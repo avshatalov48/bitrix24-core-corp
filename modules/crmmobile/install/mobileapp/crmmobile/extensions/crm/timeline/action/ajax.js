@@ -11,10 +11,13 @@ jn.define('crm/timeline/action/ajax', (require, exports, module) => {
 		execute()
 		{
 			this.source.showLoader();
-			Haptics.impactLight();
+			Haptics.vibrate(5);
 
 			BX.ajax.runAction(this.value, { data: this.actionParams })
-				.then(() => this.source.hideLoader())
+				.then(() => {
+					this.source.hideLoader();
+					Haptics.impactLight();
+				})
 				.catch((response) => {
 					ErrorNotifier.showError(response.errors[0].message).finally(() => this.source.hideLoader());
 					Haptics.notifyFailure();

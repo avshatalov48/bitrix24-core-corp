@@ -228,7 +228,7 @@
 								'className' : "imconnector-field-user-icon",
 							},
 							attrs : {
-								style : item.getAvatar() ? "background-image:url('" + BX.util.htmlspecialchars(item.getAvatar()) + "')" : ""
+								style : item.getAvatar() ? "background-image:url('" + encodeURI(BX.util.htmlspecialchars(item.getAvatar())) + "')" : ""
 							}
 						}),
 						BX.create("div", {
@@ -624,7 +624,7 @@
 			item.NAME = BX.util.htmlspecialchars(item.NAME);
 
 			newItem.id = item.ID;
-			newItem.title = item.NAME;
+			newItem.title = BX.util.htmlspecialcharsback(item.NAME);
 			newItem.text = item.NAME;
 			newItem.delimiterAfter = item.DELIMITER_AFTER;
 			newItem.delimiterBefore = item.DELIMITER_BEFORE;
@@ -683,8 +683,8 @@
 
 		changeLine: function(url)
 		{
-			BX.SidePanel.Instance.reload();
-			window.location.href = url + '&IFRAME=Y';
+			BX.SidePanel.Instance.getSliderByWindow(window).showLoader();
+			window.location = `${url}&IFRAME=Y`;
 		},
 
 		activateLine: function(lineId)

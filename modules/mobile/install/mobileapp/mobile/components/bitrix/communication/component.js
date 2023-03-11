@@ -677,8 +677,8 @@
 			{
 				params = tag.split("|");
 				BX.postComponentEvent(
-					'taskbackground::task::action',
-					[{id: params[2]}, params[2], {taskId: params[2], getTaskInfo: true}]
+					'taskbackground::task::open',
+					[{id: params[2], taskId: params[2]}, {taskId: params[2], getTaskInfo: true}]
 				);
 			}
 			else if (tag.substr(0, 12) == 'SONET|EVENT|')

@@ -25,12 +25,17 @@ if ($arParams["LIVEFEED_EVENT_ID"] === "photo")
 		$id = "photo-attached-".$arItem["~PREVIEW_PICTURE"];
 		$jsIds .= $jsIds !== "" ? ', "'.$id.'"' : '"'.$id.'"';
 		$arItem["TITLE"] = trim(htmlspecialcharsEx($arItem["~PREVIEW_TEXT"]), " -");
+		$previewPicture = $arItem["PREVIEW_PICTURE"];
+		if (!is_array($previewPicture))
+		{
+			continue;
+		}
 		?><div class="post-item-attached-img-block"><?
 			?><img 
 				class="post-item-attached-img" 
 				id="<?=$id?>" 
 				src="<?=CMobileLazyLoad::getBase64Stub()?>" 
-				data-src="<?=$arItem["PREVIEW_PICTURE"]["SRC"]?>" 
+				data-src="<?=$previewPicture["SRC"]?>"
 				border="0" 
 				title="<?= $arItem["TITLE"]?>" 
 				data-bx-image="<?=$arItem["BIG_PICTURE"]["SRC"]?>"

@@ -264,18 +264,19 @@ class CBPTask2Activity extends CBPActivity implements
 
 		$allDateFields = array_merge(
 			['DEADLINE', 'END_DATE_PLAN', 'START_DATE_PLAN'],
-			array_keys(\Bitrix\Tasks\Integration\Bizproc\Document\Task::getFieldsCreatedByUser('datetime'))
+			\Bitrix\Tasks\Integration\Bizproc\Document\Task::getFieldsCreatedByUser('datetime')
 		);
 		foreach ($allDateFields as $dateField)
 		{
-			$checkedDateField = $this->assertDateField($dateField, $arFieldsChecked[$dateField]);
+			$dateFieldName = is_array($dateField) ? $dateField['Name'] : $dateField;
+			$checkedDateField = $this->assertDateField($dateField, $arFieldsChecked[$dateFieldName]);
 			if(!$checkedDateField)
 			{
-				unset($arFieldsChecked[$dateField]);
+				unset($arFieldsChecked[$dateFieldName]);
 			}
 			else
 			{
-				$arFieldsChecked[$dateField] = $checkedDateField;
+				$arFieldsChecked[$dateFieldName] = $checkedDateField;
 			}
 		}
 
@@ -294,7 +295,12 @@ class CBPTask2Activity extends CBPActivity implements
 		$errors = array();
 		try
 		{
-			$this->writeDebugInfo($this->getDebugInfo(array_merge($arFieldsChecked, ['HoldToClose' => $this->HoldToClose])));
+			if ($this->workflow->isDebug())
+			{
+				$this->writeDebugInfo(
+					$this->getDebugInfo(array_merge($arFieldsChecked, ['HoldToClose' => $this->HoldToClose]))
+				);
+			}
 
 			// todo: use \Bitrix\Tasks\Item\Task here
 			$task = CTaskItem::add($arFieldsChecked, \Bitrix\Tasks\Util\User::getAdminId());
@@ -370,14 +376,22 @@ class CBPTask2Activity extends CBPActivity implements
 						],
 					]
 				);
-				$this->writeDebugInfo($map);
+
+				if ($this->workflow->isDebug())
+				{
+					$this->writeDebugInfo($map);
+				}
 			}
 		}
 
 		$this->TaskId = $result;
 		$this->markAsBPTask($result);
 		$this->WriteToTrackingService(str_replace("#VAL#", $result, GetMessage("BPSA_TRACK_OK")));
-		$this->logDebugTaskUrl($result);
+
+		if ($this->workflow->isDebug())
+		{
+			$this->logDebugTaskUrl($result);
+		}
 
 		return $result > 0;
 	}
@@ -411,7 +425,7 @@ class CBPTask2Activity extends CBPActivity implements
 		return $diskFilesIds;
 	}
 
-	protected function assertDateField(string $dateFieldName, $dateFieldValue)
+	protected function assertDateField($dateField, $dateFieldValue)
 	{
 		if(is_object($dateFieldValue))
 		{
@@ -422,7 +436,7 @@ class CBPTask2Activity extends CBPActivity implements
 			$realDateField = [];
 			foreach ($dateFieldValue as $date)
 			{
-				$checkedField = $this->assertDateField($dateFieldName, $date);
+				$checkedField = $this->assertDateField($dateField, $date);
 				if(is_array($checkedField))
 				{
 					$realDateField = array_merge($realDateField, $checkedField);
@@ -432,18 +446,27 @@ class CBPTask2Activity extends CBPActivity implements
 					$realDateField[] = $checkedField;
 				}
 			}
+
+			if (is_array($realDateField) && (is_string($dateField) || empty($dateField['Multiple'])))
+			{
+				return current($realDateField);
+			}
+
 			return $realDateField;
 		}
 
 		if (!empty($dateFieldValue) && !CheckDateTime($dateFieldValue))
 		{
+			$name = is_array($dateField) ? $dateField['Name'] : $dateField;
 			$this->WriteToTrackingService(
-				'Incorrect '.$dateFieldName.': '.$dateFieldValue,
+				'Incorrect ' . $name . ': ' . $dateFieldValue,
 				0,
 				CBPTrackingType::Error
 			);
+
 			return false;
 		}
+
 		return $dateFieldValue;
 	}
 
@@ -1195,7 +1218,7 @@ class CBPTask2Activity extends CBPActivity implements
 			$this->getName(),
 			$this->executionStatus,
 			$this->executionResult,
-			$this->Title ?? '',
+			$this->getTitle(),
 			$toWrite,
 			CBPTrackingType::DebugLink,
 		);

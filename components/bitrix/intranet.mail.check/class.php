@@ -48,7 +48,10 @@ class CIntranetMailCheckComponent extends CBitrixComponent
 				$settedUp = false;
 			}
 		}
-
+		$nextTimeToCheck = 0;
+		$hasSuccessSync = false;
+		$failedToSyncMailboxId = null;
+		$isTimeToMailCheck = false;
 		if ($settedUp !== false)
 		{
 			$mailboxesSyncManager = new \Bitrix\Mail\Helper\Mailbox\MailboxSyncManager(\Bitrix\Main\Engine\CurrentUser::get()->getId());

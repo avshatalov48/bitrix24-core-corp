@@ -48,7 +48,7 @@ foreach ($map as $fieldId => $field):?>
 		$attachmentValues = array_values(array_filter((array)$dialog->getCurrentValue($attachment['FieldName'])));
 		$fileValues = $diskValues = array();
 
-		if ($currentType == 'disk' && !CModule::IncludeModule('disk'))
+		if ($currentType == 'disk' && !\Bitrix\Main\Loader::includeModule('disk'))
 		{
 			$currentType = 'file';
 		}

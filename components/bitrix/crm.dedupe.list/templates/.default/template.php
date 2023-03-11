@@ -2,6 +2,7 @@
 
 use Bitrix\Crm\Integrity\DuplicateIndexType;
 use Bitrix\Main\UI;
+use Bitrix\Main\Web\Uri;
 
 UI\Extension::load([
 	'ui.design-tokens',
@@ -236,7 +237,7 @@ foreach($arResult['ITEMS'] as $item)
 				{
 			?>
 				<div class="crm-client-photo-wrapper">
-					<img width="50" height="50" border="0" src="<?=htmlspecialcharsbx($imageUrl)?>" alt="" />
+					<img width="50" height="50" border="0" src="<?= Uri::urnEncode(htmlspecialcharsbx($imageUrl))?>" alt="" />
 				</div>
 			<? 	}; ?>
 				<div class="crm-client-info-wrapper">

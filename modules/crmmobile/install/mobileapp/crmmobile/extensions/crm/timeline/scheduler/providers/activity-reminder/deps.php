@@ -4,6 +4,7 @@ return [
 	'extensions' => [
 		'loc',
 		'haptics',
+		'crm:loc',
 		'crm:timeline/scheduler/providers/activity',
 		'crm:timeline/ui/toolbar',
 		'crm:timeline/ui/textarea',

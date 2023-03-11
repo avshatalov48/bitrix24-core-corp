@@ -548,6 +548,19 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 					'url' => Container::getInstance()->getRouter()->getAutomationUrl(CCrmOwnerType::Lead)
 						->addParams(['id' => $this->entityID]),
 				);
+
+				$checkAutomationTourGuideData = CCrmBizProcHelper::getHowCheckAutomationTourGuideData(
+					CCrmOwnerType::Lead,
+					0,
+					$this->userID
+				);
+				if ($checkAutomationTourGuideData)
+				{
+					$this->arResult['AUTOMATION_CHECK_AUTOMATION_TOUR_GUIDE_DATA'] = [
+						'options' => $checkAutomationTourGuideData,
+					];
+				}
+				unset($checkAutomationTourGuideData);
 			}
 			if (CModule::IncludeModule('bizproc') && CBPRuntime::isFeatureEnabled())
 			{

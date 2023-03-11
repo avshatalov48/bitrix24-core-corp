@@ -46,7 +46,7 @@ class ImConnectorWechat extends CBitrixComponent
 		}
 		else
 		{
-			ShowError(Loc::getMessage('IMCONNECTOR_COMPONENT_WECHAT_MODULE_NOT_INSTALLED'));
+			ShowError(Loc::getMessage('IMCONNECTOR_COMPONENT_WECHAT_MODULE_NOT_INSTALLED_MSGVER_1'));
 			return false;
 		}
 	}
@@ -64,9 +64,9 @@ class ImConnectorWechat extends CBitrixComponent
 	 */
 	protected function initialization()
 	{
-		$this->connectorOutput = new Output($this->connector, $this->arParams['LINE']);
+		$this->connectorOutput = new Output($this->connector, (int)$this->arParams['LINE']);
 
-		$this->status = Status::getInstance($this->connector, $this->arParams['LINE']);
+		$this->status = Status::getInstance($this->connector, (int)$this->arParams['LINE']);
 
 		$this->arResult["STATUS"] = $this->status->isStatus();
 		$this->arResult["ACTIVE_STATUS"] = $this->status->getActive();
@@ -212,7 +212,7 @@ class ImConnectorWechat extends CBitrixComponent
 
 						if($rawDelete->isSuccess())
 						{
-							Status::delete($this->connector, $this->arParams['LINE']);
+							Status::delete($this->connector, (int)$this->arParams['LINE']);
 							$this->arResult["STATUS"] = false;
 							$this->arResult["ACTIVE_STATUS"] = false;
 							$this->arResult["CONNECTION_STATUS"] = false;

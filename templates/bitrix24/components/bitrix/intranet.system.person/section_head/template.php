@@ -1,4 +1,7 @@
 <?
+
+use Bitrix\Main\Web\Uri;
+
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 $arUser = $arParams['~USER'];
 $name = CUser::FormatName($arParams['NAME_TEMPLATE'], $arUser, $arResult["bUseLogin"]);
@@ -13,7 +16,7 @@ $avatar = !empty($arUser["PERSONAL_PHOTO"]) ? $arUser["PERSONAL_PHOTO"] : false;
 				class="department-manager-avatar user-default-avatar"
 				href="<?=$arUser['DETAIL_URL']?>"
 				<?if ($avatar):?>
-					style="background: url('<?=$avatar?>') no-repeat; background-size: cover;"
+					style="background: url('<?=Uri::urnEncode($avatar)?>') no-repeat; background-size: cover;"
 				<?endif?>>
 			</a>
 			<span class="department-manager-name-block">
@@ -30,14 +33,14 @@ $avatar = !empty($arUser["PERSONAL_PHOTO"]) ? $arUser["PERSONAL_PHOTO"] : false;
 </div>
 
 <?
-if ($arUser["ACTIVITY_STATUS"] == "fired") $userActive = "Y"; elseif($arUser["ACTIVITY_STATUS"] == "inactive")  $userActive = "D"; else $userActive = "N"; 
+if ($arUser["ACTIVITY_STATUS"] == "fired") $userActive = "Y"; elseif($arUser["ACTIVITY_STATUS"] == "inactive")  $userActive = "D"; else $userActive = "N";
 $userActionHref = CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_USER_EDIT'], array("user_id" => $arUser["ID"]))."?ACTIVE=".$userActive;
-if ($arUser["ACTIVITY_STATUS"] == "fired") 
-	$userActionMessage = GetMessage('INTR_ISP_RESTORE_USER'); 
-elseif ($arUser["ACTIVITY_STATUS"] == "inactive") 
-	$userActionMessage = GetMessage('INTR_ISP_DELETE_USER'); 
-else 
-	$userActionMessage = GetMessage('INTR_ISP_DEACTIVATE_USER');	
+if ($arUser["ACTIVITY_STATUS"] == "fired")
+	$userActionMessage = GetMessage('INTR_ISP_RESTORE_USER');
+elseif ($arUser["ACTIVITY_STATUS"] == "inactive")
+	$userActionMessage = GetMessage('INTR_ISP_DELETE_USER');
+else
+	$userActionMessage = GetMessage('INTR_ISP_DEACTIVATE_USER');
 ?>
 <script>
 function user_action_menu<?=$user_action_menu_number?> (button, number, user_id, is_extranet) {
@@ -144,7 +147,7 @@ function user_action_menu<?=$user_action_menu_number?> (button, number, user_id,
 	);
 }
 
-function confirmUser(activity_status) 
+function confirmUser(activity_status)
 {
 	var  confirmMess = "";
 	if (activity_status == "fired")
@@ -153,8 +156,8 @@ function confirmUser(activity_status)
 		confirmMess = "<?=GetMessage('INTR_CONFIRM_DELETE')?>";
 	else if (activity_status == "active" || activity_status == "extranet")
 		confirmMess = "<?=GetMessage('INTR_CONFIRM_FIRE')?>";
-	if (confirm(confirmMess)) 
-		return true; 
+	if (confirm(confirmMess))
+		return true;
 	else
 		return false;
 }

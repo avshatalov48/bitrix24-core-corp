@@ -355,7 +355,7 @@ $APPLICATION->IncludeComponent(
 						"name" => GetMessage("MB_TASKS_TASK_SETTINGS_PARENT_ID"),
 						"class" => "mobile-grid-field-parent-id",
 						"value" =>
-							"<span onclick=\"BXMobileApp.Events.postToComponent('taskbackground::task::action', {taskId: ".(int)$task['PARENT_ID']."}, 'background');\">".htmlspecialcharsbx($task["SE_PARENTTASK"]["TITLE"]).
+							"<span onclick=\"BXMobileApp.Events.postToComponent('taskbackground::task::open', {taskId: ".(int)$task['PARENT_ID']."}, 'background');\">".htmlspecialcharsbx($task["SE_PARENTTASK"]["TITLE"]).
 							"</span>"
 					) : null),
 					($subtasks_html !== null ? array(

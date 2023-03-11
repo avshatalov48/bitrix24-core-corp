@@ -14,6 +14,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Main\Web\Json;
 use Bitrix\Tasks\Helper\Filter;
+use Bitrix\Tasks\Slider\Exception\SliderException;
+use Bitrix\Tasks\Update\TagConverter;
+use Bitrix\Tasks\Slider\Factory\SliderFactory;
 
 require_once __DIR__.'/header.php';
 
@@ -24,6 +27,9 @@ $pathToTaskCreate = str_replace('#action#', 'edit', $arParams['PATH_TO_GROUP_TAS
 $pathToTaskCreate = str_replace('#group_id#', $arParams['GROUP_ID'], $pathToTaskCreate);
 
 $pathToBurnDown = str_replace('#group_id#', $arParams['GROUP_ID'], $arParams['PATH_TO_SCRUM_BURN_DOWN']);
+
+//Checking for working tags agent
+$tagsAreConverting = TagConverter::isProceed();
 ?>
 
 <div id="tasks-scrum-container" class="tasks-scrum__container tasks-scrum__scope"></div>
@@ -33,6 +39,7 @@ $pathToBurnDown = str_replace('#group_id#', $arParams['GROUP_ID'], $arParams['PA
 	{
 		BX.message(<?= Json::encode($messages) ?>);
 		BX.Tasks.Scrum.Entry = new BX.Tasks.Scrum.Entry({
+			tagsAreConverting: '<?=$tagsAreConverting?>',
 			viewName: 'plan',
 			signedParameters: '<?= $this->getComponent()->getSignedParameters() ?>',
 			debugMode: '<?= $arResult['debugMode'] ?>',
@@ -49,6 +56,7 @@ $pathToBurnDown = str_replace('#group_id#', $arParams['GROUP_ID'], $arParams['PA
 			backlog: <?= Json::encode($arResult['backlog']) ?>,
 			sprints: <?= Json::encode($arResult['sprints']) ?>,
 			views: <?= Json::encode($arResult['views']) ?>,
+			culture: <?= Json::encode($arResult['culture']) ?>,
 			activeSprintId: '<?= $arResult['activeSprintId'] ?>',
 			filterId: '<?= $filterId ?>',
 			defaultResponsible: <?= Json::encode($arResult['defaultResponsible']) ?>,
@@ -62,3 +70,24 @@ $pathToBurnDown = str_replace('#group_id#', $arParams['GROUP_ID'], $arParams['PA
 		BX.Tasks.Scrum.Entry.renderTo(document.getElementById('tasks-scrum-container'));
 	});
 </script>
+<?php
+if ($arParams['BACKGROUND_FOR_TASK'])
+{
+	$ownerId = (int)$arParams['GROUP_ID'];
+	$taskId = (int)$arParams['TASK_ID'];
+
+	$factory = new SliderFactory();
+	try
+	{
+		$factory
+			->setAction($arParams['TASK_ACTION'])
+			->setQueryParams($arParams['GET_PARAMS']);
+
+		$slider = $factory->createEntitySlider($taskId, SliderFactory::TASK, $ownerId, SliderFactory::GROUP_CONTEXT);
+		$slider->open();
+	}
+	catch (SliderException $exception)
+	{
+		$exception->show();
+	}
+}

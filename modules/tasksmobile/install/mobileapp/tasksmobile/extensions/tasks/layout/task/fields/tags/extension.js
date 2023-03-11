@@ -14,6 +14,7 @@ jn.define('tasks/layout/task/fields/tags', (require, exports, module) => {
 			this.state = {
 				readOnly: props.readOnly,
 				tags: (props.tags || []),
+				groupId: props.groupId,
 			};
 		}
 
@@ -22,6 +23,7 @@ jn.define('tasks/layout/task/fields/tags', (require, exports, module) => {
 			this.state = {
 				readOnly: props.readOnly,
 				tags: (props.tags || []),
+				groupId: props.groupId,
 			};
 		}
 
@@ -30,6 +32,7 @@ jn.define('tasks/layout/task/fields/tags', (require, exports, module) => {
 			this.setState({
 				readOnly: newState.readOnly,
 				tags: (newState.tags || []),
+				groupId: newState.groupId,
 			});
 		}
 
@@ -43,35 +46,45 @@ jn.define('tasks/layout/task/fields/tags', (require, exports, module) => {
 					readOnly: this.state.readOnly,
 					showEditIcon: true,
 					title: Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_FIELDS_TAGS'),
-					value: this.state.tags,
+					value: Object.keys(this.state.tags),
 					multiple: true,
 					config: {
 						deepMergeStyles: this.props.deepMergeStyles,
 						selectorType: EntitySelectorFactory.Type.TASK_TAG,
 						enableCreation: true,
 						closeAfterCreation: false,
-						entityList: this.state.tags.map(tag => ({id: tag, title: tag})),
+						canUseRecent: false,
+						entityList: Object.values(this.state.tags),
 						provider: {
 							context: 'TASKS_TAG',
 							options: {
 								taskId: this.props.taskId,
+								groupId: this.state.groupId,
 							},
 						},
-						castType: 'string',
 						parentWidget: this.props.parentWidget,
 						reloadEntityListFromProps: true,
 					},
 					testId: 'tags',
-					onChange: (newTags) => {
+					onChange: (tagsIds, tagsData) => {
+						const tags = tagsData.reduce((result, tag) => {
+							result[tag.id] = {
+								id: tag.id,
+								title: tag.title,
+							};
+							return result;
+						}, {});
+						const newTags = Object.keys(tags);
+						const oldTags = Object.keys(this.state.tags);
 						const difference =
 							newTags
-								.filter(id => !this.state.tags.includes(id))
-								.concat(this.state.tags.filter(id => !newTags.includes(id)))
+								.filter(id => !oldTags.includes(id))
+								.concat(oldTags.filter(id => !newTags.includes(id)))
 						;
 						if (difference.length)
 						{
-							this.setState({tags: newTags});
-							this.props.onChange(newTags);
+							this.setState({tags});
+							this.props.onChange(tags);
 						}
 					},
 				}),

@@ -241,7 +241,7 @@ class Template extends Base
 		{
 			$fileId = $template->FILE_ID;
 		}
-		$fileId['moduleId'] = static::MODULE_ID;
+		$fields['moduleId'] = static::MODULE_ID;
 		$providersMap = DocumentGeneratorManager::getInstance()->getCrmOwnerTypeProvidersMap();
 		if(isset($fields['entityTypeId']) && is_array($fields['entityTypeId']))
 		{

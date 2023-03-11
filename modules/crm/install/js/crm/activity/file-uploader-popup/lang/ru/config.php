@@ -1,0 +1,4 @@
+<?php
+$MESS['CRM_FILE_UPLOADER_POPUP_TITLE'] = 'Файлы в сделке';
+$MESS['CRM_FILE_UPLOADER_POPUP_TITLE_2'] = 'Файлы';
+$MESS['CRM_FILE_UPLOADER_POPUP_CANCEL'] = 'Отменить (Esc)';

@@ -9,10 +9,13 @@
 namespace Bitrix\Tasks\Access\Rule;
 
 
+use Bitrix\Main\Access\Rule\AbstractRule;
+use Bitrix\Main\Loader;
+use Bitrix\Socialnetwork\Internals\Registry\FeaturePermRegistry;
 use Bitrix\Tasks\Access\Role\RoleDictionary;
 use Bitrix\Main\Access\AccessibleItem;
 
-class TaskApproveRule extends \Bitrix\Main\Access\Rule\AbstractRule
+class TaskApproveRule extends AbstractRule
 {
 	public function execute(AccessibleItem $task = null, $params = null): bool
 	{
@@ -34,6 +37,20 @@ class TaskApproveRule extends \Bitrix\Main\Access\Rule\AbstractRule
 		}
 
 		if ($task->isMember($this->user->getUserId(), RoleDictionary::ROLE_DIRECTOR))
+		{
+			return true;
+		}
+
+		if (
+			$task->getGroupId()
+			&& Loader::includeModule('socialnetwork')
+			&& FeaturePermRegistry::getInstance()->get(
+				$task->getGroupId(),
+				'tasks',
+				'edit_tasks',
+				$this->user->getUserId()
+			)
+		)
 		{
 			return true;
 		}

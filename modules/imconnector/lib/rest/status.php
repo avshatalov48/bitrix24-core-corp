@@ -98,11 +98,12 @@ if(Loader::includeModule('rest'))
 
 			if(!empty($params['ACTIVE']))
 			{
-				$status = StatusConnector::getInstance($params['CONNECTOR'], $params['LINE']);
-				$status->setActive(true);
-				$status->setConnection(true);
-				$status->setRegister(true);
-				$status->setError(false);
+				$status = StatusConnector::getInstance($params['CONNECTOR'], (int)$params['LINE']);
+				$status
+					->setActive(true)
+					->setConnection(true)
+					->setRegister(true)
+					->setError(false);
 
 				$app = \Bitrix\Rest\AppTable::getByClientId($server->getClientId());
 				if ($app['CODE'])
@@ -126,7 +127,7 @@ if(Loader::includeModule('rest'))
 			}
 			else
 			{
-				$result = StatusConnector::delete($params['CONNECTOR'], $params['LINE']);
+				$result = StatusConnector::delete($params['CONNECTOR'], (int)$params['LINE']);
 			}
 
 			self::cleanCache($params['CONNECTOR'], $params['LINE']);
@@ -156,7 +157,7 @@ if(Loader::includeModule('rest'))
 				throw new ArgumentNullException("CONNECTOR");
 			}
 
-			$status = StatusConnector::getInstance($params['CONNECTOR'], $params['LINE']);
+			$status = StatusConnector::getInstance($params['CONNECTOR'], (int)$params['LINE']);
 
 			$result = array(
 				'LINE' => $status->getLine(),
@@ -219,7 +220,7 @@ if(Loader::includeModule('rest'))
 			if(!empty($params['DATA']['NAME']))
 				$data['name'] = $params['DATA']['NAME'];
 
-			$status = StatusConnector::getInstance($params['CONNECTOR'], $params['LINE']);
+			$status = StatusConnector::getInstance($params['CONNECTOR'], (int)$params['LINE']);
 			$oldData = $status->getData();
 
 			if (!empty($oldData) && is_array($oldData))

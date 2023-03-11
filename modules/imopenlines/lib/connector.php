@@ -408,7 +408,11 @@ class Connector
 						{
 							$isGroupChatAllowed = \Bitrix\ImConnector\Connector::isChatGroup($params['connector']['connector_id']) != true;
 
-							if ($addMessage["MESSAGE"] && $params['extra']['disable_tracker'] !== 'Y' && $isGroupChatAllowed)
+							if (
+								$addMessage["MESSAGE"]
+								&& (empty($params['extra']['disable_tracker']) || $params['extra']['disable_tracker'] !== 'Y')
+								&& $isGroupChatAllowed
+							)
 							{
 								$tracker = new ImOpenLines\Tracker();
 								$tracker->setSession($session);
@@ -730,7 +734,7 @@ class Connector
 			$actualLineId = $params['connector']['line_id'];
 
 			$session = new Session();
-			if ($params['no_session'] !== 'Y')
+			if (empty($params['no_session']) || $params['no_session'] !== 'Y')
 			{
 				$resultLoadSession = $session->load([
 					'USER_CODE' => self::getUserCode($params['connector']),
@@ -1156,7 +1160,8 @@ class Connector
 	 */
 	public static function onMessageSend($messageId, $messageFields)
 	{
-		if ($messageFields['CHAT_ENTITY_TYPE'] !== 'LINES')
+		$chatEntityType = $messageFields['CHAT_ENTITY_TYPE'] ?? null;
+		if ($chatEntityType !== 'LINES')
 		{
 			return false;
 		}
@@ -1187,12 +1192,19 @@ class Connector
 			return false;
 		}
 
-		if ($messageFields['SKIP_CONNECTOR'] === 'Y')
+		if (
+			isset($messageFields['SKIP_CONNECTOR'])
+			&& $messageFields['SKIP_CONNECTOR'] === 'Y'
+		)
 		{
 			return false;
 		}
 
-		if ($messageFields['IMPORTANT_CONNECTOR'] !== 'Y' && $messageFields['SYSTEM'] === 'Y')
+		if (
+			$messageFields['IMPORTANT_CONNECTOR'] !== 'Y'
+			&& isset($messageFields['SYSTEM'])
+			&& $messageFields['SYSTEM'] === 'Y'
+		)
 		{
 			return false;
 		}
@@ -1381,7 +1393,8 @@ class Connector
 		else
 		{
 			if (
-				$messageFields['SYSTEM'] === 'Y'
+				isset($messageFields['SYSTEM'])
+				&& $messageFields['SYSTEM'] === 'Y'
 				&& !self::isEnableSendSystemMessage($connectorId)
 			)
 			{
@@ -1486,8 +1499,9 @@ class Connector
 			}
 
 			if (
-				$messageFields['SYSTEM'] !== 'Y'
-				&& $messageFields['AUTHOR_ID'] > 0
+				(empty($messageFields['SYSTEM']) || $messageFields['SYSTEM'] !== 'Y')
+				&& isset($messageFields['AUTHOR_ID'], $messageFields['MESSAGE'])
+				&& (int)$messageFields['AUTHOR_ID'] > 0
 				&& self::isEnableSendMessageWithSignature($connectorId, $lineId)
 				&& !self::isNeedRichLinkData($connectorId, $messageFields['MESSAGE'])
 			)
@@ -1508,13 +1522,13 @@ class Connector
 					'id' => $messageId,
 					'chat_id' => $messageFields['TO_CHAT_ID'],
 					'user_id' => $messageFields['FROM_USER_ID'],
-					'text' => $messageFields['MESSAGE'],
+					'text' => $messageFields['MESSAGE'] ?? '',
 					'files' => $files,
 					'attachments' => $attaches,
 					'params' => $params,
-					'system' => $messageFields['SYSTEM']
+					'system' => $messageFields['SYSTEM'] ?? 'N',
 				],
-				'no_session' => $messageFields['NO_SESSION_OL']
+				'no_session' => $messageFields['NO_SESSION_OL'] ?? 'N',
 			];
 
 			if (in_array($connectorId, self::getListShowDeliveryStatus()))
@@ -2015,7 +2029,7 @@ class Connector
 
 		$chatId = $session->getChat()->getData('ID');
 
-		if (\CModule::IncludeModule('im'))
+		if (\Bitrix\Main\Loader::includeModule('im'))
 		{
 			\CIMMessenger::StartWriting('chat'.$chatId, $params['user'], "", true);
 		}

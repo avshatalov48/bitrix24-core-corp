@@ -269,15 +269,17 @@ class UserAbsence
 				}
 
 				$isCounterpart = $vacation['DATE_FROM_TS'] === $vacation['DATE_TO_TS'];
+				$isLastDayWithoutTime = date('y.d.m', $nowTs) === date('y.d.m', $vacation['DATE_TO_TS'])
+					&& date('H:i:s', $vacation['DATE_TO_TS']) === '00:00:00';
 
-				if ($isCounterpart)
+				if ($isCounterpart || $isLastDayWithoutTime)
 				{
 					$vacation['DATE_TO_TS'] += 86400;
 				}
 
 				if ($nowTs >= $vacation['DATE_FROM_TS'] && $nowTs < $vacation['DATE_TO_TS'])
 				{
-					if ($isCounterpart)
+					if ($isCounterpart || $isLastDayWithoutTime)
 					{
 						$vacation['DATE_TO_TS'] -= 86399;
 					}

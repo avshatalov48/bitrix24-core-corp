@@ -9,6 +9,7 @@ class EntityInfo
 	private $typesParticipantsGenerated = 'N';
 	private $events = [];
 	private $templatesClosed = 'N';
+	private $sprintStagesRecoveryStatus = 'checked';
 
 	public function getInfoData(): array
 	{
@@ -18,17 +19,24 @@ class EntityInfo
 			$this->getTypesParticipantsGeneratedKey() => $this->getTypesParticipantsGenerated(),
 			$this->getEventsKey() => $this->getEvents(),
 			$this->getTemplatesClosedKey() => $this->getTemplatesClosed(),
+			$this->getSprintStagesRecoveryStatusKey() => $this->getSprintStagesRecoveryStatus(),
 		];
 	}
 
 	public function setInfoData(array $infoData): void
 	{
-		if (isset($infoData[$this->getSprintGoalKey()]) && is_string($infoData[$this->getSprintGoalKey()]))
+		if (
+			isset($infoData[$this->getSprintGoalKey()])
+			&& is_string($infoData[$this->getSprintGoalKey()])
+		)
 		{
 			$this->setSprintGoal($infoData[$this->getSprintGoalKey()]);
 		}
 
-		if (isset($infoData[$this->getTypesGeneratedKey()]) && is_string($infoData[$this->getTypesGeneratedKey()]))
+		if (
+			isset($infoData[$this->getTypesGeneratedKey()])
+			&& is_string($infoData[$this->getTypesGeneratedKey()])
+		)
 		{
 			$this->setTypesGenerated($infoData[$this->getTypesGeneratedKey()]);
 		}
@@ -46,9 +54,20 @@ class EntityInfo
 			$this->setEvents($infoData[$this->getEventsKey()]);
 		}
 
-		if (isset($infoData[$this->getTemplatesClosedKey()]) && is_string($infoData[$this->getTemplatesClosedKey()]))
+		if (
+			isset($infoData[$this->getTemplatesClosedKey()])
+			&& is_string($infoData[$this->getTemplatesClosedKey()])
+		)
 		{
 			$this->setTemplatesClosed($infoData[$this->getTemplatesClosedKey()]);
+		}
+
+		if (
+			isset($infoData[$this->getSprintStagesRecoveryStatusKey()])
+			&& is_string($infoData[$this->getSprintStagesRecoveryStatusKey()])
+		)
+		{
+			$this->setSprintStagesRecoveryStatus($infoData[$this->getSprintStagesRecoveryStatusKey()]);
 		}
 	}
 
@@ -77,6 +96,11 @@ class EntityInfo
 		return 'templatesClosed';
 	}
 
+	public function getSprintStagesRecoveryStatusKey(): string
+	{
+		return 'sprintStagesRecoveryStatus';
+	}
+
 	public function getSprintGoal(): string
 	{
 		return $this->sprintGoal;
@@ -102,6 +126,11 @@ class EntityInfo
 		return $this->templatesClosed;
 	}
 
+	public function getSprintStagesRecoveryStatus(): string
+	{
+		return $this->sprintStagesRecoveryStatus;
+	}
+
 	public function isTypesGenerated(): bool
 	{
 		return $this->typesGenerated === 'Y';
@@ -115,6 +144,14 @@ class EntityInfo
 	public function isTemplatesClosed(): bool
 	{
 		return $this->templatesClosed === 'Y';
+	}
+
+	public function sprintStagesRecoveryStatusIsVerified(): bool
+	{
+		return (
+			$this->sprintStagesRecoveryStatus === 'checked'
+			|| $this->sprintStagesRecoveryStatus === 'completed'
+		);
 	}
 
 	public function setSprintGoal(string $sprintGoal): void
@@ -172,5 +209,32 @@ class EntityInfo
 			$templatesClosed = 'N';
 		}
 		$this->templatesClosed = $templatesClosed;
+	}
+
+	public function setSprintStagesRecoveryStatusToWaiting(): void
+	{
+		$this->sprintStagesRecoveryStatus = 'waiting';
+	}
+
+	public function setSprintStagesRecoveryStatusToChecked(): void
+	{
+		$this->sprintStagesRecoveryStatus = 'checked';
+	}
+
+	public function setSprintStagesRecoveryStatusToCompleted(): void
+	{
+		$this->sprintStagesRecoveryStatus = 'completed';
+	}
+
+	public function setSprintStagesRecoveryStatus(string $status): void
+	{
+		$availableValues = ['waiting', 'checked', 'completed'];
+
+		if (!in_array($status, $availableValues))
+		{
+			$status = 'checked';
+		}
+
+		$this->sprintStagesRecoveryStatus = $status;
 	}
 }

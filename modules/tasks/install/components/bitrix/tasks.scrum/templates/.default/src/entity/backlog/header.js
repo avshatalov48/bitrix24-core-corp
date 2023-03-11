@@ -13,7 +13,13 @@ export class Header extends EventEmitter
 
 		this.backlog = backlog;
 
+		this.epicButtonLocked = false;
+		this.taskButtonLocked = false;
+
 		this.node = null;
+
+		this.epicButton = null;
+		this.taskButton = null;
 	}
 
 	render(): HTMLElement
@@ -43,7 +49,10 @@ export class Header extends EventEmitter
 
 		const buttons = this.node.querySelectorAll('button');
 
-		Event.bind(buttons.item(0), 'click', this.onEpicClick.bind(this, buttons.item(0)));
+		this.epicButton = buttons.item(0);
+		this.taskButton = buttons.item(1);
+
+		Event.bind(buttons.item(0), 'click', this.onEpicClick.bind(this));
 		Event.bind(buttons.item(1), 'click', this.onTaskClick.bind(this));
 
 		return this.node;
@@ -66,13 +75,55 @@ export class Header extends EventEmitter
 		`;
 	}
 
-	onEpicClick(button: HTMLElement)
+	unLockEpicButton()
 	{
-		this.emit('epicClick', button);
+		this.epicButtonLocked = false;
+
+		Dom.removeClass(this.epicButton, 'ui-btn-wait');
+	}
+
+	lockEpicButton()
+	{
+		this.epicButtonLocked = true;
+
+		Dom.addClass(this.epicButton, 'ui-btn-wait');
+	}
+
+	unLockTaskButton()
+	{
+		this.taskButtonLocked = false;
+
+		Dom.removeClass(this.taskButton, 'ui-btn-wait');
+	}
+
+	lockTaskButton()
+	{
+		this.taskButtonLocked = true;
+
+		Dom.addClass(this.taskButton, 'ui-btn-wait');
+	}
+
+	onEpicClick()
+	{
+		if (this.epicButtonLocked)
+		{
+			return;
+		}
+
+		this.lockEpicButton();
+
+		this.emit('epicClick');
 	}
 
 	onTaskClick()
 	{
+		if (this.taskButtonLocked)
+		{
+			return;
+		}
+
+		this.lockTaskButton();
+
 		this.emit('taskClick');
 	}
 }

@@ -149,6 +149,15 @@ class CBPCrmCopyMoveProductRow extends CBPActivity
 
 			return isset($item) ? [CCrmOwnerType::SmartInvoice, (int)$entityId] : null;
 		}
+		elseif (CCrmOwnerTypeAbbr::isDynamicTypeAbbreviation($entityType))
+		{
+			$dynamicTypeId = CCrmOwnerTypeAbbr::ResolveTypeID($entityType);
+
+			$factory = Crm\Service\Container::getInstance()->getFactory($dynamicTypeId);
+			$item = isset($factory) ? $factory->getItem((int)$entityId) : null;
+
+			return isset($item) ? [$dynamicTypeId, (int)$entityId] : null;
+		}
 		/*elseif ($entityType === \CCrmOwnerTypeAbbr::Order)
 		{
 			if (Crm\Order\Order::load($entityId))
@@ -232,16 +241,36 @@ class CBPCrmCopyMoveProductRow extends CBPActivity
 
 	protected static function getPropertiesMap(array $documentType, array $context = []): array
 	{
+		$dstEntityTypeOptions = [
+			\CCrmOwnerTypeAbbr::Deal => \CCrmOwnerType::GetDescription(\CCrmOwnerType::Deal),
+			\CCrmOwnerTypeAbbr::SmartInvoice => \CCrmOwnerType::GetDescription(\CCrmOwnerType::SmartInvoice),
+		];
+
+		$dynamicTypesMap =
+			Crm\Service\Container::getInstance()
+				->getDynamicTypesMap()
+				->load([
+					'isLoadCategories' => false,
+					'isLoadStages' => false,
+				])
+				->getTypes()
+		;
+		foreach ($dynamicTypesMap as $type)
+		{
+			$entityTypeId = $type->getEntityTypeId();
+			if ($type->getIsLinkWithProductsEnabled())
+			{
+				$dstEntityTypeOptions[\CCrmOwnerTypeAbbr::ResolveByTypeID($entityTypeId)] = $type->getTitle();
+			}
+		}
+
 		return [
 			'DstEntityType' => [
 				'Name' => GetMessage('CRM_CMPR_DST_ENTITY_TYPE'),
 				'FieldName' => 'dst_entity_type',
 				'Type' => 'select',
 				'Default' => \CCrmOwnerTypeAbbr::Deal,
-				'Options' => [
-					\CCrmOwnerTypeAbbr::Deal => \CCrmOwnerType::GetDescription(\CCrmOwnerType::Deal),
-					\CCrmOwnerTypeAbbr::SmartInvoice => \CCrmOwnerType::GetDescription(\CCrmOwnerType::SmartInvoice),
-				],
+				'Options' => $dstEntityTypeOptions,
 				'Required' => true,
 			],
 			'DstEntityId' => [

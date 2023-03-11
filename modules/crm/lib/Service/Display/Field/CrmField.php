@@ -251,7 +251,7 @@ class CrmField extends BaseLinkedEntitiesField
 			}
 
 			$entityTypeId = \CCrmOwnerTypeAbbr::ResolveTypeID($entityTypePrefix);
-			if (!$entityTypeId)
+			if (!$entityTypeId || !$entityElementId)
 			{
 				continue;
 			}
@@ -341,15 +341,17 @@ class CrmField extends BaseLinkedEntitiesField
 						? $linkedEntitiesValues[$entityType][$entityElementId]->getHeading()
 						: null
 					);
-
-					if (\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId))
-					{
-						$entityElementId = DynamicMultipleProvider::prepareId($entityTypeId, $entityElementId);
-						$entityType = DynamicMultipleProvider::DYNAMIC_MULTIPLE_ID;
-					}
 				}
 			}
 
+			if (
+				\CCrmOwnerType::isUseFactoryBasedApproach($entityTypeId)
+				&& \CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId)
+			)
+			{
+					$entityElementId = DynamicMultipleProvider::prepareId($entityTypeId, $entityElementId);
+					$entityType = DynamicMultipleProvider::DYNAMIC_MULTIPLE_ID;
+			}
 
 			$result[] = [
 				'id' => $entityElementId,
@@ -362,11 +364,6 @@ class CrmField extends BaseLinkedEntitiesField
 		}
 
 		[$entityIds, $providerOptions] = $this->getCrmUserFieldEntityOptions();
-
-		if (empty($result))
-		{
-			return [];
-		}
 
 		return [
 			'value' => array_column($result, 'id'),

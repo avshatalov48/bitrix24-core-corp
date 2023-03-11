@@ -812,30 +812,36 @@ class CIBlockPropertyEmployee extends CIEmployeeProperty
 					var selector = new BX.UI.EntitySelector.TagSelector({
 						id: '{$container_id}',
 						multiple: {$isMultipleValue},
-						
+
 						dialogOptions: {
 							height: 300,
 							id: '{$container_id}',
 							multiple: {$isMultipleValue},
 							context: 'CATALOG_PRODUCT_CARD_EMPLOYEES',
 							selectedItems: {$selectedItems},
-	
+
 							events: {
 								'Item:onSelect': setSelectedInputs.bind(this, 'Item:onSelect'),
 								'Item:onDeselect': setSelectedInputs.bind(this, 'Item:onDeselect'),
 							},
-	
+
 							entities: [
 								{
-									id: 'user'
+									id: 'user',
+									options:{
+										inviteEmployeeLink: false,
+									},
 								},
 								{
-									id: 'department'
+									id: 'department',
+									options:{
+										inviteEmployeeLink: false,
+									},
 								}
 							]
 						}
 					})
-				
+
 					function setSelectedInputs(eventName, event)
 					{
 						var dialog = event.getData().item.getDialog();
@@ -863,7 +869,7 @@ class CIBlockPropertyEmployee extends CIEmployeeProperty
 							BX.Event.EventEmitter.emit('onChangeEmployee');
 						}
 					}
-				
+
 					selector.renderTo(document.getElementById('{$container_id}'));
 				})();
 			</script>

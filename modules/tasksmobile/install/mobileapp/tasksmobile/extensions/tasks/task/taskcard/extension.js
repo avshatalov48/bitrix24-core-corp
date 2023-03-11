@@ -662,6 +662,10 @@ include('InAppNotifier');
 					this.onMoreAction();
 					return;
 
+				case 'share':
+					this.onShareAction();
+					break;
+
 				default:
 					break;
 			}
@@ -906,6 +910,10 @@ include('InAppNotifier');
 
 				case 'remove':
 					this.onRemoveAction();
+					break;
+
+				case 'share':
+					this.onShareAction();
 					break;
 
 				case 'cancel':
@@ -1244,6 +1252,13 @@ include('InAppNotifier');
 			{
 				this.updateTask({activityDate: Date.now()});
 			}
+		}
+
+		onShareAction()
+		{
+			dialogs.showSharingDialog({
+				message: `${currentDomain}/company/personal/user/${this.currentUser.id}/tasks/task/view/${this.task.id}/`,
+			});
 		}
 
 		sendOnItemActionStatusWebEvent()

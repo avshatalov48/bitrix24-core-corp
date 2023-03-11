@@ -26,6 +26,11 @@ jn.define('crm/selector/entity/contact', (require, exports, module) => {
 			return BX.message('SELECTOR_COMPONENT_START_TYPING_TO_SEARCH_CONTACT');
 		}
 
+		static getStartTypingWithCreationText()
+		{
+			return BX.message('SELECTOR_COMPONENT_START_TYPING_TO_CREATE_CONTACT');
+		}
+
 		static getSearchPlaceholderWithCreation()
 		{
 			return BX.message('SELECTOR_COMPONENT_SEARCH_PLACEHOLDER_CONTACT');

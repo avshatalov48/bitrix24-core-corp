@@ -101,10 +101,6 @@
 	background-repeat: no-repeat;
 }
 
-.bx-ie .crm-tracking-channel-pool-section-title-icon {
-	width: 20px;
-}
-
 .crm-tracking-channel-pool-section + .crm-tracking-channel-pool-section {
 	margin-top: 33px;
 }

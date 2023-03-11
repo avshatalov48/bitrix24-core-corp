@@ -39,7 +39,8 @@ $arDefaultUrlTemplates404 = array(
 	'edit' => 'edit/#quote_id#/',
 	'show' => 'show/#quote_id#/',
 	'details' => 'details/#quote_id#/',
-	'payment' => 'payment/#quote_id#/'
+	'payment' => 'payment/#quote_id#/',
+	'deadlines' => 'deadlines/',
 );
 
 $arDefaultVariableAliases404 = array();

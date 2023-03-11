@@ -53,12 +53,12 @@ class SalesCenterPaySystemAjaxController extends \Bitrix\Main\Engine\Controller
 	{
 		$documentRoot = Application::getDocumentRoot();
 
-		$id = $this->request->get('ID');
+		$id = (int)$this->request->get('ID');
 		$handler = $this->request->get('ACTION_FILE');
 		$psMode = $this->request->get('PS_MODE');
 		$name = trim($this->request->get('NAME'));
 		$description = trim($this->request->get('DESCRIPTION'));
-		$active = $this->request->get('ACTIVE');
+		$active = $this->request->get('ACTIVE') ?? 'N';
 		$isCanPrintCheck = $this->request->get('CAN_PRINT_CHECK');
 		$sort = $this->request->get('SORT');
 		$xmlId = $this->request->get('XML_ID');
@@ -68,6 +68,22 @@ class SalesCenterPaySystemAjaxController extends \Bitrix\Main\Engine\Controller
 		$allowEditPayment = $this->request->get('ALLOW_EDIT_PAYMENT');
 		$code = $this->request->get('CODE');
 		$isCanPrintCheckSelf = $this->request->get('CAN_PRINT_CHECK_SELF');
+
+		if ($id > 0)
+		{
+			$service = PaySystem\Manager::getObjectById($id);
+			if (!$service)
+			{
+				$this->errorCollection->setError(new Error(Loc::getMessage('SP_AJAX_SAVE_PAYSYSTEM_ERROR_UPDATE')));
+				return [];
+			}
+		}
+
+		// always active for new pay system
+		if ((int)$id <= 0)
+		{
+			$active = 'Y';
+		}
 
 		if (empty($handler))
 		{
@@ -89,10 +105,10 @@ class SalesCenterPaySystemAjaxController extends \Bitrix\Main\Engine\Controller
 			"PSA_NAME" => $name,
 			"ACTIVE" => $active ?? 'Y',
 			"CAN_PRINT_CHECK" => ($isCanPrintCheck === 'Y' || $isCanPrintCheckSelf === 'Y') ? 'Y' : 'N',
-			"CODE" => $code ? $code : '',
+			"CODE" => $code ?: '',
 			"NEW_WINDOW" => ($newWindow === 'Y') ? 'Y' : 'N',
 			"ALLOW_EDIT_PAYMENT" => ($allowEditPayment === 'Y') ? 'Y' : 'N',
-			"IS_CASH" => isset($isCash) ? $isCash : 'N',
+			"IS_CASH" => $isCash ?? 'N',
 			"ENTITY_REGISTRY_TYPE" => Registry::REGISTRY_TYPE_ORDER,
 			"SORT" => $sort,
 			"ENCODING" => $encoding,

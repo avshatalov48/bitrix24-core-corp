@@ -464,7 +464,7 @@ abstract class Configurable extends Item
 		return $userData ?? [];
 	}
 
-	protected function getClientContentBlock(int $options = 0): ?Layout\Body\ContentBlock
+	protected function buildClientBlock(int $options = 0): ?Layout\Body\ContentBlock
 	{
 		$communication = $this->getAssociatedEntityModel()->get('COMMUNICATION') ?? [];
 		$title = $communication['TITLE'] ?? null;

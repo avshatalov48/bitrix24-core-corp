@@ -297,7 +297,7 @@
 				{
 					resolveFunction: BX.MobileTools.taskIdFromUrl,
 					openFunction: function(data) {
-						BXMobileApp.Events.postToComponent("taskbackground::task::action", data, "background");
+						BXMobileApp.Events.postToComponent("taskbackground::task::open", data, "background");
 					}
 				},
 				{
@@ -307,9 +307,9 @@
 					}
 				},
 				{
-					resolveFunction: BX.MobileTools.diskFolderIdFromUrl,
-					openFunction: function(folderId) {
-						BXMobileApp.Events.postToComponent("onDiskFolderOpen", [{folderId: folderId}], "background");
+					resolveFunction: BX.MobileTools.diskFromUrl,
+					openFunction: function(params) {
+						BXMobileApp.Events.postToComponent("onDiskFolderOpen", [params], "background");
 					}
 				},
 				{
@@ -532,16 +532,66 @@
 
 			return null;
 		},
-		diskFolderIdFromUrl:function(url)
+		diskFromUrl:function(url)
 		{
-			var result = url.match(/\/bitrix\/tools\/disk\/focus.php\?.*(folderId|objectId)=(\d+)/i);
-			if(result)
-			{
-				return result[2];
+			const regExpMap = [
+				{
+					regExp: /\/bitrix\/tools\/disk\/focus.php\?.*(folderId|objectId)=(\d+)/i,
+					params: [
+						{
+							name: 'folderId',
+							key: 2,
+						}
+					],
+				},
+				{
+					regExp: /\/company\/personal\/user\/(\d+)\/disk\/path\//i,
+					result: {}
+				},
+				{
+					regExp: /\/workgroups\/group\/(\d+)\/disk\/path\//i,
+					result: {
+						entityType: 'group',
+					},
+					params: [
+						{
+							name: 'ownerId',
+							key: 1,
+						},
+					]
+				},
+				{
+					regExp: /\/docs\/(path|shared)\//i,
+					result: {
+						entityType: 'common',
+						ownerId: `shared_files_${BX.message('SITE_ID')}`
+					}
+				},
+			];
+
+			for (let i = 0; i < regExpMap.length; i++) {
+				const found = url.match(regExpMap[i].regExp);
+				const params = regExpMap[i].params;
+				const result = regExpMap[i].result || {};
+
+				if(!found) {
+					continue;
+				}
+
+				if(Array.isArray(params))
+				{
+					params.forEach(({key, name}) => {
+						result[name] = found[key];
+					});
+				}
+
+				return result;
+
 			}
 
 			return null;
 		},
+
 		diskFileIdFromUrl:function(url)
 		{
 			var result = url.match(/\/disk\/showFile\/(\d+)\//i);

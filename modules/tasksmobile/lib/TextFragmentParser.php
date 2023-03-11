@@ -178,6 +178,10 @@ class TextFragmentParser
 				'REPLACE' => "\n$1\n",
 			],
 			[
+				'PATTERN' => "/<br>/",
+				'REPLACE' => "\n",
+			],
+			[
 				'PATTERN' => "/<br\/>/",
 				'REPLACE' => "\n",
 			],

@@ -8,6 +8,8 @@ use Bitrix\Crm\Service\Timeline\Item;
 use Bitrix\Crm\Service\Timeline\Item\Model;
 use Bitrix\Crm\Settings\Crm;
 use Bitrix\Crm\Timeline\LogMessageType;
+use Bitrix\Crm\Timeline\OrderCategoryType;
+use Bitrix\Crm\Timeline\ProductCompilationType;
 use Bitrix\Crm\Timeline\TimelineType;
 use CCrmOwnerType;
 
@@ -88,10 +90,10 @@ class HistoryItem
 
 		if ($typeId === TimelineType::PRODUCT_COMPILATION)
 		{
-			return
-				(new Item\Catalog\ProductCompilation($context, $model))
-					->setData($rawData)
-			;
+			if ($typeCategoryId === ProductCompilationType::PRODUCT_LIST)
+			{
+				return new Item\ProductCompilation\SentToClient($context, $model);
+			}
 		}
 
 		if ($typeId === TimelineType::DOCUMENT && Crm::isUniversalActivityScenarioEnabled())
@@ -107,6 +109,23 @@ class HistoryItem
 			}
 
 			return new Item\NotAvailable($context, $model);
+		}
+
+		if ($typeId === TimelineType::ORDER)
+		{
+			if ($typeCategoryId === OrderCategoryType::ENCOURAGE_BUY_PRODUCTS)
+			{
+				return new Item\Order\EncourageBuyProducts($context, $model);
+			}
+		}
+
+		if ($typeId === TimelineType::STORE_DOCUMENT)
+		{
+			$item = HistoryItemStoreDocument::createItem($context, $model);
+			if ($item)
+			{
+				return $item;
+			}
 		}
 
 		return new Item\Compatible\HistoryItem(

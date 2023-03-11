@@ -6,6 +6,7 @@ return [
 		'layout/ui/loading-screen',
 		'layout/ui/detail-card/notify-manager',
 		'layout/ui/detail-card/tabs/factory',
+		'layout/pure-component',
 		'event-emitter',
 		'notify-manager',
 		'rest',

@@ -2,6 +2,8 @@
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Tasks\Helper\RestrictionUrl;
+use Bitrix\Tasks\Integration\SocialNetwork\Group;
 
 Loc::loadMessages(__FILE__);
 
@@ -18,6 +20,12 @@ $can = $templateData["DATA"]["TASK"]["ACTION"];
 $workingTime = $templateData["AUX_DATA"]["COMPANY_WORKTIME"];
 $stages = isset($arParams['TEMPLATE_DATA']['DATA']['STAGES']) ? $arParams['TEMPLATE_DATA']['DATA']['STAGES'] : array();
 $taskLimitExceeded = $arResult['TASK_LIMIT_EXCEEDED'];
+
+$canReadGroupTasks = (
+	array_key_exists('GROUP_ID', $taskData)
+	&& \Bitrix\Main\Loader::includeModule('socialnetwork')
+	&& Group::canReadGroupTasks(\Bitrix\Tasks\Util\User::getId(), $taskData['GROUP_ID'])
+);
 
 \Bitrix\Main\UI\Extension::load('ui.fonts.opensans');
 ?>
@@ -167,7 +175,22 @@ $taskLimitExceeded = $arResult['TASK_LIMIT_EXCEEDED'];
 		<div class="task-detail-sidebar-item task-detail-sidebar-item-mark">
 			<div class="task-detail-sidebar-item-title"><?=Loc::getMessage("TASKS_MARK")?>:</div>
 			<div class="task-detail-sidebar-item-value<?if(!$can["RATE"]):?> task-detail-sidebar-item-readonly<?php endif?>">
-				<?=($taskLimitExceeded ? '<span class="tariff-lock"></span>' : '')?>
+				<?php
+					if ($taskLimitExceeded)
+					{
+						$lockClassName = 'tariff-lock';
+						$onLockClick =
+							"top.BX.UI.InfoHelper.show('"
+							. RestrictionUrl::TASK_RATE_SLIDER_URL
+							. "',{isLimit: true,limitAnalyticsLabels: {module: 'tasks',}});"
+						;
+						$lockClassStyle = "cursor: pointer;";
+				?>
+					<span class="<?=$lockClassName?>" onclick="<?=$onLockClick?>" style="<?=$lockClassStyle?>"></span>
+				<?php
+				}
+				?>
+
 				<span class="task-detail-sidebar-item-mark-<?= mb_strtolower($taskData["MARK"])?>" id="task-detail-mark">
 					<?=Loc::getMessage(($taskData["MARK"] ? "TASKS_MARK_".$taskData["MARK"] : "TASKS_MARK_NONE"))?>
 				</span>
@@ -323,11 +346,11 @@ $taskLimitExceeded = $arResult['TASK_LIMIT_EXCEEDED'];
 		<?php if (!$arParams["PUBLIC_MODE"]): ?>
 			<div
 				id="tasksEpicTitle"
-				class="task-detail-sidebar-info-title <?= $arParams["IS_SCRUM_TASK"] ? '' : 'hide' ?>"
+				class="task-detail-sidebar-info-title <?= $arParams["IS_SCRUM_TASK"] && $canReadGroupTasks ? '' : 'hide' ?>"
 			><?=Loc::getMessage("TASKS_TASK_EPIC")?></div>
 			<div
 				id="tasksEpicContainer"
-				class="task-detail-sidebar-info <?= $arParams["IS_SCRUM_TASK"] ? '' : 'hide' ?>"
+				class="task-detail-sidebar-info <?= $arParams["IS_SCRUM_TASK"] && $canReadGroupTasks ? '' : 'hide' ?>"
 			>
 				<div class="task-detail-sidebar-info-tag">
 					<?php

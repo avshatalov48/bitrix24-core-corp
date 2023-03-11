@@ -56,6 +56,60 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return RequestSender;
 	}();
 
+	function _classStaticPrivateFieldSpecSet(receiver, classConstructor, descriptor, value) { _classCheckPrivateStaticAccess(receiver, classConstructor); _classCheckPrivateStaticFieldDescriptor(descriptor, "set"); _classApplyDescriptorSet(receiver, descriptor, value); return value; }
+
+	function _classApplyDescriptorSet(receiver, descriptor, value) { if (descriptor.set) { descriptor.set.call(receiver, value); } else { if (!descriptor.writable) { throw new TypeError("attempted to set read only private field"); } descriptor.value = value; } }
+
+	function _classStaticPrivateFieldSpecGet(receiver, classConstructor, descriptor) { _classCheckPrivateStaticAccess(receiver, classConstructor); _classCheckPrivateStaticFieldDescriptor(descriptor, "get"); return _classApplyDescriptorGet(receiver, descriptor); }
+
+	function _classCheckPrivateStaticFieldDescriptor(descriptor, action) { if (descriptor === undefined) { throw new TypeError("attempted to " + action + " private static field before its declaration"); } }
+
+	function _classCheckPrivateStaticAccess(receiver, classConstructor) { if (receiver !== classConstructor) { throw new TypeError("Private static access of wrong provenance"); } }
+
+	function _classApplyDescriptorGet(receiver, descriptor) { if (descriptor.get) { return descriptor.get.call(receiver); } return descriptor.value; }
+
+	var Culture = /*#__PURE__*/function () {
+	  function Culture() {
+	    babelHelpers.classCallCheck(this, Culture);
+	  }
+
+	  babelHelpers.createClass(Culture, [{
+	    key: "setData",
+	    value: function setData(data) {
+	      this.data = data;
+	    }
+	  }, {
+	    key: "getDayMonthFormat",
+	    value: function getDayMonthFormat() {
+	      return this.data.dayMonthFormat;
+	    }
+	  }, {
+	    key: "getLongDateFormat",
+	    value: function getLongDateFormat() {
+	      return this.data.longDateFormat;
+	    }
+	  }, {
+	    key: "getShortTimeFormat",
+	    value: function getShortTimeFormat() {
+	      return this.data.shortTimeFormat;
+	    }
+	  }], [{
+	    key: "getInstance",
+	    value: function getInstance() {
+	      if (!_classStaticPrivateFieldSpecGet(Culture, Culture, _instance)) {
+	        _classStaticPrivateFieldSpecSet(Culture, Culture, _instance, new Culture());
+	      }
+
+	      return _classStaticPrivateFieldSpecGet(Culture, Culture, _instance);
+	    }
+	  }]);
+	  return Culture;
+	}();
+	var _instance = {
+	  writable: true,
+	  value: void 0
+	};
+
 	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5, _templateObject6, _templateObject7, _templateObject8, _templateObject9, _templateObject10, _templateObject11, _templateObject12, _templateObject13, _templateObject14;
 	var SprintCompletionForm = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(SprintCompletionForm, _EventEmitter);
@@ -176,6 +230,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        _this5.requestSender.getDataForSprintCompletionForm({
 	          groupId: _this5.groupId
 	        }).then(function (response) {
+	          Culture.getInstance().setData(response.data.culture);
 	          resolve(_this5.render(response.data));
 	        })["catch"](function (response) {
 	          reject();
@@ -301,7 +356,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      var _this8 = this;
 
 	      var src = item.responsible.photo ? main_core.Text.encode(item.responsible.photo.src) : null;
-	      var photoStyle = src ? "background-image: url('".concat(src, "');") : '';
+	      var photoStyle = src ? "background-image: url('".concat(encodeURI(src), "');") : '';
 	      var storyPointsClass = item.storyPoints === '' ? '--empty' : '';
 	      var node = main_core.Tag.render(_templateObject11 || (_templateObject11 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__item-side-panel\">\n\t\t\t\t<div class=\"tasks-scrum__item-side-panel--info\">\n\t\t\t\t\t<div class=\"tasks-scrum__item-side-panel--main-info\">\n\t\t\t\t\t\t<div class=\"tasks-scrum__item-side-panel--title\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"tasks-scrum__item-side-panel--tags\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-scrum__item-side-panel--responsible\">\n\t\t\t\t\t<div\n\t\t\t\t\t\tclass=\"tasks-scrum__item-side-panel--responsible-photo ui-icon ui-icon-common-user\"\n\t\t\t\t\t\ttitle=\"", "\"\n\t\t\t\t\t><i style=\"", "\"></i>\n\t\t\t\t\t</div>\n\t\t\t\t\t<span>", "</span>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-scrum__item-side-panel--story-points ", "\">\n\t\t\t\t\t<div class=\"tasks-scrum__item-side-panel--story-points-content\">\n\t\t\t\t\t\t<div class=\"tasks-scrum__item-side-panel--story-points-element\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Text.encode(item.name), this.renderEpic(item.epic), this.renderTags(item.tags), main_core.Text.encode(item.responsible.name), photoStyle, main_core.Text.encode(item.responsible.name), storyPointsClass, item.storyPoints === '' ? '-' : main_core.Text.encode(item.storyPoints));
 	      main_core.Event.bind(node, 'click', function () {
@@ -333,14 +388,14 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "getFormattedDateStart",
 	    value: function getFormattedDateStart(dateStart) {
 	      /* eslint-disable */
-	      return BX.date.format('j F Y', dateStart);
+	      return BX.date.format(Culture.getInstance().getLongDateFormat(), dateStart);
 	      /* eslint-enable */
 	    }
 	  }, {
 	    key: "getFormattedDateEnd",
 	    value: function getFormattedDateEnd(dateEnd) {
 	      /* eslint-disable */
-	      return BX.date.format('j F Y', dateEnd);
+	      return BX.date.format(Culture.getInstance().getLongDateFormat(), dateEnd);
 	      /* eslint-enable */
 	    }
 	  }, {

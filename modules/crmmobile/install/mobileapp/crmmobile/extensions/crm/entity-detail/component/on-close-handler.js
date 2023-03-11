@@ -9,34 +9,43 @@ jn.define('crm/entity-detail/component/on-close-handler', (require, exports, mod
 
 	/**
 	 * @param {DetailCardComponent} detailCard
+	 * @param {boolean} entityWasSaved
 	 */
-	const onCloseHandler = (detailCard) => {
+	const onCloseHandler = (detailCard, entityWasSaved = false) => {
+		let promise = Promise.resolve();
+
 		if (
 			detailCard.isNewEntity()
 			|| (detailCard.hasEntityModel() && detailCard.isReadonly())
 		)
 		{
-			return Promise.resolve();
+			return promise;
 		}
 
 		const { todoNotificationParams } = detailCard.getComponentParams();
 		if (!todoNotificationParams)
 		{
-			return Promise.resolve();
+			return promise;
 		}
 
 		const { isSkipped, plannedActivityCounter, isFinalStage } = todoNotificationParams;
 		if (isSkipped || plannedActivityCounter > 0)
 		{
-			return Promise.resolve();
+			return promise;
 		}
 
 		if (detailCard.hasEntityModel() && checkIfFinalStage(detailCard) || isFinalStage)
 		{
-			return Promise.resolve();
+			return promise;
 		}
 
-		return showTodoNotification(detailCard);
+		if (entityWasSaved)
+		{
+			const fakeSaveIndicatorTimeout = () => new Promise((resolve) => setTimeout(resolve, 500));
+			promise = promise.then(fakeSaveIndicatorTimeout);
+		}
+
+		return promise.then(() => showTodoNotification(detailCard));
 	};
 
 	/**

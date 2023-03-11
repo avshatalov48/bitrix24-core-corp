@@ -131,6 +131,7 @@
 
 			result.push({
 				type: UI.Menu.Types.DESKTOP,
+				showHint: false,
 				showTopSeparator: isCancelDocumentActive,
 				data: {
 					qrUrl: desktopUrl

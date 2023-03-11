@@ -145,7 +145,7 @@ $placeholder = $arResult['placeholder']['api_token'] ? Loc::getMessage('IMCONNEC
 	<?
 	include 'messages.php';
 
-	if ($arResult['STATUS'])
+	if (!empty($arResult['STATUS']))
 	{
 		include 'info.php';
 	}

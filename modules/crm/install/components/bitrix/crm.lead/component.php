@@ -48,6 +48,7 @@ $arDefaultUrlTemplates404 = array(
 	'details' => 'details/#lead_id#/',
 	'calendar' => 'calendar/',
 	'automation' => 'automation/#category_id#/',
+	'activity' => 'activity/',
 );
 
 $arDefaultVariableAliases404 = array(
@@ -169,9 +170,15 @@ if(isset($_GET['redirect_to']))
 }
 
 $arResult['NAVIGATION_CONTEXT_ID'] = 'LEAD';
-if($componentPage === 'index')
+if ($componentPage === 'index')
 {
 	$componentPage = 'list';
+}
+elseif ($componentPage === 'activity')
+{
+	$arResult['KANBAN_VIEW_MODE'] = \Bitrix\Crm\Kanban\ViewMode::MODE_ACTIVITIES;
+	$arResult['PATH_TO_LEAD_KANBAN'] = $arResult['PATH_TO_LEAD_ACTIVITY'];
+	$componentPage = 'kanban';
 }
 
 if(isset($_GET['id']))

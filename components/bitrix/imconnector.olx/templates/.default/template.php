@@ -50,7 +50,7 @@ if (empty($arResult['PAGE'])) //case when not first open
 {
 	?>
 	<div class="imconnector-field-container">
-	<?if($arResult['STATUS'] === true): //case when connection completed ?>
+	<?if(!empty($arResult['STATUS']) && $arResult['STATUS'] === true): //case when connection completed ?>
 		<div class="imconnector-field-section imconnector-field-section-social">
 			<div class="imconnector-field-box">
 				<div class="connector-icon ui-icon ui-icon-service-<?=$iconCode?>"><i></i></div>
@@ -70,7 +70,7 @@ if (empty($arResult['PAGE'])) //case when not first open
 				</div>
 			</div>
 		</div>
-	<?elseif($arResult['ACTIVE_STATUS'] === true):?>
+	<?elseif(!empty($arResult['ACTIVE_STATUS']) && $arResult['ACTIVE_STATUS'] === true):?>
 		<div class="imconnector-field-section imconnector-field-section-social">
 			<div class="imconnector-field-box">
 				<div class="connector-icon ui-icon ui-icon-service-<?=$iconCode?>"><i></i></div>
@@ -142,7 +142,7 @@ if (empty($arResult['PAGE'])) //case when not first open
 	<?php
 	include 'messages.php';
 
-	if ($arResult['STATUS'])
+	if (!empty($arResult['STATUS']))
 	{
 		include 'info.php';
 	}
@@ -197,7 +197,7 @@ else
 		</div>
 	</div>
 	<?include 'messages.php'?>
-	<?if ($arResult['STATUS'])
+	<?if (!empty($arResult['STATUS']))
 	{
 		include 'info.php';
 	}
@@ -215,7 +215,7 @@ else
 					</div>
 				</div>
 				<?php
-				if ($arResult['FORM']['USER']['URI'] !== '')
+				if (!empty($arResult['FORM']['USER']['URI']))
 				{
 					?>
 					<div class="imconnector-field-social-connector">

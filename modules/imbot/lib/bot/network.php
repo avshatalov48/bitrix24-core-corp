@@ -434,7 +434,7 @@ class Network extends Base implements NetworkBot
 	protected static function getCommandByMessage(array $messageFields): ?array
 	{
 		if (
-			$messageFields['SYSTEM'] === 'Y'
+			(isset($messageFields['SYSTEM']) && $messageFields['SYSTEM'] === 'Y')
 			|| empty($messageFields['COMMAND'])
 		)
 		{
@@ -1019,7 +1019,7 @@ class Network extends Base implements NetworkBot
 
 			static::operatorMessageAdd($params['MESSAGE_ID'], [
 				'BOT_ID' => $params['BOT_ID'],
-				'BOT_CODE' => $params['BOT_CODE'],
+				'BOT_CODE' => $params['BOT_CODE'] ?? '',
 				'DIALOG_ID' => $params['DIALOG_ID'],
 				'MESSAGE' => $params['MESSAGE'],
 				'FILES' => $params['FILES'] ?? '',
@@ -1265,6 +1265,8 @@ class Network extends Base implements NetworkBot
 				'ATTACH' => $fields['ATTACH'] ?? null,
 				'PARAMS' => $fields['PARAMS'] ?? null,
 				'USER' => $user,
+				'FILES_RAW' => $fields['FILES_RAW'] ?? null,
+				'EXTRA_DATA' => $fields['EXTRA_DATA'] ?? null,
 			]
 		);
 
@@ -2002,7 +2004,7 @@ class Network extends Base implements NetworkBot
 	 */
 	public static function onMessageAdd($messageId, $messageFields)
 	{
-		if ($messageFields['SYSTEM'] === 'Y')
+		if (isset($messageFields['SYSTEM']) && $messageFields['SYSTEM'] === 'Y')
 		{
 			return false;
 		}
@@ -3243,8 +3245,8 @@ class Network extends Base implements NetworkBot
 		return Im\Bot::updateMessage(['BOT_ID' => static::getBotId()], [
 			'MESSAGE_ID' => $messageId,
 			'MESSAGE' => $messageFields['MESSAGE'],
-			'KEYBOARD' => $messageFields['KEYBOARD'],
-			'ATTACH' => $messageFields['ATTACH'],
+			'KEYBOARD' => $messageFields['KEYBOARD'] ?? null,
+			'ATTACH' => $messageFields['ATTACH'] ?? null,
 			'URL_PREVIEW' => ($messageFields['URL_PREVIEW'] === 'Y' ? 'Y' : 'N'),
 			'EDIT_FLAG' => ($messageFields['EDIT_FLAG'] === 'N' ? 'N' : 'Y'),
 			'SKIP_CONNECTOR' => 'Y',
@@ -3404,7 +3406,7 @@ class Network extends Base implements NetworkBot
 			$send['LINE_NAME'] = $config['LINE_NAME'];
 		}
 
-		if ($send['FIRST_MESSAGE'] == '')
+		if (empty($send['FIRST_MESSAGE']))
 		{
 			$send['FIRST_MESSAGE'] = $config['WELCOME_MESSAGE_TEXT'];
 		}
@@ -3838,11 +3840,11 @@ class Network extends Base implements NetworkBot
 	{
 		$filter = ['MODULE_ID' => 'imbot'];
 		$className = $params['class'] ?? static::class;
-		if ($params['agent'])
+		if (!empty($params['agent']))
 		{
 			$filter['=NAME'] = $className.'::'.$params['agent'].';';
 		}
-		elseif ($params['mask'])
+		elseif (!empty($params['mask']))
 		{
 			$filter['NAME'] = $className.'::'.$params['mask'].'%';
 		}

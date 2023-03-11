@@ -91,11 +91,6 @@
 .add-file-popup-btn:active:before,
 .add-file-popup-btn.adm-btn-active:before {top:11px;}
 
-.bx-ie8 .add-file-popup-btn:active:before,
-.bx-ie8 .add-file-popup-btn.adm-btn-active:before,
-.bx-ie9 .add-file-popup-btn:active:before,
-.bx-ie9 .add-file-popup-btn.adm-btn-active:before {top:9px;}
-
 /* File input control - body */
 .adm-input-file-top-shift{position: relative; top: -1px;}
 .adm-input-file-ext-class{position: relative; overflow: hidden; cursor: pointer !important;}

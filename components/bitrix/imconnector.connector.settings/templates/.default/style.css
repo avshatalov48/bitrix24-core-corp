@@ -518,7 +518,7 @@
 	font: normal 13px/18px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
-.imconnector-field-social-name-icon, .bx-ie .ui-icon.imconnector-field-social-name-icon {
+.imconnector-field-social-name-icon {
 	width: 14px;
 	height: 14px;
 	margin-right: 5px;

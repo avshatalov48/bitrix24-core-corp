@@ -113,7 +113,7 @@ class TemplateMember
 			$insertRows = array_merge(
 				$insertRows,
 				array_map(function($el) {
-					$implode = $el['USER_ID'];
+					$implode = (int) $el['USER_ID'];
 					$implode .= ','.$this->templateId;
 					$implode .= ',\''.$el['TYPE'].'\'';
 					return $implode;

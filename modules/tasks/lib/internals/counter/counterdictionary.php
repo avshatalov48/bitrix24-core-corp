@@ -79,7 +79,8 @@ class CounterDictionary
 		COUNTER_SCRUM_TOTAL_COMMENTS			= 'scrum_total_comments',
 		COUNTER_SCRUM_FOREIGN_COMMENTS			= 'scrum_foreign_comments',
 
-		COUNTER_FLAG_COUNTED					= 'flag_computed_20210501';
+		COUNTER_FLAG_COUNTED					= 'flag_computed_20210501',
+		COUNTER_FLAG_CLEARED					= 'flag_cleared';
 
 	public const MAP_EXPIRED = [
 		MemberTable::MEMBER_TYPE_RESPONSIBLE 	=> self::COUNTER_MY_EXPIRED,

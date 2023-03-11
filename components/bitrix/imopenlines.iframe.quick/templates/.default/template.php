@@ -66,7 +66,9 @@ Extension::load([
 		<div class="imopenlines-iframe-quick-search" id="quick-search">
 			<input type="text" placeholder="<?=Loc::getMessage('IMOL_QA_IFRAME_SEARCH')?>" class="imopenlines-iframe-quick-search-input" id="quick-search-input" value="<?= htmlspecialcharsbx($arResult['SEARCH']) ?>">
 		</div>
-		<div class="imopenlines-iframe-quick-search-button imopenlines-iframe-quick-search-add" id="quick-create-message"></div>
+		<?php if($arParams['CAN_CREATE'] === true): ?>
+			<div class="imopenlines-iframe-quick-search-button imopenlines-iframe-quick-search-add" id="quick-create-message"></div>
+		<?php endif; ?>
 		<div class="imopenlines-iframe-quick-search-button imopenlines-iframe-quick-search-settings" id="quick-all-url"></div>
 	</div>
 

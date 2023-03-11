@@ -28,6 +28,8 @@ Extension::load([
 	'ui.switcher',
 	'salescenter.manager',
 	'ui.sidepanel-content',
+	'ui.notification',
+	'main.popup',
 ]);
 ?>
 
@@ -69,16 +71,13 @@ Extension::load([
 					<div class="salescenter-main-header-feedback-container">
 						<?Bitrix\SalesCenter\Integration\Bitrix24Manager::getInstance()->renderFeedbackButton();?>
 					</div>
-					<?php if ($arResult['PAYSYSTEM_ID'] > 0):?>
-						<div class="salescenter-main-header-switcher-container">
-							<span data-switcher="<?=htmlspecialcharsbx(\Bitrix\Main\Web\Json::encode([
-							 'id' => 'salescenter-paysystem-active',
-							 'checked' => ($arResult['PAYSYSTEM']['ACTIVE'] === 'Y'),
-							 'inputName' => "ACTIVE",
-							 'color' => "green"
-						 ]))?>" class="ui-switcher"></span>
-						</div>
-					<?php endif;?>
+					<div
+						id="settings-menu"
+						onclick="BX.SalecenterPaySystem.showExpertSettingsMenu(event)"
+						class="ui-toolbar-right-buttons salescenter-settings-menu"
+					>
+						<button class="ui-btn ui-btn-light-border ui-btn-icon-setting ui-btn-themes"></button>
+					</div>
 				</div>
 				<div class="ui-slider-inner-box">
 					<?php
@@ -98,7 +97,7 @@ Extension::load([
 					$description = $sanitizer->SanitizeHtml($description);
 					?>
 					<p class="ui-slider-paragraph-2"><?=$description?></p>
-					<div class="salescenter-button-container">
+					<div class="salescenter-button-container" id="salescenter-button-container-top">
 						<?php if (!empty($arResult['ADDITIONAL_LINK_FOR_DESCRIPTION'])):?>
 							<div>
 								<a class="ui-link ui-link-dashed" href="<?= $arResult['ADDITIONAL_LINK_FOR_DESCRIPTION']['HREF'] ?>" target="_blank">
@@ -140,10 +139,32 @@ Extension::load([
 							<?=Loc::getMessage('SALESCENTER_SP_CONNECT_YOOKASSA_PAYMENT_BUTTON')?>
 						</a>
 					</div>
-					<div data-bx-salescenter-block="settings" style="display: none;" class="salescenter-button-container">
-						<a id="bx-salescenter-add-button" href="javascript: void(0);" class="ui-btn ui-btn-md ui-btn-light-border ui-btn-width">
-							<?=Loc::getMessage('SALESCENTER_SP_ADD_PAYMENT_BUTTON')?>
-						</a>
+					<div id="salescenter-settings-block" class="salescenter-button-container">
+						<?php if ($arResult['PAY_SYSTEM_ROBOKASSA_SETTINGS']['IS_SUPPORT_SETTINGS']): ?>
+							<?php if (!$arResult['PAY_SYSTEM_ROBOKASSA_SETTINGS']['IS_SETTINGS_EXISTS']): ?>
+								<span id="salescenter-settings-paysystem-register-component">
+									<?php
+									$APPLICATION->IncludeComponent(
+										'bitrix:sale.paysystem.registration.robokassa',
+										'.default'
+									);
+									?>
+								</span>
+							<?php endif;?>
+							<?php if (
+									!$arResult['PAY_SYSTEM_ROBOKASSA_SETTINGS']['IS_SETTINGS_EXISTS']
+									|| $arResult['PAY_SYSTEM_ROBOKASSA_SETTINGS']['IS_ONLY_COMMON_SETTINGS_EXISTS']
+								): ?>
+								<a
+									href="javascript:void(0);"
+									onclick="BX.SalecenterPaySystem.openSettingsForm('<?= $arResult['PAY_SYSTEM_ROBOKASSA_SETTINGS']['FORM_LINK'] ?>')"
+									id="salescenter-settings-paysystem-form-link"
+									class="ui-btn ui-btn-md ui-btn-light-border ui-btn-width"
+								>
+									<?= $arResult['SETTINGS_FORM_LINK_NAME'] ?>
+								</a>
+							<?php endif; ?>
+						<?php endif ?>
 					</div>
 				</div>
 			</div>
@@ -187,6 +208,19 @@ Extension::load([
 			<div class="ui-slider-section">
 				<div class="ui-slider-heading-4"><?=Loc::getMessage('SALESCENTER_SP_PARAMS_FORM_TITLE')?></div>
 				<div class="salescenter-editor-section-content">
+					<?php if ($arResult['PAYSYSTEM_ID'] > 0): ?>
+							<div class="ui-ctl ui-ctl-checkbox ui-ctl-w100">
+							<input
+								type="checkbox"
+								name="ACTIVE"
+								id="ACTIVE"
+								class="ui-ctl-element"
+								value="Y"
+								<?= ($arResult['PAYSYSTEM']['ACTIVE'] === 'Y') ? ' checked' : '' ?>
+							>
+							<label for="ACTIVE" class="ui-ctl-label-text"><?=Loc::getMessage('SALESCENTER_SP_PARAMS_FORM_ACTIVE')?></label>
+						</div>
+					<?php endif ?>
 					<div class="salescenter-editor-content-block">
 						<div class="ui-ctl-label-text">
 							<label for="NAME"><?=Loc::getMessage('SALESCENTER_SP_PARAMS_FORM_NAME')?></label>
@@ -416,9 +450,22 @@ Extension::load([
 			<div hidden><?=$arResult["BUS_VAL"];?></div>
 		</div>
 		<?php
+
+		$saveButton = [
+			'TYPE' => 'save',
+		];
+
+		if ($arResult['PAYSYSTEM_ID'] <= 0)
+		{
+			$saveButton['CAPTION'] = Loc::getMessage('SALESCENTER_SP_SAVE_NEW_BUTTON_CAPTION');
+		}
+
 		$buttons = [
-			'save',
-			'cancel' => $arParams['SALESCENTER_DIR']
+			$saveButton,
+			[
+				'TYPE' => 'cancel',
+				'URL' => $arParams['SALESCENTER_DIR'],
+			],
 		];
 		if ($arResult['PAYSYSTEM_ID'] > 0)
 		{
@@ -452,6 +499,11 @@ Extension::load([
 			buttonSaveId: 'ui-button-panel-save',
 			auth: <?=CUtil::PhpToJSObject($arResult['AUTH'])?>,
 			errorMessageId: 'salescenter-paysystem-error',
+			settingsFormLinkNameCodeMap: <?=CUtil::PhpToJSObject($arResult['SETTINGS_FORM_LINK_NAME_CODE_MAP'] ?? [])?>,
+			handlerClassName: '<?=CUtil::JSEscape($arResult['PAYSYSTEM_HANDLER_CLASS_NAME'])?>',
+			isExistsSettings: <?=CUtil::PhpToJSObject($arResult['PAY_SYSTEM_ROBOKASSA_SETTINGS']['IS_SETTINGS_EXISTS'] ?? false)?>,
+			isExistsOnlyCommonSettings: <?=CUtil::PhpToJSObject($arResult['PAY_SYSTEM_ROBOKASSA_SETTINGS']['IS_ONLY_COMMON_SETTINGS_EXISTS'] ?? false)?>,
+			settingsMenuId: 'settings-menu',
 		})
 
 		BX.SalecenterPaySystemCashbox.init({

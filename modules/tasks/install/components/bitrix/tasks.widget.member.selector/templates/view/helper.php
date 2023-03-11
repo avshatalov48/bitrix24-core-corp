@@ -1,4 +1,6 @@
 <?
+
+use Bitrix\Main\Web\Uri;
 use Bitrix\Tasks\Util\User;
 use Bitrix\Tasks\UI;
 
@@ -26,7 +28,7 @@ $helper = new \Bitrix\Tasks\UI\Component\TemplateHelper('TasksWidgetMemberSelect
 			$user['AVATAR'] = UI::getAvatar($user['PERSONAL_PHOTO'], 100, 100);
 			$user['AVATAR_CSS'] =
 				$user['AVATAR'] ?
-					"background: url('".$user['AVATAR']."') center no-repeat; background-size: 35px;" :
+					"background: url('".Uri::urnEncode($user['AVATAR'])."') center no-repeat; background-size: 35px;" :
 					''
 			;
 

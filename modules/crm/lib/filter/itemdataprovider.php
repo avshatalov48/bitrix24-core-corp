@@ -242,6 +242,18 @@ class ItemDataProvider extends EntityDataProvider
 			'filterOptionPreset' => static::PRESET_ENTITY_SELECTOR,
 		];
 
+		if ($this->factory->isLastActivityEnabled())
+		{
+			$fields[Item::FIELD_NAME_LAST_ACTIVITY_TIME] = [
+				'type' => static::PRESET_DATETIME,
+				'displayGrid' => true,
+				'displayFilter' => false,
+				'defaultGrid' => false,
+				'defaultFilter' => false,
+				'filterOptionPreset' => static::PRESET_DATETIME,
+			];
+		}
+
 		if ($this->factory->isBeginCloseDatesEnabled())
 		{
 			$fields[Item::FIELD_NAME_BEGIN_DATE] = [

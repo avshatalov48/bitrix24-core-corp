@@ -3,6 +3,7 @@
 namespace Bitrix\Tasks\Grid\Scrum\Row\Content;
 
 use Bitrix\Main\Loader;
+use Bitrix\Main\Web\Uri;
 use Bitrix\Tasks\Grid\Scrum\Row\Content;
 use Bitrix\Tasks\UI;
 
@@ -23,7 +24,7 @@ class Name extends Content
 		$name = htmlspecialcharsbx($row['NAME']);
 		$path = htmlspecialcharsbx($row['PATH']);
 
-		$photo = ($imageSrc ? "<i style='background-image: url(\"{$imageSrc}\")'></i>" : "<i></i>");
+		$photo = ($imageSrc ? '<i style="background-image: url(\'' . Uri::urnEncode($imageSrc) . '\')"></i>' : "<i></i>");
 
 		$iconClassList = [
 			'tasks-projects-icon',

@@ -4,6 +4,7 @@ namespace Bitrix\Imopenlines;
 
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\ModuleManager;
+use Bitrix\Main\Loader;
 
 use Bitrix\Bitrix24\Feature;
 
@@ -31,7 +32,7 @@ class Limit
 	 */
 	public static function isDemoLicense()
 	{
-		if (!\CModule::IncludeModule('bitrix24'))
+		if (!Loader::includeModule('bitrix24'))
 			return false;
 
 		return \CBitrix24::getLicenseType() == 'demo';
@@ -42,7 +43,7 @@ class Limit
 	 */
 	public static function getLinesLimit()
 	{
-		if (!\CModule::IncludeModule('bitrix24'))
+		if (!Loader::includeModule('bitrix24'))
 			return 0;
 
 		return (int)Feature::getVariable('imopenlines_max_lines_limit');
@@ -53,7 +54,7 @@ class Limit
 	 */
 	public static function canUseQueueAll()
 	{
-		if (!\CModule::IncludeModule('bitrix24'))
+		if (!Loader::includeModule('bitrix24'))
 			return true;
 
 		return Feature::getVariable('imopenlines_can_use_queue_all');
@@ -64,7 +65,7 @@ class Limit
 	 */
 	public static function canUseVoteClient()
 	{
-		if (!\CModule::IncludeModule('bitrix24'))
+		if (!Loader::includeModule('bitrix24'))
 			return true;
 
 		return Feature::isFeatureEnabled("imopenlines_can_use_vote_client");
@@ -75,7 +76,7 @@ class Limit
 	 */
 	public static function canUseVoteHead()
 	{
-		if (!\CModule::IncludeModule('bitrix24'))
+		if (!Loader::includeModule('bitrix24'))
 			return true;
 
 		return Feature::isFeatureEnabled("imopenlines_can_use_vote_head");
@@ -87,7 +88,7 @@ class Limit
 	public static function canJoinChatUser(): bool
 	{
 		$result = true;
-		if (\CModule::IncludeModule('bitrix24'))
+		if (Loader::includeModule('bitrix24'))
 		{
 			$result = Feature::isFeatureEnabled('imopenlines_can_join_chat_user');
 		}
@@ -101,7 +102,7 @@ class Limit
 	public static function canTransferToLine(): bool
 	{
 		$result = true;
-		if (\CModule::IncludeModule('bitrix24'))
+		if (Loader::includeModule('bitrix24'))
 		{
 			$result = Feature::isFeatureEnabled('imopenlines_can_transfer_to_line');
 		}
@@ -115,7 +116,7 @@ class Limit
 	public static function canWorkHourSettings(): bool
 	{
 		$result = true;
-		if (\CModule::IncludeModule('bitrix24'))
+		if (Loader::includeModule('bitrix24'))
 		{
 			$result = Feature::isFeatureEnabled('imopenlines_can_workhour_settings');
 		}
@@ -130,7 +131,7 @@ class Limit
 	public static function canStatisticsExcel(): bool
 	{
 		$result = true;
-		if (\CModule::IncludeModule('bitrix24'))
+		if (Loader::includeModule('bitrix24'))
 		{
 			$result = Feature::isFeatureEnabled('imopenlines_can_statistics_excel');
 		}
@@ -143,7 +144,7 @@ class Limit
 	 */
 	public static function canRemoveCopyright()
 	{
-		if(!\CModule::IncludeModule('bitrix24'))
+		if(!Loader::includeModule('bitrix24'))
 			return true;
 
 		return \CBitrix24::IsLicensePaid();
@@ -156,7 +157,7 @@ class Limit
 	{
 		$result = true;
 
-		if(\CModule::IncludeModule('bitrix24'))
+		if(Loader::includeModule('bitrix24'))
 		{
 			$result = Feature::isFeatureEnabled(self::OPTION_REPORT);
 		}
@@ -171,7 +172,7 @@ class Limit
 	{
 		$result = true;
 
-		if(\CModule::IncludeModule('bitrix24'))
+		if(Loader::includeModule('bitrix24'))
 		{
 			$result = Feature::isFeatureEnabled(self::OPTION_QUICK_ANSWERS);
 		}

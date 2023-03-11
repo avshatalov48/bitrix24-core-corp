@@ -12,7 +12,7 @@ class MicrosoftPowerBI extends Service
 		'date_format_php' => 'Y-m-d',
 	];
 
-	public function validateDashboardUrl($url)
+	public static function validateDashboardUrl($url)
 	{
 		$uri = new \Bitrix\Main\Web\Uri($url);
 		return $uri->getScheme() === 'https'

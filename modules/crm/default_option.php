@@ -28,6 +28,7 @@ $crm_default_option = [
 	'path_to_quote_import' => '/crm/quote/import/',
 	'path_to_quote_kanban' => '/crm/quote/kanban/',
 	'path_to_quote_activity' => '/crm/quote/activity/',
+	'path_to_quote_deadlines' => '/crm/quote/deadlines/',
 
 	'path_to_order_details' => '/shop/orders/details/#order_id#/',
 	'path_to_order_list' => '/shop/orders/list/',

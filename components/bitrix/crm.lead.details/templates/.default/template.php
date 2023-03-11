@@ -244,3 +244,22 @@ if($arResult['CONVERSION_PERMITTED'] && $arResult['CAN_CONVERT'] && isset($arRes
 		);
 	</script><?
 endif;
+
+if (array_key_exists('AUTOMATION_CHECK_AUTOMATION_TOUR_GUIDE_DATA', $arResult)):?>
+	<script type="text/javascript">
+		BX.ready(function() {
+			BX.Runtime.loadExtension('bizproc.automation.guide')
+			.then((exports) => {
+				const {CrmCheckAutomationGuide} = exports;
+				if (CrmCheckAutomationGuide)
+				{
+					CrmCheckAutomationGuide.showCheckAutomation(
+						'<?= CUtil::JSEscape(CCrmOwnerType::LeadName) ?>',
+						0,
+						<?= CUtil::PhpToJSObject($arResult['AUTOMATION_CHECK_AUTOMATION_TOUR_GUIDE_DATA']['options']) ?>,
+					);
+				}
+			});
+		});
+	</script>
+<?php endif;

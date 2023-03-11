@@ -125,7 +125,11 @@ class LocationManager extends Base
 		/**
 		 * If it's a single location we must turn it into array
 		 */
-		if (array_key_exists('externalId', $defaultLocationsFrom))
+		if (
+			array_key_exists('externalId', $defaultLocationsFrom)
+			|| array_key_exists('name', $defaultLocationsFrom)
+			|| array_key_exists('address', $defaultLocationsFrom)
+		)
 		{
 			$defaultLocationsFrom = [
 				$this->makeLocationCode($defaultLocationsFrom) => $defaultLocationsFrom,

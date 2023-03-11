@@ -43,6 +43,7 @@
 				searchOptions,
 				createOptions,
 				selectOptions: props.selectOptions || {},
+				canUseRecent: props.canUseRecent,
 				allowMultipleSelection,
 				closeOnSelect,
 				widgetParams,
@@ -97,6 +98,11 @@
 			if (!searchOptions['startTypingText'])
 			{
 				searchOptions.startTypingText = this.getStartTypingText();
+			}
+
+			if (!searchOptions['startTypingWithCreationText'])
+			{
+				searchOptions.startTypingWithCreationText = this.getStartTypingWithCreationText();
 			}
 
 			if (!searchOptions['searchPlaceholderWithCreation'])
@@ -178,6 +184,11 @@
 		}
 
 		static getStartTypingText()
+		{
+			return null;
+		}
+
+		static getStartTypingWithCreationText()
 		{
 			return null;
 		}

@@ -111,7 +111,7 @@ if (!$isAlreadyAuthorized)
 else
 {
 	$isExtranetModuleInstalled = \Bitrix\Main\Loader::includeModule("extranet");
-	$intent = $_REQUEST['intent'];
+	$intent = $_REQUEST['intent'] ?? null;
 	if ($isExtranetModuleInstalled)
 	{
 		$extranetSiteId = \CExtranet::getExtranetSiteId();
@@ -328,7 +328,7 @@ else
 	$appUUID = \Bitrix\Main\Context::getCurrent()->getServer()->get("HTTP_BX_APP_UUID");
 	$deviceName = \Bitrix\Main\Context::getCurrent()->getServer()->get("HTTP_BX_DEVICE_NAME");
 	$userId = $USER->GetID();
-	$hitHash = trim($_REQUEST["bx_hit_hash"]);
+	$hitHash = trim($_REQUEST["bx_hit_hash"] ?? '');
 	$forceGenerate = \Bitrix\Mobile\Auth::removeOneTimeAuthHash($hitHash);
 	if (($needAppPass == 'mobile' && $USER->GetParam("APPLICATION_ID") === null) || $forceGenerate)
 	{

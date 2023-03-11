@@ -1,6 +1,8 @@
 <?
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
+use Bitrix\Main\Web\Uri;
+
 $avatarId = "lenta-task-avatar-".randString(5);
 ?>
 
@@ -10,7 +12,7 @@ $avatarId = "lenta-task-avatar-".randString(5);
 	</div>
 	<div class="lenta-info-block-r">
 		<div class="lenta-info-block-data">
-			<div class="lenta-info-avatar avatar" id="<?=$avatarId?>"<?if ($arResult["PHOTO"]):?> data-src="<?=CHTTP::urnEncode($arResult["PHOTO"]["CACHE"]["src"])?>"<?endif?>></div>
+			<div class="lenta-info-avatar avatar" id="<?=$avatarId?>"<?if ($arResult["PHOTO"]):?> data-src="<?=Uri::urnEncode($arResult["PHOTO"]["CACHE"]["src"])?>"<?endif?>></div>
 			<div class="lenta-info-name">
 				<a href="<?=$arResult["PATH_TO_USER"]?>" class="lenta-info-name-text"><?=CUser::FormatName($arParams["NAME_TEMPLATE"], $arResult["USER"])?></a>
 				<div class="lenta-info-name-description"><?=htmlspecialcharsbx($arResult["USER"]["WORK_POSITION"])?></div>

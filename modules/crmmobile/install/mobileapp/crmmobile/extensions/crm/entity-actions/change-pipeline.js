@@ -6,7 +6,6 @@ jn.define('crm/entity-actions/change-pipeline', (require, exports, module) => {
 	const { Loc } = require('loc');
 	const { Alert } = require('alert');
 	const { Type } = require('crm/type');
-	const { CategorySvg } = require('crm/assets/category');
 	const { getPublicErrors } = require('crm/entity-actions/public-errors');
 	const { openCategoryListView } = require('crm/category-list-view/open');
 
@@ -32,63 +31,62 @@ jn.define('crm/entity-actions/change-pipeline', (require, exports, module) => {
 		 * @returns {Promise}
 		 */
 		const onAction = (params) => new Promise((resolve, reject) => {
-				const { categoryId, itemId, parentWidget, entityType } = params;
+			const { categoryId, itemId, parentWidget, entityType } = params;
 
-				if (!Type.existsByName(entityType))
-				{
-					return Promise.resolve();
-				}
+			if (!Type.existsByName(entityType))
+			{
+				return Promise.resolve();
+			}
 
-				return openCategoryListView({
-					categoryId,
-					entityTypeId: Type.resolveIdByName(entityType),
-					onChangeCategory: ({ category, categoryListLayout }) => {
-						categoryListLayout.setListener((eventName) => {
-							if (eventName === 'onViewHidden')
+			return openCategoryListView({
+				categoryId,
+				entityTypeId: Type.resolveIdByName(entityType),
+				onChangeCategory: ({ category, categoryListLayout }) => {
+					categoryListLayout.setListener((eventName) => {
+						if (eventName === 'onViewHidden')
+						{
+							const selectedCategoryId = Number(category.id);
+							if (!itemId && !categoryId)
 							{
-								const selectedCategoryId = Number(category.id);
-								if (!itemId && !categoryId)
-								{
-									resolve({ categoryId: selectedCategoryId });
-									return;
-								}
-
-								const ids = [Number(itemId)];
-								const changeData = { entityType, ids, categoryId: selectedCategoryId };
-
-								BX.ajax.runAction(AJAX_ACTION, { data: changeData })
-									.then(({ errors }) => {
-										if (errors.length)
-										{
-											alert(errors);
-											reject(errors);
-										}
-										else
-										{
-											resolve(changeData);
-										}
-									})
-									.catch(console.error);
+								resolve({ categoryId: selectedCategoryId });
+								return;
 							}
-						});
-						categoryListLayout.close();
-					},
-					parentWidget,
-				});
-			},
-		);
 
-		/**
-		 * @param errors
-		 */
-		const alert = (errors) => {
-			Alert.alert(
-				Loc.getMessage('M_CRM_ENTITY_ACTION_ERROR_ON_CHANGE'),
-				getPublicErrors(errors) || Loc.getMessage('M_CRM_ENTITY_ACTION_DEFAULT_ERROR'),
-			);
-		};
+							const ids = [Number(itemId)];
+							const changeData = { entityType, ids, categoryId: selectedCategoryId };
+
+							BX.ajax.runAction(AJAX_ACTION, { data: changeData })
+								.then(({ errors }) => {
+									if (errors.length)
+									{
+										alert(errors);
+										reject(errors);
+									}
+									else
+									{
+										resolve(changeData);
+									}
+								})
+								.catch(console.error);
+						}
+					});
+					categoryListLayout.close();
+				},
+				parentWidget,
+			});
+		});
 
 		return { title, svgIcon, iconUrl, onAction };
+	};
+
+	/**
+	 * @param errors
+	 */
+	const alert = (errors) => {
+		Alert.alert(
+			Loc.getMessage('M_CRM_ENTITY_ACTION_ERROR_ON_CHANGE'),
+			getPublicErrors(errors) || Loc.getMessage('M_CRM_ENTITY_ACTION_DEFAULT_ERROR'),
+		);
 	};
 
 	module.exports = { getActionToChangePipeline };

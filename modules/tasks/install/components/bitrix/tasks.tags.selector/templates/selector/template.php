@@ -5,23 +5,19 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Main\Web\Json;
+use Bitrix\Tasks\Update\TagConverter;
 
 $isSilent = (isset($arParams['SILENT']) && $arParams['SILENT'] === 'Y');
 $canEdit = $arResult['CAN_EDIT'];
+
+//Checking for working tags agent
+$tagsAreConverting = TagConverter::isProceed();
 ?>
 
 <?php if (!$isSilent):?>
 	<?php if (count($arResult['VALUE']) > 0): ?>
 		<span id="task-tags-line" class="task-tags-line">
-			<?php
-			$items = [];
-			foreach ($arResult['VALUE'] as $tag)
-			{
-				$items[] = '<a data-slider-ignore-autobinding="true" target="_top" href="'.$arResult['PATH_TO_TASKS'] . '?apply_filter=Y&TAG=' . urlencode(htmlspecialcharsback($tag)).'">' . $tag . '</a>';
-			}
-			echo implode(', ', $items);
-			unset($items);
-			?>
+			<?= $arResult['TAGS'] ?>
 		</span>
 		<?php if ($canEdit): ?>
 			<span class="task-dashed-link">
@@ -49,17 +45,21 @@ $canEdit = $arResult['CAN_EDIT'];
 			TAGS_BUTTON_SAVE: '<?= GetMessageJS('TASKS_TAGS_SAVE') ?>',
 			TAGS_BUTTON_DISCARD: '<?= GetMessageJS('TASKS_TAGS_DISCARD') ?>',
 			TAGS_BUTTON_ADD: '<?= GetMessageJS('TASKS_TAGS_ADD') ?>',
-			TAGS_BUTTON_CHANGE: '<?= GetMessageJS('TASKS_TAGS_CHANGE') ?>'
+			TAGS_BUTTON_CHANGE: '<?= GetMessageJS('TASKS_TAGS_CHANGE') ?>',
+			TASKS_TAG_SELECTOR_TAGS_ARE_CONVERTING_TITLE: '<?= GetMessageJS('TASKS_TAG_SELECTOR_TAGS_ARE_CONVERTING_TITLE') ?>',
+			TASKS_TAG_SELECTOR_TAGS_ARE_CONVERTING_COME_BACK_LATER: '<?= GetMessageJS('TASKS_TAG_SELECTOR_TAGS_ARE_CONVERTING_COME_BACK_LATER') ?>',
+			TASKS_TAG_SELECTOR_TAGS_ARE_CONVERTING_TEXT: '<?= GetMessageJS('TASKS_TAG_SELECTOR_TAGS_ARE_CONVERTING_TEXT') ?>',
 		});
 
 		var tasksTagsSelector = new BX.Tasks.TagsSelector(
 			<?= Json::encode([
+				'tagsAreConverting' => $tagsAreConverting,
 				'groupId' => (int) $arResult['GROUP_ID'],
 				'taskId' => (int) $arResult['TASK_ID'],
 				'isScrumTask' => $arResult['IS_SCRUM_TASK'] ? 'Y' : 'N',
 				'templateId' => (int) $arResult['TEMPLATE_ID'],
 				'tags' =>  $arResult['VALUE'],
-
+				'userId' => \Bitrix\Main\Engine\CurrentUser::get()->getId(),
 			])?>
 		);
 

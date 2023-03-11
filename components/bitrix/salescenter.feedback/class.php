@@ -107,7 +107,7 @@ class SalesCenterFeedbackComponent extends CBitrixComponent
 				'b24_plan' => Bitrix24Manager::getInstance()->getLicenseType(),
 				'b24_zone' => Bitrix24Manager::getInstance()->getPortalZone(),
 				'c_name' => CurrentUser::get()->getFullName(),
-				'user_status' => Bitrix24Manager::getInstance()->isPortalAdmin(CurrentUser::get()->getId()),
+				'user_status' => $this->getBooleanPhrase(CurrentUser::get()->isAdmin()),
 				'is_created_eshop' => $this->getBooleanPhrase(LandingManager::getInstance()->isSiteExists()),
 				'is_payment_system' => $this->getBooleanPhrase($this->hasPaymentSystemConfigured()),
 				'is_cashbox' => $this->getBooleanPhrase($this->hasCashboxConfigured()),

@@ -1,7 +1,8 @@
 
 .crm-timeline__card-action {
-	padding: calc(var(--ui-space-inset-sm, 12px) * -1) var(--ui-space-inset-md, 16px) var(--ui-space-inset-sm, 12px) var(--ui-space-inset-md, 16px);
+	padding: calc(var(--ui-space-inset-sm, 12px) * -1) var(--ui-space-inset-md, 16px) 0 var(--ui-space-inset-md, 16px);
 	display: flex;
+	margin-top: 16px;
 	margin-bottom: 16px;
 }
 
@@ -13,7 +14,7 @@
 	display: flex;
 	flex-wrap: wrap;
 	flex: 1;
-	margin-bottom: -8px;
+	margin-bottom: -4px;
 }
 
 .crm-timeline__card-action_menu {

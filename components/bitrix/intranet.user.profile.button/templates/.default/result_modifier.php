@@ -80,7 +80,7 @@ else
 
 	if($obCache->StartDataCache())
 	{
-		$obCache->EndDataCache($arResult["USER_PERSONAL_PHOTO_SRC"]);
+		$obCache->EndDataCache($arResult["USER_PERSONAL_PHOTO_SRC"] ?? null);
 	}
 }
 

@@ -96,6 +96,8 @@ class ContentBlockFactory
 		$count = 1;
 		foreach ($parts as $singlePart)
 		{
+			$singlePart = trim($singlePart, ' ');
+
 			if (mb_strpos($singlePart, '#') === 0)
 			{
 				$block = $replacements[$singlePart] ?? null;

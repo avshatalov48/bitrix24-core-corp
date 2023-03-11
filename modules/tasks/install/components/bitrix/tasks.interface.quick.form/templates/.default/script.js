@@ -564,7 +564,7 @@ BX.Tasks.QuickForm.ProjectSelector.prototype.onSelect = function(item)
 	this.projectName = item.getTitle();
 
 	this.form.layout.projectId.value = this.projectId;
-	this.form.layout.projectLink.innerHTML = this.projectName;
+	this.form.layout.projectLink.textContent = this.projectName;
 
 	BX.addClass(this.form.layout.projectClearing, "task-top-panel-tab-close-active");
 };
@@ -703,6 +703,10 @@ BX.Tasks.QuickForm.UserSelector.prototype.setCurrentUser = function(userData)
 	this.userNameFormatted = userData.fullName;
 	this.form.layout.responsible.value = this.userNameFormatted;
 	this.form.layout.responsibleId.value = this.userId;
+	if (!this.userDialog)
+	{
+		return;
+	}
 	var currentUser = this.userDialog.getItem({
 		id: this.userId,
 		entityId: 'user',

@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\Tasks\Scrum\Service;
 
+use Bitrix\Main\Application;
 use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\Error;
 use Bitrix\Main\Errorable;
@@ -17,8 +18,10 @@ use Bitrix\Socialnetwork\Item\Workgroup;
 use Bitrix\Tasks\Access\ActionDictionary;
 use Bitrix\Tasks\Access\Model\TaskModel;
 use Bitrix\Tasks\Access\TaskAccessController;
+use Bitrix\Tasks\Control\Tag;
 use Bitrix\Tasks\Internals\Counter\Template\CounterStyle;
 use Bitrix\Tasks\Internals\Counter\Template\TaskCounter;
+use Bitrix\Tasks\Internals\Task\LabelTable;
 use Bitrix\Tasks\Manager;
 use Bitrix\Tasks\Scrum\Form\EntityForm;
 use Bitrix\Tasks\Helper\Common;
@@ -223,8 +226,9 @@ class TaskService implements Errorable
 	{
 		try
 		{
-			$taskTags = new \CTaskTags();
-			$taskTags->delete(['TASK_ID' => $taskId, 'NAME' => $inputTag]);
+			$tagService = new Tag($this->getUserId());
+			$tagId = $tagService->getIdByTask($taskId, $inputTag);
+			$tagService->unlinkTag($taskId, $tagId);
 
 			return true;
 		}
@@ -398,7 +402,15 @@ class TaskService implements Errorable
 		try
 		{
 			$tags = [];
-			$queryObject = \CTaskTags::getList([], ['TASK_ID' => $taskIds]);
+			$queryObject = LabelTable::getList([
+				'select' => [
+					'*',
+					'TASK_' => 'TASKS',
+				],
+				'filter' => [
+					'=TASK_ID' => $taskIds,
+				]
+			]);
 			while ($tag = $queryObject->fetch())
 			{
 				if (in_array($tag['TASK_ID'], $taskIds))
@@ -906,7 +918,16 @@ class TaskService implements Errorable
 		}
 
 		$tags = [];
-		$queryObject = \CTaskTags::getList([], ['TASK_ID' => $taskIds]);
+		$queryObject = LabelTable::getList([
+			'select' => [
+				'*',
+				'TASK_' => 'TASKS',
+			],
+			'filter' => [
+				'=TASK_ID' => $taskIds,
+			],
+		]);
+
 		while ($tag = $queryObject->fetch())
 		{
 			if (in_array($tag['TASK_ID'], $taskIds))
@@ -1490,8 +1511,8 @@ class TaskService implements Errorable
 
 	private function addTags(int $taskId, array $tags): void
 	{
-		$tasksObject = new \CTasks();
-		$tasksObject->addTags($taskId, $this->executiveUserId, $tags, $this->executiveUserId);
+		$tagService = new Tag($this->executiveUserId);
+		$tagService->set($taskId, $tags);
 	}
 
 	private static function createScrumItem(int $taskId, array $fields, $previousFields = []): void

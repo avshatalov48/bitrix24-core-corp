@@ -194,7 +194,6 @@ class Epic extends Controller
 		$inputEpic->setId($epicId);
 		$inputEpic->setGroupId($post['groupId']);
 		$inputEpic->setName($post['name']);
-
 		if ($epic->getName() === '')
 		{
 			$this->errorCollection->setError(

@@ -242,7 +242,8 @@
 	    }
 	  }, {
 	    key: "showSiteCode",
-	    value: function showSiteCode(id, options = {}) {
+	    value: function showSiteCode(id) {
+	      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 	      BX.Crm.Form.Embed.openSlider(id, options);
 	    }
 	  }, {
@@ -480,7 +481,7 @@
 	        bindElement: event.target,
 	        width: popupWidth,
 	        padding: 0,
-	        content: main_core.Tag.render(_templateObject6 || (_templateObject6 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t<div class=\"crm-webform-list-active-popup-row\">\n\t\t\t\t\t\t\t<div class=\"crm-webform-list-active-popup-item\">\n\t\t\t\t\t\t\t\t<div class=\"crm-webform-active-popup-item-caption\">", "</div>\n\t\t\t\t\t\t\t\t<div class=\"crm-webform-active-popup-item-date\"\n\t\t\t\t\t\t\t\t\ttitle=\"", "\"\n\t\t\t\t\t\t\t\t>", "</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<a \n\t\t\t\t\t\t\t\thref=\"", "\"\n\t\t\t\t\t\t\t\tonclick=\"BX.SidePanel.Instance.open('", "')\"\n\t\t\t\t\t\t\t\ttitle=\"", "\"\n\t\t\t\t\t\t\t\tclass=\"ui-icon ui-icon-common-user crm-webform-active-popup-item-avatar ", "\"\n\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t<i style=\"background-image: url(", ");\"></i>\n\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t"])), main_core.Text.encode(data.activatedBy.text), main_core.Text.encode(data.dateActiveFull), main_core.Text.encode(data.dateActiveFull), main_core.Text.encode(data.activatedBy.path), main_core.Text.encode(data.activatedBy.path), main_core.Text.encode(data.activatedBy.name), main_core.Text.encode(data.activatedBy.iconClass), main_core.Text.encode(data.activatedBy.iconPath))
+	        content: main_core.Tag.render(_templateObject6 || (_templateObject6 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t<div class=\"crm-webform-list-active-popup-row\">\n\t\t\t\t\t\t\t<div class=\"crm-webform-list-active-popup-item\">\n\t\t\t\t\t\t\t\t<div class=\"crm-webform-active-popup-item-caption\">", "</div>\n\t\t\t\t\t\t\t\t<div class=\"crm-webform-active-popup-item-date\"\n\t\t\t\t\t\t\t\t\ttitle=\"", "\"\n\t\t\t\t\t\t\t\t>", "</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<a \n\t\t\t\t\t\t\t\thref=\"", "\"\n\t\t\t\t\t\t\t\tonclick=\"BX.SidePanel.Instance.open('", "')\"\n\t\t\t\t\t\t\t\ttitle=\"", "\"\n\t\t\t\t\t\t\t\tclass=\"ui-icon ui-icon-common-user crm-webform-active-popup-item-avatar ", "\"\n\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t<i style=\"background-image: url(", ");\"></i>\n\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t"])), main_core.Text.encode(data.activatedBy.text), main_core.Text.encode(data.dateActiveFull), main_core.Text.encode(data.dateActiveFull), main_core.Text.encode(data.activatedBy.path), main_core.Text.encode(data.activatedBy.path), main_core.Text.encode(data.activatedBy.name), main_core.Text.encode(data.activatedBy.iconClass), encodeURI(main_core.Text.encode(data.activatedBy.iconPath)))
 	      });
 	      popup.show();
 	    };

@@ -138,3 +138,7 @@ $MESS["KANBAN_SORT_DESC"] = "Сверху";
 $MESS["KANBAN_SORT_ASC"] = "Снизу";
 $MESS["KANBAN_SORT_ACTUAL"] = "По активности";
 $MESS["KANBAN_SORT_ACTUAL_RECOMMENDED_LABEL"] = "Рекомендуется";
+
+$MESS['TASKS_SCRUM_TAG_SELECTOR_TAGS_ARE_CONVERTING_TITLE'] = 'Подождите немного, теги скоро появятся';
+$MESS['TASKS_SCRUM_TAG_SELECTOR_TAGS_ARE_CONVERTING_COME_BACK_LATER'] = 'Вернуться позже';
+$MESS['TASKS_SCRUM_TAG_SELECTOR_TAGS_ARE_CONVERTING_TEXT'] = 'Прямо сейчас мы обновляем теги, чтобы они стали ещё удобнее. Вы можете продолжить работу в других разделах Битрикс24 и вернуться чуть позже, обновление не займёт много времени.';

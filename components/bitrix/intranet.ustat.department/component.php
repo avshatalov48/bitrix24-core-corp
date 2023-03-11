@@ -6,7 +6,8 @@ CModule::IncludeModule('intranet');
 
 $nowDate = new Type\DateTime();
 $toDate = new Type\DateTime();
-
+$arParams['PERIOD'] ??= null;
+$arParams['DEPARTMENT_ID'] ??= null;
 // parse period
 switch ($arParams['PERIOD'])
 {

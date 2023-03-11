@@ -31,3 +31,12 @@ $arActivityDescription = [
 		'SORT' => 700,
 	],
 ];
+
+if (
+	isset($documentType)
+	&& $documentType[0] === 'crm'
+	&& CCrmBizProcHelper::isDynamicEntityWithProducts(CCrmOwnerType::ResolveID((string)$documentType[2]))
+)
+{
+	$arActivityDescription['FILTER']['INCLUDE'][] = ['crm', \Bitrix\Crm\Integration\BizProc\Document\Dynamic::class];
+}

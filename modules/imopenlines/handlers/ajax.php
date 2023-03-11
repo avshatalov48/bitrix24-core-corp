@@ -11,7 +11,7 @@ if ($request->isPost() &&
 	$chatId = intval($request->getPost('CHAT_ID'));
 	$userId = intval($USER->GetId());
 
-	if ($userId <= 0 || !(IsModuleInstalled('imopenlines') && \Bitrix\Main\Loader::includeModule('im') && \Bitrix\Im\User::getInstance($userId)->isConnector()))
+	if ($userId <= 0 || !(\Bitrix\Main\ModuleManager::isModuleInstalled('imopenlines') && \Bitrix\Main\Loader::includeModule('im') && \Bitrix\Im\User::getInstance($userId)->isConnector()))
 	{
 		echo \Bitrix\ImOpenLines\Common::objectEncode(Array('ERROR' => 'AUTHORIZE_ERROR'));
 		CMain::FinalActions();
@@ -33,7 +33,7 @@ else if($request->isPost() &&
 	$request->getPost('IM_OPEN_LINES') == 'Y'
 )
 {
-	if (intval($USER->GetID()) <= 0 || !(IsModuleInstalled('imopenlines') && (!IsModuleInstalled('extranet') || CModule::IncludeModule('extranet') && CExtranet::IsIntranetUser())))
+	if (intval($USER->GetID()) <= 0 || !(\Bitrix\Main\ModuleManager::isModuleInstalled('imopenlines') && (!\Bitrix\Main\ModuleManager::isModuleInstalled('extranet') || \Bitrix\Main\Loader::includeModule('extranet') && CExtranet::IsIntranetUser())))
 	{
 		echo \Bitrix\ImOpenLines\Common::objectEncode(Array('ERROR' => 'AUTHORIZE_ERROR'));
 		CMain::FinalActions();
@@ -287,7 +287,8 @@ else if($request->isPost() &&
 	else if ($request->getPost('COMMAND') == 'openSession')
 	{
 		$control = new \Bitrix\ImOpenLines\Operator(0, $userId);
-		$result = $control->openChat($request->getPostList()->getRaw('USER_CODE'));
+		$userCode = $request->getPostList()->getRaw('USER_CODE');
+		$result = $control->openChat($userCode);
 		if ($result)
 		{
 			echo \Bitrix\ImOpenLines\Common::objectEncode(Array(

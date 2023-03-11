@@ -21,12 +21,16 @@ initBvar($arParams['MULTIPLE']); //allow multiple user selection
 initBvar($arParams['IS_EXTRANET']);
 initBvar($arParams['SHOW_INACTIVE_USERS']);
 
+$arParams["SHOW_STRUCTURE_ONLY"] ??= null;
+$arParams["SUBORDINATE_ONLY"] ??= null;
+$arParams["ON_CHANGE"] ??= null;
+$arParams["SHOW_STRUCTURE_ONLY"] ??= null;
 $arParams['FORM_NAME']           = isset($arParams['FORM_NAME']) && preg_match('/^[a-zA-Z0-9_-]+$/', $arParams['FORM_NAME']) ? $arParams['FORM_NAME'] : false;
 $arParams['INPUT_NAME']          = isset($arParams['INPUT_NAME']) && preg_match('/^[a-zA-Z0-9_-]+$/', $arParams['INPUT_NAME']) ? $arParams['INPUT_NAME'] : false;
 $arParams['SHOW_EXTRANET_USERS'] = empty($arParams['SHOW_EXTRANET_USERS']) ? "ALL" : $arParams["SHOW_EXTRANET_USERS"];
 $arParams['SITE_ID']             = $arParams['SITE_ID'] ?? SITE_ID;
 $arParams['GROUP_SITE_ID']       = $arParams['GROUP_SITE_ID'] ?? SITE_ID;
-$arParams['GROUP_ID_FOR_SITE']   = intval($arParams['GROUP_ID_FOR_SITE']) > 0 ? intval($arParams['GROUP_ID_FOR_SITE']) : false;
+$arParams['GROUP_ID_FOR_SITE']   = intval($arParams['GROUP_ID_FOR_SITE'] ?? null) > 0 ? intval($arParams['GROUP_ID_FOR_SITE']) : false;
 $arParams["SHOW_LOGIN"]          = isset($arParams["SHOW_LOGIN"]) && $arParams["SHOW_LOGIN"] != 'N' ? 'Y' : 'N';
 $arParams['SHOW_USER_PROFILE_URL'] = isset($arParams['SHOW_USER_PROFILE_URL']) && $arParams['SHOW_USER_PROFILE_URL'] === 'Y' ? 'Y' : 'N';
 $arParams["DISPLAY_TAB_STRUCTURE"] = isset($arParams["DISPLAY_TAB_STRUCTURE"]) && $arParams["DISPLAY_TAB_STRUCTURE"] != 'N' ? 'N' : 'Y';

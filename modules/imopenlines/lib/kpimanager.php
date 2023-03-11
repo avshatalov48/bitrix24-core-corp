@@ -219,7 +219,10 @@ class KpiManager
 		$result = false;
 		$lastMessage = $this->getLastMessage();
 
-		if (!is_null($lastMessage['TIME_ANSWER']) || $lastMessage === false)
+		if (
+			$lastMessage === false
+			|| !is_null($lastMessage['TIME_ANSWER'])
+		)
 		{
 			$addFields = array(
 				'SESSION_ID' => $this->sessionId,
@@ -248,7 +251,15 @@ class KpiManager
 						];
 					}
 
-					if ($config)
+					$sessionFields = SessionTable::getById($this->sessionId)->fetch();
+
+					$chat = new Chat($sessionFields['CHAT_ID']);
+
+					$sessionObject = new Session();
+					$sessionObject->loadByArray($sessionFields, $config, $chat);
+
+					$isWorktime = (new AutomaticAction\WorkTime($sessionObject))->isWorkTimeLine();
+					if ($isWorktime)
 					{
 						if ($addFields['IS_FIRST_MESSAGE'] == 'Y')
 						{

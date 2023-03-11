@@ -698,6 +698,19 @@ class CCrmComponentHelper
 
 		return $result;
 	}
+
+	public static function encodeErrorMessage(string $text): string
+	{
+		if ($text === '')
+		{
+			return '';
+		}
+		$text = str_ireplace(['<br/>', '<br />', '<br>'], '<br>', $text);
+		$textLines = explode('<br>', $text);
+		$textLines = array_map(static function($item) { return htmlspecialcharsbx($item); }, $textLines);
+
+		return implode('<br>', $textLines);
+	}
 }
 
 class CCrmInstantEditorHelper

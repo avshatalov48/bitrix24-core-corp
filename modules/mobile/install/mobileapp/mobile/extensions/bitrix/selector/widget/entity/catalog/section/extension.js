@@ -19,6 +19,11 @@
 			return BX.message('SELECTOR_COMPONENT_START_TYPING_TO_SEARCH_SECTION');
 		}
 
+		static getStartTypingWithCreationText()
+		{
+			return BX.message('SELECTOR_COMPONENT_START_TYPING_TO_CREATE_SECTION');
+		}
+
 		static isCreationEnabled()
 		{
 			return true;

@@ -6,6 +6,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Web\Uri;
 
 \Bitrix\Main\UI\Extension::load("ui.icons");
 
@@ -132,7 +133,7 @@ if (!function_exists('prepareProjectRowTitle'))
 			$photoSrc = getUserPictureSrc($head['PHOTO_ID'], $head['USER_GENDER'], 25, 25);
 			$out .=
 				'<a href="'.$head['HREF'].'" class="ui-icon ui-icon-common-user tasks-project-overview-member-avatar">'
-				.($photoSrc ? '<i style="background-image: url('.$photoSrc.')"></i>' : '')
+				.($photoSrc ? '<i style="background-image: url('.Uri::urnEncode($photoSrc).')"></i>' : '')
 				.'</a>';
 		}
 

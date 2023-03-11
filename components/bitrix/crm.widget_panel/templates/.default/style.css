@@ -1534,14 +1534,6 @@ div.field-container-period {
 	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
-.bx-ie .select-container select {
-	padding-right: 0;
-}
-
-.bx-ie .select-container:after {
-	content: none;
-}
-
 .select-container:after {
 	position: absolute;
 	content: '';
@@ -1864,11 +1856,6 @@ div.field-container-period span.select-container-period-month { width: 145px; }
 .crm-widg-blue-tooltip-close:hover:before,
 .crm-widg-blue-tooltip-close:hover:after {
 	background-color: #fff;
-}
-
-.bx-ie8 .crm-widg-blue-tooltip-close,
-.bx-ie8 .crm-widg-white-close {
-	display: none;
 }
 
 .crm-widg-blue-tooltip-link {

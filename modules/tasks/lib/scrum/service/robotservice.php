@@ -79,6 +79,54 @@ class RobotService implements Errorable
 		}
 	}
 
+	public function hasRobots(int $groupId, array $stageIds): bool
+	{
+		$projectDocumentType = Bizproc\Document\Task::resolveScrumProjectTaskType($groupId);
+		$currentDocumentType = ['tasks', Bizproc\Document\Task::class, $projectDocumentType];
+
+		$helper = new \Bitrix\Bizproc\Copy\Integration\Helper($currentDocumentType);
+
+		$robotIds = $helper->getWorkflowTemplateIds();
+		$triggerIds = $helper->getTriggerIds();
+
+		if (empty($robotIds) && empty($triggerIds))
+		{
+			return false;
+		}
+
+		$has = false;
+		foreach ($robotIds as $robotId)
+		{
+			$queryResult = \CBPWorkflowTemplateLoader::getList([], ['ID' => $robotId]);
+			if ($fields = $queryResult->fetch())
+			{
+				if (in_array($fields['DOCUMENT_STATUS'], $stageIds))
+				{
+					$has = true;
+				}
+			}
+		}
+
+		if ($has)
+		{
+			return true;
+		}
+
+		foreach ($triggerIds as $triggerId)
+		{
+			$queryResult = TriggerTable::getList(['filter' => ['=ID' => $triggerId]]);
+			if ($fields = $queryResult->fetch())
+			{
+				if (in_array($fields['DOCUMENT_STATUS'], $stageIds))
+				{
+					$has = true;
+				}
+			}
+		}
+
+		return $has;
+	}
+
 	public function getErrors()
 	{
 		return $this->errorCollection->toArray();

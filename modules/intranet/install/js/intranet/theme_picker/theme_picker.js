@@ -46,9 +46,6 @@ BX.Intranet.Bitrix24.ThemePicker = function(options)
 		BX.addCustomEvent("SidePanel.Slider:onOpenComplete", this.handleSliderOpen.bind(this));
 		BX.addCustomEvent("SidePanel.Slider:onCloseComplete", this.handleSliderClose.bind(this));
 
-		BX.addCustomEvent("OnMessengerWindowShowPopup", this.handleMessengerOpen.bind(this));
-		BX.addCustomEvent("OnMessengerWindowClosePopup", this.handleMessengerClose.bind(this));
-
 		var eventHandler = this.handleVisibilityChange.bind(this);
 		window.addEventListener("load", eventHandler);
 		document.addEventListener("visibilitychange", eventHandler);
@@ -916,6 +913,19 @@ BX.Intranet.Bitrix24.ThemePicker.prototype =
 		return document.querySelector(".theme-video");
 	},
 
+	shouldPlayVideo: function()
+	{
+		const iframeMode = window !== window.top;
+		if (iframeMode)
+		{
+			return BX.SidePanel.Instance.getSliderByWindow(window) === BX.SidePanel.Instance.getTopSlider();
+		}
+		else
+		{
+			return !BX.SidePanel.Instance.isOpen();
+		}
+	},
+
 	playVideo: function()
 	{
 		var video = this.getVideoElement();
@@ -936,23 +946,26 @@ BX.Intranet.Bitrix24.ThemePicker.prototype =
 
 	handleVisibilityChange: function()
 	{
-		var video = this.getVideoElement();
+		const video = this.getVideoElement();
 		if (video)
 		{
 			if (document.visibilityState === "hidden")
 			{
-				video.pause();
+				this.pauseVideo();
 			}
 			else
 			{
-				video.play();
+				if (this.shouldPlayVideo())
+				{
+					this.playVideo();
+				}
 			}
 		}
 	},
 
 	handleWindowFocus: function()
 	{
-		if (!BX.SidePanel.Instance.isOpen())
+		if (this.shouldPlayVideo())
 		{
 			this.playVideo();
 		}
@@ -960,11 +973,7 @@ BX.Intranet.Bitrix24.ThemePicker.prototype =
 
 	handleWindowBlur: function()
 	{
-		var video = this.getVideoElement();
-		if (video)
-		{
-			video.pause();
-		}
+		this.pauseVideo();
 	},
 
 	handleBeforePrint: function(event)
@@ -1005,21 +1014,10 @@ BX.Intranet.Bitrix24.ThemePicker.prototype =
 
 	handleSliderClose: function()
 	{
-		//Uncomment this line after fixing onCloseComplete event in BX.SidePanel.Manager
-		//if (!BX.SidePanel.Instance.isOpen())
-		//{
+		if (this.shouldPlayVideo())
+		{
 			this.playVideo();
-		//}
-	},
-
-	handleMessengerOpen: function()
-	{
-		this.pauseVideo();
-	},
-
-	handleMessengerClose: function()
-	{
-		this.playVideo();
+		}
 	},
 
 	needReturnValue: function()

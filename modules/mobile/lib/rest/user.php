@@ -333,19 +333,24 @@ class User extends \IRestService
 
 	private static function userDepartmentData($userId, $departmentIDs = [], $photoSize = false)
 	{
-		$data = [];
-		$data['EMPLOYEES'] = [];
-		$deps = self::departmentGet($departmentIDs);
-		$heads = array_values(CIntranetUtils::GetDepartmentManager($departmentIDs, $userId, true));
-		$data['DEPARTMENTS'] = implode(', ', $deps);
-		$data['HEAD'] = CUser::FormatName(CSite::GetNameFormat(false), $heads[0]);
-		$photoData = self::getUserPhoto($heads[0]['PERSONAL_PHOTO'], $photoSize);
-		$headData = [
-			'name' => $data['HEAD'],
-			'id' => $heads[0]['ID'],
-			'position' => $heads[0]['WORK_POSITION'],
+		$data = [
+			'HEAD_DATA' => [],
+			'EMPLOYEES' => [],
 		];
-		$data['HEAD_DATA'] = array_merge($headData, $photoData);
+		$deps = self::departmentGet($departmentIDs);
+		$data['DEPARTMENTS'] = implode(', ', $deps);
+		$heads = array_values(CIntranetUtils::GetDepartmentManager($departmentIDs, $userId, true));
+		if(!empty($heads[0])) {
+			$data['HEAD'] = CUser::FormatName(CSite::GetNameFormat(false), $heads[0]);
+			$photoData = self::getUserPhoto($heads[0]['PERSONAL_PHOTO'], $photoSize);
+			$headData = [
+				'name' => $data['HEAD'],
+				'id' => $heads[0]['ID'],
+				'position' => $heads[0]['WORK_POSITION'],
+			];
+			$data['HEAD_DATA'] = array_merge($headData, $photoData);
+		}
+
 		$data['EMPLOYEES_LIST'] = "";
 
 		if (Loader::includeModule('extranet') && \CExtranet::isIntranetUser() === true)

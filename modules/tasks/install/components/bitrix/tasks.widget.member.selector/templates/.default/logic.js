@@ -76,12 +76,26 @@ BX.namespace('Tasks.Component');
 			onChanged: function(items)
 			{
 				var value = '';
-				if(items[0])
+				var project = '';
+				if (items[0])
 				{
 					value = this.getSelector().get(items[0]).id();
 				}
-
 				this.control('sole-input').value = value;
+
+				//SG - group prefix
+				if(items[0] && items[0].substr(0, 2) === 'SG')
+				{
+					project = this.getSelector().get(items[0]).opts.data.DISPLAY;
+					BX.onCustomEvent(this, 'onProjectChanged', {
+						groupId: items,
+						owner: project,
+					});
+				}
+				else
+				{
+					BX.onCustomEvent(this, 'onProjectChanged', {});
+				}
 			},
 
 			getSelector: function()
@@ -196,6 +210,7 @@ BX.namespace('Tasks.Component');
 				}
 
 				this.dialog = new BX.UI.EntitySelector.Dialog({
+					id: 'tasksMemberSelector_' + this.option('userType'),
 					enableSearch: true,
 					multiple: this.option('max') > 1,
 					context: 'TASKS_MEMBER_SELECTOR_EDIT_' + this.option('userType'),
@@ -247,7 +262,6 @@ BX.namespace('Tasks.Component');
 							{
 								var item = event.getData().item;
 								var userData = this.prepareUserData(item);
-
 								BX.Event.EventEmitter.emit(
 									'BX.Tasks.MemberSelector:' + this.option('userType') + 'Deselected',
 									userData

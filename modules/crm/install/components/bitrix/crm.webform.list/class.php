@@ -813,6 +813,14 @@ class CCrmWebFormListComponent extends \CBitrixComponent
 		{
 			$formIdByPublink = null;
 
+			// check for cloud link
+			$codePrefix = Crm\Integration\Landing\FormLanding::LANDING_CODE_PRERIX;
+			if (preg_match('#('.$codePrefix.'[a-zA-Z\d]+)#', $requestFilter['PUBLINK'], $matches))
+			{
+				$landingCode = $matches[1];
+				$formIdByPublink = $this->getFormIdByLandingCode($landingCode);
+			}
+
 			// check for public link
 			if (preg_match('#/pub/site/(\d+)/([a-zA-Z_\d]+)#', $requestFilter['PUBLINK'], $matches))
 			{
@@ -1225,7 +1233,7 @@ class CCrmWebFormListComponent extends \CBitrixComponent
 		}
 		return null;
 	}
-	
+
 	protected function getFormIdByLandingId(int $landingId): ?int
 	{
 		$row = Internals\LandingTable::getRow([

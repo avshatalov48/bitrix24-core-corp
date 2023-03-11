@@ -9,9 +9,8 @@ use Bitrix\Crm\Order\OrderDealSynchronizer\Products\ProductRowXmlId;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Internals\Catalog\ProductTypeMapper;
 use Bitrix\Main\Loader;
-use Bitrix\Sale\PriceMaths;
-use Bitrix\Sale\Tax\VatCalculator;
 use Bitrix\Catalog;
+use Bitrix\Crm\Order\ProductManager\ProductConverter\PricesConverter;
 use Exception;
 
 /**
@@ -20,6 +19,7 @@ use Exception;
 class EntityProductConverter implements ProductConverter
 {
 	private ?Basket $basket = null;
+	private PricesConverter $pricesConverter;
 
 	/**
 	 * @throws Exception if not installed 'sale' module.
@@ -27,6 +27,8 @@ class EntityProductConverter implements ProductConverter
 	public function __construct()
 	{
 		Loader::requireModule('sale');
+
+		$this->pricesConverter = new PricesConverter;
 	}
 
 	public function setBasketItem(Basket $basket): void
@@ -39,21 +41,13 @@ class EntityProductConverter implements ProductConverter
 	 */
 	public function convertToSaleBasketFormat(array $product): array
 	{
-		/*
-		 * `BASE_PRICE` and `PRICE` in basket item it is prices without tax.
-		 */
-		if ($product['TAX_INCLUDED'] === 'Y')
-		{
-			$basePrice = (float)($product['PRICE_BRUTTO'] ?? 0);
-			$price = (float)($product['PRICE'] ?? 0);
-		}
-		else
-		{
-			$basePrice = (float)($product['PRICE_NETTO'] ?? 0);
-			$price = (float)($product['PRICE_EXCLUSIVE'] ?? 0);
-		}
-
-		$discountPrice = $basePrice - $price;
+		$prices = $this->pricesConverter->convertToSaleBasketPrices(
+			(float)($product['PRICE'] ?? 0),
+			(float)($product['PRICE_EXCLUSIVE'] ?? 0),
+			(float)($product['PRICE_NETTO'] ?? 0),
+			(float)($product['PRICE_BRUTTO'] ?? 0),
+			$product['TAX_INCLUDED'] === 'Y'
+		);
 
 		$vatRate = null;
 		if (isset($product['TAX_RATE']) && is_numeric($product['TAX_RATE']))
@@ -73,9 +67,9 @@ class EntityProductConverter implements ProductConverter
 			'PRODUCT_ID' => $product['PRODUCT_ID'],
 			'OFFER_ID' => $product['PRODUCT_ID'], // used in basket builders
 			'QUANTITY' => $product['QUANTITY'],
-			'DISCOUNT_PRICE' => $discountPrice,
-			'BASE_PRICE' => $basePrice,
-			'PRICE' => $price,
+			'DISCOUNT_PRICE' => $prices['DISCOUNT_PRICE'],
+			'BASE_PRICE' => $prices['BASE_PRICE'],
+			'PRICE' => $prices['PRICE'],
 			'CUSTOM_PRICE' => 'Y',
 			'MEASURE_CODE' => $product['MEASURE_CODE'],
 			'MEASURE_NAME' => $product['MEASURE_NAME'],
@@ -84,7 +78,7 @@ class EntityProductConverter implements ProductConverter
 			'XML_ID' => $xmlId,
 			'TYPE' => ProductTypeMapper::getType((int)$product['TYPE']),
 			// not `sale` basket item, but used.
-			'DISCOUNT_SUM' => $discountPrice,
+			'DISCOUNT_SUM' => $prices['DISCOUNT_PRICE'],
 			'DISCOUNT_RATE' => $product['DISCOUNT_RATE'] ?? null,
 			'DISCOUNT_TYPE_ID' => $product['DISCOUNT_TYPE_ID'] ?? null,
 		];
@@ -129,30 +123,11 @@ class EntityProductConverter implements ProductConverter
 		// prices
 		$vatRate = (float)$basketItem['VAT_RATE'];
 		$vatIncluded = $basketItem['VAT_INCLUDED'] === 'Y';
-		$vatCalculator = new VatCalculator($vatRate);
-
 		$price = (float)$basketItem['PRICE'];
 		$basePrice = (float)$basketItem['BASE_PRICE'];
 
-		if ($vatIncluded)
-		{
-			$result['PRICE_BRUTTO'] = $basePrice;
-			$result['PRICE_NETTO'] = $vatCalculator->allocate($basePrice);
-			$result['PRICE_EXCLUSIVE'] = $vatCalculator->allocate($price);
-			$result['PRICE'] = $price;
-		}
-		else
-		{
-			$result['PRICE_BRUTTO'] = $vatCalculator->accrue($basePrice);
-			$result['PRICE_NETTO'] = $basePrice;
-			$result['PRICE_EXCLUSIVE'] = $price;
-			$result['PRICE'] = $vatCalculator->accrue($price);
-		}
-
-		// discount
+		$result += $this->pricesConverter->convertToProductRowPrices($price, $basePrice, $vatRate, $vatIncluded);
 		$result['DISCOUNT_TYPE_ID'] = Discount::MONETARY;
-		$result['DISCOUNT_PERCENT'] = null; // set null, it will be recalculated when saving.
-		$result['DISCOUNT_SUM'] = PriceMaths::roundPrecision($result['PRICE_NETTO'] - $result['PRICE_EXCLUSIVE']);
 
 		// type
 		$result['TYPE'] = $this->getTypeByProductId((int)$basketItem['PRODUCT_ID']);

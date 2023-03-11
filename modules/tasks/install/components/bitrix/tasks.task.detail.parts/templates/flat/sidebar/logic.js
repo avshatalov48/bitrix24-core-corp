@@ -190,7 +190,7 @@ BX.namespace("Tasks.Component");
 
 		BX.ajax.runComponentAction(
 			'bitrix:tasks.task',
-			'isScrumProject',
+			'needShowEpicField',
 			{
 				mode: 'class',
 				data: {

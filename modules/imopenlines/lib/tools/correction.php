@@ -1,19 +1,20 @@
 <?php
+
 namespace Bitrix\ImOpenLines\Tools;
 
-use \Bitrix\ImOpenLines\Chat,
-	\Bitrix\ImOpenLines\Queue,
-	\Bitrix\ImOpenLines\Session,
-	\Bitrix\ImOpenLines\Model\SessionTable,
-	\Bitrix\ImOpenLines\Model\SessionCheckTable;
+use Bitrix\ImOpenLines\Chat,
+	Bitrix\ImOpenLines\Queue,
+	Bitrix\ImOpenLines\Session,
+	Bitrix\ImOpenLines\Model\SessionTable,
+	Bitrix\ImOpenLines\Model\SessionCheckTable;
 
-use \Bitrix\Im,
-	\Bitrix\Im\Model\MessageTable;
+use Bitrix\Im,
+	Bitrix\Im\Model\MessageTable;
 
-use \Bitrix\Main\ORM,
-	\Bitrix\Main\Loader,
-	\Bitrix\Main\Application,
-	\Bitrix\Main\Type\DateTime;
+use Bitrix\Main\ORM,
+	Bitrix\Main\Loader,
+	Bitrix\Main\Application,
+	Bitrix\Main\Type\DateTime;
 
 /**
  * Class Correction
@@ -24,10 +25,8 @@ class Correction
 	/**
 	 * @return int
 	 */
-	public static function getCountBrokenSessions()
+	public static function getCountBrokenSessions(): int
 	{
-		$connection = Application::getConnection();
-
 		$sql = "
 			SELECT
 				count(*) AS COUNT
@@ -43,38 +42,23 @@ class Correction
 				b_imopenlines_session.CLOSED != 'Y'
 		";
 
-		$raw = $connection->query($sql);
-
-		$result = $raw->fetch()['COUNT'];
-
-		if (empty($result) || !is_numeric($result))
-		{
-			$result = 0;
-		}
-
-		return $result;
+		return (int) Application::getConnection()->queryScalar($sql);
 	}
 
 	/**
 	 * Fix sessions that have lost the consistency of the data structure. And closing old sessions.
 	 *
 	 * @param bool $correction
-	 * @param bool $closeDay
+	 * @param int $closeDay
 	 * @param int $limit
 	 * @return array
 	 */
-	public static function repairBrokenSessions($correction = true, $closeDay = false, $limit = 0)
+	public static function repairBrokenSessions(bool $correction = true, int $closeDay = -1, int $limit = 0): array
 	{
 		$result = [
 			'CLOSE' => [],
 			'UPDATE' => []
 		];
-
-		$closeDay = intval($closeDay);
-		if ($closeDay<=0)
-		{
-			$closeDay = false;
-		}
 
 		$query = new ORM\Query\Query(SessionTable::getEntity());
 		$selectFields = [
@@ -102,7 +86,7 @@ class Correction
 
 		$oldCloseTime = new DateTime();
 		$closeTime = (new DateTime())->add('30 DAY');
-		if ($closeDay)
+		if ($closeDay > 0)
 		{
 			$oldCloseTime->add('-' . $closeDay . ' DAY');
 		}
@@ -116,7 +100,7 @@ class Correction
 				$message = MessageTable::getById($session['LAST_MESSAGE_ID'])->fetch();
 			}
 
-			if (empty($message) || ($closeDay && $message['DATE_CREATE'] instanceof DateTime && $message['DATE_CREATE']->getTimestamp() < $oldCloseTime->getTimestamp()))
+			if (empty($message) || ($closeDay > 0 && $message['DATE_CREATE'] instanceof DateTime && $message['DATE_CREATE']->getTimestamp() < $oldCloseTime->getTimestamp()))
 			{
 				if ($correction)
 				{
@@ -165,10 +149,8 @@ class Correction
 	/**
 	 * @return int
 	 */
-	public static function getCountSessionsThatNotShown()
+	public static function getCountSessionsThatNotShown(): int
 	{
-		$connection = Application::getConnection();
-
 		$sql = "
 			SELECT
 				count(*) AS COUNT
@@ -196,16 +178,7 @@ class Correction
 				AND b_imopenlines_session.CLOSED != 'Y'
 		";
 
-		$raw = $connection->query($sql);
-
-		$result = $raw->fetch()['COUNT'];
-
-		if (empty($result) || !is_numeric($result))
-		{
-			$result = 0;
-		}
-
-		return $result;
+		return (int) Application::getConnection()->queryScalar($sql);
 	}
 
 	/**
@@ -214,7 +187,7 @@ class Correction
 	 * @param int $limit
 	 * @return array
 	 */
-	public static function setSessionsThatNotShown($limit = 0)
+	public static function setSessionsThatNotShown(int $limit = 0): array
 	{
 		$result = [];
 
@@ -265,13 +238,10 @@ class Correction
 
 		if (!empty($limit))
 		{
-			$sql = $sql . '
-			LIMIT 10';
+			$sql .= ' LIMIT 10 ';
 		}
 
-
 		$raw = $connection->query($sql);
-
 		while ($value = $raw->fetch())
 		{
 			$result[] = $value;
@@ -284,25 +254,20 @@ class Correction
 	 * Fix sessions that are not displayed to any operator and will not be allocated.
 	 *
 	 * @param bool $correction
-	 * @param bool $closeDay
+	 * @param int $closeDay
 	 * @param int $limit
 	 * @return array
 	 */
-	public static function repairSessionsThatNotShown($correction = true, $closeDay = false, $limit = 0)
+	public static function repairSessionsThatNotShown(bool $correction = true, int $closeDay = -1, int $limit = 0): array
 	{
 		$result = [
 			'CLOSE' => [],
 			'UPDATE' => []
 		];
 
-		if (is_numeric($closeDay) && $closeDay<=0)
-		{
-			$closeDay = false;
-		}
-
 		$oldCloseTime = new DateTime();
 		$queueTime = new DateTime();
-		if ($closeDay)
+		if ($closeDay > 0)
 		{
 			$oldCloseTime->add('-' . $closeDay . ' DAY');
 		}
@@ -318,7 +283,7 @@ class Correction
 				$message = MessageTable::getById($session['LAST_MESSAGE_ID'])->fetch();
 			}
 
-			if (empty($message) || ($closeDay && $message['DATE_CREATE'] instanceof DateTime && $message['DATE_CREATE']->getTimestamp() < $oldCloseTime->getTimestamp()))
+			if (empty($message) || ($closeDay > 0 && $message['DATE_CREATE'] instanceof DateTime && $message['DATE_CREATE']->getTimestamp() < $oldCloseTime->getTimestamp()))
 			{
 				if ($correction)
 				{
@@ -353,10 +318,8 @@ class Correction
 	/**
 	 * @return int
 	 */
-	public static function getCountSessionsNoDateClose()
+	public static function getCountSessionsNoDateClose(): int
 	{
-		$connection = Application::getConnection();
-
 		$sql = "
 			SELECT
 				count(*) AS COUNT
@@ -368,38 +331,23 @@ class Correction
 				b_imopenlines_session_check.DATE_CLOSE IS NULL
 		";
 
-		$raw = $connection->query($sql);
-
-		$result = $raw->fetch()['COUNT'];
-
-		if (empty($result) || !is_numeric($result))
-		{
-			$result = 0;
-		}
-
-		return $result;
+		return (int) Application::getConnection()->queryScalar($sql);
 	}
 
 	/**
 	 * Marks the date of the closing of the session and closes the old session.
 	 *
 	 * @param bool $correction
-	 * @param bool $closeDay
+	 * @param int $closeDay
 	 * @param int $limit
 	 * @return array
 	 */
-	public static function closeOldSession($correction = true, $closeDay = false, $limit = 0)
+	public static function closeOldSession(bool $correction = true, int $closeDay = -1, int $limit = 0): array
 	{
 		$result = [
 			'CLOSE' => [],
 			'UPDATE' => []
 		];
-
-		$closeDay = intval($closeDay);
-		if ($closeDay<=0)
-		{
-			$closeDay = false;
-		}
 
 		$query = new ORM\Query\Query(SessionCheckTable::getEntity());
 		$query->setSelect([
@@ -418,7 +366,7 @@ class Correction
 
 		$oldCloseTime = new DateTime();
 		$closeTime = (new DateTime())->add('30 DAY');
-		if ($closeDay)
+		if ($closeDay > 0)
 		{
 			$oldCloseTime->add('-' . $closeDay . ' DAY');
 		}
@@ -432,7 +380,7 @@ class Correction
 				$message = MessageTable::getById($sessionCheck['LAST_MESSAGE_ID'])->fetch();
 			}
 
-			if (empty($message) || ($closeDay && $message['DATE_CREATE'] instanceof DateTime && $message['DATE_CREATE']->getTimestamp() < $oldCloseTime->getTimestamp()))
+			if (empty($message) || ($closeDay > 0 && $message['DATE_CREATE'] instanceof DateTime && $message['DATE_CREATE']->getTimestamp() < $oldCloseTime->getTimestamp()))
 			{
 				if ($correction)
 				{
@@ -467,7 +415,7 @@ class Correction
 	/**
 	 * @return int
 	 */
-	public static function getCountStatusClosedSessions()
+	public static function getCountStatusClosedSessions(): int
 	{
 		$query = new ORM\Query\Query(SessionTable::getEntity());
 		$query->setFilter([
@@ -485,7 +433,7 @@ class Correction
 	 * @param int $limit
 	 * @return int[]
 	 */
-	public static function setStatusClosedSessions($correction = true, $limit = 0)
+	public static function setStatusClosedSessions(bool $correction = true, int $limit = 0): array
 	{
 		$result = [];
 
@@ -549,13 +497,15 @@ class Correction
 				AND SUBSTRING_INDEX(SUBSTRING_INDEX(c.ENTITY_DATA_1, '|', 6), '|', -1) = '0'
 		";
 
-		return Application::getConnection()->queryScalar($sql);
+		return (int) Application::getConnection()->queryScalar($sql);
 	}
 
 	/**
+	 * @param bool $correction
+	 * @param int $limit
 	 * @return int[]
 	 */
-	public static function restoreChatSessionId($correction = true, $limit = 0): array
+	public static function restoreChatSessionId(bool $correction = true, int $limit = 0): array
 	{
 		$status = Session::STATUS_CLOSE;
 		$sql = "

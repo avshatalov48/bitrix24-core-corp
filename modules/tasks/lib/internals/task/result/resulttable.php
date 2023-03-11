@@ -91,7 +91,8 @@ class ResultTable extends DataManager
 			// references
 			'USER' => [
 				'data_type' => 'Bitrix\Main\UserTable',
-				'reference' => ['=this.CREATED_BY' => 'ref.ID']
+				'reference' => ['=this.CREATED_BY' => 'ref.ID'],
+				'join_type' => 'inner',
 			],
 			'TASK' => [
 				'data_type' => 'Bitrix\Tasks\Internals\TaskTable',

@@ -156,56 +156,11 @@ class CBPTasksChangeStatusActivity extends CBPActivity
 
 				if ($taskFields)
 				{
-					switch ($targetStatus)
-					{
-						case \CTasks::STATE_PENDING:
-							$action = Tasks\Access\ActionDictionary::ACTION_TASK_PAUSE;
-							break;
-						case \CTasks::STATE_IN_PROGRESS:
-							$action = Tasks\Access\ActionDictionary::ACTION_TASK_START;
-							break;
-						case \CTasks::STATE_COMPLETED:
-
-							$action = Tasks\Access\ActionDictionary::ACTION_TASK_COMPLETE;
-
-							if ($taskFields['TASK_CONTROL'] === 'Y')
-							{
-								$isAdmin = Tasks\Util\User::isSuper($ownerId);
-								$isCreator = ((int) $taskFields['CREATED_BY'] === $ownerId);
-								$isOnePersonTask = (int) $taskFields['CREATED_BY'] === (int) $taskFields['RESPONSIBLE_ID'];
-								$isCreatorDirector = Tasks\Util\User::isBoss($taskFields['CREATED_BY'], $ownerId);
-
-								if (
-									!$isAdmin
-									&& !$isCreatorDirector
-									&& !$isOnePersonTask
-									&& !$isCreator
-								)
-								{
-									$targetStatus = CTasks::STATE_SUPPOSEDLY_COMPLETED;
-								}
-								elseif ((int) $taskFields['STATUS'] === \CTasks::STATE_SUPPOSEDLY_COMPLETED)
-								{
-									$action = Tasks\Access\ActionDictionary::ACTION_TASK_APPROVE;
-								}
-							}
-
-							break;
-						case \CTasks::STATE_SUPPOSEDLY_COMPLETED:
-							$action = Tasks\Access\ActionDictionary::ACTION_TASK_COMPLETE;
-							break;
-						case \CTasks::STATE_DEFERRED:
-							$action = Tasks\Access\ActionDictionary::ACTION_TASK_DEFER;
-							break;
-						default:
-							$action = null;
-							break;
-					}
-
-					if ($action)
-					{
-						$canChange = Tasks\Access\TaskAccessController::can($ownerId, $action, $taskId);
-					}
+					$canChange = Tasks\Access\TaskAccessController::can(
+						$ownerId,
+						Tasks\Access\ActionDictionary::ACTION_TASK_CHANGE_STATUS,
+						$taskId
+					);
 				}
 			}
 		}

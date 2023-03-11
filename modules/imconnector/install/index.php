@@ -124,6 +124,8 @@ if (!class_exists('imconnector'))
 			CAgent::AddAgent('\Bitrix\ImConnector\InfoConnectors::infoConnectorsUpdateAgent();', 'imconnector', 'Y', 21600, '', 'Y', ConvertTimeStamp((time() + 21600), 'FULL'));
 			CAgent::AddAgent('\Bitrix\ImConnector\Status::cleanupDuplicates();', 'imconnector', 'N', 60, '', 'Y', ConvertTimeStamp(time()+CTimeZone::GetOffset()+600, 'FULL'));
 			CAgent::AddAgent('\Bitrix\ImConnector\Connectors\Olx::initializeReceiveMessages();', 'imconnector', 'N', 60, '', 'Y', ConvertTimeStamp(time()+CTimeZone::GetOffset()+600, 'FULL'));
+			/** @see \Bitrix\ImConnector\Agent::notifyUndelivered */
+			CAgent::AddAgent('\Bitrix\ImConnector\Agent::notifyUndelivered();', 'imconnector', 'N', 60);
 
 			return true;
 		}

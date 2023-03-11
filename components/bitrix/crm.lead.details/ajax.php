@@ -85,6 +85,10 @@ if($action === 'GET_FORMATTED_SUM')
 elseif($action === 'SAVE')
 {
 	$ID = isset($_POST['ACTION_ENTITY_ID']) ? max((int)$_POST['ACTION_ENTITY_ID'], 0) : 0;
+
+	$params = (isset($_POST['PARAMS']) && is_array($_POST['PARAMS']) ? $_POST['PARAMS'] : []);
+	$viewMode = ($params['VIEW_MODE'] ?? null);
+
 	if(($ID > 0 && !\CCrmLead::CheckUpdatePermission($ID, $currentUserPermissions))
 		|| ($ID === 0 && !\CCrmLead::CheckCreatePermission($currentUserPermissions))
 	)
@@ -583,11 +587,20 @@ elseif($action === 'SAVE')
 
 				$fields['EXCH_RATE'] = CCrmCurrency::GetExchangeRate($fields['CURRENCY_ID']);
 
-				$options = array('REGISTER_SONET_EVENT' => true, 'FIELD_CHECK_OPTIONS' => $fieldCheckOptions);
+				$options = [
+					'REGISTER_SONET_EVENT' => true,
+					'FIELD_CHECK_OPTIONS' => $fieldCheckOptions,
+					'ITEM_OPTIONS' => [
+						'VIEW_MODE' => $viewMode,
+						'STATUS_ID' => $fields['STATUS_ID'],
+					],
+				];
+
 				if(!$enableRequiredUserFieldCheck)
 				{
 					$options['DISABLE_REQUIRED_USER_FIELD_CHECK'] = true;
 				}
+
 				$ID = $entity->Add($fields, true, $options);
 				if($ID <= 0)
 				{

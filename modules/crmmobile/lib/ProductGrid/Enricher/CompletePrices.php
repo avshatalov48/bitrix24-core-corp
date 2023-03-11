@@ -36,9 +36,9 @@ final class CompletePrices implements EnricherContract
 		{
 			$productData = $this->getProductData($productRow);
 			$basePrice = $productData['BASE_PRICE']['PRICE'] ?? 0.0;
-			$baseCurrency = $productData['BASE_PRICE']['CURRENCY'];
+			$baseCurrency = $productData['BASE_PRICE']['CURRENCY'] ?? null;
 			$vatId = $productData['VAT_ID'] ?? 0;
-			$vatIncluded = ($productData['VAT_INCLUDED'] === 'Y');
+			$vatIncluded = ($productData['VAT_INCLUDED'] ?? 'N') === 'Y';
 
 			$this->taxCalculator->calculate((float)$basePrice, (int)$vatId, $vatIncluded);
 

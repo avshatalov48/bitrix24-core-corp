@@ -404,7 +404,7 @@ export default class CompatibleItem extends Item
 		const imageUrl = BX.prop.getString(authorInfo, "IMAGE_URL", "");
 		if(imageUrl !== "")
 		{
-			link.children[0].style.backgroundImage = "url('" + imageUrl + "')";
+			link.children[0].style.backgroundImage = "url('" + encodeURI(imageUrl) + "')";
 			link.children[0].style.backgroundSize = "21px";
 		}
 

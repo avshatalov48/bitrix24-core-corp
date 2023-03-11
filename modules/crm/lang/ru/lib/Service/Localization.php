@@ -79,6 +79,7 @@ $MESS["CRM_COMMON_PIPELINE"] = "Воронка";
 $MESS["CRM_COMMON_ACTIVITY"] = "Дела";
 $MESS["CRM_COMMON_CALENDAR"] = "Календарь";
 $MESS["CRM_COMMON_CATEGORY"] = "Воронка";
+$MESS["CRM_COMMON_DEADLINES"] = "Сроки";
 $MESS["CRM_COMMON_CLIENT_CATEGORY"] = "Категория";
 $MESS["CRM_COMMON_MODIFY_DATE"] = "Дата изменения";
 $MESS["CRM_COMMON_DETAIL"] = "Подробнее";

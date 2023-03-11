@@ -59,7 +59,7 @@ if ($bHasHead):
 		'ID' => $arEntry['UF_HEAD'],
 		'NAME' => strip_tags($headName),
 		'POSITION' => $arUsers[$arEntry['UF_HEAD']]['WORK_POSITION'],
-		'PHOTO' => \CHTTP::urnEncode($arUsers[$arEntry['UF_HEAD']]['PERSONAL_PHOTO']['CACHE']['src']),
+		'PHOTO' => \CHTTP::urnEncode($arUsers[$arEntry['UF_HEAD']]['PERSONAL_PHOTO']['CACHE']['src'] ?? null),
 		'PROFILE' => $arUsers[$arEntry['UF_HEAD']]['PROFILE_URL']
 	);
 
@@ -89,7 +89,7 @@ endif; // $can_edit;
 ?>
 	</div>
 <?
-$cnt = $arEntry['EMPLOYEES'] ? count($arEntry['EMPLOYEES']) : 0;
+$cnt = ($arEntry['EMPLOYEES'] ?? null) ? count($arEntry['EMPLOYEES']) : 0;
 $real_cnt = $cnt;
 $bFirst = true;
 ?>
@@ -176,7 +176,7 @@ endif; // $can_edit
 				employees: <?=CUtil::PhpToJsObject($arJSEmployees)?>,
 				hasChildren: <?=$bHasChildren ? 'true' : 'false';?>,
 				disableDrag: <?=$arEntry['IBLOCK_SECTION_ID'] > 0 ? 'false' : 'true';?>,
-				disableDragDest: <?=$arEntry['DISABLE_DRAG_DEST'] ? 'true' : 'false';?>
+				disableDragDest: <?=($arEntry['DISABLE_DRAG_DEST'] ?? null) ? 'true' : 'false';?>
 
 			});
 		</script>
@@ -205,8 +205,8 @@ endif; // function_exists
 /******************************* OUTPUT START **********************************************/
 
 
-if ($arResult['__SKIP_ROOT'] != 'Y'):
-	if ($arResult['UNDO_ID']):
+if (($arResult['__SKIP_ROOT'] ?? null) != 'Y'):
+	if ($arResult['UNDO_ID'] ?? null):
 		?>
 		<span class="structure-undo" id="bx_undo_block">
 	<span class="structure-undo-inner">
@@ -236,7 +236,7 @@ if ($arResult['__SKIP_ROOT'] != 'Y'):
 			USE_USER_LINK: <?=$arParams['USE_USER_LINK'] == 'Y' ? 'true' : 'false'?>,
 			MAX_DEPTH: <?=intval($arParams['MAX_DEPTH'])?>,
 			<?
-			if ($arResult['UNDO_ID']):
+			if ($arResult['UNDO_ID'] ?? null):
 			?>
 			UNDO: {
 				ID: '<?=$arResult['UNDO_ID']?>',
@@ -309,7 +309,7 @@ if ($arParams['MODE'] != 'reload'):
 		$arEntries = array();
 		$arSubEntries = array();
 
-		$q = $arResult['__SKIP_ROOT'] != 'Y' ? 2 : 1;
+		$q = ($arResult['__SKIP_ROOT'] ?? null) != 'Y' ? 2 : 1;
 		foreach ($arResult['ENTRIES'] as $key => $arEntry)
 		{
 

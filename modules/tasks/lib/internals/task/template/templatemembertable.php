@@ -8,6 +8,22 @@ use Bitrix\Tasks\Internals\Task\MemberTable;
 use Bitrix\Tasks\Internals\Task\TemplateTable;
 use Bitrix\Tasks\Internals\TaskDataManager;
 
+/**
+ * Class TemplateMemberTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_TemplateMember_Query query()
+ * @method static EO_TemplateMember_Result getByPrimary($primary, array $parameters = [])
+ * @method static EO_TemplateMember_Result getById($id)
+ * @method static EO_TemplateMember_Result getList(array $parameters = [])
+ * @method static EO_TemplateMember_Entity getEntity()
+ * @method static \Bitrix\Tasks\Internals\Task\Template\TemplateMemberObject createObject($setDefaultValues = true)
+ * @method static \Bitrix\Tasks\Internals\Task\Template\EO_TemplateMember_Collection createCollection()
+ * @method static \Bitrix\Tasks\Internals\Task\Template\TemplateMemberObject wakeUpObject($row)
+ * @method static \Bitrix\Tasks\Internals\Task\Template\EO_TemplateMember_Collection wakeUpCollection($rows)
+ */
 class TemplateMemberTable extends TaskDataManager
 {
 	public const MEMBER_TYPE_ORIGINATOR = MemberTable::MEMBER_TYPE_ORIGINATOR;

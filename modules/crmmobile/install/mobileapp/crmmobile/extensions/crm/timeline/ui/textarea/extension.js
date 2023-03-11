@@ -17,6 +17,7 @@ jn.define('crm/timeline/ui/textarea', (require, exports, module) => {
 			TextInput({
 				ref,
 				placeholder,
+				placeholderTextColor: '#bdc1c6',
 				value: text,
 				multiline: true,
 				style: {
@@ -24,7 +25,8 @@ jn.define('crm/timeline/ui/textarea', (require, exports, module) => {
 					paddingVertical: 12,
 					fontSize: 18,
 					flexGrow: 1,
-					maxHeight: 155,
+					maxHeight: '100%',
+					color: '#333333',
 				},
 				onChangeText: onChange,
 			}),

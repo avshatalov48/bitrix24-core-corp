@@ -1,4 +1,6 @@
 <?php
+$MESS["CRM_DOCUMENT_VIEW_CREATE_OR_EDIT_MY_COMPANY_REQUISITES"] = "<a href=\"#URL#\" target=\"_blank\" class=\"crm__document-view--details-link\">Enter <br> or edit</a>
+<span class=\"crm__document-view--details-text\">my company details</span>";
 $MESS["CRM_DOCUMENT_VIEW_NO_AVAILABLE_FILES"] = "No files to send available.";
 $MESS["CRM_DOCUMENT_VIEW_PUBLIC_LINK"] = "Public link";
 $MESS["CRM_DOCUMENT_VIEW_PUBLIC_URL_VIEWED_TIME"] = "Customer clicked public link at <span>#TIME#</span>";

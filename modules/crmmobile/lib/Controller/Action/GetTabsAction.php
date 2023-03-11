@@ -85,7 +85,7 @@ class GetTabsAction extends Action
 					'counters' => $this->getCounters($factory, $categoryId),
 					'presetId' => $this->getCurrentFilterPresetId($filterOptions),
 					'defaultFilterId' => $this->getDefaultFilterId($filterOptions),
-					'sortType' => $this->getSortType($entityTypeName),
+					'sortType' => $this->getSortType($entityTypeName, $categoryId),
 					'smartActivitySettings' => $this->getSmartActivitySettings($factory, $permissions),
 				],
 				'permissions' => $permissions,
@@ -136,7 +136,7 @@ class GetTabsAction extends Action
 		return ($currentCategoryId ?? $factory->getCategories()[0]->getId());
 	}
 
-	private function getSortType(string $entityTypeName): ?string
+	private function getSortType(string $entityTypeName, ?int $categoryId): ?string
 	{
 		// only deals support now
 		if ($entityTypeName !== \CCrmOwnerType::DealName)
@@ -147,6 +147,11 @@ class GetTabsAction extends Action
 		$instance = \Bitrix\Crm\Kanban\Entity::getInstance($entityTypeName);
 		if ($instance)
 		{
+			if ($categoryId !== null)
+			{
+				$instance->setCategoryId($categoryId);
+			}
+
 			return $instance->getSortSettings()->getCurrentType();
 		}
 

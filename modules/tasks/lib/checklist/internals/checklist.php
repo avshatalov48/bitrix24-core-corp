@@ -32,6 +32,7 @@ class CheckList extends CompositeTreeItem
 	private $userId;
 	private $facade;
 	private $action = [];
+	private bool $needSkipMembers = false;
 
 	/** @var DataManager $checkListDataController */
 	private $checkListDataController;
@@ -66,6 +67,16 @@ class CheckList extends CompositeTreeItem
 		$this->checkListTree = $facade::getCheckListTree();
 		$this->checkListMemberDataController = $facade::getCheckListMemberDataController();
 		$this->userFieldsEntityIdName = $facade::$userFieldsEntityIdName;
+	}
+
+	public function setSkipMembers(): void
+	{
+		$this->needSkipMembers = true;
+	}
+
+	public function getSkipMembers(): bool
+	{
+		return $this->needSkipMembers;
 	}
 
 	/**

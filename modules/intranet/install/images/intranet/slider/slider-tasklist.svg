@@ -1,0 +1,119 @@
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100% 1285"
+	 preserveAspectRatio="xMinYMin meet" style="width: 100%; height: 1285px" fill="none">
+
+	<svg height="1285px">
+		<defs>
+			<g id="btn-min">
+				<rect x="0" y="104.5" width="38" height="38" rx="3.5" stroke="#C6CDD3" />
+			</g>
+			<g id="upper-right-corner">
+				<path d="M9.99997 10V0H0C5.52285 0 9.99997 4.47715 9.99997 10Z" fill="#eef2f4"/>
+			</g>
+			<g id="lower-right-corner">
+				<path d="M9.99997 0V10H0C5.52285 10 9.99997 5.52285 9.99997 0Z" fill="#eef2f4"/>
+			</g>
+		</defs>
+
+		<rect width="100%" height="1285" fill="#EEF2F4"/>
+		<rect x="20" y="18" width="100%" height="60" rx="10" fill="white" />
+		<use xlink:href="#upper-right-corner" x="100%" y="18" transform="translate(-30)" ></use>
+		<use xlink:href="#lower-right-corner" x="100%" y="68" transform="translate(-30)" ></use>
+
+		<rect x="20" y="225" width="100%" height="644" rx="10" fill="white" />
+		<use xlink:href="#upper-right-corner" x="100%" y="225" transform="translate(-30)" ></use>
+		<use xlink:href="#lower-right-corner" x="100%" y="859" transform="translate(-30)" ></use>
+
+		<rect x="190" y="104" width="205" height="39" rx="4" fill="#BBED21" />
+		<rect x="28" y="156" width="100%" height="1" fill="#e3e7e9" />
+		<rect x="100%" y="156" width="28" height="1" fill="#EEF2F4" transform="translate(-28)"/>
+
+		<use xlink:href="#btn-min" x="100%" transform="translate(-58, 0)"></use>
+		<use xlink:href="#btn-min" x="100%" transform="translate(-109, 0)"></use>
+
+		<rect x="0" y="596" width="100%" height="44" fill="#EEF2F4" />
+	</svg>
+
+	<svg height="1285px"  id="animated-elements">
+		<defs>
+			<g id="menu-item-1--animat">
+				<rect x="0" y="45" width="89" height="8" rx="2" fill="#ecedee" />
+			</g>
+			<g id="menu-item-2--animat">
+				<rect x="0" y="45" width="69" height="8" rx="2" fill="#ecedee" />
+			</g>
+			<g id="btn-min--animat">
+				<rect x="0" y="117" width="14" height="14" rx="2" fill="#dee3e6" />
+			</g>
+			<g id="thead--animat">
+				<rect x="41" y="249" width="10" height="10" rx="2" fill="#ecedee" />
+				<rect x="70" y="249" width="10" height="10" rx="2" fill="#ecedee" />
+				<rect x="109" y="249" width="96" height="8" rx="2" fill="#ecedee" />
+				<rect x="43.7%" y="249" width="105" height="8" rx="2" fill="#ecedee" />
+				<rect x="59.7%" y="249" width="105" height="8" rx="2" fill="#ecedee" />
+				<rect x="78%" y="249" width="105" height="8" rx="2" fill="#ecedee" />
+			</g>
+
+			<g id="trow--animat">
+				<rect x="41" y="249" width="10" height="10" rx="2" fill="#ecedee" />
+				<rect x="70" y="249" width="10" height="10" rx="2" fill="#ecedee" />
+				<rect x="109" y="249" width="96" height="8" rx="2" fill="#ecedee" />
+				<rect x="43.7%" y="249" width="105" height="8" rx="2" fill="#ecedee" />
+
+				<circle cx="60.2%" cy="253" r="10" fill="#ecedee" />
+				<rect x="60.2%" y="249" width="105" height="8" rx="2" fill="#ecedee" transform="translate(17)"/>
+
+				<circle cx="78.6%" cy="253" r="10" fill="#ecedee" />
+				<rect x="78.6%" y="249" width="105" height="8" rx="2" fill="#ecedee" transform="translate(17)" />
+			</g>
+		</defs>
+
+		<use xlink:href="#menu-item-1--animat" x="42"></use>
+		<use xlink:href="#menu-item-2--animat" x="163"></use>
+		<use xlink:href="#menu-item-2--animat" x="258"></use>
+		<use xlink:href="#menu-item-2--animat" x="353"></use>
+		<use xlink:href="#menu-item-2--animat" x="448"></use>
+		<rect x="28" y="120" width="121" height="12" rx="2" fill="#dee3e6" />
+		<rect x="218" y="119" width="149" height="9" rx="2" fill="#b6df4d" />
+
+		<use xlink:href="#btn-min--animat" x="100%" transform="translate(-46)"></use>
+		<use xlink:href="#btn-min--animat" x="100%" transform="translate(-98)"></use>
+
+		<rect x="22" y="178" width="398" height="32" rx="16" fill="#dee3e5" />
+		<rect x="433" y="178" width="317" height="32" rx="16" fill="#dee3e5" />
+		<use xlink:href="#thead--animat"></use>
+		<use xlink:href="#trow--animat" y="50"></use>
+		<use xlink:href="#trow--animat" y="102"></use>
+		<use xlink:href="#trow--animat" y="155"></use>
+		<use xlink:href="#trow--animat" y="209"></use>
+		<use xlink:href="#trow--animat" y="262"></use>
+		<use xlink:href="#trow--animat" y="315"></use>
+
+		<use xlink:href="#trow--animat" y="416"></use>
+		<use xlink:href="#trow--animat" y="469"></use>
+		<use xlink:href="#trow--animat" y="522"></use>
+		<use xlink:href="#trow--animat" y="575"></use>
+		<rect x="53" y="614" width="233" height="8" rx="2" fill="#dee3e6" />
+	</svg>
+
+	<svg height="1285px">
+		<rect width="20" height="100%" x="100%" fill="#EEF2F4" transform="translate(-20)"/>
+	</svg>
+
+	<svg x="408" y="104.5" width="calc(100% - 530px)">
+		<rect width="100%" height="38" rx="3.5" stroke="#C6CDD3" />
+	</svg>
+
+	<rect id="msk1" width="100%" fill="url(#msk_gd)" mask="url(#headerMsk)" height="1270"/>
+
+	<mask id="headerMsk" fill="white">
+		<use xlink:href="#animated-elements"/>
+	</mask>
+
+	<linearGradient x1="66.6%" y1="50%" x2="33.3%" y2="50%" id="msk_gd">
+		<stop stop-color="#000000" stop-opacity="0" offset="0%"/>
+		<stop stop-color="#000000" stop-opacity="0.07" offset="50%"/>
+		<stop stop-color="#000000" stop-opacity="0" offset="100%"/>
+	</linearGradient>
+
+	<animate xlink:href="#msk1" attributeName="x" from="-100%" to="100%" dur="1s" begin="0s" repeatCount="indefinite"/>
+</svg>

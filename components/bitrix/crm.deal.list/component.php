@@ -564,6 +564,10 @@ $clientFieldsRestrictionManager = new Crm\Component\EntityList\ClientFieldRestri
 $clientFieldsRestrictionManager->removeRestrictedFieldsFromSort($gridOptions);
 $clientFieldsRestrictionManager->removeRestrictedFieldsFromFilter($filterOptions);
 
+$observersFieldRestrictionManager = new Crm\Component\EntityList\ObserversFieldRestrictionManager();
+$observersFieldRestrictionManager->removeRestrictedFieldsFromSort($gridOptions);
+$observersFieldRestrictionManager->removeRestrictedFieldsFromFilter($filterOptions);
+
 //region Filter initialization
 if (!$bInternal)
 {
@@ -880,6 +884,17 @@ if ($clientFieldsRestrictionManager->hasRestrictions())
 	];
 }
 
+if ($observersFieldRestrictionManager->hasRestrictions())
+{
+	$arResult['OBSERVERS_FIELD_RESTRICTIONS'] = [
+		'callback' => $observersFieldRestrictionManager->getJsCallback(),
+		'filterId' =>  $arResult['GRID_ID'],
+		'filterFields' => isset($entityFilter)
+			? $observersFieldRestrictionManager->getRestrictedFilterFields($entityFilter)
+			: []
+	];
+}
+
 // list all fields for export
 $exportAllFieldsList = array();
 if ($isInExportMode && $isStExportAllFields)
@@ -1125,7 +1140,8 @@ $arImmutableFilters = array(
 	'WEBFORM_ID', 'TRACKING_SOURCE_ID', 'TRACKING_CHANNEL_CODE',
 	'SEARCH_CONTENT',
 	'PRODUCT_ID', 'TYPE_ID', 'SOURCE_ID', 'STAGE_ID', 'COMPANY_ID', 'CONTACT_ID',
-	'FILTER_ID', 'FILTER_APPLIED', 'PRESET_ID', 'PAYMENT_STAGE', 'ORDER_SOURCE', 'DELIVERY_STAGE',
+	'FILTER_ID', 'FILTER_APPLIED', 'PRESET_ID', 'PAYMENT_STAGE', 'ORDER_SOURCE',
+	'DELIVERY_STAGE', 'OBSERVER_IDS',
 );
 
 foreach ($arFilter as $k => $v)
@@ -3143,15 +3159,10 @@ foreach ($displayValues as $dealId => $dealDisplayValues)
 		if (isset($displayFields[$fieldId]) && $displayFields[$fieldId]->isUserField())
 		{
 			$arResult['DEAL_UF'][$dealId][$fieldId] = $fieldValue;
+			continue;
 		}
-		else
-		{
-			$arResult['DEAL'][$dealId][$fieldId] =
-				$displayFields[$fieldId]->wasRenderedAsHtml()
-				? $fieldValue
-				: htmlspecialcharsbx($fieldValue)
-			;
-		}
+
+		$arResult['DEAL'][$dealId][$fieldId] = $fieldValue;
 	}
 }
 

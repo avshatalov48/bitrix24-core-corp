@@ -1,4 +1,4 @@
-<?
+<?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
 use Bitrix\Main\Loader;
@@ -60,8 +60,6 @@ if (empty($arResult['RELOAD']) && empty($arResult['URL_RELOAD']))
 {
 	if (!empty($arResult['ACTIVE_LINE']))
 	{
-		?>
-		<?
 		$APPLICATION->IncludeComponent(
 			$arResult['COMPONENT'],
 			'',
@@ -78,8 +76,8 @@ if (empty($arResult['RELOAD']) && empty($arResult['URL_RELOAD']))
 		); ?>
 		<?= $arResult['LANG_JS_SETTING']; ?>
 		<?
-		$status = Status::getInstance($arResult['ID'], $arResult['ACTIVE_LINE']['ID'])->isStatus();
-		Status::cleanCache($arResult['ID'], $arResult['ACTIVE_LINE']['ID']);
+		$status = Status::getInstance($arResult['ID'], (int)$arResult['ACTIVE_LINE']['ID'])->isStatus();
+		Status::cleanCache($arResult['ID'], (int)$arResult['ACTIVE_LINE']['ID']);
 		if ($status || count($arResult['LIST_LINE']) > 1)
 		{
 			?>
@@ -90,7 +88,7 @@ if (empty($arResult['RELOAD']) && empty($arResult['URL_RELOAD']))
 					</div>
 
 					<?
-					if ($arResult['SHOW_LIST_LINES'])
+					if (!empty($arResult['SHOW_LIST_LINES']))
 					{
 						?>
 						<div class="imconnector-field-box">

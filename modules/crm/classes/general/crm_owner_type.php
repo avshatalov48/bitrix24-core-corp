@@ -663,7 +663,7 @@ class CCrmOwnerType
 
 	public static function GetAllDescriptions(): array
 	{
-		if (!self::$ALL_DESCRIPTIONS[LANGUAGE_ID])
+		if (!isset(self::$ALL_DESCRIPTIONS[LANGUAGE_ID]))
 		{
 			IncludeModuleLangFile(__FILE__);
 			self::$ALL_DESCRIPTIONS[LANGUAGE_ID] = [
@@ -702,7 +702,7 @@ class CCrmOwnerType
 
 	public static function GetAllCategoryCaptions(bool $useNames = false): array
 	{
-		if (!self::$ALL_CATEGORY_CAPTION[LANGUAGE_ID])
+		if (!isset(self::$ALL_CATEGORY_CAPTION[LANGUAGE_ID]))
 		{
 			IncludeModuleLangFile(__FILE__);
 			self::$ALL_CATEGORY_CAPTION[LANGUAGE_ID] = [

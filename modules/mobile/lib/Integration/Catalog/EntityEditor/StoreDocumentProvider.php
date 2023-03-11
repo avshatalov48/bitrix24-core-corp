@@ -327,7 +327,7 @@ class StoreDocumentProvider extends \Bitrix\Catalog\v2\Integration\UI\EntityEdit
 	{
 		foreach ($userFields as $fieldName => $userId)
 		{
-			if (!$userId)
+			if (!$userId || empty($usersInfo[$userId]))
 			{
 				continue;
 			}

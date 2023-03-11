@@ -54,32 +54,49 @@ BX.namespace('Tasks.Component');
 
 			getDialog: function(node)
 			{
+				var getTargetContainer = function()
+				{
+					var fields = document.querySelectorAll('div.task-options-item-open-inner');
+					var target = node
+					fields.forEach(function(field){
+						if (field.contains(target))
+						{
+							target = field;
+						}
+					});
+
+					return target;
+				}.bind(this);
+
 				if (!this.dialog)
 				{
 					this.dialog = new BX.UI.EntitySelector.Dialog({
-						targetNode: node,
+						id: 'tasks-widget-tag-selector-template-edit',
+						targetNode: getTargetContainer(),
 						enableSearch: true,
 						width: 350,
 						height: 400,
 						multiple: true,
 						dropdownMode: true,
 						compactView: true,
-						context: 'TASKS_TAG',
 						entities: [
 							{
-								id: 'task-tag'
+								id: 'template-tag',
+								options: {},
+								dynamicLoad: true,
+								dynamicSearch: true,
 							}
 						],
 						selectedItems: this.preselectedItems.map(function(tag) {
 							return {
 								id: tag.NAME,
-								entityId: 'task-tag',
+								entityId: 'template-tag',
 								title: tag.NAME,
 								tabs: 'all'
 							};
 						}),
 						searchOptions: {
-							allowCreateItem: true
+							allowCreateItem: true,
 						},
 						events: {
 							'Search:onItemCreateAsync': function (event) {
@@ -90,7 +107,7 @@ BX.namespace('Tasks.Component');
 								setTimeout(function () {
 									var item = dialog.addItem({
 										id: searchQuery.getQuery(),
-										entityId: 'task-tag',
+										entityId: 'template-tag',
 										title: searchQuery.getQuery(),
 										tabs: 'all'
 									});
@@ -120,7 +137,7 @@ BX.namespace('Tasks.Component');
 				});
 
 				var tags = this.getDialog().getSelectedItems().map(function(item) {
-					return item.getId();
+					return item.getTitle();
 				});
 				tags.forEach(function(tag) {
 					if (!BX.util.in_array(tag, displayedItems))

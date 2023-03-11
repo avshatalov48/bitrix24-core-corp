@@ -34,3 +34,5 @@ $MESS['TASKS_SCRUM_SPRINT_GET_COMPLETED_ITEMS_ERROR'] = 'Произошла ош
 $MESS['TASKS_SCRUM_SPRINT_GET_DATA_ERROR'] = 'Произошла ошибка получения данных спринта.';
 $MESS['TASKS_SCRUM_TYPE_PRODUCT_NAME'] = 'Продуктовая задача';
 $MESS['TASKS_SCRUM_TYPE_TECHNICAL_NAME'] = 'Техническая задача';
+$MESS['TASKS_SCRUM_TAG_ALREADY_EXISTS'] = 'Такой тег уже существует';
+$MESS['TASKS_SCRUM_TAG_ACCESS_DENIED'] = 'Недостаточно прав';

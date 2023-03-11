@@ -15,6 +15,7 @@ $APPLICATION->IncludeComponent('bitrix:bizproc.automation', '', [
 	//'PARAMETERS_EDIT_URL'            => '/bizproc/script/template/parameters/?id=#ID#',
 	'MARKETPLACE_ROBOT_CATEGORY' => $arResult['DOCUMENT_TYPE'][0].'_bots',
 	'MARKETPLACE_TRIGGER_PLACEMENT' => mb_strtoupper($arResult['DOCUMENT_TYPE'][0]).'_ROBOT_TRIGGERS',
+	'IS_TEMPLATES_SCHEME_SUPPORTED' => true,
 ], $this);
 ?>
 </div>

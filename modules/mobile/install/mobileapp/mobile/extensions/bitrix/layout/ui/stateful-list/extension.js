@@ -1,7 +1,13 @@
-(() => {
-	const { NavigationLoader } = jn.require('navigation-loader');
-	const { debounce } = jn.require('utils/function');
-	const { merge, mergeImmutable, get, clone, isEqual } = jn.require('utils/object');
+/**
+ * @module layout/ui/stateful-list
+ */
+jn.define('layout/ui/stateful-list', (require, exports, module) => {
+
+	const { NavigationLoader } = require('navigation-loader');
+	const { debounce } = require('utils/function');
+	const { merge, mergeImmutable, get, clone, isEqual } = require('utils/object');
+	const { PureComponent } = require('layout/pure-component');
+	const { SimpleList } = require('layout/ui/simple-list');
 
 	const ITEMS_LOAD_LIMIT = 20;
 	const DEFAULT_BLOCK_PAGE = 1;
@@ -13,19 +19,18 @@
 	const renderType = {
 		cache: 'cache',
 		ajax: 'ajax',
-	}
+	};
 
 	/**
 	 * @class StatefulList
 	 */
-	class StatefulList extends LayoutComponent
+	class StatefulList extends PureComponent
 	{
 		constructor(props)
 		{
 			super(props);
 
 			this.isLoading = false;
-			this.blockPage = DEFAULT_BLOCK_PAGE;
 			this.stateBeforeSearch = null;
 			this.simpleList = null;
 			this.searchBarIsInited = false;
@@ -51,6 +56,7 @@
 			this.deleteItemHandler = this.deleteItemHandler.bind(this);
 			this.addItemHandler = this.addItemHandler.bind(this);
 			this.menuShowHandler = this.menuShow.bind(this);
+			this.bindSimpleListRef = this.bindSimpleListRef.bind(this);
 
 			this.state = this.getInitialState();
 			this.state.itemType = this.getValue(props, 'itemType', ListItemsFactory.Type.Base);
@@ -69,7 +75,7 @@
 			this.onViewShow = this.onViewShowHandler.bind(this);
 
 			this.debounceSearch = debounce((params, callback) => {
-				this.search(params, callback)
+				this.search(params, callback);
 			}, 500, this);
 
 			this.loadFirstItems();
@@ -248,7 +254,7 @@
 				type: 'search',
 				badgeCode: 'search',
 				callback: () => this.showSearchBar(),
-			}
+			};
 		}
 
 		showSearchBar()
@@ -361,7 +367,7 @@
 
 			if (this.needAnimateIds.length)
 			{
-				this.getSimpleList().lastElementIdAddedWithAnimation = this.needAnimateIds[this.needAnimateIds.length-1];
+				this.getSimpleList().lastElementIdAddedWithAnimation = this.needAnimateIds[this.needAnimateIds.length - 1];
 				this.needAnimateIds.map(id => this.blinkItem(id));
 			}
 
@@ -460,8 +466,8 @@
 			this.setState(
 				this.getPreparedSearchInitialState(params),
 				() => {
-					this.updateStateBySearchCallback(params)
-				}
+					this.updateStateBySearchCallback(params);
+				},
 			);
 		}
 
@@ -588,7 +594,7 @@
 									}
 								});
 
-								this.modifyCache(ACTION_UPDATE, {items});
+								this.modifyCache(ACTION_UPDATE, { items });
 
 								resolve();
 							});
@@ -687,7 +693,7 @@
 			{
 				config.data.extra = merge(
 					config.data.extra,
-					params.extra
+					params.extra,
 				);
 			}
 			config.data.extra.subscribeUser = (params.subscribeUser || true);
@@ -698,11 +704,14 @@
 				&& this.props.cacheName !== undefined
 			);
 
+			const cacheId = (useCache ? this.props.cacheName : null);
+
 			new RunActionExecutor(this.actions.loadItems, config.data, config.navigation)
-				.setCacheId(this.props.cacheName)
+				.setCacheId(cacheId)
 				.setCacheHandler(response => this.drawListFromCache(response, blockPage, append))
 				.setHandler(response => this.drawListFromAjax(response, blockPage, append))
-				.call(useCache);
+				.call(useCache)
+			;
 		}
 
 		drawListFromCache(response, blockPage, append)
@@ -711,12 +720,12 @@
 				append: append,
 				incBlockPage: false,
 				renderType: renderType.cache,
-			}
+			};
 
 			BX.postComponentEvent('UI.StatefulList::onDrawList', [{
 				renderType: renderType.cache,
 				items: response.data.items,
-				blockPage: this.blockPage,
+				blockPage: this.state.blockPage,
 				params,
 			}]);
 
@@ -730,7 +739,7 @@
 			BX.postComponentEvent('UI.StatefulList::onDrawListFromAjax', [{
 				renderType: renderType.ajax,
 				items: response.data.items,
-				blockPage: this.blockPage,
+				blockPage: this.state.blockPage,
 				params: loadItems,
 			}]);
 
@@ -805,7 +814,7 @@
 
 			if (params.incBlockPage)
 			{
-				this.blockPage = blockPage;
+				newState.blockPage = blockPage;
 			}
 
 			if (
@@ -856,7 +865,7 @@
 
 			const loadItemsParams = {
 				useCache: false,
-			}
+			};
 
 			this.reload(initialStateParams, loadItemsParams, this.props.reloadListCallbackHandler);
 		}
@@ -882,7 +891,7 @@
 				const simpleList = this.getSimpleList();
 				if (simpleList)
 				{
-					simpleList.dropShowReloadListNotification()
+					simpleList.dropShowReloadListNotification();
 				}
 
 				if (initialStateParams.menuButtons)
@@ -900,6 +909,7 @@
 		getInitialState(params = {})
 		{
 			const initialState = {
+				blockPage: DEFAULT_BLOCK_PAGE,
 				isRefreshing: true,
 				allItemsLoaded: false,
 				permissions: {
@@ -1030,7 +1040,7 @@
 
 				const items = new Map([...itemMap, ...stateItems]);
 
-				this.setState({items}, () => {
+				this.setState({ items }, () => {
 					resolve();
 				});
 			});
@@ -1202,8 +1212,8 @@
 			generateForGroup(item.data.fields);
 
 			const hashCode = (s => {
-				let h=0;
-				for(let i = 0; i < s.length; i++)
+				let h = 0;
+				for (let i = 0; i < s.length; i++)
 				{
 					h = Math.imul(31, h) + s.charCodeAt(i) | 0;
 				}
@@ -1225,7 +1235,7 @@
 					testId,
 					onPan: this.props.onPanListHandler || null,
 					style: {
-						backgroundColor: '#F0F2F5',
+						backgroundColor: '#f0f2f5',
 						flex: 1,
 					},
 				},
@@ -1234,13 +1244,13 @@
 						style: {
 							flex: 1,
 							flexDirection: 'column',
-							backgroundColor: title ? '#F4F7F8' : '#F0F2F5',
+							backgroundColor: title ? '#f4f7f8' : '#f0f2f5',
 						},
 					},
 					title && Text({
 						style: {
 							fontSize: 13,
-							color: '#525C69',
+							color: '#525c69',
 							marginVertical: 10,
 							marginLeft: 20,
 						},
@@ -1257,7 +1267,7 @@
 						itemParams: this.state.itemParams,
 						getItemCustomStyles: BX.prop.getFunction(this.props, 'getItemCustomStyles', null),
 						isSearchEnabled: this.stateBeforeSearch !== null,
-						blockPage: this.blockPage,
+						blockPage: this.state.blockPage,
 						allItemsLoaded: this.state.allItemsLoaded,
 						forcedShowSkeleton: this.state.forcedShowSkeleton,
 						itemLayoutOptions: this.itemLayoutOptions,
@@ -1270,14 +1280,19 @@
 						showFloatingButton: BX.prop.getBoolean(this.props, 'isShowFloatingButton', true),
 						itemsLoadLimit: ITEMS_LOAD_LIMIT,
 						isRefreshing: this.state.isRefreshing,
-						ref: ref => this.simpleList = ref,
+						ref: this.bindSimpleListRef,
 						pull: this.pull,
 						onDetailCardUpdateHandler: this.props.onDetailCardUpdateHandler || null,
 						onDetailCardCreateHandler: this.props.onDetailCardCreateHandler || null,
 						onNotViewableHandler: this.props.onNotViewableHandler || null,
 					}),
-				)
+				),
 			);
+		}
+
+		bindSimpleListRef(ref)
+		{
+			this.simpleList = ref;
 		}
 
 		showError(errorText)
@@ -1345,7 +1360,7 @@
 				return layout.search;
 			}
 
-			if(layout.searchBar)
+			if (layout.searchBar)
 			{
 				return layout.searchBar;
 			}
@@ -1388,10 +1403,10 @@
 			const simpleList = this.getSimpleList();
 			if (simpleList)
 			{
-				simpleList.setShowReloadListNotification()
+				simpleList.setShowReloadListNotification();
 			}
 		}
 	}
 
-	this.StatefulList = StatefulList;
-})();
+	module.exports = { StatefulList };
+});

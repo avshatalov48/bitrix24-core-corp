@@ -5,8 +5,11 @@ import {Plan} from './view/plan/plan';
 import {ActiveSprint} from './view/active.sprint';
 import {CompletedSprint} from './view/completed.sprint';
 
+import {Culture, CultureData} from './utility/culture';
+
 type Params = {
-	viewName: string
+	viewName: string,
+	culture: CultureData
 }
 
 export class Entry
@@ -21,6 +24,8 @@ export class Entry
 	setParams(params: Params)
 	{
 		this.setViewName(params.viewName);
+
+		Culture.getInstance().setData(params.culture);
 	}
 
 	setViewName(viewName: string)

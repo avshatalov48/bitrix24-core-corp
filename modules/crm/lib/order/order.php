@@ -2,16 +2,16 @@
 
 namespace Bitrix\Crm\Order;
 
+use Bitrix\Catalog\v2\Sku\BaseSku;
 use Bitrix\Crm\Activity\Provider\Sms;
 use Bitrix\Crm\Relation\EntityRelationTable;
+use Bitrix\Crm\Service\Timeline\Item\DealProductList\SkuConverter;
 use Bitrix\Main\EventResult;
 use Bitrix\Sale;
 use Bitrix\Crm;
-use Bitrix\Catalog;
 use Bitrix\Main;
 use Bitrix\Crm\Requisite;
 use Bitrix\Sale\TradingPlatform\Landing\Landing;
-use Bitrix\Iblock;
 use Bitrix\Catalog\v2\Integration\UI\ViewedProducts;
 use Bitrix\Main\Engine\UrlManager;
 use Bitrix\Crm\Order\BindingsMaker\TimelineBindingsMaker;
@@ -599,52 +599,6 @@ class Order extends Sale\Order
 	}
 
 	/**
-	 * @return ?array
-	 */
-	private function getViewedProducts(): ?array
-	{
-		if (!Main\Loader::includeModule('catalog') || !Main\Loader::includeModule('iblock'))
-		{
-			return null;
-		}
-
-		$basePriceGroupId = \CCatalogGroup::GetBaseGroupId();
-		/** @var Crm\Product\Url\ProductBuilder $adminLinkBuilder */
-		$adminLinkBuilder = Iblock\Url\AdminPage\BuilderManager::getInstance()->getBuilder(
-			Crm\Product\Url\ProductBuilder::TYPE_ID
-		);
-
-		$skus = ViewedProducts\Repository::getInstance()->getList();
-
-		$newCard = \Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isFullCatalogEnabled();
-
-		$result  = [];
-		foreach ($skus as $sku)
-		{
-			$price = $basePriceGroupId ? $sku->getPriceCollection()->findByGroupId($basePriceGroupId) : null;
-			$image = $sku->getFrontImageCollection()->getFrontImage();
-
-			if ($adminLinkBuilder)
-			{
-				$adminLinkBuilder->setIblockId($sku->getIblockId());
-			}
-
-			$result[] = [
-				'slider' => $newCard ? 'Y' : 'N',
-				'offerId' => $sku->getId(),
-				'adminLink' => $adminLinkBuilder ? $adminLinkBuilder->getProductDetailUrl($sku->getId()) : null,
-				'name' => $sku->getName(),
-				'image' => $image ? $image->getSource() : null,
-				'variationInfo' => Catalog\v2\Helpers\PropertyValue::getSkuPropertyDisplayValues($sku),
-				'price' => $price ? $price->getPrice() : null,
-				'currency' => $price ? $price->getCurrency() : null,
-			];
-		}
-
-		return $result;
-	}
-
-	/**
 	 * Processing the creation of an order for the store.
 	 *
 	 * @return void
@@ -669,7 +623,13 @@ class Order extends Sale\Order
 
 	private function addTimelineEntryOnStoreV3OrderCreate(): void
 	{
-		$viewedProducts = $this->getViewedProducts();
+		$viewedProducts = array_map(
+			static function (BaseSku $sku)
+			{
+				return SkuConverter::convertToProductModel($sku)->toArray();
+			},
+			ViewedProducts\Repository::getInstance()->getList()
+		);
 
 		if (
 			$viewedProducts

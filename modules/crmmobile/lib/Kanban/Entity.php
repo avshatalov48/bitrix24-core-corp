@@ -157,7 +157,7 @@ abstract class Entity
 
 		foreach ($presets as $id => $preset)
 		{
-			$name = html_entity_decode($preset['name'], ENT_QUOTES);
+			$name = html_entity_decode($preset['name'] ?? '', ENT_QUOTES);
 
 			if ($id === null || $id === 'default_filter' || $id === 'tmp_filter')
 			{
@@ -343,7 +343,7 @@ abstract class Entity
 		}
 
 		$indicator = null;
-		if (!$activityCounterTotal && $item['activityProgress'])
+		if (!$activityCounterTotal && !empty($item['activityProgress']))
 		{
 			$userId = (int)$this->params['userId'];
 

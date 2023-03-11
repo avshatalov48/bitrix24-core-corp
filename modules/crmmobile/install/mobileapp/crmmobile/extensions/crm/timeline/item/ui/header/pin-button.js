@@ -23,6 +23,7 @@ jn.define('crm/timeline/item/ui/header/pin-button', (require, exports, module) =
 		{
 			return View(
 				{
+					testId: this.props.testId,
 					style: {
 						paddingVertical: 10,
 						paddingHorizontal: 13,

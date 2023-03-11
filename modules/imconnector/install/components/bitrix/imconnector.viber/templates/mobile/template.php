@@ -37,7 +37,7 @@ $placeholder = ' placeholder="' . Loc::getMessage('IMCONNECTOR_COMPONENT_SETTING
 					<?=Loc::getMessage('IMCONNECTOR_COMPONENT_VIBER_SIMPLE_FORM_DESCRIPTION_1')?>
 				</div>
 					<?
-					if($arResult['messages'])
+					if (!empty($arResult['messages']))
 					{
 						echo '<div class="imconnector-settings-message imconnector-settings-message-success">';
 						foreach ($arResult['messages'] as $value)
@@ -46,7 +46,7 @@ $placeholder = ' placeholder="' . Loc::getMessage('IMCONNECTOR_COMPONENT_SETTING
 						}
 						echo '</div>';
 					}
-					if($arResult['error'])
+					if (!empty($arResult['error']))
 					{
 						echo '<div class="imconnector-settings-message imconnector-settings-message-error">';
 						foreach ($arResult['error'] as $value)

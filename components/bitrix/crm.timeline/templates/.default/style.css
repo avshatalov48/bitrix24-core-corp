@@ -8,7 +8,7 @@
 	--crm-timeline-card-icon-size: var(--ui-size-4xl, 36px);
 	--crm-timeline-card-icon-left-indent: var(--ui-space-inline-sm-neg, -12px);
 	--crm-timeline-card-icon-top-indent:  calc(var(--ui-space-inset-sm, 12px) / 2);
-	--crm-timeline-stream-section-connect-line-color: rgba(255, 255, 255, 0.6);
+	--crm-timeline-stream-section-connect-line-color: var(--ui-color-base-20, #dfe0e3);
 }
 
 .crm-entity-stream-container-content { }
@@ -670,7 +670,6 @@
 	line-height: var(--ui-font-line-height-md, 18px);
 }
 
-.bx-ie .crm-entity-stream-content-detail,
 .bx-firefox .crm-entity-stream-content-detail {
 	word-break: break-all;
 	word-break: break-word;
@@ -1833,8 +1832,7 @@
 	white-space: nowrap;
 }
 
-.crm-entity-stream-live-im-user-avatar,
-.bx-ie .crm-entity-stream-live-im-user-avatar {
+.crm-entity-stream-live-im-user-avatar {
 	position: relative;
 	display: inline-block;
 	min-width: 22px;

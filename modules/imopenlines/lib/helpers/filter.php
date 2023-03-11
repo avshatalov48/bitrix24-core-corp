@@ -104,7 +104,7 @@ class Filter
 
 		$extractDateRange = function($fieldName) use (&$filter, &$result)
 		{
-			if ($filter["{$fieldName}_from"] <> '')
+			if (!empty($filter["{$fieldName}_from"]))
 			{
 				try
 				{
@@ -114,7 +114,7 @@ class Filter
 				{
 				}
 			}
-			if ($filter["{$fieldName}_to"] <> '')
+			if (!empty($filter["{$fieldName}_to"]))
 			{
 				try
 				{
@@ -129,12 +129,12 @@ class Filter
 		$extractDateRange('DATE_CREATE');
 		$extractDateRange('DATE_CLOSE');
 
-		if (is_array($filter['SOURCE']))
+		if (isset($filter['SOURCE']) && is_array($filter['SOURCE']))
 		{
 			$result['=SOURCE'] = $filter['SOURCE'];
 		}
 
-		if (is_array($filter['CONFIG_ID']))
+		if (isset($filter['CONFIG_ID']) && is_array($filter['CONFIG_ID']))
 		{
 			$result['=CONFIG_ID'] = $filter['CONFIG_ID'];
 		}
@@ -150,7 +150,14 @@ class Filter
 
 		if (!empty($filter['EXTRA_TARIFF']))
 		{
-			$result['=EXTRA_TARIFF'] = $filter['EXTRA_TARIFF'];
+			if (mb_strpos($filter['EXTRA_TARIFF'],'%') !== false && mb_strpos($filter['EXTRA_TARIFF'],'%') == 0)
+			{
+				$result['%EXTRA_TARIFF'] = mb_substr($filter['EXTRA_TARIFF'], 1);
+			}
+			else
+			{
+				$result['=EXTRA_TARIFF'] = $filter['EXTRA_TARIFF'];
+			}
 		}
 
 		if (!empty($filter['EXTRA_USER_LEVEL']))
@@ -182,7 +189,7 @@ class Filter
 			}
 		}
 
-		if (is_array($filter['STATUS_DETAIL']))
+		if (isset($filter['STATUS_DETAIL']) && is_array($filter['STATUS_DETAIL']))
 		{
 			$result['=STATUS'] = $filter['STATUS_DETAIL'];
 		}
@@ -309,7 +316,7 @@ class Filter
 			$result['=VOTE'] = intval($filter['VOTE']);
 		}
 
-		if (is_array($filter['VOTE_HEAD']))
+		if (isset($filter['VOTE_HEAD']) && is_array($filter['VOTE_HEAD']))
 		{
 			foreach ($filter['VOTE_HEAD'] as $key => $value)
 			{

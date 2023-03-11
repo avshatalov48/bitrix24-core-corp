@@ -48,7 +48,7 @@ class ImConnectorFacebook extends CBitrixComponent
 		}
 		else
 		{
-			ShowError(Loc::getMessage('IMCONNECTOR_COMPONENT_FACEBOOK_MODULE_NOT_INSTALLED'));
+			ShowError(Loc::getMessage('IMCONNECTOR_COMPONENT_FACEBOOK_MODULE_NOT_INSTALLED_MSGVER_1'));
 
 			return false;
 		}
@@ -56,9 +56,9 @@ class ImConnectorFacebook extends CBitrixComponent
 
 	protected function initialization()
 	{
-		$this->connectorOutput = new Output($this->connector, $this->arParams['LINE']);
+		$this->connectorOutput = new Output($this->connector, (int)$this->arParams['LINE']);
 
-		$this->status = Status::getInstance($this->connector, $this->arParams['LINE']);
+		$this->status = Status::getInstance($this->connector, (int)$this->arParams['LINE']);
 
 		$this->arResult['STATUS'] = $this->status->isStatus();
 		$this->arResult['ACTIVE_STATUS'] = $this->status->getActive();
@@ -88,9 +88,9 @@ class ImConnectorFacebook extends CBitrixComponent
 	{
 		$this->arResult['STATUS'] = $status;
 
-		$this->status->setConnection($status);
+		$this->status->setConnection((bool)$status);
 		$this->arResult['CONNECTION_STATUS'] = $status;
-		$this->status->setRegister($status);
+		$this->status->setRegister((bool)$status);
 		$this->arResult['REGISTER_STATUS'] = $status;
 
 		if ($data !== null)
@@ -237,7 +237,7 @@ class ImConnectorFacebook extends CBitrixComponent
 
 						if ($rawDelete->isSuccess())
 						{
-							Status::delete($this->connector, $this->arParams['LINE']);
+							Status::delete($this->connector, (int)$this->arParams['LINE']);
 							$this->arResult['STATUS'] = false;
 							$this->arResult['ACTIVE_STATUS'] = false;
 							$this->arResult['CONNECTION_STATUS'] = false;

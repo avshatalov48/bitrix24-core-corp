@@ -1,9 +1,13 @@
 <?php
+
 namespace Bitrix\Crm\Timeline;
 
+use Bitrix\Catalog\v2\Sku\BaseSku;
 use Bitrix\Crm\Binding\OrderEntityTable;
+use Bitrix\Crm\Service\Timeline\Item\DealProductList\SkuConverter;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Crm\ItemIdentifier;
 
 Loc::loadMessages(__FILE__);
 
@@ -80,7 +84,13 @@ class ProductCompilationController extends Controller
 
 		if (isset($params['SETTINGS']['SENT_PRODUCTS']) && is_array($params['SETTINGS']['SENT_PRODUCTS']))
 		{
-			$params['SETTINGS']['SENT_PRODUCTS'] = Product::prepareProductsForTimeline($params['SETTINGS']['SENT_PRODUCTS']);
+			$params['SETTINGS']['SENT_PRODUCTS'] = array_map(
+				static function (BaseSku $sku)
+				{
+					return SkuConverter::convertToProductModel($sku)->toArray();
+				},
+				$params['SETTINGS']['SENT_PRODUCTS']
+			);
 		}
 
 		$this->addToTimeline($dealId, $params, ProductCompilationType::PRODUCT_LIST);
@@ -119,10 +129,12 @@ class ProductCompilationController extends Controller
 			'BINDINGS' => $bindings,
 		]);
 
-		foreach($bindings as $binding)
+		foreach ($bindings as $binding)
 		{
-			$tag = TimelineEntry::prepareEntityPushTag($binding['ENTITY_TYPE_ID'], $binding['ENTITY_ID']);
-			self::pushHistoryEntry($entityId, $tag, 'timeline_activity_add');
+			$this->sendPullEventOnAdd(
+				new ItemIdentifier($binding['ENTITY_TYPE_ID'], $binding['ENTITY_ID']),
+				$entityId
+			);
 		}
 	}
 }

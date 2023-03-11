@@ -1,12 +1,14 @@
-import { ajax as Ajax, Dom, Loc, Reflection, Type } from 'main.core';
+import {ajax as Ajax, Dom, Loc, Reflection, Type} from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
-import './todo-editor.css';
-import { BitrixVue } from "ui.vue3";
-import { TodoEditor as TodoEditorComponent } from "./components/todo-editor";
+import { BitrixVue } from 'ui.vue3';
+import { TodoEditor as TodoEditorComponent } from './components/todo-editor';
 import { UI } from 'ui.notification';
-import { DateTimeFormat } from "main.date";
-import { DatetimeConverter } from "crm.timeline.tools";
+import { DateTimeFormat } from 'main.date';
+import { DatetimeConverter } from 'crm.timeline.tools';
 import { TodoEditorBorderColor } from './enums/border-color';
+import { FileUploader as TodoEditorFileUploader } from 'crm.activity.file-uploader';
+
+import './todo-editor.css';
 
 declare type TodoEditorParams = {
 	container: HTMLElement,
@@ -43,6 +45,7 @@ export class TodoEditor
 	#borderColor = '';
 
 	#eventEmitter: EventEmitter = null;
+	#fileUploader: TodoEditorFileUploader = null;
 
 	constructor(params: TodoEditorParams)
 	{
@@ -63,6 +66,7 @@ export class TodoEditor
 			throw new Error('OwnerTypeId must be set');
 		}
 		this.#ownerTypeId = params.ownerTypeId;
+
 		if (!Type.isNumber(params.ownerId))
 		{
 			throw new Error('OwnerId must be set');
@@ -101,6 +105,12 @@ export class TodoEditor
 			onFocus: this.#onInputFocus.bind(this),
 			onChangeDescription: this.#onChangeDescription.bind(this),
 			onSaveHotkeyPressed: this.#onSaveHotkeyPressed.bind(this),
+			additionalButtons: [{
+				id: 'file-uploader',
+				icon: 'attach',
+				description: Loc.getMessage('CRM_ACTIVITY_TODO_UPLOAD_FILE_BUTTON_HINT'),
+				action: this.#onFileUploadButtonClick.bind(this),
+			}]
 		});
 		this.#layoutComponent = this.#layoutApp.mount(this.#container);
 	}
@@ -121,7 +131,8 @@ export class TodoEditor
 					ownerId: this.#ownerId,
 					description: userData.description,
 					deadline: DateTimeFormat.format(DatetimeConverter.getSiteDateTimeFormat(), userData.deadline),
-					parentActivityId: this.#parentActivityId
+					parentActivityId: this.#parentActivityId,
+					fileTokens: this.#fileUploader ? this.#fileUploader.getServerFileIds() : []
 				}
 			})
 				.then(resolve)
@@ -198,6 +209,11 @@ export class TodoEditor
 		this.#parentActivityId = null;
 		this.setDefaultDeadLine();
 		Dom.removeClass(this.#container, '--is-edit');
+		if (this.#fileUploader) {
+			Dom.removeClass(this.#fileUploader.getContainer(), '--is-displayed');
+		}
+
+		this.#fileUploader = null;
 
 		return new Promise((resolve) => {
 			setTimeout(resolve, 10);
@@ -209,6 +225,12 @@ export class TodoEditor
 		this.#layoutComponent.setDescription(this.#getDefaultDescription());
 		this.setDefaultDeadLine();
 		Dom.removeClass(this.#container, '--is-edit');
+		if (this.#fileUploader)
+		{
+			Dom.removeClass(this.#fileUploader.getContainer(), '--is-displayed');
+		}
+
+		this.#fileUploader = null;
 
 		return new Promise((resolve) => {
 			setTimeout(resolve, 10);
@@ -257,6 +279,34 @@ export class TodoEditor
 	#getClassname(): string
 	{
 		return `crm-activity__todo-editor --border-${this.#borderColor}`;
+	}
+
+	#onFileUploadButtonClick(): void
+	{
+		if (!this.#fileUploader)
+		{
+			this.#fileUploader = new TodoEditorFileUploader({
+				baseContainer: this.#container,
+				events: {
+					'File:onRemove': (event) => {
+						this.#eventEmitter.emit('onChangeUploaderContainerSize');
+					},
+					'onUploadStart': (event) => {
+						this.#eventEmitter.emit('onChangeUploaderContainerSize');
+					},
+					// TODO: not implemented yet
+					//		'File:onComplete'
+					//		'onUploadComplete'
+				},
+				ownerId: this.#ownerId,
+				ownerTypeId: this.#ownerTypeId,
+				activityId: null, // new activity
+			});
+		}
+
+		Dom.toggleClass(this.#fileUploader.getContainer(), '--is-displayed');
+
+		this.#eventEmitter.emit('onChangeUploaderContainerSize');
 	}
 }
 

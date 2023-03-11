@@ -1,50 +1,37 @@
 <?php
 namespace Bitrix\ImOpenLines;
 
-use Bitrix\Main\Loader;
-use Bitrix\Main\UserTable;
-use Bitrix\Main\Localization\Loc;
-
-Loc::loadMessages(__FILE__);
+use
+	Bitrix\Main,
+	Bitrix\Main\Loader,
+	Bitrix\Main\UserTable,
+	Bitrix\Main\Localization\Loc,
+	Bitrix\Main\Config\Option,
+	Bitrix\Main\Application;
 
 class Common
 {
-	const TYPE_BITRIX24 = 'B24';
-	const TYPE_CP = 'CP';
+	public const
+		TYPE_BITRIX24 = 'B24',
+		TYPE_CP = 'CP';
 
-	const MODE_AGENT = 'agent';
-	const MODE_CRON = 'cron';
+	public const
+		MODE_AGENT = 'agent',
+		MODE_CRON = 'cron';
 
-	const CACHE_TTL_MONTH = 2700000;
+	protected const CACHE_TTL_MONTH = 2700000;
 
 	/**
-	 * Unsupported old-fashioned permission check.
-	 * @return bool
-	 * @deprecated Use Bitrix\ImOpenLines\Security\Permissions instead.
+	 * @return string
 	 */
-	public static function hasAccessForAdminPages()
+	public static function getPortalType(): string
 	{
-		if (\IsModuleInstalled('bitrix24'))
-		{
-			return $GLOBALS['USER']->CanDoOperation('bitrix24_config');
-		}
-		else
-		{
-			return $GLOBALS["USER"]->IsAdmin();
-		}
-	}
-
-	public static function getPortalType()
-	{
-		$type = '';
-		if(defined('BX24_HOST_NAME'))
+		$type = self::TYPE_CP;
+		if (defined('BX24_HOST_NAME'))
 		{
 			$type = self::TYPE_BITRIX24;
 		}
-		else
-		{
-			$type = self::TYPE_CP;
-		}
+
 		return $type;
 	}
 
@@ -53,11 +40,16 @@ class Common
 	 */
 	public static function getPublicFolder(): string
 	{
-		return
-			self::GetPortalType() === self::TYPE_BITRIX24
-			|| file_exists($_SERVER['DOCUMENT_ROOT'] . '/openlines/')?
-				'/openlines/':
-				SITE_DIR . 'services/openlines/';
+		if (
+			self::getPortalType() === self::TYPE_BITRIX24
+			|| Main\IO\Directory::isDirectoryExists(Application::getDocumentRoot(). '/openlines/')
+		)
+		{
+			return '/openlines/';
+		}
+
+		return SITE_DIR. 'services/openlines/';
+
 	}
 
 	/**
@@ -73,11 +65,15 @@ class Common
 	 */
 	public static function getContactCenterPublicFolder(): string
 	{
-		return
-			self::GetPortalType() === self::TYPE_BITRIX24
-			|| file_exists($_SERVER['DOCUMENT_ROOT'] . '/contact_center/')?
-				'/contact_center/':
-				SITE_DIR . 'services/contact_center/';
+		if (
+			self::getPortalType() === self::TYPE_BITRIX24
+			|| Main\IO\Directory::isDirectoryExists(Application::getDocumentRoot(). '/contact_center/')
+		)
+		{
+			return '/contact_center/';
+		}
+
+		return SITE_DIR . 'services/contact_center/';
 	}
 
 	/**
@@ -99,97 +95,192 @@ class Common
 		return Common::getContactCenterPublicFolder() . 'connector/' . '?ID=' . $connectorId;
 	}
 
-	public static function getServerAddress()
+	/**
+	 * Returns from settings or detects from request external public url.
+	 * @return string
+	 */
+	public static function getServerAddress(): string
 	{
-		$publicUrl = \Bitrix\Main\Config\Option::get("imopenlines", "portal_url");
+		$publicUrl = Option::get('imopenlines', 'portal_url');
 
-		if ($publicUrl != '')
-			return $publicUrl;
-		else
-			return (\Bitrix\Main\Context::getCurrent()->getRequest()->isHttps() ? "https" : "http")."://".$_SERVER['SERVER_NAME'].(in_array($_SERVER['SERVER_PORT'], Array(80, 443))?'':':'.$_SERVER['SERVER_PORT']);
-	}
+		if (empty($publicUrl))
+		{
+			$context = Application::getInstance()->getContext();
+			$scheme = $context->getRequest()->isHttps() ? 'https' : 'http';
+			$server = $context->getServer();
+			$domain = Option::get('main', 'server_name', '');
+			if (empty($domain))
+			{
+				$domain = $server->getServerName();
+			}
+			if (preg_match('/^(?<domain>.+):(?<port>\d+)$/', $domain, $matches))
+			{
+				$domain = $matches['domain'];
+				$port = (int)$matches['port'];
+			}
+			else
+			{
+				$port = (int)$server->getServerPort();
+			}
+			$port = in_array($port, [0, 80, 443]) ? '' : ':'.$port;
 
-	public static function getExecMode()
-	{
-		$execMode = \Bitrix\Main\Config\Option::get("imopenlines", "exec_mode");
+			$publicUrl = $scheme.'://'.$domain.$port;
+		}
+		if (!(mb_strpos($publicUrl, 'https://') === 0 || mb_strpos($publicUrl, 'http://') === 0))
+		{
+			$publicUrl = 'https://' . $publicUrl;
+		}
 
-		if (!empty($execMode) && in_array($execMode, array(self::MODE_AGENT, self::MODE_CRON)))
-			return $execMode;
-		else
-			return self::MODE_AGENT;
+		return $publicUrl;
 	}
 
 	/**
-	 * Agent clears broken session data.
-	 * @return string
+	 * Checks availability of the external public url.
+	 * @param string $publicUrl Portal public url.
+	 * @return Result
 	 */
-	public static function deleteBrokenSession(): string
+	public static function checkPublicUrl(string $publicUrl): Result
 	{
-		$sessList = \Bitrix\ImOpenLines\Model\SessionTable::getList([
-			'select' => ['ID', 'CHAT_ID'],
-			'filter' => ['=CONFIG.ID' => null]
-		]);
-		while ($session = $sessList->fetch())
+		$result = new Result;
+
+		if (empty($publicUrl))
 		{
-			Im::chatHide($session['CHAT_ID']);
-			Session::deleteSession($session['ID']);
+			$message = Loc::getMessage('IMOL_ERROR_PUBLIC_URL_EMPTY');
+			if (empty($message))
+			{
+				$message = 'Cannot detect a value of the portal public url.';
+			}
+
+			return $result->addError(new Error($message, 'PUBLIC_URL_EMPTY'));
 		}
 
-		$checkList = \Bitrix\ImOpenLines\Model\SessionCheckTable::getList([
-			'filter' => ['=SESSION.ID' => null]
-		]);
-		while ($session = $checkList->fetch())
+		if (
+			(mb_strlen($publicUrl) < 11)
+			|| !($parsedUrl = \parse_url($publicUrl))
+			|| empty($parsedUrl['host'])
+			|| strpos($parsedUrl['host'], '.') === false
+			|| !in_array($parsedUrl['scheme'], ['http', 'https'])
+		)
 		{
-			\Bitrix\ImOpenLines\Model\SessionCheckTable::delete($session['SESSION_ID']);
+			$message = Loc::getMessage('IMOL_ERROR_PUBLIC_URL_MALFORMED');
+			if (empty($message))
+			{
+				$message = 'Portal public url is malformed.';
+			}
+
+			return $result->addError(new Error($message, 'PUBLIC_URL_MALFORMED'));
 		}
 
-		if (\Bitrix\Main\Loader::includeModule('pull'))
+		// check for local address
+		$host = $parsedUrl['host'];
+		if (
+			strtolower($host) == 'localhost'
+			|| $host == '0.0.0.0'
+			||
+			(
+				preg_match('#^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$#', $host)
+				&& preg_match('#^(127|10|172\.16|192\.168)\.#', $host)
+			)
+		)
 		{
-			\Bitrix\Pull\Event::send();
+			$message = Loc::getMessage('IMOL_ERROR_PUBLIC_URL_LOCALHOST', ['#HOST#' => $host]);
+			if (empty($message))
+			{
+				$message = 'Portal public url points to localhost: '.$host;
+			}
+
+			return $result->addError(new Error($message, 'PUBLIC_URL_LOCALHOST'));
 		}
 
-		return __METHOD__. '();';
+		$error = (new \Bitrix\Main\Web\Uri($publicUrl))->convertToPunycode();
+		if ($error instanceof \Bitrix\Main\Error)
+		{
+			$message = Loc::getMessage('IMOL_ERROR_CONVERTING_PUNYCODE', ['#HOST#' => $host, '#ERROR#' => $error->getMessage()]);
+			if (empty($message))
+			{
+				$message = 'Error converting hostname '.$host.' to punycode: '.$error->getMessage();
+			}
+
+			return $result->addError(new Error($message, 'PUBLIC_URL_MALFORMED'));
+		}
+
+		return $result;
 	}
 
-	public static function setUserAgrees($params)
+	/**
+	 * @return string
+	 */
+	public static function getExecMode(): string
+	{
+		$execMode = Option::get("imopenlines", "exec_mode");
+
+		if (!empty($execMode) && in_array($execMode, [self::MODE_AGENT, self::MODE_CRON]))
+		{
+			return $execMode;
+		}
+
+		return self::MODE_AGENT;
+	}
+
+	/**
+	 * @param $params
+	 * @return bool
+	 */
+	public static function setUserAgrees($params): bool
 	{
 		if (empty($params['USER_CODE']))
+		{
 			return false;
+		}
 
-		$params['AGREEMENT_ID'] = intval($params['AGREEMENT_ID']);
+		$params['AGREEMENT_ID'] = (int)$params['AGREEMENT_ID'];
 		if ($params['AGREEMENT_ID'] <= 0)
+		{
 			return false;
+		}
 
 		$params['FLAG'] = $params['FLAG'] == 'N'? 'N': 'Y';
 
 		\Bitrix\Imopenlines\Model\UserRelationTable::update($params['USER_CODE'], Array('AGREES' => $params['FLAG']));
 
-		if ($params['FLAG'] == 'Y' && \Bitrix\Main\Loader::includeModule('crm'))
+		if ($params['FLAG'] == 'Y' && Main\Loader::includeModule('crm'))
 		{
-			\Bitrix\Main\UserConsent\Consent::addByContext(
-				intval($params['AGREEMENT_ID']),
+			Main\UserConsent\Consent::addByContext(
+				(int)$params['AGREEMENT_ID'],
 				\Bitrix\Crm\Integration\UserConsent::PROVIDER_CODE,
-				intval($params['CRM_ACTIVITY_ID']),
-				array('IP' => '', 'URL' => self::getHistoryLink($params['SESSION_ID'], $params['CONFIG_ID']))
+				(int)$params['CRM_ACTIVITY_ID'],
+				['IP' => '', 'URL' => self::getHistoryLink($params['SESSION_ID'], $params['CONFIG_ID'])]
 			);
 		}
 
 		return true;
 	}
 
-	public static function getAgreementLink($agreementId, $languageId = null, $iframe = false)
+	/**
+	 * @param int $agreementId
+	 * @param string $languageId
+	 * @param bool $iframe
+	 * @return string
+	 */
+	public static function getAgreementLink($agreementId, $languageId = null, $iframe = false): string
 	{
-		$agreementId = intval($agreementId);
+		$agreementId = (int)$agreementId;
 
 		$ag = new \Bitrix\Main\UserConsent\Agreement($agreementId);
 		$data = $ag->getData();
 
-		return \Bitrix\ImOpenLines\Common::getServerAddress().'/pub/imol.php?id='.$agreementId.'&sec='.$data['SECURITY_CODE'].($iframe? '&iframe=Y': '').($languageId? '&user_lang='.$languageId: '');
+		return
+			self::getServerAddress()
+			. '/pub/imol.php?id='.$agreementId
+			. '&sec='.$data['SECURITY_CODE']
+			. ($iframe ? '&iframe=Y': '')
+			. ($languageId ? '&user_lang='.$languageId: '')
+		;
 	}
 
 	/**
-	 * @param $sessionId
-	 * @param $configId
+	 * @param int $sessionId
+	 * @param int $configId
 	 * @return string
 	 */
 	public static function getHistoryLink($sessionId, $configId): string
@@ -197,20 +288,33 @@ class Common
 		$sessionId = (int)$sessionId;
 		$configId = (int)$configId;
 
-		return self::getServerAddress() . self::getContactCenterPublicFolder() . 'dialog_list/?' . ($configId? 'CONFIG_ID=' . $configId . '&': '') . 'IM_HISTORY=imol|' . $sessionId;
+		return
+			self::getServerAddress()
+			. self::getContactCenterPublicFolder()
+			. 'dialog_list/?'
+			. ($configId? 'CONFIG_ID=' . $configId . '&': '')
+			. 'IM_HISTORY=imol|' . $sessionId
+		;
 	}
 
-	public static function getBitrixUrlByLang($lang = null)
+	/**
+	 * @param string $lang
+	 * @return string
+	 */
+	public static function getBitrixUrlByLang($lang = null): string
 	{
-		$url = '';
-		if (\Bitrix\Main\Loader::includeModule('bitrix24'))
+		if (Main\Loader::includeModule('bitrix24'))
 		{
 			if (!$lang)
 			{
 				if (defined('B24_LANGUAGE_ID'))
-					$lang = B24_LANGUAGE_ID;
+				{
+					$lang = \B24_LANGUAGE_ID;
+				}
 				else
-					$lang = mb_substr((string)\Bitrix\Main\Config\Option::get('main', '~controller_group_name'), 0, 2);
+				{
+					$lang = mb_substr((string)Option::get('main', '~controller_group_name'), 0, 2);
+				}
 			}
 
 			$areaConfig = \CBitrix24::getAreaConfig($lang);
@@ -225,23 +329,23 @@ class Common
 		}
 		else
 		{
-			if (LANGUAGE_ID == 'de')
+			if (\LANGUAGE_ID == 'de')
 			{
 				$url = 'www.bitrix24.de';
 			}
-			else if (LANGUAGE_ID == 'ua')
+			elseif (\LANGUAGE_ID == 'ua')
 			{
 				$url = 'www.bitrix24.ua';
 			}
-			else if (LANGUAGE_ID == 'kz')
+			elseif (\LANGUAGE_ID == 'kz')
 			{
 				$url = 'www.bitrix24.kz';
 			}
-			else if (LANGUAGE_ID == 'by')
+			elseif (\LANGUAGE_ID == 'by')
 			{
 				$url = 'www.bitrix24.by';
 			}
-			else if (LANGUAGE_ID == 'ru')
+			elseif (\LANGUAGE_ID == 'ru')
 			{
 				$url = 'www.bitrix24.ru';
 			}
@@ -251,7 +355,7 @@ class Common
 			}
 		}
 
-		$partnerId = \Bitrix\Main\Config\Option::get("bitrix24", "partner_id", 0);
+		$partnerId = Option::get("bitrix24", "partner_id", 0);
 		if ($partnerId)
 		{
 			$url .= '/?p='.$partnerId;
@@ -260,13 +364,14 @@ class Common
 		return "https://".$url;
 	}
 
-	public static function setCacheTag($tag, $cacheTtl = self::CACHE_TTL_MONTH)
+	/**
+	 * @param string $tag
+	 * @param int $cacheTtl
+	 * @return bool
+	 */
+	public static function setCacheTag(string $tag, int $cacheTtl = self::CACHE_TTL_MONTH): bool
 	{
-		if (!is_string($tag))
-			return false;
-
-		$app = \Bitrix\Main\Application::getInstance();
-		$managedCache = $app->getManagedCache();
+		$managedCache = Application::getInstance()->getManagedCache();
 		$managedCache->clean("imol_cache_tag_".$tag);
 		$managedCache->read($cacheTtl, "imol_cache_tag_".$tag);
 		$managedCache->setImmediate("imol_cache_tag_".$tag, true);
@@ -274,70 +379,73 @@ class Common
 		return true;
 	}
 
-	public static function getCacheTag($tag, $cacheTtl = self::CACHE_TTL_MONTH)
+	/**
+	 * @param string $tag
+	 * @param int $cacheTtl
+	 * @return bool
+	 */
+	public static function getCacheTag(string $tag, int $cacheTtl = self::CACHE_TTL_MONTH): bool
 	{
-		if (!is_string($tag))
-			return false;
-
-		$app = \Bitrix\Main\Application::getInstance();
-		$managedCache = $app->getManagedCache();
+		$managedCache = Application::getInstance()->getManagedCache();
 		if ($result = $managedCache->read($cacheTtl, "imol_cache_tag_".$tag))
 		{
-			$result = $managedCache->get("imol_cache_tag_".$tag) === false? false: true;
+			$result = $managedCache->get("imol_cache_tag_".$tag) === false ? false : true;
 		}
+
 		return $result;
 	}
 
-	public static function removeCacheTag($tag)
+	/**
+	 * @param string $tag
+	 * @return bool
+	 */
+	public static function removeCacheTag(string $tag): bool
 	{
-		if (!is_string($tag))
-			return false;
-
-		$app = \Bitrix\Main\Application::getInstance();
-		$managedCache = $app->getManagedCache();
-		$managedCache->clean("imol_cache_tag_".$tag);
+		Application::getInstance()->getManagedCache()->clean("imol_cache_tag_".$tag);
 
 		return true;
 	}
 
-	public static function getWorkTimeEnd($date = null)
+	/**
+	 * @param $date
+	 * @return Main\Type\DateTime
+	 */
+	public static function getWorkTimeEnd($date = null): Main\Type\DateTime
 	{
-		$workTimeEnd = explode('.', \Bitrix\Main\Config\Option::get('calendar', 'work_time_end', '18'));
+		$workTimeEnd = explode('.', Option::get('calendar', 'work_time_end', '18'));
 
-		if (!($date instanceof \Bitrix\Main\Type\DateTime))
+		if (!($date instanceof Main\Type\DateTime))
 		{
-			$date = new \Bitrix\Main\Type\DateTime();
+			$date = new Main\Type\DateTime();
 		}
 		$date->setTime($workTimeEnd[0], $workTimeEnd[1], 0);
 
 		return $date;
 	}
 
-	public static function objectEncode($params)
+	/**
+	 * @param $params
+	 * @return string
+	 */
+	public static function objectEncode($params): string
 	{
 		if (is_array($params))
 		{
 			array_walk_recursive($params, function(&$item, $key){
-				if ($item instanceof \Bitrix\Main\Type\DateTime)
+				if ($item instanceof Main\Type\DateTime)
 				{
 					$item = date('c', $item->getTimestamp());
 				}
 			});
 		}
 
-		return \CUtil::PhpToJSObject($params);
+		return \CUtil::phpToJSObject($params);
 	}
 
 	/**
-	 * @deprecated
-	 *
-	 * @return int
+	 * @param string $userCode
+	 * @return false|mixed
 	 */
-	public static function getMaxSessionCount()
-	{
-		return 100;
-	}
-
 	public static function getUserIdByCode(string $userCode)
 	{
 		if (mb_substr($userCode, 0, 5) === 'imol|')
@@ -345,7 +453,7 @@ class Common
 			$userCode = mb_substr($userCode, 5);
 		}
 
-		$entity = \Bitrix\ImOpenLines\Chat::parseLinesChatEntityId($userCode);
+		$entity = Chat::parseLinesChatEntityId($userCode);
 		if (empty($entity['connectorUserId']))
 		{
 			return false;
@@ -363,7 +471,11 @@ class Common
 		return $userData['ID'];
 	}
 
-	public static function depersonalizationLinesUser($userId)
+	/**
+	 * @param int $userId
+	 * @return bool
+	 */
+	public static function depersonalizationLinesUser($userId): bool
 	{
 		$userData = UserTable::getList([
 			'select' => ['ID', 'EXTERNAL_AUTH_ID', 'PERSONAL_PHOTO', ],
@@ -384,7 +496,7 @@ class Common
 		}
 
 		$user = new \CUser();
-		$user->Update($userData['ID'], [
+		$user->update($userData['ID'], [
 			'NAME' => Loc::getMessage('IMOL_COMMON_GUEST_NAME'),
 			'LAST_NAME' => '',
 			'EMAIL' => $userData['ID'].'@temporary.temp',
@@ -411,7 +523,7 @@ class Common
 		}
 		else
 		{
-			$res = \CGroup::GetGroupUserEx(1);
+			$res = \CGroup::getGroupUserEx(1);
 			while ($row = $res->fetch())
 			{
 				$users[] = (int)$row['USER_ID'];

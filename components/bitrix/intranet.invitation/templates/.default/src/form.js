@@ -109,6 +109,12 @@ export default class Form extends EventEmitter
 				return;
 			}
 
+			const projectId = (
+				this.userOptions.hasOwnProperty('groupId')
+					? parseInt(this.userOptions.groupId, 10)
+					: 0
+			);
+
 			for (let type in this.contentBlocks)
 			{
 				let block = this.contentBlocks[type];
@@ -137,6 +143,7 @@ export default class Form extends EventEmitter
 							options: {
 								department: true,
 								project: true,
+								projectId: projectId,
 								isAdmin: this.isAdmin,
 							}
 						};
@@ -152,6 +159,7 @@ export default class Form extends EventEmitter
 							options: {
 								department: false,
 								project: "extranet",
+								projectId: projectId,
 								isAdmin: this.isAdmin,
 							}
 						};
@@ -167,6 +175,7 @@ export default class Form extends EventEmitter
 							options: {
 								department: true,
 								project: true,
+								projectId: projectId,
 								isAdmin: this.isAdmin,
 							}
 						};

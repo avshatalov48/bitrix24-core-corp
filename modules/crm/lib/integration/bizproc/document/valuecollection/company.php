@@ -50,11 +50,11 @@ class Company extends Base
 		parent::loadAddressValues();
 
 		$this->document['ADDRESS'] = Crm\Format\AddressFormatter::getSingleInstance()->formatTextComma(
-			Crm\CompanyAddress::mapEntityFields($this->document, ['TYPE' => Crm\EntityAddressType::Delivery])
+			Crm\CompanyAddress::mapEntityFields($this->document, ['TYPE_ID' => Crm\EntityAddressType::Delivery])
 		);
 
 		$this->document['ADDRESS_LEGAL'] = Crm\Format\AddressFormatter::getSingleInstance()->formatTextComma(
-			Crm\CompanyAddress::mapEntityFields($this->document, ['TYPE' => Crm\EntityAddressType::Registered])
+			Crm\CompanyAddress::mapEntityFields($this->document, ['TYPE_ID' => Crm\EntityAddressType::Registered])
 		);
 	}
 }

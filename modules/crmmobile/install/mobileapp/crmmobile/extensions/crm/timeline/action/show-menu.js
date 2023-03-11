@@ -10,8 +10,13 @@ jn.define('crm/timeline/action/show-menu', (require, exports, module) => {
 	{
 		execute()
 		{
+			const items = [];
+			Object.keys(this.value.items).map(key => {
+				items.push({ ...this.value.items[key], id: key });
+			});
+
 			const menu = new TimelineItemContextMenu({
-				items: Object.values(this.value.items),
+				items,
 				onAction: (action) => this.factory.execute({
 					...action,
 					source: this.source,

@@ -10,7 +10,6 @@
 			this.id = id;
 			this.storage = Application.storageById(`selector${this.id}`)
 			this.data = {};
-			this.writeCache = BasePickerCache.debounce((items, key) => this.storage.setObject(key, {items}), 500, this)
 		}
 
 		get(key, diskCache)
@@ -56,8 +55,7 @@
 
 			if (saveDisk)
 			{
-				// noinspection JSCheckFunctionSignatures
-				this.writeCache(this.data[key], key)
+				this.storage.setObject(key, {items});
 			}
 		}
 

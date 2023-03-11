@@ -3,6 +3,7 @@ namespace Bitrix\ImConnector\Provider\ImConnectorServer;
 
 use Bitrix\Main\Text\Encoding;
 
+use Bitrix\ImConnector\DeliveryMark;
 use Bitrix\ImConnector\Error;
 use Bitrix\ImConnector\Result;
 use Bitrix\ImConnector\Converter;
@@ -58,7 +59,7 @@ class Input extends Base\Input
 	{
 		$result = new Result();
 
-		if ($params['BX_HASH'] === '')
+		if (!isset($params['BX_HASH']) || empty($params['BX_HASH']))
 		{
 			$result->addError(new Error('Hash is empty', 'HASH_EMPTY', __METHOD__));
 		}
@@ -121,6 +122,24 @@ class Input extends Base\Input
 	{
 		$result = parent::receivingMessage();
 		$result->setData([]);
+
+		return $result;
+	}
+
+	protected function receivingStatusDelivery(): Result
+	{
+		$result = parent::receivingStatusDelivery();
+
+		if ($result->isSuccess())
+		{
+			foreach ($this->data as $messageData)
+			{
+				DeliveryMark::unsetDeliveryMark(
+					(int)$messageData['im']['message_id'],
+					(int)$messageData['im']['chat_id']
+				);
+			}
+		}
 
 		return $result;
 	}

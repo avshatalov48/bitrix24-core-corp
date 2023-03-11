@@ -51,17 +51,27 @@ class DocumentCreateTrigger extends BaseTrigger
 
 		if (static::isEnabled())
 		{
-			$result['TEMPLATE_LIST'] = [];
-			$result['TEMPLATE_LABEL'] = Loc::getMessage('CRM_AUTOMATION_TRIGGER_DOCUMENT_CREATE_TEMPLATE_LABEL');
 			$provider = DocumentGeneratorManager::getInstance()->getCrmOwnerTypeProvidersMap()[$entityTypeId];
 			if ($provider)
 			{
-				foreach (\Bitrix\DocumentGenerator\Model\TemplateTable::getListByClassName($provider) as $tpl)
-				{
-					$result['TEMPLATE_LIST'][] = ['ID' => $tpl['ID'], 'NAME' => $tpl['NAME']];
-				}
+				$result['SETTINGS']['Properties'] = [
+					[
+						'Id' => 'TEMPLATE_ID',
+						'Name' => Loc::getMessage('CRM_AUTOMATION_TRIGGER_DOCUMENT_CREATE_TEMPLATE_LABEL'),
+						'Type' => 'select',
+						'EmptyValueText' => Loc::getMessage('CRM_AUTOMATION_TRIGGER_DOCUMENT_CREATE_TEMPLATE_ALL_LABEL'),
+						'Options' => array_map(
+							function($tpl)
+							{
+								return ['value' => $tpl['ID'], 'name' => $tpl['NAME']];
+							},
+							\Bitrix\DocumentGenerator\Model\TemplateTable::getListByClassName($provider)
+						),
+					],
+				];
 			}
 		}
+
 		return $result;
 	}
 

@@ -32,7 +32,7 @@ $arParams['SHOW_YEAR'] = $arParams['SHOW_YEAR'] == 'Y' ? 'Y' : ($arParams['SHOW_
 
 if (!isset($arParams['DATE_FORMAT']))
 {
-	$arParams['DATE_FORMAT'] = \Bitrix\Main\Context::getCurrent()->getCulture()->getLongDateFormat()();
+	$arParams['DATE_FORMAT'] = \Bitrix\Main\Context::getCurrent()->getCulture()->getLongDateFormat();
 }
 
 if (!isset($arParams['DATE_FORMAT_NO_YEAR']))
@@ -97,7 +97,7 @@ if ($arParams['bCache'])
 }
 
 $arResult['CURRENT_USER'] = array();
-
+$_REQUEST['department'] ??= null;
 $arResult['DEPARTMENT'] = $arParams['DEPARTMENT'] > 0 ? $arParams['DEPARTMENT'] : (intval($_REQUEST['department']) > 0 ? intval($_REQUEST['department']) : 0);
 
 if ($arParams['bCache'] && $arResult['DEPARTMENT'] > 0)

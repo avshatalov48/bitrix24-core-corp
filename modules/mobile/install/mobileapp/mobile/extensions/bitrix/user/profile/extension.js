@@ -660,7 +660,7 @@ jn.define("user/profile", (require, exports, module) => {
 							}
 							else if(item.id == "tasks")
 							{
-								BX.postComponentEvent('taskbackground::task::action', [{ownerId: this.userId}], 'background');
+								BX.postComponentEvent('taskbackground::taskList::open', [{ownerId: this.userId}], 'background');
 							}
 							else if(item.id == "messages")
 							{
@@ -677,10 +677,10 @@ jn.define("user/profile", (require, exports, module) => {
 			}
 		}
 
-		error()
+		error(e)
 		{
 			this.form.stopRefreshing();
-			super.error();
+			super.error(e);
 		}
 
 		onRefresh()

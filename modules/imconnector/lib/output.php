@@ -60,7 +60,7 @@ final class Output
 	/**
 	 * Output constructor.
 	 * @param string $connector ID connector.
-	 * @param string|bool $line ID open line.
+	 * @param int|bool $line ID open line.
 	 * @param bool $ignoreDeactivatedConnector
 	 */
 	public function __construct($connector, $line = false, $ignoreDeactivatedConnector = false)
@@ -170,7 +170,7 @@ final class Output
 	 */
 	public static function deleteLine($lineId): Result
 	{
-		Status::deleteAll($lineId);
+		Status::deleteAll((int)$lineId);
 
 		return self::__callStatic('deleteLine', [$lineId]);
 	}

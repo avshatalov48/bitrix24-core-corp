@@ -86,7 +86,7 @@ $counters = \CUserCounter::GetValues($USER->GetID(), SITE_ID);
 $counters = is_array($counters) ? $counters : [];
 
 $workgroupCounterData = [
-	'livefeed' => ($counters[\CUserCounter::LIVEFEED_CODE . 'SG0']),
+	'livefeed' => ($counters[\CUserCounter::LIVEFEED_CODE . 'SG0'] ?? ''),
 ];
 
 if (Loader::includeModule('tasks'))

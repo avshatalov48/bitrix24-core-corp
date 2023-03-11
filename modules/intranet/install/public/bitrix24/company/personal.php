@@ -173,7 +173,7 @@ $APPLICATION->IncludeComponent("bitrix:socialnetwork_user", ".default", Array(
 	// "CALENDAR_VIDEO_MEETING_USERGROUPS" => array("1"),
 	"TASK_FORUM_ID" => $GLOBAL_FORUM_ID["intranet_tasks"],//"#TASKS_FORUM_ID#",
 	"FILES_USER_IBLOCK_TYPE"	=>	"library",
-	"FILES_USER_IBLOCK_ID"	=> $GLOBAL_IBLOCK_ID["user_files"],//"#FILES_USER_IBLOCK_ID#",
+	"FILES_USER_IBLOCK_ID"	=> $GLOBAL_IBLOCK_ID["user_files"] ?? null,//"#FILES_USER_IBLOCK_ID#",
 	"FILES_USE_AUTH"	=>	"Y",
 	"NAME_FILE_PROPERTY"	=>	"FILE",
 	"FILES_UPLOAD_MAX_FILESIZE"	=>	"1024",

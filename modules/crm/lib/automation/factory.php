@@ -75,7 +75,7 @@ class Factory
 			$feature = 'crm_automation_' . mb_strtolower(\CCrmOwnerType::ResolveName($entityTypeId));
 			$is = Feature::isFeatureEnabled($feature);
 
-			if (!$is && self::isLimitationSupported() && in_array($entityTypeId, self::$limitedEntityTypes))
+			if (!$is && in_array($entityTypeId, self::$limitedEntityTypes))
 			{
 				$is = Feature::isFeatureEnabled($feature.'_limited');
 			}
@@ -171,11 +171,6 @@ class Factory
 		return self::$limitationCache[$entityTypeId] = ($triggersCnt + $robotsCnt > $limit);
 	}
 
-	private static function isLimitationSupported()
-	{
-		return method_exists(\Bitrix\Bizproc\Automation\Helper::class, 'countAllRobots');
-	}
-
 	public static function canUseBizprocDesigner()
 	{
 		if (Loader::includeModule('bitrix24'))
@@ -260,7 +255,7 @@ class Factory
 
 	private static function createAddContext(?Starter $starter = null): ?Bizproc\Runtime\Starter\Context
 	{
-		if (!$starter || !class_exists(Bizproc\Runtime\Starter\Context::class))
+		if (!$starter)
 		{
 			return null;
 		}

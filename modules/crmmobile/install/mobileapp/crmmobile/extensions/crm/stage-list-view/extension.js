@@ -321,6 +321,7 @@ jn.define('crm/stage-list-view', (require, exports, module) => {
 						showOnTop: true,
 						swipeContentAllowed: false,
 						horizontalSwipeAllowed: false,
+						navigationBarColor: '#eef2f4',
 					},
 				},
 			}, this.layout);
@@ -349,7 +350,7 @@ jn.define('crm/stage-list-view', (require, exports, module) => {
 					},
 					style: {
 						flexDirection: 'column',
-						backgroundColor: '#eef3f5',
+						backgroundColor: '#eef2f4',
 					},
 				},
 				category === null
@@ -446,6 +447,7 @@ jn.define('crm/stage-list-view', (require, exports, module) => {
 						forceDismissOnSwipeDown: true,
 						horizontalSwipeAllowed: false,
 						swipeContentAllowed: true,
+						navigationBarColor: '#eef2f4',
 					},
 				},
 			});

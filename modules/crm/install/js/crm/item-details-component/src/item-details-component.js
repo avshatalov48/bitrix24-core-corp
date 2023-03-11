@@ -1,4 +1,4 @@
-import { ajax as Ajax, Dom, Loc, Reflection, Tag, Text, Type, Uri } from "main.core";
+import { ajax as Ajax, Dom, Loc, Reflection, Tag, Text, Type, Uri, Runtime} from "main.core";
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { MessageBox, MessageBoxButtons } from "ui.dialogs.messagebox";
 import { StageFlow } from 'ui.stageflow';
@@ -26,6 +26,7 @@ export type ItemDetailsComponentParams = {
 	isStageFlowActive: ?boolean,
 	pullTag: ?string,
 	bizprocStarterConfig: ?Object,
+	automationCheckAutomationTourGuideData: ?Object,
 };
 
 declare type Category = {
@@ -62,6 +63,7 @@ export class ItemDetailsComponent
 	isStageFlowActive: ?boolean;
 	pullTag: ?string;
 	bizprocStarterConfig: ?Object;
+	automationCheckAutomationTourGuideData: ?Object;
 
 	constructor(params: ItemDetailsComponentParams): void
 	{
@@ -104,6 +106,11 @@ export class ItemDetailsComponent
 			this.isStageFlowActive = params.isStageFlowActive;
 			this.pullTag = params.pullTag;
 			this.bizprocStarterConfig = params.bizprocStarterConfig;
+			this.automationCheckAutomationTourGuideData =
+				Type.isPlainObject(params.automationCheckAutomationTourGuideData)
+					? params.automationCheckAutomationTourGuideData
+					: null
+			;
 
 			this.isPageTitleEditable = Boolean(params.isPageTitleEditable);
 		}
@@ -215,6 +222,7 @@ export class ItemDetailsComponent
 		{
 			this.initPageTitleButtons();
 			this.initPull();
+			this.initTours();
 		}
 	}
 
@@ -738,6 +746,26 @@ export class ItemDetailsComponent
 			{
 				window.location.reload();
 			}
+		}
+	}
+
+	initTours()
+	{
+		if (this.automationCheckAutomationTourGuideData)
+		{
+			Runtime.loadExtension('bizproc.automation.guide')
+				.then((exports) => {
+					const {CrmCheckAutomationGuide} = exports;
+					if (CrmCheckAutomationGuide)
+					{
+						CrmCheckAutomationGuide.showCheckAutomation(
+							this.entityTypeName,
+							this.categoryId ?? 0,
+							this.automationCheckAutomationTourGuideData['options']
+						);
+					}
+				})
+			;
 		}
 	}
 }

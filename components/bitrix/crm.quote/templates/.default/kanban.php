@@ -15,9 +15,10 @@ Loc::loadMessages($_SERVER['DOCUMENT_ROOT'].'/bitrix/components/bitrix/crm.quote
 Loc::loadMessages($_SERVER['DOCUMENT_ROOT'].'/bitrix/components/bitrix/crm.quote.list/templates/.default/template.php');
 
 // if not isset
-$arResult['PATH_TO_QUOTE_EDIT'] = isset($arResult['PATH_TO_QUOTE_EDIT']) ? $arResult['PATH_TO_QUOTE_EDIT'] : '';
-$arResult['PATH_TO_QUOTE_LIST'] = isset($arResult['PATH_TO_QUOTE_LIST']) ? $arResult['PATH_TO_QUOTE_LIST'] : '';
-$arResult['PATH_TO_QUOTE_KANBAN'] = isset($arResult['PATH_TO_QUOTE_KANBAN']) ? $arResult['PATH_TO_QUOTE_KANBAN'] : '';
+$arResult['PATH_TO_QUOTE_EDIT'] = $arResult['PATH_TO_QUOTE_EDIT'] ?? '';
+$arResult['PATH_TO_QUOTE_LIST'] = $arResult['PATH_TO_QUOTE_LIST'] ?? '';
+$arResult['PATH_TO_QUOTE_KANBAN'] = $arResult['PATH_TO_QUOTE_KANBAN'] ?? '';
+$arResult['PATH_TO_QUOTE_DEADLINES'] = $arResult['PATH_TO_QUOTE_DEADLINES'] ?? '';
 $arResult['PATH_TO_QUOTE_DETAILS'] = $arResult['PATH_TO_QUOTE_DETAILS'] ?? '';
 
 // csv and excel delegate to list
@@ -100,7 +101,8 @@ else
 				->setItems([
 					NavigationBarPanel::ID_AUTOMATION,
 					NavigationBarPanel::ID_KANBAN,
-					NavigationBarPanel::ID_LIST
+					NavigationBarPanel::ID_LIST,
+					NavigationBarPanel::ID_DEADLINES
 				], NavigationBarPanel::ID_KANBAN)
 				->setBinding($arResult['NAVIGATION_CONTEXT_ID'])
 				->get(),

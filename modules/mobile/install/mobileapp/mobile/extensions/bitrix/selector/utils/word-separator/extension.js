@@ -122,6 +122,11 @@
 
 			return result;
 		}
+
+		static hasEmojiWord(text)
+		{
+			return new RegExp(rsEmoji).test(text);
+		}
 	}
 
 	window.WordSeparator = WordSeparator;

@@ -13,6 +13,7 @@ else
 }
 
 use Bitrix\Intranet\UStat\UStat;
+use Bitrix\Main\Web\Uri;
 
 ?>
 
@@ -628,7 +629,7 @@ BX.ready(function(){
 											<?=nl2br(htmlspecialcharsbx($arResult['USERS_INFO'][$arParams['USER_ID']]['FULL_NAME']))?><!-- need br -->
 											<span class="pulse-info-user-img"
 											<? if(!empty($arResult['USERS_INFO'][$arParams['USER_ID']]['AVATAR_SRC'])): ?>
-												style="background: url('<?=$arResult['USERS_INFO'][$arParams['USER_ID']]['AVATAR_SRC']?>') no-repeat center center;"
+												style="background: url('<?=Uri::urnEncode($arResult['USERS_INFO'][$arParams['USER_ID']]['AVATAR_SRC'])?>') no-repeat center center;"
 											<? endif ?>></span>
 										</span>
 

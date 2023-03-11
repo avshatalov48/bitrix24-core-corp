@@ -265,6 +265,8 @@ class Item implements \IBPWorkflowDocument
 			{
 				$value[$i] = $map[$val];
 			}
+
+			$value = array_values($value);
 		}
 		else
 		{

@@ -8,9 +8,6 @@ return [
 	'css' => 'dist/timeline.bundle.css',
 	'js' => 'dist/timeline.bundle.js',
 	'rel' => [
-		'ui.notification',
-		'currency',
-		'ui.design-tokens',
 		'pull.client',
 		'crm.activity.todo-editor',
 		'crm.datetime',

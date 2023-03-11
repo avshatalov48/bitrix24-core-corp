@@ -1,6 +1,17 @@
 <?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 use Bitrix\Main\Localization\Loc;
+
+if (empty($arResult['INFO_CONNECTION']))
+{
+	$arResult['INFO_CONNECTION'] = [
+		'ID' => '',
+		'URL' => '',
+		'NAME' => '',
+		'ESHOP_URL' => '',
+	];
+}
+
 ?>
 <div class="imconnector-field-container">
 	<div class="imconnector-field-section">
@@ -28,7 +39,7 @@ use Bitrix\Main\Localization\Loc;
 				<span class="imconnector-field-box-entity-icon-copy-to-clipboard"
 					  data-text="<?=htmlspecialcharsbx(CUtil::JSEscape($arResult['INFO_CONNECTION']['URL']))?>"></span>
 			</div>
-			<?php if ($arResult['INFO_CONNECTION']['ESHOP_URL']):?>
+			<?php if (!empty($arResult['INFO_CONNECTION']['ESHOP_URL'])):?>
 			<div class="imconnector-field-box-entity-row">
 				<div class="imconnector-field-box-subtitle">
 					<?=Loc::getMessage('IMCONNECTOR_COMPONENT_TELEGRAMBOT_ESHOP_LINK')?>

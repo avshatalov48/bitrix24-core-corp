@@ -2,11 +2,12 @@
 
 return [
 	'extensions' => [
-		'utils/string',
-		'utils/url',
 		'crm:in-app-url/routes',
-		'in-app-url/route',
+		'utils/url',
+		'utils/string',
 		'in-app-url/url',
+		'in-app-url/route',
+		'in-app-url/routes',
 	],
 	'bundle' => [
 		'./in-app-url',

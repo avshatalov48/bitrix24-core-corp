@@ -515,6 +515,15 @@ abstract class Kanban
 				]);
 			}
 
+			// Pass symantic param to the deadlines view for correct filter works
+			if (
+				$this->viewMode === \Bitrix\Crm\Kanban\ViewMode::MODE_DEADLINES &&
+				!empty($this->allowSemantics) &&
+				is_array($this->allowSemantics) &&
+				$this->entity instanceof \Bitrix\Crm\Kanban\Entity\Dynamic
+			) {
+				$filter['STAGE_SEMANTIC_ID'] = $this->allowSemantics;
+			}
 			//get sums and counts
 			$this->entity->fillStageTotalSums($filter, $runtime, $columns);
 		}
@@ -1248,6 +1257,15 @@ abstract class Kanban
 			$parameters['runtime'] = $runtime;
 		}
 
+		// Pass symantic param to the deadlines view for correct filter works
+		if (
+			$this->viewMode === \Bitrix\Crm\Kanban\ViewMode::MODE_DEADLINES &&
+			!empty($this->allowSemantics) &&
+			is_array($this->allowSemantics) &&
+			$this->entity instanceof \Bitrix\Crm\Kanban\Entity\Dynamic
+		) {
+			$parameters['filter']['STAGE_SEMANTIC_ID'] = $this->allowSemantics;
+		}
 		$res = $this->entity->getItems($parameters);
 
 		$rows = [];

@@ -29,7 +29,7 @@ export default Vue.extend({
 			if (this.authorImageUrl)
 			{
 				return {
-					backgroundImage: "url('" + this.authorImageUrl + "')",
+					backgroundImage: "url('" + encodeURI(this.authorImageUrl) + "')",
 					backgroundSize: '21px',
 				}
 			}

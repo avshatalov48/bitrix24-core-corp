@@ -41,10 +41,12 @@ final class File implements \JsonSerializable
 			return null;
 		}
 
+		$fileName = $fileInfo['ORIGINAL_NAME'] ?: $fileInfo['FILE_NAME'];
+
 		return new self(
 			$fileId,
-			$fileInfo['FILE_NAME'],
-			MimeType::getByFilename($fileInfo['ORIGINAL_NAME']),
+			$fileName,
+			MimeType::getByFilename($fileName),
 			$fileInfo['SRC'],
 			(int)$fileInfo['WIDTH'],
 			(int)$fileInfo['HEIGHT'],

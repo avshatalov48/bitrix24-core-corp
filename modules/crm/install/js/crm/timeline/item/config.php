@@ -11,6 +11,7 @@ return [
 	'rel' => [
 		'ui.notification',
 		'ui.dialogs.messagebox',
+		'crm.activity.file-uploader-popup',
 		'crm.timeline.tools',
 		'crm.datetime',
 		'main.popup',

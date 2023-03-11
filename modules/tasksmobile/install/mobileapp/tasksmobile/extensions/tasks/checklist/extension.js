@@ -270,6 +270,8 @@ jn.define('tasks/checklist', (require, exports, module) => {
 			}
 
 			this.updateIndexes();
+
+			return item;
 		}
 
 		removeListItem()

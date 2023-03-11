@@ -135,21 +135,40 @@ class Http
 
 	/**
 	 * @param string $type
-	 * @param string $str
+	 * @param array $params
 	 * @return string
 	 */
-	public static function requestSign($type, $str)
+	public static function requestSign(string $type, array $params): string
 	{
+		$sign = '';
+
+		$params2 = [];
+		foreach ($params as $val)
+		{
+			if (is_array($val))
+			{
+				$params2[] = 'Array';
+			}
+			else
+			{
+				$params2[] = $val;
+			}
+		}
+
+		$str = \md5(implode('|', $params2));
+
 		if ($type == self::TYPE_BITRIX24 && function_exists('bx_sign'))
 		{
-			return \bx_sign($str);
+			$sign = \bx_sign($str);
 		}
 		else
 		{
 			include($_SERVER["DOCUMENT_ROOT"]."/bitrix/license_key.php");
 			/** @global string $LICENSE_KEY */
-			return md5($str.md5($LICENSE_KEY));
+			$sign = \md5($str. \md5($LICENSE_KEY));
 		}
+
+		return $sign;
 	}
 
 	/**
@@ -192,7 +211,7 @@ class Http
 		$params['BX_VERSION'] = Main\ModuleManager::getVersion('imbot');
 		$params['BX_LANG'] = \Bitrix\Main\Localization\Loc::getCurrentLang();
 		$params = \Bitrix\Main\Text\Encoding::convertEncoding($params, SITE_CHARSET, 'UTF-8');
-		$params['BX_HASH'] = self::requestSign($this->type, md5(implode('|', $params)));
+		$params['BX_HASH'] = self::requestSign($this->type, $params);
 
 		$waitResponse = $waitResponse ? true : (bool)Option::get('imbot', 'wait_response', false);
 

@@ -16,7 +16,7 @@ export const User = {
 			}
 
 			return {
-				backgroundImage: "url('" + Text.encode(this.imageUrl) + "')",
+				backgroundImage: "url('" + encodeURI(Text.encode(this.imageUrl)) + "')",
 				backgroundSize: '21px'
 			};
 		},

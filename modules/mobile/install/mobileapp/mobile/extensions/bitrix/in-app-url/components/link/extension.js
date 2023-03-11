@@ -12,6 +12,7 @@ jn.define('in-app-url/components/link', (require, exports, module) => {
 	 *     context: object,
 	 *     style: object,
 	 *     containerStyle: object,
+	 *     testId?: string,
 	 *     renderContent: function|null,
 	 * }} props
 	 * @return {LayoutComponent}
@@ -24,11 +25,13 @@ jn.define('in-app-url/components/link', (require, exports, module) => {
 			context,
 			style,
 			containerStyle,
+			testId,
 			renderContent,
 		} = props;
 
 		return View(
 			{
+				testId,
 				style: containerStyle || {},
 				onClick: () => {
 					// @todo We probably need some hooks here

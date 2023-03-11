@@ -50,7 +50,7 @@ class ImConnectorConnectorSettings extends \CBitrixComponent
 			}
 			if(!Loader::includeModule('imconnector'))
 			{
-				ShowError(Loc::getMessage('IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_MODULE_IMCONNECTOR_NOT_INSTALLED'));
+				ShowError(Loc::getMessage('IMCONNECTOR_COMPONENT_CONNECTOR_SETTINGS_MODULE_IMCONNECTOR_NOT_INSTALLED_MSGVER_1'));
 			}
 		}
 
@@ -97,18 +97,22 @@ class ImConnectorConnectorSettings extends \CBitrixComponent
 		foreach ($result as $id => $config)
 		{
 			if (
-				$limit !== null &&
-				!isset($limit[$config['ID']]) &&
-				!in_array($config['MODIFY_USER_ID'], $allowedUserIds, false)
+				$limit !== null
+				&& !isset($limit[$config['ID']])
+				&& !in_array($config['MODIFY_USER_ID'], $allowedUserIds, false)
 			)
 			{
 				unset($result[$id]);
 				continue;
 			}
 
-			//getting status if connector is connected for the open line
-			$status = $statusList[$this->arResult['ID']][$config['ID']];
-			if (!empty($status) && ($status instanceof Status) && $status->isStatus())
+			// getting status if connector is connected for the open line
+			if (
+				isset($statusList[$this->arResult['ID']], $statusList[$this->arResult['ID']][$config['ID']])
+				&& ($status = $statusList[$this->arResult['ID']][$config['ID']])
+				&& ($status instanceof Status)
+				&& $status->isStatus()
+			)
 			{
 				$config['STATUS'] = 1;
 			}
@@ -117,16 +121,21 @@ class ImConnectorConnectorSettings extends \CBitrixComponent
 				$config['STATUS'] = 0;
 			}
 
-			//getting connected channel name
+			// getting connected channel name
 			$channelInfo = $infoConnectors[$config['ID']];
+			$channelName = '';
 			try
 			{
-				$channelData = JSON::decode($channelInfo['DATA']);
-				$channelName = trim($channelData[$this->arResult['ID']]['name']);
+				if (
+					($channelData = JSON::decode($channelInfo['DATA']))
+					&& !empty($channelData[$this->arResult['ID']]['name'])
+				)
+				{
+					$channelName = trim($channelData[$this->arResult['ID']]['name']);
+				}
 			}
-			catch (\Exception $exception)
+			catch (\Bitrix\Main\SystemException $exception)
 			{
-				$channelName = '';
 			}
 
 			if (!empty($channelName))
@@ -139,11 +148,11 @@ class ImConnectorConnectorSettings extends \CBitrixComponent
 				$config['NAME'] .= " ({$connectedMessage})";
 			}
 
-			if(empty($this->arResult['LINE']) && $id === 0)
+			if (empty($this->arResult['LINE']) && $id === 0)
 			{
 				$config['ACTIVE'] = true;
 			}
-			elseif(!empty($this->arResult['LINE']) && $config['ID'] == $this->arResult['LINE'])
+			elseif (!empty($this->arResult['LINE']) && $config['ID'] == $this->arResult['LINE'])
 			{
 				$config['ACTIVE'] = true;
 			}
@@ -186,7 +195,7 @@ class ImConnectorConnectorSettings extends \CBitrixComponent
 				$config['URL'] = $uri->getUri();
 			}
 
-			if(!empty($config['ACTIVE']))
+			if (!empty($config['ACTIVE']))
 			{
 				$this->arResult['ACTIVE_LINE'] = $config;
 
@@ -305,7 +314,7 @@ class ImConnectorConnectorSettings extends \CBitrixComponent
 				}
 				else
 				{
-					$this->arResult['CAN_CHANGE_USERS'] = Config::canEditLine($this->arResult['ACTIVE_LINE']['ID']);
+					$this->arResult['CAN_CHANGE_USERS'] = Config::canEditLine($this->request['LINE']);
 					$this->userPermissions = Permissions::createWithCurrentUser();
 
 					if (!empty($this->request['LINE']))
@@ -383,8 +392,7 @@ class ImConnectorConnectorSettings extends \CBitrixComponent
 					|| !empty($this->arResult['URL_RELOAD'])
 				)
 				{
-					CMain::FinalActions();
-					die();
+					\CMain::FinalActions();
 				}
 			}
 			else

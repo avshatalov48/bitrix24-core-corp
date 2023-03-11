@@ -414,9 +414,9 @@ abstract class ItemDetail extends Base implements Controllerable
 
 		$data = [
 			'ID' => $this->item->getId(),
-			'CREATED_TIME' => $this->item->getCreatedTime(),
-			'UPDATED_TIME' => $this->item->getUpdatedTime(),
-			'MOVED_TIME' => $this->item->getMovedTime(),
+			'CREATED_TIME' => (string) $this->item->getCreatedTime(),
+			'UPDATED_TIME' => (string) $this->item->getUpdatedTime(),
+			'MOVED_TIME' => (string) $this->item->getMovedTime(),
 		];
 
 		foreach(['CREATED_BY', 'MOVED_BY', 'UPDATED_BY'] as $fieldName)

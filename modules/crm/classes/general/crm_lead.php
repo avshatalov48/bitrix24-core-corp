@@ -13,6 +13,7 @@ use Bitrix\Crm\Integration\PullManager;
 use Bitrix\Crm\Integrity\DuplicateCommunicationCriterion;
 use Bitrix\Crm\Integrity\DuplicateIndexMismatch;
 use Bitrix\Crm\Integrity\DuplicateManager;
+use Bitrix\Crm\Kanban\ViewMode;
 use Bitrix\Crm\Tracking;
 use Bitrix\Crm\UserField\Visibility\VisibilityManager;
 use Bitrix\Crm\UtmTable;
@@ -33,6 +34,8 @@ class CAllCrmLead
 
 	public $LAST_ERROR = '';
 	protected $checkExceptions = array();
+
+	private static ?\Bitrix\Crm\Entity\Compatibility\Adapter $lastActivityAdapter = null;
 
 	/** @var \Bitrix\Crm\Entity\Compatibility\Adapter */
 	private $compatibilityAdapter;
@@ -133,6 +136,18 @@ class CAllCrmLead
 		$compatibilityAdapter->addChild($addressAdapter);
 
 		return $compatibilityAdapter;
+	}
+
+	private static function getLastActivityAdapter(): Crm\Entity\Compatibility\Adapter
+	{
+		if (!self::$lastActivityAdapter)
+		{
+			$factory = Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::Lead);
+			self::$lastActivityAdapter = new Crm\Entity\Compatibility\Adapter\LastActivity($factory);
+			self::$lastActivityAdapter->setTableAlias(self::TABLE_ALIAS);
+		}
+
+		return self::$lastActivityAdapter;
 	}
 
 	// Service -->
@@ -350,6 +365,7 @@ class CAllCrmLead
 				self::$FIELD_INFOS += UtmTable::getUtmFieldsInfo();
 
 				self::$FIELD_INFOS += Crm\Service\Container::getInstance()->getParentFieldManager()->getParentFieldsInfo(\CCrmOwnerType::Lead);
+				self::$FIELD_INFOS += self::getLastActivityAdapter()->getFieldsInfo();
 			}
 		}
 
@@ -512,6 +528,8 @@ class CAllCrmLead
 				'L'
 			)
 		);
+
+		$result += self::getLastActivityAdapter()->getFields();
 
 		return $result;
 	}
@@ -1448,18 +1466,33 @@ class CAllCrmLead
 			$arFields['MOVED_TIME'] = (new \Bitrix\Main\Type\DateTime())->toString();
 		}
 
+		self::getLastActivityAdapter()->performAdd($arFields, $options);
+
+		$permissionTypeId = (
+			$this->bCheckPermission
+				? Bitrix\Crm\Security\EntityPermissionType::CREATE
+				: Bitrix\Crm\Security\EntityPermissionType::UNDEFINED
+		);
+
 		if(!isset($arFields['STATUS_ID']) || (string)$arFields['STATUS_ID'] === '')
 		{
-			$arFields['STATUS_ID'] = self::GetStartStatusID(
-				$this->bCheckPermission
-					? Bitrix\Crm\Security\EntityPermissionType::CREATE
-					: Bitrix\Crm\Security\EntityPermissionType::UNDEFINED
-			);
+			$arFields['STATUS_ID'] = self::GetStartStatusID($permissionTypeId);
 		}
 
-		$arFields['STATUS_SEMANTIC_ID'] = self::IsStatusExists($arFields['STATUS_ID'])
+		$viewMode = ($options['ITEM_OPTIONS']['VIEW_MODE'] ?? null);
+
+		$viewModeActivitiesStatusId = null;
+		if ($viewMode === ViewMode::MODE_ACTIVITIES)
+		{
+			$viewModeActivitiesStatusId = $arFields['STATUS_ID'];
+			$arFields['STATUS_ID'] = self::GetStartStatusID($permissionTypeId);
+		}
+
+		$isStatusExist = self::IsStatusExists($arFields['STATUS_ID']);
+		$arFields['STATUS_SEMANTIC_ID'] = $isStatusExist
 			? self::GetSemanticID($arFields['STATUS_ID'])
-			: Bitrix\Crm\PhaseSemantics::UNDEFINED;
+			: Bitrix\Crm\PhaseSemantics::UNDEFINED
+		;
 
 		if (isset($arFields['DATE_CLOSED']))
 			unset($arFields['DATE_CLOSED']);
@@ -1832,16 +1865,20 @@ class CAllCrmLead
 				)
 			);
 
-			CCrmSonetSubscription::RegisterSubscription(
-				CCrmOwnerType::Lead,
-				$ID,
-				CCrmSonetSubscriptionType::Responsibility,
-				$assignedByID
-			);
-			$logEventID = CCrmLiveFeed::CreateLogEvent($liveFeedFields, CCrmLiveFeedEvent::Add, array('CURRENT_USER' => $userID));
+			if (Crm\Settings\Crm::isLiveFeedRecordsGenerationEnabled())
+			{
+				CCrmSonetSubscription::RegisterSubscription(
+					CCrmOwnerType::Lead,
+					$ID,
+					CCrmSonetSubscriptionType::Responsibility,
+					$assignedByID
+				);
+			}
+
+			$logEventID = CCrmLiveFeed::CreateLogEvent($liveFeedFields, CCrmLiveFeedEvent::Add, ['CURRENT_USER' => $userID]);
 
 			if (
-				$logEventID
+				$logEventID !== false
 				&& $assignedByID != $createdByID
 				&& CModule::IncludeModule("im")
 				&& \Bitrix\Crm\Settings\LeadSettings::isEnabled()
@@ -1886,6 +1923,23 @@ class CAllCrmLead
 
 		if ($ID>0)
 		{
+			if (
+				$viewMode === ViewMode::MODE_ACTIVITIES
+				&& $viewModeActivitiesStatusId
+			)
+			{
+				$deadline = (new Crm\Kanban\EntityActivityDeadline())->getDeadline($viewModeActivitiesStatusId);
+
+				if ($deadline)
+				{
+					\Bitrix\Crm\Activity\Entity\ToDo::createWithDefaultDescription(
+						\CCrmOwnerType::Lead,
+						$ID,
+						$deadline
+					);
+				}
+			}
+
 			$item = Crm\Kanban\Entity::getInstance(self::$TYPE_NAME)
 				->createPullItem($arFields);
 
@@ -2281,6 +2335,9 @@ class CAllCrmLead
 				$removedObserverIDs = array_diff($originalObserverIDs, $observerIDs);
 			}
 			//endregion
+
+			self::getLastActivityAdapter()->performUpdate((int)$ID, $arFields, $options);
+
 			//
 			$sonetEventData = array();
 			if ($bCompare)
@@ -2790,7 +2847,11 @@ class CAllCrmLead
 			//region Social network
 			$registerSonetEvent = isset($options['REGISTER_SONET_EVENT']) && $options['REGISTER_SONET_EVENT'] === true;
 
-			if($bResult && isset($arFields['ASSIGNED_BY_ID']))
+			if (
+				$bResult
+				&& isset($arFields['ASSIGNED_BY_ID'])
+				&& Crm\Settings\Crm::isLiveFeedRecordsGenerationEnabled()
+			)
 			{
 				CCrmSonetSubscription::ReplaceSubscriptionByEntity(
 					CCrmOwnerType::Lead,
@@ -2812,10 +2873,10 @@ class CAllCrmLead
 					$sonetEventFields['ENTITY_ID'] = $ID;
 					$sonetEventFields['USER_ID'] = $modifiedByID;
 
-					$logEventID = CCrmLiveFeed::CreateLogEvent($sonetEventFields, $sonetEvent['TYPE'], array('CURRENT_USER' => $iUserId));
+					$logEventID = CCrmLiveFeed::CreateLogEvent($sonetEventFields, $sonetEvent['TYPE'], ['CURRENT_USER' => $iUserId]);
 
 					if (
-						$logEventID
+						$logEventID !== false
 						&& CModule::IncludeModule("im")
 						&& \Bitrix\Crm\Settings\LeadSettings::isEnabled()
 					)
@@ -3230,6 +3291,7 @@ class CAllCrmLead
 			[
 				'TYPE' => self::$TYPE_NAME,
 				'SKIP_CURRENT_USER' => false,
+				'EVENT_ID' => ($arOptions['eventId'] ?? null),
 			]
 		);
 

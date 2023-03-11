@@ -18,6 +18,7 @@ return [
 		'crm:entity-detail/component/menu-provider',
 		'layout/ui/detail-card/tabs/factory/type',
 		'layout/ui/empty-screen',
+		'layout/pure-component',
 		'layout/ui/simple-list/view-mode',
 		'pull/client/events',
 		'utils/random',

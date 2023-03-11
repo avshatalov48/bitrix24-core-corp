@@ -42,10 +42,6 @@
 	flex-shrink: 0;
 }
 
-.bx-ie .crm-analytics-source-icon.ui-icon {
-	width: 95px;
-}
-
 .crm-analytics-source-empty-text {
 	color: #333;
 	opacity: .4;

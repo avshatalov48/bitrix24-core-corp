@@ -21,7 +21,26 @@ class Quote extends Entity
 
 	public function getItemsSelectPreset(): array
 	{
-		return ['ID', 'STATUS_ID', 'TITLE', 'DATE_CREATE', 'BEGINDATE', 'CLOSEDATE', 'OPPORTUNITY', 'OPPORTUNITY_ACCOUNT', 'CURRENCY_ID', 'ACCOUNT_CURRENCY_ID', 'CONTACT_ID', 'COMPANY_ID', 'MODIFY_BY_ID', 'ASSIGNED_BY', 'QUOTE_NUMBER'];
+		return [
+			'ID',
+			'STATUS_ID',
+			'TITLE',
+			'DATE_CREATE',
+			'BEGINDATE',
+			'CLOSEDATE',
+			'OPPORTUNITY',
+			'OPPORTUNITY_ACCOUNT',
+			'CURRENCY_ID',
+			'ACCOUNT_CURRENCY_ID',
+			'CONTACT_ID',
+			'COMPANY_ID',
+			'MODIFY_BY_ID',
+			'ASSIGNED_BY',
+			'QUOTE_NUMBER',
+			Item::FIELD_NAME_LAST_ACTIVITY_TIME,
+			Item::FIELD_NAME_LAST_ACTIVITY_BY,
+			'ACTUAL_DATE'
+		];
 	}
 
 	protected function getDetailComponentName(): ?string

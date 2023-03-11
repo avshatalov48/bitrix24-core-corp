@@ -20,8 +20,8 @@ class Custom extends PresetAbstract
 			, ['allowed_classes' => false]
 		);
 		return is_array($structure) ? [
-			'shown' => is_array($structure['show']) ? $structure['show'] : [],
-			'hidden' => is_array($structure['hide']) ? $structure['hide'] : []
+			'shown' => isset($structure['show']) && is_array($structure['show']) ? $structure['show'] : [],
+			'hidden' => isset($structure['hide']) && is_array($structure['hide']) ? $structure['hide'] : []
 		] : [];
 	}
 
@@ -53,7 +53,7 @@ class Custom extends PresetAbstract
 				'ID' => $itemData['ID'],
 				'TEXT' => $itemData['TEXT'],
 				'LINK' => $itemData['LINK'],
-				'COUNTER_ID' => $itemData['COUNTER_ID'],
+				'COUNTER_ID' => $itemData['COUNTER_ID'] ?? null,
 				'SUB_LINK' => $itemData['SUB_LINK'] ?? null,
 				'NEW_PAGE' => $itemData['NEW_PAGE'] ?? null,
 				'ADDITIONAL_LINKS' => $itemData['ADDITIONAL_LINKS'] ?? [],

@@ -1,6 +1,8 @@
 import {Loc, Tag, Event, Text} from 'main.core';
 import {EventEmitter} from 'main.core.events';
 
+import {Culture} from './culture';
+
 export type CreatedEventType = {
 	id: number,
 	name: string,
@@ -15,6 +17,8 @@ export class CreatedEvent extends EventEmitter
 	constructor()
 	{
 		super();
+
+		this.setEventNamespace('BX.Tasks.Scrum.CreatedEvent');
 
 		this.node = null;
 	}
@@ -109,7 +113,9 @@ export class CreatedEvent extends EventEmitter
 	getFormattedTime(from: number, to: number): string
 	{
 		/* eslint-disable */
-		return `${BX.date.format('H:i', from, null, true)} - ${BX.date.format('H:i', to, null, true)}`
+		return `${BX.date.format(Culture.getInstance().getShortTimeFormat(), from, null, true)
+			} - ${BX.date.format(Culture.getInstance().getShortTimeFormat(), to, null, true)}`
+		;
 		/* eslint-enable */
 	}
 }

@@ -25,6 +25,7 @@ $MESS["IMCONNECTOR_ERROR_PROVIDER_UNSUPPORTED_TYPE_INCOMING_MESSAGE"] = 'Unsuppo
 $MESS["IMCONNECTOR_ERROR_PUBLIC_URL_ANSWER_MALFORMED"] = "Error verifying public site address: unrecognized server response";
 $MESS["IMCONNECTOR_ERROR_PUBLIC_URL_CONNECT_ERROR"] = "Error verifying public site address: cannot connect";
 $MESS["IMCONNECTOR_ERROR_PUBLIC_URL_EMPTY"] = "Please provide the public site address in the \"External Messenger Connectors\" module settings";
+$MESS["IMCONNECTOR_ERROR_PUBLIC_URL_EMPTY_MSGVER_1"] = "Please provide the public site address in the \"External Messenger Connectors\" module settings";
 $MESS["IMCONNECTOR_ERROR_PUBLIC_URL_FAIL"] = "The public site address you specified is not available (code: #ERROR#)";
 $MESS["IMCONNECTOR_ERROR_PUBLIC_URL_HANDLER_PATH"] = "Cannot find handler file in the public area. Required file: #PATH#";
 $MESS["IMCONNECTOR_ERROR_PUBLIC_URL_LOCALHOST"] = "Public site address resolves to a local host: #HOST#";

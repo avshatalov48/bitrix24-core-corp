@@ -1,28 +1,7 @@
 import { DatetimeConverter } from "crm.timeline.tools";
-import {TodoEditorActionBtn} from './todo-editor-action-btn';
-import {DateTimeFormat} from "main.date";
-import {Dom, Browser} from 'main.core';
-
-const exampleAdditionalButtons = [
-	{
-		id: 'attach',
-		action: {},
-		icon: 'attach',
-		description: 'Attach file',
-	},
-	{
-		id: 'attach-2',
-		action: {},
-		icon: 'attach-2',
-		description: 'Attach document',
-	},
-	{
-		id: 'micro',
-		action: {},
-		icon: 'micro',
-		description: 'Record audio',
-	},
-];
+import { TodoEditorActionBtn } from './todo-editor-action-btn';
+import { DateTimeFormat } from "main.date";
+import { Dom, Browser } from 'main.core';
 
 export const TodoEditor = {
 	components: {
@@ -38,24 +17,21 @@ export const TodoEditor = {
 			required: false,
 			default: '',
 		},
+		additionalButtons: Array,
 	},
 	data(): Object
 	{
 		return {
 			description: this.defaultDescription,
-			currentDeadline: this.deadline ?? new Date()
+			currentDeadline: this.deadline ?? new Date(),
+			showFileUploader: false
 		}
 	},
 	computed: {
 		deadlineFormatted(): string
 		{
 			return (new DatetimeConverter(this.currentDeadline)).toDatetimeString({ withDayOfWeek: true, delimiter:', ' });
-		},
-
-		exampleAdditionalButtons() {
-			return [];
-			//return exampleAdditionalButtons;
-		},
+		}
 	},
 	methods: {
 		clearDescription(): void
@@ -63,16 +39,19 @@ export const TodoEditor = {
 			this.description = '';
 			Dom.style(this.$refs.textarea, 'height', 'auto');
 		},
+
 		setDescription(description): void
 		{
 			this.description = description;
 			Dom.style(this.$refs.textarea, 'height', 'auto');
 			Dom.style(this.$refs.textarea, 'height', `${this.$refs.textarea.scrollHeight}px`);
 		},
+
 		onTextareaFocus(): void
 		{
 			this.onFocus();
 		},
+
 		onTextareaKeydown(event): void
 		{
 			if (
@@ -86,10 +65,12 @@ export const TodoEditor = {
 				this.onSaveHotkeyPressed();
 			}
 		},
+
 		setTextareaFocused(): void
 		{
 			this.$refs.textarea.focus();
 		},
+
 		onDeadlineClick(): void
 		{
 			BX.calendar({
@@ -101,10 +82,12 @@ export const TodoEditor = {
 				callback: this.setDeadlineValue.bind(this)
 			});
 		},
+
 		setDeadlineValue(newDeadline): void
 		{
 			this.currentDeadline = newDeadline;
 		},
+
 		getData(): Object
 		{
 			return {
@@ -112,15 +95,16 @@ export const TodoEditor = {
 				deadline: this.currentDeadline,
 			};
 		},
-		onTextareaInput(e) {
-			Dom.style(e.target, 'height', 'auto');
-			Dom.style(e.target, 'height', `${e.target.scrollHeight}px`);
 
-			this.description = e.target.value;
+		onTextareaInput(event)
+		{
+			Dom.style(event.target, 'height', 'auto');
+			Dom.style(event.target, 'height', `${event.target.scrollHeight}px`);
 
-			this.onChangeDescription(e.target.value);
-		},
+			this.description = event.target.value;
 
+			this.onChangeDescription(event.target.value);
+		}
 	},
 	template: `
 			<textarea 
@@ -143,12 +127,12 @@ export const TodoEditor = {
 			</div>
 			<div class="crm-activity__todo-editor_action-btns">
 				<TodoEditorActionBtn
-				v-for="btn in exampleAdditionalButtons"
-				:key="btn.id"
-				:icon="btn.icon"
-				:description="btn.description"
-				:action="btn.action"
-			/>
+					v-for="btn in additionalButtons"
+					:key="btn.id"
+					:icon="btn.icon"
+					:description="btn.description"
+					:action="btn.action"
+				/>
 			</div>
 	`
 };

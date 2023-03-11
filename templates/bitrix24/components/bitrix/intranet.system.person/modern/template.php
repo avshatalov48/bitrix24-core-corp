@@ -1,4 +1,7 @@
 <?
+
+use Bitrix\Main\Web\Uri;
+
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 
 $this->addExternalCss(SITE_TEMPLATE_PATH."/css/employee.css");
@@ -20,7 +23,7 @@ $user_action_menu_number = rand();
 	<td class="employee-table-info">
 		<div class="employee-info-block <? if (!in_array('PERSONAL_PHOTO', $arParams['USER_PROPERTY'])): ?> no-photo<? endif ?><? if (!$arUser['IS_ONLINE']): ?> employee-state-offline<? endif ?>">
 			<? if (in_array('PERSONAL_PHOTO', $arParams['USER_PROPERTY'])): ?>
-			<div class="user-avatar user-default-avatar" <?if ($arUser['PERSONAL_PHOTO_SOURCE']):?>style="background: url('<?=$arUser['PERSONAL_PHOTO_SOURCE']?>') no-repeat center center; background-size: cover;"<?endif;?>></div>
+			<div class="user-avatar user-default-avatar" <?if ($arUser['PERSONAL_PHOTO_SOURCE']):?>style="background: url('<?=Uri::urnEncode($arUser['PERSONAL_PHOTO_SOURCE'])?>') no-repeat center center; background-size: cover;"<?endif;?>></div>
 			<? endif ?>
 			<div class="employee-name<?=($arUser["EXTRANET"] ? ' employee-name-extranet' : '')?>"><a class="employee-name-link" href="<?=$arUser['DETAIL_URL']?>"><?=$name?></a><?if ($arResult['CAN_EDIT_USER'] || $arUser["ACTIVITY_STATUS"] != "inactive"):?><span class="employee-user-action" onclick="user_action_menu<?=$user_action_menu_number?>(this,<?=$arUser['ID'].rand()?>, <?=$arUser['ID']?>, '<?=($arUser["EXTRANET"] ? "1" : "0")?>')"></span><?endif?></div>
 			<div class="employee-post"><?=$arUser['WORK_POSITION']?></div>

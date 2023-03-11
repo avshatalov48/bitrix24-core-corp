@@ -36,7 +36,7 @@ class ImConnectorWhatsappByEdna extends \CBitrixComponent
 	{
 		if (!Loader::includeModule('imconnector'))
 		{
-			ShowError(Loc::getMessage('IMCONNECTOR_COMPONENT_WHATSAPPBYEDNA_MODULE_NOT_INSTALLED'));
+			ShowError(Loc::getMessage('IMCONNECTOR_COMPONENT_WHATSAPPBYEDNA_MODULE_NOT_INSTALLED_MSGVER_1'));
 
 			return false;
 		}
@@ -46,9 +46,9 @@ class ImConnectorWhatsappByEdna extends \CBitrixComponent
 
 	protected function initialization(): void
 	{
-		$this->connectorOutput = new Output($this->connector, $this->arParams['LINE']);
+		$this->connectorOutput = new Output($this->connector, (int)$this->arParams['LINE']);
 
-		$this->status = Status::getInstance($this->connector, $this->arParams['LINE']);
+		$this->status = Status::getInstance($this->connector, (int)$this->arParams['LINE']);
 
 		$this->arResult['STATUS'] = $this->status->isStatus();
 		$this->arResult['ACTIVE_STATUS'] = $this->status->getActive();
@@ -161,7 +161,7 @@ class ImConnectorWhatsappByEdna extends \CBitrixComponent
 							$this->status->setError(false);
 							$this->arResult['ERROR_STATUS'] = false;
 
-							Status::deleteLinesExcept($this->connector, $this->arParams['LINE']);
+							Status::deleteLinesExcept($this->connector, (int)$this->arParams['LINE']);
 						}
 						else
 						{
@@ -198,7 +198,7 @@ class ImConnectorWhatsappByEdna extends \CBitrixComponent
 							$this->error[] = Loc::getMessage('IMCONNECTOR_COMPONENT_SETTINGS_NO_DISABLE');
 						}
 
-						Status::delete($this->connector, $this->arParams['LINE']);
+						Status::delete($this->connector, (int)$this->arParams['LINE']);
 
 						//Reset cache
 						$this->cleanCache();
@@ -241,11 +241,11 @@ class ImConnectorWhatsappByEdna extends \CBitrixComponent
 
 				foreach ($this->listOptions as $value)
 				{
-					if(empty($this->arResult['FORM'][$value]))
+					if (empty($this->arResult['FORM'][$value]))
 					{
-						if(empty($result[$value]))
+						if (empty($result[$value]))
 						{
-							$this->arResult['FORM'][$value] = $result[$value];
+							$this->arResult['FORM'][$value] = $result[$value] ?? '';
 						}
 						else
 						{

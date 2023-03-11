@@ -153,13 +153,13 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 
 		$urls = [
 			'Security' => \CComponentEngine::MakePathFromTemplate($this->arParams['PATH_TO_USER_SECURITY'], [
-				"user_id" => $this->arParams["ID"]
+				"user_id" => (int) $this->arParams["ID"]
 			]),
 			'Passwords' => \CComponentEngine::MakePathFromTemplate($this->arParams['PATH_TO_USER_PASSWORDS'], [
-				'user_id' => $this->arParams['ID']
+				'user_id' => (int) $this->arParams['ID']
 			]),
 			'CommonSecurity' => \CComponentEngine::MakePathFromTemplate($this->arParams["PATH_TO_USER_COMMON_SECURITY"], [
-				'user_id' => $this->arParams['ID']
+				'user_id' => (int) $this->arParams['ID']
 			]),
 		];
 		if (Loader::includeModule('dav'))
@@ -208,6 +208,19 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 		{
 			$params['LIST_URL'] = Option::get('intranet', 'list_user_url', (Loader::includeModule('extranet') && \CExtranet::isExtranetSite() ? SITE_DIR.'contacts/' : SITE_DIR.'company/'), SITE_ID);
 		}
+
+		$params['PATH_TO_POST_EDIT_PROFILE'] ??= null;
+		$params['PATH_TO_POST_EDIT_GRAT'] ??= null;
+		$params['PATH_TO_USER_GRAT'] ??= null;
+		$params['CACHE_TIME'] ??= null;
+		$params['PATH_TO_CONPANY_DEPARTMENT'] ??= null;
+		$params['PATH_TO_USER_SECURITY'] ??= null;
+		$params['PATH_TO_USER_PASSWORDS'] ??= null;
+		$params['PATH_TO_USER_SYNCHRONIZE'] ??= null;
+		$params['PAGE_VAR'] ??= null;
+		$params['USER_VAR'] ??= null;
+		$params['PATH_TO_POST'] ??= null;
+		$params['PATH_TO_USER'] ??= null;
 
 		return $params;
 	}
@@ -299,7 +312,7 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 		}
 
 		$user["ONLINE_STATUS"] = \CUser::GetOnlineStatus($this->arParams["ID"],
-			MakeTimeStamp($user["LAST_ACTIVITY_DATE_FROM_DB"], "YYYY-MM-DD HH-MI-SS"));
+			MakeTimeStamp($user["LAST_ACTIVITY_DATE_FROM_DB"] ?? null, "YYYY-MM-DD HH-MI-SS"));
 
 		$user["SHOW_SONET_ADMIN"] = false;
 		if (

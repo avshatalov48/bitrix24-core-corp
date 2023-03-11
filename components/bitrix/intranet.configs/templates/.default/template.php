@@ -1,6 +1,7 @@
 <?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Bitrix24\Feature;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Location\Entity\Source\ConfigItem;
 use Bitrix\Location;
@@ -468,6 +469,21 @@ $APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
 			</td>
 			<td class="content-edit-form-field-error"></td>
 		</tr>
+
+		<?php
+			if (
+				Loader::includeModule('imconnector')
+				&& method_exists('\Bitrix\ImConnector\Connectors\Network', 'isSearchEnabled')
+			):
+		?>
+			<tr>
+				<td class="content-edit-form-field-name content-edit-form-field-name-left"><label for="allow_search_network"><?= GetMessage('CONFIG_ALLOW_SEARCH_NETWORK') ?></label></td>
+				<td class="content-edit-form-field-input">
+					<input type="checkbox" id="allow_search_network" name="allow_search_network" <?php if (\Bitrix\ImConnector\Connectors\Network::isSearchEnabled()): ?>checked<?php endif; ?> class="content-edit-form-field-input-selector"/>
+				</td>
+				<td class="content-edit-form-field-error"></td>
+			</tr>
+		<?php endif; ?>
 
 		<tr>
 			<td class="content-edit-form-field-name content-edit-form-field-name-left"><label for="allow_livefeed_toall"><?=GetMessage('CONFIG_ALLOW_TOALL')?></label></td>

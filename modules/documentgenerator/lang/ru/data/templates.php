@@ -1,4 +1,8 @@
 <?php
+
+$MESS['DOCGEN_TEMPLATE_NUMERATOR_EDM_RU_NAME'] = 'Соглашение ЭДО (Россия)';
+$MESS['DOCGEN_TEMPLATE_NUMERATOR_EDM_BY_NAME'] = 'Соглашение ЭДО (Беларусь)';
+
 $MESS['DOCGEN_TEMPLATE_ACT_RU_NAME'] = 'Акт (Россия)';
 $MESS['DOCGEN_TEMPLATE_BILL_RU_NAME'] = 'Счет (Россия)';
 $MESS['DOCGEN_TEMPLATE_CONTRACT_RU_NAME'] = 'Договор (Россия)';
@@ -14,6 +18,8 @@ $MESS['DOCGEN_TEMPLATE_STORE_DOC_STORE_ADJUSTMENT_RU_NAME'] = 'Акт об оп�
 $MESS['DOCGEN_TEMPLATE_STORE_DOC_ARRIVAL_RU_NAME'] = 'Приходная накладная (Россия)';
 $MESS['DOCGEN_TEMPLATE_STORE_DOC_MOVING_RU_NAME'] = 'Накладная о внутреннем перемещении (Россия)';
 $MESS['DOCGEN_TEMPLATE_SHIPMENT_DOC_REALIZATION_RU_NAME'] = 'Реализация товаров (Россия)';
+$MESS['DOCGEN_TEMPLATE_EDM_AGREEMENT_IND_RU_NAME'] = 'Соглашение ЭДО ФЛ (Россия)';
+$MESS['DOCGEN_TEMPLATE_EDM_AGREEMENT_ORG_RU_NAME'] = 'Соглашение ЭДО ЮЛ (Россия)';
 $MESS['DOCGEN_TEMPLATE_ACT_BY_NAME'] = 'Акт (Беларусь)';
 $MESS['DOCGEN_TEMPLATE_BILL_BY_NAME'] = 'Счет (Беларусь)';
 $MESS['DOCGEN_TEMPLATE_DOVER_BY_NAME'] = 'Доверенность (Беларусь)';
@@ -24,6 +30,8 @@ $MESS['DOCGEN_TEMPLATE_DOGOVOR_PODRYAD_BY_NAME'] = 'Договор подряд�
 $MESS['DOCGEN_TEMPLATE_DOGOVOR_PRODAZHA_BY_NAME'] = 'Договор продажи (Беларусь)';
 $MESS['DOCGEN_TEMPLATE_DOGOVOR_USLUGI_BY_NAME'] = 'Договор оказания услуг (Беларусь)';
 $MESS["DOCGEN_TEMPLATE_QUOTE_BY_NAME"] = 'Коммерческое предложение (Беларусь)';
+$MESS['DOCGEN_TEMPLATE_EDM_AGREEMENT_IND_BY_NAME'] = 'Соглашение ЭДО ФЛ (Беларусь)';
+$MESS['DOCGEN_TEMPLATE_EDM_AGREEMENT_ORG_BY_NAME'] = 'Соглашение ЭДО ЮЛ (Беларусь)';
 $MESS['DOCGEN_TEMPLATE_ACT_KZ_NAME'] = 'Акт (Казахстан)';
 $MESS['DOCGEN_TEMPLATE_BILL_KZ_NAME'] = 'Счет (Казахстан)';
 $MESS['DOCGEN_TEMPLATE_DOVER_KZ_NAME'] = 'Доверенность (Казахстан)';

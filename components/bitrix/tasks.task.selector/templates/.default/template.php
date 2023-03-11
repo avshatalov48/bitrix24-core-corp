@@ -160,7 +160,7 @@ $name = $arResult["NAME"];
 				<td class="finder-box-right-column" id="<?=$name?>_selected_tasks">
 					<div class="finder-box-selected-title">
 						<?=GetMessage("TASKS_TASKS_CURRENT_COUNT")?> (
-							<span id="<?=$name?>_current_count"><?=sizeof($arResult["CURRENT_TASKS"])?></span>
+							<span id="<?=$name?>_current_count"><?=sizeof($arResult["CURRENT_TASKS"] ?? [])?></span>
 						)</div>
 					<div class="finder-box-selected-items">
 						<?foreach ($arResult["CURRENT_TASKS"] as $task):

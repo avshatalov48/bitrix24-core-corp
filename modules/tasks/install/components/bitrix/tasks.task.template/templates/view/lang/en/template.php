@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["TASKS_ABOUT_DEADLINE"] = "Before deadline";
 $MESS["TASKS_ACCEPT_TASK"] = "Accept Task";
 $MESS["TASKS_ADD_BACK_TO_TASKS_LIST"] = "Back to Tasks";
@@ -191,7 +191,7 @@ $MESS["TASKS_TASK_TITLE"] = "Task name and description";
 $MESS["TASKS_TASK_TITLE_LABEL"] = "Task";
 $MESS["TASKS_TEMPLATES"] = "Templates";
 $MESS["TASKS_TEMPLATES_LIST"] = "All templates";
-$MESS["TASKS_TEMPLATE_COPY"] = "Copy Template";
+$MESS["TASKS_TEMPLATE_COPY"] = "Copy template";
 $MESS["TASKS_TEMPLATE_CREATE_SUB"] = "Add subtemplate";
 $MESS["TASKS_TEMPLATE_CREATE_TASK"] = "Create task on this template";
 $MESS["TASKS_TITLE"] = "Tasks";
@@ -207,4 +207,3 @@ $MESS["TASKS_TTV_TASK_INACCESSIBLE"] = "cannot view task";
 $MESS["TASKS_TTV_TEMPLATE_INACCESSIBLE"] = "cannot view template";
 $MESS["TASKS_TTV_TYPE_FOR_NEW_USER_HINT"] = "This template is used to create a task for each new registered user";
 $MESS["TASKS_TT_VIEW"] = "View Template ##ID#";
-?>

@@ -16,3 +16,8 @@ $MESS["SUPPORT_BOX_CHANGE_LINE_USER"] = "Здравствуйте, #USER_NAME#!
 Ваш уровень поддержки был изменен. Внимание: если вы писали нам вопрос ранее, пожалуйста, повторите его в этом чате, тогда мы его увидим.";
 $MESS["SUPPORT_BOX_START_DIALOG_M"] = "Диалог открыл #USER_FULL_NAME#";
 $MESS["SUPPORT_BOX_START_DIALOG_F"] = "Диалог открыла #USER_FULL_NAME#";
+$MESS["TELEMETRY_NO_CHECK_NEVER_BEEN_DONE"] = "Проверка системы не проводилась.";
+$MESS["TELEMETRY_ALL_OK"] = "Во время последней проверки системы #DATE# проблем не было обнаружено.";
+$MESS["TELEMETRY_ALL_FAIL_PLURAL_0"] = "Во время последней проверки системы #DATE# обнаружена #FAILS_COUNT# критическая ошибка.";
+$MESS["TELEMETRY_ALL_FAIL_PLURAL_1"] = "Во время последней проверки системы #DATE# обнаружены #FAILS_COUNT# критические ошибки.";
+$MESS["TELEMETRY_ALL_FAIL_PLURAL_2"] = "Во время последней проверки системы #DATE# обнаружено #FAILS_COUNT# критических ошибок.";

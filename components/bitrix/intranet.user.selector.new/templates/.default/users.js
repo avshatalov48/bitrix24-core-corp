@@ -244,7 +244,7 @@ IntranetUsers.prototype.show = function (sectionID, usersData, sectionPrefixName
 							className : "company-department-employee-avatar"
 						},
 						style : {
-							background : arEmployees[i].PHOTO ? "url('" + arEmployees[i].PHOTO + "') no-repeat center center" : "",
+							background : arEmployees[i].PHOTO ? "url('" + encodeURI(arEmployees[i].PHOTO) + "') no-repeat center center" : "",
 							backgroundSize: arEmployees[i].PHOTO ? "cover" : ""
 						}
 					}),

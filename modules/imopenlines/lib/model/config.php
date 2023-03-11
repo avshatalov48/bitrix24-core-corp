@@ -444,7 +444,15 @@ class ConfigTable extends Main\Entity\DataManager
 				'values' => ['N', 'Y'],
 				'title' => Loc::getMessage('CONFIG_ENTITY_SEND_WELCOME_EACH_SESSION'),
 				'default_value' => 'N',
-			])
+			]),
+			new BooleanField('CONFIRM_CLOSE', [
+				'values' => ['N', 'Y'],
+				'default_value' => 'N',
+			]),
+			new BooleanField('IGNORE_WELCOME_FORM_RESPONSIBLE', [
+				'values' => ['N', 'Y'],
+				'default_value' => 'N',
+			]),
 		];
 	}
 

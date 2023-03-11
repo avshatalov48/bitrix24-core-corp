@@ -520,7 +520,17 @@ jn.define('tasks/layout/task/create', (require, exports, module) => {
 					parentWidget: this.layoutWidget,
 					style: this.getStyleForField(TaskCreate.field.project),
 					deepMergeStyles: this.getDeepMergeStylesForField(),
-					onChange: (groupId, group) => this.task.updateData({groupId, group}),
+					onChange: (groupId, group) => {
+						this.task.updateData({groupId, group});
+						if (this.tagsRef)
+						{
+							this.tagsRef.updateState({
+								readOnly: this.state.readOnly,
+								tags: this.task.tags,
+								groupId: this.task.groupId,
+							});
+						}
+					},
 				}),
 				[TaskCreate.field.description]: new Description({
 					readOnly: this.state.readOnly,
@@ -632,9 +642,11 @@ jn.define('tasks/layout/task/create', (require, exports, module) => {
 					readOnly: this.state.readOnly,
 					tags: this.task.tags,
 					taskId: 0,
+					groupId: this.task.groupId,
 					parentWidget: this.layoutWidget,
 					style: this.getStyleForField(TaskCreate.field.tags),
 					deepMergeStyles: this.getDeepMergeStylesForField(true),
+					ref: ref => this.tagsRef = ref,
 					onChange: tags => this.task.updateData({tags}),
 				}),
 				[TaskCreate.field.parentTask]: new ParentTask({
@@ -789,12 +801,11 @@ jn.define('tasks/layout/task/create', (require, exports, module) => {
 		{
 			if (imageUrl.indexOf(currentDomain) !== 0)
 			{
-				imageUrl = encodeURI(imageUrl);
 				imageUrl = imageUrl.replace(`${currentDomain}`, '');
 				imageUrl = (imageUrl.indexOf('http') !== 0 ? `${currentDomain}${imageUrl}` : imageUrl);
 			}
 
-			return imageUrl;
+			return encodeURI(imageUrl);
 		}
 	}
 

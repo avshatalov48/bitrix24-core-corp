@@ -6,6 +6,7 @@ jn.define('crm/entity-tab/list', (require, exports, module) => {
 	const { EntityTab } = require('crm/entity-tab');
 	const { Filter } = require('crm/entity-tab/filter');
 	const { TypePull } = require('crm/entity-tab/pull-manager');
+	const { StatefulList } = require('layout/ui/stateful-list');
 
 	/**
 	 * @class ListTab
@@ -161,7 +162,9 @@ jn.define('crm/entity-tab/list', (require, exports, module) => {
 				this.state.searchButtonBackgroundColor = null;
 			}
 
-			this.setState({}, () => {
+			this.setState({
+				forceRenderSwitcher: !this.state. forceRenderSwitcher,
+			}, () => {
 				const canUseCache = !(Boolean(this.filter.currentFilterId) || Boolean(this.filter.search));
 				this.getViewComponent().reload(
 					{

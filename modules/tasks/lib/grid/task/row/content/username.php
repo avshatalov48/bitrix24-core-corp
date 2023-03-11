@@ -3,6 +3,7 @@ namespace Bitrix\Tasks\Grid\Task\Row\Content;
 
 use Bitrix\Main;
 use Bitrix\Main\Web\Json;
+use Bitrix\Main\Web\Uri;
 use Bitrix\Tasks\Grid\Task\Row\Content;
 use Bitrix\Tasks\UI;
 use Bitrix\Tasks\Util\User;
@@ -75,7 +76,7 @@ class UserName extends Content
 
 		if ($avatar = $user['AVATAR'])
 		{
-			$userAvatar = " style='background-image: url(\"{$avatar}\")'";
+			$userAvatar = ' style="background-image: url(\'' . Uri::urnEncode($avatar) . '\')"';
 			$userEmptyAvatar = '';
 		}
 

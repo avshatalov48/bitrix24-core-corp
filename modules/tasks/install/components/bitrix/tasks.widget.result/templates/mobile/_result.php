@@ -12,6 +12,8 @@
  * @var $arParams array
  */
 
+use Bitrix\Main\Web\Uri;
+
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
 $author = $arResult['USERS'][$result->getCreatedBy()] ? $arResult['USERS'][$result->getCreatedBy()] : null;
@@ -22,7 +24,7 @@ $author = $arResult['USERS'][$result->getCreatedBy()] ? $arResult['USERS'][$resu
 	<div class="mobile-tasks-widget-result__item--content">
 		<div class="mobile-tasks-widget-result__item-header">
 			<span class="ui-icon ui-icon-common-user user-img mobile-tasks-widget-result__item-header--avatar">
-				<i style="<?= ($author && !empty($author['AVATAR'])) ? 'background-image: url(\''.$author['AVATAR'].'\');' : '';  ?>"></i>
+				<i style="<?= ($author && !empty($author['AVATAR'])) ? 'background-image: url(\''. Uri::urnEncode($author['AVATAR']).'\');' : '';  ?>"></i>
 			</span>
 			<div class="mobile-tasks-widget-result__item-header--info">
 				<a href="/company/personal/user/<?= $result->getCreatedBy(); ?>/" class="mobile-tasks-widget-result__item-header--name ui-link"><?= $author ? \htmlspecialcharsbx(\Bitrix\Tasks\Util\User::formatName($author)) : ''; ?></a>

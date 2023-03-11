@@ -39,6 +39,8 @@ class ParameterTable extends TaskDataManager
 	public const PARAM_SUBTASKS_AUTOCOMPLETE = 2;
 	public const PARAM_RESULT_REQUIRED = 3;
 
+	public const PREFIX_PARAM = 'PARAM_';
+
 	/**
 	 * @return int[]
 	 */
@@ -49,6 +51,23 @@ class ParameterTable extends TaskDataManager
 			self::PARAM_SUBTASKS_AUTOCOMPLETE,
 			self::PARAM_RESULT_REQUIRED,
 		];
+	}
+
+	public static function getLegacyMap(): array
+	{
+		$constants = (new \ReflectionClass(self::class))->getReflectionConstants();
+		$map = [];
+		foreach ($constants as $constant)
+		{
+			if (
+				$constant->class === self::class
+				&& mb_strrpos($constant->getName(), self::PREFIX_PARAM) === 0
+			)
+			{
+				$map[$constant->getValue()] = $constant->getName();
+			}
+		}
+		return $map;
 	}
 
 	/**

@@ -32,9 +32,9 @@ use Bitrix\Tasks\Util\UserField;
  * @method static EO_Template_Result getById($id)
  * @method static EO_Template_Result getList(array $parameters = [])
  * @method static EO_Template_Entity getEntity()
- * @method static \Bitrix\Tasks\Internals\Task\EO_Template createObject($setDefaultValues = true)
+ * @method static \Bitrix\Tasks\Internals\Task\Template\TemplateObject createObject($setDefaultValues = true)
  * @method static \Bitrix\Tasks\Internals\Task\EO_Template_Collection createCollection()
- * @method static \Bitrix\Tasks\Internals\Task\EO_Template wakeUpObject($row)
+ * @method static \Bitrix\Tasks\Internals\Task\Template\TemplateObject wakeUpObject($row)
  * @method static \Bitrix\Tasks\Internals\Task\EO_Template_Collection wakeUpCollection($rows)
  */
 class TemplateTable extends Main\Entity\DataManager

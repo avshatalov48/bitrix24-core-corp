@@ -14,6 +14,8 @@ if (!empty($arResult['ERRORS']))
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\Web\Json;
+use Bitrix\Tasks\Slider\Exception\SliderException;
+use Bitrix\Tasks\Slider\Factory\SliderFactory;
 use Bitrix\Tasks\UI\Filter;
 use Bitrix\Tasks\Kanban\StagesTable;
 use Bitrix\Tasks\UI\ScopeDictionary;
@@ -169,7 +171,7 @@ if (isset($arParams['INCLUDE_INTERFACE_HEADER']) && $arParams['INCLUDE_INTERFACE
 		],
 		[
 			'tabId' => 'popupMenuOptions',
-			'html' => Loc::getMessage('KANBAN_SORT_MY_SORT'),
+			'html' => Loc::getMessage('KANBAN_SORT_MY_SORT_V2'),
 			'className' => ($order === 'asc' || $order === 'desc') ? 'menu-popup-item-accept' : 'menu-popup-item-none',
 			'onclick' => 'BX.delegate(BX.Tasks.KanbanComponent.enableCustomSort)',
 			'params' => CUtil::PhpToJSObject($popupSortSubItems),
@@ -348,7 +350,9 @@ if (isset($arParams['INCLUDE_INTERFACE_HEADER']) && $arParams['INCLUDE_INTERFACE
             data: {
             	kanbanType: "<?= \htmlspecialcharsbx($type);?>",
                 ajaxHandlerPath: ajaxHandlerPath,
+				groupId: '<?=$arParams['GROUP_ID']?>',
                 pathToTask: "<?= \CUtil::JSEscape(str_replace('#action#', 'view', $arParams['~PATH_TO_TASKS_TASK']))?>",
+                pathToGroupTask: "<?= \CUtil::JSEscape(str_replace(['#group_id#', '#action#'], [(int)$arParams['GROUP_ID'], 'view'], $arParams['~PATH_TO_GROUP_TASKS_TASK']))?>",
                 pathToTaskCreate: "<?= \CUtil::JSEscape(str_replace('#action#', 'edit', $arParams['~PATH_TO_TASKS_TASK']))?>",
                 pathToUser: "<?= \CUtil::JSEscape($arParams['~PATH_TO_USER_PROFILE'])?>",
                 addItemInSlider: <?= $arResult['MANDATORY_EXISTS'] ? 'true' : 'false'?>,
@@ -501,4 +505,34 @@ CJSCore::Init("spotlight");
         TASKS_CLOSE_PAGE_CONFIRM: '<?=GetMessageJS('TASKS_CLOSE_PAGE_CONFIRM')?>'
     });
 </script>
-<? //endif?>
+<?php //endif
+if ($arParams['BACKGROUND_FOR_TASK'])
+{
+	if ((int)$arParams['GROUP_ID'] > 0 )
+	{
+		$context = SliderFactory::GROUP_CONTEXT;
+		$ownerId = (int)$arParams['GROUP_ID'];
+	}
+	else
+	{
+		$context = SliderFactory::PERSONAL_CONTEXT;
+		$ownerId = (int)$arParams['USER_ID'];
+	}
+
+	$taskId = (int)$arParams['TASK_ID'];
+
+	$factory = new SliderFactory();
+	try
+	{
+		$factory
+			->setAction($arParams['TASK_ACTION'])
+			->setQueryParams($arParams['GET_PARAMS']);
+
+		$slider = $factory->createEntitySlider($taskId, SliderFactory::TASK, $ownerId, $context);
+		$slider->open();
+	}
+	catch (SliderException $exception)
+	{
+		$exception->show();
+	}
+}

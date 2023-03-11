@@ -652,6 +652,8 @@ class CCrmDocumentDeal extends CCrmDocument implements IBPWorkflowDocument
 	private static function performTypeCast(array $documentInfo, array $fields, bool $isUpdate = false): array
 	{
 		$documentId = $documentInfo['TYPE'] . '_' . ($isUpdate ? $documentInfo['ID'] : '0');
+		$complexDocumentId = [$documentInfo['DOCUMENT_TYPE'][0], $documentInfo['DOCUMENT_TYPE'][1], $documentId];
+
 		$documentFields = self::GetDocumentFields($documentInfo['TYPE']);
 
 		$keys = array_keys($fields);
@@ -671,24 +673,7 @@ class CCrmDocumentDeal extends CCrmDocument implements IBPWorkflowDocument
 
 			if ($documentFields[$key]['Type'] == 'user')
 			{
-				$ar = [];
-				foreach ($fields[$key] as $v1)
-				{
-					if (mb_substr($v1, 0, mb_strlen('user_')) == 'user_')
-					{
-						$ar[] = mb_substr($v1, mb_strlen('user_'));
-					}
-					else
-					{
-						$a1 = self::GetUsersFromUserGroup($v1, $documentId);
-						foreach ($a1 as $a11)
-						{
-							$ar[] = $a11;
-						}
-					}
-				}
-
-				$fields[$key] = $ar;
+				$fields[$key] = \CBPHelper::extractUsers($fields[$key], $complexDocumentId);;
 			}
 			elseif ($documentFields[$key]['Type'] == 'select' && mb_substr($key, 0, 3) == 'UF_')
 			{

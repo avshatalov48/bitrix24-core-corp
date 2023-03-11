@@ -54,6 +54,11 @@ export const Footer = {
 
 		visibleButtons(): Array
 		{
+			if (!Type.isPlainObject(this.buttons))
+			{
+				return [];
+			}
+
 			return this.buttons
 				?  Object.keys(this.buttons)
 					.map((id) => ({id, ...this.buttons[id]}))

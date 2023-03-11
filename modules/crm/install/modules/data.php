@@ -1515,7 +1515,28 @@ if (!$res->fetch())
 
 	if (\Bitrix\Crm\Integration\DocumentGeneratorManager::getInstance()->isEnabled())
 	{
-		\Bitrix\DocumentGenerator\Driver::installDefaultTemplatesForCurrentRegion();
+		$agents = CAgent::GetList(
+			[],
+			[
+				"NAME" => '\\Bitrix\\DocumentGenerator\\Driver::installDefaultTemplatesForCurrentRegion();',
+				"MODULE_ID" => 'documentgenerator',
+				"ACTIVE" => 'Y',
+			]
+		);
+		$agentIsRunning = false;
+		if ($agent = $agents->Fetch())
+		{
+			$agentIsRunning = ($agent['RUNNING'] ?? 'N') === 'Y'; // agent is running right now
+			if (!$agentIsRunning)
+			{
+				CAgent::Delete($agent['ID']);
+			}
+		}
+		if (!$agentIsRunning)
+		{
+			\Bitrix\DocumentGenerator\Driver::installDefaultTemplatesForCurrentRegion();
+		}
+
 		$template = \Bitrix\DocumentGenerator\Model\TemplateTable::getList([
 			'select' => ['ID'],
 			'filter' => [

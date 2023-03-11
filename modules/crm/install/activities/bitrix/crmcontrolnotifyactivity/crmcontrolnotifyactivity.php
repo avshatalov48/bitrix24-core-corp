@@ -142,18 +142,7 @@ class CBPCrmControlNotifyActivity extends CBPActivity
 		/** @var CBPDocumentService $documentService */
 		$documentService = $runtime->GetService('DocumentService');
 
-		$messageText = $this->MessageText;
-
-		$CCTP = new CTextParser();
-		$CCTP->allow = array(
-			"HTML" => "N",
-			"USER" => "N",
-			"ANCHOR" => "Y",
-			"BIU" => "Y",
-			"IMG" => "Y", "QUOTE" => "N", "CODE" => "N", "FONT" => "Y", "LIST" => "Y",
-			"SMILES" => "N", "NL2BR" => "Y", "VIDEO" => "N", "TABLE" => "N",
-			"CUT_ANCHOR" => "N", "ALIGN" => "N"
-		);
+		$messageText = $this->getMessageText();
 
 		$attach = new CIMMessageParamAttach(1, '#468EE5');
 		$attach->AddUser(Array(
@@ -171,18 +160,18 @@ class CBPCrmControlNotifyActivity extends CBPActivity
 		));
 		$attach->AddDelimiter();
 		$attach->AddHtml('<span style="color: #6E6E6E">'.
-			$CCTP->convertText(htmlspecialcharsbx($messageText))
+			$messageText
 			.'</span>'
 		);
 
 		$message = array(
 			"MESSAGE_TYPE" => IM_MESSAGE_SYSTEM,
-			"MESSAGE_OUT" => CBPHelper::ConvertTextForMail($messageText),
+			"MESSAGE_OUT" => CBPHelper::convertBBtoText($messageText),
 			"ATTACH" => $attach,
 			'NOTIFY_TAG' => 'ROBOT|'.implode('|', array_map('mb_strtoupper', $documentId)),
 			'NOTIFY_MODULE' => 'bizproc',
 			'NOTIFY_EVENT' => 'activity',
-			'PUSH_MESSAGE' => $messageText,
+			'PUSH_MESSAGE' => $this->getPushText($messageText),
 		);
 
 		if ($from)
@@ -313,5 +302,35 @@ class CBPCrmControlNotifyActivity extends CBPActivity
 		unset($debugInfo['ToHead']);
 
 		$this->writeDebugInfo($debugInfo);
+	}
+
+	private function getMessageText()
+	{
+		$messageText = $this->MessageText;
+		if (is_array($messageText))
+		{
+			$messageText = implode(', ', CBPHelper::MakeArrayFlat($messageText));
+		}
+
+		$messageText = (string) $messageText;
+
+		if ($messageText)
+		{
+			$messageText = strip_tags($messageText);
+			$messageText = CBPHelper::convertBBtoText($messageText);
+		}
+
+		return $messageText;
+	}
+
+	private function getPushText(string $htmlMessage): string
+	{
+		$text = mb_substr(HTMLToTxt($htmlMessage, '', [], 0), 0, 200);
+		if (mb_strlen($text) === 200)
+		{
+			$text .= '...';
+		}
+
+		return $text;
 	}
 }

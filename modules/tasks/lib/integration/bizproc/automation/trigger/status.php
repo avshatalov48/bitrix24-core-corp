@@ -36,12 +36,17 @@ class Status extends Base
 		return (!$statusA || $statusA === $statusB);
 	}
 
-	public static function toArray()
+	protected static function getPropertiesMap(): array
 	{
-		$result = parent::toArray();
-		$result['STATUS_LIST'] = static::getStatusList();
-		$result['STATUS_LABEL'] = Loc::getMessage('TASKS_AUTOMATION_TRIGGER_STATUS_LABEL');
-		return $result;
+		return [
+			[
+				'Id' => 'STATUS',
+				'Name' => Loc::getMessage('TASKS_AUTOMATION_TRIGGER_STATUS_LABEL'),
+				'Type' => 'select',
+				'EmptyValueText' => Loc::getMessage('TASKS_AUTOMATION_TRIGGER_STATUS_DEFAULT_LABEL'),
+				'Options' => static::getStatusList(),
+			],
+		];
 	}
 
 	/**
@@ -49,30 +54,28 @@ class Status extends Base
 	 */
 	private static function getStatusList()
 	{
-		$result = [
+		return [
 			[
-				'ID' => \CTasks::STATE_PENDING,
-				'NAME' => Loc::getMessage('TASKS_AUTOMATION_TRIGGER_STATUS_PENDING_1')
+				'value' => \CTasks::STATE_PENDING,
+				'name' => Loc::getMessage('TASKS_AUTOMATION_TRIGGER_STATUS_PENDING_1')
 			],
 			[
-				'ID' => \CTasks::STATE_IN_PROGRESS,
-				'NAME' => Loc::getMessage('TASKS_AUTOMATION_TRIGGER_STATUS_IN_PROGRESS')
+				'value' => \CTasks::STATE_IN_PROGRESS,
+				'name' => Loc::getMessage('TASKS_AUTOMATION_TRIGGER_STATUS_IN_PROGRESS')
 			],
 			[
-				'ID' => \CTasks::STATE_SUPPOSEDLY_COMPLETED,
-				'NAME' => Loc::getMessage('TASKS_AUTOMATION_TRIGGER_STATUS_SUPPOSEDLY_COMPLETED')
+				'value' => \CTasks::STATE_SUPPOSEDLY_COMPLETED,
+				'name' => Loc::getMessage('TASKS_AUTOMATION_TRIGGER_STATUS_SUPPOSEDLY_COMPLETED')
 			],
 			[
-				'ID' => \CTasks::STATE_COMPLETED,
-				'NAME' => Loc::getMessage('TASKS_AUTOMATION_TRIGGER_STATUS_COMPLETED')
+				'value' => \CTasks::STATE_COMPLETED,
+				'name' => Loc::getMessage('TASKS_AUTOMATION_TRIGGER_STATUS_COMPLETED')
 			],
 			[
-				'ID' => \CTasks::STATE_DEFERRED,
-				'NAME' => Loc::getMessage('TASKS_AUTOMATION_TRIGGER_STATUS_DEFERRED')
+				'value' => \CTasks::STATE_DEFERRED,
+				'name' => Loc::getMessage('TASKS_AUTOMATION_TRIGGER_STATUS_DEFERRED')
 			]
 		];
-
-		return $result;
 	}
 
 	public static function getDescription(): string

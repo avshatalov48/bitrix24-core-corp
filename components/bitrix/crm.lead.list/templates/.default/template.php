@@ -1049,7 +1049,7 @@ $APPLICATION->IncludeComponent(
 $APPLICATION->IncludeComponent(
 	'bitrix:crm.interface.grid',
 	'titleflex',
-	array(
+	[
 		'GRID_ID' => $arResult['GRID_ID'],
 		'HEADERS' => $arResult['HEADERS'],
 		'HEADERS_SECTIONS' => $arResult['HEADERS_SECTIONS'],
@@ -1062,15 +1062,15 @@ $APPLICATION->IncludeComponent(
 		'AJAX_ID' => $arResult['AJAX_ID'],
 		'AJAX_OPTION_JUMP' => 'N',
 		'AJAX_OPTION_HISTORY' => 'N',
-		'HIDE_FILTER' => isset($arParams['HIDE_FILTER']) ? $arParams['HIDE_FILTER'] : null,
+		'HIDE_FILTER' => ($arParams['HIDE_FILTER'] ?? null),
 		'FILTER' => $arResult['FILTER'],
 		'FILTER_PRESETS' => $arResult['FILTER_PRESETS'],
 		'FILTER_PARAMS' => [
 			'LAZY_LOAD' => [
 				'CONTROLLER' => [
 					'getList' => 'crm.api.filter.lead.getlist',
-					'getField' => 'crm.api.filter.lead.getfield'
-				]
+					'getField' => 'crm.api.filter.lead.getfield',
+				],
 			],
 			'ENABLE_FIELDS_SEARCH' => 'Y',
 			'HEADERS_SECTIONS' => $arResult['HEADERS_SECTIONS'],
@@ -1080,38 +1080,41 @@ $APPLICATION->IncludeComponent(
 				'showPopupInCenter' => true,
 			],
 		],
-		'LIVE_SEARCH_LIMIT_INFO' => isset($arResult['LIVE_SEARCH_LIMIT_INFO'])
-			? $arResult['LIVE_SEARCH_LIMIT_INFO'] : null,
+		'LIVE_SEARCH_LIMIT_INFO' => ($arResult['LIVE_SEARCH_LIMIT_INFO'] ?? null),
 		'ENABLE_LIVE_SEARCH' => true,
 		'ACTION_PANEL' => $controlPanel,
-		'PAGINATION' => isset($arResult['PAGINATION']) && is_array($arResult['PAGINATION'])
-			? $arResult['PAGINATION'] : array(),
+		'PAGINATION' => (
+			isset($arResult['PAGINATION']) && is_array($arResult['PAGINATION'])
+				? $arResult['PAGINATION']
+				: []
+		),
 		'ENABLE_ROW_COUNT_LOADER' => true,
 		'PRESERVE_HISTORY' => $arResult['PRESERVE_HISTORY'],
 		'MESSAGES' => $messages,
 		'DISABLE_NAVIGATION_BAR' => $arResult['DISABLE_NAVIGATION_BAR'],
 		'NAVIGATION_BAR' => (new NavigationBarPanel(CCrmOwnerType::Lead))
 			->setItems([
-				NavigationBarPanel::ID_AUTOMATION,
 				NavigationBarPanel::ID_KANBAN,
 				NavigationBarPanel::ID_LIST,
-				NavigationBarPanel::ID_CALENDAR
+				NavigationBarPanel::ID_ACTIVITY,
+				NavigationBarPanel::ID_CALENDAR,
+				NavigationBarPanel::ID_AUTOMATION
 			], NavigationBarPanel::ID_LIST)
 			->setBinding($arResult['NAVIGATION_CONTEXT_ID'])
 			->get(),
 		'IS_EXTERNAL_FILTER' => $arResult['IS_EXTERNAL_FILTER'],
-		'EXTENSION' => array(
+		'EXTENSION' => [
 			'ID' => $gridManagerID,
-			'CONFIG' => array(
+			'CONFIG' => [
 				'ownerTypeName' => CCrmOwnerType::LeadName,
 				'gridId' => $arResult['GRID_ID'],
 				'activityEditorId' => $activityEditorID,
 				'activityServiceUrl' => '/bitrix/components/bitrix/crm.activity.editor/ajax.php?siteID='.SITE_ID.'&'.bitrix_sessid_get(),
-				'taskCreateUrl'=> isset($arResult['TASK_CREATE_URL']) ? $arResult['TASK_CREATE_URL'] : '',
+				'taskCreateUrl'=> ($arResult['TASK_CREATE_URL'] ?? ''),
 				'serviceUrl' => '/bitrix/components/bitrix/crm.lead.list/list.ajax.php?siteID='.SITE_ID.'&'.bitrix_sessid_get(),
-				'loaderData' => isset($arParams['AJAX_LOADER']) ? $arParams['AJAX_LOADER'] : null
-			),
-			'MESSAGES' => array(
+				'loaderData' => ($arParams['AJAX_LOADER'] ?? null),
+			],
+			'MESSAGES' => [
 				'deletionDialogTitle' => GetMessage('CRM_LEAD_DELETE_TITLE'),
 				'deletionDialogMessage' => GetMessage('CRM_LEAD_DELETE_CONFIRM'),
 				'deletionDialogButtonTitle' => GetMessage('CRM_LEAD_DELETE'),
@@ -1119,9 +1122,9 @@ $APPLICATION->IncludeComponent(
 				'exclusionDialogMessage' => GetMessage('CRM_LEAD_EXCLUDE_CONFIRM'),
 				'exclusionDialogMessageHelp' => GetMessage('CRM_LEAD_EXCLUDE_CONFIRM_HELP'),
 				'exclusionDialogButtonTitle' => GetMessage('CRM_LEAD_EXCLUDE'),
-			)
-		)
-	),
+			],
+		],
+	],
 	$component
 );
 ?><script type="text/javascript">
@@ -1208,6 +1211,20 @@ $APPLICATION->IncludeComponent(
 	BX.ready(
 			function()
 			{
+				<?php if (\Bitrix\Crm\Settings\Crm::isUniversalActivityScenarioEnabled()): ?>
+				BX.Runtime.loadExtension(['crm.push-crm-settings', 'crm.toolbar-component']).then((exports) => {
+					/** @see BX.Crm.ToolbarComponent */
+					const settingsButton = exports.ToolbarComponent.Instance.getSettingsButton();
+
+					/** @see BX.Crm.PushCrmSettings */
+					new exports.PushCrmSettings({
+						entityTypeId: <?= (int)\CCrmOwnerType::Lead ?>,
+						rootMenu: settingsButton ? settingsButton.getMenuWindow() : undefined,
+						grid: BX.Reflection.getClass('BX.Main.gridManager') ? BX.Main.gridManager.getInstanceById('<?= \CUtil::JSEscape($arResult['GRID_ID']) ?>') : undefined,
+					});
+				});
+				<?php endif; ?>
+
 				BX.CrmActivityEditor.items['<?= CUtil::JSEscape($activityEditorID)?>'].addActivityChangeHandler(
 						function()
 						{

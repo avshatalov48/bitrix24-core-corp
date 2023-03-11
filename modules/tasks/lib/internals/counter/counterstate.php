@@ -25,6 +25,9 @@ class CounterState implements \Iterator
 		CounterDictionary::META_PROP_NONE => [],
 	];
 
+	private $flagCounted;
+	private $flagCleared = 0;
+
 	/**
 	 * @param int $userId
 	 * @return static
@@ -70,22 +73,17 @@ class CounterState implements \Iterator
 	/**
 	 * @return bool
 	 */
-	public function isCounted(string $flag = CounterDictionary::COUNTER_FLAG_COUNTED): bool
+	public function isCounted(): bool
 	{
-		if (empty($this->state))
-		{
-			return false;
-		}
+		return (bool) $this->flagCounted;
+	}
 
-		foreach ($this->state as $row)
-		{
-			if ($row['TYPE'] === $flag)
-			{
-				return true;
-			}
-		}
-
-		return false;
+	/**
+	 * @return int
+	 */
+	public function getClearedDate(): int
+	{
+		return $this->flagCleared;
 	}
 
 	/**
@@ -214,6 +212,14 @@ class CounterState implements \Iterator
 	}
 
 	/**
+	 * @return int
+	 */
+	public function getSize(): int
+	{
+		return count($this->state);
+	}
+
+	/**
 	 * @throws \Bitrix\Main\DB\SqlQueryException
 	 */
 	private function loadCounters(): void
@@ -221,8 +227,11 @@ class CounterState implements \Iterator
 		$limit = Counter::getGlobalLimit();
 		if ($limit === 0)
 		{
-			$rowFlag = $this->loadFlag();
-			$this->updateState([$rowFlag]);
+			$rowsFlag = $this->loadFlags();
+			if ($rowsFlag)
+			{
+				$this->updateState($rowsFlag);
+			}
 			return;
 		}
 
@@ -235,17 +244,17 @@ class CounterState implements \Iterator
 			])
 			->where('USER_ID', $this->userId);
 
-		$rowFlag = null;
+		$rowsFlag = null;
 		if (!is_null($limit))
 		{
-			$rowFlag = $this->loadFlag();
+			$rowsFlag = $this->loadFlags();
 			$query->setLimit($limit);
 		}
 
 		$rows = $query->exec()->fetchAll();
-		if (!is_null($rowFlag))
+		if (!is_null($rowsFlag))
 		{
-			$rows[] = $rowFlag;
+			$rows = array_merge($rows, $rowsFlag);
 		}
 
 		$this->updateState($rows);
@@ -257,7 +266,7 @@ class CounterState implements \Iterator
 	 * @throws \Bitrix\Main\ObjectPropertyException
 	 * @throws \Bitrix\Main\SystemException
 	 */
-	private function loadFlag(): ?array
+	private function loadFlags(): ?array
 	{
 		$query = CounterTable::query()
 			->setSelect([
@@ -267,12 +276,25 @@ class CounterState implements \Iterator
 				'TYPE'
 			])
 			->where('USER_ID', $this->userId)
-			->where('TYPE', CounterDictionary::COUNTER_FLAG_COUNTED)
-			->setLimit(1);
+			->whereIn('TYPE', [CounterDictionary::COUNTER_FLAG_COUNTED, CounterDictionary::COUNTER_FLAG_CLEARED])
+			->setLimit(2);
 
-		$row = $query->exec()->fetch();
+		$rows = $query->exec()->fetchAll();
 
-		return $row ? $row : null;
+		foreach ($rows as $row)
+		{
+			switch ($row['TYPE'])
+			{
+				case CounterDictionary::COUNTER_FLAG_COUNTED:
+					$this->flagCounted = (int) $row['VALUE'];
+					break;
+				case CounterDictionary::COUNTER_FLAG_CLEARED:
+					$this->flagCleared = (int) $row['VALUE'];
+					break;
+			}
+		}
+
+		return $rows ? $rows : null;
 	}
 
 	/**
@@ -297,7 +319,10 @@ class CounterState implements \Iterator
 		$tmpHeap[] = [];
 		foreach ($this->state as $item)
 		{
-			if ($item['TYPE'] === CounterDictionary::COUNTER_FLAG_COUNTED)
+			if (
+				$item['TYPE'] === CounterDictionary::COUNTER_FLAG_COUNTED
+				|| $item['TYPE'] === CounterDictionary::COUNTER_FLAG_CLEARED
+			)
 			{
 				continue;
 			}

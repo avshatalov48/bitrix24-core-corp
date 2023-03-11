@@ -1,4 +1,7 @@
 <?php
+
+use Bitrix\Main\Web\Uri;
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 /**
@@ -41,7 +44,7 @@ foreach($arResult['ROW_DATA'] as $rowItem)
 			}
 
 			$columns[$colName] = '<div class="crm-dedupe-grid-user"><span class="ui-icon ui-icon-common-user crm-dedupe-grid-user-icon">'
-				.($imageUrl !== '' ? '<img class="" src="'.htmlspecialcharsbx($imageUrl).'"/>' : '<i></i>')
+				.($imageUrl !== '' ? '<img class="" src="'. Uri::urnEncode(htmlspecialcharsbx($imageUrl)).'"/>' : '<i></i>')
 				.'</span><a class="crm-dedupe-grid-user-name" href="'
 				.htmlspecialcharsbx($entityInfo['SHOW_URL'])
 				.'">'.htmlspecialcharsbx($entityInfo['TITLE'])
@@ -60,7 +63,7 @@ foreach($arResult['ROW_DATA'] as $rowItem)
 				$entityResponsiblePhotoUrl = isset($entityInfo['RESPONSIBLE_PHOTO_URL']) ? $entityInfo['RESPONSIBLE_PHOTO_URL'] : '';
 				$columns[$colName] = '<div class="crm-dedupe-grid-user crm-dedupe-grid-user-responsible">'
 					.'<span class="ui-icon ui-icon-common-user crm-dedupe-grid-user-icon">'
-					.($entityResponsiblePhotoUrl !== '' ? '<img class="" src="'.htmlspecialcharsbx($entityResponsiblePhotoUrl).'"/>' : '<i></i>')
+					.($entityResponsiblePhotoUrl !== '' ? '<img class="" src="'. Uri::urnEncode(htmlspecialcharsbx($entityResponsiblePhotoUrl)).'"/>' : '<i></i>')
 					.'</span><a href="'.htmlspecialcharsbx($entityResponsibleUrl) .'" target="_blank" class="crm-dedupe-grid-user-name">'
 					.htmlspecialcharsbx($entityResponsibleName).'</a></div>';
 			}

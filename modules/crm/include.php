@@ -38,6 +38,7 @@ define('BX_CRM_VIEW_WIDGET', 2);
 define('BX_CRM_VIEW_KANBAN', 3);
 define('BX_CRM_VIEW_CALENDAR', 4);
 define('BX_CRM_VIEW_ACTIVITY', 5);
+define('BX_CRM_VIEW_DEADLINES', 6);
 //endregion
 
 define('REGISTRY_TYPE_CRM_INVOICE', 'CRM_INVOICE');

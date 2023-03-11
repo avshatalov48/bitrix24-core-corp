@@ -1,5 +1,5 @@
 <?php
-$MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYEDNA_MODULE_NOT_INSTALLED"] = "Das Modul \"Externe IM Connector\" ist nicht installiert.";
+$MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYEDNA_MODULE_NOT_INSTALLED_MSGVER_1"] = "Das Modul \"External Messenger Connectors\" ist nicht installiert.";
 $MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYEDNA_NO_ACTIVE_CONNECTOR"] = "Dieser Connector ist nicht aktiv.";
 $MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYEDNA_NO_CONNECT"] = "Mit den angegebenen Parametern konnte keine Testverbindung hergestellt werden";
 $MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYEDNA_NO_DATA_SAVE"] = "Es gibt keine Daten zum Speichern";

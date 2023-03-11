@@ -25,8 +25,8 @@ use Bitrix\Tasks\Integration\CRM;
 use Bitrix\Tasks\Integration\Disk\Connector\Task as ConnectorTask;
 use Bitrix\Tasks\Integration\SocialNetwork;
 use Bitrix\Tasks\Internals\Counter;
+use Bitrix\Tasks\Internals\Task\LabelTable;
 use Bitrix\Tasks\Internals\Task\MemberTable;
-use Bitrix\Tasks\Internals\Task\TagTable;
 use Bitrix\Tasks\Internals\TaskTable;
 use Bitrix\Tasks\Internals\UserOption;
 use Bitrix\Tasks\Manager;
@@ -129,7 +129,7 @@ class TasksTaskListComponent extends TasksBaseComponent
 
 	protected function setUserId()
 	{
-		$this->userId = (int) \Bitrix\Tasks\Util\User::getId();
+		$this->userId = (int)\Bitrix\Tasks\Util\User::getId();
 	}
 
 	public function getErrorByCode($code)
@@ -148,7 +148,7 @@ class TasksTaskListComponent extends TasksBaseComponent
 
 	public function pinAction($taskId, $groupId = 0)
 	{
-		$taskId = (int) $taskId;
+		$taskId = (int)$taskId;
 		if (!$taskId)
 		{
 			return null;
@@ -175,7 +175,7 @@ class TasksTaskListComponent extends TasksBaseComponent
 
 	public function unpinAction($taskId, $groupId = 0)
 	{
-		$taskId = (int) $taskId;
+		$taskId = (int)$taskId;
 		if (!$taskId)
 		{
 			return null;
@@ -374,7 +374,7 @@ class TasksTaskListComponent extends TasksBaseComponent
 	 * @throws Main\ObjectPropertyException
 	 * @throws Main\SystemException
 	 */
-	public function getGridRowsAction(array $taskIds = [], array $arParams = []): array
+	public static function getGridRows(array $taskIds, array $arParams): array
 	{
 		if (empty($taskIds))
 		{
@@ -399,9 +399,14 @@ class TasksTaskListComponent extends TasksBaseComponent
 		$tasks = self::setFilesCount($tasks);
 		$tasks = self::setCheckListCount($tasks);
 
-		$tagResult = TagTable::getList([
-			'select' => ['TASK_ID', 'NAME'],
-			'filter' => ['TASK_ID' => array_keys($tasks)],
+		$tagResult = LabelTable::getList([
+			'select' => [
+				'TASK_ID' => 'TASKS.ID',
+				'NAME'
+			],
+			'filter' => [
+				'TASK_ID' => array_keys($tasks)
+			],
 		]);
 		while ($tag = $tagResult->fetch())
 		{
@@ -415,6 +420,17 @@ class TasksTaskListComponent extends TasksBaseComponent
 		}
 
 		return (new Task\Grid($tasks, $arParams))->prepareRows();
+	}
+
+	/**
+	 * @throws Main\LoaderException
+	 * @throws Main\ArgumentException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	public function getGridRowsAction(array $taskIds = [], array $arParams = []): array
+	{
+		return self::getGridRows($taskIds, $arParams);
 	}
 
 	protected static function checkRequiredModules(
@@ -1098,7 +1114,7 @@ class TasksTaskListComponent extends TasksBaseComponent
 				'FAVORITE',
 				'IS_MUTED',
 				'IS_PINNED',
-				'IS_PINNED_IN_GROUP',
+				'IS_PINNED_IN_GROUP'
 			];
 
 			$columns = array_merge($columns, $preferredColumns, array_keys($this->getUF()));
@@ -1216,25 +1232,26 @@ class TasksTaskListComponent extends TasksBaseComponent
 		);
 	}
 
-	protected function mergeWithTags(array $items)
+	protected function mergeWithTags(array $items): array
 	{
 		if (empty($items))
 		{
-			return array();
+			return [];
 		}
 
-		$res = TagTable::getList(array(
-			'select' => array(
-				'TASK_ID', 'NAME'
-			),
-			'filter' => array(
+		$res = LabelTable::getList([
+			'select' => [
+				'NAME',
+				'TASK_ID' => 'TASKS.ID',
+			],
+			'filter' => [
 				'TASK_ID' => array_keys($items)
-			)
-		));
+			]
+		]);
 
 		while ($row = $res->fetch())
 		{
-			$items[ $row['TASK_ID'] ]['TAG'][] = $row['NAME'];
+			$items[$row['TASK_ID']]['TAG'][] = $row['NAME'];
 		}
 
 		return $items;
@@ -1846,7 +1863,7 @@ class TasksTaskListComponent extends TasksBaseComponent
 
 		if ($this->errors->checkNoFatals())
 		{
-			if ($this->exportAs && !empty($this->arResult['LIST']))
+			if ($this->exportAs)
 			{
 				$APPLICATION->RestartBuffer();
 
@@ -1879,6 +1896,7 @@ class TasksTaskListComponent extends TasksBaseComponent
 			}
 		}
 	}
+
 	protected function addForbiddenError()
 	{
 		$this->errorCollection->add('ACTION_NOT_ALLOWED.RESTRICTED', Loc::getMessage('TASKS_ACTION_NOT_ALLOWED'));

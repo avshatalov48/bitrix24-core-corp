@@ -209,16 +209,21 @@ class LiveChat
 	 */
 	public static function onMessageSend($messageId, $messageFields)
 	{
-		if ($messageFields['CHAT_ENTITY_TYPE'] != 'LIVECHAT')
+		$chatEntityType = $messageFields['CHAT_ENTITY_TYPE'] ?? null;
+		if ($chatEntityType !== 'LIVECHAT')
+		{
 			return false;
+		}
 
 		$messageFields['MESSAGE_ID'] = $messageId;
 		Log::write($messageFields, 'LIVECHAT MESSAGE SEND');
 
 		if ($messageFields['SKIP_CONNECTOR'] == 'Y')
+		{
 			return false;
+		}
 
-		list($lineId, $userId) = explode("|", $messageFields['CHAT_ENTITY_ID']);
+		[$lineId, $userId] = explode("|", $messageFields['CHAT_ENTITY_ID']);
 
 		$extraFields = Array();
 		if ($messageFields['AUTHOR_ID'] > 0)

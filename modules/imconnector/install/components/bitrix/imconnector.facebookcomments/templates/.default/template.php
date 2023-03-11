@@ -1,4 +1,4 @@
-<?
+<?php
 if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 
 use Bitrix\Main\UI\Extension;
@@ -8,19 +8,15 @@ use \Bitrix\ImConnector\Connector;
 
 /** @var array $arParams */
 /** @var array $arResult */
-/** @global CMain $APPLICATION */
-/** @global CUser $USER */
-/** @global CDatabase $DB */
-/** @var CBitrixComponentTemplate $this */
+/** @global \CMain $APPLICATION */
+/** @global \CUser $USER */
+/** @global \CDatabase $DB */
+/** @var \CBitrixComponentTemplate $this */
 /** @var string $templateName */
 /** @var string $templateFile */
 /** @var string $templateFolder */
 /** @var string $componentPath */
-/** @var CBitrixComponent $component */
-/** $arResult['CONNECTION_STATUS']; */
-/** $arResult['REGISTER_STATUS']; */
-/** $arResult['ERROR_STATUS']; */
-/** $arResult['SAVE_STATUS']; */
+/** @var \CBitrixComponent $component */
 
 Loc::loadMessages(__FILE__);
 Loc::loadMessages(__DIR__ . '/meta.php');
@@ -52,7 +48,7 @@ $lang = [
 	'index_additional_description' => Loc::getMessage('IMCONNECTOR_COMPONENT_FACEBOOK_COMMENTS_INDEX_ADDITIONAL_DESCRIPTION' . $langPostfix),
 ];
 
-if ($arResult['NEED_META_RESTRICTION_NOTE'] && !$arResult['ACTIVE_STATUS'])
+if (!empty($arResult['NEED_META_RESTRICTION_NOTE']) && !$arResult['ACTIVE_STATUS'])
 {
 	$this->SetViewTarget('fb_meta_restriction_note');
 	?>
@@ -69,12 +65,12 @@ if ($arResult['NEED_META_RESTRICTION_NOTE'] && !$arResult['ACTIVE_STATUS'])
 	<?=bitrix_sessid_post();?>
 </form>
 <?
-if(
+if (
 	empty($arResult['PAGE'])
 	&& $arResult['ACTIVE_STATUS']
 )
 {
-	if($arResult['STATUS'])
+	if (!empty($arResult['STATUS']))
 	{
 		?>
 		<div class="imconnector-field-container">
@@ -101,7 +97,7 @@ if(
 				</div>
 			</div>
 		</div>
-		<?include 'messages.php'?>
+		<?php include 'messages.php'?>
 		<div class="imconnector-field-container">
 			<div class="imconnector-field-section">
 				<div class="imconnector-field-main-title">
@@ -179,17 +175,15 @@ if(
 				</div>
 			</div>
 		</div>
-		<?include 'messages.php'?>
+		<?php include 'messages.php'?>
 		<?
 	}
 }
 else
 {
-	if(empty($arResult['FORM']['USER']['INFO'])) //start case with clear connections
+	if (empty($arResult['FORM']['USER']['INFO'])) //start case with clear connections
 	{
-		?>
-		<?
-		if($arResult['ACTIVE_STATUS']) //case before auth to fb
+		if (!empty($arResult['ACTIVE_STATUS'])) //case before auth to fb
 		{
 			?>
 			<div class="imconnector-field-container">
@@ -207,7 +201,7 @@ else
 					</div>
 				</div>
 			</div>
-			<?include 'messages.php'?>
+			<?php include 'messages.php'?>
 
 			<div class="imconnector-field-container">
 				<div class="imconnector-field-section">
@@ -220,7 +214,7 @@ else
 						</div>
 					</div>
 					<?
-					if($arResult['FORM']['USER']['URI'] !== '')
+					if(!empty($arResult['FORM']['USER']['URI']))
 					{
 						?>
 						<div class="imconnector-field-social-connector">
@@ -283,7 +277,7 @@ else
 				</div>
 			</div>
 
-			<?include 'messages.php'?>
+			<?php include 'messages.php'?>
 			<?
 		}
 	}
@@ -324,7 +318,7 @@ else
 				</div>
 			</div>
 		</div>
-		<?include 'messages.php'?>
+		<?php include 'messages.php'?>
 		<?
 		if(empty($arResult['FORM']['PAGES']))  //case user haven't got any groups.
 		{
@@ -516,4 +510,4 @@ else
 		}
 	}
 }
-?>
+

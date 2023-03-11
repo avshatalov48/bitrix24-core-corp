@@ -10,17 +10,16 @@ use Bitrix\Crm\Category\Entity\DealDefaultCategory;
 use Bitrix\Crm\DealTable;
 use Bitrix\Crm\Field;
 use Bitrix\Crm\Item;
+use Bitrix\Crm\Reservation;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Context;
 use Bitrix\Crm\Service\EventHistory\TrackedObject;
 use Bitrix\Crm\Service\Factory;
 use Bitrix\Crm\Service\Operation;
 use Bitrix\Crm\Settings\DealSettings;
+use Bitrix\Crm\Settings\LayoutSettings;
 use Bitrix\Crm\Statistics;
 use Bitrix\Crm\StatusTable;
-use Bitrix\Crm\Reservation;
-use Bitrix\Crm\Settings\LayoutSettings;
-use Bitrix\Main\Config\Option;
 use Bitrix\Main\IO\Path;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ORM\Objectify\EntityObject;
@@ -165,18 +164,6 @@ final class Deal extends Factory
 	public function isDeferredCleaningEnabled(): bool
 	{
 		return DealSettings::getCurrent()->isDeferredCleaningEnabled();
-	}
-
-	public function isLastActivitySupported(): bool
-	{
-		return true;
-	}
-
-	public function isLastActivityEnabled(): bool
-	{
-		$isEnabled = Option::get('crm', 'enable_last_activity_for_deal', 'Y');
-
-		return ($isEnabled === 'Y');
 	}
 
 	public function getEntityTypeId(): int

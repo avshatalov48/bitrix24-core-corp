@@ -54,8 +54,19 @@ export class Selector
 
 	render()
 	{
+		const preselectedItems = [];
+
+		if (
+			this.options.hasOwnProperty('projectId')
+			&& this.options.projectId > 0
+		)
+		{
+			preselectedItems.push(['project', this.options.projectId])
+		}
+
 		this.tagSelector = new TagSelector({
 			dialogOptions: {
+				preselectedItems: preselectedItems,
 				entities: this.entities,
 				context: 'INTRANET_INVITATION'
 			}

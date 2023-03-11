@@ -1,4 +1,4 @@
-<?
+<?php
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
@@ -16,6 +16,7 @@ return [
 		'ui.notification',
 		'main.date',
 		'crm.timeline.tools',
+		'crm.activity.file-uploader',
 	],
 	'skip_core' => false,
 	'oninit' => static function()

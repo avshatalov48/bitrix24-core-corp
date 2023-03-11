@@ -13,8 +13,12 @@ class ShipmentChangedTrigger extends BaseTrigger
 	{
 		return (
 			$entityTypeId === \CCrmOwnerType::Order
-			&& method_exists('\Bitrix\Bizproc\Automation\Engine\ConditionGroup', 'evaluateByDocument')
 		);
+	}
+
+	public static function isEnabled()
+	{
+		return Loader::includeModule('sale');
 	}
 
 	public static function getCode()
@@ -55,16 +59,21 @@ class ShipmentChangedTrigger extends BaseTrigger
 		return true;
 	}
 
-	public static function toArray()
+	protected static function getPropertiesMap(): array
 	{
-		$result = parent::toArray();
-		if (static::isEnabled() && Loader::includeModule('sale'))
-		{
-			$result['FIELDS'] = array_values(\Bitrix\Bizproc\Automation\Helper::getDocumentFields(
-				\CCrmBizProcHelper::ResolveDocumentType(\CCrmOwnerType::OrderShipment)
-			));
-		}
-		return $result;
+		$docType = \CCrmBizProcHelper::ResolveDocumentType(\CCrmOwnerType::OrderShipment);
+		$fields = array_values(\Bitrix\Bizproc\Automation\Helper::getDocumentFields($docType));
+
+		return [
+			[
+				'Id' => 'shipmentCondition',
+				'Name' => Loc::getMessage('CRM_AUTOMATION_TRIGGER_SHIPMENT_CHANGED_CONDITION'),
+				'Type' => '@condition-group-selector',
+				'Settings' => [
+					'Fields' => $fields,
+				],
+			],
+		];
 	}
 
 	public static function getDescription(): string

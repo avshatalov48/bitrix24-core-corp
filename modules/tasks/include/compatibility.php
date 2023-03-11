@@ -12,8 +12,8 @@ class_alias('\\Bitrix\\Tasks\\Internals\\DataBase\\Tree\\LinkNotExistException',
 
 class_alias('\\Bitrix\\Tasks\\Integration\\Report\\Internals\\TaskTable', 'Bitrix\\Tasks\\TaskTable');
 
-class_alias('\\Bitrix\\Tasks\\Internals\\Task\\TagTable', 'Bitrix\\Tasks\\TagTable');
-class_alias('\\Bitrix\\Tasks\\Internals\\Task\\TagTable', 'Bitrix\\Tasks\\Task\\TagTable');
+class_alias('\\Bitrix\\Tasks\\Internals\\Task\\LabelTable', 'Bitrix\\Tasks\\TagTable');
+class_alias('\\Bitrix\\Tasks\\Internals\\Task\\LabelTable', 'Bitrix\\Tasks\\Task\\TagTable');
 class_alias('\\Bitrix\\Tasks\\Internals\\Task\\MemberTable', 'Bitrix\\Tasks\\MemberTable');
 class_alias('\\Bitrix\\Tasks\\Internals\\Task\\ElapsedTimeTable', 'Bitrix\\Tasks\\ElapsedTimeTable');
 class_alias('\\Bitrix\\Tasks\\Internals\\Task\\SortingTable', 'Bitrix\\Tasks\\Task\\SortingTable');
@@ -28,4 +28,3 @@ class_alias('\\Bitrix\\Tasks\\Internals\\Task\\Template\\CheckListTable', 'Bitri
 class_alias('\\Bitrix\\Tasks\\Internals\\Notification\\Task\\ThrottleTable', 'Bitrix\\Tasks\\Notification\\ThrottleTable');
 
 class_alias('\\Bitrix\\Tasks\\UI', 'Bitrix\\Tasks\\Util\\UI');
-

@@ -95,11 +95,18 @@ class TemplateFieldHandler
 		if (
 			array_key_exists('RESPONSIBLES', $this->fields)
 			&& is_array($this->fields['RESPONSIBLES'])
-			&& count($this->fields['RESPONSIBLES']) > 1
 		)
 		{
-			$this->fields['MULTITASK'] = 'Y';
+			if (count($this->fields['RESPONSIBLES']) > 1)
+			{
+				$this->fields['MULTITASK'] = 'Y';
+			}
+			else
+			{
+				$this->fields['MULTITASK'] = 'N';
+			}
 		}
+
 
 		return $this;
 	}

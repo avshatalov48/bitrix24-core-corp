@@ -804,7 +804,7 @@ if(typeof BX.Crm.EntityEditorUser === "undefined")
 				props: { className: "crm-widget-employee-avatar-container", target: "_blank" },
 				style:
 					{
-						backgroundImage: BX.type.isNotEmptyString(photoUrl) ? "url('" + photoUrl + "')" : "",
+						backgroundImage: BX.type.isNotEmptyString(photoUrl) ? "url('" + encodeURI(photoUrl) + "')" : "",
 						backgroundSize: BX.type.isNotEmptyString(photoUrl) ? "30px" : ""
 					}
 			}
@@ -940,7 +940,7 @@ if(typeof BX.Crm.EntityEditorUser === "undefined")
 
 		this._input.value = this._selectedData["id"];
 		this._photoElement.style.backgroundImage = this._selectedData["photoUrl"] !== ""
-			? "url('" + this._selectedData["photoUrl"] + "')" : "";
+			? "url('" + encodeURI(this._selectedData["photoUrl"]) + "')" : "";
 		this._photoElement.style.backgroundSize = this._selectedData["photoUrl"] !== ""
 			? "30px" : "";
 

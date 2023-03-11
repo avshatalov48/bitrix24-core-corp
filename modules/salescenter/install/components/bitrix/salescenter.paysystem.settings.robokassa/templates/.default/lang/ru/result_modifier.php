@@ -1,0 +1,2 @@
+<?php
+$MESS["SALESCENTER_SPSR_TEMPLATE_SETTINGS_HINT"] = "Подробнее";

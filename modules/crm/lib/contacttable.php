@@ -203,6 +203,10 @@ class ContactTable extends ORM\Data\DataManager
 				->configureTitle(Loc::getMessage('CRM_COMMON_CLIENT_CATEGORY'))
 			,
 
+			$fieldRepository->getLastActivityBy(),
+
+			$fieldRepository->getLastActivityTime(),
+
 			(new OneToMany(
 				'COMPANY_BINDINGS',
 				Binding\ContactCompanyTable::class,

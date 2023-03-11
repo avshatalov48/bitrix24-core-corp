@@ -785,8 +785,6 @@ class QueueManager
 	 */
 	public function compatibleUpdate($fields, $usersFields = false)
 	{
-		$result = false;
-
 		foreach ($fields as $cell=>$field)
 		{
 			if(!is_array($field))
@@ -800,12 +798,7 @@ class QueueManager
 
 		$resultUpdate = $this->update($fields, $usersFields);
 
-		if($resultUpdate->isSuccess())
-		{
-			$result = $resultUpdate->getResult();
-		}
-
-		return $result;
+		return $resultUpdate->isSuccess();
 	}
 
 	/**

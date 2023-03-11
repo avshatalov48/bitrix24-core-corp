@@ -103,65 +103,6 @@ jn.define('crm/entity-detail/toolbar/activity/templates/base', (require, exports
 			});
 		}
 
-		renderSkeleton()
-		{
-			const styles = this.getStyles();
-
-			return [
-				View(
-					{
-						style: {
-							flexDirection: 'row',
-							alignItems: 'center',
-							justifyContent: 'flex-start',
-						},
-					},
-					View({
-						style: styles.circle(true, false),
-					}),
-					View({
-							style: {
-								marginLeft: 14,
-								flexDirection: 'column',
-							},
-						},
-						View({
-							style: {
-								width: 73,
-								height: 3,
-								borderRadius: 3,
-								marginBottom: 12,
-								backgroundColor: '#DFE0E3',
-							},
-						}),
-						View({
-							style: {
-								width: 31,
-								height: 3,
-								borderRadius: 3,
-								backgroundColor: '#DFE0E3',
-							},
-						}),
-					),
-				),
-				View(
-					{
-						style: {
-							width: 146,
-							flexDirection: 'row',
-							justifyContent: 'space-between',
-						},
-					},
-					...Array.from({ length: 4 }).map((el, i) =>
-						View({
-							style: styles.circle(false, i !== 0),
-						}),
-					),
-				),
-
-			];
-		}
-
 		renderActivityImage()
 		{
 			const styles = this.getStyles();
@@ -224,9 +165,15 @@ jn.define('crm/entity-detail/toolbar/activity/templates/base', (require, exports
 			);
 		}
 
+		shouldHighlightOnShow()
+		{
+			return true;
+		}
+
 		show()
 		{
 			const { animation = {} } = this.props;
+			const shouldHighlightOnShow = this.shouldHighlightOnShow() && !this.state.visible;
 
 			const open = transition(this.ref, {
 				...animation,
@@ -240,7 +187,7 @@ jn.define('crm/entity-detail/toolbar/activity/templates/base', (require, exports
 			});
 
 			const toWhite = transition(this.ref, {
-				duration: 100,
+				duration: 200,
 				backgroundColor: '#ffffff',
 			});
 
@@ -255,9 +202,9 @@ jn.define('crm/entity-detail/toolbar/activity/templates/base', (require, exports
 			return chain(
 				start,
 				open,
-				toGrey,
-				pause(1000),
-				toWhite,
+				shouldHighlightOnShow && toGrey,
+				shouldHighlightOnShow && pause(100),
+				shouldHighlightOnShow && toWhite,
 			)();
 		}
 

@@ -1,4 +1,5 @@
 <?php
+
 $MESS["TASKS_BP_DOCUMENT_ENTITY_NAME"] = "Задача";
 $MESS["TASKS_BP_DOCUMENT_TITLE"] = "Название";
 $MESS["TASKS_BP_DOCUMENT_DESCRIPTION"] = "Описание";
@@ -49,4 +50,8 @@ $MESS["TASKS_BP_DOCUMENT_MEMBER_ROLE_R"] = "Ответственный";
 $MESS["TASKS_BP_DOCUMENT_MEMBER_ROLE_A"] = "Соисполнитель";
 $MESS["TASKS_BP_DOCUMENT_MEMBER_ROLE_U"] = "Наблюдатель";
 $MESS["TASKS_BP_DOCUMENT_RESUME_RESTRICTED"] = "Завершено по тарифным ограничениям";
-?>
+$MESS["TASKS_BP_DOCUMENT_COMMENT_RESULT"] = "Результат";
+$MESS["TASKS_BP_DOCUMENT_COMMENT_RESULT_LAST"] = "Результат (последний)";
+$MESS["TASKS_BP_DOCUMENT_SCRUM_OWNER_ROLE"] = "Владелец продукта";
+$MESS["TASKS_BP_DOCUMENT_SCRUM_MASTER_ROLE"] = "Скрам-мастер";
+$MESS["TASKS_BP_DOCUMENT_SCRUM_TEAM_ROLE"] = "Команда разработки";

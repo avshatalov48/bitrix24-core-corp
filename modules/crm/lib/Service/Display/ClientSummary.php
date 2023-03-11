@@ -2,6 +2,8 @@
 
 namespace Bitrix\Crm\Service\Display;
 
+use Bitrix\Main\Web\Uri;
+
 class ClientSummary
 {
 	private const DEFAULT_PHOTO_SIZE = 50;
@@ -117,7 +119,7 @@ class ClientSummary
 				$styles = [];
 				if ($needResizeByShortestDimension)
 				{
-					$styles[] = 'background-image: url(\'' . htmlspecialcharsbx($resizedFile['src']) . '\')';
+					$styles[] = 'background-image: url(\'' . Uri::urnEncode(htmlspecialcharsbx($resizedFile['src'])) . '\')';
 				}
 				else
 				{
@@ -132,7 +134,7 @@ class ClientSummary
 						false,
 						true
 					);
-					$styles[] = 'background-image: url(\'' . htmlspecialcharsbx($resizedFile['src']) . '\'), url(\'' . htmlspecialcharsbx($backgroundFile['src']) . '\')';
+					$styles[] = 'background-image: url(\'' . Uri::urnEncode(htmlspecialcharsbx($resizedFile['src'])) . '\'), url(\'' . Uri::urnEncode(htmlspecialcharsbx($backgroundFile['src'])) . '\')';
 					$styles[] = 'background-size: contain, cover';
 				}
 

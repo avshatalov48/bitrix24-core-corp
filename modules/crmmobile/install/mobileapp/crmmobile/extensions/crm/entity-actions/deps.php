@@ -5,7 +5,6 @@ return [
 		'loc',
 		'alert',
 		'crm:type',
-		'crm:assets/category',
 		'crm:category-list-view/open',
 	],
 	'bundle' => [

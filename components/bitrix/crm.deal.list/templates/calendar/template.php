@@ -14,6 +14,7 @@ use Bitrix\Main\Text\HtmlFilter;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm\Integration\Calendar;
 use Bitrix\Crm\UI\NavigationBarPanel;
+use Bitrix\Main\UI\Extension;
 
 $APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/crm-entity-show.css");
 if(SITE_TEMPLATE_ID === 'bitrix24')
@@ -25,7 +26,15 @@ if (CModule::IncludeModule('bitrix24') && !\Bitrix\Crm\CallList\CallList::isAvai
 	CBitrix24::initLicenseInfoPopupJS();
 }
 
-\Bitrix\Main\UI\Extension::load('ui.fonts.opensans');
+Extension::load('ui.fonts.opensans');
+
+if (
+	!empty($arResult['CLIENT_FIELDS_RESTRICTIONS'])
+	|| !empty($arResult['OBSERVERS_FIELD_RESTRICTIONS'])
+)
+{
+	Extension::load(['crm.restriction.filter-fields']);
+}
 
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/common.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/progress_control.js');
@@ -374,7 +383,13 @@ if(!Bitrix\Main\Grid\Context::isInternalRequest()
 				'showPopupInCenter' => true,
 			],
 			'NAVIGATION_BAR' => (new NavigationBarPanel(CCrmOwnerType::Deal, $arResult['CATEGORY_ID']))
-				->setAllAllowableItems(NavigationBarPanel::ID_CALENDAR)
+				->setItems([
+					NavigationBarPanel::ID_KANBAN,
+					NavigationBarPanel::ID_LIST,
+					NavigationBarPanel::ID_ACTIVITY,
+					NavigationBarPanel::ID_CALENDAR,
+					NavigationBarPanel::ID_AUTOMATION
+				], NavigationBarPanel::ID_CALENDAR)
 				->setBinding($arResult['NAVIGATION_CONTEXT_ID'])
 				->get(),
 			'LIMITS' => ($arResult['LIVE_SEARCH_LIMIT_INFO'] ?? null),
@@ -626,18 +641,30 @@ $APPLICATION->IncludeComponent("bitrix:calendar.interface.grid", "", Array(
 
 	//endregion
 </script>
-<?if (!empty($arResult['CLIENT_FIELDS_RESTRICTIONS'])):
-	Bitrix\Main\UI\Extension::load(['crm.restriction.client-fields']);
-	?>
+
+<?if (!empty($arResult['CLIENT_FIELDS_RESTRICTIONS'])):?>
 	<script type="text/javascript">
 		BX.ready(
 			function()
 			{
-				new BX.Crm.Restriction.ClientFieldsRestriction(
+				new BX.Crm.Restriction.FilterFieldsRestriction(
 					<?=CUtil::PhpToJSObject($arResult['CLIENT_FIELDS_RESTRICTIONS'])?>
 				);
 			}
 		);
 	</script>
 <?endif;?>
+<?if (!empty($arResult['OBSERVERS_FIELD_RESTRICTIONS'])):?>
+	<script type="text/javascript">
+		BX.ready(
+			function()
+			{
+				new BX.Crm.Restriction.FilterFieldsRestriction(
+					<?=CUtil::PhpToJSObject($arResult['OBSERVERS_FIELD_RESTRICTIONS'])?>
+				);
+			}
+		);
+	</script>
+<?endif;?>
+
 <?\Bitrix\Crm\Integration\NotificationsManager::showSignUpFormOnCrmShopCreated()?>

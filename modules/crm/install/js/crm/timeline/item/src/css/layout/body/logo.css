@@ -245,6 +245,22 @@
 	background-image: url('../../../images/timeline-card-logos/call/crm-timeline__call-pause-record.svg');
 }
 
+.crm-timeline__card-logo_icon.--shop > i {
+	mask-image: url('../../../images/timeline-card-logos/shop/crm-timeline__shop-basket.svg');
+}
+
+.crm-timeline__card-logo_icon.--shop-eye > i {
+	mask-image: url('../../../images/timeline-card-logos/shop/crm-timeline__shop-eye.svg');
+}
+
+.crm-timeline__card-logo_icon.--list-check > i {
+	mask-image: url('../../../images/timeline-card-logos/shop/crm-timeline__list-check.svg');
+}
+
+.crm-timeline__card-logo_icon.--check > i {
+	mask-image: url('../../../images/timeline-card-logos/shop/crm-timeline__check.svg');
+}
+
 
 .crm-timeline__card-logo_add-icon {
 	--add-icon-size: var(--ui-size-3xl, 34px);

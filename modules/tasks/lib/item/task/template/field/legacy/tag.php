@@ -26,7 +26,7 @@ class Tag extends \Bitrix\Tasks\Item\Field\Collection
 		return $this->createValue($result, $key, $item);
 	}
 
-	public function setValue($value, $key, $item)
+	public function setValue($value, $key, $item, array $parameters = array())
 	{
 		$item['SE_TAG'] = $value;
 		$item->setFieldModified('SE_TAG');

@@ -1300,7 +1300,10 @@ class Support24 extends Network implements MenuBot, SupportBot, SupportQuestion
 
 		$fromUserId = (int)$messageFields['FROM_USER_ID'];
 		$dialogId = (string)$messageFields['FROM_USER_ID'];
-		$isChat = $messageFields['CHAT_ENTITY_TYPE'] === self::CHAT_ENTITY_TYPE;
+		$isChat = (
+			isset($messageFields['CHAT_ENTITY_TYPE'])
+			&& $messageFields['CHAT_ENTITY_TYPE'] === self::CHAT_ENTITY_TYPE
+		);
 		if ($isChat)
 		{
 			$dialogId = 'chat'.(int)$messageFields['CHAT_ID'];

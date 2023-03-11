@@ -3,6 +3,7 @@ namespace Bitrix\ImOpenLines\Session;
 
 use Bitrix\ImOpenLines\Crm;
 use Bitrix\ImOpenLines\Chat;
+use Bitrix\ImOpenLines\Im;
 use Bitrix\ImOpenLines\Mail;
 use Bitrix\ImOpenLines\Queue;
 use Bitrix\ImOpenLines\Debug;
@@ -112,8 +113,6 @@ class Agent
 	{
 		Debug::addAgent('start ' . __METHOD__);
 
-		$result = '\Bitrix\ImOpenLines\Session::transferToNextInQueueAgent(0);';
-
 		if(!self::isCronCall() && self::isExecModeAgent() || self::isCronCall() && self::isExecModeCron())
 		{
 			ExecLog::setExecFunction(__METHOD__);
@@ -133,7 +132,7 @@ class Agent
 
 		Debug::addAgent('stop ' . __METHOD__);
 
-		return $result;
+		return __METHOD__. '(0);';
 	}
 
 	/**
@@ -146,10 +145,12 @@ class Agent
 	{
 		Debug::addAgent('start ' . __METHOD__);
 
-		$emptyResultReturn = '\Bitrix\ImOpenLines\Session::closeByTimeAgent(0);';
+		$emptyResultReturn = __METHOD__. '(0);';
 
 		if (self::isCronCall() && self::isExecModeAgent() || !self::isCronCall() && self::isExecModeCron())
+		{
 			return $emptyResultReturn;
+		}
 
 		if (Session::getQueueFlagCache(Session::CACHE_CLOSE))
 		{
@@ -217,7 +218,7 @@ class Agent
 
 		Debug::addAgent('stop ' . __METHOD__);
 
-		return '\Bitrix\ImOpenLines\Session::closeByTimeAgent(1);';
+		return __METHOD__. '(1);';
 	}
 
 	/**
@@ -228,8 +229,6 @@ class Agent
 	public static function sendMessageNoAnswer()
 	{
 		Debug::addAgent('start ' . __METHOD__);
-
-		$result = '\Bitrix\ImOpenLines\Session\Agent::sendMessageNoAnswer();';
 
 		if(!self::isCronCall() && self::isExecModeAgent() || self::isCronCall() && self::isExecModeCron())
 		{
@@ -250,7 +249,7 @@ class Agent
 
 		Debug::addAgent('stop ' . __METHOD__);
 
-		return $result;
+		return __METHOD__. '();';
 	}
 
 	/**
@@ -263,10 +262,12 @@ class Agent
 	{
 		Debug::addAgent('start ' . __METHOD__);
 
-		$emptyResultReturn = '\Bitrix\ImOpenLines\Session::mailByTimeAgent(0);';
+		$emptyResultReturn = __METHOD__. '(0);';
 
 		if (self::isCronCall() && self::isExecModeAgent() || !self::isCronCall() && self::isExecModeCron())
+		{
 			return $emptyResultReturn;
+		}
 
 		if (Session::getQueueFlagCache(Session::CACHE_MAIL))
 		{
@@ -307,7 +308,7 @@ class Agent
 
 		Debug::addAgent('stop ' . __METHOD__);
 
-		return '\Bitrix\ImOpenLines\Session::mailByTimeAgent(1);';
+		return __METHOD__. '(1);';
 	}
 
 	/**
@@ -405,13 +406,16 @@ class Agent
 	{
 		Debug::addAgent('start ' . __METHOD__);
 
-		$result = '\Bitrix\ImOpenLines\Session\Agent::sendAutomaticMessage();';
-
-		if(
-			!self::isCronCall() &&
-			self::isExecModeAgent() ||
-			self::isCronCall() &&
-			self::isExecModeCron()
+		if (
+			(
+				!self::isCronCall()
+				&& self::isExecModeAgent()
+			)
+			||
+			(
+				self::isCronCall()
+				&& self::isExecModeCron()
+			)
 		)
 		{
 			ExecLog::setExecFunction(__METHOD__);
@@ -424,7 +428,39 @@ class Agent
 
 		Debug::addAgent('stop ' . __METHOD__);
 
-		return $result;
+		return __METHOD__ .'();';
+	}
+
+	/**
+	 * Agent clears broken session data.
+	 * @return string
+	 */
+	public static function deleteBrokenSession(): string
+	{
+		$sessList = \Bitrix\ImOpenLines\Model\SessionTable::getList([
+			'select' => ['ID', 'CHAT_ID'],
+			'filter' => ['=CONFIG.ID' => null]
+		]);
+		while ($session = $sessList->fetch())
+		{
+			Im::chatHide($session['CHAT_ID']);
+			Session::deleteSession($session['ID']);
+		}
+
+		$checkList = \Bitrix\ImOpenLines\Model\SessionCheckTable::getList([
+			'filter' => ['=SESSION.ID' => null]
+		]);
+		while ($session = $checkList->fetch())
+		{
+			\Bitrix\ImOpenLines\Model\SessionCheckTable::delete($session['SESSION_ID']);
+		}
+
+		if (\Bitrix\Main\Loader::includeModule('pull'))
+		{
+			\Bitrix\Pull\Event::send();
+		}
+
+		return __METHOD__. '();';
 	}
 
 	/**

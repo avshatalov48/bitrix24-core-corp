@@ -1,4 +1,7 @@
-<? if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+<?
+use Bitrix\Main\Web\Uri;
+
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 if (isset($_REQUEST['AJAX']))
 {
@@ -15,7 +18,7 @@ $topActivity = $arParams['OFFSET'] ? (int) $arParams['TOP_ACTIVITY'] : $arResult
 	<div class="pulse-popup-user-block <?=$USER->getId() == $data['USER_ID']?'pulse-popup-i-am-user':''?>">
 		<span class="pulse-popup-user-avatar" data-userid="<?=$data['USER_ID']?>"
 			<? if(!empty($arResult['USERS_INFO'][$data['USER_ID']]['AVATAR_SRC'])): ?>
-				style="background: url('<?=$arResult['USERS_INFO'][$data['USER_ID']]['AVATAR_SRC']?>') no-repeat center center;"
+				style="background: url('<?=Uri::urnEncode($arResult['USERS_INFO'][$data['USER_ID']]['AVATAR_SRC'])?>') no-repeat center center;"
 			<?endif?>
 			>
 			<span class="pulse-popup-user-avatar-flag <?=$data['IS_INVOLVED']?'pulse-user-online':''?>"></span>

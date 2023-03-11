@@ -1,6 +1,7 @@
 <?php
 $MESS["TASKS_PRESET_ACTIVE_REGULAR"] = "Wiederholende";
 $MESS["TASKS_PRESET_NEW_USER"] = "Für neue Nutzer";
+$MESS["TASKS_TEMPLATES_LIST_BATCH_DELETE_ERROR_MESSAGE"] = "Sie haben nicht genügend Rechte, um Vorlagen zu löschen: #TEMPLATE_IDS#";
 $MESS["TASKS_TEMPLATES_LIST_CLOSE"] = "Schließen";
 $MESS["TASKS_TEMPLATES_LIST_GROUP_ACTION_ERROR_MESSAGE"] = "\"#MESSAGE#\" in dieser Vorlage: #TEMPLATE_IDS#";
 $MESS["TASKS_TEMPLATES_LIST_TITLE_ERROR"] = "Fehler";

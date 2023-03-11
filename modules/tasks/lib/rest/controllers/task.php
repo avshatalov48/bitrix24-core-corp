@@ -657,7 +657,10 @@ final class Task extends Base
 		$tagsResult = \CTaskTags::GetList([], ['TASK_ID' => $taskIds]);
 		while ($tag = $tagsResult->Fetch())
 		{
-			$tags[$tag['TASK_ID']][] = $tag['NAME'];
+			$tags[$tag['TASK_ID']][$tag['ID']] = [
+				'ID' => $tag['ID'],
+				'TITLE' => $tag['NAME'],
+			];
 		}
 
 		foreach ($tasks as $id => $task)
@@ -901,8 +904,7 @@ final class Task extends Base
 	private function processCrmElements(array $fields): array
 	{
 		if (
-			empty($fields['CRM'])
-			|| !is_array($fields['CRM'])
+			!array_key_exists('CRM', $fields)
 			|| !Loader::includeModule('crm')
 		)
 		{
@@ -913,6 +915,11 @@ final class Task extends Base
 		if (!is_array($fields[$crmUfCode]))
 		{
 			$fields[$crmUfCode] = [];
+		}
+
+		if (!is_array($fields['CRM']) || empty($fields['CRM']))
+		{
+			return $fields;
 		}
 
 		foreach ($fields['CRM'] as $item)
@@ -1008,6 +1015,8 @@ final class Task extends Base
 
 		try
 		{
+			//todo: tmp, remove after internalizer is injected
+			$fields = $this->removeReferences($fields);
 			$task->update($fields, $params);
 		}
 		catch (\Exception $exception)
@@ -1156,7 +1165,15 @@ final class Task extends Base
 		$params['USE_MINIMAL_SELECT_LEGACY'] = 'N'; // VERY VERY BAD HACK! DONT REPEAT IT !
 		$params['RETURN_ACCESS'] = ($params['RETURN_ACCESS'] ?? 'N'); // VERY VERY BAD HACK! DONT REPEAT IT !.. too late
 
-		$result = Manager\Task::getList($this->getCurrentUser()->getId(), $getListParams, $params);
+		try
+		{
+			$result = Manager\Task::getList($this->getCurrentUser()->getId(), $getListParams, $params);
+		}
+		catch (\Exception $exception)
+		{
+			$this->addError(new Error($exception->getMessage()));
+			return null;
+		}
 		$tasks = array_values($result['DATA']);
 		$tasks = $this->fillGroupInfo($tasks, $params);
 		$tasks = $this->fillUserInfo($tasks);
@@ -2256,5 +2273,47 @@ final class Task extends Base
 		}
 
 		return $tree;
+	}
+
+	//tmp, remove after internalizer is injected
+	private function removeReferences(array $receivedFields): array
+	{
+		$blackList = [
+			'CREATOR',
+			'RESPONSIBLE',
+			'PARENT',
+			'SITE',
+			'MEMBERS',
+			'RESULTS',
+			'GROUP',
+			'MEMBER_LIST',
+			'TAG_LIST',
+		];
+		$allowableFields = [];
+		foreach ($receivedFields as $field => $data)
+		{
+			if (!in_array($field, $blackList, true))
+			{
+				$allowableFields[$field] = $data;
+			}
+		}
+
+		return $allowableFields;
+	}
+
+	/**
+	 * @param array $taskIds
+	 * @param array $arParams
+	 * @return array
+	 * @throws Main\ArgumentException
+	 * @throws Main\LoaderException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	public function getGridRowsAction(array $taskIds = [], array $arParams = []): array
+	{
+		/** @var \TasksTaskListComponent $componentClassName */
+		$componentClassName = \CBitrixComponent::includeComponentClass("bitrix:tasks.task.list");
+		return $componentClassName::getGridRows($taskIds, $arParams);
 	}
 }

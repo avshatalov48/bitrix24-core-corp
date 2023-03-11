@@ -124,15 +124,20 @@ final class SignDocument extends Activity
 					->setTitle(Loc::getMessage('CRM_TIMELINE_ACTIVITY_SIGN_DOCUMENT_TITLE_AND_DEADLINE'))
 					->setContentBlock($activityDeadLine);
 
-		$blocks['updatedAt'] = (new Layout\Body\ContentBlock\ContentBlockWithTitle())
-					->setTitle(Loc::getMessage('CRM_TIMELINE_ACTIVITY_SIGN_DOCUMENT_UPDATED_AT'))
-					->setContentBlock(
-						(new Layout\Body\ContentBlock\Date())
-							->setDate($this->getDocument()
-								->getUpdatedTime()
+		$document = $this->getDocument();
+
+		if ($document)
+		{
+			$blocks['updatedAt'] = (new Layout\Body\ContentBlock\ContentBlockWithTitle())
+				->setTitle(Loc::getMessage('CRM_TIMELINE_ACTIVITY_SIGN_DOCUMENT_UPDATED_AT'))
+				->setContentBlock(
+					(new Layout\Body\ContentBlock\Date())
+						->setDate(
+							$document->getUpdatedTime()
 								->toUserTime()
-							)
-					);
+						)
+				);
+		}
 
 		$blocks['myCompany'] = (new Layout\Body\ContentBlock\ContentBlockWithTitle())
 					->setTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_MYCOMPANY_ID'))
@@ -141,23 +146,25 @@ final class SignDocument extends Activity
 							->setValue($this->getMyCompanyCaption())
 		);
 
-
-		$clientCount = 1;
-		/** @var Contact $contact */
-		foreach ($this->getDocument()->getContacts() as $contact)
+		if ($document)
 		{
-			$blocks['client' . $clientCount] =
-				(new Layout\Body\ContentBlock\ContentBlockWithTitle())
-					->setTitle(
-						Loc::getMessage('CRM_TIMELINE_ACTIVITY_SIGN_DOCUMENT_CONTER_AGENT')
-					)
-					->setContentBlock(
-						(new Layout\Body\ContentBlock\Text())
-							->setValue($contact->getFormattedName())
-					)
-			;
+			$clientCount = 1;
+			/** @var Contact $contact */
+			foreach ($document->getContacts() as $contact)
+			{
+				$blocks['client' . $clientCount] =
+					(new Layout\Body\ContentBlock\ContentBlockWithTitle())
+						->setTitle(
+							Loc::getMessage('CRM_TIMELINE_ACTIVITY_SIGN_DOCUMENT_CONTER_AGENT')
+						)
+						->setContentBlock(
+							(new Layout\Body\ContentBlock\Text())
+								->setValue($contact->getFormattedName())
+						)
+				;
 
-			$clientCount++;
+				$clientCount++;
+			}
 		}
 
 		return $blocks;
@@ -205,27 +212,19 @@ final class SignDocument extends Activity
 		return (int)$this->getAssociatedEntityModel()->get('OWNER_TYPE_ID');
 	}
 
-	private function getDocument(): \Bitrix\Crm\Item
+	private function getDocument(): ?\Bitrix\Crm\Item
 	{
 		if (!$this->document)
 		{
 			$factory = Container::getInstance()->getFactory($this->getEntityTypeId());
 			if (!$factory)
 			{
-				throw new ObjectNotFoundException(
-					'Factory for ' . \CCrmOwnerType::ResolveName($this->getEntityTypeId()) . ' was not found'
-				);
+				return null;
 			}
 
 			$documentId = $this->getDocumentId();
 
 			$this->document = $factory->getItem($documentId);
-			if (!$this->document)
-			{
-				$identifier = new ItemIdentifier($this->getEntityTypeId(), $documentId);
-
-				throw new ObjectNotFoundException('Item was not found: ' . $identifier);
-			}
 		}
 
 		return $this->document;
@@ -241,14 +240,15 @@ final class SignDocument extends Activity
 			$linkedRequisiteId = ((int)$requisiteId > 0) ? (int)$requisiteId : null;
 		}
 
+		$document = $this->getDocument();
 		if (!empty($linkedRequisiteId))
 		{
 			$requisites = EntityRequisite::getSingleInstance()->getById($linkedRequisiteId);
 		}
-		elseif (isset($this->getDocument()->getData()['MYCOMPANY_ID']) && $this->getDocument()->getMycompanyId() > 0)
+		elseif ($document && isset($document->getData()['MYCOMPANY_ID']) && $document->getMycompanyId() > 0)
 		{
 			$defaultRequisite = new DefaultRequisite(
-				new ItemIdentifier(\CCrmOwnerType::Company, $this->getDocument()->getMycompanyId())
+				new ItemIdentifier(\CCrmOwnerType::Company, $document->getMycompanyId())
 			);
 
 			$requisites = $defaultRequisite->get();

@@ -212,6 +212,7 @@ jn.define('crm/timeline/scheduler/providers/comment', (require, exports, module)
 					backdrop: {
 						mediumPositionPercent: 70,
 						horizontalSwipeAllowed: false,
+						navigationBarColor: '#eef2f4',
 					},
 				},
 			});

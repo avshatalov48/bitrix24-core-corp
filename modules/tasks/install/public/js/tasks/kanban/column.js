@@ -489,6 +489,10 @@
 	BX.Tasks.Kanban.DraftColumn.prototype = {
 		__proto__: BX.Kanban.DraftColumn.prototype,
 		constructor: BX.Tasks.Kanban.DraftColumn,
+		isScrumGridHeader: function()
+		{
+			return this.getGrid().isScrumGridHeader();
+		},
 		applyEditMode: function()
 		{
 			if (this.asyncEventStarted)
@@ -540,7 +544,35 @@
 			);
 
 			promise.fulfill(this);
-		}
+		},
+		getSubTitle: function()
+		{
+			if (this.isScrumGridHeader())
+			{
+				this.layout.subTitle = document.createElement('div');
+
+				return this.layout.subTitle;
+			}
+			else
+			{
+				return BX.Kanban.Column.prototype.getSubTitle.call(this);
+			}
+		},
+		getBody: function()
+		{
+			if (this.isScrumGridHeader())
+			{
+				this.layout.body = document.createElement('div');
+
+				this.layout.items = this.getItemsContainer();
+
+				return this.layout.body;
+			}
+			else
+			{
+				return BX.Kanban.Column.prototype.getBody.call(this);
+			}
+		},
 	};
 
 })();

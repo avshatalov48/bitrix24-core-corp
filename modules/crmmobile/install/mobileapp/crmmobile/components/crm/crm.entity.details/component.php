@@ -29,8 +29,11 @@ $component = new class {
 	{
 		try
 		{
-			Loader::requireModule('mobile');
+			Loader::requireModule('catalog');
 			Loader::requireModule('crm');
+			Loader::requireModule('currency');
+			Loader::requireModule('mobile');
+			Loader::requireModule('sale');
 		}
 		catch (LoaderException $exception)
 		{
@@ -57,6 +60,20 @@ $component = new class {
 	public function execute(): array
 	{
 		$this->checkModules();
+		if ($this->hasErrors())
+		{
+			return $this->showErrors();
+		}
+
+		if (!CAllCrmInvoice::installExternalEntities())
+		{
+			$this->errorCollection[] = new Error('Could not install external entities', 2494608);
+		}
+		elseif (!CCrmQuote::LocalComponentCausedUpdater())
+		{
+			$this->errorCollection[] = new Error('Could not install external entities', 2623264);
+		}
+
 		if ($this->hasErrors())
 		{
 			return $this->showErrors();

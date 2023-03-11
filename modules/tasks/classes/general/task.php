@@ -1,6 +1,7 @@
 <?php
 /**
  * Bitrix Framework
+ *
  * @package bitrix
  * @subpackage tasks
  * @copyright 2001-2013 Bitrix
@@ -77,10 +78,10 @@ class CTasks
 	const CACHE_TASKS_COUNT = 'CACHE_TASKS_COUNT_KEY';
 	const CACHE_TASKS_COUNT_DIR_NAME = '/bx_tasks_count';
 
-	private $_errors = array();
-	private $lastOperationResultData = array();
+	private $_errors = [];
+	private $lastOperationResultData = [];
 
-	private static $cacheIds = array();
+	private static $cacheIds = [];
 	private static $cacheClearEnabled = true;
 
 	function GetErrors()
@@ -125,8 +126,7 @@ class CTasks
 
 		if (
 			!isset($arParams['CORRECT_DATE_PLAN'])
-			||
-			(
+			|| (
 				$arParams['CORRECT_DATE_PLAN'] !== false
 				&& $arParams['CORRECT_DATE_PLAN'] !== 'N'
 			)
@@ -182,31 +182,31 @@ class CTasks
 			{
 				$msg = GetMessage("TASKS_UNKNOWN_ADD_ERROR");
 			}
-			$this->_errors[] = array(
+			$this->_errors[] = [
 				"text" => $msg,
-				"id"   => "ERROR_UNKNOWN_ADD_TASK_ERROR"
-			);
+				"id" => "ERROR_UNKNOWN_ADD_TASK_ERROR",
+			];
 			return false;
 		}
-		catch(\Exception $e)
+		catch (\Exception $e)
 		{
-			$this->_errors[] = array(
+			$this->_errors[] = [
 				"text" => $e->getMessage(),
-				"id"   => "ERROR_UNKNOWN_ADD_TASK_ERROR"
-			);
+				"id" => "ERROR_UNKNOWN_ADD_TASK_ERROR",
+			];
 			return false;
 		}
 
 		return $task->getId();
 	}
 
-	public function Update($taskId, $arFields, $arParams = array(
+	public function Update($taskId, $arFields, $arParams = [
 		'CORRECT_DATE_PLAN_DEPENDENT_TASKS' => true,
-		'CORRECT_DATE_PLAN'                 => true,
-		'THROTTLE_MESSAGES'                 => false
-	))
+		'CORRECT_DATE_PLAN' => true,
+		'THROTTLE_MESSAGES' => false,
+	])
 	{
-		$taskId = (int) $taskId;
+		$taskId = (int)$taskId;
 		if ($taskId < 1)
 		{
 			return false;
@@ -245,8 +245,7 @@ class CTasks
 
 		if (
 			!isset($arParams['CORRECT_DATE_PLAN'])
-			||
-			(
+			|| (
 				$arParams['CORRECT_DATE_PLAN'] !== false
 				&& $arParams['CORRECT_DATE_PLAN'] !== 'N'
 			)
@@ -257,8 +256,7 @@ class CTasks
 
 		if (
 			!isset($arParams['CORRECT_DATE_PLAN_DEPENDENT_TASKS'])
-			||
-			(
+			|| (
 				$arParams['CORRECT_DATE_PLAN_DEPENDENT_TASKS'] !== false
 				&& $arParams['CORRECT_DATE_PLAN_DEPENDENT_TASKS'] !== 'N'
 			)
@@ -299,19 +297,19 @@ class CTasks
 		}
 		catch (\Bitrix\Tasks\Control\Exception\TaskUpdateException $e)
 		{
-			$this->_errors[] = array(
+			$this->_errors[] = [
 				"text" => $e->getMessage(),
-				"id"   => "ERROR_UNKNOWN_UPDATE_TASK_ERROR"
-			);
+				"id" => "ERROR_UNKNOWN_UPDATE_TASK_ERROR",
+			];
 
 			return false;
 		}
 		catch (\Exception $e)
 		{
-			$this->_errors[] = array(
+			$this->_errors[] = [
 				"text" => GetMessage("TASKS_UNKNOWN_UPDATE_ERROR"),
-				"id"   => "ERROR_UNKNOWN_UPDATE_TASK_ERROR"
-			);
+				"id" => "ERROR_UNKNOWN_UPDATE_TASK_ERROR",
+			];
 
 			AddMessage2Log(serialize($e->getMessage()), 'tasks');
 
@@ -364,7 +362,7 @@ class CTasks
 				$CACHE_MANAGER->ClearByTag($id);
 			}
 
-			static::$cacheIds = array();
+			static::$cacheIds = [];
 		}
 	}
 
@@ -415,25 +413,27 @@ class CTasks
 			$handler->withSkipExchangeSync();
 		}
 
-		return $handler->delete((int) $taskId);
+		return $handler->delete((int)$taskId);
 	}
 
-	protected static function GetSqlByFilter($arFilter, $userID, $sAliasPrefix, $bGetZombie, $bMembersTableJoined = false, $params = [])
+	protected static function GetSqlByFilter($arFilter, $userID, $sAliasPrefix, $bGetZombie,
+		$bMembersTableJoined = false, $params = [])
 	{
 		global $DB;
 
 		$bFullJoin = null;
 
 		if (!is_array($arFilter))
+		{
 			throw new TasksException(
-				'GetSqlByFilter: expected array, but something other given: '.var_export($arFilter, true)
+				'GetSqlByFilter: expected array, but something other given: ' . var_export($arFilter, true)
 			);
+		}
 
 		if (
 			array_key_exists('ONLY_ROOT_TASKS', $arFilter)
 			&& $arFilter['ONLY_ROOT_TASKS'] === 'Y'
-			&&
-			(
+			&& (
 				array_key_exists('FULL_SEARCH_INDEX', $arFilter)
 				|| array_key_exists('COMMENT_SEARCH_INDEX', $arFilter)
 			)
@@ -461,7 +461,7 @@ class CTasks
 			}
 		}
 
-		$arSqlSearch = array();
+		$arSqlSearch = [];
 
 		$targetUserId = isset($params['TARGET_USER_ID']) ? $params['TARGET_USER_ID'] : $userID;
 
@@ -469,16 +469,21 @@ class CTasks
 		{
 			// Skip meta-key
 			if ($key === '::LOGIC')
+			{
 				continue;
+			}
 
 			// Skip markers
 			if ($key === '::MARKERS')
+			{
 				continue;
+			}
 
 			// Subfilter?
 			if (static::isSubFilterKey($key))
 			{
-				$arSqlSearch[] = self::GetSqlByFilter($val, $userID, $sAliasPrefix, $bGetZombie, $bMembersTableJoined, $params);
+				$arSqlSearch[] = self::GetSqlByFilter($val, $userID, $sAliasPrefix, $bGetZombie, $bMembersTableJoined,
+					$params);
 				continue;
 			}
 
@@ -505,14 +510,14 @@ class CTasks
 			switch ($key)
 			{
 				case 'META::ID_OR_NAME':
-					$arSqlSearch[] = " (".
-						$sAliasPrefix.
-						"T.ID = '".
-						intval($val).
-						"' OR (UPPER(".
-						$sAliasPrefix.
-						"T.TITLE) LIKE UPPER('%".
-						$DB->ForSqlLike($val).
+					$arSqlSearch[] = " (" .
+						$sAliasPrefix .
+						"T.ID = '" .
+						intval($val) .
+						"' OR (UPPER(" .
+						$sAliasPrefix .
+						"T.TITLE) LIKE UPPER('%" .
+						$DB->ForSqlLike($val) .
 						"%')) ) ";
 					break;
 
@@ -522,7 +527,7 @@ class CTasks
 				case "STATUS_CHANGED_BY":
 				case "FORUM_TOPIC_ID":
 					$arSqlSearch[] = CTasks::FilterCreate(
-						$sAliasPrefix."T.".$key,
+						$sAliasPrefix . "T." . $key,
 						$val,
 						"number",
 						$bFullJoin,
@@ -538,7 +543,7 @@ class CTasks
 				case 'TIME_ESTIMATE':
 				case 'FORKED_BY_TEMPLATE_ID':
 					$arSqlSearch[] = CTasks::FilterCreate(
-						$sAliasPrefix."T.".$key,
+						$sAliasPrefix . "T." . $key,
 						$val,
 						"number_wo_nulls",
 						$bFullJoin,
@@ -559,7 +564,7 @@ class CTasks
 				case "REFERENCE:START_DATE_PLAN":
 					$key = 'START_DATE_PLAN';
 					$arSqlSearch[] = CTasks::FilterCreate(
-						$sAliasPrefix."T.".$key,
+						$sAliasPrefix . "T." . $key,
 						$val,
 						'reference',
 						$bFullJoin,
@@ -570,7 +575,7 @@ class CTasks
 				case 'META:GROUP_ID_IS_NULL_OR_ZERO':
 					$key = 'GROUP_ID';
 					$arSqlSearch[] = CTasks::FilterCreate(
-						$sAliasPrefix."T.".$key,
+						$sAliasPrefix . "T." . $key,
 						$val,
 						"null_or_zero",
 						$bFullJoin,
@@ -582,22 +587,24 @@ class CTasks
 				case 'META:PARENT_ID_OR_NULL':
 					if ((array)$val)
 					{
-						$arSqlSearch[] = '(T.PARENT_ID IN ('.join(', ', array_map('intval', (array)$val)).') OR T.PARENT_ID IS NULL)';
+						$arSqlSearch[] = '(T.PARENT_ID IN ('
+							. join(', ', array_map('intval', (array)$val))
+							. ') OR T.PARENT_ID IS NULL)';
 					}
 					break;
 
 				case "CHANGED_BY":
 					$arSqlSearch[] = CTasks::FilterCreate(
-						"CASE WHEN ".
-						$sAliasPrefix.
-						"T.".
-						$key.
-						" IS NULL THEN ".
-						$sAliasPrefix.
-						"T.CREATED_BY ELSE ".
-						$sAliasPrefix.
-						"T.".
-						$key.
+						"CASE WHEN " .
+						$sAliasPrefix .
+						"T." .
+						$key .
+						" IS NULL THEN " .
+						$sAliasPrefix .
+						"T.CREATED_BY ELSE " .
+						$sAliasPrefix .
+						"T." .
+						$key .
 						" END",
 						$val,
 						"number",
@@ -609,7 +616,7 @@ class CTasks
 				case 'GUID':
 				case 'TITLE':
 					$arSqlSearch[] = CTasks::FilterCreate(
-						$sAliasPrefix."T.".$key,
+						$sAliasPrefix . "T." . $key,
 						$val,
 						"string",
 						$bFullJoin,
@@ -621,7 +628,7 @@ class CTasks
 				case 'COMMENT_SEARCH_INDEX':
 					$isComment = $key === 'COMMENT_SEARCH_INDEX';
 					$tableName = SearchIndexTable::getTableName();
-					$tableAlias = $sAliasPrefix.($isComment ? 'TSIC' : 'TSIF');
+					$tableAlias = $sAliasPrefix . ($isComment ? 'TSIC' : 'TSIF');
 					$columnName = "{$tableAlias}.SEARCH_INDEX";
 					$where = self::FilterCreate($columnName, $val, 'fulltext', $bFullJoin, $cOperationType);
 
@@ -636,17 +643,23 @@ class CTasks
 					{
 						$join = "AND {$tableAlias}.MESSAGE_ID = 0";
 					}
-					else if ($isComment || $searchCommentOnly)
+					elseif ($isComment || $searchCommentOnly)
 					{
 						$join = "AND {$tableAlias}.MESSAGE_ID != 0";
 					}
 
 					$innerQuery = "
-						"."SELECT {$sAliasPrefix}ST.ID"."
-						"."FROM b_tasks {$sAliasPrefix}ST"."
-						"."INNER JOIN {$tableName} {$tableAlias} ON {$tableAlias}.TASK_ID = {$sAliasPrefix}ST.ID {$join}"."
-						"."WHERE {$where}"
-					;
+						"
+						. "SELECT {$sAliasPrefix}ST.ID"
+						. "
+						"
+						. "FROM b_tasks {$sAliasPrefix}ST"
+						. "
+						"
+						. "INNER JOIN {$tableName} {$tableAlias} ON {$tableAlias}.TASK_ID = {$sAliasPrefix}ST.ID {$join}"
+						. "
+						"
+						. "WHERE {$where}";
 					$arSqlSearch[] = "({$sAliasPrefix}T.ID IN ({$innerQuery}))";
 					break;
 
@@ -671,8 +684,9 @@ class CTasks
 							{$sAliasPrefix}T.ID IN (
 								SELECT TT.TASK_ID
 								FROM (
-									SELECT TASK_ID, COUNT(1) AS CNT
-									FROM b_tasks_tag
+									SELECT TASK_ID, COUNT(TASK_ID) AS CNT
+									FROM b_tasks_label
+									INNER JOIN b_tasks_task_tag bttt on bttt.TAG_ID = b_tasks_label.ID
 									WHERE NAME IN {$tags}
 									GROUP BY TASK_ID
 									HAVING CNT = {$tagsCount}
@@ -681,11 +695,37 @@ class CTasks
 						");
 					}
 					break;
+				case 'TAG_ID':
+					if (!is_array($val))
+					{
+						$val = [$val];
+					}
+					$tags = array_filter(
+						array_map(
+							static function ($tag) use ($DB) {
+								return ($tag ? $DB->ForSql($tag) : false);
+							},
+							$val
+						)
+					);
+					$tagsCount = count($tags);
+					if ($tagsCount)
+					{
+						$tags = "('" . implode("','", $tags) . "')";
+						$arSqlSearch[] = "
+						{$sAliasPrefix}T.ID IN (
+								SELECT ID FROM b_tasks
+								INNER JOIN b_tasks_task_tag BTT on BTT.TASK_ID = b_tasks.ID
+								WHERE BTT.TAG_ID IN $tags
+						)
+					";
+					}
+					break;
 
 				case 'REAL_STATUS':
 					$val = self::removeStatusValueForActiveSprint($val);
 					$realStatusFilter = CTasks::FilterCreate(
-						$sAliasPrefix."T.STATUS",
+						$sAliasPrefix . "T.STATUS",
 						$val,
 						"number",
 						$bFullJoin,
@@ -695,15 +735,14 @@ class CTasks
 					{
 						$realStatusFilter = $realStatusFilter
 							? $realStatusFilter . " OR ({$sAliasPrefix}TSI.ID IS NOT NULL AND (T.STATUS = '5'))"
-							: "({$sAliasPrefix}TSI.ID IS NOT NULL AND (T.STATUS = '5'))"
-						;
+							: "({$sAliasPrefix}TSI.ID IS NOT NULL AND (T.STATUS = '5'))";
 					}
 					$arSqlSearch[] = $realStatusFilter;
 					break;
 
 				case 'DEADLINE_COUNTED':
 					$arSqlSearch[] = CTasks::FilterCreate(
-						$sAliasPrefix."T.DEADLINE_COUNTED",
+						$sAliasPrefix . "T.DEADLINE_COUNTED",
 						$val,
 						"number_wo_nulls",
 						$bFullJoin,
@@ -716,9 +755,9 @@ class CTasks
 						"
 						CASE
 							WHEN
-								".$sAliasPrefix."TV.USER_ID IS NULL
+								" . $sAliasPrefix . "TV.USER_ID IS NULL
 								AND
-								(".$sAliasPrefix."T.STATUS = 1 OR ".$sAliasPrefix."T.STATUS = 2)
+								(" . $sAliasPrefix . "T.STATUS = 1 OR " . $sAliasPrefix . "T.STATUS = 2)
 							THEN
 								'0'
 							ELSE
@@ -734,34 +773,34 @@ class CTasks
 
 				case "STATUS_EXPIRED": // expired: deadline in past and
 
-					$arSqlSearch[] = ($cOperationType == 'N' ? 'not' : '').
-						"(".
-						$sAliasPrefix.
-						"T.DEADLINE < ".
-						$DB->CurrentTimeFunction().
-						" AND ".
-						$sAliasPrefix.
-						"T.STATUS != '4' AND ".
-						$sAliasPrefix.
-						"T.STATUS != '5' AND (".
-						$sAliasPrefix.
-						"T.STATUS != '7' OR ".
-						$sAliasPrefix.
-						"T.RESPONSIBLE_ID != ".
-						$userID.
+					$arSqlSearch[] = ($cOperationType == 'N' ? 'not' : '') .
+						"(" .
+						$sAliasPrefix .
+						"T.DEADLINE < " .
+						$DB->CurrentTimeFunction() .
+						" AND " .
+						$sAliasPrefix .
+						"T.STATUS != '4' AND " .
+						$sAliasPrefix .
+						"T.STATUS != '5' AND (" .
+						$sAliasPrefix .
+						"T.STATUS != '7' OR " .
+						$sAliasPrefix .
+						"T.RESPONSIBLE_ID != " .
+						$userID .
 						"))";
 
 					break;
 
 				case "STATUS_NEW": // viewed by a specified user + status is either new or pending
 
-					$arSqlSearch[] = ($cOperationType == 'N' ? 'not' : '')."(
+					$arSqlSearch[] = ($cOperationType == 'N' ? 'not' : '') . "(
 
-						".$sAliasPrefix."TV.USER_ID IS NULL
+						" . $sAliasPrefix . "TV.USER_ID IS NULL
 						AND
-						".$sAliasPrefix."T.CREATED_BY != ".$userID."
+						" . $sAliasPrefix . "T.CREATED_BY != " . $userID . "
 						AND
-						(".$sAliasPrefix."T.STATUS = 1 OR ".$sAliasPrefix."T.STATUS = 2)
+						(" . $sAliasPrefix . "T.STATUS = 1 OR " . $sAliasPrefix . "T.STATUS = 2)
 
 					)";
 					$bFullJoin = true; // join TV
@@ -773,75 +812,75 @@ class CTasks
 						"
 						CASE
 							WHEN
-								".
-						$sAliasPrefix.
-						"T.DEADLINE < DATE_ADD(".
-						$DB->CurrentTimeFunction().
-						", INTERVAL ".
-						Counter\Deadline::getDeadlineTimeLimit().
+								" .
+						$sAliasPrefix .
+						"T.DEADLINE < DATE_ADD(" .
+						$DB->CurrentTimeFunction() .
+						", INTERVAL " .
+						Counter\Deadline::getDeadlineTimeLimit() .
 						" SECOND)
-								AND ".
-						$sAliasPrefix.
-						"T.DEADLINE >= ".
-						$DB->CurrentTimeFunction().
+								AND " .
+						$sAliasPrefix .
+						"T.DEADLINE >= " .
+						$DB->CurrentTimeFunction() .
 						"
-								AND ".
-						$sAliasPrefix.
+								AND " .
+						$sAliasPrefix .
 						"T.STATUS != '4'
-								AND ".
-						$sAliasPrefix.
+								AND " .
+						$sAliasPrefix .
 						"T.STATUS != '5'
 								AND (
-									".
-						$sAliasPrefix.
+									" .
+						$sAliasPrefix .
 						"T.STATUS != '7'
-									OR ".
-						$sAliasPrefix.
-						"T.RESPONSIBLE_ID != ".
-						intval($userID).
+									OR " .
+						$sAliasPrefix .
+						"T.RESPONSIBLE_ID != " .
+						intval($userID) .
 						"
 								)
 							THEN
 								'-3'
 							WHEN
-								".
-						$sAliasPrefix.
-						"T.DEADLINE < ".
-						$DB->CurrentTimeFunction().
-						" AND ".
-						$sAliasPrefix.
-						"T.STATUS != '4' AND ".
-						$sAliasPrefix.
-						"T.STATUS != '5' AND (".
-						$sAliasPrefix.
-						"T.STATUS != '7' OR ".
-						$sAliasPrefix.
-						"T.RESPONSIBLE_ID != ".
-						$userID.
+								" .
+						$sAliasPrefix .
+						"T.DEADLINE < " .
+						$DB->CurrentTimeFunction() .
+						" AND " .
+						$sAliasPrefix .
+						"T.STATUS != '4' AND " .
+						$sAliasPrefix .
+						"T.STATUS != '5' AND (" .
+						$sAliasPrefix .
+						"T.STATUS != '7' OR " .
+						$sAliasPrefix .
+						"T.RESPONSIBLE_ID != " .
+						$userID .
 						")
 							THEN
 								'-1'
 							WHEN
-								".
-						$sAliasPrefix.
+								" .
+						$sAliasPrefix .
 						"TV.USER_ID IS NULL
 								AND
-								".
-						$sAliasPrefix.
-						"T.CREATED_BY != ".
-						$userID.
+								" .
+						$sAliasPrefix .
+						"T.CREATED_BY != " .
+						$userID .
 						"
 								AND
-								(".
-						$sAliasPrefix.
-						"T.STATUS = 1 OR ".
-						$sAliasPrefix.
+								(" .
+						$sAliasPrefix .
+						"T.STATUS = 1 OR " .
+						$sAliasPrefix .
 						"T.STATUS = 2)
 							THEN
 								'-2'
 							ELSE
-								".
-						$sAliasPrefix.
+								" .
+						$sAliasPrefix .
 						"T.STATUS
 						END
 					",
@@ -861,7 +900,7 @@ class CTasks
 				case 'ALLOW_CHANGE_DEADLINE':
 				case 'MATCH_WORK_TIME':
 					$arSqlSearch[] = CTasks::FilterCreate(
-						$sAliasPrefix."T.".$key,
+						$sAliasPrefix . "T." . $key,
 						$val,
 						"string_equal",
 						$bFullJoin,
@@ -876,29 +915,33 @@ class CTasks
 				case "CREATED_DATE":
 				case "CLOSED_DATE":
 					if (($val === false) || ($val === ''))
+					{
 						$arSqlSearch[] = CTasks::FilterCreate(
-							$sAliasPrefix."T.".$key,
+							$sAliasPrefix . "T." . $key,
 							$val,
 							"date",
 							$bFullJoin,
 							$cOperationType,
 							$bSkipEmpty = false
 						);
+					}
 					else
+					{
 						$arSqlSearch[] = CTasks::FilterCreate(
-							$sAliasPrefix."T.".$key,
+							$sAliasPrefix . "T." . $key,
 							Db::charToDateFunction($val),
 							"date",
 							$bFullJoin,
 							$cOperationType
 						);
+					}
 					break;
 
 				case "CHANGED_DATE":
 				case "ACTIVITY_DATE":
 					$fname = "CASE WHEN {$sAliasPrefix}T.{$key} IS NULL"
-						." THEN {$sAliasPrefix}T.CREATED_DATE"
-						." ELSE {$sAliasPrefix}T.{$key} END";
+						. " THEN {$sAliasPrefix}T.CREATED_DATE"
+						. " ELSE {$sAliasPrefix}T.{$key} END";
 					$arSqlSearch[] = CTasks::FilterCreate(
 						$fname,
 						Db::charToDateFunction($val),
@@ -910,11 +953,13 @@ class CTasks
 
 				case "ACCOMPLICE":
 					if (!is_array($val))
-						$val = array($val);
+					{
+						$val = [$val];
+					}
 
 					$val = array_filter($val);
 
-					$arConds = array();
+					$arConds = [];
 
 					if ($bMembersTableJoined)
 					{
@@ -922,47 +967,55 @@ class CTasks
 						{
 							foreach ($val as $id)
 							{
-								$arConds[] = "(".$sAliasPrefix."TM.USER_ID = '".intval($id)."')";
+								$arConds[] = "(" . $sAliasPrefix . "TM.USER_ID = '" . intval($id) . "')";
 							}
 
 							if (!empty($arConds))
-								$arSqlSearch[] = '('.$sAliasPrefix."TM.TYPE = 'A' AND (".implode(" OR ", $arConds).'))';
+							{
+								$arSqlSearch[] = '('
+									. $sAliasPrefix
+									. "TM.TYPE = 'A' AND ("
+									. implode(" OR ", $arConds)
+									. '))';
+							}
 						}
 						else
 						{
 							foreach ($val as $id)
 							{
-								$arConds[] = "(".$sAliasPrefix."TM.USER_ID != '".intval($id)."')";
+								$arConds[] = "(" . $sAliasPrefix . "TM.USER_ID != '" . intval($id) . "')";
 							}
 
 							if (!empty($arConds))
-								$arSqlSearch[] = '('.
-									$sAliasPrefix.
-									"TM.TYPE = 'A' AND (".
-									implode(" AND ", $arConds).
+							{
+								$arSqlSearch[] = '(' .
+									$sAliasPrefix .
+									"TM.TYPE = 'A' AND (" .
+									implode(" AND ", $arConds) .
 									'))';
+							}
 						}
 					}
 					else
 					{
 						foreach ($val as $id)
 						{
-							$arConds[] = "(".$sAliasPrefix."TM.USER_ID = '".intval($id)."')";
+							$arConds[] = "(" . $sAliasPrefix . "TM.USER_ID = '" . intval($id) . "')";
 						}
 
 						if (!empty($arConds))
 						{
-							$arSqlSearch[] = ($cOperationType !== 'N' ? 'EXISTS' : 'NOT EXISTS')."(
+							$arSqlSearch[] = ($cOperationType !== 'N' ? 'EXISTS' : 'NOT EXISTS') . "(
 								SELECT
 									'x'
 								FROM
-									b_tasks_member ".$sAliasPrefix."TM
+									b_tasks_member " . $sAliasPrefix . "TM
 								WHERE
-									(".implode(" OR ", $arConds).")
+									(" . implode(" OR ", $arConds) . ")
 								AND
-									".$sAliasPrefix."TM.TASK_ID = ".$sAliasPrefix."T.ID
+									" . $sAliasPrefix . "TM.TASK_ID = " . $sAliasPrefix . "T.ID
 								AND
-									".$sAliasPrefix."TM.TYPE = 'A'
+									" . $sAliasPrefix . "TM.TYPE = 'A'
 							)";
 						}
 					}
@@ -1028,11 +1081,13 @@ class CTasks
 
 				case "AUDITOR":
 					if (!is_array($val))
-						$val = array($val);
+					{
+						$val = [$val];
+					}
 
 					$val = array_filter($val);
 
-					$arConds = array();
+					$arConds = [];
 
 					if ($bMembersTableJoined)
 					{
@@ -1040,47 +1095,55 @@ class CTasks
 						{
 							foreach ($val as $id)
 							{
-								$arConds[] = "(".$sAliasPrefix."TM.USER_ID = '".intval($id)."')";
+								$arConds[] = "(" . $sAliasPrefix . "TM.USER_ID = '" . intval($id) . "')";
 							}
 
 							if (!empty($arConds))
-								$arSqlSearch[] = '('.$sAliasPrefix."TM.TYPE = 'U' AND (".implode(" OR ", $arConds).'))';
+							{
+								$arSqlSearch[] = '('
+									. $sAliasPrefix
+									. "TM.TYPE = 'U' AND ("
+									. implode(" OR ", $arConds)
+									. '))';
+							}
 						}
 						else
 						{
 							foreach ($val as $id)
 							{
-								$arConds[] = "(".$sAliasPrefix."TM.USER_ID != '".intval($id)."')";
+								$arConds[] = "(" . $sAliasPrefix . "TM.USER_ID != '" . intval($id) . "')";
 							}
 
 							if (!empty($arConds))
-								$arSqlSearch[] = '('.
-									$sAliasPrefix.
-									"TM.TYPE = 'U' AND (".
-									implode(" AND ", $arConds).
+							{
+								$arSqlSearch[] = '(' .
+									$sAliasPrefix .
+									"TM.TYPE = 'U' AND (" .
+									implode(" AND ", $arConds) .
 									'))';
+							}
 						}
 					}
 					else
 					{
 						foreach ($val as $id)
 						{
-							$arConds[] = "(".$sAliasPrefix."TM.USER_ID = '".intval($id)."')";
+							$arConds[] = "(" . $sAliasPrefix . "TM.USER_ID = '" . intval($id) . "')";
 						}
 
 						if (!empty($arConds))
 						{
-							$arSqlSearch[] = ($cOperationType !== 'N' ? 'EXISTS' : 'NOT EXISTS')."(
+							$arSqlSearch[] = ($cOperationType !== 'N' ? 'EXISTS' : 'NOT EXISTS') . "(
 								SELECT
 									'x'
 								FROM
-									b_tasks_member ".$sAliasPrefix."TM
+									b_tasks_member " . $sAliasPrefix . "TM
 								WHERE
-									(".implode(" OR ", $arConds).")
+									(" . implode(" OR ", $arConds) . ")
 								AND
-									".$sAliasPrefix."TM.TASK_ID = ".$sAliasPrefix."T.ID
+									" . $sAliasPrefix . "TM.TASK_ID = " . $sAliasPrefix . "T.ID
 								AND
-									".$sAliasPrefix."TM.TYPE = 'U'
+									" . $sAliasPrefix . "TM.TYPE = 'U'
 							)";
 						}
 					}
@@ -1090,18 +1153,18 @@ class CTasks
 				case "DOER":
 					$val = intval($val);
 					$arSqlSearch[] = "(
-						".$sAliasPrefix."T.RESPONSIBLE_ID = ".$val."
+						" . $sAliasPrefix . "T.RESPONSIBLE_ID = " . $val . "
 						OR
 						EXISTS(
 							SELECT 'x'
 							FROM
-								b_tasks_member ".$sAliasPrefix."TM
+								b_tasks_member " . $sAliasPrefix . "TM
 							WHERE
-								".$sAliasPrefix."TM.TASK_ID = ".$sAliasPrefix."T.ID
+								" . $sAliasPrefix . "TM.TASK_ID = " . $sAliasPrefix . "T.ID
 								AND
-								".$sAliasPrefix."TM.USER_ID = '".$val."'
+								" . $sAliasPrefix . "TM.USER_ID = '" . $val . "'
 								AND
-								".$sAliasPrefix."TM.TYPE = 'A'
+								" . $sAliasPrefix . "TM.TYPE = 'A'
 							)
 						)";
 					break;
@@ -1109,16 +1172,16 @@ class CTasks
 				case "MEMBER":
 					$val = intval($val);
 					$arSqlSearch[] = "(
-						".$sAliasPrefix."T.CREATED_BY = ".intval($val)."
+						" . $sAliasPrefix . "T.CREATED_BY = " . intval($val) . "
 						OR
-						".$sAliasPrefix."T.RESPONSIBLE_ID = ".intval($val)."
+						" . $sAliasPrefix . "T.RESPONSIBLE_ID = " . intval($val) . "
 						OR
 						EXISTS(
-							SELECT 'x' FROM b_tasks_member ".$sAliasPrefix."TM
+							SELECT 'x' FROM b_tasks_member " . $sAliasPrefix . "TM
 							WHERE
-								".$sAliasPrefix."TM.TASK_ID = ".$sAliasPrefix."T.ID
+								" . $sAliasPrefix . "TM.TASK_ID = " . $sAliasPrefix . "T.ID
 								AND
-								".$sAliasPrefix."TM.USER_ID = '".$val."'
+								" . $sAliasPrefix . "TM.USER_ID = '" . $val . "'
 						)
 					)";
 					break;
@@ -1126,14 +1189,14 @@ class CTasks
 				case "DEPENDS_ON":
 					if (!is_array($val))
 					{
-						$val = array($val);
+						$val = [$val];
 					}
-					$arConds = array();
+					$arConds = [];
 					foreach ($val as $id)
 					{
 						if ($id)
 						{
-							$arConds[] = "(".$sAliasPrefix."TD.TASK_ID = '".intval($id)."')";
+							$arConds[] = "(" . $sAliasPrefix . "TD.TASK_ID = '" . intval($id) . "')";
 						}
 					}
 					if (sizeof($arConds))
@@ -1142,11 +1205,11 @@ class CTasks
 							SELECT
 								'x'
 							FROM
-								b_tasks_dependence ".$sAliasPrefix."TD
+								b_tasks_dependence " . $sAliasPrefix . "TD
 							WHERE
-								(".implode(" OR ", $arConds).")
+								(" . implode(" OR ", $arConds) . ")
 							AND
-								".$sAliasPrefix."TD.DEPENDS_ON_ID = ".$sAliasPrefix."T.ID
+								" . $sAliasPrefix . "TD.DEPENDS_ON_ID = " . $sAliasPrefix . "T.ID
 						)";
 					}
 					break;
@@ -1155,48 +1218,48 @@ class CTasks
 					if ($val === 'Y')
 					{
 						$arSqlSearch[] = "("
-							."{$sAliasPrefix}T.PARENT_ID IS NULL OR "
-							."{$sAliasPrefix}T.PARENT_ID = '0' OR "
-							."{$sAliasPrefix}T.PARENT_ID NOT IN ("
-							.CTasks::GetRootSubQuery($arFilter, $sAliasPrefix, $params)
-							."))";
+							. "{$sAliasPrefix}T.PARENT_ID IS NULL OR "
+							. "{$sAliasPrefix}T.PARENT_ID = '0' OR "
+							. "{$sAliasPrefix}T.PARENT_ID NOT IN ("
+							. CTasks::GetRootSubQuery($arFilter, $sAliasPrefix, $params)
+							. "))";
 					}
 					break;
 
 				case "SUBORDINATE_TASKS":
 					if ($val == "Y")
 					{
-						$arSubSqlSearch = array(
-							$sAliasPrefix."T.CREATED_BY = ".$targetUserId,
-							$sAliasPrefix."T.RESPONSIBLE_ID = ".$targetUserId,
+						$arSubSqlSearch = [
+							$sAliasPrefix . "T.CREATED_BY = " . $targetUserId,
+							$sAliasPrefix . "T.RESPONSIBLE_ID = " . $targetUserId,
 							"EXISTS(
 								SELECT 'x'
 								FROM
-									b_tasks_member ".$sAliasPrefix."TM
+									b_tasks_member " . $sAliasPrefix . "TM
 								WHERE
-									".$sAliasPrefix."TM.TASK_ID = ".$sAliasPrefix."T.ID
+									" . $sAliasPrefix . "TM.TASK_ID = " . $sAliasPrefix . "T.ID
 									AND
-									".$sAliasPrefix."TM.USER_ID = ".$targetUserId."
-							)"
-						);
+									" . $sAliasPrefix . "TM.USER_ID = " . $targetUserId . "
+							)",
+						];
 						// subordinate check
-						if ($strSql = CTasks::GetSubordinateSql($sAliasPrefix, array('USER_ID' => $targetUserId)))
+						if ($strSql = CTasks::GetSubordinateSql($sAliasPrefix, ['USER_ID' => $targetUserId]))
 						{
-							$arSubSqlSearch[] = "EXISTS(".$strSql.")";
+							$arSubSqlSearch[] = "EXISTS(" . $strSql . ")";
 						}
 
-						$arSqlSearch[] = "(".implode(" OR ", $arSubSqlSearch).")";
+						$arSqlSearch[] = "(" . implode(" OR ", $arSubSqlSearch) . ")";
 					}
 					break;
 
 				case "OVERDUED":
 					if ($val == "Y")
 					{
-						$arSqlSearch[] = $sAliasPrefix.
-							"T.CLOSED_DATE IS NOT NULL AND ".
-							$sAliasPrefix.
-							"T.DEADLINE IS NOT NULL AND ".
-							$sAliasPrefix.
+						$arSqlSearch[] = $sAliasPrefix .
+							"T.CLOSED_DATE IS NOT NULL AND " .
+							$sAliasPrefix .
+							"T.DEADLINE IS NOT NULL AND " .
+							$sAliasPrefix .
 							"T.DEADLINE < CLOSED_DATE";
 					}
 					break;
@@ -1208,14 +1271,14 @@ class CTasks
 							SELECT
 								'x'
 							FROM
-								b_tasks ".$sAliasPrefix."PT
+								b_tasks " . $sAliasPrefix . "PT
 							WHERE
-								".$sAliasPrefix."T.PARENT_ID = ".$sAliasPrefix."PT.ID
+								" . $sAliasPrefix . "T.PARENT_ID = " . $sAliasPrefix . "PT.ID
 							AND
-								(".$sAliasPrefix."PT.GROUP_ID = ".$sAliasPrefix."T.GROUP_ID
-								OR (".$sAliasPrefix."PT.GROUP_ID IS NULL AND ".$sAliasPrefix."T.GROUP_ID IS NULL)
-								OR (".$sAliasPrefix."PT.GROUP_ID = 0 AND ".$sAliasPrefix."T.GROUP_ID IS NULL)
-								OR (".$sAliasPrefix."PT.GROUP_ID IS NULL AND ".$sAliasPrefix."T.GROUP_ID = 0)
+								(" . $sAliasPrefix . "PT.GROUP_ID = " . $sAliasPrefix . "T.GROUP_ID
+								OR (" . $sAliasPrefix . "PT.GROUP_ID IS NULL AND " . $sAliasPrefix . "T.GROUP_ID IS NULL)
+								OR (" . $sAliasPrefix . "PT.GROUP_ID = 0 AND " . $sAliasPrefix . "T.GROUP_ID IS NULL)
+								OR (" . $sAliasPrefix . "PT.GROUP_ID IS NULL AND " . $sAliasPrefix . "T.GROUP_ID = 0)
 								)
 						)";
 					}
@@ -1224,7 +1287,7 @@ class CTasks
 				case "DEPARTMENT_ID":
 					if ($strSql = CTasks::GetDeparmentSql($val, $sAliasPrefix))
 					{
-						$arSqlSearch[] = "EXISTS(".$strSql.")";
+						$arSqlSearch[] = "EXISTS(" . $strSql . ")";
 					}
 					break;
 
@@ -1233,7 +1296,7 @@ class CTasks
 
 				case 'FAVORITE':
 					$arSqlSearch[] = CTasks::FilterCreate(
-						$sAliasPrefix."FVT.TASK_ID",
+						$sAliasPrefix . "FVT.TASK_ID",
 						$val,
 						"left_existence",
 						$bFullJoin,
@@ -1244,7 +1307,7 @@ class CTasks
 
 				case 'SORTING':
 					$arSqlSearch[] = CTasks::FilterCreate(
-						$sAliasPrefix."SRT.TASK_ID",
+						$sAliasPrefix . "SRT.TASK_ID",
 						$val,
 						"left_existence",
 						$bFullJoin,
@@ -1255,7 +1318,7 @@ class CTasks
 
 				case 'STAGES_ID':
 					$arSqlSearch[] = CTasks::FilterCreate(
-						$sAliasPrefix."STG.STAGE_ID",
+						$sAliasPrefix . "STG.STAGE_ID",
 						$val,
 						"number",
 						$bFullJoin,
@@ -1358,7 +1421,7 @@ class CTasks
 						'IS_PINNED_IN_GROUP' => UserOption\Option::PINNED_IN_GROUP,
 					];
 					$arSqlSearch[] = " {$sAliasPrefix}T.ID " . ($val === 'N' ? 'NOT ' : '')
-						.UserOption::getFilterSql($targetUserId, $optionMap[$key], $sAliasPrefix);
+						. UserOption::getFilterSql($targetUserId, $optionMap[$key], $sAliasPrefix);
 					break;
 
 				default:
@@ -1372,13 +1435,13 @@ class CTasks
 
 						if (isset($_POST['action']) && ($_POST['action'] === 'group_action'))
 						{
-							$extraData = '; Extra data: <data0>'.
-								serialize(array($_POST['arFilter'], $_POST['action'], $arFilter)).
+							$extraData = '; Extra data: <data0>' .
+								serialize([$_POST['arFilter'], $_POST['action'], $arFilter]) .
 								'</data0>';
 						}
 						else
 						{
-							$extraData = '; Extra data: <data1>'.serialize($arFilter).'</data1>';
+							$extraData = '; Extra data: <data1>' . serialize($arFilter) . '</data1>';
 						}
 
 						//CTaskAssert::logError('[0x6024749e] unexpected field in filter: ' . $key . $extraData);
@@ -1397,9 +1460,11 @@ class CTasks
 		);
 
 		if ($sql == '')
+		{
 			$sql = '1=1';
+		}
 
-		return ('('.$sql.')');
+		return ('(' . $sql . ')');
 	}
 
 	private static function removeStatusValueForActiveSprint($values)
@@ -1436,7 +1501,6 @@ class CTasks
 						return true;
 					}
 				}
-
 			}
 		}
 
@@ -1447,27 +1511,32 @@ class CTasks
 	{
 		static $ts = null;        // some fixed timestamp of "now" (for consistency)
 
-
 		if ($ts === null)
+		{
 			$ts = CTasksPerHitOption::getHitTimestamp();
+		}
 
 		$bTzWasDisabled = !CTimeZone::enabled();
 
 		if ($bTzWasDisabled)
+		{
 			CTimeZone::enable();
+		}
 
 		// Adjust UNIX TS to "Bitrix timestamp"
 		$tzOffset = CTimeZone::getOffset();
 		$ts += $tzOffset;
 
 		if ($bTzWasDisabled)
+		{
 			CTimeZone::disable();
+		}
 
-		$arSqlSearch = array();
+		$arSqlSearch = [];
 
-		$arFilter = array(
-			'::LOGIC' => 'AND'
-		);
+		$arFilter = [
+			'::LOGIC' => 'AND',
+		];
 
 		$key = ltrim($key);
 
@@ -1508,10 +1577,10 @@ class CTasks
 
 				default:
 					CTaskAssert::log(
-						'Unknown operation code: '.
-						$operationSymbol.
-						'; $key = '.
-						$key.
+						'Unknown operation code: ' .
+						$operationSymbol .
+						'; $key = ' .
+						$key .
 						'; it will be silently ignored, incorrect results expected',
 						CTaskAssert::ELL_ERROR    // errors, incorrect results expected
 					);
@@ -1521,13 +1590,18 @@ class CTasks
 			}
 		}
 		else
+		{
 			$operationCode = (int)mb_substr($cOperationType, 1);
+		}
 
 		$date1 = $date2 = $cOperationType1 = $cOperationType2 = null;
 
 		// sometimes we can have DAYS in $val, not TIMESTAMP
-		if ($operationCode != CTaskFilterCtrl::OP_DATE_NEXT_DAYS &&
-			$operationCode != CTaskFilterCtrl::OP_DATE_LAST_DAYS)
+		if (
+			$operationCode != CTaskFilterCtrl::OP_DATE_NEXT_DAYS
+			&& $operationCode
+			!= CTaskFilterCtrl::OP_DATE_LAST_DAYS
+		)
 		{
 			$val += $tzOffset;
 		}
@@ -1574,10 +1648,10 @@ class CTasks
 
 			default:
 				CTaskAssert::log(
-					'Unknown operation code: '.
-					$operationCode.
-					'; $key = '.
-					$key.
+					'Unknown operation code: ' .
+					$operationCode .
+					'; $key = ' .
+					$key .
 					'; it will be silently ignored, incorrect results expected',
 					CTaskAssert::ELL_ERROR    // errors, incorrect results expected
 				);
@@ -1664,10 +1738,10 @@ class CTasks
 
 			default:
 				CTaskAssert::log(
-					'Unknown operation code: '.
-					$operationCode.
-					'; $key = '.
-					$key.
+					'Unknown operation code: ' .
+					$operationCode .
+					'; $key = ' .
+					$key .
 					'; it will be silently ignored, incorrect results expected',
 					CTaskAssert::ELL_ERROR    // errors, incorrect results expected
 				);
@@ -1677,17 +1751,21 @@ class CTasks
 		}
 
 		if ($ts1)
+		{
 			$date1 = ConvertTimeStamp(mktime(0, 0, 0, date('n', $ts1), date('j', $ts1), date('Y', $ts1)), 'FULL');
+		}
 
 		if ($ts2)
+		{
 			$date2 = ConvertTimeStamp(mktime(23, 59, 59, date('n', $ts2), date('j', $ts2), date('Y', $ts2)), 'FULL');
+		}
 
 		if (($cOperationType1 !== null) && ($date1 !== null))
 		{
-			$arrayKey = $cOperationType1.$fieldName;
+			$arrayKey = $cOperationType1 . $fieldName;
 			while (isset($arFilter[$arrayKey]))
 			{
-				$arrayKey = ' '.$arrayKey;
+				$arrayKey = ' ' . $arrayKey;
 			}
 
 			$arFilter[$arrayKey] = $date1;
@@ -1695,10 +1773,10 @@ class CTasks
 
 		if (($cOperationType2 !== null) && ($date2 !== null))
 		{
-			$arrayKey = $cOperationType2.$fieldName;
+			$arrayKey = $cOperationType2 . $fieldName;
 			while (isset($arFilter[$arrayKey]))
 			{
-				$arrayKey = ' '.$arrayKey;
+				$arrayKey = ' ' . $arrayKey;
 			}
 
 			$arFilter[$arrayKey] = $date2;
@@ -1782,10 +1860,10 @@ class CTasks
 	{
 		if (!is_array($arFilter))
 		{
-			$arFilter = array();
+			$arFilter = [];
 		}
 
-		$arSqlSearch = array();
+		$arSqlSearch = [];
 
 		if (is_array($arParams) && array_key_exists('USER_ID', $arParams) && ($arParams['USER_ID'] > 0))
 		{
@@ -1805,7 +1883,7 @@ class CTasks
 
 		$bGetZombie = false;
 		$sql = self::GetSqlByFilter($arFilter, $userID, $sAliasPrefix, $bGetZombie, $bMembersTableJoined, $arParams);
-		if($sql <> '')
+		if ($sql <> '')
 		{
 			$arSqlSearch[] = $sql;
 		}
@@ -1818,13 +1896,13 @@ class CTasks
 		{
 			[$arSubSqlSearch, $fields] = static::getPermissionFilterConditions(
 				$arParams,
-				array('ALIAS' => $sAliasPrefix)
+				['ALIAS' => $sAliasPrefix]
 			);
 
 			if (!empty($arSubSqlSearch))
 			{
-				$arSqlSearch[] = " \n/*access LEGACY BEGIN*/\n (".
-					implode(" OR ", $arSubSqlSearch).
+				$arSqlSearch[] = " \n/*access LEGACY BEGIN*/\n (" .
+					implode(" OR ", $arSubSqlSearch) .
 					") \n/*access LEGACY END*/\n";
 			}
 		}
@@ -1841,7 +1919,7 @@ class CTasks
 			return '%s';
 		}
 
-		return $behaviour['ALIAS'].'T.'.$field;
+		return $behaviour['ALIAS'] . 'T.' . $field;
 	}
 
 	/**
@@ -1851,7 +1929,8 @@ class CTasks
 	 * @return array
 	 * @deprecated
 	 */
-	public static function getPermissionFilterConditions($arParams, $behaviour = ['ALIAS' => '', 'USE_PLACEHOLDERS' => false])
+	public static function getPermissionFilterConditions($arParams,
+		$behaviour = ['ALIAS' => '', 'USE_PLACEHOLDERS' => false])
 	{
 		if (!is_array($behaviour))
 		{
@@ -1866,8 +1945,8 @@ class CTasks
 			$behaviour['USE_PLACEHOLDERS'] = false;
 		}
 
-		$arSubSqlSearch = array();
-		$fields = array();
+		$arSubSqlSearch = [];
+		$fields = [];
 
 		$a = $behaviour['ALIAS'];
 		$b = $behaviour;
@@ -1906,9 +1985,13 @@ class CTasks
 			}
 
 			// group permission check
-			if ($arAllowedGroups = Integration\SocialNetwork\Group::getIdsByAllowedAction('view_all', true, $arParams['USER_ID']))
+			if (
+				$arAllowedGroups = Integration\SocialNetwork\Group::getIdsByAllowedAction('view_all', true,
+					$arParams['USER_ID'])
+			)
 			{
-				$arSubSqlSearch[] = "(" . static::placeFieldSql('GROUP_ID', $b, $f) . " IN (" . implode(",", $arAllowedGroups) . "))";
+				$arSubSqlSearch[] = "(" . static::placeFieldSql('GROUP_ID', $b, $f) . " IN (" . implode(",",
+						$arAllowedGroups) . "))";
 			}
 
 			if (!$taskMemberJoined || ($taskMemberJoined && !empty($arSubSqlSearch)))
@@ -1918,14 +2001,24 @@ class CTasks
 				$arSubSqlSearch[] =
 					"EXISTS(
 					SELECT 'x'
-					FROM b_tasks_member " . $a . "TM
+					FROM b_tasks_member "
+					. $a
+					. "TM
 					WHERE
-						" . $a . "TM.TASK_ID = " . static::placeFieldSql('ID', $b, $f) . " AND " . $a . "TM.USER_ID = '" . $userID . "'
+						"
+					. $a
+					. "TM.TASK_ID = "
+					. static::placeFieldSql('ID', $b, $f)
+					. " AND "
+					. $a
+					. "TM.USER_ID = '"
+					. $userID
+					. "'
 					)";
 			}
 		}
 
-		return array($arSubSqlSearch, $fields);
+		return [$arSubSqlSearch, $fields];
 	}
 
 	public static function MkOperationFilter($key)
@@ -2025,7 +2118,7 @@ class CTasks
 			$operation = null;
 			foreach ($arOperationsMap as $operationCode => $operationPrefix)
 			{
-				$pattern = '/^'.preg_quote($operationPrefix).'[A-Za-z]/';
+				$pattern = '/^' . preg_quote($operationPrefix) . '[A-Za-z]/';
 				if (preg_match($pattern, $key))
 				{
 					$operation = $operationCode;
@@ -2036,12 +2129,14 @@ class CTasks
 
 			CTaskAssert::assert($operation !== null);
 
-			$cOperationType = "#".$operation;
+			$cOperationType = "#" . $operation;
 		}
 		else
-			$cOperationType = "E"; // field LIKE val
+		{
+			$cOperationType = "E";
+		} // field LIKE val
 
-		return array("FIELD" => $key, "OPERATION" => $cOperationType);
+		return ["FIELD" => $key, "OPERATION" => $cOperationType];
 	}
 
 	public static function FilterCreate($fname, $vals, $type, &$bFullJoin, $cOperationType = false, $bSkipEmpty = true)
@@ -2049,7 +2144,7 @@ class CTasks
 		global $DB;
 		if (!is_array($vals))
 		{
-			$vals = array($vals);
+			$vals = [$vals];
 		}
 		else
 		{
@@ -2057,28 +2152,46 @@ class CTasks
 		}
 
 		if (count($vals) < 1)
+		{
 			return "";
+		}
 
 		if (is_bool($cOperationType))
 		{
 			if ($cOperationType === true)
+			{
 				$cOperationType = "N";
+			}
 			else
+			{
 				$cOperationType = "E";
+			}
 		}
 
 		if ($cOperationType == "G")
+		{
 			$strOperation = ">";
+		}
 		elseif ($cOperationType == "GE")
+		{
 			$strOperation = ">=";
+		}
 		elseif ($cOperationType == "LE")
+		{
 			$strOperation = "<=";
+		}
 		elseif ($cOperationType == "L")
+		{
 			$strOperation = "<";
+		}
 		elseif ($cOperationType === "NI")
+		{
 			$strOperation = "!=";
+		}
 		else
+		{
 			$strOperation = "=";
+		}
 
 		$bFullJoin = false;
 		$bWasLeftJoin = false;
@@ -2088,21 +2201,25 @@ class CTasks
 		{
 			$vals = implode(', ', array_unique(array_map('intval', $vals)));
 
-			$res = $fname.' '.($cOperationType == 'N' ? 'not' : '').' in ('.$vals.')';
+			$res = $fname . ' ' . ($cOperationType == 'N' ? 'not' : '') . ' in (' . $vals . ')';
 
 			// INNER JOIN in this case
 			if ($cOperationType != "N")
+			{
 				$bFullJoin = true;
+			}
 
 			return $res;
 		}
 
-		$res = array();
+		$res = [];
 
 		foreach ($vals as $key => $val)
 		{
 			if (($type === 'number') && !$val)
+			{
 				$val = 0;
+			}
 
 			if (!$bSkipEmpty || $val === 0 || $val <> '' || (is_bool($val) && $val === false))
 			{
@@ -2110,37 +2227,43 @@ class CTasks
 				{
 					case "string_equal":
 						if ($val == '')
-							$res[] = ($cOperationType == "N" ? "NOT" : "").
-								"(".
-								$fname.
-								" IS NULL OR ".
-								$DB->Length($fname).
+						{
+							$res[] = ($cOperationType == "N" ? "NOT" : "") .
+								"(" .
+								$fname .
+								" IS NULL OR " .
+								$DB->Length($fname) .
 								"<=0)";
+						}
 						else
-							$res[] = "(".
-								($cOperationType == "N" ? " ".$fname." IS NULL OR NOT (" : "").
-								$fname.
-								$strOperation.
-								"'".
-								$DB->ForSql($val).
-								"'".
-								($cOperationType == "N" ? ")" : "").
+						{
+							$res[] = "(" .
+								($cOperationType == "N" ? " " . $fname . " IS NULL OR NOT (" : "") .
+								$fname .
+								$strOperation .
+								"'" .
+								$DB->ForSql($val) .
+								"'" .
+								($cOperationType == "N" ? ")" : "") .
 								")";
+						}
 						break;
 
 					case "string":
 						if ($cOperationType == "?")
 						{
 							if ($val === 0 || $val <> '')
-								$res[] = GetFilterQuery($fname, $val, "Y", array(), "N");
+							{
+								$res[] = GetFilterQuery($fname, $val, "Y", [], "N");
+							}
 						}
 						elseif ($cOperationType == "S")
 						{
-							$res[] = "(UPPER(".$fname.") LIKE UPPER('%".$DB->ForSqlLike($val)."%'))";
+							$res[] = "(UPPER(" . $fname . ") LIKE UPPER('%" . $DB->ForSqlLike($val) . "%'))";
 						}
 						elseif ($cOperationType == "NS")
 						{
-							$res[] = "(UPPER(".$fname.") NOT LIKE UPPER('%".$DB->ForSqlLike($val)."%'))";
+							$res[] = "(UPPER(" . $fname . ") NOT LIKE UPPER('%" . $DB->ForSqlLike($val) . "%'))";
 						}
 						elseif ($cOperationType == "FTL")
 						{
@@ -2149,42 +2272,46 @@ class CTasks
 						}
 						elseif ($val == '')
 						{
-							$res[] = ($cOperationType == "N" ? "NOT" : "").
-								"(".
-								$fname.
-								" IS NULL OR ".
-								$DB->Length($fname).
+							$res[] = ($cOperationType == "N" ? "NOT" : "") .
+								"(" .
+								$fname .
+								" IS NULL OR " .
+								$DB->Length($fname) .
 								"<=0)";
 						}
 						else
 						{
 							if ($strOperation == "=")
-								$res[] = "(".
-									($cOperationType == "N" ? " ".$fname." IS NULL OR NOT (" : "").
-									($fname.
-										" ".
+							{
+								$res[] = "(" .
+									($cOperationType == "N" ? " " . $fname . " IS NULL OR NOT (" : "") .
+									($fname .
+										" " .
 										($strOperation ==
 										"="
 											? "LIKE"
-											: $strOperation).
-										" '".
+											: $strOperation) .
+										" '" .
 										$DB->ForSqlLike(
 											$val
-										).
-										"'").
-									($cOperationType == "N" ? ")" : "").
+										) .
+										"'") .
+									($cOperationType == "N" ? ")" : "") .
 									")";
+							}
 							else
-								$res[] = "(".
-									($cOperationType == "N" ? " ".$fname." IS NULL OR NOT (" : "").
-									($fname.
-										" ".
-										$strOperation.
-										" '".
-										$DB->ForSql($val).
-										"'").
-									($cOperationType == "N" ? ")" : "").
+							{
+								$res[] = "(" .
+									($cOperationType == "N" ? " " . $fname . " IS NULL OR NOT (" : "") .
+									($fname .
+										" " .
+										$strOperation .
+										" '" .
+										$DB->ForSql($val) .
+										"'") .
+									($cOperationType == "N" ? ")" : "") .
 									")";
+							}
 						}
 						break;
 					case "fulltext":
@@ -2207,110 +2334,135 @@ class CTasks
 									$fname,
 									$val,
 									"Y",
-									array(),
+									[],
 									($fname == "BE.SEARCHABLE_CONTENT" || $fname == "BE.DETAIL_TEXT" ? "Y" : "N")
 								);
 								if ($sr != "0")
+								{
 									$res[] = $sr;
+								}
 							}
 						}
-						elseif (($cOperationType == "B" || $cOperationType == "NB") &&
-							is_array($val) &&
-							count($val) == 2)
+						elseif (
+							($cOperationType == "B" || $cOperationType == "NB") && is_array($val)
+							&& count($val)
+							== 2
+						)
 						{
-							$res[] = ($cOperationType == "NB" ? " ".$fname." IS NULL OR NOT " : "").
-								"(".
-								CIBlock::_Upper($fname).
-								" ".
-								$strOperation[0].
-								" '".
-								CIBlock::_Upper($DB->ForSql($val[0])).
-								"' ".
-								$strOperation[1].
-								" '".
-								CIBlock::_Upper($DB->ForSql($val[1])).
+							$res[] = ($cOperationType == "NB" ? " " . $fname . " IS NULL OR NOT " : "") .
+								"(" .
+								CIBlock::_Upper($fname) .
+								" " .
+								$strOperation[0] .
+								" '" .
+								CIBlock::_Upper($DB->ForSql($val[0])) .
+								"' " .
+								$strOperation[1] .
+								" '" .
+								CIBlock::_Upper($DB->ForSql($val[1])) .
 								"')";
 						}
 						elseif ($cOperationType == "S" || $cOperationType == "NS")
-							$res[] = ($cOperationType == "NS" ? " ".$fname." IS NULL OR NOT " : "").
-								"(".
-								CIBlock::_Upper($fname).
-								" LIKE ".
-								CIBlock::_Upper("'%".CIBlock::ForLIKE($val)."%'").
+						{
+							$res[] = ($cOperationType == "NS" ? " " . $fname . " IS NULL OR NOT " : "") .
+								"(" .
+								CIBlock::_Upper($fname) .
+								" LIKE " .
+								CIBlock::_Upper("'%" . CIBlock::ForLIKE($val) . "%'") .
 								")";
+						}
 						else
 						{
 							if ($val == '')
-								$res[] = ($bNegative ? "NOT" : "")."(".$fname." IS NULL OR ".$DB->Length($fname)."<=0)";
-							else if ($strOperation == "=" && $cOperationType != "I" && $cOperationType != "NI")
-								$res[] = ($cOperationType == "N" ? " ".$fname." IS NULL OR NOT " : "").
-									"(".
-									($fname.
-										" LIKE '".
-										$DB->ForSqlLike($val).
-										"'").
+							{
+								$res[] = ($bNegative ? "NOT" : "")
+									. "("
+									. $fname
+									. " IS NULL OR "
+									. $DB->Length($fname)
+									. "<=0)";
+							}
+							elseif ($strOperation == "=" && $cOperationType != "I" && $cOperationType != "NI")
+							{
+								$res[] = ($cOperationType == "N" ? " " . $fname . " IS NULL OR NOT " : "") .
+									"(" .
+									($fname .
+										" LIKE '" .
+										$DB->ForSqlLike($val) .
+										"'") .
 									")";
+							}
 							else
-								$res[] = ($bNegative ? " ".$fname." IS NULL OR NOT " : "").
-									"(".
-									($fname.
-										" ".
-										$strOperation.
-										" '".
-										$DB->ForSql($val).
-										"'").
+							{
+								$res[] = ($bNegative ? " " . $fname . " IS NULL OR NOT " : "") .
+									"(" .
+									($fname .
+										" " .
+										$strOperation .
+										" '" .
+										$DB->ForSql($val) .
+										"'") .
 									")";
+							}
 						}
 						break;
 					case "date":
 						if ($val == '')
-							$res[] = ($cOperationType == "N" ? "NOT" : "")."(".$fname." IS NULL)";
+						{
+							$res[] = ($cOperationType == "N" ? "NOT" : "") . "(" . $fname . " IS NULL)";
+						}
 						else
-							$res[] = "(".
-								($cOperationType == "N" ? " ".$fname." IS NULL OR NOT (" : "").
-								$fname.
-								" ".
-								$strOperation.
-								" ".
-								$val.
-								"".
-								($cOperationType == "N" ? ")" : "").
+						{
+							$res[] = "(" .
+								($cOperationType == "N" ? " " . $fname . " IS NULL OR NOT (" : "") .
+								$fname .
+								" " .
+								$strOperation .
+								" " .
+								$val .
+								"" .
+								($cOperationType == "N" ? ")" : "") .
 								")";
+						}
 						break;
 
 					case "number":
 						$isOperationTypeN = $cOperationType === 'N';
 						if ($vals[$key] === false || strlen($val) <= 0)
 						{
-							$res[] = ($isOperationTypeN ? 'NOT' : '')."({$fname} IS NULL)";
+							$res[] = ($isOperationTypeN ? 'NOT' : '') . "({$fname} IS NULL)";
 						}
 						else
 						{
 							$res[] = "("
-								.($isOperationTypeN ? "{$fname} IS NULL OR NOT (" : "")
-								."{$fname} {$strOperation} '".DoubleVal($val)."'"
-								.($isOperationTypeN ? ")" : "")
-								.")";
+								. ($isOperationTypeN ? "{$fname} IS NULL OR NOT (" : "")
+								. "{$fname} {$strOperation} '" . DoubleVal($val) . "'"
+								. ($isOperationTypeN ? ")" : "")
+								. ")";
 						}
 						break;
 
 					case "number_wo_nulls":
-						$res[] = "(".
-							($cOperationType == "N" ? "NOT (" : "").
-							$fname.
-							" ".
-							$strOperation.
-							" ".
-							DoubleVal($val).
-							($cOperationType == "N" ? ")" : "").
+						$res[] = "(" .
+							($cOperationType == "N" ? "NOT (" : "") .
+							$fname .
+							" " .
+							$strOperation .
+							" " .
+							DoubleVal($val) .
+							($cOperationType == "N" ? ")" : "") .
 							")";
 						break;
 
 					case "null_or_zero":
 						if ($cOperationType == "N")
-							$res[] = "((".$fname." IS NOT NULL) AND (".$fname." != 0))";
+						{
+							$res[] = "((" . $fname . " IS NOT NULL) AND (" . $fname . " != 0))";
+						}
 						else
-							$res[] = "((".$fname." IS NULL) OR (".$fname." = 0))";
+						{
+							$res[] = "((" . $fname . " IS NULL) OR (" . $fname . " = 0))";
+						}
 
 						break;
 
@@ -2318,20 +2470,24 @@ class CTasks
 
 						if ($strOperation != '=')
 						{
-							CTaskAssert::logError('Operation type not supported for '.$fname.': '.$strOperation);
+							CTaskAssert::logError('Operation type not supported for ' . $fname . ': ' . $strOperation);
 						}
 						elseif ($val != 'Y' && $val != 'N' && 0)
 						{
-							CTaskAssert::logError('Filter value not supported for '.$fname.': '.$val);
+							CTaskAssert::logError('Filter value not supported for ' . $fname . ': ' . $val);
 						}
 						else
 						{
 							$otNot = $cOperationType == "N";
 
 							if (($val == 'Y' && !$otNot) || ($val == 'N' && $otNot))
-								$res[] = "(".$fname." IS NOT NULL)";
+							{
+								$res[] = "(" . $fname . " IS NOT NULL)";
+							}
 							else
-								$res[] = "(".$fname." IS NULL)";
+							{
+								$res[] = "(" . $fname . " IS NULL)";
+							}
 						}
 
 						break;
@@ -2343,19 +2499,29 @@ class CTasks
 						if (preg_match('#^[a-z0-9_]+(\.{1}[a-z0-9_]+)*$#i', $val))
 						{
 							if ($cOperationType === 'E')
-								$res[] = '('.$fname.' = '.$DB->ForSql($val).')';
+							{
+								$res[] = '(' . $fname . ' = ' . $DB->ForSql($val) . ')';
+							}
 							elseif ($cOperationType === 'N')
-								$res[] = '('.$fname.' != '.$DB->ForSql($val).')';
+							{
+								$res[] = '(' . $fname . ' != ' . $DB->ForSql($val) . ')';
+							}
 							elseif ($cOperationType === 'L')
-								$res[] = '('.$fname.' < '.$DB->ForSql($val).')';
+							{
+								$res[] = '(' . $fname . ' < ' . $DB->ForSql($val) . ')';
+							}
 							elseif ($cOperationType === 'G')
-								$res[] = '('.$fname.' > '.$DB->ForSql($val).')';
+							{
+								$res[] = '(' . $fname . ' > ' . $DB->ForSql($val) . ')';
+							}
 							else
-								CTaskAssert::logError('[0xcf017223] Operation type not supported: '.$cOperationType);
+							{
+								CTaskAssert::logError('[0xcf017223] Operation type not supported: ' . $cOperationType);
+							}
 						}
 						else
 						{
-							CTaskAssert::logError("Bad reference: ".$fname." => '".$val."'");
+							CTaskAssert::logError("Bad reference: " . $fname . " => '" . $val . "'");
 						}
 
 						break;
@@ -2363,9 +2529,13 @@ class CTasks
 
 				// INNER JOIN in this case
 				if (($val === 0 || $val <> '') && $cOperationType != "N")
+				{
 					$bFullJoin = true;
+				}
 				else
+				{
 					$bWasLeftJoin = true;
+				}
 			}
 		}
 
@@ -2373,21 +2543,28 @@ class CTasks
 		for ($i = 0, $resCnt = count($res); $i < $resCnt; $i++)
 		{
 			if ($i > 0)
+			{
 				$strResult .= ($cOperationType == "N" ? " AND " : " OR ");
+			}
 			$strResult .= $res[$i];
 		}
 
 		if (count($res) > 1)
-			$strResult = "(".$strResult.")";
+		{
+			$strResult = "(" . $strResult . ")";
+		}
 
 		if ($bFullJoin && $bWasLeftJoin && $cOperationType != "N")
+		{
 			$bFullJoin = false;
+		}
 
 		return $strResult;
 	}
 
 	/**
 	 * This method is deprecated. Use CTaskItem class instead.
+	 *
 	 * @deprecated
 	 */
 	public static function GetByID($ID, $bCheckPermissions = true, $arParams = [])
@@ -2413,7 +2590,8 @@ class CTasks
 		$permissionUserId = isset($arParams['USER_ID']) ? $arParams['USER_ID'] : User::getId();
 		if (
 			$bCheckPermissions
-			&& !\Bitrix\Tasks\Access\TaskAccessController::can($permissionUserId, ActionDictionary::ACTION_TASK_READ, $ID)
+			&& !\Bitrix\Tasks\Access\TaskAccessController::can($permissionUserId, ActionDictionary::ACTION_TASK_READ,
+				$ID)
 		)
 		{
 			if ($bReturnAsArray)
@@ -2426,7 +2604,7 @@ class CTasks
 			return $res;
 		}
 
-		$arFilter = array("ID" => (int)$ID);
+		$arFilter = ["ID" => (int)$ID];
 		// no further access verification required
 		$arFilter["CHECK_PERMISSIONS"] = "N";
 
@@ -2438,7 +2616,7 @@ class CTasks
 
 		$select = array_unique(array_merge(['ID'], $select));
 
-		$res = CTasks::GetList(array(), $arFilter, $select, $arGetListParams);
+		$res = CTasks::GetList([], $arFilter, $select, $arGetListParams);
 		if ($res && ($task = $res->Fetch()))
 		{
 			if (array_key_exists('TITLE', $task))
@@ -2454,7 +2632,7 @@ class CTasks
 			if (in_array('AUDITORS', $select) || in_array('ACCOMPLICES', $select) || in_array('*', $select))
 			{
 				$task["ACCOMPLICES"] = $task["AUDITORS"] = [];
-				$rsMembers = CTaskMembers::GetList(array(), array("TASK_ID" => $ID));
+				$rsMembers = CTaskMembers::GetList([], ["TASK_ID" => $ID]);
 				while ($arMember = $rsMembers->Fetch())
 				{
 					if ($arMember["TYPE"] == "A" && (in_array('ACCOMPLICES', $select) || in_array('*', $select)))
@@ -2472,10 +2650,10 @@ class CTasks
 			{
 				if (in_array('TAGS', $select) || in_array('*', $select))
 				{
-					$arTagsFilter = array("TASK_ID" => $ID);
-					$arTagsOrder = array("NAME" => "ASC");
+					$arTagsFilter = ["TASK_ID" => $ID];
+					$arTagsOrder = ["NAME" => "ASC"];
 					$rsTags = CTaskTags::GetList($arTagsOrder, $arTagsFilter);
-					$task["TAGS"] = array();
+					$task["TAGS"] = [];
 					while ($arTag = $rsTags->Fetch())
 					{
 						$task["TAGS"][] = $arTag["NAME"];
@@ -2489,8 +2667,8 @@ class CTasks
 
 				if (in_array('FILES', $select) || in_array('*', $select))
 				{
-					$rsFiles = CTaskFiles::GetList(array(), array("TASK_ID" => $ID));
-					$task["FILES"] = array();
+					$rsFiles = CTaskFiles::GetList([], ["TASK_ID" => $ID]);
+					$task["FILES"] = [];
 					while ($arFile = $rsFiles->Fetch())
 					{
 						$task["FILES"][] = $arFile["FILE_ID"];
@@ -2499,8 +2677,8 @@ class CTasks
 
 				if (in_array('DEPENDS_ON', $select) || in_array('*', $select))
 				{
-					$rsDependsOn = CTaskDependence::GetList(array(), array("TASK_ID" => $ID));
-					$task["DEPENDS_ON"] = array();
+					$rsDependsOn = CTaskDependence::GetList([], ["TASK_ID" => $ID]);
+					$task["DEPENDS_ON"] = [];
 					while ($arDependsOn = $rsDependsOn->Fetch())
 					{
 						$task["DEPENDS_ON"][] = $arDependsOn["DEPENDS_ON_ID"];
@@ -2509,11 +2687,13 @@ class CTasks
 			}
 
 			if ($bReturnAsArray)
+			{
 				return ($task);
+			}
 			else
 			{
 				$rsTask = new CDBResult;
-				$rsTask->InitFromarray(array($task));
+				$rsTask->InitFromarray([$task]);
 
 				return $rsTask;
 			}
@@ -2521,9 +2701,13 @@ class CTasks
 		else
 		{
 			if ($bReturnAsArray)
+			{
 				return (false);
+			}
 			else
+			{
 				return $res;
+			}
 		}
 	}
 
@@ -2545,30 +2729,34 @@ class CTasks
 	 * @deprecated
 	 * @see Integration\SocialNetwork\Group::getIdsByAllowedAction
 	 */
-	public static function GetAllowedGroups($arParams = array())
+	public static function GetAllowedGroups($arParams = [])
 	{
 		global $DB;
-		static $ALLOWED_GROUPS = array();
+		static $ALLOWED_GROUPS = [];
 
 		$userId = null;
 
 		if (is_array($arParams) && isset($arParams['USER_ID']))
+		{
 			$userId = $arParams['USER_ID'];
+		}
 		else
 		{
 			$userId = User::getId();
 		}
 
 		if (!($userId >= 1))
+		{
 			$userId = 0;
+		}
 
 		if (!isset($ALLOWED_GROUPS[$userId]) && CModule::IncludeModule("socialnetwork"))
 		{
 			// bottleneck
 			$strSql = "SELECT DISTINCT(T.GROUP_ID) FROM b_tasks T WHERE T.GROUP_ID IS NOT NULL";
 
-			$rsGroups = $DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
-			$ALLOWED_GROUPS[$userId] = $arGroupsWithTasks = array();
+			$rsGroups = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+			$ALLOWED_GROUPS[$userId] = $arGroupsWithTasks = [];
 			while ($arGroup = $rsGroups->Fetch())
 			{
 				$arGroupsWithTasks[] = $arGroup["GROUP_ID"];
@@ -2576,13 +2764,16 @@ class CTasks
 			if (is_array($arGroupsWithTasks) && sizeof($arGroupsWithTasks))
 			{
 				if ($userId === 0)
+				{
 					$featurePerms = CSocNetFeaturesPerms::CurrentUserCanPerformOperation(
 						SONET_ENTITY_GROUP,
 						$arGroupsWithTasks,
 						"tasks",
 						"view_all"
 					);
+				}
 				else
+				{
 					$featurePerms = CSocNetFeaturesPerms::CanPerformOperation(
 						$userId,
 						SONET_ENTITY_GROUP,
@@ -2590,6 +2781,7 @@ class CTasks
 						"tasks",
 						"view_all"
 					);
+				}
 
 				if (is_array($featurePerms))
 				{
@@ -2601,7 +2793,7 @@ class CTasks
 		return $ALLOWED_GROUPS[$userId];
 	}
 
-	public static function GetDepartmentManagers($arDepartments, $skipUserId = false, $arSelectFields = array('ID'))
+	public static function GetDepartmentManagers($arDepartments, $skipUserId = false, $arSelectFields = ['ID'])
 	{
 		global $CACHE_MANAGER;
 
@@ -2612,14 +2804,16 @@ class CTasks
 
 		// We need ID in any case
 		if (!in_array('ID', $arSelectFields))
+		{
 			$arSelectFields[] = 'ID';
+		}
 
-		$arManagers = array();
+		$arManagers = [];
 		$obCache = new CPHPCache();
 		$lifeTime = CTasksTools::CACHE_TTL_UNLIM;
 		$cacheDir = "/tasks/subordinatedeps";
 		$cacheFPrint = sha1(
-			serialize($arDepartments).'|'.serialize($arSelectFields)
+			serialize($arDepartments) . '|' . serialize($arSelectFields)
 		);
 		if ($obCache->InitCache($lifeTime, $cacheFPrint, $cacheDir))
 		{
@@ -2630,26 +2824,28 @@ class CTasks
 			$IBlockID = COption::GetOptionInt('intranet', 'iblock_structure', 0);
 
 			$CACHE_MANAGER->StartTagCache($cacheDir);
-			$CACHE_MANAGER->RegisterTag("iblock_id_".$IBlockID);
+			$CACHE_MANAGER->RegisterTag("iblock_id_" . $IBlockID);
 
 			$arUserIDs = self::GetDepartmentManagersIDs($arDepartments, $IBlockID);
 
 			if (count($arUserIDs) > 0)
 			{
-				$arFilter = array(
-					'ID' => implode('|', $arUserIDs)
-				);
+				$arFilter = [
+					'ID' => implode('|', $arUserIDs),
+				];
 
 				// Prevent using users, that doesn't activate it's account
 				// http://jabber.bx/view.php?id=29118
 				if (IsModuleInstalled('bitrix24'))
+				{
 					$arFilter['!LAST_LOGIN'] = false;
+				}
 
 				$dbUser = CUser::GetList(
 					'ID',
 					'ASC',
 					$arFilter,
-					array('FIELDS' => $arSelectFields)    // selects only $arSelectFields fields
+					['FIELDS' => $arSelectFields]    // selects only $arSelectFields fields
 				);
 				while ($arUser = $dbUser->GetNext())
 				{
@@ -2674,35 +2870,37 @@ class CTasks
 	{
 		if (!CModule::IncludeModule('iblock'))
 		{
-			return array();
+			return [];
 		}
 
 		$dbSections = CIBlockSection::GetList(
-			array('SORT' => 'ASC'),
-			array(
-				'ID'                => $arDepartments,
-				'IBLOCK_ID'         => $IBlockID,
-				'CHECK_PERMISSIONS' => 'N'
-			),
+			['SORT' => 'ASC'],
+			[
+				'ID' => $arDepartments,
+				'IBLOCK_ID' => $IBlockID,
+				'CHECK_PERMISSIONS' => 'N',
+			],
 			false,                                // don't count
-			array(
+			[
 				'ID',
 				'UF_HEAD',
-				'IBLOCK_SECTION_ID'
-			)
+				'IBLOCK_SECTION_ID',
+			]
 		);
 
-		$arUserIDs = array();
+		$arUserIDs = [];
 		while ($arSection = $dbSections->Fetch())
 		{
 			if ($arSection['UF_HEAD'] > 0)
+			{
 				$arUserIDs[] = $arSection['UF_HEAD'];
+			}
 
 			if ($arSection['IBLOCK_SECTION_ID'] > 0)
 			{
 				$arUserIDs = array_merge(
 					$arUserIDs,
-					self::GetDepartmentManagersIDs(array($arSection['IBLOCK_SECTION_ID']), $IBlockID)
+					self::GetDepartmentManagersIDs([$arSection['IBLOCK_SECTION_ID']], $IBlockID)
 				);
 			}
 		}
@@ -2726,8 +2924,8 @@ class CTasks
 		$dbRes = CUser::GetList(
 			'ID',
 			'ASC',
-			array('ID' => $employeeID1),
-			array('SELECT' => array('UF_DEPARTMENT'))
+			['ID' => $employeeID1],
+			['SELECT' => ['UF_DEPARTMENT']]
 		);
 
 		if (($arRes = $dbRes->Fetch()) && is_array($arRes['UF_DEPARTMENT']) && (count($arRes['UF_DEPARTMENT']) > 0))
@@ -2735,13 +2933,15 @@ class CTasks
 			$arManagers = array_keys(CTasks::GetDepartmentManagers($arRes['UF_DEPARTMENT'], $employeeID1));
 
 			if (in_array($employeeID2, $arManagers))
+			{
 				return true;
+			}
 		}
 
 		return false;
 	}
 
-	public static function getSelectSqlByFilter(array $filter = array(), $alias = '', array $filterParams = array())
+	public static function getSelectSqlByFilter(array $filter = [], $alias = '', array $filterParams = [])
 	{
 		$userId = intval($filterParams['USER_ID']);
 
@@ -2766,7 +2966,7 @@ class CTasks
 		$params = [
 			'USER_ID' => $userId,
 			'JOIN_ALIAS' => $alias,
-			'SOURCE_ALIAS' => "{$alias}T"
+			'SOURCE_ALIAS' => "{$alias}T",
 		];
 		$relatedJoins = static::getRelatedJoins([], $filter, [], $params);
 		$relatedJoins = array_merge($relatedJoins, $optimized['JOINS']);
@@ -2777,7 +2977,7 @@ class CTasks
 			INNER JOIN b_user {$alias}CU ON {$alias}CU.ID = {$alias}T.CREATED_BY
 			INNER JOIN b_user {$alias}RU ON {$alias}RU.ID = {$alias}T.RESPONSIBLE_ID
 			" . implode("\n", $relatedJoins) . "
-			" . $obUserFieldsSql->GetJoin($alias."T.ID") . "
+			" . $obUserFieldsSql->GetJoin($alias . "T.ID") . "
 			" . (count($sqlSearch) ? " WHERE " . implode(" AND ", $sqlSearch) : "") . "
 		";
 	}
@@ -3003,7 +3203,7 @@ class CTasks
 			'SITE_ID' => [
 				'type' => 'string',
 			],
-			'SUBORDINATE'=> [
+			'SUBORDINATE' => [
 				'type' => 'enum',
 				'values' => [
 					'Y' => Loc::getMessage('TASKS_FIELDS_Y'),
@@ -3027,9 +3227,9 @@ class CTasks
 				'type' => 'integer',
 				'default' => null,
 			],
-			'OUTLOOK_VERSION'   => [
-				'type'    => 'integer',
-				'default' => null
+			'OUTLOOK_VERSION' => [
+				'type' => 'integer',
+				'default' => null,
 			],
 			'VIEWED_DATE' => [
 				'type' => 'datetime',
@@ -3087,7 +3287,7 @@ class CTasks
 
 		foreach ($fields as $fieldId => &$fieldData)
 		{
-			$fieldData = array_merge(['title' => Loc::getMessage('TASKS_FIELDS_'.$fieldId)], $fieldData);
+			$fieldData = array_merge(['title' => Loc::getMessage('TASKS_FIELDS_' . $fieldId)], $fieldData);
 		}
 		unset($fieldData);
 
@@ -3189,11 +3389,11 @@ class CTasks
 	{
 		$relatedJoins = [];
 
-		$userId = ($params['USER_ID'] ? (int) $params['USER_ID']: User::getId());
-		$viewedBy = ($params['VIEWED_BY']?: $userId);
-		$sortingGroupId = (int) $params['SORTING_GROUP_ID'];
-		$joinAlias = ($params['JOIN_ALIAS']?: "");
-		$sourceAlias = ($params['SOURCE_ALIAS']?: "T");
+		$userId = ($params['USER_ID'] ? (int)$params['USER_ID'] : User::getId());
+		$viewedBy = ($params['VIEWED_BY'] ?: $userId);
+		$sortingGroupId = (int)$params['SORTING_GROUP_ID'];
+		$joinAlias = ($params['JOIN_ALIAS'] ?: "");
+		$sourceAlias = ($params['SOURCE_ALIAS'] ?: "T");
 
 		$filterKeys = static::GetFilteredKeys($filter);
 		$possibleJoins = [
@@ -3207,7 +3407,7 @@ class CTasks
 			'FORUM_MESSAGE',
 			'USER_OPTION',
 			'COUNTERS',
-			'SCRUM'
+			'SCRUM',
 		];
 
 		foreach ($possibleJoins as $join)
@@ -3228,7 +3428,7 @@ class CTasks
 					{
 						$tableName = UserTable::getTableName();
 						$relatedJoins[$join] = "INNER JOIN {$tableName} {$joinAlias}CU "
-							."ON {$joinAlias}CU.ID = {$sourceAlias}.CREATED_BY";
+							. "ON {$joinAlias}CU.ID = {$sourceAlias}.CREATED_BY";
 					}
 					break;
 
@@ -3246,7 +3446,7 @@ class CTasks
 					{
 						$tableName = UserTable::getTableName();
 						$relatedJoins[$join] = "INNER JOIN {$tableName} {$joinAlias}RU "
-							."ON {$joinAlias}RU.ID = {$sourceAlias}.RESPONSIBLE_ID";
+							. "ON {$joinAlias}RU.ID = {$sourceAlias}.RESPONSIBLE_ID";
 					}
 					break;
 
@@ -3262,7 +3462,7 @@ class CTasks
 					{
 						$tableName = ViewedTable::getTableName();
 						$relatedJoins[$join] = "LEFT JOIN {$tableName} {$joinAlias}TV "
-							."ON {$joinAlias}TV.TASK_ID = {$sourceAlias}.ID AND {$joinAlias}TV.USER_ID = {$viewedBy}";
+							. "ON {$joinAlias}TV.TASK_ID = {$sourceAlias}.ID AND {$joinAlias}TV.USER_ID = {$viewedBy}";
 					}
 					break;
 
@@ -3275,13 +3475,12 @@ class CTasks
 					{
 						$tableName = SortingTable::getTableName();
 						$relatedJoins[$join] = "LEFT JOIN {$tableName} {$joinAlias}SRT "
-							."ON {$joinAlias}SRT.TASK_ID = {$sourceAlias}.ID "
-							."AND ".(
+							. "ON {$joinAlias}SRT.TASK_ID = {$sourceAlias}.ID "
+							. "AND " . (
 							$sortingGroupId > 0
 								? "{$joinAlias}SRT.GROUP_ID = {$sortingGroupId}"
 								: "{$joinAlias}SRT.USER_ID = {$userId}"
-							)
-						;
+							);
 					}
 					break;
 
@@ -3294,7 +3493,7 @@ class CTasks
 					{
 						$tableName = FavoriteTable::getTableName();
 						$relatedJoins[$join] = "LEFT JOIN {$tableName} {$joinAlias}FVT "
-							."ON {$joinAlias}FVT.TASK_ID = {$sourceAlias}.ID AND {$joinAlias}FVT.USER_ID = {$userId}";
+							. "ON {$joinAlias}FVT.TASK_ID = {$sourceAlias}.ID AND {$joinAlias}FVT.USER_ID = {$userId}";
 					}
 					break;
 
@@ -3303,7 +3502,7 @@ class CTasks
 					{
 						$tableName = TaskStageTable::getTableName();
 						$relatedJoins[$join] = "INNER JOIN {$tableName} {$joinAlias}STG "
-							."ON STG.TASK_ID = {$sourceAlias}.ID";
+							. "ON STG.TASK_ID = {$sourceAlias}.ID";
 					}
 					break;
 
@@ -3320,7 +3519,7 @@ class CTasks
 					{
 						$tableName = \Bitrix\Forum\TopicTable::getTableName();
 						$relatedJoins[$join] = "LEFT JOIN {$tableName} {$joinAlias}FT "
-							."ON {$joinAlias}FT.ID = {$sourceAlias}.FORUM_TOPIC_ID";
+							. "ON {$joinAlias}FT.ID = {$sourceAlias}.FORUM_TOPIC_ID";
 					}
 					break;
 
@@ -3333,9 +3532,9 @@ class CTasks
 					{
 						$tableName = \Bitrix\Forum\MessageTable::getTableName();
 						$relatedJoins[$join] = "LEFT JOIN {$tableName} {$joinAlias}FM "
-							."ON {$joinAlias}FM.TOPIC_ID = {$sourceAlias}.FORUM_TOPIC_ID\n";
+							. "ON {$joinAlias}FM.TOPIC_ID = {$sourceAlias}.FORUM_TOPIC_ID\n";
 						$relatedJoins[$join] .= "LEFT JOIN b_uts_forum_message {$joinAlias}BUF_FM "
-							."ON {$joinAlias}BUF_FM.VALUE_ID = {$joinAlias}FM.ID";
+							. "ON {$joinAlias}BUF_FM.VALUE_ID = {$joinAlias}FM.ID";
 					}
 					break;
 
@@ -3347,7 +3546,7 @@ class CTasks
 					{
 						$tableName = UserOptionTable::getTableName();
 						$relatedJoins[$join] = "LEFT JOIN {$tableName} {$joinAlias}TUO "
-							."ON {$joinAlias}TUO.TASK_ID = {$sourceAlias}.ID AND {$joinAlias}TUO.USER_ID = {$userId}";
+							. "ON {$joinAlias}TUO.TASK_ID = {$sourceAlias}.ID AND {$joinAlias}TUO.USER_ID = {$userId}";
 					}
 					break;
 
@@ -3457,7 +3656,7 @@ class CTasks
 
 					if ($hasEpicKey)
 					{
-						$epicId = (int) $epicValue;
+						$epicId = (int)$epicValue;
 
 						if ($epicId)
 						{
@@ -3545,7 +3744,8 @@ class CTasks
 					$fieldRuntimeOptions = static::getFieldRuntimeOptions($newKey, $value, $parameters);
 
 					$runtimeOptions['FIELDS'] = array_merge($runtimeOptions['FIELDS'], $fieldRuntimeOptions['FIELDS']);
-					$runtimeOptions['FILTERS'] = array_merge($runtimeOptions['FILTERS'], $fieldRuntimeOptions['FILTERS']);
+					$runtimeOptions['FILTERS'] = array_merge($runtimeOptions['FILTERS'],
+						$fieldRuntimeOptions['FILTERS']);
 				}
 			}
 		}
@@ -3568,7 +3768,7 @@ class CTasks
 	{
 		$runtimeOptions = [
 			'FIELDS' => [],
-			'FILTERS' => []
+			'FILTERS' => [],
 		];
 		$dates = ['DEADLINE', 'CREATED_DATE', 'CLOSED_DATE', 'DATE_START', 'START_DATE_PLAN', 'END_DATE_PLAN'];
 
@@ -3612,7 +3812,8 @@ class CTasks
 			case 'RESPONSIBLE_ID':
 			case 'GROUP_ID':
 				$fieldKeyData = static::parseFieldKey(key($value), $key, 'in');
-				$runtimeOptions['FILTERS'][$key] = Query::filter()->where($key, $fieldKeyData['OPERATOR'], current($value));
+				$runtimeOptions['FILTERS'][$key] = Query::filter()
+					->where($key, $fieldKeyData['OPERATOR'], current($value));
 				break;
 
 			case 'STATUS':
@@ -3628,7 +3829,8 @@ class CTasks
 				$parameters['USER_ID'] = $parameters['NAME'] = current($value);
 				$parameters['TYPE_CONDITION'] = true;
 
-				$runtimeOptions['FILTERS'][$key] = Query::filter()->whereExists(static::getSelectionExpressionByType($key, $parameters));
+				$runtimeOptions['FILTERS'][$key] = Query::filter()
+					->whereExists(static::getSelectionExpressionByType($key, $parameters));
 				break;
 
 			case 'ROLEID':
@@ -3694,7 +3896,7 @@ class CTasks
 						$operator = $fieldKeyData['OPERATOR'];
 						$runtimeOptions['FILTERS'][$fieldName] = Query::filter()->where($fieldName, $operator, $val);
 					}
-					else if ($fieldName == 'FAVORITE')
+					elseif ($fieldName == 'FAVORITE')
 					{
 						$runtimeOptions['FIELDS'][$fieldName] = new Entity\ReferenceField(
 							'FVT',
@@ -3704,7 +3906,7 @@ class CTasks
 						);
 						$runtimeOptions['FILTERS'][$fieldName] = Query::filter()->where('FVT.TASK_ID', '!=', null);
 					}
-					else if ($fieldName == 'OVERDUED')
+					elseif ($fieldName == 'OVERDUED')
 					{
 						$runtimeOptions['FILTERS'][$fieldName] = Query::filter()
 							->where('DEADLINE', '!=', null)
@@ -3745,7 +3947,7 @@ class CTasks
 		if ($fieldName)
 		{
 			$operator = str_replace($fieldName, '', $key);
-			$operator = ($operator && isset($operators[$operator])? $operators[$operator] : $defaultOperator);
+			$operator = ($operator && isset($operators[$operator]) ? $operators[$operator] : $defaultOperator);
 		}
 		else
 		{
@@ -3768,7 +3970,7 @@ class CTasks
 
 		return [
 			'OPERATOR' => $operator,
-			'FIELD_NAME' => $fieldName
+			'FIELD_NAME' => $fieldName,
 		];
 	}
 
@@ -3823,7 +4025,7 @@ class CTasks
 
 		$key = 'ROLE_';
 		$roleType = static::getRoleFieldType($role);
-		$userId = $role[($roleType == 'MEMBER'? '' : '=') . $roleType];
+		$userId = $role[($roleType == 'MEMBER' ? '' : '=') . $roleType];
 
 		$referenceFilter = Query::filter()
 			->whereColumn('ref.TASK_ID', 'this.ID')
@@ -3843,7 +4045,7 @@ class CTasks
 					'CREATED_BY' => 'O',
 					'RESPONSIBLE_ID' => 'R',
 					'ACCOMPLICE' => 'A',
-					'AUDITOR' => 'U'
+					'AUDITOR' => 'U',
 				];
 				$referenceFilter->where('ref.TYPE', $map[$roleType]);
 
@@ -3858,7 +4060,7 @@ class CTasks
 
 		return [
 			'FIELDS' => $fields,
-			'FILTERS' => $filters
+			'FILTERS' => $filters,
 		];
 	}
 
@@ -3894,7 +4096,7 @@ class CTasks
 
 		if (array_key_exists('VIEWED', $problem))
 		{
-			$userId = ($problem['VIEWED_BY']?: $parameters['USER_ID']);
+			$userId = ($problem['VIEWED_BY'] ?: $parameters['USER_ID']);
 			$filterKey = 'PROBLEM_NOT_VIEWED';
 
 			$fields[$filterKey] = new Entity\ReferenceField(
@@ -3907,14 +4109,14 @@ class CTasks
 				->where('TV.USER_ID', null)
 				->where('STATUS', 'in', [1, 2]);
 		}
-		else if ($problemFilter = static::parseLogicProblemFilter($problem))
+		elseif ($problemFilter = static::parseLogicProblemFilter($problem))
 		{
 			$filters['PROBLEM'] = $problemFilter;
 		}
 
 		return [
 			'FIELDS' => $fields,
-			'FILTERS' => $filters
+			'FILTERS' => $filters,
 		];
 	}
 
@@ -3956,13 +4158,13 @@ class CTasks
 			{
 				$filter->whereColumn(mb_substr($fieldKeyName, 10), $fieldKeyOperator, $condition);
 			}
-			else if ($fieldKeyOperator === '=')
+			elseif ($fieldKeyOperator === '=')
 			{
 				if ($condition === null)
 				{
 					$filter->whereNull($fieldKeyName);
 				}
-				else if (is_array($condition))
+				elseif (is_array($condition))
 				{
 					$filter->where($fieldKeyName, 'in', $condition);
 				}
@@ -4000,7 +4202,10 @@ class CTasks
 					$typeCondition = ($parameters['TYPE_CONDITION'] ? ' AND TM.TYPE = ?s' : '');
 
 					$sql = new SqlExpression(
-						'SELECT TM.?# FROM ?# TM WHERE TM.?# = ?#.ID AND (' . implode(" OR ", $userIdsConditions) . ')' . $typeCondition,
+						'SELECT TM.?# FROM ?# TM WHERE TM.?# = ?#.ID AND ('
+						. implode(" OR ", $userIdsConditions)
+						. ')'
+						. $typeCondition,
 						'TASK_ID',
 						'b_tasks_member',
 						'TASK_ID',
@@ -4039,9 +4244,9 @@ class CTasks
 	 */
 	public static function makePossibleForwardedFilter($filter)
 	{
-		$result = array();
+		$result = [];
 
-		$allowedFields = array(
+		$allowedFields = [
 			'ID' => true, // number_wo_nulls
 			'TITLE' => true, // string
 			'STATUS_CHANGED_BY' => true, // number
@@ -4072,9 +4277,9 @@ class CTasks
 			'CREATED_DATE' => true,
 			'STATUS_CHANGED_DATE' => true,
 			 */
-		);
+		];
 
-		$stringEqual = array(
+		$stringEqual = [
 			'SITE_ID' => true, // string_equal
 			'XML_ID' => true, // string_equal
 			'MARK' => true, // string_equal
@@ -4082,41 +4287,41 @@ class CTasks
 			'ALLOW_TIME_TRACKING' => true, // string_equal
 			'ADD_IN_REPORT' => true, // string_equal
 			'MATCH_WORK_TIME' => true, // string_equal
-		);
+		];
 
-		if(is_array($filter) && !empty($filter))
+		if (is_array($filter) && !empty($filter))
 		{
 			// cannot forward filer with LOGIC OR or LOGIC NOT
-			if(array_key_exists('LOGIC', $filter) && $filter['LOGIC'] != 'AND')
+			if (array_key_exists('LOGIC', $filter) && $filter['LOGIC'] != 'AND')
 			{
 				return $result;
 			}
-			if(array_key_exists('::LOGIC', $filter) && $filter['::LOGIC'] != 'AND')
+			if (array_key_exists('::LOGIC', $filter) && $filter['::LOGIC'] != 'AND')
 			{
 				return $result;
 			}
 
 			$filter = \Bitrix\Tasks\Internals\DataBase\Helper\Common::parseFilter($filter);
-			foreach($filter as $k => $condition)
+			foreach ($filter as $k => $condition)
 			{
 				$field = $condition['FIELD'];
 
-				if(!array_key_exists($field, $allowedFields))
+				if (!array_key_exists($field, $allowedFields))
 				{
 					continue;
 				}
 
 				// convert like into strict check
-				if(array_key_exists($field, $stringEqual))
+				if (array_key_exists($field, $stringEqual))
 				{
 					// '' => '='
-					if($condition['OPERATION'] == 'E')
+					if ($condition['OPERATION'] == 'E')
 					{
 						$condition['OPERATION'] = 'I';
 						unset($condition['ORIG_KEY']);
 					}
 					// '!' => '!='
-					if($condition['OPERATION'] == 'N')
+					if ($condition['OPERATION'] == 'N')
 					{
 						$condition['OPERATION'] = 'NI';
 						unset($condition['ORIG_KEY']);
@@ -4125,7 +4330,7 @@ class CTasks
 
 				// actually, allow only "equal" and "not equal"
 				$op = $condition['OPERATION'];
-				if($op != 'E' && $op != 'I' && $op != 'N' && $op != 'NI')
+				if ($op != 'E' && $op != 'I' && $op != 'N' && $op != 'NI')
 				{
 					continue;
 				}
@@ -4142,16 +4347,18 @@ class CTasks
 	public static function needAccessRestriction(array $arFilter, $arParams)
 	{
 		if (is_array($arParams) && array_key_exists('USER_ID', $arParams) && ($arParams['USER_ID'] > 0))
-			$userID = (int) $arParams['USER_ID'];
+		{
+			$userID = (int)$arParams['USER_ID'];
+		}
 		else
+		{
 			$userID = User::getId();
+		}
 
 		return
 			!User::isSuper($userID)
-			&&
-			$arFilter["CHECK_PERMISSIONS"] != "N" // and not setted flag "skip permissions check"
-			&&
-			$arFilter["SUBORDINATE_TASKS"] != "Y"; // and not rights via subordination
+			&& $arFilter["CHECK_PERMISSIONS"] != "N" // and not setted flag "skip permissions check"
+			&& $arFilter["SUBORDINATE_TASKS"] != "Y"; // and not rights via subordination
 	}
 
 	/**
@@ -4162,8 +4369,8 @@ class CTasks
 	 */
 	private static function GetRootSubQuery($filter = [], $aliasPrefix = '', $params = [])
 	{
-		$filter = (isset($params['SOURCE_FILTER'])? $params['SOURCE_FILTER'] : $filter);
-		$userId = (isset($params['USER_ID'])? $params['USER_ID'] : User::getId());
+		$filter = (isset($params['SOURCE_FILTER']) ? $params['SOURCE_FILTER'] : $filter);
+		$userId = (isset($params['USER_ID']) ? $params['USER_ID'] : User::getId());
 
 		$sqlSearch = ["(PT.ID = " . $aliasPrefix . "T.PARENT_ID)"];
 
@@ -4190,7 +4397,7 @@ class CTasks
 		$relatedParams = [
 			'USER_ID' => $userId,
 			'JOIN_ALIAS' => 'P',
-			'SOURCE_ALIAS' => 'PT'
+			'SOURCE_ALIAS' => 'PT',
 		];
 		$relatedJoins = static::getRelatedJoins([], $filter, [], $relatedParams);
 		$relatedJoins = array_merge($relatedJoins, $optimized['JOINS']);
@@ -4203,14 +4410,13 @@ class CTasks
 		";
 	}
 
-
 	/**
 	 * @param array $arFilter
 	 * @param array $arParams
 	 * @param array $arGroupBy
 	 * @return bool|CDBResult
 	 */
-	public static function GetCount($arFilter=array(), $arParams = array(), $arGroupBy = array())
+	public static function GetCount($arFilter = [], $arParams = [], $arGroupBy = [])
 	{
 		/**
 		 * @global CDatabase $DB
@@ -4281,7 +4487,11 @@ class CTasks
 		if ($filter['::LOGIC'] != 'OR' && $filter['LOGIC'] != 'OR')
 		{
 			// MEMBER
-			if (array_key_exists('MEMBER', $filter) || isset($filter[$roleKey]) && array_key_exists('MEMBER', $filter[$roleKey]))
+			if (
+				array_key_exists('MEMBER', $filter)
+				|| isset($filter[$roleKey])
+				&& array_key_exists('MEMBER', $filter[$roleKey])
+			)
 			{
 				if (array_key_exists('MEMBER', $filter))
 				{
@@ -4297,7 +4507,7 @@ class CTasks
 				$additionalJoins[] = "INNER JOIN b_tasks_member {$joinAlias} ON {$joinAlias}.TASK_ID = {$sourceAlias}.ID AND {$joinAlias}.USER_ID = {$member}";
 			}
 			// DOER
-			else if (array_key_exists('DOER', $filter))
+			elseif (array_key_exists('DOER', $filter))
 			{
 				$doer = intval($filter['DOER']);
 				unset($filter['DOER']);
@@ -4305,7 +4515,7 @@ class CTasks
 				$additionalJoins[] = "INNER JOIN b_tasks_member {$joinAlias} ON {$joinAlias}.TASK_ID = {$sourceAlias}.ID AND {$joinAlias}.USER_ID = {$doer} AND {$joinAlias}.TYPE in ('R', 'A')";
 			}
 			// RESPONSIBLE
-			else if (isset($filter[$roleKey]) && array_key_exists('=RESPONSIBLE_ID', $filter[$roleKey]))
+			elseif (isset($filter[$roleKey]) && array_key_exists('=RESPONSIBLE_ID', $filter[$roleKey]))
 			{
 				$responsible = (int)$filter[$roleKey]['=RESPONSIBLE_ID'];
 				unset($filter[$roleKey]);
@@ -4313,7 +4523,7 @@ class CTasks
 				$additionalJoins[] = "INNER JOIN b_tasks_member {$joinAlias} ON {$joinAlias}.TASK_ID = {$sourceAlias}.ID AND {$joinAlias}.USER_ID = {$responsible} AND {$joinAlias}.TYPE = 'R'";
 			}
 			// CREATOR
-			else if (isset($filter[$roleKey]) && array_key_exists('=CREATED_BY', $filter[$roleKey]))
+			elseif (isset($filter[$roleKey]) && array_key_exists('=CREATED_BY', $filter[$roleKey]))
 			{
 				$creator = (int)$filter[$roleKey]['=CREATED_BY'];
 				unset($filter[$roleKey]['=CREATED_BY']);
@@ -4327,7 +4537,11 @@ class CTasks
 				$additionalJoins[] = "INNER JOIN b_tasks_member {$joinAlias} ON {$joinAlias}.TASK_ID = {$sourceAlias}.ID AND {$joinAlias}.USER_ID = {$creator} AND {$joinAlias}.TYPE = 'O'";
 			}
 			// ACCOMPLICE
-			else if (array_key_exists('ACCOMPLICE', $filter) || isset($filter[$roleKey]) && array_key_exists('=ACCOMPLICE', $filter[$roleKey]))
+			elseif (
+				array_key_exists('ACCOMPLICE', $filter)
+				|| isset($filter[$roleKey])
+				&& array_key_exists('=ACCOMPLICE', $filter[$roleKey])
+			)
 			{
 				if (array_key_exists('ACCOMPLICE', $filter))
 				{
@@ -4351,7 +4565,11 @@ class CTasks
 				}
 			}
 			// AUDITOR
-			else if (array_key_exists('AUDITOR', $filter) || isset($filter[$roleKey]) && array_key_exists('=AUDITOR', $filter[$roleKey]))
+			elseif (
+				array_key_exists('AUDITOR', $filter)
+				|| isset($filter[$roleKey])
+				&& array_key_exists('=AUDITOR', $filter[$roleKey])
+			)
 			{
 				if (array_key_exists('AUDITOR', $filter))
 				{
@@ -4424,14 +4642,14 @@ class CTasks
 		$viewedBy = $defaultValue;
 
 		if (
-			array_key_exists('::SUBFILTER-PROBLEM', $filter) &&
-			array_key_exists('VIEWED_BY', $filter['::SUBFILTER-PROBLEM']) &&
-			intval($filter['::SUBFILTER-PROBLEM']['VIEWED_BY'])
+			array_key_exists('::SUBFILTER-PROBLEM', $filter)
+			&& array_key_exists('VIEWED_BY', $filter['::SUBFILTER-PROBLEM'])
+			&& intval($filter['::SUBFILTER-PROBLEM']['VIEWED_BY'])
 		)
 		{
 			$viewedBy = intval($filter['::SUBFILTER-PROBLEM']['VIEWED_BY']);
 		}
-		else if (array_key_exists('VIEWED_BY', $filter) && intval($filter['VIEWED_BY']))
+		elseif (array_key_exists('VIEWED_BY', $filter) && intval($filter['VIEWED_BY']))
 		{
 			$viewedBy = intval($filter['VIEWED_BY']);
 		}
@@ -4443,28 +4661,31 @@ class CTasks
 	{
 		global $DB;
 
-		$taskId = (int) $taskId;
+		$taskId = (int)$taskId;
 
 		$res = $DB->query(
 			"SELECT USER_ID
 			FROM b_tasks_viewed
 			WHERE TASK_ID = " . $taskId,
-			true	// ignore DB errors
+			true    // ignore DB errors
 		);
 
 		if ($res === false)
+		{
 			throw new TasksException ('', TasksException::TE_SQL_ERROR);
+		}
 
-		$arUsers = array();
+		$arUsers = [];
 
 		while ($ar = $res->fetch())
-			$arUsers[] = (int) $ar['USER_ID'];
+		{
+			$arUsers[] = (int)$ar['USER_ID'];
+		}
 
 		return ($arUsers);
 	}
 
-
-	public static function GetCountInt($arFilter=array(), $arParams = array())
+	public static function GetCountInt($arFilter = [], $arParams = [])
 	{
 		$count = 0;
 
@@ -4476,7 +4697,6 @@ class CTasks
 
 		return $count;
 	}
-
 
 	public static function GetChildrenCount($filter, $parentIds)
 	{
@@ -4506,7 +4726,7 @@ class CTasks
 		$r = $obUserFieldsSql->GetFilter();
 		if ($r <> '')
 		{
-			$sqlSearch[] = "(".$r.")";
+			$sqlSearch[] = "(" . $r . ")";
 		}
 
 		$relatedJoins = static::getRelatedJoins([], $filter, [], ['USER_ID' => $userId]);
@@ -4523,7 +4743,7 @@ class CTasks
 			INNER JOIN b_user RU ON RU.ID = T.RESPONSIBLE_ID
 			" . $relatedJoins . "
 			" . $obUserFieldsSql->GetJoin("T.ID") . "
-			" . (sizeof($sqlSearch)? "WHERE " . implode(" AND ", $sqlSearch) : "") . "
+			" . (sizeof($sqlSearch) ? "WHERE " . implode(" AND ", $sqlSearch) : "") . "
 			GROUP BY T.ID
 		";
 
@@ -4531,7 +4751,7 @@ class CTasks
 			GROUP BY T.PARENT_ID
 		";
 
-		$res = $DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
+		$res = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
 
 		return $res;
 	}
@@ -4558,33 +4778,38 @@ class CTasks
 	{
 		CTaskAssert::assert($loggedInUserId && is_array($arFilter));
 
-		$arSqlSearch = CTasks::GetFilter($arFilter, '', array('USER_ID' => $loggedInUserId));
+		$arSqlSearch = CTasks::GetFilter($arFilter, '', ['USER_ID' => $loggedInUserId]);
 
 		$keysFiltered = CTasks::GetFilteredKeys($arFilter);
 
 		$bNeedJoinFavoritesTable = in_array('FAVORITE', $keysFiltered, true);
 
-		$sql = "SELECT T.".$column." AS USER_ID, COUNT(T.ID) AS TASKS_CNT
+		$sql = "SELECT T." . $column . " AS USER_ID, COUNT(T.ID) AS TASKS_CNT
 			FROM b_tasks T
 			LEFT JOIN b_tasks_viewed TV ON TV.TASK_ID = T.ID AND TV.USER_ID = " . $loggedInUserId . "
 
-			". ($bNeedJoinFavoritesTable ? "
-				LEFT JOIN ".FavoriteTable::getTableName()." FVT ON FVT.TASK_ID = T.ID and FVT.USER_ID = '".$loggedInUserId/*always int, no sqli*/."'
-				" : "")."
+			" . ($bNeedJoinFavoritesTable ? "
+				LEFT JOIN "
+				. FavoriteTable::getTableName()
+				. " FVT ON FVT.TASK_ID = T.ID and FVT.USER_ID = '"
+				. $loggedInUserId
+				/*always int, no sqli*/
+				. "'
+				" : "") . "
 
 			WHERE " . implode('AND', $arSqlSearch)
-			. " GROUP BY T.".$column;
+			. " GROUP BY T." . $column;
 
 		return $GLOBALS['DB']->query($sql);
 	}
 
-	public static function GetSubordinateSql($sAliasPrefix="", $arParams = array(), $behaviour = array())
+	public static function GetSubordinateSql($sAliasPrefix = "", $arParams = [], $behaviour = [])
 	{
 		$arDepsIDs = Integration\Intranet\Department::getSubordinateIds($arParams['USER_ID'], true);
 
 		if (sizeof($arDepsIDs))
 		{
-			$rsDepartmentField = CUserTypeEntity::GetList(array(), array("ENTITY_ID" => "USER", "FIELD_NAME" => "UF_DEPARTMENT"));
+			$rsDepartmentField = CUserTypeEntity::GetList([], ["ENTITY_ID" => "USER", "FIELD_NAME" => "UF_DEPARTMENT"]);
 			if ($arDepartmentField = $rsDepartmentField->Fetch())
 			{
 				return CTasks::GetDeparmentSql($arDepsIDs, $sAliasPrefix, $arParams, $behaviour);
@@ -4594,29 +4819,28 @@ class CTasks
 		return false;
 	}
 
-
-	public static function GetDeparmentSql($arDepsIDs, $sAliasPrefix="", $arParams = array(), $behaviour = array())
+	public static function GetDeparmentSql($arDepsIDs, $sAliasPrefix = "", $arParams = [], $behaviour = [])
 	{
 		if (!is_array($arDepsIDs))
 		{
-			$arDepsIDs = array(intval($arDepsIDs));
+			$arDepsIDs = [intval($arDepsIDs)];
 		}
 		else
 		{
 			$arDepsIDs = array_map('intval', $arDepsIDs);
 		}
 
-		if(!is_array($behaviour))
+		if (!is_array($behaviour))
 		{
-			$behaviour = array();
+			$behaviour = [];
 		}
-		if(!isset($behaviour['ALIAS']))
+		if (!isset($behaviour['ALIAS']))
 		{
 			$behaviour['ALIAS'] = $sAliasPrefix;
 		}
-		if(!isset($arParams['FIELDS']))
+		if (!isset($arParams['FIELDS']))
 		{
-			$arParams['FIELDS'] = array();
+			$arParams['FIELDS'] = [];
 		}
 
 		$a = $sAliasPrefix;
@@ -4625,7 +4849,7 @@ class CTasks
 
 		//static::placeFieldSql('CREATED_BY', 	$b, $f)
 
-		$rsDepartmentField = CUserTypeEntity::GetList(array(), array("ENTITY_ID" => "USER", "FIELD_NAME" => "UF_DEPARTMENT"));
+		$rsDepartmentField = CUserTypeEntity::GetList([], ["ENTITY_ID" => "USER", "FIELD_NAME" => "UF_DEPARTMENT"]);
 		$cntOfDepartments = count($arDepsIDs);
 		if ($cntOfDepartments && $arDepartmentField = $rsDepartmentField->Fetch())
 		{
@@ -4636,17 +4860,17 @@ class CTasks
 				SELECT
 					'x'
 				FROM
-					b_utm_user ".$sAliasPrefix."BUF1
+					b_utm_user " . $sAliasPrefix . "BUF1
 				WHERE
-					".$sAliasPrefix."BUF1.FIELD_ID = ".$arDepartmentField["ID"]."
+					" . $sAliasPrefix . "BUF1.FIELD_ID = " . $arDepartmentField["ID"] . "
 				AND
-					(" . $sAliasPrefix . "BUF1.VALUE_ID = " . static::placeFieldSql('RESPONSIBLE_ID', $b, $f)."
+					(" . $sAliasPrefix . "BUF1.VALUE_ID = " . static::placeFieldSql('RESPONSIBLE_ID', $b, $f) . "
 						OR " . $sAliasPrefix . "BUF1.VALUE_ID = " . static::placeFieldSql('CREATED_BY', $b, $f) . "
 						OR EXISTS(
 							SELECT 'x'
-							FROM b_tasks_member ".$sAliasPrefix."DSTM
-							WHERE ".$sAliasPrefix."DSTM.TASK_ID = ".static::placeFieldSql('ID', $b, $f)."
-								AND ".$sAliasPrefix."DSTM.USER_ID = " . $sAliasPrefix . "BUF1.VALUE_ID
+							FROM b_tasks_member " . $sAliasPrefix . "DSTM
+							WHERE " . $sAliasPrefix . "DSTM.TASK_ID = " . static::placeFieldSql('ID', $b, $f) . "
+								AND " . $sAliasPrefix . "DSTM.USER_ID = " . $sAliasPrefix . "BUF1.VALUE_ID
 						)
 					)
 				AND
@@ -4659,58 +4883,55 @@ class CTasks
 		return false;
 	}
 
-
 	/**
 	 * Use CTaskItem->update() instead (with key 'ACCOMPLICES')
 	 *
 	 * @deprecated
 	 */
-	public static function AddAccomplices($ID, $arAccompleces = array())
+	public static function AddAccomplices($ID, $arAccompleces = [])
 	{
 		if ($arAccompleces)
 		{
 			$arAccompleces = array_unique($arAccompleces);
 			foreach ($arAccompleces as $accomplice)
 			{
-				$arMember = array(
+				$arMember = [
 					"TASK_ID" => $ID,
 					"USER_ID" => $accomplice,
-					"TYPE" => "A"
-				);
+					"TYPE" => "A",
+				];
 				$member = new CTaskMembers();
 				$member->Add($arMember);
 			}
 		}
 	}
-
 
 	/**
 	 * Use CTaskItem->update() instead (with key 'AUDITORS')
 	 *
 	 * @deprecated
 	 */
-	public static function AddAuditors($ID, $arAuditors = array())
+	public static function AddAuditors($ID, $arAuditors = [])
 	{
 		if ($arAuditors)
 		{
 			$arAuditors = array_unique($arAuditors);
 			foreach ($arAuditors as $auditor)
 			{
-				$arMember = array(
+				$arMember = [
 					"TASK_ID" => $ID,
 					"USER_ID" => $auditor,
-					"TYPE" => "U"
-				);
+					"TYPE" => "U",
+				];
 				$member = new CTaskMembers();
 				$member->Add($arMember);
 			}
 		}
 	}
 
-
-	static function AddFiles($ID, $arFiles = array(), $arParams = array())
+	static function AddFiles($ID, $arFiles = [], $arParams = [])
 	{
-		$arFilesIds = array();
+		$arFilesIds = [];
 
 		$userId = null;
 
@@ -4719,16 +4940,20 @@ class CTasks
 		if (is_array($arParams))
 		{
 			if (isset($arParams['USER_ID']) && ($arParams['USER_ID'] > 0))
-				$userId = (int) $arParams['USER_ID'];
+			{
+				$userId = (int)$arParams['USER_ID'];
+			}
 
 			if (isset($arParams['CHECK_RIGHTS_ON_FILES']))
+			{
 				$bCheckRightsOnFiles = $arParams['CHECK_RIGHTS_ON_FILES'];
+			}
 		}
 
 		if ($userId === null)
 		{
 			$userId = User::getId();
-			if(!$userId)
+			if (!$userId)
 			{
 				$userId = User::getAdminId();
 			}
@@ -4737,17 +4962,19 @@ class CTasks
 		if ($arFiles)
 		{
 			foreach ($arFiles as $file)
-				$arFilesIds[] = (int) $file;
+			{
+				$arFilesIds[] = (int)$file;
+			}
 
 			if (count($arFilesIds))
 			{
 				CTaskFiles::AddMultiple(
 					$ID,
 					$arFilesIds,
-					array(
-						'USER_ID'               => $userId,
-						'CHECK_RIGHTS_ON_FILES' => $bCheckRightsOnFiles
-					)
+					[
+						'USER_ID' => $userId,
+						'CHECK_RIGHTS_ON_FILES' => $bCheckRightsOnFiles,
+					]
 				);
 			}
 		}
@@ -4759,7 +4986,7 @@ class CTasks
 	 * @param array $sourceTags
 	 * @param null $effectiveUserId
 	 */
-	public static function AddTags($taskId, $userId, $sourceTags = [], $effectiveUserId = null): void
+	public static function AddTags($taskId, $userId, $sourceTags = [], $effectiveUserId = null, $groupId = null): void
 	{
 		$tagHandler = new CTaskTags();
 		$tagHandler::DeleteByTaskID($taskId);
@@ -4782,6 +5009,10 @@ class CTasks
 					'USER_ID' => ($effectiveUserId ?: $userId),
 					'NAME' => $tag,
 				];
+				if ($groupId)
+				{
+					$tagFields['GROUP_ID'] = $groupId;
+				}
 				$tagHandler = new CTaskTags();
 				$tagHandler->Add($tagFields, $effectiveUserId);
 
@@ -4790,8 +5021,7 @@ class CTasks
 		}
 	}
 
-
-	function AddPrevious($ID, $arPrevious = array())
+	function AddPrevious($ID, $arPrevious = [])
 	{
 		$oDependsOn = new CTaskDependence();
 		$oDependsOn->DeleteByTaskID($ID);
@@ -4802,16 +5032,15 @@ class CTasks
 
 			foreach ($arPrevious as $dependsOn)
 			{
-				$arDependsOn = array(
+				$arDependsOn = [
 					"TASK_ID" => $ID,
-					"DEPENDS_ON_ID" => $dependsOn
-				);
+					"DEPENDS_ON_ID" => $dependsOn,
+				];
 				$oDependsOn = new CTaskDependence();
 				$oDependsOn->Add($arDependsOn);
 			}
 		}
 	}
-
 
 	public static function Index($arTask, $tags)
 	{
@@ -4822,7 +5051,7 @@ class CTasks
 	public static function OnSearchReindex($nextStep = [], $callback = null, $callback_method = '')
 	{
 		$arResult = [];
-		$order  = ['ID' => 'ASC'];
+		$order = ['ID' => 'ASC'];
 		$filter = [];
 
 		if (
@@ -5024,9 +5253,10 @@ class CTasks
 		// group id is set, then take permissions from socialnetwork settings
 		if ($arTask["GROUP_ID"] > 0 && CModule::IncludeModule("socialnetwork"))
 		{
-			$prefix = "SG".$arTask["GROUP_ID"]."_";
-			$letter = CSocNetFeaturesPerms::GetOperationPerm(SONET_ENTITY_GROUP, $arTask["GROUP_ID"], "tasks", "view_all");
-			switch($letter)
+			$prefix = "SG" . $arTask["GROUP_ID"] . "_";
+			$letter = CSocNetFeaturesPerms::GetOperationPerm(SONET_ENTITY_GROUP, $arTask["GROUP_ID"], "tasks",
+				"view_all");
+			switch ($letter)
 			{
 				case "N"://All
 					$arPermissions[] = 'G2';
@@ -5035,11 +5265,11 @@ class CTasks
 					$arPermissions[] = 'AU';
 					break;
 				case "K"://Group members includes moderators and admins
-					$arPermissions[] = $prefix.'K';
+					$arPermissions[] = $prefix . 'K';
 				case "E"://Moderators includes admins
-					$arPermissions[] = $prefix.'E';
+					$arPermissions[] = $prefix . 'E';
 				case "A"://Admins
-					$arPermissions[] = $prefix.'A';
+					$arPermissions[] = $prefix . 'A';
 					break;
 			}
 		}
@@ -5048,25 +5278,34 @@ class CTasks
 		if (!in_array("G2", $arPermissions) && !in_array("AU", $arPermissions))
 		{
 			if (!$arTask["ACCOMPLICES"])
-				$arTask["ACCOMPLICES"] = array();
+			{
+				$arTask["ACCOMPLICES"] = [];
+			}
 
 			if (!$arTask["AUDITORS"])
-				$arTask["AUDITORS"] = array();
+			{
+				$arTask["AUDITORS"] = [];
+			}
 
-			$arParticipants = array_unique(array_merge(array($arTask["CREATED_BY"], $arTask["RESPONSIBLE_ID"]), $arTask["ACCOMPLICES"], $arTask["AUDITORS"]));
-			foreach($arParticipants as $userId)
-				$arPermissions[] = "U".$userId;
+			$arParticipants = array_unique(array_merge([$arTask["CREATED_BY"], $arTask["RESPONSIBLE_ID"]],
+				$arTask["ACCOMPLICES"], $arTask["AUDITORS"]));
+			foreach ($arParticipants as $userId)
+			{
+				$arPermissions[] = "U" . $userId;
+			}
 
-			$arDepartments = array();
+			$arDepartments = [];
 
-			$arSubUsers = array_unique(array($arTask['RESPONSIBLE_ID'], $arTask['CREATED_BY']));
+			$arSubUsers = array_unique([$arTask['RESPONSIBLE_ID'], $arTask['CREATED_BY']]);
 
 			foreach ($arSubUsers as $subUserId)
 			{
 				$arUserDepartments = CTasks::GetUserDepartments($subUserId);
 
 				if (is_array($arUserDepartments) && count($arUserDepartments))
+				{
 					$arDepartments = array_merge($arDepartments, $arUserDepartments);
+				}
 			}
 
 			$arDepartments = array_unique($arDepartments);
@@ -5079,10 +5318,12 @@ class CTasks
 				// Remove $arSubUsers from $arManagers
 				$arManagers = array_diff($arManagers, $arSubUsers);
 
-				foreach($arManagers as $userId)
+				foreach ($arManagers as $userId)
 				{
-					if (!in_array("U".$userId, $arPermissions))
-						$arPermissions[] = "U".$userId;
+					if (!in_array("U" . $userId, $arPermissions))
+					{
+						$arPermissions[] = "U" . $userId;
+					}
 				}
 			}
 		}
@@ -5104,20 +5345,20 @@ class CTasks
 	 * @return string empty string.
 	 * @deprecated
 	 */
-	public static function RepeatTaskByTemplateId ($templateId, $flipFlop = 1, array &$debugHere = array())
+	public static function RepeatTaskByTemplateId($templateId, $flipFlop = 1, array &$debugHere = [])
 	{
 		if (\Bitrix\Tasks\Update\TemplateConverter::isProceed())
 		{
-			return 'CTasks::RepeatTaskByTemplateId('.$templateId.');';
+			return 'CTasks::RepeatTaskByTemplateId(' . $templateId . ');';
 		}
 
 		return Replicator\Task\FromTemplate::repeatTask(
 			$templateId,
-			array(
+			[
 				// todo: get rid of use of CTasks one day...
 				'AGENT_NAME_TEMPLATE' => 'CTasks::RepeatTaskByTemplateId(#ID#);',
 				'RESULT' => &$debugHere,
-			)
+			]
 		);
 	}
 
@@ -5129,28 +5370,29 @@ class CTasks
 	 */
 	public static function getNextTime($arParams, $template = false, $agentTime = false)
 	{
-		if(!is_array($arParams))
+		if (!is_array($arParams))
 		{
 			return false;
 		}
 
 		$templateData = false;
-		if(is_array($template))
+		if (is_array($template))
 		{
 			$templateData = $template;
 		}
-		elseif($template = intval($template))
+		elseif ($template = intval($template))
 		{
-			$item = \CTaskTemplates::getList(array(), array('ID' => $template), array(), array(), array('CREATED_BY', 'REPLICATE_PARAMS', 'TPARAM_REPLICATION_COUNT'))->fetch();
-			if($item)
+			$item = \CTaskTemplates::getList([], ['ID' => $template], [], [],
+				['CREATED_BY', 'REPLICATE_PARAMS', 'TPARAM_REPLICATION_COUNT'])->fetch();
+			if ($item)
 			{
 				$templateData = $item;
 			}
 		}
 
-		if(!$templateData)
+		if (!$templateData)
 		{
-			$templateData = array();
+			$templateData = [];
 		}
 		$templateData['REPLICATE_PARAMS'] = $arParams;
 
@@ -5160,15 +5402,18 @@ class CTasks
 		return $rData['TIME'] == '' ? false : $rData['TIME'];
 	}
 
-	public static function CanGivenUserDelete($userId, $taskCreatedBy, $taskGroupId, /** @noinspection PhpUnusedParameterInspection */ $site_id = SITE_ID)
+	public static function CanGivenUserDelete($userId, $taskCreatedBy, $taskGroupId,
+		/** @noinspection PhpUnusedParameterInspection */ $site_id = SITE_ID)
 	{
-		$userId = (int) $userId;
-		$taskGroupId = (int) $taskGroupId;
+		$userId = (int)$userId;
+		$taskGroupId = (int)$taskGroupId;
 
-		$site_id = null;	// not used, left in function declaration for backward compatibility
+		$site_id = null;    // not used, left in function declaration for backward compatibility
 
 		if ($userId <= 0)
+		{
 			throw new TasksException();
+		}
 
 		if (
 			CTasksTools::IsAdmin($userId)
@@ -5180,12 +5425,12 @@ class CTasks
 		}
 		elseif (($taskGroupId > 0) && CModule::IncludeModule('socialnetwork'))
 		{
-			return (boolean) CSocNetFeaturesPerms::CanPerformOperation($userId, SONET_ENTITY_GROUP, $taskGroupId, "tasks", "delete_tasks");
+			return (boolean)CSocNetFeaturesPerms::CanPerformOperation($userId, SONET_ENTITY_GROUP, $taskGroupId,
+				"tasks", "delete_tasks");
 		}
 
 		return false;
 	}
-
 
 	public static function CanCurrentUserDelete($task, $site_id = SITE_ID)
 	{
@@ -5197,16 +5442,18 @@ class CTasks
 		return (self::CanGivenUserDelete($userID, $task['CREATED_BY'], $task['GROUP_ID'], $site_id));
 	}
 
-
-	public static function CanGivenUserEdit($userId, $taskCreatedBy, $taskGroupId, /** @noinspection PhpUnusedParameterInspection */ $site_id = SITE_ID)
+	public static function CanGivenUserEdit($userId, $taskCreatedBy, $taskGroupId,
+		/** @noinspection PhpUnusedParameterInspection */ $site_id = SITE_ID)
 	{
-		$userId = (int) $userId;
-		$taskGroupId = (int) $taskGroupId;
+		$userId = (int)$userId;
+		$taskGroupId = (int)$taskGroupId;
 
-		$site_id = null;	// not used, left in function declaration for backward compatibility    /** @noinspection PhpUnusedParameterInspection */
+		$site_id = null;    // not used, left in function declaration for backward compatibility    /** @noinspection PhpUnusedParameterInspection */
 
 		if ($userId <= 0)
+		{
 			throw new TasksException();
+		}
 
 		if (
 			CTasksTools::IsAdmin($userId)
@@ -5218,12 +5465,12 @@ class CTasks
 		}
 		elseif (($taskGroupId > 0) && CModule::IncludeModule('socialnetwork'))
 		{
-			return (boolean) CSocNetFeaturesPerms::CanPerformOperation($userId, SONET_ENTITY_GROUP, $taskGroupId, "tasks", "edit_tasks");
+			return (boolean)CSocNetFeaturesPerms::CanPerformOperation($userId, SONET_ENTITY_GROUP, $taskGroupId,
+				"tasks", "edit_tasks");
 		}
 
 		return false;
 	}
-
 
 	public static function CanCurrentUserEdit($task, $site_id = SITE_ID)
 	{
@@ -5249,44 +5496,44 @@ class CTasks
 	 */
 	public static function __updateViewed($TASK_ID, $USER_ID, $onTaskAdd = false)
 	{
-		$USER_ID = (int) $USER_ID;
-		$TASK_ID = (int) $TASK_ID;
+		$USER_ID = (int)$USER_ID;
+		$TASK_ID = (int)$TASK_ID;
 
-		$list = \Bitrix\Tasks\Internals\Task\ViewedTable::getList(array(
-			"select" => array("TASK_ID", "USER_ID"),
-			"filter" => array(
+		$list = \Bitrix\Tasks\Internals\Task\ViewedTable::getList([
+			"select" => ["TASK_ID", "USER_ID"],
+			"filter" => [
 				"=TASK_ID" => $TASK_ID,
 				"=USER_ID" => $USER_ID,
-			),
-		));
+			],
+		]);
 		if ($item = $list->fetch())
 		{
-			\Bitrix\Tasks\Internals\Task\ViewedTable::update($item, array(
+			\Bitrix\Tasks\Internals\Task\ViewedTable::update($item, [
 				"VIEWED_DATE" => new \Bitrix\Main\Type\DateTime(),
-			));
+			]);
 		}
 		else
 		{
-			\Bitrix\Tasks\Internals\Task\ViewedTable::add(array(
+			\Bitrix\Tasks\Internals\Task\ViewedTable::add([
 				"TASK_ID" => $TASK_ID,
 				"USER_ID" => $USER_ID,
 				"VIEWED_DATE" => new \Bitrix\Main\Type\DateTime(),
-			));
+			]);
 		}
 
 		$pullData = [
 			'USER_ID' => $USER_ID,
 			'TASK_ID' => $TASK_ID,
 		];
-		self::EmitPullWithTag([$USER_ID], 'TASKS_TASK_'.$TASK_ID, 'task_view', $pullData);
+		self::EmitPullWithTag([$USER_ID], 'TASKS_TASK_' . $TASK_ID, 'task_view', $pullData);
 
 		$event = new \Bitrix\Main\Event(
 			'tasks',
 			'onTaskUpdateViewed',
-			array(
+			[
 				'taskId' => $TASK_ID,
-				'userId' => $USER_ID
-			)
+				'userId' => $USER_ID,
+			]
 		);
 		$event->send();
 	}
@@ -5296,15 +5543,19 @@ class CTasks
 		global $DB;
 		if ($userID = User::getId())
 		{
-			$arSqlSearch = array();
-			$arUpdatesCount = array();
-			foreach($arViewed as $key=>$val)
+			$arSqlSearch = [];
+			$arUpdatesCount = [];
+			foreach ($arViewed as $key => $val)
 			{
-				$arSqlSearch[] = "(CREATED_DATE > " . Db::charToDateFunction($val) . " AND TASK_ID = " . (int) $key . ")";
+				$arSqlSearch[] = "(CREATED_DATE > "
+					. Db::charToDateFunction($val)
+					. " AND TASK_ID = "
+					. (int)$key
+					. ")";
 				$arUpdatesCount[$key] = 0;
 			}
 
-			if ( ! empty($arSqlSearch) )
+			if (!empty($arSqlSearch))
 			{
 				$strSql = "
 					SELECT
@@ -5315,14 +5566,14 @@ class CTasks
 					WHERE
 						USER_ID != " . $userID . "
 						AND (
-						".implode(" OR ", $arSqlSearch)."
+						" . implode(" OR ", $arSqlSearch) . "
 						)
 					GROUP BY
 						TL.TASK_ID
 				";
 
-				$rsUpdatesCount = $DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
-				while($arUpdate = $rsUpdatesCount->Fetch())
+				$rsUpdatesCount = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+				while ($arUpdate = $rsUpdatesCount->Fetch())
 				{
 					$arUpdatesCount[$arUpdate["TASK_ID"]] = $arUpdate["CNT"];
 				}
@@ -5334,12 +5585,11 @@ class CTasks
 		return false;
 	}
 
-
 	function GetFilesCount($arTasksIDs)
 	{
 		global $DB;
 
-		$arFilesCount = array();
+		$arFilesCount = [];
 
 		$arTasksIDs = array_filter($arTasksIDs);
 
@@ -5352,10 +5602,10 @@ class CTasks
 				FROM
 					b_tasks_file TF
 				WHERE
-					TF.TASK_ID IN (".implode(",", $arTasksIDs).")
+					TF.TASK_ID IN (" . implode(",", $arTasksIDs) . ")
 			";
-			$rsFilesCount = $DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
-			while($arFile = $rsFilesCount->Fetch())
+			$rsFilesCount = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+			while ($arFile = $rsFilesCount->Fetch())
 			{
 				$arFilesCount[$arFile["TASK_ID"]] = $arFile["CNT"];
 			}
@@ -5363,7 +5613,6 @@ class CTasks
 
 		return $arFilesCount;
 	}
-
 
 	public static function CanCurrentUserViewTopic($topicID)
 	{
@@ -5376,16 +5625,22 @@ class CTasks
 				return true;
 			}
 
-			$rsTask = $res = CTasks::GetList(array(), array("FORUM_TOPIC_ID" => $topicID));
+			$rsTask = $res = CTasks::GetList([], ["FORUM_TOPIC_ID" => $topicID]);
 			if ($arTask = $rsTask->Fetch())
 			{
-				if ( ((int)$arTask['GROUP_ID']) > 0 )
+				if (((int)$arTask['GROUP_ID']) > 0)
 				{
-					if (in_array(CSocNetFeaturesPerms::GetOperationPerm(SONET_ENTITY_GROUP, $arTask["GROUP_ID"], "tasks", "view_all"), array("G2", "AU")))
+					if (
+						in_array(CSocNetFeaturesPerms::GetOperationPerm(SONET_ENTITY_GROUP, $arTask["GROUP_ID"],
+							"tasks", "view_all"), ["G2", "AU"])
+					)
+					{
 						return true;
+					}
 					elseif (
 						$isSocNetModuleIncluded
-						&& (false !== CSocNetFeaturesPerms::CurrentUserCanPerformOperation(SONET_ENTITY_GROUP, $arTask['GROUP_ID'], 'tasks', 'view_all'))
+						&& (false !== CSocNetFeaturesPerms::CurrentUserCanPerformOperation(SONET_ENTITY_GROUP,
+								$arTask['GROUP_ID'], 'tasks', 'view_all'))
 					)
 					{
 						return (true);
@@ -5396,15 +5651,31 @@ class CTasks
 				$arTask['ACCOMPLICES'] = $members[MemberTable::MEMBER_TYPE_ACCOMPLICE];
 				$arTask['AUDITORS'] = $members[MemberTable::MEMBER_TYPE_AUDITOR];
 
-				if (in_array(User::getId(), array_unique(array_merge(array($arTask["CREATED_BY"], $arTask["RESPONSIBLE_ID"]), $arTask["ACCOMPLICES"], $arTask["AUDITORS"]))))
+				if (
+					in_array(User::getId(), array_unique(array_merge([$arTask["CREATED_BY"], $arTask["RESPONSIBLE_ID"]],
+						$arTask["ACCOMPLICES"], $arTask["AUDITORS"])))
+				)
+				{
 					return true;
+				}
 
+				$dbRes = CUser::GetList('ID', 'ASC', ['ID' => $arTask["RESPONSIBLE_ID"]],
+					['SELECT' => ['UF_DEPARTMENT']]);
 
-				$dbRes = CUser::GetList('ID', 'ASC', array('ID' => $arTask["RESPONSIBLE_ID"]), array('SELECT' => array('UF_DEPARTMENT')));
-
-				if (($arRes = $dbRes->Fetch()) && is_array($arRes['UF_DEPARTMENT']) && count($arRes['UF_DEPARTMENT']) > 0)
-					if (in_array(User::getId(), array_keys(CTasks::GetDepartmentManagers($arRes['UF_DEPARTMENT'], $arTask["RESPONSIBLE_ID"]))))
+				if (
+					($arRes = $dbRes->Fetch()) && is_array($arRes['UF_DEPARTMENT'])
+					&& count($arRes['UF_DEPARTMENT'])
+					> 0
+				)
+				{
+					if (
+						in_array(User::getId(), array_keys(CTasks::GetDepartmentManagers($arRes['UF_DEPARTMENT'],
+							$arTask["RESPONSIBLE_ID"])))
+					)
+					{
 						return true;
+					}
+				}
 			}
 		}
 
@@ -5414,44 +5685,47 @@ class CTasks
 	public static function getParentOfTask($taskId)
 	{
 		$taskId = intval($taskId);
-		if(!$taskId)
+		if (!$taskId)
 		{
 			return false;
 		}
 
 		global $DB;
 
-		$item = $DB->query("select PARENT_ID from b_tasks where ID = '".$taskId."'")->fetch();
+		$item = $DB->query("select PARENT_ID from b_tasks where ID = '" . $taskId . "'")->fetch();
 
 		return intval($item['PARENT_ID']) ? intval($item['PARENT_ID']) : false;
 	}
 
 	public static function GetUserDepartments($USER_ID)
 	{
-		static $cache = array();
-		$USER_ID = (int) $USER_ID;
+		static $cache = [];
+		$USER_ID = (int)$USER_ID;
 
 		if (!isset($cache[$USER_ID]))
 		{
-			$dbRes = CUser::GetList('ID', 'ASC', array('ID' => $USER_ID), array('SELECT' => array('UF_DEPARTMENT')));
+			$dbRes = CUser::GetList('ID', 'ASC', ['ID' => $USER_ID], ['SELECT' => ['UF_DEPARTMENT']]);
 
 			if ($arRes = $dbRes->Fetch())
+			{
 				$cache[$USER_ID] = $arRes['UF_DEPARTMENT'];
+			}
 			else
+			{
 				$cache[$USER_ID] = false;
+			}
 		}
 
 		return $cache[$USER_ID];
 	}
 
-
 	public static function onBeforeSocNetGroupDelete($inGroupId)
 	{
 		global $DB, $APPLICATION;
 
-		$bCanDelete = false;	// prohibit group removing by default
+		$bCanDelete = false;    // prohibit group removing by default
 
-		$groupId = (int) $inGroupId;
+		$groupId = (int)$inGroupId;
 
 		$strSql =
 			"SELECT ID AS TASK_ID
@@ -5470,9 +5744,13 @@ class CTasks
 
 		// permit group deletion only when there is no tasks
 		if ($arResult === false)
+		{
 			$bCanDelete = true;
+		}
 		else
+		{
 			$APPLICATION->ThrowException(GetMessage('TASKS_ERR_GROUP_IN_USE'));
+		}
 
 		return ($bCanDelete);
 	}
@@ -5580,7 +5858,7 @@ class CTasks
 				$tail = GetMessage('TASKS_ERR_USER_IN_USE_TAIL', ['#N#' => $count - 10]);
 			}
 
-			$errorMessages[] = GetMessage('TASKS_ERR_USER_IN_USE_TASKS', ['#IDS#' => implode(', ', $tasks)]).$tail;
+			$errorMessages[] = GetMessage('TASKS_ERR_USER_IN_USE_TASKS', ['#IDS#' => implode(', ', $tasks)]) . $tail;
 		}
 
 		if (!empty($templates))
@@ -5593,7 +5871,8 @@ class CTasks
 				$tail = GetMessage('TASKS_ERR_USER_IN_USE_TAIL', ['#N#' => $count - 10]);
 			}
 
-			$errorMessages[] = GetMessage('TASKS_ERR_USER_IN_USE_TEMPLATES', ['#IDS#' => implode(', ', $templates)]).$tail;
+			$errorMessages[] = GetMessage('TASKS_ERR_USER_IN_USE_TEMPLATES', ['#IDS#' => implode(', ', $templates)])
+				. $tail;
 		}
 
 		return implode(', ', $errorMessages);
@@ -5602,12 +5881,12 @@ class CTasks
 	// $value comes in seconds, we must translate to units of $type
 	public static function convertDurationFromSeconds($value, $type)
 	{
-		if($type == self::TIME_UNIT_TYPE_HOUR)
+		if ($type == self::TIME_UNIT_TYPE_HOUR)
 		{
 			// hours to seconds
 			return round(intval($value) / 3600, 0);
 		}
-		elseif($type == self::TIME_UNIT_TYPE_DAY || (string) $type == ''/*days by default, see install/db*/)
+		elseif ($type == self::TIME_UNIT_TYPE_DAY || (string)$type == ''/*days by default, see install/db*/)
 		{
 			// days to seconds
 			return round(intval($value) / 86400, 0);
@@ -5621,29 +5900,38 @@ class CTasks
 		global $CACHE_MANAGER, $DB;
 		$USER_ID = intval($USER_ID);
 		$strSql = "
-			SELECT RESPONSIBLE_ID AS USER_ID FROM b_tasks WHERE CREATED_BY = ".$USER_ID." AND CREATED_BY != RESPONSIBLE_ID
+			SELECT RESPONSIBLE_ID AS USER_ID FROM b_tasks WHERE CREATED_BY = "
+			. $USER_ID
+			. " AND CREATED_BY != RESPONSIBLE_ID
 			UNION
-			SELECT CREATED_BY AS USER_ID FROM b_tasks WHERE RESPONSIBLE_ID = ".$USER_ID." AND CREATED_BY != RESPONSIBLE_ID
+			SELECT CREATED_BY AS USER_ID FROM b_tasks WHERE RESPONSIBLE_ID = "
+			. $USER_ID
+			. " AND CREATED_BY != RESPONSIBLE_ID
 			UNION
-			SELECT USER_ID FROM b_tasks_member WHERE TASK_ID IN (SELECT TASK_ID FROM b_tasks_member WHERE USER_ID = ".$USER_ID.")
+			SELECT USER_ID FROM b_tasks_member WHERE TASK_ID IN (SELECT TASK_ID FROM b_tasks_member WHERE USER_ID = "
+			. $USER_ID
+			. ")
 		";
-		$result = $DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
-		while($arResult = $result->Fetch())
+		$result = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
+		while ($arResult = $result->Fetch())
 		{
-			$CACHE_MANAGER->ClearByTag("tasks_user_".$arResult["USER_ID"]);
+			$CACHE_MANAGER->ClearByTag("tasks_user_" . $arResult["USER_ID"]);
 		}
 	}
 
-
 	public static function EmitPullWithTagPrefix($arRecipients, $tagPrefix, $cmd, $arParams)
 	{
-		if ( ! is_array($arRecipients) )
+		if (!is_array($arRecipients))
+		{
 			throw new TasksException('EA_PARAMS', TasksException::TE_WRONG_ARGUMENTS);
+		}
 
 		$arRecipients = array_unique($arRecipients);
 
-		if ( ! CModule::IncludeModule('pull') )
+		if (!CModule::IncludeModule('pull'))
+		{
 			return;
+		}
 
 		/*
 		$arEventData = array(
@@ -5661,50 +5949,55 @@ class CTasks
 
 		foreach ($arRecipients as $userId)
 		{
-			$userId = (int) $userId;
+			$userId = (int)$userId;
 
 			if ($userId < 1)
 			{
 				$bWasFatalError = true;
-				continue;	// skip invalid items
+				continue;    // skip invalid items
 			}
 
 			//\Bitrix\Pull\Event::add($userId, $arEventData);
 			CPullWatch::AddToStack(
 				$tagPrefix . $userId,
-				array(
-					'module_id'  => 'tasks',
-					'command'    => $cmd,
-					'params'     => $arParams
-				)
+				[
+					'module_id' => 'tasks',
+					'command' => $cmd,
+					'params' => $arParams,
+				]
 			);
 		}
 
 		if ($bWasFatalError)
+		{
 			throw new TasksException('EA_PARAMS', TasksException::TE_WRONG_ARGUMENTS);
+		}
 	}
-
 
 	public static function EmitPullWithTag($arRecipients, $tag, $cmd, $arParams)
 	{
-		if ( ! is_array($arRecipients) )
+		if (!is_array($arRecipients))
+		{
 			throw new TasksException('EA_PARAMS', TasksException::TE_WRONG_ARGUMENTS);
+		}
 
 		$arRecipients = array_unique($arRecipients);
 
-		if ( ! CModule::IncludeModule('pull') )
+		if (!CModule::IncludeModule('pull'))
+		{
 			return;
+		}
 
 		$bWasFatalError = false;
 
 		foreach ($arRecipients as $userId)
 		{
-			$userId = (int) $userId;
+			$userId = (int)$userId;
 
 			if ($userId < 1)
 			{
 				$bWasFatalError = true;
-				continue;	// skip invalid items
+				continue;    // skip invalid items
 			}
 
 			CPullWatch::Add($userId, $tag);
@@ -5712,33 +6005,32 @@ class CTasks
 			//\Bitrix\Pull\Event::add($userId, $arEventData);
 			CPullWatch::AddToStack(
 				$tag,
-				array(
-					'module_id'  => 'tasks',
-					'command'    => $cmd,
-					'params'     => $arParams
-				)
+				[
+					'module_id' => 'tasks',
+					'command' => $cmd,
+					'params' => $arParams,
+				]
 			);
-
-
 		}
 
 		if ($bWasFatalError)
+		{
 			throw new TasksException('EA_PARAMS', TasksException::TE_WRONG_ARGUMENTS);
+		}
 	}
-
 
 	/**
 	 * Get list of IDs groups, which contains tasks where given user is member
 	 *
 	 * @param integer $userId
-	 * @throws TasksException
 	 * @return array
+	 * @throws TasksException
 	 */
 	public static function GetGroupsWithTasksForUser($userId)
 	{
 		global $DB;
 
-		$userId = (int) $userId;
+		$userId = (int)$userId;
 
 		// EXISTS!
 		$rc = $DB->Query(
@@ -5760,13 +6052,17 @@ class CTasks
 			"
 		);
 
-		if ( ! $rc )
+		if (!$rc)
+		{
 			throw new TasksException();
+		}
 
-		$arGroups = array();
+		$arGroups = [];
 
 		while ($ar = $rc->Fetch())
-			$arGroups[] = (int) $ar['GROUP_ID'];
+		{
+			$arGroups[] = (int)$ar['GROUP_ID'];
+		}
 
 		return (array_unique($arGroups));
 	}
@@ -5776,13 +6072,15 @@ class CTasks
 	 *
 	 * @param array $arStringsInBbcode
 	 *
-	 * @throws TasksException
 	 * @return array of strings converted to HTML, keys maintaned
+	 * @throws TasksException
 	 */
 	public static function convertBbcode2Html($arStringsInBbcode)
 	{
-		if ( ! is_array($arStringsInBbcode) )
+		if (!is_array($arStringsInBbcode))
+		{
 			throw new TasksException();
+		}
 
 		static $delimiter = '--------This is unique BB-code strings delimiter at high confidence level (CL)--------';
 
@@ -5796,8 +6094,10 @@ class CTasks
 		while (count(explode($delimiter, $concatenatedStrings)) !== $stringsCount)
 		{
 			// prevent an infinite loop
-			if ( ! ($i++) )
+			if (!($i++))
+			{
 				throw new TasksException();
+			}
 
 			$delimiter = '--------' . sha1(uniqid()) . '--------';
 			$concatenatedStrings = implode($delimiter, $arStringsInBbcode);
@@ -5814,7 +6114,7 @@ class CTasks
 			)
 		);
 
-		$arHtmlStrings = array();
+		$arHtmlStrings = [];
 
 		// Do job in compatibility mode, if count of resulted strings not match source
 		if (count($arHtmlStringsWoKeys) !== $stringsCount)
@@ -5835,7 +6135,9 @@ class CTasks
 			// Maintain original array keys
 			$i = 0;
 			foreach ($arStringsKeys as $key)
+			{
 				$arHtmlStrings[$key] = $arHtmlStringsWoKeys[$i++];
+			}
 		}
 
 		return ($arHtmlStrings);
@@ -5844,36 +6146,36 @@ class CTasks
 	public static function getTaskSubTree($taskId)
 	{
 		$taskId = intval($taskId);
-		if(!$taskId)
+		if (!$taskId)
 		{
-			return array();
+			return [];
 		}
 
-		$queue = array($taskId);
-		$met = array();
+		$queue = [$taskId];
+		$met = [];
 		$limit = 1000;
-		$result = array();
+		$result = [];
 
 		$i = 0;
-		while(true)
+		while (true)
 		{
-			if($i > $limit)
+			if ($i > $limit)
 			{
 				break;
 			}
 
 			$next = array_shift($queue);
-			if(isset($met[$next]))
+			if (isset($met[$next]))
 			{
 				break;
 			}
-			if(!intval($next))
+			if (!intval($next))
 			{
 				break;
 			}
 
 			$subTasks = self::getSubTaskIdsForTask($next);
-			foreach($subTasks as $sTId)
+			foreach ($subTasks as $sTId)
 			{
 				$result[] = $sTId;
 				$queue[] = $sTId;
@@ -5892,11 +6194,12 @@ class CTasks
 
 		$taskId = intval($taskId);
 
-		$result = array();
-		$res = $DB->query("select ID from b_tasks where ".($taskId ? "PARENT_ID = '".$taskId."'" : "PARENT_ID is null or PARENT_ID = '0'"));
-		while($item = $res->fetch())
+		$result = [];
+		$res = $DB->query("select ID from b_tasks where " . ($taskId ? "PARENT_ID = '" . $taskId . "'"
+				: "PARENT_ID is null or PARENT_ID = '0'"));
+		while ($item = $res->fetch())
 		{
-			if(intval($item['ID']))
+			if (intval($item['ID']))
 			{
 				$result[] = $item['ID'];
 			}
@@ -5911,42 +6214,50 @@ class CTasks
 
 		// Force & limit NAV_PARAMS (in 4th argument)
 		while (count($args) < 4)
-			$args[] = array();		// All params in CTasks::GetList() by default are empty arrays
+		{
+			$args[] = [];
+		}        // All params in CTasks::GetList() by default are empty arrays
 
-		$arParams = & $args[3];
+		$arParams = &$args[3];
 
 		if ($navigation['iNumPage'] > 1)
 		{
-			$arParams['NAV_PARAMS'] = array(
+			$arParams['NAV_PARAMS'] = [
 				'nPageSize' => CTaskRestService::TASKS_LIMIT_PAGE_SIZE,
-				'iNumPage'  => (int) $navigation['iNumPage']
-			);
+				'iNumPage' => (int)$navigation['iNumPage'],
+			];
 		}
-		else if (isset($arParams['NAV_PARAMS']))
+		elseif (isset($arParams['NAV_PARAMS']))
 		{
 			if (isset($arParams['NAV_PARAMS']['nPageTop']))
-				$arParams['NAV_PARAMS']['nPageTop'] = min(CTaskRestService::TASKS_LIMIT_TOP_COUNT, (int) $arParams['NAV_PARAMS']['nPageTop']);
+			{
+				$arParams['NAV_PARAMS']['nPageTop'] = min(CTaskRestService::TASKS_LIMIT_TOP_COUNT,
+					(int)$arParams['NAV_PARAMS']['nPageTop']);
+			}
 
 			if (isset($arParams['NAV_PARAMS']['nPageSize']))
-				$arParams['NAV_PARAMS']['nPageSize'] = min(CTaskRestService::TASKS_LIMIT_PAGE_SIZE, (int) $arParams['NAV_PARAMS']['nPageSize']);
+			{
+				$arParams['NAV_PARAMS']['nPageSize'] = min(CTaskRestService::TASKS_LIMIT_PAGE_SIZE,
+					(int)$arParams['NAV_PARAMS']['nPageSize']);
+			}
 
 			if (
-				( ! isset($arParams['NAV_PARAMS']['nPageTop']) )
-				&& ( ! isset($arParams['NAV_PARAMS']['nPageSize']) )
+				(!isset($arParams['NAV_PARAMS']['nPageTop']))
+				&& (!isset($arParams['NAV_PARAMS']['nPageSize']))
 			)
 			{
-				$arParams['NAV_PARAMS'] = array(
+				$arParams['NAV_PARAMS'] = [
 					'nPageSize' => CTaskRestService::TASKS_LIMIT_PAGE_SIZE,
-					'iNumPage'  => 1
-				);
+					'iNumPage' => 1,
+				];
 			}
 		}
 		else
 		{
-			$arParams['NAV_PARAMS'] = array(
+			$arParams['NAV_PARAMS'] = [
 				'nPageSize' => CTaskRestService::TASKS_LIMIT_PAGE_SIZE,
-				'iNumPage'  => 1
-			);
+				'iNumPage' => 1,
+			];
 		}
 
 		// Check and parse params
@@ -5978,170 +6289,182 @@ class CTasks
 			}
 		}
 
-		$rsTasks = call_user_func_array(array('self', 'getlist'), $argsParsed);
+		$rsTasks = call_user_func_array(['self', 'getlist'], $argsParsed);
 
-		$arTasks = array();
+		$arTasks = [];
 		while ($arTask = $rsTasks->fetch())
+		{
 			$arTasks[] = $arTask;
+		}
 
-		return (array($arTasks, $rsTasks));
+		return ([$arTasks, $rsTasks]);
 	}
 
 	public static function getPublicFieldMap()
 	{
 		// READ, WRITE, SORT, FILTER, DATE
-		return array(
-			'TITLE' => 						array(1, 1, 1, 1, 0),
-			'STAGE_ID' => 					array(1, 1, 0, 1, 0),
-			'STAGES_ID' => 					array(0, 0, 0, 1, 0),
-			'DESCRIPTION' => 				array(1, 1, 0, 0, 0),
-			'DEADLINE' => 					array(1, 1, 1, 1, 1),
-			'START_DATE_PLAN' => 			array(1, 1, 1, 1, 1),
-			'END_DATE_PLAN' => 				array(1, 1, 1, 1, 1),
-			'PRIORITY' => 					array(1, 1, 1, 1, 0),
-			'ACCOMPLICES' => 				array(1, 1, 0, 0, 0),
-			'AUDITORS' => 					array(1, 1, 0, 0, 0),
-			'TAGS' => 						array(1, 1, 0, 0, 0),
-			'ALLOW_CHANGE_DEADLINE' => 		array(1, 1, 1, 0, 0),
-			'TASK_CONTROL' => 				array(1, 1, 0, 0, 0),
-			'PARENT_ID' => 					array(1, 1, 0, 1, 0),
-			'DEPENDS_ON' => 				array(1, 1, 0, 1, 0),
-			'GROUP_ID' => 					array(1, 1, 1, 1, 0),
-			'RESPONSIBLE_ID' => 			array(1, 1, 1, 1, 0),
-			'TIME_ESTIMATE' => 				array(1, 1, 1, 1, 0),
-			'ID' => 						array(1, 0, 1, 1, 0),
-			'CREATED_BY' => 				array(1, 1, 1, 1, 0),
-			'DESCRIPTION_IN_BBCODE' => 		array(1, 0, 0, 0, 0),
-			'DECLINE_REASON' => 			array(1, 1, 0, 0, 0),
-			'REAL_STATUS' => 				array(1, 0, 0, 1, 0),
-			'STATUS' => 					array(1, 1, 1, 1, 0),
-			'RESPONSIBLE_NAME' => 			array(1, 0, 0, 0, 0),
-			'RESPONSIBLE_LAST_NAME' => 		array(1, 0, 0, 0, 0),
-			'RESPONSIBLE_SECOND_NAME' => 	array(1, 0, 0, 0, 0),
-			'DATE_START' => 				array(1, 0, 1, 1, 1),
-			'DURATION_FACT' => 				array(1, 0, 0, 0, 0),
-			'DURATION_PLAN' => 				array(1, 1, 0, 0, 0),
-			'DURATION_TYPE' => 				array(1, 1, 0, 0, 0),
-			'CREATED_BY_NAME' => 			array(1, 0, 0, 0, 0),
-			'CREATED_BY_LAST_NAME' => 		array(1, 0, 0, 0, 0),
-			'CREATED_BY_SECOND_NAME' => 	array(1, 0, 0, 0, 0),
-			'CREATED_DATE' => 				array(1, 1, 1, 1, 1),
-			'CHANGED_BY' => 				array(1, 1, 0, 1, 0),
-			'CHANGED_DATE' => 				array(1, 1, 1, 1, 1),
-			'STATUS_CHANGED_BY' => 			array(1, 1, 0, 1, 0),
-			'STATUS_CHANGED_DATE' => 		array(1, 1, 0, 0, 1),
-			'CLOSED_BY' =>					array(1, 0, 0, 0, 0),
-			'CLOSED_DATE' => 				array(1, 0, 1, 1, 1),
-			'ACTIVITY_DATE' => 				array(1, 0, 1, 1, 1),
-			'GUID' => 						array(1, 0, 0, 1, 0),
-			'MARK' => 						array(1, 1, 1, 1, 0),
-			'VIEWED_DATE' => 				array(1, 0, 0, 0, 1),
-			'TIME_SPENT_IN_LOGS' => 		array(1, 0, 0, 0, 0),
-			'FAVORITE' => 					array(1, 0, 1, 1, 0),
-			'ALLOW_TIME_TRACKING' => 		array(1, 1, 1, 1, 0),
-			'MATCH_WORK_TIME' => 			array(1, 1, 1, 1, 0),
-			'ADD_IN_REPORT' => 				array(1, 1, 0, 1, 0),
-			'FORUM_ID' => 					array(1, 0, 0, 0, 0),
-			'FORUM_TOPIC_ID' => 			array(1, 0, 0, 1, 0),
-			'COMMENTS_COUNT' => 			array(1, 0, 0, 0, 0),
-			'SITE_ID' => 					array(1, 1, 0, 1, 0),
-			'SUBORDINATE' => 				array(1, 0, 0, 0, 0),
-			'FORKED_BY_TEMPLATE_ID' => 		array(1, 0, 0, 0, 0),
-			'MULTITASK' => 					array(1, 0, 0, 0, 0),
-			'ACCOMPLICE' => 				array(0, 0, 0, 1, 0),
-			'AUDITOR' => 					array(0, 0, 0, 1, 0),
-			'DOER' => 						array(0, 0, 0, 1, 0),
-			'MEMBER' => 					array(0, 0, 0, 1, 0),
-			'TAG' => 						array(0, 0, 0, 1, 0),
-			'EPIC' => 						array(1, 1, 0, 1, 0),
-			'ONLY_ROOT_TASKS' => 			array(0, 0, 0, 1, 0),
-		);
+		return [
+			'TITLE' => [1, 1, 1, 1, 0],
+			'STAGE_ID' => [1, 1, 0, 1, 0],
+			'STAGES_ID' => [0, 0, 0, 1, 0],
+			'DESCRIPTION' => [1, 1, 0, 0, 0],
+			'DEADLINE' => [1, 1, 1, 1, 1],
+			'START_DATE_PLAN' => [1, 1, 1, 1, 1],
+			'END_DATE_PLAN' => [1, 1, 1, 1, 1],
+			'PRIORITY' => [1, 1, 1, 1, 0],
+			'ACCOMPLICES' => [1, 1, 0, 0, 0],
+			'AUDITORS' => [1, 1, 0, 0, 0],
+			'TAGS' => [1, 1, 0, 0, 0],
+			'ALLOW_CHANGE_DEADLINE' => [1, 1, 1, 0, 0],
+			'TASK_CONTROL' => [1, 1, 0, 0, 0],
+			'PARENT_ID' => [1, 1, 0, 1, 0],
+			'DEPENDS_ON' => [1, 1, 0, 1, 0],
+			'GROUP_ID' => [1, 1, 1, 1, 0],
+			'RESPONSIBLE_ID' => [1, 1, 1, 1, 0],
+			'TIME_ESTIMATE' => [1, 1, 1, 1, 0],
+			'ID' => [1, 0, 1, 1, 0],
+			'CREATED_BY' => [1, 1, 1, 1, 0],
+			'DESCRIPTION_IN_BBCODE' => [1, 0, 0, 0, 0],
+			'DECLINE_REASON' => [1, 1, 0, 0, 0],
+			'REAL_STATUS' => [1, 0, 0, 1, 0],
+			'STATUS' => [1, 1, 1, 1, 0],
+			'RESPONSIBLE_NAME' => [1, 0, 0, 0, 0],
+			'RESPONSIBLE_LAST_NAME' => [1, 0, 0, 0, 0],
+			'RESPONSIBLE_SECOND_NAME' => [1, 0, 0, 0, 0],
+			'DATE_START' => [1, 0, 1, 1, 1],
+			'DURATION_FACT' => [1, 0, 0, 0, 0],
+			'DURATION_PLAN' => [1, 1, 0, 0, 0],
+			'DURATION_TYPE' => [1, 1, 0, 0, 0],
+			'CREATED_BY_NAME' => [1, 0, 0, 0, 0],
+			'CREATED_BY_LAST_NAME' => [1, 0, 0, 0, 0],
+			'CREATED_BY_SECOND_NAME' => [1, 0, 0, 0, 0],
+			'CREATED_DATE' => [1, 1, 1, 1, 1],
+			'CHANGED_BY' => [1, 1, 0, 1, 0],
+			'CHANGED_DATE' => [1, 1, 1, 1, 1],
+			'STATUS_CHANGED_BY' => [1, 1, 0, 1, 0],
+			'STATUS_CHANGED_DATE' => [1, 1, 0, 0, 1],
+			'CLOSED_BY' => [1, 0, 0, 0, 0],
+			'CLOSED_DATE' => [1, 0, 1, 1, 1],
+			'ACTIVITY_DATE' => [1, 0, 1, 1, 1],
+			'GUID' => [1, 0, 0, 1, 0],
+			'MARK' => [1, 1, 1, 1, 0],
+			'VIEWED_DATE' => [1, 0, 0, 0, 1],
+			'TIME_SPENT_IN_LOGS' => [1, 0, 0, 0, 0],
+			'FAVORITE' => [1, 0, 1, 1, 0],
+			'ALLOW_TIME_TRACKING' => [1, 1, 1, 1, 0],
+			'MATCH_WORK_TIME' => [1, 1, 1, 1, 0],
+			'ADD_IN_REPORT' => [1, 1, 0, 1, 0],
+			'FORUM_ID' => [1, 0, 0, 0, 0],
+			'FORUM_TOPIC_ID' => [1, 0, 0, 1, 0],
+			'COMMENTS_COUNT' => [1, 0, 0, 0, 0],
+			'SITE_ID' => [1, 1, 0, 1, 0],
+			'SUBORDINATE' => [1, 0, 0, 0, 0],
+			'FORKED_BY_TEMPLATE_ID' => [1, 0, 0, 0, 0],
+			'MULTITASK' => [1, 0, 0, 0, 0],
+			'ACCOMPLICE' => [0, 0, 0, 1, 0],
+			'AUDITOR' => [0, 0, 0, 1, 0],
+			'DOER' => [0, 0, 0, 1, 0],
+			'MEMBER' => [0, 0, 0, 1, 0],
+			'TAG' => [0, 0, 0, 1, 0],
+			'EPIC' => [1, 1, 0, 1, 0],
+			'ONLY_ROOT_TASKS' => [0, 0, 0, 1, 0],
+		];
 	}
 
 	public static function getManifest()
 	{
 		static $fieldMap;
 
-		if($fieldMap == null)
+		if ($fieldMap == null)
 		{
 			$fieldMap = static::getPublicFieldMap();
 		}
 
 		static $fieldManifest;
 
-		if($fieldManifest === null)
+		if ($fieldManifest === null)
 		{
-			foreach($fieldMap as $field => $permissions)
+			foreach ($fieldMap as $field => $permissions)
 			{
-				if($permissions[0]) // read
+				if ($permissions[0]) // read
 				{
 					$fieldManifest['READ'][] = $field;
 				}
 
-				if($permissions[1]) // write
+				if ($permissions[1]) // write
 				{
 					$fieldManifest['WRITE'][] = $field;
 				}
 
-				if($permissions[2]) // sort
+				if ($permissions[2]) // sort
 				{
 					$fieldManifest['SORT'][] = $field;
 				}
 
-				if($permissions[3]) // filter
+				if ($permissions[3]) // filter
 				{
 					$fieldManifest['FILTER'][] = $field;
 				}
 
-				if($permissions[4]) // filter
+				if ($permissions[4]) // filter
 				{
 					$fieldManifest['DATE'][] = $field;
 				}
 			}
 		}
 
-		return(array(
+		return ([
 			'Manifest version' => '2.1',
 			'Warning' => 'don\'t rely on format of this manifest, it can be changed without any notification',
-			'REST: shortname alias to class'    => 'items',
-			'REST: writable task data fields'   =>  $fieldManifest['WRITE'],
-			'REST: readable task data fields'   =>  $fieldManifest['READ'],
-			'REST: sortable task data fields'   =>  $fieldManifest['SORT'],
-			'REST: filterable task data fields' =>  $fieldManifest['FILTER'],
-			'REST: date fields' =>  $fieldManifest['DATE'],
-			'REST: available methods' => array(
-				'getlist' => array(
+			'REST: shortname alias to class' => 'items',
+			'REST: writable task data fields' => $fieldManifest['WRITE'],
+			'REST: readable task data fields' => $fieldManifest['READ'],
+			'REST: sortable task data fields' => $fieldManifest['SORT'],
+			'REST: filterable task data fields' => $fieldManifest['FILTER'],
+			'REST: date fields' => $fieldManifest['DATE'],
+			'REST: available methods' => [
+				'getlist' => [
 					'mandatoryParamsCount' => 0,
-					'params' => array(
-						array(
+					'params' => [
+						[
 							'description' => 'arOrder',
-							'type'        => 'array',
-							'allowedKeys' => $fieldManifest['SORT']
-						),
-						array(
+							'type' => 'array',
+							'allowedKeys' => $fieldManifest['SORT'],
+						],
+						[
 							'description' => 'arFilter',
-							'type'        => 'array',
-							'allowedKeys' =>  $fieldManifest['FILTER'],
-							'allowedKeyPrefixes' => array(
-								'=', '!=', '%', '!%', '?', '><',
-								'!><', '>=', '>', '<', '<=', '!'
-							)
-						),
-						array(
-							'description'   => 'arSelect',
-							'type'          => 'array',
-							'allowedValues' => $fieldManifest['READ']
-						),
-						array(
+							'type' => 'array',
+							'allowedKeys' => $fieldManifest['FILTER'],
+							'allowedKeyPrefixes' => [
+								'=',
+								'!=',
+								'%',
+								'!%',
+								'?',
+								'><',
+								'!><',
+								'>=',
+								'>',
+								'<',
+								'<=',
+								'!',
+							],
+						],
+						[
+							'description' => 'arSelect',
+							'type' => 'array',
+							'allowedValues' => $fieldManifest['READ'],
+						],
+						[
 							'description' => 'arParams',
-							'type'        => 'array',
-							'allowedKeys' =>  array('NAV_PARAMS', 'bGetZombie')
-						)
-					),
+							'type' => 'array',
+							'allowedKeys' => ['NAV_PARAMS', 'bGetZombie'],
+						],
+					],
 					'allowedKeysInReturnValue' => $fieldManifest['READ'],
-					'collectionInReturnValue'  => true
-				)
-			)
-		));
+					'collectionInReturnValue' => true,
+				],
+			],
+		]);
 	}
 }

@@ -1,9 +1,10 @@
 <?php
+
 namespace Bitrix\ImOpenLines\Queue\Event;
 
-use \Bitrix\ImOpenLines,
-	\Bitrix\ImOpenLines\Session,
-	\Bitrix\ImOpenLines\Model\SessionCheckTable;
+use Bitrix\ImOpenLines,
+	Bitrix\ImOpenLines\Session,
+	Bitrix\ImOpenLines\Model\SessionCheckTable;
 
 /**
  * Class Evenly
@@ -14,20 +15,16 @@ class Evenly extends Queue
 	/**
 	 * Send recent messages to operator in current queue when he return to work.
 	 *
-	 * @param $userIds
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
+	 * @param int[] $userIds
+	 * @return void
 	 */
-	public function returnUserToQueue(array $userIds)
+	public function returnUserToQueue(array $userIds): void
 	{
 		$sessionList = SessionCheckTable::getList(
 			[
 				'select' => ['SESSION_ID', 'UNDISTRIBUTED'],
 				'filter' => [
-					'SESSION.CONFIG_ID' => $this->configLine['ID'],
+					'=SESSION.CONFIG_ID' => $this->configLine['ID'],
 					'<SESSION.STATUS' => Session::STATUS_ANSWER,
 					'!=SESSION.OPERATOR_FROM_CRM' => 'Y'
 				]
@@ -38,7 +35,9 @@ class Evenly extends Queue
 		foreach ($sessionList as $session)
 		{
 			if ($session['UNDISTRIBUTED'] == 'Y')
+			{
 				$undistributedSessions[] = $session;
+			}
 		}
 
 		$undistributedSessionsCount = count($undistributedSessions);
@@ -48,7 +47,12 @@ class Evenly extends Queue
 
 			foreach ($userIds as $userId)
 			{
-				$operatorsFreeSlotsCount = $operatorsFreeSlotsCount + ImOpenLines\Queue::getCountFreeSlotOperator($userId, $this->configLine['ID'], $this->configLine['MAX_CHAT'], $this->configLine['TYPE_MAX_CHAT']);
+				$operatorsFreeSlotsCount += ImOpenLines\Queue::getCountFreeSlotOperator(
+					$userId,
+					$this->configLine['ID'],
+					$this->configLine['MAX_CHAT'],
+					$this->configLine['TYPE_MAX_CHAT']
+				);
 			}
 
 			if ($undistributedSessionsCount <= $operatorsFreeSlotsCount)

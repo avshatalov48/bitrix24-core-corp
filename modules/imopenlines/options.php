@@ -1,102 +1,252 @@
 <?php
-if(!$USER->IsAdmin())
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
+use Bitrix\Main\Loader,
+	Bitrix\Main\Config\Option,
+	Bitrix\Main\HttpApplication,
+	Bitrix\Main\Localization\Loc,
+	Bitrix\ImOpenLines,
+	Bitrix\ImOpenLines\Common;
+
+/**
+ * @global \CMain $APPLICATION
+ * @global \CUser $USER
+ * @global string $mid
+ */
+
+if (!$USER->isAdmin())
+{
 	return;
+}
 
-IncludeModuleLangFile($_SERVER['DOCUMENT_ROOT'].BX_ROOT.'/modules/main/options.php');
-IncludeModuleLangFile($_SERVER['DOCUMENT_ROOT'].BX_ROOT.'/modules/imopenlines/options.php');
+Loc::loadMessages($_SERVER['DOCUMENT_ROOT'].BX_ROOT.'/modules/main/options.php');
+Loc::loadMessages(__FILE__);
 
-CModule::IncludeModule('imopenlines');
+$module_id = 'imopenlines';
 
-$errorMessage = '';
+if (!Loader::includeModule($module_id))
+{
+	return;
+}
+
 
 $aTabs = array(
 	array(
-		"DIV" => "edit1", "TAB" => GetMessage("IMOPENLINES_TAB_SETTINGS"), "ICON" => "imopenlines_config", "TITLE" => GetMessage("IMOPENLINES_TAB_TITLE_SETTINGS_2"),
+		'DIV' => 'edit1',
+		'TAB' => Loc::getMessage('IMOPENLINES_TAB_SETTINGS'),
+		'ICON' => 'imopenlines_config',
+		'TITLE' => Loc::getMessage('IMOPENLINES_TAB_TITLE_SETTINGS_2'),
 	),
 );
-$tabControl = new CAdminTabControl("tabControl", $aTabs);
+$tabControl = new \CAdminTabControl('tabControl', $aTabs);
 
-if($_POST['Update'] <> '' && check_bitrix_sessid())
+$defaults = Option::getDefaults($module_id);
+
+//region POST Action
+
+$request = HttpApplication::getInstance()->getContext()->getRequest();
+
+$isUpdate = $request->isPost() && !empty($request['Update']);
+$isApply = $request->isPost() && !empty($request['Apply']);
+$isRestoreDefaults = $request->isPost() && !empty($request['RestoreDefaults']);
+
+$publicUrl = '';
+
+if (
+	($isUpdate || $isApply || $isRestoreDefaults)
+	&& \check_bitrix_sessid()
+)
 {
-	if ($_POST['PUBLIC_URL'] <> '' && mb_strlen($_POST['PUBLIC_URL']) < 12)
+	if ($isRestoreDefaults)
 	{
-		$errorMessage = GetMessage('IMOPENLINES_ACCOUNT_ERROR_PUBLIC');
+		Option::delete($module_id);
 	}
-	else if($_POST['Update'] <> '')
+	else
 	{
-		if ($_POST['PUBLIC_URL'] != COption::GetOptionString("imopenlines", "portal_url"))
-		{
-			COption::SetOptionString("imopenlines", "portal_url", $_POST['PUBLIC_URL']);
+		$APPLICATION->resetException();
 
-			if(\Bitrix\Main\Loader::includeModule('Crm'))
+		$publicUrl = trim($request['PUBLIC_URL'] ?? '');
+
+		if (defined('BOT_CLIENT_URL'))
+		{
+			if ($publicUrl != '' && mb_strlen($publicUrl) < 12)
 			{
-				\Bitrix\Crm\SiteButton\Manager::updateScriptCacheAgent();
+				$APPLICATION->throwException(Loc::getMessage('IMOPENLINES_ACCOUNT_ERROR_PUBLIC'));
 			}
-		}
+			elseif (isset($request['PUBLIC_URL']) && $publicUrl === '')
+			{
+				// gonna use domain value from 'main:server_name' option
+				Option::delete('imopenlines', ['name' => 'portal_url']);
+			}
+			elseif ($publicUrl != Option::get('imopenlines', 'portal_url'))
+			{
+				Option::set('imopenlines', 'portal_url', $publicUrl);
 
-		COption::SetOptionString("imopenlines", "debug", isset($_POST['DEBUG_MODE']));
-
-		$execMode = COption::GetOptionString("imopenlines", "exec_mode");
-		if ($_POST['EXEC_MODE'] != $execMode && in_array($_POST['EXEC_MODE'], array(\Bitrix\ImOpenlines\Common::MODE_AGENT, \Bitrix\ImOpenlines\Common::MODE_CRON)))
-		{
-			COption::SetOptionString("imopenlines", "exec_mode", $_POST['EXEC_MODE']);
-		}
-
-		if($Update <> '' && $_REQUEST["back_url_settings"] <> '')
-		{
-			LocalRedirect($_REQUEST["back_url_settings"]);
+				if (Loader::includeModule('crm'))
+				{
+					\Bitrix\Crm\SiteButton\Manager::updateScriptCacheAgent();
+				}
+			}
 		}
 		else
 		{
-			LocalRedirect($APPLICATION->GetCurPage()."?mid=".urlencode($mid)."&lang=".urlencode(LANGUAGE_ID)."&back_url_settings=".urlencode($_REQUEST["back_url_settings"])."&".$tabControl->ActiveTabParam());
+			$checkUrlResult = false;
+			if (!empty($publicUrl))
+			{
+				$checkUrlResult = Common::checkPublicUrl($publicUrl);
+				if ($checkUrlResult->isSuccess())
+				{
+					Option::set('imopenlines', 'portal_url', $publicUrl);
+				}
+			}
+			elseif (isset($request['PUBLIC_URL']) && $publicUrl === '')
+			{
+				// gonna use domain value from 'main:server_name' option
+				Option::delete('imopenlines', ['name' => 'portal_url']);
+				$checkUrlResult = Common::checkPublicUrl(Common::getServerAddress());
+			}
+
+			if ($checkUrlResult instanceof ImOpenLines\Result)
+			{
+				if ($checkUrlResult->isSuccess())
+				{
+					if (Loader::includeModule('crm'))
+					{
+						\Bitrix\Crm\SiteButton\Manager::updateScriptCacheAgent();
+					}
+				}
+				else
+				{
+					$error = $checkUrlResult->getErrors()[0];
+					if ($error->getMessage())
+					{
+						$message = Loc::getMessage('IMOPENLINES_ACCOUNT_ERROR_PUBLIC_CHECK',
+							['#ERROR#' => $error->getMessage()]);
+					}
+					else
+					{
+						$message = Loc::getMessage('IMOPENLINES_ACCOUNT_ERROR_PUBLIC');
+					}
+					$APPLICATION->throwException($message);
+				}
+			}
+		}
+
+		Option::set('imopenlines', 'debug', isset($request['DEBUG_MODE']));
+
+		$execMode = Option::get('imopenlines', 'exec_mode');
+		if ($request['EXEC_MODE'] != $execMode && in_array($request['EXEC_MODE'], [Common::MODE_AGENT, Common::MODE_CRON]))
+		{
+			Option::set('imopenlines', 'exec_mode', $request['EXEC_MODE']);
+		}
+
+		if (!empty($request['queue_interact_count']) && (int)$request['queue_interact_count'] > 0)
+		{
+			Option::set('imopenlines', 'queue_interact_count', (int)$request['queue_interact_count']);
+		}
+		else
+		{
+			Option::delete('imopenlines', ['name' => 'queue_interact_count']);
+		}
+
+		if ($exception = $APPLICATION->getException())
+		{
+			\CAdminMessage::showMessage([
+				'DETAILS' => $exception->getString(),
+				'TYPE' => 'ERROR',
+				'HTML' => true
+			]);
+		}
+		elseif ($_REQUEST['back_url_settings'] <> '')
+		{
+			\LocalRedirect($_REQUEST['back_url_settings']);
+		}
+		else
+		{
+			\LocalRedirect(
+				$APPLICATION->getCurPage()
+				. '?mid='. urlencode($mid)
+				. '&mid_menu=1'
+				. '&lang='. urlencode(\LANGUAGE_ID)
+				. '&'. $tabControl->activeTabParam()
+			);
 		}
 	}
 }
 ?>
-<form method="post" action="<?echo $APPLICATION->GetCurPage()?>?mid=<?=htmlspecialcharsbx($mid)?>&lang=<?echo LANG?>">
-<?php echo bitrix_sessid_post()?>
-<?php
-$tabControl->Begin();
-$tabControl->BeginNextTab();
-if ($errorMessage):?>
-<tr>
-	<td colspan="2" align="center"><b style="color:red"><?=$errorMessage?></b></td>
-</tr>
-<?endif;?>
-<tr>
-	<td width="40%"><?=GetMessage("IMOPENLINES_ACCOUNT_URL")?>:</td>
-	<td width="60%"><input type="text" name="PUBLIC_URL" value="<?=htmlspecialcharsbx(\Bitrix\ImOpenlines\Common::getServerAddress())?>" /></td>
-</tr>
-<tr>
-	<td width="40%"><?=GetMessage("IMOPENLINES_ACCOUNT_DEBUG")?>:</td>
-	<td width="60%"><input type="checkbox" name="DEBUG_MODE" value="Y" <?=(COption::GetOptionInt("imopenlines", "debug")? 'checked':'')?> /></td>
-</tr>
-<tr>
-	<td width="40%"><?=GetMessage("IMOPENLINES_ACCOUNT_EXEC_MODE")?>:</td>
-	<td width="60%">
-		<select name="EXEC_MODE">
-			<option value="<?=\Bitrix\ImOpenlines\Common::MODE_AGENT?>"
-				<?if(\Bitrix\ImOpenlines\Common::getExecMode() == \Bitrix\ImOpenlines\Common::MODE_AGENT) {?>selected="selected"<?}?>>
-				<?=GetMessage("IMOPENLINES_ACCOUNT_EXEC_MODE_AGENT")?>
-			</option>
-			<option value="<?=\Bitrix\ImOpenlines\Common::MODE_CRON?>"
-					<?if(\Bitrix\ImOpenlines\Common::getExecMode() == \Bitrix\ImOpenlines\Common::MODE_CRON) {?>selected="selected"<?}?>>
-				<?=GetMessage("IMOPENLINES_ACCOUNT_EXEC_MODE_CRON")?>
-			</option>
-		</select>
-	</td>
-</tr>
-<tr>
-	<td colspan="2">
-		<div class="adm-info-message-wrap">
-			<div class="adm-info-message">
-				<?=GetMessage("IMOPENLINES_ACCOUNT_EXEC_DESCRIPTION")?>
+<form method="post" action="<?= $APPLICATION->getCurPage()?>?mid=<?=htmlspecialcharsbx($mid)?>&lang=<?= LANG?>">
+	<?= \bitrix_sessid_post() ?>
+	<?php
+	$tabControl->begin();
+	$tabControl->beginNextTab();
+	?>
+	<tr>
+		<td width="40%"><?=Loc::getMessage("IMOPENLINES_ACCOUNT_URL")?>:</td>
+		<td width="60%">
+			<input type="text"
+					name="PUBLIC_URL"
+					value="<?= htmlspecialcharsbx(Option::get('imopenlines', 'portal_url', $publicUrl)) ?>"
+					placeholder="<?= htmlspecialcharsbx(defined('BOT_CLIENT_URL') ? \BOT_CLIENT_URL : Common::getServerAddress()) ?>" /></td>
+	</tr>
+	<tr>
+		<td><?=Loc::getMessage("IMOPENLINES_ACCOUNT_DEBUG")?>:</td>
+		<td><input type="checkbox" name="DEBUG_MODE" value="Y" <?=( (int)Option::get('imopenlines', 'debug') ? 'checked' : '')?> /></td>
+	</tr>
+	<tr>
+		<td><?=Loc::getMessage('IMOPENLINES_QUEUE_INTERACT_COUNT')?>:</td>
+		<td>
+			<input type="text"
+					name="queue_interact_count"
+					value="<?= Option::getRealValue('imopenlines', 'queue_interact_count') ?>"
+					placeholder="<?= $defaults['queue_interact_count'] ?>" /></td>
+	</tr>
+	<tr>
+		<td><?=Loc::getMessage("IMOPENLINES_ACCOUNT_EXEC_MODE")?>:</td>
+		<td>
+			<select name="EXEC_MODE">
+				<option value="<?= Common::MODE_AGENT ?>"
+					<? if (Common::getExecMode() == Common::MODE_AGENT) {?>selected="selected"<?}?>>
+					<?=Loc::getMessage("IMOPENLINES_ACCOUNT_EXEC_MODE_AGENT")?>
+				</option>
+				<option value="<?= Common::MODE_CRON ?>"
+					<? if (Common::getExecMode() == Common::MODE_CRON) {?>selected="selected"<?}?>>
+					<?=Loc::getMessage("IMOPENLINES_ACCOUNT_EXEC_MODE_CRON")?>
+				</option>
+			</select>
+		</td>
+	</tr>
+	<tr>
+		<td colspan="2">
+			<div class="adm-info-message-wrap">
+				<div class="adm-info-message">
+					<?=Loc::getMessage("IMOPENLINES_ACCOUNT_EXEC_DESCRIPTION")?>
+				</div>
 			</div>
-		</div>
-	</td>
-</tr>
-<?$tabControl->Buttons();?>
-<input type="submit" name="Update" value="<?echo GetMessage('MAIN_SAVE')?>">
-<input type="reset" name="reset" value="<?echo GetMessage('MAIN_RESET')?>">
-<?$tabControl->End();?>
+		</td>
+	</tr>
+	<?
+	$tabControl->buttons();
+
+	?>
+	<input type="submit" name="Update" value="<?=Loc::getMessage("MAIN_SAVE")?>" title="<?=Loc::getMessage("MAIN_OPT_SAVE_TITLE")?>">
+	<input type="submit" name="Apply" value="<?=Loc::getMessage("MAIN_OPT_APPLY")?>" title="<?=Loc::getMessage("MAIN_OPT_APPLY_TITLE")?>">
+	<?
+	if ($request["back_url_settings"] <> ''):
+		?>
+		<input type="button" name="Cancel" value="<?=Loc::getMessage("MAIN_OPT_CANCEL")?>" title="<?=Loc::getMessage("MAIN_OPT_CANCEL_TITLE")?>" onclick="window.location='<?= htmlspecialcharsbx(\CUtil::addslashes($request["back_url_settings"]))?>'">
+		<input type="hidden" name="back_url_settings" value="<?=htmlspecialcharsbx($request["back_url_settings"])?>">
+		<?
+	endif;
+	?>
+	<input type="submit" name="RestoreDefaults" title="<?= Loc::getMessage("MAIN_HINT_RESTORE_DEFAULTS")?>" onclick="return confirm('<?= \AddSlashes(Loc::getMessage("MAIN_HINT_RESTORE_DEFAULTS_WARNING"))?>')" value="<?= Loc::getMessage("MAIN_RESTORE_DEFAULTS")?>">
+	<?
+
+	$tabControl->end();
+	?>
 </form>
+<?
+//endregion

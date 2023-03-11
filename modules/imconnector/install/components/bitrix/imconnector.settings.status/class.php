@@ -28,7 +28,7 @@ class ImConnectorSettingsStatus extends CBitrixComponent implements Controllerab
 		}
 		else
 		{
-			ShowError(Loc::getMessage('IMCONNECTOR_COMPONENT_SETTINGS_STATUS_CONFIG_MODULE_NOT_INSTALLED'));
+			ShowError(Loc::getMessage('IMCONNECTOR_COMPONENT_SETTINGS_STATUS_CONFIG_MODULE_NOT_INSTALLED_MSGVER_1'));
 			return false;
 		}
 	}
@@ -45,7 +45,7 @@ class ImConnectorSettingsStatus extends CBitrixComponent implements Controllerab
 			$this->arResult[$id] = array(
 				'ID' => $id,
 				'NAME' => $value,
-				'STATUS' => Status::getInstance($id, $this->arParams['LINE'])->isStatus()
+				'STATUS' => Status::getInstance($id, (int)$this->arParams['LINE'])->isStatus()
 			);
 		}
 	}

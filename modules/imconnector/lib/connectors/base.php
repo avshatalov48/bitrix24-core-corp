@@ -363,7 +363,8 @@ class Base
 		}
 
 		if (
-			$message['message']['disable_crm'] === 'Y'
+			isset($message['message']['disable_crm'])
+			&& $message['message']['disable_crm'] === 'Y'
 			&& $result->isSuccess()
 		)
 		{
@@ -872,17 +873,26 @@ class Base
 			}
 		}
 
-		if (!Library::isEmpty($user['title']))
+		if (
+			isset($user['title'])
+			&& !Library::isEmpty($user['title'])
+		)
 		{
 			$fields['TITLE'] = $user['title'];
 		}
 
-		if (!Library::isEmpty($user['email']))
+		if (
+			isset($user['email'])
+			&& !Library::isEmpty($user['email'])
+		)
 		{
 			$fields['EMAIL'] = $user['email'];
 		}
 
-		if (!Library::isEmpty($user['phone']))
+		if (
+			isset($user['phone'])
+			&& !Library::isEmpty($user['phone'])
+		)
 		{
 			$fields['PERSONAL_MOBILE'] = $user['phone'];
 		}
@@ -1185,7 +1195,7 @@ class Base
 						}
 					}
 				}
-				catch (\Exception $e)
+				catch (\Bitrix\Main\SystemException $e)
 				{
 				}
 			}
@@ -1219,14 +1229,14 @@ class Base
 	}
 
 	/**
-	 * @param $idLine
+	 * @param int $idLine
 	 * @return bool
 	 */
 	protected function isHumanAgent($idLine): bool
 	{
 		$result = false;
 
-		$statusData = Status::getInstance($this->idConnector, $idLine)->getData();
+		$statusData = Status::getInstance($this->idConnector, (int)$idLine)->getData();
 
 		if (
 			!empty($statusData)

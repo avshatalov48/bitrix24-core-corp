@@ -18,6 +18,9 @@ $MESS['TASKS_GRID_STUB_PROJECT_CREATE_TASK'] = 'Создать задачу';
 $MESS['TASKS_GRID_STUB_PROJECT_CREATE_TASK_SUBTITLE'] = 'Здесь будет список задач, которые вы выполняете или поручаете своим сотрудникам. Создайте первую задачу, чтобы увидеть как она появится в списке';
 
 $MESS["TASKS_GROUP_ACTION_COMPLETE_SCRUM_TASK"] = "К сожалению, не удалось завершить выбранные задачи, так как они привязаны к Скрам-команде";
+$MESS['TASKS_TASK_LIST_TAGS_ARE_CONVERTING_TITLE'] = 'Подождите немного, теги скоро появятся';
+$MESS['TASKS_TASK_LIST_TAGS_ARE_CONVERTING_COME_BACK_LATER'] = 'Вернуться позже';
+$MESS['TASKS_TASK_LIST_TAGS_ARE_CONVERTING_TEXT'] = 'Прямо сейчас мы обновляем теги, чтобы они стали ещё удобнее. Вы можете продолжить работу в других разделах Битрикс24 и вернуться чуть позже, обновление не займёт много времени.';
 
 /*
 $MESS["TASKS_MODULE_NOT_AVAILABLE_IN_THIS_EDITION"] = "Модуль управления задачами не доступен в данной редакции продукта.";
@@ -40,4 +43,3 @@ $MESS["TASKS_TASK_NUM"] = "Задача № #TASK_NUM#";
 $MESS["TASKS_DATE_MUST_BE_IN_FUTURE"] = "Дата напоминания должна быть в будущем!";
 $MESS["TASKS_TASK_UNABLE_TO_DELETE"] = "Невозможно удалить задачу";
 */
-

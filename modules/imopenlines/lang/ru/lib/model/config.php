@@ -76,4 +76,3 @@ $MESS["CONFIG_ENTITY_WELCOME_FORM_ID"] = "ID формы, которая буде
 $MESS["CONFIG_ENTITY_WELCOME_FORM_DELAY"] = "Когда показывать приветственную форму";
 $MESS["CONFIG_ENTITY_OFFLINE_FORM_ID"] = "ID формы, которая будет показана клиенту, если оператор офлайн";
 $MESS["CONFIG_ENTITY_SEND_WELCOME_EACH_SESSION"] = "Отправлять ли автоответ в каждой новой сессии";
-?>

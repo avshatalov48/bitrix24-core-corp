@@ -1,5 +1,17 @@
-<?
+<?php
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
+
+/**
+ * @var array $arParams
+ * @var array $arResult
+ * @global \CMain $APPLICATION
+ * @global \CUser $USER
+ * @global \CDatabase $DB
+ * @var \CBitrixComponentTemplate $this
+ * @var \CBitrixComponent $component
+ */
+
 use \Bitrix\Imopenlines\Limit,
 	\Bitrix\Main\Localization\Loc;
 
@@ -172,6 +184,7 @@ if ($arResult['CAN_EDIT'])
 			</div>
 
 
+			<?php /*
 			<div id="imol_check_online_block" class="imopenlines-control-checkbox-container<?if ($arResult['VISIBLE']['CHECK_ONLINE_BLOCK'] == false){?> invisible<?}?>">
 				<label class="imopenlines-control-checkbox-label">
 					<input id="imol_check_online"
@@ -183,6 +196,7 @@ if ($arResult['CAN_EDIT'])
 					<?=Loc::getMessage('IMOL_CONFIG_EDIT_CHECK_OPERATOR_ONLINE')?>
 				</label>
 			</div>
+			*/ ?>
 			<div id="imol_limitation_max_chat_block" <? if ($arResult['VISIBLE']['LIMITATION_MAX_CHAT'] === false) { ?>class="invisible"<? } ?>>
 				<div class="imopenlines-control-checkbox-container">
 					<label class="imopenlines-control-checkbox-label">

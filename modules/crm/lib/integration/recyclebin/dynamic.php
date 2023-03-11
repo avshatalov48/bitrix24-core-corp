@@ -68,7 +68,6 @@ class Dynamic extends RecyclableEntity
 				),
 			],
 			'filter' => [
-				'=MODULE_ID' => self::MODULE_ID,
 				'=%ENTITY_TYPE' => self::PREFIX.'%'
 			]
 		]);

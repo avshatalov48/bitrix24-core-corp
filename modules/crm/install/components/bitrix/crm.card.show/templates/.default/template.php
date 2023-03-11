@@ -1,4 +1,7 @@
 <?php
+
+use Bitrix\Main\Web\Uri;
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 \Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/common.js');
 \Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/progress_control.js');
@@ -46,7 +49,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 				<div class="crm-card-show-user-responsible-title"><?= GetMessage('CRM_CARD_RESPONSIBLE')?>:</div>
 				<div class="crm-card-show-user-responsible-user">
 					<? if($arResult['ENTITY']['RESPONSIBLE']['PHOTO'] != ''): ?>
-						<div class="ui-icon ui-icon-common-user crm-card-show-user-responsible-user-icon"><i style="background-image: url(<?=$arResult['ENTITY']['RESPONSIBLE']['PHOTO']?>)"></i></div>
+						<div class="ui-icon ui-icon-common-user crm-card-show-user-responsible-user-icon"><i style="background-image: url(<?= Uri::urnEncode($arResult['ENTITY']['RESPONSIBLE']['PHOTO'])?>)"></i></div>
 					<? else: ?>
 						<div class="ui-icon ui-icon-common-user crm-card-show-user-responsible-user-icon"><i></i></div>
 					<? endif ?>
@@ -246,7 +249,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 								<div class="crm-card-show-user-responsible-title"><?= GetMessage('CRM_CARD_RESPONSIBLE')?>:</div>
 								<div class="crm-card-show-user-responsible-user">
 									<? if($arResult['ENTITY']['RESPONSIBLE']['PHOTO'] != ''): ?>
-										<div class="ui-icon ui-icon-common-user crm-card-show-user-responsible-user-icon"><i style="background-image: url(<?=$arResult['ENTITY']['RESPONSIBLE']['PHOTO']?>)"></i></div>
+										<div class="ui-icon ui-icon-common-user crm-card-show-user-responsible-user-icon"><i style="background-image: url(<?= Uri::urnEncode($arResult['ENTITY']['RESPONSIBLE']['PHOTO'])?>)"></i></div>
 									<? else: ?>
 										<div class="ui-icon ui-icon-common-user crm-card-show-user-responsible-user-icon"><i></i></div>
 									<? endif ?>

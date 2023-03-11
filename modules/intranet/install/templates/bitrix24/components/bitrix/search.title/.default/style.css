@@ -13,7 +13,7 @@
 	/*top: 15px;*/
 	overflow: hidden;
 	transition: width .2s;
-	margin-left: 10px;
+	margin-left: 14px;
 }
 
 .header-search-inner {
@@ -42,7 +42,7 @@
 	font-size: 14px;
 	height: 34px;
 	outline: medium none;
-	margin: 0 35px 0 5px;
+	margin: 0 31px 0 1px;
 	padding: 0 35px 0 0;
 	text-indent: 0;
 	width: 100%;

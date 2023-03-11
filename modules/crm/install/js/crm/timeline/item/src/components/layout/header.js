@@ -3,7 +3,7 @@ import {Title} from './header/title'
 import {Tag} from './header/tag'
 import {User} from './header/user'
 import {FormatDate} from './header/format-date';
-import {Runtime} from 'main.core';
+import {Runtime, Type} from 'main.core';
 import {Hint} from './header/hint';
 
 export const Header = {
@@ -28,10 +28,16 @@ export const Header = {
 	},
 	inject: [
 		'isReadOnly',
+		'isLogMessage',
 	],
 	computed: {
 		visibleTags(): Array
 		{
+			if (!Type.isPlainObject(this.tags))
+			{
+				return [];
+			}
+
 			return this.tags
 				? Object.values(this.tags).filter(this.isVisibleTagFilter)
 				: []
@@ -48,6 +54,14 @@ export const Header = {
 		{
 			return this.date || this.datePlaceholder;
 		},
+
+		className(): Object {
+			return [
+				'crm-timeline__card-top', {
+				'--log-message': this.isReadOnly || this.isLogMessage,
+				}
+			]
+		}
 	},
 	methods: {
 		isVisibleTagFilter(tag): Boolean {
@@ -64,7 +78,7 @@ export const Header = {
 		}
 	},
 	template: `
-		<div class="crm-timeline__card-top">
+		<div :class="className">
 			<div class="crm-timeline__card-top_info">
 				<div class="crm-timeline__card-top_info_left">
 					<ChangeStreamButton v-if="changeStreamButton" v-bind="changeStreamButton" ref="changeStreamButton"></ChangeStreamButton>

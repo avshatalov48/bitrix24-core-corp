@@ -43,6 +43,19 @@ BX.Tasks.Kanban.Item.prototype = {
 		}
 	},
 
+	setOptions: function(options)
+	{
+		if (!BX.type.isPlainObject(options))
+		{
+			return;
+		}
+
+		BX.Kanban.Item.prototype.setOptions.apply(this, arguments);
+
+		this.storyPoints = (options.data.storyPoints ? options.data.storyPoints : '');
+		this.epic = (BX.type.isPlainObject(options.data.epic) ? options.data.epic : null);
+	},
+
 	/**
 	 * Return formatted time.
 	 * @param {String} string
@@ -552,6 +565,10 @@ BX.Tasks.Kanban.Item.prototype = {
 	 */
 	getTaskUrl: function(id)
 	{
+		if (parseInt(this.getGridData().groupId, 10) > 0)
+		{
+			return this.getGridData().pathToGroupTask.replace("#task_id#", id);
+		}
 		return this.getGridData().pathToTask.replace("#task_id#", id);
 	},
 
@@ -753,6 +770,14 @@ BX.Tasks.Kanban.Item.prototype = {
 			"tasks-kanban-item-title-hot",
 			data.high
 		);
+		if (this.getGrid().isScrumGrid())
+		{
+			BX.cleanNode(this.epicLayout);
+			if (this.epic)
+			{
+				this.epicLayout.appendChild(this.createEpicLayout());
+			}
+		}
 		// tags
 		if (data.tags && data.tags.length > 0)
 		{
@@ -957,7 +982,7 @@ BX.Tasks.Kanban.Item.prototype = {
 				},
 				style: {
 					backgroundImage: data.author.photo
-						? "url(\'" + data.author.photo.src + "\')"
+						? "url(\'" + encodeURI(data.author.photo.src) + "\')"
 						: "",
 					cursor: data.allow_edit
 						? "pointer"
@@ -1017,7 +1042,7 @@ BX.Tasks.Kanban.Item.prototype = {
 				},
 				style: {
 					backgroundImage: 	data.responsible.photo
-										? "url(\'" + data.responsible.photo.src + "\')"
+										? "url(\'" + encodeURI(data.responsible.photo.src) + "\')"
 										: "",
 					cursor: data.allow_delegate
 						? "pointer"
@@ -1169,31 +1194,16 @@ BX.Tasks.Kanban.Item.prototype = {
 		if (this.getGrid().isScrumGrid())
 		{
 			//region epic
-
+			this.epicLayout = BX.create("span", {
+				props: {
+					className: "tasks-kanban-item-epic-container"
+				}
+			});
 			if (this.epic)
 			{
-				var colorBorder = this.convertHexToRGBA(this.epic.color, 0.7);
-				var colorBackground = this.convertHexToRGBA(this.epic.color, 0.3);
-
-				this.epicNode = BX.create("span", {
-					props: {
-						className: "tasks-kanban-item-epic"
-					},
-					style: {
-						background: colorBackground,
-						borderColor: colorBorder
-					},
-					text: this.epic.name,
-					events: {
-						click: BX.delegate(function(e) {
-							this.setFilterEpic(this.epic.id);
-							e.stopPropagation();
-						}, this)
-					}
-				});
-
-				this.container.appendChild(this.epicNode);
+				this.epicLayout.appendChild(this.createEpicLayout());
 			}
+			this.container.appendChild(this.epicLayout);
 		}
 
 		//region tags
@@ -1506,6 +1516,29 @@ BX.Tasks.Kanban.Item.prototype = {
 	{
 		clearTimeout(this.timer);
 		itemBlock.classList.remove("tasks-kanban-item-hover");
+	},
+
+	createEpicLayout: function ()
+	{
+		var colorBorder = this.convertHexToRGBA(this.epic.color, 0.7);
+		var colorBackground = this.convertHexToRGBA(this.epic.color, 0.3);
+
+		return BX.create("span", {
+			props: {
+				className: "tasks-kanban-item-epic"
+			},
+			style: {
+				background: colorBackground,
+				borderColor: colorBorder
+			},
+			text: this.epic.name,
+			events: {
+				click: BX.delegate(function(e) {
+					this.setFilterEpic(this.epic.id);
+					e.stopPropagation();
+				}, this)
+			}
+		});
 	},
 
 	convertHexToRGBA: function (hexCode, opacity)

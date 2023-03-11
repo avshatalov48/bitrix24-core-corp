@@ -46,6 +46,9 @@ class CIntranetUserProfileComponent extends UserProfile
 
 		$this->init();
 
+		$currentUserId = (int) $USER->GetID();
+		$ownerUserId = (int) ($this->arParams["ID"] ?? 0);
+
 		$this->arResult["isCloud"] = Loader::includeModule("bitrix24");
 
 		if ($this->arResult["isCloud"])
@@ -110,14 +113,14 @@ class CIntranetUserProfileComponent extends UserProfile
 			}
 		}
 
-		$this->arResult["FormConfig"] = $this->getFormInstance()->getConfig($this->arResult["SettingsFieldsForConfig"]);
+		$this->arResult["FormConfig"] = $this->getFormInstance()->getConfig($this->arResult["SettingsFieldsForConfig"] ?? null);
 		$this->arResult["FormData"] = $this->getFormInstance()->getData($this->arResult);
 
 		$this->arResult["Gratitudes"] = $this->getGratsInstance()->getStub();
 		$this->arResult["ProfileBlogPost"] = $this->getProfilePostInstance()->getStub();
 		$this->arResult["Tags"] = $this->getTagsInstance()->getStub();
 		$this->arResult["FormId"] = "intranet-user-profile";
-		$this->arResult["IsOwnProfile"] = $USER->GetID() === $this->arParams["ID"];
+		$this->arResult["IsOwnProfile"] = $currentUserId === $ownerUserId;
 		$this->arResult["StressLevel"] = $this->getStressLevelInstance()->getStub();
 
 		$this->filterHiddenFields();
@@ -139,7 +142,7 @@ class CIntranetUserProfileComponent extends UserProfile
 
 		if ($this->arResult["isCloud"])
 		{
-			$this->arResult["IS_CURRENT_USER_INTEGRATOR"] = \Bitrix\Bitrix24\Integrator::isIntegrator($USER->GetID());
+			$this->arResult["IS_CURRENT_USER_INTEGRATOR"] = \Bitrix\Bitrix24\Integrator::isIntegrator($currentUserId);
 
 			if (!Bitrix\Bitrix24\Feature::isFeatureEnabled("user_dismissal"))
 			{

@@ -40,10 +40,6 @@
 	flex-shrink: 0;
 }
 
-.bx-ie .crm-ads-conversion-icon.ui-icon {
-	width: 95px;
-}
-
 .crm-ads-conversion-empty-text {
 	color: #333;
 	opacity: .4;

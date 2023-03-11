@@ -16,11 +16,11 @@ $arDefaultParams = array(
 
 foreach ($arDefaultParams as $param => $value)
 {
-	$arParams[$param] = $arParams[$param] ? $arParams[$param] : $value;
-	$arParams['~'.$param] = $arParams['~'.$param] ? $arParams['~'.$param] : $value;
+	$arParams[$param] = $arParams[$param] ?? $value;
+	$arParams['~'.$param] = $arParams['~'.$param] ?? $value;
 }
 
-$arParams['IBLOCK_ID'] = intval($arParams['IBLOCK_ID']);
+$arParams['IBLOCK_ID'] = intval($arParams['IBLOCK_ID'] ?? null);
 
 if ($arParams['IBLOCK_ID'] <= 0)
 	$arParams['IBLOCK_ID'] = COption::GetOptionInt('intranet', 'iblock_structure', 0);
@@ -555,7 +555,7 @@ elseif ($mode == 'reload')
 }
 
 $bCache = true;
-if ($this->StartResultCache(false, $arParams['IBLOCK_ID'].'|'.$arResult['CAN_EDIT'].'|'.$arResult['UNDO_ID'].'|'.$cache_id))
+if ($this->StartResultCache(false, $arParams['IBLOCK_ID'].'|'.$arResult['CAN_EDIT'].'|'.($arResult['UNDO_ID'] ?? null).'|'.$cache_id))
 {
 	$bCache = false;
 
@@ -858,11 +858,11 @@ else
 				"AJAX_ONLY" => "Y",
 				"PATH_TO_SONET_USER_PROFILE" => COption::GetOptionString('intranet', 'search_user_url', '/company/personal/user/#ID#/'),
 				"PATH_TO_SONET_MESSAGES_CHAT" => $arParams["PM_URL"],
-				"DATE_TIME_FORMAT" => $arParams["DATE_TIME_FORMAT"],
-				"SHOW_YEAR" => $arParams["SHOW_YEAR"],
+				"DATE_TIME_FORMAT" => $arParams["DATE_TIME_FORMAT"] ?? null,
+				"SHOW_YEAR" => $arParams["SHOW_YEAR"] ?? null,
 				"NAME_TEMPLATE" => $arParams["NAME_TEMPLATE"],
-				"SHOW_LOGIN" => $arParams["SHOW_LOGIN"],
-				"PATH_TO_CONPANY_DEPARTMENT" => $arParams["~PATH_TO_CONPANY_DEPARTMENT"],
+				"SHOW_LOGIN" => $arParams["SHOW_LOGIN"] ?? null,
+				"PATH_TO_CONPANY_DEPARTMENT" => $arParams["~PATH_TO_CONPANY_DEPARTMENT"] ?? null,
 				"PATH_TO_VIDEO_CALL" => $arParams["~PATH_TO_VIDEO_CALL"],
 			),
 			false,

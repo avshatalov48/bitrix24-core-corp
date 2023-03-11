@@ -1,10 +1,12 @@
 <?php
 
 use Bitrix\Catalog\Access\AccessController;
+use Bitrix\Catalog\Access\Permission\PermissionDictionary;
 use Bitrix\Catalog\Url\InventoryManagementSourceBuilder;
 use Bitrix\Catalog\Access\ActionDictionary;
 use Bitrix\Catalog\StoreDocumentTable;
 use Bitrix\Crm\Order\Internals\ShipmentRealizationTable;
+use Bitrix\Sale\Internals\ShipmentItemStoreTable;
 use Bitrix\Sale\Internals\ShipmentItemTable;
 use Bitrix\Main;
 use Bitrix\Main\Context;
@@ -12,6 +14,7 @@ use Bitrix\Main\Engine\Contract\Controllerable;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Web\Uri;
+use Bitrix\Main\DB\SqlExpression;
 use Bitrix\Crm;
 use Bitrix\Main\Web\Json;
 use Bitrix\Sale\Internals\ShipmentTable;
@@ -824,7 +827,7 @@ class CrmStoreDocumentListComponent extends CBitrixComponent implements Controll
 		{
 			$userEmptyAvatar = '';
 			$photoUrl = $fileInfo['src'];
-			$userAvatar = " style='background-image: url(\"{$photoUrl}\")'";
+			$userAvatar = ' style="background-image: url(\'' . Uri::urnEncode($photoUrl) . '\')"';
 		}
 
 		$userNameElement = "<span class='documents-grid-avatar ui-icon ui-icon-common-user{$userEmptyAvatar}'><i{$userAvatar}></i></span>"
@@ -948,7 +951,7 @@ class CrmStoreDocumentListComponent extends CBitrixComponent implements Controll
 		static $filter = null;
 		if ($filter === null)
 		{
-			$filter = array_merge($this->getUserFilter(), $this->getIsRealizeFilter());
+			$filter = array_merge($this->getUserFilter(), $this->getIsRealizeFilter(), $this->getAccessProductStoreFilter());
 
 			$filter = $this->prepareListFilter($filter);
 
@@ -1020,7 +1023,7 @@ class CrmStoreDocumentListComponent extends CBitrixComponent implements Controll
 		return [
 			new Main\Entity\ReferenceField(
 				self::RUNTIME_REALIZATION_FIELD_NAME,
-				Crm\Order\Internals\ShipmentRealizationTable::class,
+				ShipmentRealizationTable::class,
 				[
 					'=this.ID' => 'ref.SHIPMENT_ID',
 				],
@@ -1034,6 +1037,44 @@ class CrmStoreDocumentListComponent extends CBitrixComponent implements Controll
 		return [
 			self::RUNTIME_REALIZATION_FIELD_NAME . '.IS_REALIZATION' => 'Y',
 			'=SYSTEM' => 'N',
+		];
+	}
+
+	private function getAccessProductStoreFilter(): array
+	{
+		// TODO: move logic and use `AccessController::getEntityFilter`
+
+		$acceptedStores = AccessController::getCurrent()->getPermissionValue(
+			ActionDictionary::ACTION_STORE_VIEW,
+		);
+
+		if (!is_array($acceptedStores))
+		{
+			$acceptedStores = [];
+		}
+		elseif (in_array(PermissionDictionary::VALUE_VARIATION_ALL, $acceptedStores, true))
+		{
+			return [];
+		}
+
+		$acceptedStores[] = null;
+		$storeFilter = [
+			'=STORE_ID' => $acceptedStores,
+		];
+
+		$query =
+			ShipmentItemStoreTable::query()
+				->setSelect(['ORDER_DELIVERY_BASKET_ID'])
+				->setFilter($storeFilter)
+				->getQuery()
+		;
+
+		return [
+			[
+				'LOGIC' => 'OR',
+				'=SHIPMENT_ITEM.ID' => null,
+				'@SHIPMENT_ITEM.ID' => new SqlExpression($query),
+			]
 		];
 	}
 

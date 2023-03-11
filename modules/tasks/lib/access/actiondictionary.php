@@ -60,7 +60,12 @@ class ActionDictionary
 		ACTION_TASK_RESULT_EDIT				= 'task_result_edit',
 		ACTION_TASK_COMPLETE_RESULT			= 'task_complete_result',
 
-		ACTION_TASK_ADMIN					= 'task_admin';
+		ACTION_TASK_ADMIN					= 'task_admin',
+
+		ACTION_TAG_EDIT						= 'tag_edit',
+		ACTION_TAG_DELETE					= 'tag_delete',
+		ACTION_TAG_CREATE					= 'tag_create',
+		ACTION_TAG_SEARCH					= 'tag_search';
 
 	public static function getLegacyActionMap(): array
 	{

@@ -1,4 +1,8 @@
 <?
+
+use Bitrix\Main\Engine\CurrentUser;
+use Bitrix\Tasks\Update\TagConverter;
+
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 
 // create template controller with js-dependency injections
@@ -31,9 +35,14 @@ foreach($arParams['DATA'] as $i => $item)
 	$arParams['DATA'][$i] = $item;
 }
 
+//Checking for working tags agent
+$tagsAreConverting = TagConverter::isProceed();
+
 $arResult['JS_DATA'] = array(
+	'tagsAreConverting' => $tagsAreConverting,
 	'data' => $arParams['DATA'],
 	'groupId' => $arResult['GROUP_ID'],
+	'userName' => CurrentUser::get()->getFormattedName(),
 	'taskId' => $arParams['TASK_ID'],
 	'isScrumTask' => $arResult['IS_SCRUM_TASK'],
 );

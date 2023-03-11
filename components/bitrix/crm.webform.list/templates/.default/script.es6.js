@@ -242,7 +242,7 @@ class WebFormList
 								title="${Text.encode(data.activatedBy.name)}"
 								class="ui-icon ui-icon-common-user crm-webform-active-popup-item-avatar ${Text.encode(data.activatedBy.iconClass)}"
 							>
-								<i style="background-image: url(${Text.encode(data.activatedBy.iconPath)});"></i>
+								<i style="background-image: url(${encodeURI(Text.encode(data.activatedBy.iconPath))});"></i>
 							</a>
 						</div>
 					`,

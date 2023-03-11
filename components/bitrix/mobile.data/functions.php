@@ -16,10 +16,12 @@
 	function defineApiVersion()
 	{
 		global $APPLICATION;
-		if ($_REQUEST["api_version"])
+
+		$apiVersion = $_REQUEST["api_version"] ?? null;
+		if ($apiVersion)
 		{
-			$APPLICATION->set_cookie("MOBILE_APP_VERSION", intval($_REQUEST["api_version"]), time() + 60 * 60 * 24 * 30 * 12 * 2);
-			$api_version = intval($_REQUEST["api_version"]);
+			$APPLICATION->set_cookie("MOBILE_APP_VERSION", intval($apiVersion), time() + 60 * 60 * 24 * 30 * 12 * 2);
+			$api_version = intval($apiVersion);
 		}
 		else
 		{

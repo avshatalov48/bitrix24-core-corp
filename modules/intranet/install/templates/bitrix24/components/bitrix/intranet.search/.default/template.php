@@ -192,7 +192,7 @@ if (
 					cacheable: false,
 					allowChangeHistory: false,
 					contentClassName: "bitrix24-profile-slider-content",
-					loader: "intranet:profile",
+					loader: "intranet:slider-profile",
 					width: 1100,
 					events: {
 						onCloseComplete: function(event) {

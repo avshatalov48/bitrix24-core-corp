@@ -4,6 +4,8 @@
 	background-color: var(--crm-timeline__card-color-background);
 	border-radius: var(--crm-timeline__card-border-radius);
 	position: relative;
+	padding-top: var(--ui-space-inset-sm, 12px);
+	padding-bottom: var(--ui-space-inset-sm, 12px);
 }
 
 .crm-timeline__card.--stream-type-pinned {
@@ -56,7 +58,7 @@
 }
 
 .crm-timeline__card-body {
-	padding: 0 var(--ui-space-inset-md, 16px) var(--ui-space-inset-md, 16px) var(--ui-space-inset-md, 16px);
+	padding: 0 var(--ui-space-inset-md, 16px) 0 var(--ui-space-inset-md, 16px);
 	display: flex;
 	align-items: flex-start;
 }
@@ -109,6 +111,8 @@
 
 .crm-timeline__card-bottom {
 	display: block;
+	margin-top: 16px;
+	margin-bottom: -12px;
 }
 
 .crm-timeline__card_more-menu .menu-popup-item-icon {

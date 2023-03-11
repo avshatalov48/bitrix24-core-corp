@@ -413,6 +413,24 @@ class KanbanService implements Errorable
 		}
 	}
 
+	public function removeStages(int $sprintId): void
+	{
+		StagesTable::setWorkMode(StagesTable::WORK_MODE_ACTIVE_SPRINT);
+
+		$queryObject = StagesTable::getList([
+			'select' => ['ID'],
+			'filter' => [
+				'=ENTITY_TYPE' => StagesTable::WORK_MODE_ACTIVE_SPRINT,
+				'ENTITY_ID' => $sprintId,
+			],
+			'order' => ['ID' => 'ASC']
+		]);
+		while ($stage = $queryObject->fetch())
+		{
+			StagesTable::delete($stage['ID'], $sprintId);
+		}
+	}
+
 	/**
 	 * Gets default stages or stages of last sprint for active sprint.
 	 *
@@ -593,6 +611,9 @@ class KanbanService implements Errorable
 		$firstStages = [];
 		$secondStages = [];
 
+		$firstSprintId = (int) $firstSprintId;
+		$secondSprintId = (int) $secondSprintId;
+
 		$queryObject = StagesTable::getList([
 			'select' => ['*'],
 			'filter' => [
@@ -603,11 +624,13 @@ class KanbanService implements Errorable
 		]);
 		while ($stage = $queryObject->fetch())
 		{
-			if ($stage['ENTITY_ID'] == $firstSprintId)
+			$entityId = (int) $stage['ENTITY_ID'];
+
+			if ($entityId === $firstSprintId)
 			{
 				$firstStages[] = $stage;
 			}
-			else if ($stage['ENTITY_ID'] == $secondSprintId)
+			else if ($entityId === $secondSprintId)
 			{
 				$secondStages[] = $stage;
 			}
@@ -626,7 +649,7 @@ class KanbanService implements Errorable
 			{
 				if (
 					$firstStage['TITLE'] === $secondStage['TITLE']
-					&& $firstStage['SORT'] === $secondStage['SORT']
+					&& $firstStage['SYSTEM_TYPE'] === $secondStage['SYSTEM_TYPE']
 				)
 				{
 					$stageIdsMap[$secondStage['ID']] = $firstStage['ID'];
@@ -674,6 +697,49 @@ class KanbanService implements Errorable
 		]);
 
 		return (bool) $queryObject->fetch();
+	}
+
+	/**
+	 * Checks if the number of columns differs between sprints.
+	 *
+	 * @param int $firstSprintId First sprint id.
+	 * @param int $secondSprintId Second sprint id.
+	 * @return bool
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public function hasDifferencesBetweenTwoSprints(int $firstSprintId, int $secondSprintId): bool
+	{
+		$firstStages = [];
+		$secondStages = [];
+
+		$firstSprintId = (int) $firstSprintId;
+		$secondSprintId = (int) $secondSprintId;
+
+		$queryObject = StagesTable::getList([
+			'select' => ['ENTITY_ID'],
+			'filter' => [
+				'=ENTITY_TYPE' => StagesTable::WORK_MODE_ACTIVE_SPRINT,
+				'ENTITY_ID' => [$firstSprintId, $secondSprintId],
+			],
+			'order' => ['SORT' => 'ASC']
+		]);
+		while ($stage = $queryObject->fetch())
+		{
+			$entityId = (int) $stage['ENTITY_ID'];
+
+			if ($entityId === $firstSprintId)
+			{
+				$firstStages[] = $stage;
+			}
+			else if ($entityId === $secondSprintId)
+			{
+				$secondStages[] = $stage;
+			}
+		}
+
+		return count($firstStages) !== count($secondStages);
 	}
 
 	private function getDefaultStageId(int $sprintId): int
@@ -745,7 +811,7 @@ class KanbanService implements Errorable
 		return $stages;
 	}
 
-	private function getSprintStageIds(int $sprintId): array
+	public function getSprintStageIds(int $sprintId): array
 	{
 		if (isset(self::$sprintStageIds[$sprintId]))
 		{

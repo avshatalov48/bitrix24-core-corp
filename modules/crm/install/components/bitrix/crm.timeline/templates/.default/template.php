@@ -33,6 +33,7 @@ Bitrix\Main\UI\Extension::load([
 	'sidepanel',
 	'crm.restriction.bitrix24',
 	'ui.hint',
+	'ui.viewer',
 ]);
 
 //HACK: Preloading files for prevent trembling of player afer load.
@@ -827,30 +828,6 @@ $filterClassName = $arResult['IS_HISTORY_FILTER_APPLIED']
 					sended: "<?=GetMessageJS('CRM_TIMELINE_ORDER_CHECK_SENT')?>",
 					urlLink: "<?=GetMessageJS('CRM_TIMELINE_ORDER_CHECK_LINK')?>",
 					sendedTitle: "<?=GetMessageJS('CRM_TIMELINE_ORDER_CHECK_SENT_TITLE')?>",
-				};
-
-			BX.CrmHistoryItemStoreDocumentCreation.messages =
-				{
-					arrivalDocument: "<?=GetMessageJS('CRM_TIMELINE_ARRIVAL_DOCUMENT_CREATION')?>",
-					storeAdjustmentDocument: "<?=GetMessageJS('CRM_TIMELINE_STORE_ADJUSTMENT_DOCUMENT_CREATION')?>",
-					movingDocument: "<?=GetMessageJS('CRM_TIMELINE_MOVING_DOCUMENT_CREATION')?>",
-					deductDocument: "<?=GetMessageJS('CRM_TIMELINE_DEDUCT_DOCUMENT_CREATION')?>",
-					shipmentDocument: "<?=GetMessageJS('CRM_TIMELINE_SHIPMENT_DOCUMENT_CREATION')?>",
-				};
-
-			BX.CrmHistoryItemStoreDocumentModification.messages =
-				{
-					arrivalDocument: "<?=GetMessageJS('CRM_TIMELINE_ARRIVAL_DOCUMENT')?>",
-					storeAdjustmentDocument: "<?=GetMessageJS('CRM_TIMELINE_STORE_ADJUSTMENT_DOCUMENT')?>",
-					movingDocument: "<?=GetMessageJS('CRM_TIMELINE_MOVING_DOCUMENT')?>",
-					shipmentDocument: "<?=GetMessageJS('CRM_TIMELINE_SHIPMENT_DOCUMENT')?>",
-					deductDocument: "<?=GetMessageJS('CRM_TIMELINE_DEDUCT_DOCUMENT')?>",
-					arrivalModification: "<?=GetMessageJS('CRM_TIMELINE_ARRIVAL_DOCUMENT_MODIFICATION')?>",
-					storeAdjustmentModification: "<?=GetMessageJS('CRM_TIMELINE_STORE_ADJUSTMENT_DOCUMENT_MODIFICATION')?>",
-					movingModification: "<?=GetMessageJS('CRM_TIMELINE_MOVING_DOCUMENT_MODIFICATION')?>",
-					deductModification: "<?=GetMessageJS('CRM_TIMELINE_DEDUCT_DOCUMENT_MODIFICATION')?>",
-					shipmentModification: "<?=GetMessageJS('CRM_TIMELINE_SHIPMENT_DOCUMENT_MODIFICATION')?>",
-					conductError: "<?=GetMessageJS('CRM_TIMELINE_CONDUCT_ERROR')?>",
 				};
 
 			BX.message({

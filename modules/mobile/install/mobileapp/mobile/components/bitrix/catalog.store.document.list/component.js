@@ -1,4 +1,5 @@
 (() => {
+	const { StatefulList } = jn.require('layout/ui/stateful-list');
 
 	const COMPONENT_ID = 'CATALOG_STORE_LIST';
 	const PULL_MODULE_ID = 'catalog';
@@ -21,6 +22,8 @@
 			this.state = {
 				activeTab: this.documentTabs[0].id,
 			};
+
+			this.clickFloatingButtonMenuItemHandler = this.clickFloatingButtonMenuItemHandler.bind(this);
 		}
 
 		createStatefulList()
@@ -322,17 +325,15 @@
 
 			return documentTypes
 				.filter(item => result.permissions.document[item.id]['catalog_store_document_modify'])
-				.map((item) => {
-					return {
+				.map((item) => ({
 						id: item.id,
 						title: item.title,
 						data: {
 							svgIcon: (floatingButtonSvgIcons[item.id] ? floatingButtonSvgIcons[item.id] : null),
 						},
-						onClickCallback: this.clickFloatingButtonMenuItemHandler.bind(this),
-					};
-				}
-			);
+						onClickCallback: this.clickFloatingButtonMenuItemHandler,
+					}),
+				);
 		}
 
 		clickFloatingButtonMenuItemHandler(actionItemId)

@@ -189,7 +189,7 @@ class CIntranetUtils
 			$arAbsence = $CACHE_ABSENCE;
 		}
 
-		if (is_array($arAbsence[$USER_ID]))
+		if (is_array($arAbsence[$USER_ID] ?? null))
 		{
 			$ts = time() + \CTimeZone::getOffset();
 			foreach($arAbsence[$USER_ID] as $arEntry)
@@ -389,15 +389,16 @@ class CIntranetUtils
 	{
 		global $DB;
 
-		$arDefaultParams = array(
+		$arDefaultParams = [
 			'CALENDAR_IBLOCK_ID' => false,
 			'ABSENCE_IBLOCK_ID' => COption::GetOptionInt('intranet', 'iblock_absence'),
 			'DATE_START' => date($DB->DateFormatToPHP(CSite::GetDateFormat('FULL')), strtotime(date('Y-m-01'))),
 			'DATE_FINISH' => date($DB->DateFormatToPHP(CSite::GetDateFormat('FULL')), strtotime('+1 month', strtotime(date('Y-m-01')))),
 			'USERS' => false,
 			'PER_USER' => true,
-			'SELECT' => array('ID', 'IBLOCK_ID', 'DATE_ACTIVE_FROM', 'DATE_ACTIVE_TO', 'NAME', 'PREVIEW_TEXT', 'DETAIL_TEXT', 'PROPERTY_USER', 'PROPERTY_FINISH_STATE', 'PROPERTY_STATE', 'PROPERTY_ABSENCE_TYPE'),
-		);
+			'SELECT' => ['ID', 'IBLOCK_ID', 'DATE_ACTIVE_FROM', 'DATE_ACTIVE_TO', 'NAME', 'PREVIEW_TEXT', 'DETAIL_TEXT', 'PROPERTY_USER', 'PROPERTY_FINISH_STATE', 'PROPERTY_STATE', 'PROPERTY_ABSENCE_TYPE'],
+			'CHECK_PERMISSIONS' => 'Y',
+		];
 
 		foreach ($arDefaultParams as $key => $value)
 		{
@@ -654,14 +655,14 @@ class CIntranetUtils
 					$arSectionParams['LINK_URL'] = SITE_DIR.'company/';
 			}
 
-			if (!$arSectionParams['NAME'])
+			if (!isset($arSectionParams['NAME']))
 			{
 				if (CModule::IncludeModule('extranet') && CExtranet::IsExtranetSite() && !$employees)
 					$arSectionParams['NAME'] = GetMessage('INTR_OUTLOOK_TITLE_CONTACTS_EXTRANET');
 				else
 					$arSectionParams['NAME'] = GetMessage('INTR_OUTLOOK_TITLE_CONTACTS');
 			}
-			if (!$arSectionParams['PREFIX'])
+			if (!isset($arSectionParams['PREFIX']))
 			{
 				$rsSites = CSite::GetByID(SITE_ID);
 				$arSite = $rsSites->Fetch();
@@ -694,11 +695,10 @@ class CIntranetUtils
 					$arSectionParams['LINK_URL'] = SITE_DIR.'company/personal/user/'.$USER->GetID().'/tasks/';
 			}
 
-			if (!$arSectionParams['NAME'])
-				$arSectionParams['NAME'] = GetMessage('INTR_OUTLOOK_TITLE_TASKS');
+			$arSectionParams['NAME'] = $arSectionParams['NAME'] ?? GetMessage('INTR_OUTLOOK_TITLE_TASKS');
 
 
-			if (!$arSectionParams['PREFIX'])
+			if (!($arSectionParams['PREFIX'] ?? null))
 			{
 				$rsSites = CSite::GetByID(SITE_ID);
 				$arSite = $rsSites->Fetch();
@@ -844,7 +844,7 @@ class CIntranetUtils
 				return array_keys(self::$SECTIONS_SETTINGS_CACHE['DATA']);
 		}
 
-		$arSections = self::$SECTIONS_SETTINGS_CACHE['TREE'][$section_id];
+		$arSections = self::$SECTIONS_SETTINGS_CACHE['TREE'][$section_id] ?? null;
 
 		if (is_array($arSections) && count($arSections) > 0)
 		{
@@ -951,7 +951,7 @@ class CIntranetUtils
 						if (empty($section['IBLOCK_SECTION_ID']))
 							$section['IBLOCK_SECTION_ID'] = 0;
 
-						if (!$subStructure['TREE'][$section['IBLOCK_SECTION_ID']])
+						if (!isset($subStructure['TREE'][$section['IBLOCK_SECTION_ID']]))
 							$subStructure['TREE'][$section['IBLOCK_SECTION_ID']] = array();
 
 						$subStructure['TREE'][$section['IBLOCK_SECTION_ID']][] = $section['ID'];

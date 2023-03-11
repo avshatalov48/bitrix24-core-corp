@@ -202,7 +202,7 @@ final class Provider extends \Bitrix\Crm\Integration\UI\EntityEditor\Provider
 
 			$fieldDataToMergeLast = [];
 
-			if (!is_array($field['data']))
+			if (!isset($field['data']) || !is_array($field['data']))
 			{
 				$field['data'] = [];
 			}

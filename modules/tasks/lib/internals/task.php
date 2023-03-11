@@ -13,10 +13,11 @@ use Bitrix\Main\Entity;
 use Bitrix\Main\Entity\EnumField;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Disk\Driver;
+use Bitrix\Main\ORM\Fields\Relations\ManyToMany;
 use Bitrix\Main\ORM\Fields\Relations\OneToMany;
 use Bitrix\Tasks\Internals\Task\MemberTable;
 use Bitrix\Tasks\Internals\Task\Result\ResultTable;
-use Bitrix\Tasks\Internals\Task\TagTable;
+use Bitrix\Tasks\Internals\Task\LabelTable;
 use Bitrix\Tasks\Util\Entity\DateTimeField;
 use Bitrix\Tasks\Util\Type\DateTime;
 use Bitrix\Tasks\Util\UserField;
@@ -81,8 +82,6 @@ class TaskTable extends TaskDataManager
 	 */
 	public static function getMap()
 	{
-		// todo: DO NOT include EXCHANGE_* fields here, they should be moved to a separate table one day
-
 		return array(
 			'ID' => array(
 				'data_type' => 'integer',
@@ -279,7 +278,25 @@ class TaskTable extends TaskDataManager
 			),
 
 			(new OneToMany("MEMBER_LIST", MemberTable::class, "TASK"))->configureJoinType("inner"),
-			(new OneToMany("TAG_LIST", TagTable::class, "TASK")),
+			//todo
+			(new ManyToMany("TAG_LIST", LabelTable::class))
+				->configureLocalReference("TASK")
+				->configureRemoteReference('TAG')
+				->configureTableName('b_tasks_task_tag')
+				->configureJoinType("inner"),
+
+			'EXCHANGE_ID' => [
+				'data_type' => 'string',
+			],
+			'EXCHANGE_MODIFIED' => [
+				'data_type' => 'string',
+			],
+			'DECLINE_REASON' => [
+				'data_type' => 'string',
+			],
+			'DEADLINE_COUNTED' => [
+				'data_type' => 'integer',
+			],
 
 		);
 	}

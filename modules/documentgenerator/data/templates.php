@@ -1,11 +1,16 @@
 <?php
 
 use Bitrix\DocumentGenerator\Body\Docx;
+use Bitrix\DocumentGenerator\Driver;
 use Bitrix\DocumentGenerator\Model;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Numerator;
 
 Loc::loadMessages(__FILE__);
+
 $deal = 'Bitrix\Crm\Integration\DocumentGenerator\DataProvider\Deal';
+$contact = 'Bitrix\Crm\Integration\DocumentGenerator\DataProvider\Contact';
+$company = 'Bitrix\Crm\Integration\DocumentGenerator\DataProvider\Company';
 $invoice = 'Bitrix\Crm\Integration\DocumentGenerator\DataProvider\Invoice';
 $quote = 'Bitrix\Crm\Integration\DocumentGenerator\DataProvider\Quote';
 $smartInvoice = 'Bitrix\Crm\Integration\DocumentGenerator\DataProvider\SmartInvoice';
@@ -15,6 +20,24 @@ $storeDocumentMoving = 'Bitrix\Crm\Integration\DocumentGenerator\DataProvider\St
 $shipmentDocumentRealization = 'Bitrix\Crm\Integration\DocumentGenerator\DataProvider\ShipmentDocumentRealization';
 $invoiceAndDeal = [$deal, $invoice, $smartInvoice];
 $quoteAndDeal = [$deal, $quote];
+
+$edmNumeratorRu = [
+	'CONFIG' => [
+		Numerator\Numerator::getType() => [
+			'code' => 'EDM_RU',
+			'name' => Loc::getMessage('DOCGEN_TEMPLATE_NUMERATOR_EDM_RU_NAME'),
+			'template' => '{NUMBER}',
+			'type' => Driver::NUMERATOR_TYPE,
+		],
+		Numerator\Generator\SequentNumberGenerator::getType() => [
+			'isDirectNumeration' => true,
+		],
+	],
+];
+
+$edmNumeratorBy = $edmNumeratorRu;
+$edmNumeratorBy['CONFIG'][Numerator\Numerator::getType()]['code'] = 'EDM_BY';
+$edmNumeratorBy['CONFIG'][Numerator\Numerator::getType()]['name'] = Loc::getMessage('DOCGEN_TEMPLATE_NUMERATOR_EDM_BY_NAME');
 
 return [
 	[
@@ -164,6 +187,50 @@ return [
 		'PRODUCTS_TABLE_VARIANT' => Model\TemplateTable::PRODUCTS_TABLE_VARIANT_GOODS
 	],
 	[
+		'REGION' => 'ru',
+		'NAME' => Loc::getMessage('DOCGEN_TEMPLATE_EDM_AGREEMENT_IND_RU_NAME'),
+		'CODE' => 'EDM_AGREEMENT_IND_DEAL_RU',
+		'SORT' => 1600,
+		'MODULE_ID' => 'crm',
+		'BODY_TYPE' => Docx::class,
+		'FILE' => '/bitrix/modules/documentgenerator/data/templates/edm_agreement_ind_deal_ru.docx',
+		'PROVIDERS' => [$deal],
+		'NUMERATOR' => $edmNumeratorRu,
+	],
+	[
+		'REGION' => 'ru',
+		'NAME' => Loc::getMessage('DOCGEN_TEMPLATE_EDM_AGREEMENT_IND_RU_NAME'),
+		'CODE' => 'EDM_AGREEMENT_IND_CONTACT_RU',
+		'SORT' => 1700,
+		'MODULE_ID' => 'crm',
+		'BODY_TYPE' => Docx::class,
+		'FILE' => '/bitrix/modules/documentgenerator/data/templates/edm_agreement_ind_contact_ru.docx',
+		'PROVIDERS' => [$contact],
+		'NUMERATOR' => $edmNumeratorRu,
+	],
+	[
+		'REGION' => 'ru',
+		'NAME' => Loc::getMessage('DOCGEN_TEMPLATE_EDM_AGREEMENT_ORG_RU_NAME'),
+		'CODE' => 'EDM_AGREEMENT_ORG_RU',
+		'SORT' => 1800,
+		'MODULE_ID' => 'crm',
+		'BODY_TYPE' => Docx::class,
+		'FILE' => '/bitrix/modules/documentgenerator/data/templates/edm_agreement_org_ru.docx',
+		'PROVIDERS' => [$deal, $company],
+		'NUMERATOR' => $edmNumeratorRu,
+	],
+	[
+		'REGION' => 'ru',
+		'NAME' => Loc::getMessage('DOCGEN_TEMPLATE_EDM_AGREEMENT_ORG_RU_NAME'),
+		'CODE' => 'EDM_AGREEMENT_ORG_CONTACT_RU',
+		'SORT' => 1900,
+		'MODULE_ID' => 'crm',
+		'BODY_TYPE' => Docx::class,
+		'FILE' => '/bitrix/modules/documentgenerator/data/templates/edm_agreement_org_contact_ru.docx',
+		'PROVIDERS' => [$contact],
+		'NUMERATOR' => $edmNumeratorRu,
+	],
+	[
 		'REGION' => 'by',
 		'NAME' => Loc::getMessage('DOCGEN_TEMPLATE_ACT_BY_NAME'),
 		'CODE' => 'ACT_BY',
@@ -265,6 +332,50 @@ return [
 		'BODY_TYPE' => Docx::class,
 		'FILE' => '/bitrix/modules/documentgenerator/data/templates/quote_by.docx',
 		'PROVIDERS' => $quoteAndDeal,
+	],
+	[
+		'REGION' => 'by',
+		'NAME' => Loc::getMessage('DOCGEN_TEMPLATE_EDM_AGREEMENT_IND_BY_NAME'),
+		'CODE' => 'EDM_AGREEMENT_IND_DEAL_BY',
+		'SORT' => 1100,
+		'MODULE_ID' => 'crm',
+		'BODY_TYPE' => Docx::class,
+		'FILE' => '/bitrix/modules/documentgenerator/data/templates/edm_agreement_ind_deal_by.docx',
+		'PROVIDERS' => [$deal],
+		'NUMERATOR' => $edmNumeratorBy,
+	],
+	[
+		'REGION' => 'by',
+		'NAME' => Loc::getMessage('DOCGEN_TEMPLATE_EDM_AGREEMENT_IND_BY_NAME'),
+		'CODE' => 'EDM_AGREEMENT_IND_CONTACT_BY',
+		'SORT' => 1200,
+		'MODULE_ID' => 'crm',
+		'BODY_TYPE' => Docx::class,
+		'FILE' => '/bitrix/modules/documentgenerator/data/templates/edm_agreement_ind_contact_by.docx',
+		'PROVIDERS' => [$contact],
+		'NUMERATOR' => $edmNumeratorBy,
+	],
+	[
+		'REGION' => 'by',
+		'NAME' => Loc::getMessage('DOCGEN_TEMPLATE_EDM_AGREEMENT_ORG_BY_NAME'),
+		'CODE' => 'EDM_AGREEMENT_ORG_BY',
+		'SORT' => 1300,
+		'MODULE_ID' => 'crm',
+		'BODY_TYPE' => Docx::class,
+		'FILE' => '/bitrix/modules/documentgenerator/data/templates/edm_agreement_org_by.docx',
+		'PROVIDERS' => [$deal, $company],
+		'NUMERATOR' => $edmNumeratorBy,
+	],
+	[
+		'REGION' => 'by',
+		'NAME' => Loc::getMessage('DOCGEN_TEMPLATE_EDM_AGREEMENT_ORG_BY_NAME'),
+		'CODE' => 'EDM_AGREEMENT_ORG_CONTACT_BY',
+		'SORT' => 1400,
+		'MODULE_ID' => 'crm',
+		'BODY_TYPE' => Docx::class,
+		'FILE' => '/bitrix/modules/documentgenerator/data/templates/edm_agreement_org_contact_by.docx',
+		'PROVIDERS' => [$contact],
+		'NUMERATOR' => $edmNumeratorBy,
 	],
 	[
 		'REGION' => 'kz',

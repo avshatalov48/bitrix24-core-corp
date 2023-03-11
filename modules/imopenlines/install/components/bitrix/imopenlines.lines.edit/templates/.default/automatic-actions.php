@@ -135,6 +135,18 @@ $sendWelcomeEachSession = $arResult['CONFIG']['SEND_WELCOME_EACH_SESSION'] === '
 					</div>
 				</div>
 			</div>
+			<div class="imopenlines-control-checkbox-container">
+				<label class="imopenlines-control-checkbox-label">
+					<input type="checkbox"
+						   class="imopenlines-control-checkbox"
+						   id="imol_form_welcome_ignore_responsible"
+						   name="CONFIG[IGNORE_WELCOME_FORM_RESPONSIBLE]"
+						   value="Y"
+						   <?php if ($arResult['CONFIG']['IGNORE_WELCOME_FORM_RESPONSIBLE'] == 'Y'): ?>checked<?php endif; ?>>
+					<?= Loc::getMessage('IMOL_CONFIG_EDIT_FORM_WELCOME_IGNORE_RESPONSIBLE') ?>
+					<span data-hint-html data-hint="<?= htmlspecialcharsbx(Loc::getMessage('IMOL_CONFIG_EDIT_FORM_WELCOME_IGNORE_RESPONSIBLE_TIP')) ?>"></span>
+				</label>
+			</div>
 		</div>
 	</div>
 	<?endif;?>
@@ -160,7 +172,7 @@ $sendWelcomeEachSession = $arResult['CONFIG']['SEND_WELCOME_EACH_SESSION'] === '
 							   name="AUTOMATIC_MESSAGE[TASK][<?=$idConfigTask?>][ACTIVE]"
 							   value="Y"
 							   class="imopenlines-control-checkbox"
-							   <? if ($configTask['ACTIVE']  === 'Y') { ?>checked<? } ?>>
+							   <? if (isset($configTask['ACTIVE']) && $configTask['ACTIVE']  === 'Y') { ?>checked<? } ?>>
 						<?=Loc::getMessage('IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_ACTIVE')?>
 					</label>
 				</div>
@@ -170,13 +182,16 @@ $sendWelcomeEachSession = $arResult['CONFIG']['SEND_WELCOME_EACH_SESSION'] === '
 					</div>
 					<div class="imopenlines-control-inner">
 						<select class="imopenlines-control-input" name="AUTOMATIC_MESSAGE[TASK][<?=$idConfigTask?>][TIME_TASK]">
-							<option value="10800" <?if((int)$configTask['TIME_TASK'] === 10800) { ?>selected<? }?>><?=Loc::getMessage('IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_TIME_3_H')?></option>
-							<option value="25200" <?if((int)$configTask['TIME_TASK'] === 25200) { ?>selected<? }?>><?=Loc::getMessage('IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_TIME_7_H')?></option>
-							<option value="43200" <?if((int)$configTask['TIME_TASK'] === 43200) { ?>selected<? }?>><?=Loc::getMessage('IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_TIME_12_H')?></option>
-							<option value="172800" <?if((int)$configTask['TIME_TASK'] === 172800) { ?>selected<? }?>><?=Loc::getMessage('IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_TIME_2_D')?></option>
-							<option value="345600" <?if((int)$configTask['TIME_TASK'] === 345600) { ?>selected<? }?>><?=Loc::getMessage('IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_TIME_4_D')?></option>
-							<option value="518400" <?if((int)$configTask['TIME_TASK'] === 518400) { ?>selected<? }?>><?=Loc::getMessage('IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_TIME_6_D')?></option>
-							<option value="1209600" <?if((int)$configTask['TIME_TASK'] === 1209600) { ?>selected<? }?>><?=Loc::getMessage('IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_TIME_2_W')?></option>
+							<?php
+							$timeTask = (int)($configTask['TIME_TASK'] ?? 0);
+							?>
+							<option value="10800" <? if($timeTask === 10800) { ?>selected<? }?>><?=Loc::getMessage('IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_TIME_3_H')?></option>
+							<option value="25200" <? if($timeTask === 25200) { ?>selected<? }?>><?=Loc::getMessage('IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_TIME_7_H')?></option>
+							<option value="43200" <? if($timeTask === 43200) { ?>selected<? }?>><?=Loc::getMessage('IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_TIME_12_H')?></option>
+							<option value="172800" <? if($timeTask === 172800) { ?>selected<? }?>><?=Loc::getMessage('IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_TIME_2_D')?></option>
+							<option value="345600" <? if($timeTask === 345600) { ?>selected<? }?>><?=Loc::getMessage('IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_TIME_4_D')?></option>
+							<option value="518400" <? if($timeTask === 518400) { ?>selected<? }?>><?=Loc::getMessage('IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_TIME_6_D')?></option>
+							<option value="1209600" <? if($timeTask === 1209600) { ?>selected<? }?>><?=Loc::getMessage('IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_TIME_2_W')?></option>
 						</select>
 					</div>
 				</div>
@@ -184,7 +199,7 @@ $sendWelcomeEachSession = $arResult['CONFIG']['SEND_WELCOME_EACH_SESSION'] === '
 					<div class="imopenlines-control-subtitle"><?=Loc::getMessage('IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_TEXT')?></div>
 					<div class="imopenlines-control-inner">
 				<textarea type="text" class="imopenlines-control-input imopenlines-control-textarea"
-						  name="AUTOMATIC_MESSAGE[TASK][<?=$idConfigTask?>][MESSAGE]"><?=htmlspecialcharsbx($configTask['MESSAGE'])?></textarea>
+						  name="AUTOMATIC_MESSAGE[TASK][<?=$idConfigTask?>][MESSAGE]"><?=htmlspecialcharsbx($configTask['MESSAGE'] ?? '')?></textarea>
 					</div>
 				</div>
 				<div class="imopenlines-control-checkbox-container">
@@ -197,7 +212,7 @@ $sendWelcomeEachSession = $arResult['CONFIG']['SEND_WELCOME_EACH_SESSION'] === '
 					<div class="imopenlines-control-inner">
 						<input name="AUTOMATIC_MESSAGE[TASK][<?=$idConfigTask?>][TEXT_BUTTON_CLOSE]"
 							   class="imopenlines-control-input"
-							   value="<?=htmlspecialcharsbx($configTask['TEXT_BUTTON_CLOSE'])?>"
+							   value="<?=htmlspecialcharsbx($configTask['TEXT_BUTTON_CLOSE'] ?? '')?>"
 							   placeholder="<?=Loc::getMessage('IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_CLOSE_TITLE')?>"
 							   type="text">
 					</div>
@@ -209,7 +224,7 @@ $sendWelcomeEachSession = $arResult['CONFIG']['SEND_WELCOME_EACH_SESSION'] === '
 					<div class="imopenlines-control-inner">
 						<input name="AUTOMATIC_MESSAGE[TASK][<?=$idConfigTask?>][LONG_TEXT_BUTTON_CLOSE]"
 							   class="imopenlines-control-input"
-							   value="<?=htmlspecialcharsbx($configTask['LONG_TEXT_BUTTON_CLOSE'])?>"
+							   value="<?=htmlspecialcharsbx($configTask['LONG_TEXT_BUTTON_CLOSE'] ?? '')?>"
 							   placeholder="<?=Loc::getMessage('IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_CLOSE_TITLE')?>"
 							   type="text">
 					</div>
@@ -218,7 +233,7 @@ $sendWelcomeEachSession = $arResult['CONFIG']['SEND_WELCOME_EACH_SESSION'] === '
 					<div class="imopenlines-control-subtitle"><?=Loc::getMessage('IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_AUTOMATIC_TEXT_TITLE')?></div>
 					<div class="imopenlines-control-inner">
 				<textarea type="text" class="imopenlines-control-input imopenlines-control-textarea"
-						  name="AUTOMATIC_MESSAGE[TASK][<?=$idConfigTask?>][AUTOMATIC_TEXT_CLOSE]"><?=htmlspecialcharsbx($configTask['AUTOMATIC_TEXT_CLOSE'])?></textarea>
+						  name="AUTOMATIC_MESSAGE[TASK][<?=$idConfigTask?>][AUTOMATIC_TEXT_CLOSE]"><?=htmlspecialcharsbx($configTask['AUTOMATIC_TEXT_CLOSE'] ?? '')?></textarea>
 					</div>
 				</div>
 
@@ -232,7 +247,7 @@ $sendWelcomeEachSession = $arResult['CONFIG']['SEND_WELCOME_EACH_SESSION'] === '
 					<div class="imopenlines-control-inner">
 						<input name="AUTOMATIC_MESSAGE[TASK][<?=$idConfigTask?>][TEXT_BUTTON_CONTINUE]"
 							   class="imopenlines-control-input"
-							   value="<?=htmlspecialcharsbx($configTask['TEXT_BUTTON_CONTINUE'])?>"
+							   value="<?=htmlspecialcharsbx($configTask['TEXT_BUTTON_CONTINUE'] ?? '')?>"
 							   placeholder="<?=Loc::getMessage('IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_CONTINUE_TITLE')?>"
 							   type="text">
 					</div>
@@ -244,7 +259,7 @@ $sendWelcomeEachSession = $arResult['CONFIG']['SEND_WELCOME_EACH_SESSION'] === '
 					<div class="imopenlines-control-inner">
 						<input name="AUTOMATIC_MESSAGE[TASK][<?=$idConfigTask?>][LONG_TEXT_BUTTON_CONTINUE]"
 							   class="imopenlines-control-input"
-							   value="<?=htmlspecialcharsbx($configTask['LONG_TEXT_BUTTON_CONTINUE'])?>"
+							   value="<?=htmlspecialcharsbx($configTask['LONG_TEXT_BUTTON_CONTINUE'] ?? '')?>"
 							   placeholder="<?=Loc::getMessage('IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_CONTINUE_TITLE')?>"
 							   type="text">
 					</div>
@@ -253,7 +268,7 @@ $sendWelcomeEachSession = $arResult['CONFIG']['SEND_WELCOME_EACH_SESSION'] === '
 					<div class="imopenlines-control-subtitle"><?=Loc::getMessage('IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_AUTOMATIC_TEXT_TITLE')?></div>
 					<div class="imopenlines-control-inner">
 				<textarea type="text" class="imopenlines-control-input imopenlines-control-textarea"
-						  name="AUTOMATIC_MESSAGE[TASK][<?=$idConfigTask?>][AUTOMATIC_TEXT_CONTINUE]"><?=htmlspecialcharsbx($configTask['AUTOMATIC_TEXT_CONTINUE'])?></textarea>
+						  name="AUTOMATIC_MESSAGE[TASK][<?=$idConfigTask?>][AUTOMATIC_TEXT_CONTINUE]"><?=htmlspecialcharsbx($configTask['AUTOMATIC_TEXT_CONTINUE'] ?? '')?></textarea>
 					</div>
 				</div>
 
@@ -267,7 +282,7 @@ $sendWelcomeEachSession = $arResult['CONFIG']['SEND_WELCOME_EACH_SESSION'] === '
 					<div class="imopenlines-control-inner">
 						<input name="AUTOMATIC_MESSAGE[TASK][<?=$idConfigTask?>][TEXT_BUTTON_NEW]"
 							   class="imopenlines-control-input"
-							   value="<?=htmlspecialcharsbx($configTask['TEXT_BUTTON_NEW'])?>"
+							   value="<?=htmlspecialcharsbx($configTask['TEXT_BUTTON_NEW'] ?? '')?>"
 							   placeholder="<?=Loc::getMessage('IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_NEW_TITLE')?>"
 							   type="text">
 					</div>
@@ -279,7 +294,7 @@ $sendWelcomeEachSession = $arResult['CONFIG']['SEND_WELCOME_EACH_SESSION'] === '
 					<div class="imopenlines-control-inner">
 						<input name="AUTOMATIC_MESSAGE[TASK][<?=$idConfigTask?>][LONG_TEXT_BUTTON_NEW]"
 							   class="imopenlines-control-input"
-							   value="<?=htmlspecialcharsbx($configTask['LONG_TEXT_BUTTON_NEW'])?>"
+							   value="<?=htmlspecialcharsbx($configTask['LONG_TEXT_BUTTON_NEW'] ?? '')?>"
 							   placeholder="<?=Loc::getMessage('IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_NEW_TITLE')?>"
 							   type="text">
 					</div>
@@ -288,7 +303,7 @@ $sendWelcomeEachSession = $arResult['CONFIG']['SEND_WELCOME_EACH_SESSION'] === '
 					<div class="imopenlines-control-subtitle"><?=Loc::getMessage('IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_AUTOMATIC_TEXT_TITLE')?></div>
 					<div class="imopenlines-control-inner">
 				<textarea type="text" class="imopenlines-control-input imopenlines-control-textarea"
-						  name="AUTOMATIC_MESSAGE[TASK][<?=$idConfigTask?>][AUTOMATIC_TEXT_NEW]"><?=htmlspecialcharsbx($configTask['AUTOMATIC_TEXT_NEW'])?></textarea>
+						  name="AUTOMATIC_MESSAGE[TASK][<?=$idConfigTask?>][AUTOMATIC_TEXT_NEW]"><?=htmlspecialcharsbx($configTask['AUTOMATIC_TEXT_NEW'] ?? '')?></textarea>
 					</div>
 				</div>
 			<?endforeach;?>

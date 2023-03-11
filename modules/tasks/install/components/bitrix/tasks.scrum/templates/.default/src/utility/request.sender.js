@@ -53,6 +53,16 @@ export class RequestSender
 		return this.sendRequestToComponent(data, 'updateItemSort');
 	}
 
+	addTag(data): Promise
+	{
+		return new Promise((resolve, reject) => {
+			ajax.runComponentAction('bitrix:tasks.tag.list', 'addTag', {
+				mode: 'class',
+				data: data,
+			}).then(resolve, reject);
+		});
+	}
+
 	updateSprintSort(data): Promise
 	{
 		return this.sendRequestToComponent(data, 'updateSprintSort');

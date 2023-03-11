@@ -8,8 +8,8 @@ if ($this->__component->__parent && $this->__component->__parent->arParams && ar
 	$arParams["NAME_TEMPLATE"] = $this->__component->__parent->arParams["NAME_TEMPLATE"];
 
 $arParams['NAME_TEMPLATE'] = empty($arParams['NAME_TEMPLATE']) ? CSite::GetNameFormat(false) : str_replace(array("#NOBR#","#/NOBR#"), array("",""), $arParams["NAME_TEMPLATE"]);
-
-if ($this->__parent && $this->__parent->arParams && array_key_exists("SHOW_LOGIN", $this->__parent->arParams))
+$arParams["SHOW_LOGIN"] ??= null;
+if (isset($this->__parent) && $this->__parent->arParams && array_key_exists("SHOW_LOGIN", $this->__parent->arParams))
 	$arParams["SHOW_LOGIN"] = $this->__parent->arParams["SHOW_LOGIN"];
 $bUseLogin = $arParams["SHOW_LOGIN"] != "N" ? true : false;
 

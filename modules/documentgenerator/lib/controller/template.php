@@ -26,6 +26,7 @@ use Bitrix\Main\IO\Path;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
+use Bitrix\Main\Numerator\Model\NumeratorTable;
 use Bitrix\Main\Numerator\Numerator;
 use Bitrix\Main\Result;
 use Bitrix\Main\Type\DateTime;
@@ -325,6 +326,40 @@ class Template extends Base
 				$result->addErrors($this->getErrors());
 			}
 		}
+		if ($result->isSuccess() && isset($template['NUMERATOR']) && !isset($template['NUMERATOR_ID']))
+		{
+			$config = $template['NUMERATOR']['CONFIG'];
+			$config[Numerator::getType()]['type'] = Driver::NUMERATOR_TYPE;
+
+			if (!empty($config[Numerator::getType()]['code']))
+			{
+				// in case the numerator was created on this hit while adding another default template
+				$id = NumeratorTable::getIdByCode($config[Numerator::getType()]['code']);
+				if ($id !== null)
+				{
+					$template['NUMERATOR_ID'] = $id;
+				}
+			}
+
+			if (empty($template['NUMERATOR_ID']))
+			{
+				$numerator = Numerator::create();
+				$numeratorCreateResult = $numerator->setConfig($config);
+				if ($numeratorCreateResult->isSuccess())
+				{
+					$numeratorCreateResult = $numerator->save();
+				}
+
+				if ($numeratorCreateResult->isSuccess())
+				{
+					$template['NUMERATOR_ID'] = $numerator->getId();
+				}
+				else
+				{
+					$result->addErrors($numeratorCreateResult->getErrors());
+				}
+			}
+		}
 		if($result->isSuccess())
 		{
 			if($template['IS_DELETED'] === 'Y')
@@ -485,6 +520,43 @@ class Template extends Base
 				}
 			}
 		}
+
+		$numeratorCodes = [];
+		foreach ($templates as $template)
+		{
+			$baseNumeratorConfig = $template['NUMERATOR']['CONFIG'][Numerator::getType()] ?? null;
+			if ($baseNumeratorConfig && isset($baseNumeratorConfig['code']))
+			{
+				$numeratorCodes[$baseNumeratorConfig['code']] = (string)$baseNumeratorConfig['code'];
+			}
+		}
+
+		if (!empty($numeratorCodes))
+		{
+			$dbIterator =
+				NumeratorTable::query()
+					->setSelect(['ID', 'CODE'])
+					->whereIn('CODE', $numeratorCodes)
+					->exec()
+			;
+
+			$codeToIdMap = [];
+			while ($numerator = $dbIterator->fetchObject())
+			{
+				$codeToIdMap[$numerator->getCode()] = $numerator->getId();
+			}
+
+			foreach ($templates as &$template)
+			{
+				$code = $template['NUMERATOR']['CONFIG'][Numerator::getType()]['code'] ?? null;
+				if ($code && isset($codeToIdMap[$code]))
+				{
+					$template['NUMERATOR_ID'] = $codeToIdMap[$code];
+				}
+			}
+			unset($template);
+		}
+
 		$result->setData($templates);
 
 		return $result;

@@ -14,6 +14,7 @@ $MESS["TASKS_LIST_CRM_TYPE_L"] = "Лид";
 $MESS["TASKS_LIST_CRM_TYPE_D"] = "Сделка";
 
 $MESS["TASKS_TEMPLATE_ADD"] = "Добавить";
+$MESS['TASKS_TEMPLATE_CREATE'] = 'Создать';
 
 $MESS["TASKS_TEMPLATES_ROW_ACTION_VIEW"] = "Просмотреть";
 $MESS["TASKS_TEMPLATES_ROW_ACTION_CREATE_TASK"] = "Добавить задачу по шаблону";

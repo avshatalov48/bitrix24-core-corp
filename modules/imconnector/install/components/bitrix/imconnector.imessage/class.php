@@ -51,7 +51,7 @@ class ImConnectorImessage extends CBitrixComponent
 		}
 		else
 		{
-			ShowError(Loc::getMessage('IMCONNECTOR_COMPONENT_IMESSAGE_MODULE_NOT_INSTALLED'));
+			ShowError(Loc::getMessage('IMCONNECTOR_COMPONENT_IMESSAGE_MODULE_NOT_INSTALLED_MSGVER_1'));
 			return false;
 		}
 	}
@@ -95,12 +95,6 @@ class ImConnectorImessage extends CBitrixComponent
 
 	/**
 	 * Initialize connector before starting actions.
-	 *
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ArgumentNullException
-	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	protected function initialization()
 	{
@@ -126,9 +120,9 @@ class ImConnectorImessage extends CBitrixComponent
 			}
 		}
 
-		$this->connectorOutput = new Output($this->connector, $this->arParams['LINE']);
+		$this->connectorOutput = new Output($this->connector, (int)$this->arParams['LINE']);
 
-		$this->status = Status::getInstance($this->connector, $this->arParams['LINE']);
+		$this->status = Status::getInstance($this->connector, (int)$this->arParams['LINE']);
 
 		$this->arResult['STATUS'] = $this->status->isStatus();
 		$this->arResult['ACTIVE_STATUS'] = $this->status->getActive();
@@ -232,7 +226,7 @@ class ImConnectorImessage extends CBitrixComponent
 				//Reset cache
 				$this->cleanCache();
 
-				if ($this->arResult['SAVE_STATUS'])
+				if (isset($this->arResult['SAVE_STATUS']) && $this->arResult['SAVE_STATUS'] === true)
 				{
 					$this->registerConnector();
 
@@ -249,7 +243,6 @@ class ImConnectorImessage extends CBitrixComponent
 					$this->cleanCache();
 				}
 			}
-
 		}
 	}
 
@@ -295,7 +288,7 @@ class ImConnectorImessage extends CBitrixComponent
 						//Reset cache
 						$this->cleanCache();
 
-						if ($this->arResult['SAVE_STATUS'])
+						if (isset($this->arResult['SAVE_STATUS']) && $this->arResult['SAVE_STATUS'] === true)
 						{
 							$this->registerConnector();
 
@@ -310,7 +303,7 @@ class ImConnectorImessage extends CBitrixComponent
 
 						if($rawDelete->isSuccess())
 						{
-							Status::delete($this->connector, $this->arParams['LINE']);
+							Status::delete($this->connector, (int)$this->arParams['LINE']);
 							$this->arResult['STATUS'] = false;
 							$this->arResult['ACTIVE_STATUS'] = false;
 							$this->arResult['CONNECTION_STATUS'] = false;
@@ -389,11 +382,11 @@ class ImConnectorImessage extends CBitrixComponent
 
 				foreach ($this->listOptions as $value)
 				{
-					if(empty($this->arResult['FORM'][$value]))
+					if (empty($this->arResult['FORM'][$value]))
 					{
-						if(empty($result[$value]))
+						if (empty($result[$value]))
 						{
-							$this->arResult['FORM'][$value] = $result[$value];
+							$this->arResult['FORM'][$value] = $result[$value] ?? '';
 						}
 						else
 						{

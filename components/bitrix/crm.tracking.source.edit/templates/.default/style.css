@@ -72,15 +72,12 @@
 	flex-shrink: 0;
 }
 
-.bx-ie .crm-analytics-source-icon.ui-icon {
-	width: 95px;
-}
-
 .crm-analytics-source-connect-btn {
 	margin-top: 15px;
 	padding-left: 60px;
 	position: relative;
 }
+
 .crm-analytics-source-connect-btn-goo {
 	position: relative;
 	padding: 15px;
@@ -358,10 +355,6 @@
 
 .crm-analytics-source-contact-title-icon.ui-icon > i {
 	background-color: #2fc6f6;
-}
-
-.bx-ie .crm-analytics-source-contact-title-icon.ui-icon {
-	width: 23px;
 }
 
 .crm-analytics-source-contact-replace .crm-analytics-source-contact-item {

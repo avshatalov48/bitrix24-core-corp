@@ -7,6 +7,8 @@ use Bitrix\Crm;
 use Bitrix\Crm\Order\OrderDealSynchronizer\Products\ProductRowXmlId;
 use Bitrix\Main\Type\Date;
 use Bitrix\Catalog;
+use Bitrix\Catalog\VatTable;
+use Bitrix\Main\Loader;
 
 Main\Localization\Loc::loadMessages(__FILE__);
 
@@ -26,6 +28,12 @@ class ProductManager
 	/** @var ProductManager\ProductConverter $productConverter */
 	private $productConverter;
 
+	/** @var ProductManager\ProductConverter\PricesConverter */
+	private ProductManager\ProductConverter\PricesConverter $pricesConverter;
+
+	/** @var array */
+	private static array $taxRates;
+
 	/**
 	 * @param int $ownerTypeId
 	 * @param int $ownerId
@@ -36,6 +44,7 @@ class ProductManager
 		$this->ownerId = $ownerId;
 
 		$this->productConverter = new ProductManager\EntityProductConverter();
+		$this->pricesConverter = new ProductManager\ProductConverter\PricesConverter();
 	}
 
 	/**
@@ -606,22 +615,24 @@ class ProductManager
 							$resultProductList[$index]['QUANTITY'] = $basketProduct['QUANTITY'];
 						}
 
-						$resultProductList[$index]['PRICE'] = $product['price'];
-						$resultProductList[$index]['PRICE_EXCLUSIVE'] = $product['priceExclusive'];
-						$resultProductList[$index]['PRICE_ACCOUNT'] = $product['price'];
-						$resultProductList[$index]['PRICE_NETTO'] = $product['basePrice'];
-						$resultProductList[$index]['PRICE_BRUTTO'] = $product['price'];
 						$resultProductList[$index]['XML_ID'] = $basketId ? ProductRowXmlId::getXmlIdFromBasketId($basketId) : null;
 
-						if (!empty($product['discount']))
+						// prices
+						$prices = $this->pricesConverter->convertToProductRowPrices(
+							(float)$product['price'],
+							(float)$product['basePrice'],
+							$this->getProductTaxRate($product) * 0.01,
+							$product['taxIncluded'] === 'Y'
+						);
+						$resultProductList[$index] = array_merge($resultProductList[$index], $prices);
+
+						if (!empty($product['discountType']))
 						{
 							$resultProductList[$index]['DISCOUNT_TYPE_ID'] =
 								(int)$product['discountType'] === Crm\Discount::MONETARY
 									? Crm\Discount::MONETARY
 									: Crm\Discount::PERCENTAGE
 							;
-							$resultProductList[$index]['DISCOUNT_RATE'] = $product['discountRate'];
-							$resultProductList[$index]['DISCOUNT_SUM'] = $product['discount'];
 						}
 
 						continue;
@@ -632,11 +643,6 @@ class ProductManager
 			$item = [
 				'PRODUCT_ID' => $productId,
 				'PRODUCT_NAME' => $product['name'],
-				'PRICE' => $product['price'],
-				'PRICE_ACCOUNT' => $product['price'],
-				'PRICE_EXCLUSIVE' => $product['priceExclusive'],
-				'PRICE_NETTO' => $product['basePrice'],
-				'PRICE_BRUTTO' => $product['price'],
 				'QUANTITY' => $product['quantity'],
 				'MEASURE_CODE' => $product['measureCode'],
 				'MEASURE_NAME' => $product['measureName'],
@@ -646,15 +652,21 @@ class ProductManager
 				'TYPE' => $productTypes[$productId] ?? Crm\ProductType::TYPE_PRODUCT,
 			];
 
-			if (!empty($product['discount']))
+			// prices
+			$item += $this->pricesConverter->convertToProductRowPrices(
+				(float)$product['price'],
+				(float)$product['basePrice'],
+				$this->getProductTaxRate($product) * 0.01,
+				$product['taxIncluded'] === 'Y'
+			);
+
+			if (!empty($product['discountType']))
 			{
 				$item['DISCOUNT_TYPE_ID'] =
 					(int)$product['discountType'] === Crm\Discount::MONETARY
 						? Crm\Discount::MONETARY
 						: Crm\Discount::PERCENTAGE
 				;
-				$item['DISCOUNT_RATE'] = $product['discountRate'];
-				$item['DISCOUNT_SUM'] = $product['discount'];
 			}
 
 			$resultProductList[] = $item;
@@ -693,5 +705,52 @@ class ProductManager
 		}
 
 		return $result;
+	}
+
+	/**
+	 * Product tax rate.
+	 *
+	 * Tax read from `taxRate` and `taxId` fields.
+	 *
+	 * @param array $product
+	 *
+	 * @return float between 0 and 100
+	 */
+	private function getProductTaxRate(array $product): float
+	{
+		if (isset($product['taxRate']))
+		{
+			return (float)$product['taxRate'];
+		}
+
+		$taxId = $product['taxId'] ?? null;
+		if (!$taxId)
+		{
+			return 0.0;
+		}
+
+		if (!isset(self::$taxRates))
+		{
+			self::$taxRates = [];
+
+			if (Loader::includeModule('catalog'))
+			{
+				$rows = VatTable::getList([
+					'select' => [
+						'ID',
+						'RATE',
+					],
+					'cache' => [
+						'ttl' => 86400,
+					],
+				]);
+				foreach ($rows as $row)
+				{
+					self::$taxRates[$row['ID']] = (float)$row['RATE'];
+				}
+			}
+		}
+
+		return self::$taxRates[$taxId] ?? 0.0;
 	}
 }

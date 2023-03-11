@@ -2534,7 +2534,7 @@ class CCrmDocument
 
 	protected static function getAssignedByFields()
 	{
-		return [
+		$fields = [
 			'ASSIGNED_BY_PRINTABLE' => array(
 				'Name' => GetMessage('CRM_DOCUMENT_FIELD_ASSIGNED_BY_PRINTABLE'),
 				'Type' => 'string',
@@ -2613,6 +2613,28 @@ class CCrmDocument
 				'Type' => 'string',
 			),
 		];
+
+		return array_merge(
+			$fields,
+			static::getExtendedResponsibleFields(),
+		);
+	}
+
+	protected static function getExtendedResponsibleFields(string $prefix = 'ASSIGNED_BY.'): array
+	{
+		$responsibleName = GetMessage('CRM_DOCUMENT_FIELD_ASSIGNED_BY_FIELD');
+		$wrapName = fn($name) => sprintf('%s: %s', $responsibleName, $name);
+
+		$userService = \CBPRuntime::getRuntime(true)->getUserService();
+		$fields = [];
+
+		foreach ($userService->getUserExtendedFields() as $id => $field)
+		{
+			$field['Name'] = $wrapName($field['Name']);
+			$fields[$prefix . $id] = $field;
+		}
+
+		return $fields;
 	}
 
 	protected static function getUtmFields()

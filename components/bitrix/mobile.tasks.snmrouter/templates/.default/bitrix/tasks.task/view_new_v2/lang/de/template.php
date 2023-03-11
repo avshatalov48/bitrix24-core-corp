@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["MB_TASKS_BASE_SETTINGS"] = "Haupparameter der Aufgaben";
 $MESS["MB_TASKS_BASE_SETTINGS_DESCRIPTION"] = "Zu erledigen";
 $MESS["MB_TASKS_BASE_SETTINGS_DESCRIPTION_PLACEHOLDER"] = "Aufgabenbeschreibung";
@@ -77,7 +77,7 @@ $MESS["TASKS_STATUS_STATE_DECLINED"] = "Abgelehnt";
 $MESS["TASKS_STATUS_STATE_DEFERRED"] = "Verschoben";
 $MESS["TASKS_STATUS_STATE_IN_PROGRESS"] = "In Arbeit";
 $MESS["TASKS_STATUS_STATE_NEW"] = "Neu";
-$MESS["TASKS_STATUS_STATE_PENDING"] = "Muss gestartet werden";
+$MESS["TASKS_STATUS_STATE_PENDING"] = "Muss begonnen werden";
 $MESS["TASKS_STATUS_STATE_SUPPOSEDLY_COMPLETED"] = "Muss kontrolliert werden";
 $MESS["TASKS_STATUS_STATE_UNKNOWN"] = "Unbekannt";
 $MESS["TASKS_TT_CANCEL"] = "Abbrechen";
@@ -86,4 +86,3 @@ $MESS["TASKS_TT_ERROR1_DESC"] = "Momentan erfassen Sie Zeit für die Aufgabe \"#
 $MESS["TASKS_TT_ERROR1_TITLE"] = "Zeiterfassung wird für eine andere Aufgabe verwendet.";
 $MESS["TASKS_TT_PAUSE"] = "Stopp";
 $MESS["TASKS_TT_START"] = "Zeiterfassung starten";
-?>

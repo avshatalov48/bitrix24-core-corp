@@ -1,5 +1,4 @@
 <?php
-
 $MESS["CRM_DOCUMENT_OPERATION_WRITE"] = "Запись";
 $MESS["CRM_DOCUMENT_OPERATION_READ"] = "Чтение";
 $MESS["CRM_DOCUMENT_OPERATION_ADD"] = "Добавление";
@@ -61,6 +60,7 @@ $MESS["CRM_DOCUMENT_FIELD_CREATED_BY_ID_DEAL"] = "Создатель сделк�
 $MESS["CRM_DOCUMENT_FIELD_CREATED_BY_ID_CONTACT"] = "Создатель контакта";
 $MESS["CRM_DOCUMENT_FIELD_CREATED_BY_ID_COMPANY"] = "Создатель компании";
 $MESS["CRM_DOCUMENT_FIELD_MODIFY_BY_ID"] = "Кем изменен";
+$MESS["CRM_DOCUMENT_FIELD_ASSIGNED_BY_FIELD"] = "Ответственный";
 $MESS["CRM_DOCUMENT_FIELD_ASSIGNED_BY_PRINTABLE"] = "Ответственный (текст)";
 $MESS["CRM_DOCUMENT_FIELD_ASSIGNED_BY_EMAIL"] = "Ответственный (e-mail)";
 $MESS["CRM_DOCUMENT_FIELD_ASSIGNED_BY_WORK_PHONE"] = "Ответственный (Рабочий телефон)";
@@ -92,8 +92,9 @@ $MESS["CRM_DOCUMENT_FIELD_URL_BB"] = "Ссылка на элемент (BBcode)"
 $MESS["CRM_DOCUMENT_FIELD_PRODUCT_IDS"] = "Товарные позиции";
 $MESS["CRM_DOCUMENT_FIELD_PRODUCT_NAME"] = "Товар";
 $MESS["CRM_DOCUMENT_FIELD_PRODUCT_SUM"] = "Сумма";
-$MESS['CRM_DOCUMENT_FIELD_TRACKING_SOURCE_ID'] = 'Источник сквозной аналитики';
-$MESS['CRM_DOCUMENT_AUTOMATION_DEBUG_MESSAGE_INTERCEPTED'] = 'Элемент находится в режиме отладки. Приостановите работу с элементом, пока он не вернется в обычный режим';
-$MESS['CRM_DOCUMENT_AUTOMATION_DEBUG_MESSAGE_REMOVED'] = 'Элемент вернулся в обычный режим, можете продолжить работу с элементом';
-$MESS['CRM_DOCUMENT_AUTOMATION_DEBUG_MESSAGE_IN_DEBUG'] = 'Этот элемент выбран для отладки роботов. Приостановите работу с элементом, пока не завершится отладка';
-$MESS['CRM_DOCUMENT_AUTOMATION_DEBUG_MESSAGE_FINISHED'] = 'Отладка роботов завершена, можете продолжить работу с элементом';
+$MESS["CRM_DOCUMENT_FIELD_TRACKING_SOURCE_ID"] = 'Источник сквозной аналитики';
+$MESS["CRM_DOCUMENT_AUTOMATION_DEBUG_MESSAGE_INTERCEPTED"] = 'Элемент находится в режиме отладки. Приостановите работу с элементом, пока он не вернется в обычный режим';
+$MESS["CRM_DOCUMENT_AUTOMATION_DEBUG_MESSAGE_REMOVED"] = 'Элемент вернулся в обычный режим, можете продолжить работу с элементом';
+$MESS["CRM_DOCUMENT_AUTOMATION_DEBUG_MESSAGE_IN_DEBUG"] = 'Этот элемент выбран для отладки роботов. Приостановите работу с элементом, пока не завершится отладка';
+$MESS["CRM_DOCUMENT_AUTOMATION_DEBUG_MESSAGE_FINISHED"] = 'Отладка роботов завершена, можете продолжить работу с элементом';
+$MESS["CRM_DOCUMENT_RESPONSIBLE_HEAD"] = "Руководитель";

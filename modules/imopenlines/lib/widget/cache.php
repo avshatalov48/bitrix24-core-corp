@@ -8,19 +8,30 @@ class Cache
 	static $cacheDir = '/bx/imol/widget/cache/';
 	static $cacheTtl = 8*60*60; // 8 hour
 
-	public static function get(int $userId, string $option = null)
+	public static function get(int $userId, ?string $option = null)
 	{
 		$cache = \Bitrix\Main\Data\Cache::createInstance();
 
 		$result = [];
-		if($cache->initCache(self::$cacheTtl, $userId, self::$cacheDir))
+		if ($cache->initCache(self::$cacheTtl, $userId, self::$cacheDir))
 		{
 			$result = $cache->getVars();
 		}
 
-		if (!is_null($option))
+		if ($option !== null)
 		{
-			return $result[$option]?: null;
+			if (
+				!empty($result)
+				&& is_array($result)
+				&& isset($result[$option])
+			)
+			{
+				return $result[$option];
+			}
+			else
+			{
+				return null;
+			}
 		}
 
 		return $result;

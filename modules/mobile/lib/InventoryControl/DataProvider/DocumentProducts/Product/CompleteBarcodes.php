@@ -29,11 +29,11 @@ final class CompleteBarcodes implements Enricher
 		{
 			$record = clone $origRecord;
 
-			if ($barcodesFromDocuments[$record->id])
+			if (!empty($barcodesFromDocuments[$record->id]))
 			{
 				$record->barcode = $barcodesFromDocuments[$record->id];
 			}
-			elseif ($barcodesFromCatalog[$record->productId])
+			elseif (!empty($barcodesFromCatalog[$record->productId]))
 			{
 				$record->barcode = $barcodesFromCatalog[$record->productId];
 			}

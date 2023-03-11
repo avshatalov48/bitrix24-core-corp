@@ -11,7 +11,7 @@
 
 namespace Bitrix\Tasks\Item\Task\Field\Legacy;
 
-use Bitrix\Tasks\Internals\Task\TagTable;
+use Bitrix\Tasks\Internals\Task\LabelTable;
 use Bitrix\Tasks\Item\Result;
 use Bitrix\Tasks\Util\Collection;
 

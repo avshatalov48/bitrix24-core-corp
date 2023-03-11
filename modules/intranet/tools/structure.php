@@ -15,6 +15,34 @@ if($_REQUEST["site_id"] <> '')
 
 $iblockID = COption::GetOptionInt("intranet", "iblock_structure");
 
+function updateUserEmployee(int $userId, int $departmentId)
+{
+	$user = CUser::GetByID($userId);
+	if ($userData = $user->Fetch())
+	{
+		$userData['UF_DEPARTMENT'][] = $departmentId;
+	}
+	else
+	{
+		return false;
+	}
+	$user = new CUser();
+	$isSuccess = $user->Update(
+		$userId,
+		[
+			'UF_DEPARTMENT' => array_unique($userData['UF_DEPARTMENT']),
+		]
+	);
+	if (!$isSuccess)
+	{
+		return $user->LAST_ERROR;
+	}
+	else
+	{
+		return $isSuccess;
+	}
+}
+
 function AddDepartment($SITE_ID, $arFields)
 {
 	if (CModule::IncludeModule('iblock'))
@@ -38,6 +66,14 @@ function AddDepartment($SITE_ID, $arFields)
 	}
 	else
 	{
+		if (intval($arFields["UF_HEAD"]) > 0)
+		{
+			$result = updateUserEmployee(intval($arFields["UF_HEAD"]), intval($ID));
+			if ($result !== true)
+			{
+				return preg_split("/<br>/", $result);
+			}
+		}
 		return $ID;
 	}
 }
@@ -65,6 +101,15 @@ function EditDepartment($SITE_ID, $arFields)
 	}
 	else
 	{
+		if (intval($arFields["UF_HEAD"]) > 0)
+		{
+			$result = updateUserEmployee(intval($arFields["UF_HEAD"]), intval($arFields["CURRENT_DEPARTMENT_ID"]));
+			if ($result !== true)
+			{
+				return preg_split("/<br>/", $result);
+			}
+		}
+
 		return $ID;
 	}
 }

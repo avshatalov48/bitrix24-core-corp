@@ -818,8 +818,8 @@ class Filter extends Common
 							[
 								'id' => 'task-tag',
 								'options' => $isScrumProject
-									? ['groupId' => $this->getGroupId()]
-									: []
+									? ['groupId' => $this->getGroupId(), 'filter' => true]
+									: ['filter' => true]
 								,
 							],
 						],

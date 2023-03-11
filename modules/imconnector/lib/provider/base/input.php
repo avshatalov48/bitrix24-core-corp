@@ -182,7 +182,7 @@ class Input
 
 		if ($result->isSuccess())
 		{
-			$lineStatus = Status::getInstance($this->connector, $this->line);
+			$lineStatus = Status::getInstance($this->connector, (int)$this->line);
 			if ($lineStatus->isStatus())
 			{
 				$resultData = [];
@@ -463,9 +463,12 @@ class Input
 
 		if ($result->isSuccess())
 		{
-			foreach ($this->data as $cell => $status)
+			foreach ($this->data as $status)
 			{
-				if (!Library::isEmpty($status['message']['date']))
+				if (
+					isset($status['message']['date'])
+					&& !Library::isEmpty($status['message']['date'])
+				)
 				{
 					$status['message']['date'] = DateTime::createFromTimestamp((int)$status['message']['date']);
 				}
@@ -490,7 +493,7 @@ class Input
 
 		if ($result->isSuccess())
 		{
-			foreach ($this->data as $cell => $status)
+			foreach ($this->data as $status)
 			{
 				$event = $this->sendEventStatusReading($status);
 				if (!$event->isSuccess())
@@ -580,7 +583,7 @@ class Input
 
 		if ($result->isSuccess())
 		{
-			Status::getInstance($this->connector, $this->line)->setError(true);
+			Status::getInstance($this->connector, (int)$this->line)->setError(true);
 			$cacheId = Connector::getCacheIdConnector($this->line, $this->connector);
 
 			//Reset cache

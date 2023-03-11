@@ -1,4 +1,6 @@
-#crm-tracking-settings {width: 100%;}
+#crm-tracking-settings {
+	width: 100%;
+}
 
 .crm-analytics-source-block {
 	background: #fff;
@@ -35,8 +37,4 @@
 	height: 95px;
 	margin-right: 24px;
 	flex-shrink: 0;
-}
-
-.bx-ie .crm-analytics-source-icon.ui-icon {
-	width: 95px;
 }

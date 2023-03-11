@@ -29,6 +29,7 @@ use Bitrix\Main\Web\Uri;
  * @property-read int IMAGE_ID
  * @property-read int PDF_ID
  * @property-read DateTime UPDATE_TIME
+ * @property-read int TEMPLATE_ID
  */
 class Document
 {

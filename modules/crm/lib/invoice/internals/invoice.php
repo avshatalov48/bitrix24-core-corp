@@ -253,9 +253,9 @@ class InvoiceTable extends Main\Entity\DataManager
 
 			new Main\Entity\ExpressionField(
 				'DISCOUNT_ALL',
-				"%s + (SELECT SUM(b_crm_basket.DISCOUNT_PRICE)
-						FROM b_crm_basket
-						WHERE b_crm_basket.ORDER_ID = %s)",
+				"%s + (SELECT SUM(b_crm_invoice_basket.DISCOUNT_PRICE)
+						FROM b_crm_invoice_basket
+						WHERE b_crm_invoice_basket.ORDER_ID = %s)",
 				array('DISCOUNT_VALUE', 'ID')
 			),
 

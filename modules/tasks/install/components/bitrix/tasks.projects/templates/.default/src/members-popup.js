@@ -160,7 +160,7 @@ export class MembersPopup
 		{
 			return Tag.render`
 				<div class="ui-icon ui-icon-common-user tasks-projects-members-popup-avatar-img">
-					<i style="background-image: url('${user['PHOTO']}')"></i>
+					<i style="background-image: url('${encodeURI(user['PHOTO'])}')"></i>
 				</div>
 			`;
 		}

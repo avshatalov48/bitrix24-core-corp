@@ -1,0 +1,26 @@
+@keyframes crm-activity-file-uploader-wrapper-hide {
+	from { opacity: 1; }
+	to { opacity: 0; }
+}
+
+@keyframes crm-activity-file-uploader-wrapper-show {
+	from { opacity: 0; }
+	to { opacity: 1; }
+}
+
+.crm-activity__todo-editor-file-uploader-wrapper {
+	display: none;
+	animation: crm-activity-file-uploader-wrapper-hide 500ms both;
+	position: relative;
+	margin-top: 10px;
+	padding: 15px 20px;
+	background-color: #f8f9fa;
+	border-top: none;
+	box-shadow: inset 0 1px 1px 0 rgb(0 0 0 / 7%);
+	border-radius: var(--ui-border-radius-2xs);
+}
+
+.crm-activity__todo-editor-file-uploader-wrapper.--is-displayed {
+	display: block;
+	animation: crm-activity-file-uploader-wrapper-show 750ms ease-in-out both;
+}

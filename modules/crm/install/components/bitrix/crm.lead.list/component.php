@@ -620,6 +620,17 @@ Crm\Service\Container::getInstance()->getParentFieldManager()->prepareGridHeader
 	$arResult['HEADERS']
 );
 
+$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::Lead);
+if (
+	\Bitrix\Crm\Settings\Crm::isUniversalActivityScenarioEnabled()
+	&& $factory
+	&& $factory->isLastActivityEnabled()
+)
+{
+	$arResult['HEADERS'][] = ['id' => Crm\Item::FIELD_NAME_LAST_ACTIVITY_TIME, 'name' => $factory->getFieldCaption(Crm\Item::FIELD_NAME_LAST_ACTIVITY_TIME), 'sort' => mb_strtolower(Crm\Item::FIELD_NAME_LAST_ACTIVITY_TIME), 'first_order' => 'desc', 'class' => 'datetime'];
+}
+unset($factory);
+
 $arResult['HEADERS_SECTIONS'] = [
 	[
 		'id' => 'LEAD',

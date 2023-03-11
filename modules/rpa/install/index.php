@@ -124,7 +124,7 @@ class rpa extends CModule
 		}
 		elseif($step==2)
 		{
-			$this->UnInstallDB(["savedata" => $_REQUEST["savedata"]]);
+			$this->UnInstallDB(["savedata" => $_REQUEST["savedata"] ?? null]);
 			$this->UnInstallFiles();
 
 			$APPLICATION->IncludeAdminFile(GetMessage("RPA_UNINSTALL_TITLE"), $DOCUMENT_ROOT."/bitrix/modules/".$this->MODULE_ID."/install/unstep2.php");

@@ -14,68 +14,36 @@ use Bitrix\Main\Update\Stepper;
 
 final class LastActivityFields extends Stepper
 {
+	private const OPTION_PREFIX = 'update_last_activity_stepper_';
+
 	protected static $moduleId = 'crm';
 
-	private Factory $factory;
 	private Monitor $monitor;
 
 	function execute(array &$option)
 	{
-		if (!$this->initFactory())
+		$this->initMonitor();
+
+		$isProcessingFinishedForAllTypes = true;
+
+		foreach (self::getTypesToProcess() as $entityTypeId)
 		{
+			$isAllItemsProcessed = $this->processType($entityTypeId);
+
+			$isProcessingFinishedForAllTypes = $isProcessingFinishedForAllTypes && $isAllItemsProcessed;
+		}
+
+		if ($isProcessingFinishedForAllTypes)
+		{
+			$this->cleanUp();
+
 			return self::FINISH_EXECUTION;
 		}
 
-		$this->initMonitor();
-
-		$lastId = (isset($option['lastId']) && is_numeric($option['lastId'])) ? (int)$option['lastId'] : null;
-
-		$processedCount = 0;
-		foreach ($this->getRowsToProcess(self::getSingleStepLimit(), $lastId) as $row)
-		{
-			$this->processRow($row);
-
-			$lastId = $row->getId();
-			$processedCount++;
-		}
-
-		$option['lastId'] = $lastId;
-
-		if ($processedCount >= self::getSingleStepLimit())
-		{
-			return self::CONTINUE_EXECUTION;
-		}
-
-		// default value for this option is Y. remove unnecessary data
-		Option::delete(
-			'crm',
-			[
-				'name' => 'enable_last_activity_for_' . mb_strtolower($this->factory->getEntityName()),
-			],
-		);
-
-		return self::FINISH_EXECUTION;
+		return self::CONTINUE_EXECUTION;
 	}
 
-	private function initFactory(): bool
-	{
-		$entityTypeId = $this->getOuterParams()[0] ?? \CCrmOwnerType::Undefined;
-		if (!\CCrmOwnerType::IsDefined($entityTypeId))
-		{
-			return false;
-		}
-
-		$factory = Container::getInstance()->getFactory((int)$entityTypeId);
-		if (!$factory || !$factory->isFieldExists(Item::FIELD_NAME_LAST_ACTIVITY_TIME))
-		{
-			return false;
-		}
-
-		$this->factory = $factory;
-
-		return true;
-	}
-
+	//region Processing
 	private function initMonitor(): void
 	{
 		Monitor::onLastActivityRecalculationByAgent();
@@ -83,23 +51,69 @@ final class LastActivityFields extends Stepper
 		$this->monitor = Monitor::getInstance();
 	}
 
-	private function getRowsToProcess(int $singleStepLimit, ?int $lastId): Collection
+	private function processType(int $entityTypeId): bool
 	{
-		$query = $this->factory->getDataClass()::query();
+		$factory = $this->getFactory($entityTypeId);
+		if (!$factory)
+		{
+			$this->markTypeAsFinished($entityTypeId);
+
+			return true;
+		}
+
+		[$lastId, $isAllItemsProcessed] = $this->getProgress($entityTypeId);
+		if ($isAllItemsProcessed)
+		{
+			return true;
+		}
+
+		$processedCount = 0;
+		foreach ($this->getRowsToProcess($factory, $lastId) as $row)
+		{
+			$this->processRow($factory, $row);
+
+			$lastId = $row->getId();
+			$processedCount++;
+		}
+
+		if ($processedCount < self::getSingleEntityStepLimit())
+		{
+			$isAllItemsProcessed = true;
+		}
+
+		$this->saveProgress($entityTypeId, $lastId, $isAllItemsProcessed);
+
+		return $isAllItemsProcessed;
+	}
+
+	private function getFactory(int $entityTypeId): ?Factory
+	{
+		$factory = Container::getInstance()->getFactory($entityTypeId);
+		if ($factory && $factory->isFieldExists(Item::FIELD_NAME_LAST_ACTIVITY_TIME))
+		{
+			return $factory;
+		}
+
+		return null;
+	}
+
+	private function getRowsToProcess(Factory $factory, ?int $lastId): Collection
+	{
+		$query = $factory->getDataClass()::query();
 
 		$select = [
 			Item::FIELD_NAME_ID,
-			$this->factory->getEntityFieldNameByMap(Item::FIELD_NAME_CREATED_TIME),
-			$this->factory->getEntityFieldNameByMap(Item::FIELD_NAME_CREATED_BY),
+			$factory->getEntityFieldNameByMap(Item::FIELD_NAME_CREATED_TIME),
+			$factory->getEntityFieldNameByMap(Item::FIELD_NAME_CREATED_BY),
 		];
 
-		if ($this->factory->isFieldExists(Item::FIELD_NAME_LAST_ACTIVITY_TIME))
+		if ($factory->isFieldExists(Item::FIELD_NAME_LAST_ACTIVITY_TIME))
 		{
-			$select[] = $this->factory->getEntityFieldNameByMap(Item::FIELD_NAME_LAST_ACTIVITY_TIME);
+			$select[] = $factory->getEntityFieldNameByMap(Item::FIELD_NAME_LAST_ACTIVITY_TIME);
 		}
-		if ($this->factory->isFieldExists(Item::FIELD_NAME_LAST_ACTIVITY_BY))
+		if ($factory->isFieldExists(Item::FIELD_NAME_LAST_ACTIVITY_BY))
 		{
-			$select[] = $this->factory->getEntityFieldNameByMap(Item::FIELD_NAME_LAST_ACTIVITY_BY);
+			$select[] = $factory->getEntityFieldNameByMap(Item::FIELD_NAME_LAST_ACTIVITY_BY);
 		}
 
 		$query
@@ -107,7 +121,7 @@ final class LastActivityFields extends Stepper
 			->setOrder([
 				Item::FIELD_NAME_ID => 'ASC',
 			])
-			->setLimit($singleStepLimit)
+			->setLimit(self::getSingleEntityStepLimit())
 		;
 
 		if (!is_null($lastId))
@@ -118,35 +132,143 @@ final class LastActivityFields extends Stepper
 		return $query->exec()->fetchCollection();
 	}
 
-	private function processRow(EntityObject $row): void
+	private function processRow(Factory $factory, EntityObject $row): void
 	{
-		$identifier = new ItemIdentifier($this->factory->getEntityTypeId(), $row->getId());
+		$identifier = new ItemIdentifier($factory->getEntityTypeId(), $row->getId());
 		[$lastActivityTime, $lastActivityBy] = $this->monitor->calculateLastActivityInfo($identifier);
 
-		$lastActivityTime ??= $row->get($this->factory->getEntityFieldNameByMap(Item::FIELD_NAME_CREATED_TIME));
-		$lastActivityBy ??= $row->get($this->factory->getEntityFieldNameByMap(Item::FIELD_NAME_CREATED_BY));
+		$lastActivityTime ??= $row->get($factory->getEntityFieldNameByMap(Item::FIELD_NAME_CREATED_TIME));
+		$lastActivityBy ??= $row->get($factory->getEntityFieldNameByMap(Item::FIELD_NAME_CREATED_BY));
 
-		if ($this->factory->isFieldExists(Item::FIELD_NAME_LAST_ACTIVITY_TIME))
+		if ($factory->isFieldExists(Item::FIELD_NAME_LAST_ACTIVITY_TIME))
 		{
 			$row->set(
-				$this->factory->getEntityFieldNameByMap(Item::FIELD_NAME_LAST_ACTIVITY_TIME),
+				$factory->getEntityFieldNameByMap(Item::FIELD_NAME_LAST_ACTIVITY_TIME),
 				$lastActivityTime,
 			);
 		}
 
-		if ($this->factory->isFieldExists(Item::FIELD_NAME_LAST_ACTIVITY_BY))
+		if ($factory->isFieldExists(Item::FIELD_NAME_LAST_ACTIVITY_BY))
 		{
 			$row->set(
-				$this->factory->getEntityFieldNameByMap(Item::FIELD_NAME_LAST_ACTIVITY_BY),
+				$factory->getEntityFieldNameByMap(Item::FIELD_NAME_LAST_ACTIVITY_BY),
 				$lastActivityBy,
 			);
 		}
 
 		$row->save();
 	}
+	//endregion
 
-	private static function getSingleStepLimit(): int
+	//region Options
+	private static function getTypesToProcess(): array
 	{
-		return (int)Option::get('crm', 'update_last_activity_stepper_step_limit', 25);
+		$value = Option::get('crm', self::OPTION_PREFIX . 'types');
+		if (!$value)
+		{
+			return [];
+		}
+
+		return unserialize($value, ['allowed_classes' => false]);
+	}
+
+	private function markTypeAsFinished(int $entityTypeId): void
+	{
+		[$lastId, ] = $this->getProgress($entityTypeId);
+		$this->saveProgress($entityTypeId, $lastId, true);
+	}
+
+	private function getProgress(int $entityTypeId): array
+	{
+		$serialized = Option::get('crm', $this->getProgressOptionName($entityTypeId));
+
+		$values = $serialized ? unserialize($serialized, ['allowed_classes' => false]) : [];
+
+		return [
+			isset($values['lastId']) ? (int)$values['lastId'] : null,
+			isset($values['isFinished']) ? (bool)$values['isFinished'] : false,
+		];
+	}
+
+	private function saveProgress(int $entityTypeId, ?int $lastId, bool $isFinished): void
+	{
+		if ($isFinished)
+		{
+			$this->enableLastActivity($entityTypeId);
+		}
+
+		Option::set(
+			'crm',
+			$this->getProgressOptionName($entityTypeId),
+			serialize([
+				'lastId' => $lastId,
+				'isFinished' => $isFinished,
+			]),
+		);
+	}
+
+	private function cleanUp(): void
+	{
+		foreach (self::getTypesToProcess() as $entityTypeId)
+		{
+			$this->enableLastActivity($entityTypeId);
+
+			Option::delete(
+				'crm',
+				[
+					'name' => $this->getProgressOptionName($entityTypeId),
+				],
+			);
+		}
+
+		Option::delete('crm', ['name' => self::OPTION_PREFIX . 'types']);
+		Option::delete('crm', ['name' => self::OPTION_PREFIX . 'entity_step_limit']);
+	}
+
+	private function enableLastActivity(int $entityTypeId): void
+	{
+		Option::delete(
+			'crm',
+			[
+				'name' => 'enable_last_activity_for_' . mb_strtolower(\CCrmOwnerType::ResolveName($entityTypeId)),
+			],
+		);
+	}
+
+	private function getProgressOptionName(int $entityTypeId): string
+	{
+		$entityName = \CCrmOwnerType::ResolveName($entityTypeId);
+
+		return self::OPTION_PREFIX . 'progress_' . mb_strtolower($entityName);
+	}
+
+	private static function getSingleEntityStepLimit(): int
+	{
+		// we will process at least 6 types at the same time. but it's possible to have up to 70 types with dynamic types
+
+		return (int)Option::get('crm',  self::OPTION_PREFIX . 'entity_step_limit', 10);
+	}
+	//endregion
+
+	public static function bindOnCrmModuleInstallIfNeeded(): void
+	{
+		if (!empty(self::getTypesToProcess()))
+		{
+			\CAgent::AddAgent(
+			/** @see self::execAgent() */
+				"\\Bitrix\\Crm\\Update\\Entity\\LastActivityFields::execAgent();",
+				'crm',
+				"Y",
+				// run once every minute
+				60,
+				"",
+				"Y",
+				// 5 min delay
+				\ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 300, 'FULL'),
+				100,
+				false,
+				false
+			);
+		}
 	}
 }

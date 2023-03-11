@@ -123,7 +123,7 @@ export class ItemMover extends EventEmitter
 
 		const item = this.entityStorage.findItemByItemId(itemId);
 
-		if (item.isSubTask() || item.isDisabled())
+		if (!item || item.isSubTask() || item.isDisabled())
 		{
 			baseEvent.preventDefault();
 		}

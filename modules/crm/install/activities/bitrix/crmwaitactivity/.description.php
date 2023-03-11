@@ -36,7 +36,7 @@ $arActivityDescription = [
 
 if (
 	Main\Loader::includeModule('crm')
-	&& Crm\Settings\Crm::isUniversalActivityScenarioEnabled()
+	&& !Crm\Settings\ActivitySettings::areOutdatedCalendarActivitiesEnabled()
 )
 {
 	$arActivityDescription['EXCLUDED'] = true;

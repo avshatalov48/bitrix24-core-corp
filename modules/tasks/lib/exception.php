@@ -83,7 +83,7 @@ class Exception extends \Bitrix\Main\SystemException
 
 	protected function dumpAuxError()
 	{
-		return true;
+		return false;
 	}
 
 	/**

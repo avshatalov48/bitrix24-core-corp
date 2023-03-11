@@ -1,18 +1,29 @@
 <?
-if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
+{
+	die();
+}
 
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Tasks\Integration\Bitrix24\UI;
+use Bitrix\Tasks\Helper\RestrictionUrl;
+
+/** @var array $arResult*/
+/** @global $APPLICATION*/
 
 Loc::loadMessages(__FILE__);
 
 $helper = $arResult['HELPER'];
+$APPLICATION->IncludeComponent('bitrix:ui.info.helper', '', []);
 ?>
 
 <?if (!$arResult['DATA']['FEATURE_ENABLED']):?>
-	<div class="tasks-btn-restricted tasks-uf-panel-restricted">
+	<div class="tasks-btn-restricted tasks-uf-panel-restricted"
+		 onclick="top.BX.UI.InfoHelper.show('<?= RestrictionUrl::TEMPLATE_ACCESS_PERMISSIONS_SLIDER_URL ?>',{isLimit: true,limitAnalyticsLabels: {module: 'tasks'}});"
+		 style="cursor:pointer;">
 		<?= Loc::getMessage("TASKS_TWR_TEMPLATE_FEATURE_ACCESS_RESTRICTED");?>
-		<a href="<?= UI::getLicenseUrl();?>" target="_blank"><?=Loc::getMessage('TASKS_TWR_TEMPLATE_FEATURE_ACCESS_RESTRICTED_MORE');?></a>
+		<a href="javascript:void(0);"
+		   onclick="top.BX.UI.InfoHelper.show('<?= RestrictionUrl::TEMPLATE_ACCESS_PERMISSIONS_SLIDER_URL ?>',{isLimit: true,limitAnalyticsLabels: {module: 'tasks',}});"
+		><?=Loc::getMessage('TASKS_TWR_TEMPLATE_FEATURE_ACCESS_RESTRICTED_MORE');?></a>
 	</div>
 <?else:?>
 	<?$helper->displayFatals();?>

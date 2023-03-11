@@ -77,6 +77,7 @@
 
 			this.preselectedItems = [];
 			this.emptyResults = [];
+			this.canUseRecent = true;
 			this.recentLoaded = false;
 			this.searchFields = ['position', 'secondName', 'lastName', 'name'];
 			this.entityWeight = {
@@ -138,6 +139,11 @@
 			this.preselectedItems = preselectedItems;
 
 			return this;
+		}
+
+		setCanUseRecent(canUseRecent)
+		{
+			this.canUseRecent = canUseRecent;
 		}
 
 		cacheId()
@@ -413,19 +419,19 @@
 				});
 		}
 
-		addItems(items)
+		addItems(items, saveDisk = false)
 		{
 			const currentItems = this.cache.get('items');
 			const mergedItems = [...currentItems, ...items];
 
-			this.cache.save(mergedItems, 'items', { unique: true });
+			this.cache.save(mergedItems, 'items', {saveDisk, unique: true});
 		}
 
 		getAllItems()
 		{
 			const items = [
 				...this.cache.get('recent'),
-				...this.cache.get('items'),
+				...this.cache.get('items', !this.canUseRecent),
 			];
 
 			return uniqBy(items, 'id');
@@ -475,22 +481,36 @@
 				getParameters: {
 					context: this.context,
 				},
-			})
-				.then((response) => {
-					const recentItems = this.getItemsFromResponse(response.data.dialog, 'recentItems');
-					this.cache.save(recentItems, 'recent', { saveDisk: true });
+			}).then((response) => {
+				let recentItems;
 
-					const preselectedItems = this.getItemsFromResponse(response.data.dialog, 'preselectedItems');
-					this.addItems(preselectedItems);
+				if (this.canUseRecent)
+				{
+					recentItems = this.getItemsFromResponse(response.data.dialog, 'recentItems');
+				}
+				else
+				{
+					recentItems = this.getItemsFromResponse(response.data.dialog, 'items');
 
-					if (justLoad === false)
+					const items = this.prepareItems(response.data.dialog.items);
+					if (items.length)
 					{
-						const result = this.prepareRecentResult(preselectedItems, recentItems);
-
-						this.listener.onRecentResult(result, false);
-						this.recentLoaded = true;
+						this.addItems(items, true);
 					}
-				});
+				}
+				this.cache.save(recentItems, 'recent', {saveDisk: true});
+
+				const preselectedItems = this.getItemsFromResponse(response.data.dialog, 'preselectedItems');
+				this.addItems(preselectedItems);
+
+				if (justLoad === false)
+				{
+					const result = this.prepareRecentResult(preselectedItems, recentItems);
+
+					this.listener.onRecentResult(result, false);
+					this.recentLoaded = true;
+				}
+			});
 		}
 
 		getLoadingItem()
@@ -508,14 +528,14 @@
 		{
 			let result = dialog[key] || [];
 
-			result = (
-				result
-					.map((item) => {
-						const [entityId, id] = item;
-						return dialog.items.find(item => item.entityId === entityId && item.id.toString() === id.toString());
-					})
-					.filter(item => item)
-			);
+			if (key !== 'items')
+			{
+				result = result.map((item) => {
+					const [entityId, id] = item;
+					return dialog.items.find(item => item.entityId === entityId && item.id.toString() === id.toString());
+				});
+			}
+			result = result.filter(item => item);
 
 			return (
 				this
@@ -622,7 +642,6 @@
 			if (recentItems.length)
 			{
 				this.updateRecentCache(items);
-
 				this.addRecentItems(recentItems).then(() => this.loadRecent(true));
 			}
 

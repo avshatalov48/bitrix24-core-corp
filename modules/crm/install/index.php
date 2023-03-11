@@ -1733,14 +1733,11 @@ class crm extends CModule
 		{
 			\Bitrix\Crm\Agent\MovedByField\DealFieldAgent::bind();
 		}
-		// set initial values for LAST_ACTIVITY_TIME and LAST_ACTIVITY_BY fields in deals
-		if (\Bitrix\Main\Config\Option::get('crm', 'enable_last_activity_for_deal', 'Y') === 'N')
-		{
-			\Bitrix\Crm\Update\Entity\LastActivityFields::bind(300, [\CCrmOwnerType::Deal]);
-		}
-		
+		// set initial values for LAST_ACTIVITY_TIME and LAST_ACTIVITY_BY fields
+		\Bitrix\Crm\Update\Entity\LastActivityFields::bindOnCrmModuleInstallIfNeeded();
+
 		\Bitrix\Crm\Update\Entity\ContactId::bindOnCrmModuleInstallIfNeeded();
-		
+
 		// fill b_crm_entity_uncompleted_act table
 		if (\Bitrix\Main\Config\Option::get('crm', 'enable_entity_uncompleted_act', 'Y') === 'N')
 		{

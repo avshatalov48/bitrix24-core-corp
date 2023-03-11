@@ -78,6 +78,8 @@ class Deal extends Entity
 		$options = parent::getFilterOptions();
 		$clientFieldsRestrictionManager = new \Bitrix\Crm\Component\EntityList\ClientFieldRestrictionManager();
 		$clientFieldsRestrictionManager->removeRestrictedFieldsFromFilter($options);
+		$observersFieldRestrictionManager = new \Bitrix\Crm\Component\EntityList\ObserversFieldRestrictionManager();
+		$observersFieldRestrictionManager->removeRestrictedFieldsFromFilter($options);
 
 		return $options;
 	}
@@ -328,25 +330,6 @@ class Deal extends Entity
 		return parent::updateItemStage($id, $stageId, $newStateParams, $stages);
 	}
 
-	protected function getItemViaLoadedItems(int $id): Result
-	{
-		$result = new Result();
-
-		$item = ($this->loadedItems[$id] ?? $this->getItem($id));
-		if($item)
-		{
-			$result->setData([
-				'item' => $item,
-			]);
-		}
-		else
-		{
-			$result->addError(new Error('Deal not found'));
-		}
-
-		return $result;
-	}
-
 	public function getFilterLazyLoadParams(): ?array
 	{
 		$path = '/bitrix/components/bitrix/crm.deal.list/filter.ajax.php'
@@ -370,6 +353,21 @@ class Deal extends Entity
 			'callback' => $clientFieldsRestrictionManager->getJsCallback(),
 			'filterId' =>  $this->getGridId(),
 			'filterFields' => $clientFieldsRestrictionManager->getRestrictedFilterFields($this->getFilter()),
+		];
+	}
+
+	public function getObserversFieldRestrictions(): ?array
+	{
+		$observersFieldRestrictionManager = new \Bitrix\Crm\Component\EntityList\ObserversFieldRestrictionManager();
+		if (!$observersFieldRestrictionManager->hasRestrictions())
+		{
+			return null;
+		}
+
+		return [
+			'callback' => $observersFieldRestrictionManager->getJsCallback(),
+			'filterId' =>  $this->getGridId(),
+			'filterFields' => $observersFieldRestrictionManager->getRestrictedFilterFields($this->getFilter()),
 		];
 	}
 
@@ -492,19 +490,6 @@ class Deal extends Entity
 			PhaseSemantics::PROCESS,
 			PhaseSemantics::SUCCESS,
 			PhaseSemantics::FAILURE,
-		];
-	}
-
-	protected function getDefaultSortType(): string
-	{
-		return Sort\Type::BY_LAST_ACTIVITY_TIME;
-	}
-
-	protected function getSupportedSortTypes(): array
-	{
-		return [
-			Sort\Type::BY_ID,
-			Sort\Type::BY_LAST_ACTIVITY_TIME,
 		];
 	}
 }

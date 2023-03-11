@@ -192,12 +192,11 @@ jn.define('tasks/layout/task/fields/status', (require, exports, module) => {
 		{
 			if (imageUrl.indexOf(currentDomain) !== 0)
 			{
-				imageUrl = encodeURI(imageUrl);
 				imageUrl = imageUrl.replace(`${currentDomain}`, '');
 				imageUrl = (imageUrl.indexOf('http') !== 0 ? `${currentDomain}${imageUrl}` : imageUrl);
 			}
 
-			return imageUrl;
+			return encodeURI(imageUrl);
 		}
 
 		getDefaultStyles()

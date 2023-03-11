@@ -5,6 +5,7 @@ import {Layout} from 'ui.sidepanel.layout';
 import {Confetti} from 'ui.confetti';
 
 import {RequestSender} from './request.sender';
+import {Culture, CultureData} from './culture';
 
 import 'ui.design-tokens';
 import 'ui.fonts.opensans';
@@ -32,7 +33,8 @@ type SprintData = {
 	lastStoryPoints: number,
 	lastCompletedStoryPoints: number,
 	plannedSprints: Array<PlannedSprint>,
-	uncompletedTasks: Array<Item>
+	uncompletedTasks: Array<Item>,
+	culture: CultureData
 }
 
 type PlannedSprint = {
@@ -193,6 +195,7 @@ export class SprintCompletionForm extends EventEmitter
 				groupId: this.groupId
 			})
 				.then((response: Response) => {
+					Culture.getInstance().setData(response.data.culture);
 					resolve(this.render(response.data));
 				})
 				.catch((response) => {
@@ -495,7 +498,7 @@ export class SprintCompletionForm extends EventEmitter
 	renderItem(item: Item): HTMLElement
 	{
 		const src = item.responsible.photo ? Text.encode(item.responsible.photo.src) : null;
-		const photoStyle = src ? `background-image: url('${src}');` : '';
+		const photoStyle = src ? `background-image: url('${encodeURI(src)}');` : '';
 
 		const storyPointsClass = (item.storyPoints === '' ? '--empty' : '');
 
@@ -570,14 +573,14 @@ export class SprintCompletionForm extends EventEmitter
 	getFormattedDateStart(dateStart: number): string
 	{
 		/* eslint-disable */
-		return BX.date.format('j F Y', dateStart);
+		return BX.date.format(Culture.getInstance().getLongDateFormat(), dateStart);
 		/* eslint-enable */
 	}
 
 	getFormattedDateEnd(dateEnd: number): string
 	{
 		/* eslint-disable */
-		return BX.date.format('j F Y', dateEnd);
+		return BX.date.format(Culture.getInstance().getLongDateFormat(), dateEnd);
 		/* eslint-enable */
 	}
 

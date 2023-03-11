@@ -70,11 +70,13 @@ jn.define('crm/timeline/item/ui/icon', (require, exports, module) => {
 				this.itemScopeEventBus.on('AudioPlayer::onPause', () => {
 					this.setState({
 						play: false,
+						isLoading: false,
 					});
 				});
 				this.itemScopeEventBus.on('AudioPlayer::onFinish', () => {
 					this.setState({
 						play: false,
+						isLoading: false,
 					});
 				});
 			}

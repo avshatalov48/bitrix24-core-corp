@@ -219,14 +219,20 @@ final class imopenlines extends \CModule
 
 		\CAgent::AddAgent('\Bitrix\ImOpenLines\Integrations\Report\Statistics\Manager::calculateStatisticsInQueue();', 'imopenlines', 'N');
 
-		\CAgent::AddAgent('\Bitrix\ImOpenLines\Session::transferToNextInQueueAgent(0);', "imopenlines", "N", 60);
-		\CAgent::AddAgent('\Bitrix\ImOpenLines\Session::closeByTimeAgent(0);', "imopenlines", "N", 60);
-		\CAgent::AddAgent('\Bitrix\ImOpenLines\Session::mailByTimeAgent(0);', "imopenlines", "N", 60);
-		\CAgent::AddAgent('\Bitrix\ImOpenLines\Common::deleteBrokenSession();', "imopenlines", "N", 86400, "", "Y", \ConvertTimeStamp(time()+\CTimeZone::GetOffset()+86400, "FULL"));
-		\CAgent::AddAgent('\Bitrix\ImOpenLines\Session::dismissedOperatorAgent(0);', "imopenlines", "N", 86400);
-		\CAgent::AddAgent('\Bitrix\ImOpenLines\Session\Agent::sendMessageNoAnswer();', "imopenlines", "N", 60);
+		/** @see \Bitrix\ImOpenLines\Session\Agent::transferToNextInQueue */
+		\CAgent::AddAgent('\Bitrix\ImOpenLines\Session\Agent::transferToNextInQueue(0);', 'imopenlines', "N", 60);
+		/** @see \Bitrix\ImOpenLines\Session\Agent::closeByTime */
+		\CAgent::AddAgent('\Bitrix\ImOpenLines\Session\Agent::closeByTime(0);', 'imopenlines', "N", 60);
+		/** @see \Bitrix\ImOpenLines\Session\Agent::mailByTime */
+		\CAgent::AddAgent('\Bitrix\ImOpenLines\Session\Agent::mailByTime(0);', 'imopenlines', "N", 60);
+		/** @see \Bitrix\ImOpenLines\Session\Agent::deleteBrokenSession */
+		\CAgent::AddAgent('\Bitrix\ImOpenLines\Session\Agent::deleteBrokenSession();', 'imopenlines', "N", 86400, "", "Y", \ConvertTimeStamp(time()+\CTimeZone::GetOffset()+86400, "FULL"));
+		/** @see \Bitrix\ImOpenLines\Session\Agent::sendMessageNoAnswer */
+		\CAgent::AddAgent('\Bitrix\ImOpenLines\Session\Agent::sendMessageNoAnswer();', 'imopenlines', "N", 60);
+		/** @see \Bitrix\ImOpenLines\Session\Agent::sendAutomaticMessage */
 		\CAgent::AddAgent('\Bitrix\ImOpenLines\Session\Agent::sendAutomaticMessage();', 'imopenlines', 'N', 60);
-		\CAgent::AddAgent('\Bitrix\ImOpenLines\KpiManager::setExpiredMessagesAgent();', "imopenlines", "N", 60, "", "Y", \ConvertTimeStamp(time()+\CTimeZone::GetOffset()+60, "FULL"));
+		/** @see \Bitrix\ImOpenLines\KpiManager::setExpiredMessagesAgent */
+		\CAgent::AddAgent('\Bitrix\ImOpenLines\KpiManager::setExpiredMessagesAgent();', 'imopenlines', "N", 60, "", "Y", \ConvertTimeStamp(time()+\CTimeZone::GetOffset()+60, "FULL"));
 
 		if (!\Bitrix\Main\ModuleManager::isModuleInstalled('bitrix24'))
 		{

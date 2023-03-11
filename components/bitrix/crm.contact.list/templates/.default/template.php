@@ -980,6 +980,20 @@ BX.ready(
 BX.ready(
 		function()
 		{
+			<?php if (\Bitrix\Crm\Settings\Crm::isUniversalActivityScenarioEnabled()): ?>
+			BX.Runtime.loadExtension(['crm.push-crm-settings', 'crm.toolbar-component']).then((exports) => {
+				/** @see BX.Crm.ToolbarComponent */
+				const settingsButton = exports.ToolbarComponent.Instance.getSettingsButton();
+
+				/** @see BX.Crm.PushCrmSettings */
+				new exports.PushCrmSettings({
+					entityTypeId: <?= (int)\CCrmOwnerType::Contact ?>,
+					rootMenu: settingsButton ? settingsButton.getMenuWindow() : undefined,
+					grid: BX.Reflection.getClass('BX.Main.gridManager') ? BX.Main.gridManager.getInstanceById('<?= \CUtil::JSEscape($arResult['GRID_ID']) ?>') : undefined,
+				});
+			});
+			<?php endif; ?>
+
 			BX.CrmActivityEditor.items['<?= CUtil::JSEscape($activityEditorID)?>'].addActivityChangeHandler(
 					function()
 					{

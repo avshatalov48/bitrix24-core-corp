@@ -1,4 +1,7 @@
 <?php
+
+use Bitrix\Main\Web\Uri;
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 Bitrix\Main\UI\Extension::load("ui.tooltip");
@@ -94,7 +97,7 @@ $prefix = $arResult['GRID_ID'];
 					<div class=\"crm-client-title-wrapper\">
 						<a class='crm-grid-username' href='{$arEvent['CREATED_BY_LINK']}' id=\"balloon_{$arResult['GRID_ID']}_{$arEvent['ID']}\" bx-tooltip-user-id=\"{$arEvent['CREATED_BY_ID']}\">
 							<span class='crm-grid-avatar ui-icon ui-icon-common-user'>
-								<i ".($photoUrl ? "style=\"background-image: url('{$photoUrl}')\"" : "")."></i>
+								<i ".($photoUrl ? 'style=\"background-image: url(\'' . Uri::urnEncode($photoUrl) . '\')"' : '') ."></i>
 							</span>
 							<span class='crm-grid-username-inner'>{$arEvent['CREATED_BY_FULL_NAME']}</span>
 						</a>

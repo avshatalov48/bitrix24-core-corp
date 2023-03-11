@@ -21,6 +21,7 @@ jn.define('crm/timeline/item/ui/header/checkbox', (require, exports, module) => 
 		{
 			return View(
 				{
+					testId: this.props.testId,
 					style: {
 						paddingVertical: 10,
 						paddingHorizontal: 13,

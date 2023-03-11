@@ -24,13 +24,14 @@ Loc::loadMessages($_SERVER['DOCUMENT_ROOT'].'/bitrix/components/bitrix/crm.lead.
 \Bitrix\Crm\Settings\Crm::markAsInitiated();
 
 // if not isset
-$arResult['PATH_TO_LEAD_EDIT'] = isset($arResult['PATH_TO_LEAD_EDIT']) ? $arResult['PATH_TO_LEAD_EDIT'] : '';
-$arResult['PATH_TO_LEAD_LIST'] = isset($arResult['PATH_TO_LEAD_LIST']) ? $arResult['PATH_TO_LEAD_LIST'] : '';
-$arResult['PATH_TO_LEAD_WIDGET'] = isset($arResult['PATH_TO_LEAD_WIDGET']) ? $arResult['PATH_TO_LEAD_WIDGET'] : '';
-$arResult['PATH_TO_LEAD_KANBAN'] = isset($arResult['PATH_TO_LEAD_KANBAN']) ? $arResult['PATH_TO_LEAD_KANBAN'] : '';
-$arResult['PATH_TO_LEAD_CALENDAR'] = isset($arResult['PATH_TO_LEAD_CALENDAR']) ? $arResult['PATH_TO_LEAD_CALENDAR'] : '';
-$arResult['PATH_TO_LEAD_DEDUPE'] = isset($arResult['PATH_TO_LEAD_DEDUPE']) ? $arResult['PATH_TO_LEAD_DEDUPE'] : '';
-$arResult['PATH_TO_LEAD_IMPORT'] = isset($arResult['PATH_TO_LEAD_IMPORT']) ? $arResult['PATH_TO_LEAD_IMPORT'] : '';
+$arResult['PATH_TO_LEAD_EDIT'] = ($arResult['PATH_TO_LEAD_EDIT'] ?? '');
+$arResult['PATH_TO_LEAD_LIST'] = ($arResult['PATH_TO_LEAD_LIST'] ?? '');
+$arResult['PATH_TO_LEAD_WIDGET'] = ($arResult['PATH_TO_LEAD_WIDGET'] ?? '');
+$arResult['PATH_TO_LEAD_KANBAN'] = ($arResult['PATH_TO_LEAD_KANBAN'] ?? '');
+$arResult['PATH_TO_LEAD_ACTIVITY'] = ($arResult['PATH_TO_LEAD_ACTIVITY'] ?? '');
+$arResult['PATH_TO_LEAD_CALENDAR'] = ($arResult['PATH_TO_LEAD_CALENDAR'] ?? '');
+$arResult['PATH_TO_LEAD_DEDUPE'] = ($arResult['PATH_TO_LEAD_DEDUPE'] ?? '');
+$arResult['PATH_TO_LEAD_IMPORT'] = ($arResult['PATH_TO_LEAD_IMPORT'] ?? '');
 
 // csv and excel delegate to list
 $context = \Bitrix\Main\Application::getInstance()->getContext();
@@ -48,26 +49,26 @@ if (in_array($request->get('type'), array('csv', 'excel')))
 $APPLICATION->IncludeComponent(
 	'bitrix:crm.control_panel',
 	'',
-	array(
+	[
 		'ID' => 'LEAD_LIST',
-		'ACTIVE_ITEM_ID' => 'LEAD',
-		'PATH_TO_COMPANY_LIST' => isset($arResult['PATH_TO_COMPANY_LIST']) ? $arResult['PATH_TO_COMPANY_LIST'] : '',
-		'PATH_TO_COMPANY_EDIT' => isset($arResult['PATH_TO_COMPANY_EDIT']) ? $arResult['PATH_TO_COMPANY_EDIT'] : '',
-		'PATH_TO_CONTACT_LIST' => isset($arResult['PATH_TO_CONTACT_LIST']) ? $arResult['PATH_TO_CONTACT_LIST'] : '',
-		'PATH_TO_CONTACT_EDIT' => isset($arResult['PATH_TO_CONTACT_EDIT']) ? $arResult['PATH_TO_CONTACT_EDIT'] : '',
-		'PATH_TO_DEAL_LIST' => isset($arResult['PATH_TO_DEAL_LIST']) ? $arResult['PATH_TO_DEAL_LIST'] : '',
-		'PATH_TO_DEAL_EDIT' => isset($arResult['PATH_TO_DEAL_EDIT']) ? $arResult['PATH_TO_DEAL_EDIT'] : '',
-		'PATH_TO_LEAD_LIST' => isset($arResult['PATH_TO_LEAD_LIST']) ? $arResult['PATH_TO_LEAD_LIST'] : '',
-		'PATH_TO_LEAD_EDIT' => isset($arResult['PATH_TO_LEAD_EDIT']) ? $arResult['PATH_TO_LEAD_EDIT'] : '',
-		'PATH_TO_QUOTE_LIST' => isset($arResult['PATH_TO_QUOTE_LIST']) ? $arResult['PATH_TO_QUOTE_LIST'] : '',
-		'PATH_TO_QUOTE_EDIT' => isset($arResult['PATH_TO_QUOTE_EDIT']) ? $arResult['PATH_TO_QUOTE_EDIT'] : '',
-		'PATH_TO_INVOICE_LIST' => isset($arResult['PATH_TO_INVOICE_LIST']) ? $arResult['PATH_TO_INVOICE_LIST'] : '',
-		'PATH_TO_INVOICE_EDIT' => isset($arResult['PATH_TO_INVOICE_EDIT']) ? $arResult['PATH_TO_INVOICE_EDIT'] : '',
-		'PATH_TO_REPORT_LIST' => isset($arResult['PATH_TO_REPORT_LIST']) ? $arResult['PATH_TO_REPORT_LIST'] : '',
-		'PATH_TO_DEAL_FUNNEL' => isset($arResult['PATH_TO_DEAL_FUNNEL']) ? $arResult['PATH_TO_DEAL_FUNNEL'] : '',
-		'PATH_TO_EVENT_LIST' => isset($arResult['PATH_TO_EVENT_LIST']) ? $arResult['PATH_TO_EVENT_LIST'] : '',
-		'PATH_TO_PRODUCT_LIST' => isset($arResult['PATH_TO_PRODUCT_LIST']) ? $arResult['PATH_TO_PRODUCT_LIST'] : ''
-	),
+		'ACTIVE_ITEM_ID' => \CCrmOwnerType::LeadName,
+		'PATH_TO_COMPANY_LIST' => $arResult['PATH_TO_COMPANY_LIST'] ?? '',
+		'PATH_TO_COMPANY_EDIT' => $arResult['PATH_TO_COMPANY_EDIT'] ?? '',
+		'PATH_TO_CONTACT_LIST' => $arResult['PATH_TO_CONTACT_LIST'] ?? '',
+		'PATH_TO_CONTACT_EDIT' => $arResult['PATH_TO_CONTACT_EDIT'] ?? '',
+		'PATH_TO_DEAL_LIST' => $arResult['PATH_TO_DEAL_LIST'] ?? '',
+		'PATH_TO_DEAL_EDIT' => $arResult['PATH_TO_DEAL_EDIT'] ?? '',
+		'PATH_TO_LEAD_LIST' => $arResult['PATH_TO_LEAD_LIST'] ?? '',
+		'PATH_TO_LEAD_EDIT' => $arResult['PATH_TO_LEAD_EDIT'] ?? '',
+		'PATH_TO_QUOTE_LIST' => $arResult['PATH_TO_QUOTE_LIST'] ?? '',
+		'PATH_TO_QUOTE_EDIT' => $arResult['PATH_TO_QUOTE_EDIT'] ?? '',
+		'PATH_TO_INVOICE_LIST' => $arResult['PATH_TO_INVOICE_LIST'] ?? '',
+		'PATH_TO_INVOICE_EDIT' => $arResult['PATH_TO_INVOICE_EDIT'] ?? '',
+		'PATH_TO_REPORT_LIST' => $arResult['PATH_TO_REPORT_LIST'] ?? '',
+		'PATH_TO_DEAL_FUNNEL' => $arResult['PATH_TO_DEAL_FUNNEL'] ?? '',
+		'PATH_TO_EVENT_LIST' => $arResult['PATH_TO_EVENT_LIST'] ?? '',
+		'PATH_TO_PRODUCT_LIST' => $arResult['PATH_TO_PRODUCT_LIST'] ?? ''
+	],
 	$component
 );
 
@@ -126,23 +127,31 @@ else
 	);
 
 	// filter
+	$activeItemId = (
+		$arResult['KANBAN_VIEW_MODE'] === \Bitrix\Crm\Kanban\ViewMode::MODE_ACTIVITIES
+			? NavigationBarPanel::ID_ACTIVITY
+			: NavigationBarPanel::ID_KANBAN
+	);
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.kanban.filter',
 		'',
 		[
 			'ENTITY_TYPE' => $entityType,
-			'NAVIGATION_BAR' => (new NavigationBarPanel(CCrmOwnerType::Lead, $categoryID))
+			'NAVIGATION_BAR' => (new NavigationBarPanel(CCrmOwnerType::Lead))
 				->setItems([
-					NavigationBarPanel::ID_AUTOMATION,
 					NavigationBarPanel::ID_KANBAN,
 					NavigationBarPanel::ID_LIST,
-					NavigationBarPanel::ID_CALENDAR
-				], NavigationBarPanel::ID_KANBAN)
+					NavigationBarPanel::ID_ACTIVITY,
+					NavigationBarPanel::ID_CALENDAR,
+					NavigationBarPanel::ID_AUTOMATION
+				], $activeItemId)
 				->setBinding($arResult['NAVIGATION_CONTEXT_ID'])
-				->get()
+				->get(),
 		],
 		$component,
-		['HIDE_ICONS' => true]
+		[
+			'HIDE_ICONS' => true,
+		]
 	);
 
 	\Bitrix\Crm\Service\Container::getInstance()->getLocalization()->loadMessages();
@@ -150,8 +159,9 @@ else
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.kanban',
 		'',
-		array(
+		[
 			'ENTITY_TYPE' => $entityType,
+			'VIEW_MODE' => ($arResult['KANBAN_VIEW_MODE'] ?? \Bitrix\Crm\Kanban\ViewMode::MODE_STAGES),
 			'SHOW_ACTIVITY' => 'Y',
 			'PATH_TO_IMPORT' => $arResult['PATH_TO_LEAD_IMPORT'],
 			'PATH_TO_MERGE' => $arResult['PATH_TO_LEAD_MERGE'],
@@ -163,7 +173,7 @@ else
 					'selected' => true,
 				],
 			],
-		),
+		],
 		$component
 	);
 }

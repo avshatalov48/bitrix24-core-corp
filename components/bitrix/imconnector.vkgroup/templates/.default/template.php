@@ -1,4 +1,4 @@
-<?
+<?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Localization\Loc;
@@ -16,10 +16,6 @@ use Bitrix\ImConnector\Connector;
 /** @var string $templateFolder */
 /** @var string $componentPath */
 /** @var CBitrixComponent $component */
-/** $arResult['CONNECTION_STATUS']; */
-/** $arResult['REGISTER_STATUS']; */
-/** $arResult['ERROR_STATUS']; */
-/** $arResult['SAVE_STATUS']; */
 
 Loc::loadMessages(__FILE__);
 
@@ -34,7 +30,7 @@ if ($arParams['INDIVIDUAL_USE'] !== 'Y')
 
 $iconCode = Connector::getIconByConnector($arResult['CONNECTOR']);
 
-if ($arResult['GROUP_ORDERS']):
+if (!empty($arResult['GROUP_ORDERS'])):
 	include 'group-orders.php';
 else:?>
 	<form action="<?=$arResult['URL']['DELETE']?>" method="post" id="form_delete_<?=$arResult['CONNECTOR']?>">
@@ -155,7 +151,7 @@ else:?>
 		<?endif;
 	else:
 		if (empty($arResult['FORM']['USER']['INFO'])): //start case with clear connections?>
-			<? if($arResult['ACTIVE_STATUS']): //case before auth to vk?>
+			<? if (!empty($arResult['ACTIVE_STATUS'])): //case before auth to vk?>
 				<div class="imconnector-field-container">
 					<div class="imconnector-field-section imconnector-field-section-social">
 						<div class="imconnector-field-box">

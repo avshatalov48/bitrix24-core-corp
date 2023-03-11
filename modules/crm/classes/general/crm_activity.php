@@ -8,9 +8,12 @@ use Bitrix\Crm;
 use Bitrix\Crm\Activity\Provider\Eventable\PingOffset;
 use Bitrix\Crm\Activity\Provider\Eventable\PingQueue;
 use Bitrix\Crm\Automation\Trigger\ResourceBookingTrigger;
+use Bitrix\Crm\Entity\Traits\EntityFieldsNormalizer;
+use Bitrix\Crm\Integration\Disk\HiddenStorage;
 use Bitrix\Crm\Integration\StorageFileType;
 use Bitrix\Crm\Integration\StorageManager;
 use Bitrix\Crm\Integration\StorageType;
+use Bitrix\Crm\Settings;
 use Bitrix\Crm\Settings\ActivitySettings;
 use Bitrix\Disk\SpecificFolder;
 use Bitrix\Main\Localization\Loc;
@@ -18,6 +21,7 @@ use Bitrix\Main\Type\DateTime;
 
 class CAllCrmActivity
 {
+	use EntityFieldsNormalizer;
 	const CACHE_NAME = 'CRM_ACTIVITY_CACHE';
 	const TABLE_ALIAS = 'A';
 	const UF_ENTITY_TYPE = 'CRM_ACTIVITY';
@@ -44,6 +48,12 @@ class CAllCrmActivity
 	private static $NEXT_DAY_TIME_STAMP = null;
 	private static $CLIENT_INFOS = null;
 	protected static $PROVIDERS = null;
+	protected const TABLE_NAME = CCrmActivity::TABLE_NAME;
+
+	protected static function getInstance(): self
+	{
+		return new static();
+	}
 
 	// CRUD -->
 	public static function Add(&$arFields, $checkPerms = true, $regEvent = true, $options = array())
@@ -136,7 +146,12 @@ class CAllCrmActivity
 			ExecuteModuleEventEx($arEvent, array(&$arFields));
 		}
 
-		$ID = $DB->Add(CCrmActivity::TABLE_NAME, $arFields, array('DESCRIPTION', 'STORAGE_ELEMENT_IDS', 'SETTINGS', 'PROVIDER_PARAMS', 'PROVIDER_DATA'));
+		self::getInstance()->normalizeEntityFields($arFields);
+		$ID = $DB->Add(
+			CCrmActivity::TABLE_NAME,
+			$arFields,
+			['DESCRIPTION', 'STORAGE_ELEMENT_IDS', 'SETTINGS', 'PROVIDER_PARAMS', 'PROVIDER_DATA']
+		);
 		if(is_string($ID) && $ID !== '')
 		{
 			//MS SQL RETURNS STRING INSTEAD INT
@@ -337,7 +352,7 @@ class CAllCrmActivity
 			if(isset($options['REGISTER_SONET_EVENT']) && $options['REGISTER_SONET_EVENT'] === true)
 			{
 				self::RegisterLiveFeedEvent($arFields);
-				if($responsibleID > 0)
+				if ($responsibleID > 0 && Settings\Crm::isLiveFeedRecordsGenerationEnabled())
 				{
 					CCrmSonetSubscription::RegisterSubscription(
 						CCrmOwnerType::Activity,
@@ -551,7 +566,9 @@ class CAllCrmActivity
 			ExecuteModuleEventEx($arEvent, array($ID, &$arFields));
 		}
 
+		self::getInstance()->normalizeEntityFields($arFields);
 		$sql = 'UPDATE '.CCrmActivity::TABLE_NAME.' SET '.$DB->PrepareUpdate(CCrmActivity::TABLE_NAME, $arFields).' WHERE ID = '.$ID;
+
 		if(!empty($arRecordBindings))
 		{
 			$DB->QueryBind($sql, $arRecordBindings, false);
@@ -894,7 +911,7 @@ class CAllCrmActivity
 					$sonetEventID = self::RegisterLiveFeedEvent($itemFields);
 					$isSonetEventRegistred = is_int($sonetEventID) && $sonetEventID > 0;
 
-					if($responsibleID > 0)
+					if ($responsibleID > 0 && Settings\Crm::isLiveFeedRecordsGenerationEnabled())
 					{
 						CCrmSonetSubscription::RegisterSubscription(
 							CCrmOwnerType::Activity,
@@ -907,7 +924,11 @@ class CAllCrmActivity
 			}
 		}
 
-		if(!$isSonetEventRegistred && $responsibleID !== $prevResponsibleID)
+		if (
+			!$isSonetEventRegistred
+			&& $responsibleID !== $prevResponsibleID
+			&& Settings\Crm::isLiveFeedRecordsGenerationEnabled()
+		)
 		{
 			CCrmSonetSubscription::ReplaceSubscriptionByEntity(
 				CCrmOwnerType::Activity,
@@ -2026,14 +2047,14 @@ class CAllCrmActivity
 	}
 	public static function DoDeleteStorageElements($storageTypeID, array $storageElementIDs)
 	{
-		if(empty($storageElementIDs))
+		if (empty($storageElementIDs))
 		{
 			return;
 		}
 
-		if($storageTypeID === StorageType::File)
+		if ($storageTypeID === StorageType::File)
 		{
-			foreach($storageElementIDs as $storageElementID)
+			foreach ($storageElementIDs as $storageElementID)
 			{
 				CFile::Delete($storageElementID);
 			}
@@ -2042,28 +2063,37 @@ class CAllCrmActivity
 		{
 			\Bitrix\Main\Loader::includeModule('disk');
 
-			$codeMap = array(
+			$codeMap = [
 				StorageFileType::getFolderXmlID(StorageFileType::EmailAttachment) => true,
 				StorageFileType::getFolderXmlID(StorageFileType::CallRecord) => true,
 				StorageFileType::getFolderXmlID(StorageFileType::Rest) => true
-			);
+			];
 
-			foreach($storageElementIDs as $storageElementID)
+			foreach ($storageElementIDs as $storageElementID)
 			{
 				$file = \Bitrix\Disk\File::loadById($storageElementID);
-				if($file === null)
+				if ($file === null)
 				{
 					continue;
 				}
 
 				$folder = $file->getParent();
-				if($folder === null)
+				if ($folder === null)
 				{
 					continue;
 				}
 
-				if((isset($codeMap[$folder->getXmlId()]) || $folder->getCode() === SpecificFolder::CODE_FOR_UPLOADED_FILES) &&
-					$file->countAttachedObjects() == 0)
+				$parentFolder = $folder->getParent();
+				$parentFolderCode = isset($parentFolder) ? $parentFolder->getCode() : null;
+
+				if (
+					(
+						isset($codeMap[$folder->getXmlId()])
+						|| $folder->getCode() === SpecificFolder::CODE_FOR_UPLOADED_FILES
+						|| $parentFolderCode === HiddenStorage::FOLDER_CODE_ACTIVITY
+					)
+					&& $file->countAttachedObjects() == 0
+				)
 				{
 					$file->delete(\Bitrix\Disk\SystemUser::SYSTEM_USER_ID);
 				}
@@ -2259,7 +2289,7 @@ class CAllCrmActivity
 		$result = self::GetList(array(), $arFilter, array(), false, array(), $arOptions);
 		return is_int($result) ? $result : 0;
 	}
-	static public function BuildPermSql($aliasPrefix = 'A', $permType = 'READ', $arOptions = array())
+	public static function BuildPermSql($aliasPrefix = 'A', $permType = 'READ', $arOptions = array())
 	{
 		if(!(is_string($aliasPrefix) && $aliasPrefix !== ''))
 		{
@@ -7038,12 +7068,14 @@ class CAllCrmActivity
 		$eventID = 0;
 		$associatedEntityId = isset($arFields['ASSOCIATED_ENTITY_ID']) ? (int)$arFields['ASSOCIATED_ENTITY_ID'] : 0;
 		$provider = self::GetActivityProvider($arFields);
-		if ($provider !== null)
+		if ($provider !== null && Settings\Crm::isLiveFeedRecordsGenerationEnabled())
+		{
 			$eventID = $provider::createLiveFeedLog($associatedEntityId, $arFields, $liveFeedFields);
+		}
 
 		if ($eventID === 0)
 		{
-			$arOptions = array();
+			$arOptions = [];
 			if (isset($arFields['PROVIDER_ID']))
 			{
 				$arOptions['ACTIVITY_PROVIDER_ID'] = $arFields['PROVIDER_ID'];
@@ -7051,7 +7083,7 @@ class CAllCrmActivity
 			$eventID = CCrmLiveFeed::CreateLogEvent($liveFeedFields, CCrmLiveFeedEvent::Add, $arOptions);
 		}
 
-		if(!(is_int($eventID) && $eventID > 0) && isset($liveFeedFields['ERROR']))
+		if ($eventID === false && isset($liveFeedFields['ERROR']))
 		{
 			$arFields['ERROR'] = $liveFeedFields['ERROR'];
 		}
@@ -7088,9 +7120,7 @@ class CAllCrmActivity
 
 				if ($type)
 				{
-					$url = "/crm/stream/?log_id=#log_id#";
-					$url = str_replace(array("#log_id#"), array($eventID), $url);
-					$serverName = (CMain::IsHTTPS() ? "https" : "http")."://".((defined("SITE_SERVER_NAME") && SITE_SERVER_NAME <> '') ? SITE_SERVER_NAME : COption::GetOptionString("main", "server_name", ""));
+					$url = CCrmOwnerType::GetEntityShowPath(CCrmOwnerType::Activity, $ID);
 
 					$arMessageFields = array(
 						"MESSAGE_TYPE" => IM_MESSAGE_SYSTEM,
@@ -7102,7 +7132,7 @@ class CAllCrmActivity
 						"NOTIFY_EVENT" => "changeAssignedBy",
 						"NOTIFY_TAG" => "CRM|ACTIVITY|".$ID,
 						"NOTIFY_MESSAGE" => GetMessage("CRM_ACTIVITY_".$type."_RESPONSIBLE_IM_NOTIFY", Array("#title#" => '<a href="'.$url.'">'.htmlspecialcharsbx($arFields['SUBJECT']).'</a>')),
-						"NOTIFY_MESSAGE_OUT" => GetMessage("CRM_ACTIVITY_".$type."_RESPONSIBLE_IM_NOTIFY", Array("#title#" => htmlspecialcharsbx($arFields['SUBJECT'])))." (".$serverName.$url.")"
+						"NOTIFY_MESSAGE_OUT" => GetMessage("CRM_ACTIVITY_".$type."_RESPONSIBLE_IM_NOTIFY", Array("#title#" => htmlspecialcharsbx($arFields['SUBJECT'])))." (".CCrmUrlUtil::ToAbsoluteUrl($url).")"
 					);
 
 					if(!$bHasPermissions)
@@ -7202,9 +7232,7 @@ class CAllCrmActivity
 
 				if ($type)
 				{
-					$url = "/crm/stream/?log_id=#log_id#";
-					$url = str_replace(array("#log_id#"), array($slID), $url);
-					$serverName = (CMain::IsHTTPS() ? "https" : "http")."://".((defined("SITE_SERVER_NAME") && SITE_SERVER_NAME <> '') ? SITE_SERVER_NAME : COption::GetOptionString("main", "server_name", ""));
+					$url = CCrmOwnerType::GetEntityShowPath(CCrmOwnerType::Activity, $activityID);
 
 					$arMessageFields = array(
 						"MESSAGE_TYPE" => IM_MESSAGE_SYSTEM,
@@ -7234,7 +7262,7 @@ class CAllCrmActivity
 						{
 							$arMessageFields["TO_USER_ID"] = $params['START_RESPONSIBLE_ID'];
 							$arMessageFields["NOTIFY_MESSAGE"] = GetMessage("CRM_ACTIVITY_".$type."_NOT_RESPONSIBLE_IM_NOTIFY", Array("#title#" => '<a href="'.$url.'">'.htmlspecialcharsbx($params['SUBJECT']).'</a>'));
-							$arMessageFields["NOTIFY_MESSAGE_OUT"] = GetMessage("CRM_ACTIVITY_".$type."_NOT_RESPONSIBLE_IM_NOTIFY", Array("#title#" => htmlspecialcharsbx($params['SUBJECT'])))." (".$serverName.$url.")";
+							$arMessageFields["NOTIFY_MESSAGE_OUT"] = GetMessage("CRM_ACTIVITY_".$type."_NOT_RESPONSIBLE_IM_NOTIFY", Array("#title#" => htmlspecialcharsbx($params['SUBJECT'])))." (".CCrmUrlUtil::ToAbsoluteUrl($url).")";
 
 							CIMNotify::Add($arMessageFields);
 						}
@@ -7257,7 +7285,7 @@ class CAllCrmActivity
 						if ($bHasPermissions)
 						{
 							$arMessageFields["NOTIFY_MESSAGE"] = GetMessage("CRM_ACTIVITY_".$type."_RESPONSIBLE_IM_NOTIFY", Array("#title#" => '<a href="'.$url.'">'.htmlspecialcharsbx($params['SUBJECT']).'</a>'));
-							$arMessageFields["NOTIFY_MESSAGE_OUT"] = GetMessage("CRM_ACTIVITY_".$type."_RESPONSIBLE_IM_NOTIFY", Array("#title#" => htmlspecialcharsbx($params['SUBJECT'])))." (".$serverName.$url.")";
+							$arMessageFields["NOTIFY_MESSAGE_OUT"] = GetMessage("CRM_ACTIVITY_".$type."_RESPONSIBLE_IM_NOTIFY", Array("#title#" => htmlspecialcharsbx($params['SUBJECT'])))." (".CCrmUrlUtil::ToAbsoluteUrl($url).")";
 						}
 						else
 						{
@@ -7271,7 +7299,7 @@ class CAllCrmActivity
 				}
 			}
 
-			if($processBindings && $hasBindings)
+			if ($processBindings && $hasBindings && Settings\Crm::isLiveFeedRecordsGenerationEnabled())
 			{
 				CCrmSonetRelation::RegisterRelationBundle(
 					$slID,

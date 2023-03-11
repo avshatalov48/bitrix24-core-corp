@@ -76,7 +76,6 @@ class OrderController extends EntityController
 
 		$entityId = OrderEntry::create([
 			'ENTITY_ID' => $ownerId,
-			'CREATED' => Main\Type\DateTime::createFromTimestamp(time() - 60),
 			'TYPE_CATEGORY_ID' => OrderCategoryType::ENCOURAGE_BUY_PRODUCTS,
 			'AUTHOR_ID' => self::resolveCreatorID($orderFields),
 			'SETTINGS' => $settings,

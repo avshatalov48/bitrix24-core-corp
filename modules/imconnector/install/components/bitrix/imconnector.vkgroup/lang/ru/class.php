@@ -1,5 +1,5 @@
 <?
-$MESS["IMCONNECTOR_COMPONENT_VKGROUP_MODULE_NOT_INSTALLED"] = "Модуль коннекторов мессенджеров не установлен";
+$MESS["IMCONNECTOR_COMPONENT_VKGROUP_MODULE_NOT_INSTALLED_MSGVER_1"] = "Модуль коннекторов мессенджеров не установлен";
 $MESS["IMCONNECTOR_COMPONENT_VKGROUP_NO_ACTIVE_CONNECTOR"] = "Данный коннектор не активен";
 $MESS["IMCONNECTOR_COMPONENT_VKGROUP_SESSION_HAS_EXPIRED"] = "Ваша сессия истекла. Отправьте форму еще раз";
 $MESS["IMCONNECTOR_COMPONENT_VKGROUP_REMOVED_REFERENCE_TO_ENTITY"] = "Данный коннектор был настроен на работу с группой / публичной страницей / мероприятием, доступ к администрированию которого Вы в текущий момент вы не имеете.<br>

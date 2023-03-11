@@ -113,13 +113,17 @@ $this->SetViewTarget("im", 100);
 		));
 	}
 	?>
-	<div id="bx-im-bar-notify" class="bx-im-informer">
-		<div class="bx-im-informer-icon" title="<?=GetMessage('IM_MESSENGER_OPEN_NOTIFY');?>"></div>
-		<div class="bx-im-informer-num"></div>
-	</div>
-	<div id="bx-im-bar-ol" class="bx-im-informer bx-im-informer-ol bx-im-border-b">
-		<div class="bx-im-informer-ol-icon" title="<?=GetMessage('IM_MESSENGER_OPEN_OL');?>"></div>
-		<div class="bx-im-informer-num"></div>
+	<div class="bx-im-helper-block bx-im-border-b">
+		<div id="bx-im-bar-notify" class="bx-im-informer">
+			<div class="bx-im-informer-icon" title="<?=GetMessage('IM_MESSENGER_OPEN_NOTIFY');?>">
+				<div class="bx-im-informer-num"></div>
+			</div>
+		</div>
+		<div id="bx-im-bar-ol" class="bx-im-informer bx-im-informer-ol">
+			<div class="bx-im-informer-ol-icon" title="<?=GetMessage('IM_MESSENGER_OPEN_OL');?>">
+				<div class="bx-im-informer-num"></div>
+			</div>
+		</div>
 	</div>
 	<div id="bx-im-bar-search" class="bx-im-search bx-im-border-b" title="<?=GetMessage('IM_MESSENGER_OPEN_SEARCH');?>">
 		<div class="bx-im-informer-num"></div>
@@ -176,9 +180,9 @@ try
 {
 	$externalData = \CUserOptions::GetOption('external', 'notification', []);
 	$tutorialDataJson = \Bitrix\Main\Web\Json::encode([
-		'tutorialData' => \Bitrix\Main\Web\Json::decode($externalData['tutorials']),
-		'eventService' => \Bitrix\Main\Web\Json::decode($externalData['eventService']),
-		'lastCheckTime' => $externalData['lastCheckTime'],
+		'tutorialData' => \Bitrix\Main\Web\Json::decode($externalData['tutorials'] ?? ''),
+		'eventService' => \Bitrix\Main\Web\Json::decode($externalData['eventService'] ?? ''),
+		'lastCheckTime' => $externalData['lastCheckTime'] ?? '',
 	]);
 }
 catch(\Bitrix\Main\ArgumentException $exception)

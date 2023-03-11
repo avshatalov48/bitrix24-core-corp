@@ -1,3 +1,6 @@
 <?php
 $MESS['UI_FILE_ATTACHMENT_DELETE_CONFIRM_TITLE'] = 'Вы уверены, что хотите удалить файл?';
 $MESS['UI_FILE_ATTACHMENT_DELETE_CONFIRM_OK'] = 'Удалить';
+$MESS['UI_FILE_ATTACHMENT_NAVIGATION_EDIT'] = 'Изменить';
+$MESS['UI_FILE_ATTACHMENT_NAVIGATION_SAVE'] = 'Сохранить';
+$MESS['UI_FILE_ATTACHMENT_BUTTON_ADD'] = 'Добавить файл';

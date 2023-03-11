@@ -87,15 +87,15 @@ class ImConnectorTelegrambot extends \CBitrixComponent
 			return true;
 		}
 
-		ShowError(Loc::getMessage('IMCONNECTOR_COMPONENT_TELEGRAMBOT_MODULE_NOT_INSTALLED'));
+		ShowError(Loc::getMessage('IMCONNECTOR_COMPONENT_TELEGRAMBOT_MODULE_NOT_INSTALLED_MSGVER_1'));
 		return false;
 	}
 
 	protected function initialization(): void
 	{
-		$this->connectorOutput = new Output($this->connector, $this->arParams['LINE']);
+		$this->connectorOutput = new Output($this->connector, (int)$this->arParams['LINE']);
 
-		$this->status = Status::getInstance($this->connector, $this->arParams['LINE']);
+		$this->status = Status::getInstance($this->connector, (int)$this->arParams['LINE']);
 
 		$this->arResult['STATUS'] = $this->status->isStatus();
 		$this->arResult['ACTIVE_STATUS'] = $this->status->getActive();
@@ -160,11 +160,11 @@ class ImConnectorTelegrambot extends \CBitrixComponent
 							}
 
 							$dataToSave = [
-								'eshop_enabled' => $this->arResult['FORM']['eshop_enabled'],
+								'eshop_enabled' => $this->arResult['FORM']['eshop_enabled'] ?? 'N',
 								'welcome_message' => $this->arResult['FORM']['welcome_message'] ? : ''
 							];
 
-							if ($this->arResult['FORM']['eshop_enabled'] && $this->arResult['FORM']['eshop_enabled'] === 'Y')
+							if (isset($this->arResult['FORM']['eshop_enabled']) && $this->arResult['FORM']['eshop_enabled'] === 'Y')
 							{
 								if ((int)$this->request['eshop_id'] > 0)
 								{
@@ -192,9 +192,9 @@ class ImConnectorTelegrambot extends \CBitrixComponent
 							$this->status->setData($dataToSave);
 
 							$dataToSaveOnServer = [
-								'eshop_name' => $dataToSave['eshop_name'],
-								'eshop_url' => $dataToSave['eshop_url'],
-								'api_token' => $this->arResult['FORM']['api_token'],
+								'eshop_name' => $dataToSave['eshop_name'] ?? '',
+								'eshop_url' => $dataToSave['eshop_url'] ?? '',
+								'api_token' => $this->arResult['FORM']['api_token'] ?? '',
 							];
 
 							if (is_null($dataToSaveOnServer['api_token']))
@@ -322,7 +322,7 @@ class ImConnectorTelegrambot extends \CBitrixComponent
 
 						if ($rawDelete->isSuccess())
 						{
-							Status::delete($this->connector, $this->arParams['LINE']);
+							Status::delete($this->connector, (int)$this->arParams['LINE']);
 							$this->arResult['STATUS'] = false;
 							$this->arResult['ACTIVE_STATUS'] = false;
 							$this->arResult['CONNECTION_STATUS'] = false;
@@ -375,7 +375,7 @@ class ImConnectorTelegrambot extends \CBitrixComponent
 					{
 						if (empty($result[$value]))
 						{
-							$this->arResult['FORM'][$value] = $result[$value];
+							$this->arResult['FORM'][$value] = $result[$value] ?? '';
 						}
 						else
 						{
@@ -386,7 +386,7 @@ class ImConnectorTelegrambot extends \CBitrixComponent
 				}
 
 				$statusData = $this->status->getData();
-				if ($statusData['welcome_message'])
+				if (!empty($statusData['welcome_message']))
 				{
 					$this->arResult['FORM']['welcome_message'] = $statusData['welcome_message'];
 				}
@@ -399,7 +399,7 @@ class ImConnectorTelegrambot extends \CBitrixComponent
 				{
 					$this->arResult['FORM']['welcome_message'] = '';
 				}
-				if ($statusData['eshop_url'])
+				if (!empty($statusData['eshop_url']))
 				{
 					$this->arResult['FORM']['eshop_enabled'] = 'Y';
 					$this->arResult['FORM']['eshop_url'] = $statusData['eshop_url'];

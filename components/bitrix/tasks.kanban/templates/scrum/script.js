@@ -1,7 +1,42 @@
 this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
-(function (exports,main_core_events,main_core) {
+(function (exports,pull_client,main_core_events,main_core) {
 	'use strict';
+
+	var PullItem = /*#__PURE__*/function (_EventEmitter) {
+	  babelHelpers.inherits(PullItem, _EventEmitter);
+
+	  function PullItem() {
+	    var _this;
+
+	    babelHelpers.classCallCheck(this, PullItem);
+	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(PullItem).call(this));
+
+	    _this.setEventNamespace('BX.Tasks.Scrum.KanbanManager.PullItem');
+
+	    return _this;
+	  }
+
+	  babelHelpers.createClass(PullItem, [{
+	    key: "getModuleId",
+	    value: function getModuleId() {
+	      return 'tasks';
+	    }
+	  }, {
+	    key: "getMap",
+	    value: function getMap() {
+	      return {
+	        itemUpdated: this.onItemUpdated.bind(this)
+	      };
+	    }
+	  }, {
+	    key: "onItemUpdated",
+	    value: function onItemUpdated(params) {
+	      this.emit('itemUpdated', params);
+	    }
+	  }]);
+	  return PullItem;
+	}(main_core_events.EventEmitter);
 
 	var KanbanComponent = /*#__PURE__*/function () {
 	  function KanbanComponent(params) {
@@ -56,6 +91,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    var _this = this;
 
 	    babelHelpers.classCallCheck(this, KanbanManager);
+	    this.groupId = parseInt(params.groupId, 10);
 	    this.filterId = params.filterId;
 	    this.siteTemplateId = params.siteTemplateId;
 	    this.ajaxComponentPath = params.ajaxComponentPath;
@@ -72,6 +108,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      ajaxComponentPath: params.ajaxComponentPath,
 	      ajaxComponentParams: params.ajaxComponentParams
 	    });
+	    this.pullItem = new PullItem({
+	      groupId: this.groupId
+	    });
+	    this.pullItem.subscribe('itemUpdated', this.onItemUpdated.bind(this));
 	    main_core_events.EventEmitter.subscribe('BX.Main.Filter:apply', function (event) {
 	      var _event$getCompatData = event.getCompatData(),
 	          _event$getCompatData2 = babelHelpers.slicedToArray(_event$getCompatData, 5),
@@ -84,6 +124,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      _this.onApplyFilter(filterId, values, filterInstance, promise, params);
 	    });
 	    main_core_events.EventEmitter.subscribe('onTasksGroupSelectorChange', this.onChangeSprint.bind(this));
+	    pull_client.PULL.subscribe(this.pullItem);
 	  }
 
 	  babelHelpers.createClass(KanbanManager, [{
@@ -410,6 +451,27 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      }, function (error) {});
 	    }
 	  }, {
+	    key: "onItemUpdated",
+	    value: function onItemUpdated(baseEvent) {
+	      var data = baseEvent.getData();
+
+	      if (this.groupId !== data.groupId) {
+	        return;
+	      }
+
+	      var taskId = data.sourceId;
+
+	      if (this.kanban.hasItem(taskId)) {
+	        this.kanban.refreshTask(taskId);
+	      } else {
+	        this.kanbanGroupedByParentTasks.forEach(function (parentTaskKanban) {
+	          if (parentTaskKanban.hasItem(taskId)) {
+	            parentTaskKanban.refreshTask(taskId);
+	          }
+	        });
+	      }
+	    }
+	  }, {
 	    key: "refreshKanban",
 	    value: function refreshKanban(kanban, data) {
 	      kanban.resetPaginationPage();
@@ -638,5 +700,5 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	exports.KanbanManager = KanbanManager;
 
-}((this.BX.Tasks.Scrum = this.BX.Tasks.Scrum || {}),BX.Event,BX));
+}((this.BX.Tasks.Scrum = this.BX.Tasks.Scrum || {}),BX,BX.Event,BX));
 //# sourceMappingURL=script.js.map

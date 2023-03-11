@@ -18,6 +18,7 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 	const { capitalize } = require('utils/string');
 	const { ActivityCountersStoreManager } = require('crm/state-storage');
 	const { getActionToChangePipeline } = require('crm/entity-actions');
+	const { PureComponent } = require('layout/pure-component');
 
 	const iconColor = '#767c87';
 
@@ -39,7 +40,7 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 	 * @class EntityTab
 	 * @abstract
 	 */
-	class EntityTab extends LayoutComponent
+	class EntityTab extends PureComponent
 	{
 		constructor(props)
 		{
@@ -66,8 +67,11 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 			this.entityTypeName = props.entityTypeName;
 			this.entityTypes = props.entityTypes;
 
-			this.state.isLoading = false;
-			this.state.searchButtonBackgroundColor = null;
+			this.state = {
+				isLoading: false,
+				searchButtonBackgroundColor: null,
+				forceRenderSwitcher: false,
+			}
 
 			/** @type {Filter}*/
 			this.filter = new Filter(this.getDefaultPresetId());
@@ -171,7 +175,9 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 			if (this.getCurrentStatefulList().getSimpleList().getViewMode() === ViewMode.empty)
 			{
 				this.filter.unsetWasShown();
-				this.setState({});
+				this.setState({
+					forceRenderSwitcher: !this.state.forceRenderSwitcher,
+				});
 			}
 		}
 

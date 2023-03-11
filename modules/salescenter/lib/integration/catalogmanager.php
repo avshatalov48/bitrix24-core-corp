@@ -90,7 +90,11 @@ class CatalogManager extends Base
 
 		return Catalog\ProductCompilationTable::add([
 			'DEAL_ID' => $dealId,
-			'PRODUCT_IDS' => Json::encode($productIds),
+			'PRODUCT_IDS' => Json::encode(
+				array_unique(
+					$productIds
+				)
+			),
 			'CREATION_DATE' => new DateTime(),
 			'CHAT_ID' => $chatId,
 		])->getId();
@@ -125,7 +129,16 @@ class CatalogManager extends Base
 	public function setCompilationProducts(int $compilationId, array $productIds): void
 	{
 		$productIds = $this->prepareProductIds($productIds);
-		Catalog\ProductCompilationTable::update($compilationId, ['PRODUCT_IDS' => Json::encode($productIds)]);
+		Catalog\ProductCompilationTable::update(
+			$compilationId,
+			[
+				'PRODUCT_IDS' => Json::encode(
+					array_unique(
+						$productIds
+					)
+				)
+			]
+		);
 	}
 
 	private function prepareProductIds(array $productIds): array

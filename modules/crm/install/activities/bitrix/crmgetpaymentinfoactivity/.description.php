@@ -24,7 +24,7 @@ $arActivityDescription = [
 			'TYPE' => 'int',
 		],
 		'PaymentAccountNumber' => [
-			'NAME' => Loc::getMessage('CRM_BP_GPI_RETURN_PAYMENT_NUM'),
+			'NAME' => Loc::getMessage('CRM_BP_GPI_RETURN_PAYMENT_ACCOUNT_NUMBER'),
 			'TYPE' => 'string',
 		],
 	],

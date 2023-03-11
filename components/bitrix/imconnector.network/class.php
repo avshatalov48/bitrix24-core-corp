@@ -54,9 +54,9 @@ class ImConnectorNetwork extends \CBitrixComponent
 
 	protected function initialization()
 	{
-		$this->connectorOutput = new Output($this->connector, $this->arParams['LINE']);
+		$this->connectorOutput = new Output($this->connector, (int)$this->arParams['LINE']);
 
-		$this->status = Status::getInstance($this->connector, $this->arParams['LINE']);
+		$this->status = Status::getInstance($this->connector, (int)$this->arParams['LINE']);
 
 		$this->arResult["STATUS"] = $this->status->isStatus();
 		$this->arResult["ACTIVE_STATUS"] = $this->status->getActive();
@@ -228,7 +228,7 @@ class ImConnectorNetwork extends \CBitrixComponent
 							$this->error[] = Loc::getMessage("IMCONNECTOR_COMPONENT_SETTINGS_NO_DISABLE");
 						}
 
-						Status::delete($this->connector, $this->arParams['LINE']);
+						Status::delete($this->connector, (int)$this->arParams['LINE']);
 						$this->arResult["STATUS"] = false;
 						$this->arResult["ACTIVE_STATUS"] = false;
 						$this->arResult["CONNECTION_STATUS"] = false;

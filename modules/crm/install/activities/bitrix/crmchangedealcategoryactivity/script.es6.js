@@ -43,6 +43,11 @@ class CrmChangeDealCategoryActivity
 				continue;
 			}
 
+			if (opt.selected && opt.getAttribute('data-role') === 'expression')
+			{
+				continue;
+			}
+
 			opt.disabled = (prefix && opt.value.indexOf(prefix) < 0) || (!prefix && opt.value.indexOf(':') > -1);
 
 			if (opt.disabled === Dom.isShown(opt))

@@ -183,6 +183,11 @@ class DynamicMultipleProvider extends BaseProvider
 
 	protected function filterOutNonExistentEntityIds(int $entityTypeId, array $ids): array
 	{
+		if (empty($ids))
+		{
+			return [];
+		}
+
 		return $this->fetchEntryIds($entityTypeId, [
 			'@ID' => $ids,
 		]);

@@ -8,6 +8,7 @@ import {PopupComponentsMaker} from 'ui.popupcomponentsmaker';
 import {CreatedEvent, CreatedEventType} from './created.event';
 import {ListEvents} from './list.events';
 import {RequestSender} from './request.sender';
+import {Culture, CultureData} from './culture';
 
 import 'ui.design-tokens';
 import 'ui.fonts.opensans';
@@ -28,7 +29,8 @@ type MeetingsResponse = {
 		todayEvent: ?CreatedEventType,
 		isTemplatesClosed: boolean,
 		defaultSprintDuration: number,
-		calendarSettings: CalendarSettings
+		calendarSettings: CalendarSettings,
+		culture: CultureData
 	}
 }
 
@@ -127,6 +129,10 @@ export class Meetings
 
 		const response = this.requestSender.getMeetings({
 			groupId: this.groupId
+		}).then((response: MeetingsResponse) => {
+			Culture.getInstance().setData(response.data.culture);
+
+			return response;
 		});
 
 		this.menu = new PopupComponentsMaker({
@@ -223,7 +229,7 @@ export class Meetings
 								</div>
 								<div class="tasks-scrum__widget-meetings--chat-info">
 									<div class="tasks-scrum__widget-meetings--chat-name">
-										${Text.encode(chat.name)}
+										${chat.name}
 									</div>
 									<div class="users-icon tasks-scrum__widget-meetings--chat-users">
 										${this.renderChatUser(chat.users)}
@@ -277,7 +283,7 @@ export class Meetings
 		return Tag.render`
 			${
 				users.map((user: ChatUser) => {
-					const src = user.photo ? Text.encode(user.photo.src) : null;
+					const src = user.photo ? encodeURI(Text.encode(user.photo.src)) : null;
 					const photoStyle = src ? `background-image: url('${src}');` : '';
 					return Tag.render`
 						<div class="user-icon ${uiIconClasses}" title="${Text.encode(user.name)}">

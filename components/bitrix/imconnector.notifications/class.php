@@ -60,9 +60,9 @@ class ImConnectorNotificationsComponent extends \CBitrixComponent implements \Bi
 
 	protected function initialization()
 	{
-		$this->connectorOutput = new Output($this->connector, $this->arParams['LINE']);
+		$this->connectorOutput = new Output($this->connector, (int)$this->arParams['LINE']);
 
-		$this->status = Status::getInstance($this->connector, $this->arParams['LINE']);
+		$this->status = Status::getInstance($this->connector, (int)$this->arParams['LINE']);
 
 		$request = \Bitrix\Main\Context::getCurrent()->getRequest();
 		$this->scenarioCode = $request->get('scenario') ?? Settings::SCENARIO_CRM_PAYMENT;
@@ -115,7 +115,7 @@ class ImConnectorNotificationsComponent extends \CBitrixComponent implements \Bi
 
 				$this->arResult["STATUS"] = true;
 
-				Status::deleteLinesExcept($this->connector, $this->arParams['LINE']);
+				Status::deleteLinesExcept($this->connector, (int)$this->arParams['LINE']);
 
 				$scenarioEnableResult = Settings::setScenarioStatus($this->arResult['SCENARIO_CODE'], true);
 				if (!$scenarioEnableResult->isSuccess())
@@ -150,7 +150,7 @@ class ImConnectorNotificationsComponent extends \CBitrixComponent implements \Bi
 					}
 					else
 					{
-						Status::delete($this->connector, $this->arParams['LINE']);
+						Status::delete($this->connector, (int)$this->arParams['LINE']);
 					}
 				}
 

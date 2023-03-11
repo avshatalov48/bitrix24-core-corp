@@ -17,11 +17,8 @@ use \Bitrix\Main\Error;
 use \Bitrix\Main\Loader;
 use \Bitrix\Main\Application;
 
-use Bitrix\Tasks\Access\TaskAccessController;
 use Bitrix\Tasks\Component\Kanban\ScrumManager;
 use Bitrix\Tasks\Internals\Registry\TaskRegistry;
-use Bitrix\Tasks\Internals\Task\Result\ResultManager;
-use Bitrix\Tasks\Internals\TaskTable;
 use \Bitrix\Tasks\Kanban\StagesTable;
 use \Bitrix\Tasks\Kanban\TaskStageTable;
 use \Bitrix\Tasks\Kanban\TimeLineTable;
@@ -205,9 +202,10 @@ class TasksKanbanComponent extends \CBitrixComponent
 		$scrumManager = new ScrumManager($params['GROUP_ID']);
 		if ($scrumManager->isScrumProject())
 		{
+			StagesTable::setWorkMode(StagesTable::WORK_MODE_ACTIVE_SPRINT);
+
 			if (isset($params['SPRINT_ID']) && $params['SPRINT_ID'] >= 0)
 			{
-				StagesTable::setWorkMode(StagesTable::WORK_MODE_ACTIVE_SPRINT);
 				$params['SPRINT_SELECTED'] = 'Y';
 			}
 			else
@@ -1050,14 +1048,15 @@ class TasksKanbanComponent extends \CBitrixComponent
 			return $items;
 		}
 
-		$res = Task\TagTable::getList(array(
-			'select' => array(
-				'TASK_ID', 'NAME'
-			),
-			'filter' => array(
+		$res = Task\LabelTable::getList([
+			'select' => [
+				'TASK_ID' => 'TASKS.ID',
+				'NAME'
+			],
+			'filter' => [
 				'TASK_ID' => array_keys($items)
-			)
-		));
+			],
+		]);
 		while ($row = $res->fetch())
 		{
 			$tags =& $items[$row['TASK_ID']]['data']['tags'];
@@ -2842,12 +2841,20 @@ class TasksKanbanComponent extends \CBitrixComponent
 							continue;
 						}
 
-						// personal kanban
+						// personal kanban or scrum
 						if (
-							$this->arParams['PERSONAL'] == 'Y' ||
-							$this->arParams['SPRINT_ID'] > 0
+							$this->arParams['PERSONAL'] == 'Y'
+							|| $this->arParams['SPRINT_ID'] > 0
 						)
 						{
+							if ($this->arParams['PERSONAL'] == 'Y')
+							{
+								StagesTable::setWorkMode(StagesTable::WORK_MODE_USER);
+							}
+							else
+							{
+								StagesTable::setWorkMode(StagesTable::WORK_MODE_ACTIVE_SPRINT);
+							}
 							$resStg = TaskStageTable::getList(array(
 								'filter' => array(
 									'TASK_ID' => $data['id'],
@@ -3068,8 +3075,12 @@ class TasksKanbanComponent extends \CBitrixComponent
 			{
 				$rows = $this->getData(['ID' => $taskId]);
 				$data = array_shift($rows);
-				$data['columns'] = $this->getStages($taskId);
-				return $data;
+				if (!empty($data))
+				{
+					$data['columns'] = $this->getStages($taskId);
+
+					return $data;
+				}
 			}
 		}
 

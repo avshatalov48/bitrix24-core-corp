@@ -664,10 +664,11 @@ class ItrMenu
 
 		// go to next menu level
 		if (
-			$params['COMMAND'] === self::COMMAND_MENU &&
-			!empty($params['COMMAND_PARAMS']) &&
-			is_string($params['COMMAND_PARAMS']) &&
-			$this->getItem($params['COMMAND_PARAMS'])
+			!empty($params['COMMAND'])
+			&& $params['COMMAND'] === self::COMMAND_MENU
+			&& !empty($params['COMMAND_PARAMS'])
+			&& is_string($params['COMMAND_PARAMS'])
+			&& $this->getItem($params['COMMAND_PARAMS'])
 		)
 		{
 			$currentMenuItemId = $params['COMMAND_PARAMS'];

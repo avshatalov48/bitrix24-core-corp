@@ -1760,11 +1760,11 @@ abstract class Entity
 	protected function getPopupHiddenFields(): array
 	{
 		return [
-			'STAGE_ID', 'STATUS', 'STATUS_ID',
+			'STAGE_ID', 'STATUS', 'STATUS_ID', 'OBSERVER_IDS',
 		];
 	}
 
-	public static function getInstance(string $entityTypeName, string $viewMode = \Bitrix\Crm\Kanban\ViewMode::MODE_STAGES): ?Entity
+	public static function getInstance(string $entityTypeName, string $viewMode = ViewMode::MODE_STAGES): ?Entity
 	{
 		Loc::loadMessages(Path::combine(__DIR__, 'helper.php'));
 		Loc::loadMessages(Application::getDocumentRoot() . BX_ROOT . '/components'.\CComponentEngine::makeComponentPath('bitrix:crm.kanban') . '/ajax.fields.php');
@@ -1776,12 +1776,16 @@ abstract class Entity
 			$instance = null;
 			if($entityTypeName === \CCrmOwnerType::LeadName)
 			{
-				$instance = ServiceLocator::getInstance()->get('crm.kanban.entity.lead');
+				$instance = ServiceLocator::getInstance()->get(
+					$viewMode === \Bitrix\Crm\Kanban\ViewMode::MODE_ACTIVITIES
+						? 'crm.kanban.entity.lead.activities'
+						: 'crm.kanban.entity.lead'
+				);
 			}
 			elseif($entityTypeName === \CCrmOwnerType::DealName)
 			{
 				$instance = ServiceLocator::getInstance()->get(
-					$viewMode === \Bitrix\Crm\Kanban\ViewMode::MODE_ACTIVITIES
+					$viewMode === ViewMode::MODE_ACTIVITIES
 						? 'crm.kanban.entity.deal.activities'
 						: 'crm.kanban.entity.deal'
 				);
@@ -1800,7 +1804,11 @@ abstract class Entity
 			}
 			elseif($entityTypeName === \CCrmOwnerType::QuoteName)
 			{
-				$instance = ServiceLocator::getInstance()->get('crm.kanban.entity.quote');
+				$instance = ServiceLocator::getInstance()->get(
+					$viewMode === ViewMode::MODE_DEADLINES
+						? 'crm.kanban.entity.quote.deadlines'
+						: 'crm.kanban.entity.quote'
+				);
 			}
 			elseif($entityTypeName === \CCrmOwnerType::OrderName)
 			{
@@ -1808,8 +1816,12 @@ abstract class Entity
 			}
 			elseif($entityTypeName === \CCrmOwnerType::SmartInvoiceName)
 			{
+				$alias = $viewMode === ViewMode::MODE_DEADLINES
+					? 'crm.kanban.entity.smartInvoiceDeadlines'
+					: 'crm.kanban.entity.smartInvoice';
+
 				$factory = Container::getInstance()->getFactory(\CCrmOwnerType::SmartInvoice);
-				$instance = ServiceLocator::getInstance()->get('crm.kanban.entity.smartInvoice');
+				$instance = ServiceLocator::getInstance()->get($alias);
 				if ($factory)
 				{
 					$instance->setFactory($factory);
@@ -2142,6 +2154,11 @@ abstract class Entity
 	}
 
 	public function getClientFieldsRestrictions(): ?array
+	{
+		return null;
+	}
+
+	public function getObserversFieldRestrictions(): ?array
 	{
 		return null;
 	}
@@ -2479,12 +2496,24 @@ abstract class Entity
 
 	protected function getDefaultSortType(): string
 	{
+		if ($this->isLastActivitySupported())
+		{
+			return Sort\Type::BY_LAST_ACTIVITY_TIME;
+		}
+
 		return Sort\Type::BY_ID;
 	}
 
 	protected function getSupportedSortTypes(): array
 	{
-		return [Sort\Type::BY_ID];
+		$types = [Sort\Type::BY_ID];
+
+		if ($this->isLastActivitySupported())
+		{
+			$types[] = Sort\Type::BY_LAST_ACTIVITY_TIME;
+		}
+
+		return $types;
 	}
 
 	final public function setCurrentSortType(string $sortType): Result
@@ -2585,14 +2614,22 @@ abstract class Entity
 			}
 
 			$lastActivityTimeString = (string)($singleRawRow[Item::FIELD_NAME_LAST_ACTIVITY_TIME] ?? null);
-			try
-			{
-				// time was converted automatically to user time on the DB read
-				$lastActivityTime = DateTime::createFromUserTime($lastActivityTimeString);
-			}
-			catch (\Throwable $throwable)
+
+			if ($lastActivityTimeString === '')
 			{
 				$lastActivityTime = null;
+			}
+			else
+			{
+				try
+				{
+					// time was converted automatically to user time on the DB read
+					$lastActivityTime = DateTime::createFromUserTime($lastActivityTimeString);
+				}
+				catch (\Throwable $throwable)
+				{
+					$lastActivityTime = null;
+				}
 			}
 
 			if ($lastActivityTime)
@@ -2625,5 +2662,29 @@ abstract class Entity
 	public function isLastActivityEnabled(): bool
 	{
 		return ($this->factory && $this->factory->isLastActivityEnabled());
+	}
+
+	private function isLastActivitySupported(): bool
+	{
+		return ($this->factory && $this->factory->isLastActivitySupported());
+	}
+
+	protected function getItemViaLoadedItems(int $id): Result
+	{
+		$result = new Result();
+
+		$item = ($this->loadedItems[$id] ?? $this->getItem($id));
+		if($item)
+		{
+			$result->setData([
+				'item' => $item,
+			]);
+		}
+		else
+		{
+			$result->addError(new Error($this->getTypeName() . ' not found'));
+		}
+
+		return $result;
 	}
 }

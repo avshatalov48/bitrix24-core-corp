@@ -1,6 +1,6 @@
 <?php
 $MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_ESHOP_DEFAULT_NAME"] = "Onlineshop";
-$MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_MODULE_NOT_INSTALLED"] = "Das Modul IM Connectors ist nicht installiert";
+$MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_MODULE_NOT_INSTALLED_MSGVER_1"] = "Das Modul \"External Messenger Connectors\" ist nicht installiert.";
 $MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_NO_ACTIVE_CONNECTOR"] = "Dieser Connector ist nicht aktiv.";
 $MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_NO_CONNECT"] = "Testverbindung mit angegebenen Daten konnte nicht hergestellt werden.";
 $MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_NO_DATA_SAVE"] = "Keine Daten zum Speichern verfügbar.";

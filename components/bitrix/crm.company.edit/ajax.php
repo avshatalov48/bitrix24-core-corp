@@ -136,9 +136,9 @@ elseif($action === 'ENABLE_SONET_SUBSCRIPTION')
 
 		$enable = isset($_POST['ENABLE']) && mb_strtoupper($_POST['ENABLE']) === 'Y' ;
 
-		if($isEnabled !== $enable)
+		if ($isEnabled !== $enable && \Bitrix\Crm\Settings\Crm::isLiveFeedRecordsGenerationEnabled())
 		{
-			if($enable)
+			if ($enable)
 			{
 				CCrmSonetSubscription::RegisterSubscription(CCrmOwnerType::Company, $entityID, CCrmSonetSubscriptionType::Observation, $userID);
 			}

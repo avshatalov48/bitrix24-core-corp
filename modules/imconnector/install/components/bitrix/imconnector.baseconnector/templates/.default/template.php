@@ -42,7 +42,7 @@ $iconCode = Connector::getIconByConnector($arResult['CONNECTOR']);
 </form>
 
 <?
-if ($arResult['STATUS'])
+if (!empty($arResult['STATUS']))
 {
 	if (empty($arResult['PAGE']))
 	{

@@ -2,7 +2,6 @@
 
 namespace Bitrix\Crm\Integration;
 
-use Bitrix\Crm\Kanban\Entity;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Engine\CurrentUser;
@@ -281,15 +280,18 @@ class PullManager
 	 */
 	protected function filterUserIdsWhoCanViewItem(array $item, array $userIds, string $eventName): array
 	{
-		$typeWithCategoryId = explode(
-			'_',
-			str_replace(self::EVENT_KANBAN_UPDATED . '_', '', $eventName)
-		);
-		$typeName = (
-			$typeWithCategoryId[0] === 'DYNAMIC'
-				? $typeWithCategoryId[0] . '_' . $typeWithCategoryId[1]
-				: $typeWithCategoryId[0]
-		);
+		$withoutPrefix = str_replace(self::EVENT_KANBAN_UPDATED . '_', '', $eventName);
+		$nameParts = (array)explode('_', $withoutPrefix);
+
+		if ($nameParts[0] === 'DYNAMIC' || $nameParts[0] === 'SMART')
+		{
+			// like 'DYNAMIC_128' or 'SMART_INVOICE'
+			$typeName = $nameParts[0] . '_' . $nameParts[1];
+		}
+		else
+		{
+			$typeName = $nameParts[0];
+		}
 
 		$result = [];
 
@@ -342,21 +344,38 @@ class PullManager
 		return null;
 	}
 
-	public function sendCrmInitiatedEvent(): bool
+	public function sendCrmInitiatedEvent(?array $channelShared = null): bool
 	{
 		if(!$this->isEnabled())
 		{
 			return false;
 		}
-		$sharedChannel = \CPullChannel::GetChannelShared();
+
+		if (!is_array($channelShared))
+		{
+			$channelShared = \CPullChannel::GetChannelShared();
+		}
+
+		if (!$channelShared)
+		{
+			return false;
+		}
 
 		return $this->sendChannelEvent(
-			$sharedChannel['CHANNEL_ID'],
+			$channelShared['CHANNEL_ID'],
 			'was_inited',
 			[
 				'expiry' => 180,
 			]
 		);
+	}
+
+	/**
+	 * @return array|false
+	 */
+	public function getChannelShared()
+	{
+		return \CPullChannel::GetChannelShared();
 	}
 
 	public static function isPullChannelActiveByTag(string $tag): bool

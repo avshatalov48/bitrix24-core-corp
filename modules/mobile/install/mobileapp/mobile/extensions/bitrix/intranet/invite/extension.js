@@ -144,18 +144,34 @@ IntranetInvite.openRegisterSlider = function(params)
 		settings.sharingMessage = params.sharingMessage;
 	}
 
-	PageManager.openComponent('JSStackComponent', {
+	const componentConfig = {
 		scriptPath: availableComponents["intranet.invite"].publicUrl,
 		params: {
 			ORIGINATOR: (Utils.isNotEmptyObject(params) && Utils.isNotEmptyString(params.originator) ? params.originator : ''),
-			DISABLE_ADMIN_CONFIRM: settings.disableAdminConfirm
+			DISABLE_ADMIN_CONFIRM: settings.disableAdminConfirm,
 		},
 		componentCode: "invite",
 		rootWidget: {
 			name: 'invite',
-			settings: settings
+			settings: settings,
 		}
-	});
+	};
+
+	if (params.parentLayout)
+	{
+		PageManager.openComponent(
+			'JSStackComponent',
+			componentConfig,
+			params.parentLayout
+		);
+
+		return;
+	}
+
+	PageManager.openComponent(
+		'JSStackComponent',
+		componentConfig,
+	);
 };
 
 IntranetInvite.onSendInvite = function(params)

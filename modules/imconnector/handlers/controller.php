@@ -11,8 +11,6 @@ define('NOT_CHECK_PERMISSIONS', true);
 define('DisableEventsCheck', true);
 define('NO_AGENT_CHECK', true);
 
-global $APPLICATION;
-
 /* PROVIDER -> CONTROLLER -> PORTAL */
 
 require_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_before.php');
@@ -32,7 +30,8 @@ if (!Main\Loader::includeModule('imconnector'))
 }
 else
 {
-	if (is_object($APPLICATION))
+	/** @global \CMain $APPLICATION */
+	if ($APPLICATION instanceof \CMain)
 	{
 		$APPLICATION->RestartBuffer();
 	}
@@ -54,4 +53,3 @@ else
 }
 
 \CMain::FinalActions();
-die();

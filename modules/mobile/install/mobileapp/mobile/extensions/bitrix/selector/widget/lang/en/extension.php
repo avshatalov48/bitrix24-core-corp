@@ -8,4 +8,5 @@ $MESS["PROVIDER_WIDGET_CREATE_ITEM"] = "Create item";
 $MESS["PROVIDER_WIDGET_CREATING_ITEM"] = "Creating item...";
 $MESS["PROVIDER_WIDGET_DONE"] = "Done";
 $MESS["PROVIDER_WIDGET_SELECT"] = "Select";
+$MESS["PROVIDER_WIDGET_START_TYPING_TO_CREATE"] = "Start typing to create item";
 $MESS["PROVIDER_WIDGET_START_TYPING_TO_SEARCH"] = "Start typing to find items";

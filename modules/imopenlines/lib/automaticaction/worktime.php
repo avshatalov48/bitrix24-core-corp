@@ -49,6 +49,11 @@ class WorkTime
 
 			if (!empty($this->config['WORKTIME_DAYOFF']))
 			{
+				if (!is_array($this->config['WORKTIME_DAYOFF']))
+				{
+					$this->config['WORKTIME_DAYOFF'] = explode(',', $this->config['WORKTIME_DAYOFF']);
+				}
+
 				$allWeekDays = [
 					'MO' => 1,
 					'TU' => 2,
@@ -71,6 +76,11 @@ class WorkTime
 
 			if ($result && !empty($this->config['WORKTIME_HOLIDAYS']))
 			{
+				if (!is_array($this->config['WORKTIME_HOLIDAYS']))
+				{
+					$this->config['WORKTIME_HOLIDAYS'] = explode(',', $this->config['WORKTIME_HOLIDAYS']);
+				}
+
 				$currentDay = $numberDate->format('d.m');
 				foreach($this->config['WORKTIME_HOLIDAYS'] as $holiday)
 				{

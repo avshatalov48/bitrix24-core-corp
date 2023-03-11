@@ -28,7 +28,7 @@ export class Responsible  extends EventEmitter
 		const name = Text.encode(this.responsible.name);
 
 		const src = this.responsible.photo ? Text.encode(this.responsible.photo.src) : null;
-		const photoStyle = src ? `background-image: url('${src}');` : '';
+		const photoStyle = src ? `background-image: url('${encodeURI(src)}');` : '';
 
 		this.node = Tag.render`
 			<div class="tasks-scrum__item--responsible">

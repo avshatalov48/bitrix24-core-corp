@@ -7,7 +7,6 @@ this.BX = this.BX || {};
 	    babelHelpers.classCallCheck(this, Result);
 	    this.taskId = taskId;
 	  }
-
 	  babelHelpers.createClass(Result, [{
 	    key: "setClosed",
 	    value: function setClosed(value) {
@@ -29,7 +28,6 @@ this.BX = this.BX || {};
 	      if (this.comments && this.comments[commentId]) {
 	        return true;
 	      }
-
 	      return false;
 	    }
 	  }, {
@@ -48,7 +46,6 @@ this.BX = this.BX || {};
 	      if (this.comments[commentId]) {
 	        return false;
 	      }
-
 	      return true;
 	    }
 	  }, {
@@ -57,15 +54,6 @@ this.BX = this.BX || {};
 	      if (!this.comments[commentId]) {
 	        return false;
 	      }
-
-	      if (this.comments[commentId].status == 1) {
-	        return false;
-	      }
-
-	      if (this.isClosed) {
-	        return false;
-	      }
-
 	      return true;
 	    }
 	  }]);
@@ -79,43 +67,35 @@ this.BX = this.BX || {};
 	      if (!ResultManager.instance) {
 	        ResultManager.instance = new ResultManager();
 	      }
-
 	      return ResultManager.instance;
 	    }
 	  }, {
 	    key: "showField",
 	    value: function showField() {
 	      var node = document.getElementById('IS_TASK_RESULT');
-
 	      if (!node || !node.closest('label')) {
 	        return;
 	      }
-
 	      node.closest('label').classList.remove('--hidden');
 	    }
 	  }, {
 	    key: "hideField",
 	    value: function hideField() {
 	      var node = document.getElementById('IS_TASK_RESULT');
-
 	      if (!node || !node.closest('label')) {
 	        return;
 	      }
-
 	      node.closest('label').classList.add('--hidden');
 	    }
 	  }]);
-
 	  function ResultManager() {
 	    babelHelpers.classCallCheck(this, ResultManager);
 	    this.init();
 	  }
-
 	  babelHelpers.createClass(ResultManager, [{
 	    key: "init",
 	    value: function init() {
 	      var _this = this;
-
 	      var compatMode = {
 	        compatMode: true
 	      };
@@ -134,15 +114,12 @@ this.BX = this.BX || {};
 	    value: function initResult(params) {
 	      var result = this.getResult(params.taskId);
 	      result.setComments(params.comments);
-
 	      if (params.context) {
 	        result.setContext(params.context);
 	      }
-
 	      if (params.isClosed) {
 	        result.setClosed(true);
 	      }
-
 	      return result;
 	    }
 	  }, {
@@ -151,7 +128,6 @@ this.BX = this.BX || {};
 	      if (!ResultManager.resultRegistry[taskId]) {
 	        ResultManager.resultRegistry[taskId] = new Result(taskId);
 	      }
-
 	      return ResultManager.resultRegistry[taskId];
 	    }
 	  }, {
@@ -160,13 +136,10 @@ this.BX = this.BX || {};
 	      if (!event || !event['id'] || event['id'][0].indexOf('TASK_') !== 0) {
 	        return;
 	      }
-
 	      var node = document.getElementById('IS_TASK_RESULT');
-
 	      if (!node) {
 	        return;
 	      }
-
 	      var taskId = +/\d+/.exec(event['id'][0]);
 	      var result = this.getResult(taskId);
 	      node.checked = result.isResult(event['id'][1]);
@@ -176,29 +149,22 @@ this.BX = this.BX || {};
 	    value: function onPushResult(command, params) {
 	      if (command === 'task_update') {
 	        var _taskId = parseInt(params.TASK_ID);
-
 	        var _result = this.getResult(_taskId);
-
 	        if (params.AFTER.STATUS && (params.AFTER.STATUS == 4 || params.AFTER.STATUS == 5)) {
 	          _result.setClosed(true);
 	        } else if (params.AFTER.STATUS) {
 	          _result.setClosed(false);
 	        }
-
 	        return;
 	      }
-
 	      if (command !== 'task_result_create' && command !== 'task_result_delete') {
 	        return;
 	      }
-
 	      if (!params.result || !params.result.taskId || !params.result.commentId) {
 	        return;
 	      }
-
 	      var taskId = params.result.taskId;
 	      var result = this.getResult(taskId);
-
 	      if (command === 'task_result_create') {
 	        result.pushComment(params.result);
 	      } else if (command === 'task_result_delete') {
@@ -218,15 +184,12 @@ this.BX = this.BX || {};
 	      if (!ResultAction.instance) {
 	        ResultAction.instance = new ResultAction();
 	      }
-
 	      return ResultAction.instance;
 	    }
 	  }]);
-
 	  function ResultAction() {
 	    babelHelpers.classCallCheck(this, ResultAction);
 	  }
-
 	  babelHelpers.createClass(ResultAction, [{
 	    key: "canCreateResult",
 	    value: function canCreateResult(taskId) {

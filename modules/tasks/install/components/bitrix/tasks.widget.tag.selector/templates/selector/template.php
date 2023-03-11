@@ -51,3 +51,12 @@ Extension::load(['ui.entity-selector']);
 	<?php $helper->initializeExtension();?>
 
 <?php endif?>
+<script>
+	BX.ready(function() {
+		BX.message({
+			TASKS_WIDGET_TAG_SELECTOR_TAGS_ARE_CONVERTING_TITLE: '<?= Loc::getMessage('TASKS_WIDGET_TAG_SELECTOR_TAGS_ARE_CONVERTING_TITLE') ?>',
+			TASKS_WIDGET_TAG_SELECTOR_TAGS_ARE_CONVERTING_COME_BACK_LATER: '<?= Loc::getMessage('TASKS_WIDGET_TAG_SELECTOR_TAGS_ARE_CONVERTING_COME_BACK_LATER') ?>',
+			TASKS_WIDGET_TAG_SELECTOR_TAGS_ARE_CONVERTING_TEXT: '<?= Loc::getMessage('TASKS_WIDGET_TAG_SELECTOR_TAGS_ARE_CONVERTING_TEXT') ?>',
+		});
+	});
+</script>

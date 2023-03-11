@@ -8,6 +8,11 @@ Loc::loadMessages(__FILE__);
 
 class CallTrigger extends BaseTrigger
 {
+	protected static function hasLines()
+	{
+		return (Loader::includeModule('voximplant') && \CVoxImplantHttp::VERSION >= 19);
+	}
+
 	public static function getCode()
 	{
 		return 'CALL';
@@ -36,14 +41,29 @@ class CallTrigger extends BaseTrigger
 		return ($lineA === $lineB);
 	}
 
-	public static function toArray()
+	protected static function getPropertiesMap(): array
 	{
-		$result = parent::toArray();
-		if(Loader::includeModule('voximplant') && \CVoxImplantHttp::VERSION > 15) // todo: remove version check in future
+		if (!static::hasLines())
 		{
-			$result['LINES'] = array_values(\CVoxImplantConfig::GetLines(false, true));
+			return [];
 		}
-		return $result;
+
+		return [
+			[
+				'Id' => 'LINE_NUMBER',
+				'Name' => Loc::getMessage('CRM_AUTOMATION_TRIGGER_CALL_PROPERTY_LINE'),
+				'Type' => 'select',
+				'EmptyValueText' => Loc::getMessage('CRM_AUTOMATION_TRIGGER_CALL_DEFAULT_LINE'),
+				'Settings' => [
+					'OptionsLoader' => [
+						'type' => 'component',
+						'component' => 'bitrix:crm.automation',
+						'action' => 'getCallLines',
+						'mode' => 'class',
+					],
+				],
+			]
+		];
 	}
 
 	public static function getGroup(): array

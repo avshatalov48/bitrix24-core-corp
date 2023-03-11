@@ -1,5 +1,5 @@
 <?
-$MESS['IMCONNECTOR_COMPONENT_OK_MODULE_NOT_INSTALLED'] = 'Модуль коннекторов мессенджеров не установлен';
+$MESS['IMCONNECTOR_COMPONENT_OK_MODULE_NOT_INSTALLED_MSGVER_1'] = 'Модуль коннекторов мессенджеров не установлен';
 $MESS['IMCONNECTOR_COMPONENT_OK_NO_ACTIVE_CONNECTOR'] = 'Данный коннектор не активен';
 $MESS['IMCONNECTOR_COMPONENT_OK_SESSION_HAS_EXPIRED'] = 'Ваша сессия истекла. Отправьте форму еще раз';
 $MESS['IMCONNECTOR_COMPONENT_OK_OK_SAVE'] = 'Данные успешно сохранены';

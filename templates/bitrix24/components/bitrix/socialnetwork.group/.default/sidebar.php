@@ -133,21 +133,22 @@ if ($_REQUEST['BLOCK_RELOAD'] !== 'Y')
 			<td class="socialnetwork-group-layout-left-column"><?=GetMessage("SONET_C6_NMEM")?>:</td>
 			<td class="socialnetwork-group-layout-right-column"><?=$arResult["Group"]["NUMBER_OF_MEMBERS"]?></td>
 		</tr>
-		<tr class="socialnetwork-group-layout-row">
-			<?
-			$caption = Loc::getMessage('SONET_C6_TYPE');
-			if ($arResult['isScrumProject'])
-			{
-				$caption = Loc::getMessage('SONET_C6_TYPE_SCRUM');
-			}
-			elseif ($arResult['Group']['PROJECT'] === 'Y')
-			{
-				$caption = Loc::getMessage('SONET_C6_TYPE_PROJECT');
-			}
-			?>
-			<td class="socialnetwork-group-layout-left-column"><?= $caption ?>:</td>
-			<td class="socialnetwork-group-layout-right-column"><?=$arResult['Group']['Type']['NAME']?></td>
-		</tr><?php
+
+		<?php if(!$arResult['isScrumProject']): ?>
+			<tr class="socialnetwork-group-layout-row">
+				<?
+				$caption = Loc::getMessage('SONET_C6_TYPE');
+				if ($arResult['Group']['PROJECT'] === 'Y')
+				{
+					$caption = Loc::getMessage('SONET_C6_TYPE_PROJECT');
+				}
+				?>
+				<td class="socialnetwork-group-layout-left-column"><?= $caption ?>:</td>
+				<td class="socialnetwork-group-layout-right-column"><?=$arResult['Group']['Type']['NAME']?></td>
+			</tr>
+		<?php endif; ?>
+
+		<?php
 
 		if (
 			$arResult['Group']['PROJECT'] === 'Y'
@@ -344,7 +345,7 @@ if ($_REQUEST['BLOCK_RELOAD'] !== 'Y')
 
 						$style = (
 							$avatar
-								? "style=\"background: url('" . $avatar . "'); background-size: cover\""
+								? "style=\"background: url('" . Uri::urnEncode($avatar) . "'); background-size: cover\""
 								: ''
 						);
 
@@ -448,7 +449,7 @@ if ($_REQUEST['BLOCK_RELOAD'] !== 'Y')
 
 					$style = (
 						$avatar
-							? "style=\"background: url('" . $avatar . "'); background-size: cover\""
+							? "style=\"background: url('" . Uri::urnEncode($avatar) . "'); background-size: cover\""
 						: ''
 					);
 

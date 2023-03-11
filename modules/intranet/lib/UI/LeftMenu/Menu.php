@@ -49,7 +49,7 @@ class Menu
 						'ID' => $itemData['ID'],
 						'TEXT' => $itemData['TEXT'],
 						'LINK' => $itemData['LINK'],
-						'COUNTER_ID' => $itemData['COUNTER_ID'],
+						'COUNTER_ID' => $itemData['COUNTER_ID'] ?? null,
 						'SUB_LINK' => $itemData['SUB_LINK'] ?? null,
 						'NEW_PAGE' => $itemData['NEW_PAGE'] ?? null,
 						'ADDITIONAL_LINKS' => $itemData['ADDITIONAL_LINKS'] ?? [],

@@ -1,10 +1,21 @@
-<?
+<?php
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
-use Bitrix\Imopenlines\Limit;
 
 use Bitrix\Main\Loader;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Imopenlines\Limit;
+
+/**
+ * @var array $arParams
+ * @var array $arResult
+ * @global \CMain $APPLICATION
+ * @global \CUser $USER
+ * @global \CDatabase $DB
+ * @var \CBitrixComponentTemplate $this
+ * @var \CBitrixComponent $component
+ */
 
 Loc::loadMessages(__FILE__);
 
@@ -25,9 +36,15 @@ if (Loader::includeModule('bitrix24'))
 	$APPLICATION->IncludeComponent('bitrix:ui.info.helper', '', []);
 	\CBitrix24::initLicenseInfoPopupJS();
 }
-$APPLICATION->SetTitle($arResult['PAGE_TITLE']);
-$APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "") . "no-all-paddings no-background");
 
+$APPLICATION->SetTitle($arResult['PAGE_TITLE']);
+
+$isBitrix24Template = (SITE_TEMPLATE_ID == 'bitrix24');
+if($isBitrix24Template)
+{
+	$bodyClass = $APPLICATION->getPageProperty('BodyClass');
+	$APPLICATION->setPageProperty("BodyClass", ($bodyClass ? $bodyClass . " " : "") . "no-all-paddings no-background");
+}
 ?>
 <script>
 	BX.ready(function(){

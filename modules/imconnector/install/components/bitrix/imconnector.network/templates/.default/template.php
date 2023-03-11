@@ -116,7 +116,7 @@ if(empty($arResult['PAGE']) && $arResult['ACTIVE_STATUS']) //case when first tim
 	</div>
 	<?
 }
-elseif($arResult['ACTIVE_STATUS'])
+elseif(!empty($arResult['ACTIVE_STATUS']))
 {
 	?>
 	<div class="imconnector-field-container">
@@ -249,7 +249,7 @@ elseif($arResult['ACTIVE_STATUS'])
 					</div>
 
 					<?
-					if($arResult['FORM']['CODE'] !== '')
+					if (!empty($arResult['FORM']['CODE']))
 					{
 						?>
 						<div class="imconnector-field-box">

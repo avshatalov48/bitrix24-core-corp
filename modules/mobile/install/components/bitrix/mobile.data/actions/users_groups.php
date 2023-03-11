@@ -8,8 +8,8 @@
 global $USER, $APPLICATION, $CACHE_MANAGER;
 $cache = new CPHPCache();
 $cache_time = 3600 * 24 * 365;
-$detailurl = $_REQUEST["detail_url"];
-$action = $_REQUEST["action"];
+$detailurl = $_REQUEST["detail_url"] ?? '';
+$action = $_REQUEST["action"] ?? null;
 $feature = (isset($_REQUEST["feature"]) ? $_REQUEST["feature"] : '');
 $onlyBusiness = $_REQUEST["only_business"] == 'Y' ? 'Y' : 'N';
 $businessUsers = array();
@@ -24,9 +24,9 @@ else
 
 $cache_path = '/mobile_cache/' . $action;
 $data = array();
-$action = $_REQUEST["mobile_action"];
+$action = $_REQUEST["mobile_action"] ?? null;
 $showBots = false;
-if (in_array($action, array("get_user_list", "get_usergroup_list")))
+if ($action && in_array($action, array("get_user_list", "get_usergroup_list")))
 {
 	$withTags = ($_REQUEST["tags"] == "N" ? "N" : "Y");
 	$cache_id = "mobileAction|get_users|" . $USER->GetID() . "|" . $detailurl . "|" . $withTags . "|" . LANGUAGE_ID . "|" . $onlyBusiness . "|" . md5(implode('|', $businessUsers));

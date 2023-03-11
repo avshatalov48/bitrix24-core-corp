@@ -1,8 +1,10 @@
-<?
+<?php
+
 namespace Bitrix\Tasks\Integration\Bizproc;
 
 use Bitrix\Main;
 use Bitrix\Socialnetwork\Item\Workgroup;
+use Bitrix\Tasks\Internals\Task\EO_Member_Collection;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\TaskLimit;
 
 class Listener
@@ -27,7 +29,6 @@ class Listener
 		}
 
 		//Run project automation
-
 		if (isset($fields['GROUP_ID']) && $fields['GROUP_ID'] > 0)
 		{
 			$group = Workgroup::getById($fields['GROUP_ID']);
@@ -67,56 +68,42 @@ class Listener
 			return false;
 		}
 
-		$projectId = isset($fields['GROUP_ID']) ? $fields['GROUP_ID'] : $previousFields['GROUP_ID'];
+		$projectId = $fields['GROUP_ID'] ?? $previousFields['GROUP_ID'];
 		$statusChanged = (isset($fields['STATUS']) && (string)$fields['STATUS'] !== (string)$previousFields['STATUS']);
+		$changedFields = self::compareFields($fields, $previousFields);
 
 		//Stop automation on previous project if project was changed
 		if (
-			isset($fields['GROUP_ID']) &&
-			(int)$fields['GROUP_ID'] !== (int)$previousFields['GROUP_ID'] &&
-			$previousFields['GROUP_ID'] > 0
+			isset($fields['GROUP_ID'])
+			&& (int)$fields['GROUP_ID'] !== (int)$previousFields['GROUP_ID']
+			&& $previousFields['GROUP_ID'] > 0
 		)
 		{
-			$group = Workgroup::getById($previousFields['GROUP_ID']);
-			$isScrumTaskUpdated = ($group && $group->isScrumProject());
-
-			if ($isScrumTaskUpdated)
-			{
-				$projectTaskType = Document\Task::resolveScrumProjectTaskType($previousFields['GROUP_ID']);
-			}
-			else
-			{
-				$projectTaskType = Document\Task::resolveProjectTaskType($previousFields['GROUP_ID']);
-			}
-
+			$projectTaskType = self::resolveProjectTaskType($previousFields['GROUP_ID']);
 			Automation\Factory::stopAutomation($projectTaskType, $id);
 		}
 
 		//Check triggers for project tasks
-		$projectTriggerApplied = ($statusChanged ? static::fireStatusTriggerOnProject($id, $projectId, $fields) : false);
+		$projectTriggerApplied = ($statusChanged && static::fireStatusTriggerOnProject($id, $projectId, $fields));
+		if ($projectTriggerApplied === false)
+		{
+			$projectTriggerApplied = (
+				$changedFields
+				&& static::fireFieldChangedTriggerOnProject($id, $projectId, $changedFields)
+			);
+		}
 
 		//Run project automation
-		if (
-			$projectTriggerApplied !== true &&
-			isset($fields['STAGE_ID']) &&
-			(
-				(int)$fields['STAGE_ID'] === 0 ||
-				(int)$fields['STAGE_ID'] !== (int)$previousFields['STAGE_ID']
+		$stageChanged = (
+			isset($fields['STAGE_ID'])
+			&& (
+				(int)$fields['STAGE_ID'] === 0
+				|| (int)$fields['STAGE_ID'] !== (int)$previousFields['STAGE_ID']
 			)
-		)
+		);
+		if ($projectTriggerApplied !== true && $stageChanged)
 		{
-			$group = Workgroup::getById($projectId);
-			$isScrumTaskUpdated = ($group && $group->isScrumProject());
-
-			if ($isScrumTaskUpdated)
-			{
-				$projectDocumentType = Document\Task::resolveScrumProjectTaskType($projectId);
-			}
-			else
-			{
-				$projectDocumentType = Document\Task::resolveProjectTaskType($projectId);
-			}
-
+			$projectDocumentType = self::resolveProjectTaskType($projectId);
 			Automation\Factory::runOnStatusChanged($projectDocumentType, $id, $fields);
 		}
 
@@ -137,7 +124,17 @@ class Listener
 		{
 			//Run plan
 			$planDocumentType = Document\Task::resolvePlanTaskType($memberId);
-			if (!$statusChanged || $statusChanged && !self::fireStatusTriggerOnPlan($planDocumentType, $id, $fields))
+
+			$runAutomation = !($statusChanged && self::fireStatusTrigger($planDocumentType, $id, $fields));
+			if ($runAutomation)
+			{
+				$runAutomation = !(
+					$changedFields
+					&& self::fireFieldChangedTrigger($planDocumentType, $id, $changedFields)
+				);
+			}
+
+			if ($runAutomation)
 			{
 				Automation\Factory::runOnAdd($planDocumentType, $id, $fields);
 			}
@@ -147,17 +144,24 @@ class Listener
 			Automation\Factory::runOnAdd($personalDocumentType, $id, $fields);
 		}
 
-		if ($statusChanged)
+		if ($changedFields || $statusChanged)
 		{
 			foreach ($membersDiff->current as $memberId)
 			{
 				//Run plan trigger
 				$planDocumentType = Document\Task::resolvePlanTaskType($memberId);
-				self::fireStatusTriggerOnPlan($planDocumentType, $id, $fields);
+				if ($statusChanged)
+				{
+					self::fireStatusTrigger($planDocumentType, $id, $fields);
 
-				//Run personal
-				$personalDocumentType = Document\Task::resolvePersonalTaskType($memberId);
-				Automation\Factory::runOnStatusChanged($personalDocumentType, $id, $fields);
+					//Run personal
+					$personalDocumentType = Document\Task::resolvePersonalTaskType($memberId);
+					Automation\Factory::runOnStatusChanged($personalDocumentType, $id, $fields);
+				}
+				if ($changedFields)
+				{
+					self::fireFieldChangedTrigger($planDocumentType, $id, $changedFields);
+				}
 			}
 		}
 	}
@@ -181,6 +185,7 @@ class Listener
 			return false;
 		}
 
+		$errors = [];
 		$documentId = Document\Task::resolveDocumentId($id);
 		\CBPDocument::OnDocumentDelete($documentId, $errors);
 
@@ -255,36 +260,59 @@ class Listener
 		}
 	}
 
-	private static function fireStatusTriggerOnProject($taskId, $projectId, $fields)
+	public static function onTaskFieldChanged($id, array $fields, array $previousFields): Main\Result
 	{
-		$documentType = Document\Task::resolveProjectTaskType($projectId);
+		$result = new Main\Result();
 
-		if ($projectId && Main\Loader::includeModule('socialnetwork'))
+		if (!self::loadBizproc())
 		{
-			$group = Workgroup::getById($projectId);
-			if ($group && $group->isScrumProject())
-			{
-				$documentType = Document\Task::resolveScrumProjectTaskType($projectId);
-			}
+			return $result->addError(new Main\Error('Unable to load bizproc module'));
 		}
+
+		if (TaskLimit::isLimitExceeded())
+		{
+			return (
+				$result
+					->addError(new Main\Error(
+						Main\Localization\Loc::getMessage('TASKS_BP_LISTENER_RESUME_RESTRICTED')
+					))
+			);
+		}
+
+		$projectId = $fields['GROUP_ID'] ?? $previousFields['GROUP_ID'];
+		$changedFields = self::compareFields($fields, $previousFields);
+
+		//Run project trigger
+		if ($projectId > 0)
+		{
+			$documentType = self::resolveProjectTaskType($projectId);
+			Automation\Trigger\TasksFieldChangedTrigger::execute($documentType, $id, ['CHANGED_FIELDS' => $changedFields]);
+		}
+
+		//Run plan trigger
+		$members = self::extractTaskMembers(array_merge($previousFields, $fields));
+		foreach ($members as $memberId)
+		{
+			$planDocumentType = Document\Task::resolvePlanTaskType($memberId);
+			Automation\Trigger\TasksFieldChangedTrigger::execute($planDocumentType, $id, ['CHANGED_FIELDS' => $changedFields]);
+		}
+
+		return $result;
+	}
+
+	private static function fireStatusTriggerOnProject($taskId, $projectId, $fields): bool
+	{
+		$documentType = self::resolveProjectTaskType($projectId);
 
 		if ($documentType)
 		{
-			$result = Automation\Trigger\Status::execute($documentType, $taskId, $fields);
-			if ($result->isSuccess())
-			{
-				$data = $result->getData();
-				if (!empty($data['triggerApplied']))
-				{
-					return true;
-				}
-			}
+			return self::fireStatusTrigger($documentType, $taskId, $fields);
 		}
 
 		return false;
 	}
 
-	private static function fireStatusTriggerOnPlan($documentType, $taskId, $fields)
+	private static function fireStatusTrigger($documentType, $taskId, $fields): bool
 	{
 		$result = Automation\Trigger\Status::execute($documentType, $taskId, $fields);
 		if ($result->isSuccess())
@@ -297,6 +325,47 @@ class Listener
 		}
 
 		return false;
+	}
+
+	private static function fireFieldChangedTriggerOnProject($taskId, $projectId, $fields): bool
+	{
+		$documentType = self::resolveProjectTaskType($projectId);
+
+		return self::fireFieldChangedTrigger($documentType, $taskId, $fields);
+	}
+
+	private static function fireFieldChangedTrigger($documentType, $taskId, $fields): bool
+	{
+		$result = Automation\Trigger\TasksFieldChangedTrigger::execute(
+			$documentType,
+			$taskId,
+			['CHANGED_FIELDS' => $fields]
+		);
+		if ($result->isSuccess())
+		{
+			$data = $result->getData();
+			if (!empty($data['triggerApplied']))
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	private static function resolveProjectTaskType($projectId): string
+	{
+		$documentType = Document\Task::resolveProjectTaskType($projectId);
+		if ($projectId && Main\Loader::includeModule('socialnetwork'))
+		{
+			$group = Workgroup::getById($projectId);
+			if ($group && $group->isScrumProject())
+			{
+				$documentType = Document\Task::resolveScrumProjectTaskType($projectId);
+			}
+		}
+
+		return $documentType;
 	}
 
 	private static function loadBizproc()
@@ -338,6 +407,13 @@ class Listener
 			$users = array_merge($users, $fields['AUDITORS']);
 		}
 
+		if (is_object($fields['MEMBER_LIST']))
+		{
+			/** @var $members EO_Member_Collection */
+			$members = $fields['MEMBER_LIST'];
+			$users = array_merge($users, $members->getUserIdList());
+		}
+
 		return array_map('intval', array_unique($users));
 	}
 
@@ -349,6 +425,20 @@ class Listener
 		$plus = array_diff($currentMembers, $previousMembers);
 		$minus = array_diff($previousMembers, $currentMembers);
 
-		return (object) ['plus' => $plus, 'minus' => $minus, 'current' => $currentMembers];
+		return (object)['plus' => $plus, 'minus' => $minus, 'current' => $currentMembers];
+	}
+
+	private static function compareFields(array $actual, array $previous): array
+	{
+		$diff = [];
+		foreach ($actual as $key => $field)
+		{
+			if (!array_key_exists($key, $previous) || $previous[$key] != $field)
+			{
+				$diff[] = $key;
+			}
+		}
+
+		return $diff;
 	}
 }

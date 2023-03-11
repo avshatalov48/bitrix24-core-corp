@@ -1,10 +1,9 @@
 <?php
 namespace Bitrix\ImOpenLines;
 
-use \Bitrix\Main\EventManager,
-	\Bitrix\Main\DB\SqlExpression;
-
-use \Bitrix\ImOpenLines\Model\ConfigStatisticTable;
+use Bitrix\Main\Application;
+use Bitrix\Main\DB\SqlExpression;
+use Bitrix\ImOpenLines\Model\ConfigStatisticTable;
 
 /**
  * Class ConfigStatistic
@@ -12,26 +11,27 @@ use \Bitrix\ImOpenLines\Model\ConfigStatisticTable;
  */
 class ConfigStatistic
 {
-	/** @var array(\Bitrix\ImOpenLines\ConfigStatistic) */
-	private static $instance = [];
-	private static $flagEvent = false;
+	/** @var array<int, ConfigStatistic> */
+	private static array $instance = [];
+	private static bool $flagEvent = false;
 
-	protected $id;
-	protected $closed = 0;
-	protected $inWork = 0;
-	protected $session = 0;
-	protected $lead = 0;
-	protected $message = 0;
+	protected bool $updated = false;
+	protected int $id = 0;
+	protected int $closed = 0;
+	protected int $inWork = 0;
+	protected int $session = 0;
+	protected int $lead = 0;
+	protected int $message = 0;
 
 	/**
-	 * @param $lineId
+	 * @param int $lineId
 	 * @return self
 	 */
-	public static function getInstance($lineId)
+	public static function getInstance($lineId): self
 	{
 		if (empty(self::$instance[$lineId]) )
 		{
-			self::$instance[$lineId]= new self($lineId);
+			self::$instance[$lineId] = new self((int)$lineId);
 		}
 
 		return self::$instance[$lineId];
@@ -40,11 +40,15 @@ class ConfigStatistic
 	/**
 	 * Add a handler to the save changes.
 	 */
-	public static function addEventHandlerSave()
+	public static function addEventHandlerSave(): void
 	{
-		if(empty(self::$flagEvent))
+		if (empty(self::$flagEvent))
 		{
-			EventManager::getInstance()->addEventHandler("main", "OnAfterEpilog", Array(__CLASS__, "save"), false, 1000);
+			Application::getInstance()->addBackgroundJob(
+				[__CLASS__, 'save'],
+				[],
+				Application::JOB_PRIORITY_LOW
+			);
 
 			self::$flagEvent = true;
 		}
@@ -53,45 +57,48 @@ class ConfigStatistic
 	/**
 	 * The event handler OnAfterEpilog.
 	 * Data is saved only when the script completes.
-	 *
-	 * @throws \Exception
+	 * @return void
 	 */
-	public static function save()
+	public static function save(): void
 	{
-		foreach (self::$instance as $id => $updateStatistic)
+		foreach (self::$instance as $statisticManager)
 		{
-			$statisticManager = self::$instance[$id];
-			if(!empty($statisticManager) && $statisticManager instanceof self && !empty($statisticManager->id))
+			if (
+				$statisticManager instanceof self
+				&& $statisticManager->id > 0
+				&& $statisticManager->updated === true
+			)
 			{
-				if(!empty(ConfigStatisticTable::getRowById($statisticManager->id)))
+				if (!empty(ConfigStatisticTable::getRowById($statisticManager->id)))
 				{
 					$fieldsUpdate = [];
 
-					if(!empty($statisticManager->closed))
+					if ($statisticManager->closed != 0)
 					{
 						$fieldsUpdate['CLOSED'] = new SqlExpression("?# + " . $statisticManager->closed , "CLOSED");
 					}
-					if(!empty($statisticManager->inWork))
+					if ($statisticManager->inWork != 0)
 					{
 						$fieldsUpdate['IN_WORK'] = new SqlExpression("?# + " . $statisticManager->inWork , "IN_WORK");
 					}
-					if(!empty($statisticManager->session))
+					if ($statisticManager->session != 0)
 					{
 						$fieldsUpdate['SESSION'] = new SqlExpression("?# + " . $statisticManager->session , "SESSION");
 					}
-					if(!empty($statisticManager->lead))
+					if ($statisticManager->lead != 0)
 					{
 						$fieldsUpdate['LEAD'] = new SqlExpression("?# + " . $statisticManager->lead , "LEAD");
 					}
-					if(!empty($statisticManager->message))
+					if ($statisticManager->message != 0)
 					{
 						$fieldsUpdate['MESSAGE'] = new SqlExpression("?# + " . $statisticManager->message , "MESSAGE");
 					}
 
-					if(!empty($fieldsUpdate))
+					if (!empty($fieldsUpdate))
 					{
 						ConfigStatisticTable::update($statisticManager->id, $fieldsUpdate);
 					}
+					$statisticManager->updated = false;
 				}
 			}
 		}
@@ -100,9 +107,8 @@ class ConfigStatistic
 	/**
 	 * @param $lineId
 	 * @return bool
-	 * @throws \Exception
 	 */
-	public static function add($lineId)
+	public static function add($lineId): bool
 	{
 		$result = false;
 
@@ -121,9 +127,8 @@ class ConfigStatistic
 	/**
 	 * @param $lineId
 	 * @return bool
-	 * @throws \Exception
 	 */
-	public static function delete($lineId)
+	public static function delete($lineId): bool
 	{
 		$result = false;
 
@@ -148,131 +153,142 @@ class ConfigStatistic
 		$this->id = $lineId;
 	}
 
-	private function __clone()
+	public function __clone()
 	{
-
+		throw new \Bitrix\Main\NotImplementedException();
 	}
-	private function __wakeup()
-	{
 
+	public function __wakeup()
+	{
+		throw new \Bitrix\Main\NotImplementedException();
 	}
 
 	/**
-	 * @return $this
+	 * @return self
 	 */
-	public function addClosed()
+	public function addClosed(): self
 	{
 		self::addEventHandlerSave();
 
 		$this->closed++;
+		$this->updated = true;
 
 		return $this;
 	}
 
 	/**
-	 * @return $this
+	 * @return self
 	 */
-	public function deleteClosed()
+	public function deleteClosed(): self
 	{
 		self::addEventHandlerSave();
 
 		$this->closed--;
+		$this->updated = true;
 
 		return $this;
 	}
 
 	/**
-	 * @return $this
+	 * @return self
 	 */
-	public function addInWork()
+	public function addInWork(): self
 	{
 		self::addEventHandlerSave();
 
 		$this->inWork++;
+		$this->updated = true;
 
 		return $this;
 	}
 
 	/**
-	 * @return $this
+	 * @return self
 	 */
-	public function deleteInWork()
+	public function deleteInWork(): self
 	{
 		self::addEventHandlerSave();
 
 		$this->inWork--;
+		$this->updated = true;
 
 		return $this;
 	}
 
 	/**
-	 * @return $this
+	 * @return self
 	 */
-	public function addSession()
+	public function addSession(): self
 	{
 		self::addEventHandlerSave();
 
 		$this->session++;
+		$this->updated = true;
 
 		return $this;
 	}
 
 	/**
-	 * @return $this
+	 * @return self
 	 */
-	public function deleteSession()
+	public function deleteSession(): self
 	{
 		self::addEventHandlerSave();
 
 		$this->session--;
+		$this->updated = true;
 
 		return $this;
 	}
 
 	/**
-	 * @return $this
+	 * @return self
 	 */
-	public function addLead()
+	public function addLead(): self
 	{
 		self::addEventHandlerSave();
 
 		$this->lead++;
+		$this->updated = true;
 
 		return $this;
 	}
 
 	/**
-	 * @return $this
+	 * @return self
 	 */
-	public function deleteLead()
+	public function deleteLead(): self
 	{
 		self::addEventHandlerSave();
 
 		$this->lead--;
+		$this->updated = true;
 
 		return $this;
 	}
 
 	/**
-	 * @return $this
+	 * @return self
 	 */
-	public function addMessage()
+	public function addMessage(): self
 	{
 		self::addEventHandlerSave();
 
 		$this->message++;
+		$this->updated = true;
 
 		return $this;
 	}
 
 	/**
-	 * @return $this
+	 * @return self
 	 */
-	public function deleteMessage()
+	public function deleteMessage(): self
 	{
 		self::addEventHandlerSave();
 
 		$this->message--;
+		$this->updated = true;
 
 		return $this;
 	}

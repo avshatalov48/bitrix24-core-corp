@@ -3,7 +3,7 @@ $MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_ERROR_DISABLED_ACCESS_INSTAGRAM_D
 $MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_ERROR_IG_ACCOUNT_IS_NOT_ELIGIBLE_API_3"] = "Leider entspricht Ihr IG Direct nicht den Anforderungen von Facebook. #A#Details#A_END#";
 $MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_ERROR_REQUEST_INFORMATION_FROM_SERVER"] = "Serverfehler.";
 $MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_INVALID_OAUTH_ACCESS_TOKEN"] = "Öffentliche Seite kann nicht bearbeitet werden, weil die Verbindung verloren gegangen ist. Sie müssen die Verbindung erneut herstellen.";
-$MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_MODULE_NOT_INSTALLED"] = "Das Modul \"IM Connectors\" ist nicht installiert.";
+$MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_MODULE_NOT_INSTALLED_MSGVER_1"] = "Das Modul \"External Messenger Connectors\" ist nicht installiert.";
 $MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_NO_ACTIVE_CONNECTOR"] = "Dieser Connector ist nicht aktiv.";
 $MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_NO_AUTHORIZATION_PAGE"] = "Die Seite konnte nicht angebunden werden";
 $MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_NO_DEL_PAGE"] = "Die Verknüpfung mit der Seite kann nicht gelöscht werden";

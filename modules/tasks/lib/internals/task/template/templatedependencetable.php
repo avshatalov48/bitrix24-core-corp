@@ -5,6 +5,22 @@ namespace Bitrix\Tasks\Internals\Task\Template;
 use Bitrix\Tasks\Internals\TaskDataManager;
 use Bitrix\Tasks\Internals\Task\TemplateTable;
 
+/**
+ * Class TemplateDependenceTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_TemplateDependence_Query query()
+ * @method static EO_TemplateDependence_Result getByPrimary($primary, array $parameters = [])
+ * @method static EO_TemplateDependence_Result getById($id)
+ * @method static EO_TemplateDependence_Result getList(array $parameters = [])
+ * @method static EO_TemplateDependence_Entity getEntity()
+ * @method static \Bitrix\Tasks\Internals\Task\Template\EO_TemplateDependence createObject($setDefaultValues = true)
+ * @method static \Bitrix\Tasks\Internals\Task\Template\EO_TemplateDependence_Collection createCollection()
+ * @method static \Bitrix\Tasks\Internals\Task\Template\EO_TemplateDependence wakeUpObject($row)
+ * @method static \Bitrix\Tasks\Internals\Task\Template\EO_TemplateDependence_Collection wakeUpCollection($rows)
+ */
 class TemplateDependenceTable extends TaskDataManager
 {
 

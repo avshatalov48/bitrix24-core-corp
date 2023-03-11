@@ -2,6 +2,8 @@
 
 namespace Bitrix\Crm\Integrity;
 
+use Bitrix\Crm\Item;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main;
 use CCrmOwnerType;
 
@@ -141,7 +143,26 @@ class DedupeParams
 	{
 		if (in_array($this->entityTypeID, [CCrmOwnerType::Contact, CCrmOwnerType::Company], true))
 		{
-			return $this->categoryId;
+			if ($this->categoryId > 0)
+			{
+				return $this->categoryId;
+			}
+
+			$factory = Container::getInstance()->getFactory($this->entityTypeID);
+			if ($factory && $factory->isCategoriesEnabled())
+			{
+				$itemInCustomCategory = $factory->getDataClass()::query()
+					->setLimit(1)
+					->where(Item::FIELD_NAME_CATEGORY_ID, '>', 0)
+					->setSelect(['ID'])
+					->setCacheTtl(60)
+					->fetch()
+				;
+				if ($itemInCustomCategory)
+				{
+					return $this->categoryId;
+				}
+			}
 		}
 
 		return null;

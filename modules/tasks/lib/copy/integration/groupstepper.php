@@ -1,9 +1,12 @@
 <?php
 namespace Bitrix\Tasks\Copy\Integration;
 
+use Bitrix\Tasks\Internals\Log\Log;
+use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Update\Stepper;
+use Bitrix\Tasks\Copy\Exception\GroupCopyException;
 use Bitrix\Tasks\Copy\TaskManager;
 use Bitrix\Tasks\Internals\Task\ProjectDependenceTable;
 
@@ -15,7 +18,14 @@ class GroupStepper extends Stepper
 	protected $checkerName = "TasksGroupChecker_";
 	protected $baseName = "TasksGroupStepper_";
 	protected $errorName = "TasksGroupError_";
+	private ?Log $logger;
 
+	private const MAX_VALUE_LENGTH = 2**24 - 1;
+
+	public function __construct()
+	{
+		$this->logger = new Log();
+	}
 	/**
 	 * Executes some action, and if return value is false, agent will be deleted.
 	 * @param array $option Array with main data to show if it is necessary
@@ -88,7 +98,6 @@ class GroupStepper extends Stepper
 				$mapIdsCopiedTasks = $taskCopyManager->getMapIdsCopiedTasks() + $mapIdsCopiedTasks;
 				$queueOption["mapIdsCopiedTasks"] = $mapIdsCopiedTasks;
 				$this->saveQueueOption($queueOption);
-
 				$option["steps"] = $offset;
 
 				return true;
@@ -102,7 +111,7 @@ class GroupStepper extends Stepper
 		}
 		catch (\Exception $exception)
 		{
-			$this->writeToLog($exception);
+			$this->logger->collect("Error while copying a group. Reason: {$exception->getMessage()}");
 			$this->deleteQueueOption();
 			return false;
 		}
@@ -146,7 +155,7 @@ class GroupStepper extends Stepper
 		try
 		{
 			$tasksIds = [];
-			list($tasks, $res) = \CTaskItem::fetchList($userId, [], ["GROUP_ID" => $groupId], [], ["ID", "PARENT_ID"]);
+			[$tasks, $res] = \CTaskItem::fetchList($userId, [], ["GROUP_ID" => $groupId], [], ["ID", "PARENT_ID"]);
 			foreach ($tasks as $task)
 			{
 				/** @var \CTaskItem $task */
@@ -226,9 +235,18 @@ class GroupStepper extends Stepper
 		return $this->getOptionData($this->baseName);
 	}
 
+	/**
+	 * @throws ArgumentOutOfRangeException
+	 * @throws GroupCopyException
+	 */
 	protected function saveQueueOption(array $data)
 	{
-		Option::set(static::$moduleId, $this->baseName, serialize($data));
+		$data = serialize($data);
+		if (strlen($data) > self::MAX_VALUE_LENGTH)
+		{
+			throw new GroupCopyException('Copied data is too large');
+		}
+		Option::set(static::$moduleId, $this->baseName, $data);
 	}
 
 	protected function deleteQueueOption()
@@ -236,8 +254,7 @@ class GroupStepper extends Stepper
 		$queue = $this->getQueue();
 		$this->setQueue($queue);
 		$this->deleteCurrentQueue($queue);
-		Option::delete(static::$moduleId, ["name" => $this->checkerName]);
-		Option::delete(static::$moduleId, ["name" => $this->baseName]);
+		$this->deleteStepperOptions();
 	}
 
 	protected function deleteCurrentQueue(array $queue): void
@@ -257,15 +274,34 @@ class GroupStepper extends Stepper
 		return empty($queue);
 	}
 
-	protected function getOptionData($optionName)
+	/**
+	 * @throws GroupCopyException
+	 */
+	protected function getOptionData($optionName): array
 	{
 		$option = Option::get(static::$moduleId, $optionName);
-		$option = ($option !== "" ? unserialize($option, ['allowed_classes' => false]) : []);
-		return (is_array($option) ? $option : []);
+		$result = [];
+		if ($option !== '')
+		{
+			$result = unserialize($option, ['allowed_classes' => false]);
+			if ($result === false)
+			{
+				throw new GroupCopyException('Can not unserialize group tasks data');
+			}
+			$result = is_array($result) ? $result: [];
+		}
+
+		return $result;
 	}
 
 	protected function deleteOption($optionName)
 	{
 		Option::delete(static::$moduleId, ["name" => $optionName]);
+	}
+
+	private function deleteStepperOptions(): void
+	{
+		Option::delete(static::$moduleId, ['name' => $this->checkerName]);
+		Option::delete(static::$moduleId, ['name' => $this->baseName]);
 	}
 }

@@ -4,7 +4,9 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\Integration\SocialNetwork;
+use Bitrix\Tasks\Slider\Exception\SliderException;
 use Bitrix\Tasks\UI\ScopeDictionary;
+use Bitrix\Tasks\Slider\Factory\SliderFactory;
 
 $isIFrame = $_REQUEST['IFRAME'] == 'Y';
 
@@ -669,6 +671,11 @@ if ($isBitrix24Template)
 
 <br/>
 <?php
+$currentPagePath = $APPLICATION->GetCurPageParam('F_STATE=sVg0', [ 'F_STATE' ]);
+if ($arParams['BACKGROUND_FOR_TASK'])
+{
+	$currentPagePath = $arResult['ASSEMBLED_PATH_TO_TASKS'] . '?F_STATE=sVg0';
+}
 
 //region Navigation
 ob_start();
@@ -678,7 +685,7 @@ $APPLICATION->IncludeComponent(
 	[
 		'PAGE_NUM' => $arResult['CURRENT_PAGE'],
 		'ENABLE_NEXT_PAGE' => $arResult['ENABLE_NEXT_PAGE'],
-		'URL' => $APPLICATION->GetCurPageParam('F_STATE=sVg0', [ 'F_STATE' ]),
+		'URL' => $currentPagePath,
 	],
 	$component,
 	array('HIDE_ICONS' => 'Y')
@@ -695,3 +702,34 @@ ob_end_clean();
 		TASKS_DELETE_SUCCESS: '<?=GetMessage('TASKS_DELETE_SUCCESS')?>'
 	});
 </script>
+<?php
+if ($arParams['BACKGROUND_FOR_TASK'])
+{
+	if ((int)$arParams['GROUP_ID'] > 0 )
+	{
+		$context = SliderFactory::GROUP_CONTEXT;
+		$ownerId = (int)$arParams['GROUP_ID'];
+	}
+	else
+	{
+		$context = SliderFactory::PERSONAL_CONTEXT;
+		$ownerId = (int)$arParams['USER_ID'];
+	}
+
+	$taskId = (int)$arParams['TASK_ID'];
+
+	$factory = new SliderFactory();
+	try
+	{
+		$factory
+			->setAction($arParams['TASK_ACTION'])
+			->setQueryParams($arParams['GET_PARAMS']);
+
+		$slider = $factory->createEntitySlider($taskId, SliderFactory::TASK, $ownerId, $context);
+		$slider->open();
+	}
+	catch (SliderException $exception)
+	{
+		$exception->show();
+	}
+}

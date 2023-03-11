@@ -1,0 +1,147 @@
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" class="defs-only" xmlns="http://www.w3.org/2000/svg"
+	 style="width:100%;height:1200px">
+	<svg height="1200">
+		<rect fill="#EBF1F4" width="100%" height="1200"/>
+		<rect fill="#FFF" width="100%" height="60" x="20" rx="10" y="73"/>
+		<rect opacity="0.04" x="140" y="152" width="258" height="39" rx="19.5" fill="#525C69"/>
+		<rect opacity="0.04" x="435" y="152" width="162" height="39" rx="2" fill="#525C69"/>
+		<rect opacity="0.04" x="630" y="152" width="392" height="39" rx="2" fill="#525C69"/>
+	</svg>
+
+	<svg id="header" height="260">
+		<rect fill="#DEE2E6" rx="17"       width="34"  height="34" x="28" y="16"/>
+		<rect fill="#DEE2E6" rx="2" ry="2" width="270" height="10" x="87" y="27"/>
+		<rect fill="#3BC8F5" rx="2" ry="2" width="157" height="39" x="100%" y="16" transform="translate(-347)"/>
+		<rect fill="#62D3F7" rx="2" ry="2" width="120" height="7" x="100%" y="32" transform="translate(-330)"/>
+		<rect fill="transparent" stroke="#868D95" opacity=".2" rx="2" ry="2" width="157" height="39" x="100%" y="16" transform="translate(-175)"/>
+		<rect fill="#DEE2E6" rx="2" ry="2" width="120" height="7" x="100%" y="32" transform="translate(-157)"/>
+
+		<rect fill="#DEE2E6" rx="2" ry="2" width="90" height="7" x="45" y="100"/>
+		<rect fill="#DEE2E6" rx="2" ry="2" width="77" height="7" x="155" y="100"/>
+		<rect fill="#DEE2E6" rx="2" ry="2" width="77" height="7" x="250" y="100"/>
+		<rect fill="#DEE2E6" rx="2" ry="2" width="77" height="7" x="345" y="100"/>
+
+		<rect fill="#DEE2E6" rx="2" ry="2" width="84" height="7" x="30" y="168"/>
+		<rect fill="#DEE2E6" rx="2" ry="2" width="154" height="7" x="163" y="168"/>
+		<rect fill="#DEE2E6" rx="2" ry="2" width="101" height="7" x="450" y="168"/>
+		<rect fill="#DEE2E6" rx="2" ry="2" width="154" height="7" x="640" y="168"/>
+
+		<rect fill="#DEE2E6" rx="2" ry="2" width="154" height="7" x="43" y="233"/>
+		<rect fill="#DEE2E6" rx="2" ry="2" width="154" height="7" x="50%" y="233"/>
+	</svg>
+
+	<svg height="1200" y="263" x="0" width="40%">
+		<rect fill="#F2F5F7" rx="2" ry="2" width="100%" height="705" x="20" y="0"/>
+		<rect fill="#fff" rx="2" ry="2" width="100%" height="5" x="20" y="0"/>
+
+		<rect fill="#fff" rx="2" ry="2" width="100%" height="58" x="32" y="83"/>
+		<rect fill="#fff" rx="2" ry="2" width="100%" height="58" x="32" y="151"/>
+		<rect fill="#fff" rx="2" ry="2" width="100%" height="58" x="32" y="219"/>
+		<rect fill="#fff" rx="2" ry="2" width="100%" height="58" x="32" y="287"/>
+		<rect fill="#fff" rx="2" ry="2" width="100%" height="58" x="32" y="355"/>
+		<rect fill="#fff" rx="2" ry="2" width="100%" height="58" x="32" y="423"/>
+		<rect fill="#fff" rx="2" ry="2" width="100%" height="58" x="32" y="491"/>
+		<rect fill="#fff" rx="2" ry="2" width="100%" height="58" x="32" y="559"/>
+		<rect fill="#fff" rx="2" ry="2" width="100%" height="58" x="32" y="627"/>
+
+		<rect fill="#F2F5F7" width="12" y="5" height="700" x="100%" transform="translate(-12)"/>
+	</svg>
+
+	<svg height="1200" y='263' x="0" width="40%" id="l">
+		<rect fill="#DEE2E6" rx="2" ry="2" width="270" height="10" x="35" y="21"/>
+		<rect fill="#DEE2E6" rx="2" ry="2" width="154" height="7" x="35" y="43"/>
+
+		<defs>
+			<g id="a">
+				<rect fill="#DEE2E6" rx="2" ry="2" width="5" height="58" x="0" y="0"/>
+				<rect fill="#DEE2E6" rx="2" ry="2" width="335" height="8" x="15" y="15" style="max-width:50%;"/>
+				<rect fill="#DEE2E6" rx="2" ry="2" width="98" height="6" x="15" y="33"/>
+				<rect fill="#DEE2E6" rx="2" ry="2" width="64" height="6" x="120" y="33"/>
+				<rect fill="#DEE2E6" rx="2" ry="2" width="64" height="6" x="191" y="33"/>
+			</g>
+		</defs>
+		<use xlink:href="#a" width="100%" height="58" x="32" y="83"/>
+		<use xlink:href="#a" width="100%" height="58" x="32" y="151"/>
+		<use xlink:href="#a" width="100%" height="58" x="32" y="219"/>
+		<use xlink:href="#a" width="100%" height="58" x="32" y="287"/>
+		<use xlink:href="#a" width="100%" height="58" x="32" y="355"/>
+		<use xlink:href="#a" width="100%" height="58" x="32" y="423"/>
+		<use xlink:href="#a" width="100%" height="58" x="32" y="491"/>
+		<use xlink:href="#a" width="100%" height="58" x="32" y="559"/>
+		<use xlink:href="#a" width="100%" height="58" x="32" y="627"/>
+	</svg>
+
+	<svg height="1200" y='263' x="40%" width="60%">
+		<rect fill="#F2F5F7" rx="2" ry="2" width="100%" height="705" x="20" y="0"/>
+		<rect fill="#fff" rx="2" ry="2" width="100%" height="5" x="20" y="0"/>
+
+		<rect fill="#fff" rx="2" ry="2" width="100%" height="58" x="32" y="83"/>
+		<rect fill="#fff" rx="2" ry="2" width="100%" height="58" x="32" y="151"/>
+		<rect fill="#fff" rx="2" ry="2" width="100%" height="58" x="32" y="219"/>
+		<rect fill="#fff" rx="2" ry="2" width="100%" height="58" x="32" y="287"/>
+		<rect fill="#fff" rx="2" ry="2" width="100%" height="58" x="32" y="355"/>
+		<rect fill="#fff" rx="2" ry="2" width="100%" height="58" x="32" y="423"/>
+		<rect fill="#fff" rx="2" ry="2" width="100%" height="58" x="32" y="491"/>
+		<rect fill="#fff" rx="2" ry="2" width="100%" height="58" x="32" y="559"/>
+		<rect fill="#fff" rx="2" ry="2" width="100%" height="58" x="32" y="627"/>
+
+		<rect fill="#F2F5F7" width="12" y="5" height="700" x="100%" transform="translate(-32)"/>
+	</svg>
+
+	<svg height="1200" y='263' x="40%" width="60%" id="r">
+		<rect fill="#DEE2E6" rx="2" ry="2" width="270" height="10" x="35" y="21"/>
+		<rect fill="#DEE2E6" rx="2" ry="2" width="154" height="7" x="35" y="43"/>
+
+		<defs>
+			<g id="b">
+				<rect fill="#DEE2E6" rx="2" ry="2" width="335" height="8" x="15" y="15"/>
+				<rect fill="#DEE2E6" rx="2" ry="2" width="98" height="6" x="15" y="33"/>
+				<rect fill="#DEE2E6" rx="2" ry="2" width="64" height="6" x="120" y="33"/>
+				<rect fill="#DEE2E6" rx="2" ry="2" width="64" height="6" x="191" y="33"/>
+			</g>
+		</defs>
+		<use xlink:href="#b" width="100%" height="58" x="32" y="83"/>
+		<use xlink:href="#b" width="100%" height="58" x="32" y="151"/>
+		<use xlink:href="#b" width="100%" height="58" x="32" y="219"/>
+		<use xlink:href="#b" width="100%" height="58" x="32" y="287"/>
+		<use xlink:href="#b" width="100%" height="58" x="32" y="355"/>
+		<use xlink:href="#b" width="100%" height="58" x="32" y="423"/>
+		<use xlink:href="#b" width="100%" height="58" x="32" y="491"/>
+		<use xlink:href="#b" width="100%" height="58" x="32" y="559"/>
+		<use xlink:href="#b" width="100%" height="58" x="32" y="627"/>
+	</svg>
+	<rect fill="#EBF1F4" width="20" y="70" height="1200" x="100%" transform="translate(-20)"/>
+
+
+
+	<!--  -->
+	<rect id="msk1" width="100%" fill="url(#msk_gd)" mask="url(#headerMsk)" height="1270"/>
+
+	<mask id="headerMsk" fill="white">
+		<use xlink:href="#header"/>
+		<use xlink:href="#l"/>
+		<use xlink:href="#r"/>
+	</mask>
+
+	<linearGradient x1="66.6%" y1="50%" x2="33.3%" y2="50%" id="msk_gd">
+		<stop stop-color="#000000" stop-opacity="0" offset="0%"/>
+		<stop stop-color="#000000" stop-opacity="0.07" offset="50%"/>
+		<stop stop-color="#000000" stop-opacity="0" offset="100%"/>
+	</linearGradient>
+
+	<animate xlink:href="#msk1" attributeName="x" from="-100%" to="100%" dur="1s" begin="0s" repeatCount="indefinite"/>
+
+	<svg height="100%">
+		<defs>
+			<g id="upper-right-corner">
+				<path d="M9.99997 10V0H0C5.52285 0 9.99997 4.47715 9.99997 10Z" fill="#eef2f4"/>
+			</g>
+			<g id="lower-right-corner">
+				<path d="M9.99997 0V10H0C5.52285 10 9.99997 5.52285 9.99997 0Z" fill="#eef2f4"/>
+			</g>
+		</defs>
+		<use xlink:href="#upper-right-corner" x="100%" y="73" transform="translate(-30)" ></use>
+		<use xlink:href="#lower-right-corner" x="100%" y="123" transform="translate(-30)" ></use>
+
+	</svg>
+</svg>

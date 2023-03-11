@@ -4,7 +4,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
 	die();
 }
 
-if ($arResult['messages'])
+if (!empty($arResult['messages']))
 {
 	echo '<div class="imconnector-field-container">'.
 		 '<div class="imconnector-field-section imconnector-settings-message imconnector-settings-message-success">';
@@ -15,7 +15,7 @@ if ($arResult['messages'])
 	echo '</div>'.
 		 '</div>';
 }
-if ($arResult['error'])
+if (!empty($arResult['error']))
 {
 	echo '<div class="imconnector-field-container">'.
 		 '<div class="imconnector-field-section imconnector-settings-message imconnector-settings-message-error">';

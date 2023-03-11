@@ -1,4 +1,3 @@
-import EncourageBuyProducts from './encourage-buy-products/component';
 import Notification from './notification/component';
 import DeliveryActivity from './delivery-activity/component';
 import DeliveryMessage from './delivery-message/component';
@@ -56,8 +55,6 @@ import Visit from "./items/visit";
 import Scoring from "./items/scoring";
 import OrderCreation from "./items/order-creation";
 import OrderModification from "./items/order-modification";
-import StoreDocumentCreation from "./items/store-document-creation";
-import StoreDocumentModification from "./items/store-document-modification";
 import FinalSummaryDocuments from "./items/final-summary-documents";
 import FinalSummary from "./items/final-summary";
 import ExternalNoticeModification from "./items/external-notice-modification";
@@ -70,7 +67,6 @@ import ScheduledCall from "./items/scheduled/call";
 import CallTracker from "./items/scheduled/call-tracker";
 import ScheduledMeeting from "./items/scheduled/meeting";
 import ScheduledTask from "./items/scheduled/task";
-import ScheduledStoreDocument from "./items/scheduled/store-document";
 import ScheduledWebForm from "./items/scheduled/webform";
 import ScheduledWait from "./items/scheduled/wait";
 import ScheduledRequest from "./items/scheduled/request";
@@ -83,7 +79,6 @@ import Expand from "./animations/expand";
 import Shift from "./animations/shift";
 import AnimationComment from "./animations/comment";
 import Fasten from "./animations/fasten";
-import ProductCompilationList from './product-compilation/compilation-product-list/component';
 import CompilationOrderNotice from './product-compilation/order-notice/component';
 import ProductCompilationViewed from './product-compilation/compilation-viewed/component';
 import NewDealCreated from './product-compilation/deal-created/component';
@@ -129,7 +124,6 @@ const ScheduledItems = {
 	CallTracker,
 	Meeting: ScheduledMeeting,
 	Task: ScheduledTask,
-	StoreDocument: ScheduledStoreDocument,
 	WebForm: ScheduledWebForm,
 	Wait: ScheduledWait,
 	Request: ScheduledRequest,
@@ -168,8 +162,6 @@ const Items = {
 	Scoring,
 	OrderCreation,
 	OrderModification,
-	StoreDocumentCreation,
-	StoreDocumentModification,
 	FinalSummaryDocuments,
 	FinalSummary,
 	ExternalNoticeModification,
@@ -189,7 +181,6 @@ const Animations = {
 };
 
 export {
-	EncourageBuyProducts,
 	Notification,
 	DeliveryActivity,
 	DeliveryMessage,
@@ -206,7 +197,6 @@ export {
 	Items,
 	Animations,
 	CompatibleItem,
-	ProductCompilationList,
 	CompilationOrderNotice,
 	ProductCompilationViewed,
 	NewDealCreated,

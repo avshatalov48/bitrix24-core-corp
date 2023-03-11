@@ -54,6 +54,11 @@ final class Order extends Service\Factory
 		return false;
 	}
 
+	public function isLastActivitySupported(): bool
+	{
+		return false;
+	}
+
 	public function getDataClass(): string
 	{
 		return OrderTable::class;

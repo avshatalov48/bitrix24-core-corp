@@ -1149,7 +1149,7 @@ else if (isset($_REQUEST['import']) && isset($_SESSION['CRM_IMPORT_FILE']))
 		{
 			$arResult['error']++;
 			$arResult['error_data'][] = array(
-				'message' => $err,
+				'message' => CCrmComponentHelper::encodeErrorMessage((string)$err),
 				'data' => $arProduct['__CSV_DATA__']
 			);
 		}

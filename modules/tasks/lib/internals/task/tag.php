@@ -1,7 +1,7 @@
 <?php
 /**
  * Class TagTable
- *
+ * @deprecated since tasks 22.1400.0
  * @package Bitrix\Tasks
  **/
 
@@ -66,6 +66,10 @@ class TagTable extends TaskDataManager
 				'data_type' => 'string',
 				'primary' => true,
 				'validation' => array(__CLASS__, 'validateName'),
+			),
+			'CONVERTED' => array(
+				'data_type' => 'string',
+				'default' => 0,
 			),
 
 			// references

@@ -37,6 +37,17 @@ class EmailLinkTrigger extends BaseTrigger
 		return true;
 	}
 
+	protected static function getPropertiesMap(): array
+	{
+		return [
+			[
+				'Id' => 'url',
+				'Name' => Loc::getMessage('CRM_AUTOMATION_TRIGGER_LINKHOOK_URL'),
+				'Placeholder' => 'https://example.com',
+				'Type' => 'text',
+			]
+		];
+	}
 
 	public static function getDescription(): string
 	{

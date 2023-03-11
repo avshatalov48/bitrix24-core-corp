@@ -208,7 +208,11 @@ class Type extends UserField\Internal\Type implements Permission\Containable
 	public function getItems(array $parameters = []): Collection
 	{
 		$itemDataClass = $this->getFactory()->getItemDataClass($this);
-		if (is_array($parameters['filter']) && array_key_exists('*FULL_TEXT.SEARCH_CONTENT', $parameters['filter']))
+		if (
+			isset($parameters['filter'])
+			&& is_array($parameters['filter'])
+			&& array_key_exists('*FULL_TEXT.SEARCH_CONTENT', $parameters['filter'])
+		)
 		{
 			if(!is_array($parameters['runtime']))
 			{

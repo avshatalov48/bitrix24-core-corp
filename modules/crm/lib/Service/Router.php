@@ -26,6 +26,7 @@ class Router
 	public const LIST_VIEW_ACTIVITY = EntityViewSettings::ACTIVITY_VIEW_NAME;
 	public const LIST_VIEW_LIST = EntityViewSettings::LIST_VIEW_NAME;
 	public const LIST_VIEW_CALENDAR = EntityViewSettings::CALENDAR_VIEW_NAME;
+	public const LIST_VIEW_DEADLINES = EntityViewSettings::DEADLINES_VIEW_NAME;
 
 	protected const GET_COMPONENT_NAME = 'c';
 	protected const GET_COMPONENT_PARAMETERS = 'cp';
@@ -163,6 +164,7 @@ class Router
 			'bitrix:crm.item.list' => 'type/#entityTypeId#/list/category/#categoryId#/',
 			'bitrix:crm.sales.tunnels' => 'type/#entityTypeId#/categories/',
 			'bitrix:crm.item.automation' => 'type/#entityTypeId#/automation/#categoryId#/',
+			'bitrix:crm.item.deadlines' => 'type/#entityTypeId#/deadlines/category/#categoryId#/',
 		];
 	}
 
@@ -520,6 +522,24 @@ class Router
 		return $this->getKanbanActivityUrlWithOldRouting($entityTypeId, $categoryId);
 	}
 
+	public function getDeadlinesUrl(int $entityTypeId, int $categoryId = null): ?Uri
+	{
+		if ($this->isNewRoutingForListEnabled($entityTypeId))
+		{
+			return $this->getDeadlinesUrlViaViewModeWithNewRouting($entityTypeId, $categoryId);
+		}
+		// old routind support. like getKanbanActivityUrlWithOldRouting
+		if ($entityTypeId === \CCrmOwnerType::Quote)
+		{
+			$template = Option::get(self::MODULE_ID, 'path_to_quote_deadlines');
+			return new Uri(\CComponentEngine::makePathFromTemplate($template));
+		}
+		else
+		{
+			return null;
+		}
+	}
+
 	protected function getKanbanActivityUrlWithNewRouting(int $entityTypeId, int $categoryId = null): ?Uri
 	{
 		return $this->getKanbanUrlViaViewModeWithNewRouting($entityTypeId, $categoryId, \Bitrix\Crm\Kanban\ViewMode::MODE_ACTIVITIES);
@@ -558,6 +578,22 @@ class Router
 	{
 		return $this->getUrlForTemplate(
 			'bitrix:crm.item.kanban',
+			[
+				'entityTypeId' => $entityTypeId,
+				'categoryId' => $categoryId ?? 0,
+				'viewMode' => $viewMode,
+			]
+		);
+	}
+
+	protected function getDeadlinesUrlViaViewModeWithNewRouting(
+		int $entityTypeId,
+		int $categoryId = null,
+		string $viewMode = \Bitrix\Crm\Kanban\ViewMode::MODE_DEADLINES
+	): ?Uri
+	{
+		return $this->getUrlForTemplate(
+			'bitrix:crm.item.deadlines',
 			[
 				'entityTypeId' => $entityTypeId,
 				'categoryId' => $categoryId ?? 0,
@@ -943,6 +979,7 @@ class Router
 			static::LIST_VIEW_LIST => 'getItemListUrl',
 			static::LIST_VIEW_CALENDAR => 'getCalendarUrl',
 			static::LIST_VIEW_ACTIVITY => 'getActivityUrl',
+			static::LIST_VIEW_DEADLINES => 'getDeadlinesUrl'
 		];
 
 		if (!isset($methodMap[$currentView]))

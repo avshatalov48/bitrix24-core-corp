@@ -107,41 +107,15 @@ abstract class Base extends ValueCollection
 
 	protected function getUserValues($id): ?array
 	{
+		if (!$id)
+		{
+			return null;
+		}
+
 		$id = \CBPHelper::StripUserPrefix($id);
+		$userService = \CBPRuntime::getRuntime(true)->getUserService();
 
-		$userList = \CUser::getList(
-			'id',
-			'asc',
-			['ID' => $id],
-			[
-				'SELECT' => [
-					'UF_SKYPE',
-					'UF_TWITTER',
-					'UF_FACEBOOK',
-					'UF_LINKEDIN',
-					'UF_XING',
-					'UF_WEB_SITES',
-					'UF_PHONE_INNER',
-				],
-				'FIELDS' => [
-					'EMAIL',
-					'WORK_PHONE',
-					'PERSONAL_MOBILE',
-					'LOGIN',
-					'ACTIVE',
-					'NAME',
-					'LAST_NAME',
-					'SECOND_NAME',
-					'WORK_POSITION',
-					'PERSONAL_WWW',
-					'PERSONAL_CITY',
-				],
-			]
-		);
-
-		$user = is_object($userList) ? $userList->fetch() : null;
-
-		return $user ?: null;
+		return $userService->getUserInfo($id);
 	}
 
 	protected function loadAssignedByValues(
@@ -165,22 +139,12 @@ abstract class Base extends ValueCollection
 		$this->document[$prefix . $compatibleDelimiter . 'WORK_PHONE'] = $user['WORK_PHONE'];
 		$this->document[$prefix . $compatibleDelimiter . 'PERSONAL_MOBILE'] = $user['PERSONAL_MOBILE'];
 
-		//new style fields
-		$this->document[$prefix . '.LOGIN'] = $user['LOGIN'];
-		$this->document[$prefix . '.ACTIVE'] = $user['ACTIVE'];
-		$this->document[$prefix . '.NAME'] = $user['NAME'];
-		$this->document[$prefix . '.LAST_NAME'] = $user['LAST_NAME'];
-		$this->document[$prefix . '.SECOND_NAME'] = $user['SECOND_NAME'];
-		$this->document[$prefix . '.WORK_POSITION'] = $user['WORK_POSITION'];
-		$this->document[$prefix . '.PERSONAL_WWW'] = $user['PERSONAL_WWW'];
-		$this->document[$prefix . '.PERSONAL_CITY'] = $user['PERSONAL_CITY'];
-		$this->document[$prefix . '.UF_SKYPE'] = $user['UF_SKYPE'];
-		$this->document[$prefix . '.UF_TWITTER'] = $user['UF_TWITTER'];
-		$this->document[$prefix . '.UF_FACEBOOK'] = $user['UF_FACEBOOK'];
-		$this->document[$prefix . '.UF_LINKEDIN'] = $user['UF_LINKEDIN'];
-		$this->document[$prefix . '.UF_XING'] = $user['UF_XING'];
-		$this->document[$prefix . '.UF_WEB_SITES'] = $user['UF_WEB_SITES'];
-		$this->document[$prefix . '.UF_PHONE_INNER'] = $user['UF_PHONE_INNER'];
+		unset($user['EMAIL'], $user['WORK_PHONE'], $user['PERSONAL_MOBILE']);
+
+		foreach ($user as $id => $value)
+		{
+			$this->document[$prefix . '.' . $id] = $value;
+		}
 
 		$this->document[$prefix . '_PRINTABLE'] = \CUser::FormatName(
 			\CSite::GetNameFormat(false),
@@ -260,7 +224,7 @@ abstract class Base extends ValueCollection
 	protected function loadUserFieldValues(): void
 	{
 		$entity = \CCrmOwnerType::ResolveUserFieldEntityID($this->typeId);
-		$userFieldsList = Application::getUserTypeManager()->getUserFields($entity);
+		$userFieldsList = Application::getUserTypeManager()->getUserFields($entity, $this->id);
 
 		if (is_array($userFieldsList))
 		{
@@ -274,9 +238,20 @@ abstract class Base extends ValueCollection
 				{
 					$fieldValue = $this->document[$userFieldName];
 				}
+				elseif (isset($userFieldParams['VALUE']) && $userFieldParams['VALUE'] !== false)
+				{
+					$fieldValue = $userFieldParams['VALUE'];
+				}
 				elseif (isset($fieldSettings['DEFAULT_VALUE']))
 				{
-					$fieldValue = $fieldSettings['DEFAULT_VALUE'];
+					if (is_array($fieldSettings['DEFAULT_VALUE']))
+					{
+						$fieldValue = $fieldSettings['DEFAULT_VALUE']['VALUE'] ?? '';
+					}
+					else
+					{
+						$fieldValue = $fieldSettings['DEFAULT_VALUE'];
+					}
 				}
 				else
 				{
@@ -329,6 +304,7 @@ abstract class Base extends ValueCollection
 				}
 				elseif ($fieldTypeID == 'enumeration')
 				{
+					$this->document[$userFieldName] = $fieldValue;
 					\CCrmDocument::externalizeEnumerationField($this->document, $userFieldName);
 				}
 				elseif ($fieldTypeID === 'boolean')
@@ -339,6 +315,10 @@ abstract class Base extends ValueCollection
 				elseif ($fieldTypeID === 'resourcebooking')
 				{
 					self::prepareResourceBookingField($this->document, $userFieldName);
+				}
+				elseif (!isset($this->document[$userFieldName]))
+				{
+					$this->document[$userFieldName] = $fieldValue;
 				}
 			}
 		}

@@ -1,4 +1,4 @@
-import {Popup} from 'main.popup';
+import { Popup } from 'main.popup';
 
 export const TodoEditorActionBtn = {
 	props: {
@@ -8,9 +8,9 @@ export const TodoEditorActionBtn = {
 			default: '',
 		},
 		action: {
-			type: Object,
+			type: Function,
 			required: true,
-			default: () => ({}),
+			default: () => {}
 		},
 		description: {
 			type: String,
@@ -33,7 +33,7 @@ export const TodoEditorActionBtn = {
 		}
 	},
 	methods: {
-		onMouseEnter(e)
+		onMouseEnter(event): void
 		{
 			if (!this.description) {
 				return;
@@ -41,7 +41,7 @@ export const TodoEditorActionBtn = {
 
 			this.popup = new Popup({
 				content: this.description,
-				bindElement: e.target,
+				bindElement: event.target,
 				darkMode: true,
 			});
 
@@ -54,7 +54,8 @@ export const TodoEditorActionBtn = {
 				this.popup.show();
 			}, 400);
 		},
-		onMouseLeave()
+
+		onMouseLeave(): void
 		{
 			if (!this.popup || !this.description)
 			{
@@ -64,11 +65,17 @@ export const TodoEditorActionBtn = {
 			this.popup.close();
 			this.popup = null;
 		},
+
+		onButtonClick(): void
+		{
+			this.action.call(this);
+		}
 	},
 	template: `
 		<button
 			@mouseenter="onMouseEnter"
 			@mouseleave="onMouseLeave"
+			@click="onButtonClick"
 			class="crm-activity__todo-editor_action-btn"
 		>
 			<i :class="iconClassname"></i>

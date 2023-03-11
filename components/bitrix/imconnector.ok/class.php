@@ -51,7 +51,7 @@ class ImConnectorOk extends \CBitrixComponent
 		}
 		else
 		{
-			ShowError(Loc::getMessage('IMCONNECTOR_COMPONENT_OK_MODULE_NOT_INSTALLED'));
+			ShowError(Loc::getMessage('IMCONNECTOR_COMPONENT_OK_MODULE_NOT_INSTALLED_MSGVER_1'));
 		}
 
 		return $result;
@@ -66,9 +66,9 @@ class ImConnectorOk extends \CBitrixComponent
 	 */
 	protected function initialization(): void
 	{
-		$this->connectorOutput = new Output($this->connector, $this->arParams['LINE']);
+		$this->connectorOutput = new Output($this->connector, (int)$this->arParams['LINE']);
 
-		$this->status = Status::getInstance($this->connector, $this->arParams['LINE']);
+		$this->status = Status::getInstance($this->connector, (int)$this->arParams['LINE']);
 
 		$this->arResult['STATUS'] = $this->status->isStatus();
 		$this->arResult['ACTIVE_STATUS'] = $this->status->getActive();
@@ -280,7 +280,7 @@ class ImConnectorOk extends \CBitrixComponent
 
 						if($rawDelete->isSuccess())
 						{
-							Status::delete($this->connector, $this->arParams['LINE']);
+							Status::delete($this->connector, (int)$this->arParams['LINE']);
 							$this->arResult['STATUS'] = false;
 							$this->arResult['ACTIVE_STATUS'] = false;
 							$this->arResult['CONNECTION_STATUS'] = false;
@@ -327,21 +327,20 @@ class ImConnectorOk extends \CBitrixComponent
 
 				foreach ($this->listOptions as $value)
 				{
-					if(empty($this->arResult['FORM'][$value]))
+					if (empty($this->arResult['FORM'][$value]))
 					{
-						if(empty($result[$value]))
+						if (empty($result[$value]))
 						{
-							$this->arResult['FORM'][$value] = $result[$value];
+							$this->arResult['FORM'][$value] = $result[$value] ?? '';
 						}
 						else
 						{
 							$this->arResult['SAVE_STATUS'] = true;
 
-							if($result[$value] == '#HIDDEN#')
+							if ($result[$value] == '#HIDDEN#')
 							{
 								$this->arResult['placeholder'][$value] = true;
 							}
-
 							else
 							{
 								$this->arResult['FORM'][$value] = $result[$value];

@@ -97,6 +97,7 @@ $editorConfig = [
 	'allowEdit' => $settings['ALLOW_EDIT'],
 	'allowedStores' => $arResult['ALLOWED_STORES'],
 	'allowEntityReserve' => $arResult['ALLOW_ENTITY_RESERVE'],
+	'allowReservation' => $arResult['ALLOW_RESERVATION'],
 	'allowProductView' => $arResult['ALLOW_PRODUCT_VIEW'],
 	'allowDiscountChange' => $arResult['ALLOW_DISCOUNT_CHANGE'],
 	'disabledAddRowButton' => $disabledAddRowButton,
@@ -193,6 +194,8 @@ $grid['ROWS']['template_0'] = [
 	'SORT' => null,
 	'IS_NEW' => 'N',
 	'TYPE' => Crm\ProductType::TYPE_PRODUCT,
+	'SKU_PROPERTIES' => [],
+	'PRODUCT_PROPERTIES' => [],
 ];
 
 $rows = [];
@@ -499,6 +502,13 @@ foreach ($grid['ROWS'] as $product)
 	];
 	// end region SUM
 
+
+	// region PURCHASING_PRICE
+
+	$purchasingPriceColumn = $rawProduct['SKU_PROPERTIES']['PURCHASING_PRICE_FORMATTED'];
+
+	// end region PURCHASING_PRICE
+
 	$reserveInfo =
 		$rawProduct['INPUT_RESERVE_QUANTITY'] !== null
 			? $rawProduct['INPUT_RESERVE_QUANTITY'] . " " . $measureName
@@ -539,6 +549,18 @@ foreach ($grid['ROWS'] as $product)
 		$columns['TAX_INCLUDED'] = $taxIncludedColumn;
 		$columns['TAX_SUM'] = '<span data-name="TAX_SUM">' . $taxSumColumn . '</span>';
 	}
+
+
+	if (!empty($arResult['USER_FIELD_COLUMNS']))
+	{
+		foreach ($arResult['USER_FIELD_COLUMNS'] as $propName)
+		{
+			$value = $rawProduct[$propName] ?? '';
+			$columns[$propName] = "<span data-name='{$propName}'>{$value}</a>";
+		}
+	}
+
+	$columns['PURCHASING_PRICE_FORMATTED'] = "<span data-name='PURCHASING_PRICE_FORMATTED'>{$purchasingPriceColumn}</a>";
 
 	$rows[] = [
 		'id' => $rawProduct['ID'] === $productIdMask ? 'template_0' : $rawProduct['ID'],
@@ -613,6 +635,7 @@ foreach ($rows as $key => $row)
 		[
 			'GRID_ID' => $gridId,
 			'HEADERS' => $grid['COLUMNS'],
+			'HEADERS_SECTIONS' => $grid['HEADERS_SECTIONS'],
 			// 'ROW_LAYOUT' => $rowLayout,
 			'SORT' => $grid['SORT'],
 			'SORT_VARS' => $grid['SORT_VARS'],
@@ -635,6 +658,7 @@ foreach ($rows as $key => $row)
 			'ALLOW_ROWS_SORT_IN_EDIT_MODE' => true,
 			'ALLOW_ROWS_SORT_INSTANT_SAVE' => false,
 			'ENABLE_ROW_COUNT_LOADER' => false,
+			'ENABLE_FIELDS_SEARCH' => 'Y',
 			'HIDE_FILTER' => true,
 			'ENABLE_COLLAPSIBLE_ROWS' => false,
 			'ADVANCED_EDIT_MODE' => true,

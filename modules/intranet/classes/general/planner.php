@@ -76,11 +76,11 @@ class CIntranetPlanner
 
 				if(is_array($arEventData))
 				{
-					if(is_array($arEventData['SCRIPTS']))
+					if(is_array($arEventData['SCRIPTS'] ?? null))
 						$arData['SCRIPTS'] = array_merge($arData['SCRIPTS'], $arEventData['SCRIPTS']);
-					if(is_array($arEventData['STYLES']))
+					if(is_array($arEventData['STYLES'] ?? null))
 						$arData['STYLES'] = array_merge($arData['STYLES'], $arEventData['STYLES']);
-					if(is_array($arEventData['DATA']))
+					if(is_array($arEventData['DATA'] ?? null))
 						$arData['DATA'] = array_merge($arData['DATA'], $arEventData['DATA']);
 				}
 			}

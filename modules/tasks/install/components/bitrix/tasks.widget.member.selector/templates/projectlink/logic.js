@@ -94,6 +94,10 @@ BX.namespace('Tasks.Component');
 							{id: entityId}
 						);
 						BX.onCustomEvent(this, 'onChangeProjectLink', [groupId, entityId]);
+						if (response.status === 'success')
+						{
+							BX.onCustomEvent(this, 'onProjectChanged', groupId);
+						}
 					}.bind(this)
 				).catch(
 					function(response)

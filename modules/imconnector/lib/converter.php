@@ -16,26 +16,25 @@ class Converter
 	 */
 	public static function convertObjectArray(Result $object)
 	{
-		$result['OK'] = $object ->isSuccess();
-		$result['DATA'] = $object->getData();
-		if(!$object->isSuccess())
+		$result = [
+			'OK' => $object ->isSuccess(),
+			'DATA' => $object->getData(),
+		];
+		if (!$object->isSuccess())
 		{
-			$result['ERROR'] = array();
-
+			$result['ERROR'] = [];
 			foreach ($object->getErrors() as $error)
 			{
-				if(!($error instanceof Error))
-					$result['ERROR'][] = array(
+				if (
+					$error instanceof Error
+					|| $error instanceof \Exception
+				)
+				{
+					$result['ERROR'][] = [
 						'CODE' => $error->getCode(),
 						//'MESSAGE' => $error->getMessage()
-					);
-				else
-					$result['ERROR'][] = array(
-						'CODE' => $error->getCode(),
-						//'MESSAGE' => $error->getMessage(),
-						//'METHOD' => $error->getMethod(),
-						//'PARAMS' => $error->getParams()
-					);
+					];
+				}
 			}
 		}
 
@@ -52,21 +51,33 @@ class Converter
 	{
 		$result = new Result();
 
-		if(!empty($array['DATA']) && is_array($array['DATA']))
-			$result ->setData($array['DATA']);
-
-		if(empty($array['OK']))
+		if (!empty($array['DATA']) && is_array($array['DATA']))
 		{
-			if(is_array($array['ERROR']))
+			$result ->setData($array['DATA']);
+		}
+
+		if (empty($array['OK']) || $array['OK'] == '0')
+		{
+			if (is_array($array['ERROR']))
 			{
 				foreach ($array['ERROR'] as $error)
 				{
-					$result->addError(new Error($error['MESSAGE'], $error['CODE'], $error['METHOD'], $error['PARAMS']));
+					$result->addError(new Error(
+						$error['MESSAGE'] ?? '',
+						$error['CODE'] ?? 'ERROR_UNDEFINED',
+						$error['METHOD'] ?? '',
+						$error['PARAMS'] ?? []
+					));
 				}
 			}
 			else
 			{
-				$result->addError(new Error('Empty server response', self::ERROR_EMPTY_SERVER_RESPONSE, __METHOD__, $array['ERROR']));
+				$result->addError(new Error(
+					'Empty server response',
+					self::ERROR_EMPTY_SERVER_RESPONSE,
+					__METHOD__,
+					$array['ERROR']
+				));
 			}
 		}
 

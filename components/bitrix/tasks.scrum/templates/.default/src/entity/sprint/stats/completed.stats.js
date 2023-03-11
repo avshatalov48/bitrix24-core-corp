@@ -2,6 +2,7 @@ import {Loc, Tag} from 'main.core';
 
 import {Stats} from './stats';
 import {Date as HeaderDate} from '../header/date';
+import {Culture} from '../../../utility/culture';
 
 export class CompletedStats extends Stats
 {
@@ -32,6 +33,6 @@ export class CompletedStats extends Stats
 
 	getCompletedDate(endDate: number): string
 	{
-		return BX.date.format('j F Y', endDate);
+		return BX.date.format(Culture.getInstance().getLongDateFormat(), endDate);
 	};
 }

@@ -1,26 +1,26 @@
 (() => {
 
-	/**
-	 * @class UI.Kanban
-	 * @property { ToolbarFactory } props.toolbarFactory
-	 */
+	const require = (ext) => jn.require(ext);
 
-	const { Loc } = jn.require('loc');
-	const { RefsContainer } = jn.require('layout/ui/kanban/refs-container');
+	const { Loc } = require('loc');
+	const { RefsContainer } = require('layout/ui/kanban/refs-container');
 	const {
 		clone,
 		merge,
 		mergeImmutable,
 		isEqual,
-	} = jn.require('utils/object');
+	} = require('utils/object');
+	const { useCallback } = require('utils/function');
+	const { PureComponent } = require('layout/pure-component');
+	const { StatefulList } = require('layout/ui/stateful-list');
 
 	let RequiredFields;
 	let CategoryStorage;
 
 	try
 	{
-		RequiredFields = jn.require('crm/required-fields').RequiredFields;
-		CategoryStorage = jn.require('crm/storage/category').CategoryStorage;
+		RequiredFields = require('crm/required-fields').RequiredFields;
+		CategoryStorage = require('crm/storage/category').CategoryStorage;
 	}
 	catch (e)
 	{
@@ -39,15 +39,16 @@
 	const EXCLUDE_ACTION = 'excludeEntity';
 	const DELETE_ACTION = 'deleteEntity';
 
-	class Kanban extends LayoutComponent
+	/**
+	 * @class UI.Kanban
+	 * @property { ToolbarFactory } props.toolbarFactory
+	 */
+	class Kanban extends PureComponent
 	{
 		constructor(props)
 		{
 			super(props);
 			this.actions = props.actions || {};
-			this.changeColumn = this.changeColumnHandler.bind(this);
-			this.reloadCurrentColumn = this.reloadCurrentColumnHandler.bind(this);
-			this.changeItemStageHandler = this.changeItemStage.bind(this);
 			this.currentSlideName = null;
 			this.columns = new Map();
 			this.needExecuteOnNotViewableHandler = false;
@@ -70,6 +71,10 @@
 				}
 			});
 
+			this.getRuntimeParams = this.getRuntimeParams.bind(this);
+			this.changeColumn = this.changeColumnHandler.bind(this);
+			this.reloadCurrentColumn = this.reloadCurrentColumnHandler.bind(this);
+			this.changeItemStageHandler = this.changeItemStage.bind(this);
 			this.reloadListCallbackHandler = this.initCounters.bind(this);
 			this.blinkItemHandler = this.blinkItem.bind(this);
 			this.onUpdateItemHandler = this.onUpdateItem.bind(this);
@@ -98,7 +103,7 @@
 
 		fillSlidesOrReload()
 		{
-			if (this.slides.size === this.getColumnsFromCurrentCategory().size)
+			if (this.slides.size === this.getColumnsFromCurrentCategory().size + 1)
 			{
 				this.fillSlides();
 			}
@@ -427,7 +432,8 @@
 		getPublicError(errors)
 		{
 			const error = errors.find(({ customData, message }) => customData && customData.public && message);
-			return ([ error ] || null);
+
+			return error ? [error] : null;
 		}
 
 		deleteItem(itemId, params = {})
@@ -777,7 +783,7 @@
 				itemType: 'Kanban',
 				itemParams: (params.itemParams || {}),
 				getEmptyListComponent: this.props.getEmptyListComponent || null,
-				getRuntimeParams: this.getRuntimeParams.bind(this),
+				getRuntimeParams: this.getRuntimeParams,
 				showEmptySpaceItem: this.isEnabledKanbanToolbar(),
 				pull: (this.props.pull || null),
 				onDetailCardUpdateHandler: this.props.onDetailCardUpdateHandler || null,
@@ -789,9 +795,9 @@
 				context: {
 					slideName,
 				},
-				ref: ref => {
+				ref: useCallback((ref) => {
 					this.refsContainer.setColumn(slideName, ref);
-				},
+				}, [slideName]),
 			});
 		}
 

@@ -1,5 +1,9 @@
-<?
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+<?php
+
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 class CBPImOpenLinesMessageActivity
 	extends CBPActivity
@@ -22,8 +26,14 @@ class CBPImOpenLinesMessageActivity
 
 	public function Execute()
 	{
-		if (!CModule::IncludeModule("im") || !CModule::IncludeModule("crm") || !CModule::IncludeModule("imopenlines"))
+		if (
+			!\Bitrix\Main\Loader::includeModule("im")
+			|| !\Bitrix\Main\Loader::includeModule("crm")
+			|| !\Bitrix\Main\Loader::includeModule("imopenlines")
+		)
+		{
 			return CBPActivityExecutionStatus::Closed;
+		}
 
 		list($moduleId, $documentEntity, $documentId) = $this->GetDocumentId();
 
@@ -33,8 +43,7 @@ class CBPImOpenLinesMessageActivity
 			return CBPActivityExecutionStatus::Closed;
 		}
 
-		list($entityTypeName, $entityId) = explode('_', $documentId);
-		$entityTypeId = \CCrmOwnerType::ResolveID($entityTypeName);
+		[$entityTypeId, $entityId] = \CCrmBizProcHelper::resolveEntityId($this->GetDocumentId());
 
 		$fromUserId = \CCrmOwnerType::GetResponsibleID($entityTypeId, $entityId, false);
 
@@ -256,6 +265,10 @@ class CBPImOpenLinesMessageActivity
 		{
 			$clients = $this->getOrderClients($entityId);
 		}
+		elseif (CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId))
+		{
+			$clients = $this->getDynamicItemClients($entityTypeId, $entityId);
+		}
 		else
 		{
 			$clients = [[\CCrmOwnerType::ResolveName($entityTypeId), $entityId]];
@@ -368,6 +381,37 @@ class CBPImOpenLinesMessageActivity
 				$clients[] = [\CCrmOwnerType::CompanyName, $companyId];
 			}
 		}
+		return $clients;
+	}
+
+	private function getDynamicItemClients($entityTypeId, $entityId): array
+	{
+		$clients = [];
+		$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory($entityTypeId);
+		if (!$factory)
+		{
+			return $clients;
+		}
+
+		$item = $factory->getItem($entityId);
+		if (!$item)
+		{
+			return $clients;
+		}
+
+		$companyId = $item->getCompanyId();
+		$contactIds = $item->getContactIds();
+
+		if ($companyId > 0)
+		{
+			$clients[] = [\CCrmOwnerType::CompanyName, $companyId];
+		}
+
+		foreach ($contactIds as $contactId)
+		{
+			$clients[] = [\CCrmOwnerType::ContactName, $contactId];
+		}
+
 		return $clients;
 	}
 

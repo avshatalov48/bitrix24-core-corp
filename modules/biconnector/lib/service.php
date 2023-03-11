@@ -33,7 +33,7 @@ class Service
 		return $this->languageId;
 	}
 
-	public function validateDashboardUrl($url)
+	public static function validateDashboardUrl($url)
 	{
 		return false;
 	}

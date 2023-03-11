@@ -3,9 +3,11 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Tasks\Helper\RestrictionUrl;
 
 Loc::loadMessages(__FILE__);
-
+/** @var array $arResult */
+/** @global $APPLICATION */
 $helper = $arResult['HELPER'];
 $arParams =& $helper->getComponent()->arParams; // make $arParams the same variable as $this->__component->arParams, as it really should be
 
@@ -42,8 +44,22 @@ $arParams =& $helper->getComponent()->arParams; // make $arParams the same varia
 		</div>
 
 		<div class="task-detail-sidebar-info-title <?if($multiple):?>task-detail-sidebar-info-title-line<?endif?>">
-			<?=($arParams['TITLE'] != '' ? htmlspecialcharsbx($arParams['TITLE']) : '&nbsp;')?>
-			<?=($arResult['TASK_LIMIT_EXCEEDED']? '<span class="tariff-lock"></span>' : '')?>
+			<?=($arParams['TITLE'] !== '' ? htmlspecialcharsbx($arParams['TITLE']) : '&nbsp;')?>
+			<?php
+				if ($arResult['TASK_LIMIT_EXCEEDED'])
+				{
+					$lockClassName = 'tariff-lock';
+					$onLockClick =
+						"top.BX.UI.InfoHelper.show('"
+						. RestrictionUrl::TASK_LIMIT_OBSERVERS_SLIDER_URL
+						. "',{isLimit: true,limitAnalyticsLabels: {module: 'tasks',}});"
+					;
+					$lockClassStyle = "cursor: pointer;";
+			?>
+					<span class="<?=$lockClassName?>" onclick="<?=$onLockClick?>" style="<?=$lockClassStyle?>"></span>
+			<?php
+				}
+			?>
 		</div>
 
 		<div class="js-id-mem-sel-is-items<?if($multiple):?> task-detail-sidebar-info-users-list<?endif?>">

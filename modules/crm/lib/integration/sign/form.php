@@ -238,7 +238,6 @@ class Form
 				$this->appendField($field);
 			}
 
-
 			if ($requisitePresetId !== null && $requisitePresetId > 0)
 			{
 				$this->setRequisitePresetId($requisitePresetId);

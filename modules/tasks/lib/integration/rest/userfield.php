@@ -10,15 +10,17 @@
 
 namespace Bitrix\Tasks\Integration\Rest;
 
+use Bitrix\Main\ArgumentTypeException;
 use Bitrix\Tasks\Integration\Disk\Rest\Attachment;
-
 use Bitrix\Rest\UserFieldProxy;
-use Bitrix\Main\EO_UserField_Result;
 use Bitrix\Main\UserFieldTable;
+use ReflectionClass;
+use ReflectionException;
+use TasksException;
 
 abstract class UserField extends UserFieldProxy
 {
-	abstract static public function getTargetEntityId();
+	abstract public static function getTargetEntityId();
 
 	public static function getClassName()
 	{
@@ -40,20 +42,20 @@ abstract class UserField extends UserFieldProxy
 
 	// a part of rest class-method router, for code-consistency purposes
 	// see CTaskRestService::__callStatic()
+	/**
+	 * @throws ArgumentTypeException
+	 * @throws TasksException
+	 */
 	public static function runRestMethod($executiveUserId, $methodName, array $args)
 	{
-		if(!is_array($args))
-		{
-		    $args = array();
-		}
-
 		$instance = new static(static::getTargetEntityId(), new \CUser($executiveUserId));
-		$res = call_user_func_array(array($instance, $methodName), $args);
+		static::validateArgs($instance, $methodName, $args);
+		$res = call_user_func_array([$instance, $methodName], $args);
 
-		return array(
+		return [
 			$res,
-			array()
-		);
+			[],
+		];
 	}
 
 	/**
@@ -130,5 +132,26 @@ abstract class UserField extends UserFieldProxy
 	protected function checkReadPermission()
 	{
 		return $this->isAuthorizedUser();
+	}
+
+	/**
+	 * @throws TasksException
+	 */
+	private static function validateArgs(UserFieldProxy $class, string $method, array $args): void
+	{
+		try
+		{
+			$targetClass = new ReflectionClass($class);
+			$targetMethod = $targetClass->getMethod($method);
+		}
+		catch (ReflectionException $e)
+		{
+			throw new TasksException($e->getMessage());
+		}
+
+		if (count($args) < $targetMethod->getNumberOfRequiredParameters())
+		{
+			throw new TasksException("Invalid arguments for {$targetClass->getName()}::{$method}");
+		}
 	}
 }

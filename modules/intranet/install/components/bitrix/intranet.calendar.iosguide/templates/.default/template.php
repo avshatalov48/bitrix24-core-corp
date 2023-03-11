@@ -24,7 +24,7 @@
 				<div class="ios-guide-section-content">
 					<div class="ios-guide-section-title"><span><?=\Bitrix\Main\Localization\Loc::getMessage('CAL_IOS_GUIDE_IS_SUCCESS')?></span></div>
 					<p><?=\Bitrix\Main\Localization\Loc::getMessage('CAL_IOS_GUIDE_IS_INSTALLED_ON_DEVICE')?></p>
-					<p style="margin-top: 23px;"><a href="https://helpdesk.bitrix24.ru/open/5686207/" class="ios-guide-link"><?=\Bitrix\Main\Localization\Loc::getMessage('CAL_IOS_GUIDE_READ_HOW_IT_WORK')?></a></p>
+					<p style="margin-top: 23px;"><a href="<?php echo \Bitrix\Ui\Util::getArticleUrlByCode(5686207);?>" class="ios-guide-link"><?=\Bitrix\Main\Localization\Loc::getMessage('CAL_IOS_GUIDE_READ_HOW_IT_WORK')?></a></p>
 				</div>
 			</div>
 		</div>

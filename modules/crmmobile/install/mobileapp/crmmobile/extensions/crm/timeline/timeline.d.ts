@@ -63,6 +63,7 @@ type TimelinePushActionParams = {
 };
 
 type TimelineContextMenuItem = {
+	id: string,
 	title: string,
 	scope?: string,
 	sort?: number,

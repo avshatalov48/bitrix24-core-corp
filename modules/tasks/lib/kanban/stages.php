@@ -196,7 +196,10 @@ class StagesTable extends Entity\DataManager
 		if ($stage = $res->fetch())
 		{
 			// user can't delete first stage
-			if ($stage['SYSTEM_TYPE'] == self::SYS_TYPE_NEW)
+			if (
+				$stage['SYSTEM_TYPE'] == self::SYS_TYPE_NEW
+				&& $entityType !== self::WORK_MODE_ACTIVE_SPRINT
+			)
 			{
 				$result = new Entity\DeleteResult();
 				$result->addError(new Entity\EntityError(
@@ -224,7 +227,10 @@ class StagesTable extends Entity\DataManager
 						));
 					}
 				}
-				elseif ($entityType == self::WORK_MODE_USER)
+				elseif (
+					$entityType === self::WORK_MODE_USER
+					|| $entityType === self::WORK_MODE_ACTIVE_SPRINT
+				)
 				{
 					$resT = TaskStageTable::getList(array(
 						'filter' => array(

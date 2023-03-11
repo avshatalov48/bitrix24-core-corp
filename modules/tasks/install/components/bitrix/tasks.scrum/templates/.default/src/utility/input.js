@@ -39,6 +39,11 @@ export class Input extends EventEmitter
 		return this.entity;
 	}
 
+	hasEntity(entity: Entity): boolean
+	{
+		return this.entity && this.entity.getId() === entity.getId();
+	}
+
 	setBindNode(node: HTMLElement)
 	{
 		this.bindNode = node;
@@ -57,11 +62,6 @@ export class Input extends EventEmitter
 	render(): HTMLElement
 	{
 		this.nodeId = Text.getRandom();
-
-		if (!Type.isNull(this.node))
-		{
-			Dom.remove(this.node);
-		}
 
 		this.node = Tag.render`
 			<div id="${Text.encode(this.nodeId)}" class="tasks-scrum__input --add-block">
@@ -91,45 +91,39 @@ export class Input extends EventEmitter
 
 	onKeydown(event: KeyboardEvent)
 	{
-		if (event.isComposing || event.key === 'Escape' || event.key === 'Enter')
+		if (event.key === 'Escape' || event.key === 'Enter')
 		{
 			if (!this.isTagsSearchMode() && !this.isEpicSearchMode())
 			{
-				this.getInputNode().blur();
+				this.submit();
 
 				event.stopImmediatePropagation();
 			}
 
-			if (event.key === 'Enter')
+			if (
+				event.key === 'Enter'
+				&& !((Browser.isMac() && event.metaKey) || event.ctrlKey)
+			)
 			{
 				this.emit('onEnter', { event });
-
-				if ((Browser.isMac() && event.metaKey) || event.ctrlKey)
-				{
-					this.emit('onMetaEnter', { event });
-				}
+			}
+			if (
+				event.key === 'Enter'
+				&& ((Browser.isMac() && event.metaKey) || event.ctrlKey)
+			)
+			{
+				this.emit('onMetaEnter', { event });
 			}
 		}
 	}
 
 	onBlur()
 	{
-		if (this.isTagsSearchMode() || this.isEpicSearchMode())
-		{
-			return;
-		}
-
-		this.disable();
-
 		const input = this.getInputNode();
 
 		if (input.value === '')
 		{
 			this.removeYourself();
-		}
-		else
-		{
-			this.createTaskItem();
 		}
 	}
 
@@ -150,6 +144,20 @@ export class Input extends EventEmitter
 		else
 		{
 			this.emit('tagsSearchClose');
+		}
+	}
+
+	submit()
+	{
+		this.disable();
+
+		if (this.isEmpty())
+		{
+			this.removeYourself();
+		}
+		else
+		{
+			this.createTaskItem();
 		}
 	}
 
@@ -205,6 +213,25 @@ export class Input extends EventEmitter
 		Dom.removeClass(this.node, '--disabled');
 
 		this.getInputNode().disabled = false;
+
+		this.emit('unDisable');
+	}
+
+	isExists(): boolean
+	{
+		return !Type.isNull(this.node);
+	}
+
+	isEmpty(): boolean
+	{
+		if (!this.isExists())
+		{
+			return true;
+		}
+
+		const input = this.getInputNode();
+
+		return input.value === '';
 	}
 
 	isTaskCreated(): boolean
@@ -241,6 +268,8 @@ export class Input extends EventEmitter
 	{
 		Dom.remove(this.node);
 
+		this.node = null;
+
 		this.emit('remove');
 	}
 
@@ -271,18 +300,15 @@ export class Input extends EventEmitter
 
 	createTaskItem()
 	{
-		if (!this.isTagsSearchMode() && !this.isEpicSearchMode())
+		const input = this.getInputNode();
+
+		if (input.value)
 		{
-			const input = this.getInputNode();
+			this.emit('createTaskItem', input.value);
 
-			if (input.value)
-			{
-				this.emit('createTaskItem', input.value);
+			this.taskCreated = true;
 
-				this.taskCreated = true;
-
-				input.value = '';
-			}
+			input.value = '';
 		}
 	}
 }

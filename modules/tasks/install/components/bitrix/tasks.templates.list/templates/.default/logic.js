@@ -290,7 +290,29 @@ function DeleteTemplate(templateId)
 
 					}.bind(this)
 				);
-			}
+			},
+
+			toggleFilter: function (data)
+			{
+				var tag = data.tag;
+				if (typeof tag === 'undefined')
+				{
+					return;
+				}
+
+				BX.SidePanel.Instance.closeAll()
+				var filter = top.BX.Main.filterManager.getById(this.option('gridId'));
+
+				if (!filter)
+				{
+					console.log('BX.Main.filterManager not initialised');
+					return;
+				}
+
+				var filterApi = filter.getApi();
+				filterApi.setFields({ TAGS: tag, TAGS_label: tag });
+				filterApi.apply();
+			},
 		}
 	});
 

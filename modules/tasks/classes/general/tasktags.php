@@ -1,58 +1,72 @@
 <?php
+
+use Bitrix\Tasks\Internals\Task\LabelTable;
+use Bitrix\Tasks\Internals\Task\TaskTagTable;
+
 /**
+ * @deprecated since tasks 22.1400.0
+ * use Control\Tag(...) instead
  * Bitrix Framework
+ *
  * @package bitrix
  * @subpackage tasks
  * @copyright 2001-2013 Bitrix
  */
-
-
 class CTaskTags
 {
-	function CheckFields(&$arFields, /** @noinspection PhpUnusedParameterInspection */ $ID = false, $effectiveUserId = null)
+	function CheckFields(&$arFields, /** @noinspection PhpUnusedParameterInspection */ $ID = false,
+		$effectiveUserId = null)
 	{
 		/** @global CMain $APPLICATION */
 		global $APPLICATION;
 
-		$arMsg = Array();
+		$arMsg = [];
 
 		if (!is_set($arFields, "TASK_ID"))
 		{
-			$arMsg[] = array("text" => GetMessage("TASKS_BAD_TASK_ID"), "id" => "ERROR_TASKS_BAD_TASK_ID");
+			$arMsg[] = ["text" => GetMessage("TASKS_BAD_TASK_ID"), "id" => "ERROR_TASKS_BAD_TASK_ID"];
 		}
 		else
 		{
-			$arParams = array();
+			$arParams = [];
 			if ($effectiveUserId !== null)
+			{
 				$arParams['USER_ID'] = $effectiveUserId;
+			}
 
 			$r = CTasks::GetByID($arFields["TASK_ID"], true, $arParams);
 			if (!$r->Fetch())
 			{
-				$arMsg[] = array("text" => GetMessage("TASKS_BAD_TASK_ID_EX"), "id" => "ERROR_TASKS_BAD_TASK_ID_EX");
+				$arMsg[] = ["text" => GetMessage("TASKS_BAD_TASK_ID_EX"), "id" => "ERROR_TASKS_BAD_TASK_ID_EX"];
 			}
 		}
 
 		if ($effectiveUserId !== null && !isset($arFields['USER_ID']))
+		{
 			$arFields['USER_ID'] = $effectiveUserId;
+		}
 
 		if (!is_set($arFields, "USER_ID"))
 		{
-			$arMsg[] = array("text" => GetMessage("TASKS_BAD_USER_ID"), "id" => "ERROR_TASKS_BAD_USER_ID");
+			$arMsg[] = ["text" => GetMessage("TASKS_BAD_USER_ID"), "id" => "ERROR_TASKS_BAD_USER_ID"];
 		}
 		else
 		{
-
 			$r = CUser::GetByID($arFields["USER_ID"]);
 			if (!$r->Fetch())
 			{
-				$arMsg[] = array("text" => GetMessage("TASKS_BAD_USER_ID_EX"), "id" => "ERROR_TASKS_BAD_USER_ID_EX");
+				$arMsg[] = ["text" => GetMessage("TASKS_BAD_USER_ID_EX"), "id" => "ERROR_TASKS_BAD_USER_ID_EX"];
 			}
 		}
 
 		if (!is_set($arFields, "NAME") || trim($arFields["NAME"]) == '')
 		{
-			$arMsg[] = array("text" => GetMessage("TASKS_BAD_NAME"), "id" => "ERROR_BAD_TASKS_NAME");
+			$arMsg[] = ["text" => GetMessage("TASKS_BAD_NAME"), "id" => "ERROR_BAD_TASKS_NAME"];
+		}
+
+		if (!is_set($arFields, "GROUP_ID"))
+		{
+			$arMsg[] = ["text" => GetMessage("TASKS_BAD_NAME"), "id" => "ERROR_BAD_GROUP_ID"];
 		}
 
 		if (!empty($arMsg))
@@ -69,12 +83,40 @@ class CTaskTags
 	{
 		if ($this->CheckFields($arFields, false, $effectiveUserId))
 		{
-			$result = \Bitrix\Tasks\TagTable::add(array(
-				"TASK_ID" => $arFields["TASK_ID"],
-				"USER_ID" => $arFields["USER_ID"],
-				"NAME" => $arFields["NAME"],
-			));
-			if ($result->isSuccess())
+			$result = LabelTable::add([
+				'NAME' => $arFields['NAME'],
+				'USER_ID' => $arFields['USER_ID'],
+				'GROUP_ID' => $arFields['GROUP_ID'] ?? 0,
+			]);
+
+			$tagId = LabelTable::getList([
+				'select' => [
+					'ID',
+				],
+				'filter' => [
+					'=NAME' => $arFields['NAME'],
+					'=GROUP_ID' => $arFields['GROUP_ID'] ?? 0,
+					'=USER_NAME' => $arFields['USER_ID'],
+				]
+			])->fetchAll();
+
+			$tagId = array_map(static function($el): int{
+				return (int)$el['ID'];
+			}, $tagId);
+
+			if (count($tagId) !== 1)
+			{
+				return false;
+			}
+
+			$tagId = $tagId[0];
+
+			$finalResult = TaskTagTable::add([
+				'TAG_ID' => $tagId,
+				'TASK_ID' => $arFields["TASK_ID"],
+			]);
+
+			if ($result->isSuccess() && $finalResult->isSuccess())
 			{
 				return $result->getId();
 			}
@@ -85,9 +127,11 @@ class CTaskTags
 	public static function GetFilter($arFilter)
 	{
 		if (!is_array($arFilter))
-			$arFilter = Array();
+		{
+			$arFilter = [];
+		}
 
-		$arSqlSearch = Array();
+		$arSqlSearch = [];
 
 		foreach ($arFilter as $key => $val)
 		{
@@ -101,11 +145,12 @@ class CTaskTags
 			{
 				case "TASK_ID":
 				case "USER_ID":
-					$arSqlSearch[] = CTasks::FilterCreate("TT.".$key, $val, "number", $bFullJoin, $cOperationType);
+					$arSqlSearch[] = CTasks::FilterCreate("TT." . $key, $val, "number", $bFullJoin, $cOperationType);
 					break;
 
 				case "NAME":
-					$arSqlSearch[] = CTasks::FilterCreate("TT.".$key, $val, "string_equal", $bFullJoin, $cOperationType);
+					$arSqlSearch[] = CTasks::FilterCreate("TT." . $key, $val, "string_equal", $bFullJoin,
+						$cOperationType);
 					break;
 			}
 		}
@@ -113,37 +158,22 @@ class CTaskTags
 		return $arSqlSearch;
 	}
 
-	public static function getTagsNamesByUserId($userId, $limit = 100)
-	{
-		global $DB;
-
-		$userId = (int) $userId;
-
-		return ($DB->query(
-			"SELECT DISTINCT TT.NAME 
-			FROM b_tasks_tag TT 
-			WHERE TT.USER_ID = $userId
-			ORDER BY TT.NAME ASC
-			LIMIT ".(int)$limit
-		));
-	}
-
 	public static function GetList($arOrder, $arFilter)
 	{
 		global $DB;
 
 		$arSqlSearch = array_filter(CTaskTags::GetFilter($arFilter));
-
-		$strSql = "
-			SELECT
-				TT.*
-			FROM
-				b_tasks_tag TT
-			".(sizeof($arSqlSearch) ? "WHERE ".implode(" AND ", $arSqlSearch) : "")."
-		";
+		$strSql = "SELECT BTT.*, TT.TASK_ID FROM "
+			. LabelTable::getTableName()
+			. " BTT INNER JOIN "
+			. LabelTable::getRelationTable()
+			. " TT ON BTT.ID = TT.TAG_ID "
+			. (sizeof($arSqlSearch) ? " WHERE " . implode(" AND ", $arSqlSearch) : "");
 
 		if (!is_array($arOrder))
-			$arOrder = Array();
+		{
+			$arOrder = [];
+		}
 
 		$arSqlOrder = [];
 		foreach ($arOrder as $by => $order)
@@ -151,18 +181,30 @@ class CTaskTags
 			$by = mb_strtolower($by);
 			$order = mb_strtolower($order);
 			if ($order != "asc")
+			{
 				$order = "desc";
+			}
 
 			if ($by == "task")
-				$arSqlOrder[] = " TT.TASK_ID ".$order." ";
+			{
+				$arSqlOrder[] = " TT.TASK_ID " . $order . " ";
+			}
 			elseif ($by == "user")
-				$arSqlOrder[] = " TT.USER_ID ".$order." ";
+			{
+				$arSqlOrder[] = " BTT.USER_ID " . $order . " ";
+			}
 			elseif ($by == "name")
-				$arSqlOrder[] = " TT.NAME ".$order." ";
+			{
+				$arSqlOrder[] = " BTT.NAME " . $order . " ";
+			}
 			elseif ($by == "rand")
+			{
 				$arSqlOrder[] = CTasksTools::getRandFunction();
+			}
 			else
-				$arSqlOrder[] = " TT.TASK_ID ".$order." ";
+			{
+				$arSqlOrder[] = " TT.TASK_ID " . $order . " ";
+			}
 		}
 
 		$strSqlOrder = "";
@@ -171,9 +213,13 @@ class CTaskTags
 		for ($i = 0; $i < $arSqlOrderCnt; $i++)
 		{
 			if ($i == 0)
+			{
 				$strSqlOrder = " ORDER BY ";
+			}
 			else
+			{
 				$strSqlOrder .= ",";
+			}
 
 			$strSqlOrder .= $arSqlOrder[$i];
 		}
@@ -182,46 +228,50 @@ class CTaskTags
 
 		//echo $strSql;
 
-		return $DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
+		return $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
 	}
 
 	function DeleteByName($NAME)
 	{
-		return self::Delete(array("=NAME" => $NAME));
+		return self::Delete(["=NAME" => $NAME]);
 	}
 
 	public static function DeleteByTaskID($TASK_ID)
 	{
-		return self::Delete(array("=TASK_ID" => (int) $TASK_ID));
+		return self::Delete(["=TASK_ID" => (int)$TASK_ID]);
 	}
 
 	function DeleteByUserID($USER_ID)
 	{
-		return self::Delete(array("=USER_ID" => (int) $USER_ID));
+		return self::Delete(["=USER_ID" => (int)$USER_ID]);
 	}
 
 	public static function Rename($OLD_NAME, $NEW_NAME, $USER_ID)
 	{
-		$tasks = array();
-		$list = \Bitrix\Tasks\TagTable::getList(array(
-			"select" => array("TASK_ID", "USER_ID", "NAME"),
-			"filter" => array(
+		// $tasks = [];
+		$list = LabelTable::getList([
+			"select" => ['ID', "USER_ID", "NAME", 'GROUP_ID'],
+			"filter" => [
 				"=USER_ID" => intval($USER_ID),
 				"=NAME" => $OLD_NAME,
-			),
-		));
-		while ($item = $list->fetch())
-		{
-			$tasks[] = $item;
-		}
+				'=GROUP_ID' => 0,
+			],
+		]);
+		$id = array_map(static function($el): int{
+			return (int)$el['ID'];
+		}, $list);
 
-		foreach ($tasks as $primary)
+		if (count($id) !== 1)
 		{
-			\Bitrix\Tasks\TagTable::delete($primary);
-			\Bitrix\Tasks\TagTable::add(array_merge($primary, array("NAME" => $NEW_NAME)));
+			return false;
 		}
+		$id = $id[0];
 
-		return true;
+		$result = LabelTable::update($id,[
+			'NAME' => $NEW_NAME,
+		]);
+
+		return $result->isSuccess();
 	}
 
 	public static function Delete($arFilter)
@@ -229,15 +279,32 @@ class CTaskTags
 		$result = false;
 		if ($arFilter)
 		{
-			$list = \Bitrix\Tasks\TagTable::getList(array(
+			$list = LabelTable::getList([
+				'select' => [
+					'*',
+					'TASK_' => 'TASKS',
+				],
 				"filter" => $arFilter,
-			));
+			]);
+			$idList = [];
 			while ($item = $list->fetch())
 			{
-
-				$result = \Bitrix\Tasks\TagTable::delete($item);
+				$idList[] = $item['ID'];
 			}
-			return $result;
+			$idList = [];
+			while ($item = $list->fetch())
+			{
+				$idList[] = $item['ID'];
+			}
+			$relsResult = TaskTagTable::deleteList([
+				'TAG_ID' => $idList,
+			]);
+
+			$tagsResult = LabelTable::deleteList([
+				'ID' => $idList,
+			]);
+
+			return $relsResult && $tagsResult;
 		}
 	}
 

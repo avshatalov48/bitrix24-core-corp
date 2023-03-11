@@ -196,7 +196,7 @@ trait NetworkMenuBot
 
 		$message = static::instanceMenu()->generateNextMessage($params);
 
-		if ($params['UNDELIVERED_MESSAGE'])
+		if (!empty($params['UNDELIVERED_MESSAGE']))
 		{
 			static::instanceMenu()->addStateData(['messages' => [$params['UNDELIVERED_MESSAGE']] ]);
 		}
@@ -222,7 +222,10 @@ trait NetworkMenuBot
 				$previousMessageId = null;
 			}
 
-			$fullRedraw = (bool)($params['FULL_REDRAW'] === true);
+			$fullRedraw = (
+				isset($params['FULL_REDRAW'])
+				&& $params['FULL_REDRAW'] === true
+			);
 
 			if ($previousMessageId && !$fullRedraw)
 			{

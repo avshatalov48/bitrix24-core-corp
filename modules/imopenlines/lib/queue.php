@@ -162,6 +162,7 @@ class Queue
 
 				$session = new Session();
 				$session->loadByArray($fields, $configs[$fields['CONFIG_ID']], $chats[$fields['CHAT_ID']]);
+
 				$resultTransfer = $session->transferToNextInQueue(false);
 
 				if ($resultTransfer == true)

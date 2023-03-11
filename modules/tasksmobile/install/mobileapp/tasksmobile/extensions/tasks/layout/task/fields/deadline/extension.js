@@ -102,7 +102,7 @@ jn.define('tasks/layout/task/fields/deadline', (require, exports, module) => {
 
 		renderContent()
 		{
-			const {showBalloonDate, taskState, counter} = this.getConfig();
+			const {counter} = this.getConfig();
 
 			return View(
 				{
@@ -119,11 +119,7 @@ jn.define('tasks/layout/task/fields/deadline', (require, exports, module) => {
 					},
 					Text({
 						style: this.styles.value,
-						text: (
-							showBalloonDate
-								? taskState.message
-								: (this.isEmpty() ? this.getEditableEmptyValue() : this.getFormattedDate())
-						),
+						text: (this.isEmpty() ? this.getEditableEmptyValue() : this.getFormattedDate()),
 					}),
 					(!this.isReadOnly() && this.renderBalloonArrowDown()),
 				),
@@ -177,12 +173,11 @@ jn.define('tasks/layout/task/fields/deadline', (require, exports, module) => {
 		{
 			if (imageUrl.indexOf(currentDomain) !== 0)
 			{
-				imageUrl = encodeURI(imageUrl);
 				imageUrl = imageUrl.replace(`${currentDomain}`, '');
 				imageUrl = (imageUrl.indexOf('http') !== 0 ? `${currentDomain}${imageUrl}` : imageUrl);
 			}
 
-			return imageUrl;
+			return encodeURI(imageUrl);
 		}
 
 		getDefaultStyles()

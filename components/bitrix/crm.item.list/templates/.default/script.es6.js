@@ -1,4 +1,4 @@
-import { ajax as Ajax, Loc, Reflection, Text, Type, Event, Uri, Runtime } from "main.core";
+import { ajax as Ajax, Event, Loc, Reflection, Runtime, Text, Type, Uri } from "main.core";
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { MessageBox, MessageBoxButtons } from "ui.dialogs.messagebox";
 import { Router } from "crm.router";
@@ -16,6 +16,7 @@ class ItemListComponent
 	entityTypeName: string;
 	reloadGridTimeoutId: number;
 	exportPopups: Object;
+	#isUniversalActivityScenarioEnabled: boolean = false;
 
 	constructor(params): void
 	{
@@ -58,6 +59,10 @@ class ItemListComponent
 			{
 				this.errorTextContainer = params.errorTextContainer;
 			}
+			if (Type.isBoolean(params.isUniversalActivityScenarioEnabled))
+			{
+				this.#isUniversalActivityScenarioEnabled = params.isUniversalActivityScenarioEnabled;
+			}
 		}
 
 		this.reloadGridTimeoutId = 0;
@@ -66,6 +71,8 @@ class ItemListComponent
 	init(): void
 	{
 		this.bindEvents();
+
+		this.#initPushCrmSettings();
 	}
 
 	bindEvents(): void
@@ -79,9 +86,7 @@ class ItemListComponent
 			this.handleStartExport(event, 'excel');
 		});
 
-		const toolbarComponent = Reflection.getClass('BX.Crm.ToolbarComponent')
-			? Reflection.getClass('BX.Crm.ToolbarComponent').Instance
-			: null;
+		const toolbarComponent = this.#getToolbarComponent();
 
 		if (toolbarComponent)
 		{
@@ -159,6 +164,37 @@ class ItemListComponent
 				});
 			});
 		}
+	}
+
+	#getToolbarComponent(): ?BX.Crm.ToolbarComponent
+	{
+		const component = Reflection.getClass('BX.Crm.ToolbarComponent');
+
+		return component ? component.Instance : null;
+	}
+
+	#initPushCrmSettings(): void
+	{
+		if (!this.#isUniversalActivityScenarioEnabled)
+		{
+			return;
+		}
+
+		const toolbar = this.#getToolbarComponent();
+		if (!toolbar)
+		{
+			console.error('BX.Crm.ToolbarComponent not found');
+			return;
+		}
+
+		Runtime.loadExtension('crm.push-crm-settings').then(({PushCrmSettings}) => {
+			/** @see BX.Crm.PushCrmSettings */
+			new PushCrmSettings({
+				entityTypeId: this.entityTypeId,
+				rootMenu: toolbar.getSettingsButton()?.getMenuWindow(),
+				grid: this.grid,
+			});
+		});
 	}
 
 	reloadGridAfterTimeout()

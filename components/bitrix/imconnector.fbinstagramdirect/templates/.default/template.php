@@ -72,7 +72,7 @@ $lang = [
 	'index_subtitle' => Loc::getMessage('IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_INDEX_SUBTITLE' . $langPostfix),
 	'index_additional_description' => Loc::getMessage('IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_INDEX_ADDITIONAL_DESCRIPTION' . $langPostfix),
 ];
-if ($arResult['NEED_META_RESTRICTION_NOTE'] && !$arResult['ACTIVE_STATUS'])
+if (!empty($arResult['NEED_META_RESTRICTION_NOTE']) && !$arResult['ACTIVE_STATUS'])
 {
 	$this->SetViewTarget('fb_meta_restriction_note');
 	?>
@@ -99,10 +99,10 @@ if ($arResult['NEED_META_RESTRICTION_NOTE'] && !$arResult['ACTIVE_STATUS'])
 <?
 if(
 	empty($arResult['PAGE'])
-	&& $arResult['ACTIVE_STATUS']
+	&& !empty($arResult['ACTIVE_STATUS'])
 )
 {
-	if($arResult['STATUS'])
+	if (!empty($arResult['STATUS']))
 	{
 		?>
 		<div class="imconnector-field-container">
@@ -239,9 +239,7 @@ else
 {
 	if(empty($arResult['FORM']['USER']['INFO'])) //start case with clear connections
 	{
-		?>
-		<?
-		if($arResult['ACTIVE_STATUS'] === true) //case before auth to fb
+		if (!empty($arResult['ACTIVE_STATUS']) && $arResult['ACTIVE_STATUS'] === true) //case before auth to fb
 		{
 			?>
 			<div class="imconnector-field-container">
@@ -271,7 +269,7 @@ else
 						</div>
 					</div>
 					<?
-					if($arResult['FORM']['USER']['URI'] !== '')
+					if (!empty($arResult['FORM']['USER']['URI']))
 					{
 						?>
 						<div class="imconnector-field-social-connector">

@@ -7,3 +7,4 @@
  */
 
 $MESS["TASKS_RESULT_HEADER"] = "Результат";
+$MESS['TASKS_RESULTS_REMOVE_RESULT'] = 'Убрать результат';

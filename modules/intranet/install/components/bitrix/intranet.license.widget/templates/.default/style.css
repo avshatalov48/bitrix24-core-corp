@@ -515,7 +515,11 @@ a.license-widget-item-info-text:hover { color: #2b89ea; }
 
 .license-widget-item--main .license-widget-item-content,
 .license-widget-item--wide .license-widget-item-content {
-	padding-right: 5px;
+	padding: 0 5px 0 0;
+}
+
+.license-widget-item--wide .license-widget-item-link-text {
+	line-height: unset;
 }
 
 .license-widget-item--main .license-widget-item-content {

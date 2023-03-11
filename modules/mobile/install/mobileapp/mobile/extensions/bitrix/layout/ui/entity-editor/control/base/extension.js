@@ -1,11 +1,12 @@
 (() => {
 	const { EventEmitter } = jn.require('event-emitter');
 	const { isEqual } = jn.require('utils/object');
+	const { PureComponent } = jn.require('layout/pure-component');
 
 	/**
 	 * @class EntityEditorBaseControl
 	 */
-	class EntityEditorBaseControl extends LayoutComponent
+	class EntityEditorBaseControl extends PureComponent
 	{
 		constructor(props)
 		{

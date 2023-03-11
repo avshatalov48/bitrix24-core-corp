@@ -253,7 +253,10 @@ class Task extends Base
 			$fields["PARENT_ID"] = $container->getParentId();
 		}
 
-		if ($this->projectTerm)
+		// it's really possible:
+		// http://jabber.bx/view.php?id=161576
+		// http://jabber.bx/view.php?id=162694
+		if ($this->projectTerm && !empty($fields['CREATED_DATE']))
 		{
 			$isProject = (!empty($this->projectTerm["project"]));
 
@@ -667,7 +670,12 @@ class Task extends Base
 
 			$currentFieldDateTime = TasksDateTime::createFrom($currentFieldDate);
 
-			$startPointTime->add("PT".($currentFieldDateTime->getTimestamp() - $oldStartPointTime->getTimestamp())."S");
+			$interval = $currentFieldDateTime->getTimestamp() - $oldStartPointTime->getTimestamp();
+			if ($interval < 0)
+			{
+				return '';
+			}
+			$startPointTime->add('PT' . $interval . 'S');
 
 			$phpDateTimeFormat = DateTime::convertFormatToPhp(FORMAT_DATETIME);
 			$deadline = $startPointTime->format($phpDateTimeFormat);
@@ -736,7 +744,13 @@ class Task extends Base
 			$createdDate = TasksDateTime::createFrom($taskCreatedDate);
 			$createdDate->setTime(0, 0);
 			$currentDeadlineTime = TasksDateTime::createFrom($currentDeadline);
-			$startPointTime->add("PT".($currentDeadlineTime->getTimestamp()-$createdDate->getTimestamp())."S");
+			$interval = $currentDeadlineTime->getTimestamp() - $createdDate->getTimestamp();
+			if ($interval < 0)
+			{
+				return '';
+			}
+
+			$startPointTime->add('PT' . $interval . 'S');
 
 			$phpDateTimeFormat = DateTime::convertFormatToPhp(FORMAT_DATETIME);
 			return $startPointTime->format($phpDateTimeFormat);

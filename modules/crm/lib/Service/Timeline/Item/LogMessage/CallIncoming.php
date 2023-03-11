@@ -27,7 +27,7 @@ class CallIncoming extends LogMessage
 
 	public function getContentBlocks(): ?array
 	{
-		$clientBlock = $this->getClientContentBlock(self::BLOCK_WITH_FORMATTED_VALUE);
+		$clientBlock = $this->buildClientBlock(self::BLOCK_WITH_FORMATTED_VALUE);
 		if (isset($clientBlock))
 		{
 			return [

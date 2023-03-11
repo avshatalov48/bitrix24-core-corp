@@ -1,4 +1,7 @@
 (() => {
+	const { clip } = jn.require('assets/common');
+	const { transparent } = jn.require('utils/color');
+
 	/**
 	 * @class UI.FileAttachment
 	 */
@@ -15,6 +18,7 @@
 			this.layoutWidget = props.layoutWidget;
 			this.serverName = props.serverName;
 		}
+
 		onChangeAttachments(attachments)
 		{
 			this.setState({
@@ -66,25 +70,135 @@
 		{
 			const {attachments} = this.state;
 
-			return ScrollView(
+			return View(
 				{
 					style: {
-						backgroundColor: '#ffffff'
+						backgroundColor: '#eef2f4',
+					}
+				},
+				View(
+					{
+						style: {
+							backgroundColor: '#ffffff',
+							flex: 2,
+							flexDirection: 'column',
+							borderRadius: 12,
+						},
+						safeArea: {
+							bottom: true,
+						},
+					},
+					ScrollView(
+						{
+							style: {
+								flex: 1,
+								flexDirection: 'column',
+								flexShrink: 2,
+							},
+						},
+						View(
+							{
+								style: {
+									padding: 20,
+									flexShrink: 2,
+								},
+							},
+							View(
+								{
+									style: {
+										flexDirection: 'row',
+										flexWrap: 'wrap',
+										justifyContent: 'flex-start',
+										alignItems: 'flex-start',
+									},
+								},
+								...attachments.map((file, index) => this.renderFile(file, index)),
+							),
+						),
+					),
+					this.renderAddButton(),
+				)
+			);
+		}
+
+		renderAddButton()
+		{
+			if (!this.showAddButton)
+			{
+				return null;
+			}
+
+			return Shadow(
+				{
+					style: {
+						borderTopLeftRadius: 16,
+						borderTopRightRadius: 16,
+					},
+					radius: 5,
+					color: transparent('#000000', 0.14),
+					offset: {
+						x: 0,
+						y: -3,
+					},
+					inset: {
+						left: 5,
+						right: 5,
+						top: 0,
+						bottom: 5,
 					},
 				},
-				View({},
+				View(
+					{
+						style: {
+							flexDirection: 'row',
+							backgroundColor: '#fff',
+							paddingVertical: 12.5,
+							justifyContent: 'center',
+							alignItems: 'center',
+						},
+						onClick: () => {
+							if (this.props.onAddButtonClick)
+							{
+								this.props.onAddButtonClick();
+							}
+						},
+					},
 					View(
 						{
 							style: {
-								padding: 13,
-								flexDirection: 'row',
-								flexWrap: 'wrap',
+								width: 24,
+								height: 24,
+								backgroundColor: '#E1F3F9',
+								borderRadius: 12,
+								justifyContent: 'center',
+								alignItems: 'center',
+								marginRight: 6,
 							},
 						},
-						...attachments.map((file, index) => this.renderFile(file, index))
-					)
-				)
-			)
+						Image({
+							style: {
+								width: 17,
+								height: 17,
+							},
+							svg: {
+								content: clip,
+							},
+						}),
+					),
+					Text({
+						style: {
+							color: '#828B95',
+							fontSize: 18,
+						},
+						text: BX.message('UI_FILE_ATTACHMENT_BUTTON_ADD'),
+					}),
+				),
+			);
+		}
+
+		get showAddButton()
+		{
+			return BX.prop.getBoolean(this.props, 'showAddButton', false);
 		}
 	}
 

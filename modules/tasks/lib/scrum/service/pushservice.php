@@ -53,6 +53,7 @@ class PushService
 				'params' => [
 					'id' => $updatedItem->getId(),
 					'groupId' => $entity->getGroupId(),
+					'sourceId' => $updatedItem->getSourceId(),
 					'tmpId' => $updatedItem->getTmpId(),
 				],
 			]

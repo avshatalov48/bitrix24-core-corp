@@ -1,17 +1,18 @@
-(()=>{
-	BX.addCustomEvent("onDiskFolderOpen", folderData =>
-	{
+(() => {
+	BX.addCustomEvent('onDiskFolderOpen', (params = {}) => {
 		ComponentHelper.openList({
-			name:"user.disk",
-			object:"list",
+			name: 'user.disk',
+			object: 'list',
 			canOpenInDefault: true,
-			version:availableComponents["user.disk"].version,
-			componentParams:{userId: env.userId, folderId: folderData.folderId},
-			widgetParams:{
+			version: availableComponents['user.disk'].version,
+			componentParams: {
+				userId: env.userId,
+				...params,
+			},
+			widgetParams: {
 				useSearch: true,
-				doNotHideSearchResult: true
-			}
+				doNotHideSearchResult: true,
+			},
 		});
 	});
-
 })();

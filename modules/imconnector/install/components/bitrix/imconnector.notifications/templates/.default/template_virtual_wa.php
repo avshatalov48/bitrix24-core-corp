@@ -20,7 +20,7 @@ Extension::load([
 
 $iconCode = Connector::getIconByConnector('notifications_virtual_wa');
 
-if ($arResult['error'])
+if (!empty($arResult['error']))
 {
 	foreach ($arResult['error'] as $error)
 	{
@@ -35,7 +35,7 @@ if ($arResult['error'])
 	<?=bitrix_sessid_post();?>
 </form>
 
-<?if($arResult['ACTIVE_STATUS']):?>
+<?if(!empty($arResult['ACTIVE_STATUS'])):?>
 	<div class="imconnector-field-container">
 		<div class="imconnector-field-section imconnector-field-section-social">
 			<div class="imconnector-field-box">

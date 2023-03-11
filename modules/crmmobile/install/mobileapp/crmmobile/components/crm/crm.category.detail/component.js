@@ -209,7 +209,7 @@
 					resizableByKeyboard: true,
 					style: {
 						flexDirection: 'column',
-						backgroundColor: '#eef3f5',
+						backgroundColor: '#eef2f4',
 					},
 				},
 				this.state.category === null ? this.renderLoader() : this.renderContent(),
@@ -240,7 +240,10 @@
 					},
 				},
 				View(
-					{},
+					{
+						onClick: () => Keyboard.dismiss(),
+						onPan: () => Keyboard.dismiss(),
+					},
 					this.renderCategoryName(),
 					this.renderPermissions(),
 					this.renderStageList(),
@@ -268,6 +271,7 @@
 					config: {
 						deepMergeStyles: styles.categoryNameField,
 						selectionOnFocus: name === BX.message('M_CRM_CATEGORY_DETAIL_DEFAULT_CATEGORY_NAME2'),
+						enableKeyboardHide: true,
 					},
 					onChange: (value) => {
 						this.changedFields.name = value;
@@ -449,6 +453,7 @@
 						forceDismissOnSwipeDown: true,
 						horizontalSwipeAllowed: false,
 						swipeContentAllowed: true,
+						navigationBarColor: '#eef2f4',
 					},
 				},
 			});

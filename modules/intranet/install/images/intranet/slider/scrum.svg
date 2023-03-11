@@ -112,9 +112,6 @@
 	</svg>
 	<rect fill="#EBF1F4" width="20" y="70" height="1200" x="100%" transform="translate(-20)"/>
 
-
-
-	<!--  -->
 	<rect id="msk1" width="100%" fill="url(#msk_gd)" mask="url(#headerMsk)" height="1270"/>
 
 	<mask id="headerMsk" fill="white">

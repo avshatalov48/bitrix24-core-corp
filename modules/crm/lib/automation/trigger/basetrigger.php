@@ -1,10 +1,11 @@
 <?php
+
 namespace Bitrix\Crm\Automation\Trigger;
 
 use Bitrix\Crm\Automation\Factory;
+use Bitrix\Crm\Automation\Trigger\Entity\TriggerTable;
 use Bitrix\Crm\EntityManageFacility;
 use Bitrix\Crm\Service\Container;
-use Bitrix\Crm\Service\DynamicTypesMap;
 use Bitrix\Crm\Settings\LeadSettings;
 use Bitrix\Main;
 
@@ -56,7 +57,8 @@ class BaseTrigger extends \Bitrix\Bizproc\Automation\Trigger\BaseTrigger
 	{
 		$triggersSent = false;
 		$triggersApplied = false;
-		$clientBindings = array();
+		$clientBindings = [];
+		$bindingDocuments = [];
 
 		$result = new Main\Result();
 
@@ -68,8 +70,11 @@ class BaseTrigger extends \Bitrix\Bizproc\Automation\Trigger\BaseTrigger
 			if ($entityTypeId === \CCrmOwnerType::Contact || $entityTypeId === \CCrmOwnerType::Company)
 			{
 				$clientBindings[] = $binding;
+
 				continue;
 			}
+
+			$bindingDocuments[] = [$entityTypeId, $entityId];
 
 			if (Factory::isSupported($entityTypeId))
 			{
@@ -78,34 +83,29 @@ class BaseTrigger extends \Bitrix\Bizproc\Automation\Trigger\BaseTrigger
 					continue;
 				}
 
-				if (!Factory::isAutomationRunnable($entityTypeId))
-				{
-					continue;
-				}
-
-				$automationTarget = Factory::getTarget($entityTypeId, $entityId);
-
-				$trigger = new static();
-				$trigger->setTarget($automationTarget);
-				if ($inputData !== null)
-					$trigger->setInputData($inputData);
-
-				$triggersApplied = $trigger->send();
+				$triggersApplied = static::sendTrigger([$entityTypeId, $entityId], $inputData);
 				$triggersSent = true;
 			}
 		}
 
-		if (!$triggersSent && $clientBindings)
+		if (!empty($clientBindings))
 		{
 			$facilitySelector = (new EntityManageFacility())->getSelector();
 
 			foreach ($clientBindings as $binding)
 			{
+				if (!$facilitySelector)
+				{
+					break;
+				}
+
 				$facilitySelector
 					->setEntity($binding['OWNER_TYPE_ID'], $binding['OWNER_ID'])
-					->search();
+					->search()
+				;
 
 				$documents = [];
+
 				$dealId = $facilitySelector->getDealId();
 				$orderIds = $facilitySelector->getOrders();
 
@@ -118,33 +118,81 @@ class BaseTrigger extends \Bitrix\Bizproc\Automation\Trigger\BaseTrigger
 					$documents[] = [\CCrmOwnerType::Order, $orderId];
 				}
 
-				foreach ($documents as [$docTypeId, $docId])
+				if (static::areDynamicTypesSupported())
 				{
-					if (!Factory::isAutomationRunnable($docTypeId))
+					$entityTypeIdsWithTrigger = static::getEntityTypeIdsBySelfCode();
+
+					$ownerIdFieldName = '';
+					if ($binding['OWNER_TYPE_ID'] === \CCrmOwnerType::Contact)
+					{
+						$ownerIdFieldName = 'CONTACT_ID';
+					}
+					elseif ($binding['OWNER_TYPE_ID'] === \CCrmOwnerType::Company)
+					{
+						$ownerIdFieldName = 'COMPANY_ID';
+					}
+
+					foreach ($entityTypeIdsWithTrigger as $entityTypeIdWithTrigger)
+					{
+						if (empty($ownerIdFieldName))
+						{
+							break;
+						}
+
+						if (
+							!\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeIdWithTrigger)
+							|| !Factory::isSupported($entityTypeIdWithTrigger)
+						)
+						{
+							continue;
+						}
+
+						$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory($entityTypeIdWithTrigger);
+						if (!$factory)
+						{
+							continue;
+						}
+
+						$items = $factory->getItems([
+							'select' => ['ID'],
+							'filter' => [
+								'=' . $ownerIdFieldName => (int)$binding['OWNER_ID'],
+							],
+						]);
+
+						foreach ($items as $item)
+						{
+							$documents[] = [(int)$entityTypeIdWithTrigger, $item->getId()];
+						}
+
+					}
+				}
+
+				foreach ($documents as $document)
+				{
+					if (in_array($document, $bindingDocuments, true))
 					{
 						continue;
 					}
 
-					$automationTarget = Factory::getTarget($docTypeId, $docId);
-
-					$trigger = new static();
-					$trigger->setTarget($automationTarget);
-					if ($inputData !== null)
-						$trigger->setInputData($inputData);
-
-					$triggersApplied = $trigger->send();
+					if (static::sendTrigger($document, $inputData))
+					{
+						$triggersApplied = true;
+					}
 					$triggersSent = true;
 				}
 			}
 		}
 
 		$result->setData(['triggersSent' => $triggersSent, 'triggersApplied' => $triggersApplied]);
+
 		return $result;
 	}
 
 	public function setInputData($data)
 	{
 		$this->inputData = $data;
+
 		return $this;
 	}
 
@@ -154,7 +202,27 @@ class BaseTrigger extends \Bitrix\Bizproc\Automation\Trigger\BaseTrigger
 		{
 			return is_array($this->inputData) && isset($this->inputData[$key]) ? $this->inputData[$key] : null;
 		}
+
 		return $this->inputData;
+	}
+
+	protected static function sendTrigger(array $document, array $inputData = null)
+	{
+		[$entityTypeId, $entityId] = $document;
+		if (!Factory::isAutomationRunnable($entityTypeId))
+		{
+			return false;
+		}
+
+		$automationTarget = Factory::getTarget($entityTypeId, $entityId);
+		$trigger = new static();
+		$trigger->setTarget($automationTarget);
+		if ($inputData !== null)
+		{
+			$trigger->setInputData($inputData);
+		}
+
+		return $trigger->send();
 	}
 
 	public function send()
@@ -169,6 +237,7 @@ class BaseTrigger extends \Bitrix\Bizproc\Automation\Trigger\BaseTrigger
 				{
 					$this->applyTrigger($trigger);
 					$applied = true;
+
 					break;
 				}
 			}
@@ -216,5 +285,26 @@ class BaseTrigger extends \Bitrix\Bizproc\Automation\Trigger\BaseTrigger
 		}
 
 		return true;
+	}
+
+	protected static function getEntityTypeIdsBySelfCode(): array
+	{
+		$triggerCode = static::getCode();
+		if (empty($triggerCode) || $triggerCode === self::getCode())
+		{
+			return [];
+		}
+
+		$entityTypeIds = TriggerTable::getList([
+			'select' => ['ENTITY_TYPE_ID'],
+			'filter' => [
+				'=CODE' => $triggerCode
+			],
+			'cache' => [
+				'ttl' => '7200'
+			]
+		])->fetchAll();
+
+		return array_unique(array_column($entityTypeIds, 'ENTITY_TYPE_ID'));
 	}
 }

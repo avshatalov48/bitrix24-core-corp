@@ -69,7 +69,14 @@ class PlanTask extends Base
 	public function getDocumentStatusList($categoryId = 0)
 	{
 		$planId = Document\Task::resolvePlanId($this->getDocumentType()[2]);
+
+		$previousWorkMode = Tasks\Kanban\StagesTable::getWorkMode();
+
 		Tasks\Kanban\StagesTable::setWorkMode(Tasks\Kanban\StagesTable::WORK_MODE_USER);
-		return Tasks\Kanban\StagesTable::getStages($planId);
+		$stages = Tasks\Kanban\StagesTable::getStages($planId);
+
+		Tasks\Kanban\StagesTable::setWorkMode($previousWorkMode);
+
+		return $stages;
 	}
 }

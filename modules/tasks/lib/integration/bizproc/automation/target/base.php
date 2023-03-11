@@ -1,6 +1,8 @@
 <?php
 namespace Bitrix\Tasks\Integration\Bizproc\Automation\Target;
 
+use Bitrix\Bizproc\Automation\Engine\TemplatesScheme;
+use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Loader;
 use Bitrix\Tasks\Integration\Bizproc\Automation\Factory;
 
@@ -73,5 +75,15 @@ abstract class Base extends \Bitrix\Bizproc\Automation\Target\BaseTarget
 	public function getAvailableTriggers()
 	{
 		return Factory::getAvailableTriggers($this->getDocumentType()[2]);
+	}
+
+	public function getTemplatesScheme(): ?TemplatesScheme
+	{
+		$currentUserId = CurrentUser::get()->getId();
+
+		$scheme = new \Bitrix\Tasks\Integration\Bizproc\Automation\Engine\TemplatesScheme($currentUserId);
+		$scheme->build();
+
+		return $scheme;
 	}
 }

@@ -137,12 +137,6 @@ class BasketTable extends Main\Entity\DataManager
 				'data_type' => 'integer',
 				'required' => true,
 			),
-			'PRODUCT' => array(
-				'data_type' => 'Product',
-				'reference' => array(
-					'=this.PRODUCT_ID' => 'ref.ID'
-				)
-			),
 			'PRODUCT_PRICE_ID' => array(
 				'data_type' => 'integer'
 			),
@@ -373,26 +367,6 @@ class BasketTable extends Main\Entity\DataManager
 				'data_type' => 'float',
 				'expression' => array(
 					'(%s + %s)', 'PRICE', 'DISCOUNT_PRICE'
-				)
-			),
-
-			'SUMMARY_PURCHASING_PRICE' => array(
-				'data_type' => 'float',
-				'expression' => array(
-					'(%s) * %s', 'PRODUCT.PURCHASING_PRICE_IN_SITE_CURRENCY', 'QUANTITY'
-				)
-			),
-			'GROSS_PROFIT' => array(
-				'data_type' => 'float',
-				'expression' => array(
-					'(%s) - (%s)', 'SUMMARY_PRICE', 'SUMMARY_PURCHASING_PRICE'
-				)
-			),
-			'PROFITABILITY' => array(
-				'data_type' => 'float',
-				'expression' => array(
-					'CASE WHEN %s is NULL OR %s=0 THEN NULL ELSE (%s) * 100 / (%s) END',
-					'SUMMARY_PURCHASING_PRICE', 'SUMMARY_PURCHASING_PRICE', 'GROSS_PROFIT', 'SUMMARY_PURCHASING_PRICE'
 				)
 			),
 

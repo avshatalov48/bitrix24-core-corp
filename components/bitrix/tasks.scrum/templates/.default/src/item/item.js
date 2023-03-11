@@ -685,9 +685,16 @@ export class Item extends EventEmitter
 	{
 		this.disableStatus = Boolean(status);
 
-		if (this.isDisabled())
+		if (this.storyPoints)
 		{
-			this.storyPoints.disable();
+			if (this.isDisabled())
+			{
+				this.storyPoints.disable();
+			}
+			else
+			{
+				this.storyPoints.unDisable();
+			}
 		}
 	}
 

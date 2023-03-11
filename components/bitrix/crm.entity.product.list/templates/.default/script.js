@@ -592,6 +592,8 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 
 	var _getNodeChildByDataName = /*#__PURE__*/new WeakSet();
 
+	var _getNodesChild = /*#__PURE__*/new WeakSet();
+
 	var _onGridUpdated = /*#__PURE__*/new WeakSet();
 
 	var _needReserveControlInput = /*#__PURE__*/new WeakSet();
@@ -607,6 +609,8 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	    _classPrivateMethodInitSpec$2(this, _needReserveControlInput);
 
 	    _classPrivateMethodInitSpec$2(this, _onGridUpdated);
+
+	    _classPrivateMethodInitSpec$2(this, _getNodesChild);
 
 	    _classPrivateMethodInitSpec$2(this, _getNodeChildByDataName);
 
@@ -1430,6 +1434,31 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	      }
 	    }
 	  }, {
+	    key: "updatePropertyFields",
+	    value: function updatePropertyFields() {
+	      var productProps = this.model.getField('PRODUCT_PROPERTIES');
+
+	      for (var property in productProps) {
+	        var availableWrapper = _classPrivateMethodGet$2(this, _getNodeChildByDataName, _getNodeChildByDataName2).call(this, property);
+
+	        if (availableWrapper) {
+	          var _this$model$getField$;
+
+	          var value = (_this$model$getField$ = this.model.getField('PRODUCT_PROPERTIES')[property]) !== null && _this$model$getField$ !== void 0 ? _this$model$getField$ : '';
+	          availableWrapper.innerHTML = value;
+	        }
+	      }
+	    }
+	  }, {
+	    key: "clearPropertyFields",
+	    value: function clearPropertyFields() {
+	      var propNodes = _classPrivateMethodGet$2(this, _getNodesChild, _getNodesChild2).call(this);
+
+	      propNodes.forEach(function (property) {
+	        property.innerHTML = '';
+	      });
+	    }
+	  }, {
 	    key: "setRowReserved",
 	    value: function setRowReserved(value) {
 	      this.setField('ROW_RESERVED', value);
@@ -1604,6 +1633,13 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	    key: "changeBasePrice",
 	    value: function changeBasePrice(value) {
 	      var mode = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : MODE_SET;
+
+	      if (mode === MODE_EDIT && !_classPrivateMethodGet$2(this, _isEditableCatalogPrice, _isEditableCatalogPrice2).call(this)) {
+	        value = this.getField('BASE_PRICE');
+	        this.updateUiInputField('PRICE', value.toFixed(this.getPricePrecision()));
+	        return;
+	      }
+
 	      var originalPrice = value; // price can't be less than zero
 
 	      value = Math.max(value, 0);
@@ -2202,6 +2238,10 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	    value: function isRestrictedStoreInfo() {
 	      var _this$getField;
 
+	      if (!this.editor.getSettingValue('allowReservation', true)) {
+	        return false;
+	      }
+
 	      var storeId = (_this$getField = this.getField('STORE_ID')) === null || _this$getField === void 0 ? void 0 : _this$getField.toString();
 
 	      if (main_core.Type.isNil(storeId) || storeId === '0') {
@@ -2523,6 +2563,10 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 
 	function _getNodeChildByDataName2(name) {
 	  return this.getNode().querySelector("[data-name=\"".concat(name, "\"]"));
+	}
+
+	function _getNodesChild2() {
+	  return this.getNode().querySelectorAll("span[data-name]");
 	}
 
 	function _onGridUpdated2() {
@@ -3195,6 +3239,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	    babelHelpers.defineProperty(this, "onGridRowMovedHandler", this.handleOnGridRowMoved.bind(this));
 	    babelHelpers.defineProperty(this, "onBeforeProductChangeHandler", this.handleOnBeforeProductChange.bind(this));
 	    babelHelpers.defineProperty(this, "onProductChangeHandler", this.handleOnProductChange.bind(this));
+	    babelHelpers.defineProperty(this, "onBeforeProductClearHandler", this.handleOnBeforeProductClear.bind(this));
 	    babelHelpers.defineProperty(this, "onProductClearHandler", this.handleOnProductClear.bind(this));
 	    babelHelpers.defineProperty(this, "dropdownChangeHandler", this.handleDropdownChange.bind(this));
 	    babelHelpers.defineProperty(this, "pullReloadGrid", null);
@@ -3316,6 +3361,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	      main_core_events.EventEmitter.subscribe('Grid::rowMoved', this.onGridRowMovedHandler);
 	      main_core_events.EventEmitter.subscribe('BX.Catalog.ProductSelector:onBeforeChange', this.onBeforeProductChangeHandler);
 	      main_core_events.EventEmitter.subscribe('BX.Catalog.ProductSelector:onChange', this.onProductChangeHandler);
+	      main_core_events.EventEmitter.subscribe('BX.Catalog.ProductSelector:onBeforeClear', this.onBeforeProductClearHandler);
 	      main_core_events.EventEmitter.subscribe('BX.Catalog.ProductSelector:onClear', this.onProductClearHandler);
 	      main_core_events.EventEmitter.subscribe('Dropdown::change', this.dropdownChangeHandler);
 
@@ -3344,6 +3390,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	      main_core_events.EventEmitter.unsubscribe('Grid::rowMoved', this.onGridRowMovedHandler);
 	      main_core_events.EventEmitter.unsubscribe('BX.Catalog.ProductSelector:onBeforeChange', this.onBeforeProductChangeHandler);
 	      main_core_events.EventEmitter.unsubscribe('BX.Catalog.ProductSelector:onChange', this.onProductChangeHandler);
+	      main_core_events.EventEmitter.unsubscribe('BX.Catalog.ProductSelector:onBeforeClear', this.onBeforeProductClearHandler);
 	      main_core_events.EventEmitter.unsubscribe('BX.Catalog.ProductSelector:onClear', this.onProductClearHandler);
 	      main_core_events.EventEmitter.unsubscribe('Dropdown::change', this.dropdownChangeHandler);
 
@@ -4581,9 +4628,11 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 
 	      delete fields.RESERVE_ID;
 	      var isReserveBlocked = this.getSettingValue('isReserveBlocked', false);
-	      var product = new Row(rowId, fields, {
-	        isReserveBlocked: isReserveBlocked
-	      }, this);
+	      var settings = {
+	        isReserveBlocked: isReserveBlocked,
+	        selectorId: 'crm_grid_' + rowId
+	      };
+	      var product = new Row(rowId, fields, settings, this);
 	      product.refreshFieldsLayout();
 
 	      if (anchorProduct instanceof Row) {
@@ -4741,6 +4790,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	          productRow.layoutStoreSelector();
 	          productRow.initHandlersForSelectors();
 	          productRow.updateUiStoreAmountData();
+	          productRow.updatePropertyFields();
 	          productRow.modifyBasePriceInput();
 	          productRow.executeExternalActions();
 
@@ -4751,10 +4801,19 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	      }
 	    }
 	  }, {
-	    key: "handleOnProductClear",
-	    value: function handleOnProductClear(event) {
+	    key: "handleOnBeforeProductClear",
+	    value: function handleOnBeforeProductClear(event) {
 	      var _event$getData5 = event.getData(),
 	          rowId = _event$getData5.rowId;
+
+	      var product = this.getProductByRowId(rowId);
+	      product.clearPropertyFields();
+	    }
+	  }, {
+	    key: "handleOnProductClear",
+	    value: function handleOnProductClear(event) {
+	      var _event$getData6 = event.getData(),
+	          rowId = _event$getData6.rowId;
 
 	      var product = this.getProductByRowId(rowId);
 

@@ -80,6 +80,49 @@ class QuickAnswer
 	}
 
 	/**
+	 * Returns quick answers array by permission
+	 *
+	 * @param array $filter
+	 * @param int|null $limit
+	 * @param int|null $offset
+	 * @param string $permission
+	 *
+	 * @return QuickAnswer[]
+	 */
+	public static function getListByUserPermissions(
+		array $filter,
+		?int $offset = null,
+		?int $limit = 10,
+		string $permission = 'element_read'
+	): array
+	{
+		$answers = self::getList($filter, 0, 0);
+
+		foreach ($answers as $key => $answer)
+		{
+			if (!\CIBlockElementRights::UserHasRightTo($answer->getIblock(), $answer->getId(), $permission))
+			{
+				unset($answers[$key]);
+			}
+		}
+
+		return array_slice($answers, $offset, $limit);
+	}
+
+	/**
+	 * Returns quick answers count by permission
+	 *
+	 * @param array $filter
+	 * @param string $permission
+	 *
+	 * @return int
+	 */
+	public static function getCountByUserPermissions(array $filter, string $permission = 'element_read'): int
+	{
+		return count(self::getListByUserPermissions($filter, null, null, $permission));
+	}
+
+	/**
 	 * Update record through dataManager, update $this attributes.
 	 * Returns true on success, false on failure.
 	 *

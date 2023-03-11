@@ -118,7 +118,7 @@ class TemplateProvider
 
 		if (!$includeSubTemplates)
 		{
-			$this->strFrom .= "\nLEFT JOIN " . $tableName . " TDD ON TT.ID = TDD.TEMPLATE_ID AND TDD.DIRECT = '1'";
+			$this->strFrom .= "\nLEFT JOIN " . $tableName . " TDD ON TT.ID = TDD.TEMPLATE_ID AND TDD.DIRECT = 1";
 			$this->arSqlSearch[] = "TDD." . $parentIdColumnName . " IS NULL";
 		}
 
@@ -403,7 +403,7 @@ class TemplateProvider
 		}
 		else
 		{
-			$treeJoin = "LEFT JOIN ". DependencyTable::getTableName() ." TD on TT.ID = TD.TEMPLATE_ID".($includeSubtree ? "" : " AND TD.DIRECT = '1'");
+			$treeJoin = "LEFT JOIN ". DependencyTable::getTableName() ." TD on TT.ID = TD.TEMPLATE_ID".($includeSubtree ? "" : " AND TD.DIRECT = 1");
 		}
 
 		$temporalTableName = \Bitrix\Tasks\DB\Helper::getTemporaryTableNameSql();
@@ -415,7 +415,7 @@ class TemplateProvider
 
 			".($selectBaseTemplateId ? "
 			LEFT JOIN
-				". DependencyTable::getTableName() ." TDD ON TT.ID = TDD.TEMPLATE_ID AND TDD.DIRECT = '1'
+				". DependencyTable::getTableName() ." TDD ON TT.ID = TDD.TEMPLATE_ID AND TDD.DIRECT = 1
 			" : "
 			")."
 
@@ -424,7 +424,7 @@ class TemplateProvider
 					SELECT TTI.ID, COUNT(TDDC.TEMPLATE_ID) AS TEMPLATE_CHILDREN_COUNT
 					from
 						b_tasks_template TTI
-						INNER JOIN ". DependencyTable::getTableName() ." TDDC ON TTI.ID = TDDC.PARENT_TEMPLATE_ID AND TDDC.DIRECT = '1'
+						INNER JOIN ". DependencyTable::getTableName() ." TDDC ON TTI.ID = TDDC.PARENT_TEMPLATE_ID AND TDDC.DIRECT = 1
 					GROUP BY TTI.ID
 				) ".$temporalTableName." on ".$temporalTableName.".ID = TT.ID
 			" : "
@@ -586,9 +586,37 @@ class TemplateProvider
 					$this->arSqlSearch[] = CTasks::FilterCreate("TT.RESPONSIBLE_ID", $val, "number", $bFullJoin, $cOperationType);
 					break;
 
-				case "TAGS":
-					$val = '%i:%;s:%:"'.$val.'";%';
-					$this->arSqlSearch[] = CTasks::FilterCreate("TT.".$key, $val, "string", $bFullJoin, $cOperationType);
+				case 'TAGS':
+					if (!is_array($val))
+					{
+						$val = [$val];
+					}
+					global $DB;
+					$tags = array_filter(
+						array_map(
+							function ($tag) use ($DB) {
+								return ($tag ? $DB->ForSql($tag) : false);
+							},
+							$val
+						)
+					);
+					$tagsCount = count($tags);
+					if ($tagsCount)
+					{
+						$tags = "('" . implode("','", $tags) . "')";
+						$this->arSqlSearch[] = trim("
+							TT.ID IN (
+								SELECT TTT.TEMPLATE_ID
+								FROM (
+									SELECT TEMPLATE_ID, COUNT(TEMPLATE_ID) AS CNT
+									FROM b_tasks_template_tag
+									WHERE NAME IN {$tags}
+									GROUP BY TEMPLATE_ID
+									HAVING CNT = {$tagsCount}
+								) TTT
+							)
+						");
+					}
 					break;
 
 				case "TITLE":
@@ -641,7 +669,7 @@ class TemplateProvider
 					}
 					else
 					{
-						$this->arSqlSearch[] = '('.($val ? "TD." . $parentColumnName . " = '".intval($val)."'" : "TD." . $parentColumnName . " = '0' OR TD." . $parentColumnName . " IS NULL").')';
+						$this->arSqlSearch[] = '('.($val ? "TD." . $parentColumnName . " = '".intval($val)."'" : "TD." . $parentColumnName . " = 0 OR TD." . $parentColumnName . " IS NULL").')';
 					}
 
 					break;

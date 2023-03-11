@@ -154,7 +154,10 @@ abstract class PresetAbstract implements PresetInterface
 
 	public static function oldToNewStructure(array $oldData, array $newData): array
 	{
-		$data = ['shown' => $oldData['show'], 'hidden' => $oldData['hide']];
+		$data = [
+			'shown' => isset($oldData['show']) && is_array($oldData['show']) ? $oldData['show'] : [],
+			'hidden' => isset($oldData['hide']) && is_array($oldData['hide']) ? $oldData['hide'] : []
+		];
 
 		$result = ['shown' => [], 'hidden' => []];
 		$systemGroups = [];

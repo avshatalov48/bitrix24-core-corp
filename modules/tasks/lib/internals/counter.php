@@ -8,6 +8,7 @@ use Bitrix\Tasks\Internals\Counter\CounterDictionary;
 use Bitrix\Tasks\Internals\Counter\CounterController;
 use Bitrix\Tasks\Internals\Counter\CounterService;
 use Bitrix\Tasks\Internals\Counter\CounterState;
+use Bitrix\Tasks\Internals\Counter\Event\EventDictionary;
 use Bitrix\Tasks\Internals\Registry\UserRegistry;
 use Bitrix\Tasks\Util\User;
 use CTasks;
@@ -96,6 +97,8 @@ class Counter
 		}
 
 		CounterService::getInstance();
+
+		$this->dropOldCounters();
 	}
 
 	/**
@@ -498,6 +501,36 @@ class Counter
 		}
 
 		return false;
+	}
+
+	/**
+	 * @return void
+	 */
+	private function dropOldCounters(): void
+	{
+		if (Counter\Queue\Queue::isInQueue($this->userId))
+		{
+			return;
+		}
+
+		$state = $this->getState();
+
+		if ($state->getClearedDate() >= (int) date('ymd'))
+		{
+			return;
+		}
+
+		// if ($state->getSize() < self::DEFAULT_LIMIT)
+		// {
+		// 	return;
+		// }
+
+		CounterService::addEvent(
+			EventDictionary::EVENT_GARBAGE_COLLECT,
+			[
+				'USER_ID' => $this->userId,
+			]
+		);
 	}
 
 	/**

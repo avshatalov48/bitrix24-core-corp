@@ -2,6 +2,7 @@
 namespace Bitrix\Crm\Automation\Trigger;
 
 use Bitrix\Bizproc\Automation\Engine\ConditionGroup;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Loader;
 Use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
@@ -17,18 +18,29 @@ class TaskStatusTrigger extends BaseTrigger
 	 */
 	public static function isSupported($entityTypeId)
 	{
-		return in_array($entityTypeId, [\CCrmOwnerType::Lead, \CCrmOwnerType::Deal], true);
+		if (in_array($entityTypeId, [\CCrmOwnerType::Lead, \CCrmOwnerType::Deal], true))
+		{
+			return true;
+		}
+
+		if (\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId))
+		{
+			$factory = Container::getInstance()->getFactory($entityTypeId);
+
+			return (
+				static::areDynamicTypesSupported()
+				&& !is_null($factory)
+				&& $factory->isAutomationEnabled()
+				&& $factory->isStagesEnabled()
+			);
+		}
+
+		return false;
 	}
 
 	public static function isEnabled()
 	{
-		$tasksOk = ModuleManager::isModuleInstalled('tasks');
-		$conditionsOk = method_exists(
-			\Bitrix\Bizproc\Automation\Engine\ConditionGroup::class,
-			'evaluateByDocument'
-		);
-
-		return $tasksOk && $conditionsOk;
+		return ModuleManager::isModuleInstalled('tasks');
 	}
 
 	public static function getCode()
@@ -75,26 +87,36 @@ class TaskStatusTrigger extends BaseTrigger
 		return true;
 	}
 
-	public static function toArray()
+	protected static function getPropertiesMap(): array
 	{
-		$result = parent::toArray();
-		if (static::isEnabled() && Loader::includeModule('tasks'))
+		$taskFields = \Bitrix\Bizproc\Automation\Helper::getDocumentFields(
+			['tasks', Tasks\Integration\Bizproc\Document\Task::class, 'TASK']
+		);
+
+		$statusList = [];
+		foreach($taskFields['STATUS']['Options'] as $id => $status)
 		{
-			$taskFields = \Bitrix\Bizproc\Automation\Helper::getDocumentFields(
-				['tasks', Tasks\Integration\Bizproc\Document\Task::class, 'TASK']
-			);
-
-			$statusList = [];
-			foreach($taskFields['STATUS']['Options'] as $id => $status)
-			{
-				$statusList[] = ['id' => $id, 'name' => $status];
-			}
-			unset($taskFields['STATUS']);
-
-			$result['STATUS_LIST'] = $statusList;
-			$result['FIELDS'] = array_values($taskFields);
+			$statusList[] = ['value' => $id, 'name' => $status];
 		}
-		return $result;
+		unset($taskFields['STATUS']);
+
+		return [
+			[
+				'Id' => 'taskStatus',
+				'Name' => Loc::getMessage('CRM_AUTOMATION_TRIGGER_TASK_STATUS_PROPERTY_STATUS'),
+				'Type' => 'select',
+				'EmptyValueText' => Loc::getMessage('CRM_AUTOMATION_TRIGGER_TASK_STATUS_DEFAULT_STATUS'),
+				'Options' => $statusList,
+			],
+			[
+				'Id' => 'taskCondition',
+				'Name' => Loc::getMessage('CRM_AUTOMATION_TRIGGER_TASK_STATUS_CONDITION'),
+				'Type' => '@condition-group-selector',
+				'Settings' => [
+					'Fields' => array_values($taskFields),
+				],
+			],
+		];
 	}
 
 	public static function getDescription(): string

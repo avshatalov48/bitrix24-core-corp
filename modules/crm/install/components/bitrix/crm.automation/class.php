@@ -92,7 +92,7 @@ class CrmAutomationComponent extends \CBitrixComponent implements Main\Engine\Co
 		$this->includeComponentTemplate();
 	}
 
-	public function generateWebhookPasswordAction($entityTypeId, $entityCategoryId)
+	public function generateWebhookPasswordAction(array $documentType)
 	{
 		if (
 			!Main\Loader::includeModule('crm')
@@ -107,7 +107,12 @@ class CrmAutomationComponent extends \CBitrixComponent implements Main\Engine\Co
 
 		$userId = Main\Engine\CurrentUser::get()->getId();
 
-		$documentType = \CCrmBizProcHelper::ResolveDocumentType($entityTypeId);
+		$entityCategoryId = 0;
+		if (isset($documentType[3]))
+		{
+			$entityCategoryId = $documentType[3];
+		}
+		$documentType = \CBPHelper::ParseDocumentId($documentType);
 		$canCreate = CBPDocument::CanUserOperateDocumentType(
 			CBPCanUserOperateOperation::CreateAutomation,
 			$userId,
@@ -128,6 +133,49 @@ class CrmAutomationComponent extends \CBitrixComponent implements Main\Engine\Co
 		}
 
 		return ['password' => $pwd];
+	}
+
+	public function getCallLinesAction(array $documentType, array $property)
+	{
+		if (
+			!Main\Loader::includeModule('crm')
+			|| !Main\Loader::includeModule('bizproc')
+			|| !Main\Loader::includeModule('voximplant')
+		)
+		{
+			return ['error' => Loc::getMessage('CRM_AUTOMATION_NOT_AVAILABLE')];
+		}
+
+		$userId = Main\Engine\CurrentUser::get()->getId();
+		$entityCategoryId = 0;
+
+		if (isset($documentType[3]))
+		{
+			$entityCategoryId = $documentType[3];
+		}
+
+		$documentType = \CBPHelper::ParseDocumentId($documentType);
+		$canCreate = CBPDocument::CanUserOperateDocumentType(
+			CBPCanUserOperateOperation::CreateAutomation,
+			$userId,
+			$documentType,
+			['DocumentCategoryId' => $entityCategoryId]
+		);
+
+		if (!$canCreate)
+		{
+			return ['error' => Loc::getMessage('CRM_AUTOMATION_NOT_AVAILABLE')];
+		}
+
+		return [
+			'options' => array_values(array_map(
+				function($line)
+				{
+					return ['value' => $line['LINE_NUMBER'], 'name' => $line['SHORT_NAME']];
+				},
+				\CVoxImplantConfig::GetLines(false, true)
+			)),
+		];
 	}
 
 	private function getBpDesignerEditUrl($entityTypeId)

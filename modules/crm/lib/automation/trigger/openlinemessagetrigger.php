@@ -8,14 +8,6 @@ Loc::loadMessages(__FILE__);
 
 class OpenLineMessageTrigger extends OpenLineTrigger
 {
-	public static function isEnabled()
-	{
-		return (Integration\OpenLineManager::isEnabled()
-			&& class_exists('\Bitrix\ImOpenLines\Crm')
-			&& method_exists('\Bitrix\ImOpenLines\Crm', 'executeAutomationMessageTrigger')
-		);
-	}
-
 	public static function getCode()
 	{
 		return 'OPENLINE_MSG';
@@ -34,5 +26,17 @@ class OpenLineMessageTrigger extends OpenLineTrigger
 	public static function getDescription(): string
 	{
 		return Loc::getMessage('CRM_AUTOMATION_TRIGGER_OPENLINE_MESSAGE_DESCRIPTION') ?? '';
+	}
+
+	protected static function getPropertiesMap(): array
+	{
+		$map = parent::getPropertiesMap();
+		$map[] = [
+			'Id' => 'msg_text',
+			'Name' => Loc::getMessage('CRM_AUTOMATION_TRIGGER_OPENLINE_MESSAGE_PROPERTY_MSG_TEXT'),
+			'Type' => 'string',
+		];
+
+		return $map;
 	}
 }

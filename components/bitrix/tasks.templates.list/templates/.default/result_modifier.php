@@ -3,12 +3,20 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
+/** @var array $arParams*/
+/** @var array $arResult*/
+/** @global CMain $APPLICATION*/
 
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Grid;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Web\Json;
+use Bitrix\Main\Web\Uri;
 use Bitrix\Tasks\Access\ActionDictionary;
+use Bitrix\Tasks\Helper\RestrictionUrl;
 use Bitrix\Tasks\Integration\SocialNetwork;
+use Bitrix\Tasks\Slider\Path\TemplatePathMaker;
+use Bitrix\Tasks\Slider\Path\PathMaker;
 use Bitrix\Tasks\UI\Component\TemplateHelper;
 use Bitrix\Tasks\Util;
 use Bitrix\Tasks\Util\Type\DateTime;
@@ -153,13 +161,14 @@ function prepareTaskRowActions($row, $arParams, $arResult)
 			];
 			if ($arResult['AUX_DATA']['TEMPLATE_SUBTASK_LIMIT_EXCEEDED'])
 			{
-				$addSubTemplateAction['onclick'] = "BX.UI.InfoHelper.show('limit_tasks_templates_subtasks', {
+				$addSubTemplateAction['onclick'] =
+					"BX.UI.InfoHelper.show('" . RestrictionUrl::TEMPLATE_LIMIT_SUBTASKS_SLIDER_URL . "', {
 					isLimit: true,
 					limitAnalyticsLabels: {
 						module: 'tasks',
 						source: 'templateList'
-					}
-				});";
+					}});"
+				;
 				$addSubTemplateAction['className'] = 'tasks-list-menu-popup-item-lock';
 			}
 			else
@@ -369,7 +378,7 @@ function prepareTaskRowUserBaloonHtml($arParams)
 	}
 
 	$userName = '<span class="tasks-grid-avatar  '.$userAvatar.' '.$userIcon.'" 
-			'.($user['AVATAR'] ? 'style="background-image: url(\''.$user['AVATAR'].'\')"' : '').'></span>';
+			'.($user['AVATAR'] ? 'style="background-image: url(\''.Uri::urnEncode($user['AVATAR']).'\')"' : '').'></span>';
 
 	$userName .= '<span class="tasks-grid-username-inner '.
 				 $userIcon.
@@ -414,7 +423,11 @@ function prepareTag($row, $arParams)
 	foreach ($row['TAGS'] as $tag)
 	{
 		$safeTag = htmlspecialcharsbx($tag);
-		$list[] = "<a href=\"javascript:void(0)\">#{$safeTag}</a>";
+		$encodedData = Json::encode([
+			'tag' => $tag,
+		]);
+		$onClick = "BX.Tasks.Component.TasksTemplatesList.getInstance().toggleFilter({$encodedData})";
+		$list[] = "<a class=\"tasks-templates-list-grid-tag\" onclick='{$onClick}'>#{$safeTag}</a>";
 	}
 
 	return implode(', ', $list);

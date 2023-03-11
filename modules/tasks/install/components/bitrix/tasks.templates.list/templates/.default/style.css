@@ -220,3 +220,7 @@
 	align-items: center;
 	justify-content: center;
 }
+
+.tasks-templates-list-grid-tag {
+	cursor: pointer;
+}

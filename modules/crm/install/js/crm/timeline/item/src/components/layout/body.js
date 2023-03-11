@@ -40,6 +40,11 @@ export const Body = {
 	computed: {
 		visibleBlocks(): Array
 		{
+			if (!Type.isPlainObject(this.blocks))
+			{
+				return [];
+			}
+
 			return Object.keys(this.blocks)
 				.map((id) => ({id, ...this.blocks[id]}))
 				.filter((item) => (item.scope !== 'mobile'))

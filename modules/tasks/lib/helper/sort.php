@@ -10,7 +10,7 @@ namespace Bitrix\Tasks\Helper;
 
 class Sort
 {
-	private $bd;
+	private $db;
 
 	public function __construct()
 	{
@@ -27,34 +27,25 @@ class Sort
 	public function getPositionForGroup(int $taskId, string $order, int $groupId): int
 	{
 		$sql = "
-			SELECT
-				SRT.TASK_ID AS ID,
-				SRT.SORT AS SORTING,
-				CASE WHEN T.STATUS = '5' THEN '2' ELSE '1' END AS STATUS_COMPLETE,
-				T.DEADLINE AS DEADLINE_ORIG
-			FROM
-				b_tasks_sorting SRT
-				LEFT JOIN b_tasks T ON SRT.TASK_ID = T.ID
-			WHERE
-			(
+			SELECT 
+				SRT.TASK_ID 
+			FROM b_tasks_sorting SRT 
+			WHERE 
 				SRT.GROUP_ID = ".$groupId."
-				AND
-				NOT (SRT.TASK_ID = ".$taskId.")
-			)
+			ORDER BY 
+				SRT.SORT ASC, 
+			    SRT.TASK_ID ASC 
+			LIMIT 100
 		";
-
-		$orderBy = ($order === 'asc') ? $this->getOrderAsc() : $this->getOrderDesc();
-
-		$sql .= 'ORDER BY '.$orderBy;
-		$sql .= ' LIMIT 1';
-
 		$res = $this->db->Query($sql);
-		if ($row = $res->fetch())
+
+		$taskIds = [];
+		while ($row = $res->fetch())
 		{
-			return (int) $row['ID'];
+			$taskIds[] = (int) $row['TASK_ID'];
 		}
 
-		return 0;
+		return $this->getSortByStatus($taskId, $taskIds, $order);
 	}
 
 	/**
@@ -84,6 +75,17 @@ class Sort
 			$taskIds[] = (int) $row['TASK_ID'];
 		}
 
+		return $this->getSortByStatus($taskId, $taskIds, $order);
+	}
+
+	/**
+	 * @param int $taskId
+	 * @param array $taskIds
+	 * @param string $order
+	 * @return int
+	 */
+	private function getSortByStatus(int $taskId, array $taskIds, string $order): int
+	{
 		if (empty($taskIds))
 		{
 			return 0;
@@ -126,34 +128,5 @@ class Sort
 		}
 
 		return 0;
-	}
-
-	/**
-	 * @return string
-	 */
-	private function getOrderAsc(): string
-	{
-		return '
-			ISNULL(SORTING) DESC,
-			SORTING DESC,
-			STATUS_COMPLETE DESC,
-			T.DEADLINE DESC,
-			ID DESC
-		';
-	}
-
-	/**
-	 * @return string
-	 */
-	private function getOrderDesc(): string
-	{
-		return '
-			ISNULL(SORTING) ASC,
-			SORTING ASC,
-			STATUS_COMPLETE ASC,
-			length(T.DEADLINE)>0 DESC,
-			T.DEADLINE ASC,
-			ID ASC
-		';
 	}
 }

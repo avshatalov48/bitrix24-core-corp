@@ -47,7 +47,12 @@ class CustomConnectors
 		{
 			if ($eventResult != EventResult::ERROR && $params = $eventResult->getParameters())
 			{
-				if (isset($params['ID']) && isset($params['NAME']) && isset($params['COMPONENT']) && isset($params['ICON']['DATA_IMAGE']))
+				if (
+					isset($params['ID'])
+					&& isset($params['NAME'])
+					&& isset($params['COMPONENT'])
+					&& isset($params['ICON']['DATA_IMAGE'])
+				)
 				{
 					self::$customConnectors[$params['ID']] = self::handlingValues($params);
 				}
@@ -58,7 +63,12 @@ class CustomConnectors
 
 		foreach ($restConnectors as $restConnector)
 		{
-			if (isset($restConnector['ID']) && isset($restConnector['NAME']) && isset($restConnector['COMPONENT']) && isset($restConnector['ICON']['DATA_IMAGE']))
+			if (
+				isset($restConnector['ID'])
+				&& isset($restConnector['NAME'])
+				&& isset($restConnector['COMPONENT'])
+				&& isset($restConnector['ICON']['DATA_IMAGE'])
+			)
 			{
 				self::$customConnectors[$restConnector['ID']] = self::handlingValues($restConnector);
 			}
@@ -79,54 +89,99 @@ class CustomConnectors
 		);
 
 		if (isset($data['ICON_DISABLED']))
+		{
 			$result['ICON_DISABLED'] = $data['ICON_DISABLED'];
+		}
 
-		if (isset($data['DEL_EXTERNAL_MESSAGES']) && ($data['DEL_EXTERNAL_MESSAGES'] === true || $data['DEL_EXTERNAL_MESSAGES'] === false))
+		if (
+			isset($data['DEL_EXTERNAL_MESSAGES'])
+			&& ($data['DEL_EXTERNAL_MESSAGES'] === true || $data['DEL_EXTERNAL_MESSAGES'] === false)
+		)
+		{
 			$result['DEL_EXTERNAL_MESSAGES'] = $data['DEL_EXTERNAL_MESSAGES'];
+		}
 		else
+		{
 			$result['DEL_EXTERNAL_MESSAGES'] = self::DEFAULT_DEL_EXTERNAL_MESSAGES;
+		}
 
-		if (isset($data['EDIT_INTERNAL_MESSAGES']) && ($data['EDIT_INTERNAL_MESSAGES'] === true || $data['EDIT_INTERNAL_MESSAGES'] === false))
+		if (
+			isset($data['EDIT_INTERNAL_MESSAGES'])
+			&& ($data['EDIT_INTERNAL_MESSAGES'] === true || $data['EDIT_INTERNAL_MESSAGES'] === false)
+		)
+		{
 			$result['EDIT_INTERNAL_MESSAGES'] = $data['EDIT_INTERNAL_MESSAGES'];
+		}
 		else
+		{
 			$result['EDIT_INTERNAL_MESSAGES'] = self::DEFAULT_EDIT_INTERNAL_MESSAGES;
+		}
 
-		if (isset($data['DEL_INTERNAL_MESSAGES']) && ($data['DEL_INTERNAL_MESSAGES'] === true || $data['DEL_INTERNAL_MESSAGES'] === false))
+		if (
+			isset($data['DEL_INTERNAL_MESSAGES'])
+			&& ($data['DEL_INTERNAL_MESSAGES'] === true || $data['DEL_INTERNAL_MESSAGES'] === false)
+		)
+		{
 			$result['DEL_INTERNAL_MESSAGES'] = $data['DEL_INTERNAL_MESSAGES'];
+		}
 		else
+		{
 			$result['DEL_INTERNAL_MESSAGES'] = self::DEFAULT_DEL_INTERNAL_MESSAGES;
+		}
 
 		if (isset($data['NEWSLETTER']) && ($data['NEWSLETTER'] === true || $data['NEWSLETTER'] === false))
+		{
 			$result['NEWSLETTER'] = $data['NEWSLETTER'];
+		}
 		else
+		{
 			$result['NEWSLETTER'] = self::DEFAULT_NEWSLETTER;
+		}
 
-		if (isset($data['NEED_SYSTEM_MESSAGES']) && ($data['NEED_SYSTEM_MESSAGES'] === true || $data['NEED_SYSTEM_MESSAGES'] === false))
+		if (
+			isset($data['NEED_SYSTEM_MESSAGES'])
+			&& ($data['NEED_SYSTEM_MESSAGES'] === true || $data['NEED_SYSTEM_MESSAGES'] === false)
+		)
+		{
 			$result['NEED_SYSTEM_MESSAGES'] = $data['NEED_SYSTEM_MESSAGES'];
+		}
 		else
+		{
 			$result['NEED_SYSTEM_MESSAGES'] = self::DEFAULT_NEED_SYSTEM_MESSAGES;
+		}
 
-		if (isset($data['NEED_SIGNATURE']) && ($data['NEED_SIGNATURE'] === true || $data['NEED_SIGNATURE'] === false))
+		if (
+			isset($data['NEED_SIGNATURE'])
+			&& ($data['NEED_SIGNATURE'] === true || $data['NEED_SIGNATURE'] === false)
+		)
+		{
 			$result['NEED_SIGNATURE'] = $data['NEED_SIGNATURE'];
+		}
 		else
+		{
 			$result['NEED_SIGNATURE'] = self::DEFAULT_NEED_SIGNATURE;
+		}
 
 		if (isset($data['CHAT_GROUP']) && ($data['CHAT_GROUP'] === true || $data['CHAT_GROUP'] === false))
+		{
 			$result['CHAT_GROUP'] = $data['CHAT_GROUP'];
+		}
 		else
+		{
 			$result['CHAT_GROUP'] = self::DEFAULT_CHAT_GROUP;
+		}
 
 		return $result;
 	}
 
-	private function __clone()
+	public function __clone()
 	{
-
+		throw new \Bitrix\Main\NotImplementedException();
 	}
 
-	private function __wakeup()
+	public function __wakeup()
 	{
-
+		throw new \Bitrix\Main\NotImplementedException();
 	}
 
 	/**
@@ -145,7 +200,9 @@ class CustomConnectors
 		$result = array();
 
 		foreach (self::getInstance()->getCustomConnectors() as $connector)
+		{
 			$result[$connector['ID']] = $connector['NAME'];
+		}
 
 		return $result;
 	}
@@ -166,7 +223,9 @@ class CustomConnectors
 		$result = array();
 
 		foreach (self::getInstance()->getCustomConnectors() as $connector)
+		{
 			$result[] = $connector['ID'];
+		}
 
 		return $result;
 	}
@@ -179,7 +238,9 @@ class CustomConnectors
 		$result = array();
 
 		foreach (self::getInstance()->getCustomConnectors() as $connector)
+		{
 			$result[$connector['ID']] = $connector['COMPONENT'];
+		}
 
 		return $result;
 	}
@@ -192,8 +253,12 @@ class CustomConnectors
 		$result = array();
 
 		foreach (self::getInstance()->getCustomConnectors() as $connector)
-			if($connector['DEL_EXTERNAL_MESSAGES'] === true)
+		{
+			if ($connector['DEL_EXTERNAL_MESSAGES'] === true)
+			{
 				$result[] = $connector['ID'];
+			}
+		}
 
 		return $result;
 	}
@@ -206,8 +271,12 @@ class CustomConnectors
 		$result = array();
 
 		foreach (self::getInstance()->getCustomConnectors() as $connector)
-			if($connector['EDIT_INTERNAL_MESSAGES'] === true)
+		{
+			if ($connector['EDIT_INTERNAL_MESSAGES'] === true)
+			{
 				$result[] = $connector['ID'];
+			}
+		}
 
 		return $result;
 	}
@@ -220,8 +289,12 @@ class CustomConnectors
 		$result = array();
 
 		foreach (self::getInstance()->getCustomConnectors() as $connector)
-			if($connector['DEL_INTERNAL_MESSAGES'] === true)
+		{
+			if ($connector['DEL_INTERNAL_MESSAGES'] === true)
+			{
 				$result[] = $connector['ID'];
+			}
+		}
 
 		return $result;
 	}
@@ -234,8 +307,12 @@ class CustomConnectors
 		$result = array();
 
 		foreach (self::getInstance()->getCustomConnectors() as $connector)
-			if($connector['NEWSLETTER'] === false)
+		{
+			if ($connector['NEWSLETTER'] === false)
+			{
 				$result[] = $connector['ID'];
+			}
+		}
 
 		return $result;
 	}
@@ -248,8 +325,12 @@ class CustomConnectors
 		$result = array();
 
 		foreach (self::getInstance()->getCustomConnectors() as $connector)
-			if($connector['NEED_SYSTEM_MESSAGES'] === false)
+		{
+			if ($connector['NEED_SYSTEM_MESSAGES'] === false)
+			{
 				$result[] = $connector['ID'];
+			}
+		}
 
 		return $result;
 	}
@@ -262,8 +343,12 @@ class CustomConnectors
 		$result = array();
 
 		foreach (self::getInstance()->getCustomConnectors() as $connector)
-			if($connector['NEED_SIGNATURE'] === false)
+		{
+			if ($connector['NEED_SIGNATURE'] === false)
+			{
 				$result[] = $connector['ID'];
+			}
+		}
 
 		return $result;
 	}
@@ -276,8 +361,12 @@ class CustomConnectors
 		$result = array();
 
 		foreach (self::getInstance()->getCustomConnectors() as $connector)
-			if($connector['CHAT_GROUP'] === true)
+		{
+			if ($connector['CHAT_GROUP'] === true)
+			{
 				$result[] = $connector['ID'];
+			}
+		}
 
 		return $result;
 	}
@@ -312,21 +401,20 @@ class CustomConnectors
 	{
 		$result = new Result();
 
-		$params =
-			[
-				'BX_COMMAND' => $command,
-				'CONNECTOR' => $connector,
-				'LINE' => $line,
-				'DATA' => $data,
-			];
+		$params = [
+			'BX_COMMAND' => $command,
+			'CONNECTOR' => $connector,
+			'LINE' => $line,
+			'DATA' => $data,
+		];
 
 		$providerResult = Provider::getProviderForConnectorInput($connector, $params);
 
-		if($providerResult->isSuccess())
+		if ($providerResult->isSuccess())
 		{
 			/** @var  \Bitrix\ImConnector\Provider\Custom\Input $provider */
 			$provider = $providerResult->getResult();
-			if($provider instanceof Provider\Base\Input)
+			if ($provider instanceof Provider\Base\Input)
 			{
 				$result = $provider->reception();
 			}
@@ -401,7 +489,7 @@ class CustomConnectors
 	 */
 	public static function deactivateConnectors($connector, $line): Result
 	{
-		return self::processingInProvider('deactivateConnector', $connector, $line, $data);
+		return self::processingInProvider('deactivateConnector', $connector, $line, []);
 	}
 
 	/**

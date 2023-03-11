@@ -51,7 +51,7 @@ jn.define('tasks/layout/task/fields/tasks', (require, exports, module) => {
 				title: taskTitle,
 			});
 			task.canSendMyselfOnOpen = false;
-			task.open();
+			task.open(this.getConfig().parentWidget);
 		}
 
 		shouldShowEditIcon()

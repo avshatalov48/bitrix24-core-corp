@@ -214,11 +214,13 @@ class Task
 			return false;
 		}
 
+
 		$this->taskId = $taskId;
 
 		CounterService::getInstance()->collectData($this->taskId);
 
 		$taskData = $this->getFullTaskData();
+
 		if (!$taskData)
 		{
 			return false;
@@ -363,6 +365,9 @@ class Task
 			$sql = "DELETE FROM `b_tasks` WHERE ID = ".$taskId;
 			Application::getConnection()->query($sql);
 		}
+
+		$tagService = new Tag($this->userId);
+		$tagService->unlinkTags($taskId);
 
 		\CTaskNotifications::SendDeleteMessage($taskData, $safeDelete);
 
@@ -1935,8 +1940,15 @@ class Task
 		{
 			return;
 		}
-		$tag = new Tag($this->userId, $this->taskId);
-		$tag->set($parsedTags);
+		$oldGroupId = 0;
+		$newGroupId = 0;
+		if ($this->changes && array_key_exists('GROUP_ID', $this->changes))
+		{
+			$oldGroupId = (int)$this->changes['GROUP_ID']['FROM_VALUE'];
+			$newGroupId = (int)$this->changes['GROUP_ID']['TO_VALUE'];
+		}
+		$tag = new Tag($this->userId);
+		$tag->set($this->taskId, $parsedTags, $oldGroupId, $newGroupId);
 	}
 
 	/**
@@ -2352,12 +2364,14 @@ class Task
 		{
 			$source = $fields['UF_TASK_WEBDAV_FILES'];
 			$fields['UF_TASK_WEBDAV_FILES'] = Disk::cloneFileAttachment($fields['UF_TASK_WEBDAV_FILES'], $this->userId);
-			$relations = array_combine($source, $fields['UF_TASK_WEBDAV_FILES']);
 
-			if ($relations)
+			if (count($source) !== count($fields['UF_TASK_WEBDAV_FILES']))
 			{
-				$fields = $this->updateInlineFiles($fields, $relations);
+				return $fields;
 			}
+
+			$relations = array_combine($source, $fields['UF_TASK_WEBDAV_FILES']);
+			$fields = $this->updateInlineFiles($fields, $relations);
 		}
 
 		return $fields;

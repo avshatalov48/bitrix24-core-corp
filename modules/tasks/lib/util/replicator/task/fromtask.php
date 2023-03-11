@@ -17,7 +17,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\CheckList\Task\TaskCheckListFacade;
 use Bitrix\Tasks\Internals\Task\MemberTable;
 use Bitrix\Tasks\Internals\Task\RelatedTable;
-use Bitrix\Tasks\Internals\Task\TagTable;
+use Bitrix\Tasks\Internals\Task\LabelTable;
 use Bitrix\Tasks\Internals\TaskTable;
 use Bitrix\Tasks\Item\Result;
 use Bitrix\Tasks\Item\Task;
@@ -201,7 +201,16 @@ class FromTask extends \Bitrix\Tasks\Util\Replicator\Task
 			}
 
 			// get tag data
-			$res = TagTable::getList(array('filter' => array('=TASK_ID' => $ids)));
+			$res = LabelTable::getList([
+				'select' => [
+					'*',
+					'TASK_' => 'TASKS'
+				],
+				'filter' => [
+					'=TASK_ID' => $ids,
+				],
+			]);
+
 			while($item = $res->fetch())
 			{
 				if(array_key_exists($item['TASK_ID'], $data))

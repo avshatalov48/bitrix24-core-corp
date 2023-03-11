@@ -858,7 +858,7 @@ class ImOpenLinesManager extends Base
 					[
 						'ORDER_FIELDS' => $order->getFieldValues(),
 						'SETTINGS' => ['SENDED' => 'Y'],
-						'BINDINGS' => $bindings
+						'BINDINGS' => $bindings,
 					]
 				);
 			}

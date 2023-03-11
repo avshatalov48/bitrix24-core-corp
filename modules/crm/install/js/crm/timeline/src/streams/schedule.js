@@ -5,7 +5,6 @@ import Call from "../items/scheduled/call";
 import CallTracker from "../items/scheduled/call-tracker";
 import Meeting from "../items/scheduled/meeting";
 import Task from "../items/scheduled/task";
-import StoreDocument from "../items/scheduled/store-document";
 import WebForm from "../items/scheduled/webform";
 import Wait from "../items/scheduled/wait";
 import Request from "../items/scheduled/request";
@@ -441,18 +440,6 @@ export default class Schedule extends Stream
 							activityEditor: this._activityEditor,
 							data: data,
 
-						}
-					);
-				}
-				else if(providerId === 'STORE_DOCUMENT')
-				{
-					return StoreDocument.create(
-						itemId,
-						{
-							schedule: this,
-							container: this._wrapper,
-							activityEditor: this._activityEditor,
-							data: data
 						}
 					);
 				}

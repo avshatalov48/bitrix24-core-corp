@@ -1,0 +1,1 @@
+.tasks-selector-add-tag-already-exists-alert{transform:translateY(150%);animation:tasks-selector-add-tag-already-exists-alert-ani 1s forwards;z-index:0;position:absolute;bottom:0;left:0;right:0}@keyframes tasks-selector-add-tag-already-exists-alert-ani{0%{transform:translateY(0)}100%{transform:translateY(-150%)}}

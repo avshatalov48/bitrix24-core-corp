@@ -10,6 +10,7 @@ class QuoteSettings
 
 	const VIEW_LIST = EntityViewSettings::LIST_VIEW_NAME;
 	const VIEW_KANBAN = EntityViewSettings::KANBAN_VIEW_NAME;
+	const VIEW_DEADLINES = EntityViewSettings::DEADLINES_VIEW_NAME;
 
 	private static $current;
 	private $enableViewEvent;

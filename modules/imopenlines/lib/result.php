@@ -9,7 +9,7 @@ class Result extends \Bitrix\Main\Result
 	 */
 	public function setResult($result)
 	{
-		$this->data = array('RESULT' => $result);
+		$this->data = ['RESULT' => $result];
 	}
 
 	/**
@@ -18,6 +18,6 @@ class Result extends \Bitrix\Main\Result
 	 */
 	public function getResult()
 	{
-		return $this->data['RESULT'];
+		return $this->data['RESULT'] ?? null;
 	}
 }

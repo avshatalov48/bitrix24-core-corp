@@ -22,6 +22,11 @@ class LineOfTextBlocks extends ContentBlock
 		return $this->blocks;
 	}
 
+	public function isEmpty(): bool
+	{
+		return empty($this->blocks);
+	}
+
 	/**
 	 * @param string $id
 	 * @param Text|Link|Date $textContentBlock
@@ -34,11 +39,12 @@ class LineOfTextBlocks extends ContentBlock
 			!($textContentBlock instanceof Text)
 			&& !($textContentBlock instanceof Link)
 			&& !($textContentBlock instanceof Date)
+			&& !($textContentBlock instanceof Money)
 		)
 		{
 			throw new ArgumentTypeException(
 				'textContentBlock',
-				Text::class . '|' . Link::class . '|' . Date::class
+				Text::class . '|' . Link::class . '|' . Date::class . '|' . Money::class
 			);
 		}
 		if (is_null($textContentBlock->getSort()))

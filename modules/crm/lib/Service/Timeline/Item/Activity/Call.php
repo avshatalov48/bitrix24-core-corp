@@ -3,7 +3,6 @@
 namespace Bitrix\Crm\Service\Timeline\Item\Activity;
 
 use Bitrix\Crm\Activity\StatisticsMark;
-use Bitrix\Crm\Integration\StorageManager;
 use Bitrix\Crm\Integration\VoxImplantManager;
 use Bitrix\Crm\Format\Duration;
 use Bitrix\Crm\Service\Container;
@@ -178,25 +177,25 @@ class Call extends Activity
 		}
 
 		$clientBlockOptions = self::BLOCK_WITH_FORMATTED_VALUE | self::BLOCK_WITH_FIXED_TITLE;
-		$clientBlock = $this->getClientContentBlock($clientBlockOptions);
+		$clientBlock = $this->buildClientBlock($clientBlockOptions);
 		if (isset($clientBlock))
 		{
 			$result['client'] = $clientBlock;
 		}
 
-		$responsibleUserBlock = $this->getResponsibleUserBlock();
+		$responsibleUserBlock = $this->buildResponsibleUserBlock();
 		if (isset($responsibleUserBlock))
 		{
 			$result['responsibleUser'] = $responsibleUserBlock;
 		}
 
-		$subjectBlock = $this->getSubjectBlock();
+		$subjectBlock = $this->buildSubjectBlock();
 		if (isset($subjectBlock) && $this->isPlanned())
 		{
 			$result['subject'] = $subjectBlock;
 		}
 
-		$callQueueBlock = $this->getCallQueueBlock();
+		$callQueueBlock = $this->buildCallQueueBlock();
 		if (isset($callQueueBlock) && $this->isMissedCall())
 		{
 			$result['callQueue'] = $callQueueBlock;
@@ -230,13 +229,13 @@ class Call extends Activity
 			$result['audio'] = $audio;
 		}
 
-		$additionalInfoBlock = $this->getAdditionalInfoBlock();
+		$additionalInfoBlock = $this->buildAdditionalInfoBlock();
 		if (isset($additionalInfoBlock))
 		{
 			$result['callInformation'] = $additionalInfoBlock;
 		}
 
-		$clientMarkBlock = $this->getClientMarkBlock();
+		$clientMarkBlock = $this->buildClientMarkBlock();
 		if (isset($clientMarkBlock))
 		{
 			$result['clientMark'] = $clientMarkBlock;
@@ -418,7 +417,7 @@ class Call extends Activity
 		return parent::getDeleteConfirmationText();
 	}
 
-	private function getResponsibleUserBlock(): ?ContentBlock
+	private function buildResponsibleUserBlock(): ?ContentBlock
 	{
 		$data = $this->getUserData($this->getAssociatedEntityModel()->get('RESPONSIBLE_ID'));
 		if (empty($data))
@@ -436,7 +435,7 @@ class Call extends Activity
 		;
 	}
 
-	private function getSubjectBlock(): ?ContentBlock
+	private function buildSubjectBlock(): ?ContentBlock
 	{
 		$subject = $this->getAssociatedEntityModel()->get('SUBJECT');
 		if (empty($subject))
@@ -451,7 +450,7 @@ class Call extends Activity
 		;
 	}
 
-	private function getCallQueueBlock(): ?ContentBlock
+	private function buildCallQueueBlock(): ?ContentBlock
 	{
 		// TODO: call queue not implemented yet
 		/*return (new ContentBlockWithTitle())
@@ -462,7 +461,7 @@ class Call extends Activity
 		return null;
 	}
 
-	private function getAdditionalInfoBlock(): ?ContentBlock
+	private function buildAdditionalInfoBlock(): ?ContentBlock
 	{
 		$callInfo = $this->fetchInfo();
 		if (empty($callInfo))
@@ -534,7 +533,7 @@ class Call extends Activity
 		return $callInfoBlockIsEmpty ? null : $block;
 	}
 
-	private function getClientMarkBlock():  ?ContentBlock
+	private function buildClientMarkBlock():  ?ContentBlock
 	{
 		$clientMark = $this->mapClientMark((int)$this->getAssociatedEntityModel()->get('RESULT_MARK'));
 		if (!isset($clientMark))
@@ -644,38 +643,16 @@ class Call extends Activity
 			]];
 		}
 
-		$storageElementIds = $this->getAssociatedEntityModel()->get('STORAGE_ELEMENT_IDS');
-		$storageTypeId = $this->getAssociatedEntityModel()->get('STORAGE_TYPE_ID');
-		if (empty($storageElementIds) || empty($storageTypeId))
-		{
-			return [];
-		}
-		$result = [];
-
-		$elementIds = unserialize($storageElementIds, ['allowed_classes' => false]);
-		foreach ($elementIds as $elementId)
-		{
-			$fileInfo = StorageManager::getFileInfo(
-				$elementId,
-				$storageTypeId,
-				false,
-				['OWNER_TYPE_ID' => CCrmOwnerType::Activity, 'OWNER_ID' => $this->getActivityId()]
-			);
-
-			if (is_array($fileInfo))
-			{
-				$result[] = $fileInfo;
-			}
-		}
-		if (empty($result))
+		$files = $this->fetchStorageFiles();
+		if (empty($files))
 		{
 			return [];
 		}
 
 		return array_values(
 			array_filter(
-				$result,
-				fn($row) => in_array(GetFileExtension(mb_strtolower($row['NAME'])), ['wav', 'mp3', 'mp4'])
+				$files,
+				fn($row) => in_array(GetFileExtension(mb_strtolower($row['NAME'])), self::ALLOWED_AUDIO_EXTENSIONS)
 			)
 		);
 	}

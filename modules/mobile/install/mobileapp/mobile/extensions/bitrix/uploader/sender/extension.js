@@ -22,7 +22,7 @@ jn.define("uploader/sender", (require, exports, module) => {
 				prepareData: false,
 				headers: {
 					"Content-Type": type,
-					"X-Upload-Content-Name": name,
+					"X-Upload-Content-Name": encodeURI(name),
 					"Content-Range": "bytes " + start + "-" + (end - 1) + "/" + size
 				},
 				getParameters: {

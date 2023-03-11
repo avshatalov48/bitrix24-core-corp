@@ -20,6 +20,7 @@ use Bitrix\Tasks\Internals\Task\CheckListTable;
 use Bitrix\Tasks\Util;
 use CTaskAssert;
 use CTaskItem;
+use Exception;
 
 /**
  * Class TaskCheckListFacade
@@ -262,6 +263,11 @@ class TaskCheckListFacade extends CheckListFacade
 		{
 			$checkListLog->logUpdatingChanges();
 			SearchIndex::setTaskSearchIndex($taskId);
+
+			if ($newCheckList->getSkipMembers())
+			{
+				return;
+			}
 
 			$members = $newCheckList->getFields()['MEMBERS'];
 			if (is_array($members) && !empty($members))

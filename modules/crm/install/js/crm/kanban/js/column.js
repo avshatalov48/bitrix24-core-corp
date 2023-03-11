@@ -335,6 +335,8 @@
 					if (data && data.error)
 					{
 						BX.Kanban.Utils.showErrorDialog(data.error, true);
+					} else if (data && data.IS_SHOULD_UPDATE_CARD) {
+						this.getGrid().loadNew(forSend, false, true, true, true);
 					}
 				}.bind(this),
 				function(error)
@@ -377,6 +379,11 @@
 
 
 			BX.onCustomEvent(this.getGrid(), "Kanban.Grid:onBeforeItemMoved", [event]);
+
+			if (!event.isActionAllowed())
+			{
+				return;
+			}
 
 			success = this.getGrid().moveItem(draggableItem, this);
 
@@ -477,6 +484,7 @@
 							categoryId: gridData.params.CATEGORY_ID ? gridData.params.CATEGORY_ID : 0,
 							guid: this.editorId,
 							configId: gridData.editorConfigId,
+							viewMode: gridData.viewMode,
 							params: {
 								'ENABLE_PERSONAL_CONFIGURATION_UPDATE': true,
 								'ENABLE_COMMON_CONFIGURATION_UPDATE': true,

@@ -313,7 +313,7 @@ class CIntranetUserListComponent extends UserList
 			foreach ($result as $key => $column)
 			{
 				if (
-					!$column['default']
+					!($column['default'] ?? null)
 					&& in_array($column['id'], $defaultSelectedGridHeaders)
 				)
 				{
@@ -966,25 +966,25 @@ class CIntranetUserListComponent extends UserList
 				$result['%=TAGS.NAME'] = $tagsSearchValue.'%';
 			}
 		}
-
+		$gridFilter['DEPARTMENT'] ??= null;
 		$integerFieldsList = [
 			[
 				'FILTER_FIELD_NAME' => 'ID',
 				'FIELD_NAME' => 'ID',
 				'OPERATION' => '=',
-				'VALUE' => $gridFilter['ID']
+				'VALUE' => $gridFilter['ID'] ?? null
 			],
 			[
 				'FILTER_FIELD_NAME' => 'PERSONAL_COUNTRY',
 				'FIELD_NAME' => 'PERSONAL_COUNTRY',
 				'OPERATION' => '@',
-				'VALUE' => $gridFilter['PERSONAL_COUNTRY']
+				'VALUE' => $gridFilter['PERSONAL_COUNTRY'] ?? null
 			],
 			[
 				'FILTER_FIELD_NAME' => 'WORK_COUNTRY',
 				'FIELD_NAME' => 'WORK_COUNTRY',
 				'OPERATION' => '@',
-				'VALUE' => $gridFilter['WORK_COUNTRY']
+				'VALUE' => $gridFilter['WORK_COUNTRY'] ?? null
 			],
 			[
 				'FILTER_FIELD_NAME' => 'DEPARTMENT',
@@ -1014,133 +1014,133 @@ class CIntranetUserListComponent extends UserList
 				'FILTER_FIELD_NAME' => 'NAME',
 				'FIELD_NAME' => 'NAME',
 				'OPERATION' => '%=',
-				'VALUE' => $gridFilter['NAME'].'%'
+				'VALUE' => ($gridFilter['NAME'] ?? null).'%'
 			],
 			[
 				'FILTER_FIELD_NAME' => 'LAST_NAME',
 				'FIELD_NAME' => 'LAST_NAME',
 				'OPERATION' => '%=',
-				'VALUE' => $gridFilter['LAST_NAME'].'%'
+				'VALUE' => ($gridFilter['LAST_NAME'] ?? null).'%'
 			],
 			[
 				'FILTER_FIELD_NAME' => 'SECOND_NAME',
 				'FIELD_NAME' => 'SECOND_NAME',
 				'OPERATION' => '%=',
-				'VALUE' => $gridFilter['SECOND_NAME'].'%'
+				'VALUE' => ($gridFilter['SECOND_NAME'] ?? null).'%'
 			],
 			[
 				'FILTER_FIELD_NAME' => 'LOGIN',
 				'FIELD_NAME' => 'LOGIN',
 				'OPERATION' => '%=',
-				'VALUE' => $gridFilter['LOGIN'].'%'
+				'VALUE' => ($gridFilter['LOGIN'] ?? null).'%'
 			],
 			[
 				'FILTER_FIELD_NAME' => 'EMAIL',
 				'FIELD_NAME' => 'EMAIL',
 				'OPERATION' => '%=',
-				'VALUE' => $gridFilter['EMAIL'].'%'
+				'VALUE' => ($gridFilter['EMAIL'] ?? null).'%'
 			],
 			[
 				'FILTER_FIELD_NAME' => 'GENDER',
 				'FIELD_NAME' => 'PERSONAL_GENDER',
 				'OPERATION' => '=',
-				'VALUE' => $gridFilter['GENDER']
+				'VALUE' => $gridFilter['GENDER'] ?? null
 			],
 			[
 				'FILTER_FIELD_NAME' => 'PHONE_MOBILE',
 				'FIELD_NAME' => 'PERSONAL_MOBILE',
 				'OPERATION' => '%',
-				'VALUE' => $gridFilter['PHONE_MOBILE']
+				'VALUE' => $gridFilter['PHONE_MOBILE'] ?? null
 			],
 			[
 				'FILTER_FIELD_NAME' => 'PHONE',
 				'FIELD_NAME' => 'PERSONAL_PHONE',
 				'OPERATION' => '%',
-				'VALUE' => $gridFilter['PHONE']
+				'VALUE' => $gridFilter['PHONE'] ?? null
 			],
 			[
 				'FILTER_FIELD_NAME' => 'PERSONAL_CITY',
 				'FIELD_NAME' => 'PERSONAL_CITY',
 				'OPERATION' => '%',
-				'VALUE' => $gridFilter['PERSONAL_CITY']
+				'VALUE' => $gridFilter['PERSONAL_CITY'] ?? null
 			],
 			[
 				'FILTER_FIELD_NAME' => 'PERSONAL_STREET',
 				'FIELD_NAME' => 'PERSONAL_STREET',
 				'OPERATION' => '%',
-				'VALUE' => $gridFilter['PERSONAL_STREET']
+				'VALUE' => $gridFilter['PERSONAL_STREET'] ?? null
 			],
 			[
 				'FILTER_FIELD_NAME' => 'PERSONAL_STATE',
 				'FIELD_NAME' => 'PERSONAL_STATE',
 				'OPERATION' => '%',
-				'VALUE' => $gridFilter['PERSONAL_STATE']
+				'VALUE' => $gridFilter['PERSONAL_STATE'] ?? null
 			],
 			[
 				'FILTER_FIELD_NAME' => 'PERSONAL_ZIP',
 				'FIELD_NAME' => 'PERSONAL_ZIP',
 				'OPERATION' => '%',
-				'VALUE' => $gridFilter['PERSONAL_ZIP']
+				'VALUE' => $gridFilter['PERSONAL_ZIP'] ?? null
 			],
 			[
 				'FILTER_FIELD_NAME' => 'PERSONAL_MAILBOX',
 				'FIELD_NAME' => 'PERSONAL_MAILBOX',
 				'OPERATION' => '%',
-				'VALUE' => $gridFilter['PERSONAL_MAILBOX']
+				'VALUE' => $gridFilter['PERSONAL_MAILBOX'] ?? null
 			],
 			[
 				'FILTER_FIELD_NAME' => 'WORK_CITY',
 				'FIELD_NAME' => 'WORK_CITY',
 				'OPERATION' => '%',
-				'VALUE' => $gridFilter['WORK_CITY']
+				'VALUE' => $gridFilter['WORK_CITY'] ?? null
 			],
 			[
 				'FILTER_FIELD_NAME' => 'WORK_STREET',
 				'FIELD_NAME' => 'WORK_STREET',
 				'OPERATION' => '%',
-				'VALUE' => $gridFilter['WORK_STREET']
+				'VALUE' => $gridFilter['WORK_STREET'] ?? null
 			],
 			[
 				'FILTER_FIELD_NAME' => 'WORK_STATE',
 				'FIELD_NAME' => 'WORK_STATE',
 				'OPERATION' => '%',
-				'VALUE' => $gridFilter['WORK_STATE']
+				'VALUE' => $gridFilter['WORK_STATE'] ?? null
 			],
 			[
 				'FILTER_FIELD_NAME' => 'WORK_ZIP',
 				'FIELD_NAME' => 'WORK_ZIP',
 				'OPERATION' => '%',
-				'VALUE' => $gridFilter['WORK_ZIP']
+				'VALUE' => $gridFilter['WORK_ZIP'] ?? null
 			],
 			[
 				'FILTER_FIELD_NAME' => 'WORK_MAILBOX',
 				'FIELD_NAME' => 'WORK_MAILBOX',
 				'OPERATION' => '%',
-				'VALUE' => $gridFilter['WORK_MAILBOX']
+				'VALUE' => $gridFilter['WORK_MAILBOX'] ?? null
 			],
 			[
 				'FILTER_FIELD_NAME' => 'WORK_PHONE',
 				'FIELD_NAME' => 'WORK_PHONE',
 				'OPERATION' => '%',
-				'VALUE' => $gridFilter['WORK_PHONE']
+				'VALUE' => $gridFilter['WORK_PHONE'] ?? null
 			],
 			[
 				'FILTER_FIELD_NAME' => 'POSITION',
 				'FIELD_NAME' => 'WORK_POSITION',
 				'OPERATION' => '%',
-				'VALUE' => $gridFilter['POSITION']
+				'VALUE' => $gridFilter['POSITION'] ?? null
 			],
 			[
 				'FILTER_FIELD_NAME' => 'COMPANY',
 				'FIELD_NAME' => 'WORK_COMPANY',
 				'OPERATION' => '%',
-				'VALUE' => $gridFilter['COMPANY']
+				'VALUE' => $gridFilter['COMPANY'] ?? null
 			],
 			[
 				'FILTER_FIELD_NAME' => 'WORK_DEPARTMENT',
 				'FIELD_NAME' => 'WORK_DEPARTMENT',
 				'OPERATION' => '%',
-				'VALUE' => $gridFilter['WORK_DEPARTMENT']
+				'VALUE' => $gridFilter['WORK_DEPARTMENT'] ?? null
 			],
 		];
 

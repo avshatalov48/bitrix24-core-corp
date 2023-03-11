@@ -8,12 +8,14 @@
 
 namespace Bitrix\Tasks\Item\Task;
 
-use Bitrix\Tasks\Internals\Task\TagTable;
+use Bitrix\Tasks\Internals\Task\LabelTable;
+use Bitrix\Tasks\Item\Result;
 use Bitrix\Tasks\Util\User;
 use Bitrix\Tasks\Item\Task\Collection;
 
 final class Tag extends \Bitrix\Tasks\Item\SubItem
 {
+
 	protected static function getParentConnectorField()
 	{
 		return 'TASK_ID';
@@ -21,7 +23,7 @@ final class Tag extends \Bitrix\Tasks\Item\SubItem
 
 	public static function getDataSourceClass()
 	{
-		return TagTable::getClass();
+		return LabelTable::getClass();
 	}
 
 	public static function getCollectionClass()
@@ -52,5 +54,31 @@ final class Tag extends \Bitrix\Tasks\Item\SubItem
 		}
 
 		return $result->isSuccess();
+	}
+
+	public function save($settings = [])
+	{
+		$tags = is_string($this['NAME']) ? [$this['NAME']] : [];
+		$tagService = new \Bitrix\Tasks\Control\Tag((int)$this['USER_ID']);
+		$tagService->set($this['TASK_ID'], $tags, 0, 0, true);
+		return new Result();
+	}
+
+	public static function find(array $parameters = [], $settings = null)
+	{
+		$items = [];
+		$result = self::getCollectionInstance();
+		$dc = self::getDataSourceClass();
+		$res = $dc::getList(array_merge(['select' => ['*', 'TASK_' => 'TASKS']], $parameters));
+		if ($res)
+		{
+			while ($item = $res->fetch())
+			{
+				$items[] = self::makeInstanceFromSource($item, $settings['USER_ID']);
+			}
+			$result->set($items);
+		}
+
+		return $result;
 	}
 }

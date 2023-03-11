@@ -88,6 +88,7 @@ class GroupRegistry
 		$res = WorkgroupTable::query()
 			->addSelect('ID')
 			->addSelect('CLOSED')
+			->addSelect('NAME')
 			->whereIn('ID', $groupIds)
 			->exec();
 
@@ -96,6 +97,7 @@ class GroupRegistry
 			$this->storage[$row['ID']] = [
 				'ID' => $row['ID'],
 				'CLOSED' => $row['CLOSED'],
+				'NAME' => $row['NAME'],
 				'TASKS_ENABLED' => false
 			];
 		}

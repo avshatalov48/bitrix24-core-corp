@@ -5,7 +5,6 @@ jn.define('crm/in-app-url/routes', (require, exports, module) => {
 
 	const { EntityDetailOpener } = require('crm/entity-detail/opener');
 	const { TypeId, TypeName } = require('crm/type');
-	const { ProfileView } = require('user/profile');
 
 	const openCrmEntity = (
 		entityTypeId,
@@ -114,27 +113,6 @@ jn.define('crm/in-app-url/routes', (require, exports, module) => {
 				activeTab: TypeName.Company,
 			});
 		}).name('crm:companyList');
-
-		inAppUrl.register('/company/personal/user/:userId/', ({ userId }, { context }) => {
-
-			const widgetParams = { groupStyle: true };
-			const isBackdrop = Boolean(context.backdrop);
-
-			if (isBackdrop)
-			{
-				widgetParams.backdrop = {
-					bounceEnable: false,
-					swipeAllowed: true,
-					showOnTop: true,
-					hideNavigationBar: false,
-					horizontalSwipeAllowed: false,
-				};
-			}
-
-			PageManager.openWidget('list', widgetParams)
-				.then(list => ProfileView.open({ userId, isBackdrop }, list));
-
-		}).name('crm:user');
 
 	};
 

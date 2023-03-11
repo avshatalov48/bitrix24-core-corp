@@ -1,4 +1,5 @@
 <?php
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
@@ -10,6 +11,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 if (isset($arResult['ERROR']))
 {
 	ShowError($arResult['ERROR']);
+
 	return;
 }
 
@@ -19,8 +21,9 @@ use Bitrix\Crm\Conversion\LeadConversionScheme;
 use Bitrix\Crm\Integration\NotificationsManager;
 use Bitrix\Crm\Integration\PullManager;
 use Bitrix\Crm\Kanban\Helper;
-use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm\Tour;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\UI\Extension;
 
 Loc::loadMessages(__FILE__);
 
@@ -41,10 +44,20 @@ $isBitrix24 = \Bitrix\Main\ModuleManager::isModuleInstalled('bitrix24');
 // ;
 
 // js extension reg
-\Bitrix\Main\UI\Extension::load([
-	'ui.actionpanel',
-	'ui.notification'
-]);
+Extension::load(
+	[
+		'ui.actionpanel',
+		'ui.notification',
+	]
+);
+
+if (
+	!empty($arResult['CLIENT_FIELDS_RESTRICTIONS'])
+	|| !empty($arResult['OBSERVERS_FIELD_RESTRICTIONS'])
+)
+{
+	Extension::load(['crm.restriction.filter-fields']);
+}
 
 \CJSCore::registerExt('crm_common', array(
 	'js' => array('/bitrix/js/crm/crm.js', '/bitrix/js/crm/common.js')
@@ -82,7 +95,7 @@ $isMergeEnabled = ($arParams['PATH_TO_MERGE'] != '');
 
 if ($isMergeEnabled)
 {
-	Bitrix\Main\UI\Extension::load(['crm.merger.batchmergemanager']);
+	Extension::load(['crm.merger.batchmergemanager']);
 }
 
 $gridId = Helper::getGridId($arParams['ENTITY_TYPE_CHR']);
@@ -171,6 +184,7 @@ $gridId = Helper::getGridId($arParams['ENTITY_TYPE_CHR']);
 					itemType: "BX.CRM.Kanban.Item",
 					columnType: "BX.CRM.Kanban.Column",
 					dropZoneType: "BX.CRM.Kanban.DropZone",
+					columnsRevert: <?= $arResult['CONFIG_BY_VIEW_MODE']['columnsRevert'] ?>,
 					canAddColumn: <?= $arResult['CONFIG_BY_VIEW_MODE']['canAddColumn'] ?>,
 					canEditColumn: <?= $arResult['CONFIG_BY_VIEW_MODE']['canEditColumn'] ?>,
 					canRemoveColumn: <?= $arResult['CONFIG_BY_VIEW_MODE']['canRemoveColumn'] ?>,
@@ -401,15 +415,25 @@ $gridId = Helper::getGridId($arParams['ENTITY_TYPE_CHR']);
 	print (Tour\NewCountersMode::getInstance())->build();
 	print (Tour\SortByLastActivityTime::getInstance())->build();
 endif;
-if (!empty($arResult['CLIENT_FIELDS_RESTRICTIONS'])):
-	Bitrix\Main\UI\Extension::load(['crm.restriction.client-fields']);
-	?>
+if (!empty($arResult['CLIENT_FIELDS_RESTRICTIONS'])):?>
+		<script type="text/javascript">
+		BX.ready(
+			function()
+			{
+				new BX.Crm.Restriction.FilterFieldsRestriction(
+					<?=CUtil::PhpToJSObject($arResult['CLIENT_FIELDS_RESTRICTIONS'])?>
+				);
+			}
+		);
+		</script>
+<?endif;?>
+<?if (!empty($arResult['OBSERVERS_FIELD_RESTRICTIONS'])):?>
 	<script type="text/javascript">
 		BX.ready(
 			function()
 			{
-				new BX.Crm.Restriction.ClientFieldsRestriction(
-					<?=CUtil::PhpToJSObject($arResult['CLIENT_FIELDS_RESTRICTIONS'])?>
+				new BX.Crm.Restriction.FilterFieldsRestriction(
+					<?=CUtil::PhpToJSObject($arResult['OBSERVERS_FIELD_RESTRICTIONS'])?>
 				);
 			}
 		);

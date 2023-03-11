@@ -47,7 +47,7 @@ class NetworkProvider extends BaseProvider
 
 	public function doSearch(SearchQuery $searchQuery, Dialog $dialog): void
 	{
-		$this->setSearchText($searchQuery->getQuery());
+		$this->setSearchText($searchQuery);
 
 		$networkLineList = $this->getNetworkLineList();
 
@@ -120,9 +120,15 @@ class NetworkProvider extends BaseProvider
 		return $row ? htmlspecialcharsbx($row) : Loc::getMessage('NETWORK_PROVIDER_DEFAULT_SUB_TITLE');
 	}
 
-	protected function setSearchText(string $text): NetworkProvider
+	protected function setSearchText(SearchQuery $searchQuery): NetworkProvider
 	{
-		$this->searchText = $text;
+		if (!method_exists($searchQuery, 'getRawQuery'))
+		{
+			$this->searchText = $searchQuery->getQuery();
+
+			return $this;
+		}
+		$this->searchText = $searchQuery->getRawQuery();
 
 		return $this;
 	}

@@ -69,7 +69,7 @@ function GetAbsenceDialog(absenceID)
 	$arAbsenceParams["MESS"]["INTR_ABSENCE_POPUP_BUTTON"] = GetMessage("INTR_ABSENCE_EDIT_BUTTON_POPUP");
 	$arAbsenceParams["ABSENCE_ELEMENT_ID"] = "#ABSENCE_ID#";
 	?>
-	var dialog = "<?="BX.AbsenceCalendar.ShowForm(".CUtil::PhpToJSObject($arAbsenceParams).")"?>";
+	var dialog = "<?=CUtil::JSEscape("BX.AbsenceCalendar.ShowForm(".CUtil::PhpToJSObject($arAbsenceParams).")")?>";
 	return dialog.replace("#ABSENCE_ID#", absenceID);
 }
 jsBXAC.Init(

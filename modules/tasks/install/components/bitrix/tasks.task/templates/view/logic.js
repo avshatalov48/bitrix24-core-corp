@@ -50,6 +50,26 @@ BX.namespace('Tasks.Component');
 		BX.addCustomEvent('SidePanel.Slider:onClose', this.onSliderClose.bind(this, false));
 		BX.addCustomEvent('SidePanel.Slider:onCloseByEsc', this.onSliderClose.bind(this, true));
 		BX.addCustomEvent(window, 'OnUCCommentWasRead', this.onCommentRead.bind(this));
+		BX.PULL.subscribe({
+			type: BX.PullClient.SubscriptionType.Server,
+			moduleId: 'tasks',
+			command: 'tag_changed',
+			callback: function(){
+				BX.ajax.runComponentAction('bitrix:tasks.tag.list', 'getTaskTags', {
+					mode: 'class',
+					data: {
+						taskId: this.taskId,
+					}
+				}).then(function(response){
+					var tagLine = BX('task-tags-line');
+					BX.cleanNode(tagLine);
+					var tags = response.data;
+					var tagsString = tags.join(', ')
+					BX.adjust(tagLine, { text: tagsString });
+				})
+
+			}.bind(this)
+		});
 
 		BX.Event.EventEmitter.subscribe('BX.Tasks.CheckListItem:CheckListChanged', function(eventData) {
 			var action = eventData.data.action;

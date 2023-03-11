@@ -45,6 +45,8 @@ class CAllCrmCompany
 	private static $FIELD_INFOS = null;
 	const DEFAULT_FORM_ID = 'CRM_COMPANY_SHOW_V12';
 
+	private static ?\Bitrix\Crm\Entity\Compatibility\Adapter $lastActivityAdapter = null;
+
 	private ?Crm\Entity\Compatibility\Adapter $compatibilityAdapter = null;
 
 	function __construct($bCheckPermission = true)
@@ -126,6 +128,18 @@ class CAllCrmCompany
 		$compatibilityAdapter->addChild($registeredAddressAdapter);
 
 		return $compatibilityAdapter;
+	}
+
+	private static function getLastActivityAdapter(): Crm\Entity\Compatibility\Adapter
+	{
+		if (!self::$lastActivityAdapter)
+		{
+			$factory = Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::Company);
+			self::$lastActivityAdapter = new Crm\Entity\Compatibility\Adapter\LastActivity($factory);
+			self::$lastActivityAdapter->setTableAlias(self::TABLE_ALIAS);
+		}
+
+		return self::$lastActivityAdapter;
 	}
 
 	// Service -->
@@ -343,6 +357,8 @@ class CAllCrmCompany
 			// add utm fields
 			self::$FIELD_INFOS = self::$FIELD_INFOS + UtmTable::getUtmFieldsInfo();
 			self::$FIELD_INFOS += Container::getInstance()->getParentFieldManager()->getParentFieldsInfo(CCrmOwnerType::Company);
+
+			self::$FIELD_INFOS += self::getLastActivityAdapter()->getFieldsInfo();
 		}
 
 		return self::$FIELD_INFOS;
@@ -503,6 +519,8 @@ class CAllCrmCompany
 				$tableAliasName
 			)
 		);
+
+		$result += self::getLastActivityAdapter()->getFields();
 
 		return $result;
 	}
@@ -1357,6 +1375,8 @@ class CAllCrmCompany
 			}
 			//endregion
 
+			self::getLastActivityAdapter()->performAdd($arFields, $options);
+
 			$beforeEvents = GetModuleEvents('crm', 'OnBeforeCrmCompanyAdd');
 			while ($arEvent = $beforeEvents->Fetch())
 			{
@@ -1563,7 +1583,7 @@ class CAllCrmCompany
 				);
 
 				$isUntypedCategory = (int)$arFields['CATEGORY_ID'] === 0;
-				if ($isUntypedCategory)
+				if ($isUntypedCategory && Crm\Settings\Crm::isLiveFeedRecordsGenerationEnabled())
 				{
 					CCrmSonetSubscription::RegisterSubscription(
 						CCrmOwnerType::Company,
@@ -1578,9 +1598,9 @@ class CAllCrmCompany
 					: false;
 
 				if (
-					$logEventID
+					$logEventID !== false
 					&& $assignedByID != $createdByID
-					&& (int)$arFields['CATEGORY_ID'] === 0
+					&& $isUntypedCategory
 					&& CModule::IncludeModule("im")
 				)
 				{
@@ -1858,6 +1878,8 @@ class CAllCrmCompany
 						$arFields['LOGO'] = '';
 				}
 			}
+
+			self::getLastActivityAdapter()->performUpdate((int)$ID, $arFields, $arOptions);
 
 			$sonetEventData = array();
 			if ($bCompare)
@@ -2235,7 +2257,12 @@ class CAllCrmCompany
 			$registerSonetEvent = isset($arOptions['REGISTER_SONET_EVENT']) && $arOptions['REGISTER_SONET_EVENT'] === true;
 			$isUntypedCategory = $categoryId === 0;
 
-			if ($bResult && isset($arFields['ASSIGNED_BY_ID']) && $isUntypedCategory)
+			if (
+				$bResult
+				&& isset($arFields['ASSIGNED_BY_ID'])
+				&& $isUntypedCategory
+				&& Crm\Settings\Crm::isLiveFeedRecordsGenerationEnabled()
+			)
 			{
 				CCrmSonetSubscription::ReplaceSubscriptionByEntity(
 					CCrmOwnerType::Company,
@@ -2262,7 +2289,7 @@ class CAllCrmCompany
 						: false;
 
 					if (
-						$logEventID
+						$logEventID !== false
 						&& $sonetEvent['TYPE'] == CCrmLiveFeedEvent::Responsible
 						&& $categoryId === 0
 						&& CModule::IncludeModule("im")

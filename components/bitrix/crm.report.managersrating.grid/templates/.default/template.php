@@ -3,6 +3,7 @@
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)	die();
 
 use Bitrix\Main\UI\Extension;
+use Bitrix\Main\Web\Uri;
 
 \Bitrix\Main\UI\Extension::load([
 	'ui.design-tokens',
@@ -17,7 +18,7 @@ function getUserLayout($userName, $userIcon)
 	return
 		'<div class="crm-report-managersrating-grid-user">
 			<div class="ui-icon ui-icon-common-user crm-report-managersrating-grid-user-icon">
-				<i '. ($userIcon ? 'style="background-image: url(\''. $userIcon . '\')" ' : ''). '></i>
+				<i '. ($userIcon ? 'style="background-image: url(\''. Uri::urnEncode($userIcon) . '\')" ' : ''). '></i>
 			</div>
 			<div class="crm-report-managersrating-grid-user-name">
 				' . htmlspecialcharsbx($userName) . '

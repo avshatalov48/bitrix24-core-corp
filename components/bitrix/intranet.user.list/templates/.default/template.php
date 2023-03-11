@@ -81,7 +81,7 @@ if(!empty($arResult['TOOLBAR_BUTTONS']))
 		}
 
 		Toolbar::addButton([
-			"link" => $button['LINK'],
+			"link" => $button['LINK'] ?? null,
 			"color" => \Bitrix\UI\Buttons\Color::PRIMARY,
 			"icon" => $icon,
 			"text" => $button['TITLE'],
@@ -95,7 +95,7 @@ if (
 	&& (
 		(
 			ModuleManager::isModuleInstalled('bitrix24')
-			&& \CBitrix24::isPortalAdmin($arResult["currentUserId"])
+			&& \CBitrix24::isPortalAdmin($arResult["currentUserId"] ?? null)
 		)
 		|| (
 			!ModuleManager::isModuleInstalled('bitrix24')
@@ -110,6 +110,9 @@ if (
 }
 
 $gridContainerId = 'bx-iul-'.$arResult['GRID_ID'].'-container';
+$currentPage = ($arResult['NAV_OBJECT'] instanceof \Bitrix\Main\UI\PageNavigation) ?
+	$arResult['NAV_OBJECT']->getCurrentPage() :
+	null;
 
 ?><span id="<?=htmlspecialcharsbx($gridContainerId)?>"><?
 	$APPLICATION->IncludeComponent(
@@ -120,6 +123,7 @@ $gridContainerId = 'bx-iul-'.$arResult['GRID_ID'].'-container';
 			'HEADERS' => $arResult['HEADERS'],
 			'ROWS' => $arResult['ROWS'],
 			'NAV_OBJECT' => $arResult['NAV_OBJECT'],
+			'CURRENT_PAGE' => $currentPage,
 			'TOTAL_ROWS_COUNT' => $arResult['ROWS_COUNT'],
 			'ACTION_ALL_ROWS' => false,
 			'AJAX_OPTION_HISTORY' => 'N',
@@ -196,7 +200,7 @@ if (
 				cacheable: false,
 				allowChangeHistory: false,
 				contentClassName: "bitrix24-profile-slider-content",
-				loader: "intranet:profile",
+				loader: "intranet:slider-profile",
 				width: 1100,
 				events: {
 					onCloseComplete: function(event) {

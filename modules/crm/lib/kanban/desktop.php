@@ -16,7 +16,7 @@ class Desktop extends Kanban
 	 */
 	protected function isDropZone(array $status = []): bool
 	{
-		if ($this->viewMode === \Bitrix\Crm\Kanban\ViewMode::MODE_ACTIVITIES)
+		if (\Bitrix\Crm\Kanban\ViewMode::isDatesBasedView($this->viewMode))
 		{
 			return false;
 		}

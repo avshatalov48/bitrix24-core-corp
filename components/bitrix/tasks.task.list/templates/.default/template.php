@@ -3,12 +3,18 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
+/** @var array $arParams */
+/** @var array $arResult */
+/** @global CMain $APPLICATION */
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Page\Asset;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Web\Json;
+use Bitrix\Tasks\Slider\Exception\SliderException;
+use Bitrix\Tasks\Slider\Factory\SliderFactory;
 use Bitrix\Tasks\UI\ScopeDictionary;
+use Bitrix\Tasks\Update\TagConverter;
 
 Loc::loadMessages(__FILE__);
 
@@ -33,7 +39,12 @@ Extension::load([
 	'ui.label',
 	'ui.migrationbar',
 	'ui.tour',
+	'tasks.runtime',
+	'tasks.task-model',
 ]);
+
+//Checking for working tags agent
+$tagsAreConverting = TagConverter::isProceed();
 
 $APPLICATION->IncludeComponent(
 	"bitrix:tasks.iframe.popup",
@@ -126,7 +137,11 @@ endif
 
 
 <?php
-
+$currentPagePath = $APPLICATION->GetCurPage() . '?F_STATE=sV80';
+if ($arParams['BACKGROUND_FOR_TASK'])
+{
+	$currentPagePath = $arResult['ASSEMBLED_PATH_TO_TASKS'] . '?F_STATE=sV80';
+}
 //region Navigation
 ob_start();
 $APPLICATION->IncludeComponent(
@@ -135,7 +150,7 @@ $APPLICATION->IncludeComponent(
 	[
 		'PAGE_NUM' => $arResult['CURRENT_PAGE'],
 		'ENABLE_NEXT_PAGE' => $arResult['ENABLE_NEXT_PAGE'],
-		'URL' => $APPLICATION->GetCurPage() . '?F_STATE=sV80'
+		'URL' => $currentPagePath,
 	],
 	$component,
 	array('HIDE_ICONS' => 'Y')
@@ -232,6 +247,8 @@ $APPLICATION->IncludeComponent(
 		function() {
 			BX.Tasks.GridActions.gridId = '<?=$arParams['GRID_ID']?>';
 			BX.Tasks.GridActions.defaultPresetId = '<?=$arResult['DEFAULT_PRESET_KEY']?>';
+			BX.Tasks.GridActions.tagsAreConverting = '<?=$tagsAreConverting?>';
+
 			BX.message({
 				TASKS_CONFIRM_GROUP_ACTION: '<?=GetMessageJS('TASKS_CONFIRM_GROUP_ACTION')?>',
 				TASKS_DELETE_SUCCESS: '<?=GetMessageJS('TASKS_DELETE_SUCCESS')?>',
@@ -245,7 +262,9 @@ $APPLICATION->IncludeComponent(
 				TASKS_TASK_CONFIRM_START_TIMER_TITLE: '<?=GetMessageJS('TASKS_TASK_CONFIRM_START_TIMER_TITLE')?>',
 				TASKS_TASK_CONFIRM_START_TIMER: '<?=GetMessageJS('TASKS_TASK_CONFIRM_START_TIMER')?>',
 				TASKS_CLOSE_PAGE_CONFIRM: '<?=GetMessageJS('TASKS_CLOSE_PAGE_CONFIRM')?>',
-				TASKS_LIST_ADD_TAG_FOOTER_LABEL: '<?= GetMessageJS('TASKS_LIST_ADD_TAG_FOOTER_LABEL') ?>'
+				TASKS_TASK_LIST_TAGS_ARE_CONVERTING_TITLE: '<?=GetMessageJS('TASKS_TASK_LIST_TAGS_ARE_CONVERTING_TITLE')?>',
+				TASKS_TASK_LIST_TAGS_ARE_CONVERTING_TEXT: '<?=GetMessageJS('TASKS_TASK_LIST_TAGS_ARE_CONVERTING_TEXT')?>',
+				TASKS_TASK_LIST_TAGS_ARE_CONVERTING_COME_BACK_LATER: '<?=GetMessageJS('TASKS_TASK_LIST_TAGS_ARE_CONVERTING_COME_BACK_LATER')?>',
 			});
 
 			BX.Tasks.GridInstance = new BX.Tasks.Grid(<?=Json::encode([
@@ -291,3 +310,58 @@ $APPLICATION->IncludeComponent(
 		}
 	);
 </script>
+
+<?php if ($arParams['TAGS_SLIDER'])
+{
+	$ownerId = (int)$arParams['USER_ID'];
+	$queryParams = '';
+	if ($arParams['TAGS_SLIDER_GROUP_ID'])
+	{
+		$queryParams = '?GROUP_ID=' . $arParams['TAGS_SLIDER_GROUP_ID'];
+	}
+
+	$factory = new SliderFactory();
+	try
+	{
+		$factory->setQueryParams($queryParams);
+
+		$slider = $factory->createEntityListSlider(SliderFactory::TAGS, $ownerId, SliderFactory::PERSONAL_CONTEXT);
+		$slider->open();
+	}
+	catch (SliderException $exception)
+	{
+		$exception->show();
+	}
+}
+
+
+if ($arParams['BACKGROUND_FOR_TASK'])
+{
+	if ((int)$arParams['GROUP_ID'] > 0 )
+	{
+		$context = SliderFactory::GROUP_CONTEXT;
+		$ownerId = (int)$arParams['GROUP_ID'];
+	}
+	else
+	{
+		$context = SliderFactory::PERSONAL_CONTEXT;
+		$ownerId = (int)$arParams['USER_ID'];
+	}
+
+	$taskId = (int)$arParams['TASK_ID'];
+
+	$factory = new SliderFactory();
+	try
+	{
+		$factory
+			->setAction($arParams['TASK_ACTION'])
+			->setQueryParams($arParams['GET_PARAMS']);
+
+		$slider = $factory->createEntitySlider($taskId, SliderFactory::TASK, $ownerId, $context);
+		$slider->open();
+	}
+	catch (SliderException $exception)
+	{
+		$exception->show();
+	}
+}

@@ -107,6 +107,8 @@
 					style: {
 						flexDirection: 'column',
 					},
+					onClick: () => Keyboard.dismiss(),
+					onPan: () => Keyboard.dismiss(),
 				},
 				this.renderStageName(),
 				this.renderTunnelList(),
@@ -130,6 +132,7 @@
 					config: {
 						deepMergeStyles: styles.nameField,
 						selectionOnFocus: this.stageName === BX.message('M_CRM_STAGE_DETAIL_DEFAULT_STAGE_DEFAULT_NAME'),
+						enableKeyboardHide: true,
 					},
 					onChange: (value) => {
 						this.isChanged = true;
@@ -371,7 +374,7 @@
 
 	const styles = {
 		container: {
-			backgroundColor: '#eef3f5',
+			backgroundColor: '#eef2f4',
 			flexDirection: 'column',
 			flex: 1,
 		},

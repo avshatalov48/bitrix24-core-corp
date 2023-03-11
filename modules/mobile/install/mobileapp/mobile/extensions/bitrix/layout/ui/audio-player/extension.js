@@ -58,10 +58,9 @@ jn.define('layout/ui/audio-player', (require, exports, module) => {
 					this.onPlay();
 				}
 			});
-			this.customEventEmitter.on('TopPanelAudioPlayer::onChangePlay', () => {
-				this.onPlay();
-			});
-			this.customEventEmitter.on('TopPanelAudioPlayer::onSetSeek', ({currentTime}) => {
+			this.customEventEmitter.on('TopPanelAudioPlayer::onChangePlay', () => this.onPlay());
+			this.customEventEmitter.on('TopPanelAudioPlayer::onCancel', () => this.onCancel());
+			this.customEventEmitter.on('TopPanelAudioPlayer::onSetSeek', ({ currentTime }) => {
 				currentTime = Math.min(currentTime, this.state.duration);
 				currentTime = Math.max(currentTime, 0);
 
@@ -114,6 +113,17 @@ jn.define('layout/ui/audio-player', (require, exports, module) => {
 			}
 		}
 
+		onCancel()
+		{
+			if (this.state.play)
+			{
+				this.player.pause();
+			}
+
+			this.player.setSeek(0);
+			this.onPlayerUpdate(0);
+		}
+
 		render()
 		{
 			const { duration, play, isLoading } = this.state;
@@ -133,7 +143,7 @@ jn.define('layout/ui/audio-player', (require, exports, module) => {
 				}),
 				new RangeSlider({
 					uid: this.uid,
-					value: this.state.currentTime,
+					value: this.currentTime,
 					maximumValue: duration,
 					enabled: duration,
 					active: play,
@@ -191,6 +201,13 @@ jn.define('layout/ui/audio-player', (require, exports, module) => {
 
 			this.player.on('error', (data) => {
 				console.log(data);
+
+				this.onPlayerPause();
+				this.setState({
+					play: false,
+					isLoading: false,
+				});
+
 				Alert.alert(
 					'',
 					BX.message('AUDIO_PLAYER_ERROR'),

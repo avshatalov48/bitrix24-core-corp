@@ -493,7 +493,7 @@
 				],
 				options: {
 					contentClassName: "bitrix24-profile-slider-content",
-					loader: "intranet:profile",
+					loader: "intranet:slider-profile",
 					width: 1100
 				}
 			},
@@ -503,7 +503,7 @@
 				],
 				options: {
 					contentClassName: "bitrix24-group-slider-content",
-					loader: "intranet:livefeed",
+					loader: "intranet:slider-livefeed",
 					cacheable: false,
 					customLeftBoundary: 0,
 					newWindowLabel: true,
@@ -516,7 +516,7 @@
 				],
 				options: {
 					contentClassName: "bitrix24-group-slider-content",
-					loader: "intranet:tasklist",
+					loader: "intranet:slider-projects-tasklist",
 					cacheable: false,
 					customLeftBoundary: 0,
 					newWindowLabel: true,
@@ -530,7 +530,7 @@
 				],
 				options: {
 					contentClassName: "bitrix24-group-slider-content",
-					loader: "intranet:scrum",
+					loader: "intranet:slider-scrum",
 					cacheable: false,
 					customLeftBoundary: 0,
 					newWindowLabel: true,
@@ -563,7 +563,7 @@
 							cacheable: false,
 							allowChangeHistory: false,
 							contentClassName: "bitrix24-profile-slider-content",
-							loader: "intranet:profile",
+							loader: "intranet:slider-profile",
 							width: 1100
 						}
 					);

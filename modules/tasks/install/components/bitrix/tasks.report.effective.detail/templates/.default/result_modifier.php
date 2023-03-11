@@ -5,6 +5,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Web\Uri;
 use Bitrix\Tasks\Util\User;
 
 //region TITLE
@@ -52,7 +53,7 @@ if (!function_exists('prepareTaskRowUserBaloonHtml'))
 		}
 
 		$userName = '<span class="tasks-grid-avatar  '.$userAvatar.' '.$userIcon.'" 
-			'.($user['AVATAR'] ? 'style="background-image: url(\''.$user['AVATAR'].'\')"' : '').'></span>';
+			'.($user['AVATAR'] ? 'style="background-image: url(\''.Uri::urnEncode($user['AVATAR']).'\')"' : '').'></span>';
 
 		$userName .= '<span class="tasks-grid-username-inner '.$userIcon.'">'. htmlspecialcharsbx($user['NAME']) .'</span>';
 

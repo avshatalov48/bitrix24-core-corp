@@ -338,7 +338,7 @@ export default {
 							<div class="ui-sidepanel-menu-link-text"
 								 data-manager-openIntegrationRequestForm-params="sender_page:deal"
 							>
-								${Loc.getMessage('SALESCENTER_LEFT_PAYMENT_INTEGRATION_MSGVER_1')}
+								${Loc.getMessage('SALESCENTER_LEFT_PAYMENT_INTEGRATION_MSGVER_2')}
 							</div>
 						</a>
 					</li>

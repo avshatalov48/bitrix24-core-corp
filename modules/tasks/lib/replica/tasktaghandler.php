@@ -5,7 +5,7 @@ class TaskTagHandler extends \Bitrix\Replica\Client\BaseHandler
 {
 	protected $tableName = "b_tasks_tag";
 	protected $moduleId = "tasks";
-	protected $className = "\\Bitrix\\Tasks\\Internals\\Task\\TagTable";
+	protected $className = "\\Bitrix\\Tasks\\Internals\\Task\\tagtable";
 
 	protected $primary = array(
 		"TASK_ID" => "b_tasks.ID",

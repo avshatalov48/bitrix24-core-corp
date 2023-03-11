@@ -43,6 +43,7 @@ jn.define('tasks/layout/task/fields/subTasks', (require, exports, module) => {
 					multiple: true,
 					value: Object.keys(this.state.subTasks),
 					config: {
+						parentWidget: this.props.parentWidget,
 						deepMergeStyles: this.props.deepMergeStyles,
 						entityList: Object.entries(this.state.subTasks).map(([id, title]) => ({id, title})),
 						reloadEntityListFromProps: true,

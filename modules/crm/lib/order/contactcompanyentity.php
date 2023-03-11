@@ -121,9 +121,10 @@ abstract class ContactCompanyEntity extends Sale\Internals\CollectableEntity
 	 * @throws Main\NotImplementedException
 	 * @throws \Exception
 	 */
-	public function setField($name, $value)
+	public function checkValueBeforeSet($name, $value)
 	{
-		if ($name === 'IS_PRIMARY'
+		if (
+			$name === 'IS_PRIMARY'
 			&& $value === 'Y'
 		)
 		{
@@ -138,7 +139,7 @@ abstract class ContactCompanyEntity extends Sale\Internals\CollectableEntity
 			}
 		}
 
-		return parent::setField($name, $value);
+		return parent::checkValueBeforeSet($name, $value);
 	}
 
 	/**

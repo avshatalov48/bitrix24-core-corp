@@ -344,6 +344,34 @@ class CCrmBizProcHelper
 
 		return in_array($entityId, $ids, true);
 	}
+
+	public static function isDynamicEntityWithProducts(int $entityTypeId): bool
+	{
+		if (!CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId))
+		{
+			return false;
+		}
+
+		$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory($entityTypeId);
+
+		return $factory && $factory->isLinkWithProductsEnabled();
+	}
+
+	public static function getHowCheckAutomationTourGuideData(int $entityTypeId, int $categoryId, int $userId): ?array
+	{
+		$userOption = \CUserOptions::GetOption('bizproc.automation.guide', 'crm_check_automation', $userId);
+		$entityName = CCrmOwnerType::ResolveName($entityTypeId);
+		if (
+			empty($userOption)
+			|| $userOption['document_type'] !== $entityName
+			|| (int)$userOption['category_id'] !== $categoryId
+		)
+		{
+			return null;
+		}
+
+		return $userOption;
+	}
 }
 
 class CCrmBizProcEventType

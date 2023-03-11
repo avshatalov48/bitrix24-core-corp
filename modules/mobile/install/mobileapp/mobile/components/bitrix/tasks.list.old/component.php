@@ -92,7 +92,7 @@ function getUserInfo($userId)
 		return null;
 	}
 
-	if (!$users[$userId])
+	if (empty($users[$userId]))
 	{
 		// prepare link to profile
 		$replaceList = ['user_id' => $userId];

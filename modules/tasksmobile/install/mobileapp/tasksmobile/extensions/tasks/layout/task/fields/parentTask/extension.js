@@ -48,6 +48,7 @@ jn.define('tasks/layout/task/fields/parentTask', (require, exports, module) => {
 					multiple: false,
 					value: this.state.parentTask.id,
 					config: {
+						parentWidget: this.props.parentWidget,
 						deepMergeStyles: this.props.deepMergeStyles,
 						entityList: [this.state.parentTask],
 						reloadEntityListFromProps: true,

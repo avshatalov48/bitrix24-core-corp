@@ -4313,24 +4313,12 @@ if(typeof(BX.CrmDupController) === "undefined")
 					}
 				}
 			}
-
-			var form = this.getSetting("form", null);
-			if(form instanceof BX.Crm.Form)
-			{
-				BX.addCustomEvent(form, "onBeforeSubmit", this._beforeFormSubmitHandler);
-			}
 		},
 		_unbind: function()
 		{
 			for(var i = 0; i < this._submits.length; i++)
 			{
 				BX.unbind(this._submits[i], "click", this._submitClickHandler);
-			}
-
-			var form = this.getSetting("form", null);
-			if(form instanceof BX.Crm.Form)
-			{
-				BX.removeCustomEvent(form, "onBeforeSubmit", this._beforeFormSubmitHandler);
 			}
 		},
 		_search: function(params)
@@ -4652,7 +4640,7 @@ if(typeof(BX.CrmDupController) === "undefined")
 			else
 			{
 				var form = this.getSetting("form", null);
-				if(form instanceof BX.Crm.Form)
+				if(form instanceof BX.Crm.Form || form instanceof BX.UI.AjaxForm)
 				{
 					form.submit({ originator: this });
 				}

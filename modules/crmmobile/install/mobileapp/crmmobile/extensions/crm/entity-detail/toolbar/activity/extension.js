@@ -5,7 +5,6 @@ jn.define('crm/entity-detail/toolbar/activity', (require, exports, module) => {
 
 	const { ActivityFactory } = require('crm/entity-detail/toolbar/activity/factory');
 	const { ActivityToolbarModel } = require('crm/entity-detail/toolbar/activity/model');
-	const { NotifyManager } = require('notify-manager');
 	const { EventEmitter } = require('event-emitter');
 
 	class ActivityToolbar extends LayoutComponent
@@ -14,28 +13,31 @@ jn.define('crm/entity-detail/toolbar/activity', (require, exports, module) => {
 		{
 			super(props);
 
-			const { detailCard } = props;
-
 			this.state = {
 				loaded: false,
 			};
 
-			this.topPaddingRef = detailCard.topPaddingRef;
-			this.storage = Application.sharedStorage();
+			const { detailCard } = props;
+
 			this.detailCardUid = detailCard.uid;
 			this.customEventEmitter = EventEmitter.createWithUid(this.detailCardUid);
+
+			this.handleHide = this.hide.bind(this);
+		}
+
+		get topPaddingRef()
+		{
+			return BX.prop.get(this.props.detailCard, 'topPaddingRef', null);
 		}
 
 		componentDidMount()
 		{
-			this.customEventEmitter.on('Crm.Timeline::onTimelineRefresh', () => {
-				this.hide();
-			});
+			this.customEventEmitter.on('Crm.Timeline::onTimelineRefresh', this.handleHide);
 		}
 
 		show(model, actionParams)
 		{
-			return new Promise((resolve) => {
+			return new Promise((resolve, reject) => {
 				this.setState(
 					{
 						loaded: true,
@@ -43,9 +45,16 @@ jn.define('crm/entity-detail/toolbar/activity', (require, exports, module) => {
 						actionParams,
 					},
 					() => {
-						this.topPaddingRef.show();
-						this.activityRef.show();
-						resolve();
+						if (this.topPaddingRef && this.activityRef)
+						{
+							this.topPaddingRef.show();
+							this.activityRef.show();
+							resolve();
+						}
+						else
+						{
+							reject();
+						}
 					},
 				);
 			});
@@ -60,45 +69,6 @@ jn.define('crm/entity-detail/toolbar/activity', (require, exports, module) => {
 			}
 		}
 
-		loadScheduled()
-		{
-			const { loaded } = this.state;
-			const { entityTypeId, entityId } = this.props;
-
-			if (loaded)
-			{
-				return Promise.resolve();
-			}
-
-			return new Promise((resolve, reject) => {
-				BX.ajax.runAction('crmmobile.Timeline.loadScheduled', {
-						json: {
-							entityTypeId,
-							entityId,
-						},
-					})
-					.then(({ data }) => {
-						if (!data)
-						{
-							reject();
-							return;
-						}
-
-						this.setState(
-							{
-								loaded: true,
-								model: new ActivityToolbarModel(data),
-							},
-							resolve,
-						);
-					})
-					.catch(({ errors }) => {
-						NotifyManager.showErrors(errors);
-						reject();
-					});
-			});
-		}
-
 		render()
 		{
 			const { loaded, model, actionParams } = this.state;
@@ -111,14 +81,14 @@ jn.define('crm/entity-detail/toolbar/activity', (require, exports, module) => {
 					},
 					clickable: false,
 				},
-				loaded &&  ActivityFactory.make(
+				loaded && ActivityFactory.make(
 					model.getType(),
 					{
 						actionParams,
 						model,
 						style,
 						animation,
-						onHide: this.hide.bind(this),
+						onHide: this.handleHide,
 						ref: ref => this.activityRef = ref,
 					},
 				),

@@ -19,6 +19,9 @@ class Crm
 	protected $chatId = 0;
 	protected $userViewChat = false;
 
+	/** @var \CIMMessageParamAttach */
+	protected $attach;
+
 	/**
 	 * Crm constructor.
 	 * @param int $chatId
@@ -117,165 +120,205 @@ class Crm
 	}
 
 	/**
-	 * @param $entityType
-	 * @param $entityId
-	 * @return mixed
-	 * @throws \Bitrix\Main\LoaderException
+	 * @param array<string, int[]> $entities
+	 * @return void
 	 */
-	public function sendMessageAboutAddEntity($entityType, $entityId)
+	public function sendMessageAboutAddEntity(array $entities): void
 	{
 		$eventType = 'ADD_NEW';
 
-		return $this->sendMessageAboutEntity($entityType, $entityId, $eventType);
+		$this->sendMessageAboutEntity($entities, $eventType);
 	}
 
 	/**
-	 * @param $entityType
-	 * @param $entityId
-	 * @return mixed
-	 * @throws \Bitrix\Main\LoaderException
+	 * @param array<string, int[]> $entities
+	 * @return void
 	 */
-	public function sendMessageAboutExtendEntity($entityType, $entityId)
+	public function sendMessageAboutExtendEntity(array $entities): void
 	{
 		$eventType = 'EXTEND';
 
-		return $this->sendMessageAboutEntity($entityType, $entityId, $eventType);
+		$this->sendMessageAboutEntity($entities, $eventType);
 	}
 
 	/**
-	 * @param $entityType
-	 * @param $entityId
-	 * @return mixed
-	 * @throws \Bitrix\Main\LoaderException
+	 * @param array<string, int[]> $entities
+	 * @return void
 	 */
-	public function sendMessageAboutUpdateEntity($entityType, $entityId)
+	public function sendMessageAboutUpdateEntity(array $entities): void
 	{
 		$eventType = 'UPDATE';
 
-		return $this->sendMessageAboutEntity($entityType, $entityId, $eventType);
+		$this->sendMessageAboutEntity($entities, $eventType);
 	}
 
 	/**
 	 * Base function.
 	 *
-	 * @param $entityType
-	 * @param $entityId
-	 * @param $eventType
-	 * @return mixed
+	 * @param array<string, int[]> $entities
+	 * @param string $eventType
+	 * @return void
 	 */
-	protected function sendMessageAboutEntity($entityType, $entityId, $eventType)
+	protected function sendMessageAboutEntity(array $entities, string $eventType): void
 	{
-		$message = Loc::getMessage('IMOL_MESSAGE_CRM_' . $entityType . '_' . $eventType);
-
-		if(empty($message))
+		foreach ($entities as $entityType => $entityIds)
 		{
-			$message = Loc::getMessage('IMOL_MESSAGE_CRM_OTHER_' . $eventType);
-		}
+			$message = Loc::getMessage('IMOL_MESSAGE_CRM_' . $entityType . '_' . $eventType);
 
-		return Im::addMessage(Array(
-			"TO_CHAT_ID" => $this->chatId,
-			"MESSAGE" => '[b]' . $message . '[/b]',
-			"SYSTEM" => 'Y',
-			"ATTACH" => self::getEntityCard($entityType, $entityId),
-			"RECENT_ADD" => $this->getUserViewChat(),
-			//"KEYBOARD" => $keyboard
-		));
+			if (empty($message))
+			{
+				$message = Loc::getMessage('IMOL_MESSAGE_CRM_OTHER_' . $eventType);
+			}
+
+			Im::addMessage([
+				'TO_CHAT_ID' => $this->chatId,
+				'MESSAGE' => '[b]' . $message . '[/b]',
+				'SYSTEM' => 'Y',
+				'ATTACH' => $this->getEntityCard($entityType, $entityIds),
+				'RECENT_ADD' => $this->getUserViewChat(),
+			]);
+		}
 	}
 
 	/**
-	 * @param $entityType
-	 * @param $entityId
+	 * @param string $entityType
+	 * @param int[] $entityIds
 	 * @return \CIMMessageParamAttach|null
 	 */
-	protected static function getEntityCard($entityType, $entityId)
+	protected function getEntityCard(string $entityType, array $entityIds): ?\CIMMessageParamAttach
 	{
-		$result = null;
-
-		if(Loader::includeModule('im') && in_array($entityType, Array(ImOpenLines\Crm::ENTITY_LEAD, ImOpenLines\Crm::ENTITY_CONTACT, ImOpenLines\Crm::ENTITY_COMPANY, ImOpenLines\Crm::ENTITY_DEAL)))
+		if (
+			Loader::includeModule('im')
+			&& in_array($entityType, [ImOpenLines\Crm::ENTITY_LEAD, ImOpenLines\Crm::ENTITY_CONTACT, ImOpenLines\Crm::ENTITY_COMPANY, ImOpenLines\Crm::ENTITY_DEAL])
+		)
 		{
-			$entityData = ImOpenLines\Crm\Common::get($entityType, $entityId, true);
-
 			$attach = new \CIMMessageParamAttach();
 
-			$entityGrid = Array();
-			if ($entityType == ImOpenLines\Crm::ENTITY_LEAD)
+			foreach ($entityIds as $entityId)
 			{
-				if (isset($entityData['TITLE']))
+				$entityData = ImOpenLines\Crm\Common::get($entityType, $entityId, true);
+				if (!$entityData)
 				{
-					$attach->AddLink(Array(
-						'NAME' => $entityData['TITLE'],
-						'LINK' => ImOpenLines\Crm\Common::getLink($entityType, $entityData['ID']),
-					));
+					continue;
 				}
 
-				if (!empty($entityData['FULL_NAME']) && mb_strpos($entityData['TITLE'], $entityData['FULL_NAME']) === false)
+				$entityGrid = [];
+				if ($entityType == ImOpenLines\Crm::ENTITY_LEAD)
 				{
-					$entityGrid[] = Array('DISPLAY' => 'COLUMN', 'NAME' => Loc::getMessage('IMOL_MESSAGE_CRM_CARD_FULL_NAME'), 'VALUE' => $entityData['FULL_NAME']);
-				}
-				if (!empty($entityData['COMPANY_TITLE']))
-				{
-					$entityGrid[] = Array('DISPLAY' => 'COLUMN', 'NAME' => Loc::getMessage('IMOL_MESSAGE_CRM_CARD_COMPANY_TITLE'), 'VALUE' => $entityData['COMPANY_TITLE']);
-				}
-				if (!empty($entityData['POST']))
-				{
-					$entityGrid[] = Array('DISPLAY' => 'COLUMN', 'NAME' => Loc::getMessage('IMOL_MESSAGE_CRM_CARD_POST'), 'VALUE' => $entityData['POST']);
-				}
-			}
-			elseif($entityType == ImOpenLines\Crm::ENTITY_CONTACT)
-			{
-				if (isset($entityData['FULL_NAME']))
-				{
-					$attach->AddLink(Array(
-						'NAME' => $entityData['FULL_NAME'],
-						'LINK' => ImOpenLines\Crm\Common::getLink($entityType, $entityData['ID']),
-					));
-				}
-
-				if (!empty($entityData['POST']))
-				{
-					$entityGrid[] = Array('DISPLAY' => 'COLUMN', 'NAME' => Loc::getMessage('IMOL_MESSAGE_CRM_CARD_POST'), 'VALUE' => $entityData['POST']);
-				}
-			}
-			elseif($entityType == ImOpenLines\Crm::ENTITY_COMPANY || $entityType == ImOpenLines\Crm::ENTITY_DEAL)
-			{
-				if (isset($entityData['TITLE']))
-				{
-					$attach->AddLink(Array(
-						'NAME' => $entityData['TITLE'],
-						'LINK' => ImOpenLines\Crm\Common::getLink($entityType, $entityData['ID']),
-					));
-				}
-			}
-
-			if ($entityData['HAS_PHONE'] == 'Y' && isset($entityData['FM']['PHONE']))
-			{
-				$fields = Array();
-				foreach ($entityData['FM']['PHONE'] as $phones)
-				{
-					foreach ($phones as $phone)
+					if (isset($entityData['TITLE']))
 					{
-						$fields[] = $phone;
+						$attach->addLink([
+							'NAME' => $entityData['TITLE'],
+							'LINK' => ImOpenLines\Crm\Common::getLink($entityType, $entityData['ID']),
+						]);
+					}
+
+					if (
+						!empty($entityData['FULL_NAME'])
+						&& mb_strpos($entityData['TITLE'], $entityData['FULL_NAME']) === false
+					)
+					{
+						$entityGrid[] = [
+							'DISPLAY' => 'COLUMN',
+							'NAME' => Loc::getMessage('IMOL_MESSAGE_CRM_CARD_FULL_NAME'),
+							'VALUE' => $entityData['FULL_NAME']
+						];
+					}
+					if (!empty($entityData['COMPANY_TITLE']))
+					{
+						$entityGrid[] = [
+							'DISPLAY' => 'COLUMN',
+							'NAME' => Loc::getMessage('IMOL_MESSAGE_CRM_CARD_COMPANY_TITLE'),
+							'VALUE' => $entityData['COMPANY_TITLE']
+						];
+					}
+					if (!empty($entityData['POST']))
+					{
+						$entityGrid[] = [
+							'DISPLAY' => 'COLUMN',
+							'NAME' => Loc::getMessage('IMOL_MESSAGE_CRM_CARD_POST'),
+							'VALUE' => $entityData['POST']
+						];
 					}
 				}
-				$entityGrid[] = Array('DISPLAY' => 'LINE', 'NAME' => Loc::getMessage('IMOL_MESSAGE_CRM_CARD_PHONE'), 'VALUE' => implode('[br]', $fields), 'HEIGHT' => '20');
-			}
-			if ($entityData['HAS_EMAIL'] == 'Y' && $entityData['FM']['EMAIL'])
-			{
-				$fields = Array();
-				foreach ($entityData['FM']['EMAIL'] as $emails)
+				elseif ($entityType == ImOpenLines\Crm::ENTITY_CONTACT)
 				{
-					foreach ($emails as $email)
+					if (isset($entityData['FULL_NAME']))
 					{
-						$fields[] = $email;
+						$attach->addLink([
+							'NAME' => $entityData['FULL_NAME'],
+							'LINK' => ImOpenLines\Crm\Common::getLink($entityType, $entityData['ID']),
+						]);
+					}
+
+					if (!empty($entityData['POST']))
+					{
+						$entityGrid[] = [
+							'DISPLAY' => 'COLUMN',
+							'NAME' => Loc::getMessage('IMOL_MESSAGE_CRM_CARD_POST'),
+							'VALUE' => $entityData['POST']
+						];
 					}
 				}
-				$entityGrid[] = Array('DISPLAY' => 'LINE', 'NAME' => Loc::getMessage('IMOL_MESSAGE_CRM_CARD_EMAIL'), 'VALUE' => implode('[br]', $fields), 'HEIGHT' => '20');
-			}
-			$attach->AddGrid($entityGrid);
+				elseif ($entityType == ImOpenLines\Crm::ENTITY_COMPANY || $entityType == ImOpenLines\Crm::ENTITY_DEAL)
+				{
+					if (isset($entityData['TITLE']))
+					{
+						$attach->addLink([
+							'NAME' => $entityData['TITLE'],
+							'LINK' => ImOpenLines\Crm\Common::getLink($entityType, $entityData['ID']),
+						]);
+					}
+				}
 
-			$result = $attach;
+				if (
+					isset($entityData['HAS_PHONE'])
+					&& $entityData['HAS_PHONE'] == 'Y'
+					&& isset($entityData['FM']['PHONE'])
+				)
+				{
+					$fields = [];
+					foreach ($entityData['FM']['PHONE'] as $phones)
+					{
+						foreach ($phones as $phone)
+						{
+							$fields[] = $phone;
+						}
+					}
+					$entityGrid[] = [
+						'DISPLAY' => 'LINE',
+						'NAME' => Loc::getMessage('IMOL_MESSAGE_CRM_CARD_PHONE'),
+						'VALUE' => implode('[br]', $fields),
+						'HEIGHT' => '20'
+					];
+				}
+				if ($entityData['HAS_EMAIL'] == 'Y' && $entityData['FM']['EMAIL'])
+				{
+					$fields = [];
+					foreach ($entityData['FM']['EMAIL'] as $emails)
+					{
+						foreach ($emails as $email)
+						{
+							$fields[] = $email;
+						}
+					}
+					$entityGrid[] = [
+						'DISPLAY' => 'LINE',
+						'NAME' => Loc::getMessage('IMOL_MESSAGE_CRM_CARD_EMAIL'),
+						'VALUE' => implode('[br]', $fields),
+						'HEIGHT' => '20'
+					];
+				}
+
+				$attach->addGrid($entityGrid);
+			}
+
+			if (!$attach->isEmpty())
+			{
+				return $attach;
+			}
 		}
 
-		return $result;
+		return null;
 	}
 }

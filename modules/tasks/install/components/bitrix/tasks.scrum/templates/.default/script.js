@@ -1,6 +1,6 @@
 this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
-(function (exports,ui_shortView,ui_entitySelector,ui_hint,main_polyfill_intersectionobserver,main_popup,ui_dialogs_messagebox,ui_draganddrop_draggable,pull_client,main_loader,main_core,main_core_events) {
+(function (exports,ui_shortView,ui_entitySelector,ui_notification,ui_hint,main_polyfill_intersectionobserver,main_popup,ui_dialogs_messagebox,ui_draganddrop_draggable,pull_client,main_loader,main_core,main_core_events) {
 	'use strict';
 
 	var SidePanel = /*#__PURE__*/function (_EventEmitter) {
@@ -163,6 +163,16 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "updateItemSort",
 	    value: function updateItemSort(data) {
 	      return this.sendRequestToComponent(data, 'updateItemSort');
+	    }
+	  }, {
+	    key: "addTag",
+	    value: function addTag(data) {
+	      return new Promise(function (resolve, reject) {
+	        main_core.ajax.runComponentAction('bitrix:tasks.tag.list', 'addTag', {
+	          mode: 'class',
+	          data: data
+	        }).then(resolve, reject);
+	      });
 	    }
 	  }, {
 	    key: "updateSprintSort",
@@ -1266,7 +1276,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      var uiClasses = 'ui-icon ui-icon-common-user';
 	      var name = main_core.Text.encode(this.responsible.name);
 	      var src = this.responsible.photo ? main_core.Text.encode(this.responsible.photo.src) : null;
-	      var photoStyle = src ? "background-image: url('".concat(src, "');") : '';
+	      var photoStyle = src ? "background-image: url('".concat(encodeURI(src), "');") : '';
 	      this.node = main_core.Tag.render(_templateObject$9 || (_templateObject$9 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__item--responsible\">\n\t\t\t\t<div class=\"tasks-scrum__item--responsible-photo ", "\" title=\"", "\">\n\t\t\t\t\t<i style=\"", "\"></i>\n\t\t\t\t</div>\n\t\t\t\t<span>", "</span>\n\t\t\t</div>\n\t\t"])), uiClasses, name, photoStyle, name);
 	      main_core.Event.bind(this.node.querySelector('div'), 'click', this.onClick.bind(this));
 	      main_core.Event.bind(this.node.querySelector('span'), 'click', this.onClick.bind(this));
@@ -2179,8 +2189,12 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    value: function setDisableStatus(status) {
 	      this.disableStatus = Boolean(status);
 
-	      if (this.isDisabled()) {
-	        this.storyPoints.disable();
+	      if (this.storyPoints) {
+	        if (this.isDisabled()) {
+	          this.storyPoints.disable();
+	        } else {
+	          this.storyPoints.unDisable();
+	        }
 	      }
 	    }
 	  }, {
@@ -2719,7 +2733,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    _this.requestSender = params.requestSender;
 	    _this.filterService = params.filter;
 	    _this.groupId = parseInt(params.groupId, 10);
+	    _this.tagsAreConverting = params.tagsAreConverting;
 	    _this.allTags = new Map();
+	    _this.messageViewed = false;
 	    return _this;
 	  }
 
@@ -2790,15 +2806,25 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      return babelHelpers.toConsumableArray(this.allTags.values()).find(function (epic) {
 	        return epic.entityId === 'epic' && epic.id === epicId;
 	      });
-	    }
+	    } // widget on scrum (ex task)
+
 	  }, {
 	    key: "showTagsDialog",
 	    value: function showTagsDialog(item, targetNode) {
 	      var _this2 = this;
 
+	      if (this.tagsAreConverting) {
+	        this.showConvertingMessage();
+	        return;
+	      }
+
 	      var choiceWasMade = false;
+	      var groupId = this.groupId;
+	      var statusSuccess = {
+	        status: false
+	      };
 	      this.tagDialog = new ui_entitySelector.Dialog({
-	        id: item.getId(),
+	        id: item.getId().toString(),
 	        targetNode: targetNode,
 	        width: 400,
 	        height: 300,
@@ -2807,13 +2833,14 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        enableSearch: true,
 	        compactView: true,
 	        searchOptions: {
-	          allowCreateItem: true,
-	          footerOptions: {
-	            label: main_core.Loc.getMessage('TASKS_SCRUM_SEARCHER_ACTIONS_TAG_ADD')
-	          }
+	          allowCreateItem: false
+	        },
+	        footer: BX.Tasks.EntitySelector.Footer,
+	        footerOptions: {
+	          userId: this.userId,
+	          groupId: groupId
 	        },
 	        offsetTop: 12,
-	        context: 'TASKS_SCRUM_TAG_' + this.groupId,
 	        entities: [{
 	          id: 'task-tag',
 	          options: {
@@ -2821,34 +2848,14 @@ this.BX.Tasks = this.BX.Tasks || {};
 	            taskId: item.getSourceId()
 	          }
 	        }],
+	        clearUnavailableItems: true,
 	        events: {
-	          'Search:onItemCreateAsync': function SearchOnItemCreateAsync(event) {
-	            return new Promise(function (resolve) {
-	              var _event$getData = event.getData(),
-	                  searchQuery = _event$getData.searchQuery;
+	          'onLoad': function onLoad(baseEvent) {
+	            baseEvent.getTarget().getFooterContainer().style.zIndex = 1;
 
-	              var dialog = event.getTarget();
-	              var tagName = searchQuery.getQuery();
+	            _this2.onShowTaskEditCallback(baseEvent, statusSuccess, item);
 
-	              if (!tagName) {
-	                dialog.focusSearch();
-	                return;
-	              }
-
-	              var item = dialog.addItem({
-	                id: tagName,
-	                entityId: 'task-tag',
-	                title: tagName,
-	                tabs: 'recents'
-	              });
-	              item.select();
-	              dialog.getTagSelector().clearTextBox();
-	              dialog.focusSearch();
-	              dialog.selectFirstTab();
-	              var label = dialog.getContainer().querySelector('.ui-selector-footer-conjunction');
-	              label.textContent = '';
-	              resolve();
-	            });
+	            _this2.hideDialogLabel(baseEvent.getTarget());
 	          },
 	          'Item:onSelect': function ItemOnSelect(event) {
 	            choiceWasMade = true;
@@ -2864,8 +2871,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	            _this2.emit('deAttachTagToTask', tag);
 	          },
-	          'onLoad': function onLoad(baseEvent) {
-	            _this2.hideDialogLabel(baseEvent.getTarget());
+	          'onSearch': function onSearch(event) {
+	            _this2.onSearchCallback(event);
 	          }
 	        },
 	        tagSelectorOptions: {
@@ -2929,8 +2936,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        events: {
 	          'Search:onItemCreateAsync': function SearchOnItemCreateAsync(event) {
 	            return new Promise(function (resolve) {
-	              var _event$getData2 = event.getData(),
-	                  searchQuery = _event$getData2.searchQuery;
+	              var _event$getData = event.getData(),
+	                  searchQuery = _event$getData.searchQuery;
 
 	              var dialog = event.getTarget();
 	              var epicName = searchQuery.getQuery();
@@ -3010,17 +3017,25 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      if (this.tagDialog) {
 	        this.tagDialog.hide();
 	      }
-	    }
+	    } //widget on scrum (new task)
+
 	  }, {
 	    key: "showTagsSearchDialog",
 	    value: function showTagsSearchDialog(inputObject, enteredQuery) {
 	      var _this4 = this;
+
+	      if (this.tagsAreConverting) {
+	        inputObject.setTagsSearchMode(false);
+	        return;
+	      }
 
 	      var input = inputObject.getInputNode();
 
 	      if (this.tagSearchDialog && this.tagSearchDialog.getId() !== inputObject.getNodeId()) {
 	        this.tagSearchDialog = null;
 	      }
+
+	      var groupId = this.groupId;
 
 	      if (!this.tagSearchDialog) {
 	        this.tagSearchDialog = new ui_entitySelector.Dialog({
@@ -3031,7 +3046,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          multiple: false,
 	          dropdownMode: true,
 	          compactView: true,
-	          context: 'TASKS_SCRUM_TAG_' + this.groupId,
 	          entities: [{
 	            id: 'task-tag',
 	            options: {
@@ -3042,19 +3056,22 @@ this.BX.Tasks = this.BX.Tasks || {};
 	            visible: false
 	          },
 	          searchOptions: {
-	            allowCreateItem: true,
-	            footerOptions: {
-	              label: main_core.Loc.getMessage('TASKS_SCRUM_SEARCHER_ACTIONS_TAG_ADD')
-	            }
+	            allowCreateItem: false
 	          },
+	          footer: BX.Tasks.EntitySelector.Footer,
+	          footerOptions: {
+	            userId: this.userId,
+	            groupId: groupId
+	          },
+	          clearUnavailableItems: true,
 	          events: {
-	            'Search:onItemCreateAsync': function SearchOnItemCreateAsync(event) {
-	              return new Promise(function (resolve) {
-	                var dialog = event.getTarget();
-	                dialog.hide();
-	                input.focus();
-	                resolve();
-	              });
+	            'onLoad': function onLoad(event) {
+	              event.getTarget().getFooterContainer().style.zIndex = 1;
+
+	              _this4.onLoadTaskQuickCreateCallback(event, inputObject);
+	            },
+	            'onSearch': function onSearch(event) {
+	              _this4.onSearchCallback(event);
 	            },
 	            'Item:onSelect': function ItemOnSelect(event) {
 	              var newValue = '';
@@ -3070,35 +3087,32 @@ this.BX.Tasks = this.BX.Tasks || {};
 	              input.value = newValue.trim();
 	              input.focus();
 	              selectedItem.deselect();
-	            },
-	            'onLoad': function onLoad(baseEvent) {
-	              _this4.hideDialogLabel(baseEvent.getTarget());
 	            }
 	          }
 	        });
 	        this.tagSearchDialog.subscribe('onHide', function () {
 	          inputObject.setTagsSearchMode(false);
 	        });
-	        inputObject.subscribe('onEnter', function () {
-	          if (main_core.Type.isNil(_this4.tagSearchDialog)) {
-	            return;
-	          }
-
-	          var searchTab = _this4.tagSearchDialog.getSearchTab();
-
-	          if (main_core.Type.isNil(searchTab)) {
-	            return;
-	          }
-
-	          if (searchTab.isEmptyResult()) {
-	            _this4.tagSearchDialog.hide();
-
-	            _this4.tagSearchDialog = null;
-	            input.focus();
-	          }
-	        });
 	      }
 
+	      inputObject.subscribe('onEnter', function (event) {
+	        if (main_core.Type.isNil(_this4.tagSearchDialog)) {
+	          return;
+	        }
+
+	        var searchTab = _this4.tagSearchDialog.getSearchTab();
+
+	        if (main_core.Type.isNil(searchTab)) {
+	          return;
+	        }
+
+	        if (searchTab.isEmptyResult()) {
+	          _this4.tagSearchDialog.hide();
+
+	          _this4.tagSearchDialog = null;
+	          input.focus();
+	        }
+	      });
 	      inputObject.setTagsSearchMode(true);
 	      this.tagSearchDialog.show();
 	      this.tagSearchDialog.search(enteredQuery);
@@ -3141,8 +3155,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          events: {
 	            'Search:onItemCreateAsync': function SearchOnItemCreateAsync(event) {
 	              return new Promise(function (resolve) {
-	                var _event$getData3 = event.getData(),
-	                    searchQuery = _event$getData3.searchQuery;
+	                var _event$getData2 = event.getData(),
+	                    searchQuery = _event$getData2.searchQuery;
 
 	                var epicName = searchQuery.getQuery();
 	                inputObject.disable();
@@ -3253,6 +3267,192 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        main_core.Dom.addClass(label, 'ui-selector-tab-label-hidden');
 	      });
 	    }
+	  }, {
+	    key: "onSearchCallback",
+	    value: function onSearchCallback(event) {
+	      var dialog = event.getTarget();
+	      var query = event.getData().query;
+
+	      if (query.trim() !== '') {
+	        dialog.getFooterContainer().querySelector('#tags-widget-custom-footer-add-new').hidden = false;
+	        dialog.getFooterContainer().querySelector('#tags-widget-custom-footer-conjunction').hidden = false;
+	      } else {
+	        dialog.getFooterContainer().querySelector('#tags-widget-custom-footer-add-new').hidden = true;
+	        dialog.getFooterContainer().querySelector('#tags-widget-custom-footer-conjunction').hidden = true;
+	      }
+	    }
+	  }, {
+	    key: "onLoadTaskQuickCreateCallback",
+	    value: function onLoadTaskQuickCreateCallback(event, inputObject) {
+	      var _this6 = this;
+
+	      var dialog = event.getTarget();
+	      this.hideDialogLabel(dialog);
+	      var input = inputObject.getInputNode();
+	      inputObject.subscribe('onMetaEnter', function (event) {
+	        var regex = new RegExp('\\s|#$', 'm');
+	        var currentPiece = input.value.split(regex).pop();
+	        var tagName = currentPiece.replace('#', '').trim();
+	        var data = {
+	          newTag: tagName,
+	          groupId: _this6.groupId,
+	          taskId: 0,
+	          action: 'add'
+	        };
+
+	        if (tagName === '') {
+	          return;
+	        }
+
+	        _this6.requestSender.addTag(data).then(function (response) {
+	          if (!response.data.success) {
+	            var alertClass = 'tasks-scrum-tag-already-exists-alert';
+
+	            _this6.showAlert(dialog.getId(), alertClass, response.data.error);
+
+	            setTimeout(function () {
+	              _this6.removeAlert(dialog, alertClass);
+	            }, 2000);
+	            return;
+	          }
+
+	          dialog.search(tagName);
+	        });
+	      });
+	      dialog.getFooterContainer().querySelector('#tags-widget-custom-footer-add-new').addEventListener('click', function (event) {
+	        var regex = new RegExp('\\s|#$', 'm');
+	        var currentPiece = input.value.split(regex).pop();
+	        var tagName = currentPiece.replace('#', '').trim();
+	        var data = {
+	          newTag: tagName,
+	          groupId: _this6.groupId,
+	          taskId: 0,
+	          action: 'add'
+	        };
+
+	        if (tagName === '') {
+	          return;
+	        }
+
+	        _this6.requestSender.addTag(data).then(function (response) {
+	          if (!response.data.success) {
+	            var alertClass = 'tasks-scrum-tag-already-exists-alert';
+
+	            _this6.showAlert(dialog.getId(), alertClass, response.data.error);
+
+	            setTimeout(function () {
+	              _this6.removeAlert(dialog, alertClass);
+	            }, 2000);
+	            return;
+	          }
+
+	          dialog.search(tagName);
+	        });
+	      });
+	    }
+	  }, {
+	    key: "onShowTaskEditCallback",
+	    value: function onShowTaskEditCallback(event, statusSuccess, item) {
+	      var _this7 = this;
+
+	      var dialog = event.getTarget();
+	      var events = ['click', 'keydown'];
+
+	      var handler = function handler(event) {
+	        if (event.type === 'keydown') {
+	          if (!((event.ctrlKey || event.metaKey) && event.keyCode === 13)) {
+	            return;
+	          }
+	        }
+
+	        var tag = dialog.getTagSelectorQuery();
+
+	        if (tag.trim() === '') {
+	          return;
+	        }
+
+	        var data = {
+	          tag: tag,
+	          itemIds: [item.getId()],
+	          groupId: _this7.groupId,
+	          action: 'add'
+	        };
+
+	        _this7.requestSender.updateTaskTags(data).then(function (response) {
+	          if (response.data.success) {
+	            statusSuccess.status = true;
+
+	            var _item = dialog.addItem({
+	              id: tag,
+	              entityId: 'task-tag',
+	              title: tag,
+	              tabs: 'all'
+	            });
+
+	            _item.select();
+
+	            _item.setBadges([{
+	              title: response.data.group
+	            }]);
+
+	            dialog.getTagSelector().clearTextBox();
+	            dialog.focusSearch();
+	            dialog.selectFirstTab();
+	          } else {
+	            var alertClass = 'tasks-scrum-tag-already-exists-alert';
+
+	            _this7.showAlert(dialog.getId(), alertClass, response.data.error);
+
+	            setTimeout(function () {
+	              _this7.removeAlert(dialog, alertClass);
+	            }, 3000);
+	          }
+	        });
+	      };
+
+	      events.forEach(function (ev) {
+	        if (ev === 'click') {
+	          dialog.getFooterContainer().querySelector('#tags-widget-custom-footer-add-new').addEventListener(ev, handler);
+	        } else {
+	          dialog.getContainer().addEventListener(ev, handler);
+	        }
+	      });
+	    }
+	  }, {
+	    key: "showAlert",
+	    value: function showAlert(dialogId, className, error) {
+	      var messageType = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : 'ui-alert ui-alert-xs ui-alert-danger';
+	      var dialog = BX.UI.EntitySelector.Dialog.getById(dialogId);
+
+	      if (dialog.getContainer().querySelector("div.".concat(className))) {
+	        return;
+	      }
+
+	      var alert = document.createElement('div');
+	      alert.className = className;
+	      alert.innerHTML = "\n\t\t\t\t\t\t<div class='".concat(messageType, "'  \n\t\t\t\t\t\t\t<span class='ui-alert-message'>\n\t\t\t\t\t\t\t\t").concat(error, "\n\t\t\t\t\t\t\t</span> \n\t\t\t\t\t\t</div>\n\t\t\t\t\t");
+	      dialog.getFooterContainer().before(alert);
+	    }
+	  }, {
+	    key: "removeAlert",
+	    value: function removeAlert(dialog, className) {
+	      var notification = dialog.getContainer().querySelector("div.".concat(className));
+	      notification && notification.remove();
+	    }
+	  }, {
+	    key: "showConvertingMessage",
+	    value: function showConvertingMessage() {
+	      var message = new ui_dialogs_messagebox.MessageBox({
+	        title: main_core.Loc.getMessage('TASKS_SCRUM_TAG_SELECTOR_TAGS_ARE_CONVERTING_TITLE'),
+	        message: main_core.Loc.getMessage('TASKS_SCRUM_TAG_SELECTOR_TAGS_ARE_CONVERTING_TEXT'),
+	        buttons: ui_dialogs_messagebox.MessageBoxButtons.OK,
+	        okCaption: main_core.Loc.getMessage('TASKS_SCRUM_TAG_SELECTOR_TAGS_ARE_CONVERTING_COME_BACK_LATER'),
+	        onOk: function onOk() {
+	          message.close();
+	        }
+	      });
+	      message.show();
+	    }
 	  }], [{
 	    key: "getHashTagNamesFromText",
 	    value: function getHashTagNamesFromText(inputText) {
@@ -3318,6 +3518,11 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      return this.entity;
 	    }
 	  }, {
+	    key: "hasEntity",
+	    value: function hasEntity(entity) {
+	      return this.entity && this.entity.getId() === entity.getId();
+	    }
+	  }, {
 	    key: "setBindNode",
 	    value: function setBindNode(node) {
 	      this.bindNode = node;
@@ -3338,11 +3543,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      var _this2 = this;
 
 	      this.nodeId = main_core.Text.getRandom();
-
-	      if (!main_core.Type.isNull(this.node)) {
-	        main_core.Dom.remove(this.node);
-	      }
-
 	      this.node = main_core.Tag.render(_templateObject$e || (_templateObject$e = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div id=\"", "\" class=\"tasks-scrum__input --add-block\">\n\t\t\t\t<textarea\n\t\t\t\t\tplaceholder=\"", "\"\n\t\t\t\t\tclass=\"tasks-scrum__input--textarea\"\n\t\t\t\t>", "</textarea>\n\t\t\t\t<div class=\"tasks-scrum__input--textarea-help\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Text.encode(this.nodeId), main_core.Loc.getMessage('TASKS_SCRUM_TASK_ADD_INPUT_TASK_PLACEHOLDER'), main_core.Text.encode(this.value), main_core.Loc.getMessage('TASKS_SCRUM_TASK_ADD_INPUT_TASK_PLACEHOLDER_HELPER'));
 	      main_core.Event.bind(this.getInputNode(), 'input', function (event) {
 	        _this2.onTagSearch(event);
@@ -3358,39 +3558,32 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "onKeydown",
 	    value: function onKeydown(event) {
-	      if (event.isComposing || event.key === 'Escape' || event.key === 'Enter') {
+	      if (event.key === 'Escape' || event.key === 'Enter') {
 	        if (!this.isTagsSearchMode() && !this.isEpicSearchMode()) {
-	          this.getInputNode().blur();
+	          this.submit();
 	          event.stopImmediatePropagation();
 	        }
 
-	        if (event.key === 'Enter') {
+	        if (event.key === 'Enter' && !(main_core.Browser.isMac() && event.metaKey || event.ctrlKey)) {
 	          this.emit('onEnter', {
 	            event: event
 	          });
+	        }
 
-	          if (main_core.Browser.isMac() && event.metaKey || event.ctrlKey) {
-	            this.emit('onMetaEnter', {
-	              event: event
-	            });
-	          }
+	        if (event.key === 'Enter' && (main_core.Browser.isMac() && event.metaKey || event.ctrlKey)) {
+	          this.emit('onMetaEnter', {
+	            event: event
+	          });
 	        }
 	      }
 	    }
 	  }, {
 	    key: "onBlur",
 	    value: function onBlur() {
-	      if (this.isTagsSearchMode() || this.isEpicSearchMode()) {
-	        return;
-	      }
-
-	      this.disable();
 	      var input = this.getInputNode();
 
 	      if (input.value === '') {
 	        this.removeYourself();
-	      } else {
-	        this.createTaskItem();
 	      }
 	    }
 	  }, {
@@ -3406,6 +3599,17 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        this.emit('tagsSearchOpen', query);
 	      } else {
 	        this.emit('tagsSearchClose');
+	      }
+	    }
+	  }, {
+	    key: "submit",
+	    value: function submit() {
+	      this.disable();
+
+	      if (this.isEmpty()) {
+	        this.removeYourself();
+	      } else {
+	        this.createTaskItem();
 	      }
 	    }
 	  }, {
@@ -3448,6 +3652,22 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    value: function unDisable() {
 	      main_core.Dom.removeClass(this.node, '--disabled');
 	      this.getInputNode().disabled = false;
+	      this.emit('unDisable');
+	    }
+	  }, {
+	    key: "isExists",
+	    value: function isExists() {
+	      return !main_core.Type.isNull(this.node);
+	    }
+	  }, {
+	    key: "isEmpty",
+	    value: function isEmpty() {
+	      if (!this.isExists()) {
+	        return true;
+	      }
+
+	      var input = this.getInputNode();
+	      return input.value === '';
 	    }
 	  }, {
 	    key: "isTaskCreated",
@@ -3483,6 +3703,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "removeYourself",
 	    value: function removeYourself() {
 	      main_core.Dom.remove(this.node);
+	      this.node = null;
 	      this.emit('remove');
 	    }
 	  }, {
@@ -3513,14 +3734,12 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "createTaskItem",
 	    value: function createTaskItem() {
-	      if (!this.isTagsSearchMode() && !this.isEpicSearchMode()) {
-	        var input = this.getInputNode();
+	      var input = this.getInputNode();
 
-	        if (input.value) {
-	          this.emit('createTaskItem', input.value);
-	          this.taskCreated = true;
-	          input.value = '';
-	        }
+	      if (input.value) {
+	        this.emit('createTaskItem', input.value);
+	        this.taskCreated = true;
+	        input.value = '';
 	      }
 	    }
 	  }]);
@@ -4145,7 +4364,11 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    _this.setEventNamespace('BX.Tasks.Scrum.BacklogHeader');
 
 	    _this.backlog = backlog;
+	    _this.epicButtonLocked = false;
+	    _this.taskButtonLocked = false;
 	    _this.node = null;
+	    _this.epicButton = null;
+	    _this.taskButton = null;
 	    return _this;
 	  }
 
@@ -4156,7 +4379,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      var uiTaskClasses = 'ui-btn ui-btn-sm ui-btn-success ui-btn-round ui-btn-no-caps ';
 	      this.node = main_core.Tag.render(_templateObject$f || (_templateObject$f = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__content-header\">\n\n\t\t\t\t<div class=\"tasks-scrum__name-container\">\n\t\t\t\t\t<div class=\"tasks-scrum__title\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\n\t\t\t\t<button class=\"tasks-scrum__backlog-btn ", " ui-btn-icon-add\">\n\t\t\t\t\t", "\n\t\t\t\t</button>\n\t\t\t\t<button class=\"tasks-scrum__backlog-btn ", " ui-btn-icon-add\">\n\t\t\t\t\t", "\n\t\t\t\t</button>\n\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('TASKS_SCRUM_BACKLOG_TITLE'), this.renderTaskCounterLabel(this.backlog.getNumberTasks()), uiEpicClasses, main_core.Loc.getMessage('TASKS_SCRUM_BACKLOG_HEADER_EPIC'), uiTaskClasses, main_core.Loc.getMessage('TASKS_SCRUM_BACKLOG_HEADER_TASK'));
 	      var buttons = this.node.querySelectorAll('button');
-	      main_core.Event.bind(buttons.item(0), 'click', this.onEpicClick.bind(this, buttons.item(0)));
+	      this.epicButton = buttons.item(0);
+	      this.taskButton = buttons.item(1);
+	      main_core.Event.bind(buttons.item(0), 'click', this.onEpicClick.bind(this));
 	      main_core.Event.bind(buttons.item(1), 'click', this.onTaskClick.bind(this));
 	      return this.node;
 	    }
@@ -4171,13 +4396,47 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      return main_core.Tag.render(_templateObject2$5 || (_templateObject2$5 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__backlog-tasks\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('TASKS_SCRUM_BACKLOG_HEADER_TASK_COUNTER').replace('#value#', value));
 	    }
 	  }, {
+	    key: "unLockEpicButton",
+	    value: function unLockEpicButton() {
+	      this.epicButtonLocked = false;
+	      main_core.Dom.removeClass(this.epicButton, 'ui-btn-wait');
+	    }
+	  }, {
+	    key: "lockEpicButton",
+	    value: function lockEpicButton() {
+	      this.epicButtonLocked = true;
+	      main_core.Dom.addClass(this.epicButton, 'ui-btn-wait');
+	    }
+	  }, {
+	    key: "unLockTaskButton",
+	    value: function unLockTaskButton() {
+	      this.taskButtonLocked = false;
+	      main_core.Dom.removeClass(this.taskButton, 'ui-btn-wait');
+	    }
+	  }, {
+	    key: "lockTaskButton",
+	    value: function lockTaskButton() {
+	      this.taskButtonLocked = true;
+	      main_core.Dom.addClass(this.taskButton, 'ui-btn-wait');
+	    }
+	  }, {
 	    key: "onEpicClick",
-	    value: function onEpicClick(button) {
-	      this.emit('epicClick', button);
+	    value: function onEpicClick() {
+	      if (this.epicButtonLocked) {
+	        return;
+	      }
+
+	      this.lockEpicButton();
+	      this.emit('epicClick');
 	    }
 	  }, {
 	    key: "onTaskClick",
 	    value: function onTaskClick() {
+	      if (this.taskButtonLocked) {
+	        return;
+	      }
+
+	      this.lockTaskButton();
 	      this.emit('taskClick');
 	    }
 	  }]);
@@ -4379,13 +4638,13 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	      this.header = new Header(backlog);
 	      this.header.subscribe('epicClick', function (baseEvent) {
-	        return _this3.emit('openAddEpicForm', baseEvent.getData());
+	        _this3.emit('openAddEpicForm', baseEvent.getTarget());
 	      });
-	      this.header.subscribe('taskClick', function () {
+	      this.header.subscribe('taskClick', function (baseEvent) {
 	        if (_this3.mandatoryExists) {
 	          _this3.emit('openAddTaskForm');
 	        } else {
-	          _this3.emit('showInput');
+	          _this3.emit('showInput', baseEvent.getTarget());
 	        }
 	      });
 	    }
@@ -4486,6 +4745,60 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return Backlog;
 	}(Entity);
 
+	function _classStaticPrivateFieldSpecSet(receiver, classConstructor, descriptor, value) { _classCheckPrivateStaticAccess(receiver, classConstructor); _classCheckPrivateStaticFieldDescriptor(descriptor, "set"); _classApplyDescriptorSet(receiver, descriptor, value); return value; }
+
+	function _classApplyDescriptorSet(receiver, descriptor, value) { if (descriptor.set) { descriptor.set.call(receiver, value); } else { if (!descriptor.writable) { throw new TypeError("attempted to set read only private field"); } descriptor.value = value; } }
+
+	function _classStaticPrivateFieldSpecGet(receiver, classConstructor, descriptor) { _classCheckPrivateStaticAccess(receiver, classConstructor); _classCheckPrivateStaticFieldDescriptor(descriptor, "get"); return _classApplyDescriptorGet(receiver, descriptor); }
+
+	function _classCheckPrivateStaticFieldDescriptor(descriptor, action) { if (descriptor === undefined) { throw new TypeError("attempted to " + action + " private static field before its declaration"); } }
+
+	function _classCheckPrivateStaticAccess(receiver, classConstructor) { if (receiver !== classConstructor) { throw new TypeError("Private static access of wrong provenance"); } }
+
+	function _classApplyDescriptorGet(receiver, descriptor) { if (descriptor.get) { return descriptor.get.call(receiver); } return descriptor.value; }
+
+	var Culture = /*#__PURE__*/function () {
+	  function Culture() {
+	    babelHelpers.classCallCheck(this, Culture);
+	  }
+
+	  babelHelpers.createClass(Culture, [{
+	    key: "setData",
+	    value: function setData(data) {
+	      this.data = data;
+	    }
+	  }, {
+	    key: "getDayMonthFormat",
+	    value: function getDayMonthFormat() {
+	      return this.data.dayMonthFormat;
+	    }
+	  }, {
+	    key: "getLongDateFormat",
+	    value: function getLongDateFormat() {
+	      return this.data.longDateFormat;
+	    }
+	  }, {
+	    key: "getShortTimeFormat",
+	    value: function getShortTimeFormat() {
+	      return this.data.shortTimeFormat;
+	    }
+	  }], [{
+	    key: "getInstance",
+	    value: function getInstance() {
+	      if (!_classStaticPrivateFieldSpecGet(Culture, Culture, _instance)) {
+	        _classStaticPrivateFieldSpecSet(Culture, Culture, _instance, new Culture());
+	      }
+
+	      return _classStaticPrivateFieldSpecGet(Culture, Culture, _instance);
+	    }
+	  }]);
+	  return Culture;
+	}();
+	var _instance = {
+	  writable: true,
+	  value: void 0
+	};
+
 	var _templateObject$k;
 	var Date$1 = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(Date, _EventEmitter);
@@ -4552,7 +4865,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	      var updateDateNode = function updateDateNode(node, value) {
 	        /* eslint-disable */
-	        node.textContent = BX.date.format('j F', Math.floor(BX.parseDate(value).getTime() / 1000));
+	        node.textContent = BX.date.format(Culture.getInstance().getDayMonthFormat(), Math.floor(BX.parseDate(value).getTime() / 1000));
 	        /* eslint-enable */
 	      };
 
@@ -4622,14 +4935,14 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "getFormattedDateStart",
 	    value: function getFormattedDateStart(sprint) {
 	      /* eslint-disable */
-	      return BX.date.format('j F', sprint.getDateStart(), null, true);
+	      return BX.date.format(Culture.getInstance().getDayMonthFormat(), sprint.getDateStart(), null, true);
 	      /* eslint-enable */
 	    }
 	  }, {
 	    key: "getFormattedDateEnd",
 	    value: function getFormattedDateEnd(sprint) {
 	      /* eslint-disable */
-	      return BX.date.format('j F', sprint.getDateEnd(), null, true);
+	      return BX.date.format(Culture.getInstance().getDayMonthFormat(), sprint.getDateEnd(), null, true);
 	      /* eslint-enable */
 	    }
 	  }]);
@@ -4791,7 +5104,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "getCompletedDate",
 	    value: function getCompletedDate(endDate) {
-	      return BX.date.format('j F Y', endDate);
+	      return BX.date.format(Culture.getInstance().getLongDateFormat(), endDate);
 	    }
 	  }]);
 	  return CompletedStats;
@@ -4819,7 +5132,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "getExpiredDay",
 	    value: function getExpiredDay(endDate) {
-	      return BX.date.format('j F Y', endDate);
+	      return BX.date.format(Culture.getInstance().getLongDateFormat(), endDate);
 	    }
 	  }]);
 	  return ExpiredStats;
@@ -8068,7 +8381,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      var itemId = parseInt(dragBeforeStartEvent.source.dataset.id, 10);
 	      var item = this.entityStorage.findItemByItemId(itemId);
 
-	      if (item.isSubTask() || item.isDisabled()) {
+	      if (!item || item.isSubTask() || item.isDisabled()) {
 	        baseEvent.preventDefault();
 	      } else {
 	        if (item.isShownSubTasks()) {
@@ -10010,6 +10323,94 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return Decomposition;
 	}();
 
+	var PullTag = /*#__PURE__*/function () {
+	  function PullTag(params) {
+	    babelHelpers.classCallCheck(this, PullTag);
+	    this.requestSender = params.requestSender;
+	    this.entityStorage = params.entityStorage;
+	    this.groupId = params.groupId;
+	  }
+
+	  babelHelpers.createClass(PullTag, [{
+	    key: "getModuleId",
+	    value: function getModuleId() {
+	      return 'tasks';
+	    }
+	  }, {
+	    key: "getMap",
+	    value: function getMap() {
+	      return {
+	        tag_changed: this.onTagChanged.bind(this)
+	      };
+	    }
+	  }, {
+	    key: "onTagChanged",
+	    value: function onTagChanged(params) {
+	      var _this = this;
+
+	      var tagDialogs = BX.UI.EntitySelector.Dialog.getInstances();
+	      tagDialogs.forEach(function (dialog) {
+	        dialog.hide();
+	      });
+
+	      if (parseInt(this.groupId, 10) !== params.groupId) {
+	        return;
+	      }
+
+	      this.entityStorage.getBacklog().fadeOut();
+	      var updatedTags = params.oldTagsNames;
+	      var updatedTag = params.oldTagName;
+	      var newTag = params.newTagName;
+	      var items = this.entityStorage.getAllItems();
+	      var itemsToUpdate = new Set();
+	      items.forEach(function (item) {
+	        var tags = item.getTags().getValue();
+
+	        if (tags.find(function (tag) {
+	          return tag === updatedTag;
+	        })) {
+	          itemsToUpdate.add(item);
+	        }
+
+	        if (updatedTags) {
+	          updatedTags.forEach(function (tag) {
+	            var updatedTagFromArray = tag;
+
+	            if (tags.find(function (tag) {
+	              return tag === updatedTagFromArray;
+	            })) {
+	              itemsToUpdate.add(item);
+	            }
+	          });
+	        }
+	      });
+	      itemsToUpdate.forEach(function (item) {
+	        var currentTags = item.getTags().getValue();
+	        currentTags.forEach(function (tag, index, array) {
+	          if (updatedTags && updatedTags.length !== 0 && updatedTags.find(function (tagInArr) {
+	            return tag === tagInArr;
+	          })) {
+	            array[index] = newTag;
+	          } else if (tag === updatedTag) {
+	            array[index] = newTag;
+	          }
+	        });
+	        var newTags = [];
+	        currentTags.forEach(function (tag) {
+	          if (tag !== '') {
+	            newTags.push(tag);
+	          }
+	        });
+	        item.setTags(newTags);
+	      });
+	      setTimeout(function () {
+	        _this.entityStorage.getBacklog().fadeIn();
+	      }, 1000);
+	    }
+	  }]);
+	  return PullTag;
+	}();
+
 	function ownKeys$3(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
 
 	function _objectSpread$3(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$3(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$3(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
@@ -10061,7 +10462,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    _this.tagSearcher = new TagSearcher({
 	      requestSender: _this.requestSender,
 	      filter: _this.filter,
-	      groupId: params.groupId
+	      groupId: params.groupId,
+	      tagsAreConverting: params.tagsAreConverting
 	    });
 	    Object.values(params.tags.epic).forEach(function (epic) {
 	      _this.tagSearcher.addEpicToSearcher(epic);
@@ -10133,6 +10535,11 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      entityStorage: _this.entityStorage,
 	      filter: _this.filter,
 	      tagSearcher: _this.tagSearcher
+	    });
+	    _this.pullTag = new PullTag({
+	      requestSender: _this.requestSender,
+	      entityStorage: _this.entityStorage,
+	      groupId: _this.groupId
 	    });
 	    _this.pullSprint = new PullSprint({
 	      requestSender: _this.requestSender,
@@ -10215,6 +10622,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      pull_client.PULL.subscribe(this.pullSprint);
 	      pull_client.PULL.subscribe(this.pullItem);
 	      pull_client.PULL.subscribe(this.pullEpic);
+	      pull_client.PULL.subscribe(this.pullTag);
 	    }
 	  }, {
 	    key: "bindHandlers",
@@ -10368,30 +10776,23 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "onShowBacklogInput",
 	    value: function onShowBacklogInput(baseEvent) {
 	      var backlog = baseEvent.getTarget();
-	      this.input.setEntity(backlog);
-	      this.input.cleanBindNode();
-	      this.renderInput();
+	      var header = baseEvent.getData();
+	      this.showInput(backlog).then(function () {
+	        if (!main_core.Type.isPlainObject(header)) {
+	          header.unLockTaskButton();
+	        }
+	      });
 	    }
 	  }, {
 	    key: "onShowSprintInput",
 	    value: function onShowSprintInput(baseEvent) {
-	      var _this5 = this;
-
 	      var sprint = baseEvent.getTarget();
 
-	      var showInput = function showInput() {
-	        _this5.input.setEntity(sprint);
-
-	        _this5.input.cleanBindNode();
-
-	        _this5.renderInput();
-	      };
-
 	      if (sprint.isHideContent()) {
-	        sprint.subscribeOnce('toggleVisibilityContent', showInput.bind(this));
+	        sprint.subscribeOnce('toggleVisibilityContent', this.showInput.bind(this, sprint));
 	        sprint.toggleVisibilityContent(sprint.getContentContainer());
 	      } else {
-	        showInput();
+	        this.showInput(sprint);
 	      }
 	    }
 	  }, {
@@ -10407,6 +10808,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "onRenderInput",
 	    value: function onRenderInput(baseEvent) {
+	      this.deactivateDraggable();
 	      var input = baseEvent.getTarget();
 	      var entity = input.getEntity();
 	      entity.hideBlank();
@@ -10416,6 +10818,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "onRemoveInput",
 	    value: function onRemoveInput(baseEvent) {
+	      this.activateDraggable();
 	      var input = baseEvent.getTarget();
 	      var entity = input.getEntity();
 
@@ -10449,7 +10852,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "onCreateTaskItem",
 	    value: function onCreateTaskItem(baseEvent) {
-	      var _this6 = this;
+	      var _this5 = this;
 
 	      var input = baseEvent.getTarget();
 	      var entity = input.getEntity();
@@ -10504,17 +10907,14 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      this.pullItem.addTmpIdToSkipAdding(newItem.getId());
 	      this.pullItem.addTmpIdToSkipSorting(newItem.getId());
 	      this.sendRequestToCreateTask(entity, newItem).then(function (response) {
-	        input.unDisable();
-	        input.focus();
-
-	        _this6.fillItemAfterCreation(newItem, response.data);
+	        _this5.fillItemAfterCreation(newItem, response.data);
 
 	        entity.setItem(newItem);
 
-	        _this6.updateEntityCounters(entity);
+	        _this5.updateEntityCounters(entity);
 
-	        if (_this6.decomposition) {
-	          var _parentItem = _this6.decomposition.getParentItem();
+	        if (_this5.decomposition) {
+	          var _parentItem = _this5.decomposition.getParentItem();
 
 	          if (!entity.isBacklog()) {
 	            var subTasks = _parentItem.getSubTasks();
@@ -10540,17 +10940,19 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          }
 	        }
 
+	        input.unDisable();
+	        input.focus();
 	        entity.adjustListItemsWidth();
 
-	        _this6.planBuilder.adjustSprintListWidth();
+	        _this5.planBuilder.adjustSprintListWidth();
 	      })["catch"](function (response) {
-	        _this6.requestSender.showErrorAlert(response);
+	        _this5.requestSender.showErrorAlert(response);
 	      });
 	    }
 	  }, {
 	    key: "onUpdateItem",
 	    value: function onUpdateItem(baseEvent) {
-	      var _this7 = this;
+	      var _this6 = this;
 
 	      var entity = baseEvent.getTarget();
 	      var updateData = baseEvent.getData();
@@ -10559,16 +10961,16 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        var isStoryPointsUpdated = !main_core.Type.isUndefined(updateData.storyPoints);
 
 	        if (isStoryPointsUpdated) {
-	          _this7.updateEntityCounters(entity);
+	          _this6.updateEntityCounters(entity);
 	        }
 	      })["catch"](function (response) {
-	        _this7.requestSender.showErrorAlert(response);
+	        _this6.requestSender.showErrorAlert(response);
 	      });
 	    }
 	  }, {
 	    key: "onGetSubTasks",
 	    value: function onGetSubTasks(baseEvent) {
-	      var _this8 = this;
+	      var _this7 = this;
 
 	      var sprint = baseEvent.getTarget();
 	      var subTasks = baseEvent.getData();
@@ -10585,15 +10987,15 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        subTasks.getParentItem().showSubTasks();
 	        sprint.deactivateSubTaskLoading(subTasks.getParentItem());
 
-	        _this8.planBuilder.adjustSprintListWidth();
+	        _this7.planBuilder.adjustSprintListWidth();
 	      })["catch"](function (response) {
-	        _this8.requestSender.showErrorAlert(response);
+	        _this7.requestSender.showErrorAlert(response);
 	      });
 	    }
 	  }, {
 	    key: "onChangeTaskResponsible",
 	    value: function onChangeTaskResponsible(baseEvent) {
-	      var _this9 = this;
+	      var _this8 = this;
 
 	      var item = baseEvent.getData();
 	      this.pullItem.addIdToSkipUpdating(item.getId());
@@ -10602,7 +11004,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        sourceId: item.getSourceId(),
 	        responsible: item.getResponsible().getValue()
 	      })["catch"](function (response) {
-	        _this9.requestSender.showErrorAlert(response);
+	        _this8.requestSender.showErrorAlert(response);
 	      });
 	    }
 	  }, {
@@ -10613,10 +11015,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "onOpenEpicForm",
 	    value: function onOpenEpicForm(baseEvent) {
-	      var button = baseEvent.getData();
-	      main_core.Dom.addClass(button, 'ui-btn-wait');
+	      var header = baseEvent.getData();
 	      this.epic.openAddForm().then(function () {
-	        main_core.Dom.removeClass(button, 'ui-btn-wait');
+	        header.unLockEpicButton();
 	      });
 	    }
 	  }, {
@@ -10633,7 +11034,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "onCompleteSprint",
 	    value: function onCompleteSprint() {
-	      var _this10 = this;
+	      var _this9 = this;
 
 	      var sprintSidePanel = new SprintSidePanel({
 	        sidePanel: this.sidePanel,
@@ -10642,13 +11043,13 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      });
 	      sprintSidePanel.showCompletionForm();
 	      sprintSidePanel.subscribe('showTask', function (innerBaseEvent) {
-	        _this10.sidePanel.openSidePanelByUrl(_this10.getPathToTask().replace('#task_id#', innerBaseEvent.getData()));
+	        _this9.sidePanel.openSidePanelByUrl(_this9.getPathToTask().replace('#task_id#', innerBaseEvent.getData()));
 	      });
 	    }
 	  }, {
 	    key: "onRemoveSprint",
 	    value: function onRemoveSprint(baseEvent) {
-	      var _this11 = this;
+	      var _this10 = this;
 
 	      var sprint = baseEvent.getTarget();
 	      this.pullSprint.addIdToSkipRemoving(sprint.getId());
@@ -10661,35 +11062,35 @@ this.BX.Tasks = this.BX.Tasks || {};
 	            sprint.addItemToGroupMode(item);
 	          });
 
-	          _this11.itemMover.moveToWithGroupMode(sprint, _this11.entityStorage.getBacklog(), null, false, false);
+	          _this10.itemMover.moveToWithGroupMode(sprint, _this10.entityStorage.getBacklog(), null, false, false);
 	        }
 
-	        _this11.destroyActionPanel();
+	        _this10.destroyActionPanel();
 
 	        sprint.removeYourself();
 
-	        _this11.entityStorage.removeSprint(sprint.getId());
+	        _this10.entityStorage.removeSprint(sprint.getId());
 
-	        _this11.planBuilder.adjustSprintListWidth();
+	        _this10.planBuilder.adjustSprintListWidth();
 	      })["catch"](function (response) {
-	        _this11.requestSender.showErrorAlert(response);
+	        _this10.requestSender.showErrorAlert(response);
 	      });
 	    }
 	  }, {
 	    key: "onChangeSprintName",
 	    value: function onChangeSprintName(baseEvent) {
-	      var _this12 = this;
+	      var _this11 = this;
 
 	      var requestData = baseEvent.getData();
 	      this.pullSprint.addIdToSkipUpdating(requestData.sprintId);
 	      this.requestSender.changeSprintName(requestData)["catch"](function (response) {
-	        _this12.requestSender.showErrorAlert(response);
+	        _this11.requestSender.showErrorAlert(response);
 	      });
 	    }
 	  }, {
 	    key: "onChangeSprintDeadline",
 	    value: function onChangeSprintDeadline(baseEvent) {
-	      var _this13 = this;
+	      var _this12 = this;
 
 	      var sprint = baseEvent.getTarget();
 	      var requestData = baseEvent.getData();
@@ -10699,13 +11100,13 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        sprint.setDateStart(sprintData.dateStart);
 	        sprint.setDateEnd(sprintData.dateEnd);
 	      })["catch"](function (response) {
-	        _this13.requestSender.showErrorAlert(response);
+	        _this12.requestSender.showErrorAlert(response);
 	      });
 	    }
 	  }, {
 	    key: "onGetSprintCompletedItems",
 	    value: function onGetSprintCompletedItems(baseEvent) {
-	      var _this14 = this;
+	      var _this13 = this;
 
 	      var sprint = baseEvent.getTarget();
 	      var listItemsNode = sprint.getListItemsNode();
@@ -10744,7 +11145,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      })["catch"](function (response) {
 	        loader.hide();
 
-	        _this14.requestSender.showErrorAlert(response);
+	        _this13.requestSender.showErrorAlert(response);
 	      });
 	    }
 	  }, {
@@ -10762,7 +11163,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "onOpenSprintAddMenu",
 	    value: function onOpenSprintAddMenu(baseEvent) {
-	      var _this15 = this;
+	      var _this14 = this;
 
 	      var entity = baseEvent.getTarget();
 	      var button = baseEvent.getData().getNode();
@@ -10787,7 +11188,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      this.sprintAddMenu.addMenuItem({
 	        text: main_core.Loc.getMessage('TASKS_SCRUM_BACKLOG_SPRINT_FIRST_ADD'),
 	        onclick: function onclick(event, menuItem) {
-	          _this15.onShowSprintInput(new main_core_events.BaseEvent().setTarget(entity));
+	          _this14.onShowSprintInput(new main_core_events.BaseEvent().setTarget(entity));
 
 	          menuItem.getMenuWindow().close();
 	        }
@@ -10795,18 +11196,18 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      this.sprintAddMenu.addMenuItem({
 	        text: main_core.Loc.getMessage('TASKS_SCRUM_BACKLOG_SPRINT_SECOND_ADD'),
 	        onclick: function onclick(event, menuItem) {
-	          _this15.planBuilder.createSprint();
+	          _this14.planBuilder.createSprint();
 
 	          menuItem.getMenuWindow().close();
 	        }
 	      });
 	      this.sprintAddMenu.getPopupWindow().subscribe('onClose', function () {
-	        _this15.sprintAddMenu.getPopupWindow().destroy();
+	        _this14.sprintAddMenu.getPopupWindow().destroy();
 
-	        _this15.sprintAddMenu = null;
+	        _this14.sprintAddMenu = null;
 	      });
 	      this.sprintAddMenu.getPopupWindow().subscribe('onShow', function () {
-	        var angle = _this15.sprintAddMenu.getMenuContainer().querySelector('.popup-window-angly');
+	        var angle = _this14.sprintAddMenu.getMenuContainer().querySelector('.popup-window-angly');
 
 	        main_core.Dom.style(angle, 'pointerEvents', 'none');
 	      });
@@ -10889,7 +11290,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "onChangeShortView",
 	    value: function onChangeShortView(baseEvent) {
-	      var _this16 = this;
+	      var _this15 = this;
 
 	      var isShortView = baseEvent.getData();
 	      this.planBuilder.setShortView(isShortView);
@@ -10918,7 +11319,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          }
 	        });
 
-	        _this16.requestSender.showErrorAlert(response);
+	        _this15.requestSender.showErrorAlert(response);
 	      });
 	    }
 	  }, {
@@ -10947,7 +11348,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "onShowLinked",
 	    value: function onShowLinked(baseEvent) {
-	      var _this17 = this;
+	      var _this16 = this;
 
 	      var item = baseEvent.getData();
 
@@ -10979,7 +11380,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        filteredItems.forEach(function (itemParams) {
 	          var item = Item.buildItem(itemParams);
 
-	          var entity = _this17.entityStorage.findEntityByEntityId(item.getEntityId());
+	          var entity = _this16.entityStorage.findEntityByEntityId(item.getEntityId());
 
 	          if (!entity.isCompleted() && !entity.hasItem(item)) {
 	            item.setShortView(entity.getShortView());
@@ -10988,7 +11389,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          }
 	        });
 
-	        var allItems = _this17.entityStorage.getAllItems();
+	        var allItems = _this16.entityStorage.getAllItems();
 
 	        var items = new Set();
 	        linkedItemIds.forEach(function (itemId) {
@@ -10997,17 +11398,17 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          }
 	        });
 
-	        _this17.itemDesigner.updateBorderColor(items);
+	        _this16.itemDesigner.updateBorderColor(items);
 
 	        if (linkedItemIds.length > 0) {
-	          _this17.searchItems.start(item, linkedItemIds);
+	          _this16.searchItems.start(item, linkedItemIds);
 	        } else {
-	          _this17.searchItems.fadeInAll();
+	          _this16.searchItems.fadeInAll();
 	        }
 
 	        loader.hide();
 	      })["catch"](function (response) {
-	        _this17.requestSender.showErrorAlert(response);
+	        _this16.requestSender.showErrorAlert(response);
 
 	        loader.hide();
 	      });
@@ -11039,7 +11440,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "onShowBlank",
 	    value: function onShowBlank(baseEvent) {
-	      var _this18 = this;
+	      var _this17 = this;
 
 	      var backlog = baseEvent.getTarget();
 	      setTimeout(function () {
@@ -11047,7 +11448,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          return;
 	        }
 
-	        if (_this18.entityStorage.existsAtLeastOneItem()) {
+	        if (_this17.entityStorage.existsAtLeastOneItem()) {
 	          if (backlog.isExactSearchApplied()) {
 	            backlog.showEmptySearchStub();
 	          } else {
@@ -11082,7 +11483,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "loadItems",
 	    value: function loadItems(entity) {
-	      var _this19 = this;
+	      var _this18 = this;
 
 	      if (this.loadItemsRepeatCounter.get(entity.getId()) > 1) {
 	        return;
@@ -11107,7 +11508,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        if (main_core.Type.isArray(items) && items.length) {
 	          entity.incrementPageNumberItems();
 
-	          _this19.createItemsInEntity(entity, items);
+	          _this18.createItemsInEntity(entity, items);
 
 	          if (entity.isGroupMode()) {
 	            entity.activateGroupMode();
@@ -11116,11 +11517,11 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          entity.bindItemsLoader();
 	        } else {
 	          if (entity.getNumberTasks() !== entity.getNumberItems()) {
-	            _this19.loadItemsRepeatCounter.set(entity.getId(), _this19.loadItemsRepeatCounter.get(entity.getId()) + 1);
+	            _this18.loadItemsRepeatCounter.set(entity.getId(), _this18.loadItemsRepeatCounter.get(entity.getId()) + 1);
 
 	            entity.decrementPageNumberItems();
 
-	            _this19.loadItems(entity);
+	            _this18.loadItems(entity);
 	          }
 	        }
 
@@ -11129,18 +11530,47 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        loader.hide();
 	        entity.setActiveLoadItems(false);
 
-	        _this19.requestSender.showErrorAlert(response);
+	        _this18.requestSender.showErrorAlert(response);
+	      });
+	    }
+	  }, {
+	    key: "showInput",
+	    value: function showInput(entity, bindNode) {
+	      var _this19 = this;
+
+	      return new Promise(function (resolve) {
+	        if (_this19.input.isExists()) {
+	          _this19.input.submit();
+
+	          if (_this19.input.hasEntity(entity)) {
+	            resolve();
+	          } else {
+	            _this19.input.subscribeOnce('unDisable', function () {
+	              _this19.input.removeYourself();
+
+	              _this19.renderInput(entity, bindNode);
+
+	              resolve();
+	            });
+	          }
+	        } else {
+	          _this19.renderInput(entity, bindNode);
+
+	          resolve();
+	        }
 	      });
 	    }
 	  }, {
 	    key: "renderInput",
-	    value: function renderInput() {
-	      var entity = this.input.getEntity();
-	      var bindNode = this.input.getBindNode();
+	    value: function renderInput(entity, bindNode) {
+	      this.input.setEntity(entity);
 
-	      if (bindNode) {
+	      if (main_core.Type.isElementNode(bindNode)) {
+	        this.input.setBindNode(bindNode);
 	        main_core.Dom.insertAfter(this.input.render(), bindNode);
 	      } else {
+	        this.input.cleanBindNode();
+
 	        if (entity.isEmpty()) {
 	          main_core.Dom.insertBefore(this.input.render(), entity.getLoaderNode());
 	        } else {
@@ -11149,7 +11579,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      }
 
 	      entity.adjustListItemsWidth();
-	      this.input.getInputNode().focus();
+	      this.input.focus();
 	      this.scrollToInput();
 	    }
 	  }, {
@@ -11367,6 +11797,20 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      this.actionPanel.show();
 	    }
 	  }, {
+	    key: "activateDraggable",
+	    value: function activateDraggable() {
+	      this.entityStorage.getAllItems().forEach(function (item) {
+	        return item.setDisableStatus(false);
+	      });
+	    }
+	  }, {
+	    key: "deactivateDraggable",
+	    value: function deactivateDraggable() {
+	      this.entityStorage.getAllItems().forEach(function (item) {
+	        return item.setDisableStatus(true);
+	      });
+	    }
+	  }, {
 	    key: "activateGroupMode",
 	    value: function activateGroupMode(entity, item) {
 	      if (item) {
@@ -11559,7 +12003,11 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        }).then(function (response) {
 	          entity.getGroupModeItems().forEach(function (groupModeItem) {
 	            var currentTags = groupModeItem.getTags().getValue();
-	            currentTags.push(tag);
+
+	            if (!currentTags.includes(tag)) {
+	              currentTags.push(tag);
+	            }
+
 	            groupModeItem.setTags(currentTags);
 	          });
 	        })["catch"](function (response) {
@@ -11653,8 +12101,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      this.decomposition = new Decomposition({
 	        parentItem: parentItem
 	      });
-	      this.input.setEntity(entity);
-	      this.input.setBindNode(parentItem.getNode());
 
 	      if (!parentItem.isLinkedTask()) {
 	        this.itemDesigner.getRandomColorForItemBorder().then(function (randomColor) {
@@ -11662,7 +12108,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        });
 	      }
 
-	      this.renderInput();
+	      this.showInput(entity, parentItem.getNode());
 	    }
 	  }, {
 	    key: "startSprintDecomposition",
@@ -11681,11 +12127,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	        parentItem.showSubTasks();
 
-	        _this26.input.setEntity(entity);
-
-	        _this26.input.setBindNode(subTasks.getNode());
-
-	        _this26.renderInput();
+	        _this26.showInput(entity, subTasks.getNode());
 	      };
 
 	      if (parentItem.isParentTask()) {
@@ -11709,9 +12151,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          renderInputAfterSubTasks(subTasks);
 	        }
 	      } else {
-	        this.input.setEntity(entity);
-	        this.input.setBindNode(parentItem.getNode());
-	        this.renderInput();
+	        this.showInput(entity, parentItem.getNode());
 	      }
 	    }
 	  }]);
@@ -12099,6 +12539,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "setParams",
 	    value: function setParams(params) {
 	      this.setViewName(params.viewName);
+	      Culture.getInstance().setData(params.culture);
 	    }
 	  }, {
 	    key: "setViewName",
@@ -12205,5 +12646,5 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	exports.Entry = Entry;
 
-}((this.BX.Tasks.Scrum = this.BX.Tasks.Scrum || {}),BX.UI.ShortView,BX.UI.EntitySelector,BX,BX,BX.Main,BX.UI.Dialogs,BX.UI.DragAndDrop,BX,BX,BX,BX.Event));
+}((this.BX.Tasks.Scrum = this.BX.Tasks.Scrum || {}),BX.UI.ShortView,BX.UI.EntitySelector,BX,BX,BX,BX.Main,BX.UI.Dialogs,BX.UI.DragAndDrop,BX,BX,BX,BX.Event));
 //# sourceMappingURL=script.js.map

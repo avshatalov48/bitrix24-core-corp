@@ -283,7 +283,7 @@ foreach($arResult['ROWS'] as $key => $row)
 							cacheable: false,
 							allowChangeHistory: true,
 							contentClassName: "bitrix24-profile-slider-content",
-							loader: "intranet:profile",
+							loader: "intranet:slider-profile",
 							width: 1100
 						}
 					)',

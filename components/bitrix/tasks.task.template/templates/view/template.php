@@ -603,6 +603,8 @@ $APPLICATION->SetAdditionalCSS('/bitrix/js/tasks/css/tasks.css');
 										'VALUE' => htmlspecialcharsback($tagString),
 										'CAN_EDIT' => $canUpdate,
 										'TEMPLATE_ID' => $template->getId(),
+										'CONTEXT' => 'TEMPLATE',
+										'PATH_TO_TEMPLATES' => $arParams['PATH_TO_USER_TASKS_TEMPLATES'],
 									],
 									null,
 									['HIDE_ICONS' => 'Y']

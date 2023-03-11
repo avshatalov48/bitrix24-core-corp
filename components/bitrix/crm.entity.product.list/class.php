@@ -43,6 +43,7 @@ final class CCrmEntityProductListComponent
 	protected const STORAGE_GRID = 'GRID';
 	private const PREFIX_MEASURE_INDEX = 'measure_';
 	private const NEW_ROW_ID_PREFIX = 'n';
+	private const PRODUCT_ICON_URL = '/bitrix/images/crm/grid_icons/product.svg';
 
 	/** @var Main\Grid\Options $gridConfig */
 	protected $gridConfig;
@@ -654,6 +655,7 @@ final class CCrmEntityProductListComponent
 		$this->defaultSettings['ALLOW_CATALOG_PRICE_EDIT'] = true;
 		$this->defaultSettings['ALLOW_DISCOUNT_CHANGE'] = true;
 		$this->defaultSettings['ALLOW_ENTITY_RESERVE'] = false;
+		$this->defaultSettings['ALLOW_RESERVATION'] = false;
 	}
 
 	/**
@@ -1050,6 +1052,11 @@ final class CCrmEntityProductListComponent
 					}
 				}
 
+				if (!$this->isAllowedReservation())
+				{
+					$this->rows[$index]['STORE_ID'] = null;
+				}
+
 				$floatFields = [
 					'QUANTITY',
 					'DISCOUNT_RATE',
@@ -1154,6 +1161,7 @@ final class CCrmEntityProductListComponent
 			'GRID_ID' => $this->getGridId(),
 			'COLUMNS' => array_values($this->getColumns()),
 			'VISIBLE_COLUMNS' => array_values($this->getVisibleColumns()),
+			'HEADERS_SECTIONS' => array_values($this->getHeadersSections()),
 
 			'AJAX_ID' => $this->getStorageItem(self::STORAGE_GRID, 'AJAX_ID'),
 			'AJAX_MODE' => $this->arParams['~AJAX_MODE'],
@@ -1188,6 +1196,7 @@ final class CCrmEntityProductListComponent
 		$this->arResult['CATALOG_ID'] = \CCrmCatalog::EnsureDefaultExists();
 		$this->arResult['COMPONENT_ID'] = $this->randString();
 		$this->arResult['NEW_ROW_POSITION'] = $this->getStorageItem(self::STORAGE_GRID, 'NEW_ROW_POSITION');
+		$this->arResult['USER_FIELD_COLUMNS'] = $this->getColumnsForTemplate();
 		unset($grid);
 
 		$this->fillCrmSettings();
@@ -1367,6 +1376,7 @@ final class CCrmEntityProductListComponent
 	{
 		$this->initGridConfig();
 		$this->initGridColumns();
+		$this->initGridHeadersSections();
 		$this->initGridPageNavigation();
 		$this->initGridOrder();
 	}
@@ -1410,6 +1420,32 @@ final class CCrmEntityProductListComponent
 			'COLUMNS' => $columns,
 			'VISIBLE_COLUMNS' => $visibleColumns,
 			'VISIBLE_COLUMNS_MAP' => $visibleColumnsMap,
+		]);
+	}
+
+	/**
+	 * @return void
+	 */
+	protected function initGridHeadersSections(): void
+	{
+		$sections = [
+			[
+				'id' => 'DEAL',
+				'name' => Loc::getMessage('CRM_ENTITY_PRODUCT_LIST_HEADER_SECTION_DEAL'),
+				'default' => true,
+				'selected' => true,
+			],
+			[
+				'id' => 'PRODUCT',
+				'name' => Loc::getMessage('CRM_ENTITY_PRODUCT_LIST_HEADER_SECTION_PRODUCT'),
+				'hint' => Loc::getMessage('HINT_CRM_ENTITY_PRODUCT_LIST_HEADER_SECTION_PRODUCT'),
+				'hintInteractivity' => true,
+				'selected' => true,
+			],
+		];
+
+		$this->fillStorageNode(self::STORAGE_GRID, [
+			'HEADERS_SECTIONS' => $sections,
 		]);
 	}
 
@@ -1728,6 +1764,101 @@ final class CCrmEntityProductListComponent
 			'width' => $columnDefaultWidth,
 		];
 
+		// sku + product fields
+		$result['ID'] = [
+			'id' => 'SKU_ID',
+			'iconUrl' => self::PRODUCT_ICON_URL,
+			'iconTitle' => Loc::getMessage('CRM_ENTITY_PRODUCT_LIST_HEADER_SECTION_PRODUCT'),
+			'name' => Loc::getMessage('CRM_ENTITY_PRODUCT_LIST_COLUMN_SKU_ID'),
+			'sort' => 'SKU_ID',
+			'align' => 'right',
+			'section_id' => 'PRODUCT',
+			'editable' => false,
+		];
+
+		$result['SKU_NAME'] = [
+			'id' => 'SKU_NAME',
+			'iconUrl' => self::PRODUCT_ICON_URL,
+			'iconTitle' => Loc::getMessage('CRM_ENTITY_PRODUCT_LIST_HEADER_SECTION_PRODUCT'),
+			'name' => Loc::getMessage('CRM_ENTITY_PRODUCT_LIST_COLUMN_SKU_NAME'),
+			'sort' => 'SKU_NAME',
+			'align' => 'left',
+			'section_id' => 'PRODUCT',
+			'editable' => false,
+		];
+
+		$result['SKU_DESCRIPTION'] = [
+			'id' => 'SKU_DESCRIPTION',
+			'iconUrl' => self::PRODUCT_ICON_URL,
+			'iconTitle' => Loc::getMessage('CRM_ENTITY_PRODUCT_LIST_HEADER_SECTION_PRODUCT'),
+			'name' => Loc::getMessage('CRM_ENTITY_PRODUCT_LIST_COLUMN_SKU_DESCRIPTION'),
+			'sort' => 'SKU_DESCRIPTION',
+			'align' => 'left',
+			'section_id' => 'PRODUCT',
+			'editable' => false,
+		];
+
+		$iblockColumns = $this->getIblockColumnsDescription();
+		$result = array_merge($result, $iblockColumns);
+
+		$result['LENGTH'] = [
+			'id' => 'LENGTH',
+			'iconUrl' => self::PRODUCT_ICON_URL,
+			'iconTitle' => Loc::getMessage('CRM_ENTITY_PRODUCT_LIST_HEADER_SECTION_PRODUCT'),
+			'name' => Loc::getMessage('CRM_ENTITY_PRODUCT_LIST_COLUMN_LENGTH'),
+			'sort' => 'LENGTH',
+			'align' => 'right',
+			'section_id' => 'PRODUCT',
+			'editable' => false,
+		];
+
+		$result['WIDTH'] = [
+			'id' => 'WIDTH',
+			'iconUrl' => self::PRODUCT_ICON_URL,
+			'iconTitle' => Loc::getMessage('CRM_ENTITY_PRODUCT_LIST_HEADER_SECTION_PRODUCT'),
+			'name' => Loc::getMessage('CRM_ENTITY_PRODUCT_LIST_COLUMN_WIDTH'),
+			'sort' => 'WIDTH',
+			'align' => 'right',
+			'section_id' => 'PRODUCT',
+			'editable' => false,
+		];
+
+		$result['HEIGHT'] = [
+			'id' => 'HEIGHT',
+			'iconUrl' => self::PRODUCT_ICON_URL,
+			'iconTitle' => Loc::getMessage('CRM_ENTITY_PRODUCT_LIST_HEADER_SECTION_PRODUCT'),
+			'name' => Loc::getMessage('CRM_ENTITY_PRODUCT_LIST_COLUMN_HEIGHT'),
+			'sort' => 'HEIGHT',
+			'align' => 'right',
+			'section_id' => 'PRODUCT',
+			'editable' => false,
+		];
+
+		$result['WEIGHT'] = [
+			'id' => 'WEIGHT',
+			'iconUrl' => self::PRODUCT_ICON_URL,
+			'iconTitle' => Loc::getMessage('CRM_ENTITY_PRODUCT_LIST_HEADER_SECTION_PRODUCT'),
+			'name' => Loc::getMessage('CRM_ENTITY_PRODUCT_LIST_COLUMN_WEIGHT'),
+			'sort' => 'WEIGHT',
+			'align' => 'right',
+			'section_id' => 'PRODUCT',
+			'editable' => false,
+		];
+
+		if (AccessController::getCurrent()->check(ActionDictionary::ACTION_PRODUCT_PURCHASE_INFO_VIEW))
+		{
+			$result['PURCHASING_PRICE_FORMATTED'] = [
+				'id' => 'PURCHASING_PRICE_FORMATTED',
+				'iconUrl' => self::PRODUCT_ICON_URL,
+				'iconTitle' => Loc::getMessage('CRM_ENTITY_PRODUCT_LIST_HEADER_SECTION_PRODUCT'),
+				'name' => Loc::getMessage('CRM_ENTITY_PRODUCT_LIST_COLUMN_PURCHASING_PRICE'),
+				'sort' => 'PURCHASING_PRICE',
+				'align' => 'right',
+				'section_id' => 'PRODUCT',
+				'editable' => false,
+			];
+		}
+
 		$headerDefaultMap = Crm\Component\EntityDetails\ProductList::getHeaderDefaultMap();
 		foreach ($result as $key => &$item)
 		{
@@ -1743,6 +1874,72 @@ final class CCrmEntityProductListComponent
 		unset($item);
 
 		return $result;
+	}
+
+	private function getIblockColumnsDescription(): array
+	{
+		$iblockIds = [
+			Crm\Product\Catalog::getDefaultId(),
+			Crm\Product\Catalog::getDefaultOfferId()
+		];
+		$result = [];
+
+		$restrictedPropTypes = Catalog\UI\PropertyProduct::getRestrictedPropertyTypes();
+		$restrictedProps = Catalog\UI\PropertyProduct::getRestrictedProperties();
+		$allowedUserTypes = Catalog\UI\PropertyProduct::getAllowedPropertyUserTypes();
+
+		$iterator = Iblock\PropertyTable::getList([
+			'select' => ['ID', 'NAME', 'CODE', 'PROPERTY_TYPE', 'USER_TYPE'],
+			'filter' => [
+				'=IBLOCK_ID' => $iblockIds,
+				'ACTIVE' => 'Y',
+				[
+					'LOGIC' => 'OR',
+					'=USER_TYPE' => null,
+					'@USER_TYPE' => $allowedUserTypes,
+				],
+				'!@PROPERTY_TYPE' => $restrictedPropTypes,
+				[
+					'LOGIC' => 'OR',
+					'=CODE' => null,
+					'!@CODE' => $restrictedProps,
+				],
+			],
+			'order' => [
+				'IBLOCK_ID' => 'ASC',
+				'SORT' => 'ASC',
+				'NAME' => 'ASC'
+			],
+			'cache' => ['ttl' => 86400],
+		]);
+		while ($prop = $iterator->fetch())
+		{
+			$headerId = 'PROPERTY_' . $prop['ID'];
+			$result[$headerId] = [
+				'id' => $headerId,
+				'iconUrl' => self::PRODUCT_ICON_URL,
+				'iconTitle' => Loc::getMessage('CRM_ENTITY_PRODUCT_LIST_HEADER_SECTION_PRODUCT'),
+				'name' => $prop['NAME'],
+				'section_id' => 'PRODUCT',
+				'editable' => false,
+			];
+
+			if ($prop['PROPERTY_TYPE'] === Iblock\PropertyTable::TYPE_NUMBER)
+			{
+				$result[$headerId]['align'] = 'right';
+			}
+			else
+			{
+				$result[$headerId]['align'] = 'left';
+			}
+		}
+
+		return $result;
+	}
+
+	private function getColumnsForTemplate(): array
+	{
+		return Catalog\UI\PropertyProduct::getColumnNames();
 	}
 
 	protected function getUserGridColumnIds(): array
@@ -1763,6 +1960,14 @@ final class CCrmEntityProductListComponent
 	protected function getColumns()
 	{
 		return $this->getStorageItem(self::STORAGE_GRID, 'COLUMNS');
+	}
+
+	/**
+	 * @return array
+	 */
+	protected function getHeadersSections()
+	{
+		return $this->getStorageItem(self::STORAGE_GRID, 'HEADERS_SECTIONS');
 	}
 
 	/**
@@ -1801,6 +2006,7 @@ final class CCrmEntityProductListComponent
 
 		$this->crmSettings['CATALOG_ENABLE_EMPTY_PRODUCT_ERROR'] = !\Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isCreationEntityCommodityItemAllowed();
 		$this->crmSettings['ALLOW_ENTITY_RESERVE'] = $this->isAllowedProductReserve();
+		$this->crmSettings['ALLOW_RESERVATION'] = $this->isAllowedReservation();
 
 		$priceNotification = \Bitrix\Crm\Config\State::getProductPriceChangingNotification();
 		$this->crmSettings['CATALOG_PRICE_EDIT_ARTICLE_HINT'] = $priceNotification['MESSAGE'] ?? '';
@@ -1896,6 +2102,7 @@ final class CCrmEntityProductListComponent
 		$this->arResult['IS_PRODUCT_EDITABLE'] = $this->crmSettings['IS_PRODUCT_EDITABLE'];
 		$this->arResult['ALLOW_CATALOG_PRICE_EDIT'] = $this->crmSettings['ALLOW_CATALOG_PRICE_EDIT'];
 		$this->arResult['ALLOW_ENTITY_RESERVE'] = $this->crmSettings['ALLOW_ENTITY_RESERVE'];
+		$this->arResult['ALLOW_RESERVATION'] = $this->crmSettings['ALLOW_RESERVATION'];
 		$this->arResult['ALLOW_DISCOUNT_CHANGE'] = $this->crmSettings['ALLOW_DISCOUNT_CHANGE'];
 		$this->arResult['ALLOW_CATALOG_PRICE_SAVE'] = $this->crmSettings['ALLOW_CATALOG_PRICE_SAVE'];
 		$this->arResult['CATALOG_PRICE_EDIT_ARTICLE_CODE'] = $this->crmSettings['CATALOG_PRICE_EDIT_ARTICLE_CODE'];
@@ -2012,6 +2219,8 @@ final class CCrmEntityProductListComponent
 			{
 				$this->loadCatalog($catalogItems);
 				$this->loadSkuTree($catalogItems);
+				$this->loadProductProperties($catalogItems);
+				$this->loadSkuProperties($catalogItems);
 			}
 
 			$this->fillEmptyCatalog();
@@ -2525,6 +2734,54 @@ final class CCrmEntityProductListComponent
 							}
 						}
 					}
+				}
+			}
+		}
+	}
+
+	private function loadProductProperties(array $items): void
+	{
+		$iblockId = Crm\Product\Catalog::getDefaultId();
+
+		if (!$iblockId)
+		{
+			return;
+		}
+
+		foreach ($items as $item => $rowIndexes)
+		{
+			foreach ($rowIndexes as $rowIndex)
+			{
+				$productId = $this->rows[$rowIndex]['PARENT_PRODUCT_ID'];
+				if ($productId)
+				{
+					$iblockProps = Catalog\UI\PropertyProduct::getIblockProperties($iblockId, $productId);
+					$this->rows[$rowIndex]['PRODUCT_PROPERTIES'] = $iblockProps;
+					$this->rows[$rowIndex] = array_merge($this->rows[$rowIndex], $iblockProps);
+				}
+			}
+		}
+	}
+
+	private function loadSkuProperties(array $items): void
+	{
+		$iblockId = Crm\Product\Catalog::getDefaultOfferId();
+
+		if (!$iblockId)
+		{
+			return;
+		}
+
+		foreach ($items as $item => $rowIndexes)
+		{
+			foreach ($rowIndexes as $rowIndex)
+			{
+				$productId = $item;
+				if ($productId)
+				{
+					$skuProps = Catalog\UI\PropertyProduct::getSkuProperties($iblockId, $productId);
+					$this->rows[$rowIndex]['SKU_PROPERTIES'] = $skuProps;
+					$this->rows[$rowIndex] = array_merge($this->rows[$rowIndex], $skuProps);
 				}
 			}
 		}

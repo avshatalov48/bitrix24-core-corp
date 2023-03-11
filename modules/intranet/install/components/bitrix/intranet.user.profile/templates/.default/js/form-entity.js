@@ -168,7 +168,15 @@ namespace.EntityEditor.prototype =
 			return;
 		}
 
-		grid.instance.reload();
+		let currentPage = grid.instance.getCurrentPage();
+		if (BX.Type.isInteger(currentPage) && currentPage > 0)
+		{
+			grid.instance.reload('?page=page-' + currentPage);
+		}
+		else
+		{
+			grid.instance.reload();
+		}
 	},
 
 	changePageTitle: function(fullName)

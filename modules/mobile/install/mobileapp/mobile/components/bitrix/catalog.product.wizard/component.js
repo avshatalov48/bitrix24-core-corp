@@ -51,7 +51,7 @@
 			return View(
 				{
 					style: {
-						backgroundColor: '#F4F6F7',
+						backgroundColor: '#eef2f4',
 					},
 				},
 				new Wizard({

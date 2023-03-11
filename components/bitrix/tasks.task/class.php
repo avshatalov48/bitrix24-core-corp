@@ -10,9 +10,13 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
 use Bitrix\Disk\Driver;
 use Bitrix\Main;
+use Bitrix\Main\Engine\Contract\Controllerable;
 use Bitrix\Main\Engine\Response\Component;
+use Bitrix\Main\Errorable;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Socialnetwork\Internals\Registry\FeaturePermRegistry;
+use Bitrix\Socialnetwork\WorkgroupTable;
 use Bitrix\Tasks;
 use Bitrix\Tasks\Access\ActionDictionary;
 use Bitrix\Tasks\Access\Role\RoleDictionary;
@@ -44,6 +48,9 @@ use Bitrix\Tasks\Util\User;
 use Bitrix\Tasks\Access\Model\TaskModel;
 use Bitrix\Socialnetwork\Helper\ServiceComment;
 use Bitrix\Socialnetwork\Item\Workgroup;
+use Bitrix\Tasks\Component\Task\TasksTaskHitStateStructure;
+use Bitrix\Tasks\Component\Task\TasksTaskFormState;
+use Bitrix\Main\Engine\CurrentUser;
 
 Loc::loadMessages(__FILE__);
 
@@ -52,11 +59,7 @@ require_once(__DIR__.'/class/taskstaskhitstatestructure.php');
 
 CBitrixComponent::includeComponentClass("bitrix:tasks.base");
 
-use Bitrix\Tasks\Component\Task\TasksTaskHitStateStructure;
-use Bitrix\Tasks\Component\Task\TasksTaskFormState;
-
-class TasksTaskComponent extends TasksBaseComponent
-	implements \Bitrix\Main\Errorable, \Bitrix\Main\Engine\Contract\Controllerable
+class TasksTaskComponent extends TasksBaseComponent implements Errorable, Controllerable
 {
 	const DATA_SOURCE_TEMPLATE = 	'TEMPLATE';
 	const DATA_SOURCE_TASK = 		'TASK';
@@ -79,7 +82,7 @@ class TasksTaskComponent extends TasksBaseComponent
 
 	public function configureActions()
 	{
-		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		if (!Loader::includeModule('tasks'))
 		{
 			return [];
 		}
@@ -276,7 +279,7 @@ class TasksTaskComponent extends TasksBaseComponent
 
 	protected function init()
 	{
-		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		if (!Loader::includeModule('tasks'))
 		{
 			return null;
 		}
@@ -308,7 +311,7 @@ class TasksTaskComponent extends TasksBaseComponent
 	{
 		global $APPLICATION;
 
-		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		if (!Loader::includeModule('tasks'))
 		{
 			return null;
 		}
@@ -373,7 +376,7 @@ class TasksTaskComponent extends TasksBaseComponent
 
 	public function setStateAction(array $state = [])
 	{
-		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		if (!Loader::includeModule('tasks'))
 		{
 			return null;
 		}
@@ -396,8 +399,8 @@ class TasksTaskComponent extends TasksBaseComponent
 		}
 
 		if (
-			!\Bitrix\Main\Loader::includeModule('tasks')
-			|| !\Bitrix\Main\Loader::includeModule('socialnetwork')
+			!Loader::includeModule('tasks')
+			|| !Loader::includeModule('socialnetwork')
 		)
 		{
 			return null;
@@ -566,8 +569,8 @@ class TasksTaskComponent extends TasksBaseComponent
 		}
 
 		if (
-			!\Bitrix\Main\Loader::includeModule('tasks')
-			|| !\Bitrix\Main\Loader::includeModule('socialnetwork')
+			!Loader::includeModule('tasks')
+			|| !Loader::includeModule('socialnetwork')
 		)
 		{
 			return null;
@@ -592,6 +595,33 @@ class TasksTaskComponent extends TasksBaseComponent
 		return true;
 	}
 
+	public function needRestrictResponsibleAction(int $groupId): ?bool
+	{
+		if (!Loader::includeModule('socialnetwork'))
+		{
+			return null;
+		}
+
+		if ($groupId <= 0)
+		{
+			return true;
+		}
+
+		$canEditTasks = FeaturePermRegistry::getInstance()->get(
+			$groupId,
+			'tasks',
+			'edit_tasks',
+			$this->userId
+		);
+
+		if ($canEditTasks)
+		{
+			return false;
+		}
+
+		return true;
+	}
+
 	public function getStagesAction($entityId, $isNumeric = false)
 	{
 		$entityId = (int) $entityId;
@@ -603,8 +633,8 @@ class TasksTaskComponent extends TasksBaseComponent
 		$isNumeric = (bool)$isNumeric;
 
 		if (
-			!\Bitrix\Main\Loader::includeModule('tasks')
-			|| !\Bitrix\Main\Loader::includeModule('socialnetwork')
+			!Loader::includeModule('tasks')
+			|| !Loader::includeModule('socialnetwork')
 		)
 		{
 			return null;
@@ -645,7 +675,7 @@ class TasksTaskComponent extends TasksBaseComponent
 			return null;
 		}
 
-		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		if (!Loader::includeModule('tasks'))
 		{
 			return null;
 		}
@@ -709,7 +739,7 @@ class TasksTaskComponent extends TasksBaseComponent
 			return null;
 		}
 
-		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		if (!Loader::includeModule('tasks'))
 		{
 			return null;
 		}
@@ -747,7 +777,7 @@ class TasksTaskComponent extends TasksBaseComponent
 			return null;
 		}
 
-		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		if (!Loader::includeModule('tasks'))
 		{
 			return null;
 		}
@@ -880,7 +910,7 @@ class TasksTaskComponent extends TasksBaseComponent
 	 */
 	public function legacyAddAction(array $data, array $parameters = ['RETURN_DATA' => false])
 	{
-		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		if (!Loader::includeModule('tasks'))
 		{
 			return null;
 		}
@@ -912,7 +942,7 @@ class TasksTaskComponent extends TasksBaseComponent
 
 	public function checkCanReadAction($taskId)
 	{
-		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		if (!Loader::includeModule('tasks'))
 		{
 			return null;
 		}
@@ -922,25 +952,54 @@ class TasksTaskComponent extends TasksBaseComponent
 		];
 	}
 
-	public function setTagsAction($taskId, array $tags = [])
+	public function setTagsAction($taskId, array $tags = [], string $newTag = ''): ?array
 	{
-		$taskId = (int) $taskId;
+		$taskId = (int)$taskId;
 		if (!$taskId)
 		{
 			return null;
 		}
 
-		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		if (!Loader::includeModule('socialnetwork'))
 		{
 			return null;
 		}
 
-		$result = [];
+		$task = TaskRegistry::getInstance()->get($taskId);
+
+		if (is_null($task))
+		{
+			return null;
+		}
 
 		if (!TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_EDIT, $taskId))
 		{
 			$this->addForbiddenError();
-			return $result;
+			return [];
+		}
+
+		$groupId = 0;
+		$groupName = '';
+
+		if (!is_null($task['GROUP_INFO']))
+		{
+			$groupId = $task['GROUP_INFO']['ID'];
+			$groupName = $task['GROUP_INFO']['NAME'];
+		}
+
+		if (!empty(trim($newTag)))
+		{
+			$tagService = new Bitrix\Tasks\Control\Tag($this->userId);
+
+			if ($tagService->isExists($newTag, $groupId, $taskId))
+			{
+				return [
+					'success' => false,
+					'error' => Loc::getMessage('TASKS_TASK_TAG_ALREADY_EXISTS'),
+				];
+			}
+
+			$tags[] = $newTag;
 		}
 
 		$this->updateTask(
@@ -952,10 +1011,17 @@ class TasksTaskComponent extends TasksBaseComponent
 
 		if ($this->errorCollection->checkNoFatals())
 		{
-			return null;
+			return [
+				'success' => true,
+				'error' => '',
+				'owner' => empty($groupName) ? CurrentUser::get()->getFormattedName() : $groupName,
+			];
 		}
 
-		return $result;
+		return [
+			'success' => false,
+			'error' => Loc::getMessage('TASKS_TASK_TAG_UNKNOWN_ERROR'),
+		];
 	}
 
 	public function setGroupAction($taskId, $groupId)
@@ -966,7 +1032,7 @@ class TasksTaskComponent extends TasksBaseComponent
 			return null;
 		}
 
-		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		if (!Loader::includeModule('tasks'))
 		{
 			return null;
 		}
@@ -1000,9 +1066,26 @@ class TasksTaskComponent extends TasksBaseComponent
 
 	public function isScrumProjectAction(int $groupId): ?bool
 	{
-		if (!\Bitrix\Main\Loader::includeModule('socialnetwork'))
+		if (!Loader::includeModule('socialnetwork'))
 		{
 			return null;
+		}
+
+		$group = Bitrix\Socialnetwork\Item\Workgroup::getById($groupId);
+
+		return ($group && $group->isScrumProject());
+	}
+
+	public function needShowEpicFieldAction(int $groupId): ?bool
+	{
+		if (!Loader::includeModule('socialnetwork'))
+		{
+			return null;
+		}
+
+		if (!Group::canReadGroupTasks(\Bitrix\Tasks\Util\User::getId(), $groupId))
+		{
+			return false;
 		}
 
 		$group = Bitrix\Socialnetwork\Item\Workgroup::getById($groupId);
@@ -1018,7 +1101,7 @@ class TasksTaskComponent extends TasksBaseComponent
 			return null;
 		}
 
-		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		if (!Loader::includeModule('tasks'))
 		{
 			return null;
 		}
@@ -1053,14 +1136,14 @@ class TasksTaskComponent extends TasksBaseComponent
 			return null;
 		}
 
-		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		if (!Loader::includeModule('tasks'))
 		{
 			return null;
 		}
 
 		$result = [];
 
-		if (!TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_APPROVE, $taskId))
+		if (!TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_DISAPPROVE, $taskId))
 		{
 			$this->addForbiddenError();
 			return $result;
@@ -1088,7 +1171,7 @@ class TasksTaskComponent extends TasksBaseComponent
 			return null;
 		}
 
-		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		if (!Loader::includeModule('tasks'))
 		{
 			return null;
 		}
@@ -1131,7 +1214,7 @@ class TasksTaskComponent extends TasksBaseComponent
 			return null;
 		}
 
-		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		if (!Loader::includeModule('tasks'))
 		{
 			return null;
 		}
@@ -1156,7 +1239,7 @@ class TasksTaskComponent extends TasksBaseComponent
 			return null;
 		}
 
-		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		if (!Loader::includeModule('tasks'))
 		{
 			return null;
 		}
@@ -1184,9 +1267,9 @@ class TasksTaskComponent extends TasksBaseComponent
 		}
 
 		if (
-			!\Bitrix\Main\Loader::includeModule('tasks')
-			|| !\Bitrix\Main\Loader::includeModule('forum')
-			|| !\Bitrix\Main\Loader::includeModule('disk')
+			!Loader::includeModule('tasks')
+			|| !Loader::includeModule('forum')
+			|| !Loader::includeModule('disk')
 		)
 		{
 			return null;
@@ -1250,8 +1333,8 @@ class TasksTaskComponent extends TasksBaseComponent
 		}
 
 		if (
-			!\Bitrix\Main\Loader::includeModule('tasks')
-			|| !\Bitrix\Main\Loader::includeModule('forum')
+			!Loader::includeModule('tasks')
+			|| !Loader::includeModule('forum')
 		)
 		{
 			return null;
@@ -1284,7 +1367,7 @@ class TasksTaskComponent extends TasksBaseComponent
 			return null;
 		}
 
-		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		if (!Loader::includeModule('tasks'))
 		{
 			return null;
 		}
@@ -1320,7 +1403,7 @@ class TasksTaskComponent extends TasksBaseComponent
 			return null;
 		}
 
-		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		if (!Loader::includeModule('tasks'))
 		{
 			return null;
 		}
@@ -1347,7 +1430,7 @@ class TasksTaskComponent extends TasksBaseComponent
 			return null;
 		}
 
-		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		if (!Loader::includeModule('tasks'))
 		{
 			return null;
 		}
@@ -1374,7 +1457,7 @@ class TasksTaskComponent extends TasksBaseComponent
 			return null;
 		}
 
-		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		if (!Loader::includeModule('tasks'))
 		{
 			return null;
 		}
@@ -1409,7 +1492,7 @@ class TasksTaskComponent extends TasksBaseComponent
 			return null;
 		}
 
-		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		if (!Loader::includeModule('tasks'))
 		{
 			return null;
 		}
@@ -1444,7 +1527,7 @@ class TasksTaskComponent extends TasksBaseComponent
 			return null;
 		}
 
-		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		if (!Loader::includeModule('tasks'))
 		{
 			return null;
 		}
@@ -1479,7 +1562,7 @@ class TasksTaskComponent extends TasksBaseComponent
 			return null;
 		}
 
-		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		if (!Loader::includeModule('tasks'))
 		{
 			return null;
 		}
@@ -1535,7 +1618,7 @@ class TasksTaskComponent extends TasksBaseComponent
 		}
 		$userId = (int) $parameters['userId'];
 
-		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		if (!Loader::includeModule('tasks'))
 		{
 			return null;
 		}
@@ -1578,7 +1661,7 @@ class TasksTaskComponent extends TasksBaseComponent
 			return null;
 		}
 
-		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		if (!Loader::includeModule('tasks'))
 		{
 			return null;
 		}
@@ -1613,7 +1696,7 @@ class TasksTaskComponent extends TasksBaseComponent
 			return null;
 		}
 
-		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		if (!Loader::includeModule('tasks'))
 		{
 			return null;
 		}
@@ -1650,7 +1733,7 @@ class TasksTaskComponent extends TasksBaseComponent
 			return null;
 		}
 
-		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		if (!Loader::includeModule('tasks'))
 		{
 			return null;
 		}
@@ -1689,7 +1772,7 @@ class TasksTaskComponent extends TasksBaseComponent
 			return null;
 		}
 
-		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		if (!Loader::includeModule('tasks'))
 		{
 			return null;
 		}
@@ -1721,7 +1804,7 @@ class TasksTaskComponent extends TasksBaseComponent
 			return null;
 		}
 
-		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		if (!Loader::includeModule('tasks'))
 		{
 			return null;
 		}
@@ -1777,7 +1860,7 @@ class TasksTaskComponent extends TasksBaseComponent
 			return null;
 		}
 
-		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		if (!Loader::includeModule('tasks'))
 		{
 			return null;
 		}
@@ -1814,7 +1897,7 @@ class TasksTaskComponent extends TasksBaseComponent
 			return null;
 		}
 
-		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		if (!Loader::includeModule('tasks'))
 		{
 			return null;
 		}
@@ -1852,7 +1935,7 @@ class TasksTaskComponent extends TasksBaseComponent
 			return null;
 		}
 
-		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		if (!Loader::includeModule('tasks'))
 		{
 			return null;
 		}
@@ -1891,7 +1974,7 @@ class TasksTaskComponent extends TasksBaseComponent
 			return null;
 		}
 
-		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		if (!Loader::includeModule('tasks'))
 		{
 			return null;
 		}
@@ -3617,7 +3700,7 @@ class TasksTaskComponent extends TasksBaseComponent
 	{
 		$isNetworkTask = false;
 
-		$taskData = $this->arResult['DATA']['TASK'];
+		$taskData = $this->arResult['DATA']['TASK'] ?? [];
 		$taskMembers = [];
 		if (array_key_exists(Task\Originator::getCode(true), $taskData))
 		{
@@ -3692,7 +3775,10 @@ class TasksTaskComponent extends TasksBaseComponent
 					$this->arResult['DATA']['EFFECTIVE'] = $this->getEffective();
 				}
 
-				\CPullWatch::Add($this->userId, "TASK_VIEW_{$this->task->getId()}", true);
+				if (Loader::includeModule('pull'))
+				{
+					\CPullWatch::Add($this->userId, "TASK_VIEW_{$this->task->getId()}", true);
+				}
 			}
 
 			$this->getEventData(); // put some data to $arResult for emitting javascript event when page loads
@@ -4127,5 +4213,25 @@ class TasksTaskComponent extends TasksBaseComponent
 				$task->renew();
 			}
 		}
+	}
+
+	private function getGroupInfo(int $groupId, array $task): array
+	{
+		if ($groupId === 0)
+		{
+			$groupId = $task['GROUP_ID'] ?? 0;
+			if ($groupId === 0)
+			{
+				return [0, ''];
+			}
+		}
+
+		$group = WorkgroupTable::getByPrimary($groupId)->fetchObject();
+		if (is_null($group))
+		{
+			return [0, ''];
+		}
+
+		return [$groupId, $group->getName()];
 	}
 }

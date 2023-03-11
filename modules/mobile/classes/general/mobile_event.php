@@ -26,13 +26,15 @@ class CMobileEvent
 	 */
 	public static function shouldSendNotification($message)
 	{
-		if(!$message["USER_ID"])
+		if (empty($message["USER_ID"]))
+		{
 			return false;
+		}
 
-		$energySave = Option::get("mobile", "push_save_energy_".$message["USER_ID"],  false);
-		$isMessageEmpty = !$message["MESSAGE"] && !$message["ADVANCED_PARAMS"]["senderMessage"];
+		$energySave = Option::get("mobile", "push_save_energy_" . $message["USER_ID"], false);
+		$isMessageEmpty = empty($message["MESSAGE"]) && empty($message["ADVANCED_PARAMS"]["senderMessage"]);
 
-		if($energySave == true && $isMessageEmpty)
+		if ($energySave == true && $isMessageEmpty)
 		{
 			$lastTimePushOption = "last_time_push_".$message["USER_ID"];
 			$lastEmptyMessageTime = Option::get("mobile", $lastTimePushOption,  0);

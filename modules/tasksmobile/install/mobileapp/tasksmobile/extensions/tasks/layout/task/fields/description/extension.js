@@ -150,7 +150,7 @@ jn.define('tasks/layout/task/fields/description', (require, exports, module) => 
 				url: `${env.siteDir}mobile/tasks/snmrouter/?routePage=fragmentrenderer&FRAGMENT_TYPE=${type}&FRAGMENT_ID=${id}&TASK_ID=${this.props.task.id}`,
 				title: Loc.getMessage(
 					`TASKSMOBILE_LAYOUT_TASK_FIELDS_DESCRIPTION_CONTENT_${type.toUpperCase()}`,
-					{'#INDEX#': Number(id) + 1}
+					{'#INDEX#': Number(id)}
 				),
 				backdrop: {
 					bounceEnable: false,

@@ -12,6 +12,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 /** @var string $filterId */
 
 use Bitrix\Main\Web\Json;
+use Bitrix\Tasks\Slider\Exception\SliderException;
+use Bitrix\Tasks\Slider\Factory\SliderFactory;
 
 $isKanban = true;
 
@@ -75,6 +77,7 @@ $pathToBurnDown = str_replace('#group_id#', $arParams['GROUP_ID'], $arParams['PA
 			userId: '<?= (int)$arParams['USER_ID'] ?>',
 			groupId: '<?= (int)$arParams['GROUP_ID'] ?>',
 			views: <?= Json::encode($arResult['views']) ?>,
+			culture: <?= Json::encode($arResult['culture']) ?>,
 			pathToBurnDown: '<?= \CUtil::JSEscape($pathToBurnDown)?>',
 			completedSprint: <?= Json::encode($arResult['completedSprint']) ?>,
 			filterId: '<?= $filterId ?>',
@@ -85,3 +88,24 @@ $pathToBurnDown = str_replace('#group_id#', $arParams['GROUP_ID'], $arParams['PA
 		BX.Tasks.Scrum.Entry.renderRightElementsTo(document.getElementById('tasks-scrum-right-container'));
 	});
 </script>
+<?php
+if ($arParams['BACKGROUND_FOR_TASK'])
+{
+	$ownerId = (int)$arParams['GROUP_ID'];
+	$taskId = (int)$arParams['TASK_ID'];
+
+	$factory = new SliderFactory();
+	try
+	{
+		$factory
+			->setAction($arParams['TASK_ACTION'])
+			->setQueryParams($arParams['GET_PARAMS']);
+
+		$slider = $factory->createEntitySlider($taskId, SliderFactory::TASK, $ownerId, SliderFactory::GROUP_CONTEXT);
+		$slider->open();
+	}
+	catch (SliderException $exception)
+	{
+		$exception->show();
+	}
+}

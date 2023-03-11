@@ -2,6 +2,10 @@
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Tasks\Helper\RestrictionUrl;
+
+/** @var array $arResult */
+/** @global $APPLICATION */
 
 Loc::loadMessages(__FILE__);
 
@@ -53,7 +57,21 @@ $arParams =& $helper->getComponent()->arParams; // make $arParams the same varia
 
 						<?=($option['DISABLED'] ? 'disabled' : '')?>
 					/>
-					<?=($option['CODE'] === 'TASK_CONTROL' && $arResult['TASK_LIMIT_EXCEEDED']? '<span class="task-field-locked"></span>' : '')?>
+					<?php
+						if ($option['CODE'] === 'TASK_CONTROL' && $arResult['TASK_LIMIT_EXCEEDED'])
+						{
+							$lockClassName = 'task-field-locked';
+							$onLockClick =
+								"top.BX.UI.InfoHelper.show('"
+								. RestrictionUrl::TASK_CONTROL_SLIDER_URL
+								. "',{isLimit: true,limitAnalyticsLabels: {module: 'tasks',}});"
+							;
+							$lockClassStyle = "cursor: pointer;";
+					?>
+							<span class="<?=$lockClassName?>" onclick="<?=$onLockClick?>" style="<?=$lockClassStyle?>"></span>
+					<?php
+						}
+					?>
 
 					<?if($option['LINK']):?>
                         <a href="<?=htmlspecialcharsbx($option['LINK']['URL'])?>" target="_blank"><?=htmlspecialcharsbx($option['LINK']['TEXT'])?></a>

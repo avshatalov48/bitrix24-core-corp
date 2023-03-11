@@ -1,4 +1,4 @@
-import {Text, Type} from "main.core";
+import { Tag, Text, Type} from "main.core";
 import {PopupManager, Popup} from "main.popup";
 import {SaveButton, CancelButton, ButtonColor, ButtonSize, ButtonState} from "ui.buttons";
 import {TodoEditor} from "crm.activity.todo-editor";
@@ -15,6 +15,7 @@ export class AddingPopup
 	#entityId: Number = null;
 	#entityTypeId: Number = null;
 	#popup: ?Popup = null;
+	#popupContainer: HTMLElement = null;
 	#todoEditor: ?TodoEditor = null;
 	#eventEmitter: EventEmitter = null;
 
@@ -52,16 +53,17 @@ export class AddingPopup
 			return;
 		}
 
-		if (!popup.getContentContainer().hasChildNodes())
+		if (!this.#popupContainer.hasChildNodes())
 		{
 			// just created, initialize
 			this.#todoEditor = new TodoEditor({
-				container: popup.getContentContainer(),
+				container: this.#popupContainer,
 				ownerTypeId: this.#entityTypeId,
 				ownerId: this.#entityId,
 				events: {
 					onChangeDescription: this.#onChangeEditorDescription.bind(this),
-					onSaveHotkeyPressed: this.#onEditorSaveHotkeyPressed.bind(this)
+					onSaveHotkeyPressed: this.#onEditorSaveHotkeyPressed.bind(this),
+					onChangeUploaderContainerSize: this.#onChangeUploaderContainerSize.bind(this),
 				}
 			});
 
@@ -102,11 +104,13 @@ export class AddingPopup
 	{
 		if (!this.#popup)
 		{
+			this.#popupContainer = Tag.render`<div class="crm-activity-adding-popup-container"></div>`;
 			this.#popup = PopupManager.create({
 				id: `kanban_planner_menu_${this.#entityId}`,
 				overlay: {
 					opacity: 0,
 				},
+				content: this.#popupContainer,
 				isScrollBlock: true,
 				className: 'crm-activity-adding-popup',
 				closeByEsc: true,
@@ -114,9 +118,11 @@ export class AddingPopup
 				angle: {
 					offset: 27,
 				},
-				minWidth: 500,
 				padding: 16,
+				minWidth: 500,
+				maxWidth: 550,
 				minHeight: 150,
+				maxHeight: 400
 			});
 		}
 
@@ -173,5 +179,13 @@ export class AddingPopup
 	#onEditorSaveHotkeyPressed()
 	{
 		this.#saveAndClose();
+	}
+
+	#onChangeUploaderContainerSize()
+	{
+		if (this.#popup)
+		{
+			this.#popup.adjustPosition();
+		}
 	}
 }

@@ -11,9 +11,9 @@ use Bitrix\Main\ORM;
  *
  * <<< ORMENTITYANNOTATION
  * @method static EO_StageToStage_Query query()
- * @method static EO_StageToStage_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_StageToStage_Result getByPrimary($primary, array $parameters = [])
  * @method static EO_StageToStage_Result getById($id)
- * @method static EO_StageToStage_Result getList(array $parameters = array())
+ * @method static EO_StageToStage_Result getList(array $parameters = [])
  * @method static EO_StageToStage_Entity getEntity()
  * @method static \Bitrix\Rpa\Model\EO_StageToStage createObject($setDefaultValues = true)
  * @method static \Bitrix\Rpa\Model\EO_StageToStage_Collection createCollection()

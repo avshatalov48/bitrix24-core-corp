@@ -3,6 +3,60 @@ this.BX.Tasks = this.BX.Tasks || {};
 (function (exports,main_loader,main_popup,ui_popupcomponentsmaker,main_core_events,main_core,ui_dialogs_messagebox) {
 	'use strict';
 
+	function _classStaticPrivateFieldSpecSet(receiver, classConstructor, descriptor, value) { _classCheckPrivateStaticAccess(receiver, classConstructor); _classCheckPrivateStaticFieldDescriptor(descriptor, "set"); _classApplyDescriptorSet(receiver, descriptor, value); return value; }
+
+	function _classApplyDescriptorSet(receiver, descriptor, value) { if (descriptor.set) { descriptor.set.call(receiver, value); } else { if (!descriptor.writable) { throw new TypeError("attempted to set read only private field"); } descriptor.value = value; } }
+
+	function _classStaticPrivateFieldSpecGet(receiver, classConstructor, descriptor) { _classCheckPrivateStaticAccess(receiver, classConstructor); _classCheckPrivateStaticFieldDescriptor(descriptor, "get"); return _classApplyDescriptorGet(receiver, descriptor); }
+
+	function _classCheckPrivateStaticFieldDescriptor(descriptor, action) { if (descriptor === undefined) { throw new TypeError("attempted to " + action + " private static field before its declaration"); } }
+
+	function _classCheckPrivateStaticAccess(receiver, classConstructor) { if (receiver !== classConstructor) { throw new TypeError("Private static access of wrong provenance"); } }
+
+	function _classApplyDescriptorGet(receiver, descriptor) { if (descriptor.get) { return descriptor.get.call(receiver); } return descriptor.value; }
+
+	var Culture = /*#__PURE__*/function () {
+	  function Culture() {
+	    babelHelpers.classCallCheck(this, Culture);
+	  }
+
+	  babelHelpers.createClass(Culture, [{
+	    key: "setData",
+	    value: function setData(data) {
+	      this.data = data;
+	    }
+	  }, {
+	    key: "getDayMonthFormat",
+	    value: function getDayMonthFormat() {
+	      return this.data.dayMonthFormat;
+	    }
+	  }, {
+	    key: "getLongDateFormat",
+	    value: function getLongDateFormat() {
+	      return this.data.longDateFormat;
+	    }
+	  }, {
+	    key: "getShortTimeFormat",
+	    value: function getShortTimeFormat() {
+	      return this.data.shortTimeFormat;
+	    }
+	  }], [{
+	    key: "getInstance",
+	    value: function getInstance() {
+	      if (!_classStaticPrivateFieldSpecGet(Culture, Culture, _instance)) {
+	        _classStaticPrivateFieldSpecSet(Culture, Culture, _instance, new Culture());
+	      }
+
+	      return _classStaticPrivateFieldSpecGet(Culture, Culture, _instance);
+	    }
+	  }]);
+	  return Culture;
+	}();
+	var _instance = {
+	  writable: true,
+	  value: void 0
+	};
+
 	var _templateObject, _templateObject2, _templateObject3;
 	var CreatedEvent = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(CreatedEvent, _EventEmitter);
@@ -12,6 +66,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	    babelHelpers.classCallCheck(this, CreatedEvent);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(CreatedEvent).call(this));
+
+	    _this.setEventNamespace('BX.Tasks.Scrum.CreatedEvent');
+
 	    _this.node = null;
 	    return _this;
 	  }
@@ -68,7 +125,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "getFormattedTime",
 	    value: function getFormattedTime(from, to) {
 	      /* eslint-disable */
-	      return "".concat(BX.date.format('H:i', from, null, true), " - ").concat(BX.date.format('H:i', to, null, true));
+	      return "".concat(BX.date.format(Culture.getInstance().getShortTimeFormat(), from, null, true), " - ").concat(BX.date.format(Culture.getInstance().getShortTimeFormat(), to, null, true));
 	      /* eslint-enable */
 	    }
 	  }]);
@@ -84,6 +141,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	    babelHelpers.classCallCheck(this, ListEvents);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(ListEvents).call(this));
+
+	    _this.setEventNamespace('BX.Tasks.Scrum.ListEvents');
+
 	    _this.listIsShown = false;
 	    _this.todayEvent = null;
 	    _this.node = null;
@@ -218,7 +278,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "getFormattedDate",
 	    value: function getFormattedDate(ts) {
 	      /* eslint-disable */
-	      return BX.date.format('j F', ts, null, true);
+	      return BX.date.format(Culture.getInstance().getDayMonthFormat(), ts, null, true);
 	      /* eslint-enable */
 	    }
 	  }]);
@@ -308,6 +368,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	      var response = this.requestSender.getMeetings({
 	        groupId: this.groupId
+	      }).then(function (response) {
+	        Culture.getInstance().setData(response.data.culture);
+	        return response;
 	      });
 	      this.menu = new ui_popupcomponentsmaker.PopupComponentsMaker({
 	        id: 'tasks-scrum-meetings-widget',
@@ -359,7 +422,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      return main_core.Tag.render(_templateObject3$2 || (_templateObject3$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__widget-meetings--chat-content ", "\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), visibility, chats.map(function (chat) {
 	        var chatIconClass = chat.icon === '' ? 'default' : '';
 	        var chatIconStyle = chat.icon !== '' ? "background-image: url('".concat(chat.icon, "');") : '';
-	        var chatNode = main_core.Tag.render(_templateObject4$1 || (_templateObject4$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t\t<div class=\"tasks-scrum__widget-meetings--chat-container\">\n\t\t\t\t\t\t\t\t<div class=\"ui-icon ui-icon-common-company tasks-scrum__widget-meetings--chat-icon\">\n\t\t\t\t\t\t\t\t\t<i\n\t\t\t\t\t\t\t\t\tclass=\"chat-icon ", "\"\n\t\t\t\t\t\t\t\t\t\tstyle=\"", "\"\n\t\t\t\t\t\t\t\t\t></i>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t<div class=\"tasks-scrum__widget-meetings--chat-info\">\n\t\t\t\t\t\t\t\t\t<div class=\"tasks-scrum__widget-meetings--chat-name\">\n\t\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t<div class=\"users-icon tasks-scrum__widget-meetings--chat-users\">\n\t\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t"])), chatIconClass, chatIconStyle, main_core.Text.encode(chat.name), _this3.renderChatUser(chat.users));
+	        var chatNode = main_core.Tag.render(_templateObject4$1 || (_templateObject4$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t\t<div class=\"tasks-scrum__widget-meetings--chat-container\">\n\t\t\t\t\t\t\t\t<div class=\"ui-icon ui-icon-common-company tasks-scrum__widget-meetings--chat-icon\">\n\t\t\t\t\t\t\t\t\t<i\n\t\t\t\t\t\t\t\t\tclass=\"chat-icon ", "\"\n\t\t\t\t\t\t\t\t\t\tstyle=\"", "\"\n\t\t\t\t\t\t\t\t\t></i>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t<div class=\"tasks-scrum__widget-meetings--chat-info\">\n\t\t\t\t\t\t\t\t\t<div class=\"tasks-scrum__widget-meetings--chat-name\">\n\t\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t<div class=\"users-icon tasks-scrum__widget-meetings--chat-users\">\n\t\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t"])), chatIconClass, chatIconStyle, chat.name, _this3.renderChatUser(chat.users));
 	        main_core.Event.bind(chatNode, 'click', _this3.openChat.bind(_this3, chat, chatNode));
 	        return chatNode;
 	      }));
@@ -394,7 +457,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    value: function renderChatUser(users) {
 	      var uiIconClasses = 'tasks-scrum__widget-meetings--chat-icon-user ui-icon ui-icon-common-user';
 	      return main_core.Tag.render(_templateObject5$1 || (_templateObject5$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t", "\n\t\t"])), users.map(function (user) {
-	        var src = user.photo ? main_core.Text.encode(user.photo.src) : null;
+	        var src = user.photo ? encodeURI(main_core.Text.encode(user.photo.src)) : null;
 	        var photoStyle = src ? "background-image: url('".concat(src, "');") : '';
 	        return main_core.Tag.render(_templateObject6$1 || (_templateObject6$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t<div class=\"user-icon ", "\" title=\"", "\">\n\t\t\t\t\t\t\t<i style=\"", "\"></i>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t"])), uiIconClasses, main_core.Text.encode(user.name), photoStyle);
 	      }));

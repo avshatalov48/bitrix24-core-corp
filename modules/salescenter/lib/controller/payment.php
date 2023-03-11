@@ -117,7 +117,7 @@ class Payment extends Base
 		}
 
 		return [
-				'order' => [
+				'payment' => [
 					'url' => $urlInfo['url'],
 					'shortUrl' => $urlInfo['shortUrl'],
 				]

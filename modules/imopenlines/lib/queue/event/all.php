@@ -1,10 +1,12 @@
 <?php
+
 namespace Bitrix\ImOpenLines\Queue\Event;
 
-use \Bitrix\ImOpenLines,
-	\Bitrix\ImOpenLines\Session,
-	\Bitrix\ImOpenLines\Model\SessionTable,
-	\Bitrix\ImOpenLines\Model\SessionCheckTable;
+use Bitrix\Main\Config\Option,
+	Bitrix\ImOpenLines,
+	Bitrix\ImOpenLines\Session,
+	Bitrix\ImOpenLines\Model\SessionTable,
+	Bitrix\ImOpenLines\Model\SessionCheckTable;
 
 /**
  * Class All
@@ -16,25 +18,17 @@ class All extends Queue
 	 * Returns the number of sessions an open line can accept.
 	 *
 	 * @return int
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
-	public function getCountFreeSlots()
+	public function getCountFreeSlots(): int
 	{
 		$result = 0;
 
-		$select = [
-			'ID',
-			'USER_ID'
-		];
-
-		$filter = ['=CONFIG_ID' => $this->configLine['ID']];
-
 		$res = ImOpenLines\Queue::getList([
-			'select' => $select,
-			'filter' => $filter,
+			'select' => [
+				'ID',
+				'USER_ID'
+			],
+			'filter' => ['=CONFIG_ID' => $this->configLine['ID']],
 			'order' => [
 				'SORT' => 'ASC',
 				'ID' => 'ASC'
@@ -56,21 +50,16 @@ class All extends Queue
 	/**
 	 * Send recent messages to operator in current queue when he return to work.
 	 *
-	 * @param $userIds
-	 *
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
+	 * @param int[] $userIds
+	 * @return void
 	 */
-	public function returnUserToQueue(array $userIds)
+	public function returnUserToQueue(array $userIds): void
 	{
 		$sessionList = SessionCheckTable::getList(
 			[
 				'select' => ['SESSION_ID'],
 				'filter' => [
-					'SESSION.CONFIG_ID' => $this->configLine['ID'],
+					'=SESSION.CONFIG_ID' => $this->configLine['ID'],
 					'<SESSION.STATUS' => Session::STATUS_ANSWER,
 					'!=SESSION.OPERATOR_FROM_CRM' => 'Y'
 				]
@@ -88,39 +77,38 @@ class All extends Queue
 	/**
 	 * Return to the queue of not accepted sessions.
 	 *
-	 * @param $userId
+	 * @param int $userId
 	 * @param string $reasonReturn
+	 * @return void
 	 */
-	public function returnNotAcceptedSessionsToQueue($userId = 0, $reasonReturn = ImOpenLines\Queue::REASON_DEFAULT)
+	public function returnNotAcceptedSessionsToQueue($userId = 0, string $reasonReturn = ImOpenLines\Queue::REASON_DEFAULT): void
 	{
-		$sessionListManager = SessionTable::getList(
-			[
-				'select' => [
-					'ID',
-					'OPERATOR_ID'
+		$sessionListManager = SessionTable::getList([
+			'select' => [
+				'ID',
+				'OPERATOR_ID'
+			],
+			'filter' => [
+				'LOGIC' => 'OR',
+				[
+					// Remove unanswered, but accepted by the operator dialogs.
+					'=CONFIG_ID' => $this->configLine['ID'],
+					'=OPERATOR_ID' => $userId,
+					'<STATUS' => Session::STATUS_OPERATOR,
+					'!=PAUSE' => 'Y'
 				],
-				'filter' => [
-					'LOGIC' => 'OR',
-					[
-						//Remove unanswered, but accepted by the operator dialogs.
-						'CONFIG_ID' => $this->configLine['ID'],
-						'=OPERATOR_ID' => $userId,
-						'<STATUS' => Session::STATUS_OPERATOR,
-						'!=PAUSE' => 'Y'
-					],
-					[
-						//Rebuilding the list of missed conversations for operators.
-						'CONFIG_ID' => $this->configLine['ID'],
-						'<STATUS' => Session::STATUS_ANSWER,
-						'!=OPERATOR_FROM_CRM' => 'Y'
-					]
+				[
+					// Rebuilding the list of missed conversations for operators.
+					'=CONFIG_ID' => $this->configLine['ID'],
+					'<STATUS' => Session::STATUS_ANSWER,
+					'!=OPERATOR_FROM_CRM' => 'Y'
 				]
 			]
-		);
+		]);
 
 		while ($session = $sessionListManager->fetch())
 		{
-			if(!empty($session['OPERATOR_ID']) && $session['OPERATOR_ID'] == $userId)
+			if (!empty($session['OPERATOR_ID']) && $session['OPERATOR_ID'] == $userId)
 			{
 				ImOpenLines\Queue::returnSessionToQueue($session['ID'], $reasonReturn);
 			}
@@ -135,22 +123,21 @@ class All extends Queue
 	 * Return to the queue not distributed sessions
 	 *
 	 * @param string $reasonReturn
+	 * @return void
 	 */
 	public function returnNotDistributedSessionsToQueue(string $reasonReturn = ImOpenLines\Queue::REASON_DEFAULT): void
 	{
-		$sessionListManager = SessionCheckTable::getList(
-			[
-				'select' => [
-					'SESSION_ID'
-				],
-				'filter' => [
-					'SESSION.OPERATOR_ID' => 0,
-					'SESSION.CONFIG_ID' => $this->configLine['ID']
-				],
-				'order' => ['SESSION_ID' => 'ASC'],
-				'limit' => self::MAX_SESSION_RETURN
-			]
-		);
+		$sessionListManager = SessionCheckTable::getList([
+			'select' => [
+				'SESSION_ID'
+			],
+			'filter' => [
+				'=SESSION.OPERATOR_ID' => 0,
+				'=SESSION.CONFIG_ID' => $this->configLine['ID']
+			],
+			'order' => ['SESSION_ID' => 'ASC'],
+			'limit' => self::getMaxInteractionCount(),
+		]);
 
 		while ($sessionId = $sessionListManager->fetch()['SESSION_ID'])
 		{
@@ -161,52 +148,47 @@ class All extends Queue
 	/**
 	 * Returns all operator sessions.
 	 *
-	 * @param array $userIds
+	 * @param int[] $userIds
 	 * @param string $reasonReturn
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
+	 * @return void
 	 */
-	public function returnSessionsUsersToQueue(array $userIds, $reasonReturn = ImOpenLines\Queue::REASON_DEFAULT)
+	public function returnSessionsUsersToQueue(array $userIds, string $reasonReturn = ImOpenLines\Queue::REASON_DEFAULT): void
 	{
-		if(!empty($userIds))
+		if (!empty($userIds))
 		{
 			$sessionNotAccepted = [];
 			$sessionAccepted = [];
 			$sessionWaitClient = [];
 
-			$managerSessionCheck = SessionCheckTable::getList(
-				[
-					'select' => [
-						'ID' => 'SESSION_ID',
-						'STATUS' => 'SESSION.STATUS',
-						'DATE_CLOSE'
+			$managerSessionCheck = SessionCheckTable::getList([
+				'select' => [
+					'ID' => 'SESSION_ID',
+					'STATUS' => 'SESSION.STATUS',
+					'DATE_CLOSE'
+				],
+				'filter' => [
+					'LOGIC' => 'OR',
+					[
+						'=SESSION.CONFIG_ID' => $this->configLine['ID'],
+						'=SESSION.OPERATOR_ID' => $userIds
 					],
-					'filter' => [
-						'LOGIC' => 'OR',
-						[
-							'SESSION.CONFIG_ID' => $this->configLine['ID'],
-							'SESSION.OPERATOR_ID' => $userIds
-						],
-						[
-							'SESSION.CONFIG_ID' => $this->configLine['ID'],
-							'<SESSION.STATUS' => Session::STATUS_ANSWER,
-							'!=SESSION.OPERATOR_FROM_CRM' => 'Y'
-						]
+					[
+						'=SESSION.CONFIG_ID' => $this->configLine['ID'],
+						'<SESSION.STATUS' => Session::STATUS_ANSWER,
+						'!=SESSION.OPERATOR_FROM_CRM' => 'Y'
 					]
 				]
-			);
+			]);
 
 			while ($session = $managerSessionCheck->fetch())
 			{
 				$status = $session['STATUS'];
 				unset($session['STATUS']);
-				if($status == Session::STATUS_WAIT_CLIENT)
+				if ($status == Session::STATUS_WAIT_CLIENT)
 				{
 					$sessionWaitClient[$session['ID']] = $session;
 				}
-				elseif($status < Session::STATUS_ANSWER)
+				elseif ($status < Session::STATUS_ANSWER)
 				{
 					$sessionNotAccepted[$session['ID']] = $session;
 				}
@@ -216,19 +198,19 @@ class All extends Queue
 				}
 			}
 
-			if(!empty($sessionWaitClient))
+			if (!empty($sessionWaitClient))
 			{
 				$this->returnSessionsWaitClientUsersToQueue($sessionWaitClient, $reasonReturn);
 			}
 
-			if(!empty($sessionNotAccepted) || !empty($sessionAccepted))
+			if (!empty($sessionNotAccepted) || !empty($sessionAccepted))
 			{
-				if(!empty($sessionAccepted))
+				if (!empty($sessionAccepted))
 				{
 					$this->returnSessionsAcceptedUsersToQueue(array_keys($sessionAccepted), $reasonReturn);
 				}
 
-				if(!empty($sessionNotAccepted))
+				if (!empty($sessionNotAccepted))
 				{
 					$this->returnSessionsNotAcceptedUsersToQueue(array_keys($sessionNotAccepted), $reasonReturn);
 				}
@@ -238,16 +220,18 @@ class All extends Queue
 
 	/**
 	 * OnChatAnswer event handler for filling free slots
+	 * @return void
 	 */
-	public function checkFreeSlotOnChatAnswer()
+	public function checkFreeSlotOnChatAnswer(): void
 	{
 		$this->returnNotDistributedSessionsToQueue();
 	}
 
 	/**
 	 * OnChatSkip/OnChatMarkSpam/OnChatFinish/OnOperatorTransfer event handler for filling free slots
+	 * @return void
 	 */
-	public function checkFreeSlotOnChatFinish()
+	public function checkFreeSlotOnChatFinish(): void
 	{
 		$this->returnNotDistributedSessionsToQueue();
 	}
@@ -257,5 +241,6 @@ class All extends Queue
 	 *
 	 * @param array $messageData
 	 */
-	public function checkFreeSlotOnMessageSend($messageData) {}
+	public function checkFreeSlotOnMessageSend($messageData): void
+	{}
 }

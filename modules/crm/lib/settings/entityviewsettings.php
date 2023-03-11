@@ -13,12 +13,14 @@ class EntityViewSettings
 	const KANBAN_VIEW        = BX_CRM_VIEW_KANBAN;
 	const ACTIVITY_VIEW      = BX_CRM_VIEW_ACTIVITY;
 	const CALENDAR_VIEW      = BX_CRM_VIEW_CALENDAR;
+	const DEADLINES_VIEW      = BX_CRM_VIEW_DEADLINES;
 
 	const LIST_VIEW_NAME     = 'LIST';
 	const WIDGET_VIEW_NAME   = 'WIDGET';
 	const KANBAN_VIEW_NAME   = 'KANBAN';
 	const ACTIVITY_VIEW_NAME   = 'ACTIVITY';
 	const CALENDAR_VIEW_NAME = 'CALENDAR';
+	const DEADLINES_VIEW_NAME = 'DEADLINES';
 
 	/**
 	 * Resolve view ID by name.
@@ -50,6 +52,11 @@ class EntityViewSettings
 		if($name === self::CALENDAR_VIEW_NAME)
 		{
 			return self::CALENDAR_VIEW;
+		}
+
+		if($name === self::DEADLINES_VIEW_NAME)
+		{
+			return self::DEADLINES_VIEW;
 		}
 
 		return self::UNDEFINED;
@@ -85,6 +92,11 @@ class EntityViewSettings
 		if($ID === self::CALENDAR_VIEW)
 		{
 			return self::CALENDAR_VIEW_NAME;
+		}
+
+		if ($ID === self::DEADLINES_VIEW)
+		{
+			return self::DEADLINES_VIEW_NAME;
 		}
 
 		return '';

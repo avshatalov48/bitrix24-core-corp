@@ -413,7 +413,7 @@ $sliderPages = [
 		'loader' => 'intranet:disk',
 	],
 	'blog' => [
-		'loader' => 'intranet:livefeed',
+		'loader' => 'intranet:slider-livefeed',
 	],
 //	'General' => [],
 //	'view' => [],

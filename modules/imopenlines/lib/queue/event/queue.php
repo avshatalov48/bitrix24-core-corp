@@ -1,17 +1,15 @@
 <?php
+
 namespace Bitrix\ImOpenLines\Queue\Event;
 
-use \Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Config\Option,
+	Bitrix\ImOpenLines,
+	Bitrix\ImOpenLines\Session,
+	Bitrix\ImOpenLines\Tools\Lock,
+	Bitrix\ImOpenLines\Model\SessionTable,
+	Bitrix\ImOpenLines\Model\SessionCheckTable,
+	Bitrix\Main\Type\DateTime;
 
-use \Bitrix\ImOpenLines,
-	\Bitrix\ImOpenLines\Config,
-	\Bitrix\ImOpenLines\Session,
-	\Bitrix\ImOpenLines\Tools\Lock,
-	\Bitrix\ImOpenLines\Model\SessionTable,
-	\Bitrix\ImOpenLines\Model\SessionCheckTable;
-use \Bitrix\Main\Type\DateTime;
-
-Loc::loadMessages(__FILE__);
 
 /**
  * Class Queue
@@ -19,13 +17,13 @@ Loc::loadMessages(__FILE__);
  */
 abstract class Queue
 {
-	public const MAX_SESSION_RETURN = 1000;
+	public const MAX_SESSION_RETURN = 100;
 
 	protected $configLine = [];
 
 	/**
 	 * Queue constructor.
-	 * @param $configLine
+	 * @param array $configLine
 	 */
 	public function __construct($configLine)
 	{
@@ -33,44 +31,51 @@ abstract class Queue
 	}
 
 	/**
-	 * @param $chatId
+	 * Returns maximum session number per interaction.
+	 * @return int
+	 */
+	public static function getMaxInteractionCount(): int
+	{
+		return (int)Option::get('imopenlines', 'queue_interact_count', self::MAX_SESSION_RETURN);
+	}
+
+	//region Lock
+
+	/**
+	 * @param int $chatId
 	 * @return string
 	 */
-	private static function getKeyLock($chatId)
+	private static function getKeyLock(int $chatId): string
 	{
 		return ImOpenLines\Queue\Queue::PREFIX_KEY_LOCK . $chatId;
 	}
 
 	/**
-	 * @param $chatId
+	 * @param int $chatId
 	 * @return bool
-	 * @throws \Bitrix\Main\Db\SqlQueryException
 	 */
-	protected function startLock($chatId)
+	protected function startLock(int $chatId): bool
 	{
 		return Lock::getInstance()->set(static::getKeyLock($chatId));
 	}
 
 	/**
-	 * @param $chatId
+	 * @param int $chatId
 	 * @return bool
-	 * @throws \Bitrix\Main\Db\SqlQueryException
 	 */
-	protected function stopLock($chatId)
+	protected function stopLock(int $chatId): bool
 	{
 		return Lock::getInstance()->delete(static::getKeyLock($chatId));
 	}
 
+	//endregion
+
 	/**
 	 * Basic check that the operator is active.
 	 *
-	 * @param $userId
+	 * @param int $userId
 	 * @param bool $ignorePause
 	 * @return bool|string
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public function isOperatorActive($userId, bool $ignorePause = false)
 	{
@@ -81,12 +86,7 @@ abstract class Queue
 	 * Are there any available operators in the line.
 	 *
 	 * @param bool $ignorePause
-	 *
 	 * @return bool
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public function isOperatorsActiveLine(bool $ignorePause = false): bool
 	{
@@ -97,36 +97,35 @@ abstract class Queue
 	 * Returns the number of sessions an open line can accept.
 	 *
 	 * @return int
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
-	public function getCountFreeSlots()
+	public function getCountFreeSlots(): int
 	{
 		$result = 0;
 
-		$select = [
-			'ID',
-			'USER_ID'
-		];
-
-		$filter = ['=CONFIG_ID' => $this->configLine['ID']];
-
 		$res = ImOpenLines\Queue::getList([
-			'select' => $select,
-			'filter' => $filter,
+			'select' => [
+				'ID',
+				'USER_ID'
+			],
+			'filter' => [
+				'=CONFIG_ID' => $this->configLine['ID']
+			],
 			'order' => [
 				'SORT' => 'ASC',
 				'ID' => 'ASC'
 			]
 		]);
 
-		while($queueUser = $res->fetch())
+		while ($queueUser = $res->fetch())
 		{
-			if($this->isOperatorActive($queueUser['USER_ID']) === true)
+			if ($this->isOperatorActive($queueUser['USER_ID']) === true)
 			{
-				$result += ImOpenLines\Queue::getCountFreeSlotOperator($queueUser['USER_ID'], $this->configLine['ID'], $this->configLine['MAX_CHAT'], $this->configLine['TYPE_MAX_CHAT']);
+				$result += ImOpenLines\Queue::getCountFreeSlotOperator(
+					$queueUser['USER_ID'],
+					$this->configLine['ID'],
+					$this->configLine['MAX_CHAT'],
+					$this->configLine['TYPE_MAX_CHAT']
+				);
 			}
 		}
 
@@ -136,37 +135,33 @@ abstract class Queue
 	/**
 	 * Send recent messages to operator in current queue when he return to work.
 	 *
-	 * @param $userIds
+	 * @param int[] $userIds
+	 * @return void
 	 */
-	abstract public function returnUserToQueue(array $userIds);
+	abstract public function returnUserToQueue(array $userIds): void;
 
 	/**
 	 * Return to the queue of not accepted or missed sessions.
 	 *
-	 * @param $userId
+	 * @param int $userId
 	 * @param string $reasonReturn
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
+	 * @return void
 	 */
-	public function returnNotAcceptedSessionsToQueue($userId, $reasonReturn = ImOpenLines\Queue::REASON_DEFAULT)
+	public function returnNotAcceptedSessionsToQueue($userId, string $reasonReturn = ImOpenLines\Queue::REASON_DEFAULT): void
 	{
 		$sessionList = [];
 
-		$sessionListManager = SessionTable::getList(
-			[
-				'select' => [
-					'ID'
-				],
-				'filter' => [
-					'CONFIG_ID' => $this->configLine['ID'],
-					'=OPERATOR_ID' => $userId,
-					'<STATUS' => Session::STATUS_OPERATOR,
-					'!=PAUSE' => 'Y'
-				]
+		$sessionListManager = SessionTable::getList([
+			'select' => [
+				'ID'
+			],
+			'filter' => [
+				'=CONFIG_ID' => $this->configLine['ID'],
+				'=OPERATOR_ID' => $userId,
+				'<STATUS' => Session::STATUS_OPERATOR,
+				'!=PAUSE' => 'Y'
 			]
-		);
+		]);
 
 		while ($sessionId = $sessionListManager->fetch()['ID'])
 		{
@@ -175,23 +170,21 @@ abstract class Queue
 
 		$countSession = count($sessionList);
 
-		if($countSession > 0)
+		if ($countSession > 0)
 		{
-			if($countSession > $this->getCountFreeSlots())
+			if ($countSession > $this->getCountFreeSlots())
 			{
-				$sessionListManager = SessionTable::getList(
-					[
-						'select' => [
-							'ID'
-						],
-						'filter' => [
-							'CONFIG_ID' => $this->configLine['ID'],
-							'<STATUS' => Session::STATUS_ANSWER,
-							'!=OPERATOR_ID' => $userId,
-							'!=OPERATOR_FROM_CRM' => 'Y'
-						]
+				$sessionListManager = SessionTable::getList([
+					'select' => [
+						'ID'
+					],
+					'filter' => [
+						'=CONFIG_ID' => $this->configLine['ID'],
+						'<STATUS' => Session::STATUS_ANSWER,
+						'!=OPERATOR_ID' => $userId,
+						'!=OPERATOR_FROM_CRM' => 'Y'
 					]
-				);
+				]);
 
 				while ($sessionId = $sessionListManager->fetch()['ID'])
 				{
@@ -210,23 +203,22 @@ abstract class Queue
 	 * Return to the queue not distributed sessions
 	 *
 	 * @param string $reasonReturn
+	 * @return void
 	 */
 	public function returnNotDistributedSessionsToQueue(string $reasonReturn = ImOpenLines\Queue::REASON_DEFAULT): void
 	{
-		$sessionListManager = SessionCheckTable::getList(
-			[
-				'select' => [
-					'SESSION_ID'
-				],
-				'filter' => [
-					'SESSION.OPERATOR_ID' => 0,
-					'SESSION.CONFIG_ID' => $this->configLine['ID'],
-					'UNDISTRIBUTED' => 'Y'
-				],
-				'order' => ['SESSION_ID' => 'ASC'],
-				'limit' => self::MAX_SESSION_RETURN
-			]
-		);
+		$sessionListManager = SessionCheckTable::getList([
+			'select' => [
+				'SESSION_ID'
+			],
+			'filter' => [
+				'=SESSION.OPERATOR_ID' => 0,
+				'=SESSION.CONFIG_ID' => $this->configLine['ID'],
+				'=UNDISTRIBUTED' => 'Y'
+			],
+			'order' => ['SESSION_ID' => 'ASC'],
+			'limit' => self::getMaxInteractionCount(),
+		]);
 
 		while ($sessionId = $sessionListManager->fetch()['SESSION_ID'])
 		{
@@ -237,45 +229,39 @@ abstract class Queue
 	/**
 	 * Returns all operator sessions.
 	 *
-	 * @param array $userIds
+	 * @param int[] $userIds
 	 * @param string $reasonReturn
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
+	 * @return void
 	 */
-	public function returnSessionsUsersToQueue(array $userIds, $reasonReturn = ImOpenLines\Queue::REASON_DEFAULT)
+	public function returnSessionsUsersToQueue(array $userIds, string $reasonReturn = ImOpenLines\Queue::REASON_DEFAULT): void
 	{
-		if(!empty($userIds))
+		if (!empty($userIds))
 		{
 			$sessionNotAccepted = [];
 			$sessionAccepted = [];
 			$sessionWaitClient = [];
 
-			$managerSessionCheck = SessionCheckTable::getList(
-				[
-					'select' => [
-						'ID' => 'SESSION_ID',
-						'STATUS' => 'SESSION.STATUS',
-						'DATE_CLOSE'
-					],
-					'filter' => [
-						'SESSION.CONFIG_ID' => $this->configLine['ID'],
-						'SESSION.OPERATOR_ID' => $userIds,
-					]
+			$managerSessionCheck = SessionCheckTable::getList([
+				'select' => [
+					'ID' => 'SESSION_ID',
+					'STATUS' => 'SESSION.STATUS',
+					'DATE_CLOSE'
+				],
+				'filter' => [
+					'=SESSION.CONFIG_ID' => $this->configLine['ID'],
+					'=SESSION.OPERATOR_ID' => $userIds,
 				]
-			);
+			]);
 
 			while ($session = $managerSessionCheck->fetch())
 			{
 				$status = $session['STATUS'];
 				unset($session['STATUS']);
-				if($status == Session::STATUS_WAIT_CLIENT)
+				if ($status == Session::STATUS_WAIT_CLIENT)
 				{
 					$sessionWaitClient[$session['ID']] = $session;
 				}
-				elseif($status < Session::STATUS_ANSWER)
+				elseif ($status < Session::STATUS_ANSWER)
 				{
 					$sessionNotAccepted[$session['ID']] = $session;
 				}
@@ -285,43 +271,41 @@ abstract class Queue
 				}
 			}
 
-			if(!empty($sessionWaitClient))
+			if (!empty($sessionWaitClient))
 			{
 				$this->returnSessionsWaitClientUsersToQueue($sessionWaitClient, $reasonReturn);
 			}
 
-			if(!empty($sessionNotAccepted) || !empty($sessionAccepted))
+			if (!empty($sessionNotAccepted) || !empty($sessionAccepted))
 			{
 				$freeSlotsCount = $this->getCountFreeSlots();
 				$sessionsCount = count($sessionNotAccepted) + count($sessionAccepted);
 
-				if(!empty($sessionAccepted))
+				if (!empty($sessionAccepted))
 				{
 					$this->returnSessionsAcceptedUsersToQueue(array_keys($sessionAccepted), $reasonReturn);
 				}
 
 				if ($sessionsCount > $freeSlotsCount)
 				{
-					$managerSessionCheck = SessionCheckTable::getList(
-						[
-							'select' => [
-								'ID' => 'SESSION_ID',
-							],
-							'filter' => [
-								'SESSION.CONFIG_ID' => $this->configLine['ID'],
-								'<SESSION.STATUS' => Session::STATUS_ANSWER,
-								'!=SESSION.OPERATOR_FROM_CRM' => 'Y'
-							]
+					$managerSessionCheck = SessionCheckTable::getList([
+						'select' => [
+							'ID' => 'SESSION_ID',
+						],
+						'filter' => [
+							'=SESSION.CONFIG_ID' => $this->configLine['ID'],
+							'<SESSION.STATUS' => Session::STATUS_ANSWER,
+							'!=SESSION.OPERATOR_FROM_CRM' => 'Y'
 						]
-					);
+					]);
 
-					while($sessionId = $managerSessionCheck->fetch()['ID'])
+					while ($sessionId = $managerSessionCheck->fetch()['ID'])
 					{
 						$sessionNotAccepted[$sessionId] = $sessionId;
 					}
 				}
 
-				if(!empty($sessionNotAccepted))
+				if (!empty($sessionNotAccepted))
 				{
 					$this->returnSessionsNotAcceptedUsersToQueue(array_keys($sessionNotAccepted), $reasonReturn);
 				}
@@ -334,13 +318,13 @@ abstract class Queue
 	 *
 	 * @param array $sessionList
 	 * @param string $reasonReturn
-	 * @throws \Bitrix\Main\ObjectException
+	 * @return void
 	 */
-	protected function returnSessionsWaitClientUsersToQueue(array $sessionList, $reasonReturn = ImOpenLines\Queue::REASON_DEFAULT)
+	protected function returnSessionsWaitClientUsersToQueue(array $sessionList, string $reasonReturn = ImOpenLines\Queue::REASON_DEFAULT): void
 	{
 		foreach ($sessionList as $session)
 		{
-			if(!empty($session['DATE_CLOSE']) && $session['DATE_CLOSE'] instanceof DateTime)
+			if (!empty($session['DATE_CLOSE']) && $session['DATE_CLOSE'] instanceof DateTime)
 			{
 				$dateQueue = new $session['DATE_CLOSE'];
 			}
@@ -358,11 +342,11 @@ abstract class Queue
 	/**
 	 * Return accepted user session.
 	 *
-	 * @param array $sessionIds
+	 * @param int[] $sessionIds
 	 * @param string $reasonReturn
-	 * @throws \Bitrix\Main\ObjectException
+	 * @return void
 	 */
-	protected function returnSessionsAcceptedUsersToQueue(array $sessionIds, $reasonReturn = ImOpenLines\Queue::REASON_DEFAULT)
+	protected function returnSessionsAcceptedUsersToQueue(array $sessionIds, string $reasonReturn = ImOpenLines\Queue::REASON_DEFAULT): void
 	{
 		foreach ($sessionIds as $id)
 		{
@@ -375,10 +359,9 @@ abstract class Queue
 	 *
 	 * @param array $sessionIds
 	 * @param string $reasonReturn
-	 *
-	 * @throws \Bitrix\Main\ObjectException
+	 * @return void
 	 */
-	protected function returnSessionsNotAcceptedUsersToQueue(array $sessionIds, $reasonReturn = ImOpenLines\Queue::REASON_DEFAULT)
+	protected function returnSessionsNotAcceptedUsersToQueue(array $sessionIds, string $reasonReturn = ImOpenLines\Queue::REASON_DEFAULT): void
 	{
 		foreach ($sessionIds as $id)
 		{
@@ -389,16 +372,12 @@ abstract class Queue
 	/**
 	 * Return to the session queue the user who went on vacation.
 	 *
-	 * @param $userId
-	 * @param $durationAbsenceDay
+	 * @param int $userId
+	 * @param int $durationAbsenceDay
 	 * @param string $reasonReturn
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
+	 * @return void
 	 */
-	public function returnSessionsUsersToQueueIsStartAbsence($userId, $durationAbsenceDay, $reasonReturn = ImOpenLines\Queue::REASON_DEFAULT)
+	public function returnSessionsUsersToQueueIsStartAbsence($userId, $durationAbsenceDay, string $reasonReturn = ImOpenLines\Queue::REASON_DEFAULT): void
 	{
 		$this->returnNotAcceptedSessionsToQueue($userId, $reasonReturn);
 	}
@@ -411,13 +390,9 @@ abstract class Queue
 	/**
 	 * OnChatSkip/OnChatMarkSpam/OnChatFinish/OnOperatorTransfer event handler for filling free slots
 	 *
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
+	 * @return void
 	 */
-	public function checkFreeSlotOnChatFinish()
+	public function checkFreeSlotOnChatFinish(): void
 	{
 		$this->returnNotDistributedSessionsToQueue();
 
@@ -427,27 +402,20 @@ abstract class Queue
 	/**
 	 * OnImopenlineMessageSend event handler for filling free slots
 	 *
-	 * @param $messageData
-	 *
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
+	 * @param array $messageData
+	 * @return void
 	 */
-	public function checkFreeSlotOnMessageSend($messageData)
+	public function checkFreeSlotOnMessageSend($messageData): void
 	{
 		if ($this->configLine['MAX_CHAT'] > 0)
 		{
 			$session = new Session();
-			$resultLoad = $session->load(
-				[
-					'USER_CODE' => $messageData['CHAT_ENTITY_ID'],
-					'SKIP_CREATE' => 'Y'
-				]
-			);
+			$resultLoad = $session->load([
+				'USER_CODE' => $messageData['CHAT_ENTITY_ID'],
+				'SKIP_CREATE' => 'Y'
+			]);
 
-			if($resultLoad)
+			if ($resultLoad)
 			{
 				$firstMessage = $messageData['STATUS_BEFORE'] < Session::STATUS_CLIENT_AFTER_OPERATOR && $messageData['STATUS_AFTER'] == Session::STATUS_OPERATOR;
 

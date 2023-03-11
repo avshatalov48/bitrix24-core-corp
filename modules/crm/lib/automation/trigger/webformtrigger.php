@@ -1,17 +1,11 @@
 <?php
+
 namespace Bitrix\Crm\Automation\Trigger;
 
-Use Bitrix\Main\Localization\Loc;
-
-Loc::loadMessages(__FILE__);
+use Bitrix\Main\Localization\Loc;
 
 class WebFormTrigger extends BaseTrigger
 {
-	protected static function areDynamicTypesSupported(): bool
-	{
-		return false;
-	}
-
 	public static function getCode()
 	{
 		return 'WEBFORM';
@@ -40,18 +34,17 @@ class WebFormTrigger extends BaseTrigger
 		return true;
 	}
 
-	public static function toArray()
+	protected static function getPropertiesMap(): array
 	{
-		$result = parent::toArray();
-		if (static::isEnabled())
-		{
-			$forms = \Bitrix\Crm\WebForm\Internals\FormTable::getDefaultTypeList(array(
-				'select' => array('ID', 'NAME'),
-				'order' => array('NAME' => 'ASC', 'ID' => 'ASC'),
-			))->fetchAll();
-			$result['WEBFORM_LIST'] = $forms;
-		}
-		return $result;
+		return [
+			[
+				'Id' => 'form_id',
+				'Name' => Loc::getMessage('CRM_AUTOMATION_TRIGGER_WEBFORM_PROPERTY_FORM'),
+				'Type' => 'select',
+				'EmptyValueText' => Loc::getMessage('CRM_AUTOMATION_TRIGGER_WEBFORM_DEFAULT_FORM'),
+				'Options' => static::getFormList(),
+			],
+		];
 	}
 
 	public static function getGroup(): array
@@ -62,5 +55,19 @@ class WebFormTrigger extends BaseTrigger
 	public static function getDescription(): string
 	{
 		return Loc::getMessage('CRM_AUTOMATION_TRIGGER_WEBFORM_DESCRIPTION') ?? '';
+	}
+
+	protected static function getFormList(array $filter = []): array
+	{
+		$forms = \Bitrix\Crm\WebForm\Internals\FormTable::getDefaultTypeList([
+			'select' => ['ID', 'NAME'],
+			'order' => ['NAME' => 'ASC', 'ID' => 'ASC'],
+			'filter' => $filter,
+		])->fetchAll();
+
+		return array_map(
+			fn ($form) => ['value' => $form['ID'], 'name' => $form['NAME']],
+			$forms
+		);
 	}
 }

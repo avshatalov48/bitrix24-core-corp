@@ -1,7 +1,9 @@
 <?php
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
+use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Socialnetwork\WorkgroupTable;
 use Bitrix\Tasks\Access\ActionDictionary;
 use Bitrix\Tasks\Access\Model\TaskModel;
 use Bitrix\Tasks\Access\Role\RoleDictionary;
@@ -277,7 +279,18 @@ class TasksWidgetMemberSelectorComponent extends TasksBaseComponent
 
 		if ($this->errorCollection->checkNoFatals())
 		{
-			return null;
+			if (!empty($groupId))
+			{
+				$group = WorkgroupTable::getById($groupId)->fetch();
+				$owner = $group && $group['NAME'];
+			}
+			else
+			{
+				$owner = CurrentUser::get()->getFirstName() . ' ' .CurrentUser::get()->getLastName();
+			}
+			return [
+				'owner' => $owner,
+			];
 		}
 
 		return [];

@@ -139,7 +139,7 @@ else
 			</div>
 			<div class="imconnector-field-box">
 				<?
-				if($arResult['STATUS'])
+				if (!empty($arResult['STATUS']))
 				{
 					?>
 					<div class="imconnector-field-main-subtitle">
@@ -156,7 +156,7 @@ else
 					</div>
 					<?
 				}
-				elseif($arResult['ERROR_STATUS'])
+				elseif (!empty($arResult['ERROR_STATUS']))
 				{
 					?>
 					<div class="imconnector-field-main-subtitle">

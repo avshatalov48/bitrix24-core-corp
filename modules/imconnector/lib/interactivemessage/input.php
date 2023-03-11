@@ -378,7 +378,7 @@ class Input
 						$resultCommand = $this->sessionClose(
 							$params['CHAT_ID'],
 							$sessionData['USER_ID'],
-							$configTask['AUTOMATIC_TEXT_CLOSE']
+							$configTask['AUTOMATIC_TEXT_CLOSE'] ?? ''
 						);
 						break;
 
@@ -386,7 +386,7 @@ class Input
 						$resultCommand = $this->sessionContinue(
 							$params['CHAT_ID'],
 							$sessionData['USER_ID'],
-							$configTask['AUTOMATIC_TEXT_CONTINUE']
+							$configTask['AUTOMATIC_TEXT_CONTINUE'] ?? ''
 						);
 						break;
 
@@ -394,7 +394,7 @@ class Input
 						$resultCommand = $this->sessionNew(
 							$params['CHAT_ID'],
 							$sessionData['USER_ID'],
-							$configTask['AUTOMATIC_TEXT_NEW']
+							$configTask['AUTOMATIC_TEXT_NEW'] ?? ''
 						);
 						break;
 

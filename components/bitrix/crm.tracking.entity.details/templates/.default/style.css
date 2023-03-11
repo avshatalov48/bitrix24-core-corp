@@ -104,16 +104,6 @@
 	color: #fff;
 }
 
-.bx-ie .crm-tracking-entity-details-btn-connect.ui-btn {
-	background: #fff;
-	border: none;
-}
-
-.bx-ie .crm-tracking-entity-details-btn-hide.ui-btn,
-.bx-ie .crm-tracking-entity-details-btn-hide.ui-btn:hover {
-	color: #fff;
-}
-
 .crm-tracking-entity-details-path-block {
 	box-sizing: border-box;
 	margin: 0 0 20px;
@@ -214,10 +204,6 @@
 
 .crm-tracking-entity-details-path-content {
 	font-size: 0;
-}
-
-.bx-ie .ui-icon.crm-tracking-entity-details-path-icon {
-	width: 14px;
 }
 
 .crm-tracking-entity-details-popup {

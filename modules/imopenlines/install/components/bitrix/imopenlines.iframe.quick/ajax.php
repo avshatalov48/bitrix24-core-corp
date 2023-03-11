@@ -63,11 +63,12 @@ class ImopenlinesIframeQuickAjaxController
 			$filter['CATEGORY'] = $sectionId;
 		}
 		$converter = \Bitrix\Main\Text\Converter::getHtmlConverter();
-		$answers = QuickAnswer::getList($filter, $offset);
-		$this->responseData['result'] = array();
+		$answers = QuickAnswer::getListByUserPermissions($filter, $offset);
+		$this->responseData['allCount'] = QuickAnswer::getCountByUserPermissions($filter);
+		$this->responseData['result'] = [];
 		foreach($answers as $answer)
 		{
-			$this->responseData['result'][] = array(
+			$this->responseData['result'][] = [
 				'name' => $converter->decode($answer->getName()),
 				'text' => $converter->decode($answer->getText()),
 				'id' => (int)$answer->getId(),
@@ -77,9 +78,8 @@ class ImopenlinesIframeQuickAjaxController
 					'element_edit'
 				),
 				'section' => (int)$answer->getCategory(),
-			);
+			];
 		}
-		$this->responseData['allCount'] = QuickAnswer::getCount($filter);
 	}
 
 	protected function edit()
@@ -107,6 +107,13 @@ class ImopenlinesIframeQuickAjaxController
 		}
 		else
 		{
+			$listsDataManager = new \Bitrix\ImOpenlines\QuickAnswers\ListsDataManager($this->requestData['LINE_ID']);
+			$iblockId = $listsDataManager->getIblockId();
+			if (!\CIBlockRights::UserHasRightTo($iblockId, $iblockId, 'section_element_bind'))
+			{
+				$this->errors[] = Loc::getMessage('IMOP_QUICK_ANSWERS_AJAX_EDIT_EDIT');
+				return false;
+			}
 			$answer = QuickAnswer::add(array('TEXT' => $text, 'CATEGORY' => $sectionId));
 		}
 		if($answer->getId() > 0)

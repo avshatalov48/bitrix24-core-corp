@@ -4,6 +4,7 @@
  */
 jn.define('crm/entity-detail/component/smart-activity-menu-item', (require, exports, module) => {
 
+	const { getEntityMessage } = require('crm/loc');
 	const { TypeId } = require('crm/type');
 	const { Haptics } = require('haptics');
 	const { Loc } = require('loc');
@@ -43,7 +44,8 @@ jn.define('crm/entity-detail/component/smart-activity-menu-item', (require, expo
 		const menu = new ContextMenu({
 			actions,
 			params: {
-				title: Loc.getMessage('M_CRM_ACTION_SMART_ACTIVITY_SKIP_TITLE'),
+				// ToDo move to entityTypeId from props
+				title: getEntityMessage('M_CRM_ACTION_SMART_ACTIVITY_SKIP_TITLE', TypeId.Deal),
 				showCancelButton: true,
 				showActionLoader: false,
 			},

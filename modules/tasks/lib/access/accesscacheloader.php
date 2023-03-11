@@ -4,16 +4,11 @@ namespace Bitrix\Tasks\Access;
 
 use Bitrix\Main\Loader;
 use Bitrix\Socialnetwork\Internals\Registry\FeaturePermRegistry;
+use Bitrix\Tasks\Internals\Registry\TagRegistry;
 use Bitrix\Tasks\Internals\Registry\TaskRegistry;
 
 class AccessCacheLoader
 {
-
-	public function __construct()
-	{
-
-	}
-
 	public function preload(int $userId, array $taskIds)
 	{
 		$registry = TaskRegistry::getInstance();
@@ -49,6 +44,12 @@ class AccessCacheLoader
 		$sonetRegistry->load($groupIds, 'tasks', 'create_tasks', $userId);
 		$sonetRegistry->load($groupIds, 'tasks', 'delete_tasks', $userId);
 		$sonetRegistry->load($groupIds, 'tasks', 'view_all', $userId);
+	}
+
+	public function preloadTags(array $tagsIds): void
+	{
+		$registry = TagRegistry::getInstance();
+		$registry->load($tagsIds);
 	}
 
 }

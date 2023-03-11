@@ -286,4 +286,9 @@ export default class MenuBar
 		}
 		return false;
 	}
+
+	getMenuItems()
+	{
+		return this._menu.getAllItems();
+	}
 }

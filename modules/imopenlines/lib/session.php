@@ -186,21 +186,21 @@ class Session
 		$this->connectorId = $params['SOURCE'];
 
 		$fields = [];
-		$fields['PARENT_ID'] = (int)$params['PARENT_ID'];
+		$fields['PARENT_ID'] = (int)($params['PARENT_ID'] ?? 0);
 		$fields['USER_CODE'] = $params['USER_CODE'];
 
 		$fields['USER_CODE_FAIL'] = $params['USER_CODE_FAIL'];
 
 		$fields['CONFIG_ID'] = (int)$params['CONFIG_ID'];
 		$fields['USER_ID'] = (int)$params['USER_ID'];
-		$fields['OPERATOR_ID'] = (int)$params['OPERATOR_ID'];
+		$fields['OPERATOR_ID'] = (int)($params['OPERATOR_ID'] ?? 0);
 		$params['CRM_TRACE_DATA'] = (string)($params['CRM_TRACE_DATA'] ?? '');
 		$params['CRM_SKIP_PHONE_VALIDATE'] = (string)($params['CRM_SKIP_PHONE_VALIDATE'] ?? '');
-		$fields['SOURCE'] = $params['SOURCE'];
-		$fields['MODE'] =  $params['MODE'] === self::MODE_OUTPUT? self::MODE_OUTPUT: self::MODE_INPUT;
-		$params['DEFERRED_JOIN'] =  $params['DEFERRED_JOIN'] === 'Y'? 'Y': 'N';
-		$params['SKIP_CREATE'] =  $params['SKIP_CREATE'] === 'Y'? 'Y': 'N';
-		$params['REOPEN'] =  $params['REOPEN'] === 'Y'? 'Y': 'N';
+		$fields['SOURCE'] = (string)($params['SOURCE'] ?? '');
+		$fields['MODE'] =  (isset($params['MODE']) && $params['MODE'] === self::MODE_OUTPUT ? self::MODE_OUTPUT : self::MODE_INPUT);
+		$params['DEFERRED_JOIN'] = (isset($params['DEFERRED_JOIN']) && $params['DEFERRED_JOIN'] === 'Y' ? 'Y' : 'N');
+		$params['SKIP_CREATE'] = (isset($params['SKIP_CREATE']) && $params['SKIP_CREATE'] === 'Y' ? 'Y' : 'N');
+		$params['REOPEN'] = (isset($params['REOPEN']) && $params['REOPEN'] === 'Y' ? 'Y' : 'N');
 
 		//Check open line configuration load
 		if (empty($this->config) && !empty($fields['CONFIG_ID']))
@@ -493,8 +493,7 @@ class Session
 
 
 				/* BLOCK STATISTIC*/
-				ConfigStatistic::getInstance($fields['CONFIG_ID'])->addInWork()->addSession();
-				/* END BLOCK STATISTIC*/
+				ConfigStatistic::getInstance((int)$fields['CONFIG_ID'])->addInWork()->addSession();
 
 				/* CRM BLOCK */
 				if ($fields['MODE'] == self::MODE_INPUT)
@@ -685,10 +684,18 @@ class Session
 
 		//There is no open session, but the session voting
 		if (
-			empty($loadSession) &&
+			empty($loadSession)
+			&&
 			(
-				$params['VOTE_SESSION'] === 'Y' ||
-				$params['REOPEN'] === 'Y'
+				(
+					isset($params['VOTE_SESSION'])
+					&& $params['VOTE_SESSION'] === 'Y'
+				)
+				||
+				(
+					isset($params['REOPEN'])
+					&& $params['REOPEN'] === 'Y'
+				)
 			)
 		)
 		{
@@ -720,7 +727,7 @@ class Session
 			$loadSession['SESSION_ID'] = $loadSession['ID'];
 			$this->session = $loadSession;
 
-			if ($params['VOTE_SESSION'] === 'Y')
+			if (isset($params['VOTE_SESSION']) && $params['VOTE_SESSION'] === 'Y')
 			{
 				$this->session['VOTE_SESSION'] = true;
 			}
@@ -754,8 +761,9 @@ class Session
 				}
 
 				if (
-					$params['VOTE_SESSION'] === 'Y'
-					&& $loadSession['DATE_CLOSE_VOTE'] !== null
+					isset($params['VOTE_SESSION'])
+					&& $params['VOTE_SESSION'] === 'Y'
+					&& isset($loadSession['DATE_CLOSE_VOTE'])
 					&& $loadSession['DATE_CLOSE_VOTE'] instanceof DateTime
 					&& $loadSession['DATE_CLOSE_VOTE']->getTimestamp() < time()
 				)
@@ -767,15 +775,15 @@ class Session
 				{
 					//If the session is closed and voting
 					if (
-						$params['VOTE_SESSION'] === 'Y' &&
-						$loadSession['CLOSED'] === 'Y'
+						isset($params['VOTE_SESSION'])
+						&& $params['VOTE_SESSION'] === 'Y'
+						&& $loadSession['CLOSED'] === 'Y'
 					)
 					{
 						Messages\Session::sendMessageReopenSession($this->session['CHAT_ID'], $this->session['SESSION_ID']);
 
 						//statistics
-						ConfigStatistic::getInstance($this->session['CONFIG_ID'])->deleteClosed()->addInWork();
-						//statistics END
+						ConfigStatistic::getInstance((int)$this->session['CONFIG_ID'])->deleteClosed()->addInWork();
 
 						$dateClose = new DateTime();
 
@@ -939,6 +947,31 @@ class Session
 				$crmManager->setSessionAnswered(['DATE_CLOSE' => $closeDate]);
 				$crmManager->executeAutomationAnswerControlTrigger($this);
 				$crmManager->executeAutomationAnswerTrigger($this);
+
+				if (
+					$this->getData('STATUS') <= self::STATUS_ANSWER
+					&& $this->getConfig('IGNORE_WELCOME_FORM_RESPONSIBLE') === 'Y'
+					&& $this->getData('CRM') === 'Y'
+				)
+				{
+					$crmEntitiesManager = \Bitrix\ImOpenLines\Crm\Common::getActivityBindings($this->getData('CRM_ACTIVITY_ID'));
+					if($crmEntitiesManager->isSuccess())
+					{
+						$entities = $crmEntitiesManager->getData();
+						if (isset($entities[Crm::ENTITY_CONTACT]) && $entities[Crm::ENTITY_CONTACT] > 0)
+						{
+							$entity = new \CCrmContact(false);
+							$data = ['ASSIGNED_BY_ID' => $crmManager->getResponsibleCrmId()];
+							$entity->Update($entities[Crm::ENTITY_CONTACT], $data);
+						}
+						if (isset($entities[Crm::ENTITY_LEAD]) && $entities[Crm::ENTITY_LEAD] > 0)
+						{
+							$entity = new \CCrmLead(false);
+							$data = ['ASSIGNED_BY_ID' => $crmManager->getResponsibleCrmId()];
+							$entity->Update($entities[Crm::ENTITY_LEAD], $data);
+						}
+					}
+				}
 			}
 		}
 
@@ -1319,7 +1352,10 @@ class Session
 				$update['DATE_MODIFY'] = $currentDate;
 			}
 
-			if ($update['CLOSED'] === 'Y')
+			if (
+				isset($update['CLOSED'])
+				&& $update['CLOSED'] === 'Y'
+			)
 			{
 				if ($this->session['CRM_ACTIVITY_ID'] > 0)
 				{
@@ -1360,14 +1396,19 @@ class Session
 
 			$this->update($update);
 
-			if (method_exists('\\Bitrix\\ImConnector\\Chat', 'deleteLastMessage'))
+			if (!empty($this->user['USER_CODE']))
 			{
-				//TODO: Replace with the method \Bitrix\ImOpenLines\Chat::parseLinesChatEntityId or \Bitrix\ImOpenLines\Chat::parseLiveChatEntityId
-				[$connectorId, $lineId, $connectorChatId, $connectorUserId] = explode('|', $this->user['USER_CODE']);
-				ImConnector\Chat::deleteLastMessage($connectorChatId, $connectorId);
+				$chatEntityId =	\Bitrix\ImOpenLines\Chat::parseLinesChatEntityId($this->user['USER_CODE']);
+				if (!empty($chatEntityId['connectorId']) && !empty($chatEntityId['connectorChatId']))
+				{
+					ImConnector\Chat::deleteLastMessage($chatEntityId['connectorChatId'], $chatEntityId['connectorId']);
+				}
 			}
 
-			if ($update['CLOSED'] === 'Y')
+			if (
+				isset($update['CLOSED'])
+				&& $update['CLOSED'] === 'Y'
+			)
 			{
 				$eventData = [];
 				$eventData['RUNTIME_SESSION'] = $this;
@@ -1577,7 +1618,7 @@ class Session
 		elseif (
 			isset($fields['DATE_MODIFY'])
 			&& $fields['DATE_MODIFY'] instanceof DateTime
-			&& $fields['CLOSED'] !== 'Y'
+			&& (!isset($fields['CLOSED']) || $fields['CLOSED'] !== 'Y')
 		)
 		{
 			$dateCrmClose = new DateTime();
@@ -1601,7 +1642,8 @@ class Session
 				)
 				{
 					if (
-						$this->session['VOTE_SESSION']
+						isset($this->session['VOTE_SESSION'])
+						&& $this->session['VOTE_SESSION']
 						&&
 						(
 							(
@@ -1658,7 +1700,10 @@ class Session
 							&& $fields['WAIT_ANSWER'] != 'N'
 						)
 						||
-						$fields['WAIT_ANSWER'] == 'Y'
+						(
+							isset($fields['WAIT_ANSWER'])
+							&& $fields['WAIT_ANSWER'] == 'Y'
+						)
 					)
 					{
 						$fields['STATUS'] =
@@ -1679,7 +1724,10 @@ class Session
 							&& $fields['WAIT_ACTION'] !== 'N'
 						)
 						||
-						$fields['WAIT_ACTION'] === 'Y'
+						(
+							isset($fields['WAIT_ACTION'])
+							&& $fields['WAIT_ACTION'] === 'Y'
+						)
 					)
 					{
 						$fields['STATUS'] = self::STATUS_WAIT_CLIENT;
@@ -1834,9 +1882,9 @@ class Session
 
 			$updateCheckTable = [];
 
-			ConfigStatistic::getInstance($this->session['CONFIG_ID'])->addClosed()->deleteInWork();
+			ConfigStatistic::getInstance((int)$this->session['CONFIG_ID'])->addClosed()->deleteInWork();
 
-			if ($fields['FORCE_CLOSE'] != 'Y')
+			if (!isset($fields['FORCE_CLOSE']) || $fields['FORCE_CLOSE'] != 'Y')
 			{
 				$this->chat->close();
 			}
@@ -1957,7 +2005,7 @@ class Session
 		if (isset($fields['MESSAGE_COUNT']))
 		{
 			$fields["MESSAGE_COUNT"] = new SqlExpression("?# + 1", "MESSAGE_COUNT");
-			ConfigStatistic::getInstance($this->session['CONFIG_ID'])->addMessage();
+			ConfigStatistic::getInstance((int)$this->session['CONFIG_ID'])->addMessage();
 		}
 
 		if (!empty($updateCheckTable))
@@ -2037,27 +2085,22 @@ class Session
 		$isResponseOperator = null;
 
 		if (
-			isset($fields['STATUS']) &&
-			$this->session['STATUS'] != $fields['STATUS']
+			!empty($fields['STATUS'])
+			&& $this->session['STATUS'] != $fields['STATUS']
 		)
 		{
 			$this->chat->updateSessionStatus($fields['STATUS']);
 
-			if (Connector::isLiveChat($this->session['SOURCE']))
-			{
-				$parsedUserCode = Session\Common::parseUserCode($this->session['USER_CODE']);
-			}
-
 			if (
-				(int)$this->session['STATUS'] !== self::STATUS_OPERATOR &&
-				(int)$fields['STATUS'] === self::STATUS_OPERATOR
+				(int)$this->session['STATUS'] !== self::STATUS_OPERATOR
+				&& (int)$fields['STATUS'] === self::STATUS_OPERATOR
 			)
 			{
 				$isResponseOperator = true;
 			}
-			elseif(
-				(int)$this->session['STATUS'] === self::STATUS_OPERATOR &&
-				(int)$fields['STATUS'] !== self::STATUS_OPERATOR
+			elseif (
+				(int)$this->session['STATUS'] === self::STATUS_OPERATOR
+				&& (int)$fields['STATUS'] !== self::STATUS_OPERATOR
 			)
 			{
 				$isResponseOperator = false;
@@ -2065,24 +2108,35 @@ class Session
 
 			$sessionClose = false;
 			if (
-				isset($fields['CLOSED']) &&
-				$fields['CLOSED'] === 'Y'
+				isset($fields['CLOSED'])
+				&& $fields['CLOSED'] === 'Y'
 			)
 			{
 				$sessionClose = true;
 			}
 
-			\Bitrix\Pull\Event::add($this->session['USER_ID'], [
-				'module_id' => 'imopenlines',
-				'command' => 'sessionStatus',
-				'params' => [
-					'chatId' => (int)$parsedUserCode['EXTERNAL_CHAT_ID'],
-					'sessionId' => (int)$this->session['ID'],
-					'sessionStatus' => (int)$fields['STATUS'],
-					'spam' => $this->session['SPAM'] == 'Y',
-					'sessionClose' => $sessionClose
-				]
-			]);
+			if (
+				!empty($this->session['SOURCE'])
+				&& Connector::isLiveChat($this->session['SOURCE'])
+				&& !empty($this->session['USER_CODE'])
+			)
+			{
+				$chatEntityId = \Bitrix\ImOpenLines\Chat::parseLinesChatEntityId($this->session['USER_CODE']);
+				if (!empty($chatEntityId['connectorChatId']))
+				{
+					\Bitrix\Pull\Event::add($this->session['USER_ID'], [
+						'module_id' => 'imopenlines',
+						'command' => 'sessionStatus',
+						'params' => [
+							'chatId' => (int)$chatEntityId['connectorChatId'],
+							'sessionId' => (int)$this->session['ID'],
+							'sessionStatus' => (int)$fields['STATUS'],
+							'spam' => $this->session['SPAM'] == 'Y',
+							'sessionClose' => $sessionClose
+						]
+					]);
+				}
+			}
 		}
 
 		foreach ($fields as $key => $value)
@@ -3001,7 +3055,7 @@ class Session
 		}
 
 		//statistics
-		ConfigStatistic::getInstance($duplicateSession['CONFIG_ID'])->addClosed()->deleteInWork();
+		ConfigStatistic::getInstance((int)$duplicateSession['CONFIG_ID'])->addClosed()->deleteInWork();
 
 		return $result;
 	}
@@ -3142,7 +3196,8 @@ class Session
 
 	public static function onSessionProlongWriting($params)
 	{
-		if ($params['CHAT']['ENTITY_TYPE'] != 'LINES')
+		$entityType = $params['CHAT']['ENTITY_TYPE'] ?? null;
+		if ($entityType !== 'LINES')
 		{
 			return true;
 		}

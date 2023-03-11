@@ -21,6 +21,11 @@ class TelegramBot extends Base
 		parent::__construct(self::TELEGRAM_BOT);
 	}
 
+	/**
+	 * @param array $message
+	 * @param int $line
+	 * @return Result
+	 */
 	public function processingInputWelcomeMessage(array $message, int $line): Result
 	{
 		$result = new Result();

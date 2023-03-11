@@ -499,7 +499,9 @@ class Sprint extends Base
 			return null;
 		}
 
-		if (!$this->canStartSprint($this->getUserId(), $sprint->getGroupId()))
+		$sprintService = new SprintService();
+
+		if (!$sprintService->canStartSprint($this->getUserId(), $sprint->getGroupId()))
 		{
 			$this->errorCollection->add([new Error('Access denied')]);
 
@@ -512,8 +514,6 @@ class Sprint extends Base
 
 			return null;
 		}
-
-		$sprintService = new SprintService();
 
 		$kanbanService = new KanbanService();
 		$taskService = new TaskService($this->getUserId());
@@ -567,7 +567,7 @@ class Sprint extends Base
 			return null;
 		}
 
-		if (!$this->canCompleteSprint($this->getUserId(), $sprint->getGroupId()))
+		if (!$sprintService->canCompleteSprint($this->getUserId(), $sprint->getGroupId()))
 		{
 			$this->errorCollection->add([new Error('Access denied')]);
 
@@ -673,47 +673,5 @@ class Sprint extends Base
 		}
 
 		return $date;
-	}
-
-	private function canStartSprint(int $userId, int $groupId): bool
-	{
-		if (!Loader::includeModule('socialnetwork'))
-		{
-			return false;
-		}
-
-		$userRoleInGroup = \CSocNetUserToGroup::getUserRole($userId, $groupId);
-
-		if (
-			$userRoleInGroup == SONET_ROLES_MODERATOR
-			|| $userRoleInGroup == SONET_ROLES_OWNER
-			|| \CSocNetUser::isCurrentUserModuleAdmin()
-		)
-		{
-			return true;
-		}
-
-		return false;
-	}
-
-	private function canCompleteSprint(int $userId, int $groupId): bool
-	{
-		if (!Loader::includeModule('socialnetwork'))
-		{
-			return false;
-		}
-
-		$userRoleInGroup = \CSocNetUserToGroup::getUserRole($userId, $groupId);
-
-		if (
-			$userRoleInGroup == SONET_ROLES_MODERATOR
-			|| $userRoleInGroup == SONET_ROLES_OWNER
-			|| \CSocNetUser::isCurrentUserModuleAdmin()
-		)
-		{
-			return true;
-		}
-
-		return false;
 	}
 }

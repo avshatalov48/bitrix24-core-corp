@@ -4,6 +4,7 @@
 jn.define('layout/ui/fields/web', (require, exports, module) => {
 
 	const { StringFieldClass } = require('layout/ui/fields/string');
+	const { SafeImage } = require('layout/ui/safe-image');
 	const { isValidLink, URL } = require('utils/url');
 	const { set } = require('utils/object');
 
@@ -16,40 +17,16 @@ jn.define('layout/ui/fields/web', (require, exports, module) => {
 	 */
 	class WebField extends StringFieldClass
 	{
-		constructor(props)
-		{
-			super(props);
-
-			this.state.imageUri = this.getImageUri(props);
-		}
-
-		componentWillReceiveProps(nextProps)
-		{
-			super.componentWillReceiveProps(nextProps);
-
-			this.state.imageUri = this.getImageUri(nextProps);
-		}
-
 		renderLeftIcons()
 		{
-			const { imageUri } = this.state;
-
+			const { valueType, valueLink } = this.props;
 			this.styles = this.getStyles();
 
-			return Image({
+			return SafeImage({
 				style: this.styles.leftIcon,
-				uri: imageUri,
+				uri: this.getImageUri({ valueType, valueLink }),
 				resizeMode: 'contain',
-				onFailure: () => {
-					const { valueType } = this.props;
-					const defaultImage = WebField.getImage({ valueType });
-					if (imageUri !== defaultImage)
-					{
-						this.setState({
-							imageUri: defaultImage,
-						});
-					}
-				},
+				placeholder: WebField.getImage({ valueType }),
 			});
 		}
 

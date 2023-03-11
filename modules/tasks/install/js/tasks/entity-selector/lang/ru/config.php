@@ -1,2 +1,5 @@
 <?php
-$MESS["TASKS_ENTITY_SELECTOR_TAG_FOOTER_CREATE_NEW"] = "Начните ввод, чтобы создать новый тег";
+$MESS['TASKS_ENTITY_SELECTOR_TAG_FOOTER_CREATE_NEW'] = 'Начните ввод, чтобы создать новый тег';
+$MESS['TASKS_ENTITY_SELECTOR_TAG_FOOTER_CREATE'] = 'Создать новый тег';
+$MESS['TASKS_ENTITY_SELECTOR_TAG_FOOTER_OR'] = 'или';
+$MESS['TASKS_ENTITY_SELECTOR_TAG_FOOTER_GET_TAG_SLIDER'] = 'Посмотреть теги';

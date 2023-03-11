@@ -153,6 +153,7 @@ jn.define('crm/timeline/item/ui/footer', (require, exports, module) => {
 
 			return View(
 				{
+					testId: `TimelineItemFooterIcon_${code}`,
 					style: {
 						flexDirection: 'column',
 						justifyContent: 'center',
@@ -184,6 +185,7 @@ jn.define('crm/timeline/item/ui/footer', (require, exports, module) => {
 
 			return View(
 				{
+					testId: 'TimelineItemFooterMenuIcon',
 					style: {
 						flexDirection: 'column',
 						justifyContent: 'center',
@@ -215,11 +217,12 @@ jn.define('crm/timeline/item/ui/footer', (require, exports, module) => {
 		}
     }
 
-	function TimelineItemButton({ type, title, onClick = nothing })
+	function TimelineItemButton({ type, title, sort = 0, onClick = nothing })
 	{
 		return View(
 			{
 				onClick,
+				testId: `TimelineItemFooterButton_${sort}_clickable`,
 				style: {
 					backgroundColor: type === TimelineButtonType.PRIMARY ? '#00A2E8' : transparent('#ffffff'),
 					borderRadius: 512,
@@ -233,6 +236,7 @@ jn.define('crm/timeline/item/ui/footer', (require, exports, module) => {
 			},
 			Text({
 				text: title,
+				testId: `TimelineItemFooterButton_${sort}_caption`,
 				ellipsize: 'end',
 				numberOfLines: 1,
 				style: {

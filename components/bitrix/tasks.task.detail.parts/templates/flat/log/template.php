@@ -12,7 +12,7 @@ use Bitrix\Tasks\UI;
 /** @var CBitrixComponent $component */
 
 Loc::loadMessages(__FILE__);
-
+$commentAndResult = ['COMMENT', 'COMMENT_EDIT', 'COMMENT_DEL', 'RESULT', 'RESULT_EDIT', 'RESULT_REMOVE'];
 if (!function_exists('lambda_sgkrg456d_funcFormatForHuman') )
 {
 	function lambda_sgkrg456d_funcFormatForHuman($seconds)
@@ -197,7 +197,8 @@ $trackedFields = CTaskLog::getTrackedFields();
 			{
 				?>: <?=htmlspecialcharsbx($record["TO_VALUE"])?><?
 			}
-			elseif ($record["FIELD"] == "COMMENT" || $record["FIELD"] == "COMMENT_EDIT" || $record["FIELD"] == "COMMENT_DEL")
+			elseif (in_array($record['FIELD'], $commentAndResult)
+			)
 			{
 				$link = \Bitrix\Tasks\UI\Task::makeActionUrl($arParams["PATH_TO_TASKS_TASK"], $taskData["ID"], 'view');
 				$link = \Bitrix\Tasks\Integration\Forum\Comment::makeUrl($link, $record["TO_VALUE"]);

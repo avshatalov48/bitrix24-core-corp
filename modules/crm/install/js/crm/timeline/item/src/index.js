@@ -13,6 +13,7 @@ import './css/layout/body/logo.css';
 import './css/content-blocks/client-mark.css';
 import './css/layout/note.css';
 import './css/content-blocks/with-title.css';
+import './css/content-blocks/file-list.css';
 import './css/layout/market.css';
 import './css/content-blocks/timeline-audio.css';
 import './css/layout/footer.css';
@@ -23,6 +24,8 @@ import './css/content-blocks/editable-text.css';
 import './css/layout/header/hint.css';
 import './css/content-blocks/info-group.css';
 import './css/content-blocks/sms-message.css';
+import './css/content-blocks/money-pill.css';
+import './css/content-blocks/product-list/styles.css';
 import './css/main.css';
 
 export {

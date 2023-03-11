@@ -1,19 +1,25 @@
-import {Loc, Type, Text, Dom} from 'main.core';
-import {BaseEvent, EventEmitter} from 'main.core.events';
+import { Loc, Type, Text, Dom } from 'main.core';
+import { BaseEvent, EventEmitter } from 'main.core.events';
 
-import {Dialog} from 'ui.entity-selector';
+import { Dialog } from 'ui.entity-selector';
 
-import {Filter} from '../service/filter';
+import { Filter } from '../service/filter';
 
-import {RequestSender} from './request.sender';
-import {Input} from './input';
+import { RequestSender } from './request.sender';
+import { Input } from './input';
 
-import type {EpicType} from '../item/task/epic';
+import type { EpicType } from '../item/task/epic';
+
+import { UI } from 'ui.notification';
+import {MessageBox, MessageBoxButtons} from 'ui.dialogs.messagebox';
+
+
 
 type Params = {
 	requestSender: RequestSender,
 	filter: Filter,
-	groupId: number
+	groupId: number,
+	tagsAreConverting: number,
 }
 
 export class TagSearcher extends EventEmitter
@@ -30,8 +36,10 @@ export class TagSearcher extends EventEmitter
 		this.requestSender = params.requestSender;
 		this.filterService = params.filter;
 		this.groupId = parseInt(params.groupId, 10);
-
+		this.tagsAreConverting = params.tagsAreConverting;
 		this.allTags = new Map();
+
+		this.messageViewed = false;
 	}
 
 	addEpicToSearcher(epic: EpicType)
@@ -49,7 +57,7 @@ export class TagSearcher extends EventEmitter
 			color: epic.color,
 			groupId: epic.groupId,
 			createdBy: epic.createdBy,
-			modifiedBy: epic.modifiedBy
+			modifiedBy: epic.modifiedBy,
 		});
 	}
 
@@ -107,15 +115,21 @@ export class TagSearcher extends EventEmitter
 	{
 		return [...this.allTags.values()]
 			.find((epic) => (epic.entityId === 'epic' && epic.id === epicId))
-		;
+			;
 	}
-
+	// widget on scrum (ex task)
 	showTagsDialog(item: Item, targetNode: HTMLElement): Dialog
 	{
+		if (this.tagsAreConverting)
+		{
+			this.showConvertingMessage();
+			return;
+		}
 		let choiceWasMade = false;
-
+		let groupId = this.groupId;
+		let statusSuccess = { status: false };
 		this.tagDialog = new Dialog({
-			id: item.getId(),
+			id: item.getId().toString(),
 			targetNode: targetNode,
 			width: 400,
 			height: 300,
@@ -124,54 +138,29 @@ export class TagSearcher extends EventEmitter
 			enableSearch: true,
 			compactView: true,
 			searchOptions: {
-				allowCreateItem: true,
-				footerOptions: {
-					label: Loc.getMessage('TASKS_SCRUM_SEARCHER_ACTIONS_TAG_ADD')
-				}
+				allowCreateItem: false,
+			},
+			footer: BX.Tasks.EntitySelector.Footer,
+			footerOptions: {
+				userId: this.userId,
+				groupId: groupId,
 			},
 			offsetTop: 12,
-			context: 'TASKS_SCRUM_TAG_' + this.groupId,
 			entities: [
 				{
 					id: 'task-tag',
 					options: {
 						groupId: this.groupId,
-						taskId: item.getSourceId()
-					}
-				}
+						taskId: item.getSourceId(),
+					},
+				},
 			],
+			clearUnavailableItems: true,
 			events: {
-				'Search:onItemCreateAsync': (event) => {
-					return new Promise((resolve) => {
-
-						const { searchQuery } = event.getData();
-						const dialog = event.getTarget();
-
-						const tagName = searchQuery.getQuery();
-						if (!tagName)
-						{
-							dialog.focusSearch();
-
-							return;
-						}
-
-						const item = dialog.addItem({
-							id: tagName,
-							entityId: 'task-tag',
-							title: tagName,
-							tabs: 'recents'
-						});
-						item.select();
-
-						dialog.getTagSelector().clearTextBox();
-						dialog.focusSearch();
-						dialog.selectFirstTab();
-
-						const label = dialog.getContainer().querySelector('.ui-selector-footer-conjunction');
-						label.textContent = '';
-
-						resolve();
-					});
+				'onLoad': (baseEvent: BaseEvent) => {
+					baseEvent.getTarget().getFooterContainer().style.zIndex = 1;
+					this.onShowTaskEditCallback(baseEvent, statusSuccess, item);
+					this.hideDialogLabel(baseEvent.getTarget());
 				},
 				'Item:onSelect': (event) => {
 					choiceWasMade = true;
@@ -185,9 +174,9 @@ export class TagSearcher extends EventEmitter
 					const tag = deselectedItem.getTitle();
 					this.emit('deAttachTagToTask', tag);
 				},
-				'onLoad': (baseEvent: BaseEvent) => {
-					this.hideDialogLabel(baseEvent.getTarget());
-				}
+				'onSearch': event => {
+					this.onSearchCallback(event);
+				},
 			},
 			tagSelectorOptions: {
 				events: {
@@ -200,8 +189,8 @@ export class TagSearcher extends EventEmitter
 							label.textContent = Text.encode(selector.getTextBoxValue());
 						}
 					},
-				}
-			}
+				},
+			},
 		});
 
 		this.tagDialog.subscribe('onHide', () => {
@@ -245,8 +234,8 @@ export class TagSearcher extends EventEmitter
 			searchOptions: {
 				allowCreateItem: true,
 				footerOptions: {
-					label: Loc.getMessage('TASKS_SCRUM_SEARCHER_ACTIONS_EPIC_ADD')
-				}
+					label: Loc.getMessage('TASKS_SCRUM_SEARCHER_ACTIONS_EPIC_ADD'),
+				},
 			},
 			hideOnDeselect: true,
 			events: {
@@ -260,7 +249,7 @@ export class TagSearcher extends EventEmitter
 								this.addEpicToSearcher(epic);
 								this.filterService.addItemToListTypeField('EPIC', {
 									NAME: epic.name.trim(),
-									VALUE: String(epic.id)
+									VALUE: String(epic.id),
 								});
 								const epicDialogItem = this.getEpicById(epic.id);
 								epicDialogItem.selected = true;
@@ -292,8 +281,8 @@ export class TagSearcher extends EventEmitter
 			},
 			tagSelectorOptions: {
 				textBoxWidth: 340,
-				placeholder: Loc.getMessage('TASKS_SCRUM_ITEM_EPIC_SEARCHER_PLACEHOLDER')
-			}
+				placeholder: Loc.getMessage('TASKS_SCRUM_ITEM_EPIC_SEARCHER_PLACEHOLDER'),
+			},
 		});
 
 		this.epicDialog.subscribe('onHide', () => {
@@ -314,7 +303,7 @@ export class TagSearcher extends EventEmitter
 
 	hasActionPanelDialog(): boolean
 	{
-		return (this.epicDialog || this.tagDialog)
+		return (this.epicDialog || this.tagDialog);
 	}
 
 	closeActionPanelDialogs()
@@ -330,15 +319,21 @@ export class TagSearcher extends EventEmitter
 		}
 	}
 
+	//widget on scrum (new task)
 	showTagsSearchDialog(inputObject: Input, enteredQuery: string): Dialog
 	{
+		if (this.tagsAreConverting)
+		{
+			inputObject.setTagsSearchMode(false);
+			return;
+		}
 		const input = inputObject.getInputNode();
 
 		if (this.tagSearchDialog && this.tagSearchDialog.getId() !== inputObject.getNodeId())
 		{
 			this.tagSearchDialog = null;
 		}
-
+		let groupId = this.groupId;
 		if (!this.tagSearchDialog)
 		{
 			this.tagSearchDialog = new Dialog({
@@ -349,32 +344,33 @@ export class TagSearcher extends EventEmitter
 				multiple: false,
 				dropdownMode: true,
 				compactView: true,
-				context: 'TASKS_SCRUM_TAG_' + this.groupId,
 				entities: [
 					{
 						id: 'task-tag',
 						options: {
-							groupId: this.groupId
-						}
-					}
+							groupId: this.groupId,
+						},
+					},
 				],
 				tabOptions: {
-					visible: false
+					visible: false,
 				},
 				searchOptions: {
-					allowCreateItem: true,
-					footerOptions: {
-						label: Loc.getMessage('TASKS_SCRUM_SEARCHER_ACTIONS_TAG_ADD')
-					}
+					allowCreateItem: false,
 				},
+				footer: BX.Tasks.EntitySelector.Footer,
+				footerOptions: {
+					userId: this.userId,
+					groupId: groupId,
+				},
+				clearUnavailableItems: true,
 				events: {
-					'Search:onItemCreateAsync': (event) => {
-						return new Promise((resolve) => {
-							const dialog = event.getTarget();
-							dialog.hide();
-							input.focus();
-							resolve();
-						});
+					'onLoad': (event) => {
+						event.getTarget().getFooterContainer().style.zIndex = 1;
+						this.onLoadTaskQuickCreateCallback(event, inputObject);
+					},
+					'onSearch': event => {
+						this.onSearchCallback(event);
 					},
 					'Item:onSelect': (event) => {
 						let newValue = '';
@@ -394,39 +390,34 @@ export class TagSearcher extends EventEmitter
 						input.focus();
 						selectedItem.deselect();
 					},
-					'onLoad': (baseEvent: BaseEvent) => {
-						this.hideDialogLabel(baseEvent.getTarget());
-					}
-				}
+				},
 			});
 
 			this.tagSearchDialog.subscribe('onHide', () => {
 				inputObject.setTagsSearchMode(false);
 			});
-
-			inputObject.subscribe('onEnter', () => {
-				if (Type.isNil(this.tagSearchDialog))
-				{
-					return;
-				}
-				const searchTab = this.tagSearchDialog.getSearchTab();
-				if (Type.isNil(searchTab))
-				{
-					return;
-				}
-				if (searchTab.isEmptyResult())
-				{
-					this.tagSearchDialog.hide();
-					this.tagSearchDialog = null;
-					input.focus();
-				}
-			});
 		}
 
+		inputObject.subscribe('onEnter', event => {
+			if (Type.isNil(this.tagSearchDialog))
+			{
+				return;
+			}
+			const searchTab = this.tagSearchDialog.getSearchTab();
+			if (Type.isNil(searchTab))
+			{
+				return;
+			}
+			if (searchTab.isEmptyResult())
+			{
+				this.tagSearchDialog.hide();
+				this.tagSearchDialog = null;
+				input.focus();
+			}
+		});
+
 		inputObject.setTagsSearchMode(true);
-
 		this.tagSearchDialog.show();
-
 		this.tagSearchDialog.search(enteredQuery);
 	}
 
@@ -461,8 +452,8 @@ export class TagSearcher extends EventEmitter
 				searchOptions: {
 					allowCreateItem: true,
 					footerOptions: {
-						label: Loc.getMessage('TASKS_SCRUM_SEARCHER_ACTIONS_EPIC_ADD')
-					}
+						label: Loc.getMessage('TASKS_SCRUM_SEARCHER_ACTIONS_EPIC_ADD'),
+					},
 				},
 				items: this.getEpicList(),
 				events: {
@@ -483,7 +474,7 @@ export class TagSearcher extends EventEmitter
 
 									this.filterService.addItemToListTypeField('EPIC', {
 										NAME: epic.name.trim(),
-										VALUE: String(epic.id)
+										VALUE: String(epic.id),
 									});
 
 									inputObject.unDisable();
@@ -502,13 +493,13 @@ export class TagSearcher extends EventEmitter
 						const selectedItem = event.getData().item;
 						const epicName = selectedItem.getTitle();
 						input.value = input.value.replace('@' + this.epicEnteredQuery, '').replace('@', '');
-						input.value = input.value + '@' + epicName
+						input.value = input.value + '@' + epicName;
 						inputObject.setSelectedEpicLength([...epicName].length);
 						input.focus();
 						selectedItem.deselect();
 						inputObject.setEpic(this.getEpicByName(selectedItem.getTitle()));
-					}
-				}
+					},
+				},
 			});
 
 			this.epicSearchDialog.subscribe('onHide', () => {
@@ -544,7 +535,7 @@ export class TagSearcher extends EventEmitter
 
 						this.filterService.addItemToListTypeField('EPIC', {
 							NAME: epic.name.trim(),
-							VALUE: String(epic.id)
+							VALUE: String(epic.id),
 						});
 
 						inputObject.unDisable();
@@ -575,15 +566,15 @@ export class TagSearcher extends EventEmitter
 	createEpic(epicName: string): Promise
 	{
 		return this.requestSender.createEpic(
-			{
-				groupId: this.groupId,
-				name: epicName
-			}
-		)
+				{
+					groupId: this.groupId,
+					name: epicName,
+				},
+			)
 			.then((response) => {
 				return response.data;
 			})
-		;
+			;
 	}
 
 	static getHashTagNamesFromText(inputText: string): Array
@@ -624,5 +615,196 @@ export class TagSearcher extends EventEmitter
 				Dom.addClass(label, 'ui-selector-tab-label-hidden');
 			})
 		;
+	}
+
+	onSearchCallback(event)
+	{
+		let dialog = event.getTarget();
+		let query = event.getData().query;
+		if (query.trim() !== '')
+		{
+			dialog.getFooterContainer().querySelector('#tags-widget-custom-footer-add-new').hidden = false;
+			dialog.getFooterContainer().querySelector('#tags-widget-custom-footer-conjunction').hidden = false;
+		}
+		else
+		{
+			dialog.getFooterContainer().querySelector('#tags-widget-custom-footer-add-new').hidden = true;
+			dialog.getFooterContainer().querySelector('#tags-widget-custom-footer-conjunction').hidden = true;
+		}
+	}
+
+	onLoadTaskQuickCreateCallback(event, inputObject)
+	{
+		let dialog = event.getTarget();
+		this.hideDialogLabel(dialog);
+		let input = inputObject.getInputNode();
+
+		inputObject.subscribe('onMetaEnter', (event) => {
+			const regex = new RegExp('\\s|#$', 'm');
+			const currentPiece = input.value.split(regex).pop();
+			const tagName = currentPiece.replace('#', '').trim();
+			let data = {
+				newTag: tagName,
+				groupId: this.groupId,
+				taskId: 0,
+				action: 'add',
+			};
+			if (tagName === '')
+			{
+				return;
+			}
+			this.requestSender.addTag(data).then(response => {
+				if (!response.data.success)
+				{
+					let alertClass = 'tasks-scrum-tag-already-exists-alert';
+					this.showAlert(dialog.getId(), alertClass, response.data.error);
+					setTimeout(() => {
+							this.removeAlert(dialog, alertClass);
+						},
+						2000);
+					return;
+				}
+				dialog.search(tagName);
+			});
+		});
+
+		dialog.getFooterContainer().querySelector('#tags-widget-custom-footer-add-new')
+			.addEventListener('click', event => {
+				const regex = new RegExp('\\s|#$', 'm');
+				const currentPiece = input.value.split(regex).pop();
+				const tagName = currentPiece.replace('#', '').trim();
+				let data = {
+					newTag: tagName,
+					groupId: this.groupId,
+					taskId: 0,
+					action: 'add',
+				};
+				if (tagName === '')
+				{
+					return;
+				}
+				this.requestSender.addTag(data).then(response => {
+					if (!response.data.success)
+					{
+						let alertClass = 'tasks-scrum-tag-already-exists-alert';
+						this.showAlert(dialog.getId(), alertClass, response.data.error);
+						setTimeout(() => {
+								this.removeAlert(dialog, alertClass);
+							},
+							2000);
+						return;
+					}
+					dialog.search(tagName);
+				});
+			});
+	}
+
+	onShowTaskEditCallback(event, statusSuccess, item)
+	{
+		let dialog = event.getTarget();
+		const events = ['click', 'keydown'];
+
+		const handler = event => {
+			if (event.type === 'keydown')
+			{
+				if (!((event.ctrlKey || event.metaKey) && event.keyCode === 13))
+				{
+					return;
+				}
+			}
+
+			const tag = dialog.getTagSelectorQuery();
+			if (tag.trim() === '')
+			{
+				return;
+			}
+			const data = {
+				tag: tag,
+				itemIds: [item.getId()],
+				groupId: this.groupId,
+				action: 'add',
+			};
+			this.requestSender.updateTaskTags(data).then(response => {
+				if (response.data.success)
+				{
+					statusSuccess.status = true;
+					let item = dialog.addItem({
+						id: tag,
+						entityId: 'task-tag',
+						title: tag,
+						tabs: 'all',
+					});
+
+					item.select();
+					item.setBadges([{ title: response.data.group }]);
+					dialog.getTagSelector().clearTextBox();
+					dialog.focusSearch();
+					dialog.selectFirstTab();
+
+				}
+				else
+				{
+					let alertClass = 'tasks-scrum-tag-already-exists-alert';
+					this.showAlert(dialog.getId(), alertClass, response.data.error);
+					setTimeout(() => {
+							this.removeAlert(dialog, alertClass);
+						},
+						3000);
+				}
+			});
+		};
+
+		events.forEach(function(ev) {
+			if (ev === 'click')
+			{
+				dialog.getFooterContainer().querySelector('#tags-widget-custom-footer-add-new')
+					.addEventListener(ev, handler);
+			}
+			else
+			{
+				dialog.getContainer().addEventListener(ev, handler);
+			}
+		});
+	}
+
+	showAlert(dialogId: string, className: string, error: string, messageType = 'ui-alert ui-alert-xs ui-alert-danger')
+	{
+		let dialog = BX.UI.EntitySelector.Dialog.getById(dialogId);
+
+		if (dialog.getContainer().querySelector(`div.${className}`))
+		{
+			return;
+		}
+
+		let alert = document.createElement('div');
+		alert.className = className;
+		alert.innerHTML = `
+						<div class='${messageType}'  
+							<span class='ui-alert-message'>
+								${error}
+							</span> 
+						</div>
+					`;
+		dialog.getFooterContainer().before(alert);
+	};
+
+	removeAlert(dialog: Dialog, className: string)
+	{
+		let notification = dialog.getContainer().querySelector(`div.${className}`);
+		notification && notification.remove();
+	}
+
+	showConvertingMessage()
+	{
+		const message = new MessageBox({
+			title: Loc.getMessage('TASKS_SCRUM_TAG_SELECTOR_TAGS_ARE_CONVERTING_TITLE'),
+			message: Loc.getMessage('TASKS_SCRUM_TAG_SELECTOR_TAGS_ARE_CONVERTING_TEXT'),
+			buttons: MessageBoxButtons.OK,
+			okCaption: Loc.getMessage('TASKS_SCRUM_TAG_SELECTOR_TAGS_ARE_CONVERTING_COME_BACK_LATER'),
+			onOk: function(){
+				message.close();
+			}
+		});
+		message.show();
 	}
 }

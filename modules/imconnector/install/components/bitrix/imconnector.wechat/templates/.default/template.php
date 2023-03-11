@@ -51,7 +51,7 @@ if (empty($arResult['PAGE'])) //case when not first open
 			</div>
 			<div class="imconnector-field-box">
 				<?
-				if ($arResult['STATUS']) //case when connection competed
+				if (!empty($arResult['STATUS'])) //case when connection competed
 				{
 					?>
 					<div class="imconnector-field-main-subtitle">
@@ -78,7 +78,7 @@ if (empty($arResult['PAGE'])) //case when not first open
 						<?=$arResult['NAME']?>
 					</div>
 					<?
-					if ($arResult['ACTIVE_STATUS']) //case when connection in process
+					if (!empty($arResult['ACTIVE_STATUS'])) //case when connection in process
 					{
 						?>
 						<div class="imconnector-field-box-content">
@@ -127,7 +127,7 @@ if (empty($arResult['PAGE'])) //case when not first open
 	<?
 	include 'messages.php';
 
-	if ($arResult['STATUS'])
+	if (!empty($arResult['STATUS']))
 	{
 		include 'info.php';
 	}

@@ -130,7 +130,7 @@ $userUrl = CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_USER_PROFIL
 <div class="user-block" id="user-block" data-user-id="<?= (int)$USER->getID() ?>">
 	<span class="ui-icon ui-icon-common-user user-img" id="user-block-icon"><?php
 		$style = (
-			$arResult['USER_PERSONAL_PHOTO_SRC']
+			($arResult['USER_PERSONAL_PHOTO_SRC'] ?? null)
 				? "background: url('" . \Bitrix\Main\Web\Uri::urnEncode($arResult['USER_PERSONAL_PHOTO_SRC']) . "') no-repeat center; background-size: cover;"
 				: ''
 		);
@@ -292,10 +292,10 @@ $frame = $this->createFrame("b24_helper")->begin("");
 		"host" => $host,
 		"key" => $bitrix24Included ? CBitrix24::RequestSign($host.$USER->GetID()) : md5($host.$USER->GetID().'BX_USER_CHECK'),
 		"is_cloud" => $bitrix24Included ? "1" : "0",
-		"user_date_register" => $arResult["USER_DATE_REGISTER"],
+		"user_date_register" => $arResult["USER_DATE_REGISTER"] ?? 0,
 		"portal_date_register" => $bitrix24Included ? COption::GetOptionString("main", "~controller_date_create", "") : "",
 		"partner_link" => COption::GetOptionString("bitrix24", "partner_id", 0) ? 'Y' : 'N',
-		"counter_update_date" => $arResult["COUNTER_UPDATE_DATE"],
+		"counter_update_date" => $arResult["COUNTER_UPDATE_DATE"] ?? 0,
 	);
 	if($imBotIncluded)
 	{

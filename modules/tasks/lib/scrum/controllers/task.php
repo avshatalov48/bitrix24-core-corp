@@ -22,6 +22,11 @@ class Task extends Controller
 
 	protected function processBeforeAction(Action $action)
 	{
+		if ($action->getName() === 'isParentScrumTask')
+		{
+			return true;
+		}
+
 		$actionArguments = $action->getArguments();
 
 		$taskId = (is_numeric($actionArguments['taskId']) ? (int) $actionArguments['taskId'] : 0);

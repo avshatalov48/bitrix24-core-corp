@@ -1,7 +1,9 @@
 <?
 define("BX_MOBILE_LOG", true);
+
+$action = $_POST["ACTION"] ?? null;
 if (isset($_REQUEST['BX_SESSION_LOCK']) && $_REQUEST['BX_SESSION_LOCK'] !== 'Y'
-	&& !($_POST["ACTION"] == "ADD_POST" || $_POST["ACTION"] == "EDIT_POST")
+	&& !($action == "ADD_POST" || $action == "EDIT_POST")
 )
 {
 	define('BX_SECURITY_SESSION_READONLY', true);
@@ -19,10 +21,8 @@ AddEventHandler("blog", "BlogImageSize", "ResizeMobileLogImages", 100, $_SERVER[
 if (IsModuleInstalled("bitrix24"))
 	GetGlobalID();
 
-if (
-	$_POST["ACTION"] == "ADD_POST"
-	|| $_POST["ACTION"] == "EDIT_POST"
-)
+
+if ($action == "ADD_POST" || $action == "EDIT_POST")
 {
 	function LocalRedirectHandler(&$url)
 	{
@@ -33,7 +33,7 @@ if (
 			$arUrlParam = explode("&", mb_substr($url, mb_strpos($url, "?") + 1));
 			foreach ($arUrlParam as $url_param)
 			{
-				list($key, $val) = explode("=", $url_param, 2);
+				[$key, $val] = explode("=", $url_param, 2);
 				if ($key == "new_post_id")
 				{
 					$new_post_id = $val;
@@ -108,8 +108,8 @@ if (
 	$LocalRedirectHandlerId = AddEventHandler('main', 'OnBeforeLocalRedirect', "LocalRedirectHandler");
 
 	$APPLICATION->IncludeComponent("bitrix:socialnetwork.blog.post.edit", "mobile_empty", array(
-			"ID" => ($_POST["ACTION"] == "EDIT_POST" && intval($_POST["post_id"]) > 0 ? intval($_POST["post_id"]) : 0),
-			"USER_ID" => ($_POST["ACTION"] == "EDIT_POST" && intval($_POST["post_user_id"]) > 0 ? intval($_POST["post_user_id"]) : $GLOBALS["USER"]->GetID()),
+			"ID" => ($action == "EDIT_POST" && intval($_POST["post_id"]) > 0 ? intval($_POST["post_id"]) : 0),
+			"USER_ID" => ($action == "EDIT_POST" && intval($_POST["post_user_id"]) > 0 ? intval($_POST["post_user_id"]) : $GLOBALS["USER"]->GetID()),
 			"PATH_TO_POST_EDIT" => $APPLICATION->GetCurPageParam("success=Y&new_post_id=#post_id#"), // redirect when success
 			"PATH_TO_POST" => "/company/personal/user/".$GLOBALS["USER"]->GetID()."/blog/#post_id#/", // search index
 			"USE_SOCNET" => "Y",
@@ -129,34 +129,36 @@ if (
 }
 
 $filter = false;
-if ($_GET["favorites"] == "Y")
+
+if (isset($_GET["favorites"]) && $_GET["favorites"] === "Y")
 {
 	$filter = "favorites";
 }
-elseif ($_GET["my"] == "Y")
+elseif (isset($_GET["my"]) && $_GET["my"] === "Y")
 {
 	$filter = "my";
 }
-elseif ($_GET["important"] == "Y")
+elseif (isset($_GET["important"]) && $_GET["important"] === "Y")
 {
 	$filter = "important";
 }
-elseif ($_GET["work"] == "Y")
+elseif (isset($_GET["work"]) && $_GET["work"] === "Y")
 {
 	$filter = "work";
 }
-elseif ($_GET["bizproc"] == "Y")
+elseif (isset($_GET["bizproc"]) && $_GET["bizproc"] === "Y")
 {
 	$filter = "bizproc";
 }
-elseif ($_GET["blog"] == "Y")
+elseif (isset($_GET["blog"]) && $_GET["blog"] === "Y")
 {
 	$filter = "blog";
 }
-?><?$APPLICATION->IncludeComponent("bitrix:mobile.socialnetwork.log.ex", ".default", array(
-		"GROUP_ID" => intval($_GET["group_id"]),
-		"LOG_ID" => intval($_GET["detail_log_id"]),
-		"FAVORITES" => ($_GET["favorites"] == "Y" ? "Y" : "N"),
+
+$APPLICATION->IncludeComponent("bitrix:mobile.socialnetwork.log.ex", ".default", array(
+		"GROUP_ID" => intval($_GET["group_id"] ?? 0),
+		"LOG_ID" => intval($_GET["detail_log_id"] ?? 0),
+		"FAVORITES" => ($filter === 'favorites' ? "Y" : "N"),
 		"FILTER" => $filter,
 		"CREATED_BY_ID" => (isset($_GET["created_by_id"]) && intval($_GET["created_by_id"]) > 0 ? intval($_GET["created_by_id"]) : false),
 		"PATH_TO_LOG_ENTRY" => SITE_DIR."mobile/log/?detail_log_id=#log_id#",
@@ -179,5 +181,6 @@ elseif ($_GET["blog"] == "Y")
 	),
 	false,
 	Array("HIDE_ICONS" => "Y")
-);?>
-<?require($_SERVER["DOCUMENT_ROOT"]."/bitrix/footer.php")?>
+);
+
+require($_SERVER["DOCUMENT_ROOT"]."/bitrix/footer.php");

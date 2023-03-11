@@ -117,7 +117,7 @@
 							try
 							{
 								const params = JSON.parse(result.data);
-								BX.postComponentEvent('taskbackground::task::action', params);
+								BX.postComponentEvent('taskbackground::task::open', params);
 							}
 							catch (e)
 							{
@@ -141,7 +141,7 @@
 						BX.rest.callMethod('mobile.task.link.params.get', { taskId })
 							.then(res => {
 								const params = res.data();
-								BX.postComponentEvent('taskbackground::task::action', JSON.parse(params));
+								BX.postComponentEvent('taskbackground::task::open', JSON.parse(params));
 							})
 							.catch(error => console.log(error));
 					}
@@ -210,7 +210,7 @@
 						.then(res => {
 							const params = res.data();
 							console.log(JSON.parse(params));
-							BX.postComponentEvent('taskbackground::task::action', JSON.parse(params));
+							BX.postComponentEvent('taskbackground::task::open', JSON.parse(params));
 						})
 						.catch(error => console.log(error));
 				}

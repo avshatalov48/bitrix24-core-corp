@@ -11,7 +11,7 @@ if ($arParams['ID'] <= 0)
 if ($arParams['ID'] <= 0)
 	return false;
 
-$arParams['CALENDAR_IBLOCK_ID'] = intval($arParams['CALENDAR_IBLOCK_ID']);
+$arParams['CALENDAR_IBLOCK_ID'] = intval($arParams['CALENDAR_IBLOCK_ID'] ?? null);
 if ($arParams['CALENDAR_IBLOCK_ID'] <= 0)
 	$arParams['CALENDAR_IBLOCK_ID'] = COption::GetOptionInt('intranet', 'iblock_calendar');
 

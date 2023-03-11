@@ -36,7 +36,8 @@ class Action
 		{
 
 			$isSessidValid = true;
-			if ($actionDesc["needBitrixSessid"] == true || (array_key_exists("sessid", $_REQUEST) && $_REQUEST["sessid"] <> ''))
+			$needBitrixSessid = $actionDesc["needBitrixSessid"] ?? false;
+			if ($needBitrixSessid == true || (array_key_exists("sessid", $_REQUEST) && $_REQUEST["sessid"] <> ''))
 			{
 				$isSessidValid = check_bitrix_sessid();
 			}
@@ -49,21 +50,26 @@ class Action
 				}
 			}
 
-			if ($actionDesc["no_check_auth"] !== true && (!$USER->IsAuthorized() || !$isSessidValid))
+			$noCheckAuth = $actionDesc["no_check_auth"] ?? null;
+			$file = $actionDesc["file"] ?? null;
+
+			if ($noCheckAuth !== true && (!$USER->IsAuthorized() || !$isSessidValid))
 			{
 				Auth::setNotAuthorizedHeaders();
 				echo json_encode(Auth::getNotAuthorizedResponse());
 			}
-			elseif ($actionDesc["file"])
+			elseif ($file)
 			{
 				header("BX-Mobile-Action: " . $name);
-				if ($actionDesc["json"] === true)
+				$json = $actionDesc["json"] ?? false;
+				if ($json === true)
 				{
 					header("Content-Type: application/x-javascript");
-					$data = include($actionDesc["file"]);
+					$data = include($file);
 					if ($data)
 					{
-						if ($actionDesc["removeNulls"])
+						$removeNulls = $actionDesc["removeNulls"] ?? false;
+						if ($removeNulls)
 						{
 							echo json_encode(self::removeNulls($data));
 						}
@@ -72,11 +78,10 @@ class Action
 							echo json_encode($data);
 						}
 					}
-
 				}
 				else
 				{
-					include($actionDesc["file"]);
+					include($file);
 				}
 			}
 		}

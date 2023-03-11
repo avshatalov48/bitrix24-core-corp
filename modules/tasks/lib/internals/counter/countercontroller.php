@@ -210,21 +210,4 @@ class CounterController
 
 		return false;
 	}
-
-	/**
-	 *
-	 */
-	private function readAllGroups()
-	{
-		$groups = UserRegistry::getInstance($this->userId)->getUserGroups();
-		$groupIds = array_keys($groups);
-
-		if (empty($groupIds))
-		{
-			return;
-		}
-
-		UserTopic::readGroups($this->userId, $groupIds, true);
-		ViewedTable::readGroups($this->userId, $groupIds, true);
-	}
 }

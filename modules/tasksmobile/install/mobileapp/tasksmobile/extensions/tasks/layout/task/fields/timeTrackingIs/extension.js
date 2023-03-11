@@ -43,7 +43,7 @@ jn.define('tasks/layout/task/fields/timeTrackingIs', (require, exports, module) 
 						},
 					},
 					mode: BooleanMode.SWITCHER,
-					description: Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_FIELDS_TIME_TRACKING_IS'),
+					description: Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_FIELDS_TIME_TRACKING_IS_MSGVER_1'),
 					showSwitcher: true,
 				},
 				testId: 'timeTrackingIs',

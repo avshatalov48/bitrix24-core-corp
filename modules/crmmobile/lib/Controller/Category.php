@@ -111,6 +111,7 @@ class Category extends Controller
 			'link' => $entity->getDesktopLink($categoryId),
 			'counters' => $entity->getCounters($userId, $categoryId),
 			'categoryId' => $categoryId,
+			'sortType' => $this->getSortType($entityTypeId, $categoryId),
 			'restrictions' => [
 				'search' => [
 					'isExceeded' => $searchRestriction->isExceeded($entityTypeId),
@@ -118,6 +119,28 @@ class Category extends Controller
 				],
 			],
 		];
+	}
+
+	private function getSortType(int $entityTypeId, ?int $categoryId): ?string
+	{
+		// only deals support now
+		if ($entityTypeId !== \CCrmOwnerType::Deal)
+		{
+			return null;
+		}
+
+		$instance = \Bitrix\Crm\Kanban\Entity::getInstance(\CCrmOwnerType::ResolveName($entityTypeId));
+		if ($instance)
+		{
+			if ($categoryId !== null)
+			{
+				$instance->setCategoryId($categoryId);
+			}
+
+			return $instance->getSortSettings()->getCurrentType();
+		}
+
+		return null;
 	}
 
 	/**
@@ -714,7 +737,8 @@ class Category extends Controller
 		}
 
 		$userLabel = \CBPHelper::UsersArrayToString(
-			$tunnel['robot']['Properties']['Responsible'], [],
+			$tunnel['robot']['Properties']['Responsible'] ?? [],
+			[],
 			\CCrmBizProcHelper::ResolveDocumentType($factory->getEntityTypeId()),
 			false
 		);
@@ -777,11 +801,11 @@ class Category extends Controller
 			'srcCategoryId' => $srcCategory->getId(),
 			'srcStageColor' => $stageColors[$srcStage->getStatusId()]['COLOR'] ?? $srcStage->getColor(),
 			'robot' => [
-				'name' => $tunnel['robot']['Name'],
+				'name' => $tunnel['robot']['Name'] ?? '',
 				'properties' => $robotProperties,
-				'delay' => $tunnel['robot']['Delay'],
+				'delay' => $tunnel['robot']['Delay'] ?? null,
 				'conditionGroup' => [
-					'type' => $tunnel['robot']['Condition']['type'],
+					'type' => $tunnel['robot']['Condition']['type'] ?? null,
 					'items' => $conditionGroup,
 				],
 				'responsible' => [

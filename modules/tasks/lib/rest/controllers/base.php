@@ -4,6 +4,7 @@ namespace Bitrix\Tasks\Rest\Controllers;
 use Bitrix\Main\Engine\AutoWire\Parameter;
 use Bitrix\Main\Engine\Controller;
 use Bitrix\Main\Engine\CurrentUser;
+use Bitrix\Main\Error;
 use Bitrix\Main\SystemException;
 use Bitrix\Tasks\Item\Task\Template;
 
@@ -89,7 +90,8 @@ class Base extends Controller
                 function ($className, $id) {
 					if (($id = (int)$id) <= 0)
 					{
-						throw new SystemException('wrong task id');
+						$this->addError(new Error('wrong task id'));
+						return null;
 					}
                     return new $className($id, CurrentUser::get()->getId());
                 }

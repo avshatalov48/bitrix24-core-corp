@@ -512,6 +512,21 @@ final class IntranetConfigsComponent extends CBitrixComponent
 				COption::SetOptionString("disk", "disk_allow_use_extended_fulltext", "N");
 		}
 
+		if (
+			Loader::includeModule('imconnector')
+			&& method_exists('\Bitrix\ImConnector\Connectors\Network', 'setIsSearchEnabled')
+		)
+		{
+			if ($_POST["allow_search_network"] <> '')
+			{
+				\Bitrix\ImConnector\Connectors\Network::setIsSearchEnabled(true);
+			}
+			else
+			{
+				\Bitrix\ImConnector\Connectors\Network::setIsSearchEnabled(false);
+			}
+		}
+
 		if ($_POST["allow_livefeed_toall"] <> '')
 			COption::SetOptionString("socialnetwork", "allow_livefeed_toall", "Y");
 		else

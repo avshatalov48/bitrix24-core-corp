@@ -9,14 +9,6 @@ Loc::loadMessages(__FILE__);
 
 class OpenLineAnswerControlTrigger extends OpenLineTrigger
 {
-	public static function isEnabled()
-	{
-		return (Integration\OpenLineManager::isEnabled()
-			&& class_exists('\Bitrix\ImOpenLines\Crm')
-			&& method_exists('\Bitrix\ImOpenLines\Crm', 'executeAutomationAnswerControlTrigger')
-		);
-	}
-
 	public static function getCode()
 	{
 		return 'OPENLINE_ANSWER_CTRL';
@@ -54,15 +46,21 @@ class OpenLineAnswerControlTrigger extends OpenLineTrigger
 		);
 	}
 
-	public static function toArray()
+	protected static function getPropertiesMap(): array
 	{
-		$result = parent::toArray();
-		if (static::isEnabled())
-		{
-			$docType = Integration\BizProc\Document\TmpDoc::createNewDocument(self::getSessionFields());
-			$result['FIELDS'] = array_values(\Bitrix\Bizproc\Automation\Helper::getDocumentFields($docType));
-		}
-		return $result;
+		$docType = Integration\BizProc\Document\TmpDoc::createNewDocument(self::getSessionFields());
+		$fields = array_values(\Bitrix\Bizproc\Automation\Helper::getDocumentFields($docType));
+
+		return [
+			[
+				'Id' => 'imolCondition',
+				'Name' => Loc::getMessage('CRM_AUTOMATION_TRIGGER_OPENLINE_ANSWER_CTRL_CONDITION'),
+				'Type' => '@condition-group-selector',
+				'Settings' => [
+					'Fields' => $fields,
+				],
+			],
+		];
 	}
 
 	public function checkApplyRules(array $trigger)
@@ -103,7 +101,9 @@ class OpenLineAnswerControlTrigger extends OpenLineTrigger
 				'ReturnId' => 'OpenLineAnswerCtrlConfigId',
 				'Name' => Loc::getMessage("CRM_AUTOMATION_TRIGGER_OPENLINE_ANSWER_CTRL_FIELD_CONFIG_ID"),
 				'Type' => 'select',
-				'Options' => array_combine(array_column($configs, 'ID'), array_column($configs, 'NAME')),
+				'Options' => array_combine(
+					array_column($configs, 'value'), array_column($configs, 'name')
+				),
 			],
 			'ANSWER_TIME_SEC' => [
 				'ReturnId' => 'OpenLineAnswerCtrlAnswerTimeSec',

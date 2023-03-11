@@ -33,5 +33,7 @@ class EventDictionary
 		EVENT_PROJECT_DELETE			= 'onProjectDelete',
 		EVENT_PROJECT_USER_ADD			= 'onProjectUserAdd',
 		EVENT_PROJECT_USER_UPDATE		= 'onProjectUserUpdate',
-		EVENT_PROJECT_USER_DELETE		= 'onProjectUserDelete';
+		EVENT_PROJECT_USER_DELETE		= 'onProjectUserDelete',
+
+		EVENT_GARBAGE_COLLECT			= 'onGarbageCollect';
 }

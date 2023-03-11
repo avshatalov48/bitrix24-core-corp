@@ -65,16 +65,6 @@ export class Result
 			return false;
 		}
 
-		if (this.comments[commentId].status == 1)
-		{
-			return false;
-		}
-
-		if (this.isClosed)
-		{
-			return false;
-		}
-
 		return true;
 	}
 }

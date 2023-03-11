@@ -3,6 +3,7 @@ namespace Bitrix\Tasks\Integration\Recyclebin;
 
 use Bitrix\Main\Application;
 use Bitrix\Main\Data\Cache;
+use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
@@ -12,8 +13,10 @@ use Bitrix\Recyclebin\Internals\Entity;
 use Bitrix\Recyclebin\Internals\Contracts\Recyclebinable;
 use Bitrix\Recyclebin\Internals\Models\RecyclebinTable;
 use Bitrix\Tasks\CheckList\Task\TaskCheckListFacade;
+use Bitrix\Tasks\Control\Tag;
 use Bitrix\Tasks\Integration;
 use Bitrix\Tasks\Internals\Counter;
+use Bitrix\Tasks\Internals\Task\TaskTagTable;
 use Bitrix\Tasks\Internals\TaskTable;
 use Bitrix\Tasks\Internals\Task\SearchIndexTable;
 use Bitrix\Tasks\Internals\Task\FavoriteTable;
@@ -85,10 +88,25 @@ if (Loader::includeModule('recyclebin'))
 				]
 			);
 
+			$tags = TaskTagTable::getList([
+				'select' => [
+					'TAG_ID',
+				],
+				'filter' => [
+					'TASK_ID' => $taskId,
+				],
+			])->fetchAll();
+
+			$tagIds = array_map(static function (array $el): int {
+				return (int)$el['TAG_ID'];
+			}, $tags);
+
 			$res = $task->fetchObject();
+
 			if ($res)
 			{
 				$data['TASK'] = $res->toArray();
+				$data['TAGS'] = $tagIds;
 			}
 
 			$res = TaskStageTable::getList(['filter' => ['TASK_ID' => $taskId], 'select' => ['STAGE_ID']]);
@@ -395,6 +413,11 @@ if (Loader::includeModule('recyclebin'))
 						{
 							Dependence::attach($taskId, $parentId);
 						}
+						break;
+
+					case 'TAGS':
+						$tagService = new Tag(CurrentUser::get()->getId());
+						$tagService->linkTags($taskId, $data);
 						break;
 				}
 			}

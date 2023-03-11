@@ -16,6 +16,7 @@ use Bitrix\Main\Type\DateTime;
  * <li> SESSION_ID int optional
  * <li> GREETING_SHOWN bool optional
  * <li> MENU_STATE string
+ * <li> TELEMETRY_SENT bool
  * </ul>
  *
  * @package Bitrix\ImBot\Model
@@ -102,6 +103,11 @@ class NetworkSessionTable extends Main\Entity\DataManager
 					"CASE WHEN %s IS NULL THEN 0 WHEN %s = '0000-00-00' THEN 0 ELSE %s < NOW() END",
 					'DATE_FINISH', 'DATE_FINISH', 'DATE_FINISH',
 				]
+			],
+			'TELEMETRY_SENT' => [
+				'data_type' => 'boolean',
+				'values' => ['N', 'Y'],
+				'default_value' => 'N',
 			],
 		];
 	}

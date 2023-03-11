@@ -15,12 +15,16 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Security\Sign\Signer;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\UrlPreview\UrlPreview;
+use Bitrix\Tasks\Integration\Bizproc\Listener;
 use Bitrix\Tasks\Integration\Pull\PushService;
 use Bitrix\Tasks\Internals\Registry\TaskRegistry;
 use Bitrix\Tasks\Internals\Task\ParameterTable;
 use Bitrix\Tasks\Internals\Task\Result\Exception\ResultNotFoundException;
 use Bitrix\Tasks\Internals\Task\Result\Exception\ResultSystemException;
 use Bitrix\Tasks\Internals\TaskObject;
+use Bitrix\Tasks\UI;
+use Bitrix\Tasks\Util\User;
+use CTaskLog;
 
 class ResultManager
 {
@@ -30,8 +34,13 @@ class ResultManager
 	public const COMMAND_DELETE = 'task_result_delete';
 	public const COMMAND_UPDATE = 'task_result_update';
 
+	public const RESULT_ADD = 'RESULT';
+	public const RESULT_EDIT = 'RESULT_EDIT';
+	public const RESULT_REMOVE = 'RESULT_REMOVE';
+
 	private $userId;
 	private $ufManager;
+	private ?CTaskLog $taskLogger = null;
 
 	/**
 	 * @param array $taskIds
@@ -117,6 +126,7 @@ class ResultManager
 		global $USER_FIELD_MANAGER;
 		$this->userId = $userId;
 		$this->ufManager = $USER_FIELD_MANAGER;
+		$this->taskLogger = new CTaskLog();
 
 		$this->includeModules();
 	}
@@ -186,6 +196,9 @@ class ResultManager
 		$this->updateUf($result, $commentId);
 
 		$this->sendPush(self::COMMAND_CREATE, $result);
+		$this->log($result, self::RESULT_ADD);
+
+		$this->executeAutomationTrigger($task, $result);
 
 		return $result;
 	}
@@ -201,10 +214,7 @@ class ResultManager
 	public function updateFromComment(int $taskId, int $commentId): ?Result
 	{
 		$task = $this->loadTask($taskId);
-		if (
-			!$task
-			|| (int)$task->getStatus() === \CTasks::STATE_COMPLETED
-		)
+		if (!$task)
 		{
 			return null;
 		}
@@ -217,19 +227,14 @@ class ResultManager
 
 		$result = $this->loadResult($commentId);
 
-		if (
-			$result
-			&& $result->getStatus() !== ResultTable::STATUS_OPENED
-		)
-		{
-			return null;
-		}
-
 		if ($comment->getServiceData() !== self::COMMENT_SERVICE_DATA)
 		{
 			if ($result)
 			{
 				$result->delete();
+
+				$this->executeAutomationTrigger($task, $result);
+
 				$this->sendPush(self::COMMAND_DELETE, $result);
 			}
 			return null;
@@ -257,6 +262,9 @@ class ResultManager
 		$this->updateUf($result, $commentId);
 
 		$this->sendPush($pushCommand, $result);
+		$this->log($result, self::RESULT_EDIT);
+
+		$this->executeAutomationTrigger($task, $result);
 
 		return $result;
 	}
@@ -308,14 +316,12 @@ class ResultManager
 	public function deleteByComment(int $commentId)
 	{
 		$result = $this->loadResult($commentId);
-		if (
-			!$result
-			|| $result->getStatus() !== ResultTable::STATUS_OPENED
-		)
+		if (!$result)
 		{
 			return;
 		}
 
+		$task = $result->fillTask();
 		$result->delete();
 
 		$comment = $this->loadComment($commentId);
@@ -329,6 +335,12 @@ class ResultManager
 		}
 
 		$this->sendPush(self::COMMAND_DELETE, $result);
+
+		if ($task)
+		{
+			$this->executeAutomationTrigger($task, $result);
+		}
+		$this->log($result, self::RESULT_REMOVE);
 	}
 
 	/**
@@ -540,6 +552,16 @@ class ResultManager
 		]);
 	}
 
+	private function executeAutomationTrigger(TaskObject $task, Result $result)
+	{
+		$task->fillMemberList();
+		Listener::onTaskFieldChanged(
+			$task->getId(),
+			['COMMENT_RESULT' => $result->getText()],
+			$task->collectValues()
+		);
+	}
+
 	/**
 	 * @throws ResultSystemException
 	 * @throws \Bitrix\Main\LoaderException
@@ -552,5 +574,16 @@ class ResultManager
 		{
 			throw new ResultSystemException('Unable to load forum module.');
 		}
+	}
+
+	private function log(Result $result, string $field): void
+	{
+		$this->taskLogger->Add([
+			'TASK_ID' => $result->getTaskId(),
+			'USER_ID' => $this->userId,
+			'CREATED_DATE' => UI::formatDateTime(User::getTime()),
+			'FIELD' => $field,
+			'TO_VALUE' => $result->getCommentId(),
+		]);
 	}
 }

@@ -102,7 +102,7 @@ function __MSLOnFeedInit(params)
 							if (Application.getApiVersion() >= 31)
 							{
 								BXMobileApp.Events.postToComponent(
-									'taskbackground::task::action',
+									'taskbackground::taskList::open',
 									[{
 										groupId: groupID,
 										groupName: BX.message('MSLLogTitle'),
@@ -3221,7 +3221,7 @@ BitrixMSL.prototype.createTaskSetContentSuccess = function(taskId)
 			if (buttonId == 2)
 			{
 				BXMobileApp.Events.postToComponent(
-					'taskbackground::task::action',
+					'taskbackground::task::open',
 					[{taskId: taskId}]
 				);
 			}
@@ -3672,7 +3672,7 @@ function openTaskComponentByTaskId(e, taskId, data) {
 	data = data || {};
 	data.selectedTab = data.selectedTab || 'taskTab';
 
-	BXMobileApp.Events.postToComponent("taskbackground::task::action", [{taskId:taskId, data:data}], "background");
+	BXMobileApp.Events.postToComponent("taskbackground::task::open", [{taskId:taskId, data:data}], "background");
 
 	e.preventDefault();
 	e.stopPropagation();

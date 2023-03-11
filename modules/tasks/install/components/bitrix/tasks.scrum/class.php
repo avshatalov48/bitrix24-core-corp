@@ -23,9 +23,12 @@ use Bitrix\Main\UI\PageNavigation;
 use Bitrix\Main\Web\Uri;
 use Bitrix\Socialnetwork\ComponentHelper;
 use Bitrix\Socialnetwork\Item\Workgroup;
+use Bitrix\Socialnetwork\WorkgroupTable;
 use Bitrix\Tasks\Access\ActionDictionary;
+use Bitrix\Tasks\Access\TagAccessController;
 use Bitrix\Tasks\Access\TaskAccessController;
 use Bitrix\Tasks\Component\Scrum;
+use Bitrix\Tasks\Control\Tag;
 use Bitrix\Tasks\Integration\Bizproc\Automation\Factory;
 use Bitrix\Tasks\Integration\SocialNetwork\Group;
 use Bitrix\Tasks\Internals\Counter;
@@ -39,6 +42,7 @@ use Bitrix\Tasks\Scrum\Service\DefinitionOfDoneService;
 use Bitrix\Tasks\Scrum\Service\EntityService;
 use Bitrix\Tasks\Scrum\Service\EpicService;
 use Bitrix\Tasks\Scrum\Service\ItemService;
+use Bitrix\Tasks\Scrum\Service\RobotService;
 use Bitrix\Tasks\Scrum\Service\TypeService;
 use Bitrix\Tasks\Scrum\Service\KanbanService;
 use Bitrix\Tasks\Scrum\Service\PullService;
@@ -254,6 +258,7 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 			$this->arResult['debugMode'] = ($this->debugMode ? 'Y' : 'N');
 			$this->arResult['frameMode'] = ($this->frameMode ? 'Y' : 'N');
 			$this->arResult['views'] = $this->getViewsInfo($groupId);
+			$this->arResult['culture'] = $this->getCultureInfo();
 
 			switch ($activeTab)
 			{
@@ -681,7 +686,31 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 
 			$itemIds = (is_array($post['itemIds']) ? $post['itemIds'] : []);
 			$tag = (is_string($post['tag']) ? $post['tag'] : '');
+			$groupId = (int) $this->arParams['GROUP_ID'];
+			$params = ['GROUP_ID' => $groupId];
 
+			$tagService = new Tag($this->userId);
+			$actionAdd = isset($post['action']) && $post['action'] === 'add';
+			if ($actionAdd)
+			{
+				if (
+					!TagAccessController::can($this->userId, ActionDictionary::ACTION_TAG_SEARCH, null, $params)
+				)
+				{
+					return [
+						'success' => false,
+						'error' => Loc::getMessage('TASKS_SCRUM_TAG_ACCESS_DENIED'),
+					];
+				}
+
+				if ($tagService->isExistsByGroup($groupId, $tag))
+				{
+					return [
+						'success' => false,
+						'error' => Loc::getMessage('TASKS_SCRUM_TAG_ALREADY_EXISTS'),
+					];
+				}
+			}
 			$itemService = new ItemService();
 			$taskService = new TaskService($this->userId);
 
@@ -725,7 +754,11 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 				}
 			}
 
-			return '';
+			return [
+				'success' => true,
+				'error' => '',
+				'group' => WorkgroupTable::getByPrimary($groupId)->fetchObject()->getName(),
+			];
 		}
 		catch (\Exception $exception)
 		{
@@ -826,20 +859,18 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 				$itemId = (is_numeric($itemId) ? (int) $itemId : 0);
 
 				$item = $itemService->getItemById($itemId);
-				if (!$item->isEmpty())
-				{
-					if (
-						TaskAccessController::can(
-							$this->userId,
-							ActionDictionary::ACTION_TASK_EDIT,
-							$item->getSourceId()
-						)
+				if (
+					!$item->isEmpty()
+					&& TaskAccessController::can(
+						$this->userId,
+						ActionDictionary::ACTION_TASK_EDIT,
+						$item->getSourceId()
 					)
-					{
-						$item->setEpicId($epic->getId());
+				)
+				{
+					$item->setEpicId($epic->getId());
 
-						$itemService->changeItem($item, $pushService);
-					}
+					$itemService->changeItem($item, $pushService);
 				}
 			}
 
@@ -2368,10 +2399,12 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 		{
 			$this->arResult['activeSprintId'] = ($sprintService->getErrors() ? 0 : $sprint->getId());
 
+			$this->restoreStagesLastCompletedSprint($this->userId, $groupId, $sprint->getId());
+
 			$this->arResult['taskLimitExceeded'] = Bitrix24Restriction\Limit\TaskLimit::isLimitExceeded();
 			$this->arResult['canUseAutomation'] = Factory::canUseAutomation();
 
-			$this->arResult['canCompleteSprint'] = $this->canCompleteSprint($this->userId, $groupId);
+			$this->arResult['canCompleteSprint'] = $sprintService->canCompleteSprint($this->userId, $groupId);
 
 			$kanbanService = new KanbanService();
 
@@ -2380,7 +2413,10 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 
 		if ($this->getErrors())
 		{
-			$this->includeErrorTemplate(current($this->getErrors()), $this->getFirstErrorCode($this->getErrors()));
+			$this->includeErrorTemplate(
+				current($this->getErrors()),
+				$this->getFirstErrorCode($this->getErrors())
+			);
 
 			return;
 		}
@@ -2737,6 +2773,13 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 		{
 			$uri = new Uri(str_replace('#group_id#', $groupId, $this->arParams['PATH_TO_GROUP_TASKS']));
 		}
+		elseif(
+			stripos($request->getRequestUri(), '/task/view/') > 0
+			|| stripos($request->getRequestUri(), '/task/edit/') > 0
+		)
+		{
+			$uri = new Uri(str_replace('#group_id#', $groupId, $this->arParams['PATH_TO_GROUP_TASKS']));
+		}
 		else
 		{
 			$uri = new Uri($request->getRequestUri());
@@ -2769,6 +2812,17 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 				'url' => $completedSprintUrl,
 				'active' => ($this->getActiveTab($groupId) == 'completed_sprint')
 			],
+		];
+	}
+
+	private function getCultureInfo(): array
+	{
+		$culture = Context::getCurrent()->getCulture();
+
+		return [
+			'dayMonthFormat' => $culture->getDayMonthFormat(),
+			'longDateFormat' => $culture->getLongDateFormat(),
+			'shortTimeFormat' => $culture->getShortTimeFormat(),
 		];
 	}
 
@@ -3149,8 +3203,9 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 		if ($this->getActiveTab($groupId) === 'plan')
 		{
 			$pullService->subscribeToEntityActions();
-			$pullService->subscribeToItemActions();
 		}
+
+		$pullService->subscribeToItemActions();
 	}
 
 	private function syncItemsWithTasks(int $backlogId, int $userId, int $groupId): void
@@ -3287,22 +3342,6 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 		return $item;
 	}
 
-	private function canCompleteSprint(int $userId, int $groupId): bool
-	{
-		$userRoleInGroup = \CSocNetUserToGroup::getUserRole($userId, $groupId);
-
-		if (
-			$userRoleInGroup == SONET_ROLES_MODERATOR
-			|| $userRoleInGroup == SONET_ROLES_OWNER
-			|| \CSocNetUser::isCurrentUserModuleAdmin()
-		)
-		{
-			return true;
-		}
-
-		return false;
-	}
-
 	/**
 	 * Deletes tasks that are trying to move to another project.
 	 *
@@ -3349,5 +3388,84 @@ class TasksScrumComponent extends \CBitrixComponent implements Controllerable, E
 		}
 
 		return $sortInfo;
+	}
+
+	private function restoreStagesLastCompletedSprint(int $userId, int $groupId, int $sprintId): void
+	{
+		$sprintService = new SprintService();
+
+		$sprint = $sprintService->getSprintById($sprintId);
+		if (
+			$sprint->isEmpty()
+			|| !$sprint->isActiveSprint()
+			|| $sprint->getGroupId() !== $groupId
+		)
+		{
+			return;
+		}
+
+		if (!$sprintService->canStartSprint($userId, $groupId))
+		{
+			return;
+		}
+
+		if ($sprint->getInfo()->sprintStagesRecoveryStatusIsVerified())
+		{
+			return;
+		}
+
+		$sprint->getInfo()->setSprintStagesRecoveryStatusToChecked();
+		if (!$sprintService->changeSprint($sprint))
+		{
+			return;
+		}
+
+		$kanbanService = new KanbanService();
+
+		$lastSprintId = $kanbanService->getLastCompletedSprintIdSameGroup($sprint->getId());
+		if (!$lastSprintId)
+		{
+			return;
+		}
+
+		if (!$kanbanService->hasDifferencesBetweenTwoSprints($sprint->getId(), $lastSprintId))
+		{
+			return;
+		}
+
+		$robotService = (Loader::includeModule('bizproc') ? new RobotService() : null);
+		if ($robotService)
+		{
+			$currentSprintHasRobots = $robotService->hasRobots(
+				$groupId,
+				$kanbanService->getSprintStageIds($sprint->getId())
+			);
+			if ($currentSprintHasRobots)
+			{
+				return;
+			}
+		}
+
+		$sprint->setStatus(EntityForm::SPRINT_PLANNED);
+		$sprint->getInfo()->setSprintStagesRecoveryStatusToCompleted();
+		if (!$sprintService->changeSprint($sprint))
+		{
+			return;
+		}
+
+		$kanbanService->removeStages($sprint->getId());
+
+		$taskService = new TaskService($userId);
+		$itemService = new ItemService();
+		$backlogService = new BacklogService();
+
+		$sprintService->startSprint(
+			$sprint,
+			$taskService,
+			$kanbanService,
+			$itemService,
+			$backlogService,
+			$robotService
+		);
 	}
 }

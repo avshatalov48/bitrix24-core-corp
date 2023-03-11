@@ -12,6 +12,7 @@ use Bitrix\Crm\Kanban\EntityActivityDeadline;
 use Bitrix\Crm\PhaseSemantics;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Service\Factory;
 use Bitrix\Crm\Service\Operation;
 use Bitrix\Crm\Statistics;
 use Bitrix\Crm\Timeline\MarkController;
@@ -102,7 +103,7 @@ class Add extends Operation
 			$this->getContext()->getUserId(),
 		);
 
-		$factory = Container::getInstance()->getFactory($this->getItem()->getEntityTypeId());
+		$factory = $this->getFactory();
 
 		if ($this->item->hasField(Item::FIELD_NAME_CONTACT_BINDINGS))
 		{
@@ -163,7 +164,10 @@ class Add extends Operation
 
 		if ($viewMode === \Bitrix\Crm\Kanban\ViewMode::MODE_ACTIVITIES)
 		{
-			$stageId = $context->getItemOption('STAGE_ID');
+			$factory = $this->getFactory();
+			$stageFieldName = $factory->getFieldsMap()[Item::FIELD_NAME_STAGE_ID];
+
+			$stageId = $context->getItemOption($stageFieldName);
 			if (!$stageId)
 			{
 				return;
@@ -180,6 +184,11 @@ class Add extends Operation
 				);
 			}
 		}
+	}
+
+	protected function getFactory(): ?Factory
+	{
+		return Container::getInstance()->getFactory($this->getItem()->getEntityTypeId());
 	}
 
 	protected function sendPullEvent(): void

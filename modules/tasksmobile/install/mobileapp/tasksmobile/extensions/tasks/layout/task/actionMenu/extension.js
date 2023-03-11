@@ -24,6 +24,7 @@ jn.define('tasks/layout/task/actionMenu', (require, exports, module) => {
 				approve: 'approve',
 				disapprove: 'disapprove',
 				delegate: 'delegate',
+				share: 'share',
 				remove: 'remove',
 			};
 		}
@@ -228,7 +229,7 @@ jn.define('tasks/layout/task/actionMenu', (require, exports, module) => {
 				},
 				{
 					id: ActionMenu.action.approve,
-					title: Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_ACTION_MENU_ACTION_APPROVE'),
+					title: Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_ACTION_MENU_ACTION_APPROVE_MSGVER_1'),
 					data: {
 						imgUri: `${imagePrefix}approve.png`,
 					},
@@ -245,7 +246,7 @@ jn.define('tasks/layout/task/actionMenu', (require, exports, module) => {
 				},
 				{
 					id: ActionMenu.action.disapprove,
-					title: Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_ACTION_MENU_ACTION_DISAPPROVE'),
+					title: Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_ACTION_MENU_ACTION_DISAPPROVE_MSGVER_1'),
 					data: {
 						imgUri: `${imagePrefix}disapprove.png`,
 					},
@@ -307,6 +308,18 @@ jn.define('tasks/layout/task/actionMenu', (require, exports, module) => {
 							},
 						});
 						void selector.show({}, this.layoutWidget);
+					},
+				},
+				{
+					id: ActionMenu.action.share,
+					title: Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_ACTION_MENU_ACTION_SHARE'),
+					data: {
+						imgUri: `${imagePrefix}share.png`,
+					},
+					onClickCallback: () => {
+						dialogs.showSharingDialog({
+							message: `${currentDomain}/company/personal/user/${this.task.currentUser.id}/tasks/task/view/${this.task.id}/`,
+						});
 					},
 				},
 				{

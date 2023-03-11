@@ -122,7 +122,7 @@ class Config
 		{
 			$fields['LINE_NAME'] = $params['LINE_NAME'];
 		}
-		else if ($mode == self::MODE_ADD)
+		elseif ($mode == self::MODE_ADD)
 		{
 			$configCount = Model\ConfigTable::getList(array(
 				'select' => array('CNT'),
@@ -139,13 +139,13 @@ class Config
 			}
 		}
 
-		if (\IsModuleInstalled('crm'))
+		if (\Bitrix\Main\ModuleManager::isModuleInstalled('crm'))
 		{
 			if (isset($params['CRM']))
 			{
 				$fields['CRM'] = $params['CRM'] == 'N'? 'N': 'Y';
 			}
-			else if ($mode == self::MODE_ADD)
+			elseif ($mode == self::MODE_ADD)
 			{
 				$fields['CRM'] = 'Y';
 			}
@@ -159,7 +159,7 @@ class Config
 		{
 			$fields['CRM_CREATE'] = in_array($params['CRM_CREATE'], [self::CRM_CREATE_NONE, self::CRM_CREATE_LEAD, self::CRM_CREATE_DEAL])? $params['CRM_CREATE']: self::CRM_CREATE_LEAD;
 		}
-		else if ($mode == self::MODE_ADD)
+		elseif ($mode == self::MODE_ADD)
 		{
 			$fields['CRM_CREATE'] = self::CRM_CREATE_LEAD;
 		}
@@ -168,7 +168,7 @@ class Config
 		{
 			$fields['CRM_CREATE_SECOND'] = $params['CRM_CREATE_SECOND'];
 		}
-		else if ($mode == self::MODE_ADD)
+		elseif ($mode == self::MODE_ADD)
 		{
 			$fields['CRM_CREATE_SECOND'] = '';
 		}
@@ -177,7 +177,7 @@ class Config
 		{
 			$fields['CRM_CREATE_THIRD'] = $params['CRM_CREATE_THIRD'] === 'N'? 'N': 'Y';
 		}
-		else if ($mode == self::MODE_ADD)
+		elseif ($mode == self::MODE_ADD)
 		{
 			$fields['CRM_CREATE_THIRD'] = 'Y';
 		}
@@ -186,7 +186,7 @@ class Config
 		{
 			$fields['CRM_FORWARD'] = $params['CRM_FORWARD'] == 'N'? 'N': 'Y';
 		}
-		else if ($mode == self::MODE_ADD)
+		elseif ($mode == self::MODE_ADD)
 		{
 			$fields['CRM_FORWARD'] = 'Y';
 		}
@@ -195,7 +195,7 @@ class Config
 		{
 			$fields['CRM_CHAT_TRACKER'] = $params['CRM_CHAT_TRACKER'] == 'N'? 'N': 'Y';
 		}
-		else if ($mode == self::MODE_ADD)
+		elseif ($mode == self::MODE_ADD)
 		{
 			$fields['CRM_CHAT_TRACKER'] = 'Y';
 		}
@@ -204,7 +204,7 @@ class Config
 		{
 			$fields['CRM_TRANSFER_CHANGE'] = $params['CRM_TRANSFER_CHANGE'] == 'N'? 'N': 'Y';
 		}
-		else if ($mode == self::MODE_ADD)
+		elseif ($mode == self::MODE_ADD)
 		{
 			$fields['CRM_TRANSFER_CHANGE'] = 'Y';
 		}
@@ -213,7 +213,7 @@ class Config
 		{
 			$fields['CRM_SOURCE'] = $params['CRM_SOURCE'];
 		}
-		else if ($mode == self::MODE_ADD)
+		elseif ($mode == self::MODE_ADD)
 		{
 			$fields['CRM_SOURCE'] = self::CRM_SOURCE_AUTO_CREATE;
 		}
@@ -222,7 +222,7 @@ class Config
 		{
 			$fields['QUEUE_TIME'] = intval($params['QUEUE_TIME']);
 		}
-		else if ($mode == self::MODE_ADD)
+		elseif ($mode == self::MODE_ADD)
 		{
 			$fields['QUEUE_TIME'] = 60;
 		}
@@ -231,26 +231,39 @@ class Config
 		{
 			$fields['NO_ANSWER_TIME'] = intval($params['NO_ANSWER_TIME']);
 		}
-		else if ($mode == self::MODE_ADD)
+		elseif ($mode == self::MODE_ADD)
 		{
 			$fields['NO_ANSWER_TIME'] = 60;
 		}
 
 		if (isset($params['MAX_CHAT']))
 		{
-			if($fields['MAX_CHAT'] >= 0)
-				$fields['MAX_CHAT'] = intval($params['MAX_CHAT']);
+			if ((int)$params['MAX_CHAT'] >= 0)
+			{
+				$fields['MAX_CHAT'] = (int)$params['MAX_CHAT'];
+			}
+			else
+			{
+				$fields['MAX_CHAT'] = 0;
+			}
 		}
-		else if ($mode == self::MODE_ADD)
+		elseif ($mode == self::MODE_ADD)
 		{
 			$fields['MAX_CHAT'] = 0;
 		}
 
 		if (isset($params['TYPE_MAX_CHAT']))
 		{
-			$fields['TYPE_MAX_CHAT'] = in_array($params['TYPE_MAX_CHAT'], Array(self::TYPE_MAX_CHAT_ANSWERED_NEW, self::TYPE_MAX_CHAT_ANSWERED, self::TYPE_MAX_CHAT_CLOSED))? $params['TYPE_MAX_CHAT']: self::TYPE_MAX_CHAT_ANSWERED_NEW;
+			if (in_array($params['TYPE_MAX_CHAT'], [self::TYPE_MAX_CHAT_ANSWERED_NEW, self::TYPE_MAX_CHAT_ANSWERED, self::TYPE_MAX_CHAT_CLOSED], true))
+			{
+				$fields['TYPE_MAX_CHAT'] = $params['TYPE_MAX_CHAT'];
+			}
+			else
+			{
+				$fields['TYPE_MAX_CHAT'] = self::TYPE_MAX_CHAT_ANSWERED_NEW;
+			}
 		}
-		else if ($mode == self::MODE_ADD)
+		elseif ($mode == self::MODE_ADD)
 		{
 			$fields['TYPE_MAX_CHAT'] = self::TYPE_MAX_CHAT_ANSWERED;
 		}
@@ -259,7 +272,7 @@ class Config
 		{
 			$fields['CATEGORY_ENABLE'] = $params['CATEGORY_ENABLE'] == 'Y'? 'Y': 'N';
 		}
-		else if ($mode == self::MODE_ADD)
+		elseif ($mode == self::MODE_ADD)
 		{
 			$fields["CATEGORY_ENABLE"] = 'N';
 		}
@@ -268,7 +281,7 @@ class Config
 		{
 			$fields['CATEGORY_ID'] = $fields['CATEGORY_ENABLE'] == 'Y'? intval($params['CATEGORY_ID']): 0;
 		}
-		else if ($mode == self::MODE_ADD)
+		elseif ($mode == self::MODE_ADD)
 		{
 			$fields["CATEGORY_ID"] = 0;
 		}
@@ -278,7 +291,7 @@ class Config
 			$params['SESSION_PRIORITY'] = intval($params['SESSION_PRIORITY']);
 			$fields['SESSION_PRIORITY'] = $params['SESSION_PRIORITY'] >= 0 && $params['SESSION_PRIORITY'] <= 86400? $params['SESSION_PRIORITY']: ($params['SESSION_PRIORITY'] > 0? 86400: 0);
 		}
-		else if ($mode == self::MODE_ADD)
+		elseif ($mode == self::MODE_ADD)
 		{
 			$fields["SESSION_PRIORITY"] = 0;
 		}
@@ -292,7 +305,7 @@ class Config
 		{
 			$fields['AGREEMENT_MESSAGE'] = $params['AGREEMENT_MESSAGE'] == 'Y'? 'Y': 'N';
 		}
-		else if ($mode == self::MODE_ADD)
+		elseif ($mode == self::MODE_ADD)
 		{
 			$fields["AGREEMENT_MESSAGE"] = 'N';
 		}
@@ -301,7 +314,7 @@ class Config
 		{
 			$fields['AGREEMENT_ID'] = intval($params['AGREEMENT_ID']);
 		}
-		else if ($mode == self::MODE_ADD)
+		elseif ($mode == self::MODE_ADD)
 		{
 			$fields["AGREEMENT_ID"] = 0;
 		}
@@ -310,7 +323,7 @@ class Config
 		{
 			$fields['WELCOME_BOT_ENABLE'] = $params['WELCOME_BOT_ENABLE'] == 'Y'? 'Y': 'N';
 		}
-		else if ($mode == self::MODE_ADD)
+		elseif ($mode == self::MODE_ADD)
 		{
 			$fields["WELCOME_BOT_ENABLE"] = 'N';
 		}
@@ -319,7 +332,7 @@ class Config
 		{
 			$fields['WELCOME_BOT_JOIN'] = $params['WELCOME_BOT_JOIN'] == self::BOT_JOIN_FIRST? self::BOT_JOIN_FIRST: self::BOT_JOIN_ALWAYS;
 		}
-		else if ($mode == self::MODE_ADD)
+		elseif ($mode == self::MODE_ADD)
 		{
 			$fields['WELCOME_BOT_JOIN'] = self::BOT_JOIN_ALWAYS;
 		}
@@ -328,7 +341,7 @@ class Config
 		{
 			$fields['WELCOME_BOT_ID'] = $fields["WELCOME_BOT_ENABLE"] == 'Y'? intval($params['WELCOME_BOT_ID']): 0;
 		}
-		else if ($mode == self::MODE_ADD)
+		elseif ($mode == self::MODE_ADD)
 		{
 			$fields['WELCOME_BOT_ID'] = 0;
 		}
@@ -337,7 +350,7 @@ class Config
 		{
 			$fields['WELCOME_BOT_TIME'] = $fields["WELCOME_BOT_ENABLE"] == 'Y'? intval($params['WELCOME_BOT_TIME']): 600;
 		}
-		else if ($mode == self::MODE_ADD)
+		elseif ($mode == self::MODE_ADD)
 		{
 			$fields['WELCOME_BOT_TIME'] = 600;
 		}
@@ -346,7 +359,7 @@ class Config
 		{
 			$fields['WELCOME_BOT_LEFT'] = $fields["WELCOME_BOT_ENABLE"] == 'Y' && $params['WELCOME_BOT_LEFT'] == self::BOT_LEFT_CLOSE? self::BOT_LEFT_CLOSE: self::BOT_LEFT_QUEUE;
 		}
-		else if ($mode == self::MODE_ADD)
+		elseif ($mode == self::MODE_ADD)
 		{
 			$fields['WELCOME_BOT_LEFT'] = self::BOT_LEFT_QUEUE;
 		}
@@ -355,12 +368,13 @@ class Config
 		{
 			$fields['QUEUE_TYPE'] = in_array($params['QUEUE_TYPE'], Array(self::QUEUE_TYPE_STRICTLY, self::QUEUE_TYPE_ALL, self::QUEUE_TYPE_EVENLY))? $params['QUEUE_TYPE']: self::QUEUE_TYPE_ALL;
 		}
-		else if ($mode == self::MODE_ADD)
+		elseif ($mode == self::MODE_ADD)
 		{
 			$fields['QUEUE_TYPE'] = self::QUEUE_TYPE_ALL;
 		}
 		if (
-			$fields['QUEUE_TYPE'] == self::QUEUE_TYPE_ALL
+			isset($params['QUEUE_TYPE'])
+			&& $fields['QUEUE_TYPE'] == self::QUEUE_TYPE_ALL
 			&& !Limit::canUseQueueAll()
 		)
 		{
@@ -371,7 +385,7 @@ class Config
 		{
 			$fields['CHECK_AVAILABLE'] = $params['CHECK_AVAILABLE'] == 'N'? 'N': 'Y';
 		}
-		else if ($mode == self::MODE_ADD)
+		elseif ($mode == self::MODE_ADD)
 		{
 			$fields["CHECK_AVAILABLE"] = 'N';
 		}
@@ -380,7 +394,7 @@ class Config
 		{
 			$fields['WATCH_TYPING'] = $params['WATCH_TYPING'] == 'Y'? 'Y': 'N';
 		}
-		else if ($mode == self::MODE_ADD)
+		elseif ($mode == self::MODE_ADD)
 		{
 			$fields["WATCH_TYPING"] = 'Y';
 		}
@@ -389,7 +403,7 @@ class Config
 		{
 			$fields['WELCOME_MESSAGE'] = $params['WELCOME_MESSAGE'] == 'N'? 'N': 'Y';
 		}
-		else if ($mode == self::MODE_ADD)
+		elseif ($mode == self::MODE_ADD)
 		{
 			$fields['WELCOME_MESSAGE'] = 'Y';
 		}
@@ -398,7 +412,7 @@ class Config
 		{
 			$fields['SEND_WELCOME_EACH_SESSION'] = $params['SEND_WELCOME_EACH_SESSION'] == 'Y'? 'Y': 'N';
 		}
-		else if ($mode == self::MODE_ADD)
+		elseif ($mode == self::MODE_ADD)
 		{
 			$fields['SEND_WELCOME_EACH_SESSION'] = 'N';
 		}
@@ -407,7 +421,7 @@ class Config
 		{
 			$fields['WELCOME_MESSAGE_TEXT'] = Emoji::encode($params['WELCOME_MESSAGE_TEXT']);
 		}
-		else if ($mode == self::MODE_ADD)
+		elseif ($mode == self::MODE_ADD)
 		{
 			$fields['WELCOME_MESSAGE_TEXT'] = Loc::getMessage('IMOL_CONFIG_WELCOME_MESSAGE', Array('#COMPANY_NAME#' => $companyName));
 		}
@@ -416,7 +430,7 @@ class Config
 		{
 			$fields['OPERATOR_DATA'] = in_array($params['OPERATOR_DATA'], Array(self::OPERATOR_DATA_PROFILE, self::OPERATOR_DATA_QUEUE, self::OPERATOR_DATA_HIDE))? $params['OPERATOR_DATA']: self::OPERATOR_DATA_PROFILE;
 		}
-		else if ($mode == self::MODE_ADD)
+		elseif ($mode == self::MODE_ADD)
 		{
 			$fields['OPERATOR_DATA'] = self::OPERATOR_DATA_PROFILE;
 		}
@@ -434,7 +448,7 @@ class Config
 		{
 			$fields['NO_ANSWER_RULE'] = in_array($params["NO_ANSWER_RULE"], Array(self::RULE_TEXT, self::RULE_NONE))? $params["NO_ANSWER_RULE"]: self::RULE_NONE;
 		}
-		else if ($mode == self::MODE_ADD)
+		elseif ($mode == self::MODE_ADD)
 		{
 			$fields['NO_ANSWER_RULE'] = self::RULE_NONE;
 		}
@@ -443,7 +457,7 @@ class Config
 		{
 			$fields['NO_ANSWER_FORM_ID'] = isset($formValues[$params['NO_ANSWER_FORM_ID']])? $params['NO_ANSWER_FORM_ID']: $defaultAuthFormId;
 		}
-		else if ($mode == self::MODE_ADD)
+		elseif ($mode == self::MODE_ADD)
 		{
 			$fields['NO_ANSWER_FORM_ID'] = $defaultAuthFormId;
 		}
@@ -452,7 +466,7 @@ class Config
 		{
 			$fields['NO_ANSWER_BOT_ID'] = intval($params['NO_ANSWER_BOT_ID']);
 		}
-		else if ($mode == self::MODE_ADD)
+		elseif ($mode == self::MODE_ADD)
 		{
 			$fields['NO_ANSWER_BOT_ID'] = 0;
 		}
@@ -461,7 +475,7 @@ class Config
 		{
 			$fields['NO_ANSWER_TEXT'] = $params['NO_ANSWER_TEXT'];
 		}
-		else if ($mode == self::MODE_ADD)
+		elseif ($mode == self::MODE_ADD)
 		{
 			$fields['NO_ANSWER_TEXT'] = Loc::getMessage('IMOL_CONFIG_NO_ANSWER_NEW', Array('#COMPANY_NAME#' => $companyName));
 		}
@@ -470,12 +484,13 @@ class Config
 		{
 			$fields['WORKTIME_ENABLE'] = $params['WORKTIME_ENABLE'] == 'Y'? 'Y': 'N';
 		}
-		else if ($mode == self::MODE_ADD)
+		elseif ($mode == self::MODE_ADD)
 		{
 			$fields["WORKTIME_ENABLE"] = 'N';
 		}
 		if (
-			$fields['WORKTIME_ENABLE'] == 'Y'
+			isset($fields['WORKTIME_ENABLE'])
+			&& $fields['WORKTIME_ENABLE'] == 'Y'
 			&& !Limit::canWorkHourSettings()
 		)
 		{
@@ -486,7 +501,7 @@ class Config
 		{
 			$fields['WORKTIME_TIMEZONE'] = $params['WORKTIME_TIMEZONE'];
 		}
-		else if ($mode == self::MODE_ADD)
+		elseif ($mode == self::MODE_ADD)
 		{
 			$fields["WORKTIME_TIMEZONE"] = '';
 		}
@@ -503,7 +518,7 @@ class Config
 			}
 			$fields['WORKTIME_DAYOFF'] = implode(",", $params["WORKTIME_DAYOFF"]);
 		}
-		else if ($mode == self::MODE_ADD)
+		elseif ($mode == self::MODE_ADD)
 		{
 			$fields['WORKTIME_DAYOFF'] = '';
 		}
@@ -533,29 +548,38 @@ class Config
 				$fields['WORKTIME_TO'] = "18.30";
 			}
 		}
-		else if ($mode == self::MODE_ADD)
+		elseif ($mode == self::MODE_ADD)
 		{
 			$fields['WORKTIME_FROM'] = "9";
 			$fields['WORKTIME_TO'] = "18.30";
 		}
 
-		if (isset($params["WORKTIME_HOLIDAYS"]))
+		if (isset($params['WORKTIME_HOLIDAYS']))
 		{
-			$params["WORKTIME_HOLIDAYS"] = str_replace(' ', '', $params["WORKTIME_HOLIDAYS"]);
-			$params["WORKTIME_HOLIDAYS"] = implode(',', $params["WORKTIME_HOLIDAYS"]);
-			preg_match("/^(\d{1,2}\.\d{1,2},?)+$/i", $params["WORKTIME_HOLIDAYS"], $matches);
-			$fields['WORKTIME_HOLIDAYS'] = isset($matches[0])? $params["WORKTIME_HOLIDAYS"]: "";
+			$params['WORKTIME_HOLIDAYS'] = str_replace(' ', '', $params['WORKTIME_HOLIDAYS']);
+			if (is_array($params['WORKTIME_HOLIDAYS']))
+			{
+				$params['WORKTIME_HOLIDAYS'] = implode(',', $params['WORKTIME_HOLIDAYS']);
+			}
+			if (preg_match("/^(\d{1,2}\.\d{1,2},?)+$/i", $params['WORKTIME_HOLIDAYS']))
+			{
+				$fields['WORKTIME_HOLIDAYS'] = $params['WORKTIME_HOLIDAYS'];
+			}
+			else
+			{
+				$fields['WORKTIME_HOLIDAYS'] = '';
+			}
 		}
-		else if ($mode == self::MODE_ADD)
+		elseif ($mode == self::MODE_ADD)
 		{
-			$fields['WORKTIME_HOLIDAYS'] = "";
+			$fields['WORKTIME_HOLIDAYS'] = '';
 		}
 
 		if (isset($params['WORKTIME_DAYOFF_RULE']))
 		{
 			$fields['WORKTIME_DAYOFF_RULE'] = in_array($params["WORKTIME_DAYOFF_RULE"], Array( self::RULE_TEXT, self::RULE_NONE))? $params["WORKTIME_DAYOFF_RULE"]: self::RULE_NONE;
 		}
-		else if ($mode == self::MODE_ADD)
+		elseif ($mode == self::MODE_ADD)
 		{
 			$fields['WORKTIME_DAYOFF_RULE'] = self::RULE_NONE;
 		}
@@ -564,7 +588,7 @@ class Config
 		{
 			$fields['WORKTIME_DAYOFF_FORM_ID'] = isset($formValues[$params['WORKTIME_DAYOFF_FORM_ID']])? $params['WORKTIME_DAYOFF_FORM_ID']: $defaultAuthFormId;
 		}
-		else if ($mode == self::MODE_ADD)
+		elseif ($mode == self::MODE_ADD)
 		{
 			$fields['WORKTIME_DAYOFF_FORM_ID'] = $defaultAuthFormId;
 		}
@@ -573,7 +597,7 @@ class Config
 		{
 			$fields['WORKTIME_DAYOFF_BOT_ID'] = intval($params['WORKTIME_DAYOFF_BOT_ID']);
 		}
-		else if ($mode == self::MODE_ADD)
+		elseif ($mode == self::MODE_ADD)
 		{
 			$fields['WORKTIME_DAYOFF_BOT_ID'] = 0;
 		}
@@ -582,7 +606,7 @@ class Config
 		{
 			$fields['WORKTIME_DAYOFF_TEXT'] = Emoji::encode($params['WORKTIME_DAYOFF_TEXT']);
 		}
-		else if ($mode == self::MODE_ADD)
+		elseif ($mode == self::MODE_ADD)
 		{
 			$fields['WORKTIME_DAYOFF_TEXT'] = Loc::getMessage('IMOL_CONFIG_WORKTIME_DAYOFF_3', Array('#COMPANY_NAME#' => $companyName));
 		}
@@ -591,7 +615,7 @@ class Config
 		{
 			$fields['CLOSE_RULE'] = in_array($params["CLOSE_RULE"], Array(self::RULE_TEXT, self::RULE_QUALITY, self::RULE_NONE))? $params["CLOSE_RULE"]: self::RULE_NONE;
 		}
-		else if ($mode == self::MODE_ADD)
+		elseif ($mode == self::MODE_ADD)
 		{
 			$fields['CLOSE_RULE'] = self::RULE_QUALITY;
 		}
@@ -600,7 +624,7 @@ class Config
 		{
 			$fields['CLOSE_FORM_ID'] = isset($formValues[$params['CLOSE_FORM_ID']])? $params['CLOSE_FORM_ID']: $defaultRatingFormId;
 		}
-		else if ($mode == self::MODE_ADD)
+		elseif ($mode == self::MODE_ADD)
 		{
 			$fields['CLOSE_FORM_ID'] = $defaultRatingFormId;
 		}
@@ -609,7 +633,7 @@ class Config
 		{
 			$fields['CLOSE_BOT_ID'] = intval($params['CLOSE_BOT_ID']);
 		}
-		else if ($mode == self::MODE_ADD)
+		elseif ($mode == self::MODE_ADD)
 		{
 			$fields['CLOSE_BOT_ID'] = 0;
 		}
@@ -618,7 +642,7 @@ class Config
 		{
 			$fields['CLOSE_TEXT'] = Emoji::encode($params['CLOSE_TEXT']);
 		}
-		else if ($mode == self::MODE_ADD)
+		elseif ($mode == self::MODE_ADD)
 		{
 			$fields['CLOSE_TEXT'] = Loc::getMessage('IMOL_CONFIG_CLOSE_TEXT_2');
 		}
@@ -627,14 +651,15 @@ class Config
 		{
 			$fields['VOTE_MESSAGE'] = $params['VOTE_MESSAGE'] == 'N'? 'N': 'Y';
 		}
-		else if ($mode == self::MODE_ADD)
+		elseif ($mode == self::MODE_ADD)
 		{
 			$fields['VOTE_MESSAGE'] = 'Y';
 		}
-		if(
-			$fields['VOTE_MESSAGE'] === 'Y'
-			&& !Limit::canUseVoteClient())
-
+		if (
+			isset($params['VOTE_MESSAGE'])
+			&& $fields['VOTE_MESSAGE'] === 'Y'
+			&& !Limit::canUseVoteClient()
+		)
 		{
 			$fields['VOTE_MESSAGE'] = 'N';
 		}
@@ -642,7 +667,7 @@ class Config
 		{
 			$fields['VOTE_TIME_LIMIT'] = (int)$params['VOTE_TIME_LIMIT'] > 0 ? (int)$params['VOTE_TIME_LIMIT']: 0;
 		}
-		else if ($mode == self::MODE_ADD)
+		elseif ($mode == self::MODE_ADD)
 		{
 			$fields['VOTE_TIME_LIMIT'] = 0;
 		}
@@ -651,7 +676,7 @@ class Config
 		{
 			$fields['VOTE_CLOSING_DELAY'] = $params['VOTE_CLOSING_DELAY'] == 'Y'? 'Y': 'N';
 		}
-		else if ($mode == self::MODE_ADD)
+		elseif ($mode == self::MODE_ADD)
 		{
 			$fields["VOTE_CLOSING_DELAY"] = 'N';
 		}
@@ -660,7 +685,7 @@ class Config
 		{
 			$fields['VOTE_BEFORE_FINISH'] = $params['VOTE_BEFORE_FINISH'] == 'Y'? 'Y': 'N';
 		}
-		else if ($mode == self::MODE_ADD)
+		elseif ($mode == self::MODE_ADD)
 		{
 			$fields["VOTE_BEFORE_FINISH"] = 'Y';
 		}
@@ -670,7 +695,7 @@ class Config
 			$params['VOTE_MESSAGE_1_TEXT'] = Emoji::encode($params['VOTE_MESSAGE_1_TEXT']);
 			$fields['VOTE_MESSAGE_1_TEXT'] = mb_substr($params['VOTE_MESSAGE_1_TEXT'], 0, 100);
 		}
-		else if ($mode == self::MODE_ADD)
+		elseif ($mode == self::MODE_ADD)
 		{
 			$fields['VOTE_MESSAGE_1_TEXT'] = Loc::getMessage('IMOL_CONFIG_VOTE_MESSAGE_1_TEXT');
 		}
@@ -679,7 +704,7 @@ class Config
 			$params['VOTE_MESSAGE_1_LIKE'] = Emoji::encode($params['VOTE_MESSAGE_1_LIKE']);
 			$fields['VOTE_MESSAGE_1_LIKE'] = mb_substr($params['VOTE_MESSAGE_1_LIKE'], 0, 100);
 		}
-		else if ($mode == self::MODE_ADD)
+		elseif ($mode == self::MODE_ADD)
 		{
 			$fields['VOTE_MESSAGE_1_LIKE'] = Loc::getMessage('IMOL_CONFIG_VOTE_MESSAGE_1_LIKE');
 		}
@@ -688,7 +713,7 @@ class Config
 			$params['VOTE_MESSAGE_1_DISLIKE'] = Emoji::encode($params['VOTE_MESSAGE_1_DISLIKE']);
 			$fields['VOTE_MESSAGE_1_DISLIKE'] = mb_substr($params['VOTE_MESSAGE_1_DISLIKE'], 0, 100);
 		}
-		else if ($mode == self::MODE_ADD)
+		elseif ($mode == self::MODE_ADD)
 		{
 			$fields['VOTE_MESSAGE_1_DISLIKE'] = Loc::getMessage('IMOL_CONFIG_VOTE_MESSAGE_1_DISLIKE');
 		}
@@ -697,7 +722,7 @@ class Config
 			$params['VOTE_MESSAGE_2_TEXT'] = Emoji::encode($params['VOTE_MESSAGE_2_TEXT']);
 			$fields['VOTE_MESSAGE_2_TEXT'] = $params['VOTE_MESSAGE_2_TEXT'];
 		}
-		else if ($mode == self::MODE_ADD)
+		elseif ($mode == self::MODE_ADD)
 		{
 			$fields['VOTE_MESSAGE_2_TEXT'] = Loc::getMessage('IMOL_CONFIG_VOTE_MESSAGE_2_TEXT');
 		}
@@ -706,7 +731,7 @@ class Config
 			$params['VOTE_MESSAGE_2_LIKE'] = Emoji::encode($params['VOTE_MESSAGE_2_LIKE']);
 			$fields['VOTE_MESSAGE_2_LIKE'] = $params['VOTE_MESSAGE_2_LIKE'];
 		}
-		else if ($mode == self::MODE_ADD)
+		elseif ($mode == self::MODE_ADD)
 		{
 			$fields['VOTE_MESSAGE_2_LIKE'] = Loc::getMessage('IMOL_CONFIG_VOTE_MESSAGE_2_LIKE');
 		}
@@ -715,7 +740,7 @@ class Config
 			$params['VOTE_MESSAGE_2_DISLIKE'] = Emoji::encode($params['VOTE_MESSAGE_2_DISLIKE']);
 			$fields['VOTE_MESSAGE_2_DISLIKE'] = $params['VOTE_MESSAGE_2_DISLIKE'];
 		}
-		else if ($mode == self::MODE_ADD)
+		elseif ($mode == self::MODE_ADD)
 		{
 			$fields['VOTE_MESSAGE_2_DISLIKE'] = Loc::getMessage('IMOL_CONFIG_VOTE_MESSAGE_2_DISLIKE');
 		}
@@ -724,7 +749,7 @@ class Config
 		{
 			$fields['AUTO_CLOSE_RULE'] = in_array($params["AUTO_CLOSE_RULE"], Array(self::RULE_TEXT, self::RULE_NONE))? $params["AUTO_CLOSE_RULE"]: self::RULE_NONE;
 		}
-		else if ($mode == self::MODE_ADD)
+		elseif ($mode == self::MODE_ADD)
 		{
 			$fields['AUTO_CLOSE_RULE'] = self::RULE_NONE;
 		}
@@ -733,7 +758,7 @@ class Config
 		{
 			$fields['FULL_CLOSE_TIME'] = intval($params['FULL_CLOSE_TIME']);
 		}
-		else if ($mode == self::MODE_ADD)
+		elseif ($mode == self::MODE_ADD)
 		{
 			$fields['FULL_CLOSE_TIME'] = 10;
 		}
@@ -742,7 +767,7 @@ class Config
 		{
 			$fields['AUTO_CLOSE_TIME'] = intval($params['AUTO_CLOSE_TIME']);
 		}
-		else if ($mode == self::MODE_ADD)
+		elseif ($mode == self::MODE_ADD)
 		{
 			$fields['AUTO_CLOSE_TIME'] = 14400;
 		}
@@ -751,7 +776,7 @@ class Config
 		{
 			$fields['AUTO_CLOSE_FORM_ID'] = isset($formValues[$params['AUTO_CLOSE_FORM_ID']])? $params['AUTO_CLOSE_FORM_ID']: $defaultRatingFormId;
 		}
-		else if ($mode == self::MODE_ADD)
+		elseif ($mode == self::MODE_ADD)
 		{
 			$fields['AUTO_CLOSE_FORM_ID'] = $defaultRatingFormId;
 		}
@@ -760,7 +785,7 @@ class Config
 		{
 			$fields['AUTO_CLOSE_BOT_ID'] = intval($params['AUTO_CLOSE_BOT_ID']);
 		}
-		else if ($mode == self::MODE_ADD)
+		elseif ($mode == self::MODE_ADD)
 		{
 			$fields['AUTO_CLOSE_BOT_ID'] = 0;
 		}
@@ -769,7 +794,7 @@ class Config
 		{
 			$fields['AUTO_CLOSE_TEXT'] = $params['AUTO_CLOSE_TEXT'];
 		}
-		else if ($mode == self::MODE_ADD)
+		elseif ($mode == self::MODE_ADD)
 		{
 			$fields['AUTO_CLOSE_TEXT'] = Loc::getMessage('IMOL_CONFIG_AUTO_CLOSE_TEXT');
 		}
@@ -778,7 +803,7 @@ class Config
 		{
 			$fields['AUTO_EXPIRE_TIME'] = intval($params['AUTO_EXPIRE_TIME']);
 		}
-		else if ($mode == self::MODE_ADD)
+		elseif ($mode == self::MODE_ADD)
 		{
 			$fields['AUTO_EXPIRE_TIME'] = 86400;
 		}
@@ -787,7 +812,7 @@ class Config
 		{
 			$fields['TEMPORARY'] = $params['TEMPORARY'] == 'N'? 'N': 'Y';
 		}
-		else if ($mode == self::MODE_ADD)
+		elseif ($mode == self::MODE_ADD)
 		{
 			$fields['TEMPORARY'] = 'N';
 		}
@@ -796,7 +821,7 @@ class Config
 		{
 			$fields['ACTIVE'] = $params['ACTIVE'] == 'N'? 'N': 'Y';
 		}
-		else if ($mode == self::MODE_ADD)
+		elseif ($mode == self::MODE_ADD)
 		{
 			$fields['ACTIVE'] = 'Y';
 		}
@@ -810,7 +835,7 @@ class Config
 		{
 			$fields['KPI_FIRST_ANSWER_TIME'] = intval($params['KPI_FIRST_ANSWER_TIME']) > 0 ? intval($params['KPI_FIRST_ANSWER_TIME']) : 0;
 		}
-		else if ($mode == self::MODE_ADD)
+		elseif ($mode == self::MODE_ADD)
 		{
 			$fields['KPI_FIRST_ANSWER_TIME'] = 0;
 		}
@@ -819,7 +844,7 @@ class Config
 		{
 			$fields['KPI_FIRST_ANSWER_ALERT'] = $params['KPI_FIRST_ANSWER_ALERT'] == 'Y' ? 'Y' : 'N';
 		}
-		else if ($mode == self::MODE_ADD)
+		elseif ($mode == self::MODE_ADD)
 		{
 			$fields['KPI_FIRST_ANSWER_ALERT'] = 'N';
 		}
@@ -833,7 +858,7 @@ class Config
 		{
 			$fields['KPI_FIRST_ANSWER_TEXT'] = htmlspecialcharsbx($params['KPI_FIRST_ANSWER_TEXT']);
 		}
-		else if ($mode == self::MODE_ADD)
+		elseif ($mode == self::MODE_ADD)
 		{
 			$fields['KPI_FIRST_ANSWER_TEXT'] = Loc::getMessage('IMOL_CONFIG_KPI_FIRST_ANSWER_TEXT');
 		}
@@ -842,7 +867,7 @@ class Config
 		{
 			$fields['KPI_FURTHER_ANSWER_TIME'] = intval($params['KPI_FURTHER_ANSWER_TIME']) > 0 ? intval($params['KPI_FURTHER_ANSWER_TIME']) : 0;
 		}
-		else if ($mode == self::MODE_ADD)
+		elseif ($mode == self::MODE_ADD)
 		{
 			$fields['KPI_FURTHER_ANSWER_TIME'] = 0;
 		}
@@ -851,7 +876,7 @@ class Config
 		{
 			$fields['KPI_FURTHER_ANSWER_ALERT'] = $params['KPI_FURTHER_ANSWER_ALERT'] == 'Y' ? 'Y' : 'N';
 		}
-		else if ($mode == self::MODE_ADD)
+		elseif ($mode == self::MODE_ADD)
 		{
 			$fields['KPI_FURTHER_ANSWER_ALERT'] = 'N';
 		}
@@ -865,7 +890,7 @@ class Config
 		{
 			$fields['KPI_FURTHER_ANSWER_TEXT'] = htmlspecialcharsbx($params['KPI_FURTHER_ANSWER_TEXT']);
 		}
-		else if ($mode == self::MODE_ADD)
+		elseif ($mode == self::MODE_ADD)
 		{
 			$fields['KPI_FURTHER_ANSWER_TEXT'] = Loc::getMessage('IMOL_CONFIG_KPI_FURTHER_ANSWER_TEXT');
 		}
@@ -874,7 +899,7 @@ class Config
 		{
 			$fields['KPI_CHECK_OPERATOR_ACTIVITY'] = $params['KPI_CHECK_OPERATOR_ACTIVITY'] == 'Y' ? 'Y' : 'N';
 		}
-		else if ($mode == self::MODE_ADD)
+		elseif ($mode == self::MODE_ADD)
 		{
 			$fields['KPI_CHECK_OPERATOR_ACTIVITY'] = 'N';
 		}
@@ -883,7 +908,7 @@ class Config
 		{
 			$fields['USE_WELCOME_FORM'] = $params['USE_WELCOME_FORM'] == 'Y' ? 'Y' : 'N';
 		}
-		else if ($mode == self::MODE_ADD)
+		elseif ($mode == self::MODE_ADD)
 		{
 			$fields['USE_WELCOME_FORM'] = 'Y';
 		}
@@ -892,7 +917,7 @@ class Config
 		{
 			$fields['WELCOME_FORM_ID'] = (int)$params['WELCOME_FORM_ID'];
 		}
-		else if ($mode == self::MODE_ADD)
+		elseif ($mode == self::MODE_ADD)
 		{
 			if (Loader::includeModule('crm'))
 			{
@@ -916,9 +941,27 @@ class Config
 		{
 			$fields['WELCOME_FORM_DELAY'] = $params['WELCOME_FORM_DELAY'] == 'Y' ? 'Y' : 'N';
 		}
-		else if ($mode == self::MODE_ADD)
+		elseif ($mode == self::MODE_ADD)
 		{
 			$fields['WELCOME_FORM_DELAY'] = 'Y';
+		}
+
+		if (isset($params['CONFIRM_CLOSE']))
+		{
+			$fields['CONFIRM_CLOSE'] = $params['CONFIRM_CLOSE'] == 'Y' ? 'Y' : 'N';
+		}
+		elseif ($mode == self::MODE_ADD)
+		{
+			$fields['CONFIRM_CLOSE'] = 'N';
+		}
+
+		if (isset($params['IGNORE_WELCOME_FORM_RESPONSIBLE']))
+		{
+			$fields['IGNORE_WELCOME_FORM_RESPONSIBLE'] = $params['IGNORE_WELCOME_FORM_RESPONSIBLE'] == 'Y' ? 'Y' : 'N';
+		}
+		elseif ($mode == self::MODE_ADD)
+		{
+			$fields['IGNORE_WELCOME_FORM_RESPONSIBLE'] = 'N';
 		}
 
 		return $fields;
@@ -943,7 +986,7 @@ class Config
 			$this->error = new BasicError(__METHOD__, 'ADD_ERROR', Loc::getMessage('IMOL_ADD_ERROR'));
 			return false;
 		}
-		$id = $result->getId();
+		$id = (int)$result->getId();
 		$data = $result->getData();
 
 
@@ -1172,7 +1215,7 @@ class Config
 							'QUEUE_TYPE' => $queueType
 						]);
 					}
-					else if ($sendDelete)
+					elseif ($sendDelete)
 					{
 						self::sendUpdateForQueueList([
 							'ID' => $id,
@@ -1368,7 +1411,7 @@ class Config
 			self::$cacheOperation[$id][$entity][$action] = true;
 			return true;
 		}
-		else if (empty($allowedUserIds))
+		elseif (empty($allowedUserIds))
 		{
 			self::$cacheOperation[$id][$entity][$action] = false;
 			return false;
@@ -2080,6 +2123,22 @@ class Config
 		}
 
 		return $result;
+	}
+
+	/**
+	 * @param array $select
+	 * @return array
+	 */
+	public static function getAllLinesSettings(array $select): array
+	{
+		$rawConfigs = Model\ConfigTable::getList([
+			'select' => array_merge(['ID'], $select),
+			'filter' => ['=ACTIVE' => 'Y'],
+			'order' => ['ID' => 'ASC'],
+			'cache' => ['ttl' => 86400]
+		]);
+
+		return $rawConfigs->fetchAll();
 	}
 
 	public static function sendUpdateForQueueList($data)

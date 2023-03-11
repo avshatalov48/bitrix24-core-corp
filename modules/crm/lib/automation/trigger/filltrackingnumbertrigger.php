@@ -13,6 +13,11 @@ class FillTrackingNumberTrigger extends BaseTrigger
 		return ($entityTypeId === \CCrmOwnerType::Order);
 	}
 
+	public static function isEnabled()
+	{
+		return Loader::includeModule('sale');
+	}
+
 	public static function getCode()
 	{
 		return 'FILL_TRACKNUM';
@@ -43,19 +48,23 @@ class FillTrackingNumberTrigger extends BaseTrigger
 		return true;
 	}
 
-	public static function toArray()
+	protected static function getPropertiesMap(): array
 	{
-		$result = parent::toArray();
-		if (static::isEnabled() && Loader::includeModule('sale'))
-		{
-			$result['DELIVERY_LIST'] = [];
-
-			foreach(\Bitrix\Sale\Delivery\Services\Manager::getActiveList() as $service)
-			{
-				$result['DELIVERY_LIST'][] = ['id' => $service['ID'], 'name' => $service['NAME']];
-			}
-		}
-		return $result;
+		return [
+			[
+				'Id' => 'DELIVERY_ID',
+				'Name' => Loc::getMessage('CRM_AUTOMATION_TRIGGER_FILL_TRACKNUM_PROPERTY_SERVICE'),
+				'Type' => 'select',
+				'EmptyValueText' => Loc::getMessage('CRM_AUTOMATION_TRIGGER_FILL_TRACKNUM_DEFAULT'),
+				'Options' => array_values(array_map(
+					function($item)
+					{
+						return ['value' => $item['ID'], 'name' => $item['NAME']];
+					},
+					\Bitrix\Sale\Delivery\Services\Manager::getActiveList()
+				)),
+			]
+		];
 	}
 
 	public static function getDescription(): string

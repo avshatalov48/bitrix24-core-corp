@@ -2,6 +2,7 @@
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Tasks\Helper\RestrictionUrl;
 
 $APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
 
@@ -86,7 +87,22 @@ $inputPrefix = $arParams['INPUT_PREFIX'];
 								<?endif?>
 
 								<span class="task-options-item-param"><?=htmlspecialcharsbx($block['TITLE'])?></span>
-								<div class="task-options-item-open-inner <?=($block['RESTRICTED']? 'tasks-btn-restricted' : '')?>">
+								<?php
+									$lockClassName = 'task-options-item-open-inner';
+									$onLockClick = '';
+									$lockClassStyle = '';
+									if ($block['RESTRICTED'])
+									{
+										$lockClassName .= ' tasks-btn-restricted';
+										$onLockClick =
+											"top.BX.UI.InfoHelper.show('"
+											. RestrictionUrl::TASK_LIMIT_OBSERVERS_SLIDER_URL
+											. "',{isLimit: true,limitAnalyticsLabels: {module: 'tasks',}});"
+										;
+										$lockClassStyle = "cursor: pointer;";
+									}
+								?>
+								<div class="<?=$lockClassName?>" onclick="<?=$onLockClick?>" style="<?=$lockClassStyle?>">
 
 									<?=$block['HTML']?>
 

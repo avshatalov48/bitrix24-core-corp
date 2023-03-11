@@ -11,12 +11,12 @@ if (!is_array($arResult) || empty($arResult))
 
 foreach ($arResult as &$item)
 {
+	$item["PARAMS"] = $item["PARAMS"] ?? [];
 	//id to item
-	if (!isset($item["PARAMS"]["menu_item_id"]) && $item["PARAMS"]["menu_item_id"] == '')
+	if (empty($item["PARAMS"]["menu_item_id"]))
 	{
 		$item["PARAMS"]["menu_item_id"] = ($item["PARAMS"]["name"] == "live_feed") ? "menu_live_feed"
 			: crc32($item["LINK"]);
 	}
-
 	$item["PARAMS"]["class"] = isset($item["PARAMS"]["class"]) ? $item["PARAMS"]["class"] : "";
 }

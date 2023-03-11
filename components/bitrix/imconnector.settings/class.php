@@ -28,7 +28,7 @@ class ImConnectorSettings extends CBitrixComponent
 		}
 		else
 		{
-			ShowError(Loc::getMessage('IMCONNECTOR_COMPONENT_SETTINGS_MODULE_NOT_INSTALLED'));
+			ShowError(Loc::getMessage('IMCONNECTOR_COMPONENT_SETTINGS_MODULE_NOT_INSTALLED_MSGVER_1'));
 			return false;
 		}
 	}

@@ -7,12 +7,14 @@ jn.define('crm/timeline/item/ui/user-avatar', (require, exports, module) => {
 
 	const DEFAULT_AVATAR = '/bitrix/mobileapp/crmmobile/extensions/crm/timeline/item/ui/user-avatar/default-avatar.png';
 
-	function TimelineItemUserAvatar({ title, imageUrl, detailUrl })
+	function TimelineItemUserAvatar({ title, imageUrl, detailUrl, testId })
 	{
 		imageUrl = imageUrl || DEFAULT_AVATAR;
 		imageUrl = imageUrl.startsWith('/') ? currentDomain + imageUrl : imageUrl;
+		testId = testId || 'TimelineItemUserAvatar';
 
 		return InAppLink({
+			testId,
 			url: detailUrl,
 			context: {
 				backdrop: true,

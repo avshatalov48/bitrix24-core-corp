@@ -19,6 +19,11 @@
 			return BX.message('SELECTOR_COMPONENT_START_TYPING_TO_SEARCH_PRODUCT');
 		}
 
+		static getStartTypingWithCreationText()
+		{
+			return BX.message('SELECTOR_COMPONENT_START_TYPING_TO_CREATE_PRODUCT');
+		}
+
 		static getSearchPlaceholderWithCreation()
 		{
 			return BX.message('SELECTOR_COMPONENT_SEARCH_WITH_CREATION_PLACEHOLDER_PRODUCT');

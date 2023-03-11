@@ -72,6 +72,20 @@ use \Bitrix\Main\Localization\Loc;
 		</div>
 	</div>
 	<div class="imopenlines-form-settings-block">
+		<div class="imopenlines-control-checkbox-container">
+			<label class="imopenlines-control-checkbox-label">
+				<input type="checkbox"
+					   id="imol_history_checkbox"
+					   name="CONFIG[CONFIRM_CLOSE]"
+					   <?php if($arResult['CONFIG']['CONFIRM_CLOSE'] === 'Y'): ?>checked="checked"<?php endif; ?>
+					   value="Y"
+					   class="imopenlines-control-checkbox">
+				<?= Loc::getMessage('IMOL_CONFIG_CONFIRM_CLOSE') ?>
+				<span data-hint-html data-hint="<?= htmlspecialcharsbx(Loc::getMessage('IMOL_CONFIG_CONFIRM_CLOSE_DESC')) ?>"></span>
+			</label>
+		</div>
+	</div>
+	<div class="imopenlines-form-settings-block">
 		<div class="imopenlines-control-container">
 			<div class="imopenlines-control-subtitle">
 				<?=Loc::getMessage('IMOL_CONFIG_EDIT_LANG_NEW')?>

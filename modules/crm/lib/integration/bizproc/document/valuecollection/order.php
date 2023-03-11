@@ -105,7 +105,11 @@ class Order extends Base
 			$fields['LID_PRINTABLE'] = $site['NAME'];
 		}
 
-		$fields['PRICE_FORMATTED'] = \CCrmCurrency::MoneyToString($fields['PRICE'], $fields['CURRENCY']);
+		$fields['PRICE_FORMATTED'] = html_entity_decode(
+			\CCrmCurrency::MoneyToString($fields['PRICE'], $fields['CURRENCY']),
+			ENT_NOQUOTES,
+			LANG_CHARSET
+		);
 
 		self::convertDateFields($fields);
 

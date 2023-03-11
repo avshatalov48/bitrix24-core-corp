@@ -76,7 +76,7 @@
 				action.updateItemHandler = (this.props.updateItemHandler || null);
 				action.closeHandler = this.closeHandler;
 
-				if (!action.hasOwnProperty('showActionLoader') && overallShowActionLoaderParam)
+				if (!action.hasOwnProperty('showActionLoader'))
 				{
 					action.showActionLoader = overallShowActionLoaderParam;
 				}
@@ -115,7 +115,7 @@
 							action.onActiveCallback
 							&& action.onActiveCallback(action.id, action.parentId, action.parent)
 						)
-					)
+					),
 				});
 			});
 
@@ -132,7 +132,7 @@
 							actionCancel.onActiveCallback
 							&& actionCancel.onActiveCallback(actionCancel.id, actionCancel.parentId, actionCancel.parent)
 						)
-					)
+					),
 				});
 			}
 
@@ -218,7 +218,7 @@
 						showIcon,
 						firstInSection,
 						lastInSection,
-						enabled
+						enabled,
 					}) => ContextMenuItem.create({
 						...action,
 						onClick,
@@ -227,7 +227,6 @@
 						lastInSection,
 						enabled,
 						testId: this.testId,
-						showActionLoader: action.title !== BX.message('CONTEXT_MENU_CANCEL')
 					}),
 					enabled: this.state.enabled,
 					style: {
@@ -249,6 +248,7 @@
 				sectionCode: ContextMenuSection.getServiceSectionName(),
 				largeIcon: false,
 				type: ContextMenuItem.getTypeCancelName(),
+				showActionLoader: false,
 				data: {
 					svgIcon: '<svg width="17" height="17" viewBox="0 0 17 17" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M10.7562 8.54581L16.4267 14.2163L14.2165 16.4266L8.54596 10.7561L2.87545 16.4266L0.665192 14.2163L6.3357 8.54581L0.665192 2.87529L2.87545 0.665039L8.54596 6.33555L14.2165 0.665039L16.4267 2.87529L10.7562 8.54581Z" fill="#A8ADB4"/></svg>',
 				},

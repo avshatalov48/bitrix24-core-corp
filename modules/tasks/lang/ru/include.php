@@ -64,3 +64,7 @@ $MESS["TASKS_COMMON_OP_CREATE"] = "создание";
 $MESS["TASKS_COMMON_OP_READ"] = "чтение";
 $MESS["TASKS_COMMON_OP_UPDATE"] = "обновление";
 $MESS["TASKS_COMMON_OP_DELETE"] = "удаление";
+
+$MESS['TASKS_WIDGET_TAG_SELECTOR_TAGS_ARE_CONVERTING_TITLE'] = 'Подождите немного, теги скоро появятся';
+$MESS['TASKS_WIDGET_TAG_SELECTOR_TAGS_ARE_CONVERTING_COME_BACK_LATER'] = 'Вернуться позже';
+$MESS['TASKS_WIDGET_TAG_SELECTOR_TAGS_ARE_CONVERTING_TEXT'] = 'Прямо сейчас мы обновляем теги, чтобы они стали ещё удобнее. Вы можете продолжить работу в других разделах Битрикс24 и вернуться чуть позже, обновление не займёт много времени.';

@@ -3,7 +3,7 @@ import Manager from "./manager";
 import {Item, ConfigurableItem, StreamType} from 'crm.timeline.item';
 import ItemAnimation from "./animations/item";
 import ItemNew from "./animations/item-new";
-import {TimezoneOffset} from "crm.datetime";
+import {TimezoneOffset, Format} from "crm.datetime"
 
 /** @memberof BX.Crm.Timeline */
 export default class Steam
@@ -177,7 +177,7 @@ export default class Steam
 					["today", "today"],
 					["tommorow", "tommorow"],
 					["yesterday", "yesterday"],
-					["", (date.getFullYear() === this._year) ? "j F" : "j F Y"]
+					["", (date.getFullYear() === this._year) ? Format.DAY_MONTH_FORMAT : Format.LONG_DATE_FORMAT],
 				],
 				date
 			)

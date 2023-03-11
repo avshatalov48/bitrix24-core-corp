@@ -2,6 +2,7 @@
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Tasks\Helper\RestrictionUrl;
 
 $APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
 \Bitrix\Main\UI\Extension::load(['uf']);
@@ -158,10 +159,28 @@ $APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
 					{
 						$canManage = $arResult['COMPONENT_DATA']['RESTRICTION']['MANAGE'];
 						$taskLimitExceeded = $arResult['COMPONENT_DATA']['RESTRICTION']['TASK_LIMIT_EXCEEDED'];
+						if (!$canManage && $taskLimitExceeded)
+						{
 						?>
-						<span class="<?if(!$canManage && $taskLimitExceeded):?>tasks-btn-restricted<?endif?>">
-							<a class="tasks-uf-panel-btn-action js-id-uf-panel-add-field" href="javascript:void(0);"><?=Loc::getMessage('TASKS_TUFP_FIELD_ADD')?></a>
-						</span><?php
+							<span class="tasks-btn-restricted"
+								  onclick="top.BX.UI.InfoHelper.show('<?= RestrictionUrl::TASK_LIMIT_CUSTOM_FIELDS_SLIDER_URL?>',{isLimit: true,limitAnalyticsLabels: {module: 'tasks'}});"
+								  style="cursor: pointer;">
+								<a class="tasks-uf-panel-btn-action js-id-uf-panel-add-field" href="javascript:void(0);">
+									<?=Loc::getMessage('TASKS_TUFP_FIELD_ADD')?>
+								</a>
+							</span>
+						<?php
+						}
+						else
+						{
+						?>
+							<span>
+								<a class="tasks-uf-panel-btn-action js-id-uf-panel-add-field" href="javascript:void(0);">
+									<?=Loc::getMessage('TASKS_TUFP_FIELD_ADD')?>
+								</a>
+							</span>
+						<?php
+						}
 					}?>
 					<a class="js-id-uf-panel-un-hide-field" href="javascript:void(0);"><?=Loc::getMessage('TASKS_TUFP_FIELD_UN_HIDE')?></a>
 				<?else:?>

@@ -94,15 +94,8 @@ class ToolBar
 
 			[$prefix, $entityName] = explode('_', $toolbarId);
 			$entityTypeId = CCrmOwnerType::ResolveID($entityName);
-			$currentView = Container::getInstance()
-				->getRouter()
-				->getCurrentListView($entityTypeId)
-			;
 
-			$isKanbanView = (
-				$currentView === Router::LIST_VIEW_KANBAN
-				|| $currentView === Router::LIST_VIEW_ACTIVITY
-			);
+			$isKanbanView = self::isCurrentViewKanbanView($entityTypeId);
 
 			$factory = Container::getInstance()->getFactory($entityTypeId);
 			if ($factory && $factory->isCategoriesEnabled())
@@ -110,7 +103,7 @@ class ToolBar
 				$isKanbanView = $isKanbanView && !is_null($params['CATEGORY_ID'] ?? null);
 			}
 
-			if (isset($entityTypeId) && $isKanbanView)
+			if (!empty($entityTypeId) && $isKanbanView)
 			{
 				$result = array_merge([self::getKanbanSettings()], $result);
 			}
@@ -139,6 +132,21 @@ class ToolBar
 				],
 			]
 		];
+	}
+
+	private static function isCurrentViewKanbanView(int $entityTypeId): bool
+	{
+		$currentView = Container::getInstance()
+			->getRouter()
+			->getCurrentListView($entityTypeId)
+		;
+
+		$kanbanViewTypes = [
+			Router::LIST_VIEW_KANBAN,
+			Router::LIST_VIEW_ACTIVITY,
+			Router::LIST_VIEW_DEADLINES
+		];
+		return in_array($currentView, $kanbanViewTypes, true);
 	}
 
 }

@@ -258,7 +258,7 @@ class Connector
 		$virtualConnector = self::getListVirtualConnectorBase(true);
 		$customConnectors = [];
 
-		if($customConnectorsEnable === true)
+		if ($customConnectorsEnable === true)
 		{
 			$customConnectors = self::getListCustomConnectorBase();
 		}
@@ -267,9 +267,7 @@ class Connector
 
 		$connectors = self::filterConnectorsByPortalRegion($connectors);
 
-		$connectors = self::getListReducedConnectorBase($reduced, $connectors);
-
-		return $connectors;
+		return self::getListReducedConnectorBase($reduced, $connectors);
 	}
 
 	/**
@@ -278,7 +276,6 @@ class Connector
 	 * @param bool $customConnectorsEnable Return custom connectors
 	 *
 	 * @return array.
-	 * @throws \Bitrix\Main\LoaderException
 	 */
 	public static function getListConnectorReal($reduced = false, $customConnectorsEnable = true): array
 	{
@@ -286,7 +283,7 @@ class Connector
 		$virtualConnector = self::getListVirtualConnectorBase(false);
 		$customConnectors = [];
 
-		if($customConnectorsEnable === true)
+		if ($customConnectorsEnable === true)
 		{
 			$customConnectors = self::getListCustomConnectorBase();
 		}
@@ -295,9 +292,7 @@ class Connector
 
 		$connectors = self::filterConnectorsByPortalRegion($connectors);
 
-		$connectors = self::getListReducedConnectorBase($reduced, $connectors);
-
-		return $connectors;
+		return self::getListReducedConnectorBase($reduced, $connectors);
 	}
 
 	/**
@@ -567,18 +562,20 @@ class Connector
 	/**
 	 * Returns a list of connectors, ready for sharing.
 	 *
-	 * @param string $lineId ID Open Line.
+	 * @param int $lineId ID Open Line.
 	 * @return array
 	 */
 	public static function getListConnectedConnector($lineId)
 	{
-		$result = array();
+		$result = [];
 		$listActiveConnector = self::getListActiveConnector();
 
 		foreach ($listActiveConnector as $id => $value)
 		{
-			if(Status::getInstance($id, $lineId)->isStatus())
+			if (Status::getInstance($id, (int)$lineId)->isStatus())
+			{
 				$result[$id] = $value;
+			}
 		}
 
 		return $result;
@@ -610,18 +607,20 @@ class Connector
 	/**
 	 * Returns a list of real connectors, ready for sharing.
 	 *
-	 * @param string $lineId ID Open Line.
+	 * @param int $lineId ID Open Line.
 	 * @return array
 	 */
 	public static function getListConnectedConnectorReal($lineId)
 	{
-		$result = array();
+		$result = [];
 		$listActiveConnector = self::getListActiveConnectorReal();
 
 		foreach ($listActiveConnector as $id => $value)
 		{
-			if(Status::getInstance($id, $lineId)->isStatus())
+			if (Status::getInstance($id, (int)$lineId)->isStatus())
+			{
 				$result[$id] = $value;
+			}
 		}
 
 		return $result;
@@ -1036,7 +1035,7 @@ class Connector
 			}
 			else
 			{
-				$status = Status::getInstance($connector, $line);
+				$status = Status::getInstance($connector, (int)$line);
 				$cacheId = self::getCacheIdConnector($line, $connector);
 
 				if($status->getActive())
@@ -1136,10 +1135,12 @@ class Connector
 
 				if ($result->isSuccess())
 				{
-					$status->setActive(true);
-					$status->setConnection(true);
-					$status->setRegister(true);
-					$status->setError(false);
+					$status
+						->setActive(true)
+						->setConnection(true)
+						->setRegister(true)
+						->setError(false);
+
 					Status::save();
 					Status::sendUpdateEvent();
 				}
@@ -1178,7 +1179,7 @@ class Connector
 			}
 			else
 			{
-				$status = Status::getInstance($connector, $line);
+				$status = Status::getInstance($connector, (int)$line);
 				$cacheId = self::getCacheIdConnector($line, $connector);
 
 				if (!$status->getActive())
@@ -1293,9 +1294,10 @@ class Connector
 
 				if ($result->isSuccess())
 				{
-					$status->setActive(true);
-					$status->setConnection(true);
-					$status->setRegister(true);
+					$status
+						->setActive(true)
+						->setConnection(true)
+						->setRegister(true);
 				}
 
 				$status->setError(false);
@@ -1335,7 +1337,7 @@ class Connector
 			}
 			else
 			{
-				$status = Status::getInstance($connector, $line);
+				$status = Status::getInstance($connector, (int)$line);
 				$cacheId = self::getCacheIdConnector($line, $connector);
 
 				if (!$status->getActive())
@@ -1416,7 +1418,7 @@ class Connector
 
 				if($result->isSuccess())
 				{
-					Status::delete($connector, $line);
+					Status::delete($connector, (int)$line);
 				}
 
 				self::cleanCacheConnector($line, $cacheId);

@@ -7,6 +7,22 @@ use Bitrix\Tasks\Internals\TaskDataManager;
 use Bitrix\Tasks\Internals\Task\TemplateTable;
 use Bitrix\Main\UserTable;
 
+/**
+ * Class TemplateTagTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_TemplateTag_Query query()
+ * @method static EO_TemplateTag_Result getByPrimary($primary, array $parameters = [])
+ * @method static EO_TemplateTag_Result getById($id)
+ * @method static EO_TemplateTag_Result getList(array $parameters = [])
+ * @method static EO_TemplateTag_Entity getEntity()
+ * @method static \Bitrix\Tasks\Internals\Task\Template\EO_TemplateTag createObject($setDefaultValues = true)
+ * @method static \Bitrix\Tasks\Internals\Task\Template\EO_TemplateTag_Collection createCollection()
+ * @method static \Bitrix\Tasks\Internals\Task\Template\EO_TemplateTag wakeUpObject($row)
+ * @method static \Bitrix\Tasks\Internals\Task\Template\EO_TemplateTag_Collection wakeUpCollection($rows)
+ */
 class TemplateTagTable extends TaskDataManager
 {
 

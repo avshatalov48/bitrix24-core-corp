@@ -551,15 +551,7 @@ final class CTaskRestService extends IRestService
 	{
 		global $APPLICATION;
 
-		if (empty($arMessages))
-		{
-			$arMessages[] = array(
-				'id'   => 'TASKS_ERROR_UNKNOWN',
-				'text' => 'TASKS_ERROR_UNKNOWN'
-			);
-		}
-
-		$e = new CAdminException($arMessages);
+		$e = new CAdminException(self::getFormattedMessages($arMessages));
 		$APPLICATION->throwException($e);
 	}
 
@@ -886,5 +878,53 @@ final class CTaskRestService extends IRestService
 
 		return $outArgs;
 	}
-}
 
+	private static function getFormattedMessages(array $messages = []): array
+	{
+		$formattedMessages = [];
+
+		if (empty($messages))
+		{
+			$formattedMessages[] = [
+				'id' => 'TASKS_ERROR_UNKNOWN',
+				'text' => 'TASKS_ERROR_UNKNOWN',
+			];
+
+			return $formattedMessages;
+		}
+
+
+		foreach ($messages as $id => $message)
+		{
+			if (is_string($message))
+			{
+				$formattedMessages[$id] = [
+					'id' => $message,
+					'text' => $message,
+				];
+
+				continue;
+			}
+
+			if (is_array($message))
+			{
+				if (isset($message['text']))
+				{
+					$formattedMessages[$id] = [
+						'id' => $message['id'] ?? $message['text'],
+						'text' => $message['text'],
+					];
+				}
+				else
+				{
+					$formattedMessages[$id] = [
+						'id' => $message['id'] ?? 'TASKS_ERROR_UNKNOWN',
+						'text' => 'TASKS_ERROR_UNKNOWN',
+					];
+				}
+			}
+		}
+
+		return $formattedMessages;
+	}
+}

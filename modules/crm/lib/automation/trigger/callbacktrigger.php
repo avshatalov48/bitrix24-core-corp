@@ -1,17 +1,11 @@
 <?php
+
 namespace Bitrix\Crm\Automation\Trigger;
 
-Use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Localization\Loc;
 
-Loc::loadMessages(__FILE__);
-
-class CallBackTrigger extends BaseTrigger
+class CallBackTrigger extends WebFormTrigger
 {
-	protected static function areDynamicTypesSupported(): bool
-	{
-		return false;
-	}
-
 	public static function getCode()
 	{
 		return 'CALLBACK';
@@ -22,39 +16,6 @@ class CallBackTrigger extends BaseTrigger
 		return Loc::getMessage('CRM_AUTOMATION_TRIGGER_CALLBACK_NAME_1');
 	}
 
-	public function checkApplyRules(array $trigger)
-	{
-		if (!parent::checkApplyRules($trigger))
-		{
-			return false;
-		}
-
-		if (
-			is_array($trigger['APPLY_RULES'])
-			&& isset($trigger['APPLY_RULES']['form_id'])
-			&& $trigger['APPLY_RULES']['form_id'] > 0
-		)
-		{
-			return (int)$trigger['APPLY_RULES']['form_id'] === (int)$this->getInputData('WEBFORM_ID');
-		}
-		return true;
-	}
-
-	public static function toArray()
-	{
-		$result = parent::toArray();
-		if (static::isEnabled())
-		{
-			$forms = \Bitrix\Crm\WebForm\Internals\FormTable::getDefaultTypeList(array(
-				'select' => ['ID', 'NAME'],
-				'order' => ['NAME' => 'ASC', 'ID' => 'ASC'],
-				'filter' => ['=IS_CALLBACK_FORM' => 'Y']
-			))->fetchAll();
-			$result['WEBFORM_LIST'] = $forms;
-		}
-		return $result;
-	}
-
 	public static function getDescription(): string
 	{
 		return Loc::getMessage('CRM_AUTOMATION_TRIGGER_CALLBACK_DESCRIPTION') ?? '';
@@ -63,5 +24,10 @@ class CallBackTrigger extends BaseTrigger
 	public static function getGroup(): array
 	{
 		return ['clientCommunication'];
+	}
+
+	protected static function getFormList(array $filter = []): array
+	{
+		return parent::getFormList(['=IS_CALLBACK_FORM' => 'Y']);
 	}
 }

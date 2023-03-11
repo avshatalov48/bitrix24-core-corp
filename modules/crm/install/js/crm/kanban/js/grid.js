@@ -11,6 +11,7 @@ BX.namespace("BX.CRM.Kanban");
  */
 BX.CRM.Kanban.Grid = function(options)
 {
+	BX.Event.EventEmitter.setMaxListeners('Kanban.Grid:onFirstRender', 50);
 
 	BX.Kanban.Grid.apply(this, arguments);
 
@@ -38,6 +39,8 @@ BX.CRM.Kanban.Grid = function(options)
 	BX.addCustomEvent("BX.CRM.Kanban.Item.select", BX.proxy(this.startActionPanel, this));
 	BX.addCustomEvent("BX.CRM.Kanban.Item.unSelect", BX.proxy(this.stopActionPanel, this));
 	BX.addCustomEvent("BX.UI.ActionPanel:clickResetAllBlock", BX.proxy(this.resetMultiSelectMode, this));
+	BX.addCustomEvent('BX.UI.ActionPanel:hidePanel', BX.proxy(this.showUiToolbarContainer, this));
+	BX.addCustomEvent('BX.UI.ActionPanel:showPanel', BX.proxy(this.hideUiToolbarContainer, this));
 	BX.addCustomEvent("BX.Crm.EntityEditorSection:onOpenChildMenu", BX.proxy(this.onOpenEditorMenu, this));
 	BX.addCustomEvent("BX.Crm.EntityEditor:onConfigScopeChange", BX.proxy(this.onConfigEditorScopeChange, this));
 	BX.addCustomEvent("BX.Crm.EntityEditor:onConfigReset", BX.proxy(this.onConfigEditorReset, this));
@@ -46,6 +49,7 @@ BX.CRM.Kanban.Grid = function(options)
 	BX.addCustomEvent("onPopupShow", BX.proxy(this.onPopupShow, this));
 	BX.addCustomEvent("onPopupClose", BX.proxy(this.onPopupClose, this));
 	BX.addCustomEvent("CrmDragItemDragRelease", BX.proxy(this.onEditorDragItemRelease, this));
+	BX.addCustomEvent(window, "onCrmEntityCreate", BX.delegate(this.onCrmEntityCreateDeadlinesView, this));
 
 	//setInterval(BX.proxy(this.loadNew, this), this.loadNewInterval * 1000);
 	this.bindEvents();
@@ -139,6 +143,18 @@ BX.CRM.Kanban.Grid.prototype = {
 		}
 
 		return false;
+	},
+
+	onCrmEntityCreateDeadlinesView: function(entityData)
+	{
+		var context = entityData.sender.getContext();
+		if (context['VIEW_MODE'] === 'DEADLINES')
+		{
+			this.loadNew(
+				entityData.entityId,
+				true
+			);
+		}
 	},
 
 	onEditorDragItemRelease: function()
@@ -250,6 +266,7 @@ BX.CRM.Kanban.Grid.prototype = {
 				)
 				{
 					this.unSetKanbanDragMode();
+					this.resetMultiSelectMode();
 				}
 			}.bind(this));
 
@@ -1299,6 +1316,7 @@ BX.CRM.Kanban.Grid.prototype = {
 			);
 
 			event.denyAction();
+			return;
 		}
 
 		var item = event.getItem();
@@ -1552,6 +1570,10 @@ BX.CRM.Kanban.Grid.prototype = {
 						else
 						{
 							item.setDataKey("columnId", targetColumnId);
+							if (data.IS_SHOULD_UPDATE_CARD)
+							{
+								this.loadNew(itemId, false, true, true, true);
+							}
 						}
 					}
 					else if (data)
@@ -2593,7 +2615,8 @@ BX.CRM.Kanban.Grid.prototype = {
 	{
 		var gridData = this.getData();
 
-		var renderToNode = document.querySelector(".pagetitle-wrap");
+		// var renderToNode = document.querySelector(".pagetitle-wrap");
+		var renderToNode = document.querySelector(".page-toolbar");
 		if(!renderToNode)
 		{
 			renderToNode = document.getElementById('uiToolbarContainer');
@@ -2904,6 +2927,18 @@ BX.CRM.Kanban.Grid.prototype = {
 		return ((column && column.data && column.data.blockedIncomingMoving) || false);
 	},
 
+	hideUiToolbarContainer()
+	{
+		var uiToolbarContainer = document.getElementById('uiToolbarContainer');
+		BX.Dom.addClass(uiToolbarContainer, '--transparent');
+	},
+
+	showUiToolbarContainer()
+	{
+		var uiToolbarContainer = document.getElementById('uiToolbarContainer');
+		BX.Dom.removeClass(uiToolbarContainer, '--transparent');
+	},
+
 	/**
 	 * Show action panel.
 	 * @returns {void}
@@ -2922,7 +2957,7 @@ BX.CRM.Kanban.Grid.prototype = {
 	 * Hide action panel.
 	 * @returns {void}
 	 */
-	stopActionPanel: function(force)
+	stopActionPanel: function(force = false, resetMultiSelectMode = false)
 	{
 		if (!this.actionPanel)
 		{

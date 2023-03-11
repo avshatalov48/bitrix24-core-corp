@@ -52,8 +52,7 @@
 
 .webform-small-button.webform-small-button-transparent.crm-contact-menu-im-icon { background-position: center -266px !important; }
 
-.crm-bizproc-starter-icon,
-.bx-ie .ui-btn.crm-bizproc-starter-icon {
+.crm-bizproc-starter-icon {
 	background-position: center -355px;
 	background-image: url(images/icons-sprite.svg);
 	background-repeat: no-repeat;

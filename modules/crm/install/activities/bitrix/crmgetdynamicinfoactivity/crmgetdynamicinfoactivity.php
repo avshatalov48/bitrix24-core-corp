@@ -53,6 +53,8 @@ class CBPCrmGetDynamicInfoActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 		$filter = ['LOGIC' => 'OR'];
 
 		$conditionGroup = new ConditionGroup($this->DynamicFilterFields);
+		$conditionGroup->internalizeValues($this->getDocumentType());
+
 		$complexDocumentType = CCrmBizProcHelper::ResolveDocumentType($this->DynamicTypeId);
 		$fieldsMap = static::getDocumentService()->GetDocumentFields($complexDocumentType);
 		$i = 0;
@@ -159,28 +161,7 @@ class CBPCrmGetDynamicInfoActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 				return CBPHelper::getBool($fieldValue);
 
 			case FieldType::USER:
-				$documentType = CCrmBizProcHelper::ResolveDocumentType($this->DynamicTypeId);
-				$errors = [];
-				$users = CBPHelper::UsersStringToArray($fieldValue, $documentType, $errors);
-
-				$result = 0;
-				if (!$errors)
-				{
-					if ($fieldInfo['Multiple'])
-					{
-						$result = [];
-						foreach ($users as $userId)
-						{
-							$result[] = (int)mb_substr($userId, mb_strlen('user_'));
-						}
-					}
-					else
-					{
-						$result = (int)mb_substr($users[0], mb_strlen('user_'));
-					}
-				}
-
-				return $result;
+				return CBPHelper::extractUsers($fieldValue, $this->getDocumentId(), !$fieldInfo['Multiple']) ?? 0;
 
 			case FieldType::INT:
 				return (int)$fieldValue;

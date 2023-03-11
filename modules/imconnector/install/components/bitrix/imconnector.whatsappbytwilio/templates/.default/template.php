@@ -1,4 +1,4 @@
-<?
+<?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Localization\Loc;
@@ -6,19 +6,15 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\ImConnector\Connector;
 /** @var array $arParams */
 /** @var array $arResult */
-/** @global CMain $APPLICATION */
-/** @global CUser $USER */
-/** @global CDatabase $DB */
-/** @var CBitrixComponentTemplate $this */
+/** @global \CMain $APPLICATION */
+/** @global \CUser $USER */
+/** @global \CDatabase $DB */
+/** @var \CBitrixComponentTemplate $this */
 /** @var string $templateName */
 /** @var string $templateFile */
 /** @var string $templateFolder */
 /** @var string $componentPath */
-/** @var CBitrixComponent $component */
-/** $arResult['CONNECTION_STATUS']; */
-/** $arResult['REGISTER_STATUS']; */
-/** $arResult['ERROR_STATUS']; */
-/** $arResult['SAVE_STATUS']; */
+/** @var \CBitrixComponent $component */
 
 Loc::loadMessages(__FILE__);
 
@@ -148,7 +144,7 @@ if(empty($arResult['PAGE']))
 	<?
 	include 'messages.php';
 
-	if ($arResult['STATUS'])
+	if (!empty($arResult['STATUS']))
 	{
 		include 'info.php';
 	}

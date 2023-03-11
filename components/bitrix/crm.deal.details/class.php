@@ -914,6 +914,19 @@ class CCrmDealDetailsComponent
 							->getAutomationUrl(CCrmOwnerType::Deal, $this->categoryID)
 							->addParams(['id' => $this->entityID]),
 					);
+					$checkAutomationTourGuideData = CCrmBizProcHelper::getHowCheckAutomationTourGuideData(
+						CCrmOwnerType::Deal,
+						$this->categoryID,
+						$this->userID
+					);
+					if ($checkAutomationTourGuideData)
+					{
+						$this->arResult['AUTOMATION_CHECK_AUTOMATION_TOUR_GUIDE_DATA'] = [
+							'options' => $checkAutomationTourGuideData,
+						];
+					}
+					unset($checkAutomationTourGuideData);
+
 				}
 				if (CModule::IncludeModule('bizproc') && CBPRuntime::isFeatureEnabled())
 				{

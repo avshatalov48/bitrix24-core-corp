@@ -411,6 +411,16 @@ abstract class ItemList extends Base
 				'url' => Container::getInstance()->getRouter()->getItemListUrl($this->entityTypeId, $this->getCategoryId()),
 				'isActive' => true,
 			];
+
+			if ($this->isDeadlinesModeSupported())
+			{
+				$views[Service\Router::LIST_VIEW_DEADLINES] = [
+					'title' => Loc::getMessage('CRM_COMMON_DEADLINES'),
+					'url' => Container::getInstance()->getRouter()->getDeadlinesUrl($this->entityTypeId, $this->getCategoryId()),
+					'isActive' => false,
+				];
+			}
+
 		}
 
 		if (Automation\Factory::isSupported($this->entityTypeId))
@@ -554,5 +564,11 @@ abstract class ItemList extends Base
 			'dataset' => $disabledButtonDataset,
 			'className' => $disabledButtonClass,
 		];
+	}
+
+	protected function isDeadlinesModeSupported(): bool
+	{
+		$supported = [\CCrmOwnerType::SmartInvoice];
+		return in_array($this->entityTypeId, $supported);
 	}
 }

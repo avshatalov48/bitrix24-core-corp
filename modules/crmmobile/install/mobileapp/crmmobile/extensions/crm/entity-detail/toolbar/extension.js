@@ -14,13 +14,12 @@ jn.define('crm/entity-detail/toolbar', (require, exports, module) => {
 	{
 		/**
 		 * @param {Number|String} typeId
-		 * @param {String} activeTab
 		 * @param {Object?} data
 		 * @return {null|DealDetailToolbar}
 		 */
-		static create({ typeId, activeTab }, data = {})
+		static create({ typeId }, data = {})
 		{
-			if (DetailToolbarFactory.has({ typeId, activeTab }))
+			if (this.has({ typeId }))
 			{
 				const props = {
 					...data,
@@ -31,14 +30,11 @@ jn.define('crm/entity-detail/toolbar', (require, exports, module) => {
 				return new ToolbarPanelWrapper(props);
 			}
 
-			// 	return new ToolbarPanelWrapper(props);
-
 			return null;
 		}
 
 		/**
 		 * @param {Number|String} typeId
-		 * @param activeTab
 		 * @return {Boolean}
 		 */
 		static has({ typeId })
@@ -50,7 +46,6 @@ jn.define('crm/entity-detail/toolbar', (require, exports, module) => {
 
 			return Number.isInteger(typeId);
 		}
-
 	}
 
 	module.exports = { DetailToolbarFactory };

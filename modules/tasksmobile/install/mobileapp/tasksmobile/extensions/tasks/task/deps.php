@@ -5,6 +5,7 @@ return [
 		'loc',
 		'notify',
 		'rest',
+		'tasks:entry',
 		'type',
 	],
 ];

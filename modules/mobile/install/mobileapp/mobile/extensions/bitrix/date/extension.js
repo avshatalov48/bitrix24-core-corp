@@ -130,13 +130,13 @@
 
 		formats: (() => data['formats'] || {})(),
 
-		get: (timestamp, format, locale = null) => DateFormatter.getDateString(timestamp, convert(format), locale),
+		get: (timestamp, format, locale = null) => DateFormatter.getDateString(timestamp, this.dateFormatter.convert(format), locale),
 
 		test: (timestamp) => {
 			for (const format in this.dateFormatter.formats)
 			{
 				const phpFormat = this.dateFormatter.formats[format];
-				const convertedFormat = convert(phpFormat);
+				const convertedFormat = this.dateFormatter.convert(phpFormat);
 				console.log(DateFormatter.getDateString(timestamp, convertedFormat) + ` ---- (${phpFormat} -> ${convertedFormat})`);
 			}
 		},

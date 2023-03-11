@@ -2,15 +2,18 @@
 
 namespace Bitrix\Crm\Service\Timeline\Item;
 
-use Bitrix\Crm\Activity\IncomingChannel;
+use Bitrix\Crm\Integration\StorageManager;
 use Bitrix\Crm\Service\Timeline\Layout;
 use Bitrix\Crm\Service\Timeline\Layout\Menu\MenuItemFactory;
 use Bitrix\Crm\Timeline\Entity\NoteTable;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\DateTime;
+use CCrmOwnerType;
 
 abstract class Activity extends Configurable
 {
+	public const ALLOWED_AUDIO_EXTENSIONS = ['flv', 'mp3', 'mp4', 'vp6', 'aac', 'wav'];
+
 	/**
 	 * Should return unique identifier of an activity template
 	 *
@@ -38,7 +41,7 @@ abstract class Activity extends Configurable
 				$this->getDate()
 					? -(int)$this->getDate()->getTimestamp()
 					: 0,
-				(int)$this->getActivityId()
+				$this->getActivityId()
 			];
 		}
 
@@ -46,7 +49,7 @@ abstract class Activity extends Configurable
 			$this->getDeadline()
 				? (int)$this->getDeadline()->getTimestamp()
 				: PHP_INT_MAX,
-			(int)$this->getActivityId()
+			$this->getActivityId()
 		];
 	}
 
@@ -282,6 +285,11 @@ abstract class Activity extends Configurable
 			return false;
 		}
 
+		return $this->hasUpdatePermission();
+	}
+
+	protected function hasUpdatePermission(): bool
+	{
 		return \CCrmActivity::CheckItemUpdatePermission(
 			$this->getAssociatedEntityModel()->toArray(),
 			$this->getContext()->getUserPermissions()->getCrmPermissions(),
@@ -301,6 +309,45 @@ abstract class Activity extends Configurable
 		);
 	}
 
+	protected function fetchStorageFiles(): array
+	{
+		$storageTypeId = $this->getAssociatedEntityModel()->get('STORAGE_TYPE_ID');
+		if (empty($storageTypeId))
+		{
+			return [];
+		}
+
+		$storageElementIds = $this->getAssociatedEntityModel()->get('STORAGE_ELEMENT_IDS');
+		if (empty($storageElementIds))
+		{
+			return [];
+		}
+
+		$elementIds = unserialize($storageElementIds, ['allowed_classes' => false]);
+		if (!is_array($elementIds))
+		{
+			return [];
+		}
+
+		$result = [];
+		foreach ($elementIds as $elementId)
+		{
+			$fileInfo = StorageManager::getFileInfo(
+				$elementId,
+				$storageTypeId,
+				false,
+				['OWNER_TYPE_ID' => CCrmOwnerType::Activity, 'OWNER_ID' => $this->getActivityId()]
+			);
+
+			if (is_array($fileInfo))
+			{
+				$result[] = $fileInfo;
+			}
+		}
+
+		return $result;
+	}
+
 	public function getNoteItemType(): int
 	{
 		return NoteTable::NOTE_TYPE_ACTIVITY;
@@ -310,5 +357,4 @@ abstract class Activity extends Configurable
 	{
 		return $this->getActivityId();
 	}
-
 }

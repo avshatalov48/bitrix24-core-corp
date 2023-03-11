@@ -386,7 +386,8 @@
 						action: "delete",
 						id: grid.getCheckedId()
 					}, false);
-				}.bind(this)
+				}.bind(this),
+				{ grid }
 			);
 		},
 
@@ -441,7 +442,8 @@
 							content: response.errors[0].message
 						});
 					}.bind(this));
-				}.bind(this)
+				}.bind(this),
+				{ grid }
 			);
 		},
 
@@ -524,9 +526,10 @@
 		 * Confirm for some actions.
 		 * @param {String} message
 		 * @param {Function} acceptFunc
+		 * @param {Object} params
 		 * @return {BX.PopupWindowManager}
 		 */
-		confirm: function(message, acceptFunc)
+		confirm: function(message, acceptFunc, params = {})
 		{
 			var dialog = BX.PopupWindowManager.create(
 				"crm-kanban-confirm-dialog",
@@ -563,6 +566,10 @@
 					events: {
 						click: function()
 						{
+							if (params.grid instanceof BX.CRM.Kanban.Grid)
+							{
+								params.grid.resetMultiSelectMode();
+							}
 							this.popupWindow.close();
 						}
 					}

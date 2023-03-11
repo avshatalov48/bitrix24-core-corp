@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\ImConnector\Provider\Network;
 
+use Bitrix\ImConnector\DeliveryMark;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Application;
 use Bitrix\Main\DI\ServiceLocator;
@@ -220,6 +221,18 @@ class Output extends Base\Output
 
 		if($result->isSuccess())
 		{
+			foreach ($data as $messageData)
+			{
+				if (
+					isset($messageData['im'])
+					&& isset($messageData['im']['message_id'])
+					&& isset($messageData['im']['chat_id'])
+				)
+				{
+					DeliveryMark::setDeliveryMark((int)$messageData['im']['message_id'], (int)$messageData['im']['chat_id']);
+				}
+			}
+
 			$data = $this->sendMessagesProcessing($data);
 
 			foreach ($data as $message)
@@ -333,7 +346,7 @@ class Output extends Base\Output
 			Loader::includeModule(Library::MODULE_ID_OPEN_LINES)
 		)
 		{
-			$statusNetwork = Status::getInstance(Library::ID_NETWORK_CONNECTOR, $lineId);
+			$statusNetwork = Status::getInstance(Library::ID_NETWORK_CONNECTOR, (int)$lineId);
 
 			if($statusNetwork->isStatus())
 			{

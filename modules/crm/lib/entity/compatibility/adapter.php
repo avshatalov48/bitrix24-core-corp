@@ -7,7 +7,8 @@ use Bitrix\Main\Result;
 abstract class Adapter
 {
 	/** @var self[] */
-	private $children = [];
+	private array $children = [];
+	private ?string $tableAlias = null;
 
 	final public function addChild(self $child): self
 	{
@@ -38,6 +39,36 @@ abstract class Adapter
 	protected function doGetFieldsInfo(): array
 	{
 		return [];
+	}
+
+	final public function getFields(): array
+	{
+		$fields = $this->doGetFields();
+
+		foreach ($this->children as $child)
+		{
+			//child can't override parent fields, only add new ones
+			$fields += $child->getFields();
+		}
+
+		return $fields;
+	}
+
+	protected function doGetFields(): array
+	{
+		return [];
+	}
+
+	final public function setTableAlias(string $alias): self
+	{
+		$this->tableAlias = $alias;
+
+		return $this;
+	}
+
+	final protected function getTableAlias(): ?string
+	{
+		return $this->tableAlias;
 	}
 
 	/**

@@ -152,7 +152,7 @@ jn.define('crm/category-list-view', (require, exports, module) => {
 				{
 					style: {
 						flexDirection: 'column',
-						backgroundColor: '#eef3f5',
+						backgroundColor: '#eef2f4',
 					},
 				},
 				this.state.categoryList === null ? this.renderLoader() : this.renderContent(),
@@ -215,6 +215,7 @@ jn.define('crm/category-list-view', (require, exports, module) => {
 						forceDismissOnSwipeDown: true,
 						swipeContentAllowed: false,
 						horizontalSwipeAllowed: false,
+						navigationBarColor: '#eef2f4',
 					},
 				},
 			}, this.layout);

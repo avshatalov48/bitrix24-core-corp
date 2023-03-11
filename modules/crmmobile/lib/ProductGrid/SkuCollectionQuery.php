@@ -55,14 +55,14 @@ final class SkuCollectionQuery extends Query
 
 			$basePriceFields = $sku->getPriceCollection()->findBasePrice()->getFields();
 			$basePrice = $basePriceFields['PRICE'] ?? 0.0;
-			$currencyId = $basePriceFields['CURRENCY'];
+			$currencyId = $basePriceFields['CURRENCY'] ?? null;
 			if ($currencyId && $currencyId !== $this->currencyId)
 			{
 				$basePrice = \CCrmCurrency::ConvertMoney($basePrice, $currencyId, $this->currencyId);
 			}
 
 			$vatId = $fields['VAT_ID'] ?? 0;
-			$vatIncluded = ($fields['VAT_INCLUDED'] === 'Y');
+			$vatIncluded = ($fields['VAT_INCLUDED'] ?? 'N') === 'Y';
 
 			$this->taxCalculator->calculate((float)$basePrice, (int)$vatId, $vatIncluded);
 

@@ -43,6 +43,7 @@ jn.define('layout/ui/fields/string', (require, exports, module) => {
 
 		shouldComponentUpdate(nextProps, nextState)
 		{
+			//hide text onScroll ListView
 			if (this.isReadOnly() && this.showHideButton && this.state.showAll && this.props.value === nextProps.value)
 			{
 				this.state.showAll = false;

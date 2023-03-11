@@ -18,17 +18,9 @@ class OpenLineTrigger extends BaseTrigger
 		return parent::isSupported($entityTypeId);
 	}
 
-	protected static function areDynamicTypesSupported(): bool
-	{
-		return false;
-	}
-
 	public static function isEnabled()
 	{
-		return (Integration\OpenLineManager::isEnabled()
-			&& class_exists('\Bitrix\ImOpenLines\Crm')
-			&& method_exists('\Bitrix\ImOpenLines\Crm', 'executeAutomationTrigger')
-		);
+		return Integration\OpenLineManager::isEnabled();
 	}
 
 	public static function getCode()
@@ -79,14 +71,17 @@ class OpenLineTrigger extends BaseTrigger
 		return true;
 	}
 
-	public static function toArray()
+	protected static function getPropertiesMap(): array
 	{
-		$result = parent::toArray();
-		if (static::isEnabled())
-		{
-			$result['CONFIG_LIST'] = static::getConfigList();
-		}
-		return $result;
+		return [
+			[
+				'Id' => 'config_id',
+				'Name' => Loc::getMessage('CRM_AUTOMATION_TRIGGER_OPENLINE_PROPERTY_CONFIG'),
+				'Type' => 'select',
+				'EmptyValueText' => Loc::getMessage('CRM_AUTOMATION_TRIGGER_OPENLINE_DEFAULT_CONFIG'),
+				'Options' => static::getConfigList(),
+			],
+		];
 	}
 
 	protected static function getConfigList()
@@ -104,10 +99,11 @@ class OpenLineTrigger extends BaseTrigger
 		while ($config = $orm->fetch())
 		{
 			$configs[] = array(
-				'ID' => $config['ID'],
-				'NAME' => $config['LINE_NAME']
+				'value' => $config['ID'],
+				'name' => $config['LINE_NAME']
 			);
 		}
+
 		return $configs;
 	}
 

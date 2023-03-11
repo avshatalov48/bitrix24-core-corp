@@ -5,7 +5,9 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Text\HtmlFilter;
+use Bitrix\Tasks\Slider\Exception\SliderException;
 use Bitrix\Tasks\UI\ScopeDictionary;
+use Bitrix\Tasks\Slider\Factory\SliderFactory;
 
 $isIFrame = $_REQUEST['IFRAME'] == 'Y';
 
@@ -461,4 +463,33 @@ if ($isBitrix24Template)
 {
 	$this->EndViewTarget();
 }
-?>
+if ($arParams['BACKGROUND_FOR_TASK'])
+{
+	if ((int)$arParams['GROUP_ID'] > 0 )
+	{
+		$context = SliderFactory::GROUP_CONTEXT;
+		$ownerId = (int)$arParams['GROUP_ID'];
+	}
+	else
+	{
+		$context = SliderFactory::PERSONAL_CONTEXT;
+		$ownerId = (int)$arParams['USER_ID'];
+	}
+
+	$taskId = (int)$arParams['TASK_ID'];
+
+	$factory = new SliderFactory();
+	try
+	{
+		$factory
+			->setAction($arParams['TASK_ACTION'])
+			->setQueryParams($arParams['GET_PARAMS']);
+
+		$slider = $factory->createEntitySlider($taskId, SliderFactory::TASK, $ownerId, $context);
+		$slider->open();
+	}
+	catch (SliderException $exception)
+	{
+		$exception->show();
+	}
+}

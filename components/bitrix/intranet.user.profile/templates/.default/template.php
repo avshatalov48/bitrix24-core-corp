@@ -927,7 +927,7 @@ if ($arResult["adminRightsRestricted"])
 		userStatus: <?= CUtil::PhpToJSObject($arResult["User"]["STATUS"]) ?>,
 		isOwnProfile: '<?=$arResult["IsOwnProfile"] ? "Y" : "N"?>',
 		urls: <?= CUtil::PhpToJSObject($arResult["Urls"]) ?>,
-		isSessionAdmin: "<?=$arResult["User"]["IS_SESSION_ADMIN"] ? "Y" : "N"?>",
+		isSessionAdmin: "<?=($arResult["User"]["IS_SESSION_ADMIN"] ?? null) ? "Y" : "N"?>",
 		showSonetAdmin: "<?=$arResult["User"]["SHOW_SONET_ADMIN"] ? "Y" : "N"?>",
 		isExtranetUser: "<?=$arResult["User"]["IS_EXTRANET"] ? "Y" : "N"?>",
 		isCurrentUserIntegrator: "<?=$arResult["IS_CURRENT_USER_INTEGRATOR"] ? "Y" : "N"?>",

@@ -1,0 +1,11 @@
+div.tasks-tag-list-page-nav{
+	display: flex;
+	justify-content: center;
+}
+a.tasks-by-tag-class:hover,
+a.tasks-by-tag-class:active,
+a.tasks-by-tag-class{
+	cursor: pointer;
+	color: inherit;
+	text-decoration: none;
+}

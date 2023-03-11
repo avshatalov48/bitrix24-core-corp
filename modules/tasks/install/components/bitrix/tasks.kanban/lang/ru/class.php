@@ -25,4 +25,5 @@ $MESS["TASK_LIST_TASK_MANDATORY_EXISTS"] = "В задаче присутству
 $MESS["TASK_PROJECT_TITLE"] = "Проект";
 $MESS["TASKS_KANBAN_RESULT_REQUIRED"] = "Постановщик запросил результат работы.<br> Оставьте комментарий к задаче и отметьте его как отчет.";
 $MESS['KANBAN_SORT_MY_SORT'] = 'Моя сортировка';
+$MESS['KANBAN_SORT_MY_SORT_V2'] = 'Моя сортировка';
 ?>

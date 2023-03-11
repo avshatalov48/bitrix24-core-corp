@@ -283,7 +283,7 @@ export default class EntityChat extends Stream
 				const imageUrl = BX.prop.getString(info, "avatar", "");
 				if(imageUrl !== "")
 				{
-					icon.style.backgroundImage = "url(" +  imageUrl + ")";
+					icon.style.backgroundImage = "url(" +  encodeURI(imageUrl) + ")";
 				}
 
 				this._userWrapper.appendChild(

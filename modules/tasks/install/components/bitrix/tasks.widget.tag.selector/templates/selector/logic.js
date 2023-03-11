@@ -26,7 +26,9 @@ BX.namespace('Tasks.Component');
 						data: this.option('data'),
 						groupId: this.option('groupId'),
 						taskId: this.option('taskId'),
+						userName: this.option('userName'),
 						isScrumTask: (this.option('isScrumTask') === 'Y'),
+						tagsAreConverting: this.option('tagsAreConverting'),
 						preRendered: true
 					});
 				});
@@ -53,6 +55,113 @@ BX.namespace('Tasks.Component');
 				this.bindDelegateControl('form-control', 'click', this.passCtx(this.openAddForm));
 				BX.addCustomEvent(window, 'onTaskTagSelectAlt', this.onTagsChange.bind(this));
 
+				var onPullTagChanged = function(params)
+				{
+					var tagsToRemove = params.oldTagsNames;
+					if (this.opts.dialog)
+					{
+						this.opts.dialog.hide();
+					}
+					var displayedItems = [];
+					this.each(function(item){
+						displayedItems.push(item);
+					});
+					var names = [];
+					displayedItems.forEach(function(item){
+						names.push(item.display());
+					})
+
+					var tagToChange = params.oldTagName;
+					var newTagName = params.newTagName;
+
+					if (!this.opts.changedItems)
+					{
+						this.opts.changedItems = [];
+					}
+
+					displayedItems.forEach(function(item) {
+						if (
+							tagToChange
+							&& newTagName !== ''
+							&& item.display() === tagToChange
+						)
+						{
+							this.addItem({
+								NAME: newTagName,
+							});
+
+							this.opts.changedItems.indexOf(newTagName) === -1
+							&& this.opts.changedItems.push(newTagName);
+
+							var oldIndex = this.opts.changedItems.indexOf(tagToChange);
+							this.opts.changedItems.splice(oldIndex, oldIndex);
+
+							this.deleteItem(item.value());
+							return;
+						}
+						if (
+							tagToChange
+							&& newTagName === ''
+							&& item.display() === tagToChange
+						)
+						{
+							var index = this.opts.changedItems.indexOf(tagToChange);
+							this.opts.changedItems.splice(index, index);
+							this.deleteItem(item.value());
+							return;
+						}
+
+						if (tagsToRemove && tagsToRemove.length !== 0)
+						{
+							if (tagsToRemove.indexOf(item.display()) !== -1)
+							{
+								var multiIndex = this.opts.changedItems.indexOf(tagToChange);
+								this.opts.changedItems.splice(multiIndex, multiIndex);
+								this.deleteItem(item.value());
+								return;
+							}
+							else
+							{
+								this.opts.changedItems.indexOf(item.display()) === -1
+								&& this.opts.changedItems.push(item.display());
+							}
+							return;
+						}
+
+						this.opts.changedItems.indexOf(item.display()) === -1
+						&& this.opts.changedItems.push(item.display());
+
+					}.bind(this));
+					this.opts.dialog = null;
+				};
+				var onPullTaskProjectChanged = function(params)
+				{
+					if (this.opts.dialog)
+					{
+						this.selectedItems = this.opts.dialog.getSelectedItems();
+						this.opts.dialog.hide();
+						this.opts.dialog = null;
+					}
+
+					if (!params.data.groupId || params.data.groupId.length === 0)
+					{
+						this.opts.groupId = 0;
+						this.tagOwner = this.option('userName');
+					}
+					else
+					{
+						this.opts.groupId= parseInt(params.data.groupId[0].match(/\d+/));
+						this.tagOwner = params.data.owner;
+					}
+				}
+				BX.addCustomEvent('onProjectChanged', onPullTaskProjectChanged.bind(this));
+				BX.PULL.subscribe({
+					type: BX.PullClient.SubscriptionType.Server,
+					moduleId: 'tasks',
+					command: 'tag_changed',
+					callback: onPullTagChanged.bind(this),
+				});
+
 				this.getTagSelector().load();
 			},
 
@@ -70,10 +179,10 @@ BX.namespace('Tasks.Component');
 					var item = items[k];
 					if (item.isSelected())
 					{
-						selectedItems.push(item.getId());
-						if(!BX.util.in_array(item.getId(), displayedItems))
+						selectedItems.push(item.getTitle());
+						if(!BX.util.in_array(item.getTitle(), displayedItems))
 						{
-							this.addItem({NAME: item.getId()});
+							this.addItem({NAME: item.getTitle()});
 						}
 					}
 				}
@@ -89,6 +198,20 @@ BX.namespace('Tasks.Component');
 
 			openAddForm: function(node)
 			{
+				if (this.option('tagsAreConverting'))
+				{
+					var message = new top.BX.UI.Dialogs.MessageBox({
+						title: BX.message('TASKS_WIDGET_TAG_SELECTOR_TAGS_ARE_CONVERTING_TITLE'),
+						message: BX.message('TASKS_WIDGET_TAG_SELECTOR_TAGS_ARE_CONVERTING_TEXT'),
+						buttons: top.BX.UI.Dialogs.MessageBoxButtons.OK,
+						okCaption: BX.message('TASKS_WIDGET_TAG_SELECTOR_TAGS_ARE_CONVERTING_COME_BACK_LATER'),
+						onOk: function(){
+							message.close();
+						}
+					});
+					message.show();
+					return;
+				}
 				this.getTagSelector().show();
 			},
 
@@ -115,7 +238,7 @@ BX.namespace('Tasks.Component');
 					value = value.data();
 				}
 
-				var item = dialog.getItem(this.prepareItemData(value));
+				var item = dialog.getItem(this.prepareTagItemData(value, dialog));
 				item && item.deselect();
 
 				this.opts.dialogCallback = true;
@@ -124,6 +247,21 @@ BX.namespace('Tasks.Component');
 			prepareItemData: function (data)
 			{
 				return ['task-tag', data.NAME];
+			},
+
+			prepareTagItemData: function (data, dialog)
+			{
+				var tags = dialog.getItems();
+				var id = null;
+				tags.forEach(function (tag){
+					if (tag.title.text === data.NAME)
+					{
+						id = tag.id;
+						return;
+					}
+				})
+
+				return { id: id, entityId: 'task-tag' };
 			},
 
 			extractItemDisplay: function(data)
@@ -164,82 +302,265 @@ BX.namespace('Tasks.Component');
 
 				return hash;
 			},
-
+			//widget on task create/edit page
 			getTagSelector: function()
 			{
-				if (!this.opts.dialog)
+				var taskId = this.opts.taskId;
+				var groupId = this.opts.groupId;
+				var previousSelected = this.selectedItems;
+				var changedItems = this.opts.changedItems;
+				var tagOwner = this.tagOwner;
+				if (this.opts.groupId === 0)
 				{
-					this.opts.dialog = new BX.UI.EntitySelector.Dialog({
-						id: 'tasksTagSelector',
-						targetNode: this.control('form-control'),
-						enableSearch: true,
-						width: 350,
-						height: 400,
-						multiple: true,
-						dropdownMode: true,
-						compactView: true,
-						context: this.option('isScrumTask') ? 'TASKS_SCRUM_TAG_' + this.option('groupId') : 'TASKS_TAG',
-						entities: [
+					var projectDialog = BX.UI.EntitySelector.Dialog.getById("tasksMemberSelector_project");
+					if (projectDialog)
+					{
+						var items = projectDialog.getSelectedItems();
+						if (items.length !== 0)
+						{
+							this.opts.dialog = null;
+							this.opts.groupId = items[0].id
+							groupId = this.opts.groupId;
+						}
+					}
+				}
+
+
+
+				var showAddButton = function()
+				{
+					var dialog = BX.UI.EntitySelector.Dialog.getById('tasksTagSelector');
+					dialog.getFooterContainer().querySelector('#tags-widget-custom-footer-add-new').hidden = false;
+					dialog.getFooterContainer().querySelector('#tags-widget-custom-footer-conjunction').hidden = false;
+				};
+
+				var hideAddButton = function()
+				{
+					var dialog = BX.UI.EntitySelector.Dialog.getById('tasksTagSelector');
+					dialog.getFooterContainer().querySelector('#tags-widget-custom-footer-add-new').hidden = true;
+					dialog.getFooterContainer().querySelector('#tags-widget-custom-footer-conjunction').hidden = true;
+				};
+
+				var onSearch = function(event)
+				{
+					var dialog = event.getTarget();
+					var query = event.getData().query;
+					if (query.trim() !== '')
+					{
+						showAddButton();
+					}
+					else
+					{
+						hideAddButton();
+					}
+				};
+				var showAlert = function(className, error) {
+					var dialog = BX.UI.EntitySelector.Dialog.getById('tasksTagSelector');
+
+					if (dialog.getContainer().querySelector(`div.${className}`))
+					{
+						return;
+					}
+
+					var alert = document.createElement('div');
+					alert.className = className;
+					alert.innerHTML = `
+						<div class='ui-alert ui-alert-xs ui-alert-danger'  
+							<span class='ui-alert-message'>
+								${error}
+							</span> 
+						</div>
+					`;
+				dialog.getFooterContainer().before(alert);
+				};
+
+				var onTagsLoad = function(event)
+				{
+					var dialog = event.getTarget();
+					if (changedItems)
+					{
+						changedItems.forEach(function(tagName){
+							var item = dialog.addItem({
+								id: tagName,
+								entityId: 'task-tag',
+								title: tagName,
+								tabs: 'all',
+								badges: [
+									{
+										title: tagOwner,
+									},
+								],
+							});
+							item.select();
+						});
+					}
+					if (previousSelected)
+					{
+						previousSelected.forEach(function(item){
+							var tag = item.title.text;
+							var exists = false;
+							dialog.getItems().forEach(function(dialogItem){
+								if (dialogItem.title.text === tag)
+								{
+									exists = true;
+									dialogItem.select();
+									dialogItem.setBadges([{ title: tagOwner }]);
+								}
+							});
+
+							if (!exists)
 							{
-								id: 'task-tag',
-								options: {
-									taskId: this.option('taskId'),
-									groupId: this.option('isScrumTask') ? this.option('groupId') : 0
-								}
+								var newItem = dialog.addItem({
+									id: item.title.text,
+									entityId: item.entityId,
+									title: item.title.text,
+									tabs: 'all',
+									badges: [
+										{
+											title: tagOwner,
+										},
+									],
+								});
+								newItem.select();
 							}
-						],
-						searchOptions: {
-							allowCreateItem: true,
-						},
-						events: {
-							'onShow': function () {
+						});
+					}
 
-							}.bind(this),
-							'onHide': function () {
+					var events = ['click', 'keydown'];
+					var handler = function(event) {
+						if (event.type === 'keydown')
+						{
+							if (!((event.ctrlKey || event.metaKey) && event.keyCode === 13))
+							{
+								return;
+							}
+						}
 
-							}.bind(this),
-							'Search:onItemCreateAsync': function (event) {
-								var promise = new BX.Promise();
-								var searchQuery = event.getData().searchQuery;
-								var dialog = event.getTarget();
+						var newTag = dialog.getTagSelectorQuery();
+						if (newTag.trim() === '')
+						{
+							return;
+						}
 
-								setTimeout(function () {
-									var item = dialog.addItem({
-										id: searchQuery.getQuery(),
-										entityId: 'task-tag',
-										title: searchQuery.getQuery(),
-										tabs: 'all'
-									});
-									if (item) {
-										item.select();
-									}
-									promise.fulfill();
-								}, 1000);
-
-								return promise;
+						BX.ajax.runComponentAction('bitrix:tasks.tag.list', 'addTag', {
+							mode: 'class',
+							data: {
+								newTag: newTag,
+								taskId: taskId,
+								groupId: groupId,
 							},
-							'Item:onSelect': function (event) {
-								if (this.opts.dialogCallback === false)
-								{
-									return;
-								}
+						}).then(function(response) {
+							if (response.data.success)
+							{
+								var item = dialog.addItem({
+									id: newTag,
+									entityId: 'task-tag',
+									title: newTag,
+									tabs: 'all',
+									badges: [
+										{
+											title: tagOwner,
+										},
+									],
+								});
 
-								this.onTagsChange(event);
-							}.bind(this),
-							'Item:onDeselect': function (event) {
-								if (this.opts.dialogCallback === false)
-								{
-									return;
-								}
+								var badge = { title: response.data.owner };
 
-								this.onTagsChange(event);
-							}.bind(this),
+								item.setBadges([badge]);
+								item.select();
+								dialog.clearSearch();
+
+							}
+							else
+							{
+								var alertClass = 'tasks-selector-add-tag-already-exists-alert';
+								showAlert(alertClass, response.data.error);
+								var removeAlert = function() {
+									var notification = dialog.getContainer().querySelector(`div.${alertClass}`);
+									notification && notification.remove();
+								};
+								setTimeout(removeAlert, 2000);
+							}
+						});
+					};
+
+					events.forEach(function(ev) {
+						if (ev === 'click')
+						{
+							dialog.getFooterContainer().querySelector('#tags-widget-custom-footer-add-new')
+								.addEventListener(ev, handler);
+						}
+						else
+						{
+							dialog.getContainer().addEventListener(ev, handler);
 						}
 					});
+				};
+				var getTargetContainer = function()
+				{
+					var fields = document.querySelectorAll('div.task-options-item-open-inner');
+					var target = this.control('form-control')
+					fields.forEach(function(field){
+						if (field.contains(target))
+						{
+							target = field;
+						}
+					});
+
+					return target;
+				}.bind(this);
+
+				if (this.opts.dialog)
+				{
+					return this.opts.dialog;
 				}
+
+				this.opts.dialog = new BX.UI.EntitySelector.Dialog({
+					id: 'tasksTagSelector',
+					targetNode: getTargetContainer(),
+					enableSearch: true,
+					width: 350,
+					height: 400,
+					multiple: true,
+					dropdownMode: true,
+					compactView: true,
+					entities: [
+						{
+							id: 'task-tag',
+							options: {
+								taskId: this.option('taskId'),
+								groupId: this.opts.groupId,
+							},
+						},
+					],
+					searchOptions: {
+						allowCreateItem: false,
+					},
+					footer: BX.Tasks.EntitySelector.Footer,
+					footerOptions: {
+						taskId: this.opts.taskId,
+						groupId: this.opts.groupId,
+					},
+					clearUnavailableItems: true,
+					events: {
+						'onLoad': function(event) {
+							event.getTarget().getFooterContainer().style.zIndex = 1;
+							onTagsLoad(event);
+						}.bind(this),
+						'onSearch': function(event) {
+							onSearch(event);
+						}.bind(this),
+						'Item:onSelect': function(event) {
+							this.opts.dialogCallback && this.onTagsChange(event);
+						}.bind(this),
+						'Item:onDeselect': function(event) {
+							this.opts.dialogCallback && this.onTagsChange(event);
+						}.bind(this),
+					},
+				});
+
 				return this.opts.dialog;
 			}
 		}
 	});
-
 }).call(this);

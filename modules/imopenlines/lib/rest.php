@@ -1341,7 +1341,7 @@ class Rest extends \IRestService
 			'FORMAT_DATETIME' => $coreMessages['FORMAT_DATETIME'],
 			'AMPM_MODE' => IsAmPmMode(true),
 			'UTF_MODE' => Main\Application::getInstance()->isUtfMode() ? 'Y' : 'N',
-			'isCloud' => IsModuleInstalled('bitrix24'),
+			'isCloud' => \Bitrix\Main\ModuleManager::isModuleInstalled('bitrix24'),
 		];
 
 		return $result;
@@ -1370,6 +1370,19 @@ class Rest extends \IRestService
 
 		$arParams['PARAMS'] = !empty($arParams['PARAMS']) && is_array($arParams['PARAMS']) ? $arParams['PARAMS'] : [];
 		$arParams['OPTIONS'] = !empty($arParams['OPTIONS']) && is_array($arParams['OPTIONS']) ? $arParams['OPTIONS'] : [];
+
+		if (isset($arParams['PARAMS']['select']) && !is_array($arParams['PARAMS']['select']))
+		{
+			throw new RestException('A wrong format for the PARAMS field \'select\' is passed', 'INVALID_FORMAT', \CRestServer::STATUS_WRONG_REQUEST);
+		}
+		if (isset($arParams['PARAMS']['order']) && !is_array($arParams['PARAMS']['order']))
+		{
+			throw new RestException('A wrong format for the PARAMS field \'order\' is passed', 'INVALID_FORMAT', \CRestServer::STATUS_WRONG_REQUEST);
+		}
+		if (isset($arParams['PARAMS']['filter']) && !is_array($arParams['PARAMS']['filter']))
+		{
+			throw new RestException('A wrong format for the PARAMS field \'filter\' is passed', 'INVALID_FORMAT', \CRestServer::STATUS_WRONG_REQUEST);
+		}
 
 		return $config->getList($arParams['PARAMS'], $arParams['OPTIONS']);
 	}
@@ -1542,7 +1555,7 @@ class Rest extends \IRestService
 
 		if (isset($params['SESSION_ID']))
 		{
-			return Chat::getChatIdBySession($params['SESSION_ID']);
+			return Chat::getChatIdBySession((int)$params['SESSION_ID']);
 		}
 
 		if (isset($params['USER_CODE']))

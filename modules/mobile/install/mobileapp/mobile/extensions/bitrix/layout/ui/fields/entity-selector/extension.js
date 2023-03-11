@@ -63,6 +63,7 @@ jn.define('layout/ui/fields/entity-selector', (require, exports, module) => {
 				reloadEntityListFromProps: BX.prop.getBoolean(config, 'reloadEntityListFromProps', false),
 				entityList: BX.prop.getArray(config, 'entityList', []),
 				canUnselectLast: BX.prop.getBoolean(config, 'canUnselectLast', true),
+				canUseRecent: BX.prop.getBoolean(config, 'canUseRecent', true),
 				entityIds,
 				isComplex,
 			};
@@ -318,6 +319,7 @@ jn.define('layout/ui/fields/entity-selector', (require, exports, module) => {
 				enableCreation,
 				closeAfterCreation,
 				canUnselectLast,
+				canUseRecent,
 				selectorTitle,
 			} = this.getConfig();
 
@@ -325,6 +327,7 @@ jn.define('layout/ui/fields/entity-selector', (require, exports, module) => {
 				EntitySelectorFactory
 					.createByType(selectorType, {
 						provider,
+						canUseRecent,
 						createOptions: {
 							enableCreation,
 							closeAfterCreation,

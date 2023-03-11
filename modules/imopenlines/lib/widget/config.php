@@ -110,7 +110,7 @@ class Config
 			'ONLINE' => $config['QUEUE_ONLINE'] === 'Y',
 			'CONNECTORS' => $connectors,
 			'DISK' => [
-				'ENABLED' => IsModuleInstalled('disk'),
+				'ENABLED' => \Bitrix\Main\ModuleManager::isModuleInstalled('disk'),
 				'MAX_FILE_SIZE' => $maxFileSize
 			],
 			'VOTE' => [

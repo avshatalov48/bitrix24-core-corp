@@ -18,12 +18,14 @@ class NavigationBarPanel
 	public const ID_LIST = 'list';
 	public const ID_CALENDAR = 'calendar';
 	public const ID_ACTIVITY = 'activity';
+	public const ID_DEADLINES = 'deadlines';
 
 	private const LANG_MAP = [
 		self::ID_KANBAN => 'CRM_COMMON_KANBAN',
 		self::ID_LIST => 'CRM_COMMON_LIST',
 		self::ID_ACTIVITY => 'CRM_COMMON_ACTIVITY',
 		self::ID_CALENDAR => 'CRM_COMMON_CALENDAR',
+		self::ID_DEADLINES => 'CRM_COMMON_DEADLINES'
 	];
 	private const ID_BINDING_CATEGORY = 'crm.navigation';
 	private const ID_BINDING_NAME = 'index';
@@ -78,11 +80,6 @@ class NavigationBarPanel
 		$this->entityTypeId = $entityTypeId;
 		$this->categoryId = $categoryId === -1 ? null : $categoryId;
 		$this->router = Container::getInstance()->getRouter();
-	}
-
-	public function setAllAllowableItems(string $activeId = ''): self
-	{
-		return $this->setItems($this->getAllowableItemsList(), $activeId);
 	}
 
 	public function setItems(array $ids, string $activeId = ''): self
@@ -142,6 +139,7 @@ class NavigationBarPanel
 			self::ID_LIST,
 			self::ID_ACTIVITY,
 			self::ID_CALENDAR,
+			self::ID_DEADLINES
 		];
 
 		if ($withAutomation)
@@ -204,6 +202,8 @@ class NavigationBarPanel
 				return $this->router->getItemListUrl($this->entityTypeId, $this->categoryId);
 			case self::ID_CALENDAR:
 				return $this->router->getCalendarUrl($this->entityTypeId, $this->categoryId);
+			case self::ID_DEADLINES:
+				return $this->router->getDeadlinesUrl($this->entityTypeId, $this->categoryId);
 		}
 
 		return null;

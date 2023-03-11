@@ -1000,18 +1000,14 @@ class CMobileHelper
 			$responsibleIcon = Bitrix\Tasks\UI\Avatar::getPerson($taskData['RESPONSIBLE_PHOTO']);
 			$title = addslashes(htmlspecialcharsbx($taskData['TITLE']));
 
-			$eventName = "'taskbackground::task::action'";
 			$taskInfoParameter = "{title: '{$title}', creatorIcon: '{$creatorIcon}', responsibleIcon: '{$responsibleIcon}'}";
-			$taskDataParameter = "{id: {$taskId}, title: 'TASK', taskInfo: {$taskInfoParameter}}";
 
-			return 'BXMobileApp.Events.postToComponent('
-				.$eventName.', '
-				.'['
-					.$taskDataParameter.', '
-					.$taskId.', '
-					.'{taskId: '.$taskId.', getTaskInfo: true}'
-				.']'
-			.');';
+			return "BXMobileApp.Events.postToComponent('taskbackground::task::open',"
+				. '['
+					. "{id: {$taskId}, taskId: {$taskId}, title: 'TASK', taskInfo: {$taskInfoParameter}},"
+					. "{taskId: {$taskId}, getTaskInfo: true}"
+				. ']'
+			. ');';
 		}
 		catch (TasksException $exception)
 		{
@@ -1044,6 +1040,7 @@ class CMobileHelper
 			$taskDataParams = [
 				[
 					'id' => $taskId,
+					'taskId' => $taskId,
 					'title' => 'TASK',
 					'taskInfo' => [
 						'title' => $title,
@@ -1051,11 +1048,10 @@ class CMobileHelper
 						'responsibleIcon' => $responsibleIcon,
 					],
 				],
-				$taskId,
 				[
 					'taskId' => $taskId,
 					'getTaskInfo' => true,
-				]
+				],
 			];
 
 			$taskDataParams = \Bitrix\Main\Web\Json::encode($taskDataParams);

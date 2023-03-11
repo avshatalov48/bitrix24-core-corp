@@ -238,6 +238,7 @@
 
 			if (
 				this.isCurrentUserAdmin === 'Y'
+				&& this.userStatus !== "fired"
 				&& !this.isOwnProfile
 				&& !BX.util.in_array(this.userStatus, ['email', 'shop' ])
 			)
@@ -265,7 +266,7 @@
 				});
 			}
 
-			if (this.userStatus === "fired" && !this.isOwnProfile)
+			if (this.isCurrentUserAdmin === 'Y' && this.userStatus === "fired" && !this.isOwnProfile)
 			{
 				menuItems.push({
 					text: BX.message("INTRANET_USER_PROFILE_HIRE"),

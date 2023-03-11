@@ -195,7 +195,10 @@ jn.define('crm/timeline/item/ui/header', (require, exports, module) => {
 				return null;
 			}
 
-			return TimelineItemUserAvatar(this.props.user);
+			return TimelineItemUserAvatar({
+				...this.props.user,
+				testId: 'TimelineItemHeaderUserAvatar',
+			});
 		}
 
 		renderChangeStreamButton()
@@ -217,13 +220,24 @@ jn.define('crm/timeline/item/ui/header', (require, exports, module) => {
 				switch (type)
 				{
 					case ChangeStreamButtonTypes.COMPLETE:
-						return new Checkbox(props);
+						return new Checkbox({
+							...props,
+							testId: 'TimelineItemChangeStreamComplete',
+						});
 
 					case ChangeStreamButtonTypes.PIN:
-						return new PinButton({...props, pinned: false});
+						return new PinButton({
+							...props,
+							pinned: false,
+							testId: 'TimelineItemChangeStreamPin',
+						});
 
 					case ChangeStreamButtonTypes.UNPIN:
-						return new PinButton({...props, pinned: true});
+						return new PinButton({
+							...props,
+							pinned: true,
+							testId: 'TimelineItemChangeStreamUnpin'
+						});
 				}
 			};
 

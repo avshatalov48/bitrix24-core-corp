@@ -2,6 +2,8 @@
 
 namespace Bitrix\Tasks\Provider;
 
+use Bitrix\Main\Config\Option;
+use Bitrix\Main\Type\DateTime;
 use Bitrix\Tasks\Access\Model\UserModel;
 use Bitrix\Tasks\Access\Permission\PermissionDictionary;
 use Bitrix\Tasks\Access\Role\RoleDictionary;
@@ -14,6 +16,8 @@ use Bitrix\Tasks\Integration;
 class TaskProvider
 {
 	use UserProviderTrait;
+
+	private const USE_ORM_KEY = 'tasks_use_orm_list';
 
 	private $db;
 	private $userFieldManager;
@@ -70,6 +74,11 @@ class TaskProvider
 	{
 		$this->configure($arOrder, $arFilter, $arSelect, $arParams, $arGroup);
 
+		if ($this->useOrm())
+		{
+			return $this->getListOrm($arOrder, $arFilter, $arSelect, $arParams, $arGroup);
+		}
+
 		$this
 			->makeArFields()
 			->makeArSelect()
@@ -85,11 +94,22 @@ class TaskProvider
 		return $this->executeQuery();
 	}
 
+	/**
+	 * @param $arFilter
+	 * @param $arParams
+	 * @param $arGroup
+	 * @return CDBResult
+	 * @throws \TasksException
+	 */
 	public function getCount($arFilter = [], $arParams = [], $arGroup = []): CDBResult
 	{
 		$this->countMode = true;
-
 		$this->configure([], $arFilter, ['*'], $arParams, $arGroup);
+
+		if ($this->useOrm())
+		{
+			return $this->getCountOrm($arFilter, $arParams, $arGroup);
+		}
 
 		$this
 			->makeArFields()
@@ -110,6 +130,210 @@ class TaskProvider
 		}
 
 		return $res;
+	}
+
+	/**
+	 * @return bool
+	 */
+	private function useOrm(): bool
+	{
+		$request = \Bitrix\Main\Context::getCurrent()->getRequest()->toArray();
+		if (array_key_exists(self::USE_ORM_KEY, $request))
+		{
+			\CUserOptions::setOption('tasks', self::USE_ORM_KEY, (int) $request[self::USE_ORM_KEY], false, $this->userId);
+			return $request[self::USE_ORM_KEY] > 0 ? true : false;
+		}
+
+		if ((int) \CUserOptions::getOption('tasks', self::USE_ORM_KEY, 0, $this->userId) > 0)
+		{
+			return true;
+		}
+
+		if (Option::get('tasks', self::USE_ORM_KEY, 'null', '-') !== 'null')
+		{
+			return true;
+		}
+
+		return false;
+	}
+
+	/**
+	 * @param $arOrder
+	 * @param $arFilter
+	 * @param $arSelect
+	 * @param $arParams
+	 * @param array $arGroup
+	 * @return CDBResult
+	 * @throws Exception\InvalidSelectException
+	 * @throws Exception\UnexpectedTableException
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	private function getListOrm($arOrder = [], $arFilter = [], $arSelect = [], $arParams = [], array $arGroup = []): CDBResult
+	{
+		$userFields = [];
+		if (
+			in_array('UF_*', $arSelect, true)
+			|| in_array('*', $arSelect, true)
+			|| !empty(preg_grep('/^UF_/', $arSelect))
+
+		)
+		{
+			$userFields = TasksUFManager::getInstance()->getFields();
+		}
+		if (
+			empty($arSelect)
+			|| in_array('*', $arSelect)
+		)
+		{
+			$this->makeArFields();
+			$arSelect = array_diff(array_keys($this->arFields), ['MESSAGE_ID']);
+		}
+		if (!in_array('ID', $arSelect, true))
+		{
+			$arSelect[] = 'ID';
+		}
+
+		$arSelect = array_merge($arSelect, $userFields);
+
+		$query = new TaskQuery($this->executorId);
+		$query
+			->setBehalfUser($this->userId)
+			->setSelect($arSelect)
+			->setOrder($arOrder)
+			->setGroupBy($arGroup)
+			->setWhere($arFilter)
+		;
+
+		if (
+			isset($arParams['FILTER_PARAMS']['SEARCH_TASK_ONLY'])
+			&& $arParams['FILTER_PARAMS']['SEARCH_TASK_ONLY'] = 'Y'
+		)
+		{
+			$query->setParam('SEARCH_TASK_ONLY', true);
+		}
+
+		$nPlusOne = isset($arParams['NAV_PARAMS']['getPlusOne']) ? 1 : 0;
+		$pageSize = isset($arParams['NAV_PARAMS']['nPageSize']) ? (int) $arParams['NAV_PARAMS']['nPageSize'] : 0;
+		$page =
+			(isset($arParams['NAV_PARAMS']['iNumPage']) && $arParams['NAV_PARAMS']['iNumPage'] > 0)
+			? $arParams['NAV_PARAMS']['iNumPage']
+			: 1;
+
+		$query->setLimit($pageSize + $nPlusOne);
+		$query->setOffset(($page - 1) * $pageSize);
+
+		try
+		{
+			$list = new TaskList();
+			$tasks = $list->getList($query);
+			$dbResult = $list->getLastDbResult();
+		}
+		catch (\Exception $e)
+		{
+			throw new \TasksException($e->getMessage(), \TasksException::TE_SQL_ERROR);
+		}
+
+		$tasks = $this->prepareOrmData($tasks);
+
+		$result = new CDBResult($dbResult);
+		$result->InitFromArray($tasks);
+		$result->NavPageNomer = $page;
+		$result->PAGEN = $page;
+
+		return $result;
+	}
+
+	/**
+	 * @param array $rows
+	 * @return array
+	 */
+	private function prepareOrmData(array $rows): array
+	{
+		if (empty($rows))
+		{
+			return [];
+		}
+
+		$res = [];
+		foreach ($rows as $k => $row)
+		{
+			if (!is_array($row))
+			{
+				$res[$k] = $row;
+				continue;
+			}
+
+			foreach ($row as $key => $value)
+			{
+				if (is_array($value))
+				{
+					foreach ($value as $subValue)
+					{
+						if (is_a($subValue, DateTime::class))
+						{
+							$subValue = $subValue->toString();
+						}
+
+						$res[$k][$key][] = $subValue;
+					}
+				}
+				else
+				{
+					if (is_a($value, DateTime::class))
+					{
+						$value = $value->toString();
+					}
+
+					$res[$k][$key] = $value;
+				}
+			}
+		}
+
+		return $res;
+	}
+
+	/**
+	 * @param $arFilter
+	 * @param $arParams
+	 * @param $arGroup
+	 * @return CDBResult
+	 * @throws \TasksException
+	 */
+	private function getCountOrm($arFilter = [], $arParams = [], $arGroup = []): CDBResult
+	{
+		$query = new TaskQuery($this->executorId);
+		$query
+			->setBehalfUser($this->userId)
+			->setGroupBy($arGroup)
+			->setWhere($arFilter);
+
+		if (
+			isset($arParams['FILTER_PARAMS']['SEARCH_TASK_ONLY'])
+			&& $arParams['FILTER_PARAMS']['SEARCH_TASK_ONLY'] = 'Y'
+		)
+		{
+			$query->setParam('SEARCH_TASK_ONLY', true);
+		}
+
+		try
+		{
+			$list = new TaskList();
+			$count = $list->getCount($query);
+			$dbResult = $list->getLastDbResult();
+		}
+		catch (\Exception $e)
+		{
+			throw new \TasksException('', \TasksException::TE_SQL_ERROR);
+		}
+
+		$result = new CDBResult($dbResult);
+		$result->InitFromArray([
+			['CNT' => $count],
+		]);
+
+		return $result;
 	}
 
 	private function executeQuery(): \CDBResult
@@ -676,6 +900,7 @@ class TaskProvider
 					$this->arSqlOrder[] = " IS_PINNED_IN_GROUP " . $order . " ";
 					$needle = 'IS_PINNED_IN_GROUP';
 					break;
+
 				case 'scrum_items_sort':
 					$this->arSqlOrder[] = " BTSI.SORT " . $order . " ";
 					break;
@@ -717,7 +942,7 @@ class TaskProvider
 		// add fields that are NOT selected by default
 		//$this->arFields["FAVORITE"] = "CASE WHEN FVT.TASK_ID IS NULL THEN 'N' ELSE 'Y' END";
 
-		// If DESCRIPTION selected, than BBCODE flag must be selected too
+		// If DESCRIPTION selected, then BBCODE flag must be selected too
 		if (
 			in_array('DESCRIPTION', $this->arSelect)
 			&& ( ! in_array('DESCRIPTION_IN_BBCODE', $this->arSelect) )
@@ -939,7 +1164,7 @@ class TaskProvider
 
 			if (isset($this->arParams['bIgnoreErrors']))
 			{
-				$this->bIgnoreErrors = (bool) $this->arParams['bIgnoreErrors'];
+				// $this->bIgnoreErrors = (bool) $this->arParams['bIgnoreErrors'];
 			}
 
 			if (isset($this->arParams['bIgnoreDbErrors']))
@@ -990,7 +1215,7 @@ class TaskProvider
 		{
 			\CTaskAssert::assert($this->arFilter['::LOGIC'] === 'AND');
 		}
-
+		$this->bIgnoreErrors = false;
 		$this->invokeUserTypeSql();
 		$this->setUserId();
 

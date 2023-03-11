@@ -23,6 +23,7 @@ BX.Crm.KanbanComponent.returnItem = function(item)
 	data.targetId = lastPosition.targetId;
 
 	// dec in column and inc in last column
+	this.successClosePopup = true;
 	item.getColumn().decPrice(price);
 	grid.getColumn(data.columnId).incPrice(price);
 	// update item info
@@ -87,6 +88,8 @@ BX.Crm.KanbanComponent.showPopup = function(containerId, handlerData, handlerTyp
 	{
 		return;
 	}
+
+	this.successClosePopup = false;
 
 	if (containerId === "crm_kanban_lead_win")
 	{

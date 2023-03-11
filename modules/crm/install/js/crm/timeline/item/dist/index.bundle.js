@@ -1,6 +1,6 @@
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,ui_cnt,ui_label,main_core_events,main_loader,crm_timeline_item,ui_vue3_components_audioplayer,main_popup,currency_currencyCore,ui_vue3,ui_alerts,crm_datetime,main_date,crm_router,ui_dialogs_messagebox,crm_timeline_tools,ui_notification,main_core,ui_buttons) {
+(function (exports,ui_cnt,ui_label,ui_buttons,main_loader,crm_timeline_item,ui_vue3_components_audioplayer,main_popup,currency_currencyCore,ui_vue3,ui_alerts,crm_datetime,ui_icons_generator,main_date,crm_router,ui_dialogs_messagebox,crm_timeline_tools,crm_activity_fileUploaderPopup,main_core_events,ui_notification,main_core) {
 	'use strict';
 
 	let Item = /*#__PURE__*/function () {
@@ -894,7 +894,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      }
 
 	      return {
-	        backgroundImage: "url('" + main_core.Text.encode(this.imageUrl) + "')",
+	        backgroundImage: "url('" + encodeURI(main_core.Text.encode(this.imageUrl)) + "')",
 	        backgroundSize: '21px'
 	      };
 	    },
@@ -1199,9 +1199,13 @@ this.BX.Crm = this.BX.Crm || {};
 	    user: Object,
 	    infoHelper: Object
 	  },
-	  inject: ['isReadOnly'],
+	  inject: ['isReadOnly', 'isLogMessage'],
 	  computed: {
 	    visibleTags() {
+	      if (!main_core.Type.isPlainObject(this.tags)) {
+	        return [];
+	      }
+
 	      return this.tags ? Object.values(this.tags).filter(this.isVisibleTagFilter) : [];
 	    },
 
@@ -1212,6 +1216,12 @@ this.BX.Crm = this.BX.Crm || {};
 
 	    isShowDate() {
 	      return this.date || this.datePlaceholder;
+	    },
+
+	    className() {
+	      return ['crm-timeline__card-top', {
+	        '--log-message': this.isReadOnly || this.isLogMessage
+	      }];
 	    }
 
 	  },
@@ -1230,7 +1240,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	  },
 	  template: `
-		<div class="crm-timeline__card-top">
+		<div :class="className">
 			<div class="crm-timeline__card-top_info">
 				<div class="crm-timeline__card-top_info_left">
 					<ChangeStreamButton v-if="changeStreamButton" v-bind="changeStreamButton" ref="changeStreamButton"></ChangeStreamButton>
@@ -1442,6 +1452,10 @@ this.BX.Crm = this.BX.Crm || {};
 
 	  computed: {
 	    visibleBlocks() {
+	      if (!main_core.Type.isPlainObject(this.blocks)) {
+	        return [];
+	      }
+
 	      return Object.keys(this.blocks).map(id => ({
 	        id,
 	        ...this.blocks[id]
@@ -1961,6 +1975,10 @@ this.BX.Crm = this.BX.Crm || {};
 	    },
 
 	    visibleButtons() {
+	      if (!main_core.Type.isPlainObject(this.buttons)) {
+	        return [];
+	      }
+
 	      return this.buttons ? Object.keys(this.buttons).map(id => ({
 	        id,
 	        ...this.buttons[id]
@@ -2331,6 +2349,9 @@ this.BX.Crm = this.BX.Crm || {};
 	  }
 
 	  babelHelpers.createClass(Base, [{
+	    key: "onInitialize",
+	    value: function onInitialize(item) {}
+	  }, {
 	    key: "onItemAction",
 	    value: function onItemAction(item, actionParams) {}
 	  }, {
@@ -2391,7 +2412,9 @@ this.BX.Crm = this.BX.Crm || {};
 
 	      for (const controller of ControllerManager.getRegisteredControllers()) {
 	        if (controller.isItemSupported(item)) {
-	          foundControllers.push(new controller());
+	          const controllerInstance = new controller();
+	          controllerInstance.onInitialize(item);
+	          foundControllers.push(controllerInstance);
 	        }
 	      }
 
@@ -2790,8 +2813,10 @@ this.BX.Crm = this.BX.Crm || {};
 	            this.refreshLayout();
 	          }
 	        });
+	        return true;
 	      }).catch(err => {
 	        console.error(err);
+	        return true;
 	      });
 	    }
 	  }], [{
@@ -3594,7 +3619,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    currencyId: String
 	  },
 	  computed: {
-	    moneyHtml() {
+	    encodedText() {
 	      if (!main_core.Type.isNumber(this.opportunity) || !main_core.Type.isStringFilled(this.currencyId)) {
 	        return null;
 	      }
@@ -3603,7 +3628,13 @@ this.BX.Crm = this.BX.Crm || {};
 	    }
 
 	  },
-	  template: `<span v-if="moneyHtml" v-html="moneyHtml"></span>`
+	  extends: Text,
+	  template: `
+		<span
+			v-if="encodedText"
+			:class="className"
+			v-html="encodedText"
+		></span>`
 	};
 
 	var EditableText = ui_vue3.BitrixVue.cloneComponent(Text, {
@@ -4542,6 +4573,26 @@ this.BX.Crm = this.BX.Crm || {};
 		</span>`
 	};
 
+	const MoneyPill = {
+	  components: {
+	    Money
+	  },
+	  props: {
+	    opportunity: Number,
+	    currencyId: String
+	  },
+	  template: `
+		<div class="crm-timeline-card__money-pill">
+			<span class="crm-timeline-card__money-pill_amount">
+				<money
+					:opportunity="opportunity"
+					:currency-id="currencyId"
+				/>
+			</span>
+		</div>
+	`
+	};
+
 	const InfoGroup = {
 	  props: {
 	    blocks: {
@@ -4588,6 +4639,140 @@ this.BX.Crm = this.BX.Crm || {};
 			</span>
 		</div>
 	`
+	};
+
+	var File = {
+	  props: {
+	    text: String,
+	    href: String,
+	    size: Number,
+	    attributes: Object
+	  },
+	  computed: {
+	    fileExtension() {
+	      return this.text.split('.').slice(-1)[0] || '';
+	    }
+
+	  },
+
+	  mounted() {
+	    const fileIcon = new ui_icons_generator.FileIcon({
+	      name: this.fileExtension
+	    });
+	    fileIcon.renderTo(this.$refs.icon);
+	  },
+
+	  template: `
+			<div class="crm-timeline__file">
+				<div ref="icon" class="crm-timeline__file_icon"></div>
+				<a
+					target="_blank"
+					class="crm-timeline__card_link"
+					v-if="href"
+					:title="text"
+					:href="href"
+					v-bind="attributes"
+				>
+					{{text}}
+				</a>
+			</div>
+		`
+	};
+
+	const FileList = {
+	  components: {
+	    File
+	  },
+	  props: {
+	    title: {
+	      type: String,
+	      required: false,
+	      default: ''
+	    },
+	    numberOfFiles: {
+	      type: Number,
+	      required: false,
+	      default: 0
+	    },
+	    files: {
+	      type: Array,
+	      required: true,
+	      default: []
+	    },
+	    updateParams: {
+	      type: Object,
+	      required: false,
+	      default: {}
+	    }
+	  },
+	  inject: ['isReadOnly'],
+	  computed: {
+	    titleClassName() {
+	      return {
+	        'crm-timeline__file-list-title': true,
+	        '--editable': this.isEditable
+	      };
+	    },
+
+	    fileListTitleText() {
+	      const numberOfFiles = this.numberOfFiles > 0 ? `(${this.numberOfFiles})` : '';
+	      const title = this.title !== '' ? this.title : '';
+	      return `${title} ${numberOfFiles}`;
+	    },
+
+	    isEditable() {
+	      return Object.keys(this.updateParams).length > 0 && !this.isReadOnly;
+	    }
+
+	  },
+	  methods: {
+	    fileProps(file) {
+	      return {
+	        text: file.name,
+	        href: file.viewUrl,
+	        size: file.size,
+	        attributes: file.attributes
+	      };
+	    },
+
+	    showFileUploaderPopup() {
+	      if (!this.isEditable) {
+	        return;
+	      }
+
+	      const popup = new crm_activity_fileUploaderPopup.FileUploaderPopup(this.updateParams);
+	      popup.show();
+	    }
+
+	  },
+	  template: `
+			<div class="crm-timeline__file-list-wrapper">
+				<div class="crm-timeline__file-list-title-container">
+					<span
+						v-if="title !== '' || numberOfFiles > 0"
+						@click="showFileUploaderPopup"
+						:class="titleClassName"
+					>
+						{{ fileListTitleText }}
+					</span>
+					<button
+						v-if="isEditable"
+						@click="showFileUploaderPopup"
+						class="crm-timeline__file-list-edit-btn"
+					>
+						<i class="crm-timeline__editable-text_edit-icon"></i>
+					</button>
+				</div>
+				<div class="crm-timeline__file-list-container">
+					<div
+						class="crm-timeline__file-container"
+						v-for="file in files"
+					>
+						<File :key="file.id" v-bind="fileProps(file)"></File>
+					</div>
+				</div>
+			</div>
+		`
 	};
 
 	function _classPrivateMethodInitSpec$3(obj, privateSet) { _checkPrivateRedeclaration$6(obj, privateSet); privateSet.add(obj); }
@@ -4638,8 +4823,10 @@ this.BX.Crm = this.BX.Crm || {};
 	        PlayerAlert,
 	        DatePill,
 	        Note,
+	        FileList,
 	        InfoGroup,
-	        SmsMessage
+	        SmsMessage,
+	        MoneyPill
 	      };
 	    }
 	    /**
@@ -5550,12 +5737,26 @@ this.BX.Crm = this.BX.Crm || {};
 	  location.href = url;
 	}
 
+	function _classPrivateMethodInitSpec$8(obj, privateSet) { _checkPrivateRedeclaration$b(obj, privateSet); privateSet.add(obj); }
+
+	function _checkPrivateRedeclaration$b(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+
+	function _classPrivateMethodGet$8(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+
+	var _showFileUploaderPopup = /*#__PURE__*/new WeakSet();
+
 	let ToDo = /*#__PURE__*/function (_Base) {
 	  babelHelpers.inherits(ToDo, _Base);
 
-	  function ToDo() {
+	  function ToDo(...args) {
+	    var _this;
+
 	    babelHelpers.classCallCheck(this, ToDo);
-	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(ToDo).apply(this, arguments));
+	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(ToDo).call(this, ...args));
+
+	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _showFileUploaderPopup);
+
+	    return _this;
 	  }
 
 	  babelHelpers.createClass(ToDo, [{
@@ -5563,7 +5764,8 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function onItemAction(item, actionParams) {
 	      const {
 	        action,
-	        actionType
+	        actionType,
+	        actionData
 	      } = actionParams;
 
 	      if (actionType !== 'jsEvent') {
@@ -5577,6 +5779,10 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (action === 'EditableDescription:FinishEdit') {
 	        item.highlightContentBlockById('description', false);
 	      }
+
+	      if (action === 'Activity:ToDo:AddFile' && actionData) {
+	        _classPrivateMethodGet$8(this, _showFileUploaderPopup, _showFileUploaderPopup2).call(this, item, actionData);
+	      }
 	    }
 	  }], [{
 	    key: "isItemSupported",
@@ -5587,11 +5793,29 @@ this.BX.Crm = this.BX.Crm || {};
 	  return ToDo;
 	}(Base);
 
-	function _classPrivateMethodInitSpec$8(obj, privateSet) { _checkPrivateRedeclaration$b(obj, privateSet); privateSet.add(obj); }
+	function _showFileUploaderPopup2(item, actionData) {
+	  const isValidParams = main_core.Type.isNumber(actionData.entityId) && main_core.Type.isNumber(actionData.entityTypeId) && main_core.Type.isNumber(actionData.ownerId) && main_core.Type.isNumber(actionData.ownerTypeId);
 
-	function _checkPrivateRedeclaration$b(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	  if (!isValidParams) {
+	    return;
+	  }
 
-	function _classPrivateMethodGet$8(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	  actionData.files = actionData.files.split(',').filter(id => main_core.Type.isNumber(id));
+	  const fileList = item.getLayoutContentBlockById('fileList');
+
+	  if (fileList) {
+	    fileList.showFileUploaderPopup(actionData);
+	  } else {
+	    const popup = new crm_activity_fileUploaderPopup.FileUploaderPopup(actionData);
+	    popup.show();
+	  }
+	}
+
+	function _classPrivateMethodInitSpec$9(obj, privateSet) { _checkPrivateRedeclaration$c(obj, privateSet); privateSet.add(obj); }
+
+	function _checkPrivateRedeclaration$c(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+
+	function _classPrivateMethodGet$9(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 
 	var _openHelpdesk = /*#__PURE__*/new WeakSet();
 
@@ -5604,7 +5828,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    babelHelpers.classCallCheck(this, Helpdesk);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Helpdesk).call(this, ...args));
 
-	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _openHelpdesk);
+	    _classPrivateMethodInitSpec$9(babelHelpers.assertThisInitialized(_this), _openHelpdesk);
 
 	    return _this;
 	  }
@@ -5618,7 +5842,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      } = actionParams;
 
 	      if (action === 'Helpdesk:Open' && actionData && actionData.articleCode) {
-	        _classPrivateMethodGet$8(this, _openHelpdesk, _openHelpdesk2).call(this, actionData.articleCode);
+	        _classPrivateMethodGet$9(this, _openHelpdesk, _openHelpdesk2).call(this, actionData.articleCode);
 	      }
 	    }
 	  }], [{
@@ -5636,6 +5860,325 @@ this.BX.Crm = this.BX.Crm || {};
 	  }
 	}
 
+	var ListItemButton = {
+	  props: {
+	    text: {
+	      type: String,
+	      required: true
+	    },
+	    action: Object
+	  },
+	  methods: {
+	    executeAction() {
+	      if (this.action) {
+	        const action = new Action(this.action);
+	        action.execute(this);
+	      }
+	    }
+
+	  },
+	  // language=Vue
+	  template: `
+		<div class="crm-entity-stream-advice-list-btn-box">
+			<button
+				@click="executeAction"
+				class="crm-entity-stream-advice-list-btn"
+			>
+				{{text}}
+			</button>
+		</div>
+	`
+	};
+
+	var ListItem = {
+	  props: {
+	    title: {
+	      type: String,
+	      required: true
+	    },
+	    titleAction: Object,
+	    isSelected: {
+	      type: Boolean,
+	      required: false,
+	      default: false
+	    },
+	    image: String,
+	    showDummyImage: {
+	      type: Boolean,
+	      required: false,
+	      default: true
+	    },
+	    bottomBlock: Object,
+	    button: Object
+	  },
+	  components: {
+	    Text,
+	    Link,
+	    ListItemButton
+	  },
+	  computed: {
+	    imageStyle() {
+	      if (!this.image) {
+	        return {};
+	      }
+
+	      return {
+	        backgroundImage: 'url(' + this.image + ')'
+	      };
+	    }
+
+	  },
+	  // language=Vue
+	  template: `
+		<li
+			:class="{'crm-entity-stream-advice-list-item--active': isSelected}"
+			class="crm-entity-stream-advice-list-item"
+		>
+			<div class="crm-entity-stream-advice-list-content">
+				<div
+					v-if="image || showDummyImage"
+					:style="imageStyle"
+					class="crm-entity-stream-advice-list-icon"
+				>
+				</div>
+				<div class="crm-entity-stream-advice-list-inner">
+					<Link v-if="titleAction" :action="titleAction" :text="title"></Link>
+					<Text v-else :value="title"></Text>
+					<div v-if="bottomBlock" class="crm-entity-stream-advice-list-desc-box">
+						<LineOfTextBlocks v-bind="bottomBlock.properties"></LineOfTextBlocks>
+					</div>
+				</div>
+			</div>
+			<ListItemButton v-if="button" v-bind="button.properties"></ListItemButton>
+		</li>
+	`
+	};
+
+	var ExpandableList = {
+	  props: {
+	    listItems: {
+	      type: Array,
+	      required: true,
+	      default: []
+	    },
+	    title: {
+	      type: String,
+	      required: false,
+	      default: ''
+	    },
+	    showMoreEnabled: {
+	      type: Boolean,
+	      required: true
+	    },
+	    showMoreCnt: {
+	      type: Number,
+	      required: false
+	    },
+	    showMoreText: {
+	      type: String,
+	      required: false
+	    }
+	  },
+
+	  data() {
+	    return {
+	      isShortList: this.showMoreEnabled,
+	      shortListItemsCnt: this.showMoreCnt
+	    };
+	  },
+
+	  components: {
+	    ListItem
+	  },
+	  methods: {
+	    showMore() {
+	      this.isShortList = false;
+	    },
+
+	    isItemVisible(index) {
+	      return !this.isShortList || index < this.showMoreCnt;
+	    }
+
+	  },
+	  computed: {
+	    isShowMoreVisible() {
+	      return this.isShortList && this.listItems.length > this.shortListItemsCnt;
+	    },
+
+	    cnt() {
+	      return this.listItems.length;
+	    }
+
+	  },
+	  // language=Vue
+	  template: `
+		<div>
+			<div v-if="title" class="crm-entity-stream-advice-title">
+				{{title}}
+			</div>
+			<transition-group class="crm-entity-stream-advice-list" name="list" tag="ul">
+				<ListItem
+					v-for="(item, index) in listItems"
+					v-show="isItemVisible(index)"
+					:key="item.id"
+					v-bind="item.properties"
+				></ListItem>
+			</transition-group>
+			<a
+				v-if="isShowMoreVisible"
+				@click.prevent="showMore"
+				class="crm-entity-stream-advice-link"
+				href="#"
+			>
+				{{showMoreText}} ({{cnt}})
+			</a>
+		</div>
+	`
+	};
+
+	function _classPrivateMethodInitSpec$a(obj, privateSet) { _checkPrivateRedeclaration$d(obj, privateSet); privateSet.add(obj); }
+
+	function _classPrivateFieldInitSpec$5(obj, privateMap, value) { _checkPrivateRedeclaration$d(obj, privateMap); privateMap.set(obj, value); }
+
+	function _checkPrivateRedeclaration$d(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+
+	function _classPrivateMethodGet$a(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+
+	var _item = /*#__PURE__*/new WeakMap();
+
+	var _productsGrid = /*#__PURE__*/new WeakMap();
+
+	var _addProductToDeal = /*#__PURE__*/new WeakSet();
+
+	let DealProductList = /*#__PURE__*/function (_Base) {
+	  babelHelpers.inherits(DealProductList, _Base);
+
+	  function DealProductList(...args) {
+	    var _this;
+
+	    babelHelpers.classCallCheck(this, DealProductList);
+	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(DealProductList).call(this, ...args));
+
+	    _classPrivateMethodInitSpec$a(babelHelpers.assertThisInitialized(_this), _addProductToDeal);
+
+	    _classPrivateFieldInitSpec$5(babelHelpers.assertThisInitialized(_this), _item, {
+	      writable: true,
+	      value: null
+	    });
+
+	    _classPrivateFieldInitSpec$5(babelHelpers.assertThisInitialized(_this), _productsGrid, {
+	      writable: true,
+	      value: null
+	    });
+
+	    return _this;
+	  }
+
+	  babelHelpers.createClass(DealProductList, [{
+	    key: "getContentBlockComponents",
+	    value: function getContentBlockComponents(Item) {
+	      return {
+	        ExpandableList
+	      };
+	    }
+	  }, {
+	    key: "onInitialize",
+	    value: function onInitialize(item) {
+	      babelHelpers.classPrivateFieldSet(this, _item, item);
+	      main_core_events.EventEmitter.subscribe('onCrmEntityUpdate', () => {
+	        babelHelpers.classPrivateFieldGet(this, _item).reloadFromServer();
+	      });
+	      /**
+	       * For cases when timeline block controller initialization runs after product grid initialization
+	       */
+
+	      BX.Crm.EntityEditor.getDefault().tapController('PRODUCT_LIST', controller => {
+	        babelHelpers.classPrivateFieldSet(this, _productsGrid, controller.getProductList());
+	      });
+	      /**
+	       * For cases when timeline block controller initialization runs before product grid initialization
+	       */
+
+	      main_core_events.EventEmitter.subscribe('EntityProductListController', event => {
+	        babelHelpers.classPrivateFieldSet(this, _productsGrid, event.getData()[0]);
+	      });
+	    }
+	  }, {
+	    key: "onItemAction",
+	    value: function onItemAction(item, actionParams) {
+	      const {
+	        action,
+	        actionType,
+	        actionData,
+	        animationCallbacks
+	      } = actionParams;
+
+	      if (actionType !== 'jsEvent') {
+	        return;
+	      }
+
+	      if (action === 'ProductList:AddToDeal') {
+	        _classPrivateMethodGet$a(this, _addProductToDeal, _addProductToDeal2).call(this, actionData, animationCallbacks);
+	      }
+	    }
+	  }], [{
+	    key: "isItemSupported",
+	    value: function isItemSupported(item) {
+	      return item.getType() === 'ProductCompilation:SentToClient' || item.getType() === 'Order:EncourageBuyProducts';
+	    }
+	  }]);
+	  return DealProductList;
+	}(Base);
+
+	function _addProductToDeal2(actionData, animationCallbacks) {
+	  if (!(actionData && actionData.dealId && actionData.productId)) {
+	    return;
+	  }
+
+	  if (animationCallbacks.onStart) {
+	    animationCallbacks.onStart();
+	  }
+
+	  main_core.ajax.runAction('crm.timeline.dealproduct.addtodeal', {
+	    data: {
+	      dealId: actionData.dealId,
+	      productId: actionData.productId,
+	      options: actionData.options || {}
+	    }
+	  }).then(() => {
+	    BX.Crm.EntityEditor.getDefault().reload();
+
+	    if (babelHelpers.classPrivateFieldGet(this, _productsGrid)) {
+	      babelHelpers.classPrivateFieldGet(this, _productsGrid).reloadGrid(false);
+	    }
+
+	    ui_notification.UI.Notification.Center.notify({
+	      content: main_core.Loc.getMessage('CRM_TIMELINE_ENCOURAGE_BUY_PRODUCTS_PRODUCTS_ADDED_TO_DEAL'),
+	      actions: [{
+	        title: main_core.Loc.getMessage('CRM_TIMELINE_ENCOURAGE_BUY_PRODUCTS_EDIT_PRODUCTS'),
+	        events: {
+	          click: (event, balloon, action) => {
+	            BX.onCustomEvent(window, 'OpenEntityDetailTab', ['tab_products']);
+	            balloon.close();
+	          }
+	        }
+	      }],
+	      autoHideDelay: 5000
+	    });
+	    babelHelpers.classPrivateFieldGet(this, _item).reloadFromServer().then(() => {
+	      if (animationCallbacks.onStop) {
+	        animationCallbacks.onStop();
+	      }
+	    });
+	  }, response => {
+	    if (animationCallbacks.onStop) {
+	      animationCallbacks.onStop();
+	    }
+
+	    return true;
+	  });
+	}
+
 	ControllerManager.registerController(Activity);
 	ControllerManager.registerController(CommonContentBlocks);
 	ControllerManager.registerController(OpenLines);
@@ -5645,6 +6188,7 @@ this.BX.Crm = this.BX.Crm || {};
 	ControllerManager.registerController(Call);
 	ControllerManager.registerController(ToDo);
 	ControllerManager.registerController(Helpdesk);
+	ControllerManager.registerController(DealProductList);
 
 	exports.Item = Item;
 	exports.ConfigurableItem = ConfigurableItem;
@@ -5652,5 +6196,5 @@ this.BX.Crm = this.BX.Crm || {};
 	exports.ControllerManager = ControllerManager;
 	exports.BaseController = Base;
 
-}((this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}),BX.UI,BX.UI,BX.Event,BX,BX.Crm.Timeline,BX.Vue3.Components,BX.Main,BX.Currency,BX.Vue3,BX.UI,BX.Crm.DateTime,BX.Main,BX.Crm,BX.UI.Dialogs,BX.Crm.Timeline,BX,BX,BX.UI));
+}((this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}),BX.UI,BX.UI,BX.UI,BX,BX.Crm.Timeline,BX.Vue3.Components,BX.Main,BX.Currency,BX.Vue3,BX.UI,BX.Crm.DateTime,BX.UI.Icons.Generator,BX.Main,BX.Crm,BX.UI.Dialogs,BX.Crm.Timeline,BX.Crm.Activity,BX.Event,BX,BX));
 //# sourceMappingURL=index.bundle.js.map

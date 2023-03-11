@@ -3,7 +3,8 @@
 return [
 	'extensions' => [
 		'pull/client/events',
-		'rest',
 		'qrauth/utils',
+		'rest',
+		'tasks:entry',
 	]
 ];

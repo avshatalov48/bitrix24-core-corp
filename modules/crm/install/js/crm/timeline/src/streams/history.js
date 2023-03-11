@@ -17,8 +17,6 @@ import Visit from "../items/visit";
 import Zoom from "../items/zoom";
 import OrderCreation from "../items/order-creation";
 import OrderModification from "../items/order-modification";
-import StoreDocumentCreation from "../items/store-document-creation";
-import StoreDocumentModification from "../items/store-document-modification";
 import ExternalNoticeStatusModification from "../items/external-notice-status-modification";
 import ExternalNoticeModification from "../items/external-notice-modification";
 import OrderCheck from "../items/order-check";
@@ -803,38 +801,6 @@ export default class History extends Stream
 		{
 			return OrderModification.create(data["ID"], settings);
 		}
-		else if (typeId === OrderType.encourageBuyProducts)
-		{
-			settings.vueComponent = BX.Crm.Timeline.EncourageBuyProducts;
-			return HistoryItem.create(data["ID"], settings);
-		}
-	}
-
-	createStoreDocumentItem(data)
-	{
-		const entityId = BX.prop.getInteger(data, "ASSOCIATED_ENTITY_TYPE_ID", 0);
-		const typeId = BX.prop.getInteger(data, "TYPE_CATEGORY_ID", 0);
-		if (entityId !== BX.CrmEntityType.enumeration.storeDocument && entityId !== BX.CrmEntityType.enumeration.shipmentDocument)
-		{
-			return null;
-		}
-
-		const settings = {
-			history: this._history,
-			fixedHistory: this._fixedHistory,
-			container: this._wrapper,
-			activityEditor: this._activityEditor,
-			data: data
-		};
-
-		if (typeId === ItemType.creation)
-		{
-			return StoreDocumentCreation.create(data["ID"], settings);
-		}
-		else if (typeId === ItemType.modification)
-		{
-			return StoreDocumentModification.create(data["ID"], settings);
-		}
 	}
 
 	createProductCompilationItem(data)
@@ -854,11 +820,7 @@ export default class History extends Stream
 			data: data
 		};
 
-		if (typeId === CompilationType.productList)
-		{
-			settings.vueComponent = BX.Crm.Timeline.ProductCompilationList;
-		}
-		else if (typeId === CompilationType.orderExists)
+		if (typeId === CompilationType.orderExists)
 		{
 			settings.vueComponent = BX.Crm.Timeline.CompilationOrderNotice;
 		}
@@ -973,10 +935,6 @@ export default class History extends Stream
 		else if(typeId === ItemType.productCompilation)
 		{
 			return this.createProductCompilationItem(data);
-		}
-		else if (typeId === ItemType.storeDocument)
-		{
-			return this.createStoreDocumentItem(data);
 		}
 		else if (typeId === ItemType.externalNotification)
 		{

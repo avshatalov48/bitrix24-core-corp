@@ -233,7 +233,13 @@ else
 			'ENTITY_TYPE' => $entityType,
 			'VIEW_MODE' => $arResult['KANBAN_VIEW_MODE'],
 			'NAVIGATION_BAR' => (new NavigationBarPanel(CCrmOwnerType::Deal, $categoryID))
-				->setAllAllowableItems($activeItemId)
+				->setItems([
+					NavigationBarPanel::ID_KANBAN,
+					NavigationBarPanel::ID_LIST,
+					NavigationBarPanel::ID_ACTIVITY,
+					NavigationBarPanel::ID_CALENDAR,
+					NavigationBarPanel::ID_AUTOMATION
+				], $activeItemId)
 				->setBinding($arResult['NAVIGATION_CONTEXT_ID'])
 				->get()
 		],

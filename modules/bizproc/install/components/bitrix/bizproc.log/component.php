@@ -1,4 +1,9 @@
-<?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
+<?php
+
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 if (array_key_exists("COMPONENT_VERSION", $arParams) && $arParams["COMPONENT_VERSION"] == 2)
 {
@@ -64,7 +69,7 @@ if (array_key_exists("COMPONENT_VERSION", $arParams) && $arParams["COMPONENT_VER
 			$documentType = $documentId;
 		}
 
-		$arResult["GRID_ID"] = "bizproc_loggrid_".$arWorkflowState["WORKFLOW_TEMPLATE_ID"];
+		$arResult["GRID_ID"] = "bizproc_loggrid_" . ($arWorkflowState["WORKFLOW_TEMPLATE_ID"] ?? '');
 
 		$gridOptions = new CGridOptions($arResult["GRID_ID"]);
 		$gridColumns = $gridOptions->GetVisibleColumns();
@@ -267,7 +272,7 @@ if (array_key_exists("COMPONENT_VERSION", $arParams) && $arParams["COMPONENT_VER
 	{
 		if ($arParams["SET_TITLE"] == "Y")
 			$APPLICATION->SetTitle(GetMessage("BPABL_PAGE_TITLE").": ".$arResult["WorkflowState"]["TEMPLATE_NAME"]);
-		if ($arParams["SET_NAV_CHAIN"] == "Y")
+		if (isset($arParams["SET_NAV_CHAIN"]) && $arParams["SET_NAV_CHAIN"] === "Y")
 			$APPLICATION->AddChainItem(GetMessage("BPABL_PAGE_TITLE").": ".$arResult["WorkflowState"]["TEMPLATE_NAME"]);
 	}
 	else

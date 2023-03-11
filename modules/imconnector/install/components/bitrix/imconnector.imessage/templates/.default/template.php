@@ -2,19 +2,15 @@
 
 /** @var array $arParams */
 /** @var array $arResult */
-/** @global CMain $APPLICATION */
-/** @global CUser $USER */
-/** @global CDatabase $DB */
-/** @var CBitrixComponentTemplate $this */
+/** @global \CMain $APPLICATION */
+/** @global \CUser $USER */
+/** @global \CDatabase $DB */
+/** @var \CBitrixComponentTemplate $this */
 /** @var string $templateName */
 /** @var string $templateFile */
 /** @var string $templateFolder */
 /** @var string $componentPath */
 /** @var CBitrixComponent $component */
-/** $arResult['CONNECTION_STATUS']; */
-/** $arResult['REGISTER_STATUS']; */
-/** $arResult['ERROR_STATUS']; */
-/** $arResult['SAVE_STATUS']; */
 
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Localization\Loc;
@@ -22,7 +18,7 @@ use Bitrix\ImConnector\Connector;
 
 Loc::loadMessages(__FILE__);
 
-if($arParams['INDIVIDUAL_USE'] !== 'Y')
+if ($arParams['INDIVIDUAL_USE'] !== 'Y')
 {
 	$this->addExternalCss('/bitrix/components/bitrix/imconnector.settings/templates/.default/style.css');
 	$this->addExternalJs('/bitrix/components/bitrix/imconnector.settings/templates/.default/script.js');
@@ -32,13 +28,16 @@ if($arParams['INDIVIDUAL_USE'] !== 'Y')
 }
 
 $iconCode = Connector::getIconByConnector($arResult['CONNECTOR']);
-$placeholder = $arResult['placeholder']['business_id'] ? Loc::getMessage('IMCONNECTOR_COMPONENT_SETTINGS_PLACEHOLDER') : Loc::getMessage('IMCONNECTOR_COMPONENT_IMESSAGE_NAME_BUSINESS_ID');
+$placeholder = !empty($arResult['placeholder']['business_id'])
+	? Loc::getMessage('IMCONNECTOR_COMPONENT_SETTINGS_PLACEHOLDER')
+	: Loc::getMessage('IMCONNECTOR_COMPONENT_IMESSAGE_NAME_BUSINESS_ID');
 
-if($arResult['CAN_USE_CONNECTION'] === true)
+if (!empty($arResult['CAN_USE_CONNECTION']) && $arResult['CAN_USE_CONNECTION'] === true)
 {
 	$onClickConnectCode = 'popupIMessageShow(); return false;';
 	$onClickManuallyCode = 'BX.submit(BX(\'' . $arResult['CONNECTOR'] . '_action_form\'));';
-} else
+}
+else
 {
 	$onClickConnectCode = 'BX.UI.InfoHelper.show(\'' . $arResult['INFO_HELPER_LIMIT'] . '\'); return false;';
 	$onClickManuallyCode = 'BX.UI.InfoHelper.show(\'' . $arResult['INFO_HELPER_LIMIT'] . '\'); return false;';
@@ -52,7 +51,7 @@ if($arResult['CAN_USE_CONNECTION'] === true)
 </form>
 <?if(empty($arResult['PAGE'])): //case when not first open?>
 	<div class="imconnector-field-container">
-	<?if($arResult['STATUS'] === true): //case when connection competed?>
+	<?if (!empty($arResult['STATUS']) && $arResult['STATUS'] === true): //case when connection competed?>
 		<div class="imconnector-field-section imconnector-field-section-social">
 			<div class="imconnector-field-box">
 				<div class="connector-icon ui-icon ui-icon-service-<?=$iconCode?>"><i></i></div>
@@ -78,7 +77,7 @@ if($arResult['CAN_USE_CONNECTION'] === true)
 				</div>
 			</div>
 		</div>
-	<?elseif($arResult['ACTIVE_STATUS'] === true):?>
+	<? elseif(!empty($arResult['ACTIVE_STATUS']) && $arResult['ACTIVE_STATUS'] === true):?>
 		<div class="imconnector-field-section imconnector-field-section-social">
 			<div class="imconnector-field-box">
 				<div class="connector-icon ui-icon ui-icon-service-<?=$iconCode?>"><i></i></div>
@@ -161,7 +160,7 @@ if($arResult['CAN_USE_CONNECTION'] === true)
 	<?
 	include 'messages.php';
 
-	if($arResult['STATUS'])
+	if (!empty($arResult['STATUS']))
 	{
 		include 'info.php';
 	}
@@ -182,7 +181,7 @@ else:?>
 				<div class="connector-icon ui-icon ui-icon-service-<?=$iconCode?>"><i></i></div>
 			</div>
 			<div class="imconnector-field-box">
-			<?if($arResult['PAGE'] === 'connection'):?>
+			<? if (!empty($arResult['PAGE']) && $arResult['PAGE'] === 'connection'):?>
 				<div class="imconnector-field-main-subtitle">
 					<?=Loc::getMessage('IMCONNECTOR_COMPONENT_IMESSAGE_CONNECT_CONNECTION_TITLE')?>
 				</div>
@@ -214,7 +213,7 @@ else:?>
 			</div>
 		</div>
 		<?include 'messages.php'?>
-		<?if($arResult['PAGE'] === 'connection'):?>
+		<?if (!empty($arResult['PAGE']) && $arResult['PAGE'] === 'connection'):?>
 			<?
 			if(!empty($arResult['INFO_CONNECTION']))
 			{
@@ -233,17 +232,17 @@ else:?>
 							<?=Loc::getMessage('IMCONNECTOR_COMPONENT_IMESSAGE_NAME_BUSINESS_ID')?>:
 						</div>
 						<span class="imconnector-field-box-entity-link">
-						<?=htmlspecialcharsbx($arResult['FORM']['business_id'])?>
+							<?=htmlspecialcharsbx($arResult['FORM']['business_id'] ?? '')?>
 						</span>
 					</div>
 
-					<?if(!empty($arResult['FORM']['business_name'])):?>
+					<?if (!empty($arResult['FORM']['business_name'])):?>
 					<div class="imconnector-field-box-entity-row">
 						<div class="imconnector-field-box-subtitle">
 							<?=Loc::getMessage('IMCONNECTOR_COMPONENT_IMESSAGE_NAME_BUSINESS_NAME')?>:
 						</div>
 						<span class="imconnector-field-box-entity-link">
-						<?=htmlspecialcharsbx($arResult['FORM']['business_name'])?>
+							<?=htmlspecialcharsbx($arResult['FORM']['business_name'])?>
 						</span>
 					</div>
 					<?endif;?>
@@ -290,7 +289,7 @@ else:?>
 							   class="imconnector-field-control-input"
 							   id="imconnector-imessage-business-id"
 							   name="business_id"
-							   value="<?=htmlspecialcharsbx($arResult['FORM']['business_id'])?>"
+							   value="<?=htmlspecialcharsbx($arResult['FORM']['business_id'] ?? '')?>"
 							   placeholder="<?=$placeholder?>">
 						<button class="ui-btn ui-btn-success"
 								id="webform-small-button-have-bot"

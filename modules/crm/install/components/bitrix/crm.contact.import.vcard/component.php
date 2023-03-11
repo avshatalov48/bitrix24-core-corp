@@ -694,7 +694,7 @@ if (isset($_REQUEST['import']) && isset($_SESSION['CRM_IMPORT_FILE']))
 									$elementContent = $reader->getElementContent();
 									$arResult['error']++;
 									$arResult['error_data'][] = Array(
-										'message' => $errors[0],
+										'message' => CCrmComponentHelper::encodeErrorMessage((string)$errors[0] ?? ''),
 										'data' => $elementContent
 									);
 
@@ -756,7 +756,7 @@ if (isset($_REQUEST['import']) && isset($_SESSION['CRM_IMPORT_FILE']))
 				$elementContent = $reader->getElementContent();
 				$arResult['error']++;
 				$arResult['error_data'][] = Array(
-					'message' => $fields['RESULT_MESSAGE'],
+					'message' => CCrmComponentHelper::encodeErrorMessage((string)$fields['RESULT_MESSAGE'] ?? ''),
 					'data' => $elementContent
 				);
 
@@ -776,7 +776,7 @@ if (isset($_REQUEST['import']) && isset($_SESSION['CRM_IMPORT_FILE']))
 							$elementContent = $reader->getElementContent();
 							$arResult['error']++;
 							$arResult['error_data'][] = Array(
-								'message' => $errors[0],
+								'message' => CCrmComponentHelper::encodeErrorMessage((string)$errors[0] ?? ''),
 								'data' => $elementContent
 							);
 

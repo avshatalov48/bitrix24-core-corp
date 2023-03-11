@@ -191,6 +191,14 @@ export class TodoCreateNotification
 		}
 	}
 
+	#onChangeUploaderContainerSize()
+	{
+		if (this.#popup)
+		{
+			this.#popup.adjustPosition();
+		}
+	}
+
 	#onSkipMenuItemSelect(period): void
 	{
 		this.#popup?.getButton(SKIP_BUTTON_ID)?.getMenuWindow()?.close();
@@ -326,6 +334,7 @@ export class TodoCreateNotification
 			events: {
 				onChangeDescription: this.#onChangeDescription.bind(this),
 				onSaveHotkeyPressed: this.#onSaveHotkeyPressed.bind(this),
+				onChangeUploaderContainerSize: this.#onChangeUploaderContainerSize.bind(this),
 			},
 			borderColor: TodoEditor.BorderColor.PRIMARY,
 		});

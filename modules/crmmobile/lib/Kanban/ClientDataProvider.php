@@ -32,12 +32,12 @@ class ClientDataProvider extends KanbanDataProvider
 
 		return array_merge(
 			$contactData, [
-							'id' => $clientInfo[$entityTypeName . '_ID'],
-							'subtitle' => '',
-							'title' => $this->formatTitle($clientInfo),
-							'type' => strtolower($entityTypeName),
-							'hidden' => $hidden,
-						]
+				'id' => $clientInfo[$entityTypeName . '_ID'] ?? null,
+				'subtitle' => '',
+				'title' => $this->formatTitle($clientInfo),
+				'type' => strtolower($entityTypeName),
+				'hidden' => $hidden,
+			]
 		);
 	}
 

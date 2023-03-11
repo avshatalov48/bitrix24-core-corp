@@ -128,7 +128,7 @@
 			this.bindEvents();
 			this.checkToolbarPanel();
 
-			this.showTab(this.activeTab);
+			this.showTab(this.activeTab, false);
 		}
 
 		componentWillUnmount()
@@ -441,7 +441,7 @@
 			}
 		}
 
-		showTab(activeTabId)
+		showTab(activeTabId, animate = true)
 		{
 			this.activeTab = activeTabId;
 
@@ -453,7 +453,7 @@
 				const tabPosition = this.availableTabs.findIndex((tab) => tab.id === activeTabId);
 				if (tabPosition >= 0)
 				{
-					this.sliderRef.scrollToPage(tabPosition);
+					this.sliderRef.scrollToPage(tabPosition, animate);
 				}
 			}
 		}
@@ -598,13 +598,12 @@
 
 		isEnabledTopToolbar()
 		{
-			return (
-				this.topToolbarFactory
-				&& this.topToolbarFactory.has({
-					typeId: this.getEntityTypeId(),
-					activeTab: this.activeTab,
-				})
-			);
+			if (!this.topToolbarFactory)
+			{
+				return false;
+			}
+
+			return this.topToolbarFactory.has({ typeId: this.getEntityTypeId() });
 		}
 
 		renderTopToolbar(duration)
@@ -614,7 +613,6 @@
 				return this.topToolbarFactory.create(
 					{
 						typeId: this.getEntityTypeId(),
-						activeTab: this.activeTab,
 					},
 					{
 						...this.getComponentParams(),
@@ -650,12 +648,15 @@
 
 		renderSlider()
 		{
+			const initPage = this.availableTabs.findIndex(({ id }) => id === this.activeTab);
+
 			return Slider(
 				{
 					bounces: true,
 					style: {
 						flex: 1,
 					},
+					initPage: Math.max(0, initPage),
 					ref: (ref) => this.sliderRef = ref,
 					onPageWillChange: this.handleSliderPageWillChange.bind(this),
 					onPageChange: this.handleSliderPageChange.bind(this),
@@ -1118,7 +1119,7 @@
 
 				if (this.activeTab === tabId)
 				{
-					this.showTab(this.activeTab);
+					this.showTab(this.activeTab, false);
 				}
 			}
 
@@ -1234,20 +1235,27 @@
 			}
 
 			let promise = Promise.resolve();
+			let entityWasSaved = false;
 
 			if (this.isChanged)
 			{
+				const onSaveHandler = (resolve, reject) => () => {
+					entityWasSaved = true;
+					this.handleSave().then(resolve).catch(reject);
+				};
+				const onDiscardHandler = (resolve) => () => resolve();
+
 				promise = promise.then(() => new Promise((resolve, reject) => {
 					this.showConfirmExitEntity(
-						() => this.handleSave().then(resolve).catch(reject),
-						resolve,
+						onSaveHandler(resolve, reject),
+						onDiscardHandler(resolve, reject),
 					);
 				}));
 			}
 
 			if (this.onCloseHandler)
 			{
-				promise = promise.then(() => this.onCloseHandler());
+				promise = promise.then(() => this.onCloseHandler(entityWasSaved));
 			}
 
 			return promise.then(() => this.close());
@@ -1494,7 +1502,6 @@
 			this.isEditing = false;
 			this.isSaving = false;
 
-			this.setLoading(false);
 			this.clearTabsExternalData();
 
 			const { entityId, title, header, params, load } = response.data;
@@ -1518,6 +1525,8 @@
 				this.setComponentParams({ entityId, title });
 				this.entityModel.ID = entityId;
 			}
+
+			this.setLoading(false);
 
 			const { closeOnSave } = this.getComponentParams();
 			if (closeOnSave)

@@ -100,7 +100,7 @@ if (!function_exists('getImolUserDataAvatarTemplate'))
 		?>
 		<span data-imopenlines-user-photo-edit-avatar-item="" data-file-id="%file_id%" data-path="%path%" class="imopenlines-user-photo-upload-item-added-completed-item">
 			<span data-remove="" class="imopenlines-user-photo-upload-item-remove"></span>
-			<span data-view="" style="background-image: url(%path%)" class="imopenlines-user-photo-upload-item"></span>
+			<span data-view="" style="background-image: url(%url_path%)" class="imopenlines-user-photo-upload-item"></span>
 			<span class="imopenlines-user-photo-upload-item-selected"></span>
 		</span>
 		<?

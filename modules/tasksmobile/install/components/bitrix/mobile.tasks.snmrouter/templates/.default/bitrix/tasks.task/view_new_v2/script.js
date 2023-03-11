@@ -634,7 +634,7 @@
 					}
 					else if (action == 'APPROVE') {
 						menu_items.push({
-							name: BX.message('MB_TASKS_TASK_DETAIL_BTN_APPROVE_TASK'),
+							name: BX.message('MB_TASKS_TASK_DETAIL_BTN_APPROVE_TASK_MSGVER_1'),
 							icon: 'check',
 							action: BX.proxy(function () { this.act('approve'); }, this)
 						});

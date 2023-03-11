@@ -9,6 +9,7 @@ use Bitrix\Tasks\Integration\Bizproc\Automation\Factory;
 use Bitrix\Tasks\Internals\Task\MemberTable;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\TaskLimit;
+use Bitrix\Socialnetwork;
 
 if (!Main\Loader::includeModule('bizproc'))
 {
@@ -329,7 +330,7 @@ class Task implements \IBPWorkflowDocument
 				'Type' => 'string',
 				'Editable' => true,
 				'Multiple' => true,
-			]
+			],
 		];
 
 		if (isset($documentType) && (self::isPlanTask($documentType) || self::isPersonalTask($documentType)))
@@ -344,6 +345,23 @@ class Task implements \IBPWorkflowDocument
 					'U' => Loc::getMessage('TASKS_BP_DOCUMENT_MEMBER_ROLE_U'),
 				]
 			];
+		}
+
+		if (Main\Loader::includeModule('forum'))
+		{
+			$fields['COMMENT_RESULT'] = [
+				'Name' => Loc::getMessage('TASKS_BP_DOCUMENT_COMMENT_RESULT'),
+				'Type' => 'text',
+				//'Editable' => true,
+				'Multiple' => true,
+			];
+			$fields['COMMENT_RESULT_LAST'] = [
+				'Name' => Loc::getMessage('TASKS_BP_DOCUMENT_COMMENT_RESULT_LAST'),
+				'Type' => 'text',
+				//'Editable => true,
+				'Multiple' => false,
+			];
+
 		}
 
 		return array_merge($fields, self::getFieldsCreatedByUser());
@@ -426,25 +444,35 @@ class Task implements \IBPWorkflowDocument
 			}
 		}
 
+		if (Main\Loader::includeModule('forum'))
+		{
+			$fields['COMMENT_RESULT'] =
+				(new \Bitrix\Tasks\Internals\Task\Result\ResultManager(0))
+					->getTaskResults((int)$documentId)
+			;
+			$fields['COMMENT_RESULT_LAST'] = \Bitrix\Tasks\Internals\Task\Result\ResultManager::getLastResult((int)$documentId);
+		}
+
 		static::convertFieldsToDocument($fields);
+
 		return $fields;
 	}
 
 	private static function getMemberRole($memberId, array $fields)
 	{
-		if ($memberId === (int) $fields['CREATED_BY'])
+		if ($memberId === (int)$fields['CREATED_BY'])
 		{
 			return 'O';
 		}
 
-		if ($memberId === (int) $fields['RESPONSIBLE_ID'])
+		if ($memberId === (int)$fields['RESPONSIBLE_ID'])
 		{
 			return 'R';
 		}
 
 		foreach ($fields['ACCOMPLICES'] as $accomplice)
 		{
-			if ($memberId === (int) $accomplice)
+			if ($memberId === (int)$accomplice)
 			{
 				return 'A';
 			}
@@ -452,7 +480,7 @@ class Task implements \IBPWorkflowDocument
 
 		foreach ($fields['AUDITORS'] as $auditor)
 		{
-			if ($memberId === (int) $auditor)
+			if ($memberId === (int)$auditor)
 			{
 				return 'U';
 			}
@@ -723,6 +751,15 @@ class Task implements \IBPWorkflowDocument
 
 	public static function getAllowableUserGroups($documentType)
 	{
+		if (static::isScrumProjectTask($documentType))
+		{
+			return [
+				'scrum_owner' => Loc::getMessage('TASKS_BP_DOCUMENT_SCRUM_OWNER_ROLE'),
+				'scrum_master' => Loc::getMessage('TASKS_BP_DOCUMENT_SCRUM_MASTER_ROLE'),
+				'scrum_team' => Loc::getMessage('TASKS_BP_DOCUMENT_SCRUM_TEAM_ROLE'),
+			];
+		}
+
 		return [];
 	}
 
@@ -737,8 +774,65 @@ class Task implements \IBPWorkflowDocument
 
 			return $member ? [$member['USER_ID']] : [];
 		}
+		elseif (strpos($group, 'scrum_') === 0)
+		{
+			$projectId = static::getProjectId($documentId);
+
+			if ($projectId && Main\Loader::includeModule('socialnetwork'))
+			{
+				$workGroup = Socialnetwork\Item\Workgroup::getById($projectId);
+				$scrumMaster = (int)$workGroup->getScrumMaster();
+
+				if ($group === 'scrum_master')
+				{
+					return [$scrumMaster];
+				}
+
+				if ($group === 'scrum_owner')
+				{
+					$owner = Socialnetwork\UserToGroupTable::getList([
+						'filter' => [
+							'=ROLE' => Socialnetwork\UserToGroupTable::ROLE_OWNER,
+							'=GROUP_ID' => $projectId,
+						],
+						'cache' => [
+							'ttl' => 3600
+						],
+					])->fetch();
+
+					return $owner ? [$owner['USER_ID']] : [];
+				}
+
+				//else ($group === 'scrum_team')
+				$teamRows = Socialnetwork\UserToGroupTable::getList([
+					'filter' => [
+						'=ROLE' => Socialnetwork\UserToGroupTable::ROLE_MODERATOR,
+						'=GROUP_ID' => $projectId,
+					],
+					'cache' => [
+						'ttl' => 3600
+					],
+				])->fetchAll();
+
+				$team = array_column($teamRows, 'USER_ID');
+				$team = array_map(fn($user) => (int)$user, $team);
+
+				return array_filter($team, fn($user) => $user !== $scrumMaster);
+			}
+		}
 
 		return [];
+	}
+
+	private static function getProjectId(int $documentId): int
+	{
+		$document = static::getDocument($documentId);
+		if ($document && $document['GROUP_ID'])
+		{
+			return (int)$document['GROUP_ID'];
+		}
+
+		return 0;
 	}
 
 	private static function convertFieldsToDocument(array &$fields)
@@ -809,6 +903,24 @@ class Task implements \IBPWorkflowDocument
 		if ((int)$fields['PARENT_ID'] <= 0) // issue: 0155930
 		{
 			$fields['PARENT_ID'] = null;
+		}
+
+		if (is_array($fields['COMMENT_RESULT']))
+		{
+			$results = [];
+			/** @var \Bitrix\Tasks\Internals\Task\Result\Result $result */
+			foreach ($fields['COMMENT_RESULT'] as $result)
+			{
+				$results[] = htmlspecialcharsback($result->getText()); //$result->getFormattedText();
+			}
+
+			$fields['COMMENT_RESULT'] = array_reverse($results);
+			unset($results, $result);
+		}
+
+		if (is_array($fields['COMMENT_RESULT_LAST']))
+		{
+			$fields['COMMENT_RESULT_LAST'] = htmlspecialcharsback($fields['COMMENT_RESULT_LAST']['TEXT']);
 		}
 	}
 
@@ -908,6 +1020,8 @@ class Task implements \IBPWorkflowDocument
 				$result[] = (string) $val;
 			}
 		}
+
+		$result = array_filter($result, fn($date) => \CheckDateTime($date));
 
 		return $multiple ? $result : reset($result);
 	}

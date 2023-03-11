@@ -9,7 +9,7 @@ $APPLICATION->AddHeadScript('/bitrix/components/bitrix/intranet.user.selector.ne
 
 $namePrefix = CUtil::jsEscape($arResult['NAME']);
 $selectorName = 'O_' . $namePrefix;
-
+$bExtranet ??= null;
 $ajaxUrl = $this->__component->GetPath() . '/ajax.php?' .
 	http_build_query(
 		array(

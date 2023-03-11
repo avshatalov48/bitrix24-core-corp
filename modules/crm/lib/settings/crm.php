@@ -14,6 +14,7 @@ class Crm
 
 	private const UNIVERSAL_ACTIVITY_OPTION_NAME = 'UNIVERSAL_ACTIVITY_ENABLED';
 	private const DOCUMENT_SIGNING_OPTION_NAME = 'DOCUMENTS_SIGNING_ENABLED';
+	private const LF_GENERATION_OPTION_NAME = 'LIVE_FEED_RECORDS_GENERATION_ENABLED';
 
 	public static function wasInitiated(): bool
 	{
@@ -24,10 +25,28 @@ class Crm
 	{
 		if (!self::wasInitiated())
 		{
-			\Bitrix\Main\Config\Option::set(self::OPTION_MODULE, self::OPTION_NAME, true);
-			$GLOBALS['CACHE_MANAGER']->ClearByTag('crm_initiated');
-			\Bitrix\Crm\Integration\PullManager::getInstance()->sendCrmInitiatedEvent();
+			$pullManager = \Bitrix\Crm\Integration\PullManager::getInstance();
+
+			if ($pullManager->isEnabled())
+			{
+				$channelShared = $pullManager->getChannelShared();
+				if (is_array($channelShared))
+				{
+					self::setInitiatedOption();
+					$pullManager->sendCrmInitiatedEvent($channelShared);
+				}
+			}
+			else
+			{
+				self::setInitiatedOption();
+			}
 		}
+	}
+
+	private static function setInitiatedOption(): void
+	{
+		\Bitrix\Main\Config\Option::set(self::OPTION_MODULE, self::OPTION_NAME, true);
+		$GLOBALS['CACHE_MANAGER']->ClearByTag('crm_initiated');
 	}
 
 	public static function isUniversalActivityScenarioEnabled(): bool
@@ -71,5 +90,18 @@ class Crm
 		{
 			$relationManager->unbindTypes($relationIdentifier);
 		}
+	}
+
+	public static function isLiveFeedRecordsGenerationEnabled(): bool
+	{
+		return (
+			Loader::includeModule('socialnetwork')
+			&& (bool)\Bitrix\Main\Config\Option::get(self::OPTION_MODULE, self::LF_GENERATION_OPTION_NAME, true)
+		);
+	}
+
+	public static function setLiveFeedRecordsGenerationEnabled(bool $isEnabled): void
+	{
+		\Bitrix\Main\Config\Option::set(self::OPTION_MODULE, self::LF_GENERATION_OPTION_NAME, $isEnabled);
 	}
 }

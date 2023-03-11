@@ -1780,18 +1780,27 @@ class ResultEntity
 			$isEntityAdded = !$entity['IS_DUPLICATE'];
 			$entityTypeName = $entity['ENTITY_NAME'];
 			$entityId = $entity['ITEM_ID'];
-			$errors = array();
-			\CCrmBizProcHelper::AutoStartWorkflows(
-				\CCrmOwnerType::ResolveID($entityTypeName),
-				$entityId,
-				$isEntityAdded ? \CCrmBizProcEventType::Create : \CCrmBizProcEventType::Edit,
-				$errors
-			);
 
-			if($isEntityAdded && empty($entity['IS_AUTOMATION_RUN']))
+			$wasAutomationLaunchedInOperation =
+				$entityTypeName === \CCrmOwnerType::QuoteName
+				&& Crm\Settings\QuoteSettings::getCurrent()->isFactoryEnabled()
+			;
+
+			if (!$wasAutomationLaunchedInOperation)
 			{
-				$starter = new Automation\Starter(\CCrmOwnerType::ResolveID($entityTypeName), $entityId);
-				$starter->runOnAdd();
+				$errors = array();
+				\CCrmBizProcHelper::AutoStartWorkflows(
+					\CCrmOwnerType::ResolveID($entityTypeName),
+					$entityId,
+					$isEntityAdded ? \CCrmBizProcEventType::Create : \CCrmBizProcEventType::Edit,
+					$errors
+				);
+
+				if($isEntityAdded && empty($entity['IS_AUTOMATION_RUN']))
+				{
+					$starter = new Automation\Starter(\CCrmOwnerType::ResolveID($entityTypeName), $entityId);
+					$starter->runOnAdd();
+				}
 			}
 
 			$bindings[] = array(
@@ -2397,11 +2406,9 @@ class ResultEntity
 	 */
 	private function getEntityLink(string $link, string $entityName): string
 	{
-		return Loc::getMessage('CRM_WEBFORM_RESULT_ENTITY_NOTIFY_MESSAGE')
-			. ': '
-			. '<a href="' . $link . '">'
-			. htmlspecialcharsbx($entityName)
-			. '</a>';
+		return Loc::getMessage('CRM_WEBFORM_RESULT_ENTITY_NOTIFY_MESSAGE_LINK', [
+			'#ENTITY_LINK#' => '<a href="' . $link . '">' . htmlspecialcharsbx($entityName) . '</a>',
+		]);
 	}
 
 	private function removeIgnoredActivityBindings(array $bindings): array

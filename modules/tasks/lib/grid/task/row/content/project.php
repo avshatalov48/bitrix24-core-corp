@@ -3,6 +3,7 @@ namespace Bitrix\Tasks\Grid\Task\Row\Content;
 
 use Bitrix\Main;
 use Bitrix\Main\Web\Json;
+use Bitrix\Main\Web\Uri;
 use Bitrix\Tasks\Grid\Task\Row\Content;
 
 /**
@@ -70,7 +71,7 @@ class Project extends Content
 			'tasks-grid-avatar',
 		];
 
-		$photo = (!empty($groupImage) ? "<i style='background-image: url(\"{$groupImage}\")'></i>" : "<i></i>");
+		$photo = (!empty($groupImage) ? '<i style="background-image: url(\'' . Uri::urnEncode($groupImage) . '\')"></i>' : '<i></i>');
 
 		if (
 			empty($groupImage)

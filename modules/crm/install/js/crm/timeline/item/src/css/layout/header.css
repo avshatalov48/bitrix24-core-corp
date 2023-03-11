@@ -1,9 +1,13 @@
 
 .crm-timeline__card-top {
-	padding: var(--ui-space-inset-sm, 12px) var(--ui-space-inset-md, 16px) 0 var(--ui-space-inset-md, 16px);
+	padding: 0 var(--ui-space-inset-md, 16px) 0 var(--ui-space-inset-md, 16px);
 	display: flex;
 	justify-content: space-between;
 	margin-bottom: 4px;
+}
+
+.crm-timeline__card-top.--log-message {
+	margin-bottom: -4px;
 }
 
 .crm-timeline__card-top:last-child {

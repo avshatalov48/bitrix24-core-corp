@@ -18,6 +18,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\SystemException;
 use Bitrix\Tasks\Internals\DataBase\LazyAccess;
+use Bitrix\Tasks\Internals\Task\LabelTable;
 use Bitrix\Tasks\Item\Access;
 use Bitrix\Tasks\Item\Collection;
 use Bitrix\Tasks\Item\Context;

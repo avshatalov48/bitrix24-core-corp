@@ -14,7 +14,7 @@ export default {
 			}
 
 			return {
-				'background-image': 'url(' + this.author.IMAGE_URL + ')',
+				'background-image': 'url(' + encodeURI(this.author.IMAGE_URL) + ')',
 				'background-size': '21px',
 			};
 		},

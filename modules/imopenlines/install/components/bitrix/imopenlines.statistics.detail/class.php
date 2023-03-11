@@ -12,6 +12,7 @@ use \Bitrix\Imopenlines\Limit,
 	\Bitrix\ImOpenlines\Security,
 	\Bitrix\ImOpenLines\Model\SessionTable,
 	\Bitrix\ImOpenlines\Security\Permissions;
+use Bitrix\Main\Web\Uri;
 
 class ImOpenLinesComponentStatisticsDetail extends \CBitrixComponent
 {
@@ -315,7 +316,7 @@ class ImOpenLinesComponentStatisticsDetail extends \CBitrixComponent
 	{
 		$name = '';
 
-		if (\CModule::IncludeModule('crm'))
+		if (\Bitrix\Main\Loader::includeModule('crm'))
 		{
 			$name = \CCrmOwnerType::GetDescription(\CCrmOwnerType::ResolveID($type));
 		}
@@ -852,7 +853,7 @@ class ImOpenLinesComponentStatisticsDetail extends \CBitrixComponent
 	 */
 	protected function getFilterUrl(string $path, array $parameters = []): string
 	{
-		$uri = new \Bitrix\Main\Web\Uri($path);
+		$uri = new Uri($path);
 
 		$filterReserved = [
 			//filter
@@ -955,14 +956,14 @@ class ImOpenLinesComponentStatisticsDetail extends \CBitrixComponent
 		}
 		else
 		{
-			if ($userId > 0)
+			if ($userId > 0 && isset($userData[$userId]))
 			{
 				$photoStyle = '';
 				$photoClass = '';
 
-				if ($userData[$userId]["PHOTO"])
+				if (!empty($userData[$userId]["PHOTO"]))
 				{
-					$photoStyle = "background: url('".$userData[$userId]["PHOTO"]."') no-repeat center;";
+					$photoStyle = "background: url('".Uri::urnEncode($userData[$userId]["PHOTO"])."') no-repeat center;";
 				}
 				else
 				{
@@ -1853,7 +1854,7 @@ class ImOpenLinesComponentStatisticsDetail extends \CBitrixComponent
 			$newRow["OPERATOR_NAME"] = $this->getUserHtml($row["data"]["OPERATOR_ID"], $arUsers);
 			$newRow["MODE_NAME"] = $row["data"]["MODE"] == 'input'? Loc::getMessage('OL_COMPONENT_TABLE_INPUT'): Loc::getMessage('OL_COMPONENT_TABLE_OUTPUT');
 
-			$newRow["SOURCE_TEXT"] = $arSources[$row["data"]["SOURCE"]];
+			$newRow["SOURCE_TEXT"] = $arSources[mb_strtolower($row["data"]["SOURCE"])];
 
 			$newRow['STATUS'] = $this->formatStatus($row['data']['STATUS']);
 			$newRow['STATUS_DETAIL'] = $this->formatStatusDetail($row['data']['STATUS']);

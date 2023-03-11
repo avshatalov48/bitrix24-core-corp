@@ -8,19 +8,11 @@ use Bitrix\Rest;
 
 class WebHookTrigger extends BaseTrigger
 {
-	protected static function areDynamicTypesSupported(): bool
-	{
-		return false;
-	}
-
 	public static function isEnabled()
 	{
 		return (
 			Main\Loader::includeModule('rest')
-			&& (
-				!class_exists(Rest\Engine\Access::class)
-				|| Rest\Engine\Access::isAvailable()
-			)
+			&& Rest\Engine\Access::isAvailable()
 		);
 	}
 
@@ -60,8 +52,14 @@ class WebHookTrigger extends BaseTrigger
 		);
 	}
 
-	private static function getPassword($userId)
+	private static function getPassword($userId = null)
 	{
+		if ($userId === null)
+		{
+			$user = Main\Engine\CurrentUser::get();
+			$userId = $user->getId();
+		}
+
 		$result = null;
 
 		$userId = (int)$userId;
@@ -125,6 +123,31 @@ class WebHookTrigger extends BaseTrigger
 		}
 
 		return null;
+	}
+
+	protected static function getPropertiesMap(): array
+	{
+		return [
+			[
+				'Id' => 'code',
+				'Type' => '@webhook-code',
+				'Name' => 'URL',
+				'Copyable' => false,
+				'Settings' => [
+					'Handler' => sprintf(
+						'%srest/{{USER_ID}}/{{PASSWORD}}/crm.automation.trigger/?target={{DOCUMENT_TYPE}}_{{ID}}',
+						SITE_DIR,
+					),
+					'Password' => self::getPassword(),
+					'PasswordLoader' => [
+						'type' => 'component',
+						'component' => 'bitrix:crm.automation',
+						'action' => 'generateWebhookPassword',
+						'mode' => 'class',
+					],
+				],
+			],
+		];
 	}
 
 	public static function toArray()

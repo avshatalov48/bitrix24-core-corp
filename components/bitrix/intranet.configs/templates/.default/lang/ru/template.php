@@ -32,6 +32,7 @@ $MESS["CONFIG_ADD_LOGO_BUTTON"] = "Загрузить логотип";
 $MESS["CONFIG_ADD_LOGO_DELETE"] = "Удалить логотип";
 $MESS["CONFIG_ADD_LOGO_DELETE_CONFIRM"] = "Вы уверены, что хотите удалить логотип?";
 $MESS["CONFIG_ALLOW_TOALL"] = "Разрешать адресовать \"Всем\" сообщения в Живой ленте";
+$MESS["CONFIG_ALLOW_SEARCH_NETWORK"] = "Разрешать поиск Открытых линий в Битрикс24.Network";
 $MESS["CONFIG_IM_CHAT_RIGHTS"] = "Разрешать отправлять сообщения в \"Общий чат\"";
 $MESS["CONFIG_DEFAULT_TOALL"] = "Отображать адресацию \"Всем\" по умолчанию";
 $MESS["CONFIG_TOALL_RIGHTS_ADD"] = "Добавить";

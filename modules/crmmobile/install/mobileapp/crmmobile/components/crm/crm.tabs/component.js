@@ -12,13 +12,14 @@
 	const { Search } = jn.require('crm/entity-tab/search');
 	const { ActivityCountersStoreManager } = jn.require('crm/state-storage');
 	const { Type } = jn.require('crm/type');
+	const { PureComponent } = jn.require('layout/pure-component');
 
 	const TAB_BIG_LABEL = '99+';
 
 	/**
 	 * @class CrmTabs
 	 */
-	class CrmTabs extends LayoutComponent
+	class CrmTabs extends PureComponent
 	{
 		constructor(props)
 		{
@@ -175,7 +176,6 @@
 						item.label = this.getPreparedLabel(counters[code]);
 						const preparedItem = this.getPreparedTabItem(item);
 						this.updateTabItem(preparedItem);
-						this.modifyCache({ label: item.label }, tab.id);
 					}
 				}
 			});
@@ -470,23 +470,20 @@
 			};
 		}
 
-		getPreparedLabel(label, tabId)
+		getPreparedLabel(label)
 		{
 			if (!label)
 			{
 				return '';
 			}
 
-			let counter = Number(label);
+			const counter = Number(label);
 			if (isNaN(counter))
 			{
 				return String(label);
 			}
 
-			counter = (counter > 99 ? TAB_BIG_LABEL : String(counter));
-			this.modifyCache({ label: counter }, tabId);
-
-			return counter;
+			return (counter > 99 ? TAB_BIG_LABEL : String(counter));
 		}
 
 		getEntityTypes()
@@ -563,7 +560,7 @@
 				modifyData.permissions = permissions;
 			}
 
-			if(data.link && tab.link !== data.link)
+			if (data.link && tab.link !== data.link)
 			{
 				const { link } = data;
 				tab.link = link;
@@ -575,7 +572,7 @@
 			if (!isNaN(Number(data.categoryId)) && tab.data.currentCategoryId !== data.categoryId)
 			{
 				const { categoryId } = data;
-				tab.data.currentCategoryId = categoryId
+				tab.data.currentCategoryId = categoryId;
 
 				modifyData.data = modifyData.data || {};
 				modifyData.data.currentCategoryId = categoryId;
@@ -590,7 +587,7 @@
 				modifyData.data.counters = counters;
 			}
 
-			if(data.sortType && tab.data.sortType !== data.sortType)
+			if (data.sortType && tab.data.sortType !== data.sortType)
 			{
 				const { sortType } = data;
 				tab.data.sortType = sortType;

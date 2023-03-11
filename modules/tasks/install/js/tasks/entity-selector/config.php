@@ -35,6 +35,10 @@ return [
 					'itemOptions' => [
 						'default' => [
 							'avatar' => '/bitrix/js/tasks/entity-selector/src/images/default-tag.svg',
+							'badgesOptions' => [
+								'fitContent' => true,
+								'maxWidth' => 100,
+							],
 						],
 					],
 				],

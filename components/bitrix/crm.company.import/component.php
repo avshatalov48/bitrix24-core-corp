@@ -1716,7 +1716,7 @@ else if (isset($_REQUEST['import']) && isset($_SESSION['CRM_IMPORT_FILE']))
 
 				$arResult['error']++;
 				$arResult['error_data'][] = Array(
-					'message' => $arCompany['RESULT_MESSAGE'],
+					'message' => CCrmComponentHelper::encodeErrorMessage((string)($arCompany['RESULT_MESSAGE'] ?? '')),
 					'data' => $errRows
 				);
 
@@ -1747,7 +1747,7 @@ else if (isset($_REQUEST['import']) && isset($_SESSION['CRM_IMPORT_FILE']))
 
 							$arResult['error']++;
 							$arResult['error_data'][] = Array(
-								'message' => $errors[0],
+								'message' => CCrmComponentHelper::encodeErrorMessage((string)$errors[0] ?? ''),
 								'data' => $errRows
 							);
 
@@ -1780,7 +1780,7 @@ else if (isset($_REQUEST['import']) && isset($_SESSION['CRM_IMPORT_FILE']))
 						{
 							$arResult['error']++;
 							$arResult['error_data'][] = Array(
-								'message' => $errors[0],
+								'message' => CCrmComponentHelper::encodeErrorMessage((string)$errors[0] ?? ''),
 								'data' => $requisiteImportHelper->getRows()
 							);
 

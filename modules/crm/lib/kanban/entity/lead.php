@@ -3,6 +3,7 @@
 namespace Bitrix\Crm\Kanban\Entity;
 
 use Bitrix\Crm\Filter;
+use Bitrix\Crm\Item;
 use Bitrix\Crm\Kanban\Entity;
 use Bitrix\Crm\PhaseSemantics;
 use Bitrix\Crm\Settings\LeadSettings;
@@ -20,11 +21,6 @@ class Lead extends Entity
 	public function isContactCenterSupported(): bool
 	{
 		return true;
-	}
-
-	public function isTotalPriceSupported(): bool
-	{
-		return false;
 	}
 
 	public function getTypeInfo(): array
@@ -55,7 +51,23 @@ class Lead extends Entity
 
 	public function getItemsSelectPreset(): array
 	{
-		return ['ID', 'STATUS_ID', 'TITLE', 'DATE_CREATE', 'OPPORTUNITY', 'OPPORTUNITY_ACCOUNT', 'CURRENCY_ID', 'ACCOUNT_CURRENCY_ID', 'CONTACT_ID', 'COMPANY_ID', 'MODIFY_BY_ID', 'IS_RETURN_CUSTOMER', 'ASSIGNED_BY'];
+		return [
+			'ID',
+			'STATUS_ID',
+			'TITLE',
+			'DATE_CREATE',
+			'OPPORTUNITY',
+			'OPPORTUNITY_ACCOUNT',
+			'CURRENCY_ID',
+			'ACCOUNT_CURRENCY_ID',
+			'CONTACT_ID',
+			'COMPANY_ID',
+			'MODIFY_BY_ID',
+			'IS_RETURN_CUSTOMER',
+			'ASSIGNED_BY',
+			Item::FIELD_NAME_LAST_ACTIVITY_TIME,
+			Item::FIELD_NAME_LAST_ACTIVITY_BY,
+		];
 	}
 
 	public function getFilterPresets(): array
@@ -164,18 +176,20 @@ class Lead extends Entity
 
 	public function updateItemStage(int $id, string $stageId, array $newStateParams, array $stages): Result
 	{
-		$result = new Result();
-
-		$item = $this->loadedItems[$id] ?? $this->getItem($id);
-		if(!$item)
+		$result = $this->getItemViaLoadedItems($id);
+		if (!$result->isSuccess())
 		{
-			return $result->addError(new Error('Invoice not found'));
+			return $result;
 		}
+
+		$item = $result->getData()['item'];
+
 		if ($stages[$item[$this->getStageFieldName()]]['PROGRESS_TYPE'] === 'WIN')
 		{
 			$result->addError(new Error(Loc::getMessage('CRM_KANBAN_ERROR_LEAD_ALREADY_CONVERTED')));
 			return $result;
 		}
+
 		if ($stages[$stageId]['PROGRESS_TYPE'] === 'WIN')
 		{
 			return $result;

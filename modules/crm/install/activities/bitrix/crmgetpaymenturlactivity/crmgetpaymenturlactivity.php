@@ -196,10 +196,11 @@ class CBPCrmGetPaymentUrlActivity extends CBPActivity
 			['PROPS']
 		);
 
-		$products = array_combine(array_column($products, 'OFFER_ID'), $products);
-		foreach ($productParams as $productId => $fields)
+		foreach ($products as $index => $product)
 		{
-			$products[$productId]['PROPS'] = $fields['PROPS'] ?? [];
+			$props = $productParams[$product['OFFER_ID']]['PROPS'] ?? [];
+
+			$products[$index]['PROPS'] = $props;
 		}
 
 		return $products;

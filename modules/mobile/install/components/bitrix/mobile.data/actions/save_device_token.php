@@ -38,7 +38,7 @@ if ($_REQUEST["mobile_action"] == "removeToken")
 }
 elseif ($_REQUEST["mobile_action"] == "save_device_token")
 {
-	if ($_REQUEST["device_token"] || $_REQUEST["device_token_voip"])
+	if (!empty($_REQUEST["device_token"]) || !empty($_REQUEST["device_token_voip"]))
 	{
 
 		$uuid = $_REQUEST["uuid"];
@@ -81,7 +81,7 @@ elseif ($_REQUEST["mobile_action"] == "save_device_token")
 				$data["type"] = $voipType;
 			}
 
-			if ($arToken["ID"])
+			if (!empty($arToken["ID"]))
 			{
 				$res = CPullPush::Update($arToken["ID"], $fields);
 				$data["register_token"] = "updated";

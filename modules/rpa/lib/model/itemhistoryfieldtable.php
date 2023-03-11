@@ -11,9 +11,9 @@ use Bitrix\Main\ORM;
  *
  * <<< ORMENTITYANNOTATION
  * @method static EO_ItemHistoryField_Query query()
- * @method static EO_ItemHistoryField_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_ItemHistoryField_Result getByPrimary($primary, array $parameters = [])
  * @method static EO_ItemHistoryField_Result getById($id)
- * @method static EO_ItemHistoryField_Result getList(array $parameters = array())
+ * @method static EO_ItemHistoryField_Result getList(array $parameters = [])
  * @method static EO_ItemHistoryField_Entity getEntity()
  * @method static \Bitrix\Rpa\Model\EO_ItemHistoryField createObject($setDefaultValues = true)
  * @method static \Bitrix\Rpa\Model\EO_ItemHistoryField_Collection createCollection()

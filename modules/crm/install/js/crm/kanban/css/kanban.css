@@ -158,6 +158,7 @@
 	margin: 0 0 3px 0;
 	position: relative;
 	z-index: 9;
+	text-overflow: ellipsis;
 }
 
 .crm-kanban-item-contact a:hover {
@@ -1291,13 +1292,11 @@ a.crm-kanban-sidepanel:hover {
 	word-break: break-word;
 }
 
-.bx-ie .crm-kanban-item-fields-item-value,
 .bx-firefox .crm-kanban-item-fields-item-value {
 	max-height: 51px;
 	position: relative;
 }
 
-.bx-ie .crm-kanban-item-fields-item-value:after,
 .bx-firefox .crm-kanban-item-ficrm-entity-card-widget-editelds-item-value:after {
 	content: "\02026";
 	position: absolute;

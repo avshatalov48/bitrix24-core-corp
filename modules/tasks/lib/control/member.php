@@ -5,6 +5,7 @@ namespace Bitrix\Tasks\Control;
 use Bitrix\Main\Application;
 use Bitrix\Tasks\Control\Exception\TaskNotFoundException;
 use Bitrix\Tasks\Internals\Task\MemberTable;
+use Bitrix\Tasks\Internals\TaskTable;
 
 class Member
 {
@@ -15,6 +16,67 @@ class Member
 	private const FIELD_ACCOMPLICES = 'ACCOMPLICES';
 	private const FIELD_AUDITORS = 'AUDITORS';
 
+
+	private function setToOwner(int $fromUser, Tag $userTagRepository)
+	{
+		$userTagRepository->changeTagsOwner($this->taskId, $fromUser);
+	}
+	private function transferTags(array $users)
+	{
+		$userTagRepository = new Tag($this->userId);
+		foreach ($users as $fromUser)
+		{
+			$this->setToOwner((int)$fromUser, $userTagRepository);
+		}
+	}
+
+	private function getMembersIds(array $curMembers)
+	{
+		$members = [];
+
+		foreach ($curMembers  as $role => $roleMembers)
+		{
+			foreach ($roleMembers as $roleMember)
+			{
+				$members[] = $roleMember['USER_ID'];
+			}
+		}
+		return array_unique($members);
+	}
+
+	private function getDataMembersIds(array $data)
+	{
+		$members = [];
+
+		if (!empty($data[self::FIELD_CREATED_BY]))
+		{
+			$members[] = $data[self::FIELD_CREATED_BY];
+		}
+		else
+		{
+			$members[] = (int)TaskTable::getById($this->taskId)->fetch()['CREATED_BY'];
+		}
+		if (!empty($data[self::FIELD_RESPONSIBLE_ID]))
+		{
+			$members[] = $data[self::FIELD_RESPONSIBLE_ID];
+		}
+		if (!empty($data[self::FIELD_ACCOMPLICES]))
+		{
+			foreach ($data[self::FIELD_ACCOMPLICES] as $key => $id)
+			{
+				$members[] = $id;
+			}
+		}
+
+		if (!empty($data[self::FIELD_AUDITORS]))
+		{
+			foreach ($data[self::FIELD_AUDITORS] as $key => $id)
+			{
+				$members[] = $id;
+			}
+		}
+		return array_unique($members);
+	}
 	/**
 	 * @param array $data
 	 * @return void
@@ -27,31 +89,37 @@ class Member
 	public function set(array $data)
 	{
 		$this->loadTask();
-
 		$members = $this->getCurrentMembers();
+
+		$curMembersIds = $this->getMembersIds($members);
+
+		// $membersToRemove = array_diff($curMembersIds, $newMembersIds);
+
+
+		// $this->transferTags($membersToRemove);
 
 		$this->deleteByTask();
 
 		if (
 			array_key_exists(self::FIELD_RESPONSIBLE_ID, $data)
-			&& (int) $data[self::FIELD_RESPONSIBLE_ID] > 0
+			&& (int)$data[self::FIELD_RESPONSIBLE_ID] > 0
 		)
 		{
 			$members[MemberTable::MEMBER_TYPE_RESPONSIBLE] = [];
 			$members[MemberTable::MEMBER_TYPE_RESPONSIBLE][] = [
-				'USER_ID' => (int) $data[self::FIELD_RESPONSIBLE_ID],
+				'USER_ID' => (int)$data[self::FIELD_RESPONSIBLE_ID],
 				'TYPE' => MemberTable::MEMBER_TYPE_RESPONSIBLE,
 			];
 		}
 
 		if (
 			array_key_exists(self::FIELD_CREATED_BY, $data)
-			&& (int) $data[self::FIELD_CREATED_BY] > 0
+			&& (int)$data[self::FIELD_CREATED_BY] > 0
 		)
 		{
 			$members[MemberTable::MEMBER_TYPE_ORIGINATOR] = [];
 			$members[MemberTable::MEMBER_TYPE_ORIGINATOR][] = [
-				'USER_ID' => (int) $data[self::FIELD_CREATED_BY],
+				'USER_ID' => (int)$data[self::FIELD_CREATED_BY],
 				'TYPE' => MemberTable::MEMBER_TYPE_ORIGINATOR,
 			];
 		}
@@ -61,7 +129,7 @@ class Member
 			$members[MemberTable::MEMBER_TYPE_ACCOMPLICE] = [];
 			foreach ($data[self::FIELD_ACCOMPLICES] as $userId)
 			{
-				$userId = (int) $userId;
+				$userId = (int)$userId;
 				if ($userId < 1)
 				{
 					continue;
@@ -78,7 +146,7 @@ class Member
 			$members[MemberTable::MEMBER_TYPE_AUDITOR] = [];
 			foreach ($data[self::FIELD_AUDITORS] as $userId)
 			{
-				$userId = (int) $userId;
+				$userId = (int)$userId;
 				if ($userId < 1)
 				{
 					continue;
@@ -94,6 +162,11 @@ class Member
 		{
 			return;
 		}
+		$newMembersIds = $this->getMembersIds($members);
+		$membersToRemove = array_diff($curMembersIds, $newMembersIds);
+
+		// $this->transferTags($membersToRemove);
+
 
 		$connection = Application::getConnection();
 		$sqlHelper = $connection->getSqlHelper();
@@ -103,20 +176,20 @@ class Member
 		{
 			$insertRows = array_merge(
 				$insertRows,
-				array_map(function($el) use ($sqlHelper) {
-					$implode = (int) $el['USER_ID'];
-					$implode .= ','.$this->taskId;
-					$implode .= ',\''. $sqlHelper->forSql($el['TYPE']) .'\'';
+				array_map(function ($el) use ($sqlHelper) {
+					$implode = (int)$el['USER_ID'];
+					$implode .= ',' . $this->taskId;
+					$implode .= ',\'' . $sqlHelper->forSql($el['TYPE']) . '\'';
 					return $implode;
 				}, $list)
 			);
 		}
 
 		$sql = "
-			INSERT INTO ". MemberTable::getTableName() ."
+			INSERT INTO " . MemberTable::getTableName() . "
 			(`USER_ID`, `TASK_ID`, `TYPE`)
 			VALUES
-			(". implode("),(", $insertRows) .")
+			(" . implode("),(", $insertRows) . ")
 		";
 
 		Application::getConnection()->query($sql);
@@ -142,7 +215,7 @@ class Member
 	{
 		$members = [];
 		$memberList = $this->task->getMemberList();
-		foreach($memberList as $member)
+		foreach ($memberList as $member)
 		{
 			$memberType = $member->getType();
 			$members[$memberType][] = [

@@ -142,7 +142,7 @@ class Helper
 			while ($row = $raw->fetch())
 			{
 				$result = true;
-				$isStatusDeleted = \Bitrix\ImConnector\Status::delete($row['CONNECTOR'], $row['LINE']);
+				$isStatusDeleted = \Bitrix\ImConnector\Status::delete($row['CONNECTOR'], (int)$row['LINE']);
 				if (!$isStatusDeleted)
 				{
 					$result = false;
@@ -178,7 +178,7 @@ class Helper
 				$connection->rollbackTransaction();
 			}
 		}
-		catch (\Exception $e)
+		catch (\Bitrix\Main\SystemException $e)
 		{
 			$connection->rollbackTransaction();
 			$result = false;

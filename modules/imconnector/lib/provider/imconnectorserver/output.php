@@ -2,6 +2,7 @@
 namespace Bitrix\ImConnector\Provider\ImConnectorServer;
 
 use Bitrix\ImConnector\Connector;
+use Bitrix\ImConnector\DeliveryMark;
 use Bitrix\ImConnector\Error;
 use Bitrix\ImConnector\Result;
 use Bitrix\ImConnector\Library;
@@ -198,6 +199,18 @@ class Output extends Base\Output
 
 		if ($result->isSuccess())
 		{
+			foreach ($data as $messageData)
+			{
+				if (
+					isset($messageData['im'])
+					&& isset($messageData['im']['message_id'])
+					&& isset($messageData['im']['chat_id'])
+				)
+				{
+					DeliveryMark::setDeliveryMark((int)$messageData['im']['message_id'], (int)$messageData['im']['chat_id']);
+				}
+			}
+
 			$data = $this->sendMessagesProcessing($data);
 
 			$result = $this->query('sendMessage', [$data]);

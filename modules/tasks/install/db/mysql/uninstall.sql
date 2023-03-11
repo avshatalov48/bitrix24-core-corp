@@ -119,3 +119,7 @@ DROP TABLE IF EXISTS b_tasks_template_member;
 DROP TABLE IF EXISTS b_tasks_template_tag;
 
 DROP TABLE IF EXISTS b_tasks_template_dependence;
+
+DROP TABLE IF EXISTS b_tasks_task_tag;
+
+DROP TABLE IF EXISTS b_tasks_label;

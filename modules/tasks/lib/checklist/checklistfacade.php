@@ -287,6 +287,7 @@ abstract class CheckListFacade
 				$updateResult = static::addErrorToResult($updateResult, $code, self::ACTION_TOGGLE);
 				return $updateResult;
 			}
+			$checkList->setSkipMembers();
 		}
 		else if (!static::checkAccess($entityId, $userId, ActionDictionary::ACTION_CHECKLIST_EDIT, $checkList))
 		{

@@ -199,9 +199,16 @@ class Field
 			{
 				$result->addError($this->getValueNotUniqueError());
 			}
-			elseif ($attribute === \CCrmFieldInfoAttr::CanNotBeEmptied && !$isNew && $isValueChanged && $isValueEmpty)
+			elseif ($attribute === \CCrmFieldInfoAttr::CanNotBeEmptied && !$isNew && $isValueEmpty)
 			{
-				$item->reset($this->getName());
+				if ($isValueChanged && !$this->isValueEmpty($item->remindActual($this->getName())))
+				{
+					$item->reset($this->getName());
+				}
+				elseif ($this->isHasDefaultValue())
+				{
+					$item->set($this->getName(), $item->getDefaultValue($this->getName()));
+				}
 			}
 		}
 
@@ -430,6 +437,11 @@ class Field
 	public function isProgress(): bool
 	{
 		return in_array(\CCrmFieldInfoAttr::Progress, $this->getAttributes(), true);
+	}
+
+	public function isHasDefaultValue(): bool
+	{
+		return in_array(\CCrmFieldInfoAttr::HasDefaultValue, $this->getAttributes(), true);
 	}
 
 	/**

@@ -6,6 +6,7 @@ jn.define('layout/ui/detail-card/tabs', (require, exports, module) => {
 	const { animate } = require('animation/effects/skeleton');
 	const { EventEmitter } = require('event-emitter');
 	const { TabLoaderFactory } = require('layout/ui/detail-card/tabs/loader-factory');
+	const { PureComponent } = require('layout/pure-component');
 	const { NotifyManager } = require('notify-manager');
 	const { throttle } = require('utils/function');
 	const { mergeImmutable } = require('utils/object');
@@ -19,7 +20,7 @@ jn.define('layout/ui/detail-card/tabs', (require, exports, module) => {
 	/**
 	 * @class Tab
 	 */
-	class Tab extends LayoutComponent
+	class Tab extends PureComponent
 	{
 		constructor(props)
 		{
@@ -156,6 +157,12 @@ jn.define('layout/ui/detail-card/tabs', (require, exports, module) => {
 				this.customEventEmitter.emit('DetailCard::onSaveLock', [true]);
 
 				this.setState({ status: Status.FETCHING }, () => {
+					if (this.loaderRef)
+					{
+						clearInterval(this.loadingAnimation);
+						this.loadingAnimation = animate(this.loaderRef);
+					}
+
 					BX.ajax.runAction(this.props.endpoint, {
 						json: {
 							...this.props.payload,
@@ -245,11 +252,7 @@ jn.define('layout/ui/detail-card/tabs', (require, exports, module) => {
 
 		renderContent()
 		{
-			if (this.state.status === Status.INITIAL)
-			{
-				return [this.renderInitial()];
-			}
-			else if (this.state.status === Status.FETCHING)
+			if (this.state.status === Status.INITIAL || this.state.status === Status.FETCHING)
 			{
 				return [this.renderLoader()];
 			}
@@ -325,14 +328,7 @@ jn.define('layout/ui/detail-card/tabs', (require, exports, module) => {
 		getLoaderProps()
 		{
 			return {
-				onRef: (
-					this.inFetchingStatus()
-						? (ref) => {
-							clearInterval(this.loadingAnimation);
-							this.loadingAnimation = animate(ref);
-						}
-						: undefined
-				),
+				onRef: (ref) => this.loaderRef = ref,
 			};
 		}
 

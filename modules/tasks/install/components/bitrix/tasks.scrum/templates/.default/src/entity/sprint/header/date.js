@@ -2,6 +2,7 @@ import {Event, Loc, Tag, Text} from 'main.core';
 import {EventEmitter} from 'main.core.events';
 
 import {Sprint} from '../sprint';
+import {Culture} from '../../../utility/culture';
 
 export class Date extends EventEmitter
 {
@@ -74,7 +75,10 @@ export class Date extends EventEmitter
 
 		const updateDateNode = (node, value) => {
 			/* eslint-disable */
-			node.textContent = BX.date.format('j F', Math.floor(BX.parseDate(value).getTime() / 1000));
+			node.textContent = BX.date.format(
+				Culture.getInstance().getDayMonthFormat(),
+				Math.floor(BX.parseDate(value).getTime() / 1000)
+			);
 			/* eslint-enable */
 		};
 		const sendRequest = (data) => {
@@ -150,14 +154,14 @@ export class Date extends EventEmitter
 	static getFormattedDateStart(sprint: Sprint): string
 	{
 		/* eslint-disable */
-		return BX.date.format('j F', sprint.getDateStart(), null, true);
+		return BX.date.format(Culture.getInstance().getDayMonthFormat(), sprint.getDateStart(), null, true);
 		/* eslint-enable */
 	}
 
 	static getFormattedDateEnd(sprint: Sprint): string
 	{
 		/* eslint-disable */
-		return BX.date.format('j F', sprint.getDateEnd(), null, true);
+		return BX.date.format(Culture.getInstance().getDayMonthFormat(), sprint.getDateEnd(), null, true);
 		/* eslint-enable */
 	}
 }

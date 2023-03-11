@@ -377,7 +377,7 @@ if (typeof BX.Tasks.SprintSelector === 'undefined')
 							);
 
 							var selectorTextNode = BX(containerId).querySelector('.webform-small-button-text');
-							selectorTextNode.innerHTML = selectedItem.customData.get('label');
+							selectorTextNode.textContent = selectedItem.customData.get('label');
 						},
 					},
 				});

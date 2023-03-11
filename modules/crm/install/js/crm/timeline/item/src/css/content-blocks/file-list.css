@@ -1,0 +1,81 @@
+.crm-timeline__file-list-wrapper {
+	display: flex;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	overflow: hidden;
+	flex-direction: row;
+	align-items: flex-start;
+	max-width: 100%;
+}
+
+.crm-timeline__file-list-wrapper .crm-timeline__file-list-title-container {
+	display: flex;
+	flex-direction: row;
+	align-items: flex-start;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font-size: var(--ui-font-size-sm, 13px);
+	color: var(--ui-color-palette-gray-70, #828b95);
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.crm-timeline__file-list-wrapper .crm-timeline__file-list-title-container .crm-timeline__file-list-title {
+	margin-right: 5px;
+	padding-bottom: 2px;
+}
+
+.crm-timeline__file-list-title.--editable {
+	cursor: pointer;
+	border-bottom: 1px dashed rgba(var(--ui-color-base-50-rgb), 0.4);
+}
+
+.crm-timeline__file-list-wrapper .crm-timeline__file-list-title-container .crm-timeline__file-list-edit-btn {
+	padding: 0;
+	width: 18px;
+	height: 18px;
+	background: none;
+	border: none;
+	outline: none;
+}
+
+.crm-timeline__file-list-wrapper .crm-timeline__file-list-container {
+	padding-left: 40px;
+	overflow: hidden;
+	zoom: 1;
+}
+
+.crm-timeline__file-list-wrapper .crm-timeline__file-list-container .crm-timeline__file-container {
+	display: block;
+	padding-bottom: 4px;
+	font-size: var(--ui-font-size-md, 14px);
+	line-height: var(--ui-font-line-height-lg, 1.5);
+	margin: 0;
+	position: relative;
+	box-sizing: border-box;
+	max-width: 100%;
+	vertical-align: middle;
+	word-wrap: break-word;
+}
+
+.crm-timeline__file {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: flex-start;
+}
+.crm-timeline__file_icon {
+	display: inline-block;
+	width: 18px;
+	margin-right: 7px;
+}
+
+.crm-timeline__file_icon svg {
+	width: 18px;
+}
+
+.crm-timeline__file .crm-timeline__card_link {
+	max-width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}

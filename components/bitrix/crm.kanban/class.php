@@ -307,6 +307,11 @@ class CrmKanbanComponent extends \CBitrixComponent
 							$this->arResult['ERROR'] = $errorMessage;
 						}
 					}
+					else
+					{
+						$viewMode = $this->arParams['VIEW_MODE'] ?? '';
+						$this->arResult['ITEMS']['IS_SHOULD_UPDATE_CARD'] = $viewMode === Kanban\ViewMode::MODE_DEADLINES;
+					}
 				}
 			}
 
@@ -488,6 +493,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 		}
 
 		$this->arResult['CLIENT_FIELDS_RESTRICTIONS'] = $this->getEntity()->getClientFieldsRestrictions();
+		$this->arResult['OBSERVERS_FIELD_RESTRICTIONS'] = $this->getEntity()->getObserversFieldRestrictions();
 		$this->arResult['SORT_SETTINGS'] = $this->getEntity()->getSortSettings();
 		$this->arResult['IS_LAST_ACTIVITY_ENABLED'] = $this->getEntity()->isLastActivityEnabled();
 		$GLOBALS['APPLICATION']->setTitle($this->getEntity()->getTitle());
@@ -498,7 +504,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 	{
 		$viewMode = $this->arParams['VIEW_MODE'];
 
-		if ($viewMode === \Bitrix\Crm\Kanban\ViewMode::MODE_ACTIVITIES)
+		if (\Bitrix\Crm\Kanban\ViewMode::isDatesBasedView($viewMode))
 		{
 			$canChangeColumns = 'false';
 			return [
@@ -507,7 +513,8 @@ class CrmKanbanComponent extends \CBitrixComponent
 				'canEditColumn'=> $canChangeColumns,
 				'canRemoveColumn' => $canChangeColumns,
 				'canSortColumn' => $canChangeColumns,
-				'canChangeItemStage' => true,
+				'canChangeItemStage' => 'true',
+				'columnsRevert' => 'true',
 			];
 		}
 
@@ -521,6 +528,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 			'canRemoveColumn' => $canChangeColumns,
 			'canSortColumn' => $canChangeColumns,
 			'canChangeItemStage' => 'true',
+			'columnsRevert' => 'false',
 		];
 	}
 

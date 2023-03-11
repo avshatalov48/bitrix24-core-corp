@@ -564,10 +564,6 @@
 	text-decoration: underline;
 }
 
-.ui-btn-width {
-	width: 130px;
-}
-
 .salescenter-button-container {
 	padding-top: 5px;
 	margin-bottom: 15px;
@@ -668,4 +664,8 @@
 	-ms-transform-origin: center;
 	-o-transform-origin: center;
 	transform-origin: center;
+}
+
+.salescenter-settings-menu {
+	margin-left: 5px;
 }

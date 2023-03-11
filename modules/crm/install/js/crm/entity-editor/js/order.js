@@ -6732,7 +6732,7 @@ if(typeof BX.Crm.EntityEditorOrderUser === "undefined")
 					props: { className: "crm-widget-employee-avatar-container", target: "_blank" },
 					style:
 						{
-							backgroundImage: photoUrl !== "" ? "url('" + photoUrl + "')" : "",
+							backgroundImage: photoUrl !== "" ? "url('" + encodeURI(photoUrl) + "')" : "",
 							backgroundSize: photoUrl !== "" ? "30px" : ""
 						}
 				}

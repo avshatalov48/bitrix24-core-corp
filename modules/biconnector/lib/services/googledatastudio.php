@@ -15,11 +15,14 @@ class GoogleDataStudio extends Service
 	public const URL_CREATE = 'https://datastudio.google.com/datasources/create';
 	public const OPTION_DEPLOYMENT_ID = 'gds_deployment_id';
 
-	public function validateDashboardUrl($url)
+	public static function validateDashboardUrl($url)
 	{
 		$uri = new \Bitrix\Main\Web\Uri($url);
 		return $uri->getScheme() === 'https'
-			&& $uri->getHost() === 'datastudio.google.com'
+			&& (
+				$uri->getHost() === 'datastudio.google.com'
+				|| $uri->getHost() === 'lookerstudio.google.com'
+			)
 			&& strpos($uri->getPath(), '/embed/reporting/') === 0
 		;
 	}

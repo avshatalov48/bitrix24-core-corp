@@ -22,7 +22,6 @@ jn.define('crm/timeline/ui/text-editor', (require, exports, module) => {
 
 			this.layout = props.layout;
 			this.textInputRef = null;
-			this.createButtonRef = null;
 
 			this.saveButton = new WidgetHeaderButton({
 				widget: this.layout,
@@ -43,22 +42,24 @@ jn.define('crm/timeline/ui/text-editor', (require, exports, module) => {
 			PageManager.openWidget('layout', {
 				modal: true,
 				backdrop: {
-					onlyMediumPosition: false,
-					showOnTop: true,
-					mediumPositionPercent: 50,
-					navigationBarColor: '#EEF2F4',
+					onlyMediumPosition: true,
+					showOnTop: false,
+					mediumPositionPercent: 70,
+					navigationBarColor: '#eef2f4',
 					swipeAllowed: true,
 					swipeContentAllowed: false,
 					horizontalSwipeAllowed: false,
-				}}
-			).then(widget => {
-				widget.setTitle({ text: title });
-				widget.enableNavigationBarBorder(false);
-				widget.showComponent(new TimelineTextEditor({
-					layout: widget,
-					...options,
-				}));
-			});
+				},
+			})
+				.then(widget => {
+					widget.setTitle({ text: title });
+					widget.enableNavigationBarBorder(false);
+					widget.showComponent(new TimelineTextEditor({
+						layout: widget,
+						...options,
+					}));
+				})
+			;
 		}
 
 		componentDidMount()
@@ -99,38 +100,59 @@ jn.define('crm/timeline/ui/text-editor', (require, exports, module) => {
 			return this.state.text;
 		}
 
+		get placeholder()
+		{
+			return this.props.placeholder || Loc.getMessage('M_CRM_TIMELINE_TYPE_SOMETHING');
+		}
+
 		render()
 		{
 			return View(
 				{
 					style: {
 						flexDirection: 'column',
+						flex: 1,
+						backgroundColor: '#eef2f4',
 					},
 					resizableByKeyboard: true,
 				},
-				this.renderTextField(),
-				this.renderClearIcon(),
+				View(
+					{
+						style: {
+							flex: 1,
+							marginBottom: 12,
+							backgroundColor: '#ffffff',
+							borderRadius: 12,
+							maxHeight: 197,
+						},
+					},
+					this.renderTextField(),
+					this.renderClearIcon(),
+				),
 			);
 		}
 
 		renderTextField()
 		{
+			const isIOS = Application.getPlatform() === 'ios';
+
 			return View(
 				{
 					style: {
 						flexGrow: 1,
 						paddingRight: 48,
-					}
+						paddingLeft: isIOS ? 8 : 0,
+					},
 				},
 				Textarea({
 					ref: (ref) => this.textInputRef = ref,
 					text: this.state.text,
-					placeholder: Loc.getMessage('M_CRM_TIMELINE_TYPE_SOMETHING'),
+					placeholder: this.placeholder,
 					onChange: (text) => {
 						this.state.text = text;
 						this.refreshSaveButton();
 					},
-				})
+				}),
 			);
 		}
 
@@ -157,8 +179,8 @@ jn.define('crm/timeline/ui/text-editor', (require, exports, module) => {
 					style: {
 						width: 18,
 						height: 18,
-					}
-				})
+					},
+				}),
 			);
 		}
 
@@ -175,7 +197,7 @@ jn.define('crm/timeline/ui/text-editor', (require, exports, module) => {
 			}
 			else
 			{
-				this.saveButton.disable()
+				this.saveButton.disable();
 			}
 		}
 

@@ -27,7 +27,7 @@ class Tag extends Content
 
 		if ($row['ACTION']['EDIT'])
 		{
-			$params = $row['IS_SCRUM_PROJECT'] ? "{$row['ID']}, {$row['GROUP_ID']}" : "{$row['ID']}, 0";
+			$params = "{$row['ID']}, {$row['GROUP_ID']}";
 
 			$tags['addButton'] = [
 				'events' => [

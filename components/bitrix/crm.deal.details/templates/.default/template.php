@@ -347,3 +347,23 @@ endif;
 	});
 </script>
 <?php endif; ?>
+
+<?php if (array_key_exists('AUTOMATION_CHECK_AUTOMATION_TOUR_GUIDE_DATA', $arResult)):?>
+	<script type="text/javascript">
+		BX.ready(function() {
+			BX.Runtime.loadExtension('bizproc.automation.guide')
+				.then((exports) => {
+					const {CrmCheckAutomationGuide} = exports;
+					if (CrmCheckAutomationGuide)
+					{
+						CrmCheckAutomationGuide.showCheckAutomation(
+							'<?= CUtil::JSEscape(CCrmOwnerType::DealName) ?>',
+							'<?= CUtil::JSEscape($arResult['CATEGORY_ID'])?>',
+							<?= CUtil::PhpToJSObject($arResult['AUTOMATION_CHECK_AUTOMATION_TOUR_GUIDE_DATA']['options']) ?>,
+						);
+					}
+				})
+			;
+		});
+	</script>
+<?php endif;

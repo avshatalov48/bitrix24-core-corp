@@ -86,11 +86,15 @@ class OrderCreator
 				'SITE_ID' => Context::getCurrent()->getSite(),
 				'USER_ID' => $userId,
 				'RESPONSIBLE_ID' => $userId,
-				'CURRENCY' => $currencyId,
 				'OWNER_ID' => $this->ownerId,
 				'OWNER_TYPE_ID' => $this->ownerTypeId,
 				'TRADING_PLATFORM' => $this->getDealTradingPlatformId(),
 			];
+
+			if (!empty($currencyId))
+			{
+				$fields['CURRENCY'] = $currencyId;
+			}
 
 			// if order exist - don't changes part of the fields.
 			if ($orderId)
@@ -118,7 +122,11 @@ class OrderCreator
 				$order->getContactCompanyCollection()->disableAutoCreationMode();
 			}
 
-			if ($orderId > 0 && $currencyId !== $order->getCurrency())
+			if (
+				$orderId > 0
+				&& !empty($currencyId)
+				&& $currencyId !== $order->getCurrency()
+			)
 			{
 				$order->changeCurrency($currencyId);
 			}

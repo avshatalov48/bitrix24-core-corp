@@ -455,15 +455,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  return SelfRegister;
 	}();
 
-	function _templateObject() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<span style=\"z-index: 3;\" class=\"ui-ctl-before\" data-role=\"phone-block\">\n\t\t\t\t<input type=\"hidden\" name=\"PHONE_COUNTRY[]\" id=\"phone_country_", "\" value=\"\">\n\t\t\t\t<input type=\"hidden\" name=\"PHONE[]\" id=\"phone_number_", "\" value=\"\">\n\t\t\t\t<div class=\"invite-dialog-phone-flag-block\" data-role=\"flag\">\n\t\t\t\t\t<span data-role=\"phone_flag_", "\" style=\"pointer-events: none;\"></span>\n\t\t\t\t</div>\n\t\t\t\t<input class=\"invite-dialog-phone-input\" type=\"hidden\" id=\"phone_input_", "\" value=\"\">&nbsp;\n\t\t\t</span>\n\t\t"]);
-
-	  _templateObject = function _templateObject() {
-	    return data;
-	  };
-
-	  return data;
-	}
+	var _templateObject;
 	var Phone = /*#__PURE__*/function () {
 	  function Phone(parent) {
 	    babelHelpers.classCallCheck(this, Phone);
@@ -493,7 +485,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	        return;
 	      }
 
-	      var element = main_core.Tag.render(_templateObject(), num, num, num, num);
+	      var element = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<span style=\"z-index: 3;\" class=\"ui-ctl-before\" data-role=\"phone-block\">\n\t\t\t\t<input type=\"hidden\" name=\"PHONE_COUNTRY[]\" id=\"phone_country_", "\" value=\"\">\n\t\t\t\t<input type=\"hidden\" name=\"PHONE[]\" id=\"phone_number_", "\" value=\"\">\n\t\t\t\t<div class=\"invite-dialog-phone-flag-block\" data-role=\"flag\">\n\t\t\t\t\t<span data-role=\"phone_flag_", "\" style=\"pointer-events: none;\"></span>\n\t\t\t\t</div>\n\t\t\t\t<input class=\"invite-dialog-phone-input\" type=\"hidden\" id=\"phone_input_", "\" value=\"\">&nbsp;\n\t\t\t</span>\n\t\t"])), num, num, num, num);
 	      inputNode.style.paddingLeft = "57px";
 	      main_core.Dom.append(element, inputNode.parentNode);
 	      var flagNode = inputNode.parentNode.querySelector("[data-role='flag']");
@@ -536,45 +528,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  return Phone;
 	}();
 
-	function _templateObject4() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"invite-form-row\">\n\t\t\t\t<div class=\"invite-form-col\">\n\t\t\t\t\t<div class=\"ui-ctl-label-text\">", "</div>\n\t\t\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-textbox ui-ctl-block ui-ctl-after-icon\">\n\t\t\t\t\t\t<input \n\t\t\t\t\t\t\ttype=\"text\" \n\t\t\t\t\t\t\tclass=\"ui-ctl-element\" \n\t\t\t\t\t\t\tvalue=\"\" \n\t\t\t\t\t\t\tmaxlength=\"50\"\n\t\t\t\t\t\t\tname=\"integrator_email\" \n\t\t\t\t\t\t\tid=\"integrator_email\" \n\t\t\t\t\t\t\tplaceholder=\"", "\"\n\t\t\t\t\t\t/>\n\t\t\t\t\t\t<button class=\"ui-ctl-after ui-ctl-icon-clear\" style=\"display: none\"></button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"]);
-
-	  _templateObject4 = function _templateObject4() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject3() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div>\n\t\t\t\t<div class=\"invite-form-row\">\n\t\t\t\t\t<div class=\"invite-form-col\">\n\t\t\t\t\t\t<div class=\"ui-ctl-label-text\">", "</div>\n\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-textbox ui-ctl-block ui-ctl-after-icon\">\n\t\t\t\t\t\t\t<input type=\"text\" name=\"ADD_NAME\" id=\"ADD_NAME\" class=\"ui-ctl-element\">\n\t\t\t\t\t\t\t<button class=\"ui-ctl-after ui-ctl-icon-clear\" style=\"display: none\"></button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"invite-form-row\">\n\t\t\t\t\t<div class=\"invite-form-col\">\n\t\t\t\t\t\t<div class=\"ui-ctl-label-text\">", "</div>\n\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-textbox ui-ctl-block ui-ctl-after-icon\">\n\t\t\t\t\t\t\t<input type=\"text\" name=\"ADD_LAST_NAME\" id=\"ADD_LAST_NAME\" class=\"ui-ctl-element\">\n\t\t\t\t\t\t\t<button class=\"ui-ctl-after ui-ctl-icon-clear\" style=\"display: none\"></button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"invite-form-row\">\n\t\t\t\t\t<div class=\"invite-form-col\">\n\t\t\t\t\t\t<div class=\"ui-ctl-label-text\">", "</div>\n\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-textbox ui-ctl-block ui-ctl-after-icon\">\n\t\t\t\t\t\t\t<input type=\"text\" name=\"ADD_EMAIL\" id=\"ADD_EMAIL\" class=\"ui-ctl-element\" maxlength=\"50\">\n\t\t\t\t\t\t\t<button class=\"ui-ctl-after ui-ctl-icon-clear\" style=\"display: none\"></button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"invite-form-row\">\n\t\t\t\t\t<div class=\"invite-form-col\">\n\t\t\t\t\t\t<div class=\"ui-ctl-label-text\">", "</div>\n\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-textbox ui-ctl-block ui-ctl-after-icon\">\n\t\t\t\t\t\t\t<input type=\"text\" name=\"ADD_POSITION\" id=\"ADD_POSITION\" class=\"ui-ctl-element\">\n\t\t\t\t\t\t\t<button class=\"ui-ctl-after ui-ctl-icon-clear\" style=\"display: none\"></button>\n\t\t\t\t\t\t</div>\t\t\t\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"]);
-
-	  _templateObject3 = function _templateObject3() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject2() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"invite-form-row js-form-row\">\n\t\t\t\t<div class=\"invite-form-col\">\n\t\t\t\t\t", "\n\t\t\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-textbox ui-ctl-block ui-ctl-after-icon\">\n\t\t\t\t\t\t<input \n\t\t\t\t\t\t\tname=\"EMAIL[]\" \n\t\t\t\t\t\t\ttype=\"text\" \n\t\t\t\t\t\t\tmaxlength=\"50\"\n\t\t\t\t\t\t\tdata-num=\"", "\" \n\t\t\t\t\t\t\tclass=\"ui-ctl-element js-email-phone-input\" \n\t\t\t\t\t\t\tplaceholder=\"", "\"\n\t\t\t\t\t\t/>\n\t\t\t\t\t\t<button class=\"ui-ctl-after ui-ctl-icon-clear\" style=\"display: none\"></button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"invite-form-col\">\n\t\t\t\t\t", "\n\t\t\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-textbox ui-ctl-block ui-ctl-after-icon\">\n\t\t\t\t\t\t<input name=\"NAME[]\" type=\"text\" class=\"ui-ctl-element\" placeholder=\"", "\">\n\t\t\t\t\t\t<button class=\"ui-ctl-after ui-ctl-icon-clear\" style=\"display: none\"></button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"invite-form-col\">\n\t\t\t\t\t", "\n\t\t\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-textbox ui-ctl-block ui-ctl-after-icon\">\n\t\t\t\t\t\t<input name=\"LAST_NAME[]\" type=\"text\" class=\"ui-ctl-element\" placeholder=\"", "\">\n\t\t\t\t\t\t<button class=\"ui-ctl-after ui-ctl-icon-clear\" style=\"display: none\"></button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"]);
-
-	  _templateObject2 = function _templateObject2() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject$1() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t\t<input\n\t\t\t\t\t\t\t\tname=\"EMAIL[]\"\n\t\t\t\t\t\t\t\ttype=\"text\"\n\t\t\t\t\t\t\t\tmaxlength=\"50\"\n\t\t\t\t\t\t\t\tdata-num=\"", "\"\n\t\t\t\t\t\t\t\tclass=\"ui-ctl-element js-email-phone-input\"\n\t\t\t\t\t\t\t\tplaceholder=\"", "\"\n\t\t\t\t\t\t\t/>"]);
-
-	  _templateObject$1 = function _templateObject() {
-	    return data;
-	  };
-
-	  return data;
-	}
+	var _templateObject$1, _templateObject2, _templateObject3, _templateObject4;
 	var Row = /*#__PURE__*/function () {
 	  function Row(parent, params) {
 	    babelHelpers.classCallCheck(this, Row);
@@ -664,7 +618,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	            var phoneBlock = node.parentNode.querySelector("[data-role='phone-block']");
 
 	            if (main_core.Type.isDomNode(phoneBlock)) {
-	              var newInput = main_core.Tag.render(_templateObject$1(), node.getAttribute('data-num'), main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_EMAIL_OR_PHONE_INPUT'));
+	              var newInput = main_core.Tag.render(_templateObject$1 || (_templateObject$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t\t<input\n\t\t\t\t\t\t\t\tname=\"EMAIL[]\"\n\t\t\t\t\t\t\t\ttype=\"text\"\n\t\t\t\t\t\t\t\tmaxlength=\"50\"\n\t\t\t\t\t\t\t\tdata-num=\"", "\"\n\t\t\t\t\t\t\t\tclass=\"ui-ctl-element js-email-phone-input\"\n\t\t\t\t\t\t\t\tplaceholder=\"", "\"\n\t\t\t\t\t\t\t/>"])), node.getAttribute('data-num'), main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_EMAIL_OR_PHONE_INPUT'));
 	              main_core.Dom.replace(node, newInput);
 
 	              _this3.bindCloseIcons(newInput.parentNode);
@@ -701,7 +655,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	        lastNameTitle = "\n\t\t\t\t<div class=\"ui-ctl-label-text\">\n\t\t\t\t\t".concat(main_core.Loc.getMessage("BX24_INVITE_DIALOG_ADD_LAST_NAME_TITLE"), "\n\t\t\t\t</div>");
 	      }
 
-	      var element = main_core.Tag.render(_templateObject2(), showTitles ? emailTitle : '', this.inputNum++, main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_EMAIL_OR_PHONE_INPUT'), showTitles ? nameTitle : '', main_core.Loc.getMessage('BX24_INVITE_DIALOG_ADD_NAME_TITLE'), showTitles ? lastNameTitle : '', main_core.Loc.getMessage('BX24_INVITE_DIALOG_ADD_LAST_NAME_TITLE'));
+	      var element = main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"invite-form-row js-form-row\">\n\t\t\t\t<div class=\"invite-form-col\">\n\t\t\t\t\t", "\n\t\t\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-textbox ui-ctl-block ui-ctl-after-icon\">\n\t\t\t\t\t\t<input \n\t\t\t\t\t\t\tname=\"EMAIL[]\" \n\t\t\t\t\t\t\ttype=\"text\" \n\t\t\t\t\t\t\tmaxlength=\"50\"\n\t\t\t\t\t\t\tdata-num=\"", "\" \n\t\t\t\t\t\t\tclass=\"ui-ctl-element js-email-phone-input\" \n\t\t\t\t\t\t\tplaceholder=\"", "\"\n\t\t\t\t\t\t/>\n\t\t\t\t\t\t<button class=\"ui-ctl-after ui-ctl-icon-clear\" style=\"display: none\"></button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"invite-form-col\">\n\t\t\t\t\t", "\n\t\t\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-textbox ui-ctl-block ui-ctl-after-icon\">\n\t\t\t\t\t\t<input name=\"NAME[]\" type=\"text\" class=\"ui-ctl-element\" placeholder=\"", "\">\n\t\t\t\t\t\t<button class=\"ui-ctl-after ui-ctl-icon-clear\" style=\"display: none\"></button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"invite-form-col\">\n\t\t\t\t\t", "\n\t\t\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-textbox ui-ctl-block ui-ctl-after-icon\">\n\t\t\t\t\t\t<input name=\"LAST_NAME[]\" type=\"text\" class=\"ui-ctl-element\" placeholder=\"", "\">\n\t\t\t\t\t\t<button class=\"ui-ctl-after ui-ctl-icon-clear\" style=\"display: none\"></button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), showTitles ? emailTitle : '', this.inputNum++, main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_EMAIL_OR_PHONE_INPUT'), showTitles ? nameTitle : '', main_core.Loc.getMessage('BX24_INVITE_DIALOG_ADD_NAME_TITLE'), showTitles ? lastNameTitle : '', main_core.Loc.getMessage('BX24_INVITE_DIALOG_ADD_LAST_NAME_TITLE'));
 	      main_core.Dom.append(element, this.rowsContainer);
 	      this.bindCloseIcons(element);
 	      this.bindPhoneChecker(element);
@@ -710,7 +664,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    key: "renderRegisterInputs",
 	    value: function renderRegisterInputs() {
 	      main_core.Dom.clean(this.rowsContainer);
-	      var element = main_core.Tag.render(_templateObject3(), main_core.Loc.getMessage("BX24_INVITE_DIALOG_ADD_NAME_TITLE"), main_core.Loc.getMessage("BX24_INVITE_DIALOG_ADD_LAST_NAME_TITLE"), main_core.Loc.getMessage("BX24_INVITE_DIALOG_ADD_EMAIL_TITLE"), main_core.Loc.getMessage("BX24_INVITE_DIALOG_ADD_POSITION_TITLE"));
+	      var element = main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div>\n\t\t\t\t<div class=\"invite-form-row\">\n\t\t\t\t\t<div class=\"invite-form-col\">\n\t\t\t\t\t\t<div class=\"ui-ctl-label-text\">", "</div>\n\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-textbox ui-ctl-block ui-ctl-after-icon\">\n\t\t\t\t\t\t\t<input type=\"text\" name=\"ADD_NAME\" id=\"ADD_NAME\" class=\"ui-ctl-element\">\n\t\t\t\t\t\t\t<button class=\"ui-ctl-after ui-ctl-icon-clear\" style=\"display: none\"></button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"invite-form-row\">\n\t\t\t\t\t<div class=\"invite-form-col\">\n\t\t\t\t\t\t<div class=\"ui-ctl-label-text\">", "</div>\n\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-textbox ui-ctl-block ui-ctl-after-icon\">\n\t\t\t\t\t\t\t<input type=\"text\" name=\"ADD_LAST_NAME\" id=\"ADD_LAST_NAME\" class=\"ui-ctl-element\">\n\t\t\t\t\t\t\t<button class=\"ui-ctl-after ui-ctl-icon-clear\" style=\"display: none\"></button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"invite-form-row\">\n\t\t\t\t\t<div class=\"invite-form-col\">\n\t\t\t\t\t\t<div class=\"ui-ctl-label-text\">", "</div>\n\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-textbox ui-ctl-block ui-ctl-after-icon\">\n\t\t\t\t\t\t\t<input type=\"text\" name=\"ADD_EMAIL\" id=\"ADD_EMAIL\" class=\"ui-ctl-element\" maxlength=\"50\">\n\t\t\t\t\t\t\t<button class=\"ui-ctl-after ui-ctl-icon-clear\" style=\"display: none\"></button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"invite-form-row\">\n\t\t\t\t\t<div class=\"invite-form-col\">\n\t\t\t\t\t\t<div class=\"ui-ctl-label-text\">", "</div>\n\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-textbox ui-ctl-block ui-ctl-after-icon\">\n\t\t\t\t\t\t\t<input type=\"text\" name=\"ADD_POSITION\" id=\"ADD_POSITION\" class=\"ui-ctl-element\">\n\t\t\t\t\t\t\t<button class=\"ui-ctl-after ui-ctl-icon-clear\" style=\"display: none\"></button>\n\t\t\t\t\t\t</div>\t\t\t\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage("BX24_INVITE_DIALOG_ADD_NAME_TITLE"), main_core.Loc.getMessage("BX24_INVITE_DIALOG_ADD_LAST_NAME_TITLE"), main_core.Loc.getMessage("BX24_INVITE_DIALOG_ADD_EMAIL_TITLE"), main_core.Loc.getMessage("BX24_INVITE_DIALOG_ADD_POSITION_TITLE"));
 	      main_core.Dom.append(element, this.rowsContainer);
 	      this.bindCloseIcons(element);
 	    }
@@ -718,7 +672,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    key: "renderIntegratorInput",
 	    value: function renderIntegratorInput() {
 	      main_core.Dom.clean(this.rowsContainer);
-	      var element = main_core.Tag.render(_templateObject4(), main_core.Loc.getMessage("INTRANET_INVITE_DIALOG_INTEGRATOR_EMAIL"), main_core.Loc.getMessage("INTRANET_INVITE_DIALOG_INTEGRATOR_EMAIL"));
+	      var element = main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"invite-form-row\">\n\t\t\t\t<div class=\"invite-form-col\">\n\t\t\t\t\t<div class=\"ui-ctl-label-text\">", "</div>\n\t\t\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-textbox ui-ctl-block ui-ctl-after-icon\">\n\t\t\t\t\t\t<input \n\t\t\t\t\t\t\ttype=\"text\" \n\t\t\t\t\t\t\tclass=\"ui-ctl-element\" \n\t\t\t\t\t\t\tvalue=\"\" \n\t\t\t\t\t\t\tmaxlength=\"50\"\n\t\t\t\t\t\t\tname=\"integrator_email\" \n\t\t\t\t\t\t\tid=\"integrator_email\" \n\t\t\t\t\t\t\tplaceholder=\"", "\"\n\t\t\t\t\t\t/>\n\t\t\t\t\t\t<button class=\"ui-ctl-after ui-ctl-icon-clear\" style=\"display: none\"></button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage("INTRANET_INVITE_DIALOG_INTEGRATOR_EMAIL"), main_core.Loc.getMessage("INTRANET_INVITE_DIALOG_INTEGRATOR_EMAIL"));
 	      main_core.Dom.append(element, this.rowsContainer);
 	      this.bindCloseIcons(element);
 	    }
@@ -774,8 +728,15 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  }, {
 	    key: "render",
 	    value: function render() {
+	      var preselectedItems = [];
+
+	      if (this.options.hasOwnProperty('projectId') && this.options.projectId > 0) {
+	        preselectedItems.push(['project', this.options.projectId]);
+	      }
+
 	      this.tagSelector = new ui_entitySelector.TagSelector({
 	        dialogOptions: {
+	          preselectedItems: preselectedItems,
 	          entities: this.entities,
 	          context: 'INTRANET_INVITATION'
 	        }
@@ -926,6 +887,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 	          return;
 	        }
 
+	        var projectId = this.userOptions.hasOwnProperty('groupId') ? parseInt(this.userOptions.groupId, 10) : 0;
+
 	        for (var type in this.contentBlocks) {
 	          var block = this.contentBlocks[type];
 
@@ -946,6 +909,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	                options: {
 	                  department: true,
 	                  project: true,
+	                  projectId: projectId,
 	                  isAdmin: this.isAdmin
 	                }
 	              };
@@ -957,6 +921,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	                options: {
 	                  department: false,
 	                  project: "extranet",
+	                  projectId: projectId,
 	                  isAdmin: this.isAdmin
 	                }
 	              };
@@ -968,6 +933,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	                options: {
 	                  department: true,
 	                  project: true,
+	                  projectId: projectId,
 	                  isAdmin: this.isAdmin
 	                }
 	              };

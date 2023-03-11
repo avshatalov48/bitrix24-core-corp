@@ -161,7 +161,7 @@ class TasksTaskTemplateComponent extends TasksBaseComponent
 		return [];
 	}
 
-	public function setTagsAction($templateId, $tags)
+	public function setTagsAction($templateId, array $tags = [])
 	{
 		$templateId = (int) $templateId;
 		if (!$templateId)

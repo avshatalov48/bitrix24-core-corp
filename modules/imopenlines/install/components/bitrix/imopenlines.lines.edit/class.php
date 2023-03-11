@@ -65,6 +65,8 @@ class ImOpenLinesComponentLinesEdit extends CBitrixComponent implements Controll
 		'VOTE_ENABLE_TIME_LIMIT',
 		'USE_WELCOME_FORM',
 		'WELCOME_FORM_DELAY',
+		'CONFIRM_CLOSE',
+		'IGNORE_WELCOME_FORM_RESPONSIBLE',
 
 		'CATEGORY_ENABLE'
 	];
@@ -358,7 +360,7 @@ class ImOpenLinesComponentLinesEdit extends CBitrixComponent implements Controll
 							$post['AUTOMATIC_MESSAGE']['TASK'][$cell]['LONG_TEXT_BUTTON_NEW'] = Loc::getMessage('OL_COMPONENT_AUTOMATIC_MESSAGE_NEW_TITLE');
 						}
 
-						if($cell[0] !== 'n')
+						if(is_numeric($cell))
 						{
 							$post['AUTOMATIC_MESSAGE']['TASK'][$cell]['ID'] = $cell;
 						}
@@ -485,7 +487,6 @@ class ImOpenLinesComponentLinesEdit extends CBitrixComponent implements Controll
 					{
 						$userFields['USER_AVATAR'] = Im\User::getInstance($key)->getAvatar();
 					}
-					$userFields['USER_AVATAR'] = \CHTTP::urnEncode($userFields['USER_AVATAR']);
 					$result['queueUsersFields'][$key] = $userFields;
 				}
 			}
@@ -493,10 +494,6 @@ class ImOpenLinesComponentLinesEdit extends CBitrixComponent implements Controll
 			//TODO ui 20.400.0
 			//$result['queueItems'] = $itemCollections->toArray();
 			$result['queueItems'] = array_map(static function(EntitySelector\Item $item) {
-				if($item->getAvatar())
-				{
-					$item->setAvatar(\CHTTP::urnEncode($item->getAvatar()));
-				}
 				return $item->jsonSerialize();
 			}, $itemCollections->getAll());
 		}
@@ -537,7 +534,7 @@ class ImOpenLinesComponentLinesEdit extends CBitrixComponent implements Controll
 				'entityId' => $item->getId(),
 				'entityType' => $item->getEntityId(),
 				'name' => $item->getTitle(),
-				'avatar' => \CHTTP::urnEncode($item->getAvatar()),
+				'avatar' => $item->getAvatar(),
 				'department' => $this->arResult['CONFIG']['QUEUE_FULL'][$item->getId()]['DEPARTMENT_ID']
 			];
 		}
@@ -900,7 +897,7 @@ class ImOpenLinesComponentLinesEdit extends CBitrixComponent implements Controll
 
 		$this->arResult['CAN_EDIT'] = $configManager->canEditLine($configId);
 		$this->arResult['CAN_EDIT_CONNECTOR'] = $configManager->canEditConnector($configId);
-		$this->arResult['IS_CRM_INSTALLED'] = IsModuleInstalled('crm')? 'Y': 'N';
+		$this->arResult['IS_CRM_INSTALLED'] = \Bitrix\Main\ModuleManager::isModuleInstalled('crm')? 'Y': 'N';
 
 		$this->arResult['LANGUAGE_LIST'] = Intranet\Util::getLanguageList();
 		if (!$config['LANGUAGE_ID'])
@@ -1039,6 +1036,10 @@ class ImOpenLinesComponentLinesEdit extends CBitrixComponent implements Controll
 		if((int)$this->arResult['CONFIG']['VOTE_TIME_LIMIT'] > 0)
 		{
 			$this->arResult['CONFIG']['VOTE_ENABLE_TIME_LIMIT'] = 'Y';
+		}
+		else
+		{
+			$this->arResult['CONFIG']['VOTE_ENABLE_TIME_LIMIT'] = 'N';
 		}
 
 		$this->arResult['CAN_WATCH_TYPING'] = \CPullOptions::GetQueueServerStatus() && \CPullOptions::GetPublishWebEnabled();

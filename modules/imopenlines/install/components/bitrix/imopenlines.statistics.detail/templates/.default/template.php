@@ -19,12 +19,15 @@ use \Bitrix\Main\UI;
 	'ui.design-tokens',
 ]);
 
-if ($arResult['LINE_NAME'])
+if (!empty($arResult['LINE_NAME']))
 {
 	$APPLICATION->SetTitle(Loc::getMessage('OL_STAT_TITLE', ['#LINE_NAME#' => htmlspecialcharsbx($arResult['LINE_NAME'])]));
 }
 
-\ShowError($arResult['ERROR_TEXT']);
+if (!empty($arResult['ERROR_TEXT']))
+{
+	\ShowError($arResult['ERROR_TEXT']);
+}
 
 $isBitrix24Template = (SITE_TEMPLATE_ID == 'bitrix24');
 if($isBitrix24Template)
@@ -42,8 +45,8 @@ $APPLICATION->IncludeComponent(
 	[
 		'GRID_ID' => $arResult['GRID_ID'],
 		'FILTER_ID' => $arResult['FILTER_ID'],
-		'FILTER' => $arResult['FILTER'],
-		'FILTER_PRESETS' => $arResult['FILTER_PRESETS'],
+		'FILTER' => $arResult['FILTER'] ?? [],
+		'FILTER_PRESETS' => $arResult['FILTER_PRESETS'] ?? [],
 		'ENABLE_LIVE_SEARCH' => (bool)\Bitrix\Main\Config\Option::get('imopenlines', 'enable_live_search'),
 		'ENABLE_LABEL' => true
 	],
@@ -70,7 +73,7 @@ if ($isBitrix24Template)
 	?></div><?
 	$this->EndViewTarget();
 
-	$isAdmin = CModule::IncludeModule('bitrix24') ? \CBitrix24::isPortalAdmin($USER->getId()) : $USER->IsAdmin();
+	$isAdmin = \Bitrix\Main\Loader::includeModule('bitrix24') ? \CBitrix24::isPortalAdmin($USER->getId()) : $USER->IsAdmin();
 	if($isAdmin)
 	{
 		echo Bitrix\Imopenlines\Ui\Helper::getStatisticStepper();

@@ -4,6 +4,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 use Bitrix\Main;
 use Bitrix\Main\Web\Json;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Web\Uri;
 use Bitrix\UI;
 
 /** @var CBitrixComponentTemplate $this */
@@ -178,7 +179,7 @@ foreach ($arResult["ITEMS"] as $index => $data)
 		>
 			<span 
 				class="crm-webform-list-user-icon ' . htmlspecialcharsbx($userClass) . '" 
-				style="background-image: url(' . htmlspecialcharsbx($userIconPath) . ');"
+				style="background-image: url(' . Uri::urnEncode(htmlspecialcharsbx($userIconPath)) . ');"
 			>
 				<i></i>
 			</span>

@@ -24,13 +24,27 @@ foreach ($arResult["ELEMENTS_LIST"] as $key => $arItem)
 			false,
 			true
 		);
+		if (
+			!is_array($image_resize)
+			|| !isset($image_resize["src"])
+		)
+		{
+			continue;
+		}
 
-		$arResult["ELEMENTS_LIST"][$key]["PREVIEW_PICTURE"]["SRC"] = $image_resize["src"];
+		$previewPicture = $arResult["ELEMENTS_LIST"][$key]["PREVIEW_PICTURE"];
+		if (!is_array($previewPicture))
+		{
+			continue;
+		}
+
+		$previewPicture["SRC"] = $image_resize["src"];
 		if ($arParams["LIVEFEED_EVENT_ID"] == "photo_photo")
 		{
-			$arResult["ELEMENTS_LIST"][$key]["PREVIEW_PICTURE"]["WIDTH"] = intval($image_resize["width"] / 2);
-			$arResult["ELEMENTS_LIST"][$key]["PREVIEW_PICTURE"]["HEIGHT"] = intval($image_resize["height"] / 2);
+			$previewPicture["WIDTH"] = intval($image_resize["width"] / 2);
+			$previewPicture["HEIGHT"] = intval($image_resize["height"] / 2);
 		}
+		$arResult["ELEMENTS_LIST"][$key]["PREVIEW_PICTURE"] = $previewPicture;
 	}
 }
 

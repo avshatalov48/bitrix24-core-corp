@@ -1,6 +1,10 @@
 import {Loc, Dom, Tag, Type, Text, Event, Runtime} from 'main.core';
 import {BaseEvent, EventEmitter} from 'main.core.events';
 
+import {PULL as Pull} from 'pull.client';
+
+import {PullItem, UpdateParams} from './pull.item';
+
 import {KanbanComponent, AjaxComponentParams} from './kanban.component';
 
 import './css/base.css';
@@ -76,6 +80,7 @@ export class KanbanManager
 {
 	constructor(params: Params)
 	{
+		this.groupId = parseInt(params.groupId, 10);
 		this.filterId = params.filterId;
 		this.siteTemplateId = params.siteTemplateId;
 		this.ajaxComponentPath = params.ajaxComponentPath;
@@ -96,12 +101,19 @@ export class KanbanManager
 			ajaxComponentParams: params.ajaxComponentParams
 		});
 
+		this.pullItem = new PullItem({
+			groupId: this.groupId
+		});
+		this.pullItem.subscribe('itemUpdated', this.onItemUpdated.bind(this));
+
 		EventEmitter.subscribe('BX.Main.Filter:apply', (event: BaseEvent) => {
 			const [filterId, values, filterInstance, promise, params] = event.getCompatData();
 			this.onApplyFilter(filterId, values, filterInstance, promise, params);
 		});
 
 		EventEmitter.subscribe('onTasksGroupSelectorChange', this.onChangeSprint.bind(this));
+
+		Pull.subscribe(this.pullItem);
 	}
 
 	drawKanban(renderTo: HTMLElement, params: KanbanParams)
@@ -436,6 +448,34 @@ export class KanbanManager
 			this.fillNeighborKanbans();
 			this.adjustGroupHeadersWidth();
 		}, (error) => {});
+	}
+
+	onItemUpdated(baseEvent: BaseEvent)
+	{
+		const data: UpdateParams = baseEvent.getData();
+
+		if (this.groupId !== data.groupId)
+		{
+			return;
+		}
+
+		const taskId = data.sourceId;
+
+		if (this.kanban.hasItem(taskId))
+		{
+			this.kanban.refreshTask(taskId);
+		}
+		else
+		{
+			this.kanbanGroupedByParentTasks.forEach(
+				(parentTaskKanban) => {
+					if (parentTaskKanban.hasItem(taskId))
+					{
+						parentTaskKanban.refreshTask(taskId);
+					}
+				}
+			);
+		}
 	}
 
 	refreshKanban(kanban, data)

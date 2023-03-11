@@ -5,7 +5,7 @@ use \Bitrix\Main\Localization\Loc;
 <div class="imconnector-field-container">
 	<div class="imconnector-field-section">
 		<div class="imconnector-field-main-title">
-			<?if($arResult['PAGE'] == 'connection'):?>
+			<?if (!empty($arResult['PAGE']) && $arResult['PAGE'] == 'connection'):?>
 				<?=Loc::getMessage('IMCONNECTOR_COMPONENT_IMESSAGE_INFO_OLD_CONNECT')?>
 			<?else:?>
 				<?=Loc::getMessage('IMCONNECTOR_COMPONENT_IMESSAGE_INFO')?>

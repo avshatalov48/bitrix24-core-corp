@@ -709,16 +709,6 @@ return array(
 			"releaseDate" => "23 February 2018"
 		),
 
-		"light:red-star" => array(
-			"title" => Loc::getMessage("BITRIX24_THEME_RED_STAR"),
-			"prefetchImages" => array("red-star.jpg"),
-			"previewImage" => "red-star-preview.jpg",
-			"width" => 1920,
-			"height" => 1080,
-			"resizable" => true,
-			"zones" => array("ru", "by", "kz")
-		),
-
 		"light:jack-o-lantern" => array(
 			"title" => Loc::getMessage("BITRIX24_THEME_JACK_O_LANTERN"),
 			"prefetchImages" => array("jack-o-lantern.jpg"),

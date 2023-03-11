@@ -6,6 +6,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Tasks\Helper\RestrictionUrl;
 use Bitrix\Tasks\Util\Type;
 use Bitrix\Tasks\Util;
 use Bitrix\Tasks\Integration\CRM;
@@ -540,8 +541,20 @@ if ($arParams['ENABLE_MENU_TOOLBAR'])
 
 			ob_start();
 			$replicationEnabled = !$template['BASE_TEMPLATE_ID'] && $template['TPARAM_TYPE'] != 1;
+			$lockClassStyle = '';
+			if (!empty($lockClass))
+			{
+				$lockClassStyle = 'cursor: pointer;';
+			}
 			?>
-					<label class="js-id-hint-help js-id-task-template-edit-hint-replication task-field-label task-field-label-repeat <?= $lockClass ?>" data-hint-enabled="<?=!intval($replicationEnabled)?>" data-hint-text="<?=Loc::getMessage('TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_NO_REPLICATION_TEMPLATE_NOTICE', array('#TPARAM_FOR_NEW_USER#' => Loc::getMessage('TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_TPARAM_TYPE')))?>">
+					<label class="js-id-hint-help js-id-task-template-edit-hint-replication task-field-label task-field-label-repeat <?= $lockClass ?>"
+						   data-hint-enabled="<?=!intval($replicationEnabled)?>"
+						   data-hint-text="<?=Loc::getMessage('TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_NO_REPLICATION_TEMPLATE_NOTICE', array(
+							   '#TPARAM_FOR_NEW_USER#' => Loc::getMessage('TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_TPARAM_TYPE')
+						   		)
+						   )?>"
+						   style="<?=$lockClassStyle?>"
+					>
 						<input class="js-id-task-template-edit-flag js-id-task-template-edit-flag-replication task-options-checkbox"
 							   data-target="replication"
 							   data-flag-name="REPLICATE"
@@ -760,9 +773,27 @@ if ($arParams['ENABLE_MENU_TOOLBAR'])
 						</div>
 						<input class="js-id-task-template-edit-parent-type-task" type="hidden" name="<?=$inputPrefix?>[PARENT_ID]" value="<?=intval($template['PARENT_ID'])?>" />
 						<input class="js-id-task-template-edit-parent-type-template" type="hidden" name="<?=$inputPrefix?>[BASE_TEMPLATE_ID]" value="<?=(intval($template['PARENT_ID']) ? 0 : intval($template['BASE_TEMPLATE_ID']))?>" />
-
-						<div class="tasks-parent-selector <?= $lockClass ?>">
-							<?$APPLICATION->IncludeComponent(
+						<?php
+							if (!empty($lockClass))
+							{
+								$lockClassName = "tasks-parent-selector {$lockClass}";
+								$onLockClick =
+									"top.BX.UI.InfoHelper.show('"
+									. RestrictionUrl::TEMPLATE_LIMIT_SUBTASKS_SLIDER_URL
+									. "',{isLimit: true,limitAnalyticsLabels: {module: 'tasks'}});"
+								;
+								$lockClassStyle = "cursor: pointer;";
+						?>
+								<div class="<?=$lockClassName?>" onclick="<?=$onLockClick?>" style="<?=$lockClassStyle?>">
+						<?php
+							}
+							else
+							{
+						?>
+								<div class="tasks-parent-selector">
+						<?php
+							}
+								$APPLICATION->IncludeComponent(
 								'bitrix:tasks.widget.related.selector',
 								'',
 								[

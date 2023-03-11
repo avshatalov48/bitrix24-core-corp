@@ -39,7 +39,7 @@ jn.define('tasks/layout/task/fields/taskResultList/taskResult', (require, export
 					fontWeight: '500',
 					color: '#a8adb4',
 				},
-				text: Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_FIELDS_TASK_RESULT_TITLE').toUpperCase(),
+				text: Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_FIELDS_TASK_RESULT_TITLE_MSGVER_1').toLocaleUpperCase(),
 			});
 		}
 
@@ -255,12 +255,11 @@ jn.define('tasks/layout/task/fields/taskResultList/taskResult', (require, export
 		{
 			if (imageUrl.indexOf(currentDomain) !== 0)
 			{
-				imageUrl = encodeURI(imageUrl);
 				imageUrl = imageUrl.replace(`${currentDomain}`, '');
 				imageUrl = (imageUrl.indexOf('http') !== 0 ? `${currentDomain}${imageUrl}` : imageUrl);
 			}
 
-			return imageUrl;
+			return encodeURI(imageUrl);
 		}
 
 		openFileViewer({fileType, url, name})
@@ -292,7 +291,7 @@ jn.define('tasks/layout/task/fields/taskResultList/taskResult', (require, export
 				url: `${env.siteDir}mobile/tasks/snmrouter/?routePage=fragmentrenderer&FRAGMENT_TYPE=${type}&FRAGMENT_ID=${id}&TASK_ID=${this.props.taskId}&RESULT_ID=${this.props.taskResult.id}`,
 				title: Loc.getMessage(
 					`TASKSMOBILE_LAYOUT_TASK_FIELDS_TASK_RESULT_CONTENT_${type.toUpperCase()}`,
-					{'#INDEX#': Number(id) + 1}
+					{'#INDEX#': Number(id)}
 				),
 				backdrop: {
 					bounceEnable: false,

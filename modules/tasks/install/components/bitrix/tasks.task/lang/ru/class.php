@@ -16,4 +16,7 @@ $MESS['TASKS_REST_BUTTON_TITLE_2'] = 'Битрикс24.Маркет';
 
 $MESS['TASKS_TEMPLATE_CREATE_FORBIDDEN'] = 'Доступ к созданию шаблонов запрещен';
 $MESS["TASKS_ACTION_RESULT_REQUIRED"] = "Постановщик запросил результат работы.<br> Оставьте комментарий к задаче и отметьте его как отчет.";
+$MESS['TASKS_TASK_TAG_ALREADY_EXISTS'] = 'Такой тег уже существует';
+$MESS['TASKS_TASK_TAG_ACCESS_DENIED'] = 'Недостаточно прав';
+$MESS['TASKS_TASK_TAG_UNKNOWN_ERROR'] = 'Не удалось добавить тег, попробуйте ещё раз';
 ?>

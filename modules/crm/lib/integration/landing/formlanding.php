@@ -25,6 +25,8 @@ class FormLanding
 	 */
 	const SITE_TYPE = 'PAGE';
 
+	public const LANDING_CODE_PRERIX = 'crm_form_';
+
 	/**
 	 * If object initialization was successfully.
 	 * @var bool
@@ -209,7 +211,7 @@ class FormLanding
 		$result = Landing::add([
 			'TITLE' => $formName ?: 'CRM Form',
 			'SITE_ID' => $siteId,
-			'CODE' => 'crm_form_' . mb_strtolower(\Bitrix\Main\Security\Random::getString(5, true))
+			'CODE' => self::LANDING_CODE_PRERIX . mb_strtolower(\Bitrix\Main\Security\Random::getString(5, true))
 		]);
 		if ($result->isSuccess())
 		{

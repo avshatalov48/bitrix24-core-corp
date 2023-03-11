@@ -20,6 +20,7 @@ $MESS["IMOL_CHAT_ERROR_ANSWER_ALREADY_RESPONSIBLE"] = "The agent you are trying 
 $MESS["IMOL_CHAT_ERROR_ANSWER_COMPETITIVE_REQUEST"] = "There is a concurrent request to accept this conversation";
 $MESS["IMOL_CHAT_ERROR_ANSWER_NOT_LOAD_SESSION"] = "Cannot load session";
 $MESS["IMOL_CHAT_ERROR_CONNECTOR_LOAD"] = "Error initializing External IM Connectors module.";
+$MESS["IMOL_CHAT_ERROR_CONNECTOR_LOAD_MSGVER_1"] = "Error initializing the External Messenger Connectors module.";
 $MESS["IMOL_CHAT_ERROR_CONNECTOR_SEND"] = "Error sending message";
 $MESS["IMOL_CHAT_ERROR_IM_LOAD"] = "Error initializing Instant Messenger module.";
 $MESS["IMOL_CHAT_ERROR_NOT_LOAD_DATA"] = "Unable to load chat data";

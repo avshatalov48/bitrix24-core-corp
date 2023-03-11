@@ -239,25 +239,25 @@ class Task implements Tabable
 	 */
 	public function getMenuData()
 	{
-		$data = $this->getDataInternal();
 		$result = [
-			"title"=>$this->getTitle(),
-			"useLetterImage" => true,
-			"color" => "#fabb3f",
-			"imageUrl" => "favorite/icon-tasks.png",
-		];;
+			'title' => $this->getTitle(),
+			'useLetterImage' => true,
+			'color' => '#fabb3f',
+			'imageUrl' => 'favorite/icon-tasks.png',
+		];
 
-		if($data["component"])
+		$data = $this->getDataInternal();
+		if (!empty($data['component']))
 		{
-			$result["params"]= [
-				"onclick"=>\Bitrix\Mobile\Tab\Utils::getComponentJSCode($data["component"]),
-				"counter"=>"tasks_total",
+			$result['params']= [
+				'onclick' => "BX.postComponentEvent('taskbackground::taskList::open', [{ownerId: {$this->context->userId}}], 'background');",
+				'counter' => 'tasks_total',
 			];
 		}
-		else if($data["page"])
+		elseif (!empty($data['page']))
 		{
-			$result["params"]= $data["page"];
-			$result["params"]["counter"] = "tasks_total";
+			$result['params'] = $data['page'];
+			$result['params']['counter'] = 'tasks_total';
 		}
 
 		return $result;

@@ -277,7 +277,7 @@ class Marta extends Base
 			if ($messageFields['COMMAND_PARAMS'] == 'welcome')
 			{
 				$message = Loc::getMessage('IMBOT_BOT_DISABLE_WELCOME', Array('#USER_NAME#' => $userName));
-				self::setBotOption($messageFields['DIALOG_ID'], 'planner_message', '20230219');
+				self::setBotOption($messageFields['DIALOG_ID'], 'planner_message', '20290219');
 			}
 			else
 			{

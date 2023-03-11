@@ -338,6 +338,15 @@ class Compilation extends Base
 		{
 			$compilationId = CatalogManager::getInstance()->createCompilationForDeal($dealId, $productIds, $chatId);
 		}
+		if ($compilationId)
+		{
+			$compilation = CatalogManager::getInstance()->getCompilationById($compilationId);
+			if (isset($compilation['PRODUCT_IDS']))
+			{
+				$productIds = $compilation['PRODUCT_IDS'];
+			}
+		}
+
 		$compilationLink = CatalogManager::getInstance()->getLinkToProductCompilation($compilationId, $productIds)->getData();
 
 		if ($options['sendingMethod'] === 'sms')

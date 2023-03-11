@@ -610,7 +610,8 @@ $APPLICATION->IncludeComponent(
 			->setItems([
 				NavigationBarPanel::ID_AUTOMATION,
 				NavigationBarPanel::ID_KANBAN,
-				NavigationBarPanel::ID_LIST
+				NavigationBarPanel::ID_LIST,
+				NavigationBarPanel::ID_DEADLINES,
 			], NavigationBarPanel::ID_LIST)
 			->setBinding($arResult['NAVIGATION_CONTEXT_ID'])
 			->get(),
@@ -656,7 +657,30 @@ $APPLICATION->IncludeComponent(
 				};
 		}
 	);
-</script><?
+</script>
+<?php if (!$isInternal):?>
+	<script type="text/javascript">
+		BX.ready(
+			function()
+			{
+				<?php if (\Bitrix\Crm\Settings\Crm::isUniversalActivityScenarioEnabled()): ?>
+				BX.Runtime.loadExtension(['crm.push-crm-settings', 'crm.toolbar-component']).then((exports) =>
+				{
+					/** @see BX.Crm.ToolbarComponent */
+					const settingsButton = exports.ToolbarComponent.Instance.getSettingsButton();
+
+					/** @see BX.Crm.PushCrmSettings */
+					new exports.PushCrmSettings({
+						entityTypeId: <?= (int)\CCrmOwnerType::Quote ?>,
+						rootMenu: settingsButton ? settingsButton.getMenuWindow() : undefined,
+						grid: BX.Reflection.getClass('BX.Main.gridManager') ? BX.Main.gridManager.getInstanceById('<?= \CUtil::JSEscape($arResult['GRID_ID']) ?>') : undefined,
+					});
+				});
+				<?php endif; ?>
+			}
+		);
+	</script>
+<?endif;?><?
 if($arResult['CONVERSION_PERMITTED'] && $arResult['CAN_CONVERT'] && isset($arResult['CONVERSION_CONFIG'])):?>
 	<script type="text/javascript">
 		BX.ready(

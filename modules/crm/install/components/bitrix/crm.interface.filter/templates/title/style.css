@@ -81,10 +81,6 @@
 	color: #fff;
 }
 
-.bx-ie .ui-btn.ui-btn-light-border.crm-robot-btn {
-	background: rgba(255,255,255,.15);
-}
-
 .crm-view-switcher-buttons {
 	display: flex;
 	align-items: center;

@@ -173,7 +173,7 @@ class TasksWidgetResult extends \CBitrixComponent
 			return null;
 		}
 
-		(new ResultManager($userId))->deleteByComment($commentId);
+		(new ResultManager($userId))->deleteByComment($commentId, $userId);
 		return null;
 	}
 

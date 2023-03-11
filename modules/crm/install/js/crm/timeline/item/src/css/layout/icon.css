@@ -113,6 +113,11 @@
 	mask-position: center;
 }
 
+.crm-timeline__card_icon.--code-bank-card i {
+	mask-image: url(images/icon_);
+	mask-position: center;
+}
+
 .crm-timeline__card_icon.--code-wallet i {
 	mask-position: center -1343px;
 }
@@ -159,6 +164,14 @@
 
 .crm-timeline__card_icon.--code-call-completed i {
 	mask-image: url('../../images/timeline-card-icons/call/crm-timeline__call-completed.svg');
+	width: 26px;
+	height: 26px;
+	mask-size: contain;
+	mask-position: center;
+}
+
+.crm-timeline__card_icon.--code-bank-card i {
+	mask-image: url('../../images/timeline-card-icons/crm-timeline__bank-card-icon.svg');
 	width: 26px;
 	height: 26px;
 	mask-size: contain;

@@ -186,7 +186,17 @@ class Result extends Base
 		$taskResults = (new ResultManager($userId))->getTaskResults($taskId);
 		foreach ($taskResults as $result)
 		{
-			$list[] = $result->toArray();
+			$data = $result->toArray();
+			if (!is_array($data['files']))
+			{
+				$data['files'] = [];
+			}
+			$list[] = $data;
+		}
+
+		if (empty($list))
+		{
+			return [];
 		}
 
 		$params = [

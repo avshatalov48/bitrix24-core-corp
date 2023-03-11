@@ -15,8 +15,8 @@ class Olx extends Base
 {
 	//Input
 	/**
-	 * @param $message
-	 * @param $line
+	 * @param array $message
+	 * @param int $line
 	 * @return Result
 	 */
 	public function processingInputNewMessage($message, $line): Result
@@ -27,7 +27,7 @@ class Olx extends Base
 		{
 			$message = $result->getResult();
 
-			$status = Status::getInstance($this->idConnector, $line);
+			$status = Status::getInstance($this->idConnector, (int)$line);
 
 			if(!($data = $status->getData()))
 			{

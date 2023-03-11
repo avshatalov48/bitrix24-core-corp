@@ -12,8 +12,8 @@ Loc::loadMessages(__FILE__);
 class StoreDocument extends Base
 {
 	private const PROVIDER_TYPE_DEFAULT = 'STORE_DOCUMENT';
-	private const PROVIDER_TYPE_ID_PRODUCT = 'STORE_DOCUMENT_PRODUCT';
-	private const PROVIDER_TYPE_ID_SERVICE = 'STORE_DOCUMENT_SERVICE';
+	public const PROVIDER_TYPE_ID_PRODUCT = 'STORE_DOCUMENT_PRODUCT';
+	public const PROVIDER_TYPE_ID_SERVICE = 'STORE_DOCUMENT_SERVICE';
 
 	public static function getName()
 	{
@@ -172,5 +172,10 @@ class StoreDocument extends Base
 		}
 
 		return $deadlineTime;
+	}
+
+	public static function isTypeEditable($providerTypeId = null, $direction = \CCrmActivityDirection::Undefined)
+	{
+		return false;
 	}
 }

@@ -1,4 +1,4 @@
-<?
+<?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 use Bitrix\Main\Localization\Loc;
 
@@ -6,7 +6,7 @@ $helpDeskCode = 'redirect=detail&code=8288267';
 
 Loc::loadMessages(__FILE__);
 ?>
-<?if ($arResult['STATUS']):?>
+<?if (!empty($arResult['STATUS'])):?>
 	<div class="imconnector-field-container">
 		<div class="imconnector-field-section imconnector-field-section-social">
 			<div class="imconnector-field-box">

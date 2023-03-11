@@ -47,7 +47,7 @@ jn.define('tasks/layout/task/fields/isTaskControl', (require, exports, module) =
 					config: {
 						deepMergeStyles: this.props.deepMergeStyles,
 						mode: BooleanMode.SWITCHER,
-						description: Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_FIELDS_IS_TASK_CONTROL'),
+						description: Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_FIELDS_IS_TASK_CONTROL_MSGVER_1'),
 						showSwitcher: true,
 					},
 					testId: 'isTaskControl',

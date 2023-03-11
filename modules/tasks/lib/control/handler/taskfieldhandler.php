@@ -127,6 +127,7 @@ class TaskFieldHandler
 		{
 			$type = (string) $this->fields['DURATION_TYPE'];
 		}
+
 		if (
 			$this->taskId
 			&& empty($type)

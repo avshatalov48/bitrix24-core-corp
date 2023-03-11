@@ -44,6 +44,7 @@ export default class ToDo extends Editor
 				return false;
 			}
 			this.cancel();
+			this._manager.processEditingCompletion(this);
 
 			return true;
 		});

@@ -4,6 +4,8 @@ namespace Bitrix\Crm\Controller;
 
 use Bitrix\Crm\Component\EntityDetails\FactoryBased;
 use Bitrix\Crm\Field;
+use Bitrix\Crm\Kanban\Entity\Deadlines;
+use Bitrix\Crm\Kanban\ViewMode;
 use Bitrix\Crm\Multifield\Assembler;
 use Bitrix\Crm\Service;
 use Bitrix\Crm\Service\Container;
@@ -595,6 +597,7 @@ class Item extends Base
 		string $configId = null,
 		int $categoryId = null,
 		string $stageId = null,
+		string $viewMode = null,
 		array $params = []
 	): ?Component
 	{
@@ -640,6 +643,23 @@ class Item extends Base
 		if ($stageId)
 		{
 			$editorConfig['CONTEXT']['STAGE_ID'] = $stageId;
+		}
+
+		// In the deadlines mode we have to set actual_date and first stage for new entity
+		if (
+			$viewMode === ViewMode::MODE_DEADLINES &&
+			Deadlines\DeadlinesStageManager::isEntitySupportDeadlines($entityTypeId)
+		)
+		{
+			$fieldName = Deadlines\DeadlinesStageManager::dateFieldByEntityType($entityTypeId);
+			$deadLinePeriods = new Deadlines\DatePeriods();
+
+			$actualDate = $deadLinePeriods->calculateDateByStage($stageId);
+			$stages = $factory->getStages()->getStatusIdList();
+			$editorConfig['ENTITY_DATA'][$fieldName] = $actualDate;
+			$editorConfig['CONTEXT']['STAGE_ID'] = $stages[0] ?? null ;
+			$editorConfig['CONTEXT']['VIEW_MODE'] = ViewMode::MODE_DEADLINES;
+			$editorConfig['CONTEXT']['DEADLINE_STAGE'] = $deadLinePeriods->stageByDate($actualDate);
 		}
 
 		$forceDefaultConfig = $params['forceDefaultConfig'] ?? 'N';

@@ -1,13 +1,13 @@
-import { Reflection } from "main.core";
+import { Extension } from "main.core";
 
-const EntityType = Reflection.getClass('BX.CrmEntityType');
+const aliases: {[key: number]: string} = Extension.getSettings('crm.push-crm-settings').get('createTimeAliases', {});
 
 const DefaultSort: {[key: number]: {column: string, order: 'asc' | 'desc'}} = {};
 
-if (EntityType)
+for (const entityTypeId in aliases)
 {
-	DefaultSort[EntityType.enumeration.deal] = {
-		column: 'DATE_CREATE',
+	DefaultSort[entityTypeId] = {
+		column: aliases[entityTypeId],
 		order: 'desc',
 	};
 }

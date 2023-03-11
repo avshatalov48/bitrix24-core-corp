@@ -1,4 +1,6 @@
 (() => {
+	const {Entry} = jn.require('tasks/entry');
+
 	const SITE_ID = BX.componentParameters.get('SITE_ID', 's1');
 
 	class Pull
@@ -246,7 +248,7 @@
 			}
 			else if (tabId === TasksTabs.tabNames.efficiency)
 			{
-				BX.postComponentEvent('taskbackground::efficiency::open', [{userId: this.userId}]);
+				(new Entry()).openEfficiency({userId: this.userId});
 			}
 		}
 

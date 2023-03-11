@@ -61,23 +61,23 @@ class DialogSession
 	{
 		$this->data = array_merge($this->data, $params);
 
-		if ($params['ID'])
+		if (!empty($params['ID']))
 		{
 			$this->primaryId = (int)$params['ID'];
 		}
-		if ($params['BOT_ID'])
+		if (!empty($params['BOT_ID']))
 		{
 			$this->botId = (int)$params['BOT_ID'];
 		}
-		if ($params['DIALOG_ID'])
+		if (!empty($params['DIALOG_ID']))
 		{
 			$this->dialogId = $params['DIALOG_ID'];
 		}
-		if ($params['SESSION_ID'])
+		if (!empty($params['SESSION_ID']))
 		{
 			$this->sessionId = (int)$params['SESSION_ID'];
 		}
-		if ($params['CLOSE_TERM'])
+		if (!empty($params['CLOSE_TERM']))
 		{
 			$this->closeTerm = (int)$params['CLOSE_TERM'];
 		}
@@ -116,6 +116,7 @@ class DialogSession
 					'DATE_LAST_ACTIVITY',
 					'CLOSE_TERM',
 					'CLOSED',
+					'TELEMETRY_SENT',
 				],
 				'filter' => $filter
 			]);
@@ -290,6 +291,7 @@ class DialogSession
 				'DATE_LAST_ACTIVITY',
 				'CLOSE_TERM',
 				'CLOSED',
+				'TELEMETRY_SENT',
 			],
 			'filter' => $filter
 		]);

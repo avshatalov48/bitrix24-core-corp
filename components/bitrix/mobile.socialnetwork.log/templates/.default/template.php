@@ -55,7 +55,7 @@ else
 								if (<?=\Bitrix\MobileApp\Mobile::getApiVersion()?> >= 31)
 								{
 									BXMobileApp.Events.postToComponent(
-										"taskbackground::task::action",
+										"taskbackground::taskList::open",
 										[{groupId: <?=(int)$arParams["GROUP_ID"]?>}],
 										"background"
 									);
@@ -742,7 +742,10 @@ else
 									$photo_section_id = $arEvent["EVENT"]["SOURCE_ID"];
 									if ($arEvent["EVENT"]["PARAMS"] <> '')
 									{
-										$arEventParams = unserialize(htmlspecialcharsback($arEvent["EVENT"]["PARAMS"]));
+										$arEventParams = unserialize(
+											htmlspecialcharsback($arEvent["EVENT"]["PARAMS"]),
+											['allowed_classes' => false]
+										);
 										if (
 											$arEventParams
 											&& is_array($arEventParams)
@@ -759,7 +762,10 @@ else
 
 									if ($arEvent["EVENT"]["PARAMS"] <> '')
 									{
-										$arEventParams = unserialize(htmlspecialcharsback($arEvent["EVENT"]["PARAMS"]));
+										$arEventParams = unserialize(
+											htmlspecialcharsback($arEvent["EVENT"]["PARAMS"]),
+											['allowed_classes' => false]
+										);
 										if (
 											$arEventParams
 											&& is_array($arEventParams)
@@ -772,7 +778,10 @@ else
 
 								if ($arEvent["EVENT"]["PARAMS"] <> '')
 								{
-									$arEventParams = unserialize(htmlspecialcharsback($arEvent["EVENT"]["PARAMS"]));
+									$arEventParams = unserialize(
+										htmlspecialcharsback($arEvent["EVENT"]["PARAMS"]),
+										['allowed_classes' => false]
+									);
 
 									$photo_iblock_type = $arEventParams["IBLOCK_TYPE"];
 									$photo_iblock_id = $arEventParams["IBLOCK_ID"];
@@ -827,7 +836,15 @@ else
 												"SHOW_COMMENTS" => "Y",
 												"MAX_VOTE" => $arParams["PHOTO_MAX_VOTE"],
 												"VOTE_NAMES" => isset($arParams["PHOTO_VOTE_NAMES"])? $arParams["PHOTO_VOTE_NAMES"]: Array(),
-												"DISPLAY_AS_RATING" => $arParams["SHOW_RATING"] == "Y"? "rating_main": isset($arParams["PHOTO_DISPLAY_AS_RATING"])? $arParams["PHOTO_DISPLAY_AS_RATING"]: "rating",
+												"DISPLAY_AS_RATING" => (
+													(
+														$arParams["SHOW_RATING"] == "Y"
+															? "rating_main"
+															: isset($arParams["PHOTO_DISPLAY_AS_RATING"])
+													)
+														? $arParams["PHOTO_DISPLAY_AS_RATING"]
+														: "rating"
+												),
 												"RATING_MAIN_TYPE" => $arParams["SHOW_RATING"] == "Y"? $arParams["RATING_TYPE"]: "",
 
 												"BEHAVIOUR" => "SIMPLE",

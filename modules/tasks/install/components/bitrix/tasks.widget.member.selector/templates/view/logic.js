@@ -518,7 +518,7 @@ BX.namespace('Tasks.Component');
 			prepareData: function(data)
 			{
 				data = this.callMethod(BX.Tasks.UserItemSet, 'prepareData', arguments);
-				data.AVATAR_CSS = data.AVATAR ? "background: url('"+data.AVATAR+"') center no-repeat; background-size: 35px;" : '';
+				data.AVATAR_CSS = data.AVATAR ? "background: url('"+encodeURI(data.AVATAR)+"') center no-repeat; background-size: 35px;" : '';
 
 				return data;
 			},

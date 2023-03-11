@@ -270,8 +270,6 @@
 
 .task-webform .webform-field-textbox input.inactive, .task-webform .webform-field-textbox-double input.inactive { height:20px; color: gray; }
 .task-webform input.webform-field-textbox { height:20px; color: black; }
-.bx-ie8 .task-webform input.webform-field-textbox,
-.bx-ie9 .task-webform input.webform-field-textbox { line-height: 20px; }
 
 .task-responsible-employee-row { margin: 0 0 13px 0;}
 .task-responsible-employee-layout-left { width: 275px; vertical-align:top;}

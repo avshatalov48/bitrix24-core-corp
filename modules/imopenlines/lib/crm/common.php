@@ -655,20 +655,14 @@ class Common
 			if($crmEntityIdByTypeCode && $crmEntityId > 0)
 			{
 				$filter = [
-					'BINDINGS' =>
-						[
-							0 =>
-								[
-									'OWNER_TYPE_ID' => $crmEntityIdByTypeCode,
-									'OWNER_ID' => $crmEntityId,
-									'PROVIDER_ID' => \Bitrix\Crm\Activity\Provider\OpenLine::ACTIVITY_PROVIDER_ID
-								],
+					'PROVIDER_ID' => \Bitrix\Crm\Activity\Provider\OpenLine::ACTIVITY_PROVIDER_ID,
+					'BINDINGS' => [
+						0 => [
+							'OWNER_TYPE_ID' => $crmEntityIdByTypeCode,
+							'OWNER_ID' => $crmEntityId,
 						],
+					],
 				];
-			}
-
-			if (isset($filter))
-			{
 				$activity = \CCrmActivity::GetList(
 					['LAST_UPDATED' => 'DESC'],
 					$filter,
@@ -681,7 +675,7 @@ class Common
 						'DEADLINE', 'RESPONSIBLE_ID'
 					],
 					['QUERY_OPTIONS' => ['LIMIT' => 1, 'OFFSET' => 0]]
-				)->Fetch();
+				)->fetch();
 			}
 
 			if (!empty($activity))

@@ -67,19 +67,17 @@ if (!empty($arResult['CONFIG_MENU']) && is_countable($arResult['CONFIG_MENU']) &
 		'RELOAD_PAGE_AFTER_SAVE' => true
 	]);
 }
-?>
 
-<?php
 foreach ($arResult['CONFIG_MENU'] as $key => $menuItem)
 {
 	$className = ($key === $arResult['MENU_TAB'] ? 'imconnector-page-show' : 'imconnector-page-hide imconnector-hidden-page');
-	if ($arResult['MENU_TAB'] === '' && $key === 'connector')
+	if (!empty($arResult['MENU_TAB']) && $key === 'connector')
 	{
 		$className = 'imconnector-page-show';
 	}
 	?>
 	<div data-fb-connector-page="<?=$key?>" class="<?=$className?>">
-		<?include_once $menuItem['PAGE']; ?>
+		<?php include_once $menuItem['PAGE']; ?>
 	</div>
 	<?php
 }

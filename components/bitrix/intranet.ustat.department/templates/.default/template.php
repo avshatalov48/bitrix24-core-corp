@@ -13,6 +13,7 @@ else
 }
 
 use Bitrix\Intranet\UStat\UStat;
+use Bitrix\Main\Web\Uri;
 
 ?>
 
@@ -576,7 +577,7 @@ BX.ready(function(){
 											class="pulse-info-rat-avatar <?=$i==1?'pulse-info-rat-green':''?>
 												<?=($i>1 && $userRating['USER_ID'] == $USER->getId())?'pulse-info-rat-blue':''?> pulse-info-rat-avatar-<?=$i?>"
 											<? if(!empty($arResult['USERS_INFO'][$userRating['USER_ID']]['AVATAR_SRC'])): ?>
-												style="background: url('<?=$arResult['USERS_INFO'][$userRating['USER_ID']]['AVATAR_SRC']?>') no-repeat center center;"
+												style="background: url('<?=Uri::urnEncode($arResult['USERS_INFO'][$userRating['USER_ID']]['AVATAR_SRC'])?>') no-repeat center center;"
 											<? endif ?>
 											><!--<? if($i==1): ?>
 												--><span class="pulse-info-rat-counter">1</span><!--
@@ -594,7 +595,7 @@ BX.ready(function(){
 											class="pulse-info-rat-avatar <?=++$i==1?'pulse-info-rat-green':''?>
 												<?=($i>1 && $userRating['USER_ID'] == $USER->getId())?'pulse-info-rat-blue':''?> pulse-info-rat-avatar-<?=$i?>"
 											<? if(!empty($arResult['USERS_INFO'][$userRating['USER_ID']]['AVATAR_SRC'])): ?>
-												style="background: url('<?=$arResult['USERS_INFO'][$userRating['USER_ID']]['AVATAR_SRC']?>') no-repeat center center;"
+												style="background: url('<?=Uri::urnEncode($arResult['USERS_INFO'][$userRating['USER_ID']]['AVATAR_SRC'])?>') no-repeat center center;"
 											<? endif ?>
 										><!--<? if($i==1): ?>
 												--><span class="pulse-info-rat-counter">1</span><!--

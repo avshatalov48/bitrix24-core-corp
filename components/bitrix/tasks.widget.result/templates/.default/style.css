@@ -212,3 +212,29 @@
 .tasks-widget-result__item--link-block {
 	margin-top: 11px;
 }
+
+.tasks-widget-result-remove {
+	margin-left: 10px;
+	text-align: right;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	overflow: hidden;
+	opacity: 0;
+	cursor: pointer;
+	transition: .2s;
+	align-items: center;
+}
+
+.tasks-widget-result__item:hover .tasks-widget-result-remove {
+	opacity: .5;
+}
+
+.tasks-widget-result__item:hover .tasks-widget-result-remove:hover {
+	opacity: .75;
+	transition: none;
+}
+
+.tasks-widget-result-remove i {
+	flex: 1;
+	background: url(images/tasks-widget-result_icon-cross.svg) center no-repeat;
+}

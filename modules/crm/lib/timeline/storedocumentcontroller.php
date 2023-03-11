@@ -1,10 +1,8 @@
 <?php
+
 namespace Bitrix\Crm\Timeline;
 
 use Bitrix\Catalog\StoreDocumentTable;
-use Bitrix\Crm\Exclusion\Store;
-use Bitrix\Crm\Order\Order;
-use Bitrix\Crm\Timeline\Entity\TimelineTable;
 use Bitrix\Main;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
@@ -161,18 +159,18 @@ class StoreDocumentController extends EntityController
 			if ($wasCancelledBefore === 'N')
 			{
 				$newStageName = Loc::getMessage('STORE_DOCUMENT_STATUS_DRAFT');
-				$newStageClass = 'draft';
+				$newStageClass = StoreDocumentStatusDictionary::DRAFT;
 			}
 			else
 			{
 				$newStageName = Loc::getMessage('STORE_DOCUMENT_STATUS_CANCELLED');
-				$newStageClass = 'cancelled';
+				$newStageClass = StoreDocumentStatusDictionary::CANCELLED;
 			}
 		}
 		else
 		{
 			$newStageName = Loc::getMessage('STORE_DOCUMENT_STATUS_CONDUCTED');
-			$newStageClass = 'conducted';
+			$newStageClass = StoreDocumentStatusDictionary::CONDUCTED;
 		}
 
 		$authorID = self::resolveEditorID($updatedFields);
@@ -228,73 +226,45 @@ class StoreDocumentController extends EntityController
 
 	public function prepareHistoryDataModel(array $data, array $options = null)
 	{
-		if (!$data['ASSOCIATED_ENTITY']['TITLE'])
+		if (empty($data['ASSOCIATED_ENTITY']['TITLE']))
 		{
-			$data['ASSOCIATED_ENTITY']['TITLE'] = StoreDocumentTable::getTypeList(true)[$data['ASSOCIATED_ENTITY']['DOC_TYPE']];
+			$typeListDescriptions = StoreDocumentTable::getTypeList(true);
+			$data['ASSOCIATED_ENTITY']['TITLE'] = $typeListDescriptions[$data['ASSOCIATED_ENTITY']['DOC_TYPE']] ?? '';
 		}
+		$data['TITLE_TEMPLATE'] = Loc::getMessage(
+			'STORE_DOCUMENT_TITLE',
+			[
+				'#DATE#' => $data['ASSOCIATED_ENTITY']['DATE_CREATE'],
+			]
+		);
+		$data['TOTAL'] = $data['SETTINGS']['TOTAL'] ?? null;
+		$data['CURRENCY'] = $data['SETTINGS']['CURRENCY'] ?? null;
 
-		$documentData = $data['ASSOCIATED_ENTITY'];
-
-		$categoryId = (int)$data['TYPE_CATEGORY_ID'];
-
-		if ($categoryId === TimelineType::CREATION)
+		if (!empty($data['ASSOCIATED_ENTITY']['ID']))
 		{
-			$data['ASSOCIATED_ENTITY']['TITLE'] = htmlspecialcharsbx($documentData['TITLE']);
-			$creationDate = $documentData['DATE_CREATE'];
-			$total = $data['SETTINGS']['TOTAL'] ?? $documentData['TOTAL'];
-			$currency = $data['SETTINGS']['CURRENCY'] ?? $documentData['CURRENCY'];
-			$price = \CCrmCurrency::MoneyToString($total, $currency);
-			$data['TITLE_TEMPLATE'] = Loc::getMessage(
-				'STORE_DOCUMENT_TITLE',
+			$data['DETAIL_LINK'] = \CComponentEngine::MakePathFromTemplate(
+				\COption::GetOptionString('crm', 'path_to_store_document_details'),
 				[
-					'#DATE#' => $creationDate,
-					'#PRICE_WITH_CURRENCY#' => $price
+					'store_document_id' => (int)$data['ASSOCIATED_ENTITY']['ID'],
 				]
 			);
-
-			$documentId = (int)$documentData['ID'];
-			if ($documentId > 0)
-			{
-				$data['DETAIL_LINK'] = "/shop/documents/details/$documentId/";
-			}
 		}
 
-		if ($categoryId === TimelineType::MODIFICATION)
+		if ((int)$data['TYPE_CATEGORY_ID'] === TimelineType::MODIFICATION)
 		{
-			$data['ASSOCIATED_ENTITY']['TITLE'] = htmlspecialcharsbx($documentData['TITLE']);
-			$creationDate = $documentData['DATE_CREATE'];
-			$total = $data['SETTINGS']['TOTAL'] ?? $documentData['TOTAL'];
-			$currency = $data['SETTINGS']['CURRENCY'] ?? $documentData['CURRENCY'];
-			$price = \CCrmCurrency::MoneyToString($total, $currency);
-			$data['TITLE_TEMPLATE'] = Loc::getMessage(
-				'STORE_DOCUMENT_TITLE',
-				[
-					'#DATE#' => $creationDate,
-					'#PRICE_WITH_CURRENCY#' => $price
-				]
-			);
-
-			$documentId = (int)$documentData['ID'];
-			if ($documentId > 0)
-			{
-				$data['DETAIL_LINK'] = "/shop/documents/details/$documentId/";
-			}
-
 			$data['FIELD'] = $data['SETTINGS']['FIELD'] ?? '';
-
 			if ($data['SETTINGS']['FIELD'] === 'STATUS')
 			{
 				$data['STATUS_TITLE'] = $data['SETTINGS']['NEW_VALUE'];
 				$data['STATUS_CLASS'] = $data['SETTINGS']['CLASS'];
 			}
+			$data['MODIFIED_FIELD'] = $data['FIELD'];
 
 			if (isset($data['SETTINGS']['ERROR']))
 			{
 				$data['ERROR'] = $data['SETTINGS']['ERROR'];
 				$data['ERROR_MESSAGE'] = htmlspecialcharsbx($data['SETTINGS']['ERROR_MESSAGE']);
 			}
-
-			$data['MODIFIED_FIELD'] = $data['FIELD'];
 		}
 
 		return parent::prepareHistoryDataModel($data, $options);

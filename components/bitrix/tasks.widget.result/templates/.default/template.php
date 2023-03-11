@@ -16,11 +16,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 /** @global CMain $APPLICATION */
 
 if (
-	(
-		!isset($arParams['SHOW_RESULT_FIELD'])
-		|| $arParams['SHOW_RESULT_FIELD'] !== 'N'
-	)
-	&& !in_array((int)$arResult['TASK_DATA']['STATUS'], [CTasks::STATE_COMPLETED, CTasks::STATE_SUPPOSEDLY_COMPLETED])
+	!isset($arParams['SHOW_RESULT_FIELD'])
+	|| $arParams['SHOW_RESULT_FIELD'] !== 'N'
 )
 {
 	$APPLICATION->IncludeComponent(

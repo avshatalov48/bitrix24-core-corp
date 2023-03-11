@@ -18,6 +18,7 @@ import {ActionPanel} from '../../entity/action.panel';
 import {EntityStorage} from '../../entity/entity.storage';
 import {SearchItems} from '../../entity/search.items';
 import {Backlog, BacklogParams} from '../../entity/backlog/backlog';
+import {Header as BacklogHeader} from '../../entity/backlog/header';
 import {Sprint, SprintParams} from '../../entity/sprint/sprint';
 import {SprintMover} from '../../entity/sprint/sprint.mover';
 import {SprintSidePanel} from '../../entity/sprint/sprint.side.panel';
@@ -48,6 +49,7 @@ import type {EpicType} from '../../item/task/epic';
 import type {ResponsibleType} from '../../item/task/responsible';
 
 import type {ShowLinkedTasksResponse} from '../../response';
+import { PullTag } from '../../pull/pull.tag';
 
 type Params = {
 	pathToTask: string,
@@ -116,7 +118,8 @@ export class Plan extends View
 		this.tagSearcher = new TagSearcher({
 			requestSender: this.requestSender,
 			filter: this.filter,
-			groupId: params.groupId
+			groupId: params.groupId,
+			tagsAreConverting: params.tagsAreConverting,
 		});
 		Object.values(params.tags.epic).forEach((epic) => {
 			this.tagSearcher.addEpicToSearcher(epic);
@@ -192,7 +195,11 @@ export class Plan extends View
 			filter: this.filter,
 			tagSearcher: this.tagSearcher
 		});
-
+		this.pullTag = new PullTag({
+			requestSender: this.requestSender,
+			entityStorage: this.entityStorage,
+			groupId: this.groupId
+		});
 		this.pullSprint = new PullSprint({
 			requestSender: this.requestSender,
 			planBuilder: this.planBuilder,
@@ -271,6 +278,7 @@ export class Plan extends View
 		Pull.subscribe(this.pullSprint);
 		Pull.subscribe(this.pullItem);
 		Pull.subscribe(this.pullEpic);
+		Pull.subscribe(this.pullTag);
 	}
 
 	bindHandlers()
@@ -436,32 +444,28 @@ export class Plan extends View
 	onShowBacklogInput(baseEvent: BaseEvent)
 	{
 		const backlog: Backlog = baseEvent.getTarget();
+		const header: ?BacklogHeader = baseEvent.getData();
 
-		this.input.setEntity(backlog);
-		this.input.cleanBindNode();
-
-		this.renderInput();
+		this.showInput(backlog).then(() => {
+			if (!Type.isPlainObject(header))
+			{
+				header.unLockTaskButton();
+			}
+		});
 	}
 
 	onShowSprintInput(baseEvent: BaseEvent)
 	{
 		const sprint: Sprint = baseEvent.getTarget();
 
-		const showInput = () => {
-			this.input.setEntity(sprint);
-			this.input.cleanBindNode();
-
-			this.renderInput();
-		};
-
 		if (sprint.isHideContent())
 		{
-			sprint.subscribeOnce('toggleVisibilityContent', showInput.bind(this));
+			sprint.subscribeOnce('toggleVisibilityContent', this.showInput.bind(this, sprint));
 			sprint.toggleVisibilityContent(sprint.getContentContainer());
 		}
 		else
 		{
-			showInput();
+			this.showInput(sprint);
 		}
 	}
 
@@ -477,6 +481,8 @@ export class Plan extends View
 
 	onRenderInput(baseEvent: BaseEvent)
 	{
+		this.deactivateDraggable();
+
 		const input: Input = baseEvent.getTarget();
 
 		const entity = input.getEntity();
@@ -488,6 +494,8 @@ export class Plan extends View
 
 	onRemoveInput(baseEvent: BaseEvent)
 	{
+		this.activateDraggable();
+
 		const input: Input = baseEvent.getTarget();
 
 		const entity = input.getEntity();
@@ -524,6 +532,7 @@ export class Plan extends View
 				}
 			}
 		}
+
 
 		if (this.decomposition)
 		{
@@ -613,9 +622,6 @@ export class Plan extends View
 
 		this.sendRequestToCreateTask(entity, newItem).then((response) => {
 
-			input.unDisable();
-			input.focus();
-
 			this.fillItemAfterCreation(newItem, response.data);
 
 			entity.setItem(newItem);
@@ -650,6 +656,10 @@ export class Plan extends View
 					parentItem.showSubTasks();
 				}
 			}
+
+			input.unDisable();
+			input.focus();
+
 			entity.adjustListItemsWidth();
 			this.planBuilder.adjustSprintListWidth();
 		}).catch((response) => {
@@ -727,12 +737,10 @@ export class Plan extends View
 
 	onOpenEpicForm(baseEvent: BaseEvent)
 	{
-		const button: HTMLElement = baseEvent.getData();
-
-		Dom.addClass(button, 'ui-btn-wait');
+		const header: BacklogHeader = baseEvent.getData();
 
 		this.epic.openAddForm().then(() => {
-			Dom.removeClass(button, 'ui-btn-wait');
+			header.unLockEpicButton();
 		});
 	}
 
@@ -1312,17 +1320,51 @@ export class Plan extends View
 		;
 	}
 
-	renderInput()
+	showInput(entity: Entity, bindNode: ?HTMLElement): Promise
 	{
-		const entity: Entity = this.input.getEntity();
-		const bindNode: ?HTMLElement = this.input.getBindNode();
+		return new Promise((resolve) => {
+			if (this.input.isExists())
+			{
+				this.input.submit();
 
-		if (bindNode)
+				if (this.input.hasEntity(entity))
+				{
+					resolve();
+				}
+				else
+				{
+					this.input.subscribeOnce('unDisable', () => {
+						this.input.removeYourself();
+
+						this.renderInput(entity, bindNode);
+
+						resolve();
+					});
+				}
+			}
+			else
+			{
+				this.renderInput(entity, bindNode);
+
+				resolve();
+			}
+		});
+	}
+
+	renderInput(entity: Entity, bindNode: ?HTMLElement)
+	{
+		this.input.setEntity(entity);
+
+		if (Type.isElementNode(bindNode))
 		{
+			this.input.setBindNode(bindNode);
+
 			Dom.insertAfter(this.input.render(), bindNode);
 		}
 		else
 		{
+			this.input.cleanBindNode();
+
 			if (entity.isEmpty())
 			{
 				Dom.insertBefore(this.input.render(), entity.getLoaderNode());
@@ -1335,7 +1377,7 @@ export class Plan extends View
 
 		entity.adjustListItemsWidth();
 
-		this.input.getInputNode().focus();
+		this.input.focus();
 
 		this.scrollToInput();
 	}
@@ -1548,6 +1590,16 @@ export class Plan extends View
 		});
 
 		this.actionPanel.show();
+	}
+
+	activateDraggable()
+	{
+		this.entityStorage.getAllItems().forEach((item: Item) => item.setDisableStatus(false));
+	}
+
+	deactivateDraggable()
+	{
+		this.entityStorage.getAllItems().forEach((item: Item) => item.setDisableStatus(true));
 	}
 
 	activateGroupMode(entity: Entity, item?: Item)
@@ -1765,7 +1817,10 @@ export class Plan extends View
 			}).then((response) => {
 				entity.getGroupModeItems().forEach((groupModeItem: Item) => {
 					const currentTags = groupModeItem.getTags().getValue();
-					currentTags.push(tag);
+					if (!currentTags.includes(tag))
+					{
+						currentTags.push(tag);
+					}
 					groupModeItem.setTags(currentTags);
 				});
 			}).catch((response) => {
@@ -1865,9 +1920,6 @@ export class Plan extends View
 			parentItem: parentItem
 		});
 
-		this.input.setEntity(entity);
-		this.input.setBindNode(parentItem.getNode());
-
 		if (!parentItem.isLinkedTask())
 		{
 			this.itemDesigner.getRandomColorForItemBorder()
@@ -1877,7 +1929,7 @@ export class Plan extends View
 			;
 		}
 
-		this.renderInput();
+		this.showInput(entity, parentItem.getNode());
 	}
 
 	startSprintDecomposition(entity: Entity, parentItem: Item)
@@ -1894,10 +1946,8 @@ export class Plan extends View
 				entity.appendNodeAfterItem(subTasks.render(), parentItem.getNode());
 			}
 			parentItem.showSubTasks();
-			this.input.setEntity(entity);
-			this.input.setBindNode(subTasks.getNode());
 
-			this.renderInput();
+			this.showInput(entity, subTasks.getNode());
 		}
 
 		if (parentItem.isParentTask())
@@ -1930,10 +1980,7 @@ export class Plan extends View
 		}
 		else
 		{
-			this.input.setEntity(entity);
-			this.input.setBindNode(parentItem.getNode());
-
-			this.renderInput();
+			this.showInput(entity, parentItem.getNode());
 		}
 	}
 }

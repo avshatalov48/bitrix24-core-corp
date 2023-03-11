@@ -5,11 +5,13 @@ return [
 		'utils',
 		'recipient',
 		'helpers/component',
-		'tasks:task',
 		'menu/spotlight',
 		'stress/more',
 		'qrauth/utils',
-		'intent'
+		'intent',
 	],
-	'components' => ['users', 'tab.settings']
+	'components' => [
+		'users',
+		'tab.settings',
+	],
 ];

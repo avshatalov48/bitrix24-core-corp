@@ -52,6 +52,7 @@ $data = $arResult['DATA'];
 	BX.message(<?=Json::encode($messages)?>);
 
 	BX.Tasks.Scrum.Kanban = new BX.Tasks.Scrum.KanbanManager({
+		groupId: <?= (int) $arParams['GROUP_ID'] ?>,
 		signedParameters: '<?=$this->getComponent()->getSignedParameters()?>',
 		filterId: '<?=$filterInstance->getId()?>',
 		defaultPresetId:'<?=$arResult['DEFAULT_PRESET_KEY']?>',

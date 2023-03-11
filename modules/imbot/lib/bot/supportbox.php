@@ -3,13 +3,18 @@
 namespace Bitrix\ImBot\Bot;
 
 use Bitrix\Main;
+use Bitrix\Main\Application;
 use Bitrix\Main\Config\Option;
+use Bitrix\Main\IO\File;
+use Bitrix\Main\IO\FileNotFoundException;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ModuleManager;
 use Bitrix\Im;
 use Bitrix\Im\Bot\Keyboard;
 use Bitrix\ImBot;
 use Bitrix\ImBot\Log;
 use Bitrix\ImBot\Bot\Mixin;
+use CSiteCheckerTest;
 
 class SupportBox extends Network implements SupportBot, SupportQuestion
 {
@@ -477,6 +482,19 @@ class SupportBox extends Network implements SupportBot, SupportQuestion
 			return true;
 		}
 
+		$managedCache = Application::getInstance()->getManagedCache();
+		$cacheKey = 'telemetry_sent_' . md5($messageFields['BOT_ID'], $messageFields['DIALOG_ID']);
+		if (!$managedCache->read(86400, $cacheKey))
+		{
+			$dialogSession = self::instanceDialogSession((int)$messageFields['BOT_ID'], $messageFields['DIALOG_ID']);
+			if ($dialogSession->getParam('TELEMETRY_SENT') === 'N')
+			{
+				self::sendTelemetry($messageFields);
+				$dialogSession->update(['TELEMETRY_SENT' => 'Y']);
+				$managedCache->set($cacheKey, true);
+			}
+		}
+
 		return parent::onMessageAdd($messageId, $messageFields);
 	}
 
@@ -513,6 +531,90 @@ class SupportBox extends Network implements SupportBot, SupportQuestion
 		}
 
 		return parent::operatorMessageAdd($messageId, $messageFields);
+	}
+
+	protected static function sendTelemetry($messageFields): bool
+	{
+		$modulesInfo = ModuleManager::getInstalledModules();
+		foreach ($modulesInfo as $key => $mi)
+		{
+			$modulesInfo[$key]['VERSION'] = ModuleManager::getVersion($key);
+		}
+
+		$siteCheckerTest = new CSiteCheckerTest();
+		$filePath = $_SERVER['DOCUMENT_ROOT'] . $siteCheckerTest->LogFile;
+		try
+		{
+			$logFile = new File($filePath);
+			$lastCheckDate = (new \DateTimeImmutable)->setTimestamp($logFile->getModificationTime());
+			$logContents = htmlspecialcharsEx($logFile->getContents());
+		}
+		catch (FileNotFoundException $exception)
+		{
+			self::clientMessageAdd([
+				'BOT_ID' => self::getBotId(),
+				'USER_ID' => $messageFields['FROM_USER_ID'],
+				'DIALOG_ID' => $messageFields['DIALOG_ID'],
+				'MESSAGE' => [
+					'TEXT' => Loc::getMessage('TELEMETRY_NO_CHECK_NEVER_BEEN_DONE'),
+				],
+				'EXTRA_DATA' => [
+					'MODULES_INFO' => $modulesInfo,
+				],
+				'PARAMS' => [
+					'CLASS' => 'bx-messenger-content-item-system',
+					'TELEMETRY' => 'Y',
+				],
+			]);
+
+			return false;
+		}
+
+		if ($failsCount = substr_count($logContents, 'Fail'))
+		{
+			$text = Loc::getMessagePlural(
+				'TELEMETRY_ALL_FAIL',
+				$failsCount,
+				[
+					'#DATE#' => $lastCheckDate->format('Y-m-d H:i'),
+					'#FAILS_COUNT#' => $failsCount
+				]
+			);
+		}
+		else
+		{
+			$text = Loc::getMessage(
+				'TELEMETRY_ALL_OK',
+				[
+					'#DATE#' => $lastCheckDate->format('Y-m-d H:i')
+				]
+			);
+		}
+
+		self::clientMessageAdd([
+			'BOT_ID' => self::getBotId(),
+			'USER_ID' => $messageFields['FROM_USER_ID'],
+			'DIALOG_ID' => $messageFields['DIALOG_ID'],
+			'MESSAGE' => [
+				'TEXT' => $text,
+			],
+			'EXTRA_DATA' => [
+				'MODULES_INFO' => $modulesInfo,
+			],
+			'FILES_RAW' => [
+				[
+					'NAME' => 'site_checker.log',
+					'TYPE' => 'text/x-log',
+					'DATA' => $logContents,
+				],
+			],
+			'PARAMS' => [
+				'CLASS' => 'bx-messenger-content-item-system',
+				'TELEMETRY' => 'Y',
+			]
+		]);
+
+		return true;
 	}
 
 	/**

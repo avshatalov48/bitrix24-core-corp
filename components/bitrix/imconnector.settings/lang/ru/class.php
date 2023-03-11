@@ -1,5 +1,5 @@
 <?
-$MESS["IMCONNECTOR_COMPONENT_SETTINGS_MODULE_NOT_INSTALLED"] = "Модуль коннекторов мессенджеров не установлен.";
+$MESS["IMCONNECTOR_COMPONENT_SETTINGS_MODULE_NOT_INSTALLED_MSGVER_1"] = "Модуль коннекторов мессенджеров не установлен.";
 $MESS["IMCONNECTOR_COMPONENT_SETTINGS_SESSION_HAS_EXPIRED"] = "Ваша сессия истекла. Попробуйте еще раз.";
 $MESS["IMCONNECTOR_COMPONENT_SETTINGS_OK_UPDATE"] = "Данные успешно обновлены.";
 $MESS["IMCONNECTOR_COMPONENT_SETTINGS_NO_UPDATE"] = "При обновлении данных произошла ошибка.";

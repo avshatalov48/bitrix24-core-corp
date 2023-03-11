@@ -79,7 +79,7 @@ foreach ($arResult['ENTRIES'] as $key => $arEntry)
 
 		if ($startAbsence === $finishAbsence && date('H:i', $startAbsence) === START_DAY_TIME)
 		{
-			$nextDaysAbsenceList[] = FormatDate($formatsForNextDaysAbsences['finish'], $finishAbsence, $timeZone)
+			$nextDaysAbsenceList[] = FormatDate($formatsForNextDaysAbsences['finish'], $finishAbsence)
 				. ' - '
 				. Loc::getMessage('INTR_IAU_TPL_ALL_DAY')
 				. ' '
@@ -89,9 +89,9 @@ foreach ($arResult['ENTRIES'] as $key => $arEntry)
 		}
 		else
 		{
-			$nextDaysAbsenceList[] = FormatDate($formatsForNextDaysAbsences['start'], $startAbsence, $timeZone)
+			$nextDaysAbsenceList[] = FormatDate($formatsForNextDaysAbsences['start'], $startAbsence)
 				. '&nbsp-&nbsp'
-				. FormatDate($formatsForNextDaysAbsences['finish'], $finishAbsence, $timeZone)
+				. FormatDate($formatsForNextDaysAbsences['finish'], $finishAbsence)
 				. ' '
 				. '('
 				. $title
@@ -109,7 +109,7 @@ foreach ($arResult['ENTRIES'] as $key => $arEntry)
 	{
 		$oneDayList[] = date('H:i', $startAbsence)
 			. '&nbsp-&nbsp'
-			. FormatDate(Context::getCurrent()->getCulture()->getShortTimeFormat(), $finishAbsence, $timeZone)
+			. FormatDate(Context::getCurrent()->getCulture()->getShortTimeFormat(), $finishAbsence)
 			. ' '
 			. '('
 			. $title
@@ -127,6 +127,13 @@ foreach ($arResult['ENTRIES'] as $key => $arEntry)
 		if ($maxFinish < ($startAbsence + $fullDaySeconds))
 		{
 			$maxFinish = $startAbsence + $fullDaySeconds;
+		}
+	}
+	elseif ($startAbsence !== $finishAbsence && $finishDateForDiff === $nowDateForDiff && date('H:i:s', $finishAbsence) === '00:00:00')
+	{
+		if ($maxFinish < ($finishAbsence + $fullDaySeconds))
+		{
+			$maxFinish = $finishAbsence + $fullDaySeconds;
 		}
 	}
 
@@ -190,11 +197,11 @@ $dayForFinish = date("d", $maxFinish);
 				$formatsForAssociationAbsences = formatUserAbsenceDate($minStart, $maxFinish, $now);
 				echo Loc::getMessage('INTR_IAU_TPL_FROM')
 					. ' '
-					. FormatDate($formatsForAssociationAbsences['start'], $minStart, $timeZone)
+					. FormatDate($formatsForAssociationAbsences['start'], $minStart)
 					. ' '
 					. Loc::getMessage('INTR_IAU_TPL_TO')
 					. ' '
-					. FormatDate($formatsForAssociationAbsences['finish'], $maxFinish, $timeZone)
+					. FormatDate($formatsForAssociationAbsences['finish'], $maxFinish)
 					. ' '
 					. $reasonResult
 					. '<br>'
@@ -220,11 +227,11 @@ $dayForFinish = date("d", $maxFinish);
 			{
 				echo Loc::getMessage('INTR_IAU_TPL_FROM')
 					. ' '
-					. FormatDate($formShortDate, $minStart, $timeZone)
+					. FormatDate($formShortDate, $minStart)
 					. ' '
 					. Loc::getMessage('INTR_IAU_TPL_TO')
 					. ' '
-					. FormatDate($formShortDate, $maxFinish, $timeZone)
+					. FormatDate($formShortDate, $maxFinish)
 					. ' '
 					. $reasonResult
 					. '<br>'

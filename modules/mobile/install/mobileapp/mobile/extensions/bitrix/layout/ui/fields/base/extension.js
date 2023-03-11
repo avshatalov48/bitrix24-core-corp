@@ -857,7 +857,7 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 		{
 			if (!this.checkRequired())
 			{
-				return BX.message('FIELDS_BASE_REQUIRED_ERROR');
+				return this.props.requiredErrorMessage || BX.message('FIELDS_BASE_REQUIRED_ERROR');
 			}
 
 			if (this.hasCustomValidation())

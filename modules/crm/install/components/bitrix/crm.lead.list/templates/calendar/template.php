@@ -300,30 +300,34 @@ foreach($arResult['LEAD'] as $sKey => $arLead)
 if(!Bitrix\Main\Grid\Context::isInternalRequest()
 	&& isset($arResult['FILTER']) && isset($arResult['FILTER_PRESETS']))
 {
+	$lazyLoadPath = '/bitrix/components/bitrix/crm.lead.list/filter.ajax.php'
+		. '?filter_id=' . urlencode($arResult['GRID_ID']) . '&siteID=' . SITE_ID . '&' . bitrix_sessid_get()
+	;
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.interface.filter',
-		isset($arParams['~FILTER_TEMPLATE']) ? $arParams['~FILTER_TEMPLATE'] : 'title',
-		array(
+		($arParams['~FILTER_TEMPLATE'] ?? 'title'),
+		[
 			'GRID_ID' => $arResult['GRID_ID'],
 			'FILTER_ID' => $arResult['GRID_ID'],
 			'FILTER' => $arResult['FILTER'],
 			'FILTER_PRESETS' => $arResult['FILTER_PRESETS'],
 			'NAVIGATION_BAR' => (new NavigationBarPanel(CCrmOwnerType::Lead))
 				->setItems([
-					NavigationBarPanel::ID_AUTOMATION,
 					NavigationBarPanel::ID_KANBAN,
 					NavigationBarPanel::ID_LIST,
-					NavigationBarPanel::ID_CALENDAR
+					NavigationBarPanel::ID_ACTIVITY,
+					NavigationBarPanel::ID_CALENDAR,
+					NavigationBarPanel::ID_AUTOMATION
 				], NavigationBarPanel::ID_CALENDAR)
 				->setBinding($arResult['NAVIGATION_CONTEXT_ID'])
 				->get(),
-			'LIMITS' => isset($arResult['LIVE_SEARCH_LIMIT_INFO']) ? $arResult['LIVE_SEARCH_LIMIT_INFO'] : null,
+			'LIMITS' => ($arResult['LIVE_SEARCH_LIMIT_INFO'] ?? null),
 			'ENABLE_LIVE_SEARCH' => true,
 			'DISABLE_SEARCH' => isset($arParams['~DISABLE_SEARCH']) && $arParams['~DISABLE_SEARCH'] === true,
-			'LAZY_LOAD' => array(
-				'GET_LIST' => '/bitrix/components/bitrix/crm.lead.list/filter.ajax.php?action=list&filter_id='.urlencode($arResult['GRID_ID']).'&siteID='.SITE_ID.'&'.bitrix_sessid_get(),
-				'GET_FIELD' => '/bitrix/components/bitrix/crm.lead.list/filter.ajax.php?action=field&filter_id='.urlencode($arResult['GRID_ID']).'&siteID='.SITE_ID.'&'.bitrix_sessid_get(),
-			),
+			'LAZY_LOAD' => [
+				'GET_LIST' => $lazyLoadPath . '&action=list',
+				'GET_FIELD' => $lazyLoadPath . '&action=field',
+			],
 			'ENABLE_FIELDS_SEARCH' => 'Y',
 			'HEADERS_SECTIONS' => $arResult['HEADERS_SECTIONS'],
 			'CONFIG' => [
@@ -331,9 +335,11 @@ if(!Bitrix\Main\Grid\Context::isInternalRequest()
 				'popupWidth' => 800,
 				'showPopupInCenter' => true,
 			],
-		),
+		],
 		$component,
-		array('HIDE_ICONS' => 'Y')
+		[
+			'HIDE_ICONS' => 'Y',
+		]
 	);
 
 	?>

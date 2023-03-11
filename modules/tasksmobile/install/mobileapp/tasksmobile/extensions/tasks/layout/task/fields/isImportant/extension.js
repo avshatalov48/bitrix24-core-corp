@@ -47,8 +47,8 @@ jn.define('tasks/layout/task/fields/isImportant', (require, exports, module) => 
 					config: {
 						deepMergeStyles: this.props.deepMergeStyles,
 						mode: BooleanMode.ICON,
-						descriptionYes: Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_FIELDS_IS_IMPORTANT_YES'),
-						descriptionNo: Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_FIELDS_IS_IMPORTANT_NO'),
+						descriptionYes: Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_FIELDS_IS_IMPORTANT_YES_MSGVER_1'),
+						descriptionNo: Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_FIELDS_IS_IMPORTANT_NO_MSGVER_1'),
 						iconUri: `${this.props.pathToImages}/tasksmobile-layout-task-is-important.png`,
 					},
 					testId: 'isImportant',

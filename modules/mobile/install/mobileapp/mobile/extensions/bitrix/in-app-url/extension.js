@@ -13,6 +13,7 @@ jn.define('in-app-url', (require, exports, module) => {
 	 */
 	const routes = [
 		'crm/in-app-url/routes',
+		'in-app-url/routes',
 	];
 
 	routes.map(ext => {

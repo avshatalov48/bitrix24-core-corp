@@ -33,7 +33,7 @@ jn.define('layout/ui/fields/user', (require, exports, module) => {
 						users: this.state.entityList.map((user) => ({
 							id: user.id,
 							name: user.title,
-							avatar: this.getImageUrl(user.imageUrl || DEFAULT_AVATAR),
+							avatar: user.imageUrl,
 							workPosition: (user.customData && user.customData.position ? user.customData.position : ''),
 						})),
 						testId: this.testId,
@@ -199,7 +199,6 @@ jn.define('layout/ui/fields/user', (require, exports, module) => {
 		{
 			if (imageUrl.indexOf(currentDomain) !== 0)
 			{
-				imageUrl = encodeURI(imageUrl);
 				imageUrl = imageUrl.replace(`${currentDomain}`, '');
 				imageUrl = (imageUrl.indexOf('http') !== 0 ? `${currentDomain}${imageUrl}` : imageUrl);
 			}
@@ -209,7 +208,7 @@ jn.define('layout/ui/fields/user', (require, exports, module) => {
 				imageUrl = currentDomain + DEFAULT_AVATAR;
 			}
 
-			return imageUrl;
+			return encodeURI(imageUrl);
 		}
 
 		canOpenEntity()

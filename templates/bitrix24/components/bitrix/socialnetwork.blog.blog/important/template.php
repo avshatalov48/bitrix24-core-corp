@@ -25,7 +25,7 @@ foreach($arResult["POST"] as $id => $res)
 		"post_url" => $res["urlToPost"],
 		"author_name" => $res["AUTHOR_NAME"],
 		"author_avatar_style" => (!empty($res["AUTHOR_AVATAR"]["src"]) ? "url('". Uri::urnEncode($res["AUTHOR_AVATAR"]["src"])."')" : ""),
-		"author_avatar" => (!empty($res["AUTHOR_AVATAR"]["src"]) ? "style=\"background:url('".$res["AUTHOR_AVATAR"]["src"]."') no-repeat center; background-size: cover;\"" : ""),
+		"author_avatar" => (!empty($res["AUTHOR_AVATAR"]["src"]) ? "style=\"background:url('".Uri::urnEncode($res["AUTHOR_AVATAR"]["src"])."') no-repeat center; background-size: cover;\"" : ""),
 		"author_url" => $res["urlToAuthor"]
 	);
 
@@ -34,7 +34,7 @@ foreach($arResult["POST"] as $id => $res)
 
 	$arRes["data"][] = $res;
 }
-if ($_REQUEST["AJAX_POST"] == "Y")
+if ($_REQUEST["AJAX_POST"] ?? null == "Y")
 {
 	$APPLICATION->RestartBuffer();
 	echo CUtil::PhpToJSObject($arRes);
@@ -44,7 +44,13 @@ CUtil::InitJSCore(array("ajax"));
 $arUser = (is_array($arResult["USER"]) ? $arResult["USER"] : array());
 $btnTitle = GetMessage("SBB_READ_".$arUser["PERSONAL_GENDER"]);
 $btnTitle = (!empty($btnTitle) ? $btnTitle : GetMessage("SBB_READ_"));
-$res = reset($arRes["data"]);
+$res = reset($arRes["data"]) ?: [
+	'author_avatar' => '',
+	'author_url' => null,
+	'author_name' => null,
+	'post_url' => null,
+	'post_text' => null,
+];
 $this->SetViewTarget("sidebar", 80);
 $frame = $this->createFrame()->begin();
 ?>

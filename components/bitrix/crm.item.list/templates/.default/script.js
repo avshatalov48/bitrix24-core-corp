@@ -4,13 +4,37 @@
 	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
 
 	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
+
+	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration(obj, privateSet); privateSet.add(obj); }
+
+	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
+
+	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+
+	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var namespace = main_core.Reflection.namespace('BX.Crm');
+
+	var _isUniversalActivityScenarioEnabled = /*#__PURE__*/new WeakMap();
+
+	var _getToolbarComponent = /*#__PURE__*/new WeakSet();
+
+	var _initPushCrmSettings = /*#__PURE__*/new WeakSet();
 
 	var ItemListComponent = /*#__PURE__*/function () {
 	  function ItemListComponent(params) {
 	    var _this = this;
 
 	    babelHelpers.classCallCheck(this, ItemListComponent);
+
+	    _classPrivateMethodInitSpec(this, _initPushCrmSettings);
+
+	    _classPrivateMethodInitSpec(this, _getToolbarComponent);
+
+	    _classPrivateFieldInitSpec(this, _isUniversalActivityScenarioEnabled, {
+	      writable: true,
+	      value: false
+	    });
+
 	    this.exportPopups = {};
 
 	    if (main_core.Type.isPlainObject(params)) {
@@ -47,6 +71,10 @@
 	      if (main_core.Type.isElementNode(params.errorTextContainer)) {
 	        this.errorTextContainer = params.errorTextContainer;
 	      }
+
+	      if (main_core.Type.isBoolean(params.isUniversalActivityScenarioEnabled)) {
+	        babelHelpers.classPrivateFieldSet(this, _isUniversalActivityScenarioEnabled, params.isUniversalActivityScenarioEnabled);
+	      }
 	    }
 
 	    this.reloadGridTimeoutId = 0;
@@ -56,6 +84,8 @@
 	    key: "init",
 	    value: function init() {
 	      this.bindEvents();
+
+	      _classPrivateMethodGet(this, _initPushCrmSettings, _initPushCrmSettings2).call(this);
 	    }
 	  }, {
 	    key: "bindEvents",
@@ -69,7 +99,8 @@
 	      main_core_events.EventEmitter.subscribe('BX.Crm.ItemListComponent:onStartExportExcel', function (event) {
 	        _this2.handleStartExport(event, 'excel');
 	      });
-	      var toolbarComponent = main_core.Reflection.getClass('BX.Crm.ToolbarComponent') ? main_core.Reflection.getClass('BX.Crm.ToolbarComponent').Instance : null;
+
+	      var toolbarComponent = _classPrivateMethodGet(this, _getToolbarComponent, _getToolbarComponent2).call(this);
 
 	      if (toolbarComponent) {
 	        toolbarComponent.subscribeTypeUpdatedEvent(function () {
@@ -290,6 +321,39 @@
 	  }]);
 	  return ItemListComponent;
 	}();
+
+	function _getToolbarComponent2() {
+	  var component = main_core.Reflection.getClass('BX.Crm.ToolbarComponent');
+	  return component ? component.Instance : null;
+	}
+
+	function _initPushCrmSettings2() {
+	  var _this6 = this;
+
+	  if (!babelHelpers.classPrivateFieldGet(this, _isUniversalActivityScenarioEnabled)) {
+	    return;
+	  }
+
+	  var toolbar = _classPrivateMethodGet(this, _getToolbarComponent, _getToolbarComponent2).call(this);
+
+	  if (!toolbar) {
+	    console.error('BX.Crm.ToolbarComponent not found');
+	    return;
+	  }
+
+	  main_core.Runtime.loadExtension('crm.push-crm-settings').then(function (_ref3) {
+	    var _toolbar$getSettingsB;
+
+	    var PushCrmSettings = _ref3.PushCrmSettings;
+
+	    /** @see BX.Crm.PushCrmSettings */
+	    new PushCrmSettings({
+	      entityTypeId: _this6.entityTypeId,
+	      rootMenu: (_toolbar$getSettingsB = toolbar.getSettingsButton()) === null || _toolbar$getSettingsB === void 0 ? void 0 : _toolbar$getSettingsB.getMenuWindow(),
+	      grid: _this6.grid
+	    });
+	  });
+	}
 
 	namespace.ItemListComponent = ItemListComponent;
 

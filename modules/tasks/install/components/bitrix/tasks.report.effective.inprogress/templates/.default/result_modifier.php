@@ -5,6 +5,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Web\Uri;
 use Bitrix\Tasks\Integration\SocialNetwork;
 use Bitrix\Tasks\Internals\Fields\Status;
 use Bitrix\Tasks\UI;
@@ -53,7 +54,7 @@ if (!function_exists('prepareTaskRowUserBalloonHtml'))
 		}
 
 		$emptyAvatar = ($user['AVATAR'] ? '' : ' tasks-grid-avatar-empty');
-		$style = ($user['AVATAR'] ? ' style="background-image: url(\''.$user['AVATAR'].'\')"' : '');
+		$style = ($user['AVATAR'] ? ' style="background-image: url(\''.Uri::urnEncode($user['AVATAR']).'\')"' : '');
 
 		return
 			'<div class="tasks-grid-username-wrapper">'

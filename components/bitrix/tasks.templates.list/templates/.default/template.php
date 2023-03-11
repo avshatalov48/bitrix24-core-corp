@@ -1,13 +1,33 @@
-<?
+<?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
 
+/** @global CMain $APPLICATION */
+/** @var array $arParams */
+/** @var string $templateAddUrl */
+/** @var CBitrixComponent $component */
+/** @global array $arResult */
+
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\UI\Extension;
+use Bitrix\Tasks\Access\ActionDictionary;
+use Bitrix\Tasks\Access\TemplateAccessController;
+use Bitrix\Tasks\Slider\Exception\SliderException;
+use Bitrix\Tasks\Slider\Factory\SliderFactory;
+use Bitrix\UI\Buttons\Color;
+use Bitrix\UI\Buttons\Button;
+use Bitrix\UI\Toolbar\Facade\Toolbar;
+use Bitrix\UI\Toolbar\ButtonLocation;
 
 Loc::loadMessages(__FILE__);
-\Bitrix\Main\UI\Extension::load(["ui.buttons", "ui.buttons.icons", "ui.fonts.opensans"]);
+Extension::load([
+	"ui.buttons",
+	"ui.buttons.icons",
+	"ui.fonts.opensans",
+	'ui.entity-selector',
+]);
 
 $isIFrame = isset($_REQUEST["IFRAME"]) && $_REQUEST["IFRAME"] === "Y";
 if($isIFrame)
@@ -17,8 +37,7 @@ if($isIFrame)
 
 
 $helper = $arResult['HELPER'];
-$arParams =& $helper->getComponent(
-)->arParams; // make $arParams the same variable as $this->__component->arParams, as it really should be
+$arParams =& $helper->getComponent()->arParams; // make $arParams the same variable as $this->__component->arParams, as it really should be
 
 if ($arParams['HIDE_FILTER'] != 'Y')
 {
@@ -69,58 +88,43 @@ if ($arParams['HIDE_MENU'] != 'Y')
 	);
 } ?>
 
-<?
-if ($arParams['HIDE_FILTER'] != 'Y')
+<?php
+if ($arParams['HIDE_FILTER'] !== 'Y')
 {
-	if ($isBitrix24Template)
-	{
-		$this->SetViewTarget('inside_pagetitle');
-	}
-
 	//region FILTER
-
 	if (!$isBitrix24Template): ?>
 		<div class="tasks-interface-filter-container">
-	<? endif ?>
+	<?php
+	endif ?>
 
 	<div class="pagetitle-container pagetitle-flexible-space">
-		<? $APPLICATION->IncludeComponent(
-			"bitrix:main.ui.filter",
-			"",
-			array(
-				"FILTER_ID" => $arParams['FILTER_ID'],
-				"GRID_ID"   => $arParams["GRID_ID"],
-
-				"FILTER"         => $arResult['FILTER']['FIELDS'],
-				"FILTER_PRESETS" => $arResult['FILTER']['PRESETS'],
-
-				"ENABLE_LABEL"          => true,
-				'ENABLE_LIVE_SEARCH'    => $arParams['USE_LIVE_SEARCH'] == 'Y',
-				'RESET_TO_DEFAULT_MODE' => true
-			),
-			$component,
-			array("HIDE_ICONS" => true)
-		); ?>
+		<?php
+		Toolbar::addFilter([
+			'FILTER_ID' => $arParams['FILTER_ID'],
+			'GRID_ID' => $arParams["GRID_ID"],
+			'FILTER' => $arResult['FILTER']['FIELDS'],
+			'FILTER_PRESETS' => $arResult['FILTER']['PRESETS'],
+			'ENABLE_LABEL' => true,
+			'ENABLE_LIVE_SEARCH' => $arParams['USE_LIVE_SEARCH'] === 'Y',
+			'RESET_TO_DEFAULT_MODE' => true,
+		]);
+		if ((TemplateAccessController::can($arParams['USER_ID'], ActionDictionary::ACTION_TEMPLATE_CREATE)))
+		{
+			$button = new Button([
+				'link' => $templateAddUrl,
+				'color' => Color::SUCCESS,
+				'text' => Loc::getMessage('TASKS_TEMPLATE_CREATE'),
+			]);
+			Toolbar::addButton($button, ButtonLocation::AFTER_TITLE);
+		}
+		?>
 	</div>
-
-	<? if (\Bitrix\Tasks\Access\TemplateAccessController::can($arParams['USER_ID'], \Bitrix\Tasks\Access\ActionDictionary::ACTION_TEMPLATE_CREATE)): ?>
-		<div class="pagetitle-container pagetitle-align-right-container">
-			<a class="ui-btn ui-btn-primary ui-btn-icon-add tasks-filter-btn-add" href="<?=$templateAddUrl?>">
-				<?=GetMessage('TASKS_TEMPLATE_ADD')?>
-			</a>
-		</div>
-	<? endif; ?>
-
-	<? if (!$isBitrix24Template): ?>
-	</div>
-<? endif ?>
 	<?php
-	//endregion
-
-	if ($isBitrix24Template)
-	{
-		$this->EndViewTarget();
-	}
+	if (!$isBitrix24Template): ?>
+		</div>
+	<?php
+	endif; ?>
+	<?php
 }
 ?>
 
@@ -302,4 +306,24 @@ if ($arParams['HIDE_FILTER'] != 'Y')
 		</script>
 	<? endif ?>
 
-<? endif ?>
+<?php endif;
+if ($arParams['BACKGROUND_FOR_TEMPLATE'])
+{
+	$ownerId = (int)$arParams['USER_ID'];
+	$templateId = (int)$arParams['TEMPLATE_ID'];
+
+	$factory = new SliderFactory();
+	try
+	{
+		$factory
+			->setAction($arParams['TEMPLATE_ACTION'])
+			->setQueryParams($arParams['GET_PARAMS']);
+
+		$slider = $factory->createEntitySlider($templateId, SliderFactory::TEMPLATE, $ownerId, SliderFactory::PERSONAL_CONTEXT);
+		$slider->open();
+	}
+	catch (SliderException $exception)
+	{
+		$exception->show();
+	}
+}

@@ -23,11 +23,6 @@
 	z-index: 2;
 }
 
-.bx-ie8 .bx-filter-tab {
-	border:1px solid #d0d9db;
-	border-bottom: none;
-}
-
 .bx-filter-add-tab {}
 
 .bx-filter-add-tab:after {
@@ -42,11 +37,7 @@
 
 .bx-filter-main-table {border-spacing:0; width:670px !important;}
 
-.bx-ie8 .bx-filter-main-table,
-.bx-ie9 .bx-filter-main-table {border-spacing:0; width:800px;}
-
 .bx-filter-main-table-cell {padding:0;}
-
 
 .bx-filter-tab:first-child {margin:0;}
 
@@ -285,8 +276,6 @@
 	width:190px;
 }
 
-.bx-ie8 .bx-workarea .bx-filter-box-sizing .bx-input-wrap { width: 150px; }
-
 .bx-filter-box-sizing .bx-select {width:100%;}
 
 .bx-calendar-separate {
@@ -354,10 +343,6 @@
 }
 
 .bx-filter-setting {margin-right:12px;}
-
-.bx-ie8 .bx-filter-add-button,
-.bx-ie8 .bx-filter-item-delete,
-.bx-ie8 .bx-filter-setting {border:1px solid #8b999d;}
 
 .bx-filter-item-delete {
 	display:inline-block;
@@ -438,8 +423,6 @@
 .bx-chrome .bx-filter-main-table label + br { margin-top:5px;}
 .bx-filter-main-table label.bx-designed-checkbox-label + br {display:none;}
 
-.bx-ie8 .bx-filter-main-table input[type="checkbox"] {margin-left:12px;}
-
 .bx-filter-text-search {margin:6px 0 0 12px;}
 
 .bx-filter-switcher-tab {
@@ -475,9 +458,6 @@
 	background: -ms-linear-gradient(top, #ffffff 0%,#edf3f4 100%);
 	background: linear-gradient(to bottom, #ffffff 0%,#edf3f4 100%);
 }
-
-.bx-ie8 .bx-filter-switcher-tab:hover { background: #fff; }
-.bx-ie9 .bx-filter-switcher-tab:hover { background: url(data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiA/Pgo8c3ZnIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgdmlld0JveD0iMCAwIDEgMSIgcHJlc2VydmVBc3BlY3RSYXRpbz0ibm9uZSI+CiAgPGxpbmVhckdyYWRpZW50IGlkPSJncmFkLXVjZ2ctZ2VuZXJhdGVkIiBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgeDE9IjAlIiB5MT0iMCUiIHgyPSIwJSIgeTI9IjEwMCUiPgogICAgPHN0b3Agb2Zmc2V0PSIwJSIgc3RvcC1jb2xvcj0iI2ZmZmZmZiIgc3RvcC1vcGFjaXR5PSIxIi8+CiAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0b3AtY29sb3I9IiNlZGYzZjQiIHN0b3Atb3BhY2l0eT0iMSIvPgogIDwvbGluZWFyR3JhZGllbnQ+CiAgPHJlY3QgeD0iMCIgeT0iMCIgd2lkdGg9IjEiIGhlaWdodD0iMSIgZmlsbD0idXJsKCNncmFkLXVjZ2ctZ2VuZXJhdGVkKSIgLz4KPC9zdmc+); }
 
 .bx-filter-switcher-tab:hover .bx-filter-switcher-tab-icon { background-position: 0 -359px;}
 
@@ -554,10 +534,6 @@
 .bx-filter-folded .bx-filter-tabs-block-underlay {
 	opacity: 1;
 }
-
-.bx-ie8 .bx-filter-tabs-block-underlay { display: none; }
-.bx-ie8 .bx-filter-folded .bx-filter-tabs-block-underlay { display: block; }
-
 
 .bx-filter-wrap .bx-btn,
 .bx-filter-wrap input[type="button"],

@@ -26,7 +26,7 @@ class Input extends InteractiveMessage\Input
 			{
 				$data = Json::decode($data);
 			}
-			catch (\Exception $e)
+			catch (\Bitrix\Main\SystemException $e)
 			{
 				$result->addError(new Error($e->getMessage(), $e->getCode(), __METHOD__));
 			}

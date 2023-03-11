@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\Rpa\Integration\Bizproc\Automation\Target;
 
+use Bitrix\Bizproc\Automation\Engine\TemplatesScheme;
 use Bitrix\Main\Loader;
 use Bitrix\Rpa\Model\TypeTable;
 
@@ -45,5 +46,13 @@ class Item extends Base
 	private function getTypeId(): int
 	{
 		return (int) str_replace('T', '', $this->getDocumentType()[2]);
+	}
+
+	public function getTemplatesScheme(): ?TemplatesScheme
+	{
+		$scheme = new \Bitrix\Rpa\Integration\Bizproc\Automation\Engine\TemplatesScheme();
+		$scheme->build();
+
+		return $scheme;
 	}
 }

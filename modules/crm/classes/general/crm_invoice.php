@@ -9,9 +9,9 @@ use Bitrix\Crm\EntityAddressType;
 use Bitrix\Crm\Format\AddressFormatter;
 use Bitrix\Crm\Invoice\Invoice;
 use Bitrix\Crm\Invoice\Compatible;
+use Bitrix\Crm\Settings;
 use Bitrix\Iblock;
 use Bitrix\Catalog;
-
 
 if (!Loader::includeModule('sale'))
 	return;
@@ -1194,7 +1194,10 @@ class CAllCrmInvoice
 					);
 				}
 
-				if($responsibleID !== $prevResponsibleID)
+				if (
+					$responsibleID !== $prevResponsibleID
+					&& Settings\Crm::isLiveFeedRecordsGenerationEnabled()
+				)
 				{
 					CCrmSonetSubscription::ReplaceSubscriptionByEntity(
 						CCrmOwnerType::Invoice,
@@ -1678,7 +1681,7 @@ class CAllCrmInvoice
 						$arFields['STATUS_ID'] = $orderStatus;
 					self::RegisterLiveFeedEvent($arFields, $orderID, $userId);
 					unset($arFields['STATUS_ID']);
-					if($responsibleID > 0)
+					if ($responsibleID > 0 && Settings\Crm::isLiveFeedRecordsGenerationEnabled())
 					{
 						CCrmSonetSubscription::RegisterSubscription(
 							CCrmOwnerType::Invoice,
@@ -1741,7 +1744,10 @@ class CAllCrmInvoice
 						)
 					);
 
-					if($responsibleID !== $prevResponsibleID)
+					if (
+						$responsibleID !== $prevResponsibleID
+						&& Settings\Crm::isLiveFeedRecordsGenerationEnabled()
+					)
 					{
 						CCrmSonetSubscription::ReplaceSubscriptionByEntity(
 							CCrmOwnerType::Invoice,
@@ -4273,18 +4279,22 @@ class CAllCrmInvoice
 		}
 
 		$eventID = CCrmLiveFeed::CreateLogEvent($liveFeeedFields, CCrmLiveFeedEvent::Add);
-		if(!(is_int($eventID) && $eventID > 0))
+		if ($eventID === false)
 		{
-			if(isset($liveFeeedFields['ERROR']))
+			if (isset($liveFeeedFields['ERROR']))
 			{
 				$arFields['ERROR'] = $liveFeeedFields['ERROR'];
 			}
 		}
-		elseif($responsibleID > 0 && $responsibleID !== $userID
-			&& IsModuleInstalled('im') && CModule::IncludeModule('im'))
+		elseif (
+			$responsibleID > 0
+			&& $responsibleID !== $userID
+			&& IsModuleInstalled('im')
+			&& CModule::IncludeModule('im')
+		)
 		{
-			$eventUrl = CCrmLiveFeed::GetShowUrl($eventID);
-			$topic = isset($arFields['ORDER_TOPIC']) ? $arFields['ORDER_TOPIC'] : $invoiceID;
+			$url = CCrmOwnerType::GetEntityShowPath(CCrmOwnerType::Invoice, $invoiceID);
+			$topic = $arFields['ORDER_TOPIC'] ?? $invoiceID;
 
 			CIMNotify::Add(
 				array(
@@ -4297,11 +4307,12 @@ class CAllCrmInvoice
 					'NOTIFY_EVENT' => 'changeAssignedBy',
 					'NOTIFY_TAG' => "CRM|INVOICE|{$invoiceID}",
 					'TO_USER_ID' => $responsibleID,
-					'NOTIFY_MESSAGE' => GetMessage('CRM_INVOICE_RESPONSIBLE_IM_NOTIFY', array('#title#' => '<a href="'.htmlspecialcharsbx($eventUrl).'">'.htmlspecialcharsbx($topic).'</a>')),
-					'NOTIFY_MESSAGE_OUT' => GetMessage('CRM_INVOICE_RESPONSIBLE_IM_NOTIFY', array('#title#' => htmlspecialcharsbx($topic)))." (".CCrmUrlUtil::ToAbsoluteUrl($eventUrl).")"
+					'NOTIFY_MESSAGE' => GetMessage('CRM_INVOICE_RESPONSIBLE_IM_NOTIFY', array('#title#' => '<a href="'.htmlspecialcharsbx($url).'">'.htmlspecialcharsbx($topic).'</a>')),
+					'NOTIFY_MESSAGE_OUT' => GetMessage('CRM_INVOICE_RESPONSIBLE_IM_NOTIFY', array('#title#' => htmlspecialcharsbx($topic)))." (".CCrmUrlUtil::ToAbsoluteUrl($url).")"
 				)
 			);
 		}
+
 		return $eventID;
 	}
 	private static function SynchronizeLiveFeedEvent($invoiceID, $params)
@@ -4372,7 +4383,7 @@ class CAllCrmInvoice
 				);
 			}
 
-			if($processParents && $hasParents)
+			if ($processParents && $hasParents && Settings\Crm::isLiveFeedRecordsGenerationEnabled())
 			{
 				CCrmSonetRelation::RegisterRelationBundle(
 					$slID,
@@ -4397,12 +4408,13 @@ class CAllCrmInvoice
 					'NOTIFY_TAG' => "CRM|INVOICE|{$invoiceID}"
 				);
 
-				$eventUrl = CCrmLiveFeed::GetShowUrl($slID);
+				$url = CCrmOwnerType::GetEntityShowPath(CCrmOwnerType::Invoice, $invoiceID);
+
 				if($startResponsibleID > 0 && $startResponsibleID !== $userID)
 				{
 					$messageFields['TO_USER_ID'] = $startResponsibleID;
-					$messageFields['NOTIFY_MESSAGE'] = GetMessage('CRM_INVOICE_NOT_RESPONSIBLE_IM_NOTIFY', array('#title#' => '<a href="'.htmlspecialcharsbx($eventUrl).'">'.htmlspecialcharsbx($topic).'</a>'));
-					$messageFields['NOTIFY_MESSAGE_OUT'] = GetMessage('CRM_INVOICE_NOT_RESPONSIBLE_IM_NOTIFY', array('#title#' => htmlspecialcharsbx($topic)))." (".CCrmUrlUtil::ToAbsoluteUrl($eventUrl).")";
+					$messageFields['NOTIFY_MESSAGE'] = GetMessage('CRM_INVOICE_NOT_RESPONSIBLE_IM_NOTIFY', array('#title#' => '<a href="'.htmlspecialcharsbx($url).'">'.htmlspecialcharsbx($topic).'</a>'));
+					$messageFields['NOTIFY_MESSAGE_OUT'] = GetMessage('CRM_INVOICE_NOT_RESPONSIBLE_IM_NOTIFY', array('#title#' => htmlspecialcharsbx($topic)))." (".CCrmUrlUtil::ToAbsoluteUrl($url).")";
 
 					CIMNotify::Add($messageFields);
 				}
@@ -4410,8 +4422,8 @@ class CAllCrmInvoice
 				if($finalResponsibleID > 0 && $finalResponsibleID !== $userID)
 				{
 					$messageFields['TO_USER_ID'] = $finalResponsibleID;
-					$messageFields['NOTIFY_MESSAGE'] = GetMessage('CRM_INVOICE_RESPONSIBLE_IM_NOTIFY', array('#title#' => '<a href="'.htmlspecialcharsbx($eventUrl).'">'.htmlspecialcharsbx($topic).'</a>'));
-					$messageFields['NOTIFY_MESSAGE_OUT'] = GetMessage('CRM_INVOICE_RESPONSIBLE_IM_NOTIFY', array('#title#' => htmlspecialcharsbx($topic)))." (".CCrmUrlUtil::ToAbsoluteUrl($eventUrl).")";
+					$messageFields['NOTIFY_MESSAGE'] = GetMessage('CRM_INVOICE_RESPONSIBLE_IM_NOTIFY', array('#title#' => '<a href="'.htmlspecialcharsbx($url).'">'.htmlspecialcharsbx($topic).'</a>'));
+					$messageFields['NOTIFY_MESSAGE_OUT'] = GetMessage('CRM_INVOICE_RESPONSIBLE_IM_NOTIFY', array('#title#' => htmlspecialcharsbx($topic)))." (".CCrmUrlUtil::ToAbsoluteUrl($url).")";
 
 					CIMNotify::Add($messageFields);
 				}

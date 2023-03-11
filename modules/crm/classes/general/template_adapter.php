@@ -147,6 +147,7 @@ class CCrmTemplateAdapter extends CCrmTemplateAdapterBase
 					array('id' => 'NAME', 'name' => GetMessage('CRM_TEMPLATE_ADAPTER_NAME')),
 					array('id' => 'SECOND_NAME', 'name' => GetMessage('CRM_TEMPLATE_ADAPTER_SECOND_NAME')),
 					array('id' => 'FORMATTED_NAME', 'name' => GetMessage('CRM_TEMPLATE_ADAPTER_FORMATTED_NAME')),
+					array('id' => 'HONORIFIC', 'name' => GetMessage('CRM_TEMPLATE_ADAPTER_HONORIFIC')),
 					array('id' => 'POST', 'name' => GetMessage('CRM_TEMPLATE_ADAPTER_POST')),
 					array('id' => 'ADDRESS', 'name' => GetMessage('CRM_TEMPLATE_ADAPTER_ADDRESS')),
 					array('id' => 'TYPE', 'name' => GetMessage('CRM_TEMPLATE_ADAPTER_TYPE')),

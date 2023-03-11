@@ -3,6 +3,7 @@
 namespace Bitrix\Crm\Integration\BizProc\Document;
 
 use Bitrix\Main;
+use Bitrix\Main\Application;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\NotImplementedException;
 use Bitrix\Crm\Order\Permissions;
@@ -212,6 +213,7 @@ class Order extends \CCrmDocument implements \IBPWorkflowDocument
 		];
 
 		$fields += self::getShippingFields();
+		$fields += self::getUserFieldsMap();
 
 		self::appendReferenceFields(
 			$fields,
@@ -310,8 +312,67 @@ class Order extends \CCrmDocument implements \IBPWorkflowDocument
 				$arFields['EMP_STATUS_ID'] = $modifiedById;
 			}
 
-			$order->setFields($arFields);
-			$result = $order->save();
+			$orderFields = array_filter(
+				$arFields,
+				fn($key) => strpos($key, 'UF_') !== 0,
+				ARRAY_FILTER_USE_KEY
+			);
+
+			if ($orderFields)
+			{
+				$order->setFields($orderFields);
+				$result = $order->save();
+			}
+
+			self::updateDocumentUserFields($arDocumentID['ID'], $arFields);
+		}
+	}
+
+	private static function updateDocumentUserFields($orderId, $fields)
+	{
+		$values = [];
+
+		foreach (static::getUserFieldsMap() as $fieldId => $field)
+		{
+			if (!isset($fields[$fieldId]))
+			{
+				continue;
+			}
+
+			if ($field['Type'] === 'user')
+			{
+				$values[$fieldId] = \CBPHelper::ExtractUsers(
+					$fields[$fieldId],
+					['crm', __CLASS__, $orderId],
+					!$field['Multiple']
+				);
+			}
+			elseif ($field['Type'] === 'select')
+			{
+				static::InternalizeEnumerationField(
+					\CCrmOwnerType::ResolveUserFieldEntityID(\CCrmOwnerType::Order),
+					$fields,
+					$fieldId
+				);
+				$values[$fieldId] = $fields[$fieldId];
+			}
+			elseif ($field['Type'] === 'bool')
+			{
+				$values[$fieldId] = \CBPHelper::getBool($fields[$fieldId]) ? 1 : 0;
+			}
+			else
+			{
+				$values[$fieldId] = $fields[$fieldId];
+			}
+		}
+
+		if ($values)
+		{
+			Application::getUserTypeManager()->update(
+				\CCrmOwnerType::ResolveUserFieldEntityID(\CCrmOwnerType::Order),
+				$orderId,
+				$values
+			);
 		}
 	}
 
@@ -339,6 +400,29 @@ class Order extends \CCrmDocument implements \IBPWorkflowDocument
 				'Multiple' => true
 			]
 		];
+	}
+
+	private static function getUserFieldsMap()
+	{
+		$userFields = [];
+		$CCrmUserType = new \CCrmUserType(
+			Application::getUserTypeManager(),
+			\CCrmOwnerType::ResolveUserFieldEntityID(\CCrmOwnerType::Order),
+		);
+		$CCrmUserType->addBPFields(
+			$userFields,
+			['PRINTABLE_SUFFIX' => Loc::getMessage('CRM_BP_DOCUMENT_ORDER_PRINTABLE')]
+		);
+
+		foreach ($userFields as &$field)
+		{
+			if ($field['Type'] === 'UF:date')
+			{
+				$field['Type'] = 'date';
+			}
+		}
+
+		return $userFields;
 	}
 
 	public static function getDocumentName($documentId)
@@ -374,7 +458,7 @@ class Order extends \CCrmDocument implements \IBPWorkflowDocument
 
 	private static function getResponsibleFields()
 	{
-		return [
+		$fields = [
 			'RESPONSIBLE_ID_PRINTABLE' => array(
 				'Name' => GetMessage('CRM_BP_DOCUMENT_ORDER_FIELD_RESPONSIBLE_ID_PRINTABLE'),
 				'Type' => 'string',
@@ -452,6 +536,11 @@ class Order extends \CCrmDocument implements \IBPWorkflowDocument
 				'Type' => 'string',
 			),
 		];
+
+		return array_merge(
+			$fields,
+			static::getExtendedResponsibleFields('RESPONSIBLE_ID.')
+		);
 	}
 
 	public static function isFeatureEnabled($documentType, $feature)

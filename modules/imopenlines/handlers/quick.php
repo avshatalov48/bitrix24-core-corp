@@ -88,10 +88,15 @@ if ($dialogId)
 		}
 	}
 }
+
 if (!$lineId)
 {
 	$lineId = Common::parseUserCode($userCode)['CONFIG_ID'];
 }
+
+$listsDataManager = new \Bitrix\ImOpenlines\QuickAnswers\ListsDataManager($lineId);
+$iblockId = $listsDataManager->getIblockId();
+$params['CAN_CREATE'] = \CIBlockRights::UserHasRightTo($iblockId, $iblockId, 'section_element_bind');
 $params['IMOP_ID'] = $lineId;
 $params['DARK_MODE'] = (isset($getRequest['DARK_MODE']) && $getRequest['DARK_MODE'] === 'Y') ? 'Y' : 'N';
 

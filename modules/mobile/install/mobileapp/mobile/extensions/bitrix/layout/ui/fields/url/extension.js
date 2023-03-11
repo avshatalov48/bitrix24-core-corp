@@ -6,6 +6,7 @@ jn.define('layout/ui/fields/url', (require, exports, module) => {
 	const { pen } = require('assets/common');
 	const { StringFieldClass } = require('layout/ui/fields/string');
 	const { URL, isValidLink, getHttpPath } = require('utils/url');
+	const { inAppUrl } = require('in-app-url');
 
 	/**
 	 * @class UrlField
@@ -51,7 +52,7 @@ jn.define('layout/ui/fields/url', (require, exports, module) => {
 						flex: 1,
 					},
 					onClick: () => {
-						Application.openUrl(link)
+						inAppUrl.open(link)
 					},
 				},
 				showFavicon && Image({

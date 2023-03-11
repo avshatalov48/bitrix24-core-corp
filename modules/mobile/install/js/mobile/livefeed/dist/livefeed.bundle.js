@@ -854,15 +854,16 @@ this.BX = this.BX || {};
 	      }
 
 	      if (this.taskId > 0 && BXMobileAppContext.getApiVersion() >= 31 && this.taskData) {
-	        BXMobileApp.Events.postToComponent('taskbackground::task::action', [{
+	        BXMobileApp.Events.postToComponent('taskbackground::task::open', [{
 	          id: this.taskId,
+	          taskId: this.taskId,
 	          title: 'TASK',
 	          taskInfo: {
 	            title: this.taskData.title,
 	            creatorIcon: this.taskData.creatorIcon,
 	            responsibleIcon: this.taskData.responsibleIcon
 	          }
-	        }, this.taskId, {
+	        }, {
 	          taskId: this.taskId,
 	          getTaskInfo: true
 	        }]);
@@ -3488,7 +3489,7 @@ this.BX = this.BX || {};
 	      BXMobileApp.UI.Page.TextPanel.hide();
 	      this.emptyCommentsXhr = mobile_ajax.Ajax.wrap({
 	        type: 'json',
-	        method: 'GET',
+	        method: 'POST',
 	        url: "".concat(main_core.Loc.getMessage('MSLPathToLogEntry').replace("#log_id#", logId), "&empty_get_comments=Y").concat(!main_core.Type.isNil(timestampValue) ? "&LAST_LOG_TS=".concat(timestampValue) : ''),
 	        data: {},
 	        processData: true,

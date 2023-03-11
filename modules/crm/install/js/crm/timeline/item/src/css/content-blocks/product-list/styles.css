@@ -1,0 +1,207 @@
+.crm-entity-stream-section-icon-advice.crm-entity-stream-section-icon {
+	background-position: center -121px;
+}
+
+.crm-entity-stream-advice-content {
+	position: relative;
+	padding: 12px 13px;
+	background-color: #fff;
+	z-index: 1000;
+	border-radius: var(--ui-border-radius-md, 2px);
+}
+
+.crm-entity-stream-advice-info {
+	padding: 0 34px 0 0;
+	font: 13px/16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	color: rgba(83,92,105,.7);
+}
+
+.crm-entity-stream-advice-inner {
+	padding-top: 20px;
+	margin-top: 12px;
+	border-top: 1px solid rgba(82,92,105,.1);
+}
+
+.crm-entity-stream-advice-title {
+	display: block;
+	margin-bottom: 10px;
+	color: var(--ui-color-text-secondary, #525c69);
+	font-size: var(--ui-font-size-sm, 13px);
+	line-height: var(--ui-font-line-height-3xs, 16px);
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+}
+
+.crm-entity-stream-advice-list {
+
+}
+
+.crm-entity-stream-advice-list {
+	padding: 0;
+	margin: 0;
+	transition: max-height .5s linear;
+}
+
+.crm-entity-stream-advice-list-item {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	border-radius: var(--ui-border-radius-xs, 1px);
+	margin-bottom: 11px;
+	padding: 5px 9px 4px 6px;
+	background-color: transparent;
+}
+
+.crm-entity-stream-advice-list-item--active {
+	background-color: var(--ui-color-palette-blue-15, #ECFAFE);
+}
+
+.crm-entity-stream-advice-list-content {
+	display: flex;
+	overflow: hidden;
+}
+
+.crm-entity-stream-advice-list-icon {
+	display: block;
+	margin: 0 8px 0 3px;
+	min-width: 35px;
+	width: 35px;
+	height: 35px;
+	border-radius: 50%;
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='37' height='37'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cpath fill='%23D8D8D8' d='M18.5 0C28.717 0 37 8.283 37 18.5S28.717 37 18.5 37 0 28.717 0 18.5 8.283 0 18.5 0zm0 1C8.835 1 1 8.835 1 18.5S8.835 36 18.5 36 36 28.165 36 18.5 28.165 1 18.5 1z'/%3E%3Cpath fill='%23828B95' d='M12 10h13a2 2 0 012 2v13a2 2 0 01-2 2H12a2 2 0 01-2-2V12a2 2 0 012-2zm0 15h13v-1l-3.466-4-1.734 2-4.334-5L12 21v4zm9.5-9a1.5 1.5 0 100-3 1.5 1.5 0 000 3z'/%3E%3C/g%3E%3C/svg%3E");
+	background-position: center;
+	background-repeat: no-repeat;
+	background-size: cover;
+}
+
+.crm-entity-stream-advice-list-item a.crm-timeline__card_link {
+	display: inline;
+	margin: 0;
+	font-family:  var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font-size: var(--ui-font-size-md, 14px);
+	line-height: var(--ui-font-line-height-md, 1.4);
+	color: var(--ui-color-link-primary-base, #2066b0);
+	cursor: pointer;
+	text-decoration: underline;
+	text-decoration-color: transparent;
+	text-decoration-style: solid;
+	transition: text-decoration-color 0.2s ease-in-out;
+}
+
+.crm-entity-stream-advice-list-item a.crm-timeline__card_link:hover {
+	text-decoration: underline;
+	text-decoration-color: var(--ui-color-link-primary-base, #2066b0) !important;
+	transition-duration: 0s;
+}
+
+
+.crm-entity-stream-advice-list-desc-box {
+	display: flex;
+}
+
+.crm-entity-stream-advice-list-inner {
+	overflow: hidden;
+}
+
+.crm-entity-stream-advice-list-desc-name,
+.crm-entity-stream-advice-list-desc-value {
+	font-size: var(--ui-font-size-xs, 12px);
+	line-height: var(--ui-font-line-height-sm, 1.3);
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+}
+.crm-entity-stream-advice-list-desc-name {
+	display: inline-block;
+	margin-right: 7px;
+	color: rgba(var(--ui-color-text-secondary-rgb), 0.5);
+}
+
+.crm-entity-stream-advice-list-desc-value {
+	display: inline-block;
+	color: var(--ui-color-text-primary, #333);
+	white-space: nowrap;
+}
+
+.crm-entity-stream-advice-list-btn-box {
+	display: flex;
+	justify-content: flex-end;
+	min-width: 80px;
+}
+
+.crm-entity-stream-advice-list-btn {
+	padding: 0 8px;
+	height: 21px;
+	border: var(--ui-border-width-thin, 1px) solid rgba(var(--ui-color-base-90-rgb), 0.3);
+	border-radius: 15px;
+	font-size: var(--ui-font-size-3xs, 12px);
+	line-height: var(--ui-font-line-height-3xs, 14px);
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font-weight: var(--ui-font-weight-normal, 400);
+	color: var(--ui-color-base-80, #6a737f);
+	text-transform: inherit;
+	background-color: transparent;
+	cursor: pointer;
+	transition: border-color 0.2s ease-in-out;
+}
+
+.crm-entity-stream-advice-list-btn::before {
+	content: '';
+	display: inline-block;
+	width: 7px;
+	height: 7px;
+	margin-right: 4px;
+	mask-image: url("data:image/svg+xml,%3Csvg width='7' height='7' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4.105.278v2.618h2.588v1.207H4.105v2.619H2.9v-2.62l-2.611.001V2.897h2.61V.277h1.207z' fill='%23ffffff' fill-rule='evenodd'/%3E%3C/svg%3E");
+	mask-repeat: no-repeat;
+	background-color: var(--ui-color-base-80, #6a737f);
+}
+
+.crm-entity-stream-advice-list-btn:hover,
+.crm-entity-stream-advice-list-btn:hover::before {
+	transition-duration: 0s;
+}
+
+.crm-entity-stream-advice-list-btn:hover {
+	border-color: rgba(var(--ui-color-base-90-rgb), 0.6);
+}
+
+
+.crm-entity-stream-advice-list-item--active .crm-entity-stream-advice-list-btn {
+	padding: 0 5px;
+	background: none;
+	border: none;
+	color: var(--ui-color-primary, #2fc6f6);
+	pointer-events: none;
+}
+
+.crm-entity-stream-advice-list-item--active .crm-entity-stream-advice-list-btn::before {
+	content: '';
+	width: 9px;
+	height: 8px;
+	margin-right: 5px;
+	mask-image: url(../../../images/common/crm-timeline__check.svg);
+	mask-repeat: no-repeat;
+	background-color: var(--ui-color-primary, #2fc6f6);
+}
+
+.crm-entity-stream-advice-link {
+	display: inline-block;
+	margin-top: 3px;
+	border-bottom: 1px dashed rgba(130,139,149,.4);
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	color: #80868e;
+	transition: border-bottom .3s;
+}
+
+.crm-entity-stream-advice-link:hover {
+	border-bottom: 1px dashed transparent;
+	color: #80868e;
+}
+
+/*** Vue's built-in animation Demo ***/
+.list-item {
+	display: inline-block;
+}
+.list-enter-active, .list-leave-active {
+	transition: opacity .5s .15s linear;
+}
+.list-enter, .list-leave-to /* .list-leave-active up to 2.1.8 version */ {
+	opacity: 0;
+}

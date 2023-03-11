@@ -3,6 +3,7 @@
 return [
 	'extensions' => [
 		'layout/ui/menu',
+		'layout/pure-component',
 		'layout/ui/stateful-list',
 		'qrauth/utils',
 		'rest',

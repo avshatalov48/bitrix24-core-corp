@@ -4,6 +4,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Main\Web\Uri;
 use Bitrix\Tasks\UI;
 use Bitrix\Tasks\Util\User;
 
@@ -113,7 +114,7 @@ function prepareTaskRowUserBalloonHtml(array $user, array $arParams)
 	$userUrl = htmlspecialcharsbx($user['URL']);
 
 	$emptyAvatar = ($user['AVATAR'] ? '' : ' tasks-grid-avatar-empty');
-	$style = ($user['AVATAR'] ? ' style="background-image: url(\''.$user['AVATAR'].'\')"' : '');
+	$style = ($user['AVATAR'] ? ' style="background-image: url(\''. Uri::urnEncode($user['AVATAR']).'\')"' : '');
 
 	return
 		'<div class="tasks-grid-username-wrapper">'

@@ -1,6 +1,7 @@
 <?php
 
 $pathToComponents =  $_SERVER["DOCUMENT_ROOT"] . "/bitrix/components/bitrix/";
+$fileType = $_REQUEST["fileType"] ?? null;
 
 $ajaxActions = [
 	"checkout" => [
@@ -79,7 +80,7 @@ $ajaxActions = [
 		"file" => $pathToComponents."im.messenger/im.ajax.php",
 	],
 	"im_files" => [
-		"file" => $pathToComponents."im.messenger/" . ($_REQUEST["fileType"] == 'show' ? 'show.file.php' : 'download.file.php'),
+		"file" => $pathToComponents."im.messenger/" . ($fileType == 'show' ? 'show.file.php' : 'download.file.php'),
 		"json" => false
 	],
 	"im_answer" => [

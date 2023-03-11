@@ -715,10 +715,10 @@ class Template
 		$handler = new TemplateFieldHandler($this->userId, $fields, $templateData);
 
 		$handler
+			->prepareResponsible()
 			->prepareMultitask()
 			->prepareBBCodes()
 			->prepareType()
-			->prepareResponsible()
 			->prepareMembers()
 			->prepareTitle()
 			->prepareReplication()

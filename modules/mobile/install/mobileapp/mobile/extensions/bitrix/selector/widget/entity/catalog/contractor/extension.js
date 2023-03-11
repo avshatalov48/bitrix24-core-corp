@@ -19,6 +19,11 @@
 			return BX.message('SELECTOR_COMPONENT_START_TYPING_TO_SEARCH_CONTRACTOR');
 		}
 
+		static getStartTypingWithCreationText()
+		{
+			return BX.message('SELECTOR_COMPONENT_START_TYPING_TO_CREATE_CONTRACTOR');
+		}
+
 		static isCreationEnabled()
 		{
 			return true;

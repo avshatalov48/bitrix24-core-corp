@@ -2,6 +2,7 @@
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Tasks\Helper\RestrictionUrl;
 use Bitrix\Tasks\Integration\Bitrix24;
 use Bitrix\Tasks\Manager;
 use Bitrix\Tasks\Util;
@@ -342,7 +343,22 @@ if ($taskLimitExceeded || $taskRecurrentRestrict)
 					<div class="task-options-item task-options-item-destination">
 						<span data-bx-id="task-edit-chooser" data-target="accomplice" class="task-option-fixedbtn"></span>
 						<span class="task-options-item-param"><?=Loc::getMessage('TASKS_TASK_COMPONENT_TEMPLATE_ACCOMPLICES')?></span>
-						<div class="task-options-item-open-inner <?=$taskLimitExceeded? 'tasks-btn-restricted' : ''?>">
+						<?php
+							$lockClassName = 'task-options-item-open-inner';
+							$onLockClick = '';
+							$lockClassStyle = '';
+							if ($taskLimitExceeded)
+							{
+								$lockClassName .= ' tasks-btn-restricted';
+								$onLockClick =
+									"top.BX.UI.InfoHelper.show('"
+									. RestrictionUrl::TASK_LIMIT_OBSERVERS_SLIDER_URL
+									. "',{isLimit: true,limitAnalyticsLabels: {module: 'tasks',}});"
+								;
+								$lockClassStyle = "cursor: pointer;";
+							}
+						?>
+						<div class="<?=$lockClassName?>" onclick="<?=$onLockClick?>" style="<?=$lockClassStyle?>">
 
 							<?php
 							$APPLICATION->IncludeComponent(
@@ -381,7 +397,23 @@ if ($taskLimitExceeded || $taskRecurrentRestrict)
 					<div class="task-options-item task-options-item-destination">
 						<span data-bx-id="task-edit-chooser" data-target="auditor" class="task-option-fixedbtn"></span>
 						<span class="task-options-item-param"><?=Loc::getMessage('TASKS_TASK_COMPONENT_TEMPLATE_AUDITORS')?></span>
-						<div class="task-options-item-open-inner <?=$taskLimitExceeded? 'tasks-btn-restricted' : ''?>">
+						<?php
+							$lockClassName = 'task-options-item-open-inner';
+							$onLockClick = '';
+							$lockClassStyle = '';
+							if ($taskLimitExceeded)
+							{
+								$lockClassName .= ' tasks-btn-restricted';
+								$onLockClick =
+									"top.BX.UI.InfoHelper.show('"
+									. RestrictionUrl::TASK_LIMIT_OBSERVERS_SLIDER_URL
+									. "',{isLimit: true,limitAnalyticsLabels: {module: 'tasks',}});"
+								;
+								$lockClassStyle = "cursor: pointer;";
+							}
+						?>
+						<div class="<?=$lockClassName?>" onclick="<?=$onLockClick?>" style="<?=$lockClassStyle?>">
+
 							<?php
 							$APPLICATION->IncludeComponent(
 								'bitrix:tasks.widget.member.selector',
@@ -1018,8 +1050,22 @@ if ($taskLimitExceeded || $taskRecurrentRestrict)
 					<?php $satChecked = $request['ADDITIONAL']['SAVE_AS_TEMPLATE'] == 'Y' || $taskData['REPLICATE'] == 'Y';?>
 					<?php $satDisabled = $taskData['REPLICATE'] == 'Y';?>
 
-					<?php if (\Bitrix\Tasks\Access\TemplateAccessController::can($arParams['USER_ID'], \Bitrix\Tasks\Access\ActionDictionary::ACTION_TEMPLATE_CREATE)): ?>
-					<div class="task-edit-add-template-container <?=$taskLimitExceeded? 'tasks-btn-restricted' : ''?>">
+					<?php if (\Bitrix\Tasks\Access\TemplateAccessController::can($arParams['USER_ID'], \Bitrix\Tasks\Access\ActionDictionary::ACTION_TEMPLATE_CREATE)):
+						$lockClassName = 'task-edit-add-template-container';
+						$onLockClick = '';
+						$lockClassStyle = '';
+						if ($taskLimitExceeded)
+						{
+							$lockClassName .= ' tasks-btn-restricted';
+							$onLockClick =
+								"top.BX.UI.InfoHelper.show('"
+								. RestrictionUrl::TEMPLATE_LIMIT_SLIDER_URL
+								. "',{isLimit: true,limitAnalyticsLabels: {module: 'tasks',}});"
+							;
+							$lockClassStyle = "cursor: pointer;";
+						}
+						?>
+						<div class="<?=$lockClassName?>" onclick="<?=$onLockClick?>" style="<?=$lockClassStyle?>">
 						<label class="task-edit-add-template-label"><input type="checkbox" class="task-edit-add-template-checkbox" data-bx-id="task-edit-flag task-edit-flag-save-as-template" data-target="task-param-save-as-template" data-flag-name="SAVE_AS_TEMPLATE" <?=($satDisabled? 'disabled' : '')?> <?=($satChecked? 'checked' : '')?>><?=Loc::getMessage('TASKS_TASK_COMPONENT_TEMPLATE_SAVE_AS_TEMPLATE')?></label>
 						<input data-bx-id="task-edit-task-param-save-as-template" type="hidden" name="ADDITIONAL[SAVE_AS_TEMPLATE]" value="<?=($satChecked ? 'Y' : 'N')?>" />
 					</div>

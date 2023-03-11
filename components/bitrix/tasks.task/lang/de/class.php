@@ -1,6 +1,9 @@
 <?php
 $MESS["TASKS_ACTION_RESULT_REQUIRED"] = "Aufgabenersteller verlangt, dass Sie eine Zusammenfassung des Aufgabenstatus bereitstellen.<br> Schreiben Sie einen Kommentar zur Aufgabe und markieren Sie ihn als die Zusammenfassung des Aufgabenstatus.";
 $MESS["TASKS_REST_BUTTON_TITLE_2"] = "Bitrix24.Market";
+$MESS["TASKS_TASK_TAG_ACCESS_DENIED"] = "Sie haben nicht genügend Rechte.";
+$MESS["TASKS_TASK_TAG_ALREADY_EXISTS"] = "Dieses Tag existiert bereits.";
+$MESS["TASKS_TASK_TAG_UNKNOWN_ERROR"] = "Tag kann nicht hinzugefügt werden. Versuchen Sie bitte später erneut.";
 $MESS["TASKS_TEMPLATE_CREATE_FORBIDDEN"] = "Vorlage kann nicht erstellt werden, weil Zugriff verweigert ist";
 $MESS["TASKS_TT_AUTO_CHANGE_GROUP"] = "Aufgabe wurde mit dem aktuellen Projekt verknüpft";
 $MESS["TASKS_TT_AUTO_CHANGE_ORIGINATOR"] = "Aufgabenautor wurde automatisch auf den aktuellen Nutzer geändert.";

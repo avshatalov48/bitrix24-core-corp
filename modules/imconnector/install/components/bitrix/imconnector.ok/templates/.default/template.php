@@ -46,7 +46,7 @@ $placeholder = $arResult['placeholder']['api_key'] ? Loc::getMessage('IMCONNECTO
 </form>
 <?if(empty($arResult['PAGE'])):?>
 	<div class="imconnector-field-container">
-	<?if($arResult['STATUS'] === true): //case when connection completed ?>
+	<?if(!empty($arResult['STATUS']) && $arResult['STATUS'] === true): //case when connection completed ?>
 		<div class="imconnector-field-section imconnector-field-section-social">
 			<div class="imconnector-field-box">
 				<div class="connector-icon ui-icon ui-icon-service-<?=$iconCode?>"><i></i></div>
@@ -69,7 +69,7 @@ $placeholder = $arResult['placeholder']['api_key'] ? Loc::getMessage('IMCONNECTO
 				</div>
 			</div>
 		</div>
-	<?elseif($arResult['ACTIVE_STATUS'] === true):?>
+	<?elseif(!empty($arResult['ACTIVE_STATUS']) && $arResult['ACTIVE_STATUS'] === true):?>
 		<div class="imconnector-field-section imconnector-field-section-social">
 			<div class="imconnector-field-box">
 				<div class="connector-icon ui-icon ui-icon-service-<?=$iconCode?>"><i></i></div>
@@ -141,7 +141,7 @@ $placeholder = $arResult['placeholder']['api_key'] ? Loc::getMessage('IMCONNECTO
 	<?
 	include 'messages.php';
 
-	if ($arResult['STATUS'])
+	if (!empty($arResult['STATUS']))
 	{
 		include 'info.php';
 	}

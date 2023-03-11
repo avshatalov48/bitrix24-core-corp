@@ -35,7 +35,7 @@ class Stage extends Field
 			return $result;
 		}
 
-		if (!$isCategoryChanged)
+		if (!$isCategoryChanged && !$item->isNew())
 		{
 			$result->addError($this->getValueNotValidError());
 

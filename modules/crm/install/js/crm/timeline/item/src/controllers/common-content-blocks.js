@@ -1,24 +1,25 @@
-import {Base} from './base';
+import { Base } from './base';
 import ConfigurableItem from '../configurable-item';
-import { ajax as Ajax, Type } from "main.core";
+import { Type } from "main.core";
 
 import TextBlock from '../components/content-blocks/text';
 import LinkBlock from '../components/content-blocks/link';
 import DateBlock from '../components/content-blocks/date';
 import WithTitle from '../components/content-blocks/with-title';
 import LineOfTextBlocks from '../components/content-blocks/line-of-text-blocks';
-import {TimelineAudio} from '../components/content-blocks/timeline-audio';
-import {ClientMark} from '../components/content-blocks/client-mark';
+import { TimelineAudio } from '../components/content-blocks/timeline-audio';
+import { ClientMark } from '../components/content-blocks/client-mark';
 import Money from '../components/content-blocks/money';
-import  EditableText from '../components/content-blocks/editable-text';
+import EditableText from '../components/content-blocks/editable-text';
 import { EditableDescription } from '../components/content-blocks/editable-description';
 import EditableDate from '../components/content-blocks/editable-date';
-import {PlayerAlert} from '../components/content-blocks/player-alert';
-import {Note} from '../components/content-blocks/note';
+import { PlayerAlert } from '../components/content-blocks/player-alert';
+import { Note } from '../components/content-blocks/note';
 import DatePill from '../components/content-blocks/date-pill';
-import {ButtonState} from "ui.buttons";
+import {MoneyPill} from '../components/content-blocks/money-pill';
 import {InfoGroup} from '../components/content-blocks/info-group';
 import {SmsMessage} from '../components/content-blocks/sms-message';
+import { FileList } from '../components/content-blocks/file-list';
 
 export class CommonContentBlocks extends Base
 {
@@ -39,8 +40,10 @@ export class CommonContentBlocks extends Base
 			PlayerAlert,
 			DatePill,
 			Note,
+			FileList,
 			InfoGroup,
 			SmsMessage,
+			MoneyPill,
 		};
 	}
 
@@ -91,4 +94,3 @@ export class CommonContentBlocks extends Base
 		return true; // common blocks can be used anywhere
 	}
 }
-

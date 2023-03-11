@@ -15,6 +15,7 @@ use Bitrix\Sale\Helpers\Admin;
 use Bitrix\SalesCenter\Integration\SaleManager;
 use Bitrix\Seo;
 use Bitrix\Sale\Internals\Input;
+use Bitrix\SaleScenter\Controller\Engine\ActionFilter\CheckWritePermission;
 
 class SalesCenterPaySystemComponent extends CBitrixComponent implements Main\Engine\Contract\Controllerable, Main\Errorable
 {
@@ -24,8 +25,20 @@ class SalesCenterPaySystemComponent extends CBitrixComponent implements Main\Eng
 	public function configureActions()
 	{
 		Loader::includeModule('sale');
+		Loader::includeModule('salescenter');
 
-		return [];
+		return [
+			'reloadCashboxSettings' => [
+				'+prefilters' => [
+					new CheckWritePermission(),
+				]
+			],
+			'getPaySystemSettingsData' => [
+				'+prefilters' => [
+					new CheckWritePermission(),
+				]
+			],
+		];
 	}
 
 	/**
@@ -166,6 +179,10 @@ class SalesCenterPaySystemComponent extends CBitrixComponent implements Main\Eng
 		$this->arResult['AUTH']['PROFILE'] = false;
 
 		[$className] = PaySystem\Manager::includeHandler($this->arResult['PAYSYSTEM_HANDLER']);
+
+		$reflection = new \ReflectionClass($className);
+		$className = $reflection->getName();
+
 		$this->arResult['PAYSYSTEM_HANDLER_CLASS_NAME'] = $className;
 		if (mb_strtolower($className) === mb_strtolower(\Sale\Handlers\PaySystem\YandexCheckoutHandler::class))
 		{
@@ -190,6 +207,8 @@ class SalesCenterPaySystemComponent extends CBitrixComponent implements Main\Eng
 				}
 			}
 		}
+
+		$this->arResult = array_merge($this->arResult, $this->getPaySystemSettingsData($className));
 
 		$this->arResult['PAYSYSTEM_HANDLER_STYLE'] = mb_strtolower($this->arResult['PAYSYSTEM_HANDLER']);
 		$this->arResult['PAYSYSTEM_HANDLER_FULL'] = mb_strtoupper($this->arResult['PAYSYSTEM_HANDLER']);
@@ -552,7 +571,7 @@ class SalesCenterPaySystemComponent extends CBitrixComponent implements Main\Eng
 			\Sale\Handlers\PaySystem\UaPayHandler::class => '11825299',
 			\Sale\Handlers\PaySystem\WooppayHandler::class => '12183852',
 			\Sale\Handlers\PaySystem\AlfaBankHandler::class => '12595422',
-			\Sale\Handlers\PaySystem\RoboxchangeHandler::class => '12595360',
+			\Sale\Handlers\PaySystem\RoboxchangeHandler::class => '17168072',
 			\Sale\Handlers\PaySystem\PlatonHandler::class => '13920167',
 		];
 
@@ -673,5 +692,35 @@ class SalesCenterPaySystemComponent extends CBitrixComponent implements Main\Eng
 		}
 
 		return $this->initCashbox($service, $kkmId);
+	}
+
+	public function getPaySystemSettingsDataAction(string $handlerClassName): array
+	{
+		$handler = PaySystem\Manager::getFolderFromClassName($handlerClassName);
+		[$className] = PaySystem\Manager::includeHandler($handler);
+
+		return $this->getPaySystemSettingsData($className);
+	}
+
+	private function getPaySystemSettingsData(string $handlerClassName): array
+	{
+		$arResult['PAY_SYSTEM_ROBOKASSA_SETTINGS']['IS_SUPPORT_SETTINGS'] = strcasecmp($handlerClassName, \Sale\Handlers\PaySystem\RoboxchangeHandler::class) === 0;
+		if ($arResult['PAY_SYSTEM_ROBOKASSA_SETTINGS']['IS_SUPPORT_SETTINGS'])
+		{
+			$shopSettings = new PaySystem\Robokassa\ShopSettings();
+			$arResult['PAY_SYSTEM_ROBOKASSA_SETTINGS']['IS_ONLY_COMMON_SETTINGS_EXISTS'] = $shopSettings->isOnlyCommonSettingsExists();
+			$arResult['PAY_SYSTEM_ROBOKASSA_SETTINGS']['IS_SETTINGS_EXISTS'] = $shopSettings->isAnySettingsExists();
+
+			$settingsFormUrl = \CComponentEngine::makeComponentPath('bitrix:salescenter.paysystem.settings.robokassa');
+			$settingsFormUrl = getLocalPath('components' . $settingsFormUrl . '/slider.php');
+			$settingsFormUrl = new Main\Web\Uri($settingsFormUrl);
+			$settingsFormUrl->addParams([
+				'analyticsLabel' => 'paySystemSettings',
+			]);
+
+			$arResult['PAY_SYSTEM_ROBOKASSA_SETTINGS']['FORM_LINK'] = $settingsFormUrl;
+		}
+
+		return $arResult;
 	}
 }

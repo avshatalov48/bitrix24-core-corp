@@ -1125,6 +1125,24 @@ BX.Tasks.Kanban.Grid.prototype = {
 		}
 
 		var taskId = this.recognizeTaskId(data);
+		if (!taskId)
+		{
+			return;
+		}
+
+		if (this.isScrumGrid())
+		{
+			// todo wtf... split into different methods tasksTaskPull
+			if (
+				!this.hasItem(taskId)
+				&& command !== 'task_add'
+				&& command !== 'comment_read_all'
+				&& command !== 'tag_changed'
+			)
+			{
+				return;
+			}
+		}
 
 		switch (command)
 		{
@@ -1153,14 +1171,6 @@ BX.Tasks.Kanban.Grid.prototype = {
 			case "task_view":
 				if (taskId)
 				{
-					if (this.isScrumGrid())
-					{
-						if (!this.getItems()[taskId])
-						{
-							return;
-						}
-					}
-
 					var requestParams = this.getData().params;
 
 					BX.ajax.runAction('tasks.task.list', {
@@ -1170,7 +1180,10 @@ BX.Tasks.Kanban.Grid.prototype = {
 								RETURN_ACCESS: 'Y',
 								SIFT_THROUGH_FILTER: {
 									sprintKanban: (this.isScrumGrid() ? 'Y' : 'N'),
-									isCompletedSprint: (this.isScrumGrid() ? requestParams.IS_COMPLETED_SPRINT : 'N'),
+									isCompletedSprint: (this.isScrumGrid()
+										? requestParams.IS_COMPLETED_SPRINT
+										: 'N'
+									),
 									userId: this.ownerId,
 									groupId: this.groupId
 								}
@@ -1211,7 +1224,22 @@ BX.Tasks.Kanban.Grid.prototype = {
 					this.removeItem(taskId);
 				}
 				break;
-
+			case 'task_update':
+				if (taskId)
+				{
+					this.refreshTask(taskId);
+				}
+				break;
+			case 'tag_changed':
+				if (this.isScrumGrid())
+				{
+					BX.Tasks.Scrum.Kanban.onApplyFilter()
+				}
+				else
+				{
+					this.onApplyFilter();
+				}
+				break;
 			default:
 				break;
 		}
@@ -1224,7 +1252,7 @@ BX.Tasks.Kanban.Grid.prototype = {
 				taskId: taskId
 			},
 			function(data) {
-				if (data && !data.error)
+				if (data && !BX.type.isArray(data) && !data.error)
 				{
 					this.addItemOrder(data);
 				}
@@ -1812,6 +1840,23 @@ BX.Tasks.Kanban.Grid.prototype = {
 		});
 
 		return columnsWidth + 'px';
+	},
+
+	hasItem: function(itemId)
+	{
+		itemId = parseInt(itemId, 10);
+
+		var hasItem = false;
+		Object.values(this.getItems())
+			.forEach(function(item) {
+				if (parseInt(item.getId(), 10) === itemId)
+				{
+					hasItem = true;
+				}
+			})
+		;
+
+		return hasItem;
 	},
 
 	hasItemInProgress: function()

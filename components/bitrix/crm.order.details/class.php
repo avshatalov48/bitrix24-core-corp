@@ -651,6 +651,19 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 					'url' => Container::getInstance()->getRouter()->getAutomationUrl(CCrmOwnerType::Order)
 						->addParams(['id' => $this->entityID]),
 				);
+
+				$checkAutomationTourGuideData = CCrmBizProcHelper::getHowCheckAutomationTourGuideData(
+					CCrmOwnerType::Order,
+					0,
+					$this->userID
+				);
+				if ($checkAutomationTourGuideData)
+				{
+					$this->arResult['AUTOMATION_CHECK_AUTOMATION_TOUR_GUIDE_DATA'] = [
+						'options' => $checkAutomationTourGuideData,
+					];
+				}
+				unset($checkAutomationTourGuideData);
 			}
 
 			$this->arResult['TABS'][] = array(
@@ -896,7 +909,14 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 				'title' => Loc::getMessage('CRM_ORDER_FIELD_DATE_INSERT'),
 				'type' => 'datetime',
 				'editable' => false,
-				'data' => array('enableTime' => true)
+				'data' => [
+					'enableTime' => true,
+					'dateViewFormat' =>
+						\Bitrix\Main\Application::getInstance()->getContext()->getCulture()->getLongDateFormat()
+						. ' '
+						. \Bitrix\Main\Application::getInstance()->getContext()->getCulture()->getShortTimeFormat()
+					,
+				],
 			),
 			array(
 				'name' => 'COMMENTS',

@@ -1186,6 +1186,29 @@ export class Row
 		}
 	}
 
+	updatePropertyFields()
+	{
+		const productProps = this.model.getField('PRODUCT_PROPERTIES');
+
+		for (const property in productProps)
+		{
+			const availableWrapper = this.#getNodeChildByDataName(property);
+			if (availableWrapper)
+			{
+				const value = this.model.getField('PRODUCT_PROPERTIES')[property] ?? '';
+				availableWrapper.innerHTML = value;
+			}
+		}
+	}
+
+	clearPropertyFields()
+	{
+		const propNodes = this.#getNodesChild();
+		propNodes.forEach((property) => {
+			property.innerHTML = '';
+		})
+	}
+
 	setRowReserved(value)
 	{
 		this.setField('ROW_RESERVED', value)
@@ -1388,6 +1411,14 @@ export class Row
 
 	changeBasePrice(value, mode = MODE_SET)
 	{
+		if (mode === MODE_EDIT && !this.#isEditableCatalogPrice())
+		{
+			value = this.getField('BASE_PRICE');
+			this.updateUiInputField('PRICE', value.toFixed(this.getPricePrecision()));
+
+			return;
+		}
+
 		const originalPrice = value;
 		// price can't be less than zero
 		value = Math.max(value, 0);
@@ -2084,6 +2115,11 @@ export class Row
 
 	isRestrictedStoreInfo(): boolean
 	{
+		if (!this.editor.getSettingValue('allowReservation', true))
+		{
+			return false;
+		}
+
 		const storeId = this.getField('STORE_ID')?.toString();
 		if (Type.isNil(storeId) || storeId === '0')
 		{
@@ -2123,6 +2159,11 @@ export class Row
 	#getNodeChildByDataName(name: String): HTMLElement
 	{
 		return this.getNode().querySelector(`[data-name="${name}"]`);
+	}
+
+	#getNodesChild(): NodeList
+	{
+		return this.getNode().querySelectorAll(`span[data-name]`);
 	}
 
 	#onGridUpdated(): void

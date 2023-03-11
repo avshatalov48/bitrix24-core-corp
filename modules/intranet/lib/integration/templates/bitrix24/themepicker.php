@@ -39,6 +39,8 @@ class ThemePicker
 		self::BEHAVIOUR_RETURN,
 	];
 
+	public const DEFAULT_THEME_ID = 'light:milky-way';
+
 	private static $instance = null;
 	private static $config = null;
 
@@ -283,7 +285,7 @@ class ThemePicker
 
 	public function getCurrentThemeId()
 	{
-		return $this->currentTheme !== null ? $this->currentTheme["id"] : "default";
+		return $this->currentTheme !== null ? $this->currentTheme["id"] : self::DEFAULT_THEME_ID;
 	}
 
 	public function getCurrentTheme()
@@ -781,13 +783,13 @@ class ThemePicker
 			}
 		}
 
-		return $theme ?: $this->getStandardTheme('default');
+		return $theme ?: $this->getStandardTheme(self::DEFAULT_THEME_ID);
 	}
 
 	public function getDefaultThemeId()
 	{
 		$defaultTheme = $this->getDefaultTheme();
-		return $defaultTheme ? $defaultTheme["id"] : "default";
+		return $defaultTheme ? $defaultTheme["id"] : self::DEFAULT_THEME_ID;
 	}
 
 	public function setDefaultTheme($themeId, $currentUserId = 0): bool

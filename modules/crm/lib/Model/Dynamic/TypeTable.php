@@ -630,22 +630,36 @@ class TypeTable extends UserField\Internal\TypeDataManager
 				)
 			);
 		}
-		global $DB;
+
+		self::createIndexIfNotExists(
+			$type['TABLE_NAME'],
+			'ix_crm_type_item_' . (int)$type['ID'] . '_category',
+			[\Bitrix\Crm\Item::FIELD_NAME_CATEGORY_ID],
+		);
+		self::createIndexIfNotExists(
+			$type['TABLE_NAME'],
+			'ix_crm_type_item_' . (int)$type['ID'] . '_contact',
+			[\Bitrix\Crm\Item::FIELD_NAME_CONTACT_ID],
+		);
+		self::createIndexIfNotExists(
+			$type['TABLE_NAME'],
+			'ix_crm_type_item_' . (int)$type['ID'] . '_company',
+			[\Bitrix\Crm\Item::FIELD_NAME_COMPANY_ID],
+		);
+		// self::createIndexIfNotExists(
+		// 	$type['TABLE_NAME'],
+		// 	'ix_crm_type_item_' . (int)$type['ID'] . '_last_activity_time',
+		// 	[\Bitrix\Crm\Item::FIELD_NAME_LAST_ACTIVITY_TIME],
+		// );
+	}
+
+	private static function createIndexIfNotExists(string $tableName, string $indexName, array $columns): void
+	{
 		$connection = Application::getConnection();
-		if(!$DB->IndexExists($type['TABLE_NAME'], ['CATEGORY_ID'], true))
+
+		if ($connection->getIndexName($tableName, $columns, true) === null)
 		{
-			/** @noinspection SqlResolve */
-			$DB->Query('ALTER TABLE '.$connection->getSqlHelper()->forSql($type['TABLE_NAME']).' ADD INDEX ix_crm_type_item_'.$type['ID'].'_category(CATEGORY_ID)', true);
-		}
-		if(!$DB->IndexExists($type['TABLE_NAME'], ['CONTACT_ID'], true))
-		{
-			/** @noinspection SqlResolve */
-			$DB->Query('ALTER TABLE '.$connection->getSqlHelper()->quote($type['TABLE_NAME']).' ADD INDEX ix_crm_type_item_'.$type['ID'].'_contact(CONTACT_ID)', true);
-		}
-		if(!$DB->IndexExists($type['TABLE_NAME'], ['COMPANY_ID'], true))
-		{
-			/** @noinspection SqlResolve */
-			$DB->Query('ALTER TABLE '.$connection->getSqlHelper()->forSql($type['TABLE_NAME']).' ADD INDEX ix_crm_type_item_'.$type['ID'].'_company(COMPANY_ID)', true);
+			$connection->createIndex($tableName, $indexName, $columns);
 		}
 	}
 

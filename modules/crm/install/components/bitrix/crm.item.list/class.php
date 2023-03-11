@@ -1,6 +1,5 @@
 <?php
 
-use Bitrix\Crm\Category\Entity\Category;
 use Bitrix\Crm\Integration;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\ItemIdentifier;
@@ -118,6 +117,7 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 			'categoryId' => $this->category ? $this->category->getId() : 0,
 			'gridId' => $this->getGridId(),
 			'backendUrl' => $this->arParams['backendUrl'] ?? null,
+			'isUniversalActivityScenarioEnabled' => \Bitrix\Crm\Settings\Crm::isUniversalActivityScenarioEnabled(),
 		];
 
 		$this->includeComponentTemplate();

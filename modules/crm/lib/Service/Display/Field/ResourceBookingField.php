@@ -35,6 +35,8 @@ class ResourceBookingField extends BaseSimpleField
 
 	protected function getPreparedValue($fieldValue, $itemId): string
 	{
+		$fieldValue = (array)$fieldValue;
+
 		$userField = array_merge(
 			$this->getUserFieldParams(),
 			[

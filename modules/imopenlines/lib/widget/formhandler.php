@@ -19,7 +19,6 @@ use	Bitrix\ImOpenLines\Crm\Common as CrmCommon;
 use Bitrix\Main\ErrorCollection;
 use	Bitrix\Main\Event;
 use Bitrix\Main\EventResult;
-use Bitrix\Main\LoaderException;
 use	Bitrix\Main\SystemException;
 use	Bitrix\Main\Localization\Loc;
 
@@ -93,7 +92,8 @@ class FormHandler
 	}
 
 	/**
-	 * Event handler for 'onSiteFormFilledOpenlines' event (class entry point)
+	 * Event handler for 'crm::onSiteFormFilledOpenlines' event (class entry point)
+	 * @see \Bitrix\Crm\WebForm\ResultEntity::add
 	 * @param Event $event
 	 *
 	 * @return bool
@@ -122,17 +122,26 @@ class FormHandler
 	}
 
 	/**
-	 * Event handler for 'onSiteFormFillOpenlines' event (event is fired before CRM entities are created)
+	 * Event handler for 'crm::onSiteFormFillOpenlines' event (event is fired before CRM entities are created)
+	 * @see \Bitrix\Crm\WebForm\ResultEntity::add
 	 *
 	 * @param Event $event
-	 *
 	 * @return bool
-	 * @throws LoaderException
 	 */
 	public static function onOpenlinesFormFill(Event $event): bool
 	{
 		$eventData = $event->getParameters();
 		$userCode = self::decodeConnectorName($eventData['properties']['openlinesCode']);
+
+		if (empty($userCode))
+		{
+			$result = new EventResult(EventResult::ERROR, [
+				'error' => 'User code error',
+				'errorCode' => self::ERROR_USER_CODE,
+			]);
+			$event->addResult($result);
+			return false;
+		}
 
 		$session = new Session();
 		$session->load([
@@ -682,22 +691,22 @@ class FormHandler
 
 			if ($entity['IS_DUPLICATE'] === true)
 			{
-				$updatedEntities[] = $entity;
+				$updatedEntities[$entity['ENTITY_TYPE']][] = $entity['ENTITY_ID'];
 			}
 			else
 			{
-				$createdEntities[] = $entity;
+				$createdEntities[$entity['ENTITY_TYPE']][] = $entity['ENTITY_ID'];
 			}
 		}
 
-		foreach ($createdEntities as $createdEntity)
+		if (!empty($createdEntities))
 		{
-			$messageManager->sendMessageAboutAddEntity($createdEntity['ENTITY_TYPE'], $createdEntity['ENTITY_ID']);
+			$messageManager->sendMessageAboutAddEntity($createdEntities);
 		}
 
-		foreach ($updatedEntities as $updatedEntity)
+		if (!empty($updatedEntities))
 		{
-			$messageManager->sendMessageAboutExtendEntity($updatedEntity['ENTITY_TYPE'], $updatedEntity['ENTITY_ID']);
+			$messageManager->sendMessageAboutExtendEntity($updatedEntities);
 		}
 
 		return true;

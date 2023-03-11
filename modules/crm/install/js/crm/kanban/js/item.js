@@ -963,9 +963,14 @@ BX.CRM.Kanban.Item.prototype = {
 					});
 
 					if (
-						(e.target !== this.container && !parent) ||
-						(parent && e.target.tagName === "A") ||
-						(parent && e.target.tagName === "SPAN"))
+						(e.target !== this.container && !parent)
+						|| (parent && e.target.tagName === 'A')
+						|| (
+							parent
+							&& e.target.tagName === 'SPAN'
+							&& !e.target.classList.contains('crm-kanban-item-contact')
+						)
+					)
 					{
 						return;
 					}

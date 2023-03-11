@@ -14,9 +14,9 @@ use Bitrix\Main\Type\DateTime;
  *
  * <<< ORMENTITYANNOTATION
  * @method static EO_ItemHistory_Query query()
- * @method static EO_ItemHistory_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_ItemHistory_Result getByPrimary($primary, array $parameters = [])
  * @method static EO_ItemHistory_Result getById($id)
- * @method static EO_ItemHistory_Result getList(array $parameters = array())
+ * @method static EO_ItemHistory_Result getList(array $parameters = [])
  * @method static EO_ItemHistory_Entity getEntity()
  * @method static \Bitrix\Rpa\Model\ItemHistory createObject($setDefaultValues = true)
  * @method static \Bitrix\Rpa\Model\EO_ItemHistory_Collection createCollection()

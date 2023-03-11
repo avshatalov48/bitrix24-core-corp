@@ -32,6 +32,7 @@ $MESS['M_CRM_TIMELINE_CANCEL'] = 'Отмена';
 
 $MESS['M_CRM_TIMELINE_BLOCK_EDITABLE_TEXT_TITLE2'] = 'Описание дела';
 $MESS['M_CRM_TIMELINE_BLOCK_EDITABLE_NOTE_TITLE'] = 'Заметка';
+$MESS['M_CRM_TIMELINE_BLOCK_EDITABLE_NOTE_PLACEHOLDER'] = 'Введите текст заметки';
 
 $MESS['M_CRM_TIMELINE_COMMON_ERROR_TITLE'] = 'Произошла внутренняя ошибка';
 $MESS['M_CRM_TIMELINE_COMMON_ERROR_DESCRIPTION'] = 'Обратитесь к администратору вашего Битрикс24 или сотруднику, который отвечает за CRM';

@@ -1,0 +1,47 @@
+.crm-timeline-card__money-pill {
+	--money-pill-background-color: #59BD51;
+	display: inline-block;
+	box-sizing: border-box;
+	margin-left: 5px;
+	min-height: 35px;
+	padding: 8px 11px 8px 26px;
+	position: relative;
+	border-radius: 40px;
+	background-color: var(--money-pill-background-color);
+}
+
+.crm-timeline-card__money-pill::before {
+	content: '';
+	position: absolute;
+	width: 16px;
+	height: 23px;
+	top: 50%;
+	transform: translateY(-50%);
+	left: -8px;
+	mask-image: url(../../images/common/money-pill-corner.svg);
+	mask-repeat: no-repeat;
+	mask-position: center;
+	background-color: var(--money-pill-background-color);
+}
+.crm-timeline-card__money-pill_amount::before {
+	display: inline-block;
+	content: '+';
+	position: absolute;
+	opacity: 0.8;
+	width: 12px;
+	height: 12px;
+	top: 20%;
+	left: 11px;
+}
+
+.crm-timeline-card__money-pill_amount,
+.crm-timeline-card__money-pill_amount::before {
+	font-size: var(--ui-font-size-2xl, 19px);
+	color: #FFF;
+	line-height: var(--ui-font-line-height-reset, 1);
+	font-weight: var(--ui-font-weight-semi-bold, 600);
+}
+
+.crm-timeline-card__money-pill_amount:empty::before {
+	display: none;
+}

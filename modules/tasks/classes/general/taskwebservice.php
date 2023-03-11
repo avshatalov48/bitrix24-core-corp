@@ -1018,7 +1018,8 @@ class CTasksWebService extends IWebService
 						$arRes["FILES"][] = $arFiles["FILE_ID"];
 					}
 					$arRes['TITLE'] = \Bitrix\Main\Text\Emoji::decode($arRes['TITLE']);
-					$obRow = $this->__getRow($arRes, $listName, $last_change = 0);
+					$last_change = 0;
+					$obRow = $this->__getRow($arRes, $listName, $last_change);
 
 					if ($arReplicationIDs[$arRes['ID']])
 						$obRow->setAttribute('ows_MetaInfo_ReplicationID', $arReplicationIDs[$arRes['ID']]);

@@ -160,7 +160,7 @@ foreach ($event->getResults() as $eventResult)
 }
 
 $editProfilePath = \Bitrix\MobileApp\Janative\Manager::getComponentPath("user.profile");
-$workPosition = \CUtil::addslashes($arResult["user"]["WORK_POSITION"]);
+$workPosition = \CUtil::addslashes($arResult["user"]["WORK_POSITION"] ?? '');
 $canEditProfile = $USER->CanDoOperation('edit_own_profile');
 $arResult["menu"][] = [
 	"title" => "",
@@ -394,7 +394,7 @@ array_walk($arResult["menu"], function (&$section) use (&$counterList) {
 			}
 
 			$item["sectionCode"] = "section_" . $section["sort"];
-			if ($item["attrs"])
+			if (!empty($item["attrs"]))
 			{
 				$item["params"] = $item["attrs"];
 				unset($item["attrs"]);
@@ -409,19 +409,20 @@ array_walk($arResult["menu"], function (&$section) use (&$counterList) {
 
 			unset($item["attrs"]);
 
-			if ($item["params"]["counter"] && !in_array($item["params"]["counter"], $counterList))
+			if (!empty($item["params"]["counter"]) && !in_array($item["params"]["counter"], $counterList))
 			{
 				$counterList[] = $item["params"]["counter"];
 			}
 
-			if ($item["type"] != "destruct" && $item["type"] != "button")
+			$type = $item["type"] ?? "";
+			if ($type != "destruct" && $type != "button")
 			{
-				if (!$item["styles"])
+				if (empty($item["styles"]))
 				{
 					$item["styles"] = [];
 				}
 
-				if (!$item["styles"]["title"]["font"])
+				if (empty($item["styles"]["title"]["font"]))
 				{
 					$item["styles"]["title"] = ["font" => [
 						"fontStyle" => "medium",
@@ -430,7 +431,7 @@ array_walk($arResult["menu"], function (&$section) use (&$counterList) {
 					]];
 				}
 
-				if ($item["type"] != "userinfo")
+				if ($type != "userinfo")
 				{
 					$item["height"] = 60;
 				}

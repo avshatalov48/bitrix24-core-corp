@@ -8,14 +8,6 @@ Loc::loadMessages(__FILE__);
 
 class OpenLineAnswerTrigger extends OpenLineTrigger
 {
-	public static function isEnabled()
-	{
-		return (Integration\OpenLineManager::isEnabled()
-			&& class_exists('\Bitrix\ImOpenLines\Crm')
-			&& method_exists('\Bitrix\ImOpenLines\Crm', 'executeAutomationAnswerTrigger')
-		);
-	}
-
 	public static function getCode()
 	{
 		return 'OPENLINE_ANSWER';

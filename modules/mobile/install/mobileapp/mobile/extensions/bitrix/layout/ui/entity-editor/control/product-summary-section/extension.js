@@ -35,13 +35,6 @@
 			});
 		}
 
-		initializeStateFromModel()
-		{
-			const { count = 0, totalRaw = {} } = this.getValueFromModel({});
-			this.state.count = count;
-			this.state.total = totalRaw;
-		}
-
 		render()
 		{
 			const showButton = (!this.hasProducts() && this.readOnly === false);

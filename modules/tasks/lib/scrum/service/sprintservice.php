@@ -5,6 +5,7 @@ use Bitrix\Main\DB\SqlExpression;
 use Bitrix\Main\Error;
 use Bitrix\Main\Errorable;
 use Bitrix\Main\ErrorCollection;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
 use Bitrix\Main\Entity\Query;
@@ -942,6 +943,78 @@ class SprintService implements Errorable
 		];
 	}
 
+	public function canStartSprint(int $userId, int $groupId): bool
+	{
+		if (!Loader::includeModule('socialnetwork'))
+		{
+			return false;
+		}
+
+		if ($userId === 0)
+		{
+			return false;
+		}
+
+		$key = $userId . $groupId;
+		if (self::$allowedActions[$key])
+		{
+			return self::$allowedActions[$key];
+		}
+
+		$userRoleInGroup = \CSocNetUserToGroup::getUserRole($userId, $groupId);
+
+		if (
+			$userRoleInGroup == SONET_ROLES_MODERATOR
+			|| $userRoleInGroup == SONET_ROLES_OWNER
+			|| \CSocNetUser::isCurrentUserModuleAdmin()
+		)
+		{
+			self::$allowedActions[$key] = true;
+		}
+		else
+		{
+			self::$allowedActions[$key] = false;
+		}
+
+		return self::$allowedActions[$key];
+	}
+
+	public function canCompleteSprint(int $userId, int $groupId): bool
+	{
+		if (!Loader::includeModule('socialnetwork'))
+		{
+			return false;
+		}
+
+		if ($userId === 0)
+		{
+			return false;
+		}
+
+		$key = $userId . $groupId;
+		if (self::$allowedActions[$key])
+		{
+			return self::$allowedActions[$key];
+		}
+
+		$userRoleInGroup = \CSocNetUserToGroup::getUserRole($userId, $groupId);
+
+		if (
+			$userRoleInGroup == SONET_ROLES_MODERATOR
+			|| $userRoleInGroup == SONET_ROLES_OWNER
+			|| \CSocNetUser::isCurrentUserModuleAdmin()
+		)
+		{
+			self::$allowedActions[$key] = true;
+		}
+		else
+		{
+			self::$allowedActions[$key] = false;
+		}
+
+		return self::$allowedActions[$key];
+	}
+
 	public function getErrors()
 	{
 		return $this->errorCollection->toArray();
@@ -1012,67 +1085,5 @@ class SprintService implements Errorable
 		}
 
 		return 0;
-	}
-
-	private function canStartSprint(int $userId, int $groupId): bool
-	{
-		if ($userId === 0)
-		{
-			return false;
-		}
-
-		$key = $userId . $groupId;
-		if (self::$allowedActions[$key])
-		{
-			return self::$allowedActions[$key];
-		}
-
-		$userRoleInGroup = \CSocNetUserToGroup::getUserRole($userId, $groupId);
-
-		if (
-			$userRoleInGroup == SONET_ROLES_MODERATOR
-			|| $userRoleInGroup == SONET_ROLES_OWNER
-			|| \CSocNetUser::isCurrentUserModuleAdmin()
-		)
-		{
-			self::$allowedActions[$key] = true;
-		}
-		else
-		{
-			self::$allowedActions[$key] = false;
-		}
-
-		return self::$allowedActions[$key];
-	}
-
-	private function canCompleteSprint(int $userId, int $groupId): bool
-	{
-		if ($userId === 0)
-		{
-			return false;
-		}
-
-		$key = $userId . $groupId;
-		if (self::$allowedActions[$key])
-		{
-			return self::$allowedActions[$key];
-		}
-
-		$userRoleInGroup = \CSocNetUserToGroup::getUserRole($userId, $groupId);
-
-		if (
-			$userRoleInGroup == SONET_ROLES_MODERATOR
-			|| $userRoleInGroup == SONET_ROLES_OWNER
-			|| \CSocNetUser::isCurrentUserModuleAdmin()
-		)
-		{
-			self::$allowedActions[$key] = true;
-		}
-		else
-		{
-			self::$allowedActions[$key] = false;
-		}
-
-		return self::$allowedActions[$key];
 	}
 }

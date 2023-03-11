@@ -558,7 +558,7 @@ else if (isset($_REQUEST['import']) && isset($_SESSION['CRM_IMPORT_FILE']))
 		{
 			$arResult['error']++;
 			$arResult['error_data'][] = array(
-				'message' => $arDeal['RESULT_MESSAGE'],
+				'message' => CCrmComponentHelper::encodeErrorMessage((string)($arDeal['RESULT_MESSAGE'] ?? '')),
 				'data' => $arDeal['__CSV_DATA__']
 			);
 		}
@@ -570,7 +570,7 @@ else if (isset($_REQUEST['import']) && isset($_SESSION['CRM_IMPORT_FILE']))
 				{
 					$arResult['error']++;
 					$arResult['error_data'][] = array(
-						'message' => CCrmProductRow::GetLastError(), // HACK: Get error from nested class
+						'message' => CCrmComponentHelper::encodeErrorMessage((string)CCrmProductRow::GetLastError()), // HACK: Get error from nested class
 						'data' => $arDeal['__CSV_DATA__']
 					);
 				}

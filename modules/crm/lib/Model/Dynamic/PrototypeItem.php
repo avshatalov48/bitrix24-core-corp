@@ -141,6 +141,10 @@ abstract class PrototypeItem extends Main\UserField\Internal\PrototypeItemDataMa
 			$fieldRepository->getSourceDescription(),
 
 			$fieldRepository->getWebformId(),
+
+			// $fieldRepository->getLastActivityBy(),
+			//
+			// $fieldRepository->getLastActivityTime(),
 		];
 	}
 

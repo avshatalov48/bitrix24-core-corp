@@ -492,6 +492,17 @@ if (
 		if(\Bitrix\Main\Loader::includeModule('rest'))
 		{
 			$restPlacementHandlerList = \Bitrix\Rest\PlacementTable::getHandlersList(\CTaskRestService::PLACEMENT_TASK_VIEW_TAB);
+			$restPlacementHandlerList = array_filter($restPlacementHandlerList, function($placement) use ($arParams) {
+				$groupIdOption = (string)$placement['OPTIONS']['groupId'];
+				if ($groupIdOption == '')
+				{
+					return true;
+				}
+				$allowedGroups = array_map('trim', explode(',', $groupIdOption));
+
+				return $arParams['GROUP_ID'] > 0 && in_array($arParams['GROUP_ID'], $allowedGroups, false);
+			});
+
 			$hasRestPlacement = !empty($restPlacementHandlerList);
 		}
 	?>

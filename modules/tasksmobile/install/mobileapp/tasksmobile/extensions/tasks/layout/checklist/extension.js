@@ -739,7 +739,14 @@ jn.define('tasks/layout/checklist', (require, exports, module) => {
 						onToggleSave: (itemId, isComplete) => {
 							this.props.onToggleSave(itemId, isComplete);
 						},
-						onAdd: () => this.setState({ focus: false }),
+						onAdd: (emptyItemNodeId) => {
+							this.setState(
+								{ focus: false },
+								() => {
+									this.focusDescendant(emptyItemNodeId);
+								}
+							);
+						},
 						onToggleComplete: () => {
 							this.checkBox.updateCounter(
 								this.props.checkList.getCompletedCount(),
@@ -895,6 +902,20 @@ jn.define('tasks/layout/checklist', (require, exports, module) => {
 					if (item)
 					{
 						item.submit();
+					}
+				}
+			});
+		}
+
+		focusDescendant(nodeId)
+		{
+			this.descendantsRefs.forEach((descendant) => {
+				if (descendant)
+				{
+					const item = descendant.findChild(nodeId);
+					if (item)
+					{
+						item.focus();
 					}
 				}
 			});
@@ -1354,7 +1375,10 @@ jn.define('tasks/layout/checklist', (require, exports, module) => {
 						},
 						onBlur: () => {
 							this.props.checkList.blur();
-							if (this.state.title === '')
+							if (
+								this.state.title === ''
+								&& this.isShownSettings !== true
+							)
 							{
 								this.remove();
 							}
@@ -1378,6 +1402,16 @@ jn.define('tasks/layout/checklist', (require, exports, module) => {
 					new ItemSettings({
 						checkList: this.props.checkList,
 						parentWidget: this.props.parentWidget,
+						onBeforeShow: () => {
+							this.isShownSettings = true;
+						},
+						onAfterClose: () => {
+							this.isShownSettings = false;
+							if (this.state.title === '')
+							{
+								this.focus();
+							}
+						},
 						onMoveRight: () => this.moveRight(),
 						onMoveLeft: () => this.moveLeft(),
 						onToggleImportant: this.onToggleImportant.bind(this),
@@ -1421,7 +1455,7 @@ jn.define('tasks/layout/checklist', (require, exports, module) => {
 						onToggleSave: (itemId, isComplete) => {
 							this.props.onToggleSave(itemId, isComplete);
 						},
-						onAdd: () => this.props.onAdd(),
+						onAdd: (emptyItemNodeId) => this.props.onAdd(emptyItemNodeId),
 						onToggleComplete: () => {
 							if (this.counterRef)
 							{
@@ -1656,8 +1690,6 @@ jn.define('tasks/layout/checklist', (require, exports, module) => {
 
 		submit()
 		{
-			this.props.checkList.blur();
-
 			if (this.state.title)
 			{
 				this.addEmpty(this.props.checkList.getNodeId());
@@ -1672,12 +1704,19 @@ jn.define('tasks/layout/checklist', (require, exports, module) => {
 			}
 		}
 
+		focus()
+		{
+			this.setState({ focus: true });
+		}
+
 		addEmpty(nodeId)
 		{
 			const dependsItem = this.props.checkList.getList().findChild(nodeId);
-			dependsItem.getParent().addListItem(null, dependsItem);
+			const emptyItem = dependsItem.getParent().addListItem(null, dependsItem);
 
-			this.props.onAdd();
+			emptyItem.blur();
+
+			this.props.onAdd(emptyItem.getNodeId());
 
 			if (!this.props.checkList.checkEditMode())
 			{
@@ -2253,11 +2292,16 @@ jn.define('tasks/layout/checklist', (require, exports, module) => {
 					},
 					resizeMode: 'center',
 					onClick: () => {
+						this.props.onBeforeShow();
+
 						this.settingsMenu = new ContextMenu({
 							actions: this.getActions(),
 							params: {
 								title: this.props.checkList.getTitle(),
 								showCancelButton: false,
+							},
+							onClose: () => {
+								this.props.onAfterClose();
 							}
 						});
 
@@ -2361,7 +2405,7 @@ jn.define('tasks/layout/checklist', (require, exports, module) => {
 				},
 				{
 					id: 'item-important',
-					title: Loc.getMessage('TASKSMOBILE_LAYOUT_CHECKLIST_IMPORTANT'),
+					title: Loc.getMessage('TASKSMOBILE_LAYOUT_CHECKLIST_IMPORTANT_MSGVER_1'),
 					isDisabled: !this.props.checkList.checkCanUpdate(),
 					data: {
 						svgIcon: svgImages.itemImportant,

@@ -11,6 +11,7 @@ if (!CModule::IncludeModule('report'))
 	return;
 
 use Bitrix\Main;
+use Bitrix\Tasks\Internals\Task\LabelTable;
 
 class CTasksReportHelper extends CReportHelper
 {
@@ -298,7 +299,8 @@ class CTasksReportHelper extends CReportHelper
 			'data_type' => 'string',
 			'expression' => array(
 				'GROUP_CONCAT(DISTINCT (%s) ORDER BY (%s) SEPARATOR \' / \')',
-				'Tag:TASK.NAME', 'Tag:TASK.NAME'
+				LabelTable::getTaskRelationName() . ':TASK.TAG.NAME',
+				LabelTable::getTaskRelationName() . ':TASK.TAG.NAME',
 			),
 		), 'TAGS');
 
@@ -401,7 +403,7 @@ class CTasksReportHelper extends CReportHelper
 	public static function beforeViewDataQuery(&$select, &$filter, &$group, &$order, &$limit, &$options, &$runtime = null)
 	{
 		parent::beforeViewDataQuery($select, $filter, $group, $order, $limit, $options);
-
+		// unset($select['TAGS']);
 		self::rewriteTagsFilter($filter, $runtime);
 		self::rewriteMoneyFilter($filter, $runtime);
 
@@ -537,8 +539,9 @@ class CTasksReportHelper extends CReportHelper
 						'data_type' => 'integer',
 						'expression' => array(
 							"(CASE WHEN EXISTS("
-								."SELECT 'x' FROM b_tasks_tag TG "
-								."WHERE TG.TASK_ID = {$DB->escL}tasks_task{$DB->escR}.ID AND $compareSql"
+								."SELECT 'x' FROM b_tasks_label TG "
+								."INNER JOIN b_tasks_task_tag btt on TG.ID=btt.TAG_ID "
+								."WHERE btt.TASK_ID = {$DB->escL}tasks_task{$DB->escR}.ID AND $compareSql"
 							.") THEN $caseResult[0] ELSE $caseResult[1] END)"
 						)
 					);
@@ -1317,4 +1320,3 @@ class CTasksReportHelper extends CReportHelper
 		return $arModuleVersion['VERSION'];
 	}
 }
-

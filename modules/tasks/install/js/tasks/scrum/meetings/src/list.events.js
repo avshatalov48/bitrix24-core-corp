@@ -2,12 +2,15 @@ import {Loc, Tag, Event, Dom, Text} from 'main.core';
 import {EventEmitter} from 'main.core.events';
 
 import {CreatedEvent, CreatedEventType} from './created.event';
+import {Culture} from './culture';
 
 export class ListEvents extends EventEmitter
 {
 	constructor()
 	{
 		super();
+
+		this.setEventNamespace('BX.Tasks.Scrum.ListEvents');
 
 		this.listIsShown = false;
 
@@ -193,7 +196,7 @@ export class ListEvents extends EventEmitter
 	getFormattedDate(ts: number): string
 	{
 		/* eslint-disable */
-		return BX.date.format('j F', ts, null, true);
+		return BX.date.format(Culture.getInstance().getDayMonthFormat(), ts, null, true);
 		/* eslint-enable */
 	}
 }

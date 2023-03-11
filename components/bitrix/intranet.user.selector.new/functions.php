@@ -45,7 +45,7 @@ class CIntranetUserSelectorHelper
 			echo '</div>';
 
 			echo '<div class="company-department-children" id="'.$name.'_children_'.$arRes['ID'].'">';
-			if (is_array($arStructure[$id]))
+			if (is_array($arStructure[$id] ?? null))
 				static::drawEmployeeStructure($arStructure, $arSections, $id, $name, $bSelectSection);
 			echo '<div class="company-department-employees" id="'.$name.'_employees_'.$id.'"><span class="company-department-employees-loading">'.GetMessage("INTRANET_EMP_WAIT").'</span></div>';
 			echo '</div>';

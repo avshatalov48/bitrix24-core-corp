@@ -57,6 +57,8 @@ jn.define('crm/timeline/item/ui/body/blocks/note', (require, exports, module) =>
 
 		render()
 		{
+			const avatar = this.props.updatedBy || {};
+
 			return View(
 				{
 					style: {
@@ -84,7 +86,10 @@ jn.define('crm/timeline/item/ui/body/blocks/note', (require, exports, module) =>
 						},
 						View(
 							{},
-							TimelineItemUserAvatar(this.props.updatedBy || {}),
+							TimelineItemUserAvatar({
+								...avatar,
+								testId: 'TimelineItemBodyNoteUserAvatar',
+							}),
 						),
 						View(
 							{
@@ -125,6 +130,7 @@ jn.define('crm/timeline/item/ui/body/blocks/note', (require, exports, module) =>
 				{},
 				View(
 					{
+						testId: 'TimelineItemBodyNoteEditIcon',
 						onClick: () => this.openEditor(),
 						style: {
 							paddingHorizontal: 16,
@@ -150,6 +156,7 @@ jn.define('crm/timeline/item/ui/body/blocks/note', (require, exports, module) =>
 				title: Loc.getMessage('M_CRM_TIMELINE_BLOCK_EDITABLE_NOTE_TITLE'),
 				text: this.state.text,
 				required: !this.initiallyFilled,
+				placeholder: Loc.getMessage('M_CRM_TIMELINE_BLOCK_EDITABLE_NOTE_PLACEHOLDER'),
 				onBeforeSave: (editor) => new Promise((resolve, reject) => {
 					const text = editor.value.trim();
 					if (!text.length && this.initiallyFilled)

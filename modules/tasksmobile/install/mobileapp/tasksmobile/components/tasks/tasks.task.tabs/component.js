@@ -59,7 +59,7 @@
 						time: 5,
 					}
 				);
-				this.tabs.back();
+				this.tabs.close();
 			}
 		}
 	}
@@ -89,7 +89,7 @@
 			BX.onViewLoaded(() => {
 				this.bindEvents();
 				this.showViewWidget();
-				this.setRightButtonsForCommentsTab();
+				this.setTopButtonsForCommentsTab();
 			});
 		}
 
@@ -129,6 +129,7 @@
 				}
 				this.tabs.updateItem(TaskTabs.tabNames[data.tab], options);
 			});
+			this.eventEmitter.on('tasks.task.view:close', () => this.tabs.close());
 		}
 
 		onTabSelected(tab, changed)
@@ -161,14 +162,20 @@
 			});
 		}
 
-		setRightButtonsForCommentsTab()
+		setTopButtonsForCommentsTab()
 		{
 			const widgets = this.tabs.nestedWidgets();
 			const commentsWidget = widgets[TaskTabs.tabNames.comments];
 
+			commentsWidget.setLeftButtons([{
+				svg: {
+					content: '<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M14.722 6.79175L10.9495 10.5643L9.99907 11.5L9.06666 10.5643L5.29411 6.79175L3.96289 8.12297L10.008 14.1681L16.0532 8.12297L14.722 6.79175Z" fill="#A8ADB4"/></svg>',
+				},
+				callback: () => this.eventEmitter.emit('tasks.task.tabs:onCommentsTabTopButtonCloseClick'),
+			}]);
 			commentsWidget.setRightButtons([{
 				type: 'more',
-				callback: () => this.eventEmitter.emit('tasks.task.tabs:onCommentsTabRightButtonClick'),
+				callback: () => this.eventEmitter.emit('tasks.task.tabs:onCommentsTabTopButtonMoreClick'),
 			}]);
 		}
 	}

@@ -16,7 +16,9 @@ export default class ControllerManager
 		{
 			if (controller.isItemSupported(item))
 			{
-				foundControllers.push(new controller());
+				const controllerInstance = new controller();
+				controllerInstance.onInitialize(item);
+				foundControllers.push(controllerInstance);
 			}
 		}
 

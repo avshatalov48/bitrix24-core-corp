@@ -27,31 +27,32 @@ class Disk extends \IRestService
 		$entityId = $params["entityId"];
 		$result = null;
 		$folderId = null;
+		$filter = $params["filter"] ?? null;
 
-		if (intval($params["folderId"]))
+		if (isset($params["folderId"]) && intval($params["folderId"]))
 		{
 			$folderId = intval($params["folderId"]);
 		}
 
-		if ($params["type"] && in_array($params["type"], $types))
+		if (isset($params["type"]) && $params["type"] && in_array($params["type"], $types))
 		{
 			$type = $params["type"];
 		}
 
 		$parameters = [
-			"filter" => $params["filter"],
+			"filter" => $filter,
 			'limit' => 50,
 			'count_total' => true,
-			'offset' => $offset > 0 ? $offset : 0
+			'offset' => $offset > 0 ? $offset : 0,
 		];
 
-		if (is_array($params["filter"]))
+		if (is_array($filter))
 		{
-			$parameters["filter"] = $params["filter"];
+			$parameters["filter"] = $filter;
 		}
 
 		$parameters['filter']['DELETED_TYPE'] = \Bitrix\Disk\Internals\ObjectTable::DELETED_TYPE_NONE;
-		if ($params["order"])
+		if (isset($params["order"]) && $params["order"])
 		{
 			$parameters["order"] = $params["order"];
 		}

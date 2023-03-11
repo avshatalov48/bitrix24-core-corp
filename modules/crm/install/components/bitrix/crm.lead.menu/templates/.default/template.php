@@ -29,12 +29,15 @@ if (!empty($arResult['BUTTONS']))
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.interface.toolbar',
 		$template,
-		array(
+		[
 			'TOOLBAR_ID' => $arResult['TOOLBAR_ID'],
-			'BUTTONS' => $arResult['BUTTONS']
-		),
+			'BUTTONS' => $arResult['BUTTONS'],
+			'TOOLBAR_PARAMS' => ($arParams['TOOLBAR_PARAMS'] ?? []),
+		],
 		$component,
-		array('HIDE_ICONS' => 'Y')
+		[
+			'HIDE_ICONS' => 'Y',
+		]
 	);
 }
 

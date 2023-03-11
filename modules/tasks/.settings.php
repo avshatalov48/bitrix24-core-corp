@@ -57,6 +57,13 @@ return array(
 						'className' => '\\Bitrix\\Tasks\\Integration\\UI\\EntitySelector\\SprintSelectorProvider',
 					],
 				],
+				[
+					'entityId' => 'template-tag',
+					'provider' => [
+						'moduleId' => 'tasks',
+						'className' => '\\Bitrix\\Tasks\\Integration\\UI\\EntitySelector\\TemplateTagProvider',
+					],
+				],
 			],
 			'extensions' => ['tasks.entity-selector'],
 		],

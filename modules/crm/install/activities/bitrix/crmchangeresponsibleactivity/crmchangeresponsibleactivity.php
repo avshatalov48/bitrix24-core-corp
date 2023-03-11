@@ -13,6 +13,7 @@ use Bitrix\Main;
  * @property-read string ModifiedBy
  * @property-read string GetterType
  * @property-read string SkipAbsent
+ * @property-read string SkipTimeMan
  */
 class CBPCrmChangeResponsibleActivity extends CBPActivity
 {
@@ -29,6 +30,7 @@ class CBPCrmChangeResponsibleActivity extends CBPActivity
 			'ModifiedBy' => null,
 			'GetterType' => self::GETTER_TYPE_RANDOM,
 			'SkipAbsent' => 'N',
+			'SkipTimeMan' => 'N',
 		];
 	}
 
@@ -86,35 +88,37 @@ class CBPCrmChangeResponsibleActivity extends CBPActivity
 		}
 
 		$getterType = $this->GetterType;
-		$skipAbsent = CBPHelper::getBool($this->SkipAbsent) && Main\Loader::includeModule('intranet');
-
-		$canUseAbsence = self::canUseAbsence();
-		if (!$canUseAbsence)
-		{
-			$skipAbsent = false;
-		}
+		$skipAbsent = (
+			CBPHelper::getBool($this->SkipAbsent)
+			&& Main\Loader::includeModule('intranet')
+			&& self::canUseAbsence()
+		);
+		$skipTimeMan = CBPHelper::getBool($this->SkipTimeMan) && self::canUseTimeMan();
 
 		if ($getterType === self::GETTER_TYPE_FIRST)
 		{
-			$user = $this->getFirstUser($target, $skipAbsent);
+			$user = $this->getFirstUser($target, $skipAbsent, $skipTimeMan);
 		}
 		elseif ($getterType === self::GETTER_TYPE_SEQUENCE)
 		{
-			$user = $this->getNextUser($target, $skipAbsent);
+			$user = $this->getNextUser($target, $skipAbsent, $skipTimeMan);
 		}
 		else // default self::GETTER_TYPE_RANDOM
 		{
-			$user = $this->getRandomUser($current, $target, $skipAbsent);
+			$user = $this->getRandomUser($current, $target, $skipAbsent, $skipTimeMan);
 		}
 
 		return $user !== $current ? $user : null;
 	}
 
-	private function getFirstUser(array $target, bool $skipAbsent): ?int
+	private function getFirstUser(array $target, bool $skipAbsent, bool $skipTimeMan): ?int
 	{
 		foreach ($target as $user)
 		{
-			if ($skipAbsent && \CIntranetUtils::IsUserAbsent($user))
+			if (
+				$skipAbsent && \CIntranetUtils::IsUserAbsent($user)
+				|| $skipTimeMan && !$this->isUserWorking($user)
+			)
 			{
 				continue;
 			}
@@ -125,7 +129,7 @@ class CBPCrmChangeResponsibleActivity extends CBPActivity
 		return null;
 	}
 
-	private function getRandomUser($current, array $target, bool $skipAbsent): ?int
+	private function getRandomUser($current, array $target, bool $skipAbsent, bool $skipTimeMan): ?int
 	{
 		$searchKey = array_search($current, $target);
 		if ($searchKey !== false)
@@ -134,10 +138,10 @@ class CBPCrmChangeResponsibleActivity extends CBPActivity
 		}
 		shuffle($target);
 
-		return $this->getFirstUser($target, $skipAbsent);
+		return $this->getFirstUser($target, $skipAbsent, $skipTimeMan);
 	}
 
-	private function getNextUser(array $target, bool $skipAbsent): ?int
+	private function getNextUser(array $target, bool $skipAbsent, bool $skipTimeMan): ?int
 	{
 		$lastUserId = $this->getStorage()->getValue('lastUserId');
 
@@ -153,7 +157,7 @@ class CBPCrmChangeResponsibleActivity extends CBPActivity
 			}
 		}
 
-		$nextUserId = $this->getFirstUser($target, $skipAbsent);
+		$nextUserId = $this->getFirstUser($target, $skipAbsent, $skipTimeMan);
 		if ($nextUserId)
 		{
 			$this->getStorage()->setValue('lastUserId', $nextUserId);
@@ -194,6 +198,7 @@ class CBPCrmChangeResponsibleActivity extends CBPActivity
 		$dialog->setMap(static::getPropertiesDialogMap($documentType));
 		$dialog->setRuntimeData([
 			'CanUseAbsence' => self::canUseAbsence(),
+			'CanUseTimeMan' => self::canUseTimeMan(),
 		]);
 
 		return $dialog;
@@ -216,11 +221,7 @@ class CBPCrmChangeResponsibleActivity extends CBPActivity
 				'Required' => true,
 				'Default' => \Bitrix\Bizproc\Automation\Helper::getResponsibleUserExpression($documentType),
 			],
-		];
-
-		if (method_exists(static::class, 'getStorage'))
-		{
-			$map['GetterType'] = [
+			'GetterType' => [
 				'Name' => GetMessage('CRM_CHANGE_RESPONSIBLE_GETTER_TYPE'),
 				'FieldName' => 'getter_type',
 				'Type' => 'select',
@@ -234,19 +235,28 @@ class CBPCrmChangeResponsibleActivity extends CBPActivity
 				'Settings' => [
 					'ShowEmptyValue' => false,
 				],
+			],
+		];
+
+		if (Main\ModuleManager::isModuleInstalled('intranet'))
+		{
+			$map['SkipAbsent'] = [
+				'Name' => GetMessage('CRM_CHANGE_RESPONSIBLE_SKIP_ABSENT'),
+				'FieldName' => 'skip_absent',
+				'Type' => 'bool',
+				'Default' => 'N',
+				'Required' => true,
+				'Getter' => static::getSkipAbsentPropertyGetter(),
 			];
 
-			if (Main\ModuleManager::isModuleInstalled('intranet'))
-			{
-				$map['SkipAbsent'] = [
-					'Name' => GetMessage('CRM_CHANGE_RESPONSIBLE_SKIP_ABSENT'),
-					'FieldName' => 'skip_absent',
-					'Type' => 'bool',
-					'Default' => 'N',
-					'Required' => true,
-					'Getter' => static::getSkipAbsentPropertyGetter(),
-				];
-			}
+			$map['SkipTimeMan'] = [
+				'Name' => GetMessage('CRM_CHANGE_RESPONSIBLE_SKIP_TIMEMAN'),
+				'FieldName' => 'skip_timeman',
+				'Type' => 'bool',
+				'Default' => 'N',
+				'Required' => true,
+				'Getter' => static::getSkipTimeManPropertyGetter(),
+			];
 		}
 
 		return $map;
@@ -274,6 +284,7 @@ class CBPCrmChangeResponsibleActivity extends CBPActivity
 			'ModifiedBy' => CBPHelper::UsersStringToArray($arCurrentValues["modified_by"], $documentType, $errors),
 			'GetterType' => $arCurrentValues["getter_type"],
 			'SkipAbsent' => $arCurrentValues["skip_absent"],
+			'SkipTimeMan' => $arCurrentValues["skip_timeman"],
 		];
 
 		if (empty($properties['GetterType']) && static::isExpression($arCurrentValues["getter_type_text"]))
@@ -281,24 +292,33 @@ class CBPCrmChangeResponsibleActivity extends CBPActivity
 			$properties['GetterType'] = $arCurrentValues["getter_type_text"];
 		}
 
-		$canUseAbsence = self::canUseAbsence();
-		if (!$canUseAbsence)
-		{
-			$properties['SkipAbsent'] = 'N';
-		}
-
 		if (empty($properties['SkipAbsent']) && static::isExpression($arCurrentValues["skip_absent_text"]))
 		{
 			$properties['SkipAbsent'] = $arCurrentValues["skip_absent_text"];
 		}
 
-		if (count($errors) > 0)
+		if (empty($properties['SkipTimeMan']) && static::isExpression($arCurrentValues["skip_timeman_text"]))
+		{
+			$properties['SkipTimeMan'] = $arCurrentValues["skip_timeman_text"];
+		}
+
+		if (!self::canUseAbsence())
+		{
+			$properties['SkipAbsent'] = 'N';
+		}
+
+		if (!self::canUseTimeMan())
+		{
+			$properties['SkipTimeMan'] = 'N';
+		}
+
+		if ($errors)
 		{
 			return false;
 		}
 
 		$errors = self::ValidateProperties($properties, new CBPWorkflowTemplateUser(CBPWorkflowTemplateUser::CurrentUser));
-		if (count($errors) > 0)
+		if ($errors)
 		{
 			return false;
 		}
@@ -333,11 +353,38 @@ class CBPCrmChangeResponsibleActivity extends CBPActivity
 		};
 	}
 
+	private static function getSkipTimeManPropertyGetter()
+	{
+		return function($dialog, $property, $arCurrentActivity, $compatible = false)
+		{
+			$canUse = self::canUseTimeMan();
+			if (!$canUse)
+			{
+				return 'N';
+			}
+
+			return $arCurrentActivity['Properties']['SkipTimeMan'];
+		};
+	}
+
 	private static function canUseAbsence(): bool
 	{
 		return (
 			(CModule::IncludeModule('bitrix24') === false)
 			|| (\Bitrix\Bitrix24\Feature::isFeatureEnabled('absence') === true)
 		);
+	}
+
+	private static function canUseTimeMan(): bool
+	{
+		return \CBPHelper::isWorkTimeAvailable();
+	}
+
+	private function isUserWorking(int $userId): bool
+	{
+		$tmUser = new CTimeManUser($userId);
+		$tmUser->getCurrentInfo(true); //clear cache
+
+		return ($tmUser->State() === 'OPENED' || $tmUser->State() === 'PAUSED');
 	}
 }

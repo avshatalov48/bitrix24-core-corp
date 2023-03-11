@@ -58,6 +58,8 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 					super.handleChange(this.queuedValue);
 				}
 			}, 50, this);
+
+			this.openFilePickerHandler = this.openFilePicker.bind(this);
 		}
 
 		componentWillReceiveProps(newProps)
@@ -687,16 +689,18 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 			void this.getPageManager().openWidget(
 				'layout',
 				{
-					title: BX.message('FIELDS_FILE_ATTACHMENTS_DIALOG_TITLE').replace('#NUM#', this.getFilesCount()),
-					useLargeTitleMode: true,
+					title: BX.message('FIELDS_FILE_ATTACHMENTS_NAVIGATION_TITLE').replace('#NUM#', this.getFilesCount()),
 					modal: false,
 					backdrop: {
 						mediumPositionPercent: 75,
 						horizontalSwipeAllowed: false,
+						swipeContentAllowed: false,
+						navigationBarColor: '#eef2f4',
 					},
 					onReady: (layoutWidget) => {
 						this.fileAttachmentWidget = layoutWidget;
 						const imageSize = device.screen.width > 375 ? FILE_PREVIEW_MEASURE : device.screen.width * FILE_PREVIEW_MEASURE / 375;
+						layoutWidget.enableNavigationBarBorder(false);
 
 						layoutWidget.showComponent(
 							new UI.FileAttachment({
@@ -707,7 +711,7 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 								styles: {
 									wrapper: {
 										marginBottom: 12,
-										marginRight: 10,
+										marginHorizontal: 3,
 										paddingRight: 9,
 									},
 									imagePreview: {
@@ -733,6 +737,8 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 									},
 								},
 								showName: this.showFilesName(),
+								showAddButton: !this.isReadOnly(),
+								onAddButtonClick: this.openFilePickerHandler,
 							}),
 						);
 					},
@@ -763,8 +769,7 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 			if (this.fileAttachmentWidget)
 			{
 				this.fileAttachmentWidget.setTitle({
-					text: BX.message('FIELDS_FILE_ATTACHMENTS_DIALOG_TITLE').replace('#NUM#', filesAfterDeletion.length),
-					largeMode: true,
+					text: BX.message('FIELDS_FILE_ATTACHMENTS_NAVIGATION_TITLE').replace('#NUM#', filesAfterDeletion.length),
 				});
 			}
 		}

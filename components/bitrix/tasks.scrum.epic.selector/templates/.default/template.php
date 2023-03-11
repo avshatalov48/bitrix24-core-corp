@@ -20,7 +20,6 @@ Extension::load(['ui.buttons', 'ui.fonts.opensans']);
 $containerId = 'tasks-scrum-epic-' . $arResult['mode'] . '-selector';
 
 ?>
-
 <div id="<?= $containerId ?>" class="tasks-scrum-epic-selector"></div>
 
 <script>

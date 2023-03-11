@@ -878,58 +878,63 @@ export default class Manager
 		this._schedule.refreshLayout();
 	}
 
-	processEditingCompletion(editor)
+	switchToDefaultEditor(editor)
 	{
-		if (this._waitEditor && editor === this._waitEditor)
-		{
-			this._waitEditor.setVisible(false);
-		}
-		if (this._smsEditor && editor === this._smsEditor)
-		{
-			this._smsEditor.setVisible(false);
-		}
-		if (this._commentEditor && editor === this._commentEditor && this._todoEditor)
-		{
-			this._commentEditor.setVisible(false);
-		}
+		let firstSuitableMenuItem = Array.from(this._menuBar.getMenuItems()).reduce(
+			(prev, item) => {
+				if (prev)
+				{
+					return prev;
+				}
+				const id = item.dataset.id;
+				if (['comment', 'wait', 'sms', 'zoom', 'todo'].indexOf(id) >= 0)
+				{
+					return id;
+				}
 
-		if (this._todoEditor)
+				return null;
+			},
+			null
+		);
+
+		const editorsMap = {
+			'comment': this._commentEditor,
+			'wait': this._waitEditor,
+			'sms': this._smsEditor,
+			'zoom': this._zoomEditor,
+			'todo': this._todoEditor
+		};
+		let firstSuitableEditor;
+		if(editorsMap.hasOwnProperty(firstSuitableMenuItem) && editorsMap[firstSuitableMenuItem] && editorsMap[firstSuitableMenuItem].setVisible)
 		{
-			this._todoEditor.setVisible(true);
-			this._menuBar.setActiveItemById('todo');
+			firstSuitableEditor = editorsMap[firstSuitableMenuItem];
+		}
+		else if (this._todoEditor)
+		{
+			firstSuitableEditor = this._todoEditor;
+			firstSuitableMenuItem = 'todo'
 		}
 		else
 		{
-			this._commentEditor.setVisible(true);
-			this._menuBar.setActiveItemById('comment');
+			firstSuitableEditor = this._commentEditor;
+			firstSuitableMenuItem = 'comment'
 		}
+		if (editor !== firstSuitableEditor && editor.setVisible)
+		{
+			editor.setVisible(false);
+		}
+		firstSuitableEditor.setVisible(true);
+		this._menuBar.setActiveItemById(firstSuitableMenuItem);
+	}
+
+	processEditingCompletion(editor)
+	{
+		this.switchToDefaultEditor(editor);
 	}
 
 	processEditingCancellation(editor)
 	{
-		if (this._waitEditor && editor === this._waitEditor)
-		{
-			this._waitEditor.setVisible(false);
-		}
-		if (this._smsEditor && editor === this._smsEditor)
-		{
-			this._smsEditor.setVisible(false);
-		}
-		if (this._commentEditor && editor === this._commentEditor && this._todoEditor)
-		{
-			this._commentEditor.setVisible(false);
-		}
-
-		if (this._todoEditor)
-		{
-			this._todoEditor.setVisible(true);
-			this._menuBar.setActiveItemById('todo');
-		}
-		else
-		{
-			this._commentEditor.setVisible(true);
-			this._menuBar.setActiveItemById('comment');
-		}
+		this.switchToDefaultEditor(editor);
 	}
 
 	addScheduleItem(data)

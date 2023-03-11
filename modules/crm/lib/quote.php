@@ -267,6 +267,10 @@ class QuoteTable extends DataManager
 
 			$fieldRepository->getSearchContent(),
 
+			$fieldRepository->getLastActivityBy(),
+
+			$fieldRepository->getLastActivityTime(),
+
 			$fieldRepository->getHasProducts(
 				\CCrmOwnerType::Quote,
 			),

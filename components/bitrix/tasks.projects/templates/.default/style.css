@@ -324,8 +324,7 @@
     user-select: none;
 }
 
-.bx-firefox .tasks-projects-members-popup .tasks-projects-members-popup-container,
-.bx-ie .tasks-projects-members-popup .tasks-projects-members-popup-container {
+.bx-firefox .tasks-projects-members-popup .tasks-projects-members-popup-container {
     min-width: 220px;
 }
 

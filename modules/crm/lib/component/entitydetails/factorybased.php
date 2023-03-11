@@ -384,6 +384,22 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 			}
 		}
 
+		if (\Bitrix\Crm\Automation\Factory::isAutomationAvailable($this->item->getEntityTypeId()))
+		{
+			$categoryId = $this->factory->isCategoriesEnabled() ? $this->item->getCategoryId() : 0;
+			$checkAutomationTourGuideData = \CCrmBizProcHelper::getHowCheckAutomationTourGuideData(
+				$this->item->getEntityTypeId(),
+				$categoryId,
+				$this->userID
+			);
+			if ($checkAutomationTourGuideData)
+			{
+				$params['automationCheckAutomationTourGuideData'] = [
+					'options' => $checkAutomationTourGuideData,
+				];
+			}
+		}
+
 		return $params;
 	}
 

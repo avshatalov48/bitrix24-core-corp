@@ -91,6 +91,7 @@ jn.define('crm/entity-detail/component/menu-provider', (require, exports, module
 
 		result.push({
 			type: UI.Menu.Types.DESKTOP,
+			showHint: false,
 			data: { qrUrl },
 			showTopSeparator: result.length > 0 && !result.some((item) => item.id === 'shareItem'),
 		});

@@ -3,6 +3,7 @@
 namespace Bitrix\Crm\Kanban\Entity;
 
 use Bitrix\Crm\Filter;
+use Bitrix\Crm\Item;
 use Bitrix\Crm\Kanban\Entity;
 
 class Company extends Entity
@@ -33,7 +34,11 @@ class Company extends Entity
 
 	public function getItemsSelectPreset(): array
 	{
-		return ['ID'];
+		return [
+			'ID',
+			Item::FIELD_NAME_LAST_ACTIVITY_TIME,
+			Item::FIELD_NAME_LAST_ACTIVITY_BY,
+		];
 	}
 
 	public function getFilterPresets(): array

@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\ImConnector\Provider\Network;
 
+use Bitrix\ImConnector\DeliveryMark;
 use Bitrix\Main\Loader;
 use Bitrix\Main\EventResult;
 use Bitrix\Main\Localization\Loc;
@@ -136,7 +137,7 @@ class Input extends Base\Input
 				$resultStatus = new Result();
 				$messageData = [];
 
-				$params['MESSAGE_ID'] = (int)$params['MESSAGE_ID'];
+				$params['MESSAGE_ID'] = (int)($params['MESSAGE_ID'] ?? -1);
 				if ($params['MESSAGE_ID'] <= 0)
 				{
 					$resultStatus->addError(new Error(
@@ -233,6 +234,7 @@ class Input extends Base\Input
 				if ($resultStatus->isSuccess())
 				{
 					$resultData[$cell]['SUCCESS'] = true;
+					DeliveryMark::unsetDeliveryMark($params['MESSAGE_ID'], $messageData['CHAT_ID']);
 				}
 				else
 				{
@@ -316,6 +318,7 @@ class Input extends Base\Input
 			$params['ACTION'] = $params['ACTION'] === 'dislike' ? 'dislike': 'like';
 
 			$resultVote = false;
+			/** @var \Bitrix\ImOpenLines\Services\SessionManager $sessionManager */
 			$sessionManager = ServiceLocator::getInstance()->get('ImOpenLines.Services.SessionManager');
 			if ($sessionManager instanceof \Bitrix\ImOpenLines\Services\SessionManager)
 			{
@@ -482,10 +485,6 @@ class Input extends Base\Input
 				}
 				else
 				{
-					$session->update([
-						'WAIT_ACTION' => 'Y',
-						'WAIT_ANSWER' => 'N',
-					]);
 					$session->finish();
 				}
 			}
@@ -567,7 +566,11 @@ class Input extends Base\Input
 			}
 		}
 
-		if ($result->isSuccess() && (int)$params['MESSAGE_ID'] > 0)
+		if (
+			$result->isSuccess()
+			&& isset($params['MESSAGE_ID'])
+			&& (int)$params['MESSAGE_ID'] > 0
+		)
 		{
 			/** @var \Bitrix\Im\Services\Message $messager */
 			$messager = ServiceLocator::getInstance()->get('Im.Services.Message');

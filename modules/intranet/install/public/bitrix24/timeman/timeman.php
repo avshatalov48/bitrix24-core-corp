@@ -18,7 +18,7 @@ if (IsModuleInstalled("timeman") && \Bitrix\Main\Loader::includeModule('timeman'
 			"POPUP_COMPONENT_NAME" => "bitrix:timeman.worktime.stats",
 			"POPUP_COMPONENT_TEMPLATE_NAME" => "",
 			"POPUP_COMPONENT_PARAMS" => [
-				'SCHEDULE_ID' => $_REQUEST['SCHEDULE_ID'],
+				'SCHEDULE_ID' => $_REQUEST['SCHEDULE_ID'] ?? null,
 			],
 			"USE_UI_TOOLBAR" => "Y"
 		]

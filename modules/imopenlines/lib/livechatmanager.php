@@ -244,7 +244,7 @@ class LiveChatManager
 					$this->config[$key] = $value;
 				}
 			}
-			if ($options['CLEAN_CACHE_CONNECTOR'] && \Bitrix\Main\Loader::includeModule('imconnector'))
+			if (isset($options['CLEAN_CACHE_CONNECTOR']) && \Bitrix\Main\Loader::includeModule('imconnector'))
 			{
 				\Bitrix\ImConnector\Connector::cleanCacheConnector(
 					$this->id,

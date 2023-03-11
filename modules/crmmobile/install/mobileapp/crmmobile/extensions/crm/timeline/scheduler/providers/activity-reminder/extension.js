@@ -4,6 +4,7 @@
 jn.define('crm/timeline/scheduler/providers/activity-reminder', (require, exports, module) => {
 
 	const { Loc } = require('loc');
+	const { getEntityMessage } = require('crm/loc');
 	const { Haptics } = require('haptics');
 	const { TimelineSchedulerActivityProvider } = require('crm/timeline/scheduler/providers/activity');
 
@@ -48,7 +49,10 @@ jn.define('crm/timeline/scheduler/providers/activity-reminder', (require, export
 				actions: this.buildSkipMenuItems(),
 				onCancel: () => this.focus(),
 				params: {
-					title: Loc.getMessage('M_CRM_TIMELINE_SCHEDULER_ACTIVITY_REMINDER_SKIP_TITLE'),
+					title: getEntityMessage(
+						'M_CRM_TIMELINE_SCHEDULER_ACTIVITY_REMINDER_SKIP_TITLE',
+						this.entity.typeId,
+					),
 					showCancelButton: true,
 					showActionLoader: false,
 				},
@@ -185,7 +189,7 @@ jn.define('crm/timeline/scheduler/providers/activity-reminder', (require, export
 					style: {
 						position: 'absolute',
 						right: 13,
-						top: 16,
+						top: 2,
 						width: 35,
 						height: 24,
 						alignSelf: 'center',

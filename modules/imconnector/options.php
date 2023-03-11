@@ -41,6 +41,7 @@ $listConnector = \Bitrix\ImConnector\Connector::getListConnectorReal(true, false
  * 1. the server address
  * 2. a list of available connectors
  * 3. debug mode
+ * 4. allow search in bitrix24.network by text
  */
 $aTabs = array(
 	'DIV' => 'edit1',
@@ -50,6 +51,12 @@ $aTabs = array(
 			'debug',
 			Loc::getMessage('IMCONNECTOR_FIELD_DEBUG_TITLE'),
 			'',
+			array('checkbox'),
+		),
+		array(
+			'allow_search_network',
+			Loc::getMessage('IMCONNECTOR_FIELD_ALLOW_SEARCH_NETWORK_TITLE'),
+			'Y',
 			array('checkbox'),
 		),
 		array(

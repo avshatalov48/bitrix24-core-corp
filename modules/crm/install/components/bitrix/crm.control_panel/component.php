@@ -73,12 +73,14 @@ $arParams['PATH_TO_DEAL_DETAILS'] = CrmCheckPath('PATH_TO_DEAL_DETAILS', $arPara
 $arParams['PATH_TO_LEAD_LIST'] = CrmCheckPath('PATH_TO_LEAD_LIST', isset($arParams['PATH_TO_LEAD_LIST']) ? $arParams['PATH_TO_LEAD_LIST'] : '', '#SITE_DIR#crm/lead/list/');
 $arParams['PATH_TO_LEAD_EDIT'] = (isset($arParams['PATH_TO_LEAD_EDIT']) && $arParams['PATH_TO_LEAD_EDIT'] !== '') ? $arParams['PATH_TO_LEAD_EDIT'] : '#SITE_DIR#crm/lead/edit/#lead_id#/';
 $arParams['PATH_TO_LEAD_KANBAN'] = (isset($arParams['PATH_TO_LEAD_KANBAN']) && $arParams['PATH_TO_LEAD_KANBAN'] !== '') ? $arParams['PATH_TO_LEAD_KANBAN'] : '#SITE_DIR#crm/lead/kanban/';
+$arParams['PATH_TO_LEAD_ACTIVITY'] = (isset($arParams['PATH_TO_LEAD_ACTIVITY']) && $arParams['PATH_TO_LEAD_ACTIVITY'] !== '') ? $arParams['PATH_TO_LEAD_ACTIVITY'] : '#SITE_DIR#crm/lead/activity/';
 $arParams['PATH_TO_LEAD_CALENDAR'] = (isset($arParams['PATH_TO_LEAD_CALENDAR']) && $arParams['PATH_TO_LEAD_CALENDAR'] !== '') ? $arParams['PATH_TO_LEAD_CALENDAR'] : '#SITE_DIR#crm/lead/calendar/';
 $arParams['PATH_TO_LEAD_DETAILS'] = CrmCheckPath('PATH_TO_LEAD_DETAILS', $arParams['PATH_TO_LEAD_DETAILS'], '#SITE_DIR#crm/lead/details/#lead_id#/');
 
 $arParams['PATH_TO_QUOTE_LIST'] = CrmCheckPath('PATH_TO_QUOTE_LIST', isset($arParams['PATH_TO_QUOTE_LIST']) ? $arParams['PATH_TO_QUOTE_LIST'] : '', '#SITE_DIR#crm/quote/list/');
 $arParams['PATH_TO_QUOTE_EDIT'] = (isset($arParams['PATH_TO_QUOTE_EDIT']) && $arParams['PATH_TO_QUOTE_EDIT'] !== '') ? $arParams['PATH_TO_QUOTE_EDIT'] : '#SITE_DIR#crm/quote/edit/#quote_id#/';
 $arParams['PATH_TO_QUOTE_KANBAN'] = (isset($arParams['PATH_TO_QUOTE_KANBAN']) && $arParams['PATH_TO_QUOTE_KANBAN'] !== '') ? $arParams['PATH_TO_QUOTE_KANBAN'] : '#SITE_DIR#crm/quote/kanban/';
+$arParams['PATH_TO_QUOTE_DEADLINES'] = (isset($arParams['PATH_TO_QUOTE_DEADLINES']) && $arParams['PATH_TO_QUOTE_DEADLINES'] !== '') ? $arParams['PATH_TO_QUOTE_DEADLINES'] : '#SITE_DIR#crm/quote/deadlines/';
 $arParams['PATH_TO_QUOTE_DETAILS'] = CrmCheckPath('PATH_TO_QUOTE_DETAILS', $arParams['PATH_TO_QUOTE_DETAILS'], '#SITE_DIR#crm/quote/details/#quote_id#/');
 
 $arParams['PATH_TO_INVOICE_LIST'] = CrmCheckPath('PATH_TO_INVOICE_LIST', isset($arParams['PATH_TO_INVOICE_LIST']) ? $arParams['PATH_TO_INVOICE_LIST'] : '', '#SITE_DIR#crm/invoice/list/');
@@ -135,7 +137,8 @@ $defaultViews = array(
 	),
 	'QUOTE' => array(
 		QuoteSettings::VIEW_LIST => $arParams['PATH_TO_QUOTE_LIST'],
-		QuoteSettings::VIEW_KANBAN => $arParams['PATH_TO_QUOTE_KANBAN']
+		QuoteSettings::VIEW_KANBAN => $arParams['PATH_TO_QUOTE_KANBAN'],
+		QuoteSettings::VIEW_DEADLINES => $arParams['PATH_TO_QUOTE_DEADLINES'],
 	),
 	'COMPANY' => array(
 		CompanySettings::VIEW_LIST => $arParams['PATH_TO_COMPANY_LIST'],

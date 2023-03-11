@@ -33,6 +33,7 @@ jn.define('tasks/layout/task/view', (require, exports, module) => {
 	const {DatesResolver} = require('tasks/task/datesResolver');
 	const {EventEmitter} = require('event-emitter');
 	const {Alert} = require('alert');
+	const {Haptics} = require('haptics');
 	const {Loc} = require('loc');
 	const {Type} = require('type');
 
@@ -434,6 +435,8 @@ jn.define('tasks/layout/task/view', (require, exports, module) => {
 				endDatePlan: this.task.endDatePlan,
 				isMatchWorkTime: this.task.isMatchWorkTime,
 			});
+
+			this.setLeftButtons();
 		}
 
 		componentDidMount()
@@ -697,7 +700,11 @@ jn.define('tasks/layout/task/view', (require, exports, module) => {
 		bindEvents()
 		{
 			this.componentEventEmitter.on(
-				'tasks.task.tabs:onCommentsTabRightButtonClick',
+				'tasks.task.tabs:onCommentsTabTopButtonCloseClick',
+				() => this.onButtonCloseClick(),
+			);
+			this.componentEventEmitter.on(
+				'tasks.task.tabs:onCommentsTabTopButtonMoreClick',
 				() => this.actionMenu.show()
 			);
 
@@ -861,6 +868,58 @@ jn.define('tasks/layout/task/view', (require, exports, module) => {
 			};
 		}
 
+		close()
+		{
+			this.componentEventEmitter.emit('tasks.task.view:close');
+		}
+
+		setLeftButtons()
+		{
+			this.layoutWidget.setLeftButtons([{
+				svg: {
+					content: '<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M14.722 6.79175L10.9495 10.5643L9.99907 11.5L9.06666 10.5643L5.29411 6.79175L3.96289 8.12297L10.008 14.1681L16.0532 8.12297L14.722 6.79175Z" fill="#A8ADB4"/></svg>',
+				},
+				callback: () => this.onButtonCloseClick(),
+			}]);
+		}
+
+		onButtonCloseClick()
+		{
+			if (this.task.haveChangedFields())
+			{
+				this.showConfirmOnFormClosing();
+			}
+			else
+			{
+				this.close();
+			}
+		}
+
+		showConfirmOnFormClosing()
+		{
+			Haptics.impactLight();
+			Alert.confirm(
+				Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_VIEW_CANCEL_ALERT_TITLE'),
+				Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_VIEW_CANCEL_ALERT_DESCRIPTION'),
+				[
+					{
+						text: Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_VIEW_CANCEL_ALERT_SAVE'),
+						type: 'default',
+						onPress: () => this.save().then(() => this.close()),
+					},
+					{
+						text: Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_VIEW_CANCEL_ALERT_DISCARD'),
+						type: 'destructive',
+						onPress: () => this.close(),
+					},
+					{
+						text: Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_VIEW_CANCEL_ALERT_CONTINUE'),
+						type: 'cancel',
+					},
+				],
+			);
+		}
+
 		updateRightButtons()
 		{
 			const buttons = [];
@@ -875,40 +934,7 @@ jn.define('tasks/layout/task/view', (require, exports, module) => {
 							: 'TASKSMOBILE_LAYOUT_TASK_VIEW_SAVE_BUTTON'
 					),
 					color: (this.isSaving ? '#bdc1c6' : '#0065a3'),
-					callback: () => {
-						if (!this.checkCanSave())
-						{
-							return;
-						}
-						this.isSaving = true;
-						this.updateRightButtons();
-						Notify.showIndicatorLoading();
-
-						if (
-							this.task.isFieldChanged(Task.fields.checkList)
-							&& this.task.getChangedFields().length === 1
-						)
-						{
-							this.checkList.save(this.task.id).then(
-								() => this.onSaveSuccess(),
-								() => {}
-							);
-						}
-						else if (!this.task.actions.edit && this.task.actions.changeDeadline)
-						{
-							this.task.saveDeadline().then(
-								() => this.onSaveSuccess(this.task.isFieldChanged(Task.fields.checkList)),
-								response => this.onSaveFail(response)
-							);
-						}
-						else
-						{
-							this.task.save().then(
-								() => this.onSaveSuccess(this.task.isFieldChanged(Task.fields.checkList)),
-								response => this.onSaveFail(response)
-							);
-						}
-					},
+					callback: () => void this.save(),
 				});
 			}
 			else
@@ -948,6 +974,59 @@ jn.define('tasks/layout/task/view', (require, exports, module) => {
 			}
 
 			return true;
+		}
+
+		save()
+		{
+			return new Promise((resolve, reject) => {
+				if (!this.checkCanSave())
+				{
+					return reject();
+				}
+				this.isSaving = true;
+				this.updateRightButtons();
+				Notify.showIndicatorLoading();
+
+				if (
+					this.task.isFieldChanged(Task.fields.checkList)
+					&& this.task.getChangedFields().length === 1
+				)
+				{
+					this.checkList.save(this.task.id).then(
+						() => {
+							this.onSaveSuccess();
+							resolve();
+						},
+						() => reject()
+					);
+				}
+				else if (!this.task.actions.edit && this.task.actions.changeDeadline)
+				{
+					this.task.saveDeadline().then(
+						() => {
+							this.onSaveSuccess(this.task.isFieldChanged(Task.fields.checkList));
+							resolve();
+						},
+						(response) => {
+							this.onSaveFail(response);
+							reject();
+						}
+					);
+				}
+				else
+				{
+					this.task.save().then(
+						() => {
+							this.onSaveSuccess(this.task.isFieldChanged(Task.fields.checkList));
+							resolve();
+						},
+						(response) => {
+							this.onSaveFail(response);
+							reject();
+						}
+					);
+				}
+			});
 		}
 
 		onSaveSuccess(shouldSaveChecklist = false)
@@ -1044,6 +1123,9 @@ jn.define('tasks/layout/task/view', (require, exports, module) => {
 						flex: 1,
 						backgroundColor: '#eef2f4',
 						paddingBottom: Comments.getHeight() + 5,
+					},
+					safeArea: {
+						bottom: true,
 					},
 				},
 				ScrollView(
@@ -1382,6 +1464,7 @@ jn.define('tasks/layout/task/view', (require, exports, module) => {
 					onChange: (groupId, group) => {
 						this.task.updateData({groupId, group});
 						this.task.addChangedFields(Task.fields.group);
+						this.updateFields([TaskView.field.tags]);
 						this.updateRightButtons();
 					},
 				}),
@@ -1530,6 +1613,7 @@ jn.define('tasks/layout/task/view', (require, exports, module) => {
 					readOnly: this.state.readOnly,
 					tags: this.task.tags,
 					taskId: this.taskId,
+					groupId: this.task.groupId,
 					parentWidget: this.layoutWidget,
 					style: this.getStyleForField(TaskView.field.tags),
 					deepMergeStyles: this.getDeepMergeStylesForField(true),
@@ -1543,18 +1627,21 @@ jn.define('tasks/layout/task/view', (require, exports, module) => {
 				[TaskView.field.parentTask]: new ParentTask({
 					parentTask: this.task.parentTask,
 					canOpenEntity: true,
+					parentWidget: this.layoutWidget,
 					style: this.getStyleForField(TaskView.field.parentTask),
 					deepMergeStyles: this.getDeepMergeStylesForField(true),
 					ref: ref => this.parentTaskRef = ref,
 				}),
 				[TaskView.field.subTasks]: new SubTasks({
 					subTasks: this.task.subTasks,
+					parentWidget: this.layoutWidget,
 					style: this.getStyleForField(TaskView.field.subTasks),
 					deepMergeStyles: this.getDeepMergeStylesForField(true),
 					ref: ref => this.subTasksRef = ref,
 				}),
 				[TaskView.field.relatedTasks]: new RelatedTasks({
 					relatedTasks: this.task.relatedTasks,
+					parentWidget: this.layoutWidget,
 					style: this.getStyleForField(TaskView.field.relatedTasks),
 					deepMergeStyles: this.getDeepMergeStylesForField(true),
 					ref: ref => this.relatedTasksRef = ref,
@@ -1751,6 +1838,7 @@ jn.define('tasks/layout/task/view', (require, exports, module) => {
 					newState: {
 						readOnly: this.state.readOnly,
 						tags: this.task.tags,
+						groupId: this.task.groupId,
 					},
 				},
 				[TaskView.field.datePlanIs]: {
@@ -1887,12 +1975,11 @@ jn.define('tasks/layout/task/view', (require, exports, module) => {
 		{
 			if (imageUrl.indexOf(currentDomain) !== 0)
 			{
-				imageUrl = encodeURI(imageUrl);
 				imageUrl = imageUrl.replace(`${currentDomain}`, '');
 				imageUrl = (imageUrl.indexOf('http') !== 0 ? `${currentDomain}${imageUrl}` : imageUrl);
 			}
 
-			return imageUrl;
+			return encodeURI(imageUrl);
 		}
 	}
 

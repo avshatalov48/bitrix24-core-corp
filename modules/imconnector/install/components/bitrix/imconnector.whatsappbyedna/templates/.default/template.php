@@ -54,7 +54,7 @@ if (empty($arResult['PAGE']))
 			</div>
 			<div class="imconnector-field-box">
 				<?php
-				if ($arResult['STATUS']) //case when connection competed
+				if (!empty($arResult['STATUS'])) //case when connection competed
 				{
 					?>
 					<div class="imconnector-field-main-subtitle">
@@ -81,7 +81,7 @@ if (empty($arResult['PAGE']))
 						<?=Loc::getMessage('IMCONNECTOR_COMPONENT_WHATSAPPBYEDNA_INDEX_TITLE')?>
 					</div>
 					<?php
-					if ($arResult['ACTIVE_STATUS'])
+					if (!empty($arResult['ACTIVE_STATUS']))
 					{
 						?>
 						<div class="imconnector-field-box-content">
@@ -214,7 +214,7 @@ else
 						id="imconnector-whatsappbyedna-api-key"
 						name="api_key"
 						value="<?=htmlspecialcharsbx($arResult['FORM']['api_key'])?>"
-						<?=$arResult['placeholder']['api_key'] ? $placeholder : ''?>
+						<?= !empty($arResult['placeholder']['api_key']) ? $placeholder : ''?>
 					>
 					<div class="imconnector-step-text">
 						<label for="imconnector-whatsappbyedna-sender-id">
@@ -227,7 +227,7 @@ else
 						id="imconnector-whatsappbyedna-sender-id"
 						name="sender_id"
 						value="<?=htmlspecialcharsbx($arResult['FORM']['sender_id'])?>"
-						<?=$arResult['placeholder']['sender_id'] ? $placeholder : ''?>
+						<?= !empty($arResult['placeholder']['sender_id']) ? $placeholder : ''?>
 					>
 					<div class="imconnector-step-text">
 						<button class="ui-btn ui-btn-success"

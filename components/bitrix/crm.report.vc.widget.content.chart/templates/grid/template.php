@@ -16,6 +16,7 @@ use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Web\Json;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm\Settings\LeadSettings;
+use Bitrix\Main\Web\Uri;
 
 \Bitrix\Main\UI\Extension::load([
 	'ui.design-tokens',
@@ -89,7 +90,7 @@ $containerId = 'crm-analytics-report-view-chart-grid' . ($arParams['IS_TRAFFIC']
 				$row['SOURCE_CODE'] = '<div class="crm-report-chart-grid-user">
 					<div class="ui-icon ui-icon-common-user crm-report-chart-grid-user-icon">
 						<i '
-							. ($userIcon ? 'style="background-image: url('. $userIcon . ')" ' : '')
+							. ($userIcon ? 'style="background-image: url('. Uri::urnEncode($userIcon) . ')" ' : '')
 						. '></i>
 					</div>
 					<div class="crm-report-chart-grid-user-name">

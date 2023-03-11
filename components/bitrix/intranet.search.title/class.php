@@ -1050,7 +1050,7 @@ class CIntranetSearchTitleComponent extends CBitrixComponent
 
 		$this->arResult["CATEGORIES"] = array();
 
-		$query = ltrim($_POST["q"]);
+		$query = ltrim($_POST["q"] ?? '');
 		if(
 			!empty($query)
 			&& $_REQUEST["ajax_call"] === "y"
@@ -1139,7 +1139,8 @@ class CIntranetSearchTitleComponent extends CBitrixComponent
 		$this->prepateGlobalSearchCategories();
 
 		if (
-			$_REQUEST["ajax_call"] === "y"
+			isset($_REQUEST["ajax_call"])
+			&& $_REQUEST["ajax_call"] === "y"
 			&& (
 				!isset($_REQUEST["INPUT_ID"])
 				|| $_REQUEST["INPUT_ID"] == $this->arParams["INPUT_ID"]

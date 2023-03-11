@@ -17,8 +17,8 @@ BX.namespace('BX.Crm.Activity');
 			config = {};
 
 		this.ajaxUrl = config.ajaxUrl || DEFAULT_AJAX_URL;
-		this.loadOffsetLeft = 3;
-		this.loadOffsetRight = 10;
+		this.loadOffsetLeft = 0;
+		this.loadOffsetRight = 13;
 		this.PLANNER_DURATION_LIMIT = 864000000; // 10 days
 		this.activityId = null;
 

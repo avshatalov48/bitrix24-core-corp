@@ -67,6 +67,7 @@ export class Editor
 	onGridRowMovedHandler = this.handleOnGridRowMoved.bind(this);
 	onBeforeProductChangeHandler = this.handleOnBeforeProductChange.bind(this);
 	onProductChangeHandler = this.handleOnProductChange.bind(this);
+	onBeforeProductClearHandler = this.handleOnBeforeProductClear.bind(this);
 	onProductClearHandler = this.handleOnProductClear.bind(this);
 	dropdownChangeHandler = this.handleDropdownChange.bind(this);
 	pullReloadGrid = null;
@@ -218,6 +219,7 @@ export class Editor
 		EventEmitter.subscribe('Grid::rowMoved', this.onGridRowMovedHandler);
 		EventEmitter.subscribe('BX.Catalog.ProductSelector:onBeforeChange', this.onBeforeProductChangeHandler);
 		EventEmitter.subscribe('BX.Catalog.ProductSelector:onChange', this.onProductChangeHandler);
+		EventEmitter.subscribe('BX.Catalog.ProductSelector:onBeforeClear', this.onBeforeProductClearHandler);
 		EventEmitter.subscribe('BX.Catalog.ProductSelector:onClear', this.onProductClearHandler);
 		EventEmitter.subscribe('Dropdown::change', this.dropdownChangeHandler);
 		if (PULL)
@@ -250,6 +252,7 @@ export class Editor
 		EventEmitter.unsubscribe('Grid::rowMoved', this.onGridRowMovedHandler);
 		EventEmitter.unsubscribe('BX.Catalog.ProductSelector:onBeforeChange', this.onBeforeProductChangeHandler);
 		EventEmitter.unsubscribe('BX.Catalog.ProductSelector:onChange', this.onProductChangeHandler);
+		EventEmitter.unsubscribe('BX.Catalog.ProductSelector:onBeforeClear', this.onBeforeProductClearHandler);
 		EventEmitter.unsubscribe('BX.Catalog.ProductSelector:onClear', this.onProductClearHandler);
 		EventEmitter.unsubscribe('Dropdown::change', this.dropdownChangeHandler);
 		if (!Type.isNil(this.pullReloadGrid))
@@ -1503,7 +1506,11 @@ export class Editor
 		}
 		delete(fields.RESERVE_ID);
 		const isReserveBlocked = this.getSettingValue('isReserveBlocked', false);
-		const product = new Row(rowId, fields, {isReserveBlocked}, this);
+		const settings = {
+			isReserveBlocked,
+			selectorId: 'crm_grid_' + rowId,
+		};
+		const product = new Row(rowId, fields, settings, this);
 		product.refreshFieldsLayout();
 
 		if (anchorProduct instanceof Row)
@@ -1695,6 +1702,7 @@ export class Editor
 				productRow.layoutStoreSelector();
 				productRow.initHandlersForSelectors();
 				productRow.updateUiStoreAmountData();
+				productRow.updatePropertyFields();
 				productRow.modifyBasePriceInput();
 				productRow.executeExternalActions();
 				this.getGrid().tableUnfade();
@@ -1704,6 +1712,13 @@ export class Editor
 		{
 			this.getGrid().tableUnfade();
 		}
+	}
+
+	handleOnBeforeProductClear(event: BaseEvent)
+	{
+		const {rowId} = event.getData();
+		const product = this.getProductByRowId(rowId);
+		product.clearPropertyFields();
 	}
 
 	handleOnProductClear(event: BaseEvent)

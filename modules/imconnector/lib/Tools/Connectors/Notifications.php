@@ -231,6 +231,11 @@ JS;
 		return 'https://bitrix24.com';
 	}
 
+	/**
+	 * @param int $lineId
+	 * @param string $scenarioCode
+	 * @return Result
+	 */
 	public static function addToLine(int $lineId, string $scenarioCode): Result
 	{
 		$result = new Result();
@@ -252,12 +257,13 @@ JS;
 			return $result->addErrors($scenarioEnableResult->getErrors());
 		}
 
-		$status->setActive(true);
-		$status->setConnection(true);
-		$status->setRegister(true);
-		$status->setData($resultRegister->getResult());
+		$status
+			->setActive(true)
+			->setConnection(true)
+			->setRegister(true)
+			->setData($resultRegister->getResult());
 
-		Status::deleteLinesExcept(Library::ID_NOTIFICATIONS_CONNECTOR, $lineId);
+		Status::deleteLinesExcept(Library::ID_NOTIFICATIONS_CONNECTOR, (int)$lineId);
 		Status::save();;
 
 		\Bitrix\ImConnector\InfoConnectors::updateInfoConnectors($lineId);

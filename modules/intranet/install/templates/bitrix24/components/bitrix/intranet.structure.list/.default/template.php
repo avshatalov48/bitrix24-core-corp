@@ -1,4 +1,7 @@
 <?
+
+use Bitrix\Main\Web\Uri;
+
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 ?>
 <?
@@ -12,7 +15,7 @@ else:
 	if (!is_array($arParams['USER_PROPERTY']) || count($arParams['USER_PROPERTY']) <= 0)
 		$arParams['USER_PROPERTY'] = array('FULL_NAME', 'PERSONAL_PHONE', 'EMAIL', 'WORK_POSITION', 'UF_DEPARTMENT');
 	$arLinkKeys = array('FULL_NAME', 'LAST_NAME', 'NAME', 'LOGIN', 'ID');
-	
+
 	foreach ($arLinkKeys as $key)
 	{
 		if (in_array($key, $arParams['USER_PROPERTY']))
@@ -54,7 +57,7 @@ endforeach;
 			{
 				case 'UF_DEPARTMENT':
 					$bFirst = true;
-					
+
 					if (is_array($arResult['USERS'][$i][$key]) && count($arResult['USERS'][$i][$key]) > 0)
 					{
 						$str = '';
@@ -62,10 +65,10 @@ endforeach;
 						{
 							if (!$bFirst) $str .= ', ';
 							else $bFirst = false;
-							
+
 							$str .= '<a href="'.$arParams['STRUCTURE_PAGE'].'?set_filter_'.$arParams['STRUCTURE_FILTER'].'=Y&'.$arParams['STRUCTURE_FILTER'].'_UF_DEPARTMENT='.$dept_id.'">'.htmlspecialcharsbx($dept_name).'</a>';
 						}
-						
+
 						$arResult['USERS'][$i][$key] = $str;
 					}
 					else
@@ -76,7 +79,7 @@ endforeach;
 					$bUseLogin = $arParams['SHOW_LOGIN'] != "N" ? true : false;
 					$arResult['USERS'][$i][$key] = CUser::FormatName($arParams['NAME_TEMPLATE'], $arResult['USERS'][$i], $bUseLogin);
 				break;
-				
+
 				case 'EMAIL':
 					$arResult['USERS'][$i][$key] = '<a href="mailto:'.urlencode($arResult['USERS'][$i][$key]).'">'.htmlspecialcharsbx($arResult['USERS'][$i][$key]).'</a>';
 				break;
@@ -84,11 +87,11 @@ endforeach;
 				case 'PERSONAL_WWW':
 					$arResult['USERS'][$i][$key] = '<a href="http://'.urlencode($arResult['USERS'][$i][$key]).'" target="_blank">'.htmlspecialcharsbx($arResult['USERS'][$i][$key]).'</a>';
 				break;
-				
+
 				case 'PERSONAL_GENDER':
 					$arResult['USERS'][$i][$key] = $arResult['USERS'][$i][$key] == 'F' ? GetMessage('INTR_ISL_TPL_GENDER_F') : ($arResult['USERS'][$i][$key] == 'M' ? GetMessage('INTR_ISL_TPL_GENDER_M') : '');
 				break;
-				
+
 				case 'PERSONAL_PHOTO':
 					if (!$arResult['USERS'][$i][$key])
 						$arResult['USERS'][$i][$key] = '<div class="user-avatar user-default-avatar"></div>';
@@ -100,35 +103,35 @@ endforeach;
 							BX_RESIZE_IMAGE_EXACT,
 							false
 						);
-						$arResult['USERS'][$i][$key] = "<div class='user-avatar' style='background: url(\"".$arFileTmp["src"]."\") no-repeat center center; background-size: cover;'></div>";
+						$arResult['USERS'][$i][$key] = "<div class='user-avatar' style='background: url(\"".Uri::urnEncode($arFileTmp["src"])."\") no-repeat center center; background-size: cover;'></div>";
 					}
 				break;
-				
+
 				case 'PERSONAL_PHONE':
 				case 'WORK_PHONE':
 				case 'PERSONAL_MOBILE':
 				case 'UF_PHONE_INNER':
 					$arResult['USERS'][$i][$key] = $arResult['USERS'][$i][$key] ? '<a href="callto:'.urlencode($arResult['USERS'][$i][$key]).'">'.htmlspecialcharsbx($arResult['USERS'][$i][$key]).'</a>' : '';
 				break;
-				
+
 				case 'PERSONAL_BIRTHDAY':
 					$arResult['USERS'][$i][$key] = FormatDateEx(
-						$arResult['USERS'][$i][$key], 
-						false, 
+						$arResult['USERS'][$i][$key],
+						false,
 						$arParams['DATE_FORMAT'.(($arParams['SHOW_YEAR'] == 'N' || $arParams['SHOW_YEAR'] == 'M' && $arUser['PERSONAL_GENDER'] == 'F') ? '_NO_YEAR' : '')]
 					);
-				
+
 					break;
-				
+
 				case 'DATE_REGISTER':
 					$arResult['USERS'][$i][$key] = FormatDateEx(
-						$arResult['USERS'][$i][$key], 
-						false, 
+						$arResult['USERS'][$i][$key],
+						false,
 						$arParams['DATE_TIME_FORMAT']
 					);
-				
+
 					break;
-				
+
 				default:
 					if (mb_substr($key, 0, 3) == 'UF_' && is_array($arResult['USER_PROP'][$key]))
 					{
@@ -147,7 +150,7 @@ endforeach;
 
 					break;
 			}
-			
+
 			if ($LINK_KEY == $key)
 				$arResult['USERS'][$i][$key] = $GLOBALS["APPLICATION"]->IncludeComponent("bitrix:main.user.link",
 					'',
@@ -157,12 +160,12 @@ endforeach;
 						"NAME" => $arResult['USERS'][$i]['NAME'],
 						"LAST_NAME" => $arResult['USERS'][$i]['LAST_NAME'],
 						"SECOND_NAME" => $arResult['USERS'][$i]['SECOND_NAME'],
-						"LOGIN" => $arResult['USERS'][$i]['LOGIN'],									
+						"LOGIN" => $arResult['USERS'][$i]['LOGIN'],
 						"PROFILE_URL" => $arResult['USERS'][$i]['DETAIL_URL'],
 						"PATH_TO_SONET_MESSAGES_CHAT" => $arParams["PM_URL"],
 						"PATH_TO_CONPANY_DEPARTMENT" => $arParams["~PATH_TO_CONPANY_DEPARTMENT"],
 						"PATH_TO_VIDEO_CALL" => $arParams["~PATH_TO_VIDEO_CALL"],
-						"USE_THUMBNAIL_LIST" => "N",						
+						"USE_THUMBNAIL_LIST" => "N",
 						"DATE_TIME_FORMAT" => $arParams["DATE_TIME_FORMAT"],
 						"SHOW_YEAR" => $arParams["SHOW_YEAR"],
 						"CACHE_TYPE" => $arParams["CACHE_TYPE"],
@@ -174,7 +177,7 @@ endforeach;
 					false
 					, array("HIDE_ICONS" => "Y")
 				);
-			
+
 			echo $arResult['USERS'][$i][$key];
 ?></td>
 <?
@@ -186,19 +189,19 @@ endforeach;
 		?>
 		<ul>
 			<?
-			if ($arUser['CAN_MESSAGE'] && $arParams['PM_URL']):	
+			if ($arUser['CAN_MESSAGE'] && $arParams['PM_URL']):
 				?>
 				<li class="bx-icon bx-icon-message"><a href="<?echo ($url = str_replace('#USER_ID#', $arUser['ID'], $arParams['PM_URL']))?>" onclick="if (BX.IM) { BXIM.openMessenger(<?=$arUser['ID']?>); return false; } else {window.open('<?echo $url ?>', '', 'status=no,scrollbars=yes,resizable=yes,width=700,height=550,top='+Math.floor((screen.height - 550)/2-14)+',left='+Math.floor((screen.width - 700)/2-5)); return false;}"><?echo GetMessage('INTR_ISP_PM')?></a></li>
 				<?
 			endif;
 			?>
 			<?
-			if ($arUser['CAN_VIDEO_CALL'] && $arParams['PATH_TO_VIDEO_CALL']):	
+			if ($arUser['CAN_VIDEO_CALL'] && $arParams['PATH_TO_VIDEO_CALL']):
 				?>
 				<li class="bx-icon bx-icon-video"><a href="<?echo $arUser["Urls"]["VideoCall"]?>" onclick="window.open('<?echo $arUser["Urls"]["VideoCall"] ?>', '', 'status=no,scrollbars=yes,resizable=yes,width=1000,height=600,top='+Math.floor((screen.height - 600)/2-14)+',left='+Math.floor((screen.width - 1000)/2-5)); return false;"><?echo GetMessage('INTR_ISP_VIDEO_CALL')?></a></li>
 				<?
 			endif;
-			?>			
+			?>
 			<?
 			if ($arResult['CAN_EDIT_USER']):
 				?>

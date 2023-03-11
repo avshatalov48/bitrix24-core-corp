@@ -17,6 +17,11 @@ export type ActionAnimationCallbacks =
 
 export class Base
 {
+	onInitialize(item: ConfigurableItem): void
+	{
+
+	}
+
 	onItemAction(item: ConfigurableItem, actionParams: ActionParams): void
 	{
 

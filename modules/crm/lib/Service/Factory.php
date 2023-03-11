@@ -20,6 +20,7 @@ use Bitrix\Crm\StatusTable;
 use Bitrix\Crm\UI\Filter\EntityHandler;
 use Bitrix\Crm\UtmTable;
 use Bitrix\Main\Application;
+use Bitrix\Main\Config\Option;
 use Bitrix\Main\InvalidOperationException;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\NotImplementedException;
@@ -1683,7 +1684,7 @@ abstract class Factory
 	 */
 	public function isLastActivitySupported(): bool
 	{
-		return false;
+		return true;
 	}
 
 	/**
@@ -1693,7 +1694,14 @@ abstract class Factory
 	 */
 	public function isLastActivityEnabled(): bool
 	{
-		return $this->isLastActivitySupported();
+		if (!$this->isLastActivitySupported())
+		{
+			return false;
+		}
+
+		$isEnabled = Option::get('crm', 'enable_last_activity_for_' . mb_strtolower($this->getEntityName()), 'Y');
+
+		return ($isEnabled === 'Y');
 	}
 
 	/**

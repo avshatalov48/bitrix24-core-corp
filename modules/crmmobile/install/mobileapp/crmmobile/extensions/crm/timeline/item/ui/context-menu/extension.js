@@ -77,6 +77,7 @@ jn.define('crm/timeline/item/ui/context-menu', (require, exports, module) => {
 		{
 			this.menuInstance = new ContextMenu({
 				actions: this.prepareActions(items),
+				testId: 'TimelineItem',
 				params: {
 					showCancelButton: true,
 					showActionLoader: false,
@@ -94,7 +95,7 @@ jn.define('crm/timeline/item/ui/context-menu', (require, exports, module) => {
 		prepareActions(items = [])
 		{
 			return items.map(item => ({
-				id: Random.getString(4),
+				id: item.id || Random.getString(4),
 				title: item.title,
 				subTitle: '',
 				// data: { svgIcon: `<svg></svg>` },

@@ -71,11 +71,12 @@ class Manager
 		$tabsDescription = $this->config["tabs"];
 		foreach ($tabsDescription as $tabData)
 		{
-			$class = $tabData["class"];
+			$class = $tabData["class"] ?? null;
+			$file = $tabData["file"] ?? null;
 
-			if ($tabData["file"])
+			if ($file)
 			{
-				require_once(Application::getDocumentRoot() . $tabData["file"]);
+				require_once(Application::getDocumentRoot() . $file);
 			}
 
 			if (class_exists($class))
@@ -151,7 +152,7 @@ class Manager
 	 */
 	public function getTabInstance($id = null)
 	{
-		return $this->tabList[$id];
+		return $this->tabList[$id] ?? null;
 	}
 
 	/**

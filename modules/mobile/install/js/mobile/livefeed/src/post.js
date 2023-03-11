@@ -281,9 +281,10 @@ class Post
 			&& this.taskData
 		)
 		{
-			BXMobileApp.Events.postToComponent('taskbackground::task::action', [
+			BXMobileApp.Events.postToComponent('taskbackground::task::open', [
 				{
 					id: this.taskId,
+					taskId: this.taskId,
 					title: 'TASK',
 					taskInfo: {
 						title: this.taskData.title,
@@ -291,7 +292,6 @@ class Post
 						responsibleIcon: this.taskData.responsibleIcon
 					}
 				},
-				this.taskId,
 				{
 					taskId: this.taskId,
 					getTaskInfo: true

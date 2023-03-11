@@ -26,33 +26,35 @@ if(array_key_exists("sessid", $_REQUEST) && $_REQUEST["sessid"] <> '')
 	$isSessidValid = check_bitrix_sessid();
 }
 
+$mobileAction = $_REQUEST["mobile_action"] ?? null;
+
 if ($USER->IsAuthorized() && $isSessidValid)
 {
 	$isBackground = Context::getCurrent()->getServer()->get("HTTP_BX_MOBILE_BACKGROUND");
-	if($isBackground != "true" && ($_REQUEST["mobile_action"] && $_REQUEST["mobile_action"] != "checkout"))
+	if($isBackground != "true" && $mobileAction != "checkout")
     {
         Bitrix\Mobile\User::setOnline();
     }
 }
 
-if ($_REQUEST["mobile_action"])//Executing some action
+if ($mobileAction)//Executing some action
 {
 	$APPLICATION->RestartBuffer();
-	$action = $_REQUEST["mobile_action"];
+	$action = $mobileAction;
 	$actionList = new Bitrix\Mobile\Action();
 	$actionList->executeAction($action, $arParams);
 
 	CMain::FinalActions();
 	die();
 }
-elseif ($_REQUEST["captcha_sid"])//getting captcha image
+elseif (!empty($_REQUEST["captcha_sid"]))//getting captcha image
 {
 	$APPLICATION->RestartBuffer();
 	$actionList = new Bitrix\Mobile\Action();
 	$actionList->executeAction("get_captcha", $arParams);
 	die();
 }
-elseif ($_REQUEST["manifest_id"])//getting content of appcache manifest
+elseif (!empty($_REQUEST["manifest_id"]))//getting content of appcache manifest
 {
 	include($_SERVER["DOCUMENT_ROOT"] .\Bitrix\Main\Data\AppCacheManifest::MANIFEST_CHECK_FILE);
 	die();

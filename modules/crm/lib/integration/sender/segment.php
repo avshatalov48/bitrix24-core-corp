@@ -1,8 +1,12 @@
 <?php
 namespace Bitrix\Crm\Integration\Sender;
 
+use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main;
+use Bitrix\Main\NotSupportedException;
+use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\SystemException;
 use Bitrix\Sender;
 use Bitrix\Crm;
 
@@ -26,19 +30,19 @@ class Segment extends Main\Engine\Controller
 	 */
 
 	const ENTITIES_LIMIT = 5000;
-
+	
 	/**
-	 * @param int $segmentId Segment id.
-	 * @param string $entityTypeName  Entity type name.
+	 * @param ?string $segmentId Segment id.
+	 * @param string $entityTypeName Entity type name.
 	 * @param array $entities Entities.
-	 * @param string $gridId Grid id.
+	 * @param string|null $gridId Grid id.
 	 * @return array
-	 * @throws Main\ArgumentException
-	 * @throws Main\NotSupportedException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
+	 * @throws ArgumentException
+	 * @throws NotSupportedException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
 	 */
-	public function uploadAction($segmentId = null, $entityTypeName, array $entities = [], $gridId = null)
+	public function uploadAction(?string $segmentId = null, string $entityTypeName = '', array $entities = [], ?string $gridId = null)
 	{
 		if (!GridPanel::canCurrentUserModifySegments())
 		{
@@ -65,7 +69,7 @@ class Segment extends Main\Engine\Controller
 			$entities = $entitiesResult->getData();
 		}
 
-		$segment = new Sender\Entity\Segment($segmentId);
+		$segment = new Sender\Entity\Segment((int)$segmentId);
 		if (!$segment->getId())
 		{
 			$segmentName = Loc::getMessage(

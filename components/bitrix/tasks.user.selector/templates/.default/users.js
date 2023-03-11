@@ -63,7 +63,7 @@ TasksUsers.prototype.show = function (sectionID)
 
 			var obUserRow;
 			var bSelected = false;
-			
+
 			TasksUsers.arEmployeesData[arEmployees[i].ID] = {
 				id : arEmployees[i].ID,
 				name : arEmployees[i].NAME,
@@ -89,7 +89,7 @@ TasksUsers.prototype.show = function (sectionID)
 				obInput.name = this.name;
 				obInput.type = "radio";
 			}
-			
+
 			var arInputs = document.getElementsByName(obInput.name);
 			var j = 0;
 			while(!bSelected && j < arInputs.length)
@@ -100,7 +100,7 @@ TasksUsers.prototype.show = function (sectionID)
 				}
 				j++;
 			}
-			
+
 			obInput.value = arEmployees[i].ID;
 
 			obUserRow = BX.create("div", {
@@ -117,7 +117,7 @@ TasksUsers.prototype.show = function (sectionID)
 							className : "company-department-employee-avatar"
 						},
 						style : {
-							background : arEmployees[i].PHOTO ? "url('" + arEmployees[i].PHOTO + "') no-repeat center center" : ""
+							background : arEmployees[i].PHOTO ? "url('" + encodeURI(arEmployees[i].PHOTO) + "') no-repeat center center" : ""
 						}
 					}),
 					BX.create("div", {
@@ -156,7 +156,7 @@ TasksUsers.prototype.select = function(e)
 {
 	var obCurrentTarget;
 	var i = 0;
-	
+
 	var target = e.target || e.srcElement;
 
 	if (e.currentTarget)
@@ -166,13 +166,13 @@ TasksUsers.prototype.select = function(e)
 	else // because IE does not support currentTarget
 	{
 		obCurrentTarget = target;
-		
+
 		while(!BX.hasClass(obCurrentTarget, "finder-box-item") && !BX.hasClass(obCurrentTarget, "company-department-employee"))
 		{
 			obCurrentTarget = obCurrentTarget.parentNode;
 		}
 	}
-	
+
 	var obInput = BX.findChild(obCurrentTarget, {tag: "input"});
 
 	if (!this.multiple)
@@ -191,11 +191,11 @@ TasksUsers.prototype.select = function(e)
 		}
 		obInput.checked = true;
 		BX.addClass(obCurrentTarget, BX.hasClass(obCurrentTarget, "finder-box-item") ?  "finder-box-item-selected" : "company-department-employee-selected");
-		
+
 		var obNameDiv = BX.findChild(obCurrentTarget, {tag: "DIV", className: "finder-box-item-text"}, true) || BX.findChild(obCurrentTarget, {tag: "DIV", className: "company-department-employee-name"}, true);
 		var userName = BX.util.htmlspecialcharsback(obNameDiv.innerHTML)
 		this.searchInput.value = userName;
-		
+
 		this.arSelected = [];
 		this.arSelected[obInput.value] = {
 			id : obInput.value,
@@ -221,28 +221,28 @@ TasksUsers.prototype.select = function(e)
 				BX.toggleClass(arInputs[i].parentNode, BX.hasClass(arInputs[i].parentNode, "finder-box-item") ?  "finder-box-item-selected" : "company-department-employee-selected")
 			}
 		}
-		
+
 		if (BX.hasClass(obInput.parentNode, "finder-box-item-selected") || BX.hasClass(obInput.parentNode, "company-department-employee-selected"))
 		{
 			obInput.checked = true;
 		}
-		
+
 		if (obInput.checked)
 		{
-			
+
 			var obSelected = BX.findChild(BX(this.name + "_selected_users"), {className: "finder-box-selected-items"});
-			
+
 			if (!BX(this.name + "_employee_selected_" + obInput.value))
 			{
 				var obUserRow = BX.create('DIV');
 				obUserRow.id = this.name + '_employee_selected_' + obInput.value;
 				obUserRow.className = 'finder-box-selected-item';
-				
+
 				var obNameDiv = BX.findChild(obCurrentTarget, {tag: "DIV", className: "finder-box-item-text"}, true) || BX.findChild(obCurrentTarget, {tag: "DIV", className: "company-department-employee-name"}, true);
-			
+
 				obUserRow.innerHTML =  "<div class=\"finder-box-selected-item-icon\" onclick=\"O_" + this.name + ".unselect(" + obInput.value + ", this);\"></div><span class=\"finder-box-selected-item-text\">" + obNameDiv.innerHTML + "</span>";
 				obSelected.appendChild(obUserRow);
-				
+
 				var countSpan = BX(this.name + "_current_count");
 				countSpan.innerHTML = parseInt(countSpan.innerHTML) + 1;
 
@@ -259,27 +259,27 @@ TasksUsers.prototype.select = function(e)
 		else
 		{
 			BX.remove(BX(this.name + '_employee_selected_' + obInput.value));
-			
+
 			var countSpan = BX(this.name + "_current_count");
 			countSpan.innerHTML = parseInt(countSpan.innerHTML) - 1;
 
 			this.arSelected[obInput.value] = null;
 		}
 	}
-	
+
 	if (!BX.util.in_array(obInput.value, TasksUsers.lastUsers))
 	{
 		TasksUsers.lastUsers.unshift(obInput.value);
 		BX.userOptions.save('tasks', 'user_search', 'last_selected', TasksUsers.lastUsers.slice(0, 10));
 	}
-	
+
 	if (this.onSelect)
 	{
 		var emp = this.arSelected.pop();
 		this.arSelected.push(emp);
 		this.onSelect(emp);
 	}
-	
+
 	if (this.onChange)
 	{
 		this.onChange(this.arSelected);
@@ -308,7 +308,7 @@ TasksUsers.prototype.unselect = function(employeeID, link)
 	}
 
 	this.arSelected[employeeID] = null;
-	
+
 	if (this.onChange)
 	{
 		this.onChange(this.arSelected);
@@ -323,7 +323,7 @@ TasksUsers.prototype.search = function(e)
 	{
 		this.showResults(data);
 	}
-	
+
 	if (this.searchInput.value.length > 0)
 	{
 		this.displayTab("search");
@@ -341,7 +341,7 @@ TasksUsers.prototype.showResults = function(data)
 {
 	var arEmployees = data;
 	var obSectionDiv = BX(this.name + '_search');
-	
+
 	var arInputs = obSectionDiv.getElementsByTagName("input");
 	for(var i = 0, count = arInputs.length; i < count; i++)
 	{
@@ -350,11 +350,11 @@ TasksUsers.prototype.showResults = function(data)
 			BX(this.name + '_last').appendChild(arInputs[i]);
 		}
 	}
-	
+
 	if (obSectionDiv)
 	{
 		obSectionDiv.innerHTML = '';
-		
+
 		var table = BX.create("table", {
 			props : {
 				className : "finder-box-tab-columns",
@@ -364,15 +364,15 @@ TasksUsers.prototype.showResults = function(data)
 				 BX.create("tbody")
 			]
 		});
-		
+
 		var tr = BX.create("tr");
 		table.firstChild.appendChild(tr);
 
 		var td = BX.create("td");
 		tr.appendChild(td);
-		
+
 		obSectionDiv.appendChild(table);
-		
+
 		for (var i = 0; i < arEmployees.length; i++)
 		{
 			var obUserRow;
@@ -402,7 +402,7 @@ TasksUsers.prototype.showResults = function(data)
 				obInput.name = this.name;
 				obInput.type = "radio";
 			}
-			
+
 			var arInputs = document.getElementsByName(obInput.name);
 			var j = 0;
 			while(!bSelected && j < arInputs.length)
@@ -413,7 +413,7 @@ TasksUsers.prototype.showResults = function(data)
 				}
 				j++;
 			}
-			
+
 			obInput.value = arEmployees[i].ID;
 
 			var text = arEmployees[i].NAME;
@@ -450,9 +450,9 @@ TasksUsers.prototype.showResults = function(data)
 					})
 				]
 			});
-			
+
 			td.appendChild(obUserRow);
-			
+
 			if (i == Math.ceil(arEmployees.length / 2) - 1)
 			{
 				td = BX.create("td");
@@ -468,7 +468,7 @@ TasksUsers.prototype.displayTab = function(tab)
 	BX.removeClass(BX(this.name + "_search"), "finder-box-tab-content-selected");
 	BX.removeClass(BX(this.name + "_structure"), "finder-box-tab-content-selected");
 	BX.addClass(BX(this.name + "_" + tab), "finder-box-tab-content-selected");
-	
+
 	BX.removeClass(BX(this.name + "_tab_last"), "finder-box-tab-selected");
 	BX.removeClass(BX(this.name + "_tab_search"), "finder-box-tab-selected");
 	BX.removeClass(BX(this.name + "_tab_structure"), "finder-box-tab-selected");

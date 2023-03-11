@@ -7,6 +7,7 @@ use Bitrix\Crm\Comparer\ComparerBase;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Context;
+use Bitrix\Crm\Settings;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Web\Uri;
 use Bitrix\Main;
@@ -2142,6 +2143,11 @@ class CCrmLiveFeed
 			return;
 		}
 
+		if (!Settings\Crm::isLiveFeedRecordsGenerationEnabled())
+		{
+			return;
+		}
+
 		$logID = intval($logID);
 		$groupCode = strval($groupCode);
 		if($logID <= 0 || $groupCode === '')
@@ -2839,6 +2845,11 @@ class CCrmLiveFeed
 			return false;
 		}
 
+		if (!Settings\Crm::isLiveFeedRecordsGenerationEnabled())
+		{
+			return 0; // return so to distinguish with the boolean value ("false")
+		}
+
 		$message = isset($fields['MESSAGE']) && is_string($fields['MESSAGE']) ? $fields['MESSAGE'] : '';
 		$title = isset($fields['TITLE']) && is_string($fields['TITLE']) ? $fields['TITLE'] : '';
 		if($title === '')
@@ -2860,11 +2871,6 @@ class CCrmLiveFeed
 		}
 
 		$sourceID = isset($fields['SOURCE_ID']) ? intval($fields['SOURCE_ID']) : 0;
-		/*if(!(is_int($sourceID) && $sourceID > 0))
-		{
-			$fields['ERROR'] = 'Could not find event';
-			return false;
-		}*/
 		$url = isset($fields['URL']) ? $fields['URL'] : '';
 		$params = isset($fields['PARAMS']) ? $fields['PARAMS'] : null;
 		$liveFeedEntityType = CCrmLiveFeedEntity::GetByEntityTypeID($entityTypeID);
@@ -3377,32 +3383,44 @@ class CCrmLiveFeed
 	}
 	static private function RegisterOwnershipRelations($logEntityID, $logEventID, &$fields)
 	{
-		$entityTypeID = isset($fields['ENTITY_TYPE_ID']) ? intval($fields['ENTITY_TYPE_ID']) : CCrmOwnerType::Undefined;
-		if(!CCrmOwnerType::IsDefined($entityTypeID))
+		if (!Settings\Crm::isLiveFeedRecordsGenerationEnabled())
+		{
+			return;
+		}
+
+		$entityTypeID = isset($fields['ENTITY_TYPE_ID']) ? (int)$fields['ENTITY_TYPE_ID'] : CCrmOwnerType::Undefined;
+		if (!CCrmOwnerType::IsDefined($entityTypeID))
 		{
 			return;
 		}
 
 		$entityID = isset($fields['ENTITY_ID']) ? intval($fields['ENTITY_ID']) : 0;
-		if($entityID < 0)
+		if ($entityID < 0)
 		{
 			return;
 		}
 
-		$parents = isset($fields['PARENTS']) && is_array($fields['PARENTS']) ? $fields['PARENTS'] : array();
-		if(!empty($fields['PARENTS']))
+		$parents = isset($fields['PARENTS']) && is_array($fields['PARENTS']) ? $fields['PARENTS'] : [];
+		if (!empty($fields['PARENTS']))
 		{
 			$parentOptions = isset($fields['PARENT_OPTIONS']) && is_array($fields['PARENT_OPTIONS'])
-				? $fields['PARENT_OPTIONS'] : array();
+				? $fields['PARENT_OPTIONS']
+				: [];
 
 			$parentOptions['TYPE_ID'] = CCrmSonetRelationType::Ownership;
+
 			CCrmSonetRelation::RegisterRelationBundle($logEntityID, $logEventID, $entityTypeID, $entityID, $parents, $parentOptions);
 		}
 		else
 		{
-			$parentEntityTypeID = isset($fields['PARENT_ENTITY_TYPE_ID']) ? intval($fields['PARENT_ENTITY_TYPE_ID']) : CCrmOwnerType::Undefined;
-			$parentEntityID = isset($fields['PARENT_ENTITY_ID']) ? intval($fields['PARENT_ENTITY_ID']) : 0;
-			if(CCrmOwnerType::IsDefined($parentEntityTypeID) && $parentEntityID > 0)
+			$parentEntityTypeID = isset($fields['PARENT_ENTITY_TYPE_ID'])
+				? intval($fields['PARENT_ENTITY_TYPE_ID'])
+				: CCrmOwnerType::Undefined;
+			$parentEntityID = isset($fields['PARENT_ENTITY_ID'])
+				? intval($fields['PARENT_ENTITY_ID'])
+				: 0;
+
+			if (CCrmOwnerType::IsDefined($parentEntityTypeID) && $parentEntityID > 0)
 			{
 				CCrmSonetRelation::RegisterRelation($logEntityID, $logEventID, $entityTypeID, $entityID, $parentEntityTypeID, $parentEntityID, CCrmSonetRelationType::Ownership, 1);
 			}

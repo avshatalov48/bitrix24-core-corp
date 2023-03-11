@@ -1,5 +1,6 @@
-import { CurrencyCore } from "currency.currency-core";
-import { Type } from "main.core";
+import Text from './text';
+import { CurrencyCore } from 'currency.currency-core';
+import { Type } from 'main.core';
 
 export default {
 	props: {
@@ -7,7 +8,7 @@ export default {
 		currencyId: String,
 	},
 	computed: {
-		moneyHtml(): ?string
+		encodedText(): ?string
 		{
 			if (!Type.isNumber(this.opportunity) || !Type.isStringFilled(this.currencyId))
 			{
@@ -17,5 +18,11 @@ export default {
 			return CurrencyCore.currencyFormat(this.opportunity, this.currencyId, true);
 		}
 	},
-	template: `<span v-if="moneyHtml" v-html="moneyHtml"></span>`
+	extends: Text,
+	template: `
+		<span
+			v-if="encodedText"
+			:class="className"
+			v-html="encodedText"
+		></span>`
 };

@@ -1,9 +1,6 @@
 <?php
 IncludeModuleLangFile(__FILE__);
 
-/**
- * @deprecated
- */
 class TasksException extends \Bitrix\Tasks\Exception
 {
 	const TE_TASK_NOT_FOUND_OR_NOT_ACCESSIBLE  = 0x000001;
@@ -48,8 +45,7 @@ class TasksException extends \Bitrix\Tasks\Exception
 
 	protected function dumpAuxError()
 	{
-		// if case of do not dump AUX ERROR, because we can not add trailing ID to a serialized message
-		return !(intval($this->additional['CODE']) & self::TE_FLAG_SERIALIZED_ERRORS_IN_MESSAGE);
+		return false;
 	}
 
 	public function __construct($message = false, $code = 0)

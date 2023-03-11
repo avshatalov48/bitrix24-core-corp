@@ -248,6 +248,10 @@ class LeadTable extends Main\ORM\Data\DataManager
 
 			$fieldRepository->getMovedTime(),
 
+			$fieldRepository->getLastActivityBy(),
+
+			$fieldRepository->getLastActivityTime(),
+
 			(new Reference(
 				'EVENT_RELATION',
 				EventRelationsTable::class,

@@ -1336,6 +1336,9 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 
 		if ($this->arTaskTags === null)
 		{
+			// $rsTags = \Bitrix\Tasks\Internals\Task\TagTable::getList([
+			//
+			// ])
 			$rsTags = CTaskTags::GetList(
 				array('NAME' => 'ASC'),
 				array('TASK_ID' => $this->taskId)
@@ -1911,12 +1914,10 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 		}
 	}
 
-
+	/** @deprecated */
 	public function isUserRole($roleId)
 	{
-		$userRoles = $this->getUserRoles();
-
-		return ($userRoles & $roleId);
+		return false;
 	}
 
 

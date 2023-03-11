@@ -103,7 +103,7 @@ if (
 		(
 			"ID" => "tasks",
 			"TEXT" => $arResult["Title"]['tasks'],
-			"ON_CLICK" => "BX.SidePanel.Instance.open('".$uri->getUri()."', { width: 1000, loader: 'intranet:tasklist', })",
+			"ON_CLICK" => "BX.SidePanel.Instance.open('".$uri->getUri()."', { width: 1000, loader: 'intranet:slider-tasklist', })",
 			'IS_ACTIVE' => (mb_strpos($requestUri, $arResult["Urls"]['tasks']) === 0)
 		)
 	);
@@ -179,7 +179,7 @@ if (
 			"ID" => "blog",
 			"TEXT" => $arResult["Title"]['blog'],
 			"ON_CLICK" => "BX.SidePanel.Instance.open('".$uri->getUri()."', {
-				loader: 'intranet:livefeed', 
+				loader: 'intranet:slider-livefeed', 
 				width: 1000 
 			})",
 			'IS_ACTIVE' => (mb_strpos($requestUri, $arResult["Urls"]['blog']) === 0),

@@ -2,6 +2,7 @@
 $MESS['IMOL_CHAT_ERROR_IM_LOAD'] = 'Ошибка загрузки модуля Веб-мессенджер';
 $MESS['IMOL_CHAT_ERROR_PULL_LOAD'] = 'Ошибка загрузки модуля Push & Pull';
 $MESS['IMOL_CHAT_ERROR_CONNECTOR_LOAD'] = 'Ошибка загрузки модуля Коннектора для внешних мессенджеров';
+$MESS['IMOL_CHAT_ERROR_CONNECTOR_LOAD_MSGVER_1'] = 'Ошибка загрузки модуля Коннектора для внешних мессенджеров';
 $MESS['IMOL_CHAT_ERROR_CONNECTOR_SEND'] = 'Ошибка отправки сообщения';
 $MESS['IMOL_CHAT_CHAT_NAME_COLOR_GUEST'] = '#COLOR# гость №#NUMBER#';
 $MESS['IMOL_CHAT_CHAT_NAME_GUEST'] = 'Гость №#NUMBER#';

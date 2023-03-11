@@ -105,6 +105,7 @@ jn.define('crm/timeline/item/ui/body/blocks/editable-description', (require, exp
 				title: Loc.getMessage('M_CRM_TIMELINE_BLOCK_EDITABLE_TEXT_TITLE2'),
 				text: this.state.text,
 				required: true,
+				placeholder: Loc.getMessage('CRM_TIMELINE_SCHEDULED_TITLE2'),
 				onSave: (text) => this.onSave(text),
 			});
 		}

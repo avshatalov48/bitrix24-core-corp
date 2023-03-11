@@ -145,7 +145,6 @@ if ($isBitrix24Cloud)
 
 $APPLICATION->IncludeComponent("bitrix:intranet.placement", "", array());
 $APPLICATION->IncludeComponent('bitrix:bizproc.debugger', '', []);
-$APPLICATION->IncludeComponent('bitrix:intranet.bitrix24.polar-star', '', []); // remove after November 26 2022
 ?>
 
 <?

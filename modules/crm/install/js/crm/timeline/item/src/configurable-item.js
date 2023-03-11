@@ -313,10 +313,12 @@ export default class ConfigurableItem extends TimelineItem
 						this.setData(item);
 						this.refreshLayout();
 					}
-				})
+				});
+				return true;
 			})
 			.catch(err => {
 				console.error(err);
+				return true;
 			});
 	}
 

@@ -38,6 +38,8 @@ class CAllCrmQuote
 	protected $bCheckPermission = true;
 	protected $lastErrors;
 
+	private static ?Crm\Entity\Compatibility\Adapter $lastActivityAdapter = null;
+
 	/** @var \Bitrix\Crm\Entity\Compatibility\Adapter */
 	private $compatibiltyAdapter;
 
@@ -113,6 +115,18 @@ class CAllCrmQuote
 					'QUOTE_NUMBER',
 				])
 		;
+	}
+
+	private static function getLastActivityAdapter(): Crm\Entity\Compatibility\Adapter
+	{
+		if (!self::$lastActivityAdapter)
+		{
+			$factory = Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::Quote);
+			self::$lastActivityAdapter = new Crm\Entity\Compatibility\Adapter\LastActivity($factory);
+			self::$lastActivityAdapter->setTableAlias(self::TABLE_ALIAS);
+		}
+
+		return self::$lastActivityAdapter;
 	}
 
 	public function __construct($bCheckPermission = true)
@@ -301,6 +315,8 @@ class CAllCrmQuote
 				\Bitrix\Crm\Binding\EntityBinding::markFirstAsPrimary($contactBindings);
 			}
 			//endregion
+
+			self::getLastActivityAdapter()->performAdd($arFields, $options);
 
 			//region Rise BeforeAdd event
 			foreach (GetModuleEvents('crm', 'OnBeforeCrmQuoteAdd', true) as $arEvent)
@@ -852,6 +868,8 @@ class CAllCrmQuote
 			{
 				$arFields['ID'] = $ID;
 			}
+
+			self::getLastActivityAdapter()->performUpdate((int)$ID, $arFields, $options);
 
 			foreach (GetModuleEvents('crm', 'OnBeforeCrmQuoteUpdate', true) as $arEvent)
 			{
@@ -2067,6 +2085,7 @@ class CAllCrmQuote
 				self::$FIELD_INFOS = self::$FIELD_INFOS + UtmTable::getUtmFieldsInfo();
 
 				self::$FIELD_INFOS += Crm\Service\Container::getInstance()->getParentFieldManager()->getParentFieldsInfo(\CCrmOwnerType::Quote);
+				self::$FIELD_INFOS += self::getLastActivityAdapter()->getFieldsInfo();
 			}
 		}
 
@@ -2206,6 +2225,8 @@ class CAllCrmQuote
 				static::TABLE_ALIAS
 			)
 		);
+
+		$result += self::getLastActivityAdapter()->getFields();
 
 		return $result;
 	}

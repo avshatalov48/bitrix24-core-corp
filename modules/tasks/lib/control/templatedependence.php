@@ -11,7 +11,7 @@ use \Bitrix\Tasks\Internals\Task\Template\TemplateMemberTable;
 
 class TemplateDependence
 {
-	private const FIELD_DEPEND = 'DEPEND_ON';
+	private const FIELD_DEPEND = 'DEPENDS_ON';
 
 	private $userId;
 	private $templateId;
@@ -45,7 +45,6 @@ class TemplateDependence
 		}
 
 		$this->loadTemplate();
-		$this->deleteByTemplate();
 
 		if (empty($data[self::FIELD_DEPEND]))
 		{
@@ -62,11 +61,13 @@ class TemplateDependence
 		$insertRows = [];
 		foreach ($depends as $depend)
 		{
-			if ((int) $depend < 1)
+			$depend = (int) $depend;
+
+			if ($depend < 1)
 			{
 				continue;
 			}
-			$insertRows = '('.$this->templateId.', '. $depend .')';
+			$insertRows[] = '('.$this->templateId.', '. $depend .')';
 		}
 
 		if (empty($insertRows))
@@ -104,18 +105,5 @@ class TemplateDependence
 			throw new TemplateNotFoundException();
 		}
 		$this->template->fillDependencies();
-	}
-
-	/**
-	 * @return void
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\DB\SqlQueryException
-	 * @throws \Bitrix\Main\SystemException
-	 */
-	public function deleteByTemplate()
-	{
-		TemplateTagTable::deleteList([
-			'TEMPLATE_ID' => $this->templateId,
-		]);
 	}
 }

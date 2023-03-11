@@ -17,6 +17,7 @@ use Bitrix\Main\Entity;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\UserTable;
+use Bitrix\Main\Web\Uri;
 
 class ManagerCounters extends DataSource
 {
@@ -224,7 +225,7 @@ HTML;
 		}
 		foreach ($result as $userId => $user)
 		{
-			$user["STYLE_USER_PHOTO"] = ($user["USER_PHOTO"] && $user["USER_PHOTO"]["src"] ? ' style="background-image:url('.htmlspecialcharsbx($user["USER_PHOTO"]["src"]).');"' : "");
+			$user["STYLE_USER_PHOTO"] = ($user["USER_PHOTO"] && $user["USER_PHOTO"]["src"] ? ' style="background-image:url('. Uri::urnEncode(htmlspecialcharsbx($user["USER_PHOTO"]["src"])).');"' : "");
 			$k0 = max(($max[0] > 0 ? intval($user["TOTAL"][0] * 100 / $max[0]) : 0), 1);
 			$k1 = max(($max[1] > 0 ? intval($user["TOTAL"][1] * 100 / $max[1]) : 0), 1);
 			$position = $user["WORK_POSITION"];

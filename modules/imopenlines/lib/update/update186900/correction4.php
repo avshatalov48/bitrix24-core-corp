@@ -18,66 +18,58 @@ final class Correction4 extends Stepper
 	/**
 	 * @inheritdoc
 	 *
-	 * @param array $result
+	 * @param array $option
 	 * @return bool
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ArgumentNullException
-	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
-	public function execute(array &$result)
+	public function execute(array &$option): bool
 	{
-		$return = false;
+		$return = Stepper::FINISH_EXECUTION;
 
 		if (Loader::includeModule(self::$moduleId))
 		{
-			$params = Option::get(self::$moduleId, self::OPTION_NAME, "");
-			$params = ($params !== "" ? @unserialize($params, ['allowed_classes' => false]) : []);
-			$params = (is_array($params) ? $params : []);
-			if (empty($params))
+			$stepVars = Option::get(self::$moduleId, self::OPTION_NAME, "");
+			$stepVars = ($stepVars !== "" ? @unserialize($stepVars, ['allowed_classes' => false]) : []);
+			$stepVars = (is_array($stepVars) ? $stepVars : []);
+			if (empty($stepVars))
 			{
-				$params = [
-					"lastId" => 0,
-					"number" => 0,
-					"count" => Correction::getCountStatusClosedSessions(),
+				$stepVars = [
+					'number' => 0,
+					'count' => Correction::getCountStatusClosedSessions(),
 				];
 			}
 
-			if ($params["count"] > 0)
+			if ($stepVars['count'] > 0)
 			{
-				$result["title"] = Loc::getMessage("IMOL_UPDATE_REPAIR_STATUS_CLOSED_SESSIONS");
-				$result["progress"] = 1;
-				$result["steps"] = "";
-				$result["count"] = $params["count"];
+				$option['count'] = $stepVars['count'];
 
 				$resultCorrectionSession = Correction::setStatusClosedSessions(true, 100);
 
-				$found = false;
-				if(!empty($resultCorrectionSession))
+				if (count($resultCorrectionSession) > 0)
 				{
-					$params["number"]++;
-					$params["lastId"] = $params["number"] * 100;
-					$found = true;
+					$stepVars['number'] += count($resultCorrectionSession);
+
+					Option::set(self::$moduleId, self::OPTION_NAME, serialize($stepVars));
+					$return = Stepper::CONTINUE_EXECUTION;
 				}
-
-				if ($found)
-				{
-					Option::set(self::$moduleId, self::OPTION_NAME, serialize($params));
-					$return = true;
-				}
-
-				$result["progress"] = intval($params["number"] * 100/ $params["count"]);
-				$result["steps"] = $params["number"];
-
-				if ($found === false)
+				else
 				{
 					Option::delete(self::$moduleId, ["name" => self::OPTION_NAME]);
 				}
+
+				$option['progress'] = round($stepVars['number'] * 100 / $stepVars['count']);
+				$option['steps'] = $stepVars['number'];
+			}
+			else
+			{
+				Option::delete(self::$moduleId, ["name" => self::OPTION_NAME]);
 			}
 		}
 
 		return $return;
+	}
+
+	public static function getTitle(): string
+	{
+		return Loc::getMessage("IMOL_UPDATE_REPAIR_STATUS_CLOSED_SESSIONS");
 	}
 }

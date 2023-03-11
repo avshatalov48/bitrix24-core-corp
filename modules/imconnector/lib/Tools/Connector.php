@@ -35,7 +35,7 @@ class Connector
 
 		while ($row = $cursor->fetch())
 		{
-			Status::delete($connectorId, $row['LINE']);
+			Status::delete($connectorId, (int)$row['LINE']);
 		}
 	}
 }

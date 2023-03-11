@@ -58,6 +58,8 @@ class TemplateTag
 			return;
 		}
 
+		$dbHelper = Application::getConnection()->getSqlHelper();
+
 		$insertRows = [];
 		foreach ($tags as $tag)
 		{
@@ -65,7 +67,7 @@ class TemplateTag
 			{
 				continue;
 			}
-			$insertRows[] = '('.$this->templateId.', '. $this->userId .', "'. str_replace('"', '\"', $tag) .'")';
+			$insertRows[] = '('.$this->templateId.', '. $this->userId .', "'. $dbHelper->forSql($tag) .'")';
 		}
 
 		$sql = "

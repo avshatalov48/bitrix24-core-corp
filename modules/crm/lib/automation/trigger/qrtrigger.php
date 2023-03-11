@@ -55,6 +55,22 @@ class QrTrigger extends BaseTrigger
 		return true;
 	}
 
+	protected static function getPropertiesMap(): array
+	{
+		return [
+			[
+				'Id' => 'ownerId',
+				'Name' => Loc::getMessage('CRM_AUTOMATION_TRIGGER_QR_PROPERTY_OWNER'),
+				'Type' => '@robot-select',
+				'EmptyValueText' => Loc::getMessage('CRM_AUTOMATION_TRIGGER_QR_DEFAULT_OWNER'),
+				'Settings' => [
+					'Filter' => ['Type' => 'CrmGenerateQr'],
+					'OptionNameProperty' => 'QrTitle'
+				],
+			],
+		];
+	}
+
 	public static function getGroup(): array
 	{
 		return ['other'];

@@ -32,11 +32,20 @@ class CBPCrmGenerateQr extends CBPActivity
 		$this->setPropertiesTypes([
 			'PageLink' => ['Type' => 'string'],
 			'PageLinkBb' => ['Type' => 'string'],
-			'PageLinkHtml' => ['Type' => 'string'],
+			'PageLinkHtml' => [
+				'Type' => 'string',
+				'ValueContentType' => 'html',
+			],
 			'QrLink' => ['Type' => 'string'],
 			'QrLinkBB' => ['Type' => 'string'],
-			'QrLinkHtml' => ['Type' => 'string'],
-			'QrImgHtml' => ['Type' => 'string'],
+			'QrLinkHtml' => [
+				'Type' => 'string',
+				'ValueContentType' => 'html',
+			],
+			'QrImgHtml' => [
+				'Type' => 'string',
+				'ValueContentType' => 'html',
+			],
 		]);
 	}
 

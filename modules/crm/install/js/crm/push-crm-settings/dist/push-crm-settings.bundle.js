@@ -35,12 +35,12 @@ this.BX = this.BX || {};
 	  return typeof value;
 	}
 
-	const EntityType = main_core.Reflection.getClass('BX.CrmEntityType');
+	const aliases = main_core.Extension.getSettings('crm.push-crm-settings').get('createTimeAliases', {});
 	const DefaultSort = {};
 
-	if (EntityType) {
-	  DefaultSort[EntityType.enumeration.deal] = {
-	    column: 'DATE_CREATE',
+	for (const entityTypeId in aliases) {
+	  DefaultSort[entityTypeId] = {
+	    column: aliases[entityTypeId],
 	    order: 'desc'
 	  };
 	}
@@ -206,7 +206,7 @@ this.BX = this.BX || {};
 	  });
 	}
 
-	const EntityType$1 = main_core.Reflection.getClass('BX.CrmEntityType');
+	const EntityType = main_core.Reflection.getClass('BX.CrmEntityType');
 	const CHECKED_CLASS = 'menu-popup-item-accept';
 	const NOT_CHECKED_CLASS = 'menu-popup-item-none';
 	/**
@@ -305,7 +305,7 @@ this.BX = this.BX || {};
 	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$1)[_entityTypeId$1] = main_core.Text.toInteger(params.entityTypeId);
 
-	    if (EntityType$1 && !EntityType$1.isDefined(babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$1)[_entityTypeId$1])) {
+	    if (EntityType && !EntityType.isDefined(babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$1)[_entityTypeId$1])) {
 	      throw new Error(`Provided entityTypeId is invalid: ${babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$1)[_entityTypeId$1]}`);
 	    }
 
@@ -455,8 +455,8 @@ this.BX = this.BX || {};
 	function _shouldShowTodoSkipMenu2() {
 	  let allowedTypes = [];
 
-	  if (EntityType$1) {
-	    allowedTypes = [EntityType$1.enumeration.deal];
+	  if (EntityType) {
+	    allowedTypes = [EntityType.enumeration.deal];
 	  }
 
 	  return allowedTypes.includes(babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$1)[_entityTypeId$1]);

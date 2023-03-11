@@ -1,9 +1,12 @@
-(() => {
-
-	const { Haptics } = jn.require('haptics');
-	const { clone, merge } = jn.require('utils/object');
-	const { ViewMode } = jn.require('layout/ui/simple-list/view-mode');
-	const { SkeletonFactory, SkeletonTypes } = jn.require('layout/ui/simple-list/skeleton');
+/**
+ * @module layout/ui/simple-list
+ */
+jn.define('layout/ui/simple-list', (require, exports, module) => {
+	const { Haptics } = require('haptics');
+	const { clone, merge } = require('utils/object');
+	const { ViewMode } = require('layout/ui/simple-list/view-mode');
+	const { SkeletonFactory, SkeletonTypes } = require('layout/ui/simple-list/skeleton');
+	const { PureComponent } = require('layout/pure-component');
 
 	const svgImages = {
 		empty: {
@@ -26,12 +29,12 @@
 		blink: 'blink',
 		setLoading: 'setLoading',
 		dropLoading: 'dropLoading',
-	}
+	};
 
 	/**
 	 * @class SimpleList
 	 */
-	class SimpleList extends LayoutComponent
+	class SimpleList extends PureComponent
 	{
 		constructor(props)
 		{
@@ -415,7 +418,9 @@
 			return items;
 		}
 
-		onLoadMoreDummy() {}
+		onLoadMoreDummy()
+		{
+		}
 
 		render()
 		{
@@ -804,5 +809,5 @@
 		}
 	}
 
-	this.SimpleList = SimpleList;
-})();
+	module.exports = { SimpleList };
+});

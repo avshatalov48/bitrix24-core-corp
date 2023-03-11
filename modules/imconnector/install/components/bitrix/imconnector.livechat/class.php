@@ -36,7 +36,7 @@ class ImConnectorLiveChat extends \CBitrixComponent
 		else
 		{
 			if(!Loader::includeModule('imconnector'))
-				ShowError(Loc::getMessage('IMCONNECTOR_COMPONENT_LIVECHAT_MODULE_IMCONNECTOR_NOT_INSTALLED'));
+				ShowError(Loc::getMessage('IMCONNECTOR_COMPONENT_LIVECHAT_MODULE_IMCONNECTOR_NOT_INSTALLED_MSGVER_1'));
 			if(!Loader::includeModule('imopenlines'))
 				ShowError(Loc::getMessage('IMCONNECTOR_COMPONENT_LIVECHAT_MODULE_IMOPENLINES_NOT_INSTALLED'));
 
@@ -46,7 +46,7 @@ class ImConnectorLiveChat extends \CBitrixComponent
 
 	protected function initialization()
 	{
-		$this->status = Status::getInstance($this->connector, $this->arParams['LINE']);
+		$this->status = Status::getInstance($this->connector, (int)$this->arParams['LINE']);
 
 		$this->arResult['STATUS'] = $this->status->isStatus();
 		$this->arResult['ACTIVE_STATUS'] = $this->status->getActive();
@@ -156,7 +156,7 @@ class ImConnectorLiveChat extends \CBitrixComponent
 					{
 						$liveChatManager->delete();
 
-						Status::delete($this->connector, $this->arParams['LINE']);
+						Status::delete($this->connector, (int)$this->arParams['LINE']);
 						$this->arResult["STATUS"] = false;
 						$this->arResult["ACTIVE_STATUS"] = false;
 						$this->arResult["CONNECTION_STATUS"] = false;

@@ -12,6 +12,8 @@ use Bitrix\Crm\Integration\StorageManager;
 use Bitrix\Crm\Integration\StorageType;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\ItemIdentifier;
+use Bitrix\Crm\Kanban\Entity\Deadlines\DeadlinesStageManager;
+use Bitrix\Crm\Kanban\ViewMode;
 use Bitrix\Crm\RelationIdentifier;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\EditorAdapter;
@@ -994,5 +996,29 @@ class CrmQuoteDetailsComponent extends FactoryBased
 				return;
 			}
 		}
+	}
+
+	public function saveAction(array $data): ?array
+	{
+		$data = $this->calculateDefaultDataValues($data);
+		return parent::saveAction($data);
+	}
+
+
+	private function calculateDefaultDataValues(array $data): array
+	{
+		$deadlineStage = $data['DEADLINE_STAGE'] ?? '';
+		$viewMode = $data['VIEW_MODE'] ?? '';
+		$isNew = (int) $this->arParams['ENTITY_ID'] === 0;
+		if (
+			$isNew &&
+			$viewMode === ViewMode::MODE_DEADLINES &&
+			!empty($deadlineStage)
+		)
+		{
+			$data = (new DeadlinesStageManager($this->getEntityTypeID()))
+				->fillDeadlinesDefaultValues($data, $deadlineStage);
+		}
+		return $data;
 	}
 }

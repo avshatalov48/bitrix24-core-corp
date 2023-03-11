@@ -55,19 +55,18 @@ export class Backlog extends Entity
 	{
 		this.header = new Header(backlog);
 
-		this.header.subscribe(
-			'epicClick',
-			(baseEvent: BaseEvent) => this.emit('openAddEpicForm', baseEvent.getData())
-		);
+		this.header.subscribe('epicClick', (baseEvent: BaseEvent) => {
+			this.emit('openAddEpicForm', baseEvent.getTarget())
+		});
 
-		this.header.subscribe('taskClick', () => {
+		this.header.subscribe('taskClick', (baseEvent: BaseEvent) => {
 			if (this.mandatoryExists)
 			{
 				this.emit('openAddTaskForm');
 			}
 			else
 			{
-				this.emit('showInput');
+				this.emit('showInput', baseEvent.getTarget());
 			}
 		});
 	}

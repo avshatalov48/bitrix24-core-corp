@@ -26,6 +26,11 @@ jn.define('crm/selector/entity/company', (require, exports, module) => {
 			return BX.message('SELECTOR_COMPONENT_START_TYPING_TO_SEARCH_COMPANY2');
 		}
 
+		static getStartTypingWithCreationText()
+		{
+			return BX.message('SELECTOR_COMPONENT_START_TYPING_TO_CREATE_COMPANY');
+		}
+
 		static getSearchPlaceholderWithCreation()
 		{
 			return BX.message('SELECTOR_COMPONENT_SEARCH_PLACEHOLDER_COMPANY');

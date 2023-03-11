@@ -50,7 +50,8 @@ jn.define('crm/product-grid/services/product-wizard', (require, exports, module)
 					backdrop: {
 						horizontalSwipeAllowed: false,
 						bounceEnable: true,
-						showOnTop: true
+						showOnTop: true,
+						navigationBarColor: '#eef2f4',
 					},
 				}
 			});

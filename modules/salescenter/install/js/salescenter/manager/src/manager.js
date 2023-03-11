@@ -519,13 +519,15 @@ export class Manager
 	{
 		return new Promise((resolve) =>
 		{
-			if(Manager.connectedSiteId > 0)
+			const siteId = Manager.connectedSiteId;
+			if (siteId > 0)
 			{
 				BX.loadExt('landing.master').then(() =>
 				{
+					BX.Landing.Env.getInstance().setOptions({site_id: siteId});
 					BX.Landing.UI.Panel.URLList
 						.getInstance()
-						.show('landing', {siteId: Manager.connectedSiteId})
+						.show('landing', {siteId: siteId})
 						.then((result) =>
 						{
 							Manager.addPage({

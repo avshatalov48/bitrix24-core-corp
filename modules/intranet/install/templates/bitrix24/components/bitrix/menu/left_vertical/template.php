@@ -47,7 +47,7 @@ $groupPopupExists = false;
 			else
 			{
 				?><ul class="menu-items"><?
-					?><li class="menu-items-empty-li" id="left-menu-empty-item" style="height: 3px;"></li><?
+					?><li class="menu-items-empty-li" id="left-menu-empty-item"></li><?
 			}
 
 			if (isset($arResult["ITEMS"][$status]) && is_array($arResult["ITEMS"][$status]))
@@ -131,7 +131,7 @@ $groupPopupExists = false;
 						$itemClass .= " menu-item-live-feed";
 					}
 
-					if ($item['IS_GROUP'] === 'Y')
+					if (isset($item['IS_GROUP']) && $item['IS_GROUP'] === 'Y')
 					{
 						$itemClass .= " menu-item-group";
 					}
@@ -154,11 +154,11 @@ $groupPopupExists = false;
 					?><li id="bx_left_menu_<?=$itemId?>"
 						data-status="<?=$status?>"
 						data-id="<?=$item["PARAMS"]["menu_item_id"]?>"
-						data-role="<?=$item['IS_GROUP'] === 'Y' ? 'group' : 'item'?>"
-						<? if ($item['IS_GROUP'] === 'Y'):?>
+						data-role="<?= isset($item['IS_GROUP']) && $item['IS_GROUP'] === 'Y' ? 'group' : 'item' ?>"
+						<? if (isset($item['IS_GROUP']) && $item['IS_GROUP'] === 'Y'):?>
 							data-collapse-mode="<?=$item['PARAMS']['collapse_mode']?>"
 						<?endif ?>
-						data-storage="<?=$item['PARAMS']['storage']?>"
+						data-storage="<?= $item['PARAMS']['storage'] ?? '' ?>"
 						data-counter-id="<?=$counterId?>"
 						data-link="<?=$curLink?>"
 						data-all-links="<?=$addLinks?>"
@@ -225,7 +225,7 @@ $groupPopupExists = false;
 									</span>
 							<?
 							}
-							if ($item['IS_GROUP'] === 'Y'):?>
+							if (isset($item['IS_GROUP']) && $item['IS_GROUP'] === 'Y'):?>
 								<span class="menu-item-link-arrow"></span>
 							<?endif ?>
 						</a><?
@@ -240,7 +240,7 @@ $groupPopupExists = false;
 						?></span><?
 					?></li><?
 
-					if ($item['IS_GROUP'] === 'Y')
+					if (isset($item['IS_GROUP']) && $item['IS_GROUP'] === 'Y')
 					{
 						$chain[] = $item['ID'];
 
@@ -289,12 +289,8 @@ $groupPopupExists = false;
 			?></span>
 			<?endif;?>
 		</div>
-		<div class="menu-item-separator --pointer-events">
-			<div class="menu-item-sepor-text-line"></div>
-		</div>
 
 		<div class="menu-extra-btn-box">
-
 			<div class="menu-settings-save-btn"><?=Loc::getMessage("MENU_EDIT_READY_FULL")?></div>
 
 			<div class="menu-help-btn">
@@ -402,7 +398,7 @@ $arJSParams = array(
 	"isExtranet" => $arResult["IS_EXTRANET"] ? "Y" : "N",
 	"isCollapsedMode" => CUserOptions::GetOption("intranet", "left_menu_collapsed") === "Y",
 	"isCustomPresetAvailable" => $arResult["IS_CUSTOM_PRESET_AVAILABLE"] ? "Y" : "N",
-	"customPresetExists" => $arResult["CUSTOM_PRESET_EXISTS"] ? "Y" : "N",
+	"customPresetExists" => !empty($arResult["CUSTOM_PRESET_EXISTS"]) ? "Y" : "N",
 	'workgroupsCounterData' => $arResult["WORKGROUP_COUNTER_DATA"],
 );
 ?>

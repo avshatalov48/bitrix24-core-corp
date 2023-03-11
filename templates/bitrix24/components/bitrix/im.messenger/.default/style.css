@@ -55,18 +55,14 @@
 }
 
 .bx-im-informer {
-	height: 48px;
-	width: 65px;
-	padding-top: 5px;
-	margin-bottom: 5px;
-	position: relative;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 6px 0;
 	cursor: pointer;
 }
 
 .bx-im-informer-ol {
-	padding-top: 0;
-	margin-top: -5px;
-	padding-bottom: 2px;
 	cursor: pointer;
 }
 
@@ -79,12 +75,10 @@
 }
 
 .bx-im-informer-icon {
-	border-radius: 50%;
+	position: relative;
 	width: 34px;
 	height: 34px;
-	position: relative;
-	top: 5px;
-	left: 16px;
+	border-radius: 50%;
 }
 
 .bitrix24-light-theme .bx-im-informer-icon {
@@ -100,38 +94,53 @@
 }
 
 .bx-im-informer-ol-icon {
-	border-radius: 50%;
+	position: relative;
 	height: 34px;
 	width: 34px;
-	position: relative;
-	top: 9px;
-	left: 16px;
+	border-radius: 50%;
 }
 
 .bitrix24-light-theme .bx-im-informer-ol-icon {
-	background: rgba(255, 255, 255, 0.2) url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2218%22%20height%3D%2217%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M3.422%2010.986A6.4%206.4%200%200%201%204.738%203.89c1.843-1.859%204.683-2.418%207.165-1.41%202.927%201.21%204.618%204.234%204.058%207.256-.56%203.02-3.22%205.217-6.381%205.268-2.682-.008-5.116-1.596-6.158-4.018zm13.004%202.51c2.553-3.502%201.985-8.35-1.325-11.288C11.81-.705%206.812-.707%203.61%202.204.394%205.138-.025%209.986%202.637%2013.49c2.632%203.492%207.542%204.476%2011.293%202.266.034.025.07.045.11.062l2.333.611a.58.58%200%200%200%20.557-.148.563.563%200%200%200%20.142-.553l-.645-2.232zm-4.614-3.595a.496.496%200%200%200-.5-.144.523.523%200%200%200-.358.391.585.585%200%200%200%20.144.534l.264.279H6.58a.424.424%200%200%200-.407.444l.004.217a.44.44%200%200%200%20.421.444h4.785l-.255.279a.573.573%200%200%200-.127.534.545.545%200%200%200%20.37.391.485.485%200%200%200%20.496-.144l1.12-1.22a.583.583%200%200%200-.012-.782L11.812%209.9zM7.754%207.01a.584.584%200%200%200-.012-.781l-.264-.279h4.786a.422.422%200%200%200%20.407-.444l-.004-.215a.439.439%200%200%200-.421-.445H7.46l.256-.279a.58.58%200%200%200-.015-.778.494.494%200%200%200-.725-.003L5.857%205.01a.582.582%200%200%200%20.012.78l1.16%201.22c.092.102.226.16.365.16a.48.48%200%200%200%20.36-.16zm-1.06.926a.424.424%200%200%200-.408.445l.003.22a.44.44%200%200%200%20.422.444h5.784a.423.423%200%200%200%20.408-.445l-.004-.216a.44.44%200%200%200-.421-.448H6.694z%22%20fill%3D%22%23FFF%22%20fill-rule%3D%22evenodd%22/%3E%3C/svg%3E') no-repeat 6px center;
+	position: relative;
+	background: rgba(255, 255, 255, 0.2);
 	opacity: .9;
-	background-position: center center;
-    background-size: 20px;
+}
+
+.bitrix24-light-theme .bx-im-informer-ol-icon:before,
+.bitrix24-dark-theme .bx-im-informer-ol-icon:before,
+.bitrix24-default-theme .bx-im-informer-ol-icon:before,
+.bx-im-bar-default .bx-im-informer-ol-icon:before {
+	content: '';
+	position: absolute;
+	top: 7.74px;
+	left: 7.24px;
+	width: 20px;
+	height: 19px;
+	background: url(images/im-messenger--icon-ol-white.svg) center center no-repeat;
 }
 
 .bitrix24-dark-theme .bx-im-informer-ol-icon,
 .bitrix24-default-theme .bx-im-informer-ol-icon,
 .bx-im-bar-default .bx-im-informer-ol-icon {
-	background: rgba(82, 92, 105, .11) url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2218%22%20height%3D%2217%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M3.422%2010.986A6.4%206.4%200%200%201%204.738%203.89c1.843-1.859%204.683-2.418%207.165-1.41%202.927%201.21%204.618%204.234%204.058%207.256-.56%203.02-3.22%205.217-6.381%205.268-2.682-.008-5.116-1.596-6.158-4.018zm13.004%202.51c2.553-3.502%201.985-8.35-1.325-11.288C11.81-.705%206.812-.707%203.61%202.204.394%205.138-.025%209.986%202.637%2013.49c2.632%203.492%207.542%204.476%2011.293%202.266.034.025.07.045.11.062l2.333.611a.58.58%200%200%200%20.557-.148.563.563%200%200%200%20.142-.553l-.645-2.232zm-4.614-3.595a.496.496%200%200%200-.5-.144.523.523%200%200%200-.358.391.585.585%200%200%200%20.144.534l.264.279H6.58a.424.424%200%200%200-.407.444l.004.217a.44.44%200%200%200%20.421.444h4.785l-.255.279a.573.573%200%200%200-.127.534.545.545%200%200%200%20.37.391.485.485%200%200%200%20.496-.144l1.12-1.22a.583.583%200%200%200-.012-.782L11.812%209.9zM7.754%207.01a.584.584%200%200%200-.012-.781l-.264-.279h4.786a.422.422%200%200%200%20.407-.444l-.004-.215a.439.439%200%200%200-.421-.445H7.46l.256-.279a.58.58%200%200%200-.015-.778.494.494%200%200%200-.725-.003L5.857%205.01a.582.582%200%200%200%20.012.78l1.16%201.22c.092.102.226.16.365.16a.48.48%200%200%200%20.36-.16zm-1.06.926a.424.424%200%200%200-.408.445l.003.22a.44.44%200%200%200%20.422.444h5.784a.423.423%200%200%200%20.408-.445l-.004-.216a.44.44%200%200%200-.421-.448H6.694z%22%20fill%3D%22%23525C69%22%20fill-rule%3D%22evenodd%22/%3E%3C/svg%3E') no-repeat 6px center;
+	position: relative;
+	background: rgba(82, 92, 105, .11);
 	opacity: .9;
-	background-position: center center;
-    background-size: 20px;
+}
+
+.bitrix24-dark-theme .bx-im-informer-ol-icon:before,
+.bitrix24-default-theme .bx-im-informer-ol-icon:before,
+.bx-im-bar-default .bx-im-informer-ol-icon:before {
+	background-image: url(images/im-messenger--icon-ol-dark.svg);
 }
 
 .bx-im-informer-num {
+	position: absolute;
+	top: 0;
+	right: -4px;
+	text-align: center;
 	color: #fff;
 	font: 10px/13px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
 	font-weight: var(--ui-font-weight-bold, 700);
-	position: absolute;
-	top: 10px;
-	right: 8px;
-	text-align: center;
 	z-index: 2;
 	opacity: .9;
 }
@@ -147,22 +156,18 @@
 
 .bx-im-search {
 	cursor: pointer;
-	height: 40px;
+	height: 37px;
 	margin-bottom: 5px;
-	margin-top: -5px;
 	position: relative;
 }
 
 .bx-im-search:before {
 	content: '';
-	width: 18px;
-	height: 18px;
+	width: 17px;
+	height: 17px;
 	position: absolute;
-	top: 50%;
-	left: 50%;
-	-webkit-transform: translate(-50%, -50%);
-	-ms-transform: translate(-50%, -50%);
-	transform: translate(-50%, -50%);
+	top: 11px;
+	left: 25px;
 }
 
 .bitrix24-light-theme .bx-im-search:before {
@@ -211,24 +216,23 @@
 }
 
 .bx-im-bar-with-ol .bx-im-users-wrap {
-	top: 213px;
+	top: 219px;
 }
 
 .bx-im-border-b {
+	position: relative;
 	border-bottom: 1px solid transparent;
 }
 
 .bx-im-border-b:after {
-	content: "";
+	content: '';
 	display: block;
-
 	position: absolute;
 	left: 11px;
 	right: 11px;
 	bottom: -1px;
 	height: 1px;
 }
-
 
 .bitrix24-light-theme .bx-im-border-b:after {
 	background-color: rgba(255, 255, 255, .1);
@@ -821,4 +825,8 @@
 
 .bitrix24-light-theme .bx-im-bar .bx-messenger-cl-item-empty {
 	color: rgba(255,255,255,.7);
+}
+
+.bx-im-helper-block {
+	padding: 8px 0;
 }

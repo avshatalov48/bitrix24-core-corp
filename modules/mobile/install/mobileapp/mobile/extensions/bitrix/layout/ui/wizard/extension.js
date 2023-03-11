@@ -160,7 +160,7 @@
 								return View(
 									{
 										style: {
-											backgroundColor: '#F4F6F7',
+											backgroundColor: '#eef2f4',
 										},
 									},
 									step.createLayout({
@@ -267,7 +267,7 @@
 		{
 			return View({
 					style: {
-						backgroundColor: '#F4F6F7',
+						backgroundColor: '#eef2f4',
 					},
 				},
 				this.getCurrentStepId() ? this.getCurrentStep().createLayout() : null,

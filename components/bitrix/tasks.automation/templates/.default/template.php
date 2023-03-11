@@ -30,7 +30,7 @@ global $APPLICATION;
 \CUtil::initJSCore('tasks_integration_socialnetwork');
 ?>
 <div class="tasks-automation">
-	<? $APPLICATION->IncludeComponent('bitrix:bizproc.automation', '', [
+	<?php $APPLICATION->IncludeComponent('bitrix:bizproc.automation', '', [
 			'DOCUMENT_TYPE' => ['tasks', \Bitrix\Tasks\Integration\Bizproc\Document\Task::class, $arResult['DOCUMENT_TYPE']],
 			'DOCUMENT_ID' => $arResult['TASK_ID'] ?: null,
 			'TITLE_VIEW' => $titleView,
@@ -42,12 +42,15 @@ global $APPLICATION;
 				'BIZPROC_AUTOMATION_CMP_ROBOT_HELP' => GetMessage('TASKS_AUTOMATION_CMP_ROBOT_HELP_TIP'),
 				'BIZPROC_AUTOMATION_CMP_ROBOT_HELP_ARTICLE_ID' => '8233939',
 			],
+			'IS_TEMPLATES_SCHEME_SUPPORTED' => true,
 			'CATEGORY_SELECTOR' => ['TEXT' => $arResult['GROUPS_SELECTOR']['CAPTION']],
 	], $this); ?>
 </div>
 <script>
 	BX.ready(function()
 	{
+		BX.message(<?= \Bitrix\Main\Web\Json::encode(\Bitrix\Main\Localization\Loc::loadLanguageFile(__file__)) ?>);
+
 		var viewType = '<?=CUtil::JSEscape($arResult['VIEW_TYPE'])?>';
 
 		var selectorNode = document.querySelector('[data-role="category-selector"]');

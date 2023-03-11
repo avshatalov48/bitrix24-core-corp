@@ -2,6 +2,7 @@
 
 namespace Bitrix\Tasks\Scrum\Controllers;
 
+use Bitrix\Main\Context;
 use Bitrix\Main\Engine\Action;
 use Bitrix\Main\Engine\Controller;
 use Bitrix\Main\Error;
@@ -301,6 +302,14 @@ class Sprint extends Controller
 			];
 		}
 
+		$culture = Context::getCurrent()->getCulture();
+
+		$sprintData['culture'] = [
+			'dayMonthFormat' => $culture->getDayMonthFormat(),
+			'longDateFormat' => $culture->getLongDateFormat(),
+			'shortTimeFormat' => $culture->getShortTimeFormat(),
+		];
+
 		return $sprintData;
 	}
 
@@ -318,7 +327,9 @@ class Sprint extends Controller
 
 		$groupId = (is_numeric($post['groupId']) ? (int) $post['groupId'] : 0);
 
-		if (!$this->canStartSprint($userId, $groupId))
+		$sprintService = new SprintService();
+
+		if (!$sprintService->canStartSprint($userId, $groupId))
 		{
 			$this->errorCollection->setError(
 				new Error(
@@ -329,8 +340,6 @@ class Sprint extends Controller
 
 			return null;
 		}
-
-		$sprintService = new SprintService();
 
 		$sprintId = (is_numeric($post['sprintId']) ? (int) $post['sprintId'] : 0);
 		$name = (is_string($post['name']) ? $post['name'] : '');
@@ -365,7 +374,11 @@ class Sprint extends Controller
 		{
 			$sprintInfo->setSprintGoal($post[$sprintInfo->getSprintGoalKey()]);
 		}
+		$sprintInfo->setSprintStagesRecoveryStatusToWaiting();
+
 		$sprint->setInfo($sprintInfo);
+
+		$sprintService->changeSprint($sprint);
 
 		$kanbanService = new KanbanService();
 		$taskService = new TaskService($userId);
@@ -410,7 +423,9 @@ class Sprint extends Controller
 
 		$groupId = (is_numeric($post['groupId']) ? (int) $post['groupId'] : 0);
 
-		if (!$this->canCompleteSprint($userId, $groupId))
+		$sprintService = new SprintService();
+
+		if (!$sprintService->canCompleteSprint($userId, $groupId))
 		{
 			$this->errorCollection->setError(
 				new Error(
@@ -425,7 +440,7 @@ class Sprint extends Controller
 		$isTargetBacklog = ($direction === 'backlog');
 		$targetSprintId = (is_numeric($direction) ? (int) $direction : 0);
 
-		$sprintService = new SprintService();
+
 		$entityService = new EntityService();
 		$kanbanService = new KanbanService();
 		$itemService = new ItemService();
@@ -516,38 +531,6 @@ class Sprint extends Controller
 	private function canReadGroupTasks(int $userId, int $groupId): bool
 	{
 		return Group::canReadGroupTasks($userId, $groupId);
-	}
-
-	private function canStartSprint(int $userId, int $groupId): bool
-	{
-		$userRoleInGroup = \CSocNetUserToGroup::getUserRole($userId, $groupId);
-
-		if (
-			$userRoleInGroup == SONET_ROLES_MODERATOR
-			|| $userRoleInGroup == SONET_ROLES_OWNER
-			|| \CSocNetUser::isCurrentUserModuleAdmin()
-		)
-		{
-			return true;
-		}
-
-		return false;
-	}
-
-	private function canCompleteSprint(int $userId, int $groupId): bool
-	{
-		$userRoleInGroup = \CSocNetUserToGroup::getUserRole($userId, $groupId);
-
-		if (
-			$userRoleInGroup == SONET_ROLES_MODERATOR
-			|| $userRoleInGroup == SONET_ROLES_OWNER
-			|| \CSocNetUser::isCurrentUserModuleAdmin()
-		)
-		{
-			return true;
-		}
-
-		return false;
 	}
 
 	private function getEpicData(int $epicId): array

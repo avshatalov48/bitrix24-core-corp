@@ -98,7 +98,7 @@ class OpenLine extends Activity
 			;
 		}
 
-		$clientBlock = $this->getClientContentBlock(self::BLOCK_WITH_FIXED_TITLE);
+		$clientBlock = $this->buildClientBlock(self::BLOCK_WITH_FIXED_TITLE);
 		if (isset($clientBlock))
 		{
 			$result['client'] = $clientBlock;
@@ -134,7 +134,7 @@ class OpenLine extends Activity
 			}
 		}
 
-		$clientMarkBlock = $this->getClientMarkBlock();
+		$clientMarkBlock = $this->buildClientMarkBlock();
 		if (isset($clientMarkBlock))
 		{
 			$result['clientMark'] = $clientMarkBlock;
@@ -207,7 +207,7 @@ class OpenLine extends Activity
 		;
 	}
 
-	private function getClientMarkBlock():  ?ContentBlock
+	private function buildClientMarkBlock(): ?ContentBlock
 	{
 		$sessionData = $this->getSessionData();
 		if (empty($sessionData))

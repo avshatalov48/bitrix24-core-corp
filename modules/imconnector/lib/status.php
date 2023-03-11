@@ -14,31 +14,146 @@ use Bitrix\ImConnector\Model\StatusConnectorsTable;
  */
 class Status
 {
-	/** @var array<string, Status[]> */
-	private static $instance = [];
+	/** @var array<string, array<int, self>> */
+	private static array $instance = [];
+
 	/** @var array<int, array> */
-	private static $rowsCacheTable = [];
+	private static array $rowsCacheTable = [];
 
-	private static $flagSaveStatusEvent = false;
-	private static $flagGenerationUpdateEvent = false;
-	private $flagUpdated = false;
+	private static bool $flagSaveStatusEvent = false;
+	private static bool $flagGenerationUpdateEvent = false;
+	private bool $flagUpdated = false;
 
-	private $active = 'N';
-	private $connection = 'N';
-	private $register = 'N';
-	private $error = 'N';
-	private $id;
-	private $connector;
-	private $line;
-	private $data = false;
+	private bool $active = false;
+	private bool $connection = false;
+	private bool $register = false;
+	private bool $error = false;
+	private int $id;
+	private string $connector;
+	private int $line;
+	private $data = null;
+
+
+	/**
+	 * Status constructor.
+	 *
+	 * @param string $connector
+	 * @param int $line
+	 */
+	private function __construct(string $connector, int $line)
+	{
+		$this->connector = $connector;
+		$this->line = $line;
+		$this->flagUpdated = false;
+		$status = null;
+
+		$cache = Cache::createInstance();
+		if ($cache->initCache(Library::CACHE_TIME_STATUS, Connector::getCacheIdConnector($line, $connector), Library::CACHE_DIR_STATUS))
+		{
+			$status = $cache->getVars();
+		}
+		else
+		{
+			if (empty(self::$rowsCacheTable))
+			{
+				self::$rowsCacheTable = StatusConnectorsTable::getList()->fetchAll();
+			}
+
+			foreach(self::$rowsCacheTable as $row)
+			{
+				if ($row['CONNECTOR'] == $connector && $row['LINE'] == $line)
+				{
+					$status = $row;
+				}
+
+				if ($cache->startDataCache(Library::CACHE_TIME_STATUS, Connector::getCacheIdConnector($row['LINE'], $row['CONNECTOR']), Library::CACHE_DIR_STATUS))
+				{
+					$cache->endDataCache($row);
+				}
+			}
+		}
+
+		if(!empty($status))
+		{
+			$this->id = (int)$status['ID'];
+			$this->active = ($status['ACTIVE'] == 'Y');
+			$this->connection = ($status['CONNECTION'] == 'Y');
+			$this->register = ($status['REGISTER'] == 'Y');
+			$this->error = ($status['ERROR'] == 'Y');
+			$this->data = $status['DATA'];
+		}
+		else
+		{
+			$add = StatusConnectorsTable::add([
+				'LINE' => $line,
+				'CONNECTOR' => $connector,
+			]);
+
+			if ($add->isSuccess())
+			{
+				$this->id = (int)$add->getId();
+			}
+
+			$dataEvent = [
+				'connector' => $connector,
+				'line' => $line
+			];
+			$event = new Event(Library::MODULE_ID, Library::EVENT_STATUS_ADD, $dataEvent);
+			$event->send();
+		}
+	}
+
+	public function __clone()
+	{
+		throw new \Bitrix\Main\NotImplementedException();
+	}
+
+	public function __wakeup()
+	{
+		throw new \Bitrix\Main\NotImplementedException();
+	}
+
+	/**
+	 * Receiving a state object of a specific connector lines.
+	 *
+	 * @param string $connector
+	 * @param int $line
+	 * @return self
+	 */
+	public static function getInstance(string $connector, int $line): self
+	{
+		$connector = Connector::getConnectorRealId($connector);
+
+		if (empty(self::$instance[$connector][$line]) || !(self::$instance[$connector][$line] instanceof Status))
+		{
+			self::$instance[$connector][$line] = new self($connector, $line);
+		}
+
+		return self::$instance[$connector][$line];
+	}
+
+	/**
+	 * Sets a new state object for specific connector line.
+	 *
+	 * @param string $connector
+	 * @param int $line
+	 * @param self $status
+	 *
+	 * @return void
+	 */
+	public static function setInstance(string $connector, int $line, self $status): void
+	{
+		$connector = Connector::getConnectorRealId($connector);
+		self::$instance[$connector][$line] = $status;
+	}
 
 	/**
 	 * Receiving a state object of a specific connector all lines.
 	 *
 	 * @param string $connector
-	 * @return self[]|[]
+	 * @return array<int, Status>
 	 */
-	public static function getInstanceAllLine($connector): array
+	public static function getInstanceAllLine(string $connector): array
 	{
 		$connector = Connector::getConnectorRealId($connector);
 
@@ -55,7 +170,7 @@ class Status
 		{
 			if (empty(self::$instance[$connector][$row['LINE']]) )
 			{
-				self::$instance[$connector][$row['LINE']] = new self($connector, $row['LINE']);
+				self::$instance[$connector][$row['LINE']] = new self($connector, (int)$row['LINE']);
 			}
 		}
 
@@ -72,7 +187,7 @@ class Status
 	/**
 	 * Receiving the status of all connectors and lines.
 	 *
-	 * @return array
+	 * @return array<string, array<int, Status>>
 	 */
 	public static function getInstanceAll(): array
 	{
@@ -82,15 +197,15 @@ class Status
 			]
 		]);
 
-		while($row = $raw->fetch())
+		while ($row = $raw->fetch())
 		{
 			if (empty(self::$instance[$row['CONNECTOR']][$row['LINE']]) )
 			{
-				self::$instance[$row['CONNECTOR']][$row['LINE']] = new self($row['CONNECTOR'], $row['LINE']);
+				self::$instance[$row['CONNECTOR']][$row['LINE']] = new self($row['CONNECTOR'], (int)$row['LINE']);
 			}
 		}
 
-		if(empty(self::$instance))
+		if (empty(self::$instance))
 		{
 			return [];
 		}
@@ -101,54 +216,22 @@ class Status
 	}
 
 	/**
-	 * Receiving a state object of a specific connector lines.
-	 *
-	 * @param string $connector
-	 * @param string $line
-	 * @return self
-	 */
-	public static function getInstance($connector, $line = '#empty#'): self
-	{
-		$connector = Connector::getConnectorRealId($connector);
-
-		if (empty(self::$instance[$connector][$line]) || !(self::$instance[$connector][$line] instanceof Status))
-		{
-			self::$instance[$connector][$line] = new self($connector, $line);
-		}
-
-		return self::$instance[$connector][$line];
-	}
-
-	/**
-	 * Sets a new state object for specific connector line.
-	 *
-	 * @param string $connector
-	 * @param string $line
-	 * @param self $status
-	 *
-	 * @return void
-	 */
-	public static function setInstance($connector, $line, self $status): void
-	{
-		$connector = Connector::getConnectorRealId($connector);
-		self::$instance[$connector][$line] = $status;
-	}
-
-	/**
 	 * Removal of information about the all connector.
 	 *
-	 * @param string $line ID.
+	 * @param int $line
 	 * @return bool
 	 */
-	public static function deleteAll($line = '#empty#')
+	public static function deleteAll(int $line): bool
 	{
-		if (!empty(self::$instance) )
+		if (!empty(self::$instance))
 		{
-			foreach (self::$instance as $connector)
+			foreach (self::$instance as $connector => &$lines)
 			{
-				unset(self::$instance[$connector][$line]);
+				unset($lines[$line]);
 			}
 		}
+
+		$result = true;
 
 		$raw = StatusConnectorsTable::getList([
 			'select' => ['ID', 'CONNECTOR'],
@@ -157,9 +240,8 @@ class Status
 			]
 		]);
 
-		while($row = $raw->fetch())
+		while ($row = $raw->fetch())
 		{
-			//Event
 			$dataEvent = [
 				'connector' => $row['CONNECTOR'],
 				'line' => $line,
@@ -167,33 +249,35 @@ class Status
 			$event = new Event(Library::MODULE_ID, Library::EVENT_STATUS_DELETE, $dataEvent);
 			$event->send();
 
-			$delete = StatusConnectorsTable::delete($row['ID']);
-			self::cleanCache($row['CONNECTOR'], $line);
+			$delete = StatusConnectorsTable::delete((int)$row['ID']);
+			if ($delete->isSuccess())
+			{
+				self::cleanCache($row['CONNECTOR'], $line);
+			}
+			else
+			{
+				$result = false;
+			}
 		}
 
-		if (!empty($delete) && is_object($delete) && $delete->isSuccess())
-		{
-			return true;
-		}
-		else
-		{
-			return false;
-		}
+		return $result;
 	}
 
 	/**
 	 * Removal of information about the connector.
 	 *
 	 * @param string $connector ID connector.
-	 * @param string $line ID open line.
+	 * @param int $line ID open line.
 	 * @return bool
 	 */
-	public static function delete($connector, $line = '#empty#')
+	public static function delete(string $connector, int $line): bool
 	{
-		if (!empty(self::$instance[$connector][$line]))
+		if (!empty(self::$instance[$connector]))
 		{
 			unset(self::$instance[$connector][$line]);
 		}
+
+		$result = true;
 
 		$raw = StatusConnectorsTable::getList([
 			'select' => ['ID'],
@@ -202,13 +286,19 @@ class Status
 				'=CONNECTOR' => $connector
 			]
 		]);
-		while($row = $raw->fetch())
+		while ($row = $raw->fetch())
 		{
 			$delete = StatusConnectorsTable::delete($row['ID']);
-			self::cleanCache($connector, $line);
+			if ($delete->isSuccess())
+			{
+				self::cleanCache($connector, $line);
+			}
+			else
+			{
+				$result = false;
+			}
 		}
 
-		//Event
 		$dataEvent = [
 			'connector' => $connector,
 			'line' => $line,
@@ -216,28 +306,21 @@ class Status
 		$event = new Event(Library::MODULE_ID, Library::EVENT_STATUS_DELETE, $dataEvent);
 		$event->send();
 
-		if (!empty($delete) && is_object($delete) && $delete->isSuccess())
-		{
-			return true;
-		}
-		else
-		{
-			return false;
-		}
+		return $result;
 	}
 
 	/**
 	 * Removal of all lines for the connector, except one
 	 *
 	 * @param string $connector ID connector.
-	 * @param int $lineToKeep ID open line to be keeped.
+	 * @param int $lineToKeep ID open line to be kipped.
 	 * @return bool
 	 */
-	public static function deleteLinesExcept(string $connector, int $lineToKeep)
+	public static function deleteLinesExcept(string $connector, int $lineToKeep): bool
 	{
 		if (!empty(self::$instance[$connector]) && is_array(self::$instance[$connector]))
 		{
-			foreach (self::$instance[$connector] as $lineId => $_)
+			foreach (self::$instance[$connector] as $lineId => $lines)
 			{
 				if ($lineId != $lineToKeep)
 				{
@@ -246,6 +329,8 @@ class Status
 			}
 		}
 
+		$result = true;
+
 		$raw = StatusConnectorsTable::getList([
 			'select' => ['ID', 'LINE'],
 			'filter' => [
@@ -253,12 +338,18 @@ class Status
 				'=CONNECTOR' => $connector
 			]
 		]);
-		while($row = $raw->fetch())
+		while ($row = $raw->fetch())
 		{
 			$delete = StatusConnectorsTable::delete($row['ID']);
-			self::cleanCache($connector, $row['LINE']);
+			if ($delete->isSuccess())
+			{
+				self::cleanCache($connector, (int)$row['LINE']);
+			}
+			else
+			{
+				$result = false;
+			}
 
-			//Event
 			$dataEvent = [
 				'connector' => $connector,
 				'line' => $row['LINE'],
@@ -267,18 +358,11 @@ class Status
 			$event->send();
 		}
 
-		if (!empty($delete) && is_object($delete) && $delete->isSuccess())
-		{
-			return true;
-		}
-		else
-		{
-			return false;
-		}
+		return $result;
 	}
 
 	/**
-	 * Add a handler to the save changes.
+	 * Adds a handler to the save changes.
 	 * @returm void
 	 */
 	public static function addEventHandlerSave(): void
@@ -296,7 +380,7 @@ class Status
 	}
 
 	/**
-	 * Adding a handler to generate change events connector.
+	 * Adds a handler to generate change events connector.
 	 * @returm void
 	 */
 	public static function addEventHandlerGenerationUpdateEvent(): void
@@ -314,9 +398,10 @@ class Status
 	}
 
 	/**
-	 * A cache reset to all connector.
+	 * Resets cache to all connectors.
+	 * @return void
 	 */
-	public static function cleanCacheAll()
+	public static function cleanCacheAll(): void
 	{
 		$allConnector = self::getInstanceAll();
 
@@ -324,25 +409,26 @@ class Status
 		{
 			foreach ($item as $line => $status)
 			{
-				self::cleanCache($connector, $line);
+				self::cleanCache($connector, (int)$line);
 			}
 		}
 	}
 
 	/**
-	 * A cache reset to the specific connector.
+	 * Resets cache to the specific connector.
 	 * @param string $connector ID connector.
-	 * @param string $line ID line.
+	 * @param int $line ID line.
 	 * @returm void
 	 */
-	public static function cleanCache($connector, $line): void
+	public static function cleanCache(string $connector, int $line): void
 	{
 		$cache = Cache::createInstance();
 		$cache->clean(Connector::getCacheIdConnector($line, $connector), Library::CACHE_DIR_STATUS);
 	}
 
 	/**
-	 * Data is saved only when the script completes.
+	 * Saves status data at script complete.
+	 * @return void
 	 */
 	public static function save(): void
 	{
@@ -357,31 +443,20 @@ class Status
 					&& $connector->flagUpdated === true
 				)
 				{
-					$fields = [];
+					$fields = [
+						'ACTIVE' => $connector->active ? 'Y' : 'N',
+						'CONNECTION' => $connector->connection ? 'Y' : 'N',
+						'REGISTER' => $connector->register ? 'Y' : 'N',
+						'ERROR' => $connector->error ? 'Y' : 'N',
+					];
 
-					if (!empty($connector->active))
-					{
-						$fields['ACTIVE'] = $connector->active;
-					}
-					if (!empty($connector->connection))
-					{
-						$fields['CONNECTION'] = $connector->connection;
-					}
-					if (!empty($connector->register))
-					{
-						$fields['REGISTER'] = $connector->register;
-					}
-					if (!empty($connector->error))
-					{
-						$fields['ERROR'] = $connector->error;
-					}
-					if ($connector->data !== false)
+					if ($connector->data !== null)
 					{
 						$fields['DATA'] = $connector->data;
 					}
 
 					StatusConnectorsTable::update($connector->id, $fields);
-					self::cleanCache($currentConnector, $line);
+					self::cleanCache($currentConnector, (int)$line);
 				}
 			}
 		}
@@ -389,8 +464,9 @@ class Status
 
 	/**
 	 * The generation of update events connector
+	 * @return void
 	 */
-	public static function sendUpdateEvent()
+	public static function sendUpdateEvent(): void
 	{
 		foreach (self::$instance as $currentConnector => $listLine)
 		{
@@ -402,25 +478,14 @@ class Status
 					&& $connector->flagUpdated === true
 				)
 				{
-					$fields = [];
+					$fields = [
+						'ACTIVE' => $connector->active ? 'Y' : 'N',
+						'CONNECTION' => $connector->connection ? 'Y' : 'N',
+						'REGISTER' => $connector->register ? 'Y' : 'N',
+						'ERROR' => $connector->error ? 'Y' : 'N',
+					];
 
-					if (!empty($connector->active))
-					{
-						$fields['ACTIVE'] = $connector->active;
-					}
-					if (!empty($connector->connection))
-					{
-						$fields['CONNECTION'] = $connector->connection;
-					}
-					if (!empty($connector->register))
-					{
-						$fields['REGISTER'] = $connector->register;
-					}
-					if (!empty($connector->error))
-					{
-						$fields['ERROR'] = $connector->error;
-					}
-					if ($connector->data !== false)
+					if ($connector->data !== null)
 					{
 						$fields['DATA'] = $connector->data;
 					}
@@ -439,6 +504,9 @@ class Status
 		}
 	}
 
+	/**
+	 * @return void
+	 */
 	public static function cleanupDuplicates()
 	{
 		$statuses = [];
@@ -515,190 +583,99 @@ class Status
 		self::cleanCacheAll();
 	}
 
-	/**
-	 * Status constructor.
-	 *
-	 * @param $connector
-	 * @param string $line
-	 */
-	private function __construct($connector, $line = '#empty#')
-	{
-		$this->connector = $connector;
-		$this->line = $line;
-		$this->flagUpdated = false;
-		$status = null;
-
-		$cache = Cache::createInstance();
-		if ($cache->initCache(Library::CACHE_TIME_STATUS, Connector::getCacheIdConnector($line, $connector), Library::CACHE_DIR_STATUS))
-		{
-			$status = $cache->getVars();
-		}
-		else
-		{
-			if (empty(self::$rowsCacheTable))
-			{
-				self::$rowsCacheTable = StatusConnectorsTable::getList()->fetchAll();
-			}
-
-			foreach(self::$rowsCacheTable as $row)
-			{
-				if ($row['CONNECTOR'] == $connector && $row['LINE'] == $line)
-				{
-					$status = $row;
-				}
-
-				if ($cache->startDataCache(Library::CACHE_TIME_STATUS, Connector::getCacheIdConnector($row['LINE'], $row['CONNECTOR']), Library::CACHE_DIR_STATUS))
-				{
-					$cache->endDataCache($row);
-				}
-			}
-		}
-
-		if(!empty($status))
-		{
-			$this->id = $status['ID'];
-			$this->active = $status['ACTIVE'];
-			$this->connection = $status['CONNECTION'];
-			$this->register = $status['REGISTER'];
-			$this->error = $status['ERROR'];
-			$this->data = $status['DATA'];
-		}
-		else
-		{
-			$add = StatusConnectorsTable::add([
-				'LINE' => $line,
-				'CONNECTOR' => $connector,
-			]);
-
-			if ($add->isSuccess())
-			{
-				$this->id = $add->getId();
-			}
-
-			$dataEvent = [
-				'connector' => $connector,
-				'line' => $line
-			];
-			$event = new Event(Library::MODULE_ID, Library::EVENT_STATUS_ADD, $dataEvent);
-			$event->send();
-		}
-	}
-
-	private function __clone()
-	{
-	}
-	private function __wakeup()
-	{
-	}
+	//region: Setters
 
 	/**
-	 * To set the activity status of the connector.
+	 * Sets active state for connector.
 	 *
-	 * @param bool $status Status.
-	 * @returm void
+	 * @param bool $state Status.
+	 * @returm self
 	 */
-	public function setActive($status = false): void
+	public function setActive(bool $state): self
 	{
-		if ($this->active !== $status)
+		if ($this->active != $state)
 		{
 			$this->flagUpdated = true;
 			self::addEventHandlerGenerationUpdateEvent();
 			self::addEventHandlerSave();
 			self::cleanCache($this->connector, $this->line);
 
-			if(empty($status))
-			{
-				$this->active = 'N';
-			}
-			else
-			{
-				$this->active = 'Y';
-			}
+			$this->active = $state;
 		}
+
+		return $this;
 	}
 
 	/**
-	 * Set the connection state of the connector.
+	 * Sets connected state for connector.
 	 *
-	 * @param bool $status Status.
-	 * @returm void
+	 * @param bool $state Status.
+	 * @returm self
 	 */
-	public function setConnection($status = false): void
+	public function setConnection(bool $state): self
 	{
-		if ($this->connection !== $status)
+		if ($this->connection != $state)
 		{
 			$this->flagUpdated = true;
 			self::addEventHandlerGenerationUpdateEvent();
 			self::addEventHandlerSave();
 			self::cleanCache($this->connector, $this->line);
 
-			if (empty($status))
-			{
-				$this->connection = 'N';
-			}
-			else
-			{
-				$this->connection = 'Y';
-			}
+			$this->connection = $state;
 		}
+
+		return $this;
 	}
 
 	/**
-	 * To set the state of register connector.
+	 * Sets registered state for connector.
 	 *
-	 * @param bool $status Status.
+	 * @param bool $state Status.
+	 * @return self
 	 */
-	public function setRegister($status = false)
+	public function setRegister(bool $state): self
 	{
-		if ($this->register !== $status)
+		if ($this->register != $state)
 		{
 			$this->flagUpdated = true;
 			self::addEventHandlerGenerationUpdateEvent();
 			self::addEventHandlerSave();
 			self::cleanCache($this->connector, $this->line);
 
-			if(empty($status))
-			{
-				$this->register = 'N';
-			}
-			else
-			{
-				$this->register = 'Y';
-			}
+			$this->register = $state;
 		}
+
+		return $this;
 	}
 
 	/**
 	 * To establish the presence or absence of error in the connector.
 	 *
-	 * @param bool $status Status.
+	 * @param bool $state Status.
+	 * @return self
 	 */
-	public function setError($status = false)
+	public function setError(bool $state): self
 	{
-		if ($this->error !== $status)
+		if ($this->error != $state)
 		{
 			$this->flagUpdated = true;
 			self::addEventHandlerGenerationUpdateEvent();
 			self::addEventHandlerSave();
 			self::cleanCache($this->connector, $this->line);
 
-			if (empty($status))
-			{
-				$this->error = 'N';
-			}
-			else
-			{
-				$this->error = 'Y';
-			}
+			$this->error = $state;
 		}
+
+		return $this;
 	}
 
 	/**
-	 * Sets the additional data connectors.
+	 * Sets the additional data for connector.
 	 *
-	 * @param string|array $data Data to save.
+	 * @param array|null $data Data to save.
+	 * @return self
 	 */
-	public function setData($data = '')
+	public function setData($data): self
 	{
 		if (serialize($this->data) !== serialize($data))
 		{
@@ -709,108 +686,86 @@ class Status
 
 			$this->data = $data;
 		}
+
+		return $this;
 	}
 
+	//endregion
+
+	//region: Getters
+
 	/**
-	 * Return the ID status of the connector.
+	 * Returns the ID status.
 	 *
 	 * @return int
 	 */
-	public function getId()
+	public function getId(): int
 	{
 		return $this->id;
 	}
 
 	/**
-	 * Return the ID line status of the connector.
+	 * Returns line id status of the connector.
 	 *
-	 * @return string
+	 * @return int
 	 */
-	public function getLine()
+	public function getLine(): int
 	{
 		return $this->line;
 	}
 
 	/**
-	 * Return the ID connector status of the connector.
+	 * Returns the ID connector status of the connector.
 	 *
 	 * @return string
 	 */
-	public function getConnector()
+	public function getConnector(): string
 	{
 		return $this->connector;
 	}
 
 	/**
-	 * Return the activity status of the connector.
+	 * Returns active state of the connector.
 	 *
 	 * @return bool
 	 */
-	public function getActive()
+	public function getActive(): bool
 	{
-		if ($this->active == 'Y')
-		{
-			return true;
-		}
-		else
-		{
-			return false;
-		}
+		return $this->active;
 	}
 
 	/**
-	 * Return the connection status of the connector.
+	 * Returns the connection status of the connector.
 	 *
 	 * @return bool
 	 */
 	public function getConnection()
 	{
-		if ($this->connection == 'Y')
-		{
-			return true;
-		}
-		else
-		{
-			return false;
-		}
+		return $this->connection;
 	}
 
 	/**
-	 * Return the status of the check connector.
+	 * Returns the status of the check connector.
 	 *
 	 * @return bool
 	 */
-	public function getRegister()
+	public function getRegister(): bool
 	{
-		if ($this->register == 'Y')
-		{
-			return true;
-		}
-		else
-		{
-			return false;
-		}
+		return $this->register;
 	}
 
 	/**
-	 * To return an error in the connector.
+	 * Returns an error in the connector.
 	 *
 	 * @return bool
 	 */
-	public function getError()
+	public function getError(): bool
 	{
-		if ($this->error == 'Y')
-		{
-			return true;
-		}
-		else
-		{
-			return false;
-		}
+		return $this->error;
 	}
 
 	/**
-	 * To return an data in the connector.
+	 * Returns additional data in the connector.
 	 *
 	 * @return string|array
 	 */
@@ -820,36 +775,24 @@ class Status
 	}
 
 	/**
-	 * Check whether the connector is configured to work.
+	 * Checks whether the connector is configured to work.
 	 *
 	 * @return bool
 	 */
-	public function isConfigured()
+	public function isConfigured(): bool
 	{
-		if ($this->getConnection() && $this->getRegister() && $this->getActive())
-		{
-			return true;
-		}
-		else
-		{
-			return false;
-		}
+		return $this->getConnection() && $this->getRegister() && $this->getActive();
 	}
 
 	/**
-	 * To check whether you can use the connector to work.
+	 * Checks whether you can use the connector to work.
 	 *
 	 * @return bool
 	 */
-	public function isStatus()
+	public function isStatus(): bool
 	{
-		if ($this->isConfigured() && !$this->getError())
-		{
-			return true;
-		}
-		else
-		{
-			return false;
-		}
+		return $this->isConfigured() && !$this->getError();
 	}
+
+	//endregion
 }

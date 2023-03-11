@@ -81,7 +81,7 @@ class Output
 				Loader::includeModule('imopenlines')
 			)
 			{
-				$chatEntityId = ChatTable::getList([
+				$chatData = ChatTable::getList([
 					'select' => ['ENTITY_ID'],
 					'filter' => [
 						'=ENTITY_TYPE' => 'LINES',
@@ -89,9 +89,11 @@ class Output
 					],
 					'limit' => 1,
 					'cache' => ['ttl' => 86400]
-				])->fetch()['ENTITY_ID'];
-
-				$connectorId = Chat::parseLinesChatEntityId($chatEntityId)['connectorId'];
+				])->fetch();
+				if ($chatData && isset($chatData['ENTITY_ID']))
+				{
+					$connectorId = Chat::parseLinesChatEntityId($chatData['ENTITY_ID'])['connectorId'];
+				}
 			}
 
 			if(

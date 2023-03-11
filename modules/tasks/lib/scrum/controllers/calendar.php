@@ -3,6 +3,7 @@
 namespace Bitrix\Tasks\Scrum\Controllers;
 
 use Bitrix\Main\Application;
+use Bitrix\Main\Context;
 use Bitrix\Main\Engine\Action;
 use Bitrix\Main\Engine\Controller;
 use Bitrix\Main\Error;
@@ -77,6 +78,8 @@ class Calendar extends Controller
 			return null;
 		}
 
+		$userId = User::getId();
+
 		$backlogService = new BacklogService();
 
 		$backlog = $backlogService->getBacklogByGroupId($groupId);
@@ -87,11 +90,13 @@ class Calendar extends Controller
 
 		$listEvents = $this->getUpcomingEventsForThisProject($groupId);
 
-		$chats = $this->getEventChats($listEvents);
+		$chats = $this->getEventChats($userId, $listEvents);
 
 		[$listEvents, $todayEvent] = $this->getEventForToday($listEvents);
 
 		$defaultSprintDuration = $this->getDefaultSprintDuration($groupId);
+
+		$culture = Context::getCurrent()->getCulture();
 
 		return [
 			'mapCreatedEvents' => $mapCreatedEvents,
@@ -101,6 +106,11 @@ class Calendar extends Controller
 			'chats' => $chats,
 			'defaultSprintDuration' => $defaultSprintDuration,
 			'calendarSettings' => $this->getCalendarSettings($defaultSprintDuration),
+			'culture'=> [
+				'dayMonthFormat' => $culture->getDayMonthFormat(),
+				'longDateFormat' => $culture->getLongDateFormat(),
+				'shortTimeFormat' => $culture->getShortTimeFormat(),
+			],
 		];
 	}
 
@@ -146,23 +156,15 @@ class Calendar extends Controller
 	}
 
 	/**
-	 * Creates a chat for a template event and saves the link to the template.
+	 * Saves an association between an event and a event template type.
 	 *
 	 * @param int $groupId Group id.
 	 * @param string $templateId Event template id.
 	 * @param int $eventId Event id.
 	 * @return int[]|null
 	 */
-	public function saveEventInfoAction(int $groupId, string $templateId, int $eventId): ?array
+	public function saveEventInfoAction(int $groupId, string $templateId, int $eventId): ?bool
 	{
-		$userId = User::getId();
-
-		$eventData = $this->getEventData($userId, $eventId);
-		if (empty($eventData['ID']))
-		{
-			return null;
-		}
-
 		$backlogService = new BacklogService();
 
 		$backlog = $backlogService->getBacklogByGroupId($groupId);
@@ -170,12 +172,14 @@ class Calendar extends Controller
 		$backlog->getInfo()->setEvents([$templateId => $eventId]);
 
 		$backlogService->changeBacklog($backlog);
+		if (!empty($backlogService->getErrors()))
+		{
+			$this->errorCollection->add([new Error('System error')]);
 
-		$chatId = $this->createChat($userId, $eventId, $eventData);
+			return null;
+		}
 
-		return [
-			'chatId' => $chatId
-		];
+		return true;
 	}
 
 	/**
@@ -222,7 +226,7 @@ class Calendar extends Controller
 			'arFilter' => [
 				'OWNER_ID'=> $groupId,
 				'ACTIVE' => 'Y',
-				'CALL_TYPE' => 'group',
+				'CAL_TYPE' => 'group',
 			],
 			'checkPermissions' => true
 		]);
@@ -444,7 +448,7 @@ class Calendar extends Controller
 		return $chatId;
 	}
 
-	private function getEventChats(array $listEvents): array
+	private function getEventChats(int $userId, array $listEvents): array
 	{
 		$userService = new UserService();
 
@@ -453,6 +457,14 @@ class Calendar extends Controller
 		foreach ($listEvents as $event)
 		{
 			$chatId = \CIMChat::getEntityChat('CALENDAR', $event['id']);
+			if ($chatId === false)
+			{
+				$eventData = $this->getEventData($userId, $event['id']);
+				if (isset($eventData['ID']))
+				{
+					$chatId = $this->createChat($userId, $event['id'], $eventData);
+				}
+			}
 			if ($chatId === false)
 			{
 				continue;
@@ -466,16 +478,19 @@ class Calendar extends Controller
 			}
 
 			$userIds = $chatData['userInChat'][$chatId];
-			$usersInfo = $userService->getInfoAboutUsers($userIds);
-			$users = (count($userIds) > 1 ? array_values($usersInfo) : [$usersInfo]);
+			if (is_array($userIds))
+			{
+				$usersInfo = $userService->getInfoAboutUsers($userIds);
+				$users = (count($userIds) > 1 ? array_values($usersInfo) : [$usersInfo]);
 
-			$chats[] = [
-				'id' => $chatData['chat'][$chatId]['id'],
-				'type' => $chatData['chat'][$chatId]['type'],
-				'icon' => $chatData['chat'][$chatId]['avatar'],
-				'name' => $chatData['chat'][$chatId]['name'],
-				'users' => $users,
-			];
+				$chats[] = [
+					'id' => $chatData['chat'][$chatId]['id'],
+					'type' => $chatData['chat'][$chatId]['type'],
+					'icon' => $chatData['chat'][$chatId]['avatar'],
+					'name' => $chatData['chat'][$chatId]['name'],
+					'users' => $users,
+				];
+			}
 		}
 
 		return $chats;

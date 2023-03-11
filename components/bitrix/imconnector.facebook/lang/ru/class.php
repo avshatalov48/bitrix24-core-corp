@@ -1,5 +1,5 @@
 <?
-$MESS["IMCONNECTOR_COMPONENT_FACEBOOK_MODULE_NOT_INSTALLED"] = "Модуль коннекторов мессенджеров не установлен";
+$MESS["IMCONNECTOR_COMPONENT_FACEBOOK_MODULE_NOT_INSTALLED_MSGVER_1"] = "Модуль коннекторов мессенджеров не установлен";
 $MESS["IMCONNECTOR_COMPONENT_FACEBOOK_NO_ACTIVE_CONNECTOR"] = "Данный коннектор не активен";
 $MESS["IMCONNECTOR_COMPONENT_FACEBOOK_SESSION_HAS_EXPIRED"] = "Ваша сессия истекла. Отправьте форму еще раз";
 $MESS["IMCONNECTOR_COMPONENT_FACEBOOK_REMOVED_REFERENCE_TO_PAGE"] = "Данный коннектор был настроен на работу с группой, доступ к администрированию которой в текущий момент вы не имеете<br>

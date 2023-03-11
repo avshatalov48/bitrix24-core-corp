@@ -71,8 +71,9 @@ final class Property
 	private function getCaster(): ?Caster
 	{
 		$casts = $this->object->getCachedCasts();
+		$caster = $casts[$this->getName()] ?? null;
 
-		if ($caster = $casts[$this->getName()])
+		if ($caster)
 		{
 			return $caster;
 		}

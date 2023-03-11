@@ -49,7 +49,7 @@ class Welcome
 		$isNewSession = (int)$this->session['MESSAGE_COUNT'] === 0;
 		$sendWelcomeEachSession = $this->config['SEND_WELCOME_EACH_SESSION'] === 'Y';
 		$isInboundCall = $this->session['MODE'] === Session::MODE_INPUT;
-		$isBotAnswered = $this->session['JOIN_BOT'];
+		$isBotAnswered = $this->session['JOIN_BOT'] ?? false;
 
 		$isAllowedAutomaticMessage = $isInboundCall && !$isBotAnswered;
 		$isNeededAutomaticMessage = $this->chat->isNowCreated()

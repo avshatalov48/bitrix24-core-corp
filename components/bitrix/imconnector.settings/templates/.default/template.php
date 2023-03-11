@@ -32,7 +32,7 @@ Loc::loadMessages(__FILE__);
 	</div>
 	<div class="tel-set-item tel-set-item-border">
 	<?
-	if($arResult['messages'])
+	if (!empty($arResult['messages']))
 	{
 		echo '<div class="imconnector-settings-message imconnector-settings-message-success">';
 		foreach ($arResult['messages'] as $value)
@@ -41,7 +41,7 @@ Loc::loadMessages(__FILE__);
 		}
 		echo '</div>';
 	}
-	if($arResult['error'])
+	if (!empty($arResult['error']))
 	{
 		echo '<div class="imconnector-settings-message imconnector-settings-message-error">';
 		foreach ($arResult['error'] as $value)

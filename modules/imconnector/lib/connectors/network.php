@@ -1,6 +1,9 @@
 <?php
 namespace Bitrix\ImConnector\Connectors;
 
+use Bitrix\Disk\File;
+use Bitrix\ImOpenLines\Chat;
+use Bitrix\ImOpenLines\Connector;
 use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Loader;
 use Bitrix\Main\UserTable;
@@ -81,6 +84,52 @@ class Network extends Base
 				'attach' => $message['ATTACH'],
 				'params' => $message['PARAMS'],
 			];
+
+			if (isset($message['FILES_RAW']) && is_array($message['FILES_RAW']))
+			{
+				$filesIds = $this->createReceivedRawFiles($message['FILES_RAW']);
+				if (count($filesIds) && Loader::includeModule('imopenlines'))
+				{
+					$chatParams = [
+						'connector_id' => $this->idConnector,
+						'line_id' => $message['LINE_ID'],
+						'chat_id' => $message['GUID'],
+						'user_id' => $userId
+					];
+
+					$chat = new Chat();
+					$isLoaded = $chat->load([
+						'USER_CODE' => Connector::getUserCode($chatParams),
+						'ONLY_LOAD' => 'Y',
+					]);
+
+					if ($isLoaded && Loader::includeModule('disk'))
+					{
+						$diskFiles = \CIMDisk::UploadFileFromMain(
+							$chat->getData('ID'),
+							$filesIds
+						);
+
+						if (!is_array($messageData['fileLinks']))
+						{
+							$messageData['fileLinks'] = [];
+						}
+
+						foreach ($diskFiles as $fileId)
+						{
+							$fileModel = File::loadById($fileId);
+							if ($fileModel)
+							{
+								$messageData['fileLinks'][] = [
+									'name' => $fileModel->getOriginalName(),
+									'link' => \CIMDisk::GetFileLink($fileModel),
+									'size' => $fileModel->getSize(),
+								];
+							}
+						}
+					}
+				}
+			}
 
 			$message['USER']['FULL_NAME'] = \CUser::FormatName(
 				\CSite::GetNameFormat(false),
@@ -258,6 +307,24 @@ class Network extends Base
 		return $result;
 	}
 
+	private function createReceivedRawFiles(array $rawFiles): array
+	{
+		$fileIds = [];
+		foreach ($rawFiles as $file)
+		{
+			$fileData = [
+				'name' => $file['NAME'],
+				'type' => $file['TYPE'],
+				'content' => $file['DATA'],
+				'MODULE_ID' => self::MODULE_ID_IMOPENLINES
+			];
+
+			$fileIds[] = \CFile::saveFile($fileData, $fileData['MODULE_ID']);
+		}
+
+		return $fileIds;
+	}
+
 	/**
 	 * @param $message
 	 * @param $line
@@ -388,7 +455,11 @@ class Network extends Base
 		}
 
 		// Interactive Message
-		if ($result->isSuccess())
+		if (
+			$result->isSuccess()
+			&& isset($params['COMMAND'])
+			&& isset($params['COMMAND_PARAMS'])
+		)
 		{
 			/** @var InteractiveMessage\Connectors\Network\Input $interactiveMessage */
 			$interactiveMessage = InteractiveMessage\Input::init('network');
@@ -400,9 +471,22 @@ class Network extends Base
 				$result->addErrors($resultProcessing->getErrors());
 			}
 		}
+		else
+		{
+			$result->addError(new Error(
+				'Invalid data was transmitted',
+				'IMCONNECTOR_INTERACTIVE_MESSAGE_ERROR_NOT_LOAD_CORRECT_DATA',
+				__METHOD__,
+				['command' => $params['COMMAND'] ?? '-empty-', 'data' => $params['COMMAND_PARAMS'] ?? '-empty-']
+			));
+		}
 
 		// IM commands
-		if ($result->isSuccess())
+		if (
+			$result->isSuccess()
+			&& isset($params['MESSAGE_ID'])
+			&& (int)$params['MESSAGE_ID'] > 0
+		)
 		{
 			$messageId = (int)$params['MESSAGE_ID'];
 
@@ -483,7 +567,7 @@ class Network extends Base
 			}
 		}
 
-		$messageParams['IMOL_VOTE'] = 0;
+		$messageParams = ['IMOL_VOTE' => 0];
 
 		if ($result->isSuccess())
 		{
@@ -493,7 +577,10 @@ class Network extends Base
 				$messageParams = $messageParamService->getParams((int)$params['MESSAGE_ID']);
 			}
 
-			if ($messageParams['IMOL_VOTE'] != $params['SESSION_ID'])
+			if (
+				!isset($messageParams['IMOL_VOTE'])
+				|| $messageParams['IMOL_VOTE'] != $params['SESSION_ID']
+			)
 			{
 				$result->addError(new Error(
 					'Voting for the wrong session',
@@ -576,9 +663,9 @@ class Network extends Base
             "MESSAGE_ID" => $message['im']['message_id'],
             "MESSAGE_TEXT" => $message['message']['text'],
             "CONNECTOR_MID" => $message['message']['id'][0],
-            "FILES" => $message['message']['files'],
-            "ATTACH" => $message['message']['attachments'],
-            "PARAMS" => $message['message']['params'],
+            "FILES" => $message['message']['files'] ?? null,
+            "ATTACH" => $message['message']['attachments'] ?? null,
+            "PARAMS" => $message['message']['params'] ?? null,
         ];
 	}
 
@@ -745,4 +832,25 @@ class Network extends Base
 	}
 
 	//endregion
+
+	/**
+	 * @return bool
+	 */
+	public static function isSearchEnabled(): bool
+	{
+		return \Bitrix\Main\Config\Option::get('imconnector', 'allow_search_network', 'Y') === 'Y';
+	}
+
+	/**
+	 * @param bool $enabled
+	 * @return void
+	 */
+	public static function setIsSearchEnabled(bool $enabled): void
+	{
+		\Bitrix\Main\Config\Option::set(
+			'imconnector',
+			'allow_search_network',
+			$enabled ? 'Y' : 'N'
+		);
+	}
 }

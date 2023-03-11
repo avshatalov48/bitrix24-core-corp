@@ -38,7 +38,7 @@ class Output extends Base\Output
 					$params = $eventResult->getParameters()
 				)
 				{
-					$connectorStatus = Status::getInstance($params['connector_id'], $lineId);
+					$connectorStatus = Status::getInstance($params['connector_id'], (int)$lineId);
 
 					if(
 						!empty($params['connector_id']) &&
@@ -74,7 +74,7 @@ class Output extends Base\Output
 
 			foreach ($restConnectors as $restConnector)
 			{
-				$connectorStatus = Status::getInstance($restConnector['ID'], $lineId);
+				$connectorStatus = Status::getInstance($restConnector['ID'], (int)$lineId);
 
 				if ($connectorStatus->isStatus())
 				{

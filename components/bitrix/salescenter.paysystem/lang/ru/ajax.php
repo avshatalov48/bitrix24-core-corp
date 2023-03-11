@@ -8,3 +8,4 @@ $MESS["SP_AJAX_SAVE_PAYSYSTEM_CASHBOX_ERROR_PARAMS"] = "Ошибка при по
 $MESS["SP_AJAX_SAVE_PAYSYSTEM_CASHBOX_ERROR_CREATE_CASHBOX"] = "Ошибка при создании кассы";
 $MESS["SP_AJAX_SAVE_PAYSYSTEM_CASHBOX_ERROR_NO_HANDLER_EXIST"] = "Неверный обработчик кассы";
 $MESS["SP_AJAX_SAVE_PAYSYSTEM_CASHBOX_ERROR_KEY_IS_EMPTY"] = "У платёжной системы не заполнено поле \"#CODE_NAME#\"";
+$MESS['SP_AJAX_SAVE_PAYSYSTEM_ERROR_UPDATE'] = "При обновлении платежной системы возникли ошибки. Пожалуйста, обновите страницу";

@@ -115,6 +115,7 @@ class Factory
 						Trigger\Status::className(),
 						Trigger\ExpiredSoon::className(),
 						Trigger\Expired::className(),
+						Trigger\TasksFieldChangedTrigger::className(),
 						//Trigger\WebHook::className(),
 						//Trigger\App::className()
 					 ]
@@ -145,7 +146,7 @@ class Factory
 		{
 			if ($triggerClass::isSupported($documentType))
 			{
-				$description[] = $triggerClass::toArray();
+				$description[] = $triggerClass::toArray($documentType);
 			}
 		}
 

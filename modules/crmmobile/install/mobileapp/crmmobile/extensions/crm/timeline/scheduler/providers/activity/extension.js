@@ -174,20 +174,25 @@ jn.define('crm/timeline/scheduler/providers/activity', (require, exports, module
 
 		renderTextField()
 		{
-			return Textarea({
-				ref: (ref) => this.textInputRef = ref,
-				text: this.state.text,
-				style: {
-					color: '#333333',
-					size: 18,
+			const isIOS = Application.getPlatform() === 'ios';
+
+			return View(
+				{
+					style: {
+						flex: 1,
+						paddingLeft: isIOS ? 8 : 0,
+					},
 				},
-				placeholder: Loc.getMessage('M_CRM_TIMELINE_SCHEDULER_ACTIVITY_PLACEHOLDER'),
-				placeholderTextColor: '#bdc1c6',
-				onChange: (text) => {
-					this.state.text = text;
-					this.refreshSaveButton();
-				},
-			});
+				Textarea({
+					ref: (ref) => this.textInputRef = ref,
+					text: this.state.text,
+					placeholder: Loc.getMessage('M_CRM_TIMELINE_SCHEDULER_ACTIVITY_PLACEHOLDER'),
+					onChange: (text) => {
+						this.state.text = text;
+						this.refreshSaveButton();
+					},
+				}),
+			);
 		}
 
 		renderAttachments()
@@ -197,6 +202,7 @@ jn.define('crm/timeline/scheduler/providers/activity', (require, exports, module
 					style: {
 						paddingHorizontal: 20,
 						display: this.state.files.length === 0 ? 'none' : 'flex',
+						paddingBottom: 16,
 					},
 				},
 				FileField({
@@ -272,7 +278,6 @@ jn.define('crm/timeline/scheduler/providers/activity', (require, exports, module
 					style: {
 						flexDirection: 'row',
 						paddingHorizontal: isAndroid ? 16 : 12,
-						paddingTop: 16,
 						paddingBottom: 21,
 					},
 				},

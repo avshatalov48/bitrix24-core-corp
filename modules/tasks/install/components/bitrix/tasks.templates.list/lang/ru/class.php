@@ -17,5 +17,6 @@ $MESS['TASKS_TEMPLATES_NO'] = 'Нет';
 $MESS['TASKS_PRESET_ACTIVE_REGULAR'] = 'Регулярные';
 $MESS['TASKS_PRESET_NEW_USER'] = 'Для новых пользователей';
 $MESS['TASKS_TEMPLATES_LIST_GROUP_ACTION_ERROR_MESSAGE'] = '"#MESSAGE#" в следующих шаблонах: #TEMPLATE_IDS#';
+$MESS['TASKS_TEMPLATES_LIST_BATCH_DELETE_ERROR_MESSAGE'] = 'Недостаточно прав для удаления следующих шаблонов: #TEMPLATE_IDS#';
 $MESS['TASKS_TEMPLATES_LIST_TITLE_ERROR'] = 'Ошибка';
 $MESS['TASKS_TEMPLATES_LIST_CLOSE'] = 'Закрыть';

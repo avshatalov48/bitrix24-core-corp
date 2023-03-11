@@ -39,13 +39,14 @@ final class CompleteStores implements Enricher
 		{
 			$record = clone $origRecord;
 
-			if ($data = $storeInfo[$record->storeFromId])
+			if (!empty($storeInfo[$record->storeFromId]))
 			{
-				$record->storeFrom = $this->buildStoreDto($data);
+				$record->storeFrom = $this->buildStoreDto($storeInfo[$record->storeFromId]);
 			}
-			if ($data = $storeInfo[$record->storeToId])
+
+			if (!empty($storeInfo[$record->storeToId]))
 			{
-				$record->storeTo = $this->buildStoreDto($data);
+				$record->storeTo = $this->buildStoreDto($storeInfo[$record->storeToId]);
 			}
 
 			$result[] = $record;

@@ -69,6 +69,8 @@ class RestrictionManager
 	private static $orderRestriction;
 	/** @var ClientFieldsRestriction  */
 	private static $clientFieldsRestriction;
+	/** @var ObserversFieldRestriction  */
+	private static $observersFieldRestriction;
 	/** @var Bitrix24AccessRestriction  */
 	private static $observersRestriction;
 	/** @var Bitrix24AccessRestriction|null  */
@@ -843,6 +845,16 @@ class RestrictionManager
 		}
 
 		return static::$clientFieldsRestriction;
+	}
+
+	public static function getDealObserversFieldRestriction(): ObserversFieldRestriction
+	{
+		if (!static::$observersFieldRestriction)
+		{
+			static::$observersFieldRestriction = new ObserversFieldRestriction(\CCrmOwnerType::Deal);
+		}
+
+		return static::$observersFieldRestriction;
 	}
 
 	public static function getObserversRestriction(): Bitrix24AccessRestriction

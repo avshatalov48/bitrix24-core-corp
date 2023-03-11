@@ -28,6 +28,13 @@ abstract class Action extends Base
 		return $this;
 	}
 
+	public function addActionParamArray(string $paramName, ?array $paramValue): self
+	{
+		$this->actionParams[$paramName] = $paramValue;
+
+		return $this;
+	}
+
 	public function getAnimation(): ?Animation
 	{
 		return $this->animation;

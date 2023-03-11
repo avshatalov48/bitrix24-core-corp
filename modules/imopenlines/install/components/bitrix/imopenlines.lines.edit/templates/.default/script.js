@@ -1507,7 +1507,7 @@
 		{
 			if (path)
 			{
-				this.currentAvatarNode.style['background-image'] = "url(" + path + ")";
+				this.currentAvatarNode.style['background-image'] = "url('" + encodeURI(path) + "')";
 				this.currentAvatarInputNode.value = path;
 
 				this.currentAvatarFileIdInputNode.value = fileId;
@@ -1533,11 +1533,11 @@
 
 			if(!!params.avatar)
 			{
-				params.avatar = ' style="background-image: url(' + params.avatar.replaceAll(/ /g, '%20') + ')"';
+				params.avatar = ' style="background-image: url(' + encodeURI(params.avatar) + ')"';
 			}
 			if(!!userAvatarShow)
 			{
-				userAvatarShow = ' style="background-image: url(' + userAvatarShow.replaceAll(/ /g, '%20') + ')"';
+				userAvatarShow = ' style="background-image: url(' + encodeURI(userAvatarShow) + ')"';
 			}
 
 			var userInputTemplate = BX('user_data_input_template').innerHTML;
@@ -1631,7 +1631,7 @@
 			item.AVATAR = BX.util.htmlspecialchars(item.AVATAR);
 			var userName = (!!item.NAME ? BX.util.htmlspecialchars(item.NAME) : ''),
 				userAvatar = (!!item.AVATAR ? item.AVATAR : ''),
-				userAvatarShow = (!!item.AVATAR ? ' style="background-image: url(' + item.AVATAR.replaceAll(/ /g, '%20') + ')' : ''),
+				userAvatarShow = (!!item.AVATAR ? ' style="background-image: url(' + encodeURI(item.AVATAR) + ')' : ''),
 				userAvatarFileId = (!!item.AVATAR_ID ? BX.util.htmlspecialchars(item.AVATAR_ID) : null);
 			var userInputTemplate = BX('default_user_data_input_template').innerHTML;
 			var innerHtml = userInputTemplate
@@ -1742,7 +1742,7 @@
 			avatarTemplate = avatarTemplate
 				.replace('%file_id%', fileId)
 				.replace('%path%', path)
-				.replace('%path%', path);
+				.replace('%url_path%', encodeURI(path));
 
 			var node = BX.create('DIV');
 			node.innerHTML = avatarTemplate;

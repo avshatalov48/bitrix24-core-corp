@@ -5,6 +5,7 @@
 (() => {
 	const {Loc} = jn.require('loc');
 	const {Type} = jn.require('type');
+	const {Entry} = jn.require('tasks/entry');
 	const pathToExtension = '/bitrix/mobileapp/tasksmobile/extensions/tasks/task/';
 
 	class Counter
@@ -146,6 +147,7 @@
 				ping: 'ping',
 				addTask: 'addTask',
 				addSubTask: 'addSubTask',
+				share: 'share',
 				'favorite.add': 'favorite.add',
 				'favorite.delete': 'favorite.delete',
 			};
@@ -211,6 +213,7 @@
 				[Action.types.ping]: true,
 				[Action.types.addTask]: true,
 				[Action.types.addSubTask]: true,
+				[Action.types.share]: true,
 				[Action.types['favorite.add']]: this.canAddToFavorite,
 				[Action.types['favorite.delete']]: this.canRemoveFromFavorite,
 			};
@@ -460,7 +463,7 @@
 				}),
 
 				[Task.fields.mark]: () => (!Type.isUndefined(this.task.mark) ? {MARK: (this.task.mark === Task.mark.none ? '' : this.task.mark)} : {}),
-				[Task.fields.tags]: () => (!Type.isUndefined(this.task.tags) ? {TAGS: this.task.tags} : {}),
+				[Task.fields.tags]: () => (!Type.isUndefined(this.task.tags) ? {TAGS: Object.values(this.task.tags).map(tag => tag.title)} : {}),
 				[Task.fields.crm]: () => (!Type.isUndefined(this.task.crm) ? {CRM: (Object.keys(this.task.crm).length > 0 ? this.task.crm : [])} : {}),
 				[Task.fields.uploadedFiles]: () => (!Type.isUndefined(this.task.uploadedFiles) ? {UPLOADED_FILES: this.task.uploadedFiles.map(file => file.token)} : {}),
 				[Task.fields.files]: () => {
@@ -1002,7 +1005,7 @@
 			});
 		}
 
-		open()
+		open(parentWidget)
 		{
 			if (Application.getApiVersion() < 31)
 			{
@@ -1028,17 +1031,19 @@
 			{
 				const taskId = this.task.id;
 				const taskData = {
+					taskId,
 					id: taskId,
 					title: 'TASK',
 					taskInfo: this.task.getTaskInfo(),
 				};
 				const params = {
+					parentWidget,
 					userId: this.task.currentUser.id,
 					taskObject: (this.task.canSendMyselfOnOpen ? this.task.exportProperties() : null),
 				};
 				delete taskData.taskInfo.project;
 
-				BX.postComponentEvent('taskbackground::task::action', [taskData, taskId, params]);
+				(new Entry()).openTask(taskData, params);
 			}
 		}
 	}
@@ -1481,6 +1486,7 @@
 				changeGroup: 'group',
 				mute: 'mute',
 				unmute: 'unmute',
+				share: 'share',
 				unfollow: 'unfollow',
 				remove: 'remove',
 				read: 'read',
@@ -1677,7 +1683,7 @@
 			}
 			if (!Type.isUndefined(row.tags))
 			{
-				this.tags = (row.tags || []);
+				this.tags = (Type.isArray(row.tags) ? {} : row.tags);
 			}
 			if (!Type.isUndefined(row.files))
 			{
@@ -1812,7 +1818,7 @@
 			}
 			if (has.call(row, 'tags'))
 			{
-				this.tags = row.tags;
+				this.tags = (Type.isArray(row.tags) ? {} : row.tags);
 			}
 			if (has.call(row, 'files'))
 			{
@@ -2250,133 +2256,140 @@
 			const titlePrefix = 'MOBILE_TASKS_TASK_CARD_VIEW_ACTION';
 			const actions = {
 				changeDeadline: {
-					identifier: 'changeDeadline',
+					identifier: Action.types.changeDeadline,
 					title: Loc.getMessage(`${titlePrefix}_CHANGE_DEADLINE`),
 					iconName: 'action_term',
 					color: '#F2A100',
 					position: 'right',
 				},
 				approve: {
-					identifier: 'approve',
+					identifier: Action.types.approve,
 					title: Loc.getMessage(`${titlePrefix}_APPROVE`),
 					iconName: 'action_accept',
 					color: '#468EE5',
 					position: 'right',
 				},
 				disapprove: {
-					identifier: 'disapprove',
-					title: Loc.getMessage(`${titlePrefix}_DISAPPROVE`),
+					identifier: Action.types.disapprove,
+					title: Loc.getMessage(`${titlePrefix}_DISAPPROVE_MSGVER_1`),
 					iconName: 'action_finish_up',
 					color: '#FF5752',
 					position: 'right',
 				},
 				changeResponsible: {
-					identifier: 'changeResponsible',
+					identifier: Action.types.changeResponsible,
 					title: Loc.getMessage(`${titlePrefix}_CHANGE_RESPONSIBLE`),
 					iconName: 'action_userlist',
 					color: '#2F72B9',
 					position: 'right',
 				},
 				delegate: {
-					identifier: 'delegate',
+					identifier: Action.types.delegate,
 					title: Loc.getMessage(`${titlePrefix}_DELEGATE`),
 					iconName: 'action_userlist',
 					color: '#2F72B9',
 					position: 'right',
 				},
 				ping: {
-					identifier: 'ping',
+					identifier: Action.types.ping,
 					title: Loc.getMessage(`${titlePrefix}_PING`),
 					iconName: 'action_ping',
 					color: '#00B4AC',
 					position: 'right',
 				},
+				share: {
+					identifier: Action.types.share,
+					title: Loc.getMessage(`${titlePrefix}_SHARE`),
+					iconName: 'action_share',
+					color: '#6E7B8F',
+					position: 'right',
+				},
 				changeGroup: {
-					identifier: 'changeGroup',
+					identifier: Action.types.changeGroup,
 					title: Loc.getMessage(`${titlePrefix}_CHANGE_GROUP`),
 					iconName: 'action_project',
 					color: '#1BA09B',
 					position: 'right',
 				},
 				startTimer: {
-					identifier: 'startTimer',
+					identifier: Action.types.startTimer,
 					title: Loc.getMessage(`${titlePrefix}_START`),
 					iconName: 'action_start',
 					color: '#38C4D6',
 					position: 'right',
 				},
 				pauseTimer: {
-					identifier: 'pauseTimer',
+					identifier: Action.types.pauseTimer,
 					title: Loc.getMessage(`${titlePrefix}_PAUSE`),
 					iconName: 'action_finish',
 					color: '#38C4D6',
 					position: 'right',
 				},
 				start: {
-					identifier: 'start',
+					identifier: Action.types.start,
 					title: Loc.getMessage(`${titlePrefix}_START`),
 					iconName: 'action_start',
 					color: '#38C4D6',
 					position: 'right',
 				},
 				pause: {
-					identifier: 'pause',
+					identifier: Action.types.pause,
 					title: Loc.getMessage(`${titlePrefix}_PAUSE`),
 					iconName: 'action_finish',
 					color: '#38C4D6',
 					position: 'right',
 				},
 				renew: {
-					identifier: 'renew',
+					identifier: Action.types.renew,
 					title: Loc.getMessage(`${titlePrefix}_RENEW`),
 					iconName: 'action_reload',
 					color: '#00B4AC',
 					position: 'right',
 				},
 				mute: {
-					identifier: 'mute',
+					identifier: Action.types.mute,
 					title: Loc.getMessage(`${titlePrefix}_MUTE`),
 					iconName: 'action_mute',
 					color: '#8BC84B',
 					position: 'right',
 				},
 				unmute: {
-					identifier: 'unmute',
+					identifier: Action.types.unmute,
 					title: Loc.getMessage(`${titlePrefix}_UNMUTE`),
 					iconName: 'action_unmute',
 					color: '#8BC84B',
 					position: 'right',
 				},
 				unfollow: {
-					identifier: 'unfollow',
+					identifier: Action.types.unfollow,
 					title: Loc.getMessage(`${titlePrefix}_DONT_FOLLOW`),
 					iconName: 'action_unfollow',
 					color: '#AF6D4D',
 					position: 'right',
 				},
 				remove: {
-					identifier: 'remove',
+					identifier: Action.types.remove,
 					title: Loc.getMessage(`${titlePrefix}_REMOVE`),
 					iconName: 'action_remove',
 					color: '#6E7B8F',
 					position: 'right',
 				},
 				read: {
-					identifier: 'read',
+					identifier: Action.types.read,
 					title: Loc.getMessage(`${titlePrefix}_READ`),
 					iconName: 'action_read',
 					color: '#E57BB6',
 					position: 'left',
 				},
 				pin: {
-					identifier: 'pin',
+					identifier: Action.types.pin,
 					title: Loc.getMessage(`${titlePrefix}_PIN`),
 					iconName: 'action_pin',
 					color: '#468EE5',
 					position: 'left',
 				},
 				unpin: {
-					identifier: 'unpin',
+					identifier: Action.types.unpin,
 					title: Loc.getMessage(`${titlePrefix}_UNPIN`),
 					iconName: `action_unpin`,
 					color: '#468EE5',
@@ -2394,7 +2407,12 @@
 
 			if (this.actions[Action.types.changeResponsible] && this.actions[Action.types.delegate])
 			{
-				currentActions.splice(currentActions.findIndex(item => item.identifier === 'delegate'), 1);
+				currentActions.splice(currentActions.findIndex(item => item.identifier === Action.types.delegate), 1);
+			}
+
+			if (Application.getApiVersion() < 34)
+			{
+				currentActions.splice(currentActions.findIndex(item => item.identifier === Action.types.share), 1);
 			}
 
 			return currentActions;
@@ -2464,9 +2482,9 @@
 			return this._actions.exportProperties();
 		}
 
-		open()
+		open(parentWidget = null)
 		{
-			this._actions.open();
+			this._actions.open(parentWidget);
 		}
 
 		save()

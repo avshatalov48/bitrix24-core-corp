@@ -79,7 +79,7 @@ jn.define('crm/required-fields/required-backdrop', (require, exports, module) =>
 				{
 					style: {
 						flexDirection: 'column',
-						backgroundColor: '#eef3f5',
+						backgroundColor: '#eef2f4',
 					},
 					resizableByKeyboard: true,
 					safeArea: {

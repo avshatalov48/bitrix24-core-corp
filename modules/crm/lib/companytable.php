@@ -102,7 +102,7 @@ class CompanyTable extends Entity\DataManager
 			(new Reference(
 				'ASSIGNED_BY',
 				UserTable::class,
-				Join::on('this.ASSIGNED_BY', 'ref.ID'),
+				Join::on('this.ASSIGNED_BY_ID', 'ref.ID'),
 			))
 				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_ASSIGNED_BY_ID'))
 			,
@@ -208,6 +208,10 @@ class CompanyTable extends Entity\DataManager
 			$fieldRepository->getCategoryId(Item::FIELD_NAME_CATEGORY_ID, \CCrmOwnerType::Company)
 				->configureTitle(Loc::getMessage('CRM_COMMON_CLIENT_CATEGORY'))
 			,
+
+			$fieldRepository->getLastActivityBy(),
+
+			$fieldRepository->getLastActivityTime(),
 
 			(new OneToMany('CONTACT_BINDINGS', Binding\ContactCompanyTable::class, 'COMPANY'))
 				->configureCascadeDeletePolicy(CascadePolicy::FOLLOW)

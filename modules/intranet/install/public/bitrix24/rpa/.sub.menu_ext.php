@@ -35,7 +35,7 @@ $aMenuLinks = [
 		'',
 	],
 	[
-		Loc::getMessage('RPA_SUB_MENU_TASKS'),
+		Loc::getMessage('RPA_SUB_MENU_TASKS_MSGVER_1'),
 		'/rpa/tasks/',
 		[],
 		[

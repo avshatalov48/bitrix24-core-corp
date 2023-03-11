@@ -644,7 +644,7 @@ class Crm
 							//TODO: deprecated
 							if (\CCrmOwnerType::ResolveName($registeredEntity->getTypeId()) == \CCrmOwnerType::LeadName)
 							{
-								ConfigStatistic::getInstance($session->getData('CONFIG_ID'))->addLead();
+								ConfigStatistic::getInstance((int)$session->getData('CONFIG_ID'))->addLead();
 							}
 						}
 					}
@@ -768,8 +768,6 @@ class Crm
 			$fieldsAdd = [];
 			$fieldsFmAdd = [];
 
-			$fieldsAdd['OPENED'] = 'Y';
-
 			$fieldsAdd['SOURCE_ID'] = $this->getSourceId()->getResult();
 
 			if (!empty($fields->getTitle()))
@@ -887,8 +885,6 @@ class Crm
 			$session = $fields->getSession();
 
 			$fieldsAdd = [];
-
-			$fieldsAdd['OPENED'] = 'Y';
 
 			$fieldsAdd['SOURCE_ID'] = $this->getSourceId()->getResult();
 
@@ -1058,27 +1054,44 @@ class Crm
 
 			if (!empty($this->registeredEntites))
 			{
+				$entities = [];
 				foreach ($this->registeredEntites as $entity)
 				{
 					if ($entity['SAVE'] == 'Y')
 					{
-						$messageManager->sendMessageAboutAddEntity($entity['ENTITY_TYPE'], $entity['ENTITY_ID']);
+						$entities[$entity['ENTITY_TYPE']][] = $entity['ENTITY_ID'];
 					}
+				}
+				if (!empty($entities))
+				{
+					$messageManager->sendMessageAboutAddEntity($entities);
 				}
 			}
 
 			if (!empty($this->updateEntites))
 			{
+				$updatedEntities = [];
+				$createdEntities = [];
 				foreach ($this->updateEntites as $entity)
 				{
 					if ($entity['SAVE'] == 'Y')
 					{
-						$messageManager->sendMessageAboutExtendEntity($entity['ENTITY_TYPE'], $entity['ENTITY_ID']);
+						$updatedEntities[$entity['ENTITY_TYPE']][] = $entity['ENTITY_ID'];
 					}
 					elseif($entity['ADD'] == 'Y')
 					{
-						$messageManager->sendMessageAboutUpdateEntity($entity['ENTITY_TYPE'], $entity['ENTITY_ID']);
+						$createdEntities[$entity['ENTITY_TYPE']][] = $entity['ENTITY_ID'];
 					}
+				}
+
+				if(!empty($createdEntities))
+				{
+					$messageManager->sendMessageAboutUpdateEntity($createdEntities);
+				}
+
+				if (!empty($updatedEntities))
+				{
+					$messageManager->sendMessageAboutExtendEntity($updatedEntities);
 				}
 			}
 		}

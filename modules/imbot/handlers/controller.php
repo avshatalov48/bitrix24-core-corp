@@ -46,7 +46,7 @@ unset($params["BX_HASH"]);
 
 // BOT CLOUD HITS
 
-if ($params['BX_IFRAME'] == 'Y')
+if (isset($params['BX_IFRAME']) && $params['BX_IFRAME'] == 'Y')
 {
 	if ($params['BX_IFRAME_ACTION'] == 'REGISTER')
 	{
@@ -120,21 +120,21 @@ if ($params['BX_IFRAME'] == 'Y')
 		));
 	}
 }
-else if
+elseif
 (
 	(
 		isset($params['BX_TYPE'])
 		&& !empty($hash)
 		&& $params['BX_TYPE'] === \Bitrix\ImBot\Http::TYPE_BITRIX24
 		&& defined('BX24_HOST_NAME')
-		&& \Bitrix\ImBot\Http::requestSign($params['BX_TYPE'], md5(implode("|", $params)."|".BX24_HOST_NAME)) === $hash
+		&& \Bitrix\ImBot\Http::requestSign(\Bitrix\ImBot\Http::TYPE_BITRIX24, array_merge($params, [\BX24_HOST_NAME])) === $hash
 	)
 	||
 	(
 		isset($params['BX_TYPE'])
 		&& !empty($hash)
 		&& $params['BX_TYPE'] === \Bitrix\ImBot\Http::TYPE_CP
-		&& \Bitrix\ImBot\Http::requestSign($params['BX_TYPE'], md5(implode("|", $params))) === $hash
+		&& \Bitrix\ImBot\Http::requestSign(\Bitrix\ImBot\Http::TYPE_CP, $params) === $hash
 	)
 )
 {

@@ -145,15 +145,16 @@ class Order extends Base
 
 			$baseSum += $basketItem->getBasePrice() * $item['quantity'];
 			$price += $basketItem->getPrice() * $item['quantity'];
+			$vatRate = (float)$basketItem->getVatRate();
 
 			if ($basketItem->isVatInPrice())
 			{
 				$vatSum += Sale\PriceMaths::roundPrecision(
 					$basketItem->getPrice()
 					* $item['quantity']
-					* $basketItem->getVatRate()
+					* $vatRate
 					/ (
-						$basketItem->getVatRate() + 1
+						$vatRate + 1
 					)
 				);
 			}
@@ -162,7 +163,7 @@ class Order extends Base
 				$vatSum += Sale\PriceMaths::roundPrecision(
 					$basketItem->getPrice()
 					* $item['quantity']
-					* $basketItem->getVatRate()
+					* $vatRate
 				);
 			}
 		}
@@ -2342,50 +2343,5 @@ HTML;
 	private function onAfterDealAdd(int $dealId, int $sessionId): void
 	{
 		ImOpenLinesManager::getInstance()->updateDealAfterCreation($dealId, $sessionId);
-	}
-
-	/**
-	 * @param int $id
-	 * @return array[]|false
-	 */
-	public function getPublicUrlAction($id)
-	{
-		if (!is_scalar($id))
-		{
-			$this->addError(new Error('Parameter id must be integer'));
-			return false;
-		}
-
-		$id = (int)$id;
-		$order = Crm\Order\Order::load($id);
-		if (!$order)
-		{
-			$this->addError(new Error('Entity is not exist'));
-			return false;
-		}
-
-		if (LandingManager::getInstance()->isOrderPublicUrlAvailable())
-		{
-
-			$urlInfo = LandingManager::getInstance()->getUrlInfoByOrder($order);
-
-			if (is_array($urlInfo) === false)
-			{
-				$this->addError(new Error('Error retrieving url info'));
-				return false;
-			}
-		}
-		else
-		{
-			$this->addError(new Error('Public url is not available'));
-			return false;
-		}
-
-		return [
-			'order' => [
-				'url' => $urlInfo['url'],
-				'shortUrl' => $urlInfo['shortUrl'],
-			]
-		];
 	}
 }

@@ -24,10 +24,10 @@ class Input
 		$this->result = new Result();
 		$this->params = $params;
 
-		if(!empty($this->params['CONNECTOR']))
+		if (!empty($this->params['CONNECTOR']))
 		{
 			$provider = Provider::getProviderForConnectorInput($this->params['CONNECTOR'], $this->params);
-			if($provider->isSuccess())
+			if ($provider->isSuccess())
 			{
 				/** @var Provider\Base\Input $this->provider */
 				$this->provider = $provider->getResult();
@@ -52,7 +52,7 @@ class Input
 	{
 		$result = clone $this->result;
 
-		if($result->isSuccess())
+		if ($result->isSuccess())
 		{
 			try
 			{
@@ -65,7 +65,7 @@ class Input
 
 				$result->setData($result->getData());
 			}
-			catch (\Exception $e)
+			catch (\Bitrix\Main\SystemException $e)
 			{
 				$result->addError(new Error($e->getMessage(), $e->getCode(), __METHOD__));
 			}

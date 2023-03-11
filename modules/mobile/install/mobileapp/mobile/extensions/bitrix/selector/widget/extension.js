@@ -22,6 +22,7 @@
 						selectOptions,
 						widgetParams,
 						allowMultipleSelection,
+						canUseRecent,
 						closeOnSelect,
 						events,
 						initSelectedIds,
@@ -46,6 +47,7 @@
 			this.selectOptions = selectOptions || {};
 			this.widgetParams = widgetParams || {};
 			this.allowMultipleSelection = allowMultipleSelection !== false;
+			this.canUseRecent = canUseRecent !== false;
 			this.closeOnSelect = this.allowMultipleSelection === false && closeOnSelect;
 			this.events = events || {};
 
@@ -95,6 +97,7 @@
 			}
 
 			this.provider.setPreselectedItems(this.initSelectedIds);
+			this.provider.setCanUseRecent(this.canUseRecent);
 
 			this.provider.setListener({
 				onFetchResult: this.onProviderFetchResult.bind(this),
@@ -371,11 +374,10 @@
 			}
 
 			const hasOwnItems = items.length > 0;
-
-			if (items.length === 0)
+			if (!hasOwnItems)
 			{
 				items.push({
-					title: this.searchOptions.startTypingText || BX.message('PROVIDER_WIDGET_START_TYPING_TO_SEARCH'),
+					title: this.getEmptyItemTitle(),
 					type: 'button',
 					sectionCode: COMMON_SECTION_CODE,
 					unselectable: true,
@@ -389,6 +391,16 @@
 				const filteredSelectedItems = this.filterSelectedByItems(items);
 				this.setSelected(filteredSelectedItems);
 			}
+		}
+
+		getEmptyItemTitle()
+		{
+			if (this.createOptions.enableCreation)
+			{
+				return this.searchOptions.startTypingWithCreationText || BX.message('PROVIDER_WIDGET_START_TYPING_TO_CREATE');
+			}
+
+			return this.searchOptions.startTypingText || BX.message('PROVIDER_WIDGET_START_TYPING_TO_SEARCH');
 		}
 
 		filterSelectedByItems(items)

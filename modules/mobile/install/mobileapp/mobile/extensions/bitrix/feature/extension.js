@@ -15,6 +15,11 @@ jn.define('feature', (require, exports, module) => {
 			return Application.getApiVersion() >= 47;
 		}
 
+		static isImageSupportsSuccessCallback()
+		{
+			return Application.getApiVersion() >= 47;
+		}
+
 		static showDefaultUnsupportedWidget()
 		{
 			AppUpdateNotifier.open();

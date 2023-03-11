@@ -1,25 +1,21 @@
-<?
+<?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
+
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Localization\Loc;
-
 use Bitrix\ImConnector\Connector;
 
-/** @var array $arParams */
-/** @var array $arResult */
-/** @global CMain $APPLICATION */
-/** @global CUser $USER */
-/** @global CDatabase $DB */
-/** @var CBitrixComponentTemplate $this */
+/** @global array $arParams */
+/** @global array $arResult */
+/** @global \CMain $APPLICATION */
+/** @global \CUser $USER */
+/** @global \CDatabase $DB */
+/** @var \CBitrixComponentTemplate $this */
 /** @var string $templateName */
 /** @var string $templateFile */
 /** @var string $templateFolder */
 /** @var string $componentPath */
-/** @var CBitrixComponent $component */
-/** $arResult['CONNECTION_STATUS']; */
-/** $arResult['REGISTER_STATUS']; */
-/** $arResult['ERROR_STATUS']; */
-/** $arResult['SAVE_STATUS']; */
+/** @var \CBitrixComponent $component */
 
 Loc::loadMessages(__FILE__);
 
@@ -35,7 +31,26 @@ if ($arParams['INDIVIDUAL_USE'] !== 'Y')
 }
 
 $iconCode = Connector::getIconByConnector($arResult['CONNECTOR']);
-$placeholder = $arResult['placeholder']['api_token'] ? Loc::getMessage('IMCONNECTOR_COMPONENT_SETTINGS_PLACEHOLDER') : Loc::getMessage('IMCONNECTOR_COMPONENT_TELEGRAMBOT_API_TOKEN_NAME');
+$placeholder = !empty($arResult['placeholder']['api_token'])
+	? Loc::getMessage('IMCONNECTOR_COMPONENT_SETTINGS_PLACEHOLDER')
+	: Loc::getMessage('IMCONNECTOR_COMPONENT_TELEGRAMBOT_API_TOKEN_NAME');
+
+$initData = [
+	'api_token' => '',
+	'welcome_message' => '',
+	'eshop_enabled' => 'N',
+	'eshop_id' => '',
+	'eshop_custom_url' => '',
+];
+if (empty($arResult['FORM']))
+{
+	$arResult['FORM'] = $initData;
+}
+else
+{
+	$arResult['FORM'] = array_merge($initData, $arResult['FORM']);
+}
+
 ?>
 
 <form action="<?=$arResult['URL']['DELETE']?>" method="post" id="form_delete_<?=$arResult['CONNECTOR']?>">
@@ -45,7 +60,7 @@ $placeholder = $arResult['placeholder']['api_token'] ? Loc::getMessage('IMCONNEC
 </form>
 <?if (empty($arResult['PAGE'])):?>
 	<div class="imconnector-field-container">
-	<?if ($arResult['STATUS'] === true): //case when connection competed?>
+	<?if (!empty($arResult['STATUS']) && $arResult['STATUS'] === true): //case when connection competed?>
 		<div class="imconnector-field-section imconnector-field-section-social">
 			<div class="imconnector-field-box">
 				<div class="connector-icon ui-icon ui-icon-service-<?=$iconCode?>"><i></i></div>
@@ -68,7 +83,7 @@ $placeholder = $arResult['placeholder']['api_token'] ? Loc::getMessage('IMCONNEC
 				</div>
 			</div>
 		</div>
-	<?elseif ($arResult['ACTIVE_STATUS'] === true):?>
+	<? elseif (!empty($arResult['ACTIVE_STATUS']) && $arResult['ACTIVE_STATUS'] === true):?>
 		<div class="imconnector-field-section imconnector-field-section-social">
 			<div class="imconnector-field-box">
 				<div class="connector-icon ui-icon ui-icon-service-<?=$iconCode?>"><i></i></div>
@@ -140,7 +155,7 @@ $placeholder = $arResult['placeholder']['api_token'] ? Loc::getMessage('IMCONNEC
 	<?
 	include 'messages.php';
 
-	if ($arResult['STATUS'])
+	if (!empty($arResult['STATUS']))
 	{
 		include 'info.php';
 	}?>
@@ -192,7 +207,7 @@ $placeholder = $arResult['placeholder']['api_token'] ? Loc::getMessage('IMCONNEC
 							class="imconnector-field-control-input"
 							id="imconnector-telegrambot-have-bot"
 							name="api_token"
-							value="<?=htmlspecialcharsbx($arResult['FORM']['api_token'])?>"
+							value="<?=htmlspecialcharsbx($arResult['FORM']['api_token'] ?? '')?>"
 							placeholder="<?=$placeholder?>"
 						>
 					</div>
@@ -202,7 +217,7 @@ $placeholder = $arResult['placeholder']['api_token'] ? Loc::getMessage('IMCONNEC
 						</span>
 						<textarea
 							class="imconnector-field-control-input imconnector-field-control-textbox imconnector-telegrambot-welcome-message-textarea"
-							name="welcome_message"><?=htmlspecialcharsbx($arResult['FORM']['welcome_message'])?></textarea>
+							name="welcome_message"><?=htmlspecialcharsbx($arResult['FORM']['welcome_message'] ?? '')?></textarea>
 					</div>
 					<div class="imconnector-field-container">
 						<input

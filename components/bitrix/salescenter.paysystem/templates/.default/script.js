@@ -17,6 +17,12 @@
 			this.errorMessageNode = BX(parameters.errorMessageId);
 			this.paySystemFormData = [];
 			this.checkedAuthStatus = false;
+			this.settingsFormLinkNameCodeMap = parameters.settingsFormLinkNameCodeMap;
+			this.handlerClassName = parameters.handlerClassName;
+			this.isExistsSettings = parameters.isExistsSettings;
+			this.isExistsOnlyCommonSettings = parameters.isExistsOnlyCommonSettings;
+			this.settingsMenu = null;
+			this.settingsMenuNode = BX(parameters.settingsMenuId);
 
 			this.uiNodes = {
 				'name': this.containerNode.querySelector('[data-bx-salescenter-auth-name]'),
@@ -24,6 +30,7 @@
 				'logout': this.containerNode.querySelector('[data-bx-salescenter-auth-logout]')
 			};
 
+			this.initExpertMenu();
 			this.showBlockByAuth();
 			this.bindEvents();
 
@@ -54,6 +61,58 @@
 			BX.addCustomEvent("SidePanel.Slider:onClose", BX.proxy(this.onCloseSlider, this));
 
 			BX.addCustomEvent("SidePanel.Slider:onMessage", BX.proxy(this.onMessageSlider, this));
+
+			BX.addCustomEvent("BX.Sale.PaySystem.Registration.Robokassa:onAddSettings", BX.proxy(this.onAddSettings, this));
+		},
+
+		initExpertMenu()
+		{
+			var self = this;
+
+			this.settingsMenu = new BX.Main.Menu({
+				bindElement: this.settingsMenuNode,
+				angle: true,
+				offsetLeft: 20,
+				closeByEsc: true,
+				items: [],
+			});
+
+			this.settingsMenu.addMenuItem({
+				text: BX.message('SALESCENTER_SP_PAY_SYSTEM_EXPERT_SETTINGS'),
+				onclick: function () {
+					self.settingsMenu.close();
+					self.openSlider();
+				}.bind(this)
+			});
+
+			if (this.isExistsOnlyCommonSettings)
+			{
+				this.addLogoutMenuItem();
+			}
+		},
+
+		addLogoutMenuItem()
+		{
+			var self = this;
+			this.settingsMenu.addMenuItem({
+				id: 'logoutMenuItem',
+				text: BX.message('SALESCENTER_SP_PAY_SYSTEM_SETTINGS_LOGOUT'),
+				onclick: function () {
+					self.settingsMenu.close();
+					self.logoutFromSettings();
+				}.bind(this)
+			});
+		},
+
+		removeLogoutMenuItem()
+		{
+			this.settingsMenu.removeMenuItem('logoutMenuItem');
+		},
+
+		showExpertSettingsMenu(e)
+		{
+			e.preventDefault();
+			this.settingsMenu.show();
 		},
 
 		onLoadSlider: function(sidePanelManager)
@@ -415,6 +474,7 @@
 
 			if (this.paySystemFormData.hasOwnProperty('NAME'))
 			{
+				saveData.append('ACTIVE', saveData.get('ACTIVE'));
 				saveData.append('NAME', saveData.get('NAME'));
 				saveData.append('DESCRIPTION', saveData.get('DESCRIPTION'));
 				saveData.append('IS_CASH', saveData.get('IS_CASH'));
@@ -966,6 +1026,156 @@
 				}, 100);
 			}
 		},
+
+		openSettingsForm(url)
+		{
+			BX.SidePanel.Instance.open(url, {
+				cacheable: false,
+				allowChangeHistory: false,
+				width: 500
+			});
+		},
+
+		onAddSettings(event)
+		{
+			var data = event.getData();
+			if (data && data.handlerClassName)
+			{
+				this.getPaySystemSettingsData(data.handlerClassName).then(
+					function (response)
+					{
+						var responseData = response.data;
+
+						this.reloadSettingsBlockOnAdd(data.handlerClassName, responseData);
+
+						if (responseData.IS_SETTINGS_EXISTS)
+						{
+							this.showNotificationOnAddSetting();
+						}
+					}.bind(this)
+				);
+			}
+		},
+
+		getPaySystemSettingsData(handlerClassName)
+		{
+			return BX.ajax.runComponentAction(
+				'bitrix:salescenter.paysystem',
+				'getPaySystemSettingsData',
+				{
+					mode: 'class',
+					data: {
+						'handlerClassName': handlerClassName,
+					}
+				}
+			);
+		},
+
+		reloadSettingsBlockOnAdd(handlerClassName, responseData)
+		{
+			var paySystemSettings = responseData.PAY_SYSTEM_ROBOKASSA_SETTINGS;
+
+			if (paySystemSettings && paySystemSettings.IS_SUPPORT_SETTINGS)
+			{
+				if (paySystemSettings.IS_ONLY_COMMON_SETTINGS_EXISTS)
+				{
+					this.addLogoutMenuItem();
+
+					var paySystemFormLinkText = this.settingsFormLinkNameCodeMap['DEFAULT'];
+
+					handlerClassName = this.handlerClassName.replace(/\/\//g, "/");
+					if (this.settingsFormLinkNameCodeMap.hasOwnProperty(handlerClassName))
+					{
+						paySystemFormLinkText = this.settingsFormLinkNameCodeMap[handlerClassName]['EXIST'];
+					}
+
+					BX('salescenter-settings-paysystem-form-link').text = paySystemFormLinkText;
+				}
+
+				if (
+					paySystemSettings.IS_SETTINGS_EXISTS
+					&& BX('salescenter-settings-paysystem-register-component')
+				)
+				{
+					BX.remove(BX('salescenter-settings-paysystem-register-component'));
+				}
+			}
+		},
+
+		showNotificationOnAddSetting()
+		{
+			window.top.BX.UI.Notification.Center.notify({
+				content: BX.message('SALESCENTER_SP_PAYSYSTEM_SETTINGS_ADD_NOTIFICATION'),
+			});
+		},
+
+		logoutFromSettings()
+		{
+			this.deletePaySystemSettings().then(
+				function ()
+				{
+					this.getPaySystemSettingsData(this.handlerClassName).then(
+						function (response)
+						{
+							var responseData = response.data;
+							if (!responseData.IS_SETTINGS_EXISTS)
+							{
+								this.removeLogoutMenuItem();
+								this.getRegisterPaySystemComponentAction().then(
+									function (response)
+									{
+										this.reloadSettingsBlockOnLogout(response.data);
+									}.bind(this)
+								);
+							}
+						}.bind(this)
+					);
+			}.bind(this));
+		},
+
+		deletePaySystemSettings()
+		{
+			return BX.ajax.runAction("sale.paysystem.settings.robokassa.delete", {});
+		},
+
+		getRegisterPaySystemComponentAction()
+		{
+			return BX.ajax.runAction("sale.paysystem.settings.robokassa.getRegisterComponent", {});
+		},
+
+		reloadSettingsBlockOnLogout(componentData)
+		{
+			if (BX('salescenter-settings-paysystem-register-component'))
+			{
+				BX.remove(BX('salescenter-settings-paysystem-register-component'));
+			}
+
+			var buttonContainerTop = BX('salescenter-settings-block');
+			if (buttonContainerTop)
+			{
+				var paysystemRegisterComponent = BX.create(
+					'span',
+					{
+						props: {
+							id: 'salescenter-settings-paysystem-register-component'
+						},
+					}
+				);
+
+				BX.html(paysystemRegisterComponent, componentData.html);
+				buttonContainerTop.prepend(paysystemRegisterComponent);
+
+				var paySystemFormLinkText = this.settingsFormLinkNameCodeMap['DEFAULT'];
+
+				var handlerClassName = this.handlerClassName.replace(/\/\//g, "/");
+				if (this.settingsFormLinkNameCodeMap.hasOwnProperty(handlerClassName))
+				{
+					paySystemFormLinkText = this.settingsFormLinkNameCodeMap[handlerClassName]['NEW'];
+				}
+
+				BX('salescenter-settings-paysystem-form-link').text = paySystemFormLinkText;
+			}
+		}
 	};
 
 	if (BX.SalecenterPaySystemCashbox)

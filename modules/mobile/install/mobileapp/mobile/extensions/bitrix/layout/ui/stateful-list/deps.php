@@ -1,11 +1,14 @@
 <?php
 
 return [
-	'rest',
-	'notify',
-	'utils',
-	'navigation-loader',
-	'layout/ui/simple-list/*',
-	'storage-cache',
-	'pull/client/events',
+	'extensions' => [
+		'rest',
+		'notify',
+		'utils',
+		'navigation-loader',
+		'layout/pure-component',
+		'layout/ui/simple-list/*',
+		'storage-cache',
+		'pull/client/events',
+	],
 ];

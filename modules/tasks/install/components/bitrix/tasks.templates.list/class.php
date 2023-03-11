@@ -4,6 +4,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Grid;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
@@ -125,8 +126,7 @@ class TasksTemplatesListComponent extends TasksBaseComponent
 		{
 			return [
 				'success' => false,
-				'message' => Loc::getMessage('TASKS_TEMPLATES_LIST_GROUP_ACTION_ERROR_MESSAGE', [
-					'#MESSAGE#' => Loc::getMessage('TASKS_ACTION_NOT_ALLOWED'),
+				'message' => Loc::getMessage('TASKS_TEMPLATES_LIST_BATCH_DELETE_ERROR_MESSAGE', [
 					'#TEMPLATE_IDS#' => implode(',', $nonAccessTemplates),
 				]),
 				'needReload' => !empty($result)
@@ -324,9 +324,24 @@ class TasksTemplatesListComponent extends TasksBaseComponent
 					]
 				]
 			],
-			'TAGS'        => [
+			'TAGS' => [
 				'id'   => 'TAGS',
-				'name' => Loc::getMessage('TASKS_TEMPLATE_TAGS')
+				'name' => Loc::getMessage('TASKS_TEMPLATE_TAGS'),
+				'type' => 'entity_selector',
+				'params' => [
+					'multiple' => 'Y',
+					'dialogOptions' => [
+						'entities' => [
+							[
+								'id' => 'template-tag',
+								'dynamicLoad' => true,
+								'dynamicSearch' => true,
+							],
+						],
+						'dropdownMode' => true,
+						'compactView' => true,
+					],
+				],
 			],
 			'TPARAM_TYPE' => [
 				'id'    => 'TPARAM_TYPE',
@@ -481,7 +496,18 @@ class TasksTemplatesListComponent extends TasksBaseComponent
 
 	private function getGridData()
 	{
-		$filter = $this->processFilter();
+		//get template's subtasks
+		if (
+			array_key_exists('ID', $this->arParams)
+			&& $this->arParams['ID'] > 0
+		)
+		{
+			$filter = [];
+		}
+		else
+		{
+			$filter = $this->processFilter();
+		}
 
 		if (!$this->arResult['IS_SEARCH_MODE'])
 		{
@@ -519,12 +545,13 @@ class TasksTemplatesListComponent extends TasksBaseComponent
 		];
 
 		$getListParameters['NAV_PARAMS'] = [
-			'nPageSize'          => $navPageSize,
+			'nPageSize' => $navPageSize,
+			'getPlusOne' => true,
 			'bDescPageNumbering' => false,
-			'NavShowAll'         => false,
-			'bShowAll'           => false,
-			'showAlways'         => false,
-			'SHOW_ALWAYS'        => false
+			'NavShowAll' => false,
+			'bShowAll' => false,
+			'showAlways' => false,
+			'SHOW_ALWAYS' => false,
 		];
 
 		if (array_key_exists('clear_nav', $_REQUEST) && $_REQUEST['clear_nav'] == 'Y')
@@ -542,8 +569,8 @@ class TasksTemplatesListComponent extends TasksBaseComponent
 
 		//region NAV
 		$this->arResult['NAV_OBJECT'] = $mgrResult['OBJ_RES'];
-		$this->arResult['NAV_OBJECT']->NavStart($navPageSize, false);
-//		$this->arResult['PAGE_SIZES'] = $this->pageSizes;
+
+		$this->arResult['NAV_STRING'] = $this->makeNavigationString($this->arResult['NAV_OBJECT']);
 
 		$this->arResult['TOTAL_RECORD_COUNT'] = $this->arResult['NAV_OBJECT']->NavRecordCount;
 		//endregion
@@ -551,13 +578,14 @@ class TasksTemplatesListComponent extends TasksBaseComponent
 		return $mgrResult['DATA'];
 	}
 
-
-	protected function mergeWithTags(array $items)
+	private function mergeWithTags(array $items): array
 	{
 		if (empty($items))
 		{
-			return array();
+			return [];
 		}
+
+		$templateIds = array_map('intval', array_keys($items));
 
 		$res = TemplateTagTable::getList([
 			'select' => [
@@ -565,13 +593,23 @@ class TasksTemplatesListComponent extends TasksBaseComponent
 				'NAME',
 			],
 			'filter' => [
-				'TEMPLATE_ID' => array_keys($items),
+				'@TEMPLATE_ID' => $templateIds,
 			],
 		]);
 
+		$uniqueTags = [];
 		while ($row = $res->fetch())
 		{
-			$items[$row['TEMPLATE_ID'] ]['TAGS'][] = $row['NAME'];
+			$templateId = (int)$row['TEMPLATE_ID'];
+			if (
+				isset($uniqueTags[$templateId])
+				&& in_array($row['NAME'], $uniqueTags[$templateId], true)
+			)
+			{
+				continue;
+			}
+			$items[$templateId]['TAGS'][] = $row['NAME'];
+			$uniqueTags[$templateId][] = $row['NAME'];
 		}
 
 		return $items;
@@ -744,4 +782,24 @@ class TasksTemplatesListComponent extends TasksBaseComponent
 		$this->errorCollection->add('ACTION_NOT_ALLOWED.RESTRICTED', Loc::getMessage('TASKS_ACTION_NOT_ALLOWED'));
 	}
 
+	private function makeNavigationString($navObject): string
+	{
+		$path = CComponentEngine::MakePathFromTemplate(
+			$this->arParams['PATH_TO_USER_TASKS_TEMPLATES'],
+			[
+				'user_id' => CurrentUser::get()->getId(),
+			]
+		);
+
+		return $navObject->GetPageNavStringEx(
+			$navObject,
+			'',
+			'grid',
+			false,
+			null,
+			[
+				'BASE_LINK' => $path,
+			]
+		);
+	}
 }

@@ -4,6 +4,7 @@ namespace Bitrix\Crm\Service\Operation\Action\Compatible\SocialNetwork;
 
 use Bitrix\Crm\Item;
 use Bitrix\Crm\Service\Operation\Action;
+use Bitrix\Crm\Settings;
 use Bitrix\Main\Error;
 use Bitrix\Main\Result;
 
@@ -23,7 +24,10 @@ class ProcessUpdate extends Action
 			return $result;
 		}
 
-		if ($itemBeforeSave->remindActual(Item::FIELD_NAME_ASSIGNED) !== $item->getAssignedById())
+		if (
+			Settings\Crm::isLiveFeedRecordsGenerationEnabled()
+			&& $itemBeforeSave->remindActual(Item::FIELD_NAME_ASSIGNED) !== $item->getAssignedById()
+		)
 		{
 			\CCrmSonetSubscription::ReplaceSubscriptionByEntity(
 				$item->getEntityTypeId(),
