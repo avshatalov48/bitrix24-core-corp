@@ -36,7 +36,7 @@ class SmartDocument extends Dynamic
 
 	public function isAutomationEnabled(): bool
 	{
-		return false;
+		return true;
 	}
 
 	public function isBizProcEnabled(): bool

@@ -7,9 +7,10 @@ use Bitrix\Crm\Service\Timeline\Context;
 use Bitrix\Crm\Service\Timeline\Item;
 use Bitrix\Crm\Service\Timeline\Item\Model;
 use Bitrix\Crm\Settings\Crm;
+use Bitrix\Crm\Timeline\DeliveryCategoryType;
 use Bitrix\Crm\Timeline\LogMessageType;
-use Bitrix\Crm\Timeline\OrderCategoryType;
 use Bitrix\Crm\Timeline\ProductCompilationType;
+use Bitrix\Crm\Timeline\OrderCategoryType;
 use Bitrix\Crm\Timeline\TimelineType;
 use CCrmOwnerType;
 
@@ -45,6 +46,22 @@ class HistoryItem
 
 		if ($typeId === TimelineType::CREATION)
 		{
+			if ($assocEntityTypeId === \CCrmOwnerType::Deal)
+			{
+				if (!empty($model->getAssociatedEntityModel()->get('ORDER')))
+				{
+					return new Item\LogMessage\DealCreationByOrder($context, $model);
+				}
+			}
+			elseif ($assocEntityTypeId === \CCrmOwnerType::OrderPayment)
+			{
+				return new Item\LogMessage\PaymentCreation($context, $model);
+			}
+			elseif ($assocEntityTypeId === \CCrmOwnerType::OrderShipment)
+			{
+				return new Item\LogMessage\ShipmentCreation($context, $model);
+			}
+
 			return new Item\LogMessage\Creation($context, $model);
 		}
 
@@ -90,9 +107,18 @@ class HistoryItem
 
 		if ($typeId === TimelineType::PRODUCT_COMPILATION)
 		{
-			if ($typeCategoryId === ProductCompilationType::PRODUCT_LIST)
+			switch ($typeCategoryId)
 			{
-				return new Item\ProductCompilation\SentToClient($context, $model);
+				case ProductCompilationType::PRODUCT_LIST:
+					return new Item\ProductCompilationSentToCustomer($context, $model);
+				case ProductCompilationType::ORDER_EXISTS:
+					return new Item\LogMessage\ProductCompilationOrderExists($context, $model);
+				case ProductCompilationType::COMPILATION_VIEWED:
+					return new Item\LogMessage\ProductCompilationViewed($context, $model);
+				case ProductCompilationType::COMPILATION_NOT_VIEWED:
+					return new Item\LogMessage\ProductCompilationNotViewed($context, $model);
+				case ProductCompilationType::NEW_DEAL_CREATED:
+					return new Item\LogMessage\ProductCompilationNewDealCreated($context, $model);
 			}
 		}
 
@@ -111,12 +137,154 @@ class HistoryItem
 			return new Item\NotAvailable($context, $model);
 		}
 
+		if ($typeId === TimelineType::MARK && $assocEntityTypeId === CCrmOwnerType::Order)
+		{
+			return new Item\LogMessage\OrderSynchronization($context, $model);
+		}
+
 		if ($typeId === TimelineType::ORDER)
 		{
-			if ($typeCategoryId === OrderCategoryType::ENCOURAGE_BUY_PRODUCTS)
+			$historyItemFields = $model->getHistoryItemModel()->get('FIELDS');
+			$historyItemFields = $historyItemFields ?? [];
+
+			if ($typeCategoryId === TimelineType::CREATION)
 			{
-				return new Item\Order\EncourageBuyProducts($context, $model);
+				if ($assocEntityTypeId === CCrmOwnerType::Order)
+				{
+					return new Item\LogMessage\OrderCreation($context, $model);
+				}
 			}
+			elseif ($typeCategoryId === TimelineType::MODIFICATION)
+			{
+				if ($assocEntityTypeId === CCrmOwnerType::OrderPayment)
+				{
+					if (
+						isset($historyItemFields['PAY_SYSTEM_CLICK'])
+						&& $historyItemFields['PAY_SYSTEM_CLICK'] === 'Y'
+					)
+					{
+						return new Item\LogMessage\CustomerSelectedPaymentMethod($context, $model);
+					}
+
+					if (
+						isset($historyItemFields['NEED_MANUAL_ADD_CHECK'])
+						&& $historyItemFields['NEED_MANUAL_ADD_CHECK'] === 'Y'
+					)
+					{
+						return new Item\LogMessage\CheckManualCreation($context, $model);
+					}
+
+					if (isset($historyItemFields['VIEWED']))
+					{
+						if ($historyItemFields['VIEWED'] === 'Y')
+						{
+							return new Item\LogMessage\PaymentViewed($context, $model);
+						}
+
+						return new Item\LogMessage\PaymentNotViewed($context, $model);
+					}
+
+					if (
+						isset($historyItemFields['STATUS_CODE'])
+						&& $historyItemFields['STATUS_CODE'] === 'ERROR'
+					)
+					{
+						return new Item\LogMessage\PaymentError($context, $model);
+					}
+
+					if (isset($historyItemFields['SENT']) &&  $historyItemFields['SENT'] === 'Y')
+					{
+						/**
+						 * New blocks of this type are not created anymore
+						 */
+						return new Item\LogMessage\PaymentSent($context, $model);
+					}
+
+					if (isset($historyItemFields['ORDER_PAID']))
+					{
+						if ($historyItemFields['ORDER_PAID'] === 'Y')
+						{
+							return new Item\LogMessage\PaymentPaid($context, $model);
+						}
+
+						return new Item\LogMessage\PaymentNotPaid($context, $model);
+					}
+				}
+				elseif ($assocEntityTypeId === CCrmOwnerType::OrderShipment)
+				{
+					if (isset($historyItemFields['ORDER_DEDUCTED']))
+					{
+						if ($historyItemFields['ORDER_DEDUCTED'] === 'Y')
+						{
+							return new Item\LogMessage\ShipmentDeducted($context, $model);
+						}
+
+						return new Item\LogMessage\ShipmentNotDeducted($context, $model);
+					}
+				}
+				elseif ($assocEntityTypeId === CCrmOwnerType::Order)
+				{
+					if (
+						isset($historyItemFields['MANUAL_CONTINUE_PAY'])
+						&& $historyItemFields['MANUAL_CONTINUE_PAY'] === 'Y'
+					)
+					{
+						return new Item\LogMessage\CustomerProceededWithOrder($context, $model);
+					}
+
+					if (isset($historyItemFields['ORDER_PAID']))
+					{
+						if ($historyItemFields['ORDER_PAID'] === 'Y')
+						{
+							return new Item\LogMessage\OrderPaid($context, $model);
+						}
+
+						return new Item\LogMessage\OrderNotPaid($context, $model);
+					}
+
+					if (isset($historyItemFields['ORDER_DEDUCTED']))
+					{
+						if ($historyItemFields['ORDER_DEDUCTED'] === 'Y')
+						{
+							return new Item\LogMessage\OrderDeducted($context, $model);
+						}
+
+						return new Item\LogMessage\OrderNotDeducted($context, $model);
+					}
+				}
+			}
+			elseif ($typeCategoryId === OrderCategoryType::ENCOURAGE_BUY_PRODUCTS)
+			{
+				return new Item\EncourageBuyProducts($context, $model);
+			}
+		}
+
+		if (in_array($typeId, [TimelineType::FINAL_SUMMARY, TimelineType::FINAL_SUMMARY_DOCUMENTS], true))
+		{
+			if ($typeCategoryId === TimelineType::CREATION)
+			{
+				return new Item\FinalSummary($context, $model);
+			}
+		}
+
+		if ($typeId === TimelineType::ORDER_CHECK)
+		{
+			if ($typeCategoryId === TimelineType::MARK)
+			{
+				return new Item\LogMessage\OrderCheckSent($context, $model);
+			}
+
+			if ($model->getAssociatedEntityId())
+			{
+				if ($model->getHistoryItemModel()->get('PRINTED') === 'Y')
+				{
+					return new Item\OrderCheckPrinted($context, $model);
+				}
+
+				return new Item\OrderCheckNotPrinted($context, $model);
+			}
+
+			return new Item\LogMessage\OrderCheckCreationError($context, $model);
 		}
 
 		if ($typeId === TimelineType::STORE_DOCUMENT)
@@ -125,6 +293,35 @@ class HistoryItem
 			if ($item)
 			{
 				return $item;
+			}
+		}
+
+		if ($typeId === TimelineType::DELIVERY)
+		{
+			switch ($typeCategoryId)
+			{
+				// v3 delivery blocks
+				case DeliveryCategoryType::UNIVERSAL:
+				// v2 delivery blocks that are compatible with v3 version
+				case DeliveryCategoryType::MESSAGE:
+				case DeliveryCategoryType::DELIVERY_CALCULATION:
+					return new Item\LogMessage\Delivery\Universal($context, $model);
+				// v1 taxi blocks that are not compatible with v1 version
+				case DeliveryCategoryType::TAXI_ESTIMATION_REQUEST:
+					return new Item\LogMessage\Delivery\Taxi\EstimationRequest($context, $model);
+				case DeliveryCategoryType::TAXI_CALL_REQUEST:
+					return new Item\LogMessage\Delivery\Taxi\CallRequest($context, $model);
+				case DeliveryCategoryType::TAXI_CANCELLED_BY_MANAGER:
+					return new Item\LogMessage\Delivery\Taxi\CancelledByManager($context, $model);
+				case DeliveryCategoryType::TAXI_CANCELLED_BY_DRIVER:
+					return new Item\LogMessage\Delivery\Taxi\CancelledByDriver($context, $model);
+				case DeliveryCategoryType::TAXI_PERFORMER_NOT_FOUND:
+					return new Item\LogMessage\Delivery\Taxi\PerformerNotFound($context, $model);
+				case DeliveryCategoryType::TAXI_SMS_PROVIDER_ISSUE:
+					return new Item\LogMessage\Delivery\Taxi\SmsProviderIssue($context, $model);
+				case DeliveryCategoryType::TAXI_RETURNED_FINISH:
+					return new Item\LogMessage\Delivery\Taxi\ReturnedFinish($context, $model);
+				// endregion
 			}
 		}
 

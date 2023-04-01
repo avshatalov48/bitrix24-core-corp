@@ -17,12 +17,12 @@ export class Backend
 		return Backend.#instance;
 	}
 
-	getFieldsList(): Promise<any>
+	getFieldsList(presetId: number): Promise<any>
 	{
 		return this.#cache.remember('fieldsList', () => {
 			return new Promise((resolve, reject) => {
 				ajax
-					.runAction('crm.api.form.field.list', {json: {}})
+					.runAction('crm.api.form.field.list', {json: {presetId}})
 					.then((result) => {
 						if (Type.isPlainObject(result?.data?.tree))
 						{

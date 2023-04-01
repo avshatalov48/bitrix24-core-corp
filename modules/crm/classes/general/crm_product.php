@@ -851,10 +851,13 @@ class CCrmProduct
 				|| preg_match('/^PROPERTY_\d+$/', $uk))
 				$arOrderRewrited[$uk] = $v;
 		}
-		if ($arOrder['ORIGINATOR_ID'].$arOrder['ORIGIN_ID'] <> '')
+
+		if (isset($arOrder['ORIGINATOR_ID']) && !empty($arOrder['ORIGINATOR_ID']))
 		{
-			if ($arOrder['ORIGINATOR_ID'] <> '') $arOrderRewrited['XML_ID'] = $arOrder['ORIGINATOR_ID'];
-			else $arOrderRewrited['XML_ID'] = $arOrder['ORIGIN_ID'];
+			$arOrderRewrited['XML_ID'] = $arOrder['ORIGINATOR_ID'];
+		} elseif (isset($arOrder['ORIGIN_ID']) && !empty($arOrder['ORIGIN_ID']))
+		{
+			$arOrderRewrited['XML_ID'] = $arOrder['ORIGIN_ID'];
 		}
 		// </editor-fold>
 
@@ -901,23 +904,19 @@ class CCrmProduct
 				}
 			}
 		}
-		if ($arFilter['ORIGINATOR_ID'].$arFilter['ORIGIN_ID'] <> '')
+
+		if (
+			isset($arFilter['ORIGINATOR_ID']) && !empty($arFilter['ORIGINATOR_ID'])
+			&& isset($arFilter['ORIGIN_ID']) && !empty($arFilter['ORIGIN_ID'])
+		)
 		{
-			if ($arFilter['ORIGINATOR_ID'] <> '' && $arFilter['ORIGIN_ID'] <> '')
-			{
-				$arFilterRewrited['XML_ID'] = $arFilter['ORIGINATOR_ID'].'#'.$arFilter['ORIGIN_ID'];
-			}
-			else
-			{
-				if ($arFilter['ORIGINATOR_ID'] <> '')
-				{
-					$arFilterRewrited['%XML_ID'] = $arFilter['ORIGINATOR_ID'].'#';
-				}
-				else
-				{
-					$arFilterRewrited['%XML_ID'] = '#'.$arFilter['ORIGIN_ID'];
-				}
-			}
+			$arFilterRewrited['XML_ID'] = $arFilter['ORIGINATOR_ID'].'#'.$arFilter['ORIGIN_ID'];
+		} elseif (isset($arFilter['ORIGINATOR_ID']) && !empty($arFilter['ORIGINATOR_ID']))
+		{
+			$arFilterRewrited['%XML_ID'] = $arFilter['ORIGINATOR_ID'].'#';
+		} elseif (isset($arFilter['ORIGIN_ID']) && !empty($arFilter['ORIGIN_ID']))
+		{
+			$arFilterRewrited['%XML_ID'] = '#'.$arFilter['ORIGIN_ID'];
 		}
 
 		if(!isset($arFilter['ID']) || isset($arFilter['CATALOG_ID']))

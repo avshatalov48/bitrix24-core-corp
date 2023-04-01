@@ -3,15 +3,17 @@
 
 $this->SetViewTarget("above_pagetitle");
 
-$isSlider = ($_REQUEST['IFRAME'] == 'Y' && $_REQUEST['IFRAME_TYPE'] == 'SIDE_SLIDER');
+$iframe = $_REQUEST['IFRAME'] ?? null;
+$sideSlider = $_REQUEST['IFRAME_TYPE'] ?? null;
+$isSlider = ($iframe === 'Y' && $sideSlider === 'SIDE_SLIDER');
 if (!$isSlider)
 {
 	$APPLICATION->IncludeComponent(
 		"bitrix:main.interface.buttons",
 		"",
 		array(
-			"ID" => $arResult["MENU_ID"],
-			"ITEMS" => $arResult["MENU_ITEMS"],
+			"ID" => $arResult["MENU_ID"] ?? '',
+			"ITEMS" => $arResult["MENU_ITEMS"] ?? [],
 		)
 	);
 }

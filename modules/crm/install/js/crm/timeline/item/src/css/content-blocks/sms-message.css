@@ -6,7 +6,7 @@
 	border-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2226%22%20height%3D%2251%22%20viewBox%3D%220%200%2026%2051%22%3E%0A%20%20%3Cpath%20fill%3D%22none%22%20stroke%3D%22%232FC6F6%22%20d%3D%22M1165.63419%2C2673.12695%20L1150.5%2C2673.12695%20L1150.5%2C2668.62695%20C1150.5%2C2667.24624%201149.38071%2C2666.12695%201148%2C2666.12695%20L1144%2C2666.12695%20C1142.61929%2C2666.12695%201141.5%2C2667.24624%201141.5%2C2668.62695%20L1141.5%2C2712.62695%20C1141.5%2C2714.00766%201142.61929%2C2715.12695%201144%2C2715.12695%20L1148%2C2715.12695%20C1149.38071%2C2715.12695%201150.5%2C2714.00766%201150.5%2C2712.62695%20L1150.5%2C2685.92251%20L1165.63419%2C2673.12695%20Z%22%20transform%3D%22translate%28-1141%20-2665%29%22%20opacity%3D%22.41%22/%3E%0A%3C/svg%3E%0A') 22 21 5 4 repeat;
 	color: var(--ui-color-text-secondary, #525c69);
 	font-size: var(--ui-font-size-sm, 13px);
-	line-height: var(--ui-font-line-height-3xs, 16px);
+	line-height: var(--ui-font-line-height-lg, 1.5);
 	font-weight: var(--ui-font-weight-normal, 400);
 	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	word-break: break-all;

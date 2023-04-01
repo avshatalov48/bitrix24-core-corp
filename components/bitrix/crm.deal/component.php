@@ -107,10 +107,15 @@ if ($arParams['SEF_MODE'] == 'Y')
 
 	foreach ($arUrlTemplates as $url => $value)
 	{
-		if($arParams['PATH_TO_DEAL_'.mb_strtoupper($url)] == '')
-			$arResult['PATH_TO_DEAL_'.mb_strtoupper($url)] = $arParams['SEF_FOLDER'].$value;
+		$pathToDealKey = 'PATH_TO_DEAL_'.mb_strtoupper($url);
+		if(!isset($arParams[$pathToDealKey]) || $arParams[$pathToDealKey] == '')
+		{
+			$arResult[$pathToDealKey] = $arParams['SEF_FOLDER'].$value;
+		}
 		else
-			$arResult['PATH_TO_DEAL_'.mb_strtoupper($url)] = $arParams['PATH_TO_'.mb_strtoupper($url)];
+		{
+			$arResult[$pathToDealKey] = $arParams['PATH_TO_'.mb_strtoupper($url)] ?? null;
+		}
 	}
 
 	if ($arParams['PATH_TO_CONTACT'] == '')
@@ -131,17 +136,27 @@ if ($arParams['SEF_MODE'] == 'Y')
 	}
 	foreach ($arDefaultUrlTemplatesContact as $url => $value)
 	{
-		if($arParams['PATH_TO_CONTACT_'.mb_strtoupper($url)] == '')
-			$arResult['PATH_TO_CONTACT_'.mb_strtoupper($url)] =$arParams['PATH_TO_CONTACT'].$value;
+		$pathToContactKey = 'PATH_TO_CONTACT_' . mb_strtoupper($url);
+		if(($arParams[$pathToContactKey] ?? null) == '')
+		{
+			$arResult[$pathToContactKey] =$arParams['PATH_TO_CONTACT'].$value;
+		}
 		else
-			$arResult['PATH_TO_CONTACT_'.mb_strtoupper($url)] = $arParams['PATH_TO_CONTACT_'.mb_strtoupper($url)];
+		{
+			$arResult[$pathToContactKey] = $arParams[$pathToContactKey] ?? null;
+		}
 	}
 	foreach ($arDefaultUrlTemplatesCompany as $url => $value)
 	{
-		if($arParams['PATH_TO_COMPANY_'.mb_strtoupper($url)] == '')
-			$arResult['PATH_TO_COMPANY_'.mb_strtoupper($url)] =$arParams['PATH_TO_COMPANY'].$value;
+		$pathToCompanyKey = 'PATH_TO_COMPANY_' . mb_strtoupper($url);
+		if(($arParams[$pathToCompanyKey] ?? null) == '')
+		{
+			$arResult[$pathToCompanyKey] =$arParams['PATH_TO_COMPANY'].$value;
+		}
 		else
-			$arResult['PATH_TO_COMPANY_'.mb_strtoupper($url)] = $arParams['PATH_TO_COMPANY_'.mb_strtoupper($url)];
+		{
+			$arResult[$pathToCompanyKey] = $arParams[$pathToCompanyKey] ?? null;
+		}
 	}
 }
 else
@@ -222,9 +237,9 @@ else
 }
 
 $arResult = array_merge(
-	array(
+	[
 		'VARIABLES' => $arVariables,
-		'ALIASES' => $arParams['SEF_MODE'] == 'Y'? array(): $arVariableAliases,
+		'ALIASES' => $arParams['SEF_MODE'] == 'Y'? [] : $arVariableAliases,
 		'ELEMENT_ID' => $arParams['ELEMENT_ID'],
 		'PATH_TO_LEAD_CONVERT' => $arParams['PATH_TO_LEAD_CONVERT'],
 		'PATH_TO_LEAD_EDIT' => $arParams['PATH_TO_LEAD_EDIT'],
@@ -234,9 +249,17 @@ $arResult = array_merge(
 		'PATH_TO_COMPANY_EDIT' => $arParams['PATH_TO_COMPANY_EDIT'],
 		'PATH_TO_COMPANY_SHOW' => $arParams['PATH_TO_COMPANY_SHOW'],
 		'PATH_TO_USER_PROFILE' => $arParams['PATH_TO_USER_PROFILE'],
-		'PATH_TO_DEAL_CATEGORY_LIST' => CrmCheckPath('PATH_TO_DEAL_CATEGORY_LIST', $arParams['PATH_TO_DEAL_CATEGORY_LIST'], COption::GetOptionString('crm', 'path_to_deal_category_list')),
-		'PATH_TO_DEAL_CATEGORY_EDIT' => CrmCheckPath('PATH_TO_DEAL_CATEGORY_EDIT', $arParams['PATH_TO_DEAL_CATEGORY_EDIT'], COption::GetOptionString('crm', 'path_to_deal_category_edit'))
-	),
+		'PATH_TO_DEAL_CATEGORY_LIST' => CrmCheckPath(
+			'PATH_TO_DEAL_CATEGORY_LIST',
+			$arParams['PATH_TO_DEAL_CATEGORY_LIST'] ?? null,
+			COption::GetOptionString('crm', 'path_to_deal_category_list')
+		),
+		'PATH_TO_DEAL_CATEGORY_EDIT' => CrmCheckPath('
+			PATH_TO_DEAL_CATEGORY_EDIT',
+			$arParams['PATH_TO_DEAL_CATEGORY_EDIT'] ?? null,
+			COption::GetOptionString('crm', 'path_to_deal_category_edit')
+		)
+	],
 	$arResult
 );
 

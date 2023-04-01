@@ -1,5 +1,6 @@
 <?php
 $MESS["CRM_DEAL_MODIFICATION_STAGE"] = "Стадия изменена";
+$MESS["CRM_DEAL_MODIFICATION_CATEGORY"] = "Изменена воронка";
 $MESS["CRM_DEAL_CREATION"] = "Создана сделка";
 $MESS["CRM_DEAL_BASE_CAPTION_LEAD"] = "На основании лида";
 $MESS["CRM_DEAL_BASE_CAPTION_DEAL_RECURRING"] = "На основании шаблона";

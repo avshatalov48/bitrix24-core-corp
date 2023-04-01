@@ -941,6 +941,7 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 			const actions = [
 				{
 					id: 'open',
+					sort: 100,
 					showActionLoader: false,
 					title: (
 						canUpdate
@@ -966,12 +967,13 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 
 				actions.push({
 					id: actionName,
+					sort: 300,
 					title,
 					type: actionName,
 					onClickCallback: (action, itemId, { parentWidget }) => {
 						const categoryId = this.getCategoryId(entityTypeId);
 						parentWidget.close(() => {
-							const changeParams = { categoryId, itemId, parentWidget, entityType: typeName };
+							const changeParams = { categoryId, itemId, entityType: typeName };
 							onAction(changeParams)
 								.then(() => this.blinkItemListView(itemId))
 								.then(() => this.deleteRowFromListView(itemId));
@@ -984,6 +986,7 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 
 			actions.push({
 				id: 'delete',
+				sort: 900,
 				title: this.getEntityMessage('M_CRM_ENTITY_TAB_ITEM_ACTION_DELETE'),
 				type: 'delete',
 				onClickCallback: this.deleteItemConfirm,
@@ -993,6 +996,7 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 
 			actions.push({
 				id: 'showActivityDetailTab',
+				sort: 1000,
 				title: BX.message('M_CRM_ENTITY_TAB_ITEM_ACTION_ACTIVITIES2'),
 				onClickCallback: (action, itemId, { parentWidget, parent }) => {
 					const params = {
@@ -1005,6 +1009,8 @@ jn.define('crm/entity-tab', (require, exports, module) => {
 					svgIcon: activitiesSvg,
 				},
 			});
+
+			actions.sort(({ sort: sortA = 0 }, { sort: sortB = 0 }) => sortA - sortB);
 
 			return actions;
 		}

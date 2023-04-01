@@ -83,40 +83,39 @@ class DatePeriods
 
 	public function stageByDate(?Date $checkDate): string
 	{
-		if (empty($checkDate))
+		if ($checkDate === null)
 		{
 			return DeadlinesStageManager::STAGE_LATER;
 		}
 
-		// reset time in the date object
-		$checkDate = new Date($checkDate);
 		$checkTs = $checkDate->getTimestamp();
 
 		if ($checkTs < $this->today()->getTimestamp())
 		{
 			return DeadlinesStageManager::STAGE_OVERDUE;
 		}
-		elseif ($checkTs === $this->today()->getTimestamp())
+
+		if ($checkTs === $this->today()->getTimestamp())
 		{
 			return DeadlinesStageManager::STAGE_TODAY;
 		}
-		else if (
-			$checkTs >= $this->tomorrow()->getTimestamp() &&
-			$checkTs <= $this->currentWeekLastDay()->getTimestamp())
+
+		if (
+			$checkTs >= $this->tomorrow()->getTimestamp()
+			&& $checkTs <= $this->currentWeekLastDay()->getTimestamp())
 		{
 			return DeadlinesStageManager::STAGE_THIS_WEEK;
 		}
-		else if (
-			$checkTs >= $this->nextWeekFirstDay()->getTimestamp() &&
-			$checkTs <= $this->nextWeekLastDay()->getTimestamp()
+
+		if (
+			$checkTs >= $this->nextWeekFirstDay()->getTimestamp()
+			&& $checkTs <= $this->nextWeekLastDay()->getTimestamp()
 		)
 		{
 			return DeadlinesStageManager::STAGE_NEXT_WEEK;
 		}
-		else
-		{
-			return DeadlinesStageManager::STAGE_LATER;
-		}
+
+		return DeadlinesStageManager::STAGE_LATER;
 	}
 
 	public function calculateDateByStage(string $stage): ?Date
@@ -124,7 +123,7 @@ class DatePeriods
 		switch ($stage)
 		{
 			case DeadlinesStageManager::STAGE_TODAY:
-				$result =  $this->datetimeStages->today($this->userCurrentDateTime);
+				$result = $this->datetimeStages->today($this->userCurrentDateTime);
 				break;
 			case DeadlinesStageManager::STAGE_THIS_WEEK:
 				$result = $this->datetimeStages->thisWeek($this->userCurrentDateTime);

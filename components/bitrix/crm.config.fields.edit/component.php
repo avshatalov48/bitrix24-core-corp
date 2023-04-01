@@ -114,7 +114,13 @@ if ($arResult['NEW_FIELD'] && $ufAddRestriction->isExceeded((int)CCrmOwnerType::
 	$hasRestrictions = true;
 	$arResult['RESTRICTION_CALLBACK'] = $ufAddRestriction->prepareInfoHelperScript();
 }
-if (!$hasRestrictions && $arResult['NEW_FIELD'] && $_POST['USER_TYPE_ID'] === 'resourcebooking' && !$resourceBookingRestriction->hasPermission())
+if (
+	!$hasRestrictions
+	&& $arResult['NEW_FIELD']
+	&& isset($_POST['USER_TYPE_ID'])
+	&& $_POST['USER_TYPE_ID'] === 'resourcebooking'
+	&& !$resourceBookingRestriction->hasPermission()
+)
 {
 	$hasRestrictions = true;
 	$arResult['RESTRICTION_CALLBACK'] = $resourceBookingRestriction->prepareInfoHelperScript();
@@ -139,10 +145,10 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 			'ENTITY_ID' => $arResult['ENTITY_ID'],
 			'CATEGORY_ID' => $arResult['CATEGORY_ID'],
 			'SORT' => $_POST['SORT'],
-			'MULTIPLE' => $_POST['MULTIPLE'] == 'Y' ? 'Y' : 'N',
-			'MANDATORY' => $_POST['MANDATORY'] == 'Y' ? 'Y' : 'N',
-			'SHOW_FILTER' => $_POST['SHOW_FILTER'] == 'Y' ? 'E' : 'N', // E - 'By mask' is default
-			'SHOW_IN_LIST' => $_POST['SHOW_IN_LIST'] == 'Y' ? 'Y' : 'N'
+			'MULTIPLE' => ($_POST['MULTIPLE'] ?? null) === 'Y' ? 'Y' : 'N',
+			'MANDATORY' => $_POST['MANDATORY'] === 'Y' ? 'Y' : 'N',
+			'SHOW_FILTER' => $_POST['SHOW_FILTER'] === 'Y' ? 'E' : 'N', // E - 'By mask' is default
+			'SHOW_IN_LIST' => $_POST['SHOW_IN_LIST'] === 'Y' ? 'Y' : 'N'
 		);
 
 		if(isset($_POST['USE_MULTI_LANG_LABEL']) && $_POST['USE_MULTI_LANG_LABEL'] === 'Y')
@@ -572,7 +578,7 @@ if($bVarsFromForm)
 	else
 		$arResult['LIST'] = false;
 
-	$arResult['FIELD']['LIST_TEXT_VALUES'] = $_POST['LIST_TEXT_VALUES'];
+	$arResult['FIELD']['LIST_TEXT_VALUES'] = $_POST['LIST_TEXT_VALUES'] ?? null;
 
 	if(isset($_POST['LIST_DEF']) && is_array($_POST['LIST_DEF']))
 	{

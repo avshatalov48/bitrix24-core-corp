@@ -347,6 +347,10 @@ ChatMessengerCommon.purifyText = function(text, params) // after change this cod
 				return  text? text: command;
 			});
 		});
+		text = text.replace(
+			/\[dialog=(chat\d+|\d+)(?: message=(\d+))?](.*?)\[\/dialog]/gi,
+			(whole, dialogId, messageId, message) => message
+		);
 
 		text = text.replace(/\[[buis]\](.*?)\[\/[buis]\]/ig, '$1');
 		text = text.replace(/\[url\](.*?)\[\/url\]/ig, '$1');

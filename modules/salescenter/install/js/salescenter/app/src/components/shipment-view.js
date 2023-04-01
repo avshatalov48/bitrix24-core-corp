@@ -1,6 +1,6 @@
 import 'ui.fonts.ruble';
 import 'currency';
-import {ajax, Loc} from 'main.core';
+import {ajax, Loc, Type} from 'main.core';
 
 export default {
 	props: {
@@ -28,8 +28,10 @@ export default {
 						logo: null,
 					},
 				},
-				extraServices: []
-			}
+				extraServices: [],
+				requestProperties: [],
+			},
+			canUserPerformCalls: false,
 		};
 	},
 	created()
@@ -41,13 +43,37 @@ export default {
 				}}
 		).then((result) => {
 			this.shipment = result.data.shipment;
+			this.canUserPerformCalls = result.data.canUserPerformCalls;
 		});
 	},
 	methods: {
 		getFormattedPrice(price)
 		{
 			return BX.Currency.currencyFormat(price, this.currency, true);
-		}
+		},
+		isPhoneRequestProperty(property)
+		{
+			if (!Type.isArray(property.tags))
+			{
+				return false;
+			}
+
+			return property.tags.includes('phone');
+		},
+		makeCall(phoneNumber)
+		{
+			if (
+				!Type.isUndefined(window.top['BXIM'])
+				&& this.canUserPerformCalls === true
+			)
+			{
+				window.top['BXIM'].phoneTo(phoneNumber);
+			}
+			else
+			{
+				window.open('tel:' + phoneNumber, '_self');
+			}
+		},
 	},
 	computed: {
 		hasParent()
@@ -80,10 +106,6 @@ export default {
 		{
 			return this.hasParent ? this.shipment.deliveryService.name : null;
 		},
-		basePriceDelivery()
-		{
-			return this.shipment ? this.shipment.basePriceDelivery : null;
-		},
 		priceDelivery()
 		{
 			return this.shipment ? this.shipment.priceDelivery : null;
@@ -94,15 +116,19 @@ export default {
 		},
 		extraServices()
 		{
-			return this.shipment.extraServices ? this.shipment.extraServices : [];
+			return Type.isArray(this.shipment.extraServices) ? this.shipment.extraServices : [];
 		},
 		isExtraServicesVisible()
 		{
 			return this.extraServices.length > 0;
 		},
-		basePriceDeliveryFormatted()
+		requestProperties()
 		{
-			return this.getFormattedPrice(this.basePriceDelivery);
+			return Type.isArray(this.shipment.requestProperties) ? this.shipment.requestProperties : [];
+		},
+		isRequestPropertiesVisible()
+		{
+			return this.requestProperties.length > 0;
 		},
 		priceDeliveryFormatted()
 		{
@@ -157,9 +183,24 @@ export default {
 					</li>
 				</ul>
 			</div>
-			<div class="salescenter-delivery-selector-bottom salescenter-delivery-selector-text-dark">
-				${Loc.getMessage('SALESCENTER_SHIPMENT_DELIVERY_PRICE_RECEIVED')}:
-				<span v-html="basePriceDeliveryFormatted"></span>
+			<div v-if="isRequestPropertiesVisible" class="salescenter-delivery-selector-main">
+				<div class="salescenter-delivery-selector-text-light">
+					${Loc.getMessage('SALESCENTER_DELIVERY_REQUEST_DETAILS')}:
+				</div>
+				<ul class="salescenter-delivery-selector-list">
+					<li
+						v-for="requestProperty in requestProperties"
+						class="salescenter-delivery-selector-list-item salescenter-delivery-selector-text-dark"
+					>
+						{{requestProperty.name}}:
+						<template v-if="isPhoneRequestProperty(requestProperty)">
+							<a @click.prevent="makeCall(requestProperty.value)" href="#">{{requestProperty.value}}</a>
+						</template>
+						<template v-else>
+							{{requestProperty.value}}
+						</template>
+					</li>
+				</ul>
 			</div>
 			<div class="salescenter-delivery-selector-line"></div>
 			<div class="catalog-pf-result-wrapper">

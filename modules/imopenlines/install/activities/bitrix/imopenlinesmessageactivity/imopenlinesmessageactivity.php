@@ -5,8 +5,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
-class CBPImOpenLinesMessageActivity
-	extends CBPActivity
+class CBPImOpenLinesMessageActivity extends CBPActivity
 {
 	const ATTACHMENT_TYPE_FILE = 'file';
 	const ATTACHMENT_TYPE_DISK = 'disk';
@@ -14,14 +13,14 @@ class CBPImOpenLinesMessageActivity
 	public function __construct($name)
 	{
 		parent::__construct($name);
-		$this->arProperties = array(
+		$this->arProperties = [
 			"Title" => "",
 			"MessageText" => "",
 			"IsSystem" => "",
 
 			'AttachmentType' => static::ATTACHMENT_TYPE_FILE,
-			'Attachment' => []
-		);
+			'Attachment' => [],
+		];
 	}
 
 	public function Execute()
@@ -35,11 +34,12 @@ class CBPImOpenLinesMessageActivity
 			return CBPActivityExecutionStatus::Closed;
 		}
 
-		list($moduleId, $documentEntity, $documentId) = $this->GetDocumentId();
+		[$moduleId, $documentEntity, $documentId] = $this->GetDocumentId();
 
 		if ($moduleId !== 'crm')
 		{
 			$this->writeError(GetMessage("IMOL_MA_UNSUPPORTED_DOCUMENT"));
+
 			return CBPActivityExecutionStatus::Closed;
 		}
 
@@ -57,6 +57,7 @@ class CBPImOpenLinesMessageActivity
 		if (!$sessionCode)
 		{
 			$this->writeError(GetMessage("IMOL_MA_NO_SESSION_CODE"), $fromUserId);
+
 			return CBPActivityExecutionStatus::Closed;
 		}
 
@@ -80,6 +81,7 @@ class CBPImOpenLinesMessageActivity
 		if (!$chat)
 		{
 			$this->writeError(GetMessage("IMOL_MA_NO_CHAT"), $fromUserId);
+
 			return CBPActivityExecutionStatus::Closed;
 		}
 
@@ -176,50 +178,50 @@ class CBPImOpenLinesMessageActivity
 			'currentValues' => $currentValues
 		));
 
-		$dialog->setMap(array(
-			'MessageText' => array(
+		$dialog->setMap([
+			'MessageText' => [
 				'Name' => GetMessage('IMOL_MA_MESSAGE'),
 				'Description' => GetMessage('IMOL_MA_MESSAGE'),
 				'FieldName' => 'message_text',
 				'Type' => 'text',
-				'Required' => true
-			),
-			'IsSystem' => array(
+				'Required' => true,
+			],
+			'IsSystem' => [
 				'Name' => GetMessage('IMOL_MA_IS_SYSTEM'),
 				'Description' => GetMessage('IMOL_MA_IS_SYSTEM_DESCRIPTION'),
 				'FieldName' => 'is_system',
 				'Type' => 'bool',
-				'Default' => 'N'
-			),
-			'AttachmentType' => array(
+				'Default' => 'N',
+			],
+			'AttachmentType' => [
 				'Name' => GetMessage('IMOL_MA_ATTACHMENT_TYPE'),
 				'FieldName' => 'attachment_type',
 				'Type' => 'select',
 				'Options' => array(
 					static::ATTACHMENT_TYPE_FILE => GetMessage('IMOL_MA_ATTACHMENT_FILE_1'),
 					static::ATTACHMENT_TYPE_DISK => GetMessage('IMOL_MA_ATTACHMENT_DISK')
-				)
-			),
-			'Attachment' => array(
+				),
+			],
+			'Attachment' => [
 				'Name' => GetMessage('IMOL_MA_ATTACHMENT'),
 				'FieldName' => 'attachment',
 				'Type' => 'file',
-				'Multiple' => true
-			),
-		));
+				'Multiple' => true,
+			],
+		]);
 
 		return $dialog;
 	}
 
 	public static function GetPropertiesDialogValues($documentType, $activityName, &$workflowTemplate, &$arWorkflowParameters, &$arWorkflowVariables, $currentValues, &$errors)
 	{
-		$errors = array();
-		$properties = array(
+		$errors = [];
+		$properties = [
 			'MessageText' => (string)$currentValues['message_text'],
 			'IsSystem' => $currentValues['is_system'] === 'Y' ? 'Y' : 'N',
 			'AttachmentType' => (string)$currentValues["attachment_type"],
 			'Attachment' => []
-		);
+		];
 
 		if ($properties['AttachmentType'] === static::ATTACHMENT_TYPE_DISK)
 		{
@@ -253,28 +255,28 @@ class CBPImOpenLinesMessageActivity
 		$code = false;
 		$lowPriorityCode = false;
 
-		if ($entityTypeId == \CCrmOwnerType::Deal)
+		if ($entityTypeId === \CCrmOwnerType::Deal)
 		{
 			$clients = $this->getDealClients($entityId);
 		}
-		elseif ($entityTypeId == \CCrmOwnerType::Lead)
+		elseif ($entityTypeId === \CCrmOwnerType::Lead)
 		{
 			$clients = $this->getLeadClients($entityId);
 		}
-		elseif ($entityTypeId == \CCrmOwnerType::Order)
+		elseif ($entityTypeId === \CCrmOwnerType::Order)
 		{
 			$clients = $this->getOrderClients($entityId);
 		}
-		elseif (CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId))
+		elseif (CCrmOwnerType::isUseFactoryBasedApproach($entityTypeId))
 		{
-			$clients = $this->getDynamicItemClients($entityTypeId, $entityId);
+			$clients = $this->getItemClients($entityTypeId, $entityId);
 		}
 		else
 		{
 			$clients = [[\CCrmOwnerType::ResolveName($entityTypeId), $entityId]];
 		}
 
-		foreach ($clients as list($typeName, $id))
+		foreach ($clients as [$typeName, $id])
 		{
 			$iterator = \CCrmFieldMulti::GetList(
 				array('ID' => 'desc'),
@@ -384,7 +386,7 @@ class CBPImOpenLinesMessageActivity
 		return $clients;
 	}
 
-	private function getDynamicItemClients($entityTypeId, $entityId): array
+	private function getItemClients($entityTypeId, $entityId): array
 	{
 		$clients = [];
 		$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory($entityTypeId);
@@ -399,8 +401,16 @@ class CBPImOpenLinesMessageActivity
 			return $clients;
 		}
 
-		$companyId = $item->getCompanyId();
-		$contactIds = $item->getContactIds();
+		$companyId =
+			$item->hasField(\Bitrix\Crm\Item::FIELD_NAME_COMPANY_ID)
+				? $item->getCompanyId()
+				: 0
+		;
+		$contactIds =
+			$item->hasField(\Bitrix\Crm\Item::FIELD_NAME_CONTACT_IDS)
+				? $item->getContactIds()
+				: []
+		;
 
 		if ($companyId > 0)
 		{

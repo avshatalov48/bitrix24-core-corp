@@ -124,26 +124,50 @@ class SearchAction extends Search\SearchAction
 
 	protected function getAdditionalFilter(int $entityTypeId, array $options): array
 	{
+		$categoryFilter = [];
+		if (isset($options['categoryId']) && in_array($entityTypeId, [\CCrmOwnerType::Contact, \CCrmOwnerType::Company], true))
+		{
+			$categoryId = $options['categoryId'] ?? 0;
+			if (isset($options['extraCategoryIds']) && is_array($options['extraCategoryIds']))
+			{
+				$extraCategoryIds = [];
+				foreach($options['extraCategoryIds'] as $extraCategoryId)
+				{
+					$extraCategoryId = (int)$extraCategoryId;
+					if ($extraCategoryId >= 0)
+					{
+						$extraCategoryIds[] = $extraCategoryId;
+					}
+				}
+				if (!empty($extraCategoryIds))
+				{
+					$extraCategoryIds[] = (int)$categoryId;
+					$extraCategoryIds = array_unique($extraCategoryIds);
+
+					$categoryFilter['@CATEGORY_ID'] = $extraCategoryIds;
+				}
+			}
+
+			if (empty($categoryFilter))
+			{
+				$categoryFilter['=CATEGORY_ID'] = (int)$categoryId;
+			}
+		}
+
 		if ($entityTypeId === \CCrmOwnerType::Company)
 		{
 			$isMyCompany = (
 				isset($options['isMyCompany'])
 				&& mb_strtoupper($options['isMyCompany']) === 'Y'
 			);
-			$categoryId = $options['categoryId'] ?? 0;
 
-			return [
+			return array_merge($categoryFilter, [
 				'=IS_MY_COMPANY' => $isMyCompany ? 'Y' : 'N',
-				'=CATEGORY_ID' =>  $categoryId
-			];
+			]);
 		}
 		if ($entityTypeId === \CCrmOwnerType::Contact)
 		{
-			$categoryId = $options['categoryId'] ?? 0;
-
-			return [
-				'=CATEGORY_ID' =>  $categoryId
-			];
+			return $categoryFilter;
 		}
 
 		return [];

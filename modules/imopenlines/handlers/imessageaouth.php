@@ -180,7 +180,7 @@ class ImessageOuath
 	public function getPublicKey(): string
 	{
 		$result = '';
-		$status = \Bitrix\ImConnector\Status::getInstance('imessage', $this->getLineId());
+		$status = \Bitrix\ImConnector\Status::getInstance('imessage', (int)$this->getLineId());
 		$statusData = $status->getData();
 		if (empty($statusData[$this->getChatId()]))
 		{
@@ -206,12 +206,15 @@ class ImessageOuath
 		return $result;
 	}
 
+	/**
+	 * @return int
+	 */
 	private function getLineId()
 	{
 		$getRequest = Context::getCurrent()->getRequest()->toArray();
 		$dialogEntityId = explode('|', $getRequest['DIALOG_ENTITY_ID']);
 
-		return $dialogEntityId[1];
+		return (int)$dialogEntityId[1];
 	}
 
 	private function getChatId()

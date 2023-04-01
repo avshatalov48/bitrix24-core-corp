@@ -14,6 +14,7 @@ $APPLICATION->IncludeComponent(
 		'POPUP_COMPONENT_PARAMS' => [
 			'SEF_MODE' => 'Y',
 			'SEF_FOLDER' => '/crm/catalog/',
+			'BUILDER_CONTEXT' => \Bitrix\Crm\Product\Url\ProductBuilder::TYPE_ID,
 		],
 		'USE_PADDING' => false,
 		'USE_UI_TOOLBAR' => 'Y',

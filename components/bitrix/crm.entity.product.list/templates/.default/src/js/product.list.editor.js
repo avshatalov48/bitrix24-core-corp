@@ -768,8 +768,12 @@ export class Editor
 		const totalBlock = BX(this.getSettingValue('totalBlockContainerId', null));
 		if (Type.isElementNode(totalBlock))
 		{
-			totalBlock.querySelectorAll('[data-role="currency-wrapper"]').forEach((row) => {
-				row.innerHTML = this.getCurrencyText();
+			totalBlock.querySelectorAll('.crm-product-list-payment-side-table-column').forEach((column) => {
+				const valueElement = column.querySelector('.crm-product-list-result-grid-total');
+				if (valueElement)
+				{
+					column.innerHTML = CurrencyCore.getPriceControl(valueElement, this.getCurrencyId());
+				}
 			});
 		}
 	}

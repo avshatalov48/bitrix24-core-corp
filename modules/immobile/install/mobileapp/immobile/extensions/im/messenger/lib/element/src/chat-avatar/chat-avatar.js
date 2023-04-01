@@ -13,6 +13,12 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 	 */
 	class ChatAvatar
 	{
+		/**
+		 *
+		 * @param {string} dialogId
+		 * @param {object} options
+		 * @return {ChatAvatar}
+		 */
 		static createFromDialogId(dialogId, options = {})
 		{
 			return new this(dialogId, options);
@@ -35,7 +41,7 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 
 		static getImagePath()
 		{
-			return '/bitrix/mobileapp/immobile/extensions/im/messenger/lib/element/src/chat-avatar/images/';
+			return currentDomain + '/bitrix/mobileapp/immobile/extensions/im/messenger/lib/element/src/chat-avatar/images/';
 		}
 
 		createDialogAvatar(dialogId)
@@ -97,6 +103,15 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 			}
 
 			return titleParams;
+		}
+
+		/**
+		 *
+		 * @return {string | null}
+		 */
+		getAvatarUrl()
+		{
+			return this.avatar;
 		}
 	}
 

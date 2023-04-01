@@ -101,7 +101,10 @@ class CCrmEntityPopupComponent extends CBitrixComponent
 
 		// region rest placement
 		$this->arResult['REST_USE'] = false;
-		if(Main\Loader::includeModule('rest') && $this->arParams['REST_USE'] != 'N')
+		if(
+			Main\Loader::includeModule('rest')
+			&& ($this->arParams['REST_USE'] ?? null) !== 'N'
+		)
 		{
 			$this->arResult['REST_USE'] = true;
 			\CJSCore::Init(array('applayout'));
@@ -166,15 +169,34 @@ class CCrmEntityPopupComponent extends CBitrixComponent
 		$this->arResult['INITIAL_MODE'] = $initMode !== '' ? $initMode : ($this->entityID > 0  ? 'view' : 'edit');
 
 		$this->arResult['GUID'] = $this->guid;
-		$this->arResult['ACTIVITY_EDITOR_ID'] = isset($this->arParams['~ACTIVITY_EDITOR_ID']) ? $this->arParams['~ACTIVITY_EDITOR_ID'] : '';
-		$this->arResult['SERVICE_URL'] = isset($this->arParams['~SERVICE_URL']) ? $this->arParams['~SERVICE_URL'] : '';
+		$this->arResult['ACTIVITY_EDITOR_ID'] = $this->arParams['~ACTIVITY_EDITOR_ID'] ?? '';
+		$this->arResult['SERVICE_URL'] = $this->arParams['~SERVICE_URL'] ?? '';
 
-		//$this->arResult['PATH_TO_DEAL_EDIT'] = CrmCheckPath('PATH_TO_DEAL_EDIT', $this->arParams['PATH_TO_DEAL_EDIT'], '');
-		$this->arResult['PATH_TO_QUOTE_EDIT'] = CrmCheckPath('PATH_TO_QUOTE_EDIT', $this->arParams['PATH_TO_QUOTE_EDIT'], '');
-		$this->arResult['PATH_TO_INVOICE_EDIT'] = CrmCheckPath('PATH_TO_INVOICE_EDIT', $this->arParams['PATH_TO_INVOICE_EDIT'], '');
-		$this->arResult['PATH_TO_ORDER_EDIT'] = CrmCheckPath('PATH_TO_ORDER_EDIT', $this->arParams['PATH_TO_ORDER_EDIT'], '');
-		$this->arResult['PATH_TO_ORDER_SHIPMENT_EDIT'] = CrmCheckPath('PATH_TO_ORDER_SHIPMENT_EDIT', $this->arParams['PATH_TO_ORDER_SHIPMENT_EDIT'], '');
-		$this->arResult['PATH_TO_ORDER_PAYMENT_EDIT'] = CrmCheckPath('PATH_TO_ORDER_PAYMENT_EDIT', $this->arParams['PATH_TO_ORDER_PAYMENT_EDIT'], '');
+		$this->arResult['PATH_TO_QUOTE_EDIT'] = CrmCheckPath(
+			'PATH_TO_QUOTE_EDIT',
+			$this->arParams['PATH_TO_QUOTE_EDIT'] ?? '',
+			''
+		);
+		$this->arResult['PATH_TO_INVOICE_EDIT'] = CrmCheckPath(
+			'PATH_TO_INVOICE_EDIT',
+			$this->arParams['PATH_TO_INVOICE_EDIT'] ?? '',
+			''
+		);
+		$this->arResult['PATH_TO_ORDER_EDIT'] = CrmCheckPath(
+			'PATH_TO_ORDER_EDIT',
+			$this->arParams['PATH_TO_ORDER_EDIT'] ?? '',
+			''
+		);
+		$this->arResult['PATH_TO_ORDER_SHIPMENT_EDIT'] = CrmCheckPath(
+			'PATH_TO_ORDER_SHIPMENT_EDIT',
+			$this->arParams['PATH_TO_ORDER_SHIPMENT_EDIT'] ?? '',
+			''
+		);
+		$this->arResult['PATH_TO_ORDER_PAYMENT_EDIT'] = CrmCheckPath(
+			'PATH_TO_ORDER_PAYMENT_EDIT',
+			$this->arParams['PATH_TO_ORDER_PAYMENT_EDIT'] ?? '',
+			''
+		);
 		$this->arResult['TODO_CREATE_NOTIFICATION_PARAMS'] = $this->getTodoCreateNotificationParams();
 
 		$this->arResult['ENTITY_CREATE_URLS'] = array(
@@ -299,6 +321,7 @@ class CCrmEntityPopupComponent extends CBitrixComponent
 			return null;
 		}
 		$allowedEntityTypeIds = [
+			CCrmOwnerType::Lead,
 			CCrmOwnerType::Deal,
 		];
 		if (!in_array($this->entityTypeID, $allowedEntityTypeIds, true))
@@ -319,7 +342,12 @@ class CCrmEntityPopupComponent extends CBitrixComponent
 			'filter' => ['=ID' => $this->entityID],
 			'select' => $select,
 			'limit' => 1,
-		])[0];
+		])[0] ?? null;
+
+		if (!$item)
+		{
+			return null;
+		}
 
 		$stages =
 			$factory->isCategoriesSupported()

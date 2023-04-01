@@ -344,6 +344,14 @@ export class TypeModel extends Model
 		return this.data.relations;
 	}
 
+	getIsCountersEnabled(): boolean {
+		return this.data.isCountersEnabled
+	}
+
+	setIsCountersEnabled(isCountersEnabled: boolean){
+		this.data.isCountersEnabled = isCountersEnabled
+	}
+
 	/**
 	 * @protected
 	 * @param types
@@ -385,6 +393,7 @@ export class TypeModel extends Model
 			'isAutomationEnabled',
 			'isBizProcEnabled',
 			'isSetOpenPermissions',
+			'isCountersEnabled'
 		];
 	}
 }

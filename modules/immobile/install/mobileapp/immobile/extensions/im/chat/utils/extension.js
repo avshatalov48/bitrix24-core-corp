@@ -215,3 +215,23 @@ ChatUtils.getUuidv4 = function()
 		return v.toString(16);
 	});
 };
+
+ChatUtils.objectKeysToLowerCase = function(originalObject)
+{
+	if (typeof originalObject !== 'object' || originalObject === null)
+	{
+		return originalObject;
+	}
+
+	return Object.fromEntries(
+		Object.entries(originalObject)
+			.map(([key, value]) => {
+				if (BX.type.isPlainObject(originalObject[key]))
+				{
+					return [key.toLowerCase(), ChatUtils.objectKeysToLowerCase(originalObject[key])];
+				}
+
+				return [key.toLowerCase(), value];
+			})
+	);
+}

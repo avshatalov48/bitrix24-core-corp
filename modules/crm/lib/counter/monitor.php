@@ -262,7 +262,8 @@ final class Monitor
 		/** @var ItemIdentifier $binding */
 		foreach ($bindings as $binding)
 		{
-			if (!is_array($loadedEntitiesData[$binding->getEntityTypeId()][$binding->getEntityId()]))
+			$value = $loadedEntitiesData[$binding->getEntityTypeId()][$binding->getEntityId()] ?? null;
+			if (!is_array($value))
 			{
 				$loadedEntitiesData[$binding->getEntityTypeId()][$binding->getEntityId()] = [];
 			}

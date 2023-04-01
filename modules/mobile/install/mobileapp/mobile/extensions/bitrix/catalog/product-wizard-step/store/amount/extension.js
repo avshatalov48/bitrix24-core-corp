@@ -16,13 +16,25 @@
 			const defaultMeasure = measures.find(item => item.isDefault);
 			const defaultStore = this.getDefaultStores(stores);
 
+			const documentType = this.entity.get('DOCUMENT_TYPE');
+
 			if (hasStoreReadAccess)
 			{
-				this.setDefaultValues({
+				const defaultValues = {
 					'AMOUNT': '',
 					'MEASURE_CODE': String(defaultMeasure ? defaultMeasure.value : ''),
-					'STORE_TO': defaultStore,
-				});
+				};
+
+				if (documentType === 'M' || documentType === 'D')
+				{
+					defaultValues.STORE_FROM = defaultStore;
+				}
+				if (documentType === 'A' || documentType === 'S' || documentType === 'M')
+				{
+					defaultValues.STORE_TO = defaultStore;
+				}
+
+				this.setDefaultValues(defaultValues);
 			}
 
 			this.addCombinedField(
@@ -55,28 +67,63 @@
 				}
 			);
 
-			const storeTo = this.entity.get('STORE_TO');
-			this.addField(
-				'STORE_TO',
-				EntitySelectorType,
-				BX.message('WIZARD_FIELD_PRODUCT_STORE'),
-				storeTo ? storeTo.id : null,
-				{
-					disabled: !hasStoreReadAccess,
-					placeholder: !hasStoreReadAccess ? BX.message('WIZARD_FIELD_ACCESS_DENIED') : null,
-					emptyValue: !hasStoreReadAccess ? BX.message('WIZARD_FIELD_ACCESS_DENIED') : null,
-					config: {
-						selectorType: EntitySelectorFactory.Type.STORE,
-						enableCreation: this.hasPermission('catalog_store_modify'),
-						entityList: [storeTo],
-						provider: {
-							options: {
-								'useAddressAsTitle': true,
+			const storeFrom = this.entity.get('STORE_FROM');
+			if (storeFrom)
+			{
+				this.addField(
+					'STORE_FROM',
+					EntitySelectorType,
+					documentType === 'M'
+						? BX.message('WIZARD_FIELD_PRODUCT_STORE_FROM')
+						: BX.message('WIZARD_FIELD_PRODUCT_STORE')
+					,
+					storeFrom ? storeFrom.id : null,
+					{
+						disabled: !hasStoreReadAccess,
+						placeholder: !hasStoreReadAccess ? BX.message('WIZARD_FIELD_ACCESS_DENIED') : null,
+						emptyValue: !hasStoreReadAccess ? BX.message('WIZARD_FIELD_ACCESS_DENIED') : null,
+						config: {
+							selectorType: EntitySelectorFactory.Type.STORE,
+							enableCreation: this.hasPermission('catalog_store_modify'),
+							entityList: [storeFrom],
+							provider: {
+								options: {
+									'useAddressAsTitle': true,
+								},
 							},
 						},
 					},
-				},
-			);
+				);
+			}
+
+			const storeTo = this.entity.get('STORE_TO');
+			if (storeTo)
+			{
+				this.addField(
+					'STORE_TO',
+					EntitySelectorType,
+					documentType === 'M'
+						? BX.message('WIZARD_FIELD_PRODUCT_STORE_TO')
+						: BX.message('WIZARD_FIELD_PRODUCT_STORE')
+					,
+					storeTo ? storeTo.id : null,
+					{
+						disabled: !hasStoreReadAccess,
+						placeholder: !hasStoreReadAccess ? BX.message('WIZARD_FIELD_ACCESS_DENIED') : null,
+						emptyValue: !hasStoreReadAccess ? BX.message('WIZARD_FIELD_ACCESS_DENIED') : null,
+						config: {
+							selectorType: EntitySelectorFactory.Type.STORE,
+							enableCreation: this.hasPermission('catalog_store_modify'),
+							entityList: [storeTo],
+							provider: {
+								options: {
+									'useAddressAsTitle': true,
+								},
+							},
+						},
+					},
+				);
+			}
 		}
 
 		getDefaultStores(stores)
@@ -103,7 +150,11 @@
 		onChange(fieldId, fieldValue, options)
 		{
 			super.onChange(fieldId, fieldValue, options);
-			if (fieldId === 'STORE_TO')
+			if (fieldId === 'STORE_FROM')
+			{
+				this.entity.set('STORE_FROM', options ? options[0] : null);
+			}
+			else if (fieldId === 'STORE_TO')
 			{
 				this.entity.set('STORE_TO', options ? options[0] : null);
 			}

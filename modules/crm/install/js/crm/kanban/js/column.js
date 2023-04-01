@@ -198,10 +198,12 @@
 			var index = BX.util.array_search(beforeItem, this.items);
 			var items = this.getItems();
 			var alreadySet = false;
-			for (itemId in items)
+
+			for (const itemId in items)
 			{
 				if (items[itemId].id === item.getId())
 				{
+					items[itemId] = item;
 					alreadySet = true;
 				}
 			}
@@ -234,7 +236,12 @@
 			}).then(function(){
 				this.setPullItemBackground(item, '#fff');
 				item.useAnimation = false;
-				item.layout.container.style.opacity = '100%';
+
+				if (item.layout.container)
+				{
+					item.layout.container.style.opacity = '100%';
+				}
+
 				BX.Event.EventEmitter.emit(
 					'Crm.Kanban.Column:onItemAdded',
 					{
@@ -359,8 +366,6 @@
 				}
 
 				this.render( );
-
-				this.layout.total.textContent = arr.length;
 			}
 		},
 
@@ -1081,6 +1086,12 @@
 					events: {
 						click: quickForm
 							? function(ev) {
+								const tariffRestrictions = gridData.tariffRestrictions || {};
+								if (tariffRestrictions.addItemNotPermittedByTariff === true)
+								{
+									BX.Crm.Router.Instance.showFeatureSlider();
+									return;
+								}
 							// @todo Checking bx-ie is still actually?
 								if(document.getElementsByTagName("html")[0].classList.contains("bx-ie"))
 								{

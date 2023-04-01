@@ -179,7 +179,7 @@ $prefix = $arResult['GRID_ID'];
 				'bitrix:crm.interface.toolbar',
 				'',
 				[
-					'TOOLBAR_ID' => $toolbarID,
+					'TOOLBAR_ID' => $toolbarID ?? null,
 					'BUTTONS' => $toolbarButtons
 				],
 				$component,
@@ -212,15 +212,15 @@ $prefix = $arResult['GRID_ID'];
 			'PAGINATION' => isset($arResult['PAGINATION']) && is_array($arResult['PAGINATION'])
 				? $arResult['PAGINATION'] : array(),
 			'ENABLE_ROW_COUNT_LOADER' => true,
-			'PRESERVE_HISTORY' => $arResult['PRESERVE_HISTORY'],
-			'IS_EXTERNAL_FILTER' => $arResult['IS_EXTERNAL_FILTER'],
+			'PRESERVE_HISTORY' => $arResult['PRESERVE_HISTORY'] ?? null,
+			'IS_EXTERNAL_FILTER' => $arResult['IS_EXTERNAL_FILTER'] ?? null,
 			'EXTENSION' => array(
 				'ID' => $gridManagerID,
 				'CONFIG' => array(
 					'ownerTypeName' => 'EVENT',
 					'gridId' => $arResult['GRID_ID'],
 					'serviceUrl' => '/bitrix/components/bitrix/crm.event.view/list.ajax.php?siteID='.SITE_ID.'&'.bitrix_sessid_get(),
-					'loaderData' => isset($arParams['AJAX_LOADER']) ? $arParams['AJAX_LOADER'] : null
+					'loaderData' => $arParams['AJAX_LOADER'] ?? null
 				),
 				'MESSAGES' => array(
 					'deletionDialogTitle' => GetMessage('CRM_EVENT_DELETE_TITLE'),

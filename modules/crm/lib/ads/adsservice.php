@@ -174,7 +174,8 @@ abstract class AdsService
 				'TYPE' => $type,
 				'HAS_AUTH' => $authAdapter->hasAuth(),
 				'AUTH_URL' => $authAdapter->getAuthUrl(),
-				'PROFILE' => $account->getProfileCached()
+				'PROFILE' => $account->getProfileCached(),
+				'HAS_PAGES' => $account->hasPageAccount(),
 			);
 
 			// check if no profile, then may be auth was removed in service

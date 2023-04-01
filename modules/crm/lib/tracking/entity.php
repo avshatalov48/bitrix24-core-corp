@@ -101,7 +101,7 @@ class Entity
 		]);
 		foreach ($channelsResult as $channel)
 		{
-			if (!is_array($channels[$channel['TRACE_ID']]))
+			if (!is_array($channels[$channel['TRACE_ID']] ?? null))
 			{
 				$channels[$channel['TRACE_ID']] = [];
 			}

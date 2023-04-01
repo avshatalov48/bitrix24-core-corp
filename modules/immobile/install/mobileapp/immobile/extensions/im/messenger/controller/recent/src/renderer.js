@@ -79,10 +79,11 @@ jn.define('im/messenger/controller/recent/renderer', (require, exports, module) 
 
 		update(itemList)
 		{
+			itemList = RecentConverter.toList(itemList);
 			itemList = itemList.map(item => {
 				return {
 					filter: { id: item.id.toString() },
-					element: RecentConverter.toListItem(item),
+					element: item,
 				};
 			});
 

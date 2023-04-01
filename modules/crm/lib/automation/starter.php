@@ -3,8 +3,7 @@ namespace Bitrix\Crm\Automation;
 
 use Bitrix\Crm\Automation\Trigger\FieldChangedTrigger;
 use Bitrix\Crm\Automation\Trigger\ResponsibleChangedTrigger;
-use Bitrix\Main;
-use Bitrix\Bizproc;
+use Bitrix\Main\Loader;
 
 class Starter
 {
@@ -155,12 +154,49 @@ class Starter
 		$diff = [];
 		foreach ($actual as $key => $field)
 		{
-			if ($key !== 'ID' && (!array_key_exists($key, $previous) || $previous[$key] != $field))
+			if (
+				$key !== 'ID'
+				&& (!array_key_exists($key, $previous) || $previous[$key] != $field)
+			)
 			{
-				$diff[] = $key;
+				if (!$this->isDefaultValue($key, $field) || !\CBPHelper::isEmptyValue($previous[$key] ?? null))
+				{
+					$diff[] = $key;
+				}
 			}
 		}
 		return $diff;
+	}
+
+	private function isDefaultValue(string $fieldName, $fieldValue): bool
+	{
+		static $documentFields = null;
+		if (is_null($documentFields))
+		{
+			$documentFields = $this->getDocumentFields();
+		}
+
+		return (
+			isset($documentFields[$fieldName], $documentFields[$fieldName]['Default'])
+			&& $documentFields[$fieldName]['Default'] === $fieldValue
+		);
+ 	}
+
+	private function getDocumentFields(): array
+	{
+		if (!Loader::includeModule('bizproc'))
+		{
+			return [];
+		}
+
+		$documentService = \CBPRuntime::getRuntime(true)->getDocumentService();
+
+		return $documentService->getDocumentFields($this->getDocumentType());
+	}
+
+	private function getDocumentType(): ?array
+	{
+		return \CCrmBizProcHelper::ResolveDocumentType($this->entityTypeId);
 	}
 
 	private function isStatusChanged(array $changedFields): bool

@@ -1331,7 +1331,7 @@ class Config
 				\Bitrix\ImConnector\Output::deleteLine($id);
 			}
 		}
-		catch (\Exception $e)
+		catch (\Bitrix\Main\SystemException $e)
 		{}
 
 		self::sendUpdateForQueueList(Array(

@@ -1,7 +1,7 @@
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
 this.BX.Crm.Config = this.BX.Crm.Config || {};
-(function (exports,main_popup,ui_buttons,catalog_storeUse,ui_vue,ui_notification,ui_designTokens,main_core) {
+(function (exports,main_popup,ui_buttons,catalog_storeUse,ui_vue,ui_notification,ui_designTokens,main_core,main_core_events) {
 	'use strict';
 
 	var LocMixin = {
@@ -329,6 +329,10 @@ this.BX.Crm.Config = this.BX.Crm.Config || {};
 	function _unsupportedIterableToArray$1(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$1(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$1(o, minLen); }
 
 	function _arrayLikeToArray$1(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+
+	function ownKeys$1(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+
+	function _objectSpread$1(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$1(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$1(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	var HELP_ARTICLE_ID = 15706692;
 	var app = ui_vue.Vue.extend({
 	  mixins: [LocMixin],
@@ -379,6 +383,7 @@ this.BX.Crm.Config = this.BX.Crm.Config || {};
 	      productCardSliderEnabled: null,
 	      isCanEnableProductCardSlider: false,
 	      isBitrix24: false,
+	      busProductCardHelpLink: '',
 	      defaultProductVatIncluded: null
 	    };
 	  },
@@ -485,53 +490,83 @@ this.BX.Crm.Config = this.BX.Crm.Config || {};
 	      this.isChanged = true;
 	    },
 	    onEnableProductCardCheckboxClick: function onEnableProductCardCheckboxClick() {
-	      if (!this.productCardSliderEnabled && this.isBitrix24) {
+	      if (!this.productCardSliderEnabled) {
 	        this.askToEnableProductCardSlider();
 	      }
 
 	      this.markAsChanged();
 	    },
 	    askToEnableProductCardSlider: function askToEnableProductCardSlider() {
+	      var askPopup = this.isBitrix24 ? this.createWarningProductCardPopupForBitrix24() : this.createWarningProductCardPopupForBUS();
+	      askPopup.show();
+	    },
+	    createWarningProductCardPopupForBitrix24: function createWarningProductCardPopupForBitrix24() {
 	      var _this = this;
 
-	      var askPopup = new main_popup.Popup(null, null, {
-	        events: {
+	      var askPopup = this.createWarningProductCardPopup(main_core.Loc.getMessage('CRM_CFG_C_SETTINGS_PRODUCT_CARD_ENABLE_NEW_CARD_ASK_TEXT'), [new ui_buttons.Button({
+	        text: main_core.Loc.getMessage('CRM_CFG_C_SETTINGS_PRODUCT_CARD_ENABLE_NEW_CARD_ASK_DISAGREE'),
+	        color: ui_buttons.Button.Color.PRIMARY,
+	        onclick: function onclick() {
+	          _this.productCardSliderEnabled = false;
+	          askPopup.close();
+	        }
+	      }), new ui_buttons.Button({
+	        text: main_core.Loc.getMessage('CRM_CFG_C_SETTINGS_PRODUCT_CARD_ENABLE_NEW_CARD_ASK_AGREE'),
+	        onclick: function onclick() {
+	          return askPopup.close();
+	        }
+	      })], {
+	        onPopupShow: function onPopupShow() {
+	          var helpdeskLink = document.getElementById('catalog-settings-new-productcard-popup-helpdesk');
+
+	          if (helpdeskLink) {
+	            main_core.Event.bind(helpdeskLink, 'click', function () {
+	              return top.BX.Helper.show('redirect=detail&code=11657084');
+	            });
+	          }
+	        }
+	      });
+	      return askPopup;
+	    },
+	    createWarningProductCardPopupForBUS: function createWarningProductCardPopupForBUS() {
+	      var _this2 = this;
+
+	      var askPopup = this.createWarningProductCardPopup(main_core.Loc.getMessage('CRM_CFG_C_SETTINGS_PRODUCT_CARD_ENABLE_NEW_CARD_ASK_BUS_TEXT').replace('#HELP_LINK#', this.busProductCardHelpLink), [new ui_buttons.Button({
+	        text: main_core.Loc.getMessage('CRM_CFG_C_SETTINGS_PRODUCT_CARD_ENABLE_NEW_CARD_ASK_AGREE'),
+	        color: ui_buttons.Button.Color.SUCCESS,
+	        onclick: function onclick() {
+	          return askPopup.close();
+	        }
+	      }), new ui_buttons.Button({
+	        text: main_core.Loc.getMessage('CRM_CFG_C_SETTINGS_PRODUCT_CARD_ENABLE_NEW_CARD_ASK_BUS_DISAGREE'),
+	        color: ui_buttons.Button.Color.LINK,
+	        onclick: function onclick() {
+	          _this2.productCardSliderEnabled = false;
+	          askPopup.close();
+	        }
+	      })]);
+	      return askPopup;
+	    },
+	    createWarningProductCardPopup: function createWarningProductCardPopup(contentText, buttons) {
+	      var events = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+	      var popupParams = {
+	        events: _objectSpread$1({
 	          onPopupClose: function onPopupClose() {
 	            return askPopup.destroy();
-	          },
-	          onPopupShow: function onPopupShow() {
-	            var helpdeskLink = document.getElementById('catalog-settings-new-productcard-popup-helpdesk');
-
-	            if (helpdeskLink) {
-	              main_core.Event.bind(helpdeskLink, 'click', function () {
-	                return top.BX.Helper.show('redirect=detail&code=11657084');
-	              });
-	            }
 	          }
-	        },
-	        content: main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"catalog-settings-new-productcard-popup-content\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t"])), main_core.Loc.getMessage('CRM_CFG_C_SETTINGS_PRODUCT_CARD_ENABLE_NEW_CARD_ASK_TEXT')),
+	        }, events),
+	        content: main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"catalog-settings-new-productcard-popup-content\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t"])), contentText),
 	        className: 'catalog-settings-new-productcard-popup',
 	        titleBar: main_core.Loc.getMessage('CRM_CFG_C_SETTINGS_PRODUCT_CARD_ENABLE_NEW_CARD_ASK_TITLE'),
 	        maxWidth: 800,
 	        overlay: true,
-	        buttons: [new ui_buttons.Button({
-	          text: main_core.Loc.getMessage('CRM_CFG_C_SETTINGS_PRODUCT_CARD_ENABLE_NEW_CARD_ASK_DISAGREE'),
-	          color: ui_buttons.Button.Color.PRIMARY,
-	          onclick: function onclick() {
-	            _this.productCardSliderEnabled = false;
-	            askPopup.close();
-	          }
-	        }), new ui_buttons.Button({
-	          text: main_core.Loc.getMessage('CRM_CFG_C_SETTINGS_PRODUCT_CARD_ENABLE_NEW_CARD_ASK_AGREE'),
-	          onclick: function onclick() {
-	            return askPopup.close();
-	          }
-	        })]
-	      });
-	      askPopup.show();
+	        buttons: buttons
+	      };
+	      var askPopup = new main_popup.Popup(null, null, popupParams);
+	      return askPopup;
 	    },
 	    openStoreControlMaster: function openStoreControlMaster() {
-	      var _this2 = this;
+	      var _this3 = this;
 
 	      var mode = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
 	      var sliderUrl = '/bitrix/components/bitrix/catalog.warehouse.master.clear/slider.php?mode=' + mode;
@@ -542,33 +577,33 @@ this.BX.Crm.Config = this.BX.Crm.Config || {};
 
 	      new catalog_storeUse.Slider().open(sliderUrl, {}).then(function (slider) {
 	        main_core.ajax.runAction('catalog.config.isUsedInventoryManagement', {}).then(function (response) {
-	          if (_this2.isStoreControlUsed !== response.data) {
+	          if (_this3.isStoreControlUsed !== response.data) {
 	            if (response.data === true) {
-	              _this2.close();
+	              _this3.close();
 	            } else {
-	              _this2.refresh();
+	              _this3.refresh();
 	            }
 	          }
 
 	          if (slider !== null && slider !== void 0 && slider.getData().get('isPresetApplied')) {
-	            _this2.showMessage(main_core.Loc.getMessage('CRM_CFG_C_SETTINGS_SAVED_SUCCESSFULLY'));
+	            _this3.showMessage(main_core.Loc.getMessage('CRM_CFG_C_SETTINGS_SAVED_SUCCESSFULLY'));
 	          }
 	        });
 	      });
 	    },
 	    refresh: function refresh() {
-	      var _this3 = this;
+	      var _this4 = this;
 
 	      return new Promise(function (resolve, reject) {
 	        main_core.ajax.runComponentAction('bitrix:crm.config.catalog.settings', 'initialize', {
 	          mode: 'class',
 	          json: {}
 	        }).then(function (response) {
-	          _this3.initialize(response.data);
+	          _this4.initialize(response.data);
 
 	          resolve();
 	        })["catch"](function (response) {
-	          _this3.showResponseErrors(response);
+	          _this4.showResponseErrors(response);
 
 	          reject();
 	        });
@@ -624,6 +659,7 @@ this.BX.Crm.Config = this.BX.Crm.Config || {};
 	      this.productCardSliderEnabled = data.productCardSliderEnabled;
 	      this.isCanEnableProductCardSlider = data.isCanEnableProductCardSlider;
 	      this.isBitrix24 = data.isBitrix24;
+	      this.busProductCardHelpLink = data.busProductCardHelpLink;
 	      this.configCatalogSource = (_this$configCatalogSo = this.configCatalogSource) !== null && _this$configCatalogSo !== void 0 ? _this$configCatalogSo : data.configCatalogSource;
 	      this.isChanged = false;
 	    },
@@ -632,7 +668,7 @@ this.BX.Crm.Config = this.BX.Crm.Config || {};
 	      this.markAsChanged();
 	    },
 	    save: function save() {
-	      var _this4 = this;
+	      var _this5 = this;
 
 	      if (this.isSaving) {
 	        return;
@@ -644,33 +680,35 @@ this.BX.Crm.Config = this.BX.Crm.Config || {};
 	          mode: 'class',
 	          json: {
 	            values: {
-	              reservationSettings: _this4.makeReservationSettings(),
-	              productCardSliderEnabled: _this4.productCardSliderEnabled,
-	              defaultProductVatIncluded: _this4.defaultProductVatIncluded,
-	              checkRightsOnDecreaseStoreAmount: _this4.checkRightsOnDecreaseStoreAmount
+	              reservationSettings: _this5.makeReservationSettings(),
+	              productCardSliderEnabled: _this5.productCardSliderEnabled,
+	              defaultProductVatIncluded: _this5.defaultProductVatIncluded,
+	              checkRightsOnDecreaseStoreAmount: _this5.checkRightsOnDecreaseStoreAmount
 	            }
 	          }
 	        }).then(function (response) {
-	          _this4.isChanged = false;
-	          _this4.isSaving = false;
+	          _this5.isChanged = false;
+	          _this5.isSaving = false;
 
-	          _this4.showMessage(main_core.Loc.getMessage('CRM_CFG_C_SETTINGS_SAVED_SUCCESSFULLY'));
+	          _this5.showMessage(main_core.Loc.getMessage('CRM_CFG_C_SETTINGS_SAVED_SUCCESSFULLY'));
 
-	          _this4.refresh().then(function () {
-	            return _this4.wait(700);
+	          _this5.refresh().then(function () {
+	            return _this5.wait(700);
 	          }).then(function () {
-	            return _this4.close();
+	            return _this5.close();
 	          });
-	        })["catch"](function (response) {
-	          _this4.isChanged = false;
-	          _this4.isSaving = false;
 
-	          _this4.showResponseErrors(response);
+	          BX.SidePanel.Instance.postMessage(window, "BX.Crm.Config.Catalog:onAfterSaveSettings");
+	        })["catch"](function (response) {
+	          _this5.isChanged = false;
+	          _this5.isSaving = false;
+
+	          _this5.showResponseErrors(response);
 	        });
 	      });
 	    },
 	    saveProductSettings: function saveProductSettings() {
-	      var _this5 = this;
+	      var _this6 = this;
 
 	      if (!this.hasProductSettingsChanged) {
 	        return Promise.resolve();
@@ -689,13 +727,13 @@ this.BX.Crm.Config = this.BX.Crm.Config || {};
 	        var productUpdater = new ProductUpdater(productUpdaterOptions).$on('complete', function () {
 	          resolve();
 
-	          if (_this5.needProgressBarOnProductsUpdating) {
-	            _this5.productUpdaterPopup.destroy();
+	          if (_this6.needProgressBarOnProductsUpdating) {
+	            _this6.productUpdaterPopup.destroy();
 	          }
 	        }).$mount();
 
-	        if (_this5.needProgressBarOnProductsUpdating) {
-	          _this5.productUpdaterPopup = new main_popup.Popup({
+	        if (_this6.needProgressBarOnProductsUpdating) {
+	          _this6.productUpdaterPopup = new main_popup.Popup({
 	            content: productUpdater.$el,
 	            width: 310,
 	            overlay: true,
@@ -704,7 +742,7 @@ this.BX.Crm.Config = this.BX.Crm.Config || {};
 	            angle: false
 	          });
 
-	          _this5.productUpdaterPopup.show();
+	          _this6.productUpdaterPopup.show();
 	        }
 	      });
 	    },
@@ -755,7 +793,7 @@ this.BX.Crm.Config = this.BX.Crm.Config || {};
 	      return "\n\t\t\t\t<a href=\"javascript:void(0);\" onclick=\"if (top.BX.Helper){top.BX.Helper.show('redirect=detail&code=".concat(article, "#").concat(anchor, "');}\" class=\"catalog-settings-helper-link\">\n\t\t\t\t\t").concat(text, "\n\t\t\t\t</a>\n\t\t\t");
 	    },
 	    showSettingsMenu: function showSettingsMenu(e) {
-	      var _this6 = this;
+	      var _this7 = this;
 
 	      this.settingsMenu = new main_popup.Menu({
 	        bindElement: e.target,
@@ -764,9 +802,9 @@ this.BX.Crm.Config = this.BX.Crm.Config || {};
 	        items: [{
 	          text: main_core.Loc.getMessage('CRM_CFG_C_SETTINGS_TURN_INVENTORY_CONTROL_OFF'),
 	          onclick: function onclick() {
-	            _this6.settingsMenu.destroy();
+	            _this7.settingsMenu.destroy();
 
-	            _this6.openStoreControlMaster('disable');
+	            _this7.openStoreControlMaster('disable');
 	          }
 	        }]
 	      });
@@ -779,9 +817,9 @@ this.BX.Crm.Config = this.BX.Crm.Config || {};
 	  template: "\n\t\t<div class=\"catalog-settings-wrapper\">\n\t\t\t<form>\n\t\t\t\t<div class=\"ui-slider-section\">\n\t\t\t\t\t<div class=\"ui-slider-content-box\">\n\t\t\t\t\t\t<div\n\t\t\t\t\t\t\tstyle=\"display: flex; align-items: center\"\n\t\t\t\t\t\t\tclass=\"ui-slider-heading-4\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{loc.CRM_CFG_C_SETTINGS_TITLE}}\n\t\t\t\t\t\t\t<div v-if=\"isStoreControlUsed\" class=\"catalog-settings-main-header-feedback-container\">\n\t\t\t\t\t\t\t\t<div\n\t\t\t\t\t\t\t\t\t@click.prevent=\"showSettingsMenu\"\n\t\t\t\t\t\t\t\t\tclass=\"ui-toolbar-right-buttons\"\n\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t\t<button class=\"ui-btn ui-btn-light-border ui-btn-icon-setting ui-btn-themes\"></button>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"ui-slider-inner-box\">\n\t\t\t\t\t\t\t<p class=\"ui-slider-paragraph-2\">\n\t\t\t\t\t\t\t\t{{description}}\n\t\t\t\t\t\t\t</p>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"catalog-settings-button-container\">\n\t\t\t\t\t\t\t<template v-if=\"isStoreControlUsed\">\n\t\t\t\t\t\t\t\t<a\n\t\t\t\t\t\t\t\t\t@click=\"openStoreControlMaster('edit')\"\n\t\t\t\t\t\t\t\t\tclass=\"ui-btn ui-btn-md ui-btn-light-border ui-btn-width\"\n\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t\t{{loc.CRM_CFG_C_SETTINGS_OPEN_SETTINGS}}\n\t\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t\t\t<a\n\t\t\t\t\t\t\t\t\t@click=\"openStoreControlMaster()\"\n\t\t\t\t\t\t\t\t\tclass=\"ui-btn ui-btn-success\"\n\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t\t{{loc.CRM_CFG_C_SETTINGS_TURN_INVENTORY_CONTROL_ON}}\n\t\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"catalog-settings-main-settings\">\n\t\t\t\t\t<div\n\t\t\t\t\t\tv-if=\"isReservationUsed && hasAccessToReservationSettings\"\n\t\t\t\t\t\tclass=\"ui-slider-section\"\n\t\t\t\t\t>\n\t\t\t\t\t\t<div class=\"ui-slider-heading-4\">\n\t\t\t\t\t\t\t{{loc.CRM_CFG_C_SETTINGS_RESERVATION_SETTINGS}}\n\t\t\t\t\t\t\t<span\n\t\t\t\t\t\t\t\tclass=\"ui-hint\"\n\t\t\t\t\t\t\t\tdata-hint-html=\"\"\n\t\t\t\t\t\t\t\tdata-hint-interactivity=\"\"\n\t\t\t\t\t\t\t\t:data-hint=\"getReservationSettingsHint()\"\n\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t<span class=\"ui-hint-icon\"></span>\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"catalog-settings-editor-content-block\">\n\t\t\t\t\t\t\t<div class=\"ui-ctl-label-text\">\n\t\t\t\t\t\t\t\t<label>{{loc.CRM_CFG_C_SETTINGS_RESERVATION_ENTITY}}</label>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-after-icon ui-ctl-dropdown ui-ctl-disabled ui-ctl-w100\">\n\t\t\t\t\t\t\t\t<!--<div class=\"ui-ctl-after ui-ctl-icon-angle\"></div>-->\n\t\t\t\t\t\t\t\t<select\n\t\t\t\t\t\t\t\t\tv-model=\"currentReservationEntityCode\"\n\t\t\t\t\t\t\t\t\tclass=\"ui-ctl-element\"\n\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t\t<option\n\t\t\t\t\t\t\t\t\t\tv-for=\"reservationEntity in reservationEntities\"\n\t\t\t\t\t\t\t\t\t\t:value=\"reservationEntity.code\"\n\t\t\t\t\t\t\t\t\t\t:disabled=\"reservationEntity.code !== 'deal'\"\n\t\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t\t\t{{reservationEntity.name}}\n\t\t\t\t\t\t\t\t\t</option>\n\t\t\t\t\t\t\t\t</select>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<reservation\n\t\t\t\t\t\t\tv-for=\"(reservationEntity, index) in reservationEntities\"\n\t\t\t\t\t\t\tv-show=\"reservationEntity.code === currentReservationEntityCode\"\n\t\t\t\t\t\t\t:key=\"reservationEntity.code\"\n\t\t\t\t\t\t\t:settings=\"reservationEntity.settings\"\n\t\t\t\t\t\t\t@change=\"onReservationSettingsValuesChanged($event, index)\"\n\t\t\t\t\t\t></reservation>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div v-if=\"hasAccessToCatalogSettings\" class=\"ui-slider-section\">\n\t\t\t\t\t\t<div class=\"ui-slider-heading-4\">\n\t\t\t\t\t\t\t{{loc.CRM_CFG_C_SETTINGS_PRODUCTS_SETTINGS}}\n\t\t\t\t\t\t\t<span\n\t\t\t\t\t\t\t\tclass=\"ui-hint\"\n\t\t\t\t\t\t\t\tdata-hint-html=\"\"\n\t\t\t\t\t\t\t\tdata-hint-interactivity=\"\"\n\t\t\t\t\t\t\t\t:data-hint=\"getProductsSettingsHint()\"\n\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t<span class=\"ui-hint-icon\"></span>\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div\n\t\t\t\t\t\t\tv-if=\"isCanEnableProductCardSlider\"\n\t\t\t\t\t\t\tclass=\"catalog-settings-editor-checkbox-content-block\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-checkbox ui-ctl-w100\">\n\t\t\t\t\t\t\t\t<input\n\t\t\t\t\t\t\t\t\t@click=\"onEnableProductCardCheckboxClick\"\n\t\t\t\t\t\t\t\t\tv-model=\"productCardSliderEnabled\"\n\t\t\t\t\t\t\t\t\tid=\"product_card_slider_enabled\"\n\t\t\t\t\t\t\t\t\ttype=\"checkbox\"\n\t\t\t\t\t\t\t\t\tclass=\"ui-ctl-element\"\n\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t<label for=\"product_card_slider_enabled\" class=\"ui-ctl-label-text\">\n\t\t\t\t\t\t\t\t\t{{loc.CRM_CFG_C_SETTINGS_PRODUCT_CARD_ENABLE_NEW_CARD}}\n\t\t\t\t\t\t\t\t</label>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"catalog-settings-editor-checkbox-content-block\">\n\t\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-checkbox ui-ctl-w100\">\n\t\t\t\t\t\t\t\t<input\n\t\t\t\t\t\t\t\t\tv-model=\"defaultSubscribe\"\n\t\t\t\t\t\t\t\t\t@click=\"markAsChanged\"\n\t\t\t\t\t\t\t\t\tid=\"default_subscribe\"\n\t\t\t\t\t\t\t\t\ttype=\"checkbox\"\n\t\t\t\t\t\t\t\t\tclass=\"ui-ctl-element\"\n\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t<label for=\"default_subscribe\" class=\"ui-ctl-label-text\">\n\t\t\t\t\t\t\t\t\t{{loc.CRM_CFG_C_SETTINGS_PRODUCTS_SETTINGS_DEFAULT_SUBSCRIBE}}\n\t\t\t\t\t\t\t\t</label>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"catalog-settings-editor-checkbox-content-block\">\n\t\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-checkbox ui-ctl-w100\">\n\t\t\t\t\t\t\t\t<input\n\t\t\t\t\t\t\t\t\tv-model=\"defaultProductVatIncluded\"\n\t\t\t\t\t\t\t\t\t@click=\"markAsChanged\"\n\t\t\t\t\t\t\t\t\tid=\"default_product_vat_included\"\n\t\t\t\t\t\t\t\t\ttype=\"checkbox\"\n\t\t\t\t\t\t\t\t\tclass=\"ui-ctl-element\"\n\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t<label for=\"default_product_vat_included\" class=\"ui-ctl-label-text\">\n\t\t\t\t\t\t\t\t\t{{loc.CRM_CFG_C_SETTINGS_PRODUCT_CARD_SET_VAT_IN_PRICE_FOR_NEW_PRODUCTS}}\n\t\t\t\t\t\t\t\t</label>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div\n\t\t\t\t\t\t\tv-if=\"isDefaultQuantityTraceVisible\"\n\t\t\t\t\t\t\tclass=\"catalog-settings-editor-checkbox-content-block\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-checkbox ui-ctl-w100\">\n\t\t\t\t\t\t\t\t<input\n\t\t\t\t\t\t\t\t\tv-model=\"defaultQuantityTrace\"\n\t\t\t\t\t\t\t\t\t@click=\"markAsChanged\"\n\t\t\t\t\t\t\t\t\tid=\"default_quantity_trace\"\n\t\t\t\t\t\t\t\t\ttype=\"checkbox\"\n\t\t\t\t\t\t\t\t\tclass=\"ui-ctl-element\"\n\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t<label for=\"default_quantity_trace\" class=\"ui-ctl-label-text\">\n\t\t\t\t\t\t\t\t\t{{loc.CRM_CFG_C_SETTINGS_PRODUCTS_DEFAULT_QUANTITY_TRACE}}\n\t\t\t\t\t\t\t\t</label>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div v-if=\"isCanBuyZeroInDocsVisible\" class=\"catalog-settings-editor-checkbox-content-block\">\n\t\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-checkbox ui-ctl-w100\">\n\t\t\t\t\t\t\t\t<input\n\t\t\t\t\t\t\t\t\tv-model=\"checkRightsOnDecreaseStoreAmount\"\n\t\t\t\t\t\t\t\t\t@click=\"markAsChanged\"\n\t\t\t\t\t\t\t\t\ttype=\"checkbox\"\n\t\t\t\t\t\t\t\t\tclass=\"ui-ctl-element\"\n\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t<label class=\"ui-ctl-label-text\">\n\t\t\t\t\t\t\t\t\t{{loc.CRM_CFG_C_SETTINGS_PRODUCTS_SETTINGS_DEFAULT_CAN_BUY_ZERO_IN_DOCS}}\n\t\t\t\t\t\t\t\t</label>\n\t\t\t\t\t\t\t\t<span\n\t\t\t\t\t\t\t\t\tclass=\"ui-hint\"\n\t\t\t\t\t\t\t\t\tdata-hint-html=\"\"\n\t\t\t\t\t\t\t\t\tdata-hint-interactivity=\"\"\n\t\t\t\t\t\t\t\t\t:data-hint=\"getCanBuyZeroInDocsHint()\"\n\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t\t<span class=\"ui-hint-icon\"></span>\n\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div\n\t\t\t\t\t\t\tv-if=\"isReservationUsed && isCanChangeOptionCanByZero\"\n\t\t\t\t\t\t\tclass=\"catalog-settings-editor-checkbox-content-block\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-checkbox ui-ctl-w100\">\n\t\t\t\t\t\t\t\t<input\n\t\t\t\t\t\t\t\t\tv-model=\"defaultCanBuyZero\"\n\t\t\t\t\t\t\t\t\t@click=\"markAsChanged\"\n\t\t\t\t\t\t\t\t\tid=\"default_can_buy_zero\"\n\t\t\t\t\t\t\t\t\ttype=\"checkbox\"\n\t\t\t\t\t\t\t\t\tclass=\"ui-ctl-element\"\n\t\t\t\t\t\t\t\t\t:disabled=\"!isCanChangeOptionCanByZero\"\n\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t<label for=\"default_can_buy_zero\" class=\"ui-ctl-label-text\">\n\t\t\t\t\t\t\t\t\t{{loc.CRM_CFG_C_SETTINGS_PRODUCTS_SETTINGS_DEFAULT_CAN_BUY_ZERO_V2}}\n\t\t\t\t\t\t\t\t</label>\n\t\t\t\t\t\t\t\t<span\n\t\t\t\t\t\t\t\t\tclass=\"ui-hint\"\n\t\t\t\t\t\t\t\t\tdata-hint-html=\"\"\n\t\t\t\t\t\t\t\t\tdata-hint-interactivity=\"\"\n\t\t\t\t\t\t\t\t\t:data-hint=\"getCanBuyZeroHint()\"\n\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t\t<span class=\"ui-hint-icon\"></span>\n\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</form>\n\t\t\t<div\n\t\t\t\t:class=\"buttonsPanelClass\"\n\t\t\t>\n\t\t\t\t<div class=\"ui-button-panel ui-button-panel-align-center \">\n\t\t\t\t\t<button\n\t\t\t\t\t\t@click=\"save\"\n\t\t\t\t\t\t:class=\"saveButtonClasses\"\n\t\t\t\t\t>\n\t\t\t\t\t\t{{loc.CRM_CFG_C_SETTINGS_SAVE_BUTTON}}\n\t\t\t\t\t</button>\n\t\t\t\t\t<a\n\t\t\t\t\t\t@click=\"cancel\"\n\t\t\t\t\t\tclass=\"ui-btn ui-btn-link\"\n\t\t\t\t\t>\n\t\t\t\t\t\t{{loc.CRM_CFG_C_SETTINGS_CANCEL_BUTTON}}\n\t\t\t\t\t</a>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<div style=\"height: 65px;\"></div>\n\t\t</div>\n\t"
 	});
 
-	function ownKeys$1(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+	function ownKeys$2(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
 
-	function _objectSpread$1(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$1(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$1(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
+	function _objectSpread$2(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$2(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$2(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 
 	var Slider = /*#__PURE__*/function () {
 	  function Slider() {
@@ -799,8 +837,17 @@ this.BX.Crm.Config = this.BX.Crm.Config || {};
 	        url += '?configCatalogSource=' + source;
 	      }
 
+	      main_core_events.EventEmitter.subscribe('SidePanel.Slider:onMessage', function (event) {
+	        var _event$getData = event.getData(),
+	            _event$getData2 = babelHelpers.slicedToArray(_event$getData, 1),
+	            data = _event$getData2[0];
+
+	        if (data.eventId === 'BX.Crm.Config.Catalog:onAfterSaveSettings') {
+	          main_core_events.EventEmitter.emit(window, 'onCatalogSettingsSave');
+	        }
+	      });
 	      return new Promise(function (resolve) {
-	        return BX.SidePanel.Instance.open(url, _objectSpread$1({
+	        return BX.SidePanel.Instance.open(url, _objectSpread$2({
 	          width: 1000,
 	          allowChangeHistory: false,
 	          cacheable: false
@@ -814,5 +861,5 @@ this.BX.Crm.Config = this.BX.Crm.Config || {};
 	exports.App = app;
 	exports.Slider = Slider;
 
-}((this.BX.Crm.Config.Catalog = this.BX.Crm.Config.Catalog || {}),BX.Main,BX.UI,BX.Catalog.StoreUse,BX,BX,BX,BX));
+}((this.BX.Crm.Config.Catalog = this.BX.Crm.Config.Catalog || {}),BX.Main,BX.UI,BX.Catalog.StoreUse,BX,BX,BX,BX,BX.Event));
 //# sourceMappingURL=catalog.bundle.js.map

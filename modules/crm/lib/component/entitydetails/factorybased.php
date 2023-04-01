@@ -196,6 +196,11 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 			$this->userFieldDispatcher = Dispatcher::instance();
 		}
 
+		if ($id <= 0)
+		{
+			$this->fillItemFromRequest();
+		}
+
 		$this->editorAdapter = $this->factory->getEditorAdapter();
 	}
 
@@ -1322,9 +1327,10 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 	protected function processItemFieldValues(array $data): array
 	{
 		$setData = [];
-		$userFields = $this->factory->getUserFields();
+
 		global $USER_FIELD_MANAGER;
-		$USER_FIELD_MANAGER->EditFormAddFields($userFields, $data, ['FORM' => $data]);
+		$USER_FIELD_MANAGER->EditFormAddFields($this->getUserFieldEntityId(), $data, ['FORM' => $data]);
+
 		$parentTypeId = (int)($data['PARENT_TYPE_ID'] ?? 0);
 		$parentId = (int)($data['PARENT_ID'] ?? 0);
 		if ($parentTypeId > 0 && $parentId > 0)
@@ -1463,15 +1469,6 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 			{
 				$this->operation = $this->factory->getAddOperation($this->item);
 			}
-		}
-
-		if ($this->isConversionMode() && !is_null($this->getConversionSource()))
-		{
-			$this->operation
-				->excludeItemsFromTimelineRelationEventsRegistration([
-					$this->getConversionSource()
-				])
-			;
 		}
 
 		return $this->operation;
@@ -1686,6 +1683,44 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 				$this->item->set($fieldName, $itemIdentifier->getEntityId());
 			}
 		}
+	}
+
+	protected function fillItemFromRequest(): void
+	{
+		$this->prepareEntityUserFields();
+		$this->prepareEntityDataScheme();
+
+		$fieldsValues = [];
+		$userFieldsValues = [];
+		foreach ($this->userFields as $userFieldName => $userFieldInfo)
+		{
+			$userFieldsValues[$userFieldName] = ['VALUE' => null];
+		}
+		\Bitrix\Crm\Entity\EntityEditor::mapRequestData(
+			$this->entityDataScheme,
+			$fieldsValues,
+			$userFieldsValues
+		);
+
+		foreach ($fieldsValues as $fieldName => $fieldValue)
+		{
+			if ($this->item->hasField($fieldName))
+			{
+				$this->item->set($fieldName, $fieldValue);
+			}
+		}
+		foreach ($userFieldsValues as $fieldName => $fieldValue)
+		{
+			if ($this->item->hasField($fieldName) && ($fieldValue['VALUE'] ?? null))
+			{
+				$this->item->set($fieldName, $fieldValue['VALUE']);
+			}
+		}
+	}
+
+	protected function getEntityFieldsInfo()
+	{
+		return $this->factory->getFieldsInfo();
 	}
 
 	protected function getProductsData(): ?array

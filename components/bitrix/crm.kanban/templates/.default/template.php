@@ -195,7 +195,7 @@ $gridId = Helper::getGridId($arParams['ENTITY_TYPE_CHR']);
 					columns: <?= \CUtil::PhpToJSObject(array_values($data['columns']), false, false, true)?>,
 					items: <?= \CUtil::PhpToJSObject($data['items'], false, false, true)?>,
 					dropZones: <?= \CUtil::PhpToJSObject(array_values($data['dropzones']), false, false, true)?>,
-					emptyStubItems: <?= \CUtil::PhpToJSObject($arResult['STUB'])?>,
+					emptyStubItems: <?= \CUtil::PhpToJSObject($arResult['STUB'] ?? null)?>,
 					data:
 						{
 							schemeInline: schemeInline,
@@ -266,7 +266,11 @@ $gridId = Helper::getGridId($arParams['ENTITY_TYPE_CHR']);
 								$arParams['EXTRA']
 							)) ?>",
 							eventKanbanUpdatedTag: "<?= PullManager::EVENT_KANBAN_UPDATED ?>",
-							moduleId: "<?= \CUtil::JSEscape(PullManager::MODULE_ID) ?>"
+							moduleId: "<?= \CUtil::JSEscape(PullManager::MODULE_ID) ?>",
+							tariffRestrictions: {
+								// We use negation so as not to confuse when working, since the default has always been allowed
+								addItemNotPermittedByTariff: <?= !($arParams['EXTRA']['ADD_ITEM_PERMITTED_BY_TARIFF'] ?? true) ? 'true' : 'false' ?>,
+							},
 						}
 				}
 			);
@@ -319,7 +323,7 @@ $gridId = Helper::getGridId($arParams['ENTITY_TYPE_CHR']);
 
 			<?php if (\Bitrix\Crm\Settings\Crm::isUniversalActivityScenarioEnabled()):
 				$todoCreateNotificationSkipPeriod =
-					(new \Bitrix\Crm\Activity\TodoCreateNotification(\CCrmOwnerType::Deal))
+					(new \Bitrix\Crm\Activity\TodoCreateNotification((int)$arParams['ENTITY_TYPE_INT']))
 						->getCurrentSkipPeriod()
 				;
 			?>

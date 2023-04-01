@@ -42,11 +42,11 @@ class EntityActivityDeadline
 
 		if ($statusTypeId === EntityActivities::STAGE_PENDING)
 		{
-			$dateTime = $this->datetimeStages->today($dateTime);
+			$dateTime = $this->datetimeStages->current($dateTime);
 		}
 		elseif ($statusTypeId === EntityActivities::STAGE_THIS_WEEK)
 		{
-			$dateTime = $this->datetimeStages->thisWeek($dateTime);
+			$dateTime = $this->datetimeStages->currentFromThisWeek($dateTime);
 		}
 		elseif ($statusTypeId === EntityActivities::STAGE_NEXT_WEEK)
 		{

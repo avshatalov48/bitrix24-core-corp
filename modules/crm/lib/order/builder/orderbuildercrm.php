@@ -100,7 +100,7 @@ class OrderBuilderCrm extends OrderBuilder
 	 */
 	public function buildBasket()
 	{
-		if(is_array($this->formData['PRODUCT']) && !empty($this->formData['PRODUCT']))
+		if(isset($this->formData['PRODUCT']) && is_array($this->formData['PRODUCT']) && !empty($this->formData['PRODUCT']))
 		{
 			foreach($this->formData['PRODUCT'] as $k => $p)
 			{
@@ -205,7 +205,7 @@ class OrderBuilderCrm extends OrderBuilder
 			'PAY_RETURN_DATE', 'PAY_VOUCHER_DATE'
 		];
 
-		if (is_array($this->formData["PAYMENT"]))
+		if (isset($this->formData["PAYMENT"]) && is_array($this->formData["PAYMENT"]))
 		{
 			foreach($this->formData["PAYMENT"] as $idx => $data)
 			{
@@ -262,7 +262,7 @@ class OrderBuilderCrm extends OrderBuilder
 			'DATE_CANCELED', 'DATE_RESPONSIBLE_ID'
 		];
 
-		if(is_array($this->formData["SHIPMENT"]))
+		if(isset($this->formData["SHIPMENT"]) && is_array($this->formData["SHIPMENT"]))
 		{
 			foreach($this->formData["SHIPMENT"] as $idx => $data)
 			{
@@ -334,11 +334,11 @@ class OrderBuilderCrm extends OrderBuilder
 		}
 
 		$requisites = [];
-		if ((int)($this->formData['REQUISITE_ID']) > 0)
+		if (isset($this->formData['REQUISITE_ID']) && (int)($this->formData['REQUISITE_ID']) > 0)
 		{
 			$requisites['REQUISITE_ID'] = (int)($this->formData['REQUISITE_ID']);
 		}
-		if ((int)($this->formData['BANK_DETAIL_ID'])> 0)
+		if (isset($this->formData['BANK_DETAIL_ID']) && (int)($this->formData['BANK_DETAIL_ID'])> 0)
 		{
 			$requisites['BANK_DETAIL_ID'] = (int)($this->formData['BANK_DETAIL_ID']);
 		}

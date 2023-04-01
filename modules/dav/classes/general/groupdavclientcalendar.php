@@ -287,7 +287,9 @@ class CDavGroupdavClientCalendar extends CDavGroupdavClient
 				{
 					$s = $prop->GetContent();
 					if (is_string($s) || is_numeric($s))
+					{
 						$arItem[$prop->GetTag()] = $this->Encode($s);
+					}
 				}
 
 				if ($calendarData)
@@ -296,6 +298,12 @@ class CDavGroupdavClientCalendar extends CDavGroupdavClient
 					if (count($arCalendarData) > 0)
 					{
 						$cal = new CDavICalendar($this->Encode($arCalendarData[0]->GetContent()));
+
+						if (!$cal->getComponent())
+						{
+							continue;
+						}
+
 						$arEvents = $cal->GetComponents('VTIMEZONE', false);
 						if (count($arEvents) > 0)
 						{
@@ -668,7 +676,7 @@ class CDavGroupdavClientCalendar extends CDavGroupdavClient
 			'SUMMARY' => $event['NAME']
 		];
 
-		if ($event['DT_SKIP_TIME'] == 'Y')
+		if ($event['DT_SKIP_TIME'] === 'Y')
 		{
 			$iCalEvent['DTSTART'] = [
 				'VALUE' => date('Ymd', MakeTimeStamp($event['DATE_FROM'])),
@@ -694,7 +702,10 @@ class CDavGroupdavClientCalendar extends CDavGroupdavClient
 
 		if (
 			isset($event['ACCESSIBILITY'])
-			&& ($event['ACCESSIBILITY'] == 'free' || $event['ACCESSIBILITY'] == 'quest')
+			&& (
+				$event['ACCESSIBILITY'] === 'free'
+				|| $event['ACCESSIBILITY'] === 'quest'
+			)
 		)
 		{
 			$iCalEvent['TRANSP'] = 'TRANSPARENT';
@@ -705,10 +716,9 @@ class CDavGroupdavClientCalendar extends CDavGroupdavClient
 		}
 
 		if (
-			isset($event['LOCATION'])
+			isset($event['LOCATION'], $event['LOCATION']['NEW'])
 			&& is_array($event['LOCATION'])
-			&& isset($event['LOCATION']['NEW'])
-			&& $event['LOCATION']['NEW'] <> ''
+			&& $event['LOCATION']['NEW']
 		)
 		{
 			$iCalEvent['LOCATION'] = $event['LOCATION']['NEW'];
@@ -716,11 +726,11 @@ class CDavGroupdavClientCalendar extends CDavGroupdavClient
 
 		if (isset($event['IMPORTANCE']))
 		{
-			if ($event['IMPORTANCE'] == 'low')
+			if ($event['IMPORTANCE'] === 'low')
 			{
 				$iCalEvent['PRIORITY'] = 9;
 			}
-			elseif ($event['IMPORTANCE'] == 'high')
+			elseif ($event['IMPORTANCE'] === 'high')
 			{
 				$iCalEvent['PRIORITY'] = 1;
 			}
@@ -730,12 +740,12 @@ class CDavGroupdavClientCalendar extends CDavGroupdavClient
 			}
 		}
 
-		if (isset($event['DESCRIPTION']) && $event['DESCRIPTION'] <> '')
+		if (isset($event['DESCRIPTION']) && $event['DESCRIPTION'])
 		{
 			$iCalEvent['DESCRIPTION'] = $event['DESCRIPTION'];
 		}
 
-		if (isset($event['PROPERTY_REMIND_SETTINGS']) && $event['PROPERTY_REMIND_SETTINGS'] <> '')
+		if (isset($event['PROPERTY_REMIND_SETTINGS']) && $event['PROPERTY_REMIND_SETTINGS'])
 		{
 			$arPeriodMapTmp = [
 				'min' => 'M',
@@ -792,14 +802,18 @@ class CDavGroupdavClientCalendar extends CDavGroupdavClient
 		// TODO: we have to update SEQUENCE corresponding to rfc5546
 		$iCalEvent['SEQUENCE'] = $event['VERSION'];
 
-		if($event['EXDATE'] && $event['RRULE'])
+		if (
+			isset($event['EXDATE'], $event['RRULE'])
+			&& $event['EXDATE']
+			&& $event['RRULE']
+		)
 		{
 			$event['EXDATE'] = explode(';', $event['EXDATE']);
 
 			$exdate = [];
 			foreach ($event['EXDATE'] as $date)
 			{
-				if ($event['DT_SKIP_TIME'] == 'Y')
+				if ($event['DT_SKIP_TIME'] === 'Y')
 				{
 					$exdate[] = date('Ymd', MakeTimeStamp($date));
 				}
@@ -811,7 +825,7 @@ class CDavGroupdavClientCalendar extends CDavGroupdavClient
 
 			if (!empty($exdate))
 			{
-				if ($event['DT_SKIP_TIME'] == 'Y')
+				if ($event['DT_SKIP_TIME'] === 'Y')
 				{
 					$iCalEvent['EXDATE'] = [
 						'VALUE' => implode(',', $exdate),
@@ -832,8 +846,8 @@ class CDavGroupdavClientCalendar extends CDavGroupdavClient
 				}
 			}
 		}
-		$cal = new CDavICalendar($iCalEvent, $siteId);
-		return $cal->Render();
+
+		return (new CDavICalendar($iCalEvent, $siteId))->Render();
 	}
 
 	public static function GenerateNewCalendarItemName()
@@ -980,13 +994,13 @@ class CDavGroupdavClientCalendar extends CDavGroupdavClient
 			$arUserCalendars = [];
 			foreach ($arCalendarsList as $value)
 			{
-				$arUserCalendars[] = array(
-					"XML_ID" => $value["href"],
-					"NAME" => $value["displayname"],
-					"DESCRIPTION" => $value["calendar-description"],
-					"COLOR" => $value["calendar-color"],
-					"MODIFICATION_LABEL" => $value["getctag"],
-				);
+				$arUserCalendars[] = [
+					"XML_ID" => $value["href"] ?? null,
+					"NAME" => $value["displayname"] ?? null,
+					"DESCRIPTION" => $value["calendar-description"] ?? null,
+					"COLOR" => $value["calendar-color"] ?? null,
+					"MODIFICATION_LABEL" => $value["getctag"] ?? null,
+				];
 			}
 			$tmpNumCals = count($arUserCalendars);
 			$tmpNumItems = 0;
@@ -1001,7 +1015,6 @@ class CDavGroupdavClientCalendar extends CDavGroupdavClient
 
 			foreach ($arUserCalendars as $userCalendar)
 			{
-				$bShouldClearCache = true;
 				$arCalendarItemsList = $client->GetCalendarItemsList($userCalendar["XML_ID"]);
 
 				if(!empty($arCalendarItemsList) && is_array($arCalendarItemsList))
@@ -1009,17 +1022,17 @@ class CDavGroupdavClientCalendar extends CDavGroupdavClient
 					$arUserCalendarItems = [];
 					foreach ($arCalendarItemsList as $value)
 					{
-						if (mb_strpos($value["getcontenttype"], "text/calendar") !== false
-							&& isset($value["getetag"]))
+						if (
+							isset($value["getetag"])
+							&& mb_strpos(($value["getcontenttype"] ?? null), "text/calendar") !== false
+						)
 						{
-							$arUserCalendarItems[] = array(
-								"XML_ID" => self::getBasenameWithoutExtension($value["href"]),
-								"MODIFICATION_LABEL" => $value["getetag"],
-							);
+							$xmlId = self::getBasenameWithoutExtension($value["href"]);
+							$arUserCalendarItems[$xmlId] = $value["getetag"];
 						}
 					}
 
-					$arUserCalendarItems = CCalendar::SyncCalendarItems(
+					$arModifiedUserCalendarItems = CCalendar::SyncCalendarItems(
 						"caldav",
 						$userCalendar["CALENDAR_ID"],
 						$arUserCalendarItems
@@ -1027,7 +1040,7 @@ class CDavGroupdavClientCalendar extends CDavGroupdavClient
 
 					$arHrefs = [];
 					$arIdMap = [];
-					foreach ($arUserCalendarItems as $value)
+					foreach ($arModifiedUserCalendarItems as $value)
 					{
 						$h = $client->GetRequestEventPath($userCalendar["XML_ID"], $value["XML_ID"]);
 						$arHrefs[] = $h;
@@ -1040,9 +1053,11 @@ class CDavGroupdavClientCalendar extends CDavGroupdavClient
 					foreach ($arCalendarItemsList as $value)
 					{
 						if (!array_key_exists($value["href"], $arIdMap))
+						{
 							continue;
+						}
 
-						$arModifyEventArray = array(
+						$arModifyEventArray = [
 							"ID" => $arIdMap[$value["href"]],
 							"NAME" => $value["calendar-data"]["NAME"],
 							"DETAIL_TEXT" => $value["calendar-data"]["DETAIL_TEXT"],
@@ -1053,33 +1068,37 @@ class CDavGroupdavClientCalendar extends CDavGroupdavClient
 							"DATE_TO" => $value["calendar-data"]["DATE_TO"],
 							"TZ_FROM" => $value["calendar-data"]["TZ_FROM"],
 							"TZ_TO" => $value["calendar-data"]["TZ_TO"],
-							"DT_LENGTH" => $value["calendar-data"]["DT_LENGTH"],
-							"SKIP_TIME" => $value["calendar-data"]["SKIP_TIME"],
-							"PROPERTY_IMPORTANCE" => $value["calendar-data"]["PROPERTY_IMPORTANCE"],
-							"PROPERTY_ACCESSIBILITY" => $value["calendar-data"]["PROPERTY_ACCESSIBILITY"],
-							"PROPERTY_REMIND_SETTINGS" => $value["calendar-data"]["PROPERTY_REMIND_SETTINGS"],
+							"DT_LENGTH" => $value["calendar-data"]["DT_LENGTH"] ?? null,
+							"SKIP_TIME" => $value["calendar-data"]["SKIP_TIME"] ?? null,
+							"PROPERTY_IMPORTANCE" => $value["calendar-data"]["PROPERTY_IMPORTANCE"] ?? null,
+							"PROPERTY_ACCESSIBILITY" => $value["calendar-data"]["PROPERTY_ACCESSIBILITY"] ?? null,
+							"PROPERTY_REMIND_SETTINGS" => $value["calendar-data"]["PROPERTY_REMIND_SETTINGS"] ?? null,
 							"PROPERTY_PERIOD_TYPE" => "NONE",
-							"PROPERTY_BXDAVCD_LABEL" => $value["getetag"],
-							"VERSION" => $value["calendar-data"]["VERSION"],
-							"ORGANIZER" => $value["calendar-data"]["ORGANIZER"]
-						);
+							"PROPERTY_BXDAVCD_LABEL" => $value["getetag"] ?? null,
+							"VERSION" => $value["calendar-data"]["VERSION"] ?? null,
+							"ORGANIZER" => $value["calendar-data"]["ORGANIZER"] ?? null,
+						];
 
 						if (isset($value["calendar-data"]["PROPERTY_PERIOD_TYPE"]) && $value["calendar-data"]["PROPERTY_PERIOD_TYPE"] !== "NONE")
 						{
-							$arModifyEventArray["PROPERTY_PERIOD_TYPE"] = $value["calendar-data"]["PROPERTY_PERIOD_TYPE"];
-							$arModifyEventArray["PROPERTY_PERIOD_COUNT"] = $value["calendar-data"]["PROPERTY_PERIOD_COUNT"];
-							$arModifyEventArray["PROPERTY_PERIOD_ADDITIONAL"] = $value["calendar-data"]["PROPERTY_PERIOD_ADDITIONAL"];
-							$arModifyEventArray["PROPERTY_EVENT_LENGTH"] = $value["calendar-data"]["PROPERTY_EVENT_LENGTH"];
-							$arModifyEventArray["PROPERTY_PERIOD_UNTIL"] = $value["calendar-data"]["PROPERTY_PERIOD_UNTIL"];
-							$arModifyEventArray["EXDATE"] = $value["calendar-data"]["EXDATE"];
-							$arModifyEventArray["PROPERTY_RRULE_COUNT"] = $value["calendar-data"]["PROPERTY_RRULE_COUNT"];
+							$arModifyEventArray["PROPERTY_PERIOD_TYPE"] = $value["calendar-data"]["PROPERTY_PERIOD_TYPE"] ?? null;
+							$arModifyEventArray["PROPERTY_PERIOD_COUNT"] = $value["calendar-data"]["PROPERTY_PERIOD_COUNT"] ?? null;
+							$arModifyEventArray["PROPERTY_PERIOD_ADDITIONAL"] = $value["calendar-data"]["PROPERTY_PERIOD_ADDITIONAL"] ?? null;
+							$arModifyEventArray["PROPERTY_EVENT_LENGTH"] = $value["calendar-data"]["PROPERTY_EVENT_LENGTH"] ?? null;
+							$arModifyEventArray["PROPERTY_PERIOD_UNTIL"] = $value["calendar-data"]["PROPERTY_PERIOD_UNTIL"] ?? null;
+							$arModifyEventArray["EXDATE"] = $value["calendar-data"]["EXDATE"] ?? null;
+							$arModifyEventArray["PROPERTY_RRULE_COUNT"] = $value["calendar-data"]["PROPERTY_RRULE_COUNT"] ?? null;
 						}
 						$k = CCalendarSync::ModifyEvent(
 							$userCalendar["CALENDAR_ID"],
 							$arModifyEventArray,
 						);
 
-						if (is_array($value['calendar-data-ex']) && count($value['calendar-data-ex']) > 0)
+						if (
+							isset($value['calendar-data-ex'])
+							&& is_array($value['calendar-data-ex'])
+							&& !empty($value['calendar-data-ex'])
+						)
 						{
 							CCalendarSync::ModifyReccurentInstances([
                                 'events' => $value['calendar-data-ex'],

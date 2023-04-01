@@ -1,7 +1,3 @@
-import Notification from './notification/component';
-import DeliveryActivity from './delivery-activity/component';
-import DeliveryMessage from './delivery-message/component';
-import DeliveryCalculation from './delivery-calculation/component';
 import Manager from "./manager";
 import Stream from "./stream";
 import Editor from "./editor";
@@ -16,7 +12,6 @@ import Sms from "./editors/sms";
 import WaitConfigurationDialog from "./tools/wait-configuration-dialog";
 import SchedulePostponeController from "./tools/schedule-postpone-controller";
 import MenuBar from "./tools/menubar";
-import {SmsWatcher} from "./tools/sms-watcher";
 import AudioPlaybackRateSelector from "./tools/audio-playback-rate-selector";
 import * as Types from "./types";
 import Action from "./action";
@@ -45,7 +40,6 @@ import WaitItem from "./items/wait";
 import Document from "./items/document";
 import Sender from "./items/sender";
 import Bizproc from "./items/bizproc";
-import SmsItem from "./items/sms";
 import Request from "./items/request";
 import RestItem from "./items/rest";
 import OpenLineItem from "./items/openline";
@@ -53,13 +47,8 @@ import Zoom from "./items/zoom";
 import Conversion from "./items/conversion";
 import Visit from "./items/visit";
 import Scoring from "./items/scoring";
-import OrderCreation from "./items/order-creation";
-import OrderModification from "./items/order-modification";
-import FinalSummaryDocuments from "./items/final-summary-documents";
-import FinalSummary from "./items/final-summary";
 import ExternalNoticeModification from "./items/external-notice-modification";
 import ExternalNoticeStatusModification from "./items/external-notice-status-modification";
-import OrderCheck from "./items/order-check";
 import Scheduled from "./items/scheduled";
 import ScheduledActivity from "./items/scheduled/activity";
 import ScheduledEmail from "./items/scheduled/email";
@@ -79,9 +68,6 @@ import Expand from "./animations/expand";
 import Shift from "./animations/shift";
 import AnimationComment from "./animations/comment";
 import Fasten from "./animations/fasten";
-import CompilationOrderNotice from './product-compilation/order-notice/component';
-import ProductCompilationViewed from './product-compilation/compilation-viewed/component';
-import NewDealCreated from './product-compilation/deal-created/component';
 
 const Streams = {
 	History,
@@ -101,7 +87,6 @@ const Tools = {
 	WaitConfigurationDialog,
 	SchedulePostponeController,
 	MenuBar,
-	SmsWatcher,
 	AudioPlaybackRateSelector,
 }
 
@@ -152,7 +137,6 @@ const Items = {
 	Document,
 	Sender,
 	Bizproc,
-	Sms: SmsItem,
 	Request,
 	Rest: RestItem,
 	OpenLine: OpenLineItem,
@@ -160,13 +144,8 @@ const Items = {
 	Conversion,
 	Visit,
 	Scoring,
-	OrderCreation,
-	OrderModification,
-	FinalSummaryDocuments,
-	FinalSummary,
 	ExternalNoticeModification,
 	ExternalNoticeStatusModification,
-	OrderCheck,
 	ScheduledBase: Scheduled,
 	Scheduled: ScheduledItems,
 }
@@ -181,10 +160,6 @@ const Animations = {
 };
 
 export {
-	Notification,
-	DeliveryActivity,
-	DeliveryMessage,
-	DeliveryCalculation,
 	Manager,
 	Stream,
 	Streams,
@@ -197,7 +172,4 @@ export {
 	Items,
 	Animations,
 	CompatibleItem,
-	CompilationOrderNotice,
-	ProductCompilationViewed,
-	NewDealCreated,
 };

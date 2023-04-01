@@ -59,7 +59,7 @@ class LeadBinder extends BaseBinder
 					$fields,
 					false,
 					false,
-					$this->getUpdateOptions((int)$associatedEntityTypeID, [$associatedEntityID]),
+					$this->getUnbindUpdateOptions((int)$associatedEntityTypeID, [$associatedEntityID]),
 				);
 			}
 		}
@@ -80,7 +80,7 @@ class LeadBinder extends BaseBinder
 					$fields,
 					false,
 					false,
-					$this->getUpdateOptions((int)$associatedEntityTypeID, [$associatedEntityID]),
+					$this->getUnbindUpdateOptions((int)$associatedEntityTypeID, [$associatedEntityID]),
 				);
 			}
 		}
@@ -106,9 +106,8 @@ class LeadBinder extends BaseBinder
 				$entity->Update(
 					$entityID,
 					$fields,
+					true,
 					false,
-					false,
-					$this->getUpdateOptions((int)$associatedEntityTypeID, [$associatedEntityID]),
 				);
 			}
 		}
@@ -127,9 +126,8 @@ class LeadBinder extends BaseBinder
 				$entity->Update(
 					$entityID,
 					$fields,
+					true,
 					false,
-					false,
-					$this->getUpdateOptions((int)$associatedEntityTypeID, [$associatedEntityID]),
 				);
 			}
 		}
@@ -153,9 +151,8 @@ class LeadBinder extends BaseBinder
 			$entity->Update(
 				$entityID,
 				$fields,
+				true,
 				false,
-				false,
-				$this->getUpdateOptions((int)$associatedEntityTypeID, $associatedEntityIDs),
 			);
 		}
 		elseif($associatedEntityTypeID === \CCrmOwnerType::Contact)
@@ -173,9 +170,8 @@ class LeadBinder extends BaseBinder
 			$entity->Update(
 				$entityID,
 				$fields,
+				true,
 				false,
-				false,
-				$this->getUpdateOptions((int)$associatedEntityTypeID, $associatedEntityIDs),
 			);
 		}
 		else

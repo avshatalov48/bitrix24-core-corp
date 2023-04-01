@@ -28,7 +28,7 @@ class StepImconnector extends Step
 		}
 		if (!\Bitrix\Main\Loader::includeModule("imconnector"))
 		{
-			$this->errorCollection->setError(new Error(Loc::getMessage("IMCONNECTOR_IS_NOT_INSTALLED"), "IMCONNECTOR_IS_NOT_INSTALLED"), "IMCONNECTOR_IS_NOT_INSTALLED");
+			$this->errorCollection->setError(new Error(Loc::getMessage("IMCONNECTOR_IS_NOT_INSTALLED_MSGVER_1"), "IMCONNECTOR_IS_NOT_INSTALLED"), "IMCONNECTOR_IS_NOT_INSTALLED");
 		}
 		if ($this->errorCollection->isEmpty())
 		{

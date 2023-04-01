@@ -17,6 +17,9 @@ $arActivityDescription = [
 		'INCLUDE' => [
 			['crm'],
 		],
+		'EXCLUDE' => [
+			['crm', \Bitrix\Crm\Integration\BizProc\Document\SmartDocument::class],
+		],
 	],
 	'CATEGORY' => [
 		'ID' => 'document',

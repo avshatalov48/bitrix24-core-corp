@@ -1161,12 +1161,7 @@ class EntityConverter
 
 	protected function getUpdateOptions(): array
 	{
-		return [
-			'EXCLUDE_FROM_RELATION_REGISTRATION' => [
-				// current conversion source
-				new Crm\ItemIdentifier($this->getEntityTypeID(), $this->getEntityID()),
-			],
-		];
+		return [];
 	}
 
 	//endregion

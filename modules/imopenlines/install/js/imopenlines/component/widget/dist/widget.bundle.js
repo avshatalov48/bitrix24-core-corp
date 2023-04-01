@@ -9,19 +9,18 @@
 	 * @subpackage imopenlines
 	 * @copyright 2001-2019 Bitrix
 	 */
+
 	function GetObjectValues(source) {
 	  var destination = [];
-
 	  for (var value in source) {
 	    if (source.hasOwnProperty(value)) {
 	      destination.push(source[value]);
 	    }
 	  }
-
 	  return destination;
 	}
-	/* region 01. Constants */
 
+	/* region 01. Constants */
 
 	var VoteType = Object.freeze({
 	  none: 'none',
@@ -136,15 +135,12 @@
 	 */
 	var WidgetModel = /*#__PURE__*/function (_VuexBuilderModel) {
 	  babelHelpers.inherits(WidgetModel, _VuexBuilderModel);
-
 	  function WidgetModel() {
 	    babelHelpers.classCallCheck(this, WidgetModel);
 	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(WidgetModel).apply(this, arguments));
 	  }
-
 	  babelHelpers.createClass(WidgetModel, [{
 	    key: "getName",
-
 	    /**
 	     * @inheritDoc
 	     */
@@ -260,126 +256,97 @@
 	    key: "getMutations",
 	    value: function getMutations() {
 	      var _this = this;
-
 	      return {
 	        common: function common(state, payload) {
 	          if (typeof payload.configId === 'number') {
 	            state.common.configId = payload.configId;
 	          }
-
 	          if (typeof payload.configName === 'string') {
 	            state.common.configName = payload.configName;
 	          }
-
 	          if (typeof payload.online === 'boolean') {
 	            state.common.online = payload.online;
 	          }
-
 	          if (im_lib_utils.Utils.types.isPlainObject(payload.vote)) {
 	            if (typeof payload.vote.enable === 'boolean') {
 	              state.common.vote.enable = payload.vote.enable;
 	            }
-
 	            if (typeof payload.vote.beforeFinish === 'boolean') {
 	              state.common.vote.beforeFinish = payload.vote.beforeFinish;
 	            }
-
 	            if (typeof payload.vote.messageText === 'string') {
 	              state.common.vote.messageText = payload.vote.messageText;
 	            }
-
 	            if (typeof payload.vote.messageLike === 'string') {
 	              state.common.vote.messageLike = payload.vote.messageLike;
 	            }
-
 	            if (typeof payload.vote.messageDislike === 'string') {
 	              state.common.vote.messageDislike = payload.vote.messageDislike;
 	            }
 	          }
-
 	          if (im_lib_utils.Utils.types.isPlainObject(payload.textMessages)) {
 	            if (typeof payload.textMessages.bxLivechatOnlineLine1 === 'string' && payload.textMessages.bxLivechatOnlineLine1 !== '') {
 	              state.common.textMessages.bxLivechatOnlineLine1 = payload.textMessages.bxLivechatOnlineLine1;
 	            }
-
 	            if (typeof payload.textMessages.bxLivechatOnlineLine2 === 'string' && payload.textMessages.bxLivechatOnlineLine2 !== '') {
 	              state.common.textMessages.bxLivechatOnlineLine2 = payload.textMessages.bxLivechatOnlineLine2;
 	            }
-
 	            if (typeof payload.textMessages.bxLivechatOffline === 'string' && payload.textMessages.bxLivechatOffline !== '') {
 	              state.common.textMessages.bxLivechatOffline = payload.textMessages.bxLivechatOffline;
 	            }
-
 	            if (typeof payload.textMessages.bxLivechatTitle === 'string' && payload.textMessages.bxLivechatTitle !== '') {
 	              state.common.textMessages.bxLivechatTitle = payload.textMessages.bxLivechatTitle;
 	            }
 	          }
-
 	          if (typeof payload.dragged === 'boolean') {
 	            state.common.dragged = payload.dragged;
 	          }
-
 	          if (typeof payload.textareaHeight === 'number') {
 	            state.common.textareaHeight = payload.textareaHeight;
 	          }
-
 	          if (typeof payload.widgetHeight === 'number') {
 	            state.common.widgetHeight = payload.widgetHeight;
 	          }
-
 	          if (typeof payload.widgetWidth === 'number') {
 	            state.common.widgetWidth = payload.widgetWidth;
 	          }
-
 	          if (typeof payload.showConsent === 'boolean') {
 	            state.common.showConsent = payload.showConsent;
 	          }
-
 	          if (typeof payload.consentUrl === 'string') {
 	            state.common.consentUrl = payload.consentUrl;
 	          }
-
 	          if (typeof payload.showed === 'boolean') {
 	            state.common.showed = payload.showed;
 	            payload.reopen = im_lib_utils.Utils.device.isMobile() ? false : payload.showed;
 	          }
-
 	          if (typeof payload.reopen === 'boolean') {
 	            state.common.reopen = payload.reopen;
 	          }
-
 	          if (typeof payload.copyright === 'boolean') {
 	            state.common.copyright = payload.copyright;
 	          }
-
 	          if (typeof payload.dialogStart === 'boolean') {
 	            state.common.dialogStart = payload.dialogStart;
 	          }
-
 	          if (typeof payload.watchTyping === 'boolean') {
 	            state.common.watchTyping = payload.watchTyping;
 	          }
-
 	          if (typeof payload.showSessionId === 'boolean') {
 	            state.common.showSessionId = payload.showSessionId;
 	          }
-
 	          if (payload.operators instanceof Array) {
 	            state.common.operators = payload.operators;
 	          }
-
 	          if (payload.connectors instanceof Array) {
 	            state.common.connectors = payload.connectors;
 	          }
-
 	          if (typeof payload.showForm === 'string' && typeof FormType[payload.showForm] !== 'undefined') {
 	            if (payload.showForm === FormType.like && !!state.dialog.closeVote) {
 	              payload.showForm = FormType.none;
 	            }
-
 	            state.common.showForm = payload.showForm;
 	          }
-
 	          if (typeof payload.location === 'number' && typeof LocationStyle[payload.location] !== 'undefined') {
 	            if (state.common.location !== payload.location) {
 	              state.common.widgetHeight = 0;
@@ -387,37 +354,29 @@
 	              state.common.location = payload.location;
 	            }
 	          }
-
 	          if (im_lib_utils.Utils.types.isPlainObject(payload.crmFormsSettings)) {
 	            if (typeof payload.crmFormsSettings.useWelcomeForm === 'string') {
 	              state.common.crmFormsSettings.useWelcomeForm = payload.crmFormsSettings.useWelcomeForm === 'Y';
 	            }
-
 	            if (typeof payload.crmFormsSettings.welcomeFormId === 'string') {
 	              state.common.crmFormsSettings.welcomeFormId = payload.crmFormsSettings.welcomeFormId;
 	            }
-
 	            if (typeof payload.crmFormsSettings.welcomeFormSec === 'string') {
 	              state.common.crmFormsSettings.welcomeFormSec = payload.crmFormsSettings.welcomeFormSec;
 	            }
-
 	            if (typeof payload.crmFormsSettings.welcomeFormDelay === 'string') {
 	              state.common.crmFormsSettings.welcomeFormDelay = payload.crmFormsSettings.welcomeFormDelay === 'Y';
 	            }
-
 	            if (typeof payload.crmFormsSettings.successText === 'string' && payload.crmFormsSettings.successText !== '') {
 	              state.common.crmFormsSettings.successText = payload.crmFormsSettings.successText;
 	            }
-
 	            if (typeof payload.crmFormsSettings.errorText === 'string' && payload.crmFormsSettings.errorText !== '') {
 	              state.common.crmFormsSettings.errorText = payload.crmFormsSettings.errorText;
 	            }
 	          }
-
 	          if (typeof payload.isCreateSessionMode === 'boolean') {
 	            state.common.isCreateSessionMode = payload.isCreateSessionMode;
 	          }
-
 	          if (_this.isSaveNeeded({
 	            common: payload
 	          })) {
@@ -428,56 +387,43 @@
 	          if (typeof payload.sessionId === 'number') {
 	            state.dialog.sessionId = payload.sessionId;
 	          }
-
 	          if (typeof payload.sessionClose === 'boolean') {
 	            state.dialog.sessionClose = payload.sessionClose;
 	          }
-
 	          if (typeof payload.sessionStatus === 'number') {
 	            state.dialog.sessionStatus = payload.sessionStatus;
 	          }
-
 	          if (typeof payload.userConsent === 'boolean') {
 	            state.dialog.userConsent = payload.userConsent;
 	          }
-
 	          if (typeof payload.userVote === 'string' && typeof payload.userVote !== 'undefined') {
 	            state.dialog.userVote = payload.userVote;
 	          }
-
 	          if (typeof payload.closeVote === 'boolean') {
 	            state.dialog.closeVote = payload.closeVote;
-
 	            if (!!payload.closeVote && state.common.showForm === FormType.like) {
 	              state.common.showForm = FormType.none;
 	            }
 	          }
-
 	          if (typeof payload.operatorChatId === 'number') {
 	            state.dialog.operatorChatId = payload.operatorChatId;
 	          }
-
 	          if (im_lib_utils.Utils.types.isPlainObject(payload.operator)) {
 	            if (typeof payload.operator.id === 'number') {
 	              state.dialog.operator.id = payload.operator.id;
 	            }
-
 	            if (typeof payload.operator.name === 'string' || typeof payload.operator.name === 'number') {
 	              state.dialog.operator.name = payload.operator.name.toString();
 	            }
-
 	            if (typeof payload.operator.lastName === 'string' || typeof payload.operator.lastName === 'number') {
 	              state.dialog.operator.lastName = payload.operator.lastName.toString();
 	            }
-
 	            if (typeof payload.operator.firstName === 'string' || typeof payload.operator.firstName === 'number') {
 	              state.dialog.operator.firstName = payload.operator.firstName.toString();
 	            }
-
 	            if (typeof payload.operator.workPosition === 'string' || typeof payload.operator.workPosition === 'number') {
 	              state.dialog.operator.workPosition = payload.operator.workPosition.toString();
 	            }
-
 	            if (typeof payload.operator.avatar === 'string') {
 	              if (!payload.operator.avatar || payload.operator.avatar.startsWith('http')) {
 	                state.dialog.operator.avatar = payload.operator.avatar;
@@ -485,12 +431,10 @@
 	                state.dialog.operator.avatar = state.common.host + payload.operator.avatar;
 	              }
 	            }
-
 	            if (typeof payload.operator.online === 'boolean') {
 	              state.dialog.operator.online = payload.operator.online;
 	            }
 	          }
-
 	          if (_this.isSaveNeeded({
 	            dialog: payload
 	          })) {
@@ -501,7 +445,6 @@
 	          if (typeof payload.id === 'number') {
 	            state.user.id = payload.id;
 	          }
-
 	          if (typeof payload.hash === 'string' && payload.hash !== state.user.hash) {
 	            state.user.hash = payload.hash;
 	            im_lib_cookie.Cookie.set(null, 'LIVECHAT_HASH', payload.hash, {
@@ -509,43 +452,33 @@
 	              path: '/'
 	            });
 	          }
-
 	          if (typeof payload.name === 'string' || typeof payload.name === 'number') {
 	            state.user.name = payload.name.toString();
 	          }
-
 	          if (typeof payload.firstName === 'string' || typeof payload.firstName === 'number') {
 	            state.user.firstName = payload.firstName.toString();
 	          }
-
 	          if (typeof payload.lastName === 'string' || typeof payload.lastName === 'number') {
 	            state.user.lastName = payload.lastName.toString();
 	          }
-
 	          if (typeof payload.avatar === 'string') {
 	            state.user.avatar = payload.avatar;
 	          }
-
 	          if (typeof payload.email === 'string') {
 	            state.user.email = payload.email;
 	          }
-
 	          if (typeof payload.phone === 'string' || typeof payload.phone === 'number') {
 	            state.user.phone = payload.phone.toString();
 	          }
-
 	          if (typeof payload.www === 'string') {
 	            state.user.www = payload.www;
 	          }
-
 	          if (typeof payload.gender === 'string') {
 	            state.user.gender = payload.gender;
 	          }
-
 	          if (typeof payload.position === 'string') {
 	            state.user.position = payload.position;
 	          }
-
 	          if (_this.isSaveNeeded({
 	            user: payload
 	          })) {
@@ -558,7 +491,6 @@
 	    key: "getActions",
 	    value: function getActions() {
 	      var _this2 = this;
-
 	      return {
 	        show: function show(_ref) {
 	          var commit = _ref.commit;
@@ -568,9 +500,8 @@
 	        },
 	        setVoteDateFinish: function setVoteDateFinish(_ref2, payload) {
 	          var commit = _ref2.commit,
-	              dispatch = _ref2.dispatch,
-	              state = _ref2.state;
-
+	            dispatch = _ref2.dispatch,
+	            state = _ref2.state;
 	          if (!payload) {
 	            clearTimeout(_this2.setVoteDateTimeout);
 	            commit('dialog', {
@@ -578,32 +509,25 @@
 	            });
 	            return true;
 	          }
-
 	          var totalDelay = new Date(payload).getTime() - new Date().getTime();
 	          var dayTimestamp = 10000;
 	          clearTimeout(_this2.setVoteDateTimeout);
-
 	          if (payload) {
 	            if (totalDelay && !state.dialog.closeVote) {
 	              commit('dialog', {
 	                closeVote: false
 	              });
 	            }
-
 	            var delay = totalDelay;
-
 	            if (totalDelay > dayTimestamp) {
 	              delay = dayTimestamp;
 	            }
-
 	            _this2.setVoteDateTimeout = setTimeout(function requestCloseVote() {
 	              delay = new Date(payload).getTime() - new Date().getTime();
-
 	              if (delay > 0) {
 	                if (delay > dayTimestamp) {
 	                  delay = dayTimestamp;
 	                }
-
 	                setTimeout(requestCloseVote, delay);
 	              } else {
 	                commit('dialog', {
@@ -638,27 +562,22 @@
 	      cors: true
 	    });
 	  }
-
 	  babelHelpers.createClass(WidgetRestClient, [{
 	    key: "setAuthId",
 	    value: function setAuthId(authId) {
 	      var customAuthId = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : '';
-
 	      if (babelHelpers["typeof"](this.queryParams) !== 'object') {
 	        this.queryParams = {};
 	      }
-
 	      if (authId == RestAuth.guest || typeof authId === 'string' && authId.match(/^[a-f0-9]{32}$/)) {
 	        this.queryParams.livechat_auth_id = authId;
 	      } else {
 	        console.error("%LiveChatRestClient.setAuthId: auth is not correct (%c".concat(authId, "%c)"), "color: black;", "font-weight: bold; color: red", "color: black");
 	        return false;
 	      }
-
 	      if (authId == RestAuth.guest && typeof customAuthId === 'string' && customAuthId.match(/^[a-f0-9]{32}$/)) {
 	        this.queryParams.livechat_custom_auth_id = customAuthId;
 	      }
-
 	      return true;
 	    }
 	  }, {
@@ -667,44 +586,37 @@
 	      if (babelHelpers["typeof"](this.queryParams) !== 'object') {
 	        this.queryParams = {};
 	      }
-
 	      return this.queryParams.livechat_auth_id || null;
 	    }
 	  }, {
 	    key: "callMethod",
 	    value: function callMethod(method, params, callback, sendCallback) {
 	      var _this = this;
-
 	      var logTag = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : null;
-
 	      if (!logTag) {
 	        logTag = im_lib_utils.Utils.getLogTrackingParams({
 	          name: method
 	        });
 	      }
+	      var promise = new BX.Promise();
 
-	      var promise = new BX.Promise(); // TODO: Callbacks methods will not work!
-
+	      // TODO: Callbacks methods will not work!
 	      this.restClient.callMethod(method, params, null, sendCallback, logTag).then(function (result) {
 	        _this.queryAuthRestore = false;
 	        promise.fulfill(result);
 	      })["catch"](function (result) {
 	        var error = result.error();
-
 	        if (error.ex.error == 'LIVECHAT_AUTH_WIDGET_USER') {
 	          _this.setAuthId(error.ex.hash);
-
 	          if (method === RestMethod.widgetUserRegister) {
 	            console.warn("BX.LiveChatRestClient: ".concat(error.ex.error_description, " (").concat(error.ex.error, ")"));
 	            _this.queryAuthRestore = false;
 	            promise.reject(result);
 	            return false;
 	          }
-
 	          if (!_this.queryAuthRestore) {
 	            console.warn('BX.LiveChatRestClient: your auth-token has expired, send query with a new token');
 	            _this.queryAuthRestore = true;
-
 	            _this.restClient.callMethod(method, params, null, sendCallback, logTag).then(function (result) {
 	              _this.queryAuthRestore = false;
 	              promise.fulfill(result);
@@ -712,11 +624,9 @@
 	              _this.queryAuthRestore = false;
 	              promise.reject(result);
 	            });
-
 	            return false;
 	          }
 	        }
-
 	        _this.queryAuthRestore = false;
 	        promise.reject(result);
 	      });
@@ -726,42 +636,32 @@
 	    key: "callBatch",
 	    value: function callBatch(calls, callback, bHaltOnError, sendCallback, logTag) {
 	      var _this2 = this;
-
 	      var resultCallback = function resultCallback(result) {
-
 	        for (var method in calls) {
 	          if (!calls.hasOwnProperty(method)) {
 	            continue;
 	          }
-
 	          var _error = result[method].error();
-
 	          if (_error && _error.ex.error == 'LIVECHAT_AUTH_WIDGET_USER') {
 	            _this2.setAuthId(_error.ex.hash);
-
 	            if (method === RestMethod.widgetUserRegister) {
 	              console.warn("BX.LiveChatRestClient: ".concat(_error.ex.error_description, " (").concat(_error.ex.error, ")"));
 	              _this2.queryAuthRestore = false;
 	              callback(result);
 	              return false;
 	            }
-
 	            if (!_this2.queryAuthRestore) {
 	              console.warn('BX.LiveChatRestClient: your auth-token has expired, send query with a new token');
 	              _this2.queryAuthRestore = true;
-
 	              _this2.restClient.callBatch(calls, callback, bHaltOnError, sendCallback, logTag);
-
 	              return false;
 	            }
 	          }
 	        }
-
 	        _this2.queryAuthRestore = false;
 	        callback(result);
 	        return true;
 	      };
-
 	      return this.restClient.callBatch(calls, resultCallback, bHaltOnError, sendCallback, logTag);
 	    }
 	  }]);
@@ -776,20 +676,16 @@
 	 * @subpackage imopenlines
 	 * @copyright 2001-2019 Bitrix
 	 */
-
 	var WidgetRestAnswerHandler = /*#__PURE__*/function (_BaseRestHandler) {
 	  babelHelpers.inherits(WidgetRestAnswerHandler, _BaseRestHandler);
-
 	  function WidgetRestAnswerHandler() {
 	    var _this;
-
 	    var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 	    babelHelpers.classCallCheck(this, WidgetRestAnswerHandler);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(WidgetRestAnswerHandler).call(this, props));
 	    _this.widget = props.widget;
 	    return _this;
 	  }
-
 	  babelHelpers.createClass(WidgetRestAnswerHandler, [{
 	    key: "handleImopenlinesWidgetConfigGetSuccess",
 	    value: function handleImopenlinesWidgetConfigGetSuccess(data) {
@@ -817,11 +713,9 @@
 	    value: function handleImopenlinesWidgetUserRegisterSuccess(data) {
 	      this.widget.restClient.setAuthId(data.hash);
 	      var previousData = [];
-
 	      if (typeof this.store.state.messages.collection[this.controller.application.getChatId()] !== 'undefined') {
 	        previousData = this.store.state.messages.collection[this.controller.application.getChatId()];
 	      }
-
 	      this.store.commit('messages/initCollection', {
 	        chatId: data.chatId,
 	        messages: previousData
@@ -957,7 +851,6 @@
 	 * @subpackage imopenlines
 	 * @copyright 2001-2019 Bitrix
 	 */
-
 	var WidgetImPullCommandHandler = /*#__PURE__*/function () {
 	  babelHelpers.createClass(WidgetImPullCommandHandler, [{
 	    key: "getModuleId",
@@ -971,14 +864,12 @@
 	      return new this(params);
 	    }
 	  }]);
-
 	  function WidgetImPullCommandHandler(params) {
 	    babelHelpers.classCallCheck(this, WidgetImPullCommandHandler);
 	    this.controller = params.controller;
 	    this.store = params.store;
 	    this.widget = params.widget;
 	  }
-
 	  babelHelpers.createClass(WidgetImPullCommandHandler, [{
 	    key: "handleMessageChat",
 	    value: function handleMessageChat(params, extra, command) {
@@ -987,7 +878,6 @@
 	          type: SubscriptionType.operatorMessage,
 	          data: params
 	        });
-
 	        if (!this.store.state.widget.common.showed && !this.widget.onceShowed) {
 	          this.widget.onceShowed = true;
 	          this.widget.open();
@@ -997,7 +887,6 @@
 	  }]);
 	  return WidgetImPullCommandHandler;
 	}();
-
 	var WidgetImopenlinesPullCommandHandler = /*#__PURE__*/function () {
 	  babelHelpers.createClass(WidgetImopenlinesPullCommandHandler, null, [{
 	    key: "create",
@@ -1006,7 +895,6 @@
 	      return new this(params);
 	    }
 	  }]);
-
 	  function WidgetImopenlinesPullCommandHandler() {
 	    var params = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 	    babelHelpers.classCallCheck(this, WidgetImopenlinesPullCommandHandler);
@@ -1014,7 +902,6 @@
 	    this.store = params.store;
 	    this.widget = params.widget;
 	  }
-
 	  babelHelpers.createClass(WidgetImopenlinesPullCommandHandler, [{
 	    key: "getModuleId",
 	    value: function getModuleId() {
@@ -1066,7 +953,6 @@
 	          sessionStatus: params.sessionStatus
 	        }
 	      });
-
 	      if (params.sessionClose) {
 	        this.widget.sendEvent({
 	          type: SubscriptionType.sessionFinish,
@@ -1075,7 +961,6 @@
 	            sessionStatus: params.sessionStatus
 	          }
 	        });
-
 	        if (!params.spam) {
 	          this.store.commit('widget/dialog', {
 	            operator: {
@@ -1100,26 +985,32 @@
 	}();
 
 	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-
 	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	var Widget = /*#__PURE__*/function () {
 	  /* region 01. Initialize and store data */
+
 	  // Vue instance
+
 	  // true if there are no initialization errors
 	  // true if all preparations are done
 	  // true if Pull-client is offline
 	  // XHR-request from widget.config.get, can be aborted before completion
+
 	  // this block can be set from public config
 	  // user info
 	  // additional info to send to server
+
 	  // external event subscribers
+
 	  // fields from params
 	  // livechat code
+
 	  // widget button
+
 	  // fullscreen livechat mode options
+
 	  function Widget() {
 	    var _this = this;
-
 	    var params = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 	    babelHelpers.classCallCheck(this, Widget);
 	    babelHelpers.defineProperty(this, "params", null);
@@ -1145,8 +1036,9 @@
 	    babelHelpers.defineProperty(this, "buttonInstance", null);
 	    babelHelpers.defineProperty(this, "localize", null);
 	    babelHelpers.defineProperty(this, "pageMode", null);
-	    this.params = params; //TODO: remove
+	    this.params = params;
 
+	    //TODO: remove
 	    this.messagesQueue = [];
 	    main_core_events.EventEmitter.subscribe(WidgetEventType.requestData, this.requestData.bind(this));
 	    main_core_events.EventEmitter.subscribe(WidgetEventType.createSession, this.createChat.bind(this));
@@ -1156,11 +1048,9 @@
 	    this.initPullClient();
 	    this.initCore().then(function () {
 	      _this.initWidget();
-
 	      _this.initComplete();
 	    });
 	  }
-
 	  babelHelpers.createClass(Widget, [{
 	    key: "initParams",
 	    value: function initParams() {
@@ -1170,27 +1060,22 @@
 	      this.language = this.params.language || 'en';
 	      this.copyright = this.params.copyright !== false;
 	      this.copyrightUrl = this.copyright && this.params.copyrightUrl ? this.params.copyrightUrl : '';
-
 	      if (this.params.buttonInstance && babelHelpers["typeof"](this.params.buttonInstance) === 'object') {
 	        this.buttonInstance = this.params.buttonInstance;
 	      }
-
 	      if (this.params.pageMode && babelHelpers["typeof"](this.params.pageMode) === 'object') {
 	        this.pageMode = {
 	          useBitrixLocalize: this.params.pageMode.useBitrixLocalize === true,
 	          placeholder: document.querySelector("#".concat(this.params.pageMode.placeholder))
 	        };
 	      }
-
 	      var errors = this.checkRequiredFields();
-
 	      if (errors.length > 0) {
 	        errors.forEach(function (error) {
 	          return console.warn(error);
 	        });
 	        this.ready = false;
 	      }
-
 	      this.setRootNode();
 	      this.localize = this.pageMode && this.pageMode.useBitrixLocalize ? window.BX.message : {};
 	      this.setLocalize();
@@ -1244,8 +1129,8 @@
 	    key: "initWidget",
 	    value: function initWidget() {
 	      this.restClient.setAuthId(this.getRestAuthId());
-	      this.setModelData(); // TODO: move from controller
-
+	      this.setModelData();
+	      // TODO: move from controller
 	      this.controller.application.setPrepareFilesBeforeSaveFunction(this.prepareFileData.bind(this));
 	      this.controller.addRestAnswerHandler(WidgetRestAnswerHandler.create({
 	        widget: this,
@@ -1254,7 +1139,6 @@
 	      }));
 	    } // if start or open methods were called before core init - we will have appropriate flags
 	    // for full-page livechat we always call open
-
 	  }, {
 	    key: "initComplete",
 	    value: function initComplete() {
@@ -1265,18 +1149,15 @@
 	          widgetHost: this.host
 	        }
 	      }));
-
 	      if (this.callStartFlag) {
 	        this.start();
 	      }
-
 	      if (this.pageMode || this.callOpenFlag) {
 	        this.open();
 	      }
 	    } // public method
 	    // initially called from imopenlines/lib/livechatmanager.php:16
 	    // if core is not ready yet - set flag and call start once again in this.initComplete()
-
 	  }, {
 	    key: "start",
 	    value: function start() {
@@ -1284,106 +1165,87 @@
 	        this.callStartFlag = true;
 	        return true;
 	      }
-
 	      if (this.isSessionActive()) {
 	        this.requestWidgetData();
 	      }
-
 	      return true;
 	    } // public method
 	    // if core is not ready yet - set flag and call start once again in this.initComplete()
 	    // if not inited yet - request widget data
-
 	  }, {
 	    key: "open",
 	    value: function open() {
 	      var params = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-
 	      if (!this.controller.getStore()) {
 	        this.callOpenFlag = true;
 	        return true;
 	      }
-
 	      if (!params.openFromButton && this.buttonInstance) {
 	        this.buttonInstance.wm.showById('openline_livechat');
 	      }
-
 	      var _this$checkForErrorsB = this.checkForErrorsBeforeOpen(),
-	          error = _this$checkForErrorsB.error,
-	          stop = _this$checkForErrorsB.stop;
-
+	        error = _this$checkForErrorsB.error,
+	        stop = _this$checkForErrorsB.stop;
 	      if (stop) {
 	        return false;
 	      }
-
 	      if (!error && !this.inited) {
 	        this.requestWidgetData();
 	      }
-
 	      this.attachTemplate();
 	    }
 	  }, {
 	    key: "requestWidgetData",
 	    value: function requestWidgetData() {
 	      var _this2 = this;
-
 	      if (!this.ready) {
 	        console.error('LiveChatWidget.start: widget code or host is not specified');
 	        return false;
-	      } // if user is registered or we have its hash - proceed to getting chat and messages
+	      }
 
-
+	      // if user is registered or we have its hash - proceed to getting chat and messages
 	      if (this.isUserReady() || this.isHashAvailable()) {
 	        this.requestData();
 	        this.inited = true;
 	        this.fireInitEvent();
 	        return true;
-	      } // if there is no info about user - we need to get config and wait for first message
+	      }
 
-
+	      // if there is no info about user - we need to get config and wait for first message
 	      this.controller.restClient.callMethod(RestMethod.widgetConfigGet, {
 	        code: this.code
 	      }, function (xhr) {
 	        _this2.widgetConfigRequest = xhr;
 	      }).then(function (result) {
 	        _this2.widgetConfigRequest = null;
-
 	        _this2.clearError();
-
 	        _this2.controller.executeRestAnswer(RestMethod.widgetConfigGet, result);
-
 	        if (!_this2.inited) {
 	          _this2.inited = true;
-
 	          _this2.fireInitEvent();
 	        }
 	      })["catch"](function (error) {
 	        _this2.widgetConfigRequest = null;
-
 	        _this2.setError(error.error().ex.error, error.error().ex.error_description);
 	      });
-
 	      if (this.isConfigDataLoaded()) {
 	        this.inited = true;
 	        this.fireInitEvent();
 	      }
 	    } // get all other info (dialog, chat, messages etc)
-
 	  }, {
 	    key: "requestData",
 	    value: function requestData() {
 	      im_lib_logger.Logger.log('requesting data from widget');
-
 	      if (this.requestDataSend) {
 	        return true;
 	      }
+	      this.requestDataSend = true;
 
-	      this.requestDataSend = true; // if there is uncompleted widget.config.get request - abort it (because we will do it anyway)
-
+	      // if there is uncompleted widget.config.get request - abort it (because we will do it anyway)
 	      if (this.widgetConfigRequest) {
 	        this.widgetConfigRequest.abort();
 	      }
-
 	      var callback = this.handleBatchRequestResult.bind(this);
 	      this.controller.restClient.callBatch(this.getDataRequestQuery(), callback, false, false, im_lib_utils.Utils.getLogTrackingParams({
 	        name: 'widget.init.config',
@@ -1394,7 +1256,6 @@
 	    key: "createChat",
 	    value: function createChat() {
 	      var _this3 = this;
-
 	      return new Promise(function (resolve, reject) {
 	        _this3.controller.restClient.callBatch(_this3.getCreateChatRequestQuery(), function (result) {
 	          _this3.handleBatchCreateChatRequestResult(result).then(function () {
@@ -1407,13 +1268,11 @@
 	    key: "handleBatchRequestResult",
 	    value: function handleBatchRequestResult(response) {
 	      var _this4 = this;
-
 	      if (!response) {
 	        this.requestDataSend = false;
 	        this.setError('EMPTY_RESPONSE', 'Server returned an empty response.');
 	        return false;
 	      }
-
 	      this.handleConfigGet(response).then(function () {
 	        return _this4.handleUserGet(response);
 	      }).then(function () {
@@ -1428,8 +1287,7 @@
 	        return _this4.handlePullRequests(response);
 	      })["catch"](function (_ref) {
 	        var code = _ref.code,
-	            description = _ref.description;
-
+	          description = _ref.description;
 	        _this4.setError(code, description);
 	      })["finally"](function () {
 	        _this4.requestDataSend = false;
@@ -1439,21 +1297,18 @@
 	    key: "handleBatchCreateChatRequestResult",
 	    value: function handleBatchCreateChatRequestResult(response) {
 	      var _this5 = this;
-
 	      if (!response) {
 	        this.requestDataSend = false;
 	        this.setError('EMPTY_RESPONSE', 'Server returned an empty response.');
 	        return false;
 	      }
-
 	      return this.handleChatCreate(response).then(function () {
 	        return _this5.handleChatGet(response);
 	      }).then(function () {
 	        return _this5.handleDialogGet(response);
 	      })["catch"](function (_ref2) {
 	        var code = _ref2.code,
-	            description = _ref2.description;
-
+	          description = _ref2.description;
 	        _this5.setError(code, description);
 	      })["finally"](function () {
 	        _this5.requestDataSend = false;
@@ -1463,21 +1318,18 @@
 	    key: "handleBatchOpenSessionRequestResult",
 	    value: function handleBatchOpenSessionRequestResult(response) {
 	      var _this6 = this;
-
 	      if (!response) {
 	        this.requestDataSend = false;
 	        this.setError('EMPTY_RESPONSE', 'Server returned an empty response.');
 	        return false;
 	      }
-
 	      return this.handleChatGet(response).then(function () {
 	        return _this6.handleDialogGet(response);
 	      }).then(function () {
 	        return _this6.handleDialogMessagesGet(response);
 	      })["catch"](function (_ref3) {
 	        var code = _ref3.code,
-	            description = _ref3.description;
-
+	          description = _ref3.description;
 	        _this6.setError(code, description);
 	      })["finally"](function () {
 	        _this6.requestDataSend = false;
@@ -1490,19 +1342,20 @@
 	      var query = babelHelpers.defineProperty({}, RestMethod.widgetConfigGet, [RestMethod.widgetConfigGet, {
 	        code: this.code
 	      }]);
-
 	      if (this.isUserRegistered()) {
 	        // widget.dialog.get
 	        query[RestMethod.widgetDialogGet] = [RestMethod.widgetDialogGet, {
 	          config_id: this.getConfigId(),
 	          trace_data: this.getCrmTraceData(),
 	          custom_data: this.getCustomData()
-	        }]; // im.chat.get
+	        }];
 
+	        // im.chat.get
 	        query[im_const.RestMethodHandler.imChatGet] = [im_const.RestMethod.imChatGet, {
 	          dialog_id: "$result[".concat(RestMethod.widgetDialogGet, "][dialogId]")
-	        }]; // im.dialog.messages.get
+	        }];
 
+	        // im.dialog.messages.get
 	        query[im_const.RestMethodHandler.imDialogMessagesGetInit] = [im_const.RestMethod.imDialogMessagesGet, {
 	          chat_id: "$result[".concat(RestMethod.widgetDialogGet, "][chatId]"),
 	          limit: this.controller.application.getRequestMessageLimit(),
@@ -1512,27 +1365,27 @@
 	        // widget.user.register
 	        query[RestMethod.widgetUserRegister] = [RestMethod.widgetUserRegister, _objectSpread({
 	          config_id: "$result[".concat(RestMethod.widgetConfigGet, "][configId]")
-	        }, this.getUserRegisterFields())]; // im.chat.get
+	        }, this.getUserRegisterFields())];
 
+	        // im.chat.get
 	        query[im_const.RestMethodHandler.imChatGet] = [im_const.RestMethod.imChatGet, {
 	          dialog_id: "$result[".concat(RestMethod.widgetUserRegister, "][dialogId]")
 	        }];
-
 	        if (this.userRegisterData.hash || this.getUserHashCookie()) {
 	          // widget.dialog.get
 	          query[RestMethod.widgetDialogGet] = [RestMethod.widgetDialogGet, {
 	            config_id: "$result[".concat(RestMethod.widgetConfigGet, "][configId]"),
 	            trace_data: this.getCrmTraceData(),
 	            custom_data: this.getCustomData()
-	          }]; // im.dialog.messages.get
+	          }];
 
+	          // im.dialog.messages.get
 	          query[im_const.RestMethodHandler.imDialogMessagesGetInit] = [im_const.RestMethod.imDialogMessagesGet, {
 	            chat_id: "$result[".concat(RestMethod.widgetDialogGet, "][chatId]"),
 	            limit: this.controller.application.getRequestMessageLimit(),
 	            convert_text: 'Y'
 	          }];
 	        }
-
 	        if (this.isUserAgreeConsent()) {
 	          // widget.user.consent.apply
 	          query[RestMethod.widgetUserConsentApply] = [RestMethod.widgetUserConsentApply, {
@@ -1541,7 +1394,6 @@
 	          }];
 	        }
 	      }
-
 	      query[RestMethod.pullServerTime] = [RestMethod.pullServerTime, {}];
 	      query[RestMethod.pullConfigGet] = [RestMethod.pullConfigGet, {
 	        'CACHE': 'N'
@@ -1559,8 +1411,9 @@
 	      }]);
 	      query[im_const.RestMethodHandler.imChatGet] = [im_const.RestMethod.imChatGet, {
 	        dialog_id: "chat".concat(chatId)
-	      }]; // im.dialog.messages.get
+	      }];
 
+	      // im.dialog.messages.get
 	      query[im_const.RestMethodHandler.imDialogMessagesGetInit] = [im_const.RestMethod.imDialogMessagesGet, {
 	        chat_id: chatId,
 	        limit: 50,
@@ -1571,22 +1424,24 @@
 	  }, {
 	    key: "getCreateChatRequestQuery",
 	    value: function getCreateChatRequestQuery() {
-	      var query = {}; // widget.chat.register
+	      var query = {};
 
+	      // widget.chat.register
 	      query[RestMethod.widgetChatCreate] = [RestMethod.widgetChatCreate, _objectSpread({
 	        config_id: this.getConfigId()
-	      }, this.getUserRegisterFields())]; // im.chat.get
+	      }, this.getUserRegisterFields())];
 
+	      // im.chat.get
 	      query[im_const.RestMethodHandler.imChatGet] = [im_const.RestMethod.imChatGet, {
 	        dialog_id: "$result[".concat(RestMethod.widgetChatCreate, "][dialogId]")
-	      }]; // widget.dialog.get
+	      }];
 
+	      // widget.dialog.get
 	      query[RestMethod.widgetDialogGet] = [RestMethod.widgetDialogGet, {
 	        config_id: this.getConfigId(),
 	        trace_data: this.getCrmTraceData(),
 	        custom_data: this.getCustomData()
 	      }];
-
 	      if (this.isUserAgreeConsent()) {
 	        // widget.user.consent.apply
 	        query[RestMethod.widgetUserConsentApply] = [RestMethod.widgetUserConsentApply, {
@@ -1594,7 +1449,6 @@
 	          consent_url: location.href
 	        }];
 	      }
-
 	      query[RestMethod.pullServerTime] = [RestMethod.pullServerTime, {}];
 	      query[RestMethod.pullConfigGet] = [RestMethod.pullConfigGet, {
 	        'CACHE': 'N'
@@ -1606,11 +1460,9 @@
 	    key: "openSession",
 	    value: function openSession(event) {
 	      var _this7 = this;
-
 	      var eventData = event.getData();
 	      return new Promise(function (resolve, reject) {
 	        var dialog = _this7.controller.getStore().getters['dialogues/get'](eventData.session.dialogId);
-
 	        if (dialog) {
 	          _this7.controller.getStore().commit('application/set', {
 	            dialog: {
@@ -1619,21 +1471,17 @@
 	              diskFolderId: 0
 	            }
 	          });
-
 	          _this7.controller.getStore().commit('widget/common', {
 	            isCreateSessionMode: false
 	          });
-
 	          resolve();
 	          return;
 	        }
-
 	        _this7.controller.restClient.callBatch(_this7.getOpenSessionQuery(eventData.session.chatId), function (result) {
 	          _this7.handleBatchOpenSessionRequestResult(result).then(function () {
 	            _this7.controller.getStore().commit('widget/common', {
 	              isCreateSessionMode: false
 	            });
-
 	            resolve();
 	          });
 	        }, false, false);
@@ -1643,27 +1491,21 @@
 	    key: "prepareFileData",
 	    value: function prepareFileData(files) {
 	      var _this8 = this;
-
 	      if (!Array.isArray(files)) {
 	        return files;
 	      }
-
 	      return files.map(function (file) {
 	        var hash = (window.md5 || main_md5.md5)("".concat(_this8.getUserId(), "|").concat(file.id, "|").concat(_this8.getUserHash()));
 	        var urlParam = "livechat_auth_id=".concat(hash, "&livechat_user_id=").concat(_this8.getUserId());
-
 	        if (file.urlPreview) {
 	          file.urlPreview = "".concat(file.urlPreview, "&").concat(urlParam);
 	        }
-
 	        if (file.urlShow) {
 	          file.urlShow = "".concat(file.urlShow, "&").concat(urlParam);
 	        }
-
 	        if (file.urlDownload) {
 	          file.urlDownload = "".concat(file.urlDownload, "&").concat(urlParam);
 	        }
-
 	        return file;
 	      });
 	    }
@@ -1671,15 +1513,12 @@
 	    key: "checkRequiredFields",
 	    value: function checkRequiredFields() {
 	      var errors = [];
-
 	      if (typeof this.code === 'string' && this.code.length <= 0) {
 	        errors.push("LiveChatWidget.constructor: code is not correct (".concat(this.code, ")"));
 	      }
-
 	      if (typeof this.host === 'string' && (this.host.length <= 0 || !this.host.startsWith('http'))) {
 	        errors.push("LiveChatWidget.constructor: host is not correct (".concat(this.host, ")"));
 	      }
-
 	      return errors;
 	    }
 	  }, {
@@ -1699,9 +1538,7 @@
 	      if (babelHelpers["typeof"](this.params.localize) === 'object') {
 	        this.addLocalize(this.params.localize);
 	      }
-
 	      var serverVariables = im_lib_localstorage.LocalStorage.get(this.getSiteId(), 0, 'serverVariables', false);
-
 	      if (serverVariables) {
 	        this.addLocalize(serverVariables);
 	      }
@@ -1727,19 +1564,15 @@
 	          bxLivechatOffline: this.getLocalize('BX_LIVECHAT_OFFLINE')
 	        }
 	      };
-
 	      if (this.params.styles) {
 	        variables.styles = {};
-
 	        if (this.params.styles.backgroundColor) {
 	          variables.styles.backgroundColor = this.params.styles.backgroundColor;
 	        }
-
 	        if (this.params.styles.iconColor) {
 	          variables.styles.iconColor = this.params.styles.iconColor;
 	        }
 	      }
-
 	      return variables;
 	    }
 	  }, {
@@ -1763,7 +1596,6 @@
 	        error: false,
 	        stop: false
 	      };
-
 	      if (!this.checkBrowserVersion()) {
 	        this.setError('OLD_BROWSER_LOCALIZED', this.localize.BX_LIVECHAT_OLD_BROWSER);
 	        result.error = true;
@@ -1776,7 +1608,6 @@
 	        this.setError('LIVECHAT_SAME_DOMAIN', this.localize.BX_LIVECHAT_SAME_DOMAIN);
 	        result.error = true;
 	      }
-
 	      return result;
 	    }
 	  }, {
@@ -1785,11 +1616,9 @@
 	      if (typeof BX === 'undefined' || !BX.isReady) {
 	        return false;
 	      }
-
 	      if (!this.options.checkSameDomain) {
 	        return false;
 	      }
-
 	      return this.host.lastIndexOf(".".concat(location.hostname)) > -1;
 	    }
 	  }, {
@@ -1797,23 +1626,18 @@
 	    value: function checkBrowserVersion() {
 	      if (im_lib_utils.Utils.platform.isIos()) {
 	        var version = im_lib_utils.Utils.platform.getIosVersion();
-
 	        if (version && version <= 10) {
 	          return false;
 	        }
 	      }
-
 	      return true;
 	    }
 	    /* endregion 01. Initialize and store data */
-
 	    /* region 02. Push & Pull */
-
 	  }, {
 	    key: "startPullClient",
 	    value: function startPullClient(config) {
 	      var _this9 = this;
-
 	      return new Promise(function (resolve, reject) {
 	        if (!_this9.getUserId() || !_this9.getSiteId() || !_this9.restClient) {
 	          return reject({
@@ -1823,15 +1647,12 @@
 	            }
 	          });
 	        }
-
 	        if (_this9.pullClientInited) {
 	          if (!_this9.pullClient.isConnected()) {
 	            _this9.pullClient.scheduleReconnect();
 	          }
-
 	          return resolve(true);
 	        }
-
 	        _this9.controller.userId = _this9.getUserId();
 	        _this9.pullClient.userId = _this9.getUserId();
 	        _this9.pullClient.configTimestamp = config ? config.server.config_timestamp : 0;
@@ -1840,39 +1661,32 @@
 	          userId: _this9.getUserId(),
 	          siteId: _this9.getSiteId()
 	        });
-
 	        _this9.pullClient.subscribe(new WidgetImPullCommandHandler({
 	          store: _this9.controller.getStore(),
 	          controller: _this9.controller,
 	          widget: _this9
 	        }));
-
 	        _this9.pullClient.subscribe(new WidgetImopenlinesPullCommandHandler({
 	          store: _this9.controller.getStore(),
 	          controller: _this9.controller,
 	          widget: _this9
 	        }));
-
 	        _this9.pullClient.subscribe({
 	          type: pull_client.PullClient.SubscriptionType.Status,
 	          callback: _this9.eventStatusInteraction.bind(_this9)
 	        });
-
 	        _this9.pullConnectedFirstTime = _this9.pullClient.subscribe({
 	          type: pull_client.PullClient.SubscriptionType.Status,
 	          callback: function callback(result) {
 	            if (result.status === pull_client.PullClient.PullStatus.Online) {
 	              resolve(true);
-
 	              _this9.pullConnectedFirstTime();
 	            }
 	          }
 	        });
-
 	        if (_this9.template) {
 	          _this9.template.$Bitrix.PullClient.set(_this9.pullClient);
 	        }
-
 	        _this9.pullClient.start(_objectSpread(_objectSpread({}, config), {}, {
 	          skipReconnectToLastSession: true
 	        }))["catch"](function () {
@@ -1883,7 +1697,6 @@
 	            }
 	          });
 	        });
-
 	        _this9.pullClientInited = true;
 	      });
 	    }
@@ -1914,9 +1727,9 @@
 	    key: "onPullOnlineStatus",
 	    value: function onPullOnlineStatus() {
 	      var _this10 = this;
+	      this.offline = false;
 
-	      this.offline = false; // if we go online after going offline - we need to request messages
-
+	      // if we go online after going offline - we need to request messages
 	      if (this.pullRequestMessage) {
 	        this.controller.pullBaseHandler.option.skip = true;
 	        im_lib_logger.Logger.warn('Requesting getDialogUnread after going online');
@@ -1938,9 +1751,7 @@
 	      }
 	    }
 	    /* endregion 02. Push & Pull */
-
 	    /* region 03. Template engine */
-
 	  }, {
 	    key: "attachTemplate",
 	    value: function attachTemplate() {
@@ -1950,7 +1761,6 @@
 	        });
 	        return true;
 	      }
-
 	      this.rootNode.innerHTML = '';
 	      this.rootNode.append(document.createElement('div'));
 	      var application = this;
@@ -1963,11 +1773,9 @@
 	            data: {}
 	          });
 	          application.template = this;
-
 	          if (main_core_minimal.ZIndexManager !== undefined) {
 	            var stack = main_core_minimal.ZIndexManager.getOrAddStack(document.body);
 	            stack.setBaseIndex(1000000); // some big value
-
 	            this.$bitrix.Data.set('zIndexStack', stack);
 	          }
 	        },
@@ -1992,32 +1800,26 @@
 	      if (!this.template) {
 	        return true;
 	      }
-
 	      this.template.$destroy();
 	      return true;
 	    } // public method
-
 	  }, {
 	    key: "mutateTemplateComponent",
 	    value: function mutateTemplateComponent(id, params) {
 	      return ui_vue.Vue.mutateComponent(id, params);
 	    }
 	    /* endregion 03. Template engine */
-
 	    /* region 04. Widget interaction and utils */
 	    // public method
-
 	  }, {
 	    key: "close",
 	    value: function close() {
 	      if (this.pageMode) {
 	        return false;
 	      }
-
 	      if (this.buttonInstance) {
 	        this.buttonInstance.onWidgetClose();
 	      }
-
 	      this.detachTemplate();
 	    }
 	  }, {
@@ -2026,16 +1828,13 @@
 	      if (this.initEventFired) {
 	        return true;
 	      }
-
 	      this.sendEvent({
 	        type: SubscriptionType.configLoaded,
 	        data: {}
 	      });
-
 	      if (this.controller.getStore().state.widget.common.reopen) {
 	        this.open();
 	      }
-
 	      this.initEventFired = true;
 	    }
 	  }, {
@@ -2067,24 +1866,20 @@
 	    key: "getCrmTraceData",
 	    value: function getCrmTraceData() {
 	      var traceData = '';
-
 	      if (!this.buttonInstance) {
 	        return traceData;
 	      }
-
 	      if (typeof this.buttonInstance.getTrace !== 'function') {
 	        traceData = this.buttonInstance.getTrace();
 	      } else if (typeof this.buttonInstance.b24Tracker !== 'undefined' && typeof this.buttonInstance.b24Tracker.guest !== 'undefined') {
 	        traceData = this.buttonInstance.b24Tracker.guest.getTrace();
 	      }
-
 	      return traceData;
 	    }
 	  }, {
 	    key: "getCustomData",
 	    value: function getCustomData() {
 	      var customData = [];
-
 	      if (this.customData.length > 0) {
 	        customData = this.customData;
 	      } else {
@@ -2092,7 +1887,6 @@
 	          MESSAGE: this.localize.BX_LIVECHAT_EXTRA_SITE + ': [URL]' + location.href + '[/URL]'
 	        }];
 	      }
-
 	      return JSON.stringify(customData);
 	    }
 	  }, {
@@ -2171,17 +1965,14 @@
 	    value: function getUserHashCookie() {
 	      var userHash = '';
 	      var cookie = im_lib_cookie.Cookie.get(null, 'LIVECHAT_HASH');
-
 	      if (typeof cookie === 'string' && cookie.match(/^[a-f0-9]{32}$/)) {
 	        userHash = cookie;
 	      } else {
 	        var _cookie = im_lib_cookie.Cookie.get(this.getSiteId(), 'LIVECHAT_HASH');
-
 	        if (typeof _cookie === 'string' && _cookie.match(/^[a-f0-9]{32}$/)) {
 	          userHash = _cookie;
 	        }
 	      }
-
 	      return userHash;
 	    }
 	  }, {
@@ -2196,7 +1987,6 @@
 	        console.error('LiveChatWidget.getUserData: method can be called after fired event - onBitrixLiveChat');
 	        return false;
 	      }
-
 	      return this.controller.getStore().state.widget.user;
 	    }
 	  }, {
@@ -2221,7 +2011,6 @@
 	    value: function getWidgetLocationCode() {
 	      return LocationStyle[this.controller.getStore().state.widget.common.location];
 	    } // public method
-
 	  }, {
 	    key: "setUserRegisterData",
 	    value: function setUserRegisterData(params) {
@@ -2229,37 +2018,29 @@
 	        console.error('LiveChatWidget.getUserData: method can be called after fired event - onBitrixLiveChat');
 	        return false;
 	      }
-
 	      var validUserFields = ['hash', 'name', 'lastName', 'avatar', 'email', 'www', 'gender', 'position'];
-
 	      if (!im_lib_utils.Utils.types.isPlainObject(params)) {
 	        console.error("%cLiveChatWidget.setUserData: params is not a object", "color: black;");
 	        return false;
 	      }
-
 	      for (var field in this.userRegisterData) {
 	        if (!this.userRegisterData.hasOwnProperty(field)) {
 	          continue;
 	        }
-
 	        if (!params[field]) {
 	          delete this.userRegisterData[field];
 	        }
 	      }
-
 	      for (var _field in params) {
 	        if (!params.hasOwnProperty(_field)) {
 	          continue;
 	        }
-
 	        if (validUserFields.indexOf(_field) === -1) {
 	          console.warn("%cLiveChatWidget.setUserData: user field is not set, because you are trying to set an unknown field (%c".concat(_field, "%c)"), "color: black;", "font-weight: bold; color: red", "color: black");
 	          continue;
 	        }
-
 	        this.userRegisterData[_field] = params[_field];
 	      }
-
 	      if (this.userRegisterData.hash && this.getUserHash() && this.userRegisterData.hash !== this.getUserHash()) {
 	        this.setNewAuthToken(this.userRegisterData.hash);
 	      }
@@ -2275,14 +2056,12 @@
 	      });
 	      this.controller.restClient.setAuthId(RestAuth.guest, authToken);
 	    } // public method
-
 	  }, {
 	    key: "setOption",
 	    value: function setOption(name, value) {
 	      this.options[name] = value;
 	      return true;
 	    } // public method
-
 	  }, {
 	    key: "setCustomData",
 	    value: function setCustomData(params) {
@@ -2290,16 +2069,13 @@
 	        console.error('LiveChatWidget.getUserData: method can be called after fired event - onBitrixLiveChat');
 	        return false;
 	      }
-
 	      var result = [];
-
 	      if (params instanceof Array) {
 	        params.forEach(function (element) {
 	          if (element && babelHelpers["typeof"](element) === 'object') {
 	            result.push(element);
 	          }
 	        });
-
 	        if (result.length <= 0) {
 	          console.error('LiveChatWidget.setCustomData: params is empty');
 	          return false;
@@ -2308,12 +2084,10 @@
 	        if (!params) {
 	          return false;
 	        }
-
 	        result = [{
 	          'MESSAGE': params
 	        }];
 	      }
-
 	      this.customData = this.customData.concat(result);
 	      return true;
 	    }
@@ -2324,7 +2098,6 @@
 	      var description = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : '';
 	      console.error("LiveChatWidget.error: ".concat(code, " (").concat(description, ")"));
 	      var localizeDescription = '';
-
 	      if (code === 'LIVECHAT_AUTH_FAILED') {
 	        localizeDescription = this.getLocalize('BX_LIVECHAT_AUTH_FAILED').replace('#LINK_START#', '<a href="javascript:void();" onclick="location.reload()">').replace('#LINK_END#', '</a>');
 	        this.setNewAuthToken();
@@ -2333,14 +2106,12 @@
 	      } else if (code === 'LIVECHAT_SAME_DOMAIN') {
 	        localizeDescription = this.getLocalize('BX_LIVECHAT_SAME_DOMAIN');
 	        var link = this.getLocalize('BX_LIVECHAT_SAME_DOMAIN_LINK');
-
 	        if (link) {
 	          localizeDescription += '<br><br><a href="' + link + '">' + this.getLocalize('BX_LIVECHAT_SAME_DOMAIN_MORE') + '</a>';
 	        }
 	      } else if (code.endsWith('LOCALIZED')) {
 	        localizeDescription = description;
 	      }
-
 	      this.controller.getStore().commit('application/set', {
 	        error: {
 	          active: true,
@@ -2360,7 +2131,6 @@
 	        }
 	      });
 	    } // public method
-
 	  }, {
 	    key: "subscribe",
 	    value: function subscribe(params) {
@@ -2368,21 +2138,17 @@
 	        console.error("%cLiveChatWidget.subscribe: params is not a object", "color: black;");
 	        return false;
 	      }
-
 	      if (!SubscriptionTypeCheck.includes(params.type)) {
 	        console.error("%cLiveChatWidget.subscribe: subscription type is not correct (%c".concat(params.type, "%c)"), "color: black;", "font-weight: bold; color: red", "color: black");
 	        return false;
 	      }
-
 	      if (typeof params.callback !== 'function') {
 	        console.error("%cLiveChatWidget.subscribe: callback is not a function (%c".concat(babelHelpers["typeof"](params.callback), "%c)"), "color: black;", "font-weight: bold; color: red", "color: black");
 	        return false;
 	      }
-
 	      if (typeof this.subscribers[params.type] === 'undefined') {
 	        this.subscribers[params.type] = [];
 	      }
-
 	      this.subscribers[params.type].push(params.callback);
 	      return function () {
 	        this.subscribers[params.type] = this.subscribers[params.type].filter(function (element) {
@@ -2394,21 +2160,17 @@
 	    key: "sendEvent",
 	    value: function sendEvent(params) {
 	      params = params || {};
-
 	      if (!params.type) {
 	        return false;
 	      }
-
 	      if (babelHelpers["typeof"](params.data) !== 'object' || !params.data) {
 	        params.data = {};
 	      }
-
 	      if (this.subscribers[params.type] instanceof Array && this.subscribers[params.type].length > 0) {
 	        this.subscribers[params.type].forEach(function (callback) {
 	          return callback(params.data);
 	        });
 	      }
-
 	      if (this.subscribers[SubscriptionType.every] instanceof Array && this.subscribers[SubscriptionType.every].length > 0) {
 	        this.subscribers[SubscriptionType.every].forEach(function (callback) {
 	          return callback({
@@ -2417,30 +2179,25 @@
 	          });
 	        });
 	      }
-
 	      return true;
 	    } // public method
-
 	  }, {
 	    key: "addLocalize",
 	    value: function addLocalize(phrases) {
 	      if (babelHelpers["typeof"](phrases) !== "object" || !phrases) {
 	        return false;
 	      }
-
 	      for (var name in phrases) {
 	        if (phrases.hasOwnProperty(name)) {
 	          this.localize[name] = phrases[name];
 	        }
 	      }
-
 	      return true;
 	    }
 	  }, {
 	    key: "getLocalize",
 	    value: function getLocalize(name) {
 	      var phrase = '';
-
 	      if (typeof name === 'undefined') {
 	        return this.localize;
 	      } else if (typeof this.localize[name.toString()] === 'undefined') {
@@ -2448,30 +2205,23 @@
 	      } else {
 	        phrase = this.localize[name];
 	      }
-
 	      return phrase;
 	    }
 	    /* endregion 04. Widget interaction and utils */
-
 	    /* region 05. Rest batch handlers */
-
 	  }, {
 	    key: "handleConfigGet",
 	    value: function handleConfigGet(response) {
 	      var _this11 = this;
-
 	      return new Promise(function (resolve, reject) {
 	        var configGet = response[RestMethod.widgetConfigGet];
-
 	        if (configGet && configGet.error()) {
 	          return reject({
 	            code: configGet.error().ex.error,
 	            description: configGet.error().ex.error_description
 	          });
 	        }
-
 	        _this11.controller.executeRestAnswer(RestMethod.widgetConfigGet, configGet);
-
 	        resolve();
 	      });
 	    }
@@ -2479,19 +2229,15 @@
 	    key: "handleUserGet",
 	    value: function handleUserGet(response) {
 	      var _this12 = this;
-
 	      return new Promise(function (resolve, reject) {
 	        var userGetResult = response[RestMethod.widgetUserGet];
-
 	        if (userGetResult.error()) {
 	          return reject({
 	            code: userGetResult.error().ex.error,
 	            description: userGetResult.error().ex.error_description
 	          });
 	        }
-
 	        _this12.controller.executeRestAnswer(RestMethod.widgetUserGet, userGetResult);
-
 	        resolve();
 	      });
 	    }
@@ -2499,19 +2245,15 @@
 	    key: "handleChatGet",
 	    value: function handleChatGet(response) {
 	      var _this13 = this;
-
 	      return new Promise(function (resolve, reject) {
 	        var chatGetResult = response[im_const.RestMethodHandler.imChatGet];
-
 	        if (chatGetResult.error()) {
 	          return reject({
 	            code: chatGetResult.error().ex.error,
 	            description: chatGetResult.error().ex.error_description
 	          });
 	        }
-
 	        _this13.controller.executeRestAnswer(im_const.RestMethodHandler.imChatGet, chatGetResult);
-
 	        resolve();
 	      });
 	    }
@@ -2519,23 +2261,18 @@
 	    key: "handleDialogGet",
 	    value: function handleDialogGet(response) {
 	      var _this14 = this;
-
 	      return new Promise(function (resolve, reject) {
 	        var dialogGetResult = response[RestMethod.widgetDialogGet];
-
 	        if (!dialogGetResult) {
 	          return resolve();
 	        }
-
 	        if (dialogGetResult.error()) {
 	          return reject({
 	            code: dialogGetResult.error().ex.error,
 	            description: dialogGetResult.error().ex.error_description
 	          });
 	        }
-
 	        _this14.controller.executeRestAnswer(RestMethod.widgetDialogGet, dialogGetResult);
-
 	        resolve();
 	      });
 	    }
@@ -2543,28 +2280,22 @@
 	    key: "handleDialogMessagesGet",
 	    value: function handleDialogMessagesGet(response) {
 	      var _this15 = this;
-
 	      return new Promise(function (resolve, reject) {
 	        var dialogMessagesGetResult = response[im_const.RestMethodHandler.imDialogMessagesGetInit];
-
 	        if (!dialogMessagesGetResult) {
 	          return resolve();
 	        }
-
 	        if (dialogMessagesGetResult.error()) {
 	          return reject({
 	            code: dialogMessagesGetResult.error().ex.error,
 	            description: dialogMessagesGetResult.error().ex.error_description
 	          });
 	        }
-
 	        _this15.controller.getStore().dispatch('dialogues/saveDialog', {
 	          dialogId: _this15.controller.application.getDialogId(),
 	          chatId: _this15.controller.application.getChatId()
 	        });
-
 	        _this15.controller.executeRestAnswer(im_const.RestMethodHandler.imDialogMessagesGetInit, dialogMessagesGetResult);
-
 	        resolve();
 	      });
 	    }
@@ -2572,23 +2303,18 @@
 	    key: "handleUserRegister",
 	    value: function handleUserRegister(response) {
 	      var _this16 = this;
-
 	      return new Promise(function (resolve, reject) {
 	        var userRegisterResult = response[RestMethod.widgetUserRegister];
-
 	        if (!userRegisterResult) {
 	          return resolve();
 	        }
-
 	        if (userRegisterResult.error()) {
 	          return reject({
 	            code: userRegisterResult.error().ex.error,
 	            description: userRegisterResult.error().ex.error_description
 	          });
 	        }
-
 	        _this16.controller.executeRestAnswer(RestMethod.widgetUserRegister, userRegisterResult);
-
 	        resolve();
 	      });
 	    }
@@ -2596,23 +2322,18 @@
 	    key: "handleChatCreate",
 	    value: function handleChatCreate(response) {
 	      var _this17 = this;
-
 	      return new Promise(function (resolve, reject) {
 	        var chatCreateResult = response[RestMethod.widgetChatCreate];
-
 	        if (!chatCreateResult) {
 	          return resolve();
 	        }
-
 	        if (chatCreateResult.error()) {
 	          return reject({
 	            code: chatCreateResult.error().ex.error,
 	            description: chatCreateResult.error().ex.error_description
 	          });
 	        }
-
 	        _this17.controller.executeRestAnswer(RestMethod.widgetChatCreate, chatCreateResult);
-
 	        resolve();
 	      });
 	    }
@@ -2620,32 +2341,25 @@
 	    key: "handlePullRequests",
 	    value: function handlePullRequests(response) {
 	      var _this18 = this;
-
 	      return new Promise(function (resolve) {
 	        var timeShift = 0;
 	        var serverTimeResult = response[RestMethod.pullServerTime];
-
 	        if (serverTimeResult && !serverTimeResult.error()) {
 	          timeShift = Math.floor((Date.now() - new Date(serverTimeResult.data()).getTime()) / 1000);
 	        }
-
 	        var config = null;
 	        var pullConfigResult = response[RestMethod.pullConfigGet];
-
 	        if (pullConfigResult && !pullConfigResult.error()) {
 	          config = pullConfigResult.data();
 	          config.server.timeShift = timeShift;
 	        }
-
 	        _this18.startPullClient(config).then(function () {
 	          main_core_events.EventEmitter.emit(WidgetEventType.processMessagesToSendQueue);
 	        })["catch"](function (error) {
 	          _this18.setError(error.ex.error, error.ex.error_description);
 	        })["finally"](resolve);
 	      });
-	    }
-	    /* endregion 05. Rest batch handlers */
-
+	    } /* endregion 05. Rest batch handlers */
 	  }]);
 	  return Widget;
 	}();
@@ -2663,10 +2377,8 @@
 	    babelHelpers.classCallCheck(this, WidgetPublicManager);
 	    this.developerInfo = 'Do not use private methods.';
 	    this.__privateMethods__ = new Widget(config);
-
 	    this.__createLegacyMethods();
 	  }
-
 	  babelHelpers.createClass(WidgetPublicManager, [{
 	    key: "open",
 	    value: function open(params) {
@@ -2712,7 +2424,6 @@
 	     * @param params {Object}
 	     * @returns {Function|Boolean} - Unsubscribe callback function or False
 	     */
-
 	  }, {
 	    key: "subscribe",
 	    value: function subscribe(params) {
@@ -2727,7 +2438,6 @@
 	    key: "__createLegacyMethods",
 	    value: function __createLegacyMethods() {
 	      var _this = this;
-
 	      if (typeof window.BX.LiveChat === 'undefined') {
 	        var sourceHref = document.createElement('a');
 	        sourceHref.href = this.__privateMethods__.host;
@@ -2764,25 +2474,20 @@
 	          sourceDomain: sourceDomain
 	        };
 	      }
-
 	      if (typeof window.BxLiveChatInit === 'function') {
 	        var config = window.BxLiveChatInit();
-
 	        if (config.user) {
 	          this.__privateMethods__.setUserRegisterData(config.user);
 	        }
-
 	        if (config.firstMessage) {
 	          this.__privateMethods__.setCustomData(config.firstMessage);
 	        }
 	      }
-
 	      if (window.BxLiveChatLoader instanceof Array) {
 	        window.BxLiveChatLoader.forEach(function (callback) {
 	          return callback();
 	        });
 	      }
-
 	      return true;
 	    }
 	  }]);
@@ -2791,10 +2496,8 @@
 
 	var WidgetSendMessageHandler = /*#__PURE__*/function (_SendMessageHandler) {
 	  babelHelpers.inherits(WidgetSendMessageHandler, _SendMessageHandler);
-
 	  function WidgetSendMessageHandler($Bitrix) {
 	    var _this;
-
 	    babelHelpers.classCallCheck(this, WidgetSendMessageHandler);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(WidgetSendMessageHandler).call(this, $Bitrix));
 	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "application", null);
@@ -2808,7 +2511,6 @@
 	    main_core_events.EventEmitter.subscribe(WidgetEventType.consentDeclined, _this.onConsentDeclinedHandler);
 	    return _this;
 	  }
-
 	  babelHelpers.createClass(WidgetSendMessageHandler, [{
 	    key: "destroy",
 	    value: function destroy() {
@@ -2821,32 +2523,27 @@
 	    key: "onSendMessage",
 	    value: function onSendMessage(_ref) {
 	      var _this2 = this;
-
 	      var event = _ref.data;
-	      event.focus = event.focus !== false; //hide smiles
+	      event.focus = event.focus !== false;
 
+	      //hide smiles
 	      if (this.getWidgetData().common.showForm === FormType.smile) {
 	        main_core_events.EventEmitter.emit(WidgetEventType.hideForm);
-	      } //show consent window if needed
+	      }
 
-
+	      //show consent window if needed
 	      if (!this.getWidgetData().dialog.userConsent && this.getWidgetData().common.consentUrl) {
 	        if (event.text) {
 	          this.storedMessage = event.text;
 	        }
-
 	        main_core_events.EventEmitter.emit(WidgetEventType.showConsent);
 	        return false;
 	      }
-
 	      event.text = event.text ? event.text : this.storedMessage;
-
 	      if (!event.text && !event.file) {
 	        return false;
 	      }
-
 	      main_core_events.EventEmitter.emit(WidgetEventType.hideForm);
-
 	      if (this.isCreateSessionMode()) {
 	        main_core_events.EventEmitter.emit(WidgetEventType.hideForm);
 	        main_core_events.EventEmitter.emit(im_const.EventType.textarea.stopWriting);
@@ -2854,42 +2551,33 @@
 	          _this2.store.commit('widget/common', {
 	            isCreateSessionMode: false
 	          });
-
 	          _this2.sendMessage(event.text, event.file);
 	        });
 	      } else {
 	        this.sendMessage(event.text, event.file);
 	      }
-
 	      if (event.focus) {
 	        main_core_events.EventEmitter.emit(im_const.EventType.textarea.setFocus);
 	      }
-
 	      return true;
 	    }
 	  }, {
 	    key: "sendMessage",
 	    value: function sendMessage() {
 	      var _this3 = this;
-
 	      var text = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
 	      var file = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
-
 	      if (!text && !file) {
 	        return false;
 	      }
-
 	      var quoteId = this.store.getters['dialogues/getQuoteId'](this.getDialogId());
-
 	      if (quoteId) {
 	        var quoteMessage = this.store.getters['messages/getMessage'](this.getChatId(), quoteId);
-
 	        if (quoteMessage) {
 	          text = this.getMessageTextWithQuote(quoteMessage, text);
 	          main_core_events.EventEmitter.emit(im_const.EventType.dialog.quotePanelClose);
 	        }
 	      }
-
 	      if (!this.controller.application.isUnreadMessagesLoaded()) {
 	        this.sendMessageToServer({
 	          id: 0,
@@ -2901,13 +2589,10 @@
 	        this.processQueue();
 	        return true;
 	      }
-
 	      var params = {};
-
 	      if (file) {
 	        params.FILE_ID = [file.id];
 	      }
-
 	      this.addMessageToModel({
 	        text: text,
 	        params: params,
@@ -2918,18 +2603,15 @@
 	            dialogStart: true
 	          });
 	        }
-
 	        main_core_events.EventEmitter.emit(im_const.EventType.dialog.scrollToBottom, {
 	          chatId: _this3.getChatId(),
 	          cancelIfScrollChange: true
 	        });
-
 	        _this3.addMessageToQueue({
 	          messageId: messageId,
 	          text: text,
 	          file: file
 	        });
-
 	        if (_this3.getChatId()) {
 	          _this3.processQueue();
 	        } else {
@@ -2942,34 +2624,30 @@
 	    key: "onClickOnKeyboard",
 	    value: function onClickOnKeyboard(_ref2) {
 	      var event = _ref2.data;
-
 	      if (event.action === 'ACTION' && event.params.action === 'LIVECHAT') {
 	        var _event$params = event.params,
-	            dialogId = _event$params.dialogId,
-	            messageId = _event$params.messageId,
-	            value = _event$params.value;
+	          dialogId = _event$params.dialogId,
+	          messageId = _event$params.messageId,
+	          value = _event$params.value;
 	        var values = JSON.parse(value);
 	        var sessionId = Number.parseInt(values.SESSION_ID, 10);
-
 	        if (sessionId !== this.getSessionId() || this.isSessionClose()) {
 	          console.error('WidgetSendMessageHandler', this.loc['BX_LIVECHAT_ACTION_EXPIRED']);
 	          return false;
 	        }
-
 	        this.restClient.callMethod(RestMethod.widgetActionSend, {
 	          'MESSAGE_ID': messageId,
 	          'DIALOG_ID': dialogId,
 	          'ACTION_VALUE': value
 	        });
 	      }
-
 	      if (event.action === 'COMMAND') {
 	        var _event$params2 = event.params,
-	            _dialogId = _event$params2.dialogId,
-	            _messageId = _event$params2.messageId,
-	            botId = _event$params2.botId,
-	            command = _event$params2.command,
-	            params = _event$params2.params;
+	          _dialogId = _event$params2.dialogId,
+	          _messageId = _event$params2.messageId,
+	          botId = _event$params2.botId,
+	          command = _event$params2.command,
+	          params = _event$params2.params;
 	        this.restClient.callMethod(im_const.RestMethod.imMessageCommand, {
 	          'MESSAGE_ID': _messageId,
 	          'DIALOG_ID': _dialogId,
@@ -3005,11 +2683,9 @@
 	    key: "getMessageTextWithQuote",
 	    value: function getMessageTextWithQuote(quoteMessage, text) {
 	      var user = null;
-
 	      if (quoteMessage.authorId) {
 	        user = this.store.getters['users/get'](quoteMessage.authorId);
 	      }
-
 	      var files = this.store.getters['files/getList'](this.getChatId());
 	      var quoteDelimiter = '-'.repeat(54);
 	      var quoteTitle = user && user.name ? user.name : this.loc['BX_LIVECHAT_SYSTEM_MESSAGE'];
@@ -3027,8 +2703,8 @@
 	    key: "addMessageToQueue",
 	    value: function addMessageToQueue(_ref3) {
 	      var messageId = _ref3.messageId,
-	          text = _ref3.text,
-	          file = _ref3.file;
+	        text = _ref3.text,
+	        file = _ref3.file;
 	      this.messagesToSend.push({
 	        id: messageId,
 	        chatId: this.getChatId(),
@@ -3042,13 +2718,12 @@
 	    key: "sendMessageToServer",
 	    value: function sendMessageToServer(message) {
 	      var _this4 = this;
+	      main_core_events.EventEmitter.emit(im_const.EventType.textarea.stopWriting);
 
-	      main_core_events.EventEmitter.emit(im_const.EventType.textarea.stopWriting); // first message, when we didn't have chat
-
+	      // first message, when we didn't have chat
 	      if (message.chatId === 0) {
 	        message.chatId = this.getChatId();
 	      }
-
 	      this.restClient.callMethod(im_const.RestMethod.imMessageAdd, {
 	        'TEMPLATE_ID': message.id,
 	        'CHAT_ID': message.chatId,
@@ -3063,7 +2738,6 @@
 	        _this4.controller.executeRestAnswer(im_const.RestMethodHandler.imMessageAdd, response, message);
 	      })["catch"](function (error) {
 	        _this4.controller.executeRestAnswer(im_const.RestMethodHandler.imMessageAdd, error, message);
-
 	        im_lib_logger.Logger.warn('Error during sending message', error);
 	      });
 	      return true;
@@ -3103,18 +2777,14 @@
 	    key: "processQueue",
 	    value: function processQueue() {
 	      var _this5 = this;
-
 	      if (this.application.offline) {
 	        return false;
 	      }
-
 	      this.messagesToSend.filter(function (element) {
 	        return !element.sending;
 	      }).forEach(function (element) {
 	        _this5.deleteFromQueue(element.id);
-
 	        element.sending = true;
-
 	        if (element.file) {
 	          main_core_events.EventEmitter.emit(im_const.EventType.textarea.stopWriting);
 	          main_core_events.EventEmitter.emit(im_const.EventType.uploader.addMessageWithFile, element);
@@ -3129,7 +2799,6 @@
 	      if (!this.storedMessage) {
 	        return;
 	      }
-
 	      var isFocusNeeded = this.getApplicationModel().device.type !== im_const.DeviceType.mobile;
 	      this.onSendMessage({
 	        data: {
@@ -3144,7 +2813,6 @@
 	      if (!this.storedMessage) {
 	        return;
 	      }
-
 	      main_core_events.EventEmitter.emit(im_const.EventType.textarea.insertText, {
 	        text: this.storedMessage,
 	        focus: this.getApplicationModel().device.type !== im_const.DeviceType.mobile
@@ -3157,10 +2825,8 @@
 
 	var WidgetTextareaHandler = /*#__PURE__*/function (_TextareaHandler) {
 	  babelHelpers.inherits(WidgetTextareaHandler, _TextareaHandler);
-
 	  function WidgetTextareaHandler($Bitrix) {
 	    var _this;
-
 	    babelHelpers.classCallCheck(this, WidgetTextareaHandler);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(WidgetTextareaHandler).call(this, $Bitrix));
 	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "application", null);
@@ -3169,12 +2835,10 @@
 	    _this.pullClient = $Bitrix.PullClient.get();
 	    return _this;
 	  }
-
 	  babelHelpers.createClass(WidgetTextareaHandler, [{
 	    key: "onAppButtonClick",
 	    value: function onAppButtonClick(_ref) {
 	      var event = _ref.data;
-
 	      if (event.appId === FormType.smile) {
 	        if (this.getWidgetModel().common.showForm === FormType.smile) {
 	          main_core_events.EventEmitter.emit(WidgetEventType.hideForm);
@@ -3191,11 +2855,9 @@
 	    key: "onFocus",
 	    value: function onFocus() {
 	      var _this2 = this;
-
 	      if (this.getWidgetModel().common.copyright && this.getApplicationModel().device.type === im_const.DeviceType.mobile) {
 	        this.getWidgetModel().common.copyright = false;
 	      }
-
 	      if (im_lib_utils.Utils.device.isMobile()) {
 	        clearTimeout(this.onFocusScrollTimeout);
 	        this.onScrollHandler = this.onScroll.bind(this);
@@ -3208,7 +2870,6 @@
 	    key: "onBlur",
 	    value: function onBlur() {
 	      var _this3 = this;
-
 	      if (!this.getWidgetModel().common.copyright && this.getWidgetModel().common.copyright !== this.application.copyright) {
 	        this.getWidgetModel().common.copyright = this.application.copyright;
 	        setTimeout(function () {
@@ -3218,18 +2879,15 @@
 	          });
 	        }, 100);
 	      }
-
 	      if (im_lib_utils.Utils.device.isMobile()) {
 	        clearTimeout(this.onFocusScrollTimeout);
 	        document.removeEventListener('scroll', this.onScrollHandler);
 	      }
 	    } // send typed client message to operator
-
 	  }, {
 	    key: "onKeyUp",
 	    value: function onKeyUp(_ref2) {
 	      var event = _ref2.data;
-
 	      if (this.canSendTypedText()) {
 	        var sessionId = this.getWidgetModel().dialog.sessionId;
 	        var chatId = this.getChatId();
@@ -3273,10 +2931,8 @@
 
 	var WidgetTextareaUploadHandler = /*#__PURE__*/function (_TextareaUploadHandle) {
 	  babelHelpers.inherits(WidgetTextareaUploadHandler, _TextareaUploadHandle);
-
 	  function WidgetTextareaUploadHandler($Bitrix) {
 	    var _this;
-
 	    babelHelpers.classCallCheck(this, WidgetTextareaUploadHandler);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(WidgetTextareaUploadHandler).call(this, $Bitrix));
 	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "storedFile", null);
@@ -3288,7 +2944,6 @@
 	    main_core_events.EventEmitter.subscribe(WidgetEventType.consentDeclined, _this.onConsentDeclinedHandler);
 	    return _this;
 	  }
-
 	  babelHelpers.createClass(WidgetTextareaUploadHandler, [{
 	    key: "destroy",
 	    value: function destroy() {
@@ -3315,9 +2970,7 @@
 	    key: "addMessageWithFile",
 	    value: function addMessageWithFile(event) {
 	      var _this2 = this;
-
 	      var message = event.getData();
-
 	      if (!this.getDiskFolderId()) {
 	        this.requestDiskFolderId(message.chatId).then(function () {
 	          _this2.addMessageWithFile(event);
@@ -3327,7 +2980,6 @@
 	        });
 	        return false;
 	      }
-
 	      this.uploader.senderOptions.customHeaders['Livechat-Dialog-Id'] = this.getDialogId();
 	      this.uploader.senderOptions.customHeaders['Livechat-Auth-Id'] = this.getUserHash();
 	      this.uploader.addTask({
@@ -3344,26 +2996,21 @@
 	    key: "onTextareaFileSelected",
 	    value: function onTextareaFileSelected() {
 	      var _ref = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
-	          event = _ref.data;
-
+	        event = _ref.data;
 	      var fileInputEvent = null;
-
 	      if (event && event.fileChangeEvent && event.fileChangeEvent.target.files.length > 0) {
 	        fileInputEvent = event.fileChangeEvent;
 	      } else {
 	        fileInputEvent = this.storedFile;
 	      }
-
 	      if (!fileInputEvent) {
 	        return false;
 	      }
-
 	      if (!this.controller.store.state.widget.dialog.userConsent && this.controller.store.state.widget.common.consentUrl) {
 	        this.storedFile = event.fileChangeEvent;
 	        main_core_events.EventEmitter.emit(WidgetEventType.showConsent);
 	        return false;
 	      }
-
 	      this.uploadFile(fileInputEvent);
 	    }
 	  }, {
@@ -3372,11 +3019,9 @@
 	      if (!event) {
 	        return false;
 	      }
-
 	      if (!this.getChatId()) {
 	        main_core_events.EventEmitter.emit(WidgetEventType.requestData);
 	      }
-
 	      this.uploader.addFilesFromEvent(event);
 	    }
 	  }, {
@@ -3385,7 +3030,6 @@
 	      if (!this.storedFile) {
 	        return;
 	      }
-
 	      this.onTextareaFileSelected();
 	      this.storedFile = '';
 	    }
@@ -3395,7 +3039,6 @@
 	      if (!this.storedFile) {
 	        return;
 	      }
-
 	      this.storedFile = '';
 	    }
 	  }, {
@@ -3417,27 +3060,22 @@
 
 	var WidgetReadingHandler = /*#__PURE__*/function (_ReadingHandler) {
 	  babelHelpers.inherits(WidgetReadingHandler, _ReadingHandler);
-
 	  function WidgetReadingHandler($Bitrix) {
 	    var _this;
-
 	    babelHelpers.classCallCheck(this, WidgetReadingHandler);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(WidgetReadingHandler).call(this, $Bitrix));
 	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "application", null);
 	    _this.application = $Bitrix.Application.get();
 	    return _this;
 	  }
-
 	  babelHelpers.createClass(WidgetReadingHandler, [{
 	    key: "readMessage",
 	    value: function readMessage(messageId) {
 	      var skipTimer = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
 	      var skipAjax = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
-
 	      if (this.application.offline) {
 	        return false;
 	      }
-
 	      return babelHelpers.get(babelHelpers.getPrototypeOf(WidgetReadingHandler.prototype), "readMessage", this).call(this, messageId, skipTimer, skipAjax);
 	    }
 	  }]);
@@ -3446,42 +3084,34 @@
 
 	var WidgetResizeHandler = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(WidgetResizeHandler, _EventEmitter);
-
 	  function WidgetResizeHandler(_ref) {
 	    var _this;
-
 	    var widgetLocation = _ref.widgetLocation,
-	        availableWidth = _ref.availableWidth,
-	        availableHeight = _ref.availableHeight,
-	        events = _ref.events;
+	      availableWidth = _ref.availableWidth,
+	      availableHeight = _ref.availableHeight,
+	      events = _ref.events;
 	    babelHelpers.classCallCheck(this, WidgetResizeHandler);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(WidgetResizeHandler).call(this));
 	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "isResizing", false);
 	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "widgetLocation", null);
 	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "availableWidth", null);
 	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "availableHeight", null);
-
 	    _this.setEventNamespace('BX.IMOL.WidgetResizeHandler');
-
 	    _this.subscribeToEvents(events);
-
 	    _this.widgetLocation = widgetLocation;
 	    _this.availableWidth = availableWidth;
 	    _this.availableHeight = availableHeight;
 	    return _this;
 	  }
-
 	  babelHelpers.createClass(WidgetResizeHandler, [{
 	    key: "subscribeToEvents",
 	    value: function subscribeToEvents(configEvents) {
 	      var _this2 = this;
-
 	      var events = main_core.Type.isObject(configEvents) ? configEvents : {};
 	      Object.entries(events).forEach(function (_ref2) {
 	        var _ref3 = babelHelpers.slicedToArray(_ref2, 2),
-	            name = _ref3[0],
-	            callback = _ref3[1];
-
+	          name = _ref3[0],
+	          callback = _ref3[1];
 	        if (main_core.Type.isFunction(callback)) {
 	          _this2.subscribe(name, callback);
 	        }
@@ -3493,7 +3123,6 @@
 	      if (this.isResizing) {
 	        return false;
 	      }
-
 	      this.isResizing = true;
 	      event = event.changedTouches ? event.changedTouches[0] : event;
 	      this.cursorStartPointY = event.clientY;
@@ -3508,7 +3137,6 @@
 	      if (!this.isResizing) {
 	        return false;
 	      }
-
 	      event = event.changedTouches ? event.changedTouches[0] : event;
 	      this.cursorControlPointY = event.clientY;
 	      this.cursorControlPointX = event.clientX;
@@ -3527,7 +3155,6 @@
 	      if (!this.isResizing) {
 	        return false;
 	      }
-
 	      this.isResizing = false;
 	      this.removeWidgetResizeEvents();
 	      this.emit(WidgetResizeHandler.events.onStopResize);
@@ -3592,7 +3219,6 @@
 	    this.application = $Bitrix.Application.get();
 	    this.subscribeToEvents();
 	  }
-
 	  babelHelpers.createClass(WidgetConsentHandler, [{
 	    key: "subscribeToEvents",
 	    value: function subscribeToEvents() {
@@ -3638,7 +3264,6 @@
 	      this.hideConsent();
 	      this.sendConsentDecision(true);
 	      main_core_events.EventEmitter.emit(WidgetEventType.consentAccepted);
-
 	      if (this.getWidgetModel().common.showForm === FormType.none) {
 	        main_core_events.EventEmitter.emit(im_const.EventType.textarea.setFocus);
 	      }
@@ -3650,7 +3275,6 @@
 	      this.hideConsent();
 	      this.sendConsentDecision(false);
 	      main_core_events.EventEmitter.emit(WidgetEventType.consentDeclined);
-
 	      if (this.getApplicationModel().device.type !== im_const.DeviceType.mobile) {
 	        main_core_events.EventEmitter.emit(im_const.EventType.textarea.setFocus);
 	      }
@@ -3661,7 +3285,6 @@
 	      this.store.commit('widget/dialog', {
 	        userConsent: result
 	      });
-
 	      if (result && this.application.isUserRegistered()) {
 	        this.restClient.callMethod(RestMethod.widgetUserConsentApply, {
 	          config_id: this.getWidgetModel().common.configId,
@@ -3706,15 +3329,12 @@
 	    main_core_events.EventEmitter.subscribe(WidgetEventType.hideForm, this.hideFormHandler);
 	    main_core_events.EventEmitter.subscribe(WidgetEventType.sendDialogVote, this.sendVoteHandler);
 	  }
-
 	  babelHelpers.createClass(WidgetFormHandler, [{
 	    key: "onShowForm",
 	    value: function onShowForm(_ref) {
 	      var _this = this;
-
 	      var event = _ref.data;
 	      clearTimeout(this.showFormTimeout);
-
 	      if (event.type === FormType.like) {
 	        if (event.delayed) {
 	          this.showFormTimeout = setTimeout(function () {
@@ -3745,17 +3365,13 @@
 	      if (this.application.offline) {
 	        return false;
 	      }
-
 	      clearTimeout(this.showFormTimeout);
-
 	      if (!this.getWidgetModel().common.vote.enable) {
 	        return false;
 	      }
-
 	      if (this.getWidgetModel().dialog.sessionClose && this.getWidgetModel().dialog.userVote !== VoteType.none) {
 	        return false;
 	      }
-
 	      this.store.commit('widget/common', {
 	        showForm: FormType.like
 	      });
@@ -3771,13 +3387,10 @@
 	    key: "sendVote",
 	    value: function sendVote(vote) {
 	      var _this2 = this;
-
 	      var sessionId = this.getWidgetModel().dialog.sessionId;
-
 	      if (!sessionId) {
 	        return false;
 	      }
-
 	      this.restClient.callMethod(RestMethod.widgetVoteSend, {
 	        'SESSION_ID': sessionId,
 	        'ACTION': vote
@@ -3797,7 +3410,6 @@
 	    key: "hideForm",
 	    value: function hideForm() {
 	      clearTimeout(this.showFormTimeout);
-
 	      if (this.getWidgetModel().common.showForm !== FormType.none) {
 	        this.store.commit('widget/common', {
 	          showForm: FormType.none
@@ -3822,12 +3434,10 @@
 
 	var WidgetReactionHandler = /*#__PURE__*/function (_ReactionHandler) {
 	  babelHelpers.inherits(WidgetReactionHandler, _ReactionHandler);
-
 	  function WidgetReactionHandler() {
 	    babelHelpers.classCallCheck(this, WidgetReactionHandler);
 	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(WidgetReactionHandler).apply(this, arguments));
 	  }
-
 	  babelHelpers.createClass(WidgetReactionHandler, [{
 	    key: "onOpenMessageReactionList",
 	    value: function onOpenMessageReactionList(_ref) {
@@ -3846,16 +3456,13 @@
 	    this.store = $Bitrix.Data.get('controller').store;
 	    this.application = $Bitrix.Application.get();
 	  }
-
 	  babelHelpers.createClass(WidgetHistoryHandler, [{
 	    key: "getHtmlHistory",
 	    value: function getHtmlHistory() {
 	      var chatId = this.getChatId();
-
 	      if (chatId <= 0) {
 	        console.error('WidgetHistoryHandler: Incorrect chatId value');
 	      }
-
 	      var config = {
 	        chatId: this.getChatId()
 	      };
@@ -3871,13 +3478,11 @@
 	      var url = new URL(ajaxEndpoint, host);
 	      url.searchParams.set('action', action);
 	      var formData = new FormData();
-
 	      for (var key in config) {
 	        if (config.hasOwnProperty(key)) {
 	          formData.append(key, config[key]);
 	        }
 	      }
-
 	      return fetch(url, {
 	        method: 'POST',
 	        headers: {
@@ -3890,11 +3495,9 @@
 	    key: "handleRequest",
 	    value: function handleRequest(response) {
 	      var contentType = response.headers.get('Content-Type');
-
 	      if (contentType.startsWith('application/json')) {
 	        return response.json();
 	      }
-
 	      return response.blob();
 	    }
 	  }, {
@@ -3926,7 +3529,8 @@
 	    }
 	  }, {
 	    key: "destroy",
-	    value: function destroy() {//
+	    value: function destroy() {
+	      //
 	    }
 	  }]);
 	  return WidgetHistoryHandler;
@@ -3934,12 +3538,10 @@
 
 	var WidgetDialogActionHandler = /*#__PURE__*/function (_DialogActionHandler) {
 	  babelHelpers.inherits(WidgetDialogActionHandler, _DialogActionHandler);
-
 	  function WidgetDialogActionHandler() {
 	    babelHelpers.classCallCheck(this, WidgetDialogActionHandler);
 	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(WidgetDialogActionHandler).apply(this, arguments));
 	  }
-
 	  babelHelpers.createClass(WidgetDialogActionHandler, [{
 	    key: "onClickOnDialog",
 	    value: function onClickOnDialog() {
@@ -3950,7 +3552,6 @@
 	}(im_eventHandler.DialogActionHandler);
 
 	function ownKeys$1(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-
 	function _objectSpread$1(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$1(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$1(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	ui_vue.BitrixVue.component('bx-livechat', {
 	  data: function data() {
@@ -3985,9 +3586,9 @@
 	      if (this.widget.common.isCreateSessionMode) {
 	        return this.startNewChatMode;
 	      }
+	      var crmFormsSettings = this.widget.common.crmFormsSettings;
 
-	      var crmFormsSettings = this.widget.common.crmFormsSettings; // show if we dont use welcome form
-
+	      // show if we dont use welcome form
 	      if (!crmFormsSettings.useWelcomeForm || !crmFormsSettings.welcomeFormId) {
 	        return true;
 	      } else {
@@ -4011,29 +3612,24 @@
 	          marginBottom: '5px'
 	        };
 	      }
-
 	      return '';
 	    },
 	    widgetHeightStyle: function widgetHeightStyle() {
 	      if (im_lib_utils.Utils.device.isMobile() || this.widget.common.pageMode) {
 	        return;
 	      }
-
 	      if (this.widgetAvailableHeight < WidgetBaseSize.height || this.widgetAvailableHeight < this.widgetCurrentHeight) {
 	        this.widgetCurrentHeight = Math.max(this.widgetAvailableHeight, WidgetMinimumSize.height);
 	      }
-
 	      return "".concat(this.widgetCurrentHeight, "px");
 	    },
 	    widgetWidthStyle: function widgetWidthStyle() {
 	      if (im_lib_utils.Utils.device.isMobile() || this.widget.common.pageMode) {
 	        return;
 	      }
-
 	      if (this.widgetAvailableWidth < WidgetBaseSize.width || this.widgetAvailableWidth < this.widgetCurrentWidth) {
 	        this.widgetCurrentWidth = Math.max(this.widgetAvailableWidth, WidgetMinimumSize.width);
 	      }
-
 	      return "".concat(this.widgetCurrentWidth, "px");
 	    },
 	    userSelectStyle: function userSelectStyle() {
@@ -4043,11 +3639,9 @@
 	      if (this.application.device.type !== im_const.DeviceType.mobile) {
 	        return false;
 	      }
-
 	      if (this.application.device.orientation !== im_const.DeviceOrientation.horizontal) {
 	        return false;
 	      }
-
 	      if (navigator.userAgent.toString().includes('iPhone')) {
 	        return true;
 	      } else {
@@ -4056,18 +3650,15 @@
 	    },
 	    widgetPositionClass: function widgetPositionClass() {
 	      var className = [];
-
 	      if (this.widget.common.pageMode) {
 	        className.push('bx-livechat-page-mode');
 	      } else {
 	        className.push("bx-livechat-position-".concat(LocationStyle[this.widget.common.location]));
 	      }
-
 	      return className;
 	    },
 	    widgetLanguageClass: function widgetLanguageClass() {
 	      var className = [];
-
 	      if (this.application.common.languageId === LanguageType.russian) {
 	        className.push('bx-livechat-logo-ru');
 	      } else if (this.application.common.languageId === LanguageType.ukraine) {
@@ -4075,12 +3666,10 @@
 	      } else {
 	        className.push('bx-livechat-logo-en');
 	      }
-
 	      return className;
 	    },
 	    widgetPlatformClass: function widgetPlatformClass() {
 	      var className = [];
-
 	      if (im_lib_utils.Utils.device.isMobile()) {
 	        className.push('bx-livechat-mobile');
 	      } else if (im_lib_utils.Utils.browser.isSafari()) {
@@ -4088,39 +3677,31 @@
 	      } else if (im_lib_utils.Utils.browser.isIe()) {
 	        className.push('bx-livechat-browser-ie');
 	      }
-
 	      if (im_lib_utils.Utils.platform.isMac()) {
 	        className.push('bx-livechat-mac');
 	      } else {
 	        className.push('bx-livechat-custom-scroll');
 	      }
-
 	      return className;
 	    },
 	    widgetClassName: function widgetClassName() {
 	      var className = [];
 	      className.push.apply(className, babelHelpers.toConsumableArray(this.widgetPositionClass).concat(babelHelpers.toConsumableArray(this.widgetLanguageClass), babelHelpers.toConsumableArray(this.widgetPlatformClass)));
-
 	      if (!this.widget.common.online) {
 	        className.push('bx-livechat-offline-state');
 	      }
-
 	      if (this.widget.common.dragged) {
 	        className.push('bx-livechat-drag-n-drop');
 	      }
-
 	      if (this.widget.common.dialogStart) {
 	        className.push('bx-livechat-chat-start');
 	      }
-
 	      if (this.widget.dialog.operator.name && !(this.application.device.type === im_const.DeviceType.mobile && this.application.device.orientation === im_const.DeviceOrientation.horizontal)) {
 	        className.push('bx-livechat-has-operator');
 	      }
-
 	      if (this.widget.common.styles.backgroundColor && im_lib_utils.Utils.isDarkColor(this.widget.common.styles.iconColor)) {
 	        className.push('bx-livechat-bright-header');
 	      }
-
 	      return className;
 	    },
 	    showMessageDialog: function showMessageDialog() {
@@ -4145,12 +3726,10 @@
 	  })),
 	  created: function created() {
 	    var _this = this;
-
-	    im_lib_logger.Logger.warn('Livechat component created'); // we need to wait for initialization and widget opening to init logic handlers
-
+	    im_lib_logger.Logger.warn('Livechat component created');
+	    // we need to wait for initialization and widget opening to init logic handlers
 	    this.onCreated().then(function () {
 	      _this.subscribeToEvents();
-
 	      _this.initEventHandlers();
 	    });
 	  },
@@ -4158,7 +3737,6 @@
 	    if (this.widget.user.id > 0) {
 	      this.welcomeFormFilled = true;
 	    }
-
 	    this.registerZIndex();
 	  },
 	  beforeDestroy: function beforeDestroy() {
@@ -4196,7 +3774,6 @@
 	    },
 	    subscribeToEvents: function subscribeToEvents() {
 	      document.addEventListener('keydown', this.onWindowKeyDown);
-
 	      if (!im_lib_utils.Utils.device.isMobile() && !this.widget.common.pageMode) {
 	        this.getAvailableSpaceFunc = im_lib_utils.Utils.throttle(this.getAvailableSpace, 50);
 	        window.addEventListener('resize', this.getAvailableSpaceFunc);
@@ -4204,19 +3781,16 @@
 	    },
 	    unsubscribeEvents: function unsubscribeEvents() {
 	      document.removeEventListener('keydown', this.onWindowKeyDown);
-
 	      if (!im_lib_utils.Utils.device.isMobile() && !this.widget.common.pageMode) {
 	        window.removeEventListener('resize', this.getAvailableSpaceFunc);
 	      }
 	    },
 	    initMobileEnv: function initMobileEnv() {
 	      var _this2 = this;
-
 	      var metaTags = document.head.querySelectorAll('meta');
 	      var viewPortMetaSiteNode = babelHelpers.toConsumableArray(metaTags).find(function (element) {
 	        return element.name === 'viewport';
 	      });
-
 	      if (viewPortMetaSiteNode) {
 	        // save tag and remove it from DOM
 	        this.viewPortMetaSiteNode = viewPortMetaSiteNode;
@@ -4224,20 +3798,16 @@
 	      } else {
 	        this.createViewportMeta();
 	      }
-
 	      if (!this.viewPortMetaWidgetNode) {
 	        this.viewPortMetaWidgetNode = document.createElement('meta');
 	        this.viewPortMetaWidgetNode.setAttribute('name', 'viewport');
 	        this.viewPortMetaWidgetNode.setAttribute('content', 'width=device-width, initial-scale=1.0, user-scalable=0');
 	        document.head.append(this.viewPortMetaWidgetNode);
 	      }
-
 	      document.body.classList.add('bx-livechat-mobile-state');
-
 	      if (im_lib_utils.Utils.browser.isSafariBased()) {
 	        document.body.classList.add('bx-livechat-mobile-safari-based');
 	      }
-
 	      return new Promise(function (resolve) {
 	        setTimeout(function () {
 	          _this2.$store.dispatch('widget/show').then(resolve);
@@ -4246,31 +3816,25 @@
 	    },
 	    createViewportMeta: function createViewportMeta() {
 	      var contentWidth = document.body.offsetWidth;
-
 	      if (contentWidth < window.innerWidth) {
 	        contentWidth = window.innerWidth;
 	      }
-
 	      if (contentWidth < 1024) {
 	        contentWidth = 1024;
 	      }
-
 	      this.viewPortMetaSiteNode = document.createElement('meta');
 	      this.viewPortMetaSiteNode.setAttribute('name', 'viewport');
 	      this.viewPortMetaSiteNode.setAttribute('content', "width=".concat(contentWidth, ", initial-scale=1.0, user-scalable=1"));
 	    },
 	    removeMobileEnv: function removeMobileEnv() {
 	      document.body.classList.remove('bx-livechat-mobile-state');
-
 	      if (im_lib_utils.Utils.browser.isSafariBased()) {
 	        document.body.classList.remove('bx-livechat-mobile-safari-based');
 	      }
-
 	      if (this.viewPortMetaWidgetNode) {
 	        this.viewPortMetaWidgetNode.remove();
 	        this.viewPortMetaWidgetNode = null;
 	      }
-
 	      if (this.viewPortMetaSiteNode) {
 	        document.head.append(this.viewPortMetaSiteNode);
 	        this.viewPortMetaSiteNode = null;
@@ -4278,7 +3842,6 @@
 	    },
 	    onCreated: function onCreated() {
 	      var _this3 = this;
-
 	      return new Promise(function (resolve) {
 	        if (im_lib_utils.Utils.device.isMobile()) {
 	          _this3.initMobileEnv().then(resolve);
@@ -4286,19 +3849,17 @@
 	          _this3.$store.dispatch('widget/show').then(function () {
 	            _this3.widgetCurrentHeight = WidgetBaseSize.height;
 	            _this3.widgetCurrentWidth = WidgetBaseSize.width;
+	            _this3.getAvailableSpace();
 
-	            _this3.getAvailableSpace(); // restore widget size from cache
-
-
+	            // restore widget size from cache
 	            _this3.widgetCurrentHeight = _this3.widget.common.widgetHeight || _this3.widgetCurrentHeight;
 	            _this3.widgetCurrentWidth = _this3.widget.common.widgetWidth || _this3.widgetCurrentWidth;
 	            resolve();
 	          });
-	        } // restore textarea size from cache
+	        }
 
-
+	        // restore textarea size from cache
 	        _this3.textareaHeight = _this3.widget.common.textareaHeight || _this3.textareaHeight;
-
 	        _this3.initCollections();
 	      });
 	    },
@@ -4350,21 +3911,22 @@
 	      // not escape
 	      if (event.keyCode !== 27) {
 	        return;
-	      } // hide form
+	      }
 
-
+	      // hide form
 	      if (this.widget.common.showForm !== FormType.none) {
 	        this.$store.commit('widget/common', {
 	          showForm: FormType.none
 	        });
-	      } // decline consent
+	      }
+	      // decline consent
 	      else if (this.widget.common.showConsent) {
 	        main_core_events.EventEmitter.emit(WidgetEventType.declineConsent);
-	      } // close widget
+	      }
+	      // close widget
 	      else {
 	        this.close();
 	      }
-
 	      event.preventDefault();
 	      event.stopPropagation();
 	      main_core_events.EventEmitter.emit(im_const.EventType.textarea.setFocus);
@@ -4398,7 +3960,6 @@
 	      if (this.widget.common.pageMode) {
 	        return false;
 	      }
-
 	      this.onBeforeClose();
 	      this.$store.commit('widget/common', {
 	        showed: false
@@ -4407,7 +3968,6 @@
 	    // how much width and height we have for resizing
 	    getAvailableSpace: function getAvailableSpace() {
 	      var widgetMargin = 50;
-
 	      if (this.isBottomLocation()) {
 	        var bottomPosition = this.$refs.widgetWrapper.getBoundingClientRect().bottom;
 	        var widgetBottomMargin = window.innerHeight - bottomPosition;
@@ -4416,9 +3976,7 @@
 	        var topPosition = this.$refs.widgetWrapper.getBoundingClientRect().top;
 	        this.widgetAvailableHeight = window.innerHeight - widgetMargin - topPosition;
 	      }
-
 	      this.widgetAvailableWidth = window.innerWidth - widgetMargin * 2;
-
 	      if (this.resizeHandler) {
 	        this.resizeHandler.setAvailableWidth(this.widgetAvailableWidth);
 	        this.resizeHandler.setAvailableHeight(this.widgetAvailableHeight);
@@ -4426,12 +3984,10 @@
 	    },
 	    getTextareaDragHandler: function getTextareaDragHandler() {
 	      var _this4 = this,
-	          _TextareaDragHandler;
-
+	        _TextareaDragHandler;
 	      return new im_eventHandler.TextareaDragHandler((_TextareaDragHandler = {}, babelHelpers.defineProperty(_TextareaDragHandler, im_eventHandler.TextareaDragHandler.events.onHeightChange, function (_ref) {
 	        var data = _ref.data;
 	        var newHeight = data.newHeight;
-
 	        if (_this4.textareaHeight !== newHeight) {
 	          _this4.textareaHeight = newHeight;
 	        }
@@ -4439,7 +3995,6 @@
 	        _this4.$store.commit('widget/common', {
 	          textareaHeight: _this4.textareaHeight
 	        });
-
 	        main_core_events.EventEmitter.emit(im_const.EventType.dialog.scrollToBottom, {
 	          chatId: _this4.chatId,
 	          force: true
@@ -4448,8 +4003,7 @@
 	    },
 	    getWidgetResizeHandler: function getWidgetResizeHandler() {
 	      var _this5 = this,
-	          _events;
-
+	        _events;
 	      return new WidgetResizeHandler({
 	        widgetLocation: this.widget.common.location,
 	        availableWidth: this.widgetAvailableWidth,
@@ -4457,18 +4011,15 @@
 	        events: (_events = {}, babelHelpers.defineProperty(_events, WidgetResizeHandler.events.onSizeChange, function (_ref2) {
 	          var data = _ref2.data;
 	          var newHeight = data.newHeight,
-	              newWidth = data.newWidth;
-
+	            newWidth = data.newWidth;
 	          if (_this5.widgetCurrentHeight !== newHeight) {
 	            _this5.widgetCurrentHeight = newHeight;
 	          }
-
 	          if (_this5.widgetCurrentWidth !== newWidth) {
 	            _this5.widgetCurrentWidth = newWidth;
 	          }
 	        }), babelHelpers.defineProperty(_events, WidgetResizeHandler.events.onStopResize, function () {
 	          _this5.widgetIsResizing = false;
-
 	          _this5.$store.commit('widget/common', {
 	            widgetHeight: _this5.widgetCurrentHeight,
 	            widgetWidth: _this5.widgetCurrentWidth
@@ -4484,7 +4035,6 @@
 	    },
 	    registerZIndex: function registerZIndex() {
 	      this.zIndexStackInstance = this.$Bitrix.Data.get('zIndexStack');
-
 	      if (this.zIndexStackInstance && !!this.$refs.widgetWrapper) {
 	        this.zIndexStackInstance.register(this.$refs.widgetWrapper);
 	      }
@@ -4494,14 +4044,12 @@
 	        this.zIndexStackInstance.unregister(this.$refs.widgetWrapper);
 	      }
 	    } // endregion helpers
-
 	  },
 	  // language=Vue
 	  template: "\n\t\t<transition enter-active-class=\"bx-livechat-show\" leave-active-class=\"bx-livechat-close\" @after-leave=\"onAfterClose\">\n\t\t\t<div\n\t\t\t\t:class=\"widgetClassName\"\n\t\t\t\tv-if=\"widget.common.showed\"\n\t\t\t\t:style=\"{height: widgetHeightStyle, width: widgetWidthStyle, userSelect: userSelectStyle}\"\n\t\t\t\tclass=\"bx-livechat-wrapper bx-livechat-show\"\n\t\t\t\tref=\"widgetWrapper\"\n\t\t\t>\n\t\t\t\t<div class=\"bx-livechat-box\">\n\t\t\t\t\t<div v-if=\"isBottomLocation() && !isPageMode()\" class=\"bx-livechat-widget-resize-handle\" @mousedown=\"onWidgetStartDrag\"></div>\n\t\t\t\t\t<bx-livechat-head \n\t\t\t\t\t\t:isWidgetDisabled=\"widgetMobileDisabled\" \n\t\t\t\t\t\t@openMenu=\"onOpenMenu\" \n\t\t\t\t\t\t@close=\"close\"\n\t\t\t\t\t\t@openDialogList=\"openDialogList\"\n\t\t\t\t\t/>\n\t\t\t\t\t<template v-if=\"widgetMobileDisabled\">\n\t\t\t\t\t\t<bx-livechat-body-orientation-disabled/>\n\t\t\t\t\t</template>\n\t\t\t\t\t<template v-else-if=\"application.error.active\">\n\t\t\t\t\t\t<bx-livechat-body-error/>\n\t\t\t\t\t</template>\n\t\t\t\t\t<template v-else-if=\"!widget.common.configId\">\n\t\t\t\t\t\t<div class=\"bx-livechat-body\" key=\"loading-body\">\n\t\t\t\t\t\t\t<bx-livechat-body-loading/>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</template>\n\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t<div v-show=\"!widget.common.dialogStart\" class=\"bx-livechat-body\" :class=\"{'bx-livechat-body-with-scroll': showWelcomeForm}\" key=\"welcome-body\">\n\t\t\t\t\t\t\t<bx-imopenlines-form\n\t\t\t\t\t\t\t  v-show=\"showWelcomeForm\"\n\t\t\t\t\t\t\t  @formSendSuccess=\"onWelcomeFormSendSuccess\"\n\t\t\t\t\t\t\t  @formSendError=\"onWelcomeFormSendError\"\n\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t\t<template v-if=\"!showWelcomeForm\">\n\t\t\t\t\t\t\t\t<bx-livechat-body-operators/>\n\t\t\t\t\t\t\t\t<keep-alive include=\"bx-livechat-smiles\">\n\t\t\t\t\t\t\t\t\t<template v-if=\"widget.common.showForm === FormType.smile\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-smiles @selectSmile=\"onSmilesSelectSmile\" @selectSet=\"onSmilesSelectSet\"/>\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t</keep-alive>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<template v-if=\"widget.common.dialogStart\">\n\t\t\t\t\t\t\t<bx-pull-component-status :canReconnect=\"true\" @reconnect=\"onPullRequestConfig\"/>\n\t\t\t\t\t\t\t<div :class=\"['bx-livechat-body', {'bx-livechat-body-with-message': showMessageDialog}]\" key=\"with-message\">\n\t\t\t\t\t\t\t\t<template v-if=\"widget.common.isCreateSessionMode\">\n\t\t\t\t\t\t\t\t\t<bx-livechat-dialogues-list @startNewChat=\"onStartNewChat\"/>\n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t<template v-else-if=\"showMessageDialog\">\n\t\t\t\t\t\t\t\t\t<div class=\"bx-livechat-dialog\">\n\t\t\t\t\t\t\t\t\t\t<bx-im-component-dialog\n\t\t\t\t\t\t\t\t\t\t\t:userId=\"application.common.userId\"\n\t\t\t\t\t\t\t\t\t\t\t:dialogId=\"application.dialog.dialogId\"\n\t\t\t\t\t\t\t\t\t\t\t:messageLimit=\"application.dialog.messageLimit\"\n\t\t\t\t\t\t\t\t\t\t\t:enableReactions=\"true\"\n\t\t\t\t\t\t\t\t\t\t\t:enableDateActions=\"false\"\n\t\t\t\t\t\t\t\t\t\t\t:enableCreateContent=\"false\"\n\t\t\t\t\t\t\t\t\t\t\t:enableGestureQuote=\"true\"\n\t\t\t\t\t\t\t\t\t\t\t:enableGestureMenu=\"true\"\n\t\t\t\t\t\t\t\t\t\t\t:showMessageAvatar=\"false\"\n\t\t\t\t\t\t\t\t\t\t\t:showMessageMenu=\"false\"\n\t\t\t\t\t\t\t\t\t\t\t:skipDataRequest=\"true\"\n\t\t\t\t\t\t\t\t\t\t\t:showLoadingState=\"false\"\n\t\t\t\t\t\t\t\t\t\t\t:showEmptyState=\"false\"\n\t\t\t\t\t\t\t\t\t\t />\n\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t\t\t\t<bx-livechat-body-loading/>\n\t\t\t\t\t\t\t\t</template>\n\n\t\t\t\t\t\t\t\t<keep-alive include=\"bx-livechat-smiles\">\n\t\t\t\t\t\t\t\t\t<template v-if=\"widget.common.showForm === FormType.like && widget.common.vote.enable\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-form-vote/>\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t<template v-else-if=\"widget.common.showForm === FormType.welcome\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-form-welcome/>\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t<template v-else-if=\"widget.common.showForm === FormType.offline\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-form-offline/>\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t<template v-else-if=\"widget.common.showForm === FormType.history\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-form-history/>\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t<template v-else-if=\"widget.common.showForm === FormType.smile\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-smiles @selectSmile=\"onSmilesSelectSmile\" @selectSet=\"onSmilesSelectSet\"/>\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t</keep-alive>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</template>\n\t\t\t\t\t\t<div v-if=\"showTextarea || startNewChatMode\" class=\"bx-livechat-textarea\" :style=\"[textareaHeightStyle, textareaBottomMargin]\" ref=\"textarea\">\n\t\t\t\t\t\t\t<div class=\"bx-livechat-textarea-resize-handle\" @mousedown=\"onTextareaStartDrag\" @touchstart=\"onTextareaStartDrag\"></div>\n\t\t\t\t\t\t\t<bx-im-component-textarea\n\t\t\t\t\t\t\t\t:siteId=\"application.common.siteId\"\n\t\t\t\t\t\t\t\t:userId=\"application.common.userId\"\n\t\t\t\t\t\t\t\t:dialogId=\"application.dialog.dialogId\"\n\t\t\t\t\t\t\t\t:writesEventLetter=\"3\"\n\t\t\t\t\t\t\t\t:enableEdit=\"true\"\n\t\t\t\t\t\t\t\t:enableCommand=\"false\"\n\t\t\t\t\t\t\t\t:enableMention=\"false\"\n\t\t\t\t\t\t\t\t:enableFile=\"application.disk.enabled\"\n\t\t\t\t\t\t\t\t:autoFocus=\"application.device.type !== DeviceType.mobile\"\n\t\t\t\t\t\t\t\t:styles=\"{button: {backgroundColor: widget.common.styles.backgroundColor, iconColor: widget.common.styles.iconColor}}\"\n\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div v-if=\"!widget.common.copyright && !isBottomLocation\" class=\"bx-livechat-nocopyright-resize-wrap\" style=\"position: relative;\">\n\t\t\t\t\t\t\t<div class=\"bx-livechat-widget-resize-handle\" @mousedown=\"onWidgetStartDrag\"></div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<bx-livechat-form-consent />\n\t\t\t\t\t\t<template v-if=\"widget.common.copyright\">\n\t\t\t\t\t\t\t<div class=\"bx-livechat-copyright\">\n\t\t\t\t\t\t\t\t<template v-if=\"widget.common.copyrightUrl\">\n\t\t\t\t\t\t\t\t\t<a class=\"bx-livechat-copyright-link\" :href=\"widget.common.copyrightUrl\" target=\"_blank\">\n\t\t\t\t\t\t\t\t\t\t<span class=\"bx-livechat-logo-name\">{{localize.BX_LIVECHAT_COPYRIGHT_TEXT}}</span>\n\t\t\t\t\t\t\t\t\t\t<span class=\"bx-livechat-logo-icon\"></span>\n\t\t\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t\t\t\t<span class=\"bx-livechat-logo-name\">{{localize.BX_LIVECHAT_COPYRIGHT_TEXT}}</span>\n\t\t\t\t\t\t\t\t\t<span class=\"bx-livechat-logo-icon\"></span>\n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t<div v-if=\"!isBottomLocation() && !isPageMode()\" class=\"bx-livechat-widget-resize-handle\" @mousedown=\"onWidgetStartDrag\"></div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</template>\n\t\t\t\t\t</template>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</transition>\n\t"
 	});
 
 	function ownKeys$2(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-
 	function _objectSpread$2(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$2(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$2(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	ui_vue.BitrixVue.component('bx-livechat-body-error', {
 	  computed: _objectSpread$2({}, ui_vue_vuex.Vuex.mapState({
@@ -4513,7 +4061,6 @@
 	});
 
 	function ownKeys$3(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-
 	function _objectSpread$3(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$3(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$3(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	ui_vue.BitrixVue.component('bx-livechat-head', {
 	  /**
@@ -4529,9 +4076,9 @@
 	  data: function data() {
 	    return {
 	      multiDialog: false // disabled because of beta status
-
 	    };
 	  },
+
 	  methods: {
 	    openDialogList: function openDialogList() {
 	      main_core_events.EventEmitter.emit(WidgetEventType.hideForm);
@@ -4571,19 +4118,15 @@
 	      if (!!state.widget.dialog.closeVote) {
 	        return false;
 	      }
-
 	      if (!state.widget.common.vote.beforeFinish && state.widget.dialog.sessionStatus < SessionStatus.waitClient) {
 	        return false;
 	      }
-
 	      if (!state.widget.dialog.sessionClose || state.widget.dialog.sessionClose && state.widget.dialog.userVote === VoteType.none) {
 	        return true;
 	      }
-
 	      if (state.widget.dialog.sessionClose && state.widget.dialog.userVote !== VoteType.none) {
 	        return true;
 	      }
-
 	      return false;
 	    },
 	    chatTitle: function chatTitle(state) {
@@ -4597,13 +4140,10 @@
 	      if (!this.showName) {
 	        return '';
 	      }
-
 	      var operatorPosition = state.widget.dialog.operator.workPosition ? state.widget.dialog.operator.workPosition : this.localize.BX_LIVECHAT_USER;
-
 	      if (state.widget.common.showSessionId && state.widget.dialog.sessionId >= 0) {
 	        return this.localize.BX_LIVECHAT_OPERATOR_POSITION_AND_SESSION_ID.replace("#POSITION#", operatorPosition).replace("#ID#", state.widget.dialog.sessionId);
 	      }
-
 	      return this.localize.BX_LIVECHAT_OPERATOR_POSITION_ONLY.replace("#POSITION#", operatorPosition);
 	    },
 	    localize: function localize() {
@@ -4623,7 +4163,6 @@
 	  watch: {
 	    showName: function showName(value) {
 	      var _this = this;
-
 	      if (value) {
 	        setTimeout(function () {
 	          _this.$root.$emit(im_const.EventType.dialog.scrollToBottom, {
@@ -4650,7 +4189,6 @@
 	});
 
 	function ownKeys$4(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-
 	function _objectSpread$4(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$4(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$4(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	ui_vue.BitrixVue.component('bx-livechat-body-operators', {
 	  computed: _objectSpread$4({}, ui_vue_vuex.Vuex.mapState({
@@ -4662,7 +4200,6 @@
 	});
 
 	function ownKeys$5(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-
 	function _objectSpread$5(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$5(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$5(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	ui_vue.BitrixVue.component('bx-livechat-dialogues-list', {
 	  data: function data() {
@@ -4686,22 +4223,18 @@
 	  methods: {
 	    requestDialogList: function requestDialogList() {
 	      var _this = this;
-
 	      var offset = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 0;
 	      this.isLoading = true;
 	      var requestParams = {
 	        'CONFIG_ID': this.$Bitrix.Application.get().getConfigId()
 	      };
-
 	      if (offset > 0) {
 	        requestParams['OFFSET'] = offset;
 	      }
-
 	      return this.$Bitrix.Application.get().controller.restClient.callMethod(RestMethod.widgetDialogList, requestParams).then(function (result) {
 	        if (result.data().length === 0 || result.data().length < _this.itemsPerPage) {
 	          _this.hasMoreItemsToLoad = false;
 	        }
-
 	        _this.pagesLoaded++;
 	        _this.isLoading = false;
 	        _this.sessionList = [].concat(babelHelpers.toConsumableArray(_this.sessionList), babelHelpers.toConsumableArray(_this.prepareSessionList(result.data())));
@@ -4733,7 +4266,6 @@
 	        if (this.isLoading || !this.hasMoreItemsToLoad) {
 	          return;
 	        }
-
 	        var offset = this.itemsPerPage * this.pagesLoaded;
 	        this.requestDialogList(offset);
 	      }
@@ -4756,7 +4288,6 @@
 	});
 
 	function ownKeys$6(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-
 	function _objectSpread$6(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$6(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$6(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	ui_vue.BitrixVue.component('bx-livechat-form-consent', {
 	  computed: _objectSpread$6({}, ui_vue_vuex.Vuex.mapState({
@@ -4803,7 +4334,6 @@
 	            this.$refs.iframe.focus();
 	          }
 	        }
-
 	        event.preventDefault();
 	      } else if (event.keyCode == 39 || event.keyCode == 37) {
 	        if (event.target.nextElementSibling) {
@@ -4811,7 +4341,6 @@
 	        } else if (event.target.previousElementSibling) {
 	          event.target.previousElementSibling.focus();
 	        }
-
 	        event.preventDefault();
 	      }
 	    }
@@ -4827,7 +4356,6 @@
 	});
 
 	function ownKeys$7(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-
 	function _objectSpread$7(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$7(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$7(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	ui_vue.BitrixVue.component('bx-livechat-form-vote', {
 	  computed: _objectSpread$7({
@@ -4853,7 +4381,7 @@
 	      main_core_events.EventEmitter.emit(WidgetEventType.hideForm);
 	    }
 	  },
-	  template: "\n\t\t<transition enter-active-class=\"bx-livechat-consent-window-show\" leave-active-class=\"bx-livechat-form-close\">\n\t\t\t<div class=\"bx-livechat-alert-box bx-livechat-form-rate-show\" key=\"vote\">\n\t\t\t\t<div class=\"bx-livechat-alert-close\" @click=\"hideForm\"></div>\n\t\t\t\t<div class=\"bx-livechat-alert-rate-box\">\n\t\t\t\t\t<h4 class=\"bx-livechat-alert-title bx-livechat-alert-title-mdl\">{{widget.common.vote.messageText}}</h4>\n\t\t\t\t\t<div class=\"bx-livechat-btn-box\">\n\t\t\t\t\t\t<button class=\"bx-livechat-btn bx-livechat-btn-like\" @click=\"userVote(VoteType.like)\" :title=\"widget.common.vote.messageLike\"></button>\n\t\t\t\t\t\t<button class=\"bx-livechat-btn bx-livechat-btn-dislike\" @click=\"userVote(VoteType.dislike)\" :title=\"widget.common.vote.messageDislike\"></button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</transition>\t\n\t"
+	  template: "\n\t\t<transition enter-active-class=\"bx-livechat-consent-window-show\" leave-active-class=\"bx-livechat-form-close\">\n\t\t\t<div class=\"bx-livechat-alert-box bx-livechat-form-rate-show\" key=\"vote\">\n\t\t\t\t<div class=\"bx-livechat-alert-close\" :title=\"$Bitrix.Loc.getMessage('BX_LIVECHAT_VOTE_LATER')\" @click=\"hideForm\"></div>\n\t\t\t\t<div class=\"bx-livechat-alert-rate-box\">\n\t\t\t\t\t<h4 class=\"bx-livechat-alert-title bx-livechat-alert-title-mdl\">{{widget.common.vote.messageText}}</h4>\n\t\t\t\t\t<div class=\"bx-livechat-btn-box\">\n\t\t\t\t\t\t<button class=\"bx-livechat-btn bx-livechat-btn-like\" @click=\"userVote(VoteType.like)\" :title=\"widget.common.vote.messageLike\"></button>\n\t\t\t\t\t\t<button class=\"bx-livechat-btn bx-livechat-btn-dislike\" @click=\"userVote(VoteType.dislike)\" :title=\"widget.common.vote.messageDislike\"></button>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"bx-livechat-alert-later\"><span class=\"bx-livechat-alert-later-btn\" @click=\"hideForm\">{{$Bitrix.Loc.getMessage('BX_LIVECHAT_VOTE_LATER')}}</span></div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</transition>\t\n\t"
 	});
 
 	/**

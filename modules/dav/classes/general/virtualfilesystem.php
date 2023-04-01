@@ -11,7 +11,9 @@ class CAllDavVirtualFileSystem
 	public static function CheckLock($path)
 	{
 		if (isset(self::$lockCache[$path]))
+		{
 			return self::$lockCache[$path];
+		}
 
 		$dbResult = CDavVirtualFileSystem::GetList(array(), array("PATH" => $path));
 
@@ -29,50 +31,56 @@ class CAllDavVirtualFileSystem
 
 	public static function Lock($path, $token, &$timeout, $owner, $scope, $type)
 	{
-		if ($path == '')
+		if (!$path)
+		{
 			return false;
+		}
 
 		unset(self::$lockCache[$path]);
 
 		if ($timeout < 1000000)				// < 1000000 is a relative timestamp, so we add the current time
+		{
 			$timeout += time();
+		}
 
-		if (($lock = self::CheckLock($path)) && ($lock['LOCK_SCOPE'] == 'exclusive' || $scope == 'exclusive'))
+		if (($lock = self::CheckLock($path)) && ($lock['LOCK_SCOPE'] === 'exclusive' || $scope === 'exclusive'))
 		{
 			return false;
 		}
-		else
+
+		try
 		{
-			try
-			{
-				self::Add(array(
-					"ID" => $token,
-					"PATH" => $path,
-					"EXPIRES" => $timeout,
-					"LOCK_OWNER" => $owner,
-					"LOCK_TYPE" => $type,
-					"LOCK_SCOPE" => $scope,
-				));
+			self::Add(array(
+				"ID" => $token,
+				"PATH" => $path,
+				"EXPIRES" => $timeout,
+				"LOCK_OWNER" => $owner,
+				"LOCK_TYPE" => $type,
+				"LOCK_SCOPE" => $scope,
+			));
 
-				return true;
-			}
-			catch (Exception $e)
-			{
-			}
-
-			return false;
+			return true;
 		}
+		catch (Exception $e)
+		{
+		}
+
+		return false;
 	}
 
 	public static function UpdateLock($path, $token, &$timeout, &$owner, &$scope, &$type)
 	{
-		if ($path == '' || $token == '')
+		if (!$path || !$token)
+		{
 			return false;
+		}
 
 		unset(self::$lockCache[$path]);
 
 		if ($timeout < 1000000)				// < 1000000 is a relative timestamp, so we add the current time
+		{
 			$timeout += time();
+		}
 
 		$dbResult = CDavVirtualFileSystem::GetList(array(), array("PATH" => $path, "ID" => $token), false, false, array("LOCK_OWNER", "LOCK_DEPTH", "LOCK_TYPE", "LOCK_SCOPE"));
 		if ($arResult = $dbResult->Fetch())
@@ -108,50 +116,73 @@ class CAllDavVirtualFileSystem
 
 	protected static function ParseFields(&$arFields, $mode = "add")
 	{
-		global $DB;
-
 		$mode = mb_strtoupper($mode);
-		$updateMode = ($mode != "add");
+		$updateMode = ($mode !== "add");
 		$addMode = !$updateMode;
 
-		if (is_set($arFields, "LOCK_TYPE"))
+		if (isset($arFields['LOCK_TYPE']))
 		{
 			$arFields["LOCK_TYPE"] = mb_strtoupper($arFields["LOCK_TYPE"]);
-			if ($arFields["LOCK_TYPE"] == "WRITE")
+			if ($arFields["LOCK_TYPE"] === "WRITE")
+			{
 				$arFields["LOCK_TYPE"] = "W";
-			if ($arFields["LOCK_TYPE"] == "READ")
+			}
+			if ($arFields["LOCK_TYPE"] === "READ")
+			{
 				$arFields["LOCK_TYPE"] = "R";
+			}
 
 			if (!in_array($arFields["LOCK_TYPE"], array("W", "R")))
+			{
 				throw new Exception("LOCK_TYPE");
+			}
 		}
 
-		if (is_set($arFields, "LOCK_SCOPE"))
+		if (isset($arFields['LOCK_SCOPE']))
 		{
 			$arFields["LOCK_SCOPE"] = mb_strtoupper($arFields["LOCK_SCOPE"]);
-			if ($arFields["LOCK_SCOPE"] == "EXCLUSIVE")
+			if ($arFields["LOCK_SCOPE"] === "EXCLUSIVE")
+			{
 				$arFields["LOCK_SCOPE"] = "E";
-			if ($arFields["LOCK_SCOPE"] == "SHARED")
+			}
+			if ($arFields["LOCK_SCOPE"] === "SHARED")
+			{
 				$arFields["LOCK_SCOPE"] = "S";
+			}
 
 			if (!in_array($arFields["LOCK_SCOPE"], array("E", "S")))
+			{
 				throw new Exception("LOCK_SCOPE");
+			}
 		}
 
-		if (is_set($arFields, "LOCK_DEPTH"))
+		if (isset($arFields['LOCK_DEPTH']))
 		{
 			if (is_numeric($arFields["LOCK_DEPTH"]))
-				$arFields["LOCK_DEPTH"] = intval($arFields["LOCK_DEPTH"]);
-			elseif (mb_strtoupper($arFields["LOCK_DEPTH"]) == "INFINITE" || mb_strtoupper($arFields["LOCK_DEPTH"]) == "I")
+			{
+				$arFields["LOCK_DEPTH"] = (int)$arFields["LOCK_DEPTH"];
+			}
+			elseif (
+				mb_strtoupper($arFields["LOCK_DEPTH"]) === "INFINITE"
+				|| mb_strtoupper($arFields["LOCK_DEPTH"]) === "I"
+			)
+			{
 				$arFields["LOCK_DEPTH"] = "I";
+			}
 			else
+			{
 				throw new Exception("LOCK_DEPTH");
+			}
 		}
 
-		if ($addMode && !is_set($arFields, "ID"))
+		if ($addMode && !isset($arFields['ID']))
+		{
 			throw new Exception("ID");
-		if ($addMode && !is_set($arFields, "PATH"))
+		}
+		if ($addMode && !isset($arFields['PATH']))
+		{
 			throw new Exception("PATH");
+		}
 	}
 
 	public static function Add($arFields)
@@ -164,7 +195,7 @@ class CAllDavVirtualFileSystem
 
 		$strSql =
 			"INSERT INTO b_dav_locks (".$arInsert[0].", CREATED, MODIFIED) ".
-			"VALUES(".$arInsert[1].", ".$DB->CurrentTimeFunction().", ".$DB->CurrentTimeFunction().")";
+			"VALUES(".$arInsert[1].", ".$DB::CurrentTimeFunction().", ".$DB::CurrentTimeFunction().")";
 		$DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
 
 		return $arFields["ID"];
@@ -175,8 +206,10 @@ class CAllDavVirtualFileSystem
 		global $DB;
 
 		$id = trim($id);
-		if ($id == '')
+		if (!$id)
+		{
 			throw new Exception("id");
+		}
 
 		self::ParseFields($arFields, "update");
 
@@ -185,7 +218,7 @@ class CAllDavVirtualFileSystem
 		$strSql =
 			"UPDATE b_dav_locks SET ".
 			"	".$strUpdate.", ".
-			"	MODIFIED = ".$DB->CurrentTimeFunction()." ".
+			"	MODIFIED = ".$DB::CurrentTimeFunction()." ".
 			"WHERE ID = '".$DB->ForSql($id)."' ";
 		$DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
 
@@ -212,9 +245,9 @@ class CDavVirtualFileSystemResult extends CDBResult
 
 		if ($res)
 		{
-			$res["LOCK_TYPE"] = ($res['LOCK_TYPE'] == "W") ? 'write' : 'read';
-			$res["LOCK_SCOPE"] = ($res['LOCK_SCOPE'] == "E") ? 'exclusive' : 'shared';
-			$res["LOCK_DEPTH"] = ($res['LOCK_DEPTH'] == "I") ? 'infinite' : 0;
+			$res["LOCK_TYPE"] = (isset($res['LOCK_TYPE']) && $res['LOCK_TYPE'] === "W") ? 'write' : 'read';
+			$res["LOCK_SCOPE"] = (isset($res['LOCK_SCOPE']) && $res['LOCK_SCOPE'] === "E") ? 'exclusive' : 'shared';
+			$res["LOCK_DEPTH"] = (isset($res['LOCK_DEPTH']) && $res['LOCK_DEPTH'] === "I") ? 'infinite' : 0;
 		}
 
 		return $res;

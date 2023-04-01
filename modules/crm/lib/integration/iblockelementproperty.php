@@ -98,7 +98,7 @@ class IBlockElementProperty
 			}
 		}
 
-		if (is_array($property['PROPERTY_USER_TYPE']))
+		if (isset($property['PROPERTY_USER_TYPE']) && is_array($property['PROPERTY_USER_TYPE']))
 		{
 			$userType = $property['PROPERTY_USER_TYPE'];
 		}

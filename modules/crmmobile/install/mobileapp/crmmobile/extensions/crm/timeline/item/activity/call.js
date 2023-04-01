@@ -12,7 +12,7 @@ jn.define('crm/timeline/item/activity/call', (require, exports, module) => {
     {
 		get hasPlayer()
 		{
-			return this.layoutSchema.body.blocks.audio;
+			return BX.prop.getBoolean(this.layoutSchema.body.blocks, 'audio', false);
 		}
     }
 

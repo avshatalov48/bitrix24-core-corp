@@ -150,6 +150,9 @@ jn.define('crm/timeline/item/base', (require, exports, module) => {
 					model: this.model,
 					itemScopeEventBus: this.itemScopeEventBus,
 					timelineScopeEventBus: this.timelineScopeEventBus,
+					style: {
+						paddingBottom: this.getBodyBottomGap(),
+					},
 				}),
 				this.layoutSchema.footer && new TimelineItemFooter({
 					...this.layoutSchema.footer,
@@ -265,6 +268,15 @@ jn.define('crm/timeline/item/base', (require, exports, module) => {
 			{
 				this.loadingOverlayRef.hide();
 			}
+		}
+
+		/**
+		 * @protected
+		 * @return {number}
+		 */
+		getBodyBottomGap()
+		{
+			return 16;
 		}
     }
 

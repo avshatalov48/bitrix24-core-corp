@@ -11,6 +11,7 @@ use \Bitrix\Intranet\Binding;
 use \Bitrix\ImBot\Bot\Partner24;
 use Bitrix\Intranet\Site\Sections\TimemanSection;
 use \Bitrix\Main;
+use Bitrix\Main\Web\Uri;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
@@ -84,9 +85,9 @@ BX.ready(function() {
 		'profile' => [
 				'ID' => $arResult['User']['ID'],
 				'FULL_NAME' => $arResult['User']['FULL_NAME'],
-				'PHOTO' => $photoId > 0 ?
-					\CHTTP::urnEncode(
-						call_user_func(
+				'PHOTO' =>
+					$photoId > 0
+						? call_user_func(
 							function($photoId)
 							{
 								if (
@@ -108,7 +109,8 @@ BX.ready(function() {
 							},
 							$photoId
 						)
-				) : '',
+						: ''
+				,
 				'STATUS' => ((
 					!empty($arResult['User']['STATUS'])
 					&& (

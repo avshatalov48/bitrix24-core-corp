@@ -1,0 +1,36 @@
+.crm-timeline__value-change-item {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: flex-start;
+	max-width: 90%;
+}
+
+.crm-timeline__value-change-item_text {
+	margin-right: 6px;
+	font-size: var(--ui-font-size-xs, 13px);
+	line-height: 1.8;
+	font-weight: var(--ui-font-weight-normal, 400);
+	color: var(--ui-color-text-secondary, #525c69);
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	overflow: hidden;
+}
+
+.crm-timeline__value-change-item_icon.--pipeline {
+	display: inline-block;
+	width: 12px;
+	height: 12px;
+	margin-right: 4px;
+	mask-image: url('../../images/timeline-card-icons/crm-timeline__funnel-icon.svg');
+	mask-repeat: no-repeat;
+	mask-position: center center;
+	mask-size: contain;
+	background-color: var(--ui-color-text-subtle, #828b95);
+	flex-basis: 12px;
+	flex-grow: 0;
+	flex-shrink: 0;
+}
+.crm-timeline__value-change-item .crm-entity-stream-content-detain-info-status {
+	margin-bottom: 2px;
+}

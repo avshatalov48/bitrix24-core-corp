@@ -10,5 +10,6 @@ return [
 		'./call-incoming',
 		'./ping',
 		'./document-viewed',
+		'./rest-log',
 	]
 ];

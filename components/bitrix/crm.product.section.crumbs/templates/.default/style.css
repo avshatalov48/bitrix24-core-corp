@@ -55,6 +55,7 @@
 	margin-right:3px;
 	color:#535c69;
 	border:none;
+	white-space: nowrap !important;
 }
 .bx-crm-interface-product-section-crumbs-item-container .popup-control{
 	position:absolute;

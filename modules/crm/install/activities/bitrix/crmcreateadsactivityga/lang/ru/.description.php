@@ -1,6 +1,4 @@
 <?php
 
-$MESS['CRM_CREATE_ADS_NAME'] = 'Реклама Google AdWords';
-$MESS['CRM_CREATE_ADS_DESC'] = 'Добавляет email и телефонные номера в рекламную аудиторию Google AdWords';
-$MESS['CRM_CREATE_ADS_NAME_1'] = 'Добавить клиента в рекламную аудиторию Google AdWords';
-$MESS['CRM_CREATE_ADS_DESC_1'] = 'Добавляет обезличенные данные клиентов в аудиторию Google AdWords';
+$MESS['CRM_CREATE_ADS_NAME_MSGVER_1'] = 'Добавить клиента в рекламную аудиторию Google Ads';
+$MESS['CRM_CREATE_ADS_DESC_MSGVER_1'] = 'Добавляет обезличенные данные клиентов в аудиторию Google Ads';

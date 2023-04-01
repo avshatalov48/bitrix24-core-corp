@@ -85,7 +85,7 @@ foreach ($communications as $k => $item)
 $rcptSelected = array();
 $rcptCcSelected = array();
 
-foreach ($activity['PARENT_ID'] > 0 ? array('REPLY_ALL', 'REPLY_CC') : array('COMMUNICATIONS') as $field)
+foreach (($activity['PARENT_ID'] ?? null) > 0 ? ['REPLY_ALL', 'REPLY_CC'] : ['COMMUNICATIONS'] as $field)
 {
 	foreach ($activity[$field] as $k => $item)
 	{
@@ -175,9 +175,9 @@ if (!empty($arParams['TEMPLATES']))
 		<input type="hidden" name="DATA[ownerRcpt]" value="Y">
 	<? endif ?>
 	<input type="hidden" name="DATA[storageTypeID]" value="<?=\CCrmActivityStorageType::Disk ?>">
-	<? if ($activity['FORWARDED_ID'] > 0): ?>
+	<? if (($activity['FORWARDED_ID'] ?? null) > 0): ?>
 		<input name="DATA[FORWARDED_ID]" type="hidden" value="<?=$activity['FORWARDED_ID'] ?>">
-	<? elseif ($activity['REPLIED_ID'] > 0): ?>
+	<? elseif (($activity['REPLIED_ID'] ?? null) > 0): ?>
 		<input name="DATA[REPLIED_ID]" type="hidden" value="<?=$activity['REPLIED_ID'] ?>">
 	<? endif ?>
 	<input type="hidden" name="DATA[content_type]" value="<?=\CCrmContentType::Html ?>">
@@ -196,8 +196,13 @@ if (!empty($arParams['TEMPLATES']))
 	);
 
 	$attachedFiles = (array) $activity['STORAGE_ELEMENT_IDS'];
-	if (empty($activity['FORWARDED_ID']) && $activity['REPLIED_ID'] > 0)
+	if (
+		empty($activity['FORWARDED_ID'] ?? null)
+		&& ($activity['REPLIED_ID'] ?? null) > 0
+	)
+	{
 		$attachedFiles = array_intersect($attachedFiles, $inlineFiles);
+	}
 
 	$selectorParams = array(
 //		'pathToAjax'               => '/bitrix/components/bitrix/crm.activity.editor/ajax.php?soc_net_log_dest=search_email_comms',
@@ -276,7 +281,7 @@ if (!empty($arParams['TEMPLATES']))
 	}
 
 	$fromValue = \CUserOptions::getOption('crm', 'activity_email_addresser', '');
-	if ('RE' == $activity['__message_type'] && !empty($activity['__parent']['SETTINGS']['EMAIL_META']['__email']))
+	if ('RE' == ($activity['__message_type'] ?? null) && !empty($activity['__parent']['SETTINGS']['EMAIL_META']['__email']))
 	{
 		$fromValue = $activity['__parent']['SETTINGS']['EMAIL_META']['__email'];
 	}
@@ -288,7 +293,7 @@ if (!empty($arParams['TEMPLATES']))
 			'FORM_ID' => $formId,
 			'LAYOUT_ONLY' => true,
 			'SUBMIT_AJAX' => true,
-			'FOLD_FILES' => $activity['REPLIED_ID'] > 0,
+			'FOLD_FILES' => ($activity['REPLIED_ID'] ?? null) > 0,
 			'EDITOR_TOOLBAR' => true,
 			'USE_SIGNATURES' => true,
 			'FIELDS' => array(
@@ -403,12 +408,12 @@ BX.message({
 BX.ready(function ()
 {
 	BXCrmActivityEmailController.init({
-		activityId: <?=intval($activity['ID']) ?>,
+		activityId: <?=intval($activity['ID'] ?? null) ?>,
 		type: 'edit',
 		templates: <?=\Bitrix\Main\Web\Json::encode($arParams['TEMPLATES_BY_TYPE']) ?>
 	});
 	var instance = new BXCrmActivityEmail({
-		activityId: <?=intval($activity['ID']) ?>,
+		activityId: <?=intval($activity['ID'] ?? null) ?>,
 		formId: '<?=\CUtil::jsEscape($formId) ?>'
 	});
 

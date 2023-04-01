@@ -172,7 +172,7 @@ class CAllCrmActivity
 			));
 		}
 
-		$isIncomingChannel = ($arFields['IS_INCOMING_CHANNEL'] === 'Y');
+		$isIncomingChannel = (($arFields['IS_INCOMING_CHANNEL'] ?? null) === 'Y');
 		if ($isIncomingChannel)
 		{
 			\Bitrix\Crm\Activity\IncomingChannel::getInstance()->register($ID, (int)$arFields['RESPONSIBLE_ID'], $arFields['COMPLETED'] === 'Y');
@@ -972,7 +972,7 @@ class CAllCrmActivity
 		);
 		$event->send();
 
-		if($arFields['COMPLETED'] === 'Y')
+		if(($arFields['COMPLETED'] ?? null) === 'Y')
 		{
 			$ownerId = $arFields['OWNER_ID'] ?: $arPrevEntity['OWNER_ID'];
 			$ownerTypeId = $arFields['OWNER_TYPE_ID'] ?: $arPrevEntity['OWNER_TYPE_ID'];
@@ -1904,7 +1904,7 @@ class CAllCrmActivity
 			}
 		}
 		// incoming channel activity cannot have a deadline
-		if ($fields['IS_INCOMING_CHANNEL'] === 'Y')
+		if (($fields['IS_INCOMING_CHANNEL'] ?? null) === 'Y')
 		{
 			unset($fields['DEADLINE']);
 			$fields['~DEADLINE'] = CCrmDateTimeHelper::GetMaxDatabaseDate();
@@ -3017,6 +3017,7 @@ class CAllCrmActivity
 
 			$isBound = false;
 			$bindings = self::GetBindings($itemID);
+			$oldBindings = $bindings;
 			foreach($bindings as $binding)
 			{
 				if($binding['OWNER_TYPE_ID'] == $targOwnerTypeID && $binding['OWNER_ID'] == $targOwnerID)
@@ -3040,6 +3041,12 @@ class CAllCrmActivity
 			{
 				$responsibleMap[$responsibleID] = true;
 			}
+
+			\Bitrix\Crm\Counter\Monitor::getInstance()->onChangeActivityBindings(
+				$itemID,
+				$oldBindings,
+				$bindings
+			);
 		}
 
 		if($processed === 0)
@@ -3091,6 +3098,7 @@ class CAllCrmActivity
 
 			$bindingIndex = -1;
 			$bindings = self::GetBindings($itemID);
+			$oldBindings = $bindings;
 			for($i = 0, $length = count($bindings); $i < $length; $i++)
 			{
 				$binding = $bindings[$i];
@@ -3115,6 +3123,12 @@ class CAllCrmActivity
 			{
 				$responsibleMap[$responsibleID] = true;
 			}
+
+			\Bitrix\Crm\Counter\Monitor::getInstance()->onChangeActivityBindings(
+				$itemID,
+				$oldBindings,
+				$bindings
+			);
 		}
 
 		if($processed === 0)
@@ -7012,7 +7026,6 @@ class CAllCrmActivity
 				$liveFeedFields['PARENTS'] = array_merge($bindings, $additionalParents);
 			}
 
-			$arOwners = array_unique($arOwners);
 		}
 
 		self::PrepareStorageElementIDs($arFields);

@@ -1,0 +1,9 @@
+<?php
+
+$MESS['IMMOBILE_MESSENGER_HEADER_MUTE'] = 'Отключить уведомления';
+$MESS['IMMOBILE_MESSENGER_HEADER_UNMUTE'] = 'Включить уведомления';
+$MESS['IMMOBILE_MESSENGER_HEADER_USER_LIST'] = 'Участники';
+$MESS['IMMOBILE_MESSENGER_HEADER_ADD_USER'] = 'Добавить Участника';
+$MESS['IMMOBILE_MESSENGER_HEADER_LEAVE'] = 'Покинуть чат';
+$MESS['IMMOBILE_MESSENGER_HEADER_RELOAD'] = 'Обновить данные';
+$MESS['IMMOBILE_MESSENGER_HEADER_PROFILE'] = 'Профиль';

@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["VI_MODULE_NAME_2"] = "Телефония";
 $MESS["VI_MODULE_DESCRIPTION_2"] = "Модуль для работы с облачной телефонией.";
 $MESS["VI_INSTALL_TITLE_2"] = "Установка модуля \"Телефония\"";
@@ -16,4 +16,3 @@ $MESS["VOXIMPLANT_ROLE_MANAGER"] = "Менеджер";
 $MESS["VOXIMPLANT_DEFAULT_GROUP"] = "Группа по умолчанию";
 $MESS["VOXIMPLANT_DEFAULT_IVR"] = "Меню по умолчанию";
 $MESS["VOXIMPLANT_DEFAULT_ITEM"] = "Здравствуйте. Пожалуйста, наберите 0 для соединения с оператором.";
-?>

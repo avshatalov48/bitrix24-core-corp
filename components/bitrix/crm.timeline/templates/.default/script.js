@@ -132,19 +132,12 @@ BX.CrmHistoryItemVisit = BX.Crm.Timeline.Items.Visit;
 
 BX.CrmHistoryItemScoring = BX.Crm.Timeline.Items.Scoring;
 
-BX.CrmHistoryItemOrderCreation = BX.Crm.Timeline.Items.OrderCreation;
-
 BX.CrmHistoryItemOrderModification = BX.Crm.Timeline.Items.OrderModification;
-
-BX.CrmHistoryItemFinalSummaryDocuments = BX.Crm.Timeline.Items.FinalSummaryDocuments;
-
-BX.CrmHistoryItemFinalSummary = BX.Crm.Timeline.Items.FinalSummary;
 
 BX.CrmHistoryItemExternalNoticeModification = BX.Crm.Timeline.Items.ExternalNoticeModification;
 
 BX.CrmHistoryItemExternalNoticeStatusModification = BX.Crm.Timeline.Items.ExternalNoticeStatusModification;
 
-BX.CrmHistoryItemOrcderCheck = BX.Crm.Timeline.Items.OrderCheck;
 //endregion
 
 //region Schedule Items

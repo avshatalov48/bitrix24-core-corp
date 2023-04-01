@@ -58,6 +58,12 @@ class Factory
 		return $result;
 	}
 
+	public function deleteItem(Item $item): bool
+	{
+		$result = Model\FieldSetTable::delete(['ID' => $item->getId(),]);
+		return $result->isSuccess();
+	}
+
 	public function save(Item $item): Main\Result
 	{
 		$result = new Main\Result();

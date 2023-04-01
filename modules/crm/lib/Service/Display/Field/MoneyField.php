@@ -10,20 +10,25 @@ class MoneyField extends BaseSimpleField
 
 	protected function getFormattedValueForMobile($fieldValue, int $itemId, Options $displayOptions): array
 	{
-		$results = [];
-
-		if (!is_array($fieldValue))
+		if ($this->isMultiple())
 		{
-			$fieldValue = [$fieldValue];
-		}
+			$results = [];
 
-		foreach ($fieldValue as $value)
-		{
-			$results[] = $this->getValue($value);
+			if (!is_array($fieldValue))
+			{
+				$fieldValue = [$fieldValue];
+			}
+
+			foreach ($fieldValue as $value)
+			{
+				$results[] = $this->getValue($value);
+			}
+
+			return $results;
 		}
 
 		return [
-			'value' => $this->isMultiple() ? $results : ($results[0] ?? null),
+			'value' => $this->getValue($fieldValue),
 		];
 	}
 

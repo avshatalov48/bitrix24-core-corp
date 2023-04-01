@@ -37,7 +37,17 @@ class QuoteDeadlines extends Quote
 		foreach ($stages as &$stage)
 		{
 			$stageFilter = $this->deadlinesManager->applyStageFilter($stage['id'], $filter);
-			$stage['count'] = $this->factory->getItemsCountFilteredByPermissions($stageFilter);
+
+			$dbResult = \CCrmQuote::GetList(
+				[],
+				$stageFilter,
+				['COUNT' => 'ID'],
+				false,
+				['ID'],
+				[]
+			);
+			$res = $dbResult->Fetch();
+			$stage['count'] = $res ? (int) $res['ID'] : 0;
 		}
 	}
 
@@ -95,6 +105,11 @@ class QuoteDeadlines extends Quote
 
 	public function isActivityCountersFilterSupported(): bool
 	{
-		return false;
+		return $this->factory->isCountersEnabled();
+	}
+
+	public function getRequiredFieldsByStages(array $stages): array
+	{
+		return [];
 	}
 }

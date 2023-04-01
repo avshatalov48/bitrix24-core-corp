@@ -124,11 +124,6 @@ abstract class FactoryBasedController extends EntityController
 		throw new NotImplementedException(__FUNCTION__ . ' should be redefined in the child');
 	}
 
-	protected function getTimelineEntryFacade(): TimelineEntry\Facade
-	{
-		return Container::getInstance()->getTimelineEntryFacade();
-	}
-
 	protected function resolveAuthorId(array $fields): int
 	{
 		$authorFieldNames = [
@@ -171,7 +166,7 @@ abstract class FactoryBasedController extends EntityController
 				continue;
 			}
 
-			if ($previousFields[$fieldName] === $currentValue)
+			if (!$this->isFieldChangeShouldBeRegistered($fieldName, $previousFields, $currentFields))
 			{
 				continue;
 			}
@@ -207,6 +202,18 @@ abstract class FactoryBasedController extends EntityController
 	 * @return string[]
 	 */
 	abstract protected function getTrackedFieldNames(): array;
+
+	protected function isFieldChangeShouldBeRegistered(
+		string $fieldName,
+		array $previousFields = [],
+		array $currentFields = []
+	): bool
+	{
+		$previousValue = $previousFields[$fieldName];
+		$currentValue = $currentFields[$fieldName];
+
+		return $previousValue !== $currentValue;
+	}
 
 	protected function prepareModificationEntryParams(
 		int $entityID,

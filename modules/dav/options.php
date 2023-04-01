@@ -44,9 +44,13 @@ $aTabs = array(
 );
 $tabControl = new CAdminTabControl("tabControl", $aTabs);
 
-if($REQUEST_METHOD=="POST" && $Update.$Apply.$RestoreDefaults <> '' && check_bitrix_sessid())
+if(
+	($REQUEST_METHOD ?? null) === "POST" &&
+	(!empty($Update) || !empty($Apply) || !empty($RestoreDefaults))
+	&& check_bitrix_sessid()
+)
 {
-	if($RestoreDefaults <> '')
+	if(!empty($RestoreDefaults))
 	{
 		COption::RemoveOption("dav");
 
@@ -60,8 +64,8 @@ if($REQUEST_METHOD=="POST" && $Update.$Apply.$RestoreDefaults <> '' && check_bit
 	{
 		foreach($arAllOptions as $arOption)
 		{
-			$name=$arOption[0];
-			$val=$_REQUEST[$name];
+			$name = $arOption[0] ?? null;
+			$val = $_REQUEST[$name] ?? null;
 			if($arOption[3][0]=="checkbox" && $val!="Y")
 				$val="N";
 
@@ -144,7 +148,7 @@ if($REQUEST_METHOD=="POST" && $Update.$Apply.$RestoreDefaults <> '' && check_bit
 			}
 		}
 	}
-	if($Update <> '' && $_REQUEST["back_url_settings"] <> '')
+	if(!empty($Update) && !empty($_REQUEST["back_url_settings"]))
 		LocalRedirect($_REQUEST["back_url_settings"]);
 	else
 		LocalRedirect($APPLICATION->GetCurPage()."?mid=".urlencode($mid)."&lang=".urlencode(LANGUAGE_ID)."&back_url_settings=".urlencode($_REQUEST["back_url_settings"])."&".$tabControl->ActiveTabParam());
@@ -166,11 +170,11 @@ function ___dav_print_opt($arOption)
 				<input type="checkbox" id="<?echo htmlspecialcharsbx($arOption[0])?>" name="<?echo htmlspecialcharsbx($arOption[0])?>" value="Y"<?if($val=="Y")echo" checked";?>>
 			<?elseif($type[0]=="text"):?>
 				<?if ($arOption[0] == "exchange_mailbox") {echo GetMessage("DAV_EXCHANGE_MAILBOX_NAME");}?>
-				<input type="text" size="<?echo $type[1]?>" maxlength="255" value="<?echo htmlspecialcharsbx($val)?>" name="<?echo htmlspecialcharsbx($arOption[0])?>">
+				<input type="text" size="<?echo ($type[1] ?? null)?>" maxlength="255" value="<?echo htmlspecialcharsbx($val)?>" name="<?echo htmlspecialcharsbx($arOption[0])?>">
 			<?elseif($type[0]=="password"):?>
-				<input type="password" size="<?echo $type[1]?>" maxlength="255" value="<?echo htmlspecialcharsbx($val)?>" name="<?echo htmlspecialcharsbx($arOption[0])?>">
+				<input type="password" size="<?echo ($type[1] ?? null)?>" maxlength="255" value="<?echo htmlspecialcharsbx($val)?>" name="<?echo htmlspecialcharsbx($arOption[0])?>">
 			<?elseif($type[0]=="textarea"):?>
-				<textarea rows="<?echo $type[1]?>" cols="<?echo $type[2]?>" name="<?echo htmlspecialcharsbx($arOption[0])?>"><?echo htmlspecialcharsbx($val)?></textarea>
+				<textarea rows="<?echo ($type[1] ?? null)?>" cols="<?echo ($type[2] ?? null)?>" name="<?echo htmlspecialcharsbx($arOption[0])?>"><?echo htmlspecialcharsbx($val)?></textarea>
 			<?elseif($type[0]=="selectbox"):?>
 				<select name="<?echo htmlspecialcharsbx($arOption[0])?>">
 					<?

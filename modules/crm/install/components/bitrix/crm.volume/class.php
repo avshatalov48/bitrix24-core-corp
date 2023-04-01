@@ -1679,7 +1679,14 @@ class CrmVolumeComponent extends \CBitrixComponent
 				}
 			}
 
-			$percent = (double)$report['TOTAL_SIZE'] * 100 / $totalSize;
+			if ($totalSize > 0)
+			{
+				$percent = round((double)$report['TOTAL_SIZE'] * 100 / $totalSize, 2);
+			}
+			else
+			{
+				$percent = '&ndash;';
+			}
 
 			$result[] = array(
 				'id' => $key,
@@ -1706,7 +1713,7 @@ class CrmVolumeComponent extends \CBitrixComponent
 					'activity_cnt' => ($report['ACTIVITY_COUNT'] > 0 ? $report['ACTIVITY_COUNT'] : (isset($report['ACTIVITY_NAN']) ? '&#x207F;/&#x2090;' : '&ndash;')),
 					'event' => ($report['EVENT_SIZE'] > 0 ? $report['EVENT_SIZE_FORMAT'] : (isset($report['EVENT_NAN']) ? '&#x207F;/&#x2090;' : '&ndash;')),
 					'event_cnt' => ($report['EVENT_COUNT'] > 0 ? $report['EVENT_COUNT'] : (isset($report['EVENT_NAN']) ? '&#x207F;/&#x2090;' : '&ndash;')),
-					'percent' => round((double)$percent, 1),
+					'percent' => $percent,
 				),
 				'actions' => $actions,
 				'attrs' => array(

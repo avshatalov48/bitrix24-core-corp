@@ -97,7 +97,7 @@ class CommentController extends EntityController
 			"SHORT_ANCHOR" => "Y"
 		);
 
-		if ( $options['INCLUDE_FILES'] === 'Y' && ModuleManager::isModuleInstalled('disk'))
+		if (($options['INCLUDE_FILES'] ?? null) === 'Y' && ModuleManager::isModuleInstalled('disk'))
 		{
 			$fileFields = $GLOBALS['USER_FIELD_MANAGER']->GetUserFields(self::UF_FIELD_NAME, $data['ID']);
 
@@ -111,7 +111,7 @@ class CommentController extends EntityController
 				$parser->arUserfields = $fileFields;
 			}
 		}
-		$parser->bMobile = ($options['MOBILE'] === 'Y');
+		$parser->bMobile = (($options['MOBILE'] ?? null) === 'Y');
 		if (self::$parser instanceof \blogTextParser)
 		{
 			$data['TEXT'] = $parser::killAllTags($data['COMMENT']);
@@ -314,12 +314,12 @@ class CommentController extends EntityController
 			{
 				$phrase = "CRM_ENTITY_TITLE_" . \CCrmOwnerType::InvoiceName;
 			}
-			$entityTitle = Loc::getMessage($phrase, array("#ENTITY_NAME#" => $nameLink));
-			$message = Loc::getMessage("CRM_COMMENT_IM_MENTION_POST" . $genderSuffix, array(
+			$entityTitle = Loc::getMessage($phrase, ["#ENTITY_NAME#" => $nameLink]);
+			$message = Loc::getMessage("CRM_COMMENT_IM_MENTION_POST" . $genderSuffix, [
 				"#COMMENT#" => $cuttedComment,
 				"#ENTITY_TITLE#" => $entityTitle
-			));
-			$oldMentionList = is_array($data['OLD_MENTION_LIST']) ? $data['OLD_MENTION_LIST'] : array();
+			]);
+			$oldMentionList = $data['OLD_MENTION_LIST'] ?? [];
 			foreach ($mentionList as $mentionId)
 			{
 				$mentionId = (int)$mentionId;

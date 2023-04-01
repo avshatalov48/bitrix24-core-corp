@@ -341,7 +341,7 @@ final class IntranetConfigsComponent extends CBitrixComponent
 			}
 
 			//allow invite users
-			if ($_POST["allow_invite_users"] <> '')
+			if (isset($_POST["allow_invite_users"]) && $_POST["allow_invite_users"] <> '')
 				COption::SetOptionString("bitrix24", "allow_invite_users", "Y");
 			else
 				COption::SetOptionString("bitrix24", "allow_invite_users", "N");
@@ -446,12 +446,12 @@ final class IntranetConfigsComponent extends CBitrixComponent
 
 		if ($this->arResult["IS_DISK_CONVERTED"])
 		{
-			if ($_POST["disk_allow_edit_object_in_uf"] <> '')
+			if (isset($_POST["disk_allow_edit_object_in_uf"]) && $_POST["disk_allow_edit_object_in_uf"] <> '')
 				COption::SetOptionString("disk", "disk_allow_edit_object_in_uf", "Y");
 			else
 				COption::SetOptionString("disk", "disk_allow_edit_object_in_uf", "N");
 
-			if ($_POST["disk_allow_autoconnect_shared_objects"] <> '')
+			if (isset($_POST["disk_allow_autoconnect_shared_objects"]) && $_POST["disk_allow_autoconnect_shared_objects"] <> '')
 				COption::SetOptionString("disk", "disk_allow_autoconnect_shared_objects", "Y");
 			else
 				COption::SetOptionString("disk", "disk_allow_autoconnect_shared_objects", "N");
@@ -495,7 +495,7 @@ final class IntranetConfigsComponent extends CBitrixComponent
 
 		if (!$this->arResult["IS_BITRIX24"] || $this->arResult["IS_BITRIX24"] && Feature::isFeatureEnabled("disk_object_lock_enabled"))
 		{
-			if ($_POST["disk_object_lock_enabled"] <> '')
+			if (isset($_POST["disk_object_lock_enabled"]) && $_POST["disk_object_lock_enabled"] <> '')
 				COption::SetOptionString("disk", "disk_object_lock_enabled", "Y");
 			else
 				COption::SetOptionString("disk", "disk_object_lock_enabled", "N");
@@ -506,7 +506,7 @@ final class IntranetConfigsComponent extends CBitrixComponent
 			|| $this->arResult["IS_BITRIX24"] && Feature::isFeatureEnabled("disk_allow_use_extended_fulltext")
 		)
 		{
-			if ($_POST["disk_allow_use_extended_fulltext"] <> '')
+			if (isset($_POST["disk_allow_use_extended_fulltext"]) && $_POST["disk_allow_use_extended_fulltext"] <> '')
 				COption::SetOptionString("disk", "disk_allow_use_extended_fulltext", "Y");
 			else
 				COption::SetOptionString("disk", "disk_allow_use_extended_fulltext", "N");
@@ -527,12 +527,12 @@ final class IntranetConfigsComponent extends CBitrixComponent
 			}
 		}
 
-		if ($_POST["allow_livefeed_toall"] <> '')
+		if (isset($_POST["allow_livefeed_toall"]) && $_POST["allow_livefeed_toall"] <> '')
 			COption::SetOptionString("socialnetwork", "allow_livefeed_toall", "Y");
 		else
 			COption::SetOptionString("socialnetwork", "allow_livefeed_toall", "N");
 
-		if ($_POST["default_livefeed_toall"] <> '')
+		if (isset($_POST["default_livefeed_toall"]) && $_POST["default_livefeed_toall"] <> '')
 			COption::SetOptionString("socialnetwork", "default_livefeed_toall", "Y");
 		else
 			COption::SetOptionString("socialnetwork", "default_livefeed_toall", "N");
@@ -559,17 +559,17 @@ final class IntranetConfigsComponent extends CBitrixComponent
 
 		if ($this->arResult["IS_BITRIX24"])
 		{
-			if ($_POST["allow_new_user_lf"] <> '')
+			if (isset($_POST["allow_new_user_lf"]) && $_POST["allow_new_user_lf"] <> '')
 				COption::SetOptionString("intranet", "BLOCK_NEW_USER_LF_SITE", "N", false, SITE_ID);
 			else
 				COption::SetOptionString("intranet", "BLOCK_NEW_USER_LF_SITE", "Y", false, SITE_ID);
 
-			if ($_POST["show_year_for_female"] <> '')
+			if (isset($_POST["show_year_for_female"]) && $_POST["show_year_for_female"] <> '')
 				COption::SetOptionString("intranet", "show_year_for_female", "Y", false);
 			else
 				COption::SetOptionString("intranet", "show_year_for_female", "N", false);
 
-			if ($_POST["buy_tariff_by_all"] <> '')
+			if (isset($_POST["buy_tariff_by_all"]) && $_POST["buy_tariff_by_all"] <> '')
 				COption::SetOptionString("bitrix24", "buy_tariff_by_all", "Y", false);
 			else
 				COption::SetOptionString("bitrix24", "buy_tariff_by_all", "N", false);
@@ -587,7 +587,7 @@ final class IntranetConfigsComponent extends CBitrixComponent
 		}
 
 		// tasks
-		if ($_POST["create_overdue_chats"] <> '')
+		if (isset($_POST["create_overdue_chats"]) && $_POST["create_overdue_chats"] <> '')
 			COption::SetOptionString("tasks", "create_overdue_chats", "Y", false);
 		else
 			COption::SetOptionString("tasks", "create_overdue_chats", "N", false);
@@ -644,12 +644,12 @@ final class IntranetConfigsComponent extends CBitrixComponent
 		else
 			COption::SetOptionString("im", "general_chat_message_join", false);
 
-		if ($_POST["general_chat_message_leave"] <> '')
+		if (isset($_POST["general_chat_message_leave"]) && $_POST["general_chat_message_leave"] <> '')
 			COption::SetOptionString("im", "general_chat_message_leave", true);
 		else
 			COption::SetOptionString("im", "general_chat_message_leave", false);
 
-		if ($_POST["url_preview_enable"] <> '')
+		if (isset($_POST["url_preview_enable"]) && $_POST["url_preview_enable"] <> '')
 			COption::SetOptionString("main", "url_preview_enable", "Y");
 		else
 			COption::SetOptionString("main", "url_preview_enable", "N");
@@ -1129,7 +1129,7 @@ final class IntranetConfigsComponent extends CBitrixComponent
 		{
 			$this->arResult['MP_ALLOW_USER_INSTALL_EXTENDED'] = !$this->arResult['IS_BITRIX24'] || Feature::isFeatureEnabled('rest_userinstall_extended');
 		}
-		$this->arResult['SHOW_RENAME_POPUP'] = ($_GET['change_address'] == 'yes');
+		$this->arResult['SHOW_RENAME_POPUP'] = (isset($_GET['change_address']) && $_GET['change_address'] == 'yes');
 
 		if ($this->arResult["IS_BITRIX24"])
 		{

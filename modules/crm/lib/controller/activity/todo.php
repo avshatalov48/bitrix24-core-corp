@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Controller\Activity;
 
+use Bitrix\Crm\Activity\Entity;
 use Bitrix\Crm\Activity\TodoCreateNotification;
 use Bitrix\Crm\Controller\Base;
 use Bitrix\Crm\Controller\ErrorCode;
@@ -17,33 +18,46 @@ use CCrmOwnerType;
 
 class ToDo extends Base
 {
+	public function getNearestAction(int $ownerTypeId, int $ownerId): ?array
+	{
+		$itemIdentifier = new ItemIdentifier($ownerTypeId, $ownerId);
+
+		$todo = Entity\ToDo::loadNearest($itemIdentifier);
+		if (!$todo)
+		{
+			return null;
+		}
+
+		return [
+			'id' => $todo->getId(),
+			'parentActivityId' => $todo->getParentActivityId(),
+			'description' => $todo->getDescription(),
+			'deadline' => $todo->getDeadline()->toString(),
+			'storageElementIds' => array_map(
+				'intval',
+				(new HiddenStorage())->fetchFileIdsByStorageFileIds($todo->getStorageElementIds())
+			),
+		];
+   }
+
 	public function addAction(
 		int $ownerTypeId,
 		int $ownerId,
-		string $description = '',
 		string $deadline,
-		int $responsibleId = null,
+		string $description = '',
+		?int $responsibleId = null,
 		?int $parentActivityId = null,
 		array $fileTokens = []
 	): ?array
 	{
-		$todo = new \Bitrix\Crm\Activity\Entity\ToDo(
+		$todo = new Entity\ToDo(
 			new ItemIdentifier($ownerTypeId, $ownerId)
 		);
-		$todo->setDescription($description);
 
-		$deadline = $this->prepareDatetime($deadline);
-		if (!$deadline)
+		$todo = $this->getPreparedEntity($todo, $description, $deadline, $parentActivityId, $responsibleId);
+		if (!$todo)
 		{
 			return null;
-		}
-		$todo->setDeadline($deadline);
-
-		$todo->setParentActivityId($parentActivityId);
-
-		if ($responsibleId)
-		{
-			$todo->setResponsibleId($responsibleId);
 		}
 
 		$result = $this->saveTodo($todo);
@@ -62,6 +76,80 @@ class ToDo extends Base
 		return $result;
 	}
 
+	public function updateAction(
+		int $ownerTypeId,
+		int $ownerId,
+		string $deadline,
+		int $id = null,
+		string $description = '',
+		?int $responsibleId = null,
+		?int $parentActivityId = null,
+		array $fileTokens = []
+	): ?array
+	{
+		$todo = $this->loadEntity($ownerTypeId, $ownerId, $id);
+		if (!$todo)
+		{
+			return null;
+		}
+
+		if ($todo->isCompleted())
+		{
+			$this->addError(new Error( Loc::getMessage('CRM_ACTIVITY_TODO_UPDATE_FILES_ERROR')));
+
+			return null;
+		}
+
+		$todo = $this->getPreparedEntity($todo, $description, $deadline, $parentActivityId, $responsibleId);
+		if (!$todo)
+		{
+			return null;
+		}
+
+		$currentStorageElementIds = $todo->getStorageElementIds() ?? [];
+		if (!empty($fileTokens) || !empty($currentStorageElementIds))
+		{
+			$storageElementIds = $this->saveFilesToStorage(
+				$ownerTypeId,
+				$ownerId,
+				$fileTokens,
+				$id,
+				$currentStorageElementIds
+			);
+
+			$todo->setStorageElementIds($storageElementIds);
+		}
+
+		return $this->saveTodo($todo);
+	}
+
+	protected function getPreparedEntity(
+		Entity\ToDo $todo,
+		string $description,
+		string $deadline,
+		?int $parentActivityId,
+		?int $responsibleId = null
+	): ?Entity\ToDo
+	{
+		$todo->setDescription($description);
+
+		$deadline = $this->prepareDatetime($deadline);
+		if (!$deadline)
+		{
+			return null;
+		}
+		$todo->setDeadline($deadline);
+
+		$todo->setParentActivityId($parentActivityId);
+
+		if ($responsibleId)
+		{
+			$todo->setResponsibleId($responsibleId);
+		}
+
+		return $todo;
+	}
+
 	public function updateDeadlineAction(
 		int $ownerTypeId,
 		int $ownerId,
@@ -69,15 +157,12 @@ class ToDo extends Base
 		string $value
 	): ?array
 	{
-		$todo = \Bitrix\Crm\Activity\Entity\ToDo::load(
-			new ItemIdentifier($ownerTypeId, $ownerId),
-			$id
-		);
+		$todo = $this->loadEntity($ownerTypeId, $ownerId, $id, false);
 		if (!$todo)
 		{
-			$this->addError(ErrorCode::getNotFoundError());
 			return null;
 		}
+
 		$deadline = $this->prepareDatetime($value);
 		if (!$deadline)
 		{
@@ -95,15 +180,12 @@ class ToDo extends Base
 		string $value
 	): ?array
 	{
-		$todo = \Bitrix\Crm\Activity\Entity\ToDo::load(
-			new ItemIdentifier($ownerTypeId, $ownerId),
-			$id
-		);
+		$todo = $this->loadEntity($ownerTypeId, $ownerId, $id, false);
 		if (!$todo)
 		{
-			$this->addError(ErrorCode::getNotFoundError());
 			return null;
 		}
+
 		$todo->setDescription($value);
 
 		return $this->saveTodo($todo);
@@ -116,14 +198,9 @@ class ToDo extends Base
 		array $fileTokens = []
 	): ?array
 	{
-		$todo = \Bitrix\Crm\Activity\Entity\ToDo::load(
-			new ItemIdentifier($ownerTypeId, $ownerId),
-			$id
-		);
+		$todo = $this->loadEntity($ownerTypeId, $ownerId, $id);
 		if (!$todo)
 		{
-			$this->addError(ErrorCode::getNotFoundError());
-
 			return null;
 		}
 
@@ -147,6 +224,21 @@ class ToDo extends Base
 		return $this->saveTodo($todo);
 	}
 
+	protected function loadEntity(int $ownerTypeId, int $ownerId, int $id): ?Entity\ToDo
+	{
+		$itemIdentifier = new ItemIdentifier($ownerTypeId, $ownerId);
+		$todo = Entity\ToDo::load($itemIdentifier, $id);
+
+		if (!$todo)
+		{
+			$this->addError(ErrorCode::getNotFoundError());
+
+			return null;
+		}
+
+		return $todo;
+	}
+
 	public function skipEntityDetailsNotificationAction(int $entityTypeId, string $period): bool
 	{
 		if (!CCrmOwnerType::ResolveName($entityTypeId))
@@ -163,7 +255,7 @@ class ToDo extends Base
 		return $result->isSuccess();
 	}
 
-	private function saveTodo(\Bitrix\Crm\Activity\Entity\ToDo $todo): ?array
+	private function saveTodo(Entity\ToDo $todo): ?array
 	{
 		$saveResult = $todo->save();
 		if ($saveResult->isSuccess())

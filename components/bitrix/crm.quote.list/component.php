@@ -95,29 +95,29 @@ $userID = CCrmSecurityHelper::GetCurrentUserID();
 $isAdmin = CCrmPerms::IsAdmin();
 
 $arResult['CURRENT_USER_ID'] = CCrmSecurityHelper::GetCurrentUserID();
-$arParams['PATH_TO_QUOTE_LIST'] = CrmCheckPath('PATH_TO_QUOTE_LIST', $arParams['PATH_TO_QUOTE_LIST'], $APPLICATION->GetCurPage());
-$arParams['PATH_TO_QUOTE_DETAILS'] = CrmCheckPath('PATH_TO_QUOTE_DETAILS', $arParams['PATH_TO_QUOTE_DETAILS'], $APPLICATION->GetCurPage().'?quote_id=#quote_id#&details');
-$arParams['PATH_TO_QUOTE_SHOW'] = CrmCheckPath('PATH_TO_QUOTE_SHOW', $arParams['PATH_TO_QUOTE_SHOW'], $APPLICATION->GetCurPage().'?quote_id=#quote_id#&show');
-$arParams['PATH_TO_QUOTE_EDIT'] = CrmCheckPath('PATH_TO_QUOTE_EDIT', $arParams['PATH_TO_QUOTE_EDIT'], $APPLICATION->GetCurPage().'?quote_id=#quote_id#&edit');
-$arParams['PATH_TO_QUOTE_KANBAN'] = CrmCheckPath('PATH_TO_QUOTE_KANBAN', $arParams['PATH_TO_QUOTE_KANBAN'], $currentPage);
-$arParams['PATH_TO_INVOICE_EDIT'] = CrmCheckPath('PATH_TO_INVOICE_EDIT', $arParams['PATH_TO_INVOICE_EDIT'], $APPLICATION->GetCurPage().'?invoice_id=#invoice_id#&edit');
-$arParams['PATH_TO_COMPANY_SHOW'] = CrmCheckPath('PATH_TO_COMPANY_SHOW', $arParams['PATH_TO_COMPANY_SHOW'], $APPLICATION->GetCurPage().'?company_id=#company_id#&show');
-$arParams['PATH_TO_LEAD_SHOW'] = CrmCheckPath('PATH_TO_LEAD_SHOW', $arParams['PATH_TO_LEAD_SHOW'], $APPLICATION->GetCurPage().'?lead_id=#lead_id#&show');
-$arParams['PATH_TO_DEAL_SHOW'] = CrmCheckPath('PATH_TO_DEAL_SHOW', $arParams['PATH_TO_DEAL_SHOW'], $APPLICATION->GetCurPage().'?deal_id=#deal_id#&show');
-$arParams['PATH_TO_CONTACT_SHOW'] = CrmCheckPath('PATH_TO_CONTACT_SHOW', $arParams['PATH_TO_CONTACT_SHOW'], $APPLICATION->GetCurPage().'?contact_id=#contact_id#&show');
-$arParams['PATH_TO_USER_PROFILE'] = CrmCheckPath('PATH_TO_USER_PROFILE', $arParams['PATH_TO_USER_PROFILE'], '/company/personal/user/#user_id#/');
+$arParams['PATH_TO_QUOTE_LIST'] = CrmCheckPath('PATH_TO_QUOTE_LIST', $arParams['PATH_TO_QUOTE_LIST'] ?? '', $APPLICATION->GetCurPage());
+$arParams['PATH_TO_QUOTE_DETAILS'] = CrmCheckPath('PATH_TO_QUOTE_DETAILS', $arParams['PATH_TO_QUOTE_DETAILS'] ?? '', $APPLICATION->GetCurPage().'?quote_id=#quote_id#&details');
+$arParams['PATH_TO_QUOTE_SHOW'] = CrmCheckPath('PATH_TO_QUOTE_SHOW', $arParams['PATH_TO_QUOTE_SHOW'] ?? '', $APPLICATION->GetCurPage().'?quote_id=#quote_id#&show');
+$arParams['PATH_TO_QUOTE_EDIT'] = CrmCheckPath('PATH_TO_QUOTE_EDIT', $arParams['PATH_TO_QUOTE_EDIT'] ?? '', $APPLICATION->GetCurPage().'?quote_id=#quote_id#&edit');
+$arParams['PATH_TO_QUOTE_KANBAN'] = CrmCheckPath('PATH_TO_QUOTE_KANBAN', $arParams['PATH_TO_QUOTE_KANBAN'] ?? '', $APPLICATION->GetCurPage());
+$arParams['PATH_TO_INVOICE_EDIT'] = CrmCheckPath('PATH_TO_INVOICE_EDIT', $arParams['PATH_TO_INVOICE_EDIT'] ?? '', $APPLICATION->GetCurPage().'?invoice_id=#invoice_id#&edit');
+$arParams['PATH_TO_COMPANY_SHOW'] = CrmCheckPath('PATH_TO_COMPANY_SHOW', $arParams['PATH_TO_COMPANY_SHOW'] ?? '', $APPLICATION->GetCurPage().'?company_id=#company_id#&show');
+$arParams['PATH_TO_LEAD_SHOW'] = CrmCheckPath('PATH_TO_LEAD_SHOW', $arParams['PATH_TO_LEAD_SHOW'] ?? '', $APPLICATION->GetCurPage().'?lead_id=#lead_id#&show');
+$arParams['PATH_TO_DEAL_SHOW'] = CrmCheckPath('PATH_TO_DEAL_SHOW', $arParams['PATH_TO_DEAL_SHOW'] ?? '', $APPLICATION->GetCurPage().'?deal_id=#deal_id#&show');
+$arParams['PATH_TO_CONTACT_SHOW'] = CrmCheckPath('PATH_TO_CONTACT_SHOW', $arParams['PATH_TO_CONTACT_SHOW'] ?? '', $APPLICATION->GetCurPage().'?contact_id=#contact_id#&show');
+$arParams['PATH_TO_USER_PROFILE'] = CrmCheckPath('PATH_TO_USER_PROFILE', $arParams['PATH_TO_USER_PROFILE'] ?? '', '/company/personal/user/#user_id#/');
 $arParams['NAME_TEMPLATE'] = empty($arParams['NAME_TEMPLATE']) ? CSite::GetNameFormat(false) : str_replace(array("#NOBR#","#/NOBR#"), array("",""), $arParams["NAME_TEMPLATE"]);
-$arParams['ADD_EVENT_NAME'] = isset($arParams['ADD_EVENT_NAME']) ? $arParams['ADD_EVENT_NAME'] : '';
+$arParams['ADD_EVENT_NAME'] = $arParams['ADD_EVENT_NAME'] ?? '';
 $arResult['ADD_EVENT_NAME'] = $arParams['ADD_EVENT_NAME'] !== ''
 	? preg_replace('/[^a-zA-Z0-9_\.]/', '', $arParams['ADD_EVENT_NAME']) : '';
 
 $arResult['IS_AJAX_CALL'] = isset($_REQUEST['AJAX_CALL']) || isset($_REQUEST['ajax_request']) || !!CAjax::GetSession();
-$arResult['NAVIGATION_CONTEXT_ID'] = isset($arParams['NAVIGATION_CONTEXT_ID']) ? $arParams['NAVIGATION_CONTEXT_ID'] : '';
-$arResult['PRESERVE_HISTORY'] = isset($arParams['PRESERVE_HISTORY']) ? $arParams['PRESERVE_HISTORY'] : false;
+$arResult['NAVIGATION_CONTEXT_ID'] = $arParams['NAVIGATION_CONTEXT_ID'] ?? '';
+$arResult['PRESERVE_HISTORY'] = $arParams['PRESERVE_HISTORY'] ?? false;
 $arResult['ENABLE_SLIDER'] = \CCrmOwnerType::IsSliderEnabled(\CCrmOwnerType::Quote);
 $arResult['CALL_LIST_UPDATE_MODE'] = isset($_REQUEST['call_list_context']) && isset($_REQUEST['call_list_id']) && IsModuleInstalled('voximplant');
-$arResult['CALL_LIST_CONTEXT'] = (string)$_REQUEST['call_list_context'];
-$arResult['CALL_LIST_ID'] = (int)$_REQUEST['call_list_id'];
+$arResult['CALL_LIST_CONTEXT'] = (string)($_REQUEST['call_list_context'] ?? null);
+$arResult['CALL_LIST_ID'] = (int)($_REQUEST['call_list_id'] ?? null);
 if($arResult['CALL_LIST_UPDATE_MODE'])
 {
 	AddEventHandler('crm', 'onCrmQuoteListItemBuildMenu', array('\Bitrix\Crm\CallList\CallList', 'handleOnCrmQuoteListItemBuildMenu'));
@@ -246,6 +246,11 @@ if (!$bInternal)
 	if(!in_array('WEBFORM_ID', $effectiveFilterFieldIDs, true))
 	{
 		$effectiveFilterFieldIDs[] = 'WEBFORM_ID';
+	}
+
+	if(!in_array('ACTIVITY_COUNTER', $effectiveFilterFieldIDs, true))
+	{
+		$effectiveFilterFieldIDs[] = 'ACTIVITY_COUNTER';
 	}
 
 	Tracking\UI\Filter::appendEffectiveFields($effectiveFilterFieldIDs);
@@ -529,10 +534,20 @@ else
 	);
 }
 
+//region Activity Counter Filter
+CCrmEntityHelper::applyCounterFilterWrapper(
+	\CCrmOwnerType::Quote,
+	$arResult['GRID_ID'],
+	Bitrix\Crm\Counter\EntityCounter::internalizeExtras($_REQUEST),
+	$arFilter,
+	$entityFilter
+);
+//endregion
+
 
 CCrmEntityHelper::PrepareMultiFieldFilter($arFilter, array(), '=%', false);
 $arImmutableFilters = array(
-	'FM', 'ID', 'ASSIGNED_BY_ID', 'CURRENCY_ID',
+	'FM', 'ID', 'ASSIGNED_BY_ID', '!ASSIGNED_BY_ID', 'CURRENCY_ID',
 	'CONTACT_ID', 'CONTACT_ID_value', 'ASSOCIATED_CONTACT_ID',
 	'COMPANY_ID', 'COMPANY_ID_value',
 	'LEAD_ID', 'LEAD_ID_value',
@@ -647,7 +662,7 @@ foreach ($arFilter as $k => $v)
 		}
 		unset($arFilter[$k]);
 	}
-	elseif (mb_strpos($k, 'UF_') !== 0 && $k != 'LOGIC' && $v !== false)
+	elseif (mb_strpos($k, 'UF_') !== 0 && $k != 'LOGIC' && $v !== false && $k != '__CONDITIONS')
 	{
 		$arFilter['%'.$k] = $v;
 		unset($arFilter[$k]);
@@ -1027,7 +1042,7 @@ if (empty($arSelect))
 {
 	foreach ($arResult['HEADERS'] as $arHeader)
 	{
-		if ($arHeader['default'])
+		if (isset($arHeader['default']) && $arHeader['default'])
 		{
 			$arSelect[] = $arHeader['id'];
 		}
@@ -1355,31 +1370,36 @@ $preFetchWasEmpty = false;
  */
 if ($isInExportMode && $isStExport)
 {
-	$limit = $pageSize;
-	$navListOptions['QUERY_OPTIONS'] = array('LIMIT' => $limit);
-	$arSort = array('ID' => 'ASC');
+	$totalExportItems = $arParams['STEXPORT_TOTAL_ITEMS'] ?: $total;
+	$arSort = ['ID' => 'DESC'];
 
-	$dbResultOnlyIds = CCrmQuote::GetList(
-		$arSort,
-		array_merge(
-			$arFilter,
-			array('>ID' => $arParams['STEXPORT_LAST_EXPORTED_ID'] ?? -1)
-		),
-		false,
-		false,
-		array('ID'),
-		$navListOptions
-	);
-
-	$entityIds = array();
-	while($arDealRow = $dbResultOnlyIds->GetNext())
+	// Skip the first page because the last ID isn't present yet.
+	if ($pageNum > 1)
 	{
-		$entityIds[] = (int) $arDealRow['ID'];
-	}
-	$lastExportedId = end($entityIds);
+		$limit = $pageSize;
+		$navListOptions['QUERY_OPTIONS'] = ['LIMIT' => $limit];
 
-	$arFilter = array('@ID' => $entityIds, 'CHECK_PERMISSIONS' => 'N');
-	$preFetchWasEmpty = empty($entityIds);
+		$dbResultOnlyIds = CCrmQuote::GetList(
+			$arSort,
+			array_merge(
+				$arFilter,
+				['<ID' => $arParams['STEXPORT_LAST_EXPORTED_ID'] ?? -1]
+			),
+			false,
+			false,
+			['ID'],
+			$navListOptions
+		);
+
+		$entityIds = [];
+		while($arDealRow = $dbResultOnlyIds->GetNext())
+		{
+			$entityIds[] = (int) $arDealRow['ID'];
+		}
+
+		$arFilter = ['@ID' => $entityIds, 'CHECK_PERMISSIONS' => 'N'];
+		$preFetchWasEmpty = empty($entityIds);
+	}
 }
 
 if ($isInGadgetMode && isset($arNavParams['nTopCount']))
@@ -1394,13 +1414,13 @@ else
 	}
 	elseif ($isInExportMode && $isStExport)
 	{
-		$navListOptions['QUERY_OPTIONS'] = null;
+		$navListOptions['QUERY_OPTIONS'] = $pageNum === 1 ? ['LIMIT' => $limit] : null;
 	}
 	else
 	{
 		$navListOptions = array_merge(
 			$arOptions,
-			array('QUERY_OPTIONS' => array('LIMIT' => $pageSize + 1, 'OFFSET' => $pageSize * ($pageNum - 1)))
+			['QUERY_OPTIONS' => ['LIMIT' => $pageSize + 1, 'OFFSET' => $pageSize * ($pageNum - 1)]]
 		);
 	}
 }
@@ -1419,10 +1439,14 @@ if (!$preFetchWasEmpty)
 	$qty = 0;
 	while($arQuote = $obRes->GetNext())
 	{
-		if($pageSize > 0 && ++$qty > $pageSize)
+		if(!$isInExportMode && $pageSize > 0 && ++$qty > $pageSize)
 		{
 			$enableNextPage = true;
 			break;
+		}
+		elseif ($isInExportMode && $isStExport)
+		{
+			$enableNextPage = $pageNum * $pageSize <= $totalExportItems;
 		}
 
 		$arQuote['CLOSEDATE'] = !empty($arQuote['CLOSEDATE']) ? CCrmComponentHelper::TrimDateTimeString(ConvertTimeStamp(MakeTimeStamp($arQuote['CLOSEDATE']), 'SHORT', SITE_ID)) : '';
@@ -1667,7 +1691,7 @@ if (!$preFetchWasEmpty)
 				'user_id' => $arQuote['ASSIGNED_BY']
 			)
 		);
-		$arQuote['PATH_TO_USER_BP'] = CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_USER_BP'],
+		$arQuote['PATH_TO_USER_BP'] = CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_USER_BP'] ?? null,
 			array(
 				'user_id' => $userID
 			)
@@ -1675,23 +1699,23 @@ if (!$preFetchWasEmpty)
 
 		$arQuote['PATH_TO_USER_CREATOR'] = CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_USER_PROFILE'],
 			array(
-				'user_id' => $arQuote['CREATED_BY']
+				'user_id' => $arQuote['CREATED_BY'] ?? null
 			)
 		);
 
 		$arQuote['PATH_TO_USER_MODIFIER'] = CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_USER_PROFILE'],
 			array(
-				'user_id' => $arQuote['MODIFY_BY']
+				'user_id' => $arQuote['MODIFY_BY'] ?? null
 			)
 		);
 
 		$arQuote['CREATED_BY_FORMATTED_NAME'] = CUser::FormatName(
 			$arParams['NAME_TEMPLATE'],
 			array(
-				'LOGIN' => $arQuote['CREATED_BY_LOGIN'],
-				'NAME' => $arQuote['CREATED_BY_NAME'],
-				'LAST_NAME' => $arQuote['CREATED_BY_LAST_NAME'],
-				'SECOND_NAME' => $arQuote['CREATED_BY_SECOND_NAME']
+				'LOGIN' => $arQuote['CREATED_BY_LOGIN'] ?? null,
+				'NAME' => $arQuote['CREATED_BY_NAME'] ?? null,
+				'LAST_NAME' => $arQuote['CREATED_BY_LAST_NAME'] ?? null,
+				'SECOND_NAME' => $arQuote['CREATED_BY_SECOND_NAME'] ?? null
 			),
 			true, false
 		);
@@ -1699,16 +1723,16 @@ if (!$preFetchWasEmpty)
 		$arQuote['MODIFY_BY_FORMATTED_NAME'] = CUser::FormatName(
 			$arParams['NAME_TEMPLATE'],
 			array(
-				'LOGIN' => $arQuote['MODIFY_BY_LOGIN'],
-				'NAME' => $arQuote['MODIFY_BY_NAME'],
-				'LAST_NAME' => $arQuote['MODIFY_BY_LAST_NAME'],
-				'SECOND_NAME' => $arQuote['MODIFY_BY_SECOND_NAME']
+				'LOGIN' => $arQuote['MODIFY_BY_LOGIN'] ?? null,
+				'NAME' => $arQuote['MODIFY_BY_NAME'] ?? null,
+				'LAST_NAME' => $arQuote['MODIFY_BY_LAST_NAME'] ?? null,
+				'SECOND_NAME' => $arQuote['MODIFY_BY_SECOND_NAME'] ?? null
 			),
 			true, false
 		);
 
-		$statusID = isset($arQuote['STATUS_ID']) ? $arQuote['STATUS_ID'] : '';
-		$arQuote['QUOTE_STATUS_NAME'] = isset($arResult['STATUS_LIST'][$statusID]) ? $arResult['STATUS_LIST'][$statusID] : $statusID;
+		$statusID = $arQuote['STATUS_ID'] ?? '';
+		$arQuote['QUOTE_STATUS_NAME'] = $arResult['STATUS_LIST'][$statusID] ?? $statusID;
 
 		if ($arResult['ENABLE_TASK'])
 		{
@@ -1788,6 +1812,15 @@ if (!$preFetchWasEmpty)
 		$arResult['QUOTE'][$entityID] = $arQuote;
 		$arResult['QUOTE_UF'][$entityID] = array();
 		$arResult['QUOTE_ID'][$entityID] = $entityID;
+	}
+
+	if (isset($arResult['QUOTE']) && count($arResult['QUOTE']) > 0)
+	{
+		$lastExportedId = end($arResult['QUOTE'])['ID'];
+	}
+	else
+	{
+		$lastExportedId = -1;
 	}
 
 }
@@ -1961,7 +1994,7 @@ if (!$isInExportMode)
 
 	$this->IncludeComponentTemplate();
 	include_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/components/bitrix/crm.quote/include/nav.php');
-	return $arResult['ROWS_COUNT'];
+	return $arResult['ROWS_COUNT'] ?? null;
 }
 else
 {

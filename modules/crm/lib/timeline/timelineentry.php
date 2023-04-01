@@ -3,6 +3,8 @@ namespace Bitrix\Crm\Timeline;
 
 use Bitrix\Crm;
 use Bitrix\Crm\Integration\DocumentGeneratorManager;
+use Bitrix\Crm\ItemIdentifier;
+use Bitrix\Crm\Timeline\Entity\TimelineBindingTable;
 use Bitrix\Main;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Entity\Query;
@@ -119,6 +121,30 @@ class TimelineEntry
 			}
 		}
 	}
+
+	/**
+	 * @param int $id
+	 * @return ItemIdentifier[]
+	 */
+	public static function getBindingItemIdentifiers(int $id): array
+	{
+		$result = [];
+
+		$bindingsList = TimelineBindingTable::getList([
+			'filter' => ['OWNER_ID' => $id],
+			'select' => [
+				'ENTITY_TYPE_ID',
+				'ENTITY_ID',
+			]
+		]);
+		while ($binding = $bindingsList->fetch())
+		{
+			$result[] = new ItemIdentifier($binding['ENTITY_TYPE_ID'], $binding['ENTITY_ID']);
+		}
+
+		return $result;
+	}
+
 	public static function deleteByOwner($entityTypeID, $entityID)
 	{
 		if(!is_int($entityTypeID))

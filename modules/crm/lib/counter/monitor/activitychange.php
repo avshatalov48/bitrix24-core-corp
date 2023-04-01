@@ -22,11 +22,11 @@ class ActivityChange
 
 	public static function create(int $id, array $oldFields, array $oldBindings, array $newFields, array $newBindings): self
 	{
-		$oldDeadline = ($oldFields['DEADLINE'] && !\CCrmDateTimeHelper::IsMaxDatabaseDate($oldFields['DEADLINE']))
+		$oldDeadline = (isset($oldFields['DEADLINE']) && $oldFields['DEADLINE'] && !\CCrmDateTimeHelper::IsMaxDatabaseDate($oldFields['DEADLINE']))
 			? DateTime::createFromUserTime($oldFields['DEADLINE'])
 			: null
 		;
-		$newDeadline = ($newFields['DEADLINE'] && !\CCrmDateTimeHelper::IsMaxDatabaseDate($newFields['DEADLINE']))
+		$newDeadline = (isset($newFields['DEADLINE']) && $newFields['DEADLINE'] && !\CCrmDateTimeHelper::IsMaxDatabaseDate($newFields['DEADLINE']))
 			? DateTime::createFromUserTime($newFields['DEADLINE'])
 			: null
 		;

@@ -1,5 +1,7 @@
 <?php
 
+use Bitrix\Ldap\Internal\Security\Encryption;
+
 IncludeModuleLangFile(__FILE__);
 
 class CLdapServer
@@ -239,7 +241,7 @@ class CLdapServer
 			return false;
 
 		if(is_set($arFields, "ADMIN_PASSWORD"))
-			$arFields["ADMIN_PASSWORD"]=CLdapUtil::Crypt($arFields["ADMIN_PASSWORD"]);
+			$arFields["ADMIN_PASSWORD"] = Encryption::encrypt($arFields["ADMIN_PASSWORD"]);
 
 		if(is_set($arFields, "FIELD_MAP") && is_array($arFields["FIELD_MAP"]))
 		{
@@ -314,7 +316,7 @@ class CLdapServer
 			return false;
 
 		if(is_set($arFields, "ADMIN_PASSWORD"))
-			$arFields["ADMIN_PASSWORD"]=CLdapUtil::Crypt($arFields["ADMIN_PASSWORD"]);
+			$arFields["ADMIN_PASSWORD"] = Encryption::encrypt($arFields["ADMIN_PASSWORD"]);
 
 		if(is_set($arFields, "FIELD_MAP") && is_array($arFields["FIELD_MAP"]))
 		{
@@ -630,7 +632,7 @@ class __CLDAPServerDBResult extends CDBResult
 	{
 		if($res = parent::Fetch())
 		{
-			$res["ADMIN_PASSWORD"] = CLdapUtil::Decrypt($res["ADMIN_PASSWORD"]);
+			$res["ADMIN_PASSWORD"] = Encryption::decrypt($res["ADMIN_PASSWORD"]);
 			$res["FIELD_MAP"] = unserialize($res["FIELD_MAP"], ['allowed_classes' => false]);
 			if(!is_array($res["FIELD_MAP"]))
 				$res["FIELD_MAP"] = Array();

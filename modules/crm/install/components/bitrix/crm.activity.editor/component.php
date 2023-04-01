@@ -47,8 +47,13 @@ if ($arResult['ENABLE_EMAIL_ADD'])
 
 		while ($mailbox = $res->fetch())
 		{
-			if (!$mailbox['USER_ID'] && $mailbox['SERVER_TYPE'] != 'imap')
+			if (
+				(!isset($mailbox['USER_ID']) || !$mailbox['USER_ID'])
+				&& $mailbox['SERVER_TYPE'] !== 'imap'
+			)
+			{
 				continue;
+			}
 
 			if (!empty($mailbox['OPTIONS']['flags']) && in_array('crm_connect', $mailbox['OPTIONS']['flags']))
 			{

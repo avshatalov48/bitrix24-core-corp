@@ -9,6 +9,9 @@
 */
 
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_before.php");
+
+\Bitrix\Main\Loader::includeModule('ldap');
+
 require_once($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/ldap/prolog.php");
 
 $MOD_RIGHT = $APPLICATION->GetGroupRight("ldap");
@@ -21,7 +24,6 @@ if (!extension_loaded('ldap'))
 	ShowError(GetMessage("LDAP_EXT_NO_LOADED"));
 	require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_admin.php");
 }
-require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/ldap/include.php");
 
 $err_mess = "File: ".__FILE__."<br>Line: ";
 
@@ -103,7 +105,6 @@ if($_SERVER['REQUEST_METHOD'] == "POST" && ($save <> '' || $apply <> '') && $MOD
 		"CONVERT_UTF8"	=>	$_REQUEST['CONVERT_UTF8'],
 		"ADMIN_LOGIN"	=>	$_REQUEST['ADMIN_LOGIN'],
 		"ACTIVE"		=>	$_REQUEST['ACTIVE'],
-		"ADMIN_PASSWORD"	=>	$_REQUEST['ADMIN_PASSWORD'],
 		"BASE_DN"	=>	$_REQUEST['BASE_DN'],
 		"GROUP_FILTER"	=>	$_REQUEST['GROUP_FILTER'],
 		"GROUP_ID_ATTR"	=>	$_REQUEST['GROUP_ID_ATTR'],
@@ -135,8 +136,15 @@ if($_SERVER['REQUEST_METHOD'] == "POST" && ($save <> '' || $apply <> '') && $MOD
 		"CONNECTION_TYPE" => $_REQUEST['CONNECTION_TYPE']
 	);
 
-	if(is_array($arGroups))
+	if (is_array($arGroups))
+	{
 		$arFields['GROUPS'] = $arGroups;
+	}
+
+	if (array_key_exists('ADMIN_PASSWORD', $_REQUEST))
+	{
+		$arFields['ADMIN_PASSWORD'] = $_REQUEST['ADMIN_PASSWORD'];
+	}
 
 	// apply form to server config
 	if($ID>0)
@@ -298,6 +306,16 @@ $context->Show();
 
 if($SERVER <> '')
 {
+	$ADMIN_PASSWORD = '';
+	if (array_key_exists('ADMIN_PASSWORD', $_REQUEST))
+	{
+		$ADMIN_PASSWORD = $_REQUEST['ADMIN_PASSWORD'];
+	}
+	elseif (isset($arFields) && array_key_exists('ADMIN_PASSWORD', $arFields))
+	{
+		$ADMIN_PASSWORD = $arFields['ADMIN_PASSWORD'];
+	}
+
 	$ldp = new CLDAP([
 		"SERVER"		=>	$SERVER,
 		"PORT"			=>	$PORT,
@@ -498,14 +516,64 @@ else
 		<td><?echo GetMessage("LDAP_EDIT_ADM_LOGIN")?></td>
 		<td><input type="text" name="ADMIN_LOGIN" size="53" maxlength="255" value="<?=$str_ADMIN_LOGIN?>"></td>
 	</tr>
-	<tr class="adm-detail-required-field">
-		<td><?echo GetMessage("LDAP_EDIT_ADM_PASS")?></td>
-		<td><input type="password" name="ADMIN_PASSWORD" size="53" maxlength="255" value="<?=$str_ADMIN_PASSWORD?>"></td>
-	</tr>
+	<?php if ($ID > 0):?>
+		<tr class="adm-detail-required-field">
+			<td><?echo GetMessage("LDAP_EDIT_ADM_PASS")?></td>
+			<td>
+				<div id="ldap-password-change-input-placeholder"></div>
+				<input
+					type="button"
+					class="button"
+					id="ldap-password-change-button"
+					value="<?=GetMessage('LDAP_EDIT_ADM_PASS_CHANGE')?>">
+				<input
+					type="button"
+					class="button"
+					id="ldap-password-change-cancel-button"
+					style="display: none"
+					value="<?=GetMessage('LDAP_EDIT_ADM_PASS_CHANGE_CANCEL')?>">
+			</td>
+		</tr>
+	<?php else:?>
+		<tr class="adm-detail-required-field">
+			<td><?=GetMessage("LDAP_EDIT_ADM_PASS")?></td>
+			<td>
+				<input type="password" name="ADMIN_PASSWORD" size="53" maxlength="255" value="<?=$str_ADMIN_PASSWORD?>">
+			</td>
+		</tr>
+	<?php endif;?>
 	<tr>
 		<td>&nbsp;</td>
-		<td><input type="submit" name="check_server" value="<?echo GetMessage("LDAP_EDIT_CHECK")?>" class="button"></td>
+		<td><input type="submit" name="check_server" value="<?=GetMessage("LDAP_EDIT_CHECK_CONNECTION")?>" class="button"></td>
 	</tr>
+	<script type="text/javascript">
+		function LdapChangePasswordHandler()
+		{
+			const changeButton = document.getElementById('ldap-password-change-button');
+			const cancelButton = document.getElementById('ldap-password-change-cancel-button');
+			const inputPlaceholder = document.getElementById('ldap-password-change-input-placeholder');
+
+			if (!changeButton)
+			{
+				return;
+			}
+
+			changeButton.addEventListener('click', () => {
+				changeButton.style.display = 'none';
+				cancelButton.style.display = 'block';
+				inputPlaceholder.innerHTML = '<input type="password" id="ldap-password-change-input" name="ADMIN_PASSWORD" size="53" maxlength="255" value="">';
+				document.getElementById('ldap-password-change-input').focus();
+			});
+
+			cancelButton.addEventListener('click', () => {
+				changeButton.style.display = 'block';
+				cancelButton.style.display = 'none';
+				inputPlaceholder.innerHTML = '';
+			});
+		}
+
+		LdapChangePasswordHandler();
+	</script>
 	<tr class="adm-detail-required-field">
 		<td><?echo GetMessage("LDAP_EDIT_BASE_DN")?></td>
 		<td>

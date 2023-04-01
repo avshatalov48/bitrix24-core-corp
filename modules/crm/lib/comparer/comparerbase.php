@@ -63,7 +63,7 @@ class ComparerBase
 		);
 	}
 
-	private static function getStageSemantics(int $entityTypeId, string $stageId): ?string
+	public static function getStageSemantics(int $entityTypeId, string $stageId): ?string
 	{
 		$factory = Container::getInstance()->getFactory($entityTypeId);
 		if (!$factory || !$factory->isStagesSupported())

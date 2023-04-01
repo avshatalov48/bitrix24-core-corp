@@ -6,6 +6,7 @@ use Bitrix\Crm\Order\Builder\OrderBuilderCrm;
 use Bitrix\Sale\PaySystem\ApplePay;
 use Bitrix\Sale\PaySystem\Manager;
 use Bitrix\Sale\PriceMaths;
+use Bitrix\Sale\Tax;
 use Bitrix\Sale\TradingPlatform\Landing\Landing;
 use Bitrix\SalesCenter\Integration\LandingManager;
 
@@ -47,11 +48,24 @@ class OrderBuilder extends OrderBuilderCrm
 
 			foreach ($this->formData['PRODUCT'] as $index => $item)
 			{
-				$fields['SUM'] += PriceMaths::roundPrecision($item['QUANTITY'] * $item['PRICE']);
+				$price = $item['PRICE'] ?? 0;
+
+				$vatRate = (float)($item['VAT_RATE'] ?? 0);
+				$isVatIncluded = ($item['VAT_INCLUDED'] ?? 'N') === 'Y';
+
+				if (!$isVatIncluded && $vatRate > 0)
+				{
+					$vatCalculator = new Tax\VatCalculator($vatRate);
+					$price = $vatCalculator->accrue($price);
+				}
+
+				$quantity = (float)$item['QUANTITY'];
+
+				$fields['SUM'] += PriceMaths::roundPrecision($quantity * $price);
 
 				$fields['PRODUCT'][] = [
 					'BASKET_CODE' => $index,
-					'QUANTITY' => $item['QUANTITY']
+					'QUANTITY' => $quantity
 				];
 			}
 

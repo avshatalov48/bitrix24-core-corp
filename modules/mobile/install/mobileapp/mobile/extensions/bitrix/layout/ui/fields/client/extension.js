@@ -349,6 +349,7 @@ jn.define('layout/ui/fields/client', (require, exports, module) => {
 					entityId: id || entityId,
 					categoryId: this.getCategoryId(type),
 					uid: this.uid,
+					context: this.getUserCountryCodeInEditorOptions(),
 					isCreationFromSelector: this.isCreateContact,
 					closeOnSave: this.isCreateContact,
 					tabsExternalData,
@@ -378,7 +379,7 @@ jn.define('layout/ui/fields/client', (require, exports, module) => {
 						Array.isArray(prevEntityList)
 						&& !isEmpty(entityData)
 						&& this.isMultipleSelector(selectorName)
-							? mergeBy(prevEntityList, entityData, 'id')
+							? uniqBy([entityData, ...prevEntityList], 'id')
 							: [entityData];
 
 					this.communicationUpdate({ [selectorName.toUpperCase()]: [entityData] });
@@ -408,6 +409,15 @@ jn.define('layout/ui/fields/client', (require, exports, module) => {
 					}
 				})
 				.catch(console.error);
+		}
+
+		getUserCountryCodeInEditorOptions()
+		{
+			const defaultCountry = get(this.getConfig(), ['options', 'defaultCountry'], null);
+
+			return {
+				defaultCountry,
+			};
 		}
 
 		communicationUpdate(clientData)

@@ -1,8 +1,9 @@
 <?php
+
 namespace Bitrix\Crm\Timeline;
 
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Sale\Cashbox;
+use Bitrix\Crm\ItemIdentifier;
 
 Loc::loadMessages(__FILE__);
 
@@ -13,7 +14,7 @@ Loc::loadMessages(__FILE__);
 class OrderCheckController extends EntityController
 {
 	/**
-	 * @return int
+	 * @inheritDoc
 	 */
 	public function getEntityTypeID()
 	{
@@ -21,46 +22,12 @@ class OrderCheckController extends EntityController
 	}
 
 	/**
-	 * @param array $data
-	 * @param array|null $options
-	 * @return array
-	 * @throws \Bitrix\Main\NotImplementedException
+	 * @inheritDoc
 	 */
 	public function prepareHistoryDataModel(array $data, array $options = null)
 	{
-		$typeId = (int)$data['TYPE_CATEGORY_ID'];
-		$entity = $data['ASSOCIATED_ENTITY'];
-
-		$data['TITLE'] = Loc::getMessage('CRM_ORDER_CHECK_CONTROLLER_TITLE', [
-			'#CHECK_ID#' => $data['ASSOCIATED_ENTITY_ID']
-		]);
-
-		$check = Cashbox\CheckManager::getObjectById($data['ASSOCIATED_ENTITY_ID']);
-		$data['CHECK_NAME'] = ($check) ? $check::getName() : '';
-
-		if ($typeId === TimelineType::MARK)
+		if (isset($data['SETTINGS']['PRINTED']))
 		{
-			$data['TITLE'] = Loc::getMessage('CRM_ORDER_CHECK_TITLE_2', [
-				'#CHECK_ID#' => $data['ASSOCIATED_ENTITY_ID'],
-				'#DATE_CREATE#' => $entity['DATE_CREATE_FORMATTED'],
-			]);
-			$data['SENDED'] = $data['SETTINGS']['SENDED'];
-			$data['LEGEND'] = Loc::getMessage('CRM_ORDER_CHECK_SENDED_TO_IM_2');
-		}
-		elseif ($typeId === TimelineType::UNDEFINED)
-		{
-			if ($check)
-			{
-				$data['LEGEND'] = Loc::getMessage('CRM_ORDER_CHECK_CONTROLLER_LEGEND', [
-					'#DATE_CREATE#' => $entity['DATE_CREATE_FORMATTED'],
-					'#SUM_WITH_CURRENCY#' => $entity['SUM_WITH_CURRENCY']
-				]);
-				$data['CHECK_URL'] = $check->getUrl();
-			}
-			elseif ($data['SETTINGS']['FAILURE'])
-			{
-				$data['LEGEND'] = $data['SETTINGS']['ERROR_TEXT'];
-			}
 			$data['PRINTED'] = $data['SETTINGS']['PRINTED'];
 		}
 
@@ -69,11 +36,7 @@ class OrderCheckController extends EntityController
 		return parent::prepareHistoryDataModel($data, $options);
 	}
 
-	/**
-	 * @param array $fields
-	 * @return int
-	 */
-	protected static function resolveCreatorID(array $fields)
+	protected static function resolveCreatorID(array $fields): int
 	{
 		$authorId = 0;
 		if (isset($fields['CREATED_BY']))
@@ -88,24 +51,19 @@ class OrderCheckController extends EntityController
 
 		if ($authorId <= 0)
 		{
-			$authorId = self::getDefaultAuthorId();
+			$authorId = (int)self::getDefaultAuthorId();
 		}
 
 		return $authorId;
 	}
 
-	/**
-	 * @param $ownerId
-	 * @param array $params
-	 * @throws \Bitrix\Main\ArgumentException
-	 */
-	public function onSendCheckToIm($ownerId, array $params)
+	public function onSendCheckToIm(int $ownerId, array $params): void
 	{
 		$bindings = $params['BINDINGS'] ?? [];
 		$settings = $params['SETTINGS'] ?? [];
 		$orderFields = $params['ORDER_FIELDS'] ?? [];
 
-		$entityId = OrderCheckEntry::create([
+		$timelineEntryId = OrderCheckEntry::create([
 			'ENTITY_ID' => $ownerId,
 			'TYPE_CATEGORY_ID' => TimelineType::MARK,
 			'AUTHOR_ID' => self::resolveCreatorID($orderFields),
@@ -116,58 +74,53 @@ class OrderCheckController extends EntityController
 		foreach($bindings as $binding)
 		{
 			$this->sendPullEventOnAdd(
-				new \Bitrix\Crm\ItemIdentifier($binding['ENTITY_TYPE_ID'], $binding['ENTITY_ID']),
-				$entityId
+				new ItemIdentifier($binding['ENTITY_TYPE_ID'], $binding['ENTITY_ID']),
+				$timelineEntryId
 			);
 		}
 	}
 
-	/**
-	 * @param $ownerId
-	 * @param array $params
-	 * @throws \Bitrix\Main\ArgumentException
-	 */
-	public function onPrintCheck($ownerId, array $params)
+	public function onPrintCheck(int $ownerId, array $params): void
 	{
 		$bindings = $params['BINDINGS'] ?? [];
 		$settings = $params['SETTINGS'] ?? [];
 		$orderFields = $params['ORDER_FIELDS'] ?? [];
 
-		$entityId = OrderCheckEntry::create([
-			'ENTITY_ID' => (int)$ownerId,
+		$timelineEntryId = OrderCheckEntry::create([
+			'ENTITY_ID' => $ownerId,
 			'TYPE_CATEGORY_ID' => TimelineType::UNDEFINED,
 			'AUTHOR_ID' => self::resolveCreatorID($orderFields),
 			'SETTINGS' => $settings,
 			'BINDINGS' => $bindings,
 		]);
 
-		foreach($bindings as $binding)
+		foreach ($bindings as $binding)
 		{
 			$this->sendPullEventOnAdd(
-				new \Bitrix\Crm\ItemIdentifier($binding['ENTITY_TYPE_ID'], $binding['ENTITY_ID']),
-				$entityId
+				new ItemIdentifier($binding['ENTITY_TYPE_ID'], $binding['ENTITY_ID']),
+				$timelineEntryId
 			);
 		}
 	}
 
-	public function onCheckFailure(array $params)
+	public function onCheckFailure(array $params): void
 	{
 		$bindings = $params['BINDINGS'] ?? [];
 		$settings = $params['SETTINGS'] ?? [];
 		$orderFields = $params['ORDER_FIELDS'] ?? [];
 
-		$entityId = OrderCheckEntry::create([
+		$timelineEntryId = OrderCheckEntry::create([
 			'TYPE_CATEGORY_ID' => TimelineType::UNDEFINED,
 			'AUTHOR_ID' => self::resolveCreatorID($orderFields),
 			'SETTINGS' => $settings,
 			'BINDINGS' => $bindings,
 		]);
 
-		foreach($bindings as $binding)
+		foreach ($bindings as $binding)
 		{
 			$this->sendPullEventOnAdd(
-				new \Bitrix\Crm\ItemIdentifier($binding['ENTITY_TYPE_ID'], $binding['ENTITY_ID']),
-				$entityId
+				new ItemIdentifier($binding['ENTITY_TYPE_ID'], $binding['ENTITY_ID']),
+				$timelineEntryId
 			);
 		}
 	}

@@ -520,14 +520,17 @@ class Order extends Base
 				&& (int)$preparedItem['discount'] === 0
 			)
 			{
-				$preparedItem['discountType'] = \Bitrix\Crm\Discount::MONETARY;
+				$preparedItem['discountType'] = Crm\Discount::MONETARY;
 			}
 
-			if (!empty($basketItem->getDiscountPrice()))
+			if (
+				!empty($basketItem->getDiscountPrice())
+				&& $basketItem->getBasePrice() > 0
+			)
 			{
 				if (empty($preparedItem['discountType']))
 				{
-					$preparedItem['discountType'] = \Bitrix\Crm\Discount::PERCENTAGE;
+					$preparedItem['discountType'] = Crm\Discount::PERCENTAGE;
 				}
 
 				if (empty($preparedItem['showDiscount']))
@@ -535,7 +538,7 @@ class Order extends Base
 					$preparedItem['showDiscount'] = 'Y';
 				}
 
-				$preparedItem['discount'] = (float)$basketItem->getDiscountPrice();
+				$preparedItem['discount'] = $basketItem->getDiscountPrice();
 				$preparedItem['discountRate'] = roundEx($basketItem->getDiscountPrice() / $basketItem->getBasePrice() * 100, 2);
 			}
 			else
@@ -1141,9 +1144,9 @@ class Order extends Base
 	protected function obtainOrderFields($options)
 	{
 		$result = [
-			'ID' => (int)$options['orderId'] ?? 0,
+			'ID' => (int)($options['orderId'] ?? 0),
 			'SITE_ID' => SITE_ID,
-			'CONNECTOR' => $options['connector'],
+			'CONNECTOR' => $options['connector'] ?? '',
 			'SHIPMENT' => [],
 			'PAYMENT' => [],
 		];
@@ -1157,7 +1160,8 @@ class Order extends Base
 		if (isset($clientInfo['OWNER_ID']) && isset($clientInfo['OWNER_TYPE_ID']))
 		{
 			if (
-				$options['context'] !== SalesCenter\Component\ContextDictionary::CHAT
+				!isset($options['context'])
+				|| $options['context'] !== SalesCenter\Component\ContextDictionary::CHAT
 				|| !CrmManager::getInstance()->isOwnerEntityInFinalStage($clientInfo['OWNER_ID'], $clientInfo['OWNER_TYPE_ID'])
 			)
 			{
@@ -1313,11 +1317,10 @@ class Order extends Base
 			&& $data['deliveryPrice'] !== $data['expectedDeliveryPrice']
 		)
 		{
-			$result['BASE_PRICE_DELIVERY'] = (float)$data['expectedDeliveryPrice'];
 			$result['CUSTOM_PRICE_DELIVERY'] = 'Y';
 		}
 
-		$result['PRICE_DELIVERY'] = (float)$data['deliveryPrice'];
+		$result['PRICE_DELIVERY'] = (float)($data['deliveryPrice'] ?? 0);
 
 		if (isset($data['shipmentPropValues']) && is_array($data['shipmentPropValues']))
 		{
@@ -1344,7 +1347,7 @@ class Order extends Base
 
 		foreach ($shipmentPropValues as $prop)
 		{
-			$result[$prop['id']] = $prop['value'];
+			$result[$prop['id']] = $prop['value'] ?? '';
 		}
 
 		return $result;
@@ -1387,9 +1390,9 @@ class Order extends Base
 			if ($product['DISCOUNT_RATE'])
 			{
 				$item['discount'] = [
-					'discountType' => $product['DISCOUNT_TYPE'],
+					'discountType' => $product['DISCOUNT_TYPE'] ?? Crm\Discount::MONETARY,
 					'discountRate' => $product['DISCOUNT_RATE'],
-					'discountSum' => $product['DISCOUNT_SUM'],
+					'discountSum' => $product['DISCOUNT_SUM'] ?? 0,
 				];
 			}
 

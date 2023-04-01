@@ -78,6 +78,7 @@ class TypePreset
 					'isAutomationEnabled' => true,
 					'isBizProcEnabled' => true,
 					'isSetOpenPermissions' => true,
+					'isCountersEnabled' => true
 				],
 			],
 			[

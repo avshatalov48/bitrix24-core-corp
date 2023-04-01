@@ -7,5 +7,6 @@ return [
 		'./creation',
 		'./todo',
 		'./document',
+		'./configurable-rest-app',
 	]
 ];

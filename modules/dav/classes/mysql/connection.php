@@ -6,9 +6,10 @@ use Bitrix\Main\DI\ServiceLocator;
 
 include_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/dav/classes/general/connection.php");
 
-class CDavConnection
-	extends CAllDavConnection
+class CDavConnection extends CAllDavConnection
 {
+	private static $connectionData = [];
+
 	public static function Add($arFields)
 	{
 		global $DB, $APPLICATION;
@@ -27,11 +28,11 @@ class CDavConnection
 
 		$strSql =
 			"INSERT INTO b_dav_connections (".$arInsert[0].", CREATED, MODIFIED) ".
-			"VALUES(".$arInsert[1].", ".$DB->CurrentTimeFunction().", ".$DB->CurrentTimeFunction().")";
+			"VALUES(".$arInsert[1].", ".$DB::CurrentTimeFunction().", ".$DB::CurrentTimeFunction().")";
 		$DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
 
 		$id = (int)$DB->LastID();
-		if (($id > 0) && \Bitrix\Main\Loader::includeModule('calendar'))
+		if ($id > 0 && \Bitrix\Main\Loader::includeModule('calendar'))
 		{
 			// TODO: remove dependence from different calendar systems
 			/** @var Google\Helper $googleHelper */
@@ -72,14 +73,23 @@ class CDavConnection
 		return $id;
 	}
 
-	public static function GetList($arOrder = array("ID" => "ASC"), $arFilter = array(), $arGroupBy = false, $arNavStartParams = false, $arSelectFields = array())
+	public static function GetList($arOrder = ["ID" => "ASC"], $arFilter = [], $arGroupBy = null, $arNavStartParams = null, $arSelectFields = [])
 	{
-
 		global $DB;
 
-		if (count($arSelectFields) <= 0)
+		if (
+			is_array($arFilter)
+			&& isset($arFilter['ID'], self::$connectionData[(int)$arFilter['ID']])
+			&& (int)$arFilter['ID']
+			&& self::$connectionData[(int)$arFilter['ID']]
+		)
 		{
-			$arSelectFields = array(
+			return self::$connectionData[(int)$arFilter['ID']];
+		}
+
+		if (is_array($arSelectFields) && empty($arSelectFields))
+		{
+			$arSelectFields = [
 				"ID",
 				"ENTITY_TYPE",
 				"ENTITY_ID",
@@ -98,79 +108,84 @@ class CDavConnection
 				"LAST_RESULT",
 				"IS_DELETED",
 				"NEXT_SYNC_TRY",
-			);
+			];
 		}
 
-		static $arFields = array(
-			"ID" => Array("FIELD" => "N.ID", "TYPE" => "int"),
-			"ENTITY_TYPE" => Array("FIELD" => "N.ENTITY_TYPE", "TYPE" => "string"),
-			"ENTITY_ID" => Array("FIELD" => "N.ENTITY_ID", "TYPE" => "int"),
-			"ACCOUNT_TYPE" => Array("FIELD" => "N.ACCOUNT_TYPE", "TYPE" => "string"),
-			"NAME" => Array("FIELD" => "N.NAME", "TYPE" => "string"),
-			"SERVER_SCHEME" => Array("FIELD" => "N.SERVER_SCHEME", "TYPE" => "string"),
-			"SERVER_HOST" => Array("FIELD" => "N.SERVER_HOST", "TYPE" => "string"),
-			"SERVER_PORT" => Array("FIELD" => "N.SERVER_PORT", "TYPE" => "int"),
-			"SERVER_USERNAME" => Array("FIELD" => "N.SERVER_USERNAME", "TYPE" => "string"),
-			"SERVER_PASSWORD" => Array("FIELD" => "N.SERVER_PASSWORD", "TYPE" => "string"),
-			"SERVER_PATH" => Array("FIELD" => "N.SERVER_PATH", "TYPE" => "string"),
-			"CREATED" => Array("FIELD" => "N.CREATED", "TYPE" => "datetime"),
-			"MODIFIED" => Array("FIELD" => "N.MODIFIED", "TYPE" => "datetime"),
-			"SYNCHRONIZED" => Array("FIELD" => "N.SYNCHRONIZED", "TYPE" => "datetime"),
-			"LAST_RESULT" => Array("FIELD" => "N.LAST_RESULT", "TYPE" => "string"),
-			"SYNC_TOKEN" => Array("FIELD" => "N.SYNC_TOKEN", "TYPE" => "string"),
-			"IS_DELETED" => Array("FIELD" => "N.IS_DELETED", "TYPE" => "string"),
-			"NEXT_SYNC_TRY" => Array("FIELD" => "N.NEXT_SYNC_TRY", "TYPE" => "datetime"),
-		);
+		static $arFields = [
+			"ID" => ["FIELD" => "N.ID", "TYPE" => "int"],
+			"ENTITY_TYPE" => ["FIELD" => "N.ENTITY_TYPE", "TYPE" => "string"],
+			"ENTITY_ID" => ["FIELD" => "N.ENTITY_ID", "TYPE" => "int"],
+			"ACCOUNT_TYPE" => ["FIELD" => "N.ACCOUNT_TYPE", "TYPE" => "string"],
+			"NAME" => ["FIELD" => "N.NAME", "TYPE" => "string"],
+			"SERVER_SCHEME" => ["FIELD" => "N.SERVER_SCHEME", "TYPE" => "string"],
+			"SERVER_HOST" => ["FIELD" => "N.SERVER_HOST", "TYPE" => "string"],
+			"SERVER_PORT" => ["FIELD" => "N.SERVER_PORT", "TYPE" => "int"],
+			"SERVER_USERNAME" => ["FIELD" => "N.SERVER_USERNAME", "TYPE" => "string"],
+			"SERVER_PASSWORD" => ["FIELD" => "N.SERVER_PASSWORD", "TYPE" => "string"],
+			"SERVER_PATH" => ["FIELD" => "N.SERVER_PATH", "TYPE" => "string"],
+			"CREATED" => ["FIELD" => "N.CREATED", "TYPE" => "datetime"],
+			"MODIFIED" => ["FIELD" => "N.MODIFIED", "TYPE" => "datetime"],
+			"SYNCHRONIZED" => ["FIELD" => "N.SYNCHRONIZED", "TYPE" => "datetime"],
+			"LAST_RESULT" => ["FIELD" => "N.LAST_RESULT", "TYPE" => "string"],
+			"SYNC_TOKEN" => ["FIELD" => "N.SYNC_TOKEN", "TYPE" => "string"],
+			"IS_DELETED" => ["FIELD" => "N.IS_DELETED", "TYPE" => "string"],
+			"NEXT_SYNC_TRY" => ["FIELD" => "N.NEXT_SYNC_TRY", "TYPE" => "datetime"],
+		];
 
 		$arSqls = CDav::PrepareSql($arFields, $arOrder, $arFilter, $arGroupBy, $arSelectFields);
 
 		$arSqls["SELECT"] = str_replace("%%_DISTINCT_%%", "", $arSqls["SELECT"]);
-		if (is_array($arGroupBy) && count($arGroupBy)==0)
+		$strSql =
+			"SELECT " . $arSqls["SELECT"] . " "
+			. "FROM b_dav_connections N "
+			. "	" . $arSqls["FROM"] . " ";
+		if ($arSqls["WHERE"])
 		{
-			$strSql =
-				"SELECT ".$arSqls["SELECT"]." ".
-				"FROM b_dav_connections N ".
-				"	".$arSqls["FROM"]." ";
-			if ($arSqls["WHERE"] <> '')
-				$strSql .= "WHERE ".$arSqls["WHERE"]." ";
-			if ($arSqls["GROUPBY"] <> '')
-				$strSql .= "GROUP BY ".$arSqls["GROUPBY"]." ";
-
-			$dbRes = $DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
+			$strSql .= "WHERE " . $arSqls["WHERE"] . " ";
+		}
+		if ($arSqls["GROUPBY"])
+		{
+			$strSql .= "GROUP BY " . $arSqls["GROUPBY"] . " ";
+		}
+		if (is_array($arGroupBy) && empty($arGroupBy))
+		{
+			$dbRes = $DB->Query($strSql, false, "File: " . __FILE__ . "<br>Line: " . __LINE__);
 			if ($arRes = $dbRes->Fetch())
+			{
 				return $arRes["CNT"];
-			else
-				return False;
+			}
+
+			return false;
 		}
 
-		$strSql =
-			"SELECT ".$arSqls["SELECT"]." ".
-			"FROM b_dav_connections N ".
-			"	".$arSqls["FROM"]." ";
-		if ($arSqls["WHERE"] <> '')
-			$strSql .= "WHERE ".$arSqls["WHERE"]." ";
-		if ($arSqls["GROUPBY"] <> '')
-			$strSql .= "GROUP BY ".$arSqls["GROUPBY"]." ";
-		if ($arSqls["ORDERBY"] <> '')
-			$strSql .= "ORDER BY ".$arSqls["ORDERBY"]." ";
+		if ($arSqls["ORDERBY"])
+		{
+			$strSql .= "ORDER BY " . $arSqls["ORDERBY"] . " ";
+		}
 
-		if (is_array($arNavStartParams) && intval($arNavStartParams["nTopCount"]) <= 0)
+		if (is_array($arNavStartParams) && !(int)$arNavStartParams["nTopCount"])
 		{
 			$strSql_tmp =
-				"SELECT COUNT('x') as CNT ".
-				"FROM b_dav_connections N ".
-				"	".$arSqls["FROM"]." ";
-			if ($arSqls["WHERE"] <> '')
-				$strSql_tmp .= "WHERE ".$arSqls["WHERE"]." ";
-			if ($arSqls["GROUPBY"] <> '')
-				$strSql_tmp .= "GROUP BY ".$arSqls["GROUPBY"]." ";
+				"SELECT COUNT('x') as CNT "
+				. "FROM b_dav_connections N "
+				. "	" . $arSqls["FROM"] . " ";
+			if ($arSqls["WHERE"])
+			{
+				$strSql_tmp .= "WHERE " . $arSqls["WHERE"] . " ";
+			}
+			if ($arSqls["GROUPBY"])
+			{
+				$strSql_tmp .= "GROUP BY " . $arSqls["GROUPBY"] . " ";
+			}
 
 			$dbRes = $DB->Query($strSql_tmp, false, "File: ".__FILE__."<br>Line: ".__LINE__);
 			$cnt = 0;
-			if ($arSqls["GROUPBY"] == '')
+			if (!$arSqls["GROUPBY"])
 			{
 				if ($arRes = $dbRes->Fetch())
+				{
 					$cnt = $arRes["CNT"];
+				}
 			}
 			else
 			{
@@ -191,7 +206,22 @@ class CDavConnection
 			$dbRes = $DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
 		}
 
-		$dbRes = new CDavConnectionResult($dbRes);
-		return $dbRes;
+		if (
+			$dbRes
+			&& is_array($arFilter)
+			&& isset($arFilter['ID'])
+			&& (int)$arFilter['ID']
+		)
+		{
+			$result = (new CDavConnectionResult($dbRes))->Fetch();
+			if ($result && $result['ID'])
+			{
+				self::$connectionData[(int)$arFilter['ID']] = $result;
+			}
+
+			return $result;
+		}
+
+		return new CDavConnectionResult($dbRes);
 	}
 }

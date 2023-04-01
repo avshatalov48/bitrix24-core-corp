@@ -34,16 +34,18 @@ jn.define('utils/phone', (require, exports, module) => {
 	 * Getting the default country code from storage
 	 * @returns {any}
 	 */
-	const getDefaultCountryCode = () => storage.get(storageKey);
+	const getMainDefaultCountryCode = () => storage.get(storageKey);
 
 	/**
 	 * Determining the country code by phone number
-	 * @param phoneNumber
-	 * @returns {*}
+	 * @param {String} phoneNumber
+	 * @param {String} defaultCountry
+	 * @returns {String}
 	 */
-	const getCountryCode = (phoneNumber = '') => {
+	const getCountryCode = (phoneNumber = '', defaultCountry) => {
 		const phone = stringify(phoneNumber);
-		const defaultCountryCode = getDefaultCountryCode();
+		const defaultCountryCode = defaultCountry || getMainDefaultCountryCode();
+
 		return phone.startsWith('+')
 			? phoneUtils.getCountryCode(phone) || defaultCountryCode
 			: defaultCountryCode;
@@ -78,5 +80,5 @@ jn.define('utils/phone', (require, exports, module) => {
 
 	fetchDefaultCountryCode();
 
-	module.exports = { getDefaultCountryCode, getFormattedNumber, getCountryCode };
+	module.exports = { getMainDefaultCountryCode, getFormattedNumber, getCountryCode };
 });

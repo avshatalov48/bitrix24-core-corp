@@ -39,6 +39,11 @@ type OrderDocument = {
 	PRICE_FORMAT: string,
 }
 
+type CreateRealizationSliderOptions = {
+	orderId?: number,
+	paymentId?: number,
+};
+
 type Phrases = {[string]: string};
 
 type EntityEditorPaymentDocumentsOptions = {
@@ -270,6 +275,15 @@ export class EntityEditorPaymentDocuments
 				title: Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_CHOOSE_DELIVERY'),
 				onclick: () => this._chooseDeliverySlider(doc.ORDER_ID)
 			});
+		}
+
+		const realizationMenuItem = this._getRealizationMenuItem(
+			Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_CREATE_REALIZATION'),
+			() => this._createRealizationSlider({paymentId: doc.ID})
+		);
+		if (realizationMenuItem)
+		{
+			menuItems.push(realizationMenuItem);
 		}
 
 		menuItems.push({
@@ -621,25 +635,15 @@ export class EntityEditorPaymentDocuments
 			});
 		}
 
-		const isAvailableInventoryManagement = this._isUsedInventoryManagement && !this._isWithOrdersMode;
-		if (isAvailableInventoryManagement && this._salesOrderRights?.modify)
+		const realizationMenuItem = this._getRealizationMenuItem(
+			Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_DOCUMENT_TYPE_SHIPMENT_DOCUMENT'),
+			() => this._createRealizationSlider({orderId: latestOrderId})
+		);
+		if (realizationMenuItem)
 		{
-			const menuItem = {
-				text: Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_DOCUMENT_TYPE_SHIPMENT_DOCUMENT'),
-			};
-
-			if (this._isInventoryManagementRestricted)
-			{
-				menuItem.onclick = () => top.BX.UI.InfoHelper.show('limit_store_crm_integration');
-				menuItem.className = 'realization-document-tariff-lock';
-			}
-			else
-			{
-				menuItem.onclick = () => this._createRealizationSlider(latestOrderId);
-			}
-
-			menuItems.push(menuItem);
+			menuItems.push(realizationMenuItem);
 		}
+
 		const openMenu = event => {
 			event.preventDefault();
 			const popupMenu = MenuManager.create({
@@ -658,6 +662,31 @@ export class EntityEditorPaymentDocuments
 				</a>
 			</div>
 		`;
+	}
+
+	_getRealizationMenuItem(text: string, onclick: Function): ?Object
+	{
+		const isAvailableInventoryManagement = this._isUsedInventoryManagement && !this._isWithOrdersMode;
+		if (isAvailableInventoryManagement && this._salesOrderRights?.modify)
+		{
+			const menuItem = {
+				text,
+			};
+
+			if (this._isInventoryManagementRestricted)
+			{
+				menuItem.onclick = () => top.BX.UI.InfoHelper.show('limit_store_crm_integration');
+				menuItem.className = 'realization-document-tariff-lock';
+			}
+			else
+			{
+				menuItem.onclick = onclick;
+			}
+
+			return menuItem;
+		}
+
+		return null;
 	}
 
 	_renderTotalSum(): HTMLElement
@@ -754,7 +783,7 @@ export class EntityEditorPaymentDocuments
 		this._context().startSalescenterApplication(orderId, options);
 	}
 
-	_createRealizationSlider(orderId: number)
+	_createRealizationSlider(createSliderOptions: CreateRealizationSliderOptions)
 	{
 		let analyticsLabel = 'crmDealPaymentDocumentsCreateRealizationSlider';
 		if (BX.CrmEntityType.isDynamicTypeByTypeId(this._ownerTypeId()))
@@ -766,7 +795,8 @@ export class EntityEditorPaymentDocuments
 			context: {
 				OWNER_TYPE_ID: this._ownerTypeId(),
 				OWNER_ID: this._options.OWNER_ID,
-				ORDER_ID: orderId,
+				ORDER_ID: createSliderOptions.orderId || 0,
+				PAYMENT_ID: createSliderOptions.paymentId || 0,
 			},
 			analyticsLabel: analyticsLabel,
 			documentType: 'W',

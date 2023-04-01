@@ -36,7 +36,7 @@ class DealActivities extends Deal
 
 		$item = $result->getData()['item'];
 
-		$stageCategoryID = (int) DealCategory::resolveFromStageID($stageId);
+		$stageCategoryID = DealCategory::resolveFromStageID($stageId);
 		$dealCategoryID = (int) $item['CATEGORY_ID'];
 		if($dealCategoryID !== $stageCategoryID && $this->getCategoryId() >= 0)
 		{
@@ -49,5 +49,10 @@ class DealActivities extends Deal
 	public function canUseAllCategories(): bool
 	{
 		return true;
+	}
+
+	public function getRequiredFieldsByStages(array $stages): array
+	{
+		return [];
 	}
 }

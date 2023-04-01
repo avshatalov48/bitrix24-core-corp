@@ -62,6 +62,7 @@ class CCrmShopPageController extends CBitrixComponent
 		if (
 			!Loader::includeModule("crm")
 			|| !Loader::includeModule("catalog")
+			|| !CCrmSaleHelper::isShopAccess()
 		)
 		{
 			throw new AccessDeniedException();

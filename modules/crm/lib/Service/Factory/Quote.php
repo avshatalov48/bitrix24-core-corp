@@ -401,8 +401,6 @@ class Quote extends Factory
 			Item::FIELD_NAME_ASSIGNED,
 			Item::FIELD_NAME_CURRENCY_ID,
 			Item::FIELD_NAME_STAGE_ID,
-			Item::FIELD_NAME_MYCOMPANY_ID,
-			Item::FIELD_NAME_COMPANY_ID,
 			Item::FIELD_NAME_IS_MANUAL_OPPORTUNITY,
 		];
 	}
@@ -414,10 +412,6 @@ class Quote extends Factory
 		$productTrackedObject = new TrackedObject\Product();
 		$productTrackedObject->makeThisObjectDependant(Item::FIELD_NAME_PRODUCTS);
 		$objects[] = $productTrackedObject;
-
-		$contactTrackedObject = new TrackedObject\Contact();
-		$contactTrackedObject->makeThisObjectDependant(Item::FIELD_NAME_CONTACTS);
-		$objects[] = $contactTrackedObject;
 
 		return $objects;
 	}

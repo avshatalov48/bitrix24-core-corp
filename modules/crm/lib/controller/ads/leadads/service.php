@@ -2,8 +2,10 @@
 
 namespace Bitrix\Crm\Controller\Ads\LeadAds;
 
+use Bitrix\Crm\Ads\Internals\AdsFormLinkTable;
 use Bitrix\Main\Error;
 use Bitrix\Main\Engine\Response\AjaxJson;
+use Bitrix\Main\Localization\Loc;
 
 class Service extends AbstractController
 {
@@ -97,6 +99,13 @@ class Service extends AbstractController
 			return $this->errorResponse();
 		}
 
+		$account = $service->getAccount($type);
+		$logoutResult = $account->logout();
+		if ($logoutResult->isSuccess())
+		{
+			$this->unlinkWebForm($logoutResult->getData());
+		}
+
 		$groupAuthAdapter = $service->getGroupAuth($type);
 		if ($groupAuthAdapter)
 		{
@@ -104,6 +113,49 @@ class Service extends AbstractController
 		}
 
 		$service::getAuthAdapter($type)->removeAuth();
+
 		return $this->successResponse();
+	}
+
+	public function unlinkWebForm(array $data): void
+	{
+		if (!empty($data))
+		{
+			$linksDb = AdsFormLinkTable::getList([
+				'select' => ['ID'],
+				'filter' => [
+					'=ADS_FORM_ID' => $data['formIds']
+				]
+			]);
+
+			while ($link = $linksDb->fetch())
+			{
+				AdsFormLinkTable::delete($link['ID']);
+			}
+		}
+	}
+
+	public function checkProfileAction($type)
+	{
+		if (!$service = $this->getService())
+		{
+			$this->addError(
+				new Error("Service not available.")
+			);
+
+			return $this->errorResponse();
+		}
+
+		$account = $service->getAccount($type);
+		if ($account->checkNewAuthInfo())
+		{
+			return $this->successResponse();
+		}
+
+		$this->addError(
+			new Error("Profile not available")
+		);
+
+		return $this->errorResponse();
 	}
 }

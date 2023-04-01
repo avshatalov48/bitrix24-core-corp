@@ -3,6 +3,7 @@
 namespace Bitrix\CrmMobile\Kanban\Entity;
 
 use Bitrix\Crm\Field\Collection;
+use Bitrix\Crm\Filter\FactoryOptionable;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\Kanban\Exception;
 use Bitrix\Crm\Service\Container;
@@ -43,6 +44,10 @@ abstract class ListEntity extends Entity
 			$this->getGridId(),
 		);
 		$this->provider = $filterFactory->getDataProvider($settings);
+		if ($this->provider instanceof FactoryOptionable)
+		{
+			$this->provider->setForceUseFactory(true);
+		}
 		$this->ufProvider = $filterFactory->getUserFieldDataProvider($settings);
 	}
 

@@ -24,6 +24,21 @@ class DatetimeStages
 		return $this;
 	}
 
+	public function currentFromThisWeek(DateTime $dateTime): DateTime
+	{
+		$dateTime = $this->current($dateTime);
+
+		return ($this->isTodayIsLastDayOfWeek($dateTime) ? $dateTime : $dateTime->add('P1D'));
+	}
+
+	public function current(DateTime $dateTime): DateTime
+	{
+		$dateTime = clone $dateTime;
+		$this->setTimeFromActivity($dateTime);
+
+		return $dateTime;
+	}
+
 	public function today(DateTime $dateTime): DateTime
 	{
 		$dateTime = clone $dateTime;

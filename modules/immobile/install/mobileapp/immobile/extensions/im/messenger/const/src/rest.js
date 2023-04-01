@@ -15,12 +15,15 @@ jn.define('im/messenger/const/rest', (require, exports, module) => {
 		imChatLeave: 'im.chat.leave',
 		imChatMute: 'im.chat.mute',
 		imChatParentJoin: 'im.chat.parent.join',
+		imChatAdd: 'im.chat.add',
+		imChatUserAdd: 'im.chat.user.add',
 
 		imDialogGet: 'im.dialog.get',
 		imDialogMessagesGet: 'im.dialog.messages.get',
 		imDialogRead: 'im.dialog.read',
 		imDialogUnread: 'im.dialog.unread',
 		imDialogWriting: 'im.dialog.writing',
+		imDialogUsersList: 'im.dialog.users.list',
 
 		imUserGet: 'im.user.get',
 		imUserListGet: 'im.user.list.get',

@@ -54,6 +54,7 @@ $MESS["BX_LIVECHAT_SYSTEM_MESSAGE"] = "System message";
 $MESS["BX_LIVECHAT_TITLE"] = "Open Channel";
 $MESS["BX_LIVECHAT_USER"] = "Agent";
 $MESS["BX_LIVECHAT_VOTE_BUTTON"] = "Rate our service";
+$MESS["BX_LIVECHAT_VOTE_LATER"] = "Rate later";
 $MESS["BX_LIVECHAT_VOTE_MINUS"] = "Dislike";
 $MESS["BX_LIVECHAT_VOTE_MINUS_TITLE"] = "We are sorry we could not help you. Your opinion will help us improve our service.";
 $MESS["BX_LIVECHAT_VOTE_PLUS"] = "Like";

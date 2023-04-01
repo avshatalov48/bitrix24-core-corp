@@ -10,6 +10,7 @@ use Bitrix\Crm\Item;
 use Bitrix\Crm\Model\Dynamic\PrototypeItem;
 use Bitrix\Crm\Model\Dynamic\PrototypeItemIndex;
 use Bitrix\Crm\Model\Dynamic\Type;
+use Bitrix\Crm\Model\Dynamic\TypeTable;
 use Bitrix\Crm\Model\ItemCategoryTable;
 use Bitrix\Crm\Service;
 use Bitrix\Crm\Service\Container;
@@ -453,16 +454,6 @@ class Dynamic extends Service\Factory
 			$trackedFieldNames[] = Item::FIELD_NAME_STAGE_ID;
 		}
 
-		if ($this->isMyCompanyEnabled())
-		{
-			$trackedFieldNames[] = Item::FIELD_NAME_MYCOMPANY_ID;
-		}
-
-		if ($this->isClientEnabled())
-		{
-			$trackedFieldNames[] = Item::FIELD_NAME_COMPANY_ID;
-		}
-
 		if ($this->isSourceEnabled())
 		{
 			$trackedFieldNames[] = Item::FIELD_NAME_SOURCE_ID;
@@ -485,13 +476,6 @@ class Dynamic extends Service\Factory
 			$productTrackedObject = new TrackedObject\Product();
 			$productTrackedObject->makeThisObjectDependant(Item::FIELD_NAME_PRODUCTS);
 			$objects[] = $productTrackedObject;
-		}
-
-		if ($this->isClientEnabled())
-		{
-			$contactTrackedObject = new TrackedObject\Contact();
-			$contactTrackedObject->makeThisObjectDependant(Item::FIELD_NAME_CONTACTS);
-			$objects[] = $contactTrackedObject;
 		}
 
 		return $objects;
@@ -526,7 +510,8 @@ class Dynamic extends Service\Factory
 			->addAction(
 				Operation::ACTION_AFTER_SAVE,
 				new Action\SendEvent($eventManager::EVENT_DYNAMIC_ITEM_UPDATE)
-			)->addAction(
+			)
+			->addAction(
 				Operation::ACTION_AFTER_SAVE,
 				new Action\SendEvent($eventManager->getItemEventNameWithEntityTypeId(
 					$eventManager::EVENT_DYNAMIC_ITEM_UPDATE,
@@ -564,5 +549,18 @@ class Dynamic extends Service\Factory
 	public function getAdditionalTableFields(): array
 	{
 		return [];
+	}
+
+	public function isCountersEnabled(): bool
+	{
+		/** @var TypeTable $typeDataClass */
+		$typeDataClass = $this->type::$dataClass;
+
+		if (!$typeDataClass::getEntity()->hasField('IS_COUNTERS_ENABLED'))
+		{
+			return false;
+		}
+
+		return $this->type->getIsCountersEnabled() ?? false;
 	}
 }

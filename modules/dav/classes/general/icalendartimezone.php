@@ -57,37 +57,49 @@ class CDavICalendarTimeZone
 
 	public static function getTimeZoneId($userId = null, $date = null)
 	{
-		$dateKey = $date === null ? 0 : $date;
-		$userIdKey = $userId === null ? 0 : $userId;
+		global $USER;
+		$dateKey = $date ?? 0;
+		$userIdKey = $userId ?? 0;
 		if ($userId === null)
-			$userId = $GLOBALS["USER"]->GetId();
+		{
+			$userId = $USER->GetID();
+		}
 
-		static $timezoneCache = array();
-		if (isset($timezoneCache[$userIdKey]) && isset($timezoneCache[$userIdKey][$dateKey]))
+		static $timezoneCache = [];
+		if (isset($timezoneCache[$userIdKey][$dateKey]))
+		{
 			return $timezoneCache[$userIdKey][$dateKey];
+		}
 
 		$autoTimeZone = $userZone = '';
 		$factOffset = 0;
 
 		if ($date === null)
+		{
 			$date = time();
+		}
 
-		static $userCache = array();
+		static $userCache = [];
 
 		if ($userId === null)
 		{
-			$autoTimeZone = trim($GLOBALS["USER"]->GetParam("AUTO_TIME_ZONE"));
-			$userZone = $GLOBALS["USER"]->GetParam("TIME_ZONE");
+			$autoTimeZone = trim($USER->GetParam("AUTO_TIME_ZONE"));
+			$userZone = $USER->GetParam("TIME_ZONE");
 		}
 		else
 		{
 			if (!isset($userCache[$userId]))
 			{
-				$dbUser = CUser::GetList("id", "asc", array("ID_EQUAL_EXACT" => intval($userId)), array("FIELDS" => array("AUTO_TIME_ZONE", "TIME_ZONE", "TIME_ZONE_OFFSET")));
+				$dbUser = CUser::GetList(
+					"id",
+					"asc",
+					array("ID_EQUAL_EXACT" => (int)$userId),
+					array("FIELDS" => array("AUTO_TIME_ZONE", "TIME_ZONE", "TIME_ZONE_OFFSET"))
+				);
 				if (($arUser = $dbUser->Fetch()))
 				{
 					$userCache[$userId] = array(
-						"AUTO_TIME_ZONE" => trim($arUser["AUTO_TIME_ZONE"]),
+						"AUTO_TIME_ZONE" => trim($arUser["AUTO_TIME_ZONE"] ?? ''),
 						"TIME_ZONE" => $arUser["TIME_ZONE"],
 						"TIME_ZONE_OFFSET" => $arUser["TIME_ZONE_OFFSET"]
 					);
@@ -106,19 +118,21 @@ class CDavICalendarTimeZone
 		{
 			static $userOffsetCache = array();
 
-			if (!isset($userOffsetCache[$userId === null ? 0 : $userId]))
+			if (!isset($userOffsetCache[$userId ?? 0]))
+			{
 				$userOffsetCache[$userIdKey] = CTimeZone::GetOffset($userId);
+			}
 
 			$userOffset = $userOffsetCache[$userIdKey];
 
 			$localTime = new DateTime();
 			$localOffset = $localTime->getOffset();
 
-			$timezoneCache[$userIdKey][$dateKey] = CDavICalendarTimeZone::getTimezoneByOffset($date, $userOffset + $localOffset);
+			$timezoneCache[$userIdKey][$dateKey] = self::getTimezoneByOffset($date, $userOffset + $localOffset);
 		}
 		else
 		{
-			if ($userZone != '' && isset(self::$arTimeZones[$userZone]))
+			if ($userZone && isset(self::$arTimeZones[$userZone]))
 			{
 				$timezoneCache[$userIdKey][$dateKey] = $userZone;
 			}
@@ -127,7 +141,7 @@ class CDavICalendarTimeZone
 				$localTime = new DateTime();
 				$localOffset = $localTime->getOffset();
 
-				$timezoneCache[$userIdKey][$dateKey] = CDavICalendarTimeZone::getTimezoneByOffset($date, $factOffset + $localOffset);
+				$timezoneCache[$userIdKey][$dateKey] = self::getTimezoneByOffset($date, $factOffset + $localOffset);
 			}
 		}
 
@@ -163,7 +177,7 @@ class CDavICalendarTimeZone
 				return $text;
 			}
 
-			$arDateParts = explode('T', $match[1].'T000000'.$match[2]);
+			$arDateParts = explode('T', $match[1] . 'T000000' . ($match[2] ?? ''));
 		}
 
 		if (($arDate = self::ParseDate($arDateParts[0])) == null)
@@ -233,16 +247,22 @@ class CDavICalendarTimeZone
 					usort($arTimeMap, function($a, $b) {return ($a['time'] > $b['time']) ? 1 : (($a['time'] < $b['time']) ? -1 : 0);});
 
 					if ($date < $arTimeMap[0]['time'] && $arTimeMap[0]['from'] == $offset)
+					{
 						return $timeZoneCode;
+					}
 
 					for ($i = 0, $n = count($arTimeMap); $i < $n - 1; $i++)
 					{
 						if (($date >= $arTimeMap[$i]['time']) && ($date < $arTimeMap[$i + 1]['time']) && $arTimeMap[$i]['to'] == $offset)
+						{
 							return $timeZoneCode;
+						}
 					}
 
 					if ($date >= $arTimeMap[$n - 1]['time'] && $arTimeMap[$n - 1]['to'] == $offset)
+					{
 						return $timeZoneCode;
+					}
 				}
 			}
 		}
@@ -252,6 +272,16 @@ class CDavICalendarTimeZone
 
 	private static function GetVTimezoneOffset($arDate, $arTime, $tzid, $calendar)
 	{
+		$arDateKeys = [
+			'hours' => 0,
+			'minutes' => null,
+			'seconds' => null,
+			'month' => null,
+			'mday' => null,
+			'year' => null,
+		];
+		$arDate = array_merge($arDateKeys, $arDate);
+
 		$arVTimezones = $calendar->GetComponentsByProperty('VTIMEZONE', 'TZID', $tzid);
 		if (!$arVTimezones)
 		{
@@ -265,28 +295,38 @@ class CDavICalendarTimeZone
 			{
 				$t = self::ParseVTimezone($comp, $arDate["year"]);
 				if ($t !== false)
+				{
 					$arTimeMap[] = $t;
+				}
 			}
 		}
 
 		if (!$arTimeMap)
+		{
 			return false;
+		}
 
 		sort($arTimeMap);
 
 		$t = @gmmktime($arDate["hours"], $arDate["minutes"], $arDate["seconds"], $arDate["month"], $arDate["mday"], $arDate["year"]);
 
 		if ($t < $arTimeMap[0]['time'])
+		{
 			return $arTimeMap[0]['from'];
+		}
 
 		for ($i = 0, $n = count($arTimeMap); $i < $n - 1; $i++)
 		{
 			if (($t >= $arTimeMap[$i]['time']) && ($t < $arTimeMap[$i + 1]['time']))
+			{
 				return $arTimeMap[$i]['to'];
+			}
 		}
 
 		if ($t >= $arTimeMap[$n - 1]['time'])
+		{
 			return $arTimeMap[$n - 1]['to'];
+		}
 
 		return false;
 	}
@@ -334,18 +374,24 @@ class CDavICalendarTimeZone
 		$rruleInterval = 0; // 0 undefined, 1 yearly, 12 monthly
 
 		$t = self::ParseUtcOffset($vtimezone->GetPropertyValue('TZOFFSETFROM'));
-		if ($t == null)
+		if ($t === null)
+		{
 			return false;
+		}
 		$result['from'] = ($t["hours"] * 60 * 60 + $t["minutes"] * 60) * ($t["ahead"] ? 1 : -1);
 
 		$t = self::ParseUtcOffset($vtimezone->GetPropertyValue('TZOFFSETTO'));
-		if ($t == null)
+		if ($t === null)
+		{
 			return false;
+		}
 		$result['to'] = ($t["hours"] * 60 * 60 + $t["minutes"] * 60) * ($t["ahead"] ? 1 : -1);
 
 		$t = $vtimezone->GetPropertyValue('DTSTART');
-		if ($t == null)
+		if ($t === null)
+		{
 			return false;
+		}
 		$switchTime = self::ParseDateTime($t);
 		if (!is_int($switchTime))
 		{
@@ -353,7 +399,7 @@ class CDavICalendarTimeZone
 		}
 
 		$rrules = $vtimezone->GetPropertyValue('RRULE');
-		if ($rrules == null)
+		if ($rrules === null)
 		{
 			$t = getdate($switchTime);
 			$result['time'] = @gmmktime($t['hours'], $t['minutes'], $t['seconds'], $t['mon'], $t['mday'], $t['year']);
@@ -376,13 +422,17 @@ class CDavICalendarTimeZone
 					switch($t[1])
 					{
 						case 'YEARLY':
-							if ($rruleInterval == 12)
+							if ($rruleInterval === 12)
+							{
 								return false;
+							}
 							$rruleInterval = 1;
 							break;
 						case 'MONTHLY':
-							if ($rruleInterval == 1)
+							if ($rruleInterval === 1)
+							{
 								return false;
+							}
 							$rruleInterval = 12;
 							break;
 						default:
@@ -391,26 +441,34 @@ class CDavICalendarTimeZone
 					break;
 
 				case 'INTERVAL':
-					if ($rruleInterval && $t[1] != $rruleInterval)
+					if ($rruleInterval && (int)$t[1] !== $rruleInterval)
+					{
 						return false;
-					$rruleInterval = intval($t[1]);
-					if ($rruleInterval != 1 && $rruleInterval != 12)
+					}
+					$rruleInterval = (int)$t[1];
+					if ($rruleInterval !== 1 && $rruleInterval !== 12)
+					{
 						return false;
+					}
 					break;
 
 				case 'COUNT':
-					if ($switchYear + intval($t[1]) < intval($year))
+					if ($switchYear + (int)$t[1] < (int)$year)
+					{
 						return false;
+					}
 					break;
 
 				case 'BYMONTH':
-					$month = intval($t[1]);
+					$month = (int)$t[1];
 					break;
 
 				case 'BYDAY':
 					$len = strspn($t[1], '1234567890-+');
-					if ($len == 0)
+					if ((int)$len === 0)
+					{
 						return false;
+					}
 					$weekday = mb_substr($t[1], $len);
 					$weekdays = array(
 						'SU' => 0,
@@ -422,17 +480,19 @@ class CDavICalendarTimeZone
 						'SA' => 6
 					);
 					$weekday = $weekdays[$weekday];
-					$which = intval(mb_substr($t[1], 0, $len));
+					$which = (int)mb_substr($t[1], 0, $len);
 					break;
 
 				case 'UNTIL':
-					if (intval($year) > intval(mb_substr($t[1], 0, 4)))
+					if ((int)$year > (int)mb_substr($t[1], 0, 4))
+					{
 						return false;
+					}
 					break;
 			}
 		}
 
-		if ($rruleInterval == 12)
+		if ($rruleInterval === 12)
 		{
 			$month = date("n", $switchTime);
 		}
@@ -442,14 +502,16 @@ class CDavICalendarTimeZone
 			return false;
 		}
 
-		$switchTime = strftime('%H:%M:%S', $switchTime);
+		$switchTime = date('H:i:s', $switchTime);
 		$switchTime = explode(':', $switchTime);
 
 		$when = gmmktime($switchTime[0], $switchTime[1], $switchTime[2], $month, 1, $year);
-		$firstOfMonthWeekday = intval(gmstrftime('%w', $when));
+		$firstOfMonthWeekday = (int)gmdate('w', $when);
 
 		if ($weekday >= $firstOfMonthWeekday)
+		{
 			$weekday -= 7;
+		}
 
 		$when -= ($firstOfMonthWeekday - $weekday) * 60 * 60 * 24;
 
@@ -459,7 +521,7 @@ class CDavICalendarTimeZone
 			{
 				$when += 60*60*24*7;
 			}
-			while (intval(gmstrftime('%m', $when)) == $month);
+			while ((int)gmdate('m', $when) === (int)$month);
 		}
 
 		$when += $which * 60 * 60 * 24 * 7;
@@ -472,7 +534,9 @@ class CDavICalendarTimeZone
 	public static function GetTimezone($tzid)
 	{
 		if (array_key_exists($tzid, self::$arTimeZones))
+		{
 			return self::$arTimeZones[$tzid];
+		}
 
 		return "";
 	}
@@ -484,7 +548,7 @@ class CDavICalendarTimeZone
 		foreach (self::$arTimeZones as $key => $value)
 		{
 			$name = GetMessage("DAV_TZ_".$key);
-			$ar[$key] = (!empty($name) > 0 ? $name : $key);
+			$ar[$key] = $name ?? $key;
 		}
 
 		return $ar;

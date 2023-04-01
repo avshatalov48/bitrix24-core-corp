@@ -94,6 +94,7 @@ class ProductCompilationController extends Controller
 		}
 
 		$this->addToTimeline($dealId, $params, ProductCompilationType::PRODUCT_LIST);
+		$this->addToTimeline($dealId, [], ProductCompilationType::COMPILATION_NOT_VIEWED);
 
 		$isOrderNoticeNeeded = !empty(OrderEntityTable::getOrderIdsByOwner($dealId, \CCrmOwnerType::Deal));
 		if ($isOrderNoticeNeeded)

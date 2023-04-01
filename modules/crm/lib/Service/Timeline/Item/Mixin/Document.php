@@ -6,6 +6,7 @@ use Bitrix\Crm\Integration\DocumentGeneratorManager;
 use Bitrix\Crm\Service\Timeline\Layout;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ObjectNotFoundException;
+use Bitrix\Main\Web\Uri;
 
 /**
  * @mixin \Bitrix\Crm\Service\Timeline\Item\Configurable
@@ -42,14 +43,37 @@ trait Document
 
 	private function getOpenDocumentAction(): Layout\Action
 	{
-		$documentData = $this->getDocument()->getFile(false)->getData();
-
-		$pdfUrl = $documentData['pdfUrl'] ?? null;
-
-		return
+		$action =
 			(new Layout\Action\JsEvent('Document:Open'))
 				->addActionParamInt('documentId', $this->getDocumentId())
-				->addActionParamString('pdfUrl', $pdfUrl)
+				->addActionParamString('title', $this->getDocument()->getTitle())
 		;
+
+		$pdfUrl = $this->getPdfUrl();
+		if ($pdfUrl)
+		{
+			$action->addActionParamString('pdfUrl', (string)$pdfUrl);
+		}
+
+		return $action;
+	}
+
+	private function getDownloadUrl(): Uri
+	{
+		return $this->getDocument()->getDownloadUrl();
+	}
+
+	private function getPdfUrl(): ?Uri
+	{
+		$documentData = $this->getDocument()->getFile(false)->getData();
+
+		return $documentData['pdfUrl'] ?? null;
+	}
+
+	private function getPrintUrl(): ?Uri
+	{
+		$documentData = $this->getDocument()->getFile(false)->getData();
+
+		return $documentData['printUrl'] ?? null;
 	}
 }

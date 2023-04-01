@@ -29,6 +29,7 @@ return [
 		'ui.notification',
 		'ui.design-tokens',
 		'main.core',
+		'main.core.events',
 	],
 	'skip_core' => false,
 	'settings' => [

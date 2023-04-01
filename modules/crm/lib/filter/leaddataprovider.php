@@ -16,8 +16,10 @@ use Bitrix\Main\Loader;
 
 Loc::loadMessages(__FILE__);
 
-class LeadDataProvider extends EntityDataProvider
+class LeadDataProvider extends EntityDataProvider implements FactoryOptionable
 {
+	use ForceUseFactoryTrait;
+
 	/** @var LeadSettings|null */
 	protected $settings = null;
 

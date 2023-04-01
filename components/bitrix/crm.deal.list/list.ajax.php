@@ -258,6 +258,7 @@ elseif ($action === 'SAVE_PROGRESS' && check_bitrix_sessid())
 
 	$arFields = array('STAGE_ID' => $stageID);
 
+	$factory = null;
 	// region InventoryManagement
 	if (!\Bitrix\Crm\Settings\DealSettings::getCurrent()->isFactoryEnabled())
 	{
@@ -335,6 +336,18 @@ elseif ($action === 'SAVE_PROGRESS' && check_bitrix_sessid())
 					__CrmDealListEndResponse([
 						'ERROR' => current($processInventoryManagementResult->getErrorMessages()),
 					]);
+				}
+			}
+
+			if (isset($itemBeforeSave) && $factory)
+			{
+				$itemAfterSave = $factory->getItem($ID);
+				if ($itemAfterSave)
+				{
+					(new \Bitrix\Crm\Service\Operation\Action\CreateFinalSummaryTimelineHistoryItem())
+						->setItemBeforeSave($itemBeforeSave)
+						->process($itemAfterSave)
+					;
 				}
 			}
 		}

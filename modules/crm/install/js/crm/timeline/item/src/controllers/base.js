@@ -36,6 +36,10 @@ export class Base
 	{
 	}
 
+	onAfterItemLayout(item: ConfigurableItem, options): void
+	{
+	}
+
 	/**
 	 * Will be executed before item node deleted from DOM
 	 * @param item

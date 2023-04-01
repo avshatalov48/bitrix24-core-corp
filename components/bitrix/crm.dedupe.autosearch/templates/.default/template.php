@@ -46,9 +46,9 @@ Bitrix\Main\UI\Extension::load([
 				'dedupeListUrl' => $arParams['PATH_TO_DEDUPELIST'],
 				'intervals' => $arResult['INTERVALS'],
 				'selectedInterval' => $arResult['SELECTED_INTERVAL'] ?: 0,
-				'status' => $arResult['STATUS'],
+				'status' => $arResult['STATUS'] ?? null,
 				'infoHelperId' => '12910200',
-				'progressData' => $arResult['PROGRESS_DATA']
+				'progressData' => $arResult['PROGRESS_DATA'] ?? null
 			])?>),
 			'<?=CCrmOwnerType::ResolveName($arParams['ENTITY_TYPE_ID'])?>'
 		);

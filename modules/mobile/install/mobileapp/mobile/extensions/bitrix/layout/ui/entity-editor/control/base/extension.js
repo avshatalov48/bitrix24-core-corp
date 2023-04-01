@@ -1,6 +1,5 @@
 (() => {
 	const { EventEmitter } = jn.require('event-emitter');
-	const { isEqual } = jn.require('utils/object');
 	const { PureComponent } = jn.require('layout/pure-component');
 
 	/**
@@ -16,13 +15,6 @@
 
 			this.initialize(props.id, props.uid, props.type, props.settings);
 			this.isChanged = false;
-		}
-
-		shouldComponentUpdate(nextProps, nextState)
-		{
-			nextState = Array.isArray(nextState) ? nextState[0] : nextState;
-
-			return !isEqual(this.props, nextProps) || !isEqual(this.state, nextState);
 		}
 
 		componentWillReceiveProps(props)

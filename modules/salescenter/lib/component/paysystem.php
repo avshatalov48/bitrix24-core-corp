@@ -91,7 +91,6 @@ class PaySystem
 				}
 				$paySystemActions[$paySystemHandler]['PS_MODE'] = true;
 				$paySystemActions[$paySystemHandler]['HANDLER_NAME'] = $systemHandlerList[$paySystemHandler]['name'];
-				$paySystemActions[$paySystemHandler]['ITEMS'][$psMode]['HANDLER_NAME'] = $systemHandlerList[$paySystemHandler]['psMode'][$psMode];
 				$paySystemActions[$paySystemHandler]['ITEMS'][$psMode]['ITEMS'][] = [
 					'NAME' => Loc::getMessage('SPP_PAYSYSTEM_SETTINGS', [
 						'#PAYSYSTEM_NAME#' => htmlspecialcharsbx($paySystem['NAME']),
@@ -183,7 +182,7 @@ class PaySystem
 			if (!$title)
 			{
 				$title = Loc::getMessage('SPP_PAYSYSTEM_DEFAULT_TITLE', [
-					'#PAYSYSTEM_NAME#' => $paySystem['HANDLER_NAME'],
+					'#PAYSYSTEM_NAME#' => $paySystem['HANDLER_NAME'] ?? '',
 				]);
 			}
 
@@ -502,18 +501,18 @@ class PaySystem
 
 	private function getItemSelectColor(array $paySystemColor, string $handler, ?string $psMode = null): ?string
 	{
-		if (is_array($paySystemColor[$handler]))
+		if (isset($paySystemColor[$handler]) && is_array($paySystemColor[$handler]))
 		{
 			if (is_null($psMode))
 			{
 				return null;
 			}
 
-			$itemSelectedColor = $paySystemColor[$handler][$psMode];
+			$itemSelectedColor = $paySystemColor[$handler][$psMode] ?? null;
 		}
 		else
 		{
-			$itemSelectedColor = $paySystemColor[$handler];
+			$itemSelectedColor = $paySystemColor[$handler] ?? null;
 		}
 
 		return $itemSelectedColor;

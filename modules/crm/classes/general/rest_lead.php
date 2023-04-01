@@ -48,7 +48,7 @@ class CCRMLeadRest
 		if ($arData['CURRENCY_ID'] == '')
 			$arData['CURRENCY_ID'] = CCrmCurrency::GetBaseCurrencyID();
 
-		$arFields = array(
+		$arFields = [
 			'TITLE' => trim($arData['TITLE']),
 			'COMPANY_TITLE' => trim($arData['COMPANY_TITLE']),
 			'NAME' => trim($arData['NAME']),
@@ -62,8 +62,8 @@ class CCRMLeadRest
 			'OPPORTUNITY' => trim($arData['OPPORTUNITY']),
 			'CURRENCY_ID' => trim($arData['CURRENCY_ID']),
 			'ASSIGNED_BY_ID' => (int)(is_array($arData['ASSIGNED_BY_ID']) ? $arData['ASSIGNED_BY_ID'][0] : $arData['ASSIGNED_BY_ID']),
-			'OPENED' => 'Y',
-		);
+			'OPENED' => \Bitrix\Crm\Settings\LeadSettings::getCurrent()->getOpenedFlag() ? 'Y' : 'N',
+		];
 
 		if (isset($arData['BIRTHDATE']))
 		{

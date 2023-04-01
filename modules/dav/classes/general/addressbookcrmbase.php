@@ -3,8 +3,7 @@
 /**
  * Class CDavAddressbookCrmResource
  */
-abstract class CDavAddressbookCrmBase
-	extends CDavAddressbookBaseLimited
+abstract class CDavAddressbookCrmBase extends CDavAddressbookBaseLimited
 {
 
 	private $multiFieldEntityId;
@@ -33,7 +32,7 @@ abstract class CDavAddressbookCrmBase
 		{
 			$photo = $photoProperty[0];
 		}
-		if (intval($id) && $oldEntity = $this->LoadEntityById($id))
+		if ((int)$id && $oldEntity = $this->LoadEntityById($id))
 		{
 			$multiFields = $this->LoadMultiFields($id);
 			$oldEntityParams = $this->AttachMultiFieldsToEntityForImport($multiFields, $oldEntity);
@@ -145,11 +144,11 @@ abstract class CDavAddressbookCrmBase
 	 * @param $maxCount
 	 * @return mixed
 	 */
-	protected function LoadLimitedEntitiesList($collectionId, $account, $filter = array(), $maxCount)
+	protected function LoadLimitedEntitiesList($collectionId, $account, $maxCount, $filter = [])
 	{
 		$result = array();
-		$crmResourceEntitiesList = $this->LoadCrmResourceEntitiesList($collectionId, $account, $filter, $maxCount);
-		while ($crmResourceEntity = $crmResourceEntitiesList->Fetch())
+		$crmResourceEntitiesList = $this->LoadCrmResourceEntitiesList($collectionId, $account, $maxCount, $filter);
+		while ($crmResourceEntitiesList && $crmResourceEntity = $crmResourceEntitiesList->Fetch())
 		{
 			$crmResourceEntityMultiFields = $this->LoadMultiFields($crmResourceEntity['ID']);
 			$result[] = $this->AttachMultiFieldsToEntityForExport($crmResourceEntityMultiFields, $crmResourceEntity);
@@ -181,145 +180,176 @@ abstract class CDavAddressbookCrmBase
 		if (!empty($entity["PHONE_MOBILE"]))
 		{
 			foreach ($entity["PHONE_MOBILE"] as $number)
-				$map["TEL"][] = array(
+			{
+				$map["TEL"][] = [
 					"VALUE" => $number,
-					"PARAMETERS" => array("TYPE" => "CELL")
-				);
+					"PARAMETERS" => ["TYPE" => "CELL"]
+				];
+			}
 		}
 
 		if (!empty($entity["PHONE_WORK"]))
 		{
 			foreach ($entity["PHONE_WORK"] as $number)
-				$map["TEL"][] = array(
+			{
+				$map["TEL"][] = [
 					"VALUE" => $number,
-					"PARAMETERS" => array("TYPE" => "WORK")
-				);
+					"PARAMETERS" => ["TYPE" => "WORK"]
+				];
+			}
 		}
 
 		if (!empty($entity["PHONE_FAX"]))
 		{
 			foreach ($entity["PHONE_FAX"] as $number)
-				$map["TEL"][] = array(
+			{
+				$map["TEL"][] = [
 					"VALUE" => $number,
-					"PARAMETERS" => array("TYPE" => "FAX")
-				);
+					"PARAMETERS" => ["TYPE" => "FAX"]
+				];
+			}
 		}
 
 		if (!empty($entity["PHONE_HOME"]))
 		{
 			foreach ($entity["PHONE_HOME"] as $number)
-				$map["TEL"][] = array(
+			{
+				$map["TEL"][] = [
 					"VALUE" => $number,
-					"PARAMETERS" => array("TYPE" => "HOME")
-				);
+					"PARAMETERS" => ["TYPE" => "HOME"]
+				];
+			}
 		}
 
 		if (!empty($entity["PHONE_PAGER"]))
 		{
 			foreach ($entity["PHONE_PAGER"] as $number)
-				$map["TEL"][] = array(
+			{
+				$map["TEL"][] = [
 					"VALUE" => $number,
-					"PARAMETERS" => array("TYPE" => "PAGER")
-				);
+					"PARAMETERS" => ["TYPE" => "PAGER"]
+				];
+			}
 		}
 
 		if (!empty($entity["PHONE_OTHER"]))
 		{
 			foreach ($entity["PHONE_OTHER"] as $number)
-				$map["TEL"][] = array(
+			{
+				$map["TEL"][] = [
 					"VALUE" => $number,
-				);
+				];
+			}
 		}
-
 
 		if (!empty($entity["EMAIL_WORK"]))
 		{
 			foreach ($entity["EMAIL_WORK"] as $number)
-				$map["EMAIL"][] = array(
+			{
+				$map["EMAIL"][] = [
 					"VALUE" => $number,
-					"PARAMETERS" => array("TYPE" => "WORK")
-				);
+					"PARAMETERS" => ["TYPE" => "WORK"]
+				];
+			}
 		}
 
 		if (!empty($entity["EMAIL_HOME"]))
 		{
 			foreach ($entity["EMAIL_HOME"] as $number)
-				$map["EMAIL"][] = array(
+			{
+				$map["EMAIL"][] = [
 					"VALUE" => $number,
-					"PARAMETERS" => array("TYPE" => "HOME")
-				);
+					"PARAMETERS" => ["TYPE" => "HOME"]
+				];
+			}
 		}
 
 		if (!empty($entity["EMAIL_OTHER"]))
 		{
 			foreach ($entity["EMAIL_OTHER"] as $number)
-				$map["EMAIL"][] = array(
+			{
+				$map["EMAIL"][] = [
 					"VALUE" => $number,
-					"PARAMETERS" => array("TYPE" => "INTERNET")
-				);
+					"PARAMETERS" => ["TYPE" => "INTERNET"]
+				];
+			}
 		}
 
 		if (!empty($entity["WEB_HOME"]))
 		{
 			foreach ($entity["WEB_HOME"] as $url)
-				$map["URL"][] = array(
+			{
+				$map["URL"][] = [
 					"VALUE" => $url,
-					"PARAMETERS" => array("TYPE" => "HOME")
-				);
+					"PARAMETERS" => ["TYPE" => "HOME"]
+				];
+			}
 		}
 
 		if (!empty($entity["WEB_WORK"]))
 		{
 			foreach ($entity["WEB_WORK"] as $url)
-				$map["URL"][] = array(
+			{
+				$map["URL"][] = [
 					"VALUE" => $url,
-					"PARAMETERS" => array("TYPE" => "WORK")
-				);
+					"PARAMETERS" => ["TYPE" => "WORK"]
+				];
+			}
 		}
 
 		if (!empty($entity["WEB_OTHER"]))
 		{
 			foreach ($entity["WEB_OTHER"] as $url)
-				$map["URL"][] = array(
+			{
+				$map["URL"][] = [
 					"VALUE" => $url,
-					"PARAMETERS" => array("TYPE" => "OTHER")
-				);
+					"PARAMETERS" => ["TYPE" => "OTHER"]
+				];
+			}
 		}
 
 		if (!empty($entity["WEB_FACEBOOK"]))
 		{
 			foreach ($entity["WEB_FACEBOOK"] as $url)
-				$map["URL"][] = array(
+			{
+				$map["URL"][] = [
 					"VALUE" => $url,
-					"PARAMETERS" => array("TYPE" => "OTHER")
-				);
+					"PARAMETERS" => ["TYPE" => "OTHER"]
+				];
+			}
 		}
 
 		if (!empty($entity["WEB_VK"]))
 		{
 			foreach ($entity["WEB_VK"] as $url)
-				$map["URL"][] = array(
+			{
+				$map["URL"][] = [
 					"VALUE" => $url,
-					"PARAMETERS" => array("TYPE" => "OTHER")
-				);
+					"PARAMETERS" => ["TYPE" => "OTHER"]
+				];
+			}
 		}
 
 		if (!empty($entity["WEB_LIVEJOURNAL"]))
 		{
 			foreach ($entity["WEB_LIVEJOURNAL"] as $url)
-				$map["URL"][] = array(
+			{
+				$map["URL"][] = [
 					"VALUE" => $url,
-					"PARAMETERS" => array("TYPE" => "OTHER")
-				);
+					"PARAMETERS" => ["TYPE" => "OTHER"]
+				];
+			}
 		}
 
 		if (!empty($entity["WEB_TWITTER"]))
 		{
 			foreach ($entity["WEB_TWITTER"] as $url)
-				$map["URL"][] = array(
+			{
+				$map["URL"][] = [
 					"VALUE" => $url,
-					"PARAMETERS" => array("TYPE" => "OTHER")
-				);
+					"PARAMETERS" => ["TYPE" => "OTHER"]
+				];
+			}
 		}
 		return $map;
 	}
@@ -378,10 +408,14 @@ abstract class CDavAddressbookCrmBase
 	protected function CatalogLastModifiedAt($collectionId = '', $filter = array())
 	{
 		if (!empty($filter['XML_ID']))
+		{
 			unset($filter['XML_ID']);
-		$lastEditedEntity = $this->LoadCrmResourceEntitiesListByParams(array('DATE_MODIFY' => "DESC"), $filter, array('DATE_MODIFY'), 1);
+		}
+		$lastEditedEntity = $this->LoadCrmResourceEntitiesListByParams(array('DATE_MODIFY' => "DESC"), $filter, 1, array('DATE_MODIFY'));
 		if ($entity = $lastEditedEntity->Fetch())
+		{
 			return $entity["DATE_MODIFY"];
+		}
 		return \Bitrix\Main\Type\Date::createFromTimestamp(0)->toString();
 	}
 
@@ -392,7 +426,7 @@ abstract class CDavAddressbookCrmBase
 	 * @param $maxCount
 	 * @return mixed
 	 */
-	abstract protected function LoadCrmResourceEntitiesList($collectionId, $account, $filter = array(), $maxCount);
+	abstract protected function LoadCrmResourceEntitiesList($collectionId, $account, $maxCount, $filter = array());
 
 	/**
 	 * @param $order
@@ -401,7 +435,7 @@ abstract class CDavAddressbookCrmBase
 	 * @param $maxCount
 	 * @return CDBResult
 	 */
-	abstract protected function LoadCrmResourceEntitiesListByParams($order, $filter, $selectParams = array(), $maxCount);
+	abstract protected function LoadCrmResourceEntitiesListByParams($order, $filter, $maxCount, $selectParams = array());
 
 	/**
 	 *

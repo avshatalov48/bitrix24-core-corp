@@ -1,7 +1,7 @@
 <?php
 
-use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Filter\EntityDataProvider;
+use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\PhaseSemantics;
 use Bitrix\Crm\Service;
 use Bitrix\Crm\Timeline;
@@ -170,6 +170,8 @@ class CCrmEntityHelper
 	 * Simple method-adapter that is used to avoid copy-paste in compatible Crm entities
 	 * Used, for example, in @see \CAllCrmDeal and other entities
 	 *
+	 * Now it registers both timeline and event history records. But for compatibility reasons, no renaming of the method
+	 *
 	 * @param array $params = [
 	 *     'entityTypeId' => 0,
 	 *     'entityId' => 0,
@@ -206,10 +208,16 @@ class CCrmEntityHelper
 			$authorId = (int)$options['CURRENT_USER'];
 		}
 
-		static::registerRelationEvents($itemIdentifier, $params, $authorId);
+		$isWriteToHistoryEnabled = (bool)($options['IS_COMPARE_ENABLED'] ?? true);
+		if ($isWriteToHistoryEnabled)
+		{
+			static::registerRelationEvents($itemIdentifier, $params, $authorId);
+		}
 
+		$isRestoration = isset($options['IS_RESTORATION']) && $options['IS_RESTORATION'] === true;
+		$isWriteToTimelineDisabled = isset($options['DISABLE_TIMELINE_CREATION']) && $options['DISABLE_TIMELINE_CREATION'] === 'Y';
 		$isMarkEventRegistrationEnabled = (bool)($params['isMarkEventRegistrationEnabled'] ?? true);
-		if ($isMarkEventRegistrationEnabled)
+		if (!$isRestoration && !$isWriteToTimelineDisabled && $isMarkEventRegistrationEnabled)
 		{
 			static::registerMarkEvent($itemIdentifier, $params);
 		}
@@ -224,13 +232,22 @@ class CCrmEntityHelper
 		$options = static::extractArrayFromParams($params, 'options');
 		$excludeFromRelationRegistration = static::extractArrayFromParams($options, 'EXCLUDE_FROM_RELATION_REGISTRATION');
 
-		Timeline\RelationController::getInstance()->registerEventsByFieldsChange(
+		$context = null;
+		if ($authorId !== null)
+		{
+			$context = clone Service\Container::getInstance()->getContext();
+			$context->setUserId($authorId);
+		}
+
+		$relationRegistrar = Service\Container::getInstance()->getRelationRegistrar();
+
+		$relationRegistrar->registerByFieldsChange(
 			$itemIdentifier,
 			static::extractArrayFromParams($params, 'fieldsInfo'),
 			static::extractArrayFromParams($params, 'previousFields'),
 			static::extractArrayFromParams($params, 'currentFields'),
 			$excludeFromRelationRegistration,
-			$authorId,
+			$context,
 		);
 
 		$bindings = static::extractArrayFromParams($params, 'bindings');
@@ -242,13 +259,13 @@ class CCrmEntityHelper
 		;
 		if (!empty($bindings) && !is_null($currentBindings))
 		{
-			Timeline\RelationController::getInstance()->registerEventsByBindingsChange(
+			$relationRegistrar->registerByBindingsChange(
 				$itemIdentifier,
 				(int)($bindings['entityTypeId'] ?? 0),
 				static::extractArrayFromParams($bindings, 'previous'),
 				$currentBindings,
 				$excludeFromRelationRegistration,
-				$authorId,
+				$context,
 			);
 		}
 	}

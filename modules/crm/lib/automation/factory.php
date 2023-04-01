@@ -6,6 +6,7 @@ use Bitrix\Bizproc;
 use Bitrix\Crm\Automation\Target;
 use Bitrix\Crm\Automation\Trigger\BaseTrigger;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Service\Integration\Sign;
 use Bitrix\Crm\Settings\QuoteSettings;
 use Bitrix\Crm\Settings\InvoiceSettings;
 use Bitrix\Main\Error;
@@ -57,6 +58,11 @@ class Factory
 			if (\CCrmSaleHelper::isWithOrdersMode())
 			{
 				static::$supportedEntityTypes[] = \CCrmOwnerType::Order;
+			}
+
+			if ((new Sign())->isEnabled())
+			{
+				static::$supportedEntityTypes[] = \CCrmOwnerType::SmartDocument;
 			}
 		}
 
@@ -343,6 +349,10 @@ class Factory
 			return new Target\ItemTarget($entityTypeId);
 		}
 		elseif ($entityTypeId === \CCrmOwnerType::SmartInvoice)
+		{
+			return new Target\ItemTarget($entityTypeId);
+		}
+		elseif ($entityTypeId === \CCrmOwnerType::SmartDocument)
 		{
 			return new Target\ItemTarget($entityTypeId);
 		}

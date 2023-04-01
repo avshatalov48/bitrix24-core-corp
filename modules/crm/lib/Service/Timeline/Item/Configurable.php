@@ -97,12 +97,18 @@ abstract class Configurable extends Item
 		return $this->layout;
 	}
 
+	public function getPayload(): ?Payload
+	{
+		return null;
+	}
+
 	public function jsonSerialize(): array
 	{
 		return [
 			'layout' => (new Converter($this->getLayout()))->toArray(),
 			'type' => $this->getType(),
 			'id' => $this->getModel()->getId(),
+			'payload' => $this->getPayload(),
 			'timestamp' => $this->getModel()->getDate() ? $this->getModel()->getDate()->getTimestamp() : null,
 			'sort' => $this->getSort(),
 			'languageId' => \Bitrix\Main\Context::getCurrent()->getLanguage(),

@@ -76,6 +76,21 @@ class LineOfTextBlocks extends ContentBlock
 		return $this;
 	}
 
+	public function setTextColor(?string $color): self
+	{
+		foreach ($this->blocks as $block)
+		{
+			if (!$block instanceof TextPropertiesInterface)
+			{
+				continue;
+			}
+
+			$block->setColor($color);
+		}
+
+		return $this;
+	}
+
 	protected function getProperties(): array
 	{
 		return [

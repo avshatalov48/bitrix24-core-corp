@@ -1,4 +1,5 @@
 import { ajax, Type } from 'main.core';
+import {rest as Rest} from 'rest.client';
 import { UI } from 'ui.notification';
 import { Menu } from "./components/layout/menu";
 import { DateTimeFormat } from "main.date";
@@ -130,10 +131,60 @@ export class Action
 					}
 				);
 			}
+			else if (this.isCallRestBatch())
+			{
+				this.#startAnimation(vueComponent);
+				vueComponent.$Bitrix.eventEmitter.emit('crm:timeline:item:action', {
+					action: this.#value,
+					actionType: 'ajaxActionStarted',
+					actionData: this.#actionParams,
+				});
+				Rest.callBatch(
+					this.#prepareCallBatchParams(this.#actionParams),
+					(restResult) => {
+						for (const result in restResult)
+						{
+							const response = restResult[result].answer;
+							if (response.error)
+							{
+								this.#stopAnimation(vueComponent);
+								UI.Notification.Center.notify({
+									content: response.error.error_description,
+									autoHideDelay: 5000,
+								});
+								vueComponent.$Bitrix.eventEmitter.emit('crm:timeline:item:action', {
+									action: this.#value,
+									actionType: 'ajaxActionFailed',
+									actionParams: this.#actionParams,
+								});
+								reject(restResult);
+
+								return;
+							}
+						}
+
+						this.#stopAnimation(vueComponent);
+						vueComponent.$Bitrix.eventEmitter.emit('crm:timeline:item:action', {
+							action: this.#value,
+							actionType: 'ajaxActionFinished',
+							actionData: this.#actionParams,
+						});
+						resolve(restResult);
+					},
+					true
+				);
+			}
 			else if (this.isRedirect())
 			{
 				this.#startAnimation(vueComponent);
-				location.href = this.#value;
+				if (this.#actionParams && this.#actionParams.target)
+				{
+					window.open(this.#value, this.#actionParams.target);
+				}
+				else
+				{
+					location.href = this.#value;
+				}
 				resolve(this.#value);
 			}
 			else if (this.isShowMenu())
@@ -169,6 +220,11 @@ export class Action
 	isAjaxAction(): boolean
 	{
 		return (this.#type === 'runAjaxAction');
+	}
+
+	isCallRestBatch(): boolean
+	{
+		return (this.#type === 'callRestBatch');
 	}
 
 	isRedirect(): boolean
@@ -209,6 +265,26 @@ export class Action
 			{
 				result[paramName] = paramValue;
 			}
+		}
+
+		return result;
+	}
+
+	#prepareCallBatchParams(params): Object
+	{
+		const result = {};
+
+		if (Type.isUndefined(params))
+		{
+			return result;
+		}
+
+		for (const paramName in params)
+		{
+			result[paramName] = {
+				method: params[paramName].method,
+				params: this.#prepareRunActionParams(params[paramName].params)
+			};
 		}
 
 		return result;

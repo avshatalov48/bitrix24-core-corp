@@ -7,6 +7,7 @@ namespace Bitrix\Crm\Recycling;
 use Bitrix\Crm\Binding\EntityBinding;
 use Bitrix\Crm\Binding\EntityContactTable;
 use Bitrix\Crm\Item;
+use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\NotSupportedException;
 
@@ -132,13 +133,18 @@ class DynamicBinder extends BaseBinder
 			return;
 		}
 
+		$registrar = Container::getInstance()->getRelationRegistrar();
+
 		if($associatedEntityTypeID === \CCrmOwnerType::Company)
 		{
 			$items = $this->getItems($entityIDs);
+			$companyIdentifier = new ItemIdentifier(\CCrmOwnerType::Company, $associatedEntityID);
 
 			foreach($items as $item)
 			{
 				$item->setCompanyId($associatedEntityID)->save();
+
+				$registrar->registerBind($companyIdentifier, ItemIdentifier::createByItem($item));
 			}
 
 			return;
@@ -147,6 +153,7 @@ class DynamicBinder extends BaseBinder
 		if($associatedEntityTypeID === \CCrmOwnerType::Contact)
 		{
 			$items = $this->getItems($entityIDs, ['withContacts' => true]);
+			$contactIdentifier = new ItemIdentifier(\CCrmOwnerType::Contact, $associatedEntityID);
 
 			$contacts = EntityBinding::prepareEntityBindings(
 				$associatedEntityTypeID,
@@ -157,6 +164,8 @@ class DynamicBinder extends BaseBinder
 			{
 				$item->bindContacts($contacts);
 				$item->save();
+
+				$registrar->registerBind($contactIdentifier, ItemIdentifier::createByItem($item));
 			}
 
 			return;

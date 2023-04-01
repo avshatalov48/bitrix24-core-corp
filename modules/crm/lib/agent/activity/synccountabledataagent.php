@@ -515,7 +515,9 @@ class SyncCountableDataAgent extends Stepper
 					new ReferenceField('A',
 						EntityCountableActivityTable::getEntity(),
 						(new ConditionTree())
-							->whereColumn('ref.ACTIVITY_ID', 'this.ACTIVITY_ID'),
+							->whereColumn('ref.ACTIVITY_ID', 'this.ACTIVITY_ID')
+							->whereColumn('ref.ENTITY_TYPE_ID', 'this.OWNER_TYPE_ID')
+							->whereColumn('ref.ENTITY_ID', 'this.OWNER_ID'),
 						['join_type' => Join::TYPE_LEFT]
 					)
 				)

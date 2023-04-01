@@ -24,6 +24,7 @@ $MESS["BX_LIVECHAT_CLOSE_BUTTON"] = "Закрыть виджет";
 $MESS["BX_LIVECHAT_VOTE_BUTTON"] = "Оценить качество обслуживания";
 $MESS["BX_LIVECHAT_VOTE_PLUS"] = "Нравится";
 $MESS["BX_LIVECHAT_VOTE_MINUS"] = "Не нравится";
+$MESS["BX_LIVECHAT_VOTE_LATER"] = "Оценить позже";
 
 $MESS["BX_LIVECHAT_MAIL_BUTTON_NEW"] = "Отправить копию разговора";
 $MESS["BX_LIVECHAT_DOWNLOAD_HISTORY"] = "Скачать историю диалога";

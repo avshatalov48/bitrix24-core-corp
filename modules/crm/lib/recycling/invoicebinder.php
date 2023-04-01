@@ -90,7 +90,7 @@ class InvoiceBinder extends BaseBinder
 				$entity->Update(
 					$fields['ID'],
 					array($fieldName => null),
-					$this->getUpdateOptions((int)$associatedEntityTypeID, [$associatedEntityID]),
+					$this->getUnbindUpdateOptions((int)$associatedEntityTypeID, [$associatedEntityID]),
 				);
 			}
 		}
@@ -136,7 +136,6 @@ class InvoiceBinder extends BaseBinder
 				$entity->Update(
 					$fields['ID'],
 					array($fieldName => $associatedEntityID),
-					$this->getUpdateOptions((int)$associatedEntityTypeID, [$associatedEntityID]),
 				);
 			}
 		}

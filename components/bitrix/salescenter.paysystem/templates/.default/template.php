@@ -246,7 +246,7 @@ Extension::load([
 						</div>
 						<div class="salescneter-editor-img-wrapper">
 							<?php
-							if ($arResult['PAYSYSTEM']["LOGOTIP"])
+							if (!empty($arResult['PAYSYSTEM']["LOGOTIP"]))
 							{
 								$logo = \CFile::ResizeImageGet(
 									$arResult['PAYSYSTEM']["LOGOTIP"],
@@ -270,7 +270,7 @@ Extension::load([
 							}
 							else
 							{
-								if ($arResult['PAYSYSTEM']['HANDLER_DESCRIPTION']['LOGO'])
+								if (!empty($arResult['PAYSYSTEM']['HANDLER_DESCRIPTION']['LOGO']))
 								{
 									?>
 									<div class="salescneter-editor-img-container">
@@ -512,8 +512,8 @@ Extension::load([
 			cashboxContainerInfoId: 'salescenter-paysystem-cashbox-block',
 			cashboxContainerId: 'salescenter-paysystem-cashbox',
 			canPrintCheckId: 'CAN_PRINT_CHECK',
-			section: <?=CUtil::PhpToJSObject($arResult['CASHBOX']['section'])?>,
-			fields: <?=CUtil::PhpToJSObject($arResult['CASHBOX']['fields'])?>,
+			section: <?=CUtil::PhpToJSObject($arResult['CASHBOX']['section'] ?? [])?>,
+			fields: <?=CUtil::PhpToJSObject($arResult['CASHBOX']['fields'] ?? [])?>,
 			containerList: {
 				settings: 'salescenter-paysystem-cashbox-settings',
 				cashboxSettings: 'salescenter-paysystem-cashbox-settings-cashbox',

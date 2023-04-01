@@ -5,12 +5,9 @@ namespace Bitrix\SalesCenter\Integration;
 use Bitrix\Crm\Activity\Provider\Sms;
 use Bitrix\Crm\AddressTable;
 use Bitrix\Crm\Binding\DealContactTable;
-use Bitrix\Crm\Binding\LeadContactTable;
-use Bitrix\Crm\DealTable;
 use Bitrix\Crm\EntityAddress;
 use Bitrix\Crm\EntityAddressType;
 use Bitrix\Crm\EntityRequisite;
-use Bitrix\Crm\LeadTable;
 use Bitrix\Crm\Order\BindingsMaker\ActivityBindingsMaker;
 use Bitrix\Crm\Restriction\OrderRestriction;
 use Bitrix\Main;
@@ -659,9 +656,9 @@ class CrmManager extends Base
 			return;
 		}
 
-		$dealId = (int)$additionalFields['ENTITIES']['DEAL']['ID'];
-		$productIds = $additionalFields['PRODUCT_IDS'];
-		$compilationId = (int)$additionalFields['COMPILATION_ID'];
+		$dealId = (int)($additionalFields['ENTITIES']['DEAL']['ID'] ?? 0);
+		$productIds = $additionalFields['PRODUCT_IDS'] ?? [];
+		$compilationId = (int)($additionalFields['COMPILATION_ID'] ?? 0);
 
 		if (!$dealId || !$productIds || !$compilationId)
 		{
@@ -952,7 +949,7 @@ class CrmManager extends Base
 					'ORDER_ID' => $payment->getOrderId(),
 					'OWNER_ID' => $binding->getOwnerId(),
 					'OWNER_TYPE_ID' => $binding->getOwnerTypeId(),
-					'SENT' => 'Y',
+					'VIEWED' => 'N',
 					'DESTINATION' => $options['DESTINATION'] ?? '',
 					'PAYMENT_ID' => $options['PAYMENT_ID'] ?? '',
 					'SHIPMENT_ID' => $options['SHIPMENT_ID'] ?? '',
@@ -1011,7 +1008,7 @@ class CrmManager extends Base
 	{
 		$company = \CCrmCompany::GetByID(EntityLink::getDefaultMyCompanyId(), false);
 
-		return (string)$company['TITLE'] ?? '';
+		return (string)($company['TITLE'] ?? '');
 	}
 
 	public static function getPublishedCompanyPhone(): array
@@ -1155,10 +1152,16 @@ class CrmManager extends Base
 	 */
 	public function getClientAddressList(int $contactId)
 	{
+		if (!Loader::includeModule('crm'))
+		{
+			return [];
+		}
+
+		$entityTypeId = CCrmOwnerType::Contact;
 		$requisite = EntityRequisite::getSingleInstance()->getList([
 			'select' => ['ID'],
 			'filter' => [
-				'=ENTITY_TYPE_ID' => \CCrmOwnerType::Contact,
+				'=ENTITY_TYPE_ID' => $entityTypeId,
 				'=ENTITY_ID' => $contactId,
 			],
 		])->fetch();
@@ -1178,7 +1181,16 @@ class CrmManager extends Base
 			],
 		])->fetchAll();
 
-		$defaultAddressTypeId = EntityAddressType::getDefaultIdByZone(EntityAddress::getZoneId());
+		$defaultAddressTypeByCategory = 
+			method_exists(EntityAddressType::class, 'getDefaultIdByEntityId')
+			? EntityAddressType::getDefaultIdByEntityId($entityTypeId, $contactId)
+			: EntityAddressType::Undefined
+		;
+		$defaultAddressTypeId =
+			EntityAddressType::isDefined($defaultAddressTypeByCategory)
+				? $defaultAddressTypeByCategory
+				: EntityAddressType::getDefaultIdByZone(EntityAddress::getZoneId())
+		;
 
 		$sortingMap = [
 			EntityAddressType::Delivery => 10,
@@ -1189,7 +1201,7 @@ class CrmManager extends Base
 		{
 			$result[$address['TYPE_ID']] = [
 				'VALUE' => (int)$address['LOC_ADDR_ID'],
-				'SORT' => isset($sortingMap[$address['TYPE_ID']]) ? $sortingMap[$address['TYPE_ID']] : 100,
+				'SORT' => $sortingMap[$address['TYPE_ID']] ?? 100,
 			];
 		}
 

@@ -245,7 +245,7 @@ final class Monitor
 			}
 
 			$items = $factory->getItems([
-				'select' => $this->prepareSelect($factory),
+				'select' => ['*'],
 				'filter' => [
 					'@' . Item::FIELD_NAME_ID => array_keys($changesOfItemsOfSameType),
 				],
@@ -256,39 +256,6 @@ final class Monitor
 				$this->processSingleItemChange($factory, $singleItem);
 			}
 		}
-	}
-
-	/**
-	 * Prepares fields to be selected from DB. Operation requires all fields to be selected to work properly.
-	 * Basically a copy of Factory::getSelectForGetItem.
-	 *
-	 * @todo Remove. Select all necessary data when '*' is in select.
-	 *
-	 * @param Factory $factory
-	 * @return array
-	 */
-	private function prepareSelect(Factory $factory): array
-	{
-		$select = ['*'];
-
-		if ($factory->isFieldExists(Item::FIELD_NAME_CONTACTS))
-		{
-			$select[] = Item::FIELD_NAME_CONTACTS;
-		}
-		if ($factory->isFieldExists(Item::FIELD_NAME_PRODUCTS))
-		{
-			$select[] = Item::FIELD_NAME_PRODUCTS;
-		}
-		if ($factory->isFieldExists(Item::FIELD_NAME_OBSERVERS))
-		{
-			$select[] = Item::FIELD_NAME_OBSERVERS;
-		}
-		if ($factory->isFieldExists(Item\Contact::FIELD_NAME_COMPANIES))
-		{
-			$select[] = Item\Contact::FIELD_NAME_COMPANIES;
-		}
-
-		return $select;
 	}
 
 	private function processSingleItemChange(Factory $factory, Item $item): void

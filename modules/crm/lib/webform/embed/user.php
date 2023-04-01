@@ -18,7 +18,7 @@ use Bitrix\Crm\Entity\Identificator;
  */
 class User
 {
-	private static array $fieldsByType = []; 
+	private static array $fieldsByType = [];
 	/**
 	 * Get user data from entities.
 	 *
@@ -48,9 +48,9 @@ class User
 							'fields' => [],
 							'reqs' => [],
 							'map' => [],
-						];	
+						];
 					}
-					
+
 					$name = $field['entity_field_name'];
 					if ($name === 'RQ')
 					{
@@ -72,7 +72,7 @@ class User
 			}
 		}
 		self::$fieldsByType = $fieldsByType;
-		
+
 		foreach ($entities as $entity)
 		{
 			/** @var Identificator\Complex $entity */
@@ -85,20 +85,25 @@ class User
 				'typeId' => $entity->getTypeId(),
 				'id' => $entity->getId(),
 			];
-			$data['fields'] = $data['fields'] + self::getEntityFields($entity);
+			$data['fields'] = $data['fields'] + self::getEntityFields(
+					$entity,
+					isset($form)
+						? ($form->get()['FORM_SETTINGS']['REQUISITE_PRESET_ID'] ?? null)
+						: null
+				);
 		}
 
 		self::$fieldsByType = [];
 
 		return $data;
 	}
-	
+
 	protected static function richMap($typeId, array $map = []): array
 	{
 		return $map + (self::$fieldsByType[$typeId]['map'] ?? []);
 	}
 
-	protected static function getEntityFields(Identificator\Complex $entity): array
+	protected static function getEntityFields(Identificator\Complex $entity, ?int $presetId): array
 	{
 		$data = [
 			/*
@@ -118,7 +123,7 @@ class User
 					Crm\DealTable::getRow([
 						'select' => ['CONTACT_ID', 'COMPANY_ID'],
 						'filter' => ['=ID' => $entity->getId()]
-					])
+					]), $presetId
 				);
 
 			case \CCrmOwnerType::Quote:
@@ -126,7 +131,7 @@ class User
 					Crm\QuoteTable::getRow([
 						'select' => ['CONTACT_ID', 'COMPANY_ID'],
 						'filter' => ['=ID' => $entity->getId()]
-					])
+					]), $presetId
 				);
 
 			case \CCrmOwnerType::Company:
@@ -160,7 +165,7 @@ class User
 					'select' => array_keys($map),
 					'filter' => ['=ID' => $entity->getId()]
 				]);
-				return self::getClientDataByFields($fields) + self::getDataByFieldsMap($fields, $map);
+				return self::getClientDataByFields($fields, $presetId) + self::getDataByFieldsMap($fields, $map);
 
 			case \CCrmOwnerType::Contact:
 				$map = self::richMap(
@@ -180,7 +185,7 @@ class User
 				);
 
 				$fields = self::loadEntityData($entity);
-				return self::getDataByFieldsMap($fields, $map) + self::getClientDataByFields($fields);
+				return self::getDataByFieldsMap($fields, $map) + self::getClientDataByFields($fields, $presetId);
 
 			default:
 				if (!\CCrmOwnerType::isUseDynamicTypeBasedApproach($entity->getTypeId()))
@@ -207,7 +212,7 @@ class User
 				$data += self::getClientDataByFields([
 					'CONTACT_ID' => $dynamicItem->getContactId(),
 					'COMPANY_ID' => $dynamicItem->getCompanyId(),
-				]);
+				], $presetId);
 		}
 
 		return $data;
@@ -262,7 +267,7 @@ class User
 		return $data;
 	}
 
-	protected static function getClientDataByFields($fields): array
+	protected static function getClientDataByFields($fields, ?int $presetId): array
 	{
 		$result = [];
 		if (!is_array($fields))
@@ -277,9 +282,9 @@ class User
 			$result += self::getEntityFields(new Identificator\Complex(
 				$typeId,
 				$entityId
-			));
+			), $presetId);
 
-			$result += self::loadReqData($typeId, $entityId);
+			$result += self::loadReqData($typeId, $entityId, $presetId);
 		}
 
 		if ($fields['COMPANY_ID'])
@@ -289,15 +294,15 @@ class User
 			$result += self::getEntityFields(new Identificator\Complex(
 				$typeId,
 				$entityId
-			));
+			), $presetId);
 
-			$result += self::loadReqData($typeId, $entityId);
+			$result += self::loadReqData($typeId, $entityId, $presetId);
 		}
 
 		return $result;
 	}
 
-	private static function loadReqData($typeId, $entityId): array
+	private static function loadReqData($typeId, $entityId, $presetId): array
 	{
 		$typeName = \CCrmOwnerType::ResolveName($typeId);
 		$reqs = self::$fieldsByType[$typeId]['reqs'] ?? [];
@@ -306,7 +311,7 @@ class User
 			return [];
 		}
 
-		$reqData = Crm\WebForm\Requisite::instance()->load($typeId, $entityId);
+		$reqData = Crm\WebForm\Requisite::instance()->load($typeId, $entityId, $presetId);
 		if (!$reqData->isSuccess())
 		{
 			return [];

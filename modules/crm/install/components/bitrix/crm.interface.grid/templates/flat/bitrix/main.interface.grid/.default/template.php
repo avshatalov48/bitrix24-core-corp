@@ -41,7 +41,7 @@ endif;?>
 <?endif?>
 		<td><div class="empty"></div></td>
 <?foreach($arResult["HEADERS"] as $header):?>
-		<td<?=($header["sort_state"] <> ''? ' class="bx-crm-sorted"':'')?>><div class="empty"></div></td>
+		<td<?=(($header["sort_state"] ?? null) <> ''? ' class="bx-crm-sorted"':'')?>><div class="empty"></div></td>
 <?endforeach?>
 	</tr>
 	<tr class="bx-crm bx-crm-grid-head" oncontextmenu="return bxGrid_<?=$arParams["GRID_ID"]?>.settingsMenu"<?if($GLOBALS['USER']->IsAuthorized()):?> ondblclick="bxGrid_<?=$arParams["GRID_ID"]?>.EditCurrentView()"<?endif?>>
@@ -58,7 +58,7 @@ foreach($arResult["HEADERS"] as $id=>$header):
 	$headerWidth = isset($header['width']) ? $header['width'] : '';
 ?>
 <?
-if($header["sort"] <> ''):
+if(isset($header["sort"]) && $header["sort"] <> ''):
 	$order_title = GetMessage("interface_grid_sort").' '.$header["name"];
 	$order_class = "";
 	if($header["sort_state"] == "desc"):
@@ -144,7 +144,7 @@ foreach($arParams["ROWS"] as $index=>$aRow):
 <?
 	$columnClasses = isset($aRow['columnClasses']) && is_array($aRow['columnClasses']) ? $aRow['columnClasses'] : null;
 	foreach($arResult["HEADERS"] as $id=>$header):
-	$columnClass = 	$header["sort_state"] !== '' ? 'bx-crm-sorted' : '';
+	$columnClass = 	($header["sort_state"] ?? null) !== '' ? 'bx-crm-sorted' : '';
 	if($columnClasses && isset($columnClasses[$id]) && $columnClasses[$id] !== '')
 	{
 		if($columnClass !== '')
@@ -155,21 +155,23 @@ foreach($arParams["ROWS"] as $index=>$aRow):
 	}
 
 	?><td<?=($columnClass !== '' ? ' class="'.$columnClass.'"' : '')?><?
-if($header["align"] <> '')
+if(isset($header["align"]) && $header["align"] <> '')
 	echo ' align="'.$header["align"].'"';
-elseif($header["type"] == "checkbox")
+elseif(isset($header["type"]) && $header["type"] == "checkbox")
 	echo ' align="center"';
 		?>><?
-	if($header["type"] == "checkbox"
-		&& $aRow["data"][$id] <> ''
-		&& ($aRow["data"][$id] == 'Y' || $aRow["data"][$id] == 'N')
+	if(
+		isset($header["type"])
+		&& $header["type"] === "checkbox"
+		&& $aRow["data"][$id] !== ''
+		&& ($aRow["data"][$id] === 'Y' || $aRow["data"][$id] === 'N')
 	)
 	{
 		echo ($aRow["data"][$id] == 'Y'? GetMessage("interface_grid_yes"):GetMessage("interface_grid_no"));
 	}
 	else
 	{
-		$val = (isset($aRow["columns"][$id])? $aRow["columns"][$id] : $aRow["data"][$id]);
+		$val = (isset($aRow["columns"][$id])? $aRow["columns"][$id] : ($aRow["data"][$id] ?? null));
 		echo ($val <> ''? $val:'&nbsp;');
 	}
 		?></td>
@@ -628,7 +630,7 @@ $variables = array(
 	),
 	"ajax"=>array(
 		"AJAX_ID"=>$arParams["AJAX_ID"],
-		"AJAX_OPTION_SHADOW"=>($arParams["AJAX_OPTION_SHADOW"] == "Y"),
+		"AJAX_OPTION_SHADOW"=>(($arParams["AJAX_OPTION_SHADOW"] ?? null) == "Y"),
 	),
 	"settingWndSize"=>CUtil::GetPopupSize("InterfaceGridSettingWnd"),
 	"viewsWndSize"=>CUtil::GetPopupSize("InterfaceGridViewsWnd", array('height' => 350, 'width' => 500)),
@@ -707,8 +709,24 @@ endforeach;
 <?
 $i = 0;
 foreach($arThemes as $theme):
+	$currTheme = $theme["theme"] ?? '';
+	$themeName = $theme["name"];
+	if ($currTheme === ($arResult["GLOBAL_OPTIONS"]["theme"] ?? null))
+	{
+		$themeName .= ' ' . GetMessage("interface_grid_default");
+	}
 ?>
-		<?if($i > 0) echo ','?>{'TEXT': '<?=CUtil::JSEscape($theme["name"])?><?if($theme["theme"] == $arResult["GLOBAL_OPTIONS"]["theme"]) echo ' '.CUtil::JSEscape(GetMessage("interface_grid_default"))?>', 'ONCLICK': 'bxGrid_<?=$arParams["GRID_ID"]?>.SetTheme(this, \'<?=CUtil::JSEscape($theme["theme"])?>\')'<?if($theme["theme"] == $arResult["OPTIONS"]["theme"] || $theme["theme"] == "grey" && $arResult["OPTIONS"]["theme"] == ''):?>, 'ICONCLASS':'checked'<?endif?>}
+	{
+		'TEXT': '<?= CUtil::JSEscape($themeName) ?>',
+		'ONCLICK': 'bxGrid_<?=$arParams["GRID_ID"]?>.SetTheme(this, \'<?=CUtil::JSEscape($theme["theme"])?>\')',
+		<?php if(
+			$currTheme == ($arResult["OPTIONS"]["theme"] ?? null)
+			|| $currTheme == "grey"
+			&& '' == ($arResult["OPTIONS"]["theme"] ?? null)
+		): ?>
+		'ICONCLASS':'checked'
+		<?php endif ?>
+	},
 <?
 	$i++;
 endforeach;

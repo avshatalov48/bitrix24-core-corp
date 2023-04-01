@@ -1217,7 +1217,7 @@ class CAllCrmProductRow
 			$taxMode = CCrmTax::isVatMode() ? self::TAX_MODE : self::LD_TAX_MODE;
 
 		$taxList = null;
-		if (is_array($totalInfo['TAX_LIST']))
+		if (is_array(($totalInfo['TAX_LIST'] ?? null)))
 			$taxList = $totalInfo['TAX_LIST'];
 		else
 		{
@@ -1295,8 +1295,10 @@ class CAllCrmProductRow
 				$calculateOptions['LOCATION_ID'] = $locationID;
 			$arResult = CCrmSaleHelper::Calculate($arRows, $currencyID, $personTypeID, $enableSaleDiscount, $siteID, $calculateOptions);
 
-			if (is_array($arResult['TAX_LIST']))
+			if (is_array(($arResult['TAX_LIST'] ?? null)))
+			{
 				$taxList = $arResult['TAX_LIST'];
+			}
 		}
 
 		$settings = CCrmProductRow::LoadSettings($ownerType, $ownerID);
@@ -1323,7 +1325,7 @@ class CAllCrmProductRow
 
 		$result['TAX_MODE'] = $taxMode;
 
-		if (is_array($settings['TAX_LIST']))
+		if (isset($settings['TAX_LIST']) && is_array($settings['TAX_LIST']))
 			$result['TAX_LIST'] = $settings['TAX_LIST'];
 
 		return $result;

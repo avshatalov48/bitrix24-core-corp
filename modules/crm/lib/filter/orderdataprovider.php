@@ -10,8 +10,10 @@ use Bitrix\Crm\Tracking;
 Loc::loadMessages(__FILE__);
 Main\Loader::includeModule('sale');
 
-class OrderDataProvider extends EntityDataProvider
+class OrderDataProvider extends EntityDataProvider implements FactoryOptionable
 {
+	use ForceUseFactoryTrait;
+
 	/** @var InvoiceSettings|null */
 	protected $settings = null;
 

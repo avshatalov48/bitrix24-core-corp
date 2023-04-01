@@ -2,8 +2,9 @@
 
 namespace Bitrix\Crm\Service\Sale\Reservation;
 
-use Bitrix\Crm\Reservation\Internals\ProductReservationMapTable;
+use Bitrix\Crm\Order\OrderDealSynchronizer;
 use Bitrix\Crm\Reservation\Internals\ProductRowReservationTable;
+use Bitrix\Crm\Reservation\Strategy\Reserve\ReservationResult;
 use Bitrix\Crm\Service\Sale\BasketService;
 use Bitrix\Crm\Service\Sale\Shipment\ProductService;
 use Bitrix\Main\DI\ServiceLocator;
@@ -12,10 +13,9 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Result;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Internals\ShipmentItemTable;
-use Bitrix\Sale\ReserveQuantity;
-use Bitrix\Sale\ReserveQuantityCollection;
 use Bitrix\Sale\Shipment;
 use Bitrix\Sale\ShipmentItem;
+use CCrmOwnerType;
 
 /**
  * Service for work with reserves of shipments.
@@ -134,8 +134,13 @@ class ShipmentService
 		}
 		[$entityTypeId, $entityId] = $result->getData();
 
+		// only for deal sync
+		if ($entityTypeId !== CCrmOwnerType::Deal)
+		{
+			return $result;
+		}
+
 		$basketItems = [];
-		$shippedBasketItemsIds = [];
 		foreach ($shipment->getShipmentItemCollection() as $item)
 		{
 			/**
@@ -145,10 +150,11 @@ class ShipmentService
 			$basketItem = $item->getBasketItem();
 			if ($basketItem)
 			{
-				$shippedBasketItemsIds[] = $basketItem->getId();
 				$basketItems[$basketItem->getId()] = $basketItem;
 			}
 		}
+
+		$shippedBasketItemsIds = array_keys($basketItems);
 		if (empty($shippedBasketItemsIds))
 		{
 			return $result;
@@ -179,7 +185,7 @@ class ShipmentService
 		]);
 		$rowReserves = array_column($rowReserves->fetchAll(), null, 'ROW_ID');
 
-		$reserveMap = [];
+		$reservationResult = new ReservationResult();
 		foreach ($productRow2basket as $rowId => $basketId)
 		{
 			$rowReserve = $rowReserves[$rowId] ?? null;
@@ -197,98 +203,46 @@ class ShipmentService
 				continue;
 			}
 
-			$basketReserveQuantity = (float)$basketItem->getReservedQuantity();
 			$crmReserveQuantity = (float)$rowReserve['RESERVE_QUANTITY'];
-			$shippedQuantity = (float)($shippedQuantities[$rowId] ?? 0.0);
-
 			if (empty($crmReserveQuantity))
 			{
-				$needReserveQuantity = $shippedQuantity;
-			}
-			else
-			{
-				$needReserveQuantity = $crmReserveQuantity - $basketReserveQuantity - $shippedQuantity;
+				continue;
 			}
 
-			if ($needReserveQuantity > 0)
+			$basketReserveQuantity = (float)$basketItem->getReservedQuantity();
+			$shippedQuantity = (float)($shippedQuantities[$rowId] ?? 0.0);
+
+			$currentQuantity = $crmReserveQuantity;
+			$deltaQuantity = $crmReserveQuantity - $basketReserveQuantity - $shippedQuantity;
+			if ($deltaQuantity <= 0.0)
 			{
-				/** @var ReserveQuantityCollection $reserveCollection */
-				$reserveCollection = $basketItem->getReserveQuantityCollection();
-				if (!$reserveCollection)
-				{
-					continue;
-				}
+				continue;
+			}
 
-				/** @var ReserveQuantity $basketReserve */
-				$basketReserve = $reserveCollection->current();
-				if (!$basketReserve)
-				{
-					$basketReserve = $reserveCollection->create();
-					$basketReserve->setFieldsNoDemand([
-						'STORE_ID' => $rowReserve['STORE_ID'],
-						'DATE_RESERVE_END' => $rowReserve['DATE_RESERVE_END'],
-					]);
-				}
+			$reserveInfo = $reservationResult->addReserveInfo(
+				$rowId,
+				$currentQuantity,
+				$deltaQuantity
+			);
 
-				$saveResult = $basketReserve->setQuantity(
-					$basketReserve->getQuantity() + $needReserveQuantity
-				);
-				if ($saveResult->isSuccess())
-				{
-					$reserveMap[$rowId] = $basketReserve;
-				}
-				$result->addErrors($saveResult->getErrors());
+			if (isset($rowReserve['STORE_ID']))
+			{
+				$reserveInfo->setStoreId((int)$rowReserve['STORE_ID']);
+			}
+
+			if (isset($rowReserve['DATE_RESERVE_END']))
+			{
+				$reserveInfo->setDateReserveEnd((string)$rowReserve['DATE_RESERVE_END']);
 			}
 		}
 
-		if ($reserveMap)
+		if (!empty($reservationResult->getChangedReserveInfos()))
 		{
-			$saveResult = $order->save();
-			if ($saveResult->isSuccess())
-			{
-				foreach ($reserveMap as $rowId => $basketReserve)
-				{
-					/**
-					 * @var ReserveQuantity $basketReserve
-					 */
-					if ($basketReserve->getId())
-					{
-						$this->setReserveMap($rowId, $basketReserve->getId());
-					}
-				}
-			}
-			$result->addErrors($saveResult->getErrors());
+			$synchronizer = new OrderDealSynchronizer(true);
+			$synchronizer->syncOrderReservesFromDeal($entityId, $reservationResult);
 		}
 
 		return $result;
-	}
-
-	/**
-	 * Set link between product row and basket reservation.
-	 *
-	 * @param int $rowId
-	 * @param int $basketReservationId
-	 *
-	 * @return Result
-	 */
-	private function setReserveMap(int $rowId, int $basketReservationId): Result
-	{
-		$exist = ProductReservationMapTable::getRow([
-			'filter' => [
-				'=PRODUCT_ROW_ID' => $rowId,
-			],
-		]);
-		if ($exist)
-		{
-			return ProductReservationMapTable::update($exist['ID'], [
-				'BASKET_RESERVATION_ID' => $basketReservationId,
-			]);
-		}
-
-		return ProductReservationMapTable::add([
-			'PRODUCT_ROW_ID' => $rowId,
-			'BASKET_RESERVATION_ID' => $basketReservationId,
-		]);
 	}
 
 	/**

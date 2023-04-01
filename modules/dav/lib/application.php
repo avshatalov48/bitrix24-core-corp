@@ -58,14 +58,22 @@ class Application extends \Bitrix\Main\Authentication\Application
 		$this->validUrls = array("/bitrix/groupdav.php", "/index.php", "/.well-known");
 
 		$site = \Bitrix\Main\Application::getInstance()->getContext()->getSite();
+		$acceptedUrl = [
+			'bitrix:socialnetwork_user',
+			'bitrix:socialnetwork_group',
+			'bitrix:disk.common',
+			'bitrix:webdav',
+		];
 
 		if (!empty($site))
 		{
 			$urls = UrlRewriter::getList($site);
 			foreach ($urls as $url)
 			{
-				if (in_array($url['ID'], array('bitrix:socialnetwork_user', 'bitrix:socialnetwork_group', 'bitrix:disk.common', 'bitrix:webdav')))
+				if (isset($url['ID']) && in_array($url['ID'], $acceptedUrl, true))
+				{
 					$this->validUrls[] = $url['PATH'];
+				}
 			}
 		}
 	}
@@ -77,13 +85,7 @@ class Application extends \Bitrix\Main\Authentication\Application
 	 */
 	public function checkScope()
 	{
-		if (parent::checkScope())
-		{
-			if (static::checkDavHeaders())
-				return true;
-		}
-
-		return false;
+		return parent::checkScope() && static::checkDavHeaders();
 	}
 
 	/**
@@ -92,45 +94,60 @@ class Application extends \Bitrix\Main\Authentication\Application
 	public static function checkDavHeaders()
 	{
 		$server = Context::getCurrent()->getServer();
-		$davHeaders = array("DAV", "IF", "DEPTH", "OVERWRITE", "DESTINATION", "LOCK_TOKEN", "TIMEOUT", "STATUS_URI");
+		$davHeaders = [
+			"DAV",
+			"IF",
+			"DEPTH",
+			"OVERWRITE",
+			"DESTINATION",
+			"LOCK_TOKEN",
+			"TIMEOUT",
+			"STATUS_URI"
+		];
 		foreach ($davHeaders as $header)
 		{
 			if ($server->get("HTTP_" . $header))
+			{
 				return true;
+			}
 		}
 
-		$davMethods = array("OPTIONS", "PUT", "PROPFIND", "REPORT", "PROPPATCH", "MKCOL", "COPY", "MOVE", "LOCK", "UNLOCK", "DELETE", "COPY", "MOVE");
-		foreach ($davMethods as $method)
+		$davMethods = [
+			"OPTIONS",
+			"PUT",
+			"PROPFIND",
+			"REPORT",
+			"PROPPATCH",
+			"MKCOL",
+			"COPY",
+			"MOVE",
+			"LOCK",
+			"UNLOCK",
+			"DELETE",
+			"COPY",
+			"MOVE"
+		];
+		if (in_array($server->getRequestMethod(), $davMethods, true))
 		{
-			if ($server->getRequestMethod() == $method)
-				return true;
+			return true;
 		}
 
 
 		$userAgentParam = $server->get('HTTP_USER_AGENT');
 		$userAgentString = $userAgentParam ?: '';
-		if (mb_strpos($userAgentString, "Microsoft Office") !== false &&
-			mb_strpos($userAgentString, "Outlook") === false
-			||
-			mb_strpos($userAgentString, "MiniRedir") !== false
-			||
-			mb_strpos($userAgentString, "WebDAVFS") !== false
-			||
-			mb_strpos($userAgentString, "davfs2") !== false
-			||
-			mb_strpos($userAgentString, "Sardine") !== false
-			||
-			mb_strpos($userAgentString, "gvfs") !== false
-			||
-			mb_strpos($userAgentString, "LibreOffice") !== false
-		)
-		{
-			return true;
-		}
 
-		return false;
+		return (
+				mb_strpos($userAgentString, "Microsoft Office") !== false
+				&& mb_strpos($userAgentString, "Outlook") === false
+			)
+			|| mb_strpos($userAgentString, "MiniRedir") !== false
+			|| mb_strpos($userAgentString, "WebDAVFS") !== false
+			|| mb_strpos($userAgentString, "davfs2") !== false
+			|| mb_strpos($userAgentString, "Sardine") !== false
+			|| mb_strpos($userAgentString, "gvfs") !== false
+			|| mb_strpos($userAgentString, "LibreOffice") !== false
+			;
 	}
-
 
 	/**
 	 * Generates AP for REST access.
@@ -138,6 +155,7 @@ class Application extends \Bitrix\Main\Authentication\Application
 	 * @param int $userId Id of password owner user.
 	 * @param string $appId Type of application(caldav, carddav, webdav).
 	 * @return bool|string password or false
+	 * @throws \Exception
 	 */
 	public static function generateAppPassword($userId, $appId)
 	{
@@ -147,7 +165,7 @@ class Application extends \Bitrix\Main\Authentication\Application
 		if ($appId)
 		{
 			$typeTitle = Loc::getMessage('DAV_APP_TYPE_' . $appId);
-			if ($typeTitle <> '')
+			if ($typeTitle)
 			{
 				$message = Loc::getMessage('DAV_APP_SYSCOMMENT_TYPE', array(
 					'#TYPE#' => $typeTitle,

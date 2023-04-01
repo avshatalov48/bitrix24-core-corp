@@ -256,20 +256,12 @@ class SalesCenterPaySystemAjaxController extends \Bitrix\Main\Engine\Controller
 					if ($result->isSuccess())
 					{
 						$service = PaySystem\Manager::getObjectById($id);
-						$currency = $service->getCurrency();
-						if ($currency)
+						$applyRestrictionsResult = Restrictions\Manager::setupDefaultRestrictions($service);
+						if (!$applyRestrictionsResult->isSuccess())
 						{
-							$params = [
-								'SERVICE_ID' => $id,
-								'SERVICE_TYPE' => Restrictions\Manager::SERVICE_TYPE_PAYMENT,
-								'PARAMS' => ['CURRENCY' => $currency]
-							];
-							Restrictions\Manager::getClassesList();
-							$saveResult = Restrictions\Currency::save($params);
-							if (!$saveResult->isSuccess())
-							{
-								$this->errorCollection->add([new Error(Loc::getMessage('SP_AJAX_SAVE_PAYSYSTEM_ERROR_RSRT_CURRENCY_SAVE'))]);
-							}
+							$this->errorCollection->add([new Error(Loc::getMessage('SP_AJAX_SAVE_PAYSYSTEM_ERROR_DEFAULT_RSRT_SETUP'))]);
+
+							// TODO: Add public messages of errors while applied concrete restrictions
 						}
 					}
 					else
@@ -299,7 +291,7 @@ class SalesCenterPaySystemAjaxController extends \Bitrix\Main\Engine\Controller
 		}
 
 		return [
-			'ID' => $id
+			'ID' => $id,
 		];
 	}
 
@@ -381,7 +373,7 @@ class SalesCenterPaySystemAjaxController extends \Bitrix\Main\Engine\Controller
 								[
 									'#CODE_NAME#' => $paySystemCodeName,
 								]
-							))
+							)),
 						]
 					);
 				}
@@ -459,14 +451,14 @@ class SalesCenterPaySystemAjaxController extends \Bitrix\Main\Engine\Controller
 				else
 				{
 					$this->errorCollection->add([
-						new Error(Loc::getMessage('SP_AJAX_SAVE_PAYSYSTEM_CASHBOX_ERROR_CREATE_CASHBOX'))
+						new Error(Loc::getMessage('SP_AJAX_SAVE_PAYSYSTEM_CASHBOX_ERROR_CREATE_CASHBOX')),
 					]);
 				}
 			}
 			else
 			{
 				$this->errorCollection->add([
-					new Error(Loc::getMessage('SP_AJAX_SAVE_PAYSYSTEM_CASHBOX_ERROR_NO_HANDLER_EXIST'))
+					new Error(Loc::getMessage('SP_AJAX_SAVE_PAYSYSTEM_CASHBOX_ERROR_NO_HANDLER_EXIST')),
 				]);
 			}
 		}

@@ -26,7 +26,12 @@ final class ProductSearchableStepper extends Stepper
 
 	public function execute(array &$option): bool
 	{
-		if (Loader::includeModule('search') || !Loader::includeModule('iblock') || !Loader::includeModule('crm'))
+		if (
+			Loader::includeModule('search')
+			|| !Loader::includeModule('catalog')
+			|| !Loader::includeModule('iblock')
+			|| !Loader::includeModule('crm')
+		)
 		{
 			return self::FINISH_EXECUTION;
 		}

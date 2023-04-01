@@ -11,6 +11,9 @@ use Bitrix\Main\Localization\Loc;
 
 class CCrmDocument
 {
+	protected const GROUP_RESPONSIBLE_HEAD = 'responsible_head';
+	protected const GROUP_AUTHOR = 'author';
+
 	private static $UNGROUPED_USERS = array();
 	private static $USER_GROUPS = array();
 	private static $USER_PERMISSION_CHECK = array();
@@ -1548,8 +1551,10 @@ class CCrmDocument
 			}
 
 			$arParameters['AllUserGroups'] = $arParameters['UserGroups'];
-			if ($userId == $arParameters['CreatedBy'])
+			if (isset($arParameters['CreatedBy']) && $userId == $arParameters['CreatedBy'])
+			{
 				$arParameters['AllUserGroups'][] = 'Author';
+			}
 		}
 
 		if ((isset($arParameters['UserIsAdmin']) && $arParameters['UserIsAdmin'] === true)
@@ -1712,7 +1717,10 @@ class CCrmDocument
 		if ($arDocumentID !== false)
 			$documentType = $arDocumentID['TYPE'];
 
-		$arResult = array('author' => GetMessage('CRM_DOCUMENT_AUTHOR'));
+		$arResult = [
+			static::GROUP_AUTHOR => GetMessage('CRM_DOCUMENT_AUTHOR'),
+			static::GROUP_RESPONSIBLE_HEAD => GetMessage('CRM_DOCUMENT_RESPONSIBLE_HEAD'),
+		];
 
 		$arGroupsID = array(1);
 		$arUsersID = array();
@@ -1777,62 +1785,33 @@ class CCrmDocument
 
 	public static function GetUsersFromUserGroup($group, $documentId)
 	{
-		$groupLc = mb_strtolower($group);
-		if ($groupLc == 'author')
+		$documentInfo = static::getDocumentInfo($documentId);
+		if (empty($documentInfo))
 		{
-			$arDocumentID = static::GetDocumentInfo($documentId);
-			if (empty($arDocumentID))
-			{
-				return array();
-			}
+			return [];
+		}
+		$entityID = isset($documentInfo['ID']) ? intval($documentInfo['ID']) : 0;
+		$responsibleId = 0;
 
-			$dbDocumentList = null;
-			$entityID = isset($arDocumentID['ID']) ? intval($arDocumentID['ID']) : 0;
-			if($entityID > 0)
-			{
-				switch ($arDocumentID['TYPE'])
-				{
-					case 'CONTACT':
-						$dbDocumentList = CCrmContact::GetListEx(
-							array(),
-							array('ID' => $entityID, 'CHECK_PERMISSIONS' => 'N'),
-							false,
-							false,
-							array('ASSIGNED_BY_ID')
-						);
-					break;
-					case 'COMPANY':
-						$dbDocumentList = CCrmCompany::GetListEx(
-							array(),
-							array('ID' => $entityID, 'CHECK_PERMISSIONS' => 'N'),
-							false,
-							false,
-							array('ASSIGNED_BY_ID')
-						);
-					break;
-					case 'DEAL':
-						$dbDocumentList = CCrmDeal::GetListEx(
-							array(),
-							array('ID' => $entityID, 'CHECK_PERMISSIONS' => 'N'),
-							false,
-							false,
-							array('ASSIGNED_BY_ID')
-						);
-					break;
-					case 'LEAD':
-						$dbDocumentList = CCrmLead::GetListEx(
-							array(),
-							array('ID' => $entityID, 'CHECK_PERMISSIONS' => 'N'),
-							false,
-							false,
-							array('ASSIGNED_BY_ID')
-						);
-					break;
-				}
-			}
-			$arFields = is_object($dbDocumentList) ? $dbDocumentList->Fetch() : null;
-			return is_array($arFields) && isset($arFields['ASSIGNED_BY_ID'])
-				? array($arFields['ASSIGNED_BY_ID']) : array();
+		if ($group === static::GROUP_RESPONSIBLE_HEAD || $group === static::GROUP_AUTHOR)
+		{
+			$responsibleId = \CCrmOwnerType::loadResponsibleId(
+				\CCrmOwnerType::ResolveID($documentInfo['TYPE']),
+				$entityID,
+				false
+			);
+		}
+
+		$groupLc = mb_strtolower($group);
+		if ($group === static::GROUP_RESPONSIBLE_HEAD)
+		{
+			$userService = \CBPRuntime::GetRuntime()->getUserService();
+
+			return $responsibleId ? $userService->getUserHeads($responsibleId) : [];
+		}
+		if ($groupLc === static::GROUP_AUTHOR)
+		{
+			return array_filter([$responsibleId]);
 		}
 		elseif ($groupLc == 'ungrouped')
 		{
@@ -2293,7 +2272,7 @@ class CCrmDocument
 
 		if($userId === static::GetDocumentAuthorID($documentId))
 		{
-			$result[] = 'author';
+			$result[] = static::GROUP_AUTHOR;
 		}
 		return $result;
 	}
@@ -2509,6 +2488,11 @@ class CCrmDocument
 		elseif (mb_strpos($documentId, $shortPrefix) === 0)
 		{
 			return $longPrefix.mb_substr($documentId, mb_strlen($shortPrefix));
+		}
+		elseif(is_string($documentId))
+		{
+			$info = static::getDocumentInfo($documentId);
+			$documentId = $info ? implode('_', [$info['TYPE'], $info['ID']]) : $longPrefix . '0';
 		}
 
 		return $documentId;

@@ -28,7 +28,6 @@ Bitrix\Main\UI\Extension::load([
 	'crm.zoom',
 	'ui.timeline',
 	'ui.forms',
-	'crm.delivery.taxi',
 	'crm.timeline',
 	'sidepanel',
 	'crm.restriction.bitrix24',
@@ -118,6 +117,8 @@ $activityEditorID = "{$prefix}_editor";
 $scheduleItems = $arResult['SCHEDULE_ITEMS'];
 $historyItems = $arResult['HISTORY_ITEMS'];
 $fixedItems = $arResult['FIXED_ITEMS'];
+
+$editorName = null;
 
 if (!empty($arResult['ERRORS']))
 {
@@ -565,6 +566,11 @@ $filterClassName = $arResult['IS_HISTORY_FILTER_APPLIED']
 	BX.ready(
 		function()
 		{
+			if (BX.Currency)
+			{
+				BX.Currency.setCurrencies(<?=CUtil::PhpToJSObject($arResult['CURRENCIES'], false, true, true)?>);
+			}
+
 			BX.CrmSchedule.messages =
 			{
 				planned: "<?=GetMessageJS('CRM_TIMELINE_SCHEDULE_PLANNED_NEW')?>",
@@ -763,71 +769,6 @@ $filterClassName = $arResult['IS_HISTORY_FILTER_APPLIED']
 			BX.CrmEntityChat.messages =
 				{
 					invite: "<?=GetMessageJS('CRM_TIMELINE_CHAT_INVITE')?>"
-				};
-
-			BX.CrmHistoryItemOrderCreation.messages =
-				{
-					order: "<?=GetMessageJS('CRM_TIMELINE_ORDER_CREATION')?>",
-					unpaid: "<?=GetMessageJS('CRM_TIMELINE_ORDER_UNPAID')?>",
-					paid: "<?=GetMessageJS('CRM_TIMELINE_ORDER_PAID')?>",
-					done: "<?=GetMessageJS('CRM_TIMELINE_ORDER_DONE')?>",
-					canceled: "<?=GetMessageJS('CRM_TIMELINE_ORDER_CANCELED')?>",
-					urlOrderLink: "<?=GetMessageJS('CRM_TIMELINE_ORDER_ORDER_LINK')?>",
-				};
-
-			BX.CrmHistoryItemOrderModification.messages =
-				{
-					order: "<?=GetMessageJS('CRM_TIMELINE_ORDER_TITLE')?>",
-					unpaid: "<?=GetMessageJS('CRM_TIMELINE_ORDER_UNPAID')?>",
-					done: "<?=GetMessageJS('CRM_TIMELINE_ORDER_DONE')?>",
-					canceled: "<?=GetMessageJS('CRM_TIMELINE_ORDER_CANCELED')?>",
-					paid: "<?=GetMessageJS('CRM_TIMELINE_ORDER_PAID')?>",
-					deducted: "<?=GetMessageJS('CRM_TIMELINE_ORDER_DEDUCTED')?>",
-					unshipped: "<?=GetMessageJS('CRM_TIMELINE_ORDER_UNSHIPPED')?>",
-					viewed: "<?=GetMessageJS('CRM_TIMELINE_ORDER_PAYMENT_VIEWED')?>",
-					sent: "<?=GetMessageJS('CRM_TIMELINE_ORDER_PAYMENT_SENT')?>",
-					allowedDelivery: "<?=GetMessageJS('CRM_TIMELINE_ORDER_ALLOWED_DELIVERY')?>",
-					disallowedDelivery: "<?=GetMessageJS('CRM_TIMELINE_ORDER_DISALLOWED_DELIVERY')?>",
-					orderPayment: "<?=GetMessageJS('CRM_TIMELINE_ORDER_PAYMENT_TITLE')?>",
-					orderPaymentLegendPaid: "<?=GetMessageJS('CRM_TIMELINE_ORDER_PAYMENT_LEGEND_PAID')?>",
-					orderPaymentLegendUnpaid: "<?=GetMessageJS('CRM_TIMELINE_ORDER_PAYMENT_LEGEND_UNPAID')?>",
-					orderPaymentSuccessTitle: "<?=GetMessageJS('CRM_TIMELINE_ORDER_PAYMENT_SUCCESS')?>",
-					orderPaySystemTitle: "<?=GetMessageJS('CRM_TIMELINE_ORDER_PAYSYSTEM_TITLE')?>",
-					orderShipment: "<?=GetMessageJS('CRM_TIMELINE_ORDER_SHIPMENT_TITLE')?>",
-					orderShipmentLegendDeducted: "<?=GetMessageJS('CRM_TIMELINE_ORDER_SHIPMENT_LEGEND_DEDUCTED')?>",
-					orderShipmentLegendUnshipped: "<?=GetMessageJS('CRM_TIMELINE_ORDER_SHIPMENT_LEGEND_UNSHIPPED')?>",
-					orderPaymentError: "<?=GetMessageJS('CRM_TIMELINE_ORDER_PAYMENT_ERROR')?>",
-					orderPaymentProcess: "<?=GetMessageJS('CRM_TIMELINE_ORDER_PAYMENT_PROCESS')?>",
-					orderPaymentStatusErrorReason: "<?=GetMessageJS('CRM_TIMELINE_ORDER_PAYMENT_STATUS_ERROR_REASON_TITLE')?>",
-					orderPaymentPaySystemClick: "<?=GetMessageJS('CRM_TIMELINE_ORDER_PAYSYSTEM_CLICK')?>",
-					orderManualContinuePay: "<?=GetMessageJS('CRM_TIMELINE_ORDER_MANUAL_CONTINUE_PAY')?>",
-					orderManualAddCheck: "<?=GetMessageJS('CRM_TIMELINE_PAYMENT_NEED_MANUAL_ADD_CHECK')?>",
-					orderManualAddCheckHelpLink: "<?=GetMessageJS('CRM_TIMELINE_PAYMENT_NEED_MANUAL_ADD_CHECK_HELP_LINK')?>",
-				};
-
-			BX.CrmHistoryItemFinalSummary.messages =
-				{
-					title: "<?=GetMessageJS($finalSummaryPhraseCodes['summary'])?>",
-					orderPaid: "<?=GetMessageJS('CRM_TIMELINE_FINAL_SUMMARY_ORDER_PAID_2')?>",
-					basketBasePrice: "<?=GetMessageJS('CRM_TIMELINE_FINAL_SUMMARY_BASKET_BASE_PRICE')?>",
-					basketPrice: "<?=GetMessageJS('CRM_TIMELINE_FINAL_SUMMARY_BASKET_PRICE')?>",
-					paymentStatusY: "<?=GetMessageJS('CRM_TIMELINE_FINAL_SUMMARY_PAYMENT_STATUS_Y')?>",
-					sumForPay: "<?=GetMessageJS('CRM_TIMELINE_FINAL_SUMMARY_SUM_FOR_PAY')?>",
-				};
-
-			BX.CrmHistoryItemFinalSummaryDocuments.messages =
-				{
-					title: "<?=GetMessageJS($finalSummaryPhraseCodes['documents'])?>",
-				};
-
-			BX.CrmHistoryItemOrcderCheck.messages =
-				{
-					orderCheck: "<?=GetMessageJS('CRM_TIMELINE_ORDER_CHECK_TITLE')?>",
-					printed: "<?=GetMessageJS('CRM_TIMELINE_ORDER_CHECK_PRINTED')?>",
-					unprinted: "<?=GetMessageJS('CRM_TIMELINE_ORDER_CHECK_UNPRINTED')?>",
-					sended: "<?=GetMessageJS('CRM_TIMELINE_ORDER_CHECK_SENT')?>",
-					urlLink: "<?=GetMessageJS('CRM_TIMELINE_ORDER_CHECK_LINK')?>",
-					sendedTitle: "<?=GetMessageJS('CRM_TIMELINE_ORDER_CHECK_SENT_TITLE')?>",
 				};
 
 			BX.message({

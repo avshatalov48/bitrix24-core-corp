@@ -10,7 +10,12 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
  * @var array $arParams
  */
 
-$darkMode = $arParams['TEMPLATE_MODE'] === 'darkmode' ? 'bx-dark' : '';
+$darkMode = '';
+
+if (isset($arParams['TEMPLATE_MODE']) && $arParams['TEMPLATE_MODE'] === 'darkmode')
+{
+	$darkMode = 'bx-dark';
+}
 
 if (!empty($arResult['JS_DATA']['app']['paySystems']))
 {

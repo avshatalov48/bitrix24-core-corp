@@ -23,6 +23,7 @@ Extension::load([
 	"ui.progressround",
 	"ui.viewer",
 	"ui.notification",
+	"ui.info-helper",
 	"loader",
 	"popup",
 	"sidepanel",
@@ -35,6 +36,9 @@ $downloadButtonOptions = \CUserOptions::GetOption('crm.document.view', 'download
 $defaultDownloadFormat = in_array(mb_strtolower($downloadButtonOptions['format']), ['doc', 'pdf'], true)
 	? mb_strtolower($downloadButtonOptions['format'])
 	: 'pdf';
+
+$isSigningEnabledInCurrentTariff = (bool)($arResult['isSigningEnabledInCurrentTariff'] ?? false);
+$APPLICATION->IncludeComponent("bitrix:bitrix24.limit.lock", "", array());
 
 $renderRequisiteSection = function(?string $entityName, array $data): void {
 	?>
@@ -75,7 +79,7 @@ if ($arParams['IS_SLIDER']):
 <body class="crm__document-view--slider-wrap">
 	<div class="crm__document-view--title">
 		<div class="crm__document-view--container-docs-preview">
-			<div class="pagetitle">
+			<div class="pagetitle crm__document-view--pagetitle">
 				<span id="pagetitle" class="pagetitle-item crm__document-view--pagetitle-item"><?=htmlspecialcharsbx($arResult['title']);?></span>
 			</div>
 			<div class="crm__document-view--buttons">
@@ -219,18 +223,24 @@ endif;
 						$arResult['clientRequisites'],
 					);
 				?></div>
-				<?php
-				if ($arResult['isSigningEnabled']):
-					echo \Bitrix\Crm\Tour\Sign\SignDocumentFromSlider::getInstance()->build();
-				?>
-				<div class="crm__document-view--sidebar-section">
-					<div class="crm__document-view--sidebar-control" id="crm-document-sign" >
-						<label class="crm__document-view--label --label-icon --icon-sign crm__document-view--sidebar-control-sign">
-							<?=Loc::getMessage('CRM_DOCUMENT_VIEW_SIGN_BUTTON');?>
-						</label>
-						<span class="crm__document-view--arrow"> </span>
+				<?php if ($arResult['isSigningEnabled'] ?? false):
+					if ($isSigningEnabledInCurrentTariff)
+					{
+						echo \Bitrix\Crm\Tour\Sign\SignDocumentFromSlider::getInstance()->build();
+					}
+					?>
+					<div class="crm__document-view--sidebar-section">
+						<div class="crm__document-view--sidebar-control" id="crm-document-sign">
+							<label class="crm__document-view--label --label-icon --icon-sign crm__document-view--sidebar-control-sign">
+								<?= Loc::getMessage('CRM_DOCUMENT_VIEW_SIGN_BUTTON') ?>
+							</label>
+							<span class="<?=
+							$isSigningEnabledInCurrentTariff
+								? "crm__document-view--arrow"
+								: "tariff-lock"
+							?>"></span>
+						</div>
 					</div>
-				</div>
 				<?php endif; ?>
 			</div>
 			<?php if ($arResult['editDocumentUrl']):?>
@@ -247,16 +257,6 @@ endif;
 				</div>
 			</div>
 			<?php endif;
-			/*
-			if ($arResult['editMyCompanyRequisitesUrl']):
-				?><div class="crm__document-view--sidebar crm__document-view--sidebar-details">
-					<div class="crm__document-view--details-inner">
-						<?=Loc::getMessage('CRM_DOCUMENT_VIEW_CREATE_OR_EDIT_MY_COMPANY_REQUISITES', ['#URL#' => $arResult['editMyCompanyRequisitesUrl']]);?>
-					</div>
-				</div>
-			<?php
-			endif;
-			*/
 			if (isset($arResult['publicUrlView']['time'])):?>
 				<div class="crm__document-view--sidebar crm__document-view--sidebar-details">
 					<div class="crm__document-view--public-view-info">

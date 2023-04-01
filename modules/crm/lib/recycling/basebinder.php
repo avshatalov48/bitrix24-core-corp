@@ -9,7 +9,7 @@ abstract class BaseBinder
 	abstract public function unbindEntities($associatedEntityTypeID, $associatedEntityID, array $entityIDs);
 	abstract public function bindEntities($associatedEntityTypeID, $associatedEntityID, array $entityIDs);
 
-	protected function getUpdateOptions(int $associatedEntityTypeID, array $associatedEntityIDs): array
+	final protected function getUnbindUpdateOptions(int $associatedEntityTypeID, array $associatedEntityIDs): array
 	{
 		if (!\CCrmOwnerType::IsDefined($associatedEntityTypeID))
 		{
@@ -29,5 +29,13 @@ abstract class BaseBinder
 			// don't register relation events while moving to/restoring from recycle bin
 			'EXCLUDE_FROM_RELATION_REGISTRATION' => $associatedEntities,
 		];
+	}
+
+	/**
+	 * @deprecated
+	 */
+	protected function getUpdateOptions(int $associatedEntityTypeID, array $associatedEntityIDs): array
+	{
+		return $this->getUnbindUpdateOptions($associatedEntityTypeID, $associatedEntityIDs);
 	}
 }

@@ -373,8 +373,10 @@ class CIntranetContactCenterListComponent extends \CBitrixComponent implements C
 
 			foreach ($itemsList as $itemCode => &$item)
 			{
+				$sliderWidth = 700;
+
 				$itemParams = [
-					'width' => ($itemCode === 'facebook' ? 1000 : 700),
+					'width' => $sliderWidth,
 					'moduleId' => 'imopenlines',
 					'itemCode' => $itemCode,
 					'allowChangeHistory' => true

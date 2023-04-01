@@ -45,6 +45,8 @@ jn.define('im/messenger/pull-handler/message', (require, exports, module) => {
 				writing: false,
 			});
 
+			MessengerStore.dispatch('usersModel/set', Object.values(params.users));
+
 			MessengerStore.dispatch('recentModel/set', [ recentItem ])
 				.then(() => {
 					Counters.updateDelayed();

@@ -9,6 +9,7 @@ use Bitrix\DocumentGenerator\CreationMethod;
 use Bitrix\DocumentGenerator\Driver;
 use Bitrix\DocumentGenerator\Integration\Bitrix24Manager;
 use Bitrix\Main\Application;
+use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Uri;
@@ -234,6 +235,10 @@ class CrmDocumentViewComponent extends ViewComponent
 				$this->arResult['channelSelectorParameters']['files'] = [$this->getEmailDiskFile(true)];
 			}
 		}
+		$signIntegration = ServiceLocator::getInstance()->get('crm.integration.sign');
+
+		$this->arResult['isSigningEnabledInCurrentTariff'] = $signIntegration->isEnabledInCurrentTariff();
+		$this->arResult['signingInfoHelperSliderCode'] = 'limit_crm_sign_integration';
 
 		$this->includeComponentTemplate();
 	}

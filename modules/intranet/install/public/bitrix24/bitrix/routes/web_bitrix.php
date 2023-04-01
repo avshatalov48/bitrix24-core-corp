@@ -72,6 +72,9 @@ return function (RoutingConfigurator $routes) {
 		$routes->any('calendar-event/{event_id}/{hash}/', new PublicPageController('/pub/calendar_event.php'))
 			->where('event_id', '[0-9]+')
 			->where('hash', '[0-9a-zA-Z]+');
+
+		$routes->any('calendar-sharing/{hash}/', new PublicPageController('/pub/calendar_sharing.php'))
+			->where('hash', '[0-9a-zA-Z]+');
 	});
 
 	$routes->any('/pub/', new PublicPageController('/pub/payment.php'));

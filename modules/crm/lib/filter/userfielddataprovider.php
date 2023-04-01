@@ -125,13 +125,13 @@ class UserFieldDataProvider extends EntityUFDataProvider
 					}
 					if ($filterField['type'] === 'string' || $filterField['type'] === 'text')
 					{
-						if ($requestFilter[$id] === false)
+						if (isset($requestFilter[$id]) && $requestFilter[$id] === false)
 						{
 							$filter[$id] = $requestFilter[$id];
 						}
-						elseif ($requestFilter['!'.$id] === false)
+						elseif (isset($requestFilter['!' . $id]) && $requestFilter['!' . $id] === false)
 						{
-							$filter['!'.$id] = $requestFilter['!'.$id];
+							$filter['!' . $id] = $requestFilter['!' . $id];
 						}
 					}
 				}

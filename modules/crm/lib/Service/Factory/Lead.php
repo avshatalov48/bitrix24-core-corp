@@ -428,7 +428,6 @@ final class Lead extends Service\Factory
 			Item\Lead::FIELD_NAME_COMPANY_TITLE,
 			Item::FIELD_NAME_ASSIGNED,
 			Item::FIELD_NAME_BIRTHDATE,
-			Item::FIELD_NAME_COMPANY_ID,
 			Item::FIELD_NAME_IS_RETURN_CUSTOMER,
 			Item::FIELD_NAME_FM,
 		];
@@ -441,10 +440,6 @@ final class Lead extends Service\Factory
 		$productTrackedObject = new TrackedObject\Product();
 		$productTrackedObject->makeThisObjectDependant(Item::FIELD_NAME_PRODUCTS);
 		$objects[] = $productTrackedObject;
-
-		$contactTrackedObject = new TrackedObject\Contact();
-		$contactTrackedObject->makeThisObjectDependant(Item::FIELD_NAME_CONTACTS);
-		$objects[] = $contactTrackedObject;
 
 		return $objects;
 	}

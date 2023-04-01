@@ -824,7 +824,7 @@ if(!empty($htmlEditorConfigs))
 						enableSectionEdit: <?=$arResult['ENABLE_SECTION_EDIT'] ? 'true' : 'false'?>,
 						enableSectionCreation: <?=$arResult['ENABLE_SECTION_CREATION'] ? 'true' : 'false'?>,
 						enableSettingsForAll: <?=$arResult['ENABLE_SETTINGS_FOR_ALL'] ? 'true' : 'false'?>,
-						inlineEditLightingHint: "<?=CUtil::JSEscape($arResult['INLINE_EDIT_LIGHTING_HINT'])?>",
+						inlineEditLightingHint: "<?=CUtil::JSEscape($arResult['INLINE_EDIT_LIGHTING_HINT'] ?? null)?>",
 						inlineEditSpotlightId: "<?=CUtil::JSEscape($arResult['INLINE_EDIT_SPOTLIGHT_ID'])?>",
 						enableInlineEditSpotlight: <?=$arResult['ENABLE_INLINE_EDIT_SPOTLIGHT'] ? 'true' : 'false'?>,
 						containerId: "<?=CUtil::JSEscape($containerID)?>",

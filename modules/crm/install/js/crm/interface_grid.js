@@ -767,7 +767,6 @@ if(typeof(BX.CrmUIGridExtension) === "undefined")
 
 			this._gridReloadHandler = BX.delegate(this.onGridReload, this);
 			this._gridBeforeRequestHandler = BX.delegate(this.onGridDataRequest, this);
-			this._applyCounterFilterHandler = BX.delegate(this.onApplyCounterFilter, this);
 			this._entityConvertHandler = BX.delegate(this.onEntityConvert, this);
 			this._singleEntityConvertHandler = BX.delegate(this.onSingleEntityConvert, this);
 			this._externalEventHandler = BX.delegate(this.onExternalEvent, this);
@@ -782,7 +781,6 @@ if(typeof(BX.CrmUIGridExtension) === "undefined")
 			{
 				BX.addCustomEvent(window, "Grid::beforeRequest", this._gridBeforeRequestHandler);
 			}
-			BX.addCustomEvent(window, "BX.CrmEntityCounterPanel:applyFilter", this._applyCounterFilterHandler);
 			BX.addCustomEvent(window, "Crm.EntityConverter.Converted", this._entityConvertHandler);
 			BX.addCustomEvent(window, "Crm.EntityConverter.SingleConverted", this._singleEntityConvertHandler);
 			BX.addCustomEvent(window, "onLocalStorageSet", this._externalEventHandler);
@@ -791,7 +789,6 @@ if(typeof(BX.CrmUIGridExtension) === "undefined")
 		{
 			BX.removeCustomEvent(window, "Grid::updated", this._gridReloadHandler);
 			BX.removeCustomEvent(window, "Grid::beforeRequest", this._gridBeforeRequestHandler);
-			BX.removeCustomEvent(window, "BX.CrmEntityCounterPanel:applyFilter", this._applyCounterFilterHandler);
 			BX.removeCustomEvent(window, "Crm.EntityConverter.Converted", this._entityConvertHandler);
 			BX.removeCustomEvent(window, "Crm.EntityConverter.SingleConverted", this._singleEntityConvertHandler);
 			BX.removeCustomEvent(window, "onLocalStorageSet", this._externalEventHandler);
@@ -1587,46 +1584,6 @@ if(typeof(BX.CrmUIGridExtension) === "undefined")
 				this._rowCountLoader = null;
 			}
 		},
-		onApplyCounterFilter: function(sender, eventArgs)
-		{
-			setTimeout(
-				BX.delegate(
-					function()
-					{
-						var options = eventArgs["counterTypeId"] ? {
-								'analyticsLabel': this.getAnalyticsLabel(eventArgs["counterTypeId"])
-							} : null;
-						this.setFilter(
-							{
-								"ASSIGNED_BY_ID": { 0: eventArgs["userId"] },
-								"ASSIGNED_BY_ID_label": [ eventArgs["userName"] ],
-								"ACTIVITY_COUNTER": BX.Type.isPlainObject(eventArgs["counterTypeId"])
-									? eventArgs["counterTypeId"]
-									: { 0: eventArgs["counterTypeId"] }
-							},
-							options
-						);
-					},
-					this
-				),
-				0
-			);
-			eventArgs["cancel"] = true;
-		},
-		setFilter: function(fields, options)
-		{
-			var filter = BX.Main.filterManager.getById(this.getGridId());
-			var api = filter.getApi();
-			api.setFields(fields);
-			if (options.hasOwnProperty('analyticsLabel'))
-			{
-				api.apply({'COUNTER': options.analyticsLabel});
-			}
-			else
-			{
-				api.apply();
-			}
-		},
 		executeGridRequest: function()
 		{
 			var grid = this.getGrid();
@@ -1634,15 +1591,6 @@ if(typeof(BX.CrmUIGridExtension) === "undefined")
 			{
 				grid.sendSelected();
 			}
-		},
-		getAnalyticsLabel: function(counterTypeId)
-		{
-			var entityTypeName = this.getSetting('ownerTypeName');
-			if (entityTypeName && counterTypeId)
-			{
-				return 'CRM_' + entityTypeName + '_COUNTER_TYPE_' + counterTypeId;
-			}
-			return '';
 		},
 		openMoveToCategoryDialog: function()
 		{

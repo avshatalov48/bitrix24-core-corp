@@ -93,7 +93,7 @@ class UserFieldHistory
 	public static function onUpdate(array $fields, $ID)
 	{
 		self::processModification(
-			\CCrmOwnerType::ResolveIDByUFEntityID($fields['ENTITY_ID']),
+			\CCrmOwnerType::ResolveIDByUFEntityID($fields['ENTITY_ID'] ?? null),
 			$ID
 		);
 	}

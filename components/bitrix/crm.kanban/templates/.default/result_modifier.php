@@ -51,7 +51,7 @@ foreach ($arResult['ITEMS']['columns'] as $k => &$column)
 				'type' => $column['type'],
 				'sum' => round($column['total']),
 				'sum_init' => 0,
-				'sum_format' => $column['total_format'],
+				'sum_format' => $column['total_format'] ?? null,
 				'blockedIncomingMoving' => ($column['blockedIncomingMoving'] ?? false),
 			],
 		];

@@ -659,7 +659,7 @@ class Item extends Base
 			$editorConfig['ENTITY_DATA'][$fieldName] = $actualDate;
 			$editorConfig['CONTEXT']['STAGE_ID'] = $stages[0] ?? null ;
 			$editorConfig['CONTEXT']['VIEW_MODE'] = ViewMode::MODE_DEADLINES;
-			$editorConfig['CONTEXT']['DEADLINE_STAGE'] = $deadLinePeriods->stageByDate($actualDate);
+			$editorConfig['CONTEXT']['DEADLINE_STAGE'] = $stageId;
 		}
 
 		$forceDefaultConfig = $params['forceDefaultConfig'] ?? 'N';

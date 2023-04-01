@@ -498,9 +498,9 @@ class Call extends Base
 			[
 				'TYPE_ID' => CCrmActivityType::Call,
 				'PROVIDER_ID' => static::getId(),
-				'PROVIDER_TYPE_ID' => static::ACTIVITY_PROVIDER_TYPE_CALL,
-				'CHECK_PERMISSIONS' => 'N',
-				'COMPLETED' => 'N',
+				'=PROVIDER_TYPE_ID' => static::ACTIVITY_PROVIDER_TYPE_CALL,
+				'=CHECK_PERMISSIONS' => 'N',
+				'=COMPLETED' => 'N',
 				'BINDINGS' => $bindings,
 			],
 			false,

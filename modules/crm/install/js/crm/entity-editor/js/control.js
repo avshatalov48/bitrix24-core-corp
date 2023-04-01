@@ -736,6 +736,11 @@ if(typeof BX.Crm.EntityEditorMoneyPay === "undefined")
 
 		return orderId;
 	};
+
+	BX.Crm.EntityEditorMoneyPay.prototype.getPaymentDocumentsControl = function()
+	{
+		return this._paymentDocumentsControl;
+	};
 }
 
 if(typeof BX.Crm.EntityEditorUser === "undefined")
@@ -1317,6 +1322,12 @@ if(typeof BX.Crm.EntityEditorMultifieldItem === "undefined")
 			{
 				return BX.prop.getObject(this._data, "VIEW_DATA", {});
 			},
+			getCountryCode: function()
+			{
+				var extraData = BX.prop.getObject(this._data, "VALUE_EXTRA", {});
+
+				return BX.prop.getString(extraData, "COUNTRY_CODE", "");
+			},
 			resolveValueTypeName: function(valueTypeId)
 			{
 				if(valueTypeId === "")
@@ -1376,6 +1387,7 @@ if(typeof BX.Crm.EntityEditorMultifieldItem === "undefined")
 				this._valueInput = null;
 				this._valueTypeInput = null;
 				this._valueTypeSelector = null;
+				this._valueCountryCode = null;
 				this._deleteButton = null;
 				var valueTypeId = this.getValueTypeId();
 				var value = this.getValue();
@@ -1399,7 +1411,6 @@ if(typeof BX.Crm.EntityEditorMultifieldItem === "undefined")
 						}
 					);
 					BX.bind(this._valueInput, "input", BX.delegate(this.onValueChange, this));
-
 
 					this._valueTypeInput = BX.create(
 						"input",
@@ -1645,6 +1656,7 @@ if(typeof BX.Crm.EntityEditorMultifieldItemPhone ==="undefined")
 		this._maskedPhone = null;
 		this._maskedValueInput = null;
 		this._countryFlagNode = null;
+		this._valueCountryCode = null;
 	};
 
 	BX.extend(BX.Crm.EntityEditorMultifieldItemPhone, BX.Crm.EntityEditorMultifieldItem);
@@ -1660,8 +1672,11 @@ if(typeof BX.Crm.EntityEditorMultifieldItemPhone ==="undefined")
 		this._valueInput = null;
 		this._valueTypeInput = null;
 		this._valueTypeSelector = null;
+		this._valueCountryCode = null;
+
 		var valueTypeId = this.getValueTypeId();
 		var value = this.getValue();
+		var countryCode = this.getCountryCode();
 
 		this._wrapper = BX.create("div");
 		this._container.appendChild(this._wrapper);
@@ -1682,6 +1697,18 @@ if(typeof BX.Crm.EntityEditorMultifieldItemPhone ==="undefined")
 			);
 			this._wrapper.appendChild(this._valueInput);
 
+			this._valueCountryCode = BX.create(
+				"input",
+				{
+					attrs: {
+						name: this.prepareControlName("VALUE_COUNTRY_CODE"),
+						type: "hidden",
+						value: countryCode
+					}
+				}
+			);
+			this._wrapper.appendChild(this._valueCountryCode);
+
 			this._wrapper.appendChild(BX.create("div", {
 				props: {className: "crm-entity-widget-content-input-wrapper"},
 				children: [
@@ -1701,14 +1728,40 @@ if(typeof BX.Crm.EntityEditorMultifieldItemPhone ==="undefined")
 				]
 			}));
 
-			this._maskedPhone = new BX.PhoneNumber.Input({
+			var defaultCountry = null;
+			if (
+				this._parent
+				&& this._parent.getSchemeElement()
+				&& BX.Type.isPlainObject(this._parent.getSchemeElement()._options)
+				&& BX.Type.isStringFilled(this._parent.getSchemeElement()._options.defaultCountry)
+			)
+			{
+				defaultCountry = this._parent.getSchemeElement()._options.defaultCountry
+			}
+
+			this._maskedPhone = new BX.Crm.PhoneNumberInput({
 				node: this._maskedValueInput,
 				flagNode: this._countryFlagNode,
-				flagSize: 24,
-				onChange: function(e)
+				isSelectionIndicatorEnabled: true,
+				searchDialogContextCode: 'CRM_ENTITY_EDITOR_PHONE',
+				userDefaultCountry: defaultCountry,
+				savedCountryCode: countryCode,
+				onChange: function(event)
 				{
-					self._valueInput.value = e.value;
-					self.onValueChange();
+					if (self._valueInput.value !== event.value)
+					{
+						self._valueInput.value = event.value;
+						if (BX.Crm.PhoneNumberInput.isCountryCodeOnly(self._valueInput.value, event.countryCode))
+						{
+							self._valueInput.value = '';
+						}
+
+						self.onValueChange();
+					}
+				},
+				onCountryChange: function(event)
+				{
+					self._valueCountryCode.value = event.country;
 				}
 			});
 
@@ -3839,6 +3892,8 @@ if(typeof BX.Crm.EntityEditorPhone === "undefined")
 		{
 			this._input.name = this.getName();
 		}
+
+		this._phoneCountryCodeInput = BX.create("input", { props: { type: "hidden" } });
 		this._countryFlagNode = BX.create("span", { props: {className: "crm-entity-widget-content-country-flag"}});
 		this._maskedPhoneInput = BX.create("input",
 			{
@@ -3851,18 +3906,39 @@ if(typeof BX.Crm.EntityEditorPhone === "undefined")
 			}
 		);
 
-		this._maskedPhone = new BX.PhoneNumber.Input(
-			{
-				node: this._maskedPhoneInput,
-				flagNode: this._countryFlagNode,
-				flagSize: 24,
-				onChange: BX.delegate(this.onPhoneNumberChange, this)
-			}
-		);
-		this._maskedPhone.setValue(value);
+		var defaultCountry = null;
+		if (
+			this.getSchemeElement()
+			&& BX.Type.isPlainObject(this.getSchemeElement()._options)
+			&& BX.Type.isStringFilled(this.getSchemeElement()._options.defaultCountry)
+		)
+		{
+			defaultCountry = this.getSchemeElement()._options.defaultCountry
+		}
 
-		var placeholder = this.isNewEntity()  ? this.getCreationPlaceholder() : this.getChangePlaceholder();
-		if(placeholder !== "")
+		var countryCode = BX.prop.getString(this.getExtraData(), "COUNTRY_CODE", "");
+
+		this._maskedPhone = new BX.Crm.PhoneNumberInput({
+			node: this._maskedPhoneInput,
+			flagNode: this._countryFlagNode,
+			isSelectionIndicatorEnabled: true,
+			searchDialogContextCode: 'CRM_ENTITY_EDITOR_PHONE',
+			userDefaultCountry: defaultCountry,
+			savedCountryCode: countryCode,
+			onChange: BX.delegate(this.onPhoneNumberChange, this),
+			onCountryChange: BX.delegate(this.onPhoneCountryChange, this),
+		});
+
+		if (BX.Type.isStringFilled(value))
+		{
+			this._maskedPhone.setValue(value, countryCode);
+		}
+
+		var placeholder = this.isNewEntity()
+			? this.getCreationPlaceholder()
+			: this.getChangePlaceholder();
+
+		if (placeholder !== '')
 		{
 			this._maskedPhoneInput.setAttribute("placeholder", placeholder);
 		}
@@ -3875,7 +3951,8 @@ if(typeof BX.Crm.EntityEditorPhone === "undefined")
 					children: [
 						this._countryFlagNode,
 						this._maskedPhoneInput,
-						this._input
+						this._input,
+						this._phoneCountryCodeInput
 					]
 				}
 			)];
@@ -3899,6 +3976,7 @@ if(typeof BX.Crm.EntityEditorPhone === "undefined")
 		BX.Crm.EntityEditorPhone.superclass.doClearLayout.apply(this, arguments);
 		this._maskedPhoneInput = null;
 		this._maskedPhone = null;
+		this._phoneCountryCodeInput = null;
 	};
 	BX.Crm.EntityEditorPhone.prototype.focus = function()
 	{
@@ -3910,19 +3988,36 @@ if(typeof BX.Crm.EntityEditorPhone === "undefined")
 		BX.focus(this._maskedPhoneInput);
 		BX.Crm.EditorTextHelper.getCurrent().setPositionAtEnd(this._maskedPhoneInput);
 	};
-	BX.Crm.EntityEditorPhone.prototype.onPhoneNumberChange = function(e)
+
+	BX.Crm.EntityEditorPhone.prototype.onPhoneNumberChange = function(event)
 	{
-		if(!this._input)
+		if (!this._input)
 		{
 			return;
 		}
 
-		if(this._input.value !== e.value)
+		if (this._input.value !== event.value)
 		{
-			this._input.value = e.value;
-			this.onChange(e);
+			this._input.value = event.value;
+			if (BX.Crm.PhoneNumberInput.isCountryCodeOnly(this._input.value, event.countryCode))
+			{
+				this._input.value = '';
+			}
+
+			this.onChange(event);
 		}
 	};
+
+	BX.Crm.EntityEditorPhone.prototype.onPhoneCountryChange = function(event)
+	{
+		if (!this._phoneCountryCodeInput)
+		{
+			return;
+		}
+
+		this._phoneCountryCodeInput.value = event.country;
+	}
+
 	BX.Crm.EntityEditorPhone.prototype.setRawRuntimeValue = function(value)
 	{
 		BX.Crm.EntityEditorPhone.superclass.setRawRuntimeValue.apply(this, arguments);
@@ -3934,6 +4029,19 @@ if(typeof BX.Crm.EntityEditorPhone === "undefined")
 	BX.Crm.EntityEditorPhone.prototype.getInputElement = function()
 	{
 		return this._maskedPhoneInput;
+	};
+	BX.Crm.EntityEditorPhone.prototype.getExtraData = function()
+	{
+		if (!this._model || !this._model._settings || !this._model._settings.extraData)
+		{
+			return {};
+		}
+
+		return BX.prop.getObject(this._model._settings.extraData, "EXTRA", {});
+	};
+	BX.Crm.EntityEditorPhone.prototype.getPhoneCountryCodeInputValue = function()
+	{
+		return this._phoneCountryCodeInput.value;
 	};
 	BX.Crm.EntityEditorPhone.create = function(id, settings)
 	{
@@ -7511,6 +7619,7 @@ if(typeof BX.Crm.EntityEditorClientLight === "undefined")
 					entityTypeId: BX.CrmEntityType.enumeration.company,
 					entityTypeName: BX.CrmEntityType.names.company,
 					categoryId: BX.prop.getInteger(categoryParams, 'categoryId', 0),
+					extraCategoryIds: BX.prop.getArray(categoryParams, 'extraCategoryIds', []),
 					entityInfo: entityInfo,
 					enableCreation: enableCreation,
 					creationLegend: this._schemeElement.getDataStringParam('creationLegend', ''),
@@ -7641,6 +7750,7 @@ if(typeof BX.Crm.EntityEditorClientLight === "undefined")
 					entityTypeId: BX.CrmEntityType.enumeration.contact,
 					entityTypeName: BX.CrmEntityType.names.contact,
 					categoryId: BX.prop.getInteger(categoryParams, 'categoryId', 0),
+					extraCategoryIds: BX.prop.getArray(categoryParams, 'extraCategoryIds', []),
 					entityInfo: entityInfo,
 					enableCreation: enableCreation,
 					creationLegend: this._schemeElement.getDataStringParam('creationLegend', ''),

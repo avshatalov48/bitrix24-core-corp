@@ -1,5 +1,9 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 use Bitrix\Crm\Integration\ClientResolver;
 use Bitrix\Main\Application;
@@ -156,6 +160,7 @@ class CCrmRequisiteDetailsComponent extends CBitrixComponent
 		if (!CModule::IncludeModule('crm'))
 		{
 			$this->errors[] = new Error(Loc::getMessage('CRM_MODULE_NOT_INSTALLED'));
+
 			return false;
 		}
 
@@ -204,18 +209,20 @@ class CCrmRequisiteDetailsComponent extends CBitrixComponent
 	{
 		$this->arParams['PATH_TO_CONTACT_SHOW'] = CrmCheckPath(
 			'PATH_TO_CONTACT_SHOW',
-			$this->arParams['PATH_TO_CONTACT_SHOW'],
+			$this->arParams['PATH_TO_CONTACT_SHOW'] ?? '',
 			$this->getApp()->GetCurPage().'?contact_id=#contact_id#&show'
 		);
 		$this->arParams['PATH_TO_COMPANY_SHOW'] = CrmCheckPath(
 			'PATH_TO_COMPANY_SHOW',
-			$this->arParams['PATH_TO_COMPANY_SHOW'],
+			$this->arParams['PATH_TO_COMPANY_SHOW'] ?? '',
 			$this->getApp()->GetCurPage().'?company_id=#company_id#&show'
 		);
 
 		//region Check base params
-		if (isset($this->arParams['~MODE'])
-			&& in_array($this->arParams['~MODE'], ['create', 'edit', 'copy', 'delete'], true))
+		if (
+			isset($this->arParams['~MODE'])
+			&& in_array($this->arParams['~MODE'], ['create', 'edit', 'copy', 'delete'], true)
+		)
 		{
 			$this->mode = $this->arParams['~MODE'];
 			switch ($this->mode)
@@ -367,7 +374,7 @@ class CCrmRequisiteDetailsComponent extends CBitrixComponent
 		}
 		else
 		{
-			if (isset($this->arParams['~PSEUDO_ID'])
+			if (isset($this->arParams['~PSEUDO_ID'], $_REQUEST['pseudoId'])
 				&& is_string($_REQUEST['pseudoId'])
 				&& preg_match('/^n\d+$/', $_REQUEST['pseudoId']))
 			{
@@ -961,7 +968,7 @@ class CCrmRequisiteDetailsComponent extends CBitrixComponent
 		);
 
 		// bank details
-		if (is_array($this->formData['BANK_DETAILS']) && !empty($this->formData['BANK_DETAILS']))
+		if (isset($this->formData['BANK_DETAILS']) && is_array($this->formData['BANK_DETAILS']))
 		{
 			foreach ($this->formData['BANK_DETAILS'] as $pseudoId => $formFields)
 			{
@@ -975,9 +982,11 @@ class CCrmRequisiteDetailsComponent extends CBitrixComponent
 				{
 					if (isset($formFields[$fieldName]))
 					{
-						if ($fieldName === 'ENTITY_TYPE_ID'
+						if (
+							$fieldName === 'ENTITY_TYPE_ID'
 							|| $fieldName === 'ENTITY_ID'
-							|| $fieldName === 'COUNTRY_ID')
+							|| $fieldName === 'COUNTRY_ID'
+						)
 						{
 							$fields[$fieldName] = (int)$formFields[$fieldName];
 						}
@@ -991,7 +1000,6 @@ class CCrmRequisiteDetailsComponent extends CBitrixComponent
 					{
 						$this->deletedBankDetailMap[$pseudoId] = true;
 					}
-
 				}
 
 				if (!is_array($this->rawBankDetailList[$pseudoId]))

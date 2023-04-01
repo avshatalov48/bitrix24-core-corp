@@ -676,7 +676,7 @@ class Session
 						]
 					);
 				}
-				catch (\Exception $e)
+				catch (\Bitrix\Main\SystemException $e)
 				{
 				}
 			}
@@ -1651,7 +1651,10 @@ class Session
 								&& $fields['WAIT_ACTION'] !== 'N'
 							)
 							||
-							$fields['WAIT_ACTION'] === 'Y'
+							(
+								isset($fields['WAIT_ACTION'])
+								&& $fields['WAIT_ACTION'] === 'Y'
+							)
 						)
 					)
 					{
@@ -2438,8 +2441,9 @@ class Session
 					],
 				];
 			}
-
-			InteractiveMessage\Output::getInstance($this->session['CHAT_ID'])->setKeyboardData($connectorKeyboard);
+			$chatEntityId = Chat::parseLinesChatEntityId($this->chat->getData('ENTITY_ID'));
+			$connectorId = $chatEntityId['connectorId'] ?? '';
+			InteractiveMessage\Output::getInstance($this->session['CHAT_ID'], ['connectorId' => $connectorId])->setKeyboardData($connectorKeyboard);
 
 			Im::addMessage([
 				'TO_CHAT_ID' => $this->session['CHAT_ID'],

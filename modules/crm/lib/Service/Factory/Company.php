@@ -336,13 +336,7 @@ final class Company extends Service\Factory
 
 	protected function getDependantTrackedObjects(): array
 	{
-		$objects = [];
-
-		$contactTrackedObject = new TrackedObject\Contact();
-		$contactTrackedObject->makeThisObjectDependant(Item::FIELD_NAME_CONTACTS);
-		$objects[] = $contactTrackedObject;
-
-		return $objects;
+		return [];
 	}
 
 	protected function configureAddOperation(Operation $operation): void

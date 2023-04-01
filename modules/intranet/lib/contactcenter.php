@@ -917,6 +917,7 @@ class ContactCenter
 		}
 
 		$connectorCode = htmlspecialcharsbx(\CUtil::JSescape($connectorCode));
+		$sliderWidth = 700;
 
 		$openLineSliderPath = Common::getContactCenterPublicFolder() . "connector/?ID={$connectorCode}&LINE=#LINE#&action-line=create";
 		$infoConnectors = ImConnector\InfoConnectors::getInfoConnectorsList();
@@ -968,14 +969,7 @@ class ContactCenter
 				}
 
 				$itemPath = str_replace('#LINE#', $configItem["ID"], $openLineSliderPath);
-				if ($connectorCode === 'facebook')
-				{
-					$configItem["ONCLICK"] = "BX.SidePanel.Instance.open('" . $itemPath . "', {width: 1000})";
-				}
-				else
-				{
-					$configItem["ONCLICK"] = "BX.SidePanel.Instance.open('" . $itemPath . "', {width: 700})";
-				}
+				$configItem["ONCLICK"] = "BX.SidePanel.Instance.open('$itemPath', {width: $sliderWidth})";
 			}
 			unset($configItem);
 
@@ -997,12 +991,11 @@ class ContactCenter
 			$userPermissions = Permissions::createWithCurrentUser();
 			if ($userPermissions->canPerform(Permissions::ENTITY_LINES, Permissions::ACTION_MODIFY))
 			{
-				$width = ($connectorCode === 'facebook') ? 1000 : 700;
 				$configList[] = [
 					'NAME' => Loc::getMessage("CONTACT_CENTER_IMOPENLINES_CREATE_OPEN_LINE"),
 					'ID' => 0,
 					'DELIMITER_BEFORE' => true,
-					'ONCLICK' => "new BX.Imopenlines.CreateLine({path:'{$openLineSliderPath}', sliderWidth:'{$width}'});",
+					'ONCLICK' => "new BX.Imopenlines.CreateLine({path:'{$openLineSliderPath}', sliderWidth:{$sliderWidth}});",
 				];
 			}
 		}

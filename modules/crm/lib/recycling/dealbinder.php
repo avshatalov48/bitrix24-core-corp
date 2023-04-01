@@ -65,7 +65,7 @@ class DealBinder extends BaseBinder
 					$fields,
 					false,
 					false,
-					$this->getUpdateOptions((int)$associatedEntityTypeID, [$associatedEntityID]),
+					$this->getUnbindUpdateOptions((int)$associatedEntityTypeID, [$associatedEntityID]),
 				);
 			}
 		}
@@ -86,7 +86,7 @@ class DealBinder extends BaseBinder
 					$fields,
 					false,
 					false,
-					$this->getUpdateOptions((int)$associatedEntityTypeID, [$associatedEntityID]),
+					$this->getUnbindUpdateOptions((int)$associatedEntityTypeID, [$associatedEntityID]),
 				);
 			}
 		}
@@ -112,9 +112,8 @@ class DealBinder extends BaseBinder
 				$entity->Update(
 					$entityID,
 					$fields,
+					true,
 					false,
-					false,
-					$this->getUpdateOptions((int)$associatedEntityTypeID, [$associatedEntityID]),
 				);
 			}
 		}
@@ -133,9 +132,8 @@ class DealBinder extends BaseBinder
 				$entity->Update(
 					$entityID,
 					$fields,
+					true,
 					false,
-					false,
-					$this->getUpdateOptions((int)$associatedEntityTypeID, [$associatedEntityID]),
 				);
 			}
 		}
@@ -161,7 +159,7 @@ class DealBinder extends BaseBinder
 				$fields,
 				false,
 				false,
-				$this->getUpdateOptions((int)$associatedEntityTypeID, $associatedEntityIDs),
+				$this->getUnbindUpdateOptions((int)$associatedEntityTypeID, $associatedEntityIDs),
 			);
 		}
 		elseif($associatedEntityTypeID === \CCrmOwnerType::Contact)
@@ -182,7 +180,7 @@ class DealBinder extends BaseBinder
 				$fields,
 				false,
 				false,
-				$this->getUpdateOptions((int)$associatedEntityTypeID, $associatedEntityIDs),
+				$this->getUnbindUpdateOptions((int)$associatedEntityTypeID, $associatedEntityIDs),
 			);
 		}
 		else
@@ -205,9 +203,8 @@ class DealBinder extends BaseBinder
 			$entity->Update(
 				$entityID,
 				$fields,
+				true,
 				false,
-				false,
-				$this->getUpdateOptions((int)$associatedEntityTypeID, $associatedEntityIDs),
 			);
 		}
 		elseif($associatedEntityTypeID === \CCrmOwnerType::Contact)
@@ -225,9 +222,8 @@ class DealBinder extends BaseBinder
 			$entity->Update(
 				$entityID,
 				$fields,
+				true,
 				false,
-				false,
-				$this->getUpdateOptions((int)$associatedEntityTypeID, $associatedEntityIDs)
 			);
 		}
 		else

@@ -3,6 +3,7 @@ export type EditableType = 'string' | 'boolean';
 export type ListEditorOptions = {
 	setId?: number,
 	autoSave?: boolean,
+	cacheable?: boolean,
 	title?: string;
 	editable: {
 		[property: string]: {

@@ -790,7 +790,7 @@ class ResultEntity
 			{
 				$previousFields = $entityClassName::GetByID($id, false);
 				$starter = new Automation\Starter(\CCrmOwnerType::ResolveID($entityName), $id);
-				$starter->runOnUpdate($entityFields, $previousFields);
+				$starter->runOnUpdate($entityFields, $previousFields ?: []);
 			}
 		}
 
@@ -1782,8 +1782,11 @@ class ResultEntity
 			$entityId = $entity['ITEM_ID'];
 
 			$wasAutomationLaunchedInOperation =
-				$entityTypeName === \CCrmOwnerType::QuoteName
-				&& Crm\Settings\QuoteSettings::getCurrent()->isFactoryEnabled()
+				\CCrmOwnerType::isUseDynamicTypeBasedApproach(\CCrmOwnerType::ResolveID($entityTypeName))
+				|| (
+					$entityTypeName === \CCrmOwnerType::QuoteName
+					&& Crm\Settings\QuoteSettings::getCurrent()->isFactoryEnabled()
+				)
 			;
 
 			if (!$wasAutomationLaunchedInOperation)

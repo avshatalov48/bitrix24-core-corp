@@ -1,5 +1,5 @@
 /**
- * @module im/chat/selector/chat
+ * @module im/chat/selector/adapter/dialog-list
  */
 jn.define('im/chat/selector/adapter/dialog-list', (require, exports, module) =>
 {

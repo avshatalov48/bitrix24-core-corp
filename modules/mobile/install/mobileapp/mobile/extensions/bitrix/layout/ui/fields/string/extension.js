@@ -17,7 +17,7 @@ jn.define('layout/ui/fields/string', (require, exports, module) => {
 		{
 			super(props);
 
-			this.valueFromKeyboard = null;
+			this.fieldValue = null;
 			this.state.showAll = this.getValue().length <= 180;
 
 			this.inputRef = null;
@@ -56,15 +56,15 @@ jn.define('layout/ui/fields/string', (require, exports, module) => {
 			let prevPropsToCompare = this.props;
 			let nextPropsToCompare = nextProps;
 
-			if (this.valueFromKeyboard !== null)
+			if (this.fieldValue !== null)
 			{
-				const valueFromKeyboard = this.valueFromKeyboard;
+				const fieldValue = this.fieldValue;
 
-				this.valueFromKeyboard = null;
+				this.fieldValue = null;
 
-				if (valueFromKeyboard !== nextProps.value)
+				if(!isEqual(fieldValue, nextProps.value))
 				{
-					// console.log('!!! valueFromKeyboard not equal', this.valueFromKeyboard, nextProps.value);
+					// console.log('!!! fieldValue not equal', this.fieldValue, nextProps.value);
 					return true;
 				}
 
@@ -131,7 +131,7 @@ jn.define('layout/ui/fields/string', (require, exports, module) => {
 		 */
 		isEmptyValue(value)
 		{
-			return value.trim() === '';
+			return typeof value === 'string' && value.trim() === '';
 		}
 
 		getDefaultStyles()
@@ -309,7 +309,7 @@ jn.define('layout/ui/fields/string', (require, exports, module) => {
 
 		changeText(currentText)
 		{
-			this.valueFromKeyboard = currentText;
+			this.fieldValue = currentText;
 			this.handleChange(currentText);
 		}
 

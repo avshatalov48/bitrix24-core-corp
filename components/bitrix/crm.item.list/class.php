@@ -102,9 +102,20 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 		$this->getApplication()->SetTitle(htmlspecialcharsbx($this->getTitle()));
 
 		$listFilter = $this->getListFilter();
+
+		// transform ACTIVITY_COUNTER filter to real filter params
+		CCrmEntityHelper::applyCounterFilterWrapper(
+			$this->entityTypeId,
+			$this->getGridId(),
+			\Bitrix\Crm\Counter\EntityCounter::internalizeExtras($_REQUEST),
+			$listFilter,
+			null
+		);
+
 		$navParams = $this->gridOptions->getNavParams(['nPageSize' => static::DEFAULT_PAGE_SIZE]);
 		$pageSize = (int)$navParams['nPageSize'];
 		$pageNavigation = $this->getPageNavigation($pageSize);
+		$entityTypeName = \CCrmOwnerType::ResolveName($this->entityTypeId);
 		$this->arResult['grid'] = $this->prepareGrid(
 			$listFilter,
 			$pageNavigation,
@@ -113,12 +124,16 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 		$this->arResult['interfaceToolbar'] = $this->prepareInterfaceToolbar();
 		$this->arResult['jsParams'] = [
 			'entityTypeId' => $this->entityTypeId,
-			'entityTypeName' => \CCrmOwnerType::ResolveName($this->entityTypeId),
+			'entityTypeName' => $entityTypeName,
 			'categoryId' => $this->category ? $this->category->getId() : 0,
 			'gridId' => $this->getGridId(),
 			'backendUrl' => $this->arParams['backendUrl'] ?? null,
 			'isUniversalActivityScenarioEnabled' => \Bitrix\Crm\Settings\Crm::isUniversalActivityScenarioEnabled(),
+			'isIframe' => $this->isIframe(),
 		];
+		$this->arResult['entityTypeName'] = $entityTypeName;
+		$this->arResult['categoryId'] = $this->category ? $this->category->getId() : 0;
+		$this->arResult['entityTypeDescription'] = $this->factory->getEntityDescription();
 
 		$this->includeComponentTemplate();
 	}

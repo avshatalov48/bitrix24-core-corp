@@ -84,7 +84,7 @@ class Display
 			$displayedField->setEntityTypeId($this->entityTypeId);
 			foreach ($items as $itemId => $item)
 			{
-				$fieldValue = $items[$itemId][$fieldId];
+				$fieldValue = $items[$itemId][$fieldId] ?? null;
 				if ($displayedField->useLinkedEntities())
 				{
 					$displayedField->prepareLinkedEntities(
@@ -113,12 +113,12 @@ class Display
 
 			if ($displayedField->useLinkedEntities())
 			{
-				$displayedField->setLinkedEntitiesValues($linkedEntitiesValues[$displayedField->getType()]);
+				$displayedField->setLinkedEntitiesValues($linkedEntitiesValues[$displayedField->getType()] ?? null);
 			}
 
 			foreach ($items as $itemId => $item)
 			{
-				$fieldValue = $items[$itemId][$fieldId];
+				$fieldValue = $items[$itemId][$fieldId] ?? null;
 				if ($displayedField->isValueEmpty($fieldValue))
 				{
 					if ($displayedField->isMultiple() && $displayedField->isUserField())

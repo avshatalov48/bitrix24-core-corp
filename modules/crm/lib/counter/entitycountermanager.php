@@ -1,6 +1,12 @@
 <?php
+
 namespace Bitrix\Crm\Counter;
+
+use Bitrix\Crm\Integration\Intranet\CustomSectionProvider;
+use Bitrix\Crm\Integration\IntranetManager;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Service\Factory;
+use Bitrix\Main;
 
 class EntityCounterManager
 {
@@ -20,6 +26,21 @@ class EntityCounterManager
 			$result['EXTRAS']['EXCLUDE_USERS'] = true;
 			unset($parts[$qty - 1]);
 			$qty--;
+		}
+
+		/*
+		Fix for the dynamic type because it contains underscore symbol in it name like `dynamic_131`, `smart_invoice`, etc.
+		The 4 constant consists of normal code has minimum 3 sections like `crm_deal_all` but wrong
+		code has minimum 4 sections `crm_dynamic_131_all`
+		*/
+		if ($qty >= 4 && \CCrmOwnerType::ResolveID($parts[1] . '_' . $parts[2]) > 0)
+		{
+			// if first and second parts looks like a typeName we will join it together and reassemble params
+			$parts = array_merge(
+				[$parts[0], $parts[1] . '_' . $parts[2]],
+				array_slice($parts, 3)
+			);
+			$qty = count($parts);
 		}
 
 		if($qty >= 2)
@@ -91,7 +112,11 @@ class EntityCounterManager
 			if (!is_null($categoryId))
 			{
 				$categoryId = (int)$categoryId;
-				if ($categoryId < 0) // compatibility with $categoryId=-1 for all deal categories
+
+				if (
+					$categoryId < 0 // compatibility with $categoryId=-1 for all deal categories
+					|| self::isDynamicTypeAllCategory($categoryId, $factory, $entityTypeID) // dynamic types all categories has 0 code
+				)
 				{
 					$categoryId = null;
 				}
@@ -126,6 +151,18 @@ class EntityCounterManager
 			$results[] = "crm_{$entityName}_{$typeName}";
 		}
 
+		if ($factory instanceof Factory\Dynamic && CustomSectionProvider::hasCustomSection($factory))
+		{
+			$settingsName = IntranetManager::preparePageSettingsForItemsList($factory->getEntityTypeId());
+			$results[] = CustomSectionProvider::COUNTER_PREFIX . $settingsName;
+
+			$sectionIds = CustomSectionProvider::getAllCustomSectionIdsByEntityTypeId($factory->getEntityTypeId());
+			foreach ($sectionIds as $sectionId)
+			{
+				$results[] = CustomSectionProvider::buildCustomSectionCounterId($sectionId);
+			}
+		}
+
 		return $results;
 	}
 
@@ -140,13 +177,20 @@ class EntityCounterManager
 		$parts = self::parseCode($code);
 		if($parts['ENTITY_TYPE_ID'] !== \CCrmOwnerType::Undefined)
 		{
-			$counter = EntityCounterFactory::create(
-				$parts['ENTITY_TYPE_ID'],
-				$parts['TYPE_ID'],
-				$userID > 0 ? $userID : \CCrmSecurityHelper::GetCurrentUserID(),
-				$parts['EXTRAS']
-			);
-			return $counter->getValue();
+			try
+			{
+				$counter = EntityCounterFactory::create(
+					$parts['ENTITY_TYPE_ID'],
+					$parts['TYPE_ID'],
+					$userID > 0 ? $userID : \CCrmSecurityHelper::GetCurrentUserID(),
+					$parts['EXTRAS']
+				);
+				return $counter->getValue();
+
+			} catch (Main\ArgumentOutOfRangeException $e)
+			{
+				return 0;
+			}
 		}
 
 		return 0;
@@ -243,5 +287,14 @@ class EntityCounterManager
 		{
 			\CUserCounter::DeleteByCode($code);
 		}
+	}
+
+	private static function isDynamicTypeAllCategory(int $categoryId, Factory $factory, int $entityTypeID): bool
+	{
+		return (
+			$categoryId === 0
+			&& $factory->isCategoriesEnabled()
+			&& \CCrmOwnerType::isUseDynamicTypeBasedApproach($entityTypeID)
+		);
 	}
 }

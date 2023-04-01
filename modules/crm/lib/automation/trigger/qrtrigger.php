@@ -13,7 +13,7 @@ class QrTrigger extends BaseTrigger
 			return parent::isSupported($entityTypeId);
 		}
 
-		$supported = [\CCrmOwnerType::Deal, \CCrmOwnerType::Lead];
+		$supported = [\CCrmOwnerType::Deal, \CCrmOwnerType::Lead, \CCrmOwnerType::SmartDocument];
 
 		return in_array($entityTypeId, $supported, true);
 	}

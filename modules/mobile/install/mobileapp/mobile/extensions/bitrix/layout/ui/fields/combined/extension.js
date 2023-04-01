@@ -74,11 +74,14 @@ jn.define('layout/ui/fields/combined', (require, exports, module) => {
 			}
 
 			const { primaryField, secondaryField } = this.prepareFieldsConfig();
+			const value = this.getValue();
 
+			const primaryId = primaryField.id;
+			const secondaryId = secondaryField.id;
 			const {
-				[primaryField.id]: primaryValue,
-				[secondaryField.id]: secondaryValue,
-			} = this.getValue();
+				[primaryId]: primaryValue,
+				[secondaryId]: secondaryValue,
+			} = value;
 
 			const renderPrimaryField = primaryField.renderField || this.props.renderField;
 			const renderSecondaryField = secondaryField.renderField || this.props.renderField;
@@ -104,15 +107,16 @@ jn.define('layout/ui/fields/combined', (require, exports, module) => {
 							readOnly: this.isReadOnly(),
 							value: primaryValue,
 							ref: this.bindPrimaryRef,
-							testId: `${this.testId}_${primaryField.id}`,
+							testId: `${this.testId}_${primaryId}`,
 							uid: this.props.uid,
+							context: this.props.context,
 							tooltip: this.props.tooltip,
 							isNew: this.isNew(),
 							parent: this,
 							onChange: useCallback((value) => this.handleChange({
-								[primaryField.id]: value,
-								[secondaryField.id]: secondaryValue,
-							}), [primaryField.id, secondaryField.id, secondaryValue]),
+								[primaryId]: value,
+								[secondaryId]: secondaryValue,
+							}, [primaryId, secondaryId, secondaryValue])),
 							onFocusIn: this.props.onFocusIn,
 							onFocusOut: this.props.onFocusOut,
 							showBorder: false,
@@ -129,14 +133,14 @@ jn.define('layout/ui/fields/combined', (require, exports, module) => {
 							readOnly: this.isReadOnly(),
 							value: secondaryValue,
 							ref: this.bindSecondaryRef,
-							testId: `${this.testId}_${secondaryField.id}`,
+							testId: `${this.testId}_${secondaryId}`,
 							uid: this.props.uid,
 							isNew: this.props.isNew,
 							parent: this,
 							onChange: useCallback((value) => this.handleChange({
-								[primaryField.id]: primaryValue,
-								[secondaryField.id]: value,
-							}, [primaryField.id, secondaryField.id, secondaryValue])),
+								[primaryId]: primaryValue,
+								[secondaryId]: value,
+							}, [primaryId, secondaryId, secondaryValue])),
 							onFocusIn: this.props.onFocusIn,
 							onFocusOut: this.props.onFocusOut,
 							showEditIcon: false,

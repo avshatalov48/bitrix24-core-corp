@@ -15,7 +15,6 @@ $MESS["CRM_OIIE_IMPORT_CONNECTED"] = "Produktimport wurde aktiviert";
 $MESS["CRM_OIIE_IMPORT_DISCONNECTED"] = "Produktimport wurde deaktiviert";
 $MESS["CRM_OIIE_MODULE_NOT_INSTALLED_CATALOG"] = "Das Modul Kommerzieller Katalog ist nicht installiert.";
 $MESS["CRM_OIIE_MODULE_NOT_INSTALLED_CRM"] = "Das Modul CRM ist nicht installiert.";
-$MESS["CRM_OIIE_MODULE_NOT_INSTALLED_IMCONNECTOR"] = "Das Modul Externe IM Connector ist nicht installiert.";
 $MESS["CRM_OIIE_SETTINGS_NO_DISABLE"] = "Fehler beim Deaktivieren des Produktimports";
 $MESS["CRM_OIIE_TITLE"] = "Verbinden Sie Instagram mit Ihrem Onlineshop";
 $MESS["CRM_OIIE_TITLE_WITH_ASTERISK"] = "Instagram mit Ihrem Onlineshop verbinden";

@@ -123,6 +123,7 @@ jn.define('crm/entity-tab/type/base', (require, exports, module) => {
 			return [
 				{
 					id: 'activity',
+					sort: 200,
 					title: BX.message('M_CRM_ENTITY_TAB_DEAL_ACTION_ACTIVITY'),
 					showActionLoader: false,
 					onClickCallback: this.addActivity.bind(this),

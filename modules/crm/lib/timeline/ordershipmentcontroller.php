@@ -1,10 +1,12 @@
 <?php
+
 namespace Bitrix\Crm\Timeline;
 
 use Bitrix\Crm\Order\DeliveryStatus;
 use Bitrix\Crm\Order\Shipment;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Crm\ItemIdentifier;
 
 Loc::loadMessages(__FILE__);
 
@@ -111,34 +113,26 @@ class OrderShipmentController extends EntityController
 	 */
 	public function onModify($ownerID, array $params)
 	{
-		if(!is_int($ownerID))
+		if (!is_int($ownerID))
 		{
 			$ownerID = (int)$ownerID;
 		}
-		if($ownerID <= 0)
+		if ($ownerID <= 0)
 		{
 			throw new Main\ArgumentException('Owner ID must be greater than zero.', 'ownerID');
 		}
 
-		$historyEntryID = null;
 		$orderId = (isset($params['ORDER_ID']) && (int)$params['ORDER_ID'] > 0) ? (int)$params['ORDER_ID'] : 0;
 
 		if (isset($params['CURRENT_FIELDS']['STATUS_ID']))
 		{
-			$historyEntryID = $this->onStatusModify($ownerID, $params, $orderId);
-		}
-
-		if($historyEntryID > 0)
-		{
-			if ($orderId > 0)
-			{
-				$itemIdentifier = new \Bitrix\Crm\ItemIdentifier(\CCrmOwnerType::Order, $orderId);
-			}
-			else
-			{
-				$itemIdentifier = new \Bitrix\Crm\ItemIdentifier(\CCrmOwnerType::OrderShipment, $ownerID);
-			}
-			$this->sendPullEventOnAdd($itemIdentifier, $historyEntryID);
+			$timelineEntryId = $this->onStatusModify($ownerID, $params, $orderId);
+			$this->sendPullEventOnAdd(
+				($orderId > 0)
+					? new ItemIdentifier(\CCrmOwnerType::Order, $orderId)
+					: new ItemIdentifier(\CCrmOwnerType::OrderShipment, $ownerID),
+				$timelineEntryId
+			);
 		}
 	}
 
@@ -161,7 +155,7 @@ class OrderShipmentController extends EntityController
 		$authorId = self::resolveCreatorID($shipmentFields);
 		if (!empty($settings))
 		{
-			$historyEntryID = OrderEntry::create([
+			$timelineEntryId = OrderEntry::create([
 				'ENTITY_ID' => $ownerID,
 				'TYPE_CATEGORY_ID' => TimelineType::MODIFICATION,
 				'ENTITY_TYPE_ID' => \CCrmOwnerType::OrderShipment,
@@ -170,15 +164,12 @@ class OrderShipmentController extends EntityController
 				'SETTINGS' => $settings
 			]);
 
-			if($historyEntryID > 0)
+			foreach ($bindings as $binding)
 			{
-				foreach($bindings as $binding)
-				{
-					$this->sendPullEventOnAdd(
-						new \Bitrix\Crm\ItemIdentifier($binding['ENTITY_TYPE_ID'], $binding['ENTITY_ID']),
-						$historyEntryID
-					);
-				}
+				$this->sendPullEventOnAdd(
+					new ItemIdentifier($binding['ENTITY_TYPE_ID'], $binding['ENTITY_ID']),
+					$timelineEntryId
+				);
 			}
 		}
 	}

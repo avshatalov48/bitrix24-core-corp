@@ -117,7 +117,7 @@ final class Document extends Activity
 			;
 		}
 
-		$blocks['titleAndCreateDate'] = Layout\Body\ContentBlock\ContentBlockFactory::createFromTemplate(
+		$blocks['titleAndCreateDate'] = Layout\Body\ContentBlock\ContentBlockFactory::createLineOfTextFromTemplate(
 			(string)Loc::getMessage('CRM_TIMELINE_ACTIVITY_DOCUMENT_TITLE_AND_CREATE_DATE'),
 			[
 				'#TITLE#' => $titleBlock,

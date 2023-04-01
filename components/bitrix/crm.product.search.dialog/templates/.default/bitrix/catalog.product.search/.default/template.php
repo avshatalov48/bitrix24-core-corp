@@ -71,7 +71,7 @@ $arSort = $gridOptions->GetSorting(
 	)
 );
 $arResult['SORT'] = $arSort['sort'];
-$arResult['SORT_VARS'] = $arSort['SORT']['vars'];
+$arResult['SORT_VARS'] = $arSort['SORT']['vars'] ?? null;
 unset($arSort);
 $arResult['ROWS_COUNT'] =
 	($arResult['DB_RESULT_LIST'] instanceof \CDBResult) ? $arResult['DB_RESULT_LIST']->SelectedRowsCount() : 0;
@@ -108,13 +108,19 @@ foreach ($arResult['PRODUCTS'] as $productId => $arItems)
 		'actions' => $arActions,
 		'data' => $arItems,
 		'editable' => false,
-		'columns' => array(
+		'columns' => [
 			'NAME' => '<a class="crm-gds-item'.($arItems['TYPE'] === 'S' ? ' crm-gds-item-section' : ' crm-gds-item-gds').'">' . htmlspecialcharsbx($arItems['NAME']).'</a>',
 			'ACTIVE' => $arItems['ACTIVE'] === 'Y' ? GetMEssage('SPS_PRODUCT_ACTIVE') : GetMEssage('SPS_PRODUCT_NO_ACTIVE'),
-			'PREVIEW_PICTURE' => getImageField('NO_FIELDS[' . $arItems['ID'] . '][PREVIEW_PICTURE]', $arItems['PREVIEW_PICTURE']),
-			'DETAIL_PICTURE' => getImageField('NO_FIELDS[' . $arItems['ID'] . '][DETAIL_PICTURE]', $arItems['DETAIL_PICTURE'])/*,
+			'PREVIEW_PICTURE' => getImageField(
+				'NO_FIELDS[' . $arItems['ID'] . '][PREVIEW_PICTURE]',
+				$arItems['PREVIEW_PICTURE'] ?? null
+			),
+			'DETAIL_PICTURE' => getImageField(
+				'NO_FIELDS[' . $arItems['ID'] . '][DETAIL_PICTURE]',
+				$arItems['DETAIL_PICTURE'] ?? null
+			)/*,
 			'DETAIL_TEXT' => isset($arItems['DETAIL_TEXT']) ? nl2br(htmlspecialcharsbx($arItems['DETAIL_TEXT'])) : ''*/
-		)
+		]
 	);
 
 	// Product properties
@@ -141,7 +147,7 @@ foreach ($arResult['PRODUCTS'] as $productId => $arItems)
 		array(
 			'CATALOG_ID' => $arResult['IBLOCK_ID'],
 			'SECTION_ID' => $arResult['SECTION_ID'],
-			'PATH_TO_PRODUCT_LIST' => $arResult['PATH_TO_PRODUCT_LIST'],
+			'PATH_TO_PRODUCT_LIST' => $arResult['PATH_TO_PRODUCT_LIST'] ?? null,
 			'JS_EVENTS_MODE' => 'Y',
 			'JS_EVENTS_MANAGER_ID' => $jsEventsManagerId
 		),
@@ -162,7 +168,7 @@ foreach ($arResult['PRODUCTS'] as $productId => $arItems)
 									onclick="return <?= $tableId ?>_helper.onSectionChange('0')"></span></span>
 						</td>
 						<td class="crm-search-input-cell"><input type="text"
-							value="<?= htmlspecialcharsbx($arFilter['QUERY']) ?>"
+							value="<?= htmlspecialcharsbx($arFilter['QUERY'] ?? null) ?>"
 							id="<?= $tableId ?>_query"
 							onkeyup="<?= $tableId ?>_helper.onSearch(this.value)">
 						</td>
@@ -170,25 +176,36 @@ foreach ($arResult['PRODUCTS'] as $productId => $arItems)
 				</table>
 			</div>
 			<span class="crm-catalog-search-icon" onclick="<?= $tableId ?>_helper.search();"></span><span class="crm-catalog-search-clear" id="<?= $tableId ?>_query_clear"
-				style="<?= $arFilter['QUERY'] ? '' : 'display:none' ?>"
+				style="<?= isset($arFilter['QUERY']) && !empty($arFilter['QUERY']) ? '' : 'display:none' ?>"
 				onclick="return <?= $tableId ?>_helper.clearQuery()"></span>
 		</div>
 		<div class="crm-catalog-search-query-settings-container">
 			<div class="crm-catalog-search-query-settings">
-				<input type="checkbox" value="Y" <?=($arFilter['USE_SUBSTRING_QUERY'] == 'Y' ? ' checked="checked"' : '');?>name="USE_SUBSTRING_QUERY" id="<?= $tableId ?>_query_substring" onclick="return <?= $tableId ?>_helper.checkSubstring()">&nbsp;<?=GetMessage('CRM_CPS_TPL_MESS_USE_SUBSTRING_QUERY'); ?>
+				<input
+					type="checkbox"
+					value="Y" <?=(($arFilter['USE_SUBSTRING_QUERY'] ?? null) == 'Y' ? ' checked="checked"' : '');?>
+					name="USE_SUBSTRING_QUERY"
+					id="<?= $tableId ?>_query_substring"
+					onclick="return <?= $tableId ?>_helper.checkSubstring()"
+				>&nbsp;<?=GetMessage('CRM_CPS_TPL_MESS_USE_SUBSTRING_QUERY'); ?>
 			</div>
 		</div>
 
-		<form name="find_form" method="GET" action="<? echo $APPLICATION->GetCurPage() ?>?"
-			accept-charset="<? echo LANG_CHARSET; ?>" id="<?= $tableId ?>_form">
+		<form name="find_form" method="GET" action="<?= $APPLICATION->GetCurPage() ?>?"
+			accept-charset="<?= LANG_CHARSET; ?>" id="<?= $tableId ?>_form">
 			<input type="hidden" name="mode" value="list">
 			<input type="hidden" name="SECTION_ID" value="<?= (int)$arResult['SECTION_ID'] ?>"
 				id="<?= $tableId ?>_section_id">
-			<input type="hidden" name="QUERY" value="<?= htmlspecialcharsbx($arFilter['QUERY']) ?>"
+			<input type="hidden" name="QUERY" value="<?= htmlspecialcharsbx($arFilter['QUERY'] ?? null) ?>"
 				id="<?= $tableId ?>_query_value">
-			<input type="hidden" name="USE_SUBSTRING_QUERY" value="<?=htmlspecialcharsbx($arFilter['USE_SUBSTRING_QUERY']) ?>" id="<?= $tableId ?>_query_substring_value">
-			<input type="hidden" name="func_name" value="<? echo htmlspecialcharsbx($arResult['JS_CALLBACK']) ?>">
-			<input type="hidden" name="lang" value="<? echo LANGUAGE_ID ?>">
+			<input
+				type="hidden"
+				name="USE_SUBSTRING_QUERY"
+				value="<?=htmlspecialcharsbx($arFilter['USE_SUBSTRING_QUERY'] ?? null) ?>"
+				id="<?= $tableId ?>_query_substring_value"
+			>
+			<input type="hidden" name="func_name" value="<?= htmlspecialcharsbx($arResult['JS_CALLBACK']) ?>">
+			<input type="hidden" name="lang" value="<?= LANGUAGE_ID ?>">
 			<input type="hidden" id="LID" name="LID" value="<?= $arResult['LID'] ?>">
 			<input type="hidden" id="caller" name="caller" value="<?= $arResult['CALLER'] ?>">
 			<input type="hidden" name="IBLOCK_ID" value="<?= (int)$arResult['IBLOCK_ID'] ?>"
@@ -202,7 +219,7 @@ foreach ($arResult['PRODUCTS'] as $productId => $arItems)
 			array(
 				'CATALOG_ID' => $arResult['IBLOCK_ID'],
 				'SECTION_ID' => $arResult['SECTION_ID'],
-				'PATH_TO_PRODUCT_LIST' => $arResult['PATH_TO_PRODUCT_LIST'],
+				'PATH_TO_PRODUCT_LIST' => $arResult['PATH_TO_PRODUCT_LIST'] ?? null,
 				'JS_EVENTS_MODE' => 'Y',
 				'JS_EVENTS_MANAGER_ID' => $jsEventsManagerId
 			),
@@ -257,11 +274,11 @@ foreach ($arResult['PRODUCTS'] as $productId => $arItems)
 							'value' => $arResult['ROWS_COUNT']
 						)
 					),
-				'EDITABLE' => !$arResult['PERMS']['WRITE'] || $arResult['INTERNAL'] ? 'N' : 'Y',
+				'EDITABLE' => !($arResult['PERMS']['WRITE'] ?? null) || $arResult['INTERNAL'] ? 'N' : 'Y',
 				'ACTIONS' =>
 					array
 					(
-						'delete' => $arResult['PERMS']['DELETE'],
+						'delete' => $arResult['PERMS']['DELETE'] ?? null,
 						'list' => array()
 					),
 				'ACTION_ALL_ROWS' => true,

@@ -25,6 +25,7 @@
 		this.viewer = null;
 		this.publicUrl = null;
 		this.sendedToSign = false;
+		this.signingInfoHelperSliderCode = null;
 	};
 
 	BX.Crm.DocumentView.init = function(options)
@@ -143,6 +144,20 @@
 		{
 			this.transformationErrorCode = options.transformationErrorCode;
 		}
+		if (BX.type.isBoolean(options.isSigningEnabledInCurrentTariff))
+		{
+			this.isSigningEnabledInCurrentTariff = options.isSigningEnabledInCurrentTariff;
+		}
+
+		if (BX.type.isString(options.signingInfoHelperSliderCode))
+		{
+			this.signingInfoHelperSliderCode =
+				options.signingInfoHelperSliderCode.length > 0
+				? options.signingInfoHelperSliderCode
+				: null
+			;
+		}
+
 		this.preview.applyOptions(options);
 	};
 	BX.Crm.DocumentView.closeSlider = function()
@@ -260,12 +275,18 @@
 				top.location.href = this.editDocumentUrl;
 			}
 		}, this));
+
 		BX.bind(document.getElementById('crm-document-sign'), 'click', BX.proxy(function(e)
 		{
 			if (this.sendedToSign)
 			{
 				this.showError(BX.message('CRM_DOCUMENT_VIEW_SIGN_CLICKED'));
 				return
+			}
+			if (!this.isSigningEnabledInCurrentTariff)
+			{
+				BX.UI.InfoHelper.show(this.signingInfoHelperSliderCode)
+				return;
 			}
 			this.sendedToSign = true;
 			if (!this.rightPanelLoader)
@@ -274,24 +295,73 @@
 			}
 			this.rightPanelLoader.show(e.currentTarget.closest('.--company-information'));
 			return new Promise(function(resolve, reject) {
-				BX.ajax.runAction('crm.api.integration.sign.convertDeal', {
+				var convertDealAndStartSign = (function (usePrevious)
+				{
+					BX.ajax.runAction('crm.api.integration.sign.convertDeal', {
+						data: {
+							documentId: Number(this.documentId),
+							usePrevious: !usePrevious ? 0 : 1,
+						}
+					}).then(BX.proxy(function(response)
+					{
+						if (typeof response.data.SMART_DOCUMENT !== 'undefined')
+						{
+							BX.SidePanel.Instance.open('/sign/doc/0/?docId=' + response.data.SMART_DOCUMENT + '&stepId=changePartner&noRedirect=Y');
+							this.sendedToSign = false;
+							this.rightPanelLoader.hide();
+							return;
+						}
+						this.closeSlider();
+					}, this),
+						BX.proxy(function(response)
+					{
+						this.sendedToSign = false;
+						this.rightPanelLoader.hide();
+						this.showError(response.errors.pop().message);
+					}, this));
+				}).bind(this);
+
+				BX.ajax.runAction('crm.api.integration.sign.getLinkedBlank', {
 					data: {
 						documentId: Number(this.documentId)
 					}
-				}).then(BX.proxy(function(response)
-				{
-					if (typeof response.data.SMART_DOCUMENT !== 'undefined')
-					{
-						BX.SidePanel.Instance.open('/sign/doc/0/?docId=' + response.data.SMART_DOCUMENT + '&stepId=changePartner&noRedirect=Y');
+				}).then(function(response) {
+					if (response.data.ID > 0) {
+						this.showMessage(BX.Loc.getMessage('CRM_DOCUMENT_VIEW_SIGN_DO_USE_PREVIOUS',
+							{
+								'%TITLE%': '<b>' + (response.data.TITLE || '') + '</b>',
+								'%CREATED_AT%': '<b>' + (response.data.CREATED_AT  || '') + '</b>',
+								'%INITIATOR%': '<b>' + (response.data.INITIATOR || '') + '</b>',
+							})
+							, [
+							new BX.PopupWindowButton({
+								text: BX.message('CRM_DOCUMENT_VIEW_SIGN_NEW_BUTTON'),
+								className: "ui-btn ui-btn-md ui-btn-primary",
+								events: {
+									click: function () {
+										convertDealAndStartSign(false);
+										this.popupWindow.destroy();
+									}
+								}
+							}),
+							new BX.PopupWindowButton({
+								text: BX.message('CRM_DOCUMENT_VIEW_SIGN_OLD_BUTTON'),
+								className: "ui-btn ui-btn-md ui-btn-primary",
+								events: {
+									click: function () {
+										convertDealAndStartSign(true);
+										this.popupWindow.destroy();
+									}
+								}
+							})
+						], BX.message('CRM_DOCUMENT_VIEW_SIGN_POPUP_TITLE'), (function () {
+							this.sendedToSign = false;
+							this.rightPanelLoader.hide();
+						}).bind(this));
+					} else {
+						convertDealAndStartSign(false);
 					}
-					this.sendedToSign = false;
-					this.rightPanelLoader.hide();
-				}, this), BX.proxy(function(response)
-				{
-					this.sendedToSign = false;
-					this.rightPanelLoader.hide();
-					reject(response.errors.pop().message);
-				}, this));
+				}.bind(this)).catch(function (){});
 			}.bind(this))
 		}, this));
 
@@ -319,6 +389,62 @@
 				}.bind(this))
 			}
 		}.bind(this));
+	};
+
+	BX.Crm.DocumentView.showMessage = function(content, buttons, title, onclose)
+	{
+		title = title || '';
+		if (typeof(buttons) === "undefined" || typeof(buttons) === "object" && buttons.length <= 0)
+		{
+			buttons = [new BX.PopupWindowButton({
+				text : BX.message('CRM_DOCUMENT_VIEW_SIGN_POPUP_CLOSE'),
+				className : "ui-btn ui-btn-md ui-btn-default",
+				events : { click : function(e) { this.popupWindow.close(); BX.PreventDefault(e) } }
+			})];
+		}
+		if(this.popupConfirm != null)
+		{
+			this.popupConfirm.destroy();
+		}
+		if(!BX.type.isDomNode(content))
+		{
+			var node = document.createElement('div');
+			node.innerHTML = content;
+			content = node;
+		}
+		if(!BX.type.isArray(content))
+		{
+			content = [content];
+		}
+		this.popupConfirm = new BX.PopupWindow('bx-popup-documentgenerator-popup', null, {
+			zIndex: 200,
+			autoHide: true,
+			closeByEsc: true,
+			buttons: buttons,
+			closeIcon: true,
+			overlay : true,
+			events : {
+				onPopupClose : function()
+				{
+					if(BX.type.isFunction(onclose))
+					{
+						onclose();
+					}
+					this.destroy();
+				}, onPopupDestroy : BX.delegate(function()
+				{
+					this.popupConfirm = null;
+				}, this)},
+			content : BX.create('div',{
+				attrs:{className:'bx-popup-documentgenerator-popup-content-text'},
+				children : content,
+			}),
+			titleBar: title,
+			contentColor: 'white',
+			className : 'bx-popup-documentgenerator-popup',
+			maxWidth: 470
+		});
+		this.popupConfirm.show();
 	};
 
 	BX.Crm.DocumentView.showError = function(text)

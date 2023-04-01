@@ -13,5 +13,7 @@ $MESS['WIZARD_FIELD_PRODUCT_BASE_PRICE'] = 'Цена продажи';
 $MESS['WIZARD_FIELD_PRODUCT_AMOUNT'] = 'Принято на склад';
 $MESS['WIZARD_FIELD_MEASURE_CODE'] = 'Единицы';
 $MESS['WIZARD_FIELD_PRODUCT_STORE'] = 'Склад';
+$MESS['WIZARD_FIELD_PRODUCT_STORE_FROM'] = 'Склад-отправитель';
+$MESS['WIZARD_FIELD_PRODUCT_STORE_TO'] = 'Склад-получатель';
 $MESS['WIZARD_FIELD_PRODUCT_BARCODE'] = 'Штрихкод';
 $MESS['WIZARD_FIELD_ACCESS_DENIED'] = 'Недостаточно прав';

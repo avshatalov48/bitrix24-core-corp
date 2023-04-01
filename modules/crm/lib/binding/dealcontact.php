@@ -211,6 +211,12 @@ class DealContactTable extends Entity\DataManager
 	 */
 	public static function getBulkDealBindings(array $dealIDs)
 	{
+		\Bitrix\Main\Type\Collection::normalizeArrayValuesByInt($dealIDs, false);
+		if (empty($dealIDs))
+		{
+			return [];
+		}
+
 		$bindingMap = array();
 		foreach($dealIDs as $dealID)
 		{

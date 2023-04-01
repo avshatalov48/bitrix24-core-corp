@@ -1,27 +1,27 @@
 <?php
 
 IncludeModuleLangFile(__FILE__);
-use \Bitrix\Main\Type\Date;
-use \Bitrix\Main\Type\DateTime;
-use \Bitrix\Crm;
-use \Bitrix\Crm\Settings\HistorySettings;
-use \Bitrix\Crm\Security\EntityAuthorization;
+
+use Bitrix\Crm;
+use Bitrix\Crm\Security\EntityAuthorization;
+use Bitrix\Crm\Service\EventHistory;
+use Bitrix\Crm\Settings\HistorySettings;
 
 class CCrmEvent
 {
 	protected $cdb = null;
 	protected $currentUserID = 0;
 
-	const TYPE_USER = 0;
-	const TYPE_CHANGE = 1;
-	const TYPE_EMAIL = 2;
-	const TYPE_VIEW = 3;
-	const TYPE_EXPORT = 4;
-	const TYPE_DELETE = 5;
-	const TYPE_MERGER = 6;
+	public const TYPE_USER = EventHistory::EVENT_TYPE_USER;
+	public const TYPE_CHANGE = EventHistory::EVENT_TYPE_UPDATE;
+	public const TYPE_EMAIL = EventHistory::EVENT_TYPE_EMAIL;
+	public const TYPE_VIEW = EventHistory::EVENT_TYPE_VIEW;
+	public const TYPE_EXPORT = EventHistory::EVENT_TYPE_EXPORT;
+	public const TYPE_DELETE = EventHistory::EVENT_TYPE_DELETE;
+	public const TYPE_MERGER = EventHistory::EVENT_TYPE_MERGER;
+	public const TYPE_LINK = EventHistory::EVENT_TYPE_LINK;
+	public const TYPE_UNLINK = EventHistory::EVENT_TYPE_UNLINK;
 
-	/** @var array  */
-	private static $eventTypes = null;
 	function __construct()
 	{
 		global $DB;
@@ -636,40 +636,9 @@ class CCrmEvent
 		while($arEvent = $db_events->Fetch())
 			ExecuteModuleEventEx($arEvent, array($entityTypeName, $entityID));
 
-		$err_mess = (self::err_mess()).'<br>Function: DeleteByElement<br>Line: ';
+		Crm\EventRelationsTable::deleteByItem(\CCrmOwnerType::ResolveID($entityTypeName), $entityID);
 
-		// check unrelated events
-		$entityTypeName = $this->cdb->ForSql($entityTypeName);
-		$sql = "SELECT EVENT_ID, COUNT(ID) as CNT
-			FROM b_crm_event_relations
-			WHERE EVENT_ID IN(SELECT EVENT_ID FROM b_crm_event_relations WHERE ENTITY_TYPE = '{$entityTypeName}' AND ENTITY_ID = {$entityID})
-			GROUP BY EVENT_ID";
-		$dbRelationResult = $this->cdb->Query($sql, false, $err_mess.__LINE__);
-		while($relationFields = $dbRelationResult->Fetch())
-		{
-			if($relationFields['CNT'] > 1)
-			{
-				continue;
-			}
-
-			$eventID = $relationFields['EVENT_ID'];
-			$dbItemResult = $this->cdb->Query("SELECT ID, FILES FROM b_crm_event WHERE ID = {$eventID}", false, $err_mess.__LINE__);
-			if($itemFields = $dbItemResult->Fetch())
-			{
-				$arFiles = isset($itemFields['FILES']) ? unserialize($itemFields['FILES'], ['allowed_classes' => false]) : null;
-				if(is_array($arFiles))
-				{
-					foreach($arFiles as $iFileId)
-					{
-						CFile::Delete((int)$iFileId);
-					}
-				}
-				$this->cdb->Query("DELETE FROM b_crm_event WHERE ID = {$eventID}", false, $err_mess.__LINE__);
-			}
-		}
-		// delete event relations
-		$res = $this->cdb->Query("DELETE FROM b_crm_event_relations WHERE ENTITY_TYPE = '{$entityTypeName}' AND ENTITY_ID = {$entityID}", false, $err_mess.__LINE__);
-		return $res;
+		return new \CDBResult();
 	}
 	public function Delete($ID, $arOptions = array())
 	{
@@ -792,19 +761,7 @@ class CCrmEvent
 	*/
 	static public function GetEventTypes()
 	{
-		if(self::$eventTypes === null)
-		{
-			self::$eventTypes = array(
-				self::TYPE_USER => GetMessage('CRM_EVENT_TYPE_USER'),
-				self::TYPE_CHANGE => GetMessage('CRM_EVENT_TYPE_CHANGE'),
-				self::TYPE_EMAIL => GetMessage('CRM_EVENT_TYPE_SNS'),
-				self::TYPE_VIEW => GetMessage('CRM_EVENT_TYPE_VIEW'),
-				self::TYPE_EXPORT => GetMessage('CRM_EVENT_TYPE_EXPORT'),
-				self::TYPE_DELETE => GetMessage('CRM_EVENT_TYPE_DELETE'),
-				self::TYPE_MERGER => GetMessage('CRM_EVENT_TYPE_MERGER'),
-			);
-		}
-		return self::$eventTypes;
+		return Crm\Service\Container::getInstance()->getEventHistory()->getAllEventTypeCaptions();
 	}
 	/**
 	 * @return string

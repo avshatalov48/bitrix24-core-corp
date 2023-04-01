@@ -74,6 +74,7 @@ export default {
 				ownerTypeId: this.$root.$app.options.ownerTypeId,
 				dialogId: this.$root.$app.options.dialogId,
 				sessionId: this.$root.$app.options.sessionId,
+				isShortProductViewFormat: true,
 			}
 		);
 

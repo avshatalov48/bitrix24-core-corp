@@ -273,6 +273,11 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 			};
 		}
 
+		getContext()
+		{
+			return BX.prop.getObject(this.props, 'context', {});
+		}
+
 		getParentWidget()
 		{
 			return this.getConfig().parentWidget;

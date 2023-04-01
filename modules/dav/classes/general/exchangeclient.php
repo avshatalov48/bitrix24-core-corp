@@ -77,7 +77,9 @@ abstract class CDavExchangeClient
 	public function Connect()
 	{
 		if ($this->connected)
+		{
 			return true;
+		}
 
 		$requestScheme = $this->scheme;
 		$requestServer = $this->server;
@@ -115,7 +117,19 @@ abstract class CDavExchangeClient
 		}
 
 		//$this->fp = @fsockopen($requestScheme.$requestServer, $requestPort, $errno, $errstr, $this->socketTimeout);
-		$this->fp = @stream_socket_client(sprintf('%s:%s', $requestScheme.$requestServer, $requestPort), $errno, $errstr, $this->socketTimeout, STREAM_CLIENT_CONNECT,stream_context_create(array('ssl' => array('verify_peer' => false, 'verify_peer_name' => false))));
+		$this->fp = @stream_socket_client(
+			sprintf('%s:%s', $requestScheme.$requestServer, $requestPort),
+			$errno,
+			$errstr,
+			$this->socketTimeout,
+			STREAM_CLIENT_CONNECT,
+			stream_context_create([
+				'ssl' => [
+					'verify_peer' => false,
+					'verify_peer_name' => false
+				]
+			])
+		);
 
 		if (!$this->fp)
 		{
@@ -123,18 +137,19 @@ abstract class CDavExchangeClient
 			$this->connected = false;
 			return false;
 		}
-		else
-		{
-			socket_set_blocking($this->fp, 1);
-			$this->connected = true;
-			return true;
-		}
+
+		stream_set_timeout($this->fp, $this->socketTimeout);
+		stream_set_blocking($this->fp, 1);
+		$this->connected = true;
+		return true;
 	}
 
 	public function Disconnect()
 	{
 		if (!$this->connected)
+		{
 			return;
+		}
 
 		fclose($this->fp);
 		$this->connected = false;
@@ -160,12 +175,12 @@ abstract class CDavExchangeClient
 		$code = $response->GetStatus('code');
 		$isErrorCode = false;
 
-		if ($code == 401)
+		if ((int)$code === 401)
 		{
 			$this->arError[] = array(401, $response->GetStatus('phrase'));
 			$isErrorCode = true;
 		}
-		elseif ($code == 500)
+		elseif ((int)$code == 500)
 		{
 			try
 			{
@@ -182,28 +197,32 @@ abstract class CDavExchangeClient
 			{
 				$errorCode = "";
 				$arResponseCode = $fault->GetPath("/Fault/detail/ResponseCode");
-				if (count($arResponseCode) > 0)
+				if (!empty($arResponseCode))
 				{
 					$errorCode = $arResponseCode[0]->GetContent();
 				}
 				else
 				{
 					$arFaultCode = $fault->GetPath("/Fault/faultcode");
-					if (count($arFaultCode) > 0)
+					if (!empty($arFaultCode))
+					{
 						$errorCode = $arFaultCode[0]->GetContent();
+					}
 				}
 
 				$errorMessage = "";
 				$arMessage = $fault->GetPath("/Fault/detail/Message");
-				if (count($arMessage) > 0)
+				if (!empty($arMessage))
 				{
 					$errorMessage = $arMessage[0]->GetContent();
 				}
 				else
 				{
 					$arFaultString = $fault->GetPath("/Fault/faultstring");
-					if (count($arFaultString) > 0)
+					if (!empty($arFaultString))
+					{
 						$errorMessage = $arFaultString[0]->GetContent();
+					}
 				}
 
 				$this->arError[] = array($this->Encode($errorCode), $this->Encode($errorMessage));
@@ -222,7 +241,7 @@ abstract class CDavExchangeClient
 		{
 			case "BodyType":
 				$bProcessed = true;
-				$arFields[$key] = (mb_strtolower($value) == "html" ? "HTML" : "Text");
+				$arFields[$key] = (mb_strtolower($value) === "html" ? "HTML" : "Text");
 				break;
 
 			case "Importance":
@@ -231,9 +250,13 @@ abstract class CDavExchangeClient
 
 				$value = mb_strtolower($value);
 				if (array_key_exists($value, $ar))
+				{
 					$arFields[$key] = $ar[$value];
+				}
 				else
-					$this->arError[] = array("WrongImportance", "Available values for Importance are Low, Normal, High");
+				{
+					$this->arError[] = ["WrongImportance", "Available values for Importance are Low, Normal, High"];
+				}
 				break;
 
 			case "LegacyFreeBusyType":
@@ -242,9 +265,16 @@ abstract class CDavExchangeClient
 
 				$value = mb_strtolower($value);
 				if (array_key_exists($value, $ar))
+				{
 					$arFields[$key] = $ar[$value];
+				}
 				else
-					$this->arError[] = array("WrongLegacyFreeBusyType", "Available values for LegacyFreeBusyType are Free, Tentative, Busy, OOF, NoData");
+				{
+					$this->arError[] = [
+						"WrongLegacyFreeBusyType",
+						"Available values for LegacyFreeBusyType are Free, Tentative, Busy, OOF, NoData"
+					];
+				}
 				break;
 
 			case "Sensitivity":
@@ -253,9 +283,16 @@ abstract class CDavExchangeClient
 
 				$value = mb_strtolower($value);
 				if (array_key_exists($value, $ar))
+				{
 					$arFields[$key] = $ar[$value];
+				}
 				else
-					$this->arError[] = array("WrongSensitivity", "Available values for Sensitivity are Normal, Personal, Private, Confidential");
+				{
+					$this->arError[] = [
+						"WrongSensitivity",
+						"Available values for Sensitivity are Normal, Personal, Private, Confidential"
+					];
+				}
 				break;
 
 			case "Status":
@@ -264,9 +301,16 @@ abstract class CDavExchangeClient
 
 				$value = mb_strtolower($value);
 				if (array_key_exists($value, $ar))
+				{
 					$arFields[$key] = $ar[$value];
+				}
 				else
-					$this->arError[] = array("WrongStatus", "Available values for Status are NotStarted, InProgress, Completed, WaitingOnOthers, Deferred");
+				{
+					$this->arError[] = [
+						"WrongStatus",
+						"Available values for Status are NotStarted, InProgress, Completed, WaitingOnOthers, Deferred"
+					];
+				}
 				break;
 		}
 
@@ -299,12 +343,14 @@ abstract class CDavExchangeClient
 				);
 
 				if (empty($value))
+				{
 					$value = "NONE";
+				}
 				$value = mb_strtolower($value);
 
 				if (array_key_exists($value, $ar))
 				{
-					if ($ar[$value] != "NONE")
+					if ($ar[$value] !== "NONE")
 					{
 						$arFields[$key] = $ar[$value];
 						$arFields["Recurrence"] = true; // Error ErrorSchemaValidation in Exchange 2013
@@ -322,9 +368,16 @@ abstract class CDavExchangeClient
 
 				$value = mb_strtolower($value);
 				if (array_key_exists($value, $ar))
+				{
 					$arFields[$key] = $ar[$value];
+				}
 				else
-					$this->arError[] = array("WrongRecurringDayOfWeekIndex", "Available values for RecurringDayOfWeekIndex are First, Second, Third, Fourth, Last");
+				{
+					$this->arError[] = [
+						"WrongRecurringDayOfWeekIndex",
+						"Available values for RecurringDayOfWeekIndex are First, Second, Third, Fourth, Last"
+					];
+				}
 				break;
 
 			case "RecurringMonth":
@@ -333,9 +386,16 @@ abstract class CDavExchangeClient
 
 				$value = mb_strtolower($value);
 				if (array_key_exists($value, $ar))
+				{
 					$arFields[$key] = $ar[$value];
+				}
 				else
-					$this->arError[] = array("WrongRecurringMonth", "Available values for RecurringMonth are January, February, March, April, May, June, July, August, September, October, November, December");
+				{
+					$this->arError[] = [
+						"WrongRecurringMonth",
+						"Available values for RecurringMonth are January, February, March, April, May, June, July, August, September, October, November, December"
+					];
+				}
 				break;
 
 			case "RecurringDaysOfWeek":
@@ -355,7 +415,9 @@ abstract class CDavExchangeClient
 							if (array_key_exists($value2, $ar))
 							{
 								if (isset($arFields[$key]) && $arFields[$key] <> '')
+								{
 									$arFields[$key] .= " ";
+								}
 								$arFields[$key] .= $ar[$value2];
 							}
 							else
@@ -376,108 +438,144 @@ abstract class CDavExchangeClient
 		$arResultItem = array();
 
 		$arAbsoluteMonthlyRecurrence = $recurrence->GetPath("/Recurrence/AbsoluteMonthlyRecurrence");
-		if (count($arAbsoluteMonthlyRecurrence) > 0)
+		if (!empty($arAbsoluteMonthlyRecurrence))
 		{
 			$arResultItem["RECURRING_TYPE"] = "MONTHLY_ABSOLUTE";
 			$arAbsoluteMonthlyRecurrenceInterval = $recurrence->GetPath("/Recurrence/AbsoluteMonthlyRecurrence/Interval");
-			if (count($arAbsoluteMonthlyRecurrenceInterval) > 0)
+			if (!empty($arAbsoluteMonthlyRecurrenceInterval))
+			{
 				$arResultItem["RECURRING_INTERVAL"] = $arAbsoluteMonthlyRecurrenceInterval[0]->GetContent();
+			}
 			$arAbsoluteMonthlyRecurrenceDayOfMonth = $recurrence->GetPath("/Recurrence/AbsoluteMonthlyRecurrence/DayOfMonth");
-			if (count($arAbsoluteMonthlyRecurrenceDayOfMonth) > 0)
+			if (!empty($arAbsoluteMonthlyRecurrenceDayOfMonth))
+			{
 				$arResultItem["RECURRING_DAYOFMONTH"] = $arAbsoluteMonthlyRecurrenceDayOfMonth[0]->GetContent();
+			}
 		}
 
 		$arRelativeMonthlyRecurrence = $recurrence->GetPath("/Recurrence/RelativeMonthlyRecurrence");
-		if (count($arRelativeMonthlyRecurrence) > 0)
+		if (!empty($arRelativeMonthlyRecurrence))
 		{
 			$arResultItem["RECURRING_TYPE"] = "MONTHLY_RELATIVE";
 			$arRelativeMonthlyRecurrenceInterval = $recurrence->GetPath("/Recurrence/RelativeMonthlyRecurrence/Interval");
-			if (count($arRelativeMonthlyRecurrenceInterval) > 0)
+			if (!empty($arRelativeMonthlyRecurrenceInterval))
+			{
 				$arResultItem["RECURRING_INTERVAL"] = $arRelativeMonthlyRecurrenceInterval[0]->GetContent();
+			}
 			$arRelativeMonthlyRecurrenceDaysOfWeek = $recurrence->GetPath("/Recurrence/RelativeMonthlyRecurrence/DaysOfWeek");
-			if (count($arRelativeMonthlyRecurrenceDaysOfWeek) > 0)
+			if (!empty($arRelativeMonthlyRecurrenceDaysOfWeek))
+			{
 				$arResultItem["RECURRING_DAYSOFWEEK"] = $arRelativeMonthlyRecurrenceDaysOfWeek[0]->GetContent();
+			}
 			$arRelativeMonthlyRecurrenceDayOfWeekIndex = $recurrence->GetPath("/Recurrence/RelativeMonthlyRecurrence/DayOfWeekIndex");
-			if (count($arRelativeMonthlyRecurrenceDayOfWeekIndex) > 0)
+			if (!empty($arRelativeMonthlyRecurrenceDayOfWeekIndex))
+			{
 				$arResultItem["RECURRING_DAYOFWEEKINDEX"] = $arRelativeMonthlyRecurrenceDayOfWeekIndex[0]->GetContent();
+			}
 		}
 
 		$arAbsoluteYearlyRecurrence = $recurrence->GetPath("/Recurrence/AbsoluteYearlyRecurrence");
-		if (count($arAbsoluteYearlyRecurrence) > 0)
+		if (!empty($arAbsoluteYearlyRecurrence))
 		{
 			$arResultItem["RECURRING_TYPE"] = "YEARLY_ABSOLUTE";
 			$arAbsoluteYearlyRecurrenceDayOfMonth = $recurrence->GetPath("/Recurrence/AbsoluteYearlyRecurrence/DayOfMonth");
-			if (count($arAbsoluteYearlyRecurrenceDayOfMonth) > 0)
+			if (!empty($arAbsoluteYearlyRecurrenceDayOfMonth))
+			{
 				$arResultItem["RECURRING_DAYOFMONTH"] = $arAbsoluteYearlyRecurrenceDayOfMonth[0]->GetContent();
+			}
 			$arAbsoluteYearlyRecurrenceMonth = $recurrence->GetPath("/Recurrence/AbsoluteYearlyRecurrence/Month");
-			if (count($arAbsoluteYearlyRecurrenceMonth) > 0)
+			if (!empty($arAbsoluteYearlyRecurrenceMonth))
+			{
 				$arResultItem["RECURRING_MONTH"] = $arAbsoluteYearlyRecurrenceMonth[0]->GetContent();
+			}
 		}
 
 		$arRelativeYearlyRecurrence = $recurrence->GetPath("/Recurrence/RelativeYearlyRecurrence");
-		if (count($arRelativeYearlyRecurrence) > 0)
+		if (!empty($arRelativeYearlyRecurrence))
 		{
 			$arResultItem["RECURRING_TYPE"] = "YEARLY_RELATIVE";
 			$arRelativeYearlyRecurrenceDaysOfWeek = $recurrence->GetPath("/Recurrence/RelativeYearlyRecurrence/DaysOfWeek");
-			if (count($arRelativeYearlyRecurrenceDaysOfWeek) > 0)
+			if (!empty($arRelativeYearlyRecurrenceDaysOfWeek))
+			{
 				$arResultItem["RECURRING_DAYSOFWEEK"] = $arRelativeYearlyRecurrenceDaysOfWeek[0]->GetContent();
+			}
 			$arRelativeYearlyRecurrenceDayOfWeekIndex = $recurrence->GetPath("/Recurrence/RelativeYearlyRecurrence/DayOfWeekIndex");
-			if (count($arRelativeYearlyRecurrenceDayOfWeekIndex) > 0)
+			if (!empty($arRelativeYearlyRecurrenceDayOfWeekIndex))
+			{
 				$arResultItem["RECURRING_DAYOFWEEKINDEX"] = $arRelativeYearlyRecurrenceDayOfWeekIndex[0]->GetContent();
+			}
 			$arRelativeYearlyRecurrenceMonth = $recurrence->GetPath("/Recurrence/RelativeYearlyRecurrence/Month");
-			if (count($arRelativeYearlyRecurrenceMonth) > 0)
+			if (!empty($arRelativeYearlyRecurrenceMonth))
+			{
 				$arResultItem["RECURRING_MONTH"] = $arRelativeYearlyRecurrenceMonth[0]->GetContent();
+			}
 		}
 
 		$arWeeklyRecurrence = $recurrence->GetPath("/Recurrence/WeeklyRecurrence");
-		if (count($arWeeklyRecurrence) > 0)
+		if (!empty($arWeeklyRecurrence))
 		{
 			$arResultItem["RECURRING_TYPE"] = "WEEKLY";
 			$arWeeklyRecurrenceInterval = $recurrence->GetPath("/Recurrence/WeeklyRecurrence/Interval");
-			if (count($arWeeklyRecurrenceInterval) > 0)
+			if (!empty($arWeeklyRecurrenceInterval))
+			{
 				$arResultItem["RECURRING_INTERVAL"] = $arWeeklyRecurrenceInterval[0]->GetContent();
+			}
 			$arWeeklyRecurrenceDaysOfWeek = $recurrence->GetPath("/Recurrence/WeeklyRecurrence/DaysOfWeek");
-			if (count($arWeeklyRecurrenceDaysOfWeek) > 0)
+			if (!empty($arWeeklyRecurrenceDaysOfWeek))
+			{
 				$arResultItem["RECURRING_DAYSOFWEEK"] = $arWeeklyRecurrenceDaysOfWeek[0]->GetContent();
+			}
 		}
 
 		$arDailyRecurrence = $recurrence->GetPath("/Recurrence/DailyRecurrence");
-		if (count($arDailyRecurrence) > 0)
+		if (!empty($arDailyRecurrence))
 		{
 			$arResultItem["RECURRING_TYPE"] = "DAILY";
 			$arDailyRecurrenceInterval = $recurrence->GetPath("/Recurrence/DailyRecurrence/Interval");
-			if (count($arDailyRecurrenceInterval) > 0)
+			if (!empty($arDailyRecurrenceInterval))
+			{
 				$arResultItem["RECURRING_INTERVAL"] = $arDailyRecurrenceInterval[0]->GetContent();
+			}
 		}
 
 		$arNumberedRecurrence = $recurrence->GetPath("/Recurrence/NumberedRecurrence");
-		if (count($arNumberedRecurrence) > 0)
+		if (!empty($arNumberedRecurrence))
 		{
 			$arNumberedRecurrenceStartDate = $recurrence->GetPath("/Recurrence/NumberedRecurrence/StartDate");
-			if (count($arNumberedRecurrenceStartDate) > 0)
+			if (!empty($arNumberedRecurrenceStartDate))
+			{
 				$arResultItem["RECURRING_STARTDATE"] = CDavICalendarTimeZone::GetFormattedServerDate($arNumberedRecurrenceStartDate[0]->GetContent());
+			}
 			$arNumberedRecurrenceNumberOfOccurrences = $recurrence->GetPath("/Recurrence/NumberedRecurrence/NumberOfOccurrences");
-			if (count($arNumberedRecurrenceNumberOfOccurrences) > 0)
+			if (!empty($arNumberedRecurrenceNumberOfOccurrences))
+			{
 				$arResultItem["RECURRING_NUMBEROFOCCURRENCES"] = $arNumberedRecurrenceNumberOfOccurrences[0]->GetContent();
+			}
 		}
 
 		$arNoEndRecurrence = $recurrence->GetPath("/Recurrence/NoEndRecurrence");
-		if (count($arNoEndRecurrence) > 0)
+		if (!empty($arNoEndRecurrence))
 		{
 			$arNoEndRecurrenceStartDate = $recurrence->GetPath("/Recurrence/NoEndRecurrence/StartDate");
-			if (count($arNoEndRecurrenceStartDate) > 0)
+			if (!empty($arNoEndRecurrenceStartDate))
+			{
 				$arResultItem["RECURRING_STARTDATE"] = CDavICalendarTimeZone::GetFormattedServerDate($arNoEndRecurrenceStartDate[0]->GetContent());
+			}
 		}
 
 		$arEndDateRecurrence = $recurrence->GetPath("/Recurrence/EndDateRecurrence");
-		if (count($arEndDateRecurrence) > 0)
+		if (!empty($arEndDateRecurrence))
 		{
 			$arEndDateRecurrenceStartDate = $recurrence->GetPath("/Recurrence/EndDateRecurrence/StartDate");
-			if (count($arEndDateRecurrenceStartDate) > 0)
+			if (!empty($arEndDateRecurrenceStartDate))
+			{
 				$arResultItem["RECURRING_STARTDATE"] = CDavICalendarTimeZone::GetFormattedServerDate($arEndDateRecurrenceStartDate[0]->GetContent());
+			}
 			$arEndDateRecurrenceEndDate = $recurrence->GetPath("/Recurrence/EndDateRecurrence/EndDate");
-			if (count($arEndDateRecurrenceEndDate) > 0)
+			if (!empty($arEndDateRecurrenceEndDate))
+			{
 				$arResultItem["RECURRING_ENDDATE"] = CDavICalendarTimeZone::GetFormattedServerDate($arEndDateRecurrenceEndDate[0]->GetContent());
+			}
 		}
 
 		return $arResultItem;
@@ -486,9 +584,13 @@ abstract class CDavExchangeClient
 	public function Encode($text)
 	{
 		if (is_null($text) || empty($text))
+		{
 			return $text;
-		if ($this->encoding == "utf-8")
+		}
+		if ($this->encoding === "utf-8")
+		{
 			return $text;
+		}
 
 		global $APPLICATION;
 		return $APPLICATION->ConvertCharset($text, "utf-8", $this->encoding);
@@ -497,9 +599,13 @@ abstract class CDavExchangeClient
 	public function Decode($text)
 	{
 		if (is_null($text) || empty($text))
+		{
 			return $text;
-		if ($this->encoding == "utf-8")
+		}
+		if ($this->encoding === "utf-8")
+		{
 			return $text;
+		}
 
 		global $APPLICATION;
 		return $APPLICATION->ConvertCharset($text, $this->encoding, "utf-8");

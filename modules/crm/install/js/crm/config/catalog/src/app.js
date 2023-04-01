@@ -58,6 +58,7 @@ export default Vue.extend({
 			productCardSliderEnabled: null,
 			isCanEnableProductCardSlider: false,
 			isBitrix24: false,
+			busProductCardHelpLink: '',
 			defaultProductVatIncluded: null,
 		};
 	},
@@ -200,7 +201,7 @@ export default Vue.extend({
 		},
 		onEnableProductCardCheckboxClick()
 		{
-			if (!this.productCardSliderEnabled && this.isBitrix24)
+			if (!this.productCardSliderEnabled)
 			{
 				this.askToEnableProductCardSlider();
 			}
@@ -209,27 +210,18 @@ export default Vue.extend({
 		},
 		askToEnableProductCardSlider()
 		{
-			const askPopup = new Popup(null, null, {
-				events: {
-					onPopupClose: () => askPopup.destroy(),
-					onPopupShow: () => {
-						const helpdeskLink = document.getElementById('catalog-settings-new-productcard-popup-helpdesk');
-						if (helpdeskLink)
-						{
-							Event.bind(helpdeskLink, 'click', () => top.BX.Helper.show('redirect=detail&code=11657084'));
-						}
-					},
-				},
-				content: Tag.render`
-					<div class="catalog-settings-new-productcard-popup-content">
-						${Loc.getMessage('CRM_CFG_C_SETTINGS_PRODUCT_CARD_ENABLE_NEW_CARD_ASK_TEXT')}
-					</div>
-				`,
-				className: 'catalog-settings-new-productcard-popup',
-				titleBar: Loc.getMessage('CRM_CFG_C_SETTINGS_PRODUCT_CARD_ENABLE_NEW_CARD_ASK_TITLE'),
-				maxWidth: 800,
-				overlay: true,
-				buttons: [
+			const askPopup =
+				this.isBitrix24
+					? this.createWarningProductCardPopupForBitrix24()
+					: this.createWarningProductCardPopupForBUS();
+
+			askPopup.show();
+		},
+		createWarningProductCardPopupForBitrix24()
+		{
+			const askPopup = this.createWarningProductCardPopup(
+				Loc.getMessage('CRM_CFG_C_SETTINGS_PRODUCT_CARD_ENABLE_NEW_CARD_ASK_TEXT'),
+				[
 					new Button({
 						text : Loc.getMessage('CRM_CFG_C_SETTINGS_PRODUCT_CARD_ENABLE_NEW_CARD_ASK_DISAGREE'),
 						color: Button.Color.PRIMARY,
@@ -242,9 +234,65 @@ export default Vue.extend({
 						text : Loc.getMessage('CRM_CFG_C_SETTINGS_PRODUCT_CARD_ENABLE_NEW_CARD_ASK_AGREE'),
 						onclick: () => askPopup.close(),
 					}),
-				]
-			});
-			askPopup.show();
+				],
+				{
+					onPopupShow: () => {
+						const helpdeskLink = document.getElementById('catalog-settings-new-productcard-popup-helpdesk');
+						if (helpdeskLink)
+						{
+							Event.bind(helpdeskLink, 'click', () => top.BX.Helper.show('redirect=detail&code=11657084'));
+						}
+					},
+				},
+			);
+
+			return askPopup;
+		},
+		createWarningProductCardPopupForBUS()
+		{
+			const askPopup = this.createWarningProductCardPopup(
+				Loc.getMessage('CRM_CFG_C_SETTINGS_PRODUCT_CARD_ENABLE_NEW_CARD_ASK_BUS_TEXT').replace('#HELP_LINK#', this.busProductCardHelpLink),
+				[
+					new Button({
+						text : Loc.getMessage('CRM_CFG_C_SETTINGS_PRODUCT_CARD_ENABLE_NEW_CARD_ASK_AGREE'),
+						color: Button.Color.SUCCESS,
+						onclick: () => askPopup.close(),
+					}),
+					new Button({
+						text : Loc.getMessage('CRM_CFG_C_SETTINGS_PRODUCT_CARD_ENABLE_NEW_CARD_ASK_BUS_DISAGREE'),
+						color: Button.Color.LINK,
+						onclick: () => {
+							this.productCardSliderEnabled = false;
+							askPopup.close();
+						},
+					}),
+				],
+			);
+
+			return askPopup;
+		},
+		createWarningProductCardPopup(contentText: string, buttons: Array, events = {})
+		{
+			const popupParams = {
+				events: {
+					onPopupClose: () => askPopup.destroy(),
+					...events,
+				},
+				content: Tag.render`
+					<div class="catalog-settings-new-productcard-popup-content">
+						${contentText}
+					</div>
+				`,
+				className: 'catalog-settings-new-productcard-popup',
+				titleBar: Loc.getMessage('CRM_CFG_C_SETTINGS_PRODUCT_CARD_ENABLE_NEW_CARD_ASK_TITLE'),
+				maxWidth: 800,
+				overlay: true,
+				buttons: buttons,
+			};
+
+			const askPopup = new Popup(null, null, popupParams);
+
+			return askPopup;
 		},
 		openStoreControlMaster(mode = '')
 		{
@@ -341,6 +389,7 @@ export default Vue.extend({
 			this.productCardSliderEnabled = data.productCardSliderEnabled;
 			this.isCanEnableProductCardSlider = data.isCanEnableProductCardSlider;
 			this.isBitrix24 = data.isBitrix24;
+			this.busProductCardHelpLink = data.busProductCardHelpLink;
 			this.configCatalogSource = this.configCatalogSource ?? data.configCatalogSource;
 
 			this.isChanged = false;
@@ -377,6 +426,8 @@ export default Vue.extend({
 					this.refresh()
 						.then(() => this.wait(700))
 						.then(() => this.close());
+
+					BX.SidePanel.Instance.postMessage(window, "BX.Crm.Config.Catalog:onAfterSaveSettings");
 				}).catch((response) => {
 					this.isChanged = false;
 					this.isSaving = false;

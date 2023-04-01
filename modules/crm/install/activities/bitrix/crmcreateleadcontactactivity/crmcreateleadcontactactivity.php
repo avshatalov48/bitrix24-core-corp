@@ -107,7 +107,16 @@ class CBPCrmCreateLeadContactActivity
 			$this->ContactId = $id;
 			$leadEntity = new \CCrmLead(false);
 			$leadUpdateFields = ['CONTACT_ID' => $id];
-			$leadEntity->Update($entityId, $leadUpdateFields);
+			$leadEntity->Update(
+				$entityId,
+				$leadUpdateFields,
+				true,
+				true,
+				[
+					'EXCLUDE_FROM_RELATION_REGISTRATION' => [
+						new \Bitrix\Crm\ItemIdentifier(\CCrmOwnerType::Contact, $id),
+					]
+				]);
 
 			if (\COption::GetOptionString("crm", "start_bp_within_bp", "N") == "Y")
 			{

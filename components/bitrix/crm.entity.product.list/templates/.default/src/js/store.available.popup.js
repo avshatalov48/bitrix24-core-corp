@@ -92,6 +92,11 @@ export default class StoreAvailablePopup
 			? `<a href="#" class="store-available-popup-reserves-slider-link">${reservedQuantity}</a>`
 			: reservedQuantity
 		;
+		const viewAvailableQuantity =
+			availableQuantity <= 0
+				? `<span class="text--danger">${availableQuantity}`
+				: availableQuantity
+		;
 
 		const result = Tag.render`
 			<div class="store-available-popup-container">
@@ -107,7 +112,7 @@ export default class StoreAvailablePopup
 						<tr class="main-grid-row main-grid-row-body">
 							${renderRow(storeQuantity)}
 							${renderRow(reservedQuantityLink)}
-							${renderRow(availableQuantity)}
+							${renderRow(viewAvailableQuantity)}
 						</tr>
 					</tbody>
 				</table>

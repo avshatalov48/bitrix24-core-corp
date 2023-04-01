@@ -156,7 +156,7 @@ jn.define('layout/ui/fields/combined-v2', (require, exports, module) => {
 
 				case PhoneType:
 					return {
-						number: VALUE,
+						number: VALUE.phoneNumber || '',
 						params: {
 							'ENTITY_TYPE_NAME': primaryConfig.entityTypeName,
 							'ENTITY_ID': primaryConfig.entityId,

@@ -1,5 +1,9 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 /**
  * @var array $arParams
@@ -10,32 +14,68 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
  * @global CDatabase $DB
  */
 
-use Bitrix\Crm\Entity\Contact;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Main\Localization\Loc;
 
 if (!CModule::IncludeModule('crm'))
+{
 	return;
+}
 
 \Bitrix\Crm\Service\Container::getInstance()->getLocalization()->loadMessages();
 
 $currentUserID = CCrmSecurityHelper::GetCurrentUserID();
 $CrmPerms = CCrmPerms::GetCurrentUserPermissions();
 
-$arParams['PATH_TO_CONTACT_LIST'] = CrmCheckPath('PATH_TO_CONTACT_LIST', $arParams['PATH_TO_CONTACT_LIST'], $APPLICATION->GetCurPage());
-$arParams['PATH_TO_CONTACT_DETAILS'] = CrmCheckPath('PATH_TO_CONTACT_DETAILS', $arParams['PATH_TO_CONTACT_DETAILS'], $APPLICATION->GetCurPage().'?contact_id=#contact_id#&details');
-$arParams['PATH_TO_CONTACT_SHOW'] = CrmCheckPath('PATH_TO_CONTACT_SHOW', $arParams['PATH_TO_CONTACT_SHOW'], $APPLICATION->GetCurPage().'?contact_id=#contact_id#&show');
-$arParams['PATH_TO_CONTACT_EDIT'] = CrmCheckPath('PATH_TO_CONTACT_EDIT', $arParams['PATH_TO_CONTACT_EDIT'], $APPLICATION->GetCurPage().'?contact_id=#contact_id#&edit');
-$arParams['PATH_TO_CONTACT_IMPORT'] = CrmCheckPath('PATH_TO_CONTACT_IMPORT', $arParams['PATH_TO_CONTACT_IMPORT'], $APPLICATION->GetCurPage().'?import');
-$arParams['PATH_TO_DEAL_EDIT'] = CrmCheckPath('PATH_TO_DEAL_EDIT', $arParams['PATH_TO_DEAL_EDIT'], $APPLICATION->GetCurPage().'?deal_id=#deal_id#&edit');
-$arParams['PATH_TO_CONTACT_DEDUPE'] = CrmCheckPath('PATH_TO_CONTACT_DEDUPE', $arParams['PATH_TO_CONTACT_DEDUPE'], $APPLICATION->GetCurPage());
-$arParams['PATH_TO_CONTACT_PORTRAIT'] = CrmCheckPath('PATH_TO_CONTACT_PORTRAIT', $arParams['PATH_TO_CONTACT_PORTRAIT'], $APPLICATION->GetCurPage().'?contact_id=#contact_id#&portrait');
-$arParams['PATH_TO_MIGRATION'] = SITE_DIR."marketplace/category/migration/";
-$arParams['NAME_TEMPLATE'] = empty($arParams['NAME_TEMPLATE']) ? CSite::GetNameFormat(false) : str_replace(array("#NOBR#","#/NOBR#"), array("",""), $arParams["NAME_TEMPLATE"]);
+$arParams['PATH_TO_CONTACT_LIST'] = CrmCheckPath(
+	'PATH_TO_CONTACT_LIST',
+		$arParams['PATH_TO_CONTACT_LIST'] ?? '',
+	$APPLICATION->GetCurPage()
+);
+$arParams['PATH_TO_CONTACT_DETAILS'] = CrmCheckPath(
+	'PATH_TO_CONTACT_DETAILS',
+		$arParams['PATH_TO_CONTACT_DETAILS'] ?? '',
+	$APPLICATION->GetCurPage() . '?contact_id=#contact_id#&details'
+);
+$arParams['PATH_TO_CONTACT_SHOW'] = CrmCheckPath(
+	'PATH_TO_CONTACT_SHOW',
+		$arParams['PATH_TO_CONTACT_SHOW'] ?? '',
+	$APPLICATION->GetCurPage() . '?contact_id=#contact_id#&show'
+);
+$arParams['PATH_TO_CONTACT_EDIT'] = CrmCheckPath(
+	'PATH_TO_CONTACT_EDIT',
+	$arParams['PATH_TO_CONTACT_EDIT'] ?? '',
+	$APPLICATION->GetCurPage().'?contact_id=#contact_id#&edit'
+);
+$arParams['PATH_TO_CONTACT_IMPORT'] = CrmCheckPath(
+	'PATH_TO_CONTACT_IMPORT',
+	$arParams['PATH_TO_CONTACT_IMPORT'] ?? '',
+	$APPLICATION->GetCurPage().'?import'
+);
+$arParams['PATH_TO_DEAL_EDIT'] = CrmCheckPath(
+	'PATH_TO_DEAL_EDIT',
+	$arParams['PATH_TO_DEAL_EDIT'] ?? '',
+	$APPLICATION->GetCurPage().'?deal_id=#deal_id#&edit'
+);
+$arParams['PATH_TO_CONTACT_DEDUPE'] = CrmCheckPath(
+	'PATH_TO_CONTACT_DEDUPE',
+	$arParams['PATH_TO_CONTACT_DEDUPE'] ?? '',
+	$APPLICATION->GetCurPage()
+);
+$arParams['PATH_TO_CONTACT_PORTRAIT'] = CrmCheckPath(
+	'PATH_TO_CONTACT_PORTRAIT',
+	$arParams['PATH_TO_CONTACT_PORTRAIT'] ?? '',
+	$APPLICATION->GetCurPage().'?contact_id=#contact_id#&portrait'
+);
+$arParams['PATH_TO_MIGRATION'] = SITE_DIR . "marketplace/category/migration/";
+
+$arParams['NAME_TEMPLATE'] = empty($arParams['NAME_TEMPLATE'])
+	? CSite::GetNameFormat(false)
+	: str_replace(array("#NOBR#","#/NOBR#"), array("",""), $arParams["NAME_TEMPLATE"]);
 
 $arParams['ELEMENT_ID'] = isset($arParams['ELEMENT_ID']) ? intval($arParams['ELEMENT_ID']) : 0;
 
-if($arParams['ELEMENT_ID'] > 0)
+if ($arParams['ELEMENT_ID'] > 0)
 {
 	$arResult['CATEGORY_ID'] =(int)\Bitrix\Crm\Service\Container::getInstance()
 		->getFactory(CCrmOwnerType::Contact)
@@ -57,13 +97,18 @@ if ($CrmPerms->HavePerm(
 }
 
 if (!isset($arParams['TYPE']))
+{
 	$arParams['TYPE'] = 'list';
+}
 
 if (isset($_REQUEST['copy']))
-	$arParams['TYPE'] = 'copy';
 
-$toolbarID = 'toolbar_contact_'.$arParams['TYPE'];
-if($arParams['ELEMENT_ID'] > 0)
+{
+	$arParams['TYPE'] = 'copy';
+}
+$toolbarID = 'toolbar_contact_' . $arParams['TYPE'];
+
+if ($arParams['ELEMENT_ID'] > 0)
 {
 	$toolbarID .= '_'.$arParams['ELEMENT_ID'];
 }
@@ -73,7 +118,7 @@ $arResult['BUTTONS'] = [];
 
 $isInSlider = ($arParams['IN_SLIDER'] === 'Y');
 
-if ($arParams['TYPE'] == 'list')
+if ($arParams['TYPE'] === 'list')
 {
 	$bRead   = CCrmContact::CheckReadPermission(0, $CrmPerms, $arResult['CATEGORY_ID']);
 	$bExport = CCrmContact::CheckExportPermission($CrmPerms, $arResult['CATEGORY_ID']);
@@ -321,12 +366,12 @@ if($arParams['TYPE'] === 'list')
 
 		$componentParams = array(
 			'CONTACT_COUNT' => '20',
-			'PATH_TO_CONTACT_LIST' => $arParams['PATH_TO_CONTACT_LIST'],
-			'PATH_TO_CONTACT_SHOW' => $arParams['PATH_TO_CONTACT_SHOW'],
-			'PATH_TO_CONTACT_EDIT' => $arParams['PATH_TO_CONTACT_EDIT'],
-			'PATH_TO_COMPANY_SHOW' => $arParams['PATH_TO_COMPANY_SHOW'],
-			'PATH_TO_DEAL_EDIT' => $arParams['PATH_TO_DEAL_EDIT'],
-			'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'],
+			'PATH_TO_CONTACT_LIST' => $arParams['PATH_TO_CONTACT_LIST'] ?? '',
+			'PATH_TO_CONTACT_SHOW' => $arParams['PATH_TO_CONTACT_SHOW'] ?? '',
+			'PATH_TO_CONTACT_EDIT' => $arParams['PATH_TO_CONTACT_EDIT'] ?? '',
+			'PATH_TO_COMPANY_SHOW' => $arParams['PATH_TO_COMPANY_SHOW'] ?? '',
+			'PATH_TO_DEAL_EDIT' => $arParams['PATH_TO_DEAL_EDIT'] ?? '',
+			'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'] ?? '',
 			'NAVIGATION_CONTEXT_ID' => $entityType,
 			'CATEGORY_ID' => $arResult['CATEGORY_ID'],
 			'GRID_ID_SUFFIX' => (new \Bitrix\Crm\Component\EntityList\GridId(CCrmOwnerType::Contact))

@@ -285,7 +285,7 @@ class EntityPreset
 				'filter' => self::getActivePresetFilter(),
 				'select' => array('ID', 'NAME'),
 				'limit' => 1,
-				'cache' => 3600
+				'cache' => ['ttl' => 3600],
 			)
 		);
 		if ($preset = $dbResult->fetch())
@@ -1124,7 +1124,7 @@ class EntityPreset
 		$preset = PresetTable::getList([
 			'select' => ['ID'],
 			'filter' => ['=XML_ID' => $xmlId],
-			'cache' => 3600
+			'cache' => ['ttl' => 3600]
 		])->fetch();
 		return $preset ? $preset['ID'] : false;
 	}

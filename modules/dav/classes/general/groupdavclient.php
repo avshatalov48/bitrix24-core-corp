@@ -39,7 +39,7 @@ class CDavGroupdavClient
 
 	public function __construct($scheme, $server, $port, $userName, $userPassword)
 	{
-		$this->scheme = ((mb_strtolower($scheme) == "https") ? "https" : "http");
+		$this->scheme = mb_strtolower($scheme) === "https" ? "https" : "http";
 		$this->server = $server;
 		$this->port = $port;
 		$this->userName = $userName;
@@ -64,13 +64,15 @@ class CDavGroupdavClient
 	public function SetCurrentEncoding($siteId = null)
 	{
 		$this->encoding = CDav::GetCharset($siteId);
-		if (is_null($this->encoding) || empty($this->encoding))
+		if (empty($this->encoding))
+		{
 			$this->encoding = "utf-8";
+		}
 	}
 
 	public function SetProxy($proxyScheme, $proxyServer, $proxyPort, $proxyUserName, $proxyUserPassword)
 	{
-		$this->proxyScheme = ((mb_strtolower($proxyScheme) == "https") ? "https" : "http");
+		$this->proxyScheme = mb_strtolower($proxyScheme) === "https" ? "https" : "http";
 		$this->proxyServer = $proxyServer;
 		$this->proxyPort = $proxyPort;
 		$this->proxyUserName = $proxyUserName;
@@ -92,7 +94,9 @@ class CDavGroupdavClient
 	public function Connect()
 	{
 		if ($this->connected)
+		{
 			return true;
+		}
 
 		$requestScheme = $this->scheme;
 		$requestServer = $this->server;
@@ -115,12 +119,12 @@ class CDavGroupdavClient
 				}
 
 				$requestScheme = 'ssl://';
-				$requestPort = ($requestPort === null) ? 443 : $requestPort;
+				$requestPort = $requestPort ?? 443;
 				break;
 
 			case 'http':
 				$requestScheme = '';
-				$requestPort = ($requestPort === null) ? 80 : $requestPort;
+				$requestPort = $requestPort ?? 80;
 				break;
 
 			default:
@@ -129,7 +133,20 @@ class CDavGroupdavClient
 				return false;
 		}
 
-		$this->fp = @fsockopen($requestScheme.$requestServer, $requestPort, $errno, $errstr, $this->socketTimeout);
+		// $this->fp = @fsockopen($requestScheme.$requestServer, $requestPort, $errno, $errstr, $this->socketTimeout);
+		$this->fp = @stream_socket_client(
+			sprintf('%s:%s', $requestScheme.$requestServer, $requestPort),
+			$errno,
+			$errstr,
+			$this->socketTimeout,
+			STREAM_CLIENT_CONNECT,
+			stream_context_create([
+				'ssl' => [
+					'verify_peer' => false,
+					'verify_peer_name' => false
+				]
+			])
+		);
 
 		if (!$this->fp)
 		{
@@ -137,18 +154,19 @@ class CDavGroupdavClient
 			$this->connected = false;
 			return false;
 		}
-		else
-		{
-			socket_set_blocking($this->fp, 1);
-			$this->connected = true;
-			return true;
-		}
+
+		stream_set_timeout($this->fp, $this->socketTimeout);
+		stream_set_blocking($this->fp, 1);
+		$this->connected = true;
+		return true;
 	}
 
 	public function Disconnect()
 	{
 		if (!$this->connected)
+		{
 			return;
+		}
 
 		fclose($this->fp);
 		$this->connected = false;
@@ -156,7 +174,7 @@ class CDavGroupdavClient
 
 	public function getError()
 	{
-		return $this->arError[0];
+		return $this->arError[0] ?? null;
 	}
 
 	public function GetErrors()
@@ -209,7 +227,7 @@ class CDavGroupdavClient
 		$path = $this->FormatUri($path);
 
 		$request = $this->CreateBasicRequest('PROPFIND', $path);
-		$request->AddHeader('Depth', intval($depth));
+		$request->AddHeader('Depth', (int)$depth);
 		$request->AddHeader('Content-type', 'text/xml');
 
 		$request->CreatePropfindBody($arProperties, $arFilter);
@@ -365,7 +383,7 @@ class CDavGroupdavClient
 
 		$request = $this->CreateBasicRequest('MKCOL', $path);
 		$request->AddHeader('Content-type', 'text/xml; charset=UTF-8');
-		
+
 		$request->SetBody($data);
 		$response = $this->Send($request);
 
@@ -389,17 +407,17 @@ class CDavGroupdavClient
 
 		return null;
 	}
-	
+
 	public function Proppatch($path, $data, $logger = null)
 	{
 		$path = $this->FormatUri($path);
-		
+
 		$request = $this->CreateBasicRequest('PROPPATCH', $path);
 		$request->AddHeader('Content-type', 'text/xml; charset=UTF-8');
 
 		$request->SetBody($data);
 		$response = $this->Send($request);
-		
+
 		if ($response)
 		{
 			if ($logger)
@@ -408,15 +426,15 @@ class CDavGroupdavClient
 			}
 
 			$code = (int)$response->GetStatus();
-			
+
 			if ($code !== 207)
 			{
 				$this->AddError($code, $response->GetStatus('phrase'));
 			}
-			
+
 			return $response;
 		}
-		
+
 		return null;
 	}
 
@@ -509,7 +527,9 @@ class CDavGroupdavClient
 		{
 			$i++;
 			if ($i > 3)
+			{
 				break;
+			}
 
 			if ($this->debug)
 			{
@@ -573,16 +593,22 @@ class CDavGroupdavClient
 		}
 
 		if (!is_null($response) && ($statusCode = $response->GetStatus('code')) && (intval($statusCode) == 401))
+		{
 			$this->AddError("401", GetMessage("DAV_GDC_NOT_AUTH"));
+		}
 
 		if ($this->debug)
 		{
 			$f = fopen($_SERVER["DOCUMENT_ROOT"]."/++++++++.+++", "a");
 			fwrite($f, "\n>>>>>>>>>>>>>>>>>> RESPONSE >>>>>>>>>>>>>>>>\n");
 			if (is_null($response))
+			{
 				fwrite($f, "NULL");
+			}
 			else
+			{
 				fwrite($f, $response->Dump());
+			}
 			fwrite($f, "\n<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n\n");
 			fclose($f);
 		}
@@ -761,7 +787,7 @@ If the "algorithm" directive's value is "MD5" or is unspecified, then
 
 		if ($this->debug)
 		{
-			$f = fopen($_SERVER["DOCUMENT_ROOT"]."/++++++++.+++", "a");			
+			$f = fopen($_SERVER["DOCUMENT_ROOT"]."/++++++++.+++", "a");
 			fwrite($f, "\n>>>>>>>>>>>>>>>>>> GOOGLEREQUEST >>>>>>>>>>>>>>>>\n");
 			fwrite($f, $request1 ? $request1->ToString() : "???");
 			fwrite($f, "\n<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n\n");

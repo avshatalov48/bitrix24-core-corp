@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm;
 
+use Bitrix\Crm\Service\EventHistory;
 use Bitrix\Main\ORM\Data\DataManager;
 use Bitrix\Main\ORM\Fields\IntegerField;
 use Bitrix\Main\ORM\Fields\Relations\Reference;
@@ -54,35 +55,26 @@ class EventRelationsTable extends DataManager
 
 	public static function deleteByEntityType(string $entityType): Result
 	{
-		return static::deleteRecordsByEventRelationFilter([
-			'=ENTITY_TYPE' => $entityType,
-		]);
+		return static::deleteRecords($entityType);
 	}
 
 	public static function deleteByItem(int $entityTypeId, int $id): Result
 	{
-		return static::deleteRecordsByEventRelationFilter([
-			'=ENTITY_TYPE' => \CCrmOwnerType::ResolveName($entityTypeId),
-			'=ENTITY_ID' => $id,
-		]);
+		return static::deleteRecords(\CCrmOwnerType::ResolveName($entityTypeId), $id);
 	}
 
-	private static function deleteRecordsByEventRelationFilter(array $filter): Result
+	private static function deleteRecords(string $entityTypeName, ?int $id = null): Result
 	{
 		$result = new Result();
 
 		$eventIds = [];
 
-		$list = static::getList([
-			'select' => ['ID', 'EVENT_ID'],
-			'filter' => $filter,
-		]);
-		while ($item = $list->fetch())
+		foreach (self::getRelationRecordsToDelete($entityTypeName, $id) as $row)
 		{
-			$deleteResult = static::delete($item['ID']);
+			$deleteResult = $row->delete();
 			if ($deleteResult->isSuccess())
 			{
-				$eventIds[] = $item['EVENT_ID'];
+				$eventIds[] = $row->requireEventId();
 			}
 			else
 			{
@@ -90,25 +82,77 @@ class EventRelationsTable extends DataManager
 			}
 		}
 
-		if (!empty($eventIds))
+		$eventIds = array_unique($eventIds);
+		if (empty($eventIds))
 		{
-			$list = EventTable::getList([
-				'select' => ['ID'],
-				'filter' => [
-					'@ID' => $eventIds,
-				],
-			]);
-			while ($item = $list->fetch())
+			return $result;
+		}
+
+			$list =
+				EventTable::query()
+					->setSelect(['ID', 'FILES'])
+					->whereIn('ID', $eventIds)
+					// delete only events that have no more references in relations table
+					->whereNull('EVENT_RELATION.EVENT_ID')
+					->exec()
+			;
+
+		while ($item = $list->fetchObject())
+		{
+			$deleteResult = $item->delete();
+			if ($deleteResult->isSuccess())
 			{
-				$deleteResult = EventTable::delete($item['ID']);
-				if (!$deleteResult->isSuccess())
+				$serializedFileIds = $item->requireFiles();
+				if (is_string($serializedFileIds) && !empty($serializedFileIds))
 				{
-					$result->addErrors($deleteResult->getErrors());
+					$fileIds = unserialize($serializedFileIds, ['allowed_classes' => false]);
+					if (is_array($fileIds))
+					{
+						foreach ($fileIds as $fileId)
+						{
+							\CFile::Delete((int)$fileId);
+						}
+					}
 				}
+			}
+			else
+			{
+				$result->addErrors($deleteResult->getErrors());
 			}
 		}
 
 		return $result;
+	}
+
+	private static function getRelationRecordsToDelete(
+		string $entityTypeName,
+		?int $id = null
+	): EO_EventRelations_Collection
+	{
+		$ownedRecordsQuery = self::query()
+			->setSelect(['ID', 'EVENT_ID'])
+			->where('ENTITY_TYPE', $entityTypeName)
+		;
+		if (!is_null($id))
+		{
+			$ownedRecordsQuery->where('ENTITY_ID', $id);
+		}
+
+		$mentionsInLinksQuery = self::query()
+			->setSelect(['ID', 'EVENT_ID'])
+			->whereIn('EVENT_BY.EVENT_TYPE', [EventHistory::EVENT_TYPE_LINK, EventHistory::EVENT_TYPE_UNLINK])
+			->where('EVENT_BY.EVENT_TEXT_1', $entityTypeName)
+		;
+		if (!is_null($id))
+		{
+			$mentionsInLinksQuery->where('EVENT_BY.EVENT_TEXT_2', $id);
+		}
+
+		return
+			$ownedRecordsQuery
+				->union($mentionsInLinksQuery)
+				->fetchCollection()
+		;
 	}
 
 	public static function setAssignedByItem(ItemIdentifier $itemIdentifier, int $assignedById): Result

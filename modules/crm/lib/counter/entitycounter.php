@@ -547,7 +547,6 @@ class EntityCounter extends CounterBase
 
 		foreach($queries as $query)
 		{
-			//echo '<pre>', $query->getQuery(), '</pre>';
 			$dbResult = $query->exec();
 			$fields = $dbResult->fetch();
 			if(is_array($fields))

@@ -23,7 +23,8 @@ class EntityEditor
 		'crm_lead' => true,
 		'crm_company' => true,
 		'crm_contact' => true,
-		'crm_quote' => true
+		'crm_quote' => true,
+		'enumeration' => true,
 	);
 	protected static $multiFields = null;
 
@@ -192,7 +193,7 @@ class EntityEditor
 				return false;
 			}
 		}
-		elseif($typeName === 'integer' || $typeName === 'user')
+		elseif($typeName === 'integer' || $typeName === 'user' || $typeName === 'enumeration')
 		{
 			$value = (int)$value;
 		}

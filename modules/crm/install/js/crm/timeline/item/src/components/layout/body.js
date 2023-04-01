@@ -63,6 +63,13 @@ export const Body = {
 				})
 			;
 		},
+		contentContainerClassname(): Array {
+			return [
+				'crm-timeline__card-container', {
+				'--without-logo': !this.logo,
+				}
+			];
+		}
 	},
 	methods: {
 		getContentBlockById(blockId: string): ?Object
@@ -84,7 +91,7 @@ export const Body = {
 				<LogoCalendar v-if="logo.icon === 'calendar'" v-bind="logo"></LogoCalendar>
 				<Logo v-else v-bind="logo" ref="logo"></Logo>
 			</div>
-			<div class="crm-timeline__card-container">
+			<div :class="contentContainerClassname">
 				<div
 					v-for="block in visibleBlocks"
 					:key="block.id"

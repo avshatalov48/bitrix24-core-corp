@@ -3,8 +3,7 @@
 /**
  * Class CDavAddressbookAccountsBaseLimited
  */
-abstract class CDavAddressbookBaseLimited
-	extends CDavAddressbookBase
+abstract class CDavAddressbookBaseLimited extends CDavAddressbookBase
 {
 	const RESOURCE_SYNC_SETTINGS_NAME = '';
 	const MAX_SYNC_COUNT = 200;
@@ -27,12 +26,16 @@ abstract class CDavAddressbookBaseLimited
 	protected function LoadEntities($collectionId, $account, $filter = array())
 	{
 		if ($account instanceof CDavPrincipal)
+		{
 			$userId = $account->Id();
+		}
 		else
+		{
 			$userId = $account[1];
+		}
 		$maxCount = static::GetResourceSyncMaxCount($userId);
 
-		return $this->LoadLimitedEntitiesList($collectionId, $account, $filter, $maxCount);
+		return $this->LoadLimitedEntitiesList($collectionId, $account, $maxCount, $filter);
 	}
 
 
@@ -43,7 +46,7 @@ abstract class CDavAddressbookBaseLimited
 	 * @param $maxCount
 	 * @return mixed
 	 */
-	abstract protected function LoadLimitedEntitiesList($collectionId, $account, $filter = array(), $maxCount);
+	abstract protected function LoadLimitedEntitiesList($collectionId, $account, $maxCount, $filter = []);
 
 
 	/**
@@ -58,9 +61,13 @@ abstract class CDavAddressbookBaseLimited
 		$lastModifiedAt = MakeTimeStamp($this->CatalogLastModifiedAt($collectionId, $filter));
 		$lastSyncSettingsSaveAt = $this->GetLastSyncSettingSaveTimestamp($principalId);
 		if ($lastModifiedAt >= $lastSyncSettingsSaveAt)
+		{
 			return parent::GetCTag($collectionId, $filter);
+		}
 		else
+		{
 			return 'BX:' . $lastSyncSettingsSaveAt;
+		}
 	}
 
 	/**
@@ -165,8 +172,7 @@ abstract class CDavAddressbookBaseLimited
 	 */
 	public function GetETag($collectionId, $entity)
 	{
-		$eTag =  static::RESOURCE_SYNC_SETTINGS_NAME . ':' . parent::GetETag($collectionId, $entity);
-		return $eTag;
+		return static::RESOURCE_SYNC_SETTINGS_NAME . ':' . parent::GetETag($collectionId, $entity);
 	}
 
 }

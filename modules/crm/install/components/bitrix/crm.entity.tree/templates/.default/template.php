@@ -367,7 +367,13 @@ if (!function_exists('CrmEntityTreeDrawItem'))
 							):?>
 								<div class="crm-doc-cart-user-company"><?= htmlspecialcharsbx($statuses['COMPANY_TYPE'][$item['COMPANY_TYPE']]['NAME'])?></div>
 							<?endif;?>
-							<?CrmEntityTreeDrawActivity($item['ID'], $item['TREE_TYPE'], $result['ACTIVITY'], $item['LEAD_ID'], $result['DOCUMENT']);?>
+							<?CrmEntityTreeDrawActivity(
+								$item['ID'],
+								$item['TREE_TYPE'],
+								$result['ACTIVITY'],
+								$item['LEAD_ID'] ?? null,
+								$result['DOCUMENT']);
+							?>
 						</div>
 					</div>
 					<?if (isset($item['FM_VALUES'])):?>
@@ -430,7 +436,13 @@ if (!function_exists('CrmEntityTreeDrawItem'))
 								])?>
 							</div>
 						<?endif;?>
-						<?CrmEntityTreeDrawActivity($item['ID'], $item['TREE_TYPE'], $result['ACTIVITY'], $item['LEAD_ID'], $result['DOCUMENT']);?>
+						<?CrmEntityTreeDrawActivity(
+							$item['ID'],
+							$item['TREE_TYPE'],
+							$result['ACTIVITY'],
+							$item['LEAD_ID'] ?? null,
+							$result['DOCUMENT']);
+						?>
 					</div>
 					<div class="crm-doc-cart-param">
 						<div class="crm-doc-info-progress">
@@ -443,7 +455,7 @@ if (!function_exists('CrmEntityTreeDrawItem'))
 									<td><?= $lang['DATE_BEGIN']?>:</td>
 									<td><?= CrmEntityTreeConvertDateTime($item['BEGINDATE'] ? $item['BEGINDATE'] : $item['DATE_CREATE'], FORMAT_DATE)?></td>
 								</tr>
-								<?if ($item['CLOSEDATE']):?>
+								<?if (isset($item['CLOSEDATE'])):?>
 									<tr>
 										<td><?= $lang['DATE_CLOSE']?>:</td>
 										<td><?= CrmEntityTreeConvertDateTime($item['CLOSEDATE'], FORMAT_DATE)?></td>
@@ -480,7 +492,13 @@ if (!function_exists('CrmEntityTreeDrawItem'))
 								])?>
 							</div>
 						<?endif;?>
-						<?CrmEntityTreeDrawActivity($item['ID'], $item['TREE_TYPE'], $result['ACTIVITY'], $item['LEAD_ID'], $result['DOCUMENT']);?>
+						<?CrmEntityTreeDrawActivity(
+							$item['ID'],
+							$item['TREE_TYPE'],
+							$result['ACTIVITY'],
+							$item['LEAD_ID'] ?? null,
+							$result['DOCUMENT']);
+						?>
 					</div>
 					<div class="crm-doc-cart-param">
 						<div class="crm-doc-info-progress">

@@ -248,17 +248,20 @@ class SalesCenterPaySystemPanel extends CBitrixComponent implements Controllerab
 				'bank_card' => '#19D0C8',
 				'sberbank' => '#2C9B47',
 				'sberbank_sms' => '#289D37',
+				'sberbank_qr' => '#289D37',
+				'sbp' => '#1487C9',
 				'alfabank' => '#EE2A23',
 				'yoo_money' => '#FFA900',
 				'qiwi' => '#E9832C',
 				'webmoney' => '#006FA8',
 				'embedded' => '#0697F2',
 				'tinkoff_bank' => '#FFE52B',
+				'installments' => '#00EEBC',
 			],
 			'skb' => [
-				'skb' => '#F65E64',
-				'delobank' => '#F65E64',
-				'gazenergobank' => '#F65E64',
+				'skb' => '#DF1D40',
+				'delobank' => '#DF1D40',
+				'gazenergobank' => '#DF1D40',
 			],
 			'bepaid' => [
 				'widget' => '#E36F10',
@@ -730,7 +733,7 @@ class SalesCenterPaySystemPanel extends CBitrixComponent implements Controllerab
 				if (!empty($marketplaceApp['ICON_PRIORITY']) || !empty($marketplaceApp['ICON']))
 				{
 					$hasOwnIcon = true;
-					$img = $marketplaceApp['ICON_PRIORITY'] ?: $marketplaceApp['ICON'];
+					$img = $marketplaceApp['ICON_PRIORITY'] ?? $marketplaceApp['ICON'];
 				}
 				else
 				{

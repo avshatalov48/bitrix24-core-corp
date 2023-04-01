@@ -168,7 +168,7 @@ class CrmStoreDocumentListComponent extends CBitrixComponent implements Controll
 		$sortField = key($gridSort['sort']);
 		foreach ($gridColumns as $key => $column)
 		{
-			if ($column['sort'] === $sortField)
+			if (isset($column['sort']) && $column['sort'] === $sortField)
 			{
 				$gridColumns[$key]['color'] = Bitrix\Main\Grid\Column\Color::BLUE;
 				break;
@@ -452,10 +452,7 @@ class CrmStoreDocumentListComponent extends CBitrixComponent implements Controll
 		foreach ($clientsData as $clientData)
 		{
 			$orderId = $clientData['ORDER_ID'];
-			if (!$clients[$orderId])
-			{
-				$clients[$orderId] = [];
-			}
+			$clients[$orderId] = $clients[$orderId] ?? [];
 
 			switch ($clientData['ENTITY_TYPE_ID'])
 			{
@@ -1173,11 +1170,11 @@ class CrmStoreDocumentListComponent extends CBitrixComponent implements Controll
 		}
 	}
 
-	private function prepareListFilter($filter)
+	private function prepareListFilter(array $filter): array
 	{
 		$preparedFilter = $filter;
 
-		if ($preparedFilter['DEDUCTED'])
+		if (isset($preparedFilter['DEDUCTED']) && $preparedFilter['DEDUCTED'])
 		{
 			$statuses = $preparedFilter['DEDUCTED'];
 			unset($preparedFilter['DEDUCTED']);
@@ -1209,7 +1206,7 @@ class CrmStoreDocumentListComponent extends CBitrixComponent implements Controll
 			$preparedFilter[] = $statusFilters;
 		}
 
-		if ($preparedFilter['STORES'])
+		if (isset($preparedFilter['STORES']) && $preparedFilter['STORES'])
 		{
 			$storeIds = $preparedFilter['STORES'];
 			unset($preparedFilter['STORES']);

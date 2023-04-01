@@ -1,0 +1,2 @@
+<?php
+$MESS['CRM_TIMELINE_TITLE_ACTIVITY_SMS_NOTIFICATION_RESEND'] = 'Отправить повторно';

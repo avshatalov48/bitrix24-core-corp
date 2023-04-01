@@ -88,8 +88,7 @@ class CBPCrmSendSmsActivity extends CBPActivity
 			]));
 
 			$documentId = $this->GetDocumentId();
-			[$typeName, $id] = mb_split('_(?=[^_]*$)', $documentId[2]);
-			$typeId = \CCrmOwnerType::ResolveID($typeName);
+			[$typeId, $id] = \CCrmBizProcHelper::resolveEntityId($documentId);
 			$responsibleId = CCrmOwnerType::GetResponsibleID($typeId, $id, false);
 
 			$bindings = [['OWNER_TYPE_ID' => $typeId, 'OWNER_ID' => $id]];
@@ -288,12 +287,8 @@ class CBPCrmSendSmsActivity extends CBPActivity
 		if ($recipientType === static::RECIPIENT_TYPE_ENTITY)
 		{
 			$documentId = $this->GetDocumentId();
-			[$typeName, $id] = mb_split('_(?=[^_]*$)', $documentId[2]);
-			$communication = $this->getEntityPhoneCommunication(
-				\CCrmOwnerType::ResolveID($typeName),
-				$id,
-				$this->PhoneType
-			);
+			[$typeId, $id] = \CCrmBizProcHelper::resolveEntityId($documentId);
+			$communication = $this->getEntityPhoneCommunication($typeId, $id, $this->PhoneType);
 			if ($communication)
 			{
 				$phoneNumber = $communication['VALUE'];
@@ -562,8 +557,9 @@ class CBPCrmSendSmsActivity extends CBPActivity
 		}
 
 		$documentId = $this->GetDocumentId();
-		[$typeName, $id] = mb_split('_(?=[^_]*$)', $documentId[2]);
-		$authorId = \CCrmOwnerType::loadResponsibleId(\CCrmOwnerType::ResolveID($typeName), $id, false);
+
+		[$typeId, $id] = \CCrmBizProcHelper::resolveEntityId($documentId);
+		$authorId = \CCrmOwnerType::loadResponsibleId($typeId, $id, false);
 
 		$result = SmsManager::sendMessage([
 			'SENDER_ID' => 'rest',
@@ -603,8 +599,7 @@ class CBPCrmSendSmsActivity extends CBPActivity
 		}
 
 		$documentId = $this->GetDocumentId();
-		[$typeName, $id] = mb_split('_(?=[^_]*$)', $documentId[2]);
-		$typeId = \CCrmOwnerType::ResolveID($typeName);
+		[$typeId, $id] = \CCrmBizProcHelper::resolveEntityId($documentId);
 
 		if ($typeId === \CCrmOwnerType::Undefined || !$id)
 		{
@@ -718,12 +713,12 @@ class CBPCrmSendSmsActivity extends CBPActivity
 		}
 
 		$documentId = $this->GetDocumentId();
-		[$typeName, $id] = mb_split('_(?=[^_]*$)', $documentId[2]);
+		[$typeId, $id] = \CCrmBizProcHelper::resolveEntityId($documentId);
 
 		$auth = [
 			'CODE' => $provider['CODE'],
 			\Bitrix\Rest\OAuth\Auth::PARAM_LOCAL_USER => \CCrmOwnerType::GetResponsibleID(
-				\CCrmOwnerType::ResolveID($typeName), $id, false
+				$typeId, $id, false
 			),
 			'application_token' => \CRestUtil::getApplicationToken($application),
 		];

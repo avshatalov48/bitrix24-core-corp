@@ -1,6 +1,7 @@
 export type EntityCounterPanelOptions = {
 	id: string,
 	entityTypeId: number,
+	entityTypeName: string,
 	userId: number,
 	userName: string,
 	serviceUrl: string,

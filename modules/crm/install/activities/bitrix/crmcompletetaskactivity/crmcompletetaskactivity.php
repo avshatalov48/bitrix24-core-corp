@@ -5,7 +5,10 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Main\Localization\Loc;
 use \Bitrix\Bizproc\Activity\PropertiesDialog;
+use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Service\Factory;
 
 class CBPCrmCompleteTaskActivity extends CBPActivity
 {
@@ -14,7 +17,8 @@ class CBPCrmCompleteTaskActivity extends CBPActivity
 		parent::__construct($name);
 		$this->arProperties = [
 			'Title' => '',
-			'TargetStatus' => null
+			'TargetCategory' => null,
+			'TargetStatus' => null,
 		];
 	}
 
@@ -26,17 +30,17 @@ class CBPCrmCompleteTaskActivity extends CBPActivity
 		}
 
 		[$entityTypeName, $entityId] = mb_split('_(?=[^_]*$)', $this->GetDocumentId()[2]);
-		$stages = $this->getStages($entityTypeName, $entityId);
 
 		if ($this->workflow->isDebug())
 		{
 			$this->logTargetStatus();
 		}
 
-		if ($stages && array_diff((array)$this->TargetStatus, $stages))
+		$test = $this->TargetStatus;
+		if (array_diff((array)$this->TargetStatus, $this->getStages()))
 		{
 			$this->WriteToTrackingService(
-				Bitrix\Main\Localization\Loc::getMessage('CRM_CTA_INCORRECT_STAGE'),
+				Loc::getMessage('CRM_CTA_INCORRECT_STAGE'),
 				0,
 				CBPTrackingType::Error
 			);
@@ -52,7 +56,45 @@ class CBPCrmCompleteTaskActivity extends CBPActivity
 		return CBPActivityExecutionStatus::Closed;
 	}
 
-	protected function getStages(string $entityTypeName, int $entityId)
+	protected function getStages(): array
+	{
+		$factory = static::getFactory($this->getDocumentType());
+		if (!isset($factory) || !$factory->isStagesSupported())
+		{
+			return [];
+		}
+
+		$categoryId = $this->TargetCategory;
+		if ($factory->isCategoriesSupported() && isset($categoryId))
+		{
+			$categoryId = (int)$categoryId;
+			$category = $factory->getCategory($categoryId);
+			if (!isset($category))
+			{
+				$this->writeToTrackingService(
+					Loc::getMessage('CRM_CTA_INCORRECT_CATEGORY'),
+					0,
+					CBPTrackingType::Error
+				);
+			}
+
+			$stageIds = [];
+			foreach ($factory->getStages($categoryId) as $status)
+			{
+				$stageIds[] = $status->getStatusId();
+			}
+
+			return $stageIds;
+		}
+		else
+		{
+			[$entityTypeId, $entityId] = CCrmBizProcHelper::resolveEntityId($this->getDocumentId());
+
+			return $this->getEntityStages(CCrmOwnerType::ResolveName($entityTypeId), $entityId);
+		}
+	}
+
+	private function getEntityStages(string $entityTypeName, int $entityId)
 	{
 		switch ($entityTypeName)
 		{
@@ -149,7 +191,7 @@ class CBPCrmCompleteTaskActivity extends CBPActivity
 	{
 		$map = [
 			'CompletedTasks' => [
-				'Name' => \Bitrix\Main\Localization\Loc::getMessage('CRM_CTA_COMPLETED_TASKS'),
+				'Name' => Loc::getMessage('CRM_CTA_COMPLETED_TASKS'),
 				'Type' => \Bitrix\Bizproc\FieldType::INT,
 				'Multiple' => true,
 			]
@@ -166,7 +208,7 @@ class CBPCrmCompleteTaskActivity extends CBPActivity
 			return '';
 		}
 
-		$dialog = new \Bitrix\Bizproc\Activity\PropertiesDialog(__FILE__,[
+		$dialog = new \Bitrix\Bizproc\Activity\PropertiesDialog(__FILE__, [
 			'documentType' => $documentType,
 			'activityName' => $activityName,
 			'workflowTemplate' => $workflowTemplate,
@@ -174,9 +216,28 @@ class CBPCrmCompleteTaskActivity extends CBPActivity
 			'workflowVariables' => $workflowVariables,
 			'currentValues' => $currentValues,
 			'formName' => $formName,
-			'siteId' => $siteId
+			'siteId' => $siteId,
 		]);
-		$dialog->setMapCallback([static::class, 'getPropertiesDialogMap']);
+
+		$factory = static::getFactory($documentType);
+		if (isset($factory))
+		{
+			$stages = [];
+			foreach (static::getFullItemStatusesList($factory) as $categoryId => $statuses)
+			{
+				$stages[$categoryId] = [];
+				foreach ($statuses as $statusId => $statusName)
+				{
+					$stages[$categoryId][] = [
+						'id' => $statusId,
+						'name' => $statusName,
+					];
+				}
+			}
+
+			$dialog->setRuntimeData(['stages' => $stages]);
+			$dialog->setMapCallback([static::class, 'getPropertiesDialogMap']);
+		}
 
 		return $dialog;
 	}
@@ -189,7 +250,18 @@ class CBPCrmCompleteTaskActivity extends CBPActivity
 
 		$properties = [];
 
-		$map = static::getPropertiesDialogMap(new PropertiesDialog('', ['documentType' => $documentType]));
+		$dialog = new \Bitrix\Bizproc\Activity\PropertiesDialog(__FILE__, [
+			'documentType' => $documentType,
+			'activityName' => $activityName,
+			'workflowTemplate' => $workflowTemplate,
+			'workflowParameters' => $workflowParameters,
+			'workflowVariables' => $workflowVariables,
+			'currentValues' => $currentValues,
+		]);
+
+		$map = static::getPropertiesDialogMap($dialog);
+		$map['TargetStatus']['Options'] = static::getDocumentStatuses($documentType[2]);
+
 		foreach ($map as $fieldId => $fieldProperties)
 		{
 			$field = $documentService->getFieldTypeObject($documentType, $fieldProperties);
@@ -230,7 +302,7 @@ class CBPCrmCompleteTaskActivity extends CBPActivity
 			$errors[] = [
 				'code' => 'NotExist',
 				'parameter' => 'FieldValue',
-				'message' => GetMessage("CRM_GRI_EMPTY_PROP", ['#PROPERTY#' => GetMessage("CRM_CTA_COMPLETE_TASK")])
+				'message' => Loc::getMessage('CRM_CTA_ERROR_EMPTY_REQUIRED_FIELD', ['#PROPERTY#' => Loc::getMessage('CRM_CTA_COMPLETE_TASK')]),
 			];
 		}
 
@@ -239,20 +311,54 @@ class CBPCrmCompleteTaskActivity extends CBPActivity
 
 	public static function getPropertiesDialogMap($dialog)
 	{
-		static $map = null;
+		$context = $dialog->getContext();
+		$categoryId = isset($context['DOCUMENT_CATEGORY_ID']) ? (int)$context['DOCUMENT_CATEGORY_ID'] : null;
 
-		$map = $map ?: [
+		$targetCategoryOptions = static::getPropertyCategoryOptions($dialog);
+
+		return [
+			'TargetCategory' => [
+				'Name' => Loc::getMessage('CRM_CTA_COMPLETE_TASK_CATEGORY'),
+				'FieldName' => 'target_category',
+				'Type' => \Bitrix\Bizproc\FieldType::SELECT,
+				'Required' => (bool)$targetCategoryOptions,
+				'Options' => $targetCategoryOptions,
+				'Default' => $categoryId,
+			],
 			'TargetStatus' => [
 				'Name' => GetMessage("CRM_CTA_COMPLETE_TASK"),
 				'FieldName' => 'target_status',
 				'Type' => \Bitrix\Bizproc\FieldType::SELECT,
 				'Required' => true,
 				'Multiple' => true,
-				'Options' => static::getDocumentStatuses($dialog->getDocumentType()[2])
+				'Options' => static::getDocumentStatuses($dialog->getDocumentType()[2], $categoryId)
 			]
 		];
+	}
 
-		return $map;
+	private static function getPropertyCategoryOptions(PropertiesDialog $dialog): array
+	{
+		$factory = static::getFactory($dialog->getDocumentType());
+
+		if (!isset($factory) || !$factory->isCategoriesEnabled())
+		{
+			return [];
+		}
+
+		$categories = [];
+		foreach ($factory->getCategories() as $category)
+		{
+			$categories[$category->getId()] = $category->getName();
+		}
+
+		return $categories;
+	}
+
+	private static function getFactory(array $documentType): ?Factory
+	{
+		$entityTypeId = CCrmOwnerType::ResolveID($documentType[2] ?? '');
+
+		return Container::getInstance()->getFactory($entityTypeId);
 	}
 
 	protected static function getPropertiesMap(array $documentType, array $context = []): array
@@ -264,35 +370,63 @@ class CBPCrmCompleteTaskActivity extends CBPActivity
 		return static::getPropertiesDialogMap($dialog);
 	}
 
-	public static function getDocumentStatuses(string $documentType)
+	public static function getDocumentStatuses(string $documentType, ?int $categoryId = null)
 	{
 		if (!CModule::IncludeModule('crm'))
 		{
 			return [];
 		}
 
-		switch ($documentType)
+		$documentTypeId = CCrmOwnerType::ResolveID($documentType);
+		$factory = Container::getInstance()->getFactory($documentTypeId);
+
+		if (!isset($factory))
 		{
-			case CCrmOwnerType::DealName:
-				return \Bitrix\Crm\Category\DealCategory::getFullStageList();
-
-			case CCrmOwnerType::LeadName:
-				return CCrmStatus::GetStatusList('STATUS');
-
-			default:
-				$documentTypeId = CCrmOwnerType::ResolveID($documentType);
-
-				$target = new \Bitrix\Crm\Automation\Target\ItemTarget($documentTypeId);
-				$statuses = [];
-
-				if ($target->isAvailable())
-				{
-					foreach ($target->getStatusInfos() as $statusName => $statusInfo)
-					{
-						$statuses[$statusName] = $statusInfo['NAME'];
-					}
-				}
-				return $statuses;
+			return [];
 		}
+
+		$statuses = [];
+		foreach (static::getFullItemStatusesList($factory, $categoryId) as $categoryStatuses)
+		{
+			$statuses = array_merge($statuses, $categoryStatuses);
+		}
+
+		return isset($categoryId) ? $statuses[$categoryId] : $statuses;
+	}
+
+	protected static function getFullItemStatusesList(Factory $factory, ?int $categoryId = null): array
+	{
+		if (!$factory->isStagesEnabled())
+		{
+			return [];
+		}
+
+		if (!$factory->isCategoriesSupported())
+		{
+			$categories = [null];
+		}
+		elseif (isset($categoryId))
+		{
+			$currentCategory = $factory->getCategory($categoryId);
+			$categories = isset($currentCategory) ? [$currentCategory] : [];
+		}
+		else
+		{
+			$categories = $factory->getCategories();
+		}
+
+		$statuses = [];
+
+		foreach ($categories as $category)
+		{
+			$categoryId = isset($category) ? $category->getId() : null;
+			$statuses[$categoryId] = [];
+			foreach ($factory->getStages($categoryId) as $status)
+			{
+				$statuses[$categoryId][$status->getStatusId()] = $status->getName();
+			}
+		}
+
+		return $statuses;
 	}
 }

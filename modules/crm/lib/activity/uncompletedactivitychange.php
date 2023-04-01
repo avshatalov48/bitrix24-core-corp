@@ -22,7 +22,7 @@ class UncompletedActivityChange
 
 	public static function create(int $id, array $oldFields, array $oldBindings, array $newFields, array $newBindings): self
 	{
-		$oldDeadline = ($oldFields['DEADLINE'] && !\CCrmDateTimeHelper::IsMaxDatabaseDate($oldFields['DEADLINE']))
+		$oldDeadline = (isset($oldFields['DEADLINE']) && $oldFields['DEADLINE'] && !\CCrmDateTimeHelper::IsMaxDatabaseDate($oldFields['DEADLINE']))
 			? DateTime::createFromUserTime($oldFields['DEADLINE'])
 			: null
 		;
@@ -33,14 +33,14 @@ class UncompletedActivityChange
 
 		return new self(
 			$id,
-			$oldFields['IS_INCOMING_CHANNEL'] ? ($oldFields['IS_INCOMING_CHANNEL'] === 'Y') : null,
-			$newFields['IS_INCOMING_CHANNEL'] ? ($newFields['IS_INCOMING_CHANNEL'] === 'Y') : null,
+			($oldFields['IS_INCOMING_CHANNEL'] ?? null) ? ($oldFields['IS_INCOMING_CHANNEL'] === 'Y') : null,
+			($newFields['IS_INCOMING_CHANNEL'] ?? null) ? ($newFields['IS_INCOMING_CHANNEL'] === 'Y') : null,
 			$oldDeadline,
 			$newDeadline,
-			$oldFields['RESPONSIBLE_ID'] ? (int)$oldFields['RESPONSIBLE_ID'] : null,
-			$newFields['RESPONSIBLE_ID'] ? (int)$newFields['RESPONSIBLE_ID']: null,
-			$oldFields['COMPLETED'] ? ($oldFields['COMPLETED'] === 'Y') : null,
-			$newFields['COMPLETED'] ? ($newFields['COMPLETED'] === 'Y') : null,
+			($oldFields['RESPONSIBLE_ID'] ?? null) ? (int)$oldFields['RESPONSIBLE_ID'] : null,
+			($newFields['RESPONSIBLE_ID'] ?? null) ? (int)$newFields['RESPONSIBLE_ID']: null,
+			($oldFields['COMPLETED'] ?? null) ? ($oldFields['COMPLETED'] === 'Y') : null,
+			($newFields['COMPLETED'] ?? null) ? ($newFields['COMPLETED'] === 'Y') : null,
 			self::prepareBindings($oldBindings),
 			self::prepareBindings($newBindings)
 		);

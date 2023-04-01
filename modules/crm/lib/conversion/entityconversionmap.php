@@ -275,7 +275,7 @@ class EntityConversionMap
 		}
 
 		$key = "{$srcEntityTypeID}_{$dstEntityTypeID}";
-		if(self::$items[$key])
+		if(isset(self::$items[$key]))
 		{
 			return self::$items[$key];
 		}

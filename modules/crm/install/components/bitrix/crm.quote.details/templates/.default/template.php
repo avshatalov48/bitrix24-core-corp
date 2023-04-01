@@ -74,7 +74,7 @@ if(isset($arResult['jsParams']['messages']['crmTimelineHistoryStub']))
 			{
 				<?php
 					// Same as params.conversion.lockScript, but not escaped
-					echo $arResult['jsParams']['conversion']['lockScript'];
+					echo $arResult['jsParams']['conversion']['lockScript'] ?? null;
 				?>
 			};
 		}

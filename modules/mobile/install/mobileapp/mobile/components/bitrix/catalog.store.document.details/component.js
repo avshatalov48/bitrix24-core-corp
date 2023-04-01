@@ -2,9 +2,9 @@
 	let desktopUrl = '';
 	const payload = BX.componentParameters.get('payload', {});
 
-	if (payload.id)
+	if (payload.entityId)
 	{
-		desktopUrl = '/shop/documents/details/#ID#/'.replace('#ID#', payload.id);
+		desktopUrl = '/shop/documents/details/#ID#/'.replace('#ID#', payload.entityId);
 	}
 	else if (payload.docType)
 	{

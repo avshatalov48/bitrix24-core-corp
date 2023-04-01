@@ -7,23 +7,23 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 $cpID = 'COMPANY_LIST';
 $cpActiveItemID = 'COMPANY';
-if ($arResult['MYCOMPANY_MODE'] === 'Y')
+$isMyCompanyMode = isset($arResult['MYCOMPANY_MODE']) && $arResult['MYCOMPANY_MODE'] === 'Y';
+if ($isMyCompanyMode)
 {
 	$cpID = 'MYCOMPANY_LIST';
 	$cpActiveItemID = 'MY_COMPANY';
 }
-
-$isMyCompanyMode = (isset($arResult['MYCOMPANY_MODE']) && $arResult['MYCOMPANY_MODE'] === 'Y');
 $categoryId = (int)($arResult['VARIABLES']['category_id'] ?? 0);
-$isSlider = ($_REQUEST['IFRAME'] === 'Y' && $_REQUEST['IFRAME_TYPE'] === 'SIDE_SLIDER');
+$isSlider = isset($_REQUEST['IFRAME'], $_REQUEST['IFRAME_TYPE'])
+	&& $_REQUEST['IFRAME'] === 'Y'
+	&& $_REQUEST['IFRAME_TYPE'] === 'SIDE_SLIDER';
 
 $pathToList = $categoryId > 0
 	? CComponentEngine::MakePathFromTemplate(
-		$arResult['PATH_TO_COMPANY_CATEGORY'],
+		$arResult['PATH_TO_COMPANY_CATEGORY'] ?? '',
 		['category_id' => $categoryId]
 	)
-	: $arResult['PATH_TO_COMPANY_LIST']
-;
+	: $arResult['PATH_TO_COMPANY_LIST'] ?? '';
 
 if (!$isSlider)
 {
@@ -50,7 +50,7 @@ if (!$isSlider)
 			'PATH_TO_DEAL_FUNNEL' => $arResult['PATH_TO_DEAL_FUNNEL'] ?? '',
 			'PATH_TO_EVENT_LIST' => $arResult['PATH_TO_EVENT_LIST'] ?? '',
 			'PATH_TO_PRODUCT_LIST' => $arResult['PATH_TO_PRODUCT_LIST'] ?? '',
-			'MYCOMPANY_MODE' => ($arResult['MYCOMPANY_MODE'] === 'Y' ? 'Y' : 'N'),
+			'MYCOMPANY_MODE' => $isMyCompanyMode ? 'Y' : 'N',
 			'PATH_TO_COMPANY_WIDGET' => $arResult['PATH_TO_COMPANY_WIDGET'] ?? '',
 			'PATH_TO_COMPANY_PORTRAIT' => $arResult['PATH_TO_COMPANY_PORTRAIT'] ?? '',
 		],
@@ -88,8 +88,8 @@ else
 			'',
 			[
 				'ENTITY_TYPE_ID' => CCrmOwnerType::Company,
-				'PATH_TO_MERGE' => $arResult['PATH_TO_COMPANY_MERGE'],
-				'PATH_TO_DEDUPELIST' => $arResult['PATH_TO_COMPANY_DEDUPELIST'],
+				'PATH_TO_MERGE' => $arResult['PATH_TO_COMPANY_MERGE'] ?? '',
+				'PATH_TO_DEDUPELIST' => $arResult['PATH_TO_COMPANY_DEDUPELIST'] ?? '',
 			],
 			$component,
 			['HIDE_ICONS' => 'Y']
@@ -99,17 +99,17 @@ else
 		'bitrix:crm.company.menu',
 		'',
 		[
-			'PATH_TO_COMPANY_LIST' => $arResult['PATH_TO_COMPANY_LIST'],
-			'PATH_TO_COMPANY_SHOW' => $arResult['PATH_TO_COMPANY_SHOW'],
-			'PATH_TO_COMPANY_EDIT' => $arResult['PATH_TO_COMPANY_EDIT'],
-			'PATH_TO_COMPANY_IMPORT' => $arResult['PATH_TO_COMPANY_IMPORT'],
-			'PATH_TO_COMPANY_DEDUPE' => $arResult['PATH_TO_COMPANY_DEDUPE'],
-			'PATH_TO_COMPANY_DEDUPEWIZARD' => $arResult['PATH_TO_COMPANY_DEDUPEWIZARD'],
-			'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'],
-			'ELEMENT_ID' => $arResult['VARIABLES']['company_id'],
+			'PATH_TO_COMPANY_LIST' => $arResult['PATH_TO_COMPANY_LIST'] ?? '',
+			'PATH_TO_COMPANY_SHOW' => $arResult['PATH_TO_COMPANY_SHOW'] ?? '',
+			'PATH_TO_COMPANY_EDIT' => $arResult['PATH_TO_COMPANY_EDIT'] ?? '',
+			'PATH_TO_COMPANY_IMPORT' => $arResult['PATH_TO_COMPANY_IMPORT'] ?? '',
+			'PATH_TO_COMPANY_DEDUPE' => $arResult['PATH_TO_COMPANY_DEDUPE'] ?? '',
+			'PATH_TO_COMPANY_DEDUPEWIZARD' => $arResult['PATH_TO_COMPANY_DEDUPEWIZARD'] ?? '',
+			'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'] ?? '',
+			'ELEMENT_ID' => $arResult['VARIABLES']['company_id'] ?? null,
 			'CATEGORY_ID' => $categoryId,
 			'TYPE' => 'list',
-			'MYCOMPANY_MODE' => ($arResult['MYCOMPANY_MODE'] === 'Y' ? 'Y' : 'N'),
+			'MYCOMPANY_MODE' => $isMyCompanyMode ? 'Y' : 'N',
 			'IN_SLIDER' => $isSlider ? 'Y' : 'N',
 		],
 		$component
@@ -120,22 +120,22 @@ else
 		$APPLICATION->IncludeComponent(
 			'bitrix:app.placement',
 			'menu',
-			array(
+			[
 				'PLACEMENT' => "CRM_COMPANY_LIST_MENU",
-				"PLACEMENT_OPTIONS" => array(),
+				"PLACEMENT_OPTIONS" => [],
 				'INTERFACE_EVENT' => 'onCrmCompanyMenuInterfaceInit',
 				'MENU_EVENT_MODULE' => 'crm',
 				'MENU_EVENT' => 'onCrmCompanyListItemBuildMenu',
-			),
+			],
 			null,
-			array('HIDE_ICONS' => 'Y')
+			['HIDE_ICONS' => 'Y']
 		);
 	}
 
 	$APPLICATION->IncludeComponent(
 		'bitrix:ui.sidepanel.wrapper',
 		'',
-		array(
+		[
 			'POPUP_COMPONENT_NAME' => 'bitrix:crm.company.list',
 			'POPUP_COMPONENT_TEMPLATE_NAME' => '',
 			'POPUP_COMPONENT_PARAMS' => [
@@ -144,21 +144,21 @@ else
 					->getDefaultSuffix($categoryId),
 				'COMPANY_COUNT' => '20',
 				'PATH_TO_COMPANY_LIST' => $pathToList,
-				'PATH_TO_COMPANY_SHOW' => $arResult['PATH_TO_COMPANY_SHOW'],
-				'PATH_TO_COMPANY_EDIT' => $arResult['PATH_TO_COMPANY_EDIT'],
-				'PATH_TO_COMPANY_WIDGET' => $arResult['PATH_TO_COMPANY_WIDGET'],
-				'PATH_TO_CONTACT_EDIT' => $arResult['PATH_TO_CONTACT_EDIT'],
-				'PATH_TO_DEAL_EDIT' => $arResult['PATH_TO_DEAL_EDIT'],
-				'PATH_TO_COMPANY_MERGE' => $arResult['PATH_TO_COMPANY_MERGE'],
-				'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'],
-				'MYCOMPANY_MODE' => ($arResult['MYCOMPANY_MODE'] === 'Y' ? 'Y' : 'N'),
-				'NAVIGATION_CONTEXT_ID' => $arResult['NAVIGATION_CONTEXT_ID']
+				'PATH_TO_COMPANY_SHOW' => $arResult['PATH_TO_COMPANY_SHOW'] ?? '',
+				'PATH_TO_COMPANY_EDIT' => $arResult['PATH_TO_COMPANY_EDIT'] ?? '',
+				'PATH_TO_COMPANY_WIDGET' => $arResult['PATH_TO_COMPANY_WIDGET'] ?? '',
+				'PATH_TO_CONTACT_EDIT' => $arResult['PATH_TO_CONTACT_EDIT'] ?? '',
+				'PATH_TO_DEAL_EDIT' => $arResult['PATH_TO_DEAL_EDIT'] ?? '',
+				'PATH_TO_COMPANY_MERGE' => $arResult['PATH_TO_COMPANY_MERGE'] ?? '',
+				'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'] ?? '',
+				'MYCOMPANY_MODE' => $isMyCompanyMode ? 'Y' : 'N',
+				'NAVIGATION_CONTEXT_ID' => $arResult['NAVIGATION_CONTEXT_ID'] ?? null
 			],
 			'USE_PADDING' => false,
 			'CLOSE_AFTER_SAVE' => true,
 			'RELOAD_PAGE_AFTER_SAVE' => false,
 			'USE_LINK_TARGETS_REPLACING' => true,
 			'USE_UI_TOOLBAR' => 'Y',
-		)
+		]
 	);
 }

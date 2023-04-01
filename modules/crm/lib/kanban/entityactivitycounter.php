@@ -25,12 +25,14 @@ class EntityActivityCounter
 		$this->entityTypeId = $entityTypeId;
 		$this->entityIds = array_unique($entityIds);
 		$this->deadlines = $deadlines;
-		$this->deadlineDate = (new DateTime())
+
+		$userTimezoneDeadlineTime = (new DateTime()) // next day midnight in user timezone
 			->toUserTime()
-			->add('-'.date('G').' hours')
-			->add('-'.date('i').' minutes')
 			->add('+1 day')
+			->setTime(0, 0, 0)
 		;
+
+		$this->deadlineDate = \CCrmDateTimeHelper::getServerTime($userTimezoneDeadlineTime); // $this->deadlineDate use server timezone
 
 		$this->prepareCounters();
 	}
@@ -62,6 +64,7 @@ class EntityActivityCounter
 				'ID',
 				'COMPLETED',
 				'OWNER_ID',
+				'OWNER_TYPE_ID',
 				'RESPONSIBLE_ID',
 				'DEADLINE',
 			]
@@ -71,7 +74,10 @@ class EntityActivityCounter
 		{
 			if ($activity['DEADLINE'])
 			{
-				$activity['DEADLINE'] = new DateTime($activity['DEADLINE']);
+				$activity['DEADLINE'] = $activity['DEADLINE'] && !\CCrmDateTimeHelper::IsMaxDatabaseDate($activity['DEADLINE'])
+					? DateTime::createFromUserTime($activity['DEADLINE']) // $activity['DEADLINE'] use server timezone
+					: null
+				;
 			}
 
 			$this->activities[] = $activity;
@@ -110,6 +116,13 @@ class EntityActivityCounter
 			{
 				$fetched[$activityId] = true;
 				$ownerId = $activity['OWNER_ID'];
+				$ownerTypeId = $activity['OWNER_TYPE_ID'];
+
+				if ((int)$ownerTypeId !== $this->entityTypeId)
+				{
+					continue;
+				}
+
 				if (!isset($this->deadlines[$ownerId]))
 				{
 					$this->deadlines[$ownerId] = [];
@@ -123,7 +136,11 @@ class EntityActivityCounter
 
 	private function isDeadlineActivity(array $activity): bool
 	{
-		return ($activity['DEADLINE'] <= $this->deadlineDate && $activity['COMPLETED'] === 'N');
+		return (
+			$activity['DEADLINE'] instanceof DateTime
+			&& $activity['DEADLINE']->getTimestamp() < $this->deadlineDate->getTimestamp()
+			&& $activity['COMPLETED'] === 'N'
+		);
 	}
 
 	private function prepareIncomings(): void
@@ -160,20 +177,14 @@ class EntityActivityCounter
 			]
 		]);
 
-		$fetched = [];
 		while ($incoming = $incomingList->fetch())
 		{
-			$activityId = $incoming['ACTIVITY_ID'];
-			if (!isset($fetched[$activityId]))
+			$ownerId = $incoming['OWNER_ID'];
+			if (!isset($this->incoming[$ownerId]))
 			{
-				$fetched[$activityId] = true;
-				$ownerId = $incoming['OWNER_ID'];
-				if (!isset($this->incoming[$ownerId]))
-				{
-					$this->incoming[$ownerId] = [];
-				}
-				$this->incoming[$ownerId][] = (int)$incoming['ACTIVITY_ID'];
+				$this->incoming[$ownerId] = [];
 			}
+			$this->incoming[$ownerId][] = (int)$incoming['ACTIVITY_ID'];
 		}
 	}
 
@@ -183,10 +194,14 @@ class EntityActivityCounter
 		foreach ($this->activities as $activity)
 		{
 			$ownerId = $activity['OWNER_ID'];
+			$ownerTypeId = $activity['OWNER_TYPE_ID'];
 			$isCompleted = $activity['COMPLETED'];
 			$responsibleId = $activity['RESPONSIBLE_ID'];
 
-			$this->prepareCounter($ownerId, $isCompleted, $responsibleId);
+			if ($ownerTypeId === $this->entityTypeId)
+			{
+				$this->prepareCounter($ownerId, $isCompleted, $responsibleId);
+			}
 
 			$activityId = (int)$activity['ID'];
 
@@ -225,7 +240,13 @@ class EntityActivityCounter
 		}
 
 		$this->counters[$ownerId][$isCompleted]++;
-		$this->counters[$ownerId]['byUser'][$responsibleId][$isCompleted]++;
+		if (!isset($this->counters[$ownerId]['byUser']))
+		{
+			$this->counters[$ownerId]['byUser'] = [$responsibleId => []];
+		}
+
+		$byUserValue = $this->counters[$ownerId]['byUser'][$responsibleId][$isCompleted] ?? 0;
+		$this->counters[$ownerId]['byUser'][$responsibleId][$isCompleted] = $byUserValue + 1;
 	}
 
 	private function getMultiBindings(): array
@@ -301,7 +322,7 @@ class EntityActivityCounter
 				$items[$id]['activityTotal']
 			] = $this->getCounterValuesFromActivities($activityCounter);
 
-			$items[$id]['activitiesByUser'] = $this->getPreparedActivitiesByUser($activityCounters[$id] ?? []);
+			$items[$id]['activitiesByUser'] = $this->getPreparedActivitiesByUser($activityCounter);
 
 			$activityCounterTotal = [];
 			if (isset($errors[$id]))

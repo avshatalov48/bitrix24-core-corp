@@ -12,8 +12,10 @@ use Bitrix\Crm\Counter\EntityCounterType;
 
 Loc::loadMessages(__FILE__);
 
-class CompanyDataProvider extends EntityDataProvider
+class CompanyDataProvider extends EntityDataProvider implements FactoryOptionable
 {
+	use ForceUseFactoryTrait;
+
 	/** @var CompanySettings|null */
 	protected $settings = null;
 	protected ?Crm\Service\Factory $factory = null;

@@ -78,15 +78,15 @@ class Messages
 
 		$count = 0;
 		$countIterationPull = 0;
-		while(
-			$time->getElapsedTime() <= $limitTime &&
-			(
-				empty($limit) ||
-				$count < $limit
+		while (
+			($time->getElapsedTime() <= $limitTime)
+			&& (
+				empty($limit)
+				|| ($count < $limit)
 			)
 		)
 		{
-			if($countIterationPull > 10 && Loader::includeModule('pull'))
+			if ($countIterationPull > 10 && Loader::includeModule('pull'))
 			{
 				$countIterationPull = 0;
 
@@ -114,21 +114,21 @@ class Messages
 				SessionAutomaticTasksTable::update($task['ID'], ['DATE_TASK' => (new DateTime())->add('120 SECONDS')]);
 
 				$sessionFields = [];
-				foreach($task as $key=>$value)
+				foreach ($task as $key => $value)
 				{
 					$newKey = str_replace('IMOPENLINES_MODEL_SESSION_AUTOMATIC_TASKS_SESSION_', '', $key);
 
-					if($newKey !== $key)
+					if ($newKey !== $key)
 					{
 						$sessionFields[$newKey] = $value;
 					}
 				}
 
-				if (!isset($configs[$fields['CONFIG_ID']]))
+				if (!isset($configs[$sessionFields['CONFIG_ID']]))
 				{
 					$configs[$sessionFields['CONFIG_ID']] = $configManager->get($sessionFields['CONFIG_ID']);
 
-					if(empty($configsAutomaticMessage[$task['CONFIG_AUTOMATIC_MESSAGE_ID']]))
+					if (empty($configsAutomaticMessage[$task['CONFIG_AUTOMATIC_MESSAGE_ID']]))
 					{
 						$automaticMessagesThisConfig = $configManager->getAutomaticMessage($sessionFields['CONFIG_ID']);
 
@@ -139,7 +139,7 @@ class Messages
 					}
 				}
 
-				if (!isset($chats[$fields['CHAT_ID']]))
+				if (!isset($chats[$sessionFields['CHAT_ID']]))
 				{
 					$chats[$sessionFields['CHAT_ID']] = new Chat($sessionFields['CHAT_ID']);
 				}
@@ -148,7 +148,7 @@ class Messages
 				$session->loadByArray($sessionFields, $configs[$sessionFields['CONFIG_ID']], $chats[$sessionFields['CHAT_ID']]);
 				$resultSendAutomaticMessage = $session->sendAutomaticMessage($task['ID'], $task['CONFIG_AUTOMATIC_MESSAGE_ID'], $configsAutomaticMessage[$task['CONFIG_AUTOMATIC_MESSAGE_ID']]);
 
-				if($resultSendAutomaticMessage->isSuccess())
+				if ($resultSendAutomaticMessage->isSuccess())
 				{
 					$countIterationPull++;
 				}

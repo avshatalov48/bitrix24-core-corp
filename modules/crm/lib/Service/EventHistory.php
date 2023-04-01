@@ -20,12 +20,45 @@ use Bitrix\Main\Type\DateTime;
 
 class EventHistory
 {
-	protected const EVENT_TYPE_USER = 0;
-	protected const EVENT_TYPE_UPDATE = 1;
-	protected const EVENT_TYPE_EMAIL = 2;
-	protected const EVENT_TYPE_VIEW = 3;
-	protected const EVENT_TYPE_EXPORT = 4;
-	protected const EVENT_TYPE_DELETE = 5;
+	public const EVENT_TYPE_USER = 0;
+	public const EVENT_TYPE_UPDATE = 1;
+	public const EVENT_TYPE_EMAIL = 2;
+	public const EVENT_TYPE_VIEW = 3;
+	public const EVENT_TYPE_EXPORT = 4;
+	public const EVENT_TYPE_DELETE = 5;
+	public const EVENT_TYPE_MERGER = 6;
+	public const EVENT_TYPE_LINK = 7;
+	public const EVENT_TYPE_UNLINK = 8;
+
+	/** @var Array<int, string> */
+	private array $eventTypeCaptions;
+
+	public function __construct()
+	{
+		$this->eventTypeCaptions = [
+			static::EVENT_TYPE_USER => (string)Loc::getMessage('CRM_EVENT_HISTORY_EVENT_NAME_USER'),
+			static::EVENT_TYPE_UPDATE => (string)Loc::getMessage('CRM_EVENT_HISTORY_EVENT_NAME_UPDATE'),
+			static::EVENT_TYPE_EMAIL => (string)Loc::getMessage('CRM_EVENT_HISTORY_EVENT_NAME_EMAIL'),
+			static::EVENT_TYPE_VIEW => (string)Loc::getMessage('CRM_EVENT_HISTORY_EVENT_NAME_VIEW'),
+			static::EVENT_TYPE_EXPORT => (string)Loc::getMessage('CRM_EVENT_HISTORY_EVENT_NAME_EXPORT'),
+			static::EVENT_TYPE_DELETE => (string)Loc::getMessage('CRM_EVENT_HISTORY_EVENT_NAME_DELETE'),
+			static::EVENT_TYPE_LINK => (string)Loc::getMessage('CRM_EVENT_HISTORY_EVENT_NAME_LINK'),
+			static::EVENT_TYPE_UNLINK => (string)Loc::getMessage('CRM_EVENT_HISTORY_EVENT_NAME_UNLINK'),
+		];
+	}
+
+	/**
+	 * @return Array<int, string>
+	 */
+	public function getAllEventTypeCaptions(): array
+	{
+		return $this->eventTypeCaptions;
+	}
+
+	public function getEventTypeCaption(int $eventType): string
+	{
+		return $this->eventTypeCaptions[$eventType] ?? '';
+	}
 
 	/**
 	 * Creates a new 'view' record in the EventsTable for the provided object
@@ -110,6 +143,24 @@ class EventHistory
 		$eventData = $trackedObject->prepareExportEventData();
 
 		return $this->add(static::EVENT_TYPE_EXPORT, $eventData, $context);
+	}
+
+	final public function registerBind(TrackedObject $parent, TrackedObject $child, Context $context = null): Result
+	{
+		$eventData = [];
+		$eventData[] = $parent->prepareRelationEventData($child);
+		$eventData[] = $child->prepareRelationEventData($parent);
+
+		return $this->add(static::EVENT_TYPE_LINK, $eventData, $context);
+	}
+
+	final public function registerUnbind(TrackedObject $parent, TrackedObject $child, Context $context = null): Result
+	{
+		$eventData = [];
+		$eventData[] = $parent->prepareRelationEventData($child);
+		$eventData[] = $child->prepareRelationEventData($parent);
+
+		return $this->add(static::EVENT_TYPE_UNLINK, $eventData, $context);
 	}
 
 	/**
@@ -201,16 +252,7 @@ class EventHistory
 
 	protected function getDefaultEventName(int $eventType): string
 	{
-		$map = [
-			static::EVENT_TYPE_USER => Loc::getMessage('CRM_EVENT_HISTORY_EVENT_NAME_USER'),
-			static::EVENT_TYPE_UPDATE => Loc::getMessage('CRM_EVENT_HISTORY_EVENT_NAME_UPDATE'),
-			static::EVENT_TYPE_EMAIL => Loc::getMessage('CRM_EVENT_HISTORY_EVENT_NAME_EMAIL'),
-			static::EVENT_TYPE_VIEW => Loc::getMessage('CRM_EVENT_HISTORY_EVENT_NAME_VIEW'),
-			static::EVENT_TYPE_EXPORT => Loc::getMessage('CRM_EVENT_HISTORY_EVENT_NAME_EXPORT'),
-			static::EVENT_TYPE_DELETE => Loc::getMessage('CRM_EVENT_HISTORY_EVENT_NAME_DELETE'),
-		];
-
-		return $map[$eventType] ?? '';
+		return $this->getEventTypeCaption($eventType);
 	}
 
 	/**

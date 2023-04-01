@@ -295,26 +295,11 @@ BX.CRM.Kanban.Item.prototype = {
 				const userNow = BX.Crm.DateTime.Factory.getUserNow();
 				const userNowTimestamp = Math.round(userNow.getTime() / 1000);
 
-				let ago;
-				if (userNowTimestamp - timestamp <= 60)
-				{
-					// less than a minute
-					ago = BX.Text.encode(BX.Loc.getMessage('CRM_KANBAN_JUST_NOW'));
-				}
-				else
-				{
-					ago = BX.Main.Date.format(
-						[
-							['i', 'idiff'],
-							['H', 'Hdiff'],
-							['yesterday', 'yesterday'],
-							['m', BX.Crm.DateTime.Dictionary.Format.DAY_SHORT_MONTH_FORMAT],
-							['-', BX.Crm.DateTime.Dictionary.Format.MEDIUM_DATE_FORMAT],
-						],
-						timestamp,
-						userNow,
-					);
-				}
+				const ago = (
+					userNowTimestamp - timestamp <= 60
+						? BX.Text.encode(BX.Loc.getMessage('CRM_KANBAN_JUST_NOW'))
+						: this.getFormattedLastActiveDateTime(timestamp, userNowTimestamp)
+				);
 
 				BX.Dom.append(
 					BX.Tag.render`<span class="crm-kanban-item-last-activity-time-ago">${ago}</span>`,
@@ -371,6 +356,36 @@ BX.CRM.Kanban.Item.prototype = {
 		layout = this.container;
 
 		return layout;
+	},
+
+	getFormattedLastActiveDateTime: function(timestamp, userNow)
+	{
+		const { Format } = BX.Crm.DateTime.Dictionary;
+		const isCurrentYear = (new Date(timestamp * 1000)).getFullYear() === (new Date()).getFullYear();
+		const defaultFormat = (
+			isCurrentYear
+				? Format.DAY_SHORT_MONTH_FORMAT
+				: Format.MEDIUM_DATE_FORMAT
+		);
+
+		let shortTimeFormat = Format.SHORT_TIME_FORMAT;
+		shortTimeFormat = shortTimeFormat.replace(/\b(a)\b/, 'A'); // for uppercase AM/PM markers: h:i a => h:i A
+
+		const formattedDateTime = BX.Main.DateTimeFormat.format(
+			[
+				['i', 'idiff'],
+				['yesterday', 'yesterday, ' + shortTimeFormat],
+				['today', 'today, ' + shortTimeFormat],
+				['-', defaultFormat],
+			],
+			timestamp,
+			userNow,
+		);
+
+		return formattedDateTime
+			.replaceAll('\\', '')
+			.replace(/(^|\s)(.)/g, firstLetter => firstLetter.toLocaleUpperCase())
+		;
 	},
 
 	needRenderFields: function()
@@ -1218,10 +1233,11 @@ BX.CRM.Kanban.Item.prototype = {
 	 * @returns {String}
 	 */
 	getActivityMessage: function(type) {
-		var content = BX.create("span");
-		content.innerHTML = BX.message("CRM_KANBAN_ACTIVITY_CHANGE_" + type);
+		const content = BX.create("span");
+		const typeTranslateCode = /DYNAMIC_(\d+)/.test(type) ? 'DYNAMIC' : type;
+		content.innerHTML = BX.message("CRM_KANBAN_ACTIVITY_CHANGE_" + typeTranslateCode);
 
-		var eventLink = content.querySelector(".crm-kanban-item-activity-link");
+		const eventLink = content.querySelector(".crm-kanban-item-activity-link");
 		BX.bind(eventLink, "click", function() {
 			this.showPlannerMenu(this.activityPlan);
 			this.popupTooltip.destroy();
@@ -1584,7 +1600,7 @@ BX.CRM.Kanban.Item.prototype = {
 	 * Plan new activity.
 	 * @returns {void}
 	 */
-	showPlannerMenu: function(node)
+	showPlannerMenu: function(node, mode = BX.Crm.Activity.TodoEditorMode.ADD )
 	{
 		const id = this.getId();
 		const popupId = `kanban_planner_menu_${id}`;
@@ -1600,21 +1616,37 @@ BX.CRM.Kanban.Item.prototype = {
 					{
 						events: {
 							onSave: function() {
-								void this.animate({
+								this.animate({
 									duration: this.grid.animationDuration,
 									draw: function(progress) {
 										this.layout.container.style.opacity = 100 - progress * 50 + '%';
 									}.bind(this),
 									useAnimation: (this.layout.container.style.opacity === '1'),
+								}).then(() => {
+									void this.animate({
+										duration: this.grid.animationDuration,
+										draw: function(progress) {
+											this.layout.container.style.opacity = progress * 100 + '%';
+										}.bind(this),
+										useAnimation: true,
+									})
 								});
-							}.bind(this)
+							}.bind(this),
+							onActualizePopupLayout: function({ data }) {
+								const item = this.grid.getItem(data.entityId);
+								if (item)
+								{
+									this.activityAddingPopup.bindPopup(item.planner.children[0]);
+								}
+							}.bind(this),
 						}
 					}
 				);
 			}
-			this.activityAddingPopup.show(bindElement);
+
+			this.activityAddingPopup.show(bindElement, mode);
 		}
-		else
+		else if (mode === BX.Crm.Activity.TodoEditorMode.ADD )
 		{
 			var popupMenu = BX.PopupMenu.create(
 				popupId,

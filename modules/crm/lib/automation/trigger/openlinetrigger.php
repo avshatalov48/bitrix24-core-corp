@@ -10,7 +10,8 @@ class OpenLineTrigger extends BaseTrigger
 {
 	public static function isSupported($entityTypeId)
 	{
-		if ($entityTypeId === \CCrmOwnerType::Quote || $entityTypeId === \CCrmOwnerType::SmartInvoice)
+		$unsupported = [\CCrmOwnerType::Quote, \CCrmOwnerType::SmartInvoice, \CCrmOwnerType::SmartDocument];
+		if (in_array($entityTypeId, $unsupported, true))
 		{
 			return false;
 		}

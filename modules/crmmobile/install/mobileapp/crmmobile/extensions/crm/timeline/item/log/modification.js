@@ -10,7 +10,10 @@ jn.define('crm/timeline/item/log/modification', (require, exports, module) => {
 	 */
 	class Modification extends TimelineItemBase
 	{
-
+		getBodyBottomGap()
+		{
+			return 10;
+		}
 	}
 
 	module.exports = { Modification };

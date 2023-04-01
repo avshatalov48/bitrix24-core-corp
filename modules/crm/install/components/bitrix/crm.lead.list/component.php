@@ -1965,34 +1965,39 @@ $limit = $pageSize + 1;
  */
 if ($isInExportMode && $isStExport)
 {
-	$limit = $pageSize;
-	$navListOptions['QUERY_OPTIONS'] = array('LIMIT' => $limit);
-	$arSort = array('ID' => 'ASC');
-	$totalExportItems = $arParams['STEXPORT_TOTAL_ITEMS'] ? $arParams['STEXPORT_TOTAL_ITEMS'] : $total;
+	$totalExportItems = $arParams['STEXPORT_TOTAL_ITEMS'] ?: $total;
+	$arSort = ['ID' => 'DESC'];
 
-	$dbResultOnlyIds = CCrmLead::GetListEx(
-		$arSort,
-		array_merge(
-			$arFilter,
-			array('>ID' => $arParams['STEXPORT_LAST_EXPORTED_ID'] ?? -1)
-		),
-		false,
-		false,
-		array('ID'),
-		$navListOptions
-	);
-
-	$entityIds = array();
-	while($arDealRow = $dbResultOnlyIds->GetNext())
+	// Skip the first page because the last ID isn't present yet.
+	if ($pageNum > 1)
 	{
-		$entityIds[] = (int) $arDealRow['ID'];
+		$limit = $pageSize;
+		$navListOptions['QUERY_OPTIONS'] = ['LIMIT' => $limit];
+
+		$dbResultOnlyIds = CCrmLead::GetListEx(
+			$arSort,
+			array_merge(
+				$arFilter,
+				['<ID' => $arParams['STEXPORT_LAST_EXPORTED_ID'] ?? -1]
+			),
+			false,
+			false,
+			['ID'],
+			$navListOptions
+		);
+
+		$entityIds = array();
+		while($arDealRow = $dbResultOnlyIds->GetNext())
+		{
+			$entityIds[] = (int) $arDealRow['ID'];
+		}
+
+		$arFilter = ['@ID' => $entityIds, 'CHECK_PERMISSIONS' => 'N'];
 	}
-	$lastExportedId = end($entityIds);
 
-	if (!empty($entityIds))
+	if (!empty($entityIds) || $pageNum === 1)
 	{
-		$navListOptions['QUERY_OPTIONS'] = null;
-		$arFilter = array('@ID' => $entityIds, 'CHECK_PERMISSIONS' => 'N');
+		$navListOptions['QUERY_OPTIONS'] = $pageNum === 1 ? ['LIMIT' => $limit] : null;
 
 		$dbResult = CCrmLead::GetListEx(
 			$arSort,
@@ -2008,7 +2013,16 @@ if ($isInExportMode && $isStExport)
 		{
 			$arResult['LEAD'][$arLead['ID']] = $arLead;
 			$arResult['LEAD_ID'][$arLead['ID']] = $arLead['ID'];
-			$arResult['LEAD_UF'][$arLead['ID']] = array();
+			$arResult['LEAD_UF'][$arLead['ID']] = [];
+		}
+
+		if (isset($arResult['LEAD']) && count($arResult['LEAD']) > 0)
+		{
+			$lastExportedId = end($arResult['LEAD'])['ID'];
+		}
+		else
+		{
+			$lastExportedId = -1;
 		}
 	}
 	$enableNextPage = $pageNum * $pageSize <= $totalExportItems;

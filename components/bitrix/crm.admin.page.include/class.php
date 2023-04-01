@@ -37,10 +37,11 @@ class CCrmAdminPageInclude extends \CBitrixComponent
 			$params["PAGE_PATH"] = $params["SEF_FOLDER"].$params["PAGE_PATH"];
 		}
 		$params["PAGE_PARAMS"] = (!empty($params["PAGE_PARAMS"]) ? $params["PAGE_PARAMS"] : "");
-		$params["PAGE_CONSTANS"] = (!empty($params["PAGE_CONSTANS"]) && is_array($params["PAGE_CONSTANS"])
-			? $params["PAGE_CONSTANS"]
-			: []
-		);
+		$params["PAGE_CONSTANTS"] =
+			!empty($params["PAGE_CONSTANTS"]) && is_array($params["PAGE_CONSTANTS"])
+				? $params["PAGE_CONSTANTS"]
+				: []
+		;
 		$params["INTERNAL_PAGE"] = (!empty($params["INTERNAL_PAGE"]) ? $params["INTERNAL_PAGE"] : "N");
 
 		if (isset($params['IS_SIDE_PANEL']))
@@ -88,7 +89,7 @@ class CCrmAdminPageInclude extends \CBitrixComponent
 			mb_stripos($this->arParams['PAGE_ID'], 'menu_catalog_goods_') === 0
 			|| preg_match('/^menu_catalog_\d+$/', $this->arParams['PAGE_ID']) === 1
 		;
-		if (AccessController::getCurrent()->check(ActionDictionary::ACTION_CATALOG_READ))
+		if (\CCrmSaleHelper::isShopAccess())
 		{
 			return true;
 		}

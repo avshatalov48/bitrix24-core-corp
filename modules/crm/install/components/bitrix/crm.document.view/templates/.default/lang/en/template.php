@@ -1,7 +1,5 @@
 <?php
 $MESS["CRM_DOCUMENT_VIEW_COPY_PUBLIC_URL_MESSAGE"] = "Public link has been copied to the Clipboard";
-$MESS["CRM_DOCUMENT_VIEW_CREATE_OR_EDIT_MY_COMPANY_REQUISITES"] = "<a href=\"#URL#\" target=\"_blank\" class=\"crm__document-view--details-link\">Provide or edit</a>
-<span class=\"crm__document-view--details-text\">my company details</span>";
 $MESS["CRM_DOCUMENT_VIEW_DOWNLOAD_IN"] = "Download as:";
 $MESS["CRM_DOCUMENT_VIEW_EDIT_DOCUMENT"] = "Edit Document";
 $MESS["CRM_DOCUMENT_VIEW_EDIT_TEMPLATE"] = "Edit Template";
@@ -26,6 +24,11 @@ $MESS["CRM_DOCUMENT_VIEW_SIGNED"] = "with signatures and stamp";
 $MESS["CRM_DOCUMENT_VIEW_SIGN_AND_STAMP"] = "Stamp and signature";
 $MESS["CRM_DOCUMENT_VIEW_SIGN_BUTTON"] = "Sign";
 $MESS["CRM_DOCUMENT_VIEW_SIGN_CLICKED"] = "You have already started signing the document.";
+$MESS["CRM_DOCUMENT_VIEW_SIGN_DO_USE_PREVIOUS"] = "This template has been used %CREATED_AT% for the deal \"%TITLE%\", by responsible person \"%INITIATOR%\". Do you want to use it again?";
+$MESS["CRM_DOCUMENT_VIEW_SIGN_NEW_BUTTON"] = "Use another template";
+$MESS["CRM_DOCUMENT_VIEW_SIGN_OLD_BUTTON"] = "Re-use this template";
+$MESS["CRM_DOCUMENT_VIEW_SIGN_POPUP_CLOSE"] = "Close";
+$MESS["CRM_DOCUMENT_VIEW_SIGN_POPUP_TITLE"] = "Signing in progress";
 $MESS["CRM_DOCUMENT_VIEW_SMS_PUBLIC_URL_NECESSARY"] = "Public link is required to send SMS";
 $MESS["CRM_DOCUMENT_VIEW_TRANSFORMATION_NO_PDF_ERROR"] = "Cannot find PDF version of the document. The file may not have been converted successfully.";
 $MESS["CRM_DOCUMENT_VIEW_TRANSFORMATION_PROGRESS"] = "Please wait until the conversion has completed";

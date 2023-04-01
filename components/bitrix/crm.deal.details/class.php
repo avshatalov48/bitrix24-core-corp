@@ -253,6 +253,12 @@ class CCrmDealDetailsComponent
 				unset($currencyFormat, $currency, $currencyIterator);
 			}
 
+			$currencyID = CCrmCurrency::GetBaseCurrencyID();
+			if(isset($this->entityData['CURRENCY_ID']) && $this->entityData['CURRENCY_ID'] !== '')
+			{
+				$currencyID = $this->entityData['CURRENCY_ID'];
+			}
+
 			$this->arResult['ENTITY_CONTROLLERS'][] = [
 				'name' => 'PRODUCT_LIST',
 				'type' => 'product_list',
@@ -281,7 +287,11 @@ class CCrmDealDetailsComponent
 			? $this->arParams['~EXTRAS'] : array();
 
 		$this->arResult['PATH_TO_USER_PROFILE'] = $this->arParams['PATH_TO_USER_PROFILE'] =
-			CrmCheckPath('PATH_TO_USER_PROFILE', $this->arParams['PATH_TO_USER_PROFILE'], '/company/personal/user/#user_id#/');
+			CrmCheckPath(
+				'PATH_TO_USER_PROFILE',
+				$this->arParams['PATH_TO_USER_PROFILE'] ?? '',
+				'/company/personal/user/#user_id#/'
+			);
 
 		$this->arResult['NAME_TEMPLATE'] = empty($this->arParams['NAME_TEMPLATE'])
 			? CSite::GetNameFormat(false)
@@ -289,29 +299,29 @@ class CCrmDealDetailsComponent
 
 		$this->arResult['PATH_TO_DEAL_SHOW'] = CrmCheckPath(
 			'PATH_TO_DEAL_SHOW',
-			$this->arParams['PATH_TO_DEAL_SHOW'],
+			$this->arParams['PATH_TO_DEAL_SHOW'] ?? '',
 			$APPLICATION->GetCurPage().'?deal_id=#deal_id#&show'
 		);
 		$this->arResult['PATH_TO_DEAL_EDIT'] = CrmCheckPath(
 			'PATH_TO_DEAL_EDIT',
-			$this->arParams['PATH_TO_DEAL_EDIT'],
+			$this->arParams['PATH_TO_DEAL_EDIT'] ?? '',
 			$APPLICATION->GetCurPage().'?deal_id=#deal_id#&edit'
 		);
 
 		$this->arResult['PATH_TO_QUOTE_SHOW'] = CrmCheckPath(
 			'PATH_TO_QUOTE_SHOW',
-			$this->arParams['PATH_TO_QUOTE_SHOW'],
+			$this->arParams['PATH_TO_QUOTE_SHOW'] ?? '',
 			$APPLICATION->GetCurPage().'?quote_id=#quote_id#&show'
 		);
 		$this->arResult['PATH_TO_QUOTE_EDIT'] = CrmCheckPath(
 			'PATH_TO_QUOTE_EDIT',
-			$this->arParams['PATH_TO_QUOTE_EDIT'],
+			$this->arParams['PATH_TO_QUOTE_EDIT'] ?? '',
 			$APPLICATION->GetCurPage().'?quote_id=#quote_id#&edit'
 		);
 
 		$this->arResult['PATH_TO_PRODUCT_EDIT'] = CrmCheckPath(
 			'PATH_TO_PRODUCT_EDIT',
-			$this->arParams['PATH_TO_PRODUCT_EDIT'],
+			$this->arParams['PATH_TO_PRODUCT_EDIT'] ?? '',
 			$APPLICATION->GetCurPage().'?product_id=#product_id#&edit'
 		);
 
@@ -324,7 +334,7 @@ class CCrmDealDetailsComponent
 		{
 			$this->arResult['PATH_TO_PRODUCT_SHOW'] = CrmCheckPath(
 				'PATH_TO_PRODUCT_SHOW',
-				$this->arParams['PATH_TO_PRODUCT_SHOW'],
+				$this->arParams['PATH_TO_PRODUCT_SHOW'] ?? '',
 				$APPLICATION->GetCurPage().'?product_id=#product_id#&show'
 			);
 		}
@@ -1199,7 +1209,7 @@ class CCrmDealDetailsComponent
 		}
 
 		//region Recurring Deals
-		if ($this->entityData['IS_RECURRING'] === 'Y')
+		if (isset($this->entityData['IS_RECURRING']) && $this->entityData['IS_RECURRING'] === 'Y')
 		{
 			$dbResult = Recurring\Manager::getList(
 				array('filter' => array('=DEAL_ID' => $this->entityID)),
@@ -1280,7 +1290,7 @@ class CCrmDealDetailsComponent
 		$prohibitedStageIDS = array();
 		foreach(array_keys($allStages) as $stageID)
 		{
-			if($this->arResult['READ_ONLY'])
+			if(isset($this->arResult['READ_ONLY']) && $this->arResult['READ_ONLY'])
 			{
 				$prohibitedStageIDS[] = $stageID;
 			}
@@ -1389,7 +1399,7 @@ class CCrmDealDetailsComponent
 				'name' => 'STAGE_ID',
 				'title' => Loc::getMessage('CRM_DEAL_FIELD_STAGE_ID'),
 				'type' => 'list',
-				'editable' => ($this->entityData['IS_RECURRING'] !== "Y"),
+				'editable' => ($this->entityData['IS_RECURRING'] ?? 'N') !== "Y",
 				'enableAttributes' => false,
 				'mergeable' => false,
 				'data' => array(
@@ -1402,7 +1412,8 @@ class CCrmDealDetailsComponent
 			array(
 				'name' => 'OPPORTUNITY_WITH_CURRENCY',
 				'title' => Loc::getMessage('CRM_DEAL_FIELD_OPPORTUNITY_WITH_CURRENCY'),
-				'type' => (($this->entityData['IS_RECURRING'] !== 'Y') && Main\Loader::includeModule('salescenter')) ? 'moneyPay' : 'money',
+				'type' => ((($this->entityData['IS_RECURRING'] ?? 'N') !== 'Y') && Main\Loader::includeModule('salescenter'))
+					? 'moneyPay' : 'money',
 				'editable' => true,
 				'mergeable' => false,
 				'data' => array(
@@ -1416,7 +1427,7 @@ class CCrmDealDetailsComponent
 					'formattedWithCurrency' => 'FORMATTED_OPPORTUNITY_WITH_CURRENCY',
 					'isDeliveryAvailable' => Crm\Integration\SalesCenterManager::getInstance()->hasInstallableDeliveryItems(),
 					'disableSendButton' => Crm\Integration\SmsManager::canSendMessage() ? '' : 'y',
-					'isShowPaymentDocuments' => $this->entityData['IS_RECURRING'] !== 'Y',
+					'isShowPaymentDocuments' => ($this->entityData['IS_RECURRING'] ?? 'N') !== 'Y',
 					'isWithOrdersMode' => \CCrmSaleHelper::isWithOrdersMode(),
 				)
 			),
@@ -1519,7 +1530,7 @@ class CCrmDealDetailsComponent
 					'position' => 'ASSIGNED_BY_WORK_POSITION',
 					'photoUrl' => 'ASSIGNED_BY_PHOTO_URL',
 					'showUrl' => 'PATH_TO_ASSIGNED_BY_USER',
-					'pathToProfile' => $this->arResult['PATH_TO_USER_PROFILE']
+					'pathToProfile' => $this->arResult['PATH_TO_USER_PROFILE'] ?? null
 
 				),
 				'enableAttributes' => false
@@ -1533,7 +1544,7 @@ class CCrmDealDetailsComponent
 					'enableEditInView' => true,
 					'map' => array('data' => 'OBSERVER_IDS'),
 					'infos' => 'OBSERVER_INFOS',
-					'pathToProfile' => $this->arResult['PATH_TO_USER_PROFILE'],
+					'pathToProfile' => $this->arResult['PATH_TO_USER_PROFILE'] ?? null,
 					'messages' => array('addObserver' => Loc::getMessage('CRM_DEAL_FIELD_ADD_OBSERVER')),
 					'restriction' => [
 						'isRestricted' => !$observersRestriction->hasPermission(),
@@ -1549,7 +1560,9 @@ class CCrmDealDetailsComponent
 				"name" => "RECURRING",
 				"title" => Loc::getMessage("CRM_DEAL_SECTION_RECURRING"),
 				"type" => "recurring",
-				"editable" => is_array($this->arResult['CREATE_CATEGORY_LIST']) && count($this->arResult['CREATE_CATEGORY_LIST']) > 0,
+				"editable" => isset($this->arResult['CREATE_CATEGORY_LIST'])
+								&& is_array($this->arResult['CREATE_CATEGORY_LIST'])
+								&& count($this->arResult['CREATE_CATEGORY_LIST']) > 0,
 				"transferable" => false,
 				'enableAttributes' => false,
 				"enableRecurring" => $this->isEnableRecurring,
@@ -2185,18 +2198,18 @@ class CCrmDealDetailsComponent
 		//endregion
 		//region Opportunity & Currency
 		$this->entityData['FORMATTED_OPPORTUNITY_WITH_CURRENCY'] = \CCrmCurrency::MoneyToString(
-			$this->entityData['OPPORTUNITY'],
+			$this->entityData['OPPORTUNITY'] ?? null,
 			$this->entityData['CURRENCY_ID'],
 			''
 		);
 		$this->entityData['FORMATTED_OPPORTUNITY_ACCOUNT_WITH_CURRENCY'] = \CCrmCurrency::MoneyToString(
-			$this->entityData['OPPORTUNITY_ACCOUNT'],
-			$this->entityData['ACCOUNT_CURRENCY_ID'],
+			$this->entityData['OPPORTUNITY_ACCOUNT'] ?? null,
+			$this->entityData['ACCOUNT_CURRENCY_ID'] ?? null,
 			''
 		);
 		$this->entityData['FORMATTED_OPPORTUNITY'] = \CCrmCurrency::MoneyToString(
-			$this->entityData['OPPORTUNITY'],
-			$this->entityData['CURRENCY_ID'],
+			$this->entityData['OPPORTUNITY'] ?? null,
+			$this->entityData['CURRENCY_ID'] ?? null,
 			'#'
 		);
 		//endregion
@@ -2235,7 +2248,7 @@ class CCrmDealDetailsComponent
 			}
 
 			$this->entityData['PATH_TO_ASSIGNED_BY_USER'] = CComponentEngine::MakePathFromTemplate(
-				$this->arResult['PATH_TO_USER_PROFILE'],
+				$this->arResult['PATH_TO_USER_PROFILE'] ?? null,
 				array('user_id' => $assignedByID)
 			);
 		}
@@ -2571,7 +2584,7 @@ class CCrmDealDetailsComponent
 				'RECURRING[MULTIPLE_DATE_START]' => $today,
 				'RECURRING[MULTIPLE_DATE_LIMIT]' => $today,
 				'RECURRING[MULTIPLE_TIMES_LIMIT]' => 1,
-				'RECURRING[CATEGORY_ID]' => $this->arResult['CATEGORY_ID']
+				'RECURRING[CATEGORY_ID]' => $this->arResult['CATEGORY_ID'] ?? null
 			];
 			$this->entityData['RECURRING'] = $recurringParams;
 			$this->entityData = array_merge($this->entityData, $recurringParams);
@@ -2932,7 +2945,7 @@ class CCrmDealDetailsComponent
 	}
 	protected function prepareRecurringElements()
 	{
-		if (!$this->isEnableRecurring || $this->arResult['READ_ONLY'] === true)
+		if (!$this->isEnableRecurring || (($this->arResult['READ_ONLY'] ?? null) === true))
 		{
 			return [];
 		}
@@ -2993,7 +3006,9 @@ class CCrmDealDetailsComponent
 			[
 				"name" => "MULTIPLE_PARAMS",
 				"type" => "recurring",
-				"editable" => is_array($this->arResult['CREATE_CATEGORY_LIST']) && count($this->arResult['CREATE_CATEGORY_LIST']) > 0,
+				"editable" => isset($this->arResult['CREATE_CATEGORY_LIST'])
+					&& is_array($this->arResult['CREATE_CATEGORY_LIST'])
+					&& count($this->arResult['CREATE_CATEGORY_LIST']) > 0,
 				"transferable" => false,
 				'enableAttributes' => false,
 				"enableRecurring" => $this->isEnableRecurring,
@@ -3085,7 +3100,9 @@ class CCrmDealDetailsComponent
 			[
 				"name" => "MULTIPLE_LIMIT",
 				"type" => "recurring",
-				"editable" => is_array($this->arResult['CREATE_CATEGORY_LIST']) && count($this->arResult['CREATE_CATEGORY_LIST']) > 0,
+				"editable" => isset($this->arResult['CREATE_CATEGORY_LIST'])
+					&& is_array($this->arResult['CREATE_CATEGORY_LIST'])
+					&& count($this->arResult['CREATE_CATEGORY_LIST']) > 0,
 				"transferable" => false,
 				'enableAttributes' => false,
 				"enableRecurring" => $this->isEnableRecurring,
@@ -3146,7 +3163,9 @@ class CCrmDealDetailsComponent
 			[
 				"name" => "NEW_BEGINDATE",
 				"type" => "recurring",
-				"editable" => is_array($this->arResult['CREATE_CATEGORY_LIST']) && count($this->arResult['CREATE_CATEGORY_LIST']) > 0,
+				"editable" => isset($this->arResult['CREATE_CATEGORY_LIST'])
+					&&  is_array($this->arResult['CREATE_CATEGORY_LIST'])
+					&& count($this->arResult['CREATE_CATEGORY_LIST']) > 0,
 				"transferable" => false,
 				'enableAttributes' => false,
 				"enableRecurring" => $this->isEnableRecurring,
@@ -3213,7 +3232,9 @@ class CCrmDealDetailsComponent
 			[
 				"name" => "NEW_CLOSEDATE",
 				"type" => "recurring",
-				"editable" => is_array($this->arResult['CREATE_CATEGORY_LIST']) && count($this->arResult['CREATE_CATEGORY_LIST']) > 0,
+				"editable" => isset($this->arResult['CREATE_CATEGORY_LIST'])
+					&& is_array($this->arResult['CREATE_CATEGORY_LIST'])
+					&& count($this->arResult['CREATE_CATEGORY_LIST']) > 0,
 				"transferable" => false,
 				'enableAttributes' => false,
 				"enableRecurring" => $this->isEnableRecurring,
@@ -3279,7 +3300,11 @@ class CCrmDealDetailsComponent
 			]
 		];
 
-		if (is_array($this->arResult['CREATE_CATEGORY_LIST']) && count($this->arResult['CREATE_CATEGORY_LIST']) > 0)
+		if (
+			isset($this->arResult['CREATE_CATEGORY_LIST'])
+			&& is_array($this->arResult['CREATE_CATEGORY_LIST'])
+			&& count($this->arResult['CREATE_CATEGORY_LIST']) > 0
+		)
 		{
 			$data[] = [
 				'name' => 'RECURRING[CATEGORY_ID]',

@@ -12,6 +12,7 @@ use Bitrix\Main\ORM\Fields\FloatField;
 use Bitrix\Main\ORM\Fields\Relations\Reference;
 use Bitrix\Main\ORM\Query\Join;
 use Bitrix\Crm\Reservation\ProductRowReservation;
+use Bitrix\Main\ORM\Data\Internal\DeleteByFilterTrait;
 use Bitrix\Main\ORM\Query\Result;
 
 /**
@@ -28,6 +29,8 @@ use Bitrix\Main\ORM\Query\Result;
  **/
 class ProductRowReservationTable extends DataManager
 {
+	use DeleteByFilterTrait;
+
 	public const PRODUCT_ROW_RESERVATION_NAME = 'PRODUCT_ROW_RESERVATION';
 
 	/**

@@ -5,8 +5,7 @@ use Bitrix\Main\Localization\Loc;
 /**
  * Class CDavExtranetAccounts
  */
-class CDavExtranetAccounts
-	extends CDavAddressbookAccountsBase
+class CDavExtranetAccounts extends CDavAddressbookAccountsBase
 {
 	const RESOURCE_SYNC_SETTINGS_NAME = 'EXTRANET_ACCOUNTS';
 	const IS_RESOURCE_SYNC_ENABLED = false;
@@ -33,30 +32,30 @@ class CDavExtranetAccounts
 	protected function CatalogLastModifiedAt($collectionId, $filter = array())
 	{
 		$order = array('TIMESTAMP_X' => 'DESC');
-		$accounts = $this->LoadExtraAccounts($collectionId[0], $order, $filter, 1);
-		if (count($accounts))
+		$accounts = $this->LoadExtraAccounts($collectionId[0], 1, $order, $filter);
+		if (!empty($accounts))
 		{
 			$lastModifiedExtranetAccount = reset($accounts);
 			return $lastModifiedExtranetAccount['TIMESTAMP_X'];
 		}
-		else
-		{
-			return 0;
-		}
+
+		return 0;
 	}
 
 	/**
 	 * Return accounts array
+	 *
 	 * @param $collectionId
 	 * @param $account
 	 * @param array $filter
 	 * @param $maxCount
-	 * @return mixed
+	 * @return array
 	 */
-	protected function LoadLimitedEntitiesList($collectionId, $account, $filter = array(), $maxCount)
+	protected function LoadLimitedEntitiesList($collectionId, $account, $maxCount, $filter = [])
 	{
 		$order = array('TIMESTAMP_X' => 'DESC');
-		return $this->LoadExtraAccounts($collectionId[0], $order, $filter, $maxCount);
+
+		return $this->LoadExtraAccounts($collectionId[0], $maxCount, $order, $filter);
 	}
 
 
@@ -67,7 +66,7 @@ class CDavExtranetAccounts
 	 * @param $maxCount
 	 * @return array
 	 */
-	private function LoadExtraAccounts($siteId, $order = array(), $filter = array(), $maxCount)
+	private function LoadExtraAccounts($siteId, $maxCount, $order = array(), $filter = array())
 	{
 		$extraUserIds = CExtranet::GetMyGroupsUsersSimple($siteId);
 		$extraUserIds = array_slice($extraUserIds, 0, $maxCount);
@@ -84,7 +83,9 @@ class CDavExtranetAccounts
 					foreach ($filter['ID'] as $filterId)
 					{
 						if (in_array($filterId, $extraUserIds))
+						{
 							$userFilter['@ID'][] = $filterId;
+						}
 					}
 				}
 				elseif (in_array($filter['ID'], $extraUserIds))
@@ -108,9 +109,6 @@ class CDavExtranetAccounts
 				$result[] = $user;
 			}
 		}
-
-
-
 
 		return $result;
 	}

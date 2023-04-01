@@ -299,7 +299,7 @@ class CCrmFields
 							'CONTROL_ID' => 'DEFAULT_VALUE_'.Main\Security\Random::getString(5),
 							'FIELD_NAME' => 'DEFAULT_VALUE',
 							'VALUE' => (isset($fieldValue['DEFAULT_VALUE']) ? $fieldValue['DEFAULT_VALUE'] : ''),
-							'EXTENDED_CURRENCY_SELECTOR' => 'Y'
+							'EXTENDED_CURRENCY_SELECTOR' => 'N'
 						),
 						null,
 						array('HIDE_ICONS' => 'Y')
@@ -308,7 +308,7 @@ class CCrmFields
 					ob_end_clean();
 					$arFields[] = array(
 						'id' => 'DEFAULT_VALUE',
-						'name' => GetMessage('CRM_FIELDS_TYPE_DT_FIXED'),
+						'name' => GetMessage('CRM_FIELDS_DEFAULT_VALUE'),
 						'type' => 'custom',
 						'value' => $moneyContent
 					);
@@ -489,7 +489,7 @@ class CCrmFields
 			break;
 
 			case 'crm':
-				$settings = $fieldValue['SETTINGS'];
+				$settings = $fieldValue['SETTINGS'] ?? [];
 
 				$entityTypeLead = isset($settings['LEAD']) && $settings['LEAD'] === 'Y'? 'Y': 'N';
 				$entityTypeContact = isset($settings['CONTACT']) && $settings['CONTACT'] === 'Y'? 'Y': 'N';

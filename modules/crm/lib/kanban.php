@@ -9,6 +9,7 @@ use Bitrix\Crm\Format\PersonNameFormatter;
 use Bitrix\Crm\Kanban\Entity;
 use Bitrix\Crm\Kanban\EntityNotFoundException;
 use Bitrix\Crm\Kanban\Sort;
+use Bitrix\Crm\Kanban\ViewMode;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Search\SearchEnvironment;
 use Bitrix\Crm\Service\Container;
@@ -21,6 +22,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Text\HtmlFilter;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Rest\Marketplace\Url;
+use CCrmEntityHelper;
 
 abstract class Kanban
 {
@@ -47,8 +49,8 @@ abstract class Kanban
 	protected $allowSemantics = [];
 	protected $allowStages = [];
 	protected $additionalSelect = [];
-	protected $additionalEdit = [];
-	protected $requiredFields = [];
+	protected array $additionalEdit = [];
+	protected array $requiredFields = [];
 
 	protected $blockPage = 1;
 	protected $currentUserId = 0;
@@ -114,7 +116,7 @@ abstract class Kanban
 	{
 		Loc::loadLanguageFile(__FILE__);
 		$this->entityType = $entityType;
-		$this->viewMode = $params['VIEW_MODE'] ?? \Bitrix\Crm\Kanban\ViewMode::MODE_STAGES;
+		$this->viewMode = $params['VIEW_MODE'] ?? ViewMode::MODE_STAGES;
 
 		$type = mb_strtoupper($this->entityType);
 		$this->entity = Entity::getInstance($type, $this->viewMode);
@@ -233,7 +235,7 @@ abstract class Kanban
 			'ITEMS' => [],
 			'ADMINS' => $this->getAdmins(),
 			'MORE_FIELDS' => (!$this->isOnlyItems() ? $this->getAdditionalFields() : []),
-			'MORE_EDIT_FIELDS' => (!$this->isOnlyItems() ? $this->getAdditionalEditFields() : []),
+			'MORE_EDIT_FIELDS' => ($this->isOnlyItems() ? [] : $this->getAdditionalEditFields()),
 			'FIELDS_DISABLED' => $this->disableMoreFields,
 			'CATEGORIES' => [],
 
@@ -411,7 +413,7 @@ abstract class Kanban
 			$clear = $withoutCache;
 		}
 
-		if($params['ONLY_ITEMS'] === 'Y')
+		if (isset($params['ONLY_ITEMS']) && $params['ONLY_ITEMS'] === 'Y')
 		{
 			return $columns;
 		}
@@ -445,7 +447,11 @@ abstract class Kanban
 
 			$filter = array_merge($filterCommon, $filter);
 
-			if ($params['VIEW_MODE'] === \Bitrix\Crm\Kanban\ViewMode::MODE_ACTIVITIES && $filter['CATEGORY_ID'] === -1)
+			if (
+				isset($params['VIEW_MODE'])
+				&& $params['VIEW_MODE'] === ViewMode::MODE_ACTIVITIES
+				&& $filter['CATEGORY_ID'] === -1
+			)
 			{
 				unset($filter['CATEGORY_ID']);
 			}
@@ -517,7 +523,7 @@ abstract class Kanban
 
 			// Pass symantic param to the deadlines view for correct filter works
 			if (
-				$this->viewMode === \Bitrix\Crm\Kanban\ViewMode::MODE_DEADLINES &&
+				$this->viewMode === ViewMode::MODE_DEADLINES &&
 				!empty($this->allowSemantics) &&
 				is_array($this->allowSemantics) &&
 				$this->entity instanceof \Bitrix\Crm\Kanban\Entity\Dynamic
@@ -659,7 +665,7 @@ abstract class Kanban
 		static $filter = null;
 		$entity = $this->getEntity();
 
-		if($params['FORCE_FILTER'] === 'Y')
+		if(isset($params['FORCE_FILTER']) && $params['FORCE_FILTER'] === 'Y')
 		{
 			$forceFilter = [];
 
@@ -741,7 +747,7 @@ abstract class Kanban
 				//fill filter by type
 				$fromFieldName = $key . '_from';
 				$toFieldName = $key . '_to';
-				if($item['type'] === 'date')
+				if(isset($item['type']) && $item['type'] === 'date')
 				{
 					if(!empty($search[$fromFieldName]))
 					{
@@ -760,7 +766,7 @@ abstract class Kanban
 						$filter['!' . $key] = $search['!' . $key];
 					}
 				}
-				elseif($item['type'] === 'number')
+				elseif(isset($item['type']) && $item['type'] === 'number')
 				{
 					$fltType = $search[$key . '_numsel'] ?? 'exact';
 					if(
@@ -957,7 +963,6 @@ abstract class Kanban
 		//endregion
 
 		\CCrmEntityHelper::prepareMultiFieldFilter($filter, [], '=%', false);
-
 		return $filter;
 	}
 
@@ -1259,7 +1264,7 @@ abstract class Kanban
 
 		// Pass symantic param to the deadlines view for correct filter works
 		if (
-			$this->viewMode === \Bitrix\Crm\Kanban\ViewMode::MODE_DEADLINES &&
+			$this->viewMode === ViewMode::MODE_DEADLINES &&
 			!empty($this->allowSemantics) &&
 			is_array($this->allowSemantics) &&
 			$this->entity instanceof \Bitrix\Crm\Kanban\Entity\Dynamic
@@ -1348,7 +1353,7 @@ abstract class Kanban
 			// collect required
 			$required = [];
 			$requiredFm = [];
-			if ($this->requiredFields)
+			if ($this->requiredFields && $this->viewMode === ViewMode::MODE_STAGES)
 			{
 				// fm fields check later
 				foreach ($this->getAllowedFmTypes() as $fm)
@@ -1461,7 +1466,7 @@ abstract class Kanban
 			{
 				foreach ($this->getClientFields() as $clientField)
 				{
-					if ($row[$clientField])
+					if (isset($row[$clientField]) && $row[$clientField])
 					{
 						$result[$row['ID']][$clientField] = (
 							$isRestricted

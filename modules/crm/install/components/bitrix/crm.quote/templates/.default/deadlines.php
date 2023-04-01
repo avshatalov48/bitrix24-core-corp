@@ -76,6 +76,28 @@ if (!Bitrix\Crm\Integration\Bitrix24Manager::isAccessEnabled(CCrmOwnerType::Quot
 else
 {
 	$entityType = \CCrmOwnerType::QuoteName;
+	$isBitrix24Template = SITE_TEMPLATE_ID === 'bitrix24';
+
+	// counters
+	if ($isBitrix24Template)
+	{
+		$this->SetViewTarget('below_pagetitle', 1000);
+	}
+
+	$APPLICATION->IncludeComponent(
+		'bitrix:crm.entity.counter.panel',
+		'',
+		[
+			'ENTITY_TYPE_NAME' => $entityType,
+			'EXTRAS' => [],
+			'PATH_TO_ENTITY_LIST' => $arResult['PATH_TO_QUOTE_DEADLINES'],
+		]
+	);
+
+	if ($isBitrix24Template)
+	{
+		$this->EndViewTarget();
+	}
 
 	// menu
 	$APPLICATION->IncludeComponent(
@@ -121,6 +143,7 @@ else
 		[
 			'ENTITY_TYPE' => $entityType,
 			'VIEW_MODE' => \Bitrix\Crm\Kanban\ViewMode::MODE_DEADLINES,
+			'SHOW_ACTIVITY' => 'Y',
 			'PATH_TO_QUOTE_DETAILS' => $arResult['PATH_TO_QUOTE_DETAILS'],
 			'HEADERS_SECTIONS' => [
 				[

@@ -142,7 +142,7 @@ export class Mapper extends EventEmitter
 		this.getMap().forEach(field => {
 			const changeHandler = () => this.#onClickChange(field);
 			const element = Tag.render`
-					<div class="ui-form-row" style="background: #eef2f4;">
+					<div class="ui-form-row" style="background: #F5F7F8; border-radius: 12px;">
 						<div class="ui-form" style="width: 100%; padding: 20px;">
 							<div class="ui-form-label">
 								<div class="ui-ctl-label-text">${Tag.safe`${field.inputName}`} - ${Tag.safe`${this.#from.caption}`}</div>
@@ -154,7 +154,7 @@ export class Mapper extends EventEmitter
 										data-role="caption"
 									>${Tag.safe`${field.outputName}` || Loc.getMessage('CRM_FORM_FIELDS_MAPPER_NOT_SELECTED')}</div>
 									<div>
-										<a class="ui-btn ui-btn-xs ui-btn-light-border"
+										<a class="ui-btn ui-btn-xs ui-btn-light-border ui-btn-round"
 											onclick="${changeHandler}"
 										>${Loc.getMessage('CRM_FORM_FIELDS_MAPPER_CHOOSE_FIELD')}</a>
 									</div>

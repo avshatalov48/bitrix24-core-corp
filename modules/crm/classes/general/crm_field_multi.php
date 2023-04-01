@@ -3,8 +3,11 @@
 use Bitrix\Crm\Integrity\DuplicateCommunicationCriterion;
 use Bitrix\Crm\Integrity\DuplicateVolatileCriterion;
 use Bitrix\Crm\Integrity\Volatile\FieldCategory;
-use Bitrix\Main;
+use Bitrix\Crm\Integration\UI\EntitySelector\CountryProvider;
+use Bitrix\Crm\Format\PhoneNumberParser;
+use Bitrix\Crm\Model\FieldMultiPhoneCountryTable;
 use Bitrix\Crm\Multifield;
+use Bitrix\Main;
 
 if (!defined('CACHED_b_field_multi')) define('CACHED_b_field_multi', 360000);
 
@@ -17,6 +20,8 @@ class CCrmFieldMulti
 	private static $FIELDS = null;
 	private static $ENTITY_TYPES = null;
 	private static $ENTITY_TYPE_INFOS = null;
+
+	private static $allowedCountryCodes = null;
 
 	const PHONE = Multifield\Type\Phone::ID;
 	const EMAIL = Multifield\Type\Email::ID;
@@ -325,6 +330,15 @@ class CCrmFieldMulti
 			//endregion Register volatile duplicate criterion fields
 		}
 
+		$valueCountryCode = static::fetchCountryCode($arFields_i['TYPE_ID'], $arFields);
+		if ($arFields_i['TYPE_ID'] === static::PHONE && !empty($valueCountryCode))
+		{
+			FieldMultiPhoneCountryTable::add([
+				'FM_ID' => $ID,
+				'COUNTRY_CODE' => $valueCountryCode,
+			]);
+		}
+
 		return $ID;
 	}
 
@@ -375,6 +389,33 @@ class CCrmFieldMulti
 			}
 		}
 
+		if ($arFields_u['TYPE_ID'] === static::PHONE)
+		{
+			$curData = FieldMultiPhoneCountryTable::getDataByMultiFieldId([$ID])[0] ?? [];
+			$valueCountryCode = static::fetchCountryCode($arFields_u['TYPE_ID'], $arFields);
+			if (empty($valueCountryCode))
+			{
+				if (isset($curData['ID']))
+				{
+					FieldMultiPhoneCountryTable::delete($curData['ID']);
+				}
+			}
+			else
+			{
+				if (isset($curData['ID']))
+				{
+					FieldMultiPhoneCountryTable::update($curData['ID'], ['COUNTRY_CODE' => $valueCountryCode]);
+				}
+				else
+				{
+					FieldMultiPhoneCountryTable::add([
+						'FM_ID' => $ID,
+						'COUNTRY_CODE' => $valueCountryCode,
+					]);
+				}
+			}
+		}
+
 		return $ID;
 	}
 
@@ -405,6 +446,9 @@ class CCrmFieldMulti
 			DuplicateVolatileCriterion::register($entityTypeId, $entityId, [FieldCategory::MULTI]);
 			//endregion Register volatile duplicate criterion fields
 		}
+
+		FieldMultiPhoneCountryTable::deleteByByMultiFieldId($ID);
+
 		return $result;
 	}
 
@@ -415,7 +459,20 @@ class CCrmFieldMulti
 		$elementId = intval($elementId);
 
 		if ($entityId == '' || $elementId == 0)
+		{
 			return false;
+		}
+
+		$idsToRemove = [];
+		$dbResult = $this->cdb->Query(
+			"SELECT ID FROM b_crm_field_multi WHERE ENTITY_ID='" . $this->cdb->ForSql($entityId) . "' AND ELEMENT_ID=" . $elementId,
+			false,
+			$err_mess . __LINE__
+		);
+		while ($row = $dbResult->Fetch())
+		{
+			$idsToRemove[] = (int)$row['ID'];
+		}
 
 		$res = $this->cdb->Query(
 			"DELETE FROM b_crm_field_multi "
@@ -430,6 +487,14 @@ class CCrmFieldMulti
 		DuplicateCommunicationCriterion::processMultifieldsChange($entityTypeId, $elementId);
 		DuplicateVolatileCriterion::register($entityTypeId, $elementId, [FieldCategory::MULTI]);
 		//endregion Register volatile duplicate criterion fields
+
+		if (!empty($idsToRemove))
+		{
+			foreach ($idsToRemove as $id)
+			{
+				FieldMultiPhoneCountryTable::deleteByByMultiFieldId($id);
+			}
+		}
 
 		return $res;
 	}
@@ -476,6 +541,22 @@ class CCrmFieldMulti
 			$results[$fields['TYPE_ID']] = (int)$fields['CNT'];
 		}
 		return $results;
+	}
+
+	public static function GetPhoneCountryList(array $multiFieldIds): array
+	{
+		if (empty($multiFieldIds))
+		{
+			return [];
+		}
+
+		$result = FieldMultiPhoneCountryTable::getDataByMultiFieldId($multiFieldIds);
+		if (empty($result))
+		{
+			return [];
+		}
+
+		return array_column($result, 'COUNTRY_CODE', 'FM_ID');
 	}
 
 	public static function HasValues(array $arFieldData, $typeId)
@@ -549,7 +630,8 @@ class CCrmFieldMulti
 					$updateItems[$id] = array(
 						'TYPE_ID' => $typeId,
 						'VALUE_TYPE' => $currentValueType,
-						'VALUE' => $currentValue
+						'VALUE' => $currentValue,
+						'VALUE_COUNTRY_CODE' => static::fetchCountryCode($typeId, $currentItem),
 					);
 				}
 			}
@@ -561,6 +643,7 @@ class CCrmFieldMulti
 			{
 				$currentValue = isset($arValue['VALUE']) ? trim($arValue['VALUE']) : '';
 				$currentValueType = isset($arValue['VALUE_TYPE']) ? trim($arValue['VALUE_TYPE']) : '';
+
 				if(mb_substr($id, 0, 1) === 'n' && $currentValue !== '')
 				{
 					$addItems[] = array(
@@ -569,6 +652,7 @@ class CCrmFieldMulti
 						'TYPE_ID' => $typeId,
 						'VALUE_TYPE' => $currentValueType,
 						'VALUE' => $currentValue,
+						'VALUE_COUNTRY_CODE' => static::fetchCountryCode($typeId, $arValue),
 					);
 				}
 			}
@@ -774,8 +858,10 @@ class CCrmFieldMulti
 		{
 			$val = $arFilter[$filter_keys[$i]];
 
-			if (!is_array($val) && (string)$val == '' || (string)$val=="NOT_REF")
+			if (!is_array($val) && ((string)$val == '' || (string)$val == "NOT_REF"))
+			{
 				continue;
+			}
 
 			$key = strtoupper($filter_keys[$i]);
 			$operationInfo = CSqlUtil::GetFilterOperation($key);
@@ -1661,6 +1747,53 @@ class CCrmFieldMulti
 	private static function err_mess()
 	{
 		return '<br />Class: CCrmFieldMulti<br>File: '.__FILE__;
+	}
+
+	private static function fetchCountryCode(string $typeId, array $input): string
+	{
+		if ($typeId !== static::PHONE)
+		{
+			return '';
+		}
+
+		$phoneNumber = isset($input['VALUE']) ? trim($input['VALUE']) : '';
+		if (empty($phoneNumber))
+		{
+			return '';
+		}
+
+		if (self::$allowedCountryCodes === null)
+		{
+			self::$allowedCountryCodes = array_column(GetCountries(), 'CODE');
+			self::$allowedCountryCodes[] = CountryProvider::GLOBAL_COUNTRY_CODE;
+		}
+
+		$countryCode = isset($input['VALUE_EXTRA']['VALUE_COUNTRY_CODE'])
+			? mb_strtoupper(trim($input['VALUE_EXTRA']['VALUE_COUNTRY_CODE']))
+			: mb_strtoupper(trim($input['VALUE_COUNTRY_CODE']));
+		if (in_array($countryCode, self::$allowedCountryCodes, true))
+		{
+			return $countryCode; // valid code
+		}
+
+		return static::detectCountryByPhone($phoneNumber);
+	}
+
+	private static function detectCountryByPhone(string $phoneNumber): string
+	{
+		/** @var Main\PhoneNumber\Parser $parserInstance */
+		$parserInstance = Main\PhoneNumber\Parser::getInstance();
+
+		$defaultResult = $parserInstance->parse($phoneNumber);
+		if ($defaultResult->hasPlus() && $defaultResult->isValid())
+		{
+			return $defaultResult->getCountry();
+		}
+
+		// add "+" and try again
+		$country = $parserInstance->parse('+' . $phoneNumber)->getCountry();
+
+		return $country ?? '';
 	}
 }
 

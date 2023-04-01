@@ -1,5 +1,7 @@
 <?php
 
+use Bitrix\Ldap\Internal\Security\Encryption;
+
 IncludeModuleLangFile(__FILE__);
 
 class CLdapUtil
@@ -60,6 +62,11 @@ class CLdapUtil
 		return $arSyncFields;
 	}
 
+	/**
+	 * @deprecated
+	 * @param string $d
+	 * @return false|int
+	 */
 	public static function ConvertADDate($d)
 	{
 		if(preg_match('#(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})\.(\d)Z#', $d, $dt))
@@ -67,71 +74,52 @@ class CLdapUtil
 		return false;
 	}
 
-	public static function ByteXOR($a,$b,$l)
+	/**
+	 * @deprecated
+	 * @param string $a
+	 * @param string $b
+	 * @param int $l
+	 * @return string
+	 */
+	public static function ByteXOR($a, $b, $l)
 	{
-		$c="";
-		for($i=0; $i<$l; $i++)
-
-			$c .= $a[$i]^$b[$i];
-		return($c);
+		return Encryption::byteXor($a, $b, $l);
 	}
 
+	/**
+	 * @deprecated
+	 * @param string $val
+	 * @return false|string
+	 */
 	public static function BinMD5($val)
 	{
-		return(pack("H*",md5($val)));
+		return Encryption::binMd5($val);
 	}
 
-	public static function Decrypt($str, $key=false)
+	/**
+	 * @deprecated Use Bitrix\Ldap\Internal\Security\Encryption::decrypt() instead.
+	 * @param string $str
+	 * @param string|false $key
+	 * @return string
+	 */
+	public static function Decrypt($str, $key = false)
 	{
-		if($key===false)
+		$key = $key === false ? null : (string)$key;
 
-		$key = COption::GetOptionString("main", "pwdhashadd", "ldap");
-		$key1 = CLdapUtil::BinMD5($key);
-		$str = base64_decode($str);
-		$res = '';
-		while($str)
-		{
-			if (function_exists('mb_substr'))
-			{
-				$m = mb_substr($str, 0, 16, "ASCII");
-				$str = mb_substr($str, 16, mb_strlen($str,"ASCII")-16, "ASCII");
-			}
-			else
-			{
-				$m = mb_substr($str, 0, 16);
-				$str = mb_substr($str, 16);
-			}
-
-			$m = CLdapUtil::ByteXOR($m, $key1, 16);
-			$res .= $m;
-			$key1 = CLdapUtil::BinMD5($key.$key1.$m);
-		}
-		return $res;
+		return Encryption::decrypt((string)$str, $key);
 	}
 
-	public static function Crypt($str, $key=false)
+	/**
+	 * @deprecated Use Bitrix\Ldap\Internal\Security\Encryption::encrypt() instead.
+	 * @param string $str
+	 * @param string|false $key
+	 * @return string
+	 */
+	public static function Crypt($str, $key = false)
 	{
-		if($key===false)
-			$key = COption::GetOptionString("main", "pwdhashadd", "ldap");
-		$key1 = CLdapUtil::BinMD5($key);
-		$res = '';
-		while($str)
-		{
-			if (function_exists('mb_substr'))
-			{
-				$m = mb_substr($str, 0, 16, "ASCII");
-				$str = mb_substr($str, 16, mb_strlen($str,"ASCII")-16, "ASCII");
-			}
-			else
-			{
-				$m = mb_substr($str, 0, 16);
-				$str = mb_substr($str, 16);
-			}
+		$key = $key === false ? null : (string)$key;
 
-			$res .= CLdapUtil::ByteXOR($m, $key1, 16);
-			$key1 = CLdapUtil::BinMD5($key.$key1.$m);
-		}
-		return(base64_encode($res));
+		return Encryption::encrypt((string)$str, $key);
 	}
 
 	public static function MkOperationFilter($key)

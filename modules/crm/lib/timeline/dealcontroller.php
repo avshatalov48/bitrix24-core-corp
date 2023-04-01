@@ -7,7 +7,6 @@ use Bitrix\Crm\Data\EntityFieldsHelper;
 use Bitrix\Crm\Entity\PaymentDocumentsRepository;
 use Bitrix\Crm\History\DealStageHistoryEntry;
 use Bitrix\Crm\Order\Order;
-use Bitrix\Crm\PhaseSemantics;
 use Bitrix\Crm\Timeline\HistoryDataModel\Presenter\SignDocument;
 use Bitrix\Main;
 use Bitrix\Main\DI\ServiceLocator;
@@ -16,8 +15,10 @@ use Bitrix\Main\Type\DateTime;
 
 Loc::loadMessages(__FILE__);
 
-class DealController extends EntityController
+class DealController extends EntityController implements Interfaces\FinalSummaryController
 {
+	use Crm\Timeline\Traits\FinalSummaryControllerTrait;
+
 	//region Event Names
 	const ADD_EVENT_NAME = 'timeline_deal_add';
 	const REMOVE_EVENT_NAME = 'timeline_deal_remove';
@@ -121,19 +122,26 @@ class DealController extends EntityController
 
 	public function onModify($ownerID, array $params)
 	{
-		if(!is_int($ownerID))
+		if (!is_int($ownerID))
 		{
 			$ownerID = (int)$ownerID;
 		}
-		if($ownerID <= 0)
+
+		if ($ownerID <= 0)
 		{
 			throw new Main\ArgumentException('Owner ID must be greater than zero.', 'ownerID');
 		}
 
-		$currentFields = isset($params['CURRENT_FIELDS']) && is_array($params['CURRENT_FIELDS'])
-			? $params['CURRENT_FIELDS'] : array();
-		$previousFields = isset($params['PREVIOUS_FIELDS']) && is_array($params['PREVIOUS_FIELDS'])
-			? $params['PREVIOUS_FIELDS'] : array();
+		$currentFields =
+			isset($params['CURRENT_FIELDS']) && is_array($params['CURRENT_FIELDS'])
+				? $params['CURRENT_FIELDS']
+				: []
+		;
+		$previousFields =
+			isset($params['PREVIOUS_FIELDS']) && is_array($params['PREVIOUS_FIELDS'])
+				? $params['PREVIOUS_FIELDS']
+				: []
+		;
 
 		$fieldsMap = $params['FIELDS_MAP'] ?? null;
 		if (is_array($fieldsMap))
@@ -142,11 +150,13 @@ class DealController extends EntityController
 			$previousFields = EntityFieldsHelper::replaceFieldNamesByMap($previousFields, $fieldsMap);
 		}
 
-		$prevStageID = isset($previousFields['STAGE_ID']) ? $previousFields['STAGE_ID'] : '';
-		$curStageID = isset($currentFields['STAGE_ID']) ? $currentFields['STAGE_ID'] : $prevStageID;
+		$authorID = self::resolveEditorID($currentFields);
+
+		$prevStageID = $previousFields['STAGE_ID'] ?? '';
+		$curStageID = $currentFields['STAGE_ID'] ?? $prevStageID;
 
 		$categoryID = isset($previousFields['CATEGORY_ID']) ? (int)$previousFields['CATEGORY_ID'] : -1;
-		if($categoryID < 0)
+		if ($categoryID < 0)
 		{
 			$categoryID = \CCrmDeal::GetCategoryID($ownerID);
 		}
@@ -155,10 +165,37 @@ class DealController extends EntityController
 		if (isset($previousFields['CATEGORY_ID']) && isset($currentFields['CATEGORY_ID']) && $previousFields['CATEGORY_ID'] != $currentFields['CATEGORY_ID'])
 		{
 			$categoryChanged = true;
+
+			$currentCategoryId = (int)$currentFields['CATEGORY_ID'];
+			$prevCategoryId = (int)$previousFields['CATEGORY_ID'];
+			$factory = Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::Deal);
+			$currentCategory = $factory ? $factory->getCategory($currentCategoryId) : null;
+			$prevCategory = $factory ? $factory->getCategory($prevCategoryId) : null;
+			$currentStage = $factory ? $factory->getStage($curStageID) : null;
+			$prevStage = $factory ? $factory->getStage($prevStageID) : null;
+
+			$historyEntryID = ModificationEntry::create(
+				array(
+					'ENTITY_TYPE_ID' => \CCrmOwnerType::Deal,
+					'ENTITY_ID' => $ownerID,
+					'AUTHOR_ID' => $authorID,
+					'SETTINGS' => array(
+						'FIELD' => 'CATEGORY_ID',
+						'START_CATEGORY_ID' => $prevCategoryId,
+						'FINISH_CATEGORY_ID' => $currentCategoryId,
+						'START_CATEGORY_NAME' => $prevCategory ? $prevCategory->getName() : $prevCategoryId,
+						'FINISH_CATEGORY_NAME' => $currentCategory ? $currentCategory->getName() : $currentCategoryId,
+						'START_STAGE_ID' => $prevStageID,
+						'FINISH_STAGE_ID' => $curStageID,
+						'START_STAGE_NAME' => $prevStage ? $prevStage->getName() : $prevStageID,
+						'FINISH_STAGE_NAME' => $currentStage ? $currentStage->getName() : $curStageID
+					)
+				)
+			);
+			$this->sendPullEventOnAdd(new Crm\ItemIdentifier(\CCrmOwnerType::Deal, $ownerID), $historyEntryID);
 		}
 
-		$authorID = self::resolveEditorID($currentFields);
-		if(!$categoryChanged && $prevStageID !== $curStageID)
+		if (!$categoryChanged && $prevStageID !== $curStageID)
 		{
 			$stageNames = \CCrmDeal::GetStageNames($categoryID);
 			$historyEntryID = ModificationEntry::create(
@@ -170,47 +207,12 @@ class DealController extends EntityController
 						'FIELD' => 'STAGE_ID',
 						'START' => $prevStageID,
 						'FINISH' => $curStageID,
-						'START_NAME' => isset($stageNames[$prevStageID]) ? $stageNames[$prevStageID] : $prevStageID,
-						'FINISH_NAME' => isset($stageNames[$curStageID]) ? $stageNames[$curStageID] : $curStageID
+						'START_NAME' => $stageNames[$prevStageID] ?? $prevStageID,
+						'FINISH_NAME' => $stageNames[$curStageID] ?? $curStageID
 					)
 				)
 			);
 			$this->sendPullEventOnAdd(new Crm\ItemIdentifier(\CCrmOwnerType::Deal, $ownerID), $historyEntryID);
-
-			$curSemanticID = \CCrmDeal::GetSemanticID($curStageID, $categoryID);
-			$prevSemanticID = \CCrmDeal::GetSemanticID($prevStageID, $categoryID);
-			if($curSemanticID !== PhaseSemantics::PROCESS && $curSemanticID !== $prevSemanticID)
-			{
-				$orderIdList = Crm\Binding\OrderEntityTable::getOrderIdsByOwner($ownerID, \CCrmOwnerType::Deal);
-				if ($orderIdList)
-				{
-					$summaryFields = [
-						'ENTITY_ID' => $ownerID,
-						'ENTITY_TYPE_ID' => \CCrmOwnerType::Deal,
-						'TYPE_CATEGORY_ID' => TimelineType::CREATION,
-						'AUTHOR_ID' => $authorID,
-						'SETTINGS' => [
-							'ORDER_IDS' => $orderIdList
-						],
-						'BINDINGS' => [
-							[
-								'ENTITY_TYPE_ID' => \CCrmOwnerType::Deal,
-								'ENTITY_ID' => $ownerID
-							]
-						]
-					];
-
-					if (\CCrmSaleHelper::isWithOrdersMode())
-					{
-						$entryId = FinalSummaryEntry::create($summaryFields);
-					}
-					else
-					{
-						$entryId = FinalSummaryDocumentsEntry::create($summaryFields);
-					}
-					$this->sendPullEventOnAdd(new Crm\ItemIdentifier(\CCrmOwnerType::Deal, $ownerID), $entryId);
-				}
-			}
 		}
 
 		$this->createManualOpportunityModificationEntryIfNeeded($ownerID, $authorID, $currentFields, $previousFields);
@@ -554,6 +556,7 @@ class DealController extends EntityController
 						$data['ASSOCIATED_ENTITY']['ORDER']['ORDER_DATE'] = \FormatDate(
 							$culture->getLongDateFormat(), $order->getDateInsert()->getTimestamp()
 						);
+						$data['ASSOCIATED_ENTITY']['ORDER']['FIELD_VALUES'] = $order->getFieldValues();
 					}
 				}
 			}
@@ -567,6 +570,14 @@ class DealController extends EntityController
 				$data['TITLE'] =  Loc::getMessage('CRM_DEAL_MODIFICATION_STAGE');
 				$data['START_NAME'] = isset($settings['START_NAME']) ? $settings['START_NAME'] : $settings['START'];
 				$data['FINISH_NAME'] = isset($settings['FINISH_NAME']) ? $settings['FINISH_NAME'] : $settings['FINISH'];
+			}
+			if ($fieldName === 'CATEGORY_ID')
+			{
+				$data['TITLE'] =  Loc::getMessage('CRM_DEAL_MODIFICATION_CATEGORY');
+				$data['START_CATEGORY_NAME'] = $settings['START_CATEGORY_NAME'];
+				$data['FINISH_CATEGORY_NAME'] = $settings['FINISH_CATEGORY_NAME'];
+				$data['START_STAGE_NAME'] = $settings['START_STAGE_NAME'];
+				$data['FINISH_STAGE_NAME'] = $settings['FINISH_STAGE_NAME'];
 			}
 			if($fieldName === 'IS_MANUAL_OPPORTUNITY')
 			{

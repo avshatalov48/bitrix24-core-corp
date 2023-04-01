@@ -1,0 +1,58 @@
+.crm-entity-widget-content-country-flag-tick {
+	position: absolute;
+	display: inline-block;
+	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='6' height='3' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M5.657 0L2.828 2.828 0 0h5.657z' fill='%23515E68'/%3E%3C/svg%3E");
+	background-position: center center;
+	background-repeat: no-repeat;
+	width: 6px;
+	height: inherit;
+	top: 1px;
+	left: 30px;
+}
+
+.crm-entity-widget-content-country-flag-tick.--flipped {
+	-webkit-transform: rotate(-180deg);
+	    -ms-transform: rotate(-180deg);
+	        transform: rotate(-180deg);
+}
+
+.crm-entity-phone-number-input-flag-16 {
+	height: 12px;
+	width: 16px;
+	border-radius: 2px;
+	border: 1px solid rgba(82, 92, 105, 0.2);
+	-webkit-background-clip: padding-box;
+	background-clip: padding-box;
+	background-size: cover;
+}
+
+.crm-entity-phone-number-input-flag-24 {
+	height: 18px;
+	width: 24px;
+	border-radius: 2px;
+	border: 1px solid rgba(82, 92, 105, 0.2);
+	-webkit-background-clip: padding-box;
+	background-clip: padding-box;
+	background-size: cover;
+}
+
+.crm-entity-phone-number-input-flag-32 {
+	height: 24px;
+	width: 32px;
+	border-radius: 2px;
+	border: 1px solid rgba(82, 92, 105, 0.2);
+	-webkit-background-clip: padding-box;
+	background-clip: padding-box;
+	background-size: cover;
+}
+
+.crm-entity-country-selector-popup .ui-selector-item-avatar
+{
+	min-width: 32px;
+	width: 32px;
+	height: 24px;
+	border-radius: 4px;
+	border: 1px solid rgba(82, 92, 105, 0.2);
+	-webkit-background-clip: padding-box;
+	background-clip: padding-box;
+}

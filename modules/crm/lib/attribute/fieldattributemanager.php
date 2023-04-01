@@ -687,7 +687,8 @@ class FieldAttributeManager
 			}
 		}
 
-		if (is_array($result[FieldOrigin::CUSTOM]))
+		$resultCustom = $result[FieldOrigin::CUSTOM] ?? null;
+		if (is_array($resultCustom))
 		{
 			$notAccessibleFields = VisibilityManager::getNotAccessibleFields($entityTypeID);
 			$result[FieldOrigin::CUSTOM] =  array_diff($result[FieldOrigin::CUSTOM], $notAccessibleFields);
@@ -888,7 +889,8 @@ class FieldAttributeManager
 			}
 
 			$fieldName = $fieldInfos[$i]['name'];
-			if(!is_array($attrConfigs[$fieldName]) || empty($attrConfigs[$fieldName]))
+			$attrConfigsValue = $attrConfigs[$fieldName] ?? null;
+			if(!is_array($attrConfigsValue) || empty($attrConfigsValue))
 			{
 				continue;
 			}

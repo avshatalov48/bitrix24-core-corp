@@ -57,7 +57,7 @@ class TimelineManager
 			return DocumentController::getInstance();
 		}
 
-		if($typeID === TimelineType::DELIVERY)
+		if ($typeID === TimelineType::DELIVERY)
 		{
 			return DeliveryController::getInstance();
 		}
@@ -395,32 +395,46 @@ class TimelineManager
 					$checkIds = array_keys($entityInfos);
 					$checkDB = \Bitrix\Sale\Cashbox\CheckManager::getList(
 						array(
-							'filter' => array('=ID' => $checkIds),
-							'select' => array('ID', 'DATE_CREATE', 'ORDER_ID', 'SUM', 'CURRENCY')
+							'filter' => [
+								'=ID' => $checkIds
+							],
+							'select' => [
+								'ID',
+								'TYPE',
+								'DATE_CREATE',
+								'ORDER_ID',
+								'SUM',
+								'CURRENCY',
+								'CASHBOX_NAME' => 'CASHBOX.NAME',
+							]
 						)
 					);
 
-					while ($check = $checkDB->fetch())
+					while ($checkRow = $checkDB->fetch())
 					{
-						$check['SHOW_URL'] = \CComponentEngine::MakePathFromTemplate(
+						$check = \Bitrix\Sale\Cashbox\CheckManager::create($checkRow);
+						$checkRow['NAME'] = $check ? $check::getName() : '';
+
+						$checkRow['SHOW_URL'] = \CComponentEngine::MakePathFromTemplate(
 							\Bitrix\Main\Config\Option::get('crm', 'path_to_order_check_details'),
-							array('check_id' => $check['ID'])
+							array('check_id' => $checkRow['ID'])
 						);
+						$checkRow['CHECK_URL'] = $check ? $check->getUrl() : '';
 
 						$listLink = Service\Sale\EntityLinkBuilder\EntityLinkBuilder::getInstance()
-							->getOrderDetailsLink($check['ORDER_ID']);
+							->getOrderDetailsLink($checkRow['ORDER_ID']);
 
 						$uri = new \Bitrix\Main\Web\Uri($listLink);
 						$uri->addParams(['tab' => 'check']);
-						$check['LIST_URL'] = $uri->getUri();
-						if ($check['DATE_CREATE'] instanceof \Bitrix\Main\Type\Date)
+						$checkRow['LIST_URL'] = $uri->getUri();
+						if ($checkRow['DATE_CREATE'] instanceof \Bitrix\Main\Type\Date)
 						{
 							$culture = \Bitrix\Main\Context::getCurrent()->getCulture();
-							$check['DATE_CREATE_FORMATTED'] =  FormatDate($culture->getLongDateFormat(), $check['DATE_CREATE']->getTimestamp());
+							$checkRow['DATE_CREATE_FORMATTED'] =  FormatDate($culture->getLongDateFormat(), $checkRow['DATE_CREATE']->getTimestamp());
 						}
 
-						$check['SUM_WITH_CURRENCY'] = \CCrmCurrency::MoneyToString($check['SUM'], $check['CURRENCY']);
-						$entityInfos[$check['ID']] = array_merge($entityInfos[$check['ID']], $check);
+						$checkRow['SUM_WITH_CURRENCY'] = \CCrmCurrency::MoneyToString($checkRow['SUM'], $checkRow['CURRENCY']);
+						$entityInfos[$checkRow['ID']] = array_merge($entityInfos[$checkRow['ID']], $checkRow);
 					}
 
 					foreach($entityInfos as $entityID => $entityInfo)

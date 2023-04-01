@@ -16,6 +16,8 @@
 
 	var _isUniversalActivityScenarioEnabled = /*#__PURE__*/new WeakMap();
 
+	var _isIframe = /*#__PURE__*/new WeakMap();
+
 	var _getToolbarComponent = /*#__PURE__*/new WeakSet();
 
 	var _initPushCrmSettings = /*#__PURE__*/new WeakSet();
@@ -31,6 +33,11 @@
 	    _classPrivateMethodInitSpec(this, _getToolbarComponent);
 
 	    _classPrivateFieldInitSpec(this, _isUniversalActivityScenarioEnabled, {
+	      writable: true,
+	      value: false
+	    });
+
+	    _classPrivateFieldInitSpec(this, _isIframe, {
 	      writable: true,
 	      value: false
 	    });
@@ -74,6 +81,10 @@
 
 	      if (main_core.Type.isBoolean(params.isUniversalActivityScenarioEnabled)) {
 	        babelHelpers.classPrivateFieldSet(this, _isUniversalActivityScenarioEnabled, params.isUniversalActivityScenarioEnabled);
+	      }
+
+	      if (main_core.Type.isBoolean(params.isIframe)) {
+	        babelHelpers.classPrivateFieldSet(this, _isIframe, params.isIframe);
 	      }
 	    }
 
@@ -330,7 +341,7 @@
 	function _initPushCrmSettings2() {
 	  var _this6 = this;
 
-	  if (!babelHelpers.classPrivateFieldGet(this, _isUniversalActivityScenarioEnabled)) {
+	  if (!babelHelpers.classPrivateFieldGet(this, _isUniversalActivityScenarioEnabled) || babelHelpers.classPrivateFieldGet(this, _isIframe)) {
 	    return;
 	  }
 

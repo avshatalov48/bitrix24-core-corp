@@ -78,7 +78,7 @@ class CCrmActivity extends CAllCrmActivity
 			{
 				unset($arBinding['ID']);
 			}
-			if (!($existedBindingsMap[$arBinding['OWNER_TYPE_ID']][$arBinding['OWNER_ID']]))
+			if (!($existedBindingsMap[$arBinding['OWNER_TYPE_ID']][$arBinding['OWNER_ID']] ?? null))
 			{
 				$newBindings[] = $arBinding;
 			}

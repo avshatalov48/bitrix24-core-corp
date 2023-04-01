@@ -6,6 +6,8 @@ return [
 		'im:messenger/const',
 		'im:messenger/lib/params',
 		'im:chat/utils',
+		'utils/function',
+		'utils/object',
 	],
 	'bundle' => [
 		'./src/shared-storage/base',

@@ -45,6 +45,8 @@ use Bitrix\Main\UserField;
  * @method setIsPaymentsEnabled(bool $isPaymentsEnabled)
  * @method int|null getEntityTypeId()
  * @method setEntityTypeId(int $entityTypeId)
+ * @method bool|null getIsCountersEnabled()
+ * @method bool|null setIsCountersEnabled(bool $isCountersEnabled)
  */
 class Type extends UserField\Internal\Type implements \JsonSerializable
 {

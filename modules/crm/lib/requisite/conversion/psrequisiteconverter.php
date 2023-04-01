@@ -7,6 +7,7 @@ use Bitrix\Crm\EntityPreset;
 use Bitrix\Crm\EntityRequisite;
 use Bitrix\Crm\Requisite\EntityLink;
 use Bitrix\Crm\RequisiteAddress;
+use Bitrix\Crm\Settings\CompanySettings;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm\Invoice;
@@ -1285,7 +1286,7 @@ class PSRequisiteConverter
 			'COMPANY_TYPE' => 'OTHER',
 			'INDUSTRY' => 'OTHER',
 			'CURRENCY_ID' => \CCrmCurrency::GetBaseCurrencyID(),
-			'OPENED' => 'Y',
+			'OPENED' => CompanySettings::getCurrent()->getOpenedFlag() ? 'Y' : 'N',
 			'IS_MY_COMPANY' => 'Y',
 			'FM' => array(),
 		);

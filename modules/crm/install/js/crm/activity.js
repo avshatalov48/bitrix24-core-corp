@@ -777,6 +777,12 @@ if(typeof(BX.CrmActivityEditor) == 'undefined')
 							BX.Crm.Activity.Planner.Manager.fireGlobalEvent('onAfterActivitySave', eventParams);
 						}
 					}
+					else if (data['ERROR'])
+					{
+						BX.loadExt('ui.dialogs.messagebox').then(function (exports) {
+							exports.MessageBox.alert(data['ERROR']);
+						});
+					}
 				},
 				onfailure: function(data)
 				{

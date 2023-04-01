@@ -1,0 +1,3 @@
+<?php
+
+$MESS['CRM_BP_DOCUMENT_SMART_DOCUMENT_ENTITY_NAME'] = 'Подпись';

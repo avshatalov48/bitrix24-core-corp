@@ -1759,24 +1759,24 @@ class CAllCrmLead
 		else
 		{
 			Bitrix\Crm\Timeline\LeadController::getInstance()->onCreate($ID, array('FIELDS' => $arFields));
-
-			CCrmEntityHelper::registerAdditionalTimelineEvents([
-				'entityTypeId' => \CCrmOwnerType::Lead,
-				'entityId' => $ID,
-				'fieldsInfo' => static::GetFieldsInfo(),
-				'previousFields' => [],
-				'currentFields' => $arFields,
-				'previousStageSemantics' => Crm\PhaseSemantics::UNDEFINED,
-				'currentStageSemantics' => $arFields['STATUS_SEMANTIC_ID'] ?? Crm\PhaseSemantics::UNDEFINED,
-				'options' => $options,
-				'bindings' => [
-					'entityTypeId' => \CCrmOwnerType::Contact,
-					'previous' => [],
-					'current' => $contactBindings,
-				],
-				'isMarkEventRegistrationEnabled' => false,
-			]);
 		}
+
+		CCrmEntityHelper::registerAdditionalTimelineEvents([
+			'entityTypeId' => \CCrmOwnerType::Lead,
+			'entityId' => $ID,
+			'fieldsInfo' => static::GetFieldsInfo(),
+			'previousFields' => [],
+			'currentFields' => $arFields,
+			'previousStageSemantics' => Crm\PhaseSemantics::UNDEFINED,
+			'currentStageSemantics' => $arFields['STATUS_SEMANTIC_ID'] ?? Crm\PhaseSemantics::UNDEFINED,
+			'options' => $options,
+			'bindings' => [
+				'entityTypeId' => \CCrmOwnerType::Contact,
+				'previous' => [],
+				'current' => $contactBindings,
+			],
+			'isMarkEventRegistrationEnabled' => false,
+		]);
 
 		//region Duplicate communication data
 		if (isset($arFields['FM']) && is_array($arFields['FM']))
@@ -2379,19 +2379,21 @@ class CAllCrmLead
 						}
 					}
 
-					$CCrmEvent = new CCrmEvent();
-					$eventID = $CCrmEvent->Add($arEvent, $this->bCheckPermission);
-					if(is_int($eventID) && $eventID > 0)
+					if ($arEvent['ENTITY_FIELD'] !== 'CONTACT_ID' && $arEvent['ENTITY_FIELD'] !== 'COMPANY_ID')
 					{
-						$fieldID = isset($arEvent['ENTITY_FIELD']) ? $arEvent['ENTITY_FIELD'] : '';
-						if($fieldID === '')
-						{
-							continue;
-						}
+						$CCrmEvent = new CCrmEvent();
+						$eventID = $CCrmEvent->Add($arEvent, $this->bCheckPermission);
+					}
 
-						switch($fieldID)
-						{
-							case 'STATUS_ID':
+					$fieldID = isset($arEvent['ENTITY_FIELD']) ? $arEvent['ENTITY_FIELD'] : '';
+					if($fieldID === '')
+					{
+						continue;
+					}
+
+					switch($fieldID)
+					{
+						case 'STATUS_ID':
 							{
 								$sonetEventData[] = array(
 									'TYPE' => CCrmLiveFeedEvent::Progress,
@@ -2407,7 +2409,7 @@ class CAllCrmLead
 								);
 							}
 							break;
-							case 'ASSIGNED_BY_ID':
+						case 'ASSIGNED_BY_ID':
 							{
 								$sonetEventData[] = array(
 									'TYPE' => CCrmLiveFeedEvent::Responsible,
@@ -2423,7 +2425,7 @@ class CAllCrmLead
 								);
 							}
 							break;
-							case 'TITLE':
+						case 'TITLE':
 							{
 								$sonetEventData[] = array(
 									'TYPE' => CCrmLiveFeedEvent::Denomination,
@@ -2439,7 +2441,6 @@ class CAllCrmLead
 								);
 							}
 							break;
-						}
 					}
 				}
 			}

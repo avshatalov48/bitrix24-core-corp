@@ -123,27 +123,32 @@ class ListFilter
 
 		foreach ($this->getFieldNamesByType(static::TYPE_USER) as $fieldName)
 		{
-			if (!empty($requestFilter[$fieldName]))
+			if (empty($requestFilter[$fieldName] ?? null)) {
+				continue;
+			}
+			if ($fieldName === 'ASSIGNED_BY_ID' && is_array($requestFilter['ASSIGNED_BY_ID']))
 			{
-				if ($fieldName === 'ASSIGNED_BY_ID' && is_array($requestFilter['ASSIGNED_BY_ID']))
+				if ($this->isAssignedAllUser($requestFilter['ASSIGNED_BY_ID']))
 				{
-					if (in_array('other-users', $requestFilter['ASSIGNED_BY_ID'], true))
-					{
-						$filter['!ASSIGNED_BY_ID'] = Container::getInstance()->getContext()->getUserId();
-					}
-					elseif(!in_array('all-users', $requestFilter['ASSIGNED_BY_ID'], true))
-					{
-						$filter['=ASSIGNED_BY_ID'] = $requestFilter[$fieldName];
-					}
+					unset($requestFilter['ASSIGNED_BY_ID']);
 				}
-				else
+				elseif (in_array('other-users', $requestFilter['ASSIGNED_BY_ID'], true))
 				{
-					$filter['=' . $fieldName] = (
-						is_array($requestFilter[$fieldName])
-							? $requestFilter[$fieldName]
-							: (int)$requestFilter[$fieldName]
-					);
+					$filter['!ASSIGNED_BY_ID'] = Container::getInstance()->getContext()->getUserId();
+					unset($requestFilter['ASSIGNED_BY_ID']);
 				}
+				elseif(!in_array('all-users', $requestFilter['ASSIGNED_BY_ID'], true))
+				{
+					$filter['=ASSIGNED_BY_ID'] = $requestFilter[$fieldName];
+				}
+			}
+			else
+			{
+				$filter['=' . $fieldName] = (
+				is_array($requestFilter[$fieldName])
+					? $requestFilter[$fieldName]
+					: (int)$requestFilter[$fieldName]
+				);
 			}
 		}
 
@@ -196,6 +201,8 @@ class ListFilter
 		}
 
 		$fieldStageSemantic = $this->getFieldStageSemantic();
+		// The `ACTIVITY_COUNTER` token is a mark for future processing, and it will be, transform by special logic
+		$filtersToSpecialCalculate = ['ACTIVITY_COUNTER'];
 		foreach ($this->getFieldNamesByType(static::TYPE_LIST) as $fieldName)
 		{
 			if (!empty($requestFilter[$fieldName]))
@@ -203,6 +210,10 @@ class ListFilter
 				if ($fieldName === $fieldStageSemantic && $this->isStagesEnabled)
 				{
 					Filter::applyStageSemanticFilter($filter, $requestFilter, $fieldStageSemantic);
+				}
+				else if (in_array($fieldName, $filtersToSpecialCalculate))
+				{
+					$filter[$fieldName] = $requestFilter[$fieldName];
 				}
 				else
 				{
@@ -266,5 +277,24 @@ class ListFilter
 	protected function getFieldStageSemantic(): string
 	{
 		return $this->fieldStageSemantic;
+	}
+
+	private function isAssignedAllUser(array $assignedFilter): bool
+	{
+		return (
+			in_array('all-users', $assignedFilter, true)
+			|| (
+				in_array('other-users', $assignedFilter, true)
+				&& $this->isCurrentUserInFilter($assignedFilter)
+			)
+		);
+	}
+
+	private function isCurrentUserInFilter(array $assignedFilter): bool
+	{
+		return (
+			Container::getInstance()->getContext()->getUserId() > 0
+			&& in_array(Container::getInstance()->getContext()->getUserId(), $assignedFilter)
+		);
 	}
 }

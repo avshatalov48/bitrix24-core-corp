@@ -32,17 +32,6 @@ class CBPCrmAddProductRow extends CBPActivity
 
 		[$entityTypeId, $entityId] = \CCrmBizProcHelper::resolveEntityId($this->GetDocumentId());
 
-		if (
-			$entityTypeId !== \CCrmOwnerType::Deal
-			&& $entityTypeId !== CCrmOwnerType::SmartInvoice
-			&& !CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId)
-		)
-		{
-			$this->WriteToTrackingService(GetMessage('CRM_APR_DOCUMENT_ERROR_1'), 0, CBPTrackingType::Error);
-
-			return CBPActivityExecutionStatus::Closed;
-		}
-
 		$id = $this->getProductId();
 		$product = $this->getProduct($id);
 

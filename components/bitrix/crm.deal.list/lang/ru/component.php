@@ -85,4 +85,4 @@ $MESS["CRM_COLUMN_SOURCE_DESCRIPTION"] = "Дополнительно об ист
 $MESS["CRM_COLUMN_IS_REPEATED_APPROACH"] = "Повторное обращение";
 $MESS["CRM_SET_STAGE_NOT_COMPLETED_TITLE"] = "Не удалось перенести сделки.";
 $MESS["CRM_SET_STAGE_NOT_COMPLETED_TEXT"] = "Некоторые сделки не удалось перенести в выбранную стадию. Заполните обязательные поля и перенесите сделки снова.";
-$MESS['CRM_DEAL_LIST_ITEM_DEBUG_TITLE'] = 'В отладке';
+$MESS['CRM_DEAL_LIST_ITEM_DEBUG_TITLE_MSGVER_1'] = 'В отладке';

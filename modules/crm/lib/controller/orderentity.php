@@ -122,7 +122,7 @@ class OrderEntity extends Controller
 		}
 	}
 
-	public function listAction($select=[], $filter=[], $order=[], PageNavigation $pageNavigation): Page
+	public function listAction(PageNavigation $pageNavigation, array $select = [], array $filter = [], array $order = []): Page
 	{
 		$select = empty($select)? ['*']:$select;
 		$order = empty($order)? ['OWNER_ID'=>'ASC']:$order;

@@ -31,6 +31,7 @@ class ProductRow extends Base
 			function ($className, array $fields): \Bitrix\Crm\ProductRow {
 
 				$fields = $this->convertKeysToUpper($fields);
+				$fields = current($this->prepareForSave([$fields])) ?: [];
 
 				return \Bitrix\Crm\ProductRow::createFromArray($fields);
 			}
@@ -232,18 +233,35 @@ class ProductRow extends Base
 			return null;
 		}
 
-		$productUpdateResult = $item->updateProductRow($originalProductRow->getId(), $this->convertKeysToUpper($fields));
-		if (!$productUpdateResult->isSuccess())
-		{
-			$this->addErrors($productUpdateResult->getErrors());
+		$productRowsWithSnakeCaseKeys = $this->convertKeysToUpper($fields);
+		$productRowsWithSnakeCaseKeys = current($this->prepareForSave([$productRowsWithSnakeCaseKeys]));
 
-			return null;
+		if ($productRowsWithSnakeCaseKeys)
+		{
+			$productUpdateResult = $item->updateProductRow($originalProductRow->getId(), $productRowsWithSnakeCaseKeys);
+			if (!$productUpdateResult->isSuccess())
+			{
+				$this->addErrors($productUpdateResult->getErrors());
+
+				return null;
+			}
+
+			$itemUpdateResult = $factory->getUpdateOperation($item)->launch();
+			if (!$itemUpdateResult->isSuccess())
+			{
+				$this->addErrors($itemUpdateResult->getErrors());
+
+				return null;
+			}
 		}
-
-		$itemUpdateResult = $factory->getUpdateOperation($item)->launch();
-		if (!$itemUpdateResult->isSuccess())
+		else
 		{
-			$this->addErrors($itemUpdateResult->getErrors());
+			foreach (array_keys($fields) as $fieldName)
+			{
+				$this->addError(
+					new Error("Field '{$fieldName}' not available for update", ErrorCode::INVALID_ARG_VALUE),
+				);
+			}
 
 			return null;
 		}
@@ -495,7 +513,11 @@ class ProductRow extends Base
 
 		foreach ($productRows as $index => $productRow)
 		{
-			$result[$index] = $this->internalizeFields($productRow, $fieldsInfo);
+			$internalizedFields = $this->internalizeFields($productRow, $fieldsInfo);
+			if ($internalizedFields)
+			{
+				$result[$index] = $internalizedFields;
+			}
 		}
 
 		$productIds = array_filter(array_column($result, 'PRODUCT_ID'));

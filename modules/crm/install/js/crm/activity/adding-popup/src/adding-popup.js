@@ -1,8 +1,9 @@
-import { Tag, Text, Type} from "main.core";
-import {PopupManager, Popup} from "main.popup";
-import {SaveButton, CancelButton, ButtonColor, ButtonSize, ButtonState} from "ui.buttons";
-import {TodoEditor} from "crm.activity.todo-editor";
-import {BaseEvent, EventEmitter} from "main.core.events";
+import { ajax as Ajax, Tag, Text, Type } from "main.core";
+import { Popup } from "main.popup";
+import { SaveButton, CancelButton, ButtonColor, ButtonSize, ButtonState } from "ui.buttons";
+import { TodoEditor, TodoEditorMode } from "crm.activity.todo-editor";
+import { BaseEvent, EventEmitter } from "main.core.events";
+import { UI } from 'ui.notification';
 
 import "./adding-popup.css"
 
@@ -44,7 +45,7 @@ export class AddingPopup
 		}
 	}
 
-	show(bindElement: HTMLElement)
+	show(bindElement: HTMLElement, mode: String = TodoEditorMode.ADD)
 	{
 		const popup = this.#createPopupIfNotExists();
 		popup.setBindElement(bindElement);
@@ -64,7 +65,8 @@ export class AddingPopup
 					onChangeDescription: this.#onChangeEditorDescription.bind(this),
 					onSaveHotkeyPressed: this.#onEditorSaveHotkeyPressed.bind(this),
 					onChangeUploaderContainerSize: this.#onChangeUploaderContainerSize.bind(this),
-				}
+				},
+				popupMode: true
 			});
 
 			popup.setButtons([
@@ -93,24 +95,88 @@ export class AddingPopup
 				this.#todoEditor.setFocused();
 			});
 			popup.subscribe('onAfterClose', () => {
-				this.#todoEditor.resetToDefaults();
-				this.#eventEmitter.emit('onClose');
+				this.#todoEditor.resetToDefaults().then(()=>{
+					this.#eventEmitter.emit('onClose');
+				});
+			});
+			popup.subscribe('onShow', () => {
+				const { mode, activity } = popup.params;
+				if (mode === TodoEditorMode.UPDATE && activity)
+				{
+					this.#todoEditor
+						.setMode(mode)
+						.setActivityId(activity.id)
+						.setDescription(activity.description)
+						.setDeadline(activity.deadline)
+					;
+
+					if (Type.isArrayFilled(activity.storageElementIds))
+					{
+						this.#todoEditor.setStorageElementIds(activity.storageElementIds);
+					}
+				}
 			});
 		}
-		popup.show();
+
+		this.#prepareAndShowPopup(popup, mode);
+	}
+
+	#prepareAndShowPopup(popup: Popup, mode: String = TodoEditorMode.ADD): void
+	{
+		popup.params.mode = mode;
+		if (mode === TodoEditorMode.ADD)
+		{
+			popup.show();
+			return;
+		}
+
+		if (mode === TodoEditorMode.UPDATE)
+		{
+			this.#fetchNearActivity().then(data => {
+				if (data)
+				{
+					popup.params.activity = data;
+					popup.show();
+				}
+			});
+			return;
+		}
+
+		console.error('Wrong TodoEditor mode');
+	}
+
+	#fetchNearActivity(): Promise
+	{
+		const data = {
+			ownerTypeId: this.#entityTypeId,
+			ownerId: this.#entityId,
+		};
+
+		return new Promise((resolve, reject) => {
+			Ajax.runAction('crm.activity.todo.getNearest', {data})
+				.then(({data}) => resolve(data))
+				.catch(response => {
+					UI.Notification.Center.notify({
+						content: response.errors[0].message,
+						autoHideDelay: 5000,
+					});
+					reject();
+				});
+		});
 	}
 
 	#createPopupIfNotExists(): Popup
 	{
-		if (!this.#popup)
+		if (!this.#popup || this.#popup.isDestroyed())
 		{
 			this.#popupContainer = Tag.render`<div class="crm-activity-adding-popup-container"></div>`;
-			this.#popup = PopupManager.create({
+			this.#popup = new Popup({
 				id: `kanban_planner_menu_${this.#entityId}`,
 				overlay: {
 					opacity: 0,
 				},
 				content: this.#popupContainer,
+				cacheable: false,
 				isScrollBlock: true,
 				className: 'crm-activity-adding-popup',
 				closeByEsc: true,
@@ -122,11 +188,24 @@ export class AddingPopup
 				minWidth: 500,
 				maxWidth: 550,
 				minHeight: 150,
-				maxHeight: 400
+				maxHeight: 400,
 			});
 		}
 
 		return this.#popup;
+	}
+
+	bindPopup(bindElement: HTMLElement): void
+	{
+		if (!this.#popup)
+		{
+			return;
+		}
+
+		if (bindElement !== this.#popup.bindElement)
+		{
+			this.#popup.setBindElement(bindElement);
+		}
 	}
 
 	#saveAndClose(): void
@@ -153,6 +232,8 @@ export class AddingPopup
 	#actualizePopupLayout(description): void{
 		if (this.#popup && this.#popup.isShown())
 		{
+			this.#eventEmitter.emit('onActualizePopupLayout', { entityId: this.#entityId });
+
 			this.#popup.adjustPosition({
 				forceBindPosition: true,
 			});
@@ -185,6 +266,7 @@ export class AddingPopup
 	{
 		if (this.#popup)
 		{
+			this.#eventEmitter.emit('onActualizePopupLayout', { entityId: this.#entityId });
 			this.#popup.adjustPosition();
 		}
 	}

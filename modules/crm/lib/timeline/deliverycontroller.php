@@ -4,17 +4,12 @@ namespace Bitrix\Crm\Timeline;
 
 use Bitrix\Crm\Order\BindingsMaker\TimelineBindingsMaker;
 use Bitrix\Crm\Order\Shipment;
-use Bitrix\Crm\Timeline\Entity\TimelineTable;
-use Bitrix\Location\Entity\Address;
-use Bitrix\Location\Entity\Address\Converter\StringConverter;
-use Bitrix\Location\Entity\Format\TemplateType;
-use Bitrix\Location\Service\FormatService;
-use Bitrix\Main;
 use Bitrix\Main\Event;
 use Bitrix\Sale\Delivery\Services\Base;
 use Bitrix\Sale\Delivery\Services\Manager;
 use Bitrix\Sale\Delivery\Requests;
 use Bitrix\Sale\Delivery\Requests\Message;
+use Bitrix\Crm\ItemIdentifier;
 
 /**
  * Class DeliveryController
@@ -76,7 +71,11 @@ class DeliveryController extends EntityController
 	 * @param int|null $shipmentId
 	 * @return int|null
 	 */
-	public function createDeliveryRequestMessage(array $messageData, int $deliveryRequestId, ?int $shipmentId = null): ?int
+	public function createDeliveryRequestMessage(
+		array $messageData,
+		int $deliveryRequestId,
+		?int $shipmentId = null
+	): ?int
 	{
 		$deliveryRequest = Requests\RequestTable::getById($deliveryRequestId)->fetch();
 		if (
@@ -87,39 +86,30 @@ class DeliveryController extends EntityController
 			return null;
 		}
 
-		$result = TimelineTable::add([
-			'TYPE_ID' => TimelineType::DELIVERY,
-			'TYPE_CATEGORY_ID' => DeliveryCategoryType::MESSAGE,
-			'CREATED' => new Main\Type\DateTime(),
+		$bindings = TimelineBindingsMaker::makeByDeliveryRequestId($deliveryRequest['ID']);
+
+		$id = DeliveryEntry::create([
+			'ENTITY_TYPE_ID' => \CCrmOwnerType::DeliveryRequest,
+			'ENTITY_ID' => $deliveryRequest['ID'],
 			'AUTHOR_ID' => (isset($deliveryRequest['CREATED_BY']) && (int)$deliveryRequest['CREATED_BY'] > 0)
 				? (int)$deliveryRequest['CREATED_BY']
-				: \CCrmSecurityHelper::GetCurrentUserID(),
+				: null,
 			'SETTINGS' => [
 				'FIELDS' => [
 					'MESSAGE_DATA' => $messageData,
 					'DELIVERY_SERVICE' => $this->makeDeliveryService($deliveryService),
 				],
 			],
-			'ASSOCIATED_ENTITY_TYPE_ID' => \CCrmOwnerType::DeliveryRequest,
-			'ASSOCIATED_ENTITY_ID' => $deliveryRequest['ID'],
+			'BINDINGS' => $bindings,
 		]);
-		if (!$result->isSuccess())
+		if (!$id)
 		{
 			return null;
 		}
 
-		$bindings = TimelineBindingsMaker::makeByDeliveryRequestId($deliveryRequest['ID']);
-		TimelineEntry::registerBindings($result->getId(), $bindings);
+		$this->sendPullEventOnAddForBindings($id, $bindings);
 
-		foreach($bindings as $binding)
-		{
-			$this->sendPullEventOnAdd(
-				new \Bitrix\Crm\ItemIdentifier($binding['ENTITY_TYPE_ID'], $binding['ENTITY_ID']),
-				$result->getId()
-			);
-		}
-
-		return (int)$result->getId();
+		return $id;
 	}
 
 	/**
@@ -127,48 +117,53 @@ class DeliveryController extends EntityController
 	 * @param Shipment $shipment
 	 * @return int|null
 	 */
-	public function createShipmentDeliveryCalculationMessage(array $messageData, Shipment $shipment): ?int
+	public function createShipmentMessage(array $messageData, Shipment $shipment): ?int
 	{
-		$shipmentResponsibleId = $this->getShipmentResponsibleId($shipment);
+		$bindings = TimelineBindingsMaker::makeByShipment($shipment);
 
-		$addressFrom = $shipment->getPropertyCollection()->getAddressFrom();
-		$addressTo = $shipment->getPropertyCollection()->getAddressTo();
-
-		$result = TimelineTable::add([
-			'TYPE_ID' => TimelineType::DELIVERY,
-			'TYPE_CATEGORY_ID' => DeliveryCategoryType::DELIVERY_CALCULATION,
-			'CREATED' => new Main\Type\DateTime(),
-			'AUTHOR_ID' => $shipmentResponsibleId ?: \CCrmSecurityHelper::GetCurrentUserID(),
+		$id = DeliveryEntry::create([
+			'ENTITY_TYPE_ID' => \CCrmOwnerType::OrderShipment,
+			'ENTITY_ID' => $shipment->getId(),
+			'AUTHOR_ID' => $this->getShipmentResponsibleId($shipment),
 			'SETTINGS' => [
 				'FIELDS' => [
 					'MESSAGE_DATA' => $messageData,
-					'DELIVERY_SERVICE' => $shipment->getDelivery()
-						? $this->makeDeliveryService($shipment->getDelivery())
-						: [],
-					'ADDRESS_FROM_FORMATTED' => $addressFrom ? self::formatAddress($addressFrom->getValue()) : '',
-					'ADDRESS_TO_FORMATTED' => $addressTo ? self::formatAddress($addressTo->getValue()) : '',
+					'DELIVERY_SERVICE' =>
+						$shipment->getDelivery()
+							? $this->makeDeliveryService($shipment->getDelivery())
+							: []
+					,
 				],
 			],
-			'ASSOCIATED_ENTITY_TYPE_ID' => \CCrmOwnerType::OrderShipment,
-			'ASSOCIATED_ENTITY_ID' => $shipment->getId(),
+			'BINDINGS' => $bindings,
 		]);
-		if (!$result->isSuccess())
+		if (!$id)
 		{
 			return null;
 		}
 
-		$bindings = TimelineBindingsMaker::makeByShipment($shipment);
-		TimelineEntry::registerBindings($result->getId(), $bindings);
+		$this->sendPullEventOnAddForBindings($id, $bindings);
 
+		return $id;
+	}
+
+	/**
+	 * @param int $id
+	 * @param array $bindings
+	 * @return void
+	 */
+	private function sendPullEventOnAddForBindings(int $id, array $bindings): void
+	{
 		foreach ($bindings as $binding)
 		{
 			$this->sendPullEventOnAdd(
-				new \Bitrix\Crm\ItemIdentifier($binding['ENTITY_TYPE_ID'], $binding['ENTITY_ID']),
-				$result->getId()
+				new ItemIdentifier(
+					$binding['ENTITY_TYPE_ID'],
+					$binding['ENTITY_ID']
+				),
+				$id
 			);
 		}
-
-		return (int)$result->getId();
 	}
 
 	/**
@@ -179,7 +174,10 @@ class DeliveryController extends EntityController
 	{
 		$result = [
 			'TITLE' => $message->getSubject() ?? '',
-			'DESCRIPTION' => $message->getBodyForHtml(),
+			'DESCRIPTION' => $message->getBody(),
+			'MONEY_VALUES' => $message->getMoneyValues(),
+			'CURRENCY' => $message->getCurrency(),
+			'DATE_VALUES' => $message->getDateValues(),
 		];
 		$messageStatus = $message->getStatus();
 
@@ -202,15 +200,19 @@ class DeliveryController extends EntityController
 	private function makeDeliveryService(Base $deliveryService): array
 	{
 		return [
-			'IS_PROFILE' => $deliveryService->getParentService() ? true : false,
+			'IS_PROFILE' => (bool)$deliveryService->getParentService(),
 			'NAME' => $deliveryService->getName(),
-			'PARENT_NAME' => $deliveryService->getParentService()
-				? $deliveryService->getParentService()->getName()
-				: null,
+			'PARENT_NAME' =>
+				$deliveryService->getParentService()
+					? $deliveryService->getParentService()->getName()
+					: null
+			,
 			'LOGO' => $deliveryService->getLogotipPath(),
-			'PARENT_LOGO' => $deliveryService->getParentService()
-				? $deliveryService->getParentService()->getLogotipPath()
-				: null,
+			'PARENT_LOGO' =>
+				$deliveryService->getParentService()
+					? $deliveryService->getParentService()->getLogotipPath()
+					: null
+			,
 		];
 	}
 
@@ -220,9 +222,11 @@ class DeliveryController extends EntityController
 	 */
 	private function getShipmentResponsibleId(Shipment $shipment): ?int
 	{
-		$responsibleId = $shipment->getField('RESPONSIBLE_ID')
-			? (int)$shipment->getField('RESPONSIBLE_ID')
-			: (int)$shipment->getField('EMP_RESPONSIBLE_ID');
+		$responsibleId =
+			$shipment->getField('RESPONSIBLE_ID')
+				? (int)$shipment->getField('RESPONSIBLE_ID')
+				: (int)$shipment->getField('EMP_RESPONSIBLE_ID')
+		;
 
 		return $responsibleId ?: null;
 	}
@@ -249,24 +253,5 @@ class DeliveryController extends EntityController
 			self::MESSAGE_STATUS_SEMANTIC_ERROR,
 			self::MESSAGE_STATUS_SEMANTIC_SUCCESS,
 		];
-	}
-
-	/**
-	 * @param array $address
-	 * @return string
-	 */
-	private static function formatAddress(?array $address): string
-	{
-		if (!$address)
-		{
-			return '';
-		}
-
-		return StringConverter::convertToStringTemplate(
-			Address::fromArray($address),
-			FormatService::getInstance()->findDefault(LANGUAGE_ID)->getTemplate(TemplateType::AUTOCOMPLETE),
-			StringConverter::STRATEGY_TYPE_TEMPLATE,
-			StringConverter::CONTENT_TYPE_TEXT
-		);
 	}
 }

@@ -58,6 +58,7 @@ if(empty($arResult['NOTIFY'])):?>
 			$data['text_converted'] = preg_replace("/\[USER=([0-9]{1,})\](.*?)\[\/USER\]/i", "$2", $data['text_converted']);
 			$data['text_converted'] = preg_replace("/\[RATING=([1-5]{1})\]/i", "$1", $data['text_converted']);
 			$data['text_converted'] = preg_replace("/\[CHAT=(imol\|)?([0-9]{1,})\](.*?)\[\/CHAT\]/i", "$3", $data['text_converted']);
+			$data['text_converted'] = preg_replace("/\[dialog=(chat\d+|\d+)(?: message=(\d+))?](.*?)\[\/dialog]/i", "$3", $data['text_converted']);
 			$data['text_converted'] = preg_replace("/\[LIKE\]/i", '<span class="bx-smile bx-im-smile-like"></span>', $data['text_converted']);
 			$data['text_converted'] = preg_replace("/\[DISLIKE\]/i", '<span class="bx-smile bx-im-smile-dislike"></span>', $data['text_converted']);
 			$data['text_converted'] = CMobileHelper::prepareNotificationText($data['text_converted'], $data['originalTag']);

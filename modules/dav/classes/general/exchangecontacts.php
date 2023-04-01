@@ -67,11 +67,44 @@ $r = $e->Delete("AAATAGFud...");
 
 print_r($e->GetErrors());
 */
-class CDavExchangeContacts
-	extends CDavExchangeClient
+class CDavExchangeContacts extends CDavExchangeClient
 {
-	static $arMapItem = array("MimeContent", "ItemId", "ParentFolderId", "ItemClass", "Subject", "Sensitivity", "Body", "Attachments", "DateTimeReceived", "Size", "Categories", "Importance", "InReplyTo", "IsSubmitted", "IsDraft", "IsFromMe", "IsResend", "IsUnmodified", "InternetMessageHeaders", "DateTimeSent", "DateTimeCreated", "ResponseObjects", "ReminderDueBy", "ReminderIsSet", "ReminderMinutesBeforeStart", "DisplayCc", "DisplayTo", "HasAttachments", "ExtendedProperty", "Culture", "EffectiveRights", "LastModifiedName", "LastModifiedTime");
-	static $arMapContact = array("FileAs", "FileAsMapping", "DisplayName", "GivenName", "Initials", "MiddleName", "Nickname", "CompleteName", "CompanyName", "EmailAddresses", "PhysicalAddresses", "PhoneNumbers", "AssistantName", "Birthday", "BusinessHomePage", "Children", "Companies", "ContactSource", "Department", "Generation", "ImAddresses", "JobTitle", "Manager", "Mileage", "OfficeLocation", "PostalAddressIndex", "Profession", "SpouseName", "Surname", "WeddingAnniversary");
+	static $arMapItem = [
+		"MimeContent",
+		"ItemId",
+		"ParentFolderId",
+		"ItemClass",
+		"Subject",
+		"Sensitivity",
+		"Body",
+		"Attachments",
+		"DateTimeReceived",
+		"Size",
+		"Categories",
+		"Importance",
+		"InReplyTo",
+		"IsSubmitted",
+		"IsDraft",
+		"IsFromMe",
+		"IsResend",
+		"IsUnmodified",
+		"InternetMessageHeaders",
+		"DateTimeSent",
+		"DateTimeCreated",
+		"ResponseObjects",
+		"ReminderDueBy",
+		"ReminderIsSet",
+		"ReminderMinutesBeforeStart",
+		"DisplayCc",
+		"DisplayTo",
+		"HasAttachments",
+		"ExtendedProperty",
+		"Culture",
+		"EffectiveRights",
+		"LastModifiedName",
+		"LastModifiedTime"
+	];
+	static $arMapContact = ["FileAs", "FileAsMapping", "DisplayName", "GivenName", "Initials", "MiddleName", "Nickname", "CompleteName", "CompanyName", "EmailAddresses", "PhysicalAddresses", "PhoneNumbers", "AssistantName", "Birthday", "BusinessHomePage", "Children", "Companies", "ContactSource", "Department", "Generation", "ImAddresses", "JobTitle", "Manager", "Mileage", "OfficeLocation", "PostalAddressIndex", "Profession", "SpouseName", "Surname", "WeddingAnniversary"];
 
 	public function __construct($scheme, $server, $port, $userName, $userPassword, $siteId = null)
 	{
@@ -91,16 +124,22 @@ class CDavExchangeContacts
 		$arMapTmp = array("addressbook_id" => "AddressbookId", "addressbookid" => "AddressbookId", "mailbox" => "Mailbox");
 		CDavExchangeClient::NormalizeArray($arFilter, $arMapTmp);
 		if (!array_key_exists("AddressbookId", $arFilter))
+		{
 			$arFilter["AddressbookId"] = "contacts";
+		}
 
 		$arMapTmp = array("itemshape" => "ItemShape", "item_shape" => "ItemShape", "additionalproperties" => "AdditionalProperties", "additional_properties" => "AdditionalProperties");
 		CDavExchangeClient::NormalizeArray($arMode, $arMapTmp);
 		if (!array_key_exists("ItemShape", $arMode))
+		{
 			$arMode["ItemShape"] = "AllProperties";
+		}
 
 		$arParentFolderId = array("id" => $arFilter["AddressbookId"]);
 		if (array_key_exists("Mailbox", $arFilter))
+		{
 			$arParentFolderId["mailbox"] = $arFilter["Mailbox"];
+		}
 
 		$request->CreateFindItemBody($arParentFolderId, null, $arMode["ItemShape"], isset($arMode["AdditionalProperties"]) ? $arMode["AdditionalProperties"] : array());
 
@@ -109,10 +148,14 @@ class CDavExchangeContacts
 		$this->Disconnect();
 
 		if (is_null($response))
+		{
 			return null;
+		}
 
 		if ($this->ParseError($response))
+		{
 			return null;
+		}
 
 		$arResultItemsList = array();
 		$xmlDoc = $response->GetBodyXml();
@@ -122,17 +165,24 @@ class CDavExchangeContacts
 		{
 			$arResponseCode = $responseMessage->GetPath("/FindItemResponseMessage/ResponseCode");
 			$responseCode = null;
-			if (count($arResponseCode) > 0)
+			if (!empty($arResponseCode))
+			{
 				$responseCode = $arResponseCode[0]->GetContent();
+			}
 
 			$responseClass = $responseMessage->GetAttribute("ResponseClass");
 
-			if ((!is_null($responseClass) && ($responseClass != "Success")) || (!is_null($responseCode) && ($responseCode != "NoError")))
+			if (
+				(!is_null($responseClass) && ($responseClass !== "Success"))
+				|| (!is_null($responseCode) && ($responseCode !== "NoError"))
+			)
 			{
 				$arMessageText = $responseMessage->GetPath("/FindItemResponseMessage/MessageText");
 				$messageText = "Error";
-				if (count($arMessageText) > 0)
+				if (!empty($arMessageText))
+				{
 					$messageText = $arMessageText[0]->GetContent();
+				}
 
 				$this->AddError(!is_null($responseCode) ? $this->Encode($responseCode) : $this->Encode($responseClass), $this->Encode($messageText));
 				continue;
@@ -140,7 +190,9 @@ class CDavExchangeContacts
 
 			$arContactItem = $responseMessage->GetPath("/FindItemResponseMessage/RootFolder/Items/Contact");
 			foreach ($arContactItem as $contactItem)
+			{
 				$arResultItemsList[] = $this->ConvertContactToArray($contactItem);
+			}
 		}
 
 		return $arResultItemsList;
@@ -163,10 +215,14 @@ class CDavExchangeContacts
 
 
 		if (is_null($response))
+		{
 			return null;
+		}
 
 		if ($this->ParseError($response))
+		{
 			return null;
+		}
 
 		$arResultItemsList = array();
 		$xmlDoc = $response->GetBodyXml();
@@ -176,17 +232,24 @@ class CDavExchangeContacts
 		{
 			$arResponseCode = $responseMessage->GetPath("/GetItemResponseMessage/ResponseCode");
 			$responseCode = null;
-			if (count($arResponseCode) > 0)
+			if (!empty($arResponseCode))
+			{
 				$responseCode = $arResponseCode[0]->GetContent();
+			}
 
 			$responseClass = $responseMessage->GetAttribute("ResponseClass");
 
-			if ((!is_null($responseClass) && ($responseClass != "Success")) || (!is_null($responseCode) && ($responseCode != "NoError")))
+			if (
+				(!is_null($responseClass) && ($responseClass !== "Success"))
+				|| (!is_null($responseCode) && ($responseCode !== "NoError"))
+			)
 			{
 				$arMessageText = $responseMessage->GetPath("/GetItemResponseMessage/MessageText");
 				$messageText = "Error";
-				if (count($arMessageText) > 0)
+				if (!empty($arMessageText))
+				{
 					$messageText = $arMessageText[0]->GetContent();
+				}
 
 				$this->AddError(!is_null($responseCode) ? $this->Encode($responseCode) : $this->Encode($responseClass), $this->Encode($messageText));
 				continue;
@@ -194,7 +257,9 @@ class CDavExchangeContacts
 
 			$arContactItem = $responseMessage->GetPath("/GetItemResponseMessage/Items/Contact");
 			foreach ($arContactItem as $contactItem)
+			{
 				$arResultItemsList[] = $this->ConvertContactToArray($contactItem);
+			}
 		}
 
 		return $arResultItemsList;
@@ -212,13 +277,17 @@ class CDavExchangeContacts
 		$arMapTmp = array("addressbook_id" => "AddressbookId", "addressbookid" => "AddressbookId", "mailbox" => "Mailbox");
 		CDavExchangeClient::NormalizeArray($arFields, $arMapTmp);
 		if (!array_key_exists("AddressbookId", $arFields))
+		{
 			$arFields["AddressbookId"] = "contacts";
+		}
 
 		$arFieldsNew = $this->FormatFieldsArray($arFields);
 
 		$arParentFolderId = array("id" => $arFields["AddressbookId"]);
 		if (array_key_exists("Mailbox", $arFields))
+		{
 			$arParentFolderId["mailbox"] = $arFields["Mailbox"];
+		}
 
 		$request->CreateCreateItemBody($arParentFolderId, $arFieldsNew);
 
@@ -227,10 +296,14 @@ class CDavExchangeContacts
 		$this->Disconnect();
 
 		if (is_null($response))
+		{
 			return null;
+		}
 
 		if ($this->ParseError($response))
+		{
 			return null;
+		}
 
 		$arResultItemsList = array();
 		$xmlDoc = $response->GetBodyXml();
@@ -240,17 +313,24 @@ class CDavExchangeContacts
 		{
 			$arResponseCode = $responseMessage->GetPath("/CreateItemResponseMessage/ResponseCode");
 			$responseCode = null;
-			if (count($arResponseCode) > 0)
+			if (!empty($arResponseCode))
+			{
 				$responseCode = $arResponseCode[0]->GetContent();
+			}
 
 			$responseClass = $responseMessage->GetAttribute("ResponseClass");
 
-			if ((!is_null($responseClass) && ($responseClass != "Success")) || (!is_null($responseCode) && ($responseCode != "NoError")))
+			if (
+				(!is_null($responseClass) && ($responseClass !== "Success"))
+				|| (!is_null($responseCode) && ($responseCode !== "NoError"))
+			)
 			{
 				$arMessageText = $responseMessage->GetPath("/CreateItemResponseMessage/MessageText");
 				$messageText = "Error";
-				if (count($arMessageText) > 0)
+				if (!empty($arMessageText))
+				{
 					$messageText = $arMessageText[0]->GetContent();
+				}
 
 				$this->AddError(!is_null($responseCode) ? $this->Encode($responseCode) : $this->Encode($responseClass), $this->Encode($messageText));
 				continue;
@@ -258,7 +338,9 @@ class CDavExchangeContacts
 
 			$arContactItem = $responseMessage->GetPath("/CreateItemResponseMessage/Items/Contact");
 			foreach ($arContactItem as $contactItem)
+			{
 				$arResultItemsList[] = $this->ConvertContactToArray($contactItem);
+			}
 		}
 
 		return $arResultItemsList;
@@ -282,10 +364,14 @@ class CDavExchangeContacts
 		$this->Disconnect();
 
 		if (is_null($response))
+		{
 			return null;
+		}
 
 		if ($this->ParseError($response))
+		{
 			return null;
+		}
 
 		$arResultItemsList = array();
 		$xmlDoc = $response->GetBodyXml();
@@ -295,17 +381,24 @@ class CDavExchangeContacts
 		{
 			$arResponseCode = $responseMessage->GetPath("/UpdateItemResponseMessage/ResponseCode");
 			$responseCode = null;
-			if (count($arResponseCode) > 0)
+			if (!empty($arResponseCode))
+			{
 				$responseCode = $arResponseCode[0]->GetContent();
+			}
 
 			$responseClass = $responseMessage->GetAttribute("ResponseClass");
 
-			if ((!is_null($responseClass) && ($responseClass != "Success")) || (!is_null($responseCode) && ($responseCode != "NoError")))
+			if (
+				(!is_null($responseClass) && ($responseClass !== "Success"))
+				|| (!is_null($responseCode) && ($responseCode !== "NoError"))
+			)
 			{
 				$arMessageText = $responseMessage->GetPath("/UpdateItemResponseMessage/MessageText");
 				$messageText = "Error";
-				if (count($arMessageText) > 0)
+				if (!empty($arMessageText))
+				{
 					$messageText = $arMessageText[0]->GetContent();
+				}
 
 				$this->AddError(!is_null($responseCode) ? $this->Encode($responseCode) : $this->Encode($responseClass), $this->Encode($messageText));
 				continue;
@@ -313,7 +406,9 @@ class CDavExchangeContacts
 
 			$arContactItem = $responseMessage->GetPath("/UpdateItemResponseMessage/Items/Contact");
 			foreach ($arContactItem as $contactItem)
+			{
 				$arResultItemsList[] = $this->ConvertContactToArray($contactItem);
+			}
 		}
 
 		return $arResultItemsList;
@@ -335,10 +430,14 @@ class CDavExchangeContacts
 		$this->Disconnect();
 
 		if (is_null($response))
+		{
 			return null;
+		}
 
 		if ($this->ParseError($response))
+		{
 			return null;
+		}
 
 		$xmlDoc = $response->GetBodyXml();
 
@@ -347,17 +446,24 @@ class CDavExchangeContacts
 		{
 			$arResponseCode = $responseMessage->GetPath("/DeleteItemResponseMessage/ResponseCode");
 			$responseCode = null;
-			if (count($arResponseCode) > 0)
+			if (!empty($arResponseCode))
+			{
 				$responseCode = $arResponseCode[0]->GetContent();
+			}
 
 			$responseClass = $responseMessage->GetAttribute("ResponseClass");
 
-			if ((!is_null($responseClass) && ($responseClass != "Success")) || (!is_null($responseCode) && ($responseCode != "NoError")))
+			if (
+				(!is_null($responseClass) && ($responseClass !== "Success"))
+				|| (!is_null($responseCode) && ($responseCode !== "NoError"))
+			)
 			{
 				$arMessageText = $responseMessage->GetPath("/DeleteItemResponseMessage/MessageText");
 				$messageText = "Error";
-				if (count($arMessageText) > 0)
+				if (!empty($arMessageText))
+				{
 					$messageText = $arMessageText[0]->GetContent();
+				}
 
 				$this->AddError(!is_null($responseCode) ? $this->Encode($responseCode) : $this->Encode($responseClass), $this->Encode($messageText));
 				return false;
@@ -381,7 +487,9 @@ class CDavExchangeContacts
 
 		$arParentFolderId = array("id" => "contacts");
 		if (array_key_exists("Mailbox", $arFilter))
+		{
 			$arParentFolderId["mailbox"] = $arFilter["Mailbox"];
+		}
 
 		$request->CreateFindFolderBody($arParentFolderId, "AllProperties");
 
@@ -390,10 +498,14 @@ class CDavExchangeContacts
 		$this->Disconnect();
 
 		if (is_null($response))
+		{
 			return null;
+		}
 
 		if ($this->ParseError($response))
+		{
 			return null;
+		}
 
 		$arResultFoldersList = array();
 		$xmlDoc = $response->GetBodyXml();
@@ -403,17 +515,24 @@ class CDavExchangeContacts
 		{
 			$arResponseCode = $responseMessage->GetPath("/FindFolderResponseMessage/ResponseCode");
 			$responseCode = null;
-			if (count($arResponseCode) > 0)
+			if (!empty($arResponseCode))
+			{
 				$responseCode = $arResponseCode[0]->GetContent();
+			}
 
 			$responseClass = $responseMessage->GetAttribute("ResponseClass");
 
-			if ((!is_null($responseClass) && ($responseClass != "Success")) || (!is_null($responseCode) && ($responseCode != "NoError")))
+			if (
+				(!is_null($responseClass) && ($responseClass !== "Success"))
+				|| (!is_null($responseCode) && ($responseCode !== "NoError"))
+			)
 			{
 				$arMessageText = $responseMessage->GetPath("/FindFolderResponseMessage/MessageText");
 				$messageText = "Error";
-				if (count($arMessageText) > 0)
+				if (!empty($arMessageText))
+				{
 					$messageText = $arMessageText[0]->GetContent();
+				}
 
 				$this->AddError(!is_null($responseCode) ? $this->Encode($responseCode) : $this->Encode($responseClass), $this->Encode($messageText));
 				continue;
@@ -421,7 +540,9 @@ class CDavExchangeContacts
 
 			$arContactFolder = $responseMessage->GetPath("/FindFolderResponseMessage/RootFolder/Folders/ContactsFolder");
 			foreach ($arContactFolder as $contactFolder)
+			{
 				$arResultFoldersList[] = $this->ConvertContactFolderToArray($contactFolder);
+			}
 		}
 
 		return $arResultFoldersList;
@@ -443,10 +564,14 @@ class CDavExchangeContacts
 		$this->Disconnect();
 
 		if (is_null($response))
+		{
 			return null;
+		}
 
 		if ($this->ParseError($response))
+		{
 			return null;
+		}
 
 		$arResultFoldersList = array();
 		$xmlDoc = $response->GetBodyXml();
@@ -456,17 +581,24 @@ class CDavExchangeContacts
 		{
 			$arResponseCode = $responseMessage->GetPath("/GetFolderResponseMessage/ResponseCode");
 			$responseCode = null;
-			if (count($arResponseCode) > 0)
+			if (!empty($arResponseCode))
+			{
 				$responseCode = $arResponseCode[0]->GetContent();
+			}
 
 			$responseClass = $responseMessage->GetAttribute("ResponseClass");
 
-			if ((!is_null($responseClass) && ($responseClass != "Success")) || (!is_null($responseCode) && ($responseCode != "NoError")))
+			if (
+				(!is_null($responseClass) && ($responseClass !== "Success"))
+				|| (!is_null($responseCode) && ($responseCode !== "NoError"))
+			)
 			{
 				$arMessageText = $responseMessage->GetPath("/GetFolderResponseMessage/MessageText");
 				$messageText = "Error";
-				if (count($arMessageText) > 0)
+				if (!empty($arMessageText))
+				{
 					$messageText = $arMessageText[0]->GetContent();
+				}
 
 				$this->AddError(!is_null($responseCode) ? $this->Encode($responseCode) : $this->Encode($responseClass), $this->Encode($messageText));
 				continue;
@@ -474,7 +606,9 @@ class CDavExchangeContacts
 
 			$arContactFolder = $responseMessage->GetPath("/GetFolderResponseMessage/Folders/ContactsFolder");
 			foreach ($arContactFolder as $contactFolder)
+			{
 				$arResultFoldersList[] = $this->ConvertContactFolderToArray($contactFolder);
+			}
 		}
 
 		return $arResultFoldersList;
@@ -496,7 +630,9 @@ class CDavExchangeContacts
 
 		$arParentFolderId = array("id" => "contacts");
 		if (array_key_exists("Mailbox", $arFields))
+		{
 			$arParentFolderId["mailbox"] = $arFields["Mailbox"];
+		}
 
 		$request->CreateCreateFolderBody($arParentFolderId, $arFieldsNew);
 
@@ -505,10 +641,14 @@ class CDavExchangeContacts
 		$this->Disconnect();
 
 		if (is_null($response))
+		{
 			return null;
+		}
 
 		if ($this->ParseError($response))
+		{
 			return null;
+		}
 
 		$arResultFoldersList = array();
 		$xmlDoc = $response->GetBodyXml();
@@ -518,17 +658,24 @@ class CDavExchangeContacts
 		{
 			$arResponseCode = $responseMessage->GetPath("/CreateFolderResponseMessage/ResponseCode");
 			$responseCode = null;
-			if (count($arResponseCode) > 0)
+			if (!empty($arResponseCode))
+			{
 				$responseCode = $arResponseCode[0]->GetContent();
+			}
 
 			$responseClass = $responseMessage->GetAttribute("ResponseClass");
 
-			if ((!is_null($responseClass) && ($responseClass != "Success")) || (!is_null($responseCode) && ($responseCode != "NoError")))
+			if (
+				(!is_null($responseClass) && ($responseClass !== "Success"))
+				|| (!is_null($responseCode) && ($responseCode !== "NoError"))
+			)
 			{
 				$arMessageText = $responseMessage->GetPath("/CreateFolderResponseMessage/MessageText");
 				$messageText = "Error";
-				if (count($arMessageText) > 0)
+				if (!empty($arMessageText))
+				{
 					$messageText = $arMessageText[0]->GetContent();
+				}
 
 				$this->AddError(!is_null($responseCode) ? $this->Encode($responseCode) : $this->Encode($responseClass), $this->Encode($messageText));
 				continue;
@@ -536,7 +683,9 @@ class CDavExchangeContacts
 
 			$arContactFolder = $responseMessage->GetPath("/CreateFolderResponseMessage/Folders/ContactsFolder");
 			foreach ($arContactFolder as $contactFolder)
+			{
 				$arResultFoldersList[] = $this->ConvertContactFolderToArray($contactFolder);
+			}
 		}
 
 		return $arResultFoldersList;
@@ -560,10 +709,14 @@ class CDavExchangeContacts
 		$this->Disconnect();
 
 		if (is_null($response))
+		{
 			return null;
+		}
 
 		if ($this->ParseError($response))
+		{
 			return null;
+		}
 
 		$arResultFoldersList = array();
 		$xmlDoc = $response->GetBodyXml();
@@ -573,17 +726,24 @@ class CDavExchangeContacts
 		{
 			$arResponseCode = $responseMessage->GetPath("/UpdateFolderResponseMessage/ResponseCode");
 			$responseCode = null;
-			if (count($arResponseCode) > 0)
+			if (!empty($arResponseCode))
+			{
 				$responseCode = $arResponseCode[0]->GetContent();
+			}
 
 			$responseClass = $responseMessage->GetAttribute("ResponseClass");
 
-			if ((!is_null($responseClass) && ($responseClass != "Success")) || (!is_null($responseCode) && ($responseCode != "NoError")))
+			if (
+				(!is_null($responseClass) && ($responseClass !== "Success"))
+				|| (!is_null($responseCode) && ($responseCode !== "NoError"))
+			)
 			{
 				$arMessageText = $responseMessage->GetPath("/UpdateFolderResponseMessage/MessageText");
 				$messageText = "Error";
-				if (count($arMessageText) > 0)
+				if (!empty($arMessageText))
+				{
 					$messageText = $arMessageText[0]->GetContent();
+				}
 
 				$this->AddError(!is_null($responseCode) ? $this->Encode($responseCode) : $this->Encode($responseClass), $this->Encode($messageText));
 				continue;
@@ -591,7 +751,9 @@ class CDavExchangeContacts
 
 			$arContactFolder = $responseMessage->GetPath("/UpdateFolderResponseMessage/Folders/ContactsFolder");
 			foreach ($arContactFolder as $contactFolder)
+			{
 				$arResultFoldersList[] = $this->ConvertContactFolderToArray($contactFolder);
+			}
 		}
 
 		return $arResultFoldersList;
@@ -613,10 +775,14 @@ class CDavExchangeContacts
 		$this->Disconnect();
 
 		if (is_null($response))
+		{
 			return null;
+		}
 
 		if ($this->ParseError($response))
+		{
 			return null;
+		}
 
 		$xmlDoc = $response->GetBodyXml();
 
@@ -625,17 +791,24 @@ class CDavExchangeContacts
 		{
 			$arResponseCode = $responseMessage->GetPath("/DeleteFolderResponseMessage/ResponseCode");
 			$responseCode = null;
-			if (count($arResponseCode) > 0)
+			if (!empty($arResponseCode))
+			{
 				$responseCode = $arResponseCode[0]->GetContent();
+			}
 
 			$responseClass = $responseMessage->GetAttribute("ResponseClass");
 
-			if ((!is_null($responseClass) && ($responseClass != "Success")) || (!is_null($responseCode) && ($responseCode != "NoError")))
+			if (
+				(!is_null($responseClass) && ($responseClass !== "Success"))
+				|| (!is_null($responseCode) && ($responseCode != "NoError"))
+			)
 			{
 				$arMessageText = $responseMessage->GetPath("/DeleteFolderResponseMessage/MessageText");
 				$messageText = "Error";
-				if (count($arMessageText) > 0)
+				if (!empty($arMessageText))
+				{
 					$messageText = $arMessageText[0]->GetContent();
+				}
 
 				$this->AddError(!is_null($responseCode) ? $this->Encode($responseCode) : $this->Encode($responseClass), $this->Encode($messageText));
 				return false;
@@ -722,35 +895,47 @@ class CDavExchangeContacts
 		$arResultItem = array();
 
 		$arItemId = $contactItem->GetPath("/Contact/ItemId");
-		if (count($arItemId) > 0)
+		if (!empty($arItemId))
 		{
 			$arResultItem["XML_ID"] = $arItemId[0]->GetAttribute("Id");
 			$arResultItem["MODIFICATION_LABEL"] = $arItemId[0]->GetAttribute("ChangeKey");
 		}
 
 		$arGivenName = $contactItem->GetPath("/Contact/GivenName");
-		if (count($arGivenName) > 0)
+		if (!empty($arGivenName))
+		{
 			$arResultItem["NAME"] = $this->Encode($arGivenName[0]->GetContent());
+		}
 
 		$arMiddleName = $contactItem->GetPath("/Contact/MiddleName");
-		if (count($arMiddleName) > 0)
+		if (!empty($arMiddleName))
+		{
 			$arResultItem["SECOND_NAME"] = $this->Encode($arMiddleName[0]->GetContent());
+		}
 
 		$arSurname = $contactItem->GetPath("/Contact/Surname");
-		if (count($arSurname) > 0)
+		if (!empty($arSurname))
+		{
 			$arResultItem["LAST_NAME"] = $this->Encode($arSurname[0]->GetContent());
+		}
 
 		$arCompanyName = $contactItem->GetPath("/Contact/CompanyName");
-		if (count($arCompanyName) > 0)
+		if (!empty($arCompanyName))
+		{
 			$arResultItem["WORK_COMPANY"] = $this->Encode($arCompanyName[0]->GetContent());
+		}
 
 		$arDepartment = $contactItem->GetPath("/Contact/Department");
-		if (count($arDepartment) > 0)
+		if (!empty($arDepartment))
+		{
 			$arResultItem["WORK_DEPARTMENT"] = $this->Encode($arDepartment[0]->GetContent());
+		}
 
 		$arJobTitle = $contactItem->GetPath("/Contact/JobTitle");
-		if (count($arJobTitle) > 0)
+		if (!empty($arJobTitle))
+		{
 			$arResultItem["WORK_POSITION"] = $this->Encode($arJobTitle[0]->GetContent());
+		}
 
 
 		$arPhysicalAddresses = $contactItem->GetPath("/Contact/PhysicalAddresses/Entry");
@@ -758,38 +943,54 @@ class CDavExchangeContacts
 		{
 			$entryKey = mb_strtolower($physicalAddress->GetAttribute("Key"));
 
-			if ($entryKey == "business")
+			if ($entryKey === "business")
+			{
 				$prefix = "WORK";
-			elseif ($entryKey == "home")
+			}
+			elseif ($entryKey === "home")
+			{
 				$prefix = "PERSONAL";
+			}
 			elseif (!isset($arResultItem["PERSONAL_STREET"]))
+			{
 				$prefix = "PERSONAL";
+			}
 
 			$arStreet = $physicalAddress->GetPath("/Entry/Street");
-			if (count($arStreet) > 0)
-				$arResultItem[$prefix."_STREET"] = $this->Encode($arStreet[0]->GetContent());
+			if (!empty($arStreet))
+			{
+				$arResultItem[$prefix . "_STREET"] = $this->Encode($arStreet[0]->GetContent());
+			}
 
 			$arCity = $physicalAddress->GetPath("/Entry/City");
-			if (count($arCity) > 0)
-				$arResultItem[$prefix."_CITY"] = $this->Encode($arCity[0]->GetContent());
+			if (!empty($arCity))
+			{
+				$arResultItem[$prefix . "_CITY"] = $this->Encode($arCity[0]->GetContent());
+			}
 
 			$arState = $physicalAddress->GetPath("/Entry/State");
-			if (count($arState) > 0)
-				$arResultItem[$prefix."_STATE"] = $this->Encode($arState[0]->GetContent());
+			if (!empty($arState))
+			{
+				$arResultItem[$prefix . "_STATE"] = $this->Encode($arState[0]->GetContent());
+			}
 
 			$arCountryOrRegion = $physicalAddress->GetPath("/Entry/CountryOrRegion");
-			if (count($arCountryOrRegion) > 0)
+			if (!empty($arCountryOrRegion))
 			{
 				$country = $this->Encode($arCountryOrRegion[0]->GetContent());
 				$ar = GetCountryArray();
 				$i = array_search($country, $ar["reference"]);
 				if ($i !== false)
-					$arResultItem[$prefix."_COUNTRY"] = $ar["reference"][$i];
+				{
+					$arResultItem[$prefix . "_COUNTRY"] = $ar["reference"][$i];
+				}
 			}
 
 			$arPostalCode = $physicalAddress->GetPath("/Entry/PostalCode");
-			if (count($arPostalCode) > 0)
-				$arResultItem[$prefix."_ZIP"] = $this->Encode($arPostalCode[0]->GetContent());
+			if (!empty($arPostalCode))
+			{
+				$arResultItem[$prefix . "_ZIP"] = $this->Encode($arPostalCode[0]->GetContent());
+			}
 		}
 
 		$arPhoneNumbers = $contactItem->GetPath("/Contact/PhoneNumbers/Entry");
@@ -798,22 +999,36 @@ class CDavExchangeContacts
 			$entryKey = mb_strtolower($phoneNumber->GetAttribute("Key"));
 			$v = $phoneNumber->GetContent();
 
-			if ($entryKey == "businessphone")
+			if ($entryKey === "businessphone")
+			{
 				$arResultItem["WORK_PHONE"] = $v;
-			elseif ($entryKey == "homephone")
+			}
+			elseif ($entryKey === "homephone")
+			{
 				$arResultItem["PERSONAL_PHONE"] = $v;
-			elseif ($entryKey == "homephone2")
+			}
+			elseif ($entryKey === "homephone2")
+			{
 				$arResultItem["PERSONAL_FAX"] = $v;
-			elseif ($entryKey == "mobilephone")
+			}
+			elseif ($entryKey === "mobilephone")
+			{
 				$arResultItem["PERSONAL_MOBILE"] = $v;
-			elseif ($entryKey == "pager")
+			}
+			elseif ($entryKey === "pager")
+			{
 				$arResultItem["PERSONAL_PAGER"] = $v;
-			elseif ($entryKey == "businessphone2")
+			}
+			elseif ($entryKey === "businessphone2")
+			{
 				$arResultItem["WORK_FAX"] = $v;
+			}
 			else
 			{
-				if (!is_null($v) && !empty($v))
+				if (!empty($v))
+				{
 					$arResultItem["WORK_PAGER"] = $v;
+				}
 			}
 		}
 
@@ -821,21 +1036,27 @@ class CDavExchangeContacts
 		foreach ($arEmailAddresses as $emailAddress)
 		{
 			$v = $emailAddress->GetContent();
-			if (!is_null($v) && !empty($v) && (!isset($arResultItem["EMAIL"]) || empty($arResultItem["EMAIL"])))
+			if (!empty($v) && empty($arResultItem["EMAIL"]))
+			{
 				$arResultItem["EMAIL"] = $v;
+			}
 		}
 
 		$arImAddresses = $contactItem->GetPath("/Contact/ImAddresses/Entry");
 		foreach ($arImAddresses as $imAddress)
 		{
 			$v = $imAddress->GetContent();
-			if (!is_null($v) && !empty($v) && (!isset($arResultItem["PERSONAL_ICQ"]) || empty($arResultItem["PERSONAL_ICQ"])))
+			if (!empty($v) && empty($arResultItem["PERSONAL_ICQ"]))
+			{
 				$arResultItem["PERSONAL_ICQ"] = $v;
+			}
 		}
 
 		$arBusinessHomePage = $contactItem->GetPath("/Contact/BusinessHomePage");
-		if (count($arBusinessHomePage) > 0)
+		if (!empty($arBusinessHomePage))
+		{
 			$arResultItem["WORK_WWW"] = $this->Encode($arBusinessHomePage[0]->GetContent());
+		}
 
 		return $arResultItem;
 	}
@@ -845,23 +1066,29 @@ class CDavExchangeContacts
 		$arResultFolder = array();
 
 		$arFolderId = $calendarFolder->GetPath("/ContactsFolder/FolderId");
-		if (count($arFolderId) > 0)
+		if (!empty($arFolderId))
 		{
 			$arResultFolder["XML_ID"] = $arFolderId[0]->GetAttribute("Id");
 			$arResultFolder["MODIFICATION_LABEL"] = $arFolderId[0]->GetAttribute("ChangeKey");
 		}
 
 		$arDisplayName = $calendarFolder->GetPath("/ContactsFolder/DisplayName");
-		if (count($arDisplayName) > 0)
+		if (!empty($arDisplayName))
+		{
 			$arResultFolder["NAME"] = $this->Encode($arDisplayName[0]->GetContent());
+		}
 
 		$arTotalCount = $calendarFolder->GetPath("/ContactsFolder/TotalCount");
-		if (count($arTotalCount) > 0)
+		if (!empty($arTotalCount))
+		{
 			$arResultFolder["TOTAL_COUNT"] = $arTotalCount[0]->GetContent();
+		}
 
 		$arChildFolderCount = $calendarFolder->GetPath("/ContactsFolder/ChildFolderCount");
-		if (count($arChildFolderCount) > 0)
+		if (!empty($arChildFolderCount))
+		{
 			$arResultFolder["CHILD_FOLDER_COUNT"] = $arChildFolderCount[0]->GetContent();
+		}
 
 		return $arResultFolder;
 	}
@@ -875,15 +1102,17 @@ class CDavExchangeContacts
 		foreach ($arMap as $key)
 		{
 			if (!array_key_exists($key, $arFields) && !in_array($key, array("PhysicalAddresses", "PhoneNumbers", "FileAsMapping", "FileAs")))
+			{
 				continue;
+			}
 
 			$value = $arFields[$key];
 
-			if ($key == "FileAsMapping")
+			if ($key === "FileAsMapping")
 			{
 				$itemBody .= "     <FileAsMapping>LastCommaFirst</FileAsMapping>\r\n";
 			}
-			elseif ($key == "FileAs")
+			elseif ($key === "FileAs")
 			{
 				$v = $arFields["Surname"];
 				if ($v <> '' && ($arFields["GivenName"] <> '' || $arFields["MiddleName"] <> ''))
@@ -895,13 +1124,13 @@ class CDavExchangeContacts
 
 				$itemBody .= "     <FileAs>".htmlspecialcharsbx($v)."</FileAs>\r\n";
 			}
-			elseif ($key == "EmailAddresses")
+			elseif ($key === "EmailAddresses")
 			{
 				$itemBody .= "     <EmailAddresses>\r\n";
 				$itemBody .= "      <Entry Key=\"EmailAddress1\">".htmlspecialcharsbx($arFields["EmailAddresses"])."</Entry>\r\n";
 				$itemBody .= "     </EmailAddresses>\r\n";
 			}
-			elseif ($key == "PhysicalAddresses")
+			elseif ($key === "PhysicalAddresses")
 			{
 				$itemBody .= "      <PhysicalAddresses>\r\n";
 				$itemBody .= "       <Entry Key=\"Business\">\r\n";
@@ -920,7 +1149,7 @@ class CDavExchangeContacts
 				$itemBody .= "       </Entry>\r\n";
 				$itemBody .= "      </PhysicalAddresses>\r\n";
 			}
-			elseif ($key == "PhoneNumbers")
+			elseif ($key === "PhoneNumbers")
 			{
 				$itemBody .= "	    <PhoneNumbers>\r\n";
 				$itemBody .= "	     <Entry Key=\"HomePhone\">".htmlspecialcharsbx($arFields["PhoneNumbers_HomePhone"])."</Entry>\r\n";
@@ -932,7 +1161,7 @@ class CDavExchangeContacts
 				$itemBody .= "	     <Entry Key=\"OtherTelephone\">".htmlspecialcharsbx($arFields["PhoneNumbers_OtherTelephone"])."</Entry>\r\n";
 				$itemBody .= "	    </PhoneNumbers>\r\n";
 			}
-			elseif ($key == "ImAddresses")
+			elseif ($key === "ImAddresses")
 			{
 				$itemBody .= "     <ImAddresses>\r\n";
 				$itemBody .= "      <Entry Key=\"ImAddress1\">".htmlspecialcharsbx($arFields["ImAddresses"])."</Entry>\r\n";

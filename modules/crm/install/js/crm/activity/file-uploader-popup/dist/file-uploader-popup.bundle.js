@@ -86,6 +86,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      const popupPaddingNumberValue = parseFloat(popupPadding) || 12;
 	      const popupOverlayColor = htmlStyles.getPropertyValue('--ui-color-base-solid') || '#000000';
 	      babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup] = new main_popup.Popup({
+	        className: 'crm-activity__file-uploader-popup',
 	        closeIcon: true,
 	        closeByEsc: true,
 	        padding: popupPaddingNumberValue,
@@ -98,8 +99,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        buttons: babelHelpers.classPrivateFieldLooseBase(this, _getPopupButtons)[_getPopupButtons](),
 	        minWidth: 650,
 	        width: 650,
-	        maxHeight: 650,
-	        className: 'crm-activity__file-uploader-popup'
+	        maxHeight: 650
 	      });
 	    }
 	    babelHelpers.classPrivateFieldLooseBase(this, _popup)[_popup].show();

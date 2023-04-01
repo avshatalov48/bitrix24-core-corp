@@ -1,6 +1,8 @@
 <?
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
+{
 	die();
+}
 
 use Bitrix\Main\Localization\Loc;
 \Bitrix\Main\UI\Extension::load("ui.buttons");
@@ -17,12 +19,12 @@ use Bitrix\Main\Localization\Loc;
 
 CJSCore::Init(array("popup", "ajax"));
 
-ShowMessage($arResult["MESSAGE"]);
+ShowMessage($arResult["MESSAGE"] ?? '');
 
 if($USER->IsAuthorized()):?>
 <div class="intranet-user-profile-security">
 	<?= Loc::getMessage('DAV_CARDDAV_SETTINGS_HELP', array("#SERVER#" => $_SERVER["SERVER_NAME"])) ?>
-	<form action="<?=$arParams['ACTION_URI']?>" method="post" id="synchronize_settings_form" name="synchronize-settings-form" >
+	<form action="<?=($arParams['ACTION_URI'] ?? '')?>" method="post" id="synchronize_settings_form" name="synchronize-settings-form" >
 		<?echo bitrix_sessid_post()?>
         <br>
 		<table class="content-edit-form">
@@ -65,10 +67,10 @@ if($USER->IsAuthorized()):?>
 						<select name="DAV_SYNC_SETTINGS[ACCOUNTS][UF_DEPARTMENT][]" size="5" multiple="multiple" class="ui-ctl-element">
 							<?
 							$rsDepartments = CIBlockSection::GetTreeList(array(
-								"IBLOCK_ID"=>intval(COption::GetOptionInt('intranet', 'iblock_structure', false)),
+								"IBLOCK_ID"=> COption::GetOptionInt('intranet', 'iblock_structure', false),
 							));
 							while($arDepartment = $rsDepartments->GetNext()):
-								?><option value="<?echo $arDepartment["ID"]?>" <?if(is_array($arResult['ACCOUNTS']['UF_DEPARTMENT']) && in_array($arDepartment["ID"], $arResult['ACCOUNTS']['UF_DEPARTMENT'])) echo "selected"?>><?echo str_repeat("&nbsp;.&nbsp;", $arDepartment["DEPTH_LEVEL"])?><?echo $arDepartment["NAME"]?></option><?
+								?><option value="<?echo $arDepartment["ID"]?>" <?if (is_array($arResult['ACCOUNTS']['UF_DEPARTMENT']) && in_array($arDepartment["ID"], $arResult['ACCOUNTS']['UF_DEPARTMENT'])) echo "selected"?>><?echo str_repeat("&nbsp;.&nbsp;", $arDepartment["DEPTH_LEVEL"])?><?echo $arDepartment["NAME"]?></option><?
 							endwhile;
 							?>
 						</select>

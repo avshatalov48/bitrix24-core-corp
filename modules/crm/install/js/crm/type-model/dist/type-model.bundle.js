@@ -8,12 +8,10 @@ this.BX.Crm = this.BX.Crm || {};
 	 */
 	var TypeModel = /*#__PURE__*/function (_Model) {
 	  babelHelpers.inherits(TypeModel, _Model);
-
 	  function TypeModel(data, params) {
 	    babelHelpers.classCallCheck(this, TypeModel);
 	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(TypeModel).call(this, data, params));
 	  }
-
 	  babelHelpers.createClass(TypeModel, [{
 	    key: "getModelName",
 	    value: function getModelName() {
@@ -23,11 +21,9 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "getData",
 	    value: function getData() {
 	      var data = babelHelpers.get(babelHelpers.getPrototypeOf(TypeModel.prototype), "getData", this).call(this);
-
 	      if (!main_core.Type.isObject(data.linkedUserFields)) {
 	        data.linkedUserFields = false;
 	      }
-
 	      data.relations = this.getRelations();
 	      data.customSections = this.getCustomSections();
 	      return data;
@@ -213,7 +209,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (this.data.hasOwnProperty('customSectionId')) {
 	        return main_core.Text.toInteger(this.data.customSectionId);
 	      }
-
 	      return null;
 	    }
 	  }, {
@@ -225,11 +220,9 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "getCustomSections",
 	    value: function getCustomSections() {
 	      var customSections = this.data.customSections;
-
 	      if (main_core.Type.isArray(customSections) && customSections.length === 0) {
 	        return false;
 	      }
-
 	      return customSections;
 	    }
 	  }, {
@@ -241,12 +234,10 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "setConversionMap",
 	    value: function setConversionMap(_ref) {
 	      var sourceTypes = _ref.sourceTypes,
-	          destinationTypes = _ref.destinationTypes;
-
+	        destinationTypes = _ref.destinationTypes;
 	      if (!this.data.hasOwnProperty('conversionMap')) {
 	        this.data.conversionMap = {};
 	      }
-
 	      this.data.conversionMap.sourceTypes = this.normalizeTypes(sourceTypes);
 	      this.data.conversionMap.destinationTypes = this.normalizeTypes(destinationTypes);
 	    }
@@ -256,17 +247,13 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (main_core.Type.isUndefined(this.data.conversionMap)) {
 	        return undefined;
 	      }
-
 	      var conversionMap = Object.assign({}, this.data.conversionMap);
-
 	      if (!conversionMap.sourceTypes) {
 	        conversionMap.sourceTypes = [];
 	      }
-
 	      if (!conversionMap.destinationTypes) {
 	        conversionMap.destinationTypes = [];
 	      }
-
 	      return conversionMap;
 	    }
 	  }, {
@@ -280,30 +267,35 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (!this.data.relations) {
 	        return null;
 	      }
-
 	      if (!main_core.Type.isArray(this.data.relations.parent) || !this.data.relations.parent.length) {
 	        this.data.relations.parent = false;
 	      }
-
 	      if (!main_core.Type.isArray(this.data.relations.child) || !this.data.relations.child.length) {
 	        this.data.relations.child = false;
 	      }
-
 	      return this.data.relations;
+	    }
+	  }, {
+	    key: "getIsCountersEnabled",
+	    value: function getIsCountersEnabled() {
+	      return this.data.isCountersEnabled;
+	    }
+	  }, {
+	    key: "setIsCountersEnabled",
+	    value: function setIsCountersEnabled(isCountersEnabled) {
+	      this.data.isCountersEnabled = isCountersEnabled;
 	    }
 	    /**
 	     * @protected
 	     * @param types
 	     * @return {false|number[]}
 	     */
-
 	  }, {
 	    key: "normalizeTypes",
 	    value: function normalizeTypes(types) {
 	      if (!main_core.Type.isArrayFilled(types)) {
 	        return false;
 	      }
-
 	      var arrayOfIntegers = types.map(function (element) {
 	        return parseInt(element, 10);
 	      });
@@ -314,7 +306,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }], [{
 	    key: "getBooleanFieldNames",
 	    value: function getBooleanFieldNames() {
-	      return ['isCategoriesEnabled', 'isStagesEnabled', 'isBeginCloseDatesEnabled', 'isClientEnabled', 'isLinkWithProductsEnabled', 'isCrmTrackingEnabled', 'isMycompanyEnabled', 'isDocumentsEnabled', 'isSourceEnabled', 'isUseInUserfieldEnabled', 'isObserversEnabled', 'isRecyclebinEnabled', 'isAutomationEnabled', 'isBizProcEnabled', 'isSetOpenPermissions'];
+	      return ['isCategoriesEnabled', 'isStagesEnabled', 'isBeginCloseDatesEnabled', 'isClientEnabled', 'isLinkWithProductsEnabled', 'isCrmTrackingEnabled', 'isMycompanyEnabled', 'isDocumentsEnabled', 'isSourceEnabled', 'isUseInUserfieldEnabled', 'isObserversEnabled', 'isRecyclebinEnabled', 'isAutomationEnabled', 'isBizProcEnabled', 'isSetOpenPermissions', 'isCountersEnabled'];
 	    }
 	  }]);
 	  return TypeModel;

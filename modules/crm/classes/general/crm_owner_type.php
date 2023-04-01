@@ -1731,6 +1731,9 @@ class CCrmOwnerType
 							$arRes['CURRENCY_ID']
 						),
 					]),
+					'OPPORTUNITY' => $arRes['OPPORTUNITY'],
+					'CURRENCY_ID' => $arRes['CURRENCY_ID'],
+					'DATE_CREATE' => $arRes['DATE_CREATE'],
 					'RESPONSIBLE_ID' => isset($arRes['ASSIGNED_BY_ID']) ? intval($arRes['ASSIGNED_BY_ID']) : 0,
 					'IMAGE_FILE_ID' => 0,
 					'SHOW_URL' => self::GetEntityShowPath(self::Deal, $ID),
@@ -1911,7 +1914,7 @@ class CCrmOwnerType
 					array('@ID' => $IDs, 'CHECK_PERMISSIONS' => $checkPermissions ? 'Y' : 'N'),
 					false,
 					false,
-					array('ID', 'TITLE', 'COMPANY_TYPE', 'INDUSTRY',  'LOGO', 'ASSIGNED_BY_ID')
+					array('ID', 'TITLE', 'COMPANY_TYPE', 'INDUSTRY',  'LOGO', 'ASSIGNED_BY_ID', 'IS_MY_COMPANY')
 				);
 				break;
 			}
@@ -2348,6 +2351,7 @@ class CCrmOwnerType
 							array('company_id' => $ID)
 						),
 					'ENTITY_TYPE_CAPTION' => static::GetDescription(static::Company),
+					'IS_MY_COMPANY' => isset($arRes['IS_MY_COMPANY']) ? ($arRes['IS_MY_COMPANY'] === 'Y') : false,
 				);
 				if($enableEditUrl)
 				{
@@ -2464,7 +2468,10 @@ class CCrmOwnerType
 					$dateInsert = FormatDate($culture->getLongDateFormat(), $arRes['DATE_INSERT']->getTimestamp());
 				}
 				$result = array(
+					'ID' => $arRes['ID'],
 					'TITLE' => $title,
+					'ACCOUNT_NUMBER' => $arRes['ACCOUNT_NUMBER'],
+					'ORDER_TOPIC' => $arRes['ORDER_TOPIC'],
 					'LEGEND' => GetMessage('CRM_OWNER_TYPE_ORDER_LEGEND', [
 						"#SUM_WITH_CURRENCY#" => \CCrmCurrency::MoneyToString($arRes['PRICE'], $arRes['CURRENCY']),
 						"#DATE_INSERT#" => $dateInsert,
@@ -2478,6 +2485,8 @@ class CCrmOwnerType
 						),
 					'DATE' => $dateInsert,
 					'SUM_WITH_CURRENCY' => \CCrmCurrency::MoneyToString($arRes['PRICE'], $arRes['CURRENCY']),
+					'PRICE' => $arRes['PRICE'],
+					'CURRENCY' => $arRes['CURRENCY'],
 					'ENTITY_TYPE_CAPTION' => static::GetDescription(static::Order),
 				);
 				if($enableEditUrl)
@@ -2508,7 +2517,10 @@ class CCrmOwnerType
 					$dateInsert = FormatDate($culture->getLongDateFormat(), $arRes['DATE_BILL']->getTimestamp());
 				}
 				$result = array(
+					'ID' => $arRes['ID'],
+					'ORDER_ID' => $arRes['ORDER_ID'],
 					'TITLE' => isset($arRes['ACCOUNT_NUMBER']) ?  $arRes['ACCOUNT_NUMBER'] : '',
+					'ACCOUNT_NUMBER' => isset($arRes['ACCOUNT_NUMBER']) ?  $arRes['ACCOUNT_NUMBER'] : '',
 					'LEGEND' => GetMessage('CRM_OWNER_TYPE_ORDER_PAYMENT_LEGEND', [
 						"#SUM_WITH_CURRENCY#" => \CCrmCurrency::MoneyToString($arRes['SUM'], $arRes['CURRENCY']),
 						"#DATE_BILL#" => $dateInsert
@@ -2525,6 +2537,8 @@ class CCrmOwnerType
 					'PAY_SYSTEM_NAME' => $arRes['PAY_SYSTEM_NAME'],
 					'SUM' => \CCrmCurrency::MoneyToString($arRes['SUM'], $arRes['CURRENCY'], '#'),
 					'CURRENCY' => \CCrmCurrency::GetCurrencyText($arRes['CURRENCY']),
+					'RAW_SUM' => $arRes['SUM'],
+					'RAW_CURRENCY' => $arRes['CURRENCY'],
 					'SUM_WITH_CURRENCY' => \CCrmCurrency::MoneyToString($arRes['SUM'], $arRes['CURRENCY']),
 					'ENTITY_TYPE_CAPTION' => static::GetDescription(static::OrderPayment),
 				);
@@ -2547,7 +2561,9 @@ class CCrmOwnerType
 				$result = [
 					'ID' => $arRes['ID'],
 					'DATE_INSERT' => $arRes['DATE_INSERT'],
+					'DATE_INSERT_FORMATTED' => $dateInsert,
 					'TITLE' => isset($arRes['ACCOUNT_NUMBER']) ? $arRes['ACCOUNT_NUMBER'] : '',
+					'ACCOUNT_NUMBER' => isset($arRes['ACCOUNT_NUMBER']) ?  $arRes['ACCOUNT_NUMBER'] : '',
 					'LEGEND' => GetMessage('CRM_OWNER_TYPE_ORDER_SHIPMENT_LEGEND_2', [
 						"#DATE_INSERT#" => $dateInsert,
 						"#PRICE_DELIVERY_WITH_CURRENCY#" => \CCrmCurrency::MoneyToString($arRes['PRICE_DELIVERY'], $arRes['CURRENCY']),
@@ -2555,6 +2571,9 @@ class CCrmOwnerType
 					'SUBLEGEND' => GetMessage('CRM_OWNER_TYPE_ORDER_SHIPMENT_SUBLEGEND', [
 						"#DELIVERY_NAME#" => $arRes['DELIVERY_NAME']
 					]),
+					'PRICE_DELIVERY' => $arRes['PRICE_DELIVERY'],
+					'CURRENCY' => $arRes['CURRENCY'],
+					'DELIVERY_NAME' => $arRes['DELIVERY_NAME'],
 					'RESPONSIBLE_ID' => isset($arRes['RESPONSIBLE_ID']) ? intval($arRes['RESPONSIBLE_ID']) : 0,
 					'IMAGE_FILE_ID' => 0,
 					'SHOW_URL' => Service\Sale\EntityLinkBuilder\EntityLinkBuilder::getInstance()

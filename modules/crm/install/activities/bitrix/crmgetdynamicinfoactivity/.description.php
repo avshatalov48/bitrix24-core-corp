@@ -33,7 +33,7 @@ $arActivityDescription = [
 		],
 		'DESCRIPTION_GROUP' => [
 			'other' => Loc::getMessage('CRM_GDIA_DESC_2_MSGVER_1'),
-			'digitalWorkplace' => Loc::getMessage('CRM_GDIA_ROBOT_DESCRIPTION_DIGITAL_WORKPLACE'),
+			'digitalWorkplace' => Loc::getMessage('CRM_GDIA_ROBOT_DESCRIPTION_DIGITAL_WORKPLACE_MSGVER_1'),
 		],
 		'SORT' => 3200,
 		'IS_SUPPORTING_ROBOT' => true,

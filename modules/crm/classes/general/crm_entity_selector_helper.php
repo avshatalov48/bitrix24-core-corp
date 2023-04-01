@@ -231,13 +231,16 @@ class CCrmEntitySelectorHelper
 				if (!empty($advancedInfo))
 					$result[$advancedInfoKey] = $advancedInfo;
 
-				if($requireMultifields)
+				if ($requireMultifields)
 				{
+					$phoneCountryList = static::getPhoneCountryList('CONTACT', $entityID);
+
 					// advanced info - phone number, e-mail
-					$obRes = CCrmFieldMulti::GetList(array('ID' => 'asc'), array('ENTITY_ID' => 'CONTACT', 'ELEMENT_ID' => $entityID));
-					while($arRes = $obRes->Fetch())
+					$obRes = CCrmFieldMulti::GetList(['ID' => 'asc'], ['ENTITY_ID' => 'CONTACT', 'ELEMENT_ID' => $entityID]);
+					while ($arRes = $obRes->Fetch())
 					{
-						if ($arRes['TYPE_ID'] === 'PHONE'
+						if (
+							$arRes['TYPE_ID'] === 'PHONE'
 							|| $arRes['TYPE_ID'] === 'EMAIL'
 							|| ($arRes['TYPE_ID'] === 'IM' && preg_match('/^imol\|/', $arRes['VALUE']) === 1)
 						)
@@ -246,21 +249,35 @@ class CCrmEntitySelectorHelper
 								? \Bitrix\Main\PhoneNumber\Parser::getInstance()->parse($arRes['VALUE'])->format()
 								: $arRes['VALUE'];
 
-							if (!is_array($result[$advancedInfoKey]))
-								$result[$advancedInfoKey] = array();
-							if (!is_array($result[$advancedInfoKey][$multiFieldsKey]))
-								$result[$advancedInfoKey][$multiFieldsKey] = array();
-							$result[$advancedInfoKey][$multiFieldsKey][] = array(
-								'ID' => $normalizeMultifields ? $arRes['ID'] : $entityID,
+							$multiFieldId = $normalizeMultifields ? $arRes['ID'] : $entityID;
+
+							if (!isset($result[$advancedInfoKey]) || !is_array($result[$advancedInfoKey]))
+							{
+								$result[$advancedInfoKey] = [];
+							}
+
+							if (
+								!isset($result[$advancedInfoKey][$multiFieldsKey])
+								|| !is_array($result[$advancedInfoKey][$multiFieldsKey])
+							)
+							{
+								$result[$advancedInfoKey][$multiFieldsKey] = [];
+							}
+
+							$result[$advancedInfoKey][$multiFieldsKey][] = [
+								'ID' => $multiFieldId,
 								'ENTITY_ID' => $normalizeMultifields ? $entityID : $arRes['ID'],
 								'ENTITY_TYPE_NAME' => $entityTypeName,
 								'TYPE_ID' => $arRes['TYPE_ID'],
 								'VALUE_TYPE' => $arRes['VALUE_TYPE'],
 								'VALUE' => $arRes['VALUE'],
+								'VALUE_EXTRA' => [
+									'COUNTRY_CODE' => $phoneCountryList[$multiFieldId] ?? ''
+								],
 								'VALUE_FORMATTED' => $formattedValue,
 								'COMPLEX_ID' => $arRes['COMPLEX_ID'],
 								'COMPLEX_NAME' => \CCrmFieldMulti::GetEntityNameByComplex($arRes['COMPLEX_ID'], false)
-							);
+							];
 						}
 					}
 				}
@@ -383,11 +400,13 @@ class CCrmEntitySelectorHelper
 				$result[$imageKey] = isset($arImages[$logoID]['src']) ? $arImages[$logoID]['src'] : '';
 				$result[$largeImageKey] = isset($arLargeImages[$logoID]['src']) ? $arLargeImages[$logoID]['src'] : '';
 
-				if($requireMultifields)
+				if ($requireMultifields)
 				{
+					$phoneCountryList = static::getPhoneCountryList('COMPANY', $entityID);
+
 					// advanced info - phone number, e-mail
-					$obRes = CCrmFieldMulti::GetList(array('ID' => 'asc'), array('ENTITY_ID' => 'COMPANY', 'ELEMENT_ID' => $entityID));
-					while($arRes = $obRes->Fetch())
+					$obRes = CCrmFieldMulti::GetList(['ID' => 'asc'], ['ENTITY_ID' => 'COMPANY', 'ELEMENT_ID' => $entityID]);
+					while ($arRes = $obRes->Fetch())
 					{
 						if ($arRes['TYPE_ID'] === 'PHONE' || $arRes['TYPE_ID'] === 'EMAIL')
 						{
@@ -395,21 +414,35 @@ class CCrmEntitySelectorHelper
 								? \Bitrix\Main\PhoneNumber\Parser::getInstance()->parse($arRes['VALUE'])->format()
 								: $arRes['VALUE'];
 
-							if (!is_array($result[$advancedInfoKey]))
-								$result[$advancedInfoKey] = array();
-							if (!is_array($result[$advancedInfoKey][$multiFieldsKey]))
-								$result[$advancedInfoKey][$multiFieldsKey] = array();
-							$result[$advancedInfoKey][$multiFieldsKey][] = array(
-								'ID' => $normalizeMultifields ? $arRes['ID'] : $entityID,
+							$multiFieldId = $normalizeMultifields ? $arRes['ID'] : $entityID;
+
+							if (!isset($result[$advancedInfoKey]) || !is_array($result[$advancedInfoKey]))
+							{
+								$result[$advancedInfoKey] = [];
+							}
+
+							if (
+								!isset($result[$advancedInfoKey][$multiFieldsKey])
+								|| !is_array($result[$advancedInfoKey][$multiFieldsKey])
+							)
+							{
+								$result[$advancedInfoKey][$multiFieldsKey] = [];
+							}
+
+							$result[$advancedInfoKey][$multiFieldsKey][] = [
+								'ID' => $multiFieldId,
 								'ENTITY_ID' => $normalizeMultifields ? $entityID : $arRes['ID'],
 								'ENTITY_TYPE_NAME' => $entityTypeName,
 								'TYPE_ID' => $arRes['TYPE_ID'],
 								'VALUE_TYPE' => $arRes['VALUE_TYPE'],
 								'VALUE' => $arRes['VALUE'],
+								'VALUE_EXTRA' => [
+									'COUNTRY_CODE' => $phoneCountryList[$multiFieldId] ?? ''
+								],
 								'VALUE_FORMATTED' => $formattedValue,
 								'COMPLEX_ID' => $arRes['COMPLEX_ID'],
 								'COMPLEX_NAME' => \CCrmFieldMulti::GetEntityNameByComplex($arRes['COMPLEX_ID'], false)
-							);
+							];
 						}
 					}
 				}
@@ -480,11 +513,13 @@ class CCrmEntitySelectorHelper
 					)
 				);
 
-				if($requireMultifields)
+				if ($requireMultifields)
 				{
+					$phoneCountryList = static::getPhoneCountryList('LEAD', $entityID);
+
 					// advanced info - phone number, e-mail
-					$obRes = CCrmFieldMulti::GetList(array('ID' => 'asc'), array('ENTITY_ID' => 'LEAD', 'ELEMENT_ID' => $entityID));
-					while($arRes = $obRes->Fetch())
+					$obRes = CCrmFieldMulti::GetList(['ID' => 'asc'], ['ENTITY_ID' => 'LEAD', 'ELEMENT_ID' => $entityID]);
+					while ($arRes = $obRes->Fetch())
 					{
 						if ($arRes['TYPE_ID'] === 'PHONE' || $arRes['TYPE_ID'] === 'EMAIL')
 						{
@@ -492,21 +527,35 @@ class CCrmEntitySelectorHelper
 								? \Bitrix\Main\PhoneNumber\Parser::getInstance()->parse($arRes['VALUE'])->format()
 								: $arRes['VALUE'];
 
-							if (!is_array($result[$advancedInfoKey]))
-								$result[$advancedInfoKey] = array();
-							if (!is_array($result[$advancedInfoKey][$multiFieldsKey]))
-								$result[$advancedInfoKey][$multiFieldsKey] = array();
-							$result[$advancedInfoKey][$multiFieldsKey][] = array(
-								'ID' => $normalizeMultifields ? $arRes['ID'] : $entityID,
+							$multiFieldId = $normalizeMultifields ? $arRes['ID'] : $entityID;
+
+							if (!isset($result[$advancedInfoKey]) || !is_array($result[$advancedInfoKey]))
+							{
+								$result[$advancedInfoKey] = [];
+							}
+
+							if (
+								!isset($result[$advancedInfoKey][$multiFieldsKey])
+								|| !is_array($result[$advancedInfoKey][$multiFieldsKey])
+							)
+							{
+								$result[$advancedInfoKey][$multiFieldsKey] = [];
+							}
+
+							$result[$advancedInfoKey][$multiFieldsKey][] = [
+								'ID' => $multiFieldId,
 								'ENTITY_ID' => $normalizeMultifields ? $entityID : $arRes['ID'],
 								'ENTITY_TYPE_NAME' => $entityTypeName,
 								'TYPE_ID' => $arRes['TYPE_ID'],
 								'VALUE_TYPE' => $arRes['VALUE_TYPE'],
 								'VALUE' => $arRes['VALUE'],
+								'VALUE_EXTRA' => [
+									'COUNTRY_CODE' => $phoneCountryList[$multiFieldId] ?? ''
+								],
 								'VALUE_FORMATTED' => $formattedValue,
 								'COMPLEX_ID' => $arRes['COMPLEX_ID'],
 								'COMPLEX_NAME' => \CCrmFieldMulti::GetEntityNameByComplex($arRes['COMPLEX_ID'], false)
-							);
+							];
 						}
 					}
 				}
@@ -1525,5 +1574,17 @@ class CCrmEntitySelectorHelper
 		}
 
 		return $result;
+	}
+
+	private static function getPhoneCountryList(string $entityId, int $elementId): array
+	{
+		$multiFieldIds = [];
+		$dbResultIds = CCrmFieldMulti::GetList(['ID' => 'asc'], ['ENTITY_ID' => $entityId, 'ELEMENT_ID' => $elementId]);
+		while ($row = $dbResultIds->fetch())
+		{
+			$multiFieldIds[] = (int)$row['ID'];
+		}
+
+		return CCrmFieldMulti::GetPhoneCountryList($multiFieldIds);
 	}
 }

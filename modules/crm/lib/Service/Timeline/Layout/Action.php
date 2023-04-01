@@ -14,6 +14,13 @@ abstract class Action extends Base
 		return $this->actionParams;
 	}
 
+	public function addActionParamBoolean(string $paramName, ?bool $paramValue): self
+	{
+		$this->actionParams[$paramName] = $paramValue;
+
+		return $this;
+	}
+
 	public function addActionParamString(string $paramName, ?string $paramValue): self
 	{
 		$this->actionParams[$paramName] = $paramValue;

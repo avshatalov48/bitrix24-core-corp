@@ -101,7 +101,7 @@ class Collection implements \Iterator, \ArrayAccess, \Countable
 
 	public function offsetGet($offset): ?Field
 	{
-		if(is_string($offset))
+		if(isset($this->fields[$offset]) && is_string($offset))
 		{
 			return $this->fields[$offset];
 		}

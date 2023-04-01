@@ -6,13 +6,15 @@ use Bitrix\Main\Text\HtmlFilter;
 
 if($arResult['additionalParameters']['bVarsFromForm'])
 {
-	$arResult['value'] =
-		HtmlFilter::encode($GLOBALS[$arResult['additionalParameters']['NAME']]['ENTITY_TYPE']);
+	$entityType = $GLOBALS[$arResult['additionalParameters']['NAME']]['ENTITY_TYPE'];
+	$entityTypeId = (is_array($entityType) ? $entityType['ID'] : $entityType);
+	$arResult['value'] = HtmlFilter::encode($entityTypeId);
 }
 elseif(is_array($arResult))
 {
-	$arResult['value'] =
-		HtmlFilter::encode($arResult['userField']['SETTINGS']['ENTITY_TYPE']);
+	$entityType = $arResult['userField']['SETTINGS']['ENTITY_TYPE'];
+	$entityTypeId = (is_array($entityType) ? $entityType['ID'] : $entityType);
+	$arResult['value'] = HtmlFilter::encode($entityTypeId);
 }
 else
 {

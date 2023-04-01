@@ -2238,25 +2238,33 @@ if(typeof BX.Crm.EntityMergerHeader === "undefined")
 		},
 		prepareTitle: function()
 		{
-			this._title = BX.create("span", { props: { className: "crm-entity-merger-column-btn-text" } });
-
-			var creationDate = this._merger.getEntityCreationDate(this._entityId);
-			var date = BX.parseDate(creationDate);
-			if(!date)
+			const creationDate = this._merger.getEntityCreationDate(this._entityId);
+			const date = BX.parseDate(creationDate);
+			if (!date)
 			{
 				return;
 			}
 
-			var dateText = BX.date.format(
-				[
-					["today", "today"],
-					["tommorow", "tommorow"],
-					["yesterday", "yesterday"],
-					["" , (date.getFullYear() === (new Date()).getFullYear()) ? "j F" : "j F Y"]
-				],
-				date
+			const isCurrentYear = (date.getFullYear() === (new Date()).getFullYear());
+			const defaultFormat = (
+				isCurrentYear
+					? BX.Crm.DateTime.Dictionary.Format.DAY_MONTH_FORMAT
+					: BX.Crm.DateTime.Dictionary.Format.LONG_DATE_FORMAT
 			);
-			this._title.innerHTML = BX.prop.getString(this._settings, "titleTemplate").replace(/#DATE_CREATE#/, dateText);
+			const formats = [
+				['today', 'today'],
+				['tommorow', 'tommorow'],
+				['yesterday', 'yesterday'],
+				['', defaultFormat],
+			];
+
+			const dateText = BX.date.format(formats, date);
+
+			const formattedDate = BX.prop
+				.getString(this._settings, 'titleTemplate', '')
+				.replace(/#DATE_CREATE#/, dateText)
+			;
+			this._title = BX.Tag.render`<span class="crm-entity-merger-column-btn-text">${formattedDate}</span>`;
 		},
 		adjustLayout: function()
 		{

@@ -185,6 +185,12 @@ class ContactCompanyTable extends Entity\DataManager
 	 */
 	public static function getBulkContactBindings(array $contactIDs)
 	{
+		\Bitrix\Main\Type\Collection::normalizeArrayValuesByInt($contactIDs, false);
+		if (empty($contactIDs))
+		{
+			return [];
+		}
+
 		$bindingMap = array();
 		foreach($contactIDs as $contactID)
 		{

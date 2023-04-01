@@ -1,4 +1,5 @@
 <?php
+
 namespace Bitrix\Crm\Timeline;
 
 use Bitrix\Crm\Order;
@@ -7,6 +8,7 @@ use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Sale\Registry;
 use Bitrix\Sale\Cashbox;
+use Bitrix\Crm\ItemIdentifier;
 
 Loc::loadMessages(__FILE__);
 
@@ -28,27 +30,24 @@ class OrderPaymentController extends EntityController
 	 * @param $ownerID
 	 * @param array $params
 	 * @throws Main\ArgumentException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
 	public function onCreate($ownerID, array $params)
 	{
-		if(!is_int($ownerID))
+		if (!is_int($ownerID))
 		{
 			$ownerID = (int)$ownerID;
 		}
-		if($ownerID <= 0)
+		if ($ownerID <= 0)
 		{
 			throw new Main\ArgumentException('Owner ID must be greater than zero.', 'ownerID');
 		}
 
 		$fields = isset($params['FIELDS']) && is_array($params['FIELDS']) ? $params['FIELDS'] : null;
-		if(!is_array($fields))
+		if (!is_array($fields))
 		{
 			$fields = self::getEntity($ownerID);
 		}
-		if(!is_array($fields))
+		if (!is_array($fields))
 		{
 			return;
 		}
@@ -66,21 +65,21 @@ class OrderPaymentController extends EntityController
 		$settings = ['FIELDS' => $settingFields];
 
 		$orderId = (isset($fields['ORDER_ID']) && (int)$fields['ORDER_ID'] > 0) ? (int)$fields['ORDER_ID'] : 0;
-		if($orderId > 0)
+		if ($orderId > 0)
 		{
-			$settings['BASE'] = array(
+			$settings['BASE'] = [
 				'ENTITY_TYPE_ID' => \CCrmOwnerType::Order,
-				'ENTITY_ID' => (int)$fields['ORDER_ID']
-			);
+				'ENTITY_ID' => (int)$fields['ORDER_ID'],
+			];
 		}
 
 		$authorID = self::resolveCreatorID($fields);
-		$bindings = array(
-			array(
+		$bindings = [
+			[
 				'ENTITY_TYPE_ID' => \CCrmOwnerType::OrderPayment,
-				'ENTITY_ID' => $ownerID
-			)
-		);
+				'ENTITY_ID' => $ownerID,
+			]
+		];
 
 		if ($orderId > 0)
 		{
@@ -90,23 +89,21 @@ class OrderPaymentController extends EntityController
 			);
 		}
 
-		$historyEntryID = CreationEntry::create(
-			array(
-				'ENTITY_TYPE_ID' => \CCrmOwnerType::OrderPayment,
-				'ENTITY_ID' => $ownerID,
-				'AUTHOR_ID' => $authorID,
-				'SETTINGS' => $settings,
-				'BINDINGS' => $bindings
-			)
-		);
+		$timelineEntryId = CreationEntry::create([
+			'ENTITY_TYPE_ID' => \CCrmOwnerType::OrderPayment,
+			'ENTITY_ID' => $ownerID,
+			'AUTHOR_ID' => $authorID,
+			'SETTINGS' => $settings,
+			'BINDINGS' => $bindings,
+		]);
 
-		$enableHistoryPush = $historyEntryID > 0;
-		if($enableHistoryPush && Main\Loader::includeModule('pull'))
+		$enableHistoryPush = $timelineEntryId > 0;
+		if ($enableHistoryPush && Main\Loader::includeModule('pull'))
 		{
 			$pushParams = array();
-			if($enableHistoryPush)
+			if ($enableHistoryPush)
 			{
-				$historyFields = TimelineEntry::getByID($historyEntryID);
+				$historyFields = TimelineEntry::getByID($timelineEntryId);
 				if(is_array($historyFields))
 				{
 					$pushParams['HISTORY_ITEM'] = $this->prepareHistoryDataModel(
@@ -181,7 +178,6 @@ class OrderPaymentController extends EntityController
 	/**
 	 * @param $ownerId
 	 * @param array $params
-	 * @throws Main\ArgumentException
 	 */
 	public function onClick($ownerId, array $params)
 	{
@@ -213,7 +209,7 @@ class OrderPaymentController extends EntityController
 		$authorId = self::resolveCreatorID($paymentFields);
 		if (!empty($settings))
 		{
-			$historyEntryID = OrderEntry::create([
+			$timelineEntryId = OrderEntry::create([
 				'ENTITY_ID' => $ownerId,
 				'TYPE_CATEGORY_ID' => TimelineType::MODIFICATION,
 				'ENTITY_TYPE_ID' => \CCrmOwnerType::OrderPayment,
@@ -222,15 +218,12 @@ class OrderPaymentController extends EntityController
 				'SETTINGS' => $settings
 			]);
 
-			if ($historyEntryID > 0)
+			foreach ($bindings as $binding)
 			{
-				foreach ($bindings as $binding)
-				{
-					$this->sendPullEventOnAdd(
-						new \Bitrix\Crm\ItemIdentifier($binding['ENTITY_TYPE_ID'], $binding['ENTITY_ID']),
-						$historyEntryID
-					);
-				}
+				$this->sendPullEventOnAdd(
+					new ItemIdentifier($binding['ENTITY_TYPE_ID'], $binding['ENTITY_ID']),
+					$timelineEntryId
+				);
 			}
 		}
 	}
@@ -241,9 +234,6 @@ class OrderPaymentController extends EntityController
 	 * @param array $fields
 	 * @return Main\Result
 	 * @throws Main\ArgumentException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
 	public function updateSettingFields($ownerID, $entryTypeID, array $fields)
 	{
@@ -302,20 +292,22 @@ class OrderPaymentController extends EntityController
 	/**
 	 * @param $ID
 	 * @return Main\ORM\Fields\ScalarField[]|null
-	 * @throws Main\ArgumentException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
 	protected static function getEntity($ID)
 	{
-		$payment = Payment::getList(	array(
-			'filter' => array('ID' => $ID),
-			'select' => array(
+		$payment = Payment::getList([
+			'filter' => [
+				'ID' => $ID,
+			],
+			'select' => [
 				'ORDER_CREATED_BY' => 'ORDER.CREATE_BY',
 				'ORDER_ACCOUNT_NUMBER' => 'ORDER.ACCOUNT_NUMBER',
-				'RESPONSIBLE_ID','ACCOUNT_NUMBER', 'DATE_BILL', 'ORDER_ID'
-			)
-		));
+				'RESPONSIBLE_ID',
+				'ACCOUNT_NUMBER',
+				'DATE_BILL',
+				'ORDER_ID',
+			],
+		]);
 
 		return is_object($payment) ? $payment->getFields() : null;
 	}
@@ -349,7 +341,6 @@ class OrderPaymentController extends EntityController
 	/**
 	 * @param $ownerId
 	 * @param $params
-	 * @throws Main\ArgumentException
 	 */
 	public function onView($ownerId, $params)
 	{
@@ -361,9 +352,6 @@ class OrderPaymentController extends EntityController
 	/**
 	 * @param $ownerId
 	 * @param $params
-	 * @throws Main\ArgumentException
-	 * @throws Main\ArgumentNullException
-	 * @throws Main\SystemException
 	 */
 	public function onSend($ownerId, $params)
 	{
@@ -419,120 +407,7 @@ class OrderPaymentController extends EntityController
 	 */
 	public function prepareHistoryDataModel(array $data, array $options = null)
 	{
-		$typeID = isset($data['TYPE_ID']) ? (int)$data['TYPE_ID'] : TimelineType::UNDEFINED;
-		$settings = is_array($data['SETTINGS']) ? $data['SETTINGS'] : [];
-		$fields = $settings['FIELDS'];
-
-		if($typeID === TimelineType::CREATION)
-		{
-			$base = isset($settings['BASE']) ? $settings['BASE'] : null;
-			$data['TITLE'] = Loc::getMessage('CRM_ORDER_PAYMENT_CREATION');
-
-			if(is_array($base))
-			{
-				$entityTypeID = isset($base['ENTITY_TYPE_ID']) ? $base['ENTITY_TYPE_ID'] : 0;
-				$caption = Loc::getMessage("CRM_PAYMENT_BASE_CAPTION_BASED_ON_ORDER");
-
-				$entityID = isset($base['ENTITY_ID']) ? $base['ENTITY_ID'] : 0;
-				if(\CCrmOwnerType::IsDefined($entityTypeID) && $entityID > 0)
-				{
-					$data['BASE']['CAPTION'] = $caption;
-					if(\CCrmOwnerType::TryGetEntityInfo(\CCrmOwnerType::Order, $entityID, $baseEntityInfo, false))
-					{
-						$data['BASE']['ENTITY_INFO'] = $baseEntityInfo;
-					}
-				}
-			}
-
-			$fields = $settings['FIELDS'];
-			$title = htmlspecialcharsbx(\CUtil::JSEscape($data['ASSOCIATED_ENTITY']['TITLE']));
-			if (!empty($fields['DATE_BILL_TIMESTAMP']))
-			{
-				$dateInsert = \CCrmComponentHelper::TrimDateTimeString(ConvertTimeStamp($fields['DATE_BILL_TIMESTAMP'],'SHORT'));
-			}
-			if (empty($dateInsert))
-			{
-				$dateInsert = \CCrmComponentHelper::TrimDateTimeString(ConvertTimeStamp(MakeTimeStamp($data['DATE_INSERT']),'SHORT'));
-			}
-
-			$data['ASSOCIATED_ENTITY']['TITLE'] = Loc::getMessage(
-				'CRM_PAYMENT_PAID_TITLE',
-				['#ACCOUNT_NUMBER#' => $data['ASSOCIATED_ENTITY']['TITLE']]
-			);
-			$data['ASSOCIATED_ENTITY']['HTML_TITLE'] = Loc::getMessage(
-				'CRM_PAYMENT_CREATION_MESSAGE',
-				[
-					'#ACCOUNT_NUMBER#' => $title,
-					'#DATE_BILL#' => $dateInsert,
-				]
-			);
-			if (!empty($fields['SUM']) && !empty($fields['CURRENCY']))
-			{
-				$data['ASSOCIATED_ENTITY']['HTML_TITLE'] .= " ".Loc::getMessage(
-					'CRM_PAYMENT_CREATION_MESSAGE_SUM',
-					['#SUM_WITH_CURRENCY#' => \CCrmCurrency::MoneyToString($fields['SUM'], $fields['CURRENCY'])]
-				);
-			}
-
-			unset($data['SETTINGS']);
-		}
-		elseif($typeID === TimelineType::ORDER)
-		{
-			if (!empty($fields['PAY_SYSTEM_CLICK']) && $fields['PAY_SYSTEM_CLICK'] === 'Y')
-			{
-				$data['TITLE'] = Loc::getMessage('CRM_PAYMENT_PAYSYSTEM_CLICK_TITLE');
-				$data['ASSOCIATED_ENTITY']['CLICK'] = 'Y';
-			}
-			elseif (!empty($fields['VIEWED']) && $fields['VIEWED'] === 'Y')
-			{
-				$paymentAccountNumber = $data['ASSOCIATED_ENTITY']['TITLE'];
-				$data['TITLE'] = \CCrmOwnerType::GetDescription(\CCrmOwnerType::OrderPayment);
-				$data['ASSOCIATED_ENTITY']['SUBLEGEND'] = Loc::getMessage('CRM_PAYMENT_PAYSYSTEM_VIEWED_TITLE');
-				$data['ASSOCIATED_ENTITY']['HTML_TITLE'] = Loc::getMessage(
-					'CRM_PAYMENT_PAYSYSTEM_VIEWED_HTML_TITLE',
-					[
-						'#ACCOUNT_NUMBER#' => $paymentAccountNumber,
-						'#DATE#' => $data['ASSOCIATED_ENTITY']['DATE'],
-						'#SUM#' => $data['ASSOCIATED_ENTITY']['SUM_WITH_CURRENCY'],
-					]
-				);
-				$data['ASSOCIATED_ENTITY']['VIEWED'] = 'Y';
-			}
-			elseif (!empty($fields['SENT']) && $fields['SENT'] === 'Y')
-			{
-				if ($fields['DESTINATION'])
-				{
-					$destinationTitle = Loc::getMessage('CRM_ORDER_DESTINATION_TITLE_'.$fields['DESTINATION']);
-					if ($destinationTitle)
-					{
-						$data['ASSOCIATED_ENTITY']['DESTINATION_TITLE'] = $destinationTitle;
-					}
-				}
-
-				$paymentAccountNumber = $data['ASSOCIATED_ENTITY']['TITLE'];
-				$data['TITLE'] = \CCrmOwnerType::GetDescription(\CCrmOwnerType::OrderPayment);
-				$data['ASSOCIATED_ENTITY']['HTML_TITLE'] = Loc::getMessage(
-					'CRM_PAYMENT_PAYSYSTEM_VIEWED_HTML_TITLE',
-					[
-						'#ACCOUNT_NUMBER#' => $paymentAccountNumber,
-						'#DATE#' => $data['ASSOCIATED_ENTITY']['DATE'],
-						'#SUM#' => $data['ASSOCIATED_ENTITY']['SUM_WITH_CURRENCY'],
-					]
-				);
-				$data['ASSOCIATED_ENTITY']['SENT'] = 'Y';
-			}
-			else
-			{
-				$data['TITLE'] = \CCrmOwnerType::GetDescription(\CCrmOwnerType::OrderPayment);
-				$data['ASSOCIATED_ENTITY']['TITLE'] = Loc::getMessage(
-					'CRM_PAYMENT_PAID_TITLE',
-					['#ACCOUNT_NUMBER#' => $data['ASSOCIATED_ENTITY']['TITLE']]
-				);
-			}
-
-			$data = array_merge($data, $settings);
-			unset($data['SETTINGS']);
-		}
+		$data = array_merge($data, is_array($data['SETTINGS']) ? $data['SETTINGS'] : []);
 
 		return parent::prepareHistoryDataModel($data, $options);
 	}

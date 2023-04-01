@@ -1,5 +1,6 @@
 .crm-activity__todo-editor {
-	--crm-activity__todo-editor-min-height: 88px;
+	--crm-activity__todo-editor-min-height: 38px;
+	--crm-activity__todo-editor_textarea-max-height: 126px;
 	--crm-activity__todo-editor-border-radius: var(--ui-border-radius-2xs, 2px);
 
 	box-sizing: border-box;
@@ -12,8 +13,20 @@
 
 .crm-activity__todo-editor.--is-edit .crm-activity__todo-editor_textarea {
 	min-height: var(--crm-activity__todo-editor-min-height);
-	padding-bottom: 50px;
 	transition-property: border-color;
+}
+
+.crm-activity__todo-editor_body {
+	display: block;
+	border: 1px solid var(--ui-color-base-20, #dfe0e3);
+	border-radius: var(--crm-activity__todo-editor-border-radius);
+	outline: none;
+}
+
+.crm-activity__todo-editor_body:focus-within {
+	outline: none;
+	border-color: var(--ui-color-palette-blue-40, #7EDCF9);
+	cursor: text;
 }
 
 .crm-activity__todo-editor_textarea {
@@ -22,8 +35,6 @@
 	width: 100%;
 	min-height: 40px;
 	padding: 11px 9px 0 15px;
-	border: 1px solid var(--ui-color-base-20, #dfe0e3);
-	border-radius: var(--crm-activity__todo-editor-border-radius);
 	color: var(--ui-color-text-primary, #333);
 	font-family: inherit;
 	font-size: var(--ui-font-size-lg, 15px);
@@ -32,21 +43,29 @@
 	resize: none;
 	background-color: transparent;
 	overflow: hidden;
+	border: none;
+}
+
+.crm-activity__todo-editor_textarea.--has-scroll {
+	max-height: var(--crm-activity__todo-editor_textarea-max-height);
+	overflow-y: scroll;
 }
 
 .crm-activity__todo-editor_textarea::placeholder {
 	color: var(--ui-color-base-40, #bdc1c6);
 }
 
-.crm-activity__todo-editor_textarea:focus {
-	outline: none;
-	border-color: var(--ui-color-palette-blue-40, #7EDCF9);
+.crm-activity__todo-editor_tools {
+	display: none;
+}
+
+.crm-activity__todo-editor.--is-edit .crm-activity__todo-editor_tools {
+	margin-top: 20px;
+	display: flex;
 }
 
 .crm-activity__todo-editor_deadline {
-	position: absolute;
-	bottom: 3px;
-	left: 9px;
+	padding-left: 8px;
 	display: flex;
 	flex-direction: row;
 	justify-content: flex-start;
@@ -88,9 +107,8 @@
 }
 
 .crm-activity__todo-editor_action-btns {
-	position: absolute;
-	bottom: 1px;
-	right: 10px;
+	margin-left: auto;
+	padding-right: 10px;
 	display: flex;
 	flex-direction: row;
 	align-items: center;

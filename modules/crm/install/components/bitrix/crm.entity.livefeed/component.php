@@ -40,7 +40,7 @@ $arResult['CAN_EDIT'] = isset($arParams['CAN_EDIT']) ? (bool)$arParams['CAN_EDIT
 $arResult['FORM_ID'] = isset($arParams['FORM_ID']) ? $arParams['FORM_ID'] : '';
 $arResult['SHOW_ACTIVITIES'] = isset($arParams['SHOW_ACTIVITIES']) ? (bool)$arParams['SHOW_ACTIVITIES'] : true;
 $arResult['NAME_TEMPLATE'] = isset($arParams['NAME_TEMPLATE']) ? $arParams['NAME_TEMPLATE'] : CSite::GetNameFormat(false);
-$arResult['DATE_TIME_FORMAT'] = isset($arParams['DATE_TIME_FORMAT']) ? $arParams['DATE_TIME_FORMAT'] : '';
+$arParams['DATE_TIME_FORMAT'] = $arParams['DATE_TIME_FORMAT'] ?? \Bitrix\Main\Context::getCurrent()->getCulture()->getFullDateFormat();
 $arResult['PATH_TO_USER_PROFILE'] = $arParams['PATH_TO_USER_PROFILE'] = CrmCheckPath('PATH_TO_USER_PROFILE', $arParams['PATH_TO_USER_PROFILE'], '/company/personal/user/#user_id#/');
 
 $arResult['PATH_TO_GROUP'] = isset($arParams['PATH_TO_GROUP']) ? $arParams['PATH_TO_GROUP'] : '/workgroups/group/#group_id#/';

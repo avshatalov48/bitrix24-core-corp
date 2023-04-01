@@ -17,14 +17,23 @@ return [
 		'im:messenger/lib/counters',
 		'im:messenger/lib/integration/immobile/calls',
 		'im:messenger/lib/element',
+		'im:messenger/lib/helper',
+		'im:messenger/lib/params',
+		'im:messenger/lib/ui/header/icon',
+		'im:messenger/controller/user-profile',
+		'im:messenger/controller/participants-list',
+		'im:messenger/controller/user-add',
 		'im:chat/const/background',
 		'im:chat/performance',
 		'im:chat/utils',
 		'im:chat/messengercommon',
 		'utils/uuid',
+
 	],
 	'bundle' => [
 		'./src/dialog',
 		'./src/web',
+		'./src/header/menu',
+		'./src/header/icon',
 	],
 ];

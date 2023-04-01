@@ -28,4 +28,9 @@ class LeadActivities extends Lead
 
 		return $this->changeStageByActivity($stageId, $id);
 	}
+
+	public function getRequiredFieldsByStages(array $stages): array
+	{
+		return [];
+	}
 }

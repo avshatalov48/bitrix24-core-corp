@@ -1,7 +1,5 @@
 <?php
 $MESS["CRM_DOCUMENT_VIEW_COPY_PUBLIC_URL_MESSAGE"] = "Öffentlicher Link wurde in die Zwischenablage gespeichert";
-$MESS["CRM_DOCUMENT_VIEW_CREATE_OR_EDIT_MY_COMPANY_REQUISITES"] = "<a href=\"#URL#\" target=\"_blank\" class=\"crm__document-view--details-link\">Informationen zu meinem Unternehmen</a>
-<span class=\"crm__document-view--details-text\">angeben oder bearbeiten</span>";
 $MESS["CRM_DOCUMENT_VIEW_DOWNLOAD_IN"] = "Herunterladen als:";
 $MESS["CRM_DOCUMENT_VIEW_EDIT_DOCUMENT"] = "Dokument bearbeiten";
 $MESS["CRM_DOCUMENT_VIEW_EDIT_TEMPLATE"] = "Vorlage bearbeiten";
@@ -26,6 +24,11 @@ $MESS["CRM_DOCUMENT_VIEW_SIGNED"] = "mit Unterschriften und einem Stempel";
 $MESS["CRM_DOCUMENT_VIEW_SIGN_AND_STAMP"] = "Stempel und Signatur";
 $MESS["CRM_DOCUMENT_VIEW_SIGN_BUTTON"] = "Unterschreiben";
 $MESS["CRM_DOCUMENT_VIEW_SIGN_CLICKED"] = "Sie haben die Unterschreibung des Dokuments bereits gestartet.";
+$MESS["CRM_DOCUMENT_VIEW_SIGN_DO_USE_PREVIOUS"] = "Diese Vorlage wurde %CREATED_AT% für den Auftrag \"%TITLE%\", von der verantwortlichen Person \"%INITIATOR%\" genutzt. Möchten Sie sie wieder nutzen?";
+$MESS["CRM_DOCUMENT_VIEW_SIGN_NEW_BUTTON"] = "Andere Vorlage nutzen";
+$MESS["CRM_DOCUMENT_VIEW_SIGN_OLD_BUTTON"] = "Diese wieder nutzen";
+$MESS["CRM_DOCUMENT_VIEW_SIGN_POPUP_CLOSE"] = "Schließen";
+$MESS["CRM_DOCUMENT_VIEW_SIGN_POPUP_TITLE"] = "Wird unterschrieben";
 $MESS["CRM_DOCUMENT_VIEW_SMS_PUBLIC_URL_NECESSARY"] = "Öffentlicher Link ist erforderlich, um SMS zu versenden";
 $MESS["CRM_DOCUMENT_VIEW_TRANSFORMATION_NO_PDF_ERROR"] = "PDF-Version des Dokuments kann nicht gefunden werden. Evtl. war die Dateikonvertierung  fehlgeschlagen.";
 $MESS["CRM_DOCUMENT_VIEW_TRANSFORMATION_PROGRESS"] = "Bitte warten Sie, bis die Konvertierung abgeschlossen wird";

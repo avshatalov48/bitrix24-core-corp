@@ -571,13 +571,14 @@ elseif($action === 'SAVE')
 	//endregion
 
 	//region RECURRING
+	$postIsRecurringValue = $_POST['IS_RECURRING'] ?? null;
 	if (
 		(
-			$_POST['IS_RECURRING'] === 'N'
+			$postIsRecurringValue === 'N'
 			&& isset($_POST['RECURRING']['MODE'])
 			&& $_POST['RECURRING']['MODE'] !== Recurring\Calculator::SALE_TYPE_NON_ACTIVE_DATE
 		)
-		|| ($_POST['IS_RECURRING'] === 'Y')
+		|| ($postIsRecurringValue === 'Y')
 	)
 	{
 		if (!Recurring\Manager::isAllowedExpose(Recurring\Manager::DEAL))
@@ -783,6 +784,7 @@ elseif($action === 'SAVE')
 		$conversionWizard->prepareDataForSave(CCrmOwnerType::Deal, $fields);
 	}
 
+	$itemBeforeSave = null;
 	$checkExceptions = null;
 	$errorMessage = '';
 
@@ -826,12 +828,6 @@ elseif($action === 'SAVE')
 			if(!$enableRequiredUserFieldCheck)
 			{
 				$saveOptions['DISABLE_REQUIRED_USER_FIELD_CHECK'] = true;
-			}
-			if (!is_null($conversionWizard))
-			{
-				$saveOptions['EXCLUDE_FROM_RELATION_REGISTRATION'] = [
-					new Crm\ItemIdentifier($conversionWizard->getEntityTypeID(), $conversionWizard->getEntityID()),
-				];
 			}
 
 			if ($enableProductRows)
@@ -967,7 +963,10 @@ elseif($action === 'SAVE')
 					$bankDetailID > 0 ? $bankDetailID : null
 				);
 
-				if($isRecurringSaving || $previousFields['IS_RECURRING'] === 'Y')
+				if(
+					(isset($isRecurringSaving) && !empty($isRecurringSaving))
+					|| ($previousFields['IS_RECURRING'] ?? null) === 'Y'
+				)
 				{
 					$saveOptions['REGISTER_STATISTICS'] = false;
 				}
@@ -1069,6 +1068,8 @@ elseif($action === 'SAVE')
 		// save and synchronize products has already been done in \Bitrix\Crm\Entity\Compatibility\Adapter::performUpdate
 		if (!$isFactoryEnabled)
 		{
+			$factory = Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::Deal);
+
 			if (!$isExternal && $enableProductRows && (!$isNew || !empty($productRows)))
 			{
 				$saveProductRowsResult = \CCrmDeal::SaveProductRows($ID, $productRows, true, true, false);
@@ -1089,7 +1090,6 @@ elseif($action === 'SAVE')
 				&& $inventoryManagementCheckResult->isSuccess()
 			)
 			{
-				$factory = Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::Deal);
 				if ($factory)
 				{
 					$itemAfterSave = $factory->getItem($ID);
@@ -1106,6 +1106,22 @@ elseif($action === 'SAVE')
 							]);
 						}
 					}
+				}
+			}
+
+			if (
+				$ID > 0
+				&& isset($itemBeforeSave)
+				&& $factory
+			)
+			{
+				$itemAfterSave = $factory->getItem($ID);
+				if ($itemAfterSave)
+				{
+					(new Crm\Service\Operation\Action\CreateFinalSummaryTimelineHistoryItem())
+						->setItemBeforeSave($itemBeforeSave)
+						->process($itemAfterSave)
+					;
 				}
 			}
 		}
@@ -1187,7 +1203,7 @@ elseif($action === 'SAVE')
 		}
 
 		$arErrors = array();
-		if (!isset($isRecurringSaving) && $previousFields['IS_RECURRING'] !== 'Y')
+		if (!isset($isRecurringSaving) && (($previousFields['IS_RECURRING'] ?? null) !== 'Y'))
 		{
 			\CCrmBizProcHelper::AutoStartWorkflows(
 				\CCrmOwnerType::Deal,

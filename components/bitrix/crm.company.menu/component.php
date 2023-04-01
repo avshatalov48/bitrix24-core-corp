@@ -1,5 +1,9 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 /**
  * @global \CMain $APPLICATION
@@ -14,27 +18,63 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 use Bitrix\Main\Localization\Loc;
 
 if (!CModule::IncludeModule('crm'))
+{
 	return;
+}
 
 \Bitrix\Crm\Service\Container::getInstance()->getLocalization()->loadMessages();
 
 $currentUserID = CCrmSecurityHelper::GetCurrentUserID();
 $CrmPerms = CCrmPerms::GetCurrentUserPermissions();
 
-$arParams['PATH_TO_COMPANY_LIST'] = CrmCheckPath('PATH_TO_COMPANY_LIST', $arParams['PATH_TO_COMPANY_LIST'], $APPLICATION->GetCurPage());
-$arParams['PATH_TO_COMPANY_DETAILS'] = CrmCheckPath('PATH_TO_COMPANY_DETAILS', $arParams['PATH_TO_COMPANY_DETAILS'], $APPLICATION->GetCurPage().'?company_id=#company_id#&details');
-$arParams['PATH_TO_COMPANY_SHOW'] = CrmCheckPath('PATH_TO_COMPANY_SHOW', $arParams['PATH_TO_COMPANY_SHOW'], $APPLICATION->GetCurPage().'?company_id=#company_id#&show');
-$arParams['PATH_TO_COMPANY_EDIT'] = CrmCheckPath('PATH_TO_COMPANY_EDIT', $arParams['PATH_TO_COMPANY_EDIT'], $APPLICATION->GetCurPage().'?company_id=#company_id#&edit');
-$arParams['PATH_TO_COMPANY_IMPORT'] = CrmCheckPath('PATH_TO_COMPANY_IMPORT', $arParams['PATH_TO_COMPANY_IMPORT'], $APPLICATION->GetCurPage().'?import');
-$arParams['PATH_TO_COMPANY_PORTRAIT'] = CrmCheckPath('PATH_TO_COMPANY_PORTRAIT', $arParams['PATH_TO_COMPANY_PORTRAIT'], $APPLICATION->GetCurPage().'?portrait');
-$arParams['PATH_TO_DEAL_EDIT'] = CrmCheckPath('PATH_TO_DEAL_EDIT', $arParams['PATH_TO_DEAL_EDIT'], $APPLICATION->GetCurPage().'?deal_id=#deal_id#&edit');
-$arParams['PATH_TO_CONTACT_EDIT'] = CrmCheckPath('PATH_TO_CONTACT_EDIT', $arParams['PATH_TO_CONTACT_EDIT'], $APPLICATION->GetCurPage().'?contact_id=#contact_id#&edit');
-$arParams['PATH_TO_MIGRATION'] = SITE_DIR."marketplace/category/migration/";
-$arParams['NAME_TEMPLATE'] = empty($arParams['NAME_TEMPLATE']) ? CSite::GetNameFormat(false) : str_replace(array("#NOBR#","#/NOBR#"), array("",""), $arParams["NAME_TEMPLATE"]);
+$arParams['PATH_TO_COMPANY_LIST'] = CrmCheckPath(
+	'PATH_TO_COMPANY_LIST',
+	$arParams['PATH_TO_COMPANY_LIST'] ?? '',
+	$APPLICATION->GetCurPage()
+);
+$arParams['PATH_TO_COMPANY_DETAILS'] = CrmCheckPath(
+	'PATH_TO_COMPANY_DETAILS',
+	$arParams['PATH_TO_COMPANY_DETAILS'] ?? '',
+	$APPLICATION->GetCurPage() . '?company_id=#company_id#&details'
+);
+$arParams['PATH_TO_COMPANY_SHOW'] = CrmCheckPath(
+	'PATH_TO_COMPANY_SHOW',
+	$arParams['PATH_TO_COMPANY_SHOW'] ?? '',
+	$APPLICATION->GetCurPage() . '?company_id=#company_id#&show'
+);
+$arParams['PATH_TO_COMPANY_EDIT'] = CrmCheckPath(
+	'PATH_TO_COMPANY_EDIT',
+	$arParams['PATH_TO_COMPANY_EDIT'] ?? '',
+	$APPLICATION->GetCurPage() . '?company_id=#company_id#&edit'
+);
+$arParams['PATH_TO_COMPANY_IMPORT'] = CrmCheckPath(
+	'PATH_TO_COMPANY_IMPORT',
+	$arParams['PATH_TO_COMPANY_IMPORT'] ?? '',
+	$APPLICATION->GetCurPage() . '?import'
+);
+$arParams['PATH_TO_COMPANY_PORTRAIT'] = CrmCheckPath(
+	'PATH_TO_COMPANY_PORTRAIT',
+	$arParams['PATH_TO_COMPANY_PORTRAIT'] ?? '',
+	$APPLICATION->GetCurPage() . '?portrait'
+);
+$arParams['PATH_TO_DEAL_EDIT'] = CrmCheckPath(
+	'PATH_TO_DEAL_EDIT',
+	$arParams['PATH_TO_DEAL_EDIT'] ?? '',
+	$APPLICATION->GetCurPage() . '?deal_id=#deal_id#&edit'
+);
+$arParams['PATH_TO_CONTACT_EDIT'] = CrmCheckPath(
+	'PATH_TO_CONTACT_EDIT',
+	$arParams['PATH_TO_CONTACT_EDIT'] ?? '',
+	$APPLICATION->GetCurPage() . '?contact_id=#contact_id#&edit'
+);
+$arParams['PATH_TO_MIGRATION'] = SITE_DIR . "marketplace/category/migration/";
+$arParams['NAME_TEMPLATE'] = empty($arParams['NAME_TEMPLATE'])
+	? CSite::GetNameFormat(false)
+	: str_replace(["#NOBR#", "#/NOBR#"], ["", ""], $arParams["NAME_TEMPLATE"]);
 
 $arParams['ELEMENT_ID'] = isset($arParams['ELEMENT_ID']) ? intval($arParams['ELEMENT_ID']) : 0;
 
-if($arParams['ELEMENT_ID'] > 0)
+if ($arParams['ELEMENT_ID'] > 0)
 {
 	$arResult['CATEGORY_ID'] = (int)\Bitrix\Crm\Service\Container::getInstance()
 		->getFactory(CCrmOwnerType::Company)
@@ -58,32 +98,35 @@ if ($CrmPerms->HavePerm(
 $arResult['MYCOMPANY_MODE'] = (isset($arParams['MYCOMPANY_MODE']) && $arParams['MYCOMPANY_MODE'] === 'Y') ? 'Y' : 'N';
 $isMyCompanyMode = ($arResult['MYCOMPANY_MODE'] === 'Y');
 
-if(!isset($arParams['TYPE']))
+if (!isset($arParams['TYPE']))
+{
 	$arParams['TYPE'] = 'list';
+}
 
 if (isset($_REQUEST['copy']))
-	$arParams['TYPE'] = 'copy';
-
-$toolbarID = 'toolbar_company_'.$arParams['TYPE'];
-if($arParams['ELEMENT_ID'] > 0)
 {
-	$toolbarID .= '_'.$arParams['ELEMENT_ID'];
+	$arParams['TYPE'] = 'copy';
+}
+
+$toolbarID = 'toolbar_company_' . $arParams['TYPE'];
+if ($arParams['ELEMENT_ID'] > 0)
+{
+	$toolbarID .= '_' . $arParams['ELEMENT_ID'];
 }
 $arResult['TOOLBAR_ID'] = $toolbarID;
 
-$arResult['BUTTONS'] = array();
+$arResult['BUTTONS'] = [];
 
-$isInSlider = ($arParams['IN_SLIDER'] === 'Y');
+$isInSlider = (isset($arParams['IN_SLIDER']) && $arParams['IN_SLIDER'] === 'Y');
 
-if ($arParams['TYPE'] == 'list')
+if ($arParams['TYPE'] === 'list')
 {
-	$bRead   = CCrmCompany::CheckReadPermission(0, $CrmPerms, $arResult['CATEGORY_ID']);
+	$bRead = CCrmCompany::CheckReadPermission(0, $CrmPerms, $arResult['CATEGORY_ID']);
 	$bExport = CCrmCompany::CheckExportPermission($CrmPerms, $arResult['CATEGORY_ID']);
 	$bImport = CCrmCompany::CheckImportPermission($CrmPerms, $arResult['CATEGORY_ID']);
-	$bAdd    = CCrmCompany::CheckCreatePermission($CrmPerms, $arResult['CATEGORY_ID']);
-	$bWrite  = CCrmCompany::CheckUpdatePermission(0, $CrmPerms, $arResult['CATEGORY_ID']);
+	$bAdd = CCrmCompany::CheckCreatePermission($CrmPerms, $arResult['CATEGORY_ID']);
+	$bWrite = CCrmCompany::CheckUpdatePermission(0, $CrmPerms, $arResult['CATEGORY_ID']);
 	$bDelete = false;
-
 	$bDedupe = $bRead && $bWrite && CCrmCompany::CheckDeletePermission(0, $CrmPerms, $arResult['CATEGORY_ID']);
 }
 else
@@ -92,28 +135,28 @@ else
 	$bImport = false;
 	$bDedupe = false;
 
-	$bRead   = CCrmCompany::CheckReadPermission($arParams['ELEMENT_ID'], $CrmPerms, $arResult['CATEGORY_ID']);
-	$bAdd    = CCrmCompany::CheckCreatePermission($CrmPerms, $arResult['CATEGORY_ID']);
-	$bWrite  = CCrmCompany::CheckUpdatePermission($arParams['ELEMENT_ID'], $CrmPerms, $arResult['CATEGORY_ID']);
+	$bRead = CCrmCompany::CheckReadPermission($arParams['ELEMENT_ID'], $CrmPerms, $arResult['CATEGORY_ID']);
+	$bAdd = CCrmCompany::CheckCreatePermission($CrmPerms, $arResult['CATEGORY_ID']);
+	$bWrite = CCrmCompany::CheckUpdatePermission($arParams['ELEMENT_ID'], $CrmPerms, $arResult['CATEGORY_ID']);
 	$bDelete = CCrmCompany::CheckDeletePermission($arParams['ELEMENT_ID'], $CrmPerms, $arResult['CATEGORY_ID']);
 }
 
 $isSliderEnabled = \CCrmOwnerType::IsSliderEnabled(\CCrmOwnerType::Company);
 
 //Skip COPY menu in slider mode
-if($arParams['TYPE'] == 'copy' && $isSliderEnabled)
+if ($arParams['TYPE'] === 'copy' && $isSliderEnabled)
 {
 	return false;
 }
 
-if($arParams['TYPE'] === 'details')
+if ($arParams['TYPE'] === 'details')
 {
-	if($arParams['ELEMENT_ID'] <= 0)
+	if ($arParams['ELEMENT_ID'] <= 0)
 	{
 		return false;
 	}
 
-	$scripts = isset($arParams['~SCRIPTS']) && is_array($arParams['~SCRIPTS']) ? $arParams['~SCRIPTS'] : array();
+	$scripts = isset($arParams['~SCRIPTS']) && is_array($arParams['~SCRIPTS']) ? $arParams['~SCRIPTS'] : [];
 
 	//region APPLICATION PLACEMENT
 	$placementGroupInfos = \Bitrix\Crm\Integration\Rest\AppPlacementManager::getHandlerInfos(
@@ -121,42 +164,42 @@ if($arParams['TYPE'] === 'details')
 	);
 	foreach($placementGroupInfos as $placementGroupName => $placementInfos)
 	{
-		$arResult['BUTTONS'][] = array(
+		$arResult['BUTTONS'][] = [
 			'TYPE' => 'rest-app-toolbar',
 			'NAME' => $placementGroupName,
-			'DATA' => array(
-				'OWNER_INFO' => isset($arParams['OWNER_INFO']) ? $arParams['OWNER_INFO'] : array(),
+			'DATA' => [
+				'OWNER_INFO' => $arParams['OWNER_INFO'] ?? [],
 				'PLACEMENT' => \Bitrix\Crm\Integration\Rest\AppPlacement::COMPANY_DETAIL_TOOLBAR,
-				'APP_INFOS' => $placementInfos
-			)
-		);
+				'APP_INFOS' => $placementInfos,
+			]
+		];
 	}
 	//endregion
 
 	if (!empty($arParams['BIZPROC_STARTER_DATA']))
 	{
-		$arResult['BUTTONS'][] = array(
+		$arResult['BUTTONS'][] = [
 			'TYPE' => 'bizproc-starter-button',
-			'DATA' => $arParams['BIZPROC_STARTER_DATA']
-		);
+			'DATA' => $arParams['BIZPROC_STARTER_DATA'],
+		];
 	}
 
 	//Force start new bar after first button
-	$arResult['BUTTONS'][] = array('NEWBAR' => true);
+	$arResult['BUTTONS'][] = ['NEWBAR' => true];
 
-	if($bWrite && !$isMyCompanyMode)
+	if ($bWrite && !$isMyCompanyMode)
 	{
-		$arResult['BUTTONS'][] = array(
+		$arResult['BUTTONS'][] = [
 			'TYPE' => 'crm-communication-panel',
-			'DATA' => array(
+			'DATA' => [
 				'ENABLE_CALL' => \Bitrix\Main\ModuleManager::isModuleInstalled('calendar'),
-				'OWNER_INFO' => isset($arParams['OWNER_INFO']) ? $arParams['OWNER_INFO'] : array(),
-				'MULTIFIELDS' => isset($arParams['MULTIFIELD_DATA']) ? $arParams['MULTIFIELD_DATA'] : array()
-			)
-		);
+				'OWNER_INFO' => $arParams['OWNER_INFO'] ?? [],
+				'MULTIFIELDS' => $arParams['MULTIFIELD_DATA'] ?? [],
+			]
+		];
 	}
 
-	if($bAdd)
+	if ($bAdd)
 	{
 		$copyUrl = CHTTP::urlAddParams(
 			CComponentEngine::MakePathFromTemplate(
@@ -194,6 +237,7 @@ if($arParams['TYPE'] === 'details')
 	}
 
 	$this->IncludeComponentTemplate();
+
 	return;
 }
 
@@ -255,20 +299,20 @@ if($arParams['TYPE'] === 'list')
 		$stExportId = 'EXPORT_'.$entityType;
 		$componentName = 'bitrix:crm.company.list';
 
-		$componentParams = array(
+		$componentParams = [
 			'COMPANY_COUNT' => '20',
-			'PATH_TO_COMPANY_LIST' => $arParams['PATH_TO_COMPANY_LIST'],
-			'PATH_TO_COMPANY_SHOW' => $arParams['PATH_TO_COMPANY_SHOW'],
-			'PATH_TO_COMPANY_EDIT' => $arParams['PATH_TO_COMPANY_EDIT'],
-			'PATH_TO_CONTACT_EDIT' => $arParams['PATH_TO_CONTACT_EDIT'],
-			'PATH_TO_DEAL_EDIT' => $arParams['PATH_TO_DEAL_EDIT'],
-			'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'],
-			'MYCOMPANY_MODE' => ($isMyCompanyMode ? 'Y' : 'N'),
+			'PATH_TO_COMPANY_LIST' => $arParams['PATH_TO_COMPANY_LIST'] ?? '',
+			'PATH_TO_COMPANY_SHOW' => $arParams['PATH_TO_COMPANY_SHOW'] ?? '',
+			'PATH_TO_COMPANY_EDIT' => $arParams['PATH_TO_COMPANY_EDIT'] ?? '',
+			'PATH_TO_CONTACT_EDIT' => $arParams['PATH_TO_CONTACT_EDIT'] ?? '',
+			'PATH_TO_DEAL_EDIT' => $arParams['PATH_TO_DEAL_EDIT'] ?? '',
+			'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'] ?? '',
+			'MYCOMPANY_MODE' => $isMyCompanyMode ? 'Y' : 'N',
 			'NAVIGATION_CONTEXT_ID' => $entityType,
 			'CATEGORY_ID' => $arResult['CATEGORY_ID'],
 			'GRID_ID_SUFFIX' => (new \Bitrix\Crm\Component\EntityList\GridId(CCrmOwnerType::Company))
 					->getDefaultSuffix($arResult['CATEGORY_ID']),
-		);
+		];
 
 		if (isset($_REQUEST['WG']) && mb_strtoupper($_REQUEST['WG']) === 'Y')
 		{
@@ -323,9 +367,6 @@ if($arParams['TYPE'] === 'list')
 		$arResult['EXPORT_EXCEL_PARAMS']['id'] = $stExportId. '_EXCEL';
 		$arResult['EXPORT_EXCEL_PARAMS']['params']['EXPORT_TYPE'] = 'excel';
 		$arResult['EXPORT_EXCEL_PARAMS']['messages']['DialogTitle'] = Loc::getMessage('COMPANY_EXPORT_EXCEL_TITLE');
-
-
-
 		$arResult['BUTTONS'][] = array(
 			'TITLE' => Loc::getMessage('COMPANY_EXPORT_CSV_TITLE'),
 			'TEXT' => Loc::getMessage('COMPANY_EXPORT_CSV'),

@@ -10,8 +10,8 @@ export class Bitrix24Banner
 			text: Loc.getMessage('B24_BANNER_DOWNLOAD_LINUX_DEB'),
 			href: 'https://dl.bitrix24.com/b24/bitrix24_desktop.deb',
 		},
-		'RBM': {
-			text: Loc.getMessage('B24_BANNER_DOWNLOAD_LINUX_RBM'),
+		'RPM': {
+			text: Loc.getMessage('B24_BANNER_DOWNLOAD_LINUX_RPM'),
 			href: 'https://dl.bitrix24.com/b24/bitrix24_desktop.rpm',
 		},
 	};
@@ -40,8 +40,8 @@ export class Bitrix24Banner
 					}
 				},
 				{
-					text: this.#typesInstallersForLinux.RBM.text,
-					href: this.#typesInstallersForLinux.RBM.href,
+					text: this.#typesInstallersForLinux.RPM.text,
+					href: this.#typesInstallersForLinux.RPM.href,
 					onclick: (element) => {
 						element.close();
 					}

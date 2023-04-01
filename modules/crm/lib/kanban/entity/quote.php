@@ -8,12 +8,11 @@ use Bitrix\Crm\Kanban\Entity;
 use Bitrix\Crm\Service;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Settings\QuoteSettings;
-use Bitrix\Main\Error;
-use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\Result;
 
 class Quote extends Entity
 {
+	use DynamicInlineEditorFieldsTrait;
+
 	public function getTypeName(): string
 	{
 		return \CCrmOwnerType::QuoteName;
@@ -56,7 +55,7 @@ class Quote extends Entity
 
 	protected function getPersistentFilterFields(): array
 	{
-		return [];
+		return [ 'ACTIVITY_COUNTER' ];
 	}
 
 	public function getFilterPresets(): array
@@ -84,7 +83,7 @@ class Quote extends Entity
 
 	public function isActivityCountersSupported(): bool
 	{
-		return false;
+		return $this->factory->isCountersEnabled();
 	}
 
 	public function isNeedToRunAutomation(): bool
@@ -167,7 +166,7 @@ class Quote extends Entity
 				'useFactoryBasedApproach' => true,
 				'canUseCallListInPanel' => true,
 				'showPersonalSetStatusNotCompletedText' => true,
-				'kanbanItemClassName' => 'crm-kanban-item crm-kanban-item-invoice',
+				'kanbanItemClassName' => 'crm-kanban-item',
 			]
 		);
 	}

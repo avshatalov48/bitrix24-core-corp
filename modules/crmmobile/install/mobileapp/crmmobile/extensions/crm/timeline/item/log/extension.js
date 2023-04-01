@@ -11,6 +11,7 @@ jn.define('crm/timeline/item/log', (require, exports, module) => {
 	const { CallIncoming } = require('crm/timeline/item/log/call-incoming');
 	const { Ping } = require('crm/timeline/item/log/ping');
 	const { DocumentViewed } = require('crm/timeline/item/log/document-viewed');
+	const { RestLog } = require('crm/timeline/item/log/rest-log');
 
     module.exports = {
 		Creation,
@@ -21,6 +22,7 @@ jn.define('crm/timeline/item/log', (require, exports, module) => {
 		CallIncoming,
 		Ping,
 		DocumentViewed,
+		RestLog,
 	};
 
 });

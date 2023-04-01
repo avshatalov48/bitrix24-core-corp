@@ -1,11 +1,14 @@
-<?
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+<?php
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 $runtime = CBPRuntime::GetRuntime();
 $runtime->IncludeActivityFile('CreateDocumentActivity');
 
-class CBPCreateCrmCompanyDocumentActivity
-	extends CBPCreateDocumentActivity
+class CBPCreateCrmCompanyDocumentActivity extends CBPCreateDocumentActivity
 {
 	public function __construct($name)
 	{
@@ -20,9 +23,16 @@ class CBPCreateCrmCompanyDocumentActivity
 			return CBPActivityExecutionStatus::Closed;
 		}
 
-		$documentId = \CCrmBizProcHelper::ResolveDocumentType(\CCrmOwnerType::Company);
+		$documentType = \CCrmBizProcHelper::ResolveDocumentType(\CCrmOwnerType::Company);
 		$documentService = $this->workflow->GetService('DocumentService');
-		$this->CompanyId = $documentService->CreateDocument($documentId, $this->Fields);
+
+		$fields = $this->Fields;
+		if (method_exists($this, 'prepareFieldsValues'))
+		{
+			$fields = $this->prepareFieldsValues($documentType, $fields);
+		}
+
+		$this->CompanyId = $documentService->CreateDocument($documentType, $fields);
 
 		return CBPActivityExecutionStatus::Closed;
 	}

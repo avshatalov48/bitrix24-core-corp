@@ -40,6 +40,18 @@ abstract class Base extends BaseReport
 	private array $users = [];
 
 	/**
+	 * Fix base method - return array only
+	 *
+	 * @override
+	 */
+	public function getCalculatedData(): array
+	{
+		$result = parent::getCalculatedData(); // return mixed value in base method
+
+		return is_array($result) ? $result : [];
+	}
+
+	/**
 	 * @param array|Request $requestParameters
 	 *
 	 * @return |null

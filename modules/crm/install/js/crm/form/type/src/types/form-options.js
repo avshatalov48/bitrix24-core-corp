@@ -127,6 +127,7 @@ type IntegrationProvider = {
 	code: string;
 	title: string;
 	hasAuth: boolean;
+	hasPages: boolean;
 };
 type Integration = {
 	canUse: boolean;

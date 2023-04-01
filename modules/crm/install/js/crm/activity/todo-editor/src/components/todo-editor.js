@@ -1,7 +1,9 @@
-import { DatetimeConverter } from "crm.timeline.tools";
+import { DatetimeConverter } from 'crm.timeline.tools';
 import { TodoEditorActionBtn } from './todo-editor-action-btn';
-import { DateTimeFormat } from "main.date";
+import { DateTimeFormat } from 'main.date';
 import { Dom, Browser } from 'main.core';
+
+const TEXTAREA_MAX_HEIGHT = 126;
 
 export const TodoEditor = {
 	components: {
@@ -18,20 +20,37 @@ export const TodoEditor = {
 			default: '',
 		},
 		additionalButtons: Array,
+		popupMode: Boolean,
 	},
 	data(): Object
 	{
 		return {
 			description: this.defaultDescription,
 			currentDeadline: this.deadline ?? new Date(),
-			showFileUploader: false
+			showFileUploader: false,
+			isTextareaToLong: false,
 		}
 	},
 	computed: {
 		deadlineFormatted(): string
 		{
-			return (new DatetimeConverter(this.currentDeadline)).toDatetimeString({ withDayOfWeek: true, delimiter:', ' });
+			const converter = new DatetimeConverter(this.currentDeadline);
+			return converter.toDatetimeString({ withDayOfWeek: true, delimiter:', ' });
 		}
+	},
+	watch: {
+		description(): void
+		{
+			Dom.style(this.$refs.textarea, 'height', 'auto');
+			void this.$nextTick(() => {
+				const currentTextareaHeight = this.$refs.textarea.scrollHeight;
+				Dom.style(this.$refs.textarea, 'height', `${currentTextareaHeight}px`);
+				if (this.popupMode === true)
+				{
+					this.isTextareaToLong = currentTextareaHeight > TEXTAREA_MAX_HEIGHT;
+				}
+			});
+		},
 	},
 	methods: {
 		clearDescription(): void
@@ -43,8 +62,6 @@ export const TodoEditor = {
 		setDescription(description): void
 		{
 			this.description = description;
-			Dom.style(this.$refs.textarea, 'height', 'auto');
-			Dom.style(this.$refs.textarea, 'height', `${this.$refs.textarea.scrollHeight}px`);
 		},
 
 		onTextareaFocus(): void
@@ -54,13 +71,14 @@ export const TodoEditor = {
 
 		onTextareaKeydown(event): void
 		{
-			if (
-				event.keyCode === 13
-				&& (
-					event.ctrlKey === true ||
-					( Browser.isMac() && (event.metaKey === true || event.altKey === true) )
-				)
-			)
+			if (event.keyCode !== 13)
+			{
+				return;
+			}
+
+			const isMacCtrlKeydown = Browser.isMac() && (event.metaKey === true || event.altKey === true);
+
+			if (event.ctrlKey === true || isMacCtrlKeydown)
 			{
 				this.onSaveHotkeyPressed();
 			}
@@ -79,11 +97,11 @@ export const TodoEditor = {
 				bHideTime: false,
 				bSetFocus: false,
 				value: DateTimeFormat.format(DatetimeConverter.getSiteDateTimeFormat(), this.currentDeadline),
-				callback: this.setDeadlineValue.bind(this)
+				callback: this.setDeadline.bind(this),
 			});
 		},
 
-		setDeadlineValue(newDeadline): void
+		setDeadline(newDeadline): void
 		{
 			this.currentDeadline = newDeadline;
 		},
@@ -98,17 +116,14 @@ export const TodoEditor = {
 
 		onTextareaInput(event)
 		{
-			Dom.style(event.target, 'height', 'auto');
-			Dom.style(event.target, 'height', `${event.target.scrollHeight}px`);
-
-			this.description = event.target.value;
-
+			this.setDescription(event.target.value);
 			this.onChangeDescription(event.target.value);
-		}
+		},
 	},
 	template: `
-			<textarea 
-				rows="1" 
+		<label class="crm-activity__todo-editor_body">
+			<textarea
+				rows="1"
 				ref="textarea"
 				@focus="onTextareaFocus"
 				@keydown="onTextareaKeydown"
@@ -116,23 +131,27 @@ export const TodoEditor = {
 				:placeholder="$Bitrix.Loc.getMessage('CRM_ACTIVITY_TODO_ADD_PLACEHOLDER')"
 				@input="onTextareaInput"
 				:value="description"
+				:class="{ '--has-scroll': isTextareaToLong }"
 			></textarea>
-			<div
-				ref="deadline"
-				@click="onDeadlineClick"
-				class="crm-activity__todo-editor_deadline"
-			>
-				<span class="crm-activity__todo-editor_deadline-icon"><i></i></span>
-				<span class="crm-activity__todo-editor_deadline-text">{{ deadlineFormatted }}</span>
+			<div class="crm-activity__todo-editor_tools">
+				<div
+					ref="deadline"
+					@click="onDeadlineClick"
+					class="crm-activity__todo-editor_deadline"
+				>
+					<span class="crm-activity__todo-editor_deadline-icon"><i></i></span>
+					<span class="crm-activity__todo-editor_deadline-text">{{ deadlineFormatted }}</span>
+				</div>
+				<div class="crm-activity__todo-editor_action-btns">
+					<TodoEditorActionBtn
+						v-for="btn in additionalButtons"
+						:key="btn.id"
+						:icon="btn.icon"
+						:description="btn.description"
+						:action="btn.action"
+					/>
+				</div>
 			</div>
-			<div class="crm-activity__todo-editor_action-btns">
-				<TodoEditorActionBtn
-					v-for="btn in additionalButtons"
-					:key="btn.id"
-					:icon="btn.icon"
-					:description="btn.description"
-					:action="btn.action"
-				/>
-			</div>
+		</label>
 	`
 };

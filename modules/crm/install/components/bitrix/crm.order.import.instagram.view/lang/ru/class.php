@@ -2,7 +2,6 @@
 $MESS["CRM_OIIV_FACEBOOK_NO_ACTIVE_CONNECTOR"] = "Данный коннектор не активен";
 $MESS["CRM_OIIV_FACEBOOK_REMOVED_REFERENCE_TO_PAGE"] = "Импорт товаров был настроен на работу с группой, доступа к администрированию которой в текущий момент у вас нет";
 
-$MESS['CRM_OIIV_MODULE_NOT_INSTALLED_IMCONNECTOR'] = 'Модуль коннекторов мессенджеров не установлен';
 $MESS['CRM_OIIV_MODULE_NOT_INSTALLED_CRM'] = 'Модуль "CRM" не установлен';
 $MESS['CRM_OIIV_MODULE_NOT_INSTALLED_CATALOG'] = 'Модуль "Торговый каталог" не установлен';
 $MESS["CRM_OIIV_TITLE"] = 'Импорт товаров в Магазин Битрикс24';

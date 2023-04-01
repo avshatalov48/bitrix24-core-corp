@@ -147,7 +147,7 @@ class CBPVoximplantCallActivity extends CBPActivity
 		$this->Result = ($parameters['RESULT'] ? 'Y' : 'N');
 
 		$this->ResultText = sprintf('%s (%s)',
-			GetMessage($this->Result ? 'BPVICA_RESULT_TRUE' : 'BPVICA_RESULT_FALSE'),
+			GetMessage($parameters['RESULT'] ? 'BPVICA_RESULT_TRUE' : 'BPVICA_RESULT_FALSE'),
 			$parameters['CODE']
 		);
 		$this->ResultCode = $parameters['CODE'];

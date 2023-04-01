@@ -4,7 +4,6 @@ namespace Bitrix\Crm\Service;
 
 use Bitrix\Crm\Attribute\FieldAttributeManager;
 use Bitrix\Crm\Automation\Starter;
-use Bitrix\Crm\Counter\EntityCounterManager;
 use Bitrix\Crm\Field;
 use Bitrix\Crm\Field\Collection;
 use Bitrix\Crm\Item;
@@ -119,6 +118,11 @@ abstract class Operation
 
 	public function launch(): Result
 	{
+		if (!$this->item->isNew())
+		{
+			$this->item->fill();
+		}
+
 		if ($this->isCheckLimitsEnabled())
 		{
 			$checkLimitsResult = $this->checkLimits();
@@ -1153,9 +1157,13 @@ abstract class Operation
 		$fields = [
 			Item::FIELD_NAME_ID,
 			Item::FIELD_NAME_ASSIGNED,
-			Item::FIELD_NAME_STAGE_ID,
 			Item::FIELD_NAME_CATEGORY_ID,
 		];
+
+		if ($this->item->isStagesEnabled())
+		{
+			$fields[] = Item::FIELD_NAME_STAGE_ID;
+		}
 
 		return array_reduce($fields, static function(array $preparedFields, string $fieldName) use ($factory): array {
 			if ($factory->isFieldExists($fieldName))

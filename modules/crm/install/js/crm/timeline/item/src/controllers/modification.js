@@ -1,6 +1,7 @@
 import {Base} from './base';
 import ConfigurableItem from '../configurable-item';
 import ValueChange from '../components/content-blocks/value-change';
+import ValueChangeItem from '../components/content-blocks/value-change-item';
 
 export class Modification extends Base
 {
@@ -8,6 +9,7 @@ export class Modification extends Base
 	{
 		return {
 			ValueChange,
+			ValueChangeItem,
 		};
 	}
 

@@ -5,8 +5,10 @@ class CDavICalendar
 
 	public function __construct($cal, $siteId = null)
 	{
-		if (!isset($cal) || !is_array($cal) && !is_string($cal))
+		if (!isset($cal) || (!is_array($cal) && !is_string($cal)))
+		{
 			return;
+		}
 
 		$this->component = new CDavICalendarComponent();
 
@@ -48,6 +50,11 @@ class CDavICalendar
 	public function Render($restrictProperties = null)
 	{
 		return trim($this->component->Render($restrictProperties));
+	}
+
+	public function getComponent()
+	{
+		return $this->component;
 	}
 
 	public function GetComponents($type = null, $normalMatch = true)

@@ -1,9 +1,11 @@
 <?php
+
 $MESS["CRM_DOCUMENT_OPERATION_WRITE"] = "Запись";
 $MESS["CRM_DOCUMENT_OPERATION_READ"] = "Чтение";
 $MESS["CRM_DOCUMENT_OPERATION_ADD"] = "Добавление";
 $MESS["CRM_DOCUMENT_OPERATION_DELETE"] = "Удаление";
 $MESS["CRM_DOCUMENT_AUTHOR"] = "Автор";
+$MESS["CRM_DOCUMENT_RESPONSIBLE_HEAD"] = "Руководитель";
 $MESS["CRM_DOCUMENT_ELEMENT_IS_NOT_FOUND"] = "Элемент не найден";
 $MESS["BPVDX_NOT_SET"] = "не установлено";
 $MESS["BPVDX_DOCUMENT_AUTHOR"] = "Автор";
@@ -92,9 +94,8 @@ $MESS["CRM_DOCUMENT_FIELD_URL_BB"] = "Ссылка на элемент (BBcode)"
 $MESS["CRM_DOCUMENT_FIELD_PRODUCT_IDS"] = "Товарные позиции";
 $MESS["CRM_DOCUMENT_FIELD_PRODUCT_NAME"] = "Товар";
 $MESS["CRM_DOCUMENT_FIELD_PRODUCT_SUM"] = "Сумма";
-$MESS["CRM_DOCUMENT_FIELD_TRACKING_SOURCE_ID"] = 'Источник сквозной аналитики';
-$MESS["CRM_DOCUMENT_AUTOMATION_DEBUG_MESSAGE_INTERCEPTED"] = 'Элемент находится в режиме отладки. Приостановите работу с элементом, пока он не вернется в обычный режим';
-$MESS["CRM_DOCUMENT_AUTOMATION_DEBUG_MESSAGE_REMOVED"] = 'Элемент вернулся в обычный режим, можете продолжить работу с элементом';
-$MESS["CRM_DOCUMENT_AUTOMATION_DEBUG_MESSAGE_IN_DEBUG"] = 'Этот элемент выбран для отладки роботов. Приостановите работу с элементом, пока не завершится отладка';
-$MESS["CRM_DOCUMENT_AUTOMATION_DEBUG_MESSAGE_FINISHED"] = 'Отладка роботов завершена, можете продолжить работу с элементом';
-$MESS["CRM_DOCUMENT_RESPONSIBLE_HEAD"] = "Руководитель";
+$MESS['CRM_DOCUMENT_FIELD_TRACKING_SOURCE_ID'] = 'Источник сквозной аналитики';
+$MESS['CRM_DOCUMENT_AUTOMATION_DEBUG_MESSAGE_INTERCEPTED'] = 'Элемент находится в режиме отладки. Приостановите работу с элементом, пока он не вернется в обычный режим';
+$MESS['CRM_DOCUMENT_AUTOMATION_DEBUG_MESSAGE_REMOVED'] = 'Элемент вернулся в обычный режим, можете продолжить работу с элементом';
+$MESS['CRM_DOCUMENT_AUTOMATION_DEBUG_MESSAGE_IN_DEBUG'] = 'Этот элемент выбран для отладки роботов. Приостановите работу с элементом, пока не завершится отладка';
+$MESS['CRM_DOCUMENT_AUTOMATION_DEBUG_MESSAGE_FINISHED'] = 'Отладка роботов завершена, можете продолжить работу с элементом';

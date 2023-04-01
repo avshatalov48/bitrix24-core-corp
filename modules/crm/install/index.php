@@ -1459,14 +1459,6 @@ class crm extends CModule
 
 		$eventManager->registerEventHandler(
 			'sale',
-			'OnDeliveryRequestUpdated',
-			'crm',
-			'\Bitrix\Crm\Activity\Provider\Delivery',
-			'onDeliveryRequestUpdated'
-		);
-
-		$eventManager->registerEventHandler(
-			'sale',
 			'OnDeliveryRequestDeleted',
 			'crm',
 			'\Bitrix\Crm\Activity\Provider\Delivery',
@@ -1639,6 +1631,14 @@ class crm extends CModule
 			'crm',
 			'\Bitrix\Crm\Integration\Catalog\EventHandler',
 			'onGetContractorsProviderEventHandler'
+		);
+
+		$eventManager->registerEventHandler(
+			'catalog',
+			'onAfterCatalogRolePermissionSave',
+			'crm',
+			'\CCrmSaleHelper',
+			'updateShopAccess'
 		);
 	}
 
@@ -2041,14 +2041,6 @@ class crm extends CModule
 
 		$eventManager->unRegisterEventHandler(
 			'sale',
-			'OnDeliveryRequestUpdated',
-			'crm',
-			'\Bitrix\Crm\Activity\Provider\Delivery',
-			'onDeliveryRequestUpdated'
-		);
-
-		$eventManager->unRegisterEventHandler(
-			'sale',
 			'OnDeliveryRequestDeleted',
 			'crm',
 			'\Bitrix\Crm\Activity\Provider\Delivery',
@@ -2230,6 +2222,14 @@ class crm extends CModule
 			'crm',
 			'\Bitrix\Crm\Integration\Catalog\EventHandler',
 			'onGetContractorsProviderEventHandler'
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'catalog',
+			'onAfterCatalogRolePermissionSave',
+			'crm',
+			'\CCrmSaleHelper',
+			'updateShopAccess'
 		);
 
 		$eventManager->unRegisterEventHandler('im', 'OnAfterMessagesAdd', 'crm', '\Bitrix\Crm\Integration\Im\Chat', 'OnAfterMessagesAdd');

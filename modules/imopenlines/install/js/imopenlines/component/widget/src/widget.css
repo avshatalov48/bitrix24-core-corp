@@ -728,6 +728,17 @@
 .bx-livechat-alert-close:hover {
 	opacity: .8;
 }
+.bx-livechat-alert-later {
+	text-align: center;
+}
+.bx-livechat-alert-later-btn {
+	text-align: center;
+	font: 13px var(--ui-font-family-secondary, var(--ui-font-family-helvetica));
+	font-weight: var(--ui-font-weight-regular, 400);
+	color: #9a9a9a;
+	border-bottom: 1px dashed #9a9a9a;
+	cursor: pointer;
+}
 .bx-livechat-alert-rate-box {
 	margin: 0 auto;
 	max-width: 236px;

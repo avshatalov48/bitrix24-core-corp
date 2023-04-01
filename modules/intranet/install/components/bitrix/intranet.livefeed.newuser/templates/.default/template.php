@@ -7,6 +7,7 @@
 /** @global CMain $APPLICATION */
 
 use Bitrix\Main\UI;
+use Bitrix\Main\Web\Uri;
 
 UI\Extension::load("ui.tooltip");
 
@@ -33,7 +34,7 @@ if (
 	<div class="ui-icon ui-icon-common-user feed-user-avatar">
 		<i
 			<? if ($arParams['AVATAR_SRC']):?>
-				style="background: url('<?=\CHTTP::urnEncode($arParams['AVATAR_SRC'])?>'); background-size: cover;"
+				style="background: url('<?=Uri::urnEncode($arParams['AVATAR_SRC'])?>'); background-size: cover;"
 			<? endif ?>
 		></i>
 	</div>

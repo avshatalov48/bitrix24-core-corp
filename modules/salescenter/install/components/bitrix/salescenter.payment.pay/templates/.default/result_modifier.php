@@ -23,7 +23,11 @@ $arResult['JS_DATA'] = [
 		'id' => $arResult['USER_CONSENT_ID'],
 		'title' => Loc::getMessage('SPP_PAY_BUTTON'),
 		'eventName' => 'bx-spp-submit',
-		'accepted' => ($arResult['USER_CONSENT'] === 'Y' && $arResult['USER_CONSENT_IS_CHECKED'] === 'Y'),
+		'accepted' => (
+			isset($arResult['USER_CONSENT'])
+			&& $arResult['USER_CONSENT'] === 'Y'
+			&& $arResult['USER_CONSENT_IS_CHECKED'] === 'Y'
+		),
 	],
 	'paymentProcess' => [
 		'allowPaymentRedirect' => ($arParams['ALLOW_PAYMENT_REDIRECT'] === 'Y'),

@@ -17,18 +17,28 @@ class CDavXmlNode
 	public function __construct($tagname, $content = false, $attributes = false, $xmlns = null)
 	{
 		$this->tagname = $tagname;
-		if (gettype($content) == "object")
-			$this->content = array(&$content);
+		if (is_object($content))
+		{
+			$this->content = [&$content];
+		}
 		else
+		{
 			$this->content = $content;
+		}
 
 		$this->attributes = $attributes;
 		if (isset($this->attributes['xmlns']))
+		{
 			$this->xmlns = $this->attributes['xmlns'];
+		}
 
 		if (isset($xmlns))
 		{
 			$this->xmlns = $xmlns;
+			if (!$this->attributes || !is_array($this->attributes))
+			{
+				$this->attributes = [];
+			}
 			$this->attributes['xmlns'] = $xmlns;
 		}
 	}
@@ -40,7 +50,7 @@ class CDavXmlNode
 
 	public function GetAttribute($name)
 	{
-		return (isset($this->attributes[$name])) ? $this->attributes[$name] : null;
+		return $this->attributes[$name] ?? null;
 	}
 
 	public function GetXmlNS()
@@ -63,7 +73,9 @@ class CDavXmlNode
 		$elements = array();
 
 		if (!preg_match('#(/)?([^/]+)(/?.*)$#', $path, $matches))
+		{
 			return $elements;
+		}
 
 		$searchTagname = $matches[2];
 		$searchXmlns = "";
@@ -79,17 +91,21 @@ class CDavXmlNode
 			{
 				$elements[] = $this;
 			}
-			elseif (gettype($this->content) == "array")
+			elseif (is_array($this->content))
 			{
-				foreach ($this->content as $key => $val)
+				foreach ($this->content as $val)
+				{
 					$elements = array_merge($elements, $val->GetPath($matches[3]));
+				}
 			}
 		}
 
-		if ($matches[1] != '/' && gettype($this->content) == "array")
+		if ($matches[1] != '/' && is_array($this->content))
 		{
 			foreach ($this->content as $key => $val)
+			{
 				$elements = array_merge($elements, $val->GetPath($path));
+			}
 		}
 
 		return $elements;
@@ -103,15 +119,19 @@ class CDavXmlNode
 	public function GetChildren($tag = null, $recursive = false)
 	{
 		$elements = array();
-		if (gettype($this->content) == "array")
+		if (is_array($this->content))
 		{
 			foreach ($this->content as $val)
 			{
 				if (!isset($tag) || (isset($val->tagname) && $val->tagname == $tag))
+				{
 					$elements[] = $val;
+				}
 
 				if ($recursive)
+				{
 					$elements = $elements + $val->GetChildren($tag, true);
+				}
 			}
 		}
 		elseif (!isset($tag) || (isset($this->content->tagname) && $this->content->tagname == $tag))

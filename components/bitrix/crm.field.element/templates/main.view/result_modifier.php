@@ -86,7 +86,7 @@ if(is_array($arResult['value']) && count($arResult['value']))
 
 	$arResult['value']['CONTACT']['title'] = Loc::getMessage('CRM_ENTITY_TYPE_CONTACT');
 	if(
-		$arParams['userField']['SETTINGS']['CONTACT'] === 'Y'
+		($arParams['userField']['SETTINGS']['CONTACT'] ?? null) === 'Y'
 		&& !empty($values['CONTACT'])
 	)
 	{
@@ -138,7 +138,7 @@ if(is_array($arResult['value']) && count($arResult['value']))
 
 	$arResult['value']['COMPANY']['title'] = Loc::getMessage('CRM_ENTITY_TYPE_COMPANY');
 	if(
-		$arParams['userField']['SETTINGS']['COMPANY'] === 'Y'
+		($arParams['userField']['SETTINGS']['COMPANY'] ?? null) === 'Y'
 		&& !empty($values['COMPANY'])
 	)
 	{

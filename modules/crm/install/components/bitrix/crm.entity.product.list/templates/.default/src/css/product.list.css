@@ -884,3 +884,12 @@ select.crm-entity-product-control-select-field:hover {
 	line-height: unset;
 	vertical-align: middle;
 }
+
+.store-available-popup-link .store-available-popup-link--danger {
+	color: var(--ui-color-palette-red-70, #e92f2a);
+	border-bottom: 1px dashed var(--ui-color-palette-red-70, #e92f2a);
+}
+
+.text--danger {
+	color: var(--ui-color-palette-red-70, #e92f2a);
+}

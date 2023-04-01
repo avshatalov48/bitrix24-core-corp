@@ -141,6 +141,7 @@
 						{
 							return new StoreProductCard({
 								...props,
+								document: this.state.document,
 								permissions: this.props.permissions,
 								onClick: this.showProductDetailsBackdrop.bind(this),
 								onLongClick: this.showProductContextMenu.bind(this),

@@ -23,24 +23,6 @@ class Creation extends LogMessage
 		;
 	}
 
-	public function getIconCode(): ?string
-	{
-		if (in_array(
-			$this->getModel()->getAssociatedEntityTypeId(),
-			[
-				\CCrmOwnerType::Order,
-				\CCrmOwnerType::OrderShipment,
-				\CCrmOwnerType::OrderPayment,
-			],
-			true
-		))
-		{
-			return 'store';
-		}
-
-		return parent::getIconCode();
-	}
-
 	public function getTitle(): ?string
 	{
 		$title = null;
@@ -69,9 +51,6 @@ class Creation extends LogMessage
 				\CCrmOwnerType::Quote => 'CRM_TIMELINE_QUOTE_CREATION',
 				\CCrmOwnerType::Invoice => 'CRM_TIMELINE_INVOICE_CREATION',
 				\CCrmOwnerType::DealRecurring => 'CRM_TIMELINE_RECURRING_DEAL_CREATION',
-				\CCrmOwnerType::Order => 'CRM_TIMELINE_ORDER_CREATION',
-				\CCrmOwnerType::OrderPayment => 'CRM_TIMELINE_ORDER_PAYMENT_CREATION',
-				\CCrmOwnerType::OrderShipment => 'CRM_TIMELINE_ORDER_SHIPMENT_CREATION',
 			];
 			if (isset($entityTypeToTitleRelations[$assocEntityTypeId]))
 			{
@@ -112,14 +91,6 @@ class Creation extends LogMessage
 			}
 
 			return $result;
-		}
-
-		if (
-			$assocEntityTypeId === \CCrmOwnerType::OrderPayment
-			|| $assocEntityTypeId === \CCrmOwnerType::OrderShipment
-		)
-		{
-			return $this->getPaymentOrShipmentBlocks();
 		}
 
 		$descriptionBlock = $this->getDescriptionBlock();
@@ -163,10 +134,6 @@ class Creation extends LogMessage
 	private function getDescriptionBlock(): ?ContentBlock
 	{
 		$htmlDescription = $this->getAssociatedEntityModel()->get('HTML_TITLE');
-		if ($this->isDealCreatedFromOrder())
-		{
-			$htmlDescription = $this->getDealCreatedFromOrderDescription();
-		}
 		$textDescription = $this->getAssociatedEntityModel()->get('TITLE');
 		$descriptionUrl = $this->getAssociatedEntityModel()->get('SHOW_URL');
 		if ($this->isItemAboutCurrentEntity())
@@ -192,70 +159,5 @@ class Creation extends LogMessage
 		}
 
 		return null;
-	}
-
-	private function isDealCreatedFromOrder(): bool
-	{
-		return (
-			$this->getModel()->getAssociatedEntityTypeId() === \CCrmOwnerType::Deal
-			&& !empty($this->getAssociatedEntityModel()->get('ORDER'))
-		);
-	}
-
-	private function getDealCreatedFromOrderDescription(): string
-	{
-		$orderData = $this->getAssociatedEntityModel()->get('ORDER') ?? [];
-
-		return Loc::getMessage(
-			'CRM_TIMELINE_DEAL_ORDER_TITLE',
-			[
-				"#ORDER_ID#" => $orderData['ID'],
-				"#DATE_TIME#" => $orderData['ORDER_DATE'],
-				"#HREF#" => $orderData['SHOW_URL'],
-				"#PRICE_WITH_CURRENCY#" => $orderData['SUM'],
-			]
-		);
-	}
-
-	/**
-	 * @return ContentBlock[]
-	 */
-	private function getPaymentOrShipmentBlocks(): array
-	{
-		$result = [];
-		$textDescription = $this->getAssociatedEntityModel()->get('TITLE');
-		$descriptionUrl = $this->getAssociatedEntityModel()->get('SHOW_URL');
-
-		if ($this->isItemAboutCurrentEntity() || !$descriptionUrl)
-		{
-			$result['description'] = (new Text())->setValue($textDescription);
-		}
-		elseif ($textDescription)
-		{
-			$result['description'] =  (new Link())
-				->setValue($textDescription)
-				->setAction(new Redirect(new Uri($descriptionUrl)))
-			;
-		}
-		$legend = $this->getAssociatedEntityModel()->get('LEGEND');
-		if ($legend)
-		{
-			$result['legend'] = (new Text())->setValue($legend);
-		}
-
-		if (count($result) > 1) // all description parts should be on one line
-		{
-			$result = [
-				'description' => (new ContentBlock\LineOfTextBlocks())->setContentBlocks($result),
-			];
-		}
-
-		$subLegend = $this->getAssociatedEntityModel()->get('SUBLEGEND');
-		if ($subLegend)
-		{
-			$result['sublegend'] = (new Text())->setValue((string)$subLegend);
-		}
-
-		return $result;
 	}
 }

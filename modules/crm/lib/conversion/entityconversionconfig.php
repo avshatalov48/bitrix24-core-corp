@@ -223,7 +223,7 @@ class EntityConversionConfig
 
 	public function deleteItemByEntityTypeId(int $entityTypeId): bool
 	{
-		if ($this->items[$entityTypeId])
+		if (array_key_exists($entityTypeId, $this->items))
 		{
 			unset($this->items[$entityTypeId]);
 

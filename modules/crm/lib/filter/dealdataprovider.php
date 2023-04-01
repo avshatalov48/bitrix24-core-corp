@@ -16,8 +16,10 @@ use Bitrix\Main\Loader;
 
 Loc::loadMessages(__FILE__);
 
-class DealDataProvider extends EntityDataProvider
+class DealDataProvider extends EntityDataProvider implements FactoryOptionable
 {
+	use ForceUseFactoryTrait;
+
 	/** @var DealSettings|null */
 	protected $settings = null;
 

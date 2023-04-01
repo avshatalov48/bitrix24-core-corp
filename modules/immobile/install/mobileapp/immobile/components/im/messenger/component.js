@@ -36,7 +36,6 @@ if (typeof window.Messenger !== 'undefined' && typeof window.Messenger.destructo
 	} = jn.require('im/messenger/model');
 
 	const {
-		MessagesCache,
 		RecentCache,
 		UsersCache,
 	} = jn.require('im/messenger/cache');
@@ -70,7 +69,7 @@ if (typeof window.Messenger !== 'undefined' && typeof window.Messenger.destructo
 	const { Promotion } = jn.require('im/messenger/lib/promotion');
 	const { PushHandler } = jn.require('im/messenger/push-handler');
 	const { SelectorDialogListAdapter } = jn.require('im/chat/selector/adapter/dialog-list');
-
+	const { DialogCreator } = jn.require('im/messenger/controller/dialog-creator');
 	/* endregion import */
 
 	class Messenger
@@ -123,6 +122,7 @@ if (typeof window.Messenger !== 'undefined' && typeof window.Messenger.destructo
 			this.dialog = null;
 			this.dialogSelector = null;
 			this.chatCreator = null;
+			this.dialogCreator = null
 			this.communication = new Communication();
 
 			this.initStore();
@@ -183,6 +183,11 @@ if (typeof window.Messenger !== 'undefined' && typeof window.Messenger.destructo
 			});
 
 			this.chatCreator = new ChatCreator();
+
+			if (Application.getApiVersion() >= 47)
+			{
+				this.dialogCreator = new DialogCreator();
+			}
 		}
 
 		subscribeEvents()
@@ -404,9 +409,16 @@ if (typeof window.Messenger !== 'undefined' && typeof window.Messenger.destructo
 		openChatCreate()
 		{
 			Logger.log('EventType.messenger.createChat');
+			if (this.dialogCreator !== null)
+			{
+				this.dialogCreator.open();
+
+				return;
+			}
 
 			this.chatCreator.open();
 		}
+
 
 		onNotificationOpen()
 		{
@@ -516,7 +528,6 @@ if (typeof window.Messenger !== 'undefined' && typeof window.Messenger.destructo
 		//TODO: Remove after database manager implementation
 		initCache()
 		{
-			const messagesState = MessagesCache.get();
 			const recentState = RecentCache.get();
 			const usersState = UsersCache.get();
 
@@ -530,11 +541,6 @@ if (typeof window.Messenger !== 'undefined' && typeof window.Messenger.destructo
 			if (usersState)
 			{
 				cachePromiseList.push(this.store.dispatch('usersModel/setState', usersState));
-			}
-
-			if (messagesState)
-			{
-				cachePromiseList.push(this.store.dispatch('messagesModel/setState', messagesState));
 			}
 
 			return Promise.all(cachePromiseList);

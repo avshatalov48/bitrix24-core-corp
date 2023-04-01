@@ -22,7 +22,7 @@ if (!empty($arResult['errorMessage']))
 {
 	require __DIR__ . '/errors.php';
 }
-elseif ($arParams['VIEW_MODE'] === 'Y')
+elseif (isset($arParams['VIEW_MODE']) && $arParams['VIEW_MODE'] === 'Y')
 {
 	require __DIR__ . '/pay_system_info.php';
 }

@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Search\Result\Provider;
 
+use Bitrix\Main\ORM\Query\Filter\ConditionTree;
 use Bitrix\Main\ORM\Query\Query;
 use Bitrix\Crm\Search\Result;
 use Bitrix\Main\Search\Content;
@@ -117,8 +118,10 @@ abstract class IndexSupportedProvider extends \Bitrix\Crm\Search\Result\Provider
 		$columnName = $this->getShortIndexColumnName();
 		if (!empty($this->additionalFilter))
 		{
-			$referenceFilter = $this->convertToReferenceFilter($this->additionalFilter);
-			$referenceFilter['=this.' . $columnName ] = 'ref.ID';
+			$referenceFilter = (new ConditionTree())
+				->whereColumn('this.' . $columnName, 'ref.ID')
+			;
+			$this->addToReferenceFilter($referenceFilter, $this->additionalFilter);
 			$query->registerRuntimeField('',
 				new \Bitrix\Main\Entity\ReferenceField('ENTITY',
 					$this->getEntityTableQuery()->getEntity(),
@@ -325,20 +328,22 @@ abstract class IndexSupportedProvider extends \Bitrix\Crm\Search\Result\Provider
 
 	abstract protected function searchByDenomination(string $searchQuery): Result;
 
-	protected function convertToReferenceFilter(array $entityFilter)
+	protected function addToReferenceFilter(ConditionTree $referenceFilter, array $entityFilter): void
 	{
-		$result = [];
-
 		$sqlWhere = new \CSQLWhere();
 		foreach ($entityFilter as $filterKey => $filterValue)
 		{
 			$operationData = $sqlWhere->makeOperation($filterKey);
 			$operation = \CSQLWhere::getOperationByCode($operationData['OPERATION']);
 			$field = $operationData['FIELD'];
-			// @todo support array type of $filterValue
-			$result[$operation . 'ref.' . $field] = new SqlExpression('?', $filterValue);
+			if ($operation === '@')
+			{
+				$referenceFilter->whereIn( 'ref.' . $field, $filterValue);
+			}
+			else
+			{
+				$referenceFilter->where('ref.' . $field, $operation, new SqlExpression('?', $filterValue));
+			}
 		}
-
-		return $result;
 	}
 }

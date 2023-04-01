@@ -93,7 +93,7 @@ class KanbanDataProvider extends \Bitrix\Crm\Component\EntityList\ClientDataProv
 						'ENTITY_TYPE_ID' => $this->clientEntityTypeId,
 						'ENTITY_ID' => $item[$clientFieldId],
 						'TITLE' => $title,
-						'PREFIX' => $entityTypeName . '_' . $item['id'],
+						'PREFIX' => $entityTypeName . '_' . $item['ID'],
 					]);
 				}
 				else

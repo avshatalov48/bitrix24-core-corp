@@ -1,10 +1,15 @@
 <?
-if (mb_strpos($_SERVER['SCRIPT_NAME'], "/bitrix/groupdav.php") === 0)
-	return;
-
-if ($_SERVER['REQUEST_METHOD'] === 'PROPFIND' || $_SERVER['REQUEST_METHOD'] === 'OPTIONS')
+if (isset($_SERVER['SCRIPT_NAME']) && mb_strpos($_SERVER['SCRIPT_NAME'], "/bitrix/groupdav.php") === 0)
 {
-	if (preg_match("/Livechat-Auth-Id/i", $_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']))
+	return;
+}
+
+if (
+	isset($_SERVER['REQUEST_METHOD'])
+	&& ($_SERVER['REQUEST_METHOD'] === 'PROPFIND' || $_SERVER['REQUEST_METHOD'] === 'OPTIONS')
+)
+{
+	if (isset($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS']) && stripos($_SERVER['HTTP_ACCESS_CONTROL_REQUEST_HEADERS'], "Livechat-Auth-Id") !== false)
 	{
 		return;
 	}
@@ -18,7 +23,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'PROPFIND' || $_SERVER['REQUEST_METHOD'] === 
 }
 
 if (\Bitrix\Main\Config\Option::get('disk', 'successfully_converted', false) !== 'Y' || !CModule::includeModule('disk'))
+{
 	return;
+}
 
 if (!defined("STOP_WEBDAV") || !STOP_WEBDAV)
 {
@@ -26,38 +33,65 @@ if (!defined("STOP_WEBDAV") || !STOP_WEBDAV)
 	{
 		function __webdavIsDavHeaders()
 		{
-			$davHeaders = array("DAV", "IF", "DEPTH", "OVERWRITE", "DESTINATION", "LOCK_TOKEN", "TIMEOUT", "STATUS_URI");
+			$davHeaders = [
+				"DAV",
+				"IF",
+				"DEPTH",
+				"OVERWRITE",
+				"DESTINATION",
+				"LOCK_TOKEN",
+				"TIMEOUT",
+				"STATUS_URI"
+			];
 			foreach ($davHeaders as $header)
 			{
 				if (array_key_exists("HTTP_".$header, $_SERVER))
+				{
 					return true;
+				}
 			}
 
-			$davMethods = array("OPTIONS", "PUT", "PROPFIND", "PROPPATCH", "MKCOL", "COPY", "MOVE", "LOCK", "UNLOCK", "DELETE");
-			foreach ($davMethods as $method)
+			$davMethods = [
+				"OPTIONS",
+				"PUT",
+				"PROPFIND",
+				"PROPPATCH",
+				"MKCOL",
+				"COPY",
+				"MOVE",
+				"LOCK",
+				"UNLOCK",
+				"DELETE"
+			];
+			if (isset($_SERVER["REQUEST_METHOD"]) && in_array($_SERVER["REQUEST_METHOD"], $davMethods))
 			{
-				if ($_SERVER["REQUEST_METHOD"] == $method)
-					return true;
+				return true;
 			}
 
-			if (mb_strpos($_SERVER['HTTP_USER_AGENT'], "Microsoft Office") !== false &&
-				mb_strpos($_SERVER['HTTP_USER_AGENT'], "Outlook") === false
-					||
-				mb_strpos($_SERVER['HTTP_USER_AGENT'], "MiniRedir") !== false
-					||
-				mb_strpos($_SERVER['HTTP_USER_AGENT'], "WebDAVFS") !== false
-					||
-				mb_strpos($_SERVER['HTTP_USER_AGENT'], "davfs2") !== false
-					||
-				mb_strpos($_SERVER['HTTP_USER_AGENT'], "Sardine") !== false
-					||
-				mb_strpos($_SERVER['HTTP_USER_AGENT'], "gvfs") !== false
-					||
-				mb_strpos($_SERVER['HTTP_USER_AGENT'], "LibreOffice") !== false
-					||
-				mb_strpos($_SERVER['HTTP_USER_AGENT'], "WinSCP") !== false
-					||
-				mb_strpos($_SERVER['HTTP_USER_AGENT'], "NetBox") !== false
+			if (
+				isset($_SERVER['HTTP_USER_AGENT'])
+				&& (
+					(
+						mb_strpos($_SERVER['HTTP_USER_AGENT'], "Microsoft Office") !== false
+						&& mb_strpos($_SERVER['HTTP_USER_AGENT'], "Outlook") === false
+					)
+						||
+					mb_strpos($_SERVER['HTTP_USER_AGENT'], "MiniRedir") !== false
+						||
+					mb_strpos($_SERVER['HTTP_USER_AGENT'], "WebDAVFS") !== false
+						||
+					mb_strpos($_SERVER['HTTP_USER_AGENT'], "davfs2") !== false
+						||
+					mb_strpos($_SERVER['HTTP_USER_AGENT'], "Sardine") !== false
+						||
+					mb_strpos($_SERVER['HTTP_USER_AGENT'], "gvfs") !== false
+						||
+					mb_strpos($_SERVER['HTTP_USER_AGENT'], "LibreOffice") !== false
+						||
+					mb_strpos($_SERVER['HTTP_USER_AGENT'], "WinSCP") !== false
+						||
+					mb_strpos($_SERVER['HTTP_USER_AGENT'], "NetBox") !== false
+				)
 			)
 			{
 				return true;
@@ -68,11 +102,14 @@ if (!defined("STOP_WEBDAV") || !STOP_WEBDAV)
 	}
 
 	$bNeedInclude = true;
-	if ($_SERVER["REQUEST_METHOD"] === "HEAD")
+	if (isset($_SERVER["REQUEST_METHOD"]) && $_SERVER["REQUEST_METHOD"] === "HEAD")
 	{
 		$res = mb_strtolower($_SERVER["HTTP_USER_AGENT"]);
-		if (mb_strpos($res, "microsoft") === false &&
-			$_SERVER["REAL_FILE_PATH"] == '' && mb_substr($_SERVER['REQUEST_URI'], -1, 1) == '/')
+		if (
+			mb_strpos($res, "microsoft") === false
+			&& $_SERVER["REAL_FILE_PATH"] == ''
+			&& mb_substr($_SERVER['REQUEST_URI'], -1, 1) === '/'
+		)
 		{
 			$bNeedInclude = false;
 			$res = CUrlRewriter::GetList(Array("QUERY" => $_SERVER['REQUEST_URI']));
@@ -94,18 +131,20 @@ if (!defined("STOP_WEBDAV") || !STOP_WEBDAV)
 			CLdapUtil::bitrixVMAuthorize();
 		}
 
-		if (!$_SERVER['PHP_AUTH_USER'])
+		if (!isset($_SERVER['PHP_AUTH_USER']) || !$_SERVER['PHP_AUTH_USER'])
 		{
 			$res = (!empty($_SERVER['REDIRECT_REMOTE_USER']) ? $_SERVER['REDIRECT_REMOTE_USER'] : $_SERVER['REMOTE_USER']);
 			if (!empty($res) && preg_match('/(?<=(basic\s))(.*)$/is', $res, $matches))
 			{
 				$res = trim($matches[0]);
-				list($_SERVER["PHP_AUTH_USER"], $_SERVER["PHP_AUTH_PW"]) = explode(':', base64_decode($res));
+				[$_SERVER["PHP_AUTH_USER"], $_SERVER["PHP_AUTH_PW"]] = explode(':', base64_decode($res));
 			}
 		}
 
 		if (!is_array($GLOBALS["APPLICATION"]->arComponentMatch))
-			$GLOBALS["APPLICATION"]->arComponentMatch = array();
+		{
+			$GLOBALS["APPLICATION"]->arComponentMatch = [];
+		}
 
 		$GLOBALS["APPLICATION"]->arComponentMatch[] = 'dav';
 		$GLOBALS["APPLICATION"]->arComponentMatch[] = 'disk';
@@ -121,7 +160,14 @@ if (!defined("STOP_WEBDAV") || !STOP_WEBDAV)
 			//CDav::OnBeforePrologWebDav();
 			CDav::Report(
 				"<<<<<<<<<<<<<< REQUEST >>>>>>>>>>>>>>>>",
-				"\n".print_r(array("REQUEST_METHOD" => $_SERVER["REQUEST_METHOD"], "REQUEST_URI" => $_SERVER["REQUEST_URI"], "PATH_INFO" => $_SERVER["PATH_INFO"], "HTTP_DEPTH" => $_SERVER["HTTP_DEPTH"], "AUTH_TYPE" => $_SERVER["AUTH_TYPE"], "PHP_AUTH_USER" => $_SERVER["PHP_AUTH_USER"]), true)."\n",
+				"\n".print_r([
+					"REQUEST_METHOD" => $_SERVER["REQUEST_METHOD"],
+					"REQUEST_URI" => $_SERVER["REQUEST_URI"],
+					"PATH_INFO" => ($_SERVER["PATH_INFO"] ?? null),
+					"HTTP_DEPTH" => ($_SERVER["HTTP_DEPTH"] ?? null),
+					"AUTH_TYPE" => ($_SERVER["AUTH_TYPE"] ?? null),
+					"PHP_AUTH_USER" => ($_SERVER["PHP_AUTH_USER"] ?? null),
+				], true)."\n",
 				"UNDEFINED",
 				true
 			);
@@ -134,4 +180,6 @@ if (!defined("STOP_WEBDAV") || !STOP_WEBDAV)
 
 $app = $GLOBALS["USER"]->GetParam("APPLICATION_ID");
 if ($app === "caldav" || $app === "carddav" || $app === "webdav")
+{
 	die();
+}

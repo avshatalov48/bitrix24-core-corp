@@ -434,7 +434,7 @@ class Provider
 
 		foreach ($adsSources as $sourceCode => $source)
 		{
-			if (!$source['CONFIGURED'] || $source['CONFIGURABLE'] || !empty($source['SAVED']))
+			if (!isset($source['CONFIGURED']) || $source['CONFIGURABLE'] || !empty($source['SAVED']))
 			{
 				continue;
 			}

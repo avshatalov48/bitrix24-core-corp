@@ -31,7 +31,7 @@ class Debug
 						'TRACE' => debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS)
 					));
 				}
-				catch (\Exception $e)
+				catch (\Bitrix\Main\SystemException $e)
 				{
 
 				}
@@ -58,7 +58,7 @@ class Debug
 					'TRACE' => debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS)
 				));
 			}
-			catch (\Exception $e)
+			catch (\Bitrix\Main\SystemException $e)
 			{
 
 			}
@@ -85,7 +85,7 @@ class Debug
 					'TRACE' => debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS)
 				));
 			}
-			catch (\Exception $e)
+			catch (\Bitrix\Main\SystemException $e)
 			{
 
 			}
@@ -112,7 +112,7 @@ class Debug
 					'TRACE' => debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS)
 				));
 			}
-			catch (\Exception $e)
+			catch (\Bitrix\Main\SystemException $e)
 			{
 
 			}

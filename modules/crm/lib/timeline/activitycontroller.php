@@ -1,4 +1,5 @@
 <?php
+
 namespace Bitrix\Crm\Timeline;
 
 use Bitrix\Crm;
@@ -628,6 +629,7 @@ class ActivityController extends EntityController
 			Activity\Provider\Document::getId(),
 			Activity\Provider\SignDocument::getId(),
 			Activity\Provider\ToDo::getId(),
+			Activity\Provider\Payment::getId(),
 		];
 	}
 
@@ -1207,9 +1209,18 @@ class ActivityController extends EntityController
 		);
 	}
 
-	final public function notifyTimelinesAboutActivityUpdate(array $activity, ?int $userId = null, bool $forceUpdateHistoryItems = false): void
+	final public function notifyTimelinesAboutActivityUpdate(
+		array $activity,
+		?int $userId = null,
+		bool $forceUpdateHistoryItems = false
+	): void
 	{
 		$bindings = \CCrmActivity::GetBindings($activity['ID']);
+		if (!$bindings)
+		{
+			return;
+		}
+
 		$this->notifyTimelinesAboutActivityUpdateForBindings($activity, $bindings, $userId, $forceUpdateHistoryItems);
 	}
 

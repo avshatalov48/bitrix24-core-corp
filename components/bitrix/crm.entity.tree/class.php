@@ -236,9 +236,10 @@ class CrmEntityTreeComponent extends \CBitrixComponent
 			$chunk = 1;
 			foreach ($entity as &$status)
 			{
+				$statusSemantics = $status['SEMANTICS'] ?? null;
 				if (
-					$status['SEMANTICS'] !== PhaseSemantics::SUCCESS
-					&& $status['SEMANTICS'] !== PhaseSemantics::FAILURE
+					$statusSemantics !== PhaseSemantics::SUCCESS
+					&& $statusSemantics !== PhaseSemantics::FAILURE
 				)
 				{
 					$status['CHUNK'] = $chunk++;

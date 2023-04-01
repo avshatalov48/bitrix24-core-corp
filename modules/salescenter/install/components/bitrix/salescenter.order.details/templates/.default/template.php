@@ -127,16 +127,8 @@ else
 								</td>
 							</tr>
 						<?php endif; ?>
-						<?php if ((float)$arResult["TAX_VALUE"] > 0) : ?>
-							<tr class="order-total-tax-row">
-								<td class="order-total-item"><?= Loc::getMessage('SOD_TAX') ?></td>
-								<td class="order-total-value">
-									<div class="order-total-price"><?= $arResult["TAX_VALUE_FORMATED"] ?></div>
-								</td>
-							</tr>
-						<?php endif; ?>
 
-						<?php if ($arResult['SHIPMENT']): ?>
+						<?php if (!empty($arResult['SHIPMENT'])): ?>
 							<tr class="order-total-delivery-row">
 								<td class="order-total-item">
 									<?= Loc::getMessage('SOD_DELIVERY') ?> (<?= HtmlFilter::encode($arResult['SHIPMENT']['DELIVERY_NAME']) ?>)
@@ -165,7 +157,7 @@ else
 			</div>
 			<!--endregion-->
 
-			<?php if ($arResult['DOCUMENT']):
+			<?php if (!empty($arResult['DOCUMENT'])):
 				$pdfId = $arResult['DOCUMENT']['pdf']['id'] ?? 0;
 				$docxId = $arResult['DOCUMENT']['docx']['id'] ?? 0;
 				$extension = $pdfId > 0 ? 'pdf' : 'docx';

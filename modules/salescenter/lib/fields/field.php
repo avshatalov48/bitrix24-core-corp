@@ -11,11 +11,12 @@ class Field
 	public function __construct(string $name, array $params = [])
 	{
 		$this->name = $name;
-		if($params['title'] && is_string($params['title']))
+		if (!empty($params['title']) && is_string($params['title']))
 		{
 			$this->title = $params['title'];
 		}
-		if($params['entity'] && $params['entity'] instanceof Entity)
+
+		if (isset($params['entity']) && $params['entity'] instanceof Entity)
 		{
 			$this->setEntity($params['entity']);
 		}

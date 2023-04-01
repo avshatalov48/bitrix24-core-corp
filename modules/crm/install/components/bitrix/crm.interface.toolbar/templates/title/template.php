@@ -73,7 +73,7 @@ for($i = 0; $i < $itemCount; $i++)
 	$title = isset($item['TITLE']) ? htmlspecialcharsbx(strip_tags($item['TITLE'])) : '';
 	$icon = isset($item['ICON']) ? htmlspecialcharsbx($item['ICON']) : '';
 	$link = $item['LINK'] ?? '#';
-	$onClick = $item['ONCLICK'] ? new JsCode($item['ONCLICK']) : '';
+	$onClick = (isset($item['ONCLICK']) && $item['ONCLICK']) ? new JsCode($item['ONCLICK']) : '';
 	$type = $item['TYPE'] ?? '';
 	$buttonId = "{$toolbarId}_button_{$i}";
 

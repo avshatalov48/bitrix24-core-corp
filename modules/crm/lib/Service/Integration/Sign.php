@@ -6,18 +6,32 @@ use Bitrix\Crm\Activity\Provider\SignDocument;
 use Bitrix\Crm\Service\Operation\ConversionResult;
 use Bitrix\DocumentGenerator\Document;
 use Bitrix\Main\DI\ServiceLocator;
+use Bitrix\Main\Error;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ObjectNotFoundException;
+use Bitrix\Main\Result;
 use Bitrix\Sign\Config\Storage;
+use Bitrix\Sign\Service\Integration\Crm\DocumentService;
 
 class Sign
 {
+	private ?DocumentService $signDocumentService = null;
+
+	public function __construct()
+	{
+		if (self::isAvailable())
+		{
+			$this->signDocumentService = ServiceLocator::getInstance()
+				->get('sign.service.integration.crm.document');
+		}
+	}
 
 	/**
 	 * Check that all dependencies is exists
 	 * @return bool
 	 * @throws \Bitrix\Main\LoaderException
 	 */
-	public function isAvailable(): bool
+	public static function isAvailable(): bool
 	{
 		return \Bitrix\Main\Loader::includeModule('documentgenerator')
 			&& \Bitrix\Main\Loader::includeModule('crm')
@@ -30,12 +44,21 @@ class Sign
 	 *
 	 * @return bool
 	 */
-	public function isEnabled(): bool
+	public static function isEnabled(): bool
 	{
 		return (
 			\Bitrix\Crm\Settings\Crm::isDocumentSigningEnabled()
-			&& $this->isAvailable()
+			&& self::isAvailable()
 		);
+	}
+
+	public static function isEnabledInCurrentTariff(): bool
+	{
+		return static::isEnabled()
+			&& \Bitrix\Main\Loader::includeModule('sign')
+			&& \Bitrix\Sign\Restriction::isSignAvailable()
+			&& \Bitrix\Sign\Restriction::isCrmIntegrationAvailable()
+		;
 	}
 
 	/**
@@ -43,11 +66,11 @@ class Sign
 	 * @param int $documentId
 	 * @return array
 	 */
-	public function convertDealDocumentToSmartDocument(int $documentId): array
+	public function convertDealDocumentToSmartDocument(int $documentId, bool $usePrevious = false): Result
 	{
-		if (!$this->isAvailable())
+		if (!self::isAvailable())
 		{
-			return [];
+			return new Result();
 		}
 
 		$document = Document::loadById($documentId);
@@ -56,7 +79,6 @@ class Sign
 		{
 			return [];
 		}
-
 		$fileId = $document->PDF_ID;
 		$fileId = $fileId ?: $document->FILE_ID;
 
@@ -64,14 +86,19 @@ class Sign
 
 		if ($fileId && $provider instanceof \Bitrix\Crm\Integration\DocumentGenerator\DataProvider\Deal)
 		{
-			$dealId = $document->getFields(['SOURCE'])['SOURCE']['VALUE'];
+			$dealId = $document->getFields(['SOURCE'])['SOURCE']['VALUE'] ?? null;
 			if ($dealId)
 			{
+				if ($usePrevious)
+				{
+					return $this->checkSignInitiation($document, $dealId, $fileId);
+				}
+
 				$result = $this->convertDealToSmartDocument($dealId);
 
 				if (!$result->isSuccess() || !$result->isConversionFinished())
 				{
-					return ['errors' => $result->getErrors()];
+					return $result;
 				}
 
 				$data = $result->getData();
@@ -92,14 +119,70 @@ class Sign
 				}
 				catch (ObjectNotFoundException $e)
 				{
-					return [];
+					return (new Result())->addError(new Error('OBJECT_NOT_FOUND'));
 				}
 
-				return $result->getData();
+				return $result;
 			}
 		}
 
 		return [];
+	}
+	private function checkSignInitiation(Document $document, int $dealId, int $fileId): Result
+	{
+		$linkedBlank = $this
+			->signDocumentService
+			->getLinkedBlankForDocumentGeneratorTemplate($document->TEMPLATE_ID);
+
+		if ($linkedBlank)
+		{
+			return $this->initiateSign($linkedBlank, $dealId, $document, $fileId);
+		}
+		
+		return new Result();
+	}
+
+	private function initiateSign(array $linkedBlank, int $dealId, Document $document, $fileId): Result
+	{
+		$blank = \Bitrix\Sign\Blank::getById((int)$linkedBlank['BLANK_ID']);
+		$result = new Result();
+		if (!$blank)
+		{
+			return $result->addError(new Error(Loc::getMessage('CRM_INTEGRATION_SIGN_NO_BLANK')));
+		}
+
+		$smartDocResult = $this->convertDealToSmartDocument($dealId);
+		$smartDocId = $smartDocResult->getData()['SMART_DOCUMENT'] ?? null;
+
+		if (
+			!$smartDocResult->isSuccess()
+			|| !$smartDocResult->isConversionFinished()
+			|| !$smartDocId
+		)
+		{
+			return $result->addError(new Error(Loc::getMessage('CRM_INTEGRATION_SIGN_CAN_NOT_CONVERT')));
+		}
+
+		$result = $this->signDocumentService
+			->createSignDocumentFromBlank(
+				$fileId,
+				$blank,
+				$document,
+				$smartDocId
+			);
+
+		if (!$result->isSuccess() || !isset($result->getData()['signDocument']))
+		{
+			return $result;
+		}
+
+		/** @var \Bitrix\Sign\Document $doc */
+		$doc = $result->getData()['signDocument'];
+		$doc->setMeta([
+			'initiatorName' => $linkedBlank['INITIATOR'],
+		]);
+
+		return $doc->send();
 	}
 
 	/**

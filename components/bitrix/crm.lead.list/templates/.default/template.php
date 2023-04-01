@@ -1206,25 +1206,35 @@ $APPLICATION->IncludeComponent(
 		}
 	);
 </script>
+<?php if (
+	!$isInternal
+	&& \Bitrix\Main\Application::getInstance()->getContext()->getRequest()->get('IFRAME') !== 'Y'
+	&& \Bitrix\Crm\Settings\Crm::isUniversalActivityScenarioEnabled()
+): ?>
+<script type="text/javascript">
+	BX.ready(
+		function()
+		{
+			BX.Runtime.loadExtension(['crm.push-crm-settings', 'crm.toolbar-component']).then((exports) => {
+				/** @see BX.Crm.ToolbarComponent */
+				const settingsButton = exports.ToolbarComponent.Instance.getSettingsButton();
+
+				/** @see BX.Crm.PushCrmSettings */
+				new exports.PushCrmSettings({
+					entityTypeId: <?= (int)\CCrmOwnerType::Lead ?>,
+					rootMenu: settingsButton ? settingsButton.getMenuWindow() : undefined,
+					grid: BX.Reflection.getClass('BX.Main.gridManager') ? BX.Main.gridManager.getInstanceById('<?= \CUtil::JSEscape($arResult['GRID_ID']) ?>') : undefined,
+				});
+			});
+		}
+	);
+</script>
+<?php endif; ?>
 <?if(!$isInternal):?>
 <script type="text/javascript">
 	BX.ready(
 			function()
 			{
-				<?php if (\Bitrix\Crm\Settings\Crm::isUniversalActivityScenarioEnabled()): ?>
-				BX.Runtime.loadExtension(['crm.push-crm-settings', 'crm.toolbar-component']).then((exports) => {
-					/** @see BX.Crm.ToolbarComponent */
-					const settingsButton = exports.ToolbarComponent.Instance.getSettingsButton();
-
-					/** @see BX.Crm.PushCrmSettings */
-					new exports.PushCrmSettings({
-						entityTypeId: <?= (int)\CCrmOwnerType::Lead ?>,
-						rootMenu: settingsButton ? settingsButton.getMenuWindow() : undefined,
-						grid: BX.Reflection.getClass('BX.Main.gridManager') ? BX.Main.gridManager.getInstanceById('<?= \CUtil::JSEscape($arResult['GRID_ID']) ?>') : undefined,
-					});
-				});
-				<?php endif; ?>
-
 				BX.CrmActivityEditor.items['<?= CUtil::JSEscape($activityEditorID)?>'].addActivityChangeHandler(
 						function()
 						{

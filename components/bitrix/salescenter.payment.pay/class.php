@@ -537,8 +537,8 @@ class SalesCenterPaymentPay extends \CBitrixComponent implements Main\Engine\Con
 		$salesCenterRestrictionIds = array_column($salesCenterRestrictionIds, 'ID');
 		$paySystemList = PaySystem\Manager::getListWithRestrictions($payment);
 
-		$excludedPaySystemIds = $this->arParams['EXCLUDED_PAY_SYSTEMS'];
-		$needValidateExcludedPaySystems = $this->arParams['NEED_VALIDATE_EXCLUDED_PAY_SYSTEMS'];
+		$excludedPaySystemIds = $this->arParams['EXCLUDED_PAY_SYSTEMS'] ?? [];
+		$needValidateExcludedPaySystems = $this->arParams['NEED_VALIDATE_EXCLUDED_PAY_SYSTEMS'] ?? false;
 
 		foreach ($paySystemList as $paySystemElement)
 		{

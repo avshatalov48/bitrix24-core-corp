@@ -104,7 +104,7 @@ final class SaveEntityCommand extends Command
 
 		if ($this->factory->getEntityTypeId() === \CCrmOwnerType::Deal)
 		{
-			$aliases[Item::FIELD_NAME_OBSERVERS] = 'OBSERVER';
+			$aliases['OBSERVER_IDS'] = 'OBSERVER';
 		}
 
 		return $aliases;

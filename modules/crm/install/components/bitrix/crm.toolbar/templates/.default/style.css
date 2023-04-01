@@ -6,7 +6,8 @@
 	box-sizing: border-box;
 }
 
-.crm-toolbar-no-border .pagetitle-below {
+.crm-toolbar-no-border .pagetitle-below,
+.crm-pagetitle-view.crm-toolbar-no-border .pagetitle-below {
 	border: none;
 }
 
@@ -54,7 +55,6 @@
 	font: 14px/normal var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
 	font-weight: var(--ui-font-weight-regular, 400);
 	color: #545c6a;
-	flex: 1;
 }
 
 .crm-view-switcher-list {

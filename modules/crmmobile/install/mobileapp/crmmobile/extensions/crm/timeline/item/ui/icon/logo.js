@@ -6,6 +6,7 @@ jn.define('crm/timeline/item/ui/icon/logo', (require, exports, module) => {
 
 	const isIOS = Application.getPlatform() === 'ios';
 	const iconSize = isIOS ? 47 : 24;
+	const logoWrapperSize = 84;
 
 	const IconType = {
 		failure: '#ff5752',
@@ -75,6 +76,11 @@ jn.define('crm/timeline/item/ui/icon/logo', (require, exports, module) => {
 			return BX.prop.getString(this.props, 'addIconType', null);
 		}
 
+		get backgroundUrl()
+		{
+			return BX.prop.getString(this.props, 'backgroundUrl', null);
+		}
+
 		render()
 		{
 			if (this.isCalendar)
@@ -85,8 +91,8 @@ jn.define('crm/timeline/item/ui/icon/logo', (require, exports, module) => {
 			return View(
 				{
 					style: {
-						width: 84,
-						height: 84,
+						width: logoWrapperSize,
+						height: logoWrapperSize,
 						justifyContent: 'center',
 						alignItems: 'center',
 					},
@@ -147,57 +153,46 @@ jn.define('crm/timeline/item/ui/icon/logo', (require, exports, module) => {
 
 		renderLogo()
 		{
-			if (this.icon)
+			if (!this.icon)
 			{
-				if (this.hasPlayer)
+				return null;
+			}
+
+			return (this.hasPlayer ? this.getPlayer() : this.getLogoImage());
+		}
+
+		getPlayer()
+		{
+			return View(
 				{
-					return View(
-						{
-							style: {
-								width: 84,
-								height: 84,
-								position: 'relative',
-							},
-						},
-						Image({
-							style: {
-								width: 84,
-								height: 84,
-							},
-							resizeMode: 'contain',
-							svg: {
-								content: this.getPlayerContent(),
-							},
-						}),
-						this.isLoading && !this.isLoaded && Loader({
-							style: {
-								width: 20,
-								height: 20,
-								position: 'absolute',
-								top: 32,
-								left: 32,
-							},
-							tintColor: '#d9dbde',
-							animating: true,
-						}),
-					);
-				}
-
-				const inCircle = this.inCircle;
-
-				return Image({
 					style: {
-						width: inCircle ? 47 : 64,
-						height: inCircle ? 47 : 64,
+						width: logoWrapperSize,
+						height: logoWrapperSize,
+						position: 'relative',
+					},
+				},
+				Image({
+					style: {
+						width: logoWrapperSize,
+						height: logoWrapperSize,
 					},
 					resizeMode: 'contain',
 					svg: {
-						content: this.getIconContent(),
+						content: this.getPlayerContent(),
 					},
-				});
-			}
-
-			return null;
+				}),
+				this.isLoading && !this.isLoaded && Loader({
+					style: {
+						width: 20,
+						height: 20,
+						position: 'absolute',
+						top: 32,
+						left: 32,
+					},
+					tintColor: '#d9dbde',
+					animating: true,
+				}),
+			);
 		}
 
 		getPlayerContent()
@@ -208,6 +203,32 @@ jn.define('crm/timeline/item/ui/icon/logo', (require, exports, module) => {
 			}
 
 			return this.play ? LogoIcons.pausePlayer() : LogoIcons.playPlayer();
+		}
+
+		getLogoImage()
+		{
+			const inCircle = this.inCircle;
+
+			const imageProps = {
+				style: {
+						width: inCircle ? 47 : 64,
+						height: inCircle ? 47 : 64,
+				},
+				resizeMode: 'contain',
+			};
+
+			if (this.backgroundUrl)
+			{
+				imageProps.uri = currentDomain + encodeURI(this.backgroundUrl);
+			}
+			else
+			{
+				imageProps.svg = {
+					content: this.getIconContent(),
+				};
+			}
+
+			return Image(imageProps);
 		}
 
 		getIconContent()

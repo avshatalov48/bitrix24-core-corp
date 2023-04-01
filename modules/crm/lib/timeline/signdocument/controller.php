@@ -358,8 +358,7 @@ final class Controller extends Timeline\Controller
 
 		foreach ($this->getCategoryMap()[$typeCategoryId] as $entryType)
 		{
-
-			$timelineEntries[] = Container::getInstance()->getTimelineEntryFacade()->create(
+			$timelineEntries[] = $this->getTimelineEntryFacade()->create(
 				$entryType,
 				[
 					'ENTITY_TYPE_ID' => $identifier->getEntityTypeId(),

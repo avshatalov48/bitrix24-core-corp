@@ -30,6 +30,12 @@ $arUrlRewrite = array(
 		"PATH" => "/pub/calendar_event.php",
 	),
 	array(
+		"CONDITION" => "#^/pub/calendar-sharing/([0-9a-zA-Z]+)/?([^/]*)#",
+		"RULE" => "hash=\$1",
+		"ID" => "bitrix:calendar.pub.sharing",
+		"PATH" => "/pub/calendar_sharing.php",
+	),
+	array(
 		"CONDITION" => "#^/pub/document/([0-9a-zA-Z_-]+)/([0-9a-zA-Z]+)/([^/]*)#",
 		"RULE" => "id=\$1&hash=\$2",
 		"ID" => "bitrix:documentgenerator.view",
@@ -659,6 +665,12 @@ $arUrlRewrite = array(
 		"ID" => "",
 		"PATH" => "/marketing/toloka.php",
 	),
+	[
+		"CONDITION" => "#^/marketing/master-yandex/#",
+		"RULE" => "",
+		"ID" => "",
+		"PATH" => "/marketing/master-yandex.php",
+	],
 	array(
 		"CONDITION" => "#^/marketing/config/role/#",
 		"RULE" => "",

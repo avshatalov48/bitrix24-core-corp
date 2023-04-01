@@ -178,6 +178,11 @@ class QuoteContactTable extends DataManager
 	 */
 	public static function getBulkQuoteBindings(array $quoteIDs)
 	{
+		\Bitrix\Main\Type\Collection::normalizeArrayValuesByInt($quoteIDs, false);
+		if (empty($quoteIDs))
+		{
+			return [];
+		}
 		$bindingMap = array();
 		foreach($quoteIDs as $quoteID)
 		{

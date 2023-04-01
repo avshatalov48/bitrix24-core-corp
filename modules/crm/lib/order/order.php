@@ -291,9 +291,15 @@ class Order extends Sale\Order
 					&& $binding->getOwnerTypeId() === \CCrmOwnerType::Deal
 				)
 				{
-					$params = $this->getTimelineEntryParamsOnSetFinalStatus();
-
-					$this->addTimelineEntryNotifyBindingDeal($params);
+					$this->addTimelineEntryNotifyBindingDeal([
+						'ORDER_FIELDS' => $this->getFieldValues(),
+						'SETTINGS' => [
+							'CHANGED_ENTITY' => \CCrmOwnerType::OrderName,
+							'FIELDS' => [
+								'ORDER_DONE' => 'Y',
+							],
+						]
+					]);
 				}
 			}
 
@@ -469,22 +475,6 @@ class Order extends Sale\Order
 		}
 
 		return null;
-	}
-
-	/**
-	 * @return array
-	 */
-	protected function getTimelineEntryParamsOnSetFinalStatus() : array
-	{
-		return [
-			'ORDER_FIELDS' => $this->getFieldValues(),
-			'SETTINGS' => [
-				'CHANGED_ENTITY' => \CCrmOwnerType::OrderName,
-				'FIELDS' => [
-					'ORDER_DONE' => 'Y',
-				],
-			]
-		];
 	}
 
 	/**

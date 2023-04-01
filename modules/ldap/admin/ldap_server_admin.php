@@ -8,12 +8,14 @@
 ##############################################
 */
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_admin_before.php");
+
+\Bitrix\Main\Loader::includeModule('ldap');
+
 require_once($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/ldap/prolog.php");
 
 $MOD_RIGHT = $APPLICATION->GetGroupRight("ldap");
 if($MOD_RIGHT<"R") $APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
 IncludeModuleLangFile(__FILE__);
-require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/ldap/include.php");
 
 $err_mess = "File: ".__FILE__."<br>Line: ";
 $APPLICATION->SetTitle(GetMessage("LDAP_ADMIN_TITLE"));

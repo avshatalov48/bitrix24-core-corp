@@ -14,6 +14,7 @@ return [
 		'ui.buttons',
 		'crm.activity.todo-editor',
 		'main.core.events',
+		'ui.notification',
 	],
 	'skip_core' => false,
 ];

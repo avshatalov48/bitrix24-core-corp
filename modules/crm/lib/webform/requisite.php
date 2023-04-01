@@ -584,7 +584,7 @@ class Requisite
 		);
 
 		$keys[] = 'ID';
-		$values = $values + (EntityRequisite::getSingleInstance()->getList([
+		$requisiteValues = (EntityRequisite::getSingleInstance()->getList([
 			'select' => $keys,
 			'filter' => [
 				'=ENTITY_TYPE_ID' => $entityTypeId,
@@ -594,13 +594,24 @@ class Requisite
 			'limit' => 1,
 		])->fetch() ?: []);
 
+		foreach ($requisiteValues as $fieldName => $value)
+		{
+			if (mb_strpos($fieldName, 'RQ_') !== 0)
+			{
+				$requisiteValues['RQ_'. $fieldName] = $value;
+				unset($requisiteValues[$fieldName]);
+			}
+		}
+		$values = $values + $requisiteValues;
+
 		if (!$values)
 		{
 			return $result;
 		}
 
-		$id = (int)$values['ID'];
+		$id = (int) ($values['ID'] ?: $values['RQ_ID']);
 		unset($values['ID']);
+		unset($values['RQ_ID']);
 
 		foreach ($this->getAddressTypes($preset['countryId']) as $address)
 		{
@@ -656,7 +667,7 @@ class Requisite
 			},
 			$this->getBankingFields($preset['countryId'])
 		);
-		$values = $values + (EntityBankDetail::getSingleInstance()->getList([
+		$bankFieldsValues = (EntityBankDetail::getSingleInstance()->getList([
 			'select' => $keys,
 			'filter' => [
 				'=ENTITY_TYPE_ID' => \CCrmOwnerType::Requisite,
@@ -665,6 +676,7 @@ class Requisite
 			'order' => ['ID' => 'DESC'],
 			'limit' => 1,
 		])->fetch() ?: []);
+		$values = $values + $bankFieldsValues;
 
 		foreach ($values as $key => $value)
 		{

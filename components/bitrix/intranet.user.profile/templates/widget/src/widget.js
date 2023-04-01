@@ -214,7 +214,7 @@ export default class Widget extends EventEmitter
 			const avatarNode = Tag.render`
 				<span class="system-auth-form__profile-avatar--image"
 					${this.#profile.PHOTO ? `
-						style="background-size: cover; background-image: url('${this.#profile.PHOTO}')"` : ''}>
+						style="background-size: cover; background-image: url('${encodeURI(this.#profile.PHOTO)}')"` : ''}>
 				</span>
 				`;
 			const nameNode = Tag.render`
@@ -492,8 +492,8 @@ export default class Widget extends EventEmitter
 					text: Loc.getMessage('INTRANET_USER_PROFILE_DOWNLOAD_LINUX_DEB'),
 					href: 'https://dl.bitrix24.com/b24/bitrix24_desktop.deb',
 				},
-				'RBM': {
-					text: Loc.getMessage('INTRANET_USER_PROFILE_DOWNLOAD_LINUX_RBM'),
+				'RPM': {
+					text: Loc.getMessage('INTRANET_USER_PROFILE_DOWNLOAD_LINUX_RPM'),
 					href: 'https://dl.bitrix24.com/b24/bitrix24_desktop.rpm',
 				},
 			};
@@ -530,8 +530,8 @@ export default class Widget extends EventEmitter
 							}
 						},
 						{
-							text: typesInstallersForLinux.RBM.text,
-							href: typesInstallersForLinux.RBM.href,
+							text: typesInstallersForLinux.RPM.text,
+							href: typesInstallersForLinux.RPM.href,
 							onclick: () => {
 								menuLinux.close();
 							}
@@ -589,8 +589,8 @@ export default class Widget extends EventEmitter
 							}
 						},
 						{
-							text: typesInstallersForLinux.RBM.text,
-							href: typesInstallersForLinux.RBM.href,
+							text: typesInstallersForLinux.RPM.text,
+							href: typesInstallersForLinux.RPM.href,
 							onclick: () => {
 								menuPopup.close();
 							}

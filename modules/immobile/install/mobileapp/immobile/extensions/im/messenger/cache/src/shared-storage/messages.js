@@ -24,6 +24,8 @@ jn.define('im/messenger/cache/messages', (require, exports, module) => {
 
 		save(state)
 		{
+			return Promise.resolve();
+
 			const firstPageState = ChatUtils.objectClone(state);
 			firstPageState.saveMessageList = {};
 

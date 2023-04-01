@@ -7,7 +7,10 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 global $APPLICATION;
 /** @var array $arResult */
 
-$APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "") . "no-all-paddings no-background");
+$APPLICATION->SetPageProperty(
+	"BodyClass",
+	(isset($bodyClass) && !empty($bodyClass) ? $bodyClass." " : "") . "no-all-paddings no-background"
+);
 
 \Bitrix\Main\UI\Extension::load([
 	'ui.design-tokens',

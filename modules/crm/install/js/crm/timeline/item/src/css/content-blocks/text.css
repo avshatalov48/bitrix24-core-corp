@@ -12,6 +12,10 @@
 	color: var(--ui-color-base-50, #a8adb4);
 }
 
+.crm-timeline__text-block.--color-base-60 {
+	color: var(--ui-color-base-60, #959ca4);
+}
+
 .crm-timeline__text-block.--color-base-70 {
 	color: var(--ui-color-base-70, #828b95);
 }

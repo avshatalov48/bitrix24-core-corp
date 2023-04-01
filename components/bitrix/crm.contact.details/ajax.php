@@ -424,12 +424,6 @@ elseif($action === 'SAVE')
 
 			$entity = new \CCrmContact(false);
 			$saveOptions = ['REGISTER_SONET_EVENT' => true];
-			if (!is_null($conversionWizard))
-			{
-				$saveOptions['EXCLUDE_FROM_RELATION_REGISTRATION'] = [
-					new Crm\ItemIdentifier($conversionWizard->getEntityTypeID(), $conversionWizard->getEntityID()),
-				];
-			}
 			if($isNew)
 			{
 				if(!isset($fields['TYPE_ID']))

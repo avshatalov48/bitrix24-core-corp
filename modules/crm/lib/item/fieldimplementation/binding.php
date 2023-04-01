@@ -222,6 +222,18 @@ final class Binding implements FieldImplementation
 	{
 		$this->entityObject = $entityObject;
 	}
+
+	public function getFieldNamesToFill(): array
+	{
+		$list = [$this->fieldNameMap->getBindings()];
+
+		if ($this->fieldNameMap->isSingleIdFilled())
+		{
+			$list[] = $this->fieldNameMap->getSingleId();
+		}
+
+		return $list;
+	}
 	//endregion
 
 	//region Get helpers

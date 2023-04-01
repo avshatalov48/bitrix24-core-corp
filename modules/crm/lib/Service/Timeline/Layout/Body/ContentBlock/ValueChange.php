@@ -6,32 +6,32 @@ use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock;
 
 class ValueChange extends ContentBlock
 {
-	protected ?string $from = null;
-	protected ?string $to = null;
+	protected ?ValueChangeItem $from = null;
+	protected ?ValueChangeItem $to = null;
 
 	public function getRendererName(): string
 	{
 		return 'ValueChange';
 	}
 
-	public function getFrom(): ?string
+	public function getFrom(): ?ValueChangeItem
 	{
 		return $this->from;
 	}
 
-	public function setFrom(?string $from): self
+	public function setFrom(?ValueChangeItem $from): self
 	{
 		$this->from = $from;
 
 		return $this;
 	}
 
-	public function getTo(): ?string
+	public function getTo(): ?ValueChangeItem
 	{
 		return $this->to;
 	}
 
-	public function setTo(?string $to): self
+	public function setTo(?ValueChangeItem $to): self
 	{
 		$this->to = $to;
 

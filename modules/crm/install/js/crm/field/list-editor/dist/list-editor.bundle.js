@@ -89,7 +89,7 @@ this.BX.Crm = this.BX.Crm || {};
 						${0}
 					</div>
 				</div>
-			`), main_core.Text.encode(sourceData.name), main_core.Text.encode(sourceData.caption), preparedCategoryCaption, main_core.Text.encode(label), this.onEditClick.bind(this), this.onRemoveClick.bind(this), this.getFormLayout());
+			`), main_core.Text.encode((sourceData == null ? void 0 : sourceData.name) || ''), main_core.Text.encode((sourceData == null ? void 0 : sourceData.caption) || ''), preparedCategoryCaption, main_core.Text.encode(label), this.onEditClick.bind(this), this.onRemoveClick.bind(this), this.getFormLayout());
 	    });
 	  }
 
@@ -239,11 +239,13 @@ this.BX.Crm = this.BX.Crm || {};
 	    return babelHelpers.classPrivateFieldLooseBase(Backend, _instance)[_instance];
 	  }
 
-	  getFieldsList() {
+	  getFieldsList(presetId) {
 	    return babelHelpers.classPrivateFieldLooseBase(this, _cache$1)[_cache$1].remember('fieldsList', () => {
 	      return new Promise((resolve, reject) => {
 	        main_core.ajax.runAction('crm.api.form.field.list', {
-	          json: {}
+	          json: {
+	            presetId
+	          }
 	        }).then(result => {
 	          var _result$data;
 
@@ -487,7 +489,12 @@ this.BX.Crm = this.BX.Crm || {};
 	  }
 
 	  loadFieldsDictionary() {
-	    return Backend.getInstance().getFieldsList();
+	    const fieldsPanelOptions = { ...this.getOptions().fieldsPanelOptions,
+	      disabledFields: this.getValue().map(field => {
+	        return field.name;
+	      })
+	    };
+	    return Backend.getInstance().getFieldsList((fieldsPanelOptions == null ? void 0 : fieldsPanelOptions.presetId) || null);
 	  }
 
 	  loadValue() {
@@ -612,8 +619,14 @@ this.BX.Crm = this.BX.Crm || {};
 	  }
 
 	  save() {
+	    const fieldsPanelOptions = { ...this.getOptions().fieldsPanelOptions,
+	      disabledFields: this.getValue().map(field => {
+	        return field.name;
+	      })
+	    };
 	    return Backend.getInstance().saveFieldsSet({
 	      id: this.getOptions().setId,
+	      presetId: (fieldsPanelOptions == null ? void 0 : fieldsPanelOptions.presetId) || null,
 	      entityTypeId: this.getEntityTypeId(),
 	      clientEntityTypeId: this.getClientEntityTypeId(),
 	      ...this.getData(),
@@ -650,6 +663,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	    BX.SidePanel.Instance.open('crm:field-list-editor', {
 	      width: 600,
+	      cacheable: this.getOptions().cacheable,
 	      contentCallback: () => {
 	        return babelHelpers.classPrivateFieldLooseBase(this, _loadPromise)[_loadPromise].then(() => ui_sidepanel_layout.Layout.createContent({
 	          extensions: ['crm.field.list-editor'],
@@ -739,6 +753,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  value: {
 	    setId: 0,
 	    autoSave: true,
+	    cacheable: true,
 	    fieldsPanelOptions: {},
 	    debouncingDelay: 500
 	  }

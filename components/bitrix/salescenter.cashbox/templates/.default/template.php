@@ -53,7 +53,7 @@ Extension::load([
 			<?
 			foreach ($arResult['menu'] as $id => $page)
 			{
-				$cashboxPageClass = ($page['ACTIVE'] ? "salescenter-cashbox-page-show" : "salescenter-cashbox-page-hide salescenter-cashbox-page-invisible");
+				$cashboxPageClass = (!empty($page['ACTIVE']) ? "salescenter-cashbox-page-show" : "salescenter-cashbox-page-hide salescenter-cashbox-page-invisible");
 				?>
 				<div data-cashbox-page="<?=$id?>" data-cashbox-title="<?=$page['NAME']?>" class="<?=$cashboxPageClass?>">
 					<?php
@@ -86,7 +86,7 @@ Extension::load([
 											<div class="salescenter-main-header-switcher-container">
 											<span data-switcher="<?=htmlspecialcharsbx(\Bitrix\Main\Web\Json::encode([
 												'id' => 'salescenter-cashbox-active',
-												'checked' => ($arResult['data']['fields[ACTIVE]'] !== 'N'),
+												'checked' => (isset($arResult['data']['fields[ACTIVE]']) && $arResult['data']['fields[ACTIVE]'] !== 'N'),
 												'inputName' => "fields[ACTIVE]",
 											]))?>" class="ui-switcher"></span>
 											</div>

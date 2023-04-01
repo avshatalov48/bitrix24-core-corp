@@ -267,10 +267,10 @@ class BasketHelper
 				$arShoppingCartItem['PRICE'] = Sale\PriceMaths::roundPrecision($arShoppingCartItem['PRICE']);
 
 				$arShoppingCartItem['QUANTITY'] = floatval($arShoppingCartItem['QUANTITY']);
-				$arShoppingCartItem['WEIGHT'] = floatval($arShoppingCartItem['WEIGHT']);
-				$arShoppingCartItem['DIMENSIONS'] = unserialize($arShoppingCartItem['DIMENSIONS'], ['allowed_classes' => false]);
-				$arShoppingCartItem['VAT_RATE'] = floatval($arShoppingCartItem['VAT_RATE']);
-				$arShoppingCartItem['DISCOUNT_PRICE'] = roundEx($arShoppingCartItem['DISCOUNT_PRICE'], SALE_VALUE_PRECISION);
+				$arShoppingCartItem['WEIGHT'] = floatval($arShoppingCartItem['WEIGHT'] ?? null);
+				$arShoppingCartItem['DIMENSIONS'] = unserialize(($arShoppingCartItem['DIMENSIONS'] ?? null), ['allowed_classes' => false]);
+				$arShoppingCartItem['VAT_RATE'] = floatval($arShoppingCartItem['VAT_RATE'] ?? null);
+				$arShoppingCartItem['DISCOUNT_PRICE'] = roundEx(($arShoppingCartItem['DISCOUNT_PRICE'] ?? null), SALE_VALUE_PRECISION);
 
 				if ($arShoppingCartItem['VAT_RATE'] > 0)
 				{

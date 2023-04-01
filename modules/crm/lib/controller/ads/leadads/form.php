@@ -34,7 +34,10 @@ class Form extends AbstractController
 			return $this->errorResponse();
 		}
 
-		$form->setAccountId($accountId);
+		if ((int)$accountId !== 0)
+		{
+			$form->setAccountId($accountId);
+		}
 		$formListResponse = $form->getList();
 
 		if (!$formListResponse->isSuccess())
@@ -90,7 +93,10 @@ class Form extends AbstractController
 			return $this->errorResponse();
 		}
 
-		$form->setAccountId($accountId);
+		if ((int)$accountId !== 0)
+		{
+			$form->setAccountId($accountId);
+		}
 		$formResponse = $form->getForm($formId);
 
 		if (!$formResponse->isSuccess())

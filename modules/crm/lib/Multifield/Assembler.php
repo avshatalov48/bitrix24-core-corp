@@ -92,17 +92,30 @@ final class Assembler
 			$value->setValue((string)$array['VALUE']);
 		}
 
+		if (!empty($array['VALUE_COUNTRY_CODE']))
+		{
+			$value->setValueExtra((new ValueExtra())->setCountryCode((string)$array['VALUE_COUNTRY_CODE']));
+		}
+
 		return $value;
 	}
 
 	public static function arrayByValue(Value $value): array
 	{
-		return [
+		$result = [
 			'ID' => $value->getId(),
 			'TYPE' => $value->getTypeId(),
 			'VALUE_TYPE' => $value->getValueType(),
 			'VALUE' => $value->getValue(),
 		];
+
+		$extra = $value->getValueExtra();
+		if ($extra instanceof ValueExtra)
+		{
+			$result['VALUE_EXTRA'] = $extra->toArray();
+		}
+
+		return $result;
 	}
 
 	public static function arrayByCollection(Collection $collection): array
@@ -169,6 +182,16 @@ final class Assembler
 				if ($value->getValue() !== $compatibleValue['VALUE'])
 				{
 					$value->setValue((string)$compatibleValue['VALUE']);
+				}
+
+				// update extra data
+				$extra = $value->getValueExtra();
+				if ($extra instanceof ValueExtra)
+				{
+					if ($extra->getCountryCode() !== $compatibleValue['VALUE_COUNTRY_CODE'])
+					{
+						$value->setValueExtra((new ValueExtra())->setCountryCode((string)$compatibleValue['VALUE_COUNTRY_CODE']));
+					}
 				}
 
 				$isValueTypeChanged =

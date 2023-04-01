@@ -4047,6 +4047,7 @@ if(typeof(BX.CrmEntityInfo) === "undefined")
 					results.push({
 						"TYPE": type,
 						"VALUE": field["VALUE"],
+						"VALUE_EXTRA": field["VALUE_EXTRA"] || {},
 						"ID": field["ID"],
 						"ENTITY_ID": field["ENTITY_ID"],
 						"COMPLEX_NAME": field["COMPLEX_NAME"] || "",

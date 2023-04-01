@@ -74,4 +74,11 @@ interface FieldImplementation
 	public function setFromExternalValues(array $externalValues): void;
 
 	public function afterItemClone(Item $item, EntityObject $entityObject): void;
+
+	/**
+	 * Returns a list of common field names that should be filled in EntityObject on Item::fill call.
+	 *
+	 * @return string[]
+	 */
+	public function getFieldNamesToFill(): array;
 }

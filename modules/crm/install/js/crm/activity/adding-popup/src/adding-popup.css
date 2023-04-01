@@ -1,3 +1,6 @@
+.crm-activity-adding-popup .popup-window-content {
+	border-radius: 0;
+}
 .crm-activity-adding-popup .popup-window-buttons {
 	padding: 16px 0 0 0;
 	text-align: left;

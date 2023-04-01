@@ -106,8 +106,10 @@
 	-ms-flex-align: center;
 	align-items: center;
 	overflow: hidden;
-	height: 70px;
+	height: 50px;
 	background: #fff;
+	border-bottom: 1px rgba(82, 92, 105, .1) solid;
+	margin-bottom: 20px;
 }
 
 .crm-ads-conversion-title-section{

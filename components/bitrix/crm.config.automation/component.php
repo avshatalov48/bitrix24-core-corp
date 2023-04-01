@@ -15,7 +15,7 @@ $arDefaultVariableAliases404 = $arDefaultVariableAliases = array();
 $arComponentVariables = array('index', 'edit');
 $arVariables = array();
 
-if($arParams['SEF_MODE'] == 'Y')
+if(($arParams['SEF_MODE'] ?? null) === 'Y')
 {
 	$arUrlTemplates = CComponentEngine::MakeComponentUrlTemplates($arDefaultUrlTemplates404, $arParams['SEF_URL_TEMPLATES']);
 	$arVariableAliases = CComponentEngine::MakeComponentVariableAliases($arDefaultVariableAliases404, $arParams['VARIABLE_ALIASES']);

@@ -245,6 +245,10 @@ if(is_array($params))
 				$call->updateLastPingDate(new \Bitrix\Main\Type\DateTime());
 			}
 		}
+		else if($params['COMMAND'] === 'pingPortal')
+		{
+			echo Json::encode(['result' => 'OK']);
+		}
 
 		// CONTROLLER OR EMERGENCY HITS
 		else if($params["BX_COMMAND"] == "add_history" || $params["COMMAND"] == "AddCallHistory")

@@ -124,13 +124,6 @@ $component = new class {
 				],
 			],
 			[
-				'id' => 'shipment',
-				'title' => Loc::getMessage('M_CSDL_TAB_REALIZATION'),
-				'documentTypes' => [],
-				'selectable' => false,
-				'link' => '/shop/documents/sales_order/',
-			],
-			[
 				'id' => 'moving',
 				'title' => Loc::getMessage('M_CSDL_TAB_MOVING'),
 				'documentTypes' => [
@@ -139,8 +132,6 @@ $component = new class {
 						'title' => Loc::getMessage('M_CSDL_TAB_MENU_MOVING'),
 					],
 				],
-				'selectable' => false,
-				'link' => '/shop/documents/moving/',
 			],
 			[
 				'id' => 'deduct',
@@ -151,8 +142,13 @@ $component = new class {
 						'title' => Loc::getMessage('M_CSDL_TAB_MENU_DEDUCT'),
 					],
 				],
+			],
+			[
+				'id' => 'shipment',
+				'title' => Loc::getMessage('M_CSDL_TAB_REALIZATION'),
+				'documentTypes' => [],
 				'selectable' => false,
-				'link' => '/shop/documents/deduct/',
+				'link' => '/shop/documents/sales_order/',
 			],
 		];
 	}
@@ -185,6 +181,29 @@ $component = new class {
 			'actions' => StoreDocumentList::getActionsList(),
 			'statuses' => $this->prepareStatuses(),
 			'permissions' => PermissionsProvider::getInstance()->getPermissions(),
+			'floatingMenuTypes' => $this->getFloatingMenuTypes(),
+		];
+	}
+
+	private function getFloatingMenuTypes(): array
+	{
+		return [
+			[
+				'id' => StoreDocumentTable::TYPE_ARRIVAL,
+				'title' => Loc::getMessage('M_CSDL_TAB_MENU_ARRIVAL'),
+			],
+			[
+				'id' => StoreDocumentTable::TYPE_STORE_ADJUSTMENT,
+				'title' => Loc::getMessage('M_CSDL_TAB_MENU_STORE_ADJUSTMENT'),
+			],
+			[
+				'id' => StoreDocumentTable::TYPE_MOVING,
+				'title' => Loc::getMessage('M_CSDL_TAB_MENU_MOVING'),
+			],
+			[
+				'id' => StoreDocumentTable::TYPE_DEDUCT,
+				'title' => Loc::getMessage('M_CSDL_TAB_MENU_DEDUCT'),
+			],
 		];
 	}
 

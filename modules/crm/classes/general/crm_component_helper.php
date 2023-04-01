@@ -1,5 +1,6 @@
 <?php
 
+use Bitrix\Crm\Category\EntityTypeRelationsRepository;
 use Bitrix\Crm\EntityAddress;
 use Bitrix\Crm\EntityAddressType;
 use Bitrix\Crm\EntityPreset;
@@ -8,8 +9,6 @@ use Bitrix\Crm\Integration\ClientResolver;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\StatusTable;
 use Bitrix\Main;
-use Bitrix\Crm\Integration\Catalog\Contractor\CategoryRepository;
-use Bitrix\Crm\Category\EntityTypeRelationsRepository;
 
 class CCrmComponentHelper
 {
@@ -595,6 +594,15 @@ class CCrmComponentHelper
 			$filter['@TYPE_ID'] = $typeIds;
 		}
 
+		// fetch field IDs to create phone country list
+		$multiFieldIds = [];
+		$dbResultIds = CCrmFieldMulti::GetListEx(['ID' => 'asc'], $filter, false, false, ['ID']);
+		while ($row = $dbResultIds->fetch())
+		{
+			$multiFieldIds[] = (int)$row['ID'];
+		}
+		$phoneCountryList = CCrmFieldMulti::GetPhoneCountryList($multiFieldIds);
+
 		$dbResult = CCrmFieldMulti::GetListEx(['ID' => 'asc'], $filter);
 		while ($fields = $dbResult->fetch())
 		{
@@ -636,6 +644,9 @@ class CCrmComponentHelper
 					'ID' => $ID,
 					'VALUE' => $value,
 					'VALUE_TYPE' => $valueTypeID,
+					'VALUE_EXTRA' => [
+						'COUNTRY_CODE' => $phoneCountryList[$ID] ?? ''
+					],
 					'VALUE_FORMATTED' => $formattedValue,
 					'COMPLEX_ID' => $complexID,
 					'COMPLEX_NAME' => \CCrmFieldMulti::GetEntityNameByComplex($complexID, false),
@@ -654,6 +665,9 @@ class CCrmComponentHelper
 					'ID' => $multiFieldID,
 					'VALUE' => $value,
 					'VALUE_TYPE' => $valueTypeID,
+					'VALUE_EXTRA' => [
+						'COUNTRY_CODE' => $phoneCountryList[$multiFieldID] ?? ''
+					],
 					'VIEW_DATA' => \CCrmViewHelper::PrepareMultiFieldValueItemData(
 						$typeID,
 						[

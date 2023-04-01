@@ -32,7 +32,7 @@
 	bottom: 0;
 	padding: 0 5px;
 	box-sizing: border-box;
-	height: 45px;
+	height: 39px;
 	text-align: center;
 	color: #525c69;
 	font: 13px/14px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
@@ -53,9 +53,14 @@
 	left: 0;
 	right: 0;
 	top: 0;
-	bottom: 27px;
+	bottom: 30px;
 	background-repeat: no-repeat;
 	background-position: center;
+}
+
+#salescenter-paysystem .ui-grid-tile-item:before {
+	min-height: 120px;
+	box-sizing: border-box;
 }
 
 .salescenter-paysystem-item-status-selected {

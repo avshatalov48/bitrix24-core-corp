@@ -149,6 +149,13 @@ class CBPCrmCopyMoveProductRow extends CBPActivity
 
 			return isset($item) ? [CCrmOwnerType::SmartInvoice, (int)$entityId] : null;
 		}
+		elseif ($entityType === CCrmOwnerTypeAbbr::SmartDocument)
+		{
+			$factory = Crm\Service\Container::getInstance()->getFactory(CCrmOwnerType::SmartDocument);
+			$item = isset($factory) ? $factory->getItem((int)$entityId) : null;
+
+			return isset($item) ? [CCrmOwnerType::SmartDocument, (int)$entityId] : null;
+		}
 		elseif (CCrmOwnerTypeAbbr::isDynamicTypeAbbreviation($entityType))
 		{
 			$dynamicTypeId = CCrmOwnerTypeAbbr::ResolveTypeID($entityType);
@@ -244,6 +251,7 @@ class CBPCrmCopyMoveProductRow extends CBPActivity
 		$dstEntityTypeOptions = [
 			\CCrmOwnerTypeAbbr::Deal => \CCrmOwnerType::GetDescription(\CCrmOwnerType::Deal),
 			\CCrmOwnerTypeAbbr::SmartInvoice => \CCrmOwnerType::GetDescription(\CCrmOwnerType::SmartInvoice),
+			\CCrmOwnerTypeAbbr::SmartDocument => \CCrmOwnerType::GetDescription(\CCrmOwnerType::SmartDocument),
 		];
 
 		$dynamicTypesMap =

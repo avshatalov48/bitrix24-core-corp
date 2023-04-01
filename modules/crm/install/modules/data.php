@@ -1577,13 +1577,19 @@ if (!$res->fetch())
 	}
 }
 
-$res = \Bitrix\Catalog\StoreTable::getList(['filter' => ["ACTIVE" => 'Y']]);
-$data = $res->fetch();
-
+$newStoreId = 0;
+$data = \Bitrix\Catalog\StoreTable::getRow([
+	'select' => [
+		'ID',
+	],
+	'filter' => [
+		'=ACTIVE' => 'Y',
+	],
+]);
 if (!$data)
 {
 	$storeImageId = 0;
-	$storeImage = CFile::MakeFileArray($_SERVER["DOCUMENT_ROOT"].'/bitrix/modules/crm/install/modules/sale/images/store.png');
+	$storeImage = CFile::MakeFileArray($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/crm/install/modules/sale/images/store.png');
 
 	if (!empty($storeImage) && is_array($storeImage))
 	{
@@ -1591,15 +1597,16 @@ if (!$data)
 		$storeImageId =  CFile::SaveFile($storeImage, 'catalog');
 	}
 
-	$storeFields = array(
-		"TITLE" => GetMessage("CRM_CATALOG_STORE_NAME"),
-		"ADDRESS" => GetMessage("CRM_CATALOG_STORE_ADR"),
-		"DESCRIPTION" => GetMessage("CRM_CATALOG_STORE_DESCR"),
-		"GPS_N" => GetMessage("CRM_CATALOG_STORE_GPS_N"),
-		"GPS_S" => GetMessage("CRM_CATALOG_STORE_GPS_S"),
-		"PHONE" => GetMessage("CRM_CATALOG_STORE_PHONE"),
-		"SCHEDULE" => GetMessage("CRM_CATALOG_STORE_SCHEDULE")
-	);
+	$storeFields = [
+		'TITLE' => GetMessage('CRM_CATALOG_STORE_NAME'),
+		'ADDRESS' => GetMessage('CRM_CATALOG_STORE_ADR'),
+		'DESCRIPTION' => GetMessage('CRM_CATALOG_STORE_DESCR'),
+		'GPS_N' => GetMessage('CRM_CATALOG_STORE_GPS_N'),
+		'GPS_S' => GetMessage('CRM_CATALOG_STORE_GPS_S'),
+		'PHONE' => GetMessage('CRM_CATALOG_STORE_PHONE'),
+		'SCHEDULE' => GetMessage('CRM_CATALOG_STORE_SCHEDULE'),
+		'IS_DEFAULT' => 'Y',
+	];
 
 	if($storeImageId > 0)
 	{
@@ -1610,12 +1617,12 @@ if (!$data)
 
 	if($res->isSuccess())
 	{
-		$newStoreId = $res->getId();
+		$newStoreId = (int)$res->getId();
 	}
 }
 else
 {
-	$newStoreId = $data['ID'];
+	$newStoreId = (int)$data['ID'];
 }
 
 $res = \Bitrix\Sale\Delivery\Services\Table::getList([

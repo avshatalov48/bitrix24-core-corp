@@ -16,6 +16,8 @@ use Bitrix\Main\Result;
 
 class Dynamic extends Kanban\Entity
 {
+	use DynamicInlineEditorFieldsTrait;
+
 	protected $stages;
 
 	public function initFactory(): void
@@ -78,7 +80,7 @@ class Dynamic extends Kanban\Entity
 
 	public function isActivityCountersSupported(): bool
 	{
-		return false;
+		return $this->factory->isCountersEnabled();
 	}
 
 	public function getStageFieldName(): string

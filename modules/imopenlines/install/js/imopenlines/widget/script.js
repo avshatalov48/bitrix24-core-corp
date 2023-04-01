@@ -9355,7 +9355,7 @@ window._main_polyfill_core = true;
 	  }, {
 	    key: "isSafari",
 	    value: function isSafari() {
-	      return UA.includes('webkit');
+	      return UA.includes('safari') && !UA.includes('chrome');
 	    }
 	  }, {
 	    key: "isFirefox",
@@ -9493,10 +9493,11 @@ window._main_polyfill_core = true;
 	    }
 	  }, {
 	    key: "addGlobalClass",
-	    value: function addGlobalClass() {
+	    value: function addGlobalClass(target) {
 	      var globalClass = 'bx-core';
+	      target = Type.isElementNode(target) ? target : document.documentElement;
 
-	      if (Dom.hasClass(document.documentElement, globalClass)) {
+	      if (Dom.hasClass(target, globalClass)) {
 	        return;
 	      }
 
@@ -9514,24 +9515,16 @@ window._main_polyfill_core = true;
 
 	      globalClass += Browser.isMobile() ? ' bx-touch' : ' bx-no-touch';
 	      globalClass += Browser.isRetina() ? ' bx-retina' : ' bx-no-retina';
-	      var ieVersion = -1;
 
 	      if (/AppleWebKit/.test(navigator.userAgent)) {
 	        globalClass += ' bx-chrome';
-	      } else if (Browser.detectIEVersion() > 0) {
-	        ieVersion = Browser.detectIEVersion();
-	        globalClass += " bx-ie bx-ie".concat(ieVersion);
-
-	        if (ieVersion > 7 && ieVersion < 10 && !Browser.isDoctype()) {
-	          globalClass += ' bx-quirks';
-	        }
 	      } else if (/Opera/.test(navigator.userAgent)) {
 	        globalClass += ' bx-opera';
-	      } else if (/Gecko/.test(navigator.userAgent)) {
+	      } else if (Browser.isFirefox()) {
 	        globalClass += ' bx-firefox';
 	      }
 
-	      Dom.addClass(document.documentElement, globalClass);
+	      Dom.addClass(target, globalClass);
 	    }
 	  }, {
 	    key: "detectAndroidVersion",
@@ -9869,8 +9862,12 @@ window._main_polyfill_core = true;
 	      var mess = message(messageId);
 
 	      if (Type.isString(mess) && Type.isPlainObject(replacements)) {
+	        var _escape = function _escape(str) {
+	          return String(str).replace(/[\\^$*+?.()|[\]{}]/g, '\\$&');
+	        };
+
 	        Object.keys(replacements).forEach(function (replacement) {
-	          var globalRegexp = new RegExp(replacement, 'gi');
+	          var globalRegexp = new RegExp(_escape(replacement), 'gi');
 	          mess = mess.replace(globalRegexp, function () {
 	            return Type.isNil(replacements[replacement]) ? '' : String(replacements[replacement]);
 	          });
@@ -30221,6 +30218,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 	const CONFIG_TTL = 24 * 60 * 60;
 	const CONFIG_CHECK_INTERVAL = 60000;
 	const MAX_IDS_TO_STORE = 10;
+	const OFFLINE_STATUS_DELAY = 5000;
 
 	const LS_SESSION = "bx-pull-session";
 	const LS_SESSION_CACHE_TIME = 20;
@@ -30258,6 +30256,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 		SERVER_RESTARTED: 3002,
 		CONFIG_EXPIRED: 3003,
 		MANUAL: 3004,
+		STUCK: 3005,
 		WRONG_CHANNEL_ID: 4010,
 	};
 
@@ -30294,7 +30293,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 	const JSON_RPC_PING = "ping"
 	const JSON_RPC_PONG = "pong"
 
-	const PING_TIMEOUT = 5;
+	const PING_TIMEOUT = 10;
 
 	const RpcError = {
 		Parse: {code: -32700, message: "Parse error"},
@@ -30336,6 +30335,8 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 
 				params.serverEnabled = true;
 			}
+
+			this._status = PullStatus.Offline;
 
 			this.context = 'master';
 
@@ -30445,6 +30446,35 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 		get connector()
 		{
 			return this._connectors[this.connectionType];
+		}
+
+		get status()
+		{
+			return this._status;
+		}
+
+		set status(status)
+		{
+			if (this._status === status)
+			{
+				return;
+			}
+
+			this._status = status;
+			if (this.offlineTimeout)
+			{
+				clearTimeout(this.offlineTimeout)
+				this.offlineTimeout = null;
+			}
+
+			if (status === PullStatus.Offline)
+			{
+				this.sendPullStatusDelayed(status, OFFLINE_STATUS_DELAY);
+			}
+			else
+			{
+				this.sendPullStatus(status);
+			}
 		}
 
 		/**
@@ -30804,7 +30834,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 					(error) =>
 					{
 						this.starting = false;
-						this.sendPullStatus(PullStatus.Offline);
+						this.status = PullStatus.Offline;
 						this.stopCheckConfig();
 						console.error(Utils.getDateForLog() + ': Pull: could not read push-server config. ', error);
 						reject(error);
@@ -30939,11 +30969,11 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 				let userIds = {};
 				for (let i = 0; i < messageBatch.length; i++)
 				{
-					if (messageBatch[i].users)
+					if (messageBatch[i].userList)
 					{
-						for (let j = 0; j < messageBatch[i].users.length; j++)
+						for (let j = 0; j < messageBatch[i].userList.length; j++)
 						{
-							userIds[messageBatch[i].users[j]] = true;
+							userIds[messageBatch[i].userList[j]] = true;
 						}
 					}
 				}
@@ -30973,7 +31003,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 
 				if (messageFields.channelList)
 				{
-					if (!BX.type.isArray(messageFields.channelList))
+					if (!Utils.isArray(messageFields.channelList))
 					{
 						throw new Error('messageFields.publicChannels must be an array');
 					}
@@ -31068,6 +31098,27 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 			});
 		}
 
+		/**
+		 * Pings server. In case of success promise will be resolved, otherwise - rejected.
+		 *
+		 * @param {int} timeout Request timeout in seconds
+		 * @returns {Promise}
+		 */
+		ping(timeout)
+		{
+			return this.jsonRpcAdapter.executeOutgoingRpcCommand("ping", {}, timeout);
+		}
+
+		/**
+		 * Returns list channels that the connection is subscribed to.
+		 * 
+		 * @returns {Promise}
+		 */
+		listChannels()
+		{
+			return this.jsonRpcAdapter.executeOutgoingRpcCommand("listChannels", {});
+		}
+
 		scheduleRestart(disconnectCode, disconnectReason, restartDelay)
 		{
 			clearTimeout(this.restartTimeout);
@@ -31097,31 +31148,29 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 			}
 			this.config = null;
 
-			this.loadConfig().catch((error) =>
-			{
-				console.error(Utils.getDateForLog() + ': Pull: could not read push-server config', error);
-				this.sendPullStatus(PullStatus.Offline);
+			this.loadConfig().then(
+				(config) =>	{
+					this.setConfig(config, true);
+					this.updateWatch();
+					this.startCheckConfig();
+					this.connect().catch(error => console.error(error));
+				},
+				(error) => {
+					console.error(Utils.getDateForLog() + ': Pull: could not read push-server config', error);
+					this.status = PullStatus.Offline;
 
-				clearTimeout(this.reconnectTimeout);
-				if (error.status == 401 || error.status == 403)
-				{
-					this.stopCheckConfig();
-
-					if (BX && BX.onCustomEvent)
+					clearTimeout(this.reconnectTimeout);
+					if (error.status == 401 || error.status == 403)
 					{
-						BX.onCustomEvent(window, 'onPullError', ['AUTHORIZE_ERROR']);
+						this.stopCheckConfig();
+
+						if (BX && BX.onCustomEvent)
+						{
+							BX.onCustomEvent(window, 'onPullError', ['AUTHORIZE_ERROR']);
+						}
 					}
 				}
-			}).then((config) =>
-			{
-				this.setConfig(config, true);
-				this.updateWatch();
-				this.startCheckConfig();
-				return this.connect();
-			}).catch((error) =>
-			{
-				console.error(error);
-			});
+			);
 		}
 
 		loadConfig()
@@ -31448,7 +31497,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 				clearTimeout(this.reconnectTimeout);
 			}
 
-			this.sendPullStatus(PullStatus.Connecting);
+			this.status = PullStatus.Connecting;
 			this.connectionAttempt++;
 			return new Promise((resolve, reject) =>
 			{
@@ -31835,9 +31884,9 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 			}
 		}
 
-		logToConsole(message)
+		logToConsole(message, force)
 		{
-			if (this.loggingEnabled)
+			if (this.loggingEnabled || force)
 			{
 				console.log(Utils.getDateForLog() + ': ' + message);
 			}
@@ -31870,13 +31919,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 			this.starting = false;
 			this.connectionAttempt = 0;
 			this.isManualDisconnect = false;
-			this.sendPullStatus(PullStatus.Online);
-
-			if (this.offlineTimeout)
-			{
-				clearTimeout(this.offlineTimeout);
-				this.offlineTimeout = null;
-			}
+			this.status = PullStatus.Online;
 
 			this.logToConsole('Pull: Long polling connection with push-server opened');
 			if (this.isWebSocketEnabled())
@@ -31918,7 +31961,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 			this.starting = false;
 			this.connectionAttempt = 0;
 			this.isManualDisconnect = false;
-			this.sendPullStatus(PullStatus.Online);
+			this.status = PullStatus.Online;
 			this.sharedConfig.setWebSocketBlocked(false);
 
 			// to prevent fallback to long polling in case of networking problems
@@ -31930,11 +31973,6 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 				this._connectors.longPolling.disconnect();
 			}
 
-			if (this.offlineTimeout)
-			{
-				clearTimeout(this.offlineTimeout);
-				this.offlineTimeout = null;
-			}
 			if (this.restoreWebSocketTimeout)
 			{
 				clearTimeout(this.restoreWebSocketTimeout);
@@ -31951,14 +31989,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 		{
 			if (this.connectionType === ConnectionType.WebSocket)
 			{
-				if (e.code != CloseReasons.CONFIG_EXPIRED && e.code != CloseReasons.CHANNEL_EXPIRED && e.code != CloseReasons.CONFIG_REPLACED)
-				{
-					this.sendPullStatus(PullStatus.Offline);
-				}
-				else
-				{
-					this.offlineTimeout = setTimeout(() => this.sendPullStatus(PullStatus.Offline), 5000)
-				}
+				this.status = PullStatus.Offline;
 			}
 
 			if (!e)
@@ -31966,7 +31997,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 				e = {};
 			}
 
-			this.logToConsole('Pull: Websocket connection with push-server closed. Code: ' + e.code + ', reason: ' + e.reason);
+			this.logToConsole('Pull: Websocket connection with push-server closed. Code: ' + e.code + ', reason: ' + e.reason, true);
 			if (!this.isManualDisconnect)
 			{
 				if (e.code == CloseReasons.WRONG_CHANNEL_ID)
@@ -31991,7 +32022,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 			this.starting = false;
 			if (this.connectionType === ConnectionType.WebSocket)
 			{
-				this.sendPullStatus(PullStatus.Offline);
+				this.status = PullStatus.Offline;
 			}
 
 			console.error(Utils.getDateForLog() + ": Pull: WebSocket connection error", e);
@@ -32008,14 +32039,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 		{
 			if (this.connectionType === ConnectionType.LongPolling)
 			{
-				if (e.code != CloseReasons.CONFIG_EXPIRED && e.code != CloseReasons.CHANNEL_EXPIRED && e.code != CloseReasons.CONFIG_REPLACED)
-				{
-					this.sendPullStatus(PullStatus.Offline);
-				}
-				else
-				{
-					this.offlineTimeout = setTimeout(() => this.sendPullStatus(PullStatus.Offline), 5500)
-				}
+				this.status = PullStatus.Offline;
 			}
 
 			if (!e)
@@ -32037,7 +32061,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 			this.starting = false;
 			if (this.connectionType === ConnectionType.LongPolling)
 			{
-				this.sendPullStatus(PullStatus.Offline);
+				this.status = PullStatus.Offline;
 			}
 			console.error(Utils.getDateForLog() + ': Pull: Long polling connection error', e);
 			this.scheduleReconnect();
@@ -32223,16 +32247,28 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 			}
 
 			let configDump;
-
-			if (this.config && this.config.channels && this.config.channels.private)
+			if (this.config && this.config.channels)
 			{
-				configDump = "ChannelID: " + this.config.channels.private.id + "\n" +
-					"ChannelDie: " + this.config.channels.private.end + "\n" +
+				configDump = "ChannelID: " + (this.config.channels.private ? this.config.channels.private.id : "n/a")  + "\n" +
+					"ChannelDie: " + (this.config.channels.private ? this.config.channels.private.end : "n/a" ) + "\n" +
 					("shared" in this.config.channels ? "ChannelDieShared: " + this.config.channels.shared.end : "");
 			}
 			else
 			{
 				configDump = "Config error: config is not loaded";
+			}
+
+			let websocketMode = "-";
+			if (this._connectors.webSocket && this._connectors.webSocket.socket)
+			{
+				if (this.isJsonRpc())
+				{
+					websocketMode = "json-rpc"
+				}
+				else
+				{
+					websocketMode = (this._connectors.webSocket.socket.url.search("binaryMode=true") != -1 ? "protobuf" : "text")
+				}
 			}
 
 			const watchTagsDump = JSON.stringify(this.watchTagsQueue);
@@ -32242,9 +32278,9 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 				"Browser online: " + (navigator.onLine ? 'Y' : 'N') + "\n" +
 				"Connect: " + (this.isConnected() ? 'Y' : 'N') + "\n" +
 				"Server type: " + (this.isSharedMode() ? 'cloud' : 'local') + "\n" +
-				"WebSocket support: " + (this.isWebSocketSupported() ? 'Y' : 'N') + "\n" +
-				"WebSocket connect: " + (this._connectors.webSocket && this._connectors.webSocket.connected ? 'Y' : 'N') + "\n" +
-				"WebSocket mode: " + (this._connectors.webSocket && this._connectors.webSocket.socket ? (this._connectors.webSocket.socket.url.search("binaryMode=true") != -1 ? "protobuf" : "text") : '-') + "\n" +
+				"WebSocket supported: " + (this.isWebSocketSupported() ? 'Y' : 'N') + "\n" +
+				"WebSocket connected: " + (this._connectors.webSocket && this._connectors.webSocket.connected ? 'Y' : 'N') + "\n" +
+				"WebSocket mode: " + websocketMode + "\n" +
 
 				"Try connect: " + (this.reconnectTimeout ? 'Y' : 'N') + "\n" +
 				"Try number: " + (this.connectionAttempt) + "\n" +
@@ -32417,6 +32453,22 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 			return result + (result * Math.random() * 0.2);
 		}
 
+		sendPullStatusDelayed(status, delay)
+		{
+			if (this.offlineTimeout)
+			{
+				clearTimeout(this.offlineTimeout)
+			}
+			this.offlineTimeout = setTimeout(
+				() =>
+				{
+					this.offlineTimeout = null;
+					this.sendPullStatus(status);
+				},
+				delay
+			)
+		}
+
 		sendPullStatus(status)
 		{
 			if (this.unloading)
@@ -32513,7 +32565,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 			}
 
 			console.warn("No pings are received in " + PING_TIMEOUT * 2 + " seconds. Reconnecting")
-			this.disconnect("1000", "connection stuck");
+			this.disconnect(CloseReasons.STUCK, "connection stuck");
 			this.scheduleReconnect();
 		}
 
@@ -33110,7 +33162,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 
 	class StorageManager
 	{
-		constuctor(params)
+		constructor(params)
 		{
 			params = params || {};
 
@@ -33198,19 +33250,34 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 			this.handlers[method] = handler;
 		}
 
-		executeOutgoingRpcCommand(method, params, id)
+		/**
+		 * Sends RPC command to the server.
+		 *
+		 * @param {string} method Method name
+		 * @param {object} params
+		 * @param {int} timeout
+		 * @returns {Promise}
+		 */
+		executeOutgoingRpcCommand(method, params, timeout)
 		{
+			if (!timeout)
+			{
+				timeout = 5;
+			}
 			return new Promise((resolve, reject) =>
 			{
-				const request = this.createRequest(method, params, id);
-				if (this.connector.send(JSON.stringify(request)))
-				{
-					this.rpcResponseAwaiters.set(request.id, {resolve, reject});
-				}
-				else
+				const request = this.createRequest(method, params);
+
+				if (!this.connector.send(JSON.stringify(request)))
 				{
 					reject(new ErrorNotConnected('websocket is not connected'));
 				}
+
+				const t = setTimeout(() => {
+					this.rpcResponseAwaiters.delete(request.id);
+					reject(new ErrorTimeout('no response'));
+				}, timeout * 1000);
+				this.rpcResponseAwaiters.set(request.id, {resolve, reject, timeout: t});
 			})
 		}
 
@@ -33242,19 +33309,21 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 		{
 			if ("id" in response && this.rpcResponseAwaiters.has(response.id))
 			{
+				const awaiter = this.rpcResponseAwaiters.get(response.id)
 				if ("result" in response)
 				{
-					this.rpcResponseAwaiters.get(response.id).resolve(response.result)
+					awaiter.resolve(response.result)
 				}
 				else if ("error" in response)
 				{
-					this.rpcResponseAwaiters.get(response.id).reject(response.error)
+					awaiter.reject(response.error)
 				}
 				else
 				{
-					this.rpcResponseAwaiters.get(response.id).reject(new Error("wrong response structure"))
+					awaiter.reject(new Error("wrong response structure"))
 				}
 
+				clearTimeout(awaiter.timeout)
 				this.rpcResponseAwaiters.delete(response.id)
 			}
 			else
@@ -33386,6 +33455,15 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 		{
 			super(message);
 			this.name = 'ErrorNotConnected';
+		}
+	}
+
+	class ErrorTimeout extends Error
+	{
+		constructor(message)
+		{
+			super(message);
+			this.name = 'ErrorTimeout';
 		}
 	}
 
@@ -34756,6 +34834,8 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 	        state: 'error'
 	      });
 	      delete currentImage.lazyloadCallback;
+	    } else {
+	      currentImage.src = BLANK_IMAGE;
 	    }
 	  };
 
@@ -34773,6 +34853,10 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 	  lazyloadObserver = new IntersectionObserver(function (entries, observer) {
 	    entries.forEach(function (entry) {
 	      var currentImage = entry.target;
+
+	      if (currentImage.classList.contains(ERROR)) {
+	        return true;
+	      }
 
 	      if (entry.isIntersecting) {
 	        if (currentImage.classList.contains(HIDDEN)) {
@@ -48973,19 +49057,12 @@ this.BX.Messenger = this.BX.Messenger || {};
 	'use strict';
 
 	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-
 	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
-
 	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
-
 	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-
 	var _types = /*#__PURE__*/new WeakMap();
-
 	var _config = /*#__PURE__*/new WeakMap();
-
 	var _custom = /*#__PURE__*/new WeakMap();
-
 	/**
 	 * Bitrix Messenger
 	 * Logger class
@@ -48997,22 +49074,18 @@ this.BX.Messenger = this.BX.Messenger || {};
 	var Logger = /*#__PURE__*/function () {
 	  function Logger() {
 	    babelHelpers.classCallCheck(this, Logger);
-
 	    _classPrivateFieldInitSpec(this, _types, {
 	      writable: true,
 	      value: {}
 	    });
-
 	    _classPrivateFieldInitSpec(this, _config, {
 	      writable: true,
 	      value: {}
 	    });
-
 	    _classPrivateFieldInitSpec(this, _custom, {
 	      writable: true,
 	      value: {}
 	    });
-
 	    babelHelpers.classPrivateFieldSet(this, _types, {
 	      desktop: true,
 	      log: false,
@@ -49022,10 +49095,8 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      trace: true
 	    });
 	    babelHelpers.classPrivateFieldSet(this, _config, babelHelpers.classPrivateFieldGet(this, _types));
-
 	    this.__load();
 	  }
-
 	  babelHelpers.createClass(Logger, [{
 	    key: "setConfig",
 	    value: function setConfig(types) {
@@ -49035,7 +49106,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          babelHelpers.classPrivateFieldGet(this, _config)[type] = !!types[type];
 	        }
 	      }
-
 	      this.__load();
 	    }
 	  }, {
@@ -49044,12 +49114,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      if (typeof babelHelpers.classPrivateFieldGet(this, _types)[type] === 'undefined') {
 	        return false;
 	      }
-
 	      babelHelpers.classPrivateFieldGet(this, _types)[type] = true;
 	      babelHelpers.classPrivateFieldGet(this, _custom)[type] = true;
-
 	      this.__save();
-
 	      return true;
 	    }
 	  }, {
@@ -49058,12 +49125,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      if (typeof babelHelpers.classPrivateFieldGet(this, _types)[type] === 'undefined') {
 	        return false;
 	      }
-
 	      babelHelpers.classPrivateFieldGet(this, _types)[type] = false;
 	      babelHelpers.classPrivateFieldGet(this, _custom)[type] = false;
-
 	      this.__save();
-
 	      return true;
 	    }
 	  }, {
@@ -49076,11 +49140,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    value: function desktop() {
 	      if (this.isEnabled('desktop')) {
 	        var _console;
-
 	        for (var _len = arguments.length, params = new Array(_len), _key = 0; _key < _len; _key++) {
 	          params[_key] = arguments[_key];
 	        }
-
 	        (_console = console).log.apply(_console, [].concat(babelHelpers.toConsumableArray(this.__getStyles('desktop')), params));
 	      }
 	    }
@@ -49089,11 +49151,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    value: function log() {
 	      if (this.isEnabled('log')) {
 	        var _console2;
-
 	        for (var _len2 = arguments.length, params = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
 	          params[_key2] = arguments[_key2];
 	        }
-
 	        (_console2 = console).log.apply(_console2, [].concat(babelHelpers.toConsumableArray(this.__getStyles('log')), params));
 	      }
 	    }
@@ -49102,11 +49162,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    value: function info() {
 	      if (this.isEnabled('info')) {
 	        var _console3;
-
 	        for (var _len3 = arguments.length, params = new Array(_len3), _key3 = 0; _key3 < _len3; _key3++) {
 	          params[_key3] = arguments[_key3];
 	        }
-
 	        (_console3 = console).info.apply(_console3, [].concat(babelHelpers.toConsumableArray(this.__getStyles('info')), params));
 	      }
 	    }
@@ -49115,11 +49173,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    value: function warn() {
 	      if (this.isEnabled('warn')) {
 	        var _console4;
-
 	        for (var _len4 = arguments.length, params = new Array(_len4), _key4 = 0; _key4 < _len4; _key4++) {
 	          params[_key4] = arguments[_key4];
 	        }
-
 	        (_console4 = console).warn.apply(_console4, [].concat(babelHelpers.toConsumableArray(this.__getStyles('warn')), params));
 	      }
 	    }
@@ -49128,11 +49184,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    value: function error() {
 	      if (this.isEnabled('error')) {
 	        var _console5;
-
 	        for (var _len5 = arguments.length, params = new Array(_len5), _key5 = 0; _key5 < _len5; _key5++) {
 	          params[_key5] = arguments[_key5];
 	        }
-
 	        (_console5 = console).error.apply(_console5, [].concat(babelHelpers.toConsumableArray(this.__getStyles('error')), params));
 	      }
 	    }
@@ -49141,7 +49195,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    value: function trace() {
 	      if (this.isEnabled('trace')) {
 	        var _console6;
-
 	        (_console6 = console).trace.apply(_console6, arguments);
 	      }
 	    }
@@ -49151,13 +49204,11 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      if (typeof window.localStorage !== 'undefined') {
 	        try {
 	          var custom = {};
-
 	          for (var type in babelHelpers.classPrivateFieldGet(this, _custom)) {
 	            if (babelHelpers.classPrivateFieldGet(this, _custom).hasOwnProperty(type) && babelHelpers.classPrivateFieldGet(this, _config)[type] !== babelHelpers.classPrivateFieldGet(this, _custom)[type]) {
 	              custom[type] = !!babelHelpers.classPrivateFieldGet(this, _custom)[type];
 	            }
 	          }
-
 	          console.warn(JSON.stringify(custom));
 	          window.localStorage.setItem('bx-messenger-logger', JSON.stringify(custom));
 	        } catch (e) {}
@@ -49169,7 +49220,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      if (typeof window.localStorage !== 'undefined') {
 	        try {
 	          var custom = window.localStorage.getItem('bx-messenger-logger');
-
 	          if (typeof custom === 'string') {
 	            babelHelpers.classPrivateFieldSet(this, _custom, JSON.parse(custom));
 	            babelHelpers.classPrivateFieldSet(this, _types, _objectSpread(_objectSpread({}, babelHelpers.classPrivateFieldGet(this, _types)), babelHelpers.classPrivateFieldGet(this, _custom)));
@@ -49188,36 +49238,29 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        'warn': ["%cWARNING", "color: white; font-style: italic; padding: 0 6\px; border: 1px solid #f0a74f"],
 	        'error': ["%cERROR", "color: white; font-style: italic; padding: 0 6\px; border: 1px solid #8a3232"]
 	      };
-
 	      if (type === 'all') {
 	        return styles;
 	      }
-
 	      if (styles[type]) {
 	        return styles[type];
 	      }
-
 	      return [];
 	    }
 	  }, {
 	    key: "__getRemoveString",
 	    value: function __getRemoveString() {
 	      var styles = this.__getStyles();
-
 	      var result = [];
-
 	      for (var type in styles) {
 	        if (styles.hasOwnProperty(type)) {
 	          result.push(styles[type][1]);
 	        }
 	      }
-
 	      return result;
 	    }
 	  }]);
 	  return Logger;
 	}();
-
 	var logger = new Logger();
 
 	exports.Logger = logger;
@@ -49242,6 +49285,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	 * @subpackage im
 	 * @copyright 2001-2020 Bitrix
 	 */
+
 	var DateFormat = Object.freeze({
 	  groupTitle: 'groupTitle',
 	  message: 'message',
@@ -49260,6 +49304,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	 * @subpackage im
 	 * @copyright 2001-2020 Bitrix
 	 */
+
 	var DeviceType = Object.freeze({
 	  mobile: 'mobile',
 	  desktop: 'desktop'
@@ -49277,6 +49322,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	 * @subpackage im
 	 * @copyright 2001-2020 Bitrix
 	 */
+
 	var MutationType = Object.freeze({
 	  none: 'none',
 	  add: 'delete',
@@ -49299,6 +49345,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	 * @subpackage im
 	 * @copyright 2001-2020 Bitrix
 	 */
+
 	var RestMethod = Object.freeze({
 	  imMessageAdd: 'im.message.add',
 	  imMessageUpdate: 'im.message.update',
@@ -49355,6 +49402,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	 * @subpackage im
 	 * @copyright 2001-2020 Bitrix
 	 */
+
 	var EventType = Object.freeze({
 	  dialog: {
 	    open: 'IM.Dialog:open',
@@ -49427,6 +49475,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	 * @subpackage im
 	 * @copyright 2001-2020 Bitrix
 	 */
+
 	var DialogType = Object.freeze({
 	  "private": 'private',
 	  chat: 'chat',
@@ -49471,6 +49520,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	 * @subpackage im
 	 * @copyright 2001-2020 Bitrix
 	 */
+
 	var FileStatus = Object.freeze({
 	  upload: 'upload',
 	  wait: 'wait',
@@ -49492,6 +49542,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	 * @subpackage im
 	 * @copyright 2001-2020 Bitrix
 	 */
+
 	var MessageType = Object.freeze({
 	  self: 'self',
 	  opponent: 'opponent',
@@ -49506,6 +49557,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	 * @subpackage im
 	 * @copyright 2001-2020 Bitrix
 	 */
+
 	var ConferenceFieldState = Object.freeze({
 	  view: 'view',
 	  edit: 'edit',
@@ -49534,8 +49586,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  chat: 'chat',
 	  users: 'users',
 	  split: 'split'
-	}); //BX.Call.UserState sync
+	});
 
+	//BX.Call.UserState sync
 	var ConferenceUserState = Object.freeze({
 	  Idle: 'Idle',
 	  Busy: 'Busy',
@@ -49556,6 +49609,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	 * @subpackage im
 	 * @copyright 2001-2020 Bitrix
 	 */
+
 	var ChatTypes = {
 	  chat: 'chat',
 	  open: 'open',
@@ -49616,1150 +49670,1149 @@ this.BX.Messenger = this.BX.Messenger || {};
 
 
 // file: /bitrix/js/main/date/main.date.js
-;(function(window)
-{
-	/****************** ATTENTION *******************************
-	 * Please do not use Bitrix CoreJS in this class.
-	 * This class can be called on page without Bitrix Framework
-	*************************************************************/
+this.BX = this.BX || {};
+(function (exports,main_core) {
+	'use strict';
 
-	if (!window.BX)
-	{
-		window.BX = {};
+	function convertBitrixFormat(format) {
+	  if (!main_core.Type.isStringFilled(format)) {
+	    return '';
+	  }
+	  return format.replace('YYYY', 'Y') // 1999
+	  .replace('MMMM', 'F') // January - December
+	  .replace('MM', 'm') // 01 - 12
+	  .replace('M', 'M') // Jan - Dec
+	  .replace('DD', 'd') // 01 - 31
+	  .replace('G', 'g') //  1 - 12
+	  .replace(/GG/i, 'G') //  0 - 23
+	  .replace('H', 'h') // 01 - 12
+	  .replace(/HH/i, 'H') // 00 - 24
+	  .replace('MI', 'i') // 00 - 59
+	  .replace('SS', 's') // 00 - 59
+	  .replace('TT', 'A') // AM - PM
+	  .replace('T', 'a'); // am - pm
 	}
 
-	if (!window.BX.Main)
-	{
-		window.BX.Main = {};
-	}
-	else if (window.BX.Main.Date)
-	{
-		return;
-	}
-
-	var BX = window.BX;
-
-	BX.Main.Date = BX.Main.DateTimeFormat = {
-
-		AM_PM_MODE: {
-			UPPER: 1,
-			LOWER: 2,
-			NONE: false
-		},
-
-		format: function(format, timestamp, now, utc)
-		{
-			var _this = this;
-
-			/*
-			PHP to Javascript:
-				time() = new Date()
-				mktime(...) = new Date(...)
-				gmmktime(...) = new Date(Date.UTC(...))
-				mktime(0,0,0, 1, 1, 1970) != 0          new Date(1970,0,1).getTime() != 0
-				gmmktime(0,0,0, 1, 1, 1970) == 0        new Date(Date.UTC(1970,0,1)).getTime() == 0
-				date("d.m.Y H:i:s") = BX.Main.Date.format("d.m.Y H:i:s")
-				gmdate("d.m.Y H:i:s") = BX.Main.Date.format("d.m.Y H:i:s", null, null, true);
-			*/
-			var date = Utils.isDate(timestamp) ? new Date(timestamp.getTime()) : Utils.isNumber(timestamp) ? new Date(timestamp * 1000) : new Date();
-			var nowDate = Utils.isDate(now) ? new Date(now.getTime()) : Utils.isNumber(now) ? new Date(now * 1000) : new Date();
-			var isUTC = !!utc;
-
-			if (Utils.isArray(format))
-				return _formatDateInterval(format, date, nowDate, isUTC);
-			else if (!Utils.isNotEmptyString(format))
-				return "";
-
-			var replaceMap = (format.match(/{{([^{}]*)}}/g) || []).map(function(x) { return (x.match(/[^{}]+/) || [''])[0]; });
-			if (replaceMap.length > 0)
-			{
-				replaceMap.forEach(function(element, index) {
-					format = format.replace("{{"+element+"}}", "{{"+index+"}}");
-				});
-			}
-
-			var formatRegex = /\\?(sago|iago|isago|Hago|dago|mago|Yago|sdiff|idiff|Hdiff|ddiff|mdiff|Ydiff|sshort|ishort|Hshort|dshort|mhort|Yshort|yesterday|today|tommorow|tomorrow|[a-z])/gi;
-
-			var dateFormats = {
-				d : function() {
-					// Day of the month 01 to 31
-					return Utils.strPadLeft(getDate(date).toString(), 2, "0");
-				},
-
-				D : function() {
-					//Mon through Sun
-					return _this._getMessage("DOW_" + getDay(date));
-				},
-
-				j : function() {
-					//Day of the month 1 to 31
-					return getDate(date);
-				},
-
-				l : function() {
-					//Sunday through Saturday
-					return _this._getMessage("DAY_OF_WEEK_" + getDay(date));
-				},
-
-				N : function() {
-					//1 (for Monday) through 7 (for Sunday)
-					return getDay(date) || 7;
-				},
-
-				S : function() {
-					//st, nd, rd or th. Works well with j
-					if (getDate(date) % 10 == 1 && getDate(date) != 11)
-						return "st";
-					else if (getDate(date) % 10 == 2 && getDate(date) != 12)
-						return "nd";
-					else if (getDate(date) % 10 == 3 && getDate(date) != 13)
-						return "rd";
-					else
-						return "th";
-				},
-
-				w : function() {
-					//0 (for Sunday) through 6 (for Saturday)
-					return getDay(date);
-				},
-
-				z : function() {
-					//0 through 365
-					var firstDay = new Date(getFullYear(date), 0, 1);
-					var currentDay = new Date(getFullYear(date), getMonth(date), getDate(date));
-					return Math.ceil( (currentDay - firstDay) / (24 * 3600 * 1000) );
-				},
-
-				W : function() {
-					//ISO-8601 week number of year
-					var newDate  = new Date(date.getTime());
-					var dayNumber   = (getDay(date) + 6) % 7;
-					setDate(newDate, getDate(newDate) - dayNumber + 3);
-					var firstThursday = newDate.getTime();
-					setMonth(newDate, 0, 1);
-					if (getDay(newDate) != 4)
-						setMonth(newDate, 0, 1 + ((4 - getDay(newDate)) + 7) % 7);
-					var weekNumber = 1 + Math.ceil((firstThursday - newDate) / (7 * 24 * 3600 * 1000));
-					return Utils.strPadLeft(weekNumber.toString(), 2, "0");
-				},
-
-				F : function() {
-					//January through December
-					return _this._getMessage("MONTH_" + (getMonth(date) + 1) + "_S");
-				},
-
-				f : function() {
-					//January through December
-					return _this._getMessage("MONTH_" + (getMonth(date) + 1));
-				},
-
-				m : function() {
-					//Numeric representation of a month 01 through 12
-					return Utils.strPadLeft((getMonth(date) + 1).toString(), 2, "0");
-				},
-
-				M : function() {
-					//A short textual representation of a month, three letters Jan through Dec
-					return _this._getMessage("MON_" + (getMonth(date) + 1));
-				},
-
-				n : function() {
-					//Numeric representation of a month 1 through 12
-					return getMonth(date) + 1;
-				},
-
-				t : function() {
-					//Number of days in the given month 28 through 31
-					var lastMonthDay = isUTC ? new Date(Date.UTC(getFullYear(date), getMonth(date) + 1, 0)) : new Date(getFullYear(date), getMonth(date) + 1, 0);
-					return getDate(lastMonthDay);
-				},
-
-				L : function() {
-					//1 if it is a leap year, 0 otherwise.
-					var year = getFullYear(date);
-					return (year % 4 == 0 && year % 100 != 0 || year % 400 == 0 ? 1 : 0);
-				},
-
-				o : function() {
-					//ISO-8601 year number
-					var correctDate  = new Date(date.getTime());
-					setDate(correctDate, getDate(correctDate) - ((getDay(date) + 6) % 7) + 3);
-					return getFullYear(correctDate);
-				},
-
-				Y : function() {
-					//A full numeric representation of a year, 4 digits
-					return getFullYear(date);
-				},
-
-				y : function() {
-					//A two digit representation of a year
-					return getFullYear(date).toString().slice(2);
-				},
-
-				a : function() {
-					//am or pm
-					return getHours(date) > 11 ? "pm" : "am";
-				},
-
-				A : function() {
-					//AM or PM
-					return getHours(date) > 11 ? "PM" : "AM";
-				},
-
-				B : function() {
-					//000 through 999
-					var swatch = ((date.getUTCHours() + 1) % 24) + date.getUTCMinutes() / 60 + date.getUTCSeconds() / 3600;
-					return Utils.strPadLeft(Math.floor(swatch * 1000 / 24).toString(), 3, "0");
-				},
-
-				g : function() {
-					//12-hour format of an hour without leading zeros 1 through 12
-					return getHours(date) % 12 || 12;
-				},
-
-				G : function() {
-					//24-hour format of an hour without leading zeros 0 through 23
-					return getHours(date);
-				},
-
-				h : function() {
-					//12-hour format of an hour with leading zeros 01 through 12
-					return Utils.strPadLeft((getHours(date) % 12 || 12).toString(), 2, "0");
-				},
-
-				H : function() {
-					//24-hour format of an hour with leading zeros 00 through 23
-					return Utils.strPadLeft(getHours(date).toString(), 2, "0");
-				},
-
-				i : function() {
-					//Minutes with leading zeros 00 to 59
-					return Utils.strPadLeft(getMinutes(date).toString(), 2, "0");
-				},
-
-				s : function() {
-					//Seconds, with leading zeros 00 through 59
-					return Utils.strPadLeft(getSeconds(date).toString(), 2, "0");
-				},
-
-				u : function() {
-					//Microseconds
-					return Utils.strPadLeft((getMilliseconds(date) * 1000).toString(), 6, "0");
-				},
-
-				e : function() {
-					if (isUTC)
-						return "UTC";
-					return "";
-				},
-
-				I : function() {
-					if (isUTC)
-						return 0;
-
-					//Whether or not the date is in daylight saving time 1 if Daylight Saving Time, 0 otherwise
-					var firstJanuary = new Date(getFullYear(date), 0, 1);
-					var firstJanuaryUTC = Date.UTC(getFullYear(date), 0, 1);
-					var firstJuly = new Date(getFullYear(date), 6, 0);
-					var firstJulyUTC = Date.UTC(getFullYear(date), 6, 0);
-					return 0 + ((firstJanuary - firstJanuaryUTC) !== (firstJuly - firstJulyUTC));
-				},
-
-				O : function() {
-					if (isUTC)
-						return "+0000";
-
-					//Difference to Greenwich time (GMT) in hours +0200
-					var timezoneOffset = date.getTimezoneOffset();
-					var timezoneOffsetAbs = Math.abs(timezoneOffset);
-					return (timezoneOffset > 0 ? "-" : "+") + Utils.strPadLeft((Math.floor(timezoneOffsetAbs / 60) * 100 + timezoneOffsetAbs % 60).toString(), 4, "0");
-				},
-
-				P : function() {
-					if (isUTC)
-						return "+00:00";
-
-					//Difference to Greenwich time (GMT) with colon between hours and minutes +02:00
-					var difference = this.O();
-					return difference.substr(0, 3) + ":" + difference.substr(3);
-				},
-
-				Z : function() {
-					if (isUTC)
-						return 0;
-					//Timezone offset in seconds. The offset for timezones west of UTC is always negative,
-					//and for those east of UTC is always positive.
-					return -date.getTimezoneOffset() * 60;
-				},
-
-				c : function() {
-					//ISO 8601 date
-					return "Y-m-d\\TH:i:sP".replace(formatRegex, _replaceDateFormat);
-				},
-
-				r : function() {
-					//RFC 2822 formatted date
-					return "D, d M Y H:i:s O".replace(formatRegex, _replaceDateFormat);
-				},
-
-				U : function() {
-					//Seconds since the Unix Epoch
-					return Math.floor(date.getTime() / 1000);
-				},
-
-				sago : function() {
-					return _formatDateMessage(intval((nowDate - date) / 1000), {
-						"0" : "FD_SECOND_AGO_0",
-						"1" : "FD_SECOND_AGO_1",
-						"10_20" : "FD_SECOND_AGO_10_20",
-						"MOD_1" : "FD_SECOND_AGO_MOD_1",
-						"MOD_2_4" : "FD_SECOND_AGO_MOD_2_4",
-						"MOD_OTHER" : "FD_SECOND_AGO_MOD_OTHER"
-					});
-				},
-
-				sdiff : function() {
-					return _formatDateMessage(intval((nowDate - date) / 1000), {
-						"0" : "FD_SECOND_DIFF_0",
-						"1" : "FD_SECOND_DIFF_1",
-						"10_20" : "FD_SECOND_DIFF_10_20",
-						"MOD_1" : "FD_SECOND_DIFF_MOD_1",
-						"MOD_2_4" : "FD_SECOND_DIFF_MOD_2_4",
-						"MOD_OTHER" : "FD_SECOND_DIFF_MOD_OTHER"
-					});
-				},
-
-				sshort : function() {
-					return _this._getMessage("FD_SECOND_SHORT").replace(/#VALUE#/g, intval((nowDate - date) / 1000));
-				},
-
-				iago : function() {
-					return _formatDateMessage(intval((nowDate - date) / 60 / 1000), {
-						"0" : "FD_MINUTE_AGO_0",
-						"1" : "FD_MINUTE_AGO_1",
-						"10_20" : "FD_MINUTE_AGO_10_20",
-						"MOD_1" : "FD_MINUTE_AGO_MOD_1",
-						"MOD_2_4" : "FD_MINUTE_AGO_MOD_2_4",
-						"MOD_OTHER" : "FD_MINUTE_AGO_MOD_OTHER"
-					});
-				},
-
-				idiff : function() {
-					return _formatDateMessage(intval((nowDate - date) / 60 / 1000), {
-						"0" : "FD_MINUTE_DIFF_0",
-						"1" : "FD_MINUTE_DIFF_1",
-						"10_20" : "FD_MINUTE_DIFF_10_20",
-						"MOD_1" : "FD_MINUTE_DIFF_MOD_1",
-						"MOD_2_4" : "FD_MINUTE_DIFF_MOD_2_4",
-						"MOD_OTHER" : "FD_MINUTE_DIFF_MOD_OTHER"
-					});
-				},
-
-				isago : function() {
-					var minutesAgo = intval((nowDate - date) / 60 / 1000);
-					var result = _formatDateMessage(minutesAgo, {
-						"0" : "FD_MINUTE_0",
-						"1" : "FD_MINUTE_1",
-						"10_20" : "FD_MINUTE_10_20",
-						"MOD_1" : "FD_MINUTE_MOD_1",
-						"MOD_2_4" : "FD_MINUTE_MOD_2_4",
-						"MOD_OTHER" : "FD_MINUTE_MOD_OTHER"
-					});
-
-					result += " ";
-
-					var secondsAgo = intval((nowDate - date) / 1000) - (minutesAgo * 60);
-					result += _formatDateMessage(secondsAgo, {
-						"0" : "FD_SECOND_AGO_0",
-						"1" : "FD_SECOND_AGO_1",
-						"10_20" : "FD_SECOND_AGO_10_20",
-						"MOD_1" : "FD_SECOND_AGO_MOD_1",
-						"MOD_2_4" : "FD_SECOND_AGO_MOD_2_4",
-						"MOD_OTHER" : "FD_SECOND_AGO_MOD_OTHER"
-					});
-					return result;
-				},
-
-				ishort : function() {
-					return _this._getMessage("FD_MINUTE_SHORT").replace(/#VALUE#/g, intval((nowDate - date) / 60 / 1000));
-				},
-
-				Hago : function() {
-					return _formatDateMessage(intval((nowDate - date) / 60 / 60 / 1000), {
-						"0" : "FD_HOUR_AGO_0",
-						"1" : "FD_HOUR_AGO_1",
-						"10_20" : "FD_HOUR_AGO_10_20",
-						"MOD_1" : "FD_HOUR_AGO_MOD_1",
-						"MOD_2_4" : "FD_HOUR_AGO_MOD_2_4",
-						"MOD_OTHER" : "FD_HOUR_AGO_MOD_OTHER"
-					});
-				},
-
-				Hdiff : function() {
-					return _formatDateMessage(intval((nowDate - date) / 60 / 60 / 1000), {
-						"0" : "FD_HOUR_DIFF_0",
-						"1" : "FD_HOUR_DIFF_1",
-						"10_20" : "FD_HOUR_DIFF_10_20",
-						"MOD_1" : "FD_HOUR_DIFF_MOD_1",
-						"MOD_2_4" : "FD_HOUR_DIFF_MOD_2_4",
-						"MOD_OTHER" : "FD_HOUR_DIFF_MOD_OTHER"
-					});
-				},
-
-				Hshort : function() {
-					return _this._getMessage("FD_HOUR_SHORT").replace(/#VALUE#/g, intval((nowDate - date) / 60 / 60 / 1000));
-				},
-
-				yesterday : function() {
-					return _this._getMessage("FD_YESTERDAY");
-				},
-
-				today : function() {
-					return _this._getMessage("FD_TODAY");
-				},
-
-				tommorow : function() {
-					return _this._getMessage("FD_TOMORROW");
-				},
-
-				tomorrow : function() {
-					return _this._getMessage("FD_TOMORROW");
-				},
-
-				dago : function() {
-					return _formatDateMessage(intval((nowDate - date) / 60 / 60 / 24 / 1000), {
-						"0" : "FD_DAY_AGO_0",
-						"1" : "FD_DAY_AGO_1",
-						"10_20" : "FD_DAY_AGO_10_20",
-						"MOD_1" : "FD_DAY_AGO_MOD_1",
-						"MOD_2_4" : "FD_DAY_AGO_MOD_2_4",
-						"MOD_OTHER" : "FD_DAY_AGO_MOD_OTHER"
-					});
-				},
-
-				ddiff : function() {
-					return _formatDateMessage(intval((nowDate - date) / 60 / 60 / 24 / 1000), {
-						"0" : "FD_DAY_DIFF_0",
-						"1" : "FD_DAY_DIFF_1",
-						"10_20" : "FD_DAY_DIFF_10_20",
-						"MOD_1" : "FD_DAY_DIFF_MOD_1",
-						"MOD_2_4" : "FD_DAY_DIFF_MOD_2_4",
-						"MOD_OTHER" : "FD_DAY_DIFF_MOD_OTHER"
-					});
-				},
-
-				dshort : function() {
-					return _this._getMessage("FD_DAY_SHORT").replace(/#VALUE#/g, intval((nowDate - date) / 60 / 60 / 24 / 1000));
-				},
-
-				mago : function() {
-					return _formatDateMessage(intval((nowDate - date) / 60 / 60 / 24 / 31 / 1000), {
-						"0" : "FD_MONTH_AGO_0",
-						"1" : "FD_MONTH_AGO_1",
-						"10_20" : "FD_MONTH_AGO_10_20",
-						"MOD_1" : "FD_MONTH_AGO_MOD_1",
-						"MOD_2_4" : "FD_MONTH_AGO_MOD_2_4",
-						"MOD_OTHER" : "FD_MONTH_AGO_MOD_OTHER"
-					});
-				},
-
-				mdiff : function() {
-					return _formatDateMessage(intval((nowDate - date) / 60 / 60 / 24 / 31 / 1000), {
-						"0" : "FD_MONTH_DIFF_0",
-						"1" : "FD_MONTH_DIFF_1",
-						"10_20" : "FD_MONTH_DIFF_10_20",
-						"MOD_1" : "FD_MONTH_DIFF_MOD_1",
-						"MOD_2_4" : "FD_MONTH_DIFF_MOD_2_4",
-						"MOD_OTHER" : "FD_MONTH_DIFF_MOD_OTHER"
-					});
-				},
-
-				mshort : function() {
-					return _this._getMessage("FD_MONTH_SHORT").replace(/#VALUE#/g, intval((nowDate - date) / 60 / 60 / 24 / 31 / 1000));
-				},
-
-				Yago : function() {
-					return _formatDateMessage(intval((nowDate - date) / 60 / 60 / 24 / 365 / 1000), {
-						"0" : "FD_YEARS_AGO_0",
-						"1" : "FD_YEARS_AGO_1",
-						"10_20" : "FD_YEARS_AGO_10_20",
-						"MOD_1" : "FD_YEARS_AGO_MOD_1",
-						"MOD_2_4" : "FD_YEARS_AGO_MOD_2_4",
-						"MOD_OTHER" : "FD_YEARS_AGO_MOD_OTHER"
-					});
-				},
-
-				Ydiff : function() {
-					return _formatDateMessage(intval((nowDate - date) / 60 / 60 / 24 / 365 / 1000), {
-						"0" : "FD_YEARS_DIFF_0",
-						"1" : "FD_YEARS_DIFF_1",
-						"10_20" : "FD_YEARS_DIFF_10_20",
-						"MOD_1" : "FD_YEARS_DIFF_MOD_1",
-						"MOD_2_4" : "FD_YEARS_DIFF_MOD_2_4",
-						"MOD_OTHER" : "FD_YEARS_DIFF_MOD_OTHER"
-					});
-				},
-
-				Yshort : function() {
-					return _formatDateMessage(intval((nowDate - date) / 60 / 60 / 24 / 365 / 1000), {
-						"0" : "FD_YEARS_SHORT_0",
-						"1" : "FD_YEARS_SHORT_1",
-						"10_20" : "FD_YEARS_SHORT_10_20",
-						"MOD_1" : "FD_YEARS_SHORT_MOD_1",
-						"MOD_2_4" : "FD_YEARS_SHORT_MOD_2_4",
-						"MOD_OTHER" : "FD_YEARS_SHORT_MOD_OTHER"
-					});
-				},
-
-				x : function() {
-					var ampm = _this.isAmPmMode(true);
-					var timeFormat = (ampm === _this.AM_PM_MODE.LOWER? "g:i a" : (ampm === _this.AM_PM_MODE.UPPER? "g:i A" : "H:i"));
-
-					return _this.format([
-						["tomorrow", "tomorrow, "+timeFormat],
-						["-", _this.convertBitrixFormat(_this._getMessage("FORMAT_DATETIME")).replace(/:s/g, "")],
-						["s", "sago"],
-						["i", "iago"],
-						["today", "today, "+timeFormat],
-						["yesterday", "yesterday, "+timeFormat],
-						["", _this.convertBitrixFormat(_this._getMessage("FORMAT_DATETIME")).replace(/:s/g, "")]
-					], date, nowDate, isUTC);
-				},
-
-				X : function() {
-
-					var ampm = _this.isAmPmMode(true);
-					var timeFormat = (ampm === _this.AM_PM_MODE.LOWER? "g:i a" : (ampm === _this.AM_PM_MODE.UPPER? "g:i A" : "H:i"));
-
-					var day = _this.format([
-						["tomorrow", "tomorrow"],
-						["-", _this.convertBitrixFormat(_this._getMessage("FORMAT_DATE"))],
-						["today", "today"],
-						["yesterday", "yesterday"],
-						["", _this.convertBitrixFormat(_this._getMessage("FORMAT_DATE"))]
-					], date, nowDate, isUTC);
-
-					var time = _this.format([
-						["tomorrow", timeFormat],
-						["today", timeFormat],
-						["yesterday", timeFormat],
-						["", ""]
-					], date, nowDate, isUTC);
-
-					if (time.length > 0)
-						return _this._getMessage("FD_DAY_AT_TIME").replace(/#DAY#/g, day).replace(/#TIME#/g, time);
-					else
-						return day;
-				},
-
-				Q : function() {
-					var daysAgo = intval((nowDate - date) / 60 / 60 / 24 / 1000);
-					if(daysAgo == 0)
-						return _this._getMessage("FD_DAY_DIFF_1").replace(/#VALUE#/g, 1);
-					else
-						return _this.format([ ["d", "ddiff"], ["m", "mdiff"], ["", "Ydiff"] ], date, nowDate);
-				}
-			};
-
-			var cutZeroTime = false;
-			if (format[0] && format[0] == "^")
-			{
-				cutZeroTime = true;
-				format = format.substr(1);
-			}
-
-			var result = format.replace(formatRegex, _replaceDateFormat);
-
-			if (cutZeroTime)
-			{
-				/* 	15.04.12 13:00:00 => 15.04.12 13:00
-					00:01:00 => 00:01
-					4 may 00:00:00 => 4 may
-					01-01-12 00:00 => 01-01-12
-				*/
-
-				result = result.replace(/\s*00:00:00\s*/g, "").
-								replace(/(\d\d:\d\d)(:00)/g, "$1").
-								replace(/(\s*00:00\s*)(?!:)/g, "");
-			}
-
-			if (replaceMap.length > 0)
-			{
-				replaceMap.forEach(function(element, index) {
-					result = result.replace("{{"+index+"}}", element);
-				});
-			}
-
-			return result;
-
-			function _formatDateInterval(formats, date, nowDate, isUTC)
-			{
-				var secondsAgo = intval((nowDate - date) / 1000);
-				for (var i = 0; i < formats.length; i++)
-				{
-					var formatInterval = formats[i][0];
-					var formatValue = formats[i][1];
-					var match = null;
-					if (formatInterval == "s")
-					{
-						if (secondsAgo < 60)
-							return _this.format(formatValue, date, nowDate, isUTC);
-					}
-					else if ((match = /^s(\d+)\>?(\d+)?/.exec(formatInterval)) != null)
-					{
-						if (match[1] && match[2])
-						{
-							if (
-								secondsAgo < match[1]
-								&& secondsAgo > match[2]
-							)
-							{
-								return _this.format(formatValue, date, nowDate, isUTC);
-							}
-						}
-						else if (secondsAgo < match[1])
-						{
-							return _this.format(formatValue, date, nowDate, isUTC);
-						}
-					}
-					else if (formatInterval == "i")
-					{
-						if (secondsAgo < 60 * 60)
-							return _this.format(formatValue, date, nowDate, isUTC);
-					}
-					else if ((match = /^i(\d+)\>?(\d+)?/.exec(formatInterval)) != null)
-					{
-						if (match[1] && match[2])
-						{
-							if (
-								secondsAgo < match[1] * 60
-								&& secondsAgo > match[2] * 60
-							)
-							{
-								return _this.format(formatValue, date, nowDate, isUTC);
-							}
-						}
-						else if (secondsAgo < match[1] * 60)
-						{
-							return _this.format(formatValue, date, nowDate, isUTC);
-						}
-					}
-					else if (formatInterval == "H")
-					{
-						if (secondsAgo < 24 * 60 * 60)
-							return _this.format(formatValue, date, nowDate, isUTC);
-					}
-					else if ((match = /^H(\d+)\>?(\d+)?/.exec(formatInterval)) != null)
-					{
-						if (match[1] && match[2])
-						{
-							if (
-								secondsAgo < match[1] * 60 * 60
-								&& secondsAgo > match[2] * 60 * 60
-							)
-							{
-								return _this.format(formatValue, date, nowDate, isUTC);
-							}
-						}
-						else if (secondsAgo < match[1] * 60 * 60)
-						{
-							return _this.format(formatValue, date, nowDate, isUTC);
-						}
-					}
-					else if (formatInterval == "d")
-					{
-						if (secondsAgo < 31 *24 * 60 * 60)
-							return _this.format(formatValue, date, nowDate, isUTC);
-					}
-					else if ((match = /^d(\d+)\>?(\d+)?/.exec(formatInterval)) != null)
-					{
-						if (match[1] && match[2])
-						{
-							if (
-								secondsAgo < match[1] * 24 * 60 * 60
-								&& secondsAgo > match[2] * 24 * 60 * 60
-							)
-							{
-								return _this.format(formatValue, date, nowDate, isUTC);
-							}
-						}
-						else if (secondsAgo < match[1] * 24 * 60 * 60)
-						{
-							return _this.format(formatValue, date, nowDate, isUTC);
-						}
-					}
-					else if (formatInterval == "m")
-					{
-						if (secondsAgo < 365 * 24 * 60 * 60)
-							return _this.format(formatValue, date, nowDate, isUTC);
-					}
-					else if ((match = /^m(\d+)\>?(\d+)?/.exec(formatInterval)) != null)
-					{
-						if (match[1] && match[2])
-						{
-							if (
-								secondsAgo < match[1] * 31 * 24 * 60 * 60
-								&& secondsAgo > match[2] * 31 * 24 * 60 * 60
-							)
-							{
-								return _this.format(formatValue, date, nowDate, isUTC);
-							}
-						}
-						else if (secondsAgo < match[1] * 31 * 24 * 60 * 60)
-						{
-							return _this.format(formatValue, date, nowDate, isUTC);
-						}
-					}
-					else if (formatInterval == "now")
-					{
-						if (date.getTime() == nowDate.getTime())
-						{
-							return _this.format(formatValue, date, nowDate, isUTC);
-						}
-					}
-					else if (formatInterval == "today")
-					{
-						var year = getFullYear(nowDate), month = getMonth(nowDate), day = getDate(nowDate);
-						var todayStart = isUTC ? new Date(Date.UTC(year, month, day, 0, 0, 0, 0)) : new Date(year, month, day, 0, 0, 0, 0);
-						var todayEnd = isUTC ? new Date(Date.UTC(year, month, day+1, 0, 0, 0, 0)) : new Date(year, month, day+1, 0, 0, 0, 0);
-						if (date >= todayStart && date < todayEnd)
-							return _this.format(formatValue, date, nowDate, isUTC);
-					}
-					else if (formatInterval == "todayFuture")
-					{
-						var year = getFullYear(nowDate), month = getMonth(nowDate), day = getDate(nowDate);
-						var todayStart = nowDate.getTime();
-						var todayEnd = isUTC ? new Date(Date.UTC(year, month, day+1, 0, 0, 0, 0)) : new Date(year, month, day+1, 0, 0, 0, 0);
-						if (date >= todayStart && date < todayEnd)
-							return _this.format(formatValue, date, nowDate, isUTC);
-					}
-					else if (formatInterval == "yesterday")
-					{
-						year = getFullYear(nowDate); month = getMonth(nowDate); day = getDate(nowDate);
-						var yesterdayStart = isUTC ? new Date(Date.UTC(year, month, day-1, 0, 0, 0, 0)) : new Date(year, month, day-1, 0, 0, 0, 0);
-						var yesterdayEnd = isUTC ? new Date(Date.UTC(year, month, day, 0, 0, 0, 0)) : new Date(year, month, day, 0, 0, 0, 0);
-						if (date >= yesterdayStart && date < yesterdayEnd)
-							return _this.format(formatValue, date, nowDate, isUTC);
-					}
-					else if (formatInterval == "tommorow" || formatInterval == "tomorrow")
-					{
-						year = getFullYear(nowDate); month = getMonth(nowDate); day = getDate(nowDate);
-						var tomorrowStart = isUTC ? new Date(Date.UTC(year, month, day+1, 0, 0, 0, 0)) : new Date(year, month, day+1, 0, 0, 0, 0);
-						var tomorrowEnd = isUTC ? new Date(Date.UTC(year, month, day+2, 0, 0, 0, 0)) : new Date(year, month, day+2, 0, 0, 0, 0);
-						if (date >= tomorrowStart && date < tomorrowEnd)
-							return _this.format(formatValue, date, nowDate, isUTC);
-					}
-					else if (formatInterval == "-")
-					{
-						if (secondsAgo < 0)
-							return _this.format(formatValue, date, nowDate, isUTC);
-					}
-				}
-
-				//return formats.length > 0 ? _this.format(formats.pop()[1], date, nowDate, isUTC) : "";
-				return formats.length > 0 ? _this.format(formats[formats.length - 1][1], date, nowDate, isUTC) : "";
-			}
-
-			function getFullYear(date) { return isUTC ? date.getUTCFullYear() : date.getFullYear(); }
-			function getDate(date) { return isUTC ? date.getUTCDate() : date.getDate(); }
-			function getMonth(date) { return isUTC ? date.getUTCMonth() : date.getMonth(); }
-			function getHours(date) { return isUTC ? date.getUTCHours() : date.getHours(); }
-			function getMinutes(date) { return isUTC ? date.getUTCMinutes() : date.getMinutes(); }
-			function getSeconds(date) { return isUTC ? date.getUTCSeconds() : date.getSeconds(); }
-			function getMilliseconds(date) { return isUTC ? date.getUTCMilliseconds() : date.getMilliseconds(); }
-			function getDay(date) { return isUTC ? date.getUTCDay() : date.getDay(); }
-			function setDate(date, dayValue) { return isUTC ? date.setUTCDate(dayValue) : date.setDate(dayValue); }
-			function setMonth(date, monthValue, dayValue) { return isUTC ? date.setUTCMonth(monthValue, dayValue) : date.setMonth(monthValue, dayValue); }
-
-			function _formatDateMessage(value, messages)
-			{
-				var val = value < 100 ? Math.abs(value) : Math.abs(value % 100);
-				var dec = val % 10;
-				var message = "";
-
-				if(val == 0)
-					message = _this._getMessage(messages["0"]);
-				else if (val == 1)
-					message = _this._getMessage(messages["1"]);
-				else if (val >= 10 && val <= 20)
-					message = _this._getMessage(messages["10_20"]);
-				else if (dec == 1)
-					message = _this._getMessage(messages["MOD_1"]);
-				else if (2 <= dec && dec <= 4)
-					message = _this._getMessage(messages["MOD_2_4"]);
-				else
-					message = _this._getMessage(messages["MOD_OTHER"]);
-
-				return message.replace(/#VALUE#/g, value);
-			}
-
-			function _replaceDateFormat(match, matchFull)
-			{
-				if (dateFormats[match])
-					return dateFormats[match]();
-				else
-					return matchFull;
-			}
-
-			function intval(number)
-			{
-				return number >= 0 ? Math.floor(number) : Math.ceil(number);
-			}
-		},
-
-		convertBitrixFormat: function(format)
-		{
-			if (!Utils.isNotEmptyString(format))
-				return "";
-
-			return format.replace("YYYY", "Y")	// 1999
-						 .replace("MMMM", "F")	// January - December
-						 .replace("MM", "m")	// 01 - 12
-						 .replace("M", "M")	// Jan - Dec
-						 .replace("DD", "d")	// 01 - 31
-						 .replace("G", "g")	//  1 - 12
-						 .replace(/GG/i, "G")	//  0 - 23
-						 .replace("H", "h")	// 01 - 12
-						 .replace(/HH/i, "H")	// 00 - 24
-						 .replace("MI", "i")	// 00 - 59
-						 .replace("SS", "s")	// 00 - 59
-						 .replace("TT", "A")	// AM - PM
-						 .replace("T", "a");	// am - pm
-		},
-
-		convertToUTC: function(date)
-		{
-			if (!Utils.isDate(date))
-				return null;
-
-			return new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), date.getHours(), date.getMinutes(), date.getSeconds(), date.getMilliseconds()));
-		},
-
-		/**
-		 * Function creates and returns Javascript Date() object from server timestamp regardless of local browser (system) timezone.
-		 * For example can be used to convert timestamp from some exact date on server to the JS Date object with the same value.
-		 *
-		 * @param timestamp - timestamp in seconds
-		 * @returns {Date}
-		 */
-		getNewDate: function(timestamp)
-		{
-			return new Date(this.getBrowserTimestamp(timestamp));
-		},
-
-		/**
-		 * Function transforms server timestamp (in sec) to javascript timestamp (calculated depend on local browser timezone offset). Returns timestamp in milliseconds.
-		 * Also see BX.Main.Date.getNewDate description.
-		 *
-		 * @param timestamp - timestamp in seconds
-		 * @returns {number}
-		 */
-		getBrowserTimestamp: function(timestamp)
-		{
-			timestamp = parseInt(timestamp, 10);
-			var browserOffset = new Date(timestamp * 1000).getTimezoneOffset() * 60;
-			return (parseInt(timestamp, 10) + parseInt(this._getMessage('SERVER_TZ_OFFSET')) + browserOffset) * 1000;
-		},
-
-		/**
-		 * Function transforms local browser timestamp (in ms) to server timestamp (calculated depend on local browser timezone offset). Returns timestamp in seconds.
-		 *
-		 * @param timestamp - timestamp in milliseconds
-		 * @returns {number}
-		 */
-		getServerTimestamp: function(timestamp)
-		{
-			timestamp = parseInt(timestamp, 10);
-			var browserOffset = new Date(timestamp).getTimezoneOffset() * 60;
-			return Math.round(timestamp / 1000 - (parseInt(this._getMessage('SERVER_TZ_OFFSET'), 10) + parseInt(browserOffset, 10)));
-		},
-
-		formatLastActivityDate: function(timestamp, now, utc)
-		{
-			var ampm = this.isAmPmMode(true);
-			var timeFormat = (ampm === this.AM_PM_MODE.LOWER? "g:i a" : (ampm === this.AM_PM_MODE.UPPER? "g:i A" : "H:i"));
-
-			var format = [
-			   ["tomorrow", "#01#"+timeFormat],
-			   ["now" , "#02#"],
-			   ["todayFuture", "#03#"+timeFormat],
-			   ["yesterday", "#04#"+timeFormat],
-			   ["-", this.convertBitrixFormat(this._getMessage("FORMAT_DATETIME")).replace(/:s/g, "")],
-			   ["s60", "sago"],
-			   ["i60", "iago"],
-			   ["H5", "Hago"],
-			   ["H24", "#03#"+timeFormat],
-			   ["d31", "dago"],
-			   ["m12>1", "mago"],
-			   ["m12>0", "dago"],
-			   ["", "#05#"]
-			];
-			var formattedDate = this.format(format, timestamp, now, utc);
-			var match = null;
-			if ((match = /^#(\d+)#(.*)/.exec(formattedDate)) != null)
-			{
-				switch (match[1])
-				{
-					case "01":
-						formattedDate = this._getMessage('FD_LAST_SEEN_TOMORROW').replace("#TIME#", match[2]);
-					break;
-					case "02":
-						formattedDate = this._getMessage('FD_LAST_SEEN_NOW');
-					break;
-					case "03":
-						formattedDate = this._getMessage('FD_LAST_SEEN_TODAY').replace("#TIME#", match[2]);
-					break;
-					case "04":
-						formattedDate = this._getMessage('FD_LAST_SEEN_YESTERDAY').replace("#TIME#", match[2]);
-					break;
-					case "05":
-						formattedDate = this._getMessage('FD_LAST_SEEN_MORE_YEAR');
-					break;
-					default:
-						formattedDate = match[2];
-					break;
-				}
-			}
-
-			return formattedDate;
-		},
-
-		isAmPmMode: function(returnConst)
-		{
-			if (returnConst === true)
-			{
-				return this._getMessage('AMPM_MODE');
-			}
-
-			return this._getMessage('AMPM_MODE') !== false;
-		},
-
-		/**
-		 * The method is designed to replace the localization storage on sites without Bitrix Framework.
-		 *
-		 * @param message
-		 * @returns {*}
-		 * @private
-		 */
-		_getMessage: function(message)
-		{
-			return BX.message(message);
-		},
-
-		/**
-		 * The method used to parse date from string by given format.
-		 *
-		 * @param {string} str - date in given format
-		 * @param {boolean} isUTC - is date in UTC
-		 * @param {string} formatDate - format of the date without time
-		 * @param {string} formatDatetime - format of the date with time
-		 * @returns {Date|null} - returns Date object if string was parsed or null
-		 */
-		parse: function(str, isUTC, formatDate, formatDatetime)
-		{
-			if (Utils.isNotEmptyString(str))
-			{
-				if (!formatDate)
-					formatDate = this._getMessage('FORMAT_DATE');
-				if (!formatDatetime)
-					formatDatetime = this._getMessage('FORMAT_DATETIME');
-
-				var regMonths = '';
-				for (i = 1; i <= 12; i++)
-				{
-					regMonths = regMonths + '|' + this._getMessage('MON_'+i);
-				}
-
-				var
-					expr = new RegExp('([0-9]+|[a-z]+' + regMonths + ')', 'ig'),
-					aDate = str.match(expr),
-					aFormat = formatDate.match(/(DD|MI|MMMM|MM|M|YYYY)/ig),
-					i, cnt,
-					aDateArgs=[], aFormatArgs=[],
-					aResult={};
-
-				if (!aDate)
-				{
-					return null;
-				}
-
-				if(aDate.length > aFormat.length)
-				{
-					aFormat = formatDatetime.match(/(DD|MI|MMMM|MM|M|YYYY|HH|H|SS|TT|T|GG|G)/ig);
-				}
-
-				for(i = 0, cnt = aDate.length; i < cnt; i++)
-				{
-					if(aDate[i].trim() !== '')
-					{
-						aDateArgs[aDateArgs.length] = aDate[i];
-					}
-				}
-
-				for(i = 0, cnt = aFormat.length; i < cnt; i++)
-				{
-					if(aFormat[i].trim() !== '')
-					{
-						aFormatArgs[aFormatArgs.length] = aFormat[i];
-					}
-				}
-
-				var m = Utils.array_search('MMMM', aFormatArgs);
-				if (m > 0)
-				{
-					aDateArgs[m] = this.getMonthIndex(aDateArgs[m]);
-					aFormatArgs[m] = "MM";
-				}
-				else
-				{
-					m = Utils.array_search('M', aFormatArgs);
-					if (m > 0)
-					{
-						aDateArgs[m] = this.getMonthIndex(aDateArgs[m]);
-						aFormatArgs[m] = "MM";
-					}
-				}
-
-				for(i = 0, cnt = aFormatArgs.length; i < cnt; i++)
-				{
-					var k = aFormatArgs[i].toUpperCase();
-					aResult[k] = k === 'T' || k === 'TT' ? aDateArgs[i] : parseInt(aDateArgs[i], 10);
-				}
-
-				if(aResult['DD'] > 0 && aResult['MM'] > 0 && aResult['YYYY'] > 0)
-				{
-					var d = new Date();
-
-					if(isUTC)
-					{
-						d.setUTCDate(1);
-						d.setUTCFullYear(aResult['YYYY']);
-						d.setUTCMonth(aResult['MM'] - 1);
-						d.setUTCDate(aResult['DD']);
-						d.setUTCHours(0, 0, 0, 0);
-					}
-					else
-					{
-						d.setDate(1);
-						d.setFullYear(aResult['YYYY']);
-						d.setMonth(aResult['MM'] - 1);
-						d.setDate(aResult['DD']);
-						d.setHours(0, 0, 0, 0);
-					}
-
-					if(
-						(!isNaN(aResult['HH']) || !isNaN(aResult['GG']) || !isNaN(aResult['H']) || !isNaN(aResult['G']))
-						&& !isNaN(aResult['MI'])
-					)
-					{
-						if (!isNaN(aResult['H']) || !isNaN(aResult['G']))
-						{
-							var
-								bPM = (aResult['T']||aResult['TT']||'am').toUpperCase() === 'PM',
-								h = parseInt(aResult['H']||aResult['G']||0, 10);
-
-							if(bPM)
-							{
-								aResult['HH'] = h + (h === 12 ? 0 : 12);
-							}
-							else
-							{
-								aResult['HH'] = h < 12 ? h : 0;
-							}
-						}
-						else
-						{
-							aResult['HH'] = parseInt(aResult['HH']||aResult['GG']||0, 10);
-						}
-
-						if (isNaN(aResult['SS']))
-							aResult['SS'] = 0;
-
-						if(isUTC)
-						{
-							d.setUTCHours(aResult['HH'], aResult['MI'], aResult['SS']);
-						}
-						else
-						{
-							d.setHours(aResult['HH'], aResult['MI'], aResult['SS']);
-						}
-					}
-
-					return d;
-				}
-			}
-
-			return null;
-		},
-
-		getMonthIndex: function(month)
-		{
-			var
-				i,
-				q = month.toUpperCase(),
-				wordMonthCut = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'],
-				wordMonth = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'];
-
-			for (i = 1; i <= 12; i++)
-			{
-				if (q === this._getMessage('MON_'+i).toUpperCase()
-					|| q === this._getMessage('MONTH_'+i).toUpperCase()
-					|| q === wordMonthCut[i-1].toUpperCase()
-					|| q === wordMonth[i-1].toUpperCase())
-				{
-					return i;
-				}
-			}
-			return month;
-		}
-	};
+	const formatsCache = new main_core.Cache.MemoryCache();
 
 	/**
-	 * @private
+	 * Returns culture-specific datetime format by code.
+	 * The full list with examples can be found in config.php of this extension in ['settings']['formats'].
+	 * All formats are compatible with this.format() without any additional transformations.
+	 *
+	 * @param code
+	 * @returns {string|null}
 	 */
-	var Utils = {
-		isDate: function(item) {
-			return item && Object.prototype.toString.call(item) == "[object Date]";
-		},
-		isNumber: function(item) {
-			return item === 0 ? true : (item ? (typeof (item) == "number" || item instanceof Number) : false);
-		},
-		isArray: function(item) {
-			return item && Object.prototype.toString.call(item) == "[object Array]";
-		},
-		isString: function(item) {
-			return item === '' ? true : (item ? (typeof (item) == "string" || item instanceof String) : false);
-		},
-		isNotEmptyString: function(item) {
-			return this.isString(item) ? item.length > 0 : false;
-		},
-		strPadLeft: function(input, padLength, padString)
-		{
-			var i = input.length, q=padString.length;
-			if (i >= padLength) return input;
+	function getFormat(code) {
+	  return formatsCache.remember(`main.date.format.${code}`, () => {
+	    let format = main_core.Extension.getSettings('main.date').get(`formats.${code}`);
+	    if (main_core.Type.isStringFilled(format) && (code === 'FORMAT_DATE' || code === 'FORMAT_DATETIME')) {
+	      format = convertBitrixFormat(format);
+	    }
+	    return format;
+	  });
+	}
 
-			for(;i<padLength;i+=q)
-				input = padString + input;
+	/**
+	 * @memberOf BX.Main
+	 * @alias Date
+	 */
+	let DateTimeFormat = /*#__PURE__*/function () {
+	  function DateTimeFormat() {
+	    babelHelpers.classCallCheck(this, DateTimeFormat);
+	  }
+	  babelHelpers.createClass(DateTimeFormat, null, [{
+	    key: "isAmPmMode",
+	    value: function isAmPmMode(returnConst) {
+	      if (returnConst === true) {
+	        return this._getMessage('AMPM_MODE');
+	      }
+	      return this._getMessage('AMPM_MODE') !== false;
+	    }
+	  }, {
+	    key: "convertToUTC",
+	    value: function convertToUTC(date) {
+	      if (!main_core.Type.isDate(date)) {
+	        return null;
+	      }
+	      return new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), date.getHours(), date.getMinutes(), date.getSeconds(), date.getMilliseconds()));
+	    }
+	    /**
+	     * Function creates and returns Javascript Date() object from server timestamp regardless of local browser (system) timezone.
+	     * For example can be used to convert timestamp from some exact date on server to the JS Date object with the same value.
+	     *
+	     * @param timestamp - timestamp in seconds
+	     * @returns {Date}
+	     */
+	  }, {
+	    key: "getNewDate",
+	    value: function getNewDate(timestamp) {
+	      return new Date(this.getBrowserTimestamp(timestamp));
+	    }
+	    /**
+	     * Function transforms server timestamp (in sec) to javascript timestamp (calculated depend on local browser timezone offset). Returns timestamp in milliseconds.
+	     * Also see BX.Main.Date.getNewDate description.
+	     *
+	     * @param timestamp - timestamp in seconds
+	     * @returns {number}
+	     */
+	  }, {
+	    key: "getBrowserTimestamp",
+	    value: function getBrowserTimestamp(timestamp) {
+	      timestamp = parseInt(timestamp, 10);
+	      const browserOffset = new Date(timestamp * 1000).getTimezoneOffset() * 60;
+	      return (parseInt(timestamp, 10) + parseInt(this._getMessage('SERVER_TZ_OFFSET')) + browserOffset) * 1000;
+	    }
+	    /**
+	     * Function transforms local browser timestamp (in ms) to server timestamp (calculated depend on local browser timezone offset). Returns timestamp in seconds.
+	     *
+	     * @param timestamp - timestamp in milliseconds
+	     * @returns {number}
+	     */
+	  }, {
+	    key: "getServerTimestamp",
+	    value: function getServerTimestamp(timestamp) {
+	      timestamp = parseInt(timestamp, 10);
+	      const browserOffset = new Date(timestamp).getTimezoneOffset() * 60;
+	      return Math.round(timestamp / 1000 - (parseInt(this._getMessage('SERVER_TZ_OFFSET'), 10) + parseInt(browserOffset, 10)));
+	    }
+	  }, {
+	    key: "formatLastActivityDate",
+	    value: function formatLastActivityDate(timestamp, now, utc) {
+	      const ampm = this.isAmPmMode(true);
+	      const timeFormat = ampm === this.AM_PM_MODE.LOWER ? 'g:i a' : ampm === this.AM_PM_MODE.UPPER ? 'g:i A' : 'H:i';
+	      const format = [['tomorrow', '#01#' + timeFormat], ['now', '#02#'], ['todayFuture', '#03#' + timeFormat], ['yesterday', '#04#' + timeFormat], ['-', this.convertBitrixFormat(this._getMessage('FORMAT_DATETIME')).replace(/:s/g, '')], ['s60', 'sago'], ['i60', 'iago'], ['H5', 'Hago'], ['H24', '#03#' + timeFormat], ['d31', 'dago'], ['m12>1', 'mago'], ['m12>0', 'dago'], ['', '#05#']];
+	      let formattedDate = this.format(format, timestamp, now, utc);
+	      let match = null;
+	      if ((match = /^#(\d+)#(.*)/.exec(formattedDate)) != null) {
+	        switch (match[1]) {
+	          case '01':
+	            formattedDate = this._getMessage('FD_LAST_SEEN_TOMORROW').replace('#TIME#', match[2]);
+	            break;
+	          case '02':
+	            formattedDate = this._getMessage('FD_LAST_SEEN_NOW');
+	            break;
+	          case '03':
+	            formattedDate = this._getMessage('FD_LAST_SEEN_TODAY').replace('#TIME#', match[2]);
+	            break;
+	          case '04':
+	            formattedDate = this._getMessage('FD_LAST_SEEN_YESTERDAY').replace('#TIME#', match[2]);
+	            break;
+	          case '05':
+	            formattedDate = this._getMessage('FD_LAST_SEEN_MORE_YEAR');
+	            break;
+	          default:
+	            formattedDate = match[2];
+	            break;
+	        }
+	      }
+	      return formattedDate;
+	    }
+	    /**
+	     * The method is designed to replace the localization storage on sites without Bitrix Framework.
+	     * It gets overloaded with custom implementation:
+	     *
+	     * const CustomDate = Object.create(BX.Main.Date);
+	     * CustomDate._getMessage = () => ...new implementation...;
+	     *
+	     * This class should get messages only via this method.
+	     * Otherwise, the class won't work on sites without Bitrix Framework.
+	     *
+	     * @param message
+	     * @returns {*}
+	     * @private
+	     */
+	  }, {
+	    key: "_getMessage",
+	    value: function _getMessage(message) {
+	      return main_core.Loc.getMessage(message);
+	    }
+	    /**
+	     * The method used to parse date from string by given format.
+	     *
+	     * @param {string} str - date in given format
+	     * @param {boolean} isUTC - is date in UTC
+	     * @param {string} formatDate - format of the date without time
+	     * @param {string} formatDatetime - format of the date with time
+	     * @returns {Date|null} - returns Date object if string was parsed or null
+	     */
+	  }, {
+	    key: "parse",
+	    value: function parse(str, isUTC, formatDate, formatDatetime) {
+	      if (main_core.Type.isStringFilled(str)) {
+	        if (!formatDate) {
+	          formatDate = this._getMessage('FORMAT_DATE');
+	        }
+	        if (!formatDatetime) {
+	          formatDatetime = this._getMessage('FORMAT_DATETIME');
+	        }
+	        let regMonths = '';
+	        for (let i = 1; i <= 12; i++) {
+	          regMonths = regMonths + '|' + this._getMessage('MON_' + i);
+	        }
+	        const expr = new RegExp('([0-9]+|[a-z]+' + regMonths + ')', 'ig');
+	        const aDate = str.match(expr);
+	        let aFormat = formatDate.match(/(DD|MI|MMMM|MM|M|YYYY)/ig);
+	        const aDateArgs = [];
+	        const aFormatArgs = [];
+	        const aResult = {};
+	        if (!aDate) {
+	          return null;
+	        }
+	        if (aDate.length > aFormat.length) {
+	          aFormat = formatDatetime.match(/(DD|MI|MMMM|MM|M|YYYY|HH|H|SS|TT|T|GG|G)/ig);
+	        }
+	        for (let i = 0, cnt = aDate.length; i < cnt; i++) {
+	          if (aDate[i].trim() !== '') {
+	            aDateArgs[aDateArgs.length] = aDate[i];
+	          }
+	        }
+	        for (let i = 0, cnt = aFormat.length; i < cnt; i++) {
+	          if (aFormat[i].trim() !== '') {
+	            aFormatArgs[aFormatArgs.length] = aFormat[i];
+	          }
+	        }
+	        let m = aFormatArgs.findIndex(item => item === 'MMMM');
+	        if (m > 0) {
+	          aDateArgs[m] = this.getMonthIndex(aDateArgs[m]);
+	          aFormatArgs[m] = 'MM';
+	        } else {
+	          m = aFormatArgs.findIndex(item => item === 'M');
+	          if (m > 0) {
+	            aDateArgs[m] = this.getMonthIndex(aDateArgs[m]);
+	            aFormatArgs[m] = 'MM';
+	          }
+	        }
+	        for (let i = 0, cnt = aFormatArgs.length; i < cnt; i++) {
+	          const k = aFormatArgs[i].toUpperCase();
+	          aResult[k] = k === 'T' || k === 'TT' ? aDateArgs[i] : parseInt(aDateArgs[i], 10);
+	        }
+	        if (aResult['DD'] > 0 && aResult['MM'] > 0 && aResult['YYYY'] > 0) {
+	          const d = new Date();
+	          if (isUTC) {
+	            d.setUTCDate(1);
+	            d.setUTCFullYear(aResult['YYYY']);
+	            d.setUTCMonth(aResult['MM'] - 1);
+	            d.setUTCDate(aResult['DD']);
+	            d.setUTCHours(0, 0, 0, 0);
+	          } else {
+	            d.setDate(1);
+	            d.setFullYear(aResult['YYYY']);
+	            d.setMonth(aResult['MM'] - 1);
+	            d.setDate(aResult['DD']);
+	            d.setHours(0, 0, 0, 0);
+	          }
+	          if ((!isNaN(aResult['HH']) || !isNaN(aResult['GG']) || !isNaN(aResult['H']) || !isNaN(aResult['G'])) && !isNaN(aResult['MI'])) {
+	            if (!isNaN(aResult['H']) || !isNaN(aResult['G'])) {
+	              const bPM = (aResult['T'] || aResult['TT'] || 'am').toUpperCase() === 'PM',
+	                h = parseInt(aResult['H'] || aResult['G'] || 0, 10);
+	              if (bPM) {
+	                aResult['HH'] = h + (h === 12 ? 0 : 12);
+	              } else {
+	                aResult['HH'] = h < 12 ? h : 0;
+	              }
+	            } else {
+	              aResult['HH'] = parseInt(aResult['HH'] || aResult['GG'] || 0, 10);
+	            }
+	            if (isNaN(aResult['SS'])) {
+	              aResult['SS'] = 0;
+	            }
+	            if (isUTC) {
+	              d.setUTCHours(aResult['HH'], aResult['MI'], aResult['SS']);
+	            } else {
+	              d.setHours(aResult['HH'], aResult['MI'], aResult['SS']);
+	            }
+	          }
+	          return d;
+	        }
+	      }
+	      return null;
+	    }
+	  }, {
+	    key: "getMonthIndex",
+	    value: function getMonthIndex(month) {
+	      const q = month.toUpperCase();
+	      const wordMonthCut = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+	      const wordMonth = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'];
+	      for (let i = 1; i <= 12; i++) {
+	        if (q === this._getMessage('MON_' + i).toUpperCase() || q === this._getMessage('MONTH_' + i).toUpperCase() || q === wordMonthCut[i - 1].toUpperCase() || q === wordMonth[i - 1].toUpperCase()) {
+	          return i;
+	        }
+	      }
+	      return month;
+	    }
+	  }, {
+	    key: "format",
+	    value: function format(_format, timestamp, now, utc) {
+	      /*
+	      PHP to Javascript:
+	      	time() = new Date()
+	      	mktime(...) = new Date(...)
+	      	gmmktime(...) = new Date(Date.UTC(...))
+	      	mktime(0,0,0, 1, 1, 1970) != 0          new Date(1970,0,1).getTime() != 0
+	      	gmmktime(0,0,0, 1, 1, 1970) == 0        new Date(Date.UTC(1970,0,1)).getTime() == 0
+	      	date('d.m.Y H:i:s') = BX.Main.Date.format('d.m.Y H:i:s')
+	      	gmdate('d.m.Y H:i:s') = BX.Main.Date.format('d.m.Y H:i:s', null, null, true);
+	      */
+	      const date = main_core.Type.isDate(timestamp) ? new Date(timestamp.getTime()) : main_core.Type.isNumber(timestamp) ? new Date(timestamp * 1000) : new Date();
+	      const nowDate = main_core.Type.isDate(now) ? new Date(now.getTime()) : main_core.Type.isNumber(now) ? new Date(now * 1000) : new Date();
+	      const isUTC = !!utc;
+	      // used in hoisting inner functions, like _formatDateInterval
+	      const thisDateTimeFormat = this;
+	      if (main_core.Type.isArray(_format)) {
+	        return _formatDateInterval(_format, date, nowDate, isUTC);
+	      } else {
+	        if (!main_core.Type.isStringFilled(_format)) {
+	          return '';
+	        }
+	      }
+	      const replaceMap = (_format.match(/{{([^{}]*)}}/g) || []).map(x => {
+	        return (x.match(/[^{}]+/) || [''])[0];
+	      });
+	      if (replaceMap.length > 0) {
+	        replaceMap.forEach((element, index) => {
+	          _format = _format.replace('{{' + element + '}}', '{{' + index + '}}');
+	        });
+	      }
+	      const formatRegex = /\\?(sago|iago|isago|Hago|dago|mago|Yago|sdiff|idiff|Hdiff|ddiff|mdiff|Ydiff|sshort|ishort|Hshort|dshort|mhort|Yshort|yesterday|today|tommorow|tomorrow|[a-z])/gi;
+	      const dateFormats = {
+	        d: () => {
+	          // Day of the month 01 to 31
+	          return getDate(date).toString().padStart(2, '0');
+	        },
+	        D: () => {
+	          //Mon through Sun
+	          return this._getMessage('DOW_' + getDay(date));
+	        },
+	        j: () => {
+	          //Day of the month 1 to 31
+	          return getDate(date);
+	        },
+	        l: () => {
+	          //Sunday through Saturday
+	          return this._getMessage('DAY_OF_WEEK_' + getDay(date));
+	        },
+	        N: () => {
+	          //1 (for Monday) through 7 (for Sunday)
+	          return getDay(date) || 7;
+	        },
+	        S: () => {
+	          //st, nd, rd or th. Works well with j
+	          if (getDate(date) % 10 == 1 && getDate(date) != 11) {
+	            return 'st';
+	          } else if (getDate(date) % 10 == 2 && getDate(date) != 12) {
+	            return 'nd';
+	          } else if (getDate(date) % 10 == 3 && getDate(date) != 13) {
+	            return 'rd';
+	          } else {
+	            return 'th';
+	          }
+	        },
+	        w: () => {
+	          //0 (for Sunday) through 6 (for Saturday)
+	          return getDay(date);
+	        },
+	        z: () => {
+	          //0 through 365
+	          const firstDay = new Date(getFullYear(date), 0, 1);
+	          const currentDay = new Date(getFullYear(date), getMonth(date), getDate(date));
+	          return Math.ceil((currentDay - firstDay) / (24 * 3600 * 1000));
+	        },
+	        W: () => {
+	          //ISO-8601 week number of year
+	          const newDate = new Date(date.getTime());
+	          const dayNumber = (getDay(date) + 6) % 7;
+	          setDate(newDate, getDate(newDate) - dayNumber + 3);
+	          const firstThursday = newDate.getTime();
+	          setMonth(newDate, 0, 1);
+	          if (getDay(newDate) != 4) {
+	            setMonth(newDate, 0, 1 + (4 - getDay(newDate) + 7) % 7);
+	          }
+	          const weekNumber = 1 + Math.ceil((firstThursday - newDate) / (7 * 24 * 3600 * 1000));
+	          return weekNumber.toString().padStart(2, '0');
+	        },
+	        F: () => {
+	          //January through December
+	          return this._getMessage('MONTH_' + (getMonth(date) + 1) + '_S');
+	        },
+	        f: () => {
+	          //January through December
+	          return this._getMessage('MONTH_' + (getMonth(date) + 1));
+	        },
+	        m: () => {
+	          //Numeric representation of a month 01 through 12
+	          return (getMonth(date) + 1).toString().padStart(2, '0');
+	        },
+	        M: () => {
+	          //A short textual representation of a month, three letters Jan through Dec
+	          return this._getMessage('MON_' + (getMonth(date) + 1));
+	        },
+	        n: () => {
+	          //Numeric representation of a month 1 through 12
+	          return getMonth(date) + 1;
+	        },
+	        t: () => {
+	          //Number of days in the given month 28 through 31
+	          const lastMonthDay = isUTC ? new Date(Date.UTC(getFullYear(date), getMonth(date) + 1, 0)) : new Date(getFullYear(date), getMonth(date) + 1, 0);
+	          return getDate(lastMonthDay);
+	        },
+	        L: () => {
+	          //1 if it is a leap year, 0 otherwise.
+	          const year = getFullYear(date);
+	          return year % 4 == 0 && year % 100 != 0 || year % 400 == 0 ? 1 : 0;
+	        },
+	        o: () => {
+	          //ISO-8601 year number
+	          const correctDate = new Date(date.getTime());
+	          setDate(correctDate, getDate(correctDate) - (getDay(date) + 6) % 7 + 3);
+	          return getFullYear(correctDate);
+	        },
+	        Y: () => {
+	          //A full numeric representation of a year, 4 digits
+	          return getFullYear(date);
+	        },
+	        y: () => {
+	          //A two digit representation of a year
+	          return getFullYear(date).toString().slice(2);
+	        },
+	        a: () => {
+	          //am or pm
+	          return getHours(date) > 11 ? 'pm' : 'am';
+	        },
+	        A: () => {
+	          //AM or PM
+	          return getHours(date) > 11 ? 'PM' : 'AM';
+	        },
+	        B: () => {
+	          //000 through 999
+	          const swatch = (date.getUTCHours() + 1) % 24 + date.getUTCMinutes() / 60 + date.getUTCSeconds() / 3600;
+	          return Math.floor(swatch * 1000 / 24).toString().padStart(3, '0');
+	        },
+	        g: () => {
+	          //12-hour format of an hour without leading zeros 1 through 12
+	          return getHours(date) % 12 || 12;
+	        },
+	        G: () => {
+	          //24-hour format of an hour without leading zeros 0 through 23
+	          return getHours(date);
+	        },
+	        h: () => {
+	          //12-hour format of an hour with leading zeros 01 through 12
+	          return (getHours(date) % 12 || 12).toString().padStart(2, '0');
+	        },
+	        H: () => {
+	          //24-hour format of an hour with leading zeros 00 through 23
+	          return getHours(date).toString().padStart(2, '0');
+	        },
+	        i: () => {
+	          //Minutes with leading zeros 00 to 59
+	          return getMinutes(date).toString().padStart(2, '0');
+	        },
+	        s: () => {
+	          //Seconds, with leading zeros 00 through 59
+	          return getSeconds(date).toString().padStart(2, '0');
+	        },
+	        u: () => {
+	          //Microseconds
+	          return (getMilliseconds(date) * 1000).toString().padStart(6, '0');
+	        },
+	        e: () => {
+	          if (isUTC) {
+	            return 'UTC';
+	          }
+	          return '';
+	        },
+	        I: () => {
+	          if (isUTC) {
+	            return 0;
+	          }
 
-			return input;
-		},
-		/**
-		 * @deprecated
-		 * @use myArr.findIndex(item => item === needle);
-		 */
-		array_search: function(needle, haystack)
-		{
-			for(var i = 0; i < haystack.length; i++)
-			{
-				if(haystack[i] == needle)
-					return i;
-			}
-			return -1;
-		},
+	          //Whether or not the date is in daylight saving time 1 if Daylight Saving Time, 0 otherwise
+	          const firstJanuary = new Date(getFullYear(date), 0, 1);
+	          const firstJanuaryUTC = Date.UTC(getFullYear(date), 0, 1);
+	          const firstJuly = new Date(getFullYear(date), 6, 0);
+	          const firstJulyUTC = Date.UTC(getFullYear(date), 6, 0);
+	          return 0 + (firstJanuary - firstJanuaryUTC !== firstJuly - firstJulyUTC);
+	        },
+	        O: () => {
+	          if (isUTC) {
+	            return '+0000';
+	          }
+
+	          //Difference to Greenwich time (GMT) in hours +0200
+	          const timezoneOffset = date.getTimezoneOffset();
+	          const timezoneOffsetAbs = Math.abs(timezoneOffset);
+	          return (timezoneOffset > 0 ? '-' : '+') + (Math.floor(timezoneOffsetAbs / 60) * 100 + timezoneOffsetAbs % 60).toString().padStart(4, '0');
+	        },
+	        //this method references 'O' method of the same object, arrow function is not suitable here
+	        P: function () {
+	          if (isUTC) {
+	            return '+00:00';
+	          }
+
+	          //Difference to Greenwich time (GMT) with colon between hours and minutes +02:00
+	          const difference = this.O();
+	          return difference.substr(0, 3) + ':' + difference.substr(3);
+	        },
+	        Z: () => {
+	          if (isUTC) {
+	            return 0;
+	          }
+	          //Timezone offset in seconds. The offset for timezones west of UTC is always negative,
+	          //and for those east of UTC is always positive.
+	          return -date.getTimezoneOffset() * 60;
+	        },
+	        c: () => {
+	          //ISO 8601 date
+	          return 'Y-m-d\\TH:i:sP'.replace(formatRegex, _replaceDateFormat);
+	        },
+	        r: () => {
+	          //RFC 2822 formatted date
+	          return 'D, d M Y H:i:s O'.replace(formatRegex, _replaceDateFormat);
+	        },
+	        U: () => {
+	          //Seconds since the Unix Epoch
+	          return Math.floor(date.getTime() / 1000);
+	        },
+	        sago: () => {
+	          return _formatDateMessage(intval((nowDate - date) / 1000), {
+	            '0': 'FD_SECOND_AGO_0',
+	            '1': 'FD_SECOND_AGO_1',
+	            '10_20': 'FD_SECOND_AGO_10_20',
+	            'MOD_1': 'FD_SECOND_AGO_MOD_1',
+	            'MOD_2_4': 'FD_SECOND_AGO_MOD_2_4',
+	            'MOD_OTHER': 'FD_SECOND_AGO_MOD_OTHER'
+	          });
+	        },
+	        sdiff: () => {
+	          return _formatDateMessage(intval((nowDate - date) / 1000), {
+	            '0': 'FD_SECOND_DIFF_0',
+	            '1': 'FD_SECOND_DIFF_1',
+	            '10_20': 'FD_SECOND_DIFF_10_20',
+	            'MOD_1': 'FD_SECOND_DIFF_MOD_1',
+	            'MOD_2_4': 'FD_SECOND_DIFF_MOD_2_4',
+	            'MOD_OTHER': 'FD_SECOND_DIFF_MOD_OTHER'
+	          });
+	        },
+	        sshort: () => {
+	          return this._getMessage('FD_SECOND_SHORT').replace(/#VALUE#/g, intval((nowDate - date) / 1000));
+	        },
+	        iago: () => {
+	          return _formatDateMessage(intval((nowDate - date) / 60 / 1000), {
+	            '0': 'FD_MINUTE_AGO_0',
+	            '1': 'FD_MINUTE_AGO_1',
+	            '10_20': 'FD_MINUTE_AGO_10_20',
+	            'MOD_1': 'FD_MINUTE_AGO_MOD_1',
+	            'MOD_2_4': 'FD_MINUTE_AGO_MOD_2_4',
+	            'MOD_OTHER': 'FD_MINUTE_AGO_MOD_OTHER'
+	          });
+	        },
+	        idiff: () => {
+	          return _formatDateMessage(intval((nowDate - date) / 60 / 1000), {
+	            '0': 'FD_MINUTE_DIFF_0',
+	            '1': 'FD_MINUTE_DIFF_1',
+	            '10_20': 'FD_MINUTE_DIFF_10_20',
+	            'MOD_1': 'FD_MINUTE_DIFF_MOD_1',
+	            'MOD_2_4': 'FD_MINUTE_DIFF_MOD_2_4',
+	            'MOD_OTHER': 'FD_MINUTE_DIFF_MOD_OTHER'
+	          });
+	        },
+	        isago: () => {
+	          const minutesAgo = intval((nowDate - date) / 60 / 1000);
+	          let result = _formatDateMessage(minutesAgo, {
+	            '0': 'FD_MINUTE_0',
+	            '1': 'FD_MINUTE_1',
+	            '10_20': 'FD_MINUTE_10_20',
+	            'MOD_1': 'FD_MINUTE_MOD_1',
+	            'MOD_2_4': 'FD_MINUTE_MOD_2_4',
+	            'MOD_OTHER': 'FD_MINUTE_MOD_OTHER'
+	          });
+	          result += ' ';
+	          const secondsAgo = intval((nowDate - date) / 1000) - minutesAgo * 60;
+	          result += _formatDateMessage(secondsAgo, {
+	            '0': 'FD_SECOND_AGO_0',
+	            '1': 'FD_SECOND_AGO_1',
+	            '10_20': 'FD_SECOND_AGO_10_20',
+	            'MOD_1': 'FD_SECOND_AGO_MOD_1',
+	            'MOD_2_4': 'FD_SECOND_AGO_MOD_2_4',
+	            'MOD_OTHER': 'FD_SECOND_AGO_MOD_OTHER'
+	          });
+	          return result;
+	        },
+	        ishort: () => {
+	          return this._getMessage('FD_MINUTE_SHORT').replace(/#VALUE#/g, intval((nowDate - date) / 60 / 1000));
+	        },
+	        Hago: () => {
+	          return _formatDateMessage(intval((nowDate - date) / 60 / 60 / 1000), {
+	            '0': 'FD_HOUR_AGO_0',
+	            '1': 'FD_HOUR_AGO_1',
+	            '10_20': 'FD_HOUR_AGO_10_20',
+	            'MOD_1': 'FD_HOUR_AGO_MOD_1',
+	            'MOD_2_4': 'FD_HOUR_AGO_MOD_2_4',
+	            'MOD_OTHER': 'FD_HOUR_AGO_MOD_OTHER'
+	          });
+	        },
+	        Hdiff: () => {
+	          return _formatDateMessage(intval((nowDate - date) / 60 / 60 / 1000), {
+	            '0': 'FD_HOUR_DIFF_0',
+	            '1': 'FD_HOUR_DIFF_1',
+	            '10_20': 'FD_HOUR_DIFF_10_20',
+	            'MOD_1': 'FD_HOUR_DIFF_MOD_1',
+	            'MOD_2_4': 'FD_HOUR_DIFF_MOD_2_4',
+	            'MOD_OTHER': 'FD_HOUR_DIFF_MOD_OTHER'
+	          });
+	        },
+	        Hshort: () => {
+	          return this._getMessage('FD_HOUR_SHORT').replace(/#VALUE#/g, intval((nowDate - date) / 60 / 60 / 1000));
+	        },
+	        yesterday: () => {
+	          return this._getMessage('FD_YESTERDAY');
+	        },
+	        today: () => {
+	          return this._getMessage('FD_TODAY');
+	        },
+	        tommorow: () => {
+	          return this._getMessage('FD_TOMORROW');
+	        },
+	        tomorrow: () => {
+	          return this._getMessage('FD_TOMORROW');
+	        },
+	        dago: () => {
+	          return _formatDateMessage(intval((nowDate - date) / 60 / 60 / 24 / 1000), {
+	            '0': 'FD_DAY_AGO_0',
+	            '1': 'FD_DAY_AGO_1',
+	            '10_20': 'FD_DAY_AGO_10_20',
+	            'MOD_1': 'FD_DAY_AGO_MOD_1',
+	            'MOD_2_4': 'FD_DAY_AGO_MOD_2_4',
+	            'MOD_OTHER': 'FD_DAY_AGO_MOD_OTHER'
+	          });
+	        },
+	        ddiff: () => {
+	          return _formatDateMessage(intval((nowDate - date) / 60 / 60 / 24 / 1000), {
+	            '0': 'FD_DAY_DIFF_0',
+	            '1': 'FD_DAY_DIFF_1',
+	            '10_20': 'FD_DAY_DIFF_10_20',
+	            'MOD_1': 'FD_DAY_DIFF_MOD_1',
+	            'MOD_2_4': 'FD_DAY_DIFF_MOD_2_4',
+	            'MOD_OTHER': 'FD_DAY_DIFF_MOD_OTHER'
+	          });
+	        },
+	        dshort: () => {
+	          return this._getMessage('FD_DAY_SHORT').replace(/#VALUE#/g, intval((nowDate - date) / 60 / 60 / 24 / 1000));
+	        },
+	        mago: () => {
+	          return _formatDateMessage(intval((nowDate - date) / 60 / 60 / 24 / 31 / 1000), {
+	            '0': 'FD_MONTH_AGO_0',
+	            '1': 'FD_MONTH_AGO_1',
+	            '10_20': 'FD_MONTH_AGO_10_20',
+	            'MOD_1': 'FD_MONTH_AGO_MOD_1',
+	            'MOD_2_4': 'FD_MONTH_AGO_MOD_2_4',
+	            'MOD_OTHER': 'FD_MONTH_AGO_MOD_OTHER'
+	          });
+	        },
+	        mdiff: () => {
+	          return _formatDateMessage(intval((nowDate - date) / 60 / 60 / 24 / 31 / 1000), {
+	            '0': 'FD_MONTH_DIFF_0',
+	            '1': 'FD_MONTH_DIFF_1',
+	            '10_20': 'FD_MONTH_DIFF_10_20',
+	            'MOD_1': 'FD_MONTH_DIFF_MOD_1',
+	            'MOD_2_4': 'FD_MONTH_DIFF_MOD_2_4',
+	            'MOD_OTHER': 'FD_MONTH_DIFF_MOD_OTHER'
+	          });
+	        },
+	        mshort: () => {
+	          return this._getMessage('FD_MONTH_SHORT').replace(/#VALUE#/g, intval((nowDate - date) / 60 / 60 / 24 / 31 / 1000));
+	        },
+	        Yago: () => {
+	          return _formatDateMessage(intval((nowDate - date) / 60 / 60 / 24 / 365 / 1000), {
+	            '0': 'FD_YEARS_AGO_0',
+	            '1': 'FD_YEARS_AGO_1',
+	            '10_20': 'FD_YEARS_AGO_10_20',
+	            'MOD_1': 'FD_YEARS_AGO_MOD_1',
+	            'MOD_2_4': 'FD_YEARS_AGO_MOD_2_4',
+	            'MOD_OTHER': 'FD_YEARS_AGO_MOD_OTHER'
+	          });
+	        },
+	        Ydiff: () => {
+	          return _formatDateMessage(intval((nowDate - date) / 60 / 60 / 24 / 365 / 1000), {
+	            '0': 'FD_YEARS_DIFF_0',
+	            '1': 'FD_YEARS_DIFF_1',
+	            '10_20': 'FD_YEARS_DIFF_10_20',
+	            'MOD_1': 'FD_YEARS_DIFF_MOD_1',
+	            'MOD_2_4': 'FD_YEARS_DIFF_MOD_2_4',
+	            'MOD_OTHER': 'FD_YEARS_DIFF_MOD_OTHER'
+	          });
+	        },
+	        Yshort: () => {
+	          return _formatDateMessage(intval((nowDate - date) / 60 / 60 / 24 / 365 / 1000), {
+	            '0': 'FD_YEARS_SHORT_0',
+	            '1': 'FD_YEARS_SHORT_1',
+	            '10_20': 'FD_YEARS_SHORT_10_20',
+	            'MOD_1': 'FD_YEARS_SHORT_MOD_1',
+	            'MOD_2_4': 'FD_YEARS_SHORT_MOD_2_4',
+	            'MOD_OTHER': 'FD_YEARS_SHORT_MOD_OTHER'
+	          });
+	        },
+	        x: () => {
+	          const ampm = this.isAmPmMode(true);
+	          const timeFormat = ampm === this.AM_PM_MODE.LOWER ? 'g:i a' : ampm === this.AM_PM_MODE.UPPER ? 'g:i A' : 'H:i';
+	          return this.format([['tomorrow', 'tomorrow, ' + timeFormat], ['-', this.convertBitrixFormat(this._getMessage('FORMAT_DATETIME')).replace(/:s/g, '')], ['s', 'sago'], ['i', 'iago'], ['today', 'today, ' + timeFormat], ['yesterday', 'yesterday, ' + timeFormat], ['', this.convertBitrixFormat(this._getMessage('FORMAT_DATETIME')).replace(/:s/g, '')]], date, nowDate, isUTC);
+	        },
+	        X: () => {
+	          const ampm = this.isAmPmMode(true);
+	          const timeFormat = ampm === this.AM_PM_MODE.LOWER ? 'g:i a' : ampm === this.AM_PM_MODE.UPPER ? 'g:i A' : 'H:i';
+	          const day = this.format([['tomorrow', 'tomorrow'], ['-', this.convertBitrixFormat(this._getMessage('FORMAT_DATE'))], ['today', 'today'], ['yesterday', 'yesterday'], ['', this.convertBitrixFormat(this._getMessage('FORMAT_DATE'))]], date, nowDate, isUTC);
+	          const time = this.format([['tomorrow', timeFormat], ['today', timeFormat], ['yesterday', timeFormat], ['', '']], date, nowDate, isUTC);
+	          if (time.length > 0) {
+	            return this._getMessage('FD_DAY_AT_TIME').replace(/#DAY#/g, day).replace(/#TIME#/g, time);
+	          } else {
+	            return day;
+	          }
+	        },
+	        Q: () => {
+	          const daysAgo = intval((nowDate - date) / 60 / 60 / 24 / 1000);
+	          if (daysAgo == 0) {
+	            return this._getMessage('FD_DAY_DIFF_1').replace(/#VALUE#/g, 1);
+	          } else {
+	            return this.format([['d', 'ddiff'], ['m', 'mdiff'], ['', 'Ydiff']], date, nowDate);
+	          }
+	        }
+	      };
+	      let cutZeroTime = false;
+	      if (_format[0] && _format[0] == '^') {
+	        cutZeroTime = true;
+	        _format = _format.substr(1);
+	      }
+	      let result = _format.replace(formatRegex, _replaceDateFormat);
+	      if (cutZeroTime) {
+	        /* 	15.04.12 13:00:00 => 15.04.12 13:00
+	        	00:01:00 => 00:01
+	        	4 may 00:00:00 => 4 may
+	        	01-01-12 00:00 => 01-01-12
+	        */
+
+	        result = result.replace(/\s*00:00:00\s*/g, '').replace(/(\d\d:\d\d)(:00)/g, '$1').replace(/(\s*00:00\s*)(?!:)/g, '');
+	      }
+	      if (replaceMap.length > 0) {
+	        replaceMap.forEach(function (element, index) {
+	          result = result.replace('{{' + index + '}}', element);
+	        });
+	      }
+	      return result;
+	      function _formatDateInterval(formats, date, nowDate, isUTC) {
+	        const secondsAgo = intval((nowDate - date) / 1000);
+	        for (let i = 0; i < formats.length; i++) {
+	          const formatInterval = formats[i][0];
+	          const formatValue = formats[i][1];
+	          let match = null;
+	          if (formatInterval == 's') {
+	            if (secondsAgo < 60) {
+	              return thisDateTimeFormat.format(formatValue, date, nowDate, isUTC);
+	            }
+	          } else if ((match = /^s(\d+)\>?(\d+)?/.exec(formatInterval)) != null) {
+	            if (match[1] && match[2]) {
+	              if (secondsAgo < match[1] && secondsAgo > match[2]) {
+	                return thisDateTimeFormat.format(formatValue, date, nowDate, isUTC);
+	              }
+	            } else if (secondsAgo < match[1]) {
+	              return thisDateTimeFormat.format(formatValue, date, nowDate, isUTC);
+	            }
+	          } else if (formatInterval == 'i') {
+	            if (secondsAgo < 60 * 60) {
+	              return thisDateTimeFormat.format(formatValue, date, nowDate, isUTC);
+	            }
+	          } else if ((match = /^i(\d+)\>?(\d+)?/.exec(formatInterval)) != null) {
+	            if (match[1] && match[2]) {
+	              if (secondsAgo < match[1] * 60 && secondsAgo > match[2] * 60) {
+	                return thisDateTimeFormat.format(formatValue, date, nowDate, isUTC);
+	              }
+	            } else if (secondsAgo < match[1] * 60) {
+	              return thisDateTimeFormat.format(formatValue, date, nowDate, isUTC);
+	            }
+	          } else if (formatInterval == 'H') {
+	            if (secondsAgo < 24 * 60 * 60) {
+	              return thisDateTimeFormat.format(formatValue, date, nowDate, isUTC);
+	            }
+	          } else if ((match = /^H(\d+)\>?(\d+)?/.exec(formatInterval)) != null) {
+	            if (match[1] && match[2]) {
+	              if (secondsAgo < match[1] * 60 * 60 && secondsAgo > match[2] * 60 * 60) {
+	                return thisDateTimeFormat.format(formatValue, date, nowDate, isUTC);
+	              }
+	            } else if (secondsAgo < match[1] * 60 * 60) {
+	              return thisDateTimeFormat.format(formatValue, date, nowDate, isUTC);
+	            }
+	          } else if (formatInterval == 'd') {
+	            if (secondsAgo < 31 * 24 * 60 * 60) {
+	              return thisDateTimeFormat.format(formatValue, date, nowDate, isUTC);
+	            }
+	          } else if ((match = /^d(\d+)\>?(\d+)?/.exec(formatInterval)) != null) {
+	            if (match[1] && match[2]) {
+	              if (secondsAgo < match[1] * 24 * 60 * 60 && secondsAgo > match[2] * 24 * 60 * 60) {
+	                return thisDateTimeFormat.format(formatValue, date, nowDate, isUTC);
+	              }
+	            } else if (secondsAgo < match[1] * 24 * 60 * 60) {
+	              return thisDateTimeFormat.format(formatValue, date, nowDate, isUTC);
+	            }
+	          } else if (formatInterval == 'm') {
+	            if (secondsAgo < 365 * 24 * 60 * 60) {
+	              return thisDateTimeFormat.format(formatValue, date, nowDate, isUTC);
+	            }
+	          } else if ((match = /^m(\d+)\>?(\d+)?/.exec(formatInterval)) != null) {
+	            if (match[1] && match[2]) {
+	              if (secondsAgo < match[1] * 31 * 24 * 60 * 60 && secondsAgo > match[2] * 31 * 24 * 60 * 60) {
+	                return thisDateTimeFormat.format(formatValue, date, nowDate, isUTC);
+	              }
+	            } else if (secondsAgo < match[1] * 31 * 24 * 60 * 60) {
+	              return thisDateTimeFormat.format(formatValue, date, nowDate, isUTC);
+	            }
+	          } else if (formatInterval == 'now') {
+	            if (date.getTime() == nowDate.getTime()) {
+	              return thisDateTimeFormat.format(formatValue, date, nowDate, isUTC);
+	            }
+	          } else if (formatInterval == 'today') {
+	            const year = getFullYear(nowDate);
+	            const month = getMonth(nowDate);
+	            const day = getDate(nowDate);
+	            const todayStart = isUTC ? new Date(Date.UTC(year, month, day, 0, 0, 0, 0)) : new Date(year, month, day, 0, 0, 0, 0);
+	            const todayEnd = isUTC ? new Date(Date.UTC(year, month, day + 1, 0, 0, 0, 0)) : new Date(year, month, day + 1, 0, 0, 0, 0);
+	            if (date >= todayStart && date < todayEnd) {
+	              return thisDateTimeFormat.format(formatValue, date, nowDate, isUTC);
+	            }
+	          } else if (formatInterval == 'todayFuture') {
+	            const year = getFullYear(nowDate);
+	            const month = getMonth(nowDate);
+	            const day = getDate(nowDate);
+	            const todayStart = nowDate.getTime();
+	            const todayEnd = isUTC ? new Date(Date.UTC(year, month, day + 1, 0, 0, 0, 0)) : new Date(year, month, day + 1, 0, 0, 0, 0);
+	            if (date >= todayStart && date < todayEnd) {
+	              return thisDateTimeFormat.format(formatValue, date, nowDate, isUTC);
+	            }
+	          } else if (formatInterval == 'yesterday') {
+	            const year = getFullYear(nowDate);
+	            const month = getMonth(nowDate);
+	            const day = getDate(nowDate);
+	            const yesterdayStart = isUTC ? new Date(Date.UTC(year, month, day - 1, 0, 0, 0, 0)) : new Date(year, month, day - 1, 0, 0, 0, 0);
+	            const yesterdayEnd = isUTC ? new Date(Date.UTC(year, month, day, 0, 0, 0, 0)) : new Date(year, month, day, 0, 0, 0, 0);
+	            if (date >= yesterdayStart && date < yesterdayEnd) {
+	              return thisDateTimeFormat.format(formatValue, date, nowDate, isUTC);
+	            }
+	          } else if (formatInterval == 'tommorow' || formatInterval == 'tomorrow') {
+	            const year = getFullYear(nowDate);
+	            const month = getMonth(nowDate);
+	            const day = getDate(nowDate);
+	            const tomorrowStart = isUTC ? new Date(Date.UTC(year, month, day + 1, 0, 0, 0, 0)) : new Date(year, month, day + 1, 0, 0, 0, 0);
+	            const tomorrowEnd = isUTC ? new Date(Date.UTC(year, month, day + 2, 0, 0, 0, 0)) : new Date(year, month, day + 2, 0, 0, 0, 0);
+	            if (date >= tomorrowStart && date < tomorrowEnd) {
+	              return thisDateTimeFormat.format(formatValue, date, nowDate, isUTC);
+	            }
+	          } else if (formatInterval == '-') {
+	            if (secondsAgo < 0) {
+	              return thisDateTimeFormat.format(formatValue, date, nowDate, isUTC);
+	            }
+	          }
+	        }
+
+	        //return formats.length > 0 ? thisDateTimeFormat.format(formats.pop()[1], date, nowDate, isUTC) : '';
+	        return formats.length > 0 ? thisDateTimeFormat.format(formats[formats.length - 1][1], date, nowDate, isUTC) : '';
+	      }
+	      function getFullYear(date) {
+	        return isUTC ? date.getUTCFullYear() : date.getFullYear();
+	      }
+	      function getDate(date) {
+	        return isUTC ? date.getUTCDate() : date.getDate();
+	      }
+	      function getMonth(date) {
+	        return isUTC ? date.getUTCMonth() : date.getMonth();
+	      }
+	      function getHours(date) {
+	        return isUTC ? date.getUTCHours() : date.getHours();
+	      }
+	      function getMinutes(date) {
+	        return isUTC ? date.getUTCMinutes() : date.getMinutes();
+	      }
+	      function getSeconds(date) {
+	        return isUTC ? date.getUTCSeconds() : date.getSeconds();
+	      }
+	      function getMilliseconds(date) {
+	        return isUTC ? date.getUTCMilliseconds() : date.getMilliseconds();
+	      }
+	      function getDay(date) {
+	        return isUTC ? date.getUTCDay() : date.getDay();
+	      }
+	      function setDate(date, dayValue) {
+	        return isUTC ? date.setUTCDate(dayValue) : date.setDate(dayValue);
+	      }
+	      function setMonth(date, monthValue, dayValue) {
+	        return isUTC ? date.setUTCMonth(monthValue, dayValue) : date.setMonth(monthValue, dayValue);
+	      }
+	      function _formatDateMessage(value, messages) {
+	        const val = value < 100 ? Math.abs(value) : Math.abs(value % 100);
+	        const dec = val % 10;
+	        let message = '';
+	        if (val == 0) {
+	          message = thisDateTimeFormat._getMessage(messages['0']);
+	        } else if (val == 1) {
+	          message = thisDateTimeFormat._getMessage(messages['1']);
+	        } else if (val >= 10 && val <= 20) {
+	          message = thisDateTimeFormat._getMessage(messages['10_20']);
+	        } else if (dec == 1) {
+	          message = thisDateTimeFormat._getMessage(messages['MOD_1']);
+	        } else if (2 <= dec && dec <= 4) {
+	          message = thisDateTimeFormat._getMessage(messages['MOD_2_4']);
+	        } else {
+	          message = thisDateTimeFormat._getMessage(messages['MOD_OTHER']);
+	        }
+	        return message.replace(/#VALUE#/g, value);
+	      }
+	      function _replaceDateFormat(match, matchFull) {
+	        if (dateFormats[match]) {
+	          return dateFormats[match]();
+	        } else {
+	          return matchFull;
+	        }
+	      }
+	      function intval(number) {
+	        return number >= 0 ? Math.floor(number) : Math.ceil(number);
+	      }
+	    }
+	  }]);
+	  return DateTimeFormat;
+	}();
+	babelHelpers.defineProperty(DateTimeFormat, "AM_PM_MODE", {
+	  UPPER: 1,
+	  LOWER: 2,
+	  NONE: false
+	});
+	babelHelpers.defineProperty(DateTimeFormat, "convertBitrixFormat", convertBitrixFormat);
+	babelHelpers.defineProperty(DateTimeFormat, "getFormat", getFormat);
+
+	const cache = new main_core.Cache.MemoryCache();
+
+	/**
+	 * @memberOf BX.Main.Timezone
+	 *
+	 * WARNING! Don't use this class or any classes from Timezone namespace on sites without Bitrix Framework.
+	 * It is not designed to handle this case and will definitely break.
+	 */
+	const Offset = {
+	  get SERVER_TO_UTC() {
+	    return cache.remember('SERVER_TO_UTC', () => {
+	      return main_core.Text.toInteger(main_core.Loc.getMessage('SERVER_TZ_OFFSET'));
+	    });
+	  },
+	  get USER_TO_SERVER() {
+	    return cache.remember('USER_TO_SERVER', () => {
+	      return main_core.Text.toInteger(main_core.Loc.getMessage('USER_TZ_OFFSET'));
+	    });
+	  },
+	  // Date returns timezone offset in minutes by default, change it to seconds
+	  // Also offset is negative in UTC+ timezones and positive in UTC- timezones.
+	  // By convention Bitrix uses the opposite approach, so change offset sign.
+	  get BROWSER_TO_UTC() {
+	    return cache.remember('BROWSER_TO_UTC', () => {
+	      return main_core.Text.toInteger(new Date().getTimezoneOffset() * 60);
+	    });
+	  }
 	};
+	Object.freeze(Offset);
 
-})(window);
+	function _classStaticPrivateMethodGet(receiver, classConstructor, method) { _classCheckPrivateStaticAccess(receiver, classConstructor); return method; }
+	function _classCheckPrivateStaticAccess(receiver, classConstructor) { if (receiver !== classConstructor) { throw new TypeError("Private static access of wrong provenance"); } }
+
+	/**
+	 * @memberOf BX.Main.Timezone
+	 *
+	 * WARNING! Don't use this class or any classes from Timezone namespace on sites without Bitrix Framework.
+	 * It is not designed to handle this case and will definitely break.
+	 */
+	let BrowserTime = /*#__PURE__*/function () {
+	  function BrowserTime() {
+	    babelHelpers.classCallCheck(this, BrowserTime);
+	  }
+	  babelHelpers.createClass(BrowserTime, null, [{
+	    key: "getTimestamp",
+	    /**
+	     * Returns timestamp with current time in browser timezone.
+	     *
+	     * @returns {number} timestamp in seconds
+	     */
+	    value: function getTimestamp() {
+	      return Math.round(Date.now() / 1000);
+	    }
+	    /**
+	     * Returns Date object with current time in browser timezone.
+	     *
+	     * @returns {Date}
+	     */
+	  }, {
+	    key: "getDate",
+	    value: function getDate() {
+	      return new Date(this.getTimestamp() * 1000);
+	    }
+	    /**
+	     * Converts timestamp in browser timezone to timestamp in user timezone.
+	     *
+	     * @param browserTimestamp timestamp in browser timezone in seconds
+	     * @returns {number} timestamp in user timezone in seconds
+	     */
+	  }, {
+	    key: "toUser",
+	    value: function toUser(browserTimestamp) {
+	      return main_core.Text.toInteger(browserTimestamp) + Offset.USER_TO_SERVER;
+	    }
+	    /**
+	     * Converts timestamp in browser timezone to timestamp in server timezone.
+	     *
+	     * @param browserTimestamp timestamp in browser timezone in seconds
+	     * @returns {number} timestamp in server timezone in seconds
+	     */
+	  }, {
+	    key: "toServer",
+	    value: function toServer(browserTimestamp) {
+	      return _classStaticPrivateMethodGet(this, BrowserTime, _toUTC).call(this, browserTimestamp) + Offset.SERVER_TO_UTC;
+	    }
+	  }]);
+	  return BrowserTime;
+	}();
+	function _toUTC(browserTimestamp) {
+	  return main_core.Text.toInteger(browserTimestamp) - Offset.BROWSER_TO_UTC;
+	}
+
+	/**
+	 * @memberOf BX.Main.Timezone
+	 *
+	 * WARNING! Don't use this class or any classes from Timezone namespace on sites without Bitrix Framework.
+	 * It is not designed to handle this case and will definitely break.
+	 *
+	 * ATTENTION! In Bitrix user timezone !== browser timezone. Users can change their timezone from their profile settings
+	 * and the timezone will be different from browser timezone.
+	 */
+	let UserTime = /*#__PURE__*/function () {
+	  function UserTime() {
+	    babelHelpers.classCallCheck(this, UserTime);
+	  }
+	  babelHelpers.createClass(UserTime, null, [{
+	    key: "getTimestamp",
+	    /**
+	     * Returns timestamp with current time in user timezone.
+	     *
+	     * @returns {number} timestamp in seconds
+	     */
+	    value: function getTimestamp() {
+	      return BrowserTime.toUser(BrowserTime.getTimestamp());
+	    }
+	    /**
+	     * Returns Date object with current time in user timezone. If you need to get 'now' in a user's perspective,
+	     * use this method instead of 'new Date()'.
+	     *
+	     * Note that 'getTimezoneOffset' will not return correct user timezone, its always returns browser offset
+	     *
+	     * @returns {Date}
+	     */
+	  }, {
+	    key: "getDate",
+	    value: function getDate() {
+	      return new Date(this.getTimestamp() * 1000);
+	    }
+	    /**
+	     * Converts timestamp in user timezone to timestamp in browser timezone.
+	     *
+	     * @param userTimestamp timestamp in user timezone in seconds
+	     * @returns {number} timestamp in browser timezone in seconds
+	     */
+	  }, {
+	    key: "toBrowser",
+	    value: function toBrowser(userTimestamp) {
+	      return main_core.Text.toInteger(userTimestamp) + Offset.BROWSER_TO_UTC - Offset.SERVER_TO_UTC - Offset.USER_TO_SERVER;
+	    }
+	    /**
+	     * Converts timestamp in user timezone to timestamp in server timezone.
+	     *
+	     * @param userTimestamp timestamp in user timezone in seconds
+	     * @returns {number} timestamp in server timezone in seconds
+	     */
+	  }, {
+	    key: "toServer",
+	    value: function toServer(userTimestamp) {
+	      return main_core.Text.toInteger(userTimestamp) - Offset.USER_TO_SERVER;
+	    }
+	  }]);
+	  return UserTime;
+	}();
+
+	/**
+	 * @memberOf BX.Main.Timezone
+	 *
+	 * WARNING! Don't use this class or any classes from Timezone namespace on sites without Bitrix Framework.
+	 * It is not designed to handle this case and will definitely break.
+	 */
+	let ServerTime = /*#__PURE__*/function () {
+	  function ServerTime() {
+	    babelHelpers.classCallCheck(this, ServerTime);
+	  }
+	  babelHelpers.createClass(ServerTime, null, [{
+	    key: "getTimestamp",
+	    /**
+	     * Returns timestamp with current time in server timezone.
+	     *
+	     * @returns {number} timestamp in seconds
+	     */
+	    value: function getTimestamp() {
+	      return BrowserTime.toServer(BrowserTime.getTimestamp());
+	    }
+	    /**
+	     * Returns Date object with current time in server timezone.
+	     *
+	     * Note that 'getTimezoneOffset' will not return correct server timezone, its always returns browser offset
+	     *
+	     * @returns {Date}
+	     */
+	  }, {
+	    key: "getDate",
+	    value: function getDate() {
+	      return new Date(this.getTimestamp() * 1000);
+	    }
+	    /**
+	     * Converts timestamp in server timezone to timestamp in user timezone.
+	     *
+	     * @param serverTimestamp timestamp in server timezone in seconds
+	     * @returns {number} timestamp in user timezone in seconds
+	     */
+	  }, {
+	    key: "toUser",
+	    value: function toUser(serverTimestamp) {
+	      return main_core.Text.toInteger(serverTimestamp) + Offset.USER_TO_SERVER;
+	    }
+	    /**
+	     * Converts timestamp in server timezone to timestamp in browser timezone.
+	     *
+	     * @param serverTimestamp timestamp in server timezone in seconds
+	     * @returns {number} timestamp in browser timezone in seconds
+	     */
+	  }, {
+	    key: "toBrowser",
+	    value: function toBrowser(serverTimestamp) {
+	      return main_core.Text.toInteger(serverTimestamp) + Offset.BROWSER_TO_UTC - Offset.SERVER_TO_UTC;
+	    }
+	  }]);
+	  return ServerTime;
+	}();
+
+	//compatibility alias
+	const Date$1 = DateTimeFormat;
+	const Timezone = Object.freeze({
+	  Offset,
+	  BrowserTime,
+	  UserTime,
+	  ServerTime
+	});
+
+	exports.DateTimeFormat = DateTimeFormat;
+	exports.Date = Date$1;
+	exports.Timezone = Timezone;
+
+}((this.BX.Main = this.BX.Main || {}),BX));
+ 
 
 
 
@@ -50784,18 +50837,15 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      if (this.isChrome()) {
 	        return false;
 	      }
-
 	      if (!navigator.userAgent.toLowerCase().includes('safari')) {
 	        return false;
 	      }
-
 	      return !this.isSafariBased();
 	    },
 	    isSafariBased: function isSafariBased() {
 	      if (!navigator.userAgent.toLowerCase().includes('applewebkit')) {
 	        return false;
 	      }
-
 	      return navigator.userAgent.toLowerCase().includes('yabrowser') || navigator.userAgent.toLowerCase().includes('yaapp_ios_browser') || navigator.userAgent.toLowerCase().includes('crios');
 	    },
 	    isChrome: function isChrome() {
@@ -50809,11 +50859,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    },
 	    findParent: function findParent(item, findTag) {
 	      var isHtmlElement = findTag instanceof HTMLElement;
-
 	      if (!findTag || typeof findTag !== 'string' && !isHtmlElement) {
 	        return null;
 	      }
-
 	      for (; item && item !== document; item = item.parentNode) {
 	        if (typeof findTag === 'string') {
 	          if (item.classList.contains(findTag)) {
@@ -50825,7 +50873,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          }
 	        }
 	      }
-
 	      return null;
 	    }
 	  },
@@ -50849,14 +50896,21 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      if (typeof this.getDesktopVersionStatic !== 'undefined') {
 	        return this.getDesktopVersionStatic;
 	      }
-
 	      if (typeof BXDesktopSystem === 'undefined') {
 	        return 0;
 	      }
-
 	      var version = BXDesktopSystem.GetProperty('versionParts');
 	      this.getDesktopVersionStatic = version[3];
 	      return this.getDesktopVersionStatic;
+	    },
+	    isDesktopFeatureEnabled: function isDesktopFeatureEnabled(code) {
+	      if (typeof BXDesktopSystem === 'undefined') {
+	        return false;
+	      }
+	      if (typeof BXDesktopSystem.FeatureEnabled !== 'function') {
+	        return false;
+	      }
+	      return !!BXDesktopSystem.FeatureEnabled(code);
 	    },
 	    isMobile: function isMobile() {
 	      return this.isAndroid() || this.isIos() || this.isBitrixMobile();
@@ -50868,13 +50922,10 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      if (!this.isIos()) {
 	        return null;
 	      }
-
 	      var matches = navigator.userAgent.toLowerCase().match(/(iphone|ipad)(.+)(OS\s([0-9]+)([_.]([0-9]+))?)/i);
-
 	      if (!matches || !matches[4]) {
 	        return null;
 	      }
-
 	      return parseFloat(matches[4] + '.' + (matches[6] ? matches[6] : 0));
 	    },
 	    isAndroid: function isAndroid() {
@@ -50884,22 +50935,18 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      if (!url) {
 	        return false;
 	      }
-
 	      if (this.isBitrixMobile()) {
 	        if (typeof BX.MobileTools !== 'undefined') {
 	          var openWidget = BX.MobileTools.resolveOpenFunction(url);
-
 	          if (openWidget) {
 	            openWidget();
 	            return true;
 	          }
 	        }
-
 	        app.openNewPage(url);
 	      } else {
 	        window.open(url, '_blank');
 	      }
-
 	      return true;
 	    }
 	  },
@@ -50911,7 +50958,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      if (typeof this.isMobileStatic !== 'undefined') {
 	        return this.isMobileStatic;
 	      }
-
 	      this.isMobileStatic = navigator.userAgent.toLowerCase().includes('android') || navigator.userAgent.toLowerCase().includes('webos') || navigator.userAgent.toLowerCase().includes('iphone') || navigator.userAgent.toLowerCase().includes('ipad') || navigator.userAgent.toLowerCase().includes('ipod') || navigator.userAgent.toLowerCase().includes('blackberry') || navigator.userAgent.toLowerCase().includes('windows phone');
 	      return this.isMobileStatic;
 	    },
@@ -50921,7 +50967,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      if (!this.isMobile()) {
 	        return this.orientationHorizontal;
 	      }
-
 	      return Math.abs(window.orientation) === 0 ? this.orientationPortrait : this.orientationHorizontal;
 	    }
 	  },
@@ -50945,9 +50990,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      if (!item || babelHelpers["typeof"](item) !== "object" || item.nodeType) {
 	        return false;
 	      }
-
 	      var hasProp = Object.prototype.hasOwnProperty;
-
 	      try {
 	        if (item.constructor && !hasProp.call(item, "constructor") && !hasProp.call(item.constructor.prototype, "isPrototypeOf")) {
 	          return false;
@@ -50955,16 +50998,13 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      } catch (e) {
 	        return false;
 	      }
-
 	      var key;
-
 	      return typeof key === "undefined" || hasProp.call(item, key);
 	    },
 	    isUuidV4: function isUuidV4(uuid) {
 	      if (!this.isString(uuid)) {
 	        return false;
 	      }
-
 	      var uuidV4pattern = new RegExp(/^[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i);
 	      return uuid.search(uuidV4pattern) === 0;
 	    }
@@ -50974,7 +51014,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      if (!this.isChatId(dialogId)) {
 	        return 0;
 	      }
-
 	      return parseInt(dialogId.toString().substr(4));
 	    },
 	    isChatId: function isChatId(dialogId) {
@@ -50984,13 +51023,11 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      if (!dialogId) {
 	        return true;
 	      }
-
 	      if (typeof dialogId === "string") {
 	        if (dialogId === 'chat0' || dialogId === "0") {
 	          return true;
 	        }
 	      }
-
 	      return false;
 	    }
 	  },
@@ -50998,15 +51035,12 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    quote: function quote(text, params) {
 	      var files = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
 	      var localize = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : null;
-
 	      if (typeof text !== 'string') {
 	        return text.toString();
 	      }
-
 	      if (!localize) {
 	        localize = BX.message;
 	      }
-
 	      text = text.replace(/\[USER=([0-9]{1,})](.*?)\[\/USER]/ig, function (whole, userId, text) {
 	        return text;
 	      });
@@ -51025,7 +51059,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      text = text.replace(/&nbsp;/ig, " ");
 	      text = text.replace(/\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D([\s\S]*?)\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D/gmi, "[" + localize["IM_UTILS_TEXT_QUOTE"] + "]");
 	      text = text.replace(/^(>>(.*)\n)/gi, "[" + localize["IM_UTILS_TEXT_QUOTE"] + "]\n");
-
 	      if (params && params.FILE_ID && params.FILE_ID.length > 0) {
 	        var filesText = [];
 	        params.FILE_ID.forEach(function (fileId) {
@@ -51039,42 +51072,33 @@ this.BX.Messenger = this.BX.Messenger || {};
 	            filesText.push(files[fileId].name);
 	          }
 	        });
-
 	        if (filesText.length <= 0) {
 	          filesText.push(localize['IM_UTILS_TEXT_FILE']);
 	        }
-
 	        text = filesText.join('\n') + text;
 	      } else if (params && params.ATTACH && params.ATTACH.length > 0) {
 	        text = '[' + localize['IM_UTILS_TEXT_ATTACH'] + ']\n' + text;
 	      }
-
 	      if (text.length <= 0) {
 	        text = localize['IM_UTILS_TEXT_DELETED'];
 	      }
-
 	      return text.trim();
 	    },
 	    purify: function purify(text, params) {
 	      var files = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
 	      var localize = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : null;
-
 	      if (typeof text !== 'string') {
 	        return text.toString();
 	      }
-
 	      if (!localize) {
 	        localize = BX.message;
 	      }
-
 	      text = text.trim();
-
 	      if (text.startsWith('/me')) {
 	        text = text.substr(4);
 	      } else if (text.startsWith('/loud')) {
 	        text = text.substr(6);
 	      }
-
 	      text = text.replace(/<br><br \/>/ig, '<br />');
 	      text = text.replace(/<br \/><br>/ig, '<br />');
 	      var codeReplacement = [];
@@ -51117,29 +51141,23 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      text = text.replace(/\[s]([^"]*)\[\/s]/ig, ' ');
 	      text = text.replace(/\[icon=([^\]]*)]/ig, function (whole) {
 	        var title = whole.match(/title=(.*[^\s\]])/i);
-
 	        if (title && title[1]) {
 	          title = title[1];
-
 	          if (title.indexOf('width=') > -1) {
 	            title = title.substr(0, title.indexOf('width='));
 	          }
-
 	          if (title.indexOf('height=') > -1) {
 	            title = title.substr(0, title.indexOf('height='));
 	          }
-
 	          if (title.indexOf('size=') > -1) {
 	            title = title.substr(0, title.indexOf('size='));
 	          }
-
 	          if (title) {
 	            title = '(' + title.trim() + ')';
 	          }
 	        } else {
 	          title = '(' + localize['IM_UTILS_TEXT_ICON'] + ')';
 	        }
-
 	        return title;
 	      });
 	      codeReplacement.forEach(function (element, index) {
@@ -51148,10 +51166,8 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      text = text.replace(/\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D([\s\S]*?)\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D\x2D/gmi, "[" + localize["IM_UTILS_TEXT_QUOTE"] + "] ");
 	      text = text.replace(/^(>>(.*)(\n)?)/gmi, "[" + localize["IM_UTILS_TEXT_QUOTE"] + "] ");
 	      text = text.replace(/<\/?[^>]+>/gi, '');
-
 	      if (params && params.FILE_ID && params.FILE_ID.length > 0) {
 	        var filesText = [];
-
 	        if (babelHelpers["typeof"](files) === 'object') {
 	          params.FILE_ID.forEach(function (fileId) {
 	            if (typeof files[fileId] === 'undefined') ; else if (files[fileId].type === 'image') {
@@ -51165,67 +51181,55 @@ this.BX.Messenger = this.BX.Messenger || {};
 	            }
 	          });
 	        }
-
 	        if (filesText.length <= 0) {
 	          filesText.push(localize['IM_UTILS_TEXT_FILE']);
 	        }
-
 	        text = filesText.join(' ') + text;
 	      } else if (params && (params.WITH_ATTACH || params.ATTACH && params.ATTACH.length > 0)) {
 	        text = '[' + localize['IM_UTILS_TEXT_ATTACH'] + '] ' + text;
 	      } else if (params && params.WITH_FILE) {
 	        text = '[' + localize['IM_UTILS_TEXT_FILE'] + '] ' + text;
 	      }
-
 	      if (text.length <= 0) {
 	        text = localize['IM_UTILS_TEXT_DELETED'];
 	      }
-
 	      return text.replace('\n', ' ').trim();
 	    },
 	    htmlspecialchars: function htmlspecialchars(text) {
 	      if (typeof text !== 'string') {
 	        return text;
 	      }
-
 	      return text.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 	    },
 	    htmlspecialcharsback: function htmlspecialcharsback(text) {
 	      if (typeof text !== 'string') {
 	        return text;
 	      }
-
 	      return text.replace(/\&quot;/g, '"').replace(/&#039;/g, "'").replace(/\&lt;/g, '<').replace(/\&gt;/g, '>').replace(/\&amp;/g, '&').replace(/\&nbsp;/g, ' ');
 	    },
 	    getLocalizeForNumber: function getLocalizeForNumber(phrase, number) {
 	      var language = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 'en';
 	      var localize = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : null;
-
 	      if (!localize) {
 	        localize = BX.message;
 	      }
-
 	      var pluralFormType = 1;
 	      number = parseInt(number);
-
 	      if (number < 0) {
 	        number = number * -1;
 	      }
-
 	      if (language) {
 	        switch (language) {
 	          case 'de':
 	          case 'en':
 	            pluralFormType = number !== 1 ? 1 : 0;
 	            break;
-
 	          case 'ru':
 	          case 'ua':
 	            pluralFormType = number % 10 === 1 && number % 100 !== 11 ? 0 : number % 10 >= 2 && number % 10 <= 4 && (number % 100 < 10 || number % 100 >= 20) ? 1 : 2;
 	            break;
 	        }
 	      }
-
 	      return localize[phrase + '_PLURAL_' + pluralFormType];
 	    }
 	  },
@@ -51233,13 +51237,10 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    getFormatType: function getFormatType() {
 	      var type = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : im_const.DateFormat["default"];
 	      var localize = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
-
 	      if (!localize) {
 	        localize = BX.message;
 	      }
-
 	      var format = [];
-
 	      if (type === im_const.DateFormat.groupTitle) {
 	        format = [["tommorow", "tommorow"], ["today", "today"], ["yesterday", "yesterday"], ["", localize["IM_UTILS_FORMAT_DATE"]]];
 	      } else if (type === im_const.DateFormat.message) {
@@ -51255,40 +51256,32 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      } else {
 	        format = [["tommorow", "tommorow, " + localize["IM_UTILS_FORMAT_TIME"]], ["today", "today, " + localize["IM_UTILS_FORMAT_TIME"]], ["yesterday", "yesterday, " + localize["IM_UTILS_FORMAT_TIME"]], ["", localize["IM_UTILS_FORMAT_DATE_TIME"]]];
 	      }
-
 	      return format;
 	    },
 	    getDateFunction: function getDateFunction() {
 	      var localize = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
-
 	      if (this.dateFormatFunction) {
 	        return this.dateFormatFunction;
 	      }
-
 	      this.dateFormatFunction = Object.create(BX.Main.Date);
-
 	      if (localize) {
 	        this.dateFormatFunction._getMessage = function (phrase) {
 	          return localize[phrase];
 	        };
 	      }
-
 	      return this.dateFormatFunction;
 	    },
 	    format: function format(timestamp) {
 	      var format = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
 	      var localize = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
-
 	      if (!format) {
 	        format = this.getFormatType(im_const.DateFormat["default"], localize);
 	      }
-
 	      return this.getDateFunction(localize).format(format, timestamp);
 	    },
 	    cast: function cast(date) {
 	      var def = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : new Date();
 	      var result = def;
-
 	      if (date instanceof Date) {
 	        result = date;
 	      } else if (typeof date === "string") {
@@ -51296,50 +51289,40 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      } else if (typeof date === "number") {
 	        result = new Date(date * 1000);
 	      }
-
 	      if (result instanceof Date && Number.isNaN(result.getTime())) {
 	        result = def;
 	      }
-
 	      return result;
 	    }
 	  },
 	  object: {
 	    countKeys: function countKeys(obj) {
 	      var result = 0;
-
 	      for (var i in obj) {
 	        if (obj.hasOwnProperty(i)) {
 	          result++;
 	        }
 	      }
-
 	      return result;
 	    }
 	  },
 	  user: {
 	    getLastDateText: function getLastDateText(params) {
 	      var localize = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
-
 	      if (!params) {
 	        return '';
 	      }
-
 	      var dateFunction = Utils.date.getDateFunction(localize);
-
 	      if (!localize) {
 	        localize = BX.message || {};
 	      }
-
 	      var text = '';
 	      var online = {};
-
 	      if (params.bot || params.network) {
 	        text = '';
 	      } else if (params.absent && !this.isMobileActive(params, localize)) {
 	        online = this.getOnlineStatus(params, localize);
 	        text = localize['IM_STATUS_VACATION_TITLE'].replace('#DATE#', dateFunction.format(Utils.date.getFormatType(im_const.DateFormat.vacationTitle, localize), params.absent.getTime() / 1000));
-
 	        if (online.isOnline && params.idle) {
 	          text = localize['IM_STATUS_AWAY_TITLE'].replace('#TIME#', this.getIdleText(params, localize)) + '. ' + text;
 	        } else if (online.isOnline && !online.lastSeenText) {
@@ -51351,7 +51334,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        }
 	      } else if (params.lastActivityDate) {
 	        online = this.getOnlineStatus(params, localize);
-
 	        if (online.isOnline && params.idle && !this.isMobileActive(params, localize)) {
 	          text = localize['IM_STATUS_AWAY_TITLE'].replace('#TIME#', this.getIdleText(params, localize));
 	        } else if (online.isOnline && !online.lastSeenText) {
@@ -51368,20 +51350,16 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          }
 	        }
 	      }
-
 	      return text;
 	    },
 	    getIdleText: function getIdleText(params) {
 	      var localize = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
-
 	      if (!params) {
 	        return '';
 	      }
-
 	      if (!params.idle) {
 	        return '';
 	      }
-
 	      return Utils.date.getDateFunction(localize).format([["s60", "sdiff"], ["i60", "idiff"], ["H24", "Hdiff"], ["", "ddiff"]], params.idle);
 	    },
 	    getOnlineStatus: function getOnlineStatus(params) {
@@ -51393,42 +51371,33 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        'lastSeen': params.lastActivityDate,
 	        'lastSeenText': ''
 	      };
-
 	      if (!params.lastActivityDate || params.lastActivityDate.getTime() === 0) {
 	        return result;
 	      }
-
 	      var date = new Date();
 	      result.isOnline = date.getTime() - params.lastActivityDate.getTime() <= this.getOnlineLimit(localize) * 1000;
 	      result.status = result.isOnline ? params.status : 'offline';
 	      result.statusText = localize && localize['IM_STATUS_' + result.status.toUpperCase()] ? localize['IM_STATUS_' + result.status.toUpperCase()] : result.status;
-
 	      if (localize && params.lastActivityDate.getTime() > 0 && date.getTime() - params.lastActivityDate.getTime() > 300 * 1000) {
 	        result.lastSeenText = Utils.date.getDateFunction(localize).formatLastActivityDate(params.lastActivityDate);
 	      }
-
 	      return result;
 	    },
 	    isMobileActive: function isMobileActive(params) {
 	      var localize = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
-
 	      if (!params) {
 	        return false;
 	      }
-
 	      if (!localize) {
 	        localize = BX.message || {};
 	      }
-
 	      return params.mobileLastDate && new Date() - params.mobileLastDate < this.getOnlineLimit(localize) * 1000 && params.lastActivityDate - params.mobileLastDate < 300 * 1000;
 	    },
 	    getOnlineLimit: function getOnlineLimit() {
 	      var localize = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
-
 	      if (!localize) {
 	        localize = BX.message || {};
 	      }
-
 	      return localize.LIMIT_ONLINE ? parseInt(localize.LIMIT_ONLINE) : 15 * 60;
 	    }
 	  },
@@ -51436,20 +51405,16 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    if (!hex || !hex.match(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/)) {
 	      return false;
 	    }
-
 	    if (hex.length === 4) {
 	      hex = hex.replace(/#([A-Fa-f0-9])/gi, "$1$1");
 	    } else {
 	      hex = hex.replace(/#([A-Fa-f0-9])/gi, "$1");
 	    }
-
 	    hex = hex.toLowerCase();
 	    var darkColor = ["#17a3ea", "#00aeef", "#00c4fb", "#47d1e2", "#75d900", "#ffab00", "#ff5752", "#468ee5", "#1eae43"];
-
 	    if (darkColor.includes('#' + hex)) {
 	      return true;
 	    }
-
 	    var bigint = parseInt(hex, 16);
 	    var red = bigint >> 16 & 255;
 	    var green = bigint >> 8 & 255;
@@ -51460,27 +51425,21 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  hashCode: function hashCode() {
 	    var string = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
 	    var hash = 0;
-
 	    if (babelHelpers["typeof"](string) === 'object' && string) {
 	      string = JSON.stringify(string);
 	    } else if (typeof string !== 'string') {
 	      string = string.toString();
 	    }
-
 	    if (typeof string !== 'string') {
 	      return hash;
 	    }
-
 	    for (var i = 0; i < string.length; i++) {
 	      var _char = string.charCodeAt(i);
-
 	      hash = (hash << 5) - hash + _char;
 	      hash = hash & hash;
 	    }
-
 	    return hash;
 	  },
-
 	  /**
 	   * The method compares versions, and returns - 0 if they are the same, 1 if version1 is greater, -1 if version1 is less
 	   *
@@ -51490,14 +51449,11 @@ this.BX.Messenger = this.BX.Messenger || {};
 	   */
 	  versionCompare: function versionCompare(version1, version2) {
 	    var isNumberRegExp = /^([\d+\.]+)$/;
-
 	    if (!isNumberRegExp.test(version1) || !isNumberRegExp.test(version2)) {
 	      return NaN;
 	    }
-
 	    version1 = version1.toString().split('.');
 	    version2 = version2.toString().split('.');
-
 	    if (version1.length < version2.length) {
 	      while (version1.length < version2.length) {
 	        version1.push(0);
@@ -51507,7 +51463,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        version2.push(0);
 	      }
 	    }
-
 	    for (var i = 0; i < version1.length; i++) {
 	      if (version1[i] > version2[i]) {
 	        return 1;
@@ -51515,10 +51470,8 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        return -1;
 	      }
 	    }
-
 	    return 0;
 	  },
-
 	  /**
 	   * Throttle function. Callback will be executed no more than 'wait' period (in ms).
 	   *
@@ -51531,12 +51484,10 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    var context = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : this;
 	    var timeout = null;
 	    var callbackArgs = null;
-
 	    var nextCallback = function nextCallback() {
 	      callback.apply(context, callbackArgs);
 	      timeout = null;
 	    };
-
 	    return function () {
 	      if (!timeout) {
 	        callbackArgs = arguments;
@@ -51544,7 +51495,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      }
 	    };
 	  },
-
 	  /**
 	   * Debounce function. Callback will be executed if it hast been called for longer than 'wait' period (in ms).
 	   *
@@ -51557,11 +51507,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    var context = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : this;
 	    var timeout = null;
 	    var callbackArgs = null;
-
 	    var nextCallback = function nextCallback() {
 	      callback.apply(context, callbackArgs);
 	    };
-
 	    return function () {
 	      callbackArgs = arguments;
 	      clearTimeout(timeout);
@@ -51572,53 +51520,44 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    var params = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 	    var result = [];
 	    var _params$name = params.name,
-	        name = _params$name === void 0 ? 'tracking' : _params$name,
-	        _params$data = params.data,
-	        data = _params$data === void 0 ? [] : _params$data,
-	        _params$dialog = params.dialog,
-	        dialog = _params$dialog === void 0 ? null : _params$dialog,
-	        _params$message = params.message,
-	        message = _params$message === void 0 ? null : _params$message,
-	        _params$files = params.files,
-	        files = _params$files === void 0 ? null : _params$files;
+	      name = _params$name === void 0 ? 'tracking' : _params$name,
+	      _params$data = params.data,
+	      data = _params$data === void 0 ? [] : _params$data,
+	      _params$dialog = params.dialog,
+	      dialog = _params$dialog === void 0 ? null : _params$dialog,
+	      _params$message = params.message,
+	      message = _params$message === void 0 ? null : _params$message,
+	      _params$files = params.files,
+	      files = _params$files === void 0 ? null : _params$files;
 	    name = encodeURIComponent(name);
-
 	    if (data && !(data instanceof Array) && babelHelpers["typeof"](data) === 'object') {
 	      var dataArray = [];
-
 	      for (var _name in data) {
 	        if (data.hasOwnProperty(_name)) {
 	          dataArray.push(encodeURIComponent(_name) + "=" + encodeURIComponent(data[_name]));
 	        }
 	      }
-
 	      data = dataArray;
 	    } else if (!data instanceof Array) {
 	      data = [];
 	    }
-
 	    if (dialog) {
 	      result.push('timType=' + dialog.type);
-
 	      if (dialog.type === 'lines') {
 	        result.push('timLinesType=' + dialog.entityId.split('|')[0]);
 	      }
 	    }
-
 	    if (files) {
 	      var type = 'file';
-
 	      if (files instanceof Array && files[0]) {
 	        type = files[0].type;
 	      } else {
 	        type = files.type;
 	      }
-
 	      result.push('timMessageType=' + type);
 	    } else if (message) {
 	      result.push('timMessageType=text');
 	    }
-
 	    if (this.platform.isBitrixMobile()) {
 	      result.push('timDevice=bitrixMobile');
 	    } else if (this.platform.isBitrixDesktop()) {
@@ -51628,7 +51567,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    } else {
 	      result.push('timDevice=web');
 	    }
-
 	    return name + (data.length ? '&' + data.join('&') : '') + (result.length ? '&' + result.join('&') : '');
 	  }
 	};
@@ -51657,12 +51595,10 @@ this.BX.Messenger = this.BX.Messenger || {};
 	 */
 	var ApplicationModel = /*#__PURE__*/function (_VuexBuilderModel) {
 	  babelHelpers.inherits(ApplicationModel, _VuexBuilderModel);
-
 	  function ApplicationModel() {
 	    babelHelpers.classCallCheck(this, ApplicationModel);
 	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(ApplicationModel).apply(this, arguments));
 	  }
-
 	  babelHelpers.createClass(ApplicationModel, [{
 	    key: "getName",
 	    value: function getName() {
@@ -51730,7 +51666,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    key: "getActions",
 	    value: function getActions() {
 	      var _this = this;
-
 	      return {
 	        set: function set(store, payload) {
 	          store.commit('set', _this.validate(payload));
@@ -51747,26 +51682,21 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    key: "getMutations",
 	    value: function getMutations() {
 	      var _this2 = this;
-
 	      return {
 	        set: function set(state, payload) {
 	          var hasChange = false;
-
 	          for (var group in payload) {
 	            if (!payload.hasOwnProperty(group)) {
 	              continue;
 	            }
-
 	            for (var field in payload[group]) {
 	              if (!payload[group].hasOwnProperty(field)) {
 	                continue;
 	              }
-
 	              state[group][field] = payload[group][field];
 	              hasChange = true;
 	            }
 	          }
-
 	          if (hasChange && _this2.isSaveNeeded(payload)) {
 	            _this2.saveState(state);
 	          }
@@ -51774,19 +51704,17 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        increaseDialogExtraCount: function increaseDialogExtraCount(state) {
 	          var payload = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 	          var _payload$count = payload.count,
-	              count = _payload$count === void 0 ? 1 : _payload$count;
+	            count = _payload$count === void 0 ? 1 : _payload$count;
 	          state.dialog.messageExtraCount += count;
 	        },
 	        decreaseDialogExtraCount: function decreaseDialogExtraCount(state) {
 	          var payload = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 	          var _payload$count2 = payload.count,
-	              count = _payload$count2 === void 0 ? 1 : _payload$count2;
+	            count = _payload$count2 === void 0 ? 1 : _payload$count2;
 	          var newCounter = state.dialog.messageExtraCount - count;
-
 	          if (newCounter <= 0) {
 	            newCounter = 0;
 	          }
-
 	          state.dialog.messageExtraCount = newCounter;
 	        },
 	        clearDialogExtraCount: function clearDialogExtraCount(state) {
@@ -51804,106 +51732,81 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    key: "validate",
 	    value: function validate(fields) {
 	      var result = {};
-
 	      if (babelHelpers["typeof"](fields.common) === 'object' && fields.common) {
 	        result.common = {};
-
 	        if (typeof fields.common.userId === 'number') {
 	          result.common.userId = fields.common.userId;
 	        }
-
 	        if (typeof fields.common.languageId === 'string') {
 	          result.common.languageId = fields.common.languageId;
 	        }
 	      }
-
 	      if (babelHelpers["typeof"](fields.dialog) === 'object' && fields.dialog) {
 	        result.dialog = {};
-
 	        if (typeof fields.dialog.dialogId === 'number') {
 	          result.dialog.dialogId = fields.dialog.dialogId.toString();
 	          result.dialog.chatId = 0;
 	        } else if (typeof fields.dialog.dialogId === 'string') {
 	          result.dialog.dialogId = fields.dialog.dialogId;
-
 	          if (typeof fields.dialog.chatId !== 'number') {
 	            var chatId = fields.dialog.dialogId;
-
 	            if (chatId.startsWith('chat')) {
 	              chatId = fields.dialog.dialogId.substr(4);
 	            }
-
 	            chatId = parseInt(chatId);
 	            result.dialog.chatId = !isNaN(chatId) ? chatId : 0;
 	            fields.dialog.chatId = result.dialog.chatId;
 	          }
 	        }
-
 	        if (typeof fields.dialog.chatId === 'number') {
 	          result.dialog.chatId = fields.dialog.chatId;
 	        }
-
 	        if (typeof fields.dialog.diskFolderId === 'number') {
 	          result.dialog.diskFolderId = fields.dialog.diskFolderId;
 	        }
-
 	        if (typeof fields.dialog.messageLimit === 'number') {
 	          result.dialog.messageLimit = fields.dialog.messageLimit;
 	        }
-
 	        if (typeof fields.dialog.messageExtraCount === 'number') {
 	          result.dialog.messageExtraCount = fields.dialog.messageExtraCount;
 	        }
-
 	        if (typeof fields.dialog.enableReadMessages === 'boolean') {
 	          result.dialog.enableReadMessages = fields.dialog.enableReadMessages;
 	        }
 	      }
-
 	      if (babelHelpers["typeof"](fields.disk) === 'object' && fields.disk) {
 	        result.disk = {};
-
 	        if (typeof fields.disk.enabled === 'boolean') {
 	          result.disk.enabled = fields.disk.enabled;
 	        }
-
 	        if (typeof fields.disk.maxFileSize === 'number') {
 	          result.disk.maxFileSize = fields.disk.maxFileSize;
 	        }
 	      }
-
 	      if (babelHelpers["typeof"](fields.call) === 'object' && fields.call) {
 	        result.call = {};
-
 	        if (typeof fields.call.serverEnabled === 'boolean') {
 	          result.call.serverEnabled = fields.call.serverEnabled;
 	        }
-
 	        if (typeof fields.call.maxParticipants === 'number') {
 	          result.call.maxParticipants = fields.call.maxParticipants;
 	        }
 	      }
-
 	      if (babelHelpers["typeof"](fields.mobile) === 'object' && fields.mobile) {
 	        result.mobile = {};
-
 	        if (typeof fields.mobile.keyboardShow === 'boolean') {
 	          result.mobile.keyboardShow = fields.mobile.keyboardShow;
 	        }
 	      }
-
 	      if (babelHelpers["typeof"](fields.device) === 'object' && fields.device) {
 	        result.device = {};
-
 	        if (typeof fields.device.type === 'string' && typeof im_const.DeviceType[fields.device.type] !== 'undefined') {
 	          result.device.type = fields.device.type;
 	        }
-
 	        if (typeof fields.device.orientation === 'string' && typeof im_const.DeviceOrientation[fields.device.orientation] !== 'undefined') {
 	          result.device.orientation = fields.device.orientation;
 	        }
 	      }
-
 	      if (babelHelpers["typeof"](fields.error) === 'object' && fields.error) {
 	        if (typeof fields.error.active === 'boolean') {
 	          result.error = {
@@ -51913,7 +51816,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          };
 	        }
 	      }
-
 	      return result;
 	    }
 	  }]);
@@ -51930,12 +51832,10 @@ this.BX.Messenger = this.BX.Messenger || {};
 	 */
 	var ConferenceModel = /*#__PURE__*/function (_VuexBuilderModel) {
 	  babelHelpers.inherits(ConferenceModel, _VuexBuilderModel);
-
 	  function ConferenceModel() {
 	    babelHelpers.classCallCheck(this, ConferenceModel);
 	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(ConferenceModel).apply(this, arguments));
 	  }
-
 	  babelHelpers.createClass(ConferenceModel, [{
 	    key: "getName",
 	    value: function getName() {
@@ -51983,70 +51883,60 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          if (typeof payload.newState !== 'boolean') {
 	            return false;
 	          }
-
 	          store.commit('showChat', payload);
 	        },
 	        changeRightPanelMode: function changeRightPanelMode(store, payload) {
 	          if (!im_const.ConferenceRightPanelMode[payload.mode]) {
 	            return false;
 	          }
-
 	          store.commit('changeRightPanelMode', payload);
 	        },
 	        setPermissionsRequested: function setPermissionsRequested(store, payload) {
 	          if (typeof payload.status !== 'boolean') {
 	            return false;
 	          }
-
 	          store.commit('setPermissionsRequested', payload);
 	        },
 	        setPresenters: function setPresenters(store, payload) {
 	          if (!Array.isArray(payload.presenters)) {
 	            payload.presenters = [payload.presenters];
 	          }
-
 	          store.commit('setPresenters', payload);
 	        },
 	        setUsers: function setUsers(store, payload) {
 	          if (!Array.isArray(payload.users)) {
 	            payload.users = [payload.users];
 	          }
-
 	          store.commit('setUsers', payload);
 	        },
 	        removeUsers: function removeUsers(store, payload) {
 	          if (!Array.isArray(payload.users)) {
 	            payload.users = [payload.users];
 	          }
-
 	          store.commit('removeUsers', payload);
 	        },
 	        setUsersInCall: function setUsersInCall(store, payload) {
 	          if (!Array.isArray(payload.users)) {
 	            payload.users = [payload.users];
 	          }
-
 	          store.commit('setUsersInCall', payload);
 	        },
 	        removeUsersInCall: function removeUsersInCall(store, payload) {
 	          if (!Array.isArray(payload.users)) {
 	            payload.users = [payload.users];
 	          }
-
 	          store.commit('removeUsersInCall', payload);
 	        },
 	        setConferenceTitle: function setConferenceTitle(store, payload) {
 	          if (typeof payload.conferenceTitle !== 'string') {
 	            return false;
 	          }
-
 	          store.commit('setConferenceTitle', payload);
 	        },
 	        setBroadcastMode: function setBroadcastMode(store, payload) {
 	          if (typeof payload.broadcastMode !== 'boolean') {
 	            return false;
 	          }
-
 	          store.commit('setBroadcastMode', payload);
 	        }
 	      };
@@ -52055,37 +51945,29 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    key: "getMutations",
 	    value: function getMutations() {
 	      var _this = this;
-
 	      return {
 	        common: function common(state, payload) {
 	          if (typeof payload.inited === 'boolean') {
 	            state.common.inited = payload.inited;
 	          }
-
 	          if (typeof payload.passChecked === 'boolean') {
 	            state.common.passChecked = payload.passChecked;
 	          }
-
 	          if (typeof payload.userCount === 'number' || typeof payload.userCount === 'string') {
 	            state.common.userCount = parseInt(payload.userCount);
 	          }
-
 	          if (typeof payload.messageCount === 'number' || typeof payload.messageCount === 'string') {
 	            state.common.messageCount = parseInt(payload.messageCount);
 	          }
-
 	          if (typeof payload.userInCallCount === 'number' || typeof payload.userInCallCount === 'string') {
 	            state.common.userInCallCount = parseInt(payload.userInCallCount);
 	          }
-
 	          if (typeof payload.componentError === 'string') {
 	            state.common.componentError = payload.componentError;
 	          }
-
 	          if (typeof payload.isBroadcast === 'boolean') {
 	            state.common.isBroadcast = payload.isBroadcast;
 	          }
-
 	          if (Array.isArray(payload.presenters)) {
 	            state.common.presenters = payload.presenters;
 	          }
@@ -52094,11 +51976,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          if (typeof payload.id === 'number') {
 	            state.user.id = payload.id;
 	          }
-
 	          if (typeof payload.hash === 'string' && payload.hash !== state.user.hash) {
 	            state.user.hash = payload.hash;
 	          }
-
 	          if (_this.isSaveNeeded({
 	            user: payload
 	          })) {
@@ -52170,7 +52050,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          } else {
 	            payload.presenters.forEach(function (presenter) {
 	              presenter = parseInt(presenter);
-
 	              if (!state.common.presenters.includes(presenter)) {
 	                state.common.presenters.push(presenter);
 	              }
@@ -52180,7 +52059,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        setUsers: function setUsers(state, payload) {
 	          payload.users.forEach(function (user) {
 	            user = parseInt(user);
-
 	            if (!state.common.users.includes(user)) {
 	              state.common.users.push(user);
 	            }
@@ -52194,7 +52072,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        setUsersInCall: function setUsersInCall(state, payload) {
 	          payload.users.forEach(function (user) {
 	            user = parseInt(user);
-
 	            if (!state.common.usersInCall.includes(user)) {
 	              state.common.usersInCall.push(user);
 	            }
@@ -52236,10 +52113,8 @@ this.BX.Messenger = this.BX.Messenger || {};
 	}(ui_vue_vuex.WidgetVuexBuilderModel);
 
 	function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
-
 	function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
-
-	function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+	function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i]; return arr2; }
 	var IntersectionType = {
 	  empty: 'empty',
 	  equal: 'equal',
@@ -52249,12 +52124,10 @@ this.BX.Messenger = this.BX.Messenger || {};
 	};
 	var MessagesModel = /*#__PURE__*/function (_VuexBuilderModel) {
 	  babelHelpers.inherits(MessagesModel, _VuexBuilderModel);
-
 	  function MessagesModel() {
 	    babelHelpers.classCallCheck(this, MessagesModel);
 	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(MessagesModel).apply(this, arguments));
 	  }
-
 	  babelHelpers.createClass(MessagesModel, [{
 	    key: "getName",
 	    value: function getName() {
@@ -52302,7 +52175,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    key: "getGetters",
 	    value: function getGetters() {
 	      var _this = this;
-
 	      return {
 	        getMutationType: function getMutationType(state) {
 	          return function (chatId) {
@@ -52312,7 +52184,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	                appliedType: im_const.MutationType.none
 	              };
 	            }
-
 	            return state.mutationType[chatId];
 	          };
 	        },
@@ -52321,21 +52192,16 @@ this.BX.Messenger = this.BX.Messenger || {};
 	            if (!state.collection[chatId] || state.collection[chatId].length <= 0) {
 	              return null;
 	            }
-
 	            var lastId = 0;
-
 	            for (var i = 0; i < state.collection[chatId].length; i++) {
 	              var element = state.collection[chatId][i];
-
 	              if (element.push || element.sending || element.id.toString().startsWith('temporary')) {
 	                continue;
 	              }
-
 	              if (lastId < element.id) {
 	                lastId = element.id;
 	              }
 	            }
-
 	            return lastId ? lastId : null;
 	          };
 	        },
@@ -52344,13 +52210,11 @@ this.BX.Messenger = this.BX.Messenger || {};
 	            if (!state.collection[chatId] || state.collection[chatId].length <= 0) {
 	              return null;
 	            }
-
 	            for (var index = state.collection[chatId].length - 1; index >= 0; index--) {
 	              if (state.collection[chatId][index].id === messageId) {
 	                return state.collection[chatId][index];
 	              }
 	            }
-
 	            return null;
 	          };
 	        },
@@ -52359,7 +52223,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	            if (!state.collection[chatId] || state.collection[chatId].length <= 0) {
 	              return [];
 	            }
-
 	            return state.collection[chatId];
 	          };
 	        },
@@ -52384,49 +52247,39 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    key: "getActions",
 	    value: function getActions() {
 	      var _this2 = this;
-
 	      return {
 	        add: function add(store, payload) {
 	          var result = _this2.validate(Object.assign({}, payload));
-
 	          result.params = Object.assign({}, _this2.getElementState().params, result.params);
-
 	          if (payload.id) {
 	            if (store.state.collection[payload.chatId]) {
 	              var countMessages = store.state.collection[payload.chatId].length - 1;
-
 	              for (var index = countMessages; index >= 0; index--) {
 	                var message = store.state.collection[payload.chatId][index];
-
 	                if (message.templateId === payload.id) {
 	                  return;
 	                }
 	              }
 	            }
-
 	            result.id = payload.id;
 	          } else {
 	            result.id = 'temporary' + new Date().getTime() + store.state.created;
 	          }
-
 	          result.templateId = result.id;
 	          result.unread = false;
 	          store.commit('add', Object.assign({}, _this2.getElementState(), result));
-
 	          if (payload.sending !== false) {
 	            store.dispatch('actionStart', {
 	              id: result.id,
 	              chatId: result.chatId
 	            });
 	          }
-
 	          return result.id;
 	        },
 	        actionStart: function actionStart(store, payload) {
 	          if (/^\d+$/.test(payload.id)) {
 	            payload.id = parseInt(payload.id);
 	          }
-
 	          payload.chatId = parseInt(payload.chatId);
 	          ui_vue.WidgetVue.nextTick(function () {
 	            store.commit('update', {
@@ -52442,7 +52295,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          if (/^\d+$/.test(payload.id)) {
 	            payload.id = parseInt(payload.id);
 	          }
-
 	          payload.chatId = parseInt(payload.chatId);
 	          ui_vue.WidgetVue.nextTick(function () {
 	            store.commit('update', {
@@ -52460,7 +52312,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          if (/^\d+$/.test(payload.id)) {
 	            payload.id = parseInt(payload.id);
 	          }
-
 	          payload.chatId = parseInt(payload.chatId);
 	          ui_vue.WidgetVue.nextTick(function () {
 	            store.commit('update', {
@@ -52485,10 +52336,8 @@ this.BX.Messenger = this.BX.Messenger || {};
 	            var result = _this2.prepareMessage(payload, {
 	              host: store.state.host
 	            });
-
 	            (payload = []).push(result);
 	          }
-
 	          store.commit('set', {
 	            insertType: im_const.MutationType.set,
 	            data: payload
@@ -52505,13 +52354,10 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          } else {
 	            return false;
 	          }
-
 	          var insertType = payload.requestMode === 'history' ? im_const.MutationType.setBefore : im_const.MutationType.setAfter;
-
 	          if (insertType === im_const.MutationType.setBefore) {
 	            payload.placeholders = payload.placeholders.reverse();
 	          }
-
 	          store.commit('set', {
 	            insertType: insertType,
 	            data: payload.placeholders
@@ -52531,7 +52377,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          } else {
 	            return false;
 	          }
-
 	          store.commit('updatePlaceholders', payload);
 	          return true;
 	        },
@@ -52542,10 +52387,8 @@ this.BX.Messenger = this.BX.Messenger || {};
 	            });
 	          } else {
 	            var result = _this2.prepareMessage(payload);
-
 	            (payload = []).push(result);
 	          }
-
 	          store.commit('set', {
 	            insertType: im_const.MutationType.setAfter,
 	            data: payload
@@ -52558,10 +52401,8 @@ this.BX.Messenger = this.BX.Messenger || {};
 	            });
 	          } else {
 	            var result = _this2.prepareMessage(payload);
-
 	            (payload = []).push(result);
 	          }
-
 	          store.commit('set', {
 	            insertType: im_const.MutationType.setBefore,
 	            data: payload
@@ -52571,40 +52412,31 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          if (/^\d+$/.test(payload.id)) {
 	            payload.id = parseInt(payload.id);
 	          }
-
 	          if (/^\d+$/.test(payload.chatId)) {
 	            payload.chatId = parseInt(payload.chatId);
 	          }
-
 	          store.commit('initCollection', {
 	            chatId: payload.chatId
 	          });
-
 	          if (!store.state.collection[payload.chatId]) {
 	            return false;
 	          }
-
 	          var index = store.state.collection[payload.chatId].findIndex(function (el) {
 	            return el.id === payload.id;
 	          });
-
 	          if (index < 0) {
 	            return false;
 	          }
-
 	          var result = _this2.validate(Object.assign({}, payload.fields));
-
 	          if (result.params) {
 	            result.params = Object.assign({}, _this2.getElementState().params, store.state.collection[payload.chatId][index].params, result.params);
 	          }
-
 	          store.commit('update', {
 	            id: payload.id,
 	            chatId: payload.chatId,
 	            index: index,
 	            fields: result
 	          });
-
 	          if (payload.fields.blink) {
 	            setTimeout(function () {
 	              store.commit('update', {
@@ -52616,19 +52448,16 @@ this.BX.Messenger = this.BX.Messenger || {};
 	              });
 	            }, 1000);
 	          }
-
 	          return true;
 	        },
 	        "delete": function _delete(store, payload) {
 	          if (!(payload.id instanceof Array)) {
 	            payload.id = [payload.id];
 	          }
-
 	          payload.id = payload.id.map(function (id) {
 	            if (/^\d+$/.test(id)) {
 	              id = parseInt(id);
 	            }
-
 	            return id;
 	          });
 	          store.commit('delete', {
@@ -52639,7 +52468,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        },
 	        clear: function clear(store, payload) {
 	          payload.chatId = parseInt(payload.chatId);
-
 	          if (payload.keepPlaceholders) {
 	            store.commit('clearMessages', {
 	              chatId: payload.chatId
@@ -52649,7 +52477,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	              chatId: payload.chatId
 	            });
 	          }
-
 	          return true;
 	        },
 	        applyMutationType: function applyMutationType(store, payload) {
@@ -52662,24 +52489,19 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        readMessages: function readMessages(store, payload) {
 	          payload.readId = parseInt(payload.readId) || 0;
 	          payload.chatId = parseInt(payload.chatId);
-
 	          if (typeof store.state.collection[payload.chatId] === 'undefined') {
 	            return {
 	              count: 0
 	            };
 	          }
-
 	          var count = 0;
-
 	          for (var index = store.state.collection[payload.chatId].length - 1; index >= 0; index--) {
 	            var element = store.state.collection[payload.chatId][index];
 	            if (!element.unread) continue;
-
 	            if (payload.readId === 0 || element.id <= payload.readId) {
 	              count++;
 	            }
 	          }
-
 	          store.commit('readMessages', {
 	            chatId: payload.chatId,
 	            readId: payload.readId
@@ -52691,24 +52513,19 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        unreadMessages: function unreadMessages(store, payload) {
 	          payload.unreadId = parseInt(payload.unreadId) || 0;
 	          payload.chatId = parseInt(payload.chatId);
-
 	          if (typeof store.state.collection[payload.chatId] === 'undefined' || !payload.unreadId) {
 	            return {
 	              count: 0
 	            };
 	          }
-
 	          var count = 0;
-
 	          for (var index = store.state.collection[payload.chatId].length - 1; index >= 0; index--) {
 	            var element = store.state.collection[payload.chatId][index];
 	            if (element.unread) continue;
-
 	            if (element.id >= payload.unreadId) {
 	              count++;
 	            }
 	          }
-
 	          store.commit('unreadMessages', {
 	            chatId: payload.chatId,
 	            unreadId: payload.unreadId
@@ -52723,7 +52540,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    key: "getMutations",
 	    value: function getMutations() {
 	      var _this3 = this;
-
 	      return {
 	        initCollection: function initCollection(state, payload) {
 	          return _this3.initCollection(state, payload);
@@ -52732,23 +52548,19 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          _this3.initCollection(state, {
 	            chatId: payload.chatId
 	          });
-
 	          state.collection[payload.chatId].push(payload);
 	          state.saveMessageList[payload.chatId].push(payload.id);
 	          state.created += 1;
 	          state.collection[payload.chatId].sort(function (a, b) {
 	            return a.id - b.id;
 	          });
-
 	          _this3.saveState(state, payload.chatId);
-
 	          im_lib_logger.Logger.warn('Messages model: saving state after add');
 	        },
 	        clearPlaceholders: function clearPlaceholders(state, payload) {
 	          if (!state.collection[payload.chatId]) {
 	            return false;
 	          }
-
 	          state.collection[payload.chatId] = state.collection[payload.chatId].filter(function (element) {
 	            return !element.id.toString().startsWith('placeholder');
 	          });
@@ -52757,23 +52569,21 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          var firstPlaceholderId = "placeholder".concat(payload.firstMessage);
 	          var firstPlaceholderIndex = state.collection[payload.chatId].findIndex(function (message) {
 	            return message.id === firstPlaceholderId;
-	          }); // Logger.warn('firstPlaceholderIndex', firstPlaceholderIndex);
-
+	          });
+	          // Logger.warn('firstPlaceholderIndex', firstPlaceholderIndex);
 	          if (firstPlaceholderIndex >= 0) {
 	            var _state$collection$pay;
-
 	            // Logger.warn('before delete', state.collection[payload.chatId].length, [...state.collection[payload.chatId]]);
-	            state.collection[payload.chatId].splice(firstPlaceholderIndex, payload.amount); // Logger.warn('after delete', state.collection[payload.chatId].length, [...state.collection[payload.chatId]]);
-
-	            (_state$collection$pay = state.collection[payload.chatId]).splice.apply(_state$collection$pay, [firstPlaceholderIndex, 0].concat(babelHelpers.toConsumableArray(payload.data))); // Logger.warn('after add', state.collection[payload.chatId].length, [...state.collection[payload.chatId]]);
-
+	            state.collection[payload.chatId].splice(firstPlaceholderIndex, payload.amount);
+	            // Logger.warn('after delete', state.collection[payload.chatId].length, [...state.collection[payload.chatId]]);
+	            (_state$collection$pay = state.collection[payload.chatId]).splice.apply(_state$collection$pay, [firstPlaceholderIndex, 0].concat(babelHelpers.toConsumableArray(payload.data)));
+	            // Logger.warn('after add', state.collection[payload.chatId].length, [...state.collection[payload.chatId]]);
 	          }
 
 	          state.collection[payload.chatId].sort(function (a, b) {
 	            return a.id - b.id;
 	          });
 	          im_lib_logger.Logger.warn('Messages model: saving state after updating placeholders');
-
 	          _this3.saveState(state, payload.chatId);
 	        },
 	        set: function set(state, payload) {
@@ -52783,100 +52593,78 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          var isPush = false;
 	          payload.data = MessagesModel.getPayloadWithTempMessages(state, payload);
 	          var initialType = payload.insertType;
-
 	          if (payload.insertType === im_const.MutationType.set) {
-	            (function () {
-	              payload.insertType = im_const.MutationType.setAfter;
-	              var elements = {};
-	              payload.data.forEach(function (element) {
-	                if (!elements[element.chatId]) {
-	                  elements[element.chatId] = [];
-	                }
-
-	                elements[element.chatId].push(element.id);
-	              });
-
-	              var _loop = function _loop(chatId) {
-	                if (!elements.hasOwnProperty(chatId)) return "continue";
-
-	                _this3.initCollection(state, {
-	                  chatId: chatId
-	                });
-
-	                im_lib_logger.Logger.warn('Messages model: messages before adding from request - ', state.collection[chatId].length);
-
-	                if (state.saveMessageList[chatId].length > elements[chatId].length || elements[chatId].length < im_const.StorageLimit.messages) {
-	                  state.collection[chatId] = state.collection[chatId].filter(function (element) {
-	                    return elements[chatId].includes(element.id);
-	                  });
-	                  state.saveMessageList[chatId] = state.saveMessageList[chatId].filter(function (id) {
-	                    return elements[chatId].includes(id);
-	                  });
-	                }
-
-	                im_lib_logger.Logger.warn('Messages model: cache length', state.saveMessageList[chatId].length);
-
-	                var intersection = _this3.manageCacheBeforeSet(babelHelpers.toConsumableArray(state.saveMessageList[chatId].reverse()), elements[chatId]);
-
-	                im_lib_logger.Logger.warn('Messages model: set intersection with cache', intersection);
-
-	                if (intersection.type === IntersectionType.none) {
-	                  if (intersection.foundElements.length > 0) {
-	                    state.collection[chatId] = state.collection[chatId].filter(function (element) {
-	                      return !intersection.foundElements.includes(element.id);
-	                    });
-	                    state.saveMessageList[chatId] = state.saveMessageList[chatId].filter(function (id) {
-	                      return !intersection.foundElements.includes(id);
-	                    });
-	                  }
-
-	                  im_lib_logger.Logger.warn('Messages model: no intersection - removing cache');
-	                  _this3.removeIntersectionCacheElements = state.collection[chatId].map(function (element) {
-	                    return element.id;
-	                  });
-	                  state.collection[chatId] = state.collection[chatId].filter(function (element) {
-	                    return !_this3.removeIntersectionCacheElements.includes(element.id);
-	                  });
-	                  state.saveMessageList[chatId] = state.saveMessageList[chatId].filter(function (id) {
-	                    return !_this3.removeIntersectionCacheElements.includes(id);
-	                  });
-	                  _this3.removeIntersectionCacheElements = [];
-	                } else if (intersection.type === IntersectionType.foundReverse) {
-	                  im_lib_logger.Logger.warn('Messages model: found reverse intersection');
-	                  payload.insertType = im_const.MutationType.setBefore;
-	                  payload.data = payload.data.reverse();
-	                }
-	              };
-
-	              for (var chatId in elements) {
-	                var _ret = _loop(chatId);
-
-	                if (_ret === "continue") continue;
+	            payload.insertType = im_const.MutationType.setAfter;
+	            var elements = {};
+	            payload.data.forEach(function (element) {
+	              if (!elements[element.chatId]) {
+	                elements[element.chatId] = [];
 	              }
-	            })();
+	              elements[element.chatId].push(element.id);
+	            });
+	            var _loop = function _loop(chatId) {
+	              if (!elements.hasOwnProperty(chatId)) return "continue";
+	              _this3.initCollection(state, {
+	                chatId: chatId
+	              });
+	              im_lib_logger.Logger.warn('Messages model: messages before adding from request - ', state.collection[chatId].length);
+	              if (state.saveMessageList[chatId].length > elements[chatId].length || elements[chatId].length < im_const.StorageLimit.messages) {
+	                state.collection[chatId] = state.collection[chatId].filter(function (element) {
+	                  return elements[chatId].includes(element.id);
+	                });
+	                state.saveMessageList[chatId] = state.saveMessageList[chatId].filter(function (id) {
+	                  return elements[chatId].includes(id);
+	                });
+	              }
+	              im_lib_logger.Logger.warn('Messages model: cache length', state.saveMessageList[chatId].length);
+	              var intersection = _this3.manageCacheBeforeSet(babelHelpers.toConsumableArray(state.saveMessageList[chatId].reverse()), elements[chatId]);
+	              im_lib_logger.Logger.warn('Messages model: set intersection with cache', intersection);
+	              if (intersection.type === IntersectionType.none) {
+	                if (intersection.foundElements.length > 0) {
+	                  state.collection[chatId] = state.collection[chatId].filter(function (element) {
+	                    return !intersection.foundElements.includes(element.id);
+	                  });
+	                  state.saveMessageList[chatId] = state.saveMessageList[chatId].filter(function (id) {
+	                    return !intersection.foundElements.includes(id);
+	                  });
+	                }
+	                im_lib_logger.Logger.warn('Messages model: no intersection - removing cache');
+	                _this3.removeIntersectionCacheElements = state.collection[chatId].map(function (element) {
+	                  return element.id;
+	                });
+	                state.collection[chatId] = state.collection[chatId].filter(function (element) {
+	                  return !_this3.removeIntersectionCacheElements.includes(element.id);
+	                });
+	                state.saveMessageList[chatId] = state.saveMessageList[chatId].filter(function (id) {
+	                  return !_this3.removeIntersectionCacheElements.includes(id);
+	                });
+	                _this3.removeIntersectionCacheElements = [];
+	              } else if (intersection.type === IntersectionType.foundReverse) {
+	                im_lib_logger.Logger.warn('Messages model: found reverse intersection');
+	                payload.insertType = im_const.MutationType.setBefore;
+	                payload.data = payload.data.reverse();
+	              }
+	            };
+	            for (var chatId in elements) {
+	              var _ret = _loop(chatId);
+	              if (_ret === "continue") continue;
+	            }
 	          }
-
 	          im_lib_logger.Logger.warn('Messages model: adding messages to model', payload.data);
-
 	          var _iterator = _createForOfIteratorHelper(payload.data),
-	              _step;
-
+	            _step;
 	          try {
 	            var _loop2 = function _loop2() {
 	              var element = _step.value;
-
 	              _this3.initCollection(state, {
 	                chatId: element.chatId
 	              });
-
 	              var index = state.collection[element.chatId].findIndex(function (localMessage) {
 	                if (MessagesModel.isTemporaryMessage(localMessage)) {
 	                  return localMessage.templateId === element.templateId;
 	                }
-
 	                return localMessage.id === element.id;
 	              });
-
 	              if (index > -1) {
 	                state.collection[element.chatId][index] = Object.assign(state.collection[element.chatId][index], element);
 	              } else if (payload.insertType === im_const.MutationType.setBefore) {
@@ -52884,14 +52672,11 @@ this.BX.Messenger = this.BX.Messenger || {};
 	              } else if (payload.insertType === im_const.MutationType.setAfter) {
 	                state.collection[element.chatId].push(element);
 	              }
-
 	              chats.push(element.chatId);
-
 	              if (_this3.store.getters['dialogues/canSaveChat'] && _this3.store.getters['dialogues/canSaveChat'](element.chatId)) {
 	                chatsSave.push(element.chatId);
 	              }
 	            };
-
 	            for (_iterator.s(); !(_step = _iterator.n()).done;) {
 	              _loop2();
 	            }
@@ -52900,7 +52685,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          } finally {
 	            _iterator.f();
 	          }
-
 	          chats = babelHelpers.toConsumableArray(new Set(chats));
 	          chatsSave = babelHelpers.toConsumableArray(new Set(chatsSave));
 	          isPush = payload.data.every(function (element) {
@@ -52911,7 +52695,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	            state.collection[chatId].sort(function (a, b) {
 	              return a.id - b.id;
 	            });
-
 	            if (!isPush) {
 	              //send event that messages are ready and we can start reading etc
 	              im_lib_logger.Logger.warn('setting messagesSet = true for chatId = ', chatId);
@@ -52925,11 +52708,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	              }, 100);
 	            }
 	          });
-
 	          if (initialType !== im_const.MutationType.setBefore) {
 	            chatsSave.forEach(function (chatId) {
 	              im_lib_logger.Logger.warn('Messages model: saving state after set');
-
 	              _this3.saveState(state, chatId);
 	            });
 	          }
@@ -52938,9 +52719,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          _this3.initCollection(state, {
 	            chatId: payload.chatId
 	          });
-
 	          var index = -1;
-
 	          if (typeof payload.index !== 'undefined' && state.collection[payload.chatId][payload.index]) {
 	            index = payload.index;
 	          } else {
@@ -52948,14 +52727,11 @@ this.BX.Messenger = this.BX.Messenger || {};
 	              return el.id === payload.id;
 	            });
 	          }
-
 	          if (index >= 0) {
 	            var isSaveState = state.saveMessageList[payload.chatId].includes(state.collection[payload.chatId][index].id) || payload.fields.id && !payload.fields.id.toString().startsWith('temporary') && state.collection[payload.chatId][index].id.toString().startsWith('temporary');
 	            state.collection[payload.chatId][index] = Object.assign(state.collection[payload.chatId][index], payload.fields);
-
 	            if (isSaveState) {
 	              im_lib_logger.Logger.warn('Messages model: saving state after update');
-
 	              _this3.saveState(state, payload.chatId);
 	            }
 	          }
@@ -52964,24 +52740,18 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          _this3.initCollection(state, {
 	            chatId: payload.chatId
 	          });
-
 	          state.collection[payload.chatId] = state.collection[payload.chatId].filter(function (element) {
 	            return !payload.elements.includes(element.id);
 	          });
-
 	          if (state.saveMessageList[payload.chatId].length > 0) {
 	            var _iterator2 = _createForOfIteratorHelper(payload.elements),
-	                _step2;
-
+	              _step2;
 	            try {
 	              for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
 	                var id = _step2.value;
-
 	                if (state.saveMessageList[payload.chatId].includes(id)) {
 	                  im_lib_logger.Logger.warn('Messages model: saving state after delete');
-
 	                  _this3.saveState(state, payload.chatId);
-
 	                  break;
 	                }
 	              }
@@ -52996,7 +52766,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          _this3.initCollection(state, {
 	            chatId: payload.chatId
 	          });
-
 	          state.collection[payload.chatId] = [];
 	          state.saveMessageList[payload.chatId] = [];
 	        },
@@ -53004,7 +52773,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          _this3.initCollection(state, {
 	            chatId: payload.chatId
 	          });
-
 	          state.collection[payload.chatId] = state.collection[payload.chatId].filter(function (element) {
 	            return element.id.toString().startsWith('placeholder');
 	          });
@@ -53020,20 +52788,16 @@ this.BX.Messenger = this.BX.Messenger || {};
 	              scrollMessageId: 0
 	            });
 	          }
-
 	          state.mutationType[payload.chatId].applied = true;
 	        },
 	        readMessages: function readMessages(state, payload) {
 	          _this3.initCollection(state, {
 	            chatId: payload.chatId
 	          });
-
 	          var saveNeeded = false;
-
 	          for (var index = state.collection[payload.chatId].length - 1; index >= 0; index--) {
 	            var element = state.collection[payload.chatId][index];
 	            if (!element.unread) continue;
-
 	            if (payload.readId === 0 || element.id <= payload.readId) {
 	              state.collection[payload.chatId][index] = Object.assign(state.collection[payload.chatId][index], {
 	                unread: false
@@ -53041,10 +52805,8 @@ this.BX.Messenger = this.BX.Messenger || {};
 	              saveNeeded = true;
 	            }
 	          }
-
 	          if (saveNeeded) {
 	            im_lib_logger.Logger.warn('Messages model: saving state after reading');
-
 	            _this3.saveState(state, payload.chatId);
 	          }
 	        },
@@ -53052,13 +52814,10 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          _this3.initCollection(state, {
 	            chatId: payload.chatId
 	          });
-
 	          var saveNeeded = false;
-
 	          for (var index = state.collection[payload.chatId].length - 1; index >= 0; index--) {
 	            var element = state.collection[payload.chatId][index];
 	            if (element.unread) continue;
-
 	            if (element.id >= payload.unreadId) {
 	              state.collection[payload.chatId][index] = Object.assign(state.collection[payload.chatId][index], {
 	                unread: true
@@ -53066,12 +52825,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	              saveNeeded = true;
 	            }
 	          }
-
 	          if (saveNeeded) {
 	            im_lib_logger.Logger.warn('Messages model: saving state after unreading');
-
 	            _this3.saveState(state, payload.chatId);
-
 	            _this3.updateSubordinateStates();
 	          }
 	        }
@@ -53083,11 +52839,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      if (typeof payload.chatId === 'undefined') {
 	        return false;
 	      }
-
 	      if (typeof payload.chatId === 'undefined' || typeof state.collection[payload.chatId] !== 'undefined') {
 	        return true;
 	      }
-
 	      ui_vue.WidgetVue.set(state.collection, payload.chatId, payload.messages ? [].concat(payload.messages) : []);
 	      ui_vue.WidgetVue.set(state.saveMessageList, payload.chatId, []);
 	      ui_vue.WidgetVue.set(state.saveFileList, payload.chatId, []);
@@ -53100,11 +52854,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 	      var result = this.validate(Object.assign({}, message), options);
 	      result.params = Object.assign({}, this.getElementState().params, result.params);
-
 	      if (!result.templateId) {
 	        result.templateId = result.id;
 	      }
-
 	      return Object.assign({}, this.getElementState(), result);
 	    }
 	  }, {
@@ -53117,29 +52869,23 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        foundElements: [],
 	        noneElements: []
 	      };
-
 	      if (!cache || cache.length <= 0) {
 	        return result;
 	      }
-
 	      var _iterator3 = _createForOfIteratorHelper(elements),
-	          _step3;
-
+	        _step3;
 	      try {
 	        for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
 	          var id = _step3.value;
-
 	          if (cache.includes(id)) {
 	            if (result.type === IntersectionType.empty) {
 	              result.type = IntersectionType.found;
 	            }
-
 	            result.foundElements.push(id);
 	          } else {
 	            if (result.type === IntersectionType.empty) {
 	              result.type = IntersectionType.none;
 	            }
-
 	            result.noneElements.push(id);
 	          }
 	        }
@@ -53148,18 +52894,15 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      } finally {
 	        _iterator3.f();
 	      }
-
 	      if (result.type === IntersectionType.found && cache.length === elements.length && result.foundElements.length === elements.length) {
 	        result.type = IntersectionType.equal;
 	      } else if (result.type === IntersectionType.none && !recursive && result.foundElements.length > 0) {
 	        var reverseResult = this.manageCacheBeforeSet(cache.reverse(), elements.reverse(), true);
-
 	        if (reverseResult.type === IntersectionType.found) {
 	          reverseResult.type = IntersectionType.foundReverse;
 	          return reverseResult;
 	        }
 	      }
-
 	      return result;
 	    }
 	  }, {
@@ -53168,11 +52911,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      if (!this.isSaveAvailable()) {
 	        return true;
 	      }
-
 	      if (!chatId || !this.store.getters['dialogues/canSaveChat'] || !this.store.getters['dialogues/canSaveChat'](chatId)) {
 	        return false;
 	      }
-
 	      this.initCollection(state, {
 	        chatId: chatId
 	      });
@@ -53181,30 +52922,23 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      var saveFileList = [];
 	      var saveUserList = [];
 	      var dialog = this.store.getters['dialogues/getByChatId'](chatId);
-
 	      if (dialog && dialog.type === 'private') {
 	        saveUserList.push(parseInt(dialog.dialogId));
 	      }
-
 	      var readCounter = 0;
-
 	      for (var index = state.collection[chatId].length - 1; index >= 0; index--) {
 	        if (state.collection[chatId][index].id.toString().startsWith('temporary')) {
 	          continue;
 	        }
-
 	        if (!state.collection[chatId][index].unread) {
 	          readCounter++;
 	        }
-
 	        if (count >= im_const.StorageLimit.messages && readCounter >= 50) {
 	          break;
 	        }
-
 	        saveMessageList.unshift(state.collection[chatId][index].id);
 	        count++;
 	      }
-
 	      saveMessageList = saveMessageList.slice(0, im_const.StorageLimit.messages);
 	      state.collection[chatId].filter(function (element) {
 	        return saveMessageList.includes(element.id);
@@ -53212,7 +52946,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        if (element.authorId > 0) {
 	          saveUserList.push(element.authorId);
 	        }
-
 	        if (element.params.FILE_ID instanceof Array) {
 	          saveFileList = element.params.FILE_ID.concat(saveFileList);
 	        }
@@ -53233,7 +52966,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      if (!this.updateSaveLists(state, chatId)) {
 	        return false;
 	      }
-
 	      babelHelpers.get(babelHelpers.getPrototypeOf(MessagesModel.prototype), "saveState", this).call(this, function () {
 	        var storedState = {
 	          collection: {},
@@ -53241,40 +52973,32 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          saveUserList: {},
 	          saveFileList: {}
 	        };
-
-	        var _loop3 = function _loop3(_chatId) {
-	          if (!state.saveMessageList.hasOwnProperty(_chatId)) {
+	        var _loop3 = function _loop3(chatId) {
+	          if (!state.saveMessageList.hasOwnProperty(chatId)) {
 	            return "continue";
 	          }
-
-	          if (!state.collection[_chatId]) {
+	          if (!state.collection[chatId]) {
 	            return "continue";
 	          }
-
-	          if (!storedState.collection[_chatId]) {
-	            storedState.collection[_chatId] = [];
+	          if (!storedState.collection[chatId]) {
+	            storedState.collection[chatId] = [];
 	          }
-
-	          state.collection[_chatId].filter(function (element) {
-	            return state.saveMessageList[_chatId].includes(element.id);
+	          state.collection[chatId].filter(function (element) {
+	            return state.saveMessageList[chatId].includes(element.id);
 	          }).forEach(function (element) {
 	            if (element.templateType !== 'placeholder') {
-	              storedState.collection[_chatId].push(element);
+	              storedState.collection[chatId].push(element);
 	            }
 	          });
-
-	          im_lib_logger.Logger.warn('Cache after updating', storedState.collection[_chatId]);
-	          storedState.saveMessageList[_chatId] = state.saveMessageList[_chatId];
-	          storedState.saveFileList[_chatId] = state.saveFileList[_chatId];
-	          storedState.saveUserList[_chatId] = state.saveUserList[_chatId];
+	          im_lib_logger.Logger.warn('Cache after updating', storedState.collection[chatId]);
+	          storedState.saveMessageList[chatId] = state.saveMessageList[chatId];
+	          storedState.saveFileList[chatId] = state.saveFileList[chatId];
+	          storedState.saveUserList[chatId] = state.saveUserList[chatId];
 	        };
-
 	        for (var _chatId in state.saveMessageList) {
 	          var _ret2 = _loop3(_chatId);
-
 	          if (_ret2 === "continue") continue;
 	        }
-
 	        return storedState;
 	      });
 	    }
@@ -53288,7 +53012,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    key: "validate",
 	    value: function validate(fields, options) {
 	      var result = {};
-
 	      if (typeof fields.id === "number") {
 	        result.id = fields.id;
 	      } else if (typeof fields.id === "string") {
@@ -53298,7 +53021,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          result.id = parseInt(fields.id);
 	        }
 	      }
-
 	      if (typeof fields.uuid === "string") {
 	        result.templateId = fields.uuid;
 	      } else if (typeof fields.templateId === "number") {
@@ -53310,47 +53032,40 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          result.templateId = parseInt(fields.templateId);
 	        }
 	      }
-
 	      if (typeof fields.templateType === "string") {
 	        result.templateType = fields.templateType;
 	      }
-
 	      if (typeof fields.placeholderType === "number") {
 	        result.placeholderType = fields.placeholderType;
 	      }
-
 	      if (typeof fields.chat_id !== 'undefined') {
 	        fields.chatId = fields.chat_id;
 	      }
-
 	      if (typeof fields.chatId === "number" || typeof fields.chatId === "string") {
 	        result.chatId = parseInt(fields.chatId);
 	      }
-
 	      if (typeof fields.date !== "undefined") {
 	        result.date = im_lib_utils.Utils.date.cast(fields.date);
-	      } // previous P&P format
+	      }
 
-
+	      // previous P&P format
 	      if (typeof fields.textOriginal === "string" || typeof fields.textOriginal === "number") {
 	        result.text = fields.textOriginal.toString();
-
 	        if (typeof fields.text === "string" || typeof fields.text === "number") {
 	          result.textConverted = this.convertToHtml({
 	            text: fields.text.toString(),
 	            isConverted: true
 	          });
 	        }
-	      } else // modern format
+	      } else
+	        // modern format
 	        {
 	          if (typeof fields.text_converted !== 'undefined') {
 	            fields.textConverted = fields.text_converted;
 	          }
-
 	          if (typeof fields.textConverted === "string" || typeof fields.textConverted === "number") {
 	            result.textConverted = fields.textConverted.toString();
 	          }
-
 	          if (typeof fields.text === "string" || typeof fields.text === "number") {
 	            result.text = fields.text.toString();
 	            var isConverted = typeof result.textConverted !== 'undefined';
@@ -53360,13 +53075,11 @@ this.BX.Messenger = this.BX.Messenger || {};
 	            });
 	          }
 	        }
-
 	      if (typeof fields.senderId !== 'undefined') {
 	        fields.authorId = fields.senderId;
 	      } else if (typeof fields.author_id !== 'undefined') {
 	        fields.authorId = fields.author_id;
 	      }
-
 	      if (typeof fields.authorId === "number" || typeof fields.authorId === "string") {
 	        if (fields.system === true || fields.system === 'Y') {
 	          result.authorId = 0;
@@ -53374,52 +53087,41 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          result.authorId = parseInt(fields.authorId);
 	        }
 	      }
-
 	      if (babelHelpers["typeof"](fields.params) === "object" && fields.params !== null) {
 	        var params = this.validateParams(fields.params, options);
-
 	        if (params) {
 	          result.params = params;
 	        }
 	      }
-
 	      if (typeof fields.push === "boolean") {
 	        result.push = fields.push;
 	      }
-
 	      if (typeof fields.sending === "boolean") {
 	        result.sending = fields.sending;
 	      }
-
 	      if (typeof fields.unread === "boolean") {
 	        result.unread = fields.unread;
 	      }
-
 	      if (typeof fields.blink === "boolean") {
 	        result.blink = fields.blink;
 	      }
-
 	      if (typeof fields.error === "boolean" || typeof fields.error === "string") {
 	        result.error = fields.error;
 	      }
-
 	      if (typeof fields.retry === "boolean") {
 	        result.retry = fields.retry;
 	      }
-
 	      return result;
 	    }
 	  }, {
 	    key: "validateParams",
 	    value: function validateParams(params, options) {
 	      var result = {};
-
 	      try {
 	        for (var field in params) {
 	          if (!params.hasOwnProperty(field)) {
 	            continue;
 	          }
-
 	          if (field === 'COMPONENT_ID') {
 	            if (typeof params[field] === "string" && BX.WidgetVue.isComponent(params[field])) {
 	              result[field] = params[field];
@@ -53455,18 +53157,14 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          }
 	        }
 	      } catch (e) {}
-
 	      var hasResultElements = false;
-
 	      for (var _field in result) {
 	        if (!result.hasOwnProperty(_field)) {
 	          continue;
 	        }
-
 	        hasResultElements = true;
 	        break;
 	      }
-
 	      return hasResultElements ? result : null;
 	    }
 	  }, {
@@ -53474,51 +53172,41 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    value: function convertToHtml() {
 	      var params = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 	      var _params$quote = params.quote,
-	          quote = _params$quote === void 0 ? true : _params$quote,
-	          _params$image = params.image,
-	          image = _params$image === void 0 ? true : _params$image,
-	          _params$text = params.text,
-	          text = _params$text === void 0 ? '' : _params$text,
-	          _params$isConverted = params.isConverted,
-	          isConverted = _params$isConverted === void 0 ? false : _params$isConverted,
-	          _params$enableBigSmil = params.enableBigSmile,
-	          enableBigSmile = _params$enableBigSmil === void 0 ? true : _params$enableBigSmil;
+	        quote = _params$quote === void 0 ? true : _params$quote,
+	        _params$image = params.image,
+	        image = _params$image === void 0 ? true : _params$image,
+	        _params$text = params.text,
+	        text = _params$text === void 0 ? '' : _params$text,
+	        _params$isConverted = params.isConverted,
+	        isConverted = _params$isConverted === void 0 ? false : _params$isConverted,
+	        _params$enableBigSmil = params.enableBigSmile,
+	        enableBigSmile = _params$enableBigSmil === void 0 ? true : _params$enableBigSmil;
 	      text = text.trim();
-
 	      if (!isConverted) {
 	        text = text.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 	      }
-
 	      if (text.startsWith('/me')) {
 	        text = "<i>".concat(text.substr(4), "</i>");
 	      } else if (text.startsWith('/loud')) {
 	        text = "<b>".concat(text.substr(6), "</b>");
 	      }
-
 	      var quoteSign = "&gt;&gt;";
-
 	      if (quote && text.indexOf(quoteSign) >= 0) {
 	        var textPrepare = text.split(isConverted ? "<br />" : "\n");
-
 	        for (var i = 0; i < textPrepare.length; i++) {
 	          if (textPrepare[i].startsWith(quoteSign)) {
 	            textPrepare[i] = textPrepare[i].replace(quoteSign, '<div class="bx-im-message-content-quote"><div class="bx-im-message-content-quote-wrap">');
-
 	            while (++i < textPrepare.length && textPrepare[i].startsWith(quoteSign)) {
 	              textPrepare[i] = textPrepare[i].replace(quoteSign, '');
 	            }
-
 	            textPrepare[i - 1] += '</div></div><br>';
 	          }
 	        }
-
 	        text = textPrepare.join("<br />");
 	      }
-
 	      text = text.replace(/\n/gi, '<br />');
 	      text = text.replace(/\t/gi, '&nbsp;&nbsp;&nbsp;&nbsp;');
 	      text = this.decodeBbCode(text, false, enableBigSmile);
-
 	      if (quote) {
 	        text = text.replace(/------------------------------------------------------<br \/>(.*?)\[(.*?)\]<br \/>(.*?)------------------------------------------------------(<br \/>)?/g, function (whole, p1, p2, p3, p4, offset) {
 	          return (offset > 0 ? '<br>' : '') + "<div class=\"bx-im-message-content-quote\"><div class=\"bx-im-message-content-quote-wrap\"><div class=\"bx-im-message-content-quote-name\"><span class=\"bx-im-message-content-quote-name-text\">" + p1 + "</span><span class=\"bx-im-message-content-quote-name-time\">" + p2 + "</span></div>" + p3 + "</div></div><br />";
@@ -53527,7 +53215,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          return (offset > 0 ? '<br>' : '') + "<div class=\"bx-im-message-content-quote\"><div class=\"bx-im-message-content-quote-wrap\">" + p1 + "</div></div><br />";
 	        });
 	      }
-
 	      if (image) {
 	        var changed = false;
 	        text = text.replace(/<a(.*?)>(http[s]{0,1}:\/\/.*?)<\/a>/ig, function (whole, aInner, text, offset) {
@@ -53538,22 +53225,18 @@ this.BX.Messenger = this.BX.Messenger || {};
 	            return (offset > 0 ? '<br />' : '') + '<a' + aInner + ' target="_blank" class="bx-im-element-file-image"><img src="' + text + '" class="bx-im-element-file-image-source-text" onerror="BX.Messenger.Model.MessagesModel.hideErrorImage(this)"></a></span>';
 	          }
 	        });
-
 	        if (changed) {
 	          text = text.replace(/<\/span>(\n?)<br(\s\/?)>/ig, '</span>').replace(/<br(\s\/?)>(\n?)<br(\s\/?)>(\n?)<span/ig, '<br /><span');
 	        }
 	      }
-
 	      if (enableBigSmile) {
 	        text = text.replace(/^(\s*<img\s+src=[^>]+?data-code=[^>]+?data-definition="UHD"[^>]+?style="width:)(\d+)(px[^>]+?height:)(\d+)(px[^>]+?class="bx-smile"\s*\/?>\s*)$/, function doubleSmileSize(match, start, width, middle, height, end) {
 	          return start + parseInt(width, 10) * 1.7 + middle + parseInt(height, 10) * 1.7 + end;
 	        });
 	      }
-
 	      if (text.substr(-6) == '<br />') {
 	        text = text.substr(0, text.length - 6);
 	      }
-
 	      text = text.replace(/<br><br \/>/ig, '<br />');
 	      text = text.replace(/<br \/><br>/ig, '<br />');
 	      return text;
@@ -53573,7 +53256,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    key: "decodeAttach",
 	    value: function decodeAttach(item) {
 	      var _this4 = this;
-
 	      if (Array.isArray(item)) {
 	        item.forEach(function (arrayElement) {
 	          arrayElement = _this4.decodeAttach(arrayElement);
@@ -53589,7 +53271,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          item = im_lib_utils.Utils.text.htmlspecialcharsback(item);
 	        }
 	      }
-
 	      return item;
 	    }
 	  }], [{
@@ -53597,10 +53278,10 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    value: function decodeBbCode() {
 	      var params = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 	      var text = params.text,
-	          _params$textOnly = params.textOnly,
-	          textOnly = _params$textOnly === void 0 ? false : _params$textOnly,
-	          _params$enableBigSmil2 = params.enableBigSmile,
-	          enableBigSmile = _params$enableBigSmil2 === void 0 ? true : _params$enableBigSmil2;
+	        _params$textOnly = params.textOnly,
+	        textOnly = _params$textOnly === void 0 ? false : _params$textOnly,
+	        _params$enableBigSmil2 = params.enableBigSmile,
+	        enableBigSmile = _params$enableBigSmil2 === void 0 ? true : _params$enableBigSmil2;
 	      var putReplacement = [];
 	      text = text.replace(/\[PUT(?:=(.+?))?\](.+?)?\[\/PUT\]/ig, function (whole) {
 	        var id = putReplacement.length;
@@ -53625,11 +53306,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        tag.target = '_blank';
 	        tag.text = im_lib_utils.Utils.text.htmlspecialcharsback(text);
 	        var allowList = ["http:", "https:", "ftp:", "file:", "tel:", "callto:", "mailto:", "skype:", "viber:"];
-
 	        if (allowList.indexOf(tag.protocol) <= -1) {
 	          return whole;
 	        }
-
 	        return tag.outerHTML;
 	      });
 	      text = text.replace(/\[url\]([^\]]+)\[\/url\]/ig, function (whole, link) {
@@ -53639,11 +53318,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        tag.target = '_blank';
 	        tag.text = link;
 	        var allowList = ["http:", "https:", "ftp:", "file:", "tel:", "callto:", "mailto:", "skype:", "viber:"];
-
 	        if (allowList.indexOf(tag.protocol) <= -1) {
 	          return whole;
 	        }
-
 	        return tag.outerHTML;
 	      });
 	      text = text.replace(/\[LIKE\]/ig, '<span class="bx-smile bx-im-smile-like"></span>');
@@ -53652,12 +53329,11 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      text = text.replace(/\[([buis])\](.*?)\[(\/[buis])\]/ig, function (whole, open, inner, close) {
 	        return '<' + open + '>' + inner + '<' + close + '>';
 	      }); // TODO tag USER
-	      // this code needs to be ported to im/install/js/im/view/message/body/src/body.js:229
 
+	      // this code needs to be ported to im/install/js/im/view/message/body/src/body.js:229
 	      text = text.replace(/\[CHAT=(imol\|)?([0-9]{1,})\](.*?)\[\/CHAT\]/ig, function (whole, openlines, chatId, inner) {
 	        return openlines ? inner : '<span class="bx-im-mention" data-type="CHAT" data-value="chat' + chatId + '">' + inner + '</span>';
 	      }); // TODO tag CHAT
-
 	      text = text.replace(/\[CALL(?:=(.+?))?\](.+?)?\[\/CALL\]/ig, function (whole, number, text) {
 	        return '<span class="bx-im-mention" data-type="CALL" data-value="' + im_lib_utils.Utils.text.htmlspecialchars(number) + '">' + text + '</span>';
 	      }); // TODO tag CHAT
@@ -53667,42 +53343,33 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      }); // TODO tag PCH
 
 	      var textElementSize = 0;
-
 	      if (enableBigSmile) {
 	        textElementSize = text.replace(/\[icon\=([^\]]*)\]/ig, '').trim().length;
 	      }
-
 	      text = text.replace(/\[icon\=([^\]]*)\]/ig, function (whole) {
 	        var url = whole.match(/icon\=(\S+[^\s.,> )\];\'\"!?])/i);
-
 	        if (url && url[1]) {
 	          url = url[1];
 	        } else {
 	          return '';
 	        }
-
 	        var attrs = {
 	          'src': url,
 	          'border': 0
 	        };
 	        var size = whole.match(/size\=(\d+)/i);
-
 	        if (size && size[1]) {
 	          attrs['width'] = size[1];
 	          attrs['height'] = size[1];
 	        } else {
 	          var width = whole.match(/width\=(\d+)/i);
-
 	          if (width && width[1]) {
 	            attrs['width'] = width[1];
 	          }
-
 	          var height = whole.match(/height\=(\d+)/i);
-
 	          if (height && height[1]) {
 	            attrs['height'] = height[1];
 	          }
-
 	          if (attrs['width'] && !attrs['height']) {
 	            attrs['height'] = attrs['width'];
 	          } else if (attrs['height'] && !attrs['width']) {
@@ -53712,46 +53379,35 @@ this.BX.Messenger = this.BX.Messenger || {};
 	            attrs['height'] = 20;
 	          }
 	        }
-
 	        attrs['width'] = attrs['width'] > 100 ? 100 : attrs['width'];
 	        attrs['height'] = attrs['height'] > 100 ? 100 : attrs['height'];
-
 	        if (enableBigSmile && textElementSize === 0 && attrs['width'] === attrs['height'] && attrs['width'] === 20) {
 	          attrs['width'] = 40;
 	          attrs['height'] = 40;
 	        }
-
 	        var title = whole.match(/title\=(.*[^\s\]])/i);
-
 	        if (title && title[1]) {
 	          title = title[1];
-
 	          if (title.indexOf('width=') > -1) {
 	            title = title.substr(0, title.indexOf('width='));
 	          }
-
 	          if (title.indexOf('height=') > -1) {
 	            title = title.substr(0, title.indexOf('height='));
 	          }
-
 	          if (title.indexOf('size=') > -1) {
 	            title = title.substr(0, title.indexOf('size='));
 	          }
-
 	          if (title) {
 	            attrs['title'] = im_lib_utils.Utils.text.htmlspecialchars(title).trim();
 	            attrs['alt'] = attrs['title'];
 	          }
 	        }
-
 	        var attributes = '';
-
 	        for (var name in attrs) {
 	          if (attrs.hasOwnProperty(name)) {
 	            attributes += name + '="' + attrs[name] + '" ';
 	          }
 	        }
-
 	        return '<img class="bx-smile bx-icon" ' + attributes + '>';
 	      });
 	      sendReplacement.forEach(function (value, index) {
@@ -53762,7 +53418,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          var html = '';
 	          text = text ? text : command;
 	          command = (command ? command : text).replace('<br />', '\n');
-
 	          if (!textOnly && text) {
 	            text = text.replace(/<([\w]+)[^>]*>(.*?)<\\1>/i, "$2", text);
 	            text = text.replace(/\[([\w]+)[^\]]*\](.*?)\[\/\1\]/i, "$2", text);
@@ -53771,7 +53426,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          } else {
 	            html = text;
 	          }
-
 	          return html;
 	        });
 	      });
@@ -53783,7 +53437,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          var html = '';
 	          text = text ? text : command;
 	          command = (command ? command : text).replace('<br />', '\n');
-
 	          if (!textOnly && text) {
 	            text = text.replace(/<([\w]+)[^>]*>(.*?)<\/\1>/i, "$2", text);
 	            text = text.replace(/\[([\w]+)[^\]]*\](.*?)\[\/\1\]/i, "$2", text);
@@ -53791,14 +53444,12 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          } else {
 	            html = text;
 	          }
-
 	          return html;
 	        });
 	      });
 	      codeReplacement.forEach(function (code, index) {
 	        text = text.replace('####REPLACEMENT_CODE_' + index + '####', !textOnly ? '<div class="bx-im-message-content-code">' + code + '</div>' : code);
 	      });
-
 	      if (sendReplacement.length > 0) {
 	        do {
 	          sendReplacement.forEach(function (value, index) {
@@ -53806,9 +53457,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          });
 	        } while (text.includes('####REPLACEMENT_SEND_'));
 	      }
-
 	      text = text.split('####REPLACEMENT_SP_').join('####REPLACEMENT_PUT_');
-
 	      if (putReplacement.length > 0) {
 	        do {
 	          putReplacement.forEach(function (value, index) {
@@ -53816,7 +53465,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          });
 	        } while (text.includes('####REPLACEMENT_PUT_'));
 	      }
-
 	      return text;
 	    }
 	  }, {
@@ -53825,7 +53473,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      if (element.parentNode && element.parentNode) {
 	        element.parentNode.innerHTML = '<a href="' + element.src + '" target="_blank">' + element.src + '</a>';
 	      }
-
 	      return true;
 	    }
 	  }, {
@@ -53837,22 +53484,18 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    key: "getPayloadWithTempMessages",
 	    value: function getPayloadWithTempMessages(state, payload) {
 	      var payloadData = babelHelpers.toConsumableArray(payload.data);
-
 	      if (!im_lib_utils.Utils.platform.isBitrixMobile()) {
 	        return payloadData;
 	      }
-
 	      if (!payload.data || payload.data.length <= 0) {
-	        return payloadData;
-	      } // consider that in the payload we have messages only for one chat, so we get the value from the first message.
-
-
-	      var payloadChatId = payload.data[0].chatId;
-
-	      if (!state.collection[payloadChatId]) {
 	        return payloadData;
 	      }
 
+	      // consider that in the payload we have messages only for one chat, so we get the value from the first message.
+	      var payloadChatId = payload.data[0].chatId;
+	      if (!state.collection[payloadChatId]) {
+	        return payloadData;
+	      }
 	      state.collection[payloadChatId].forEach(function (message) {
 	        if (MessagesModel.isTemporaryMessage(message) && !MessagesModel.existsInPayload(payload, message.templateId) && MessagesModel.doesTaskExist(message)) {
 	          payloadData.push(message);
@@ -53881,14 +53524,12 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        });
 	        return !!foundUploadTasks;
 	      }
-
 	      if (message.templateId) {
 	        var foundMessageTask = window.imDialogMessagesTasks.find(function (task) {
 	          return task.taskId.split('|')[1] === message.templateId;
 	        });
 	        return !!foundMessageTask;
 	      }
-
 	      return false;
 	    }
 	  }]);
@@ -53896,18 +53537,14 @@ this.BX.Messenger = this.BX.Messenger || {};
 	}(ui_vue_vuex.WidgetVuexBuilderModel);
 
 	function _createForOfIteratorHelper$1(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$1(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
-
 	function _unsupportedIterableToArray$1(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$1(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$1(o, minLen); }
-
-	function _arrayLikeToArray$1(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+	function _arrayLikeToArray$1(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i]; return arr2; }
 	var DialoguesModel = /*#__PURE__*/function (_VuexBuilderModel) {
 	  babelHelpers.inherits(DialoguesModel, _VuexBuilderModel);
-
 	  function DialoguesModel() {
 	    babelHelpers.classCallCheck(this, DialoguesModel);
 	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(DialoguesModel).apply(this, arguments));
 	  }
-
 	  babelHelpers.createClass(DialoguesModel, [{
 	    key: "getName",
 	    value: function getName() {
@@ -53990,31 +53627,26 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    key: "getGetters",
 	    value: function getGetters() {
 	      var _this = this;
-
 	      return {
 	        get: function get(state) {
 	          return function (dialogId) {
 	            if (!state.collection[dialogId]) {
 	              return null;
 	            }
-
 	            return state.collection[dialogId];
 	          };
 	        },
 	        getByChatId: function getByChatId(state) {
 	          return function (chatId) {
 	            chatId = parseInt(chatId);
-
 	            for (var dialogId in state.collection) {
 	              if (!state.collection.hasOwnProperty(dialogId)) {
 	                continue;
 	              }
-
 	              if (state.collection[dialogId].chatId === chatId) {
 	                return state.collection[dialogId];
 	              }
 	            }
-
 	            return null;
 	          };
 	        },
@@ -54028,7 +53660,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	            if (!state.collection[dialogId]) {
 	              return 0;
 	            }
-
 	            return state.collection[dialogId].quoteId;
 	          };
 	        },
@@ -54037,7 +53668,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	            if (!state.collection[dialogId]) {
 	              return 0;
 	            }
-
 	            return state.collection[dialogId].editId;
 	          };
 	        },
@@ -54046,7 +53676,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	            if (/^\d+$/.test(chatId)) {
 	              chatId = parseInt(chatId);
 	            }
-
 	            return state.saveChatList.includes(parseInt(chatId));
 	          };
 	        },
@@ -54067,7 +53696,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    key: "getActions",
 	    value: function getActions() {
 	      var _this2 = this;
-
 	      return {
 	        set: function set(store, payload) {
 	          if (payload instanceof Array) {
@@ -54087,14 +53715,12 @@ this.BX.Messenger = this.BX.Messenger || {};
 	            }));
 	            payload = result;
 	          }
-
 	          store.commit('set', payload);
 	        },
 	        update: function update(store, payload) {
 	          if (typeof store.state.collection[payload.dialogId] === 'undefined' || store.state.collection[payload.dialogId].init === false) {
 	            return true;
 	          }
-
 	          store.commit('update', {
 	            dialogId: payload.dialogId,
 	            fields: _this2.validate(Object.assign({}, payload.fields), {
@@ -54111,11 +53737,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          if (typeof store.state.collection[payload.dialogId] === 'undefined' || store.state.collection[payload.dialogId].init === false) {
 	            return true;
 	          }
-
 	          var index = store.state.collection[payload.dialogId].writingList.findIndex(function (el) {
 	            return el.userId === payload.userId;
 	          });
-
 	          if (payload.action) {
 	            if (index >= 0) {
 	              return true;
@@ -54140,7 +53764,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	              var _writingList = store.state.collection[payload.dialogId].writingList.filter(function (el) {
 	                return el.userId !== payload.userId;
 	              });
-
 	              store.commit('update', {
 	                actionName: 'updateWriting/2',
 	                dialogId: payload.dialogId,
@@ -54155,18 +53778,15 @@ this.BX.Messenger = this.BX.Messenger || {};
 	              return true;
 	            }
 	          }
-
 	          return false;
 	        },
 	        updateReaded: function updateReaded(store, payload) {
 	          if (typeof store.state.collection[payload.dialogId] === 'undefined' || store.state.collection[payload.dialogId].init === false) {
 	            return true;
 	          }
-
 	          var readedList = store.state.collection[payload.dialogId].readedList.filter(function (el) {
 	            return el.userId !== payload.userId;
 	          });
-
 	          if (payload.action) {
 	            readedList.push({
 	              userId: payload.userId,
@@ -54175,7 +53795,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	              date: payload.date || new Date()
 	            });
 	          }
-
 	          store.commit('update', {
 	            actionName: 'updateReaded',
 	            dialogId: payload.dialogId,
@@ -54189,23 +53808,17 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        },
 	        increaseCounter: function increaseCounter(store, payload) {
 	          var _store$rootState$appl;
-
 	          if (typeof store.state.collection[payload.dialogId] === 'undefined' || store.state.collection[payload.dialogId].init === false) {
 	            return true;
 	          }
-
 	          var counter = store.state.collection[payload.dialogId].counter;
-
 	          if (counter === 100) {
 	            return true;
 	          }
-
 	          var increasedCounter = counter + payload.count;
-
 	          if (increasedCounter > 100) {
 	            increasedCounter = 100;
 	          }
-
 	          var userId = (_store$rootState$appl = store.rootState.application) === null || _store$rootState$appl === void 0 ? void 0 : _store$rootState$appl.common.userId;
 	          var dialogMuted = userId && store.state.collection[payload.dialogId].muteList.includes(userId);
 	          store.commit('update', {
@@ -54223,30 +53836,21 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          if (typeof store.state.collection[payload.dialogId] === 'undefined' || store.state.collection[payload.dialogId].init === false) {
 	            return true;
 	          }
-
 	          var counter = store.state.collection[payload.dialogId].counter;
-
 	          if (counter === 100) {
 	            return true;
 	          }
-
 	          var decreasedCounter = counter - payload.count;
-
 	          if (decreasedCounter < 0) {
 	            decreasedCounter = 0;
 	          }
-
 	          var unreadId = payload.unreadId > store.state.collection[payload.dialogId].unreadId ? payload.unreadId : store.state.collection[payload.dialogId].unreadId;
-
 	          if (store.state.collection[payload.dialogId].unreadId !== unreadId || store.state.collection[payload.dialogId].counter !== decreasedCounter) {
 	            var _store$rootState$appl2;
-
 	            var previousCounter = store.state.collection[payload.dialogId].counter;
-
 	            if (decreasedCounter === 0) {
 	              unreadId = 0;
 	            }
-
 	            var userId = (_store$rootState$appl2 = store.rootState.application) === null || _store$rootState$appl2 === void 0 ? void 0 : _store$rootState$appl2.common.userId;
 	            var dialogMuted = userId && store.state.collection[payload.dialogId].muteList.includes(userId);
 	            store.commit('update', {
@@ -54260,14 +53864,12 @@ this.BX.Messenger = this.BX.Messenger || {};
 	              }
 	            });
 	          }
-
 	          return false;
 	        },
 	        increaseMessageCounter: function increaseMessageCounter(store, payload) {
 	          if (typeof store.state.collection[payload.dialogId] === 'undefined' || store.state.collection[payload.dialogId].init === false) {
 	            return true;
 	          }
-
 	          var currentCounter = store.state.collection[payload.dialogId].messageCount;
 	          store.commit('update', {
 	            actionName: 'increaseMessageCount',
@@ -54281,7 +53883,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          if (typeof store.state.collection[payload.dialogId] === 'undefined' || store.state.collection[payload.dialogId].init === false) {
 	            return true;
 	          }
-
 	          store.commit('saveDialog', {
 	            dialogId: payload.dialogId,
 	            chatId: payload.chatId
@@ -54294,7 +53895,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    key: "getMutations",
 	    value: function getMutations() {
 	      var _this3 = this;
-
 	      return {
 	        initCollection: function initCollection(state, payload) {
 	          _this3.initCollection(state, payload);
@@ -54304,59 +53904,53 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          if (!(payload.chatId > 0 && payload.dialogId.length > 0)) {
 	            return false;
 	          }
-
 	          var saveDialogList = state.saveDialogList.filter(function (element) {
 	            return element !== payload.dialogId;
 	          });
 	          saveDialogList.unshift(payload.dialogId);
 	          saveDialogList = saveDialogList.slice(0, im_const.StorageLimit.dialogues);
-
 	          if (state.saveDialogList.join(',') === saveDialogList.join(',')) {
 	            return true;
 	          }
-
 	          state.saveDialogList = saveDialogList;
 	          var saveChatList = state.saveChatList.filter(function (element) {
 	            return element !== payload.chatId;
 	          });
 	          saveChatList.unshift(payload.chatId);
 	          state.saveChatList = saveChatList.slice(0, im_const.StorageLimit.dialogues);
-
 	          _this3.saveState(state);
 	        },
 	        set: function set(state, payload) {
 	          var _iterator = _createForOfIteratorHelper$1(payload),
-	              _step;
-
+	            _step;
 	          try {
 	            for (_iterator.s(); !(_step = _iterator.n()).done;) {
 	              var element = _step.value;
-
 	              _this3.initCollection(state, {
 	                dialogId: element.dialogId
 	              });
-
 	              state.collection[element.dialogId] = Object.assign(_this3.getElementState(), state.collection[element.dialogId], element);
-	            } // TODO if payload.dialogId is IMOL, skip update cache
+	            }
 
+	            // TODO if payload.dialogId is IMOL, skip update cache
 	          } catch (err) {
 	            _iterator.e(err);
 	          } finally {
 	            _iterator.f();
 	          }
-
 	          _this3.saveState(state);
 	        },
 	        update: function update(state, payload) {
 	          _this3.initCollection(state, payload);
+	          state.collection[payload.dialogId] = Object.assign(state.collection[payload.dialogId], payload.fields);
 
-	          state.collection[payload.dialogId] = Object.assign(state.collection[payload.dialogId], payload.fields); // TODO if payload.dialogId is IMOL, skip update cache
-
+	          // TODO if payload.dialogId is IMOL, skip update cache
 	          _this3.saveState(state);
 	        },
 	        "delete": function _delete(state, payload) {
-	          delete state.collection[payload.dialogId]; // TODO if payload.dialogId is IMOL, skip update cache
+	          delete state.collection[payload.dialogId];
 
+	          // TODO if payload.dialogId is IMOL, skip update cache
 	          _this3.saveState(state);
 	        }
 	      };
@@ -54367,15 +53961,12 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      if (typeof state.collection[payload.dialogId] !== 'undefined') {
 	        return true;
 	      }
-
 	      ui_vue.WidgetVue.set(state.collection, payload.dialogId, this.getElementState());
-
 	      if (payload.fields) {
 	        state.collection[payload.dialogId] = Object.assign(state.collection[payload.dialogId], this.validate(Object.assign({}, payload.fields), {
 	          host: state.host
 	        }));
 	      }
-
 	      return true;
 	    }
 	  }, {
@@ -54387,13 +53978,10 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    key: "saveState",
 	    value: function saveState() {
 	      var _this4 = this;
-
 	      var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-
 	      if (!this.isSaveAvailable()) {
 	        return true;
 	      }
-
 	      babelHelpers.get(babelHelpers.getPrototypeOf(DialoguesModel.prototype), "saveState", this).call(this, function () {
 	        var storedState = {
 	          collection: {},
@@ -54413,96 +54001,73 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 	      var result = {};
 	      options.host = options.host || this.getState().host;
-
 	      if (typeof fields.dialog_id !== 'undefined') {
 	        fields.dialogId = fields.dialog_id;
 	      }
-
 	      if (typeof fields.dialogId === "number" || typeof fields.dialogId === "string") {
 	        result.dialogId = fields.dialogId.toString();
 	      }
-
 	      if (typeof fields.chat_id !== 'undefined') {
 	        fields.chatId = fields.chat_id;
 	      } else if (typeof fields.id !== 'undefined') {
 	        fields.chatId = fields.id;
 	      }
-
 	      if (typeof fields.chatId === "number" || typeof fields.chatId === "string") {
 	        result.chatId = parseInt(fields.chatId);
 	      }
-
 	      if (typeof fields.quoteId === "number") {
 	        result.quoteId = parseInt(fields.quoteId);
 	      }
-
 	      if (typeof fields.editId === "number") {
 	        result.editId = parseInt(fields.editId);
 	      }
-
 	      if (typeof fields.counter === "number" || typeof fields.counter === "string") {
 	        result.counter = parseInt(fields.counter);
 	      }
-
 	      if (typeof fields.user_counter === "number" || typeof fields.user_counter === "string") {
 	        result.userCounter = parseInt(fields.user_counter);
 	      }
-
 	      if (typeof fields.userCounter === "number" || typeof fields.userCounter === "string") {
 	        result.userCounter = parseInt(fields.userCounter);
 	      }
-
 	      if (typeof fields.message_count === "number" || typeof fields.message_count === "string") {
 	        result.messageCount = parseInt(fields.message_count);
 	      }
-
 	      if (typeof fields.messageCount === "number" || typeof fields.messageCount === "string") {
 	        result.messageCount = parseInt(fields.messageCount);
 	      }
-
 	      if (typeof fields.unread_id !== 'undefined') {
 	        fields.unreadId = fields.unread_id;
 	      }
-
 	      if (typeof fields.unreadId === "number" || typeof fields.unreadId === "string") {
 	        result.unreadId = parseInt(fields.unreadId);
 	      }
-
 	      if (typeof fields.last_message_id !== 'undefined') {
 	        fields.lastMessageId = fields.last_message_id;
 	      }
-
 	      if (typeof fields.lastMessageId === "number" || typeof fields.lastMessageId === "string") {
 	        result.lastMessageId = parseInt(fields.lastMessageId);
 	      }
-
 	      if (typeof fields.readed_list !== 'undefined') {
 	        fields.readedList = fields.readed_list;
 	      }
-
 	      if (typeof fields.readedList !== 'undefined') {
 	        result.readedList = [];
-
 	        if (fields.readedList instanceof Array) {
 	          fields.readedList.forEach(function (element) {
 	            var record = {};
-
 	            if (typeof element.user_id !== 'undefined') {
 	              element.userId = element.user_id;
 	            }
-
 	            if (typeof element.user_name !== 'undefined') {
 	              element.userName = element.user_name;
 	            }
-
 	            if (typeof element.message_id !== 'undefined') {
 	              element.messageId = element.message_id;
 	            }
-
 	            if (!element.userId || !element.userName || !element.messageId) {
 	              return false;
 	            }
-
 	            record.userId = parseInt(element.userId);
 	            record.userName = element.userName.toString();
 	            record.messageId = parseInt(element.messageId);
@@ -54511,58 +54076,45 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          });
 	        }
 	      }
-
 	      if (typeof fields.writing_list !== 'undefined') {
 	        fields.writingList = fields.writing_list;
 	      }
-
 	      if (typeof fields.writingList !== 'undefined') {
 	        result.writingList = [];
-
 	        if (fields.writingList instanceof Array) {
 	          fields.writingList.forEach(function (element) {
 	            var record = {};
-
 	            if (!element.userId) {
 	              return false;
 	            }
-
 	            record.userId = parseInt(element.userId);
 	            record.userName = im_lib_utils.Utils.text.htmlspecialcharsback(element.userName);
 	            result.writingList.push(record);
 	          });
 	        }
 	      }
-
 	      if (typeof fields.manager_list !== 'undefined') {
 	        fields.managerList = fields.manager_list;
 	      }
-
 	      if (typeof fields.managerList !== 'undefined') {
 	        result.managerList = [];
-
 	        if (fields.managerList instanceof Array) {
 	          fields.managerList.forEach(function (userId) {
 	            userId = parseInt(userId);
-
 	            if (userId > 0) {
 	              result.managerList.push(userId);
 	            }
 	          });
 	        }
 	      }
-
 	      if (typeof fields.mute_list !== 'undefined') {
 	        fields.muteList = fields.mute_list;
 	      }
-
 	      if (typeof fields.muteList !== 'undefined') {
 	        result.muteList = [];
-
 	        if (fields.muteList instanceof Array) {
 	          fields.muteList.forEach(function (userId) {
 	            userId = parseInt(userId);
-
 	            if (userId > 0) {
 	              result.muteList.push(userId);
 	            }
@@ -54571,7 +54123,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          Object.entries(fields.muteList).forEach(function (entry) {
 	            if (entry[1] === true) {
 	              var userId = parseInt(entry[0]);
-
 	              if (userId > 0) {
 	                result.muteList.push(userId);
 	              }
@@ -54579,34 +54130,26 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          });
 	        }
 	      }
-
 	      if (typeof fields.textareaMessage !== 'undefined') {
 	        result.textareaMessage = fields.textareaMessage.toString();
 	      }
-
 	      if (typeof fields.title !== 'undefined') {
 	        fields.name = fields.title;
 	      }
-
 	      if (typeof fields.name === "string" || typeof fields.name === "number") {
 	        result.name = im_lib_utils.Utils.text.htmlspecialcharsback(fields.name.toString());
 	      }
-
 	      if (typeof fields.owner !== 'undefined') {
 	        fields.ownerId = fields.owner;
 	      }
-
 	      if (typeof fields.ownerId === "number" || typeof fields.ownerId === "string") {
 	        result.ownerId = parseInt(fields.ownerId);
 	      }
-
 	      if (typeof fields.extranet === "boolean") {
 	        result.extranet = fields.extranet;
 	      }
-
 	      if (typeof fields.avatar === 'string') {
 	        var avatar;
-
 	        if (!fields.avatar || fields.avatar.endsWith('/js/im/images/blank.gif')) {
 	          avatar = '';
 	        } else if (fields.avatar.startsWith('http')) {
@@ -54614,124 +54157,94 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        } else {
 	          avatar = options.host + fields.avatar;
 	        }
-
 	        if (avatar) {
 	          result.avatar = encodeURI(avatar);
 	        }
 	      }
-
 	      if (typeof fields.color === "string") {
 	        result.color = fields.color.toString();
 	      }
-
 	      if (typeof fields.type === "string") {
 	        result.type = fields.type.toString();
 	      }
-
 	      if (typeof fields.entity_type !== 'undefined') {
 	        fields.entityType = fields.entity_type;
 	      }
-
 	      if (typeof fields.entityType === "string") {
 	        result.entityType = fields.entityType.toString();
 	      }
-
 	      if (typeof fields.entity_id !== 'undefined') {
 	        fields.entityId = fields.entity_id;
 	      }
-
 	      if (typeof fields.entityId === "string" || typeof fields.entityId === "number") {
 	        result.entityId = fields.entityId.toString();
 	      }
-
 	      if (typeof fields.entity_data_1 !== 'undefined') {
 	        fields.entityData1 = fields.entity_data_1;
 	      }
-
 	      if (typeof fields.entityData1 === "string") {
 	        result.entityData1 = fields.entityData1.toString();
 	      }
-
 	      if (typeof fields.entity_data_2 !== 'undefined') {
 	        fields.entityData2 = fields.entity_data_2;
 	      }
-
 	      if (typeof fields.entityData2 === "string") {
 	        result.entityData2 = fields.entityData2.toString();
 	      }
-
 	      if (typeof fields.entity_data_3 !== 'undefined') {
 	        fields.entityData3 = fields.entity_data_3;
 	      }
-
 	      if (typeof fields.entityData3 === "string") {
 	        result.entityData3 = fields.entityData3.toString();
 	      }
-
 	      if (typeof fields.date_create !== 'undefined') {
 	        fields.dateCreate = fields.date_create;
 	      }
-
 	      if (typeof fields.dateCreate !== "undefined") {
 	        result.dateCreate = im_lib_utils.Utils.date.cast(fields.dateCreate);
 	      }
-
 	      if (typeof fields.dateLastOpen !== "undefined") {
 	        result.dateLastOpen = im_lib_utils.Utils.date.cast(fields.dateLastOpen);
 	      }
-
 	      if (babelHelpers["typeof"](fields.restrictions) === 'object' && fields.restrictions) {
 	        result.restrictions = {};
-
 	        if (typeof fields.restrictions.avatar === 'boolean') {
 	          result.restrictions.avatar = fields.restrictions.avatar;
 	        }
-
 	        if (typeof fields.restrictions.extend === 'boolean') {
 	          result.restrictions.extend = fields.restrictions.extend;
 	        }
-
 	        if (typeof fields.restrictions.leave === 'boolean') {
 	          result.restrictions.leave = fields.restrictions.leave;
 	        }
-
 	        if (typeof fields.restrictions.leave_owner === 'boolean') {
 	          result.restrictions.leaveOwner = fields.restrictions.leave_owner;
 	        }
-
 	        if (typeof fields.restrictions.rename === 'boolean') {
 	          result.restrictions.rename = fields.restrictions.rename;
 	        }
-
 	        if (typeof fields.restrictions.send === 'boolean') {
 	          result.restrictions.send = fields.restrictions.send;
 	        }
-
 	        if (typeof fields.restrictions.user_list === 'boolean') {
 	          result.restrictions.userList = fields.restrictions.user_list;
 	        }
-
 	        if (typeof fields.restrictions.mute === 'boolean') {
 	          result.restrictions.mute = fields.restrictions.mute;
 	        }
-
 	        if (typeof fields.restrictions.call === 'boolean') {
 	          result.restrictions.call = fields.restrictions.call;
 	        }
 	      }
-
 	      if (babelHelpers["typeof"](fields["public"]) === 'object' && fields["public"]) {
 	        result["public"] = {};
-
 	        if (typeof fields["public"].code === 'string') {
 	          result["public"].code = fields["public"].code;
 	        }
-
 	        if (typeof fields["public"].link === 'string') {
 	          result["public"].link = fields["public"].link;
 	        }
 	      }
-
 	      return result;
 	    }
 	  }]);
@@ -54739,18 +54252,14 @@ this.BX.Messenger = this.BX.Messenger || {};
 	}(ui_vue_vuex.WidgetVuexBuilderModel);
 
 	function _createForOfIteratorHelper$2(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$2(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
-
 	function _unsupportedIterableToArray$2(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$2(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$2(o, minLen); }
-
-	function _arrayLikeToArray$2(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+	function _arrayLikeToArray$2(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i]; return arr2; }
 	var UsersModel = /*#__PURE__*/function (_VuexBuilderModel) {
 	  babelHelpers.inherits(UsersModel, _VuexBuilderModel);
-
 	  function UsersModel() {
 	    babelHelpers.classCallCheck(this, UsersModel);
 	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(UsersModel).apply(this, arguments));
 	  }
-
 	  babelHelpers.createClass(UsersModel, [{
 	    key: "getName",
 	    value: function getName() {
@@ -54773,13 +54282,13 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    value: function getElementState() {
 	      var params = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 	      var _params$id = params.id,
-	          id = _params$id === void 0 ? 0 : _params$id,
-	          _params$name = params.name,
-	          name = _params$name === void 0 ? this.getVariable('default.name', '') : _params$name,
-	          _params$firstName = params.firstName,
-	          firstName = _params$firstName === void 0 ? this.getVariable('default.name', '') : _params$firstName,
-	          _params$lastName = params.lastName,
-	          lastName = _params$lastName === void 0 ? '' : _params$lastName;
+	        id = _params$id === void 0 ? 0 : _params$id,
+	        _params$name = params.name,
+	        name = _params$name === void 0 ? this.getVariable('default.name', '') : _params$name,
+	        _params$firstName = params.firstName,
+	        firstName = _params$firstName === void 0 ? this.getVariable('default.name', '') : _params$firstName,
+	        _params$lastName = params.lastName,
+	        lastName = _params$lastName === void 0 ? '' : _params$lastName;
 	      return {
 	        id: id,
 	        name: name,
@@ -54818,13 +54327,11 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    key: "getGetters",
 	    value: function getGetters() {
 	      var _this = this;
-
 	      return {
 	        get: function get(state) {
 	          return function (userId) {
 	            var getTemporary = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
 	            userId = parseInt(userId);
-
 	            if (userId <= 0) {
 	              if (getTemporary) {
 	                userId = 0;
@@ -54832,17 +54339,14 @@ this.BX.Messenger = this.BX.Messenger || {};
 	                return null;
 	              }
 	            }
-
 	            if (!getTemporary && (!state.collection[userId] || !state.collection[userId].init)) {
 	              return null;
 	            }
-
 	            if (!state.collection[userId]) {
 	              return _this.getElementState({
 	                id: userId
 	              });
 	            }
-
 	            return state.collection[userId];
 	          };
 	        },
@@ -54854,11 +54358,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        getList: function getList(state) {
 	          return function (userList) {
 	            var result = [];
-
 	            if (!Array.isArray(userList)) {
 	              return null;
 	            }
-
 	            userList.forEach(function (id) {
 	              if (state.collection[id]) {
 	                result.push(state.collection[id]);
@@ -54877,7 +54379,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    key: "getActions",
 	    value: function getActions() {
 	      var _this2 = this;
-
 	      return {
 	        set: function set(store, payload) {
 	          if (payload instanceof Array) {
@@ -54897,16 +54398,13 @@ this.BX.Messenger = this.BX.Messenger || {};
 	            }));
 	            payload = result;
 	          }
-
 	          store.commit('set', payload);
 	        },
 	        update: function update(store, payload) {
 	          payload.id = parseInt(payload.id);
-
 	          if (typeof store.state.collection[payload.id] === 'undefined' || store.state.collection[payload.id].init === false) {
 	            return true;
 	          }
-
 	          store.commit('update', {
 	            id: payload.id,
 	            fields: _this2.validate(Object.assign({}, payload.fields), {
@@ -54929,59 +54427,42 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    key: "getMutations",
 	    value: function getMutations() {
 	      var _this3 = this;
-
 	      return {
 	        set: function set(state, payload) {
 	          var _iterator = _createForOfIteratorHelper$2(payload),
-	              _step;
-
+	            _step;
 	          try {
 	            var _loop = function _loop() {
 	              var element = _step.value;
-
 	              _this3.initCollection(state, {
 	                id: element.id
 	              });
-
 	              state.collection[element.id] = Object.assign(state.collection[element.id], element);
 	              var status = im_lib_utils.Utils.user.getOnlineStatus(element);
-
 	              if (status.isOnline) {
 	                state.collection[element.id].isOnline = true;
-
 	                _this3.addToOnlineList(state, element.id);
 	              }
-
 	              var mobileStatus = im_lib_utils.Utils.user.isMobileActive(element);
-
 	              if (mobileStatus) {
 	                state.collection[element.id].isMobileOnline = true;
-
 	                _this3.addToMobileOnlineList(state, element.id);
 	              }
-
 	              if (element.birthday) {
 	                var today = im_lib_utils.Utils.date.format(new Date(), "d-m");
-
 	                if (element.birthday === today) {
 	                  state.collection[element.id].isBirthday = true;
-
 	                  var timeToNextMidnight = _this3.getTimeToNextMidnight();
-
 	                  setTimeout(function () {
 	                    state.collection[element.id].isBirthday = false;
 	                  }, timeToNextMidnight);
 	                }
 	              }
-
 	              if (element.absent) {
 	                element.isAbsent = true;
-
 	                if (!state.absentList.includes(element.id)) {
 	                  _this3.addToAbsentList(state, element.id);
-
 	                  var _timeToNextMidnight = _this3.getTimeToNextMidnight();
-
 	                  var timeToNextDay = 1000 * 60 * 60 * 24;
 	                  setTimeout(function () {
 	                    setInterval(function () {
@@ -54990,10 +54471,8 @@ this.BX.Messenger = this.BX.Messenger || {};
 	                  }, _timeToNextMidnight);
 	                }
 	              }
-
 	              _this3.saveState(state);
 	            };
-
 	            for (_iterator.s(); !(_step = _iterator.n()).done;) {
 	              _loop();
 	            }
@@ -55005,39 +54484,29 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        },
 	        update: function update(state, payload) {
 	          _this3.initCollection(state, payload);
-
 	          if (typeof payload.fields.lastActivityDate !== 'undefined' && state.collection[payload.id].lastActivityDate) {
 	            var lastActivityDate = state.collection[payload.id].lastActivityDate.getTime();
 	            var newActivityDate = payload.fields.lastActivityDate.getTime();
-
 	            if (newActivityDate > lastActivityDate) {
 	              var status = im_lib_utils.Utils.user.getOnlineStatus(payload.fields);
-
 	              if (status.isOnline) {
 	                state.collection[payload.id].isOnline = true;
-
 	                _this3.addToOnlineList(state, payload.fields.id);
 	              }
 	            }
 	          }
-
 	          if (typeof payload.fields.mobileLastDate !== 'undefined' && state.collection[payload.id].mobileLastDate !== payload.fields.mobileLastDate) {
 	            var mobileStatus = im_lib_utils.Utils.user.isMobileActive(payload.fields);
-
 	            if (mobileStatus) {
 	              state.collection[payload.id].isMobileOnline = true;
-
 	              _this3.addToMobileOnlineList(state, payload.fields.id);
 	            }
 	          }
-
 	          state.collection[payload.id] = Object.assign(state.collection[payload.id], payload.fields);
-
 	          _this3.saveState(state);
 	        },
 	        "delete": function _delete(state, payload) {
 	          delete state.collection[payload.id];
-
 	          _this3.saveState(state);
 	        },
 	        saveState: function saveState(state, payload) {
@@ -55051,7 +54520,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      if (typeof state.collection[payload.id] !== 'undefined') {
 	        return true;
 	      }
-
 	      ui_vue.WidgetVue.set(state.collection, payload.id, this.getElementState());
 	      return true;
 	    }
@@ -55061,17 +54529,13 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      if (!this.db) {
 	        return [];
 	      }
-
 	      if (!this.store.getters['messages/getSaveUserList']) {
 	        return [];
 	      }
-
 	      var list = this.store.getters['messages/getSaveUserList']();
-
 	      if (!list) {
 	        return [];
 	      }
-
 	      return list;
 	    }
 	  }, {
@@ -55083,18 +54547,14 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    key: "saveState",
 	    value: function saveState(state) {
 	      var _this4 = this;
-
 	      if (!this.isSaveAvailable()) {
 	        return false;
 	      }
-
 	      babelHelpers.get(babelHelpers.getPrototypeOf(UsersModel.prototype), "saveState", this).call(this, function () {
 	        var list = _this4.getSaveUserList();
-
 	        if (!list) {
 	          return false;
 	        }
-
 	        var storedState = {
 	          collection: {}
 	        };
@@ -55104,21 +54564,17 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          mobileLastDate: true,
 	          lastActivityDate: true
 	        };
-
 	        for (var chatId in list) {
 	          if (!list.hasOwnProperty(chatId)) {
 	            continue;
 	          }
-
 	          list[chatId].forEach(function (userId) {
 	            if (!state.collection[userId]) {
 	              return false;
 	            }
-
 	            storedState.collection[userId] = _this4.cloneState(state.collection[userId], exceptionList);
 	          });
 	        }
-
 	        return storedState;
 	      });
 	    }
@@ -55128,47 +54584,36 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 	      var result = {};
 	      options.host = options.host || this.getState().host;
-
 	      if (typeof fields.id === "number" || typeof fields.id === "string") {
 	        result.id = parseInt(fields.id);
 	      }
-
 	      if (typeof fields.first_name !== "undefined") {
 	        fields.firstName = im_lib_utils.Utils.text.htmlspecialcharsback(fields.first_name);
 	      }
-
 	      if (typeof fields.last_name !== "undefined") {
 	        fields.lastName = im_lib_utils.Utils.text.htmlspecialcharsback(fields.last_name);
 	      }
-
 	      if (typeof fields.name === "string" || typeof fields.name === "number") {
 	        fields.name = im_lib_utils.Utils.text.htmlspecialcharsback(fields.name.toString());
 	        result.name = fields.name;
 	      }
-
 	      if (typeof fields.firstName === "string" || typeof fields.firstName === "number") {
 	        result.firstName = im_lib_utils.Utils.text.htmlspecialcharsback(fields.firstName.toString());
 	      }
-
 	      if (typeof fields.lastName === "string" || typeof fields.lastName === "number") {
 	        result.lastName = im_lib_utils.Utils.text.htmlspecialcharsback(fields.lastName.toString());
 	      }
-
 	      if (typeof fields.work_position !== "undefined") {
 	        fields.workPosition = fields.work_position;
 	      }
-
 	      if (typeof fields.workPosition === "string" || typeof fields.workPosition === "number") {
 	        result.workPosition = fields.workPosition.toString();
 	      }
-
 	      if (typeof fields.color === "string") {
 	        result.color = fields.color;
 	      }
-
 	      if (typeof fields.avatar === 'string') {
 	        var avatar;
-
 	        if (!fields.avatar || fields.avatar.endsWith('/js/im/images/blank.gif')) {
 	          avatar = '';
 	        } else if (fields.avatar.startsWith('http')) {
@@ -55176,122 +54621,93 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        } else {
 	          avatar = options.host + fields.avatar;
 	        }
-
 	        if (avatar) {
 	          result.avatar = encodeURI(avatar);
 	        }
 	      }
-
 	      if (typeof fields.gender !== 'undefined') {
 	        result.gender = fields.gender === 'F' ? 'F' : 'M';
 	      }
-
 	      if (typeof fields.birthday === "string") {
 	        result.birthday = fields.birthday;
 	      }
-
 	      if (typeof fields.extranet === "boolean") {
 	        result.extranet = fields.extranet;
 	      }
-
 	      if (typeof fields.network === "boolean") {
 	        result.network = fields.network;
 	      }
-
 	      if (typeof fields.bot === "boolean") {
 	        result.bot = fields.bot;
 	      }
-
 	      if (typeof fields.connector === "boolean") {
 	        result.connector = fields.connector;
 	      }
-
 	      if (typeof fields.external_auth_id !== "undefined") {
 	        fields.externalAuthId = fields.external_auth_id;
 	      }
-
 	      if (typeof fields.externalAuthId === "string" && fields.externalAuthId) {
 	        result.externalAuthId = fields.externalAuthId;
 	      }
-
 	      if (typeof fields.status === "string") {
 	        result.status = fields.status;
 	      }
-
 	      if (typeof fields.idle !== "undefined") {
 	        result.idle = im_lib_utils.Utils.date.cast(fields.idle, false);
 	      }
-
 	      if (typeof fields.last_activity_date !== "undefined") {
 	        fields.lastActivityDate = fields.last_activity_date;
 	      }
-
 	      if (typeof fields.lastActivityDate !== "undefined") {
 	        result.lastActivityDate = im_lib_utils.Utils.date.cast(fields.lastActivityDate, false);
 	      }
-
 	      if (typeof fields.mobile_last_date !== "undefined") {
 	        fields.mobileLastDate = fields.mobile_last_date;
 	      }
-
 	      if (typeof fields.mobileLastDate !== "undefined") {
 	        result.mobileLastDate = im_lib_utils.Utils.date.cast(fields.mobileLastDate, false);
 	      }
-
 	      if (typeof fields.absent !== "undefined") {
 	        result.absent = im_lib_utils.Utils.date.cast(fields.absent, false);
 	      }
-
 	      if (typeof fields.departments !== 'undefined') {
 	        result.departments = [];
-
 	        if (fields.departments instanceof Array) {
 	          fields.departments.forEach(function (departmentId) {
 	            departmentId = parseInt(departmentId);
-
 	            if (departmentId > 0) {
 	              result.departments.push(departmentId);
 	            }
 	          });
 	        }
 	      }
-
 	      if (babelHelpers["typeof"](fields.phones) === 'object' && fields.phones) {
 	        result.phones = {};
-
 	        if (typeof fields.phones.work_phone !== "undefined") {
 	          fields.phones.workPhone = fields.phones.work_phone;
 	        }
-
 	        if (typeof fields.phones.workPhone === 'string' || typeof fields.phones.workPhone === 'number') {
 	          result.phones.workPhone = fields.phones.workPhone.toString();
 	        }
-
 	        if (typeof fields.phones.personal_mobile !== "undefined") {
 	          fields.phones.personalMobile = fields.phones.personal_mobile;
 	        }
-
 	        if (typeof fields.phones.personalMobile === 'string' || typeof fields.phones.personalMobile === 'number') {
 	          result.phones.personalMobile = fields.phones.personalMobile.toString();
 	        }
-
 	        if (typeof fields.phones.personal_phone !== "undefined") {
 	          fields.phones.personalPhone = fields.phones.personal_phone;
 	        }
-
 	        if (typeof fields.phones.personalPhone === 'string' || typeof fields.phones.personalPhone === 'number') {
 	          result.phones.personalPhone = fields.phones.personalPhone.toString();
 	        }
-
 	        if (typeof fields.phones.inner_phone !== "undefined") {
 	          fields.phones.innerPhone = fields.phones.inner_phone;
 	        }
-
 	        if (typeof fields.phones.innerPhone === 'string' || typeof fields.phones.innerPhone === 'number') {
 	          result.phones.innerPhone = fields.phones.innerPhone.toString();
 	        }
 	      }
-
 	      return result;
 	    }
 	  }, {
@@ -55325,20 +54741,16 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    key: "startAbsentCheckInterval",
 	    value: function startAbsentCheckInterval(state) {
 	      var _iterator2 = _createForOfIteratorHelper$2(state.absentList),
-	          _step2;
-
+	        _step2;
 	      try {
 	        var _loop2 = function _loop2() {
 	          var userId = _step2.value;
 	          var user = state.collection[userId];
-
 	          if (!user) {
 	            return "continue";
 	          }
-
 	          var currentTime = new Date().getTime();
 	          var absentEnd = new Date(state.collection[userId].absent).getTime();
-
 	          if (absentEnd <= currentTime) {
 	            state.absentList = state.absentList.filter(function (element) {
 	              return element !== userId;
@@ -55346,10 +54758,8 @@ this.BX.Messenger = this.BX.Messenger || {};
 	            user.isAbsent = false;
 	          }
 	        };
-
 	        for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
 	          var _ret = _loop2();
-
 	          if (_ret === "continue") continue;
 	        }
 	      } catch (err) {
@@ -55362,23 +54772,18 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    key: "startOnlineCheckInterval",
 	    value: function startOnlineCheckInterval() {
 	      var _this5 = this;
-
 	      var intervalTime = 60000;
 	      setInterval(function () {
 	        var _iterator3 = _createForOfIteratorHelper$2(_this5.store.state.users.onlineList),
-	            _step3;
-
+	          _step3;
 	        try {
 	          var _loop3 = function _loop3() {
 	            var userId = _step3.value;
 	            var user = _this5.store.state.users.collection[userId];
-
 	            if (!user) {
 	              return "continue";
 	            }
-
 	            var status = im_lib_utils.Utils.user.getOnlineStatus(user);
-
 	            if (status.isOnline) {
 	              user.isOnline = true;
 	            } else {
@@ -55388,10 +54793,8 @@ this.BX.Messenger = this.BX.Messenger || {};
 	              });
 	            }
 	          };
-
 	          for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
 	            var _ret2 = _loop3();
-
 	            if (_ret2 === "continue") continue;
 	          }
 	        } catch (err) {
@@ -55399,21 +54802,16 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        } finally {
 	          _iterator3.f();
 	        }
-
 	        var _iterator4 = _createForOfIteratorHelper$2(_this5.store.state.users.mobileOnlineList),
-	            _step4;
-
+	          _step4;
 	        try {
 	          var _loop4 = function _loop4() {
 	            var userId = _step4.value;
 	            var user = _this5.store.state.users.collection[userId];
-
 	            if (!user) {
 	              return "continue";
 	            }
-
 	            var mobileStatus = im_lib_utils.Utils.user.isMobileActive(user);
-
 	            if (mobileStatus) {
 	              user.isMobileOnline = true;
 	            } else {
@@ -55423,10 +54821,8 @@ this.BX.Messenger = this.BX.Messenger || {};
 	              });
 	            }
 	          };
-
 	          for (_iterator4.s(); !(_step4 = _iterator4.n()).done;) {
 	            var _ret3 = _loop4();
-
 	            if (_ret3 === "continue") continue;
 	          }
 	        } catch (err) {
@@ -55441,18 +54837,14 @@ this.BX.Messenger = this.BX.Messenger || {};
 	}(ui_vue_vuex.WidgetVuexBuilderModel);
 
 	function _createForOfIteratorHelper$3(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$3(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
-
 	function _unsupportedIterableToArray$3(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$3(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$3(o, minLen); }
-
-	function _arrayLikeToArray$3(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+	function _arrayLikeToArray$3(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i]; return arr2; }
 	var FilesModel = /*#__PURE__*/function (_VuexBuilderModel) {
 	  babelHelpers.inherits(FilesModel, _VuexBuilderModel);
-
 	  function FilesModel() {
 	    babelHelpers.classCallCheck(this, FilesModel);
 	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(FilesModel).apply(this, arguments));
 	  }
-
 	  babelHelpers.createClass(FilesModel, [{
 	    key: "getName",
 	    value: function getName() {
@@ -55473,11 +54865,11 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    value: function getElementState() {
 	      var params = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 	      var _params$id = params.id,
-	          id = _params$id === void 0 ? 0 : _params$id,
-	          _params$chatId = params.chatId,
-	          chatId = _params$chatId === void 0 ? 0 : _params$chatId,
-	          _params$name = params.name,
-	          name = _params$name === void 0 ? this.getVariable('default.name', '') : _params$name;
+	        id = _params$id === void 0 ? 0 : _params$id,
+	        _params$chatId = params.chatId,
+	        chatId = _params$chatId === void 0 ? 0 : _params$chatId,
+	        _params$name = params.name,
+	        name = _params$name === void 0 ? this.getVariable('default.name', '') : _params$name;
 	      return {
 	        id: id,
 	        chatId: chatId,
@@ -55504,24 +54896,19 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    key: "getGetters",
 	    value: function getGetters() {
 	      var _this = this;
-
 	      return {
 	        get: function get(state) {
 	          return function (chatId, fileId) {
 	            var getTemporary = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
-
 	            if (!chatId || !fileId) {
 	              return null;
 	            }
-
 	            if (!state.index[chatId] || !state.index[chatId][fileId]) {
 	              return null;
 	            }
-
 	            if (!getTemporary && !state.index[chatId][fileId].init) {
 	              return null;
 	            }
-
 	            return state.index[chatId][fileId];
 	          };
 	        },
@@ -55530,7 +54917,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	            if (!state.index[chatId]) {
 	              return null;
 	            }
-
 	            return state.index[chatId];
 	          };
 	        },
@@ -55545,19 +54931,16 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    key: "getActions",
 	    value: function getActions() {
 	      var _this2 = this;
-
 	      return {
 	        add: function add(store, payload) {
 	          var result = _this2.validate(Object.assign({}, payload), {
 	            host: store.state.host
 	          });
-
 	          if (payload.id) {
 	            result.id = payload.id;
 	          } else {
 	            result.id = 'temporary' + new Date().getTime() + store.state.created;
 	          }
-
 	          result.templateId = result.id;
 	          result.init = true;
 	          store.commit('add', Object.assign({}, _this2.getElementState(), result));
@@ -55569,7 +54952,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	              var result = _this2.validate(Object.assign({}, file), {
 	                host: store.state.host
 	              });
-
 	              result.templateId = result.id;
 	              return Object.assign({}, _this2.getElementState(), result, {
 	                init: true
@@ -55579,14 +54961,12 @@ this.BX.Messenger = this.BX.Messenger || {};
 	            var result = _this2.validate(Object.assign({}, payload), {
 	              host: store.state.host
 	            });
-
 	            result.templateId = result.id;
 	            payload = [];
 	            payload.push(Object.assign({}, _this2.getElementState(), result, {
 	              init: true
 	            }));
 	          }
-
 	          store.commit('set', {
 	            insertType: im_const.MutationType.setAfter,
 	            data: payload
@@ -55598,7 +54978,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	              var result = _this2.validate(Object.assign({}, file), {
 	                host: store.state.host
 	              });
-
 	              result.templateId = result.id;
 	              return Object.assign({}, _this2.getElementState(), result, {
 	                init: true
@@ -55608,14 +54987,12 @@ this.BX.Messenger = this.BX.Messenger || {};
 	            var result = _this2.validate(Object.assign({}, payload), {
 	              host: store.state.host
 	            });
-
 	            result.templateId = result.id;
 	            payload = [];
 	            payload.push(Object.assign({}, _this2.getElementState(), result, {
 	              init: true
 	            }));
 	          }
-
 	          store.commit('set', {
 	            actionName: 'setBefore',
 	            insertType: im_const.MutationType.setBefore,
@@ -55626,25 +55003,21 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          var result = _this2.validate(Object.assign({}, payload.fields), {
 	            host: store.state.host
 	          });
-
 	          store.commit('initCollection', {
 	            chatId: payload.chatId
 	          });
 	          var index = store.state.collection[payload.chatId].findIndex(function (el) {
 	            return el.id === payload.id;
 	          });
-
 	          if (index < 0) {
 	            return false;
 	          }
-
 	          store.commit('update', {
 	            id: payload.id,
 	            chatId: payload.chatId,
 	            index: index,
 	            fields: result
 	          });
-
 	          if (payload.fields.blink) {
 	            setTimeout(function () {
 	              store.commit('update', {
@@ -55656,7 +55029,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	              });
 	            }, 1000);
 	          }
-
 	          return true;
 	        },
 	        "delete": function _delete(store, payload) {
@@ -55676,36 +55048,29 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    key: "getMutations",
 	    value: function getMutations() {
 	      var _this3 = this;
-
 	      return {
 	        initCollection: function initCollection(state, payload) {
 	          _this3.initCollection(state, payload);
 	        },
 	        add: function add(state, payload) {
 	          _this3.initCollection(state, payload);
-
 	          state.collection[payload.chatId].push(payload);
 	          state.index[payload.chatId][payload.id] = payload;
 	          state.created += 1;
-
 	          _this3.saveState(state);
 	        },
 	        set: function set(state, payload) {
 	          var _iterator = _createForOfIteratorHelper$3(payload.data),
-	              _step;
-
+	            _step;
 	          try {
 	            var _loop = function _loop() {
 	              var element = _step.value;
-
 	              _this3.initCollection(state, {
 	                chatId: element.chatId
 	              });
-
 	              var index = state.collection[element.chatId].findIndex(function (el) {
 	                return el.id === element.id;
 	              });
-
 	              if (index > -1) {
 	                delete element.templateId;
 	                state.collection[element.chatId][index] = Object.assign(state.collection[element.chatId][index], element);
@@ -55714,12 +55079,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	              } else {
 	                state.collection[element.chatId].push(element);
 	              }
-
 	              state.index[element.chatId][element.id] = element;
-
 	              _this3.saveState(state);
 	            };
-
 	            for (_iterator.s(); !(_step = _iterator.n()).done;) {
 	              _loop();
 	            }
@@ -55731,9 +55093,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        },
 	        update: function update(state, payload) {
 	          _this3.initCollection(state, payload);
-
 	          var index = -1;
-
 	          if (typeof payload.index !== 'undefined' && state.collection[payload.chatId][payload.index]) {
 	            index = payload.index;
 	          } else {
@@ -55741,24 +55101,20 @@ this.BX.Messenger = this.BX.Messenger || {};
 	              return el.id === payload.id;
 	            });
 	          }
-
 	          if (index >= 0) {
 	            delete payload.fields.templateId;
 	            var element = Object.assign(state.collection[payload.chatId][index], payload.fields);
 	            state.collection[payload.chatId][index] = element;
 	            state.index[payload.chatId][element.id] = element;
-
 	            _this3.saveState(state);
 	          }
 	        },
 	        "delete": function _delete(state, payload) {
 	          _this3.initCollection(state, payload);
-
 	          state.collection[payload.chatId] = state.collection[payload.chatId].filter(function (element) {
 	            return element.id !== payload.id;
 	          });
 	          delete state.index[payload.chatId][payload.id];
-
 	          _this3.saveState(state);
 	        },
 	        saveState: function saveState(state, payload) {
@@ -55772,7 +55128,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      if (typeof state.collection[payload.chatId] !== 'undefined') {
 	        return true;
 	      }
-
 	      ui_vue.WidgetVue.set(state.collection, payload.chatId, []);
 	      ui_vue.WidgetVue.set(state.index, payload.chatId, {});
 	      return true;
@@ -55783,18 +55138,14 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      if (!state || babelHelpers["typeof"](state) !== 'object') {
 	        return state;
 	      }
-
 	      if (babelHelpers["typeof"](state.collection) !== 'object') {
 	        return state;
 	      }
-
 	      state.index = {};
-
 	      var _loop2 = function _loop2(chatId) {
 	        if (!state.collection.hasOwnProperty(chatId)) {
 	          return "continue";
 	        }
-
 	        state.index[chatId] = {};
 	        state.collection[chatId].filter(function (file) {
 	          return file != null;
@@ -55802,13 +55153,10 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          state.index[chatId][file.id] = file;
 	        });
 	      };
-
 	      for (var chatId in state.collection) {
 	        var _ret = _loop2(chatId);
-
 	        if (_ret === "continue") continue;
 	      }
-
 	      return state;
 	    }
 	  }, {
@@ -55817,17 +55165,13 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      if (!this.db) {
 	        return [];
 	      }
-
 	      if (!this.store.getters['messages/getSaveFileList']) {
 	        return [];
 	      }
-
 	      var list = this.store.getters['messages/getSaveFileList']();
-
 	      if (!list) {
 	        return [];
 	      }
-
 	      return list;
 	    }
 	  }, {
@@ -55839,50 +55183,38 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    key: "saveState",
 	    value: function saveState(state) {
 	      var _this4 = this;
-
 	      if (!this.isSaveAvailable()) {
 	        return false;
 	      }
-
 	      babelHelpers.get(babelHelpers.getPrototypeOf(FilesModel.prototype), "saveState", this).call(this, function () {
 	        var list = _this4.getSaveFileList();
-
 	        if (!list) {
 	          return false;
 	        }
-
 	        var storedState = {
 	          collection: {}
 	        };
-
 	        var _loop3 = function _loop3(chatId) {
 	          if (!list.hasOwnProperty(chatId)) {
 	            return "continue";
 	          }
-
 	          list[chatId].forEach(function (fileId) {
 	            if (!state.index[chatId]) {
 	              return false;
 	            }
-
 	            if (!state.index[chatId][fileId]) {
 	              return false;
 	            }
-
 	            if (!storedState.collection[chatId]) {
 	              storedState.collection[chatId] = [];
 	            }
-
 	            storedState.collection[chatId].push(state.index[chatId][fileId]);
 	          });
 	        };
-
 	        for (var chatId in list) {
 	          var _ret2 = _loop3(chatId);
-
 	          if (_ret2 === "continue") continue;
 	        }
-
 	        return storedState;
 	      });
 	    }
@@ -55892,7 +55224,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 	      var result = {};
 	      options.host = options.host || this.getState().host;
-
 	      if (typeof fields.id === "number") {
 	        result.id = fields.id;
 	      } else if (typeof fields.id === "string") {
@@ -55902,7 +55233,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          result.id = parseInt(fields.id);
 	        }
 	      }
-
 	      if (typeof fields.templateId === "number") {
 	        result.templateId = fields.templateId;
 	      } else if (typeof fields.templateId === "string") {
@@ -55912,22 +55242,17 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          result.templateId = parseInt(fields.templateId);
 	        }
 	      }
-
 	      if (typeof fields.chatId === "number" || typeof fields.chatId === "string") {
 	        result.chatId = parseInt(fields.chatId);
 	      }
-
 	      if (typeof fields.date !== "undefined") {
 	        result.date = im_lib_utils.Utils.date.cast(fields.date);
 	      }
-
 	      if (typeof fields.type === "string") {
 	        result.type = fields.type;
 	      }
-
 	      if (typeof fields.extension === "string") {
 	        result.extension = fields.extension.toString();
-
 	        if (result.type === 'image') {
 	          result.icon = 'img';
 	        } else if (result.type === 'video') {
@@ -55936,15 +55261,12 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          result.icon = FilesModel.getIconType(result.extension);
 	        }
 	      }
-
 	      if (typeof fields.name === "string" || typeof fields.name === "number") {
 	        result.name = fields.name.toString();
 	      }
-
 	      if (typeof fields.size === "number" || typeof fields.size === "string") {
 	        result.size = parseInt(fields.size);
 	      }
-
 	      if (typeof fields.image === 'boolean') {
 	        result.image = false;
 	      } else if (babelHelpers["typeof"](fields.image) === 'object' && fields.image) {
@@ -55952,36 +55274,28 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          width: 0,
 	          height: 0
 	        };
-
 	        if (typeof fields.image.width === "string" || typeof fields.image.width === "number") {
 	          result.image.width = parseInt(fields.image.width);
 	        }
-
 	        if (typeof fields.image.height === "string" || typeof fields.image.height === "number") {
 	          result.image.height = parseInt(fields.image.height);
 	        }
-
 	        if (result.image.width <= 0 || result.image.height <= 0) {
 	          result.image = false;
 	        }
 	      }
-
 	      if (typeof fields.status === "string" && typeof im_const.FileStatus[fields.status] !== 'undefined') {
 	        result.status = fields.status;
 	      }
-
 	      if (typeof fields.progress === "number" || typeof fields.progress === "string") {
 	        result.progress = parseInt(fields.progress);
 	      }
-
 	      if (typeof fields.authorId === "number" || typeof fields.authorId === "string") {
 	        result.authorId = parseInt(fields.authorId);
 	      }
-
 	      if (typeof fields.authorName === "string" || typeof fields.authorName === "number") {
 	        result.authorName = fields.authorName.toString();
 	      }
-
 	      if (typeof fields.urlPreview === 'string') {
 	        if (!fields.urlPreview || fields.urlPreview.startsWith('http') || fields.urlPreview.startsWith('bx') || fields.urlPreview.startsWith('file') || fields.urlPreview.startsWith('blob')) {
 	          result.urlPreview = fields.urlPreview;
@@ -55989,7 +55303,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          result.urlPreview = options.host + fields.urlPreview;
 	        }
 	      }
-
 	      if (typeof fields.urlDownload === 'string') {
 	        if (!fields.urlDownload || fields.urlDownload.startsWith('http') || fields.urlDownload.startsWith('bx') || fields.urlPreview.startsWith('file')) {
 	          result.urlDownload = fields.urlDownload;
@@ -55997,7 +55310,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          result.urlDownload = options.host + fields.urlDownload;
 	        }
 	      }
-
 	      if (typeof fields.urlShow === 'string') {
 	        if (!fields.urlShow || fields.urlShow.startsWith('http') || fields.urlShow.startsWith('bx') || fields.urlShow.startsWith('file')) {
 	          result.urlShow = fields.urlShow;
@@ -56005,24 +55317,20 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          result.urlShow = options.host + fields.urlShow;
 	        }
 	      }
-
 	      if (babelHelpers["typeof"](fields.viewerAttrs) === 'object') {
 	        if (result.type === 'image' && !im_lib_utils.Utils.platform.isBitrixMobile()) {
 	          result.viewerAttrs = fields.viewerAttrs;
 	        }
-
 	        if (result.type === 'video' && !im_lib_utils.Utils.platform.isBitrixMobile() && result.size > FilesModel.maxDiskFileSize) {
 	          result.viewerAttrs = fields.viewerAttrs;
 	        }
 	      }
-
 	      return result;
 	    }
 	  }], [{
 	    key: "getType",
 	    value: function getType(type) {
 	      type = type.toString().toLowerCase().split('.').splice(-1)[0];
-
 	      switch (type) {
 	        case 'png':
 	        case 'jpe':
@@ -56033,7 +55341,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        case 'bmp':
 	        case 'webp':
 	          return im_const.FileType.image;
-
 	        case 'mp4':
 	        case 'mkv':
 	        case 'webm':
@@ -56047,18 +55354,15 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        case 'wmv':
 	        case 'mov':
 	          return im_const.FileType.video;
-
 	        case 'mp3':
 	          return im_const.FileType.audio;
 	      }
-
 	      return im_const.FileType.file;
 	    }
 	  }, {
 	    key: "getIconType",
 	    value: function getIconType(extension) {
 	      var icon = 'empty';
-
 	      switch (extension.toString()) {
 	        case 'png':
 	        case 'jpe':
@@ -56070,7 +55374,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        case 'webp':
 	          icon = 'img';
 	          break;
-
 	        case 'mp4':
 	        case 'mkv':
 	        case 'webm':
@@ -56085,38 +55388,30 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        case 'mov':
 	          icon = 'mov';
 	          break;
-
 	        case 'txt':
 	          icon = 'txt';
 	          break;
-
 	        case 'doc':
 	        case 'docx':
 	          icon = 'doc';
 	          break;
-
 	        case 'xls':
 	        case 'xlsx':
 	          icon = 'xls';
 	          break;
-
 	        case 'php':
 	          icon = 'php';
 	          break;
-
 	        case 'pdf':
 	          icon = 'pdf';
 	          break;
-
 	        case 'ppt':
 	        case 'pptx':
 	          icon = 'ppt';
 	          break;
-
 	        case 'rar':
 	          icon = 'rar';
 	          break;
-
 	        case 'zip':
 	        case '7z':
 	        case 'tar':
@@ -56124,18 +55419,15 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        case 'gzip':
 	          icon = 'zip';
 	          break;
-
 	        case 'set':
 	          icon = 'set';
 	          break;
-
 	        case 'conf':
 	        case 'ini':
 	        case 'plist':
 	          icon = 'set';
 	          break;
 	      }
-
 	      return icon;
 	    }
 	  }]);
@@ -56153,12 +55445,10 @@ this.BX.Messenger = this.BX.Messenger || {};
 	 */
 	var RecentModel = /*#__PURE__*/function (_VuexBuilderModel) {
 	  babelHelpers.inherits(RecentModel, _VuexBuilderModel);
-
 	  function RecentModel() {
 	    babelHelpers.classCallCheck(this, RecentModel);
 	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(RecentModel).apply(this, arguments));
 	  }
-
 	  babelHelpers.createClass(RecentModel, [{
 	    key: "getName",
 	    value: function getName() {
@@ -56205,20 +55495,16 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    key: "getGetters",
 	    value: function getGetters() {
 	      var _this = this;
-
 	      return {
 	        get: function get(state) {
 	          return function (dialogId) {
 	            if (main_core.Type.isNumber(dialogId)) {
 	              dialogId = dialogId.toString();
 	            }
-
 	            var currentItem = _this.findItem(dialogId);
-
 	            if (currentItem) {
 	              return currentItem;
 	            }
-
 	            return false;
 	          };
 	        }
@@ -56228,11 +55514,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    key: "getActions",
 	    value: function getActions() {
 	      var _this2 = this;
-
 	      return {
 	        set: function set(store, payload) {
 	          var result = [];
-
 	          if (payload instanceof Array) {
 	            result = payload.map(function (recentItem) {
 	              return _this2.prepareItem(recentItem, {
@@ -56240,14 +55524,11 @@ this.BX.Messenger = this.BX.Messenger || {};
 	              });
 	            });
 	          }
-
 	          if (result.length === 0) {
 	            return false;
 	          }
-
 	          result.forEach(function (element) {
 	            var existingItem = _this2.findItem(element.id);
-
 	            if (existingItem) {
 	              store.commit('update', {
 	                index: existingItem.index,
@@ -56274,11 +55555,8 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          });
 	          payload.items.forEach(function (element, index) {
 	            var placeholderId = 'placeholder' + (payload.firstMessage + index);
-
 	            var existingPlaceholder = _this2.findItem(placeholderId, 'templateId');
-
 	            var existingItem = _this2.findItem(element.id);
-
 	            if (existingItem) {
 	              store.commit('update', {
 	                index: existingItem.index,
@@ -56299,13 +55577,10 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          if (typeof payload.id === 'string' && !payload.id.startsWith('chat') && payload.id !== 'notify') {
 	            payload.id = parseInt(payload.id);
 	          }
-
 	          var existingItem = _this2.findItem(payload.id);
-
 	          if (!existingItem) {
 	            return false;
 	          }
-
 	          payload.fields = _this2.validate(Object.assign({}, payload.fields));
 	          store.commit('update', {
 	            index: existingItem.index,
@@ -56317,13 +55592,10 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          if (typeof payload.id === 'string' && !payload.id.startsWith('chat') && payload.id !== 'notify') {
 	            payload.id = parseInt(payload.id);
 	          }
-
 	          var existingItem = _this2.findItem(payload.id);
-
 	          if (!existingItem) {
 	            return false;
 	          }
-
 	          store.commit('update', {
 	            index: existingItem.index,
 	            fields: Object.assign({}, existingItem.element, {
@@ -56339,13 +55611,10 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          if (typeof payload.id === 'string' && !payload.id.startsWith('chat') && payload.id !== 'notify') {
 	            payload.id = parseInt(payload.id);
 	          }
-
 	          var existingItem = _this2.findItem(payload.id);
-
 	          if (!existingItem) {
 	            return false;
 	          }
-
 	          store.commit('delete', {
 	            index: existingItem.index
 	          });
@@ -56357,7 +55626,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    key: "getMutations",
 	    value: function getMutations() {
 	      var _this3 = this;
-
 	      return {
 	        add: function add(state, payload) {
 	          state.collection.push(Object.assign({}, _this3.getElementState(), payload.fields));
@@ -56383,23 +55651,18 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    value: function validate(fields) {
 	      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 	      var result = {};
-
 	      if (main_core.Type.isNumber(fields.id)) {
 	        result.id = fields.id.toString();
 	      }
-
 	      if (main_core.Type.isStringFilled(fields.id)) {
 	        result.id = fields.id;
 	      }
-
 	      if (main_core.Type.isString(fields.templateId)) {
 	        result.templateId = fields.templateId;
 	      }
-
 	      if (main_core.Type.isString(fields.template)) {
 	        result.template = fields.template;
 	      }
-
 	      if (main_core.Type.isString(fields.type)) {
 	        if (fields.type === im_const.ChatTypes.chat) {
 	          if (fields.chat.type === im_const.ChatTypes.open) {
@@ -56416,10 +55679,8 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          result.chatType = im_const.ChatTypes.chat;
 	        }
 	      }
-
 	      if (main_core.Type.isString(fields.avatar)) {
 	        var avatar;
-
 	        if (!fields.avatar || fields.avatar.endsWith('/js/im/images/blank.gif')) {
 	          avatar = '';
 	        } else if (fields.avatar.startsWith('http')) {
@@ -56427,74 +55688,56 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        } else {
 	          avatar = options.host + fields.avatar;
 	        }
-
 	        if (avatar) {
 	          result.avatar = encodeURI(avatar);
 	        }
 	      }
-
 	      if (main_core.Type.isString(fields.color)) {
 	        result.color = fields.color;
 	      }
-
 	      if (main_core.Type.isString(fields.title)) {
 	        result.title = fields.title;
 	      }
-
 	      if (main_core.Type.isPlainObject(fields.message)) {
 	        var message = {};
-
 	        if (main_core.Type.isNumber(fields.message.id)) {
 	          message.id = fields.message.id;
 	        }
-
 	        if (main_core.Type.isString(fields.message.text)) {
 	          var _options = {};
-
 	          if (fields.message.withAttach) {
 	            _options.WITH_ATTACH = true;
 	          } else if (fields.message.withFile) {
 	            _options.WITH_FILE = true;
 	          }
-
 	          message.text = im_lib_utils.Utils.text.purify(fields.message.text, _options);
 	        }
-
 	        if (main_core.Type.isDate(fields.message.date) || main_core.Type.isString(fields.message.date)) {
 	          message.date = fields.message.date;
 	        }
-
 	        if (main_core.Type.isNumber(fields.message.author_id)) {
 	          message.senderId = fields.message.author_id;
 	        }
-
 	        if (main_core.Type.isNumber(fields.message.senderId)) {
 	          message.senderId = fields.message.senderId;
 	        }
-
 	        if (main_core.Type.isStringFilled(fields.message.status)) {
 	          message.status = fields.message.status;
 	        }
-
 	        result.message = message;
 	      }
-
 	      if (main_core.Type.isNumber(fields.counter)) {
 	        result.counter = fields.counter;
 	      }
-
 	      if (main_core.Type.isBoolean(fields.pinned)) {
 	        result.pinned = fields.pinned;
 	      }
-
 	      if (main_core.Type.isNumber(fields.chatId)) {
 	        result.chatId = fields.chatId;
 	      }
-
 	      if (main_core.Type.isNumber(fields.userId)) {
 	        result.userId = fields.userId;
 	      }
-
 	      return result;
 	    }
 	  }, {
@@ -56518,41 +55761,34 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    value: function findItem(value) {
 	      var key = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'id';
 	      var result = {};
-
 	      if (key === 'id' && main_core.Type.isNumber(value)) {
 	        value = value.toString();
 	      }
-
 	      var elementIndex = this.store.state.recent.collection.findIndex(function (element, index) {
 	        return element[key] === value;
 	      });
-
 	      if (elementIndex !== -1) {
 	        result.index = elementIndex;
 	        result.element = this.store.state.recent.collection[elementIndex];
 	        return result;
 	      }
-
 	      return false;
 	    }
 	  }]);
 	  return RecentModel;
-	}(ui_vue_vuex.WidgetVuexBuilderModel); //raw input object for validation
+	}(ui_vue_vuex.WidgetVuexBuilderModel);
+
+	//raw input object for validation
 
 	function _createForOfIteratorHelper$4(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$4(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
-
 	function _unsupportedIterableToArray$4(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$4(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$4(o, minLen); }
-
-	function _arrayLikeToArray$4(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
-
+	function _arrayLikeToArray$4(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i]; return arr2; }
 	var NotificationsModel = /*#__PURE__*/function (_VuexBuilderModel) {
 	  babelHelpers.inherits(NotificationsModel, _VuexBuilderModel);
-
 	  function NotificationsModel() {
 	    babelHelpers.classCallCheck(this, NotificationsModel);
 	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(NotificationsModel).apply(this, arguments));
 	  }
-
 	  babelHelpers.createClass(NotificationsModel, [{
 	    key: "getName",
 	    value: function getName() {
@@ -56591,7 +55827,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    key: "getGetters",
 	    value: function getGetters() {
 	      var _this = this;
-
 	      return {
 	        get: function get(state) {
 	          return function () {
@@ -56603,13 +55838,10 @@ this.BX.Messenger = this.BX.Messenger || {};
 	            if (main_core.Type.isString(notificationId)) {
 	              notificationId = parseInt(notificationId);
 	            }
-
 	            var existingItem = _this.findItemInArr(state.collection, notificationId);
-
 	            if (!existingItem.element) {
 	              return false;
 	            }
-
 	            return existingItem.element;
 	          };
 	        },
@@ -56618,13 +55850,10 @@ this.BX.Messenger = this.BX.Messenger || {};
 	            if (main_core.Type.isString(notificationId)) {
 	              notificationId = parseInt(notificationId);
 	            }
-
 	            var existingItem = _this.findItemInArr(state.searchCollection, notificationId);
-
 	            if (!existingItem.element) {
 	              return false;
 	            }
-
 	            return existingItem.element;
 	          };
 	        },
@@ -56639,13 +55868,11 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    key: "getActions",
 	    value: function getActions() {
 	      var _this2 = this;
-
 	      return {
 	        set: function set(store, payload) {
 	          var result = {
 	            notification: []
 	          };
-
 	          if (payload.notification instanceof Array) {
 	            result.notification = payload.notification.map(function (notification) {
 	              return _this2.prepareNotification(notification, {
@@ -56653,23 +55880,20 @@ this.BX.Messenger = this.BX.Messenger || {};
 	              });
 	            });
 	          }
-
 	          if (main_core.Type.isNumber(payload.total) || main_core.Type.isString(payload.total)) {
 	            result.total = parseInt(payload.total);
 	          }
-
 	          store.commit('set', result);
 	        },
 	        setSearchResults: function setSearchResults(store, payload) {
 	          var result = {
 	            notification: []
 	          };
-
 	          if (!(payload.notification instanceof Array)) {
 	            return false;
-	          } // we don't need validation for the local results
+	          }
 
-
+	          // we don't need validation for the local results
 	          if (payload.type === 'local') {
 	            result.notification = payload.notification;
 	          } else {
@@ -56679,7 +55903,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	              });
 	            });
 	          }
-
 	          store.commit('setSearchResults', {
 	            data: result
 	          });
@@ -56702,11 +55925,8 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          var addItem = _this2.prepareNotification(payload.data, {
 	            host: store.state.host
 	          });
-
 	          addItem.unread = true;
-
 	          var existingItem = _this2.findItemInArr(store.state.collection, addItem.id);
-
 	          if (!existingItem.element) {
 	            store.commit('add', {
 	              data: addItem
@@ -56727,7 +55947,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          } else {
 	            return false;
 	          }
-
 	          store.commit('updatePlaceholders', payload);
 	          return true;
 	        },
@@ -56736,17 +55955,14 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        },
 	        update: function update(store, payload) {
 	          var existingItem = _this2.findItemInArr(store.state.collection, payload.id);
-
 	          if (existingItem.element) {
 	            store.commit('update', {
 	              index: existingItem.index,
 	              fields: Object.assign({}, payload.fields)
 	            });
 	          }
-
 	          if (payload.searchMode) {
 	            var existingItemInSearchCollection = _this2.findItemInArr(store.state.searchCollection, payload.id);
-
 	            if (existingItemInSearchCollection.element) {
 	              store.commit('update', {
 	                searchCollection: true,
@@ -56758,18 +55974,14 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        },
 	        read: function read(store, payload) {
 	          var _iterator = _createForOfIteratorHelper$4(payload.ids),
-	              _step;
-
+	            _step;
 	          try {
 	            for (_iterator.s(); !(_step = _iterator.n()).done;) {
 	              var notificationId = _step.value;
-
 	              var existingItem = _this2.findItemInArr(store.state.collection, notificationId);
-
 	              if (!existingItem.element) {
 	                return false;
 	              }
-
 	              store.commit('read', {
 	                index: existingItem.index,
 	                action: !payload.action
@@ -56786,7 +55998,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        },
 	        "delete": function _delete(store, payload) {
 	          var existingItem = _this2.findItemInArr(store.state.collection, payload.id);
-
 	          if (existingItem.element) {
 	            store.commit('delete', {
 	              searchCollection: false,
@@ -56794,10 +56005,8 @@ this.BX.Messenger = this.BX.Messenger || {};
 	            });
 	            store.commit('setTotal', store.state.total - 1);
 	          }
-
 	          if (payload.searchMode) {
 	            var existingItemInSearchCollection = _this2.findItemInArr(store.state.searchCollection, payload.id);
-
 	            if (existingItemInSearchCollection.element) {
 	              store.commit('delete', {
 	                searchCollection: true,
@@ -56820,24 +56029,18 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    key: "getMutations",
 	    value: function getMutations() {
 	      var _this3 = this;
-
 	      return {
 	        set: function set(state, payload) {
 	          state.total = payload.hasOwnProperty('total') ? payload.total : state.total;
-
 	          if (!payload.hasOwnProperty('notification') || !main_core.Type.isArray(payload.notification)) {
 	            return;
 	          }
-
 	          var _iterator2 = _createForOfIteratorHelper$4(payload.notification),
-	              _step2;
-
+	            _step2;
 	          try {
 	            for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
 	              var element = _step2.value;
-
 	              var existingItem = _this3.findItemInArr(state.collection, element.id);
-
 	              if (!existingItem.element) {
 	                state.collection.push(element);
 	              } else {
@@ -56846,7 +56049,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	                  element.unread = state.collection[existingItem.index].unread;
 	                  state.unreadCounter = element.unread === true ? state.unreadCounter + 1 : state.unreadCounter - 1;
 	                }
-
 	                state.collection[existingItem.index] = Object.assign(state.collection[existingItem.index], element);
 	              }
 	            }
@@ -56855,19 +56057,15 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          } finally {
 	            _iterator2.f();
 	          }
-
 	          state.collection.sort(_this3.sortByType);
 	        },
 	        setSearchResults: function setSearchResults(state, payload) {
 	          var _iterator3 = _createForOfIteratorHelper$4(payload.data.notification),
-	              _step3;
-
+	            _step3;
 	          try {
 	            for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
 	              var element = _step3.value;
-
 	              var existingItem = _this3.findItemInArr(state.searchCollection, element.id);
-
 	              if (!existingItem.element) {
 	                state.searchCollection.push(element);
 	              } else {
@@ -56888,28 +56086,28 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        },
 	        add: function add(state, payload) {
 	          var firstNotificationIndex = null;
-
 	          if (payload.data.sectionCode === im_const.NotificationTypesCodes.confirm) {
 	            //new confirms should always add to the beginning of the collection
 	            state.collection.unshift(payload.data);
-	          } else //if (payload.data.sectionCode === NotificationTypesCodes.simple)
+	          } else
+	            //if (payload.data.sectionCode === NotificationTypesCodes.simple)
 	            {
 	              for (var index = 0; state.collection.length > index; index++) {
 	                if (state.collection[index].sectionCode === im_const.NotificationTypesCodes.simple) {
 	                  firstNotificationIndex = index;
 	                  break;
 	                }
-	              } //if we didn't find any simple notification and its index, then add new one to the end.
+	              }
 
-
+	              //if we didn't find any simple notification and its index, then add new one to the end.
 	              if (firstNotificationIndex === null) {
 	                state.collection.push(payload.data);
-	              } else //otherwise, put it right before first simple notification.
+	              } else
+	                //otherwise, put it right before first simple notification.
 	                {
 	                  state.collection.splice(firstNotificationIndex, 0, payload.data);
 	                }
 	            }
-
 	          state.collection.sort(_this3.sortByType);
 	        },
 	        update: function update(state, payload) {
@@ -56940,7 +56138,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	            var existingMessageIndex = state[collectionName].findIndex(function (notification) {
 	              return notification.id === element.id;
 	            });
-
 	            if (existingMessageIndex >= 0) {
 	              state[collectionName][existingMessageIndex] = Object.assign(state[collectionName][existingMessageIndex], element);
 	              state[collectionName].splice(existingPlaceholderIndex, 1);
@@ -56968,41 +56165,35 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          state.schema = payload.data;
 	        }
 	      };
-	    }
-	    /* region Validation */
-
+	    } /* region Validation */
 	  }, {
 	    key: "validate",
 	    value: function validate(fields, options) {
 	      var result = {};
-
 	      if (main_core.Type.isString(fields.id) || main_core.Type.isNumber(fields.id)) {
 	        result.id = fields.id;
 	      }
-
 	      if (!main_core.Type.isNil(fields.date)) {
 	        result.date = im_lib_utils.Utils.date.cast(fields.date);
-	      } // previous P&P format
+	      }
 
-
+	      // previous P&P format
 	      if (main_core.Type.isString(fields.textOriginal) || main_core.Type.isNumber(fields.textOriginal)) {
 	        result.text = fields.textOriginal.toString();
-
 	        if (main_core.Type.isString(fields.text) || main_core.Type.isNumber(fields.text)) {
 	          result.textConverted = this.convertToHtml({
 	            text: fields.text.toString()
 	          });
 	        }
-	      } else // modern format
+	      } else
+	        // modern format
 	        {
 	          if (!main_core.Type.isNil(fields.text_converted)) {
 	            fields.textConverted = fields.text_converted;
 	          }
-
 	          if (main_core.Type.isString(fields.textConverted) || main_core.Type.isNumber(fields.textConverted)) {
 	            result.textConverted = fields.textConverted.toString();
 	          }
-
 	          if (main_core.Type.isString(fields.text) || main_core.Type.isNumber(fields.text)) {
 	            result.text = fields.text.toString();
 	            var isConverted = !main_core.Type.isNil(result.textConverted);
@@ -57011,7 +56202,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	            });
 	          }
 	        }
-
 	      if (main_core.Type.isNumber(fields.author_id)) {
 	        if (fields.system === true || fields.system === 'Y') {
 	          result.authorId = 0;
@@ -57019,24 +56209,20 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          result.authorId = fields.author_id;
 	        }
 	      }
-
 	      if (main_core.Type.isNumber(fields.userId)) {
 	        result.authorId = fields.userId;
 	      }
-
 	      if (main_core.Type.isObjectLike(fields.params)) {
 	        var params = this.validateParams(fields.params);
-
 	        if (params) {
 	          result.params = params;
 	        }
 	      }
-
 	      if (!main_core.Type.isNil(fields.notify_buttons)) {
 	        result.notifyButtons = JSON.parse(fields.notify_buttons);
-	      } //p&p format
+	      }
 
-
+	      //p&p format
 	      if (!main_core.Type.isNil(fields.buttons)) {
 	        result.notifyButtons = fields.buttons.map(function (button) {
 	          return {
@@ -57050,49 +56236,44 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          };
 	        });
 	      }
-
 	      if (fields.notify_type === im_const.NotificationTypesCodes.confirm || fields.type === im_const.NotificationTypesCodes.confirm) {
 	        result.sectionCode = im_const.NotificationTypesCodes.confirm;
 	      } else if (fields.type === im_const.NotificationTypesCodes.placeholder) {
 	        result.sectionCode = im_const.NotificationTypesCodes.placeholder;
 	      }
-
 	      if (!main_core.Type.isNil(fields.notify_read)) {
 	        result.unread = fields.notify_read === 'N';
-	      } //p&p format
+	      }
 
-
+	      //p&p format
 	      if (!main_core.Type.isNil(fields.read)) {
 	        result.unread = fields.read === 'N'; //?
 	      }
 
 	      if (main_core.Type.isString(fields.setting_name)) {
 	        result.settingName = fields.setting_name;
-	      } // rest format
+	      }
 
-
+	      // rest format
 	      if (main_core.Type.isString(fields.notify_title) && fields.notify_title.length > 0) {
 	        result.title = fields.notify_title;
-	      } // p&p format
+	      }
 
-
+	      // p&p format
 	      if (main_core.Type.isString(fields.title) && fields.title.length > 0) {
 	        result.title = fields.title;
 	      }
-
 	      return result;
 	    }
 	  }, {
 	    key: "validateParams",
 	    value: function validateParams(params) {
 	      var result = {};
-
 	      try {
 	        for (var field in params) {
 	          if (!params.hasOwnProperty(field)) {
 	            continue;
 	          }
-
 	          if (field === 'COMPONENT_ID') {
 	            if (main_core.Type.isString(params[field]) && BX.WidgetVue.isComponent(params[field])) {
 	              result[field] = params[field];
@@ -57120,24 +56301,18 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          }
 	        }
 	      } catch (e) {}
-
 	      var hasResultElements = false;
-
 	      for (var _field in result) {
 	        if (!result.hasOwnProperty(_field)) {
 	          continue;
 	        }
-
 	        hasResultElements = true;
 	        break;
 	      }
-
 	      return hasResultElements ? result : null;
 	    }
 	    /* endregion Validation */
-
 	    /* region Internal helpers */
-
 	  }, {
 	    key: "prepareNotification",
 	    value: function prepareNotification(notification) {
@@ -57153,12 +56328,10 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      var elementIndex = arr.findIndex(function (element, index) {
 	        return element[key] === value;
 	      });
-
 	      if (elementIndex !== -1) {
 	        result.index = elementIndex;
 	        result.element = arr[elementIndex];
 	      }
-
 	      return result;
 	    }
 	  }, {
@@ -57173,28 +56346,24 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      }
 	    }
 	    /* endregion Internal helpers */
-
 	    /* region Text utils */
-
 	  }, {
 	    key: "convertToHtml",
 	    value: function convertToHtml() {
 	      var params = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 	      var _params$text = params.text,
-	          text = _params$text === void 0 ? '' : _params$text;
+	        text = _params$text === void 0 ? '' : _params$text;
 	      text = text.trim();
 	      text = text.replace(/\n/gi, '<br />');
 	      text = text.replace(/\t/gi, '&nbsp;&nbsp;&nbsp;&nbsp;');
 	      text = NotificationsModel.decodeBbCode({
 	        text: text
 	      });
-
 	      if (im_lib_utils.Utils.platform.isBitrixDesktop()) {
 	        text = text.replace(/<a(.*?)>(.*?)<\/a>/ig, function (whole, anchor, text) {
 	          return '<a' + anchor.replace('target="_self"', 'target="_blank"') + ' class="bx-im-notifications-item-link">' + text + '</a>';
 	        });
 	      }
-
 	      return text;
 	    }
 	  }], [{
@@ -57208,11 +56377,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        tag.target = '_blank';
 	        tag.text = im_lib_utils.Utils.text.htmlspecialcharsback(text);
 	        var allowList = ['http:', 'https:', 'ftp:', 'file:', 'tel:', 'callto:', 'mailto:', 'skype:', 'viber:'];
-
 	        if (allowList.indexOf(tag.protocol) <= -1) {
 	          return whole;
 	        }
-
 	        return tag.outerHTML;
 	      });
 	      text = text.replace(/\[LIKE\]/ig, '<span class="bx-smile bx-im-smile-like"></span>');
@@ -57227,11 +56394,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      });
 	      text = text.replace(/\[CHAT=(imol\|)?([0-9]{1,})\](.*?)\[\/CHAT\]/ig, function (whole, openlines, chatId, inner) {
 	        chatId = parseInt(chatId);
-
 	        if (chatId <= 0) {
 	          return inner;
 	        }
-
 	        if (openlines) {
 	          return '<span class="bx-im-mention" data-type="OPENLINES" data-value="' + chatId + '">' + inner + '</span>';
 	        } else {
@@ -57241,22 +56406,18 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      text = text.replace(/\[USER=([0-9]{1,})\](.*?)\[\/USER\]/ig, function (whole, userId, text) {
 	        var html = '';
 	        userId = parseInt(userId);
-
 	        if (userId > 0 && typeof BXIM != 'undefined') {
 	          html = "<span class=\"bx-im-mention ".concat(userId === +BXIM.userId ? 'bx-messenger-ajax-self' : '', "\" data-type=\"USER\" data-value=\"").concat(userId, "\">").concat(text, "</span>");
 	        } else {
 	          html = text;
 	        }
-
 	        return html;
 	      });
 	      text = text.replace(/\[PCH=([0-9]{1,})\](.*?)\[\/PCH\]/ig, function (whole, historyId, text) {
 	        return text;
 	      });
 	      return text;
-	    }
-	    /* endregion Text utils */
-
+	    } /* endregion Text utils */
 	  }]);
 	  return NotificationsModel;
 	}(ui_vue_vuex.WidgetVuexBuilderModel);
@@ -57271,12 +56432,10 @@ this.BX.Messenger = this.BX.Messenger || {};
 	 */
 	var CallModel = /*#__PURE__*/function (_VuexBuilderModel) {
 	  babelHelpers.inherits(CallModel, _VuexBuilderModel);
-
 	  function CallModel() {
 	    babelHelpers.classCallCheck(this, CallModel);
 	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(CallModel).apply(this, arguments));
 	  }
-
 	  babelHelpers.createClass(CallModel, [{
 	    key: "getName",
 	    value: function getName() {
@@ -57308,18 +56467,15 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    key: "getGetters",
 	    value: function getGetters() {
 	      var _this = this;
-
 	      return {
 	        getUser: function getUser(state) {
 	          return function (userId) {
 	            userId = parseInt(userId, 10);
-
 	            if (!state.users[userId]) {
 	              return _this.getElementState({
 	                id: userId
 	              });
 	            }
-
 	            return state.users[userId];
 	          };
 	        },
@@ -57337,7 +56493,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    key: "getActions",
 	    value: function getActions() {
 	      var _this2 = this;
-
 	      return {
 	        updateUser: function updateUser(store, payload) {
 	          payload.id = parseInt(payload.id, 10);
@@ -57353,7 +56508,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    key: "getMutations",
 	    value: function getMutations() {
 	      var _this3 = this;
-
 	      return {
 	        updateUser: function updateUser(state, payload) {
 	          if (!state.users[payload.id]) {
@@ -57368,7 +56522,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          var pinnedUser = Object.values(state.users).find(function (user) {
 	            return user.pinned === true;
 	          });
-
 	          if (pinnedUser) {
 	            state.users[pinnedUser.id].pinned = false;
 	          }
@@ -57379,39 +56532,30 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    key: "validate",
 	    value: function validate(payload) {
 	      var result = {};
-
 	      if (main_core.Type.isNumber(payload.id) || main_core.Type.isString(payload.id)) {
 	        result.id = parseInt(payload.id, 10);
 	      }
-
 	      if (im_const.ConferenceUserState[payload.state]) {
 	        result.state = payload.state;
 	      }
-
 	      if (main_core.Type.isBoolean(payload.talking)) {
 	        result.talking = payload.talking;
 	      }
-
 	      if (main_core.Type.isBoolean(payload.pinned)) {
 	        result.pinned = payload.pinned;
 	      }
-
 	      if (main_core.Type.isBoolean(payload.cameraState)) {
 	        result.cameraState = payload.cameraState;
 	      }
-
 	      if (main_core.Type.isBoolean(payload.microphoneState)) {
 	        result.microphoneState = payload.microphoneState;
 	      }
-
 	      if (main_core.Type.isBoolean(payload.screenState)) {
 	        result.screenState = payload.screenState;
 	      }
-
 	      if (main_core.Type.isBoolean(payload.floorRequestState)) {
 	        result.floorRequestState = payload.floorRequestState;
 	      }
-
 	      return result;
 	    }
 	  }, {
@@ -58236,7 +57380,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	'use strict';
 
 	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-
 	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	ui_vue.WidgetBitrixVue.component('bx-im-view-element-file', {
 	  /*
@@ -58265,11 +57408,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      if (file.progress !== 100) {
 	        return false;
 	      }
-
 	      if (BX.UI && BX.UI.Viewer && Object.keys(file.viewerAttrs).length > 0) {
 	        return false;
 	      }
-
 	      if (file.type === im_const.FileType.image && file.urlShow) {
 	        if (im_lib_utils.Utils.platform.isBitrixMobile()) {
 	          BXMobileApp.UI.Photo.show({
@@ -58316,21 +57457,16 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    },
 	    createProgressbar: function createProgressbar() {
 	      var _this = this;
-
 	      if (this.uploader) {
 	        return true;
 	      }
-
 	      if (this.file.progress === 100) {
 	        return false;
 	      }
-
 	      var blurElement = undefined;
-
 	      if (this.file.progress < 0 || this.file.type !== im_const.FileType.image && this.file.type !== im_const.FileType.video) {
 	        blurElement = false;
 	      }
-
 	      this.uploader = new ui_progressbarjs_uploader.Uploader({
 	        container: this.$refs.container,
 	        blurElement: blurElement,
@@ -58360,23 +57496,19 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        }
 	      });
 	      this.uploader.start();
-
 	      if (this.file.size && this.file.size / 1024 / 1024 <= 2 || this.$refs.container.offsetHeight <= 54 && this.$refs.container.offsetWidth < 240) {
 	        this.uploader.setProgressTitleVisibility(false);
 	      }
-
 	      this.updateProgressbar();
 	      return true;
 	    },
 	    updateProgressbar: function updateProgressbar() {
 	      if (!this.uploader) {
 	        var result = this.createProgressbar();
-
 	        if (!result) {
 	          return false;
 	        }
 	      }
-
 	      if (this.file.status === im_const.FileStatus.error) {
 	        this.uploader.setProgress(0);
 	        this.uploader.setCancelDisable(false);
@@ -58396,10 +57528,8 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        if (this.file.progress === 0) {
 	          this.uploader.setIcon(ui_progressbarjs_uploader.Uploader.icon.cancel);
 	        }
-
 	        var progress = this.file.progress > 5 ? this.file.progress : 5;
 	        this.uploader.setProgress(progress);
-
 	        if (this.file.size / 1024 / 1024 <= 2) {
 	          this.uploader.setProgressTitle(this.localize['IM_MESSENGER_ELEMENT_FILE_UPLOAD_LOADING']);
 	        } else {
@@ -58411,7 +57541,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      if (!this.uploader) {
 	        return true;
 	      }
-
 	      this.uploader.destroy(false);
 	      return true;
 	    }
@@ -58425,11 +57554,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    },
 	    fileName: function fileName() {
 	      var maxLength = 70;
-
 	      if (this.file.name.length < maxLength) {
 	        return this.file.name;
 	      }
-
 	      var endWordLength = 10;
 	      var secondPart = this.file.name.substring(this.file.name.length - 1 - (this.file.extension.length + 1 + endWordLength));
 	      var firstPart = this.file.name.substring(0, maxLength - secondPart.length - 3);
@@ -58437,19 +57564,15 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    },
 	    fileSize: function fileSize() {
 	      var size = this.file.size;
-
 	      if (size <= 0) {
 	        return '&nbsp;';
 	      }
-
 	      var sizes = ["BYTE", "KB", "MB", "GB", "TB"];
 	      var position = 0;
-
 	      while (size >= 1024 && position < 4) {
 	        size /= 1024;
 	        position++;
 	      }
-
 	      return Math.round(size) + " " + this.localize['IM_MESSENGER_ELEMENT_FILE_SIZE_' + sizes[position]];
 	    },
 	    uploadProgress: function uploadProgress() {
@@ -58500,13 +57623,11 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  methods: {
 	    getImageSize: function getImageSize(width, height, maxWidth) {
 	      var aspectRatio;
-
 	      if (width > maxWidth) {
 	        aspectRatio = maxWidth / width;
 	      } else {
 	        aspectRatio = 1;
 	      }
-
 	      return {
 	        width: width * aspectRatio,
 	        height: height * aspectRatio
@@ -58526,7 +57647,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      if (parseInt(this.styleFileSizes.height) <= 280) {
 	        return {};
 	      }
-
 	      return {
 	        height: '280px'
 	      };
@@ -58550,13 +57670,11 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  methods: {
 	    getImageSize: function getImageSize(width, height, maxWidth) {
 	      var aspectRatio;
-
 	      if (width > maxWidth) {
 	        aspectRatio = maxWidth / width;
 	      } else {
 	        aspectRatio = 1;
 	      }
-
 	      return {
 	        width: width * aspectRatio,
 	        height: height * aspectRatio
@@ -58571,7 +57689,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      if (parseInt(this.styleVideoSizes.height) <= 280) {
 	        return {};
 	      }
-
 	      return {
 	        height: '280px'
 	      };
@@ -58580,7 +57697,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      if (!this.file.image) {
 	        return {};
 	      }
-
 	      var sizes = this.getImageSize(this.file.image.width, this.file.image.height, 280);
 	      return {
 	        width: sizes.width + 'px',
@@ -58678,11 +57794,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      },
 	      fileName: function fileName(element) {
 	        var maxLength = 70;
-
 	        if (!element.NAME || element.NAME.length < maxLength) {
 	          return element.NAME;
 	        }
-
 	        var endWordLength = 10;
 	        var extension = element.NAME.split('.').splice(-1)[0];
 	        var secondPart = element.NAME.substring(element.NAME.length - 1 - (extension.length + 1 + endWordLength));
@@ -58694,19 +57808,15 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      },
 	      fileSize: function fileSize(element) {
 	        var size = element.SIZE;
-
 	        if (size <= 0) {
 	          return '';
 	        }
-
 	        var sizes = ["BYTE", "KB", "MB", "GB", "TB"];
 	        var position = 0;
-
 	        while (size >= 1024 && position < 4) {
 	          size /= 1024;
 	          position++;
 	        }
-
 	        return Math.round(size) + " " + this.$Bitrix.Loc.getMessage('IM_MESSENGER_ATTACH_FILE_SIZE_' + sizes[position]);
 	      },
 	      fileIcon: function fileIcon(element) {
@@ -58722,11 +57832,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    openLink: function openLink(event) {
 	      var element = event.element;
 	      var eventData = event.event;
-
 	      if (!im_lib_utils.Utils.platform.isBitrixMobile() && element.LINK) {
 	        return;
 	      }
-
 	      if (element.LINK && eventData.target.tagName !== 'A') {
 	        im_lib_utils.Utils.platform.openNewPage(element.LINK);
 	      } else if (!element.LINK) {
@@ -58734,17 +57842,14 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          id: null,
 	          type: null
 	        };
-
 	        if (element.hasOwnProperty('USER_ID') && element.USER_ID > 0) {
 	          entity.id = element.USER_ID;
 	          entity.type = 'user';
 	        }
-
 	        if (element.hasOwnProperty('CHAT_ID') && element.CHAT_ID > 0) {
 	          entity.id = element.CHAT_ID;
 	          entity.type = 'chat';
 	        }
-
 	        if (entity.id && entity.type && window.top['BXIM']) {
 	          var popupAngle = !BX.MessengerTheme.isDark();
 	          window.top['BXIM'].messenger.openPopupExternalData(eventData.target, entity.type, popupAngle, {
@@ -58752,13 +57857,11 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          });
 	        } else if (navigator.userAgent.toLowerCase().includes('bitrixmobile')) {
 	          var dialogId = '';
-
 	          if (entity.type === 'chat') {
 	            dialogId = "chat".concat(entity.id);
 	          } else {
 	            dialogId = entity.id;
 	          }
-
 	          if (dialogId !== '') {
 	            BXMobileApp.Events.postToComponent("onOpenDialog", [{
 	              dialogId: dialogId
@@ -58807,28 +57910,22 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        if (element.DISPLAY !== 'row') {
 	          return element.WIDTH ? element.WIDTH + 'px' : '';
 	        }
-
 	        if (!element.VALUE) {
 	          return false;
 	        }
-
 	        if (this.maxCellWith && element.WIDTH > this.maxCellWith) {
 	          return this.maxCellWith + 'px';
 	        }
-
 	        return element.WIDTH ? element.WIDTH + 'px' : '';
 	      },
 	      getValue: function getValue(element) {
 	        var _this = this;
-
 	        if (!element.VALUE) {
 	          return '';
 	        }
-
 	        var text = im_lib_utils.Utils.text.htmlspecialchars(element.VALUE);
 	        text = text.replace(/\[USER=([0-9]{1,})\](.*?)\[\/USER\]/ig, function (whole, userId, userName) {
 	          var user = _this.$store.getters['users/get'](userId);
-
 	          userName = user ? im_lib_utils.Utils.text.htmlspecialchars(user.name) : userName;
 	          return '<span class="bx-im-mention" data-type="USER" data-value="' + userId + '">' + userName + '</span>';
 	        });
@@ -58899,7 +57996,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        if (!file) {
 	          return false;
 	        }
-
 	        if (im_lib_utils.Utils.platform.isBitrixMobile()) {
 	          // TODO add multiply
 	          BXMobileApp.UI.Photo.show({
@@ -58914,13 +58010,11 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      },
 	      getImageSize: function getImageSize(width, height, maxWidth) {
 	        var aspectRatio;
-
 	        if (width > maxWidth) {
 	          aspectRatio = maxWidth / width;
 	        } else {
 	          aspectRatio = 1;
 	        }
-
 	        return {
 	          width: width * aspectRatio,
 	          height: height * aspectRatio
@@ -58936,7 +58030,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        if (!event.element.style.width) {
 	          event.element.style.width = event.element.offsetWidth + 'px';
 	        }
-
 	        if (!event.element.style.height) {
 	          event.element.style.height = event.element.offsetHeight + 'px';
 	        }
@@ -58948,7 +58041,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	            backgroundSize: 'contain'
 	          };
 	        }
-
 	        var sizes = this.getImageSize(image.WIDTH, image.HEIGHT, 250);
 	        return {
 	          width: sizes.width + 'px',
@@ -58962,11 +58054,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	            height: '150px'
 	          };
 	        }
-
 	        if (parseInt(this.styleFileSizes(image).height) <= 250) {
 	          return {};
 	        }
-
 	        return {
 	          height: '280px'
 	        };
@@ -59054,11 +58144,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    computed: {
 	      message: function message() {
 	        var _this = this;
-
 	        var text = im_lib_utils.Utils.text.htmlspecialchars(this.config.MESSAGE);
 	        text = text.replace(/\[USER=([0-9]{1,})\](.*?)\[\/USER\]/ig, function (whole, userId, userName) {
 	          var user = _this.$store.getters['users/get'](userId);
-
 	          userName = user ? im_lib_utils.Utils.text.htmlspecialchars(user.name) : userName;
 	          return '<span class="bx-im-mention" data-type="USER" data-value="' + userId + '">' + userName + '</span>';
 	        });
@@ -59149,15 +58237,12 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        if (element.AVATAR) {
 	          return '';
 	        }
-
 	        var avatarType = 'user';
-
 	        if (element.AVATAR_TYPE === 'CHAT') {
 	          avatarType = 'chat';
 	        } else if (element.AVATAR_TYPE === 'BOT') {
 	          avatarType = 'bot';
 	        }
-
 	        return 'bx-im-element-attach-type-user-avatar-type-' + avatarType;
 	      }
 	    },
@@ -59166,11 +58251,14 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  }
 	};
 
-	function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
-
-	function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
-
-	function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+	/**
+	 * Bitrix Messenger
+	 * Attach element Vue component
+	 *
+	 * @package bitrix
+	 * @subpackage im
+	 * @copyright 2001-2019 Bitrix
+	 */
 	var AttachTypes = [AttachTypeDelimiter, AttachTypeFile, AttachTypeGrid, AttachTypeHtml, AttachTypeImage, AttachTypeLink, AttachTypeMessage, AttachTypeRich, AttachTypeUser];
 	var AttachComponents = {};
 	AttachTypes.forEach(function (attachType) {
@@ -59189,23 +58277,12 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  },
 	  methods: {
 	    getComponentForBlock: function getComponentForBlock(block) {
-	      var _iterator = _createForOfIteratorHelper(AttachTypes),
-	          _step;
-
-	      try {
-	        for (_iterator.s(); !(_step = _iterator.n()).done;) {
-	          var attachType = _step.value;
-
-	          if (typeof block[attachType.property] !== 'undefined') {
-	            return attachType.name;
-	          }
+	      for (var _i = 0, _AttachTypes = AttachTypes; _i < _AttachTypes.length; _i++) {
+	        var attachType = _AttachTypes[_i];
+	        if (typeof block[attachType.property] !== 'undefined') {
+	          return attachType.name;
 	        }
-	      } catch (err) {
-	        _iterator.e(err);
-	      } finally {
-	        _iterator.f();
 	      }
-
 	      return '';
 	    }
 	  },
@@ -59214,11 +58291,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      if (typeof this.config.COLOR === 'undefined' || !this.config.COLOR) {
 	        return this.baseColor;
 	      }
-
 	      if (this.config.COLOR === 'transparent') {
 	        return '';
 	      }
-
 	      return this.config.COLOR;
 	    }
 	  },
@@ -59244,12 +58319,10 @@ this.BX.Messenger = this.BX.Messenger || {};
 	 * @subpackage im
 	 * @copyright 2001-2019 Bitrix
 	 */
-
 	var _ButtonType = Object.freeze({
 	  newline: 'NEWLINE',
 	  button: 'BUTTON'
 	});
-
 	ui_vue.WidgetBitrixVue.component('bx-im-view-element-keyboard', {
 	  /*
 	   * @emits 'click' {action: string, params: Object}
@@ -59291,15 +58364,12 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  methods: {
 	    click: function click(button) {
 	      var _this = this;
-
 	      if (this.isBlocked) {
 	        return false;
 	      }
-
 	      if (button.DISABLED && button.DISABLED === 'Y') {
 	        return false;
 	      }
-
 	      if (button.ACTION && button.ACTION_VALUE.toString()) {
 	        this.$emit('click', {
 	          action: 'ACTION',
@@ -59326,7 +58396,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        if (button.BLOCK === 'Y') {
 	          this.isBlocked = true;
 	        }
-
 	        button.WAIT = 'Y';
 	        this.$emit('click', {
 	          action: 'COMMAND',
@@ -59343,26 +58412,21 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          button.WAIT = 'N';
 	        }, 10000);
 	      }
-
 	      return true;
 	    },
 	    getStyles: function getStyles(button) {
 	      var styles = {};
-
 	      if (button.WIDTH) {
 	        styles['width'] = button.WIDTH + 'px';
 	      } else if (button.DISPLAY === 'BLOCK') {
 	        styles['width'] = '225px';
 	      }
-
 	      if (button.BG_COLOR) {
 	        styles['backgroundColor'] = button.BG_COLOR;
 	      }
-
 	      if (button.TEXT_COLOR) {
 	        styles['color'] = button.TEXT_COLOR;
 	      }
-
 	      return styles;
 	    },
 	    prepareButtons: function prepareButtons(buttons) {
@@ -59370,20 +58434,17 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        if (!button.CONTEXT) {
 	          return true;
 	        }
-
 	        if (im_lib_utils.Utils.platform.isBitrixMobile() && button.CONTEXT === 'DESKTOP') {
 	          return false;
 	        }
-
 	        if (!im_lib_utils.Utils.platform.isBitrixMobile() && button.CONTEXT === 'MOBILE') {
-	          return false;
-	        } // TODO activate this buttons
-
-
-	        if (!im_lib_utils.Utils.platform.isBitrixMobile() && (button.ACTION === 'DIALOG' || button.ACTION === 'CALL')) {
 	          return false;
 	        }
 
+	        // TODO activate this buttons
+	        if (!im_lib_utils.Utils.platform.isBitrixMobile() && (button.ACTION === 'DIALOG' || button.ACTION === 'CALL')) {
+	          return false;
+	        }
 	        return true;
 	      });
 	    }
@@ -59619,16 +58680,11 @@ this.BX.Messenger = this.BX.Messenger || {};
 	'use strict';
 
 	function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
-
 	function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
-
-	function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
-
+	function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i]; return arr2; }
 	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-
 	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	var BX = window.BX;
-
 	var _ContentType = Object.freeze({
 	  "default": 'default',
 	  progress: 'progress',
@@ -59637,7 +58693,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  video: 'video',
 	  richLink: 'richLink'
 	});
-
 	ui_vue.WidgetBitrixVue.component('bx-im-view-message-body', {
 	  /**
 	   * @emits EventType.dialog.clickOnChatTeaser {message: object, event: MouseEvent}
@@ -59688,7 +58743,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      if (this.showAvatar && im_lib_utils.Utils.platform.isMobile()) {
 	        return false;
 	      }
-
 	      main_core_events.EventEmitter.emit(im_const.EventType.dialog.clickOnUserName, event);
 	    },
 	    clickByChatTeaser: function clickByChatTeaser(event) {
@@ -59710,28 +58764,22 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    },
 	    formatDate: function formatDate(date) {
 	      var id = date.toJSON().slice(0, 10);
-
 	      if (this.cacheFormatDate[id]) {
 	        return this.cacheFormatDate[id];
 	      }
-
 	      var dateFormat = im_lib_utils.Utils.date.getFormatType(BX.Messenger.Const.DateFormat.message, this.$Bitrix.Loc.getMessages());
 	      this.cacheFormatDate[id] = this._getDateFormat().format(dateFormat, date);
 	      return this.cacheFormatDate[id];
 	    },
 	    _getDateFormat: function _getDateFormat() {
 	      var _this = this;
-
 	      if (this.dateFormatFunction) {
 	        return this.dateFormatFunction;
 	      }
-
 	      this.dateFormatFunction = Object.create(BX.Main.Date);
-
 	      this.dateFormatFunction._getMessage = function (phrase) {
 	        return _this.$Bitrix.Loc.getMessage(phrase);
 	      };
-
 	      return this.dateFormatFunction;
 	    },
 	    isDesktop: function isDesktop() {
@@ -59757,14 +58805,11 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        var onlyVideo = false;
 	        var onlyAudio = false;
 	        var inProgress = false;
-
 	        var _iterator = _createForOfIteratorHelper(this.filesData),
-	            _step;
-
+	          _step;
 	        try {
 	          for (_iterator.s(); !(_step = _iterator.n()).done;) {
 	            var file = _step.value;
-
 	            if (file.progress < 0) {
 	              inProgress = true;
 	              break;
@@ -59774,7 +58819,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	                onlyVideo = false;
 	                break;
 	              }
-
 	              onlyAudio = true;
 	            } else if (file.type === 'image' && file.image) {
 	              if (onlyVideo || onlyAudio) {
@@ -59782,7 +58826,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	                onlyVideo = false;
 	                break;
 	              }
-
 	              onlyImage = true;
 	            } else if (file.type === 'video') {
 	              if (onlyImage || onlyAudio) {
@@ -59790,7 +58833,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	                onlyImage = false;
 	                break;
 	              }
-
 	              onlyVideo = true;
 	            } else {
 	              onlyAudio = false;
@@ -59804,7 +58846,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        } finally {
 	          _iterator.f();
 	        }
-
 	        if (inProgress) {
 	          return _ContentType.progress;
 	        } else if (onlyImage) {
@@ -59815,7 +58856,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          return _ContentType.video;
 	        }
 	      }
-
 	      return _ContentType["default"];
 	    },
 	    formattedDate: function formattedDate() {
@@ -59823,11 +58863,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    },
 	    messageText: function messageText() {
 	      var _this2 = this;
-
 	      if (this.isDeleted) {
 	        return this.$Bitrix.Loc.getMessage('IM_MESSENGER_MESSAGE_DELETED');
 	      }
-
 	      var message = this.message.textConverted;
 	      var messageParams = this.message.params;
 	      var replacement = [];
@@ -59839,20 +58877,16 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      message = message.replace(/\[USER=([0-9]{1,})\](.*?)\[\/USER\]/ig, function (whole, userId, userName) {
 	        if (!userName) {
 	          var user = _this2.$store.getters['users/get'](userId);
-
 	          userName = user ? im_lib_utils.Utils.text.htmlspecialchars(user.name) : 'User ' + userId;
 	        }
-
 	        return '<span class="bx-im-mention" data-type="USER" data-value="' + userId + '">' + userName + '</span>';
 	      });
 	      replacement.forEach(function (value, index) {
 	        message = message.replace('####REPLACEMENT_' + index + '####', value);
 	      });
-
 	      if (typeof messageParams.LINK_ACTIVE !== 'undefined' && messageParams.LINK_ACTIVE.length > 0 && !messageParams.LINK_ACTIVE.includes(this.userId)) {
 	        message = message.replace(/<a.*?href="([^"]*)".*?>(.*?)<\/a>/ig, '$2');
 	      }
-
 	      return message;
 	    },
 	    messageAttach: function messageAttach() {
@@ -59879,20 +58913,15 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    },
 	    filesData: function filesData() {
 	      var _this3 = this;
-
 	      var files = [];
-
 	      if (!this.message.params.FILE_ID || this.message.params.FILE_ID.length <= 0) {
 	        return files;
 	      }
-
 	      this.message.params.FILE_ID.forEach(function (fileId) {
 	        if (!fileId) {
 	          return false;
 	        }
-
 	        var file = _this3.$store.getters['files/get'](_this3.chatId, fileId, true);
-
 	        if (!file) {
 	          _this3.$store.commit('files/set', {
 	            data: [_this3.$store.getters['files/getBlank']({
@@ -59900,10 +58929,8 @@ this.BX.Messenger = this.BX.Messenger || {};
 	              chatId: _this3.chatId
 	            })]
 	          });
-
 	          file = _this3.$store.getters['files/get'](_this3.chatId, fileId, true);
 	        }
-
 	        if (file) {
 	          files.push(file);
 	        }
@@ -59912,18 +58939,15 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    },
 	    keyboardButtons: function keyboardButtons() {
 	      var result = false;
-
 	      if (!this.message.params.KEYBOARD || this.message.params.KEYBOARD === 'N') {
 	        return result;
 	      }
-
 	      return this.message.params.KEYBOARD;
 	    },
 	    chatTeaser: function chatTeaser() {
 	      if (typeof this.message.params.CHAT_ID === 'undefined' || typeof this.message.params.CHAT_LAST_DATE === 'undefined' || typeof this.message.params.CHAT_MESSAGE === 'undefined') {
 	        return false;
 	      }
-
 	      return {
 	        messageCounter: this.message.params.CHAT_MESSAGE,
 	        messageLastDate: this.message.params.CHAT_LAST_DATE,
@@ -59934,7 +58958,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      if (this.message.params.NAME) {
 	        return main_core.Text.decode(this.message.params.NAME);
 	      }
-
 	      if (!this.showAvatar) {
 	        return this.user.name;
 	      } else {
@@ -59945,7 +58968,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      if (this.user.extranet) {
 	        return "#CA7B00";
 	      }
-
 	      return this.user.color;
 	    }
 	  }, ui_vue_vuex.WidgetVuex.mapState({
@@ -59981,46 +59003,38 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  function Animation() {
 	    babelHelpers.classCallCheck(this, Animation);
 	  }
-
 	  babelHelpers.createClass(Animation, null, [{
 	    key: "start",
 	    value: function start(params) {
 	      var _params$start = params.start,
-	          start = _params$start === void 0 ? 0 : _params$start,
-	          _params$end = params.end,
-	          end = _params$end === void 0 ? 0 : _params$end,
-	          _params$increment = params.increment,
-	          increment = _params$increment === void 0 ? 20 : _params$increment,
-	          _params$callback = params.callback,
-	          callback = _params$callback === void 0 ? function () {} : _params$callback,
-	          _params$duration = params.duration,
-	          duration = _params$duration === void 0 ? 500 : _params$duration,
-	          element = params.element,
-	          elementProperty = params.elementProperty;
+	        start = _params$start === void 0 ? 0 : _params$start,
+	        _params$end = params.end,
+	        end = _params$end === void 0 ? 0 : _params$end,
+	        _params$increment = params.increment,
+	        increment = _params$increment === void 0 ? 20 : _params$increment,
+	        _params$callback = params.callback,
+	        callback = _params$callback === void 0 ? function () {} : _params$callback,
+	        _params$duration = params.duration,
+	        duration = _params$duration === void 0 ? 500 : _params$duration,
+	        element = params.element,
+	        elementProperty = params.elementProperty;
 	      var diff = end - start;
 	      var currentPosition = 0;
-
 	      var easeInOutQuad = function easeInOutQuad(current, start, diff, duration) {
 	        current /= duration / 2;
-
 	        if (current < 1) {
 	          return diff / 2 * current * current + start;
 	        }
-
 	        current--;
 	        return -diff / 2 * (current * (current - 2) - 1) + start;
 	      };
-
 	      var requestFrame = window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || function (callback) {
 	        return window.setTimeout(callback, 1000 / 60);
 	      };
-
 	      var frameId = null;
-
 	      var animateScroll = function animateScroll() {
 	        currentPosition += increment;
 	        element[elementProperty] = easeInOutQuad(currentPosition, start, diff, duration);
-
 	        if (currentPosition < duration) {
 	          frameId = requestFrame(animateScroll);
 	        } else {
@@ -60028,10 +59042,8 @@ this.BX.Messenger = this.BX.Messenger || {};
 	            callback();
 	          }
 	        }
-
 	        return frameId;
 	      };
-
 	      return animateScroll();
 	    }
 	  }, {
@@ -60040,13 +59052,11 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      var cancelFrame = window.cancelAnimationFrame || window.webkitCancelAnimationFrame || window.mozCancelAnimationFrame || function (id) {
 	        clearTimeout(id);
 	      };
-
 	      cancelFrame(id);
 	    }
 	  }]);
 	  return Animation;
 	}();
-
 	Animation.frameIds = {};
 
 	exports.Animation = Animation;
@@ -60154,7 +59164,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  beforeDestroy: function beforeDestroy() {
 	    clearTimeout(this.dragStartTimeout1);
 	    clearTimeout(this.dragStartTimeout2);
-
 	    if (this.dragBackAnimation) {
 	      im_lib_animation.Animation.cancel(this.dragBackAnimation);
 	    }
@@ -60178,26 +59187,21 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    },
 	    gestureMenu: function gestureMenu(eventName, event) {
 	      var _this = this;
-
 	      if (!this.enableGestureMenu) {
 	        return;
 	      }
-
 	      if (eventName === 'touchstart') {
 	        this.gestureMenuStarted = true;
 	        this.gestureMenuPreventTouchEnd = false;
-
 	        if (event.target.tagName === "A") {
 	          return false;
 	        }
-
 	        this.gestureMenuStartPosition = {
 	          x: event.changedTouches[0].clientX,
 	          y: event.changedTouches[0].clientY
 	        };
 	        this.gestureMenuTimeout = setTimeout(function () {
 	          _this.gestureMenuPreventTouchEnd = true;
-
 	          _this.clickByMessageMenu({
 	            message: _this.message,
 	            event: event
@@ -60207,7 +59211,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        if (!this.gestureMenuStarted) {
 	          return false;
 	        }
-
 	        if (Math.abs(this.gestureMenuStartPosition.x - event.changedTouches[0].clientX) >= 10 || Math.abs(this.gestureMenuStartPosition.y - event.changedTouches[0].clientY) >= 10) {
 	          this.gestureMenuStarted = false;
 	          clearTimeout(this.gestureMenuTimeout);
@@ -60216,10 +59219,8 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        if (!this.gestureMenuStarted) {
 	          return false;
 	        }
-
 	        this.gestureMenuStarted = false;
 	        clearTimeout(this.gestureMenuTimeout);
-
 	        if (this.gestureMenuPreventTouchEnd) {
 	          event.preventDefault();
 	        }
@@ -60227,17 +59228,13 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    },
 	    gestureQuote: function gestureQuote(eventName, event) {
 	      var _this2 = this;
-
 	      var target = im_lib_utils.Utils.browser.findParent(event.target, 'bx-im-message') || event.target;
-
 	      if (!this.enableGestureQuote || im_lib_utils.Utils.platform.isAndroid()) {
 	        return;
 	      }
-
 	      var fromRight = this.enableGestureQuoteFromRight;
 	      var layerX = target.getBoundingClientRect().left + event.layerX;
 	      var layerY = target.getBoundingClientRect().top + event.layerY;
-
 	      if (eventName === 'touchstart') {
 	        this.dragCheck = true;
 	        this.dragStartInitialX = target.getBoundingClientRect().left;
@@ -60257,11 +59254,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        }, 29);
 	        this.dragStartTimeout2 = setTimeout(function () {
 	          _this2.dragCheck = false;
-
 	          if (Math.abs(_this2.dragStartPositionY - _this2.dragMovePositionY) >= 10) {
 	            return;
 	          }
-
 	          if (_this2.dragMovePositionX === null) {
 	            return;
 	          } else if (fromRight && _this2.dragStartPositionX - _this2.dragMovePositionX < 9) {
@@ -60269,54 +59264,45 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          } else if (!fromRight && _this2.dragStartPositionX - _this2.dragMovePositionX > 9) {
 	            return;
 	          }
-
 	          im_lib_animation.Animation.cancel(_this2.dragBackAnimation);
 	          _this2.drag = true;
-
 	          _this2.$emit('dragMessage', {
 	            result: _this2.drag,
 	            event: event
 	          });
-
 	          _this2.dragWidth = _this2.$refs.body.offsetWidth;
 	        }, 80);
 	      } else if (eventName === 'touchmove') {
 	        if (this.drag || !this.dragCheck) {
 	          return false;
 	        }
-
 	        this.dragMovePositionX = layerX;
 	        this.dragMovePositionY = layerY;
 	      } else if (eventName === 'touchend') {
 	        clearTimeout(this.dragStartTimeout1);
 	        clearTimeout(this.dragStartTimeout2);
 	        this.dragCheck = false;
-
 	        if (!this.drag) {
 	          this.dragIconShowLeft = false;
 	          this.dragIconShowRight = false;
 	          return;
 	        }
-
 	        im_lib_animation.Animation.cancel(this.dragBackAnimation);
 	        this.drag = false;
 	        this.$emit('dragMessage', {
 	          result: this.drag,
 	          event: event
 	        });
-
 	        if (this.enableGestureQuoteFromRight && this.dragIconShowRight && this.dragPosition !== 0 || !this.enableGestureQuoteFromRight && this.dragIconShowLeft && this.dragPosition !== this.dragStartInitialX) {
 	          if (im_lib_utils.Utils.platform.isBitrixMobile()) {
 	            setTimeout(function () {
 	              return app.exec("callVibration");
 	            }, 200);
 	          }
-
 	          main_core_events.EventEmitter.emit(im_const.EventType.dialog.quoteMessage, {
 	            message: this.message
 	          });
 	        }
-
 	        this.dragIconShowLeft = false;
 	        this.dragIconShowRight = false;
 	        this.dragBackAnimation = im_lib_animation.Animation.start({
@@ -60340,22 +59326,17 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      if (!this.drag || !event) {
 	        return;
 	      }
-
 	      var target = im_lib_utils.Utils.browser.findParent(event.target, 'bx-im-message') || event.target;
 	      var layerX = target.getBoundingClientRect().left + event.layerX;
-
 	      if (typeof this.dragLayerPosition === 'undefined') {
 	        this.dragLayerPosition = layerX;
 	      }
-
 	      var movementX = this.dragLayerPosition - layerX;
 	      this.dragLayerPosition = layerX;
 	      this.dragPosition = this.dragPosition - movementX;
-
 	      if (this.enableGestureQuoteFromRight) {
 	        var dragPositionMax = (this.showAvatar ? 30 : 0) + 45;
 	        var dragPositionIcon = this.showAvatar ? 30 : 30;
-
 	        if (this.dragPosition < -dragPositionMax) {
 	          this.dragPosition = -dragPositionMax;
 	        } else if (this.dragPosition < -dragPositionIcon) {
@@ -60368,7 +59349,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      } else {
 	        var _dragPositionMax = 60;
 	        var _dragPositionIcon = 40;
-
 	        if (this.dragPosition <= this.dragStartInitialX) {
 	          this.dragPosition = this.dragStartInitialX;
 	        } else if (this.dragPosition >= _dragPositionMax) {
@@ -60405,11 +59385,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      if (this.message.params.AVATAR) {
 	        return "url('".concat(this.message.params.AVATAR, "')");
 	      }
-
 	      if (this.userData.avatar) {
 	        return "url('".concat(this.userData.avatar, "')");
 	      }
-
 	      return '';
 	    },
 	    filesData: function filesData() {
@@ -60464,13 +59442,11 @@ this.BX = this.BX || {};
 	  computed: {
 	    itemClasses: function itemClasses() {
 	      var itemClasses = ['im-skeleton-item', 'im-skeleton-item--sm', "".concat(im_const.DialogReferenceClassName.listItem, "-").concat(this.element.id)];
-
 	      if (this.mode === 'self') {
 	        itemClasses.push('im-skeleton-item-self');
 	      } else {
 	        itemClasses.push('im-skeleton-item-opponent');
 	      }
-
 	      return itemClasses;
 	    }
 	  },
@@ -60487,13 +59463,11 @@ this.BX = this.BX || {};
 	  computed: {
 	    itemClasses: function itemClasses() {
 	      var itemClasses = ['im-skeleton-item', 'im-skeleton-item--md', "".concat(im_const.DialogReferenceClassName.listItem, "-").concat(this.element.id)];
-
 	      if (this.mode === 'self') {
 	        itemClasses.push('im-skeleton-item-self');
 	      } else {
 	        itemClasses.push('im-skeleton-item-opponent');
 	      }
-
 	      return itemClasses;
 	    }
 	  },
@@ -60510,13 +59484,11 @@ this.BX = this.BX || {};
 	  computed: {
 	    itemClasses: function itemClasses() {
 	      var itemClasses = ['im-skeleton-item', 'im-skeleton-item--md', "".concat(im_const.DialogReferenceClassName.listItem, "-").concat(this.element.id)];
-
 	      if (this.mode === 'self') {
 	        itemClasses.push('im-skeleton-item-self');
 	      } else {
 	        itemClasses.push('im-skeleton-item-opponent');
 	      }
-
 	      return itemClasses;
 	    }
 	  },
@@ -60524,7 +59496,6 @@ this.BX = this.BX || {};
 	};
 
 	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-
 	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	var MessageList = {
 	  /**
@@ -60630,7 +59601,6 @@ this.BX = this.BX || {};
 	    // we reset messagesSet flag and run scroll on start routine
 	    dialogId: function dialogId(newValue, oldValue) {
 	      var _this = this;
-
 	      im_lib_logger.Logger.warn('new dialogId in message-list', newValue);
 	      this.messagesSet = false;
 	      this.$nextTick(function () {
@@ -60665,16 +59635,11 @@ this.BX = this.BX || {};
 	    },
 	    formattedCollection: function formattedCollection() {
 	      var _this2 = this;
-
 	      this.lastMessageId = 0; //used in readed status
-
 	      this.lastMessageAuthorId = 0; //used in readed status
-
 	      this.firstUnreadMessageId = 0;
 	      var lastAuthorId = 0; //used for delimeters
-
 	      var dateGroups = {}; //date grouping nodes
-
 	      var collection = []; //array to return
 
 	      this.collection.forEach(function (element) {
@@ -60682,39 +59647,33 @@ this.BX = this.BX || {};
 	          im_lib_logger.Logger.warn('setting new lastHistoryMessageId', element.id);
 	          _this2.lastHistoryMessageId = element.id;
 	        }
-
 	        _this2.lastMessageId = element.id;
-
 	        var group = _this2.getDateGroup(element.date);
-
 	        if (!dateGroups[group.title]) {
 	          dateGroups[group.title] = group.id;
 	          collection.push(_this2.getDateGroupBlock(group.id, group.title));
 	        } else if (lastAuthorId !== element.authorId) {
 	          collection.push(_this2.getDelimiterBlock(element.id));
 	        }
-
 	        if (element.unread && !_this2.firstUnreadMessageId) {
 	          _this2.firstUnreadMessageId = element.id;
 	        }
-
 	        collection.push(element);
 	        lastAuthorId = element.authorId;
-	      }); //remembering author of last message - used in readed status
+	      });
 
+	      //remembering author of last message - used in readed status
 	      this.lastMessageAuthorId = lastAuthorId;
 	      return collection;
 	    },
 	    writingStatusText: function writingStatusText() {
 	      var _this3 = this;
-
 	      clearTimeout(this.scrollToTimeout);
-
 	      if (this.dialog.writingList.length === 0) {
 	        return '';
-	      } //scroll to bottom
+	      }
 
-
+	      //scroll to bottom
 	      if (!this.scrollChangedByUser && !this.showScrollButton) {
 	        this.scrollToTimeout = setTimeout(function () {
 	          return _this3.animatedScrollToPosition({
@@ -60722,7 +59681,6 @@ this.BX = this.BX || {};
 	          });
 	        }, 300);
 	      }
-
 	      var text = this.dialog.writingList.map(function (element) {
 	        return element.userName;
 	      }).join(', ');
@@ -60730,18 +59688,13 @@ this.BX = this.BX || {};
 	    },
 	    statusReaded: function statusReaded() {
 	      var _this4 = this;
-
 	      clearTimeout(this.scrollToTimeout);
-
 	      if (this.dialog.readedList.length === 0) {
 	        return '';
 	      }
-
 	      var text = '';
-
 	      if (this.dialog.type === im_const.DialogType["private"]) {
 	        var record = this.dialog.readedList[0];
-
 	        if (record.messageId === this.lastMessageId && record.userId !== this.lastMessageAuthorId) {
 	          var dateFormat = this.getDateFormat(DateFormat.readedTitle);
 	          var formattedDate = this.getDateObject().format(dateFormat, record.date);
@@ -60751,19 +59704,17 @@ this.BX = this.BX || {};
 	        var readedList = this.dialog.readedList.filter(function (record) {
 	          return record.messageId === _this4.lastMessageId && record.userId !== _this4.lastMessageAuthorId;
 	        });
-
 	        if (readedList.length === 1) {
 	          text = this.localize['IM_MESSENGER_DIALOG_MESSAGES_READED_CHAT'].replace('#USERS#', readedList[0].userName);
 	        } else if (readedList.length > 1) {
 	          text = this.localize['IM_MESSENGER_DIALOG_MESSAGES_READED_CHAT'].replace('#USERS#', this.localize['IM_MESSENGER_DIALOG_MESSAGES_READED_CHAT_PLURAL'].replace('#USER#', readedList[0].userName).replace('#COUNT#', readedList.length - 1).replace('[LINK]', '').replace('[/LINK]', ''));
 	        }
 	      }
-
 	      if (!text) {
 	        return '';
-	      } //scroll to bottom
+	      }
 
-
+	      //scroll to bottom
 	      if (!this.scrollChangedByUser && !this.showScrollButton) {
 	        this.scrollToTimeout = setTimeout(function () {
 	          return _this4.animatedScrollToPosition({
@@ -60771,7 +59722,6 @@ this.BX = this.BX || {};
 	          });
 	        }, 300);
 	      }
-
 	      return text;
 	    },
 	    unreadCounter: function unreadCounter() {
@@ -60784,7 +59734,6 @@ this.BX = this.BX || {};
 	      if (this.application.device.type !== im_const.DeviceType.mobile) {
 	        return false;
 	      }
-
 	      return this.scrollAnimating || this.captureMove;
 	    },
 	    isDarkBackground: function isDarkBackground() {
@@ -60802,10 +59751,10 @@ this.BX = this.BX || {};
 	    },
 	    remainingUnreadPages: function remainingUnreadPages() {
 	      // we dont use unread counter now - we reverted unread counter to be max at 99, so we dont know actual counter
+
 	      if (this.isLastIdInCollection) {
 	        return 0;
 	      }
-
 	      return Math.ceil((this.dialog.messageCount - this.collection.length) / this.unreadMessageLimit);
 	    },
 	    unreadInCollection: function unreadInCollection() {
@@ -60834,8 +59783,7 @@ this.BX = this.BX || {};
 	    }
 	  })),
 	  methods: {
-	    /* region 01. Init and destroy */
-	    initParams: function initParams() {
+	    /* region 01. Init and destroy */initParams: function initParams() {
 	      this.placeholdersComposition = this.getPlaceholdersComposition();
 	      this.historyMessageLimit = 50;
 	      this.unreadMessageLimit = 50;
@@ -60889,9 +59837,7 @@ this.BX = this.BX || {};
 	      ui_vue.WidgetBitrixVue.event.$off('bitrixmobile:controller:focus', this.onWindowFocus);
 	      ui_vue.WidgetBitrixVue.event.$off('bitrixmobile:controller:blur', this.onWindowBlur);
 	    },
-
 	    /* endregion 01. Init and destroy */
-
 	    /* region 02. Event handlers */
 	    onDialogClick: function onDialogClick(event) {
 	      if (ui_vue.WidgetBitrixVue.testNode(event.target, {
@@ -60903,7 +59849,6 @@ this.BX = this.BX || {};
 	      })) {
 	        this.onMentionClick(event);
 	      }
-
 	      this.windowFocused = true;
 	      main_core_events.EventEmitter.emit(im_const.EventType.dialog.clickOnDialog, {
 	        event: event
@@ -60913,18 +59858,15 @@ this.BX = this.BX || {};
 	      if (!this.captureMove) {
 	        return;
 	      }
-
 	      this.capturedMoveEvent = event;
 	    },
 	    onCommandClick: function onCommandClick(event) {
 	      var value = '';
-
 	      if (event.target.dataset.entity === 'send' || event.target.dataset.entity === 'put') {
 	        value = event.target.nextSibling.innerHTML;
 	      } else if (event.target.dataset.entity === 'call') {
 	        value = event.target.dataset.command;
 	      }
-
 	      main_core_events.EventEmitter.emit(im_const.EventType.dialog.clickOnCommand, {
 	        type: event.target.dataset.entity,
 	        value: value,
@@ -60940,15 +59882,11 @@ this.BX = this.BX || {};
 	    },
 	    onOrientationChange: function onOrientationChange() {
 	      var _this5 = this;
-
 	      clearTimeout(this.scrollToTimeout);
-
 	      if (this.application.device.type !== im_const.DeviceType.mobile) {
 	        return false;
 	      }
-
 	      im_lib_logger.Logger.log('Orientation changed');
-
 	      if (!this.scrollChangedByUser) {
 	        this.scrollToTimeout = setTimeout(function () {
 	          return _this5.scrollToBottom({
@@ -60967,27 +59905,23 @@ this.BX = this.BX || {};
 	    },
 	    onScrollToBottom: function onScrollToBottom() {
 	      var _ref = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
-	          _ref$data = _ref.data,
-	          event = _ref$data === void 0 ? {
-	        chatId: 0,
-	        force: false,
-	        cancelIfScrollChange: false,
-	        duration: null
-	      } : _ref$data;
-
+	        _ref$data = _ref.data,
+	        event = _ref$data === void 0 ? {
+	          chatId: 0,
+	          force: false,
+	          cancelIfScrollChange: false,
+	          duration: null
+	        } : _ref$data;
 	      if (event.chatId !== this.chatId) {
 	        return false;
 	      }
-
 	      im_lib_logger.Logger.warn('onScrollToBottom', event);
 	      event.force = event.force === true;
 	      event.cancelIfScrollChange = event.cancelIfScrollChange === true;
-
 	      if (this.firstUnreadMessageId) {
 	        im_lib_logger.Logger.warn('Dialog.onScrollToBottom: canceled - unread messages');
 	        return false;
 	      }
-
 	      if (event.cancelIfScrollChange && this.scrollChangedByUser && this.scrollBeforeMobileKeyboard) {
 	        var body = this.$refs.body;
 	        this.scrollAfterMobileKeyboard = body.scrollHeight - body.scrollTop - body.clientHeight;
@@ -60998,28 +59932,24 @@ this.BX = this.BX || {};
 	        });
 	        return true;
 	      }
-
 	      this.scrollToBottom(event);
 	      return true;
 	    },
 	    onReadVisibleMessages: function onReadVisibleMessages() {
 	      var _ref2 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
-	          _ref2$data = _ref2.data,
-	          event = _ref2$data === void 0 ? {
-	        chatId: 0
-	      } : _ref2$data;
-
+	        _ref2$data = _ref2.data,
+	        event = _ref2$data === void 0 ? {
+	          chatId: 0
+	        } : _ref2$data;
 	      if (event.chatId !== this.chatId) {
 	        return false;
 	      }
-
 	      im_lib_logger.Logger.warn('onReadVisibleMessages');
 	      this.readVisibleMessagesDelayed();
 	      return true;
 	    },
 	    onClickOnReadList: function onClickOnReadList(event) {
 	      var _this6 = this;
-
 	      var readedList = this.dialog.readedList.filter(function (record) {
 	        return record.messageId === _this6.lastMessageId && record.userId !== _this6.lastMessageAuthorId;
 	      });
@@ -61032,9 +59962,7 @@ this.BX = this.BX || {};
 	      if (!this.windowFocused) {
 	        return false;
 	      }
-
 	      this.captureMove = event.result;
-
 	      if (!event.result) {
 	        this.capturedMoveEvent = null;
 	      }
@@ -61043,43 +59971,37 @@ this.BX = this.BX || {};
 	      if (this.isScrolling) {
 	        return false;
 	      }
-
 	      clearTimeout(this.scrollToTimeout);
 	      this.currentScroll = event.target.scrollTop;
 	      var isScrollingDown = this.lastScroll < this.currentScroll;
 	      var isScrollingUp = !isScrollingDown;
-
 	      if (isScrollingUp && this.scrollButtonClicked) {
 	        im_lib_logger.Logger.warn('scrollUp - reset scroll button clicks');
 	        this.scrollButtonClicked = false;
 	      }
-
 	      var leftSpaceBottom = event.target.scrollHeight - event.target.scrollTop - event.target.clientHeight;
-
 	      if (this.currentScroll > 0 && isScrollingDown && leftSpaceBottom < this.scrollingDownThreshold) {
 	        this.onScrollDown();
 	      } else if (isScrollingUp && this.currentScroll <= this.scrollingUpThreshold) {
 	        this.onScrollUp();
-	      } //remember current scroll to compare with new ones
+	      }
 
-
+	      //remember current scroll to compare with new ones
 	      this.lastScroll = this.currentScroll;
-	      this.scrollPositionChangeTime = new Date().getTime(); //show or hide scroll button
-
+	      this.scrollPositionChangeTime = new Date().getTime();
+	      //show or hide scroll button
 	      this.manageScrollButton(event);
 	    },
 	    onScrollDown: function onScrollDown() {
 	      var _this7 = this;
-
 	      if (!this.messagesSet || this.isLastIdInCollection) {
 	        return false;
-	      } // Logger.warn('---');
+	      }
+	      // Logger.warn('---');
 	      // Logger.warn('Want to load unread');
 	      // Logger.warn('this.isRequestingData', this.isRequestingData);
 	      // Logger.warn('this.unreadPagesRequested', this.unreadPagesRequested);
 	      // Logger.warn('this.remainingUnreadPages', this.remainingUnreadPages);
-
-
 	      if (this.isRequestingData && this.remainingUnreadPages > 0) {
 	        this.drawPlaceholders(RequestMode.unread).then(function () {
 	          _this7.unreadPagesRequested += 1;
@@ -61095,40 +60017,35 @@ this.BX = this.BX || {};
 	    },
 	    onScrollUp: function onScrollUp() {
 	      var _this8 = this;
-
 	      if (!this.messagesSet || this.stopHistoryLoading) {
 	        return false;
 	      }
+	      this.projectedPagesToLoad = 1;
 
-	      this.projectedPagesToLoad = 1; //draw 3 sets of placeholders if we are close to top of container
-
+	      //draw 3 sets of placeholders if we are close to top of container
 	      if (!this.isMobile && this.$refs.body.scrollTop < this.$refs.body.scrollHeight / 4) {
 	        this.projectedPagesToLoad = 3;
-	      } // Logger.warn('---');
+	      }
+
+	      // Logger.warn('---');
 	      // Logger.warn('Want to load history');
 	      // Logger.warn('this.isRequestingData', this.isRequestingData);
 	      // Logger.warn('this.historyPagesRequested', this.historyPagesRequested);
 	      // Logger.warn('this.remainingHistoryPages', this.remainingHistoryPages);
-
-
 	      if (this.isRequestingData && this.remainingHistoryPages > 0) {
 	        var currentBodyHeight = this.$refs.body.scrollHeight;
 	        this.drawPlaceholders(RequestMode.history, this.projectedPagesToLoad).then(function () {
 	          if (!_this8.isOverflowAnchorSupported()) {
 	            _this8.enableUserScroll();
 	          }
-
 	          _this8.historyPagesRequested += _this8.projectedPagesToLoad;
 	          im_lib_logger.Logger.warn('Already loading! Draw placeholders and add request, total - ', _this8.historyPagesRequested);
 	        });
-
 	        if (!this.isOverflowAnchorSupported()) {
 	          im_lib_logger.Logger.warn('Disabling user scroll');
 	          this.$nextTick(function () {
 	            var heightDifference = _this8.$refs.body.scrollHeight - currentBodyHeight;
-
 	            _this8.disableUserScroll();
-
 	            _this8.forceScrollToPosition(_this8.$refs.body.scrollTop + heightDifference);
 	          });
 	        }
@@ -61138,21 +60055,17 @@ this.BX = this.BX || {};
 	        var _currentBodyHeight = this.$refs.body.scrollHeight;
 	        this.drawPlaceholders(RequestMode.history, this.projectedPagesToLoad).then(function () {
 	          _this8.historyPagesRequested = _this8.projectedPagesToLoad - 1;
-
 	          if (!_this8.isOverflowAnchorSupported()) {
 	            _this8.enableUserScroll();
 	          }
-
 	          _this8.requestHistory();
-	        }); //will run right after drawing placeholders, before .then()
-
+	        });
+	        //will run right after drawing placeholders, before .then()
 	        if (!this.isOverflowAnchorSupported()) {
 	          im_lib_logger.Logger.warn('Disabling user scroll');
 	          this.$nextTick(function () {
 	            var heightDifference = _this8.$refs.body.scrollHeight - _currentBodyHeight;
-
 	            _this8.disableUserScroll();
-
 	            _this8.forceScrollToPosition(_this8.$refs.body.scrollTop + heightDifference);
 	          });
 	        }
@@ -61169,103 +60082,86 @@ this.BX = this.BX || {};
 	      this.$refs.body.classList.remove('bx-im-dialog-list-scroll-blocked');
 	    },
 	    onScrollButtonClick: function onScrollButtonClick() {
-	      im_lib_logger.Logger.warn('Scroll button click', this.scrollButtonClicked); // TODO: now we just do nothing if button was clicked during data request (history or unread)
-
+	      im_lib_logger.Logger.warn('Scroll button click', this.scrollButtonClicked);
+	      // TODO: now we just do nothing if button was clicked during data request (history or unread)
 	      if (this.isRequestingData) {
 	        return false;
-	      } //we dont have unread - just scroll to bottom
+	      }
 
-
+	      //we dont have unread - just scroll to bottom
 	      if (this.unreadCounter === 0) {
 	        this.scrollToBottom();
 	        return true;
-	      } //it's a second click on button - scroll to last page if we have one
+	      }
 
-
+	      //it's a second click on button - scroll to last page if we have one
 	      if (this.scrollButtonClicked && this.remainingUnreadPages > 0) {
 	        im_lib_logger.Logger.warn('Second click on scroll button');
 	        this.scrollToLastPage();
 	        return true;
-	      } //it's a first click - just set the flag and move on
+	      }
 
-
+	      //it's a first click - just set the flag and move on
 	      this.scrollButtonClicked = true;
 	      this.scrollToBottom();
 	    },
 	    onNewMessage: function onNewMessage(_ref3) {
 	      var _this9 = this;
-
 	      var _ref3$data = _ref3.data,
-	          chatId = _ref3$data.chatId,
-	          messageId = _ref3$data.messageId;
-
+	        chatId = _ref3$data.chatId,
+	        messageId = _ref3$data.messageId;
 	      if (chatId !== this.chatId) {
 	        return false;
 	      }
-
 	      im_lib_logger.Logger.warn('Received new message from pull', messageId);
-
 	      if (this.showScrollButton) {
 	        return false;
 	      }
-
 	      this.$nextTick(function () {
 	        //non-focus handling
 	        if (!_this9.windowFocused) {
 	          var availableScrollHeight = _this9.$refs['body'].scrollHeight - _this9.$refs['body'].clientHeight;
-
 	          if (_this9.currentScroll < availableScrollHeight) {
 	            //show scroll button when out of focus and all visible space is filled with unread messaages already
 	            _this9.showScrollButton = true;
 	          }
-
 	          _this9.scrollToFirstUnreadMessage();
-
 	          return true;
-	        } //big message handling
+	        }
 
-
+	        //big message handling
 	        var messageElement = _this9.getElementById(messageId);
-
 	        if (!messageElement) {
 	          return false;
-	        } //if big message - scroll to top of it
-
-
+	        }
+	        //if big message - scroll to top of it
 	        var body = _this9.$refs.body;
-
 	        if (messageElement.clientHeight > body.clientHeight) {
 	          _this9.scrollToMessage({
 	            messageId: messageId
 	          });
-
 	          return true;
-	        } //else - scroll to bottom
-
-
+	        }
+	        //else - scroll to bottom
 	        _this9.animatedScrollToPosition();
 	      });
 	    },
 	    onMessagesSet: function onMessagesSet(_ref4) {
 	      var event = _ref4.data;
-
 	      if (event.chatId !== this.chatId) {
 	        return false;
 	      }
-
 	      if (this.messagesSet === true) {
 	        im_lib_logger.Logger.warn('messages are already set');
 	        return false;
 	      }
-
 	      im_lib_logger.Logger.warn('onMessagesSet', event.chatId);
 	      this.messagesSet = true;
-	      var force = false; //if we are in top half of container - force scroll to first unread, else - animated scroll
-
+	      var force = false;
+	      //if we are in top half of container - force scroll to first unread, else - animated scroll
 	      if (this.$refs.body.scrollTop < this.$refs.body.scrollHeight / 2) {
 	        force = true;
 	      }
-
 	      this.scrollToBottom({
 	        force: force,
 	        cancelIfScrollChange: false
@@ -61278,17 +60174,14 @@ this.BX = this.BX || {};
 	    },
 	    onExternalUnreadRequest: function onExternalUnreadRequest() {
 	      var _this10 = this;
-
 	      var _ref6 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
-	          _ref6$data = _ref6.data,
-	          event = _ref6$data === void 0 ? {
-	        chatId: 0
-	      } : _ref6$data;
-
+	        _ref6$data = _ref6.data,
+	        event = _ref6$data === void 0 ? {
+	          chatId: 0
+	        } : _ref6$data;
 	      if (event.chatId !== this.chatId) {
 	        return false;
 	      }
-
 	      im_lib_logger.Logger.warn('onExternalUnreadRequest');
 	      this.isRequestingUnread = true;
 	      this.drawPlaceholders(RequestMode.unread).then(function () {
@@ -61301,27 +60194,21 @@ this.BX = this.BX || {};
 	    },
 	    onScrollOnStart: function onScrollOnStart(_ref7) {
 	      var event = _ref7.data;
-
 	      if (event.chatId !== this.chatId) {
 	        return false;
 	      }
-
 	      this.scrollOnStart({
 	        force: false
 	      });
 	    },
-
 	    /* endregion 02. Event handlers */
-
 	    /* region 03. Scrolling */
 	    scrollOnStart: function scrollOnStart() {
 	      var _ref8 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
-	          _ref8$force = _ref8.force,
-	          force = _ref8$force === void 0 ? true : _ref8$force;
-
+	        _ref8$force = _ref8.force,
+	        force = _ref8$force === void 0 ? true : _ref8$force;
 	      im_lib_logger.Logger.warn('scrolling on start of dialog');
 	      var unreadId = this.getFirstUnreadMessage();
-
 	      if (unreadId) {
 	        this.scrollToFirstUnreadMessage(unreadId, force);
 	      } else {
@@ -61332,40 +60219,38 @@ this.BX = this.BX || {};
 	    //scroll to first unread if counter > 0, else scroll to bottom
 	    scrollToBottom: function scrollToBottom() {
 	      var _ref9 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
-	          _ref9$force = _ref9.force,
-	          force = _ref9$force === void 0 ? false : _ref9$force,
-	          _ref9$cancelIfScrollC = _ref9.cancelIfScrollChange,
-	          cancelIfScrollChange = _ref9$cancelIfScrollC === void 0 ? false : _ref9$cancelIfScrollC,
-	          _ref9$duration = _ref9.duration,
-	          duration = _ref9$duration === void 0 ? null : _ref9$duration;
-
+	        _ref9$force = _ref9.force,
+	        force = _ref9$force === void 0 ? false : _ref9$force,
+	        _ref9$cancelIfScrollC = _ref9.cancelIfScrollChange,
+	        cancelIfScrollChange = _ref9$cancelIfScrollC === void 0 ? false : _ref9$cancelIfScrollC,
+	        _ref9$duration = _ref9.duration,
+	        duration = _ref9$duration === void 0 ? null : _ref9$duration;
 	      im_lib_logger.Logger.warn('scroll to bottom', force, cancelIfScrollChange, duration);
-
 	      if (cancelIfScrollChange && this.scrollChangedByUser) {
 	        return false;
 	      }
+	      var body = this.$refs.body;
 
-	      var body = this.$refs.body; //scroll to first unread message if there are unread messages
-
+	      //scroll to first unread message if there are unread messages
 	      if (this.dialog.counter > 0) {
 	        var scrollToMessageId = this.dialog.counter > 1 && this.firstUnreadMessageId ? this.firstUnreadMessageId : this.lastMessageId;
 	        this.scrollToFirstUnreadMessage(scrollToMessageId, force);
 	        return true;
-	      } //hide scroll button because we will scroll to bottom
+	      }
 
+	      //hide scroll button because we will scroll to bottom
+	      this.showScrollButton = false;
 
-	      this.showScrollButton = false; //without animation
-
+	      //without animation
 	      if (force) {
 	        this.forceScrollToPosition(body.scrollHeight - body.clientHeight);
-	      } //with animation
+	      }
+	      //with animation
 	      else {
 	        var scrollParams = {};
-
 	        if (duration) {
 	          scrollParams.duration = duration;
 	        }
-
 	        this.animatedScrollToPosition(_objectSpread({}, scrollParams));
 	      }
 	    },
@@ -61374,15 +60259,12 @@ this.BX = this.BX || {};
 	      var force = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
 	      im_lib_logger.Logger.warn('scroll to first unread');
 	      var element = false;
-
 	      if (unreadId !== null) {
 	        element = this.getElementById(unreadId);
 	      }
-
 	      if (!element) {
 	        unreadId = this.getFirstUnreadMessage();
 	      }
-
 	      this.scrollToMessage({
 	        messageId: unreadId,
 	        force: force
@@ -61391,21 +60273,21 @@ this.BX = this.BX || {};
 	    //scroll to message - can be set at the top or at the bottom of screen
 	    scrollToMessage: function scrollToMessage(_ref10) {
 	      var _ref10$messageId = _ref10.messageId,
-	          messageId = _ref10$messageId === void 0 ? 0 : _ref10$messageId,
-	          _ref10$force = _ref10.force,
-	          force = _ref10$force === void 0 ? false : _ref10$force,
-	          _ref10$stickToTop = _ref10.stickToTop,
-	          stickToTop = _ref10$stickToTop === void 0 ? true : _ref10$stickToTop;
+	        messageId = _ref10$messageId === void 0 ? 0 : _ref10$messageId,
+	        _ref10$force = _ref10.force,
+	        force = _ref10$force === void 0 ? false : _ref10$force,
+	        _ref10$stickToTop = _ref10.stickToTop,
+	        stickToTop = _ref10$stickToTop === void 0 ? true : _ref10$stickToTop;
 	      im_lib_logger.Logger.warn('scroll to message');
 	      var body = this.$refs.body;
 	      var element = this.getElementById(messageId);
 	      var end = 0;
-
 	      if (!element) {
 	        //if no element found in DOM - scroll to top
 	        if (stickToTop) {
 	          end = 10;
-	        } //if no element and stickToTop = false - scroll to bottom
+	        }
+	        //if no element and stickToTop = false - scroll to bottom
 	        else {
 	          end = body.scrollHeight - body.clientHeight;
 	        }
@@ -61416,7 +60298,6 @@ this.BX = this.BX || {};
 	        //message will be at the bottom of screen (+little offset)
 	        end = element.offsetTop + element.offsetHeight - body.clientHeight + this.messageScrollOffset / 2;
 	      }
-
 	      if (force) {
 	        this.forceScrollToPosition(end);
 	      } else {
@@ -61424,77 +60305,63 @@ this.BX = this.BX || {};
 	          end: end
 	        });
 	      }
-
 	      return true;
 	    },
 	    forceScrollToPosition: function forceScrollToPosition(position) {
 	      im_lib_logger.Logger.warn('Force scroll to position - ', position);
 	      var body = this.$refs.body;
-
 	      if (!body) {
 	        return false;
 	      }
-
 	      if (this.animateScrollId) {
 	        im_lib_animation.Animation.cancel(this.animateScrollId);
 	        this.scrollAnimating = false;
 	        this.animateScrollId = null;
 	      }
-
 	      body.scrollTop = position;
 	    },
 	    //scroll to provided position with animation, by default - to the bottom
 	    animatedScrollToPosition: function animatedScrollToPosition() {
 	      var _this11 = this;
-
 	      var params = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 	      im_lib_logger.Logger.warn('Animated scroll to - ', params);
-
 	      if (this.animateScrollId) {
 	        im_lib_animation.Animation.cancel(this.animateScrollId);
 	        this.scrollAnimating = false;
 	      }
-
 	      if (typeof params === 'function') {
 	        params = {
 	          callback: params
 	        };
 	      }
-
 	      var body = this.$refs.body;
-
 	      if (!body) {
 	        if (params.callback && typeof params.callback === 'function') {
 	          params.callback();
 	        }
-
 	        this.animateScrollId = null;
 	        this.scrollAnimating = false;
 	        return true;
 	      }
-
 	      if (im_lib_utils.Utils.platform.isIos() && im_lib_utils.Utils.platform.getIosVersion() > 12 && im_lib_utils.Utils.platform.getIosVersion() < 13.2) {
 	        body.scrollTop = body.scrollHeight - body.clientHeight;
 	        return true;
 	      }
-
 	      var _params = params,
-	          _params$start = _params.start,
-	          start = _params$start === void 0 ? body.scrollTop : _params$start,
-	          _params$end = _params.end,
-	          end = _params$end === void 0 ? body.scrollHeight - body.clientHeight : _params$end,
-	          _params$increment = _params.increment,
-	          increment = _params$increment === void 0 ? 20 : _params$increment,
-	          _callback = _params.callback,
-	          _params$duration = _params.duration,
-	          duration = _params$duration === void 0 ? 500 : _params$duration;
+	        _params$start = _params.start,
+	        start = _params$start === void 0 ? body.scrollTop : _params$start,
+	        _params$end = _params.end,
+	        end = _params$end === void 0 ? body.scrollHeight - body.clientHeight : _params$end,
+	        _params$increment = _params.increment,
+	        increment = _params$increment === void 0 ? 20 : _params$increment,
+	        _callback = _params.callback,
+	        _params$duration = _params.duration,
+	        duration = _params$duration === void 0 ? 500 : _params$duration;
 	      var container = this.$refs.container;
-
 	      if (container && end - start > container.offsetHeight * 3) {
 	        start = end - container.offsetHeight * 3;
 	        im_lib_logger.Logger.warn('Dialog.animatedScroll: Scroll trajectory has been reduced');
 	      }
-
 	      this.scrollAnimating = true;
 	      im_lib_logger.Logger.warn('Dialog.animatedScroll: User scroll blocked while scrolling');
 	      this.animateScrollId = im_lib_animation.Animation.start({
@@ -61507,16 +60374,13 @@ this.BX = this.BX || {};
 	        callback: function callback() {
 	          _this11.animateScrollId = null;
 	          _this11.scrollAnimating = false;
-
 	          if (_callback && typeof _callback === 'function') {
 	            _callback();
 	          }
 	        }
 	      });
 	    },
-
 	    /* endregion 03. Scrolling */
-
 	    /* region 04. Placeholders */
 	    drawPlaceholders: function drawPlaceholders(requestMode) {
 	      var pagesCount = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 1;
@@ -61529,7 +60393,6 @@ this.BX = this.BX || {};
 	    },
 	    generatePlaceholders: function generatePlaceholders(amount, pagesCount) {
 	      var placeholders = [];
-
 	      for (var i = 0; i < pagesCount; i++) {
 	        for (var j = 0; j < this.placeholdersComposition.length; j++) {
 	          placeholders.push({
@@ -61542,7 +60405,6 @@ this.BX = this.BX || {};
 	          this.placeholderCount++;
 	        }
 	      }
-
 	      return placeholders;
 	    },
 	    getPlaceholdersComposition: function getPlaceholdersComposition() {
@@ -61552,13 +60414,10 @@ this.BX = this.BX || {};
 	        return 0.5 - Math.random();
 	      });
 	    },
-
 	    /* endregion 04. Placeholders */
-
 	    /* region 05. History request */
 	    requestHistory: function requestHistory() {
 	      var _this12 = this;
-
 	      return this.$Bitrix.RestClient.get().callMethod(im_const.RestMethod.imDialogMessagesGet, {
 	        chat_id: this.chatId,
 	        last_id: this.lastHistoryMessageId,
@@ -61566,21 +60425,17 @@ this.BX = this.BX || {};
 	        convert_text: 'Y'
 	      }).then(function (result) {
 	        var newMessages = result.data().messages;
-
 	        if (newMessages.length > 0) {
 	          _this12.lastHistoryMessageId = newMessages[newMessages.length - 1].id;
 	        }
-
 	        if (newMessages.length < _this12.historyMessageLimit) {
 	          _this12.stopHistoryLoading = true;
-	        } //files and users
+	        }
 
-
+	        //files and users
 	        _this12.$Bitrix.Data.get('controller').executeRestAnswer(im_const.RestMethodHandler.imDialogMessagesGet, result);
-
 	        return new Promise(function (resolve, reject) {
 	          var currentBodyHeight = _this12.$refs.body.scrollHeight;
-
 	          _this12.$store.dispatch('messages/updatePlaceholders', {
 	            chatId: _this12.chatId,
 	            data: newMessages,
@@ -61590,18 +60445,13 @@ this.BX = this.BX || {};
 	            if (!_this12.isOverflowAnchorSupported()) {
 	              _this12.enableUserScroll();
 	            }
-
 	            resolve();
 	          });
-
 	          if (!_this12.isOverflowAnchorSupported()) {
 	            im_lib_logger.Logger.warn('Disabling user scroll in updating placeholders');
-
 	            _this12.$nextTick(function () {
 	              var heightDifference = _this12.$refs.body.scrollHeight - currentBodyHeight;
-
 	              _this12.disableUserScroll();
-
 	              _this12.forceScrollToPosition(_this12.$refs.body.scrollTop + heightDifference);
 	            });
 	          }
@@ -61616,14 +60466,11 @@ this.BX = this.BX || {};
 	    },
 	    onAfterHistoryRequest: function onAfterHistoryRequest() {
 	      var _this13 = this;
-
 	      im_lib_logger.Logger.warn('onAfterHistoryRequest');
-
 	      if (this.stopHistoryLoading) {
 	        im_lib_logger.Logger.warn('stopHistoryLoading, deleting all delayed requests');
 	        this.historyPagesRequested = 0;
 	      }
-
 	      if (this.historyPagesRequested > 0) {
 	        im_lib_logger.Logger.warn('We have delayed requests -', this.historyPagesRequested);
 	        this.historyPagesRequested--;
@@ -61636,7 +60483,6 @@ this.BX = this.BX || {};
 	            force: true,
 	            stickToTop: false
 	          });
-
 	          return _this13.requestHistory();
 	        });
 	      } else {
@@ -61648,13 +60494,10 @@ this.BX = this.BX || {};
 	        return true;
 	      }
 	    },
-
 	    /* endregion 05. History request */
-
 	    /* region 06. Unread request */
 	    prepareUnreadRequestParams: function prepareUnreadRequestParams() {
 	      var _ref11;
-
 	      return _ref11 = {}, babelHelpers.defineProperty(_ref11, im_const.RestMethodHandler.imDialogRead, [im_const.RestMethod.imDialogRead, {
 	        dialog_id: this.dialogId,
 	        message_id: this.lastUnreadMessageId
@@ -61669,15 +60512,12 @@ this.BX = this.BX || {};
 	    },
 	    requestUnread: function requestUnread() {
 	      var _this14 = this;
-
 	      if (!this.lastUnreadMessageId) {
 	        this.lastUnreadMessageId = this.$store.getters['messages/getLastId'](this.chatId);
 	      }
-
 	      if (!this.lastUnreadMessageId) {
 	        return false;
 	      }
-
 	      main_core_events.EventEmitter.emitAsync(im_const.EventType.dialog.readMessage, {
 	        id: this.lastUnreadMessageId,
 	        skipTimer: true,
@@ -61690,33 +60530,25 @@ this.BX = this.BX || {};
 	    },
 	    onUnreadRequest: function onUnreadRequest(response) {
 	      var _this15 = this;
-
 	      if (!response) {
 	        im_lib_logger.Logger.warn('Unread request: callBatch error');
 	        return false;
 	      }
-
 	      var chatGetResult = response[im_const.RestMethodHandler.imChatGet];
-
 	      if (chatGetResult.error()) {
 	        im_lib_logger.Logger.warn('Unread request: imChatGet error', chatGetResult.error());
 	        return false;
 	      }
-
 	      this.$Bitrix.Data.get('controller').executeRestAnswer(im_const.RestMethodHandler.imChatGet, chatGetResult);
 	      var dialogMessageUnread = response[im_const.RestMethodHandler.imDialogMessagesGetUnread];
-
 	      if (dialogMessageUnread.error()) {
 	        im_lib_logger.Logger.warn('Unread request: imDialogMessagesGetUnread error', dialogMessageUnread.error());
 	        return false;
 	      }
-
 	      var newMessages = dialogMessageUnread.data().messages;
-
 	      if (newMessages.length > 0) {
 	        this.lastUnreadMessageId = newMessages[newMessages.length - 1].id;
 	      }
-
 	      this.$Bitrix.Data.get('controller').executeRestAnswer(im_const.RestMethodHandler.imDialogMessagesGetUnread, dialogMessageUnread);
 	      this.$store.dispatch('messages/updatePlaceholders', {
 	        chatId: this.chatId,
@@ -61742,27 +60574,21 @@ this.BX = this.BX || {};
 	          chatId: this.chatId
 	        });
 	        this.isRequestingUnread = false;
-
 	        if (this.externalUnreadRequestResolve) {
 	          this.externalUnreadRequestResolve();
 	        }
-
 	        return true;
 	      }
 	    },
-
 	    /* endregion 06. Unread request */
-
 	    /* region 07. Last page request */
 	    scrollToLastPage: function scrollToLastPage() {
 	      var _this16 = this;
-
-	      im_lib_logger.Logger.warn('Load last page'); //draw placeholders at the bottom
-
+	      im_lib_logger.Logger.warn('Load last page');
+	      //draw placeholders at the bottom
 	      this.drawPlaceholders(RequestMode.unread).then(function () {
 	        //block unread and history requests
 	        _this16.isScrolling = true;
-
 	        _this16.animatedScrollToPosition({
 	          callback: function callback() {
 	            return _this16.onScrollToLastPage();
@@ -61772,29 +60598,27 @@ this.BX = this.BX || {};
 	    },
 	    onScrollToLastPage: function onScrollToLastPage() {
 	      var _this17 = this;
-
 	      //hide scroll button
-	      this.showScrollButton = false; //set counter to 0
-
+	      this.showScrollButton = false;
+	      //set counter to 0
 	      this.$store.dispatch('dialogues/update', {
 	        dialogId: this.dialogId,
 	        fields: {
 	          counter: 0
 	        }
-	      }); //clear all messages except placeholders
-
+	      });
+	      //clear all messages except placeholders
 	      this.$store.dispatch('messages/clear', {
 	        chatId: this.chatId,
 	        keepPlaceholders: true
-	      }); //call batch - imDialogRead, imChatGet, imDialogMessagesGet
-
+	      });
+	      //call batch - imDialogRead, imChatGet, imDialogMessagesGet
 	      this.$Bitrix.RestClient.get().callBatch(this.prepareLastPageRequestParams(), function (response) {
 	        return _this17.onLastPageRequest(response);
 	      });
 	    },
 	    prepareLastPageRequestParams: function prepareLastPageRequestParams() {
 	      var _ref12;
-
 	      return _ref12 = {}, babelHelpers.defineProperty(_ref12, im_const.RestMethodHandler.imDialogRead, [im_const.RestMethod.imDialogRead, {
 	        dialog_id: this.dialogId
 	      }]), babelHelpers.defineProperty(_ref12, im_const.RestMethodHandler.imChatGet, [im_const.RestMethod.imChatGet, {
@@ -61807,33 +60631,29 @@ this.BX = this.BX || {};
 	    },
 	    onLastPageRequest: function onLastPageRequest(response) {
 	      var _this18 = this;
-
 	      if (!response) {
 	        im_lib_logger.Logger.warn('Last page request: callBatch error');
 	        return false;
-	      } //imChatGet handle
+	      }
 
-
+	      //imChatGet handle
 	      var chatGetResult = response[im_const.RestMethodHandler.imChatGet];
-
 	      if (chatGetResult.error()) {
 	        im_lib_logger.Logger.warn('Last page request: imChatGet error', chatGetResult.error());
 	        return false;
 	      }
+	      this.$Bitrix.Data.get('controller').executeRestAnswer(im_const.RestMethodHandler.imChatGet, chatGetResult);
 
-	      this.$Bitrix.Data.get('controller').executeRestAnswer(im_const.RestMethodHandler.imChatGet, chatGetResult); //imDialogMessagesGet handle
-
+	      //imDialogMessagesGet handle
 	      var lastPageMessages = response[im_const.RestMethodHandler.imDialogMessagesGet];
-
 	      if (lastPageMessages.error()) {
 	        im_lib_logger.Logger.warn('Last page request: imDialogMessagesGet error', lastPageMessages.error());
 	        return false;
 	      }
-
-	      var newMessages = lastPageMessages.data().messages.reverse(); //handle files and users
-
-	      this.$Bitrix.Data.get('controller').executeRestAnswer(im_const.RestMethodHandler.imDialogMessagesGet, lastPageMessages); //update placeholders to real messages
-
+	      var newMessages = lastPageMessages.data().messages.reverse();
+	      //handle files and users
+	      this.$Bitrix.Data.get('controller').executeRestAnswer(im_const.RestMethodHandler.imDialogMessagesGet, lastPageMessages);
+	      //update placeholders to real messages
 	      this.$store.dispatch('messages/updatePlaceholders', {
 	        chatId: this.chatId,
 	        data: newMessages,
@@ -61842,47 +60662,41 @@ this.BX = this.BX || {};
 	      }).then(function () {
 	        //get id for history requests and increase pages counter to count placeholders on next requests
 	        _this18.lastHistoryMessageId = _this18.collection[0].id;
-	        _this18.pagesLoaded += 1; //clear remaining placeholders
+	        _this18.pagesLoaded += 1;
 
+	        //clear remaining placeholders
 	        return _this18.$store.dispatch('messages/clearPlaceholders', {
 	          chatId: _this18.chatId
 	        });
 	      }).then(function () {
 	        _this18.scrollToBottom({
 	          force: true
-	        }); //enable history requests on scroll up
-
-
+	        });
+	        //enable history requests on scroll up
 	        _this18.stopHistoryLoading = false;
 	        _this18.isScrolling = false;
 	      })["catch"](function (result) {
 	        im_lib_logger.Logger.warn('Unread history error', result);
 	      });
 	    },
-
 	    /* endregion 07. Last page request */
-
 	    /* region 08. Read messages */
 	    readVisibleMessages: function readVisibleMessages() {
 	      var _this19 = this;
-
 	      if (!this.windowFocused || !this.messagesSet) {
 	        im_lib_logger.Logger.warn('reading is disabled!');
 	        return false;
-	      } //need to filter that way to empty array after async method on every element was completed
+	      }
 
-
+	      //need to filter that way to empty array after async method on every element was completed
 	      this.readMessageQueue = this.readMessageQueue.filter(function (messageId) {
 	        if (_this19.readMessageTarget[messageId]) {
 	          if (_this19.observers[ObserverType.read]) {
 	            _this19.observers[ObserverType.read].unobserve(_this19.readMessageTarget[messageId]);
 	          }
-
 	          delete _this19.readMessageTarget[messageId];
 	        }
-
 	        _this19.requestReadVisibleMessages(messageId);
-
 	        return false;
 	      });
 	    },
@@ -61891,9 +60705,7 @@ this.BX = this.BX || {};
 	        id: messageId
 	      });
 	    },
-
 	    /* endregion 08. Read messages */
-
 	    /* region 09. Helpers */
 	    getMessageIdsForPagination: function getMessageIdsForPagination() {
 	      // console.warn('this.collection.length', this.collection.length);
@@ -61909,20 +60721,16 @@ this.BX = this.BX || {};
 	    },
 	    getFirstUnreadMessage: function getFirstUnreadMessage() {
 	      var unreadId = null;
-
 	      for (var index = this.collection.length - 1; index >= 0; index--) {
 	        if (!this.collection[index].unread) {
 	          break;
 	        }
-
 	        unreadId = this.collection[index].id;
 	      }
-
 	      return unreadId;
 	    },
 	    manageScrollButton: function manageScrollButton(event) {
 	      var _this20 = this;
-
 	      var availableScrollHeight = event.target.scrollHeight - event.target.clientHeight;
 	      this.scrollChangedByUser = this.currentScroll + this.scrollButtonDiff < availableScrollHeight;
 	      clearTimeout(this.scrollButtonShowTimeout);
@@ -61938,11 +60746,11 @@ this.BX = this.BX || {};
 	            _this20.showScrollButton = false;
 	          }
 	        }
-	      }, 200); //if we are at the bottom
+	      }, 200);
 
+	      //if we are at the bottom
 	      if (event.target.scrollTop === event.target.scrollHeight - event.target.offsetHeight) {
 	        clearTimeout(this.scrollButtonShowTimeout);
-
 	        if (this.showScrollButton && this.remainingUnreadPages === 0) {
 	          this.showScrollButton = false;
 	        }
@@ -61950,26 +60758,20 @@ this.BX = this.BX || {};
 	    },
 	    getDateObject: function getDateObject() {
 	      var _this21 = this;
-
 	      if (this.dateFormatFunction) {
 	        return this.dateFormatFunction;
 	      }
-
 	      this.dateFormatFunction = Object.create(BX.Main.Date);
-
 	      this.dateFormatFunction._getMessage = function (phrase) {
 	        return _this21.$Bitrix.Loc.getMessage(phrase);
 	      };
-
 	      return this.dateFormatFunction;
 	    },
 	    getDateGroup: function getDateGroup(date) {
 	      var id = date.toJSON().slice(0, 10);
-
 	      if (this.cachedDateGroups[id]) {
 	        return this.cachedDateGroups[id];
 	      }
-
 	      var dateFormat = this.getDateFormat(DateFormat.groupTitle);
 	      this.cachedDateGroups[id] = {
 	        id: id,
@@ -61998,20 +60800,16 @@ this.BX = this.BX || {};
 	    },
 	    getObserver: function getObserver(config) {
 	      var _this22 = this;
-
 	      if (typeof window.IntersectionObserver === 'undefined' || config.type === ObserverType.none) {
 	        return {
 	          observe: function observe() {},
 	          unobserve: function unobserve() {}
 	        };
 	      }
-
 	      var observerCallback, observerOptions;
-
 	      observerCallback = function observerCallback(entries) {
 	        entries.forEach(function (entry) {
 	          var sendReadEvent = false;
-
 	          if (entry.isIntersecting) {
 	            //on windows with interface scaling intersectionRatio will never be 1
 	            if (entry.intersectionRatio >= 0.99) {
@@ -62020,10 +60818,8 @@ this.BX = this.BX || {};
 	              sendReadEvent = true;
 	            }
 	          }
-
 	          if (sendReadEvent) {
 	            _this22.readMessageQueue.push(entry.target.dataset.messageId);
-
 	            _this22.readMessageTarget[entry.target.dataset.messageId] = entry.target;
 	          } else {
 	            _this22.readMessageQueue = _this22.readMessageQueue.filter(function (messageId) {
@@ -62031,13 +60827,11 @@ this.BX = this.BX || {};
 	            });
 	            delete _this22.readMessageTarget[entry.target.dataset.messageId];
 	          }
-
 	          if (_this22.enableReadMessages) {
 	            _this22.readVisibleMessagesDelayed();
 	          }
 	        });
 	      };
-
 	      observerOptions = {
 	        root: this.$refs.body,
 	        threshold: new Array(101).fill(0).map(function (zero, index) {
@@ -62058,9 +60852,7 @@ this.BX = this.BX || {};
 	    getPlaceholderClass: function getPlaceholderClass(elementId) {
 	      var classWithId = im_const.DialogReferenceClassName.listItem + '-' + elementId;
 	      return ['im-skeleton-item', 'im-skeleton-item-1', 'im-skeleton-item--sm', classWithId];
-	    }
-	    /* endregion 09. Helpers */
-
+	    } /* endregion 09. Helpers */
 	  },
 	  directives: {
 	    'bx-im-directive-dialog-observer': {
@@ -62068,13 +60860,11 @@ this.BX = this.BX || {};
 	        if (bindings.value === ObserverType.none) {
 	          return false;
 	        }
-
 	        if (!vnode.context.observers[bindings.value]) {
 	          vnode.context.observers[bindings.value] = vnode.context.getObserver({
 	            type: bindings.value
 	          });
 	        }
-
 	        vnode.context.observers[bindings.value].observe(element);
 	        return true;
 	      },
@@ -62082,11 +60872,9 @@ this.BX = this.BX || {};
 	        if (bindings.value === ObserverType.none) {
 	          return true;
 	        }
-
 	        if (vnode.context.observers[bindings.value]) {
 	          vnode.context.observers[bindings.value].unobserve(element);
 	        }
-
 	        return true;
 	      }
 	    }
@@ -62096,7 +60884,6 @@ this.BX = this.BX || {};
 	};
 
 	function ownKeys$1(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-
 	function _objectSpread$1(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$1(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$1(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	var ErrorState = {
 	  computed: _objectSpread$1({}, ui_vue_vuex.WidgetVuex.mapState({
@@ -62132,19 +60919,16 @@ this.BX = this.BX || {};
 	  methods: {
 	    getItemClasses: function getItemClasses(type, modeIndex) {
 	      var itemClasses = ['im-skeleton-item'];
-
 	      if (this.placeholderModes[modeIndex] === 'self') {
 	        itemClasses.push('im-skeleton-item-self');
 	      } else {
 	        itemClasses.push('im-skeleton-item-opponent');
 	      }
-
 	      if (type === 0) {
 	        itemClasses.push('im-skeleton-item--sm');
 	      } else {
 	        itemClasses.push('im-skeleton-item--md');
 	      }
-
 	      return itemClasses;
 	    }
 	  },
@@ -62194,7 +60978,6 @@ this.BX = this.BX || {};
 	};
 
 	function ownKeys$2(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-
 	function _objectSpread$2(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$2(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$2(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	ui_vue.WidgetBitrixVue.component('bx-im-component-dialog', {
 	  components: {
@@ -62285,17 +61068,13 @@ this.BX = this.BX || {};
 	        description: '',
 	        color: ''
 	      };
-
 	      if (!this.isDialogShowingMessages || !this.dialog.quoteId) {
 	        return result;
 	      }
-
 	      var message = this.$store.getters['messages/getMessage'](this.dialog.chatId, this.dialog.quoteId);
-
 	      if (!message) {
 	        return result;
 	      }
-
 	      var user = this.$store.getters['users/get'](message.authorId);
 	      var files = this.$store.getters['files/getList'](this.dialog.chatId);
 	      return {
@@ -62308,11 +61087,10 @@ this.BX = this.BX || {};
 	    isLoading: function isLoading() {
 	      if (!this.showLoadingState) {
 	        return false;
-	      } // show placeholders if we don't have chatId for current dialogId
+	      }
+	      // show placeholders if we don't have chatId for current dialogId
 	      // or we have chatId, but there is no messages collection for this chatId and messages are not set yet
 	      // (because if chat is empty - there will be no messages collection, but we should not show loading state)
-
-
 	      return !this.isChatIdInModel || this.isChatIdInModel && !this.isMessagesModelInited && !this.messagesSet;
 	    },
 	    isEmpty: function isEmpty() {
@@ -62328,7 +61106,6 @@ this.BX = this.BX || {};
 	    },
 	    isDialogShowingMessages: function isDialogShowingMessages() {
 	      var messagesNotEmpty = this.messageCollection && this.messageCollection.length > 0;
-
 	      if (messagesNotEmpty) {
 	        this.dialogState = im_const.DialogState.show;
 	      } else if (this.dialog && this.dialog.init) {
@@ -62336,7 +61113,6 @@ this.BX = this.BX || {};
 	      } else {
 	        this.dialogState = im_const.DialogState.loading;
 	      }
-
 	      return messagesNotEmpty;
 	    },
 	    dialog: function dialog() {
@@ -62347,7 +61123,6 @@ this.BX = this.BX || {};
 	      if (!this.application) {
 	        return 0;
 	      }
-
 	      return this.application.dialog.chatId;
 	    },
 	    messageCollection: function messageCollection() {
@@ -62368,7 +61143,6 @@ this.BX = this.BX || {};
 	  methods: {
 	    prepareRequestDataQuery: function prepareRequestDataQuery() {
 	      var _query;
-
 	      var query = (_query = {}, babelHelpers.defineProperty(_query, im_const.RestMethodHandler.mobileBrowserConstGet, [im_const.RestMethod.mobileBrowserConstGet, {}]), babelHelpers.defineProperty(_query, im_const.RestMethodHandler.imChatGet, [im_const.RestMethod.imChatGet, {
 	        dialog_id: this.dialogId
 	      }]), babelHelpers.defineProperty(_query, im_const.RestMethodHandler.imDialogMessagesGetInit, [im_const.RestMethod.imDialogMessagesGet, {
@@ -62376,7 +61150,6 @@ this.BX = this.BX || {};
 	        limit: this.getController().application.getRequestMessageLimit(),
 	        convert_text: 'Y'
 	      }]), _query);
-
 	      if (im_lib_utils.Utils.dialog.isChatId(this.dialogId)) {
 	        query[im_const.RestMethodHandler.imUserGet] = [im_const.RestMethod.imUserGet, {}];
 	      } else {
@@ -62384,58 +61157,51 @@ this.BX = this.BX || {};
 	          id: [this.userId, this.dialogId]
 	        }];
 	      }
-
 	      return query;
 	    },
 	    requestData: function requestData() {
 	      var _this = this;
-
 	      im_lib_logger.Logger.log('requesting dialog data');
 	      var query = this.prepareRequestDataQuery();
 	      this.$Bitrix.RestClient.get().callBatch(query, function (response) {
 	        if (!response) {
 	          return false;
-	        } //const.get
+	        }
 
-
+	        //const.get
 	        var constGetResult = response[im_const.RestMethodHandler.mobileBrowserConstGet];
-
 	        if (!constGetResult.error()) {
 	          _this.executeRestAnswer(im_const.RestMethodHandler.mobileBrowserConstGet, constGetResult);
-	        } //user.get
+	        }
 
-
+	        //user.get
 	        var userGetResult = response[im_const.RestMethodHandler.imUserGet];
-
 	        if (userGetResult && !userGetResult.error()) {
 	          _this.executeRestAnswer(im_const.RestMethodHandler.imUserGet, userGetResult);
-	        } //user.list.get
+	        }
 
-
+	        //user.list.get
 	        var userListGetResult = response[im_const.RestMethodHandler.imUserListGet];
-
 	        if (userListGetResult && !userListGetResult.error()) {
 	          _this.executeRestAnswer(im_const.RestMethodHandler.imUserListGet, userListGetResult);
-	        } //chat.get
+	        }
 
-
+	        //chat.get
 	        var chatGetResult = response[im_const.RestMethodHandler.imChatGet];
-
 	        if (!chatGetResult.error()) {
 	          _this.executeRestAnswer(im_const.RestMethodHandler.imChatGet, chatGetResult);
-	        } //dialog.messages.get
+	        }
 
-
+	        //dialog.messages.get
 	        var dialogMessagesGetResult = response[im_const.RestMethodHandler.imDialogMessagesGetInit];
-
 	        if (!dialogMessagesGetResult.error()) {
 	          _this.$store.dispatch('application/set', {
 	            dialog: {
 	              enableReadMessages: true
 	            }
 	          }).then(function () {
-	            _this.executeRestAnswer(im_const.RestMethodHandler.imDialogMessagesGetInit, dialogMessagesGetResult); // this.messagesSet = true;
-
+	            _this.executeRestAnswer(im_const.RestMethodHandler.imDialogMessagesGetInit, dialogMessagesGetResult);
+	            // this.messagesSet = true;
 	          });
 	        }
 	      }, false, false, im_lib_utils.Utils.getLogTrackingParams({
@@ -62456,22 +61222,18 @@ this.BX = this.BX || {};
 	          }
 	        });
 	      }
-
 	      if (!this.skipDataRequest) {
 	        this.requestData();
 	      }
 	    },
 	    onMessagesSet: function onMessagesSet(_ref) {
 	      var event = _ref.data;
-
 	      if (event.chatId !== this.chatId) {
 	        return false;
 	      }
-
 	      if (this.messagesSet === true) {
 	        return false;
 	      }
-
 	      this.messagesSet = true;
 	    },
 	    getController: function getController() {
@@ -62512,75 +61274,59 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    this.expireList = null;
 	    this.expireInterval = null;
 	  }
-
 	  babelHelpers.createClass(LocalStorage, [{
 	    key: "isEnabled",
 	    value: function isEnabled() {
 	      if (this.enabled !== null) {
 	        return this.enabled;
 	      }
-
 	      this.enabled = false;
-
 	      if (typeof window.localStorage !== 'undefined') {
 	        try {
 	          window.localStorage.setItem('__bx_test_ls_feature__', 'ok');
-
 	          if (window.localStorage.getItem('__bx_test_ls_feature__') === 'ok') {
 	            window.localStorage.removeItem('__bx_test_ls_feature__');
 	            this.enabled = true;
 	          }
 	        } catch (e) {}
 	      }
-
 	      if (this.enabled && !this.expireInterval) {
 	        try {
 	          var expireList = window.localStorage.getItem('bx-messenger-localstorage-expire');
-
 	          if (expireList) {
 	            this.expireList = JSON.parse(expireList);
 	          }
 	        } catch (e) {}
-
 	        clearInterval(this.expireInterval);
 	        this.expireInterval = setInterval(this._checkExpireInterval.bind(this), 60000);
 	      }
-
 	      return this.enabled;
 	    }
 	  }, {
 	    key: "set",
 	    value: function set(siteId, userId, name, value) {
 	      var ttl = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : 0;
-
 	      if (!this.isEnabled()) {
 	        return false;
 	      }
-
 	      var expire = null;
-
 	      if (ttl) {
 	        expire = new Date(new Date().getTime() + ttl * 1000);
 	      }
-
 	      var storeValue = JSON.stringify({
 	        value: value,
 	        expire: expire
 	      });
-
 	      if (window.localStorage.getItem(this._getKey(siteId, userId, name)) !== storeValue) {
 	        window.localStorage.setItem(this._getKey(siteId, userId, name), storeValue);
 	      }
-
 	      if (ttl) {
 	        if (!this.expireList) {
 	          this.expireList = {};
 	        }
-
 	        this.expireList[this._getKey(siteId, userId, name)] = expire;
 	        window.localStorage.setItem('bx-messenger-localstorage-expire', JSON.stringify(this.expireList));
 	      }
-
 	      return true;
 	    }
 	  }, {
@@ -62589,26 +61335,20 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      if (!this.isEnabled()) {
 	        return typeof defaultValue !== 'undefined' ? defaultValue : null;
 	      }
-
 	      var result = window.localStorage.getItem(this._getKey(siteId, userId, name));
-
 	      if (result === null) {
 	        return typeof defaultValue !== 'undefined' ? defaultValue : null;
 	      }
-
 	      try {
 	        result = JSON.parse(result);
-
 	        if (result && typeof result.value !== 'undefined') {
 	          if (!result.expire || new Date(result.expire) > new Date()) {
 	            result = result.value;
 	          } else {
 	            window.localStorage.removeItem(this._getKey(siteId, userId, name));
-
 	            if (this.expireList) {
 	              delete this.expireList[this._getKey(siteId, userId, name)];
 	            }
-
 	            return typeof defaultValue !== 'undefined' ? defaultValue : null;
 	          }
 	        } else {
@@ -62617,7 +61357,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      } catch (e) {
 	        return typeof defaultValue !== 'undefined' ? defaultValue : null;
 	      }
-
 	      return result;
 	    }
 	  }, {
@@ -62626,11 +61365,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      if (!this.isEnabled()) {
 	        return false;
 	      }
-
 	      if (this.expireList) {
 	        delete this.expireList[this._getKey(siteId, userId, name)];
 	      }
-
 	      return window.localStorage.removeItem(this._getKey(siteId, userId, name));
 	    }
 	  }, {
@@ -62644,12 +61381,10 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      if (!this.expireList) return true;
 	      var currentTime = new Date();
 	      var count = 0;
-
 	      for (var name in this.expireList) {
 	        if (!this.expireList.hasOwnProperty(name)) {
 	          continue;
 	        }
-
 	        if (new Date(this.expireList[name]) <= currentTime) {
 	          window.localStorage.removeItem(name);
 	          delete this.expireList[name];
@@ -62657,20 +61392,17 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          count++;
 	        }
 	      }
-
 	      if (count) {
 	        window.localStorage.setItem('bx-messenger-localstorage-expire', JSON.stringify(this.expireList));
 	      } else {
 	        this.expireList = null;
 	        window.localStorage.removeItem('bx-messenger-localstorage-expire');
 	      }
-
 	      return true;
 	    }
 	  }]);
 	  return LocalStorage;
 	}();
-
 	var localStorage = new LocalStorage();
 
 	exports.LocalStorage = localStorage;
@@ -62686,7 +61418,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	'use strict';
 
 	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-
 	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	ui_vue.WidgetBitrixVue.component('bx-im-component-textarea', {
 	  /**
@@ -62700,6 +61431,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	   * @emits 'appButtonClick' {appId: string, event: object} -- 'appId' - application name, 'event' - event click
 	   * @emits 'fileSelected' {fileInput: domNode} -- 'fileInput' - dom node element
 	   */
+
 	  props: {
 	    siteId: {
 	      "default": 'default'
@@ -62783,13 +61515,11 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    buttonStyle: function buttonStyle() {
 	      var styles = Object.assign({}, this.stylesDefault, this.styles);
 	      var isIconDark = false;
-
 	      if (styles.button.iconColor) {
 	        isIconDark = im_lib_utils.Utils.isDarkColor(styles.button.iconColor);
 	      } else {
 	        isIconDark = !im_lib_utils.Utils.isDarkColor(styles.button.backgroundColor);
 	      }
-
 	      styles.button.className = isIconDark ? 'bx-im-textarea-send-button' : 'bx-im-textarea-send-button bx-im-textarea-send-button-bright-arrow';
 	      styles.button.style = styles.button.backgroundColor ? 'background-color: ' + styles.button.backgroundColor + ';' : '';
 	      return styles;
@@ -62837,14 +61567,11 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      var textarea = this.$refs.textarea;
 	      var selectionStart = textarea.selectionStart;
 	      var selectionEnd = textarea.selectionEnd;
-
 	      if (position == 'start') {
 	        if (breakline) {
 	          text = text + "\n";
 	        }
-
 	        textarea.value = text + textarea.value;
-
 	        if (focus) {
 	          if (cursor == 'after') {
 	            textarea.selectionStart = text.length;
@@ -62859,16 +61586,13 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          if (textarea.value.substring(0, selectionStart).trim().length > 0) {
 	            text = "\n" + text;
 	          }
-
 	          text = text + "\n";
 	        } else {
 	          if (textarea.value && !textarea.value.endsWith(' ')) {
 	            text = ' ' + text;
 	          }
 	        }
-
 	        textarea.value = textarea.value.substring(0, selectionStart) + text + textarea.value.substring(selectionEnd, textarea.value.length);
-
 	        if (focus) {
 	          if (cursor == 'after') {
 	            textarea.selectionStart = selectionStart + text.length;
@@ -62883,16 +61607,13 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          if (textarea.value.substring(0, selectionStart).trim().length > 0) {
 	            text = "\n" + text;
 	          }
-
 	          text = text + "\n";
 	        } else {
 	          if (textarea.value && !textarea.value.endsWith(' ')) {
 	            text = ' ' + text;
 	          }
 	        }
-
 	        textarea.value = textarea.value + text;
-
 	        if (focus) {
 	          if (cursor == 'after') {
 	            textarea.selectionStart = textarea.value.length;
@@ -62903,7 +61624,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          }
 	        }
 	      }
-
 	      if (focus) {
 	        if (cursor == 'start') {
 	          textarea.selectionStart = 0;
@@ -62912,10 +61632,8 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          textarea.selectionStart = textarea.value.length;
 	          textarea.selectionEnd = textarea.selectionStart;
 	        }
-
 	        textarea.focus();
 	      }
-
 	      this.textChangeEvent();
 	    },
 	    sendMessage: function sendMessage(event) {
@@ -62924,49 +61642,38 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        text: this.currentMessage.trim()
 	      });
 	      var textarea = this.$refs.textarea;
-
 	      if (textarea) {
 	        textarea.value = '';
 	      }
-
 	      if (this.autoFocus === null || this.autoFocus) {
 	        textarea.focus();
 	      }
-
 	      this.textChangeEvent();
 	    },
 	    textChangeEvent: function textChangeEvent() {
 	      var _this = this;
-
 	      var textarea = this.$refs.textarea;
-
 	      if (!textarea) {
 	        return;
 	      }
-
 	      var text = textarea.value.trim();
-
 	      if (this.currentMessage === text) {
 	        return;
 	      }
-
 	      if (this.writesEventLetter <= text.length) {
 	        main_core_events.EventEmitter.emit(im_const.EventType.textarea.startWriting, {
 	          text: text
 	        });
 	      }
-
 	      this.previousMessage = this.currentMessage;
 	      this.previousSelectionStart = textarea.selectionStart;
 	      this.previousSelectionEnd = this.previousSelectionStart;
 	      this.currentMessage = text;
-
 	      if (text.toString().length > 0) {
 	        this.textareaHistory[this.dialogId] = text;
 	      } else {
 	        delete this.textareaHistory[this.dialogId];
 	      }
-
 	      clearTimeout(this.messageStoreTimeout);
 	      this.messageStoreTimeout = setTimeout(function () {
 	        _this.localStorage.set(_this.siteId, _this.userId, 'textarea-history', _this.textareaHistory, _this.userId ? 0 : 10);
@@ -62977,18 +61684,17 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      var textarea = event.target;
 	      var text = textarea.value.trim();
 	      var isMac = im_lib_utils.Utils.platform.isMac();
-	      var isCtrlTEnable = im_lib_utils.Utils.platform.isBitrixDesktop() || !im_lib_utils.Utils.browser.isChrome(); // TODO see more im/install/js/im/im.js:12324
+	      var isCtrlTEnable = im_lib_utils.Utils.platform.isBitrixDesktop() || !im_lib_utils.Utils.browser.isChrome();
 
+	      // TODO see more im/install/js/im/im.js:12324
 	      if (this.commandListen) ; else if (this.mentionListen) ; else if (!(event.altKey && event.ctrlKey)) {
 	        if (this.enableMention && event.shiftKey && (event.keyCode == 61 || event.keyCode == 50 || event.keyCode == 187 || event.keyCode == 187) || event.keyCode == 107) ; else if (this.enableCommand && (event.keyCode == 191 || event.keyCode == 111 || event.keyCode == 220)) ;
 	      }
-
 	      if (event.keyCode == 27) {
 	        if (textarea.value != '' && textarea === document.activeElement) {
 	          event.preventDefault();
 	          event.stopPropagation();
 	        }
-
 	        if (event.shiftKey) {
 	          textarea.value = '';
 	        }
@@ -63003,20 +61709,17 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          var tagStart = '[' + event.key.toLowerCase() + ']';
 	          var tagEnd = '[/' + event.key.toLowerCase() + ']';
 	          var selected = textarea.value.substring(selectionStart, selectionEnd);
-
 	          if (selected.startsWith(tagStart) && selected.endsWith(tagEnd)) {
 	            selected = selected.substring(tagStart.length, selected.indexOf(tagEnd));
 	          } else {
 	            selected = tagStart + selected + tagEnd;
 	          }
-
 	          textarea.value = textarea.value.substring(0, selectionStart) + selected + textarea.value.substring(selectionEnd, textarea.value.length);
 	          textarea.selectionStart = selectionStart;
 	          textarea.selectionEnd = selectionStart + selected.length;
 	          event.preventDefault();
 	        }
 	      }
-
 	      if (event.keyCode == 9) {
 	        this.insertText("\t");
 	        event.preventDefault();
@@ -63077,12 +61780,10 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    },
 	    onInsertText: function onInsertText(_ref) {
 	      var _ref$data = _ref.data,
-	          event = _ref$data === void 0 ? {} : _ref$data;
-
+	        event = _ref$data === void 0 ? {} : _ref$data;
 	      if (!event.text) {
 	        return false;
 	      }
-
 	      this.insertText(event.text, event.breakline, event.position, event.cursor, event.focus);
 	      main_core_events.EventEmitter.emit(im_const.EventType.textarea.keyUp, {
 	        event: event,
@@ -63109,7 +61810,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    },
 	    log: function log(text, skip, event) {
 	      console.warn(text);
-
 	      if (skip == 1) {
 	        event.preventDefault();
 	      }
@@ -63560,20 +62260,16 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	      return new this(params);
 	    }
 	  }]);
-
 	  function BaseRestHandler() {
 	    var params = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 	    babelHelpers.classCallCheck(this, BaseRestHandler);
-
 	    if (babelHelpers["typeof"](params.controller) === 'object' && params.controller) {
 	      this.controller = params.controller;
 	    }
-
 	    if (babelHelpers["typeof"](params.store) === 'object' && params.store) {
 	      this.store = params.store;
 	    }
 	  }
-
 	  babelHelpers.createClass(BaseRestHandler, [{
 	    key: "execute",
 	    value: function execute(command, result) {
@@ -63581,7 +62277,6 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	      command = 'handle' + command.split('.').map(function (element) {
 	        return element.charAt(0).toUpperCase() + element.slice(1);
 	      }).join('');
-
 	      if (result.error()) {
 	        if (typeof this[command + 'Error'] === 'function') {
 	          return this[command + 'Error'](result.error(), extra);
@@ -63591,7 +62286,6 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	          return this[command + 'Success'](result.data(), extra);
 	        }
 	      }
-
 	      return typeof this[command] === 'function' ? this[command](result, extra) : null;
 	    }
 	  }]);
@@ -63599,17 +62293,13 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	}();
 
 	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-
 	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
-
 	var CoreRestHandler = /*#__PURE__*/function (_BaseRestHandler) {
 	  babelHelpers.inherits(CoreRestHandler, _BaseRestHandler);
-
 	  function CoreRestHandler() {
 	    babelHelpers.classCallCheck(this, CoreRestHandler);
 	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(CoreRestHandler).apply(this, arguments));
 	  }
-
 	  babelHelpers.createClass(CoreRestHandler, [{
 	    key: "handleImUserListGetSuccess",
 	    value: function handleImUserListGetSuccess(data) {
@@ -63629,14 +62319,15 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	    key: "handleImDialogMessagesGetSuccess",
 	    value: function handleImDialogMessagesGetSuccess(data) {
 	      this.store.dispatch('users/set', data.users);
-	      this.store.dispatch('files/setBefore', this.controller.application.prepareFilesBeforeSave(data.files)); // this.store.dispatch('messages/setBefore', data.messages);
+	      this.store.dispatch('files/setBefore', this.controller.application.prepareFilesBeforeSave(data.files));
+	      // this.store.dispatch('messages/setBefore', data.messages);
 	    }
 	  }, {
 	    key: "handleImDialogMessagesGetInitSuccess",
 	    value: function handleImDialogMessagesGetInitSuccess(data) {
 	      this.store.dispatch('users/set', data.users);
-	      this.store.dispatch('files/set', this.controller.application.prepareFilesBeforeSave(data.files)); //handling messagesSet for empty chat
-
+	      this.store.dispatch('files/set', this.controller.application.prepareFilesBeforeSave(data.files));
+	      //handling messagesSet for empty chat
 	      if (data.messages.length === 0 && data.chat_id) {
 	        im_lib_logger.Logger.warn('setting messagesSet for empty chat', data.chat_id);
 	        setTimeout(function () {
@@ -63652,7 +62343,8 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	    key: "handleImDialogMessagesGetUnreadSuccess",
 	    value: function handleImDialogMessagesGetUnreadSuccess(data) {
 	      this.store.dispatch('users/set', data.users);
-	      this.store.dispatch('files/set', this.controller.application.prepareFilesBeforeSave(data.files)); // this.store.dispatch('messages/setAfter', data.messages);
+	      this.store.dispatch('files/set', this.controller.application.prepareFilesBeforeSave(data.files));
+	      // this.store.dispatch('messages/setAfter', data.messages);
 	    }
 	  }, {
 	    key: "handleImDiskFolderGetSuccess",
@@ -63667,7 +62359,6 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	    key: "handleImMessageAddSuccess",
 	    value: function handleImMessageAddSuccess(messageId, message) {
 	      var _this = this;
-
 	      this.store.dispatch('messages/update', {
 	        id: message.id,
 	        chatId: message.chatId,
@@ -63695,7 +62386,6 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	    key: "handleImDiskFileCommitSuccess",
 	    value: function handleImDiskFileCommitSuccess(result, message) {
 	      var _this2 = this;
-
 	      this.store.dispatch('messages/update', {
 	        id: message.id,
 	        chatId: message.chatId,
@@ -63738,12 +62428,10 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	      result.items.forEach(function (item) {
 	        var userId = 0;
 	        var chatId = 0;
-
 	        if (item.user && item.user.id > 0) {
 	          userId = item.user.id;
 	          users.push(item.user);
 	        }
-
 	        if (item.chat) {
 	          chatId = item.chat.id;
 	          dialogues.push(Object.assign(item.chat, {
@@ -63754,7 +62442,6 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	            dialogId: item.id
 	          }));
 	        }
-
 	        recent.push(_objectSpread(_objectSpread({}, item), {}, {
 	          avatar: item.avatar.url,
 	          color: item.avatar.color,
@@ -63780,16 +62467,13 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	 */
 	var DialogRestHandler = /*#__PURE__*/function (_BaseRestHandler) {
 	  babelHelpers.inherits(DialogRestHandler, _BaseRestHandler);
-
 	  function DialogRestHandler(params) {
 	    var _this;
-
 	    babelHelpers.classCallCheck(this, DialogRestHandler);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(DialogRestHandler).call(this, params));
 	    _this.application = params.application;
 	    return _this;
 	  }
-
 	  babelHelpers.createClass(DialogRestHandler, [{
 	    key: "handleImChatGetSuccess",
 	    value: function handleImChatGetSuccess(data) {
@@ -63815,25 +62499,30 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	    key: "handleImChatGetError",
 	    value: function handleImChatGetError(error) {
 	      if (error.ex.error === 'ACCESS_ERROR') {
-	        im_lib_logger.Logger.error('MobileRestAnswerHandler.handleImChatGetError: ACCESS_ERROR'); //	app.closeController();
+	        im_lib_logger.Logger.error('MobileRestAnswerHandler.handleImChatGetError: ACCESS_ERROR');
+	        //	app.closeController();
 	      }
 	    }
 	  }, {
 	    key: "handleImDialogMessagesGetInitSuccess",
-	    value: function handleImDialogMessagesGetInitSuccess(data) {// EventEmitter.emit(EventType.dialog.readVisibleMessages, {chatId: this.controller.application.getChatId()});
+	    value: function handleImDialogMessagesGetInitSuccess(data) {
+	      // EventEmitter.emit(EventType.dialog.readVisibleMessages, {chatId: this.controller.application.getChatId()});
 	    }
 	  }, {
 	    key: "handleImMessageAddSuccess",
 	    value: function handleImMessageAddSuccess(messageId, message) {
-	      console.warn('im.message.add success in dialog handler'); // this.application.messagesQueue = this.context.messagesQueue.filter(el => el.id !== message.id);
+	      console.warn('im.message.add success in dialog handler');
+	      // this.application.messagesQueue = this.context.messagesQueue.filter(el => el.id !== message.id);
 	    }
 	  }, {
 	    key: "handleImMessageAddError",
-	    value: function handleImMessageAddError(error, message) {// this.application.messagesQueue = this.context.messagesQueue.filter(el => el.id !== message.id);
+	    value: function handleImMessageAddError(error, message) {
+	      // this.application.messagesQueue = this.context.messagesQueue.filter(el => el.id !== message.id);
 	    }
 	  }, {
 	    key: "handleImDiskFileCommitSuccess",
-	    value: function handleImDiskFileCommitSuccess(result, message) {// this.application.messagesQueue = this.context.messagesQueue.filter(el => el.id !== message.id);
+	    value: function handleImDiskFileCommitSuccess(result, message) {
+	      // this.application.messagesQueue = this.context.messagesQueue.filter(el => el.id !== message.id);
 	    }
 	  }]);
 	  return DialogRestHandler;
@@ -64367,7 +63056,6 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	'use strict';
 
 	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-
 	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	var ImBasePullHandler = /*#__PURE__*/function () {
 	  babelHelpers.createClass(ImBasePullHandler, null, [{
@@ -64377,26 +63065,20 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	      return new this(params);
 	    }
 	  }]);
-
 	  function ImBasePullHandler() {
 	    var params = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 	    babelHelpers.classCallCheck(this, ImBasePullHandler);
-
 	    if (babelHelpers["typeof"](params.controller) === 'object' && params.controller) {
 	      this.controller = params.controller;
 	    }
-
 	    if (babelHelpers["typeof"](params.store) === 'object' && params.store) {
 	      this.store = params.store;
 	    }
-
 	    this.option = babelHelpers["typeof"](params.store) === 'object' && params.store ? params.store : {};
-
 	    if (!(babelHelpers["typeof"](this.option.handlingDialog) === 'object' && this.option.handlingDialog && this.option.handlingDialog.chatId && this.option.handlingDialog.dialogId)) {
 	      this.option.handlingDialog = false;
 	    }
 	  }
-
 	  babelHelpers.createClass(ImBasePullHandler, [{
 	    key: "getModuleId",
 	    value: function getModuleId() {
@@ -64411,30 +63093,24 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	    key: "skipExecute",
 	    value: function skipExecute(params) {
 	      var extra = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
-
 	      if (!extra.optionImportant) {
 	        if (this.option.skip) {
 	          im_lib_logger.Logger.info('Pull: command skipped while loading messages', params);
 	          return true;
 	        }
-
 	        if (!this.option.handlingDialog) {
 	          return false;
 	        }
 	      }
-
 	      if (typeof params.chatId !== 'undefined' || typeof params.dialogId !== 'undefined') {
 	        if (typeof params.chatId !== 'undefined' && parseInt(params.chatId) === parseInt(this.option.handlingDialog.chatId)) {
 	          return false;
 	        }
-
 	        if (typeof params.dialogId !== 'undefined' && params.dialogId.toString() === this.option.handlingDialog.dialogId.toString()) {
 	          return false;
 	        }
-
 	        return true;
 	      }
-
 	      return false;
 	    }
 	  }, {
@@ -64451,55 +63127,51 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	    key: "handleMessageAdd",
 	    value: function handleMessageAdd(params, extra) {
 	      var _this = this;
-
 	      im_lib_logger.Logger.warn('handleMessageAdd', params);
-
 	      if (this.skipExecute(params, extra)) {
 	        return false;
 	      }
-
 	      var collection = this.store.state.messages.collection[params.chatId];
-
 	      if (!collection) {
 	        collection = [];
-	      } //search for message with message id from params
+	      }
 
-
+	      //search for message with message id from params
 	      var message = collection.find(function (element) {
 	        if (params.message.templateId && element.id === params.message.templateId) {
 	          return true;
 	        }
-
 	        return element.id === params.message.id;
-	      }); //stop if it's message with 'push' (pseudo push message in mobile)
+	      });
 
+	      //stop if it's message with 'push' (pseudo push message in mobile)
 	      if (message && params.message.push) {
 	        return false;
 	      }
-
 	      if (params.chat && params.chat[params.chatId]) {
-	        var existingChat = this.store.getters['dialogues/getByChatId'](params.chatId); //add new chat if there is no one
-
+	        var existingChat = this.store.getters['dialogues/getByChatId'](params.chatId);
+	        //add new chat if there is no one
 	        if (!existingChat) {
 	          var chatToAdd = Object.assign({}, params.chat[params.chatId], {
 	            dialogId: params.dialogId
 	          });
 	          this.store.dispatch('dialogues/set', chatToAdd);
-	        } //otherwise - update it
+	        }
+	        //otherwise - update it
 	        else {
 	          this.store.dispatch('dialogues/update', {
 	            dialogId: params.dialogId,
 	            fields: params.chat[params.chatId]
 	          });
 	        }
-	      } //set users
+	      }
 
-
+	      //set users
 	      if (params.users) {
 	        this.store.dispatch('users/set', ui_vue_vuex.WidgetVuexBuilderModel.convertToArray(params.users));
-	      } //set files
+	      }
 
-
+	      //set files
 	      if (params.files) {
 	        var files = this.controller.application.prepareFilesBeforeSave(ui_vue_vuex.WidgetVuexBuilderModel.convertToArray(params.files));
 	        files.forEach(function (file) {
@@ -64518,9 +63190,9 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	            _this.store.dispatch('files/set', file);
 	          }
 	        });
-	      } //if we already have message - update it and scrollToBottom
+	      }
 
-
+	      //if we already have message - update it and scrollToBottom
 	      if (message) {
 	        im_lib_logger.Logger.warn('New message pull handler: we already have this message', params.message);
 	        this.store.dispatch('messages/update', {
@@ -64538,7 +63210,8 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	            });
 	          }
 	        });
-	      } //if we dont have message and we have all pages - add new message and send newMessage event (handles scroll stuff)
+	      }
+	      //if we dont have message and we have all pages - add new message and send newMessage event (handles scroll stuff)
 	      //we dont do anything if we dont have message and there are unloaded messages
 	      else if (this.controller.application.isUnreadMessagesLoaded()) {
 	        im_lib_logger.Logger.warn('New message pull handler: we dont have this message', params.message);
@@ -64552,14 +63225,15 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	            });
 	          }
 	        });
-	      } //stop writing event
+	      }
 
-
+	      //stop writing event
 	      this.controller.application.stopOpponentWriting({
 	        dialogId: params.dialogId,
 	        userId: params.message.senderId
-	      }); // if we sent message - read all messages on server and client, set counter to 0
+	      });
 
+	      // if we sent message - read all messages on server and client, set counter to 0
 	      if (params.message.senderId === this.controller.application.getUserId()) {
 	        if (this.store.state.dialogues.collection[params.dialogId] && this.store.state.dialogues.collection[params.dialogId].counter !== 0) {
 	          this.controller.restClient.callMethod('im.dialog.read', {
@@ -64572,7 +63246,6 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	                chatId: params.chatId,
 	                cancelIfScrollChange: false
 	              });
-
 	              _this.store.dispatch('dialogues/update', {
 	                dialogId: params.dialogId,
 	                fields: {
@@ -64582,22 +63255,24 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	            });
 	          });
 	        }
-	      } //increase the counter if message is not ours
+	      }
+	      //increase the counter if message is not ours
 	      else if (params.message.senderId !== this.controller.application.getUserId()) {
 	        this.store.dispatch('dialogues/increaseCounter', {
 	          dialogId: params.dialogId,
 	          count: 1
 	        });
-	      } //set new lastMessageId (used for pagination)
+	      }
 
-
+	      //set new lastMessageId (used for pagination)
 	      this.store.dispatch('dialogues/update', {
 	        dialogId: params.dialogId,
 	        fields: {
 	          lastMessageId: params.message.id
 	        }
-	      }); //increase total message count
+	      });
 
+	      //increase total message count
 	      this.store.dispatch('dialogues/increaseMessageCounter', {
 	        dialogId: params.dialogId,
 	        count: 1
@@ -64619,20 +63294,26 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	      if (this.skipExecute(params, extra)) {
 	        return false;
 	      }
-
 	      this.controller.application.stopOpponentWriting({
 	        dialogId: params.dialogId,
 	        userId: params.senderId
 	      });
+	      var fields = {
+	        params: params.params,
+	        blink: true
+	      };
+	      if (command === "messageUpdate") {
+	        if (typeof params.textLegacy !== 'undefined') {
+	          fields.textLegacy = params.textLegacy;
+	        }
+	        if (typeof params.text !== 'undefined') {
+	          fields.text = params.text;
+	        }
+	      }
 	      this.store.dispatch('messages/update', {
 	        id: params.id,
 	        chatId: params.chatId,
-	        fields: {
-	          text: command === "messageUpdate" ? params.text : '',
-	          textOriginal: command === "messageUpdate" ? params.textOriginal : '',
-	          params: params.params,
-	          blink: true
-	        }
+	        fields: fields
 	      }).then(function () {
 	        main_core_events.EventEmitter.emit(im_const.EventType.dialog.scrollToBottom, {
 	          chatId: params.chatId,
@@ -64646,7 +63327,6 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	      if (this.skipExecute(params, extra)) {
 	        return false;
 	      }
-
 	      this.store.dispatch('messages/delete', {
 	        id: params.id,
 	        chatId: params.chatId
@@ -64663,7 +63343,6 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	      if (this.skipExecute(params, extra)) {
 	        return false;
 	      }
-
 	      this.store.dispatch('messages/update', {
 	        id: params.id,
 	        chatId: params.chatId,
@@ -64680,7 +63359,6 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	      if (this.skipExecute(params, extra)) {
 	        return false;
 	      }
-
 	      this.store.dispatch('dialogues/update', {
 	        dialogId: params.dialogId,
 	        fields: {
@@ -64694,7 +63372,6 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	      if (this.skipExecute(params, extra)) {
 	        return false;
 	      }
-
 	      this.store.dispatch('dialogues/update', {
 	        dialogId: params.dialogId,
 	        fields: {
@@ -64708,7 +63385,6 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	      if (this.skipExecute(params, extra)) {
 	        return false;
 	      }
-
 	      this.store.dispatch('dialogues/update', {
 	        dialogId: params.dialogId,
 	        fields: params.params
@@ -64720,7 +63396,6 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	      if (this.skipExecute(params, extra)) {
 	        return false;
 	      }
-
 	      this.store.dispatch('dialogues/update', {
 	        dialogId: params.dialogId,
 	        fields: {
@@ -64734,7 +63409,6 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	      if (this.skipExecute(params, extra)) {
 	        return false;
 	      }
-
 	      this.store.dispatch('dialogues/update', {
 	        dialogId: params.dialogId,
 	        fields: {
@@ -64748,7 +63422,6 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	      if (this.skipExecute(params, extra)) {
 	        return false;
 	      }
-
 	      this.store.dispatch('messages/update', {
 	        id: params.id,
 	        chatId: params.chatId,
@@ -64768,18 +63441,15 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	      if (this.skipExecute(params, extra)) {
 	        return false;
 	      }
-
 	      this.controller.application.startOpponentWriting(params);
 	    }
 	  }, {
 	    key: "handleReadMessage",
 	    value: function handleReadMessage(params, extra) {
 	      var _this2 = this;
-
 	      if (this.skipExecute(params, extra)) {
 	        return false;
 	      }
-
 	      this.store.dispatch('messages/readMessages', {
 	        chatId: params.chatId,
 	        readId: params.lastId
@@ -64813,7 +63483,6 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	      if (this.skipExecute(params, extra)) {
 	        return false;
 	      }
-
 	      this.store.dispatch('dialogues/updateReaded', {
 	        dialogId: params.dialogId,
 	        userId: params.userId,
@@ -64839,7 +63508,6 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	      if (this.skipExecute(params, extra)) {
 	        return false;
 	      }
-
 	      this.store.dispatch('dialogues/updateReaded', {
 	        dialogId: params.dialogId,
 	        userId: params.userId,
@@ -64852,7 +63520,6 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	      if (this.skipExecute(params, extra)) {
 	        return false;
 	      }
-
 	      this.store.dispatch('files/set', this.controller.application.prepareFilesBeforeSave(ui_vue_vuex.WidgetVuexBuilderModel.convertToArray({
 	        file: params.fileParams
 	      }))).then(function () {
@@ -64865,15 +63532,12 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	    key: "handleChatMuteNotify",
 	    value: function handleChatMuteNotify(params, extra) {
 	      var existingChat = this.store.getters['dialogues/get'](params.dialogId);
-
 	      if (!existingChat) {
 	        return false;
 	      }
-
 	      var existingMuteList = existingChat.muteList;
 	      var newMuteList = [];
 	      var currentUser = this.store.state.application.common.userId;
-
 	      if (params.mute) {
 	        newMuteList = [].concat(babelHelpers.toConsumableArray(existingMuteList), [currentUser]);
 	      } else {
@@ -64881,7 +63545,6 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	          return element !== currentUser;
 	        });
 	      }
-
 	      this.store.dispatch('dialogues/update', {
 	        dialogId: params.dialogId,
 	        fields: {
@@ -64904,7 +63567,6 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	}();
 
 	function ownKeys$1(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-
 	function _objectSpread$1(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$1(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$1(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	var ImCallPullHandler = /*#__PURE__*/function () {
 	  babelHelpers.createClass(ImCallPullHandler, null, [{
@@ -64914,26 +63576,20 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	      return new this(params);
 	    }
 	  }]);
-
 	  function ImCallPullHandler() {
 	    var params = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 	    babelHelpers.classCallCheck(this, ImCallPullHandler);
-
 	    if (babelHelpers["typeof"](params.application) === 'object' && params.application) {
 	      this.application = params.application;
 	    }
-
 	    if (babelHelpers["typeof"](params.controller) === 'object' && params.controller) {
 	      this.controller = params.controller;
 	    }
-
 	    if (babelHelpers["typeof"](params.store) === 'object' && params.store) {
 	      this.store = params.store;
 	    }
-
 	    this.option = babelHelpers["typeof"](params.store) === 'object' && params.store ? params.store : {};
 	  }
-
 	  babelHelpers.createClass(ImCallPullHandler, [{
 	    key: "getModuleId",
 	    value: function getModuleId() {
@@ -64950,7 +63606,6 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	      if (params.dialogId !== this.store.state.application.dialog.dialogId) {
 	        return false;
 	      }
-
 	      var users = Object.values(params.users).map(function (user) {
 	        return _objectSpread$1(_objectSpread$1({}, user), {}, {
 	          lastActivityDate: new Date()
@@ -64972,11 +63627,9 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	      if (params.dialogId !== this.store.state.application.dialog.dialogId) {
 	        return false;
 	      }
-
 	      if (params.userId === this.controller.getUserId()) {
 	        this.application.kickFromCall();
 	      }
-
 	      this.store.commit('conference/common', {
 	        userCount: params.userCount
 	      });
@@ -64988,14 +63641,12 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	    key: "handleCallUserNameUpdate",
 	    value: function handleCallUserNameUpdate(params) {
 	      var currentUser = this.store.getters['users/get'](params.userId);
-
 	      if (!currentUser) {
 	        this.store.dispatch('users/set', {
 	          id: params.userId,
 	          lastActivityDate: new Date()
 	        });
 	      }
-
 	      this.store.dispatch('users/update', {
 	        id: params.userId,
 	        fields: {
@@ -65031,7 +63682,6 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	      if (params.chatId !== this.application.getChatId()) {
 	        return false;
 	      }
-
 	      this.store.dispatch('conference/setConferenceTitle', {
 	        conferenceTitle: params.name
 	      });
@@ -65042,13 +63692,11 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	      if (params.chatId !== this.application.getChatId()) {
 	        return false;
 	      }
-
 	      if (params.isBroadcast !== '') {
 	        this.store.dispatch('conference/setBroadcastMode', {
 	          broadcastMode: params.isBroadcast
 	        });
 	      }
-
 	      if (params.presenters.length > 0) {
 	        this.store.dispatch('conference/setPresenters', {
 	          presenters: params.presenters,
@@ -65061,10 +63709,8 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	}();
 
 	function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
-
 	function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
-
-	function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+	function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i]; return arr2; }
 	var ImNotificationsPullHandler = /*#__PURE__*/function () {
 	  babelHelpers.createClass(ImNotificationsPullHandler, null, [{
 	    key: "create",
@@ -65073,26 +63719,20 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	      return new this(params);
 	    }
 	  }]);
-
 	  function ImNotificationsPullHandler() {
 	    var params = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 	    babelHelpers.classCallCheck(this, ImNotificationsPullHandler);
-
 	    if (babelHelpers["typeof"](params.application) === 'object' && params.application) {
 	      this.application = params.application;
 	    }
-
 	    if (babelHelpers["typeof"](params.controller) === 'object' && params.controller) {
 	      this.controller = params.controller;
 	    }
-
 	    if (babelHelpers["typeof"](params.store) === 'object' && params.store) {
 	      this.store = params.store;
 	    }
-
 	    this.option = babelHelpers["typeof"](params.store) === 'object' && params.store ? params.store : {};
 	  }
-
 	  babelHelpers.createClass(ImNotificationsPullHandler, [{
 	    key: "getModuleId",
 	    value: function getModuleId() {
@@ -65109,9 +63749,7 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	      if (extra.server_time_ago > 30 || params.onlyFlash === true) {
 	        return false;
 	      }
-
 	      var user = this.store.getters['users/get'](params.userId);
-
 	      if (!user) {
 	        var users = [];
 	        users.push({
@@ -65122,7 +63760,6 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	        });
 	        this.store.dispatch('users/set', users);
 	      }
-
 	      this.store.dispatch('notifications/add', {
 	        data: params
 	      });
@@ -65147,7 +63784,6 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	      if (extra.server_time_ago > 30) {
 	        return false;
 	      }
-
 	      this.store.dispatch('notifications/delete', {
 	        id: params.id
 	      });
@@ -65160,11 +63796,9 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	    key: "handleNotifyRead",
 	    value: function handleNotifyRead(params, extra) {
 	      var _this = this;
-
 	      if (extra.server_time_ago > 30) {
 	        return false;
 	      }
-
 	      params.list.forEach(function (id) {
 	        _this.store.dispatch('notifications/read', {
 	          ids: [id],
@@ -65185,11 +63819,9 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	    key: "handleNotifyUnread",
 	    value: function handleNotifyUnread(params, extra) {
 	      var _this2 = this;
-
 	      if (extra.server_time_ago > 30) {
 	        return false;
 	      }
-
 	      params.list.forEach(function (id) {
 	        _this2.store.dispatch('notifications/read', {
 	          ids: [id],
@@ -65210,11 +63842,9 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	    key: "handleNotifyDelete",
 	    value: function handleNotifyDelete(params, extra) {
 	      var _this3 = this;
-
 	      if (extra.server_time_ago > 30) {
 	        return false;
 	      }
-
 	      var idsToDelete = Object.keys(params.id).map(function (id) {
 	        return parseInt(id, 10);
 	      });
@@ -65233,7 +63863,6 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	    value: function updateRecentListOnDelete(counterValue) {
 	      var message;
 	      var latestNotification = this.getLatest();
-
 	      if (latestNotification !== null) {
 	        message = {
 	          id: latestNotification.id,
@@ -65242,15 +63871,12 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	        };
 	      } else {
 	        var notificationChat = this.store.getters['recent/get']('notify');
-
 	        if (notificationChat === false) {
 	          return;
 	        }
-
 	        message = notificationChat.element.message;
 	        message.text = this.controller.localize['IM_NOTIFICATIONS_DELETED_ITEM_STUB'];
 	      }
-
 	      this.store.dispatch('recent/update', {
 	        id: "notify",
 	        fields: {
@@ -65265,14 +63891,11 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	      var latestNotification = {
 	        id: 0
 	      };
-
 	      var _iterator = _createForOfIteratorHelper(this.store.state.notifications.collection),
-	          _step;
-
+	        _step;
 	      try {
 	        for (_iterator.s(); !(_step = _iterator.n()).done;) {
 	          var notification = _step.value;
-
 	          if (notification.id > latestNotification.id) {
 	            latestNotification = notification;
 	          }
@@ -65282,11 +63905,9 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	      } finally {
 	        _iterator.f();
 	      }
-
 	      if (latestNotification.id === 0) {
 	        return null;
 	      }
-
 	      return latestNotification;
 	    }
 	  }]);
@@ -65334,7 +63955,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    clearInterval(this.updateIntervalId);
 	    this.updateIntervalId = setInterval(this.worker.bind(this), this.updateInterval);
 	  }
-
 	  babelHelpers.createClass(Timer, [{
 	    key: "start",
 	    value: function start(name) {
@@ -65344,17 +63964,13 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      var callbackParams = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : {};
 	      id = id == null ? 'default' : id;
 	      time = parseFloat(time);
-
 	      if (isNaN(time) || time <= 0) {
 	        return false;
 	      }
-
 	      time = time * 1000;
-
 	      if (typeof this.list[name] === 'undefined') {
 	        this.list[name] = {};
 	      }
-
 	      this.list[name][id] = {
 	        'dateStop': new Date().getTime() + time,
 	        'callback': typeof callback === 'function' ? callback : function () {},
@@ -65367,11 +63983,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    value: function has(name) {
 	      var id = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'default';
 	      id = id == null ? 'default' : id;
-
 	      if (id.toString().length <= 0 || typeof this.list[name] === 'undefined') {
 	        return false;
 	      }
-
 	      return !!this.list[name][id];
 	    }
 	  }, {
@@ -65380,19 +63994,15 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      var id = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'default';
 	      var skipCallback = arguments.length > 2 ? arguments[2] : undefined;
 	      id = id == null ? 'default' : id;
-
 	      if (id.toString().length <= 0 || typeof this.list[name] === 'undefined') {
 	        return false;
 	      }
-
 	      if (!this.list[name][id]) {
 	        return true;
 	      }
-
 	      if (skipCallback !== true) {
 	        this.list[name][id]['callback'](id, this.list[name][id]['callbackParams']);
 	      }
-
 	      delete this.list[name][id];
 	      return true;
 	    }
@@ -65408,7 +64018,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          }
 	        }
 	      }
-
 	      return true;
 	    }
 	  }, {
@@ -65418,16 +64027,13 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        if (!this.list.hasOwnProperty(name)) {
 	          continue;
 	        }
-
 	        for (var id in this.list[name]) {
 	          if (!this.list[name].hasOwnProperty(id) || this.list[name][id]['dateStop'] > new Date()) {
 	            continue;
 	          }
-
 	          this.stop(name, id);
 	        }
 	      }
-
 	      return true;
 	    }
 	  }, {
@@ -65467,17 +64073,14 @@ this.BX = this.BX || {};
 	    babelHelpers.classCallCheck(this, ApplicationController);
 	    this.controller = null;
 	    this.timer = new im_lib_timer.Timer();
-
 	    this._prepareFilesBeforeSave = function (params) {
 	      return params;
 	    };
-
 	    this.defaultMessageLimit = 50;
 	    this.requestMessageLimit = this.getDefaultMessageLimit();
 	    this.messageLastReadId = {};
 	    this.messageReadQueue = {};
 	  }
-
 	  babelHelpers.createClass(ApplicationController, [{
 	    key: "setCoreController",
 	    value: function setCoreController(controller) {
@@ -65522,11 +64125,9 @@ this.BX = this.BX || {};
 	    key: "getDialogData",
 	    value: function getDialogData() {
 	      var dialogId = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this.getDialogId();
-
 	      if (this.controller.getStore().state.dialogues.collection[dialogId]) {
 	        return this.controller.getStore().state.dialogues.collection[dialogId];
 	      }
-
 	      return this.controller.getStore().getters['dialogues/getBlank']();
 	    }
 	  }, {
@@ -65539,15 +64140,13 @@ this.BX = this.BX || {};
 	        entityId: 0
 	      };
 	      var dialogData = this.getDialogData(dialogId);
-
 	      if (dialogData.type === im_const.DialogType.call) {
 	        if (dialogData.entityData1 && typeof dialogData.entityData1 === 'string') {
 	          var _dialogData$entityDat = dialogData.entityData1.split('|'),
-	              _dialogData$entityDat2 = babelHelpers.slicedToArray(_dialogData$entityDat, 3),
-	              enabled = _dialogData$entityDat2[0],
-	              entityType = _dialogData$entityDat2[1],
-	              entityId = _dialogData$entityDat2[2];
-
+	            _dialogData$entityDat2 = babelHelpers.slicedToArray(_dialogData$entityDat, 3),
+	            enabled = _dialogData$entityDat2[0],
+	            entityType = _dialogData$entityDat2[1],
+	            entityId = _dialogData$entityDat2[2];
 	          if (enabled) {
 	            entityType = entityType ? entityType.toString().toLowerCase() : im_const.DialogCrmType.none;
 	            result = {
@@ -65559,10 +64158,9 @@ this.BX = this.BX || {};
 	        }
 	      } else if (dialogData.type === im_const.DialogType.crm) {
 	        var _dialogData$entityId$ = dialogData.entityId.split('|'),
-	            _dialogData$entityId$2 = babelHelpers.slicedToArray(_dialogData$entityId$, 2),
-	            _entityType = _dialogData$entityId$2[0],
-	            _entityId = _dialogData$entityId$2[1];
-
+	          _dialogData$entityId$2 = babelHelpers.slicedToArray(_dialogData$entityId$, 2),
+	          _entityType = _dialogData$entityId$2[0],
+	          _entityId = _dialogData$entityId$2[1];
 	        _entityType = _entityType ? _entityType.toString().toLowerCase() : im_const.DialogCrmType.none;
 	        result = {
 	          enabled: true,
@@ -65570,7 +64168,6 @@ this.BX = this.BX || {};
 	          entityId: _entityId
 	        };
 	      }
-
 	      return result;
 	    }
 	  }, {
@@ -65579,13 +64176,10 @@ this.BX = this.BX || {};
 	      if (this.getDialogId() === 'chat' + chatId) {
 	        return this.getDialogId();
 	      }
-
 	      var dialog = this.controller.getStore().getters['dialogues/getByChatId'](chatId);
-
 	      if (!dialog) {
 	        return 0;
 	      }
-
 	      return dialog.dialogId;
 	    }
 	  }, {
@@ -65607,18 +64201,14 @@ this.BX = this.BX || {};
 	    key: "muteDialog",
 	    value: function muteDialog() {
 	      var _this = this;
-
 	      var action = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
 	      var dialogId = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : this.getDialogId();
-
 	      if (im_lib_utils.Utils.dialog.isEmptyDialogId(dialogId)) {
 	        return false;
 	      }
-
 	      if (action === null) {
 	        action = !this.isDialogMuted();
 	      }
-
 	      this.timer.start('muteDialog', dialogId, .3, function (id) {
 	        _this.controller.restClient.callMethod(im_const.RestMethod.imChatMute, {
 	          'DIALOG_ID': dialogId,
@@ -65626,7 +64216,6 @@ this.BX = this.BX || {};
 	        });
 	      });
 	      var muteList = [];
-
 	      if (action) {
 	        muteList = this.getDialogData().muteList;
 	        muteList.push(this.getUserId());
@@ -65635,7 +64224,6 @@ this.BX = this.BX || {};
 	          return userId !== _this.getUserId();
 	        });
 	      }
-
 	      this.controller.getStore().dispatch('dialogues/update', {
 	        dialogId: dialogId,
 	        fields: {
@@ -65654,32 +64242,24 @@ this.BX = this.BX || {};
 	    key: "isUnreadMessagesLoaded",
 	    value: function isUnreadMessagesLoaded() {
 	      var dialog = this.controller.getStore().state.dialogues.collection[this.getDialogId()];
-
 	      if (!dialog) {
 	        return true;
 	      }
-
 	      if (dialog.lastMessageId <= 0) {
 	        return true;
 	      }
-
 	      var collection = this.controller.getStore().state.messages.collection[this.getChatId()];
-
 	      if (!collection || collection.length <= 0) {
 	        return true;
 	      }
-
 	      var lastElementId = 0;
-
 	      for (var index = collection.length - 1; index >= 0; index--) {
 	        var lastElement = collection[index];
-
 	        if (typeof lastElement.id === "number") {
 	          lastElementId = lastElement.id;
 	          break;
 	        }
 	      }
-
 	      return lastElementId >= dialog.lastMessageId;
 	    }
 	  }, {
@@ -65706,10 +64286,9 @@ this.BX = this.BX || {};
 	    key: "startOpponentWriting",
 	    value: function startOpponentWriting(params) {
 	      var _this2 = this;
-
 	      var dialogId = params.dialogId,
-	          userId = params.userId,
-	          userName = params.userName;
+	        userId = params.userId,
+	        userName = params.userName;
 	      this.controller.getStore().dispatch('dialogues/updateWriting', {
 	        dialogId: dialogId,
 	        userId: userId,
@@ -65718,8 +64297,7 @@ this.BX = this.BX || {};
 	      });
 	      this.timer.start('writingEnd', dialogId + '|' + userId, 35, function (id, params) {
 	        var dialogId = params.dialogId,
-	            userId = params.userId;
-
+	          userId = params.userId;
 	        _this2.controller.getStore().dispatch('dialogues/updateWriting', {
 	          dialogId: dialogId,
 	          userId: userId,
@@ -65736,8 +64314,8 @@ this.BX = this.BX || {};
 	    value: function stopOpponentWriting() {
 	      var params = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 	      var dialogId = params.dialogId,
-	          userId = params.userId,
-	          userName = params.userName;
+	        userId = params.userId,
+	        userName = params.userName;
 	      this.timer.stop('writingStart', dialogId + '|' + userId, true);
 	      this.timer.stop('writingEnd', dialogId + '|' + userId);
 	      return true;
@@ -65746,13 +64324,10 @@ this.BX = this.BX || {};
 	    key: "startWriting",
 	    value: function startWriting() {
 	      var _this3 = this;
-
 	      var dialogId = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this.getDialogId();
-
 	      if (im_lib_utils.Utils.dialog.isEmptyDialogId(dialogId) || this.timer.has('writes', dialogId)) {
 	        return false;
 	      }
-
 	      this.timer.start('writes', dialogId, 28);
 	      this.timer.start('writesSend', dialogId, 5, function (id) {
 	        _this3.controller.restClient.callMethod(im_const.RestMethod.imDialogWriting, {
@@ -65773,20 +64348,16 @@ this.BX = this.BX || {};
 	    key: "joinParentChat",
 	    value: function joinParentChat(messageId, dialogId) {
 	      var _this4 = this;
-
 	      return new Promise(function (resolve, reject) {
 	        if (!messageId || !dialogId) {
 	          return reject();
 	        }
-
 	        if (typeof _this4.tempJoinChat === 'undefined') {
 	          _this4.tempJoinChat = {};
 	        } else if (_this4.tempJoinChat['wait']) {
 	          return reject();
 	        }
-
 	        _this4.tempJoinChat['wait'] = true;
-
 	        _this4.controller.restClient.callMethod(im_const.RestMethod.imChatParentJoin, {
 	          'DIALOG_ID': dialogId,
 	          'MESSAGE_ID': messageId
@@ -65804,9 +64375,9 @@ this.BX = this.BX || {};
 	    key: "setTextareaMessage",
 	    value: function setTextareaMessage(params) {
 	      var _params$message = params.message,
-	          message = _params$message === void 0 ? '' : _params$message,
-	          _params$dialogId = params.dialogId,
-	          dialogId = _params$dialogId === void 0 ? this.getDialogId() : _params$dialogId;
+	        message = _params$message === void 0 ? '' : _params$message,
+	        _params$dialogId = params.dialogId,
+	        dialogId = _params$dialogId === void 0 ? this.getDialogId() : _params$dialogId;
 	      this.controller.getStore().dispatch('dialogues/update', {
 	        dialogId: dialogId,
 	        fields: {
@@ -65835,31 +64406,24 @@ this.BX = this.BX || {};
 	    key: "readMessage",
 	    value: function readMessage() {
 	      var _this5 = this;
-
 	      var messageId = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
 	      var force = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
 	      var skipAjax = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
 	      var chatId = this.getChatId();
-
 	      if (typeof this.messageLastReadId[chatId] === 'undefined') {
 	        this.messageLastReadId[chatId] = null;
 	      }
-
 	      if (typeof this.messageReadQueue[chatId] === 'undefined') {
 	        this.messageReadQueue[chatId] = [];
 	      }
-
 	      if (messageId) {
 	        this.messageReadQueue[chatId].push(parseInt(messageId));
 	      }
-
 	      this.timer.stop('readMessage', chatId, true);
 	      this.timer.stop('readMessageServer', chatId, true);
-
 	      if (force) {
 	        return this.readMessageExecute(chatId, skipAjax);
 	      }
-
 	      return new Promise(function (resolve, reject) {
 	        _this5.timer.start('readMessage', chatId, .1, function (chatId, params) {
 	          return _this5.readMessageExecute(chatId, skipAjax).then(function (result) {
@@ -65872,7 +64436,6 @@ this.BX = this.BX || {};
 	    key: "readMessageExecute",
 	    value: function readMessageExecute(chatId) {
 	      var _this6 = this;
-
 	      var skipAjax = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
 	      return new Promise(function (resolve, reject) {
 	        if (_this6.messageReadQueue[chatId]) {
@@ -65884,11 +64447,8 @@ this.BX = this.BX || {};
 	            }
 	          });
 	        }
-
 	        var dialogId = _this6.getDialogIdByChatId(chatId);
-
 	        var lastId = _this6.messageLastReadId[chatId] || 0;
-
 	        if (lastId <= 0) {
 	          resolve({
 	            dialogId: dialogId,
@@ -65896,7 +64456,6 @@ this.BX = this.BX || {};
 	          });
 	          return true;
 	        }
-
 	        _this6.controller.getStore().dispatch('messages/readMessages', {
 	          chatId: chatId,
 	          readId: lastId
@@ -65905,15 +64464,12 @@ this.BX = this.BX || {};
 	            dialogId: dialogId,
 	            count: result.count
 	          });
-
 	          if (_this6.getChatId() === chatId && _this6.controller.getStore().getters['dialogues/canSaveChat']) {
 	            var dialog = _this6.controller.getStore().getters['dialogues/get'](dialogId);
-
 	            if (dialog.counter <= 0) {
 	              _this6.controller.getStore().commit('application/clearDialogExtraCount');
 	            }
 	          }
-
 	          if (skipAjax) {
 	            resolve({
 	              dialogId: dialogId,
@@ -65946,25 +64502,20 @@ this.BX = this.BX || {};
 	    key: "unreadMessage",
 	    value: function unreadMessage() {
 	      var _this7 = this;
-
 	      var messageId = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
 	      var skipAjax = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
 	      var chatId = this.getChatId();
-
 	      if (typeof this.messageLastReadId[chatId] === 'undefined') {
 	        this.messageLastReadId[chatId] = null;
 	      }
-
 	      if (typeof this.messageReadQueue[chatId] === 'undefined') {
 	        this.messageReadQueue[chatId] = [];
 	      }
-
 	      if (messageId) {
 	        this.messageReadQueue[chatId] = this.messageReadQueue[chatId].filter(function (id) {
 	          return id < messageId;
 	        });
 	      }
-
 	      this.timer.stop('readMessage', chatId, true);
 	      this.timer.stop('readMessageServer', chatId, true);
 	      this.messageLastReadId[chatId] = messageId;
@@ -65973,19 +64524,16 @@ this.BX = this.BX || {};
 	        unreadId: this.messageLastReadId[chatId]
 	      }).then(function (result) {
 	        var dialogId = _this7.getDialogIdByChatId(chatId);
-
 	        _this7.controller.getStore().dispatch('dialogues/update', {
 	          dialogId: dialogId,
 	          fields: {
 	            unreadId: messageId
 	          }
 	        });
-
 	        _this7.controller.getStore().dispatch('dialogues/increaseCounter', {
 	          dialogId: dialogId,
 	          count: result.count
 	        });
-
 	        if (!skipAjax) {
 	          _this7.controller.restClient.callMethod(im_const.RestMethod.imDialogUnread, {
 	            'DIALOG_ID': dialogId,
@@ -66018,11 +64566,9 @@ this.BX = this.BX || {};
 	    key: "emit",
 	    value: function emit(eventName) {
 	      var _Vue$event;
-
 	      for (var _len = arguments.length, args = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
 	        args[_key - 1] = arguments[_key];
 	      }
-
 	      (_Vue$event = ui_vue.WidgetVue.event).$emit.apply(_Vue$event, [eventName].concat(args));
 	    }
 	  }, {
@@ -66035,13 +64581,12 @@ this.BX = this.BX || {};
 	}();
 
 	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-
 	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	var Controller = /*#__PURE__*/function () {
 	  /* region 01. Initialize and store data */
+
 	  function Controller() {
 	    var _this = this;
-
 	    var params = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 	    babelHelpers.classCallCheck(this, Controller);
 	    this.inited = false;
@@ -66073,7 +64618,6 @@ this.BX = this.BX || {};
 	      im_lib_logger.Logger.error('error initializing core controller', error);
 	    });
 	  }
-
 	  babelHelpers.createClass(Controller, [{
 	    key: "init",
 	    value: function init() {
@@ -66083,7 +64627,6 @@ this.BX = this.BX || {};
 	    key: "prepareParams",
 	    value: function prepareParams(params) {
 	      var _this2 = this;
-
 	      if (typeof params.localize !== 'undefined') {
 	        this.localize = params.localize;
 	      } else {
@@ -66093,16 +64636,13 @@ this.BX = this.BX || {};
 	          this.localize = {};
 	        }
 	      }
-
 	      if (typeof params.host !== 'undefined') {
 	        this.host = params.host;
 	      } else {
 	        this.host = location.origin;
 	      }
-
 	      if (typeof params.userId !== 'undefined') {
 	        var parsedUserId = parseInt(params.userId);
-
 	        if (!isNaN(parsedUserId)) {
 	          this.userId = parsedUserId;
 	        } else {
@@ -66112,7 +64652,6 @@ this.BX = this.BX || {};
 	        var userId = this.getLocalize('USER_ID');
 	        this.userId = userId ? parseInt(userId) : 0;
 	      }
-
 	      if (typeof params.siteId !== 'undefined') {
 	        if (typeof params.siteId === 'string' && params.siteId !== '') {
 	          this.siteId = params.siteId;
@@ -66122,7 +64661,6 @@ this.BX = this.BX || {};
 	      } else {
 	        this.siteId = this.getLocalize('SITE_ID') || 's1';
 	      }
-
 	      if (typeof params.siteDir !== 'undefined') {
 	        if (typeof params.siteDir === 'string' && params.siteDir !== '') {
 	          this.siteDir = params.siteDir;
@@ -66132,7 +64670,6 @@ this.BX = this.BX || {};
 	      } else {
 	        this.siteDir = this.getLocalize('SITE_DIR') || 's1';
 	      }
-
 	      if (typeof params.languageId !== 'undefined') {
 	        if (typeof params.languageId === 'string' && params.languageId !== '') {
 	          this.languageId = params.languageId;
@@ -66142,59 +64679,47 @@ this.BX = this.BX || {};
 	      } else {
 	        this.languageId = this.getLocalize('LANGUAGE_ID') || 'en';
 	      }
-
 	      this.pullInstance = pull_client.PullClient;
 	      this.pullClient = pull_client.PULL;
-
 	      if (typeof params.pull !== 'undefined') {
 	        if (typeof params.pull.instance !== 'undefined') {
 	          this.pullInstance = params.pull.instance;
 	        }
-
 	        if (typeof params.pull.client !== 'undefined') {
 	          this.pullClient = params.pull.client;
 	        }
 	      }
-
 	      this.restInstance = rest_client.RestClient;
 	      this.restClient = rest_client.rest;
-
 	      if (typeof params.rest !== 'undefined') {
 	        if (typeof params.rest.instance !== 'undefined') {
 	          this.restInstance = params.rest.instance;
 	        }
-
 	        if (typeof params.rest.client !== 'undefined') {
 	          this.restClient = params.rest.client;
 	        }
 	      }
-
 	      this.vuexBuilder = {
 	        database: false,
 	        databaseName: 'desktop/im',
 	        databaseType: ui_vue_vuex.WidgetVuexBuilder.DatabaseType.indexedDb
 	      };
-
 	      if (typeof params.vuexBuilder !== 'undefined') {
 	        if (typeof params.vuexBuilder.database !== 'undefined') {
 	          this.vuexBuilder.database = params.vuexBuilder.database;
 	        }
-
 	        if (typeof params.vuexBuilder.databaseName !== 'undefined') {
 	          this.vuexBuilder.databaseName = params.vuexBuilder.databaseName;
 	        }
-
 	        if (typeof params.vuexBuilder.databaseType !== 'undefined') {
 	          this.vuexBuilder.databaseType = params.vuexBuilder.databaseType;
 	        }
-
 	        if (typeof params.vuexBuilder.models !== 'undefined') {
 	          params.vuexBuilder.models.forEach(function (model) {
 	            _this2.addVuexModel(model);
 	          });
 	        }
 	      }
-
 	      return Promise.resolve();
 	    }
 	  }, {
@@ -66217,7 +64742,6 @@ this.BX = this.BX || {};
 	    key: "initStorage",
 	    value: function initStorage() {
 	      var _this3 = this;
-
 	      var applicationVariables = {
 	        common: {
 	          host: this.getHost(),
@@ -66287,7 +64811,6 @@ this.BX = this.BX || {};
 	      if (!this.pullClient) {
 	        return false;
 	      }
-
 	      this.pullClient.subscribe(this.pullBaseHandler = new im_provider_pull.ImBasePullHandler({
 	        store: this.store,
 	        controller: this
@@ -66308,18 +64831,15 @@ this.BX = this.BX || {};
 	    key: "initEnvironment",
 	    value: function initEnvironment(result) {
 	      var _this4 = this;
-
 	      window.addEventListener('orientationchange', function () {
 	        if (!_this4.store) {
 	          return;
 	        }
-
 	        _this4.store.commit('application/set', {
 	          device: {
 	            orientation: im_lib_utils.Utils.device.getOrientation()
 	          }
 	        });
-
 	        if (_this4.store.state.application.device.type === im_const.DeviceType.mobile && _this4.store.state.application.device.orientation === im_const.DeviceOrientation.horizontal) {
 	          document.activeElement.blur();
 	        }
@@ -66335,14 +64855,14 @@ this.BX = this.BX || {};
 	      this.initPromiseResolver(this);
 	    }
 	    /* endregion 01. Initialize and store data */
-
 	    /* region 02. Push & Pull */
-
 	  }, {
 	    key: "eventStatusInteraction",
 	    value: function eventStatusInteraction(data) {
 	      if (data.status === this.pullInstance.PullStatus.Online) {
-	        this.offline = false; //this.pullBaseHandler.option.skip = true;
+	        this.offline = false;
+
+	        //this.pullBaseHandler.option.skip = true;
 	        // this.getDialogUnread().then(() => {
 	        // 	this.pullBaseHandler.option.skip = false;
 	        // 	this.processSendMessages();
@@ -66363,7 +64883,6 @@ this.BX = this.BX || {};
 	          if (!data.params.users.hasOwnProperty(userId)) {
 	            continue;
 	          }
-
 	          this.store.dispatch('users/update', {
 	            id: data.params.users[userId].id,
 	            fields: data.params.users[userId]
@@ -66372,9 +64891,7 @@ this.BX = this.BX || {};
 	      }
 	    }
 	    /* endregion 02. Push & Pull */
-
 	    /* region 03. Rest */
-
 	  }, {
 	    key: "executeRestAnswer",
 	    value: function executeRestAnswer(command, result, extra) {
@@ -66384,48 +64901,36 @@ this.BX = this.BX || {};
 	      });
 	    }
 	    /* endregion 03. Rest */
-
 	    /* region 04. Template engine */
-
 	  }, {
 	    key: "createVue",
 	    value: function createVue(application) {
 	      var config = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 	      var controller = this;
-
 	      var beforeCreateFunction = function beforeCreateFunction() {};
-
 	      if (config.beforeCreate) {
 	        beforeCreateFunction = config.beforeCreate;
 	      }
-
 	      var destroyedFunction = function destroyedFunction() {};
-
 	      if (config.destroyed) {
 	        destroyedFunction = config.destroyed;
 	      }
-
 	      var createdFunction = function createdFunction() {};
-
 	      if (config.created) {
 	        createdFunction = config.created;
 	      }
-
 	      var initConfig = {
 	        store: this.store,
 	        beforeCreate: function beforeCreate() {
 	          this.$bitrix.Data.set('controller', controller);
 	          this.$bitrix.Application.set(application);
 	          this.$bitrix.Loc.setMessage(controller.localize);
-
 	          if (controller.restClient) {
 	            this.$bitrix.RestClient.set(controller.restClient);
 	          }
-
 	          if (controller.pullClient) {
 	            this.$bitrix.PullClient.set(controller.pullClient);
 	          }
-
 	          beforeCreateFunction.bind(this)();
 	        },
 	        created: function created() {
@@ -66435,37 +64940,29 @@ this.BX = this.BX || {};
 	          destroyedFunction.bind(this)();
 	        }
 	      };
-
 	      if (config.el) {
 	        initConfig.el = config.el;
 	      }
-
 	      if (config.template) {
 	        initConfig.template = config.template;
 	      }
-
 	      if (config.computed) {
 	        initConfig.computed = config.computed;
 	      }
-
 	      if (config.data) {
 	        initConfig.data = config.data;
 	      }
-
 	      var initConfigCreatedFunction = initConfig.created;
 	      return new Promise(function (resolve, reject) {
 	        initConfig.created = function () {
 	          initConfigCreatedFunction.bind(this)();
 	          resolve(this);
 	        };
-
 	        ui_vue.WidgetBitrixVue.createApp(initConfig);
 	      });
 	    }
 	    /* endregion 04. Template engine */
-
 	    /* region 05. Core methods */
-
 	  }, {
 	    key: "getHost",
 	    value: function getHost() {
@@ -66490,13 +64987,11 @@ this.BX = this.BX || {};
 	    key: "setUserId",
 	    value: function setUserId(userId) {
 	      var parsedUserId = parseInt(userId);
-
 	      if (!isNaN(parsedUserId)) {
 	        this.userId = parsedUserId;
 	      } else {
 	        this.userId = 0;
 	      }
-
 	      this.store.commit('application/set', {
 	        common: {
 	          userId: userId
@@ -66516,7 +65011,6 @@ this.BX = this.BX || {};
 	      } else {
 	        this.siteId = 's1';
 	      }
-
 	      this.store.commit('application/set', {
 	        common: {
 	          siteId: this.siteId
@@ -66536,7 +65030,6 @@ this.BX = this.BX || {};
 	      } else {
 	        this.languageId = 'en';
 	      }
-
 	      this.store.commit('application/set', {
 	        common: {
 	          languageId: this.languageId
@@ -66574,13 +65067,10 @@ this.BX = this.BX || {};
 	      if (this.inited) {
 	        return Promise.resolve(this);
 	      }
-
 	      return this.initPromise;
 	    }
 	    /* endregion 05. Methods */
-
 	    /* region 06. Interaction and utils */
-
 	  }, {
 	    key: "setError",
 	    value: function setError() {
@@ -66588,11 +65078,9 @@ this.BX = this.BX || {};
 	      var description = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : '';
 	      im_lib_logger.Logger.error("Messenger.Application.error: ".concat(code, " (").concat(description, ")"));
 	      var localizeDescription = '';
-
 	      if (code.endsWith('LOCALIZED')) {
 	        localizeDescription = description;
 	      }
-
 	      this.store.commit('application/set', {
 	        error: {
 	          active: true,
@@ -66618,32 +65106,27 @@ this.BX = this.BX || {};
 	      if (babelHelpers["typeof"](phrases) !== "object" || !phrases) {
 	        return false;
 	      }
-
 	      for (var name in phrases) {
 	        if (phrases.hasOwnProperty(name)) {
 	          this.localize[name] = phrases[name];
 	        }
 	      }
-
 	      return true;
 	    }
 	  }, {
 	    key: "getLocalize",
 	    value: function getLocalize(name) {
 	      var phrase = '';
-
 	      if (typeof name === 'undefined') {
 	        return this.localize;
 	      } else if (typeof this.localize[name.toString()] === 'undefined') {
-	        im_lib_logger.Logger.warn("Controller.Core.getLocalize: message with code '".concat(name.toString(), "' is undefined.")); //Logger.trace();
+	        im_lib_logger.Logger.warn("Controller.Core.getLocalize: message with code '".concat(name.toString(), "' is undefined."));
+	        //Logger.trace();
 	      } else {
 	        phrase = this.localize[name];
 	      }
-
 	      return phrase;
-	    }
-	    /* endregion 06. Interaction and utils */
-
+	    } /* endregion 06. Interaction and utils */
 	  }]);
 	  return Controller;
 	}();
@@ -66673,66 +65156,51 @@ this.BX.Messenger = this.BX.Messenger || {};
 	var Cookie = {
 	  get: function get(siteId, name) {
 	    var cookieName = siteId ? siteId + '_' + name : name;
-
 	    if (navigator.cookieEnabled) {
 	      var result = document.cookie.match(new RegExp("(?:^|; )" + cookieName.replace(/([.$?*|{}()\[\]\\\/+^])/g, '\\$1') + "=([^;]*)"));
-
 	      if (result) {
 	        return decodeURIComponent(result[1]);
 	      }
 	    }
-
 	    if (im_lib_localstorage.LocalStorage.isEnabled()) {
 	      var _result = im_lib_localstorage.LocalStorage.get(siteId, 0, name, undefined);
-
 	      if (typeof _result !== 'undefined') {
 	        return _result;
 	      }
 	    }
-
 	    if (typeof window.BX.GuestUserCookie === 'undefined') {
 	      window.BX.GuestUserCookie = {};
 	    }
-
 	    return window.BX.GuestUserCookie[cookieName];
 	  },
 	  set: function set(siteId, name, value, options) {
 	    options = options || {};
 	    var expires = options.expires;
-
 	    if (typeof expires == "number" && expires) {
 	      var currentDate = new Date();
 	      currentDate.setTime(currentDate.getTime() + expires * 1000);
 	      expires = options.expires = currentDate;
 	    }
-
 	    if (expires && expires.toUTCString) {
 	      options.expires = expires.toUTCString();
 	    }
-
 	    value = encodeURIComponent(value);
 	    var cookieName = siteId ? siteId + '_' + name : name;
 	    var updatedCookie = cookieName + "=" + value;
-
 	    for (var propertyName in options) {
 	      if (!options.hasOwnProperty(propertyName)) {
 	        continue;
 	      }
-
 	      updatedCookie += "; " + propertyName;
 	      var propertyValue = options[propertyName];
-
 	      if (propertyValue !== true) {
 	        updatedCookie += "=" + propertyValue;
 	      }
 	    }
-
 	    document.cookie = updatedCookie;
-
 	    if (typeof window.BX.GuestUserCookie === 'undefined') {
 	      BX.GuestUserCookie = {};
 	    }
-
 	    window.BX.GuestUserCookie[cookieName] = value;
 	    im_lib_localstorage.LocalStorage.set(siteId, 0, name, value);
 	    return true;
@@ -66781,16 +65249,13 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    this.actionRollbackUpload = options.actionRollbackUpload || 'disk.api.content.rollbackUpload';
 	    this.customHeaders = options.customHeaders || null;
 	  }
-
 	  babelHelpers.createClass(FileSender, [{
 	    key: "uploadContent",
 	    value: function uploadContent() {
 	      var _this = this;
-
 	      if (this.status === Uploader.STATUSES.CANCELLED) {
 	        return;
 	      }
-
 	      this.status = Uploader.STATUSES.PROGRESS;
 	      this.readNext();
 	      var url = "".concat(this.host ? this.host : "", "\n\t\t\t/bitrix/services/main/ajax.php?action=").concat(this.actionUploadChunk, "\n\t\t\t&filename=").concat(this.fileName, "\n\t\t\t").concat(this.token ? "&token=" + this.token : "");
@@ -66800,10 +65265,10 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        "Content-Type": this.fileData.type,
 	        "Content-Range": contentRangeHeader
 	      };
-
 	      if (!this.customHeaders) {
 	        headers['X-Bitrix-Csrf-Token'] = BX.bitrix_sessid();
-	      } else //if (this.customHeaders)
+	      } else
+	        //if (this.customHeaders)
 	        {
 	          for (var customHeader in this.customHeaders) {
 	            if (this.customHeaders.hasOwnProperty(customHeader)) {
@@ -66811,7 +65276,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	            }
 	          }
 	        }
-
 	      fetch(url, {
 	        method: 'POST',
 	        headers: headers,
@@ -66822,17 +65286,14 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      }).then(function (result) {
 	        if (result.errors.length > 0) {
 	          _this.status = Uploader.STATUSES.FAILED;
-
 	          _this.listener('onUploadFileError', {
 	            id: _this.taskId,
 	            result: result
 	          });
-
 	          console.error(result.errors[0].message);
 	        } else if (result.data.token) {
 	          _this.token = result.data.token;
 	          _this.readOffset = _this.readOffset + _this.chunkSizeInBytes;
-
 	          if (!_this.isEndOfFile()) {
 	            _this.uploadContent();
 	          } else {
@@ -66841,7 +65302,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        }
 	      })["catch"](function (err) {
 	        _this.status = Uploader.STATUSES.FAILED;
-
 	        _this.listener('onUploadFileError', {
 	          id: _this.taskId,
 	          result: err
@@ -66853,18 +65313,16 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    value: function deleteContent() {
 	      this.status = Uploader.STATUSES.CANCELLED;
 	      this.requestToDelete = true;
-
 	      if (!this.token) {
 	        console.error('Empty token.');
 	        return;
 	      }
-
 	      var url = "".concat(this.host ? this.host : "", "/bitrix/services/main/ajax.php?\n\t\taction=").concat(this.actionRollbackUpload, "&token=").concat(this.token);
 	      var headers = {};
-
 	      if (!this.customHeaders) {
 	        headers['X-Bitrix-Csrf-Token'] = BX.bitrix_sessid();
-	      } else //if (this.customHeaders)
+	      } else
+	        //if (this.customHeaders)
 	        {
 	          for (var customHeader in this.customHeaders) {
 	            if (this.customHeaders.hasOwnProperty(customHeader)) {
@@ -66872,7 +65330,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	            }
 	          }
 	        }
-
 	      fetch(url, {
 	        method: 'POST',
 	        credentials: "include",
@@ -66889,24 +65346,21 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    key: "createFileFromUploadedChunks",
 	    value: function createFileFromUploadedChunks() {
 	      var _this2 = this;
-
 	      if (!this.token) {
 	        console.error('Empty token.');
 	        return;
 	      }
-
 	      if (this.requestToDelete) {
 	        return;
 	      }
-
 	      var url = "".concat(this.host ? this.host : "", "/bitrix/services/main/ajax.php?action=").concat(this.actionCommitFile, "&filename=").concat(this.fileName) + "&folderId=" + this.diskFolderId + "&contentId=" + this.token + (this.generateUniqueName ? "&generateUniqueName=true" : "");
 	      var headers = {
 	        "X-Upload-Content-Type": this.fileData.type
 	      };
-
 	      if (!this.customHeaders) {
 	        headers['X-Bitrix-Csrf-Token'] = BX.bitrix_sessid();
-	      } else //if (this.customHeaders)
+	      } else
+	        //if (this.customHeaders)
 	        {
 	          for (var customHeader in this.customHeaders) {
 	            if (this.customHeaders.hasOwnProperty(customHeader)) {
@@ -66914,13 +65368,10 @@ this.BX.Messenger = this.BX.Messenger || {};
 	            }
 	          }
 	        }
-
 	      var formData = new FormData();
-
 	      if (this.previewBlob) {
 	        formData.append("previewFile", this.previewBlob, "preview_" + this.fileName + ".jpg");
 	      }
-
 	      fetch(url, {
 	        method: 'POST',
 	        headers: headers,
@@ -66930,21 +65381,16 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        return response.json();
 	      }).then(function (result) {
 	        _this2.uploadResult = result;
-
 	        if (result.errors.length > 0) {
 	          _this2.status = Uploader.STATUSES.FAILED;
-
 	          _this2.listener('onCreateFileError', {
 	            id: _this2.taskId,
 	            result: result
 	          });
-
 	          console.error(result.errors[0].message);
 	        } else {
 	          _this2.calculateProgress();
-
 	          _this2.status = Uploader.STATUSES.DONE;
-
 	          _this2.listener('onComplete', {
 	            id: _this2.taskId,
 	            result: result
@@ -66952,7 +65398,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        }
 	      })["catch"](function (err) {
 	        _this2.status = Uploader.STATUSES.FAILED;
-
 	        _this2.listener('onCreateFileError', {
 	          id: _this2.taskId,
 	          result: err
@@ -66976,7 +65421,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      if (this.readOffset + this.chunkSizeInBytes > this.fileData.size) {
 	        this.chunkSizeInBytes = this.fileData.size - this.readOffset;
 	      }
-
 	      this.nextDataChunkToSend = this.fileData.slice(this.readOffset, this.readOffset + this.chunkSizeInBytes);
 	    }
 	  }, {
@@ -66990,31 +65434,26 @@ this.BX.Messenger = this.BX.Messenger || {};
 
 	var Uploader = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(Uploader, _EventEmitter);
-
 	  //1Mb
 	  //5Mb
 	  //100Mb
+
 	  function Uploader(options) {
 	    var _this;
-
 	    babelHelpers.classCallCheck(this, Uploader);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Uploader).call(this));
 	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "queue", []);
 	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "isCloud", BX.message.isCloud);
 	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "phpUploadMaxFilesize", BX.message.phpUploadMaxFilesize);
 	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "phpPostMaxSize", BX.message.phpPostMaxSize);
-
 	    _this.setEventNamespace('BX.Messenger.Lib.Uploader');
-
 	    _this.generatePreview = options.generatePreview || false;
-
 	    if (options) {
 	      _this.inputNode = options.inputNode || null;
 	      _this.dropNode = options.dropNode || null;
 	      _this.fileMaxSize = options.fileMaxSize || null;
 	      _this.fileMaxWidth = options.fileMaxWidth || null;
 	      _this.fileMaxHeight = options.fileMaxHeight || null;
-
 	      if (options.sender) {
 	        _this.senderOptions = {
 	          host: options.sender.host,
@@ -67024,15 +65463,11 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          customHeaders: options.sender.customHeaders || null
 	        };
 	      }
-
 	      _this.assignInput();
-
 	      _this.assignDrop();
 	    }
-
 	    return _this;
 	  }
-
 	  babelHelpers.createClass(Uploader, [{
 	    key: "setInputNode",
 	    value: function setInputNode(node) {
@@ -67045,7 +65480,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    key: "addFilesFromEvent",
 	    value: function addFilesFromEvent(event) {
 	      var _this2 = this;
-
 	      Array.from(event.target.files).forEach(function (file) {
 	        _this2.emitSelectedFile(file);
 	      });
@@ -67054,12 +65488,10 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    key: "getPreview",
 	    value: function getPreview(file) {
 	      var _this3 = this;
-
 	      return new Promise(function (resolve, reject) {
 	        if (!_this3.generatePreview) {
 	          resolve();
 	        }
-
 	        if (file instanceof File) {
 	          if (file.type.startsWith('video')) {
 	            Uploader.getVideoPreviewBlob(file, 10).then(function (blob) {
@@ -67073,7 +65505,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	            var blob = new Blob([file], {
 	              type: file.type
 	            });
-
 	            _this3.getImageDimensions(blob).then(function (result) {
 	              return resolve(result);
 	            });
@@ -67089,22 +65520,17 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    key: "addTask",
 	    value: function addTask(task) {
 	      var _this4 = this;
-
 	      if (!this.isModernBrowser()) {
 	        console.warn('Unsupported browser!');
 	        return;
 	      }
-
 	      if (!this.checkTaskParams(task)) {
 	        return;
 	      }
-
 	      task.chunkSize = this.calculateChunkSize(task.chunkSize);
-
 	      task.listener = function (event, data) {
 	        return _this4.onUploadEvent(event, data);
 	      };
-
 	      task.status = Uploader.STATUSES.PENDING;
 	      var fileSender = new FileSender(task, this.senderOptions);
 	      this.queue.push(fileSender);
@@ -67116,13 +65542,11 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      if (!taskId) {
 	        return;
 	      }
-
 	      this.queue = this.queue.filter(function (queueItem) {
 	        if (queueItem.taskId === taskId) {
 	          queueItem.deleteContent();
 	          return false;
 	        }
-
 	        return true;
 	      });
 	    }
@@ -67132,7 +65556,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      var task = this.queue.find(function (queueItem) {
 	        return queueItem.taskId === taskId;
 	      });
-
 	      if (task) {
 	        return {
 	          id: task.id,
@@ -67146,7 +65569,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          uploadResult: task.uploadResult
 	        };
 	      }
-
 	      return null;
 	    }
 	  }, {
@@ -67156,7 +65578,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        var inProgressTasks = this.queue.filter(function (queueTask) {
 	          return queueTask.status === Uploader.STATUSES.PENDING;
 	        });
-
 	        if (inProgressTasks.length > 0) {
 	          inProgressTasks[0].uploadContent();
 	        }
@@ -67175,17 +65596,14 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        console.error('Empty Task ID.');
 	        return false;
 	      }
-
 	      if (!task.fileData) {
 	        console.error('Empty file data.');
 	        return false;
 	      }
-
 	      if (!task.diskFolderId) {
 	        console.error('Empty disk folder ID.');
 	        return false;
 	      }
-
 	      if (this.fileMaxSize && this.fileMaxSize < task.fileData.size) {
 	        var data = {
 	          maxFileSizeLimit: this.fileMaxSize,
@@ -67194,33 +65612,30 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        this.emit('onFileMaxSizeExceeded', data);
 	        return false;
 	      }
-
 	      return true;
 	    }
 	  }, {
 	    key: "calculateChunkSize",
 	    value: function calculateChunkSize(taskChunkSize) {
-	      if (main_core_minimal.Type.isUndefined(this.isCloud)) // widget case
+	      if (main_core_minimal.Type.isUndefined(this.isCloud))
+	        // widget case
 	        {
 	          return taskChunkSize;
 	        }
-
 	      var chunk = 0;
-
 	      if (taskChunkSize) {
 	        chunk = taskChunkSize;
 	      }
-
 	      if (this.isCloud === 'Y') {
 	        chunk = chunk < Uploader.CLOUD_MIN_CHUNK_SIZE ? Uploader.CLOUD_MIN_CHUNK_SIZE : chunk;
 	        chunk = chunk > Uploader.CLOUD_MAX_CHUNK_SIZE ? Uploader.CLOUD_MAX_CHUNK_SIZE : chunk;
-	      } else //if(this.isCloud === 'N')
+	      } else
+	        //if(this.isCloud === 'N')
 	        {
 	          var maxBoxChunkSize = Math.min(this.phpPostMaxSize, this.phpUploadMaxFilesize);
 	          chunk = chunk < Uploader.BOX_MIN_CHUNK_SIZE ? Uploader.BOX_MIN_CHUNK_SIZE : chunk;
 	          chunk = chunk > maxBoxChunkSize ? maxBoxChunkSize : chunk;
 	        }
-
 	      return chunk;
 	    }
 	  }, {
@@ -67232,7 +65647,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    key: "assignInput",
 	    value: function assignInput() {
 	      var _this5 = this;
-
 	      if (this.inputNode instanceof HTMLInputElement) {
 	        this.setOnChangeEventListener(this.inputNode);
 	      } else if (Array.isArray(this.inputNode)) {
@@ -67247,7 +65661,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    key: "setOnChangeEventListener",
 	    value: function setOnChangeEventListener(inputNode) {
 	      var _this6 = this;
-
 	      inputNode.addEventListener('change', function (event) {
 	        _this6.addFilesFromEvent(event);
 	      }, false);
@@ -67256,7 +65669,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    key: "assignDrop",
 	    value: function assignDrop() {
 	      var _this7 = this;
-
 	      if (this.dropNode instanceof HTMLElement) {
 	        this.setDropEventListener(this.dropNode);
 	      } else if (Array.isArray(this.dropNode)) {
@@ -67271,7 +65683,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    key: "setDropEventListener",
 	    value: function setDropEventListener(dropNode) {
 	      var _this8 = this;
-
 	      dropNode.addEventListener('drop', function (event) {
 	        event.preventDefault();
 	        event.stopPropagation();
@@ -67284,7 +65695,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    key: "emitSelectedFile",
 	    value: function emitSelectedFile(file) {
 	      var _this9 = this;
-
 	      var data = {
 	        file: file
 	      };
@@ -67293,11 +65703,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          data['previewData'] = previewData.blob;
 	          data['previewDataWidth'] = previewData.width;
 	          data['previewDataHeight'] = previewData.height;
-
 	          if (_this9.fileMaxWidth || _this9.fileMaxHeight) {
 	            var isMaxWidthExceeded = _this9.fileMaxWidth === null ? false : _this9.fileMaxWidth < data['previewDataWidth'];
 	            var isMaxHeightExceeded = _this9.fileMaxHeight === null ? false : _this9.fileMaxHeight < data['previewDataHeight'];
-
 	            if (isMaxWidthExceeded || isMaxHeightExceeded) {
 	              var eventData = {
 	                maxWidth: _this9.fileMaxWidth,
@@ -67305,18 +65713,14 @@ this.BX.Messenger = this.BX.Messenger || {};
 	                fileWidth: data['previewDataWidth'],
 	                fileHeight: data['previewDataHeight']
 	              };
-
 	              _this9.emit('onFileMaxResolutionExceeded', eventData);
-
 	              return false;
 	            }
 	          }
 	        }
-
 	        _this9.emit('onSelectFile', data);
 	      })["catch"](function (err) {
 	        console.warn("Couldn't get preview for file ".concat(file.name, ". Error: ").concat(err));
-
 	        _this9.emit('onSelectFile', data);
 	      });
 	    }
@@ -67327,9 +65731,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        if (!fileBlob) {
 	          rejected('getImageDimensions: fileBlob can\'t be empty');
 	        }
-
 	        var img = new Image();
-
 	        img.onload = function () {
 	          resolved({
 	            blob: fileBlob,
@@ -67337,11 +65739,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	            height: img.height
 	          });
 	        };
-
 	        img.onerror = function () {
 	          rejected();
 	        };
-
 	        img.src = URL.createObjectURL(fileBlob);
 	      });
 	    }
@@ -67358,7 +65758,8 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        });
 	        videoPlayer.addEventListener('loadedmetadata', function () {
 	          if (videoPlayer.duration < seekTime) {
-	            seekTime = 0; // reject("Too big seekTime for the video.");
+	            seekTime = 0;
+	            // reject("Too big seekTime for the video.");
 	            // return;
 	          }
 
@@ -67412,17 +65813,16 @@ this.BX.Messenger = this.BX.Messenger || {};
 	 * @subpackage im
 	 * @copyright 2001-2020 Bitrix
 	 */
+
 	var Clipboard = /*#__PURE__*/function () {
 	  function Clipboard() {
 	    babelHelpers.classCallCheck(this, Clipboard);
 	  }
-
 	  babelHelpers.createClass(Clipboard, null, [{
 	    key: "copy",
 	    value: function copy() {
 	      var text = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
 	      var store = Clipboard.getStore();
-
 	      if (text) {
 	        store.focus();
 	        store.value = text;
@@ -67434,7 +65834,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        document.execCommand("paste");
 	        text = store.value;
 	      }
-
 	      Clipboard.removeStore();
 	      return text;
 	    }
@@ -67444,7 +65843,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      if (Clipboard.store) {
 	        return Clipboard.store;
 	      }
-
 	      Clipboard.store = document.createElement('textarea');
 	      Clipboard.store.style = "position: absolute; opacity: 0; top: -1000px; left: -1000px;";
 	      document.body.insertBefore(Clipboard.store, document.body.firstChild);
@@ -67456,7 +65854,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      if (!Clipboard.store) {
 	        return true;
 	      }
-
 	      document.body.removeChild(Clipboard.store);
 	      Clipboard.store = null;
 	      return true;
@@ -67499,44 +65896,35 @@ this.BX = this.BX || {};
 	    main_core_events.EventEmitter.subscribe(im_const.EventType.dialog.clickOnCommand, this.onClickOnCommandHandler);
 	    main_core_events.EventEmitter.subscribe(im_const.EventType.dialog.clickOnKeyboardButton, this.onClickOnKeyboardHandler);
 	  }
-
 	  babelHelpers.createClass(SendMessageHandler, [{
 	    key: "onSendMessage",
 	    value: function onSendMessage(_ref) {
 	      var data = _ref.data;
-
 	      if (!data.text && !data.file) {
 	        return false;
 	      }
-
 	      this.sendMessage(data.text, data.file);
 	    } //endregion events
 	    // entry point for sending message
-
 	  }, {
 	    key: "sendMessage",
 	    value: function sendMessage() {
 	      var _this = this;
-
 	      var text = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
 	      var file = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
-
 	      if (!text && !file) {
 	        return false;
-	      } // quote handling
+	      }
 
-
+	      // quote handling
 	      var quoteId = this.store.getters['dialogues/getQuoteId'](this.getDialogId());
-
 	      if (quoteId) {
 	        var quoteMessage = this.store.getters['messages/getMessage'](this.getChatId(), quoteId);
-
 	        if (quoteMessage) {
 	          text = this.getMessageTextWithQuote(quoteMessage, text);
 	          main_core_events.EventEmitter.emit(im_const.EventType.dialog.quotePanelClose);
 	        }
 	      }
-
 	      if (!this.controller.application.isUnreadMessagesLoaded()) {
 	        // not all messages are loaded, adding message only on server
 	        this.sendMessageToServer({
@@ -67549,13 +65937,10 @@ this.BX = this.BX || {};
 	        this.processQueue();
 	        return true;
 	      }
-
 	      var params = {};
-
 	      if (file) {
 	        params.FILE_ID = [file.id];
 	      }
-
 	      this.addMessageToModel({
 	        text: text,
 	        params: params,
@@ -67565,13 +65950,11 @@ this.BX = this.BX || {};
 	          chatId: _this.getChatId(),
 	          cancelIfScrollChange: true
 	        });
-
 	        _this.addMessageToQueue({
 	          messageId: messageId,
 	          text: text,
 	          file: file
 	        });
-
 	        _this.processQueue();
 	      });
 	    }
@@ -67580,19 +65963,15 @@ this.BX = this.BX || {};
 	     * - For messages with file sends event to uploader
 	     * - For common messages sends them to server
 	     */
-
 	  }, {
 	    key: "processQueue",
 	    value: function processQueue() {
 	      var _this2 = this;
-
 	      this.messagesToSend.filter(function (element) {
 	        return !element.sending;
 	      }).forEach(function (element) {
 	        _this2.deleteFromQueue(element.id);
-
 	        element.sending = true;
-
 	        if (element.file) {
 	          main_core_events.EventEmitter.emit(im_const.EventType.textarea.stopWriting);
 	          main_core_events.EventEmitter.emit(im_const.EventType.uploader.addMessageWithFile, element);
@@ -67605,8 +65984,8 @@ this.BX = this.BX || {};
 	    key: "addMessageToModel",
 	    value: function addMessageToModel(_ref2) {
 	      var text = _ref2.text,
-	          params = _ref2.params,
-	          sending = _ref2.sending;
+	        params = _ref2.params,
+	        sending = _ref2.sending;
 	      return this.store.dispatch('messages/add', {
 	        chatId: this.getChatId(),
 	        authorId: this.getUserId(),
@@ -67619,8 +65998,8 @@ this.BX = this.BX || {};
 	    key: "addMessageToQueue",
 	    value: function addMessageToQueue(_ref3) {
 	      var messageId = _ref3.messageId,
-	          text = _ref3.text,
-	          file = _ref3.file;
+	        text = _ref3.text,
+	        file = _ref3.file;
 	      this.messagesToSend.push({
 	        id: messageId,
 	        chatId: this.getChatId(),
@@ -67634,7 +66013,6 @@ this.BX = this.BX || {};
 	    key: "sendMessageToServer",
 	    value: function sendMessageToServer(element) {
 	      var _this3 = this;
-
 	      main_core_events.EventEmitter.emit(im_const.EventType.textarea.stopWriting);
 	      this.restClient.callMethod(im_const.RestMethod.imMessageAdd, {
 	        'TEMPLATE_ID': element.id,
@@ -67644,7 +66022,6 @@ this.BX = this.BX || {};
 	        _this3.controller.executeRestAnswer(im_const.RestMethodHandler.imMessageAdd, response, element);
 	      })["catch"](function (error) {
 	        _this3.controller.executeRestAnswer(im_const.RestMethodHandler.imMessageAdd, error, element);
-
 	        im_lib_logger.Logger.warn('SendMessageHandler: error during adding message', error);
 	      });
 	    }
@@ -67684,7 +66061,6 @@ this.BX = this.BX || {};
 	    key: "onClickOnCommand",
 	    value: function onClickOnCommand(_ref5) {
 	      var event = _ref5.data;
-
 	      if (event.type === 'put') {
 	        this.handlePutAction(event.value);
 	      } else if (event.type === 'send') {
@@ -67697,21 +66073,19 @@ this.BX = this.BX || {};
 	    key: "onClickOnKeyboard",
 	    value: function onClickOnKeyboard(_ref6) {
 	      var event = _ref6.data;
-
 	      if (event.action === 'ACTION') {
 	        var _event$params = event.params,
-	            action = _event$params.action,
-	            value = _event$params.value;
+	          action = _event$params.action,
+	          value = _event$params.value;
 	        this.handleKeyboardAction(action, value);
 	      }
-
 	      if (event.action === 'COMMAND') {
 	        var _event$params2 = event.params,
-	            dialogId = _event$params2.dialogId,
-	            messageId = _event$params2.messageId,
-	            botId = _event$params2.botId,
-	            command = _event$params2.command,
-	            params = _event$params2.params;
+	          dialogId = _event$params2.dialogId,
+	          messageId = _event$params2.messageId,
+	          botId = _event$params2.botId,
+	          command = _event$params2.command,
+	          params = _event$params2.params;
 	        this.restClient.callMethod(im_const.RestMethod.imMessageCommand, {
 	          'MESSAGE_ID': messageId,
 	          'DIALOG_ID': dialogId,
@@ -67732,19 +66106,16 @@ this.BX = this.BX || {};
 	            this.handleSendAction(value);
 	            break;
 	          }
-
 	        case 'PUT':
 	          {
 	            this.handlePutAction(value);
 	            break;
 	          }
-
 	        case 'CALL':
 	          {
 	            //this.openPhoneMenu(value);
 	            break;
 	          }
-
 	        case 'COPY':
 	          {
 	            im_lib_clipboard.Clipboard.copy(value);
@@ -67754,13 +66125,11 @@ this.BX = this.BX || {};
 	            });
 	            break;
 	          }
-
 	        case 'DIALOG':
 	          {
 	            //this.openDialog(value);
 	            break;
 	          }
-
 	        default:
 	          {
 	            console.error('SendMessageHandler: unknown keyboard action');
@@ -67778,7 +66147,6 @@ this.BX = this.BX || {};
 	    key: "handleSendAction",
 	    value: function handleSendAction(text) {
 	      var _this4 = this;
-
 	      this.sendMessage(text);
 	      setTimeout(function () {
 	        main_core_events.EventEmitter.emit(im_const.EventType.dialog.scrollToBottom, {
@@ -67788,16 +66156,13 @@ this.BX = this.BX || {};
 	        });
 	      }, 300);
 	    } // region helpers
-
 	  }, {
 	    key: "getMessageTextWithQuote",
 	    value: function getMessageTextWithQuote(quoteMessage, text) {
 	      var user = null;
-
 	      if (quoteMessage.authorId) {
 	        user = this.store.getters['users/get'](quoteMessage.authorId);
 	      }
-
 	      var files = this.store.getters['files/getList'](this.getChatId());
 	      var quoteDelimiter = '-'.repeat(54);
 	      var quoteTitle = user && user.name ? user.name : this.loc['IM_QUOTE_PANEL_DEFAULT_TITLE'];
@@ -67826,7 +66191,6 @@ this.BX = this.BX || {};
 	    value: function getUserId() {
 	      return this.store.state.application.common.userId;
 	    } // endregion helpers
-
 	  }, {
 	    key: "destroy",
 	    value: function destroy() {
@@ -67841,6 +66205,7 @@ this.BX = this.BX || {};
 
 	var ReadingHandler = /*#__PURE__*/function () {
 	  // {<chatId>: [<messageId>]}
+
 	  function ReadingHandler($Bitrix) {
 	    babelHelpers.classCallCheck(this, ReadingHandler);
 	    babelHelpers.defineProperty(this, "messagesToRead", {});
@@ -67853,43 +66218,36 @@ this.BX = this.BX || {};
 	    this.onReadMessageHandler = this.onReadMessage.bind(this);
 	    main_core_events.EventEmitter.subscribe(im_const.EventType.dialog.readMessage, this.onReadMessageHandler);
 	  }
-
 	  babelHelpers.createClass(ReadingHandler, [{
 	    key: "onReadMessage",
 	    value: function onReadMessage(_ref) {
 	      var _ref$data = _ref.data,
-	          _ref$data$id = _ref$data.id,
-	          id = _ref$data$id === void 0 ? null : _ref$data$id,
-	          _ref$data$skipTimer = _ref$data.skipTimer,
-	          skipTimer = _ref$data$skipTimer === void 0 ? false : _ref$data$skipTimer,
-	          _ref$data$skipAjax = _ref$data.skipAjax,
-	          skipAjax = _ref$data$skipAjax === void 0 ? false : _ref$data$skipAjax;
+	        _ref$data$id = _ref$data.id,
+	        id = _ref$data$id === void 0 ? null : _ref$data$id,
+	        _ref$data$skipTimer = _ref$data.skipTimer,
+	        skipTimer = _ref$data$skipTimer === void 0 ? false : _ref$data$skipTimer,
+	        _ref$data$skipAjax = _ref$data.skipAjax,
+	        skipAjax = _ref$data$skipAjax === void 0 ? false : _ref$data$skipAjax;
 	      return this.readMessage(id, skipTimer, skipAjax);
 	    }
 	  }, {
 	    key: "readMessage",
 	    value: function readMessage(messageId) {
 	      var _this = this;
-
 	      var skipTimer = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
 	      var skipAjax = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
 	      var chatId = this.getChatId();
-
 	      if (messageId) {
 	        if (!this.messagesToRead[chatId]) {
 	          this.messagesToRead[chatId] = [];
 	        }
-
 	        this.messagesToRead[chatId].push(Number.parseInt(messageId, 10));
 	      }
-
 	      this.timer.stop('readMessage', chatId, true);
 	      this.timer.stop('readMessageServer', chatId, true);
-
 	      if (skipTimer) {
 	        return this.processMessagesToRead(chatId, skipAjax);
 	      }
-
 	      return new Promise(function (resolve, reject) {
 	        _this.timer.start('readMessage', chatId, 0.1, function () {
 	          _this.processMessagesToRead(chatId, skipAjax).then(function (result) {
@@ -67902,15 +66260,12 @@ this.BX = this.BX || {};
 	    key: "processMessagesToRead",
 	    value: function processMessagesToRead(chatId) {
 	      var _this2 = this;
-
 	      var skipAjax = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
 	      var lastMessageToRead = this.getMaxMessageIdFromQueue(chatId);
 	      delete this.messagesToRead[chatId];
-
 	      if (lastMessageToRead <= 0) {
 	        return Promise.resolve();
 	      }
-
 	      return new Promise(function (resolve, reject) {
 	        _this2.readMessageOnClient(chatId, lastMessageToRead).then(function (readResult) {
 	          return _this2.decreaseChatCounter(chatId, readResult.count);
@@ -67921,7 +66276,6 @@ this.BX = this.BX || {};
 	              lastId: lastMessageToRead
 	            });
 	          }
-
 	          _this2.timer.start('readMessageServer', chatId, 0.5, function () {
 	            _this2.readMessageOnServer(chatId, lastMessageToRead).then(function () {
 	              resolve({
@@ -67940,11 +66294,9 @@ this.BX = this.BX || {};
 	    key: "getMaxMessageIdFromQueue",
 	    value: function getMaxMessageIdFromQueue(chatId) {
 	      var maxMessageId = 0;
-
 	      if (!this.messagesToRead[chatId]) {
 	        return maxMessageId;
 	      }
-
 	      this.messagesToRead[chatId].forEach(function (messageId) {
 	        if (maxMessageId < messageId) {
 	          maxMessageId = messageId;
@@ -67985,11 +66337,9 @@ this.BX = this.BX || {};
 	    key: "getDialogIdByChatId",
 	    value: function getDialogIdByChatId(chatId) {
 	      var dialog = this.store.getters['dialogues/getByChatId'](chatId);
-
 	      if (!dialog) {
 	        return 0;
 	      }
-
 	      return dialog.dialogId;
 	    }
 	  }, {
@@ -68016,7 +66366,6 @@ this.BX = this.BX || {};
 	    main_core_events.EventEmitter.subscribe(im_const.EventType.dialog.setMessageReaction, this.onSetMessageReactionHandler);
 	    main_core_events.EventEmitter.subscribe(im_const.EventType.dialog.openMessageReactionList, this.onOpenMessageReactionListHandler);
 	  }
-
 	  babelHelpers.createClass(ReactionHandler, [{
 	    key: "onSetMessageReaction",
 	    value: function onSetMessageReaction(_ref) {
@@ -68034,11 +66383,9 @@ this.BX = this.BX || {};
 	    value: function reactToMessage(messageId, reaction) {
 	      // let type = reaction.type || ReactionHandler.types.like;
 	      var action = reaction.action || ReactionHandler.actions.auto;
-
 	      if (action !== ReactionHandler.actions.auto) {
 	        action = action === ReactionHandler.actions.set ? ReactionHandler.actions.plus : ReactionHandler.actions.minus;
 	      }
-
 	      this.restClient.callMethod(im_const.RestMethod.imMessageLike, {
 	        'MESSAGE_ID': messageId,
 	        'ACTION': action
@@ -68083,7 +66430,6 @@ this.BX = this.BX || {};
 	    main_core_events.EventEmitter.subscribe(im_const.EventType.dialog.quoteMessage, this.onQuoteMessageHandler);
 	    main_core_events.EventEmitter.subscribe(im_const.EventType.dialog.quotePanelClose, this.onQuotePanelCloseHandler);
 	  }
-
 	  babelHelpers.createClass(QuoteHandler, [{
 	    key: "onQuoteMessage",
 	    value: function onQuoteMessage(_ref) {
@@ -68140,9 +66486,9 @@ this.BX = this.BX || {};
 	    this.restClient = $Bitrix.RestClient.get();
 	    this.timer = new im_lib_timer.Timer();
 	    this.subscribeToEvents();
-	  } // region events
+	  }
 
-
+	  // region events
 	  babelHelpers.createClass(TextareaHandler, [{
 	    key: "subscribeToEvents",
 	    value: function subscribeToEvents() {
@@ -68173,37 +66519,38 @@ this.BX = this.BX || {};
 	    }
 	  }, {
 	    key: "onAppButtonClick",
-	    value: function onAppButtonClick() {//
+	    value: function onAppButtonClick() {
+	      //
 	    }
 	  }, {
 	    key: "onFocus",
-	    value: function onFocus() {//
+	    value: function onFocus() {
+	      //
 	    }
 	  }, {
 	    key: "onBlur",
-	    value: function onBlur() {//
+	    value: function onBlur() {
+	      //
 	    }
 	  }, {
 	    key: "onKeyUp",
-	    value: function onKeyUp() {//
+	    value: function onKeyUp() {
+	      //
 	    }
 	  }, {
 	    key: "onEdit",
-	    value: function onEdit() {//
+	    value: function onEdit() {
+	      //
 	    } //endregion events
 	    // region writing
-
 	  }, {
 	    key: "startWriting",
 	    value: function startWriting() {
 	      var _this = this;
-
 	      var dialogId = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this.getDialogId();
-
 	      if (im_lib_utils.Utils.dialog.isEmptyDialogId(dialogId) || this.timer.has('writes', dialogId)) {
 	        return false;
 	      }
-
 	      this.timer.start('writes', dialogId, 28);
 	      this.timer.start('writesSend', dialogId, 5, function () {
 	        _this.restClient.callMethod(im_const.RestMethod.imDialogWriting, {
@@ -68221,7 +66568,6 @@ this.BX = this.BX || {};
 	      this.timer.stop('writesSend', dialogId, true);
 	    } // endregion writing
 	    // region helpers
-
 	  }, {
 	    key: "getChatId",
 	    value: function getChatId() {
@@ -68242,7 +66588,6 @@ this.BX = this.BX || {};
 	    value: function getDiskFolderId() {
 	      return this.store.state.application.dialog.diskFolderId;
 	    } // endregion helpers
-
 	  }, {
 	    key: "destroy",
 	    value: function destroy() {
@@ -68262,7 +66607,6 @@ this.BX = this.BX || {};
 	 * @notice define getActionUploadChunk and getActionCommitFile methods for custom upload methods (e.g. videoconference)
 	 * @notice redefine addMessageWithFile for custom headers (e.g. videoconference)
 	 */
-
 	var TextareaUploadHandler = /*#__PURE__*/function () {
 	  function TextareaUploadHandler($Bitrix) {
 	    babelHelpers.classCallCheck(this, TextareaUploadHandler);
@@ -68280,7 +66624,6 @@ this.BX = this.BX || {};
 	    main_core_events.EventEmitter.subscribe(im_const.EventType.uploader.addMessageWithFile, this.addMessageWithFileHandler);
 	    main_core_events.EventEmitter.subscribe(im_const.EventType.dialog.clickOnUploadCancel, this.onClickOnUploadCancelHandler);
 	  }
-
 	  babelHelpers.createClass(TextareaUploadHandler, [{
 	    key: "initUploader",
 	    value: function initUploader() {
@@ -68299,7 +66642,6 @@ this.BX = this.BX || {};
 	    key: "commitFile",
 	    value: function commitFile(params, message) {
 	      var _this = this;
-
 	      this.restClient.callMethod(im_const.RestMethod.imDiskFileCommit, {
 	        chat_id: params.chatId,
 	        upload_id: params.uploadId,
@@ -68325,7 +66667,6 @@ this.BX = this.BX || {};
 	          progress: 0
 	        }
 	      });
-
 	      if (messageId) {
 	        this.controller.store.dispatch('messages/actionError', {
 	          chatId: chatId,
@@ -68339,20 +66680,16 @@ this.BX = this.BX || {};
 	    value: function onTextareaFileSelected(_ref) {
 	      var event = _ref.data;
 	      var fileInput = event && event.fileChangeEvent && event.fileChangeEvent.target.files.length > 0 ? event.fileChangeEvent : '';
-
 	      if (!fileInput) {
 	        return false;
 	      }
-
 	      this.uploadFile(fileInput);
 	    }
 	  }, {
 	    key: "addMessageWithFile",
 	    value: function addMessageWithFile(event) {
 	      var _this2 = this;
-
 	      var message = event.getData();
-
 	      if (!this.getDiskFolderId()) {
 	        this.requestDiskFolderId(message.chatId).then(function () {
 	          _this2.addMessageWithFile(event);
@@ -68362,7 +66699,6 @@ this.BX = this.BX || {};
 	        });
 	        return false;
 	      }
-
 	      this.uploader.addTask({
 	        taskId: message.file.id,
 	        fileData: message.file.source.file,
@@ -68378,7 +66714,6 @@ this.BX = this.BX || {};
 	      if (!event) {
 	        return false;
 	      }
-
 	      this.uploader.addFilesFromEvent(event);
 	    }
 	  }, {
@@ -68387,7 +66722,6 @@ this.BX = this.BX || {};
 	      if (this.uploader) {
 	        this.uploader.unsubscribeAll();
 	      }
-
 	      main_core_events.EventEmitter.unsubscribe(im_const.EventType.textarea.fileSelected, this.onTextareaFileSelectedHandler);
 	      main_core_events.EventEmitter.unsubscribe(im_const.EventType.uploader.addMessageWithFile, this.addMessageWithFileHandler);
 	      main_core_events.EventEmitter.unsubscribe(im_const.EventType.dialog.clickOnUploadCancel, this.onClickOnUploadCancelHandler);
@@ -68418,18 +66752,14 @@ this.BX = this.BX || {};
 	      var chatMessages = this.controller.store.getters['messages/get'](this.getChatId());
 	      var messageWithFile = chatMessages.find(function (message) {
 	        var _message$params;
-
 	        if (main_core.Type.isArray((_message$params = message.params) === null || _message$params === void 0 ? void 0 : _message$params.FILE_ID)) {
 	          return message.params.FILE_ID.includes(fileId);
 	        }
-
 	        return false;
 	      });
-
 	      if (!messageWithFile) {
 	        return;
 	      }
-
 	      return {
 	        id: messageWithFile.id,
 	        chatId: messageWithFile.chatId,
@@ -68447,34 +66777,26 @@ this.BX = this.BX || {};
 	    key: "requestDiskFolderId",
 	    value: function requestDiskFolderId(chatId) {
 	      var _this3 = this;
-
 	      return new Promise(function (resolve, reject) {
 	        if (_this3.isRequestingDiskFolderId || _this3.getDiskFolderId()) {
 	          _this3.isRequestingDiskFolderId = false;
 	          resolve();
 	          return;
 	        }
-
 	        _this3.isRequestingDiskFolderId = true;
-
 	        _this3.restClient.callMethod(im_const.RestMethod.imDiskFolderGet, {
 	          chat_id: chatId
 	        }).then(function (response) {
 	          _this3.isRequestingDiskFolderId = false;
-
 	          _this3.controller.executeRestAnswer(im_const.RestMethodHandler.imDiskFolderGet, response);
-
 	          resolve();
 	        })["catch"](function (error) {
 	          _this3.isRequestingDiskFolderId = false;
-
 	          _this3.controller.executeRestAnswer(im_const.RestMethodHandler.imDiskFolderGet, error);
-
 	          reject(error);
 	        });
 	      });
 	    } // Uploader handlers
-
 	  }, {
 	    key: "onStartUploadHandler",
 	    value: function onStartUploadHandler(event) {
@@ -68510,13 +66832,11 @@ this.BX = this.BX || {};
 	      var file = eventData.file;
 	      im_lib_logger.Logger.log('Uploader: onSelectFile', eventData);
 	      var fileType = 'file';
-
 	      if (file.type.toString().startsWith('image')) {
 	        fileType = 'image';
 	      } else if (file.type.toString().startsWith('video')) {
 	        fileType = 'video';
 	      }
-
 	      this.controller.store.dispatch('files/add', {
 	        chatId: this.getChatId(),
 	        authorId: this.getCurrentUser().id,
@@ -68573,7 +66893,6 @@ this.BX = this.BX || {};
 	      var eventData = event.getData();
 	      im_lib_logger.Logger.log('Uploader: onUploadFileError', eventData);
 	      var messageWithFile = this.getMessageByFileId(eventData.id, eventData);
-
 	      if (messageWithFile) {
 	        this.setUploadError(this.getChatId(), messageWithFile.file.id, messageWithFile.id);
 	      }
@@ -68584,7 +66903,6 @@ this.BX = this.BX || {};
 	      var eventData = event.getData();
 	      im_lib_logger.Logger.log('Uploader: onCreateFileError', eventData);
 	      var messageWithFile = this.getMessageByFileId(eventData.id, eventData);
-
 	      if (messageWithFile) {
 	        this.setUploadError(this.getChatId(), messageWithFile.file.id, messageWithFile.id);
 	      }
@@ -68593,16 +66911,13 @@ this.BX = this.BX || {};
 	    key: "onClickOnUploadCancel",
 	    value: function onClickOnUploadCancel(_ref2) {
 	      var _this4 = this;
-
 	      var event = _ref2.data;
 	      var fileId = event.file.id;
 	      var fileData = event.file;
 	      var messageWithFile = this.getMessageByFileId(fileId, fileData);
-
 	      if (!messageWithFile) {
 	        return;
 	      }
-
 	      this.uploader.deleteTask(fileId);
 	      this.controller.store.dispatch('messages/delete', {
 	        chatId: this.getChatId(),
@@ -68638,38 +66953,29 @@ this.BX = this.BX || {};
 
 	var TextareaDragHandler = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(TextareaDragHandler, _EventEmitter);
-
 	  function TextareaDragHandler(events) {
 	    var _this;
-
 	    babelHelpers.classCallCheck(this, TextareaDragHandler);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(TextareaDragHandler).call(this));
 	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "isDragging", false);
 	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "minimumHeight", 120);
 	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "maximumHeight", 400);
-
 	    _this.setEventNamespace('BX.IM.TextareaDragHandler');
-
 	    _this.subscribeToEvents(events);
-
 	    if (im_lib_utils.Utils.device.isMobile()) {
 	      _this.maximumHeight = 200;
 	    }
-
 	    return _this;
 	  }
-
 	  babelHelpers.createClass(TextareaDragHandler, [{
 	    key: "subscribeToEvents",
 	    value: function subscribeToEvents(configEvents) {
 	      var _this2 = this;
-
 	      var events = main_core.Type.isObject(configEvents) ? configEvents : {};
 	      Object.entries(events).forEach(function (_ref) {
 	        var _ref2 = babelHelpers.slicedToArray(_ref, 2),
-	            name = _ref2[0],
-	            callback = _ref2[1];
-
+	          name = _ref2[0],
+	          callback = _ref2[1];
 	        if (main_core.Type.isFunction(callback)) {
 	          _this2.subscribe(name, callback);
 	        }
@@ -68681,7 +66987,6 @@ this.BX = this.BX || {};
 	      if (this.isDragging) {
 	        return;
 	      }
-
 	      this.isDragging = true;
 	      event = event.changedTouches ? event.changedTouches[0] : event;
 	      this.textareaDragCursorStartPoint = event.clientY;
@@ -68694,7 +66999,6 @@ this.BX = this.BX || {};
 	      if (!this.isDragging) {
 	        return;
 	      }
-
 	      event = event.changedTouches ? event.changedTouches[0] : event;
 	      this.textareaDragCursorControlPoint = event.clientY;
 	      var maxPoint = Math.min(this.textareaDragHeightStartPoint + this.textareaDragCursorStartPoint - this.textareaDragCursorControlPoint, this.maximumHeight);
@@ -68709,7 +67013,6 @@ this.BX = this.BX || {};
 	      if (!this.isDragging) {
 	        return;
 	      }
-
 	      this.isDragging = false;
 	      this.removeTextareaDragEvents();
 	      this.emit(TextareaDragHandler.events.onStopDrag);
@@ -68754,7 +67057,6 @@ this.BX = this.BX || {};
 	    this.restClient = $Bitrix.RestClient.get();
 	    this.subscribeToEvents();
 	  }
-
 	  babelHelpers.createClass(DialogActionHandler, [{
 	    key: "subscribeToEvents",
 	    value: function subscribeToEvents() {
@@ -68775,7 +67077,6 @@ this.BX = this.BX || {};
 	    key: "onClickOnMention",
 	    value: function onClickOnMention(_ref) {
 	      var event = _ref.data;
-
 	      if (event.type === 'USER') {
 	        im_lib_logger.Logger.warn('DialogActionHandler: open user profile', event);
 	      } else if (event.type === 'CHAT') {
@@ -68823,21 +67124,18 @@ this.BX = this.BX || {};
 	    key: "joinParentChat",
 	    value: function joinParentChat(messageId, dialogId) {
 	      var _this = this;
-
 	      return new Promise(function (resolve, reject) {
 	        if (!messageId || !dialogId) {
 	          return reject();
-	        } // TODO: what is this for
+	        }
 
-
+	        // TODO: what is this for
 	        if (typeof _this.tempJoinChat === 'undefined') {
 	          _this.tempJoinChat = {};
 	        } else if (_this.tempJoinChat['wait']) {
 	          return reject();
 	        }
-
 	        _this.tempJoinChat['wait'] = true;
-
 	        _this.restClient.callMethod(im_const.RestMethod.imChatParentJoin, {
 	          'DIALOG_ID': dialogId,
 	          'MESSAGE_ID': messageId
@@ -68897,19 +67195,18 @@ this.BX = this.BX || {};
 	 * @subpackage imopenlines
 	 * @copyright 2001-2019 Bitrix
 	 */
+
 	function GetObjectValues(source) {
 	  var destination = [];
-
 	  for (var value in source) {
 	    if (source.hasOwnProperty(value)) {
 	      destination.push(source[value]);
 	    }
 	  }
-
 	  return destination;
 	}
-	/* region 01. Constants */
 
+	/* region 01. Constants */
 
 	var VoteType = Object.freeze({
 	  none: 'none',
@@ -69024,15 +67321,12 @@ this.BX = this.BX || {};
 	 */
 	var WidgetModel = /*#__PURE__*/function (_VuexBuilderModel) {
 	  babelHelpers.inherits(WidgetModel, _VuexBuilderModel);
-
 	  function WidgetModel() {
 	    babelHelpers.classCallCheck(this, WidgetModel);
 	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(WidgetModel).apply(this, arguments));
 	  }
-
 	  babelHelpers.createClass(WidgetModel, [{
 	    key: "getName",
-
 	    /**
 	     * @inheritDoc
 	     */
@@ -69148,126 +67442,97 @@ this.BX = this.BX || {};
 	    key: "getMutations",
 	    value: function getMutations() {
 	      var _this = this;
-
 	      return {
 	        common: function common(state, payload) {
 	          if (typeof payload.configId === 'number') {
 	            state.common.configId = payload.configId;
 	          }
-
 	          if (typeof payload.configName === 'string') {
 	            state.common.configName = payload.configName;
 	          }
-
 	          if (typeof payload.online === 'boolean') {
 	            state.common.online = payload.online;
 	          }
-
 	          if (im_lib_utils.Utils.types.isPlainObject(payload.vote)) {
 	            if (typeof payload.vote.enable === 'boolean') {
 	              state.common.vote.enable = payload.vote.enable;
 	            }
-
 	            if (typeof payload.vote.beforeFinish === 'boolean') {
 	              state.common.vote.beforeFinish = payload.vote.beforeFinish;
 	            }
-
 	            if (typeof payload.vote.messageText === 'string') {
 	              state.common.vote.messageText = payload.vote.messageText;
 	            }
-
 	            if (typeof payload.vote.messageLike === 'string') {
 	              state.common.vote.messageLike = payload.vote.messageLike;
 	            }
-
 	            if (typeof payload.vote.messageDislike === 'string') {
 	              state.common.vote.messageDislike = payload.vote.messageDislike;
 	            }
 	          }
-
 	          if (im_lib_utils.Utils.types.isPlainObject(payload.textMessages)) {
 	            if (typeof payload.textMessages.bxLivechatOnlineLine1 === 'string' && payload.textMessages.bxLivechatOnlineLine1 !== '') {
 	              state.common.textMessages.bxLivechatOnlineLine1 = payload.textMessages.bxLivechatOnlineLine1;
 	            }
-
 	            if (typeof payload.textMessages.bxLivechatOnlineLine2 === 'string' && payload.textMessages.bxLivechatOnlineLine2 !== '') {
 	              state.common.textMessages.bxLivechatOnlineLine2 = payload.textMessages.bxLivechatOnlineLine2;
 	            }
-
 	            if (typeof payload.textMessages.bxLivechatOffline === 'string' && payload.textMessages.bxLivechatOffline !== '') {
 	              state.common.textMessages.bxLivechatOffline = payload.textMessages.bxLivechatOffline;
 	            }
-
 	            if (typeof payload.textMessages.bxLivechatTitle === 'string' && payload.textMessages.bxLivechatTitle !== '') {
 	              state.common.textMessages.bxLivechatTitle = payload.textMessages.bxLivechatTitle;
 	            }
 	          }
-
 	          if (typeof payload.dragged === 'boolean') {
 	            state.common.dragged = payload.dragged;
 	          }
-
 	          if (typeof payload.textareaHeight === 'number') {
 	            state.common.textareaHeight = payload.textareaHeight;
 	          }
-
 	          if (typeof payload.widgetHeight === 'number') {
 	            state.common.widgetHeight = payload.widgetHeight;
 	          }
-
 	          if (typeof payload.widgetWidth === 'number') {
 	            state.common.widgetWidth = payload.widgetWidth;
 	          }
-
 	          if (typeof payload.showConsent === 'boolean') {
 	            state.common.showConsent = payload.showConsent;
 	          }
-
 	          if (typeof payload.consentUrl === 'string') {
 	            state.common.consentUrl = payload.consentUrl;
 	          }
-
 	          if (typeof payload.showed === 'boolean') {
 	            state.common.showed = payload.showed;
 	            payload.reopen = im_lib_utils.Utils.device.isMobile() ? false : payload.showed;
 	          }
-
 	          if (typeof payload.reopen === 'boolean') {
 	            state.common.reopen = payload.reopen;
 	          }
-
 	          if (typeof payload.copyright === 'boolean') {
 	            state.common.copyright = payload.copyright;
 	          }
-
 	          if (typeof payload.dialogStart === 'boolean') {
 	            state.common.dialogStart = payload.dialogStart;
 	          }
-
 	          if (typeof payload.watchTyping === 'boolean') {
 	            state.common.watchTyping = payload.watchTyping;
 	          }
-
 	          if (typeof payload.showSessionId === 'boolean') {
 	            state.common.showSessionId = payload.showSessionId;
 	          }
-
 	          if (payload.operators instanceof Array) {
 	            state.common.operators = payload.operators;
 	          }
-
 	          if (payload.connectors instanceof Array) {
 	            state.common.connectors = payload.connectors;
 	          }
-
 	          if (typeof payload.showForm === 'string' && typeof FormType[payload.showForm] !== 'undefined') {
 	            if (payload.showForm === FormType.like && !!state.dialog.closeVote) {
 	              payload.showForm = FormType.none;
 	            }
-
 	            state.common.showForm = payload.showForm;
 	          }
-
 	          if (typeof payload.location === 'number' && typeof LocationStyle[payload.location] !== 'undefined') {
 	            if (state.common.location !== payload.location) {
 	              state.common.widgetHeight = 0;
@@ -69275,37 +67540,29 @@ this.BX = this.BX || {};
 	              state.common.location = payload.location;
 	            }
 	          }
-
 	          if (im_lib_utils.Utils.types.isPlainObject(payload.crmFormsSettings)) {
 	            if (typeof payload.crmFormsSettings.useWelcomeForm === 'string') {
 	              state.common.crmFormsSettings.useWelcomeForm = payload.crmFormsSettings.useWelcomeForm === 'Y';
 	            }
-
 	            if (typeof payload.crmFormsSettings.welcomeFormId === 'string') {
 	              state.common.crmFormsSettings.welcomeFormId = payload.crmFormsSettings.welcomeFormId;
 	            }
-
 	            if (typeof payload.crmFormsSettings.welcomeFormSec === 'string') {
 	              state.common.crmFormsSettings.welcomeFormSec = payload.crmFormsSettings.welcomeFormSec;
 	            }
-
 	            if (typeof payload.crmFormsSettings.welcomeFormDelay === 'string') {
 	              state.common.crmFormsSettings.welcomeFormDelay = payload.crmFormsSettings.welcomeFormDelay === 'Y';
 	            }
-
 	            if (typeof payload.crmFormsSettings.successText === 'string' && payload.crmFormsSettings.successText !== '') {
 	              state.common.crmFormsSettings.successText = payload.crmFormsSettings.successText;
 	            }
-
 	            if (typeof payload.crmFormsSettings.errorText === 'string' && payload.crmFormsSettings.errorText !== '') {
 	              state.common.crmFormsSettings.errorText = payload.crmFormsSettings.errorText;
 	            }
 	          }
-
 	          if (typeof payload.isCreateSessionMode === 'boolean') {
 	            state.common.isCreateSessionMode = payload.isCreateSessionMode;
 	          }
-
 	          if (_this.isSaveNeeded({
 	            common: payload
 	          })) {
@@ -69316,56 +67573,43 @@ this.BX = this.BX || {};
 	          if (typeof payload.sessionId === 'number') {
 	            state.dialog.sessionId = payload.sessionId;
 	          }
-
 	          if (typeof payload.sessionClose === 'boolean') {
 	            state.dialog.sessionClose = payload.sessionClose;
 	          }
-
 	          if (typeof payload.sessionStatus === 'number') {
 	            state.dialog.sessionStatus = payload.sessionStatus;
 	          }
-
 	          if (typeof payload.userConsent === 'boolean') {
 	            state.dialog.userConsent = payload.userConsent;
 	          }
-
 	          if (typeof payload.userVote === 'string' && typeof payload.userVote !== 'undefined') {
 	            state.dialog.userVote = payload.userVote;
 	          }
-
 	          if (typeof payload.closeVote === 'boolean') {
 	            state.dialog.closeVote = payload.closeVote;
-
 	            if (!!payload.closeVote && state.common.showForm === FormType.like) {
 	              state.common.showForm = FormType.none;
 	            }
 	          }
-
 	          if (typeof payload.operatorChatId === 'number') {
 	            state.dialog.operatorChatId = payload.operatorChatId;
 	          }
-
 	          if (im_lib_utils.Utils.types.isPlainObject(payload.operator)) {
 	            if (typeof payload.operator.id === 'number') {
 	              state.dialog.operator.id = payload.operator.id;
 	            }
-
 	            if (typeof payload.operator.name === 'string' || typeof payload.operator.name === 'number') {
 	              state.dialog.operator.name = payload.operator.name.toString();
 	            }
-
 	            if (typeof payload.operator.lastName === 'string' || typeof payload.operator.lastName === 'number') {
 	              state.dialog.operator.lastName = payload.operator.lastName.toString();
 	            }
-
 	            if (typeof payload.operator.firstName === 'string' || typeof payload.operator.firstName === 'number') {
 	              state.dialog.operator.firstName = payload.operator.firstName.toString();
 	            }
-
 	            if (typeof payload.operator.workPosition === 'string' || typeof payload.operator.workPosition === 'number') {
 	              state.dialog.operator.workPosition = payload.operator.workPosition.toString();
 	            }
-
 	            if (typeof payload.operator.avatar === 'string') {
 	              if (!payload.operator.avatar || payload.operator.avatar.startsWith('http')) {
 	                state.dialog.operator.avatar = payload.operator.avatar;
@@ -69373,12 +67617,10 @@ this.BX = this.BX || {};
 	                state.dialog.operator.avatar = state.common.host + payload.operator.avatar;
 	              }
 	            }
-
 	            if (typeof payload.operator.online === 'boolean') {
 	              state.dialog.operator.online = payload.operator.online;
 	            }
 	          }
-
 	          if (_this.isSaveNeeded({
 	            dialog: payload
 	          })) {
@@ -69389,7 +67631,6 @@ this.BX = this.BX || {};
 	          if (typeof payload.id === 'number') {
 	            state.user.id = payload.id;
 	          }
-
 	          if (typeof payload.hash === 'string' && payload.hash !== state.user.hash) {
 	            state.user.hash = payload.hash;
 	            im_lib_cookie.Cookie.set(null, 'LIVECHAT_HASH', payload.hash, {
@@ -69397,43 +67638,33 @@ this.BX = this.BX || {};
 	              path: '/'
 	            });
 	          }
-
 	          if (typeof payload.name === 'string' || typeof payload.name === 'number') {
 	            state.user.name = payload.name.toString();
 	          }
-
 	          if (typeof payload.firstName === 'string' || typeof payload.firstName === 'number') {
 	            state.user.firstName = payload.firstName.toString();
 	          }
-
 	          if (typeof payload.lastName === 'string' || typeof payload.lastName === 'number') {
 	            state.user.lastName = payload.lastName.toString();
 	          }
-
 	          if (typeof payload.avatar === 'string') {
 	            state.user.avatar = payload.avatar;
 	          }
-
 	          if (typeof payload.email === 'string') {
 	            state.user.email = payload.email;
 	          }
-
 	          if (typeof payload.phone === 'string' || typeof payload.phone === 'number') {
 	            state.user.phone = payload.phone.toString();
 	          }
-
 	          if (typeof payload.www === 'string') {
 	            state.user.www = payload.www;
 	          }
-
 	          if (typeof payload.gender === 'string') {
 	            state.user.gender = payload.gender;
 	          }
-
 	          if (typeof payload.position === 'string') {
 	            state.user.position = payload.position;
 	          }
-
 	          if (_this.isSaveNeeded({
 	            user: payload
 	          })) {
@@ -69446,7 +67677,6 @@ this.BX = this.BX || {};
 	    key: "getActions",
 	    value: function getActions() {
 	      var _this2 = this;
-
 	      return {
 	        show: function show(_ref) {
 	          var commit = _ref.commit;
@@ -69456,9 +67686,8 @@ this.BX = this.BX || {};
 	        },
 	        setVoteDateFinish: function setVoteDateFinish(_ref2, payload) {
 	          var commit = _ref2.commit,
-	              dispatch = _ref2.dispatch,
-	              state = _ref2.state;
-
+	            dispatch = _ref2.dispatch,
+	            state = _ref2.state;
 	          if (!payload) {
 	            clearTimeout(_this2.setVoteDateTimeout);
 	            commit('dialog', {
@@ -69466,32 +67695,25 @@ this.BX = this.BX || {};
 	            });
 	            return true;
 	          }
-
 	          var totalDelay = new Date(payload).getTime() - new Date().getTime();
 	          var dayTimestamp = 10000;
 	          clearTimeout(_this2.setVoteDateTimeout);
-
 	          if (payload) {
 	            if (totalDelay && !state.dialog.closeVote) {
 	              commit('dialog', {
 	                closeVote: false
 	              });
 	            }
-
 	            var delay = totalDelay;
-
 	            if (totalDelay > dayTimestamp) {
 	              delay = dayTimestamp;
 	            }
-
 	            _this2.setVoteDateTimeout = setTimeout(function requestCloseVote() {
 	              delay = new Date(payload).getTime() - new Date().getTime();
-
 	              if (delay > 0) {
 	                if (delay > dayTimestamp) {
 	                  delay = dayTimestamp;
 	                }
-
 	                setTimeout(requestCloseVote, delay);
 	              } else {
 	                commit('dialog', {
@@ -69526,27 +67748,22 @@ this.BX = this.BX || {};
 	      cors: true
 	    });
 	  }
-
 	  babelHelpers.createClass(WidgetRestClient, [{
 	    key: "setAuthId",
 	    value: function setAuthId(authId) {
 	      var customAuthId = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : '';
-
 	      if (babelHelpers["typeof"](this.queryParams) !== 'object') {
 	        this.queryParams = {};
 	      }
-
 	      if (authId == RestAuth.guest || typeof authId === 'string' && authId.match(/^[a-f0-9]{32}$/)) {
 	        this.queryParams.livechat_auth_id = authId;
 	      } else {
 	        console.error("%LiveChatRestClient.setAuthId: auth is not correct (%c".concat(authId, "%c)"), "color: black;", "font-weight: bold; color: red", "color: black");
 	        return false;
 	      }
-
 	      if (authId == RestAuth.guest && typeof customAuthId === 'string' && customAuthId.match(/^[a-f0-9]{32}$/)) {
 	        this.queryParams.livechat_custom_auth_id = customAuthId;
 	      }
-
 	      return true;
 	    }
 	  }, {
@@ -69555,44 +67772,37 @@ this.BX = this.BX || {};
 	      if (babelHelpers["typeof"](this.queryParams) !== 'object') {
 	        this.queryParams = {};
 	      }
-
 	      return this.queryParams.livechat_auth_id || null;
 	    }
 	  }, {
 	    key: "callMethod",
 	    value: function callMethod(method, params, callback, sendCallback) {
 	      var _this = this;
-
 	      var logTag = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : null;
-
 	      if (!logTag) {
 	        logTag = im_lib_utils.Utils.getLogTrackingParams({
 	          name: method
 	        });
 	      }
+	      var promise = new BX.Promise();
 
-	      var promise = new BX.Promise(); // TODO: Callbacks methods will not work!
-
+	      // TODO: Callbacks methods will not work!
 	      this.restClient.callMethod(method, params, null, sendCallback, logTag).then(function (result) {
 	        _this.queryAuthRestore = false;
 	        promise.fulfill(result);
 	      })["catch"](function (result) {
 	        var error = result.error();
-
 	        if (error.ex.error == 'LIVECHAT_AUTH_WIDGET_USER') {
 	          _this.setAuthId(error.ex.hash);
-
 	          if (method === RestMethod.widgetUserRegister) {
 	            console.warn("BX.LiveChatRestClient: ".concat(error.ex.error_description, " (").concat(error.ex.error, ")"));
 	            _this.queryAuthRestore = false;
 	            promise.reject(result);
 	            return false;
 	          }
-
 	          if (!_this.queryAuthRestore) {
 	            console.warn('BX.LiveChatRestClient: your auth-token has expired, send query with a new token');
 	            _this.queryAuthRestore = true;
-
 	            _this.restClient.callMethod(method, params, null, sendCallback, logTag).then(function (result) {
 	              _this.queryAuthRestore = false;
 	              promise.fulfill(result);
@@ -69600,11 +67810,9 @@ this.BX = this.BX || {};
 	              _this.queryAuthRestore = false;
 	              promise.reject(result);
 	            });
-
 	            return false;
 	          }
 	        }
-
 	        _this.queryAuthRestore = false;
 	        promise.reject(result);
 	      });
@@ -69614,42 +67822,32 @@ this.BX = this.BX || {};
 	    key: "callBatch",
 	    value: function callBatch(calls, callback, bHaltOnError, sendCallback, logTag) {
 	      var _this2 = this;
-
 	      var resultCallback = function resultCallback(result) {
-
 	        for (var method in calls) {
 	          if (!calls.hasOwnProperty(method)) {
 	            continue;
 	          }
-
 	          var _error = result[method].error();
-
 	          if (_error && _error.ex.error == 'LIVECHAT_AUTH_WIDGET_USER') {
 	            _this2.setAuthId(_error.ex.hash);
-
 	            if (method === RestMethod.widgetUserRegister) {
 	              console.warn("BX.LiveChatRestClient: ".concat(_error.ex.error_description, " (").concat(_error.ex.error, ")"));
 	              _this2.queryAuthRestore = false;
 	              callback(result);
 	              return false;
 	            }
-
 	            if (!_this2.queryAuthRestore) {
 	              console.warn('BX.LiveChatRestClient: your auth-token has expired, send query with a new token');
 	              _this2.queryAuthRestore = true;
-
 	              _this2.restClient.callBatch(calls, callback, bHaltOnError, sendCallback, logTag);
-
 	              return false;
 	            }
 	          }
 	        }
-
 	        _this2.queryAuthRestore = false;
 	        callback(result);
 	        return true;
 	      };
-
 	      return this.restClient.callBatch(calls, resultCallback, bHaltOnError, sendCallback, logTag);
 	    }
 	  }]);
@@ -69664,20 +67862,16 @@ this.BX = this.BX || {};
 	 * @subpackage imopenlines
 	 * @copyright 2001-2019 Bitrix
 	 */
-
 	var WidgetRestAnswerHandler = /*#__PURE__*/function (_BaseRestHandler) {
 	  babelHelpers.inherits(WidgetRestAnswerHandler, _BaseRestHandler);
-
 	  function WidgetRestAnswerHandler() {
 	    var _this;
-
 	    var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 	    babelHelpers.classCallCheck(this, WidgetRestAnswerHandler);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(WidgetRestAnswerHandler).call(this, props));
 	    _this.widget = props.widget;
 	    return _this;
 	  }
-
 	  babelHelpers.createClass(WidgetRestAnswerHandler, [{
 	    key: "handleImopenlinesWidgetConfigGetSuccess",
 	    value: function handleImopenlinesWidgetConfigGetSuccess(data) {
@@ -69705,11 +67899,9 @@ this.BX = this.BX || {};
 	    value: function handleImopenlinesWidgetUserRegisterSuccess(data) {
 	      this.widget.restClient.setAuthId(data.hash);
 	      var previousData = [];
-
 	      if (typeof this.store.state.messages.collection[this.controller.application.getChatId()] !== 'undefined') {
 	        previousData = this.store.state.messages.collection[this.controller.application.getChatId()];
 	      }
-
 	      this.store.commit('messages/initCollection', {
 	        chatId: data.chatId,
 	        messages: previousData
@@ -69845,7 +68037,6 @@ this.BX = this.BX || {};
 	 * @subpackage imopenlines
 	 * @copyright 2001-2019 Bitrix
 	 */
-
 	var WidgetImPullCommandHandler = /*#__PURE__*/function () {
 	  babelHelpers.createClass(WidgetImPullCommandHandler, [{
 	    key: "getModuleId",
@@ -69859,14 +68050,12 @@ this.BX = this.BX || {};
 	      return new this(params);
 	    }
 	  }]);
-
 	  function WidgetImPullCommandHandler(params) {
 	    babelHelpers.classCallCheck(this, WidgetImPullCommandHandler);
 	    this.controller = params.controller;
 	    this.store = params.store;
 	    this.widget = params.widget;
 	  }
-
 	  babelHelpers.createClass(WidgetImPullCommandHandler, [{
 	    key: "handleMessageChat",
 	    value: function handleMessageChat(params, extra, command) {
@@ -69875,7 +68064,6 @@ this.BX = this.BX || {};
 	          type: SubscriptionType.operatorMessage,
 	          data: params
 	        });
-
 	        if (!this.store.state.widget.common.showed && !this.widget.onceShowed) {
 	          this.widget.onceShowed = true;
 	          this.widget.open();
@@ -69885,7 +68073,6 @@ this.BX = this.BX || {};
 	  }]);
 	  return WidgetImPullCommandHandler;
 	}();
-
 	var WidgetImopenlinesPullCommandHandler = /*#__PURE__*/function () {
 	  babelHelpers.createClass(WidgetImopenlinesPullCommandHandler, null, [{
 	    key: "create",
@@ -69894,7 +68081,6 @@ this.BX = this.BX || {};
 	      return new this(params);
 	    }
 	  }]);
-
 	  function WidgetImopenlinesPullCommandHandler() {
 	    var params = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 	    babelHelpers.classCallCheck(this, WidgetImopenlinesPullCommandHandler);
@@ -69902,7 +68088,6 @@ this.BX = this.BX || {};
 	    this.store = params.store;
 	    this.widget = params.widget;
 	  }
-
 	  babelHelpers.createClass(WidgetImopenlinesPullCommandHandler, [{
 	    key: "getModuleId",
 	    value: function getModuleId() {
@@ -69954,7 +68139,6 @@ this.BX = this.BX || {};
 	          sessionStatus: params.sessionStatus
 	        }
 	      });
-
 	      if (params.sessionClose) {
 	        this.widget.sendEvent({
 	          type: SubscriptionType.sessionFinish,
@@ -69963,7 +68147,6 @@ this.BX = this.BX || {};
 	            sessionStatus: params.sessionStatus
 	          }
 	        });
-
 	        if (!params.spam) {
 	          this.store.commit('widget/dialog', {
 	            operator: {
@@ -69988,26 +68171,32 @@ this.BX = this.BX || {};
 	}();
 
 	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-
 	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	var Widget = /*#__PURE__*/function () {
 	  /* region 01. Initialize and store data */
+
 	  // Vue instance
+
 	  // true if there are no initialization errors
 	  // true if all preparations are done
 	  // true if Pull-client is offline
 	  // XHR-request from widget.config.get, can be aborted before completion
+
 	  // this block can be set from public config
 	  // user info
 	  // additional info to send to server
+
 	  // external event subscribers
+
 	  // fields from params
 	  // livechat code
+
 	  // widget button
+
 	  // fullscreen livechat mode options
+
 	  function Widget() {
 	    var _this = this;
-
 	    var params = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 	    babelHelpers.classCallCheck(this, Widget);
 	    babelHelpers.defineProperty(this, "params", null);
@@ -70033,8 +68222,9 @@ this.BX = this.BX || {};
 	    babelHelpers.defineProperty(this, "buttonInstance", null);
 	    babelHelpers.defineProperty(this, "localize", null);
 	    babelHelpers.defineProperty(this, "pageMode", null);
-	    this.params = params; //TODO: remove
+	    this.params = params;
 
+	    //TODO: remove
 	    this.messagesQueue = [];
 	    main_core_events.EventEmitter.subscribe(WidgetEventType.requestData, this.requestData.bind(this));
 	    main_core_events.EventEmitter.subscribe(WidgetEventType.createSession, this.createChat.bind(this));
@@ -70044,11 +68234,9 @@ this.BX = this.BX || {};
 	    this.initPullClient();
 	    this.initCore().then(function () {
 	      _this.initWidget();
-
 	      _this.initComplete();
 	    });
 	  }
-
 	  babelHelpers.createClass(Widget, [{
 	    key: "initParams",
 	    value: function initParams() {
@@ -70058,27 +68246,22 @@ this.BX = this.BX || {};
 	      this.language = this.params.language || 'en';
 	      this.copyright = this.params.copyright !== false;
 	      this.copyrightUrl = this.copyright && this.params.copyrightUrl ? this.params.copyrightUrl : '';
-
 	      if (this.params.buttonInstance && babelHelpers["typeof"](this.params.buttonInstance) === 'object') {
 	        this.buttonInstance = this.params.buttonInstance;
 	      }
-
 	      if (this.params.pageMode && babelHelpers["typeof"](this.params.pageMode) === 'object') {
 	        this.pageMode = {
 	          useBitrixLocalize: this.params.pageMode.useBitrixLocalize === true,
 	          placeholder: document.querySelector("#".concat(this.params.pageMode.placeholder))
 	        };
 	      }
-
 	      var errors = this.checkRequiredFields();
-
 	      if (errors.length > 0) {
 	        errors.forEach(function (error) {
 	          return console.warn(error);
 	        });
 	        this.ready = false;
 	      }
-
 	      this.setRootNode();
 	      this.localize = this.pageMode && this.pageMode.useBitrixLocalize ? window.BX.message : {};
 	      this.setLocalize();
@@ -70132,8 +68315,8 @@ this.BX = this.BX || {};
 	    key: "initWidget",
 	    value: function initWidget() {
 	      this.restClient.setAuthId(this.getRestAuthId());
-	      this.setModelData(); // TODO: move from controller
-
+	      this.setModelData();
+	      // TODO: move from controller
 	      this.controller.application.setPrepareFilesBeforeSaveFunction(this.prepareFileData.bind(this));
 	      this.controller.addRestAnswerHandler(WidgetRestAnswerHandler.create({
 	        widget: this,
@@ -70142,7 +68325,6 @@ this.BX = this.BX || {};
 	      }));
 	    } // if start or open methods were called before core init - we will have appropriate flags
 	    // for full-page livechat we always call open
-
 	  }, {
 	    key: "initComplete",
 	    value: function initComplete() {
@@ -70153,18 +68335,15 @@ this.BX = this.BX || {};
 	          widgetHost: this.host
 	        }
 	      }));
-
 	      if (this.callStartFlag) {
 	        this.start();
 	      }
-
 	      if (this.pageMode || this.callOpenFlag) {
 	        this.open();
 	      }
 	    } // public method
 	    // initially called from imopenlines/lib/livechatmanager.php:16
 	    // if core is not ready yet - set flag and call start once again in this.initComplete()
-
 	  }, {
 	    key: "start",
 	    value: function start() {
@@ -70172,106 +68351,87 @@ this.BX = this.BX || {};
 	        this.callStartFlag = true;
 	        return true;
 	      }
-
 	      if (this.isSessionActive()) {
 	        this.requestWidgetData();
 	      }
-
 	      return true;
 	    } // public method
 	    // if core is not ready yet - set flag and call start once again in this.initComplete()
 	    // if not inited yet - request widget data
-
 	  }, {
 	    key: "open",
 	    value: function open() {
 	      var params = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-
 	      if (!this.controller.getStore()) {
 	        this.callOpenFlag = true;
 	        return true;
 	      }
-
 	      if (!params.openFromButton && this.buttonInstance) {
 	        this.buttonInstance.wm.showById('openline_livechat');
 	      }
-
 	      var _this$checkForErrorsB = this.checkForErrorsBeforeOpen(),
-	          error = _this$checkForErrorsB.error,
-	          stop = _this$checkForErrorsB.stop;
-
+	        error = _this$checkForErrorsB.error,
+	        stop = _this$checkForErrorsB.stop;
 	      if (stop) {
 	        return false;
 	      }
-
 	      if (!error && !this.inited) {
 	        this.requestWidgetData();
 	      }
-
 	      this.attachTemplate();
 	    }
 	  }, {
 	    key: "requestWidgetData",
 	    value: function requestWidgetData() {
 	      var _this2 = this;
-
 	      if (!this.ready) {
 	        console.error('LiveChatWidget.start: widget code or host is not specified');
 	        return false;
-	      } // if user is registered or we have its hash - proceed to getting chat and messages
+	      }
 
-
+	      // if user is registered or we have its hash - proceed to getting chat and messages
 	      if (this.isUserReady() || this.isHashAvailable()) {
 	        this.requestData();
 	        this.inited = true;
 	        this.fireInitEvent();
 	        return true;
-	      } // if there is no info about user - we need to get config and wait for first message
+	      }
 
-
+	      // if there is no info about user - we need to get config and wait for first message
 	      this.controller.restClient.callMethod(RestMethod.widgetConfigGet, {
 	        code: this.code
 	      }, function (xhr) {
 	        _this2.widgetConfigRequest = xhr;
 	      }).then(function (result) {
 	        _this2.widgetConfigRequest = null;
-
 	        _this2.clearError();
-
 	        _this2.controller.executeRestAnswer(RestMethod.widgetConfigGet, result);
-
 	        if (!_this2.inited) {
 	          _this2.inited = true;
-
 	          _this2.fireInitEvent();
 	        }
 	      })["catch"](function (error) {
 	        _this2.widgetConfigRequest = null;
-
 	        _this2.setError(error.error().ex.error, error.error().ex.error_description);
 	      });
-
 	      if (this.isConfigDataLoaded()) {
 	        this.inited = true;
 	        this.fireInitEvent();
 	      }
 	    } // get all other info (dialog, chat, messages etc)
-
 	  }, {
 	    key: "requestData",
 	    value: function requestData() {
 	      im_lib_logger.Logger.log('requesting data from widget');
-
 	      if (this.requestDataSend) {
 	        return true;
 	      }
+	      this.requestDataSend = true;
 
-	      this.requestDataSend = true; // if there is uncompleted widget.config.get request - abort it (because we will do it anyway)
-
+	      // if there is uncompleted widget.config.get request - abort it (because we will do it anyway)
 	      if (this.widgetConfigRequest) {
 	        this.widgetConfigRequest.abort();
 	      }
-
 	      var callback = this.handleBatchRequestResult.bind(this);
 	      this.controller.restClient.callBatch(this.getDataRequestQuery(), callback, false, false, im_lib_utils.Utils.getLogTrackingParams({
 	        name: 'widget.init.config',
@@ -70282,7 +68442,6 @@ this.BX = this.BX || {};
 	    key: "createChat",
 	    value: function createChat() {
 	      var _this3 = this;
-
 	      return new Promise(function (resolve, reject) {
 	        _this3.controller.restClient.callBatch(_this3.getCreateChatRequestQuery(), function (result) {
 	          _this3.handleBatchCreateChatRequestResult(result).then(function () {
@@ -70295,13 +68454,11 @@ this.BX = this.BX || {};
 	    key: "handleBatchRequestResult",
 	    value: function handleBatchRequestResult(response) {
 	      var _this4 = this;
-
 	      if (!response) {
 	        this.requestDataSend = false;
 	        this.setError('EMPTY_RESPONSE', 'Server returned an empty response.');
 	        return false;
 	      }
-
 	      this.handleConfigGet(response).then(function () {
 	        return _this4.handleUserGet(response);
 	      }).then(function () {
@@ -70316,8 +68473,7 @@ this.BX = this.BX || {};
 	        return _this4.handlePullRequests(response);
 	      })["catch"](function (_ref) {
 	        var code = _ref.code,
-	            description = _ref.description;
-
+	          description = _ref.description;
 	        _this4.setError(code, description);
 	      })["finally"](function () {
 	        _this4.requestDataSend = false;
@@ -70327,21 +68483,18 @@ this.BX = this.BX || {};
 	    key: "handleBatchCreateChatRequestResult",
 	    value: function handleBatchCreateChatRequestResult(response) {
 	      var _this5 = this;
-
 	      if (!response) {
 	        this.requestDataSend = false;
 	        this.setError('EMPTY_RESPONSE', 'Server returned an empty response.');
 	        return false;
 	      }
-
 	      return this.handleChatCreate(response).then(function () {
 	        return _this5.handleChatGet(response);
 	      }).then(function () {
 	        return _this5.handleDialogGet(response);
 	      })["catch"](function (_ref2) {
 	        var code = _ref2.code,
-	            description = _ref2.description;
-
+	          description = _ref2.description;
 	        _this5.setError(code, description);
 	      })["finally"](function () {
 	        _this5.requestDataSend = false;
@@ -70351,21 +68504,18 @@ this.BX = this.BX || {};
 	    key: "handleBatchOpenSessionRequestResult",
 	    value: function handleBatchOpenSessionRequestResult(response) {
 	      var _this6 = this;
-
 	      if (!response) {
 	        this.requestDataSend = false;
 	        this.setError('EMPTY_RESPONSE', 'Server returned an empty response.');
 	        return false;
 	      }
-
 	      return this.handleChatGet(response).then(function () {
 	        return _this6.handleDialogGet(response);
 	      }).then(function () {
 	        return _this6.handleDialogMessagesGet(response);
 	      })["catch"](function (_ref3) {
 	        var code = _ref3.code,
-	            description = _ref3.description;
-
+	          description = _ref3.description;
 	        _this6.setError(code, description);
 	      })["finally"](function () {
 	        _this6.requestDataSend = false;
@@ -70378,19 +68528,20 @@ this.BX = this.BX || {};
 	      var query = babelHelpers.defineProperty({}, RestMethod.widgetConfigGet, [RestMethod.widgetConfigGet, {
 	        code: this.code
 	      }]);
-
 	      if (this.isUserRegistered()) {
 	        // widget.dialog.get
 	        query[RestMethod.widgetDialogGet] = [RestMethod.widgetDialogGet, {
 	          config_id: this.getConfigId(),
 	          trace_data: this.getCrmTraceData(),
 	          custom_data: this.getCustomData()
-	        }]; // im.chat.get
+	        }];
 
+	        // im.chat.get
 	        query[im_const.RestMethodHandler.imChatGet] = [im_const.RestMethod.imChatGet, {
 	          dialog_id: "$result[".concat(RestMethod.widgetDialogGet, "][dialogId]")
-	        }]; // im.dialog.messages.get
+	        }];
 
+	        // im.dialog.messages.get
 	        query[im_const.RestMethodHandler.imDialogMessagesGetInit] = [im_const.RestMethod.imDialogMessagesGet, {
 	          chat_id: "$result[".concat(RestMethod.widgetDialogGet, "][chatId]"),
 	          limit: this.controller.application.getRequestMessageLimit(),
@@ -70400,27 +68551,27 @@ this.BX = this.BX || {};
 	        // widget.user.register
 	        query[RestMethod.widgetUserRegister] = [RestMethod.widgetUserRegister, _objectSpread({
 	          config_id: "$result[".concat(RestMethod.widgetConfigGet, "][configId]")
-	        }, this.getUserRegisterFields())]; // im.chat.get
+	        }, this.getUserRegisterFields())];
 
+	        // im.chat.get
 	        query[im_const.RestMethodHandler.imChatGet] = [im_const.RestMethod.imChatGet, {
 	          dialog_id: "$result[".concat(RestMethod.widgetUserRegister, "][dialogId]")
 	        }];
-
 	        if (this.userRegisterData.hash || this.getUserHashCookie()) {
 	          // widget.dialog.get
 	          query[RestMethod.widgetDialogGet] = [RestMethod.widgetDialogGet, {
 	            config_id: "$result[".concat(RestMethod.widgetConfigGet, "][configId]"),
 	            trace_data: this.getCrmTraceData(),
 	            custom_data: this.getCustomData()
-	          }]; // im.dialog.messages.get
+	          }];
 
+	          // im.dialog.messages.get
 	          query[im_const.RestMethodHandler.imDialogMessagesGetInit] = [im_const.RestMethod.imDialogMessagesGet, {
 	            chat_id: "$result[".concat(RestMethod.widgetDialogGet, "][chatId]"),
 	            limit: this.controller.application.getRequestMessageLimit(),
 	            convert_text: 'Y'
 	          }];
 	        }
-
 	        if (this.isUserAgreeConsent()) {
 	          // widget.user.consent.apply
 	          query[RestMethod.widgetUserConsentApply] = [RestMethod.widgetUserConsentApply, {
@@ -70429,7 +68580,6 @@ this.BX = this.BX || {};
 	          }];
 	        }
 	      }
-
 	      query[RestMethod.pullServerTime] = [RestMethod.pullServerTime, {}];
 	      query[RestMethod.pullConfigGet] = [RestMethod.pullConfigGet, {
 	        'CACHE': 'N'
@@ -70447,8 +68597,9 @@ this.BX = this.BX || {};
 	      }]);
 	      query[im_const.RestMethodHandler.imChatGet] = [im_const.RestMethod.imChatGet, {
 	        dialog_id: "chat".concat(chatId)
-	      }]; // im.dialog.messages.get
+	      }];
 
+	      // im.dialog.messages.get
 	      query[im_const.RestMethodHandler.imDialogMessagesGetInit] = [im_const.RestMethod.imDialogMessagesGet, {
 	        chat_id: chatId,
 	        limit: 50,
@@ -70459,22 +68610,24 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "getCreateChatRequestQuery",
 	    value: function getCreateChatRequestQuery() {
-	      var query = {}; // widget.chat.register
+	      var query = {};
 
+	      // widget.chat.register
 	      query[RestMethod.widgetChatCreate] = [RestMethod.widgetChatCreate, _objectSpread({
 	        config_id: this.getConfigId()
-	      }, this.getUserRegisterFields())]; // im.chat.get
+	      }, this.getUserRegisterFields())];
 
+	      // im.chat.get
 	      query[im_const.RestMethodHandler.imChatGet] = [im_const.RestMethod.imChatGet, {
 	        dialog_id: "$result[".concat(RestMethod.widgetChatCreate, "][dialogId]")
-	      }]; // widget.dialog.get
+	      }];
 
+	      // widget.dialog.get
 	      query[RestMethod.widgetDialogGet] = [RestMethod.widgetDialogGet, {
 	        config_id: this.getConfigId(),
 	        trace_data: this.getCrmTraceData(),
 	        custom_data: this.getCustomData()
 	      }];
-
 	      if (this.isUserAgreeConsent()) {
 	        // widget.user.consent.apply
 	        query[RestMethod.widgetUserConsentApply] = [RestMethod.widgetUserConsentApply, {
@@ -70482,7 +68635,6 @@ this.BX = this.BX || {};
 	          consent_url: location.href
 	        }];
 	      }
-
 	      query[RestMethod.pullServerTime] = [RestMethod.pullServerTime, {}];
 	      query[RestMethod.pullConfigGet] = [RestMethod.pullConfigGet, {
 	        'CACHE': 'N'
@@ -70494,11 +68646,9 @@ this.BX = this.BX || {};
 	    key: "openSession",
 	    value: function openSession(event) {
 	      var _this7 = this;
-
 	      var eventData = event.getData();
 	      return new Promise(function (resolve, reject) {
 	        var dialog = _this7.controller.getStore().getters['dialogues/get'](eventData.session.dialogId);
-
 	        if (dialog) {
 	          _this7.controller.getStore().commit('application/set', {
 	            dialog: {
@@ -70507,21 +68657,17 @@ this.BX = this.BX || {};
 	              diskFolderId: 0
 	            }
 	          });
-
 	          _this7.controller.getStore().commit('widget/common', {
 	            isCreateSessionMode: false
 	          });
-
 	          resolve();
 	          return;
 	        }
-
 	        _this7.controller.restClient.callBatch(_this7.getOpenSessionQuery(eventData.session.chatId), function (result) {
 	          _this7.handleBatchOpenSessionRequestResult(result).then(function () {
 	            _this7.controller.getStore().commit('widget/common', {
 	              isCreateSessionMode: false
 	            });
-
 	            resolve();
 	          });
 	        }, false, false);
@@ -70531,27 +68677,21 @@ this.BX = this.BX || {};
 	    key: "prepareFileData",
 	    value: function prepareFileData(files) {
 	      var _this8 = this;
-
 	      if (!Array.isArray(files)) {
 	        return files;
 	      }
-
 	      return files.map(function (file) {
 	        var hash = (window.md5 || main_md5.md5)("".concat(_this8.getUserId(), "|").concat(file.id, "|").concat(_this8.getUserHash()));
 	        var urlParam = "livechat_auth_id=".concat(hash, "&livechat_user_id=").concat(_this8.getUserId());
-
 	        if (file.urlPreview) {
 	          file.urlPreview = "".concat(file.urlPreview, "&").concat(urlParam);
 	        }
-
 	        if (file.urlShow) {
 	          file.urlShow = "".concat(file.urlShow, "&").concat(urlParam);
 	        }
-
 	        if (file.urlDownload) {
 	          file.urlDownload = "".concat(file.urlDownload, "&").concat(urlParam);
 	        }
-
 	        return file;
 	      });
 	    }
@@ -70559,15 +68699,12 @@ this.BX = this.BX || {};
 	    key: "checkRequiredFields",
 	    value: function checkRequiredFields() {
 	      var errors = [];
-
 	      if (typeof this.code === 'string' && this.code.length <= 0) {
 	        errors.push("LiveChatWidget.constructor: code is not correct (".concat(this.code, ")"));
 	      }
-
 	      if (typeof this.host === 'string' && (this.host.length <= 0 || !this.host.startsWith('http'))) {
 	        errors.push("LiveChatWidget.constructor: host is not correct (".concat(this.host, ")"));
 	      }
-
 	      return errors;
 	    }
 	  }, {
@@ -70587,9 +68724,7 @@ this.BX = this.BX || {};
 	      if (babelHelpers["typeof"](this.params.localize) === 'object') {
 	        this.addLocalize(this.params.localize);
 	      }
-
 	      var serverVariables = im_lib_localstorage.LocalStorage.get(this.getSiteId(), 0, 'serverVariables', false);
-
 	      if (serverVariables) {
 	        this.addLocalize(serverVariables);
 	      }
@@ -70615,19 +68750,15 @@ this.BX = this.BX || {};
 	          bxLivechatOffline: this.getLocalize('BX_LIVECHAT_OFFLINE')
 	        }
 	      };
-
 	      if (this.params.styles) {
 	        variables.styles = {};
-
 	        if (this.params.styles.backgroundColor) {
 	          variables.styles.backgroundColor = this.params.styles.backgroundColor;
 	        }
-
 	        if (this.params.styles.iconColor) {
 	          variables.styles.iconColor = this.params.styles.iconColor;
 	        }
 	      }
-
 	      return variables;
 	    }
 	  }, {
@@ -70651,7 +68782,6 @@ this.BX = this.BX || {};
 	        error: false,
 	        stop: false
 	      };
-
 	      if (!this.checkBrowserVersion()) {
 	        this.setError('OLD_BROWSER_LOCALIZED', this.localize.BX_LIVECHAT_OLD_BROWSER);
 	        result.error = true;
@@ -70664,7 +68794,6 @@ this.BX = this.BX || {};
 	        this.setError('LIVECHAT_SAME_DOMAIN', this.localize.BX_LIVECHAT_SAME_DOMAIN);
 	        result.error = true;
 	      }
-
 	      return result;
 	    }
 	  }, {
@@ -70673,11 +68802,9 @@ this.BX = this.BX || {};
 	      if (typeof BX === 'undefined' || !BX.isReady) {
 	        return false;
 	      }
-
 	      if (!this.options.checkSameDomain) {
 	        return false;
 	      }
-
 	      return this.host.lastIndexOf(".".concat(location.hostname)) > -1;
 	    }
 	  }, {
@@ -70685,23 +68812,18 @@ this.BX = this.BX || {};
 	    value: function checkBrowserVersion() {
 	      if (im_lib_utils.Utils.platform.isIos()) {
 	        var version = im_lib_utils.Utils.platform.getIosVersion();
-
 	        if (version && version <= 10) {
 	          return false;
 	        }
 	      }
-
 	      return true;
 	    }
 	    /* endregion 01. Initialize and store data */
-
 	    /* region 02. Push & Pull */
-
 	  }, {
 	    key: "startPullClient",
 	    value: function startPullClient(config) {
 	      var _this9 = this;
-
 	      return new Promise(function (resolve, reject) {
 	        if (!_this9.getUserId() || !_this9.getSiteId() || !_this9.restClient) {
 	          return reject({
@@ -70711,15 +68833,12 @@ this.BX = this.BX || {};
 	            }
 	          });
 	        }
-
 	        if (_this9.pullClientInited) {
 	          if (!_this9.pullClient.isConnected()) {
 	            _this9.pullClient.scheduleReconnect();
 	          }
-
 	          return resolve(true);
 	        }
-
 	        _this9.controller.userId = _this9.getUserId();
 	        _this9.pullClient.userId = _this9.getUserId();
 	        _this9.pullClient.configTimestamp = config ? config.server.config_timestamp : 0;
@@ -70728,39 +68847,32 @@ this.BX = this.BX || {};
 	          userId: _this9.getUserId(),
 	          siteId: _this9.getSiteId()
 	        });
-
 	        _this9.pullClient.subscribe(new WidgetImPullCommandHandler({
 	          store: _this9.controller.getStore(),
 	          controller: _this9.controller,
 	          widget: _this9
 	        }));
-
 	        _this9.pullClient.subscribe(new WidgetImopenlinesPullCommandHandler({
 	          store: _this9.controller.getStore(),
 	          controller: _this9.controller,
 	          widget: _this9
 	        }));
-
 	        _this9.pullClient.subscribe({
 	          type: pull_client.PullClient.SubscriptionType.Status,
 	          callback: _this9.eventStatusInteraction.bind(_this9)
 	        });
-
 	        _this9.pullConnectedFirstTime = _this9.pullClient.subscribe({
 	          type: pull_client.PullClient.SubscriptionType.Status,
 	          callback: function callback(result) {
 	            if (result.status === pull_client.PullClient.PullStatus.Online) {
 	              resolve(true);
-
 	              _this9.pullConnectedFirstTime();
 	            }
 	          }
 	        });
-
 	        if (_this9.template) {
 	          _this9.template.$Bitrix.PullClient.set(_this9.pullClient);
 	        }
-
 	        _this9.pullClient.start(_objectSpread(_objectSpread({}, config), {}, {
 	          skipReconnectToLastSession: true
 	        }))["catch"](function () {
@@ -70771,7 +68883,6 @@ this.BX = this.BX || {};
 	            }
 	          });
 	        });
-
 	        _this9.pullClientInited = true;
 	      });
 	    }
@@ -70802,9 +68913,9 @@ this.BX = this.BX || {};
 	    key: "onPullOnlineStatus",
 	    value: function onPullOnlineStatus() {
 	      var _this10 = this;
+	      this.offline = false;
 
-	      this.offline = false; // if we go online after going offline - we need to request messages
-
+	      // if we go online after going offline - we need to request messages
 	      if (this.pullRequestMessage) {
 	        this.controller.pullBaseHandler.option.skip = true;
 	        im_lib_logger.Logger.warn('Requesting getDialogUnread after going online');
@@ -70826,9 +68937,7 @@ this.BX = this.BX || {};
 	      }
 	    }
 	    /* endregion 02. Push & Pull */
-
 	    /* region 03. Template engine */
-
 	  }, {
 	    key: "attachTemplate",
 	    value: function attachTemplate() {
@@ -70838,7 +68947,6 @@ this.BX = this.BX || {};
 	        });
 	        return true;
 	      }
-
 	      this.rootNode.innerHTML = '';
 	      this.rootNode.append(document.createElement('div'));
 	      var application = this;
@@ -70851,11 +68959,9 @@ this.BX = this.BX || {};
 	            data: {}
 	          });
 	          application.template = this;
-
 	          if (main_core_minimal.ZIndexManager !== undefined) {
 	            var stack = main_core_minimal.ZIndexManager.getOrAddStack(document.body);
 	            stack.setBaseIndex(1000000); // some big value
-
 	            this.$bitrix.Data.set('zIndexStack', stack);
 	          }
 	        },
@@ -70880,32 +68986,26 @@ this.BX = this.BX || {};
 	      if (!this.template) {
 	        return true;
 	      }
-
 	      this.template.$destroy();
 	      return true;
 	    } // public method
-
 	  }, {
 	    key: "mutateTemplateComponent",
 	    value: function mutateTemplateComponent(id, params) {
 	      return ui_vue.WidgetVue.mutateComponent(id, params);
 	    }
 	    /* endregion 03. Template engine */
-
 	    /* region 04. Widget interaction and utils */
 	    // public method
-
 	  }, {
 	    key: "close",
 	    value: function close() {
 	      if (this.pageMode) {
 	        return false;
 	      }
-
 	      if (this.buttonInstance) {
 	        this.buttonInstance.onWidgetClose();
 	      }
-
 	      this.detachTemplate();
 	    }
 	  }, {
@@ -70914,16 +69014,13 @@ this.BX = this.BX || {};
 	      if (this.initEventFired) {
 	        return true;
 	      }
-
 	      this.sendEvent({
 	        type: SubscriptionType.configLoaded,
 	        data: {}
 	      });
-
 	      if (this.controller.getStore().state.widget.common.reopen) {
 	        this.open();
 	      }
-
 	      this.initEventFired = true;
 	    }
 	  }, {
@@ -70955,24 +69052,20 @@ this.BX = this.BX || {};
 	    key: "getCrmTraceData",
 	    value: function getCrmTraceData() {
 	      var traceData = '';
-
 	      if (!this.buttonInstance) {
 	        return traceData;
 	      }
-
 	      if (typeof this.buttonInstance.getTrace !== 'function') {
 	        traceData = this.buttonInstance.getTrace();
 	      } else if (typeof this.buttonInstance.b24Tracker !== 'undefined' && typeof this.buttonInstance.b24Tracker.guest !== 'undefined') {
 	        traceData = this.buttonInstance.b24Tracker.guest.getTrace();
 	      }
-
 	      return traceData;
 	    }
 	  }, {
 	    key: "getCustomData",
 	    value: function getCustomData() {
 	      var customData = [];
-
 	      if (this.customData.length > 0) {
 	        customData = this.customData;
 	      } else {
@@ -70980,7 +69073,6 @@ this.BX = this.BX || {};
 	          MESSAGE: this.localize.BX_LIVECHAT_EXTRA_SITE + ': [URL]' + location.href + '[/URL]'
 	        }];
 	      }
-
 	      return JSON.stringify(customData);
 	    }
 	  }, {
@@ -71059,17 +69151,14 @@ this.BX = this.BX || {};
 	    value: function getUserHashCookie() {
 	      var userHash = '';
 	      var cookie = im_lib_cookie.Cookie.get(null, 'LIVECHAT_HASH');
-
 	      if (typeof cookie === 'string' && cookie.match(/^[a-f0-9]{32}$/)) {
 	        userHash = cookie;
 	      } else {
 	        var _cookie = im_lib_cookie.Cookie.get(this.getSiteId(), 'LIVECHAT_HASH');
-
 	        if (typeof _cookie === 'string' && _cookie.match(/^[a-f0-9]{32}$/)) {
 	          userHash = _cookie;
 	        }
 	      }
-
 	      return userHash;
 	    }
 	  }, {
@@ -71084,7 +69173,6 @@ this.BX = this.BX || {};
 	        console.error('LiveChatWidget.getUserData: method can be called after fired event - onBitrixLiveChat');
 	        return false;
 	      }
-
 	      return this.controller.getStore().state.widget.user;
 	    }
 	  }, {
@@ -71109,7 +69197,6 @@ this.BX = this.BX || {};
 	    value: function getWidgetLocationCode() {
 	      return LocationStyle[this.controller.getStore().state.widget.common.location];
 	    } // public method
-
 	  }, {
 	    key: "setUserRegisterData",
 	    value: function setUserRegisterData(params) {
@@ -71117,37 +69204,29 @@ this.BX = this.BX || {};
 	        console.error('LiveChatWidget.getUserData: method can be called after fired event - onBitrixLiveChat');
 	        return false;
 	      }
-
 	      var validUserFields = ['hash', 'name', 'lastName', 'avatar', 'email', 'www', 'gender', 'position'];
-
 	      if (!im_lib_utils.Utils.types.isPlainObject(params)) {
 	        console.error("%cLiveChatWidget.setUserData: params is not a object", "color: black;");
 	        return false;
 	      }
-
 	      for (var field in this.userRegisterData) {
 	        if (!this.userRegisterData.hasOwnProperty(field)) {
 	          continue;
 	        }
-
 	        if (!params[field]) {
 	          delete this.userRegisterData[field];
 	        }
 	      }
-
 	      for (var _field in params) {
 	        if (!params.hasOwnProperty(_field)) {
 	          continue;
 	        }
-
 	        if (validUserFields.indexOf(_field) === -1) {
 	          console.warn("%cLiveChatWidget.setUserData: user field is not set, because you are trying to set an unknown field (%c".concat(_field, "%c)"), "color: black;", "font-weight: bold; color: red", "color: black");
 	          continue;
 	        }
-
 	        this.userRegisterData[_field] = params[_field];
 	      }
-
 	      if (this.userRegisterData.hash && this.getUserHash() && this.userRegisterData.hash !== this.getUserHash()) {
 	        this.setNewAuthToken(this.userRegisterData.hash);
 	      }
@@ -71163,14 +69242,12 @@ this.BX = this.BX || {};
 	      });
 	      this.controller.restClient.setAuthId(RestAuth.guest, authToken);
 	    } // public method
-
 	  }, {
 	    key: "setOption",
 	    value: function setOption(name, value) {
 	      this.options[name] = value;
 	      return true;
 	    } // public method
-
 	  }, {
 	    key: "setCustomData",
 	    value: function setCustomData(params) {
@@ -71178,16 +69255,13 @@ this.BX = this.BX || {};
 	        console.error('LiveChatWidget.getUserData: method can be called after fired event - onBitrixLiveChat');
 	        return false;
 	      }
-
 	      var result = [];
-
 	      if (params instanceof Array) {
 	        params.forEach(function (element) {
 	          if (element && babelHelpers["typeof"](element) === 'object') {
 	            result.push(element);
 	          }
 	        });
-
 	        if (result.length <= 0) {
 	          console.error('LiveChatWidget.setCustomData: params is empty');
 	          return false;
@@ -71196,12 +69270,10 @@ this.BX = this.BX || {};
 	        if (!params) {
 	          return false;
 	        }
-
 	        result = [{
 	          'MESSAGE': params
 	        }];
 	      }
-
 	      this.customData = this.customData.concat(result);
 	      return true;
 	    }
@@ -71212,7 +69284,6 @@ this.BX = this.BX || {};
 	      var description = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : '';
 	      console.error("LiveChatWidget.error: ".concat(code, " (").concat(description, ")"));
 	      var localizeDescription = '';
-
 	      if (code === 'LIVECHAT_AUTH_FAILED') {
 	        localizeDescription = this.getLocalize('BX_LIVECHAT_AUTH_FAILED').replace('#LINK_START#', '<a href="javascript:void();" onclick="location.reload()">').replace('#LINK_END#', '</a>');
 	        this.setNewAuthToken();
@@ -71221,14 +69292,12 @@ this.BX = this.BX || {};
 	      } else if (code === 'LIVECHAT_SAME_DOMAIN') {
 	        localizeDescription = this.getLocalize('BX_LIVECHAT_SAME_DOMAIN');
 	        var link = this.getLocalize('BX_LIVECHAT_SAME_DOMAIN_LINK');
-
 	        if (link) {
 	          localizeDescription += '<br><br><a href="' + link + '">' + this.getLocalize('BX_LIVECHAT_SAME_DOMAIN_MORE') + '</a>';
 	        }
 	      } else if (code.endsWith('LOCALIZED')) {
 	        localizeDescription = description;
 	      }
-
 	      this.controller.getStore().commit('application/set', {
 	        error: {
 	          active: true,
@@ -71248,7 +69317,6 @@ this.BX = this.BX || {};
 	        }
 	      });
 	    } // public method
-
 	  }, {
 	    key: "subscribe",
 	    value: function subscribe(params) {
@@ -71256,21 +69324,17 @@ this.BX = this.BX || {};
 	        console.error("%cLiveChatWidget.subscribe: params is not a object", "color: black;");
 	        return false;
 	      }
-
 	      if (!SubscriptionTypeCheck.includes(params.type)) {
 	        console.error("%cLiveChatWidget.subscribe: subscription type is not correct (%c".concat(params.type, "%c)"), "color: black;", "font-weight: bold; color: red", "color: black");
 	        return false;
 	      }
-
 	      if (typeof params.callback !== 'function') {
 	        console.error("%cLiveChatWidget.subscribe: callback is not a function (%c".concat(babelHelpers["typeof"](params.callback), "%c)"), "color: black;", "font-weight: bold; color: red", "color: black");
 	        return false;
 	      }
-
 	      if (typeof this.subscribers[params.type] === 'undefined') {
 	        this.subscribers[params.type] = [];
 	      }
-
 	      this.subscribers[params.type].push(params.callback);
 	      return function () {
 	        this.subscribers[params.type] = this.subscribers[params.type].filter(function (element) {
@@ -71282,21 +69346,17 @@ this.BX = this.BX || {};
 	    key: "sendEvent",
 	    value: function sendEvent(params) {
 	      params = params || {};
-
 	      if (!params.type) {
 	        return false;
 	      }
-
 	      if (babelHelpers["typeof"](params.data) !== 'object' || !params.data) {
 	        params.data = {};
 	      }
-
 	      if (this.subscribers[params.type] instanceof Array && this.subscribers[params.type].length > 0) {
 	        this.subscribers[params.type].forEach(function (callback) {
 	          return callback(params.data);
 	        });
 	      }
-
 	      if (this.subscribers[SubscriptionType.every] instanceof Array && this.subscribers[SubscriptionType.every].length > 0) {
 	        this.subscribers[SubscriptionType.every].forEach(function (callback) {
 	          return callback({
@@ -71305,30 +69365,25 @@ this.BX = this.BX || {};
 	          });
 	        });
 	      }
-
 	      return true;
 	    } // public method
-
 	  }, {
 	    key: "addLocalize",
 	    value: function addLocalize(phrases) {
 	      if (babelHelpers["typeof"](phrases) !== "object" || !phrases) {
 	        return false;
 	      }
-
 	      for (var name in phrases) {
 	        if (phrases.hasOwnProperty(name)) {
 	          this.localize[name] = phrases[name];
 	        }
 	      }
-
 	      return true;
 	    }
 	  }, {
 	    key: "getLocalize",
 	    value: function getLocalize(name) {
 	      var phrase = '';
-
 	      if (typeof name === 'undefined') {
 	        return this.localize;
 	      } else if (typeof this.localize[name.toString()] === 'undefined') {
@@ -71336,30 +69391,23 @@ this.BX = this.BX || {};
 	      } else {
 	        phrase = this.localize[name];
 	      }
-
 	      return phrase;
 	    }
 	    /* endregion 04. Widget interaction and utils */
-
 	    /* region 05. Rest batch handlers */
-
 	  }, {
 	    key: "handleConfigGet",
 	    value: function handleConfigGet(response) {
 	      var _this11 = this;
-
 	      return new Promise(function (resolve, reject) {
 	        var configGet = response[RestMethod.widgetConfigGet];
-
 	        if (configGet && configGet.error()) {
 	          return reject({
 	            code: configGet.error().ex.error,
 	            description: configGet.error().ex.error_description
 	          });
 	        }
-
 	        _this11.controller.executeRestAnswer(RestMethod.widgetConfigGet, configGet);
-
 	        resolve();
 	      });
 	    }
@@ -71367,19 +69415,15 @@ this.BX = this.BX || {};
 	    key: "handleUserGet",
 	    value: function handleUserGet(response) {
 	      var _this12 = this;
-
 	      return new Promise(function (resolve, reject) {
 	        var userGetResult = response[RestMethod.widgetUserGet];
-
 	        if (userGetResult.error()) {
 	          return reject({
 	            code: userGetResult.error().ex.error,
 	            description: userGetResult.error().ex.error_description
 	          });
 	        }
-
 	        _this12.controller.executeRestAnswer(RestMethod.widgetUserGet, userGetResult);
-
 	        resolve();
 	      });
 	    }
@@ -71387,19 +69431,15 @@ this.BX = this.BX || {};
 	    key: "handleChatGet",
 	    value: function handleChatGet(response) {
 	      var _this13 = this;
-
 	      return new Promise(function (resolve, reject) {
 	        var chatGetResult = response[im_const.RestMethodHandler.imChatGet];
-
 	        if (chatGetResult.error()) {
 	          return reject({
 	            code: chatGetResult.error().ex.error,
 	            description: chatGetResult.error().ex.error_description
 	          });
 	        }
-
 	        _this13.controller.executeRestAnswer(im_const.RestMethodHandler.imChatGet, chatGetResult);
-
 	        resolve();
 	      });
 	    }
@@ -71407,23 +69447,18 @@ this.BX = this.BX || {};
 	    key: "handleDialogGet",
 	    value: function handleDialogGet(response) {
 	      var _this14 = this;
-
 	      return new Promise(function (resolve, reject) {
 	        var dialogGetResult = response[RestMethod.widgetDialogGet];
-
 	        if (!dialogGetResult) {
 	          return resolve();
 	        }
-
 	        if (dialogGetResult.error()) {
 	          return reject({
 	            code: dialogGetResult.error().ex.error,
 	            description: dialogGetResult.error().ex.error_description
 	          });
 	        }
-
 	        _this14.controller.executeRestAnswer(RestMethod.widgetDialogGet, dialogGetResult);
-
 	        resolve();
 	      });
 	    }
@@ -71431,28 +69466,22 @@ this.BX = this.BX || {};
 	    key: "handleDialogMessagesGet",
 	    value: function handleDialogMessagesGet(response) {
 	      var _this15 = this;
-
 	      return new Promise(function (resolve, reject) {
 	        var dialogMessagesGetResult = response[im_const.RestMethodHandler.imDialogMessagesGetInit];
-
 	        if (!dialogMessagesGetResult) {
 	          return resolve();
 	        }
-
 	        if (dialogMessagesGetResult.error()) {
 	          return reject({
 	            code: dialogMessagesGetResult.error().ex.error,
 	            description: dialogMessagesGetResult.error().ex.error_description
 	          });
 	        }
-
 	        _this15.controller.getStore().dispatch('dialogues/saveDialog', {
 	          dialogId: _this15.controller.application.getDialogId(),
 	          chatId: _this15.controller.application.getChatId()
 	        });
-
 	        _this15.controller.executeRestAnswer(im_const.RestMethodHandler.imDialogMessagesGetInit, dialogMessagesGetResult);
-
 	        resolve();
 	      });
 	    }
@@ -71460,23 +69489,18 @@ this.BX = this.BX || {};
 	    key: "handleUserRegister",
 	    value: function handleUserRegister(response) {
 	      var _this16 = this;
-
 	      return new Promise(function (resolve, reject) {
 	        var userRegisterResult = response[RestMethod.widgetUserRegister];
-
 	        if (!userRegisterResult) {
 	          return resolve();
 	        }
-
 	        if (userRegisterResult.error()) {
 	          return reject({
 	            code: userRegisterResult.error().ex.error,
 	            description: userRegisterResult.error().ex.error_description
 	          });
 	        }
-
 	        _this16.controller.executeRestAnswer(RestMethod.widgetUserRegister, userRegisterResult);
-
 	        resolve();
 	      });
 	    }
@@ -71484,23 +69508,18 @@ this.BX = this.BX || {};
 	    key: "handleChatCreate",
 	    value: function handleChatCreate(response) {
 	      var _this17 = this;
-
 	      return new Promise(function (resolve, reject) {
 	        var chatCreateResult = response[RestMethod.widgetChatCreate];
-
 	        if (!chatCreateResult) {
 	          return resolve();
 	        }
-
 	        if (chatCreateResult.error()) {
 	          return reject({
 	            code: chatCreateResult.error().ex.error,
 	            description: chatCreateResult.error().ex.error_description
 	          });
 	        }
-
 	        _this17.controller.executeRestAnswer(RestMethod.widgetChatCreate, chatCreateResult);
-
 	        resolve();
 	      });
 	    }
@@ -71508,32 +69527,25 @@ this.BX = this.BX || {};
 	    key: "handlePullRequests",
 	    value: function handlePullRequests(response) {
 	      var _this18 = this;
-
 	      return new Promise(function (resolve) {
 	        var timeShift = 0;
 	        var serverTimeResult = response[RestMethod.pullServerTime];
-
 	        if (serverTimeResult && !serverTimeResult.error()) {
 	          timeShift = Math.floor((Date.now() - new Date(serverTimeResult.data()).getTime()) / 1000);
 	        }
-
 	        var config = null;
 	        var pullConfigResult = response[RestMethod.pullConfigGet];
-
 	        if (pullConfigResult && !pullConfigResult.error()) {
 	          config = pullConfigResult.data();
 	          config.server.timeShift = timeShift;
 	        }
-
 	        _this18.startPullClient(config).then(function () {
 	          main_core_events.EventEmitter.emit(WidgetEventType.processMessagesToSendQueue);
 	        })["catch"](function (error) {
 	          _this18.setError(error.ex.error, error.ex.error_description);
 	        })["finally"](resolve);
 	      });
-	    }
-	    /* endregion 05. Rest batch handlers */
-
+	    } /* endregion 05. Rest batch handlers */
 	  }]);
 	  return Widget;
 	}();
@@ -71551,10 +69563,8 @@ this.BX = this.BX || {};
 	    babelHelpers.classCallCheck(this, WidgetPublicManager);
 	    this.developerInfo = 'Do not use private methods.';
 	    this.__privateMethods__ = new Widget(config);
-
 	    this.__createLegacyMethods();
 	  }
-
 	  babelHelpers.createClass(WidgetPublicManager, [{
 	    key: "open",
 	    value: function open(params) {
@@ -71600,7 +69610,6 @@ this.BX = this.BX || {};
 	     * @param params {Object}
 	     * @returns {Function|Boolean} - Unsubscribe callback function or False
 	     */
-
 	  }, {
 	    key: "subscribe",
 	    value: function subscribe(params) {
@@ -71615,7 +69624,6 @@ this.BX = this.BX || {};
 	    key: "__createLegacyMethods",
 	    value: function __createLegacyMethods() {
 	      var _this = this;
-
 	      if (typeof window.BX.LiveChat === 'undefined') {
 	        var sourceHref = document.createElement('a');
 	        sourceHref.href = this.__privateMethods__.host;
@@ -71652,25 +69660,20 @@ this.BX = this.BX || {};
 	          sourceDomain: sourceDomain
 	        };
 	      }
-
 	      if (typeof window.BxLiveChatInit === 'function') {
 	        var config = window.BxLiveChatInit();
-
 	        if (config.user) {
 	          this.__privateMethods__.setUserRegisterData(config.user);
 	        }
-
 	        if (config.firstMessage) {
 	          this.__privateMethods__.setCustomData(config.firstMessage);
 	        }
 	      }
-
 	      if (window.BxLiveChatLoader instanceof Array) {
 	        window.BxLiveChatLoader.forEach(function (callback) {
 	          return callback();
 	        });
 	      }
-
 	      return true;
 	    }
 	  }]);
@@ -71679,10 +69682,8 @@ this.BX = this.BX || {};
 
 	var WidgetSendMessageHandler = /*#__PURE__*/function (_SendMessageHandler) {
 	  babelHelpers.inherits(WidgetSendMessageHandler, _SendMessageHandler);
-
 	  function WidgetSendMessageHandler($Bitrix) {
 	    var _this;
-
 	    babelHelpers.classCallCheck(this, WidgetSendMessageHandler);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(WidgetSendMessageHandler).call(this, $Bitrix));
 	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "application", null);
@@ -71696,7 +69697,6 @@ this.BX = this.BX || {};
 	    main_core_events.EventEmitter.subscribe(WidgetEventType.consentDeclined, _this.onConsentDeclinedHandler);
 	    return _this;
 	  }
-
 	  babelHelpers.createClass(WidgetSendMessageHandler, [{
 	    key: "destroy",
 	    value: function destroy() {
@@ -71709,32 +69709,27 @@ this.BX = this.BX || {};
 	    key: "onSendMessage",
 	    value: function onSendMessage(_ref) {
 	      var _this2 = this;
-
 	      var event = _ref.data;
-	      event.focus = event.focus !== false; //hide smiles
+	      event.focus = event.focus !== false;
 
+	      //hide smiles
 	      if (this.getWidgetData().common.showForm === FormType.smile) {
 	        main_core_events.EventEmitter.emit(WidgetEventType.hideForm);
-	      } //show consent window if needed
+	      }
 
-
+	      //show consent window if needed
 	      if (!this.getWidgetData().dialog.userConsent && this.getWidgetData().common.consentUrl) {
 	        if (event.text) {
 	          this.storedMessage = event.text;
 	        }
-
 	        main_core_events.EventEmitter.emit(WidgetEventType.showConsent);
 	        return false;
 	      }
-
 	      event.text = event.text ? event.text : this.storedMessage;
-
 	      if (!event.text && !event.file) {
 	        return false;
 	      }
-
 	      main_core_events.EventEmitter.emit(WidgetEventType.hideForm);
-
 	      if (this.isCreateSessionMode()) {
 	        main_core_events.EventEmitter.emit(WidgetEventType.hideForm);
 	        main_core_events.EventEmitter.emit(im_const.EventType.textarea.stopWriting);
@@ -71742,42 +69737,33 @@ this.BX = this.BX || {};
 	          _this2.store.commit('widget/common', {
 	            isCreateSessionMode: false
 	          });
-
 	          _this2.sendMessage(event.text, event.file);
 	        });
 	      } else {
 	        this.sendMessage(event.text, event.file);
 	      }
-
 	      if (event.focus) {
 	        main_core_events.EventEmitter.emit(im_const.EventType.textarea.setFocus);
 	      }
-
 	      return true;
 	    }
 	  }, {
 	    key: "sendMessage",
 	    value: function sendMessage() {
 	      var _this3 = this;
-
 	      var text = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
 	      var file = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
-
 	      if (!text && !file) {
 	        return false;
 	      }
-
 	      var quoteId = this.store.getters['dialogues/getQuoteId'](this.getDialogId());
-
 	      if (quoteId) {
 	        var quoteMessage = this.store.getters['messages/getMessage'](this.getChatId(), quoteId);
-
 	        if (quoteMessage) {
 	          text = this.getMessageTextWithQuote(quoteMessage, text);
 	          main_core_events.EventEmitter.emit(im_const.EventType.dialog.quotePanelClose);
 	        }
 	      }
-
 	      if (!this.controller.application.isUnreadMessagesLoaded()) {
 	        this.sendMessageToServer({
 	          id: 0,
@@ -71789,13 +69775,10 @@ this.BX = this.BX || {};
 	        this.processQueue();
 	        return true;
 	      }
-
 	      var params = {};
-
 	      if (file) {
 	        params.FILE_ID = [file.id];
 	      }
-
 	      this.addMessageToModel({
 	        text: text,
 	        params: params,
@@ -71806,18 +69789,15 @@ this.BX = this.BX || {};
 	            dialogStart: true
 	          });
 	        }
-
 	        main_core_events.EventEmitter.emit(im_const.EventType.dialog.scrollToBottom, {
 	          chatId: _this3.getChatId(),
 	          cancelIfScrollChange: true
 	        });
-
 	        _this3.addMessageToQueue({
 	          messageId: messageId,
 	          text: text,
 	          file: file
 	        });
-
 	        if (_this3.getChatId()) {
 	          _this3.processQueue();
 	        } else {
@@ -71830,34 +69810,30 @@ this.BX = this.BX || {};
 	    key: "onClickOnKeyboard",
 	    value: function onClickOnKeyboard(_ref2) {
 	      var event = _ref2.data;
-
 	      if (event.action === 'ACTION' && event.params.action === 'LIVECHAT') {
 	        var _event$params = event.params,
-	            dialogId = _event$params.dialogId,
-	            messageId = _event$params.messageId,
-	            value = _event$params.value;
+	          dialogId = _event$params.dialogId,
+	          messageId = _event$params.messageId,
+	          value = _event$params.value;
 	        var values = JSON.parse(value);
 	        var sessionId = Number.parseInt(values.SESSION_ID, 10);
-
 	        if (sessionId !== this.getSessionId() || this.isSessionClose()) {
 	          console.error('WidgetSendMessageHandler', this.loc['BX_LIVECHAT_ACTION_EXPIRED']);
 	          return false;
 	        }
-
 	        this.restClient.callMethod(RestMethod.widgetActionSend, {
 	          'MESSAGE_ID': messageId,
 	          'DIALOG_ID': dialogId,
 	          'ACTION_VALUE': value
 	        });
 	      }
-
 	      if (event.action === 'COMMAND') {
 	        var _event$params2 = event.params,
-	            _dialogId = _event$params2.dialogId,
-	            _messageId = _event$params2.messageId,
-	            botId = _event$params2.botId,
-	            command = _event$params2.command,
-	            params = _event$params2.params;
+	          _dialogId = _event$params2.dialogId,
+	          _messageId = _event$params2.messageId,
+	          botId = _event$params2.botId,
+	          command = _event$params2.command,
+	          params = _event$params2.params;
 	        this.restClient.callMethod(im_const.RestMethod.imMessageCommand, {
 	          'MESSAGE_ID': _messageId,
 	          'DIALOG_ID': _dialogId,
@@ -71893,11 +69869,9 @@ this.BX = this.BX || {};
 	    key: "getMessageTextWithQuote",
 	    value: function getMessageTextWithQuote(quoteMessage, text) {
 	      var user = null;
-
 	      if (quoteMessage.authorId) {
 	        user = this.store.getters['users/get'](quoteMessage.authorId);
 	      }
-
 	      var files = this.store.getters['files/getList'](this.getChatId());
 	      var quoteDelimiter = '-'.repeat(54);
 	      var quoteTitle = user && user.name ? user.name : this.loc['BX_LIVECHAT_SYSTEM_MESSAGE'];
@@ -71915,8 +69889,8 @@ this.BX = this.BX || {};
 	    key: "addMessageToQueue",
 	    value: function addMessageToQueue(_ref3) {
 	      var messageId = _ref3.messageId,
-	          text = _ref3.text,
-	          file = _ref3.file;
+	        text = _ref3.text,
+	        file = _ref3.file;
 	      this.messagesToSend.push({
 	        id: messageId,
 	        chatId: this.getChatId(),
@@ -71930,13 +69904,12 @@ this.BX = this.BX || {};
 	    key: "sendMessageToServer",
 	    value: function sendMessageToServer(message) {
 	      var _this4 = this;
+	      main_core_events.EventEmitter.emit(im_const.EventType.textarea.stopWriting);
 
-	      main_core_events.EventEmitter.emit(im_const.EventType.textarea.stopWriting); // first message, when we didn't have chat
-
+	      // first message, when we didn't have chat
 	      if (message.chatId === 0) {
 	        message.chatId = this.getChatId();
 	      }
-
 	      this.restClient.callMethod(im_const.RestMethod.imMessageAdd, {
 	        'TEMPLATE_ID': message.id,
 	        'CHAT_ID': message.chatId,
@@ -71951,7 +69924,6 @@ this.BX = this.BX || {};
 	        _this4.controller.executeRestAnswer(im_const.RestMethodHandler.imMessageAdd, response, message);
 	      })["catch"](function (error) {
 	        _this4.controller.executeRestAnswer(im_const.RestMethodHandler.imMessageAdd, error, message);
-
 	        im_lib_logger.Logger.warn('Error during sending message', error);
 	      });
 	      return true;
@@ -71991,18 +69963,14 @@ this.BX = this.BX || {};
 	    key: "processQueue",
 	    value: function processQueue() {
 	      var _this5 = this;
-
 	      if (this.application.offline) {
 	        return false;
 	      }
-
 	      this.messagesToSend.filter(function (element) {
 	        return !element.sending;
 	      }).forEach(function (element) {
 	        _this5.deleteFromQueue(element.id);
-
 	        element.sending = true;
-
 	        if (element.file) {
 	          main_core_events.EventEmitter.emit(im_const.EventType.textarea.stopWriting);
 	          main_core_events.EventEmitter.emit(im_const.EventType.uploader.addMessageWithFile, element);
@@ -72017,7 +69985,6 @@ this.BX = this.BX || {};
 	      if (!this.storedMessage) {
 	        return;
 	      }
-
 	      var isFocusNeeded = this.getApplicationModel().device.type !== im_const.DeviceType.mobile;
 	      this.onSendMessage({
 	        data: {
@@ -72032,7 +69999,6 @@ this.BX = this.BX || {};
 	      if (!this.storedMessage) {
 	        return;
 	      }
-
 	      main_core_events.EventEmitter.emit(im_const.EventType.textarea.insertText, {
 	        text: this.storedMessage,
 	        focus: this.getApplicationModel().device.type !== im_const.DeviceType.mobile
@@ -72045,10 +70011,8 @@ this.BX = this.BX || {};
 
 	var WidgetTextareaHandler = /*#__PURE__*/function (_TextareaHandler) {
 	  babelHelpers.inherits(WidgetTextareaHandler, _TextareaHandler);
-
 	  function WidgetTextareaHandler($Bitrix) {
 	    var _this;
-
 	    babelHelpers.classCallCheck(this, WidgetTextareaHandler);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(WidgetTextareaHandler).call(this, $Bitrix));
 	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "application", null);
@@ -72057,12 +70021,10 @@ this.BX = this.BX || {};
 	    _this.pullClient = $Bitrix.PullClient.get();
 	    return _this;
 	  }
-
 	  babelHelpers.createClass(WidgetTextareaHandler, [{
 	    key: "onAppButtonClick",
 	    value: function onAppButtonClick(_ref) {
 	      var event = _ref.data;
-
 	      if (event.appId === FormType.smile) {
 	        if (this.getWidgetModel().common.showForm === FormType.smile) {
 	          main_core_events.EventEmitter.emit(WidgetEventType.hideForm);
@@ -72079,11 +70041,9 @@ this.BX = this.BX || {};
 	    key: "onFocus",
 	    value: function onFocus() {
 	      var _this2 = this;
-
 	      if (this.getWidgetModel().common.copyright && this.getApplicationModel().device.type === im_const.DeviceType.mobile) {
 	        this.getWidgetModel().common.copyright = false;
 	      }
-
 	      if (im_lib_utils.Utils.device.isMobile()) {
 	        clearTimeout(this.onFocusScrollTimeout);
 	        this.onScrollHandler = this.onScroll.bind(this);
@@ -72096,7 +70056,6 @@ this.BX = this.BX || {};
 	    key: "onBlur",
 	    value: function onBlur() {
 	      var _this3 = this;
-
 	      if (!this.getWidgetModel().common.copyright && this.getWidgetModel().common.copyright !== this.application.copyright) {
 	        this.getWidgetModel().common.copyright = this.application.copyright;
 	        setTimeout(function () {
@@ -72106,18 +70065,15 @@ this.BX = this.BX || {};
 	          });
 	        }, 100);
 	      }
-
 	      if (im_lib_utils.Utils.device.isMobile()) {
 	        clearTimeout(this.onFocusScrollTimeout);
 	        document.removeEventListener('scroll', this.onScrollHandler);
 	      }
 	    } // send typed client message to operator
-
 	  }, {
 	    key: "onKeyUp",
 	    value: function onKeyUp(_ref2) {
 	      var event = _ref2.data;
-
 	      if (this.canSendTypedText()) {
 	        var sessionId = this.getWidgetModel().dialog.sessionId;
 	        var chatId = this.getChatId();
@@ -72161,10 +70117,8 @@ this.BX = this.BX || {};
 
 	var WidgetTextareaUploadHandler = /*#__PURE__*/function (_TextareaUploadHandle) {
 	  babelHelpers.inherits(WidgetTextareaUploadHandler, _TextareaUploadHandle);
-
 	  function WidgetTextareaUploadHandler($Bitrix) {
 	    var _this;
-
 	    babelHelpers.classCallCheck(this, WidgetTextareaUploadHandler);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(WidgetTextareaUploadHandler).call(this, $Bitrix));
 	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "storedFile", null);
@@ -72176,7 +70130,6 @@ this.BX = this.BX || {};
 	    main_core_events.EventEmitter.subscribe(WidgetEventType.consentDeclined, _this.onConsentDeclinedHandler);
 	    return _this;
 	  }
-
 	  babelHelpers.createClass(WidgetTextareaUploadHandler, [{
 	    key: "destroy",
 	    value: function destroy() {
@@ -72203,9 +70156,7 @@ this.BX = this.BX || {};
 	    key: "addMessageWithFile",
 	    value: function addMessageWithFile(event) {
 	      var _this2 = this;
-
 	      var message = event.getData();
-
 	      if (!this.getDiskFolderId()) {
 	        this.requestDiskFolderId(message.chatId).then(function () {
 	          _this2.addMessageWithFile(event);
@@ -72215,7 +70166,6 @@ this.BX = this.BX || {};
 	        });
 	        return false;
 	      }
-
 	      this.uploader.senderOptions.customHeaders['Livechat-Dialog-Id'] = this.getDialogId();
 	      this.uploader.senderOptions.customHeaders['Livechat-Auth-Id'] = this.getUserHash();
 	      this.uploader.addTask({
@@ -72232,26 +70182,21 @@ this.BX = this.BX || {};
 	    key: "onTextareaFileSelected",
 	    value: function onTextareaFileSelected() {
 	      var _ref = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
-	          event = _ref.data;
-
+	        event = _ref.data;
 	      var fileInputEvent = null;
-
 	      if (event && event.fileChangeEvent && event.fileChangeEvent.target.files.length > 0) {
 	        fileInputEvent = event.fileChangeEvent;
 	      } else {
 	        fileInputEvent = this.storedFile;
 	      }
-
 	      if (!fileInputEvent) {
 	        return false;
 	      }
-
 	      if (!this.controller.store.state.widget.dialog.userConsent && this.controller.store.state.widget.common.consentUrl) {
 	        this.storedFile = event.fileChangeEvent;
 	        main_core_events.EventEmitter.emit(WidgetEventType.showConsent);
 	        return false;
 	      }
-
 	      this.uploadFile(fileInputEvent);
 	    }
 	  }, {
@@ -72260,11 +70205,9 @@ this.BX = this.BX || {};
 	      if (!event) {
 	        return false;
 	      }
-
 	      if (!this.getChatId()) {
 	        main_core_events.EventEmitter.emit(WidgetEventType.requestData);
 	      }
-
 	      this.uploader.addFilesFromEvent(event);
 	    }
 	  }, {
@@ -72273,7 +70216,6 @@ this.BX = this.BX || {};
 	      if (!this.storedFile) {
 	        return;
 	      }
-
 	      this.onTextareaFileSelected();
 	      this.storedFile = '';
 	    }
@@ -72283,7 +70225,6 @@ this.BX = this.BX || {};
 	      if (!this.storedFile) {
 	        return;
 	      }
-
 	      this.storedFile = '';
 	    }
 	  }, {
@@ -72305,27 +70246,22 @@ this.BX = this.BX || {};
 
 	var WidgetReadingHandler = /*#__PURE__*/function (_ReadingHandler) {
 	  babelHelpers.inherits(WidgetReadingHandler, _ReadingHandler);
-
 	  function WidgetReadingHandler($Bitrix) {
 	    var _this;
-
 	    babelHelpers.classCallCheck(this, WidgetReadingHandler);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(WidgetReadingHandler).call(this, $Bitrix));
 	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "application", null);
 	    _this.application = $Bitrix.Application.get();
 	    return _this;
 	  }
-
 	  babelHelpers.createClass(WidgetReadingHandler, [{
 	    key: "readMessage",
 	    value: function readMessage(messageId) {
 	      var skipTimer = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
 	      var skipAjax = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
-
 	      if (this.application.offline) {
 	        return false;
 	      }
-
 	      return babelHelpers.get(babelHelpers.getPrototypeOf(WidgetReadingHandler.prototype), "readMessage", this).call(this, messageId, skipTimer, skipAjax);
 	    }
 	  }]);
@@ -72334,42 +70270,34 @@ this.BX = this.BX || {};
 
 	var WidgetResizeHandler = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(WidgetResizeHandler, _EventEmitter);
-
 	  function WidgetResizeHandler(_ref) {
 	    var _this;
-
 	    var widgetLocation = _ref.widgetLocation,
-	        availableWidth = _ref.availableWidth,
-	        availableHeight = _ref.availableHeight,
-	        events = _ref.events;
+	      availableWidth = _ref.availableWidth,
+	      availableHeight = _ref.availableHeight,
+	      events = _ref.events;
 	    babelHelpers.classCallCheck(this, WidgetResizeHandler);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(WidgetResizeHandler).call(this));
 	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "isResizing", false);
 	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "widgetLocation", null);
 	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "availableWidth", null);
 	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "availableHeight", null);
-
 	    _this.setEventNamespace('BX.IMOL.WidgetResizeHandler');
-
 	    _this.subscribeToEvents(events);
-
 	    _this.widgetLocation = widgetLocation;
 	    _this.availableWidth = availableWidth;
 	    _this.availableHeight = availableHeight;
 	    return _this;
 	  }
-
 	  babelHelpers.createClass(WidgetResizeHandler, [{
 	    key: "subscribeToEvents",
 	    value: function subscribeToEvents(configEvents) {
 	      var _this2 = this;
-
 	      var events = main_core.Type.isObject(configEvents) ? configEvents : {};
 	      Object.entries(events).forEach(function (_ref2) {
 	        var _ref3 = babelHelpers.slicedToArray(_ref2, 2),
-	            name = _ref3[0],
-	            callback = _ref3[1];
-
+	          name = _ref3[0],
+	          callback = _ref3[1];
 	        if (main_core.Type.isFunction(callback)) {
 	          _this2.subscribe(name, callback);
 	        }
@@ -72381,7 +70309,6 @@ this.BX = this.BX || {};
 	      if (this.isResizing) {
 	        return false;
 	      }
-
 	      this.isResizing = true;
 	      event = event.changedTouches ? event.changedTouches[0] : event;
 	      this.cursorStartPointY = event.clientY;
@@ -72396,7 +70323,6 @@ this.BX = this.BX || {};
 	      if (!this.isResizing) {
 	        return false;
 	      }
-
 	      event = event.changedTouches ? event.changedTouches[0] : event;
 	      this.cursorControlPointY = event.clientY;
 	      this.cursorControlPointX = event.clientX;
@@ -72415,7 +70341,6 @@ this.BX = this.BX || {};
 	      if (!this.isResizing) {
 	        return false;
 	      }
-
 	      this.isResizing = false;
 	      this.removeWidgetResizeEvents();
 	      this.emit(WidgetResizeHandler.events.onStopResize);
@@ -72480,7 +70405,6 @@ this.BX = this.BX || {};
 	    this.application = $Bitrix.Application.get();
 	    this.subscribeToEvents();
 	  }
-
 	  babelHelpers.createClass(WidgetConsentHandler, [{
 	    key: "subscribeToEvents",
 	    value: function subscribeToEvents() {
@@ -72526,7 +70450,6 @@ this.BX = this.BX || {};
 	      this.hideConsent();
 	      this.sendConsentDecision(true);
 	      main_core_events.EventEmitter.emit(WidgetEventType.consentAccepted);
-
 	      if (this.getWidgetModel().common.showForm === FormType.none) {
 	        main_core_events.EventEmitter.emit(im_const.EventType.textarea.setFocus);
 	      }
@@ -72538,7 +70461,6 @@ this.BX = this.BX || {};
 	      this.hideConsent();
 	      this.sendConsentDecision(false);
 	      main_core_events.EventEmitter.emit(WidgetEventType.consentDeclined);
-
 	      if (this.getApplicationModel().device.type !== im_const.DeviceType.mobile) {
 	        main_core_events.EventEmitter.emit(im_const.EventType.textarea.setFocus);
 	      }
@@ -72549,7 +70471,6 @@ this.BX = this.BX || {};
 	      this.store.commit('widget/dialog', {
 	        userConsent: result
 	      });
-
 	      if (result && this.application.isUserRegistered()) {
 	        this.restClient.callMethod(RestMethod.widgetUserConsentApply, {
 	          config_id: this.getWidgetModel().common.configId,
@@ -72594,15 +70515,12 @@ this.BX = this.BX || {};
 	    main_core_events.EventEmitter.subscribe(WidgetEventType.hideForm, this.hideFormHandler);
 	    main_core_events.EventEmitter.subscribe(WidgetEventType.sendDialogVote, this.sendVoteHandler);
 	  }
-
 	  babelHelpers.createClass(WidgetFormHandler, [{
 	    key: "onShowForm",
 	    value: function onShowForm(_ref) {
 	      var _this = this;
-
 	      var event = _ref.data;
 	      clearTimeout(this.showFormTimeout);
-
 	      if (event.type === FormType.like) {
 	        if (event.delayed) {
 	          this.showFormTimeout = setTimeout(function () {
@@ -72633,17 +70551,13 @@ this.BX = this.BX || {};
 	      if (this.application.offline) {
 	        return false;
 	      }
-
 	      clearTimeout(this.showFormTimeout);
-
 	      if (!this.getWidgetModel().common.vote.enable) {
 	        return false;
 	      }
-
 	      if (this.getWidgetModel().dialog.sessionClose && this.getWidgetModel().dialog.userVote !== VoteType.none) {
 	        return false;
 	      }
-
 	      this.store.commit('widget/common', {
 	        showForm: FormType.like
 	      });
@@ -72659,13 +70573,10 @@ this.BX = this.BX || {};
 	    key: "sendVote",
 	    value: function sendVote(vote) {
 	      var _this2 = this;
-
 	      var sessionId = this.getWidgetModel().dialog.sessionId;
-
 	      if (!sessionId) {
 	        return false;
 	      }
-
 	      this.restClient.callMethod(RestMethod.widgetVoteSend, {
 	        'SESSION_ID': sessionId,
 	        'ACTION': vote
@@ -72685,7 +70596,6 @@ this.BX = this.BX || {};
 	    key: "hideForm",
 	    value: function hideForm() {
 	      clearTimeout(this.showFormTimeout);
-
 	      if (this.getWidgetModel().common.showForm !== FormType.none) {
 	        this.store.commit('widget/common', {
 	          showForm: FormType.none
@@ -72710,12 +70620,10 @@ this.BX = this.BX || {};
 
 	var WidgetReactionHandler = /*#__PURE__*/function (_ReactionHandler) {
 	  babelHelpers.inherits(WidgetReactionHandler, _ReactionHandler);
-
 	  function WidgetReactionHandler() {
 	    babelHelpers.classCallCheck(this, WidgetReactionHandler);
 	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(WidgetReactionHandler).apply(this, arguments));
 	  }
-
 	  babelHelpers.createClass(WidgetReactionHandler, [{
 	    key: "onOpenMessageReactionList",
 	    value: function onOpenMessageReactionList(_ref) {
@@ -72734,16 +70642,13 @@ this.BX = this.BX || {};
 	    this.store = $Bitrix.Data.get('controller').store;
 	    this.application = $Bitrix.Application.get();
 	  }
-
 	  babelHelpers.createClass(WidgetHistoryHandler, [{
 	    key: "getHtmlHistory",
 	    value: function getHtmlHistory() {
 	      var chatId = this.getChatId();
-
 	      if (chatId <= 0) {
 	        console.error('WidgetHistoryHandler: Incorrect chatId value');
 	      }
-
 	      var config = {
 	        chatId: this.getChatId()
 	      };
@@ -72759,13 +70664,11 @@ this.BX = this.BX || {};
 	      var url = new URL(ajaxEndpoint, host);
 	      url.searchParams.set('action', action);
 	      var formData = new FormData();
-
 	      for (var key in config) {
 	        if (config.hasOwnProperty(key)) {
 	          formData.append(key, config[key]);
 	        }
 	      }
-
 	      return fetch(url, {
 	        method: 'POST',
 	        headers: {
@@ -72778,11 +70681,9 @@ this.BX = this.BX || {};
 	    key: "handleRequest",
 	    value: function handleRequest(response) {
 	      var contentType = response.headers.get('Content-Type');
-
 	      if (contentType.startsWith('application/json')) {
 	        return response.json();
 	      }
-
 	      return response.blob();
 	    }
 	  }, {
@@ -72814,7 +70715,8 @@ this.BX = this.BX || {};
 	    }
 	  }, {
 	    key: "destroy",
-	    value: function destroy() {//
+	    value: function destroy() {
+	      //
 	    }
 	  }]);
 	  return WidgetHistoryHandler;
@@ -72822,12 +70724,10 @@ this.BX = this.BX || {};
 
 	var WidgetDialogActionHandler = /*#__PURE__*/function (_DialogActionHandler) {
 	  babelHelpers.inherits(WidgetDialogActionHandler, _DialogActionHandler);
-
 	  function WidgetDialogActionHandler() {
 	    babelHelpers.classCallCheck(this, WidgetDialogActionHandler);
 	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(WidgetDialogActionHandler).apply(this, arguments));
 	  }
-
 	  babelHelpers.createClass(WidgetDialogActionHandler, [{
 	    key: "onClickOnDialog",
 	    value: function onClickOnDialog() {
@@ -72838,7 +70738,6 @@ this.BX = this.BX || {};
 	}(im_eventHandler.DialogActionHandler);
 
 	function ownKeys$1(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-
 	function _objectSpread$1(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$1(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$1(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	ui_vue.WidgetBitrixVue.component('bx-livechat', {
 	  data: function data() {
@@ -72873,9 +70772,9 @@ this.BX = this.BX || {};
 	      if (this.widget.common.isCreateSessionMode) {
 	        return this.startNewChatMode;
 	      }
+	      var crmFormsSettings = this.widget.common.crmFormsSettings;
 
-	      var crmFormsSettings = this.widget.common.crmFormsSettings; // show if we dont use welcome form
-
+	      // show if we dont use welcome form
 	      if (!crmFormsSettings.useWelcomeForm || !crmFormsSettings.welcomeFormId) {
 	        return true;
 	      } else {
@@ -72899,29 +70798,24 @@ this.BX = this.BX || {};
 	          marginBottom: '5px'
 	        };
 	      }
-
 	      return '';
 	    },
 	    widgetHeightStyle: function widgetHeightStyle() {
 	      if (im_lib_utils.Utils.device.isMobile() || this.widget.common.pageMode) {
 	        return;
 	      }
-
 	      if (this.widgetAvailableHeight < WidgetBaseSize.height || this.widgetAvailableHeight < this.widgetCurrentHeight) {
 	        this.widgetCurrentHeight = Math.max(this.widgetAvailableHeight, WidgetMinimumSize.height);
 	      }
-
 	      return "".concat(this.widgetCurrentHeight, "px");
 	    },
 	    widgetWidthStyle: function widgetWidthStyle() {
 	      if (im_lib_utils.Utils.device.isMobile() || this.widget.common.pageMode) {
 	        return;
 	      }
-
 	      if (this.widgetAvailableWidth < WidgetBaseSize.width || this.widgetAvailableWidth < this.widgetCurrentWidth) {
 	        this.widgetCurrentWidth = Math.max(this.widgetAvailableWidth, WidgetMinimumSize.width);
 	      }
-
 	      return "".concat(this.widgetCurrentWidth, "px");
 	    },
 	    userSelectStyle: function userSelectStyle() {
@@ -72931,11 +70825,9 @@ this.BX = this.BX || {};
 	      if (this.application.device.type !== im_const.DeviceType.mobile) {
 	        return false;
 	      }
-
 	      if (this.application.device.orientation !== im_const.DeviceOrientation.horizontal) {
 	        return false;
 	      }
-
 	      if (navigator.userAgent.toString().includes('iPhone')) {
 	        return true;
 	      } else {
@@ -72944,18 +70836,15 @@ this.BX = this.BX || {};
 	    },
 	    widgetPositionClass: function widgetPositionClass() {
 	      var className = [];
-
 	      if (this.widget.common.pageMode) {
 	        className.push('bx-livechat-page-mode');
 	      } else {
 	        className.push("bx-livechat-position-".concat(LocationStyle[this.widget.common.location]));
 	      }
-
 	      return className;
 	    },
 	    widgetLanguageClass: function widgetLanguageClass() {
 	      var className = [];
-
 	      if (this.application.common.languageId === LanguageType.russian) {
 	        className.push('bx-livechat-logo-ru');
 	      } else if (this.application.common.languageId === LanguageType.ukraine) {
@@ -72963,12 +70852,10 @@ this.BX = this.BX || {};
 	      } else {
 	        className.push('bx-livechat-logo-en');
 	      }
-
 	      return className;
 	    },
 	    widgetPlatformClass: function widgetPlatformClass() {
 	      var className = [];
-
 	      if (im_lib_utils.Utils.device.isMobile()) {
 	        className.push('bx-livechat-mobile');
 	      } else if (im_lib_utils.Utils.browser.isSafari()) {
@@ -72976,39 +70863,31 @@ this.BX = this.BX || {};
 	      } else if (im_lib_utils.Utils.browser.isIe()) {
 	        className.push('bx-livechat-browser-ie');
 	      }
-
 	      if (im_lib_utils.Utils.platform.isMac()) {
 	        className.push('bx-livechat-mac');
 	      } else {
 	        className.push('bx-livechat-custom-scroll');
 	      }
-
 	      return className;
 	    },
 	    widgetClassName: function widgetClassName() {
 	      var className = [];
 	      className.push.apply(className, babelHelpers.toConsumableArray(this.widgetPositionClass).concat(babelHelpers.toConsumableArray(this.widgetLanguageClass), babelHelpers.toConsumableArray(this.widgetPlatformClass)));
-
 	      if (!this.widget.common.online) {
 	        className.push('bx-livechat-offline-state');
 	      }
-
 	      if (this.widget.common.dragged) {
 	        className.push('bx-livechat-drag-n-drop');
 	      }
-
 	      if (this.widget.common.dialogStart) {
 	        className.push('bx-livechat-chat-start');
 	      }
-
 	      if (this.widget.dialog.operator.name && !(this.application.device.type === im_const.DeviceType.mobile && this.application.device.orientation === im_const.DeviceOrientation.horizontal)) {
 	        className.push('bx-livechat-has-operator');
 	      }
-
 	      if (this.widget.common.styles.backgroundColor && im_lib_utils.Utils.isDarkColor(this.widget.common.styles.iconColor)) {
 	        className.push('bx-livechat-bright-header');
 	      }
-
 	      return className;
 	    },
 	    showMessageDialog: function showMessageDialog() {
@@ -73033,12 +70912,10 @@ this.BX = this.BX || {};
 	  })),
 	  created: function created() {
 	    var _this = this;
-
-	    im_lib_logger.Logger.warn('Livechat component created'); // we need to wait for initialization and widget opening to init logic handlers
-
+	    im_lib_logger.Logger.warn('Livechat component created');
+	    // we need to wait for initialization and widget opening to init logic handlers
 	    this.onCreated().then(function () {
 	      _this.subscribeToEvents();
-
 	      _this.initEventHandlers();
 	    });
 	  },
@@ -73046,7 +70923,6 @@ this.BX = this.BX || {};
 	    if (this.widget.user.id > 0) {
 	      this.welcomeFormFilled = true;
 	    }
-
 	    this.registerZIndex();
 	  },
 	  beforeDestroy: function beforeDestroy() {
@@ -73084,7 +70960,6 @@ this.BX = this.BX || {};
 	    },
 	    subscribeToEvents: function subscribeToEvents() {
 	      document.addEventListener('keydown', this.onWindowKeyDown);
-
 	      if (!im_lib_utils.Utils.device.isMobile() && !this.widget.common.pageMode) {
 	        this.getAvailableSpaceFunc = im_lib_utils.Utils.throttle(this.getAvailableSpace, 50);
 	        window.addEventListener('resize', this.getAvailableSpaceFunc);
@@ -73092,19 +70967,16 @@ this.BX = this.BX || {};
 	    },
 	    unsubscribeEvents: function unsubscribeEvents() {
 	      document.removeEventListener('keydown', this.onWindowKeyDown);
-
 	      if (!im_lib_utils.Utils.device.isMobile() && !this.widget.common.pageMode) {
 	        window.removeEventListener('resize', this.getAvailableSpaceFunc);
 	      }
 	    },
 	    initMobileEnv: function initMobileEnv() {
 	      var _this2 = this;
-
 	      var metaTags = document.head.querySelectorAll('meta');
 	      var viewPortMetaSiteNode = babelHelpers.toConsumableArray(metaTags).find(function (element) {
 	        return element.name === 'viewport';
 	      });
-
 	      if (viewPortMetaSiteNode) {
 	        // save tag and remove it from DOM
 	        this.viewPortMetaSiteNode = viewPortMetaSiteNode;
@@ -73112,20 +70984,16 @@ this.BX = this.BX || {};
 	      } else {
 	        this.createViewportMeta();
 	      }
-
 	      if (!this.viewPortMetaWidgetNode) {
 	        this.viewPortMetaWidgetNode = document.createElement('meta');
 	        this.viewPortMetaWidgetNode.setAttribute('name', 'viewport');
 	        this.viewPortMetaWidgetNode.setAttribute('content', 'width=device-width, initial-scale=1.0, user-scalable=0');
 	        document.head.append(this.viewPortMetaWidgetNode);
 	      }
-
 	      document.body.classList.add('bx-livechat-mobile-state');
-
 	      if (im_lib_utils.Utils.browser.isSafariBased()) {
 	        document.body.classList.add('bx-livechat-mobile-safari-based');
 	      }
-
 	      return new Promise(function (resolve) {
 	        setTimeout(function () {
 	          _this2.$store.dispatch('widget/show').then(resolve);
@@ -73134,31 +71002,25 @@ this.BX = this.BX || {};
 	    },
 	    createViewportMeta: function createViewportMeta() {
 	      var contentWidth = document.body.offsetWidth;
-
 	      if (contentWidth < window.innerWidth) {
 	        contentWidth = window.innerWidth;
 	      }
-
 	      if (contentWidth < 1024) {
 	        contentWidth = 1024;
 	      }
-
 	      this.viewPortMetaSiteNode = document.createElement('meta');
 	      this.viewPortMetaSiteNode.setAttribute('name', 'viewport');
 	      this.viewPortMetaSiteNode.setAttribute('content', "width=".concat(contentWidth, ", initial-scale=1.0, user-scalable=1"));
 	    },
 	    removeMobileEnv: function removeMobileEnv() {
 	      document.body.classList.remove('bx-livechat-mobile-state');
-
 	      if (im_lib_utils.Utils.browser.isSafariBased()) {
 	        document.body.classList.remove('bx-livechat-mobile-safari-based');
 	      }
-
 	      if (this.viewPortMetaWidgetNode) {
 	        this.viewPortMetaWidgetNode.remove();
 	        this.viewPortMetaWidgetNode = null;
 	      }
-
 	      if (this.viewPortMetaSiteNode) {
 	        document.head.append(this.viewPortMetaSiteNode);
 	        this.viewPortMetaSiteNode = null;
@@ -73166,7 +71028,6 @@ this.BX = this.BX || {};
 	    },
 	    onCreated: function onCreated() {
 	      var _this3 = this;
-
 	      return new Promise(function (resolve) {
 	        if (im_lib_utils.Utils.device.isMobile()) {
 	          _this3.initMobileEnv().then(resolve);
@@ -73174,19 +71035,17 @@ this.BX = this.BX || {};
 	          _this3.$store.dispatch('widget/show').then(function () {
 	            _this3.widgetCurrentHeight = WidgetBaseSize.height;
 	            _this3.widgetCurrentWidth = WidgetBaseSize.width;
+	            _this3.getAvailableSpace();
 
-	            _this3.getAvailableSpace(); // restore widget size from cache
-
-
+	            // restore widget size from cache
 	            _this3.widgetCurrentHeight = _this3.widget.common.widgetHeight || _this3.widgetCurrentHeight;
 	            _this3.widgetCurrentWidth = _this3.widget.common.widgetWidth || _this3.widgetCurrentWidth;
 	            resolve();
 	          });
-	        } // restore textarea size from cache
+	        }
 
-
+	        // restore textarea size from cache
 	        _this3.textareaHeight = _this3.widget.common.textareaHeight || _this3.textareaHeight;
-
 	        _this3.initCollections();
 	      });
 	    },
@@ -73238,21 +71097,22 @@ this.BX = this.BX || {};
 	      // not escape
 	      if (event.keyCode !== 27) {
 	        return;
-	      } // hide form
+	      }
 
-
+	      // hide form
 	      if (this.widget.common.showForm !== FormType.none) {
 	        this.$store.commit('widget/common', {
 	          showForm: FormType.none
 	        });
-	      } // decline consent
+	      }
+	      // decline consent
 	      else if (this.widget.common.showConsent) {
 	        main_core_events.EventEmitter.emit(WidgetEventType.declineConsent);
-	      } // close widget
+	      }
+	      // close widget
 	      else {
 	        this.close();
 	      }
-
 	      event.preventDefault();
 	      event.stopPropagation();
 	      main_core_events.EventEmitter.emit(im_const.EventType.textarea.setFocus);
@@ -73286,7 +71146,6 @@ this.BX = this.BX || {};
 	      if (this.widget.common.pageMode) {
 	        return false;
 	      }
-
 	      this.onBeforeClose();
 	      this.$store.commit('widget/common', {
 	        showed: false
@@ -73295,7 +71154,6 @@ this.BX = this.BX || {};
 	    // how much width and height we have for resizing
 	    getAvailableSpace: function getAvailableSpace() {
 	      var widgetMargin = 50;
-
 	      if (this.isBottomLocation()) {
 	        var bottomPosition = this.$refs.widgetWrapper.getBoundingClientRect().bottom;
 	        var widgetBottomMargin = window.innerHeight - bottomPosition;
@@ -73304,9 +71162,7 @@ this.BX = this.BX || {};
 	        var topPosition = this.$refs.widgetWrapper.getBoundingClientRect().top;
 	        this.widgetAvailableHeight = window.innerHeight - widgetMargin - topPosition;
 	      }
-
 	      this.widgetAvailableWidth = window.innerWidth - widgetMargin * 2;
-
 	      if (this.resizeHandler) {
 	        this.resizeHandler.setAvailableWidth(this.widgetAvailableWidth);
 	        this.resizeHandler.setAvailableHeight(this.widgetAvailableHeight);
@@ -73314,12 +71170,10 @@ this.BX = this.BX || {};
 	    },
 	    getTextareaDragHandler: function getTextareaDragHandler() {
 	      var _this4 = this,
-	          _TextareaDragHandler;
-
+	        _TextareaDragHandler;
 	      return new im_eventHandler.TextareaDragHandler((_TextareaDragHandler = {}, babelHelpers.defineProperty(_TextareaDragHandler, im_eventHandler.TextareaDragHandler.events.onHeightChange, function (_ref) {
 	        var data = _ref.data;
 	        var newHeight = data.newHeight;
-
 	        if (_this4.textareaHeight !== newHeight) {
 	          _this4.textareaHeight = newHeight;
 	        }
@@ -73327,7 +71181,6 @@ this.BX = this.BX || {};
 	        _this4.$store.commit('widget/common', {
 	          textareaHeight: _this4.textareaHeight
 	        });
-
 	        main_core_events.EventEmitter.emit(im_const.EventType.dialog.scrollToBottom, {
 	          chatId: _this4.chatId,
 	          force: true
@@ -73336,8 +71189,7 @@ this.BX = this.BX || {};
 	    },
 	    getWidgetResizeHandler: function getWidgetResizeHandler() {
 	      var _this5 = this,
-	          _events;
-
+	        _events;
 	      return new WidgetResizeHandler({
 	        widgetLocation: this.widget.common.location,
 	        availableWidth: this.widgetAvailableWidth,
@@ -73345,18 +71197,15 @@ this.BX = this.BX || {};
 	        events: (_events = {}, babelHelpers.defineProperty(_events, WidgetResizeHandler.events.onSizeChange, function (_ref2) {
 	          var data = _ref2.data;
 	          var newHeight = data.newHeight,
-	              newWidth = data.newWidth;
-
+	            newWidth = data.newWidth;
 	          if (_this5.widgetCurrentHeight !== newHeight) {
 	            _this5.widgetCurrentHeight = newHeight;
 	          }
-
 	          if (_this5.widgetCurrentWidth !== newWidth) {
 	            _this5.widgetCurrentWidth = newWidth;
 	          }
 	        }), babelHelpers.defineProperty(_events, WidgetResizeHandler.events.onStopResize, function () {
 	          _this5.widgetIsResizing = false;
-
 	          _this5.$store.commit('widget/common', {
 	            widgetHeight: _this5.widgetCurrentHeight,
 	            widgetWidth: _this5.widgetCurrentWidth
@@ -73372,7 +71221,6 @@ this.BX = this.BX || {};
 	    },
 	    registerZIndex: function registerZIndex() {
 	      this.zIndexStackInstance = this.$Bitrix.Data.get('zIndexStack');
-
 	      if (this.zIndexStackInstance && !!this.$refs.widgetWrapper) {
 	        this.zIndexStackInstance.register(this.$refs.widgetWrapper);
 	      }
@@ -73382,14 +71230,12 @@ this.BX = this.BX || {};
 	        this.zIndexStackInstance.unregister(this.$refs.widgetWrapper);
 	      }
 	    } // endregion helpers
-
 	  },
 	  // language=Vue
 	  template: "\n\t\t<transition enter-active-class=\"bx-livechat-show\" leave-active-class=\"bx-livechat-close\" @after-leave=\"onAfterClose\">\n\t\t\t<div\n\t\t\t\t:class=\"widgetClassName\"\n\t\t\t\tv-if=\"widget.common.showed\"\n\t\t\t\t:style=\"{height: widgetHeightStyle, width: widgetWidthStyle, userSelect: userSelectStyle}\"\n\t\t\t\tclass=\"bx-livechat-wrapper bx-livechat-show\"\n\t\t\t\tref=\"widgetWrapper\"\n\t\t\t>\n\t\t\t\t<div class=\"bx-livechat-box\">\n\t\t\t\t\t<div v-if=\"isBottomLocation() && !isPageMode()\" class=\"bx-livechat-widget-resize-handle\" @mousedown=\"onWidgetStartDrag\"></div>\n\t\t\t\t\t<bx-livechat-head \n\t\t\t\t\t\t:isWidgetDisabled=\"widgetMobileDisabled\" \n\t\t\t\t\t\t@openMenu=\"onOpenMenu\" \n\t\t\t\t\t\t@close=\"close\"\n\t\t\t\t\t\t@openDialogList=\"openDialogList\"\n\t\t\t\t\t/>\n\t\t\t\t\t<template v-if=\"widgetMobileDisabled\">\n\t\t\t\t\t\t<bx-livechat-body-orientation-disabled/>\n\t\t\t\t\t</template>\n\t\t\t\t\t<template v-else-if=\"application.error.active\">\n\t\t\t\t\t\t<bx-livechat-body-error/>\n\t\t\t\t\t</template>\n\t\t\t\t\t<template v-else-if=\"!widget.common.configId\">\n\t\t\t\t\t\t<div class=\"bx-livechat-body\" key=\"loading-body\">\n\t\t\t\t\t\t\t<bx-livechat-body-loading/>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</template>\n\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t<div v-show=\"!widget.common.dialogStart\" class=\"bx-livechat-body\" :class=\"{'bx-livechat-body-with-scroll': showWelcomeForm}\" key=\"welcome-body\">\n\t\t\t\t\t\t\t<bx-imopenlines-form\n\t\t\t\t\t\t\t  v-show=\"showWelcomeForm\"\n\t\t\t\t\t\t\t  @formSendSuccess=\"onWelcomeFormSendSuccess\"\n\t\t\t\t\t\t\t  @formSendError=\"onWelcomeFormSendError\"\n\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t\t<template v-if=\"!showWelcomeForm\">\n\t\t\t\t\t\t\t\t<bx-livechat-body-operators/>\n\t\t\t\t\t\t\t\t<keep-alive include=\"bx-livechat-smiles\">\n\t\t\t\t\t\t\t\t\t<template v-if=\"widget.common.showForm === FormType.smile\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-smiles @selectSmile=\"onSmilesSelectSmile\" @selectSet=\"onSmilesSelectSet\"/>\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t</keep-alive>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<template v-if=\"widget.common.dialogStart\">\n\t\t\t\t\t\t\t<bx-pull-component-status :canReconnect=\"true\" @reconnect=\"onPullRequestConfig\"/>\n\t\t\t\t\t\t\t<div :class=\"['bx-livechat-body', {'bx-livechat-body-with-message': showMessageDialog}]\" key=\"with-message\">\n\t\t\t\t\t\t\t\t<template v-if=\"widget.common.isCreateSessionMode\">\n\t\t\t\t\t\t\t\t\t<bx-livechat-dialogues-list @startNewChat=\"onStartNewChat\"/>\n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t<template v-else-if=\"showMessageDialog\">\n\t\t\t\t\t\t\t\t\t<div class=\"bx-livechat-dialog\">\n\t\t\t\t\t\t\t\t\t\t<bx-im-component-dialog\n\t\t\t\t\t\t\t\t\t\t\t:userId=\"application.common.userId\"\n\t\t\t\t\t\t\t\t\t\t\t:dialogId=\"application.dialog.dialogId\"\n\t\t\t\t\t\t\t\t\t\t\t:messageLimit=\"application.dialog.messageLimit\"\n\t\t\t\t\t\t\t\t\t\t\t:enableReactions=\"true\"\n\t\t\t\t\t\t\t\t\t\t\t:enableDateActions=\"false\"\n\t\t\t\t\t\t\t\t\t\t\t:enableCreateContent=\"false\"\n\t\t\t\t\t\t\t\t\t\t\t:enableGestureQuote=\"true\"\n\t\t\t\t\t\t\t\t\t\t\t:enableGestureMenu=\"true\"\n\t\t\t\t\t\t\t\t\t\t\t:showMessageAvatar=\"false\"\n\t\t\t\t\t\t\t\t\t\t\t:showMessageMenu=\"false\"\n\t\t\t\t\t\t\t\t\t\t\t:skipDataRequest=\"true\"\n\t\t\t\t\t\t\t\t\t\t\t:showLoadingState=\"false\"\n\t\t\t\t\t\t\t\t\t\t\t:showEmptyState=\"false\"\n\t\t\t\t\t\t\t\t\t\t />\n\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t\t\t\t<bx-livechat-body-loading/>\n\t\t\t\t\t\t\t\t</template>\n\n\t\t\t\t\t\t\t\t<keep-alive include=\"bx-livechat-smiles\">\n\t\t\t\t\t\t\t\t\t<template v-if=\"widget.common.showForm === FormType.like && widget.common.vote.enable\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-form-vote/>\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t<template v-else-if=\"widget.common.showForm === FormType.welcome\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-form-welcome/>\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t<template v-else-if=\"widget.common.showForm === FormType.offline\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-form-offline/>\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t<template v-else-if=\"widget.common.showForm === FormType.history\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-form-history/>\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t<template v-else-if=\"widget.common.showForm === FormType.smile\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-smiles @selectSmile=\"onSmilesSelectSmile\" @selectSet=\"onSmilesSelectSet\"/>\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t</keep-alive>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</template>\n\t\t\t\t\t\t<div v-if=\"showTextarea || startNewChatMode\" class=\"bx-livechat-textarea\" :style=\"[textareaHeightStyle, textareaBottomMargin]\" ref=\"textarea\">\n\t\t\t\t\t\t\t<div class=\"bx-livechat-textarea-resize-handle\" @mousedown=\"onTextareaStartDrag\" @touchstart=\"onTextareaStartDrag\"></div>\n\t\t\t\t\t\t\t<bx-im-component-textarea\n\t\t\t\t\t\t\t\t:siteId=\"application.common.siteId\"\n\t\t\t\t\t\t\t\t:userId=\"application.common.userId\"\n\t\t\t\t\t\t\t\t:dialogId=\"application.dialog.dialogId\"\n\t\t\t\t\t\t\t\t:writesEventLetter=\"3\"\n\t\t\t\t\t\t\t\t:enableEdit=\"true\"\n\t\t\t\t\t\t\t\t:enableCommand=\"false\"\n\t\t\t\t\t\t\t\t:enableMention=\"false\"\n\t\t\t\t\t\t\t\t:enableFile=\"application.disk.enabled\"\n\t\t\t\t\t\t\t\t:autoFocus=\"application.device.type !== DeviceType.mobile\"\n\t\t\t\t\t\t\t\t:styles=\"{button: {backgroundColor: widget.common.styles.backgroundColor, iconColor: widget.common.styles.iconColor}}\"\n\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div v-if=\"!widget.common.copyright && !isBottomLocation\" class=\"bx-livechat-nocopyright-resize-wrap\" style=\"position: relative;\">\n\t\t\t\t\t\t\t<div class=\"bx-livechat-widget-resize-handle\" @mousedown=\"onWidgetStartDrag\"></div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<bx-livechat-form-consent />\n\t\t\t\t\t\t<template v-if=\"widget.common.copyright\">\n\t\t\t\t\t\t\t<div class=\"bx-livechat-copyright\">\n\t\t\t\t\t\t\t\t<template v-if=\"widget.common.copyrightUrl\">\n\t\t\t\t\t\t\t\t\t<a class=\"bx-livechat-copyright-link\" :href=\"widget.common.copyrightUrl\" target=\"_blank\">\n\t\t\t\t\t\t\t\t\t\t<span class=\"bx-livechat-logo-name\">{{localize.BX_LIVECHAT_COPYRIGHT_TEXT}}</span>\n\t\t\t\t\t\t\t\t\t\t<span class=\"bx-livechat-logo-icon\"></span>\n\t\t\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t\t\t\t<span class=\"bx-livechat-logo-name\">{{localize.BX_LIVECHAT_COPYRIGHT_TEXT}}</span>\n\t\t\t\t\t\t\t\t\t<span class=\"bx-livechat-logo-icon\"></span>\n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t<div v-if=\"!isBottomLocation() && !isPageMode()\" class=\"bx-livechat-widget-resize-handle\" @mousedown=\"onWidgetStartDrag\"></div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</template>\n\t\t\t\t\t</template>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</transition>\n\t"
 	});
 
 	function ownKeys$2(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-
 	function _objectSpread$2(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$2(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$2(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	ui_vue.WidgetBitrixVue.component('bx-livechat-body-error', {
 	  computed: _objectSpread$2({}, ui_vue_vuex.WidgetVuex.mapState({
@@ -73401,7 +71247,6 @@ this.BX = this.BX || {};
 	});
 
 	function ownKeys$3(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-
 	function _objectSpread$3(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$3(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$3(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	ui_vue.WidgetBitrixVue.component('bx-livechat-head', {
 	  /**
@@ -73417,9 +71262,9 @@ this.BX = this.BX || {};
 	  data: function data() {
 	    return {
 	      multiDialog: false // disabled because of beta status
-
 	    };
 	  },
+
 	  methods: {
 	    openDialogList: function openDialogList() {
 	      main_core_events.EventEmitter.emit(WidgetEventType.hideForm);
@@ -73459,19 +71304,15 @@ this.BX = this.BX || {};
 	      if (!!state.widget.dialog.closeVote) {
 	        return false;
 	      }
-
 	      if (!state.widget.common.vote.beforeFinish && state.widget.dialog.sessionStatus < SessionStatus.waitClient) {
 	        return false;
 	      }
-
 	      if (!state.widget.dialog.sessionClose || state.widget.dialog.sessionClose && state.widget.dialog.userVote === VoteType.none) {
 	        return true;
 	      }
-
 	      if (state.widget.dialog.sessionClose && state.widget.dialog.userVote !== VoteType.none) {
 	        return true;
 	      }
-
 	      return false;
 	    },
 	    chatTitle: function chatTitle(state) {
@@ -73485,13 +71326,10 @@ this.BX = this.BX || {};
 	      if (!this.showName) {
 	        return '';
 	      }
-
 	      var operatorPosition = state.widget.dialog.operator.workPosition ? state.widget.dialog.operator.workPosition : this.localize.BX_LIVECHAT_USER;
-
 	      if (state.widget.common.showSessionId && state.widget.dialog.sessionId >= 0) {
 	        return this.localize.BX_LIVECHAT_OPERATOR_POSITION_AND_SESSION_ID.replace("#POSITION#", operatorPosition).replace("#ID#", state.widget.dialog.sessionId);
 	      }
-
 	      return this.localize.BX_LIVECHAT_OPERATOR_POSITION_ONLY.replace("#POSITION#", operatorPosition);
 	    },
 	    localize: function localize() {
@@ -73511,7 +71349,6 @@ this.BX = this.BX || {};
 	  watch: {
 	    showName: function showName(value) {
 	      var _this = this;
-
 	      if (value) {
 	        setTimeout(function () {
 	          _this.$root.$emit(im_const.EventType.dialog.scrollToBottom, {
@@ -73538,7 +71375,6 @@ this.BX = this.BX || {};
 	});
 
 	function ownKeys$4(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-
 	function _objectSpread$4(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$4(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$4(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	ui_vue.WidgetBitrixVue.component('bx-livechat-body-operators', {
 	  computed: _objectSpread$4({}, ui_vue_vuex.WidgetVuex.mapState({
@@ -73550,7 +71386,6 @@ this.BX = this.BX || {};
 	});
 
 	function ownKeys$5(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-
 	function _objectSpread$5(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$5(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$5(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	ui_vue.WidgetBitrixVue.component('bx-livechat-dialogues-list', {
 	  data: function data() {
@@ -73574,22 +71409,18 @@ this.BX = this.BX || {};
 	  methods: {
 	    requestDialogList: function requestDialogList() {
 	      var _this = this;
-
 	      var offset = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 0;
 	      this.isLoading = true;
 	      var requestParams = {
 	        'CONFIG_ID': this.$Bitrix.Application.get().getConfigId()
 	      };
-
 	      if (offset > 0) {
 	        requestParams['OFFSET'] = offset;
 	      }
-
 	      return this.$Bitrix.Application.get().controller.restClient.callMethod(RestMethod.widgetDialogList, requestParams).then(function (result) {
 	        if (result.data().length === 0 || result.data().length < _this.itemsPerPage) {
 	          _this.hasMoreItemsToLoad = false;
 	        }
-
 	        _this.pagesLoaded++;
 	        _this.isLoading = false;
 	        _this.sessionList = [].concat(babelHelpers.toConsumableArray(_this.sessionList), babelHelpers.toConsumableArray(_this.prepareSessionList(result.data())));
@@ -73621,7 +71452,6 @@ this.BX = this.BX || {};
 	        if (this.isLoading || !this.hasMoreItemsToLoad) {
 	          return;
 	        }
-
 	        var offset = this.itemsPerPage * this.pagesLoaded;
 	        this.requestDialogList(offset);
 	      }
@@ -73644,7 +71474,6 @@ this.BX = this.BX || {};
 	});
 
 	function ownKeys$6(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-
 	function _objectSpread$6(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$6(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$6(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	ui_vue.WidgetBitrixVue.component('bx-livechat-form-consent', {
 	  computed: _objectSpread$6({}, ui_vue_vuex.WidgetVuex.mapState({
@@ -73691,7 +71520,6 @@ this.BX = this.BX || {};
 	            this.$refs.iframe.focus();
 	          }
 	        }
-
 	        event.preventDefault();
 	      } else if (event.keyCode == 39 || event.keyCode == 37) {
 	        if (event.target.nextElementSibling) {
@@ -73699,7 +71527,6 @@ this.BX = this.BX || {};
 	        } else if (event.target.previousElementSibling) {
 	          event.target.previousElementSibling.focus();
 	        }
-
 	        event.preventDefault();
 	      }
 	    }
@@ -73715,7 +71542,6 @@ this.BX = this.BX || {};
 	});
 
 	function ownKeys$7(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-
 	function _objectSpread$7(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$7(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$7(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	ui_vue.WidgetBitrixVue.component('bx-livechat-form-vote', {
 	  computed: _objectSpread$7({
@@ -73741,7 +71567,7 @@ this.BX = this.BX || {};
 	      main_core_events.EventEmitter.emit(WidgetEventType.hideForm);
 	    }
 	  },
-	  template: "\n\t\t<transition enter-active-class=\"bx-livechat-consent-window-show\" leave-active-class=\"bx-livechat-form-close\">\n\t\t\t<div class=\"bx-livechat-alert-box bx-livechat-form-rate-show\" key=\"vote\">\n\t\t\t\t<div class=\"bx-livechat-alert-close\" @click=\"hideForm\"></div>\n\t\t\t\t<div class=\"bx-livechat-alert-rate-box\">\n\t\t\t\t\t<h4 class=\"bx-livechat-alert-title bx-livechat-alert-title-mdl\">{{widget.common.vote.messageText}}</h4>\n\t\t\t\t\t<div class=\"bx-livechat-btn-box\">\n\t\t\t\t\t\t<button class=\"bx-livechat-btn bx-livechat-btn-like\" @click=\"userVote(VoteType.like)\" :title=\"widget.common.vote.messageLike\"></button>\n\t\t\t\t\t\t<button class=\"bx-livechat-btn bx-livechat-btn-dislike\" @click=\"userVote(VoteType.dislike)\" :title=\"widget.common.vote.messageDislike\"></button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</transition>\t\n\t"
+	  template: "\n\t\t<transition enter-active-class=\"bx-livechat-consent-window-show\" leave-active-class=\"bx-livechat-form-close\">\n\t\t\t<div class=\"bx-livechat-alert-box bx-livechat-form-rate-show\" key=\"vote\">\n\t\t\t\t<div class=\"bx-livechat-alert-close\" :title=\"$Bitrix.Loc.getMessage('BX_LIVECHAT_VOTE_LATER')\" @click=\"hideForm\"></div>\n\t\t\t\t<div class=\"bx-livechat-alert-rate-box\">\n\t\t\t\t\t<h4 class=\"bx-livechat-alert-title bx-livechat-alert-title-mdl\">{{widget.common.vote.messageText}}</h4>\n\t\t\t\t\t<div class=\"bx-livechat-btn-box\">\n\t\t\t\t\t\t<button class=\"bx-livechat-btn bx-livechat-btn-like\" @click=\"userVote(VoteType.like)\" :title=\"widget.common.vote.messageLike\"></button>\n\t\t\t\t\t\t<button class=\"bx-livechat-btn bx-livechat-btn-dislike\" @click=\"userVote(VoteType.dislike)\" :title=\"widget.common.vote.messageDislike\"></button>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"bx-livechat-alert-later\"><span class=\"bx-livechat-alert-later-btn\" @click=\"hideForm\">{{$Bitrix.Loc.getMessage('BX_LIVECHAT_VOTE_LATER')}}</span></div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</transition>\t\n\t"
 	});
 
 	/**

@@ -10,6 +10,39 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Main\Localization\Loc;
 
+$returnProperties = [];
+if (Loader::includeModule('crm'))
+{
+	$compatibilityMap = [
+		'PRODUCT_ID' => 'RowProductId',
+		'PRODUCT_NAME' => 'RowProductName',
+		'PRICE_ACCOUNT' => 'RowPriceAccount',
+		'QUANTITY' => 'RowQuantity',
+		'MEASURE_NAME' => 'RowMeasureName',
+		'DISCOUNT_RATE' => 'RowDiscountRate',
+		'DISCOUNT_SUM' => 'RowDiscountSum',
+		'TAX_RATE' => 'RowTaxRate',
+		'TAX_INCLUDED' => 'RowTaxIncluded',
+		'SUM_ACCOUNT' => 'RowSumAccount',
+		'PRINTABLE_SUM_ACCOUNT' => 'RowSumAccountMoney',
+	];
+	foreach (\Bitrix\Crm\Automation\Connectors\Product::getFieldsMap() as $fieldId => $field)
+	{
+		$returnProperties[$compatibilityMap[$fieldId] ?? $fieldId] = [
+			'NAME' => $field['Name'],
+			'TYPE' => $field['Type'],
+		];
+
+		if ($fieldId === 'SUM_ACCOUNT')
+		{
+			$returnProperties['RowSumAccountMoney'] = [
+				'NAME' => Loc::getMessage('CRM_BP_GPR_RETURN_ROW_SUM_ACCOUNT_MONEY'),
+				'TYPE' => \Bitrix\Bizproc\FieldType::STRING,
+			];
+		}
+	}
+}
+
 $arActivityDescription = [
 	'NAME' => Loc::getMessage('CRM_BP_GPR_NAME_1'),
 	'DESCRIPTION' => Loc::getMessage('CRM_BP_GPR_DESC_1'),
@@ -21,52 +54,7 @@ $arActivityDescription = [
 		'OWN_ID' => 'crm',
 		'OWN_NAME' => 'CRM',
 	],
-	'RETURN' => [
-		'RowProductId' => [
-			'NAME' => Loc::getMessage('CRM_BP_GPR_RETURN_ROW_PRODUCT_ID'),
-			'TYPE' => 'int',
-		],
-		'RowProductName' => [
-			'NAME' => Loc::getMessage('CRM_BP_GPR_RETURN_ROW_PRODUCT_NAME'),
-			'TYPE' => 'string',
-		],
-		'RowPriceAccount' => [
-			'NAME' => Loc::getMessage('CRM_BP_GPR_RETURN_ROW_PRICE_ACCOUNT'),
-			'TYPE' => 'double',
-		],
-		'RowQuantity' => [
-			'NAME' => Loc::getMessage('CRM_BP_GPR_RETURN_ROW_QUANTITY'),
-			'TYPE' => 'double',
-		],
-		'RowMeasureName' => [
-			'NAME' => Loc::getMessage('CRM_BP_GPR_RETURN_ROW_MEASURE_NAME'),
-			'TYPE' => 'string',
-		],
-		'RowDiscountRate' => [
-			'NAME' => Loc::getMessage('CRM_BP_GPR_RETURN_ROW_DISCOUNT_RATE'),
-			'TYPE' => 'double',
-		],
-		'RowDiscountSum' => [
-			'NAME' => Loc::getMessage('CRM_BP_GPR_RETURN_ROW_DISCOUNT_SUM'),
-			'TYPE' => 'double',
-		],
-		'RowTaxRate' => [
-			'NAME' => Loc::getMessage('CRM_BP_GPR_RETURN_ROW_TAX_RATE'),
-			'TYPE' => 'double',
-		],
-		'RowTaxIncluded' => [
-			'NAME' => Loc::getMessage('CRM_BP_GPR_RETURN_ROW_TAX_INCLUDED'),
-			'TYPE' => 'bool',
-		],
-		'RowSumAccount' => [
-			'NAME' => Loc::getMessage('CRM_BP_GPR_RETURN_ROW_SUM_ACCOUNT'),
-			'TYPE' => 'double',
-		],
-		'RowSumAccountMoney' => [
-			'NAME' => Loc::getMessage('CRM_BP_GPR_RETURN_ROW_SUM_ACCOUNT_MONEY'),
-			'TYPE' => 'int',
-		],
-	],
+	'RETURN' => $returnProperties,
 	'FILTER' => [
 		'INCLUDE' => [
 			['crm', 'CCrmDocumentDeal'],

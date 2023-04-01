@@ -40,7 +40,14 @@ class Base
 	public static function getNameByCode($code)
 	{
 		$code = $code === self::Organic ? self::Other : $code;
-		return Loc::getMessage('CRM_TRACKING_SOURCE_BASE_NAME_'.mb_strtoupper($code)) ?: $code;
+		if ($code === self::Ga)
+		{
+			return Loc::getMessage('CRM_TRACKING_SOURCE_BASE_NAME_'.mb_strtoupper($code) . '_MSGVER_1');
+		}
+		else
+		{
+			return Loc::getMessage('CRM_TRACKING_SOURCE_BASE_NAME_'.mb_strtoupper($code)) ?: $code;
+		}
 	}
 
 	/**

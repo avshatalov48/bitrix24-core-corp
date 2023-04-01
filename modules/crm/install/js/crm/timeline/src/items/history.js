@@ -366,8 +366,7 @@ export default class History extends CompatibleItem
 
 	prepareLayout(options)
 	{
-		const vueComponent = this.makeVueComponent(options, 'history');
-		this._wrapper = vueComponent ? vueComponent : this.prepareContent();
+		this._wrapper = this.prepareContent();
 		if(this._wrapper)
 		{
 			const enableAdd = BX.type.isPlainObject(options) ? BX.prop.getBoolean(options, "add", true) : true;

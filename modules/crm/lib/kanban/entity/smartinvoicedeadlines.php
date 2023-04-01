@@ -99,6 +99,11 @@ class SmartInvoiceDeadlines extends SmartInvoice
 
 	public function isActivityCountersFilterSupported(): bool
 	{
-		return false;
+		return $this->factory->isCountersEnabled();
+	}
+
+	public function getRequiredFieldsByStages(array $stages): array
+	{
+		return [];
 	}
 }

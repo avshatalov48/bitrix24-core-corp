@@ -49,6 +49,9 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 	/** @var Order\Shipment */
 	private ?Order\Shipment $shipment;
 
+	/** @var Order\Payment */
+	private ?Order\Payment $payment = null;
+
 	/** @var Order\Order */
 	private ?Order\Order $order;
 
@@ -181,6 +184,7 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 		{
 			$this->arResult['ORDER_ID'] = (int)($this->arParams['CONTEXT']['ORDER_ID'] ?? 0);
 		}
+		$this->arResult['PAYMENT_ID'] = (int)($this->arParams['CONTEXT']['PAYMENT_ID'] ?? 0);
 
 		$this->arResult['ACTION_URI'] = $this->arResult['POST_FORM_URI'] = POST_FORM_ACTION_URI;
 		$this->arResult['PRODUCT_DATA_FIELD_NAME'] = 'ORDER_SHIPMENT_PRODUCT_DATA';
@@ -201,12 +205,28 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 		if ($this->getEntityID() > 0)
 		{
 			$this->shipment = Sale\Repository\ShipmentRepository::getInstance()->getById($this->entityID);
-			if (!$this->shipment)
+			if ($this->shipment)
+			{
+				$this->order = $this->shipment->getOrder();
+			}
+			else
 			{
 				$this->addError(ComponentError::ENTITY_NOT_FOUND);
 			}
-
-			$this->order = $this->shipment->getOrder();
+		}
+		elseif ($this->arResult['PAYMENT_ID'])
+		{
+			$this->payment = Sale\Repository\PaymentRepository::getInstance()->getById($this->arResult['PAYMENT_ID']);
+			if ($this->payment)
+			{
+				$this->order = $this->payment->getOrder();
+			}
+			else
+			{
+				$this->addError(new Main\Error(
+					Loc::getMessage('CRM_STORE_DOCUMENT_SHIPMENT_PAYMENT_NOT_FOUND')
+				));
+			}
 		}
 		elseif ($this->arResult['ORDER_ID'] && $this->arResult['ORDER_ID'] > 0)
 		{
@@ -1402,9 +1422,18 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 
 			$defaultStore = Catalog\StoreTable::getDefaultStoreId();
 
+			$basketIdsFilter = $this->getEntityProductsBasketIdFilter();
 			$deliverableProducts = $productManager->getRealizationableItems();
 			foreach ($deliverableProducts as $deliverableProduct)
 			{
+				if (
+					!empty($basketIdsFilter)
+					&& !in_array($deliverableProduct['BASKET_CODE'], $basketIdsFilter, true)
+				)
+				{
+					continue;
+				}
+
 				$reserve = $deliverableProduct['RESERVE'] ? current($deliverableProduct['RESERVE']) : [];
 				if (empty($reserve['STORE_ID']))
 				{
@@ -1441,7 +1470,28 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 		return $products;
 	}
 
-	private function getEntityProductQuantity(array $product): int
+	private function getEntityProductsBasketIdFilter(): array
+	{
+		if (!$this->payment)
+		{
+			return [];
+		}
+
+		$result = [];
+
+		/** @var Order\PayableBasketItem $basketItem */
+		foreach ($this->payment->getPayableItemCollection()->getBasketItems() as $payableItem)
+		{
+			/** @var Order\BasketItem $basketItem */
+			$basketItem = $payableItem->getEntityObject();
+
+			$result[] = $basketItem->getId();
+		}
+
+		return $result;
+	}
+
+	private function getEntityProductQuantity(array $product): float
 	{
 		$quantity = $product['QUANTITY'];
 
@@ -1571,7 +1621,7 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 				ActionDictionary::ACTION_STORE_DOCUMENT_VIEW,
 				StoreDocumentTable::TYPE_SALES_ORDERS
 			)
-		;
+			;
 	}
 
 	private function checkDocumentModifyRight(): bool
@@ -1582,7 +1632,7 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 				ActionDictionary::ACTION_STORE_DOCUMENT_MODIFY,
 				StoreDocumentTable::TYPE_SALES_ORDERS
 			)
-		;
+			;
 	}
 
 	private function checkDocumentConductRight(): bool
@@ -1593,9 +1643,9 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 				ActionDictionary::ACTION_STORE_DOCUMENT_CONDUCT,
 				StoreDocumentTable::TYPE_SALES_ORDERS
 			)
-		;
+			;
 	}
-	
+
 	private function checkDocumentCancelRight(): bool
 	{
 		return
@@ -1604,6 +1654,6 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 				ActionDictionary::ACTION_STORE_DOCUMENT_CANCEL,
 				StoreDocumentTable::TYPE_SALES_ORDERS
 			)
-		;
+			;
 	}
 }

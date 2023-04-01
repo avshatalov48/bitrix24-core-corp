@@ -168,4 +168,33 @@ class Account extends AbstractController
 			)
 		);
 	}
+
+	public function loginCompletionAction(string $type, $proxyId = null): AjaxJson
+	{
+		$errorCollection = new ErrorCollection();
+		if (!$service = $this->getService($proxyId))
+		{
+			$errorCollection[] = new Error("Service not available.");
+			return AjaxJson::createError($errorCollection);
+		}
+
+		if (!$account = $service->getAccount($type))
+		{
+			$errorCollection[] = new Error("Unknown type: {$type}.");
+			return AjaxJson::createError($errorCollection);
+		}
+
+		if (!($loginCompletionResult = $account->loginCompletion()) || !$loginCompletionResult->isSuccess())
+		{
+			$errorCollection[] = new Error("External server error.");
+			return AjaxJson::createError($errorCollection);
+		}
+
+		return AjaxJson::createSuccess(
+			[
+				"data" => $loginCompletionResult->getData()
+			]
+		);
+		
+	}
 }

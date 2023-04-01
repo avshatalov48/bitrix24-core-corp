@@ -967,7 +967,6 @@ class CVoxImplantCrmHelper
 
 		$arFields = array(
 			'TITLE' => $params['PHONE_NUMBER'].' - '.$title,
-			'OPENED' => 'Y',
 			'PHONE_WORK' => $params['PHONE_NUMBER'],
 		);
 

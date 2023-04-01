@@ -2,9 +2,11 @@
 
 namespace Bitrix\Crm\Service\Timeline\Item\LogMessage;
 
+use Bitrix\Crm\Item;
 use Bitrix\Crm\Service\Timeline\Item\LogMessage;
 use Bitrix\Crm\Service\Timeline\Layout\Action\JsEvent;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\ValueChange;
+use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\ValueChangeItem;
 use Bitrix\Crm\Service\Timeline\Layout\Header\InfoHelper;
 use Bitrix\Crm\Service\Timeline\Layout\Header\InfoHelperLink;
 use Bitrix\Crm\Service\Timeline\Layout\Header\InfoHelperText;
@@ -14,17 +16,32 @@ class Modification extends LogMessage
 {
 	public function getIconCode(): ?string
 	{
-		$modifiedField = $this->getHistoryItemModel()->get('MODIFIED_FIELD');
+		if (in_array(
+			$this->getModel()->getAssociatedEntityTypeId(),
+			[
+				\CCrmOwnerType::Order,
+				\CCrmOwnerType::OrderShipment,
+				\CCrmOwnerType::OrderPayment,
+			],
+			true
+		))
+		{
+			return 'store';
+		}
+		
 
+		$modifiedField = $this->getHistoryItemModel()->get('MODIFIED_FIELD');
 		switch ($modifiedField)
 		{
 			case 'STATUS_ID':
-			case 'STAGE_ID':
 			case 'STATUS':
 			case 'TASK:STATUS':
+			case Item::FIELD_NAME_STAGE_ID:
 				return 'stage-change';
-			case 'IS_MANUAL_OPPORTUNITY':
+			case Item::FIELD_NAME_IS_MANUAL_OPPORTUNITY:
 				return 'sum';
+			case Item::FIELD_NAME_CATEGORY_ID:
+				return 'pipeline';
 		}
 
 		return parent::getIconCode();
@@ -44,7 +61,7 @@ class Modification extends LogMessage
 	{
 		$modifiedField = $this->getHistoryItemModel()->get('MODIFIED_FIELD');
 
-		if ($modifiedField === 'IS_MANUAL_OPPORTUNITY')
+		if ($modifiedField === Item::FIELD_NAME_IS_MANUAL_OPPORTUNITY)
 		{
 			$finalValue = $this->getHistoryItemModel()->get('FINISH');
 			$phrase = $finalValue === 'Y'
@@ -70,13 +87,35 @@ class Modification extends LogMessage
 	public function getContentBlocks(): ?array
 	{
 		$result = [];
+		$historyItemModel = $this->getHistoryItemModel();
+		$modifiedField = $historyItemModel->get('MODIFIED_FIELD');
 
-		$startName = $this->getHistoryItemModel()->get('START_NAME');
-		$finishName = $this->getHistoryItemModel()->get('FINISH_NAME');
+		if ($modifiedField === Item::FIELD_NAME_CATEGORY_ID)
+		{
+			$from = (new ValueChangeItem())
+				->setIconCode('pipeline')
+				->setText($historyItemModel->get('START_CATEGORY_NAME'))
+				->setPillText($historyItemModel->get('START_STAGE_NAME'))
+			;
+
+			$to = (new ValueChangeItem())
+				->setIconCode('pipeline')
+				->setText($historyItemModel->get('FINISH_CATEGORY_NAME'))
+				->setPillText($historyItemModel->get('FINISH_STAGE_NAME'))
+			;
+		}
+		else
+		{
+			$startName = $historyItemModel->get('START_NAME');
+			$finishName = $historyItemModel->get('FINISH_NAME');
+
+			$from = (new ValueChangeItem())->setPillText($startName);
+			$to = (new ValueChangeItem())->setPillText($finishName);
+		}
 
 		$result['valueChange'] = (new ValueChange())
-			->setFrom($startName)
-			->setTo($finishName);
+			->setFrom($from)
+			->setTo($to);
 
 		return $result;
 	}

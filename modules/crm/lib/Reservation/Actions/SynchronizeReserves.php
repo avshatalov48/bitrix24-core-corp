@@ -121,6 +121,10 @@ abstract class SynchronizeReserves extends Action
 					$reserveInfo->setDeltaReserveQuantity($reserveInfo->getReserveQuantity());
 					$reserveInfo->setChanged();
 				}
+				elseif ($newDateReserveEnd !== $oldDateReserveEnd)
+				{
+					$reserveInfo->setChanged();
+				}
 			}
 
 			if ($isNotSavedOnSale)

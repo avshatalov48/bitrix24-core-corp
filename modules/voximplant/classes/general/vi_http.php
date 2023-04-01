@@ -1,4 +1,8 @@
 <?
+
+use Bitrix\Voximplant\Result;
+use Bitrix\Main\Error;
+
 class CVoxImplantHttp
 {
 	const TYPE_BITRIX24 = 'B24';
@@ -71,7 +75,9 @@ class CVoxImplantHttp
 		$query = $this->Query('GetAccountInfo', $params);
 		if (isset($query->error))
 		{
-			$this->error = new CVoxImplantError(__METHOD__, $query->error->code, $query->error->msg);
+			$error = (array)$query->error;
+			$this->error = new CVoxImplantError(__METHOD__, $error['code'] ?? '', $error['msg'] ?? '');
+
 			return false;
 		}
 
@@ -161,12 +167,13 @@ class CVoxImplantHttp
 
 	public function ClearConfigCache()
 	{
-		$query = $this->Query(
-			'ClearConfigCache'
-		);
+		$query = $this->Query('ClearConfigCache', [], [
+			'returnArray' => true,
+		]);
 		if (isset($query->error))
 		{
-			$this->error = new CVoxImplantError(__METHOD__, $query->error->code, $query->error->msg);
+			$this->error = new CVoxImplantError(__METHOD__, $query->error['code'], $query->error['msg']);
+
 			return false;
 		}
 
@@ -953,8 +960,8 @@ class CVoxImplantHttp
 			return false;
 		}
 
-		$returnArray = $options["returnArray"] === true;
-		$returnRaw = $options["returnRaw"] === true;
+		$returnArray = isset($options['returnArray']) && $options['returnArray'] === true;
+		$returnRaw = isset($options['returnRaw']) && $options['returnRaw'] === true;
 
 		$params['BX_COMMAND'] = $command;
 		$params['BX_LICENCE'] = $this->licenceCode;
@@ -970,11 +977,11 @@ class CVoxImplantHttp
 
 		$params["BX_HASH"] = self::RequestSign($this->type, md5(implode("|", $params)));
 
-		$httpClient = \Bitrix\Voximplant\HttpClientFactory::create(array(
-			"socketTimeout" => (int)$options["socketTimeout"] ?: 10,
-			"streamTimeout" => (int)$options["streamTimeout"] ?: 30,
-			"disableSslVerification" => true
-		));
+		$httpClient = \Bitrix\Voximplant\HttpClientFactory::create([
+			'socketTimeout' => (int)($options['socketTimeout'] ?? 10),
+			'streamTimeout' => (int)($options['streamTimeout'] ?? 30),
+			'disableSslVerification' => true,
+		]);
 		$httpClient->setHeader('User-Agent', 'Bitrix Telephony');
 		$httpClient->setCharset(\Bitrix\Main\Context::getCurrent()->getCulture()->getCharset());
 		$result = $httpClient->query('POST', static::GetControllerUrl(), $params);
@@ -1097,6 +1104,62 @@ class CVoxImplantHttp
 		}
 
 		return $query;
+	}
+
+	public function checkPortalVisibility(): Result
+	{
+		$result = new Result();
+		$result->setData(['isVisible' => false]);
+		if ($this->checkIsDomainLocal())
+		{
+			$result->addError(new Error('', 'VI_PORTAL_URL_IS_LOCAL'));
+
+			return $result;
+		}
+
+		if ($this->checkIsDomainWithProtocol() === false)
+		{
+			$result->addError(new Error('', 'VI_PORTAL_URL_WITHOUT_PROTOCOL'));
+
+			return $result;
+		}
+
+		$query = $this->Query('checkPortalVisibility', [], [
+			'returnArray' => true,
+		]);
+		if (isset($query->error))
+		{
+			$result->addError(new Error($query->error['msg'], $query->error['code']));
+
+			return $result;
+		}
+
+		$result->setData(['isVisible' => true]);
+
+		return $result;
+	}
+
+	private function checkIsDomainLocal()
+	{
+		$parsedUrl = parse_url($this->domain);
+		$host = $parsedUrl['host'] ?? '';
+
+		$isLocalhost = strtolower($host) === 'localhost';
+		$isDefaultIP = $host === '0.0.0.0';
+		$isLocalIP = (
+			preg_match('#^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$#', $host)
+			&& preg_match('#^(127|10|172\.16|192\.168)\.#', $host)
+		);
+
+		return $isLocalhost || $isDefaultIP || $isLocalIP;
+	}
+
+	private function checkIsDomainWithProtocol(): bool
+	{
+		return (
+			mb_strpos($this->domain, 'http://') !== false
+			|| mb_strpos($this->domain, 'https://') !== false
+		);
 	}
 }
 ?>

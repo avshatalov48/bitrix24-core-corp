@@ -6,14 +6,30 @@ use Bitrix\Main\Type\Contract\Arrayable;
 
 final class Value implements Arrayable
 {
-	/** @var int|null */
-	private $id;
-	/** @var string|null */
-	private $typeId;
-	/** @var string|null */
-	private $valueType;
-	/** @var string|null */
-	private $value;
+	/**
+	 * @var int|null
+	 */
+	private ?int $id = null;
+
+	/**
+	 * @var string|null
+	 */
+	private ?string $typeId = null;
+
+	/**
+	 * @var string|null
+	 */
+	private ?string $valueType = null;
+
+	/**
+	 * @var string|null
+	 */
+	private ?string $value = null;
+
+	/**
+	 * @var ValueExtra|null
+	 */
+	private ?ValueExtra $valueExtra = null;
 
 	public function getId(): ?int
 	{
@@ -23,6 +39,7 @@ final class Value implements Arrayable
 	public function setId(?int $id): self
 	{
 		$this->id = $id;
+
 		return $this;
 	}
 
@@ -34,6 +51,7 @@ final class Value implements Arrayable
 	public function setTypeId(?string $typeId): self
 	{
 		$this->typeId = $typeId;
+
 		return $this;
 	}
 
@@ -45,6 +63,7 @@ final class Value implements Arrayable
 	public function setValueType(?string $valueType): self
 	{
 		$this->valueType = $valueType;
+
 		return $this;
 	}
 
@@ -56,6 +75,19 @@ final class Value implements Arrayable
 	public function setValue(?string $value): self
 	{
 		$this->value = $value;
+
+		return $this;
+	}
+
+	public function getValueExtra(): ?ValueExtra
+	{
+		return $this->valueExtra;
+	}
+
+	public function setValueExtra(?ValueExtra $data): self
+	{
+		$this->valueExtra = $data;
+
 		return $this;
 	}
 

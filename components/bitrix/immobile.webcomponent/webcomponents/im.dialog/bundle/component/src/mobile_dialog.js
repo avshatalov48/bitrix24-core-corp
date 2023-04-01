@@ -3038,6 +3038,22 @@ BX.ImMessengerMobile.prototype.editMessage = function(messageId, check)
 	if (!BX.MessengerCommon.checkEditMessage(messageId, 'edit'))
 		return false;
 
+	var text = '';
+	if (typeof this.message[messageId].textOriginal !== 'undefined')
+	{
+		text = this.message[messageId].textOriginal;
+	}
+	else if (typeof this.message[messageId].textLegacy !== 'undefined')
+	{
+		text = this.message[messageId].textLegacy;
+		text = BX.MessengerCommon.prepareTextBack(text, true);
+	}
+	else
+	{
+		text = this.message[messageId].text;
+		text = BX.MessengerCommon.prepareTextBack(text, true);
+	}
+
 	var formSettings = {
 		mentionButton: {
 			dataSource: {
@@ -3050,7 +3066,7 @@ BX.ImMessengerMobile.prototype.editMessage = function(messageId, check)
 		},
 		smileButton: {},
 		message : {
-			text : BX.MessengerCommon.prepareTextBack(this.message[messageId].text, true)
+			text : text
 		},
 		okButton: {
 			callback : function(data){

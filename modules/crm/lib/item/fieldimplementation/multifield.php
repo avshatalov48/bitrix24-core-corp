@@ -179,4 +179,9 @@ final class Multifield implements FieldImplementation
 	{
 		$this->afterSuccessfulItemSave($item, $entityObject);
 	}
+
+	public function getFieldNamesToFill(): array
+	{
+		return [];
+	}
 }

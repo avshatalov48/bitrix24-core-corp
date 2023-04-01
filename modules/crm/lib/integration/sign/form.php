@@ -26,6 +26,20 @@ class Form
 		return $factory->getItemByCode($code);
 	}
 
+	public static function restoreDefaultFieldSet(int $entityTypeId, ?int $presetId = null): void
+	{
+		$factory = new Crm\FieldSet\Factory;
+		$code = 'def-req-' . $entityTypeId . ($presetId ? '-' . $presetId : '');
+		$item = $factory->getItemByCode($code);
+
+		if ($item && empty($item->getFields()))
+		{
+			$factory->deleteItem($item);
+		}
+
+		$factory->installDefaults($presetId);
+	}
+
 	public static function getFieldSetValues(
 		int $entityTypeId,
 		int $entityId,
@@ -71,14 +85,26 @@ class Form
 			}
 
 			$value = $values[$name] ?? '';
-			if ($value === '' || $value === null || $value === false)
+			if ($value === null || $value === false)
 			{
 				continue;
 			}
 
 			$result[$name] = $value;
 		}
-
+		
+		foreach ($entityKeys as $key)
+		{
+			$name = "{$entityTypeName}_$key";
+			$value = $values[$name] ?? '';
+			if ($value === false || !empty($result[$name]))
+			{
+				continue;
+			}
+			
+			$result[$name] = $value ?? '';
+		}
+		
 		if (!empty($options['appendExtended']))
 		{
 			$title = '';
@@ -132,18 +158,16 @@ class Form
 		foreach ($entityKeys as $key)
 		{
 			$name = "{$entityTypeName}_$key";
-			$value = $values[$key] ?? '';
-			if ($value === '' || $value === null || $value === false)
-			{
-				continue;
-			}
-
 			if (!empty($result[$name]))
 			{
 				continue;
 			}
-
-			$result[$name] = $value;
+			
+			$value = isset($values[$key]) && !empty($values[$key])
+				? $entityFactory->getFieldValueCaption($key, $values[$key])
+				: null;
+			$value ??= '';
+			$result[$name] = $value ?? '';
 		}
 
 		return $result;

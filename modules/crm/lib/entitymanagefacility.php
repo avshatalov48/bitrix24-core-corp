@@ -1,4 +1,5 @@
 <?php
+
 namespace Bitrix\Crm;
 
 use Bitrix\Main\ArgumentException;
@@ -447,6 +448,12 @@ class EntityManageFacility
 				$fields['TITLE'] = (isset($fields['COMPANY_TITLE']) && $fields['COMPANY_TITLE']) ? $fields['COMPANY_TITLE'] : '';
 			}
 
+			// use entity configuration setting when create
+			if (!isset($fields['OPENED']) || empty($fields['OPENED']))
+			{
+				$fields['OPENED'] = Settings\CompanySettings::getCurrent()->getOpenedFlag() ? 'Y' : 'N';
+			}
+
 			$company = new \CCrmCompany(false);
 			$this->registeredId = $company->add($fields, $updateSearch, $options);
 			$this->registeredEntities->addIdentificator(
@@ -492,6 +499,12 @@ class EntityManageFacility
 
 		if ($this->canAddContact())
 		{
+			// use entity configuration setting when create
+			if (!isset($fields['OPENED']) || empty($fields['OPENED']))
+			{
+				$fields['OPENED'] = Settings\ContactSettings::getCurrent()->getOpenedFlag() ? 'Y' : 'N';
+			}
+
 			$contact = new \CCrmContact(false);
 			$this->registeredId = $contact->add($fields, $updateSearch, $options);
 			$this->registeredEntities->addIdentificator(
@@ -786,6 +799,12 @@ class EntityManageFacility
 			$options['DISABLE_USER_FIELD_CHECK'] = true;
 		}
 
+		// use entity configuration setting when create
+		if (!isset($fields['OPENED']) || empty($fields['OPENED']))
+		{
+			$fields['OPENED'] = Settings\LeadSettings::getCurrent()->getOpenedFlag() ? 'Y' : 'N';
+		}
+
 		$lead = new \CCrmLead(false);
 		$leadId = $lead->add($fields, $updateSearch, $options);
 		if (!$leadId)
@@ -844,6 +863,12 @@ class EntityManageFacility
 		if (!isset($options['DISABLE_USER_FIELD_CHECK']))
 		{
 			$options['DISABLE_USER_FIELD_CHECK'] = true;
+		}
+
+		// use entity configuration setting when create
+		if (!isset($fields['OPENED']) || empty($fields['OPENED']))
+		{
+			$fields['OPENED'] = Settings\DealSettings::getCurrent()->getOpenedFlag() ? 'Y' : 'N';
 		}
 
 		$deal = new \CCrmDeal(false);

@@ -1,6 +1,6 @@
 <?php
 
-if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
@@ -20,6 +20,7 @@ Extension::load(['ui.fonts.opensans', 'ui.counterpanel']);
 Asset::getInstance()->addJs('/bitrix/js/crm/message.js');
 
 $entityTypeId = (int)$arResult['ENTITY_TYPE_ID'];
+$entityTypeName = $arResult['ENTITY_TYPE_NAME'] ?? $arParams['ENTITY_TYPE_NAME'];
 $categoryId = (int)$arResult['CATEGORY_ID'];
 
 $prefix = mb_strtolower($arResult['GUID']);
@@ -36,9 +37,12 @@ $newCountersTourSeenOption = CUserOptions::GetOption('crm.tour', NewCountersMode
 $isNewCountersTourSeen = isset($newCountersTourSeenOption['closed']) && $newCountersTourSeenOption['closed'] === 'Y';
 
 $data = $arResult['DATA'] ?? [];
-
+$returnAsHtml = $arParams['RETURN_AS_HTML_MODE'] ?? false;
 $isBitrix24Template = SITE_TEMPLATE_ID === 'bitrix24';
-if ($isBitrix24Template)
+
+$isChangeViewTarget = !$returnAsHtml && $isBitrix24Template;
+
+if ($isChangeViewTarget)
 {
 	$bodyClass = $APPLICATION->GetPageProperty('BodyClass');
 	$APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'crm-pagetitle-view');
@@ -61,6 +65,7 @@ unset($phrases['NEW_CRM_COUNTER_TYPE_CURRENT2']);
 		(new BX.Crm.EntityCounterPanel({
 			id: "<?= $containerId ?>",
 			entityTypeId: <?= $entityTypeId ?>,
+			entityTypeName: "<?= CUtil::JSEscape($entityTypeName ?? '') ?>",
 			userId: <?= (int)$arResult['USER_ID'] ?>,
 			userName: "<?= CUtil::JSEscape($arResult['USER_NAME']) ?>",
 			serviceUrl: "<?= '/bitrix/components/bitrix/crm.entity.counter.panel/ajax.php?'.bitrix_sessid_get() ?>",
@@ -74,8 +79,8 @@ unset($phrases['NEW_CRM_COUNTER_TYPE_CURRENT2']);
 		})).init();
 	});
 </script>
-<?
-if ($isBitrix24Template)
+<?php
+if ($isChangeViewTarget)
 {
 	$this->EndViewTarget();
 }

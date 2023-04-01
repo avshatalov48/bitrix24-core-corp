@@ -168,4 +168,16 @@ class FieldMultiTable extends DataManager
 			],
 		]);
 	}
+
+	final public static function fetchPhoneIdsByOwner(ItemIdentifier $owner): array
+	{
+		return static::getList([
+			'select' => ['ID'],
+			'filter' => [
+				'=ENTITY_ID' => \CCrmOwnerType::ResolveName($owner->getEntityTypeId()),
+				'=ELEMENT_ID' => $owner->getEntityId(),
+				'=TYPE_ID' => 'PHONE',
+			],
+		])->fetchCollection()->getList('ID');
+	}
 }

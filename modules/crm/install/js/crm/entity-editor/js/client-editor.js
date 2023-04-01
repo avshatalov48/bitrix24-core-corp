@@ -79,6 +79,9 @@ if(typeof BX.Crm.EntityEditorClientSearchBox === "undefined")
 		this._isRequired = false;
 		this._enableRequisiteSelection = false;
 
+		this._categoryId = 0;
+		this._extraCategoryIds = [];
+
 		this.detailSearchPlacement = null;
 
 		this.entitySearchPopupCloseHandler = null;
@@ -118,6 +121,7 @@ if(typeof BX.Crm.EntityEditorClientSearchBox === "undefined")
 				}
 				this._entityTypeId = BX.prop.getInteger(this._settings, "entityTypeId", 0);
 				this._categoryId = BX.prop.getInteger(this._settings, "categoryId", 0);
+				this._extraCategoryIds =  BX.prop.getArray(this._settings, "extraCategoryIds", []);
 
 				this._mode = BX.prop.getInteger(this._settings, "mode", BX.Crm.EntityEditorClientMode.select);
 				if(this._mode === BX.Crm.EntityEditorClientMode.edit && !(this._entityInfo && this._entityInfo.canUpdate()))
@@ -358,6 +362,7 @@ if(typeof BX.Crm.EntityEditorClientSearchBox === "undefined")
 				var searchOptions = {
 					types: [ this._entityTypeName ],
 					categoryId: this._categoryId,
+					extraCategoryIds: this._extraCategoryIds,
 					scope: 'index',
 				};
 				if (BX.prop.getBoolean(this._settings, 'enableMyCompanyOnly', false))
@@ -460,7 +465,7 @@ if(typeof BX.Crm.EntityEditorClientSearchBox === "undefined")
 			},
 			prepareMultifieldLayout: function()
 			{
-				if(this._hasMultifieldLayout)
+				if (this._hasMultifieldLayout)
 				{
 					return;
 				}
@@ -471,14 +476,16 @@ if(typeof BX.Crm.EntityEditorClientSearchBox === "undefined")
 				if (this._clientEntityEditorEnabled)
 				{
 					this._editorContainer = BX.create("div", { props: { className: "crm-entity-widget-content-client-editor" } });
-					this.createClientEntityEditor(this._editorContainer,
-						this._entityInfo.getTypeName()+'_'+this._entityInfo.getId() + '_client_editor');
-
+					this.createClientEntityEditor(
+						this._editorContainer,
+						this._entityInfo.getTypeName() + '_' + this._entityInfo.getId() + '_client_editor'
+					);
 					this._multifieldContainer.appendChild(this._editorContainer);
 				}
 				else
 				{
 					this._phoneInput = BX.create("input", { props: { type: "hidden" } });
+					this._phoneCountryCodeInput = BX.create("input", { props: { type: "hidden" } });
 					this._countryFlagNode = BX.create("span", { props: {className: "crm-entity-widget-content-country-flag"}});
 					this._maskedPhoneInput = BX.create("input",
 						{
@@ -500,20 +507,36 @@ if(typeof BX.Crm.EntityEditorClientSearchBox === "undefined")
 									[
 										this._countryFlagNode,
 										this._maskedPhoneInput,
-										this._phoneInput
+										this._phoneInput,
+										this._phoneCountryCodeInput
 									]
 							}
 						)
 					);
 
-					this._maskedPhone = new BX.PhoneNumber.Input(
-						{
-							node: this._maskedPhoneInput,
-							flagNode: this._countryFlagNode,
-							flagSize: 24,
-							onChange: BX.delegate(this.onPhoneChange, this)
-						}
-					);
+					var defaultCountry = null;
+					if (
+						this._parentField
+						&& this._parentField._schemeElement
+						&& BX.Type.isPlainObject(this._parentField._schemeElement._options)
+						&& BX.Type.isStringFilled(this._parentField._schemeElement._options.defaultCountry)
+					)
+					{
+						defaultCountry = this._parentField._schemeElement._options.defaultCountry
+					}
+
+					var countryCode = this.getCountryCode();
+
+					this._maskedPhone = new BX.Crm.PhoneNumberInput({
+						node: this._maskedPhoneInput,
+						flagNode: this._countryFlagNode,
+						isSelectionIndicatorEnabled: true,
+						searchDialogContextCode: 'CRM_ENTITY_EDITOR_PHONE',
+						userDefaultCountry: defaultCountry,
+						savedCountryCode: countryCode,
+						onChange: BX.delegate(this.onPhoneChange, this),
+						onCountryChange: BX.delegate(this.onPhoneCountryChange, this),
+					});
 
 					this._emailInput = BX.create("input",
 						{
@@ -538,24 +561,26 @@ if(typeof BX.Crm.EntityEditorClientSearchBox === "undefined")
 					);
 				}
 
-				var emailId = "", phoneId = "", fieldCounter = 0;
-				this._phoneId = this._emailId = "";
-				if(this._entityInfo)
+				var fieldCounter = 0;
+				var phoneId = '';
+				var emailId = '';
+
+				this._phoneId = '';
+				this._emailId = '';
+
+				if (this._entityInfo)
 				{
 					var phones = this._entityInfo.getPhones();
-					if(phones.length === 0)
-					{
-						this.setPhoneFieldValue("");
-					}
-					else
+					if (phones.length > 0)
 					{
 						this._phoneId = BX.prop.getString(phones[0], "ID", "");
 						phoneId = this.parseMultifieldPseudoId(this._phoneId);
-						if(phoneId >= 0)
+						if (phoneId >= 0)
 						{
 							fieldCounter = phoneId + 1;
 						}
-						this.setPhoneFieldValue(BX.prop.getString(phones[0], "VALUE", ""));
+
+						this.setPhoneFieldValue(BX.prop.getString(phones[0], "VALUE", ""), countryCode);
 					}
 
 					var emails = this._entityInfo.getEmails();
@@ -577,7 +602,6 @@ if(typeof BX.Crm.EntityEditorClientSearchBox === "undefined")
 				else
 				{
 					this.setEmailFieldValue("");
-					this.setPhoneFieldValue("");
 				}
 
 				if(this._phoneId === "")
@@ -603,7 +627,7 @@ if(typeof BX.Crm.EntityEditorClientSearchBox === "undefined")
 
 				this._multifieldContainer = BX.remove(this._multifieldContainer);
 
-				this._phoneInput = this._maskedPhone = this._emailInput = null;
+				this._phoneInput = this._maskedPhone = this._emailInput = this._phoneCountryCodeInput = null;
 				this._phoneId = this._emailId = "";
 
 				this._hasMultifieldLayout = false;
@@ -643,7 +667,12 @@ if(typeof BX.Crm.EntityEditorClientSearchBox === "undefined")
 				if(this.hasPhoneField())
 				{
 					this._entityInfo.setMultifieldById(
-						{ "ID": this._phoneId, "TYPE_ID": "PHONE", "VALUE": this.getPhoneFieldValue() },
+						{
+							"ID": this._phoneId,
+							"TYPE_ID": "PHONE",
+							"VALUE": this.getPhoneFieldValue(),
+							"VALUE_COUNTRY_CODE": this.getPhoneCountryCode(),
+						},
 						this._phoneId
 					);
 				}
@@ -963,6 +992,7 @@ if(typeof BX.Crm.EntityEditorClientSearchBox === "undefined")
 						});
 						fieldType = 'current';
 					}
+
 					fields[fieldType].push({
 						'name': 'PHONE',
 						'title': BX.message("CRM_EDITOR_PHONE"),
@@ -973,7 +1003,10 @@ if(typeof BX.Crm.EntityEditorClientSearchBox === "undefined")
 							'change':  BX.message("CRM_EDITOR_PHONE")
 						},
 						'showTitle': false,
-						'virtual': true
+						'virtual': true,
+						'options': this._parentField && this._parentField.getSchemeElement()
+							? this._parentField.getSchemeElement()._options
+							: {}
 					});
 
 					fieldType = 'available';
@@ -1073,10 +1106,12 @@ if(typeof BX.Crm.EntityEditorClientSearchBox === "undefined")
 					);
 
 					var values = {};
+					var extraData = {};
 					var phones = this._entityInfo.getPhones();
 					if(phones.length > 0)
 					{
 						values['PHONE'] = BX.prop.getString(phones[0], "VALUE", "");
+						extraData['EXTRA'] = BX.prop.getObject(phones[0], "VALUE_EXTRA", {});
 					}
 					var emails = this._entityInfo.getEmails();
 					if(emails.length > 0)
@@ -1100,7 +1135,8 @@ if(typeof BX.Crm.EntityEditorClientSearchBox === "undefined")
 								this._editor.getEntityTypeId(),
 								this._entityInfo.getId(),
 								{
-									data: values
+									data: values,
+									extraData: extraData
 								}
 							),
 							config: config,
@@ -1157,6 +1193,7 @@ if(typeof BX.Crm.EntityEditorClientSearchBox === "undefined")
 						}
 					);
 				}
+
 				return this._clientEntityEditor;
 			},
 			isClientEntityEditorDataLoaded: function()
@@ -1218,7 +1255,7 @@ if(typeof BX.Crm.EntityEditorClientSearchBox === "undefined")
 					return this._phoneInput.value;
 				}
 			},
-			setPhoneFieldValue: function(value)
+			setPhoneFieldValue: function(value, countryCode)
 			{
 				if (this._clientEntityEditorEnabled)
 				{
@@ -1226,7 +1263,24 @@ if(typeof BX.Crm.EntityEditorClientSearchBox === "undefined")
 				}
 				else
 				{
-					this._maskedPhone.setValue((this._phoneInput.value = value));
+					this._maskedPhone.setValue((this._phoneInput.value = value), countryCode);
+				}
+			},
+			getPhoneCountryCode: function()
+			{
+				if (this._clientEntityEditorEnabled)
+				{
+					var control = this.getClientEditorField('PHONE');
+					if (control)
+					{
+						return control.getPhoneCountryCodeInputValue();
+					}
+
+					return '';
+				}
+				else
+				{
+					return this._phoneCountryCodeInput.value;
 				}
 			},
 			hasEmailField: function()
@@ -1329,19 +1383,36 @@ if(typeof BX.Crm.EntityEditorClientSearchBox === "undefined")
 					100
 				);
 			},
-			onPhoneChange: function(e)
+
+			onPhoneChange: function(event)
 			{
-				if(!this._phoneInput)
+				if (!this._phoneInput)
 				{
 					return;
 				}
 
-				if(this.getPhoneFieldValue() !== e.value)
+				if (this.getPhoneFieldValue() !== event.value)
 				{
-					this.setPhoneFieldValue(e.value);
+					this.setPhoneFieldValue(event.value);
+					if (BX.Crm.PhoneNumberInput.isCountryCodeOnly(this.getPhoneFieldValue(), event.countryCode))
+					{
+						this._phoneInput.value = '';
+					}
+
 					this._multifieldChangeNotifier.notify();
 				}
 			},
+
+			onPhoneCountryChange: function(event)
+			{
+				if (!this._phoneCountryCodeInput)
+				{
+					return;
+				}
+
+				this._phoneCountryCodeInput.value = event.country;
+			},
+
 			onEmailChange: function(e)
 			{
 				this._multifieldChangeNotifier.notify();
@@ -1803,7 +1874,19 @@ if(typeof BX.Crm.EntityEditorClientSearchBox === "undefined")
 						params: { "ENTITY_TYPE_NAME": this._entityTypeName, "ENTITY_ID": entityId, "NORMALIZE_MULTIFIELDS": "Y" }
 					}
 				).load(BX.delegate(this.onEntityInfoLoad, this));
-			}
+			},
+			getCountryCode: function()
+			{
+				var phones = this._entityInfo.getPhones();
+				if (phones.length === 0)
+				{
+					return '';
+				}
+
+				var extraData = BX.prop.getObject(phones[0], "VALUE_EXTRA", {});
+
+				return BX.prop.getString(extraData, "COUNTRY_CODE", "");
+			},
 		};
 	if(typeof(BX.Crm.EntityEditorClientSearchBox.messages) === "undefined")
 	{

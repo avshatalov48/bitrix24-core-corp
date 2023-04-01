@@ -6,6 +6,8 @@
 jn.define('im/messenger/cache/recent', (require, exports, module) => {
 
 	const { Cache } = jn.require('im/messenger/cache/base');
+	const { throttle } = jn.require('utils/function');
+	const { clone } = jn.require('utils/object');
 
 	/**
 	 * @class RecentCache
@@ -17,6 +19,8 @@ jn.define('im/messenger/cache/recent', (require, exports, module) => {
 			super({
 				name: 'recent',
 			});
+
+			this.save = throttle(this.save, 10000, this);
 		}
 
 		save(state)

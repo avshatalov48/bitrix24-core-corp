@@ -71,6 +71,7 @@
 					type: 'store',  // type: store|crm
 					entityData: { // some initial product data
 						'DOCUMENT_CURRENCY': this.root.getDocumentCurrency(),
+						'DOCUMENT_TYPE': this.root.state.document ? this.root.state.document.type : null,
 						'NAME': defaultProductName,
 						'WIZARD_UNIQID': CommonUtils.getRandom(),
 					},

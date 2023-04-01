@@ -680,7 +680,7 @@ abstract class Entity
 			$data = [
 				'fields' => $preset['fields'] ?? [],
 				'preset_id' => $presetId,
-				'rows' => (empty($preset['fields']) ? [] : array_keys($preset['fields'])),
+				'rows' => (empty($preset['fields'] || !is_array($preset['fields'])) ? [] : array_keys($preset['fields'])),
 				'name' => $preset['name'],
 			];
 		}

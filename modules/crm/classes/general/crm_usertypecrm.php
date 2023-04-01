@@ -21,7 +21,7 @@ class CUserTypeCrm extends CUserTypeString
 		return ElementType::prepareSettings($userField);
 	}
 
-	function getSettingsHtml($userField = false, $additionalParameters, $varsFromForm)
+	function getSettingsHtml($userField, $additionalParameters, $varsFromForm)
 	{
 		return ElementType::getSettingsHtml($userField, $additionalParameters, $varsFromForm);
 	}

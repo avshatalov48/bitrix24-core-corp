@@ -3,8 +3,11 @@
 namespace Bitrix\Crm\Activity\Provider;
 
 use Bitrix\Crm\Activity\CommunicationStatistics;
+use Bitrix\Crm\Order\Payment;
 use Bitrix\Main\Event;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Error;
+use Bitrix\Main\Result;
 
 /**
  * Class Message
@@ -276,9 +279,32 @@ abstract class BaseMessage extends Base
 						'TYPE' => \CCrmFieldMulti::PHONE,
 						'VALUE' => $additionalFields['MESSAGE_TO']
 					]
-				]
+				],
+				'SETTINGS' => [
+					'FIELDS' => self::makeActivityFields($additionalFields),
+				],
 			]
 		);
+	}
+
+	private static function makeActivityFields(array $additionalFields): array
+	{
+		$result = [];
+
+		if (
+			isset($additionalFields['ENTITIES']['PAYMENT'])
+			&& $additionalFields['ENTITIES']['PAYMENT'] instanceof Payment
+		)
+		{
+			$payment = $additionalFields['ENTITIES']['PAYMENT'];
+
+			$result = [
+				'ORDER_ID' => $payment->getOrder()->getId(),
+				'PAYMENT_ID' => $payment->getId(),
+			];
+		}
+
+		return $result;
 	}
 
 	/**
@@ -297,5 +323,17 @@ abstract class BaseMessage extends Base
 	protected static function getLangProviderId(): string
 	{
 		return str_replace('CRM_', '', static::getId());
+	}
+
+	public static function checkFields($action, &$fields, $id, $params = null)
+	{
+		$result = new Result();
+
+		if ($action === 'UPDATE' && ($fields['COMPLETED'] ?? 'Y') === 'N')
+		{
+			$result->addError(new Error(Loc::getMessage('CRM_ACTIVITY_PROVIDER_BASEMESSAGE_CAN_NOT_UNCOMPLETE')));
+		}
+
+		return $result;
 	}
 }

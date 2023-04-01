@@ -1,5 +1,6 @@
 <?php
 
+use Bitrix\Ldap\Internal\Security\Password;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Authentication\ApplicationPasswordTable;
 
@@ -1257,7 +1258,7 @@ class CLDAP
 						$arLdapUser["EMAIL"] = COption::GetOptionString("ldap", "default_email", 'no@email');
 					}
 
-					$arLdapUser['PASSWORD'] = uniqid(rand(), true);
+					$arLdapUser['PASSWORD'] = (string)(new Password());
 					$ID = $USER->Add($arLdapUser);
 				}
 				else

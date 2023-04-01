@@ -255,6 +255,7 @@ class Common
 				)
 			)
 			{
+				$previousFields = $entity::GetByID($id, false) ?: [];
 				if ($entity->Update($id, $updateFields, true, true, $options))
 				{
 					$errors = [];
@@ -264,6 +265,14 @@ class Common
 						\CCrmBizProcEventType::Edit,
 						$errors
 					);
+
+					//Region automation
+					if (\Bitrix\Crm\Automation\Factory::isAutomationRunnable(\CCrmOwnerType::ResolveID($type)))
+					{
+						$starter = new \Bitrix\Crm\Automation\Starter(\CCrmOwnerType::ResolveID($type), $id);
+						$starter->runOnUpdate($updateFields, $previousFields);
+					}
+					//End region
 				}
 
 				$result = true;

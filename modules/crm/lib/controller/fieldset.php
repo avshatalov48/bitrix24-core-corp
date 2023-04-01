@@ -11,9 +11,9 @@ class FieldSet extends Main\Engine\JsonController
 		return [];
 	}
 
-	public function loadAction(int $entityTypeId, int $entityId): array
+	public function loadAction(int $entityTypeId, int $entityId, ?int $presetId = null): array
 	{
-		$item = Crm\Integration\Sign\Form::getFieldSet($entityTypeId);
+		$item = Crm\Integration\Sign\Form::getFieldSet($entityTypeId, $presetId);
 		if (!$item)
 		{
 			$this->addError(new Main\Error("FieldSet not found for entity type `$entityTypeId`"));
@@ -24,7 +24,8 @@ class FieldSet extends Main\Engine\JsonController
 		$values = Crm\Integration\Sign\Form::getFieldSetValues(
 			$entityTypeId,
 			$entityId,
-			['appendExtended' => true]
+			['appendExtended' => true],
+			$presetId
 		);
 
 		$rqId = (int)($values['extended']['requisiteId'] ?? 0);
@@ -81,6 +82,11 @@ class FieldSet extends Main\Engine\JsonController
 			$field['value'] = $value;
 			$field['valuePrintable'] = $value;
 			$fieldEntityTypeId = $field['editing']['entityTypeId'];
+
+			if (!$fieldEntityTypeId)
+			{
+				continue;
+			}
 
 			$field['editing']['url'] =
 				($fieldEntityTypeId === \CCrmOwnerType::Requisite)

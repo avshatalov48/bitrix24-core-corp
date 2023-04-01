@@ -1,2344 +1,7 @@
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,pull_client,crm_activity_todoEditor,crm_datetime,crm_timeline_tools,main_core_events,crm_timeline_item,ui_vue,main_core) {
+(function (exports,crm_activity_todoEditor,main_core_events,crm_datetime,crm_timeline_tools,crm_timeline_item,main_core) {
 	'use strict';
-
-	/** @memberof BX.Crm.Timeline.Types */
-	const Item = {
-	  undefined: 0,
-	  activity: 1,
-	  creation: 2,
-	  modification: 3,
-	  link: 4,
-	  unlink: 5,
-	  mark: 6,
-	  comment: 7,
-	  wait: 8,
-	  bizproc: 9,
-	  conversion: 10,
-	  sender: 11,
-	  document: 12,
-	  restoration: 13,
-	  order: 14,
-	  orderCheck: 15,
-	  scoring: 16,
-	  externalNotification: 17,
-	  finalSummary: 18,
-	  delivery: 19,
-	  finalSummaryDocuments: 20,
-	  storeDocument: 21,
-	  productCompilation: 22,
-	  signDocument: 23
-	};
-	/** @memberof BX.Crm.Timeline.Types */
-
-	const Mark = {
-	  undefined: 0,
-	  waiting: 1,
-	  success: 2,
-	  renew: 3,
-	  ignored: 4,
-	  failed: 5
-	};
-	/** @memberof BX.Crm.Timeline.Types */
-
-	const Delivery = {
-	  undefined: 0,
-	  taxiEstimationRequest: 1,
-	  taxiCallRequest: 2,
-	  taxiCancelledByManager: 3,
-	  taxiCancelledByDriver: 4,
-	  taxiPerformerNotFound: 5,
-	  taxiSmsProviderIssue: 6,
-	  taxiReturnedFinish: 7,
-	  deliveryMessage: 101,
-	  deliveryCalculation: 102
-	};
-	/** @memberof BX.Crm.Timeline.Types */
-
-	const Order = {
-	  encourageBuyProducts: 100
-	};
-	/** @memberof BX.Crm.Timeline.Types */
-
-	const EditorMode = {
-	  view: 1,
-	  edit: 2
-	};
-	/** @memberof BX.Crm.Timeline.Types */
-
-	const Compilation = {
-	  productList: 1,
-	  orderExists: 2,
-	  compilationViewed: 3,
-	  newDealCreated: 4
-	};
-
-	var types = /*#__PURE__*/Object.freeze({
-		Item: Item,
-		Mark: Mark,
-		Delivery: Delivery,
-		Order: Order,
-		EditorMode: EditorMode,
-		Compilation: Compilation
-	});
-
-	/** @memberof BX.Crm.Timeline */
-
-	let CompatibleItem = /*#__PURE__*/function (_Item) {
-	  babelHelpers.inherits(CompatibleItem, _Item);
-
-	  function CompatibleItem() {
-	    var _this;
-
-	    babelHelpers.classCallCheck(this, CompatibleItem);
-	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(CompatibleItem).call(this));
-	    _this._id = "";
-	    _this._settings = {};
-	    _this._data = {};
-	    _this._container = null;
-	    _this._typeCategoryId = null;
-	    _this._associatedEntityData = null;
-	    _this._associatedEntityTypeId = null;
-	    _this._associatedEntityId = null;
-	    _this._isContextMenuShown = false;
-	    _this._contextMenuButton = null;
-	    _this._activityEditor = null;
-	    _this._actions = [];
-	    _this._actionContainer = null;
-	    _this._vueComponent = null;
-	    _this._vueComponentMountedNode = null;
-	    _this._existedStreamItemDeadLine = null;
-	    return _this;
-	  }
-
-	  babelHelpers.createClass(CompatibleItem, [{
-	    key: "initialize",
-	    value: function initialize(id, settings) {
-	      this._setId(id);
-
-	      this._settings = settings ? settings : {};
-	      this._container = this.getSetting("container");
-
-	      if (!BX.type.isPlainObject(settings['data'])) {
-	        throw "Item. A required parameter 'data' is missing.";
-	      }
-
-	      this._data = settings['data'];
-	      this._activityEditor = this.getSetting("activityEditor");
-	      this._vueComponent = this.getSetting("vueComponent");
-	      this.doInitialize();
-	    }
-	  }, {
-	    key: "doInitialize",
-	    value: function doInitialize() {}
-	  }, {
-	    key: "getId",
-	    value: function getId() {
-	      return this._id;
-	    }
-	  }, {
-	    key: "getSetting",
-	    value: function getSetting(name, defaultval) {
-	      return this._settings.hasOwnProperty(name) ? this._settings[name] : defaultval;
-	    }
-	  }, {
-	    key: "getData",
-	    value: function getData() {
-	      return this._data;
-	    }
-	  }, {
-	    key: "setData",
-	    value: function setData(data) {
-	      if (BX.type.isPlainObject(data)) {
-	        this._data = data;
-	        this.clearCachedData();
-	      }
-	    }
-	  }, {
-	    key: "getSort",
-	    value: function getSort() {
-	      var _this$_data$sort;
-
-	      return (_this$_data$sort = this._data['sort']) !== null && _this$_data$sort !== void 0 ? _this$_data$sort : [];
-	    }
-	  }, {
-	    key: "getAssociatedEntityData",
-	    value: function getAssociatedEntityData() {
-	      if (this._associatedEntityData === null) {
-	        this._associatedEntityData = BX.type.isPlainObject(this._data["ASSOCIATED_ENTITY"]) ? this._data["ASSOCIATED_ENTITY"] : {};
-	      }
-
-	      return this._associatedEntityData;
-	    }
-	  }, {
-	    key: "getAssociatedEntityTypeId",
-	    value: function getAssociatedEntityTypeId() {
-	      if (this._associatedEntityTypeId === null) {
-	        this._associatedEntityTypeId = BX.prop.getInteger(this._data, "ASSOCIATED_ENTITY_TYPE_ID", 0);
-	      }
-
-	      return this._associatedEntityTypeId;
-	    }
-	  }, {
-	    key: "getAssociatedEntityId",
-	    value: function getAssociatedEntityId() {
-	      if (this._associatedEntityId === null) {
-	        this._associatedEntityId = BX.prop.getInteger(this._data, "ASSOCIATED_ENTITY_ID", 0);
-	      }
-
-	      return this._associatedEntityId;
-	    }
-	  }, {
-	    key: "setAssociatedEntityData",
-	    value: function setAssociatedEntityData(associatedEntityData) {
-	      if (!BX.type.isPlainObject(associatedEntityData)) {
-	        associatedEntityData = {};
-	      }
-
-	      const data = this._data;
-	      data.ASSOCIATED_ENTITY = associatedEntityData;
-	      this.setData(data);
-	    }
-	  }, {
-	    key: "hasPermissions",
-	    value: function hasPermissions() {
-	      const entityData = this.getAssociatedEntityData();
-	      return BX.type.isPlainObject(entityData["PERMISSIONS"]);
-	    }
-	  }, {
-	    key: "getPermissions",
-	    value: function getPermissions() {
-	      return BX.prop.getObject(this.getAssociatedEntityData(), "PERMISSIONS", {});
-	    }
-	  }, {
-	    key: "setPermissions",
-	    value: function setPermissions(permissions) {
-	      const data = this._data;
-
-	      if (!main_core.Type.isPlainObject(data.ASSOCIATED_ENTITY)) {
-	        data.ASSOCIATED_ENTITY = {};
-	      }
-
-	      data.ASSOCIATED_ENTITY.PERMISSIONS = permissions;
-	      this.setData(data);
-	    }
-	  }, {
-	    key: "getTextDataParam",
-	    value: function getTextDataParam(name) {
-	      return BX.prop.getString(this._data, name, "");
-	    }
-	  }, {
-	    key: "getObjectDataParam",
-	    value: function getObjectDataParam(name) {
-	      return BX.prop.getObject(this._data, name, {});
-	    }
-	  }, {
-	    key: "getArrayDataParam",
-	    value: function getArrayDataParam(name) {
-	      return BX.prop.getArray(this._data, name, []);
-	    }
-	  }, {
-	    key: "getTypeId",
-	    value: function getTypeId() {
-	      return Item.undefined;
-	    }
-	  }, {
-	    key: "getTypeCategoryId",
-	    value: function getTypeCategoryId() {
-	      if (this._typeCategoryId === null) {
-	        this._typeCategoryId = BX.prop.getInteger(this._data, "TYPE_CATEGORY_ID", 0);
-	      }
-
-	      return this._typeCategoryId;
-	    }
-	  }, {
-	    key: "getContainer",
-	    value: function getContainer() {
-	      return this._container;
-	    }
-	  }, {
-	    key: "setContainer",
-	    value: function setContainer(container) {
-	      this._container = BX.type.isElementNode(container) ? container : null;
-	    }
-	  }, {
-	    key: "layout",
-	    value: function layout(options) {
-	      if (!BX.type.isElementNode(this._container)) {
-	        throw "Item. Container is not assigned.";
-	      }
-
-	      this.prepareLayout(options); //region Actions
-
-	      /**/
-
-	      this.prepareActions();
-	      const actionQty = this._actions.length;
-
-	      for (let i = 0; i < actionQty; i++) {
-	        this._actions[i].layout();
-	      }
-
-	      this.showActions(actionQty > 0);
-	      /**/
-	      //endregion
-	    }
-	  }, {
-	    key: "makeVueComponent",
-	    value: function makeVueComponent(options, mode) {
-	      if (this._vueComponentMountedNode) {
-	        return this._vueComponentMountedNode;
-	      }
-
-	      if (!this._vueComponent) {
-	        return null;
-	      }
-
-	      const app = new this._vueComponent({
-	        propsData: {
-	          self: this,
-	          langMessages: CompatibleItem.messages,
-	          mode: mode
-	        }
-	      });
-	      app.$mount();
-	      this._vueComponentMountedNode = app.$el;
-	      return this._vueComponentMountedNode;
-	    }
-	  }, {
-	    key: "prepareLayout",
-	    value: function prepareLayout(options) {}
-	  }, {
-	    key: "prepareActions",
-	    value: function prepareActions() {}
-	  }, {
-	    key: "showActions",
-	    value: function showActions(show) {}
-	  }, {
-	    key: "clearCachedData",
-	    value: function clearCachedData() {
-	      this._typeCategoryId = null;
-	      this._associatedEntityData = null;
-	      this._associatedEntityTypeId = null;
-	      this._associatedEntityId = null;
-	    }
-	  }, {
-	    key: "isDone",
-	    value: function isDone() {
-	      return false;
-	    }
-	  }, {
-	    key: "markAsDone",
-	    value: function markAsDone(isDone) {}
-	  }, {
-	    key: "view",
-	    value: function view() {}
-	  }, {
-	    key: "edit",
-	    value: function edit() {}
-	  }, {
-	    key: "fasten",
-	    value: function fasten() {}
-	  }, {
-	    key: "unfasten",
-	    value: function unfasten() {}
-	  }, {
-	    key: "remove",
-	    value: function remove() {}
-	  }, {
-	    key: "cutOffText",
-	    value: function cutOffText(text, length) {
-	      if (!BX.type.isNumber(length)) {
-	        length = 0;
-	      }
-
-	      if (length <= 0 || text.length <= length) {
-	        return text;
-	      }
-
-	      let offset = length - 1;
-	      const whilespaceOffset = text.substring(offset).search(/\s/i);
-
-	      if (whilespaceOffset > 0) {
-	        offset += whilespaceOffset;
-	      }
-
-	      return text.substring(0, offset);
-	    }
-	  }, {
-	    key: "prepareMultilineCutOffElements",
-	    value: function prepareMultilineCutOffElements(text, length, clickHandler) {
-	      if (!BX.type.isNumber(length)) {
-	        length = 0;
-	      }
-
-	      if (length <= 0 || text.length <= length) {
-	        return [BX.util.htmlspecialchars(text).replace(/(?:\r\n|\r|\n)/g, '<br>')];
-	      }
-
-	      let offset = length - 1;
-	      const whilespaceOffset = text.substring(offset).search(/\s/i);
-
-	      if (whilespaceOffset > 0) {
-	        offset += whilespaceOffset;
-	      }
-
-	      return [BX.util.htmlspecialchars(text.substring(0, offset)).replace(/(?:\r\n|\r|\n)/g, '<br>') + "&hellip;&nbsp;", BX.create("A", {
-	        attrs: {
-	          className: "crm-entity-stream-content-letter-more",
-	          href: "#"
-	        },
-	        events: {
-	          click: clickHandler
-	        },
-	        text: this.getMessage("details")
-	      })];
-	    }
-	  }, {
-	    key: "prepareCutOffElements",
-	    value: function prepareCutOffElements(text, length, clickHandler) {
-	      if (!BX.type.isNumber(length)) {
-	        length = 0;
-	      }
-
-	      if (length <= 0 || text.length <= length) {
-	        return [BX.util.htmlspecialchars(text)];
-	      }
-
-	      let offset = length - 1;
-	      const whilespaceOffset = text.substring(offset).search(/\s/i);
-
-	      if (whilespaceOffset > 0) {
-	        offset += whilespaceOffset;
-	      }
-
-	      return [BX.util.htmlspecialchars(text.substring(0, offset)) + "&hellip;&nbsp;", BX.create("A", {
-	        attrs: {
-	          className: "crm-entity-stream-content-letter-more",
-	          href: "#"
-	        },
-	        events: {
-	          click: clickHandler
-	        },
-	        text: this.getMessage("details")
-	      })];
-	    }
-	  }, {
-	    key: "prepareAuthorLayout",
-	    value: function prepareAuthorLayout() {
-	      const authorInfo = this.getObjectDataParam("AUTHOR", null);
-
-	      if (!authorInfo) {
-	        return null;
-	      }
-
-	      const showUrl = BX.prop.getString(authorInfo, "SHOW_URL", "");
-
-	      if (showUrl === "") {
-	        return null;
-	      }
-
-	      const link = BX.create("A", {
-	        attrs: {
-	          className: "ui-icon ui-icon-common-user crm-entity-stream-content-detail-employee",
-	          href: showUrl,
-	          target: "_blank",
-	          title: BX.prop.getString(authorInfo, "FORMATTED_NAME", "")
-	        },
-	        children: [BX.create('i', {})]
-	      });
-	      const imageUrl = BX.prop.getString(authorInfo, "IMAGE_URL", "");
-
-	      if (imageUrl !== "") {
-	        link.children[0].style.backgroundImage = "url('" + encodeURI(imageUrl) + "')";
-	        link.children[0].style.backgroundSize = "21px";
-	      }
-
-	      return link;
-	    }
-	  }, {
-	    key: "onActivityCreate",
-	    value: function onActivityCreate(activity, data) {}
-	  }, {
-	    key: "isContextMenuEnabled",
-	    value: function isContextMenuEnabled() {
-	      return false;
-	    }
-	  }, {
-	    key: "prepareContextMenuButton",
-	    value: function prepareContextMenuButton() {
-	      this._contextMenuButton = BX.create("DIV", {
-	        attrs: {
-	          className: "crm-entity-stream-section-context-menu"
-	        },
-	        events: {
-	          click: BX.delegate(this.onContextMenuButtonClick, this)
-	        }
-	      });
-	      return this._contextMenuButton;
-	    }
-	  }, {
-	    key: "onContextMenuButtonClick",
-	    value: function onContextMenuButtonClick(e) {
-	      if (!this._isContextMenuShown) {
-	        this.openContextMenu();
-	      } else {
-	        this.closeContextMenu();
-	      }
-	    }
-	  }, {
-	    key: "openContextMenu",
-	    value: function openContextMenu() {
-	      const menuItems = this.prepareContextMenuItems();
-
-	      if (typeof IntranetExtensions !== "undefined") {
-	        menuItems.push(IntranetExtensions);
-	      }
-
-	      if (menuItems.length === 0) {
-	        return;
-	      }
-
-	      BX.PopupMenu.show(this._id, this._contextMenuButton, menuItems, {
-	        offsetTop: 0,
-	        offsetLeft: 16,
-	        angle: {
-	          position: "top",
-	          offset: 0
-	        },
-	        events: {
-	          onPopupShow: BX.delegate(this.onContextMenuShow, this),
-	          onPopupClose: BX.delegate(this.onContextMenuClose, this),
-	          onPopupDestroy: BX.delegate(this.onContextMenuDestroy, this)
-	        }
-	      });
-	      this._contextMenu = BX.PopupMenu.currentItem;
-	    }
-	  }, {
-	    key: "closeContextMenu",
-	    value: function closeContextMenu() {
-	      if (this._contextMenu) {
-	        this._contextMenu.close();
-	      }
-	    }
-	  }, {
-	    key: "prepareContextMenuItems",
-	    value: function prepareContextMenuItems() {
-	      return [];
-	    }
-	  }, {
-	    key: "onContextMenuShow",
-	    value: function onContextMenuShow() {
-	      this._isContextMenuShown = true;
-	      BX.addClass(this._contextMenuButton, "active");
-	    }
-	  }, {
-	    key: "onContextMenuClose",
-	    value: function onContextMenuClose() {
-	      if (this._contextMenu) {
-	        this._contextMenu.popupWindow.destroy();
-	      }
-	    }
-	  }, {
-	    key: "onContextMenuDestroy",
-	    value: function onContextMenuDestroy() {
-	      this._isContextMenuShown = false;
-	      BX.removeClass(this._contextMenuButton, "active");
-	      this._contextMenu = null;
-
-	      if (typeof BX.PopupMenu.Data[this._id] !== "undefined") {
-	        delete BX.PopupMenu.Data[this._id];
-	      }
-	    }
-	  }, {
-	    key: "getMessage",
-	    value: function getMessage(name) {
-	      const m = CompatibleItem.messages;
-	      return m.hasOwnProperty(name) ? m[name] : name;
-	    }
-	  }], [{
-	    key: "getUserTimezoneOffset",
-	    value: function getUserTimezoneOffset() {
-	      return crm_datetime.TimezoneOffset.USER_TO_SERVER;
-	    }
-	  }]);
-	  return CompatibleItem;
-	}(crm_timeline_item.Item);
-
-	babelHelpers.defineProperty(CompatibleItem, "messages", {});
-
-	/** @memberof BX.Crm.Timeline.Animation */
-	let Fasten = /*#__PURE__*/function () {
-	  function Fasten() {
-	    babelHelpers.classCallCheck(this, Fasten);
-	    this._id = "";
-	    this._settings = {};
-	    this._initialItem = null;
-	    this._finalItem = null;
-	    this._events = null;
-	  }
-
-	  babelHelpers.createClass(Fasten, [{
-	    key: "initialize",
-	    value: function initialize(id, settings) {
-	      this._id = BX.type.isNotEmptyString(id) ? id : BX.util.getRandomString(4);
-	      this._settings = settings ? settings : {};
-	      this._initialItem = this.getSetting("initialItem");
-	      this._finalItem = this.getSetting("finalItem");
-	      this._anchor = this.getSetting("anchor");
-	      this._events = this.getSetting("events", {});
-	    }
-	  }, {
-	    key: "getId",
-	    value: function getId() {
-	      return this._id;
-	    }
-	  }, {
-	    key: "getSetting",
-	    value: function getSetting(name, defaultValue) {
-	      return this._settings.hasOwnProperty(name) ? this._settings[name] : defaultValue;
-	    }
-	  }, {
-	    key: "addFixedHistoryItem",
-	    value: function addFixedHistoryItem() {
-	      const node = this._finalItem.getWrapper();
-
-	      BX.addClass(node, 'crm-entity-stream-section-animate-start');
-
-	      if (this._anchor.parentNode && node) {
-	        this._anchor.parentNode.insertBefore(node, this._anchor.nextSibling);
-	      }
-
-	      setTimeout(BX.delegate(function () {
-	        BX.removeClass(node, 'crm-entity-stream-section-animate-start');
-	      }, this), 0);
-	    }
-	  }, {
-	    key: "run",
-	    value: function run() {
-	      const node = this._initialItem.getWrapper();
-
-	      this._clone = node.cloneNode(true);
-	      BX.addClass(this._clone, 'crm-entity-stream-section-animate-start crm-entity-stream-section-top-fixed');
-	      this._startPosition = BX.pos(node);
-	      this._clone.style.position = "absolute";
-	      this._clone.style.width = this._startPosition.width + "px";
-	      let _cloneHeight = this._startPosition.height;
-	      const _minHeight = 65;
-	      const _sumPaddingContent = 18;
-	      if (_cloneHeight < _sumPaddingContent + _minHeight) _cloneHeight = _sumPaddingContent + _minHeight;
-	      this._clone.style.height = _cloneHeight + "px";
-	      this._clone.style.top = this._startPosition.top + "px";
-	      this._clone.style.left = this._startPosition.left + "px";
-	      this._clone.style.zIndex = 960;
-	      document.body.appendChild(this._clone);
-	      setTimeout(BX.proxy(function () {
-	        BX.addClass(this._clone, "crm-entity-stream-section-casper");
-	      }, this), 0);
-	      this._anchorPosition = BX.pos(this._anchor);
-	      const finish = {
-	        top: this._anchorPosition.top,
-	        height: _cloneHeight + 15,
-	        opacity: 1
-	      };
-
-	      const _difference = this._startPosition.top - this._anchorPosition.bottom;
-
-	      const _deepHistoryLimit = 2 * (document.body.clientHeight + this._startPosition.height);
-
-	      if (_difference > _deepHistoryLimit) {
-	        finish.top = this._startPosition.top - _deepHistoryLimit;
-	        finish.opacity = 0;
-	      }
-
-	      let _duration = Math.abs(finish.top - this._startPosition.top) * 2;
-
-	      _duration = _duration < 1500 ? 1500 : _duration;
-	      const movingEvent = new BX.easing({
-	        duration: _duration,
-	        start: {
-	          top: this._startPosition.top,
-	          height: 0,
-	          opacity: 1
-	        },
-	        finish: finish,
-	        transition: BX.easing.makeEaseOut(BX.easing.transitions.quart),
-	        step: BX.proxy(function (state) {
-	          this._clone.style.top = state.top + "px";
-	          this._clone.style.opacity = state.opacity;
-	          this._anchor.style.height = state.height + "px";
-	        }, this),
-	        complete: BX.proxy(function () {
-	          this.finish();
-	        }, this)
-	      });
-	      movingEvent.animate();
-	    }
-	  }, {
-	    key: "finish",
-	    value: function finish() {
-	      this._anchor.style.height = 0;
-	      this.addFixedHistoryItem();
-	      BX.remove(this._clone);
-
-	      if (BX.type.isFunction(this._events["complete"])) {
-	        this._events["complete"]();
-	      }
-	    }
-	  }], [{
-	    key: "create",
-	    value: function create(id, settings) {
-	      const self = new Fasten();
-	      self.initialize(id, settings);
-	      return self;
-	    }
-	  }]);
-	  return Fasten;
-	}();
-
-	/** @memberof BX.Crm.Timeline.Items */
-
-	let History = /*#__PURE__*/function (_CompatibleItem) {
-	  babelHelpers.inherits(History, _CompatibleItem);
-
-	  function History() {
-	    var _this;
-
-	    babelHelpers.classCallCheck(this, History);
-	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(History).call(this));
-	    _this._history = null;
-	    _this._fixedHistory = null;
-	    _this._typeId = null;
-	    _this._createdTime = null;
-	    _this._isFixed = false;
-	    _this._headerClickHandler = BX.delegate(_this.onHeaderClick, babelHelpers.assertThisInitialized(_this));
-	    return _this;
-	  }
-
-	  babelHelpers.createClass(History, [{
-	    key: "doInitialize",
-	    value: function doInitialize() {
-	      this._history = this.getSetting("history");
-	      this._fixedHistory = this.getSetting("fixedHistory");
-	    }
-	  }, {
-	    key: "getTypeId",
-	    value: function getTypeId() {
-	      if (this._typeId === null) {
-	        this._typeId = BX.prop.getInteger(this._data, "TYPE_ID", Item.undefined);
-	      }
-
-	      return this._typeId;
-	    }
-	  }, {
-	    key: "getTitle",
-	    value: function getTitle() {
-	      return "";
-	    }
-	  }, {
-	    key: "isContextMenuEnabled",
-	    value: function isContextMenuEnabled() {
-	      return !this.isReadOnly();
-	    }
-	  }, {
-	    key: "getCreatedTimestamp",
-	    value: function getCreatedTimestamp() {
-	      return this.getTextDataParam("CREATED_SERVER");
-	    }
-	  }, {
-	    key: "getCreatedTime",
-	    value: function getCreatedTime() {
-	      if (this._createdTime === null) {
-	        const time = BX.parseDate(this.getCreatedTimestamp(), false, "YYYY-MM-DD", "YYYY-MM-DD HH:MI:SS");
-	        this._createdTime = new crm_timeline_tools.DatetimeConverter(time).toUserTime().getValue();
-	      }
-
-	      return this._createdTime;
-	    }
-	  }, {
-	    key: "getCreatedDate",
-	    value: function getCreatedDate() {
-	      return BX.prop.extractDate(new Date(this.getCreatedTime().getTime()));
-	    }
-	  }, {
-	    key: "getOwnerInfo",
-	    value: function getOwnerInfo() {
-	      return this._history ? this._history.getOwnerInfo() : null;
-	    }
-	  }, {
-	    key: "getOwnerTypeId",
-	    value: function getOwnerTypeId() {
-	      return BX.prop.getInteger(this.getOwnerInfo(), "ENTITY_TYPE_ID", BX.CrmEntityType.enumeration.undefined);
-	    }
-	  }, {
-	    key: "getOwnerId",
-	    value: function getOwnerId() {
-	      return BX.prop.getInteger(this.getOwnerInfo(), "ENTITY_ID", 0);
-	    }
-	  }, {
-	    key: "isReadOnly",
-	    value: function isReadOnly() {
-	      return this._history.isReadOnly();
-	    }
-	  }, {
-	    key: "isEditable",
-	    value: function isEditable() {
-	      return !this.isReadOnly();
-	    }
-	  }, {
-	    key: "isDone",
-	    value: function isDone() {
-	      const typeId = this.getTypeId();
-
-	      if (typeId === Item.activity) {
-	        const entityData = this.getAssociatedEntityData();
-	        return BX.CrmActivityStatus.isFinal(BX.prop.getInteger(entityData, "STATUS", 0));
-	      }
-
-	      return false;
-	    }
-	  }, {
-	    key: "isFixed",
-	    value: function isFixed() {
-	      return this._isFixed;
-	    }
-	    /**
-	     * deprecated
-	     */
-
-	  }, {
-	    key: "fasten",
-	    value: function fasten(e) {
-	      if (this._fixedHistory._items.length >= 3) {
-	        if (!this.fastenLimitPopup) {
-	          this.fastenLimitPopup = new BX.PopupWindow('timeline_fasten_limit_popup_' + this._id, this._switcher, {
-	            content: BX.message('CRM_TIMELINE_FASTEN_LIMIT_MESSAGE'),
-	            darkMode: true,
-	            autoHide: true,
-	            zIndex: 990,
-	            angle: true,
-	            closeByEsc: true,
-	            bindOptions: {
-	              forceBindPosition: true
-	            }
-	          });
-	        }
-
-	        this.fastenLimitPopup.show();
-	        this.closeContextMenu();
-	        return;
-	      }
-
-	      BX.ajax({
-	        url: this._history._serviceUrl,
-	        method: "POST",
-	        dataType: "json",
-	        data: {
-	          "ACTION": "CHANGE_FASTEN_ITEM",
-	          "VALUE": 'Y',
-	          "OWNER_TYPE_ID": this.getOwnerTypeId(),
-	          "OWNER_ID": this.getOwnerId(),
-	          "ID": this._id
-	        }
-	      });
-	      this.closeContextMenu();
-	    }
-	    /**
-	     * deprecated
-	     */
-
-	  }, {
-	    key: "onSuccessFasten",
-	    value: function onSuccessFasten(result) {
-	      if (result && BX.type.isNotEmptyString(result.ERROR)) return;
-
-	      if (!this.isFixed()) {
-	        this._data.IS_FIXED = 'Y';
-
-	        const fixedItem = this._fixedHistory.createItem(this._data);
-
-	        fixedItem._isFixed = true;
-
-	        this._fixedHistory.addItem(fixedItem, 0);
-
-	        fixedItem.layout({
-	          add: false
-	        });
-	        this.refreshLayout();
-	        const animation = Fasten.create("", {
-	          initialItem: this,
-	          finalItem: fixedItem,
-	          anchor: this._fixedHistory._anchor
-	        });
-	        animation.run();
-	      }
-
-	      this.closeContextMenu();
-	    }
-	    /**
-	     * deprecated
-	     */
-
-	  }, {
-	    key: "unfasten",
-	    value: function unfasten(e) {
-	      BX.ajax({
-	        url: this._history._serviceUrl,
-	        method: "POST",
-	        dataType: "json",
-	        data: {
-	          "ACTION": "CHANGE_FASTEN_ITEM",
-	          "VALUE": 'N',
-	          "OWNER_TYPE_ID": this.getOwnerTypeId(),
-	          "OWNER_ID": this.getOwnerId(),
-	          "ID": this._id
-	        }
-	      });
-	      this.closeContextMenu();
-	    }
-	    /**
-	     * deprecated
-	     */
-
-	  }, {
-	    key: "onSuccessUnfasten",
-	    value: function onSuccessUnfasten(result) {
-	      if (result && BX.type.isNotEmptyString(result.ERROR)) return;
-	      let item;
-	      let historyItem;
-
-	      if (this.isFixed()) {
-	        item = this;
-	        historyItem = this._history.findItemById(this._id);
-	      } else {
-	        item = this._fixedHistory.findItemById(this._id);
-	        historyItem = this;
-	      }
-
-	      if (item) {
-	        const index = this._fixedHistory.getItemIndex(item);
-
-	        item.clearAnimate();
-
-	        this._fixedHistory.removeItemByIndex(index);
-
-	        if (historyItem) {
-	          historyItem._data.IS_FIXED = 'N';
-	          historyItem.refreshLayout();
-	          BX.LazyLoad.showImages();
-	        }
-	      }
-	    }
-	  }, {
-	    key: "clearAnimate",
-	    value: function clearAnimate() {
-	      if (!BX.type.isDomNode(this._wrapper)) return;
-	      const wrapperPosition = BX.pos(this._wrapper);
-	      const hideEvent = new BX.easing({
-	        duration: 1000,
-	        start: {
-	          height: wrapperPosition.height,
-	          opacity: 1,
-	          marginBottom: 15
-	        },
-	        finish: {
-	          height: 0,
-	          opacity: 0,
-	          marginBottom: 0
-	        },
-	        transition: BX.easing.makeEaseOut(BX.easing.transitions.quart),
-	        step: BX.proxy(function (state) {
-	          this._wrapper.style.height = state.height + "px";
-	          this._wrapper.style.opacity = state.opacity;
-	          this._wrapper.style.marginBottom = state.marginBottom;
-	        }, this),
-	        complete: BX.proxy(function () {
-	          this.clearLayout();
-	        }, this)
-	      });
-	      hideEvent.animate();
-	    }
-	  }, {
-	    key: "getWrapperClassName",
-	    value: function getWrapperClassName() {
-	      return "";
-	    }
-	  }, {
-	    key: "getIconClassName",
-	    value: function getIconClassName() {
-	      return "crm-entity-stream-section-icon crm-entity-stream-section-icon-info";
-	    }
-	  }, {
-	    key: "prepareContentDetails",
-	    value: function prepareContentDetails() {
-	      return [];
-	    }
-	  }, {
-	    key: "prepareContent",
-	    value: function prepareContent() {
-	      let wrapperClassName = this.getWrapperClassName();
-
-	      if (wrapperClassName !== "") {
-	        wrapperClassName = "crm-entity-stream-section crm-entity-stream-section-history" + " " + wrapperClassName;
-	      } else {
-	        wrapperClassName = "crm-entity-stream-section crm-entity-stream-section-history";
-	      }
-
-	      const wrapper = BX.create("DIV", {
-	        attrs: {
-	          className: wrapperClassName
-	        }
-	      });
-	      wrapper.appendChild(BX.create("DIV", {
-	        attrs: {
-	          className: this.getIconClassName()
-	        }
-	      }));
-
-	      if (this.isContextMenuEnabled()) {
-	        main_core.Dom.append(this.prepareContextMenuButton(), wrapper);
-	      }
-
-	      const contentWrapper = BX.create("DIV", {
-	        attrs: {
-	          className: "crm-entity-stream-content-event"
-	        }
-	      });
-	      wrapper.appendChild(BX.create("DIV", {
-	        attrs: {
-	          className: "crm-entity-stream-section-content"
-	        },
-	        children: [contentWrapper]
-	      }));
-	      const header = BX.create("DIV", {
-	        attrs: {
-	          className: "crm-entity-stream-content-header"
-	        },
-	        children: [BX.create("DIV", {
-	          attrs: {
-	            className: "crm-entity-stream-content-event-title"
-	          },
-	          children: [BX.create("A", {
-	            attrs: {
-	              href: "#"
-	            },
-	            events: {
-	              click: this._headerClickHandler
-	            },
-	            text: this.getTitle()
-	          })]
-	        }), BX.create("SPAN", {
-	          attrs: {
-	            className: "crm-entity-stream-content-event-time"
-	          },
-	          text: this.formatTime(this.getCreatedTime())
-	        })]
-	      });
-	      contentWrapper.appendChild(header);
-	      contentWrapper.appendChild(BX.create("DIV", {
-	        attrs: {
-	          className: "crm-entity-stream-content-detail"
-	        },
-	        children: this.prepareContentDetails()
-	      })); //region Author
-
-	      const authorNode = this.prepareAuthorLayout();
-
-	      if (authorNode) {
-	        contentWrapper.appendChild(authorNode);
-	      } //endregion
-
-
-	      return wrapper;
-	    }
-	  }, {
-	    key: "prepareLayout",
-	    value: function prepareLayout(options) {
-	      const vueComponent = this.makeVueComponent(options, 'history');
-	      this._wrapper = vueComponent ? vueComponent : this.prepareContent();
-
-	      if (this._wrapper) {
-	        const enableAdd = BX.type.isPlainObject(options) ? BX.prop.getBoolean(options, "add", true) : true;
-
-	        if (enableAdd) {
-	          const anchor = BX.type.isPlainObject(options) && BX.type.isElementNode(options["anchor"]) ? options["anchor"] : null;
-
-	          if (anchor && anchor.nextSibling) {
-	            this._container.insertBefore(this._wrapper, anchor.nextSibling);
-	          } else {
-	            this._container.appendChild(this._wrapper);
-	          }
-	        }
-
-	        this.markAsTerminated(this._history.checkItemForTermination(this));
-	      }
-	    }
-	  }, {
-	    key: "onHeaderClick",
-	    value: function onHeaderClick(e) {
-	      this.view();
-	      e.preventDefault ? e.preventDefault() : e.returnValue = false;
-	    }
-	  }, {
-	    key: "prepareTitleLayout",
-	    value: function prepareTitleLayout() {
-	      return BX.create("SPAN", {
-	        attrs: {
-	          className: "crm-entity-stream-content-event-title"
-	        },
-	        text: this.getTitle()
-	      });
-	    }
-	  }, {
-	    key: "prepareFixedSwitcherLayout",
-	    value: function prepareFixedSwitcherLayout() {
-	      const isFixed = this.getTextDataParam("IS_FIXED") === 'Y';
-	      this._switcher = BX.create("span", {
-	        attrs: {
-	          className: "crm-entity-stream-section-top-fixed-btn"
-	        },
-	        events: {
-	          click: isFixed ? BX.delegate(this.unfasten, this) : BX.delegate(this.fasten, this)
-	        }
-	      });
-	      if (isFixed) BX.addClass(this._switcher, "crm-entity-stream-section-top-fixed-btn-active");
-
-	      if (!this.isReadOnly() && !isFixed) {
-	        const manager = this._history.getManager();
-
-	        if (!manager.isSpotlightShowed()) {
-	          manager.setSpotlightShowed();
-	          BX.addClass(this._switcher, "crm-entity-stream-section-top-fixed-btn-spotlight");
-	          const spotlight = new BX.SpotLight({
-	            targetElement: this._switcher,
-	            targetVertex: "middle-center",
-	            lightMode: false,
-	            id: "CRM_TIMELINE_FASTEN_SWITCHER",
-	            zIndex: 900,
-	            top: -3,
-	            left: -1,
-	            autoSave: true,
-	            content: BX.message('CRM_TIMELINE_SPOTLIGHT_FASTEN_MESSAGE')
-	          });
-	          spotlight.show();
-	        }
-	      }
-
-	      return this._switcher;
-	    }
-	  }, {
-	    key: "prepareHeaderLayout",
-	    value: function prepareHeaderLayout() {
-	      const header = BX.create("DIV", {
-	        attrs: {
-	          className: "crm-entity-stream-content-header"
-	        }
-	      });
-	      header.appendChild(this.prepareTitleLayout());
-	      const statusNode = this.getStatusNode();
-
-	      if (main_core.Type.isDomNode(statusNode)) {
-	        main_core.Dom.append(statusNode, header);
-	      }
-
-	      header.appendChild(BX.create("SPAN", {
-	        attrs: {
-	          className: "crm-entity-stream-content-event-time"
-	        },
-	        text: this.formatTime(this.getCreatedTime())
-	      }));
-	      return header;
-	    }
-	  }, {
-	    key: "getStatusNode",
-	    value: function getStatusNode() {
-	      return null;
-	    }
-	  }, {
-	    key: "onActivityCreate",
-	    value: function onActivityCreate(activity, data) {
-	      this._history.getManager().onActivityCreated(activity, data);
-	    }
-	  }, {
-	    key: "formatTime",
-	    value: function formatTime(time) {
-	      if (this.isFixed()) {
-	        return this._fixedHistory.formatTime(time);
-	      }
-
-	      return this._history.formatTime(time);
-	    }
-	  }], [{
-	    key: "create",
-	    value: function create(id, settings) {
-	      const self = new History();
-	      self.initialize(id, settings);
-	      return self;
-	    }
-	  }, {
-	    key: "isCounterEnabled",
-	    value: function isCounterEnabled(deadline) {
-	      if (!BX.type.isDate(deadline)) {
-	        return false;
-	      }
-
-	      let start = new Date();
-	      start.setHours(0);
-	      start.setMinutes(0);
-	      start.setSeconds(0);
-	      start.setMilliseconds(0);
-	      start = start.getTime();
-	      let end = new Date();
-	      end.setHours(23);
-	      end.setMinutes(59);
-	      end.setSeconds(59);
-	      end.setMilliseconds(999);
-	      end = end.getTime();
-	      const time = deadline.getTime();
-	      return time < start || time >= start && time <= end;
-	    }
-	  }]);
-	  return History;
-	}(CompatibleItem);
-
-	var HistoryItemMixin = {
-	  props: {
-	    self: {
-	      required: true,
-	      type: Object
-	    },
-	    langMessages: {
-	      required: false,
-	      type: Object
-	    }
-	  },
-	  computed: {
-	    data() {
-	      return this.self._data;
-	    },
-
-	    fields() {
-	      return this.data.FIELDS ? this.data.FIELDS : null;
-	    },
-
-	    author() {
-	      return this.data.AUTHOR ? this.data.AUTHOR : null;
-	    },
-
-	    createdAt() {
-	      return this.self instanceof History ? this.self.formatTime(this.self.getCreatedTime()) : '';
-	    }
-
-	  },
-	  methods: {
-	    getLangMessage(key) {
-	      return this.langMessages.hasOwnProperty(key) ? this.langMessages[key] : key;
-	    }
-
-	  }
-	};
-
-	var Author = {
-	  props: {
-	    author: {
-	      required: true,
-	      type: Object
-	    }
-	  },
-	  computed: {
-	    iStyle() {
-	      if (!this.author.IMAGE_URL) {
-	        return {};
-	      }
-
-	      return {
-	        'background-image': 'url(' + encodeURI(this.author.IMAGE_URL) + ')',
-	        'background-size': '21px'
-	      };
-	    }
-
-	  },
-	  // language=Vue
-	  template: `
-		<a
-			v-if="author.SHOW_URL"
-			:href="author.SHOW_URL"
-			target="_blank"
-			:title="author.FORMATTED_NAME"
-			class="ui-icon ui-icon-common-user crm-entity-stream-content-detail-employee"
-		>
-			<i :style="iStyle"></i>	
-		</a>
-	`
-	};
-
-	var component = ui_vue.Vue.extend({
-	  mixins: [HistoryItemMixin],
-	  components: {
-	    'author': Author
-	  },
-
-	  data() {
-	    return {
-	      entityData: null,
-	      messageId: null,
-	      text: null,
-	      title: null,
-	      status: {
-	        name: null,
-	        semantics: null,
-	        description: null
-	      },
-	      provider: null,
-	      isRefreshing: false
-	    };
-	  },
-
-	  created() {
-	    this.entityData = this.self.getAssociatedEntityData();
-
-	    if (this.entityData['MESSAGE_INFO']) {
-	      this.setMessageInfo(this.entityData['MESSAGE_INFO']);
-	    }
-
-	    pull_client.PULL.subscribe({
-	      moduleId: 'notifications',
-	      command: 'message_update',
-	      callback: params => {
-	        if (params.message.ID == this.messageId) {
-	          this.refresh();
-	        }
-	      }
-	    });
-
-	    if (this.entityData['PULL_TAG_NAME']) {
-	      pull_client.PULL.extendWatch(this.entityData['PULL_TAG_NAME']);
-	    }
-	  },
-
-	  methods: {
-	    setMessageInfo(messageInfo) {
-	      this.messageId = messageInfo['MESSAGE']['ID'];
-
-	      if (messageInfo['HISTORY_ITEMS'] && Array.isArray(messageInfo['HISTORY_ITEMS']) && messageInfo['HISTORY_ITEMS'].length > 0 && messageInfo['HISTORY_ITEMS'][0] && messageInfo['HISTORY_ITEMS'][0]['PROVIDER_DATA'] && messageInfo['HISTORY_ITEMS'][0]['PROVIDER_DATA']['DESCRIPTION']) {
-	        this.provider = messageInfo['HISTORY_ITEMS'][0]['PROVIDER_DATA']['DESCRIPTION'];
-	        this.title = this.provider + ' ' + main_core.Loc.getMessage('CRM_TIMELINE_NOTIFICATION_MESSAGE');
-	      } else {
-	        this.title = this.capitalizeFirstLetter(main_core.Loc.getMessage('CRM_TIMELINE_NOTIFICATION_MESSAGE'));
-	      }
-
-	      if (messageInfo['HISTORY_ITEMS'] && Array.isArray(messageInfo['HISTORY_ITEMS']) && messageInfo['HISTORY_ITEMS'].length > 0 && messageInfo['HISTORY_ITEMS'][0] && messageInfo['HISTORY_ITEMS'][0]['STATUS_DATA'] && messageInfo['HISTORY_ITEMS'][0]['STATUS_DATA']['DESCRIPTION']) {
-	        this.status.name = messageInfo['HISTORY_ITEMS'][0]['STATUS_DATA']['DESCRIPTION'];
-	        this.status.semantics = messageInfo['HISTORY_ITEMS'][0]['STATUS_DATA']['SEMANTICS'];
-	        this.status.description = messageInfo['HISTORY_ITEMS'][0]['ERROR_MESSAGE'];
-	      }
-
-	      this.text = messageInfo['MESSAGE']['TEXT'] ? messageInfo['MESSAGE']['TEXT'] : main_core.Loc.getMessage('CRM_TIMELINE_NOTIFICATION_NO_MESSAGE_TEXT_2');
-	    },
-
-	    refresh() {
-	      if (this.isRefreshing) {
-	        return;
-	      }
-
-	      this.isRefreshing = true;
-	      main_core.ajax.runAction('crm.timeline.notification.getmessageinfo', {
-	        data: {
-	          messageId: this.messageId
-	        }
-	      }).then(result => {
-	        this.setMessageInfo(result.data);
-	        this.isRefreshing = false;
-	      }).catch(result => {
-	        this.isRefreshing = false;
-	      });
-	    },
-
-	    viewActivity() {
-	      this.self.view();
-	    },
-
-	    capitalizeFirstLetter(str, locale = navigator.language) {
-	      return str.replace(/^\p{CWU}/u, char => char.toLocaleUpperCase(locale));
-	    }
-
-	  },
-	  computed: {
-	    communication() {
-	      return this.entityData['COMMUNICATION'] ? this.entityData['COMMUNICATION'] : null;
-	    },
-
-	    statusClass() {
-	      return {
-	        'crm-entity-stream-content-event-process': this.status.semantics === 'process',
-	        'crm-entity-stream-content-event-successful': this.status.semantics === 'success',
-	        'crm-entity-stream-content-event-missing': this.status.semantics === 'failure',
-	        'crm-entity-stream-content-event-error-tip': this.isStatusError
-	      };
-	    },
-
-	    isStatusError() {
-	      return this.status.semantics === 'failure' && !!this.status.description;
-	    },
-
-	    statusErrorDescription() {
-	      return this.isStatusError ? this.status.description : '';
-	    }
-
-	  },
-	  // language=Vue
-	  template: `
-		<div class="crm-entity-stream-section crm-entity-stream-section-history crm-entity-stream-section-sms">
-			<div class="crm-entity-stream-section-icon crm-entity-stream-section-icon-sms"></div>
-			<div class="crm-entity-stream-section-content">
-				<div class="crm-entity-stream-content-event">
-					<div class="crm-entity-stream-content-header">
-						<a
-							@click.prevent="viewActivity"
-							href="#"
-							class="crm-entity-stream-content-event-title"
-						>
-							{{title}}
-						</a>
-						<span
-							v-if="status"
-							:class="statusClass"
-							:title="statusErrorDescription"
-						>
-							{{status.name}}
-						</span>
-						<span class="crm-entity-stream-content-event-time">{{createdAt}}</span>
-					</div>
-					<div class="crm-entity-stream-content-detail">
-						<div class="crm-entity-stream-content-detail-sms">
-							<div class="crm-entity-stream-content-detail-sms-status">
-								${main_core.Loc.getMessage('CRM_TIMELINE_NOTIFICATION_VIA')} 
-								<strong>
-									${main_core.Loc.getMessage('CRM_TIMELINE_NOTIFICATION_BITRIX24')}
-								</strong>
-							</div>
-							<div class="crm-entity-stream-content-detail-sms-fragment">
-								<span>{{text}}</span>
-							</div>
-						</div>
-						<div
-							v-if="communication"
-							class="crm-entity-stream-content-detail-contact-info"
-						>
-							{{BX.message('CRM_TIMELINE_SMS_TO')}}
-							<a v-if="communication.SHOW_URL" :href="communication.SHOW_URL">
-								{{communication.TITLE}}
-							</a>
-							<template v-else>
-								{{communication.TITLE}}
-							</template>
-							<span v-if="communication.VALUE">{{communication.VALUE}}</span>
-							<template v-if="provider">
-								${main_core.Loc.getMessage('CRM_TIMELINE_NOTIFICATION_IN_MESSENGER')} {{provider}}
-							</template>
-						</div>
-					</div>
-					<author v-if="author" :author="author"></author>
-				</div>
-			</div>
-		</div>	
-	`
-	});
-
-	var DeliveryServiceInfo = {
-	  props: {
-	    deliveryService: {
-	      required: true,
-	      type: Object
-	    }
-	  },
-	  computed: {
-	    isDeliveryServiceProfile() {
-	      return this.deliveryService.IS_PROFILE;
-	    },
-
-	    deliveryServiceName() {
-	      return this.isDeliveryServiceProfile ? this.deliveryService.PARENT_NAME : this.deliveryService.NAME;
-	    },
-
-	    deliveryProfileServiceName() {
-	      return this.deliveryService.NAME;
-	    },
-
-	    deliveryServiceLogoBackgroundUrl() {
-	      return this.isDeliveryServiceProfile ? this.deliveryService.PARENT_LOGO : this.deliveryService.LOGO;
-	      return logo ? {
-	        'background-image': 'url(' + logo + ')'
-	      } : {};
-	    }
-
-	  },
-	  // language=Vue
-	  template: `
-		<div class="crm-entity-stream-content-delivery-title">
-			<div
-				v-if="isDeliveryServiceProfile && deliveryService.LOGO"
-				class="crm-entity-stream-content-delivery-icon"
-				:style="{'background-image': 'url(' + deliveryService.LOGO + ')'}"
-			>
-			</div>
-			<div class="crm-entity-stream-content-delivery-title-contnet">
-				<div
-					v-if="deliveryServiceLogoBackgroundUrl"
-					class="crm-entity-stream-content-delivery-title-logo"
-					:style="{'background-image': 'url(' + deliveryServiceLogoBackgroundUrl + ')'}"
-				></div>
-				<div class="crm-entity-stream-content-delivery-title-info">
-					<div class="crm-entity-stream-content-delivery-title-name">
-						{{deliveryServiceName}}
-					</div>
-					<div
-						v-if="isDeliveryServiceProfile"
-						class="crm-entity-stream-content-delivery-title-param"
-					>
-						{{deliveryProfileServiceName}}
-					</div>
-				</div>
-			</div>
-		</div>
-	`
-	};
-
-	var component$1 = ui_vue.Vue.extend({
-	  mixins: [HistoryItemMixin],
-	  components: {
-	    'author': Author,
-	    'delivery-service-info': DeliveryServiceInfo
-	  },
-	  props: {
-	    mode: {
-	      required: true,
-	      type: String
-	    }
-	  },
-
-	  data() {
-	    return {
-	      entityData: null,
-	      deliveryInfo: null,
-	      isRefreshing: false,
-	      isCreatingRequest: false,
-	      isCancellingRequest: false
-	    };
-	  },
-
-	  methods: {
-	    // region common activity methods
-	    completeActivity() {
-	      if (this.self.canComplete()) {
-	        this.self.setAsDone(!this.self.isDone());
-	      }
-	    },
-
-	    showContextMenu(event) {
-	      let popup = BX.PopupMenu.create('taxi_activity_context_menu_' + this.self.getId(), event.target, [{
-	        id: 'delete',
-	        text: this.getLangMessage('menuDelete'),
-	        onclick: () => {
-	          popup.close();
-	          let deletionDlgId = 'entity_timeline_deletion_' + this.self.getId() + '_confirm';
-	          let dlg = BX.Crm.ConfirmationDialog.get(deletionDlgId);
-
-	          if (!dlg) {
-	            dlg = BX.Crm.ConfirmationDialog.create(deletionDlgId, {
-	              title: this.getLangMessage('removeConfirmTitle'),
-	              content: this.getLangMessage('deliveryRemove')
-	            });
-	          }
-
-	          dlg.open().then(result => {
-	            if (result.cancel) {
-	              return;
-	            }
-
-	            this.self.remove();
-	          }, result => {});
-	        }
-	      }], {
-	        autoHide: true,
-	        offsetTop: 0,
-	        offsetLeft: 16,
-	        angle: {
-	          position: "top",
-	          offset: 0
-	        },
-	        events: {
-	          onPopupShow: () => BX.addClass(event.target, 'active'),
-	          onPopupClose: () => BX.removeClass(event.target, 'active')
-	        }
-	      });
-	      popup.show();
-	    },
-
-	    // endregion
-	    // region delivery request methods
-	    createDeliveryRequest() {
-	      if (this.isLocked) {
-	        return;
-	      }
-
-	      this.isCreatingRequest = true;
-	      BX.ajax.runAction('sale.deliveryrequest.create', {
-	        analyticsLabel: 'saleDeliveryTaxiCall',
-	        data: {
-	          shipmentIds: this.shipmentIds,
-	          additional: {
-	            ACTIVITY_ID: this.activityId
-	          }
-	        }
-	      }).then(result => {
-	        this.refresh(() => {
-	          this.isCreatingRequest = false;
-	        });
-	      }).catch(result => {
-	        this.isCreatingRequest = false;
-	        this.showError(result.errors.map(item => item.message).join());
-	      });
-	    },
-
-	    cancelDeliveryRequest() {
-	      if (this.isLocked || !this.deliveryRequest) {
-	        return;
-	      }
-
-	      this.isCancellingRequest = true;
-	      BX.ajax.runAction('sale.deliveryrequest.execute', {
-	        data: {
-	          requestId: this.deliveryRequest['ID'],
-	          actionType: this.deliveryService['CANCEL_ACTION_CODE']
-	        }
-	      }).then(result => {
-	        const data = result.data;
-	        BX.ajax.runAction('crm.timeline.deliveryactivity.createcanceldeliveryrequestmessage', {
-	          data: {
-	            requestId: this.deliveryRequest['ID'],
-	            message: data.message
-	          }
-	        }).then(result => {
-	          BX.ajax.runAction('sale.deliveryrequest.delete', {
-	            data: {
-	              requestId: this.deliveryRequest['ID']
-	            }
-	          }).then(result => {
-	            this.refresh(() => {
-	              this.isCancellingRequest = false;
-	            });
-	          }).catch(result => {
-	            this.isCancellingRequest = false;
-	            this.showError(result.errors.map(item => item.message).join());
-	          });
-	        });
-	      }).catch(result => {
-	        this.isCancellingRequest = false;
-	        this.showError(result.errors.map(item => item.message).join());
-	      });
-	    },
-
-	    checkRequestStatus() {
-	      BX.ajax.runAction('crm.timeline.deliveryactivity.checkrequeststatus');
-	    },
-
-	    startCheckingRequestStatus() {
-	      clearTimeout(this._checkRequestStatusTimeoutId);
-	      this._checkRequestStatusTimeoutId = setInterval(() => this.checkRequestStatus(), 30 * 1000);
-	    },
-
-	    stopCheckingRequestStatus() {
-	      clearTimeout(this._checkRequestStatusTimeoutId);
-	    },
-
-	    // endregion
-	    // region refresh methods
-	    setDeliveryInfo(deliveryInfo) {
-	      this.deliveryInfo = deliveryInfo;
-	    },
-
-	    refresh(callback = null) {
-	      if (this.isRefreshing) {
-	        return;
-	      }
-
-	      this.isRefreshing = true;
-
-	      const finallyCallback = () => {
-	        this.isRefreshing = false;
-
-	        if (callback) {
-	          callback();
-	        }
-	      };
-
-	      main_core.ajax.runAction('crm.timeline.deliveryactivity.getdeliveryinfo', {
-	        data: {
-	          activityId: this.activityId
-	        }
-	      }).then(result => {
-	        this.setDeliveryInfo(result.data);
-	        finallyCallback();
-	      }).catch(result => {
-	        finallyCallback();
-	      });
-	    },
-
-	    subscribePullEvents() {
-	      if (this._isPullSubscribed) {
-	        return;
-	      }
-
-	      pull_client.PULL.subscribe({
-	        moduleId: 'crm',
-	        command: 'onOrderShipmentSave',
-	        callback: params => {
-	          if (this.shipmentIds.some(id => id == params.FIELDS.ID)) {
-	            this.refresh();
-	          }
-	        }
-	      });
-	      pull_client.PULL.subscribe({
-	        moduleId: 'sale',
-	        command: 'onDeliveryServiceSave',
-	        callback: params => {
-	          if (this.deliveryServiceIds.some(id => id == params.ID)) {
-	            this.refresh();
-	          }
-	        }
-	      });
-	      pull_client.PULL.subscribe({
-	        moduleId: 'sale',
-	        command: 'onDeliveryRequestUpdate',
-	        callback: params => {
-	          if (this.deliveryRequestId == params.ID) {
-	            this.refresh();
-	          }
-	        }
-	      });
-	      pull_client.PULL.subscribe({
-	        moduleId: 'sale',
-	        command: 'onDeliveryRequestDelete',
-	        callback: params => {
-	          if (this.deliveryRequestId == params.ID) {
-	            this.refresh();
-	          }
-	        }
-	      });
-	      pull_client.PULL.extendWatch('SALE_DELIVERY_SERVICE');
-	      pull_client.PULL.extendWatch('CRM_ENTITY_ORDER_SHIPMENT');
-	      pull_client.PULL.extendWatch('SALE_DELIVERY_REQUEST');
-	      this._isPullSubscribed = true;
-	    },
-
-	    //endregion
-	    // region miscellaneous
-	    callPhone(phone) {
-	      if (this.canUseTelephony && typeof top.BXIM !== 'undefined') {
-	        top.BXIM.phoneTo(phone);
-	      } else {
-	        window.location.href = 'tel:' + phone;
-	      }
-	    },
-
-	    isPhone(property) {
-	      return property.hasOwnProperty('TAGS') && Array.isArray(property['TAGS']) && property['TAGS'].includes('phone');
-	    },
-
-	    showError(message) {
-	      BX.loadExt('ui.notification').then(() => {
-	        BX.UI.Notification.Center.notify({
-	          content: message
-	        });
-	      });
-	    } // endregion
-
-
-	  },
-
-	  created() {
-	    this.entityData = this.self.getAssociatedEntityData();
-
-	    if (this.entityData['DELIVERY_INFO']) {
-	      this.setDeliveryInfo(this.entityData['DELIVERY_INFO']);
-	    }
-
-	    this.subscribePullEvents();
-	    this._checkRequestStatusTimeoutId = null;
-
-	    if (this.needCheckRequestStatus) {
-	      this.startCheckingRequestStatus();
-	    }
-	  },
-
-	  computed: {
-	    activityId() {
-	      return this.data.ASSOCIATED_ENTITY.ID;
-	    },
-
-	    // region shipments
-	    shipments() {
-	      if (this.deliveryInfo && this.deliveryInfo.hasOwnProperty('SHIPMENTS') && Array.isArray(this.deliveryInfo['SHIPMENTS'])) {
-	        return this.deliveryInfo['SHIPMENTS'];
-	      }
-
-	      return null;
-	    },
-
-	    shipmentIds() {
-	      return this.shipments ? this.shipments.map(shipment => shipment['ID']) : [];
-	    },
-
-	    shipment() {
-	      if (this.shipments && Array.isArray(this.shipments) && this.shipments.length > 0) {
-	        return this.shipments[0];
-	      }
-
-	      return null;
-	    },
-
-	    expectedDeliveryPriceFormatted() {
-	      return this.shipment && this.shipment.hasOwnProperty('BASE_PRICE_DELIVERY') ? this.shipment['BASE_PRICE_DELIVERY_FORMATTED'] : this.shipment['PRICE_DELIVERY_FORMATTED'];
-	    },
-
-	    // endregion
-	    // region delivery service
-	    deliveryService() {
-	      if (this.deliveryInfo && this.deliveryInfo.hasOwnProperty('DELIVERY_SERVICE') && typeof this.deliveryInfo['DELIVERY_SERVICE'] === 'object' && this.deliveryInfo['DELIVERY_SERVICE'] !== null) {
-	        return this.deliveryInfo['DELIVERY_SERVICE'];
-	      }
-
-	      return null;
-	    },
-
-	    deliveryServiceIds() {
-	      // @TODO
-	      if (!this.deliveryService) {
-	        return null;
-	      }
-
-	      return this.deliveryService.IDS;
-	    },
-
-	    // endregion
-	    // region delivery request
-	    deliveryRequest() {
-	      if (this.deliveryInfo && this.deliveryInfo.hasOwnProperty('DELIVERY_REQUEST') && typeof this.deliveryInfo['DELIVERY_REQUEST'] === 'object' && this.deliveryInfo['DELIVERY_REQUEST'] !== null) {
-	        return this.deliveryInfo['DELIVERY_REQUEST'];
-	      }
-
-	      return null;
-	    },
-
-	    deliveryRequestId() {
-	      if (this.deliveryRequest && this.deliveryRequest.hasOwnProperty('ID')) {
-	        return this.deliveryRequest['ID'];
-	      }
-
-	      return null;
-	    },
-
-	    deliveryRequestProperties() {
-	      if (this.deliveryRequest && this.deliveryRequest.hasOwnProperty('EXTERNAL_PROPERTIES') && typeof this.deliveryRequest['EXTERNAL_PROPERTIES'] === 'object' && this.deliveryRequest['EXTERNAL_PROPERTIES'] !== null) {
-	        return this.deliveryRequest['EXTERNAL_PROPERTIES'];
-	      }
-
-	      return null;
-	    },
-
-	    deliveryRequestStatus() {
-	      if (!this.deliveryRequest) {
-	        return null;
-	      }
-
-	      return this.deliveryRequest['EXTERNAL_STATUS'];
-	    },
-
-	    deliveryRequestStatusSemantic() {
-	      if (!this.deliveryRequest) {
-	        return null;
-	      }
-
-	      return this.deliveryRequest['EXTERNAL_STATUS_SEMANTIC'];
-	    },
-
-	    isConnectedWithDeliveryRequest() {
-	      return !!this.deliveryRequest;
-	    },
-
-	    needCheckRequestStatus() {
-	      return this.isConnectedWithDeliveryRequest && this.mode === 'schedule';
-	    },
-
-	    isSendRequestButtonVisible() {
-	      return !this.isCreatingRequest && !this.isConnectedWithDeliveryRequest;
-	    },
-
-	    // endregion
-	    //region miscellaneous
-	    miscellaneous() {
-	      if (this.deliveryInfo && this.deliveryInfo.hasOwnProperty('MISCELLANEOUS')) {
-	        return this.deliveryInfo['MISCELLANEOUS'];
-	      }
-
-	      return null;
-	    },
-
-	    canUseTelephony() {
-	      return this.miscellaneous && this.miscellaneous.hasOwnProperty('CAN_USE_TELEPHONY') && this.miscellaneous['CAN_USE_TELEPHONY'];
-	    },
-
-	    template() {
-	      if (!this.miscellaneous || !this.miscellaneous.hasOwnProperty('TEMPLATE')) {
-	        return null;
-	      }
-
-	      return this.miscellaneous['TEMPLATE'];
-	    },
-
-	    // endregion
-	    // region classes
-	    cancelRequestButtonStyle() {
-	      return {
-	        'ui-btn': true,
-	        'ui-btn-sm': true,
-	        'ui-btn-light-border': true,
-	        'ui-btn-wait': this.isCancellingRequest
-	      };
-	    },
-
-	    statusClass() {
-	      return {
-	        'crm-entity-stream-content-event-process': this.deliveryRequestStatusSemantic === 'process',
-	        'crm-entity-stream-content-event-missing': this.deliveryRequestStatusSemantic === 'error',
-	        'crm-entity-stream-content-event-done': this.deliveryRequestStatusSemantic === 'success'
-	      };
-	    },
-
-	    wrapperContainerClass() {
-	      return {
-	        'crm-entity-stream-section-planned': this.mode === 'schedule'
-	      };
-	    },
-
-	    innerWrapperContainerClass() {
-	      return {
-	        'crm-entity-stream-content-event--delivery': this.mode !== 'schedule'
-	      };
-	    },
-
-	    // endregion
-	    isLocked() {
-	      return this.isRefreshing || this.isCreatingRequest || this.isCancellingRequest;
-	    }
-
-	  },
-	  watch: {
-	    needCheckRequestStatus: function (value) {
-	      if (value) {
-	        this.startCheckingRequestStatus();
-	      } else {
-	        this.stopCheckingRequestStatus();
-	      }
-	    }
-	  },
-	  // language=Vue
-	  template: `
-		<div
-			class="crm-entity-stream-section crm-entity-stream-section-new"
-			:class="wrapperContainerClass"
-		>
-			<div class="crm-entity-stream-section-icon crm-entity-stream-section-icon-new crm-entity-stream-section-icon-taxi"></div>
-			<div
-				v-if="mode === 'schedule'"
-				@click="showContextMenu"
-				class="crm-entity-stream-section-context-menu"
-			></div>
-			<div class="crm-entity-stream-section-content">
-				<div
-					class="crm-entity-stream-content-event"
-					:class="innerWrapperContainerClass"
-				>
-					<div class="crm-entity-stream-content-header">
-						<span class="crm-entity-stream-content-event-title">
-							${main_core.Loc.getMessage('TIMELINE_DELIVERY_TAXI_SERVICE')}
-						</span>
-						<span
-							v-if="deliveryRequestStatus && deliveryRequestStatusSemantic"
-							:class="statusClass"
-						>
-							{{deliveryRequestStatus}}
-						</span>
-						<span class="crm-entity-stream-content-event-time">{{createdAt}}</span>
-					</div>
-					<div class="crm-entity-stream-content-detail crm-entity-stream-content-delivery">
-						<div class="crm-entity-stream-content-delivery-row crm-entity-stream-content-delivery-row--flex">
-							<template v-if="mode === 'schedule'">
-								<span
-									v-if="isSendRequestButtonVisible"
-									@click="createDeliveryRequest"
-									class="ui-btn ui-btn-sm ui-btn-primary"
-								>
-									${main_core.Loc.getMessage('TIMELINE_DELIVERY_CREATE_DELIVERY_REQUEST')}
-								</span>
-								<span v-if="isCreatingRequest" class="crm-entity-stream-content-delivery-status">
-									${main_core.Loc.getMessage('TIMELINE_DELIVERY_CREATING_REQUEST')}
-								</span>
-								<span
-									v-if="isConnectedWithDeliveryRequest && deliveryService && deliveryService.IS_CANCELLABLE"
-									@click="cancelDeliveryRequest"
-									:class="cancelRequestButtonStyle"
-								>								
-									{{deliveryService.CANCEL_ACTION_NAME}}
-								</span>					
-							</template>
-							<delivery-service-info
-								v-if="deliveryService"
-								:deliveryService="deliveryService"
-							>
-							</delivery-service-info>
-						</div>
-						<div class="crm-entity-stream-content-delivery-row">
-							<table class="crm-entity-stream-content-delivery-order">
-								<tr v-if="shipment && shipment.ADDRESS_FROM_FORMATTED && shipment.ADDRESS_TO_FORMATTED">
-									<td colspan="2">
-										<div class="crm-entity-stream-content-delivery-order-item">
-											<div class="crm-entity-stream-content-delivery-order-value crm-entity-stream-content-delivery-order-value--sm">
-												<div class="crm-entity-stream-content-delivery-order-box">
-													<div class="crm-entity-stream-content-delivery-order-box-label">
-														${main_core.Loc.getMessage('TIMELINE_DELIVERY_TAXI_ADDRESS_FROM')}
-													</div>
-													<span v-html="shipment.ADDRESS_FROM_FORMATTED">
-													</span>
-												</div>
-												<div class="crm-entity-stream-content-delivery-order-box">
-													<div class="crm-entity-stream-content-delivery-order-box-label">
-														${main_core.Loc.getMessage('TIMELINE_DELIVERY_TAXI_ADDRESS_TO')}
-													</div>
-													<span v-html="shipment.ADDRESS_TO_FORMATTED">
-													</span>
-												</div>
-											</div>
-										</div>
-									</td>
-								</tr>
-								<tr v-if="shipment">
-									<td>
-										<div class="crm-entity-stream-content-delivery-order-item">
-											<div class="crm-entity-stream-content-delivery-order-label">
-												${main_core.Loc.getMessage('TIMELINE_DELIVERY_TAXI_CLIENT_DELIVERY_PRICE')}
-											</div>
-											<div class="crm-entity-stream-content-delivery-order-value crm-entity-stream-content-delivery-order-value--sm">
-												<span
-													v-html="shipment.PRICE_DELIVERY_FORMATTED"
-													 style="font-size: 14px; color: #333;"
-												>
-												</span>
-											</div>
-										</div>
-									</td>
-									<td>
-										<div class="crm-entity-stream-content-delivery-order-item">
-											<div class="crm-entity-stream-content-delivery-order-label">
-												${main_core.Loc.getMessage('TIMELINE_DELIVERY_TAXI_EXPECTED_DELIVERY_PRICE')}
-											</div>
-											<div class="crm-entity-stream-content-delivery-order-value crm-entity-stream-content-delivery-order-value--sm">
-												<span style="font-size: 14px; color: #333; opacity: .5;">
-													<span
-														v-html="expectedDeliveryPriceFormatted"
-													>
-													</span>
-												</span>
-												<span v-else>
-													${main_core.Loc.getMessage('TIMELINE_DELIVERY_TAXI_EXPECTED_PRICE_NOT_RECEIVED')}
-												</span>
-											</div>
-										</div>
-									</td>
-								</tr>
-								<!-- Properties --->
-								<tr v-for="property in deliveryRequestProperties">
-									<td colspan="2">
-										<div class="crm-entity-stream-content-delivery-order-item">
-											<div class="crm-entity-stream-content-delivery-order-label">
-												{{property.NAME}}
-											</div>
-											<div class="crm-entity-stream-content-delivery-order-value crm-entity-stream-content-delivery-order-value--sm">
-												<span
-													v-if="isPhone(property)"
-													@click="callPhone(property.VALUE)"
-													class="crm-entity-stream-content-delivery-link"
-												>
-													{{property.VALUE}}
-												</span>
-												<span v-else>
-													{{property.VALUE}}
-												</span>
-											</div>
-										</div>
-									</td>
-								</tr>
-								<!-- end Properties --->
-							</table>
-						</div>
-					</div>
-					<div v-if="mode === 'schedule'" class="crm-entity-stream-content-detail-planned-action">
-						<input @click="completeActivity" type="checkbox" class="crm-entity-stream-planned-apply-btn">
-					</div>
-					<author v-if="author" :author="author">
-					</author>
-				</div>
-			</div>
-		</div>
-	`
-	});
-
-	var component$2 = ui_vue.Vue.extend({
-	  mixins: [HistoryItemMixin],
-	  components: {
-	    'author': Author,
-	    'delivery-service-info': DeliveryServiceInfo
-	  },
-	  computed: {
-	    deliveryService() {
-	      if (!this.data.FIELDS.hasOwnProperty('DELIVERY_SERVICE')) {
-	        return null;
-	      }
-
-	      return this.data.FIELDS.DELIVERY_SERVICE;
-	    },
-
-	    messageData() {
-	      if (!this.data.FIELDS.hasOwnProperty('MESSAGE_DATA')) {
-	        return null;
-	      }
-
-	      return this.data.FIELDS.MESSAGE_DATA;
-	    },
-
-	    messageTitle() {
-	      if (!this.messageData) {
-	        return null;
-	      }
-
-	      return this.messageData['TITLE'];
-	    },
-
-	    messageDescription() {
-	      if (!this.messageData) {
-	        return null;
-	      }
-
-	      return this.messageData['DESCRIPTION'];
-	    },
-
-	    messageStatus() {
-	      if (!this.messageData) {
-	        return null;
-	      }
-
-	      return this.messageData['STATUS'];
-	    },
-
-	    messageStatusSemantics() {
-	      if (!this.messageData) {
-	        return null;
-	      }
-
-	      return this.messageData['STATUS_SEMANTIC'];
-	    },
-
-	    messageStatusSemanticsClass() {
-	      return {
-	        'crm-entity-stream-content-event-process': this.messageStatusSemantics === 'process',
-	        'crm-entity-stream-content-event-missing': this.messageStatusSemantics === 'error',
-	        'crm-entity-stream-content-event-done': this.messageStatusSemantics === 'success'
-	      };
-	    }
-
-	  },
-	  // language=Vue
-	  template: `
-		<div class="crm-entity-stream-section crm-entity-stream-section-new">
-			<div class="crm-entity-stream-section-icon crm-entity-stream-section-icon-new crm-entity-stream-section-icon-taxi"></div>
-			<div class="crm-entity-stream-section-content">
-				<div class="crm-entity-stream-content-event">
-					<div class="crm-entity-stream-content-header">
-						<span
-							v-if="messageTitle"
-							class="crm-entity-stream-content-event-title"
-						>
-							{{messageTitle}}
-						</span>
-						<span
-							v-if="messageStatus && messageStatusSemantics"
-							:class="messageStatusSemanticsClass"
-						>
-							{{messageStatus}}
-						</span>
-						<span class="crm-entity-stream-content-event-time">
-							<span v-html="createdAt">
-							</span>
-						</span>
-					</div>
-					<div class="crm-entity-stream-content-detail">
-						<div class="crm-entity-stream-content-delivery-row crm-entity-stream-content-delivery-row--flex">
-							<delivery-service-info
-								v-if="deliveryService"
-								:deliveryService="deliveryService"
-							>
-							</delivery-service-info>
-						</div>
-						<div
-							v-if="messageDescription"
-							class="crm-entity-stream-content-delivery-description"
-							v-html="messageDescription"
-						>
-						</div>
-					</div>
-					<author v-if="author" :author="author">
-					</author>
-				</div>
-			</div>
-		</div>
-	`
-	});
-
-	var component$3 = ui_vue.Vue.extend({
-	  mixins: [HistoryItemMixin],
-	  components: {
-	    'author': Author,
-	    'delivery-service-info': DeliveryServiceInfo
-	  },
-	  computed: {
-	    deliveryService() {
-	      if (!this.data.FIELDS.hasOwnProperty('DELIVERY_SERVICE')) {
-	        return null;
-	      }
-
-	      return this.data.FIELDS.DELIVERY_SERVICE;
-	    },
-
-	    messageData() {
-	      if (!this.data.FIELDS.hasOwnProperty('MESSAGE_DATA')) {
-	        return null;
-	      }
-
-	      return this.data.FIELDS.MESSAGE_DATA;
-	    },
-
-	    messageTitle() {
-	      if (!this.messageData) {
-	        return null;
-	      }
-
-	      return this.messageData['TITLE'];
-	    },
-
-	    messageDescription() {
-	      if (!this.messageData) {
-	        return null;
-	      }
-
-	      return this.messageData['DESCRIPTION'];
-	    },
-
-	    messageStatus() {
-	      if (!this.messageData) {
-	        return null;
-	      }
-
-	      return this.messageData['STATUS'];
-	    },
-
-	    messageStatusSemantics() {
-	      if (!this.messageData) {
-	        return null;
-	      }
-
-	      return this.messageData['STATUS_SEMANTIC'];
-	    },
-
-	    messageStatusSemanticsClass() {
-	      return {
-	        'crm-entity-stream-content-event-process': this.messageStatusSemantics === 'process',
-	        'crm-entity-stream-content-event-missing': this.messageStatusSemantics === 'error',
-	        'crm-entity-stream-content-event-done': this.messageStatusSemantics === 'success'
-	      };
-	    },
-
-	    addressFrom() {
-	      if (!this.data.FIELDS.hasOwnProperty('ADDRESS_FROM_FORMATTED')) {
-	        return null;
-	      }
-
-	      return this.data.FIELDS.ADDRESS_FROM_FORMATTED;
-	    },
-
-	    addressTo() {
-	      if (!this.data.FIELDS.hasOwnProperty('ADDRESS_TO_FORMATTED')) {
-	        return null;
-	      }
-
-	      return this.data.FIELDS.ADDRESS_TO_FORMATTED;
-	    }
-
-	  },
-	  // language=Vue
-	  template: `
-		<div class="crm-entity-stream-section crm-entity-stream-section-new">
-			<div class="crm-entity-stream-section-icon crm-entity-stream-section-icon-new crm-entity-stream-section-icon-taxi"></div>
-			
-			<div class="crm-entity-stream-section-content">
-				<div class="crm-entity-stream-content-event">
-					<div class="crm-entity-stream-content-header">
-						<span
-							v-if="messageTitle"
-							class="crm-entity-stream-content-event-title"
-						>
-							{{messageTitle}}
-						</span>
-						<span
-							v-if="messageStatus && messageStatusSemantics"
-							:class="messageStatusSemanticsClass"
-						>
-							{{messageStatus}}
-						</span>
-						<span class="crm-entity-stream-content-event-time">
-							<span v-html="createdAt">
-							</span>
-						</span>
-					</div>
-					<div class="crm-entity-stream-content-detail">
-						<div
-							v-html="messageDescription"
-							class="crm-entity-stream-content-detail-description crm-delivery-taxi-caption"
-						>
-						</div>
-						<div class="crm-entity-stream-content-detail-description">
-							<div v-if="addressFrom" class="crm-entity-stream-content-delivery-order-box">
-								<div class="crm-entity-stream-content-delivery-order-box-label">
-									${main_core.Loc.getMessage('TIMELINE_DELIVERY_TAXI_ADDRESS_FROM')}
-								</div>
-								<span>{{addressFrom}}</span>
-							</div>
-							<div v-if="addressTo" class="crm-entity-stream-content-delivery-order-box">
-								<div class="crm-entity-stream-content-delivery-order-box-label">
-									${main_core.Loc.getMessage('TIMELINE_DELIVERY_TAXI_ADDRESS_TO')}
-								</div>
-								<span>{{addressTo}}</span>
-							</div>
-						</div>
-					</div>
-					<author v-if="author" :author="author">
-					</author>
-				</div>
-			</div>
-		</div>
-	`
-	});
 
 	/** @memberof BX.Crm.Timeline */
 
@@ -4807,6 +2470,1157 @@ this.BX.Crm = this.BX.Crm || {};
 
 	babelHelpers.defineProperty(ToDo, "items", {});
 
+	/** @memberof BX.Crm.Timeline.Types */
+	const Item = {
+	  undefined: 0,
+	  activity: 1,
+	  creation: 2,
+	  modification: 3,
+	  link: 4,
+	  unlink: 5,
+	  mark: 6,
+	  comment: 7,
+	  wait: 8,
+	  bizproc: 9,
+	  conversion: 10,
+	  sender: 11,
+	  document: 12,
+	  restoration: 13,
+	  order: 14,
+	  orderCheck: 15,
+	  scoring: 16,
+	  externalNotification: 17,
+	  finalSummary: 18,
+	  delivery: 19,
+	  finalSummaryDocuments: 20,
+	  storeDocument: 21,
+	  productCompilation: 22,
+	  signDocument: 23
+	};
+	/** @memberof BX.Crm.Timeline.Types */
+
+	const Mark = {
+	  undefined: 0,
+	  waiting: 1,
+	  success: 2,
+	  renew: 3,
+	  ignored: 4,
+	  failed: 5
+	};
+	/** @memberof BX.Crm.Timeline.Types */
+
+	/** @memberof BX.Crm.Timeline.Types */
+
+	const Order = {
+	  encourageBuyProducts: 100
+	};
+	/** @memberof BX.Crm.Timeline.Types */
+
+	const EditorMode = {
+	  view: 1,
+	  edit: 2
+	};
+
+	var types = /*#__PURE__*/Object.freeze({
+		Item: Item,
+		Mark: Mark,
+		Order: Order,
+		EditorMode: EditorMode
+	});
+
+	/** @memberof BX.Crm.Timeline */
+
+	let CompatibleItem = /*#__PURE__*/function (_Item) {
+	  babelHelpers.inherits(CompatibleItem, _Item);
+
+	  function CompatibleItem() {
+	    var _this;
+
+	    babelHelpers.classCallCheck(this, CompatibleItem);
+	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(CompatibleItem).call(this));
+	    _this._id = "";
+	    _this._settings = {};
+	    _this._data = {};
+	    _this._container = null;
+	    _this._typeCategoryId = null;
+	    _this._associatedEntityData = null;
+	    _this._associatedEntityTypeId = null;
+	    _this._associatedEntityId = null;
+	    _this._isContextMenuShown = false;
+	    _this._contextMenuButton = null;
+	    _this._activityEditor = null;
+	    _this._actions = [];
+	    _this._actionContainer = null;
+	    _this._existedStreamItemDeadLine = null;
+	    return _this;
+	  }
+
+	  babelHelpers.createClass(CompatibleItem, [{
+	    key: "initialize",
+	    value: function initialize(id, settings) {
+	      this._setId(id);
+
+	      this._settings = settings ? settings : {};
+	      this._container = this.getSetting("container");
+
+	      if (!BX.type.isPlainObject(settings['data'])) {
+	        throw "Item. A required parameter 'data' is missing.";
+	      }
+
+	      this._data = settings['data'];
+	      this._activityEditor = this.getSetting("activityEditor");
+	      this.doInitialize();
+	    }
+	  }, {
+	    key: "doInitialize",
+	    value: function doInitialize() {}
+	  }, {
+	    key: "getId",
+	    value: function getId() {
+	      return this._id;
+	    }
+	  }, {
+	    key: "getSetting",
+	    value: function getSetting(name, defaultval) {
+	      return this._settings.hasOwnProperty(name) ? this._settings[name] : defaultval;
+	    }
+	  }, {
+	    key: "getData",
+	    value: function getData() {
+	      return this._data;
+	    }
+	  }, {
+	    key: "setData",
+	    value: function setData(data) {
+	      if (BX.type.isPlainObject(data)) {
+	        this._data = data;
+	        this.clearCachedData();
+	      }
+	    }
+	  }, {
+	    key: "getSort",
+	    value: function getSort() {
+	      var _this$_data$sort;
+
+	      return (_this$_data$sort = this._data['sort']) !== null && _this$_data$sort !== void 0 ? _this$_data$sort : [];
+	    }
+	  }, {
+	    key: "getAssociatedEntityData",
+	    value: function getAssociatedEntityData() {
+	      if (this._associatedEntityData === null) {
+	        this._associatedEntityData = BX.type.isPlainObject(this._data["ASSOCIATED_ENTITY"]) ? this._data["ASSOCIATED_ENTITY"] : {};
+	      }
+
+	      return this._associatedEntityData;
+	    }
+	  }, {
+	    key: "getAssociatedEntityTypeId",
+	    value: function getAssociatedEntityTypeId() {
+	      if (this._associatedEntityTypeId === null) {
+	        this._associatedEntityTypeId = BX.prop.getInteger(this._data, "ASSOCIATED_ENTITY_TYPE_ID", 0);
+	      }
+
+	      return this._associatedEntityTypeId;
+	    }
+	  }, {
+	    key: "getAssociatedEntityId",
+	    value: function getAssociatedEntityId() {
+	      if (this._associatedEntityId === null) {
+	        this._associatedEntityId = BX.prop.getInteger(this._data, "ASSOCIATED_ENTITY_ID", 0);
+	      }
+
+	      return this._associatedEntityId;
+	    }
+	  }, {
+	    key: "setAssociatedEntityData",
+	    value: function setAssociatedEntityData(associatedEntityData) {
+	      if (!BX.type.isPlainObject(associatedEntityData)) {
+	        associatedEntityData = {};
+	      }
+
+	      const data = this._data;
+	      data.ASSOCIATED_ENTITY = associatedEntityData;
+	      this.setData(data);
+	    }
+	  }, {
+	    key: "hasPermissions",
+	    value: function hasPermissions() {
+	      const entityData = this.getAssociatedEntityData();
+	      return BX.type.isPlainObject(entityData["PERMISSIONS"]);
+	    }
+	  }, {
+	    key: "getPermissions",
+	    value: function getPermissions() {
+	      return BX.prop.getObject(this.getAssociatedEntityData(), "PERMISSIONS", {});
+	    }
+	  }, {
+	    key: "setPermissions",
+	    value: function setPermissions(permissions) {
+	      const data = this._data;
+
+	      if (!main_core.Type.isPlainObject(data.ASSOCIATED_ENTITY)) {
+	        data.ASSOCIATED_ENTITY = {};
+	      }
+
+	      data.ASSOCIATED_ENTITY.PERMISSIONS = permissions;
+	      this.setData(data);
+	    }
+	  }, {
+	    key: "getTextDataParam",
+	    value: function getTextDataParam(name) {
+	      return BX.prop.getString(this._data, name, "");
+	    }
+	  }, {
+	    key: "getObjectDataParam",
+	    value: function getObjectDataParam(name) {
+	      return BX.prop.getObject(this._data, name, {});
+	    }
+	  }, {
+	    key: "getArrayDataParam",
+	    value: function getArrayDataParam(name) {
+	      return BX.prop.getArray(this._data, name, []);
+	    }
+	  }, {
+	    key: "getTypeId",
+	    value: function getTypeId() {
+	      return Item.undefined;
+	    }
+	  }, {
+	    key: "getTypeCategoryId",
+	    value: function getTypeCategoryId() {
+	      if (this._typeCategoryId === null) {
+	        this._typeCategoryId = BX.prop.getInteger(this._data, "TYPE_CATEGORY_ID", 0);
+	      }
+
+	      return this._typeCategoryId;
+	    }
+	  }, {
+	    key: "getContainer",
+	    value: function getContainer() {
+	      return this._container;
+	    }
+	  }, {
+	    key: "setContainer",
+	    value: function setContainer(container) {
+	      this._container = BX.type.isElementNode(container) ? container : null;
+	    }
+	  }, {
+	    key: "layout",
+	    value: function layout(options) {
+	      if (!BX.type.isElementNode(this._container)) {
+	        throw "Item. Container is not assigned.";
+	      }
+
+	      this.prepareLayout(options); //region Actions
+
+	      /**/
+
+	      this.prepareActions();
+	      const actionQty = this._actions.length;
+
+	      for (let i = 0; i < actionQty; i++) {
+	        this._actions[i].layout();
+	      }
+
+	      this.showActions(actionQty > 0);
+	      /**/
+	      //endregion
+	    }
+	  }, {
+	    key: "prepareLayout",
+	    value: function prepareLayout(options) {}
+	  }, {
+	    key: "prepareActions",
+	    value: function prepareActions() {}
+	  }, {
+	    key: "showActions",
+	    value: function showActions(show) {}
+	  }, {
+	    key: "clearCachedData",
+	    value: function clearCachedData() {
+	      this._typeCategoryId = null;
+	      this._associatedEntityData = null;
+	      this._associatedEntityTypeId = null;
+	      this._associatedEntityId = null;
+	    }
+	  }, {
+	    key: "isDone",
+	    value: function isDone() {
+	      return false;
+	    }
+	  }, {
+	    key: "markAsDone",
+	    value: function markAsDone(isDone) {}
+	  }, {
+	    key: "view",
+	    value: function view() {}
+	  }, {
+	    key: "edit",
+	    value: function edit() {}
+	  }, {
+	    key: "fasten",
+	    value: function fasten() {}
+	  }, {
+	    key: "unfasten",
+	    value: function unfasten() {}
+	  }, {
+	    key: "remove",
+	    value: function remove() {}
+	  }, {
+	    key: "cutOffText",
+	    value: function cutOffText(text, length) {
+	      if (!BX.type.isNumber(length)) {
+	        length = 0;
+	      }
+
+	      if (length <= 0 || text.length <= length) {
+	        return text;
+	      }
+
+	      let offset = length - 1;
+	      const whilespaceOffset = text.substring(offset).search(/\s/i);
+
+	      if (whilespaceOffset > 0) {
+	        offset += whilespaceOffset;
+	      }
+
+	      return text.substring(0, offset);
+	    }
+	  }, {
+	    key: "prepareMultilineCutOffElements",
+	    value: function prepareMultilineCutOffElements(text, length, clickHandler) {
+	      if (!BX.type.isNumber(length)) {
+	        length = 0;
+	      }
+
+	      if (length <= 0 || text.length <= length) {
+	        return [BX.util.htmlspecialchars(text).replace(/(?:\r\n|\r|\n)/g, '<br>')];
+	      }
+
+	      let offset = length - 1;
+	      const whilespaceOffset = text.substring(offset).search(/\s/i);
+
+	      if (whilespaceOffset > 0) {
+	        offset += whilespaceOffset;
+	      }
+
+	      return [BX.util.htmlspecialchars(text.substring(0, offset)).replace(/(?:\r\n|\r|\n)/g, '<br>') + "&hellip;&nbsp;", BX.create("A", {
+	        attrs: {
+	          className: "crm-entity-stream-content-letter-more",
+	          href: "#"
+	        },
+	        events: {
+	          click: clickHandler
+	        },
+	        text: this.getMessage("details")
+	      })];
+	    }
+	  }, {
+	    key: "prepareCutOffElements",
+	    value: function prepareCutOffElements(text, length, clickHandler) {
+	      if (!BX.type.isNumber(length)) {
+	        length = 0;
+	      }
+
+	      if (length <= 0 || text.length <= length) {
+	        return [BX.util.htmlspecialchars(text)];
+	      }
+
+	      let offset = length - 1;
+	      const whilespaceOffset = text.substring(offset).search(/\s/i);
+
+	      if (whilespaceOffset > 0) {
+	        offset += whilespaceOffset;
+	      }
+
+	      return [BX.util.htmlspecialchars(text.substring(0, offset)) + "&hellip;&nbsp;", BX.create("A", {
+	        attrs: {
+	          className: "crm-entity-stream-content-letter-more",
+	          href: "#"
+	        },
+	        events: {
+	          click: clickHandler
+	        },
+	        text: this.getMessage("details")
+	      })];
+	    }
+	  }, {
+	    key: "prepareAuthorLayout",
+	    value: function prepareAuthorLayout() {
+	      const authorInfo = this.getObjectDataParam("AUTHOR", null);
+
+	      if (!authorInfo) {
+	        return null;
+	      }
+
+	      const showUrl = BX.prop.getString(authorInfo, "SHOW_URL", "");
+
+	      if (showUrl === "") {
+	        return null;
+	      }
+
+	      const link = BX.create("A", {
+	        attrs: {
+	          className: "ui-icon ui-icon-common-user crm-entity-stream-content-detail-employee",
+	          href: showUrl,
+	          target: "_blank",
+	          title: BX.prop.getString(authorInfo, "FORMATTED_NAME", "")
+	        },
+	        children: [BX.create('i', {})]
+	      });
+	      const imageUrl = BX.prop.getString(authorInfo, "IMAGE_URL", "");
+
+	      if (imageUrl !== "") {
+	        link.children[0].style.backgroundImage = "url('" + encodeURI(imageUrl) + "')";
+	        link.children[0].style.backgroundSize = "21px";
+	      }
+
+	      return link;
+	    }
+	  }, {
+	    key: "onActivityCreate",
+	    value: function onActivityCreate(activity, data) {}
+	  }, {
+	    key: "isContextMenuEnabled",
+	    value: function isContextMenuEnabled() {
+	      return false;
+	    }
+	  }, {
+	    key: "prepareContextMenuButton",
+	    value: function prepareContextMenuButton() {
+	      this._contextMenuButton = BX.create("DIV", {
+	        attrs: {
+	          className: "crm-entity-stream-section-context-menu"
+	        },
+	        events: {
+	          click: BX.delegate(this.onContextMenuButtonClick, this)
+	        }
+	      });
+	      return this._contextMenuButton;
+	    }
+	  }, {
+	    key: "onContextMenuButtonClick",
+	    value: function onContextMenuButtonClick(e) {
+	      if (!this._isContextMenuShown) {
+	        this.openContextMenu();
+	      } else {
+	        this.closeContextMenu();
+	      }
+	    }
+	  }, {
+	    key: "openContextMenu",
+	    value: function openContextMenu() {
+	      const menuItems = this.prepareContextMenuItems();
+
+	      if (typeof IntranetExtensions !== "undefined") {
+	        menuItems.push(IntranetExtensions);
+	      }
+
+	      if (menuItems.length === 0) {
+	        return;
+	      }
+
+	      BX.PopupMenu.show(this._id, this._contextMenuButton, menuItems, {
+	        offsetTop: 0,
+	        offsetLeft: 16,
+	        angle: {
+	          position: "top",
+	          offset: 0
+	        },
+	        events: {
+	          onPopupShow: BX.delegate(this.onContextMenuShow, this),
+	          onPopupClose: BX.delegate(this.onContextMenuClose, this),
+	          onPopupDestroy: BX.delegate(this.onContextMenuDestroy, this)
+	        }
+	      });
+	      this._contextMenu = BX.PopupMenu.currentItem;
+	    }
+	  }, {
+	    key: "closeContextMenu",
+	    value: function closeContextMenu() {
+	      if (this._contextMenu) {
+	        this._contextMenu.close();
+	      }
+	    }
+	  }, {
+	    key: "prepareContextMenuItems",
+	    value: function prepareContextMenuItems() {
+	      return [];
+	    }
+	  }, {
+	    key: "onContextMenuShow",
+	    value: function onContextMenuShow() {
+	      this._isContextMenuShown = true;
+	      BX.addClass(this._contextMenuButton, "active");
+	    }
+	  }, {
+	    key: "onContextMenuClose",
+	    value: function onContextMenuClose() {
+	      if (this._contextMenu) {
+	        this._contextMenu.popupWindow.destroy();
+	      }
+	    }
+	  }, {
+	    key: "onContextMenuDestroy",
+	    value: function onContextMenuDestroy() {
+	      this._isContextMenuShown = false;
+	      BX.removeClass(this._contextMenuButton, "active");
+	      this._contextMenu = null;
+
+	      if (typeof BX.PopupMenu.Data[this._id] !== "undefined") {
+	        delete BX.PopupMenu.Data[this._id];
+	      }
+	    }
+	  }, {
+	    key: "getMessage",
+	    value: function getMessage(name) {
+	      const m = CompatibleItem.messages;
+	      return m.hasOwnProperty(name) ? m[name] : name;
+	    }
+	  }], [{
+	    key: "getUserTimezoneOffset",
+	    value: function getUserTimezoneOffset() {
+	      return crm_datetime.TimezoneOffset.USER_TO_SERVER;
+	    }
+	  }]);
+	  return CompatibleItem;
+	}(crm_timeline_item.Item);
+
+	babelHelpers.defineProperty(CompatibleItem, "messages", {});
+
+	/** @memberof BX.Crm.Timeline.Animation */
+	let Fasten = /*#__PURE__*/function () {
+	  function Fasten() {
+	    babelHelpers.classCallCheck(this, Fasten);
+	    this._id = "";
+	    this._settings = {};
+	    this._initialItem = null;
+	    this._finalItem = null;
+	    this._events = null;
+	  }
+
+	  babelHelpers.createClass(Fasten, [{
+	    key: "initialize",
+	    value: function initialize(id, settings) {
+	      this._id = BX.type.isNotEmptyString(id) ? id : BX.util.getRandomString(4);
+	      this._settings = settings ? settings : {};
+	      this._initialItem = this.getSetting("initialItem");
+	      this._finalItem = this.getSetting("finalItem");
+	      this._anchor = this.getSetting("anchor");
+	      this._events = this.getSetting("events", {});
+	    }
+	  }, {
+	    key: "getId",
+	    value: function getId() {
+	      return this._id;
+	    }
+	  }, {
+	    key: "getSetting",
+	    value: function getSetting(name, defaultValue) {
+	      return this._settings.hasOwnProperty(name) ? this._settings[name] : defaultValue;
+	    }
+	  }, {
+	    key: "addFixedHistoryItem",
+	    value: function addFixedHistoryItem() {
+	      const node = this._finalItem.getWrapper();
+
+	      BX.addClass(node, 'crm-entity-stream-section-animate-start');
+
+	      if (this._anchor.parentNode && node) {
+	        this._anchor.parentNode.insertBefore(node, this._anchor.nextSibling);
+	      }
+
+	      setTimeout(BX.delegate(function () {
+	        BX.removeClass(node, 'crm-entity-stream-section-animate-start');
+	      }, this), 0);
+	    }
+	  }, {
+	    key: "run",
+	    value: function run() {
+	      const node = this._initialItem.getWrapper();
+
+	      this._clone = node.cloneNode(true);
+	      BX.addClass(this._clone, 'crm-entity-stream-section-animate-start crm-entity-stream-section-top-fixed');
+	      this._startPosition = BX.pos(node);
+	      this._clone.style.position = "absolute";
+	      this._clone.style.width = this._startPosition.width + "px";
+	      let _cloneHeight = this._startPosition.height;
+	      const _minHeight = 65;
+	      const _sumPaddingContent = 18;
+	      if (_cloneHeight < _sumPaddingContent + _minHeight) _cloneHeight = _sumPaddingContent + _minHeight;
+	      this._clone.style.height = _cloneHeight + "px";
+	      this._clone.style.top = this._startPosition.top + "px";
+	      this._clone.style.left = this._startPosition.left + "px";
+	      this._clone.style.zIndex = 960;
+	      document.body.appendChild(this._clone);
+	      setTimeout(BX.proxy(function () {
+	        BX.addClass(this._clone, "crm-entity-stream-section-casper");
+	      }, this), 0);
+	      this._anchorPosition = BX.pos(this._anchor);
+	      const finish = {
+	        top: this._anchorPosition.top,
+	        height: _cloneHeight + 15,
+	        opacity: 1
+	      };
+
+	      const _difference = this._startPosition.top - this._anchorPosition.bottom;
+
+	      const _deepHistoryLimit = 2 * (document.body.clientHeight + this._startPosition.height);
+
+	      if (_difference > _deepHistoryLimit) {
+	        finish.top = this._startPosition.top - _deepHistoryLimit;
+	        finish.opacity = 0;
+	      }
+
+	      let _duration = Math.abs(finish.top - this._startPosition.top) * 2;
+
+	      _duration = _duration < 1500 ? 1500 : _duration;
+	      const movingEvent = new BX.easing({
+	        duration: _duration,
+	        start: {
+	          top: this._startPosition.top,
+	          height: 0,
+	          opacity: 1
+	        },
+	        finish: finish,
+	        transition: BX.easing.makeEaseOut(BX.easing.transitions.quart),
+	        step: BX.proxy(function (state) {
+	          this._clone.style.top = state.top + "px";
+	          this._clone.style.opacity = state.opacity;
+	          this._anchor.style.height = state.height + "px";
+	        }, this),
+	        complete: BX.proxy(function () {
+	          this.finish();
+	        }, this)
+	      });
+	      movingEvent.animate();
+	    }
+	  }, {
+	    key: "finish",
+	    value: function finish() {
+	      this._anchor.style.height = 0;
+	      this.addFixedHistoryItem();
+	      BX.remove(this._clone);
+
+	      if (BX.type.isFunction(this._events["complete"])) {
+	        this._events["complete"]();
+	      }
+	    }
+	  }], [{
+	    key: "create",
+	    value: function create(id, settings) {
+	      const self = new Fasten();
+	      self.initialize(id, settings);
+	      return self;
+	    }
+	  }]);
+	  return Fasten;
+	}();
+
+	/** @memberof BX.Crm.Timeline.Items */
+
+	let History = /*#__PURE__*/function (_CompatibleItem) {
+	  babelHelpers.inherits(History, _CompatibleItem);
+
+	  function History() {
+	    var _this;
+
+	    babelHelpers.classCallCheck(this, History);
+	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(History).call(this));
+	    _this._history = null;
+	    _this._fixedHistory = null;
+	    _this._typeId = null;
+	    _this._createdTime = null;
+	    _this._isFixed = false;
+	    _this._headerClickHandler = BX.delegate(_this.onHeaderClick, babelHelpers.assertThisInitialized(_this));
+	    return _this;
+	  }
+
+	  babelHelpers.createClass(History, [{
+	    key: "doInitialize",
+	    value: function doInitialize() {
+	      this._history = this.getSetting("history");
+	      this._fixedHistory = this.getSetting("fixedHistory");
+	    }
+	  }, {
+	    key: "getTypeId",
+	    value: function getTypeId() {
+	      if (this._typeId === null) {
+	        this._typeId = BX.prop.getInteger(this._data, "TYPE_ID", Item.undefined);
+	      }
+
+	      return this._typeId;
+	    }
+	  }, {
+	    key: "getTitle",
+	    value: function getTitle() {
+	      return "";
+	    }
+	  }, {
+	    key: "isContextMenuEnabled",
+	    value: function isContextMenuEnabled() {
+	      return !this.isReadOnly();
+	    }
+	  }, {
+	    key: "getCreatedTimestamp",
+	    value: function getCreatedTimestamp() {
+	      return this.getTextDataParam("CREATED_SERVER");
+	    }
+	  }, {
+	    key: "getCreatedTime",
+	    value: function getCreatedTime() {
+	      if (this._createdTime === null) {
+	        const time = BX.parseDate(this.getCreatedTimestamp(), false, "YYYY-MM-DD", "YYYY-MM-DD HH:MI:SS");
+	        this._createdTime = new crm_timeline_tools.DatetimeConverter(time).toUserTime().getValue();
+	      }
+
+	      return this._createdTime;
+	    }
+	  }, {
+	    key: "getCreatedDate",
+	    value: function getCreatedDate() {
+	      return BX.prop.extractDate(new Date(this.getCreatedTime().getTime()));
+	    }
+	  }, {
+	    key: "getOwnerInfo",
+	    value: function getOwnerInfo() {
+	      return this._history ? this._history.getOwnerInfo() : null;
+	    }
+	  }, {
+	    key: "getOwnerTypeId",
+	    value: function getOwnerTypeId() {
+	      return BX.prop.getInteger(this.getOwnerInfo(), "ENTITY_TYPE_ID", BX.CrmEntityType.enumeration.undefined);
+	    }
+	  }, {
+	    key: "getOwnerId",
+	    value: function getOwnerId() {
+	      return BX.prop.getInteger(this.getOwnerInfo(), "ENTITY_ID", 0);
+	    }
+	  }, {
+	    key: "isReadOnly",
+	    value: function isReadOnly() {
+	      return this._history.isReadOnly();
+	    }
+	  }, {
+	    key: "isEditable",
+	    value: function isEditable() {
+	      return !this.isReadOnly();
+	    }
+	  }, {
+	    key: "isDone",
+	    value: function isDone() {
+	      const typeId = this.getTypeId();
+
+	      if (typeId === Item.activity) {
+	        const entityData = this.getAssociatedEntityData();
+	        return BX.CrmActivityStatus.isFinal(BX.prop.getInteger(entityData, "STATUS", 0));
+	      }
+
+	      return false;
+	    }
+	  }, {
+	    key: "isFixed",
+	    value: function isFixed() {
+	      return this._isFixed;
+	    }
+	    /**
+	     * deprecated
+	     */
+
+	  }, {
+	    key: "fasten",
+	    value: function fasten(e) {
+	      if (this._fixedHistory._items.length >= 3) {
+	        if (!this.fastenLimitPopup) {
+	          this.fastenLimitPopup = new BX.PopupWindow('timeline_fasten_limit_popup_' + this._id, this._switcher, {
+	            content: BX.message('CRM_TIMELINE_FASTEN_LIMIT_MESSAGE'),
+	            darkMode: true,
+	            autoHide: true,
+	            zIndex: 990,
+	            angle: true,
+	            closeByEsc: true,
+	            bindOptions: {
+	              forceBindPosition: true
+	            }
+	          });
+	        }
+
+	        this.fastenLimitPopup.show();
+	        this.closeContextMenu();
+	        return;
+	      }
+
+	      BX.ajax({
+	        url: this._history._serviceUrl,
+	        method: "POST",
+	        dataType: "json",
+	        data: {
+	          "ACTION": "CHANGE_FASTEN_ITEM",
+	          "VALUE": 'Y',
+	          "OWNER_TYPE_ID": this.getOwnerTypeId(),
+	          "OWNER_ID": this.getOwnerId(),
+	          "ID": this._id
+	        }
+	      });
+	      this.closeContextMenu();
+	    }
+	    /**
+	     * deprecated
+	     */
+
+	  }, {
+	    key: "onSuccessFasten",
+	    value: function onSuccessFasten(result) {
+	      if (result && BX.type.isNotEmptyString(result.ERROR)) return;
+
+	      if (!this.isFixed()) {
+	        this._data.IS_FIXED = 'Y';
+
+	        const fixedItem = this._fixedHistory.createItem(this._data);
+
+	        fixedItem._isFixed = true;
+
+	        this._fixedHistory.addItem(fixedItem, 0);
+
+	        fixedItem.layout({
+	          add: false
+	        });
+	        this.refreshLayout();
+	        const animation = Fasten.create("", {
+	          initialItem: this,
+	          finalItem: fixedItem,
+	          anchor: this._fixedHistory._anchor
+	        });
+	        animation.run();
+	      }
+
+	      this.closeContextMenu();
+	    }
+	    /**
+	     * deprecated
+	     */
+
+	  }, {
+	    key: "unfasten",
+	    value: function unfasten(e) {
+	      BX.ajax({
+	        url: this._history._serviceUrl,
+	        method: "POST",
+	        dataType: "json",
+	        data: {
+	          "ACTION": "CHANGE_FASTEN_ITEM",
+	          "VALUE": 'N',
+	          "OWNER_TYPE_ID": this.getOwnerTypeId(),
+	          "OWNER_ID": this.getOwnerId(),
+	          "ID": this._id
+	        }
+	      });
+	      this.closeContextMenu();
+	    }
+	    /**
+	     * deprecated
+	     */
+
+	  }, {
+	    key: "onSuccessUnfasten",
+	    value: function onSuccessUnfasten(result) {
+	      if (result && BX.type.isNotEmptyString(result.ERROR)) return;
+	      let item;
+	      let historyItem;
+
+	      if (this.isFixed()) {
+	        item = this;
+	        historyItem = this._history.findItemById(this._id);
+	      } else {
+	        item = this._fixedHistory.findItemById(this._id);
+	        historyItem = this;
+	      }
+
+	      if (item) {
+	        const index = this._fixedHistory.getItemIndex(item);
+
+	        item.clearAnimate();
+
+	        this._fixedHistory.removeItemByIndex(index);
+
+	        if (historyItem) {
+	          historyItem._data.IS_FIXED = 'N';
+	          historyItem.refreshLayout();
+	          BX.LazyLoad.showImages();
+	        }
+	      }
+	    }
+	  }, {
+	    key: "clearAnimate",
+	    value: function clearAnimate() {
+	      if (!BX.type.isDomNode(this._wrapper)) return;
+	      const wrapperPosition = BX.pos(this._wrapper);
+	      const hideEvent = new BX.easing({
+	        duration: 1000,
+	        start: {
+	          height: wrapperPosition.height,
+	          opacity: 1,
+	          marginBottom: 15
+	        },
+	        finish: {
+	          height: 0,
+	          opacity: 0,
+	          marginBottom: 0
+	        },
+	        transition: BX.easing.makeEaseOut(BX.easing.transitions.quart),
+	        step: BX.proxy(function (state) {
+	          this._wrapper.style.height = state.height + "px";
+	          this._wrapper.style.opacity = state.opacity;
+	          this._wrapper.style.marginBottom = state.marginBottom;
+	        }, this),
+	        complete: BX.proxy(function () {
+	          this.clearLayout();
+	        }, this)
+	      });
+	      hideEvent.animate();
+	    }
+	  }, {
+	    key: "getWrapperClassName",
+	    value: function getWrapperClassName() {
+	      return "";
+	    }
+	  }, {
+	    key: "getIconClassName",
+	    value: function getIconClassName() {
+	      return "crm-entity-stream-section-icon crm-entity-stream-section-icon-info";
+	    }
+	  }, {
+	    key: "prepareContentDetails",
+	    value: function prepareContentDetails() {
+	      return [];
+	    }
+	  }, {
+	    key: "prepareContent",
+	    value: function prepareContent() {
+	      let wrapperClassName = this.getWrapperClassName();
+
+	      if (wrapperClassName !== "") {
+	        wrapperClassName = "crm-entity-stream-section crm-entity-stream-section-history" + " " + wrapperClassName;
+	      } else {
+	        wrapperClassName = "crm-entity-stream-section crm-entity-stream-section-history";
+	      }
+
+	      const wrapper = BX.create("DIV", {
+	        attrs: {
+	          className: wrapperClassName
+	        }
+	      });
+	      wrapper.appendChild(BX.create("DIV", {
+	        attrs: {
+	          className: this.getIconClassName()
+	        }
+	      }));
+
+	      if (this.isContextMenuEnabled()) {
+	        main_core.Dom.append(this.prepareContextMenuButton(), wrapper);
+	      }
+
+	      const contentWrapper = BX.create("DIV", {
+	        attrs: {
+	          className: "crm-entity-stream-content-event"
+	        }
+	      });
+	      wrapper.appendChild(BX.create("DIV", {
+	        attrs: {
+	          className: "crm-entity-stream-section-content"
+	        },
+	        children: [contentWrapper]
+	      }));
+	      const header = BX.create("DIV", {
+	        attrs: {
+	          className: "crm-entity-stream-content-header"
+	        },
+	        children: [BX.create("DIV", {
+	          attrs: {
+	            className: "crm-entity-stream-content-event-title"
+	          },
+	          children: [BX.create("A", {
+	            attrs: {
+	              href: "#"
+	            },
+	            events: {
+	              click: this._headerClickHandler
+	            },
+	            text: this.getTitle()
+	          })]
+	        }), BX.create("SPAN", {
+	          attrs: {
+	            className: "crm-entity-stream-content-event-time"
+	          },
+	          text: this.formatTime(this.getCreatedTime())
+	        })]
+	      });
+	      contentWrapper.appendChild(header);
+	      contentWrapper.appendChild(BX.create("DIV", {
+	        attrs: {
+	          className: "crm-entity-stream-content-detail"
+	        },
+	        children: this.prepareContentDetails()
+	      })); //region Author
+
+	      const authorNode = this.prepareAuthorLayout();
+
+	      if (authorNode) {
+	        contentWrapper.appendChild(authorNode);
+	      } //endregion
+
+
+	      return wrapper;
+	    }
+	  }, {
+	    key: "prepareLayout",
+	    value: function prepareLayout(options) {
+	      this._wrapper = this.prepareContent();
+
+	      if (this._wrapper) {
+	        const enableAdd = BX.type.isPlainObject(options) ? BX.prop.getBoolean(options, "add", true) : true;
+
+	        if (enableAdd) {
+	          const anchor = BX.type.isPlainObject(options) && BX.type.isElementNode(options["anchor"]) ? options["anchor"] : null;
+
+	          if (anchor && anchor.nextSibling) {
+	            this._container.insertBefore(this._wrapper, anchor.nextSibling);
+	          } else {
+	            this._container.appendChild(this._wrapper);
+	          }
+	        }
+
+	        this.markAsTerminated(this._history.checkItemForTermination(this));
+	      }
+	    }
+	  }, {
+	    key: "onHeaderClick",
+	    value: function onHeaderClick(e) {
+	      this.view();
+	      e.preventDefault ? e.preventDefault() : e.returnValue = false;
+	    }
+	  }, {
+	    key: "prepareTitleLayout",
+	    value: function prepareTitleLayout() {
+	      return BX.create("SPAN", {
+	        attrs: {
+	          className: "crm-entity-stream-content-event-title"
+	        },
+	        text: this.getTitle()
+	      });
+	    }
+	  }, {
+	    key: "prepareFixedSwitcherLayout",
+	    value: function prepareFixedSwitcherLayout() {
+	      const isFixed = this.getTextDataParam("IS_FIXED") === 'Y';
+	      this._switcher = BX.create("span", {
+	        attrs: {
+	          className: "crm-entity-stream-section-top-fixed-btn"
+	        },
+	        events: {
+	          click: isFixed ? BX.delegate(this.unfasten, this) : BX.delegate(this.fasten, this)
+	        }
+	      });
+	      if (isFixed) BX.addClass(this._switcher, "crm-entity-stream-section-top-fixed-btn-active");
+
+	      if (!this.isReadOnly() && !isFixed) {
+	        const manager = this._history.getManager();
+
+	        if (!manager.isSpotlightShowed()) {
+	          manager.setSpotlightShowed();
+	          BX.addClass(this._switcher, "crm-entity-stream-section-top-fixed-btn-spotlight");
+	          const spotlight = new BX.SpotLight({
+	            targetElement: this._switcher,
+	            targetVertex: "middle-center",
+	            lightMode: false,
+	            id: "CRM_TIMELINE_FASTEN_SWITCHER",
+	            zIndex: 900,
+	            top: -3,
+	            left: -1,
+	            autoSave: true,
+	            content: BX.message('CRM_TIMELINE_SPOTLIGHT_FASTEN_MESSAGE')
+	          });
+	          spotlight.show();
+	        }
+	      }
+
+	      return this._switcher;
+	    }
+	  }, {
+	    key: "prepareHeaderLayout",
+	    value: function prepareHeaderLayout() {
+	      const header = BX.create("DIV", {
+	        attrs: {
+	          className: "crm-entity-stream-content-header"
+	        }
+	      });
+	      header.appendChild(this.prepareTitleLayout());
+	      const statusNode = this.getStatusNode();
+
+	      if (main_core.Type.isDomNode(statusNode)) {
+	        main_core.Dom.append(statusNode, header);
+	      }
+
+	      header.appendChild(BX.create("SPAN", {
+	        attrs: {
+	          className: "crm-entity-stream-content-event-time"
+	        },
+	        text: this.formatTime(this.getCreatedTime())
+	      }));
+	      return header;
+	    }
+	  }, {
+	    key: "getStatusNode",
+	    value: function getStatusNode() {
+	      return null;
+	    }
+	  }, {
+	    key: "onActivityCreate",
+	    value: function onActivityCreate(activity, data) {
+	      this._history.getManager().onActivityCreated(activity, data);
+	    }
+	  }, {
+	    key: "formatTime",
+	    value: function formatTime(time) {
+	      if (this.isFixed()) {
+	        return this._fixedHistory.formatTime(time);
+	      }
+
+	      return this._history.formatTime(time);
+	    }
+	  }], [{
+	    key: "create",
+	    value: function create(id, settings) {
+	      const self = new History();
+	      self.initialize(id, settings);
+	      return self;
+	    }
+	  }, {
+	    key: "isCounterEnabled",
+	    value: function isCounterEnabled(deadline) {
+	      if (!BX.type.isDate(deadline)) {
+	        return false;
+	      }
+
+	      let start = new Date();
+	      start.setHours(0);
+	      start.setMinutes(0);
+	      start.setSeconds(0);
+	      start.setMilliseconds(0);
+	      start = start.getTime();
+	      let end = new Date();
+	      end.setHours(23);
+	      end.setMinutes(59);
+	      end.setSeconds(59);
+	      end.setMilliseconds(999);
+	      end = end.getTime();
+	      const time = deadline.getTime();
+	      return time < start || time >= start && time <= end;
+	    }
+	  }]);
+	  return History;
+	}(CompatibleItem);
+
 	/** @memberof BX.Crm.Timeline.Items */
 
 	let Scheduled = /*#__PURE__*/function (_CompatibleItem) {
@@ -4993,8 +3807,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "prepareLayout",
 	    value: function prepareLayout(options) {
-	      const vueComponent = this.makeVueComponent(options, 'schedule');
-	      this._wrapper = vueComponent ? vueComponent : this.prepareContent();
+	      this._wrapper = this.prepareContent();
 
 	      if (this._wrapper) {
 	        const enableAdd = BX.type.isPlainObject(options) ? BX.prop.getBoolean(options, "add", true) : true;
@@ -9754,14 +8567,6 @@ this.BX.Crm = this.BX.Crm || {};
 	                activityEditor: this._activityEditor,
 	                data: data
 	              });
-	            } else if (providerId === 'CRM_DELIVERY') {
-	              return Activity$1.create(itemId, {
-	                schedule: this,
-	                container: this._wrapper,
-	                activityEditor: this._activityEditor,
-	                data: data,
-	                vueComponent: BX.Crm.Timeline.DeliveryActivity
-	              });
 	            } else if (providerId === 'CRM_CALL_TRACKER') {
 	              return CallTracker.create(itemId, {
 	                schedule: this,
@@ -11582,254 +10387,6 @@ this.BX.Crm = this.BX.Crm || {};
 
 	/** @memberof BX.Crm.Timeline.Items */
 
-	let Sms$1 = /*#__PURE__*/function (_HistoryActivity) {
-	  babelHelpers.inherits(Sms, _HistoryActivity);
-
-	  function Sms() {
-	    babelHelpers.classCallCheck(this, Sms);
-	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Sms).call(this));
-	  }
-
-	  babelHelpers.createClass(Sms, [{
-	    key: "prepareHeaderLayout",
-	    value: function prepareHeaderLayout() {
-	      const header = BX.create("DIV", {
-	        attrs: {
-	          className: "crm-entity-stream-content-header"
-	        }
-	      });
-	      header.appendChild(this.prepareTitleLayout());
-	      header.appendChild(this.prepareMessageStatusLayout());
-	      header.appendChild(this.prepareTimeLayout());
-	      return header;
-	    }
-	  }, {
-	    key: "prepareMessageStatusLayout",
-	    value: function prepareMessageStatusLayout() {
-	      return this._messageStatusNode = BX.create("SPAN");
-	    }
-	  }, {
-	    key: "prepareContent",
-	    value: function prepareContent() {
-	      const entityData = this.getAssociatedEntityData();
-	      const communication = BX.prop.getObject(entityData, "COMMUNICATION", {});
-	      const communicationTitle = BX.prop.getString(communication, "TITLE", "");
-	      const communicationShowUrl = BX.prop.getString(communication, "SHOW_URL", "");
-	      const communicationValue = BX.prop.getString(communication, "VALUE", "");
-	      const smsInfo = BX.prop.getObject(entityData, "SMS_INFO", {});
-	      const wrapperClassName = "crm-entity-stream-section-sms";
-	      const wrapper = BX.create("DIV", {
-	        attrs: {
-	          className: "crm-entity-stream-section crm-entity-stream-section-history" + " " + wrapperClassName
-	        }
-	      });
-	      wrapper.appendChild(BX.create("DIV", {
-	        attrs: {
-	          className: "crm-entity-stream-section-icon crm-entity-stream-section-icon-sms"
-	        }
-	      }));
-	      if (this.isFixed()) BX.addClass(wrapper, 'crm-entity-stream-section-top-fixed');
-	      const contentWrapper = BX.create("DIV", {
-	        attrs: {
-	          className: "crm-entity-stream-content-event"
-	        }
-	      });
-	      wrapper.appendChild(BX.create("DIV", {
-	        attrs: {
-	          className: "crm-entity-stream-section-content"
-	        },
-	        children: [contentWrapper]
-	      }));
-	      const header = this.prepareHeaderLayout();
-	      contentWrapper.appendChild(header);
-	      const detailWrapper = BX.create("DIV", {
-	        attrs: {
-	          className: "crm-entity-stream-content-detail"
-	        }
-	      });
-	      contentWrapper.appendChild(detailWrapper);
-	      const messageWrapper = BX.create("DIV", {
-	        attrs: {
-	          className: "crm-entity-stream-content-detail-sms"
-	        }
-	      });
-
-	      if (smsInfo.senderId) {
-	        const senderId = smsInfo.senderId;
-	        let senderName = smsInfo.senderShortName;
-
-	        if (senderId === 'rest' && smsInfo.fromName) {
-	          senderName = smsInfo.fromName;
-	        }
-
-	        const messageSenderWrapper = BX.create("DIV", {
-	          attrs: {
-	            className: "crm-entity-stream-content-detail-sms-status"
-	          },
-	          children: [BX.message('CRM_TIMELINE_SMS_SENDER') + ' ', BX.create('STRONG', {
-	            text: senderName
-	          })]
-	        });
-
-	        if (senderId !== 'rest' && smsInfo.fromName) {
-	          messageSenderWrapper.innerHTML += ' ' + BX.message('CRM_TIMELINE_SMS_FROM') + ' ';
-	          messageSenderWrapper.appendChild(BX.create('STRONG', {
-	            text: smsInfo.fromName
-	          }));
-	        }
-
-	        messageWrapper.appendChild(messageSenderWrapper);
-	      }
-
-	      if (smsInfo.statusId !== '') {
-	        this.setMessageStatus(smsInfo.statusId, smsInfo.errorText);
-	      }
-
-	      const bodyText = BX.util.htmlspecialchars(entityData['DESCRIPTION_RAW']).replace(/\r\n|\r|\n/g, "<br/>");
-	      const messageBodyWrapper = BX.create("DIV", {
-	        attrs: {
-	          className: "crm-entity-stream-content-detail-sms-fragment"
-	        }
-	      });
-	      messageBodyWrapper.appendChild(BX.create('SPAN', {
-	        html: bodyText
-	      }));
-	      messageWrapper.appendChild(messageBodyWrapper);
-	      detailWrapper.appendChild(messageWrapper);
-	      const communicationWrapper = BX.create("DIV", {
-	        attrs: {
-	          className: "crm-entity-stream-content-detail-contact-info"
-	        },
-	        text: BX.message('CRM_TIMELINE_SMS_TO') + ' '
-	      });
-	      detailWrapper.appendChild(communicationWrapper);
-
-	      if (communicationTitle !== '') {
-	        if (communicationShowUrl !== '') {
-	          communicationWrapper.appendChild(BX.create("A", {
-	            attrs: {
-	              href: communicationShowUrl
-	            },
-	            text: communicationTitle
-	          }));
-	        } else {
-	          communicationWrapper.appendChild(BX.create("SPAN", {
-	            text: communicationTitle
-	          }));
-	        }
-	      }
-
-	      communicationWrapper.appendChild(BX.create("SPAN", {
-	        text: " " + communicationValue
-	      })); //region Author
-
-	      const authorNode = this.prepareAuthorLayout();
-
-	      if (authorNode) {
-	        contentWrapper.appendChild(authorNode);
-	      } //endregion
-	      //region  Actions
-
-
-	      this._actionContainer = BX.create("SPAN", {
-	        attrs: {
-	          className: "crm-entity-stream-content-detail-action"
-	        }
-	      });
-	      contentWrapper.appendChild(this._actionContainer); //endregion
-
-	      if (!this.isReadOnly()) contentWrapper.appendChild(this.prepareFixedSwitcherLayout());
-	      return wrapper;
-	    }
-	  }, {
-	    key: "prepareActions",
-	    value: function prepareActions() {}
-	  }, {
-	    key: "showActions",
-	    value: function showActions(show) {
-	      if (this._actionContainer) {
-	        this._actionContainer.style.display = show ? "" : "none";
-	      }
-	    }
-	  }, {
-	    key: "setMessageStatus",
-	    value: function setMessageStatus(status, errorText) {
-	      status = parseInt(status);
-	      if (isNaN(status) || !this._messageStatusNode) return;
-	      const statuses = this.getSetting('smsStatusDescriptions', {});
-
-	      if (statuses.hasOwnProperty(status)) {
-	        this._messageStatusNode.textContent = statuses[status];
-	        this.setMessageStatusErrorText(errorText);
-	        const statusSemantic = this.getMessageStatusSemantic(status);
-	        this.setMessageStatusSemantic(statusSemantic);
-	      }
-	    }
-	  }, {
-	    key: "setMessageStatusSemantic",
-	    value: function setMessageStatusSemantic(semantic) {
-	      const classMap = {
-	        process: 'crm-entity-stream-content-event-process',
-	        success: 'crm-entity-stream-content-event-successful',
-	        failure: 'crm-entity-stream-content-event-missing'
-	      };
-
-	      for (let checkSemantic in classMap) {
-	        const fn = checkSemantic === semantic ? 'addClass' : 'removeClass';
-	        BX[fn](this._messageStatusNode, classMap[checkSemantic]);
-	      }
-	    }
-	  }, {
-	    key: "setMessageStatusErrorText",
-	    value: function setMessageStatusErrorText(errorText) {
-	      if (!errorText) {
-	        this._messageStatusNode.removeAttribute('title');
-
-	        BX.removeClass(this._messageStatusNode, 'crm-entity-stream-content-event-error-tip');
-	      } else {
-	        this._messageStatusNode.setAttribute('title', errorText);
-
-	        BX.addClass(this._messageStatusNode, 'crm-entity-stream-content-event-error-tip');
-	      }
-	    }
-	  }, {
-	    key: "getMessageStatusSemantic",
-	    value: function getMessageStatusSemantic(status) {
-	      const semantics = this.getSetting('smsStatusSemantics', {});
-	      return semantics.hasOwnProperty(status) ? semantics[status] : 'failure';
-	    }
-	  }, {
-	    key: "subscribe",
-	    value: function subscribe() {
-	      if (!BX.CrmSmsWatcher) return;
-	      const entityData = this.getAssociatedEntityData();
-	      const smsInfo = BX.prop.getObject(entityData, "SMS_INFO", {});
-
-	      if (smsInfo.id) {
-	        BX.CrmSmsWatcher.subscribeOnMessageUpdate(smsInfo.id, this.onMessageUpdate.bind(this));
-	      }
-	    }
-	  }, {
-	    key: "onMessageUpdate",
-	    value: function onMessageUpdate(message) {
-	      if (message.STATUS_ID) {
-	        this.setMessageStatus(message.STATUS_ID, message.EXEC_ERROR);
-	      }
-	    }
-	  }], [{
-	    key: "create",
-	    value: function create(id, settings) {
-	      const self = new Sms();
-	      self.initialize(id, settings);
-	      self.subscribe();
-	      return self;
-	    }
-	  }]);
-	  return Sms;
-	}(HistoryActivity);
-
-	/** @memberof BX.Crm.Timeline.Items */
-
 	let Request$1 = /*#__PURE__*/function (_HistoryActivity) {
 	  babelHelpers.inherits(Request, _HistoryActivity);
 
@@ -13057,198 +11614,6 @@ this.BX.Crm = this.BX.Crm || {};
 
 	/** @memberof BX.Crm.Timeline.Actions */
 
-	let OrderCreation = /*#__PURE__*/function (_History) {
-	  babelHelpers.inherits(OrderCreation, _History);
-
-	  function OrderCreation() {
-	    babelHelpers.classCallCheck(this, OrderCreation);
-	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(OrderCreation).call(this));
-	  }
-
-	  babelHelpers.createClass(OrderCreation, [{
-	    key: "doInitialize",
-	    value: function doInitialize() {
-	      babelHelpers.get(babelHelpers.getPrototypeOf(OrderCreation.prototype), "doInitialize", this).call(this);
-
-	      if (!(this._activityEditor instanceof BX.CrmActivityEditor)) {
-	        throw "OrderCreation. The field 'activityEditor' is not assigned.";
-	      }
-	    }
-	  }, {
-	    key: "getTitle",
-	    value: function getTitle() {
-	      let msg = this.getMessage(BX.CrmEntityType.resolveName(this.getAssociatedEntityTypeId()).toLowerCase());
-
-	      if (!BX.type.isNotEmptyString(msg)) {
-	        msg = this.getTextDataParam("TITLE");
-	      }
-
-	      return msg;
-	    }
-	  }, {
-	    key: "getWrapperClassName",
-	    value: function getWrapperClassName() {
-	      return "crm-entity-stream-section-createOrderEntity";
-	    }
-	  }, {
-	    key: "getHeaderChildren",
-	    value: function getHeaderChildren() {
-	      let statusMessage = '';
-	      let statusClass = '';
-	      const fields = this.getObjectDataParam('FIELDS');
-
-	      if (BX.prop.get(fields, 'DONE') === 'Y') {
-	        statusMessage = this.getMessage("done");
-	        statusClass = "crm-entity-stream-content-event-done";
-	      } else if (BX.prop.get(fields, 'CANCELED') === 'Y') {
-	        statusMessage = this.getMessage("canceled");
-	        statusClass = "crm-entity-stream-content-event-canceled";
-	      } else {
-	        if (BX.prop.get(fields, 'PAID') === 'Y') {
-	          statusMessage = this.getMessage("paid");
-	          statusClass = "crm-entity-stream-content-event-paid";
-	        } else if (BX.prop.get(fields, 'PAID') === 'N') {
-	          statusMessage = this.getMessage("unpaid");
-	          statusClass = "crm-entity-stream-content-event-not-paid";
-	        }
-	      }
-
-	      return [BX.create("DIV", {
-	        attrs: {
-	          className: "crm-entity-stream-content-event-title"
-	        },
-	        events: {
-	          click: this._headerClickHandler
-	        },
-	        text: this.getTitle()
-	      }), BX.create("SPAN", {
-	        attrs: {
-	          className: statusClass
-	        },
-	        text: statusMessage
-	      }), BX.create("SPAN", {
-	        attrs: {
-	          className: "crm-entity-stream-content-event-time"
-	        },
-	        text: this.formatTime(this.getCreatedTime())
-	      })];
-	    }
-	  }, {
-	    key: "prepareContentDetails",
-	    value: function prepareContentDetails() {
-	      const entityData = this.getAssociatedEntityData();
-	      const entityTypeId = this.getAssociatedEntityTypeId();
-	      const entityId = this.getAssociatedEntityId();
-	      let title = BX.util.htmlspecialchars(BX.prop.getString(entityData, "TITLE", ""));
-	      const showUrl = BX.prop.getString(entityData, "SHOW_URL", "");
-	      const legend = BX.prop.getString(entityData, "LEGEND", "");
-
-	      if (legend !== "") {
-	        title += " " + legend;
-	      }
-
-	      const nodes = [];
-
-	      if (title !== "") {
-	        if (showUrl === "" || entityTypeId === this.getOwnerTypeId() && entityId === this.getOwnerId()) {
-	          nodes.push(BX.create("DIV", {
-	            attrs: {
-	              className: "crm-entity-stream-content-detail-description"
-	            },
-	            html: title
-	          }));
-	        } else {
-	          nodes.push(BX.create("DIV", {
-	            attrs: {
-	              className: "crm-entity-stream-content-detail-description"
-	            },
-	            html: title
-	          }));
-	          nodes.push(BX.create("A", {
-	            attrs: {
-	              href: showUrl
-	            },
-	            text: this.getMessage('urlOrderLink')
-	          }));
-	        }
-	      }
-
-	      return nodes;
-	    }
-	  }, {
-	    key: "getIconClassName",
-	    value: function getIconClassName() {
-	      return "crm-entity-stream-section-icon crm-entity-stream-section-icon-store";
-	    }
-	  }, {
-	    key: "prepareContent",
-	    value: function prepareContent() {
-	      const wrapperClassName = "crm-entity-stream-section crm-entity-stream-section-history";
-	      const wrapper = BX.create("DIV", {
-	        attrs: {
-	          className: wrapperClassName
-	        }
-	      });
-	      wrapper.appendChild(BX.create("DIV", {
-	        attrs: {
-	          className: this.getIconClassName()
-	        }
-	      }));
-	      const contentWrapper = BX.create("DIV", {
-	        attrs: {
-	          className: "crm-entity-stream-content-event"
-	        }
-	      });
-	      wrapper.appendChild(BX.create("DIV", {
-	        attrs: {
-	          className: "crm-entity-stream-section-content"
-	        },
-	        children: [contentWrapper]
-	      }));
-	      const header = BX.create("DIV", {
-	        attrs: {
-	          className: "crm-entity-stream-content-header"
-	        },
-	        children: this.getHeaderChildren()
-	      });
-	      contentWrapper.appendChild(header);
-	      contentWrapper.appendChild(BX.create("DIV", {
-	        attrs: {
-	          className: "crm-entity-stream-content-detail"
-	        },
-	        children: this.prepareContentDetails()
-	      })); //region Author
-
-	      const authorNode = this.prepareAuthorLayout();
-
-	      if (authorNode) {
-	        contentWrapper.appendChild(authorNode);
-	      } //endregion
-
-
-	      return wrapper;
-	    }
-	  }, {
-	    key: "getMessage",
-	    value: function getMessage(name) {
-	      const m = OrderCreation.messages;
-	      return m.hasOwnProperty(name) ? m[name] : name;
-	    }
-	  }], [{
-	    key: "create",
-	    value: function create(id, settings) {
-	      const self = new OrderCreation();
-	      self.initialize(id, settings);
-	      return self;
-	    }
-	  }]);
-	  return OrderCreation;
-	}(History);
-
-	babelHelpers.defineProperty(OrderCreation, "messages", {});
-
-	/** @memberof BX.Crm.Timeline.Actions */
-
 	let OrderModification = /*#__PURE__*/function (_History) {
 	  babelHelpers.inherits(OrderModification, _History);
 
@@ -14091,491 +12456,6 @@ this.BX.Crm = this.BX.Crm || {};
 	  }]);
 	  return ExternalNoticeStatusModification;
 	}(ExternalNoticeModification);
-
-	/** @memberof BX.Crm.Timeline.Items */
-
-	let OrderCheck = /*#__PURE__*/function (_History) {
-	  babelHelpers.inherits(OrderCheck, _History);
-
-	  function OrderCheck() {
-	    babelHelpers.classCallCheck(this, OrderCheck);
-	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(OrderCheck).call(this));
-	  }
-
-	  babelHelpers.createClass(OrderCheck, [{
-	    key: "doInitialize",
-	    value: function doInitialize() {
-	      babelHelpers.get(babelHelpers.getPrototypeOf(OrderCheck.prototype), "doInitialize", this).call(this);
-
-	      if (!(this._activityEditor instanceof BX.CrmActivityEditor)) {
-	        throw "OrderCheck. The field 'activityEditor' is not assigned.";
-	      }
-	    }
-	  }, {
-	    key: "getTitle",
-	    value: function getTitle() {
-	      let result = this.getMessage('orderCheck');
-	      const checkName = this.getTextDataParam('CHECK_NAME');
-
-	      if (checkName !== '') {
-	        result += ' "' + checkName + '"';
-	      }
-
-	      return result;
-	    }
-	  }, {
-	    key: "getWrapperClassName",
-	    value: function getWrapperClassName() {
-	      return "crm-entity-stream-section-createOrderEntity";
-	    }
-	  }, {
-	    key: "getHeaderChildren",
-	    value: function getHeaderChildren() {
-	      let statusMessage = '';
-	      let statusClass = '';
-	      let title = this.getTitle();
-
-	      if (this.getTextDataParam("SENDED") !== '') {
-	        title = this.getMessage('sendedTitle');
-	      } else {
-	        statusMessage = this.getMessage("printed");
-	        statusClass = "crm-entity-stream-content-event-successful";
-
-	        if (this.getTextDataParam("PRINTED") !== 'Y') {
-	          statusMessage = this.getMessage("unprinted");
-	          statusClass = "crm-entity-stream-content-event-missing";
-	        }
-	      }
-
-	      return [BX.create("DIV", {
-	        attrs: {
-	          className: "crm-entity-stream-content-event-title"
-	        },
-	        children: [BX.create("A", {
-	          attrs: {
-	            href: "#"
-	          },
-	          events: {
-	            click: this._headerClickHandler
-	          },
-	          text: title
-	        })]
-	      }), BX.create("SPAN", {
-	        attrs: {
-	          className: statusClass
-	        },
-	        text: statusMessage
-	      }), BX.create("SPAN", {
-	        attrs: {
-	          className: "crm-entity-stream-content-event-time"
-	        },
-	        text: this.formatTime(this.getCreatedTime())
-	      })];
-	    }
-	  }, {
-	    key: "prepareContentDetails",
-	    value: function prepareContentDetails() {
-	      const entityData = this.getAssociatedEntityData();
-	      const title = this.getTextDataParam("TITLE");
-	      const showUrl = BX.prop.getString(entityData, "SHOW_URL", '');
-	      const nodes = [];
-
-	      if (title !== "") {
-	        const isSended = this.getTextDataParam("SENDED") !== '';
-	        const className = isSended ? 'crm-entity-stream-content-detail-order' : 'crm-entity-stream-content-detail-description';
-	        const descriptionNode = BX.create("DIV", {
-	          attrs: {
-	            className: className
-	          }
-	        });
-
-	        if (showUrl !== "") {
-	          descriptionNode.appendChild(BX.create("A", {
-	            attrs: {
-	              href: showUrl
-	            },
-	            events: {
-	              click: BX.delegate(function (e) {
-	                BX.Crm.Page.openSlider(showUrl, {
-	                  width: 500
-	                });
-	                e.preventDefault ? e.preventDefault() : e.returnValue = false;
-	              }, this)
-	            },
-	            text: title
-	          }));
-	        }
-
-	        const legend = this.getTextDataParam("LEGEND");
-	        let legendNode;
-
-	        if (legend !== "") {
-	          legendNode = BX.create("SPAN", {
-	            html: " " + legend
-	          });
-	        }
-
-	        if (isSended) {
-	          nodes.push(descriptionNode);
-
-	          if (legendNode) {
-	            nodes.push(legendNode);
-	          }
-	        } else {
-	          if (legendNode) {
-	            descriptionNode.appendChild(legendNode);
-	          }
-
-	          nodes.push(descriptionNode);
-	        }
-	      }
-
-	      const checkUrl = this.getTextDataParam("CHECK_URL");
-
-	      if (checkUrl) {
-	        nodes.push(BX.create("DIV", {
-	          attrs: {
-	            className: 'crm-entity-stream-content-detail-payment-info'
-	          },
-	          children: [BX.create("A", {
-	            attrs: {
-	              href: checkUrl,
-	              target: '_blank'
-	            },
-	            text: this.getMessage('urlLink')
-	          })]
-	        }));
-	      }
-
-	      return nodes;
-	    }
-	  }, {
-	    key: "prepareContent",
-	    value: function prepareContent() {
-	      const wrapperClassName = "crm-entity-stream-section crm-entity-stream-section-history crm-entity-stream-section-createOrderEntity";
-	      const wrapper = BX.create("DIV", {
-	        attrs: {
-	          className: wrapperClassName
-	        }
-	      });
-	      wrapper.appendChild(BX.create("DIV", {
-	        attrs: {
-	          className: this.getIconClassName()
-	        }
-	      }));
-	      const contentWrapper = BX.create("DIV", {
-	        attrs: {
-	          className: "crm-entity-stream-content-event"
-	        }
-	      });
-	      wrapper.appendChild(BX.create("DIV", {
-	        attrs: {
-	          className: "crm-entity-stream-section-content"
-	        },
-	        children: [contentWrapper]
-	      }));
-	      const header = BX.create("DIV", {
-	        attrs: {
-	          className: "crm-entity-stream-content-header"
-	        },
-	        children: this.getHeaderChildren()
-	      });
-	      contentWrapper.appendChild(header);
-	      contentWrapper.appendChild(BX.create("DIV", {
-	        attrs: {
-	          className: "crm-entity-stream-content-detail"
-	        },
-	        children: this.prepareContentDetails()
-	      })); //region Author
-
-	      const authorNode = this.prepareAuthorLayout();
-
-	      if (authorNode) {
-	        contentWrapper.appendChild(authorNode);
-	      } //endregion
-
-
-	      return wrapper;
-	    }
-	  }, {
-	    key: "getMessage",
-	    value: function getMessage(name) {
-	      const m = OrderCheck.messages;
-	      return m.hasOwnProperty(name) ? m[name] : name;
-	    }
-	  }], [{
-	    key: "create",
-	    value: function create(id, settings) {
-	      const self = new OrderCheck();
-	      self.initialize(id, settings);
-	      return self;
-	    }
-	  }]);
-	  return OrderCheck;
-	}(History);
-
-	babelHelpers.defineProperty(OrderCheck, "messages", {});
-
-	/** @memberof BX.Crm.Timeline.Items */
-
-	let FinalSummaryDocuments = /*#__PURE__*/function (_History) {
-	  babelHelpers.inherits(FinalSummaryDocuments, _History);
-
-	  function FinalSummaryDocuments() {
-	    babelHelpers.classCallCheck(this, FinalSummaryDocuments);
-	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(FinalSummaryDocuments).call(this));
-	  }
-
-	  babelHelpers.createClass(FinalSummaryDocuments, [{
-	    key: "getMessage",
-	    value: function getMessage(name) {
-	      const m = FinalSummaryDocuments.messages;
-	      return m.hasOwnProperty(name) ? m[name] : name;
-	    }
-	  }, {
-	    key: "getTitle",
-	    value: function getTitle() {
-	      return this.getMessage('title');
-	    }
-	  }, {
-	    key: "getHeaderChildren",
-	    value: function getHeaderChildren() {
-	      const children = [BX.create("DIV", {
-	        attrs: {
-	          className: "crm-entity-stream-content-event-title"
-	        },
-	        children: [BX.create("A", {
-	          attrs: {
-	            href: "#"
-	          },
-	          events: {
-	            click: this._headerClickHandler
-	          },
-	          text: this.getTitle()
-	        })]
-	      })];
-	      children.push(BX.create("SPAN", {
-	        attrs: {
-	          className: "crm-entity-stream-content-event-time"
-	        },
-	        text: this.formatTime(this.getCreatedTime())
-	      }));
-	      return children;
-	    }
-	  }, {
-	    key: "createCheckBlock",
-	    value: function createCheckBlock(check) {
-	      const blockNode = BX.create("DIV", {
-	        attrs: {
-	          className: "crm-entity-stream-content-detail-notice"
-	        }
-	      });
-	      blockNode.appendChild(BX.create("a", {
-	        attrs: {
-	          href: check.URL,
-	          target: '_blank'
-	        },
-	        text: check.TITLE
-	      }));
-	      return blockNode;
-	    }
-	  }, {
-	    key: "prepareContent",
-	    value: function prepareContent() {
-	      const wrapper = BX.create("DIV", {
-	        attrs: {
-	          className: "crm-entity-stream-section crm-entity-stream-section-payment"
-	        }
-	      });
-	      wrapper.appendChild(BX.create("DIV", {
-	        attrs: {
-	          className: 'crm-entity-stream-section-icon ' + this.getIconClassName()
-	        }
-	      }));
-	      const content = BX.create("DIV", {
-	        attrs: {
-	          className: "crm-entity-stream-section-content"
-	        }
-	      });
-	      const contentItem = BX.create("DIV", {
-	        attrs: {
-	          className: "crm-entity-stream-content-event"
-	        }
-	      });
-	      const header = BX.create("DIV", {
-	        attrs: {
-	          className: "crm-entity-stream-content-header"
-	        },
-	        children: this.getHeaderChildren()
-	      });
-	      contentItem.appendChild(header);
-	      const data = this.getData();
-
-	      if (data.RESULT) {
-	        const summaryOptions = {
-	          'OWNER_ID': data.ASSOCIATED_ENTITY_ID,
-	          'OWNER_TYPE_ID': data.ASSOCIATED_ENTITY_TYPE_ID,
-	          'PARENT_CONTEXT': this,
-	          'CONTEXT': BX.CrmEntityType.resolveName(data.ASSOCIATED_ENTITY_TYPE_ID).toLowerCase(),
-	          'IS_WITH_ORDERS_MODE': false
-	        };
-	        const timelineSummaryDocuments = new BX.Crm.TimelineSummaryDocuments(summaryOptions);
-	        const options = data.RESULT.TIMELINE_SUMMARY_OPTIONS;
-	        timelineSummaryDocuments.setOptions(options);
-	        const nodes = [timelineSummaryDocuments.render()];
-	        contentItem.appendChild(BX.create("DIV", {
-	          attrs: {
-	            className: "crm-entity-stream-content-detail"
-	          },
-	          children: nodes
-	        }));
-	        content.appendChild(contentItem);
-	      } //region Author
-
-
-	      const authorNode = this.prepareAuthorLayout();
-
-	      if (authorNode) {
-	        content.appendChild(authorNode);
-	      } //endregion
-
-
-	      wrapper.appendChild(BX.create("DIV", {
-	        attrs: {
-	          className: "crm-entity-stream-section-content"
-	        },
-	        children: [content]
-	      }));
-	      return wrapper;
-	    }
-	  }, {
-	    key: "prepareLayout",
-	    value: function prepareLayout(options) {
-	      babelHelpers.get(babelHelpers.getPrototypeOf(FinalSummaryDocuments.prototype), "prepareLayout", this).call(this, options);
-	      const enableAdd = BX.type.isPlainObject(options) ? BX.prop.getBoolean(options, "add", true) : true;
-
-	      if (enableAdd) {
-	        main_core_events.EventEmitter.emit('BX.Crm.Timeline.Items.FinalSummaryDocuments:onHistoryNodeAdded', [this._wrapper]);
-	      }
-	    }
-	  }, {
-	    key: "getIconClassName",
-	    value: function getIconClassName() {
-	      return 'crm-entity-stream-section-icon-complete';
-	    }
-	  }, {
-	    key: "startSalescenterApplication",
-	    value: function startSalescenterApplication(orderId, options) {
-	      if (options === undefined) {
-	        return;
-	      }
-
-	      BX.loadExt('salescenter.manager').then(function () {
-	        BX.Salescenter.Manager.openApplication(options);
-	      }.bind(this));
-	    }
-	  }], [{
-	    key: "create",
-	    value: function create(id, settings) {
-	      const self = new FinalSummaryDocuments();
-	      self.initialize(id, settings);
-	      return self;
-	    }
-	  }]);
-	  return FinalSummaryDocuments;
-	}(History);
-
-	babelHelpers.defineProperty(FinalSummaryDocuments, "messages", {});
-
-	/** @memberof BX.Crm.Timeline.Items */
-
-	let FinalSummary = /*#__PURE__*/function (_FinalSummaryDocument) {
-	  babelHelpers.inherits(FinalSummary, _FinalSummaryDocument);
-
-	  function FinalSummary() {
-	    babelHelpers.classCallCheck(this, FinalSummary);
-	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(FinalSummary).call(this));
-	  }
-
-	  babelHelpers.createClass(FinalSummary, [{
-	    key: "prepareContent",
-	    value: function prepareContent() {
-	      const wrapper = BX.create("DIV", {
-	        attrs: {
-	          className: "crm-entity-stream-section crm-entity-stream-section-payment"
-	        }
-	      });
-	      wrapper.appendChild(BX.create("DIV", {
-	        attrs: {
-	          className: 'crm-entity-stream-section-icon ' + this.getIconClassName()
-	        }
-	      }));
-	      const content = BX.create("DIV", {
-	        attrs: {
-	          className: "crm-entity-stream-section-content"
-	        }
-	      });
-	      const contentItem = BX.create("DIV", {
-	        attrs: {
-	          className: "crm-entity-stream-content-event"
-	        }
-	      });
-	      const header = BX.create("DIV", {
-	        attrs: {
-	          className: "crm-entity-stream-content-header"
-	        },
-	        children: this.getHeaderChildren()
-	      });
-	      contentItem.appendChild(header);
-	      const data = this.getData();
-
-	      if (data.RESULT) {
-	        const summaryOptions = {
-	          'OWNER_ID': data.ASSOCIATED_ENTITY_ID,
-	          'OWNER_TYPE_ID': data.ASSOCIATED_ENTITY_TYPE_ID,
-	          'PARENT_CONTEXT': this,
-	          'CONTEXT': BX.CrmEntityType.resolveName(data.ASSOCIATED_ENTITY_TYPE_ID).toLowerCase(),
-	          'IS_WITH_ORDERS_MODE': true
-	        };
-	        const timelineSummaryDocuments = new BX.Crm.TimelineSummaryDocuments(summaryOptions);
-	        const options = data.RESULT.TIMELINE_SUMMARY_OPTIONS;
-	        timelineSummaryDocuments.setOptions(options);
-	        const nodes = [timelineSummaryDocuments.render()];
-	        contentItem.appendChild(BX.create("DIV", {
-	          attrs: {
-	            className: "crm-entity-stream-content-detail"
-	          },
-	          children: nodes
-	        }));
-	        content.appendChild(contentItem);
-	      } //region Author
-
-
-	      const authorNode = this.prepareAuthorLayout();
-
-	      if (authorNode) {
-	        content.appendChild(authorNode);
-	      } //endregion
-
-
-	      wrapper.appendChild(BX.create("DIV", {
-	        attrs: {
-	          className: "crm-entity-stream-section-content"
-	        },
-	        children: [content]
-	      }));
-	      return wrapper;
-	    }
-	  }], [{
-	    key: "create",
-	    value: function create(id, settings) {
-	      const self = new FinalSummary();
-	      self.initialize(id, settings);
-	      return self;
-	    }
-	  }]);
-	  return FinalSummary;
-	}(FinalSummaryDocuments);
 
 	/** @memberof BX.Crm.Timeline.Items */
 
@@ -16987,9 +14867,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      const typeId = BX.prop.getInteger(data, "TYPE_ID", Item.undefined);
 	      const typeCategoryId = BX.prop.getInteger(data, "TYPE_CATEGORY_ID", 0);
 	      const providerId = BX.prop.getString(BX.prop.getObject(data, "ASSOCIATED_ENTITY", {}), "PROVIDER_ID", "");
-	      const vueComponentId = 'TYPE_' + typeCategoryId + (providerId ? '_' + providerId : '');
-	      const vueComponentsMap = new Map([['TYPE_' + BX.CrmActivityType.provider + '_CRM_NOTIFICATION', BX.Crm.Timeline.Notification], ['TYPE_' + BX.CrmActivityType.provider + '_CRM_DELIVERY', BX.Crm.Timeline.DeliveryActivity]]);
-	      const vueComponent = vueComponentsMap.has(vueComponentId) ? vueComponentsMap.get(vueComponentId) : null;
 
 	      if (typeId !== Item.activity) {
 	        return null;
@@ -17038,16 +14915,6 @@ this.BX.Crm = this.BX.Crm || {};
 	            activityEditor: this._activityEditor,
 	            data: data
 	          });
-	        } else if (providerId === 'CRM_SMS') {
-	          return Sms$1.create(data["ID"], {
-	            history: this._history,
-	            fixedHistory: this._fixedHistory,
-	            container: this._wrapper,
-	            activityEditor: this._activityEditor,
-	            data: data,
-	            smsStatusDescriptions: this._manager.getSetting('smsStatusDescriptions', {}),
-	            smsStatusSemantics: this._manager.getSetting('smsStatusSemantics', {})
-	          });
 	        } else if (providerId === 'CRM_REQUEST') {
 	          return Request$1.create(data["ID"], {
 	            history: this._history,
@@ -17080,15 +14947,6 @@ this.BX.Crm = this.BX.Crm || {};
 	            activityEditor: this._activityEditor,
 	            data: data
 	          });
-	        } else if (providerId === 'CRM_DELIVERY') {
-	          return HistoryActivity.create(data["ID"], {
-	            history: this._history,
-	            fixedHistory: this._fixedHistory,
-	            container: this._wrapper,
-	            activityEditor: this._activityEditor,
-	            data: data,
-	            vueComponent: vueComponent
-	          });
 	        } else if (providerId === 'ZOOM') {
 	          return Zoom$1.create(data["ID"], {
 	            history: this,
@@ -17113,61 +14971,8 @@ this.BX.Crm = this.BX.Crm || {};
 	        fixedHistory: this._fixedHistory,
 	        container: this._wrapper,
 	        activityEditor: this._activityEditor,
-	        data: data,
-	        vueComponent: vueComponent
+	        data: data
 	      });
-	    }
-	  }, {
-	    key: "createOrderEntityItem",
-	    value: function createOrderEntityItem(data) {
-	      const entityId = BX.prop.getInteger(data, "ASSOCIATED_ENTITY_TYPE_ID", 0);
-	      const typeId = BX.prop.getInteger(data, "TYPE_CATEGORY_ID", 0);
-
-	      if (entityId !== BX.CrmEntityType.enumeration.order && entityId !== BX.CrmEntityType.enumeration.orderpayment && entityId !== BX.CrmEntityType.enumeration.ordershipment) {
-	        return null;
-	      }
-
-	      const settings = {
-	        history: this._history,
-	        fixedHistory: this._fixedHistory,
-	        container: this._wrapper,
-	        activityEditor: this._activityEditor,
-	        data: data
-	      };
-
-	      if (typeId === Item.creation) {
-	        return OrderCreation.create(data["ID"], settings);
-	      } else if (typeId === Item.modification) {
-	        return OrderModification.create(data["ID"], settings);
-	      }
-	    }
-	  }, {
-	    key: "createProductCompilationItem",
-	    value: function createProductCompilationItem(data) {
-	      var typeId = BX.prop.getInteger(data, "TYPE_CATEGORY_ID", 0);
-	      var entityId = BX.prop.getInteger(data, "ASSOCIATED_ENTITY_TYPE_ID", 0);
-
-	      if (entityId !== BX.CrmEntityType.enumeration.deal) {
-	        return null;
-	      }
-
-	      var settings = {
-	        history: this._history,
-	        fixedHistory: this._fixedHistory,
-	        container: this._wrapper,
-	        activityEditor: this._activityEditor,
-	        data: data
-	      };
-
-	      if (typeId === Compilation.orderExists) {
-	        settings.vueComponent = BX.Crm.Timeline.CompilationOrderNotice;
-	      } else if (typeId === Compilation.compilationViewed) {
-	        settings.vueComponent = BX.Crm.Timeline.ProductCompilationViewed;
-	      } else if (typeId === Compilation.newDealCreated) {
-	        settings.vueComponent = BX.Crm.Timeline.NewDealCreated;
-	      }
-
-	      return BX.CrmHistoryItem.create(data["ID"], settings);
 	    }
 	  }, {
 	    key: "createExternalNotificationItem",
@@ -17192,29 +14997,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      });
 	    }
 	  }, {
-	    key: "createDeliveryItem",
-	    value: function createDeliveryItem(data) {
-	      const typeId = BX.prop.getInteger(data, "TYPE_ID", Item.undefined);
-	      const typeCategoryId = BX.prop.getInteger(data, "TYPE_CATEGORY_ID", 0);
-
-	      if (typeId !== Item.delivery) {
-	        return null;
-	      }
-
-	      const vueComponentsMap = new Map([[Delivery.taxiEstimationRequest, BX.Crm.Delivery.Taxi.EstimationRequest], [Delivery.taxiCallRequest, BX.Crm.Delivery.Taxi.CallRequest], [Delivery.taxiCancelledByManager, BX.Crm.Delivery.Taxi.CancelledByManager], [Delivery.taxiCancelledByDriver, BX.Crm.Delivery.Taxi.CancelledByDriver], [Delivery.taxiPerformerNotFound, BX.Crm.Delivery.Taxi.PerformerNotFound], [Delivery.taxiSmsProviderIssue, BX.Crm.Delivery.Taxi.SmsProviderIssue], [Delivery.taxiReturnedFinish, BX.Crm.Delivery.Taxi.ReturnedFinish], [Delivery.deliveryMessage, BX.Crm.Timeline.DeliveryMessage], [Delivery.deliveryCalculation, BX.Crm.Timeline.DeliveryCalculation]]);
-
-	      if (vueComponentsMap.has(typeCategoryId)) {
-	        return History.create(data["ID"], {
-	          history: this._history,
-	          fixedHistory: this._fixedHistory,
-	          container: this._wrapper,
-	          activityEditor: this._activityEditor,
-	          data: data,
-	          vueComponent: vueComponentsMap.get(typeCategoryId)
-	        });
-	      }
-	    }
-	  }, {
 	    key: "createItem",
 	    value: function createItem(data) {
 	      if (data.hasOwnProperty('type')) {
@@ -17237,33 +15019,8 @@ this.BX.Crm = this.BX.Crm || {};
 
 	      if (typeId === Item.activity) {
 	        return this.createActivityItem(data);
-	      } else if (typeId === Item.order) {
-	        return this.createOrderEntityItem(data);
-	      } else if (typeId === Item.productCompilation) {
-	        return this.createProductCompilationItem(data);
 	      } else if (typeId === Item.externalNotification) {
 	        return this.createExternalNotificationItem(data);
-	      } else if (typeId === Item.orderCheck) {
-	        return OrderCheck.create(data["ID"], {
-	          history: this._history,
-	          container: this._wrapper,
-	          activityEditor: this._activityEditor,
-	          data: data
-	        });
-	      } else if (typeId === Item.finalSummary) {
-	        return FinalSummary.create(data["ID"], {
-	          history: this._history,
-	          container: this._wrapper,
-	          activityEditor: this._activityEditor,
-	          data: data
-	        });
-	      } else if (typeId === Item.finalSummaryDocuments) {
-	        return FinalSummaryDocuments.create(data["ID"], {
-	          history: this._history,
-	          container: this._wrapper,
-	          activityEditor: this._activityEditor,
-	          data: data
-	        });
 	      } else if (typeId === Item.creation) {
 	        return Creation.create(data["ID"], {
 	          history: this._history,
@@ -17360,8 +15117,6 @@ this.BX.Crm = this.BX.Crm || {};
 	          activityEditor: this._activityEditor,
 	          data: data
 	        });
-	      } else if (typeId === Item.delivery) {
-	        return this.createDeliveryItem(data);
 	      }
 
 	      return History.create(data["ID"], {
@@ -19179,45 +16934,6 @@ this.BX.Crm = this.BX.Crm || {};
 	};
 	babelHelpers.defineProperty(Manager, "instances", {});
 
-	/** @memberof BX.Crm.Timeline.Tools */
-	const SmsWatcher = {
-	  _pullTagName: 'MESSAGESERVICE',
-	  _pullInited: false,
-	  _listeners: {},
-	  initPull: function () {
-	    if (this._pullInited) return;
-	    BX.addCustomEvent("onPullEvent-messageservice", this.onPullEvent.bind(this));
-	    this.extendWatch();
-	    this._pullInited = true;
-	  },
-	  subscribeOnMessageUpdate: function (messageId, callback) {
-	    this.initPull();
-	    this._listeners[messageId] = callback;
-	  },
-	  fireExternalStatusUpdate: function (messageId, message) {
-	    const listener = this._listeners[messageId];
-
-	    if (listener) {
-	      listener(message);
-	    }
-	  },
-	  onPullEvent: function (command, params) {
-	    // console.log(command, params);
-	    if (command === 'message_update') {
-	      for (let i = 0; i < params.messages.length; ++i) {
-	        const message = params.messages[i];
-	        this.fireExternalStatusUpdate(message['ID'], message);
-	      }
-	    }
-	  },
-	  extendWatch: function () {
-	    if (BX.type.isFunction(BX.PULL)) {
-	      BX.PULL.extendWatch(this._pullTagName);
-	      window.setTimeout(this.extendWatch.bind(this), 60000);
-	    }
-	  }
-	};
-
 	/** @memberof BX.Crm.Timeline.Actions */
 
 	let SchedulePostpone = /*#__PURE__*/function (_Activity) {
@@ -19476,123 +17192,6 @@ this.BX.Crm = this.BX.Crm || {};
 	  return Comment;
 	}();
 
-	var component$4 = ui_vue.Vue.extend({
-	  mixins: [HistoryItemMixin],
-	  // language=Vue
-	  template: `
-		<div class="crm-entity-stream-section crm-entity-stream-section-history crm-entity-stream-section-advice">
-			<div class="crm-entity-stream-section-icon crm-entity-stream-section-icon-advice"></div>
-			<div class="crm-entity-stream-advice-content">
-				<div class="crm-entity-stream-advice-info">
-					${main_core.Loc.getMessage('CRM_TIMELINE_PRODUCT_COMPILATION_ORDER_EXISTS_NOTICE')}
-				</div>
-			</div>
-		</div>
-	`
-	});
-
-	var component$5 = ui_vue.Vue.extend({
-	  mixins: [HistoryItemMixin],
-	  computed: {
-	    legend() {
-	      var compilationCreationDate = BX.prop.getString(this.data, 'COMPILATION_CREATION_DATE', '');
-	      var legendTextTemplate = main_core.Loc.getMessage('CRM_TIMELINE_PRODUCT_COMPILATION_VIEWED_LEGEND');
-	      return legendTextTemplate.replace('#DATE_CREATE#', compilationCreationDate);
-	    },
-
-	    authorFormattedName() {
-	      var _this$data, _this$data$AUTHOR;
-
-	      return this === null || this === void 0 ? void 0 : (_this$data = this.data) === null || _this$data === void 0 ? void 0 : (_this$data$AUTHOR = _this$data.AUTHOR) === null || _this$data$AUTHOR === void 0 ? void 0 : _this$data$AUTHOR.FORMATTED_NAME;
-	    },
-
-	    authorHref() {
-	      var _this$data2, _this$data2$AUTHOR;
-
-	      return this === null || this === void 0 ? void 0 : (_this$data2 = this.data) === null || _this$data2 === void 0 ? void 0 : (_this$data2$AUTHOR = _this$data2.AUTHOR) === null || _this$data2$AUTHOR === void 0 ? void 0 : _this$data2$AUTHOR.SHOW_URL;
-	    },
-
-	    authorImageUrl() {
-	      var _this$data3, _this$data3$AUTHOR;
-
-	      return this === null || this === void 0 ? void 0 : (_this$data3 = this.data) === null || _this$data3 === void 0 ? void 0 : (_this$data3$AUTHOR = _this$data3.AUTHOR) === null || _this$data3$AUTHOR === void 0 ? void 0 : _this$data3$AUTHOR.IMAGE_URL;
-	    },
-
-	    authorImageStyle() {
-	      if (this.authorImageUrl) {
-	        return {
-	          backgroundImage: "url('" + encodeURI(this.authorImageUrl) + "')",
-	          backgroundSize: '21px'
-	        };
-	      }
-
-	      return {};
-	    }
-
-	  },
-	  // language=Vue
-	  template: `
-		<div class="crm-entity-stream-section crm-entity-stream-section-history">
-			<div class="crm-entity-stream-section-icon crm-entity-stream-section-icon-info"></div>
-			<div class="crm-entity-stream-section-content">
-				<div class="crm-entity-stream-content-event">
-					<div class="crm-entity-stream-content-header">
-						<div class="crm-entity-stream-content-event-title">
-							${main_core.Loc.getMessage('CRM_TIMELINE_PRODUCT_COMPILATION_TITLE')}
-						</div>
-						<span class="crm-entity-stream-content-event-done">
-							${main_core.Loc.getMessage('CRM_TIMELINE_PRODUCT_COMPILATION_VIEWED')}
-						</span>
-						<span class="crm-entity-stream-content-event-time">{{createdAt}}</span>
-					</div>
-					<div class="crm-entity-stream-content-detail">
-						<div class="crm-entity-stream-content-detail-description">
-							${main_core.Loc.getMessage('CRM_TIMELINE_PRODUCT_COMPILATION_VIEWED_DESCRIPTION')}
-						</div>
-					</div>
-						<a
-							class="ui-icon ui-icon-common-user crm-entity-stream-content-detail-employee" 
-							v-bind:title="authorFormattedName"
-							target="_blank"
-							v-bind:href="authorHref"
-						>
-							<i :style="authorImageStyle"></i>
-						</a>
-					</div>
-			</div>
-		</div>
-	`
-	});
-
-	var component$6 = ui_vue.Vue.extend({
-	  mixins: [HistoryItemMixin],
-	  computed: {
-	    message() {
-	      var _this$data, _this$data$NEW_DEAL_D, _this$data2, _this$data2$NEW_DEAL_, _this$data3, _this$data3$NEW_DEAL_;
-
-	      const dealTitle = BX.util.htmlspecialchars(this === null || this === void 0 ? void 0 : (_this$data = this.data) === null || _this$data === void 0 ? void 0 : (_this$data$NEW_DEAL_D = _this$data.NEW_DEAL_DATA) === null || _this$data$NEW_DEAL_D === void 0 ? void 0 : _this$data$NEW_DEAL_D.TITLE);
-	      const dealLegend = this === null || this === void 0 ? void 0 : (_this$data2 = this.data) === null || _this$data2 === void 0 ? void 0 : (_this$data2$NEW_DEAL_ = _this$data2.NEW_DEAL_DATA) === null || _this$data2$NEW_DEAL_ === void 0 ? void 0 : _this$data2$NEW_DEAL_.LEGEND;
-	      const dealUrl = this === null || this === void 0 ? void 0 : (_this$data3 = this.data) === null || _this$data3 === void 0 ? void 0 : (_this$data3$NEW_DEAL_ = _this$data3.NEW_DEAL_DATA) === null || _this$data3$NEW_DEAL_ === void 0 ? void 0 : _this$data3$NEW_DEAL_.SHOW_URL;
-	      const dealTitleLink = `<a href="${dealUrl}">${dealTitle}</a>`;
-	      let message = main_core.Loc.getMessage('CRM_TIMELINE_PRODUCT_COMPILATION_DEAL_CREATED');
-	      message = message.replace('#DEAL_TITLE#', dealTitleLink);
-	      message = message.replace('#DEAL_LEGEND#', dealLegend);
-	      return message;
-	    }
-
-	  },
-	  // language=Vue
-	  template: `
-		<div class="crm-entity-stream-section crm-entity-stream-section-history crm-entity-stream-section-advice">
-			<div class="crm-entity-stream-section-icon crm-entity-stream-section-icon-advice"></div>
-			<div class="crm-entity-stream-advice-content">
-				<div class="crm-entity-stream-advice-info" v-html="message">
-				</div>
-			</div>
-		</div>
-	`
-	});
-
 	const Streams = {
 	  History: History$1,
 	  FixedHistory,
@@ -19609,7 +17208,6 @@ this.BX.Crm = this.BX.Crm || {};
 	  WaitConfigurationDialog,
 	  SchedulePostponeController,
 	  MenuBar,
-	  SmsWatcher,
 	  AudioPlaybackRateSelector
 	};
 	const Actions = {
@@ -19657,7 +17255,6 @@ this.BX.Crm = this.BX.Crm || {};
 	  Document,
 	  Sender,
 	  Bizproc,
-	  Sms: Sms$1,
 	  Request: Request$1,
 	  Rest: Rest$2,
 	  OpenLine: OpenLine$2,
@@ -19665,13 +17262,8 @@ this.BX.Crm = this.BX.Crm || {};
 	  Conversion,
 	  Visit,
 	  Scoring,
-	  OrderCreation,
-	  OrderModification,
-	  FinalSummaryDocuments,
-	  FinalSummary,
 	  ExternalNoticeModification,
 	  ExternalNoticeStatusModification,
-	  OrderCheck,
 	  ScheduledBase: Scheduled,
 	  Scheduled: ScheduledItems
 	};
@@ -19684,10 +17276,6 @@ this.BX.Crm = this.BX.Crm || {};
 	  Fasten
 	};
 
-	exports.Notification = component;
-	exports.DeliveryActivity = component$1;
-	exports.DeliveryMessage = component$2;
-	exports.DeliveryCalculation = component$3;
 	exports.Manager = Manager;
 	exports.Stream = Steam;
 	exports.Streams = Streams;
@@ -19700,9 +17288,6 @@ this.BX.Crm = this.BX.Crm || {};
 	exports.Items = Items;
 	exports.Animations = Animations;
 	exports.CompatibleItem = CompatibleItem;
-	exports.CompilationOrderNotice = component$4;
-	exports.ProductCompilationViewed = component$5;
-	exports.NewDealCreated = component$6;
 
-}((this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}),BX,BX.Crm.Activity,BX.Crm.DateTime,BX.Crm.Timeline,BX.Event,BX.Crm.Timeline,BX,BX));
+}((this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}),BX.Crm.Activity,BX.Event,BX.Crm.DateTime,BX.Crm.Timeline,BX.Crm.Timeline,BX));
 //# sourceMappingURL=timeline.bundle.js.map

@@ -16,6 +16,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Page;
+use Bitrix\Main\Web\Uri;
 use Bitrix\UI;
 
 $bodyClass = $APPLICATION->GetPageProperty('BodyClass');
@@ -227,7 +228,7 @@ if (
 				<?php
 				$style = (
 					isset($arResult["User"]["PHOTO"]) && !empty($arResult["User"]["PHOTO"])
-						? 'style="background-image: url(\'' . CHTTP::urnEncode($arResult["User"]["PHOTO"]) . '\'); background-size: cover"'
+						? 'style="background-image: url(\'' . Uri::urnEncode($arResult["User"]["PHOTO"]) . '\'); background-size: cover"'
 						: ''
 				);
 				?>
@@ -581,7 +582,7 @@ if (
 										<?php
 										$style = (
 											isset($subUser["PHOTO"]) && !empty($subUser["PHOTO"])
-												? 'style="background-image: url(\'' . CHTTP::urnEncode($subUser["PHOTO"]) . '\');"'
+												? 'style="background-image: url(\'' . Uri::urnEncode($subUser["PHOTO"]) . '\');"'
 												: ''
 										);
 										?>
@@ -627,7 +628,7 @@ if (
 									<?php
 									$style = (
 										isset($manager["PHOTO"]) && !empty($manager["PHOTO"])
-											? 'style="background-image: url(\'' . CHTTP::urnEncode($manager["PHOTO"]) . '\');"'
+											? 'style="background-image: url(\'' . Uri::urnEncode($manager["PHOTO"]) . '\');"'
 											: ''
 									);
 									?>

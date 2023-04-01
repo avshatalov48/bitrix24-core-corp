@@ -5,6 +5,7 @@ return [
 		'layout/ui/floating-button',
 		'layout/ui/empty-list',
 		'layout/ui/context-menu',
+		'layout/ui/snackbar-text',
 		'selector/widget/factory',
 		'crm:timeline/ui/*',
 		'crm:timeline/services/*',

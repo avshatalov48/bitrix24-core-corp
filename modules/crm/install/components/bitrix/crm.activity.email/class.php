@@ -20,7 +20,7 @@ class CrmActivityEmailComponent extends CBitrixComponent
 
 		$this->arParams['PATH_TO_DEAL_DETAILS'] = \CrmCheckPath(
 			'PATH_TO_DEAL_DETAILS',
-			$this->arParams['PATH_TO_DEAL_DETAILS'],
+			$this->arParams['PATH_TO_DEAL_DETAILS'] ?? '',
 			$APPLICATION->getCurPage().'?deal_id=#deal_id#&details'
 		);
 
@@ -39,12 +39,16 @@ class CrmActivityEmailComponent extends CBitrixComponent
 		global $USER;
 
 		if (!\CCrmSecurityHelper::isAuthorized())
+		{
 			return;
+		}
 
 		$activity = $this->arParams['~ACTIVITY'];
 
-		if ($activity['ID'] > 0)
+		if (($activity['ID'] ?? null) > 0)
+		{
 			return;
+		}
 
 		$siteNameFormat = \CSite::getNameFormat();
 
@@ -170,15 +174,14 @@ class CrmActivityEmailComponent extends CBitrixComponent
 			{
 				$quote = \CCrmQuote::getById($activity['OWNER_ID']);
 
-				$activity['OWNER_TYPE_ID'] = 0;
-				$activity['OWNER_ID'] = 0;
-
 				if (!empty($quote))
 				{
 					if ($quote['DEAL_ID'] > 0)
 					{
-						$activity['OWNER_TYPE_ID'] = \CCrmOwnerType::Deal;
-						$activity['OWNER_ID'] = $quote['DEAL_ID'];
+						$activity['BINDINGS'][] = [
+							'OWNER_TYPE_ID' => \CCrmOwnerType::Deal,
+							'OWNER_ID' => $quote['DEAL_ID'],
+						];
 					}
 
 					$activity['SUBJECT'] = $quote['TITLE'] ?: sprintf(
@@ -532,7 +535,7 @@ class CrmActivityEmailComponent extends CBitrixComponent
 			while ($item = $res->fetch())
 			{
 				if (array_key_exists($item['ACTIVITY_ID'], $clients))
-					continue; 
+					continue;
 
 				static::prepareCommunication($item);
 				$clients[$item['ACTIVITY_ID']] = $item;
@@ -742,7 +745,7 @@ class CrmActivityEmailComponent extends CBitrixComponent
 							break;
 					}
 				}
-				
+
 				if (empty($fromItem))
 					$fromItem = reset($activity['COMMUNICATIONS']);
 

@@ -559,7 +559,7 @@ class CCrmLiveFeed
 			}
 		}
 
-		if ($arParams["MOBILE"] === "Y")
+		if (($arParams["MOBILE"] ?? null) === "Y")
 		{
 			self::OnBeforeSocNetLogEntryGetRights($arEventFields, $arRights);
 			$arDestination = CSocNetLogTools::FormatDestinationFromRights($arRights, array_merge($arParams, array("CREATED_BY" => $arFields["USER_ID"], "USE_ALL_DESTINATION" => true)), $iMoreCount);
@@ -749,10 +749,10 @@ class CCrmLiveFeed
 		{
 			$arFieldsTooltip = array(
 				'ID' => $arFields['USER_ID'],
-				'NAME' => $arFields['~CREATED_BY_NAME'],
-				'LAST_NAME' => $arFields['~CREATED_BY_LAST_NAME'],
-				'SECOND_NAME' => $arFields['~CREATED_BY_SECOND_NAME'],
-				'LOGIN' => $arFields['~CREATED_BY_LOGIN'],
+				'NAME' => $arFields['~CREATED_BY_NAME'] ?? null,
+				'LAST_NAME' => $arFields['~CREATED_BY_LAST_NAME'] ?? null,
+				'SECOND_NAME' => $arFields['~CREATED_BY_SECOND_NAME'] ?? null,
+				'LOGIN' => $arFields['~CREATED_BY_LOGIN'] ?? null,
 			);
 			$arResult['CREATED_BY']['TOOLTIP_FIELDS'] = CSocNetLogTools::FormatEvent_FillTooltip($arFieldsTooltip, $arParams);
 		}
@@ -1922,12 +1922,12 @@ class CCrmLiveFeed
 				"ID" => $matches[2],
 				"CRM_PREFIX" => GetMessage('CRM_LF_'.$matches[1].'_DESTINATION_PREFIX'),
 				"URL" => (
-					$arParams["MOBILE"] !== 'Y'
+				(($arParams["MOBILE"] ?? null) !== 'Y')
 						? CCrmOwnerType::GetEntityShowPath(CCrmLiveFeedEntity::ResolveEntityTypeID($matches[1]), $matches[2])
 						: (
 							isset($arParams["PATH_TO_".$matches[1]])
 								? str_replace(
-									array("#company_id#", "#contact_id#", "#lead_id#", "#deal_id#"),
+									["#company_id#", "#contact_id#", "#lead_id#", "#deal_id#"],
 									$matches[2],
 									$arParams["PATH_TO_".$matches[1]]
 								)
@@ -5902,10 +5902,11 @@ class CCrmLiveFeedComponent
 						$strUser .= '<span class="crm-feed-company-avatar">';
 						if(is_array($arFileTmp) && isset($arFileTmp['src']))
 						{
-							if ($this->params["PATH_TO_USER"] <> '')
+							if (($this->params["PATH_TO_USER"] ?? null) !== '')
 							{
-								$strUser .= '<a target="_blank" href="'.str_replace(array("#user_id#", "#USER_ID#"), (int)$arField["VALUE"], $this->params["PATH_TO_USER"]).'" class="ui-icon ui-icon-common-user" style="border: none;">'.
-									"<i style=\"background: url('".\CHTTP::urnEncode($arFileTmp['src'])."'); background-size: cover;\"></i>".
+								$href = str_replace(["#user_id#", "#USER_ID#"], (int)$arField["VALUE"], ($this->params["PATH_TO_USER"] ?? null));
+								$strUser .= '<a target="_blank" href="'. $href .'" class="ui-icon ui-icon-common-user" style="border: none;">'.
+									"<i style=\"background: url('".Uri::urnEncode($arFileTmp['src'])."'); background-size: cover;\"></i>".
 									'</a>';
 							}
 							else
@@ -5915,9 +5916,12 @@ class CCrmLiveFeedComponent
 						}
 						$strUser .= '</span><span class="crm-feed-client-right">';
 
-						if ($this->params["PATH_TO_USER"] <> '')
+						if (($this->params["PATH_TO_USER"] ?? null) !== '')
 						{
-							$strUser .= '<a class="crm-feed-user-name" target="_blank" href="'.str_replace(array("#user_id#", "#USER_ID#"), intval($arField["VALUE"]), $this->params["PATH_TO_USER"]).'">'.CUser::FormatName(CSite::GetNameFormat(), $arUser, true, false).'</a>';
+							$href = str_replace(["#user_id#", "#USER_ID#"], intval($arField["VALUE"]), ($this->params["PATH_TO_USER"] ?? null));
+							$strUser .= '<a class="crm-feed-user-name" target="_blank" href="'. $href .'">'.
+								CUser::FormatName(CSite::GetNameFormat(), $arUser, true, false).
+								'</a>';
 						}
 						else
 						{
@@ -6217,7 +6221,7 @@ class CCrmLiveFeedComponent
 						$strResult .= '<span class="crm-feed-user-block" href="'.$url.'">';
 							$strResult .= '<span class="crm-feed-company-avatar">';
 								$strResult .= '<a href="'.$url.'" class="ui-icon ui-icon-common-user" style="border: none;">'.
-									"<i style=\"background: url('".\CHTTP::urnEncode($arFileTmp['src'])."'); background-size: cover;\"></i>".
+									"<i style=\"background: url('".Uri::urnEncode($arFileTmp['src'])."'); background-size: cover;\"></i>".
 									'</a>';
 							$strResult .= '</span>';
 							$strResult .= '<span class="crm-feed-client-right"><a href="'.$url.'" class="crm-feed-user-name">'.$arField["VALUE"]["TITLE"].'</a></span>';

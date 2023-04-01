@@ -1,4 +1,4 @@
-<?
+<?php
 IncludeModuleLangFile(__FILE__);
 
 use Bitrix\VoxImplant as VI;
@@ -558,7 +558,7 @@ class CVoxImplantSip
 			case 'ru':
 				return 'https://www.1c-bitrix.ru/buy/products/b24.php#tab-section-3';
 			case 'ua':
-				return 'https://www.bitrix.ua/buy/intranet.php#tab-call-link';
+				return 'https://www.bitrix24.eu/prices/self-hosted-telephony.php';
 			case 'kz':
 				return 'https://www.1c-bitrix.kz/buy/products/b24.php#tab-section-3';
 			case 'by':

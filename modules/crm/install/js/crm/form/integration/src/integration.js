@@ -10,6 +10,7 @@ import 'ui.dropdown';
 import {ajax} from "main.core.ajax";
 import {Loader} from "main.loader";
 import { LoginFactory } from 'seo.ads.login';
+import { MessageBox } from 'ui.dialogs.messagebox';
 
 type Options = {
 	type: String;
@@ -174,6 +175,16 @@ export class Integration extends EventEmitter
 				}
 			})
 		;
+
+		ajax.runAction('crm.api.ads.leadads.account.loginCompletion', {
+			data: {
+				type: this.type,
+			}
+		}).then((data) => {
+
+		}, (error) => {
+			this.handleLoginCompletionError(error);
+		});
 	}
 
 	#loginProfile()
@@ -192,11 +203,11 @@ export class Integration extends EventEmitter
 				type: this.type
 			}
 		})
-			.then(() => {
-				this.#adAccounts = null;
-				this.getProvider().profile = null;
-				this.#renderProfileSelector();
-			})
+		.then(() => {
+			this.#adAccounts = null;
+			this.getProvider().profile = null;
+			this.#renderProfileSelector();
+		})
 	}
 
 	#loginGroup()
@@ -266,7 +277,6 @@ export class Integration extends EventEmitter
 
 			return this.#container;
 		}
-
 		this.#container.appendChild(this.#renderProfileSelector());
 		return this.#container;
 	}
@@ -305,14 +315,8 @@ export class Integration extends EventEmitter
 		this.#profileContainer.appendChild(Tag.render`
 			<div>
 				<div class="crm-ads-conversion-block">
-					<div class="crm-ads-conversion-social crm-ads-conversion-social-facebook">
-						<div>
-							<div
-								class="crm-ads-conversion-social-avatar-icon"
-								style="background-image: url(${Tag.safe`${provider.profile.picture}`})"
-								>
-							</div>
-						</div>
+					<div class="crm-ads-conversion-social crm-ads-conversion-social-facebook"  style="padding-bottom: 15px">
+						${this.showAvatar(provider)}
 						<div class="crm-ads-conversion-social-user">
 							<a
 								${provider.profile.url ? 'href="' + Tag.safe`${provider.profile.url}` + '"' : ""}
@@ -323,20 +327,67 @@ export class Integration extends EventEmitter
 							</a>
 						</div>
 						<div class="crm-ads-conversion-social-shutoff">
-							<span
-								class="crm-ads-conversion-social-shutoff-link"
-								onclick="${this.#logoutProfile.bind(this)}"
-							>
-								${Loc.getMessage('CRM_FORM_INTEGRATION_JS_LOGOUT_BTN')}
-							</span>
+							${this.createLogoutProfileButton().render()}
 						</div>
 					</div>
 				</div>
 			</div>
 		`);
 
-		this.#profileContainer.appendChild(this.#renderPageSelector());
+		if (this.type === 'vkontakte')
+		{
+			this.#profileContainer.appendChild(this.#renderFormSelector());
+		}
+		else
+		{
+			this.#profileContainer.appendChild((this.#renderPageSelector()));
+		}
+
+		if (this.type === 'vkontakte')
+		{
+			this.#checkNewProfile()
+		}
+
 		return this.#profileContainer;
+	}
+
+	showBannerForOldProfile()
+	{
+		const message = MessageBox.create({
+			message: Loc.getMessage('CRM_FORM_INTEGRATION_JS_ALERT_POPUP_MESSAGE'),
+			title: Loc.getMessage('CRM_FORM_INTEGRATION_JS_ALERT_POPUP_TITLE'),
+			minWidth: 517,
+			buttons: [
+				new Button({
+					text: Loc.getMessage('CRM_FORM_INTEGRATION_JS_ALERT_POPUP_BTN_YES'),
+					color: Button.Color.SUCCESS,
+					onclick: () => this.#loginProfile(),
+				}),
+				new Button({
+					text: Loc.getMessage('CRM_FORM_INTEGRATION_JS_ALERT_POPUP_BTN_OK'),
+					color: Button.Color.LIGHT_BORDER,
+					onclick: () =>
+					{
+						message.close()
+					},
+				}),
+			]
+		});
+		message.show();
+	}
+
+	showAvatar(provider)
+	{
+		if (provider.profile.picture !== undefined)
+		{
+			return Tag.render`<div>
+				<div
+					class="crm-ads-conversion-social-avatar-icon"
+					style="background-image: url(${Tag.safe`${provider.profile.picture}`})"
+				>
+				</div>
+			</div>`;
+		}
 	}
 
 	#setPageId(id)
@@ -486,15 +537,18 @@ export class Integration extends EventEmitter
 
 		this.#formsContainer.innerHTML = '';
 
-		const accountId = this.getAdAccountId();
-		if (!accountId)
+		if (this.getProvider().hasPages)
 		{
-			this.#formsContainer.appendChild((new Alert({
-				color: Alert.Color.PRIMARY,
-				text: Loc.getMessage('CRM_FORM_INTEGRATION_JS_PAGE_CHOOSE'),
-			})).render());
+			const accountId = this.getAdAccountId();
+			if (!accountId)
+			{
+				this.#formsContainer.appendChild((new Alert({
+					color: Alert.Color.PRIMARY,
+					text: Loc.getMessage('CRM_FORM_INTEGRATION_JS_PAGE_CHOOSE'),
+				})).render());
 
-			return this.#formsContainer;
+				return this.#formsContainer;
+			}
 		}
 
 		if (!this.#adForms)
@@ -503,7 +557,7 @@ export class Integration extends EventEmitter
 			ajax.runAction('crm.api.ads.leadads.form.list', {
 				data: {
 					type: this.type,
-					accountId,
+					accountId: this.getAdAccountId() || 0,
 					proxyId: null,
 				}
 			}).then(response => {
@@ -562,6 +616,7 @@ export class Integration extends EventEmitter
 		});
 
 		this.#formsContainer.appendChild(formsDropdown.getNode());
+
 		this.#formsContainer.appendChild(this.#renderMapper());
 
 		return this.#formsContainer;
@@ -592,13 +647,33 @@ export class Integration extends EventEmitter
 			return this.#mapperContainer;
 		}
 
-		const mappingMessageContainer = Tag.render`<div style="margin-bottom: 40px"></div>`;
+		const mappingMessageContainer = Tag.render`<div style="margin-bottom: 29px"></div>`;
 		(new Alert({
 			color: Alert.Color.PRIMARY,
 			text: Loc.getMessage('CRM_FORM_INTEGRATION_JS_FIELD_MAP'),
 		})).renderTo(mappingMessageContainer);
 		this.#mapperContainer.appendChild(mappingMessageContainer);
 
+		if (this.getAdForm()?.fields === undefined)
+		{
+			this.#mapperContainer.appendChild(this.#renderLoader());
+			ajax.runAction('crm.api.ads.leadads.form.get', {
+				data: {
+					type: this.type,
+					accountId: this.getAdAccountId() || 0,
+					proxyId: null,
+					formId: this.getAdForm().id,
+				}
+			}).then(response => {
+				this.getAdForm().fields = response.data.form.fields;
+				this.#renderMapper();
+			}).catch(response => {
+				this.#adFormsErrors = response.errors;
+				this.#renderMapper();
+			});
+
+			return this.#mapperContainer;
+		}
 		const mapper = new Mapper({
 			from: {
 				caption: this.getTypeTitle(),
@@ -659,5 +734,37 @@ export class Integration extends EventEmitter
 
 		this.#mapperContainer.appendChild(mapper.render());
 		return this.#mapperContainer;
+	}
+
+	handleLoginCompletionError(error)
+	{
+		//show banner
+	}
+
+	createLogoutProfileButton()
+	{
+		return new Button({
+			text : Loc.getMessage('CRM_FORM_INTEGRATION_JS_LOGOUT_BTN'),
+			color: Button.Color.LIGHT_BORDER,
+			round: true,
+			size: Button.Size.EXTRA_SMALL,
+			onclick: this.#logoutProfile.bind(this),
+		});
+	}
+
+	#checkNewProfile()
+	{
+		ajax.runAction('crm.api.ads.leadads.service.checkProfile',{
+			data: {
+				type: this.type
+			}
+		})
+		.then(
+			(response) => {},
+			(error) => {
+				this.#logoutProfile();
+				this.showBannerForOldProfile();
+			}
+		)
 	}
 }

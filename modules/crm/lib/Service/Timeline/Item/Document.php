@@ -192,20 +192,36 @@ final class Document extends Configurable
 				->setAction($this->getOpenDocumentAction())
 		;
 
+		$signIntegration = ServiceLocator::getInstance()->get('crm.integration.sign');
+
 		if (
 			$this->getContext()->getEntityTypeId() === \CCrmOwnerType::Deal
-			&& ServiceLocator::getInstance()->get('crm.integration.sign')->isEnabled()
+			&& $signIntegration::isEnabled()
 		)
 		{
-			$buttons['sign'] =
-				(new Layout\Footer\Button(Loc::getMessage('CRM_COMMON_ACTION_SIGN'), Layout\Footer\Button::TYPE_SECONDARY))
+			if ($signIntegration::isEnabledInCurrentTariff())
+			{
+				$signButton = (new Layout\Footer\Button(Loc::getMessage('CRM_COMMON_ACTION_SIGN'), Layout\Footer\Button::TYPE_SECONDARY))
 					->setAction(
-						(new Layout\Action\RunAjaxAction('crm.api.integration.sign.convertDeal'))
+						(new Layout\Action\JsEvent('Document:ConvertDeal'))
 							->addActionParamInt('documentId', $this->getDocumentId())
 							->setAnimation(Layout\Action\Animation::showLoaderForBlock())
 					)
 					->setScopeWeb()
-			;
+				;
+			}
+			else
+			{
+				$signButton = (new Layout\Footer\Button(Loc::getMessage('CRM_COMMON_ACTION_SIGN'), Layout\Footer\Button::TYPE_SECONDARY))
+					->setAction(
+						(new Layout\Action\JsEvent('Document:ShowInfoHelperSlider'))
+							->addActionParamString('infoHelperCode', 'limit_crm_sign_integration')
+					)
+					->setScopeWeb()
+				;
+			}
+
+			$buttons['sign'] = $signButton;
 		}
 
 		return $buttons;
@@ -222,13 +238,11 @@ final class Document extends Configurable
 			(new Layout\Action\JsEvent('Document:Print'))
 		;
 
-		$documentData = $this->getDocument()->getFile(false)->getData();
-		$printUrl = $documentData['printUrl'] ?? null;
-		$pdfUrl = $documentData['pdfUrl'] ?? null;
+		$printUrl = $this->getPrintUrl();
 		if ($printUrl)
 		{
 			$action->addActionParamString('printUrl', (string)$printUrl);
-			$action->addActionParamString('pdfUrl', (string)$pdfUrl);
+			$action->addActionParamString('pdfUrl', (string)$this->getPdfUrl());
 		}
 		else
 		{
@@ -250,6 +264,28 @@ final class Document extends Configurable
 	public function getMenuItems(): ?array
 	{
 		$menuItems = parent::getMenuItems();
+
+		$downloadPdfAction = (new Layout\Action\JsEvent('Document:DownloadPdf'));
+		$pdfUrl = $this->getPdfUrl();
+		if ($pdfUrl)
+		{
+			$downloadPdfAction->addActionParamString('pdfUrl', (string)$pdfUrl);
+		}
+
+		$menuItems['downloadPdf'] =
+			(new MenuItem(Loc::getMessage('CRM_COMMON_ACTION_DOWNLOAD_FORMAT', ['#FORMAT#' => 'PDF'])))
+				->setAction($downloadPdfAction)
+				->setScopeWeb()
+		;
+
+		$menuItems['downloadDocx'] =
+			(new MenuItem(Loc::getMessage('CRM_COMMON_ACTION_DOWNLOAD_FORMAT', ['#FORMAT#' => 'DOCX'])))
+				->setAction(
+					(new Layout\Action\JsEvent('Document:DownloadDocx'))
+						->addActionParamString('docxUrl', (string)$this->getDownloadUrl())
+				)
+				->setScopeWeb()
+		;
 
 		$menuItems['delete'] = MenuItemFactory::createDeleteMenuItem()
 			->setAction(

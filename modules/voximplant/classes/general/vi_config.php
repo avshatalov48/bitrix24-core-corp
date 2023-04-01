@@ -1,4 +1,4 @@
-<?
+<?php
 IncludeModuleLangFile(__FILE__);
 
 use Bitrix\Voximplant as VI;
@@ -131,8 +131,8 @@ class CVoxImplantConfig
 	 */
 	public static function GetLinesEx(array $params = [])
 	{
-		$showRestApps = $params['showRestApps'] == true;
-		$showInboundOnly = $params['showInboundOnly'] == true;
+		$showRestApps = isset($params['showRestApps']) && $params['showRestApps'] === true;
+		$showInboundOnly = isset($params['showInboundOnly']) && $params['showInboundOnly'] === true;
 
 		static $cache = [];
 		$cacheKey = ($showRestApps ? 'r' : '_') . ($showInboundOnly ? 'i' : '_');
@@ -416,14 +416,6 @@ class CVoxImplantConfig
 		}
 
 		return $result;
-	}
-
-	public static function DetectNumberCountry ($config)
-	{
-		if ($config['PORTAL_MODE'] != self::MODE_RENT)
-		{
-			return false;
-		}
 	}
 
 	public static function GetModeStatus($mode)
@@ -815,6 +807,7 @@ class CVoxImplantConfig
 	 * <li>ID int Search config by id;
 	 * <li>SEARCH_ID string Search config by search_id.
 	 * @return array|false Returns array with parameters if config is found or false otherwise.
+	 * @throws \Bitrix\Main\ArgumentException
 	 */
 	public static function GetBriefConfig($params)
 	{

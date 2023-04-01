@@ -12,7 +12,6 @@ namespace Bitrix\Crm\Integration\Im;
 use Bitrix\Crm;
 use Bitrix\Crm\Activity\Provider\ProviderManager;
 use Bitrix\Crm\Badge\Model\BadgeTable;
-use Bitrix\Crm\Badge\SourceIdentifier;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Timeline\ActivityController;
 use Bitrix\Im;
@@ -884,15 +883,10 @@ class Chat
 			return;
 		}
 
-		$currentCountOfBadges = BadgeTable::getCount([
-			'=SOURCE_PROVIDER_ID' => SourceIdentifier::CRM_OWNER_TYPE_PROVIDER,
-			'SOURCE_ENTITY_TYPE_ID' => \CCrmOwnerType::Activity,
-			'SOURCE_ENTITY_ID' => (int)$activity['ID']
-		]);
-
+		$isActivityHasBadge = BadgeTable::isActivityHasBadge((int)$activity['ID']);
 		$needNotifyAboutActivityUpdate =
-			($action === static::ACTION_ADD && $currentCountOfBadges === 0)
-			|| ($action === static::ACTION_READ && $currentCountOfBadges > 0)
+			($action === static::ACTION_ADD && !$isActivityHasBadge)
+			|| ($action === static::ACTION_READ && $isActivityHasBadge)
 		;
 
 		if ($needNotifyAboutActivityUpdate)

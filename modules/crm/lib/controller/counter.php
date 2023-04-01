@@ -3,7 +3,11 @@
 namespace Bitrix\Crm\Controller;
 
 use Bitrix\Crm\Counter\EntityCounterFactory;
+use Bitrix\Crm\Counter\EntityCounterManager;
+use Bitrix\Crm\Integration\Intranet\CustomSectionProvider;
+use Bitrix\Crm\Integration\IntranetManager;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Service\Factory\Dynamic;
 
 class Counter extends Base
 {
@@ -56,6 +60,21 @@ class Counter extends Base
 		}
 		$currentUserId = $this->getCurrentUser()->getId();
 		$enabledCounterTypes = $factory->getCountersSettings()->getEnabledCountersTypes();
+
+		if ($factory instanceof Dynamic && CustomSectionProvider::hasCustomSection($factory))
+		{
+			$settingsName = IntranetManager::preparePageSettingsForItemsList($factory->getEntityTypeId());
+			CustomSectionProvider::getAllCustomSectionIdsByEntityTypeId($factory->getEntityTypeId());
+			EntityCounterManager::prepareValue(CustomSectionProvider::COUNTER_PREFIX . $settingsName);
+
+			$sectionIds = CustomSectionProvider::getAllCustomSectionIdsByEntityTypeId($factory->getEntityTypeId());
+			foreach ($sectionIds as $sectionId)
+			{
+				EntityCounterManager::prepareValue(
+					CustomSectionProvider::buildCustomSectionCounterId($sectionId)
+				);
+			}
+		}
 
 		$result = [];
 		foreach($enabledCounterTypes as $typeId)

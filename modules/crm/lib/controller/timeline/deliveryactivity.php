@@ -32,10 +32,8 @@ class DeliveryActivity extends Controller
 	{
 		DeliveryController::getInstance()->createDeliveryRequestMessage(
 			[
-				'TITLE' => Loc::getMessage('CRM_TIMELINE_CONTROLLER_DELIVERY_ACTIVITY_CANCEL_DELIVERY_ORDER'),
+				'TITLE' => Loc::getMessage('CRM_TIMELINE_CONTROLLER_DELIVERY_ACTIVITY_CANCEL_DELIVERY_ORDER_V2'),
 				'DESCRIPTION' => $message,
-				'STATUS' => Loc::getMessage('CRM_TIMELINE_CONTROLLER_DELIVERY_ACTIVITY_CANCEL_DELIVERY_ORDER_STATUS'),
-				'STATUS_SEMANTIC' => DeliveryController::MESSAGE_STATUS_SEMANTIC_PROCESS,
 			],
 			$requestId
 		);

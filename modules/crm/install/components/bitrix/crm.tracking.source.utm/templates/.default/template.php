@@ -55,7 +55,7 @@ use Bitrix\Main\UI\Extension;
 		<div class="crm-analytics-utm-editor-addition crm-analytics-utm-editor-addition-closed" id="crm-analytics-utm-editor-addition">
 			<div class="crm-analytics-utm-editor-addition-inner">
 				<div class="crm-analytics-utm-editor-addition-title" id="crm-analytics-utm-editor-addition-title">
-					<?= Loc::getMessage("CRM_TRACKING_SOURCE_UTM_ADDITIONAL_GOOGLE") ?>
+					<?= Loc::getMessage("CRM_TRACKING_SOURCE_UTM_ADDITIONAL_GOOGLE_MSGVER_1") ?>
 				</div>
 			</div>
 			<div class="crm-analytics-utm-editor-addition-list">

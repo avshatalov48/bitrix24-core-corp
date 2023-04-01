@@ -330,7 +330,7 @@ class UncompletedActivity
 	{
 		$existedRecord = $this->getExistedRecord();
 
-		return $existedRecord['ID'] ? (int)$existedRecord['ID'] : null;
+		return (isset($existedRecord['ID']) && $existedRecord['ID']) ? (int)$existedRecord['ID'] : null;
 	}
 
 	protected function getExistedRecord(): ?array

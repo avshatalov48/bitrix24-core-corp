@@ -1,5 +1,9 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 /**
  * @var array $arParams
@@ -29,16 +33,16 @@ if (!empty($arResult['BUTTONS']))
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.interface.toolbar',
 		$template,
-		array(
+		[
 			'TOOLBAR_ID' => $arResult['TOOLBAR_ID'],
 			'BUTTONS' => $arResult['BUTTONS']
-		),
+		],
 		$component,
-		array('HIDE_ICONS' => 'Y')
+		['HIDE_ICONS' => 'Y']
 	);
 }
 
-if(isset($arResult['SONET_SUBSCRIBE']) && is_array($arResult['SONET_SUBSCRIBE']))
+if (isset($arResult['SONET_SUBSCRIBE']) && is_array($arResult['SONET_SUBSCRIBE']))
 {
 	$subscribe = $arResult['SONET_SUBSCRIBE'];
 ?><script type="text/javascript">
@@ -57,7 +61,7 @@ BX.ready(
 );
 </script><?
 }
-if (is_array($arResult['EXPORT_CSV_PARAMS']))
+if (isset($arResult['EXPORT_CSV_PARAMS']) && is_array($arResult['EXPORT_CSV_PARAMS']))
 {
 	\Bitrix\Main\UI\Extension::load('ui.stepprocessing');
 	?>

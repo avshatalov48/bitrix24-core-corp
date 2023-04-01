@@ -14,14 +14,16 @@ $pathToList = $categoryId > 0
 	: $arResult['PATH_TO_CONTACT_LIST']
 ;
 
-$isSlider = ($_REQUEST['IFRAME'] === 'Y' && $_REQUEST['IFRAME_TYPE'] === 'SIDE_SLIDER');
+$isSlider = isset($_REQUEST['IFRAME'], $_REQUEST['IFRAME_TYPE'])
+	&& $_REQUEST['IFRAME'] === 'Y'
+	&& $_REQUEST['IFRAME_TYPE'] === 'SIDE_SLIDER';
 if (!$isSlider)
 {
 	/** @var CMain $APPLICATION */
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.control_panel',
 		'',
-		array(
+		[
 			'ID' => 'CONTACT_LIST',
 			'ACTIVE_ITEM_ID' => CCrmComponentHelper::getMenuActiveItemId(CCrmOwnerType::ContactName, $categoryId),
 			'PATH_TO_COMPANY_LIST' => $arResult['PATH_TO_COMPANY_LIST'] ?? '',
@@ -42,7 +44,7 @@ if (!$isSlider)
 			'PATH_TO_PRODUCT_LIST' => $arResult['PATH_TO_PRODUCT_LIST'] ?? '',
 			'PATH_TO_CONTACT_WIDGET' => $arResult['PATH_TO_CONTACT_WIDGET'] ?? '',
 			'PATH_TO_CONTACT_PORTRAIT' => $arResult['PATH_TO_CONTACT_PORTRAIT'] ?? '',
-		),
+		],
 		$component
 	);
 }
@@ -86,14 +88,14 @@ else
 		'bitrix:crm.contact.menu',
 		'',
 		[
-			'PATH_TO_CONTACT_LIST' => $arResult['PATH_TO_CONTACT_LIST'],
-			'PATH_TO_CONTACT_SHOW' => $arResult['PATH_TO_CONTACT_SHOW'],
-			'PATH_TO_CONTACT_EDIT' => $arResult['PATH_TO_CONTACT_EDIT'],
-			'PATH_TO_CONTACT_IMPORT' => $arResult['PATH_TO_CONTACT_IMPORT'],
-			'PATH_TO_CONTACT_IMPORTVCARD' => $arResult['PATH_TO_CONTACT_IMPORTVCARD'],
-			'PATH_TO_CONTACT_DEDUPE' => $arResult['PATH_TO_CONTACT_DEDUPE'],
-			'PATH_TO_CONTACT_DEDUPEWIZARD' => $arResult['PATH_TO_CONTACT_DEDUPEWIZARD'],
-			'ELEMENT_ID' => $arResult['VARIABLES']['contact_id'],
+			'PATH_TO_CONTACT_LIST' => $arResult['PATH_TO_CONTACT_LIST'] ?? '',
+			'PATH_TO_CONTACT_SHOW' => $arResult['PATH_TO_CONTACT_SHOW'] ?? '',
+			'PATH_TO_CONTACT_EDIT' => $arResult['PATH_TO_CONTACT_EDIT'] ?? '',
+			'PATH_TO_CONTACT_IMPORT' => $arResult['PATH_TO_CONTACT_IMPORT'] ?? '',
+			'PATH_TO_CONTACT_IMPORTVCARD' => $arResult['PATH_TO_CONTACT_IMPORTVCARD'] ?? '',
+			'PATH_TO_CONTACT_DEDUPE' => $arResult['PATH_TO_CONTACT_DEDUPE'] ?? '',
+			'PATH_TO_CONTACT_DEDUPEWIZARD' => $arResult['PATH_TO_CONTACT_DEDUPEWIZARD'] ?? '',
+			'ELEMENT_ID' => $arResult['VARIABLES']['contact_id'] ?? null,
 			'CATEGORY_ID' => $categoryId,
 			'TYPE' => 'list',
 			'IN_SLIDER' => $isSlider ? 'Y' : 'N',

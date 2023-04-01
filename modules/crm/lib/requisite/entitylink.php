@@ -255,7 +255,7 @@ class EntityLink
 				|| !isset($options['CLIENT_SELLER_INFO']['CLIENT_ENTITY_ID'])
 				|| !(\CCrmOwnerType::IsDefined($options['CLIENT_SELLER_INFO']['CLIENT_ENTITY_TYPE_ID'])
 					|| $options['CLIENT_SELLER_INFO']['CLIENT_ENTITY_TYPE_ID'] === \CCrmOwnerType::Undefined)
-				|| $options['CLIENT_ENTITY_ID'] < 0))
+				|| ($options['CLIENT_ENTITY_ID'] ?? null) < 0))
 		{
 			throw new Main\SystemException(
 				'The entity check is disabled, but client type and id are not specified.',
@@ -1168,7 +1168,7 @@ class EntityLink
 					$result['CLIENT_ENTITY_ID'] = (int)$entityFields['CONTACT_ID'];
 				}
 				elseif (
-					is_array($entityFields['CONTACT_IDS'])
+					is_array($entityFields['CONTACT_IDS'] ?? null)
 					&& !empty($entityFields['CONTACT_IDS'])
 					&& $entityFields['CONTACT_IDS'][0] > 0
 				)

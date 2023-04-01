@@ -42,7 +42,7 @@ class MarkController extends Controller
 
 		$bindings = $this->getBindingsForItem($item);
 
-		$timelineEntryId = Container::getInstance()->getTimelineEntryFacade()->create(
+		$timelineEntryId = $this->getTimelineEntryFacade()->create(
 			TimelineEntry\Facade::MARK,
 			[
 				'MARK_TYPE_ID' => TimelineMarkType::getMarkTypeByPhaseSemantics($finalStageSemantics),
@@ -60,7 +60,7 @@ class MarkController extends Controller
 
 		$historyDataModel = null;
 
-		$timelineEntry = Container::getInstance()->getTimelineEntryFacade()->getById($timelineEntryId);
+		$timelineEntry = $this->getTimelineEntryFacade()->getById($timelineEntryId);
 		if (is_array($timelineEntry))
 		{
 			$historyDataModel = Container::getInstance()->getTimelineHistoryDataModelMaker()->prepareHistoryDataModel(

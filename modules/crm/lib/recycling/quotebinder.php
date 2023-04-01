@@ -71,7 +71,7 @@ class QuoteBinder extends BaseBinder
 					$fields,
 					false,
 					false,
-					$this->getUpdateOptions((int)$associatedEntityTypeID, [$associatedEntityID]),
+					$this->getUnbindUpdateOptions((int)$associatedEntityTypeID, [$associatedEntityID]),
 				);
 			}
 		}
@@ -92,7 +92,7 @@ class QuoteBinder extends BaseBinder
 					$fields,
 					false,
 					false,
-					$this->getUpdateOptions((int)$associatedEntityTypeID, [$associatedEntityID]),
+					$this->getUnbindUpdateOptions((int)$associatedEntityTypeID, [$associatedEntityID]),
 				);
 			}
 		}
@@ -121,9 +121,8 @@ class QuoteBinder extends BaseBinder
 				$entity->Update(
 					$entityID,
 					$fields,
+					true,
 					false,
-					false,
-					$this->getUpdateOptions((int)$associatedEntityTypeID, [$associatedEntityID]),
 				);
 			}
 		}
@@ -142,9 +141,8 @@ class QuoteBinder extends BaseBinder
 				$entity->Update(
 					$entityID,
 					$fields,
+					true,
 					false,
-					false,
-					$this->getUpdateOptions((int)$associatedEntityTypeID, [$associatedEntityID]),
 				);
 			}
 		}

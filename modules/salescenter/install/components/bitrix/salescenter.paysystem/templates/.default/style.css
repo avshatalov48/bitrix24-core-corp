@@ -239,6 +239,13 @@
 	background-color: #289D37;
 }
 
+.salescenter-yandexcheckout-sberbank_qr-icon { width: 97px; }
+.salescenter-yandexcheckout-sberbank_qr-icon i {
+	background-image: url(images/yandexcheckout_sberbank_qr.svg);
+	background-size: 85% auto;
+	background-color: #289D37;
+}
+
 .salescenter-yandexcheckout-qiwi-icon { width: 97px; }
 .salescenter-yandexcheckout-qiwi-icon i {
 	background-image: url(images/yandexcheckout_qiwi.svg);
@@ -265,6 +272,20 @@
 	background-image: url(images/yandexcheckout_tinkoff_bank.svg);
 	background-size: 85% auto;
 	background-color: #FFE52B;
+}
+
+.salescenter-yandexcheckout-installments-icon { width: 97px; }
+.salescenter-yandexcheckout-installments-icon i {
+	background-image: url(images/yandexcheckout_installments.svg);
+	background-size: 75% auto;
+	background-color: #00EEBC;
+}
+
+.salescenter-yandexcheckout-sbp-icon { width: 97px; }
+.salescenter-yandexcheckout-sbp-icon i {
+	background-image: url(images/yandexcheckout_sbp.svg);
+	background-size: 80% auto;
+	background-color: #1487C9;
 }
 
 .salescenter-liqpay-icon { width: 97px; }
@@ -313,21 +334,21 @@
 .salescenter-skb-skb-icon i {
 	background-image: url(images/skb_skb.svg);
 	background-size: 85% auto;
-	background-color: #F65E64;
+	background-color: #DF1D40;
 }
 
 .salescenter-skb-delobank-icon { width: 97px; }
 .salescenter-skb-delobank-icon i {
 	background-image: url(images/skb_delobank.svg);
 	background-size: 85% auto;
-	background-color: #F65E64;
+	background-color: #DF1D40;
 }
 
 .salescenter-skb-gazenergobank-icon { width: 97px; }
 .salescenter-skb-gazenergobank-icon i {
 	background-image: url(images/skb_gazenergobank.svg);
 	background-size: 85% auto;
-	background-color: #F65E64;
+	background-color: #DF1D40;
 }
 
 .salescenter-bepaid-widget-icon{ width: 97px; }

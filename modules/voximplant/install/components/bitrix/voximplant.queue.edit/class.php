@@ -287,7 +287,8 @@ class CVoximplantQueueEditComponent extends \CBitrixComponent
 		$queueFields = \Bitrix\Voximplant\Model\QueueTable::getList([
 			'select' => ['NAME'],
 			'filter' => ['=ID' => $id]
-		]);
+		])->fetch();
+		
 		if ($queueFields)
 		{
 			return $queueFields['NAME'];

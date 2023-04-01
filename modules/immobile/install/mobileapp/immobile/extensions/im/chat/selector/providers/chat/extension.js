@@ -292,6 +292,9 @@ jn.define('im/chat/selector/providers/chat', (require, exports, module) => {
 				this.cache.get('recent')
 					.concat(this.cache.get('items'))
 			;
+			items = items.filter(item => {
+				return Object.keys(this.options.entities).includes(item.params.entityId);
+			});
 
 			let cachedItems = this.processResult(query, items);
 
@@ -381,6 +384,10 @@ jn.define('im/chat/selector/providers/chat', (require, exports, module) => {
 				let recentItems = this.cache.get('recent', true);
 
 				const hasRecentCache = recentItems.length > 0;
+
+				recentItems = recentItems.filter(item => {
+					return Object.keys(this.options.entities).includes(item.params.entityId);
+				});
 
 				if (this.customItems)
 				{

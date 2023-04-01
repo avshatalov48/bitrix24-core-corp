@@ -1,7 +1,6 @@
-<?
-$MESS["CRM_TRACKING_SOURCE_UTM_ADDITIONAL_GOOGLE"] = "Extra UTM parameters for Google Adwords";
+<?php
+$MESS["CRM_TRACKING_SOURCE_UTM_ADDITIONAL_GOOGLE_MSGVER_1"] = "Extra UTM parameters for Google Ads";
 $MESS["CRM_TRACKING_SOURCE_UTM_CAMPAIGN"] = "Advertising campaign name";
-$MESS["CRM_TRACKING_SOURCE_UTM_CAMPAIGN_DESC_GOOGLE"] = "AdWords will replace {network} with \"g\" (google search), \"s\" (search partner) or \"d\" (Display Planner). Example: children_clothes, cheap_shoes etc.";
 $MESS["CRM_TRACKING_SOURCE_UTM_MATCHTYPE_DESC_GOOGLE"] = "Possible values: e (exact match), p (phrase match) or b (modified broad match)";
 $MESS["CRM_TRACKING_SOURCE_UTM_MATCHTYPE_GOOGLE"] = "Keyword match type";
 $MESS["CRM_TRACKING_SOURCE_UTM_MEDIUM"] = "Ad campaign type";
@@ -16,4 +15,3 @@ $MESS["CRM_TRACKING_SOURCE_UTM_SITE_NAME"] = "Enter site URL";
 $MESS["CRM_TRACKING_SOURCE_UTM_SITE_NAME_DESC"] = "Target page a visitor will be redirected to";
 $MESS["CRM_TRACKING_SOURCE_UTM_SOURCE"] = "Ad campaign source";
 $MESS["CRM_TRACKING_SOURCE_UTM_SOURCE_DESC"] = "Click source. Example: instagram, google, email, newsletter";
-?>

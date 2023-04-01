@@ -73,8 +73,7 @@ print_r($e->GetErrors());
 
 IncludeModuleLangFile(__FILE__);
 
-class CDavExchangeTasks
-	extends CDavExchangeClient
+class CDavExchangeTasks extends CDavExchangeClient
 {
 	static $arMapItem = array("MimeContent", "ItemId", "ParentFolderId", "ItemClass", "Subject", "Sensitivity", "Body", "Attachments", "DateTimeReceived", "Size", "Categories", "Importance", "InReplyTo", "IsSubmitted", "IsDraft", "IsFromMe", "IsResend", "IsUnmodified", "InternetMessageHeaders", "DateTimeSent", "DateTimeCreated", "ResponseObjects", "ReminderDueBy", "ReminderIsSet", "ReminderMinutesBeforeStart", "DisplayCc", "DisplayTo", "HasAttachments", "ExtendedProperty", "Culture", "EffectiveRights", "LastModifiedName", "LastModifiedTime");
 	static $arMapTask = array("ActualWork", "AssignedTime", "BillingInformation", "ChangeCount", "Companies", "CompleteDate", "Contacts", "DelegationState", "Delegator", "DueDate", "IsAssignmentEditable", "IsComplete", "IsRecurring", "IsTeamTask", "Mileage", "Owner", "PercentComplete", "Recurrence", "StartDate", "Status", "StatusDescription", "TotalWork");
@@ -98,16 +97,22 @@ class CDavExchangeTasks
 		$arMapTmp = array("folder_id" => "FolderId", "folderid" => "FolderId", "mailbox" => "Mailbox");
 		CDavExchangeClient::NormalizeArray($arFilter, $arMapTmp);
 		if (!array_key_exists("FolderId", $arFilter))
+		{
 			$arFilter["FolderId"] = "tasks";
+		}
 
 		$arMapTmp = array("itemshape" => "ItemShape", "item_shape" => "ItemShape");
 		CDavExchangeClient::NormalizeArray($arMode, $arMapTmp);
 		if (!array_key_exists("ItemShape", $arMode))
+		{
 			$arMode["ItemShape"] = "AllProperties";
+		}
 
 		$arParentFolderId = array("id" => $arFilter["FolderId"]);
 		if (array_key_exists("Mailbox", $arFilter))
+		{
 			$arParentFolderId["mailbox"] = $arFilter["Mailbox"];
+		}
 
 		$arAdditionalProperties = array();
 
@@ -121,7 +126,9 @@ class CDavExchangeTasks
 		$this->Disconnect();
 
 		if (is_null($response))
+		{
 			return null;
+		}
 
 		if ($this->ParseError($response))
 			return null;
@@ -134,17 +141,24 @@ class CDavExchangeTasks
 		{
 			$arResponseCode = $responseMessage->GetPath("/FindItemResponseMessage/ResponseCode");
 			$responseCode = null;
-			if (count($arResponseCode) > 0)
+			if (!empty($arResponseCode))
+			{
 				$responseCode = $arResponseCode[0]->GetContent();
+			}
 
 			$responseClass = $responseMessage->GetAttribute("ResponseClass");
 
-			if ((!is_null($responseClass) && ($responseClass != "Success")) || (!is_null($responseCode) && ($responseCode != "NoError")))
+			if (
+				(!is_null($responseClass) && ($responseClass !== "Success"))
+				|| (!is_null($responseCode) && ($responseCode !== "NoError"))
+			)
 			{
 				$arMessageText = $responseMessage->GetPath("/FindItemResponseMessage/MessageText");
 				$messageText = "Error";
-				if (count($arMessageText) > 0)
+				if (!empty($arMessageText))
+				{
 					$messageText = $arMessageText[0]->GetContent();
+				}
 
 				$this->AddError(!is_null($responseCode) ? $this->Encode($responseCode) : $this->Encode($responseClass), $this->Encode($messageText));
 				continue;
@@ -152,7 +166,9 @@ class CDavExchangeTasks
 
 			$arTaskItem = $responseMessage->GetPath("/FindItemResponseMessage/RootFolder/Items/Task");
 			foreach ($arTaskItem as $taskItem)
+			{
 				$arResultItemsList[] = $this->ConvertTaskToArray($taskItem);
+			}
 		}
 
 		return $arResultItemsList;
@@ -174,10 +190,14 @@ class CDavExchangeTasks
 		$this->Disconnect();
 
 		if (is_null($response))
+		{
 			return null;
+		}
 
 		if ($this->ParseError($response))
+		{
 			return null;
+		}
 
 		$arResultItemsList = array();
 		$xmlDoc = $response->GetBodyXml();
@@ -187,17 +207,24 @@ class CDavExchangeTasks
 		{
 			$arResponseCode = $responseMessage->GetPath("/GetItemResponseMessage/ResponseCode");
 			$responseCode = null;
-			if (count($arResponseCode) > 0)
+			if (!empty($arResponseCode))
+			{
 				$responseCode = $arResponseCode[0]->GetContent();
+			}
 
 			$responseClass = $responseMessage->GetAttribute("ResponseClass");
 
-			if ((!is_null($responseClass) && ($responseClass != "Success")) || (!is_null($responseCode) && ($responseCode != "NoError")))
+			if (
+				(!is_null($responseClass) && ($responseClass !== "Success"))
+				|| (!is_null($responseCode) && ($responseCode !== "NoError"))
+			)
 			{
 				$arMessageText = $responseMessage->GetPath("/GetItemResponseMessage/MessageText");
 				$messageText = "Error";
-				if (count($arMessageText) > 0)
+				if (!empty($arMessageText))
+				{
 					$messageText = $arMessageText[0]->GetContent();
+				}
 
 				$this->AddError(!is_null($responseCode) ? $this->Encode($responseCode) : $this->Encode($responseClass), $this->Encode($messageText));
 				continue;
@@ -205,7 +232,9 @@ class CDavExchangeTasks
 
 			$arTaskItem = $responseMessage->GetPath("/GetItemResponseMessage/Items/Task");
 			foreach ($arTaskItem as $taskItem)
+			{
 				$arResultItemsList[] = $this->ConvertTaskToArray($taskItem);
+			}
 		}
 
 		return $arResultItemsList;
@@ -223,13 +252,17 @@ class CDavExchangeTasks
 		$arMapTmp = array("folder_id" => "FolderId", "folderid" => "FolderId", "mailbox" => "Mailbox");
 		CDavExchangeClient::NormalizeArray($arFields, $arMapTmp);
 		if (!array_key_exists("FolderId", $arFields))
+		{
 			$arFields["FolderId"] = "tasks";
+		}
 
 		$arFieldsNew = $this->FormatFieldsArray($arFields);
 
 		$arParentFolderId = array("id" => $arFields["FolderId"]);
 		if (array_key_exists("Mailbox", $arFields))
+		{
 			$arParentFolderId["mailbox"] = $arFields["Mailbox"];
+		}
 
 		$request->CreateCreateItemBody($arParentFolderId, $arFieldsNew);
 
@@ -238,10 +271,14 @@ class CDavExchangeTasks
 		$this->Disconnect();
 
 		if (is_null($response))
+		{
 			return null;
+		}
 
 		if ($this->ParseError($response))
+		{
 			return null;
+		}
 
 		$arResultItemsList = array();
 		$xmlDoc = $response->GetBodyXml();
@@ -251,17 +288,24 @@ class CDavExchangeTasks
 		{
 			$arResponseCode = $responseMessage->GetPath("/CreateItemResponseMessage/ResponseCode");
 			$responseCode = null;
-			if (count($arResponseCode) > 0)
+			if (!empty($arResponseCode))
+			{
 				$responseCode = $arResponseCode[0]->GetContent();
+			}
 
 			$responseClass = $responseMessage->GetAttribute("ResponseClass");
 
-			if ((!is_null($responseClass) && ($responseClass != "Success")) || (!is_null($responseCode) && ($responseCode != "NoError")))
+			if (
+				(!is_null($responseClass) && ($responseClass !== "Success"))
+				|| (!is_null($responseCode) && ($responseCode !== "NoError"))
+			)
 			{
 				$arMessageText = $responseMessage->GetPath("/CreateItemResponseMessage/MessageText");
 				$messageText = "Error";
-				if (count($arMessageText) > 0)
+				if (!empty($arMessageText))
+				{
 					$messageText = $arMessageText[0]->GetContent();
+				}
 
 				$this->AddError(!is_null($responseCode) ? $this->Encode($responseCode) : $this->Encode($responseClass), $this->Encode($messageText));
 				continue;
@@ -269,7 +313,9 @@ class CDavExchangeTasks
 
 			$arTaskItem = $responseMessage->GetPath("/CreateItemResponseMessage/Items/Task");
 			foreach ($arTaskItem as $taskItem)
+			{
 				$arResultItemsList[] = $this->ConvertTaskToArray($taskItem);
+			}
 		}
 
 		return $arResultItemsList;
@@ -293,10 +339,14 @@ class CDavExchangeTasks
 		$this->Disconnect();
 
 		if (is_null($response))
+		{
 			return null;
+		}
 
 		if ($this->ParseError($response))
+		{
 			return null;
+		}
 
 		$arResultItemsList = array();
 		$xmlDoc = $response->GetBodyXml();
@@ -306,17 +356,24 @@ class CDavExchangeTasks
 		{
 			$arResponseCode = $responseMessage->GetPath("/UpdateItemResponseMessage/ResponseCode");
 			$responseCode = null;
-			if (count($arResponseCode) > 0)
+			if (!empty($arResponseCode))
+			{
 				$responseCode = $arResponseCode[0]->GetContent();
+			}
 
 			$responseClass = $responseMessage->GetAttribute("ResponseClass");
 
-			if ((!is_null($responseClass) && ($responseClass != "Success")) || (!is_null($responseCode) && ($responseCode != "NoError")))
+			if (
+				(!is_null($responseClass) && ($responseClass !== "Success"))
+				|| (!is_null($responseCode) && ($responseCode !== "NoError"))
+			)
 			{
 				$arMessageText = $responseMessage->GetPath("/UpdateItemResponseMessage/MessageText");
 				$messageText = "Error";
-				if (count($arMessageText) > 0)
+				if (!empty($arMessageText))
+				{
 					$messageText = $arMessageText[0]->GetContent();
+				}
 
 				$this->AddError(!is_null($responseCode) ? $this->Encode($responseCode) : $this->Encode($responseClass), $this->Encode($messageText));
 				continue;
@@ -324,7 +381,9 @@ class CDavExchangeTasks
 
 			$arTaskItem = $responseMessage->GetPath("/UpdateItemResponseMessage/Items/Task");
 			foreach ($arTaskItem as $taskItem)
+			{
 				$arResultItemsList[] = $this->ConvertTaskToArray($taskItem);
+			}
 		}
 
 		return $arResultItemsList;
@@ -346,10 +405,14 @@ class CDavExchangeTasks
 		$this->Disconnect();
 
 		if (is_null($response))
+		{
 			return null;
+		}
 
 		if ($this->ParseError($response))
+		{
 			return null;
+		}
 
 		$xmlDoc = $response->GetBodyXml();
 
@@ -358,17 +421,24 @@ class CDavExchangeTasks
 		{
 			$arResponseCode = $responseMessage->GetPath("/DeleteItemResponseMessage/ResponseCode");
 			$responseCode = null;
-			if (count($arResponseCode) > 0)
+			if (!empty($arResponseCode))
+			{
 				$responseCode = $arResponseCode[0]->GetContent();
+			}
 
 			$responseClass = $responseMessage->GetAttribute("ResponseClass");
 
-			if ((!is_null($responseClass) && ($responseClass != "Success")) || (!is_null($responseCode) && ($responseCode != "NoError")))
+			if (
+				(!is_null($responseClass) && ($responseClass !== "Success"))
+				|| (!is_null($responseCode) && ($responseCode !== "NoError"))
+			)
 			{
 				$arMessageText = $responseMessage->GetPath("/DeleteItemResponseMessage/MessageText");
 				$messageText = "Error";
-				if (count($arMessageText) > 0)
+				if (!empty($arMessageText))
+				{
 					$messageText = $arMessageText[0]->GetContent();
+				}
 
 				$this->AddError(!is_null($responseCode) ? $this->Encode($responseCode) : $this->Encode($responseClass), $this->Encode($messageText));
 				return false;
@@ -392,7 +462,9 @@ class CDavExchangeTasks
 
 		$arParentFolderId = array("id" => "tasks");
 		if (array_key_exists("Mailbox", $arFilter))
+		{
 			$arParentFolderId["mailbox"] = $arFilter["Mailbox"];
+		}
 
 		$request->CreateFindFolderBody($arParentFolderId, "AllProperties");
 
@@ -401,10 +473,14 @@ class CDavExchangeTasks
 		$this->Disconnect();
 
 		if (is_null($response))
+		{
 			return null;
+		}
 
 		if ($this->ParseError($response))
+		{
 			return null;
+		}
 
 		$arResultFoldersList = array();
 		try
@@ -422,17 +498,24 @@ class CDavExchangeTasks
 		{
 			$arResponseCode = $responseMessage->GetPath("/FindFolderResponseMessage/ResponseCode");
 			$responseCode = null;
-			if (count($arResponseCode) > 0)
+			if (!empty($arResponseCode))
+			{
 				$responseCode = $arResponseCode[0]->GetContent();
+			}
 
 			$responseClass = $responseMessage->GetAttribute("ResponseClass");
 
-			if ((!is_null($responseClass) && ($responseClass != "Success")) || (!is_null($responseCode) && ($responseCode != "NoError")))
+			if (
+				(!is_null($responseClass) && ($responseClass !== "Success"))
+				|| (!is_null($responseCode) && ($responseCode !== "NoError"))
+			)
 			{
 				$arMessageText = $responseMessage->GetPath("/FindFolderResponseMessage/MessageText");
 				$messageText = "Error";
-				if (count($arMessageText) > 0)
+				if (!empty($arMessageText))
+				{
 					$messageText = $arMessageText[0]->GetContent();
+				}
 
 				$this->AddError(!is_null($responseCode) ? $this->Encode($responseCode) : $this->Encode($responseClass), $this->Encode($messageText));
 				continue;
@@ -440,7 +523,9 @@ class CDavExchangeTasks
 
 			$arTaskFolder = $responseMessage->GetPath("/FindFolderResponseMessage/RootFolder/Folders/TasksFolder");
 			foreach ($arTaskFolder as $taskFolder)
+			{
 				$arResultFoldersList[] = $this->ConvertTaskFolderToArray($taskFolder);
+			}
 		}
 
 		return $arResultFoldersList;
@@ -462,10 +547,14 @@ class CDavExchangeTasks
 		$this->Disconnect();
 
 		if (is_null($response))
+		{
 			return null;
+		}
 
 		if ($this->ParseError($response))
+		{
 			return null;
+		}
 
 		$arResultFoldersList = array();
 		$xmlDoc = $response->GetBodyXml();
@@ -475,17 +564,24 @@ class CDavExchangeTasks
 		{
 			$arResponseCode = $responseMessage->GetPath("/GetFolderResponseMessage/ResponseCode");
 			$responseCode = null;
-			if (count($arResponseCode) > 0)
+			if (!empty($arResponseCode))
+			{
 				$responseCode = $arResponseCode[0]->GetContent();
+			}
 
 			$responseClass = $responseMessage->GetAttribute("ResponseClass");
 
-			if ((!is_null($responseClass) && ($responseClass != "Success")) || (!is_null($responseCode) && ($responseCode != "NoError")))
+			if (
+				(!is_null($responseClass) && ($responseClass !== "Success"))
+				|| (!is_null($responseCode) && ($responseCode !== "NoError"))
+			)
 			{
 				$arMessageText = $responseMessage->GetPath("/GetFolderResponseMessage/MessageText");
 				$messageText = "Error";
-				if (count($arMessageText) > 0)
+				if (!empty($arMessageText))
+				{
 					$messageText = $arMessageText[0]->GetContent();
+				}
 
 				$this->AddError(!is_null($responseCode) ? $this->Encode($responseCode) : $this->Encode($responseClass), $this->Encode($messageText));
 				continue;
@@ -493,7 +589,9 @@ class CDavExchangeTasks
 
 			$arTaskFolder = $responseMessage->GetPath("/GetFolderResponseMessage/Folders/TasksFolder");
 			foreach ($arTaskFolder as $taskFolder)
+			{
 				$arResultFoldersList[] = $this->ConvertTaskFolderToArray($taskFolder);
+			}
 		}
 
 		return $arResultFoldersList;
@@ -515,7 +613,9 @@ class CDavExchangeTasks
 
 		$arParentFolderId = array("id" => "tasks");
 		if (array_key_exists("Mailbox", $arFields))
+		{
 			$arParentFolderId["mailbox"] = $arFields["Mailbox"];
+		}
 
 		$request->CreateCreateFolderBody($arParentFolderId, $arFieldsNew);
 
@@ -524,10 +624,14 @@ class CDavExchangeTasks
 		$this->Disconnect();
 
 		if (is_null($response))
+		{
 			return null;
+		}
 
 		if ($this->ParseError($response))
+		{
 			return null;
+		}
 
 		$arResultFoldersList = array();
 		$xmlDoc = $response->GetBodyXml();
@@ -537,17 +641,24 @@ class CDavExchangeTasks
 		{
 			$arResponseCode = $responseMessage->GetPath("/CreateFolderResponseMessage/ResponseCode");
 			$responseCode = null;
-			if (count($arResponseCode) > 0)
+			if (!empty($arResponseCode))
+			{
 				$responseCode = $arResponseCode[0]->GetContent();
+			}
 
 			$responseClass = $responseMessage->GetAttribute("ResponseClass");
 
-			if ((!is_null($responseClass) && ($responseClass != "Success")) || (!is_null($responseCode) && ($responseCode != "NoError")))
+			if (
+				(!is_null($responseClass) && ($responseClass !== "Success"))
+				|| (!is_null($responseCode) && ($responseCode !== "NoError"))
+			)
 			{
 				$arMessageText = $responseMessage->GetPath("/CreateFolderResponseMessage/MessageText");
 				$messageText = "Error";
-				if (count($arMessageText) > 0)
+				if (!empty($arMessageText))
+				{
 					$messageText = $arMessageText[0]->GetContent();
+				}
 
 				$this->AddError(!is_null($responseCode) ? $this->Encode($responseCode) : $this->Encode($responseClass), $this->Encode($messageText));
 				continue;
@@ -555,7 +666,9 @@ class CDavExchangeTasks
 
 			$arTaskFolder = $responseMessage->GetPath("/CreateFolderResponseMessage/Folders/TasksFolder");
 			foreach ($arTaskFolder as $taskFolder)
+			{
 				$arResultFoldersList[] = $this->ConvertTaskFolderToArray($taskFolder);
+			}
 		}
 
 		return $arResultFoldersList;
@@ -579,10 +692,14 @@ class CDavExchangeTasks
 		$this->Disconnect();
 
 		if (is_null($response))
+		{
 			return null;
+		}
 
 		if ($this->ParseError($response))
+		{
 			return null;
+		}
 
 		$arResultFoldersList = array();
 		$xmlDoc = $response->GetBodyXml();
@@ -592,17 +709,24 @@ class CDavExchangeTasks
 		{
 			$arResponseCode = $responseMessage->GetPath("/UpdateFolderResponseMessage/ResponseCode");
 			$responseCode = null;
-			if (count($arResponseCode) > 0)
+			if (!empty($arResponseCode))
+			{
 				$responseCode = $arResponseCode[0]->GetContent();
+			}
 
 			$responseClass = $responseMessage->GetAttribute("ResponseClass");
 
-			if ((!is_null($responseClass) && ($responseClass != "Success")) || (!is_null($responseCode) && ($responseCode != "NoError")))
+			if (
+				(!is_null($responseClass) && ($responseClass !== "Success"))
+				|| (!is_null($responseCode) && ($responseCode !== "NoError"))
+			)
 			{
 				$arMessageText = $responseMessage->GetPath("/UpdateFolderResponseMessage/MessageText");
 				$messageText = "Error";
-				if (count($arMessageText) > 0)
+				if (!empty($arMessageText))
+				{
 					$messageText = $arMessageText[0]->GetContent();
+				}
 
 				$this->AddError(!is_null($responseCode) ? $this->Encode($responseCode) : $this->Encode($responseClass), $this->Encode($messageText));
 				continue;
@@ -610,7 +734,9 @@ class CDavExchangeTasks
 
 			$arTaskFolder = $responseMessage->GetPath("/UpdateFolderResponseMessage/Folders/TasksFolder");
 			foreach ($arTaskFolder as $taskFolder)
+			{
 				$arResultFoldersList[] = $this->ConvertTaskFolderToArray($taskFolder);
+			}
 		}
 
 		return $arResultFoldersList;
@@ -632,10 +758,14 @@ class CDavExchangeTasks
 		$this->Disconnect();
 
 		if (is_null($response))
+		{
 			return null;
+		}
 
 		if ($this->ParseError($response))
+		{
 			return null;
+		}
 
 		$xmlDoc = $response->GetBodyXml();
 
@@ -644,17 +774,24 @@ class CDavExchangeTasks
 		{
 			$arResponseCode = $responseMessage->GetPath("/DeleteFolderResponseMessage/ResponseCode");
 			$responseCode = null;
-			if (count($arResponseCode) > 0)
+			if (!empty($arResponseCode))
+			{
 				$responseCode = $arResponseCode[0]->GetContent();
+			}
 
 			$responseClass = $responseMessage->GetAttribute("ResponseClass");
 
-			if ((!is_null($responseClass) && ($responseClass != "Success")) || (!is_null($responseCode) && ($responseCode != "NoError")))
+			if (
+				(!is_null($responseClass) && ($responseClass !== "Success"))
+				|| (!is_null($responseCode) && ($responseCode !== "NoError"))
+			)
 			{
 				$arMessageText = $responseMessage->GetPath("/DeleteFolderResponseMessage/MessageText");
 				$messageText = "Error";
-				if (count($arMessageText) > 0)
+				if (!empty($arMessageText))
+				{
 					$messageText = $arMessageText[0]->GetContent();
+				}
 
 				$this->AddError(!is_null($responseCode) ? $this->Encode($responseCode) : $this->Encode($responseClass), $this->Encode($messageText));
 				return false;
@@ -711,7 +848,9 @@ class CDavExchangeTasks
 		foreach ($arFields as $key => $value)
 		{
 			if (!array_key_exists($key, $arMap))
+			{
 				continue;
+			}
 
 			$newKey = $arMap[$key];
 			if (is_array($newKey))
@@ -727,8 +866,10 @@ class CDavExchangeTasks
 			{
 				$arFieldsNew[$newKey] = date("Y-m-d\Z", MakeTimeStamp($value));
 			}
-			elseif ($this->FormatStandartFieldsArray($newKey, $value, $arFieldsNew)
-				|| $this->FormatRecurrenceFieldsArray($newKey, $value, $arFieldsNew))
+			elseif (
+				$this->FormatStandartFieldsArray($newKey, $value, $arFieldsNew)
+				|| $this->FormatRecurrenceFieldsArray($newKey, $value, $arFieldsNew)
+			)
 			{
 
 			}
@@ -738,9 +879,9 @@ class CDavExchangeTasks
 			}
 		}
 
-		if (isset($arFieldsNew["ReminderMinutesBeforeStart"]) && intval($arFieldsNew["ReminderMinutesBeforeStart"]) > 0)
+		if (isset($arFieldsNew["ReminderMinutesBeforeStart"]) && (int)$arFieldsNew["ReminderMinutesBeforeStart"])
 		{
-			$arFieldsNew["ReminderMinutesBeforeStart"] = intval($arFieldsNew["ReminderMinutesBeforeStart"]);
+			$arFieldsNew["ReminderMinutesBeforeStart"] = (int)$arFieldsNew["ReminderMinutesBeforeStart"];
 			$arFieldsNew["ReminderIsSet"] = true;
 		}
 
@@ -753,11 +894,9 @@ class CDavExchangeTasks
 
 		foreach ($arFields as $key => $value)
 		{
-			switch ($key)
+			if ($key == "NAME")
 			{
-				case "NAME":
-					$arFieldsNew["DisplayName"] = $this->Decode($value);
-					break;
+				$arFieldsNew["DisplayName"] = $this->Decode($value);
 			}
 		}
 
@@ -769,72 +908,94 @@ class CDavExchangeTasks
 		$arResultItem = array();
 
 		$arItemId = $taskItem->GetPath("/Task/ItemId");
-		if (count($arItemId) > 0)
+		if (!empty($arItemId))
 		{
 			$arResultItem["XML_ID"] = $arItemId[0]->GetAttribute("Id");
 			$arResultItem["MODIFICATION_LABEL"] = $arItemId[0]->GetAttribute("ChangeKey");
 		}
 
 		$arSubject = $taskItem->GetPath("/Task/Subject");
-		if (count($arSubject) > 0)
+		if (!empty($arSubject))
+		{
 			$arResultItem["SUBJECT"] = $this->Encode($arSubject[0]->GetContent());
+		}
 
 		$arBody = $taskItem->GetPath("/Task/Body");
-		if (count($arBody) > 0)
+		if (!empty($arBody))
 		{
 			$arResultItem["BODY"] = $this->Encode($arBody[0]->GetContent());
 			$arResultItem["BODY_TYPE"] = $arBody[0]->GetAttribute("BodyType");
 		}
 
 		$arDateTimeCreated = $taskItem->GetPath("/Task/DateTimeCreated");
-		if (count($arDateTimeCreated) > 0)
+		if (!empty($arDateTimeCreated))
+		{
 			$arResultItem["DATE_CREATE"] = CDavICalendarTimeZone::GetFormattedServerDateTime($arDateTimeCreated[0]->GetContent());
+		}
 
 		$arImportance = $taskItem->GetPath("/Task/Importance");
-		if (count($arImportance) > 0)
+		if (!empty($arImportance))
+		{
 			$arResultItem["IMPORTANCE"] = $arImportance[0]->GetContent();
+		}
 
 		$arReminderIsSet = $taskItem->GetPath("/Task/ReminderIsSet");
-		if ((count($arReminderIsSet) > 0) && ($arReminderIsSet[0]->GetContent() == "true"))
+		if (!empty($arReminderIsSet) && ($arReminderIsSet[0]->GetContent() === "true"))
 		{
 			$arReminderMinutesBeforeStart = $taskItem->GetPath("/Task/ReminderMinutesBeforeStart");
-			if (count($arReminderMinutesBeforeStart) > 0)
+			if (!empty($arReminderMinutesBeforeStart))
+			{
 				$arResultItem["REMINDER_MINUTES_BEFORE_START"] = $arReminderMinutesBeforeStart[0]->GetContent();
+			}
 		}
 
 		$arActualWork = $taskItem->GetPath("/Task/ActualWork");
-		if (count($arActualWork) > 0)
+		if (!empty($arActualWork))
+		{
 			$arResultItem["ACTUAL_WORK"] = $arActualWork[0]->GetContent();
+		}
 
 		$arBillingInformation = $taskItem->GetPath("/Task/BillingInformation");
-		if (count($arBillingInformation) > 0)
+		if (!empty($arBillingInformation))
+		{
 			$arResultItem["BILLING_INFORMATION"] = $arBillingInformation[0]->GetContent();
+		}
 
 		$arMileage = $taskItem->GetPath("/Task/Mileage");
-		if (count($arMileage) > 0)
+		if (!empty($arMileage))
+		{
 			$arResultItem["MILEAGE"] = $arMileage[0]->GetContent();
+		}
 
 		$arStartDate = $taskItem->GetPath("/Task/StartDate");
-		if (count($arStartDate) > 0)
+		if (!empty($arStartDate))
+		{
 			$arResultItem["START_DATE"] = CDavICalendarTimeZone::GetFormattedServerDateTime($arStartDate[0]->GetContent());
+		}
 
 		$arDueDate = $taskItem->GetPath("/Task/DueDate");
-		if (count($arDueDate) > 0)
+		if (!empty($arDueDate))
+		{
 			$arResultItem["DUE_DATE"] = CDavICalendarTimeZone::GetFormattedServerDateTime($arDueDate[0]->GetContent());
+		}
 
 		$arIsComplete = $taskItem->GetPath("/Task/IsComplete");
-		if (count($arIsComplete) > 0)
-			$arResultItem["IS_COMPLETE"] = (($arIsComplete[0]->GetContent() == "true") ? true : false);
+		if (!empty($arIsComplete))
+		{
+			$arResultItem["IS_COMPLETE"] = (($arIsComplete[0]->GetContent() === "true") ? true : false);
+		}
 
 		$arIsRecurring = $taskItem->GetPath("/Task/IsRecurring");
-		if (count($arIsRecurring) > 0)
-			$arResultItem["IS_RECURRING"] = (($arIsRecurring[0]->GetContent() == "true") ? true : false);
+		if (!empty($arIsRecurring))
+		{
+			$arResultItem["IS_RECURRING"] = (($arIsRecurring[0]->GetContent() === "true") ? true : false);
+		}
 
 		$arRecurrence = $taskItem->GetPath("/Task/Recurrence");
-		if (count($arRecurrence) > 0)
+		if (!empty($arRecurrence))
 		{
 			$ar = $this->ConvertRecurrenceToArray($arRecurrence[0]);
-			if (count($ar) > 0)
+			if (!empty($ar))
 			{
 				$arResultItem = array_merge($arResultItem, $ar);
 				$arResultItem["IS_RECURRING"] = true;
@@ -842,12 +1003,16 @@ class CDavExchangeTasks
 		}
 
 		$arPercentComplete = $taskItem->GetPath("/Task/PercentComplete");
-		if (count($arPercentComplete) > 0)
+		if (!empty($arPercentComplete))
+		{
 			$arResultItem["PERCENT_COMPLETE"] = $arPercentComplete[0]->GetContent();
+		}
 
 		$arStatus = $taskItem->GetPath("/Task/Status");
-		if (count($arStatus) > 0)
+		if (!empty($arStatus))
+		{
 			$arResultItem["STATUS"] = $arStatus[0]->GetContent();
+		}
 
 		$arExtendedProperty = $taskItem->GetPath("/Task/ExtendedProperty");
 		$extendedPropertiesCount = count($arExtendedProperty);
@@ -865,16 +1030,22 @@ class CDavExchangeTasks
 		}
 
 		$arStatusDescription = $taskItem->GetPath("/Task/StatusDescription");
-		if (count($arStatusDescription) > 0)
+		if (!empty($arStatusDescription))
+		{
 			$arResultItem["STATUS_DESCRIPTION"] = $arStatusDescription[0]->GetContent();
+		}
 
 		$arTotalWork = $taskItem->GetPath("/Task/TotalWork");
-		if (count($arTotalWork) > 0)
+		if (!empty($arTotalWork))
+		{
 			$arResultItem["TOTAL_WORK"] = $arTotalWork[0]->GetContent();
+		}
 
 		$arOwner = $taskItem->GetPath("/Task/Owner");
-		if (count($arOwner) > 0)
+		if (!empty($arOwner))
+		{
 			$arResultItem["OWNER"] = $this->Encode($arOwner[0]->GetContent());
+		}
 
 		return $arResultItem;
 	}
@@ -884,23 +1055,29 @@ class CDavExchangeTasks
 		$arResultFolder = array();
 
 		$arFolderId = $calendarFolder->GetPath("/TasksFolder/FolderId");
-		if (count($arFolderId) > 0)
+		if (!empty($arFolderId))
 		{
 			$arResultFolder["XML_ID"] = $arFolderId[0]->GetAttribute("Id");
 			$arResultFolder["MODIFICATION_LABEL"] = $arFolderId[0]->GetAttribute("ChangeKey");
 		}
 
 		$arDisplayName = $calendarFolder->GetPath("/TasksFolder/DisplayName");
-		if (count($arDisplayName) > 0)
+		if (!empty($arDisplayName))
+		{
 			$arResultFolder["NAME"] = $this->Encode($arDisplayName[0]->GetContent());
+		}
 
 		$arTotalCount = $calendarFolder->GetPath("/TasksFolder/TotalCount");
-		if (count($arTotalCount) > 0)
+		if (!empty($arTotalCount))
+		{
 			$arResultFolder["TOTAL_COUNT"] = $arTotalCount[0]->GetContent();
+		}
 
 		$arChildFolderCount = $calendarFolder->GetPath("/TasksFolder/ChildFolderCount");
-		if (count($arChildFolderCount) > 0)
+		if (!empty($arChildFolderCount))
+		{
 			$arResultFolder["CHILD_FOLDER_COUNT"] = $arChildFolderCount[0]->GetContent();
+		}
 
 		return $arResultFolder;
 	}
@@ -914,7 +1091,9 @@ class CDavExchangeTasks
 		foreach ($arMap as $key)
 		{
 			if (!array_key_exists($key, $arFields))
+			{
 				continue;
+			}
 
 			$value = $arFields[$key];
 
@@ -939,7 +1118,9 @@ class CDavExchangeTasks
 		foreach ($arMap as $key)
 		{
 			if (!array_key_exists($key, $arFields))
+			{
 				continue;
+			}
 
 			$value = $arFields[$key];
 			$fieldUri = (in_array($key, self::$arMapTask) ? "task" : "item").":".htmlspecialcharsbx($key);
@@ -975,14 +1156,16 @@ class CDavExchangeTasks
 	{
 		$itemBody = "";
 
-		if ($key == "Body")
+		if ($key === "Body")
 		{
 			$itemBody .= "     <Body";
 			if (array_key_exists("BodyType", $arFields))
-				$itemBody .= " BodyType=\"".(mb_strtolower($arFields["BodyType"]) == "html" ? "HTML" : "Text")."\"";
+			{
+				$itemBody .= " BodyType=\"" . (mb_strtolower($arFields["BodyType"]) == "html" ? "HTML" : "Text") . "\"";
+			}
 			$itemBody .= ">".htmlspecialcharsbx($value)."</Body>\r\n";
 		}
-		elseif ($key == "Recurrence")
+		elseif ($key === "Recurrence")
 		{
 			$ar = array("MONTHLY_ABSOLUTE" => "AbsoluteMonthlyRecurrence", "MONTHLY_RELATIVE" => "RelativeMonthlyRecurrence", "YEARLY_ABSOLUTE" => "AbsoluteYearlyRecurrence", "YEARLY_RELATIVE" => "RelativeYearlyRecurrence", "WEEKLY" => "WeeklyRecurrence", "DAILY" => "DailyRecurrence");
 
@@ -993,49 +1176,101 @@ class CDavExchangeTasks
 				$itemBody .= "     <Recurrence>\r\n";
 				$itemBody .= "      <".$rnode.">\r\n";
 
-				if ($arFields["RecurringType"] == "MONTHLY_ABSOLUTE")
+				if ($arFields["RecurringType"] === "MONTHLY_ABSOLUTE")
 				{
 					if (isset($arFields["RecurringInterval"]))
-						$itemBody .= "       <Interval>".htmlspecialcharsbx($arFields["RecurringInterval"])."</Interval>\r\n";
+					{
+						$itemBody .= "       <Interval>"
+							. htmlspecialcharsbx($arFields["RecurringInterval"])
+							. "</Interval>\r\n";
+					}
 					if (isset($arFields["RecurringDayOfMonth"]))
-						$itemBody .= "       <DayOfMonth>".htmlspecialcharsbx($arFields["RecurringDayOfMonth"])."</DayOfMonth>\r\n";
+					{
+						$itemBody .= "       <DayOfMonth>"
+							. htmlspecialcharsbx($arFields["RecurringDayOfMonth"])
+							. "</DayOfMonth>\r\n";
+					}
 				}
-				elseif ($arFields["RecurringType"] == "MONTHLY_RELATIVE")
+				elseif ($arFields["RecurringType"] === "MONTHLY_RELATIVE")
 				{
 					if (isset($arFields["RecurringInterval"]))
-						$itemBody .= "       <Interval>".htmlspecialcharsbx($arFields["RecurringInterval"])."</Interval>\r\n";
+					{
+						$itemBody .= "       <Interval>"
+							. htmlspecialcharsbx($arFields["RecurringInterval"])
+							. "</Interval>\r\n";
+					}
 					if (isset($arFields["RecurringDaysOfWeek"]))
-						$itemBody .= "       <DaysOfWeek>".htmlspecialcharsbx($arFields["RecurringDaysOfWeek"])."</DaysOfWeek>\r\n";
+					{
+						$itemBody .= "       <DaysOfWeek>"
+							. htmlspecialcharsbx($arFields["RecurringDaysOfWeek"])
+							. "</DaysOfWeek>\r\n";
+					}
 					if (isset($arFields["RecurringDayOfWeekIndex"]))
-						$itemBody .= "       <DayOfWeekIndex>".htmlspecialcharsbx($arFields["RecurringDayOfWeekIndex"])."</DayOfWeekIndex>\r\n";
+					{
+						$itemBody .= "       <DayOfWeekIndex>"
+							. htmlspecialcharsbx($arFields["RecurringDayOfWeekIndex"])
+							. "</DayOfWeekIndex>\r\n";
+					}
 				}
-				elseif ($arFields["RecurringType"] == "YEARLY_ABSOLUTE")
+				elseif ($arFields["RecurringType"] === "YEARLY_ABSOLUTE")
 				{
 					if (isset($arFields["RecurringDayOfMonth"]))
-						$itemBody .= "       <DayOfMonth>".htmlspecialcharsbx($arFields["RecurringDayOfMonth"])."</DayOfMonth>\r\n";
+					{
+						$itemBody .= "       <DayOfMonth>"
+							. htmlspecialcharsbx($arFields["RecurringDayOfMonth"])
+							. "</DayOfMonth>\r\n";
+					}
 					if (isset($arFields["RecurringMonth"]))
-						$itemBody .= "       <Month>".htmlspecialcharsbx($arFields["RecurringMonth"])."</Month>\r\n";
+					{
+						$itemBody .= "       <Month>"
+							. htmlspecialcharsbx($arFields["RecurringMonth"])
+							. "</Month>\r\n";
+					}
 				}
-				elseif ($arFields["RecurringType"] == "YEARLY_RELATIVE")
+				elseif ($arFields["RecurringType"] === "YEARLY_RELATIVE")
 				{
 					if (isset($arFields["RecurringDaysOfWeek"]))
-						$itemBody .= "       <DaysOfWeek>".htmlspecialcharsbx($arFields["RecurringDaysOfWeek"])."</DaysOfWeek>\r\n";
+					{
+						$itemBody .= "       <DaysOfWeek>"
+							. htmlspecialcharsbx($arFields["RecurringDaysOfWeek"])
+							. "</DaysOfWeek>\r\n";
+					}
 					if (isset($arFields["RecurringDayOfWeekIndex"]))
-						$itemBody .= "       <DayOfWeekIndex>".htmlspecialcharsbx($arFields["RecurringDayOfWeekIndex"])."</DayOfWeekIndex>\r\n";
+					{
+						$itemBody .= "       <DayOfWeekIndex>"
+							. htmlspecialcharsbx($arFields["RecurringDayOfWeekIndex"])
+							. "</DayOfWeekIndex>\r\n";
+					}
 					if (isset($arFields["RecurringMonth"]))
-						$itemBody .= "       <Month>".htmlspecialcharsbx($arFields["RecurringMonth"])."</Month>\r\n";
+					{
+						$itemBody .= "       <Month>"
+							. htmlspecialcharsbx($arFields["RecurringMonth"])
+							. "</Month>\r\n";
+					}
 				}
-				elseif ($arFields["RecurringType"] == "WEEKLY")
+				elseif ($arFields["RecurringType"] === "WEEKLY")
 				{
 					if (isset($arFields["RecurringInterval"]))
-						$itemBody .= "       <Interval>".htmlspecialcharsbx($arFields["RecurringInterval"])."</Interval>\r\n";
+					{
+						$itemBody .= "       <Interval>"
+							. htmlspecialcharsbx($arFields["RecurringInterval"])
+							. "</Interval>\r\n";
+					}
 					if (isset($arFields["RecurringDaysOfWeek"]))
-						$itemBody .= "       <DaysOfWeek>".htmlspecialcharsbx($arFields["RecurringDaysOfWeek"])."</DaysOfWeek>\r\n";
+					{
+						$itemBody .= "       <DaysOfWeek>"
+							. htmlspecialcharsbx($arFields["RecurringDaysOfWeek"])
+							. "</DaysOfWeek>\r\n";
+					}
 				}
-				elseif ($arFields["RecurringType"] == "DAILY")
+				elseif ($arFields["RecurringType"] === "DAILY")
 				{
 					if (isset($arFields["RecurringInterval"]))
-						$itemBody .= "       <Interval>".htmlspecialcharsbx($arFields["RecurringInterval"])."</Interval>\r\n";
+					{
+						$itemBody .= "       <Interval>"
+							. htmlspecialcharsbx($arFields["RecurringInterval"])
+							. "</Interval>\r\n";
+					}
 				}
 
 				$itemBody .= "      </".$rnode.">\r\n";
@@ -1044,7 +1279,11 @@ class CDavExchangeTasks
 				{
 					$itemBody .= "      <EndDateRecurrence>\r\n";
 					if (isset($arFields["RecurringStartDate"]))
-						$itemBody .= "      <StartDate>".htmlspecialcharsbx($arFields["RecurringStartDate"])."</StartDate>\r\n";
+					{
+						$itemBody .= "      <StartDate>"
+							. htmlspecialcharsbx($arFields["RecurringStartDate"])
+							. "</StartDate>\r\n";
+					}
 					$itemBody .= "      <EndDate>".htmlspecialcharsbx($arFields["RecurringEndDate"])."</EndDate>\r\n";
 					$itemBody .= "      </EndDateRecurrence>\r\n";
 				}
@@ -1052,7 +1291,11 @@ class CDavExchangeTasks
 				{
 					$itemBody .= "      <NumberedRecurrence>\r\n";
 					if (isset($arFields["RecurringStartDate"]))
-						$itemBody .= "      <StartDate>".htmlspecialcharsbx($arFields["RecurringStartDate"])."</StartDate>\r\n";
+					{
+						$itemBody .= "      <StartDate>"
+							. htmlspecialcharsbx($arFields["RecurringStartDate"])
+							. "</StartDate>\r\n";
+					}
 					$itemBody .= "      <NumberOfOccurrences>".htmlspecialcharsbx($arFields["RecurringNumberOfOccurrences"])."</NumberOfOccurrences>\r\n";
 					$itemBody .= "      </NumberedRecurrence>\r\n";
 				}
@@ -1060,7 +1303,11 @@ class CDavExchangeTasks
 				{
 					$itemBody .= "      <NoEndRecurrence>\r\n";
 					if (isset($arFields["RecurringStartDate"]))
-						$itemBody .= "      <StartDate>".htmlspecialcharsbx($arFields["RecurringStartDate"])."</StartDate>\r\n";
+					{
+						$itemBody .= "      <StartDate>"
+							. htmlspecialcharsbx($arFields["RecurringStartDate"])
+							. "</StartDate>\r\n";
+					}
 					$itemBody .= "      </NoEndRecurrence>\r\n";
 				}
 
@@ -1085,9 +1332,13 @@ class CDavExchangeTasks
 		{
 			$itemBody .= "     <".htmlspecialcharsbx($key).">";
 			if (is_bool($value))
+			{
 				$itemBody .= ($value ? "true" : "false");
+			}
 			else
+			{
 				$itemBody .= htmlspecialcharsbx($value);
+			}
 			$itemBody .= "</".htmlspecialcharsbx($key).">\r\n";
 		}
 
@@ -1120,7 +1371,9 @@ class CDavExchangeTasks
 	private static function InitUserEntity()
 	{
 		if (!CModule::IncludeModule("tasks"))
+		{
 			return;
+		}
 
 		$arRequiredFields = array(
 			"UF_BXDAVEX_TSKSYNC" => array(
@@ -1134,7 +1387,9 @@ class CDavExchangeTasks
 		foreach ($arUserCustomFields as $key => $value)
 		{
 			if (array_key_exists($key, $arRequiredFields))
+			{
 				unset($arRequiredFields[$key]);
+			}
 		}
 
 		foreach ($arRequiredFields as $requiredFieldKey => $requiredFieldValue)
@@ -1178,12 +1433,16 @@ class CDavExchangeTasks
 		$maxNumber = COption::GetOptionString("dav", "users_by_step", "5");
 		$index = 0;
 
-		$paramUserId = intval($paramUserId);
+		$paramUserId = (int)$paramUserId;
 		$arUserFilter = array("ACTIVE" => "Y", "!UF_DEPARTMENT" => false);
 		if ($paramUserId > 0)
+		{
 			$arUserFilter["ID_EQUAL_EXACT"] = $paramUserId;
-		if ($exchangeUseLogin == "N")
+		}
+		if ($exchangeUseLogin === "N")
+		{
 			$arUserFilter["!UF_BXDAVEX_MAILBOX"] = false;
+		}
 
 		$arAdditionalExtendedProperties = array(
 			array(
@@ -1203,25 +1462,33 @@ class CDavExchangeTasks
 		{
 			$index++;
 			if ($index > $maxNumber)
+			{
 				break;
+			}
 
 			$GLOBALS["USER_FIELD_MANAGER"]->Update("USER", $arUser["ID"], array("UF_BXDAVEX_TSKSYNC" => ConvertTimeStamp(time(), "FULL")));
 
-			$mailbox = (($exchangeUseLogin == "Y") ? $arUser["LOGIN"].$exchangeMailbox : $arUser["UF_BXDAVEX_MAILBOX"]);
+			$mailbox = (($exchangeUseLogin === "Y") ? $arUser["LOGIN"].$exchangeMailbox : $arUser["UF_BXDAVEX_MAILBOX"]);
 			if (empty($mailbox))
+			{
 				continue;
+			}
 
 			$arFoldersList = $exchange->GetFoldersList(array("mailbox" => $mailbox));
 			if ( ! is_array($arFoldersList) )
 			{
 				if (DAV_CALDAV_DEBUG)
+				{
 					CDav::WriteToLog('Error during tasks exchange: $exchange->GetFoldersList() returns unexpected result', '');
+				}
 				continue;
 			}
 
 			$arUserFolders = array("tasks" => GetMessage("DAV_EC_TASKS"));
 			foreach ($arFoldersList as $value)
+			{
 				$arUserFolders[$value["XML_ID"]] = $value["NAME"];
+			}
 
 			$arUserTaskItems = array();
 			$arUserTaskItemsFolder = array();
@@ -1235,7 +1502,9 @@ class CDavExchangeTasks
 				if ( ! is_array($arTaskItemsList) )
 				{
 					if (DAV_CALDAV_DEBUG)
+					{
 						CDav::WriteToLog('Error during tasks exchange: $exchange->GetList() returns unexpected result', '');
+					}
 					continue;
 				}
 
@@ -1254,7 +1523,7 @@ class CDavExchangeTasks
 			foreach ($arModifiedUserTaskItems as $value)
 			{
 				$arModifiedTaskItem = $exchange->GetById($value["XML_ID"], $arAdditionalExtendedProperties);
-				if (is_array($arModifiedTaskItem) && count($arModifiedTaskItem) > 0)
+				if (is_array($arModifiedTaskItem) && !empty($arModifiedTaskItem))
 				{
 					$arModifiedTaskItem = $arModifiedTaskItem[0];
 
@@ -1286,7 +1555,9 @@ class CDavExchangeTasks
 		$exchangePassword = COption::GetOptionString("dav", "exchange_password", "");
 
 		if (empty($exchangeServer))
+		{
 			return "";
+		}
 
 		$exchange = new CDavExchangeTasks($exchangeScheme, $exchangeServer, $exchangePort, $exchangeUsername, $exchangePassword);
 
@@ -1295,7 +1566,7 @@ class CDavExchangeTasks
 
 		self::InitUserEntity();
 
-		$userId = intval($userId);
+		$userId = (int)$userId;
 		$dbUserList = CUser::GetList(
 			"",
 			"",
@@ -1304,7 +1575,7 @@ class CDavExchangeTasks
 		);
 		if ($arUser = $dbUserList->Fetch())
 		{
-			$mailbox = (($exchangeUseLogin == "Y") ? $arUser["LOGIN"].$exchangeMailbox : $arUser["UF_BXDAVEX_MAILBOX"]);
+			$mailbox = (($exchangeUseLogin === "Y") ? $arUser["LOGIN"].$exchangeMailbox : $arUser["UF_BXDAVEX_MAILBOX"]);
 			if (!empty($mailbox))
 			{
 				$arFields["MAILBOX"] = $mailbox;
@@ -1314,12 +1585,18 @@ class CDavExchangeTasks
 					$arFoldersList = $exchange->GetFoldersList(array("mailbox" => $mailbox));
 					$arUserFolders = array(GetMessage("DAV_EC_TASKS") => "tasks");
 					foreach ($arFoldersList as $value)
+					{
 						$arUserFolders[$value["NAME"]] = $value["XML_ID"];
+					}
 
 					if (array_key_exists($arFields["FOLDER_ID"], $arUserFolders))
+					{
 						$arFields["FOLDER_ID"] = $arUserFolders[$arFields["FOLDER_ID"]];
+					}
 					else
+					{
 						$arFields["FOLDER_ID"] = "tasks";
+					}
 				}
 				else
 				{
@@ -1328,8 +1605,10 @@ class CDavExchangeTasks
 
 				$arResult = $exchange->Add($arFields);
 
-				if (is_array($arResult) && (count($arResult) > 0))
+				if (is_array($arResult) && !empty($arResult))
+				{
 					return $arResult[0];
+				}
 			}
 		}
 
@@ -1345,7 +1624,9 @@ class CDavExchangeTasks
 		$exchangePassword = COption::GetOptionString("dav", "exchange_password", "");
 
 		if (empty($exchangeServer))
+		{
 			return "";
+		}
 
 		$exchange = new CDavExchangeTasks($exchangeScheme, $exchangeServer, $exchangePort, $exchangeUsername, $exchangePassword);
 
@@ -1354,7 +1635,7 @@ class CDavExchangeTasks
 
 		self::InitUserEntity();
 
-		$userId = intval($userId);
+		$userId = (int)$userId;
 		$dbUserList = CUser::GetList(
 			"",
 			"",
@@ -1363,7 +1644,7 @@ class CDavExchangeTasks
 		);
 		if ($arUser = $dbUserList->Fetch())
 		{
-			$mailbox = (($exchangeUseLogin == "Y") ? $arUser["LOGIN"].$exchangeMailbox : $arUser["UF_BXDAVEX_MAILBOX"]);
+			$mailbox = (($exchangeUseLogin === "Y") ? $arUser["LOGIN"].$exchangeMailbox : $arUser["UF_BXDAVEX_MAILBOX"]);
 			if (!empty($mailbox))
 			{
 				$arResult = $exchange->Update(
@@ -1371,8 +1652,10 @@ class CDavExchangeTasks
 					$arFields
 				);
 
-				if (is_array($arResult) && (count($arResult) > 0))
+				if (is_array($arResult) && !empty($arResult))
+				{
 					return $arResult[0];
+				}
 			}
 		}
 
@@ -1388,7 +1671,9 @@ class CDavExchangeTasks
 		$exchangePassword = COption::GetOptionString("dav", "exchange_password", "");
 
 		if (empty($exchangeServer))
+		{
 			return "";
+		}
 
 		$exchange = new CDavExchangeTasks($exchangeScheme, $exchangeServer, $exchangePort, $exchangeUsername, $exchangePassword);
 
@@ -1397,7 +1682,7 @@ class CDavExchangeTasks
 
 		self::InitUserEntity();
 
-		$userId = intval($userId);
+		$userId = (int)$userId;
 		$dbUserList = CUser::GetList(
 			"",
 			"",
@@ -1406,12 +1691,14 @@ class CDavExchangeTasks
 		);
 		if ($arUser = $dbUserList->Fetch())
 		{
-			$mailbox = (($exchangeUseLogin == "Y") ? $arUser["LOGIN"].$exchangeMailbox : $arUser["UF_BXDAVEX_MAILBOX"]);
+			$mailbox = (($exchangeUseLogin === "Y") ? $arUser["LOGIN"].$exchangeMailbox : $arUser["UF_BXDAVEX_MAILBOX"]);
 			if (!empty($mailbox))
 			{
 				$arResult = $exchange->Delete($itemXmlId);
 				if ($arResult)
+				{
 					return $arResult;
+				}
 			}
 		}
 
@@ -1422,7 +1709,7 @@ class CDavExchangeTasks
 	{
 		$exchangeServer = COption::GetOptionString("dav", "exchange_server", "");
 		$agentTasks = COption::GetOptionString("dav", "agent_tasks", "N");
-		return (!empty($exchangeServer) && ($agentTasks == "Y"));
+		return (!empty($exchangeServer) && ($agentTasks === "Y"));
 	}
 }
 

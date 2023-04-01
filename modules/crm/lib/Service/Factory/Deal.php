@@ -523,7 +523,6 @@ final class Deal extends Factory
 			Item::FIELD_NAME_CURRENCY_ID,
 			Item::FIELD_NAME_CATEGORY_ID,
 			Item::FIELD_NAME_STAGE_ID,
-			Item::FIELD_NAME_COMPANY_ID,
 			Item::FIELD_NAME_OPPORTUNITY,
 			Item::FIELD_NAME_IS_MANUAL_OPPORTUNITY,
 			Item::FIELD_NAME_TYPE_ID,
@@ -544,10 +543,6 @@ final class Deal extends Factory
 		$productTrackedObject = new TrackedObject\Product();
 		$productTrackedObject->makeThisObjectDependant(Item::FIELD_NAME_PRODUCTS);
 		$objects[] = $productTrackedObject;
-
-		$contactTrackedObject = new TrackedObject\Contact();
-		$contactTrackedObject->makeThisObjectDependant(Item::FIELD_NAME_CONTACTS);
-		$objects[] = $contactTrackedObject;
 
 		return $objects;
 	}
@@ -676,6 +671,11 @@ final class Deal extends Factory
 				)
 			;
 		}
+
+		$operation->addAction(
+			Operation::ACTION_AFTER_SAVE,
+			new Operation\Action\CreateFinalSummaryTimelineHistoryItem()
+		);
 
 		return $operation;
 	}

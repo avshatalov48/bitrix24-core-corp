@@ -1,10 +1,12 @@
 <?php
 $MESS["CSPD_ACCESS_DENIED"] = "Insufficient permissions";
 $MESS["CSPD_ACCESS_DENIED_NOTIFY_TEXT"] = "Please contact your Bitrix24 administrator";
+$MESS["CSPD_ADD_SKU"] = "Add SKU";
 $MESS["CSPD_ADD_SKU_OR_SERIAL_NUMBER"] = "Add SKU or S/N";
 $MESS["CSPD_CLOSE"] = "Close";
 $MESS["CSPD_DONE"] = "Done";
 $MESS["CSPD_EDIT_ACCESS_DENIED_NOTIFY_TITLE"] = "Insufficient permission to edit items";
+$MESS["CSPD_FIELDS_AMOUNT"] = "Quantity";
 $MESS["CSPD_FIELDS_BARCODE"] = "Barcode";
 $MESS["CSPD_FIELDS_MEASURES"] = "Unit of measurement";
 $MESS["CSPD_FIELDS_PHOTOS"] = "Product images";
@@ -16,6 +18,8 @@ $MESS["CSPD_FIELDS_PRODUCT_SECTIONS"] = "Bind to section";
 $MESS["CSPD_FIELDS_PURCHASING_PRICE"] = "Purchase price";
 $MESS["CSPD_FIELDS_SELLING_PRICE"] = "Sale price";
 $MESS["CSPD_FIELDS_STORE"] = "Warehouse";
+$MESS["CSPD_FIELDS_STORE_FROM"] = "Source warehouse";
+$MESS["CSPD_FIELDS_STORE_TO"] = "Destination warehouse";
 $MESS["CSPD_FIELDS_STORE_TO_AMOUNT"] = "Quantity arrived";
 $MESS["CSPD_MORE_OPPORTUNITIES"] = "Additional options";
 $MESS["CSPD_OPEN_PRODUCT_IN_DESKTOP_VERSION"] = "Open product in the full version";

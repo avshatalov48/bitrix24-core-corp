@@ -19,6 +19,7 @@
 .crm-timeline__card.--log-message {
 	--crm-timeline__card_log-message-white-rgb: 255, 255, 255;
 	background-color: var(--ui-color-base-02, #f8fafb);
+	border: var(--ui-border-width-thin, 1px) solid var(--ui-color-base-20, #dfe0e3);
 	opacity: 1;
 }
 
@@ -71,6 +72,10 @@
 	max-width: calc(100% - var(--crm-timeline__icon-size) - 18px);
 	flex: 1;
 	padding: 2px 0;
+}
+
+.crm-timeline__card-container.--without-logo {
+	--crm-timeline__icon-size: 0.00000000001px; /* hack due to the css minifier replaces `0px` to `0` and breaks expression calc(100% - var(--crm-timeline__icon-size) - 18px); */
 }
 
 .crm-timeline__card_link {

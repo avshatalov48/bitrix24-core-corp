@@ -36,6 +36,8 @@ class CBPCrmGetRequisitesInfoActivity extends CBPActivity
 		}
 
 		[$this->CrmEntityType, $this->CrmEntityId] = $this->defineCrmEntityWithRequisites();
+		// Due to bug 165848. Necessary for correct execution of robots with old settings
+		$this->RequisitePresetId = (int)$this->RequisitePresetId;
 		$this->logRequisiteProperties();
 		$executionStatus = $this->assertProperties();
 		if ($executionStatus !== CBPActivityExecutionStatus::Executing)
@@ -656,6 +658,11 @@ class CBPCrmGetRequisitesInfoActivity extends CBPActivity
 		{
 			$presetsInfo = EntityPreset::getListForRequisiteEntityEditor();
 		}
+		$requisitePresetIdOptions = [];
+		foreach ($presetsInfo as $presetId => $info)
+		{
+			$requisitePresetIdOptions[$presetId] = $info['NAME'];
+		}
 
 		return [
 			'CrmEntityType' => [
@@ -682,7 +689,7 @@ class CBPCrmGetRequisitesInfoActivity extends CBPActivity
 				"FieldName" => 'requisite_preset',
 				'Type' => \Bitrix\Bizproc\FieldType::SELECT,
 				'Required' => true,
-				'Options' => array_column($presetsInfo, 'NAME', 'ID'),
+				'Options' => $requisitePresetIdOptions,
 			],
 			'AddressTypeId' => [
 				'Name' => GetMessage('CRM_GRI_ADDRESS_TYPE'),

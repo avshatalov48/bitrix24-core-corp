@@ -17,19 +17,19 @@
 			this.detailNavigation = new DetailCardNavigation(result.detailNavigation);
 
 			this.documentTabs = result.documentTabs || [];
-			this.floatingButtonMenuMap = new Map();
+			this.floatingButtonMenu = null;
 			this.statuses = result.statuses;
 			this.state = {
 				activeTab: this.documentTabs[0].id,
 			};
 
 			this.clickFloatingButtonMenuItemHandler = this.clickFloatingButtonMenuItemHandler.bind(this);
+
+			this.onDetailCardCreate = this.onDetailCardCreateHandler.bind(this);
 		}
 
 		createStatefulList()
 		{
-			const tab = this.getTab(this.state.activeTab);
-
 			return new StatefulList({
 				testId: `${COMPONENT_ID}_${this.state.activeTab}`.toUpperCase(),
 				actions: result.actions || {},
@@ -43,7 +43,7 @@
 					useItemMenu: true,
 					useStatusBlock: true,
 				},
-				isShowFloatingButton: this.isShowFloatingButton(tab.id),
+				isShowFloatingButton: this.isShowFloatingButton(),
 				itemDetailOpenHandler: this.itemDetailOpenHandler.bind(this),
 				itemActions: [
 					{
@@ -83,7 +83,7 @@
 					useSearch: true,
 					useOnViewLoaded: false,
 				},
-				floatingButtonClickHandler: this.floatingButtonClickHandler.bind(this, this.state.activeTab),
+				floatingButtonClickHandler: this.floatingButtonClickHandler.bind(this),
 				cacheName: 'store.docs.' + env.userId + '.' + this.state.activeTab,
 				pull: {
 					moduleId: PULL_MODULE_ID,
@@ -101,6 +101,7 @@
 					notificationUpdateText: BX.message('M_CSDL_PULL_NOTIFICATION_UPDATE'),
 					notificationAddText: BX.message('M_CSDL_PULL_NOTIFICATION_ADD'),
 				},
+				onDetailCardCreateHandler: this.onDetailCardCreate,
 				onDetailCardUpdateHandler: (params) => {
 					if (this.statefulList)
 					{
@@ -176,9 +177,44 @@
 							});
 						}
 					},
+					ref: ref => this.tabViewRef = ref,
 				}),
 				this.createStatefulList(),
 			);
+		}
+
+		getTabIdByDocumentType(documentType)
+		{
+			let tabId = '';
+			switch (documentType) {
+				case 'A':
+				case 'S':
+					tabId = 'receipt_adjustment';
+					break;
+				case 'M':
+					tabId = 'moving';
+					break;
+				case 'D':
+					tabId = 'deduct';
+					break;
+			}
+
+			return tabId;
+		}
+
+		setActiveTabByDocumentType(documentType)
+		{
+			if (!this.tabViewRef)
+			{
+				return;
+			}
+
+			let tabId = this.getTabIdByDocumentType(documentType);
+
+			if (tabId)
+			{
+				this.tabViewRef.setActiveItem(tabId);
+			}
 		}
 
 		getTab(tabId)
@@ -265,9 +301,10 @@
 			});
 		}
 
-		floatingButtonClickHandler(tabId)
+		floatingButtonClickHandler()
 		{
-			this.floatingMenu = this.getFloatingButtonMenu(tabId);
+			const tabId = this.state.activeTab;
+			this.floatingMenu = this.getFloatingButtonMenu();
 			if (this.floatingMenu)
 			{
 				this.floatingMenu.show();
@@ -281,19 +318,19 @@
 			}
 		}
 
-		getFloatingButtonMenu(tabId)
+		getFloatingButtonMenu()
 		{
-			if (!this.floatingButtonMenuMap.has(tabId))
+			if (!this.floatingButtonMenu)
 			{
-				this.floatingButtonMenuMap.set(tabId, this.createFloatingMenu(tabId));
+				this.floatingButtonMenu = this.createFloatingMenu();
 			}
 
-			return this.floatingButtonMenuMap.get(tabId);
+			return this.floatingButtonMenu;
 		}
 
-		createFloatingMenu(tabId)
+		createFloatingMenu()
 		{
-			const actions = this.getFloatingMenuActions(tabId);
+			const actions = this.getFloatingMenuActions();
 			if (actions.length === 0)
 			{
 				return null;
@@ -310,30 +347,34 @@
 			});
 		}
 
-		isShowFloatingButton(tabId)
+		isShowFloatingButton()
 		{
-			return this.getFloatingMenuActions(tabId).length > 0;
+			return this.getModifiableDocumentTypes().length > 0;
 		}
 
-		getFloatingMenuActions(tabId)
+		getModifiableDocumentTypes()
 		{
-			const documentTypes = this.getDocumentTypesByTab(tabId);
-			if (documentTypes.length < 2)
+			const documentTypes = result.floatingMenuTypes;
+			if (documentTypes.length < 1)
 			{
 				return [];
 			}
 
-			return documentTypes
-				.filter(item => result.permissions.document[item.id]['catalog_store_document_modify'])
+			return documentTypes.filter(item => result.permissions.document[item.id]['catalog_store_document_modify']);
+		}
+
+		getFloatingMenuActions()
+		{
+			return this.getModifiableDocumentTypes()
 				.map((item) => ({
-						id: item.id,
-						title: item.title,
-						data: {
-							svgIcon: (floatingButtonSvgIcons[item.id] ? floatingButtonSvgIcons[item.id] : null),
-						},
-						onClickCallback: this.clickFloatingButtonMenuItemHandler,
-					}),
-				);
+					id: item.id,
+					title: item.title,
+					data: {
+						svgIcon: (floatingButtonSvgIcons[item.id] ? floatingButtonSvgIcons[item.id] : null),
+					},
+					onClickCallback: this.clickFloatingButtonMenuItemHandler,
+				}),
+			);
 		}
 
 		clickFloatingButtonMenuItemHandler(actionItemId)
@@ -346,6 +387,25 @@
 			}
 
 			return Promise.resolve({ closeMenu: false });
+		}
+
+		onDetailCardCreateHandler(params)
+		{
+			if (!params.docType || !this.statefulList)
+			{
+				return;
+			}
+
+			const tabId = this.getTabIdByDocumentType(params.docType);
+
+			if (tabId === this.state.activeTab)
+			{
+				this.statefulList.reload();
+			}
+			else
+			{
+				this.setActiveTabByDocumentType(params.docType);
+			}
 		}
 
 		conductDocumentHandler(actionItemId, itemId, options)

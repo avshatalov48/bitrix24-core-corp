@@ -9,6 +9,11 @@
 	const { NumberField, NumberPrecision } = jn.require('layout/ui/fields/number');
 	const { SelectField } = jn.require('layout/ui/fields/select');
 	const { StringField } = jn.require('layout/ui/fields/string');
+	const {
+		clone,
+		set,
+		get,
+	} = jn.require('utils/object');
 
 	/**
 	 * @class CatalogStoreProductDetails
@@ -20,7 +25,7 @@
 			super(props);
 
 			this.state = {
-				product: CommonUtils.objectClone(this.props.product),
+				product: clone(this.props.product),
 			};
 
 			/** @type {BaseField} */
@@ -87,17 +92,65 @@
 		{
 			return UI.BannerButton({
 				title: BX.message('CSPD_MORE_OPPORTUNITIES'),
-				description: BX.message('CSPD_ADD_SKU_OR_SERIAL_NUMBER'),
+				description: BX.message('CSPD_ADD_SKU'),
 				onClick: this.openDesktopVersion.bind(this),
 			});
 		}
 
+		getFieldsListForCurrentDocumentType()
+		{
+			const docType = this.props.document.type;
+
+			if (docType === 'A' || docType === 'S')
+			{
+				return [
+					'name', 'sections', 'barcode', 'gallery', 'amount',
+					'storeTo', 'purchasingPrice', 'sellingPrice',
+				];
+			}
+
+			if (docType === 'M')
+			{
+				return [
+					'name', 'sections', 'barcode', 'gallery', 'amount',
+					'storeFrom', 'storeTo', 'purchasingPrice', 'sellingPrice',
+				];
+			}
+
+			if (docType === 'D')
+			{
+				return [
+					'name', 'sections', 'barcode', 'gallery', 'amount',
+					'storeFrom', 'purchasingPrice',  'sellingPrice',
+				];
+			}
+
+			return [];
+		}
+
 		buildFieldsList()
 		{
+			const fieldsList = this.getFieldsListForCurrentDocumentType();
+			const fieldDescriptions = this.getFieldsDescriptions();
 			const fields = [];
 
+			fieldsList.forEach((field) => {
+				if (fieldDescriptions[field])
+				{
+					fields.push(fieldDescriptions[field]);
+				}
+			})
+
+			return fields;
+		}
+
+		getFieldsDescriptions()
+		{
+			const fields = {};
+
 			const hasProductEditAccess = this.hasAccess('catalog_product_edit');
-			fields.push(StringField({
+
+			fields.name = StringField({
 				ref: (ref) => this.nameFieldRef = ref,
 				title: BX.message('CSPD_FIELDS_PRODUCT_NAME'),
 				value: this.state.product.name,
@@ -105,9 +158,9 @@
 				required: true,
 				onChange: (newVal) => this.updateFieldState('name', newVal),
 				...this.getAccessProps(true, hasProductEditAccess),
-			}));
+			});
 
-			fields.push(EntitySelectorField({
+			fields.sections = EntitySelectorField({
 				title: BX.message('CSPD_FIELDS_PRODUCT_SECTIONS'),
 				value: this.state.product.sections.map(section => section.id),
 				readOnly: this.isReadonly(),
@@ -134,20 +187,20 @@
 					this.updateFieldState('sections', newVal);
 				},
 				...this.getAccessProps(true, hasProductEditAccess),
-			}));
+			});
 
-			fields.push(BarcodeField({
+			fields.barcode = BarcodeField({
 				title: BX.message('CSPD_FIELDS_BARCODE'),
 				value: this.state.product.barcode,
 				readOnly: this.isReadonly(),
 				onChange: (newVal) => this.updateFieldState('barcode', newVal),
 				...this.getAccessProps(true, hasProductEditAccess),
-			}));
+			});
 
-			const gallery = CommonUtils.objectClone(this.state.product.gallery);
-			const galleryInfo = CommonUtils.objectClone(this.state.product.galleryInfo);
+			const gallery = clone(this.state.product.gallery);
+			const galleryInfo = clone(this.state.product.galleryInfo);
 
-			fields.push(FileField({
+			fields.gallery = FileField({
 				ref: (ref) => this.photoFieldRef = ref,
 				title: BX.message('CSPD_FIELDS_PHOTOS'),
 				multiple: true,
@@ -165,42 +218,56 @@
 				readOnly: this.isReadonly(),
 				onChange: (images) => this.updateFieldState('gallery', images),
 				...this.getAccessProps(true, hasProductEditAccess),
-			}));
+			});
 
 			const hasPurchasingPriceReadAccess = this.hasAccess('catalog_purchas_info');
-			fields.push(MoneyField({
+
+			fields.purchasingPrice = MoneyField({
 				title: BX.message('CSPD_FIELDS_PURCHASING_PRICE'),
 				value: this.state.product.price.purchase,
-				readOnly: this.isReadonly(),
+				readOnly: this.arePricesReadonly(),
 				config: {
 					currencyReadOnly: true,
 				},
 				onChange: (newVal) => this.updateFieldState('price.purchase', newVal),
 				...this.getAccessProps(hasPurchasingPriceReadAccess, hasProductEditAccess),
-			}));
+			});
 
 			const hasSellingPriceEditAccess = this.hasAccess('catalog_price');
-			fields.push(MoneyField({
+
+			fields.sellingPrice = MoneyField({
 				title: BX.message('CSPD_FIELDS_SELLING_PRICE'),
 				value: this.state.product.price.sell,
-				readOnly: this.isReadonly(),
+				readOnly: this.arePricesReadonly(),
 				config: {
 					currencyReadOnly: true,
 				},
 				onChange: (newVal) => this.updateFieldState('price.sell', newVal),
 				...this.getAccessProps(true, hasSellingPriceEditAccess),
-			}));
+			});
 
+			const docType = this.props.document.type;
 			const hasStoreToAccess = this.state.product.hasStoreToAccess !== false;
-			const hasStoreModifyAccess = (
-				this.hasAccess('catalog_store_all')
-				&& this.hasAccess('catalog_store_modify')
-			);
+			const hasStoreFromAccess = this.state.product.hasStoreFromAccess !== false;
 
-			fields.push(CombinedField({
+			let amountAccess = true;
+			if (docType === 'A' || docType === 'S')
+			{
+				amountAccess = hasStoreToAccess;
+			}
+			else if (docType === 'M')
+			{
+				amountAccess = hasStoreFromAccess && hasStoreToAccess;
+			}
+			else if (docType === 'D')
+			{
+				amountAccess = hasStoreFromAccess;
+			}
+
+			fields.amount = CombinedField({
 				value: {
 					amount: this.state.product.amount,
-					measure: CommonUtils.objectDeepGet(this.state.product, 'measure.code', ''),
+					measure: get(this.state.product, 'measure.code', ''),
 				},
 				onChange: ({ amount, measure }) => {
 					this.updateFieldState('amount', amount);
@@ -210,20 +277,22 @@
 					primaryField: {
 						id: 'amount',
 						renderField: NumberField,
-						title: BX.message('CSPD_FIELDS_STORE_TO_AMOUNT'),
+						title:
+							['A', 'S'].includes(docType)
+								? BX.message('CSPD_FIELDS_STORE_TO_AMOUNT')
+								: BX.message('CSPD_FIELDS_AMOUNT')
+						,
 						value: this.state.product.amount,
 						placeholder: '0',
-						readOnly: this.isReadonly(),
 						config: {
 							type: NumberPrecision.INTEGER,
 						},
-						...this.getAccessProps(hasStoreToAccess, true),
+						...this.getAccessProps(amountAccess, true),
 					},
 					secondaryField: {
 						id: 'measure',
 						renderField: SelectField,
 						title: BX.message('CSPD_FIELDS_MEASURES'),
-						readOnly: this.isReadonly(),
 						required: true,
 						showRequired: false,
 						config: {
@@ -234,27 +303,59 @@
 								};
 							}),
 						},
-						...this.getAccessProps(hasStoreToAccess, true),
+						...this.getAccessProps(amountAccess, true),
 					},
 				},
-				...this.getAccessProps(hasStoreToAccess, true),
-			}));
+				readOnly: this.isReadonly(),
+				...this.getAccessProps(amountAccess, true),
+			});
+
+			fields.storeFrom = this.getStoreSelectorField({
+				fieldTitle: docType === 'M' ? BX.message('CSPD_FIELDS_STORE_FROM') : BX.message('CSPD_FIELDS_STORE'),
+				fieldCode: 'storeFrom',
+				storeInfo: this.state.product.storeFrom ? this.state.product.storeFrom : null,
+				access: hasStoreFromAccess,
+			});
+
+			fields.storeTo = this.getStoreSelectorField({
+				fieldTitle: docType === 'M' ? BX.message('CSPD_FIELDS_STORE_TO') : BX.message('CSPD_FIELDS_STORE'),
+				fieldCode: 'storeTo',
+				storeInfo: this.state.product.storeTo ? this.state.product.storeTo : null,
+				access: hasStoreToAccess,
+			});
+
+			return fields;
+		}
+
+		getStoreSelectorField(params = {})
+		{
+			const {
+				fieldTitle,
+				fieldCode,
+				storeInfo,
+				access
+			} = params;
 
 			let storeId = null;
 			const entityList = [];
 
-			if (this.state.product.storeTo)
+			if (storeInfo)
 			{
-				storeId = this.state.product.storeTo.id;
+				storeId = storeInfo.id;
 				entityList.push({
-					id: this.state.product.storeTo.id,
-					title: this.state.product.storeTo.title,
+					id: storeInfo.id,
+					title: storeInfo.title,
 					type: 'store',
 				});
 			}
 
-			fields.push(EntitySelectorField({
-				title: BX.message('CSPD_FIELDS_STORE'),
+			const hasStoreModifyAccess = (
+				this.hasAccess('catalog_store_all')
+				&& this.hasAccess('catalog_store_modify')
+			);
+
+			return EntitySelectorField({
+				title: fieldTitle,
 				value: storeId,
 				readOnly: this.isReadonly(),
 				multiple: false,
@@ -265,6 +366,7 @@
 					provider: {
 						options: {
 							'useAddressAsTitle': true,
+							'productId': this.state.product.productId,
 						},
 					},
 				},
@@ -286,13 +388,11 @@
 						};
 					}
 
-					this.updateFieldState('storeTo', newVal);
-					this.updateFieldState('storeToId', newVal.id);
+					this.updateFieldState(fieldCode, newVal);
+					this.updateFieldState(fieldCode + 'Id', newVal.id);
 				},
-				...this.getAccessProps(hasStoreToAccess, true),
-			}));
-
-			return fields;
+				...this.getAccessProps(access, true),
+			});
 		}
 
 		/**
@@ -345,9 +445,9 @@
 		updateFieldState(fieldName, newValue)
 		{
 			this.setState((oldState) => {
-				const product = CommonUtils.objectClone(oldState.product);
+				const product = clone(oldState.product);
 
-				CommonUtils.objectDeepSet(product, fieldName, newValue);
+				set(product, fieldName, newValue);
 
 				return { product };
 			});
@@ -356,7 +456,7 @@
 		openDesktopVersion()
 		{
 			const productUrl = this.state.product.desktopUrl;
-			const catalogUrl = CommonUtils.objectDeepGet(this.props, 'catalog.url.create_product', '/');
+			const catalogUrl = get(this.props, 'catalog.url.create_product', '/');
 
 			qrauth.open({
 				title: BX.message('CSPD_OPEN_PRODUCT_IN_DESKTOP_VERSION'),
@@ -418,6 +518,11 @@
 		{
 			const editable = Boolean(this.props.document.editable);
 			return !editable;
+		}
+
+		arePricesReadonly()
+		{
+			return ['D', 'M'].includes(this.props.document.type) || this.isReadonly();
 		}
 
 		validateNameField()

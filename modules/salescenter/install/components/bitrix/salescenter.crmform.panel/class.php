@@ -185,7 +185,7 @@ class SalesCenterCrmFormPanel extends CBitrixComponent
 			],
 			[
 				'id' => 'products2',
-				'title' => Loc::getMessage('SALESCENTER_CRM_FORM_PANEL_PRESET_2'),
+				'title' => Loc::getMessage('SALESCENTER_CRM_FORM_PANEL_PRESET_2_MSGVER_1'),
 				'image' => $this->getImagePath().'products2.svg',
 				'activeImage' => $this->getImagePath().'products2-active.svg',
 				'helpdeskHash' => 'payment',

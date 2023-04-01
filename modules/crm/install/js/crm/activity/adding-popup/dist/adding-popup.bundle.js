@@ -1,6 +1,6 @@
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,main_core,main_popup,ui_buttons,crm_activity_todoEditor,main_core_events) {
+(function (exports,main_core,main_popup,ui_buttons,crm_activity_todoEditor,main_core_events,ui_notification) {
 	'use strict';
 
 	let _ = t => t,
@@ -20,6 +20,8 @@ this.BX.Crm = this.BX.Crm || {};
 	var _popupContainer = /*#__PURE__*/new WeakMap();
 	var _todoEditor = /*#__PURE__*/new WeakMap();
 	var _eventEmitter = /*#__PURE__*/new WeakMap();
+	var _prepareAndShowPopup = /*#__PURE__*/new WeakSet();
+	var _fetchNearActivity = /*#__PURE__*/new WeakSet();
 	var _createPopupIfNotExists = /*#__PURE__*/new WeakSet();
 	var _saveAndClose = /*#__PURE__*/new WeakSet();
 	var _actualizePopupLayout = /*#__PURE__*/new WeakSet();
@@ -35,6 +37,8 @@ this.BX.Crm = this.BX.Crm || {};
 	    _classPrivateMethodInitSpec(this, _actualizePopupLayout);
 	    _classPrivateMethodInitSpec(this, _saveAndClose);
 	    _classPrivateMethodInitSpec(this, _createPopupIfNotExists);
+	    _classPrivateMethodInitSpec(this, _fetchNearActivity);
+	    _classPrivateMethodInitSpec(this, _prepareAndShowPopup);
 	    _classPrivateFieldInitSpec(this, _entityId, {
 	      writable: true,
 	      value: null
@@ -76,7 +80,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }
 	  babelHelpers.createClass(AddingPopup, [{
 	    key: "show",
-	    value: function show(bindElement) {
+	    value: function show(bindElement, mode = crm_activity_todoEditor.TodoEditorMode.ADD) {
 	      const popup = _classPrivateMethodGet(this, _createPopupIfNotExists, _createPopupIfNotExists2).call(this);
 	      popup.setBindElement(bindElement);
 	      if (popup.isShown()) {
@@ -92,7 +96,8 @@ this.BX.Crm = this.BX.Crm || {};
 	            onChangeDescription: _classPrivateMethodGet(this, _onChangeEditorDescription, _onChangeEditorDescription2).bind(this),
 	            onSaveHotkeyPressed: _classPrivateMethodGet(this, _onEditorSaveHotkeyPressed, _onEditorSaveHotkeyPressed2).bind(this),
 	            onChangeUploaderContainerSize: _classPrivateMethodGet(this, _onChangeUploaderContainerSize, _onChangeUploaderContainerSize2).bind(this)
-	          }
+	          },
+	          popupMode: true
 	        }));
 	        popup.setButtons([new ui_buttons.SaveButton({
 	          id: 'save',
@@ -116,24 +121,84 @@ this.BX.Crm = this.BX.Crm || {};
 	          babelHelpers.classPrivateFieldGet(this, _todoEditor).setFocused();
 	        });
 	        popup.subscribe('onAfterClose', () => {
-	          babelHelpers.classPrivateFieldGet(this, _todoEditor).resetToDefaults();
-	          babelHelpers.classPrivateFieldGet(this, _eventEmitter).emit('onClose');
+	          babelHelpers.classPrivateFieldGet(this, _todoEditor).resetToDefaults().then(() => {
+	            babelHelpers.classPrivateFieldGet(this, _eventEmitter).emit('onClose');
+	          });
+	        });
+	        popup.subscribe('onShow', () => {
+	          const {
+	            mode,
+	            activity
+	          } = popup.params;
+	          if (mode === crm_activity_todoEditor.TodoEditorMode.UPDATE && activity) {
+	            babelHelpers.classPrivateFieldGet(this, _todoEditor).setMode(mode).setActivityId(activity.id).setDescription(activity.description).setDeadline(activity.deadline);
+	            if (main_core.Type.isArrayFilled(activity.storageElementIds)) {
+	              babelHelpers.classPrivateFieldGet(this, _todoEditor).setStorageElementIds(activity.storageElementIds);
+	            }
+	          }
 	        });
 	      }
-	      popup.show();
+	      _classPrivateMethodGet(this, _prepareAndShowPopup, _prepareAndShowPopup2).call(this, popup, mode);
+	    }
+	  }, {
+	    key: "bindPopup",
+	    value: function bindPopup(bindElement) {
+	      if (!babelHelpers.classPrivateFieldGet(this, _popup)) {
+	        return;
+	      }
+	      if (bindElement !== babelHelpers.classPrivateFieldGet(this, _popup).bindElement) {
+	        babelHelpers.classPrivateFieldGet(this, _popup).setBindElement(bindElement);
+	      }
 	    }
 	  }]);
 	  return AddingPopup;
 	}();
+	function _prepareAndShowPopup2(popup, mode = crm_activity_todoEditor.TodoEditorMode.ADD) {
+	  popup.params.mode = mode;
+	  if (mode === crm_activity_todoEditor.TodoEditorMode.ADD) {
+	    popup.show();
+	    return;
+	  }
+	  if (mode === crm_activity_todoEditor.TodoEditorMode.UPDATE) {
+	    _classPrivateMethodGet(this, _fetchNearActivity, _fetchNearActivity2).call(this).then(data => {
+	      if (data) {
+	        popup.params.activity = data;
+	        popup.show();
+	      }
+	    });
+	    return;
+	  }
+	  console.error('Wrong TodoEditor mode');
+	}
+	function _fetchNearActivity2() {
+	  const data = {
+	    ownerTypeId: babelHelpers.classPrivateFieldGet(this, _entityTypeId),
+	    ownerId: babelHelpers.classPrivateFieldGet(this, _entityId)
+	  };
+	  return new Promise((resolve, reject) => {
+	    main_core.ajax.runAction('crm.activity.todo.getNearest', {
+	      data
+	    }).then(({
+	      data
+	    }) => resolve(data)).catch(response => {
+	      ui_notification.UI.Notification.Center.notify({
+	        content: response.errors[0].message,
+	        autoHideDelay: 5000
+	      });
+	      reject();
+	    });
+	  });
+	}
 	function _createPopupIfNotExists2() {
-	  if (!babelHelpers.classPrivateFieldGet(this, _popup)) {
+	  if (!babelHelpers.classPrivateFieldGet(this, _popup) || babelHelpers.classPrivateFieldGet(this, _popup).isDestroyed()) {
 	    babelHelpers.classPrivateFieldSet(this, _popupContainer, main_core.Tag.render(_t || (_t = _`<div class="crm-activity-adding-popup-container"></div>`)));
-	    babelHelpers.classPrivateFieldSet(this, _popup, main_popup.PopupManager.create({
+	    babelHelpers.classPrivateFieldSet(this, _popup, new main_popup.Popup({
 	      id: `kanban_planner_menu_${babelHelpers.classPrivateFieldGet(this, _entityId)}`,
 	      overlay: {
 	        opacity: 0
 	      },
 	      content: babelHelpers.classPrivateFieldGet(this, _popupContainer),
+	      cacheable: false,
 	      isScrollBlock: true,
 	      className: 'crm-activity-adding-popup',
 	      closeByEsc: true,
@@ -166,6 +231,9 @@ this.BX.Crm = this.BX.Crm || {};
 	}
 	function _actualizePopupLayout2(description) {
 	  if (babelHelpers.classPrivateFieldGet(this, _popup) && babelHelpers.classPrivateFieldGet(this, _popup).isShown()) {
+	    babelHelpers.classPrivateFieldGet(this, _eventEmitter).emit('onActualizePopupLayout', {
+	      entityId: babelHelpers.classPrivateFieldGet(this, _entityId)
+	    });
 	    babelHelpers.classPrivateFieldGet(this, _popup).adjustPosition({
 	      forceBindPosition: true
 	    });
@@ -188,11 +256,14 @@ this.BX.Crm = this.BX.Crm || {};
 	}
 	function _onChangeUploaderContainerSize2() {
 	  if (babelHelpers.classPrivateFieldGet(this, _popup)) {
+	    babelHelpers.classPrivateFieldGet(this, _eventEmitter).emit('onActualizePopupLayout', {
+	      entityId: babelHelpers.classPrivateFieldGet(this, _entityId)
+	    });
 	    babelHelpers.classPrivateFieldGet(this, _popup).adjustPosition();
 	  }
 	}
 
 	exports.AddingPopup = AddingPopup;
 
-}((this.BX.Crm.Activity = this.BX.Crm.Activity || {}),BX,BX.Main,BX.UI,BX.Crm.Activity,BX.Event));
+}((this.BX.Crm.Activity = this.BX.Crm.Activity || {}),BX,BX.Main,BX.UI,BX.Crm.Activity,BX.Event,BX));
 //# sourceMappingURL=adding-popup.bundle.js.map

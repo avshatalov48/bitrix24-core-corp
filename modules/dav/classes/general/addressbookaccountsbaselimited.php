@@ -3,8 +3,7 @@
 /**
  * Class CDavAccountsBaseLimited
  */
-abstract class CDavAccountsBaseLimited
-	extends CDavAddressbookAccountsBase
+abstract class CDavAccountsBaseLimited extends CDavAddressbookAccountsBase
 {
 	const RESOURCE_SYNC_OWNER = 'all';
 	protected static $resourceSyncOrder = array('DATE_MODIFY' => 'DESC');
@@ -19,15 +18,21 @@ abstract class CDavAccountsBaseLimited
 	 * @param $maxCount
 	 * @return mixed
 	 */
-	protected function LoadLimitedEntitiesList($collectionId, $account, $filter = array(), $maxCount)
+	protected function LoadLimitedEntitiesList($collectionId, $account, $maxCount, $filter = [])
 	{
 		if ($account instanceof CDavPrincipal)
+		{
 			$userId = $account->Id();
+		}
 		else
+		{
 			$userId = $account[1];
+		}
 		$filter['UF_DEPARTMENT'] = self::GetResourceSyncUfDepartments($userId);
 		if (empty($filter['UF_DEPARTMENT']))
+		{
 			unset($filter['UF_DEPARTMENT']);
+		}
 
 		return CDavAccount::GetAddressbookContactsList($collectionId, $filter);
 	}
@@ -64,9 +69,13 @@ abstract class CDavAccountsBaseLimited
 	{
 		$params = parent::PrepareForSaveSyncSettings($settings);
 		if (isset($settings['UF_DEPARTMENT']) && is_array($settings['UF_DEPARTMENT']))
+		{
 			$params['UF_DEPARTMENT'] = array_filter($settings['UF_DEPARTMENT']);
+		}
 		else
+		{
 			$params['UF_DEPARTMENT'] = static::$defaultDepartments;
+		}
 		return $params;
 	}
 

@@ -54,7 +54,9 @@ class CDavSynchronizeSettings extends \CBitrixComponent implements \Bitrix\Main\
 		{
 			$postParams = $this->request->getPostList()->toArray();
 			if (!empty($postParams["data"]))
+			{
 				$this->saveParams($postParams["data"]);
+			}
 
 			return true;
 		}
@@ -67,7 +69,7 @@ class CDavSynchronizeSettings extends \CBitrixComponent implements \Bitrix\Main\
 		$this->setFrameMode(false);
 		$APPLICATION->SetTitle(Loc::getMessage("DAV_SYNCHRONIZE_TITLE"));
 
-		if (isset($this->arParams["COMPONENT_AJAX_LOAD"]) && $this->arParams["COMPONENT_AJAX_LOAD"] == "Y")
+		if (isset($this->arParams["COMPONENT_AJAX_LOAD"]) && $this->arParams["COMPONENT_AJAX_LOAD"] === "Y")
 		{
 			$this->arParams["COMPONENT_AJAX_LOAD"] = "Y";
 		}
@@ -80,8 +82,10 @@ class CDavSynchronizeSettings extends \CBitrixComponent implements \Bitrix\Main\
 		if ($USER->IsAuthorized())
 		{
 			$postParams = $this->request->getPostList()->toArray();
-			if (!empty($postParams) && check_bitrix_sessid() && $this->arParams["COMPONENT_AJAX_LOAD"] == "N")
+			if (!empty($postParams) && check_bitrix_sessid() && $this->arParams["COMPONENT_AJAX_LOAD"] === "N")
+			{
 				$this->saveParams($postParams);
+			}
 
 			$this->prepareData();
 		}

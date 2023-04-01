@@ -1,0 +1,22 @@
+.crm-entity-country-tag-selector-popup .ui-selector-item-avatar
+{
+	min-width: 32px;
+	width: 32px;
+	height: 24px;
+	border-radius: 4px;
+	border: 1px solid rgba(82, 92, 105, 0.2);
+	-webkit-background-clip: padding-box;
+	background-clip: padding-box;
+}
+
+.crm-entity-country-tag-selector .ui-tag-selector-tag-avatar
+{
+	width: 28px;
+	border-radius: 4px;
+	border: 1px solid rgba(82, 92, 105, 0.2);
+	-webkit-background-clip: padding-box;
+	background-clip: padding-box;
+	background-position: center;
+	background-size: contain;
+	background-repeat: no-repeat;
+}

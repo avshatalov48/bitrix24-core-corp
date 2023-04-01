@@ -29,7 +29,7 @@ class EntityEditorConfigScope
 	 */
 	public static function getCaptions(string $entityTypeId = '', ?string $moduleId = null): array
 	{
-		if(!self::$captions[LANGUAGE_ID])
+		if(!isset(self::$captions[LANGUAGE_ID]))
 		{
 			Loc::loadMessages(__FILE__);
 

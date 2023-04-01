@@ -71,6 +71,7 @@ this.BX.Crm = this.BX.Crm || {};
 	`
 	};
 
+	const TEXTAREA_MAX_HEIGHT = 126;
 	const TodoEditor = {
 	  components: {
 	    TodoEditorActionBtn
@@ -85,21 +86,36 @@ this.BX.Crm = this.BX.Crm || {};
 	      required: false,
 	      default: ''
 	    },
-	    additionalButtons: Array
+	    additionalButtons: Array,
+	    popupMode: Boolean
 	  },
 	  data() {
 	    var _this$deadline;
 	    return {
 	      description: this.defaultDescription,
 	      currentDeadline: (_this$deadline = this.deadline) !== null && _this$deadline !== void 0 ? _this$deadline : new Date(),
-	      showFileUploader: false
+	      showFileUploader: false,
+	      isTextareaToLong: false
 	    };
 	  },
 	  computed: {
 	    deadlineFormatted() {
-	      return new crm_timeline_tools.DatetimeConverter(this.currentDeadline).toDatetimeString({
+	      const converter = new crm_timeline_tools.DatetimeConverter(this.currentDeadline);
+	      return converter.toDatetimeString({
 	        withDayOfWeek: true,
 	        delimiter: ', '
+	      });
+	    }
+	  },
+	  watch: {
+	    description() {
+	      main_core.Dom.style(this.$refs.textarea, 'height', 'auto');
+	      void this.$nextTick(() => {
+	        const currentTextareaHeight = this.$refs.textarea.scrollHeight;
+	        main_core.Dom.style(this.$refs.textarea, 'height', `${currentTextareaHeight}px`);
+	        if (this.popupMode === true) {
+	          this.isTextareaToLong = currentTextareaHeight > TEXTAREA_MAX_HEIGHT;
+	        }
 	      });
 	    }
 	  },
@@ -110,14 +126,16 @@ this.BX.Crm = this.BX.Crm || {};
 	    },
 	    setDescription(description) {
 	      this.description = description;
-	      main_core.Dom.style(this.$refs.textarea, 'height', 'auto');
-	      main_core.Dom.style(this.$refs.textarea, 'height', `${this.$refs.textarea.scrollHeight}px`);
 	    },
 	    onTextareaFocus() {
 	      this.onFocus();
 	    },
 	    onTextareaKeydown(event) {
-	      if (event.keyCode === 13 && (event.ctrlKey === true || main_core.Browser.isMac() && (event.metaKey === true || event.altKey === true))) {
+	      if (event.keyCode !== 13) {
+	        return;
+	      }
+	      const isMacCtrlKeydown = main_core.Browser.isMac() && (event.metaKey === true || event.altKey === true);
+	      if (event.ctrlKey === true || isMacCtrlKeydown) {
 	        this.onSaveHotkeyPressed();
 	      }
 	    },
@@ -131,10 +149,10 @@ this.BX.Crm = this.BX.Crm || {};
 	        bHideTime: false,
 	        bSetFocus: false,
 	        value: main_date.DateTimeFormat.format(crm_timeline_tools.DatetimeConverter.getSiteDateTimeFormat(), this.currentDeadline),
-	        callback: this.setDeadlineValue.bind(this)
+	        callback: this.setDeadline.bind(this)
 	      });
 	    },
-	    setDeadlineValue(newDeadline) {
+	    setDeadline(newDeadline) {
 	      this.currentDeadline = newDeadline;
 	    },
 	    getData() {
@@ -144,15 +162,14 @@ this.BX.Crm = this.BX.Crm || {};
 	      };
 	    },
 	    onTextareaInput(event) {
-	      main_core.Dom.style(event.target, 'height', 'auto');
-	      main_core.Dom.style(event.target, 'height', `${event.target.scrollHeight}px`);
-	      this.description = event.target.value;
+	      this.setDescription(event.target.value);
 	      this.onChangeDescription(event.target.value);
 	    }
 	  },
 	  template: `
-			<textarea 
-				rows="1" 
+		<label class="crm-activity__todo-editor_body">
+			<textarea
+				rows="1"
 				ref="textarea"
 				@focus="onTextareaFocus"
 				@keydown="onTextareaKeydown"
@@ -160,24 +177,28 @@ this.BX.Crm = this.BX.Crm || {};
 				:placeholder="$Bitrix.Loc.getMessage('CRM_ACTIVITY_TODO_ADD_PLACEHOLDER')"
 				@input="onTextareaInput"
 				:value="description"
+				:class="{ '--has-scroll': isTextareaToLong }"
 			></textarea>
-			<div
-				ref="deadline"
-				@click="onDeadlineClick"
-				class="crm-activity__todo-editor_deadline"
-			>
-				<span class="crm-activity__todo-editor_deadline-icon"><i></i></span>
-				<span class="crm-activity__todo-editor_deadline-text">{{ deadlineFormatted }}</span>
+			<div class="crm-activity__todo-editor_tools">
+				<div
+					ref="deadline"
+					@click="onDeadlineClick"
+					class="crm-activity__todo-editor_deadline"
+				>
+					<span class="crm-activity__todo-editor_deadline-icon"><i></i></span>
+					<span class="crm-activity__todo-editor_deadline-text">{{ deadlineFormatted }}</span>
+				</div>
+				<div class="crm-activity__todo-editor_action-btns">
+					<TodoEditorActionBtn
+						v-for="btn in additionalButtons"
+						:key="btn.id"
+						:icon="btn.icon"
+						:description="btn.description"
+						:action="btn.action"
+					/>
+				</div>
 			</div>
-			<div class="crm-activity__todo-editor_action-btns">
-				<TodoEditorActionBtn
-					v-for="btn in additionalButtons"
-					:key="btn.id"
-					:icon="btn.icon"
-					:description="btn.description"
-					:action="btn.action"
-				/>
-			</div>
+		</label>
 	`
 	};
 
@@ -191,18 +212,31 @@ this.BX.Crm = this.BX.Crm || {};
 	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
 	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	const TodoEditorMode = {
+	  ADD: 'add',
+	  UPDATE: 'update'
+	};
+
+	/**
+	 * @memberOf BX.Crm.Activity
+	 */
 	var _container = /*#__PURE__*/new WeakMap();
 	var _layoutApp = /*#__PURE__*/new WeakMap();
 	var _layoutComponent = /*#__PURE__*/new WeakMap();
 	var _loadingPromise = /*#__PURE__*/new WeakMap();
+	var _mode = /*#__PURE__*/new WeakMap();
 	var _ownerTypeId = /*#__PURE__*/new WeakMap();
 	var _ownerId = /*#__PURE__*/new WeakMap();
 	var _defaultDescription = /*#__PURE__*/new WeakMap();
 	var _deadline = /*#__PURE__*/new WeakMap();
 	var _parentActivityId = /*#__PURE__*/new WeakMap();
 	var _borderColor = /*#__PURE__*/new WeakMap();
+	var _activityId = /*#__PURE__*/new WeakMap();
 	var _eventEmitter = /*#__PURE__*/new WeakMap();
 	var _fileUploader = /*#__PURE__*/new WeakMap();
+	var _isPopupMode = /*#__PURE__*/new WeakMap();
+	var _getSaveActionData = /*#__PURE__*/new WeakSet();
+	var _getSaveActionPath = /*#__PURE__*/new WeakSet();
 	var _getDefaultDescription = /*#__PURE__*/new WeakSet();
 	var _onInputFocus = /*#__PURE__*/new WeakSet();
 	var _onChangeDescription = /*#__PURE__*/new WeakSet();
@@ -210,9 +244,6 @@ this.BX.Crm = this.BX.Crm || {};
 	var _isValidBorderColor = /*#__PURE__*/new WeakSet();
 	var _getClassname = /*#__PURE__*/new WeakSet();
 	var _onFileUploadButtonClick = /*#__PURE__*/new WeakSet();
-	/**
-	 * @memberOf BX.Crm.Activity
-	 */
 	let TodoEditor$1 = /*#__PURE__*/function () {
 	  /**
 	   * @event onFocus
@@ -229,6 +260,8 @@ this.BX.Crm = this.BX.Crm || {};
 	    _classPrivateMethodInitSpec(this, _onChangeDescription);
 	    _classPrivateMethodInitSpec(this, _onInputFocus);
 	    _classPrivateMethodInitSpec(this, _getDefaultDescription);
+	    _classPrivateMethodInitSpec(this, _getSaveActionPath);
+	    _classPrivateMethodInitSpec(this, _getSaveActionData);
 	    _classPrivateFieldInitSpec(this, _container, {
 	      writable: true,
 	      value: null
@@ -244,6 +277,10 @@ this.BX.Crm = this.BX.Crm || {};
 	    _classPrivateFieldInitSpec(this, _loadingPromise, {
 	      writable: true,
 	      value: null
+	    });
+	    _classPrivateFieldInitSpec(this, _mode, {
+	      writable: true,
+	      value: TodoEditorMode.ADD
 	    });
 	    _classPrivateFieldInitSpec(this, _ownerTypeId, {
 	      writable: true,
@@ -269,6 +306,10 @@ this.BX.Crm = this.BX.Crm || {};
 	      writable: true,
 	      value: ''
 	    });
+	    _classPrivateFieldInitSpec(this, _activityId, {
+	      writable: true,
+	      value: null
+	    });
 	    _classPrivateFieldInitSpec(this, _eventEmitter, {
 	      writable: true,
 	      value: null
@@ -276,6 +317,10 @@ this.BX.Crm = this.BX.Crm || {};
 	    _classPrivateFieldInitSpec(this, _fileUploader, {
 	      writable: true,
 	      value: null
+	    });
+	    _classPrivateFieldInitSpec(this, _isPopupMode, {
+	      writable: true,
+	      value: false
 	    });
 	    if (!main_core.Type.isDomNode(params.container)) {
 	      throw new Error('TodoEditor container must be a DOM Node');
@@ -296,6 +341,9 @@ this.BX.Crm = this.BX.Crm || {};
 	    if (!babelHelpers.classPrivateFieldGet(this, _deadline)) {
 	      this.setDefaultDeadLine(false);
 	    }
+	    if (params.popupMode === true) {
+	      babelHelpers.classPrivateFieldSet(this, _isPopupMode, true);
+	    }
 	    babelHelpers.classPrivateFieldSet(this, _eventEmitter, new main_core_events.EventEmitter());
 	    babelHelpers.classPrivateFieldGet(this, _eventEmitter).setEventNamespace('Crm.Activity.TodoEditor');
 	    if (main_core.Type.isObject(params.events)) {
@@ -307,6 +355,15 @@ this.BX.Crm = this.BX.Crm || {};
 	    }
 	  }
 	  babelHelpers.createClass(TodoEditor$$1, [{
+	    key: "setMode",
+	    value: function setMode(mode) {
+	      if (!Object.values(TodoEditorMode).some(value => value === mode)) {
+	        throw new Error(`Unknown TodoEditor mode ${mode}`);
+	      }
+	      babelHelpers.classPrivateFieldSet(this, _mode, mode);
+	      return this;
+	    }
+	  }, {
 	    key: "show",
 	    value: function show() {
 	      babelHelpers.classPrivateFieldSet(this, _layoutApp, ui_vue3.BitrixVue.createApp(TodoEditor, {
@@ -320,7 +377,8 @@ this.BX.Crm = this.BX.Crm || {};
 	          icon: 'attach',
 	          description: main_core.Loc.getMessage('CRM_ACTIVITY_TODO_UPLOAD_FILE_BUTTON_HINT'),
 	          action: _classPrivateMethodGet(this, _onFileUploadButtonClick, _onFileUploadButtonClick2).bind(this)
-	        }]
+	        }],
+	        popupMode: babelHelpers.classPrivateFieldGet(this, _isPopupMode)
 	      }));
 	      babelHelpers.classPrivateFieldSet(this, _layoutComponent, babelHelpers.classPrivateFieldGet(this, _layoutApp).mount(babelHelpers.classPrivateFieldGet(this, _container)));
 	    }
@@ -330,19 +388,12 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (babelHelpers.classPrivateFieldGet(this, _loadingPromise)) {
 	        return babelHelpers.classPrivateFieldGet(this, _loadingPromise);
 	      }
-	      const userData = babelHelpers.classPrivateFieldGet(this, _layoutComponent).getData();
+	      const data = _classPrivateMethodGet(this, _getSaveActionData, _getSaveActionData2).call(this);
 
 	      // wrap BX.Promise in native js promise
 	      babelHelpers.classPrivateFieldSet(this, _loadingPromise, new Promise((resolve, reject) => {
-	        main_core.ajax.runAction('crm.activity.todo.add', {
-	          data: {
-	            ownerTypeId: babelHelpers.classPrivateFieldGet(this, _ownerTypeId),
-	            ownerId: babelHelpers.classPrivateFieldGet(this, _ownerId),
-	            description: userData.description,
-	            deadline: main_date.DateTimeFormat.format(crm_timeline_tools.DatetimeConverter.getSiteDateTimeFormat(), userData.deadline),
-	            parentActivityId: babelHelpers.classPrivateFieldGet(this, _parentActivityId),
-	            fileTokens: babelHelpers.classPrivateFieldGet(this, _fileUploader) ? babelHelpers.classPrivateFieldGet(this, _fileUploader).getServerFileIds() : []
-	          }
+	        main_core.ajax.runAction(_classPrivateMethodGet(this, _getSaveActionPath, _getSaveActionPath2).call(this), {
+	          data
 	        }).then(resolve).catch(reject);
 	      }).catch(response => {
 	        ui_notification.UI.Notification.Center.notify({
@@ -373,15 +424,23 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "setParentActivityId",
 	    value: function setParentActivityId(activityId) {
 	      babelHelpers.classPrivateFieldSet(this, _parentActivityId, activityId);
+	      return this;
 	    }
 	  }, {
-	    key: "setDeadLine",
-	    value: function setDeadLine(deadLine) {
+	    key: "setActivityId",
+	    value: function setActivityId(activityId) {
+	      babelHelpers.classPrivateFieldSet(this, _activityId, activityId);
+	      return this;
+	    }
+	  }, {
+	    key: "setDeadline",
+	    value: function setDeadline(deadLine) {
 	      let value = BX.parseDate(deadLine);
 	      if (main_core.Type.isDate(value)) {
-	        babelHelpers.classPrivateFieldGet(this, _layoutComponent).setDeadlineValue(value);
+	        babelHelpers.classPrivateFieldGet(this, _layoutComponent).setDeadline(value);
 	        babelHelpers.classPrivateFieldSet(this, _deadline, value);
 	      }
+	      return this;
 	    }
 	  }, {
 	    key: "setDefaultDeadLine",
@@ -396,13 +455,20 @@ this.BX.Crm = this.BX.Crm || {};
 	      }
 
 	      if (isNeedUpdateLayout) {
-	        babelHelpers.classPrivateFieldGet(this, _layoutComponent).setDeadlineValue(babelHelpers.classPrivateFieldGet(this, _deadline));
+	        babelHelpers.classPrivateFieldGet(this, _layoutComponent).setDeadline(babelHelpers.classPrivateFieldGet(this, _deadline));
 	      }
+	      return this;
 	    }
 	  }, {
 	    key: "setFocused",
 	    value: function setFocused() {
 	      babelHelpers.classPrivateFieldGet(this, _layoutComponent).setTextareaFocused();
+	    }
+	  }, {
+	    key: "setDescription",
+	    value: function setDescription(description) {
+	      babelHelpers.classPrivateFieldGet(this, _layoutComponent).setDescription(description);
+	      return this;
 	    }
 	  }, {
 	    key: "clearValue",
@@ -433,9 +499,65 @@ this.BX.Crm = this.BX.Crm || {};
 	        setTimeout(resolve, 10);
 	      });
 	    }
+	  }, {
+	    key: "setStorageElementIds",
+	    value: function setStorageElementIds(ids) {
+	      this.initFileUploader(ids);
+	    }
+	  }, {
+	    key: "initFileUploader",
+	    value: function initFileUploader(files = []) {
+	      if (!babelHelpers.classPrivateFieldGet(this, _fileUploader)) {
+	        babelHelpers.classPrivateFieldSet(this, _fileUploader, new crm_activity_fileUploader.FileUploader({
+	          baseContainer: babelHelpers.classPrivateFieldGet(this, _container),
+	          events: {
+	            'File:onRemove': event => {
+	              babelHelpers.classPrivateFieldGet(this, _eventEmitter).emit('onChangeUploaderContainerSize');
+	            },
+	            'onUploadStart': event => {
+	              babelHelpers.classPrivateFieldGet(this, _eventEmitter).emit('onChangeUploaderContainerSize');
+	            }
+	            // TODO: not implemented yet
+	            //		'File:onComplete'
+	            //		'onUploadComplete'
+	          },
+
+	          ownerId: babelHelpers.classPrivateFieldGet(this, _ownerId),
+	          ownerTypeId: babelHelpers.classPrivateFieldGet(this, _ownerTypeId),
+	          activityId: babelHelpers.classPrivateFieldGet(this, _activityId),
+	          files
+	        }));
+	      }
+	      const fileUploaderContainer = babelHelpers.classPrivateFieldGet(this, _fileUploader).getContainer();
+	      const displayedClass = '--is-displayed';
+	      if (files && !main_core.Dom.hasClass(fileUploaderContainer, displayedClass)) {
+	        main_core.Dom.addClass(fileUploaderContainer, displayedClass);
+	      } else {
+	        main_core.Dom.toggleClass(fileUploaderContainer, displayedClass);
+	      }
+	      babelHelpers.classPrivateFieldGet(this, _eventEmitter).emit('onChangeUploaderContainerSize');
+	    }
 	  }]);
 	  return TodoEditor$$1;
 	}();
+	function _getSaveActionData2() {
+	  const userData = babelHelpers.classPrivateFieldGet(this, _layoutComponent).getData();
+	  const data = {
+	    ownerTypeId: babelHelpers.classPrivateFieldGet(this, _ownerTypeId),
+	    ownerId: babelHelpers.classPrivateFieldGet(this, _ownerId),
+	    description: userData.description,
+	    deadline: main_date.DateTimeFormat.format(crm_timeline_tools.DatetimeConverter.getSiteDateTimeFormat(), userData.deadline),
+	    parentActivityId: babelHelpers.classPrivateFieldGet(this, _parentActivityId),
+	    fileTokens: babelHelpers.classPrivateFieldGet(this, _fileUploader) ? babelHelpers.classPrivateFieldGet(this, _fileUploader).getServerFileIds() : []
+	  };
+	  if (babelHelpers.classPrivateFieldGet(this, _mode) === TodoEditorMode.UPDATE) {
+	    data.id = babelHelpers.classPrivateFieldGet(this, _activityId);
+	  }
+	  return data;
+	}
+	function _getSaveActionPath2() {
+	  return babelHelpers.classPrivateFieldGet(this, _mode) === TodoEditorMode.ADD ? 'crm.activity.todo.add' : 'crm.activity.todo.update';
+	}
 	function _getDefaultDescription2() {
 	  let messagePhrase = 'CRM_ACTIVITY_TODO_NOTIFICATION_DEFAULT_TEXT';
 	  switch (babelHelpers.classPrivateFieldGet(this, _ownerTypeId)) {
@@ -466,34 +588,13 @@ this.BX.Crm = this.BX.Crm || {};
 	  return `crm-activity__todo-editor --border-${babelHelpers.classPrivateFieldGet(this, _borderColor)}`;
 	}
 	function _onFileUploadButtonClick2() {
-	  if (!babelHelpers.classPrivateFieldGet(this, _fileUploader)) {
-	    babelHelpers.classPrivateFieldSet(this, _fileUploader, new crm_activity_fileUploader.FileUploader({
-	      baseContainer: babelHelpers.classPrivateFieldGet(this, _container),
-	      events: {
-	        'File:onRemove': event => {
-	          babelHelpers.classPrivateFieldGet(this, _eventEmitter).emit('onChangeUploaderContainerSize');
-	        },
-	        'onUploadStart': event => {
-	          babelHelpers.classPrivateFieldGet(this, _eventEmitter).emit('onChangeUploaderContainerSize');
-	        }
-	        // TODO: not implemented yet
-	        //		'File:onComplete'
-	        //		'onUploadComplete'
-	      },
-
-	      ownerId: babelHelpers.classPrivateFieldGet(this, _ownerId),
-	      ownerTypeId: babelHelpers.classPrivateFieldGet(this, _ownerTypeId),
-	      activityId: null // new activity
-	    }));
-	  }
-
-	  main_core.Dom.toggleClass(babelHelpers.classPrivateFieldGet(this, _fileUploader).getContainer(), '--is-displayed');
-	  babelHelpers.classPrivateFieldGet(this, _eventEmitter).emit('onChangeUploaderContainerSize');
+	  this.initFileUploader();
 	}
 	babelHelpers.defineProperty(TodoEditor$1, "BorderColor", TodoEditorBorderColor);
 	const namespace = main_core.Reflection.namespace('BX.Crm.Activity');
 	namespace.TodoEditor = TodoEditor$1;
 
+	exports.TodoEditorMode = TodoEditorMode;
 	exports.TodoEditor = TodoEditor$1;
 
 }((this.BX.Crm.Activity = this.BX.Crm.Activity || {}),BX.Event,BX.Vue3,BX.Main,BX,BX,BX.Main,BX.Crm.Timeline,BX.Crm.Activity));

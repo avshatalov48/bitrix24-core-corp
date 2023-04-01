@@ -203,7 +203,9 @@ class SalesCenterCashboxComponent extends CBitrixComponent implements Main\Engin
 		}
 		else
 		{
-			$menu[reset(array_keys($menu))]['ACTIVE'] = true;
+			$menuKeys = array_keys($menu);
+
+			$menu[reset($menuKeys)]['ACTIVE'] = true;
 		}
 
 		return $menu;
@@ -268,7 +270,7 @@ class SalesCenterCashboxComponent extends CBitrixComponent implements Main\Engin
 				'NAME' => $name,
 				'VALUE' => $handler,
 			];
-			if ($this->arResult['data']['OFD'] == $handler)
+			if (isset($this->arResult['data']['OFD']) && $this->arResult['data']['OFD'] == $handler)
 			{
 				$item['SELECTED'] = true;
 				$isSelected = true;
@@ -418,7 +420,7 @@ class SalesCenterCashboxComponent extends CBitrixComponent implements Main\Engin
 	 */
 	protected function getOfdSettings()
 	{
-		$ofdHandler = $this->arResult['data']['OFD'];
+		$ofdHandler = $this->arResult['data']['OFD'] ?? '';
 		if (class_exists($ofdHandler))
 		{
 			/** @var Cashbox\Ofd $ofdHandler */
@@ -505,13 +507,13 @@ class SalesCenterCashboxComponent extends CBitrixComponent implements Main\Engin
 				'title' => $cashboxSetting['LABEL'],
 				'elements' => [],
 			];
-			$isFieldsRequired = ($cashboxSetting['REQUIRED'] == 'Y');
+			$isFieldsRequired = (isset($cashboxSetting['REQUIRED']) && $cashboxSetting['REQUIRED'] === 'Y');
 			if (is_array($cashboxSetting['ITEMS']))
 			{
 				foreach($cashboxSetting['ITEMS'] as $itemName => $item)
 				{
 					$name = $prefix.'['.$sectionName.']['.$itemName.']';
-					$value = $item['VALUE'];
+					$value = $item['VALUE'] ?? null;
 					if (isset($this->arResult['data'][$prefix][$sectionName][$itemName]))
 					{
 						$value = $this->arResult['data'][$prefix][$sectionName][$itemName];
@@ -524,7 +526,7 @@ class SalesCenterCashboxComponent extends CBitrixComponent implements Main\Engin
 					$field = [
 						'name' => $name,
 						'title' => $item['LABEL'],
-						'required' => ($isFieldsRequired || ($item['REQUIRED'] == 'Y')),
+						'required' => ($isFieldsRequired || (isset($item['REQUIRED']) && $item['REQUIRED'] === 'Y')),
 					];
 					if ($item['TYPE'] == 'Y/N')
 					{

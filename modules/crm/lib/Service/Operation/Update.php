@@ -4,7 +4,6 @@ namespace Bitrix\Crm\Service\Operation;
 
 use Bitrix\Crm\Automation\Helper;
 use Bitrix\Crm\Comparer\ComparerBase;
-use Bitrix\Crm\Counter\EntityCounterManager;
 use Bitrix\Crm\Field\Collection;
 use Bitrix\Crm\Integration\PullManager;
 use Bitrix\Crm\Integrity;
@@ -14,7 +13,6 @@ use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Operation;
 use Bitrix\Crm\Statistics;
 use Bitrix\Crm\Timeline\MarkController;
-use Bitrix\Crm\Timeline\RelationController;
 use Bitrix\Crm\Timeline\TimelineManager;
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
@@ -195,7 +193,58 @@ class Update extends Operation
 		$factory = Container::getInstance()->getFactory($this->item->getEntityTypeId());
 		$trackedObject = $factory->getTrackedObject($this->itemBeforeSave, $this->item);
 
-		return Container::getInstance()->getEventHistory()->registerUpdate($trackedObject, $this->getContext());
+		$updateResult = Container::getInstance()->getEventHistory()->registerUpdate($trackedObject, $this->getContext());
+
+		$registrar = Container::getInstance()->getRelationRegistrar();
+
+		$relationsByFieldsChange = $registrar->registerByFieldsChange(
+			$this->getItemIdentifier(),
+			$this->fieldsCollection->toArray(),
+			$this->itemBeforeSave->getData(Values::ACTUAL),
+			$this->item->getData(),
+			$this->getItemsThatExcludedFromTimelineRelationEventsRegistration(),
+			$this->getContext(),
+		);
+		if (!$relationsByFieldsChange->isSuccess())
+		{
+			$updateResult->addErrors($relationsByFieldsChange->getErrors());
+		}
+
+		if ($this->item->hasField(Item::FIELD_NAME_CONTACT_BINDINGS))
+		{
+			$contactBindingsResult = $registrar->registerByBindingsChange(
+				$this->getItemIdentifier(),
+				\CCrmOwnerType::Contact,
+				$this->itemBeforeSave->remindActual(Item::FIELD_NAME_CONTACT_BINDINGS),
+				$this->item->getContactBindings(),
+				$this->getItemsThatExcludedFromTimelineRelationEventsRegistration(),
+				$this->getContext(),
+			);
+
+			if (!$contactBindingsResult->isSuccess())
+			{
+				$updateResult->addErrors($contactBindingsResult->getErrors());
+			}
+		}
+
+		if ($this->item->hasField(Item\Contact::FIELD_NAME_COMPANY_BINDINGS))
+		{
+			$companyBindingsResult = $registrar->registerByBindingsChange(
+				$this->getItemIdentifier(),
+				\CCrmOwnerType::Company,
+				$this->itemBeforeSave->remindActual(Item\Contact::FIELD_NAME_COMPANY_BINDINGS),
+				$this->item->get(Item\Contact::FIELD_NAME_COMPANY_BINDINGS),
+				$this->getItemsThatExcludedFromTimelineRelationEventsRegistration(),
+				$this->getContext(),
+			);
+
+			if (!$companyBindingsResult->isSuccess())
+			{
+				$updateResult->addErrors($companyBindingsResult->getErrors());
+			}
+		}
+
+		return $updateResult;
 	}
 
 	protected function createTimelineRecord(): void
@@ -216,40 +265,7 @@ class Update extends Operation
 			);
 		}
 
-		RelationController::getInstance()->registerEventsByFieldsChange(
-			$this->getItemIdentifier(),
-			$this->fieldsCollection->toArray(),
-			$this->itemBeforeSave->getData(Values::ACTUAL),
-			$this->item->getData(),
-			$this->getItemsThatExcludedFromTimelineRelationEventsRegistration(),
-			$this->getContext()->getUserId(),
-		);
-
 		$factory = Container::getInstance()->getFactory($this->getItem()->getEntityTypeId());
-
-		if ($this->item->hasField(Item::FIELD_NAME_CONTACT_BINDINGS))
-		{
-			RelationController::getInstance()->registerEventsByBindingsChange(
-				$this->getItemIdentifier(),
-				\CCrmOwnerType::Contact,
-				$this->itemBeforeSave->remindActual(Item::FIELD_NAME_CONTACT_BINDINGS),
-				$this->item->getContactBindings(),
-				$this->getItemsThatExcludedFromTimelineRelationEventsRegistration(),
-				$this->getContext()->getUserId(),
-			);
-		}
-
-		if ($this->item->hasField(Item\Contact::FIELD_NAME_COMPANY_BINDINGS))
-		{
-			RelationController::getInstance()->registerEventsByBindingsChange(
-				$this->getItemIdentifier(),
-				\CCrmOwnerType::Company,
-				$this->itemBeforeSave->remindActual(Item\Contact::FIELD_NAME_COMPANY_BINDINGS),
-				$this->item->get(Item\Contact::FIELD_NAME_COMPANY_BINDINGS),
-				$this->getItemsThatExcludedFromTimelineRelationEventsRegistration(),
-				$this->getContext()->getUserId(),
-			);
-		}
 
 		if ($factory->isStagesEnabled() && $this->wasItemMovedToFinalStage())
 		{

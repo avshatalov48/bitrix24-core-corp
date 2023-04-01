@@ -134,16 +134,18 @@ class ObserverManager
 			]
 		);
 
-		$results = array();
+		$results = [];
+
 		while($fields = $dbResult->fetch())
 		{
-			$entityID = $fields['ENTITY_ID'];
-			if(!$results[$entityID])
+			$entityId = $fields['ENTITY_ID'];
+			if (empty($results[$entityId]))
 			{
-				$results[$entityID] = array();
+				$results[$entityId] = [];
 			}
-			$results[$entityID][] = (int)$fields['USER_ID'];
+			$results[$entityId][] = (int)$fields['USER_ID'];
 		}
+
 		return $results;
 	}
 

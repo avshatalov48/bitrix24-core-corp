@@ -1,5 +1,8 @@
 <?php
 
+use Bitrix\Catalog\Access\ShopGroupAssistant;
+use Bitrix\Catalog\Access\AccessController;
+use Bitrix\Catalog\Access\ActionDictionary;
 use Bitrix\Catalog\Config\State;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Config\Option;
@@ -8,11 +11,14 @@ use Bitrix\Main\Loader;
 use Bitrix\Crm;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Main;
+use Bitrix\Main\UserTable;
 use Bitrix\Sale;
+use Bitrix\Catalog\Access\Permission\Catalog\IblockCatalogPermissions;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
+use Bitrix\Catalog\StoreDocumentTable;
 
 class CCrmSaleHelper
 {
@@ -59,7 +65,7 @@ class CCrmSaleHelper
 		$cartItems = self::PrepareShoppingCartItems($productRows, $currencyID, $siteId);
 		foreach ($cartItems as &$item) // tmp hack not to update basket quantity data from catalog
 		{
-			$item['ID_TMP'] = $item['ID'];
+			$item['ID_TMP'] = $item['ID'] ?? null;
 			unset($item['ID']);
 		}
 		unset($item);
@@ -357,17 +363,28 @@ class CCrmSaleHelper
 	 * @throws ObjectPropertyException
 	 * @throws SystemException
 	 */
-	public static function isShopAccess($role = "")
+	public static function isShopAccess(string $role = ""): bool
 	{
+		if (!Loader::includeModule('catalog'))
+		{
+			return false;
+		}
+
 		global $USER;
 		if (!is_object($USER))
 		{
 			return false;
 		}
+
 		$userId = $USER->getID();
 		if (!$userId)
 		{
 			return false;
+		}
+
+		if ($role !== 'admin' && $role !== 'manager')
+		{
+			return self::isShopAccess('manager') || self::isShopAccess('admin');
 		}
 
 		if (self::isCacheAccess($userId, $role))
@@ -375,62 +392,27 @@ class CCrmSaleHelper
 			return self::getCacheAccess($userId, $role);
 		}
 
-		if (!isModuleInstalled("bitrix24"))
-		{
-			if ($USER->isAdmin())
-			{
-				$isDbAccess = self::isDbAccess($userId, "admin");
-				if (!$isDbAccess)
-				{
-					self::addDbAccessAddingAgent($userId);
-				}
-				self::addToCacheAccess($userId, $role, true);
+		$action =
+			$role === 'admin'
+				? ActionDictionary::ACTION_CATALOG_SETTINGS_ACCESS
+				: ActionDictionary::ACTION_CATALOG_READ
+		;
 
-				return true;
-			}
-			else
-			{
-				$isDbAccess = self::isDbAccess($userId, $role);
-				self::addToCacheAccess($userId, $role, $isDbAccess);
-
-				return $isDbAccess;
-			}
-		}
-
-		$isCrmAccess = self::isCrmAccess($USER, $role);
-
-		if (!$isCrmAccess)
+		if (!AccessController::getCurrent()->check($action))
 		{
 			self::addToCacheAccess($userId, $role, false);
 
 			return false;
 		}
 
-		$isDbAccess = self::isDbAccess($userId, $role);
+		self::addToCacheAccess($userId, $role, true);
 
-		if ($isDbAccess)
+		if (!AccessController::getCurrent()->hasIblockAccess($action))
 		{
-			self::addToCacheAccess($userId, $role, true);
-
-			return true;
+			self::addShopAccessByUserId($userId);
 		}
-		else
-		{
-			$shopRole = self::getShopRole($userId);
-			if ($shopRole)
-			{
-				self::addDbAccessAddingAgent($userId);
-				self::addToCacheAccess($userId, $role, true);
 
-				return true;
-			}
-			else
-			{
-				self::addToCacheAccess($userId, $role, false);
-
-				return false;
-			}
-		}
+		return true;
 	}
 
 	private static function addToCacheAccess(int $userId, string $role, bool $access): void
@@ -450,6 +432,8 @@ class CCrmSaleHelper
 	}
 
 	/**
+	 * @deprecated
+	 *
 	 * @param CUser $user
 	 * @param string $role
 	 * @return bool
@@ -514,37 +498,6 @@ class CCrmSaleHelper
 	{
 		$listUserId = self::getListUserIdFromCrmRoles();
 		return (in_array($userId, $listUserId));
-	}
-
-	private static function isDbAccess($userId, $role)
-	{
-		$shopGroupIds = [];
-		if ($role)
-		{
-			$shopGroupIds[] = self::getShopGroupIdByType($role);
-		}
-		else
-		{
-			$shopGroupIds[] = self::getShopGroupIdByType("admin");
-			$shopGroupIds[] = self::getShopGroupIdByType("manager");
-		}
-
-		$currentUserGroupIds = [];
-		$groupListObject = CUser::getUserGroupList($userId);
-		while ($groupList = $groupListObject->fetch())
-		{
-			$currentUserGroupIds[] = $groupList["GROUP_ID"];
-		}
-
-		foreach ($shopGroupIds as $groupId)
-		{
-			if (in_array($groupId, $currentUserGroupIds))
-			{
-				return true;
-			}
-		}
-
-		return false;
 	}
 
 	private static function getShopRole($userId)
@@ -613,32 +566,125 @@ class CCrmSaleHelper
 		self::deleteUserFromShopGroupByUserIds(self::getCurrentUsersShopGroups());
 	}
 
+	/**
+	 * @deprecated
+	 *
+	 * Proxy for starting \Bitrix\Catalog\Access\Permission\Catalog\IblockCatalogPermissionStepper
+	 *
+	 * @return void
+	 * @throws LoaderException
+	 */
 	public static function updateShopAccess()
 	{
-		self::startAgentToAddShopAccess();
-	}
-
-	public static function updateShopAccessByAgent()
-	{
-		$userIds = self::getListUserIdFromCrmRoles(true);
-
-		self::deleteUserFromShopGroupByUserIds(self::getCurrentUsersShopGroups());
-
-		foreach ($userIds as $userId)
+		if (Loader::includeModule('catalog'))
 		{
-			self::addShopAccessByUserId($userId);
+			\Bitrix\Catalog\Access\Permission\Catalog\IblockCatalogPermissionStepper::bind(1);
 		}
 	}
 
+	/**
+	 * @deprecated
+	 *
+	 * Old binging for crm user to sale and iblock groups.
+	 * Instead of it use \Bitrix\Catalog\Access\Permission\Catalog\IblockCatalogPermissionStepper.
+	 *
+	 * @return void
+	 * @throws ArgumentException
+	 * @throws LoaderException
+	 * @throws ObjectPropertyException
+	 * @throws SqlQueryException
+	 * @throws SystemException
+	 */
+	public static function updateShopAccessByAgent(): void
+	{
+		if (Loader::includeModule('catalog'))
+		{
+			$userGroups = [
+				'admin' => [],
+				'manager' => [],
+			];
+			$userIds = self::getListUserIdFromCrmRoles(true);
+			array_push($userIds, ...CGroup::getGroupUser(1));
+			foreach ($userIds as $userId)
+			{
+				$groupCode = ShopGroupAssistant::getShopUserGroupCode($userId);
+				if ($groupCode === self::CROUP_PREFIX . self::GROUP_CRM_ADMIN)
+				{
+					$userGroups['admin'][] = $userId;
+				}
+				elseif ($groupCode === self::CROUP_PREFIX . self::GROUP_CRM_MANAGER)
+				{
+					$userGroups['manager'][] = $userId;
+				}
+			}
+
+			foreach ($userGroups as $groupId => $userIds)
+			{
+				self::updateShopAccessGroup($userIds, $groupId);
+			}
+		}
+		else
+		{
+			self::deleteAllUserFromShopGroup();
+		}
+	}
+
+	/**
+	 * @deprecated
+	 *
+	 * @param array $userIds
+	 * @param string $groupType
+	 * @return void
+	 */
+	private static function updateShopAccessGroup(array $userIds, string $groupType): void
+	{
+		$groupCode = self::getShopGroupIdByType($groupType);
+		$currentGroupUserIds = CGroup::getGroupUser($groupCode);
+		$removeFromGroup = array_diff($currentGroupUserIds, $userIds);
+		if ($removeFromGroup)
+		{
+			self::deleteUserFromShopGroupByUserIds($removeFromGroup, [$groupCode]);
+		}
+
+		$addToGroup = array_diff($userIds, $currentGroupUserIds);
+		foreach ($addToGroup as $userId)
+		{
+			self::addToDbAccess($userId, $groupType);
+		}
+	}
+
+	/**
+	 * Used for appending user in agent
+	 *
+	 * @param $userId
+	 * @return void
+	 * @throws LoaderException
+	 */
 	public static function addShopAccessByUserId($userId)
 	{
-		if (Loader::includeModule("crm"))
+		if (Loader::includeModule("catalog"))
 		{
-			$shopRole = self::getShopRole($userId);
-			if ($shopRole)
+			$emptyDepartmentTypeFirst = serialize([]);
+			$emptyDepartmentTypeSecond = serialize([0]);
+			$externalTypes = UserTable::getExternalUserTypes();
+			$externalTypes[] = null;
+			$filter = [
+				'=ID' => $userId,
+				'!=UF_DEPARTMENT' => [null, $emptyDepartmentTypeFirst, $emptyDepartmentTypeSecond],
+				'!=EXTERNAL_AUTH_ID' => $externalTypes,
+			];
+
+			$userData = UserTable::getRow([
+				'filter' => $filter,
+				'select' => ['ID'],
+			]);
+
+			if (!$userData)
 			{
-				self::addToDbAccess($userId, $shopRole);
+				return;
 			}
+
+			ShopGroupAssistant::addShopAccess($userId);
 		}
 	}
 
@@ -886,7 +932,7 @@ class CCrmSaleHelper
 		}
 	}
 
-	private static function deleteUserFromShopGroupByUserIds($currentUserIds = [])
+	private static function deleteUserFromShopGroupByUserIds(array $currentUserIds = [], array $shopGroupIds = null): void
 	{
 		if (!$currentUserIds)
 		{
@@ -896,11 +942,19 @@ class CCrmSaleHelper
 		$connection = Bitrix\Main\Application::getConnection();
 		if ($connection->isTableExists("b_user_group"))
 		{
-			$shopGroupIds = [
-				self::getShopGroupIdByType("admin"),
-				self::getShopGroupIdByType("manager")
-			];
-			$shopGroupIds = array_filter($shopGroupIds);
+			if (!$shopGroupIds)
+			{
+				$shopGroupIds = [
+					self::getShopGroupIdByType("admin"),
+					self::getShopGroupIdByType("manager")
+				];
+				$shopGroupIds = array_filter($shopGroupIds);
+
+				if (!$shopGroupIds)
+				{
+					return;
+				}
+			}
 
 			$result = array_search(1, $currentUserIds);
 			if ($result !== false)
@@ -1190,51 +1244,6 @@ class CCrmSaleHelper
 		return '';
 	}
 
-	private static function addDbAccessAddingAgent(int $userId): void
-	{
-		$moduleId = "crm";
-		$agentName = "CCrmSaleHelper::addShopAccessByUserId(" . $userId . ");";
-		$agent = \CAgent::getList([], [
-			"MODULE_ID" => $moduleId,
-			"NAME" => $agentName
-		])->fetch();
-		if (!$agent)
-		{
-			CAgent::addAgent(
-				$agentName,
-				$moduleId,
-				"N",
-				60,
-				"",
-				"Y",
-				\ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 3, "FULL"),
-				1500
-			);
-		}
-	}
-
-	private static function startAgentToAddShopAccess(): void
-	{
-		$moduleId = "crm";
-		$agentName = "CCrmSaleHelper::updateShopAccessByAgent();";
-		$agent = \CAgent::getList([], [
-			"MODULE_ID" => $moduleId,
-			"NAME" => $agentName
-		])->fetch();
-		if (!$agent)
-		{
-			CAgent::addAgent(
-				$agentName,
-				$moduleId,
-				"N",
-				10,
-				"",
-				"Y",
-				\ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 3, "FULL")
-			);
-		}
-	}
-
 	/**
 	 * @return bool
 	 */
@@ -1346,5 +1355,16 @@ class CCrmSaleHelper
 			&& Loader::includeModule('catalog')
 			&& State::isUsedInventoryManagement()
 		;
+	}
+
+	public static function isRealizationCreationAvailable(): bool
+	{
+		return (
+			self::isProcessInventoryManagement()
+			&& AccessController::getCurrent()->checkByValue(
+				ActionDictionary::ACTION_STORE_DOCUMENT_MODIFY,
+				StoreDocumentTable::TYPE_SALES_ORDERS
+			)
+		);
 	}
 }

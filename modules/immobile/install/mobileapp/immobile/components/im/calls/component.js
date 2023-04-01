@@ -747,7 +747,7 @@
 				{
 					headerLabels.firstSmallHeader.text = BX.message('IM_PHONE_OUTGOING');
 				}
-				headerLabels.firstSmallHeader.textColor = "#999999";
+				headerLabels.firstSmallHeader.textColor = "#959ca4";
 
 				if (!this.portalCall && !this.isRestCall && this.callConfig.hasOwnProperty('RECORDING'))
 				{

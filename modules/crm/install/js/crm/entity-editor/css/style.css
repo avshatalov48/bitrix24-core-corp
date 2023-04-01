@@ -2034,13 +2034,13 @@ a.crm-entity-widget-client-box-name:hover { color: #3f51b5; }
 .field-item textarea { min-width: 100%; }
 
 .crm-entity-widget-content-input.crm-entity-widget-content-input-phone {
-	padding-left: 36px;
+	padding-left: 46px;
 	width: 100%;
 }
 
 .crm-entity-widget-content-country-flag {
 	position: absolute;
-	margin: 7px;
+	margin: 10px 7px 5px 7px;
 }
 
 .field-item.money select,

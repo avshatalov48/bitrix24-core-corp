@@ -15,6 +15,8 @@ class Logo extends Base
 
 	protected string $iconCode;
 	protected ?string $iconType = null;
+	protected ?string $backgroundUrl = null;
+	protected ?int $backgroundSize = null;
 
 	protected ?string $additionalIconCode = null;
 	protected ?string $additionalIconType = null;
@@ -43,12 +45,52 @@ class Logo extends Base
 		return $this;
 	}
 
+	/**
+	 * @return string|null
+	 */
+	public function getBackgroundUrl(): ?string
+	{
+		return $this->backgroundUrl;
+	}
+
+	/**
+	 * @param string|null $backgroundUrl
+	 * @return Logo
+	 */
+	public function setBackgroundUrl(?string $backgroundUrl): Logo
+	{
+		$this->backgroundUrl = $backgroundUrl;
+
+		return $this;
+	}
+
+	/**
+	 * @return int|null
+	 */
+	public function getBackgroundSize(): ?int
+	{
+		return $this->backgroundSize;
+	}
+
+	/**
+	 * @param int|null $backgroundSize
+	 * @return Logo
+	 */
+	public function setBackgroundSize(?int $backgroundSize): Logo
+	{
+		$this->backgroundSize = $backgroundSize;
+
+		return $this;
+	}
+
 	public function toArray(): array
 	{
 		return [
 			'type' => $this->getIconType(),
 			'iconType' => $this->getIconType(),
 			'icon' => $this->getIconCode(),
+			'backgroundUrl' => $this->getBackgroundUrl(),
+			'backgroundSize' => $this->getBackgroundSize(),
 			'addIcon' => $this->getAdditionalIconCode(),
 			'addIconType' => $this->getAdditionalIconType(),
 			'inCircle' => $this->isInCircle(),
@@ -72,7 +114,6 @@ class Logo extends Base
 	{
 		return $this->additionalIconType;
 	}
-
 
 	public function setAdditionalIconType(?string $additionalIconType): self
 	{

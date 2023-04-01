@@ -3,15 +3,17 @@
  */
 jn.define('layout/ui/entity-editor/control/combined', (require, exports, module) => {
 
-	const { FieldFactory, ImType, WebType } = require('layout/ui/fields');
+	const { FieldFactory, ImType, WebType, PhoneType } = require('layout/ui/fields');
 	const { get } = require('utils/object');
 	const { EntityEditorIm } = require('layout/ui/entity-editor/control/combined/im');
 	const { EntityEditorWeb } = require('layout/ui/entity-editor/control/combined/web');
+	const { EntityEditorPhone } = require('layout/ui/entity-editor/control/combined/phone');
 	const { EntityEditorCombinedBase } = require('layout/ui/entity-editor/control/combined/base');
 
 	const combinedControls = {
 		[ImType]: EntityEditorIm,
 		[WebType]: EntityEditorWeb,
+		[PhoneType]: EntityEditorPhone,
 	};
 
 	/**

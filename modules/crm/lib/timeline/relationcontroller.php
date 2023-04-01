@@ -2,11 +2,11 @@
 
 namespace Bitrix\Crm\Timeline;
 
-use Bitrix\Crm\Binding\EntityBinding;
-use Bitrix\Crm\Comparer\ComparerBase;
 use Bitrix\Crm\ItemIdentifier;
-use Bitrix\Crm\Service\Container;
 
+/**
+ * @deprecated
+ */
 class RelationController extends Controller
 {
 	protected function __construct()
@@ -34,45 +34,6 @@ class RelationController extends Controller
 		?int $authorId = null
 	): void
 	{
-		$difference = ComparerBase::compareEntityFields($previousFields, $currentFields);
-
-		foreach ($fieldsInfo as $fieldName => $singleFieldInfo)
-		{
-			$parentEntityTypeId = (int)($singleFieldInfo['SETTINGS']['parentEntityTypeId'] ?? null);
-			if (!\CCrmOwnerType::IsDefined($parentEntityTypeId))
-			{
-				continue;
-			}
-
-			if (!$difference->isChanged($fieldName))
-			{
-				continue;
-			}
-
-			$previousValue = (int)$difference->getPreviousValue($fieldName);
-			if ($previousValue > 0)
-			{
-				$oldParent = new ItemIdentifier($parentEntityTypeId, $previousValue);
-
-				// intentional not strict comparison. it doesn't matter here if objects are the same instance
-				if (!in_array($oldParent, $itemsToIgnore, false))
-				{
-					$this->onItemsUnbind($oldParent, $child, $authorId);
-				}
-			}
-
-			$currentValue = (int)$difference->getCurrentValue($fieldName);
-			if ($currentValue > 0)
-			{
-				$newParent = new ItemIdentifier($parentEntityTypeId, $currentValue);
-
-				// intentional not strict comparison. it doesn't matter here if objects are the same instance
-				if (!in_array($newParent, $itemsToIgnore, false))
-				{
-					$this->onItemsBind($newParent, $child, $authorId);
-				}
-			}
-		}
 	}
 
 	/**
@@ -92,39 +53,10 @@ class RelationController extends Controller
 		?int $authorId = null
 	): void
 	{
-		[$bound, $unbound] = EntityBinding::prepareBoundAndUnboundEntities(
-			$parentEntityTypeId,
-			$previousBindings,
-			$currentBindings
-		);
-
-		foreach (EntityBinding::prepareEntityIDs($parentEntityTypeId, $unbound) as $removedParentId)
-		{
-			$oldParent = new ItemIdentifier($parentEntityTypeId, $removedParentId);
-
-			// intentional not strict comparison. it doesn't matter here if objects are the same instance
-			if (!in_array($oldParent, $itemsToIgnore, false))
-			{
-				$this->onItemsUnbind($oldParent, $child, $authorId);
-			}
-		}
-
-		foreach (EntityBinding::prepareEntityIDs($parentEntityTypeId, $bound) as $addedParentId)
-		{
-			$newParent = new ItemIdentifier($parentEntityTypeId, $addedParentId);
-
-			// intentional not strict comparison. it doesn't matter here if objects are the same instance
-			if (!in_array($newParent, $itemsToIgnore, false))
-			{
-				$this->onItemsBind($newParent, $child, $authorId);
-			}
-		}
 	}
 
 	public function onItemsBind(ItemIdentifier $parent, ItemIdentifier $child, ?int $authorId = null): void
 	{
-		$this->registerBindEvent($parent, $child, $authorId);
-		$this->registerBindEvent($child, $parent, $authorId);
 	}
 
 	/**
@@ -136,8 +68,6 @@ class RelationController extends Controller
 	 */
 	public function onItemsUnbind(ItemIdentifier $parent, ItemIdentifier $child, int $authorId = null): void
 	{
-		$this->registerUnbindEvent($parent, $child, $authorId);
-		$this->registerUnbindEvent($child, $parent, $authorId);
 	}
 
 	protected function registerBindEvent(
@@ -146,12 +76,6 @@ class RelationController extends Controller
 		?int $authorId = null
 	): void
 	{
-		$this->registerRelationEvent(
-			TimelineEntry\Facade::LINK,
-			$timelineOwner,
-			$boundEntity,
-			$authorId
-		);
 	}
 
 	protected function registerUnbindEvent(
@@ -160,12 +84,6 @@ class RelationController extends Controller
 		?int $authorId = null
 	): void
 	{
-		$this->registerRelationEvent(
-			TimelineEntry\Facade::UNLINK,
-			$timelineOwner,
-			$boundEntity,
-			$authorId
-		);
 	}
 
 	/**
@@ -181,27 +99,5 @@ class RelationController extends Controller
 		?int $authorId = null
 	): void
 	{
-		$timelineEntryId = Container::getInstance()->getTimelineEntryFacade()->create(
-			$timelineEntryType,
-			[
-				'ENTITY_TYPE_ID' => $boundEntity->getEntityTypeId(),
-				'ENTITY_ID' => $boundEntity->getEntityId(),
-				'AUTHOR_ID' => ($authorId > 0) ? $authorId : static::getCurrentOrDefaultAuthorId(),
-				'SETTINGS' => [],
-				'BINDINGS' => [
-					[
-						'ENTITY_TYPE_ID' => $timelineOwner->getEntityTypeId(),
-						'ENTITY_ID' => $timelineOwner->getEntityId()
-					],
-				],
-			]
-		);
-
-		if ($timelineEntryId <= 0)
-		{
-			return;
-		}
-
-		$this->sendPullEventOnAdd($timelineOwner, $timelineEntryId);
 	}
 }

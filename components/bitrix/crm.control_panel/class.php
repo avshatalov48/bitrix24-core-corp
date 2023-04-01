@@ -40,6 +40,13 @@ class CrmControlPanel extends CBitrixComponent
 		];
 	}
 
+	public function onPrepareComponentParams($arParams)
+	{
+		$arParams['ACTIVE_ITEM_ID'] = $arParams['ACTIVE_ITEM_ID'] ?? null;
+
+		return $arParams;
+	}
+
 	public function createMenuTree($standardItems)
 	{
 		return $this->createMenuItems($this->getMap(), $standardItems);
@@ -350,7 +357,7 @@ class CrmControlPanel extends CBitrixComponent
 		$item['IS_ACTIVE'] = $this->arResult['ACTIVE_ITEM_ID'] === $item['ID'];
 		$item['ID'] = $item['MENU_ID'] ?? $item['ID'];
 		$item['SUB_LINK'] = $itemActions;
-		$item['COUNTER'] = $item['COUNTER'] > 0 ? $item['COUNTER'] : false;
+		$item['COUNTER'] = (isset($item['COUNTER']) && (int) $item['COUNTER'] > 0) ? $item['COUNTER'] : false;
 		$item['COUNTER_ID'] = $item['COUNTER_ID'] ?? '';
 		$item['IS_LOCKED'] = $item['IS_LOCKED'] ?? false;
 

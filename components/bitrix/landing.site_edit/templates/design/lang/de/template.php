@@ -3,6 +3,7 @@ $MESS["LANDING_SITE_DSGN_TITLE"] = "Website-Design";
 $MESS["LANDING_SITE_DSGN_TITLE_KNOWLEDGE"] = "Design der Wissensbasis";
 $MESS["LANDING_SITE_DSGN_TITLE_STORE"] = "Design des Onlineshops";
 $MESS["LANDING_SITE_DSGN_TPL_ADDITIONAL_BG"] = "Hintergrund";
+$MESS["LANDING_SITE_DSGN_TPL_ADDITIONAL_TRANSITION_BG"] = "Wechseln einstellen";
 $MESS["LANDING_SITE_DSGN_TPL_FONTS_PAGE"] = "Texteinstellungen";
 $MESS["LANDING_SITE_DSGN_TPL_MY_COLOR"] = "Benutzerdefinierte Farbe";
 $MESS["LANDING_SITE_DSGN_TPL_OTHER_COLORS"] = "Mehr Farben";

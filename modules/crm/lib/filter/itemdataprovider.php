@@ -2,19 +2,17 @@
 
 namespace Bitrix\Crm\Filter;
 
+use Bitrix\Crm\Counter\EntityCounterType;
 use Bitrix\Crm\Currency;
 use Bitrix\Crm\Integration\Main\UISelector;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\PhaseSemantics;
-use Bitrix\Crm\Search\SearchEnvironment;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Factory;
 use Bitrix\Crm\Service\ParentFieldManager;
 use Bitrix\Crm\StatusTable;
 use Bitrix\Crm\UI\EntitySelector;
 use Bitrix\Crm\UtmTable;
-use Bitrix\Crm\WebForm;
-use Bitrix\Main\Filter\EntityDataProvider;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Text\StringHelper;
 use Bitrix\Main\Loader;
@@ -395,6 +393,18 @@ class ItemDataProvider extends EntityDataProvider
 			];
 		}
 
+		if($this->factory->isCountersEnabled()) {
+			$fields['ACTIVITY_COUNTER'] = [
+				'type' => static::TYPE_LIST,
+				'displayGrid' => false,
+				'displayFilter' => true,
+				'defaultGrid' => false,
+				'defaultFilter' => false,
+				'filterOptionPreset' => static::PRESET_LIST,
+				'customCaption' => Loc::getMessage('CRM_FILTER_ITEMDATAPROVIDER_ACTIVITY_COUNTER')
+			];
+		}
+
 		$this->addParentFieldsInfo($fields);
 
 		return $fields;
@@ -542,7 +552,7 @@ class ItemDataProvider extends EntityDataProvider
 			{
 				$options = [
 					'type' => $fieldParams['type'],
-					'default' => $fieldParams['defaultFilter']
+					'default' => $fieldParams['defaultFilter'] ?? null
 				];
 				if ($options['type'] === 'number' || $options['type'] === 'string') {
 					if ($field !== 'ID') {
@@ -697,14 +707,22 @@ class ItemDataProvider extends EntityDataProvider
 		{
 			$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory($this->getEntityTypeId());
 
+			$params = [
+				'fieldName' => $fieldID,
+				'entityTypeId' => $this->getEntityTypeId(),
+				'module' => 'crm',
+				'referenceClass' => ($factory ? $factory->getDataClass() : null),
+			];
+
+			if ($factory->isCountersEnabled() && $fieldID === Item::FIELD_NAME_ASSIGNED)
+			{
+				$params['isEnableAllUsers'] = true;
+				$params['isEnableOtherUsers'] = true;
+			}
+
 			return $this->getUserEntitySelectorParams(
 				EntitySelector::CONTEXT,
-				[
-					'fieldName' => $fieldID,
-					'entityTypeId' => $this->getEntityTypeId(),
-					'module' => 'crm',
-					'referenceClass' => ($factory ? $factory->getDataClass() : null),
-				]
+				$params
 			);
 		}
 
@@ -832,6 +850,13 @@ class ItemDataProvider extends EntityDataProvider
 			$result = Container::getInstance()->getParentFieldManager()->prepareParentFieldDataForFilterProvider(
 				$this->factory->getEntityTypeId(),
 				$fieldID
+			);
+		}
+		elseif($fieldID === 'ACTIVITY_COUNTER')
+		{
+			return EntityCounterType::getListFilterInfo(
+				['params' => ['multiple' => 'Y']],
+				['ENTITY_TYPE_ID' => \CCrmOwnerType::SmartInvoice]
 			);
 		}
 

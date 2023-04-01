@@ -184,6 +184,11 @@ class LeadContactTable extends Entity\DataManager
 	 */
 	public static function getBulkLeadBindings(array $leadsIDs)
 	{
+		\Bitrix\Main\Type\Collection::normalizeArrayValuesByInt($leadsIDs, false);
+		if (empty($leadsIDs))
+		{
+			return [];
+		}
 		$bindingMap = array();
 		foreach($leadsIDs as $leadID)
 		{

@@ -4,6 +4,7 @@ DROP TABLE IF EXISTS b_crm_company;
 DROP TABLE IF EXISTS b_crm_contact;
 DROP TABLE IF EXISTS b_crm_status;
 DROP TABLE IF EXISTS b_crm_field_multi;
+DROP TABLE IF EXISTS b_crm_field_multi_phone_country;
 DROP TABLE IF EXISTS b_crm_event;
 DROP TABLE IF EXISTS b_crm_event_relations;
 DROP TABLE IF EXISTS b_crm_entity_lock;

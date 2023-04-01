@@ -1676,7 +1676,12 @@ class CCrmUserType
 					$fl = (COption::GetOptionString("crm", "bp_version", 2) == 2);
 					$rsEnum = call_user_func_array(array($arUserField['USER_TYPE']['CLASS_NAME'], 'GetList'), array($arUserField));
 					while($ar = $rsEnum->GetNext())
-						$editable[$ar[$fl ? 'XML_ID' : 'ID']] = $ar['~VALUE'] ?? $ar['VALUE'];
+					{
+						if (isset($ar[$fl ? 'XML_ID' : 'ID']))
+						{
+							$editable[$ar[$fl ? 'XML_ID' : 'ID']] = $ar['~VALUE'] ?? $ar['VALUE'];
+						}
+					}
 				}
 			}
 
@@ -1969,16 +1974,15 @@ class CCrmUserType
 		$arUserFields = $this->GetAbstractFields();
 		foreach($arUserFields as $FIELD_NAME => $arUserField)
 		{
-			if (
-				isset($arFilter[$FIELD_NAME])
-				|| $arFilter[$FIELD_NAME] === false
-			)
+			if (array_key_exists($FIELD_NAME, $arFilter) && $arFilter[$FIELD_NAME] !== null)
 			{
 				$value = $arFilter[$FIELD_NAME];
 				unset($arFilter[$FIELD_NAME]);
 			}
 			else
+			{
 				continue;
+			}
 
 			//HACK: Force exact filtration mode for crm status and crm types. Configuration component never did not do it.
 			$userTypeID = isset($arUserField['USER_TYPE_ID']) ? $arUserField['USER_TYPE_ID'] : '';
@@ -1994,11 +1998,17 @@ class CCrmUserType
 			)
 			{
 				if ($arUserField['SHOW_FILTER'] == 'I' || $forceExactMode)
+				{
 					$arFilter['='.$FIELD_NAME] = $value;
+				}
 				else if($arUserField['SHOW_FILTER'] == 'E')
+				{
 					$arFilter['%'.$FIELD_NAME] = $value;
+				}
 				else
+				{
 					$arFilter[$FIELD_NAME] = $value;
+				}
 			}
 		}
 	}

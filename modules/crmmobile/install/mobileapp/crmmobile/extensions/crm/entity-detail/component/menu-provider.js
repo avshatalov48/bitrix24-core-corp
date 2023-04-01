@@ -37,27 +37,6 @@ jn.define('crm/entity-detail/component/menu-provider', (require, exports, module
 
 			if (entityTypeId === TypeId.Deal)
 			{
-				result.push({
-					id: 'excludeItem',
-					sectionCode: 'action',
-					onItemSelected: () => excludeEntity(detailCard),
-					title: BX.message('M_CRM_ENTITY_ACTION_EXCLUDE'),
-					iconUrl: component.path + '/icons/exclude.png',
-					disable: !canExclude,
-				});
-			}
-
-			result.push({
-				id: 'deleteItem',
-				sectionCode: 'action',
-				onItemSelected: () => deleteEntity(detailCard),
-				title: getEntityMessage('M_CRM_ENTITY_ACTION_DELETE', detailCard.getEntityTypeId()),
-				iconUrl: component.path + '/icons/delete.png',
-				disable: !canDelete,
-			});
-
-			if (entityTypeId === TypeId.Deal)
-			{
 				if (entityModel.hasOwnProperty('IS_MANUAL_OPPORTUNITY'))
 				{
 					result.push({
@@ -73,10 +52,31 @@ jn.define('crm/entity-detail/component/menu-provider', (require, exports, module
 
 				result.push(changeEntityCategory(detailCard, canUpdate));
 
-				if (todoNotificationParams)
-				{
-					result.push(getSmartActivityMenuItem(!todoNotificationParams.isSkipped));
-				}
+				result.push({
+					id: 'excludeItem',
+					sectionCode: 'action',
+					onItemSelected: () => excludeEntity(detailCard),
+					title: BX.message('M_CRM_ENTITY_ACTION_EXCLUDE'),
+					iconUrl: component.path + '/icons/exclude2.png',
+					disable: !canExclude,
+				});
+			}
+
+			result.push({
+				id: 'deleteItem',
+				sectionCode: 'action',
+				onItemSelected: () => deleteEntity(detailCard),
+				title: getEntityMessage('M_CRM_ENTITY_ACTION_DELETE', detailCard.getEntityTypeId()),
+				iconUrl: component.path + '/icons/delete.png',
+				disable: !canDelete,
+			});
+
+			if (entityTypeId === TypeId.Deal && todoNotificationParams)
+			{
+				result.push({
+					...getSmartActivityMenuItem(!todoNotificationParams.isSkipped),
+					showTopSeparator: result.length > 0,
+				});
 			}
 
 			result.push({
@@ -84,7 +84,7 @@ jn.define('crm/entity-detail/component/menu-provider', (require, exports, module
 				sectionCode: 'action',
 				onItemSelected: () => dialogs.showSharingDialog({ message: currentDomain + qrUrl }),
 				title: BX.message('M_CRM_ENTITY_ACTION_SHARE'),
-				iconUrl: component.path + '/icons/share.png',
+				iconUrl: component.path + '/icons/share2.png',
 				showTopSeparator: result.length > 0,
 			});
 		}
@@ -224,11 +224,11 @@ jn.define('crm/entity-detail/component/menu-provider', (require, exports, module
 		NotifyManager.showLoadingIndicator();
 
 		BX.ajax.runAction(`crmmobile.EntityDetails.${actionName}`, {
-				json: {
-					entityTypeId: detailCard.getEntityTypeId(),
-					entityId: detailCard.getEntityId(),
-				},
-			})
+			json: {
+				entityTypeId: detailCard.getEntityTypeId(),
+				entityId: detailCard.getEntityId(),
+			},
+		})
 			.then(() => {
 				detailCard.emitEntityUpdate(actionName);
 				NotifyManager.hideLoadingIndicatorWithoutFallback();

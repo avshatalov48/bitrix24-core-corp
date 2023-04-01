@@ -156,6 +156,6 @@ class ReserveInfo
 			return true;
 		}
 
-		return $this->reserveQuantity !== 0.0 || $this->deltaReserveQuantity !== 0.0;
+		return $this->deltaReserveQuantity !== 0.0;
 	}
 }

@@ -25,9 +25,6 @@ export default class CompatibleItem extends Item
 		this._actions = [];
 		this._actionContainer = null;
 
-		this._vueComponent = null;
-		this._vueComponentMountedNode = null;
-
 		this._existedStreamItemDeadLine = null;
 	}
 
@@ -45,8 +42,6 @@ export default class CompatibleItem extends Item
 		this._data = settings['data'];
 
 		this._activityEditor = this.getSetting("activityEditor");
-
-		this._vueComponent = this.getSetting("vueComponent");
 
 		this.doInitialize();
 	}
@@ -209,34 +204,6 @@ export default class CompatibleItem extends Item
 		this.showActions(actionQty > 0);
 		/**/
 		//endregion
-	}
-
-	makeVueComponent(options, mode)
-	{
-		if (this._vueComponentMountedNode)
-		{
-			return this._vueComponentMountedNode;
-		}
-
-		if (!this._vueComponent)
-		{
-			return null;
-		}
-
-		const app = new this._vueComponent(
-			{
-				propsData: {
-					self: this,
-					langMessages: CompatibleItem.messages,
-					mode: mode
-				}
-			}
-		);
-
-		app.$mount();
-
-		this._vueComponentMountedNode = app.$el;
-		return this._vueComponentMountedNode;
 	}
 
 	prepareLayout(options)

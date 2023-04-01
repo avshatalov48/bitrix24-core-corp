@@ -499,7 +499,7 @@ final class CCrmEntityProductListComponent
 			$params['PRODUCTS'] = null;
 		}
 
-		if (!isset($params['TOTAL_PRODUCTS_COUNT']) && is_array($params['PRODUCTS']))
+		if (!isset($params['TOTAL_PRODUCTS_COUNT']) && isset($params['PRODUCTS']) && is_array($params['PRODUCTS']))
 		{
 			$params['TOTAL_PRODUCTS_COUNT'] = count($params['PRODUCTS']);
 		}
@@ -582,7 +582,7 @@ final class CCrmEntityProductListComponent
 		{
 			$this->entity['TYPE_NAME'] = $params['ENTITY_TYPE_NAME'];
 			$this->entity['ID'] = $params['ENTITY_ID'];
-			$this->entity['TITLE'] = $params['ENTITY_TITLE'];
+			$this->entity['TITLE'] = $params['ENTITY_TITLE'] ?? null;
 			if ($this->entity['TYPE_NAME'] === \CCrmOwnerType::OrderName)
 			{
 				$this->entity['CRM_FORMAT'] = false;
@@ -1862,8 +1862,9 @@ final class CCrmEntityProductListComponent
 		$headerDefaultMap = Crm\Component\EntityDetails\ProductList::getHeaderDefaultMap();
 		foreach ($result as $key => &$item)
 		{
-			$item['default'] = $headerDefaultMap[$key];
-			if (empty($item['editable']) && $item['editable'] !== false)
+			$item['default'] = $headerDefaultMap[$key] ?? null;
+			$itemEditable = $item['editable'] ?? null;
+			if (empty($itemEditable) && $itemEditable !== false)
 			{
 				$item['editable'] = [
 					'TYPE' => Types::CUSTOM,
@@ -2464,7 +2465,7 @@ final class CCrmEntityProductListComponent
 
 	public function checkProductReadRights()
 	{
-		return AccessController::getCurrent()->check(ActionDictionary::ACTION_CATALOG_READ);
+		return \CCrmSaleHelper::isShopAccess();
 	}
 
 	public function isAllowedProductReserve(): bool
@@ -2615,7 +2616,7 @@ final class CCrmEntityProductListComponent
 					}
 					$this->rows[$index]['IMAGE_INFO'] = Json::encode($imageInfo);
 
-					$storeId = $this->rows[$index]['STORE_ID'];
+					$storeId = $this->rows[$index]['STORE_ID'] ?? null;
 					if (
 						(int)$data['OFFER_ID'] > 0
 						&& (int)$storeId > 0

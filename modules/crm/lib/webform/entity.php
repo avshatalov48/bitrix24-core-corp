@@ -1,16 +1,23 @@
 <?php
+
 /**
  * Bitrix Framework
  * @package bitrix
  * @subpackage crm
  * @copyright 2001-2016 Bitrix
  */
+
 namespace Bitrix\Crm\WebForm;
 
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Crm\UtmTable;
 use Bitrix\Crm\Merger;
+use Bitrix\Crm\Settings\ContactSettings;
+use Bitrix\Crm\Settings\CompanySettings;
+use Bitrix\Crm\Settings\DealSettings;
+use Bitrix\Crm\Settings\LeadSettings;
+use Bitrix\Crm\Settings\QuoteSettings;
+use Bitrix\Crm\UtmTable;
 
 Loc::loadMessages(__FILE__);
 
@@ -46,9 +53,9 @@ class Entity
 					'TITLE' => array(
 						'TEMPLATE' => Loc::getMessage('CRM_WEBFORM_ENTITY_FIELD_NAME_TEMPLATE'),
 					),
-					'OPENED' => array(
-						'TEMPLATE' => 'Y'
-					),
+					'OPENED' => [
+						'TEMPLATE' => LeadSettings::getCurrent()->getOpenedFlag() ? 'Y' : 'N'
+					],
 					'SOURCE_ID' => array(
 						'TEMPLATE' => 'WEBFORM'
 					)
@@ -65,9 +72,9 @@ class Entity
 					'NAME' => array(
 						'TEMPLATE' => Loc::getMessage('CRM_WEBFORM_ENTITY_FIELD_NAME_CONTACT_TEMPLATE'),
 					),
-					'OPENED' => array(
-						'TEMPLATE' => 'Y'
-					),
+					'OPENED' => [
+						'TEMPLATE' => ContactSettings::getCurrent()->getOpenedFlag() ? 'Y' : 'N'
+					],
 					'EXPORT' => array(
 						'TEMPLATE' => 'Y'
 					),
@@ -88,9 +95,9 @@ class Entity
 					'TITLE' => array(
 						'TEMPLATE' => Loc::getMessage('CRM_WEBFORM_ENTITY_FIELD_NAME_COMPANY_TEMPLATE'),
 					),
-					'OPENED' => array(
-						'TEMPLATE' => 'Y'
-					)
+					'OPENED' => [
+						'TEMPLATE' => CompanySettings::getCurrent()->getOpenedFlag() ? 'Y' : 'N'
+					]
 				)
 			),
 			\CCrmOwnerType::DealName => array(
@@ -103,9 +110,9 @@ class Entity
 					'TITLE' => array(
 						'TEMPLATE' => Loc::getMessage('CRM_WEBFORM_ENTITY_FIELD_NAME_TEMPLATE'),
 					),
-					'OPENED' => array(
-						'TEMPLATE' => 'Y'
-					),
+					'OPENED' => [
+						'TEMPLATE' => DealSettings::getCurrent()->getOpenedFlag() ? 'Y' : 'N'
+					],
 					'SOURCE_ID' => array(
 						'TEMPLATE' => 'WEBFORM'
 					)
@@ -117,9 +124,9 @@ class Entity
 					'TITLE' => array(
 						'TEMPLATE' => Loc::getMessage('CRM_WEBFORM_ENTITY_FIELD_NAME_TEMPLATE'),
 					),
-					'OPENED' => array(
-						'TEMPLATE' => 'Y'
-					)
+					'OPENED' => [
+						'TEMPLATE' => QuoteSettings::getCurrent()->getOpenedFlag() ? 'Y' : 'N'
+					]
 				)
 			),
 			\CCrmOwnerType::InvoiceName => array(

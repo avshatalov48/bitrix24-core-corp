@@ -3,7 +3,7 @@
 namespace Bitrix\Crm\Integration\Report;
 
 use Bitrix\Bitrix24\Feature;
-use Bitrix\Main\ModuleManager;
+use Bitrix\Main\Loader;
 use CCrmContact;
 use CCrmCompany;
 use CCrmDeal;
@@ -35,7 +35,7 @@ class Limit
 
 	public static function getLimitationParams($board): array
 	{
-		if (!ModuleManager::isModuleInstalled('bitrix24'))
+		if (!Loader::includeModule('bitrix24'))
 		{
 			return [];
 		}

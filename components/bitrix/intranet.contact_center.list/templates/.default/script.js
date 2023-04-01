@@ -190,12 +190,12 @@
 
 		prepareItem: function (item)
 		{
-			var newItem = {};
-
-			newItem.title = item.NAME;
-			newItem.text = item.NAME;
-			newItem.delimiterAfter = item.DELIMITER_AFTER;
-			newItem.delimiterBefore = item.DELIMITER_BEFORE;
+			const newItem = {
+				title: BX.util.htmlspecialcharsback(item.NAME),
+				text: item.NAME,
+				delimiterAfter: item.DELIMITER_AFTER,
+				delimiterBefore: item.DELIMITER_BEFORE,
+			};
 
 			if (item.IS_ACTIVE === 'Y')
 			{

@@ -784,6 +784,7 @@ class LeadConverter extends EntityConverter
 				if($contactID > 0)
 				{
 					$fields['CONTACT_ID'] = $contactID;
+					// relation was registered on contact add. avoid duplication
 					$entityUpdateOptions['EXCLUDE_FROM_RELATION_REGISTRATION'][] =
 						new Crm\ItemIdentifier(\CCrmOwnerType::Contact, $contactID);
 				}
@@ -792,6 +793,7 @@ class LeadConverter extends EntityConverter
 				if($companyID > 0)
 				{
 					$fields['COMPANY_ID'] = $companyID;
+					// relation was registered on company add. avoid duplication
 					$entityUpdateOptions['EXCLUDE_FROM_RELATION_REGISTRATION'][] =
 						new Crm\ItemIdentifier(\CCrmOwnerType::Company, $companyID);
 				}
@@ -919,6 +921,7 @@ class LeadConverter extends EntityConverter
 
 		$lead = new \CCrmLead(false);
 		$entityFields = array('LEAD_ID' => false);
+		// relation is registered on company/contact update. avoid duplication
 		$leadOptions = [
 			'EXCLUDE_FROM_RELATION_REGISTRATION' => [new Crm\ItemIdentifier($entityTypeID, $entityID)],
 		];

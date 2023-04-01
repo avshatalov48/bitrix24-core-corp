@@ -20,7 +20,7 @@ $childrenCrumbs = array();
 		catalogId: "<?= CUtil::JSEscape($arResult['CATALOG_ID']) ?>",
 		sectionId: "<?= CUtil::JSEscape($arResult['SECTION_ID']) ?>",
 		crumbs: <?= CUtil::PhpToJSObject($arResult['CRUMBS']) ?>,
-		showOnlyDeleted: <?= (int)$arResult['SHOW_ONLY_DELETED'] ?>,
+		showOnlyDeleted: <?= (int)($arResult['SHOW_ONLY_DELETED'] ?? null) ?>,
 		jsEventsMode: <?= CUtil::JSEscape($arResult['JS_EVENTS_MODE'] === 'Y' ? 'true' : 'false') ?>,
 		jsEventsManagerId: "<?= CUtil::JSEscape($arResult['JS_EVENTS_MANAGER_ID']) ?>"
 	});

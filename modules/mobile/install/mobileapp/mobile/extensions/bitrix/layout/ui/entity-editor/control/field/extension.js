@@ -14,7 +14,7 @@
 
 	const { Loc } = jn.require('loc');
 	const { FocusManager } = jn.require('layout/ui/fields/focus-manager');
-	const { isEqual } = jn.require('utils/object');
+	const { isEqual, get } = jn.require('utils/object');
 	const { stringify } = jn.require('utils/string');
 	const { PlanRestriction } = jn.require('layout/ui/plan-restriction');
 	const { DuplicateTooltip } = jn.require('layout/ui/entity-editor/tooltip/duplicate');
@@ -98,8 +98,8 @@
 				id,
 				uid: this.getUid(),
 				type: this.type,
+				context: this.getContext(),
 				testId: `${this.model.id}_${id}`,
-				uid: this.uid,
 				title: this.getTitle(),
 				multiple: this.isMultiple(),
 				placeholder: this.isNewEntity() && this.getCreationPlaceholder(),
@@ -198,6 +198,7 @@
 		{
 			return {
 				...this.schemeElement.getData(),
+				options: this.getOptions(),
 				type: this.type,
 				enableKeyboardHide: true,
 				parentWidget: this.layout,
@@ -242,6 +243,11 @@
 		onChangeState(value)
 		{
 			return this.setValue(value);
+		}
+
+		prepareBeforeSaving(value)
+		{
+			return value;
 		}
 
 		onFocusIn()
@@ -335,7 +341,7 @@
 			const promise = (
 				this.fieldRef
 					.getValueWhileReady()
-					.then((value) => ({ [this.getName()]: value }))
+					.then((value) => ({ [this.getName()]: this.prepareBeforeSaving(value) }))
 			);
 
 			return {
@@ -403,6 +409,11 @@
 			return this.hasContentToDisplay();
 		}
 
+		getOptions()
+		{
+			return this.schemeElement.options;
+		}
+
 		checkOptionFlag(flag)
 		{
 			return BX.UI.EntityEditorControlOptions.check(this.getOptionFlags(), flag);
@@ -415,6 +426,11 @@
 					? this.schemeElement.getOptionsFlags()
 					: BX.UI.EntityEditorControlOptions.none
 			);
+		}
+
+		getContext()
+		{
+			return get(this.editor, ['payload', 'context'], {});
 		}
 
 		hasContentToDisplay()

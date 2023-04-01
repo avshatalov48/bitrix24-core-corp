@@ -26,6 +26,7 @@ jn.define('im/messenger/pull-handler/user', (require, exports, module) => {
 			user.avatar = user.avatar.url;
 			user.invited = params.invited;
 
+			MessengerStore.dispatch('usersModel/set', user);
 			MessengerStore.dispatch('recentModel/set', [user]);
 		}
 

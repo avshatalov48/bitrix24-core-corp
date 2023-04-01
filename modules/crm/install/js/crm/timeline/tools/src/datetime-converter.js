@@ -91,6 +91,11 @@ export default class DatetimeConverter
 		);
 	}
 
+	toFormatString(format: string, now: Date, utc: boolean): string
+	{
+		return DateTimeFormat.format(format, this.#datetime, now, utc);
+	}
+
 	static getSiteDateFormat(): string
 	{
 		return DateTimeFormat.convertBitrixFormat(Loc.getMessage('FORMAT_DATE'));

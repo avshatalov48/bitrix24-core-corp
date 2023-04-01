@@ -32,21 +32,24 @@ abstract class Base extends LogMessage
 		}
 
 		return [
-			'content' => ContentBlockFactory::createFromTemplate(
-				$this->getHistoryItemModel()->get('TITLE_TEMPLATE'),
-				[
-					'#TITLE#' => $titleBlock,
-					'#PRICE_WITH_CURRENCY#' =>
-						(new Money())
-							->setOpportunity(
-								(float)$this->getHistoryItemModel()->get('TOTAL')
-							)
-							->setCurrencyId(
-								(string)$this->getHistoryItemModel()->get('CURRENCY')
-							)
-					,
-				]
-			),
+			'content' =>
+				ContentBlockFactory::createLineOfTextFromTemplate(
+					$this->getHistoryItemModel()->get('TITLE_TEMPLATE'),
+					[
+						'#TITLE#' => $titleBlock,
+						'#PRICE_WITH_CURRENCY#' =>
+							(new Money())
+								->setOpportunity(
+									(float)$this->getHistoryItemModel()->get('TOTAL')
+								)
+								->setCurrencyId(
+									(string)$this->getHistoryItemModel()->get('CURRENCY')
+								)
+						,
+					]
+				)
+					->setTextColor(Text::COLOR_BASE_90)
+			,
 		];
 	}
 

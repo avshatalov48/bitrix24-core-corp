@@ -21,7 +21,7 @@ class OrderContactCompany extends \Bitrix\Sale\Controller\Controller
 		)];
 	}
 
-	public function listAction($select=[], $filter=[], $order=[], PageNavigation $pageNavigation)
+	public function listAction(PageNavigation $pageNavigation, array $select = [], array $filter = [], array $order = []): Page
 	{
 		$select = empty($select)? ['*']:$select;
 		$order = empty($order)? ['ID'=>'ASC']:$order;

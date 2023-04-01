@@ -45,9 +45,9 @@ if (\Bitrix\Main\Loader::includeModule('socialnetwork'))
 		BX.ready(
 			function()
 			{
-				BX.UI.EntityEditorUserSelector.users =  <?=CUtil::PhpToJSObject($socialNetworkData['ITEMS']['USERS'])?>;
-				BX.UI.EntityEditorUserSelector.department = <?=CUtil::PhpToJSObject($socialNetworkData['ITEMS']['DEPARTMENT'])?>;
-				BX.UI.EntityEditorUserSelector.departmentRelation = <?=CUtil::PhpToJSObject($socialNetworkData['ITEMS']['DEPARTMENT_RELATION'])?>;
+				BX.UI.EntityEditorUserSelector.users =  <?=CUtil::PhpToJSObject($socialNetworkData['ITEMS']['USERS'] ?? []);?>;
+				BX.UI.EntityEditorUserSelector.department = <?=CUtil::PhpToJSObject($socialNetworkData['ITEMS']['DEPARTMENT'] ?? []);?>;
+				BX.UI.EntityEditorUserSelector.departmentRelation = <?=CUtil::PhpToJSObject($socialNetworkData['ITEMS']['DEPARTMENT_RELATION'] ?? []);?>;
 				BX.UI.EntityEditorUserSelector.last = <?=CUtil::PhpToJSObject(array_change_key_case($socialNetworkData['ITEMS_LAST'], CASE_LOWER))?>;
 			}
 		);

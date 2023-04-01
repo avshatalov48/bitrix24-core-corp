@@ -9,6 +9,7 @@ use Bitrix\Main\ArgumentTypeException;
 use Bitrix\Main\Error;
 use Bitrix\Main\ORM\Data\DataManager;
 use Bitrix\Main\Result;
+use CCrmFieldMulti;
 
 class MultifieldStorage
 {
@@ -17,12 +18,12 @@ class MultifieldStorage
 	/** @var Array<string, Multifield\Collection> */
 	private $cache = [];
 
-	/** @var \CCrmFieldMulti */
+	/** @var CCrmFieldMulti */
 	private $fieldMulti;
 
 	final public function __construct()
 	{
-		$this->fieldMulti = new \CCrmFieldMulti();
+		$this->fieldMulti = new CCrmFieldMulti();
 	}
 
 	final public function get(ItemIdentifier $owner): Multifield\Collection
@@ -60,11 +61,17 @@ class MultifieldStorage
 	private function fetch(ItemIdentifier $owner): Multifield\Collection
 	{
 		$result = $this->dataManager::fetchByOwner($owner);
+		$extraData = $this->fetchExtraData($owner);
 
 		$collection = new Multifield\Collection();
 		while ($row = $result->fetch())
 		{
 			$value = Multifield\Assembler::valueByDatabaseRow($row);
+			if (isset($extraData[$value->getId()]))
+			{
+				$value->setValueExtra((new Multifield\ValueExtra())->setCountryCode($extraData[$value->getId()]));
+			}
+
 			$collection->add($value);
 		}
 
@@ -79,6 +86,8 @@ class MultifieldStorage
 		while ($row = $result->fetch())
 		{
 			$ownerId = Multifield\Assembler::extractOwnerId($row);
+			$owner = new ItemIdentifier($entityTypeId, $ownerId);
+			$extraData = $this->fetchExtraData($owner);
 
 			$collection = $collections[$ownerId] ?? null;
 			if (!$collection)
@@ -88,10 +97,26 @@ class MultifieldStorage
 			}
 
 			$value = Multifield\Assembler::valueByDatabaseRow($row);
+			if (isset($extraData[$value->getId()]))
+			{
+				$value->setValueExtra((new Multifield\ValueExtra())->setCountryCode($extraData[$value->getId()]));
+			}
+
 			$collection->add($value);
 		}
 
 		return $collections;
+	}
+
+	private function fetchExtraData(ItemIdentifier $owner): array
+	{
+		$phoneIds = $this->dataManager::fetchPhoneIdsByOwner($owner);
+		if (empty($phoneIds))
+		{
+			return [];
+		}
+
+		return CCrmFieldMulti::GetPhoneCountryList($phoneIds);
 	}
 
 	/**
@@ -253,7 +278,7 @@ class MultifieldStorage
 	 *
 	 * @internal
 	 */
-	final protected function setFieldMulti(\CCrmFieldMulti $fieldMulti): self
+	final protected function setFieldMulti(CCrmFieldMulti $fieldMulti): self
 	{
 		$this->fieldMulti = $fieldMulti;
 

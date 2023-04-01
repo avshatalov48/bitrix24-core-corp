@@ -13,8 +13,10 @@ use Bitrix\Crm\Category\EntityTypeRelationsRepository;
 
 Loc::loadMessages(__FILE__);
 
-class ContactDataProvider extends EntityDataProvider
+class ContactDataProvider extends EntityDataProvider implements FactoryOptionable
 {
+	use ForceUseFactoryTrait;
+
 	/** @var ContactSettings|null */
 	protected $settings = null;
 	protected ?Crm\Service\Factory $factory = null;

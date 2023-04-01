@@ -64,6 +64,20 @@ class Quote extends Item
 		return $value;
 	}
 
+	protected function setFromExternalValue(string $commonFieldName, $value): Item
+	{
+		if ($commonFieldName === static::FIELD_NAME_STORAGE_ELEMENTS && is_string($value))
+		{
+			$value = unserialize($value, ['allowed_classes' => false]);
+			if (!is_array($value))
+			{
+				$value = [];
+			}
+		}
+
+		return parent::setFromExternalValue($commonFieldName, $value);
+	}
+
 	public function getCategoryId(): ?int
 	{
 		return null;

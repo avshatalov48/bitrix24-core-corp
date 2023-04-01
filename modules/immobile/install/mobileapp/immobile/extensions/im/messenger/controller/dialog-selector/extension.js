@@ -29,6 +29,11 @@ jn.define('im/messenger/controller/dialog-selector', (require, exports, module) 
 			{
 				throw new Error('DialogSelector: options.view is required');
 			}
+			if (options.entities)
+			{
+				this.entities = options.entities;
+			}
+			this.onRecentResult = options.onRecentResult;
 
 			this.view.on(EventType.recent.scopeSelected, this.view.onScopeSelected.bind(this.view));
 			this.view.on(EventType.recent.userTypeText, this.view.onUserTypeText.bind(this.view));
@@ -44,6 +49,7 @@ jn.define('im/messenger/controller/dialog-selector', (require, exports, module) 
 				providerOptions: {
 					minSearchSize : MessengerParams.get('MIN_SEARCH_SIZE', 3),
 				},
+				entities: this.entities,
 				isNetworkSearchAvailable: MessengerParams.get('IS_NETWORK_SEARCH_AVAILABLE', false),
 			};
 
@@ -54,6 +60,10 @@ jn.define('im/messenger/controller/dialog-selector', (require, exports, module) 
 			}
 
 			this.selector = new ChatSelector(chatSelectorOptions);
+			if (this.onRecentResult)
+			{
+				this.selector.onRecentResult = this.onRecentResult;
+			}
 
 			this.selector
 				.setSingleChoose(true)

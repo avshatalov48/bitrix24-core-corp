@@ -22,7 +22,7 @@ class Dynamic extends Broker
 				'filter' => [
 					'@ID' => $id,
 				],
-			]);
+			])[0] ?? null;
 		}
 
 		return null;

@@ -17,14 +17,19 @@ class CDavXmlDocument
 		xml_parser_set_option($xmlParser, XML_OPTION_SKIP_WHITE, 1);
 		xml_parser_set_option($xmlParser, XML_OPTION_CASE_FOLDING, 0);
 
-		$xmlTags = array();
+		$xmlTags = [];
 		$rc = xml_parse_into_struct($xmlParser, $data, $xmlTags);
-		if ($rc == false)
-			throw new CDavXMLParsingException(xml_error_string(xml_get_error_code($xmlParser)), xml_get_current_line_number($xmlParser), xml_get_current_column_number($xmlParser));
+		if ($rc === 0)
+		{
+			$xmlTags = null;
+		}
+		// throw new CDavXMLParsingException(xml_error_string(xml_get_error_code($xmlParser)), xml_get_current_line_number($xmlParser), xml_get_current_column_number($xmlParser));
 
 		xml_parser_free($xmlParser);
-		if (count($xmlTags) == 0)
+		if (!is_array($xmlTags) || empty($xmlTags))
+		{
 			$xmlTags = null;
+		}
 
 		return $xmlTags;
 	}

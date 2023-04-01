@@ -1,11 +1,20 @@
+:root {
+	--crm-product-list-dark-color: #525c69;
+	--crm-product-list-light-color: rgba(82,92,105,.5);
+}
+
 .crm-product-list-payment-side-table {
 	width: 50%;
 	font: 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
-	color: #525c69;
+	color: var(--crm-product-list-dark-color);
 }
 
 .crm-product-list-payment-side-table-row {
     text-align: right;
+}
+
+.crm-product-list-payment-side-table-column {
+	color: var(--crm-product-list-light-color);
 }
 
 .crm-product-list-payment-side-table td.crm-product-list-payment-side-table-td-border {
@@ -28,11 +37,11 @@
 }
 
 .crm-product-list-result-grid-item-currency-symbol {
-	color: rgba(82,92,105,.5);
+	color: var(--crm-product-list-light-color);
 }
 
 .crm-product-list-result-grid-total-big .crm-product-list-result-grid-item-currency-symbol {
-	color: rgba(82,92,105,.5);
+	color: var(--crm-product-list-light-color);
 	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
 	font-weight: var(--ui-font-weight-regular, 400);
 }
@@ -58,7 +67,7 @@
 	align-items: center;
 	justify-content: flex-end;
 	font: 15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
-	color: #525c69;
+	color: var(--crm-product-list-dark-color);
 	margin-bottom: 5px;
 }
 
@@ -68,7 +77,8 @@
 	max-width: calc(100% - 160px);
 }
 
-.crm-product-list-result-grid-benefit {
+.crm-product-list-result-grid-benefit,
+.crm-product-list-result-grid-benefit .crm-product-list-result-grid-total {
 	color: #6e881a;
 }
 
@@ -79,15 +89,19 @@
 }
 
 .crm-product-list-result-grid-total {
-	color: #525c69;
+	color: var(--crm-product-list-dark-color);
 }
 
 .crm-product-list-result-grid-total-big {
 	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
 	font-weight: var(--ui-font-weight-semi-bold, 600);
 	font-size: 21px;
-	color: #525c69;
+	color: var(--crm-product-list-dark-color);
 	padding-top: 10px;
+}
+
+.crm-product-list-result-grid-total-big.crm-product-list-payment-side-table-column {
+	color: var(--crm-product-list-light-color);
 }
 
 .crm-product-list-result-grid-total-big .crm-product-list-result-grid-item-currency {
@@ -96,4 +110,3 @@
 	white-space: nowrap;
 	padding-left: 5px
 }
-

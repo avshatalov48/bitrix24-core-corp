@@ -188,6 +188,11 @@ class TypeTable extends UserField\Internal\TypeDataManager
 			->configureDefaultValue('N')
 			->configureRequired()
 			->configureTitle(Loc::getMessage('CRM_TYPE_TYPE_IS_PAYMENTS_ENABLED_TITLE'));
+		$fieldsMap[] = (new ORM\Fields\BooleanField('IS_COUNTERS_ENABLED'))
+			->configureStorageValues('N', 'Y')
+			->configureDefaultValue('N')
+			->configureRequired()
+			->configureTitle(Loc::getMessage('CRM_TYPE_TYPE_IS_COUNTERS_ENABLED_TITLE'));
 
 		return $fieldsMap;
 	}

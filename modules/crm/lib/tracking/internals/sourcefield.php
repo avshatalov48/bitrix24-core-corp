@@ -176,7 +176,7 @@ class SourceFieldTable extends Main\ORM\Data\DataManager
 		])->fetchAll();
 		foreach ($list as $item)
 		{
-			if (!is_array($fields[$item['SOURCE_ID']]))
+			if (!isset($fields[$item['SOURCE_ID']]) || !is_array($fields[$item['SOURCE_ID']]))
 			{
 				$fields[$item['SOURCE_ID']] = $defaults;
 			}

@@ -128,7 +128,7 @@
 						className: 'salescenter-paysystem-item-image'
 					},
 					style: {
-						top: this.data.recommendation ? '22px' : null,
+						top: this.data.recommendation ? '25px' : null,
 						backgroundSize: this.outerImage ? '50px' : '',
 						backgroundImage: this.image ? 'url("' + encodeURI(this.image) + '")' : null
 					}

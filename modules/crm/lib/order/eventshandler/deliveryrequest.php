@@ -30,7 +30,10 @@ final class DeliveryRequest
 		/** @var string $addressee */
 		$addressee = $event->getParameter('ADDRESSEE');
 
-		if (!$message instanceof Message\Message || $addressee !== Manager::MESSAGE_RECIPIENT_ADDRESSEE)
+		if (
+			!$message instanceof Message\Message
+			|| $addressee !== Manager::MESSAGE_RECIPIENT_ADDRESSEE
+		)
 		{
 			return;
 		}
@@ -45,7 +48,6 @@ final class DeliveryRequest
 
 		$entityCommunication = $order->getContactCompanyCollection()->getEntityCommunication();
 		$phoneTo = $order->getContactCompanyCollection()->getEntityCommunicationPhone();
-
 		if (!$entityCommunication || !$phoneTo)
 		{
 			return;
@@ -68,7 +70,7 @@ final class DeliveryRequest
 				'TEMPLATE_CODE' => 'ORDER_IN_TRANSIT',
 				'PLACEHOLDERS' => [
 					'NAME' => $entityCommunication->getCustomerName(),
-					'ORDER' => $order->getField('ACCOUNT_NUMBER')
+					'ORDER' => $order->getField('ACCOUNT_NUMBER'),
 				]
 			];
 		}
@@ -89,9 +91,9 @@ final class DeliveryRequest
 								'extraBindings' => [
 									[
 										'TYPE_ID' => $entityCommunication::getEntityType(),
-										'ID' => $entityCommunication->getField('ENTITY_ID')
-									]
-								]
+										'ID' => $entityCommunication->getField('ENTITY_ID'),
+									],
+								],
 							]
 						),
 					]

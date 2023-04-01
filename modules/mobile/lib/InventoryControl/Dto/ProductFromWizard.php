@@ -16,6 +16,8 @@ final class ProductFromWizard extends Dto
 
 	public $documentCurrency;
 
+	public $documentType;
+
 	public $id;
 
 	public $measureCode;
@@ -33,11 +35,17 @@ final class ProductFromWizard extends Dto
 	/**
 	 * @var Store|null
 	 */
+	public $storeFrom;
+
+	/**
+	 * @var Store|null
+	 */
 	public $storeTo;
 
 	public function getCasts(): array
 	{
 		return [
+			'storeFrom' => Type::object(Store::class),
 			'storeTo' => Type::object(Store::class),
 		];
 	}

@@ -390,8 +390,8 @@ foreach($arResult['CONTACT'] as $sKey =>  $arContact)
 						$arBizprocList[] = array(
 							'TITLE' => $arBizproc['DESCRIPTION'],
 							'TEXT' => $arBizproc['NAME'],
-							'ONCLICK' => isset($arBizproc['ONCLICK']) ?
-								$arBizproc['ONCLICK']
+							'ONCLICK' => isset($arBizproc['ONCLICK'])
+								? $arBizproc['ONCLICK']
 								: "jsUtils.Redirect([], '".CUtil::JSEscape($arBizproc['PATH_TO_BIZPROC_START'])."');"
 						);
 					}
@@ -405,21 +405,32 @@ foreach($arResult['CONTACT'] as $sKey =>  $arContact)
 		}
 	}
 
-	$eventParam = array(
+	$eventParam = [
 		'ID' => $arContact['ID'],
 		'CALL_LIST_ID' => $arResult['CALL_LIST_ID'],
 		'CALL_LIST_CONTEXT' => $arResult['CALL_LIST_CONTEXT'],
-		'GRID_ID' => $arResult['GRID_ID']
-	);
-	foreach(GetModuleEvents('crm', 'onCrmContactListItemBuildMenu', true) as $event)
+		'GRID_ID' => $arResult['GRID_ID'],
+	];
+
+	foreach (GetModuleEvents('crm', 'onCrmContactListItemBuildMenu', true) as $event)
 	{
-		ExecuteModuleEventEx($event, array('CRM_CONTACT_LIST_MENU', $eventParam, &$arActions));
+		ExecuteModuleEventEx($event, ['CRM_CONTACT_LIST_MENU', $eventParam, &$arActions]);
 	}
 
-	$_sBPHint = 'class="'.($arContact['BIZPROC_STATUS'] != '' ? 'bizproc bizproc_status_'.$arContact['BIZPROC_STATUS'] : '').'"
-				'.($arContact['BIZPROC_STATUS_HINT'] != '' ? 'onmouseover="BX.hint(this, \''.CUtil::JSEscape($arContact['BIZPROC_STATUS_HINT']).'\');"' : '');
+	$dateCreate = $arContact['DATE_CREATE'] ?? '';
+	$dateModify = $arContact['DATE_MODIFY'] ?? '';
+	$sourceId = null;
+	if (isset($arContact['SOURCE_ID']))
+	{
+		$sourceId = $arResult['SOURCE_LIST'][$arContact['SOURCE_ID']] ?? $arContact['SOURCE_ID'];
+	}
+	$webformId = null;
+	if (isset($arContact['WEBFORM_ID']))
+	{
+		$webformId = $arResult['WEBFORM_LIST'][$arContact['WEBFORM_ID']] ?? $arContact['WEBFORM_ID'];
+	}
 
-	$resultItem = array(
+	$resultItem = [
 		'id' => $arContact['ID'],
 		'actions' => $arActions,
 		'data' => $arContact,
@@ -437,22 +448,23 @@ foreach($arResult['CONTACT'] as $sKey =>  $arContact)
 			'COMPANY_ID' => isset($arContact['COMPANY_INFO']) ? CCrmViewHelper::PrepareClientInfo($arContact['COMPANY_INFO']) : '',
 			'ASSIGNED_BY' => $arContact['~ASSIGNED_BY_ID'] > 0
 				? CCrmViewHelper::PrepareUserBaloonHtml(
-					array(
+					[
 						'PREFIX' => "CONTACT_{$arContact['~ID']}_RESPONSIBLE",
 						'USER_ID' => $arContact['~ASSIGNED_BY_ID'],
 						'USER_NAME'=> $arContact['ASSIGNED_BY'],
-						'USER_PROFILE_URL' => $arContact['PATH_TO_USER_PROFILE']
-					)
-				) : '',
-			'COMMENTS' => htmlspecialcharsback($arContact['COMMENTS']),
-			'SOURCE_DESCRIPTION' => nl2br($arContact['SOURCE_DESCRIPTION']),
-			'DATE_CREATE' => FormatDate($arResult['TIME_FORMAT'], MakeTimeStamp($arContact['DATE_CREATE']), $now),
-			'DATE_MODIFY' => FormatDate($arResult['TIME_FORMAT'], MakeTimeStamp($arContact['DATE_MODIFY']), $now),
-			'HONORIFIC' => isset($arResult['HONORIFIC'][$arContact['HONORIFIC']]) ? $arResult['HONORIFIC'][$arContact['HONORIFIC']] : '',
-			'TYPE_ID' => isset($arResult['TYPE_LIST'][$arContact['TYPE_ID']]) ? $arResult['TYPE_LIST'][$arContact['TYPE_ID']] : $arContact['TYPE_ID'],
-			'SOURCE_ID' => isset($arResult['SOURCE_LIST'][$arContact['SOURCE_ID']]) ? $arResult['SOURCE_LIST'][$arContact['SOURCE_ID']] : $arContact['SOURCE_ID'],
-			'WEBFORM_ID' => isset($arResult['WEBFORM_LIST'][$arContact['WEBFORM_ID']]) ? $arResult['WEBFORM_LIST'][$arContact['WEBFORM_ID']] : $arContact['WEBFORM_ID'],
-			'CREATED_BY' => $arContact['~CREATED_BY'] > 0
+						'USER_PROFILE_URL' => $arContact['PATH_TO_USER_PROFILE'],
+					]
+				)
+                : '',
+			'COMMENTS' => htmlspecialcharsback($arContact['COMMENTS'] ?? ''),
+			'SOURCE_DESCRIPTION' => nl2br($arContact['SOURCE_DESCRIPTION'] ?? ''),
+			'DATE_CREATE' => FormatDate($arResult['TIME_FORMAT'], MakeTimeStamp($dateCreate), $now),
+			'DATE_MODIFY' => FormatDate($arResult['TIME_FORMAT'], MakeTimeStamp($dateModify), $now),
+			'HONORIFIC' => $arResult['HONORIFIC'][$arContact['HONORIFIC']] ?? '',
+			'TYPE_ID' => $arResult['TYPE_LIST'][$arContact['TYPE_ID']] ?? $arContact['TYPE_ID'],
+			'SOURCE_ID' => $sourceId,
+			'WEBFORM_ID' => $webformId,
+			'CREATED_BY' => isset($arContact['~CREATED_BY']) && $arContact['~CREATED_BY'] > 0
 				? CCrmViewHelper::PrepareUserBaloonHtml(
 					array(
 						'PREFIX' => "CONTACT_{$arContact['~ID']}_CREATOR",
@@ -461,7 +473,7 @@ foreach($arResult['CONTACT'] as $sKey =>  $arContact)
 						'USER_PROFILE_URL' => $arContact['PATH_TO_USER_CREATOR']
 					)
 				) : '',
-			'MODIFY_BY' => $arContact['~MODIFY_BY'] > 0
+			'MODIFY_BY' => isset($arContact['~MODIFY_BY']) && $arContact['~MODIFY_BY'] > 0
 				? CCrmViewHelper::PrepareUserBaloonHtml(
 					array(
 						'PREFIX' => "CONTACT_{$arContact['~ID']}_MODIFIER",
@@ -471,7 +483,7 @@ foreach($arResult['CONTACT'] as $sKey =>  $arContact)
 					)
 				) : '',
 		) + CCrmViewHelper::RenderListMultiFields($arContact, "CONTACT_{$arContact['ID']}_", array('ENABLE_SIP' => true, 'SIP_PARAMS' => array('ENTITY_TYPE' => 'CRM_'.CCrmOwnerType::ContactName, 'ENTITY_ID' => $arContact['ID']))) + $arResult['CONTACT_UF'][$sKey]
-	);
+	];
 
 	Tracking\UI\Grid::appendRows(
 		\CCrmOwnerType::Contact,
@@ -479,34 +491,34 @@ foreach($arResult['CONTACT'] as $sKey =>  $arContact)
 		$resultItem['columns']
 	);
 
-	if($arResult['ENABLE_OUTMODED_FIELDS'])
+	if ($arResult['ENABLE_OUTMODED_FIELDS'])
 	{
 		$resultItem['columns']['ADDRESS'] = nl2br($arContact['ADDRESS']);
 	}
 
-	if(isset($arContact['~BIRTHDATE']))
+	if (isset($arContact['~BIRTHDATE']))
 	{
 		$resultItem['columns']['BIRTHDATE'] = FormatDate('SHORT', MakeTimeStamp($arContact['~BIRTHDATE']));
 	}
 
 	$userActivityID = isset($arContact['~ACTIVITY_ID']) ? intval($arContact['~ACTIVITY_ID']) : 0;
 	$commonActivityID = isset($arContact['~C_ACTIVITY_ID']) ? intval($arContact['~C_ACTIVITY_ID']) : 0;
-	if($userActivityID > 0)
+	if ($userActivityID > 0)
 	{
 		$resultItem['columns']['ACTIVITY_ID'] = CCrmViewHelper::RenderNearestActivity(
-			array(
+			[
 				'ENTITY_TYPE_NAME' => CCrmOwnerType::ResolveName(CCrmOwnerType::Contact),
 				'ENTITY_ID' => $arContact['~ID'],
 				'ENTITY_RESPONSIBLE_ID' => $arContact['~ASSIGNED_BY'],
 				'GRID_MANAGER_ID' => $gridManagerID,
 				'ACTIVITY_ID' => $userActivityID,
-				'ACTIVITY_SUBJECT' => isset($arContact['~ACTIVITY_SUBJECT']) ? $arContact['~ACTIVITY_SUBJECT'] : '',
-				'ACTIVITY_TIME' => isset($arContact['~ACTIVITY_TIME']) ? $arContact['~ACTIVITY_TIME'] : '',
-				'ACTIVITY_EXPIRED' => isset($arContact['~ACTIVITY_EXPIRED']) ? $arContact['~ACTIVITY_EXPIRED'] : '',
+				'ACTIVITY_SUBJECT' => $arContact['~ACTIVITY_SUBJECT'] ?? '',
+				'ACTIVITY_TIME' => $arContact['~ACTIVITY_TIME'] ?? '',
+				'ACTIVITY_EXPIRED' => $arContact['~ACTIVITY_EXPIRED'] ?? '',
 				'ALLOW_EDIT' => $arContact['EDIT'],
 				'MENU_ITEMS' => $arActivityMenuItems,
 				'USE_GRID_EXTENSION' => true
-			)
+			]
 		);
 
 		$counterData = array(
@@ -653,7 +665,7 @@ if(!$isInternal
 					'SHOW_EXTRANET_USERS' => 'NONE',
 					'POPUP' => 'Y',
 					'SITE_ID' => SITE_ID,
-					'NAME_TEMPLATE' => $arResult['NAME_TEMPLATE']
+					'NAME_TEMPLATE' => $arResult['NAME_TEMPLATE'] ?? null,
 				),
 				null,
 				array('HIDE_ICONS' => 'Y')
@@ -974,13 +986,15 @@ BX.ready(
 		}
 );
 </script>
-
-<?if(!$isInternal):?>
+<?php if(
+	!$isInternal
+	&& \Bitrix\Main\Application::getInstance()->getContext()->getRequest()->get('IFRAME') !== 'Y'
+	&& \Bitrix\Crm\Settings\Crm::isUniversalActivityScenarioEnabled()
+): ?>
 <script type="text/javascript">
-BX.ready(
+	BX.ready(
 		function()
 		{
-			<?php if (\Bitrix\Crm\Settings\Crm::isUniversalActivityScenarioEnabled()): ?>
 			BX.Runtime.loadExtension(['crm.push-crm-settings', 'crm.toolbar-component']).then((exports) => {
 				/** @see BX.Crm.ToolbarComponent */
 				const settingsButton = exports.ToolbarComponent.Instance.getSettingsButton();
@@ -992,8 +1006,15 @@ BX.ready(
 					grid: BX.Reflection.getClass('BX.Main.gridManager') ? BX.Main.gridManager.getInstanceById('<?= \CUtil::JSEscape($arResult['GRID_ID']) ?>') : undefined,
 				});
 			});
-			<?php endif; ?>
-
+		}
+	);
+</script>
+<?php endif; ?>
+<?if(!$isInternal):?>
+<script type="text/javascript">
+BX.ready(
+		function()
+		{
 			BX.CrmActivityEditor.items['<?= CUtil::JSEscape($activityEditorID)?>'].addActivityChangeHandler(
 					function()
 					{

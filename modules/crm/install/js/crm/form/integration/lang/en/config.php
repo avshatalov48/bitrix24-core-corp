@@ -1,4 +1,8 @@
 <?php
+$MESS["CRM_FORM_INTEGRATION_JS_ALERT_POPUP_BTN_OK"] = "OK";
+$MESS["CRM_FORM_INTEGRATION_JS_ALERT_POPUP_BTN_YES"] = "Select new forms";
+$MESS["CRM_FORM_INTEGRATION_JS_ALERT_POPUP_MESSAGE"] = "Current forms are no longer supported by VK. However, Bitrix24 has already been integrated with the new VK Ads profile.<br/><br/>To get the forms back online and to receive requests, you'll have to re-login to your VK and select the necessary forms.";
+$MESS["CRM_FORM_INTEGRATION_JS_ALERT_POPUP_TITLE"] = "You have to re-select the forms inside the new VK Ads profile";
 $MESS["CRM_FORM_INTEGRATION_JS_FIELD_MAP"] = "Select CRM fields to save submitted data to";
 $MESS["CRM_FORM_INTEGRATION_JS_FORM"] = "Form";
 $MESS["CRM_FORM_INTEGRATION_JS_FORM_CHOOSE"] = "Select a form whose submitted data will be saved to the CRM";

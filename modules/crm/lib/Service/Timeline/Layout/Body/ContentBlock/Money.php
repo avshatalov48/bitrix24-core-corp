@@ -6,7 +6,7 @@ use Bitrix\Crm\Currency;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock;
 use Bitrix\Main\ArgumentOutOfRangeException;
 
-class Money extends ContentBlock
+class Money extends ContentBlock implements TextPropertiesInterface
 {
 	use TextPropertiesMixin;
 

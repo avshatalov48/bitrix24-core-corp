@@ -17,7 +17,7 @@ $APPLICATION->SetTitle(GetMessage("TITLE"));
 		"PATH_TO_INVOICE_SHOW" => "/crm/invoice/show/#invoice_id#/",
 		"PATH_TO_INVOICE_EDIT" => "/crm/invoice/edit/#invoice_id#/",
 		"PATH_TO_USER_PROFILE" => "/company/personal/user/#user_id#/",
-		"ELEMENT_ID" => $_REQUEST["contact_id"],
+		"ELEMENT_ID" => $_REQUEST["contact_id"] ?? null,
 		"SEF_FOLDER" => "/crm/contact/",
 		"SEF_URL_TEMPLATES" => Array(
 			"index" => "index.php",

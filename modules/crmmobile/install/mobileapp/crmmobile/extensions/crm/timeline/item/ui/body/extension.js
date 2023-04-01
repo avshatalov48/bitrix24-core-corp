@@ -5,6 +5,7 @@ jn.define('crm/timeline/item/ui/body', (require, exports, module) => {
 
 	const { TimelineItemBodyBlockFactory } = require('crm/timeline/item/ui/body/blocks');
 	const { TimelineButtonSorter } = require('crm/timeline/item/ui/styles');
+	const { get } = require('utils/object');
 
 	const nothing = () => {};
 
@@ -25,7 +26,7 @@ jn.define('crm/timeline/item/ui/body', (require, exports, module) => {
 					style: {
 						paddingHorizontal: 16,
 						paddingTop: 0,
-						paddingBottom: 16,
+						paddingBottom: get(this, 'props.style.paddingBottom', 16),
 					}
 				},
 				this.renderBodyLogo(),

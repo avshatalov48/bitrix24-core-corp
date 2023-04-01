@@ -1,5 +1,9 @@
 <?php
-if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 use Bitrix\Crm\Attribute\FieldAttributeManager;
 use Bitrix\Crm\Category\NamingHelper;
@@ -20,7 +24,7 @@ $isClientCompany = !$isMyCompany;
 $APPLICATION->IncludeComponent(
 	'bitrix:crm.activity.editor',
 	'',
-	array(
+	[
 		'CONTAINER_ID' => '',
 		'EDITOR_ID' => $activityEditorID,
 		'PREFIX' => $prefix,
@@ -30,30 +34,29 @@ $APPLICATION->IncludeComponent(
 		'ENABLE_TASK_ADD' => $arResult['ENABLE_TASK'],
 		'MARK_AS_COMPLETED_ON_VIEW' => false,
 		'SKIP_VISUAL_COMPONENTS' => 'Y'
-	),
+	],
 	$component,
-	array('HIDE_ICONS' => 'Y')
+	['HIDE_ICONS' => 'Y']
 );
 
 $APPLICATION->IncludeComponent(
 	'bitrix:crm.company.menu',
 	'',
-	array(
-		'PATH_TO_COMPANY_LIST' => $arResult['PATH_TO_COMPANY_LIST'],
-		'PATH_TO_COMPANY_SHOW' => $arResult['PATH_TO_COMPANY_SHOW'],
-		'PATH_TO_COMPANY_EDIT' => $arResult['PATH_TO_COMPANY_EDIT'],
-		'PATH_TO_COMPANY_IMPORT' => $arResult['PATH_TO_COMPANY_IMPORT'],
+	[
+		'PATH_TO_COMPANY_LIST' => $arResult['PATH_TO_COMPANY_LIST'] ?? '',
+		'PATH_TO_COMPANY_SHOW' => $arResult['PATH_TO_COMPANY_SHOW'] ?? '',
+		'PATH_TO_COMPANY_EDIT' => $arResult['PATH_TO_COMPANY_EDIT'] ?? '',
+		'PATH_TO_COMPANY_IMPORT' => $arResult['PATH_TO_COMPANY_IMPORT'] ?? '',
 		'ELEMENT_ID' => $arResult['ENTITY_ID'],
 		'MYCOMPANY_MODE' => $isMyCompany ? 'Y' : 'N',
-		'MULTIFIELD_DATA' => isset($arResult['ENTITY_DATA']['MULTIFIELD_DATA'])
-			? $arResult['ENTITY_DATA']['MULTIFIELD_DATA'] : array(),
+		'MULTIFIELD_DATA' => $arResult['ENTITY_DATA']['MULTIFIELD_DATA'] ?? [],
 		'OWNER_INFO' => $arResult['ENTITY_INFO'],
-		'BIZPROC_STARTER_DATA' => $arResult['BIZPROC_STARTER_DATA'],
+		'BIZPROC_STARTER_DATA' => $arResult['BIZPROC_STARTER_DATA'] ?? [],
 		'TYPE' => 'details',
-		'SCRIPTS' => array(
+		'SCRIPTS' => [
 			'DELETE' => 'BX.Crm.EntityDetailManager.items["'.CUtil::JSEscape($guid).'"].processRemoval();'
-		)
-	),
+		],
+	],
 	$component
 );
 
@@ -79,10 +82,11 @@ $APPLICATION->IncludeComponent(
 </script><?
 
 $editorContext = $arResult['CONTEXT'];
-if(isset($arResult['ORIGIN_ID']) && $arResult['ORIGIN_ID'] !== '')
+if (isset($arResult['ORIGIN_ID']) && $arResult['ORIGIN_ID'] !== '')
 {
 	$editorContext['ORIGIN_ID'] = $arResult['ORIGIN_ID'];
 }
+
 $APPLICATION->IncludeComponent(
 	'bitrix:crm.entity.details',
 	'',
@@ -142,7 +146,7 @@ $APPLICATION->IncludeComponent(
 	]
 );
 
-if($arResult['ENTITY_ID'] <= 0 && !empty($arResult['FIELDS_SET_DEFAULT_VALUE']))
+if ($arResult['ENTITY_ID'] <= 0 && !empty($arResult['FIELDS_SET_DEFAULT_VALUE']))
 {?>
 	<script type="text/javascript">
 		BX.ready(function () {

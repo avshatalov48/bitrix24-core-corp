@@ -1811,6 +1811,28 @@ abstract class CCrmRestProxyBase implements ICrmRestProxy
 			}
 
 			$fieldType = $info['TYPE'] ?? '';
+
+			switch ($fieldType)
+			{
+				case 'integer':
+				case 'user':
+					if (!$isMultiple && !is_scalar($v))
+					{
+						$fields[$k] = (int)$fields[$k];
+					}
+					break;
+				case 'char':
+				case 'string':
+				case 'date':
+				case 'datetime':
+				case 'crm_status':
+					if (!$isMultiple && !is_scalar($v))
+					{
+						$fields[$k] = (string)$fields[$k];
+					}
+					break;
+			}
+
 			if($fieldType === 'date' || $fieldType === 'datetime')
 			{
 				if($v === '')

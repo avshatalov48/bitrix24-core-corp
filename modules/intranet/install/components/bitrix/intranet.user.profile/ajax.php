@@ -221,15 +221,16 @@ class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Co
 		$user = new CUser;
 		$newPhotoFile = $this->getRequest()->getFile('newPhoto');
 
-		if (
-			class_exists(UI\Avatar\Mask\Helper::class)
+		//region delete after ui 22.1200.0
+		if (class_exists(UI\Avatar\Mask\Helper::class)
 			&& ($maskInfo = UI\Avatar\Mask\Helper::getDataFromRequest('newPhoto', $this->getRequest()))
 		)
 		{
 			[$newPhotoFile, $newPhotoMaskFile] = $maskInfo;
 		}
+		//endregion
 
-		if ($userData['PERSONAL_PHOTO'])
+		if (isset($userData['PERSONAL_PHOTO']) && $userData['PERSONAL_PHOTO'] > 0)
 		{
 			$newPhotoFile['old_file'] = $userData['PERSONAL_PHOTO'];
 			$newPhotoFile['del'] = $userData['PERSONAL_PHOTO'];
@@ -255,7 +256,15 @@ class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Co
 			),
 		))->fetch();
 
-		if (isset($newPhotoMaskFile))
+
+		if (
+			//region TODO: delete after ui 22.1200.0
+			!isset($newPhotoMaskFile) &&
+			class_exists(UI\Avatar\Mask\Helper::class) &&
+			method_exists(UI\Avatar\Mask\Helper::class, 'getMaskedFile') &&
+			//endregion
+			($newPhotoMaskFile = UI\Avatar\Mask\Helper::getMaskedFile('newPhoto'))
+		)
 		{
 			UI\Avatar\Mask\Helper::save($newUserData["PERSONAL_PHOTO"], $newPhotoMaskFile);
 		}

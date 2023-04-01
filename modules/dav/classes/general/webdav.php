@@ -18,8 +18,10 @@ abstract class CDavWebDav
 		$this->request = $request;
 
 		$cs = CDav::GetCharset();
-		if (is_null($cs) || empty($cs))
+		if (empty($cs))
+		{
 			$cs = "utf-8";
+		}
 
 		/** @var CDavRequest $request */
 		$request = $this->request;
@@ -74,11 +76,21 @@ abstract class CDavWebDav
 			$response->SetHttpStatus('401 Unauthorized');
 			$response->AddHeader('WWW-Authenticate: Basic realm="'.$this->davPoweredBy.'"');
 
-			if(($this instanceof CDavWebDavServer) && CDav::isDigestEnabled() && COption::GetOptionString("main", "use_digest_auth", "N") == "Y")
+			if (
+				$this instanceof CDavWebDavServer
+				&& CDav::isDigestEnabled()
+				&& COption::GetOptionString("main", "use_digest_auth", "N") === "Y"
+			)
 			{
 				// On first try we found that we don't know user digest hash. Let ask only Basic auth first.
 				if(\Bitrix\Main\Application::getInstance()->getKernelSession()["BX_HTTP_DIGEST_ABSENT"] !== true)
-					$response->AddHeader('WWW-Authenticate: Digest realm="'.$this->davPoweredBy.'", nonce="'.uniqid().'"');
+				{
+					$response->AddHeader('WWW-Authenticate: Digest realm="'
+						. $this->davPoweredBy
+						. '", nonce="'
+						. uniqid('', true)
+						. '"');
+				}
 			}
 			$response->Render();
 
@@ -86,22 +98,26 @@ abstract class CDavWebDav
 		}
 
 		if (!$this->CheckIfHeaderConditions())
+		{
 			return;
+		}
 
 		$method = mb_strtolower($request->GetParameter("REQUEST_METHOD"));
 		$wrapper = $method."Wrapper";
 
-		if ($method == "head" && !method_exists($this, "head"))
+		if ($method === "head" && !method_exists($this, "head"))
+		{
 			$method = "get";
+		}
 
-		if (method_exists($this, $wrapper) && ($method == "options" || method_exists($this, $method)))
+		if (method_exists($this, $wrapper) && ($method === "options" || method_exists($this, $method)))
 		{
 			$this->$wrapper();
 			$response->Render();
 		}
 		else
 		{
-			if ($request->GetParameter("REQUEST_METHOD") == "LOCK")
+			if ($request->GetParameter("REQUEST_METHOD") === "LOCK")
 			{
 				$error = '412 Precondition failed';
 			}
@@ -131,17 +147,20 @@ abstract class CDavWebDav
 			{
 				$method = mb_strtoupper(mb_substr($method, 0, -7));
 				if (method_exists($this, $method))
+				{
 					$arAllowableMethods[$method] = $method;
+				}
 			}
 		}
 
 		if (isset($arAllowableMethods["GET"]))
+		{
 			$arAllowableMethods["HEAD"] = "HEAD";
+		}
 
 		if (!method_exists($this, "CheckLock"))
 		{
-			unset($arAllowableMethods["LOCK"]);
-			unset($arAllowableMethods["UNLOCK"]);
+			unset($arAllowableMethods["LOCK"], $arAllowableMethods["UNLOCK"]);
 		}
 
 		return $arAllowableMethods;
@@ -160,15 +179,21 @@ abstract class CDavWebDav
 
 			$authorization = $request->GetParameter("Authorization");
 			if (is_null($authorization))
+			{
 				$authorization = $request->GetParameter("REMOTE_USER");
+			}
 			if (is_null($authorization))
+			{
 				$authorization = $request->GetParameter("REDIRECT_REMOTE_USER");
+			}
 
 			if (is_null($phpAuthUser) && !is_null($authorization) && mb_strpos($authorization, 'Basic ') === 0)
 			{
 				$hash = base64_decode(mb_substr($authorization, 6));
 				if (mb_strpos($hash, ':') !== false)
-					list($phpAuthUser, $phpAuthPw) = explode(':', $hash, 2);
+				{
+					[$phpAuthUser, $phpAuthPw] = explode(':', $hash, 2);
+				}
 			}
 
 			return $this->CheckAuth(
@@ -185,11 +210,15 @@ abstract class CDavWebDav
 
 	private function SearchIfHeaderConditionsToken($string, &$pos)
 	{
-		while (in_array($string[$pos], array(' ', '\n', '\r', '\t')))
+		while (in_array($string[$pos], [' ', '\n', '\r', '\t'], true))
+		{
 			++$pos;
+		}
 
 		if (mb_strlen($string) <= $pos)
+		{
 			return false;
+		}
 
 		$c = $string[$pos++];
 
@@ -235,7 +264,7 @@ abstract class CDavWebDav
 		{
 			$token = $this->SearchIfHeaderConditionsToken($str, $pos);
 
-			if ($token[0] == "URI")
+			if ($token[0] === "URI")
 			{
 				$uri = $token[1];
 				$token = $this->SearchIfHeaderConditionsToken($str, $pos);
@@ -245,7 +274,7 @@ abstract class CDavWebDav
 				$uri = "";
 			}
 
-			if ($token[0] != "CHAR" || $token[1] != "(")
+			if ($token[0] !== "CHAR" || $token[1] !== "(")
 				return false;
 
 			$arList = array();
@@ -254,7 +283,7 @@ abstract class CDavWebDav
 			while ($level)
 			{
 				$token = $this->SearchIfHeaderConditionsToken($str, $pos);
-				if ($token[0] == "NOT")
+				if ($token[0] === "NOT")
 				{
 					$not = "!";
 					continue;
@@ -295,7 +324,9 @@ abstract class CDavWebDav
 			}
 
 			if (!array_key_exists($uri, $arUri))
-				$arUri[$uri] = array();
+			{
+				$arUri[$uri] = [];
+			}
 
 			$arUri[$uri] = array_merge($arUri[$uri], $arList);
 		}
@@ -314,7 +345,9 @@ abstract class CDavWebDav
 	private function CheckIfHeaderUriCondition($uri, $condition)
 	{
 		if (!strncmp("<DAV:", $condition, 5))
+		{
 			return false;
+		}
 
 		return true;
 	}
@@ -331,26 +364,28 @@ abstract class CDavWebDav
 		$request = $this->request;
 
 		$httpIf = $request->GetParameter("HTTP_IF");
-		if ($httpIf != null)
+		if ($httpIf)
 		{
 			$arIfHeaderUris = $this->ParceIfHeaderConditions($httpIf);
 
 			foreach ($arIfHeaderUris as $uri => $arConditions)
 			{
-				if ($uri == "")
+				if (!$uri)
+				{
 					$uri = $request->GetUri();
+				}
 
 				$bMatchConditions = true;
 				foreach ($arConditions as $condition)
 				{
 					// RFC2518 6.3 - 6.4
-					if (!strncmp($condition, "<opaquelocktoken:", mb_strlen("<opaquelocktoken")))
+					if (
+						!strncmp($condition, "<opaquelocktoken:", mb_strlen("<opaquelocktoken"))
+						&& !preg_match('/^<opaquelocktoken:[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}>$/', $condition)
+					)
 					{
-						if (!preg_match('/^<opaquelocktoken:[[:xdigit:]]{8}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{4}-[[:xdigit:]]{12}>$/', $condition))
-						{
-							$this->HttpStatus("423 Locked");
-							return false;
-						}
+						$this->HttpStatus("423 Locked");
+						return false;
 					}
 					if (!$this->CheckIfHeaderUriCondition($uri, $condition))
 					{
@@ -361,7 +396,9 @@ abstract class CDavWebDav
 				}
 
 				if ($bMatchConditions)
+				{
 					return true;
+				}
 			}
 			return false;
 		}
@@ -392,21 +429,27 @@ abstract class CDavWebDav
 
 		$arDav = array(1);
 		if (isset($arAllowableMethods['LOCK']))
+		{
 			$arDav[] = 2;
+		}
 
 		if (method_exists($this, 'OPTIONS'))
+		{
 			$this->OPTIONS($arDav, $arAllowableMethods);
+		}
 
 		$response->SetHttpStatus("200 OK");
-		$response->AddHeader("DAV: ".join(",", $arDav));
-		$response->AddHeader("Allow: ".join(",", $arAllowableMethods));
+		$response->AddHeader("DAV: ".implode(",", $arDav));
+		$response->AddHeader("Allow: ".implode(",", $arAllowableMethods));
 		$response->AddHeader("Content-length: 0");
 	}
 
 	protected function LockDiscovery($path)
 	{
 		if (!method_exists($this, "Checklock"))
+		{
 			return "";
+		}
 
 		$activelocks = "";
 
@@ -417,9 +460,13 @@ abstract class CDavWebDav
 		if (is_array($lock) && count($lock))
 		{
 			if (!empty($lock["EXPIRES"]))
-				$timeout = "Second-".($lock["EXPIRES"] - time());
+			{
+				$timeout = "Second-" . ($lock["EXPIRES"] - time());
+			}
 			else
+			{
 				$timeout = "Infinite";
+			}
 
 			if ($request->IsRedundantNamespaceDeclarationsRequired())
 			{
@@ -490,7 +537,7 @@ abstract class CDavWebDav
 				}
 			}
 
-			if (count($arResources) == 0)
+			if (empty($arResources))
 			{
 				$response->SetHttpStatus("404 Not Found");
 				return;
@@ -499,8 +546,10 @@ abstract class CDavWebDav
 		elseif (is_string($retVal))
 		{
 			$message = "";
-			if (mb_substr($retVal, 0, 3) == '501')
+			if (mb_strpos($retVal, '501') === 0)
+			{
 				$message .= "The requested feature is not supported by this server.\n";
+			}
 			$response->GenerateError($retVal, $message);
 
 			return;
@@ -511,25 +560,29 @@ abstract class CDavWebDav
 		$dav = array(1);
 		$allow = false;
 		if (method_exists($this, 'OPTIONS'))
+		{
 			$this->OPTIONS($dav, $allow);
+		}
 
-		$response->AddHeader("DAV: ".join(",", $dav));
+		$response->AddHeader("DAV: ".implode(",", $dav));
 		$response->AddHeader('Content-Type: text/xml; charset="utf-8"');
 
 		$response->AddLine("<D:multistatus xmlns:D=\"DAV:\"".($this instanceof CDavWebDavServer ? " xmlns:Office=\"urn:schemas-microsoft-com:office:office\" xmlns:Repl=\"http://schemas.microsoft.com/repl/\" xmlns:Z=\"urn:schemas-microsoft-com:\"" : "").">");
 
 		$bRequestedAllProp = (count($requestDocument->GetPath('/*/DAV::allprop')) > 0);
 		if ($this instanceof CDavWebDavServer)
+		{
 			$bRequestedAllProp = true;
-
-		$bRequestedPropName = (count($requestDocument->GetPath('/*/DAV::propname')) > 0);
+		}
 
 		$arRequestedPropsList = array();
 		if (!$bRequestedAllProp)
 		{
 			$ar = $requestDocument->GetPath('/*/DAV::prop/*');
 			foreach ($ar as $pw)
-				$arRequestedPropsList[] = array("xmlns" => $pw->GetXmlNS(), "tagname" => $pw->GetTag());
+			{
+				$arRequestedPropsList[] = ["xmlns" => $pw->GetXmlNS(), "tagname" => $pw->GetTag()];
+			}
 		}
 
 		foreach ($arResources as $resource)
@@ -539,7 +592,9 @@ abstract class CDavWebDav
 
 			$arRequestedProps = &$arRequestedPropsList;
 			if ($bRequestedAllProp)
+			{
 				$arRequestedProps = &$arResourceProps;
+			}
 
 			$xmlnsHash = array('DAV:' => 'D');
 			$xmlnsDefs = 'xmlns:ns0="urn:uuid:c2f41010-65b3-11d1-a29f-00aa00c14882/"';
@@ -567,13 +622,13 @@ abstract class CDavWebDav
 						$arPropStat["200"][] = CDavResource::MakeProp("lockdiscovery", $this->LockDiscovery($resource->GetPath()), "DAV:");
 						$bFound = true;
 					}
-					elseif ($request->GetParameter('HTTP_BRIEF') != 't')
+					elseif ($request->GetParameter('HTTP_BRIEF') !== 't')
 					{
 						$arPropStat["404"][] = CDavResource::MakeProp($requestedProp["tagname"], "", $requestedProp["xmlns"]);
 					}
 				}
 
-				if (!empty($requestedProp["xmlns"]) && ($bFound || $request->GetParameter('HTTP_BRIEF') != 't'))
+				if (!empty($requestedProp["xmlns"]) && ($bFound || $request->GetParameter('HTTP_BRIEF') !== 't'))
 				{
 					$xmlns = $requestedProp["xmlns"];
 					if (!isset($xmlnsHash[$xmlns]))
@@ -596,7 +651,9 @@ abstract class CDavWebDav
 				$response->AddLine("    <D:prop>");
 
 				foreach ($arPropStat["200"] as &$p)
+				{
 					CDavResource::RenderProperty($p, $xmlnsHash, $response, $request);
+				}
 
 				$response->AddLine("    </D:prop>");
 				$response->AddLine("    <D:status>HTTP/1.1 200 OK</D:status>");
@@ -609,7 +666,9 @@ abstract class CDavWebDav
 				$response->AddLine("    <D:prop>");
 
 				foreach ($arPropStat["404"] as &$p)
+				{
 					CDavResource::RenderProperty($p, $xmlnsHash, $response, $request);
+				}
 
 				$response->AddLine("    </D:prop>");
 				$response->AddLine("    <D:status>HTTP/1.1 404 Not Found</D:status>");
@@ -710,17 +769,14 @@ abstract class CDavWebDav
 
 		$arHttpRanges = null;
 		$httpRange = $request->GetParameter("HTTP_RANGE");
-		if (!is_null($httpRange))
+		if (!is_null($httpRange) && preg_match('/bytes\s*=\s*(.+)/', $httpRange, $arMatches))
 		{
-			if (preg_match('/bytes\s*=\s*(.+)/', $httpRange, $arMatches))
+			$arHttpRanges = array();
+			$arRanges = explode(",", $arMatches[1]);
+			foreach ($arRanges as $range)
 			{
-				$arHttpRanges = array();
-				$arRanges = explode(",", $arMatches[1]);
-				foreach ($arRanges as $range)
-				{
-					list($start, $end) = explode("-", $range);
-					$arHttpRanges[] = ($start === "") ? array("last" => $end) : array("start" => $start, "end" => $end);
-				}
+				[$start, $end] = explode("-", $range);
+				$arHttpRanges[] = ($start === "") ? array("last" => $end) : array("start" => $start, "end" => $end);
 			}
 		}
 
@@ -731,15 +787,21 @@ abstract class CDavWebDav
 			$response->TurnOnBinaryOutput();
 
 			if (!isset($arResult['mimetype']))
+			{
 				$arResult['mimetype'] = "application/octet-stream";
+			}
 
-			if ($arResult['mimetype'] == 'application/zip')
+			if ($arResult['mimetype'] === 'application/zip')
+			{
 				ini_set('zlib.output_compression', 0);
+			}
 
 			$response->AddHeader("Content-type: ".$arResult['mimetype']);
 
 			if (isset($arResult['mtime']))
-				$response->AddHeader("Last-modified:".gmdate("D, d M Y H:i:s ", $arResult['mtime'])."GMT");
+			{
+				$response->AddHeader("Last-modified:" . gmdate("D, d M Y H:i:s ", $arResult['mtime']) . "GMT");
+			}
 
 			$response->AddHeader("Cache-Control: maxage=1");
 			$response->AddHeader("Pragma: public");
@@ -748,7 +810,9 @@ abstract class CDavWebDav
 			if (isset($arResult['headers']))
 			{
 				foreach ($arResult['headers'] as $h)
+				{
 					$response->AddHeader($h);
+				}
 			}
 
 			if (($rETag = $request->GetParameter('HTTP_IF_NONE_MATCH')) && trim($rETag, '"\'') == $eTag)
@@ -756,7 +820,8 @@ abstract class CDavWebDav
 				$response->SetHttpStatus('304 Not Modified');
 				return;
 			}
-			elseif (isset($arResult['stream']))
+
+			if (isset($arResult['stream']))
 			{
 				if (!is_null($arHttpRanges) && (0 === fseek($arResult['stream'], 0, SEEK_SET)))
 				{
@@ -792,7 +857,7 @@ abstract class CDavWebDav
 								if (isset($arResult['size']))
 								{
 									$response->AddHeader("Content-length: ".($arResult['size'] - $range['start']));
-									$response->AddHeader("Content-range: ".$range['start']."-".$range['end']."/".(isset($arResult['size']) ? $arResult['size'] : "*"));
+									$response->AddHeader("Content-range: ".$range['start']."-".$range['end']."/".($arResult['size'] ?? "*"));
 								}
 								while (!feof($arResult['stream']))
 								{
@@ -827,7 +892,7 @@ abstract class CDavWebDav
 								$from = $arResult['size'] - $range['last'] - 1;
 								$to = $arResult['size'] - 1;
 							}
-							$total = isset($arResult['size']) ? $arResult['size'] : "*";
+							$total = $arResult['size'] ?? "*";
 							$size = $to - $from + 1;
 							$this->MultipartByteRangeHeader($arResult['mimetype'], $from, $to, $total);
 
@@ -856,10 +921,7 @@ abstract class CDavWebDav
 			}
 			elseif (isset($arResult['data']))
 			{
-				if (is_array($arResult['data']))
-				{
-				}
-				else
+				if (!is_array($arResult['data']))
 				{
 					$response->AddHeader("Content-length: ".mb_strlen($arResult['data']));
 					$response->AddLine($arResult['data']);
@@ -893,25 +955,37 @@ abstract class CDavWebDav
 			$arResult = array();
 			$status = $this->GET($arResult);
 			if (!isset($arResult['size']))
+			{
 				$arResult['size'] = ob_get_length();
+			}
 			ob_end_clean();
 		}
 
 		if (!isset($arResult['mimetype']))
+		{
 			$arResult['mimetype'] = "application/octet-stream";
+		}
 
 		$response->AddHeader("Content-type: ".$arResult["mimetype"]);
 
 		if (isset($arResult['mtime']))
-			$response->AddHeader("Last-modified:".gmdate("D, d M Y H:i:s ", $arResult['mtime'])."GMT");
+		{
+			$response->AddHeader("Last-modified:" . gmdate("D, d M Y H:i:s ", $arResult['mtime']) . "GMT");
+		}
 
 		if (isset($arResult['size']))
-			$response->AddHeader("Content-length: ".$arResult['size']);
+		{
+			$response->AddHeader("Content-length: " . $arResult['size']);
+		}
 
 		if ($status === true)
+		{
 			$status = "200 OK";
+		}
 		if ($status === false)
+		{
 			$status = "404 Not found";
+		}
 
 		$response->SetHttpStatus($status);
 	}
@@ -935,12 +1009,14 @@ abstract class CDavWebDav
 		if (method_exists($this, "CheckLock"))
 		{
 			$lock = $this->CheckLock($path);
-			if (is_array($lock) && count($lock))
+			if (is_array($lock) && !empty($lock))
 			{
 				if ($this->request->GetParameter("HTTP_IF") === null || !mb_strstr($this->request->GetParameter("HTTP_IF"), $lock["ID"]))
 				{
 					if (!$exclusiveOnly || ($lock["LOCK_SCOPE"] !== "shared"))
+					{
 						return false;
+					}
 				}
 			}
 		}
@@ -963,11 +1039,18 @@ abstract class CDavWebDav
 
 		$errorMessage = "";
 		if (!strncmp($arContentParameters["CONTENT_TYPE"], "multipart/", 10))
+		{
 			$errorMessage = "The service does not support mulipart PUT requests";
+		}
 		elseif (array_key_exists("CONTENT_ENCODING", $arContentParameters))
-			$errorMessage = str_replace("#VAL#", $arContentParameters["CONTENT_ENCODING"], "The service does not support '#VAL#' content encoding");
+		{
+			$errorMessage = str_replace("#VAL#", $arContentParameters["CONTENT_ENCODING"],
+				"The service does not support '#VAL#' content encoding");
+		}
 		elseif (array_key_exists("HTTP_CONTENT_MD5", $arContentParameters))
+		{
 			$errorMessage = "The service does not support content MD5 checksum verification";
+		}
 		else
 		{
 			// RFC 2616 2.6: The recipient of the entity MUST NOT ignore any Content-* (e.g. Content-Range) headers that it
@@ -1010,9 +1093,9 @@ abstract class CDavWebDav
 		{
 			$stat = "403 Forbidden";
 		}
-		elseif (is_resource($stat) && get_resource_type($stat) == 'stream')
+		elseif (is_resource($stat) && get_resource_type($stat) === 'stream')
 		{
-			$inputStream = fopen('php://input', 'r');
+			$inputStream = fopen('php://input', 'rb');
 
 			@set_time_limit(0);
 			$stream = $stat;
@@ -1067,12 +1150,9 @@ abstract class CDavWebDav
 		$depth = $request->GetParameter("HTTP_DEPTH");
 		if (!is_null($depth))
 		{
-			if ($depth != "infinity")
+			if ($depth !== "infinity")
 			{
-				if (mb_strpos(mb_strtolower($request->GetParameter('HTTP_USER_AGENT')), 'webdrive') !== false)
-				{
-				}
-				else
+				if (!mb_stripos($request->GetParameter('HTTP_USER_AGENT'), 'webdrive') !== false)
 				{
 					$response->SetHttpStatus('400 Bad Request');
 					return;
@@ -1102,9 +1182,13 @@ abstract class CDavWebDav
 		$request = $this->request;
 
 		if ($this->CheckLockStatus($request->GetPath()))
+		{
 			$this->CopyMove("Move");
+		}
 		else
+		{
 			$this->response->SetHttpStatus("423 Locked");
+		}
 	}
 
 	private function CopyMove($what)
@@ -1118,8 +1202,10 @@ abstract class CDavWebDav
 
 		$path = urldecode($pu['path']);
 		$httpHost = $pu['host'];
-		if (isset($pu['port']) && $pu['port'] != 80 && $pu['port'] != 443)
-			$httpHost .= ":".$pu['port'];
+		if (isset($pu['port']) && (int)$pu['port'] !== 80 && (int)$pu['port'] !== 443)
+		{
+			$httpHost .= ":" . $pu['port'];
+		}
 
 		$httpHeaderHost = preg_replace("/:(80|443)$/", "", $request->GetParameter("HTTP_HOST"));
 
@@ -1127,7 +1213,9 @@ abstract class CDavWebDav
 		{
 			$dest = $path;
 			if (!strncmp($request->GetParameter("SCRIPT_NAME"), $path, mb_strlen($request->GetParameter("SCRIPT_NAME"))))
+			{
 				$dest = mb_substr($path, mb_strlen($request->GetParameter("SCRIPT_NAME")));
+			}
 			if (!$this->CheckLockStatus($dest))
 			{
 				$response->SetHttpStatus("423 Locked");
@@ -1143,9 +1231,13 @@ abstract class CDavWebDav
 		// RFC 2518 Sections 9.6, 8.8.4, 8.9.3
 		$httpOverwrite = $request->GetParameter("HTTP_OVERWRITE");
 		if (!is_null($httpOverwrite))
-			$overwrite = ($httpOverwrite == "T");
+		{
+			$overwrite = ($httpOverwrite === "T");
+		}
 		else
+		{
 			$overwrite = true;
+		}
 
 		$stat = $this->$what($dest, $httpDestination, $overwrite);
 		$response->SetHttpStatus($stat);
@@ -1224,13 +1316,17 @@ abstract class CDavWebDav
 		$stat = $this->LOCK($locktoken, $httpTimeout, $owner, $scope, $type, $updateLock);
 
 		if (is_bool($stat))
+		{
 			$httpStat = $stat ? "200 OK" : "423 Locked";
+		}
 		else
+		{
 			$httpStat = $stat;
+		}
 
 		$response->SetHttpStatus($httpStat);
 
-		if (mb_substr($httpStat, 0, 1) == 2)
+		if (mb_strpos($httpStat, 2) === 0)
 		{
 			// 2xx states are ok
 			if (!is_null($httpTimeout))
@@ -1239,9 +1335,13 @@ abstract class CDavWebDav
 //				{
 					// more than a million is considered an absolute timestamp less is more likely a relative value
 					if ($httpTimeout > 1000000)
-						$timeout = "Second-".($httpTimeout - time());
+					{
+						$timeout = "Second-" . ($httpTimeout - time());
+					}
 					else
-						$timeout = "Second-".$httpTimeout;
+					{
+						$timeout = "Second-" . $httpTimeout;
+					}
 //				}
 //				else
 //				{
@@ -1303,7 +1403,9 @@ abstract class CDavWebDav
 			$content = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n";
 			$content .= "<D:error xmlns:D=\"DAV:\"> \n";
 			foreach ($arResult['errors'] as $e)
-				$content .= "<D:".$e."/>\n";
+			{
+				$content .= "<D:" . $e . "/>\n";
+			}
 			$content .=  "</D:error>\n";
 
 			$size = mb_strlen($content);
@@ -1315,7 +1417,7 @@ abstract class CDavWebDav
 
 	public function UrlEncode($url)
 	{
-		if ($this->request->GetAgent() == 'neon')
+		if ($this->request->GetAgent() === 'neon')
 		{
 			return strtr(rawurlencode($url), array(
 				'%2F' => '/',

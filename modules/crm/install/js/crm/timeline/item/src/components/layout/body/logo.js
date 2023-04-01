@@ -7,6 +7,8 @@ export const Logo = {
 		addIconType: String,
 		icon: String,
 		iconType: String,
+		backgroundUrl: String,
+		backgroundSize: Number,
 		inCircle: {
 			type: Boolean,
 			required: false,
@@ -47,6 +49,23 @@ export const Logo = {
 				`--icon-${this.addIcon}`
 			]
 		},
+
+		iconInteriorStyle()
+		{
+			const result = {};
+
+			if (this.backgroundUrl)
+			{
+				result.backgroundImage = 'url(' + this.backgroundUrl + ')';
+			}
+
+			if (this.backgroundSize)
+			{
+				result.backgroundSize = this.backgroundSize + 'px';
+			}
+
+			return result;
+		}
 	},
 	watch: {
 		icon(newIcon): void
@@ -72,13 +91,12 @@ export const Logo = {
 		<div :class="className" @click="executeAction">
 			<div class="crm-timeline__card-logo_content">
 				<div :class="iconClassname">
-					<i></i>
+					<i :style="iconInteriorStyle"></i>
 				</div>
 				<div :class="addIconClassname" v-if="addIcon">
 					<i></i>
 				</div>
 			</div>
-<!--			<div v-if="action" @click="executeAction" class="crm-timeline__card-icon_action-btn"></div>-->
 		</div>
 	`
 };

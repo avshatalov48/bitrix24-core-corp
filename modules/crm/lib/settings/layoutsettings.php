@@ -89,6 +89,8 @@ class LayoutSettings
 	}
 
 	/**
+	 * @deprecated
+	 *
 	 * Check if user is allowed to change product prices from entity card
 	 * @return bool
 	 */
@@ -123,6 +125,8 @@ class LayoutSettings
 		$this->enableEntityCommodityItemCreation->set($enabled);
 	}
 	/**
+	 * @deprecated
+	 *
 	 * Check if user is allowed to change product prices from entity card
 	 * @return bool
 	 */

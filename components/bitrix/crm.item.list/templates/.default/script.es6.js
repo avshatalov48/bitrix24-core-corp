@@ -17,6 +17,7 @@ class ItemListComponent
 	reloadGridTimeoutId: number;
 	exportPopups: Object;
 	#isUniversalActivityScenarioEnabled: boolean = false;
+	#isIframe: boolean = false;
 
 	constructor(params): void
 	{
@@ -62,6 +63,10 @@ class ItemListComponent
 			if (Type.isBoolean(params.isUniversalActivityScenarioEnabled))
 			{
 				this.#isUniversalActivityScenarioEnabled = params.isUniversalActivityScenarioEnabled;
+			}
+			if (Type.isBoolean(params.isIframe))
+			{
+				this.#isIframe = params.isIframe;
 			}
 		}
 
@@ -175,7 +180,7 @@ class ItemListComponent
 
 	#initPushCrmSettings(): void
 	{
-		if (!this.#isUniversalActivityScenarioEnabled)
+		if (!this.#isUniversalActivityScenarioEnabled || this.#isIframe)
 		{
 			return;
 		}

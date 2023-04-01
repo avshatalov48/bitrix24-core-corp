@@ -210,7 +210,10 @@ export class PushCrmSettings
 		let allowedTypes = [];
 		if (EntityType)
 		{
-			allowedTypes = [EntityType.enumeration.deal];
+			allowedTypes = [
+				EntityType.enumeration.deal,
+				EntityType.enumeration.lead,
+			];
 		}
 
 		return allowedTypes.includes(this.#entityTypeId);

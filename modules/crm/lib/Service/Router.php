@@ -329,14 +329,20 @@ class Router
 
 		$componentParameters = $httpRequest->get(static::GET_COMPONENT_PARAMETERS);
 
+		$entityTypeId = \CCrmOwnerType::Undefined;
+		if (is_string($componentName))
+		{
+			$entityTypeId = $this->getEntityTypeByComponent(
+				$componentName,
+				$componentParameters ?? [],
+			);
+		}
+
 		return new ParseResult(
 			$componentName,
 			$componentParameters,
 			$httpRequest->get(static::GET_COMPONENT_TEMPLATE),
-			$this->getEntityTypeByComponent(
-				$componentName,
-				$componentParameters
-			)
+			$entityTypeId
 		);
 	}
 
@@ -986,7 +992,7 @@ class Router
 		{
 			$currentView = $this->getDefaultListView($entityTypeId);
 		}
-		
+
 		if (isset($methodMap[$currentView]))
 		{
 			$methodName = $methodMap[$currentView];

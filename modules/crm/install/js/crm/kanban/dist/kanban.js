@@ -14,12 +14,10 @@ this.BX.Crm = this.BX.Crm || {};
 	      return instance;
 	    }
 	  }]);
-
 	  function PullOperation(grid) {
 	    babelHelpers.classCallCheck(this, PullOperation);
 	    this.grid = grid;
 	  }
-
 	  babelHelpers.createClass(PullOperation, [{
 	    key: "setItemId",
 	    value: function setItemId(itemId) {
@@ -59,7 +57,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (this.getAction() === 'updateItem') {
 	        return this.updateItem();
 	      }
-
 	      if (this.getAction() === 'addItem') {
 	        return this.addItem();
 	      }
@@ -70,26 +67,20 @@ this.BX.Crm = this.BX.Crm || {};
 	      var params = this.getActionParams();
 	      var item = this.grid.getItem(params.item.id);
 	      var paramsItem = params.item;
-
 	      if (!item) {
 	        return;
 	      }
-
 	      var insertItemParams = {};
-
 	      if (paramsItem.data.lastActivity && paramsItem.data.lastActivity.timestamp !== item.data.lastActivity.timestamp) {
 	        insertItemParams.canShowLastActivitySortTour = true;
 	      }
-
 	      var oldPrice = parseFloat(item.data.price);
 	      var oldColumnId = item.columnId;
-
 	      for (var key in paramsItem.data) {
 	        if (key in item.data) {
 	          item.data[key] = paramsItem.data[key];
 	        }
 	      }
-
 	      item.rawData = paramsItem.rawData;
 	      item.setActivityExistInnerHtml();
 	      item.useAnimation = true;
@@ -101,16 +92,13 @@ this.BX.Crm = this.BX.Crm || {};
 	      insertItemParams.newColumnId = newColumnId;
 	      this.grid.insertItem(item, insertItemParams);
 	      item.columnId = newColumnId;
-
 	      if (!this.grid.getTypeInfoParam('showTotalPrice')) {
 	        return;
 	      }
-
 	      if (oldColumnId !== newColumnId) {
 	        var oldColumn = this.grid.getColumn(oldColumnId);
 	        oldColumn.decPrice(oldPrice);
 	        oldColumn.renderSubTitle();
-
 	        if (newColumn) {
 	          newColumn.incPrice(newPrice);
 	          newColumn.renderSubTitle();
@@ -130,24 +118,18 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function addItem() {
 	      var params = this.getActionParams();
 	      var oldItem = this.grid.getItem(params.item.id);
-
 	      if (oldItem) {
 	        return;
 	      }
-
 	      var column = this.grid.getColumn(params.item.data.columnId);
-
 	      if (!column) {
 	        return;
 	      }
-
 	      var sorter = crm_kanban_sort.Sorter.createWithCurrentSortType(column.getItems());
 	      var beforeItem = sorter.calcBeforeItemByParams(params.item.data.sort);
-
 	      if (beforeItem) {
 	        params.item.targetId = beforeItem.getId();
 	      }
-
 	      this.grid.addItem(params.item);
 	    }
 	  }]);
@@ -170,53 +152,41 @@ this.BX.Crm = this.BX.Crm || {};
 	Object.freeze(ViewMode);
 
 	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
-
 	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+
 	/**
 	 * @class PullQueue
 	 */
 
 	var LOAD_ITEMS_DELAY = 5000;
-
 	var _queue = /*#__PURE__*/new WeakMap();
-
 	var _grid = /*#__PURE__*/new WeakMap();
-
 	var _viewMode = /*#__PURE__*/new WeakMap();
-
 	var _isProgress = /*#__PURE__*/new WeakMap();
-
 	var _isFreeze = /*#__PURE__*/new WeakMap();
-
 	var PullQueue = /*#__PURE__*/function () {
 	  function PullQueue(grid) {
 	    babelHelpers.classCallCheck(this, PullQueue);
-
 	    _classPrivateFieldInitSpec(this, _queue, {
 	      writable: true,
 	      value: void 0
 	    });
-
 	    _classPrivateFieldInitSpec(this, _grid, {
 	      writable: true,
 	      value: void 0
 	    });
-
 	    _classPrivateFieldInitSpec(this, _viewMode, {
 	      writable: true,
 	      value: void 0
 	    });
-
 	    _classPrivateFieldInitSpec(this, _isProgress, {
 	      writable: true,
 	      value: void 0
 	    });
-
 	    _classPrivateFieldInitSpec(this, _isFreeze, {
 	      writable: true,
 	      value: void 0
 	    });
-
 	    babelHelpers.classPrivateFieldSet(this, _grid, grid);
 	    babelHelpers.classPrivateFieldSet(this, _viewMode, ViewMode.normalize(babelHelpers.classPrivateFieldGet(this, _grid).getData().viewMode));
 	    babelHelpers.classPrivateFieldSet(this, _queue, new Map());
@@ -224,32 +194,25 @@ this.BX.Crm = this.BX.Crm || {};
 	    babelHelpers.classPrivateFieldSet(this, _isFreeze, false);
 	    this.loadItemsTimer = null;
 	  }
-
 	  babelHelpers.createClass(PullQueue, [{
 	    key: "loadItem",
 	    value: function loadItem() {
 	      var _this = this;
-
 	      var ignoreProgressStatus = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
 	      var ignoreDelay = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
-
 	      if (this.loadItemsTimer && !ignoreDelay) {
 	        return;
 	      }
-
 	      this.loadItemsTimer = setTimeout(function () {
 	        if (babelHelpers.classPrivateFieldGet(_this, _isProgress) && !ignoreProgressStatus) {
 	          _this.loadItemsTimer = null;
 	          return;
 	        }
-
 	        if (document.hidden || _this.isOverflow() || _this.isFreezed()) {
 	          _this.loadItemsTimer = null;
 	          return;
 	        }
-
 	        var items = _this.popAllAsArray();
-
 	        if (items.length) {
 	          var ids = [];
 	          items.map(function (item) {
@@ -263,21 +226,16 @@ this.BX.Crm = this.BX.Crm || {};
 	            });
 	            operation.execute();
 	          });
-
 	          var loadNextOnSuccess = function loadNextOnSuccess() {
 	            _this.loadItemsTimer = null;
-
 	            if (_this.peek()) {
 	              _this.loadItem(true);
 	            }
-
 	            babelHelpers.classPrivateFieldSet(_this, _isProgress, false);
 	          };
-
 	          var doNothingOnError = function doNothingOnError() {
 	            _this.loadItemsTimer = null;
 	          };
-
 	          babelHelpers.classPrivateFieldSet(_this, _isProgress, true);
 	          babelHelpers.classPrivateFieldGet(_this, _grid).loadNew(ids, false, true, true).then(loadNextOnSuccess, doNothingOnError);
 	        }
@@ -287,11 +245,9 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "push",
 	    value: function push(id, item) {
 	      id = parseInt(id, 10);
-
 	      if (this.has(id)) {
 	        this["delete"](id);
 	      }
-
 	      babelHelpers.classPrivateFieldGet(this, _queue).set(id, item);
 	      return this;
 	    }
@@ -300,9 +256,8 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function popAllAsArray() {
 	      var items = Array.from(babelHelpers.classPrivateFieldGet(this, _queue), function (_ref) {
 	        var _ref2 = babelHelpers.slicedToArray(_ref, 2),
-	            id = _ref2[0],
-	            data = _ref2[1];
-
+	          id = _ref2[0],
+	          data = _ref2[1];
 	        return {
 	          id: id,
 	          data: data
@@ -317,19 +272,14 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (count <= 0) {
 	        return [];
 	      }
-
 	      var results = [];
-
 	      for (var i = 0; i < count; i++) {
 	        var item = this.pop();
-
 	        if (!item) {
 	          break;
 	        }
-
 	        results.push(item);
 	      }
-
 	      return results;
 	    }
 	  }, {
@@ -337,18 +287,15 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function pop() {
 	      var items = babelHelpers.classPrivateFieldGet(this, _queue).entries();
 	      var first = items.next();
-
 	      if (first.value) {
 	        babelHelpers.classPrivateFieldGet(this, _queue)["delete"](first.value[0]);
 	      }
-
 	      return first.value;
 	    }
 	  }, {
 	    key: "peek",
 	    value: function peek() {
 	      var _first$value;
-
 	      var items = babelHelpers.classPrivateFieldGet(this, _queue).entries();
 	      var first = items.next();
 	      return (_first$value = first.value) !== null && _first$value !== void 0 ? _first$value : null;
@@ -399,32 +346,25 @@ this.BX.Crm = this.BX.Crm || {};
 	    this.grid = grid;
 	    this.queue = new PullQueue(this.grid);
 	    this.openedSlidersCount = 0;
-
 	    if (main_core.Type.isString(grid.getData().moduleId) && grid.getData().userId > 0) {
 	      this.init();
 	    }
-
 	    this.bindEvents();
 	  }
-
 	  babelHelpers.createClass(PullManager, [{
 	    key: "init",
 	    value: function init() {
 	      var _this = this;
-
 	      main_core.Event.ready(function () {
 	        var Pull = BX.PULL;
-
 	        if (!Pull) {
 	          console.error('pull is not initialized');
 	          return;
 	        }
-
 	        var gridData = _this.grid.getData();
-
 	        var pullTag = gridData.pullTag,
-	            eventKanbanUpdatedTag = gridData.eventKanbanUpdatedTag,
-	            viewMode = gridData.viewMode;
+	          eventKanbanUpdatedTag = gridData.eventKanbanUpdatedTag,
+	          viewMode = gridData.viewMode;
 	        Pull.subscribe({
 	          moduleId: _this.grid.getData().moduleId,
 	          //command: this.grid.getData().pullTag,
@@ -432,18 +372,14 @@ this.BX.Crm = this.BX.Crm || {};
 	            if (data.command !== pullTag && !(data.command.indexOf(eventKanbanUpdatedTag) === 0 && viewMode === ViewMode.MODE_ACTIVITIES)) {
 	              return;
 	            }
-
 	            var params = data.params;
-
 	            if (main_core.Type.isString(params.eventName)) {
 	              if (PullManager.eventIds.has(params.eventId)) {
 	                return;
 	              }
-
 	              if (_this.queue.isOverflow()) {
 	                return;
 	              }
-
 	              if (params.eventName === 'ITEMUPDATED') {
 	                _this.onPullItemUpdated(params);
 	              } else if (params.eventName === 'ITEMADDED') {
@@ -479,7 +415,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "updateItem",
 	    value: function updateItem(params) {
 	      var item = this.grid.getItem(params.item.id);
-
 	      if (item) {
 	        this.queue.push(item.id, {
 	          id: item.id,
@@ -488,7 +423,6 @@ this.BX.Crm = this.BX.Crm || {};
 	        });
 	        return true;
 	      }
-
 	      this.onPullItemAdded(params);
 	      return false;
 	    }
@@ -504,11 +438,9 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function addItem(params) {
 	      var itemId = params.item.id;
 	      var oldItem = this.grid.getItem(itemId);
-
 	      if (oldItem) {
 	        return false;
 	      }
-
 	      this.queue.push(itemId, {
 	        id: itemId,
 	        action: 'addItem',
@@ -522,12 +454,11 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (!main_core.Type.isPlainObject(params.item)) {
 	        return;
 	      }
+
 	      /**
 	       * Delay so that the element has time to be rendered before deletion,
 	       * if an event for changing the element came before. Ticket #141983
 	       */
-
-
 	      var delay = this.queue.has(params.item.id) ? 5000 : 0;
 	      setTimeout(function () {
 	        this.queue["delete"](params.item.id);
@@ -565,7 +496,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "showOutdatedDataDialog",
 	    value: function showOutdatedDataDialog() {
 	      var _this2 = this;
-
 	      if (!this.notifier) {
 	        this.notifier = BX.UI.Notification.Center.notify({
 	          content: main_core.Loc.getMessage('CRM_KANBAN_NOTIFY_OUTDATED_DATA'),
@@ -576,9 +506,7 @@ this.BX.Crm = this.BX.Crm || {};
 	            events: {
 	              click: function click(event, balloon, action) {
 	                balloon.close();
-
 	                _this2.grid.reload();
-
 	                _this2.queue.clear();
 	              }
 	            }
@@ -592,20 +520,15 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "bindEvents",
 	    value: function bindEvents() {
 	      var _this3 = this;
-
 	      main_core_events.EventEmitter.subscribe('SidePanel.Slider:onOpen', function (event) {
 	        _this3.openedSlidersCount++;
-
 	        _this3.queue.freeze();
 	      });
 	      main_core_events.EventEmitter.subscribe('SidePanel.Slider:onClose', function (event) {
 	        _this3.openedSlidersCount--;
-
 	        if (_this3.openedSlidersCount <= 0) {
 	          _this3.openedSlidersCount = 0;
-
 	          _this3.queue.unfreeze();
-
 	          _this3.onTabActivated();
 	        }
 	      });
@@ -625,17 +548,14 @@ this.BX.Crm = this.BX.Crm || {};
 	  }]);
 	  return PullManager;
 	}();
-
 	babelHelpers.defineProperty(PullManager, "eventIds", new Set());
 
 	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5, _templateObject6, _templateObject7, _templateObject8, _templateObject9, _templateObject10;
 	var TYPE_VIEW = 'view';
 	var TYPE_EDIT = 'edit';
-
 	var FieldsSelector = /*#__PURE__*/function () {
 	  function FieldsSelector(options) {
 	    var _this$options$headers, _this$options$default;
-
 	    babelHelpers.classCallCheck(this, FieldsSelector);
 	    this.popup = null;
 	    this.fields = null;
@@ -649,27 +569,23 @@ this.BX.Crm = this.BX.Crm || {};
 	    this.fieldVisibleClass = 'crm-kanban-popup-field-search-list-item-visible';
 	    this.fieldHiddenClass = 'crm-kanban-popup-field-search-list-item-hidden';
 	  }
-
 	  babelHelpers.createClass(FieldsSelector, [{
 	    key: "show",
 	    value: function show() {
 	      if (!this.popup) {
 	        this.popup = this.createPopup();
 	      }
-
 	      if (this.fields) {
 	        this.popup.setContent(this.getFieldsLayout());
 	      } else {
 	        this.loadPopupContent(this.popup);
 	      }
-
 	      this.popup.show();
 	    }
 	  }, {
 	    key: "createPopup",
 	    value: function createPopup() {
 	      var _this = this;
-
 	      return main_popup.PopupManager.create({
 	        id: 'kanban_custom_fields_' + this.type,
 	        className: 'crm-kanban-popup-field',
@@ -694,10 +610,8 @@ this.BX.Crm = this.BX.Crm || {};
 	            var selectedFields = _this.fields ? _this.fields.filter(function (field) {
 	              return _this.selectedFields.indexOf(field.NAME) >= 0;
 	            }) : [];
-
 	            if (selectedFields.length) {
 	              _this.popup.close();
-
 	              _this.executeCallback(selectedFields);
 	            } else {
 	              ui_notification.UI.Notification.Center.notify({
@@ -718,7 +632,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "loadPopupContent",
 	    value: function loadPopupContent(popup) {
 	      var _this2 = this;
-
 	      var loaderContainer = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["<div class=\"crm-kanban-popup-field-loader\"></div>"])));
 	      var loader = new BX.Loader({
 	        target: loaderContainer,
@@ -749,7 +662,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "getFieldsLayout",
 	    value: function getFieldsLayout() {
 	      var _this3 = this;
-
 	      var sectionsWithFields = this.distributeFieldsBySections(this.fields);
 	      var container = main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["<div class=\"crm-kanban-popup-field\"></div>"])));
 	      var headerWrapper = main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-kanban-popup-field-search-header-wrapper\">\n\t\t\t\t<div class=\"ui-form-row-inline\"></div>\n\t\t\t</div>\n\t\t"])));
@@ -758,20 +670,16 @@ this.BX.Crm = this.BX.Crm || {};
 	      this.preparePopupContentHeaderSearch(headerWrapper);
 	      this.getSections().map(function (section) {
 	        var sectionWrapperId = _this3.getSectionWrapperNameBySectionName(section.name);
-
 	        var sectionWrapper = main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div \n\t\t\t\t\tclass=\"crm-kanban-popup-field-search-section\" \n\t\t\t\t\tdata-crm-kanban-popup-field-search-section=\"", "\">\n\t\t\t\t</div>\n\t\t\t"])), sectionWrapperId);
 	        main_core.Dom.append(sectionWrapper, container);
 	        var sectionName = section.name;
-
 	        if (sectionsWithFields.hasOwnProperty(sectionName) && sectionsWithFields[sectionName].length) {
 	          main_core.Dom.append(main_core.Tag.render(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["<div class=\"crm-kanban-popup-field-title\">", "</div>"])), main_core.Text.encode(section.title)), sectionWrapper);
 	          main_core.Dom.append(main_core.Tag.render(_templateObject6 || (_templateObject6 = babelHelpers.taggedTemplateLiteral(["<div class=\"crm-kanban-popup-field-wrapper\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>"])), sectionsWithFields[sectionName].map(function (field) {
 	            var label = field.LABEL;
-
 	            if (!label.length && section['elements'] && section['elements'][field.NAME] && section['elements'][field.NAME]['title'] && section['elements'][field.NAME]['title'].length) {
 	              label = section['elements'][field.NAME]['title'];
 	            }
-
 	            var encodedLabel = main_core.Text.encode(label);
 	            return main_core.Tag.render(_templateObject7 || (_templateObject7 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t\t\t<div class=\"crm-kanban-popup-field-item\" title=\"", "\">\n\t\t\t\t\t\t\t\t\t<input \n\t\t\t\t\t\t\t\t\t\tid=\"cf_", "\" \n\t\t\t\t\t\t\t\t\t\ttype=\"checkbox\" \n\t\t\t\t\t\t\t\t\t\tname=\"", "\"\n\t\t\t\t\t\t\t\t\t\tclass=\"crm-kanban-popup-field-item-input\"\n\t\t\t\t\t\t\t\t\t\tdata-label=\"", "\"\n\t\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t\t\tonclick=\"", "\"\n\t\t\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t\t\t\t<label for=\"cf_", "\" class=\"crm-kanban-popup-field-item-label\">\n\t\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t\t</label>\n\t\t\t\t\t\t\t\t</div>"])), encodedLabel, main_core.Text.encode(field.ID), main_core.Text.encode(field.NAME), encodedLabel, _this3.selectedFields.indexOf(field.NAME) >= 0 ? 'checked' : '', _this3.onFieldClick.bind(_this3), main_core.Text.encode(field.ID), encodedLabel);
 	          })), sectionWrapper);
@@ -785,20 +693,16 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (!this.enableHeadersSections) {
 	        return;
 	      }
-
 	      var headerSectionsWrapper = main_core.Tag.render(_templateObject8 || (_templateObject8 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t<div class=\"ui-form-content crm-kanban-popup-field-search-section-wrapper\"></div>\n\t\t\t</div>\n\t\t"])));
 	      headerWrapper.firstElementChild.appendChild(headerSectionsWrapper);
 	      var headersSections = this.getHeadersSections();
-
 	      for (var key in headersSections) {
 	        var itemClass = 'crm-kanban-popup-field-search-section-item-icon' + (headersSections[key].selected ? " crm-kanban-popup-field-search-section-item-icon-active" : '');
 	        var headerSectionItem = main_core.Tag.render(_templateObject9 || (_templateObject9 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"crm-kanban-popup-field-search-section-item\" data-kanban-popup-filter-section-button=\"", "\">\n\t\t\t\t\t<div class=\"", "\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"])), key, itemClass, main_core.Text.encode(headersSections[key].name));
 	        headerSectionsWrapper.firstElementChild.appendChild(headerSectionItem);
-
 	        if (this.type !== TYPE_VIEW) {
 	          break;
 	        }
-
 	        main_core.Event.bind(headerSectionItem, 'click', this.onFilterSectionClick.bind(this, headerSectionItem));
 	      }
 	    }
@@ -808,7 +712,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      var activeClass = 'crm-kanban-popup-field-search-section-item-icon-active';
 	      var sectionId = item.dataset.kanbanPopupFilterSectionButton;
 	      var sections = document.querySelectorAll("[data-crm-kanban-popup-field-search-section=\"".concat(sectionId, "\"]"));
-
 	      if (main_core.Dom.hasClass(item.firstElementChild, activeClass)) {
 	        main_core.Dom.removeClass(item.firstElementChild, activeClass);
 	        this.filterSectionsToggle(sections, 'hide');
@@ -830,7 +733,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      var searchForm = main_core.Tag.render(_templateObject10 || (_templateObject10 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t<div class=\"ui-form-content crm-kanban-popup-field-search-input-wrapper\">\n\t\t\t\t\t<div class=\"ui-ctl ui-ctl-textbox ui-ctl-before-icon ui-ctl-after-icon\">\n\t\t\t\t\t\t<div class=\"ui-ctl-before ui-ctl-icon-search\"></div>\n\t\t\t\t\t\t<button class=\"ui-ctl-after ui-ctl-icon-clear\"></button>\n\t\t\t\t\t\t<input type=\"text\" class=\"ui-ctl-element crm-kanban-popup-field-search-section-input\">\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])));
 	      headerWrapper.firstElementChild.appendChild(searchForm);
 	      var inputs = searchForm.getElementsByClassName('crm-kanban-popup-field-search-section-input');
-
 	      if (inputs.length) {
 	        var input = inputs[0];
 	        main_core.Event.bind(input, 'input', this.onFilterSectionSearchInput.bind(this, input));
@@ -841,16 +743,12 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "onFilterSectionSearchInput",
 	    value: function onFilterSectionSearchInput(input) {
 	      var _this4 = this;
-
 	      var search = input.value;
-
 	      if (search.length) {
 	        search = search.toLowerCase();
 	      }
-
 	      this.getFieldsPopupItems().map(function (item) {
 	        var title = item.innerText.toLowerCase();
-
 	        if (search.length && title.indexOf(search) === -1) {
 	          main_core.Dom.removeClass(item, _this4.fieldVisibleClass);
 	          main_core.Dom.addClass(item, _this4.fieldHiddenClass);
@@ -868,14 +766,12 @@ this.BX.Crm = this.BX.Crm || {};
 	        this.fieldsPopupItems = Array.from(this.popup.getPopupContainer().querySelectorAll('.crm-kanban-popup-field-item'));
 	        this.prepareAnimation();
 	      }
-
 	      return this.fieldsPopupItems;
 	    }
 	  }, {
 	    key: "prepareAnimation",
 	    value: function prepareAnimation() {
 	      var _this5 = this;
-
 	      this.fieldsPopupItems.map(function (item) {
 	        main_core.Event.bind(item, 'animationend', _this5.onAnimationEnd.bind(_this5, item));
 	      });
@@ -897,20 +793,17 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "getSectionWrapperNameBySectionName",
 	    value: function getSectionWrapperNameBySectionName(name) {
 	      var headerSections = this.getHeadersSections();
-
 	      for (var id in headerSections) {
 	        if (this.headersSections[id].sections && this.headersSections[id].sections.includes(name)) {
 	          return this.headersSections[id].id;
 	        }
 	      }
-
 	      return this.headersSections[this.defaultHeaderSectionId] && this.defaultHeaderSectionId ? this.headersSections[this.defaultHeaderSectionId].id : null;
 	    }
 	  }, {
 	    key: "getHeadersSections",
 	    value: function getHeadersSections() {
 	      var _this$headersSections;
-
 	      return (_this$headersSections = this.headersSections) !== null && _this$headersSections !== void 0 ? _this$headersSections : {};
 	    }
 	  }, {
@@ -924,12 +817,10 @@ this.BX.Crm = this.BX.Crm || {};
 	      var fieldsBySections = {};
 	      var defaultSectionName = '';
 	      var sections = this.options.hasOwnProperty('sections') ? this.options.sections : [];
-
 	      for (var i = 0; i < sections.length; i++) {
 	        var section = sections[i];
 	        var sectionName = section.name;
 	        fieldsBySections[sectionName] = [];
-
 	        if (main_core.Type.isPlainObject(section.elements)) {
 	          fieldsBySections[sectionName] = this.filterFieldsByList(fields, section.elements);
 	        } else if (section.hasOwnProperty('elementsRule')) {
@@ -938,11 +829,9 @@ this.BX.Crm = this.BX.Crm || {};
 	          defaultSectionName = sectionName;
 	        }
 	      }
-
 	      if (defaultSectionName !== '') {
 	        fieldsBySections[defaultSectionName] = this.filterNotUsedFields(fields, fieldsBySections);
 	      }
-
 	      return fieldsBySections;
 	    }
 	  }, {
@@ -981,13 +870,11 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function getIgnoredFields() {
 	      var fields = Object.assign({}, this.options.ignoredFields);
 	      var extraFields = [];
-
 	      if (this.type === TYPE_EDIT) {
-	        extraFields = ['ID', 'CLOSED', 'CLOSEDATE', 'DATE_CREATE', 'DATE_MODIFY', 'COMMENTS', 'OPPORTUNITY'];
+	        extraFields = ['ID', 'CLOSED', 'DATE_CREATE', 'DATE_MODIFY', 'COMMENTS', 'OPPORTUNITY'];
 	      } else {
 	        extraFields = ['PHONE', 'EMAIL', 'WEB', 'IM'];
 	      }
-
 	      extraFields.forEach(function (fieldName) {
 	        return fields[fieldName] = true;
 	      });
@@ -999,7 +886,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (!this.options.hasOwnProperty('onSelect') || !main_core.Type.isFunction(this.options.onSelect)) {
 	        return;
 	      }
-
 	      var callbackPayload = {};
 	      selectedFields.forEach(function (field) {
 	        callbackPayload[field.NAME] = field.LABEL ? field.LABEL : '';
@@ -1010,11 +896,9 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "onFieldClick",
 	    value: function onFieldClick(event) {
 	      var fieldName = event.target.name;
-
 	      if (event.target.checked && this.selectedFields.indexOf(fieldName) < 0) {
 	        this.selectedFields.push(fieldName);
 	      }
-
 	      if (!event.target.checked && this.selectedFields.indexOf(fieldName) >= 0) {
 	        this.selectedFields.splice(this.selectedFields.indexOf(fieldName), 1);
 	      }
@@ -1025,6 +909,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	exports.PullManager = PullManager;
 	exports.FieldsSelector = FieldsSelector;
+	exports.ViewMode = ViewMode;
 
 }((this.BX.Crm.Kanban = this.BX.Crm.Kanban || {}),BX.CRM.Kanban,BX.Event,BX,BX.Main,BX));
 //# sourceMappingURL=kanban.js.map

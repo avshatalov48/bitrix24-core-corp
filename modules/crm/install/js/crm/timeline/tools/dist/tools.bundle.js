@@ -88,6 +88,11 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function toDateString() {
 	      return main_date.DateTimeFormat.format([['today', 'today'], ['tommorow', 'tommorow'], ['yesterday', 'yesterday'], ['', babelHelpers.classPrivateFieldGet(this, _datetime).getFullYear() === crm_datetime.Factory.getUserNow().getFullYear() ? babelHelpers.classPrivateFieldGet(this, _shortDateFormat) : babelHelpers.classPrivateFieldGet(this, _fullDateFormat)]], babelHelpers.classPrivateFieldGet(this, _datetime));
 	    }
+	  }, {
+	    key: "toFormatString",
+	    value: function toFormatString(format, now, utc) {
+	      return main_date.DateTimeFormat.format(format, babelHelpers.classPrivateFieldGet(this, _datetime), now, utc);
+	    }
 	  }], [{
 	    key: "getSiteDateFormat",
 	    value: function getSiteDateFormat() {

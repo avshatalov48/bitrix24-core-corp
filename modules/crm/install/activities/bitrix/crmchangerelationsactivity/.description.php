@@ -21,6 +21,7 @@ $arActivityDescription = [
 	'FILTER' => [
 		'INCLUDE' => [
 			['crm', \Bitrix\Crm\Integration\BizProc\Document\Dynamic::class],
+			['crm', \Bitrix\Crm\Integration\BizProc\Document\SmartDocument::class],
 		],
 	],
 	'ROBOT_SETTINGS' => [

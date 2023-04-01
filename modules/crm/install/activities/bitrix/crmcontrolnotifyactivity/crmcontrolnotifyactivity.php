@@ -10,12 +10,12 @@ class CBPCrmControlNotifyActivity extends CBPActivity
 	public function __construct($name)
 	{
 		parent::__construct($name);
-		$this->arProperties = array(
+		$this->arProperties = [
 			"Title" => "",
 			"MessageText" => "",
 			"ToHead" => "Y",
 			"ToUsers" => null,
-		);
+		];
 	}
 
 	public function Execute()
@@ -58,50 +58,58 @@ class CBPCrmControlNotifyActivity extends CBPActivity
 	{
 		$skipAbsent = CModule::IncludeModule('intranet');
 
-		$userDepartmentId = array();
+		$userDepartmentId = [];
 		$userIterator = CUser::GetByID($userId);
 		if ($user = $userIterator->Fetch())
 		{
 			if (isset($user["UF_DEPARTMENT"]))
 			{
 				if (!is_array($user["UF_DEPARTMENT"]))
-					$user["UF_DEPARTMENT"] = array($user["UF_DEPARTMENT"]);
+				{
+					$user["UF_DEPARTMENT"] = [$user["UF_DEPARTMENT"]];
+				}
 
 				foreach ($user["UF_DEPARTMENT"] as $v)
+				{
 					$userDepartmentId[] = $v;
+				}
 			}
 		}
 
-		$userDepartments = array();
+		$userDepartments = [];
 		$departmentIBlockId = COption::GetOptionInt('intranet', 'iblock_structure');
 		foreach ($userDepartmentId as $departmentId)
 		{
-			$ar = array();
+			$ar = [];
 			$dbPath = CIBlockSection::GetNavChain($departmentIBlockId, $departmentId);
 			while ($arPath = $dbPath->GetNext())
+			{
 				$ar[] = $arPath["ID"];
+			}
 
 			$userDepartments[] = array_reverse($ar);
 		}
 
-		$heads = array();
-		$absentHeads = array();
+		$heads = [];
+		$absentHeads = [];
 		$maxLevel = 1;
 		foreach ($userDepartments as $arV)
 		{
 			foreach ($arV as $level => $deptId)
 			{
 				if ($maxLevel > 0 && $level + 1 > $maxLevel)
+				{
 					break;
+				}
 
 				$dbRes = CIBlockSection::GetList(
-					array(),
-					array(
+					[],
+					[
 						'IBLOCK_ID' => $departmentIBlockId,
-						'ID'        => $deptId,
-					),
+						'ID' => $deptId,
+					],
 					false,
-					array('ID', 'UF_HEAD')
+					['ID', 'UF_HEAD']
 				);
 				while ($arRes = $dbRes->Fetch())
 				{
@@ -114,14 +122,18 @@ class CBPCrmControlNotifyActivity extends CBPActivity
 					if ($skipAbsent && CIntranetUtils::IsUserAbsent($arRes["UF_HEAD"]))
 					{
 						if (!isset($absentHeads[$level]))
-							$absentHeads[$level] = array();
+						{
+							$absentHeads[$level] = [];
+						}
 
 						$absentHeads[$level][] = $arRes["UF_HEAD"];
 						$maxLevel++;
 						continue;
 					}
 					if (!in_array($arRes["UF_HEAD"], $heads))
+					{
 						$heads[] = $arRes["UF_HEAD"];
+					}
 				}
 			}
 		}
@@ -145,34 +157,31 @@ class CBPCrmControlNotifyActivity extends CBPActivity
 		$messageText = $this->getMessageText();
 
 		$attach = new CIMMessageParamAttach(1, '#468EE5');
-		$attach->AddUser(Array(
+		$attach->AddUser([
 			'NAME' => GetMessage('CRM_CTRNA_FORMAT_ROBOT'),
-			'AVATAR' => '/bitrix/images/bizproc/message_robot.png'
-		));
+			'AVATAR' => '/bitrix/images/bizproc/message_robot.png',
+		]);
 		$attach->AddDelimiter();
-		$attach->AddGrid(Array(
-			Array(
+		$attach->AddGrid([
+			[
 				"NAME" => $documentService->getDocumentTypeName($this->GetDocumentType()) . ':',
 				"VALUE" => $documentService->getDocumentName($documentId),
 				"LINK" => $documentService->GetDocumentAdminPage($documentId),
-				'DISPLAY' => 'BLOCK'
-			),
-		));
+				'DISPLAY' => 'BLOCK',
+			],
+		]);
 		$attach->AddDelimiter();
-		$attach->AddHtml('<span style="color: #6E6E6E">'.
-			$messageText
-			.'</span>'
-		);
+		$attach->AddHtml($messageText);
 
-		$message = array(
+		$message = [
 			"MESSAGE_TYPE" => IM_MESSAGE_SYSTEM,
 			"MESSAGE_OUT" => CBPHelper::convertBBtoText($messageText),
 			"ATTACH" => $attach,
-			'NOTIFY_TAG' => 'ROBOT|'.implode('|', array_map('mb_strtoupper', $documentId)),
+			'NOTIFY_TAG' => 'ROBOT|' . implode('|', array_map('mb_strtoupper', $documentId)),
 			'NOTIFY_MODULE' => 'bizproc',
 			'NOTIFY_EVENT' => 'activity',
 			'PUSH_MESSAGE' => $this->getPushText($messageText),
-		);
+		];
 
 		if ($from)
 		{
@@ -187,69 +196,122 @@ class CBPCrmControlNotifyActivity extends CBPActivity
 		}
 	}
 
-	public static function ValidateProperties($arTestProperties = array(), CBPWorkflowTemplateUser $user = null)
+	public static function ValidateProperties($arTestProperties = [], CBPWorkflowTemplateUser $user = null)
 	{
-		$arErrors = array();
+		$arErrors = [];
 
 		if (!array_key_exists("MessageText", $arTestProperties) || $arTestProperties["MessageText"] == '')
-			$arErrors[] = array("code" => "NotExist", "parameter" => "MessageText", "message" => GetMessage("CRM_CTRNA_EMPTY_MESSAGE"));
-
-		if (array_key_exists('ToHead', $arTestProperties) && $arTestProperties['ToHead'] == 'N' && empty($arTestProperties['ToUsers']))
 		{
-			$arErrors[] = array("code" => "NotExist", "parameter" => "ToUsers", "message" => GetMessage("CRM_CTRNA_EMPTY_TO_USERS"));
+			$arErrors[] = [
+				"code" => "NotExist",
+				"parameter" => "MessageText",
+				"message" => GetMessage("CRM_CTRNA_EMPTY_MESSAGE"),
+			];
+		}
+
+		if (
+			array_key_exists('ToHead', $arTestProperties)
+			&& $arTestProperties['ToHead'] == 'N'
+			&& empty($arTestProperties['ToUsers'])
+		)
+		{
+			$arErrors[] = [
+				"code" => "NotExist",
+				"parameter" => "ToUsers",
+				"message" => GetMessage("CRM_CTRNA_EMPTY_TO_USERS"),
+			];
 		}
 
 		return array_merge($arErrors, parent::ValidateProperties($arTestProperties, $user));
 	}
 
-	public static function GetPropertiesDialog($documentType, $activityName, $arWorkflowTemplate, $arWorkflowParameters, $arWorkflowVariables, $arCurrentValues = null, $formName = "")
+	public static function GetPropertiesDialog(
+		$documentType,
+		$activityName,
+		$arWorkflowTemplate,
+		$arWorkflowParameters,
+		$arWorkflowVariables,
+		$arCurrentValues = null,
+		$formName = ""
+	)
 	{
-		$dialog = new \Bitrix\Bizproc\Activity\PropertiesDialog(__FILE__, array(
+		$dialog = new \Bitrix\Bizproc\Activity\PropertiesDialog(__FILE__, [
 			'documentType' => $documentType,
 			'activityName' => $activityName,
 			'workflowTemplate' => $arWorkflowTemplate,
 			'workflowParameters' => $arWorkflowParameters,
 			'workflowVariables' => $arWorkflowVariables,
-			'currentValues' => $arCurrentValues
-		));
+			'currentValues' => $arCurrentValues,
+		]);
 
 		$dialog->setMap(static::getPropertiesMap($documentType));
 
 		return $dialog;
 	}
 
-	public static function GetPropertiesDialogValues($documentType, $activityName, &$arWorkflowTemplate, &$arWorkflowParameters, &$arWorkflowVariables, $arCurrentValues, &$arErrors)
+	public static function GetPropertiesDialogValues(
+		$documentType,
+		$activityName,
+		&$arWorkflowTemplate,
+		&$arWorkflowParameters,
+		&$arWorkflowVariables,
+		$arCurrentValues,
+		&$errors
+	)
 	{
-		$arErrors = array();
+		$errors = [];
+		$properties = [
+			"MessageText" => $arCurrentValues["message_text"],
+		];
 
-		$arProperties = array(
-			"MessageText" => $arCurrentValues["message_text"]
-		);
-
-		[$toUsers, $toHead] = CBPHelper::UsersStringToArray(
+		$toUsers = CBPHelper::UsersStringToArray(
 			$arCurrentValues["to_users"],
 			$documentType,
-			$arErrors,
-			function($user)
-			{
-				if ($user == 'CONTROL_HEAD')
-					return $user;
-
-				return null;
-			}
+			$errors,
 		);
-		if (count($arErrors) > 0)
-			return false;
-		$arProperties["ToUsers"] = $toUsers;
-		$arProperties["ToHead"] = isset($arCurrentValues["to_head"]) && $arCurrentValues["to_head"] == 'N'
-			|| !isset($arCurrentValues["to_head"]) && !$toHead ? 'N': 'Y';
 
-		$arErrors = self::ValidateProperties($arProperties, new CBPWorkflowTemplateUser(CBPWorkflowTemplateUser::CurrentUser));
-		if (count($arErrors) > 0)
+		if ($errors)
+		{
 			return false;
+		}
+
+		$toHead = false;
+		$toUsers = array_filter($toUsers, function ($user) use (&$toHead) {
+			if ($user === 'responsible_head')
+			{
+				$toHead = true;
+
+				return false;
+			}
+
+			return true;
+		});
+
+
+		$properties["ToUsers"] = $toUsers;
+		$properties["ToHead"] =
+			(
+				isset($arCurrentValues["to_head"])
+				&& $arCurrentValues["to_head"] === 'N'
+				|| !isset($arCurrentValues["to_head"])
+				&& !$toHead
+			)
+			? 'N'
+			: 'Y'
+		;
+
+		$errors = self::ValidateProperties(
+			$properties,
+			new CBPWorkflowTemplateUser(CBPWorkflowTemplateUser::CurrentUser)
+		);
+
+		if ($errors)
+		{
+			return false;
+		}
 
 		$arCurrentActivity = &CBPWorkflowTemplateLoader::FindActivityByName($arWorkflowTemplate, $activityName);
-		$arCurrentActivity["Properties"] = $arProperties;
+		$arCurrentActivity["Properties"] = $properties;
 
 		return true;
 	}
@@ -262,30 +324,21 @@ class CBPCrmControlNotifyActivity extends CBPActivity
 				'Description' => GetMessage('CRM_CTRNA_MESSAGE'),
 				'FieldName' => 'message_text',
 				'Type' => 'text',
-				'Required' => true
+				'Required' => true,
 			],
 			'ToHead' => [
 				'Name' => GetMessage('CRM_CTRNA_TO_HEAD'),
 				'FieldName' => 'to_head',
 				'Type' => 'bool',
-				'Default' => 'Y'
+				'Default' => 'Y',
 			],
 			'ToUsers' => [
 				'Name' => GetMessage('CRM_CTRNA_TO_USERS'),
 				'FieldName' => 'to_users',
 				'Type' => 'user',
-				'Default' => 'CONTROL_HEAD',
+				'Default' => 'responsible_head',
 				'Required' => true,
 				'Multiple' => true,
-				'Settings' => [
-					'additionalFields' => [
-						[
-							'id' => 'CONTROL_HEAD',
-							'entityId' => 'CONTROL_HEAD',
-							'name' => GetMessage('CRM_CTRNA_TO_HEAD'),
-						]
-					]
-				]
 			],
 		];
 	}
@@ -294,7 +347,7 @@ class CBPCrmControlNotifyActivity extends CBPActivity
 	{
 		$debugInfo = $this->getDebugInfo([
 			'ToUsers' => array_map(
-				fn($userId) => 'user_' . $userId,
+				fn ($userId) => 'user_' . $userId,
 				$users
 			),
 		]);
@@ -312,7 +365,7 @@ class CBPCrmControlNotifyActivity extends CBPActivity
 			$messageText = implode(', ', CBPHelper::MakeArrayFlat($messageText));
 		}
 
-		$messageText = (string) $messageText;
+		$messageText = (string)$messageText;
 
 		if ($messageText)
 		{

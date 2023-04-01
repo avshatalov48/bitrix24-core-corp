@@ -209,7 +209,7 @@ class StatusTable extends Entity\DataManager
 		$id = $event->getParameter('id');
 		$data = static::getById($id)->fetch();
 
-		$entityId = $data['ENTITY_ID'];
+		$entityId = $data['ENTITY_ID'] ?? null;
 		$entity = \CCrmStatus::GetEntityTypes()[$entityId] ?? null;
 		if (!$entity)
 		{

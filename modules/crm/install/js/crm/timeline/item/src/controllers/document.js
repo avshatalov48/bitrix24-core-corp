@@ -1,4 +1,4 @@
-import { ajax as Ajax, Loc, Text, Type, Uri } from 'main.core';
+import {ajax as Ajax, Loc, Tag, Text, Type, Uri} from 'main.core';
 import { DateTimeFormat } from "main.date";
 import { type ActionAnimationCallbacks, type ActionParams, Base } from './base';
 import ConfigurableItem from '../configurable-item';
@@ -8,11 +8,14 @@ import {MessageBox, MessageBoxButtons} from "ui.dialogs.messagebox";
 import { DatetimeConverter } from "crm.timeline.tools";
 import { UI } from 'ui.notification';
 
+import 'ui.info-helper';
+
 const ACTION_NAMESPACE = 'Document:';
 
 export class Document extends Base
 {
 	static #toPrintAfterRefresh: ConfigurableItem[] = [];
+	#popupConfirm: BX.PopupWindow;
 
 	static isItemSupported(item: ConfigurableItem): boolean
 	{
@@ -49,7 +52,6 @@ export class Document extends Base
 		// {
 		// 	return;
 		// }
-
 		if (action === (ACTION_NAMESPACE + 'Open'))
 		{
 			this.#openDocument(documentId);
@@ -78,6 +80,14 @@ export class Document extends Base
 		else if (action === (ACTION_NAMESPACE + 'UpdateCreateDate'))
 		{
 			this.#updateCreateDate(documentId, actionData?.value);
+		}
+		else if (action === (ACTION_NAMESPACE + 'ConvertDeal'))
+		{
+			this.#convertDeal(documentId, animationCallbacks);
+		}
+		else if (action === (ACTION_NAMESPACE + 'ShowInfoHelperSlider'))
+		{
+			this.#showInfoHelperSlider(actionData?.infoHelperCode);
 		}
 		else if (action === (ACTION_NAMESPACE + 'Delete'))
 		{
@@ -362,4 +372,148 @@ export class Document extends Base
 			Document.#toPrintAfterRefresh.filter(remainingItem => !itemsToPrint.includes(remainingItem))
 		;
 	}
+
+	#convertDeal(id: number, animationCallbacks: ?ActionAnimationCallbacks)
+	{
+		if (animationCallbacks.onStart)
+		{
+			animationCallbacks.onStart();
+		}
+
+		const convertDealAndStartSign = (
+			(usePrevious) =>
+			{
+				Ajax.runAction('crm.api.integration.sign.convertDeal', {
+					data: {
+						documentId: id,
+						usePrevious: !usePrevious ? 0 : 1,
+					}
+			}).then(
+				(response) =>
+				{
+					if (response?.data?.SMART_DOCUMENT)
+					{
+						const wizardUri = new Uri('/sign/doc/0/');
+						wizardUri.setQueryParams({
+							docId: response.data.SMART_DOCUMENT,
+							stepId: 'changePartner',
+							noRedirect: 'Y',
+						});
+						BX.SidePanel.Instance.open(wizardUri.toString());
+					}
+
+					if (animationCallbacks.onStop)
+					{
+						animationCallbacks.onStop();
+					}
+				},
+				(response) => {
+					if (response.errors[0].message)
+					{
+						UI.Notification.Center.notify({
+							content: response.errors[0].message,
+							autoHideDelay: 5000,
+						});
+					}
+					if (animationCallbacks.onStop)
+					{
+						animationCallbacks.onStop();
+					}
+				}
+			).catch((response) =>
+				{
+					if (response.errors[0].message)
+					{
+						UI.Notification.Center.notify({
+							content: response.errors[0].message,
+							autoHideDelay: 5000,
+						});
+					}
+					if (animationCallbacks.onStop)
+					{
+						animationCallbacks.onStop();
+					}
+				}
+			);
+		});
+
+		Ajax.runAction('crm.api.integration.sign.getLinkedBlank', {
+			data: {
+				documentId: id
+			}
+		}).then(
+			(response) =>
+			{
+				if (response?.data?.ID > 0) {
+					this.#showMessage(
+						Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_DO_USE_PREVIOUS',
+							{
+								'%TITLE%': '<b>' + (response.data.TITLE || '') + '</b>',
+								'%CREATED_AT%': '<b>' + (response.data.CREATED_AT || '') + '</b>',
+								'%INITIATOR%': '<b>' + (response.data.INITIATOR || '') + '</b>',
+							}),
+						[
+							new BX.UI.Button({
+								text: Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_NEW_BUTTON'),
+								className: "ui-btn ui-btn-md ui-btn-primary",
+								events: {
+									click: () =>
+									{
+										convertDealAndStartSign(false);
+										this.#popupConfirm.destroy();
+									}
+								}
+							}),
+							new BX.UI.Button({
+								text: BX.message('CRM_TIMELINE_ITEM_ACTIVITY_OLD_BUTTON'),
+								className: "ui-btn ui-btn-md ui-btn-primary",
+								events: {
+									click: () =>
+									{
+										convertDealAndStartSign(true);
+										this.#popupConfirm.destroy();
+									}
+								}
+							})
+						],
+						Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_POPUP_TITLE')
+					);
+				} else {
+					convertDealAndStartSign(false);
+				}
+			});
+	}
+
+	#showInfoHelperSlider(code: string)
+	{
+		BX.UI.InfoHelper.show(code);
+	}
+
+	#showMessage(content: string, buttons: [], title: string)
+	{
+		this.#popupConfirm = new BX.PopupWindow(
+			'bx-popup-document-activity-popup',
+			null,
+			{
+						zIndex: 200,
+						autoHide: true,
+						closeByEsc: true,
+						buttons: buttons,
+						closeIcon: true,
+						overlay : true,
+						events : {
+							onPopupClose : () =>
+							{
+								this.#popupConfirm.destroy();
+							}
+						},
+						content: Tag.render`<div class="bx-popup-document-activity-popup-content-text">${content}</div>`,
+						titleBar: title,
+						contentColor: 'white',
+						className : 'bx-popup-document-activity-popup',
+						maxWidth: 470
+					}
+		);
+		this.#popupConfirm.show();
+	};
 }

@@ -11,12 +11,13 @@ use Bitrix\Crm\Agent\Requisite\ContactAddressConvertAgent;
 use Bitrix\Crm\Agent\Requisite\ContactUfAddressConvertAgent;
 use Bitrix\Crm\Attribute\FieldAttributeManager;
 use Bitrix\Crm\Entity\EntityEditorConfigScope;
+use Bitrix\Crm\Integration\UI\EntitySelector\CountryProvider;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Security\EntityAuthorization;
-use Bitrix\UI;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Spotlight;
+use Bitrix\UI;
 
 Loc::loadMessages(__FILE__);
 
@@ -130,10 +131,16 @@ class CCrmEntityEditorComponent extends UIFormComponent
 			}
 
 			$availableFields[$name] = $field;
-			if(isset($field['required']) && $field['required'] === true
-				|| is_array($field['data'])
+			if(
+				(isset($field['required']) && $field['required'] === true)
+				||
+				(
+					isset($field['data'])
+					&& is_array($field['data'])
 					&& isset($field['data']['isRequiredByAttribute'])
-					&& $field['data']['isRequiredByAttribute'])
+					&& $field['data']['isRequiredByAttribute']
+				)
+			)
 			{
 				$requiredFields[$name] = $field;
 
@@ -224,7 +231,12 @@ class CCrmEntityEditorComponent extends UIFormComponent
 					$additionalSectionIndex = $i;
 				}
 
-				if (is_array($defaultConfig[$sectionName]) && !empty($defaultConfig[$sectionName]['data'])) {
+				if (
+					isset($defaultConfig[$sectionName])
+					&& is_array($defaultConfig[$sectionName])
+					&& !empty($defaultConfig[$sectionName]['data'])
+				)
+				{
 					$configItem['data'] = $defaultConfig[$sectionName]['data'];
 				}
 
@@ -244,7 +256,7 @@ class CCrmEntityEditorComponent extends UIFormComponent
 
 					$title = '';
 					if (!($configScope === EntityEditorConfigScope::COMMON && $fieldType === 'userField')) {
-						$title = $configElement['title'];
+						$title = $configElement['title'] ?? null;
 					}
 
 					if ($title !== '') {
@@ -262,6 +274,17 @@ class CCrmEntityEditorComponent extends UIFormComponent
 					$schemeElement['options'] = (isset($configElement['options']) && is_array($configElement['options']))
 						? $configElement['options']
 						: [];
+
+					// set default country
+					if (
+						empty($schemeElement['options'])
+						&& in_array($name, ['PHONE', 'CLIENT', 'COMPANY', 'CONTACT', 'MYCOMPANY_ID'])
+					)
+					{
+						$schemeElement['options'] = [
+							'defaultCountry' => CountryProvider::getDefaultCountry()
+						];
+					}
 
 					$schemeElements[] = $schemeElement;
 					unset($availableFields[$name]);
@@ -537,7 +560,8 @@ class CCrmEntityEditorComponent extends UIFormComponent
 		$this->arResult['ATTRIBUTE_CONFIG'] = null;
 		if(CCrmAuthorizationHelper::CheckConfigurationUpdatePermission())
 		{
-			$this->arResult['ATTRIBUTE_CONFIG'] = is_array($this->arParams['~ATTRIBUTE_CONFIG']) ?
+			$arParamsAttributeConfig = $this->arParams['~ATTRIBUTE_CONFIG'] ?? null;
+			$this->arResult['ATTRIBUTE_CONFIG'] = is_array($arParamsAttributeConfig) ?
 				$this->arParams['~ATTRIBUTE_CONFIG'] : null;
 			if(isset($this->arResult['ATTRIBUTE_CONFIG']))
 			{

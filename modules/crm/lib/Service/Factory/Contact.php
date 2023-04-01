@@ -113,6 +113,11 @@ class Contact extends Service\Factory
 	{
 		$select = parent::prepareSelect($select);
 
+		if (in_array('*', $select, true) && $this->isFieldExists(Item\Contact::FIELD_NAME_COMPANIES))
+		{
+			$select[] = Item\Contact::FIELD_NAME_COMPANIES;
+		}
+
 		$selectWithoutCompanies = array_diff(
 			$select,
 			[Item\Contact::FIELD_NAME_COMPANIES, Item\Contact::FIELD_NAME_COMPANY_IDS],
@@ -125,18 +130,6 @@ class Contact extends Service\Factory
 		{
 			$select[] = Item\Contact::FIELD_NAME_COMPANY_BINDINGS;
 			$select[] = Item::FIELD_NAME_COMPANY_ID;
-		}
-
-		return $select;
-	}
-
-	protected function getSelectForGetItem(): array
-	{
-		$select = parent::getSelectForGetItem();
-
-		if ($this->isFieldExists(Item\Contact::FIELD_NAME_COMPANIES))
-		{
-			$select[] = Item\Contact::FIELD_NAME_COMPANIES;
 		}
 
 		return $select;
@@ -410,10 +403,7 @@ class Contact extends Service\Factory
 
 	protected function getDependantTrackedObjects(): array
 	{
-		$companyTrackedObject = new TrackedObject\Company();
-		$companyTrackedObject->makeThisObjectDependant(Item\Contact::FIELD_NAME_COMPANIES);
-
-		return [$companyTrackedObject];
+		return [];
 	}
 
 	protected function configureAddOperation(Operation $operation): void

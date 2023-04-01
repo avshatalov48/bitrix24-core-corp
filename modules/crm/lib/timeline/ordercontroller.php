@@ -1,10 +1,12 @@
 <?php
+
 namespace Bitrix\Crm\Timeline;
 
 use Bitrix\Crm\Order;
 use Bitrix\Crm\Order\OrderStatus;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Crm\ItemIdentifier;
 
 Loc::loadMessages(__FILE__);
 
@@ -38,14 +40,14 @@ class OrderController extends EntityController
 		$settings = $params['SETTINGS'] ?? [];
 		$bindings = $params['BINDINGS'] ?? [];
 
-		$entityId = OrderEntry::create([
+		$timelineEntryId = OrderEntry::create([
 			'ENTITY_ID' => $ownerId,
 			'TYPE_CATEGORY_ID' => TimelineType::CREATION,
 			'AUTHOR_ID' => self::resolveCreatorID($orderFields),
 			'SETTINGS' => $settings,
 			'BINDINGS' => $bindings,
 		]);
-		$this->sendAddPullEventToBindings($bindings, $entityId);
+		$this->sendAddPullEventToBindings($bindings, $timelineEntryId);
 	}
 
 	/**
@@ -74,15 +76,14 @@ class OrderController extends EntityController
 			]
 		];
 
-		$entityId = OrderEntry::create([
+		$timelineEntryId = OrderEntry::create([
 			'ENTITY_ID' => $ownerId,
 			'TYPE_CATEGORY_ID' => OrderCategoryType::ENCOURAGE_BUY_PRODUCTS,
 			'AUTHOR_ID' => self::resolveCreatorID($orderFields),
 			'SETTINGS' => $settings,
 			'BINDINGS' => $bindings,
 		]);
-
-		$this->sendAddPullEventToBindings($bindings, $entityId);
+		$this->sendAddPullEventToBindings($bindings, $timelineEntryId);
 	}
 
 	/**
@@ -107,19 +108,17 @@ class OrderController extends EntityController
 
 		if (!empty($fields['REASON_CANCELED']) && $fields['REASON_CANCELED'] <> '' && $value === 'Y')
 		{
-			$historyEntryID = ModificationEntry::create(
-				array(
-					'ENTITY_TYPE_ID' => \CCrmOwnerType::Order,
-					'ENTITY_ID' => $ownerID,
-					'AUTHOR_ID' => self::resolveEditorID($params),
-					'TEXT' => $fields['REASON_CANCELED'],
-					'SETTINGS' => array(
-						'FIELD' => 'REASON_CANCELED',
-					),
-					'BINDINGS' => $bindings
-				)
-			);
-			$this->sendAddPullEventToBindings($bindings, $historyEntryID);
+			$timelineEntryId = ModificationEntry::create([
+				'ENTITY_TYPE_ID' => \CCrmOwnerType::Order,
+				'ENTITY_ID' => $ownerID,
+				'AUTHOR_ID' => self::resolveEditorID($params),
+				'TEXT' => $fields['REASON_CANCELED'],
+				'SETTINGS' => [
+					'FIELD' => 'REASON_CANCELED',
+				],
+				'BINDINGS' => $bindings,
+			]);
+			$this->sendAddPullEventToBindings($bindings, $timelineEntryId);
 		}
 	}
 
@@ -139,18 +138,22 @@ class OrderController extends EntityController
 			throw new Main\ArgumentException('Owner ID must be greater than zero.', 'ownerID');
 		}
 
-		$historyEntryID = MarkEntry::create(
-			array(
-				'MARK_TYPE_ID'=>$params['TYPE'] == TimelineMarkType::SUCCESS? TimelineMarkType::SUCCESS:TimelineMarkType::FAILED,
-				'ENTITY_TYPE_ID' => \CCrmOwnerType::Order,
-				'ENTITY_ID' => $ownerID,
-				'AUTHOR_ID' => intval($GLOBALS["USER"]->GetID()),
-				'SETTINGS' => ['MESSAGE'=>$params['MESSAGE']<>''?$params['MESSAGE']:'']
-			)
-		);
+		$timelineEntryId = MarkEntry::create([
+			'MARK_TYPE_ID' =>
+				((int)$params['TYPE'] === TimelineMarkType::SUCCESS)
+					? TimelineMarkType::SUCCESS
+					: TimelineMarkType::FAILED
+			,
+			'ENTITY_TYPE_ID' => \CCrmOwnerType::Order,
+			'ENTITY_ID' => $ownerID,
+			'AUTHOR_ID' => $this->getCurrentOrDefaultAuthorId(),
+			'SETTINGS' => [
+				'MESSAGE' => $params['MESSAGE'] <>'' ? $params['MESSAGE'] : '',
+			]
+		]);
 		$this->sendPullEventOnAdd(
-			new \Bitrix\Crm\ItemIdentifier(\CCrmOwnerType::Order, $ownerID),
-			$historyEntryID
+			new ItemIdentifier(\CCrmOwnerType::Order, $ownerID),
+			$timelineEntryId
 		);
 	}
 
@@ -161,11 +164,11 @@ class OrderController extends EntityController
 	 */
 	public function onModify($ownerID, array $params)
 	{
-		if(!is_int($ownerID))
+		if (!is_int($ownerID))
 		{
 			$ownerID = (int)$ownerID;
 		}
-		if($ownerID <= 0)
+		if ($ownerID <= 0)
 		{
 			throw new Main\ArgumentException('Owner ID must be greater than zero.', 'ownerID');
 		}
@@ -206,15 +209,20 @@ class OrderController extends EntityController
 		$authorId = self::resolveCreatorID($orderFields);
 		if (!empty($settings))
 		{
-			OrderEntry::create([
+			$bindings = [
+				[
+					'ENTITY_TYPE_ID' => \CCrmOwnerType::Deal,
+					'ENTITY_ID' => $dealId,
+				]
+			];
+			$timelineEntryId = OrderEntry::create([
 				'ENTITY_ID' => $ownerId,
 				'TYPE_CATEGORY_ID' => TimelineType::MODIFICATION,
 				'AUTHOR_ID' => $authorId,
-				'BINDINGS' => [
-					['ENTITY_TYPE_ID' => \CCrmOwnerType::Deal,	'ENTITY_ID' => $dealId]
-				],
+				'BINDINGS' => $bindings,
 				'SETTINGS' => $settings
 			]);
+			$this->sendAddPullEventToBindings($bindings, $timelineEntryId);
 		}
 	}
 
@@ -269,9 +277,15 @@ class OrderController extends EntityController
 			$this->onCreate($ownerId, $params);
 		}
 
+		$bindings = [
+			[
+				'ENTITY_TYPE_ID' => \CCrmOwnerType::Order,
+				'ENTITY_ID' => $ownerId,
+			]
+		];
 		if ($params['IS_NEW_DEAL'] === 'Y')
 		{
-			ConversionEntry::create([
+			$timelineEntryId = ConversionEntry::create([
 				'ENTITY_TYPE_ID' => \CCrmOwnerType::Order,
 				'ENTITY_ID' => $ownerId,
 				'AUTHOR_ID' => $authorId,
@@ -282,20 +296,20 @@ class OrderController extends EntityController
 							'ENTITY_ID' => $dealId
 						]
 					]
-				]
+				],
+				'BINDINGS' => $bindings,
 			]);
 		}
 		else
 		{
-			LinkEntry::create([
+			$timelineEntryId = LinkEntry::create([
 				'ENTITY_TYPE_ID' => \CCrmOwnerType::Deal,
 				'ENTITY_ID' => $dealId,
 				'AUTHOR_ID' => $authorId,
-				'BINDINGS' => [
-					['ENTITY_TYPE_ID' => \CCrmOwnerType::Order,	'ENTITY_ID' => $ownerId]
-				]
+				'BINDINGS' => $bindings,
 			]);
 		}
+		$this->sendAddPullEventToBindings($bindings, $timelineEntryId);
 	}
 
 	/**
@@ -333,9 +347,6 @@ class OrderController extends EntityController
 	 * @param array $fields
 	 * @return Main\Result
 	 * @throws Main\ArgumentException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
 	public function updateSettingFields($ownerID, $entryTypeID, array $fields)
 	{
@@ -389,7 +400,6 @@ class OrderController extends EntityController
 	/**
 	 * @param $ID
 	 * @return array|false|null
-	 * @throws Main\ArgumentException
 	 */
 	protected static function getEntity($ID)
 	{
@@ -474,36 +484,7 @@ class OrderController extends EntityController
 		$settings = is_array($data['SETTINGS']) ? $data['SETTINGS'] : [];
 		$fields = $settings['FIELDS'];
 
-		if($typeID === TimelineType::CREATION)
-		{
-			$data['TITLE'] = Loc::getMessage('CRM_ORDER_CREATION');
-			$title = htmlspecialcharsbx(\CUtil::JSEscape($data['ASSOCIATED_ENTITY']['TITLE']));
-			if (!empty($fields['DATE_INSERT_TIMESTAMP']))
-			{
-				$dateInsert = \CCrmComponentHelper::TrimDateTimeString(ConvertTimeStamp($fields['DATE_INSERT_TIMESTAMP'],'SHORT'));
-			}
-			if (empty($dateInsert))
-			{
-				$dateInsert = \CCrmComponentHelper::TrimDateTimeString(ConvertTimeStamp(MakeTimeStamp($data['DATE_INSERT']),'SHORT'));
-			}
-
-			$data['ASSOCIATED_ENTITY']['HTML_TITLE'] = Loc::getMessage(
-				'CRM_ORDER_CREATION_TITLE',
-					[
-						'#TITLE#' => $title,
-						'#DATE_INSERT#' => $dateInsert,
-					]
-			);
-			if (!empty($fields['PRICE']) && !empty($fields['CURRENCY']))
-			{
-				$data['ASSOCIATED_ENTITY']['HTML_TITLE'] .= " ".Loc::getMessage(
-					'CRM_ORDER_CREATION_MESSAGE_SUM',
-					['#PRICE_WITH_CURRENCY#' => \CCrmCurrency::MoneyToString($fields['PRICE'], $fields['CURRENCY'])]
-				);
-			}
-			unset($data['SETTINGS']);
-		}
-		elseif($typeID === TimelineType::MODIFICATION)
+		if ($typeID === TimelineType::MODIFICATION)
 		{
 			$fieldName = isset($settings['FIELD']) ? $settings['FIELD'] : '';
 			if($fieldName === 'STATUS_ID')
@@ -630,7 +611,6 @@ class OrderController extends EntityController
 	 * @param $currentFields
 	 * @param $previousFields
 	 * @param array $bindings
-	 * @throws Main\ArgumentException
 	 */
 	protected function onStatusModify($ownerId, $currentFields, $previousFields, $bindings = [])
 	{
@@ -641,7 +621,7 @@ class OrderController extends EntityController
 		$authorID = self::resolveEditorID($currentFields);
 
 		$stageNames = OrderStatus::getListInCrmFormat();
-		$historyEntryID = ModificationEntry::create(
+		$timelineEntryId = ModificationEntry::create(
 			[
 				'ENTITY_TYPE_ID' => \CCrmOwnerType::Order,
 				'ENTITY_ID' => $ownerId,
@@ -656,27 +636,25 @@ class OrderController extends EntityController
 				'BINDINGS' => $bindings
 			]
 		);
-		$this->sendAddPullEventToBindings($bindings, $historyEntryID);
+		$this->sendAddPullEventToBindings($bindings, $timelineEntryId);
 	}
 
 	/**
 	 * @param $ownerId
 	 * @param $params
-	 * @throws Main\ArgumentException
 	 */
 	public function onPay($ownerId, $params)
 	{
-		return $this->notifyOrderEntry($ownerId, $params);
+		$this->notifyOrderEntry($ownerId, $params);
 	}
 
 	/**
 	 * @param $ownerId
 	 * @param $params
-	 * @throws Main\ArgumentException
 	 */
 	public function onDeduct($ownerId, $params)
 	{
-		return $this->notifyOrderEntry($ownerId, $params);
+		$this->notifyOrderEntry($ownerId, $params);
 	}
 
 	/**
@@ -698,23 +676,20 @@ class OrderController extends EntityController
 		$authorId = self::resolveCreatorID($orderFields);
 		if (!empty($settings))
 		{
-			$entityId = OrderEntry::create([
+			$timelineEntryId = OrderEntry::create([
 				'ENTITY_ID' => $ownerId,
 				'TYPE_CATEGORY_ID' => TimelineType::MODIFICATION,
 				'AUTHOR_ID' => $authorId,
 				'BINDINGS' => $bindings,
 				'SETTINGS' => $settings
 			]);
-			$this->sendAddPullEventToBindings($bindings, $entityId);
+			$this->sendAddPullEventToBindings($bindings, $timelineEntryId);
 		}
 	}
 
 	/**
 	 * @param $ownerId
 	 * @param $params
-	 * @throws Main\ArgumentException
-	 * @throws Main\ArgumentNullException
-	 * @throws Main\SystemException
 	 */
 	public function onSend($ownerId, $params)
 	{
@@ -746,20 +721,20 @@ class OrderController extends EntityController
 	/**
 	 * @param $ownerId
 	 * @param array $params
-	 * @throws Main\ArgumentException
 	 */
 	public function onManualContinuePay($ownerId, array $params)
 	{
 		$params['SETTINGS']['FIELDS']['MANUAL_CONTINUE_PAY'] = 'Y';
-		return $this->notifyOrderEntry($ownerId, $params);
+
+		$this->notifyOrderEntry($ownerId, $params);
 	}
 
 	protected function sendAddPullEventToBindings(array $bindings, int $timelineEntryId): void
 	{
-		foreach($bindings as $binding)
+		foreach ($bindings as $binding)
 		{
 			$this->sendPullEventOnAdd(
-				new \Bitrix\Crm\ItemIdentifier($binding['ENTITY_TYPE_ID'], $binding['ENTITY_ID']),
+				new ItemIdentifier($binding['ENTITY_TYPE_ID'], $binding['ENTITY_ID']),
 				$timelineEntryId
 			);
 		}

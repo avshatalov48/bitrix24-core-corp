@@ -3,7 +3,6 @@
 namespace Bitrix\Crm\Recycling;
 
 use Bitrix\Crm;
-use Bitrix\Crm\Timeline\TimelineManager;
 use Bitrix\Main;
 use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Loader;
@@ -112,13 +111,7 @@ class DynamicController extends BaseController
 	 */
 	public function getFieldNames(): array
 	{
-		$factory = Crm\Service\Container::getInstance()->getFactory($this->getEntityTypeID());
-		if (!$factory)
-		{
-			return [];
-		}
-
-		return $factory->getFieldsCollection()->getFieldNameList();
+		return $this->getFactory()->getFieldsCollection()->getFieldNameList();
 	}
 
 	public function prepareEntityData($entityId, array $params = []): array
@@ -138,8 +131,7 @@ class DynamicController extends BaseController
 			$slots['COMPANY_ID'] = $companyId;
 		}
 
-		$factory = Crm\Service\Container::getInstance()->getFactory($this->getEntityTypeID());
-		$item = $factory->getItem($entityId);
+		$item = $this->getFactory()->getItem($entityId);
 		$contacts = $item->getContactBindings();
 		if(!empty($contacts))
 		{
@@ -241,15 +233,12 @@ class DynamicController extends BaseController
 
 	protected function getEntityFields(int $entityId): ?array
 	{
-		$factory = Crm\Service\Container::getInstance()->getFactory($this->getEntityTypeID());
-		if ($factory)
+		$item = $this->getFactory()->getItem($entityId);
+		if ($item)
 		{
-			$item = $factory->getItem($entityId);
-			if ($item)
-			{
-				return $item->getCompatibleData();
-			}
+			return $item->getCompatibleData();
 		}
+
 		return null;
 	}
 
@@ -308,7 +297,16 @@ class DynamicController extends BaseController
 			->prepareRecoveryFields($fields, $relationMap);
 
 		$item = $this->createItem($fields);
-		$item->save();
+		$operation = $this->getFactory()->getRestoreOperation($item);
+		$operation
+			->disableAllChecks()
+		;
+
+		$result = $operation->launch();
+		if (!$result->isSuccess())
+		{
+			return false;
+		}
 
 		$newEntityID = $item->getId();
 		if($newEntityID <= 0)
@@ -317,8 +315,6 @@ class DynamicController extends BaseController
 		}
 
 		//region Relation
-		DynamicRelationManager::getInstance($this->getEntityTypeID())
-			->recoverBindings($newEntityID, $relationMap);
 		Relation::updateEntityID($this->getEntityTypeID(), $entityID, $newEntityID, $recyclingEntityID);
 		//endregion
 
@@ -341,22 +337,7 @@ class DynamicController extends BaseController
 		Relation::deleteJunks();
 		//endregion
 
-		$this->createRecoveryTimelineRecord($item);
-
-		$this->rebuildSearchIndex($newEntityID);
-		$this->startRecoveryWorkflows($newEntityID);
-
 		return true;
-	}
-
-	protected function createRecoveryTimelineRecord(Crm\Item $item): void
-	{
-		$timelineController = TimelineManager::resolveController(['ASSOCIATED_ENTITY_TYPE_ID' => $this->getEntityTypeID()]);
-		if ($timelineController)
-		{
-			/** @see FactoryBasedController::onRestore() */
-			$timelineController->onRestore($item->getId(), ['FIELDS' => $item->getData()]);
-		}
 	}
 
 	protected function recoverDependenceElements(int $recyclingEntityID, int $newEntityID): void
@@ -377,7 +358,7 @@ class DynamicController extends BaseController
 
 	protected function createItem(array $fields): Crm\Item
 	{
-		$factory = Crm\Service\Container::getInstance()->getFactory($this->getEntityTypeID());
+		$factory = $this->getFactory();
 
 		$item = $factory->createItem();
 		// remove parent field values, because actual values will be restored in recoverCustomRelations
@@ -492,5 +473,18 @@ class DynamicController extends BaseController
 				'=ENTITY_TYPE' => $this->getRecyclebinEntityTypeName(),
 			]);
 		}
+
+		return 0;
+	}
+
+	private function getFactory(): Crm\Service\Factory
+	{
+		$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory($this->getEntityTypeID());
+		if (!$factory)
+		{
+			throw new Main\ObjectNotFoundException('No factory found');
+		}
+
+		return $factory;
 	}
 }

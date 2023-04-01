@@ -2,10 +2,12 @@
 
 use Bitrix\Main\UserField\Types\EnumType;
 
-if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
 	die();
+}
 
-if ($arResult['CLOSE_SLIDER'] === true)
+if (isset($arResult['CLOSE_SLIDER']) && $arResult['CLOSE_SLIDER'] === true)
 {
 	?>
 	<script type="text/javascript">
@@ -31,7 +33,7 @@ if ($arResult['CLOSE_SLIDER'] === true)
 			}
 		);
 	</script>
-	<?
+	<?php
 	return;
 }
 
@@ -137,10 +139,10 @@ if(isset($arResult['ENABLE_SHOW_FILTER']) && !$arResult['ENABLE_SHOW_FILTER'])
 }
 
 $arTab1Fields[] = array(
-	"id"=>"SHOW_FILTER",
-	"name"=>GetMessage("CRM_FE_FIELD_SHOW_FILTER"),
-	"type"=>"checkbox",
-	"value"=>$arResult['FIELD']['SHOW_FILTER'] !== 'N',
+	"id" => "SHOW_FILTER",
+	"name" => GetMessage("CRM_FE_FIELD_SHOW_FILTER"),
+	"type" => "checkbox",
+	"value" => ($arResult['FIELD']['SHOW_FILTER'] ?? null) !== 'N',
 	"params" => $showInFilterParams
 );
 
@@ -178,9 +180,9 @@ $arTabs = array(
 );
 
 $custom_html = "";
-if(is_array($arResult["LIST"]))
+if(isset($arResult["LIST"]) && is_array($arResult["LIST"]))
 {
-	if($arResult["FORM_DATA"]["USER_TYPE_ID"] == 'enumeration')
+	if($arResult['FORM_DATA']['USER_TYPE_ID'] === 'enumeration')
 	{
 		$sort = 10;
 		$html = '<table id="tblLIST" width="100%">

@@ -78,12 +78,13 @@ class SalesCenterDeliveryWizard extends CBitrixComponent
 			}
 		}
 
+		$this->arResult['service'] = null;
 		if ($serviceId)
 		{
 			$this->arResult['service'] = Services\Manager::getById($serviceId);
 		}
 
-		$this->arResult['edit'] = $this->arResult['service'] ? true : false;
+		$this->arResult['edit'] = (bool)$this->arResult['service'];
 
 		$this->includeComponentTemplate();
 	}

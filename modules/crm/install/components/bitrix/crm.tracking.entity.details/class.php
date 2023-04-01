@@ -168,9 +168,11 @@ class CCrmTrackingEntityDetailsComponent extends CBitrixComponent
 		$this->arResult['TRACES'] = $traces;
 		$this->arResult['SOURCES'] = $actualSources;
 		$trace = current($traces);
+		$traceSource = $trace['SOURCE'] ?? null;
 		$this->componentResult['SELECTED_SOURCE_ID'] = $this->arResult['SELECTED_SOURCE_ID'] = (
-			(is_array($trace['SOURCE']) && array_key_exists('ID', $trace['SOURCE'])) ?
-				$trace['SOURCE']['ID'] : ($this->arParams['IS_REQUIRED'] === true ? null : 0)
+			(is_array($traceSource) && array_key_exists('ID', $traceSource))
+				? $trace['SOURCE']['ID']
+				: (($this->arParams['IS_REQUIRED'] ?? null) === true ? null : 0)
 		);
 		$this->includeComponentTemplate();
 	}

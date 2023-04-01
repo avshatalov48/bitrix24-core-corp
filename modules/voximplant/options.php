@@ -36,7 +36,39 @@ else
 	$accountBalance = $ViAccount->GetAccountBalance().' '.$ViAccount->GetAccountCurrency();
 	$errorMessage = '';
 }
-if($_POST['Update'] <> '' && check_bitrix_sessid())
+
+$publicUrl = COption::GetOptionString('voximplant', 'portal_url', '');
+$viHttp = new CVoxImplantHttp();
+$result = $viHttp->checkPortalVisibility();
+if ($result->isSuccess())
+{
+	if ($result->getData()['isVisible'] === false)
+	{
+		$errorMessage = GetMessage('VI_ACCOUNT_ERROR_PUBLIC_EXTENDED', [
+			'#PUBLIC_URL#' => htmlspecialcharsbx($publicUrl),
+		]);
+	}
+}
+else
+{
+	$error = $result->getErrorCollection()[0];
+	switch ($error->getCode())
+	{
+		case 'VI_PORTAL_URL_WITHOUT_PROTOCOL':
+			$errorMessage = GetMessage('VI_ACCOUNT_ERROR_PUBLIC_WITHOUT_PROTOCOL');
+			break;
+		case 'VI_PORTAL_URL_IS_LOCAL':
+			$errorMessage = GetMessage('VI_ACCOUNT_ERROR_PUBLIC_IS_LOCAL');
+			break;
+		default:
+			$errorMessage = GetMessage('VI_ACCOUNT_ERROR_PUBLIC_EXTENDED', [
+				'#PUBLIC_URL#' => htmlspecialcharsbx($publicUrl),
+			]);
+			break;
+	}
+}
+
+if(isset($_POST['Update']) && $_POST['Update'] <> '' && check_bitrix_sessid())
 {
 	if ($_POST['PUBLIC_URL'] <> '' && mb_strlen($_POST['PUBLIC_URL']) < 12)
 	{

@@ -40,6 +40,7 @@ class ProviderManager
 				Document::getId() => Document::className(),
 				SignDocument::getId() => SignDocument::className(),
 				ToDo::getId() => ToDo::className(),
+				Payment::getId() => Payment::className(),
 			];
 
 			if(Visit::isAvailable())

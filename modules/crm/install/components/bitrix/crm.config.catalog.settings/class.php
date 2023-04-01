@@ -24,6 +24,9 @@ class CCrmConfigCatalogSettings extends \CBitrixComponent implements Controllera
 	private const OPTION_PRODUCT_CARD_SLIDER_ENABLED = 'product_card_slider_enabled';
 	private const OPTION_DEFAULT_PRODUCT_VAT_INCLUDED = 'default_product_vat_included';
 
+	private const PRODUCT_SLIDER_HELP_LINK_EU = 'https://training.bitrix24.com/support/training/course/index.php?COURSE_ID=178&LESSON_ID=25692';
+	private const PRODUCT_SLIDER_HELP_LINK_RU = 'https://dev.1c-bitrix.ru/learning/course/index.php?COURSE_ID=48&LESSON_ID=25488';
+
 	/**
 	 * @inheritDoc
 	 */
@@ -182,6 +185,7 @@ class CCrmConfigCatalogSettings extends \CBitrixComponent implements Controllera
 			'defaultSubscribe' => Option::get('catalog', self::OPTION_DEFAULT_SUBSCRIBE) === 'Y',
 			'productCardSliderEnabled' => Option::get('catalog', self::OPTION_PRODUCT_CARD_SLIDER_ENABLED) === 'Y', // TODO: delete if not need
 			'isCanEnableProductCardSlider' => $this->isCanEnableProductCardSlider(),
+			'busProductCardHelpLink' => static::getBusProductCardHelpLink(),
 			'defaultProductVatIncluded' => Option::get('catalog', self::OPTION_DEFAULT_PRODUCT_VAT_INCLUDED) === 'Y',
 			'configCatalogSource' => \Bitrix\Main\Context::getCurrent()->getRequest()->get('configCatalogSource'),
 			'checkRightsOnDecreaseStoreAmount' => CheckRightsOnDecreaseStoreAmount::isEnabled(),
@@ -301,5 +305,45 @@ class CCrmConfigCatalogSettings extends \CBitrixComponent implements Controllera
 		}
 
 		return $isBitrix24Included;
+	}
+
+	private static function getBusProductCardHelpLink(): string
+	{
+		if (static::isBitrix24())
+		{
+			return '';
+		}
+
+		if (in_array(self::getZone(), ['ru', 'by', 'kz'], true))
+		{
+			return self::PRODUCT_SLIDER_HELP_LINK_RU;
+		}
+
+		return self::PRODUCT_SLIDER_HELP_LINK_EU;
+	}
+
+	private static function getZone(): string
+	{
+		if (self::isBitrix24())
+		{
+			$zone = \CBitrix24::getPortalZone();
+		}
+		else
+		{
+			$row = Bitrix\Main\Localization\LanguageTable::getList([
+				'select' => ['ID'],
+				'filter' => [
+					'=DEF' => 'Y',
+					'=ACTIVE' => 'Y'
+				]
+			])->fetch();
+
+			if ($row)
+			{
+				return $row['ID'];
+			}
+		}
+
+		return 'en';
 	}
 }

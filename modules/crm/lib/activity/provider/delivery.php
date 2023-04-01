@@ -1,4 +1,5 @@
 <?php
+
 namespace Bitrix\Crm\Activity\Provider;
 
 use Bitrix\Crm\Activity;
@@ -11,6 +12,8 @@ use Bitrix\Location\Service\FormatService;
 use Bitrix\Main\Event;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Result;
+use Bitrix\Main\Type\DateTime;
 use Bitrix\Sale\Delivery\Requests;
 use Bitrix\Sale\Delivery\Requests\RequestResult;
 use Bitrix\Sale\Delivery\Services\Manager;
@@ -53,8 +56,8 @@ class Delivery extends Activity\Provider\Base
 			[
 				'NAME' => Loc::getMessage('CRM_ACTIVITY_PROVIDER_DELIVERY_TYPE_DEFAULT_NAME'),
 				'PROVIDER_ID' => self::getId(),
-				'PROVIDER_TYPE_ID' => self::PROVIDER_TYPE_DEFAULT
-			]
+				'PROVIDER_TYPE_ID' => self::PROVIDER_TYPE_DEFAULT,
+			],
 		];
 	}
 
@@ -80,13 +83,13 @@ class Delivery extends Activity\Provider\Base
 	 */
 	public static function getFieldsForEdit(array $activity)
 	{
-		return array(
-			array(
+		return [
+			[
 				'LABEL' => Loc::getMessage('CRM_ACTIVITY_PROVIDER_DELIVERY_ACTIVITY_NAME_LABEL'),
 				'TYPE' => 'SUBJECT',
-				'VALUE' => $activity['SUBJECT']
-			)
-		);
+				'VALUE' => $activity['SUBJECT'],
+			],
+		];
 	}
 
 	/**
@@ -115,16 +118,21 @@ class Delivery extends Activity\Provider\Base
 	 */
 	public static function addActivity(Shipment $shipment): ?int
 	{
-		$authorId = $shipment->getField('RESPONSIBLE_ID')
-			? (int)$shipment->getField('RESPONSIBLE_ID')
-			: (int)$shipment->getField('EMP_RESPONSIBLE_ID');
-
+		$authorId =
+			$shipment->getField('RESPONSIBLE_ID')
+				? (int)$shipment->getField('RESPONSIBLE_ID')
+				: (int)$shipment->getField('EMP_RESPONSIBLE_ID')
+		;
 		$typeId = self::PROVIDER_TYPE_DEFAULT;
+		$deadlineTime = (new DateTime())->add('+1 day')->setTime(19, 0, 0);
 
 		$fields = [
 			'TYPE_ID' => \CCrmActivityType::Provider,
 			'PROVIDER_ID' => 'CRM_DELIVERY',
 			'PROVIDER_TYPE_ID' => $typeId,
+			'START_TIME' => $deadlineTime,
+			'END_TIME' => $deadlineTime,
+			'DEADLINE' => $deadlineTime,
 			'SUBJECT' => self::getActivitySubject($shipment, $typeId),
 			'IS_HANDLEABLE' => 'Y',
 			'COMPLETED' => 'N',
@@ -136,7 +144,7 @@ class Delivery extends Activity\Provider\Base
 			'SETTINGS' => [
 				'FIELDS' => [
 					'SHIPMENT_ID' => $shipment->getId(),
-				]
+				],
 			],
 		];
 
@@ -146,30 +154,27 @@ class Delivery extends Activity\Provider\Base
 			$deliveryService = $shipment->getDelivery();
 			if ($deliveryService)
 			{
-				$messageFields = [
-					'TITLE' => Loc::getMessage('CRM_ACTIVITY_PROVIDER_DELIVERY_DELIVERY_CALCULATION_TITLE'),
-				];
-				$rateCalculationResult = $deliveryService->calculate($shipment);
-				if ($rateCalculationResult->isSuccess())
-				{
-					$messageFields['DESCRIPTION'] = sprintf(
-						'%s: %s',
-						Loc::getMessage('CRM_ACTIVITY_PROVIDER_DELIVERY_CALCULATION_RECEIVED_SUCCESSFULLY'),
-						SaleFormatCurrency(
-							$rateCalculationResult->getDeliveryPrice(),
-							$shipment->getOrder()->getCurrency()
-						)
-					);
-				}
-				else
-				{
-					$messageFields['STATUS'] = Loc::getMessage('CRM_ACTIVITY_PROVIDER_DELIVERY_CALCULATION_FAILURE_STATUS');
-					$messageFields['DESCRIPTION'] = Loc::getMessage('CRM_ACTIVITY_PROVIDER_DELIVERY_CALCULATION_FAILED');
-					$messageFields['STATUS_SEMANTIC'] = DeliveryController::MESSAGE_STATUS_SEMANTIC_ERROR;
-				}
+                $deliveryServiceName = $deliveryService->getName();
+                if ($deliveryService->getParentService())
+                {
+                    $deliveryServiceName = implode(
+                        ', ',
+                        [
+                            (string)$deliveryService->getParentService()->getName(),
+                            (string)$deliveryService->getName(),
+                        ],
+                    );
+                }
 
-				DeliveryController::getInstance()->createShipmentDeliveryCalculationMessage(
-					$messageFields,
+				DeliveryController::getInstance()->createShipmentMessage(
+					[
+						'TITLE' => Loc::getMessage('CRM_ACTIVITY_PROVIDER_DELIVERY_DELIVERY_CREATED'),
+						'DESCRIPTION' => $deliveryServiceName . ' ' . '#PRICE#',
+						'CURRENCY' => $shipment->getCurrency(),
+						'MONEY_VALUES' => [
+							'#PRICE#' => $shipment->getPrice(),
+						],
+					],
 					$shipment
 				);
 			}
@@ -184,6 +189,38 @@ class Delivery extends Activity\Provider\Base
 		}
 
 		return $activityId ?? null;
+	}
+
+	/**
+	 * @param string $action Action ADD or UPDATE.
+	 * @param array $fields Activity fields.
+	 * @param int $id Activity ID.
+	 * @param null|array $params Additional parameters.
+	 * @return Result Check fields result.
+	 */
+	public static function checkFields($action, &$fields, $id, $params = null)
+	{
+		$result = new Result();
+
+		if (empty($fields['PROVIDER_TYPE_ID']))
+		{
+			$fields['PROVIDER_TYPE_ID'] = static::PROVIDER_TYPE_DEFAULT;
+		}
+
+		//Only START_TIME can be taken for DEADLINE!
+		if ($action === 'UPDATE')
+		{
+			if (isset($fields['START_TIME']) && $fields['START_TIME'] !== '')
+			{
+				$fields['DEADLINE'] = $fields['START_TIME'];
+			}
+			elseif (isset($fields['~START_TIME']) && $fields['~START_TIME'] !== '')
+			{
+				$fields['~DEADLINE'] = $fields['~START_TIME'];
+			}
+		}
+
+		return $result;
 	}
 
 	/**
@@ -205,7 +242,6 @@ class Delivery extends Activity\Provider\Base
 					'%s (%s)',
 					$deliveryService->getParentService()->getName(),
 					$deliveryService->getName()
-
 				);
 			}
 			else
@@ -214,9 +250,11 @@ class Delivery extends Activity\Provider\Base
 			}
 		}
 
-		return $deliveryServiceName
+		return
+			$deliveryServiceName
 			? sprintf('%s: %s', $result, $deliveryServiceName)
-			: $result;
+			: $result
+		;
 	}
 
 	/**
@@ -249,14 +287,14 @@ class Delivery extends Activity\Provider\Base
 		/** @var array $additional */
 		$additional = $event->getParameter('ADDITIONAL');
 
-		$requestResults = $result->getRequestResults();
-		if (!$result->isSuccess() || empty($requestResults) || count($requestResults) > 1)
-		{
-			return;
-		}
+        /** @var RequestResult|null $requestResult */
+        $requestResult = null;
 
-		/** @var RequestResult $requestResult */
-		$requestResult = $requestResults[0];
+		$requestResults = $result->getRequestResults();
+		if ($result->isSuccess() && !empty($requestResults))
+		{
+            $requestResult = $requestResults[0];
+		}
 
 		if (
 			isset($additional['ACTIVITY_ID'])
@@ -265,7 +303,9 @@ class Delivery extends Activity\Provider\Base
 		{
 			\CCrmActivity::update(
 				$activity['ID'],
-				['ASSOCIATED_ENTITY_ID' => $requestResult->getInternalId()],
+				[
+                    'ASSOCIATED_ENTITY_ID' => $requestResult ? $requestResult->getInternalId() : null,
+                ],
 				false
 			);
 		}
@@ -298,41 +338,6 @@ class Delivery extends Activity\Provider\Base
 			['ASSOCIATED_ENTITY_ID' => null],
 			false
 		);
-	}
-
-	/**
-	 * @param Event $event
-	 */
-	public static function onDeliveryRequestUpdated(Event $event): void
-	{
-		/** @var int $requestId */
-		$requestId = $event->getParameter('REQUEST_ID');
-
-		/** @var array $fields */
-		$fields = $event->getParameter('FIELDS');
-
-		/** @var Requests\Result $result */
-		$result = $event->getParameter('RESULT');
-
-		if (!$result->isSuccess())
-		{
-			return;
-		}
-
-		$activity = self::getActivity(['ASSOCIATED_ENTITY_ID' => $requestId]);
-		if (!$activity)
-		{
-			return;
-		}
-
-		if (isset($fields['STATUS']) && $fields['STATUS'] === Requests\Manager::STATUS_PROCESSED)
-		{
-			\CCrmActivity::update(
-				$activity['ID'],
-				['COMPLETED' => 'Y'],
-				false
-			);
-		}
 	}
 
 	// endregion
@@ -368,7 +373,17 @@ class Delivery extends Activity\Provider\Base
 		$deliveryServiceId = null;
 		if ($deliveryRequestId)
 		{
-			$result['DELIVERY_REQUEST'] = Requests\RequestTable::getById($deliveryRequestId)->fetch();
+			$deliveryRequest = Requests\RequestTable::getById($deliveryRequestId)->fetch();
+			if ($deliveryRequest)
+			{
+				$deliveryRequest['IS_PROCESSED'] =
+					(int)$deliveryRequest['STATUS'] === Requests\Manager::STATUS_PROCESSED
+						? 'Y'
+						: 'N'
+				;
+			}
+			$result['DELIVERY_REQUEST'] = $deliveryRequest;
+
 			$deliveryServiceId = $result['DELIVERY_REQUEST'] ? $result['DELIVERY_REQUEST']['DELIVERY_ID'] : null;
 		}
 
@@ -381,26 +396,15 @@ class Delivery extends Activity\Provider\Base
 				$deliveryServiceId = $shipment->getDelivery()->getId();
 			}
 
-			$currency = $shipment->getOrder()->getCurrency();
-			$priceDelivery = $shipment->getField('PRICE_DELIVERY');
-			$basePriceDelivery = is_null($shipment->getField('BASE_PRICE_DELIVERY'))
-				? $shipment->getField('PRICE_DELIVERY')
-				: $shipment->getField('BASE_PRICE_DELIVERY');
-
-
 			$addressFrom = $shipment->getPropertyCollection()->getAddressFrom();
 			$addressFromValue = $addressFrom ? $addressFrom->getValue() : null;
-
 			$addressTo = $shipment->getPropertyCollection()->getAddressTo();
 			$addressToValue = $addressTo ? $addressTo->getValue() : null;
 
 			$result['SHIPMENTS'][] = [
 				'ID' => $shipment->getId(),
-				'PRICE_DELIVERY' => $priceDelivery,
-				'BASE_PRICE_DELIVERY' => $basePriceDelivery,
-				'PRICE_DELIVERY_FORMATTED' => SaleFormatCurrency($priceDelivery, $currency),
-				'BASE_PRICE_DELIVERY_FORMATTED' => SaleFormatCurrency($basePriceDelivery, $currency),
-				'CURRENCY' => $currency,
+				'PRICE_DELIVERY' => $shipment->getField('PRICE_DELIVERY'),
+				'CURRENCY' => $shipment->getOrder()->getCurrency(),
 				'ADDRESS_FROM_FORMATTED' => is_array($addressFromValue) ? self::formatAddress($addressFromValue) : '',
 				'ADDRESS_TO_FORMATTED' => is_array($addressToValue) ? self::formatAddress($addressToValue) : '',
 			];
@@ -414,27 +418,37 @@ class Delivery extends Activity\Provider\Base
 
 				$result['DELIVERY_SERVICE'] = [
 					'ID' => $deliveryService->getId(),
-					'IDS' => $deliveryService->getParentService()
-						? [$deliveryService->getId(), $deliveryService->getParentService()->getId()]
-						: [$deliveryService->getId()],
-					'PARENT_ID' => $deliveryService->getParentService()
-						? $deliveryService->getParentService()->getId()
-						: null,
-					'IS_PROFILE' => $deliveryService->getParentService() ? true : false,
+					'IDS' =>
+						$deliveryService->getParentService()
+							? [$deliveryService->getId(), $deliveryService->getParentService()->getId()]
+							: [$deliveryService->getId()]
+					,
+					'PARENT_ID' =>
+						$deliveryService->getParentService()
+							? $deliveryService->getParentService()->getId()
+							: null
+					,
+					'IS_PROFILE' => (bool)$deliveryService->getParentService(),
 					'NAME' => $deliveryService->getName(),
-					'PARENT_NAME' => $deliveryService->getParentService()
-						? $deliveryService->getParentService()->getName()
-						: null,
+					'PARENT_NAME' =>
+						$deliveryService->getParentService()
+							? $deliveryService->getParentService()->getName()
+							: null
+					,
 					'LOGO' => $deliveryService->getLogotipPath(),
-					'PARENT_LOGO' => $deliveryService->getParentService()
-						? $deliveryService->getParentService()->getLogotipPath()
-						: null,
+					'PARENT_LOGO' =>
+						$deliveryService->getParentService()
+							? $deliveryService->getParentService()->getLogotipPath()
+							: null
+					,
 				];
 
-				if (
-					!is_null($deliveryRequestHandler)
-					&& isset($deliveryRequestHandler->getActions(null)[$deliveryRequestHandler::CANCEL_ACTION_CODE])
-				)
+				$deliveryRequestActions =
+					$deliveryRequestHandler
+						? $deliveryRequestHandler->getActions(null)
+						: []
+				;
+				if (isset($deliveryRequestActions[$deliveryRequestHandler::CANCEL_ACTION_CODE]))
 				{
 					$result['DELIVERY_SERVICE'] = array_merge(
 						$result['DELIVERY_SERVICE'],
@@ -459,7 +473,7 @@ class Delivery extends Activity\Provider\Base
 		$shipmentBindingsList = ActivityBindingTable::getList([
 			'filter' => [
 				'OWNER_ID' => $shipmentId,
-				'OWNER_TYPE_ID' => \CCrmOwnerType::OrderShipment
+				'OWNER_TYPE_ID' => \CCrmOwnerType::OrderShipment,
 			]
 		]);
 		while ($shipmentBinding = $shipmentBindingsList->fetch())
@@ -469,13 +483,15 @@ class Delivery extends Activity\Provider\Base
 			$activity = \CCrmActivity::GetByID((int)$shipmentBinding['ACTIVITY_ID'], false);
 			if ($activity)
 			{
-				$shipmentIds = isset($activity['SETTINGS']['FIELDS']['SHIPMENT_ID'])
-					? (
-					is_array($activity['SETTINGS']['FIELDS']['SHIPMENT_ID'])
-						? $activity['SETTINGS']['FIELDS']['SHIPMENT_ID']
-						: [$activity['SETTINGS']['FIELDS']['SHIPMENT_ID']]
-					)
-					: [];
+				$shipmentIds =
+					isset($activity['SETTINGS']['FIELDS']['SHIPMENT_ID'])
+						? (
+							is_array($activity['SETTINGS']['FIELDS']['SHIPMENT_ID'])
+								? $activity['SETTINGS']['FIELDS']['SHIPMENT_ID']
+								: [$activity['SETTINGS']['FIELDS']['SHIPMENT_ID']]
+						)
+						: []
+				;
 
 				$newShipmentIds = array_values(array_diff($shipmentIds, [$shipmentId]));
 				if (empty($newShipmentIds))

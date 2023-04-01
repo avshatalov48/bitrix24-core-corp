@@ -3,7 +3,6 @@
  */
 jn.define('crm/entity-detail/toolbar', (require, exports, module) => {
 	const { Type } = require('crm/type');
-	const { DealDetailToolbar } = require('crm/entity-detail/toolbar/deal');
 	const { ActivityToolbar } = require('crm/entity-detail/toolbar/activity');
 	const { ToolbarPanelWrapper } = require('crm/entity-detail/toolbar/panel');
 
@@ -15,7 +14,7 @@ jn.define('crm/entity-detail/toolbar', (require, exports, module) => {
 		/**
 		 * @param {Number|String} typeId
 		 * @param {Object?} data
-		 * @return {null|DealDetailToolbar}
+		 * @return {null|ToolbarPanelWrapper}
 		 */
 		static create({ typeId }, data = {})
 		{

@@ -3,6 +3,8 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Crm\Restriction\RestrictionManager;
 
+/** @var CrmEventViewComponent $this */
+
 if (!CModule::IncludeModule('crm'))
 {
 	ShowError(GetMessage('CRM_MODULE_NOT_INSTALLED'));
@@ -15,13 +17,41 @@ if (!(CCrmPerms::IsAccessEnabled()))
 	return;
 }
 
-$arParams['PATH_TO_EVENT_LIST'] = CrmCheckPath('PATH_TO_EVENT_LIST', $arParams['PATH_TO_EVENT_LIST'], $APPLICATION->GetCurPage());
-$arParams['PATH_TO_LEAD_SHOW'] = CrmCheckPath('PATH_TO_LEAD_SHOW', $arParams['PATH_TO_LEAD_SHOW'], $APPLICATION->GetCurPage().'?lead_id=#lead_id#&show');
-$arParams['PATH_TO_DEAL_SHOW'] = CrmCheckPath('PATH_TO_DEAL_SHOW', $arParams['PATH_TO_DEAL_SHOW'], $APPLICATION->GetCurPage().'?deal_id=#deal_id#&show');
-$arParams['PATH_TO_QUOTE_SHOW'] = CrmCheckPath('PATH_TO_QUOTE_SHOW', $arParams['PATH_TO_QUOTE_SHOW'], $APPLICATION->GetCurPage().'?quote_id=#quote_id#&show');
-$arParams['PATH_TO_CONTACT_SHOW'] = CrmCheckPath('PATH_TO_CONTACT_SHOW', $arParams['PATH_TO_CONTACT_SHOW'], $APPLICATION->GetCurPage().'?contact_id=#contact_id#&show');
-$arParams['PATH_TO_COMPANY_SHOW'] = CrmCheckPath('PATH_TO_COMPANY_SHOW', $arParams['PATH_TO_COMPANY_SHOW'], $APPLICATION->GetCurPage().'?company_id=#company_id#&show');
-$arParams['PATH_TO_USER_PROFILE'] = CrmCheckPath('PATH_TO_USER_PROFILE', $arParams['PATH_TO_USER_PROFILE'], '/company/personal/user/#user_id#/');
+$arParams['PATH_TO_EVENT_LIST'] = CrmCheckPath(
+	'PATH_TO_EVENT_LIST',
+		$arParams['PATH_TO_EVENT_LIST'] ?? null,
+	$APPLICATION->GetCurPage()
+);
+$arParams['PATH_TO_LEAD_SHOW'] = CrmCheckPath(
+	'PATH_TO_LEAD_SHOW',
+		$arParams['PATH_TO_LEAD_SHOW'] ?? null,
+	$APPLICATION->GetCurPage() . '?lead_id=#lead_id#&show'
+);
+$arParams['PATH_TO_DEAL_SHOW'] = CrmCheckPath(
+	'PATH_TO_DEAL_SHOW',
+		$arParams['PATH_TO_DEAL_SHOW'] ?? null,
+	$APPLICATION->GetCurPage() . '?deal_id=#deal_id#&show'
+);
+$arParams['PATH_TO_QUOTE_SHOW'] = CrmCheckPath(
+	'PATH_TO_QUOTE_SHOW',
+		$arParams['PATH_TO_QUOTE_SHOW'] ?? null,
+	$APPLICATION->GetCurPage() . '?quote_id=#quote_id#&show'
+);
+$arParams['PATH_TO_CONTACT_SHOW'] = CrmCheckPath(
+	'PATH_TO_CONTACT_SHOW',
+		$arParams['PATH_TO_CONTACT_SHOW'] ?? null,
+	$APPLICATION->GetCurPage() . '?contact_id=#contact_id#&show'
+);
+$arParams['PATH_TO_COMPANY_SHOW'] = CrmCheckPath(
+	'PATH_TO_COMPANY_SHOW',
+		$arParams['PATH_TO_COMPANY_SHOW'] ?? null,
+	$APPLICATION->GetCurPage() . '?company_id=#company_id#&show'
+);
+$arParams['PATH_TO_USER_PROFILE'] = CrmCheckPath(
+	'PATH_TO_USER_PROFILE',
+		$arParams['PATH_TO_USER_PROFILE'] ?? null,
+	'/company/personal/user/#user_id#/'
+);
 
 $arResult['EVENT_ENTITY_LINK'] = isset($arParams['EVENT_ENTITY_LINK']) && $arParams['EVENT_ENTITY_LINK'] == 'Y'? 'Y': 'N';
 $arResult['EVENT_HINT_MESSAGE'] = isset($arParams['EVENT_HINT_MESSAGE']) && $arParams['EVENT_HINT_MESSAGE'] == 'N'? 'N': 'Y';
@@ -64,8 +94,10 @@ if ($arParams['INTERNAL'] == 'Y' || $arParams['GADGET'] == 'Y')
 	$bInternal = true;
 $arResult['INTERNAL'] = $bInternal;
 $arResult['INTERNAL_EDIT'] = false;
-if ($arParams['INTERNAL_EDIT'] == 'Y')
+if (isset($arParams['INTERNAL_EDIT']) && $arParams['INTERNAL_EDIT'] === 'Y')
+{
 	$arResult['INTERNAL_EDIT'] = true;
+}
 $arResult['GADGET'] =  isset($arParams['GADGET']) && $arParams['GADGET'] == 'Y'? 'Y': 'N';
 $isInGadgetMode = $arResult['GADGET'] === 'Y';
 
@@ -340,7 +372,12 @@ if (!$arResult['INTERNAL'] || $arResult['SHOW_INTERNAL_FILTER'])
 		}
 	}
 
-	$arResult['FILTER'][] = array('id' => 'EVENT_TYPE', 'name' => GetMessage('CRM_COLUMN_EVENT_TYPE'), 'default' => true, 'type' => 'list', 'items' => array('' => '') + CCrmEvent::GetEventTypes());
+	$eventTypeItems = CCrmEvent::GetEventTypes();
+	unset($eventTypeItems[\CCrmEvent::TYPE_LINK], $eventTypeItems[\CCrmEvent::TYPE_UNLINK]);
+	$eventTypeItems[$this::FILTER_VALUE_RELATIONS] = GetMessage('CRM_EVENT_TYPE_RELATIONS');
+
+	$arResult['FILTER'][] = array('id' => 'EVENT_TYPE', 'name' => GetMessage('CRM_COLUMN_EVENT_TYPE'), 'default' => true, 'type' => 'list', 'items' => array('' => '') + $eventTypeItems);
+	unset($eventTypeItems);
 	$arResult['FILTER'][] = array('id' => 'EVENT_ID', 'name' => GetMessage('CRM_COLUMN_EVENT_NAME'), 'default' => true, 'type' => 'list', 'items' => array('' => '') + CCrmStatus::GetStatusList('EVENT_TYPE'));
 	$arResult['FILTER'][] = array('id' => 'EVENT_DESC', 'name' => GetMessage('CRM_COLUMN_EVENT_DESC'));
 	$arResult['FILTER'][] = array(
@@ -415,6 +452,11 @@ foreach ($arFilter as $k => $v)
 		}
 		unset($arFilter[$k]);
 	}
+	elseif ($k === 'EVENT_TYPE' && $v === $this::FILTER_VALUE_RELATIONS)
+	{
+		unset($arFilter['EVENT_TYPE']);
+		$arFilter['@EVENT_TYPE'] = [\CCrmEvent::TYPE_LINK, \CCrmEvent::TYPE_UNLINK];
+	}
 	else if (in_array($k, $arResult['FILTER2LOGIC']))
 	{
 		// Bugfix #26956 - skip empty values in logical filter
@@ -482,6 +524,8 @@ $arResult['EVENT'] = Array();
 //region Navigation data initialization
 $pageSize = (int)(isset($arNavParams['nPageSize']) ? $arNavParams['nPageSize'] : $arParams['EVENT_COUNT']);
 $enableNextPage = false;
+
+$pageNum = null;
 if(isset($_REQUEST['apply_filter']) && $_REQUEST['apply_filter'] === 'Y')
 {
 	$pageNum = 1;
@@ -603,16 +647,7 @@ while ($arEvent = $obRes->Fetch())
 		$arEvent['EVENT_TEXT_2'] = strip_tags($arEvent['~EVENT_TEXT_2'], '<br><br/>');
 	}
 
-	if (mb_strlen($arEvent['EVENT_TEXT_1']) > 255 || mb_strlen($arEvent['EVENT_TEXT_2']) > 255)
-	{
-		$arEvent['EVENT_DESC'] = '<div id="event_desc_short_'.$arEvent['ID'].'"><a href="#more" onclick="crm_event_desc('.$arEvent['ID'].'); return false;">'.GetMessage('CRM_EVENT_DESC_MORE').'</a></div>';
-		$arEvent['EVENT_DESC'] .= '<div id="event_desc_full_'.$arEvent['ID'].'" style="display: none"><b>'.GetMessage('CRM_EVENT_DESC_BEFORE').'</b>:<br>'.($arEvent['EVENT_TEXT_1']).'<br><br><b>'.GetMessage('CRM_EVENT_DESC_AFTER').'</b>:<br>'.($arEvent['EVENT_TEXT_2']).'</div>';
-	}
-	else if ($arEvent['EVENT_TEXT_1'] <> '' && $arEvent['EVENT_TEXT_2'] <> '')
-		$arEvent['EVENT_DESC'] = ($arEvent['EVENT_TEXT_1']).' <span>&rarr;</span> '.($arEvent['EVENT_TEXT_2']);
-	else
-		$arEvent['EVENT_DESC'] = !empty($arEvent['EVENT_TEXT_1'])? ($arEvent['EVENT_TEXT_1']): '';
-	$arEvent['EVENT_DESC'] = nl2br($arEvent['EVENT_DESC']);
+	$arEvent['EVENT_DESC'] = $this->compileEventDesc($arEvent);
 
 	$arEvent['FILES'] = $arEvent['~FILES'] = $arEvent['FILES'] !== '' ? unserialize($arEvent['FILES'], ['allowed_classes' => false]) : array();
 	if (!empty($arEvent['FILES']))
@@ -684,6 +719,8 @@ if(!empty($userIDs))
 		$userInfos[$userID] = $userInfo;
 	}
 }
+
+$arResult['EVENT'] = $this->enrichRelationEvents($arResult['EVENT']);
 
 for($i = 0, $length = count($arResult['EVENT']); $i < $length; $i++)
 {

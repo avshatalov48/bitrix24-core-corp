@@ -4,8 +4,7 @@ use Bitrix\Main\Localization\Loc;
 /**
  * Class CDavAddressbookCrmLimitedResource
  */
-abstract class CDavAddressbookCrmBaseLimited
-	extends CDavAddressbookCrmBase
+abstract class CDavAddressbookCrmBaseLimited extends CDavAddressbookCrmBase
 {
 	const RESOURCE_SYNC_OWNER = 'responsible';
 	protected static $resourceSyncOrder = array('DATE_MODIFY' => 'DESC');
@@ -22,17 +21,21 @@ abstract class CDavAddressbookCrmBaseLimited
 	 * @param $maxCount
 	 * @return CDBResult|null
 	 */
-	protected function LoadCrmResourceEntitiesList($collectionId, $account, $filter = array(), $maxCount)
+	protected function LoadCrmResourceEntitiesList($collectionId, $account, $maxCount, $filter = array())
 	{
 		if ($account instanceof CDavPrincipal)
+		{
 			$userId = $account->Id();
+		}
 		else
+		{
 			$userId = $account[1];
+		}
 
 		$filter = static::GetResourceSyncFilter($userId, $filter);
 		$order = static::GetResourceSyncOrder($userId);
 		$selectParams = static::GetResourceSyncSelectParams($userId);
-		return $this->LoadCrmResourceEntitiesListByParams($order, $filter, $selectParams, $maxCount);
+		return $this->LoadCrmResourceEntitiesListByParams($order, $filter, $maxCount, $selectParams);
 	}
 
 	/**
@@ -75,8 +78,8 @@ abstract class CDavAddressbookCrmBaseLimited
 	private static function GetResourceSyncFilter($userId, $filter = array())
 	{
 		$owner = static::GetResourceSyncFilterOwner($userId);
-		$filter = static::PerformResourceSyncFilter($owner, $userId, $filter);
-		return $filter;
+
+		return static::PerformResourceSyncFilter($owner, $userId, $filter);
 	}
 
 	/**
@@ -120,13 +123,14 @@ abstract class CDavAddressbookCrmBaseLimited
 			return null;
 		}
 		$setting = static::LoadSavedSyncSettings($userId);
+
 		return $setting['FILTER'];
 	}
 
 
 	/**
 	 * @param $userId
-	 * @return string
+	 * @return array
 	 */
 	protected static function GetResourceSyncSelectParams($userId)
 	{
@@ -157,10 +161,15 @@ abstract class CDavAddressbookCrmBaseLimited
 	protected static function PrepareForSaveSyncSettings($settings)
 	{
 		$params = parent::PrepareForSaveSyncSettings($settings);
-		if (isset($settings['FILTER']) && in_array($settings['FILTER'], array_keys(static::GetListOfFilterItems())))
+		if (isset($settings['FILTER']) && array_key_exists($settings['FILTER'], static::GetListOfFilterItems()))
+		{
 			$params['FILTER'] = htmlspecialcharsbx($settings['FILTER']);
+		}
 		else
+		{
 			$params['FILTER'] = static::RESOURCE_SYNC_OWNER;
+		}
+
 		return $params;
 	}
 }

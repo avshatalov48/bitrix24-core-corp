@@ -2,7 +2,6 @@
 namespace Bitrix\Crm\Timeline;
 
 use Bitrix\Crm\Data\EntityFieldsHelper;
-use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\DateTime;
@@ -131,31 +130,10 @@ class ContactController extends EntityController
 	}
 
 	/**
-	 * @deprecated Please, use RelationController instead
-	 * @see RelationController::onItemsBind()
+	 * @deprecated Relation events in timeline are no longer supported
 	 */
 	public function onLink($ownerID, array $params)
 	{
-		$ownerID = (int)$ownerID;
-		if ($ownerID <= 0)
-		{
-			return;
-		}
-
-		$entityTypeID = isset($params['ENTITY_TYPE_ID']) ? (int)$params['ENTITY_TYPE_ID'] : \CCrmOwnerType::Undefined;
-		$entityID = isset($params['ENTITY_ID']) ? (int)$params['ENTITY_ID'] : 0;
-
-		if (($entityID <= 0) || !\CCrmOwnerType::IsDefined($entityTypeID))
-		{
-			return ;
-		}
-
-		$authorID = isset($params['AUTHOR_ID']) ? (int)$params['AUTHOR_ID'] : null;
-
-		$child = new ItemIdentifier($entityTypeID, $entityID);
-		$parent = $this->getItemIdentifier($ownerID);
-
-		RelationController::getInstance()->onItemsBind($parent, $child, $authorID);
 	}
 	public function onRestore($ownerID, array $params)
 	{

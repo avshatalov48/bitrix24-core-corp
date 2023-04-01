@@ -216,7 +216,7 @@ class CrmCatalogControllerComponent extends CBitrixComponent implements Main\Err
 
 	protected function checkAccess(): void
 	{
-		if (!AccessController::getCurrent()->check(ActionDictionary::ACTION_CATALOG_READ))
+		if (!CCrmSaleHelper::isShopAccess())
 		{
 			$this->addErrorMessage('Access Denied');
 		}

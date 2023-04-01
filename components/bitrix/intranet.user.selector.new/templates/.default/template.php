@@ -81,22 +81,22 @@ $ajaxUrl = $this->__component->GetPath() . '/ajax.php?' .
 	endforeach;
 	?>
 	BX.ready(function() {
-		<?php if ($arParams["FORM_NAME"] <> '' && $arParams["INPUT_NAME"] <> ''):?>
+		<?php if (isset($arParams["FORM_NAME"], $arParams["INPUT_NAME"]) && $arParams["FORM_NAME"] <> '' && $arParams["INPUT_NAME"] <> ''):?>
 			window['<?= $selectorName; ?>'].searchInput = document.forms["<?php echo CUtil::JSEscape($arParams["FORM_NAME"])?>"].element["<?php echo CUtil::JSEscape($arParams["INPUT_NAME"])?>"];
-		<?php elseif($arParams["INPUT_NAME"] <> ''):?>
+		<?php elseif(isset($arParams["INPUT_NAME"]) && $arParams["INPUT_NAME"] <> ''):?>
 			window['<?= $selectorName; ?>'].searchInput = BX("<?php echo CUtil::JSEscape($arParams["INPUT_NAME"])?>");
 		<?php else:?>
 			window['<?= $selectorName; ?>'].searchInput = BX('<?= $namePrefix; ?>_user_input');
 		<?php endif?>
 
-		<?php if ($arParams["ON_CHANGE"] <> ''):?>
+		<?php if (isset($arParams["ON_CHANGE"]) && $arParams["ON_CHANGE"] <> ''):?>
 			window['<?= $selectorName; ?>'].onChange = <?php echo CUtil::JSEscape($arParams["ON_CHANGE"])?>;
 			window['<?= $selectorName; ?>'].onChange(window['<?= $selectorName; ?>'].arSelected);
 		<?php endif?>
 
-		<?php if ($arParams["ON_SELECT"] <> ''):?>
+		<?php if (isset($arParams["ON_SELECT"]) && $arParams["ON_SELECT"] <> ''):?>
 			window['<?= $selectorName; ?>'].onSelect= <?php echo CUtil::JSEscape($arParams["ON_SELECT"])?>;
-		<?php elseif ($arParams["ON_SECTION_SELECT"] <> ''):?>
+		<?php elseif (isset($arParams["ON_SECTION_SELECT"]) && $arParams["ON_SECTION_SELECT"] <> ''):?>
 			window['<?= $selectorName; ?>'].onSectionSelect= <?php echo CUtil::JSEscape($arParams["ON_SECTION_SELECT"])?>;
 		<?php endif?>
 

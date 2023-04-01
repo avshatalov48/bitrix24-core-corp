@@ -16,7 +16,7 @@ class Modification extends Presenter
 		}
 		if ($fieldName === Item::FIELD_NAME_CATEGORY_ID)
 		{
-			return (string)Loc::getMessage('CRM_TIMELINE_PRESENTER_MODIFICATION_CATEGORY_ID');
+			return (string)Loc::getMessage('CRM_TIMELINE_PRESENTER_MODIFICATION_CATEGORY_ID_2');
 		}
 
 		$fieldTitle = $this->entityImplementation->getFieldTitle((string)$fieldName) ?? $fieldName;
@@ -38,6 +38,19 @@ class Modification extends Presenter
 
 			$data['START'] = is_bool($settings['START']) ? $castToString($settings['START']) : $settings['START'];
 			$data['FINISH'] = is_bool($settings['FINISH']) ? $castToString($settings['FINISH']) : $settings['START'];
+		}
+		if ($fieldName === Item::FIELD_NAME_CATEGORY_ID)
+		{
+			$proxyFields = [
+				'START_CATEGORY_NAME',
+				'FINISH_CATEGORY_NAME',
+				'START_STAGE_NAME',
+				'FINISH_STAGE_NAME'
+			];
+			foreach ($proxyFields as $field)
+			{
+				$data[$field] = $settings[$field];
+			}
 		}
 
 		return $data;

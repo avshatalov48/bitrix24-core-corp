@@ -62,16 +62,16 @@
 }
 
 .crm-timeline__card-logo_icon.--in-circle {
-	width: var(--ui-size-7xl, 64px);
-	height: var(--ui-size-7xl, 64px);
+	width: 54px;
+	height: 54px;
 	border-radius: 50%;
 	background-color: #fff;
 	box-shadow: 0px 3px 6px rgba(4, 61, 79, 0.12);
 }
 
 .crm-timeline__card-logo_icon.--in-circle > i {
-	width: var(--ui-size-6xl, 48px);
-	height: var(--ui-size-6xl, 48px);
+	width: 46px;
+	height: 46px;
 	mask-size: contain;
 }
 .crm-timeline__card-logo_icon > i {
@@ -233,6 +233,10 @@
 	mask-image: url('../../../images/timeline-card-logos/call/crm-timeline__call-outgoing.svg');
 }
 
+.crm-timeline__card-logo_icon.--bank-card > i {
+	mask-image: url('../../../images/timeline-card-icons/crm-timeline__bank-card-icon.svg');
+}
+
 .crm-timeline__card-logo_icon.--call-play-record > i {
 	background-color: transparent;
 	mask-image: none;
@@ -259,6 +263,11 @@
 
 .crm-timeline__card-logo_icon.--check > i {
 	mask-image: url('../../../images/timeline-card-logos/shop/crm-timeline__check.svg');
+}
+
+
+.crm-timeline__card-logo_icon.--comment > i {
+	mask-image: url('../../../images/timeline-card-logos/crm-timeline__web-chat.svg');
 }
 
 
@@ -336,4 +345,26 @@
 
 .crm-timeline__card-logo_add-icon.--type-failure > i {
 	background-color: var(--ui-color-background-on-alert, #e92f2a);
+}
+
+.crm-timeline__card-logo_icon.--delivery > i {
+	background-color: transparent;
+	mask-image: none;
+	background-image: url('../../../images/timeline-card-logos/delivery/crm-timeline__delivery.svg');
+}
+
+.crm-timeline__card-logo_icon.--empty > i {
+	background-color: transparent;
+	mask-image: none;
+}
+
+.crm-timeline__card-logo_icon.--notification > i {
+	background-color: transparent;
+	mask-image: none;
+	background-image: url('../../../images/timeline-card-logos/notification/crm-timeline__notification.svg');
+}
+
+.crm-timeline__card-logo_icon.--empty > i {
+	background-color: transparent;
+	mask-image: none;
 }

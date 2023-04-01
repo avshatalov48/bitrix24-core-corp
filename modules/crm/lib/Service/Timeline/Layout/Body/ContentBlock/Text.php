@@ -4,12 +4,13 @@ namespace Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock;
 
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock;
 
-class Text extends ContentBlock
+class Text extends ContentBlock implements TextPropertiesInterface
 {
 	use TextPropertiesMixin;
 
 	public const COLOR_GREEN = 'green';
 	public const COLOR_BASE_50 = 'base_50';
+	public const COLOR_BASE_60 = 'base_60';
 	public const COLOR_BASE_70 = 'base_70';
 	public const COLOR_BASE_90 = 'base_90';
 

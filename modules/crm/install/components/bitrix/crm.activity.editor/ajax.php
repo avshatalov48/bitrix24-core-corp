@@ -64,7 +64,7 @@ $curUser = CCrmSecurityHelper::GetCurrentUser();
 if (!$curUser || !$curUser->IsAuthorized() || !check_bitrix_sessid() || $_SERVER['REQUEST_METHOD'] != 'POST')
 	__CrmActivityEditorEndResponse(array('ERROR' => getMessage('CRM_PERMISSION_DENIED')));
 
-if ($_REQUEST['soc_net_log_dest'] == 'search_email_comms')
+if (($_REQUEST['soc_net_log_dest'] ?? null) === 'search_email_comms')
 {
 	$_POST['ACTION'] = 'SEARCH_COMMUNICATIONS';
 	$_POST['COMMUNICATION_TYPE'] = 'EMAIL';
@@ -1936,6 +1936,11 @@ elseif($action == 'SAVE_EMAIL')
 			$key = sprintf('%u_%u', $item['entityType'], $item['entityId']);
 			if (\CCrmOwnerType::Deal == $item['entityTypeId'] && !isset($arBindings[$key]))
 			{
+				$arBindings[sprintf('%u_%u', $ownerTypeID, $ownerID)] = [
+					'OWNER_TYPE_ID' => $ownerTypeID,
+					'OWNER_ID'      => $ownerID,
+				];
+
 				$ownerTypeName = \CCrmOwnerType::resolveName($item['entityTypeId']);
 				$ownerTypeID = $item['entityTypeId'];
 				$ownerID = $item['entityId'];
@@ -1956,7 +1961,7 @@ elseif($action == 'SAVE_EMAIL')
 		\CCrmOwnerType::Quote,
 	);
 	if (
-		'Y' !== $data['ownerRcpt']
+		'Y' !== ($data['ownerRcpt'] ?? null)
 		&& (in_array($ownerTypeID, $nonRcptOwnerTypes) || CCrmOwnerType::isUseDynamicTypeBasedApproach($ownerTypeID))
 		&& $ownerID > 0
 	)
@@ -2122,7 +2127,7 @@ elseif($action == 'SAVE_EMAIL')
 			$injectUrn = true;
 		}
 
-		if ('Y' == $data['from_copy'])
+		if ('Y' === ($data['from_copy'] ?? null))
 		{
 			$cc[] = $fromEmail;
 		}

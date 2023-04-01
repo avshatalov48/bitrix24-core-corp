@@ -66,11 +66,11 @@ $APPLICATION->IncludeComponent(
 	'bitrix:crm.deal.menu',
 	'',
 	array(
-		'PATH_TO_DEAL_LIST' => $arResult['PATH_TO_DEAL_LIST'],
+		'PATH_TO_DEAL_LIST' => $arResult['PATH_TO_DEAL_LIST'] ?? null,
 		'PATH_TO_DEAL_SHOW' => $arResult['PATH_TO_DEAL_SHOW'],
 		'PATH_TO_DEAL_EDIT' => $arResult['PATH_TO_DEAL_EDIT'],
-		'PATH_TO_DEAL_FUNNEL' => $arResult['PATH_TO_DEAL_FUNNEL'],
-		'PATH_TO_DEAL_IMPORT' => $arResult['PATH_TO_DEAL_IMPORT'],
+		'PATH_TO_DEAL_FUNNEL' => $arResult['PATH_TO_DEAL_FUNNEL'] ?? null,
+		'PATH_TO_DEAL_IMPORT' => $arResult['PATH_TO_DEAL_IMPORT'] ?? null,
 		'ELEMENT_ID' => $arResult['ENTITY_ID'],
 		'CATEGORY_ID' => $arResult['CATEGORY_ID'],
 		'MULTIFIELD_DATA' => isset($arResult['ENTITY_DATA']['MULTIFIELD_DATA'])
@@ -340,7 +340,7 @@ endif;
 		BX.Event.EventEmitter.subscribe('PaymentDocuments.EntityEditor:changeRealizationDeductedStatus', listener);
 	})();
 </script>
-<?php if ($arResult['ACTIVE_TAB']): ?>
+<?php if (isset($arResult['ACTIVE_TAB']) && $arResult['ACTIVE_TAB']): ?>
 <script>
 	BX.ready(function () {
 		BX.onCustomEvent('<?= $arResult['GUID'] ?>_click_<?= CUtil::JSEscape($arResult['ACTIVE_TAB']) ?>');

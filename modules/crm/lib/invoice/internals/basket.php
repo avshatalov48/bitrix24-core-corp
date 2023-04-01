@@ -26,32 +26,6 @@ Loc::loadMessages(__FILE__);
  */
 class BasketTable extends Main\Entity\DataManager
 {
-
-	/**
-	 * @param $id
-	 * @return Main\Entity\DeleteResult
-	 * @throws Main\ArgumentException
-	 */
-	public static function deleteBundle($id)
-	{
-		$id = intval($id);
-		if ($id <= 0)
-			throw new Main\ArgumentNullException("id");
-
-		$itemsFromDbList = static::getList(
-			array(
-				"filter" => array(
-					'SET_PARENT_ID' => $id,
-				),
-				"select" => array("ID")
-			)
-		);
-		while ($itemsFromDbItem = $itemsFromDbList->fetch())
-			static::deleteWithItems($itemsFromDbItem['ID']);
-
-		return static::deleteWithItems($id);
-	}
-
 	/**
 	 * @param $id
 	 * @return Main\Entity\DeleteResult

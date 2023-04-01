@@ -285,7 +285,9 @@ abstract class PrototypeItem extends Main\UserField\Internal\PrototypeItemDataMa
 		preg_match('/([=%><@!]*)ASSIGNED_BY_ID/', $filterKey, $pregResult);
 		$operation = $pregResult[1];
 
-		$subQuery = AssignedTable::query()->addSelect('ENTITY_ID')->addFilter($operation.'ASSIGNED_BY', $filterValue);
+		$subQuery = AssignedTable::query()->addSelect('ENTITY_ID')
+			->addFilter($operation.'ASSIGNED_BY', $filterValue)
+			->addFilter('ENTITY_TYPE_ID', static::getEntityTypeId());
 
 		return new Main\DB\SqlExpression($subQuery->getQuery());
 	}

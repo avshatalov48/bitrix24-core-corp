@@ -6,6 +6,10 @@
 	margin-bottom: 16px;
 }
 
+.crm-timeline__card-action.--no-margin-top {
+	margin-top: 6px;
+}
+
 .crm-timeline__card-action:last-child {
 	margin-bottom: unset;
 }

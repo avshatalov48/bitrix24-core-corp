@@ -42,7 +42,6 @@ class Payment extends Sale\Payment
 
 		if ($this->fields->isChanged('PAID'))
 		{
-
 			if ($this->isPaid() && Crm\Automation\Factory::canUseAutomation())
 			{
 				Crm\Automation\Trigger\PaymentTrigger::execute(
@@ -71,6 +70,7 @@ class Payment extends Sale\Payment
 
 			if ($this->isPaid())
 			{
+				Activity\Provider\Payment::addActivity($this);
 				$this->sendOrderPaidSmsToClient();
 			}
 		}
@@ -166,6 +166,7 @@ class Payment extends Sale\Payment
 		if ($deleteResult->isSuccess() && (int)$this->getId() > 0)
 		{
 			Crm\Timeline\TimelineEntry::deleteByOwner(\CCrmOwnerType::OrderPayment, $this->getId());
+			Activity\Provider\Payment::onPaymentDeleted($this->getId());
 			Crm\Integration\DocumentGeneratorManager::getInstance()->clearPaymentBindings($this->getId());
 			PaymentWorkflow::createFrom($this)->resetStage();
 		}

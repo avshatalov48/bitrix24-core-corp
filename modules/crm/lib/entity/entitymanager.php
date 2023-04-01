@@ -32,6 +32,10 @@ class EntityManager
 		{
 			return Company::getInstance();
 		}
+		if($entityTypeID === \CCrmOwnerType::Quote)
+		{
+			return Quote::getInstance();
+		}
 
 		return null;
 	}

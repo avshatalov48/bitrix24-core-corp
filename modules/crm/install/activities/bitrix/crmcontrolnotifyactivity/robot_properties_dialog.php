@@ -13,7 +13,7 @@ if ($dialog->getCurrentValue($map['ToHead']['FieldName']) !== 'N')
 		$toUsers = (array) $toUsers;
 	}
 
-	$toUsers[] = 'CONTROL_HEAD';
+	$toUsers[] = 'responsible_head';
 }
 ?>
 <div class="bizproc-automation-popup-settings">

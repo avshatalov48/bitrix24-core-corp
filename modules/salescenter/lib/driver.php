@@ -61,7 +61,9 @@ final class Driver
 			$params['isSitePublished'] = LandingManager::getInstance()->isSitePublished();
 			$params['isSiteExists'] = LandingManager::getInstance()->isSiteExists();
 			$params['isOrderPublicUrlAvailable'] = LandingManager::getInstance()->isOrderPublicUrlAvailable();
-			$params['orderPublicUrl'] = LandingManager::getInstance()->getOrderPublicUrlInfo()['url'];
+
+			$urlInfo = LandingManager::getInstance()->getOrderPublicUrlInfo();
+			$params['orderPublicUrl'] = is_array($urlInfo) ? $urlInfo['url'] : '';
 		}
 
 		$params['isSalesInChatActive'] = $this->isSalesInChatActive();

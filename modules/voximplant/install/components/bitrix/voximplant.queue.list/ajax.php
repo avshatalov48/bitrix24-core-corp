@@ -48,7 +48,7 @@ if($action == 'delete')
 		$result = array('SUCCESS' => true);
 	}
 
-	echo\Bitrix\Main\Web\Json::encode($result);
+	echo \Bitrix\Main\Web\Json::encode($result);
 }
 else
 {

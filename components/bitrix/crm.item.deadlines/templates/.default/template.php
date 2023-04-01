@@ -40,15 +40,6 @@ $this->getComponent()->addToolbar($this);
 </div>
 
 <?php
-//$APPLICATION->IncludeComponent(
-//	'bitrix:crm.kanban.filter',
-//	'',
-//	[
-//		'ENTITY_TYPE' => $arResult['entityTypeName'],
-//	],
-//	$component,
-//	['HIDE_ICONS' => true]
-//);
 
 $APPLICATION->IncludeComponent(
 	'bitrix:crm.kanban',
@@ -56,7 +47,7 @@ $APPLICATION->IncludeComponent(
 	[
 		'ENTITY_TYPE' => $arResult['entityTypeName'],
 		'VIEW_MODE' => \Bitrix\Crm\Kanban\ViewMode::MODE_DEADLINES,
-		'SHOW_ACTIVITY' => 'N',
+		'SHOW_ACTIVITY' => $arResult['isCountersEnabled'] ? 'Y' : 'N',
 		'EXTRA' => [
 			'CATEGORY_ID' => $arResult['categoryId'],
 		],

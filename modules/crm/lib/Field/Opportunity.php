@@ -9,7 +9,6 @@ use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Context;
 use Bitrix\Crm\Service\Operation\FieldAfterSaveResult;
-use Bitrix\Main\Error;
 
 class Opportunity extends Field
 {
@@ -23,25 +22,6 @@ class Opportunity extends Field
 		$result = new FieldAfterSaveResult();
 
 		$products = $itemBeforeSave->getProductRows();
-		$productsAreNotFetched = is_null($products) && !$itemBeforeSave->isNew();
-		if ($productsAreNotFetched)
-		{
-			if (
-				!$itemBeforeSave->isChanged($this->getName())
-				|| ($item->getIsManualOpportunity() && $itemBeforeSave->isChanged($this->getName()))
-			)
-			{
-				$this->syncOpportunityAccount($item, (float)$item->getOpportunity(), $result);
-
-				return $result;
-			}
-
-			return $result->addError(new Error(
-				"Products are not fetched. Can't sync opportunity",
-				static::ERROR_CODE_PRODUCTS_NOT_FETCHED
-			));
-		}
-
 		$areProductsEmpty = is_null($products) || (count($products) <= 0);
 		$itemAlwaysHadNoProducts = $areProductsEmpty && !$itemBeforeSave->isChanged(Item::FIELD_NAME_PRODUCTS);
 

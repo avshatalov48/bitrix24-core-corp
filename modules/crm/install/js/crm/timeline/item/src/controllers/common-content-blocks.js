@@ -18,7 +18,6 @@ import { Note } from '../components/content-blocks/note';
 import DatePill from '../components/content-blocks/date-pill';
 import {MoneyPill} from '../components/content-blocks/money-pill';
 import {InfoGroup} from '../components/content-blocks/info-group';
-import {SmsMessage} from '../components/content-blocks/sms-message';
 import { FileList } from '../components/content-blocks/file-list';
 
 export class CommonContentBlocks extends Base
@@ -42,7 +41,6 @@ export class CommonContentBlocks extends Base
 			Note,
 			FileList,
 			InfoGroup,
-			SmsMessage,
 			MoneyPill,
 		};
 	}

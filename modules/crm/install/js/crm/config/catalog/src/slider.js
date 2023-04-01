@@ -1,5 +1,6 @@
 import {Const} from './const';
 import {Type} from 'main.core';
+import {EventEmitter} from 'main.core.events';
 
 export default class Slider
 {
@@ -10,6 +11,17 @@ export default class Slider
 		{
 			url += '?configCatalogSource=' + source;
 		}
+
+		EventEmitter.subscribe('SidePanel.Slider:onMessage', (event) => {
+
+			const [data] = event.getData();
+
+			if (data.eventId === 'BX.Crm.Config.Catalog:onAfterSaveSettings')
+			{
+				EventEmitter.emit(window, 'onCatalogSettingsSave');
+			}
+		});
+
 		return new Promise((resolve) =>
 		{
 			return BX.SidePanel.Instance.open(

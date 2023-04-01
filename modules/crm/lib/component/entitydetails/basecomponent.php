@@ -142,24 +142,24 @@ abstract class BaseComponent extends Crm\Component\Base
 		}
 
 		$counter = 0;
-		foreach($multifieldData as $item)
+		foreach ($multifieldData as $item)
 		{
 			$ID = isset($item['ID']) ? (int)$item['ID'] : 0;
 			$typeID = $item['TYPE_ID'] ?? '';
 			$value = $item['VALUE'] ?? '';
-			if($typeID === '')
+			if ($typeID === '')
 			{
 				continue;
 			}
 
-			if($ID <= 0 && $value === '')
+			if ($ID <= 0 && $value === '')
 			{
 				continue;
 			}
 
-			if($typeID === 'EMAIL' && !check_email($value))
+			if ($typeID === 'EMAIL' && !check_email($value))
 			{
-				if($ID <= 0)
+				if ($ID <= 0)
 				{
 					continue;
 				}
@@ -167,23 +167,37 @@ abstract class BaseComponent extends Crm\Component\Base
 				$value = '';
 			}
 
-			if(!isset($multifields[$typeID]))
+			$valueCountryCode = $typeID === 'PHONE' ? $item['VALUE_COUNTRY_CODE'] : '';
+
+			if (!isset($multifields[$typeID]))
 			{
-				$multifields[$typeID] = array();
+				$multifields[$typeID] = [];
 			}
 
-			if($ID > 0)
+			if ($ID > 0)
 			{
 				$valueType = isset($multifields[$typeID][$ID]) && $multifields[$typeID][$ID]['VALUE_TYPE']
-					? $multifields[$typeID][$ID]['VALUE_TYPE'] : 'WORK';
-				$multifields[$typeID][$ID] = array('VALUE' => $value, 'VALUE_TYPE' => $valueType);
+					? $multifields[$typeID][$ID]['VALUE_TYPE']
+					: 'WORK';
+
+				$multifields[$typeID][$ID] = [
+					'VALUE' => $value,
+					'VALUE_TYPE' => $valueType,
+					'VALUE_COUNTRY_CODE' => $valueCountryCode,
+				];
 			}
 			else
 			{
-				$multifields[$typeID]["n{$counter}"] = array('VALUE' => $value, 'VALUE_TYPE' => 'WORK');
+				$multifields[$typeID]["n{$counter}"] = [
+					'VALUE' => $value,
+					'VALUE_TYPE' => 'WORK',
+					'VALUE_COUNTRY_CODE' => $valueCountryCode,
+				];
+
 				$counter++;
 			}
 		}
+
 		return $multifields;
 	}
 
@@ -251,7 +265,12 @@ abstract class BaseComponent extends Crm\Component\Base
 
 	protected function addError($error)
 	{
-		$this->errorCollection[] = new Main\Error($this->getErrorMessage($error));
+		if (!$error instanceof Main\Error)
+		{
+			$error = new Main\Error($this->getErrorMessage($error));
+		}
+
+		$this->errorCollection[] = $error;
 	}
 
 	protected function getErrorMessage($error)

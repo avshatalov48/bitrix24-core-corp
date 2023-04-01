@@ -9,6 +9,7 @@ use Bitrix\Crm\Entity\Traits\UserFieldPreparer;
 use Bitrix\Crm\Entity\Traits\EntityFieldsNormalizer;
 use Bitrix\Crm\EntityAddress;
 use Bitrix\Crm\EntityAddressType;
+use Bitrix\Crm\Integration\Catalog\Contractor;
 use Bitrix\Crm\Integrity\DuplicateBankDetailCriterion;
 use Bitrix\Crm\Integrity\DuplicateCommunicationCriterion;
 use Bitrix\Crm\Integrity\DuplicateIndexMismatch;
@@ -19,7 +20,6 @@ use Bitrix\Crm\Tracking;
 use Bitrix\Crm\UtmTable;
 use Bitrix\Main;
 use Bitrix\Main\Text\HtmlFilter;
-use Bitrix\Crm\Integration\Catalog\Contractor;
 
 class CAllCrmCompany
 {
@@ -36,7 +36,7 @@ class CAllCrmCompany
 	protected const TABLE_NAME = 'b_crm_company';
 
 	public $LAST_ERROR = '';
-	protected $checkExceptions = array();
+	protected $checkExceptions = [];
 
 	public $cPerms = null;
 	protected $bCheckPermission = true;
@@ -538,11 +538,11 @@ class CAllCrmCompany
 	}
 
 	// GetList with navigation support
-	public static function GetListEx($arOrder = array(), $arFilter = array(), $arGroupBy = false, $arNavStartParams = false, $arSelectFields = array(), $arOptions = array())
+	public static function GetListEx($arOrder = [], $arFilter = [], $arGroupBy = false, $arNavStartParams = false, $arSelectFields = [], $arOptions = array())
 	{
 		if(!is_array($arOptions))
 		{
-			$arOptions = array();
+			$arOptions = [];
 		}
 
 		if(!isset($arOptions['PERMISSION_SQL_TYPE']))
@@ -589,7 +589,7 @@ class CAllCrmCompany
 		}
 
 		$dbRes = self::GetListEx(
-			array(),
+			[],
 			array('ID' => $ID, 'CHECK_PERMISSIONS' => 'N'),
 			false,
 			false,
@@ -775,7 +775,7 @@ class CAllCrmCompany
 			'MODIFY_BY_SECOND_NAME' => 'U3.SECOND_NAME'
 		);
 
-		$arSqlSelect = array();
+		$arSqlSelect = [];
 		$sSqlJoin = '';
 		if (count($arSelect) == 0)
 			$arSelect = array_merge(array_keys($arFields), array('UF_*'));
@@ -821,7 +821,7 @@ class CAllCrmCompany
 		if (isset($arFilter['FM']) && !empty($arFilter['FM']))
 		{
 			$res = CCrmFieldMulti::GetList(array('ID' => 'asc'), array('ENTITY_ID' => 'COMPANY', 'FILTER' => $arFilter['FM']));
-			$ids = array();
+			$ids = [];
 			while($ar = $res->Fetch())
 			{
 				$ids[] = $ar['ELEMENT_ID'];
@@ -844,14 +844,14 @@ class CAllCrmCompany
 		$obUserFieldsSql->SetFilter($arFilter);
 		$obUserFieldsSql->SetOrder($arOrder);
 
-		$arSqlSearch = array();
+		$arSqlSearch = [];
 		// check permissions
 		$sSqlPerm = '';
 		if (!CCrmPerms::IsAdmin()
 			&& (!array_key_exists('CHECK_PERMISSIONS', $arFilter) || $arFilter['CHECK_PERMISSIONS'] !== 'N')
 		)
 		{
-			$arPermType = array();
+			$arPermType = [];
 			if (!isset($arFilter['PERMISSION']))
 				$arPermType[] = 'READ';
 			else
@@ -1003,7 +1003,7 @@ class CAllCrmCompany
 
 		$obQueryWhere->SetFields($arWhereFields);
 		if (!is_array($arFilter))
-			$arFilter = array();
+			$arFilter = [];
 		$sQueryWhereFields = $obQueryWhere->GetQuery($arFilter);
 
 		$sSqlSearch = '';
@@ -1086,7 +1086,7 @@ class CAllCrmCompany
 			$arFilter['CHECK_PERMISSIONS'] = 'N';
 		}
 
-		$dbRes = CCrmCompany::GetListEx(array(), $arFilter);
+		$dbRes = CCrmCompany::GetListEx([], $arFilter);
 		return $dbRes->Fetch();
 	}
 
@@ -1120,7 +1120,7 @@ class CAllCrmCompany
 
 	public static function __AfterPrepareSql($sender, $arOrder, $arFilter, $arGroupBy, $arSelectFields)
 	{
-		$sqlData = array('FROM' => array(), 'WHERE' => array());
+		$sqlData = array('FROM' => [], 'WHERE' => array());
 		if(isset($arFilter['SEARCH_CONTENT']) && $arFilter['SEARCH_CONTENT'] !== '')
 		{
 			$tableAlias = $sender->GetTableAlias();
@@ -1182,7 +1182,7 @@ class CAllCrmCompany
 			$sender->GetTableAlias()
 		);
 
-		$result = array();
+		$result = [];
 		if(!empty($sqlData['FROM']))
 		{
 			$result['FROM'] = implode(' ', $sqlData['FROM']);
@@ -1200,7 +1200,7 @@ class CAllCrmCompany
 
 		if(!is_array($options))
 		{
-			$options = array();
+			$options = [];
 		}
 
 		$this->LAST_ERROR = '';
@@ -1286,7 +1286,7 @@ class CAllCrmCompany
 		}
 		else
 		{
-			$arAttr = array();
+			$arAttr = [];
 			if (!empty($arFields['OPENED']))
 			{
 				$arAttr['OPENED'] = $arFields['OPENED'];
@@ -1525,22 +1525,19 @@ class CAllCrmCompany
 				}
 			}
 
-			if (!$isRestoration)
-			{
-				CCrmEntityHelper::registerAdditionalTimelineEvents([
-					'entityTypeId' => CCrmOwnerType::Company,
-					'entityId' => $ID,
-					'fieldsInfo' => static::GetFieldsInfo(),
-					'previousFields' => [],
-					'currentFields' => $arFields,
-					'options' => $options,
-					'bindings' => [
-						'entityTypeId' => CCrmOwnerType::Contact,
-						'previous' => [],
-						'current' => $contactBindings,
-					],
-				]);
-			}
+			CCrmEntityHelper::registerAdditionalTimelineEvents([
+				'entityTypeId' => CCrmOwnerType::Company,
+				'entityId' => $ID,
+				'fieldsInfo' => static::GetFieldsInfo(),
+				'previousFields' => [],
+				'currentFields' => $arFields,
+				'options' => $options,
+				'bindings' => [
+					'entityTypeId' => CCrmOwnerType::Contact,
+					'previous' => [],
+					'current' => $contactBindings,
+				],
+			]);
 
 			//region Search content index
 			Bitrix\Crm\Search\SearchContentBuilderFactory::create(
@@ -1709,7 +1706,7 @@ class CAllCrmCompany
 		$ID = (int) $ID;
 		if(!is_array($arOptions))
 		{
-			$arOptions = array();
+			$arOptions = [];
 		}
 
 		$arOptions['IS_COMPARE_ENABLED'] = $bCompare;
@@ -1722,7 +1719,7 @@ class CAllCrmCompany
 			$arFilterTmp['CHECK_PERMISSIONS'] = 'N';
 		}
 
-		$obRes = self::GetListEx(array(), $arFilterTmp);
+		$obRes = self::GetListEx([], $arFilterTmp);
 		if (!($arRow = $obRes->Fetch()))
 		{
 			return false;
@@ -1836,7 +1833,7 @@ class CAllCrmCompany
 				}
 			}
 
-			$arAttr = array();
+			$arAttr = [];
 			$arAttr['OPENED'] = !empty($arFields['OPENED']) ? $arFields['OPENED'] : $arRow['OPENED'];
 			$arAttr['IS_MY_COMPANY'] = !empty($arFields['IS_MY_COMPANY']) ? $arFields['IS_MY_COMPANY'] : $arRow['IS_MY_COMPANY'];
 			$arEntityAttr = self::BuildEntityAttr($assignedByID, $arAttr);
@@ -1881,14 +1878,14 @@ class CAllCrmCompany
 
 			self::getLastActivityAdapter()->performUpdate((int)$ID, $arFields, $arOptions);
 
-			$sonetEventData = array();
+			$sonetEventData = [];
 			if ($bCompare)
 			{
 				$res = CCrmFieldMulti::GetList(
 					array('ID' => 'asc'),
 					array('ENTITY_ID' => 'COMPANY', 'ELEMENT_ID' => $ID)
 				);
-				$arRow['FM'] = array();
+				$arRow['FM'] = [];
 				while($ar = $res->Fetch())
 					$arRow['FM'][$ar['TYPE_ID']][$ar['ID']] = array('VALUE' => $ar['VALUE'], 'VALUE_TYPE' => $ar['VALUE_TYPE']);
 
@@ -2428,7 +2425,7 @@ class CAllCrmCompany
 		$ID = intval($ID);
 		if(!is_array($arOptions))
 		{
-			$arOptions = array();
+			$arOptions = [];
 		}
 
 		if(isset($arOptions['CURRENT_USER']))
@@ -2441,7 +2438,7 @@ class CAllCrmCompany
 		}
 
 		$dbResult = \CCrmCompany::GetListEx(
-			array(),
+			[],
 			array('=ID' => $ID, 'CHECK_PERMISSIONS' => 'N')
 		);
 		$arFields = is_object($dbResult) ? $dbResult->Fetch() : null;
@@ -2693,7 +2690,7 @@ class CAllCrmCompany
 
 		if (!is_array($options))
 		{
-			$options = array();
+			$options = [];
 		}
 
 		$isRestoration = isset($options['IS_RESTORATION']) && $options['IS_RESTORATION'];
@@ -2754,7 +2751,9 @@ class CAllCrmCompany
 					$ID,
 					$fieldsToCheck,
 					Crm\Attribute\FieldOrigin::UNDEFINED,
-					is_array($options['FIELD_CHECK_OPTIONS']) ? $options['FIELD_CHECK_OPTIONS'] : array()
+					isset($options['FIELD_CHECK_OPTIONS']) && is_array($options['FIELD_CHECK_OPTIONS']) 
+						? $options['FIELD_CHECK_OPTIONS'] 
+						: []
 				);
 
 				$requiredSystemFields = $requiredFields[Crm\Attribute\FieldOrigin::SYSTEM] ?? [];
@@ -2762,7 +2761,7 @@ class CAllCrmCompany
 				if (!empty($requiredSystemFields))
 				{
 					$validator = new Crm\Entity\CompanyValidator($ID, $fieldsToCheck);
-					$validationErrors = array();
+					$validationErrors = [];
 					foreach($requiredSystemFields as $fieldName)
 					{
 						if (
@@ -2866,7 +2865,7 @@ class CAllCrmCompany
 	{
 		if(!is_array($arOptions))
 		{
-			$arOptions = array();
+			$arOptions = [];
 		}
 
 		$arMsg = Array();
@@ -2883,7 +2882,7 @@ class CAllCrmCompany
 		if (isset($arFieldsOrig['FM']) && isset($arFieldsModif['FM']))
 			$arMsg = array_merge($arMsg, CCrmFieldMulti::CompareFields($arFieldsOrig['FM'], $arFieldsModif['FM']));
 
-		$addressOptions = array();
+		$addressOptions = [];
 		if(isset($arOptions['ADDRESS_FIELDS']))
 		{
 			$addressOptions['FIELDS'] = $arOptions['ADDRESS_FIELDS'];
@@ -3127,7 +3126,7 @@ class CAllCrmCompany
 				continue;
 			}
 
-			$arMatch = array();
+			$arMatch = [];
 
 			if($k === 'ORIGINATOR_ID')
 			{
@@ -3152,7 +3151,7 @@ class CAllCrmCompany
 			{
 				if(!isset($arFilter['ADDRESSES']))
 				{
-					$arFilter['ADDRESSES'] = array();
+					$arFilter['ADDRESSES'] = [];
 				}
 
 				$addressAliases = array('ADDRESS_LEGAL' => 'REG_ADDRESS');
@@ -3160,7 +3159,7 @@ class CAllCrmCompany
 
 				if(!isset($arFilter['ADDRESSES'][$addressTypeID]))
 				{
-					$arFilter['ADDRESSES'][$addressTypeID] = array();
+					$arFilter['ADDRESSES'][$addressTypeID] = [];
 				}
 
 				$n = CompanyAddress::mapEntityField($k, $addressTypeID, $addressAliases);
@@ -3214,7 +3213,7 @@ class CAllCrmCompany
 		}
 
 		$dbResult = self::GetListEx(
-			array(),
+			[],
 			array('@ID' => $IDs, 'CHECK_PERMISSIONS' => 'N'),
 			false,
 			false,
@@ -3293,7 +3292,7 @@ class CAllCrmCompany
 		}
 
 		$dbResult = self::GetListEx(
-			array(),
+			[],
 			array('=ID' => $ID, 'CHECK_PERMISSIONS' => 'N')
 		);
 
@@ -3311,12 +3310,12 @@ class CAllCrmCompany
 		}
 
 		$fieldInfos = $presetEntity->settingsGetFields(
-			is_array($presetFields['SETTINGS']) ? $presetFields['SETTINGS'] : array()
+			is_array($presetFields['SETTINGS']) ? $presetFields['SETTINGS'] : []
 		);
 
 		$title = isset($entityFields['TITLE']) ? $entityFields['TITLE'] : '';
 
-		$requisiteFields = array();
+		$requisiteFields = [];
 		foreach($fieldInfos as $fieldInfo)
 		{
 			$fieldName = isset($fieldInfo['FIELD_NAME']) ? $fieldInfo['FIELD_NAME'] : '';
@@ -3372,7 +3371,7 @@ class CAllCrmCompany
 		if($fields === null)
 		{
 			$dbResult = self::GetListEx(
-				array(),
+				[],
 				array('=ID' => $sourceID, 'CHECK_PERMISSIONS' => 'N'),
 				false,
 				false,

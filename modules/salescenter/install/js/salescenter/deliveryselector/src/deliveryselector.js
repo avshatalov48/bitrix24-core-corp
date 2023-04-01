@@ -42,7 +42,7 @@ export default {
 		externalSumLabel: {type: String, required: true},
 		currency: {type: String, required: true},
 		currencySymbol: {type: String, required: true},
-		availableServices: {type: Object, required: true},
+		availableServices: {type: [Object, Array], required: true},
 		excludedServiceIds: {type: Array, required: true},
 	},
 	data()

@@ -44,8 +44,8 @@
 }
 
 .crm-timeline__card_icon.--muted {
-	background-color: var(--ui-color-background-primary, #fff);
-	border-color: var(--ui-color-background-primary, #fff);
+	background-color: var(--ui-color-base-02, #f8fafb);
+	border-color: var(--ui-color-base-20, #dfe0e3);
 }
 
 .crm-timeline__card_icon.--muted i {
@@ -59,48 +59,48 @@
 }
 
 .crm-timeline__card_icon.--code-mail-income i {
-	mask-position: center -95px;
+	mask-position: center -97px;
 	background-color: #fff;
 }
 
 .crm-timeline__card_icon.--code-mail-outcome i {
-	mask-position: -8px -1400px;
+	mask-position: -8px -1402px;
 }
-.crm-timeline__card_icon.--code-IM i { mask-position: center -33px; }
+.crm-timeline__card_icon.--code-IM i { mask-position: center -35px; }
 
-.crm-timeline__card_icon.--code-call i { mask-position: center -64px; }
+.crm-timeline__card_icon.--code-call i { mask-position: center -66px; }
 
-.crm-timeline__card_icon.--code-email i { mask-position: center -95px; }
+.crm-timeline__card_icon.--code-email i { mask-position: center -97px; }
 
-.crm-timeline__card_icon.--code-crmForm i { mask-position: center -126px; }
+.crm-timeline__card_icon.--code-crmForm i { mask-position: center -128px; }
 
-.crm-timeline__card_icon.--code-store i { mask-position: center -1282px; }
+.crm-timeline__card_icon.--code-store i { mask-position: center -1284px; }
 
 .crm-timeline__card_icon.--code-task i,
-.crm-timeline__card_icon.--code-store-document i { mask-position: center -157px; }
+.crm-timeline__card_icon.--code-store-document i { mask-position: center -159px; }
 
-.crm-timeline__card_icon.--code-meeting i { mask-position: center -188px; }
+.crm-timeline__card_icon.--code-meeting i { mask-position: center -190px; }
 
-.crm-timeline__card_icon.--code-visit i { mask-position: center -945px; }
+.crm-timeline__card_icon.--code-visit i { mask-position: center -947px; }
 
-.crm-timeline__card_icon.--code-bp i { mask-position: center -1119px; }
+.crm-timeline__card_icon.--code-bp i { mask-position: center -1121px; }
 
 .crm-timeline__card_icon.--code-info i {
 	width: 34px;
 	height: 34px;
-	mask-position: center -219px;
+	mask-position: center -221px;
 }
 
 .crm-timeline__card_icon.--code-comment i {
-	mask-position: center -250px;
+	mask-position: center -252px;
 }
 
 .crm-timeline__card_icon.--code-complete i {
-	mask-position: center -684px;
+	mask-position: center -686px;
 }
 
 .crm-timeline__card_icon.--code-convert i {
-	mask-position: center -715px;
+	mask-position: center -717px;
 }
 
 .crm-timeline__card_icon.--code-link i {
@@ -119,12 +119,12 @@
 }
 
 .crm-timeline__card_icon.--code-wallet i {
-	mask-position: center -1343px;
+	mask-position: center -1345px;
 }
 
-.crm-timeline__card_icon.--code-robot i { mask-position: center -746px; }
+.crm-timeline__card_icon.--code-robot i { mask-position: center -748px; }
 
-.crm-timeline__card_icon.--code-rest i { mask-position: center -1176px; }
+.crm-timeline__card_icon.--code-rest i { mask-position: center -1178px; }
 
 .crm-timeline__card_icon.--code-taxi i {
 	mask-image: url('data:image/svg+xml;base64,DQo8c3ZnIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgd2lkdGg9IjE4IiBoZWlnaHQ9IjE0IiB2aWV3Qm94PSIwIDAgMTggMTQiPg0KICA8cGF0aCBmaWxsPSIjRkZGRkZGIiBkPSJNNjg2LjQ0MzE2OSw0OTEzLjM4Mjc4IEM2ODcuMzY3NjI0LDQ5MTMuMzgyNzggNjg4LjExNzA0Miw0OTE0LjEzMjIgNjg4LjExNzA0Miw0OTE1LjA1NjY2IEM2ODguMTE3MDQyLDQ5MTUuOTgxMTEgNjg3LjM2NzYyNCw0OTE2LjczMDUzIDY4Ni40NDMxNjksNDkxNi43MzA1MyBDNjg1LjUxODcxNCw0OTE2LjczMDUzIDY4NC43NjkyOTYsNDkxNS45ODExMSA2ODQuNzY5Mjk2LDQ5MTUuMDU2NjYgQzY4NC43NjkyOTYsNDkxNC4xMzIyIDY4NS41MTg3MTQsNDkxMy4zODI3OCA2ODYuNDQzMTY5LDQ5MTMuMzgyNzggWiBNNjk1LjIxOTM2Nyw0OTEzLjM4Mjc4IEM2OTYuMTQzODIxLDQ5MTMuMzgyNzggNjk2Ljg5MzI0LDQ5MTQuMTMyMiA2OTYuODkzMjQsNDkxNS4wNTY2NiBDNjk2Ljg5MzI0LDQ5MTUuOTgxMTEgNjk2LjE0MzgyMSw0OTE2LjczMDUzIDY5NS4yMTkzNjcsNDkxNi43MzA1MyBDNjk0LjI5NDkxMiw0OTE2LjczMDUzIDY5My41NDU0OTMsNDkxNS45ODExMSA2OTMuNTQ1NDkzLDQ5MTUuMDU2NjYgQzY5My41NDU0OTMsNDkxNC4xMzIyIDY5NC4yOTQ5MTIsNDkxMy4zODI3OCA2OTUuMjE5MzY3LDQ5MTMuMzgyNzggWiBNNjk5Ljg3NTMzOSw0OTE0LjAwMzU4IEM2OTkuODc1MzM5LDQ5MTQuNjg5MjkgNjk5LjMxOTQ1OSw0OTE1LjI0NTIgNjk4LjYzMzc0Niw0OTE1LjI0NTIgTDY5Ny43OTkyNTEsNDkxNS4yNDUyIEM2OTcuODAzNzM2LDQ5MTUuMTgyOTQgNjk3LjgwNjAxOCw0OTE1LjEyMDA2IDY5Ny44MDYwMTgsNDkxNS4wNTY2NiBDNjk3LjgwNjAxOCw0OTEzLjYyODA5IDY5Ni42NDc5MzUsNDkxMi40NyA2OTUuMjE5MzY3LDQ5MTIuNDcgQzY5My43OTA3OTksNDkxMi40NyA2OTIuNjMyNzE1LDQ5MTMuNjI4MDkgNjkyLjYzMjcxNSw0OTE1LjA1NjY2IEM2OTIuNjMyNzE1LDQ5MTUuMTIwMDYgNjkyLjYzNDk5Nyw0OTE1LjE4Mjk0IDY5Mi42Mzk0ODIsNDkxNS4yNDUyIEw2ODkuMDIzMDU0LDQ5MTUuMjQ1MiBDNjg5LjAyNzUzOSw0OTE1LjE4Mjk0IDY4OS4wMjk4Miw0OTE1LjEyMDA2IDY4OS4wMjk4Miw0OTE1LjA1NjY2IEM2ODkuMDI5ODIsNDkxMy42MjgwOSA2ODcuODcxNzM3LDQ5MTIuNDcgNjg2LjQ0MzE2OSw0OTEyLjQ3IEM2ODUuMDE0NjAxLDQ5MTIuNDcgNjgzLjg1NjUxOCw0OTEzLjYyODA5IDY4My44NTY1MTgsNDkxNS4wNTY2NiBDNjgzLjg1NjUxOCw0OTE1LjEyMDA2IDY4My44NTg3OTksNDkxNS4xODI5NCA2ODMuODYzMjg1LDQ5MTUuMjQ1MiBMNjgzLjMyMDc3MSw0OTE1LjI0NTIgQzY4Mi42MzUwNTgsNDkxNS4yNDUyIDY4Mi4wNzkxNzksNDkxNC42ODkyOSA2ODIuMDc5MTc5LDQ5MTQuMDAzNTggTDY4Mi4wNzkxNzksNDkxMC44OTk2IEM2ODIuMDc5MTc5LDQ5MTAuODY0NzYgNjgyLjA4MDYxMyw0OTEwLjgzMDI2IDY4Mi4wODM0MjcsNDkxMC43OTYxNSBMNjgyLjA3OTE3OSw0OTEwLjc5NjEzIEw2ODIuMDc5MTc5LDQ5MDUuMjA4OTYgQzY4Mi4wNzkxNzksNDkwNC4yOTQ2OCA2ODIuODIwMzUyLDQ5MDMuNTUzNTEgNjgzLjczNDYzNSw0OTAzLjU1MzUxIEw2OTEuMzc2ODUxLDQ5MDMuNTUzNTEgQzY5Mi4yOTExMzQsNDkwMy41NTM1MSA2OTMuMDMyMzA4LDQ5MDQuMjk0NjggNjkzLjAzMjMwOCw0OTA1LjIwODk2IEw2OTMuMDMyMzAxLDQ5MDUuNTE5MzYgTDY5NS4xNTQxNDEsNDkwNS41MTkzNiBDNjk2LjEyNjAxMiw0OTA1LjUxOTM2IDY5Ny4wMzMxMzIsNDkwNi4wMDY2OCA2OTcuNTY5NjgsNDkwNi44MTcwMiBMNjk5LjI5MDY0OCw0OTA5LjQxNjE2IEM2OTkuNDY1NzQ5LDQ5MDkuNjgwNjIgNjk5LjYwMzMyMyw0OTA5Ljk2NjA1IDY5OS43MDA5MTQsNDkxMC4yNjQzMSBDNjk5LjgxMTYzMSw0OTEwLjQ1MDIgNjk5Ljg3NTMzOSw0OTEwLjY2NzQ2IDY5OS44NzUzMzksNDkxMC44OTk2IEw2OTkuODc1MzM5LDQ5MTQuMDAzNTggWiBNNjk1LjM0MTA1NCw0OTA2Ljc2MDk2IEw2OTMuODc0MzA4LDQ5MDYuNzYwOTYgTDY5My44NzQzMDgsNDkwOS42NTgwMSBMNjk3LjkzMTIxMiw0OTA5LjY1ODAxIEw2OTYuMzc1MjUzLDQ5MDcuMzE1NTQgQzY5Ni4xNDUxNDksNDkwNi45NjkxNSA2OTUuNzU2OTA5LDQ5MDYuNzYwOTYgNjk1LjM0MTA1NCw0OTA2Ljc2MDk2IFoiIHRyYW5zZm9ybT0idHJhbnNsYXRlKC02ODIgLTQ5MDMpIi8+DQo8L3N2Zz4NCg==');
@@ -142,11 +142,11 @@
 
 .crm-timeline__card_icon.--code-sms,
 .crm-timeline__card_icon.--code-new i {
-	mask-position: center -777px;
+	mask-position: center -779px;
 }
 
 .crm-timeline__card_icon.--code-zoom i {
-	mask-position: center -1375px;
+	mask-position: center -1377px;
 }
 
 .crm-timeline__card_icon.--code-check i {
@@ -270,6 +270,22 @@
 	mask-image: url('../../images/timeline-card-icons/crm-timeline__view.svg');
 	width: 24px;
 	height: 24px;
+	mask-size: contain;
+	mask-position: center;
+}
+
+.crm-timeline__card_icon.--code-pipeline i {
+	mask-image: url('../../images/timeline-card-icons/crm-timeline__funnel-icon.svg');
+	width: 24px;
+	height: 24px;
+	mask-size: contain;
+	mask-position: center;
+}
+
+.crm-timeline__card_icon.--code-attention i {
+	mask-image: url('../../images/timeline-card-icons/crm-timeline__attention-icon.svg');
+	width: 26px;
+	height: 26px;
 	mask-size: contain;
 	mask-position: center;
 }

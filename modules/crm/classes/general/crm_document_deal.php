@@ -287,6 +287,7 @@ class CCrmDocumentDeal extends CCrmDocument implements IBPWorkflowDocument
 				"Editable" => false,
 				"Required" => false,
 				"Multiple" => true,
+				'Default' => [],
 			],
 			"COMPANY_ID" => [
 				"Name" => GetMessage("CRM_FIELD_COMPANY_ID"),

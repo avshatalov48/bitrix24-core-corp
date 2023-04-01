@@ -19,7 +19,7 @@ use Bitrix\Crm\Category\EditorHelper;
 use Bitrix\Crm\UserField\Router;
 use Bitrix\Crm\UtmTable;
 
-if(!Main\Loader::includeModule('crm'))
+if (!Main\Loader::includeModule('crm'))
 {
 	ShowError(GetMessage('CRM_MODULE_NOT_INSTALLED'));
 	return;
@@ -117,24 +117,25 @@ class CCrmCompanyDetailsComponent
 			$this->editorAdapter = $this->factory->getEditorAdapter();
 		}
 	}
+
 	public function initializeParams(array $params)
 	{
-		foreach($params as $k => $v)
+		foreach ($params as $k => $v)
 		{
-			if(!is_string($v))
+			if (!is_string($v))
 			{
 				continue;
 			}
 
-			if($k === 'PATH_TO_USER_PROFILE')
+			if ($k === 'PATH_TO_USER_PROFILE')
 			{
 				$this->arResult['PATH_TO_USER_PROFILE'] = $this->arParams['PATH_TO_USER_PROFILE'] = $v;
 			}
-			elseif($k === 'NAME_TEMPLATE')
+			elseif ($k === 'NAME_TEMPLATE')
 			{
 				$this->arResult['NAME_TEMPLATE'] = $this->arParams['NAME_TEMPLATE'] = $v;
 			}
-			elseif($k === 'LEAD_ID')
+			elseif ($k === 'LEAD_ID')
 			{
 				$this->arResult['LEAD_ID'] = $this->arParams['LEAD_ID'] = (int)$v;
 			}
@@ -145,27 +146,32 @@ class CCrmCompanyDetailsComponent
 		/** @global \CMain $APPLICATION */
 		global $APPLICATION;
 
-		$this->enableOutmodedFields = false;//\Bitrix\Crm\Settings\CompanySettings::getCurrent()->areOutmodedRequisitesEnabled();
+		$this->enableOutmodedFields = false; //\Bitrix\Crm\Settings\CompanySettings::getCurrent()->areOutmodedRequisitesEnabled();
 		$this->isLocationModuleIncluded = Main\Loader::includeModule('location');
 
 		//region Params
 		$this->arResult['ENTITY_ID'] = isset($this->arParams['~ENTITY_ID']) ? (int)$this->arParams['~ENTITY_ID'] : 0;
 
 		$this->arResult['PATH_TO_USER_PROFILE'] = $this->arParams['PATH_TO_USER_PROFILE'] =
-			\CrmCheckPath('PATH_TO_USER_PROFILE', $this->arParams['PATH_TO_USER_PROFILE'], '/company/personal/user/#user_id#/');
+			\CrmCheckPath(
+				'PATH_TO_USER_PROFILE',
+				$this->arParams['PATH_TO_USER_PROFILE'] ?? '', 
+				'/company/personal/user/#user_id#/'
+			);
 
 		$this->arResult['NAME_TEMPLATE'] = empty($this->arParams['NAME_TEMPLATE'])
 			? CSite::GetNameFormat(false)
-			: str_replace(array("#NOBR#","#/NOBR#"), array("",""), $this->arParams['NAME_TEMPLATE']);
+			: str_replace(["#NOBR#", "#/NOBR#"], ["", ""], $this->arParams['NAME_TEMPLATE']);
 
 		$this->arResult['PATH_TO_COMPANY_SHOW'] = \CrmCheckPath(
 			'PATH_TO_COMPANY_SHOW',
-			$this->arParams['PATH_TO_COMPANY_SHOW'],
+			$this->arParams['PATH_TO_COMPANY_SHOW'] ?? '',
 			$APPLICATION->GetCurPage().'?company_id=#company_id#&show'
 		);
+
 		$this->arResult['PATH_TO_COMPANY_EDIT'] = \CrmCheckPath(
 			'PATH_TO_COMPANY_EDIT',
-			$this->arParams['PATH_TO_COMPANY_EDIT'],
+			$this->arParams['PATH_TO_COMPANY_EDIT'] ?? '',
 			$APPLICATION->GetCurPage().'?company_id=#company_id#&edit'
 		);
 
@@ -186,41 +192,43 @@ class CCrmCompanyDetailsComponent
 
 		$this->setEntityID($this->arResult['ENTITY_ID']);
 
-		if($this->isMyCompany())
+		if ($this->isMyCompany())
 		{
 			$this->arResult['CONTEXT']['PARAMS']['IS_MY_COMPANY'] = 'Y';
 		}
 
 		$this->arResult['EXTERNAL_CONTEXT_ID'] = $this->request->get('external_context_id');
-		if($this->arResult['EXTERNAL_CONTEXT_ID'] === null)
+
+		if ($this->arResult['EXTERNAL_CONTEXT_ID'] === null)
 		{
 			$this->arResult['EXTERNAL_CONTEXT_ID'] = $this->request->get('external_context');
-			if($this->arResult['EXTERNAL_CONTEXT_ID'] === null)
+			if ($this->arResult['EXTERNAL_CONTEXT_ID'] === null)
 			{
 				$this->arResult['EXTERNAL_CONTEXT_ID'] = '';
 			}
 		}
 
 		$this->arResult['ORIGIN_ID'] = $this->request->get('origin_id');
-		if($this->arResult['ORIGIN_ID'] === null)
+		if ($this->arResult['ORIGIN_ID'] === null)
 		{
 			$this->arResult['ORIGIN_ID'] = '';
 		}
 
-		$this->defaultFieldValues = array();
+		$this->defaultFieldValues = [];
 		$this->tryGetFieldValueFromRequest('phone', $this->defaultFieldValues);
 		//endregion
 
 		//region Is Editing or Copying?
-		if($this->entityID > 0)
+		if ($this->entityID > 0)
 		{
-			if(!\CCrmCompany::Exists($this->entityID))
+			if (!\CCrmCompany::Exists($this->entityID))
 			{
 				ShowError(GetMessage('CRM_COMPANY_NOT_FOUND'));
+
 				return;
 			}
 
-			if($this->request->get('copy') !== null)
+			if ($this->request->get('copy') !== null)
 			{
 				$this->isCopyMode = true;
 				$this->arResult['CONTEXT']['PARAMS']['COMPANY_ID'] = $this->entityID;
@@ -235,11 +243,11 @@ class CCrmCompanyDetailsComponent
 		//endregion
 
 		//region Is Control of Duplicates enabled?
-		$this->arResult['DUPLICATE_CONTROL'] = array();
+		$this->arResult['DUPLICATE_CONTROL'] = [];
 		$this->enableDupControl = $this->arResult['DUPLICATE_CONTROL']['enabled'] =
 			!$this->isEditMode && \Bitrix\Crm\Integrity\DuplicateControl::isControlEnabledFor(CCrmOwnerType::Company);
 
-		if($this->enableDupControl)
+		if ($this->enableDupControl)
 		{
 			$this->arResult['DUPLICATE_CONTROL']['serviceUrl'] = '/bitrix/components/bitrix/crm.company.edit/ajax.php?'.bitrix_sessid_get();
 			$this->arResult['DUPLICATE_CONTROL']['entityTypeName'] = CCrmOwnerType::CompanyName;
@@ -264,17 +272,17 @@ class CCrmCompanyDetailsComponent
 		//endregion
 
 		//region Conversion Scheme
-		if(isset($this->arResult['LEAD_ID']) && $this->arResult['LEAD_ID'] > 0)
+		if (isset($this->arResult['LEAD_ID']) && $this->arResult['LEAD_ID'] > 0)
 		{
 			$this->leadID = $this->arResult['LEAD_ID'];
 		}
 		else
 		{
 			$leadID = $this->request->getQuery('lead_id');
-			if($leadID > 0)
+			if ($leadID > 0)
 			{
 				$this->leadID = $this->arResult['LEAD_ID'] = (int)$leadID;
-				if(!$this->entityID)
+				if (!$this->entityID)
 				{
 					$this->arResult['DUPLICATE_CONTROL']['ignoredItems'] = [];
 					$this->arResult['DUPLICATE_CONTROL']['ignoredItems'][] = [
@@ -299,10 +307,10 @@ class CCrmCompanyDetailsComponent
 			}
 		}
 
-		if($this->leadID > 0)
+		if ($this->leadID > 0)
 		{
 			$this->conversionWizard = \Bitrix\Crm\Conversion\LeadConversionWizard::load($this->leadID);
-			if($this->conversionWizard !== null)
+			if ($this->conversionWizard !== null)
 			{
 				$this->arResult['CONTEXT']['PARAMS'] = array_merge(
 					$this->arResult['CONTEXT']['PARAMS'],
@@ -322,13 +330,13 @@ class CCrmCompanyDetailsComponent
 			? $this->userFieldDispatcher->getCreateSignature(['ENTITY_ID' => $this->userFieldEntityID])
 			: '';
 
-		if(!isset($this->arResult['CONTEXT']['PARAMS']['CATEGORY_ID']))
+		if (!isset($this->arResult['CONTEXT']['PARAMS']['CATEGORY_ID']))
 		{
 			$this->arResult['CONTEXT']['PARAMS']['CATEGORY_ID'] = $this->arResult['CATEGORY_ID'];
 		}
 
 		//region Permissions check
-		if($this->isMyCompany())
+		if ($this->isMyCompany())
 		{
 			if (!$this->userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'))
 			{
@@ -336,9 +344,9 @@ class CCrmCompanyDetailsComponent
 				return;
 			}
 		}
-		else if($this->isCopyMode)
+		else if ($this->isCopyMode)
 		{
-			if(!(\CCrmCompany::CheckReadPermission($this->entityID, $this->userPermissions, $this->arResult['CATEGORY_ID'])
+			if (!(\CCrmCompany::CheckReadPermission($this->entityID, $this->userPermissions, $this->arResult['CATEGORY_ID'])
 				&& \CCrmCompany::CheckCreatePermission($this->userPermissions, $this->arResult['CATEGORY_ID']))
 			)
 			{
@@ -348,7 +356,7 @@ class CCrmCompanyDetailsComponent
 		}
 		elseif($this->isEditMode)
 		{
-			if(\CCrmCompany::CheckUpdatePermission($this->entityID, $this->userPermissions, $this->arResult['CATEGORY_ID']))
+			if (\CCrmCompany::CheckUpdatePermission($this->entityID, $this->userPermissions, $this->arResult['CATEGORY_ID']))
 			{
 				$this->arResult['READ_ONLY'] = false;
 			}
@@ -364,7 +372,7 @@ class CCrmCompanyDetailsComponent
 		}
 		else
 		{
-			if(\CCrmCompany::CheckCreatePermission($this->userPermissions, $this->arResult['CATEGORY_ID']))
+			if (\CCrmCompany::CheckCreatePermission($this->userPermissions, $this->arResult['CATEGORY_ID']))
 			{
 				$this->arResult['READ_ONLY'] = false;
 			}
@@ -403,7 +411,7 @@ class CCrmCompanyDetailsComponent
 		//endregion
 
 		//region Page title
-		if($this->isCopyMode)
+		if ($this->isCopyMode)
 		{
 			$APPLICATION->SetTitle(
 				Crm\Category\NamingHelper::getInstance()->getLangPhrase(
@@ -451,10 +459,10 @@ class CCrmCompanyDetailsComponent
 		//endregion
 
 		//region TABS
-		$this->arResult['TABS'] = array();
-		if($this->entityID > 0)
+		$this->arResult['TABS'] = [];
+		if ($this->entityID > 0)
 		{
-			if(!$this->isMyCompany())
+			if (!$this->isMyCompany())
 			{
 				if (!$this->arResult['CATEGORY_ID'])
 				{
@@ -470,13 +478,13 @@ class CCrmCompanyDetailsComponent
 								'template' => '',
 								'signedParameters' => \CCrmInstantEditorHelper::signComponentParams([
 									'DEAL_COUNT' => '20',
-									'PATH_TO_DEAL_SHOW' => $this->arResult['PATH_TO_DEAL_SHOW'],
-									'PATH_TO_DEAL_EDIT' => $this->arResult['PATH_TO_DEAL_EDIT'],
+									'PATH_TO_DEAL_SHOW' => $this->arResult['PATH_TO_DEAL_SHOW'] ?? '',
+									'PATH_TO_DEAL_EDIT' => $this->arResult['PATH_TO_DEAL_EDIT'] ?? '',
 									'INTERNAL_FILTER' => ['COMPANY_ID' => $this->entityID],
 									'INTERNAL_CONTEXT' => ['COMPANY_ID' => $this->entityID],
 									'GRID_ID_SUFFIX' => 'COMPANY_DETAILS',
 									'TAB_ID' => 'tab_deal',
-									'NAME_TEMPLATE' => $this->arResult['NAME_TEMPLATE'],
+									'NAME_TEMPLATE' => $this->arResult['NAME_TEMPLATE'] ?? '',
 									'ENABLE_TOOLBAR' => true,
 									'PRESERVE_HISTORY' => true,
 									'ADD_EVENT_NAME' => 'CrmCreateDealFromCompany'
@@ -507,13 +515,13 @@ class CCrmCompanyDetailsComponent
 								'template' => '',
 								'signedParameters' => \CCrmInstantEditorHelper::signComponentParams([
 									'QUOTE_COUNT' => '20',
-									'PATH_TO_QUOTE_SHOW' => $this->arResult['PATH_TO_QUOTE_SHOW'],
-									'PATH_TO_QUOTE_EDIT' => $this->arResult['PATH_TO_QUOTE_EDIT'],
+									'PATH_TO_QUOTE_SHOW' => $this->arResult['PATH_TO_QUOTE_SHOW'] ?? '',
+									'PATH_TO_QUOTE_EDIT' => $this->arResult['PATH_TO_QUOTE_EDIT'] ?? '',
 									'INTERNAL_FILTER' => ['COMPANY_ID' => $this->entityID],
 									'INTERNAL_CONTEXT' => ['COMPANY_ID' => $this->entityID],
 									'GRID_ID_SUFFIX' => 'COMPANY_DETAILS',
 									'TAB_ID' => 'tab_quote',
-									'NAME_TEMPLATE' => $this->arResult['NAME_TEMPLATE'],
+									'NAME_TEMPLATE' => $this->arResult['NAME_TEMPLATE'] ?? '',
 									'ENABLE_TOOLBAR' => true,
 									'PRESERVE_HISTORY' => true,
 									'ADD_EVENT_NAME' => 'CrmCreateQuoteFromCompany'
@@ -533,17 +541,17 @@ class CCrmCompanyDetailsComponent
 								'template' => '',
 								'signedParameters' => \CCrmInstantEditorHelper::signComponentParams([
 									'INVOICE_COUNT' => '20',
-									'PATH_TO_COMPANY_SHOW' => $this->arResult['PATH_TO_COMPANY_SHOW'],
-									'PATH_TO_COMPANY_EDIT' => $this->arResult['PATH_TO_COMPANY_EDIT'],
-									'PATH_TO_CONTACT_EDIT' => $this->arResult['PATH_TO_CONTACT_EDIT'],
-									'PATH_TO_DEAL_EDIT' => $this->arResult['PATH_TO_DEAL_EDIT'],
-									'PATH_TO_INVOICE_EDIT' => $this->arResult['PATH_TO_INVOICE_EDIT'],
-									'PATH_TO_INVOICE_PAYMENT' => $this->arResult['PATH_TO_INVOICE_PAYMENT'],
+									'PATH_TO_COMPANY_SHOW' => $this->arResult['PATH_TO_COMPANY_SHOW'] ?? '',
+									'PATH_TO_COMPANY_EDIT' => $this->arResult['PATH_TO_COMPANY_EDIT'] ?? '',
+									'PATH_TO_CONTACT_EDIT' => $this->arResult['PATH_TO_CONTACT_EDIT'] ?? '',
+									'PATH_TO_DEAL_EDIT' => $this->arResult['PATH_TO_DEAL_EDIT'] ?? '',
+									'PATH_TO_INVOICE_EDIT' => $this->arResult['PATH_TO_INVOICE_EDIT'] ?? '',
+									'PATH_TO_INVOICE_PAYMENT' => $this->arResult['PATH_TO_INVOICE_PAYMENT'] ?? '',
 									'INTERNAL_FILTER' => ['UF_COMPANY_ID' => $this->entityID],
 									'SUM_PAID_CURRENCY' => \CCrmCurrency::GetBaseCurrencyID(),
 									'GRID_ID_SUFFIX' => 'COMPANY_DETAILS',
 									'TAB_ID' => 'tab_invoice',
-									'NAME_TEMPLATE' => $this->arResult['NAME_TEMPLATE'],
+									'NAME_TEMPLATE' => $this->arResult['NAME_TEMPLATE'] ?? '',
 									'ENABLE_TOOLBAR' => 'Y',
 									'PRESERVE_HISTORY' => true,
 									'ADD_EVENT_NAME' => 'CrmCreateInvoiceFromCompany'
@@ -567,17 +575,17 @@ class CCrmCompanyDetailsComponent
 								'template' => '',
 								'signedParameters' => \CCrmInstantEditorHelper::signComponentParams([
 									'INVOICE_COUNT' => '20',
-									'PATH_TO_COMPANY_SHOW' => $this->arResult['PATH_TO_COMPANY_SHOW'],
-									'PATH_TO_COMPANY_EDIT' => $this->arResult['PATH_TO_COMPANY_EDIT'],
-									'PATH_TO_CONTACT_EDIT' => $this->arResult['PATH_TO_CONTACT_EDIT'],
-									'PATH_TO_DEAL_EDIT' => $this->arResult['PATH_TO_DEAL_EDIT'],
-									'PATH_TO_INVOICE_EDIT' => $this->arResult['PATH_TO_INVOICE_EDIT'],
-									'PATH_TO_INVOICE_PAYMENT' => $this->arResult['PATH_TO_INVOICE_PAYMENT'],
+									'PATH_TO_COMPANY_SHOW' => $this->arResult['PATH_TO_COMPANY_SHOW'] ?? '',
+									'PATH_TO_COMPANY_EDIT' => $this->arResult['PATH_TO_COMPANY_EDIT'] ?? '',
+									'PATH_TO_CONTACT_EDIT' => $this->arResult['PATH_TO_CONTACT_EDIT'] ?? '',
+									'PATH_TO_DEAL_EDIT' => $this->arResult['PATH_TO_DEAL_EDIT'] ?? '',
+									'PATH_TO_INVOICE_EDIT' => $this->arResult['PATH_TO_INVOICE_EDIT'] ?? '',
+									'PATH_TO_INVOICE_PAYMENT' => $this->arResult['PATH_TO_INVOICE_PAYMENT'] ?? '',
 									'INTERNAL_FILTER' => array('COMPANY_ID' => $this->entityID),
 									'SUM_PAID_CURRENCY' => \CCrmCurrency::GetBaseCurrencyID(),
 									'GRID_ID_SUFFIX' => 'COMPANY_DETAILS',
 									'TAB_ID' => 'tab_order',
-									'NAME_TEMPLATE' => $this->arResult['NAME_TEMPLATE'],
+									'NAME_TEMPLATE' => $this->arResult['NAME_TEMPLATE'] ?? '',
 									'ENABLE_TOOLBAR' => 'Y',
 									'PRESERVE_HISTORY' => true,
 									'ADD_EVENT_NAME' => 'CrmCreateOrderFromCompany'
@@ -745,7 +753,7 @@ class CCrmCompanyDetailsComponent
 		//endregion
 
 		//region VIEW EVENT
-		if($this->entityID > 0 && \Bitrix\Crm\Settings\HistorySettings::getCurrent()->isViewEventEnabled())
+		if ($this->entityID > 0 && \Bitrix\Crm\Settings\HistorySettings::getCurrent()->isViewEventEnabled())
 		{
 			CCrmEvent::RegisterViewEvent(CCrmOwnerType::Company, $this->entityID, $this->userID);
 		}
@@ -777,18 +785,18 @@ class CCrmCompanyDetailsComponent
 
 	public function prepareConfiguration()
 	{
-		if(isset($this->arResult['ENTITY_CONFIG']))
+		if (isset($this->arResult['ENTITY_CONFIG']))
 		{
 			return $this->arResult['ENTITY_CONFIG'];
 		}
 
-		$multiFieldConfigElements = array();
+		$multiFieldConfigElements = [];
 		foreach(array_keys($this->multiFieldInfos) as $fieldName)
 		{
 			$multiFieldConfigElements[] = array('name' => $fieldName);
 		}
 
-		$userFieldConfigElements = array();
+		$userFieldConfigElements = [];
 		foreach(array_keys($this->userFieldInfos) as $fieldName)
 		{
 			$userFieldConfigElements[] = array('name' => $fieldName);
@@ -863,7 +871,7 @@ class CCrmCompanyDetailsComponent
 	}
 	public function enableSearchHistory($enable)
 	{
-		if(!is_bool($enable))
+		if (!is_bool($enable))
 		{
 			$enable = (bool)$enable;
 		}
@@ -891,7 +899,7 @@ class CCrmCompanyDetailsComponent
 
 	public function prepareEntityDataScheme()
 	{
-		if($this->entityDataScheme === null)
+		if ($this->entityDataScheme === null)
 		{
 			$this->entityDataScheme = \CCrmCompany::GetFieldsInfo();
 			$this->userType->PrepareFieldsInfo($this->entityDataScheme);
@@ -900,7 +908,7 @@ class CCrmCompanyDetailsComponent
 	}
 	public function prepareValidators()
 	{
-		if(isset($this->arResult['ENTITY_VALIDATORS']))
+		if (isset($this->arResult['ENTITY_VALIDATORS']))
 		{
 			return $this->arResult['ENTITY_VALIDATORS'];
 		}
@@ -916,7 +924,7 @@ class CCrmCompanyDetailsComponent
 	}
 	public function prepareFieldInfos()
 	{
-		if(isset($this->entityFieldInfos))
+		if (isset($this->entityFieldInfos))
 		{
 			return $this->entityFieldInfos;
 		}
@@ -1130,7 +1138,7 @@ class CCrmCompanyDetailsComponent
 			'enableAttributes' => false
 		);
 
-		if($this->enableOutmodedFields)
+		if ($this->enableOutmodedFields)
 		{
 			$this->entityFieldInfos[] = array(
 				'name' => 'ADDRESS',
@@ -1190,9 +1198,9 @@ class CCrmCompanyDetailsComponent
 		foreach($this->multiFieldInfos as $typeName => $typeInfo)
 		{
 			$valueTypes = isset($this->multiFieldValueTypeInfos[$typeName])
-				? $this->multiFieldValueTypeInfos[$typeName] : array();
+				? $this->multiFieldValueTypeInfos[$typeName] : [];
 
-			$valueTypeItems = array();
+			$valueTypeItems = [];
 			foreach($valueTypes as $valueTypeId => $valueTypeInfo)
 			{
 				$valueTypeItems[] = array(
@@ -1202,11 +1210,11 @@ class CCrmCompanyDetailsComponent
 			}
 
 			$data = array('type' => $typeName, 'items'=> $valueTypeItems);
-			if($typeName === 'PHONE')
+			if ($typeName === 'PHONE')
 			{
 				$data['duplicateControl'] = array('groupId' => 'phone');
 			}
-			else if($typeName === 'EMAIL')
+			else if ($typeName === 'EMAIL')
 			{
 				$data['duplicateControl'] = array('groupId' => 'email');
 			}
@@ -1288,9 +1296,9 @@ class CCrmCompanyDetailsComponent
 
 	public function prepareEntityUserFields()
 	{
-		if($this->userFields === null)
+		if ($this->userFields === null)
 		{
-			if($this->isMyCompany())
+			if ($this->isMyCompany())
 			{
 				$this->userType->setOption(['isMyCompany' => true]);
 			}
@@ -1307,7 +1315,7 @@ class CCrmCompanyDetailsComponent
 
 	public function prepareEntityFieldAttributeConfigs()
 	{
-		if(!$this->entityFieldAttributeConfig)
+		if (!$this->entityFieldAttributeConfig)
 		{
 			$this->entityFieldAttributeConfig = FieldAttributeManager::getEntityConfigurations(
 				CCrmOwnerType::Company,
@@ -1323,14 +1331,14 @@ class CCrmCompanyDetailsComponent
 
 	public function prepareEntityUserFieldInfos()
 	{
-		if($this->userFieldInfos !== null)
+		if ($this->userFieldInfos !== null)
 		{
 			return $this->userFieldInfos;
 		}
 
-		$this->userFieldInfos = array();
+		$this->userFieldInfos = [];
 		$userFields = $this->prepareEntityUserFields();
-		$enumerationFields = array();
+		$enumerationFields = [];
 
 		$visibilityConfig = $this->prepareEntityFieldvisibilityConfigs(CCrmOwnerType::Company);
 
@@ -1348,7 +1356,7 @@ class CCrmCompanyDetailsComponent
 				//'CONTEXT' => $this->guid
 			);
 
-			if($userField['USER_TYPE_ID'] === 'enumeration')
+			if ($userField['USER_TYPE_ID'] === 'enumeration')
 			{
 				$enumerationFields[$fieldName] = $userField;
 			}
@@ -1386,7 +1394,7 @@ class CCrmCompanyDetailsComponent
 				unset($statusEntityId);
 			}
 
-			if(isset($visibilityConfig[$fieldName]))
+			if (isset($visibilityConfig[$fieldName]))
 			{
 				$data['visibilityConfigs'] = $visibilityConfig[$fieldName];
 			}
@@ -1398,18 +1406,18 @@ class CCrmCompanyDetailsComponent
 				'data' => $data
 			);
 
-			if(isset($userField['MANDATORY']) && $userField['MANDATORY'] === 'Y')
+			if (isset($userField['MANDATORY']) && $userField['MANDATORY'] === 'Y')
 			{
 				$this->userFieldInfos[$fieldName]['required'] = true;
 			}
 		}
 
-		if(!empty($enumerationFields))
+		if (!empty($enumerationFields))
 		{
 			$enumInfos = \CCrmUserType::PrepareEnumerationInfos($enumerationFields);
 			foreach($enumInfos as $fieldName => $enums)
 			{
-				if(isset($this->userFieldInfos[$fieldName])
+				if (isset($this->userFieldInfos[$fieldName])
 					&& isset($this->userFieldInfos[$fieldName]['data'])
 					&& isset($this->userFieldInfos[$fieldName]['data']['fieldInfo'])
 				)
@@ -1445,7 +1453,7 @@ class CCrmCompanyDetailsComponent
 
 	public function prepareEntityFieldAttributes()
 	{
-		if($this->entityFieldInfos === null)
+		if ($this->entityFieldInfos === null)
 		{
 			return;
 		}
@@ -1497,7 +1505,7 @@ class CCrmCompanyDetailsComponent
 			{
 				$fieldInfo = $fieldInfo['data']['fieldInfo'] ?? [];
 
-				if(isset($fieldInfo['USER_TYPE_ID']) && $fieldInfo['USER_TYPE_ID'] === 'boolean')
+				if (isset($fieldInfo['USER_TYPE_ID']) && $fieldInfo['USER_TYPE_ID'] === 'boolean')
 				{
 					$isResultReady = true;
 				}
@@ -1611,7 +1619,7 @@ class CCrmCompanyDetailsComponent
 		/** @global \CMain $APPLICATION */
 		global $APPLICATION;
 
-		if($this->entityData)
+		if ($this->entityData)
 		{
 			return $this->entityData;
 		}
@@ -1619,10 +1627,10 @@ class CCrmCompanyDetailsComponent
 		$isTrackingFieldRequired = false;
 
 		$file = new \CFile();
-		if($this->conversionWizard !== null)
+		if ($this->conversionWizard !== null)
 		{
-			$this->entityData = array();
-			$mappedUserFields = array();
+			$this->entityData = [];
+			$mappedUserFields = [];
 			\Bitrix\Crm\Entity\EntityEditor::prepareConvesionMap(
 				$this->conversionWizard,
 				CCrmOwnerType::Company,
@@ -1632,7 +1640,7 @@ class CCrmCompanyDetailsComponent
 
 			foreach($mappedUserFields as $k => $v)
 			{
-				if(isset($this->userFields[$k]))
+				if (isset($this->userFields[$k]))
 				{
 					$this->userFields[$k]['VALUE'] = $v;
 				}
@@ -1641,7 +1649,7 @@ class CCrmCompanyDetailsComponent
 			$this->entityData['CURRENCY_ID'] = \CCrmCurrency::GetBaseCurrencyID();
 			$this->entityData['OPENED'] = \Bitrix\Crm\Settings\CompanySettings::getCurrent()->getOpenedFlag() ? 'Y' : 'N';
 		}
-		else if($this->entityID <= 0)
+		else if ($this->entityID <= 0)
 		{
 			$requiredFields = Crm\Attribute\FieldAttributeManager::isEnabled()
 				? Crm\Attribute\FieldAttributeManager::getRequiredFields(
@@ -1660,50 +1668,50 @@ class CCrmCompanyDetailsComponent
 			$this->entityData['CURRENCY_ID'] = \CCrmCurrency::GetBaseCurrencyID();
 			$this->entityData['OPENED'] = \Bitrix\Crm\Settings\CompanySettings::getCurrent()->getOpenedFlag() ? 'Y' : 'N';
 
-			if($this->isMyCompany())
+			if ($this->isMyCompany())
 			{
 				$this->entityData['IS_MY_COMPANY'] = 'Y';
 			}
 
 			// set first option by default if the field is not required
 			$typeList = $this->prepareTypeList();
-			if(
+			if (
 				!empty($typeList)
 				&& $this->isFieldHasDefaultValueAttribute($fieldsInfo, 'COMPANY_TYPE'))
 			{
 				$this->arResult['FIELDS_SET_DEFAULT_VALUE'][] = 'COMPANY_TYPE';
 				$this->defaultEntityData['COMPANY_TYPE'] = current(array_keys($typeList));
-				if($this->isSetDefaultValueForField($fieldsInfo, $requiredFields, 'COMPANY_TYPE'))
+				if ($this->isSetDefaultValueForField($fieldsInfo, $requiredFields, 'COMPANY_TYPE'))
 				{
 					$this->entityData['COMPANY_TYPE'] = $this->defaultEntityData['COMPANY_TYPE'];
 				}
 			}
 			unset($typeList);
 
-			if($this->isFieldHasDefaultValueAttribute($fieldsInfo, 'INDUSTRY'))
+			if ($this->isFieldHasDefaultValueAttribute($fieldsInfo, 'INDUSTRY'))
 			{
 				$this->arResult['FIELDS_SET_DEFAULT_VALUE'][] = 'INDUSTRY';
 				$statusList = CCrmStatus::GetStatusList('INDUSTRY');
 				$this->defaultEntityData['INDUSTRY'] = current(array_keys($statusList));
-				if($this->isSetDefaultValueForField($fieldsInfo, $requiredFields, 'INDUSTRY'))
+				if ($this->isSetDefaultValueForField($fieldsInfo, $requiredFields, 'INDUSTRY'))
 				{
 					$this->entityData['INDUSTRY'] = $this->defaultEntityData['INDUSTRY'];
 				}
 			}
 
-			if($this->isFieldHasDefaultValueAttribute($fieldsInfo, 'EMPLOYEES'))
+			if ($this->isFieldHasDefaultValueAttribute($fieldsInfo, 'EMPLOYEES'))
 			{
 				$this->arResult['FIELDS_SET_DEFAULT_VALUE'][] = 'EMPLOYEES';
 				$statusList = CCrmStatus::GetStatusList('EMPLOYEES');
 				$this->defaultEntityData['EMPLOYEES'] = current(array_keys($statusList));
-				if($this->isSetDefaultValueForField($fieldsInfo, $requiredFields, 'EMPLOYEES'))
+				if ($this->isSetDefaultValueForField($fieldsInfo, $requiredFields, 'EMPLOYEES'))
 				{
 					$this->entityData['EMPLOYEES'] = $this->defaultEntityData['EMPLOYEES'];
 				}
 			}
 
 			//region Default Responsible
-			if($this->userID > 0)
+			if ($this->userID > 0)
 			{
 				$this->entityData['ASSIGNED_BY_ID'] = $this->userID;
 			}
@@ -1719,19 +1727,19 @@ class CCrmCompanyDetailsComponent
 		{
 			$this->entityData = $this->loadEntityData();
 
-			if(!isset($this->entityData['REVENUE']))
+			if (!isset($this->entityData['REVENUE']))
 			{
 				$this->entityData['REVENUE'] = 0.0;
 			}
 
-			if(!isset($this->entityData['CURRENCY_ID']) || $this->entityData['CURRENCY_ID'] === '')
+			if (!isset($this->entityData['CURRENCY_ID']) || $this->entityData['CURRENCY_ID'] === '')
 			{
 				$this->entityData['CURRENCY_ID'] = \CCrmCurrency::GetBaseCurrencyID();
 			}
 
-			if($this->isCopyMode)
+			if ($this->isCopyMode)
 			{
-				if($this->userID > 0)
+				if ($this->userID > 0)
 				{
 					$this->entityData['ASSIGNED_BY_ID'] = $this->userID;
 				}
@@ -1754,7 +1762,7 @@ class CCrmCompanyDetailsComponent
 		}
 
 		//region Responsible
-		if(isset($this->entityData['ASSIGNED_BY_ID']) && $this->entityData['ASSIGNED_BY_ID'] > 0)
+		if (isset($this->entityData['ASSIGNED_BY_ID']) && $this->entityData['ASSIGNED_BY_ID'] > 0)
 		{
 			$dbUsers = \CUser::GetList(
 				'ID',
@@ -1768,7 +1776,7 @@ class CCrmCompanyDetailsComponent
 				)
 			);
 			$user = is_object($dbUsers) ? $dbUsers->Fetch() : null;
-			if(is_array($user))
+			if (is_array($user))
 			{
 				$this->entityData['ASSIGNED_BY_LOGIN'] = $user['LOGIN'];
 				$this->entityData['ASSIGNED_BY_NAME'] = isset($user['NAME']) ? $user['NAME'] : '';
@@ -1796,7 +1804,7 @@ class CCrmCompanyDetailsComponent
 			$fieldData = isset($this->userFieldInfos[$fieldName])
 				? $this->userFieldInfos[$fieldName] : null;
 
-			if(!is_array($fieldData))
+			if (!is_array($fieldData))
 			{
 				continue;
 			}
@@ -1812,7 +1820,7 @@ class CCrmCompanyDetailsComponent
 			}
 
 			$fieldSignature = $this->userFieldDispatcher->getSignature($fieldParams);
-			if($isEmptyField)
+			if ($isEmptyField)
 			{
 				$this->entityData[$fieldName] = array(
 					'SIGNATURE' => $fieldSignature,
@@ -1827,7 +1835,7 @@ class CCrmCompanyDetailsComponent
 					'IS_EMPTY' => false
 				);
 
-				if($fieldData['data']['fieldInfo']['USER_TYPE_ID'] === 'file')
+				if ($fieldData['data']['fieldInfo']['USER_TYPE_ID'] === 'file')
 				{
 					$values = is_array($fieldValue) ? $fieldValue : array($fieldValue);
 					$this->entityData[$fieldName]['EXTRAS'] = array(
@@ -1840,13 +1848,13 @@ class CCrmCompanyDetailsComponent
 
 		//region Revenue & Currency
 		$this->entityData['FORMATTED_REVENUE_WITH_CURRENCY'] = \CCrmCurrency::MoneyToString(
-			$this->entityData['REVENUE'],
+			$this->entityData['REVENUE'] ?? 0,
 			$this->entityData['CURRENCY_ID'],
 			''
 		);
 
 		$this->entityData['FORMATTED_REVENUE'] = \CCrmCurrency::MoneyToString(
-			$this->entityData['REVENUE'],
+			$this->entityData['REVENUE'] ?? 0,
 			$this->entityData['CURRENCY_ID'],
 			'#'
 		);
@@ -1854,7 +1862,7 @@ class CCrmCompanyDetailsComponent
 
 		//region Responsible
 		$assignedByID = isset($this->entityData['ASSIGNED_BY_ID']) ? (int)$this->entityData['ASSIGNED_BY_ID'] : 0;
-		if($assignedByID > 0)
+		if ($assignedByID > 0)
 		{
 			$this->entityData['ASSIGNED_BY_FORMATTED_NAME'] =
 				\CUser::FormatName(
@@ -1870,16 +1878,17 @@ class CCrmCompanyDetailsComponent
 				);
 
 			$assignedByPhotoID = isset($this->entityData['ASSIGNED_BY_PERSONAL_PHOTO'])
-				? (int)$this->entityData['ASSIGNED_BY_PERSONAL_PHOTO'] : 0;
+				? (int)$this->entityData['ASSIGNED_BY_PERSONAL_PHOTO']
+				: 0;
 
-			if($assignedByPhotoID > 0)
+			if ($assignedByPhotoID > 0)
 			{
 				$fileInfo = $file->ResizeImageGet(
 					$assignedByPhotoID,
 					array('width' => 60, 'height'=> 60),
 					BX_RESIZE_IMAGE_EXACT
 				);
-				if(is_array($fileInfo) && isset($fileInfo['src']))
+				if (is_array($fileInfo) && isset($fileInfo['src']))
 				{
 					$this->entityData['ASSIGNED_BY_PHOTO_URL'] = $fileInfo['src'];
 				}
@@ -1892,8 +1901,8 @@ class CCrmCompanyDetailsComponent
 		}
 		//endregion
 		//region Contact Data & Multifield Data
-		$contactData = array();
-		if($this->entityID > 0)
+		$contactData = [];
+		if ($this->entityID > 0)
 		{
 			\CCrmComponentHelper::prepareMultifieldData(
 				\CCrmOwnerType::Company,
@@ -1919,10 +1928,10 @@ class CCrmCompanyDetailsComponent
 		}
 		else
 		{
-			if(isset($this->defaultFieldValues['phone']))
+			if (isset($this->defaultFieldValues['phone']))
 			{
 				$phone = trim($this->defaultFieldValues['phone']);
-				if($phone !== '')
+				if ($phone !== '')
 				{
 					$this->entityData['PHONE'] = array(
 						array('ID' => 'n0', 'VALUE' => $phone, 'VALUE_TYPE' => 'WORK')
@@ -1931,8 +1940,8 @@ class CCrmCompanyDetailsComponent
 			}
 		}
 
-		$contactIDs = array();
-		if($this->entityID > 0)
+		$contactIDs = [];
+		if ($this->entityID > 0)
 		{
 			$contactIDs = Bitrix\Crm\Binding\ContactCompanyTable::getCompanyContactIDs($this->entityID);
 		}
@@ -1981,21 +1990,21 @@ class CCrmCompanyDetailsComponent
 
 		//region Images
 		$logoID = isset($this->entityData['LOGO']) ? (int)$this->entityData['LOGO'] : 0;
-		if($logoID > 0)
+		if ($logoID > 0)
 		{
 			$fileResizeInfo = $file->ResizeImageGet(
 				$logoID,
 				array('width' => 300, 'height'=> 300),
 				BX_RESIZE_IMAGE_PROPORTIONAL
 			);
-			if(is_array($fileResizeInfo) && isset($fileResizeInfo['src']))
+			if (is_array($fileResizeInfo) && isset($fileResizeInfo['src']))
 			{
 				$this->entityData['LOGO_SHOW_URL'] = $fileResizeInfo['src'];
 			}
 		}
 		//endregion
 
-		if($this->enableOutmodedFields)
+		if ($this->enableOutmodedFields)
 		{
 			$this->entityData['ADDRESS_HTML'] =
 				AddressFormatter::getSingleInstance()->formatHtmlMultilineSpecialchar(
@@ -2053,7 +2062,7 @@ class CCrmCompanyDetailsComponent
 	}
 	protected function prepareTypeList()
 	{
-		if($this->types === null)
+		if ($this->types === null)
 		{
 			$this->types = \CCrmStatus::GetStatusList('COMPANY_TYPE');
 		}
@@ -2076,7 +2085,7 @@ class CCrmCompanyDetailsComponent
 	protected function tryGetFieldValueFromRequest($name, array &$params)
 	{
 		$value = $this->request->get($name);
-		if($value === null)
+		if ($value === null)
 		{
 			return false;
 		}
@@ -2090,18 +2099,18 @@ class CCrmCompanyDetailsComponent
 	 */
 	protected function isMyCompany()
 	{
-		if($this->isMyCompany === null)
+		if ($this->isMyCompany === null)
 		{
 			$this->isMyCompany = false;
 			$isMyCompany = $this->request->get('mycompany');
-			if(is_string($isMyCompany) && mb_strtoupper($isMyCompany) === 'Y')
+			if (is_string($isMyCompany) && mb_strtoupper($isMyCompany) === 'Y')
 			{
 				$this->isMyCompany = true;
 			}
 			else
 			{
 				$entityData = $this->loadEntityData();
-				if(isset($entityData['IS_MY_COMPANY']) && $entityData['IS_MY_COMPANY'] === 'Y')
+				if (isset($entityData['IS_MY_COMPANY']) && $entityData['IS_MY_COMPANY'] === 'Y')
 				{
 					$this->isMyCompany = true;
 				}
@@ -2116,17 +2125,17 @@ class CCrmCompanyDetailsComponent
 	 */
 	protected function loadEntityData()
 	{
-		if($this->rawEntityData === null)
+		if ($this->rawEntityData === null)
 		{
 			$this->rawEntityData = [];
-			if($this->entityID > 0)
+			if ($this->entityID > 0)
 			{
 				$dbResult = \CCrmCompany::GetListEx(
 					[],
 					['=ID' => $this->entityID, 'CHECK_PERMISSIONS' => 'N']
 				);
 
-				if(is_object($dbResult))
+				if (is_object($dbResult))
 				{
 					$this->rawEntityData = $dbResult->Fetch();
 				}

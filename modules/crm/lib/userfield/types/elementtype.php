@@ -273,8 +273,8 @@ class ElementType extends StringType
 		);
 
 		if (
-			is_array($destSelectorParams['addTabCrmDynamics'])
-			&& count($destSelectorParams['addTabCrmDynamics'])
+			!empty($destSelectorParams['addTabCrmDynamics'])
+			&& is_array($destSelectorParams['addTabCrmDynamics'])
 		)
 		{
 			$destSelectorParams['crmDynamicTitles'] = static::getDynamicEntityTitles();

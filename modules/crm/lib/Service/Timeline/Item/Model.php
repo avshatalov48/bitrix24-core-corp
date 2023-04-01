@@ -15,6 +15,7 @@ class Model
 	private ?Datetime $date = null;
 	private ?int $associatedEntityId = null;
 	private ?int $associatedEntityTypeId = null;
+	private ?int $typeId = null;
 	private ?int $typeCategoryId = null;
 	private ?array $settings = [];
 	private ?AssociatedEntityModel $associatedEntityModel = null;
@@ -54,9 +55,10 @@ class Model
 			->setAssociatedEntityTypeId((int)$data['ASSOCIATED_ENTITY_TYPE_ID'])
 			->setAuthorId((int)$data['AUTHOR_ID'])
 			->setDate($data['CREATED'])
-			->setSettings((array)$data['SETTINGS'])
+			->setSettings((array)($data['SETTINGS'] ?? []))
 			->setAssociatedEntityModel(self::createAssociatedEntityModel($data))
 			->setHistoryItemModel(self::createHistoryItemModel($data))
+			->setTypeId((int)$data['TYPE_ID'])
 			->setTypeCategoryId((int)$data['TYPE_CATEGORY_ID'])
 			->setNote(self::createNote($data))
 		;
@@ -205,6 +207,29 @@ class Model
 	public function setSettings(array $settings): self
 	{
 		$this->settings = $settings;
+
+		return $this;
+	}
+
+	/**
+	 * @return int|null
+	 *
+	 * @see \Bitrix\Crm\Timeline\TimelineType
+	 */
+	public function getTypeId(): ?int
+	{
+		return $this->typeId;
+	}
+
+	/**
+	 * @param int|null $typeId
+	 * @return $this
+	 *
+	 * @see \Bitrix\Crm\Timeline\TimelineType
+	 */
+	public function setTypeId(?int $typeId): self
+	{
+		$this->typeId = $typeId;
 
 		return $this;
 	}

@@ -756,7 +756,8 @@ this.BX = this.BX || {};
 	      ownerId: this.$root.$app.options.ownerId,
 	      ownerTypeId: this.$root.$app.options.ownerTypeId,
 	      dialogId: this.$root.$app.options.dialogId,
-	      sessionId: this.$root.$app.options.sessionId
+	      sessionId: this.$root.$app.options.sessionId,
+	      isShortProductViewFormat: true
 	    });
 	    this.checkProductErrors();
 	    main_core_events.EventEmitter.subscribe(this.productForm, 'ProductForm:onBasketChange', main_core.Runtime.debounce(this.onBasketChange, 500, this));
@@ -1092,8 +1093,10 @@ this.BX = this.BX || {};
 	            logo: null
 	          }
 	        },
-	        extraServices: []
-	      }
+	        extraServices: [],
+	        requestProperties: []
+	      },
+	      canUserPerformCalls: false
 	    };
 	  },
 	  created: function created() {
@@ -1105,11 +1108,26 @@ this.BX = this.BX || {};
 	      }
 	    }).then(function (result) {
 	      _this.shipment = result.data.shipment;
+	      _this.canUserPerformCalls = result.data.canUserPerformCalls;
 	    });
 	  },
 	  methods: {
 	    getFormattedPrice: function getFormattedPrice(price) {
 	      return BX.Currency.currencyFormat(price, this.currency, true);
+	    },
+	    isPhoneRequestProperty: function isPhoneRequestProperty(property) {
+	      if (!main_core.Type.isArray(property.tags)) {
+	        return false;
+	      }
+
+	      return property.tags.includes('phone');
+	    },
+	    makeCall: function makeCall(phoneNumber) {
+	      if (!main_core.Type.isUndefined(window.top['BXIM']) && this.canUserPerformCalls === true) {
+	        window.top['BXIM'].phoneTo(phoneNumber);
+	      } else {
+	        window.open('tel:' + phoneNumber, '_self');
+	      }
 	    }
 	  },
 	  computed: {
@@ -1131,9 +1149,6 @@ this.BX = this.BX || {};
 	    deliveryServiceProfileName: function deliveryServiceProfileName() {
 	      return this.hasParent ? this.shipment.deliveryService.name : null;
 	    },
-	    basePriceDelivery: function basePriceDelivery() {
-	      return this.shipment ? this.shipment.basePriceDelivery : null;
-	    },
 	    priceDelivery: function priceDelivery() {
 	      return this.shipment ? this.shipment.priceDelivery : null;
 	    },
@@ -1141,13 +1156,16 @@ this.BX = this.BX || {};
 	      return this.shipment ? this.shipment.currency : null;
 	    },
 	    extraServices: function extraServices() {
-	      return this.shipment.extraServices ? this.shipment.extraServices : [];
+	      return main_core.Type.isArray(this.shipment.extraServices) ? this.shipment.extraServices : [];
 	    },
 	    isExtraServicesVisible: function isExtraServicesVisible() {
 	      return this.extraServices.length > 0;
 	    },
-	    basePriceDeliveryFormatted: function basePriceDeliveryFormatted() {
-	      return this.getFormattedPrice(this.basePriceDelivery);
+	    requestProperties: function requestProperties() {
+	      return main_core.Type.isArray(this.shipment.requestProperties) ? this.shipment.requestProperties : [];
+	    },
+	    isRequestPropertiesVisible: function isRequestPropertiesVisible() {
+	      return this.requestProperties.length > 0;
 	    },
 	    priceDeliveryFormatted: function priceDeliveryFormatted() {
 	      return this.getFormattedPrice(this.priceDelivery);
@@ -1159,7 +1177,7 @@ this.BX = this.BX || {};
 	      return this.getFormattedPrice(this.paymentPrice);
 	    }
 	  },
-	  template: "\n\t\t<div style=\"width: 100%;\" xmlns=\"http://www.w3.org/1999/html\">\n\t\t\t<div class=\"salescenter-delivery-selector-head\">\n\t\t\t\t<div\n\t\t\t\t\tv-if=\"hasParent && deliveryServiceLogo\"\n\t\t\t\t\t:style=\"{ backgroundImage: 'url(' + deliveryServiceLogo + ')' }\"\n\t\t\t\t\tclass=\"salescenter-delivery-selector-logo\"\n\t\t\t\t>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"salescenter-delivery-selector-info\">\n\t\t\t\t\t<div\n\t\t\t\t\t\tv-if=\"deliveryServiceProfileLogo\"\n\t\t\t\t\t\t:style=\"{ backgroundImage: 'url(' + deliveryServiceProfileLogo + ')' }\"\n\t\t\t\t\t\tclass=\"salescenter-delivery-selector-logo\"\n\t\t\t\t\t>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"salescenter-delivery-selector-content\">\n\t\t\t\t\t\t<div class=\"salescenter-delivery-selector-text-light\">{{deliveryServiceName}}</div>\n\t\t\t\t\t\t<div\n\t\t\t\t\t\t\tv-if=\"deliveryServiceProfileName\"\n\t\t\t\t\t\t\tclass=\"salescenter-delivery-selector-text-dark\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{deliveryServiceProfileName}}\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<div v-if=\"isExtraServicesVisible\" class=\"salescenter-delivery-selector-main\">\n\t\t\t\t<div class=\"salescenter-delivery-selector-text-light\">\n\t\t\t\t\t".concat(main_core.Loc.getMessage('SALESCENTER_SHIPMENT_EXTRA_SERVICES'), ":\n\t\t\t\t</div>\n\t\t\t\t<ul class=\"salescenter-delivery-selector-list\">\n\t\t\t\t\t<li\n\t\t\t\t\t\tv-for=\"extraService in extraServices\"\n\t\t\t\t\t\tclass=\"salescenter-delivery-selector-list-item salescenter-delivery-selector-text-dark\"\n\t\t\t\t\t>\n\t\t\t\t\t\t{{extraService.name}}: {{extraService.value}} \n\t\t\t\t\t</li>\n\t\t\t\t</ul>\n\t\t\t</div>\n\t\t\t<div class=\"salescenter-delivery-selector-bottom salescenter-delivery-selector-text-dark\">\n\t\t\t\t").concat(main_core.Loc.getMessage('SALESCENTER_SHIPMENT_DELIVERY_PRICE_RECEIVED'), ":\n\t\t\t\t<span v-html=\"basePriceDeliveryFormatted\"></span>\n\t\t\t</div>\n\t\t\t<div class=\"salescenter-delivery-selector-line\"></div>\n\t\t\t<div class=\"catalog-pf-result-wrapper\">\n\t\t\t\t<table class=\"catalog-pf-result\">\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>\n\t\t\t\t\t\t\t<span class=\"catalog-pf-text\">\n\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('SALESCENTER_PRODUCT_PRODUCTS_PRICE'), ":\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t</td> \n\t\t\t\t\t\t<td>\n\t\t\t\t\t\t\t<span v-html=\"productsPriceFormatted\" class=\"catalog-pf-text\"></span> \n\t\t\t\t\t\t</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td class=\"catalog-pf-result-padding-bottom\">\n\t\t\t\t\t\t\t<span class=\"catalog-pf-text catalog-pf-text--tax\">\n\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('SALESCENTER_SHIPMENT_PRODUCT_BLOCK_DELIVERY_PRICE'), ": \n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t</td> \n\t\t\t\t\t\t<td class=\"catalog-pf-result-padding-bottom\"> \n\t\t\t\t\t\t\t<span class=\"catalog-pf-text catalog-pf-text--tax\" v-html=\"priceDeliveryFormatted\"></span>\n\t\t\t\t\t\t</td>\n\t\t\t\t\t</tr> \n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td class=\"catalog-pf-result-padding\">\n\t\t\t\t\t\t\t<span class=\"catalog-pf-text catalog-pf-text--total catalog-pf-text--border\">\n\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('SALESCENTER_PRODUCT_TOTAL_RESULT'), ": \n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t</td> \n\t\t\t\t\t\t<td class=\"catalog-pf-result-padding\">\n\t\t\t\t\t\t\t<span v-html=\"paymentPriceFormatted\" class=\"catalog-pf-text catalog-pf-text--total\"></span> \n\t\t\t\t\t\t</td>\n\t\t\t\t\t</tr>\n\t\t\t\t</table>\n\t\t\t</div>\n\t\t</div>\n\t")
+	  template: "\n\t\t<div style=\"width: 100%;\" xmlns=\"http://www.w3.org/1999/html\">\n\t\t\t<div class=\"salescenter-delivery-selector-head\">\n\t\t\t\t<div\n\t\t\t\t\tv-if=\"hasParent && deliveryServiceLogo\"\n\t\t\t\t\t:style=\"{ backgroundImage: 'url(' + deliveryServiceLogo + ')' }\"\n\t\t\t\t\tclass=\"salescenter-delivery-selector-logo\"\n\t\t\t\t>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"salescenter-delivery-selector-info\">\n\t\t\t\t\t<div\n\t\t\t\t\t\tv-if=\"deliveryServiceProfileLogo\"\n\t\t\t\t\t\t:style=\"{ backgroundImage: 'url(' + deliveryServiceProfileLogo + ')' }\"\n\t\t\t\t\t\tclass=\"salescenter-delivery-selector-logo\"\n\t\t\t\t\t>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"salescenter-delivery-selector-content\">\n\t\t\t\t\t\t<div class=\"salescenter-delivery-selector-text-light\">{{deliveryServiceName}}</div>\n\t\t\t\t\t\t<div\n\t\t\t\t\t\t\tv-if=\"deliveryServiceProfileName\"\n\t\t\t\t\t\t\tclass=\"salescenter-delivery-selector-text-dark\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{deliveryServiceProfileName}}\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<div v-if=\"isExtraServicesVisible\" class=\"salescenter-delivery-selector-main\">\n\t\t\t\t<div class=\"salescenter-delivery-selector-text-light\">\n\t\t\t\t\t".concat(main_core.Loc.getMessage('SALESCENTER_SHIPMENT_EXTRA_SERVICES'), ":\n\t\t\t\t</div>\n\t\t\t\t<ul class=\"salescenter-delivery-selector-list\">\n\t\t\t\t\t<li\n\t\t\t\t\t\tv-for=\"extraService in extraServices\"\n\t\t\t\t\t\tclass=\"salescenter-delivery-selector-list-item salescenter-delivery-selector-text-dark\"\n\t\t\t\t\t>\n\t\t\t\t\t\t{{extraService.name}}: {{extraService.value}} \n\t\t\t\t\t</li>\n\t\t\t\t</ul>\n\t\t\t</div>\n\t\t\t<div v-if=\"isRequestPropertiesVisible\" class=\"salescenter-delivery-selector-main\">\n\t\t\t\t<div class=\"salescenter-delivery-selector-text-light\">\n\t\t\t\t\t").concat(main_core.Loc.getMessage('SALESCENTER_DELIVERY_REQUEST_DETAILS'), ":\n\t\t\t\t</div>\n\t\t\t\t<ul class=\"salescenter-delivery-selector-list\">\n\t\t\t\t\t<li\n\t\t\t\t\t\tv-for=\"requestProperty in requestProperties\"\n\t\t\t\t\t\tclass=\"salescenter-delivery-selector-list-item salescenter-delivery-selector-text-dark\"\n\t\t\t\t\t>\n\t\t\t\t\t\t{{requestProperty.name}}:\n\t\t\t\t\t\t<template v-if=\"isPhoneRequestProperty(requestProperty)\">\n\t\t\t\t\t\t\t<a @click.prevent=\"makeCall(requestProperty.value)\" href=\"#\">{{requestProperty.value}}</a>\n\t\t\t\t\t\t</template>\n\t\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t\t{{requestProperty.value}}\n\t\t\t\t\t\t</template>\n\t\t\t\t\t</li>\n\t\t\t\t</ul>\n\t\t\t</div>\n\t\t\t<div class=\"salescenter-delivery-selector-line\"></div>\n\t\t\t<div class=\"catalog-pf-result-wrapper\">\n\t\t\t\t<table class=\"catalog-pf-result\">\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td>\n\t\t\t\t\t\t\t<span class=\"catalog-pf-text\">\n\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('SALESCENTER_PRODUCT_PRODUCTS_PRICE'), ":\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t</td> \n\t\t\t\t\t\t<td>\n\t\t\t\t\t\t\t<span v-html=\"productsPriceFormatted\" class=\"catalog-pf-text\"></span> \n\t\t\t\t\t\t</td>\n\t\t\t\t\t</tr>\n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td class=\"catalog-pf-result-padding-bottom\">\n\t\t\t\t\t\t\t<span class=\"catalog-pf-text catalog-pf-text--tax\">\n\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('SALESCENTER_SHIPMENT_PRODUCT_BLOCK_DELIVERY_PRICE'), ": \n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t</td> \n\t\t\t\t\t\t<td class=\"catalog-pf-result-padding-bottom\"> \n\t\t\t\t\t\t\t<span class=\"catalog-pf-text catalog-pf-text--tax\" v-html=\"priceDeliveryFormatted\"></span>\n\t\t\t\t\t\t</td>\n\t\t\t\t\t</tr> \n\t\t\t\t\t<tr>\n\t\t\t\t\t\t<td class=\"catalog-pf-result-padding\">\n\t\t\t\t\t\t\t<span class=\"catalog-pf-text catalog-pf-text--total catalog-pf-text--border\">\n\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('SALESCENTER_PRODUCT_TOTAL_RESULT'), ": \n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t</td> \n\t\t\t\t\t\t<td class=\"catalog-pf-result-padding\">\n\t\t\t\t\t\t\t<span v-html=\"paymentPriceFormatted\" class=\"catalog-pf-text catalog-pf-text--total\"></span> \n\t\t\t\t\t\t</td>\n\t\t\t\t\t</tr>\n\t\t\t\t</table>\n\t\t\t</div>\n\t\t</div>\n\t")
 	};
 
 	function ownKeys$2(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }

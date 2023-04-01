@@ -730,7 +730,7 @@ class ClientResolver
 						&& $clientResolverPropertyType['IS_PLACEMENT'] === 'Y'
 					),
 					'numberOfPlacements' =>
-						is_array($clientResolverPropertyType['PLACEMENTS'])
+						isset($clientResolverPropertyType['PLACEMENTS']) && is_array($clientResolverPropertyType['PLACEMENTS'])
 							? count($clientResolverPropertyType['PLACEMENTS'])
 							: 0
 					,

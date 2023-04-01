@@ -5,7 +5,7 @@ namespace Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock;
 use Bitrix\Crm\Service\Timeline\Layout\Mixin\Actionable;
 
-class Link extends ContentBlock
+class Link extends ContentBlock implements TextPropertiesInterface
 {
 	use Actionable;
 	use TextPropertiesMixin;

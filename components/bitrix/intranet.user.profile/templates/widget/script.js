@@ -878,7 +878,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      _this3.hide();
 	      return BX.SidePanel.Instance.open(babelHelpers.classPrivateFieldGet(_this3, _profile).URL);
 	    };
-	    var avatarNode = main_core.Tag.render(_templateObject$5 || (_templateObject$5 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<span class=\"system-auth-form__profile-avatar--image\"\n\t\t\t\t\t", ">\n\t\t\t\t</span>\n\t\t\t\t"])), babelHelpers.classPrivateFieldGet(_this3, _profile).PHOTO ? "\n\t\t\t\t\t\tstyle=\"background-size: cover; background-image: url('".concat(babelHelpers.classPrivateFieldGet(_this3, _profile).PHOTO, "')\"") : '');
+	    var avatarNode = main_core.Tag.render(_templateObject$5 || (_templateObject$5 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<span class=\"system-auth-form__profile-avatar--image\"\n\t\t\t\t\t", ">\n\t\t\t\t</span>\n\t\t\t\t"])), babelHelpers.classPrivateFieldGet(_this3, _profile).PHOTO ? "\n\t\t\t\t\t\tstyle=\"background-size: cover; background-image: url('".concat(encodeURI(babelHelpers.classPrivateFieldGet(_this3, _profile).PHOTO), "')\"") : '');
 	    var nameNode = main_core.Tag.render(_templateObject2$4 || (_templateObject2$4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"system-auth-form__profile-name\">", "</div>\n\t\t\t"])), main_core.Text.encode(babelHelpers.classPrivateFieldGet(_this3, _profile).FULL_NAME));
 	    main_core_events.EventEmitter.subscribe(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.Intranet.UserProfile:Avatar:changed', function (_ref2) {
 	      var _ref2$data = babelHelpers.slicedToArray(_ref2.data, 1),
@@ -1036,8 +1036,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 	        text: main_core.Loc.getMessage('INTRANET_USER_PROFILE_DOWNLOAD_LINUX_DEB'),
 	        href: 'https://dl.bitrix24.com/b24/bitrix24_desktop.deb'
 	      },
-	      'RBM': {
-	        text: main_core.Loc.getMessage('INTRANET_USER_PROFILE_DOWNLOAD_LINUX_RBM'),
+	      'RPM': {
+	        text: main_core.Loc.getMessage('INTRANET_USER_PROFILE_DOWNLOAD_LINUX_RPM'),
 	        href: 'https://dl.bitrix24.com/b24/bitrix24_desktop.rpm'
 	      }
 	    };
@@ -1068,8 +1068,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 	            menuLinux.close();
 	          }
 	        }, {
-	          text: typesInstallersForLinux.RBM.text,
-	          href: typesInstallersForLinux.RBM.href,
+	          text: typesInstallersForLinux.RPM.text,
+	          href: typesInstallersForLinux.RPM.href,
 	          onclick: function onclick() {
 	            menuLinux.close();
 	          }
@@ -1116,8 +1116,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 	            menuPopup.close();
 	          }
 	        }, {
-	          text: typesInstallersForLinux.RBM.text,
-	          href: typesInstallersForLinux.RBM.href,
+	          text: typesInstallersForLinux.RPM.text,
+	          href: typesInstallersForLinux.RPM.href,
 	          onclick: function onclick() {
 	            menuPopup.close();
 	          }

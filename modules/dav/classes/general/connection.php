@@ -6,7 +6,6 @@ class CAllDavConnection
 {
 	public static function ParseFields(&$arFields, $id = 0)
 	{
-		global $DB;
 		$id = (int)$id;
 		$updateMode = ($id > 0);
 		$addMode = !$updateMode;
@@ -17,35 +16,34 @@ class CAllDavConnection
 		{
 			$arConnectionOld = self::GetById($id);
 			if (is_null($arConnectionOld))
-				$arError[] = array("updateMode", "updateMode");
-				//throw new CDavInvalidOperationException("updateMode");
+			{
+				$arError[] = ["updateMode", "updateMode"];
+			}
+			//throw new CDavInvalidOperationException("updateMode");
 		}
 
 		if (
-			$addMode && !is_set($arFields, "NAME")
-			|| is_set($arFields, "NAME") && ($arFields["NAME"] == '')
+			($addMode && !isset($arFields['NAME']))
+			|| (isset($arFields['NAME']) && !$arFields['NAME'])
 		)
 		{
-			$arError[] =
-				[
-					GetMessage('DAV_EXP_NAME'),
-					"NULL_NAME"
-				];
+			$arError[] = [
+				GetMessage('DAV_EXP_NAME'),
+				"NULL_NAME"
+			];
 		}
 		//throw new CDavArgumentNullException("NAME", GetMessage('DAV_EXP_NAME'));
 
-		if ($addMode && !is_set($arFields, "ACCOUNT_TYPE"))
+		if ($addMode && !isset($arFields['ACCOUNT_TYPE']))
 		{
-			$arError[] =
-				[
-					GetMessage('DAV_EXP_ACCOUNT_TYPE'),
-					"NULL_ACCOUNT_TYPE"
-				];
+			$arError[] = [
+				GetMessage('DAV_EXP_ACCOUNT_TYPE'),
+				"NULL_ACCOUNT_TYPE"
+			];
 		}
 		//throw new CDavArgumentNullException("ACCOUNT_TYPE", GetMessage('DAV_EXP_ACCOUNT_TYPE'));
 
-		// TODO: need to remove dependency from module Calendar
-		if (is_set($arFields, "ACCOUNT_TYPE"))
+		if (isset($arFields['ACCOUNT_TYPE']))
 		{
 			$arFields["ACCOUNT_TYPE"] = mb_strtolower($arFields["ACCOUNT_TYPE"]);
 			if (!in_array($arFields['ACCOUNT_TYPE'], [
@@ -58,66 +56,69 @@ class CAllDavConnection
 			], true)
 		)
 			{
-				$arError[] =
-					[
-						GetMessage('DAV_EXP_ACCOUNT_TYPE_OOR'),
-						"OOR_ACCOUNT_TYPE"
-					];
+				$arError[] = [
+					GetMessage('DAV_EXP_ACCOUNT_TYPE_OOR'),
+					"OOR_ACCOUNT_TYPE"
+				];
 			}
 			//throw new CDavArgumentOutOfRangeException("ACCOUNT_TYPE", GetMessage('DAV_EXP_ACCOUNT_TYPE'), array("caldav", "ical"));
 		}
 
-		if ($addMode && !is_set($arFields, "ENTITY_TYPE"))
+		if ($addMode && !isset($arFields['ENTITY_TYPE']))
 		{
-			$arError[] =
-				[
-					GetMessage('DAV_EXP_ENTITY_TYPE'),
-					"NULL_ENTITY_TYPE"
-				];
+			$arError[] = [
+				GetMessage('DAV_EXP_ENTITY_TYPE'),
+				"NULL_ENTITY_TYPE"
+			];
 		}
 		//throw new CDavArgumentNullException("ENTITY_TYPE", GetMessage('DAV_EXP_ENTITY_TYPE'));
 
-		if (is_set($arFields, "ENTITY_TYPE"))
+		if (isset($arFields['ENTITY_TYPE']))
 		{
 			$arFields["ENTITY_TYPE"] = mb_strtolower($arFields["ENTITY_TYPE"]);
 			if (!in_array($arFields["ENTITY_TYPE"], ["user", "group"]))
 			{
-				$arError[] =
-					[
-						GetMessage('DAV_EXP_ENTITY_TYPE_OOR'),
-						"OOR_ENTITY_TYPE"
-					];
+				$arError[] = [
+					GetMessage('DAV_EXP_ENTITY_TYPE_OOR'),
+					"OOR_ENTITY_TYPE"
+				];
 			}
 			//throw new CDavArgumentOutOfRangeException("ENTITY_TYPE", GetMessage('DAV_EXP_ENTITY_TYPE'), array("user", "group"));
 		}
 
-		if ($addMode && !is_set($arFields, "ENTITY_ID"))
+		if ($addMode && !isset($arFields['ENTITY_ID']))
 		{
-			$arError[] =
-				[
-					GetMessage('DAV_EXP_ENTITY_ID'),
-					"NULL_ENTITY_ID"
-				];
+			$arError[] = [
+				GetMessage('DAV_EXP_ENTITY_ID'),
+				"NULL_ENTITY_ID"
+			];
 		}
 		//throw new CDavArgumentNullException("ENTITY_ID", GetMessage('DAV_EXP_ENTITY_ID'));
 
-		if (is_set($arFields, "ENTITY_ID"))
+		if (isset($arFields['ENTITY_ID']))
 		{
 			$entityId = (int)$arFields["ENTITY_ID"];
-			if (($entityId <= 0) || ($entityId."!" !== $arFields["ENTITY_ID"]."!"))
+			if (!$entityId || ($entityId."!" !== $arFields["ENTITY_ID"]."!"))
 			{
-				$arError[] =
-					[
-						GetMessage('DAV_EXP_ENTITY_ID_TYPE'),
-						"TYPE_ENTITY_ID"
-					];
+				$arError[] = [
+					GetMessage('DAV_EXP_ENTITY_ID_TYPE'),
+					"TYPE_ENTITY_ID"
+				];
 			}
 			//throw new CDavArgumentTypeException("ENTITY_ID", GetMessage('DAV_EXP_ENTITY_ID'), "int");
 		}
 
-		if (is_set($arFields, "SERVER"))
+		if (isset($arFields['SERVER']))
 		{
-			$arServer = parse_url($arFields["SERVER"]);
+			$arServer = [
+				'host' => null,
+				'scheme' => null,
+				'port' => null,
+				'path' => null,
+			];
+			$parsedUrl = parse_url($arFields["SERVER"]);
+			$arServer = array_merge($arServer, $parsedUrl);
+
 			$arFields["SERVER_SCHEME"] = $arServer["scheme"];
 			$arFields["SERVER_HOST"] = $arServer["host"];
 			$arFields["SERVER_PORT"] = $arServer["port"];
@@ -125,46 +126,43 @@ class CAllDavConnection
 			unset($arFields["SERVER"]);
 		}
 
-		if ($addMode && !is_set($arFields, "SERVER_SCHEME"))
+		if ($addMode && !isset($arFields['SERVER_SCHEME']))
 		{
-			$arError[] =
-				[
-					GetMessage('DAV_EXP_SERVER_SCHEME'),
-					"NULL_SERVER_SCHEME"
-				];
+			$arError[] = [
+				GetMessage('DAV_EXP_SERVER_SCHEME'),
+				"NULL_SERVER_SCHEME"
+			];
 		}
 		//throw new CDavArgumentNullException("SERVER_SCHEME", GetMessage('DAV_EXP_SERVER_SCHEME'));
 
-		if (is_set($arFields, "SERVER_SCHEME"))
+		if (isset($arFields['SERVER_SCHEME']))
 		{
 			$arFields["SERVER_SCHEME"] = mb_strtolower($arFields["SERVER_SCHEME"]);
 			if (!in_array($arFields["SERVER_SCHEME"], array("http", "https")))
 			{
-				$arError[] =
-					[
-						GetMessage('DAV_EXP_SERVER_SCHEME_OOR'),
-						"OOR_SERVER_SCHEME"
-					];
+				$arError[] = [
+					GetMessage('DAV_EXP_SERVER_SCHEME_OOR'),
+					"OOR_SERVER_SCHEME"
+				];
 			}
 			//throw new CDavArgumentOutOfRangeException("SERVER_SCHEME", GetMessage('DAV_EXP_SERVER_SCHEME'), array("http", "https"));
 		}
 
 		if (
-			$addMode && !is_set($arFields, "SERVER_HOST")
-			|| is_set($arFields, "SERVER_HOST") && ($arFields["SERVER_HOST"] == '')
+			($addMode && !isset($arFields['SERVER_HOST']))
+			|| (isset($arFields['SERVER_HOST']) && !$arFields["SERVER_HOST"])
 		)
 		{
-			$arError[] =
-				[
-					GetMessage('DAV_EXP_SERVER_HOST'),
-					"NULL_SERVER_HOST"
-				];
+			$arError[] = [
+				GetMessage('DAV_EXP_SERVER_HOST'),
+				"NULL_SERVER_HOST"
+			];
 		}
 		//throw new CDavArgumentNullException("SERVER_HOST", GetMessage('DAV_EXP_SERVER_HOST'));
 
 		if (
-			$addMode && !is_set($arFields, "SERVER_PORT")
-			|| is_set($arFields, "SERVER_PORT") && (intval($arFields["SERVER_PORT"]) <= 0)
+			($addMode && !isset($arFields['SERVER_PORT']))
+			|| (isset($arFields['SERVER_PORT']) && !(int)$arFields["SERVER_PORT"])
 		)
 		{
 			if ($updateMode && !is_set($arFields, "SERVER_SCHEME"))
@@ -172,7 +170,7 @@ class CAllDavConnection
 				$arFields["SERVER_SCHEME"] = $arConnectionOld["SERVER_SCHEME"];
 			}
 
-			if ($arFields["SERVER_SCHEME"] == 'https')
+			if ($arFields["SERVER_SCHEME"] === 'https')
 			{
 				$arFields["SERVER_PORT"] = 443;
 			}
@@ -181,28 +179,27 @@ class CAllDavConnection
 				$arFields["SERVER_PORT"] = 80;
 			}
 		}
-		elseif (is_set($arFields, "SERVER_PORT"))
+		elseif (isset($arFields['SERVER_PORT']))
 		{
 			if ($arFields["SERVER_PORT"]."!" != (int)$arFields["SERVER_PORT"]."!")
 			{
-				$arError[] =
-					[
-						GetMessage('DAV_EXP_SERVER_PORT'),
-						"TYPE_SERVER_PORT"
-					];
+				$arError[] = [
+					GetMessage('DAV_EXP_SERVER_PORT'),
+					"TYPE_SERVER_PORT"
+				];
 			}
 			//throw new CDavArgumentTypeException("SERVER_PORT", GetMessage('DAV_EXP_SERVER_PORT'), "int");
 		}
 
 		if (
-			$addMode && !is_set($arFields, "SERVER_PATH")
-			|| is_set($arFields, "SERVER_PATH") && ($arFields["SERVER_PATH"] == '')
+			($addMode && !isset($arFields['SERVER_PATH']))
+			|| (isset($arFields['SERVER_PATH']) && !$arFields["SERVER_PATH"])
 		)
 		{
 			$arFields["SERVER_PATH"] = "/";
 		}
 
-		if (count($arError) > 0)
+		if (!empty($arError))
 		{
 			return $arError;
 		}
@@ -259,7 +256,7 @@ class CAllDavConnection
 		global $DB, $APPLICATION;
 
 		$id = (int)$id;
-		if ($id <= 0)
+		if (!$id)
 		{
 			throw new CDavArgumentNullException("id");
 		}
@@ -268,8 +265,11 @@ class CAllDavConnection
 		if ($r !== true)
 		{
 			foreach ($r as $v)
+			{
 				$APPLICATION->ThrowException($v[0], $v[1]);
-			return;
+			}
+
+			return false;
 		}
 
 		$strUpdate = $DB->PrepareUpdate("b_dav_connections", $arFields);
@@ -278,7 +278,7 @@ class CAllDavConnection
 			$strSql =
 				"UPDATE b_dav_connections SET ".
 				"	".$strUpdate." ".
-				($bModifyDate ? ", MODIFIED = ".$DB->CurrentTimeFunction()." " : "").
+				($bModifyDate ? ", MODIFIED = ".$DB::CurrentTimeFunction()." " : "").
 				"WHERE ID = ".$id." ";
 
 			$DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
@@ -295,13 +295,21 @@ class CAllDavConnection
 
 	public static function GetById($id)
 	{
-		$id = intval($id);
-		if ($id <= 0)
+		$id = (int)$id;
+		if (!$id)
+		{
 			throw new CDavArgumentNullException("id");
+		}
 
-		$dbResult = CDavConnection::GetList(array(), array("ID" => $id));
-		if ($arResult = $dbResult->Fetch())
-			return $arResult;
+		$dbResult = CDavConnection::GetList(
+			["ID" => "ASC"],
+			["ID" => $id]
+		);
+
+		if ($dbResult)
+		{
+			return $dbResult;
+		}
 
 		return null;
 	}
@@ -318,15 +326,25 @@ class CDavConnectionResult extends CDBResult
 	{
 		$res = parent::Fetch();
 
-		if ($res)
+		if (
+			$res
+			&& isset(
+				$res['SERVER_SCHEME'],
+				$res['SERVER_HOST'],
+				$res['SERVER_PORT'],
+				$res['SERVER_PATH']
+			)
+		)
 		{
-			if (array_key_exists("SERVER_SCHEME", $res) && array_key_exists("SERVER_HOST", $res) && array_key_exists("SERVER_PORT", $res) && array_key_exists("SERVER_PATH", $res))
+			$res["SERVER"] = $res["SERVER_SCHEME"]."://".$res["SERVER_HOST"];
+			if (
+				($res["SERVER_SCHEME"] === "https" && (int)$res["SERVER_PORT"] !== 443)
+				|| ($res["SERVER_SCHEME"] === "http" && (int)$res["SERVER_PORT"] !== 80)
+			)
 			{
-				$res["SERVER"] = $res["SERVER_SCHEME"]."://".$res["SERVER_HOST"];
-				if ($res["SERVER_SCHEME"] == "https" && $res["SERVER_PORT"] != 443 || $res["SERVER_SCHEME"] == "http" && $res["SERVER_PORT"] != 80)
-					$res["SERVER"] .= ":".$res["SERVER_PORT"];
-				$res["SERVER"] .= $res["SERVER_PATH"];
+				$res["SERVER"] .= ":" . $res["SERVER_PORT"];
 			}
+			$res["SERVER"] .= $res["SERVER_PATH"];
 		}
 
 		return $res;

@@ -1,4 +1,4 @@
-import {ajax, Cache, Dom, Event, Loc, Reflection, Runtime, Tag, Text, Type} from 'main.core';
+import {Cache, Dom, Event, Loc, Reflection, Runtime, Tag, Text, Type} from 'main.core';
 import {Editor} from './product.list.editor';
 import {DiscountType, DiscountTypes, FieldScheme, ProductCalculator} from 'catalog.product-calculator';
 import {CurrencyCore} from 'currency.currency-core';
@@ -1174,16 +1174,30 @@ export class Row
 		}
 
 		const storeId = this.getField('STORE_ID');
+		if (!storeId)
+		{
+			return;
+		}
+
 		const available = this.model.getStoreCollection().getStoreAvailableAmount(storeId);
+		const amount = Text.toNumber(available)
+
+		let amountWithMeasure = '';
 
 		if (!this.getModel().isCatalogExisted() || this.isRestrictedStoreInfo() || this.getModel().isService())
 		{
-			availableWrapper.innerHTML = '';
+			//do nothing
 		}
 		else
 		{
-			availableWrapper.innerHTML = Text.toNumber(available) + ' ' + this.#getMeasureName();
+			amountWithMeasure = amount + ' ' + this.#getMeasureName();
 		}
+
+		availableWrapper.innerHTML =
+			amount > 0
+				? amountWithMeasure
+				: `<span class="store-available-popup-link--danger">${amountWithMeasure}</span>`
+		;
 	}
 
 	updatePropertyFields()

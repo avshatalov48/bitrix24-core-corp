@@ -2,8 +2,6 @@
 
 namespace Bitrix\Crm\Timeline;
 
-use Bitrix\Main;
-
 /**
  * Class FinalSummaryEntry
  * @package Bitrix\Crm\Timeline

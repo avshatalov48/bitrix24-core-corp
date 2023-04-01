@@ -31,26 +31,102 @@ if (!CCrmDeal::CheckReadPermission(0, $CrmPerms))
 	return;
 }
 
-$arParams['PATH_TO_DEAL_LIST'] = CrmCheckPath('PATH_TO_DEAL_LIST', $arParams['PATH_TO_DEAL_LIST'], $APPLICATION->GetCurPage());
-$arParams['PATH_TO_DEAL_SHOW'] = CrmCheckPath('PATH_TO_DEAL_SHOW', $arParams['PATH_TO_DEAL_SHOW'], $APPLICATION->GetCurPage().'?deal_id=#deal_id#&show');
-$arParams['PATH_TO_DEAL_EDIT'] = CrmCheckPath('PATH_TO_DEAL_EDIT', $arParams['PATH_TO_DEAL_EDIT'], $APPLICATION->GetCurPage().'?deal_id=#deal_id#&edit');
-$arParams['PATH_TO_DEAL_DETAILS'] = CrmCheckPath('PATH_TO_DEAL_DETAILS', $arParams['PATH_TO_DEAL_DETAILS'], $APPLICATION->GetCurPage().'?deal_id=#deal_id#&details');
-$arParams['PATH_TO_DEAL_IMPORT'] = CrmCheckPath('PATH_TO_DEAL_IMPORT', $arParams['PATH_TO_DEAL_IMPORT'], $APPLICATION->GetCurPage().'?import');
-$arParams['PATH_TO_DEAL_RECUR'] = CrmCheckPath('PATH_TO_DEAL_RECUR', $arParams['PATH_TO_DEAL_RECUR'], $APPLICATION->GetCurPage()."?recur");
-$arParams['PATH_TO_DEAL_RECUR_SHOW'] = CrmCheckPath('PATH_TO_DEAL_RECUR_SHOW', $arParams['PATH_TO_DEAL_RECUR_SHOW'], $arParams['PATH_TO_DEAL_RECUR'].'?deal_id=#deal_id#&show');
-$arParams['PATH_TO_DEAL_RECUR_EDIT'] = CrmCheckPath('PATH_TO_DEAL_RECUR_EDIT', $arParams['PATH_TO_DEAL_RECUR_EDIT'], $arParams['PATH_TO_DEAL_RECUR'].'?deal_id=#deal_id#&edit');
-$arParams['PATH_TO_DEAL_RECUR_EXPOSE'] = CrmCheckPath('PATH_TO_DEAL_RECUR_EXPOSE', $arParams['PATH_TO_DEAL_RECUR_EXPOSE'], $APPLICATION->GetCurPage().'?deal_id=#deal_id#&edit&recur&expose=Y');
-$arResult['PATH_TO_DEAL_CATEGORY_LIST'] = CrmCheckPath('PATH_TO_DEAL_CATEGORY_LIST', $arParams['PATH_TO_DEAL_CATEGORY_LIST'], COption::GetOptionString('crm', 'path_to_deal_category_list'));
-$arResult['PATH_TO_DEAL_CATEGORY_EDIT'] = CrmCheckPath('PATH_TO_DEAL_CATEGORY_EDIT', $arParams['PATH_TO_DEAL_CATEGORY_EDIT'], COption::GetOptionString('crm', 'path_to_deal_category_edit'));
-$arParams['PATH_TO_MIGRATION'] = SITE_DIR."marketplace/category/migration/";
-$arParams['PATH_TO_DEAL_WIDGET'] = CrmCheckPath('PATH_TO_DEAL_WIDGET', $arParams['PATH_TO_DEAL_WIDGET'], $APPLICATION->GetCurPage()."?widget");
-$arParams['PATH_TO_DEAL_KANBAN'] = CrmCheckPath('PATH_TO_DEAL_KANBAN', $arParams['PATH_TO_DEAL_KANBAN'], $APPLICATION->GetCurPage()."?kanban");
-$arParams['PATH_TO_DEAL_CALENDAR'] = CrmCheckPath('PATH_TO_DEAL_CALENDAR', $arParams['PATH_TO_DEAL_CALENDAR'], $APPLICATION->GetCurPage()."?calendar");
-$arParams['PATH_TO_DEAL_CATEGORY'] = CrmCheckPath('PATH_TO_DEAL_CATEGORY', $arParams['PATH_TO_DEAL_CATEGORY'], $APPLICATION->GetCurPage()."?category=#category_id#");
-$arParams['PATH_TO_DEAL_RECUR_CATEGORY'] = CrmCheckPath('PATH_TO_DEAL_RECUR_CATEGORY', $arParams['PATH_TO_DEAL_RECUR_CATEGORY'], $APPLICATION->GetCurPage().'?category_id=#category_id#');
-$arParams['PATH_TO_DEAL_WIDGETCATEGORY'] = CrmCheckPath('PATH_TO_DEAL_WIDGETCATEGORY', $arParams['PATH_TO_DEAL_WIDGETCATEGORY'], $APPLICATION->GetCurPage().'?category_id=#category_id#');
-$arParams['PATH_TO_DEAL_KANBANCATEGORY'] = CrmCheckPath('PATH_TO_DEAL_KANBANCATEGORY', $arParams['PATH_TO_DEAL_KANBANCATEGORY'], $APPLICATION->GetCurPage().'?category_id=#category_id#');
-$arParams['PATH_TO_DEAL_CALENDARCATEGORY'] = CrmCheckPath('PATH_TO_DEAL_CALENDARCATEGORY', $arParams['PATH_TO_DEAL_CALENDARCATEGORY'], $APPLICATION->GetCurPage().'?category_id=#category_id#');
+$arParams['PATH_TO_DEAL_LIST'] = CrmCheckPath(
+	'PATH_TO_DEAL_LIST',
+	$arParams['PATH_TO_DEAL_LIST'] ?? '',
+	$APPLICATION->GetCurPage()
+);
+$arParams['PATH_TO_DEAL_SHOW'] = CrmCheckPath(
+	'PATH_TO_DEAL_SHOW',
+	$arParams['PATH_TO_DEAL_SHOW'] ?? '',
+	$APPLICATION->GetCurPage() . '?deal_id=#deal_id#&show'
+);
+$arParams['PATH_TO_DEAL_EDIT'] = CrmCheckPath(
+	'PATH_TO_DEAL_EDIT',
+	$arParams['PATH_TO_DEAL_EDIT'] ?? '',
+	$APPLICATION->GetCurPage() . '?deal_id=#deal_id#&edit'
+);
+$arParams['PATH_TO_DEAL_DETAILS'] = CrmCheckPath(
+	'PATH_TO_DEAL_DETAILS',
+	$arParams['PATH_TO_DEAL_DETAILS'] ?? '',
+	$APPLICATION->GetCurPage() . '?deal_id=#deal_id#&details'
+);
+$arParams['PATH_TO_DEAL_IMPORT'] = CrmCheckPath(
+	'PATH_TO_DEAL_IMPORT',
+	$arParams['PATH_TO_DEAL_IMPORT'] ?? '',
+	$APPLICATION->GetCurPage() . '?import'
+);
+$arParams['PATH_TO_DEAL_RECUR'] = CrmCheckPath(
+	'PATH_TO_DEAL_RECUR',
+	$arParams['PATH_TO_DEAL_RECUR'] ?? '',
+	$APPLICATION->GetCurPage() . "?recur"
+);
+$arParams['PATH_TO_DEAL_RECUR_SHOW'] = CrmCheckPath(
+	'PATH_TO_DEAL_RECUR_SHOW',
+	$arParams['PATH_TO_DEAL_RECUR_SHOW'] ?? '',
+	$arParams['PATH_TO_DEAL_RECUR'] . '?deal_id=#deal_id#&show'
+);
+$arParams['PATH_TO_DEAL_RECUR_EDIT'] = CrmCheckPath(
+	'PATH_TO_DEAL_RECUR_EDIT',
+	$arParams['PATH_TO_DEAL_RECUR_EDIT'] ?? '',
+	$arParams['PATH_TO_DEAL_RECUR'] . '?deal_id=#deal_id#&edit'
+);
+$arParams['PATH_TO_DEAL_RECUR_EXPOSE'] = CrmCheckPath(
+	'PATH_TO_DEAL_RECUR_EXPOSE',
+	$arParams['PATH_TO_DEAL_RECUR_EXPOSE'] ?? '',
+	$APPLICATION->GetCurPage() . '?deal_id=#deal_id#&edit&recur&expose=Y'
+);
+$arResult['PATH_TO_DEAL_CATEGORY_LIST'] = CrmCheckPath(
+	'PATH_TO_DEAL_CATEGORY_LIST',
+	$arParams['PATH_TO_DEAL_CATEGORY_LIST'] ?? '',
+	COption::GetOptionString('crm', 'path_to_deal_category_list')
+);
+$arResult['PATH_TO_DEAL_CATEGORY_EDIT'] = CrmCheckPath(
+	'PATH_TO_DEAL_CATEGORY_EDIT',
+	$arParams['PATH_TO_DEAL_CATEGORY_EDIT'] ?? '',
+	COption::GetOptionString('crm', 'path_to_deal_category_edit')
+);
+$arParams['PATH_TO_MIGRATION'] = SITE_DIR . "marketplace/category/migration/";
+$arParams['PATH_TO_DEAL_WIDGET'] = CrmCheckPath(
+	'PATH_TO_DEAL_WIDGET',
+	$arParams['PATH_TO_DEAL_WIDGET'] ?? '',
+	$APPLICATION->GetCurPage() . "?widget"
+);
+$arParams['PATH_TO_DEAL_KANBAN'] = CrmCheckPath(
+	'PATH_TO_DEAL_KANBAN',
+	$arParams['PATH_TO_DEAL_KANBAN'] ?? '',
+	$APPLICATION->GetCurPage() . "?kanban"
+);
+$arParams['PATH_TO_DEAL_CALENDAR'] = CrmCheckPath(
+	'PATH_TO_DEAL_CALENDAR',
+	$arParams['PATH_TO_DEAL_CALENDAR'] ?? '',
+	$APPLICATION->GetCurPage() . "?calendar"
+);
+$arParams['PATH_TO_DEAL_CATEGORY'] = CrmCheckPath(
+	'PATH_TO_DEAL_CATEGORY',
+	$arParams['PATH_TO_DEAL_CATEGORY'] ?? '',
+	$APPLICATION->GetCurPage() . "?category=#category_id#"
+);
+$arParams['PATH_TO_DEAL_RECUR_CATEGORY'] = CrmCheckPath(
+	'PATH_TO_DEAL_RECUR_CATEGORY',
+	$arParams['PATH_TO_DEAL_RECUR_CATEGORY'] ?? '',
+	$APPLICATION->GetCurPage() . '?category_id=#category_id#'
+);
+$arParams['PATH_TO_DEAL_WIDGETCATEGORY'] = CrmCheckPath(
+	'PATH_TO_DEAL_WIDGETCATEGORY',
+	$arParams['PATH_TO_DEAL_WIDGETCATEGORY'] ?? '',
+	$APPLICATION->GetCurPage() . '?category_id=#category_id#'
+);
+$arParams['PATH_TO_DEAL_KANBANCATEGORY'] = CrmCheckPath(
+	'PATH_TO_DEAL_KANBANCATEGORY',
+	$arParams['PATH_TO_DEAL_KANBANCATEGORY'] ?? '',
+	$APPLICATION->GetCurPage() . '?category_id=#category_id#'
+);
+$arParams['PATH_TO_DEAL_CALENDARCATEGORY'] = CrmCheckPath(
+	'PATH_TO_DEAL_CALENDARCATEGORY',
+	$arParams['PATH_TO_DEAL_CALENDARCATEGORY'] ?? '',
+	$APPLICATION->GetCurPage() . '?category_id=#category_id#'
+);
 
 $arParams['ELEMENT_ID'] = isset($arParams['ELEMENT_ID']) ? (int)$arParams['ELEMENT_ID'] : 0;
 
@@ -80,7 +156,7 @@ $arResult['TOOLBAR_ID'] = $toolbarID;
 
 $arResult['BUTTONS'] = array();
 
-$isInSlider = ($arParams['IN_SLIDER'] === 'Y');
+$isInSlider = isset($arParams['IN_SLIDER']) && $arParams['IN_SLIDER'] === 'Y';
 
 $currentCategoryID = isset($arResult['CATEGORY_ID']) ? $arResult['CATEGORY_ID'] : -1;
 
@@ -89,7 +165,7 @@ if ($arParams['TYPE'] == 'list')
 {
 	$bRead   = CCrmDeal::CheckReadPermission(0, $CrmPerms, $currentCategoryID);
 	$bExport = CCrmDeal::CheckExportPermission($CrmPerms, $currentCategoryID);
-	$bImport = CCrmDeal::CheckImportPermission($CrmPerms, $currentCategoryID) && $arParams['IS_RECURRING'] !== 'Y';
+	$bImport = CCrmDeal::CheckImportPermission($CrmPerms, $currentCategoryID) && ($arParams['IS_RECURRING'] ?? null) !== 'Y';
 	$bAdd    = CCrmDeal::CheckCreatePermission($CrmPerms, $currentCategoryID);
 	$bWrite  = CCrmDeal::CheckUpdatePermission(0, $CrmPerms, $currentCategoryID);
 
@@ -654,7 +730,7 @@ if($arParams['TYPE'] === 'list')
 		&& !$isInSlider
 	)
 	{
-		if ($arParams['IS_RECURRING'] === 'Y')
+		if (isset($arParams['IS_RECURRING']) && $arParams['IS_RECURRING'] === 'Y')
 		{
 			$text = GetMessage('DEAL_LIST');
 			$linkList = $arParams['PATH_TO_DEAL_LIST'];
@@ -709,7 +785,7 @@ if($arParams['TYPE'] === 'list')
 		}
 	}
 
-	if(is_array($arParams['ADDITIONAL_SETTINGS_MENU_ITEMS']) && !$isInSlider)
+	if(isset($arParams['ADDITIONAL_SETTINGS_MENU_ITEMS']) && is_array($arParams['ADDITIONAL_SETTINGS_MENU_ITEMS']) && !$isInSlider)
 	{
 		$arResult['BUTTONS'] = array_merge($arResult['BUTTONS'], $arParams['ADDITIONAL_SETTINGS_MENU_ITEMS']);
 	}

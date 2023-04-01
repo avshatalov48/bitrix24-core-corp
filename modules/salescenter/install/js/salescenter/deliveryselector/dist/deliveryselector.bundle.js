@@ -634,7 +634,7 @@ this.BX = this.BX || {};
 	      required: true
 	    },
 	    availableServices: {
-	      type: Object,
+	      type: [Object, Array],
 	      required: true
 	    },
 	    excludedServiceIds: {

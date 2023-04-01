@@ -88,7 +88,17 @@ class Item extends \CCrmDocument implements \IBPWorkflowDocument
 			$item = isset($factory) ? $factory->getItem($documentInfo['ID']) : null;
 		}
 
-		if (isset($factory, $item))
+		if (!isset($factory, $item))
+		{
+			$errorMessage = Loc::getMessage('CRM_ENTITY_EXISTENCE_ERROR', ['#DOCUMENT_ID#' => $documentId]);
+			$result->addError(new Error($errorMessage));
+		}
+		elseif (!$factory->isLinkWithProductsEnabled())
+		{
+			$result->addError(new Error(Loc::getMessage('CRM_BP_DOCUMENT_ITEM_LINK_WIH_PRODUCTS_DISABLED_ERROR')));
+		}
+
+		if ($result->isSuccess())
 		{
 			foreach ($productRows as $row)
 			{
@@ -122,6 +132,16 @@ class Item extends \CCrmDocument implements \IBPWorkflowDocument
 		{
 			$factory = Container::getInstance()->getFactory($documentInfo['TYPE_ID']);
 			$item = isset($factory) ? $factory->getItem($documentInfo['ID']) : null;
+		}
+
+		if (!isset($factory, $item))
+		{
+			$errorMessage = Loc::getMessage('CRM_ENTITY_EXISTENCE_ERROR', ['#DOCUMENT_ID#' => $documentId]);
+			$result->addError(new Error($errorMessage));
+		}
+		elseif (!$factory->isLinkWithProductsEnabled())
+		{
+			$result->addError(new Error(Loc::getMessage('CRM_BP_DOCUMENT_ITEM_LINK_WIH_PRODUCTS_DISABLED_ERROR')));
 		}
 
 		if (isset($factory, $item))
@@ -322,32 +342,6 @@ class Item extends \CCrmDocument implements \IBPWorkflowDocument
 			default:
 				return $fieldInfo['bpValue'];
 		}
-	}
-
-	public static function GetUsersFromUserGroup($group, $documentId)
-	{
-		$group = mb_strtolower($group);
-		if ($group !== 'author')
-		{
-			return parent::GetUsersFromUserGroup($group, $documentId);
-		}
-
-		$users = [];
-		$documentInfo = static::GetDocumentInfo($documentId);
-
-		if ($documentInfo)
-		{
-			$factory = Container::getInstance()->getFactory($documentInfo['TYPE_ID']);
-			$item = isset($factory) ? $factory->getItem($documentInfo['ID']) : null;
-
-			$authorId = isset($item) ? $item->getAssignedById() : null;
-			if (isset($authorId))
-			{
-				$users[] = $authorId;
-			}
-		}
-
-		return $users;
 	}
 
 	protected static function isUserField(string $fieldId): bool

@@ -46,12 +46,21 @@ class CrmToolbarComponent extends Bitrix\Crm\Component\Base
 		$this->arResult = $this->arParams;
 		$views = $this->arResult['views'] ?? [];
 		$this->arResult['views'] = [];
+
+		$afterNavigationPos = defined('\Bitrix\UI\Toolbar\ButtonLocation::AFTER_NAVIGATION')
+			? ButtonLocation::AFTER_NAVIGATION
+			: 'after_navigation';
+
 		foreach ($views as $view)
 		{
 			$position = $view['position'] ?? null;
 			if ($position === ButtonLocation::RIGHT)
 			{
 				$this->arResult['views']['right'][] = $view;
+			}
+			elseif ($position === $afterNavigationPos)
+			{
+				$this->arResult['views']['counter_panel_html'] = $view['html'];
 			}
 			else
 			{
@@ -103,7 +112,7 @@ class CrmToolbarComponent extends Bitrix\Crm\Component\Base
 					'buttonUniqueId' => $button->getUniqId(),
 					'objectId' => 'crm_toolbar_button_' . $info['idSuffix'],
 					'messages' => $info['messages'] ?? [],
-					'data' => $multiFields[$type],
+					'data' => $multiFields[$type] ?? null,
 					'ownerInfo' => $this->arResult['communications']['ownerInfo'] ?? [],
 					'class' => $info['class'],
 				];

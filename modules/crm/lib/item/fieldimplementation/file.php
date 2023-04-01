@@ -208,4 +208,9 @@ final class File implements FieldImplementation
 	{
 		$this->entityObject = $entityObject;
 	}
+
+	public function getFieldNamesToFill(): array
+	{
+		return $this->getHandledFieldNames();
+	}
 }

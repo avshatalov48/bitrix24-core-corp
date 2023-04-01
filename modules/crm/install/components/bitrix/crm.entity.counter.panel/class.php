@@ -225,11 +225,7 @@ class CCrmEntityCounterPanelComponent extends CBitrixComponent
 		$permissionEntityType = $uPermissions::getPermissionEntityType($this->entityTypeID, $this->categoryId);
 		$hasAllPermissions = $uPermissions->isAdmin() || $uPermissions->getCrmPermissions()->GetPermType($permissionEntityType) >= $uPermissions::PERMISSION_ALL;
 
-		$isAllowedEntity = in_array(
-			$this->entityTypeID,
-			[CCrmOwnerType::Lead, CCrmOwnerType::Deal, CCrmOwnerType::Contact, CCrmOwnerType::Company],
-			true
-		);
+		$isAllowedEntity = Container::getInstance()->getFactory($this->entityTypeID)->isCountersEnabled();
 
 		return $isAllowedEntity && $hasAllPermissions;
 	}

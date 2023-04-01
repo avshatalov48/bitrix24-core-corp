@@ -52,26 +52,9 @@ class CBPCrmGetProductRowActivity extends CBPActivity
 		$rowId = (int)$rowId;
 		$this->writeDebugInfo($this->getDebugInfo(['RowId' => $rowId]));
 
-		$row = Crm\ProductRowTable::getList([
-			'select' => [
-				'ID',
-				'PRODUCT_ID',
-				'CP_PRODUCT_NAME',
-				'PRICE_ACCOUNT',
-				'QUANTITY',
-				'MEASURE_NAME',
-				'DISCOUNT_RATE',
-				'DISCOUNT_SUM',
-				'TAX_RATE',
-				'TAX_INCLUDED',
-				'SUM_ACCOUNT',
-			],
-			'filter' => [
-				'=ID' => $rowId,
-			]
-		])->fetch();
+		$product = Crm\Automation\Connectors\Product::fetchFromTableByFilter(['ID' => $rowId]);
 
-		if (!$row)
+		if (!$product)
 		{
 			$this->WriteToTrackingService(
 				GetMessage('CRM_BP_GPR_ROW_NOT_FOUND', ['#ID#' => $rowId]),
@@ -82,19 +65,24 @@ class CBPCrmGetProductRowActivity extends CBPActivity
 			return CBPActivityExecutionStatus::Closed;
 		}
 
-		$currencyId = \CCrmCurrency::GetAccountCurrencyID();
+		$compatibilityMap = [
+			'RowProductId' => 'PRODUCT_ID',
+			'RowProductName' => 'PRODUCT_NAME',
+			'RowPriceAccount' => 'PRICE_ACCOUNT',
+			'RowQuantity' => 'QUANTITY',
+			'RowMeasureName' => 'MEASURE_NAME',
+			'RowDiscountRate' => 'DISCOUNT_RATE',
+			'RowDiscountSum' => 'DISCOUNT_SUM',
+			'RowTaxRate' => 'TAX_RATE',
+			'RowTaxIncluded' => 'TAX_INCLUDED',
+			'RowSumAccount' => 'SUM_ACCOUNT',
+			'RowSumAccountMoney' => 'PRINTABLE_SUM_ACCOUNT',
+		];
+		foreach (array_keys($this->getReturnProperties()) as $propertyId)
+		{
+			$this->{$propertyId} = $product->get($compatibilityMap[$propertyId] ?? $propertyId);
+		}
 
-		$this->RowProductId = $row['PRODUCT_ID'];
-		$this->RowProductName = $row['CP_PRODUCT_NAME'];
-		$this->RowPriceAccount = $row['PRICE_ACCOUNT'];
-		$this->RowQuantity = $row['QUANTITY'];
-		$this->RowMeasureName = $row['MEASURE_NAME'];
-		$this->RowDiscountRate = $row['DISCOUNT_RATE'];
-		$this->RowDiscountSum = $row['DISCOUNT_SUM'];
-		$this->RowTaxRate = $row['TAX_RATE'];
-		$this->RowTaxIncluded = $row['TAX_INCLUDED'];
-		$this->RowSumAccount = $row['SUM_ACCOUNT'];
-		$this->RowSumAccountMoney = \CCrmCurrency::MoneyToString($row['SUM_ACCOUNT'], $currencyId);
 		$this->logReturnProperties();
 
 		return CBPActivityExecutionStatus::Closed;
@@ -182,40 +170,32 @@ class CBPCrmGetProductRowActivity extends CBPActivity
 
 	private function getReturnProperties(): array
 	{
-		return [
-			'RowProductId' => [
-				'Type' => 'int',
-			],
-			'RowProductName' => [
-				'Type' => 'string',
-			],
-			'RowPriceAccount' => [
-				'Type' => 'double',
-			],
-			'RowQuantity' => [
-				'Type' => 'double',
-			],
-			'RowMeasureName' => [
-				'Type' => 'string',
-			],
-			'RowDiscountRate' => [
-				'Type' => 'double',
-			],
-			'RowDiscountSum' => [
-				'Type' => 'double',
-			],
-			'RowTaxRate' => [
-				'Type' => 'double',
-			],
-			'RowTaxIncluded' => [
-				'Type' => 'bool',
-			],
-			'RowSumAccount' => [
-				'Type' => 'double',
-			],
-			'RowSumAccountMoney' => [
-				'Type' => 'int',
-			],
+		$compatibilityMap = [
+			'PRODUCT_ID' => 'RowProductId',
+			'PRODUCT_NAME' => 'RowProductName',
+			'PRICE_ACCOUNT' => 'RowPriceAccount',
+			'QUANTITY' => 'RowQuantity',
+			'MEASURE_NAME' => 'RowMeasureName',
+			'DISCOUNT_RATE' => 'RowDiscountRate',
+			'DISCOUNT_SUM' => 'RowDiscountSum',
+			'TAX_RATE' => 'RowTaxRate',
+			'TAX_INCLUDED' => 'RowTaxIncluded',
+			'SUM_ACCOUNT' => 'RowSumAccount',
+			'PRINTABLE_SUM_ACCOUNT' => 'RowSumAccountMoney',
 		];
+
+		$returnPropertiesMap = [];
+		foreach (Crm\Automation\Connectors\Product::getFieldsMap() as $fieldId => $field)
+		{
+			$returnPropertiesMap[$compatibilityMap[$fieldId] ?? $fieldId] = $field;
+		}
+
+		CBPRuntime::getRuntime()->getActivityDescription('CBPCrmGetProductRowActivity');
+		$returnPropertiesMap['RowSumAccountMoney'] = [
+			'Name' => \Bitrix\Main\Localization\Loc::getMessage('CRM_BP_GPR_RETURN_ROW_SUM_ACCOUNT_MONEY'),
+			'Type' => \Bitrix\Bizproc\FieldType::STRING,
+		];
+
+		return $returnPropertiesMap;
 	}
 }

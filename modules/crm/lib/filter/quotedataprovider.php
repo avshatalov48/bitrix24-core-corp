@@ -14,8 +14,10 @@ use Bitrix\Main\Loader;
 
 Loc::loadMessages(__FILE__);
 
-class QuoteDataProvider extends EntityDataProvider
+class QuoteDataProvider extends EntityDataProvider implements FactoryOptionable
 {
+	use ForceUseFactoryTrait;
+
 	/** @var QuoteSettings|null */
 	protected $settings = null;
 
@@ -318,6 +320,14 @@ class QuoteDataProvider extends EntityDataProvider
 					'partial' => true
 				]
 			),
+			'ACTIVITY_COUNTER' => $this->createField(
+				'ACTIVITY_COUNTER',
+				[
+					'type' => 'list',
+					'partial' => true,
+					'name' => Loc::getMessage('CRM_QUOTE_FILTER_ACTIVITY_COUNTER')
+				]
+			),
 		];
 
 		Crm\Tracking\UI\Filter::appendFields($result, $this);
@@ -382,6 +392,8 @@ class QuoteDataProvider extends EntityDataProvider
 				[
 					'fieldName' => $fieldID,
 					'referenceClass' => $referenceClass,
+					'isEnableAllUsers' => $fieldID === 'ASSIGNED_BY_ID',
+					'isEnableOtherUsers' => $fieldID === 'ASSIGNED_BY_ID',
 				]
 			);
 		}
@@ -556,6 +568,13 @@ class QuoteDataProvider extends EntityDataProvider
 			return Container::getInstance()->getParentFieldManager()->prepareParentFieldDataForFilterProvider(
 				\CCrmOwnerType::Quote,
 				$fieldID
+			);
+		}
+		elseif($fieldID === 'ACTIVITY_COUNTER')
+		{
+			return EntityCounterType::getListFilterInfo(
+				array('params' => array('multiple' => 'Y')),
+				array('ENTITY_TYPE_ID' => \CCrmOwnerType::Quote)
 			);
 		}
 		return null;

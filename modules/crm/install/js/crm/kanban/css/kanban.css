@@ -11,9 +11,9 @@
 	background: #fff;
 	position: relative;
 	min-height: 120px;
-	border-radius: var(--ui-border-radius-md, 2px);
+	border-radius: var(--ui-border-radius-md);
 	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
-	font-weight: var(--ui-font-weight-regular, 400);
+	font-weight: var(--ui-font-weight-regular);
 	-moz-user-select: -moz-none;
 	-moz-user-select: none;
 	user-select: none;
@@ -89,7 +89,7 @@
 	top: -5px;
 	height: 5px;
 	opacity: 0;
-	border-radius: var(--ui-border-radius-md, 10px);
+	border-radius: var(--ui-border-radius-md);
 	box-shadow: 0 0 10px rgba(0,0,0,.5);
 	transition: .2s;
 	-ms-transform: translateY(-5px);
@@ -113,7 +113,7 @@
 	max-width: 100%;
 	margin: 0 0 4px 0;
 	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
-	font-weight: var(--ui-font-weight-semi-bold, 600);
+	font-weight: var(--ui-font-weight-semi-bold);
 	color: #333;
 	font-size: 13px;
 	line-height: 15px;
@@ -125,7 +125,7 @@
 	font-size: 11px;
 	color: #828B95;
 	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
-	font-weight: var(--ui-font-weight-regular, 400);
+	font-weight: var(--ui-font-weight-regular);
 }
 
 .crm-kanban-item-title:hover {
@@ -208,7 +208,7 @@
 	border-radius: 30px;
 	background: #f54819;
 	font: 11px/16px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
-	font-weight: var(--ui-font-weight-semi-bold, 600);
+	font-weight: var(--ui-font-weight-semi-bold);
 	color: #fff;
 	position: relative;
 	z-index: 10;
@@ -529,7 +529,7 @@
 	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #80868e;
 	font-size: 14px;
-	border-radius: var(--ui-border-radius-3xs, 2px);
+	border-radius: var(--ui-border-radius-3xs);
 	height: 36px;
 	padding: 0 17px;
 	-webkit-box-sizing: border-box;
@@ -547,7 +547,7 @@
 	line-height: 20px;
 	background: #fff;
 	border: 1px solid #c6cdd3;
-	border-radius: var(--ui-border-radius-3xs, 2px);
+	border-radius: var(--ui-border-radius-3xs);
 	min-height: 86px;
 	padding: 12px 17px;
 	-webkit-box-sizing: border-box;
@@ -564,7 +564,7 @@
 	overflow: hidden;
 	height: 50px;
 	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
-	font-weight: var(--ui-font-weight-light, 300);
+	font-weight: var(--ui-font-weight-light);
 	line-height: 50px;
 	color: #525c68;
 	text-align: center;
@@ -575,14 +575,15 @@
 	overflow: hidden;
 	height: 31px;
 	line-height: 31px;
-	margin: 5px 6px 0 0;
+	margin: 5px 7px 0 9px;
 	position: relative;
 	z-index: 999999;
 	cursor: pointer;
 	background: transparent;
+	border-radius: var(--ui-border-radius-3xl);
 	color: #6d7984 !important;
 	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
-	font-weight: var(--ui-font-weight-semi-bold, 600);
+	font-weight: var(--ui-font-weight-semi-bold);
 	font-size: 12px;
 	transition: .3s;
 }
@@ -592,7 +593,7 @@
 }
 
 .bitrix24-light-theme .crm-kanban-column-add-item-button {
-	margin: 5px 6px 0 0;
+	/*margin: 5px 7px 0 9px;*/
 	color: #fff !important;
 }
 
@@ -604,19 +605,46 @@
 .main-kanban-column:first-child .crm-kanban-column-add-item-button,
 .main-kanban-column:hover .crm-kanban-column-add-item-button {
 	background: rgba(255,255,255,.5);
-	border-radius: var(--ui-border-radius-2xs, 2px);
+	/*border-radius: var(--ui-border-radius-2xs, 2px);*/
 	color: #6d7984;
+}
+
+.bitrix24-light-theme .main-kanban-column:first-child .crm-kanban-column-add-item-button,
+.bitrix24-light-theme .main-kanban-column:hover .crm-kanban-column-add-item-button {
+	background: rgba(255,255,255,.15);
+}
+
+.bitrix24-default-theme .main-kanban-column:first-child .crm-kanban-column-add-item-button,
+.bitrix24-default-theme .main-kanban-column:hover .crm-kanban-column-add-item-button,
+.bitrix24-dark-theme .main-kanban-column:first-child .crm-kanban-column-add-item-button,
+.bitrix24-dark-theme .main-kanban-column:hover .crm-kanban-column-add-item-button {
+	background: rgba(82,92,105,.08);
 }
 
 .crm-kanban-column-add-item-button-event {
 	transition: .1s !important;
-	background: #2fc6f6 !important;
-	border-color: #2fc6f6 !important;
-	color: #fff !important;
+	background: rgba(255,255,255,.5);
+	/*background: #2fc6f6 !important;*/
+	/*border-color: #2fc6f6 !important;*/
+	/*color: #fff !important;*/
 }
 
-.bitrix24-light-theme  .main-kanban-column:hover .crm-kanban-column-add-item-button {
+.bitrix24-light-theme .main-kanban-column:hover .crm-kanban-column-add-item-button {
+	background: rgba(255,255,255,.15);
+}
+
+.bitrix24-light-theme .main-kanban-column .crm-kanban-column-add-item-button:hover {
 	background: rgba(255,255,255,.5);
+}
+
+.bitrix24-default-theme .main-kanban-column:hover .crm-kanban-column-add-item-button,
+.bitrix24-dark-theme .main-kanban-column:hover .crm-kanban-column-add-item-button {
+	background: rgba(82,92,105,.08);
+}
+
+.bitrix24-default-theme .main-kanban-column .crm-kanban-column-add-item-button:hover,
+.bitrix24-dark-theme .main-kanban-column .crm-kanban-column-add-item-button:hover {
+	background: rgba(82,92,105,.14);
 }
 
 .main-kanban-column:last-child .crm-kanban-column-add-item-button {
@@ -632,16 +660,16 @@
 	content: '+';
 	display: inline-block;
 	vertical-align: top;
-	margin-right: 7px;
+	margin: -1px 7px 0 0;
 	font-size: 20px;
 	font-weight: var(--ui-font-weight-bold);
 }
 
 .main-kanban-column:hover .crm-kanban-column-add-item-button:hover {
 	transition: .1s;
-	background: #2fc6f6;
-	border-color: #2fc6f6;
-	color: #fff !important;
+	/*background: #2fc6f6;*/
+	/*border-color: #2fc6f6;*/
+	/*color: #fff !important;*/
 }
 
 .crm-kanban-total-price-total {
@@ -742,11 +770,11 @@
 	margin: 0 0 7px 0;
 	background: rgba(255,255,255,.9);
 	border: 1px dashed rgba(195,200,205,.9);
-	border-radius: var(--ui-border-radius-md, 2px);
+	border-radius: var(--ui-border-radius-md);
 	color: rgba(109,121,132,.7);
 	font-size: 13px;
 	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
-	font-weight: var(--ui-font-weight-semi-bold, 600);
+	font-weight: var(--ui-font-weight-semi-bold);
 	text-align: center;
 }
 
@@ -991,7 +1019,7 @@ a.crm-kanban-sidepanel:hover {
 	height: 18px;
 	background: #fff;
 	border: 1px solid rgba(130,139,149,.67);
-	border-radius: var(--ui-border-radius-3xs, 2px);
+	border-radius: var(--ui-border-radius-3xs);
 	top: 6px;
 	right: 6px;
 	pointer-events: none;
@@ -1085,7 +1113,7 @@ a.crm-kanban-sidepanel:hover {
 	font-size: 14px;
 	color: #535c69;
 	cursor: pointer;
-	border-radius: var(--ui-border-radius-2xs, 3px);
+	border-radius: var(--ui-border-radius-2xs);
 	transition: .1s;
 }
 
@@ -1181,12 +1209,12 @@ a.crm-kanban-sidepanel:hover {
 
 .crm-kanban-quick-form-buttons {
 	margin: 0;
-	margin-top: var(--ui-space-stack-md-neg, -16px);
+	margin-top: var(--ui-space-stack-md-neg);
 	padding: 15px;
 	background: #fff;
 	position: relative;
-	border-bottom-left-radius: var(--ui-border-radius-md, 2px);
-	border-bottom-right-radius: var(--ui-border-radius-md, 2px);
+	border-bottom-left-radius: var(--ui-border-radius-md);
+	border-bottom-right-radius: var(--ui-border-radius-md);
 }
 
 .crm-kanban-quick-form-container {
@@ -1282,7 +1310,7 @@ a.crm-kanban-sidepanel:hover {
 
 .crm-kanban-item-fields-item-value {
 	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
-	font-weight: var(--ui-font-weight-semi-bold, 600);
+	font-weight: var(--ui-font-weight-semi-bold);
 	color: #525c69;
 	font-size: 12px;
 	white-space: normal;
@@ -1351,7 +1379,7 @@ a.crm-kanban-sidepanel:hover {
 	margin-right: 5px;
 	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2040%2040%22%3E%0A%20%20%20%20%3Ccircle%20cx%3D%2220%22%20cy%3D%2220%22%20r%3D%2220%22%20fill%3D%22%23525C68%22/%3E%0A%20%20%20%20%3Cpath%20fill%3D%22%23FFFFFF%22%20d%3D%22M30.4364902%2C31.4100231%20C30.4364902%2C29.9871769%2028.8398242%2C23.9680557%2028.8398242%2C23.9680557%20C28.8398242%2C23.0883414%2027.6898708%2C22.083459%2025.4253473%2C21.4978674%20C24.6581347%2C21.2838747%2023.9288072%2C20.9520366%2023.2634349%2C20.514215%20C23.1179216%2C20.4310645%2023.1400361%2C19.6628072%2023.1400361%2C19.6628072%20L22.4107003%2C19.5517925%20C22.4107003%2C19.4894296%2022.3483374%2C18.5681401%2022.3483374%2C18.5681401%20C23.2209751%2C18.274902%2023.1311903%2C16.5451067%2023.1311903%2C16.5451067%20C23.6853794%2C16.8524981%2024.0462878%2C15.4836113%2024.0462878%2C15.4836113%20C24.7017612%2C13.5817654%2023.719878%2C13.6967607%2023.719878%2C13.6967607%20C23.8916546%2C12.5357299%2023.8916546%2C11.3557413%2023.719878%2C10.1947105%20C23.283338%2C6.34325128%2016.7109122%2C7.38882426%2017.4902268%2C8.64669632%20C15.5693624%2C8.29286451%2016.0076715%2C12.6635719%2016.0076715%2C12.6635719%20L16.4243085%2C13.7953913%20C15.6060724%2C14.326139%2016.1748571%2C14.9679015%2016.2031636%2C15.7065254%20C16.243412%2C16.7972119%2016.9108272%2C16.5712018%2016.9108272%2C16.5712018%20C16.9519602%2C18.3713211%2017.8396357%2C18.6057347%2017.8396357%2C18.6057347%20C18.0063789%2C19.7362273%2017.9024408%2C19.5438313%2017.9024408%2C19.5438313%20L17.1125113%2C19.6393659%20C17.1232047%2C19.896452%2017.1022601%2C20.1538778%2017.0501485%2C20.405854%20C16.12134%2C20.8198372%2015.921425%2C21.0626543%2014.9983663%2C21.4673494%20C13.215054%2C22.2488754%2011.2769403%2C23.2652573%2010.9323966%2C24.6337018%20C10.5878529%2C26.0021463%209.56350982%2C31.4100231%209.56350982%2C31.4100231%20L30.4356056%2C31.4100231%20L30.4356056%2C31.4100231%20L30.4356056%2C31.4100231%20L30.4364902%2C31.4100231%20Z%22/%3E%0A%3C/svg%3E%0A');
 	background-size: cover;
-	border-radius: var(--ui-border-radius-circle, 50%);
+	border-radius: var(--ui-border-radius-circle);
 }
 
 .crm-kanban-item-last-activity {
@@ -1373,7 +1401,7 @@ a.crm-kanban-sidepanel:hover {
 	display: inline-block;
 	width: 20px;
 	height: 20px;
-	border-radius: var(--ui-border-radius-circle, 50%);
+	border-radius: var(--ui-border-radius-circle);
 	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2040%2040%22%3E%0A%20%20%20%20%3Ccircle%20cx%3D%2220%22%20cy%3D%2220%22%20r%3D%2220%22%20fill%3D%22%23525C68%22/%3E%0A%20%20%20%20%3Cpath%20fill%3D%22%23FFFFFF%22%20d%3D%22M30.4364902%2C31.4100231%20C30.4364902%2C29.9871769%2028.8398242%2C23.9680557%2028.8398242%2C23.9680557%20C28.8398242%2C23.0883414%2027.6898708%2C22.083459%2025.4253473%2C21.4978674%20C24.6581347%2C21.2838747%2023.9288072%2C20.9520366%2023.2634349%2C20.514215%20C23.1179216%2C20.4310645%2023.1400361%2C19.6628072%2023.1400361%2C19.6628072%20L22.4107003%2C19.5517925%20C22.4107003%2C19.4894296%2022.3483374%2C18.5681401%2022.3483374%2C18.5681401%20C23.2209751%2C18.274902%2023.1311903%2C16.5451067%2023.1311903%2C16.5451067%20C23.6853794%2C16.8524981%2024.0462878%2C15.4836113%2024.0462878%2C15.4836113%20C24.7017612%2C13.5817654%2023.719878%2C13.6967607%2023.719878%2C13.6967607%20C23.8916546%2C12.5357299%2023.8916546%2C11.3557413%2023.719878%2C10.1947105%20C23.283338%2C6.34325128%2016.7109122%2C7.38882426%2017.4902268%2C8.64669632%20C15.5693624%2C8.29286451%2016.0076715%2C12.6635719%2016.0076715%2C12.6635719%20L16.4243085%2C13.7953913%20C15.6060724%2C14.326139%2016.1748571%2C14.9679015%2016.2031636%2C15.7065254%20C16.243412%2C16.7972119%2016.9108272%2C16.5712018%2016.9108272%2C16.5712018%20C16.9519602%2C18.3713211%2017.8396357%2C18.6057347%2017.8396357%2C18.6057347%20C18.0063789%2C19.7362273%2017.9024408%2C19.5438313%2017.9024408%2C19.5438313%20L17.1125113%2C19.6393659%20C17.1232047%2C19.896452%2017.1022601%2C20.1538778%2017.0501485%2C20.405854%20C16.12134%2C20.8198372%2015.921425%2C21.0626543%2014.9983663%2C21.4673494%20C13.215054%2C22.2488754%2011.2769403%2C23.2652573%2010.9323966%2C24.6337018%20C10.5878529%2C26.0021463%209.56350982%2C31.4100231%209.56350982%2C31.4100231%20L30.4356056%2C31.4100231%20L30.4356056%2C31.4100231%20L30.4356056%2C31.4100231%20L30.4364902%2C31.4100231%20Z%22/%3E%0A%3C/svg%3E%0A');
 	background-size: cover;
 }
@@ -1402,14 +1430,14 @@ a.crm-kanban-sidepanel:hover {
 	padding: 17px 18px 20px 18px;
 	text-align: center;
 	background: rgba(255,255,255,.87);
-	border-radius: var(--ui-border-radius-md, 2px);
+	border-radius: var(--ui-border-radius-md);
 }
 
 .crm-kanban-item-industry-title {
 	display: block;
 	margin-bottom: 8px;
 	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
-	font-weight: var(--ui-font-weight-semi-bold, 600);
+	font-weight: var(--ui-font-weight-semi-bold);
 	font-size: 14px;
 	color: #333;
 	text-align: left;
@@ -1435,7 +1463,7 @@ a.crm-kanban-sidepanel:hover {
 	vertical-align: middle;
 	opacity: .8;
 	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
-	font-weight: var(--ui-font-weight-semi-bold, 600);
+	font-weight: var(--ui-font-weight-semi-bold);
 	font-size: 13px;
 	line-height: 19px;
 	color: #333;
@@ -1512,7 +1540,7 @@ a.crm-kanban-sidepanel:hover {
 	text-overflow: ellipsis;
 	margin-bottom: 10px;
 	padding: 1px 11px 0;
-	border-radius: var(--ui-border-radius-md, 10px);
+	border-radius: var(--ui-border-radius-md);
 	text-transform: uppercase;
 	transition: 250ms all ease;
 	margin-top: 2px;
@@ -1583,10 +1611,10 @@ a.crm-kanban-sidepanel:hover {
 	transition: background 200ms ease;
 	box-sizing: border-box;
 	border: 2px solid #c6cdd3;
-	border-radius: var(--ui-border-radius-2xs, 4px);
+	border-radius: var(--ui-border-radius-2xs);
 }
 
-.crm-kanban-popup-field-search-section-item-icon-active{
+.crm-kanban-popup-field-search-section-item-icon-active {
 	border-color: #2FC6F6;
 }
 

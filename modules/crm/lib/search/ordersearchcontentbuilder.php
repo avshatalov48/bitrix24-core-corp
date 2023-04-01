@@ -22,7 +22,8 @@ class OrderSearchContentBuilder extends SearchContentBuilder
 			$res = OrderStatus::getList();
 			while($status = $res->fetch())
 			{
-				$statuses[$status['STATUS_ID']] = $status['NAME'];
+				$key = $status['STATUS_ID'] ?? null;
+				$statuses[$key] = $status['NAME'] ?? null;
 			}
 		}
 
@@ -179,7 +180,7 @@ class OrderSearchContentBuilder extends SearchContentBuilder
 			$map->addHtml($fields['USER_DESCRIPTION'], 1024);
 		}
 
-		if (is_array($fields['PROPERTIES']))
+		if (isset($fields['PROPERTIES']) && is_array($fields['PROPERTIES']))
 		{
 			foreach ($fields['PROPERTIES'] as $propertyValue)
 			{

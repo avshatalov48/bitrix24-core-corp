@@ -267,17 +267,75 @@
 
 		renderStoreName()
 		{
-			if (this.props.storeTo && this.props.storeTo.title)
+			const documentType = this.props.document ? this.props.document.type : '';
+			const storeFrom = this.props.storeFrom;
+			const storeTo = this.props.storeTo;
+			let storeTitle = '';
+			if (documentType === 'A' || documentType === 'S')
+			{
+				storeTitle = storeTo ? storeTo.title : '';
+			}
+			else if (documentType === 'D')
+			{
+				storeTitle = storeFrom ? storeFrom.title : '';
+			}
+			else if (documentType === 'M' && this.props.storeFrom && this.props.storeTo)
+			{
+				const storeFromTitle =
+					this.props.storeFrom.title
+						? this.props.storeFrom.title
+						: BX.message('CSPL_STORE_EMPTY')
+				;
+				const storeToTitle =
+					this.props.storeTo.title
+						? this.props.storeTo.title
+						: BX.message('CSPL_STORE_EMPTY')
+				;
+
+				return View(
+					{
+						style: Styles.summaryRow.storesWrapper,
+					},
+					View(
+						{
+							onClick: () => {
+								this.showHint(storeFromTitle);
+							}
+						},
+						Text({
+							text: storeFromTitle,
+							style: Styles.summaryRow.title,
+							ellipsize: 'end',
+							numberOfLines: 1,
+						})
+					),
+					View(
+						{
+							onClick: () => {
+								this.showHint(storeToTitle);
+							}
+						},
+						Text({
+							text: storeToTitle,
+							style: Styles.summaryRow.title,
+							ellipsize: 'end',
+							numberOfLines: 1,
+						})
+					),
+				);
+			}
+
+			if (storeTitle)
 			{
 				return View(
 					{
 						style: Styles.summaryRow.leftWrapper,
 						onClick: () => {
-							this.showHint(this.props.storeTo.title);
+							this.showHint(storeTitle);
 						}
 					},
 					Text({
-						text: this.props.storeTo.title,
+						text: storeTitle,
 						style: Styles.summaryRow.title,
 						ellipsize: 'end',
 						numberOfLines: 1,
@@ -600,6 +658,12 @@
 				width: '50%',
 				flexDirection: 'row',
 				justifyContent: 'flex-end',
+			},
+			storesWrapper: {
+				width: '50%',
+				flexDirection: 'column',
+				justifyContent: 'flex-end',
+				paddingRight: 4,
 			},
 			title: {
 				fontSize: 16,

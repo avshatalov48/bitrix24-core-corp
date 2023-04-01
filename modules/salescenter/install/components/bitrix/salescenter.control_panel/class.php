@@ -725,7 +725,7 @@ class SalesCenterControlPanelComponent extends CBitrixComponent implements Contr
 				if (!empty($marketplaceApp['ICON_PRIORITY']) || !empty($marketplaceApp['ICON']))
 				{
 					$hasOwnIcon = true;
-					$img = $marketplaceApp['ICON_PRIORITY'] ?: $marketplaceApp['ICON'];
+					$img = $marketplaceApp['ICON_PRIORITY'] ?? $marketplaceApp['ICON'];
 				}
 				else
 				{

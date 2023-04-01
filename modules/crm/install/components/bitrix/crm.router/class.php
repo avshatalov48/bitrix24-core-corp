@@ -35,7 +35,7 @@ class CrmRouterComponent extends Bitrix\Crm\Component\Base
 		parent::init();
 
 		$isSefMode = true;
-		if($this->arParams['isSefMode'] === 'n')
+		if(($this->arParams['isSefMode'] ?? null) === 'n')
 		{
 			$isSefMode = false;
 		}

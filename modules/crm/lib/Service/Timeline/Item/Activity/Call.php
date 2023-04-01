@@ -249,7 +249,7 @@ class Call extends Activity
 			$result['description'] = (new Text())->setValue($description)->setFontSize(Text::COLOR_BASE_70);
 		}
 
-		$comment = (string)$this->fetchInfo()['COMMENT'];
+		$comment = (string) ($this->fetchInfo()['COMMENT'] ?? null);
 		if (!empty($comment))
 		{
 			$result['comment'] = (new Text())->setValue($comment)->setFontSize(Text::COLOR_BASE_70);
@@ -345,7 +345,7 @@ class Call extends Activity
 				$items['edit']->setScopeWeb();
 			}
 
-			if ($items['view'])
+			if (isset($items['view']))
 			{
 				$items['view']->setScopeWeb();
 			}

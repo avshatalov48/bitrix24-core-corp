@@ -196,7 +196,7 @@ class EntityAddressType
 
 	public static function getAllDescriptions()
 	{
-		if(!self::$ALL_DESCRIPTIONS[LANGUAGE_ID])
+		if(!isset(self::$ALL_DESCRIPTIONS[LANGUAGE_ID]))
 		{
 			IncludeModuleLangFile(__FILE__);
 			self::$ALL_DESCRIPTIONS[LANGUAGE_ID] = array(

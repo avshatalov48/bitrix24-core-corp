@@ -191,11 +191,11 @@ class CCrmSearch
 			{
 				if (!isset($arStatuses[$_k]))
 					$arStatuses[$_k] = CCrmStatus::GetStatusList($arField2status[$_k]);
-				$_v = $arStatuses[$_k][$_v];
+				$_v = $arStatuses[$_k][$_v] ?? null;
 			}
 
 			if (!empty($_v) && !is_numeric($_v) && $_v != 'N' && $_v != 'Y')
-				$sBody .= self::$arMess[$ENTITY_TYPE]['CRM_FIELD_'.$_k].": $_v\n";
+				$sBody .= (self::$arMess[$ENTITY_TYPE]['CRM_FIELD_'.$_k] ?? null).": $_v\n";
 		}
 
 		if($ENTITY_TYPE === 'CONTACT' || $ENTITY_TYPE === 'COMPANY' || $ENTITY_TYPE === 'LEAD')

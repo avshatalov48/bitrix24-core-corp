@@ -69,9 +69,9 @@ class SalesCenterPaySystemComponent extends CBitrixComponent implements Main\Eng
 		$this->errorCollection = new Main\ErrorCollection();
 
 		$this->arResult = [
-			'PAYSYSTEM_HANDLER' => ($arParams["PAYSYSTEM_HANDLER"] ? $arParams["PAYSYSTEM_HANDLER"] : null),
-			'PAYSYSTEM_PS_MODE' => ($arParams["PAYSYSTEM_PS_MODE"] ? $arParams["PAYSYSTEM_PS_MODE"] : null),
-			'PAYSYSTEM_ID' => (($arParams["PAYSYSTEM_ID"] && $arParams["PAYSYSTEM_ID"] > 0) ? $arParams["PAYSYSTEM_ID"] : 0),
+			'PAYSYSTEM_HANDLER' => !empty($arParams['PAYSYSTEM_HANDLER']) ? $arParams['PAYSYSTEM_HANDLER'] : null,
+			'PAYSYSTEM_PS_MODE' => !empty($arParams['PAYSYSTEM_PS_MODE']) ? $arParams['PAYSYSTEM_PS_MODE'] : null,
+			'PAYSYSTEM_ID' => (!empty($arParams['PAYSYSTEM_ID']) && $arParams['PAYSYSTEM_ID'] > 0) ? (int)$arParams['PAYSYSTEM_ID'] : 0,
 			'ERROR' => [],
 		];
 
@@ -218,15 +218,18 @@ class SalesCenterPaySystemComponent extends CBitrixComponent implements Main\Eng
 			$this->arResult['PAYSYSTEM_HANDLER_FULL'] = mb_strtoupper($this->arResult['PAYSYSTEM_HANDLER'].'_'.$this->arResult['PAYSYSTEM_PS_MODE']);
 		}
 
-		$this->arResult['HELPDESK_DOCUMENTATION_CODE'] = $this->getHelpdeskDocumentationCode($className);
+		$this->arResult['HELPDESK_DOCUMENTATION_CODE'] =
+			$this->getHelpdeskDocumentationCode($className, $this->arResult['PAYSYSTEM_PS_MODE'] ?? '')
+		;
 
 		$this->checkAvailabilityCashbox();
 		$this->initBusinessValue($this->arResult['PAYSYSTEM_ID'], $this->arResult['PAYSYSTEM_HANDLER']);
 
 		$this->arResult['IS_CASHBOX_ENABLED'] = \Bitrix\SalesCenter\Driver::getInstance()->isCashboxEnabled();
 
-		$this->arResult['IS_CAN_PRINT_CHECK_SELF'] = false;
 		$this->arResult['CASHBOX'] = [];
+		$this->arResult['IS_CAN_PRINT_CHECK_SELF'] = false;
+		$this->arResult['IS_FISCALIZATION_ENABLE'] = false;
 
 		$service = new PaySystem\Service($this->arResult['PAYSYSTEM']);
 		if ($service->isSupportPrintCheck())
@@ -496,8 +499,12 @@ class SalesCenterPaySystemComponent extends CBitrixComponent implements Main\Eng
 			$kkmId = (string)current($supportedKkmModels);
 		}
 
-		$handlerDescription = $service->getHandlerDescription();
-		$result['PAY_SYSTEM_CODE_NAME'] = $handlerDescription['CODES'][$cashboxHandler::getPaySystemCodeForKkm()]['NAME'];
+		$result['PAY_SYSTEM_CODE_NAME'] = '';
+		if (count($supportedKkmModels) > 1)
+		{
+			$handlerDescription = $service->getHandlerDescription();
+			$result['PAY_SYSTEM_CODE_NAME'] = $handlerDescription['CODES'][$cashboxHandler::getPaySystemCodeForKkm()]['NAME'];
+		}
 
 		$cashbox = Cashbox\Manager::getList([
 			'filter' => [
@@ -549,7 +556,7 @@ class SalesCenterPaySystemComponent extends CBitrixComponent implements Main\Eng
 	 * @param string $handlerClass
 	 * @return string
 	 */
-	private function getHelpdeskDocumentationCode(string $handlerClass): string
+	private function getHelpdeskDocumentationCode(string $handlerClass, string $psMode = ''): string
 	{
 		$defaultCode = '11864562';
 
@@ -563,7 +570,7 @@ class SalesCenterPaySystemComponent extends CBitrixComponent implements Main\Eng
 			return $defaultCode;
 		}
 
-		$helpdeskCodeMap = [
+		$helpdeskHandlerCodeMap = [
 			\Sale\Handlers\PaySystem\SkbHandler::class => '11538458',
 			\Sale\Handlers\PaySystem\BePaidHandler::class => '11538452',
 			\Sale\Handlers\PaySystem\BePaidEripHandler::class => '15846692',
@@ -575,7 +582,15 @@ class SalesCenterPaySystemComponent extends CBitrixComponent implements Main\Eng
 			\Sale\Handlers\PaySystem\PlatonHandler::class => '13920167',
 		];
 
-		return $helpdeskCodeMap[$className] ?? $defaultCode;
+		if (
+			$className === \Sale\Handlers\PaySystem\YandexCheckoutHandler::class
+			&& $psMode === \Sale\Handlers\PaySystem\YandexCheckoutHandler::MODE_INSTALLMENTS
+		)
+		{
+			$helpdeskHandlerCodeMap[$className] = '17229912';
+		}
+
+		return $helpdeskHandlerCodeMap[$className] ?? $defaultCode;
 	}
 
 	/**
@@ -621,14 +636,14 @@ class SalesCenterPaySystemComponent extends CBitrixComponent implements Main\Eng
 						'TYPE' => 'STRING',
 						'CLASS' => 'ui-ctl-element'
 					],
-					$cashbox['EMAIL']
+					$cashbox['EMAIL'] ?? ''
 				),
 				'hint' => Loc::getMessage('SALESCENTER_SP_CASHBOX_EMAIL_HINT'),
 				'required' => true,
 			];
 
 			$cashboxSettings = $cashbox['SETTINGS'] ?? [];
-			$settings = $handler::getSettings($cashbox['KKM_ID']);
+			$settings = $handler::getSettings($cashbox['KKM_ID'] ?? 0);
 			if ($settings)
 			{
 				foreach ($settings as $group => $block)

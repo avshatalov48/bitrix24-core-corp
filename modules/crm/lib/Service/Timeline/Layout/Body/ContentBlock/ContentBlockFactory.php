@@ -3,6 +3,7 @@
 namespace Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock;
 
 use Bitrix\Crm\Service\Timeline\Layout\Action;
+use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock;
 use Bitrix\Main\Web\Uri;
 
 class ContentBlockFactory
@@ -83,7 +84,7 @@ class ContentBlockFactory
 		;
 	}
 
-	public static function createFromTemplate(
+	public static function createLineOfTextFromTemplate(
 		string $template,
 		array $replacements,
 		string $idPrefix = ''
@@ -91,9 +92,29 @@ class ContentBlockFactory
 	{
 		$result = new LineOfTextBlocks();
 
+		$blocks = self::getBlocksFromTemplate($template, $replacements);
+		foreach ($blocks as $index => $block)
+		{
+			$result->addContentBlock($idPrefix . (++$index), $block);
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @param string $template
+	 * @param array $replacements
+	 * @return ContentBlock[]
+	 */
+	public static function getBlocksFromTemplate(
+		string $template,
+		array $replacements
+	): array
+	{
+		$result = [];
+
 		$parts = preg_split('/(#\w+#)/' . BX_UTF_PCRE_MODIFIER, $template, -1, PREG_SPLIT_NO_EMPTY|PREG_SPLIT_DELIM_CAPTURE);
 
-		$count = 1;
 		foreach ($parts as $singlePart)
 		{
 			$singlePart = trim($singlePart, ' ');
@@ -109,10 +130,8 @@ class ContentBlockFactory
 
 			if ($block)
 			{
-				$result->addContentBlock($idPrefix . $count, $block);
+				$result[] = $block;
 			}
-
-			$count++;
 		}
 
 		return $result;

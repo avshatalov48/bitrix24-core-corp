@@ -416,6 +416,11 @@ $renderFieldSelector = static function (?string $title, bool $isActive, string $
 					? Loc::getMessage('CRM_TYPE_DETAIL_RECYCLE_DISABLED_HINT')
 					: null
 			);
+			echo $renderCheckbox(
+				Loc::getMessage('CRM_TYPE_TYPE_IS_COUNTERS_ENABLED_TITLE'),
+				'isCountersEnabled',
+				$type->getIsCountersEnabled(),
+			);
 			?>
 		</div>
 		<div class="crm-type-tab" data-tab="relation">

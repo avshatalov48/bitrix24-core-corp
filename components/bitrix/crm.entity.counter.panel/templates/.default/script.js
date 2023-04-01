@@ -367,6 +367,7 @@ this.BX = this.BX || {};
 	var namespace = main_core.Reflection.namespace('BX.Crm');
 	var _id$1 = /*#__PURE__*/new WeakMap();
 	var _entityTypeId$1 = /*#__PURE__*/new WeakMap();
+	var _entityTypeName$1 = /*#__PURE__*/new WeakMap();
 	var _userId = /*#__PURE__*/new WeakMap();
 	var _userName = /*#__PURE__*/new WeakMap();
 	var _codes$1 = /*#__PURE__*/new WeakMap();
@@ -382,6 +383,7 @@ this.BX = this.BX || {};
 	var _onFilterApply$1 = /*#__PURE__*/new WeakSet();
 	var _onRecalculate = /*#__PURE__*/new WeakSet();
 	var _processItemSelection = /*#__PURE__*/new WeakSet();
+	var _makeFilterAnalyticsLabel = /*#__PURE__*/new WeakSet();
 	var _prepareFilterTypeId = /*#__PURE__*/new WeakSet();
 	var _markCounters = /*#__PURE__*/new WeakSet();
 	var _isAllDeactivated = /*#__PURE__*/new WeakSet();
@@ -409,6 +411,7 @@ this.BX = this.BX || {};
 	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _isAllDeactivated);
 	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _markCounters);
 	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _prepareFilterTypeId);
+	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _makeFilterAnalyticsLabel);
 	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _processItemSelection);
 	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _onRecalculate);
 	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _onFilterApply$1);
@@ -420,6 +423,10 @@ this.BX = this.BX || {};
 	      value: void 0
 	    });
 	    _classPrivateFieldInitSpec$2(babelHelpers.assertThisInitialized(_this), _entityTypeId$1, {
+	      writable: true,
+	      value: void 0
+	    });
+	    _classPrivateFieldInitSpec$2(babelHelpers.assertThisInitialized(_this), _entityTypeName$1, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -461,6 +468,7 @@ this.BX = this.BX || {};
 	    });
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _id$1, options.id);
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _entityTypeId$1, options.entityTypeId ? main_core.Text.toInteger(options.entityTypeId) : 0);
+	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _entityTypeName$1, options.entityTypeName);
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _userId, options.userId ? main_core.Text.toInteger(options.userId) : 0);
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _userName, main_core.Type.isStringFilled(options.userName) ? options.userName : babelHelpers.classPrivateFieldGet(babelHelpers.assertThisInitialized(_this), _userId));
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _codes$1, main_core.Type.isArray(options.codes) ? options.codes : []);
@@ -629,12 +637,6 @@ this.BX = this.BX || {};
 	  var isOtherUsersFilter = item.id.endsWith(EntityCounterPanel.EXCLUDE_USERS_CODE_SUFFIX);
 	  var typeId = parseInt(babelHelpers.classPrivateFieldGet(this, _data)[item.id].TYPE_ID, 10);
 	  if (typeId > 0) {
-	    var eventArgs = {
-	      userId: isOtherUsersFilter ? EntityCounterFilterManager.FILTER_OTHER_USERS : babelHelpers.classPrivateFieldGet(this, _userId).toString(),
-	      userName: isOtherUsersFilter ? main_core.Loc.getMessage('NEW_CRM_COUNTER_TYPE_OTHER') : babelHelpers.classPrivateFieldGet(this, _userName),
-	      counterTypeId: _classPrivateMethodGet$2(this, _prepareFilterTypeId, _prepareFilterTypeId2).call(this, typeId),
-	      cancel: false
-	    };
 	    if (babelHelpers.classPrivateFieldGet(this, _filterManager$1).isActive()) {
 	      var filteredFields = babelHelpers.classPrivateFieldGet(this, _filterManager$1).getFields(true);
 	      if (typeof filteredFields[EntityCounterFilterManager.COUNTER_TYPE_FIELD] === 'undefined') {
@@ -644,15 +646,37 @@ this.BX = this.BX || {};
 	        }
 	        BX.userOptions.save('crm', babelHelpers.classPrivateFieldGet(this, _filterLastPresetId), '', JSON.stringify(babelHelpers.classPrivateFieldGet(this, _filterLastPreset)));
 	      }
-	      BX.onCustomEvent(window, 'BX.CrmEntityCounterPanel:applyFilter', [this, eventArgs]);
-	      if (eventArgs.cancel) {
-	        return false;
-	      }
+
+	      // BX.onCustomEvent(window, 'BX.CrmEntityCounterPanel:applyFilter', [this, eventArgs]);
+
+	      var userId = isOtherUsersFilter ? EntityCounterFilterManager.FILTER_OTHER_USERS : babelHelpers.classPrivateFieldGet(this, _userId).toString();
+	      var userName = isOtherUsersFilter ? main_core.Loc.getMessage('NEW_CRM_COUNTER_TYPE_OTHER') : babelHelpers.classPrivateFieldGet(this, _userName);
+	      var counterTypeId = _classPrivateMethodGet$2(this, _prepareFilterTypeId, _prepareFilterTypeId2).call(this, typeId);
+	      var api = babelHelpers.classPrivateFieldGet(this, _filterManager$1).getApi();
+	      var fields = {
+	        "ASSIGNED_BY_ID": {
+	          0: userId
+	        },
+	        "ASSIGNED_BY_ID_label": [userName],
+	        "ACTIVITY_COUNTER": BX.Type.isPlainObject(counterTypeId) ? counterTypeId : {
+	          0: counterTypeId
+	        }
+	      };
+	      api.setFields(fields);
+	      api.apply({
+	        'COUNTER': _classPrivateMethodGet$2(this, _makeFilterAnalyticsLabel, _makeFilterAnalyticsLabel2).call(this, counterTypeId)
+	      });
 	    } else {
 	      return false;
 	    }
 	  }
 	  return true;
+	}
+	function _makeFilterAnalyticsLabel2(counterTypeId) {
+	  if (babelHelpers.classPrivateFieldGet(this, _entityTypeName$1) && counterTypeId) {
+	    return 'CRM_' + babelHelpers.classPrivateFieldGet(this, _entityTypeName$1) + '_COUNTER_TYPE_' + counterTypeId;
+	  }
+	  return '';
 	}
 	function _prepareFilterTypeId2(typeId) {
 	  if (typeId === EntityCounterType.CURRENT) {

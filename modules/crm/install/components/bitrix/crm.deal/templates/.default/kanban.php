@@ -6,6 +6,7 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Crm\Kanban;
+use Bitrix\Crm\Kanban\ViewMode;
 use Bitrix\Crm\UI\NavigationBarPanel;
 use Bitrix\Main\Localization\Loc;
 
@@ -198,16 +199,19 @@ else
 		), true);
 	}
 
+	$kanbanViewMode = $arResult['KANBAN_VIEW_MODE'] ?? null;
+
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.deal_category.panel',
 		$isBitrix24Template ? 'tiny' : '',
 		[
-			'PATH_TO_DEAL_LIST' => ($arResult['KANBAN_VIEW_MODE'] === \Bitrix\Crm\Kanban\ViewMode::MODE_ACTIVITIES ? $arResult['PATH_TO_DEAL_ACTIVITY'] : $arResult['PATH_TO_DEAL_KANBAN']),
+			'PATH_TO_DEAL_LIST' => ($kanbanViewMode === ViewMode::MODE_ACTIVITIES
+				? $arResult['PATH_TO_DEAL_ACTIVITY'] : $arResult['PATH_TO_DEAL_KANBAN']),
 			'PATH_TO_DEAL_EDIT' => $arResult['PATH_TO_DEAL_EDIT'],
 			'PATH_TO_DEAL_CATEGORY' => $arResult['PATH_TO_DEAL_KANBANCATEGORY'],
 			'PATH_TO_DEAL_CATEGORY_LIST' => $arResult['PATH_TO_DEAL_CATEGORY_LIST'],
 			'PATH_TO_DEAL_CATEGORY_EDIT' => $arResult['PATH_TO_DEAL_CATEGORY_EDIT'],
-			'ENABLE_CATEGORY_ALL' => ($arResult['KANBAN_VIEW_MODE'] === \Bitrix\Crm\Kanban\ViewMode::MODE_ACTIVITIES ? 'Y' : 'N'),
+			'ENABLE_CATEGORY_ALL' => ($kanbanViewMode === ViewMode::MODE_ACTIVITIES ? 'Y' : 'N'),
 			'CATEGORY_ID' => $categoryID,
 		],
 		$component
@@ -222,7 +226,7 @@ else
 
 	// filter
 	$activeItemId = (
-		$arResult['KANBAN_VIEW_MODE'] === \Bitrix\Crm\Kanban\ViewMode::MODE_ACTIVITIES
+		$kanbanViewMode === ViewMode::MODE_ACTIVITIES
 			? NavigationBarPanel::ID_ACTIVITY
 			: NavigationBarPanel::ID_KANBAN
 	);
@@ -231,7 +235,7 @@ else
 		'',
 		[
 			'ENTITY_TYPE' => $entityType,
-			'VIEW_MODE' => $arResult['KANBAN_VIEW_MODE'],
+			'VIEW_MODE' => $arResult['KANBAN_VIEW_MODE'] ?? null,
 			'NAVIGATION_BAR' => (new NavigationBarPanel(CCrmOwnerType::Deal, $categoryID))
 				->setItems([
 					NavigationBarPanel::ID_KANBAN,
@@ -254,7 +258,7 @@ else
 		'',
 		array(
 			'ENTITY_TYPE' => $entityType,
-			'VIEW_MODE' => ($arResult['KANBAN_VIEW_MODE'] ?? \Bitrix\Crm\Kanban\ViewMode::MODE_STAGES),
+			'VIEW_MODE' => ($arResult['KANBAN_VIEW_MODE'] ?? ViewMode::MODE_STAGES),
 			'SHOW_ACTIVITY' => 'Y',
 			'EXTRA' => array(
 				'CATEGORY_ID' => $categoryID

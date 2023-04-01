@@ -41,6 +41,7 @@ export class FileUploaderPopup
 			const popupOverlayColor = htmlStyles.getPropertyValue('--ui-color-base-solid') || '#000000';
 
 			this.#popup = new Popup({
+				className: 'crm-activity__file-uploader-popup',
 				closeIcon: true,
 				closeByEsc: true,
 				padding: popupPaddingNumberValue,
@@ -53,8 +54,7 @@ export class FileUploaderPopup
 				buttons: this.#getPopupButtons(),
 				minWidth: 650,
 				width: 650,
-				maxHeight: 650,
-				className: 'crm-activity__file-uploader-popup'
+				maxHeight: 650
 			});
 		}
 

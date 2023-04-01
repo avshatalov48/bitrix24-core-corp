@@ -127,7 +127,7 @@ class Item
 		$this->setId((int)($options['id'] ?? 0));
 		$this->setEntityTypeId((int)($options['entityTypeId'] ?? 0));
 		$this->setClientEntityTypeId((int)($options['clientEntityTypeId'] ?? 0));
-		$this->setRequisitePresetId((int)($options['requisite']['presetId'] ?? 0));
+		$this->setRequisitePresetId((int)($options['presetId'] ?? 0));
 
 		// should be last call!
 		$this->setFields($options['fields'] ?? []);
@@ -148,12 +148,13 @@ class Item
 			\CCrmOwnerType::SmartDocument,
 			WebForm\EntityFieldProvider::TYPE_VIRTUAL,
 		];
-		$entityFields = WebForm\EntityFieldProvider::getFieldsTree($hiddenTypes);
+		$entityFields = WebForm\EntityFieldProvider::getFieldsTree($hiddenTypes, $this->getRequisitePresetId());
 		$fields = array_map(
-			function (array $field) use ($isSet)
+			function (array $field) use ($isSet, $hiddenTypes)
 			{
 				$name = $field['name'] ?? '';
-				$fieldData = WebForm\EntityFieldProvider::getField($name);
+				$fieldData = WebForm\EntityFieldProvider::getField($name, $hiddenTypes, $this->requisitePresetId);
+
 				$label = $field['label'] ?? '';
 				$mainLabel = $fieldData['caption'] ?? '';
 				$label = ($label === '' || $label === $mainLabel) ? '' : $label;
@@ -173,8 +174,7 @@ class Item
 				{
 					$entityTypeId = mb_strpos($fieldData['entity_field_name'], 'RQ_') === 0
 						? \CCrmOwnerType::Requisite
-						: \CCrmOwnerType::resolveID($fieldData['entity_name'])
-					;
+						: \CCrmOwnerType::resolveID($fieldData['entity_name']);
 
 					$data['editing'] = [
 						'entityTypeId' => $entityTypeId,
@@ -208,11 +208,32 @@ class Item
 				)
 			);
 		}
-		if ($this->requisitePresetId)
+
+		if ($this->getRequisitePresetId())
 		{
-			$rqPresetFields = WebForm\Requisite::instance()->getPreset($this->requisitePresetId)['fields'] ?? null;
+			$rqPresetFields = WebForm\Requisite::instance()->getPreset($this->getRequisitePresetId())['fields'] ?? null;
 			if ($rqPresetFields)
 			{
+				if ($this->clientEntityTypeId)
+				{
+					$entityTypeName = \CCrmOwnerType::resolveName($this->clientEntityTypeId);
+					$prefix = "{$entityTypeName}_";
+					$prefixRq = "{$entityTypeName}_RQ_";
+
+					foreach ($rqPresetFields as &$field)
+					{
+						if (mb_strpos($field['name'], $prefixRq) !== 0)
+						{
+							if (mb_strpos($field['name'], 'RQ_') !== 0)
+							{
+								$field['name'] = 'RQ_'. $field['name'];
+							}
+
+							$field['name'] = $prefix . $field['name'];
+						}
+					}
+				}
+
 				$fieldNames = array_merge(
 					$fieldNames,
 					array_column($rqPresetFields, 'name')

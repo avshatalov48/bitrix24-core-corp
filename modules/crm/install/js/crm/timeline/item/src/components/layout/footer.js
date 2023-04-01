@@ -33,6 +33,13 @@ export const Footer = {
 		'isReadOnly',
 	],
 	computed: {
+		containerClassname(): Array {
+			return [
+				'crm-timeline__card-action', {
+				'--no-margin-top': this.baseButtons.length < 1,
+				}
+			]
+		},
 		baseButtons(): Array
 		{
 			return this.visibleAndSortedButtons.slice(0, this.maxBaseButtonsCount);
@@ -126,7 +133,7 @@ export const Footer = {
 		}
 	},
 	template: `
-		<div class="crm-timeline__card-action">
+		<div :class="containerClassname">
 			<Buttons ref="buttons" :items="baseButtons" />
 			<div class="crm-timeline__card-action_menu">
 				<div

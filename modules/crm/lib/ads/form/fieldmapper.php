@@ -169,6 +169,8 @@ class FieldMapper
 						['CRM_FIELD_TYPE' => 'CONTACT_LAST_NAME', 'ADS_FIELD_TYPE' => 'LAST_NAME'],
 						['CRM_FIELD_TYPE' => 'CONTACT_EMAIL', 'ADS_FIELD_TYPE' => 'EMAIL'],
 						['CRM_FIELD_TYPE' => 'CONTACT_PHONE', 'ADS_FIELD_TYPE' => 'PHONE'],
+						['CRM_FIELD_TYPE' => 'CONTACT_ADDRESS', 'ADS_FIELD_TYPE' => 'ADDRESS'],
+						['CRM_FIELD_TYPE' => 'CONTACT_BIRTHDATE', 'ADS_FIELD_TYPE' => 'BIRTHDAY'],
 					];
 					break;
 				case LeadAds\Service::TYPE_FACEBOOK:

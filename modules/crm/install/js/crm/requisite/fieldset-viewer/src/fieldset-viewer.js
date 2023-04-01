@@ -49,10 +49,13 @@ export class FieldsetViewer extends EventEmitter
 	load(): Promise<any>
 	{
 		return new Promise((resolve) => {
-			const {entityTypeId, entityId} = this.getOptions();
+			const {entityTypeId, entityId, fieldListEditorOptions} = this.getOptions();
+			const presetId = fieldListEditorOptions
+				? (fieldListEditorOptions.fieldsPanelOptions ? fieldListEditorOptions.fieldsPanelOptions.presetId : null)
+				: null;
 
 			BX.ajax
-				.runAction('crm.api.fieldset.load', {json: {entityTypeId, entityId}})
+				.runAction('crm.api.fieldset.load', {json: {entityTypeId, entityId, presetId}})
 				.then((result) => {
 					resolve(result.data);
 				});
@@ -281,6 +284,7 @@ export class FieldsetViewer extends EventEmitter
 					},
 				},
 				autoSave: false,
+				cacheable: false,
 				events: {
 					onSave: () => this.show(),
 				},

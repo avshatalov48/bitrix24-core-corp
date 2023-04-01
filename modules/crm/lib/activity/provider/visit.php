@@ -178,7 +178,7 @@ class Visit extends Base
 	protected static function hasConsent()
 	{
 		$consent = (array)\CUserOptions::GetOption('crm.activity.visit', 'consent', array());
-		return ($consent['timestamp'] > 0);
+		return (($consent['timestamp'] ?? 0) > 0);
 	}
 
 	protected static function hasRecognizeConsent()

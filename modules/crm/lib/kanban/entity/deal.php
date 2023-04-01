@@ -117,7 +117,7 @@ class Deal extends Entity
 
 	public function isActivityCountersFilterSupported(): bool
 	{
-		return true;
+		return $this->factory->isCountersEnabled();
 	}
 
 	public function isRecurringSupported(): bool
@@ -141,17 +141,12 @@ class Deal extends Entity
 			'TITLE' => '',
 			'OPPORTUNITY' => '',
 			'DATE_CREATE' => '',
-			'PAYMENT_STAGE' => '',
-			'DELIVERY_STAGE' => '',
+			'PAYMENT_STAGE' => Loc::getMessage('CRM_KANBAN_FIELD_PAYMENT_STAGE'),
+			'DELIVERY_STAGE' => Loc::getMessage('CRM_KANBAN_FIELD_DELIVERY_STAGE'),
 			'CLIENT' => '',
 			'PROBLEM_NOTIFICATION' => '',
-			'OBSERVER' => '',
+			'OBSERVER' => Loc::getMessage('CRM_KANBAN_FIELD_OBSERVER'),
 		];
-	}
-
-	public function getAdditionalEditFields(): array
-	{
-		return (array)$this->getAdditionalEditFieldsFromOptions();
 	}
 
 	public function getStageFieldName(): string
@@ -193,7 +188,7 @@ class Deal extends Entity
 	public function prepareItemCommonFields(array $item): array
 	{
 		$item['PRICE'] = $item['OPPORTUNITY'];
-		$item['DATE'] = $item['DATE_CREATE'];
+		$item['DATE'] = $item['DATE_CREATE'] ?? null;
 
 		$item = parent::prepareItemCommonFields($item);
 
@@ -210,7 +205,7 @@ class Deal extends Entity
 			$shipmentStages = (new ShipmentsRepository())->getShipmentStages($dealIds);
 			foreach ($items as $itemId => $item)
 			{
-				$items[$itemId]['DELIVERY_STAGE'] = $shipmentStages[$itemId];
+				$items[$itemId]['DELIVERY_STAGE'] = $shipmentStages[$itemId] ?? null;
 			}
 		}
 

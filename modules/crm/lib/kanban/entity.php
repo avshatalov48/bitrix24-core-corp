@@ -342,7 +342,7 @@ abstract class Entity
 	 */
 	public function isActivityCountersFilterSupported(): bool
 	{
-		return false;
+		return $this->factory && $this->factory->isCountersEnabled();
 	}
 
 	/**
@@ -382,7 +382,7 @@ abstract class Entity
 	 */
 	public function isActivityCountersSupported(): bool
 	{
-		return true;
+		return $this->factory->isCountersEnabled();
 	}
 
 	/**
@@ -618,10 +618,19 @@ abstract class Entity
 		$fields = $this->getAdditionalEditFieldsFromOptions();
 		if(!$fields)
 		{
-			$fields = $this->getDefaultAdditionalSelectFields();
+			$fields = $this->getDefaultAdditionalEditFields();
 		}
 
 		return (array)$fields;
+	}
+
+	protected function getDefaultAdditionalEditFields(): array
+	{
+		return [
+			'TITLE' => '',
+			'OPPORTUNITY_WITH_CURRENCY' => '',
+			'CLIENT' => '',
+		];
 	}
 
 	protected function getAdditionalEditFieldsFromOptions(): ?array
@@ -749,7 +758,7 @@ abstract class Entity
 					}
 					$configurationSection['elements'][$item['name']] = [
 						'name' => $item['name'],
-						'title' => $item['title'],
+						'title' => $item['title'] ?? null,
 					];
 				}
 
@@ -1147,7 +1156,7 @@ abstract class Entity
 
 		if (!isset($item['ASSIGNED_BY']))
 		{
-			$item['ASSIGNED_BY'] = $item['RESPONSIBLE_ID'];
+			$item['ASSIGNED_BY'] = $item['RESPONSIBLE_ID'] ?? null;
 		}
 
 		$fieldSum = $this->getCustomPriceFieldName();
@@ -1187,7 +1196,8 @@ abstract class Entity
 			'CURRENCY' => $item['ENTITY_CURRENCY_ID'],
 		];
 
-		$item['OPENED'] = in_array($item['OPENED'], ['Y', '1', 1, true], true) ? 'Y' : 'N';
+		$opened = $item['OPENED'] ?? null;
+		$item['OPENED'] = in_array($opened, ['Y', '1', 1, true], true) ? 'Y' : 'N';
 		$item['DATE_FORMATTED'] = $this->dateFormatter->format($item['DATE'], (bool)$item['FORMAT_TIME']);
 
 		return $item;

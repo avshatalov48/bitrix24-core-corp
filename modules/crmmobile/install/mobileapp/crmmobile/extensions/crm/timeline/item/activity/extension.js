@@ -8,6 +8,7 @@ jn.define('crm/timeline/item/activity', (require, exports, module) => {
 	const { CreationActivity } = require('crm/timeline/item/activity/creation');
 	const { TodoActivity } = require('crm/timeline/item/activity/todo');
 	const { Document } = require('crm/timeline/item/activity/document');
+	const { ConfigurableRestAppActivity } = require('crm/timeline/item/activity/configurable-rest-app');
 
     module.exports = {
 		CallActivity,
@@ -15,6 +16,7 @@ jn.define('crm/timeline/item/activity', (require, exports, module) => {
 		CreationActivity,
 		TodoActivity,
 		Document,
+		ConfigurableRestAppActivity,
 	};
 
 });

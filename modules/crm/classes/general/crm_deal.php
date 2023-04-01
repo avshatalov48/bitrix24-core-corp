@@ -2,27 +2,27 @@
 IncludeModuleLangFile(__FILE__);
 
 use Bitrix\Crm;
-use Bitrix\Crm\CustomerType;
-use Bitrix\Crm\Integration\PullManager;
-use Bitrix\Crm\Kanban\ViewMode;
-use Bitrix\Crm\UtmTable;
-use Bitrix\Crm\Tracking;
+use Bitrix\Crm\Binding\DealContactTable;
+use Bitrix\Crm\Binding\EntityBinding;
 use Bitrix\Crm\Category\DealCategory;
 use Bitrix\Crm\Category\DealCategoryChangeError;
-use Bitrix\Crm\Binding\EntityBinding;
-use Bitrix\Crm\Binding\DealContactTable;
+use Bitrix\Crm\CustomerType;
+use Bitrix\Crm\Entity\Traits\UserFieldPreparer;
+use Bitrix\Crm\History\DealStageHistoryEntry;
+use Bitrix\Crm\Integration\Channel\DealChannelBinding;
+use Bitrix\Crm\Integration\PullManager;
+use Bitrix\Crm\Kanban\ViewMode;
 use Bitrix\Crm\Settings\DealSettings;
 use Bitrix\Crm\Settings\HistorySettings;
-use Bitrix\Crm\History\DealStageHistoryEntry;
-use Bitrix\Crm\Statistics\DealSumStatisticEntry;
-use Bitrix\Crm\Statistics\DealInvoiceStatisticEntry;
-use Bitrix\Crm\Statistics\LeadConversionStatisticsEntry;
 use Bitrix\Crm\Statistics\DealActivityStatisticEntry;
-use Bitrix\Crm\Integration\Channel\DealChannelBinding;
+use Bitrix\Crm\Statistics\DealInvoiceStatisticEntry;
+use Bitrix\Crm\Statistics\DealSumStatisticEntry;
+use Bitrix\Crm\Statistics\LeadConversionStatisticsEntry;
+use Bitrix\Crm\Tracking;
 use Bitrix\Crm\UserField\Visibility\VisibilityManager;
-use Bitrix\Crm\Entity\Traits\UserFieldPreparer;
 use Bitrix\Crm\Entity\Traits\EntityFieldsNormalizer;
 use Bitrix\Crm\Reservation\Compatibility\ProductRowReserves;
+use Bitrix\Crm\UtmTable;
 
 class CAllCrmDeal
 {
@@ -2087,7 +2087,7 @@ class CAllCrmDeal
 			}
 			//<-- Statistics & History
 
-			if ($options['DISABLE_TIMELINE_CREATION'] !== 'Y')
+			if (($options['DISABLE_TIMELINE_CREATION'] ?? null) !== 'Y')
 			{
 				if($isRestoration)
 				{
@@ -2102,24 +2102,24 @@ class CAllCrmDeal
 							'CONTACT_BINDINGS' => $contactBindings
 						)
 					);
-
-					CCrmEntityHelper::registerAdditionalTimelineEvents([
-						'entityTypeId' => \CCrmOwnerType::Deal,
-						'entityId' => $ID,
-						'fieldsInfo' => static::GetFieldsInfo(),
-						'previousFields' => [],
-						'currentFields' => $arFields,
-						'previousStageSemantics' => Crm\PhaseSemantics::UNDEFINED,
-						'currentStageSemantics' => $arFields['STAGE_SEMANTIC_ID'] ?? Crm\PhaseSemantics::UNDEFINED,
-						'options' => $options,
-						'bindings' => [
-							'entityTypeId' => \CCrmOwnerType::Contact,
-							'previous' => [],
-							'current' => $contactBindings,
-						]
-					]);
 				}
 			}
+
+			CCrmEntityHelper::registerAdditionalTimelineEvents([
+				'entityTypeId' => \CCrmOwnerType::Deal,
+				'entityId' => $ID,
+				'fieldsInfo' => static::GetFieldsInfo(),
+				'previousFields' => [],
+				'currentFields' => $arFields,
+				'previousStageSemantics' => Crm\PhaseSemantics::UNDEFINED,
+				'currentStageSemantics' => $arFields['STAGE_SEMANTIC_ID'] ?? Crm\PhaseSemantics::UNDEFINED,
+				'options' => $options,
+				'bindings' => [
+					'entityTypeId' => \CCrmOwnerType::Contact,
+					'previous' => [],
+					'current' => $contactBindings,
+				]
+			]);
 
 			\Bitrix\Crm\Counter\Monitor::getInstance()->onEntityAdd(CCrmOwnerType::Deal, $arFields);
 
@@ -2329,7 +2329,11 @@ class CAllCrmDeal
 		if (($ID == false || isset($arFields['TITLE'])) && empty($arFields['TITLE']))
 			$this->LAST_ERROR .= GetMessage('CRM_ERROR_FIELD_IS_MISSING', array('%FIELD_NAME%' => GetMessage('CRM_DEAL_FIELD_TITLE')))."<br />\n";
 
-		if(is_string($arFields['OPPORTUNITY']) && $arFields['OPPORTUNITY'] !== '')
+		if(
+			isset($arFields['OPPORTUNITY']) &&
+			is_string($arFields['OPPORTUNITY']) &&
+			$arFields['OPPORTUNITY'] !== ''
+		)
 		{
 			$arFields['OPPORTUNITY'] = str_replace(array(',', ' '), array('.', ''), $arFields['OPPORTUNITY']);
 			//HACK: MSSQL returns '.00' for zero value
@@ -2443,7 +2447,7 @@ class CAllCrmDeal
 					$ID,
 					$fieldsToCheck,
 					Crm\Attribute\FieldOrigin::UNDEFINED,
-					is_array($options['FIELD_CHECK_OPTIONS']) ? $options['FIELD_CHECK_OPTIONS'] : array()
+					(is_array($options['FIELD_CHECK_OPTIONS'] ?? null) ? $options['FIELD_CHECK_OPTIONS'] : [])
 				);
 
 				$requiredSystemFields = isset($requiredFields[Crm\Attribute\FieldOrigin::SYSTEM])
@@ -2756,7 +2760,7 @@ class CAllCrmDeal
 			}
 		}
 
-		if(isset($arFields['TITLE']) && (!is_string($arFields['TITLE']) || trim($arFields['TITLE']) === ''))
+		if(isset($arFields['TITLE']) && (!is_scalar($arFields['TITLE']) || trim($arFields['TITLE']) === ''))
 		{
 			unset($arFields['TITLE']);
 		}
@@ -3012,99 +3016,100 @@ class CAllCrmDeal
 						}
 					}
 
-					$CCrmEvent = new CCrmEvent();
-					$eventID = $CCrmEvent->Add($arEvent, $this->bCheckPermission);
-					if(is_int($eventID) && $eventID > 0)
+					if ($arEvent['ENTITY_FIELD'] !== 'CONTACT_ID' && $arEvent['ENTITY_FIELD'] !== 'COMPANY_ID')
 					{
-						$fieldID = isset($arEvent['ENTITY_FIELD']) ? $arEvent['ENTITY_FIELD'] : '';
-						if($fieldID === '')
-						{
-							continue;
-						}
+						$CCrmEvent = new CCrmEvent();
+						$eventID = $CCrmEvent->Add($arEvent, $this->bCheckPermission);
+					}
 
-						switch($fieldID)
+					$fieldID = isset($arEvent['ENTITY_FIELD']) ? $arEvent['ENTITY_FIELD'] : '';
+					if($fieldID === '')
+					{
+						continue;
+					}
+
+					switch($fieldID)
+					{
+						case 'STAGE_ID':
 						{
-							case 'STAGE_ID':
-							{
-								$sonetEventData[CCrmLiveFeedEvent::Progress] = array(
-									'TYPE' => CCrmLiveFeedEvent::Progress,
-									'FIELDS' => array(
-										//'EVENT_ID' => $eventID,
-										'TITLE' => GetMessage('CRM_DEAL_EVENT_UPDATE_STAGE'),
-										'MESSAGE' => '',
-										'PARAMS' => array(
-											'START_STATUS_ID' => $arRow['STAGE_ID'],
-											'FINAL_STATUS_ID' => $arFields['STAGE_ID'],
-											'CATEGORY_ID' => intval($arRow['CATEGORY_ID'])
-										)
+							$sonetEventData[CCrmLiveFeedEvent::Progress] = array(
+								'TYPE' => CCrmLiveFeedEvent::Progress,
+								'FIELDS' => array(
+									//'EVENT_ID' => $eventID,
+									'TITLE' => GetMessage('CRM_DEAL_EVENT_UPDATE_STAGE'),
+									'MESSAGE' => '',
+									'PARAMS' => array(
+										'START_STATUS_ID' => $arRow['STAGE_ID'],
+										'FINAL_STATUS_ID' => $arFields['STAGE_ID'],
+										'CATEGORY_ID' => intval($arRow['CATEGORY_ID'])
 									)
-								);
-							}
-							break;
-							case 'ASSIGNED_BY_ID':
-							{
-								$sonetEventData[CCrmLiveFeedEvent::Responsible] = array(
-									'TYPE' => CCrmLiveFeedEvent::Responsible,
-									'FIELDS' => array(
-										//'EVENT_ID' => $eventID,
-										'TITLE' => GetMessage('CRM_DEAL_EVENT_UPDATE_ASSIGNED_BY'),
-										'MESSAGE' => '',
-										'PARAMS' => array(
-											'START_RESPONSIBLE_ID' => $arRow['ASSIGNED_BY_ID'],
-											'FINAL_RESPONSIBLE_ID' => $arFields['ASSIGNED_BY_ID']
-										)
-									)
-								);
-							}
-							break;
-							case 'CONTACT_ID':
-							case 'COMPANY_ID':
-							{
-								if(!isset($sonetEventData[CCrmLiveFeedEvent::Client]))
-								{
-									$oldCompanyID = isset($arRow['COMPANY_ID']) ? intval($arRow['COMPANY_ID']) : 0;
-									$sonetEventData[CCrmLiveFeedEvent::Client] = array(
-										'CODE'=> 'CLIENT',
-										'TYPE' => CCrmLiveFeedEvent::Client,
-										'FIELDS' => array(
-											//'EVENT_ID' => $eventID,
-											'TITLE' => GetMessage('CRM_DEAL_EVENT_UPDATE_CLIENT'),
-											'MESSAGE' => '',
-											'PARAMS' => array(
-												'REMOVED_CLIENT_CONTACT_IDS' => is_array($removedContactIDs)
-													? $removedContactIDs : array(),
-												'ADDED_CLIENT_CONTACT_IDS' => is_array($addedContactIDs)
-													? $addedContactIDs : array(),
-												//Todo: Remove START_CLIENT_CONTACT_ID and FINAL_CLIENT_CONTACT_ID when log template will be ready
-												'START_CLIENT_CONTACT_ID' => is_array($removedContactIDs)
-													&& isset($removedContactIDs[0]) ? $removedContactIDs[0] : 0,
-												'FINAL_CLIENT_CONTACT_ID' => is_array($addedContactIDs)
-													&& isset($addedContactIDs[0]) ? $addedContactIDs[0] : 0,
-												'START_CLIENT_COMPANY_ID' => $oldCompanyID,
-												'FINAL_CLIENT_COMPANY_ID' => isset($arFields['COMPANY_ID']) ? intval($arFields['COMPANY_ID']) : $oldCompanyID
-											)
-										)
-									);
-								}
-							}
-							break;
-							case 'TITLE':
-							{
-								$sonetEventData[CCrmLiveFeedEvent::Denomination] = array(
-									'TYPE' => CCrmLiveFeedEvent::Denomination,
-									'FIELDS' => array(
-										//'EVENT_ID' => $eventID,
-										'TITLE' => GetMessage('CRM_DEAL_EVENT_UPDATE_TITLE'),
-										'MESSAGE' => '',
-										'PARAMS' => array(
-											'START_TITLE' => $arRow['TITLE'],
-											'FINAL_TITLE' => $arFields['TITLE']
-										)
-									)
-								);
-							}
-							break;
+								)
+							);
 						}
+						break;
+						case 'ASSIGNED_BY_ID':
+						{
+							$sonetEventData[CCrmLiveFeedEvent::Responsible] = array(
+								'TYPE' => CCrmLiveFeedEvent::Responsible,
+								'FIELDS' => array(
+									//'EVENT_ID' => $eventID,
+									'TITLE' => GetMessage('CRM_DEAL_EVENT_UPDATE_ASSIGNED_BY'),
+									'MESSAGE' => '',
+									'PARAMS' => array(
+										'START_RESPONSIBLE_ID' => $arRow['ASSIGNED_BY_ID'],
+										'FINAL_RESPONSIBLE_ID' => $arFields['ASSIGNED_BY_ID']
+									)
+								)
+							);
+						}
+						break;
+						case 'CONTACT_ID':
+						case 'COMPANY_ID':
+						{
+							if(!isset($sonetEventData[CCrmLiveFeedEvent::Client]))
+							{
+								$oldCompanyID = isset($arRow['COMPANY_ID']) ? intval($arRow['COMPANY_ID']) : 0;
+								$sonetEventData[CCrmLiveFeedEvent::Client] = array(
+									'CODE'=> 'CLIENT',
+									'TYPE' => CCrmLiveFeedEvent::Client,
+									'FIELDS' => array(
+										//'EVENT_ID' => $eventID,
+										'TITLE' => GetMessage('CRM_DEAL_EVENT_UPDATE_CLIENT'),
+										'MESSAGE' => '',
+										'PARAMS' => array(
+											'REMOVED_CLIENT_CONTACT_IDS' => is_array($removedContactIDs)
+												? $removedContactIDs : array(),
+											'ADDED_CLIENT_CONTACT_IDS' => is_array($addedContactIDs)
+												? $addedContactIDs : array(),
+											//Todo: Remove START_CLIENT_CONTACT_ID and FINAL_CLIENT_CONTACT_ID when log template will be ready
+											'START_CLIENT_CONTACT_ID' => is_array($removedContactIDs)
+												&& isset($removedContactIDs[0]) ? $removedContactIDs[0] : 0,
+											'FINAL_CLIENT_CONTACT_ID' => is_array($addedContactIDs)
+												&& isset($addedContactIDs[0]) ? $addedContactIDs[0] : 0,
+											'START_CLIENT_COMPANY_ID' => $oldCompanyID,
+											'FINAL_CLIENT_COMPANY_ID' => isset($arFields['COMPANY_ID']) ? intval($arFields['COMPANY_ID']) : $oldCompanyID
+										)
+									)
+								);
+							}
+						}
+						break;
+						case 'TITLE':
+						{
+							$sonetEventData[CCrmLiveFeedEvent::Denomination] = array(
+								'TYPE' => CCrmLiveFeedEvent::Denomination,
+								'FIELDS' => array(
+									//'EVENT_ID' => $eventID,
+									'TITLE' => GetMessage('CRM_DEAL_EVENT_UPDATE_TITLE'),
+									'MESSAGE' => '',
+									'PARAMS' => array(
+										'START_TITLE' => $arRow['TITLE'],
+										'FINAL_TITLE' => $arFields['TITLE']
+									)
+								)
+							);
+						}
+						break;
 					}
 				}
 			}
@@ -3565,7 +3570,7 @@ class CAllCrmDeal
 
 			if(!$isSystemAction)
 			{
-				$stageSemanticsId = $arFields['STAGE_SEMANTIC_ID'] ?: $arRow['STAGE_SEMANTIC_ID'];
+				$stageSemanticsId = ($arFields['STAGE_SEMANTIC_ID'] ?? null) ?: $arRow['STAGE_SEMANTIC_ID'];
 				if(Crm\Ml\Scoring::isMlAvailable() && !Crm\PhaseSemantics::isFinal($stageSemanticsId))
 				{
 					Crm\Ml\Scoring::queuePredictionUpdate(CCrmOwnerType::Deal, $ID, [
@@ -5224,6 +5229,16 @@ class CAllCrmDeal
 
 		$connection->query($sql);
 
+		$currentFields = array_merge($fields, [
+			'CATEGORY_ID' => $newCategoryID,
+			'STAGE_ID' => $newStageID,
+		]);
+
+		Bitrix\Crm\Timeline\DealController::getInstance()->onModify($ID, [
+			'PREVIOUS_FIELDS' => $fields,
+			'CURRENT_FIELDS' => $currentFields,
+		]);
+
 		//region Update Permissions
 		$permissionEntityController = Crm\Security\Manager::getEntityController(CCrmOwnerType::Deal);
 		$permissionEntityController->unregister(DealCategory::convertToPermissionEntityType($categoryID), $ID);
@@ -5245,23 +5260,14 @@ class CAllCrmDeal
 
 		$securityRegisterOptions = (new \Bitrix\Crm\Security\Controller\RegisterOptions())
 			->setEntityAttributes($entityAttrs)
-			->setEntityFields(array_merge(
-				$fields,
-				[
-					'CATEGORY_ID' => $newCategoryID,
-					'STAGE_ID' => $newStageID,
-				]
-			))
+			->setEntityFields($currentFields)
 		;
 		$permissionEntityController->register($permissionEntityType, $ID, $securityRegisterOptions);
 
 		\Bitrix\Crm\Counter\Monitor::getInstance()->onEntityUpdate(
 			CCrmOwnerType::Deal,
 			$fields,
-			array_merge($fields, [
-				'CATEGORY_ID' => $newCategoryID,
-				'STAGE_ID' => $newStageID,
-			])
+			$currentFields
 		);
 		//endregion
 		if(!isset($options['REGISTER_STATISTICS']) || $options['REGISTER_STATISTICS'] === true)

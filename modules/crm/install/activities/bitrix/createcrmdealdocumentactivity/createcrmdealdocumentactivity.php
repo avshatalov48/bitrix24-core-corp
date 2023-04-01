@@ -1,11 +1,14 @@
-<?
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+<?php
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 $runtime = CBPRuntime::GetRuntime();
 $runtime->IncludeActivityFile('CreateDocumentActivity');
 
-class CBPCreateCrmDealDocumentActivity
-	extends CBPCreateDocumentActivity
+class CBPCreateCrmDealDocumentActivity extends CBPCreateDocumentActivity
 {
 	public function __construct($name)
 	{
@@ -24,18 +27,24 @@ class CBPCreateCrmDealDocumentActivity
 		$documentService = $this->workflow->GetService('DocumentService');
 
 		$fields = $this->Fields;
-
-		foreach (['BEGINDATE', 'CLOSEDATE'] as $dateFields)
+		if (method_exists($this, 'prepareFieldsValues'))
 		{
-			if (isset($fields[$dateFields]))
+			$fields = $this->prepareFieldsValues($documentType, $fields);
+		}
+		else
+		{
+			foreach (['BEGINDATE', 'CLOSEDATE'] as $dateFields)
 			{
-				$fieldTypeObject = $documentService->getFieldTypeObject($documentType, ['Type' => 'datetime']);
-				if ($fieldTypeObject)
+				if (isset($fields[$dateFields]))
 				{
-					$fields[$dateFields] = $fieldTypeObject->externalizeValue(
-						'Document',
-						$fields[$dateFields]
-					);
+					$fieldTypeObject = $documentService->getFieldTypeObject($documentType, ['Type' => 'datetime']);
+					if ($fieldTypeObject)
+					{
+						$fields[$dateFields] = $fieldTypeObject->externalizeValue(
+							'Document',
+							$fields[$dateFields]
+						);
+					}
 				}
 			}
 		}
@@ -45,28 +54,34 @@ class CBPCreateCrmDealDocumentActivity
 		return CBPActivityExecutionStatus::Closed;
 	}
 
-	public static function ValidateProperties($arTestProperties = array(), CBPWorkflowTemplateUser $user = null)
+	public static function ValidateProperties($arTestProperties = [], CBPWorkflowTemplateUser $user = null)
 	{
 		if (!CModule::IncludeModule('crm'))
 		{
-			return(array('code' => 'NotLoaded', 'module'=> 'crm', 'message'=> GetMessage('BPCDA_MODULE_NOT_LOADED')));
+			return (['code' => 'NotLoaded', 'module' => 'crm', 'message' => GetMessage('BPCDA_MODULE_NOT_LOADED')]);
 		};
 
-		$arErrors = array();
+		$arErrors = [];
 
 		$arDocumentFields = CCrmDocumentDeal::GetDocumentFields('DEAL');
 
-		$arTestFields = isset($arTestProperties['Fields']) && is_array($arTestProperties['Fields']) ? $arTestProperties['Fields'] : array();
+		$arTestFields = isset($arTestProperties['Fields']) && is_array($arTestProperties['Fields'])
+			? $arTestProperties['Fields'] : [];
 		$title = isset($arTestFields['TITLE']) ? $arTestFields['TITLE'] : '';
-		if($title === '')
+		if ($title === '')
 		{
-			$arErrors[] = array('code' => 'NotExist', 'parameter' => 'TITLE', 'message' => GetMessage('BPCDA_FIELD_NOT_FOUND', array('#NAME#' => $arDocumentFields['TITLE']['Name'])));
+			$arErrors[] = [
+				'code' => 'NotExist',
+				'parameter' => 'TITLE',
+				'message' => GetMessage('BPCDA_FIELD_NOT_FOUND', ['#NAME#' => $arDocumentFields['TITLE']['Name']]),
+			];
 		}
 
 		return array_merge($arErrors, parent::ValidateProperties($arTestProperties, $user));
 	}
 
-	public static function GetPropertiesDialog($documentType, $activityName, $arWorkflowTemplate, $arWorkflowParameters, $arWorkflowVariables, $arCurrentValues = null, $formName = "", $popupWindow = null)
+	public static function GetPropertiesDialog($documentType, $activityName, $arWorkflowTemplate, $arWorkflowParameters,
+		$arWorkflowVariables, $arCurrentValues = null, $formName = "", $popupWindow = null)
 	{
 		if (!CModule::IncludeModule('crm'))
 		{
@@ -74,10 +89,12 @@ class CBPCreateCrmDealDocumentActivity
 		};
 
 		$documentType = \CCrmBizProcHelper::ResolveDocumentType(\CCrmOwnerType::Deal);
-		return parent::GetPropertiesDialog($documentType, $activityName, $arWorkflowTemplate, $arWorkflowParameters, $arWorkflowVariables, $arCurrentValues, $formName, $popupWindow);
+		return parent::GetPropertiesDialog($documentType, $activityName, $arWorkflowTemplate, $arWorkflowParameters,
+			$arWorkflowVariables, $arCurrentValues, $formName, $popupWindow);
 	}
 
-	public static function GetPropertiesDialogValues($documentType, $activityName, &$arWorkflowTemplate, &$arWorkflowParameters, &$arWorkflowVariables, $arCurrentValues, &$arErrors)
+	public static function GetPropertiesDialogValues($documentType, $activityName, &$arWorkflowTemplate,
+		&$arWorkflowParameters, &$arWorkflowVariables, $arCurrentValues, &$arErrors)
 	{
 		if (!CModule::IncludeModule('crm'))
 		{
@@ -85,6 +102,7 @@ class CBPCreateCrmDealDocumentActivity
 		};
 
 		$documentType = \CCrmBizProcHelper::ResolveDocumentType(\CCrmOwnerType::Deal);
-		return parent::GetPropertiesDialogValues($documentType, $activityName, $arWorkflowTemplate, $arWorkflowParameters, $arWorkflowVariables, $arCurrentValues, $arErrors);
+		return parent::GetPropertiesDialogValues($documentType, $activityName, $arWorkflowTemplate,
+			$arWorkflowParameters, $arWorkflowVariables, $arCurrentValues, $arErrors);
 	}
 }

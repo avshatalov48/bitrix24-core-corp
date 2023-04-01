@@ -1808,11 +1808,11 @@ class Chat
 	 * @param $messageId
 	 * @return bool
 	 */
-	public function startSessionByMessage($userId, $messageId)
+	public function startSessionByMessage($userId, $messageId): bool
 	{
 		$result = false;
 
-		if($this->isDataLoaded())
+		if ($this->isDataLoaded())
 		{
 			$keyLock = self::PREFIX_KEY_LOCK_NEW_SESSION . $this->chat['ENTITY_ID'];
 
@@ -1825,8 +1825,8 @@ class Chat
 					'USER_CODE' => $this->chat['ENTITY_ID']
 				]);
 				if (
-					$resultLoad &&
-					$this->validationAction($session->getData('CHAT_ID'))
+					$resultLoad
+					&& $this->validationAction($session->getData('CHAT_ID'))
 				)
 				{
 					$message = \CIMMessenger::GetById($messageId);
@@ -1847,15 +1847,15 @@ class Chat
 
 						$session->finish(false, true, false);
 
-						$session = new Session();
-						$session->setChat($this);
+						$newSession = new Session();
+						$newSession->setChat($this);
 
-						$session->load([
+						$newSession->load([
 							'USER_CODE' => $this->chat['ENTITY_ID'],
 							'MODE' => Session::MODE_OUTPUT,
 							'OPERATOR_ID' => $userId,
 							'CONFIG_ID' => $configId,
-							'PARENT_ID' => $sessionId
+							'PARENT_ID' => $sessionId,
 						]);
 
 						if ($this->chat['AUTHOR_ID'] == $userId)
@@ -1866,8 +1866,7 @@ class Chat
 						{
 							$resultAnswer = $this->answer($userId, false, true)->isSuccess();
 						}
-
-						if($resultAnswer)
+						if ($resultAnswer)
 						{
 							Im::addMessage([
 								'TO_CHAT_ID' => $this->chat['ID'],
@@ -1884,7 +1883,13 @@ class Chat
 								'CHECK_DATE_CLOSE' => $dateClose,
 								'DATE_FIRST_LAST_USER_ACTION' => $dateFirstLastUserAction
 							];
-							$session->update($sessionUpdate);
+
+							if ($session->getData('EXTRA_TARIFF'))
+							{
+								$sessionUpdate['EXTRA_TARIFF'] = $session->getData('EXTRA_TARIFF');
+							}
+
+							$newSession->update($sessionUpdate);
 
 							$result = true;
 						}

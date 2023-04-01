@@ -4,6 +4,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)	die();
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
+use Bitrix\Main\Web\Uri;
 
 Extension::load(["ui.icons", "ui.hint", "ui.fonts.opensans"]);
 
@@ -14,7 +15,7 @@ function getUserLayout($userName, $userIcon)
 	return
 		'<div class="telephony-report-missed-reaction-grid-user">
 			<div class="ui-icon ui-icon-common-user telephony-report-missed-reaction-grid-user-icon">
-				<i '. ($userIcon ? 'style="background-image: url(\''. $userIcon . '\')" ' : ''). '></i>
+				<i '. ($userIcon ? 'style="background-image: url(\''. Uri::urnEncode($userIcon) . '\')" ' : ''). '></i>
 			</div>
 			<div class="telephony-report-missed-reaction-grid-user-name">
 				' . htmlspecialcharsbx($userName) . '

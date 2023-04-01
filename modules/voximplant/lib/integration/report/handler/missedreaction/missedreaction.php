@@ -6,6 +6,7 @@ use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ObjectException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\ORM\Fields\ExpressionField;
+use Bitrix\Main\ORM\Fields\Relations\Reference;
 use Bitrix\Main\ORM\Query\Join;
 use Bitrix\Main\ORM\Query\Query;
 use Bitrix\Main\Entity\ReferenceField;
@@ -14,6 +15,7 @@ use Bitrix\Main\Type\DateTime;
 use Bitrix\Report\VisualConstructor\IReportMultipleData;
 use Bitrix\Voximplant\Model\StatisticMissedTable;
 use Bitrix\Voximplant\Integration\Report\Handler\Base;
+use Bitrix\Voximplant\StatisticTable;
 
 /**
  * Class MissedReaction
@@ -148,35 +150,47 @@ class MissedReaction extends Base implements IReportMultipleData
 	 */
 	public function prepareEntityListFilter($requestParameters): Query
 	{
-		$query = StatisticMissedTable::query();
+		$missedReactionQuery = StatisticMissedTable::query();
 		$fields = StatisticMissedTable::getEntity()->getScalarFields();
 
 		foreach ($fields as $field)
 		{
-			$query->addSelect($field->getName());
+			$missedReactionQuery->addSelect($field->getName());
 		}
 
 		$requestFilter = $requestParameters->toArray();
 		if ($requestFilter['UNANSWERED'] === 'Y')
 		{
-			$query->registerRuntimeField(new ExpressionField(
+			$missedReactionQuery->registerRuntimeField(new ExpressionField(
 				'UNANSWERED',
 				"if(DATE_SUB(%s, INTERVAL 24 HOUR) <= %s, 'N', 'Y')",
 				['CALLBACK_CALL_START_DATE', 'CALL_START_DATE'])
 			);
 
-			$query->where('UNANSWERED', '=', 'Y');
+			$missedReactionQuery->where('UNANSWERED', '=', 'Y');
 		}
 
 		$sliderFilterParameters = $this->mergeRequestWithReportFilter($requestFilter);
 
-		$this->addToQueryFilterCase($query, $sliderFilterParameters);
+		$this->addToQueryFilterCase($missedReactionQuery, $sliderFilterParameters);
 
-		$query->whereBetween(
+		$missedReactionQuery->whereBetween(
 			'CALL_START_DATE',
 			DateTime::createFromUserTime($sliderFilterParameters['TIME_PERIOD_from']),
 			DateTime::createFromUserTime($sliderFilterParameters['TIME_PERIOD_to'])
 		);
+
+		//The calling code expects that this method will return a query to StatisticTable
+		// and can add filters to its fields.
+		// @see CVoximplantStatisticDetailComponent createReportSliderQuery
+		$query = StatisticTable::query();
+		$query->setSelect(['ID']);
+		$query->registerRuntimeField(new Reference(
+			'STATISTIC_MISSED',
+			\Bitrix\Main\Entity\Base::getInstanceByQuery($missedReactionQuery),
+			Join::on('this.ID', 'ref.ID'),
+			['join_type' => Join::TYPE_INNER]
+		));
 
 		return $query;
 	}

@@ -16,6 +16,7 @@ class EntityCounterPanel extends CounterPanel
 
 	#id: String;
 	#entityTypeId: Number;
+	#entityTypeName: String;
 	#userId: Number;
 	#userName: String;
 	#codes: Array;
@@ -45,6 +46,7 @@ class EntityCounterPanel extends CounterPanel
 
 		this.#id = options.id;
 		this.#entityTypeId = options.entityTypeId ? Text.toInteger(options.entityTypeId) : 0;
+		this.#entityTypeName = options.entityTypeName;
 		this.#userId = options.userId ? Text.toInteger(options.userId) : 0;
 		this.#userName = Type.isStringFilled(options.userName) ? options.userName : this.#userId;
 		this.#codes = Type.isArray(options.codes) ? options.codes : [];
@@ -170,13 +172,6 @@ class EntityCounterPanel extends CounterPanel
 		const typeId = parseInt(this.#data[item.id].TYPE_ID, 10);
 		if (typeId > 0)
 		{
-			const eventArgs = {
-				userId: isOtherUsersFilter ? EntityCounterFilterManager.FILTER_OTHER_USERS : this.#userId.toString(),
-				userName: isOtherUsersFilter ? Loc.getMessage('NEW_CRM_COUNTER_TYPE_OTHER') : this.#userName,
-				counterTypeId: this.#prepareFilterTypeId(typeId),
-				cancel: false
-			};
-
 			if (this.#filterManager.isActive())
 			{
 				const filteredFields = this.#filterManager.getFields(true);
@@ -191,11 +186,25 @@ class EntityCounterPanel extends CounterPanel
 					BX.userOptions.save('crm', this.#filterLastPresetId, '', JSON.stringify(this.#filterLastPreset));
 				}
 
-				BX.onCustomEvent(window, 'BX.CrmEntityCounterPanel:applyFilter', [this, eventArgs]);
-				if (eventArgs.cancel)
-				{
-					return false;
-				}
+				// BX.onCustomEvent(window, 'BX.CrmEntityCounterPanel:applyFilter', [this, eventArgs]);
+
+				const userId = isOtherUsersFilter ? EntityCounterFilterManager.FILTER_OTHER_USERS : this.#userId.toString();
+				const userName = isOtherUsersFilter ? Loc.getMessage('NEW_CRM_COUNTER_TYPE_OTHER') : this.#userName;
+				const counterTypeId = this.#prepareFilterTypeId(typeId);
+
+
+				const api = this.#filterManager.getApi();
+
+				const fields = {
+					"ASSIGNED_BY_ID": { 0: userId },
+					"ASSIGNED_BY_ID_label": [ userName ],
+					"ACTIVITY_COUNTER": BX.Type.isPlainObject(counterTypeId)
+						? counterTypeId
+						: { 0: counterTypeId }
+				};
+
+				api.setFields(fields);
+				api.apply({'COUNTER': this.#makeFilterAnalyticsLabel(counterTypeId)});
 			}
 			else
 			{
@@ -204,6 +213,16 @@ class EntityCounterPanel extends CounterPanel
 		}
 
 		return true;
+	}
+
+	// entityTypeName
+	#makeFilterAnalyticsLabel(counterTypeId: Object | string): string
+	{
+		if (this.#entityTypeName && counterTypeId)
+		{
+			return 'CRM_' + this.#entityTypeName + '_COUNTER_TYPE_' + counterTypeId;
+		}
+		return '';
 	}
 
 	#prepareFilterTypeId(typeId: Number): Object

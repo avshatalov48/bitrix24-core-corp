@@ -886,7 +886,7 @@ class CIntranetUserListComponent extends UserList
 				$result['!UF_DEPARTMENT'] = false;
 			}
 		}
-		elseif (in_array($gridFilter['PRESET_ID'], ['company', 'employees']))
+		elseif (isset($gridFilter['PRESET_ID']) && in_array($gridFilter['PRESET_ID'], ['company', 'employees']))
 		{
 			$result['!UF_DEPARTMENT'] = false;
 		}
@@ -906,7 +906,8 @@ class CIntranetUserListComponent extends UserList
 			}
 		}
 		elseif (
-			$gridFilter['PRESET_ID'] === 'company'
+			(isset($gridFilter['PRESET_ID'])
+				&& $gridFilter['PRESET_ID'] === 'company')
 			|| !Filter\UserDataProvider::getInvitedAvailability()
 		)
 		{
@@ -1486,12 +1487,12 @@ class CIntranetUserListComponent extends UserList
 		$result['ROWS'] = [];
 
 		$gridFilter = $filterOptions->getFilter($result['FILTER']);
+		$gridFilter['EXTRANET'] = $gridFilter['EXTRANET'] ?? null;
+		$gridFilter['DEPARTMENT'] = $gridFilter['DEPARTMENT'] ?? null;
+		$gridFilter['PRESET_ID'] = $gridFilter['PRESET_ID'] ?? null;
 
 		$result['PROCESS_EXTRANET'] = (
-			(
-				isset($gridFilter['EXTRANET'])
-				&& in_array($gridFilter['EXTRANET'], ['Y', 'N'])
-			)
+			in_array($gridFilter['EXTRANET'], ['Y', 'N'])
 			|| !empty($gridFilter['DEPARTMENT'])
 			|| in_array($gridFilter['PRESET_ID'], ['company', 'employees'])
 				? 'N'

@@ -630,7 +630,9 @@ class CCrmCurrency
 			$dec = intval($formatInfo['DECIMALS']);
 
 			$sum = str_replace(',', '.', strval($sum));
-			list($i, $d) = explode('.', $sum, 2);
+			$sumArr = explode('.', $sum, 2);
+			$i = $sumArr[0] ?? null;
+			$d = $sumArr[1] ?? null;
 
 			$len = mb_strlen($i);
 			$leadLen = $len % 3;
@@ -656,7 +658,7 @@ class CCrmCurrency
 		}
 
 		$formatStr = strval($formatStr);
-		if($formatStr === '' && $formatInfo['FORMAT_STRING'] !== '')
+		if($formatStr === '' && ($formatInfo['FORMAT_STRING'] ?? '') !== '')
 		{
 			$formatStr = $formatInfo['FORMAT_STRING'];
 		}

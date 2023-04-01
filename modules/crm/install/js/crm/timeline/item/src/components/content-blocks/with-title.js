@@ -1,3 +1,5 @@
+import {Dom} from "main.core";
+
 export default {
 	props: {
 		title: String,
@@ -13,11 +15,25 @@ export default {
 			}
 		}
 	},
+	methods: {
+		isTitleCropped() {
+			const titleElem: Element = this.$refs.title;
 
+			return titleElem.scrollWidth > titleElem.clientWidth;
+		},
+	},
+	mounted() {
+		this.$nextTick(() => {
+			if (this.isTitleCropped())
+			{
+				Dom.attr(this.$refs.title, 'title', this.title);
+			}
+		});
+	},
 	template:
 		`
 			<div :class="className">
-				<div class="crm-timeline__card-container_info-title">{{ title }}</div>
+				<div ref="title" class="crm-timeline__card-container_info-title">{{ title }}</div>
 				<div class="crm-timeline__card-container_info-value">
 					<component :is="contentBlock.rendererName" v-bind="contentBlock.properties"></component>
 				</div>

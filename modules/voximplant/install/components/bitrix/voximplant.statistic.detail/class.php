@@ -7,6 +7,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ORM\Entity;
 use Bitrix\Main\UI\Filter\NumberType;
+use Bitrix\Main\Web\Uri;
 use Bitrix\Voximplant;
 use Bitrix\Voximplant\Security\Permissions;
 use Bitrix\Voximplant\Security\Helper;
@@ -851,7 +852,7 @@ class CVoximplantStatisticDetailComponent extends \CBitrixComponent implements \
 			$userHtml = '<span class="tel-stat-user-name-container">';
 			if ($this->userData[$userId]["PHOTO"])
 			{
-				$userHtml .= '<span class="ui-icon ui-icon-sm"><i style="background: url(\'' . $this->userData[$userId]["PHOTO"] . '\') no-repeat center;\"></i></span>';
+				$userHtml .= '<span class="ui-icon ui-icon-sm"><i style="background: url(\'' . Uri::urnEncode($this->userData[$userId]["PHOTO"]) . '\') no-repeat center;\"></i></span>';
 			}
 			else
 			{

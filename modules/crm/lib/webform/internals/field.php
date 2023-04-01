@@ -10,6 +10,7 @@ namespace Bitrix\Crm\WebForm\Internals;
 use Bitrix\Main\Entity;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm\WebForm\Helper;
+use Bitrix\Main\ORM\Fields\ArrayField;
 
 Loc::loadMessages(__FILE__);
 
@@ -84,10 +85,28 @@ class FieldTable extends Entity\DataManager
 			'CAPTION' => array(
 				'data_type' => 'string',
 			),
-			'ITEMS' => array(
-				'data_type' => 'text',
-				'serialized' => true
-			),
+			(new ArrayField('ITEMS'))
+				->configureSerializeCallback(static function($value) {
+					if (!is_array($value))
+					{
+						$value = [];
+					}
+
+					return serialize($value);
+				})
+				->configureUnserializeCallback(static function($value) {
+					try
+					{
+						$result = @unserialize($value, ['allowed_classes' => false]);
+					}
+					catch (\ErrorException $exception)
+					{
+						$result = [];
+					}
+
+					return is_array($result) ? $result : [];
+				})
+			,
 			'FORM_ID' => array(
 				'data_type' => 'integer',
 				'required' => true,

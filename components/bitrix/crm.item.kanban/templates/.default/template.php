@@ -40,24 +40,16 @@ $this->getComponent()->addToolbar($this);
 </div>
 
 <?php
-//$APPLICATION->IncludeComponent(
-//	'bitrix:crm.kanban.filter',
-//	'',
-//	[
-//		'ENTITY_TYPE' => $arResult['entityTypeName'],
-//	],
-//	$component,
-//	['HIDE_ICONS' => true]
-//);
 
 $APPLICATION->IncludeComponent(
 	'bitrix:crm.kanban',
 	'',
 	[
 		'ENTITY_TYPE' => $arResult['entityTypeName'],
-		'SHOW_ACTIVITY' => 'N',
+		'SHOW_ACTIVITY' => $arResult['isCountersEnabled'] ? 'Y' : 'N',
 		'EXTRA' => [
 			'CATEGORY_ID' => $arResult['categoryId'],
+			'ADD_ITEM_PERMITTED_BY_TARIFF' => $arResult['addItemPermittedByTariff']
 		],
 		'HEADERS_SECTIONS' => [
 			[

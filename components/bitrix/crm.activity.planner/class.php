@@ -287,7 +287,7 @@ class CrmActivityPlannerComponent extends \Bitrix\Crm\Component\Base
 
 		$this->arParams['PATH_TO_DEAL_DETAILS'] = \CrmCheckPath(
 			'PATH_TO_DEAL_DETAILS',
-			$this->arParams['PATH_TO_DEAL_DETAILS'],
+			$this->arParams['PATH_TO_DEAL_DETAILS'] ?? '',
 			$APPLICATION->getCurPage().'?deal_id=#deal_id#&details'
 		);
 
@@ -721,7 +721,7 @@ class CrmActivityPlannerComponent extends \Bitrix\Crm\Component\Base
 			return 'meet';
 		if ($activity['TYPE_ID'] == \CCrmActivityType::Email)
 		{
-			return $activity['DIRECTION'] == \CCrmActivityDirection::Outgoing ? 'mail' : 'mail-send';
+			return ($activity['DIRECTION'] ?? null) == \CCrmActivityDirection::Outgoing ? 'mail' : 'mail-send';
 		}
 
 		if ($activity['PROVIDER_ID'] == 'CRM_EXTERNAL_CHANNEL')
@@ -934,7 +934,10 @@ class CrmActivityPlannerComponent extends \Bitrix\Crm\Component\Base
 				array(
 					'id' => 'U'.$activity['RESPONSIBLE_ID'],
 					'entityId' => $activity['RESPONSIBLE_ID'],
-					'name' => CCrmViewHelper::GetFormattedUserName($activity['RESPONSIBLE_ID'], $this->arParams['NAME_TEMPLATE']),
+					'name' => CCrmViewHelper::GetFormattedUserName(
+						$activity['RESPONSIBLE_ID'],
+						$this->arParams['NAME_TEMPLATE'] ?? null
+					),
 					'entityType' => 'users'
 				)
 			)

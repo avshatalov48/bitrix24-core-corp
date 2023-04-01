@@ -54,7 +54,7 @@ class ContactBinder extends BaseBinder
 					$fields,
 					false,
 					false,
-					$this->getUpdateOptions((int)$associatedEntityTypeID, [$associatedEntityID]),
+					$this->getUnbindUpdateOptions((int)$associatedEntityTypeID, [$associatedEntityID]),
 				);
 			}
 		}
@@ -87,9 +87,8 @@ class ContactBinder extends BaseBinder
 				$entity->Update(
 					$entityID,
 					$fields,
+					true,
 					false,
-					false,
-					$this->getUpdateOptions((int)$associatedEntityTypeID, [$associatedEntityID]),
 				);
 			}
 		}
@@ -122,9 +121,8 @@ class ContactBinder extends BaseBinder
 			$entity->Update(
 				$entityID,
 				$fields,
+				true,
 				false,
-				false,
-				$this->getUpdateOptions((int)$associatedEntityTypeID, $associatedEntityIDs),
 			);
 		}
 		else

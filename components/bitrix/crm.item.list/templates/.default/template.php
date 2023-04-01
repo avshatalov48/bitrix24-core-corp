@@ -31,7 +31,7 @@ if($this->getComponent()->getErrors())
 
 	return;
 }
-echo CCrmViewHelper::RenderItemStatusSettings($arParams['entityTypeId'], $arParams['categoryId']);
+echo CCrmViewHelper::RenderItemStatusSettings($arParams['entityTypeId'], ($arParams['categoryId'] ?? null));
 /** @see \Bitrix\Crm\Component\Base::addTopPanel() */
 $this->getComponent()->addTopPanel($this);
 

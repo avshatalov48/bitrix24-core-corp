@@ -71,7 +71,7 @@ class CompanyGrowthStatisticEntry
 		}
 
 		$responsibleID = isset($entityFields['ASSIGNED_BY_ID']) ? (int)$entityFields['ASSIGNED_BY_ID'] : 0;
-		$date = new DateTime($entityFields['DATE_CREATE']);
+		$date = new DateTime($entityFields['DATE_CREATE'] ?? null);
 		$date->setTime(0, 0, 0);
 
 		$present = self::get($ownerID, $date);

@@ -1,10 +1,16 @@
 <?php
 namespace Bitrix\Crm\Filter;
 
-use Bitrix\Crm\Counter\EntityCounterType;
+use Bitrix\Crm\Counter\EntityCounter;
+use Bitrix\Crm\Counter\EntityCounterFactory;
+use Bitrix\Crm\Entity\EntityBase;
+use Bitrix\Crm\Entity\EntityManager;
+use Bitrix\Crm\Filter\Activity\PrepareActivityFilter;
+use Bitrix\Crm\Filter\Activity\PrepareResult;
 use Bitrix\Crm\Search\SearchContentBuilderFactory;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main;
+use Bitrix\Main\DI\ServiceLocator;
 
 abstract class EntityDataProvider extends Main\Filter\EntityDataProvider
 {
@@ -66,96 +72,21 @@ abstract class EntityDataProvider extends Main\Filter\EntityDataProvider
 
 	public function applyCounterFilter(int $entityTypeId, array &$filterFields, array $extras = []): void
 	{
-		if (!isset($filterFields['ACTIVITY_COUNTER']))
-		{
-			if (isset($filterFields['ASSIGNED_BY_ID']) && is_array($filterFields['ASSIGNED_BY_ID']))
-			{
-				if ($this->isAllUsers($filterFields['ASSIGNED_BY_ID']))
-				{
-					unset($filterFields['ASSIGNED_BY_ID']);
-				}
-				elseif ($this->isOtherUsers($filterFields['ASSIGNED_BY_ID']))
-				{
-					$filterFields['!ASSIGNED_BY_ID'] = Container::getInstance()->getContext()->getUserId();
-					unset($filterFields['ASSIGNED_BY_ID']);
-				}
-			}
+		/** @var PrepareActivityFilter $prepareFilter */
+		$prepareFilter = ServiceLocator::getInstance()->get('crm.lib.filter.activity.prepareactivityfilter');
 
+		$prepareResult = $prepareFilter->prepare($filterFields);
+		$filterFields = $prepareResult->filter();
+
+		if (!$prepareResult->willApplyCounterFilter())
+		{
 			return;
-		}
-
-		if(is_array($filterFields['ACTIVITY_COUNTER']))
-		{
-			$counterTypeId = \Bitrix\Crm\Counter\EntityCounterType::joinType(
-				array_filter($filterFields['ACTIVITY_COUNTER'], function ($value) {
-					return is_numeric($value) && EntityCounterType::isDefined($value);
-				})
-			);
-			if ($counterTypeId <= 0)
-			{
-				return;
-			}
-		}
-		else
-		{
-			$counterTypeId = (int)$filterFields['ACTIVITY_COUNTER'];
-			if (!EntityCounterType::isDefined($counterTypeId))
-			{
-				return;
-			}
-		}
-		unset($filterFields['ACTIVITY_COUNTER']);
-
-		$counterUserIds = [];
-		$excludeUsers = false;
-		if(isset($filterFields['ASSIGNED_BY_ID']))
-		{
-			if (is_array($filterFields['ASSIGNED_BY_ID']))
-			{
-				if ($this->isAllUsers($filterFields['ASSIGNED_BY_ID']))
-				{
-					$counterUserIds = [];
-					unset($filterFields['ASSIGNED_BY_ID']);
-				}
-				elseif ($this->isOtherUsers($filterFields['ASSIGNED_BY_ID']))
-				{
-					$counterUserIds[] = Container::getInstance()->getContext()->getUserId();
-					$excludeUsers = true;
-					unset($filterFields['ASSIGNED_BY_ID']);
-				}
-				else
-				{
-					$counterUserIds = array_filter($filterFields['ASSIGNED_BY_ID'], 'is_numeric');
-				}
-			}
-			elseif($filterFields['ASSIGNED_BY_ID'] > 0)
-			{
-				$counterUserIds[] = $filterFields['ASSIGNED_BY_ID'];
-			}
 		}
 
 		try
 		{
-			$counter = \Bitrix\Crm\Counter\EntityCounterFactory::create(
-				$entityTypeId,
-				$counterTypeId,
-				0,
-				array_merge($extras, $this->getCounterExtras()),
-			);
-
-			$entity = \Bitrix\Crm\Entity\EntityManager::resolveByTypeID($entityTypeId);
-			if ($entity)
-			{
-				$filterFields += $counter->prepareEntityListFilter(
-					[
-						'MASTER_ALIAS' => $entity->getDbTableAlias(),
-						'MASTER_IDENTITY' => 'ID',
-						'USER_IDS' => $counterUserIds,
-						'EXCLUDE_USERS' => $excludeUsers,
-					]
-				);
-				unset($filterFields['ASSIGNED_BY_ID']);
-			}
+			$counter = $this->getCounter($entityTypeId, $prepareResult->counterTypeId(), $extras);
+			$this->prepareFilterFields($filterFields, $entityTypeId, $counter, $prepareResult);
 		}
 		catch(\Bitrix\Main\NotSupportedException $e)
 		{
@@ -165,33 +96,73 @@ abstract class EntityDataProvider extends Main\Filter\EntityDataProvider
 		}
 	}
 
-	private function isAllUsers(array $assignedFilter): bool
+	protected function getCounter(int $entityTypeId, int $counterTypeId, array $extras): EntityCounter
 	{
-		return (
-			in_array('all-users', $assignedFilter, true)
-			|| (
-				in_array('other-users', $assignedFilter, true)
-				&& $this->isCurrentUserInFilter($assignedFilter)
-			)
-		);
+		$extras = array_merge($extras, $this->getCounterExtras());
+
+		return EntityCounterFactory::create($entityTypeId, $counterTypeId, 0, $extras);
 	}
 
-	private function isOtherUsers(array $assignedFilter): bool
+	protected function prepareFilterFields(
+		array &$filterFields,
+		int $entityTypeId,
+		EntityCounter $counter,
+		PrepareResult $prepareResult
+	): void
 	{
-		return (
-			in_array('other-users', $assignedFilter, true)
-			&& !$this->isCurrentUserInFilter($assignedFilter)
-		);
+		if ($this instanceof ItemDataProvider)
+		{
+			$this->prepareFilterFieldsWithFactory($filterFields, $counter, $prepareResult);
+			return;
+		}
+
+		$entity = EntityManager::resolveByTypeID($entityTypeId);
+		if ($entity)
+		{
+			if ($this instanceof FactoryOptionable && $this->isForceUseFactory())
+			{
+				$this->prepareFilterFieldsWithFactory($filterFields, $counter, $prepareResult);
+				return;
+			}
+
+			$this->prepareFilterFieldsWithoutFactory($entity, $filterFields, $counter, $prepareResult);
+		}
 	}
 
-	private function isCurrentUserInFilter(array $assignedFilter): bool
+	protected function prepareFilterFieldsWithFactory(
+		array &$filterFields,
+		EntityCounter $counter,
+		PrepareResult $prepareResult
+	): void
 	{
-		$currentUserId = Container::getInstance()->getContext()->getUserId();
-
-		return (
-			$currentUserId > 0
-			&& in_array($currentUserId, $assignedFilter, false)
+		$activitySubQuery = $counter->getEntityListSqlExpression(
+			[
+				'MASTER_ALIAS' => null,
+				'MASTER_IDENTITY' => null,
+				'USER_IDS' => $prepareResult->counterUserIds(),
+				'EXCLUDE_USERS' => $prepareResult->isExcludeUsers(),
+			]
 		);
+		$filterFields[] = ['@ID' => new \Bitrix\Main\DB\SqlExpression($activitySubQuery)];
+		unset($filterFields['ASSIGNED_BY_ID']);
+	}
+
+	protected function prepareFilterFieldsWithoutFactory(
+		EntityBase $entity,
+		array &$filterFields,
+		EntityCounter $counter,
+		PrepareResult $prepareResult
+	): void
+	{
+		$filterFields += $counter->prepareEntityListFilter(
+			[
+				'MASTER_ALIAS' => $entity->getDbTableAlias(),
+				'MASTER_IDENTITY' => 'ID',
+				'USER_IDS' => $prepareResult->counterUserIds(),
+				'EXCLUDE_USERS' => $prepareResult->isExcludeUsers(),
+			]
+		);
+		unset($filterFields['ASSIGNED_BY_ID']);
 	}
 
 	protected function applySettingsDependantFilter(array &$filterFields): void

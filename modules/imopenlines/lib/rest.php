@@ -1129,7 +1129,14 @@ class Rest extends \IRestService
 		}
 	}
 
-	public function widgetOperatorGet($params, $n, \CRestServer $server)
+	/**
+	 * @param array $params
+	 * @param int $n
+	 * @param \CRestServer $server
+	 * @return array
+	 * @throws RestException
+	 */
+	public static function widgetOperatorGet($params, $n, \CRestServer $server)
 	{
 		$params = array_change_key_case($params, CASE_UPPER);
 

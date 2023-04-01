@@ -261,6 +261,16 @@ this.BX = this.BX || {};
 	        });
 	      }
 
+	      var realizationMenuItem = this._getRealizationMenuItem(main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_CREATE_REALIZATION'), function () {
+	        return _this3._createRealizationSlider({
+	          paymentId: doc.ID
+	        });
+	      });
+
+	      if (realizationMenuItem) {
+	        menuItems.push(realizationMenuItem);
+	      }
+
 	      menuItems.push({
 	        text: main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_RESEND'),
 	        onclick: function onclick() {
@@ -552,8 +562,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "_renderAddDocument",
 	    value: function _renderAddDocument() {
-	      var _this6 = this,
-	          _this$_salesOrderRigh6;
+	      var _this6 = this;
 
 	      var latestOrderId = this._latestOrderId();
 
@@ -573,26 +582,14 @@ this.BX = this.BX || {};
 	        });
 	      }
 
-	      var isAvailableInventoryManagement = this._isUsedInventoryManagement && !this._isWithOrdersMode;
+	      var realizationMenuItem = this._getRealizationMenuItem(main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_DOCUMENT_TYPE_SHIPMENT_DOCUMENT'), function () {
+	        return _this6._createRealizationSlider({
+	          orderId: latestOrderId
+	        });
+	      });
 
-	      if (isAvailableInventoryManagement && (_this$_salesOrderRigh6 = this._salesOrderRights) !== null && _this$_salesOrderRigh6 !== void 0 && _this$_salesOrderRigh6.modify) {
-	        var menuItem = {
-	          text: main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_DOCUMENT_TYPE_SHIPMENT_DOCUMENT')
-	        };
-
-	        if (this._isInventoryManagementRestricted) {
-	          menuItem.onclick = function () {
-	            return top.BX.UI.InfoHelper.show('limit_store_crm_integration');
-	          };
-
-	          menuItem.className = 'realization-document-tariff-lock';
-	        } else {
-	          menuItem.onclick = function () {
-	            return _this6._createRealizationSlider(latestOrderId);
-	          };
-	        }
-
-	        menuItems.push(menuItem);
+	      if (realizationMenuItem) {
+	        menuItems.push(realizationMenuItem);
 	      }
 
 	      var openMenu = function openMenu(event) {
@@ -608,6 +605,33 @@ this.BX = this.BX || {};
 	      };
 
 	      return main_core.Tag.render(_templateObject8 || (_templateObject8 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-widget-payment-add-box\">\n\t\t\t\t<a href=\"#\" class=\"crm-entity-widget-payment-add\" onclick=\"", "\">\n\t\t\t\t\t+ ", "\n\t\t\t\t</a>\n\t\t\t</div>\n\t\t"])), openMenu, main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_CREATE_DOCUMENT'));
+	    }
+	  }, {
+	    key: "_getRealizationMenuItem",
+	    value: function _getRealizationMenuItem(text, onclick) {
+	      var _this$_salesOrderRigh6;
+
+	      var isAvailableInventoryManagement = this._isUsedInventoryManagement && !this._isWithOrdersMode;
+
+	      if (isAvailableInventoryManagement && (_this$_salesOrderRigh6 = this._salesOrderRights) !== null && _this$_salesOrderRigh6 !== void 0 && _this$_salesOrderRigh6.modify) {
+	        var menuItem = {
+	          text: text
+	        };
+
+	        if (this._isInventoryManagementRestricted) {
+	          menuItem.onclick = function () {
+	            return top.BX.UI.InfoHelper.show('limit_store_crm_integration');
+	          };
+
+	          menuItem.className = 'realization-document-tariff-lock';
+	        } else {
+	          menuItem.onclick = onclick;
+	        }
+
+	        return menuItem;
+	      }
+
+	      return null;
 	    }
 	  }, {
 	    key: "_renderTotalSum",
@@ -694,7 +718,7 @@ this.BX = this.BX || {};
 	    }
 	  }, {
 	    key: "_createRealizationSlider",
-	    value: function _createRealizationSlider(orderId) {
+	    value: function _createRealizationSlider(createSliderOptions) {
 	      var analyticsLabel = 'crmDealPaymentDocumentsCreateRealizationSlider';
 
 	      if (BX.CrmEntityType.isDynamicTypeByTypeId(this._ownerTypeId())) {
@@ -705,7 +729,8 @@ this.BX = this.BX || {};
 	        context: {
 	          OWNER_TYPE_ID: this._ownerTypeId(),
 	          OWNER_ID: this._options.OWNER_ID,
-	          ORDER_ID: orderId
+	          ORDER_ID: createSliderOptions.orderId || 0,
+	          PAYMENT_ID: createSliderOptions.paymentId || 0
 	        },
 	        analyticsLabel: analyticsLabel,
 	        documentType: 'W',

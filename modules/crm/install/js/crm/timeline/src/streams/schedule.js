@@ -417,19 +417,6 @@ export default class Schedule extends Stream
 						}
 					);
 				}
-				else if(providerId === 'CRM_DELIVERY')
-				{
-					return Activity.create(
-						itemId,
-						{
-							schedule: this,
-							container: this._wrapper,
-							activityEditor: this._activityEditor,
-							data: data,
-							vueComponent: BX.Crm.Timeline.DeliveryActivity,
-						}
-					);
-				}
 				else if(providerId === 'CRM_CALL_TRACKER')
 				{
 					return CallTracker.create(

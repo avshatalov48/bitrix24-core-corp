@@ -23,6 +23,7 @@ $arActivityDescription = [
 			['crm', 'CCrmDocumentLead'],
 			['crm', 'CCrmDocumentDeal'],
 			['crm', 'Bitrix\Crm\Integration\BizProc\Document\Dynamic'],
+			['crm', \Bitrix\Crm\Integration\BizProc\Document\SmartDocument::class],
 		],
 	],
 	'ROBOT_SETTINGS' => [

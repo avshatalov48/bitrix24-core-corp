@@ -310,7 +310,7 @@ class ProductRowSynchronizer implements LoggerAwareInterface
 					(int)$row['PRODUCT_ID'],
 					(float)$row['PRICE'],
 					(float)$row['QUANTITY'],
-					(string)$row['XML_ID']
+					(string) ($row['XML_ID'] ?? null)
 				);
 			}
 		}

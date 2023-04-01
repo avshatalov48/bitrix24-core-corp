@@ -1,10 +1,11 @@
 <?php
 
-use Bitrix\Main;
 use Bitrix\Crm;
-use Bitrix\Main\Localization\Loc;
-use Bitrix\Crm\Integration;
 use Bitrix\Crm\Activity;
+use Bitrix\Crm\Integration;
+use Bitrix\Crm\Settings\LeadSettings;
+use Bitrix\Main;
+use Bitrix\Main\Localization\Loc;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
@@ -645,7 +646,7 @@ class CrmActivityVisitComponent extends \CBitrixComponent implements Main\Errora
 	{
 		$leadFields = array(
 			'TITLE' => Loc::getMessage('CRM_ACTIVITY_VISIT_LEAD_TITLE', array('#DATE#' => $params['START_TIME'])),
-			'OPENED' => 'Y',
+			'OPENED' => LeadSettings::getCurrent()->getOpenedFlag() ? 'Y' : 'N',
 		);
 
 		$crmLead = new CCrmLead();

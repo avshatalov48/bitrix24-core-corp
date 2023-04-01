@@ -5,8 +5,7 @@ use Bitrix\Main\Localization\Loc;
 /**
  * Class CDavCrmContacts
  */
-class CDavCrmContacts
-	extends CDavAddressbookCrmBaseLimited
+class CDavCrmContacts extends CDavAddressbookCrmBaseLimited
 {
 
 	const RESOURCE_SYNC_SETTINGS_NAME = 'CONTACT';
@@ -49,9 +48,13 @@ class CDavCrmContacts
 		$map["REV"] = date("Ymd\\THis\\Z", MakeTimeStamp($contact["DATE_MODIFY"]));
 		$map["UID"] = $contact["ID"];
 		if ($contact["POST"] <> '')
+		{
 			$map["TITLE"] = $contact["POST"];
+		}
 		if (!empty($contact['COMPANY_TITLE']))
+		{
 			$map['ORG'] = $contact['COMPANY_TITLE'];
+		}
 		$map["URL"][] = 'bitrix24://@%';
 		$map['IMG'] = !empty($contact['PHOTO']) ? $contact['PHOTO'] : '';
 		return $map;
@@ -65,7 +68,7 @@ class CDavCrmContacts
 	 * @param $maxCount
 	 * @return CDBResult
 	 */
-	protected function LoadCrmResourceEntitiesListByParams($order, $filter, $selectParams = array(), $maxCount)
+	protected function LoadCrmResourceEntitiesListByParams($order, $filter, $maxCount, $selectParams = array())
 	{
 		$filter['PERMISSION'] = array('EXPORT');
 		$filter['@CATEGORY_ID'] = 0;
@@ -131,14 +134,14 @@ class CDavCrmContacts
 	 */
 	protected function AddEntity($fields)
 	{
-		$contact = new CAllCrmContact;
-		return $contact->Add($fields);
+		return (new CAllCrmContact)->Add($fields);
 	}
 
 	/**
 	 * @param $entityParams
 	 * @param $oldEntityParams
 	 * @return array
+	 * @throws \Bitrix\Main\ArgumentException
 	 */
 	protected function Merge($entityParams, $oldEntityParams)
 	{
@@ -158,7 +161,6 @@ class CDavCrmContacts
 	 */
 	protected function UpdateEntity($id, $fields)
 	{
-		$updateContact = new CAllCrmContact;
-		return $updateContact->Update($id, $fields);
+		return (new CAllCrmContact)->Update($id, $fields);
 	}
 }

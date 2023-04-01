@@ -45,6 +45,10 @@ class CCrmBizProcHelper
 		{
 			$docName = \Bitrix\Crm\Integration\BizProc\Document\SmartInvoice::class;
 		}
+		elseif ($ownerTypeID === CCrmOwnerType::SmartDocument)
+		{
+			$docName = \Bitrix\Crm\Integration\BizProc\Document\SmartDocument::class;
+		}
 		elseif(CCrmOwnerType::isPossibleDynamicTypeId($ownerTypeID))
 		{
 			$docName = \Bitrix\Crm\Integration\BizProc\Document\Dynamic::class;
@@ -361,9 +365,10 @@ class CCrmBizProcHelper
 	{
 		$userOption = \CUserOptions::GetOption('bizproc.automation.guide', 'crm_check_automation', $userId);
 		$entityName = CCrmOwnerType::ResolveName($entityTypeId);
+		$userOptionDocumentType = $userOption['document_type'] ?? null;
 		if (
 			empty($userOption)
-			|| $userOption['document_type'] !== $entityName
+			|| $userOptionDocumentType !== $entityName
 			|| (int)$userOption['category_id'] !== $categoryId
 		)
 		{

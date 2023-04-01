@@ -4,7 +4,6 @@ namespace Bitrix\Crm\Timeline;
 
 use Bitrix\Crm\Integration\Mobile\Notifier;
 use Bitrix\Crm\ItemIdentifier;
-use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Timeline\TimelineEntry\Facade;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\DateTime;
@@ -94,13 +93,13 @@ class LogMessageController extends Controller
 		{
 			$params['ASSOCIATED_ENTITY_ID'] = $input['ASSOCIATED_ENTITY_ID'];
 		}
-		if ($input['CREATED'])
+		if (isset($input['CREATED']) && $input['CREATED'])
 		{
 			$params['CREATED'] = $input['CREATED'];
 		}
 
 
-		$timelineEntryId = Container::getInstance()->getTimelineEntryFacade()->create(
+		$timelineEntryId = $this->getTimelineEntryFacade()->create(
 			Facade::LOG_MESSAGE,
 			$params
 		);

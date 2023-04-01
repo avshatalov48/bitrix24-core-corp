@@ -9,6 +9,7 @@ use Bitrix\Main\Entity\Event;
 use Bitrix\Main\ORM\Data\DataManager;
 use Bitrix\Main\ORM\Fields\EnumField;
 use Bitrix\Main\ORM\Fields\IntegerField;
+use Bitrix\Main\Result;
 
 /**
  * Class EntityRelationTable
@@ -83,8 +84,24 @@ class EntityRelationTable extends DataManager
 		));
 	}
 
-	public static function rebind(ItemIdentifier $oldItem, ItemIdentifier $newItem): void
+	public static function rebind(ItemIdentifier $oldItem, ItemIdentifier $newItem): Result
 	{
+		$childrenRows = self::query()
+			->setSelect(['DST_ENTITY_TYPE_ID', 'DST_ENTITY_ID'])
+			->where('SRC_ENTITY_TYPE_ID', $oldItem->getEntityTypeId())
+			->where('SRC_ENTITY_ID', $oldItem->getEntityId())
+			->fetchCollection()
+			->getAll()
+		;
+
+		$parentsRows = self::query()
+			->setSelect(['SRC_ENTITY_TYPE_ID', 'SRC_ENTITY_ID'])
+			->where('DST_ENTITY_TYPE_ID', $oldItem->getEntityTypeId())
+			->where('DST_ENTITY_ID', $oldItem->getEntityId())
+			->fetchCollection()
+			->getAll()
+		;
+
 		$connection = Application::getConnection();
 		$helper = $connection->getSqlHelper();
 
@@ -102,6 +119,19 @@ class EntityRelationTable extends DataManager
 				$helper->convertToDbInteger($oldItem->getEntityId())
 			));
 		}
+
+		return (new Result())->setData([
+			'affectedItems' => [
+				'parents' => array_map(
+					fn($parent) => new ItemIdentifier($parent->getSrcEntityTypeId(), $parent->getSrcEntityId()),
+					$parentsRows,
+				),
+				'children' => array_map(
+					fn($child) => new ItemIdentifier($child->getDstEntityTypeId(), $child->getDstEntityId()),
+					$childrenRows,
+				),
+			],
+		]);
 	}
 
 	public static function replaceBindings(ItemIdentifier $fromItem, ItemIdentifier $toItem): void

@@ -196,7 +196,7 @@ $tabContainerId = "{$guid}_tabs";
 		$tabID = $tab['id'];
 		$className = "crm-entity-section crm-entity-section-info";
 		$styleString = '';
-		if ($tab['active'] !== true)
+		if (($tab['active'] ?? null) !== true)
 		{
 			$className .= " crm-entity-section-tab-content-hide crm-entity-section-above-overlay";
 			$styleString = 'style="display: none;"';

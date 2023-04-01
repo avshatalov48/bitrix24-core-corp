@@ -12,6 +12,7 @@ use Bitrix\Sale\Delivery;
 use Bitrix\Sale\Repository\ShipmentRepository;
 use Bitrix\SalesCenter\Delivery\Handlers\HandlersRepository;
 use Bitrix\SalesCenter\Delivery\Handlers\IRestHandler;
+use Bitrix\Voximplant\Security\Helper;
 
 Loc::loadMessages(__FILE__);
 
@@ -224,6 +225,13 @@ class DeliverySelector extends Base
 			}
 		}
 
+		$deliveryRequest = null;
+		$deliveryRequestId = Delivery\Requests\Manager::getRequestIdByShipmentId($shipment->getId());
+		if ($deliveryRequestId)
+		{
+			$deliveryRequest = Delivery\Requests\RequestTable::getRowById($deliveryRequestId);
+		}
+
 		return [
 			'shipment' => [
 				'deliveryService' => [
@@ -240,7 +248,29 @@ class DeliverySelector extends Base
 				'basePriceDelivery' => $shipment->getField('BASE_PRICE_DELIVERY'),
 				'currency' => $shipment->getCurrency(),
 				'extraServices' => $extraServiceDisplayValues,
+				'requestProperties' =>
+					(
+						isset($deliveryRequest['EXTERNAL_PROPERTIES'])
+						&& is_array($deliveryRequest['EXTERNAL_PROPERTIES'])
+					)
+						? array_map(
+							static function (array $property)
+							{
+								return [
+									'name' => $property['NAME'] ?? null,
+									'value' => $property['VALUE'] ?? null,
+									'tags' => $property['TAGS'] ?? null,
+								];
+							},
+							$deliveryRequest['EXTERNAL_PROPERTIES']
+						)
+						: []
+				,
 			],
+			'canUserPerformCalls' => (
+				Loader::includeModule('voximplant')
+				&& Helper::canCurrentUserPerformCalls()
+			),
 		];
 	}
 

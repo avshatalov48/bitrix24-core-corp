@@ -1494,7 +1494,7 @@ class EditorAdapter
 				continue;
 			}
 
-			$value = $values[$field['data']['typeId']];
+			$value = $values[$field['data']['typeId']] ?? null;
 			$entityData = $this->addEntityDataForParentEntityField($field, $entityData, $value);
 		}
 	}

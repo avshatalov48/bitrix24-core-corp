@@ -15,7 +15,7 @@ foreach ($arResult as &$item)
 	//id to item
 	if (empty($item["PARAMS"]["menu_item_id"]))
 	{
-		$item["PARAMS"]["menu_item_id"] = ($item["PARAMS"]["name"] == "live_feed") ? "menu_live_feed"
+		$item["PARAMS"]["menu_item_id"] = (isset($item["PARAMS"]["name"]) && $item["PARAMS"]["name"] == "live_feed") ? "menu_live_feed"
 			: crc32($item["LINK"]);
 	}
 	$item["PARAMS"]["class"] = isset($item["PARAMS"]["class"]) ? $item["PARAMS"]["class"] : "";

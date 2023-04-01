@@ -1,4 +1,4 @@
-<?
+<?php
 global $MESS;
 $PathInstall = str_replace("\\", "/", __FILE__);
 $PathInstall = mb_substr($PathInstall, 0, mb_strlen($PathInstall) - mb_strlen("/index.php"));
@@ -9,12 +9,13 @@ if(class_exists("voximplant")) return;
 
 Class voximplant extends CModule
 {
-	var $MODULE_ID = "voximplant";
-	var $MODULE_VERSION;
-	var $MODULE_VERSION_DATE;
-	var $MODULE_NAME;
-	var $MODULE_DESCRIPTION;
-	var $MODULE_GROUP_RIGHTS = "Y";
+	public $MODULE_ID = "voximplant";
+	public $MODULE_VERSION;
+	public $MODULE_VERSION_DATE;
+	public $MODULE_NAME;
+	public $MODULE_DESCRIPTION;
+	public $MODULE_GROUP_RIGHTS = "Y";
+	public $errors;
 
 	public function __construct()
 	{
@@ -50,9 +51,11 @@ Class voximplant extends CModule
 		{
 			if ($this->CheckModules())
 			{
-				$this->InstallDB(Array(
-					'PUBLIC_URL' => $_REQUEST["PUBLIC_URL"]
-				));
+				$publicUrl = (string)($_REQUEST['PUBLIC_URL'] ?? '');
+
+				$this->InstallDB([
+					'PUBLIC_URL' => $publicUrl,
+				]);
 				$this->InstallFiles();
 
 				$GLOBALS["CACHE_MANAGER"]->CleanDir("menu");
@@ -190,14 +193,12 @@ Class voximplant extends CModule
 
 	function InstallFiles()
 	{
-		if($_ENV['COMPUTERNAME']!='BX')
-		{
-			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/voximplant/install/js", $_SERVER["DOCUMENT_ROOT"]."/bitrix/js", true, true);
-			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/voximplant/install/components", $_SERVER["DOCUMENT_ROOT"]."/bitrix/components", true, true);
-			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/voximplant/install/activities", $_SERVER["DOCUMENT_ROOT"]."/bitrix/activities", true, true);
-			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/voximplant/install/tools", $_SERVER["DOCUMENT_ROOT"]."/bitrix/tools", true, true);
-			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/voximplant/install/images", $_SERVER["DOCUMENT_ROOT"]."/bitrix/images/voximplant", true, true);
-		}
+		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/voximplant/install/js", $_SERVER["DOCUMENT_ROOT"]."/bitrix/js", true, true);
+		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/voximplant/install/components", $_SERVER["DOCUMENT_ROOT"]."/bitrix/components", true, true);
+		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/voximplant/install/activities", $_SERVER["DOCUMENT_ROOT"]."/bitrix/activities", true, true);
+		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/voximplant/install/tools", $_SERVER["DOCUMENT_ROOT"]."/bitrix/tools", true, true);
+		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/voximplant/install/images", $_SERVER["DOCUMENT_ROOT"]."/bitrix/images/voximplant", true, true);
+
 		return true;
 	}
 

@@ -116,7 +116,7 @@ class salescenter extends CModule
 			'salescenter',
 			'\Bitrix\SalesCenter\Integration\CrmManager',
 			'onSendPaymentByControlCenter',
-			50
+			200
 		);
 
 		\Bitrix\Main\EventManager::getInstance()->registerEventHandler(
@@ -125,7 +125,7 @@ class salescenter extends CModule
 			'salescenter',
 			'\Bitrix\SalesCenter\Integration\CrmManager',
 			'onSendCompilation',
-			50
+			200
 		);
 
 		\Bitrix\Main\EventManager::getInstance()->registerEventHandler(

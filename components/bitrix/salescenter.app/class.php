@@ -87,13 +87,17 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 			Application::getInstance()->terminate();
 		}
 
-		if (!$arParams['dialogId'])
+		if (empty($arParams['dialogId']))
 		{
 			$arParams['dialogId'] = $this->request->get('dialogId');
 		}
 
-		$arParams['sessionId'] = intval($arParams['sessionId']);
-		if (!$arParams['sessionId'])
+		if (isset($arParams['sessionId']))
+		{
+			$arParams['sessionId'] = (int)$arParams['sessionId'];
+		}
+
+		if (empty($arParams['sessionId']))
 		{
 			$arParams['sessionId'] = intval($this->request->get('sessionId'));
 		}
@@ -174,10 +178,7 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 			$arParams['ownerTypeId'] = CCrmOwnerType::Deal;
 		}
 
-		if (!$arParams['compilationId'])
-		{
-			$arParams['compilationId'] = $this->request->get('compilationId');
-		}
+		$arParams['compilationId'] ??= $this->request->get('compilationId');
 
 		return parent::onPrepareComponentParams($arParams);
 	}
@@ -226,7 +227,7 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 			return null;
 		}
 
-		return $arParams['orderId'] ? (int)$arParams['orderId'] : (int)$this->request->get('orderId');
+		return (int)($arParams['orderId'] ?? $this->request->get('orderId'));
 	}
 
 	private function needOrderFromEntity(array $arParams): bool
@@ -1602,7 +1603,7 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 			}
 		}
 
-		if ($result['items'])
+		if (!empty($result['items']))
 		{
 			Main\Type\Collection::sortByColumn($result['items'], ['sort' => SORT_ASC]);
 		}
@@ -2160,8 +2161,11 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 		{
 			if ($item['ASSOCIATED_ENTITY_TYPE_ID'] == CCrmOwnerType::OrderPayment)
 			{
-				if ($item['CHANGED_ENTITY'] == CCrmOwnerType::OrderPaymentName
-					&& $item['FIELDS']['ORDER_PAID'] === 'Y')
+				if (
+					$item['CHANGED_ENTITY'] === CCrmOwnerType::OrderPaymentName
+					&& isset($item['FIELDS']['ORDER_PAID'])
+					&& $item['FIELDS']['ORDER_PAID'] === 'Y'
+				)
 				{
 					$registry = Sale\Registry::getInstance(Sale\Registry::REGISTRY_TYPE_ORDER);
 					/** @var Sale\Payment $paymentClassName */

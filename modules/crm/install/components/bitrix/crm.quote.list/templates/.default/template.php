@@ -178,6 +178,16 @@ $prefixLC = mb_strtolower($arResult['GRID_ID']);
 		$dealID = isset($arQuote['~DEAL_ID']) ? intval($arQuote['~DEAL_ID']) : 0;
 		$myCompanyID = isset($arQuote['~MYCOMPANY_ID']) ? intval($arQuote['~MYCOMPANY_ID']) : 0;
 
+
+		$webformId = null;
+		if (
+			isset($arQuote['WEBFORM_ID'])
+			&& isset($arResult['WEBFORM_LIST'][$arQuote['WEBFORM_ID']])
+		)
+		{
+			$webformId = $arResult['WEBFORM_LIST'][$arQuote['WEBFORM_ID']];
+		}
+
 		$resultItem = array(
 			'id' => $arQuote['ID'],
 			'actions' => $arActions,
@@ -218,9 +228,9 @@ $prefixLC = mb_strtolower($arResult['GRID_ID']);
 				'DEAL_ID' => isset($arQuote['DEAL_INFO']) ? CCrmViewHelper::PrepareClientInfo($arQuote['DEAL_INFO']) : '',
 				'CONTACT_ID' => isset($arQuote['CONTACT_INFO']) ? CCrmViewHelper::PrepareClientInfo($arQuote['CONTACT_INFO']) : '',
 				'MYCOMPANY_ID' => isset($arQuote['MY_COMPANY_INFO']) ? CCrmViewHelper::PrepareClientInfo($arQuote['MY_COMPANY_INFO']) : '',
-				'WEBFORM_ID' => isset($arResult['WEBFORM_LIST'][$arQuote['WEBFORM_ID']]) ? $arResult['WEBFORM_LIST'][$arQuote['WEBFORM_ID']] : $arQuote['WEBFORM_ID'],
+				'WEBFORM_ID' => $webformId,
 				'TITLE' => '<a target="_self" href="'.$arQuote['PATH_TO_QUOTE_SHOW'].'">'.$arQuote['TITLE'].'</a>',
-				'CLOSED' => $arQuote['CLOSED'] == 'Y' ? GetMessage('MAIN_YES') : GetMessage('MAIN_NO'),
+				'CLOSED' => ($arQuote['CLOSED'] ?? null) == 'Y' ? GetMessage('MAIN_YES') : GetMessage('MAIN_NO'),
 				'ASSIGNED_BY' => $arQuote['~ASSIGNED_BY_ID'] > 0
 					? CCrmViewHelper::PrepareUserBaloonHtml(
 						array(
@@ -230,11 +240,11 @@ $prefixLC = mb_strtolower($arResult['GRID_ID']);
 							'USER_PROFILE_URL' => $arQuote['PATH_TO_USER_PROFILE']
 						)
 					) : '',
-				'COMMENTS' => htmlspecialcharsback($arQuote['COMMENTS']),
+				'COMMENTS' => htmlspecialcharsback($arQuote['COMMENTS'] ?? null),
 				'SUM' => '<nobr>'.$arQuote['FORMATTED_OPPORTUNITY'].'</nobr>',
 				'OPPORTUNITY' => '<nobr>'.$arQuote['OPPORTUNITY'].'</nobr>',
 				'DATE_CREATE' => FormatDate($arResult['TIME_FORMAT'], MakeTimeStamp($arQuote['DATE_CREATE']), $now),
-				'DATE_MODIFY' => FormatDate($arResult['TIME_FORMAT'], MakeTimeStamp($arQuote['DATE_MODIFY']), $now),
+				'DATE_MODIFY' => FormatDate($arResult['TIME_FORMAT'], MakeTimeStamp($arQuote['DATE_MODIFY'] ?? null), $now),
 				'CURRENCY_ID' => CCrmCurrency::GetEncodedCurrencyName($arQuote['CURRENCY_ID']),
 				'PRODUCT_ID' => isset($arQuote['PRODUCT_ROWS']) ? htmlspecialcharsbx(CCrmProductRow::RowsToString($arQuote['PRODUCT_ROWS'])) : '',
 				'STATUS_ID' => CCrmViewHelper::RenderQuoteStatusControl(
@@ -245,16 +255,16 @@ $prefixLC = mb_strtolower($arResult['GRID_ID']);
 						'SERVICE_URL' => '/bitrix/components/bitrix/crm.quote.list/list.ajax.php'
 					)
 				),
-				'CREATED_BY' => $arQuote['~CREATED_BY'] > 0
+				'CREATED_BY' => ($arQuote['~CREATED_BY'] ?? null) > 0
 					? CCrmViewHelper::PrepareUserBaloonHtml(
-						array(
+						[
 							'PREFIX' => "QUOTE_{$arQuote['~ID']}_CREATOR",
 							'USER_ID' => $arQuote['~CREATED_BY'],
 							'USER_NAME'=> $arQuote['CREATED_BY_FORMATTED_NAME'],
 							'USER_PROFILE_URL' => $arQuote['PATH_TO_USER_CREATOR']
-						)
+						]
 					) : '',
-				'MODIFY_BY' => $arQuote['~MODIFY_BY'] > 0
+				'MODIFY_BY' => ($arQuote['~MODIFY_BY'] ?? null) > 0
 					? CCrmViewHelper::PrepareUserBaloonHtml(
 						array(
 							'PREFIX' => "QUOTE_{$arQuote['~ID']}_MODIFIER",
@@ -658,12 +668,15 @@ $APPLICATION->IncludeComponent(
 		}
 	);
 </script>
-<?php if (!$isInternal):?>
+<?php if (
+	!$isInternal
+	&& \Bitrix\Main\Application::getInstance()->getContext()->getRequest()->get('IFRAME') !== 'Y'
+	&& \Bitrix\Crm\Settings\Crm::isUniversalActivityScenarioEnabled()
+): ?>
 	<script type="text/javascript">
 		BX.ready(
 			function()
 			{
-				<?php if (\Bitrix\Crm\Settings\Crm::isUniversalActivityScenarioEnabled()): ?>
 				BX.Runtime.loadExtension(['crm.push-crm-settings', 'crm.toolbar-component']).then((exports) =>
 				{
 					/** @see BX.Crm.ToolbarComponent */
@@ -676,7 +689,6 @@ $APPLICATION->IncludeComponent(
 						grid: BX.Reflection.getClass('BX.Main.gridManager') ? BX.Main.gridManager.getInstanceById('<?= \CUtil::JSEscape($arResult['GRID_ID']) ?>') : undefined,
 					});
 				});
-				<?php endif; ?>
 			}
 		);
 	</script>

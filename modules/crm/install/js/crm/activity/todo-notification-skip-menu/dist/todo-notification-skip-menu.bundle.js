@@ -4,21 +4,13 @@ this.BX.Crm = this.BX.Crm || {};
 	'use strict';
 
 	var _selectedMenuItemId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("selectedMenuItemId");
-
 	var _entityTypeId = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("entityTypeId");
-
 	var _skipProvider = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("skipProvider");
-
 	var _onSkippedPeriodChange = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onSkippedPeriodChange");
-
 	var _getMenuItemText = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getMenuItemText");
-
 	var _getSkipPeriodsMenuItems = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getSkipPeriodsMenuItems");
-
 	var _isLoading = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isLoading");
-
 	var _onSkipMenuItemSelect = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("onSkipMenuItemSelect");
-
 	class TodoNotificationSkipMenu {
 	  constructor(params) {
 	    Object.defineProperty(this, _onSkipMenuItemSelect, {
@@ -49,21 +41,17 @@ this.BX.Crm = this.BX.Crm || {};
 	      value: null
 	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId)[_entityTypeId] = params.entityTypeId;
-
 	    if (params.selectedValue) {
 	      babelHelpers.classPrivateFieldLooseBase(this, _selectedMenuItemId)[_selectedMenuItemId] = params.selectedValue;
 	    }
-
 	    babelHelpers.classPrivateFieldLooseBase(this, _skipProvider)[_skipProvider] = new crm_activity_todoNotificationSkip.TodoNotificationSkip({
 	      entityTypeId: babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId)[_entityTypeId],
 	      onSkippedPeriodChange: babelHelpers.classPrivateFieldLooseBase(this, _onSkippedPeriodChange)[_onSkippedPeriodChange].bind(this)
 	    });
 	  }
-
 	  setSelectedValue(value) {
 	    babelHelpers.classPrivateFieldLooseBase(this, _selectedMenuItemId)[_selectedMenuItemId] = value;
 	  }
-
 	  getItems() {
 	    const items = [];
 	    items.push({
@@ -74,29 +62,22 @@ this.BX.Crm = this.BX.Crm || {};
 	    });
 	    return items;
 	  }
-
 	}
-
 	function _onSkippedPeriodChange2(period) {
 	  babelHelpers.classPrivateFieldLooseBase(this, _selectedMenuItemId)[_selectedMenuItemId] = period;
 	}
-
 	function _getMenuItemText2() {
 	  let messagePhrase = 'CRM_ACTIVITY_TODO_NOTIFICATION_SKIP_MENU_ITEM';
-
 	  switch (babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId)[_entityTypeId]) {
 	    case BX.CrmEntityType.enumeration.lead:
 	      messagePhrase = 'CRM_ACTIVITY_TODO_NOTIFICATION_SKIP_MENU_ITEM_LEAD';
 	      break;
-
 	    case BX.CrmEntityType.enumeration.deal:
 	      messagePhrase = 'CRM_ACTIVITY_TODO_NOTIFICATION_SKIP_MENU_ITEM_DEAL';
 	      break;
 	  }
-
 	  return main_core.Loc.getMessage(messagePhrase);
 	}
-
 	function _getSkipPeriodsMenuItems2() {
 	  const activeClass = 'menu-popup-item-accept';
 	  const inactiveClass = 'menu-popup-item-none';
@@ -138,17 +119,13 @@ this.BX.Crm = this.BX.Crm || {};
 	  });
 	  return items;
 	}
-
 	function _isLoading2() {
 	  return babelHelpers.classPrivateFieldLooseBase(this, _selectedMenuItemId)[_selectedMenuItemId] === 'loading';
 	}
-
 	function _onSkipMenuItemSelect2(period, event, item) {
 	  var _item$getMenuWindow, _item$getMenuWindow$g;
-
 	  (_item$getMenuWindow = item.getMenuWindow()) == null ? void 0 : (_item$getMenuWindow$g = _item$getMenuWindow.getRootMenuWindow()) == null ? void 0 : _item$getMenuWindow$g.close();
 	  babelHelpers.classPrivateFieldLooseBase(this, _selectedMenuItemId)[_selectedMenuItemId] = 'loading';
-
 	  babelHelpers.classPrivateFieldLooseBase(this, _skipProvider)[_skipProvider].saveSkippedPeriod(period).then(() => {
 	    babelHelpers.classPrivateFieldLooseBase(this, _selectedMenuItemId)[_selectedMenuItemId] = period;
 	  });

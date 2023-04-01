@@ -1,7 +1,6 @@
 <?php
-namespace Bitrix\Crm\Timeline;
 
-use Bitrix\Main\Type\DateTime;
+namespace Bitrix\Crm\Timeline;
 
 class FinalSummaryDocumentsEntry extends FinalSummaryEntry
 {

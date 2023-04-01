@@ -71,7 +71,7 @@ if(isset($arResult['spotlight']) && is_array($arResult['spotlight']))
 <?php endif;?>
 <?php
 
-$filterId = $arResult['filter']['FILTER_ID'] ?? $arResult['filter']['GRID_ID'];
+$filterId = $arResult['filter']['FILTER_ID'] ?? ($arResult['filter']['GRID_ID'] ?? null);
 $navigationBarId = htmlspecialcharsbx(mb_strtolower("{$filterId}-nav-bar"));
 $renderViews = static function(array $views): void {
 	foreach ($views as $view):
@@ -111,7 +111,10 @@ $renderViews = static function(array $views): void {
 ?>
 <?php if (!empty($arResult['views'])): ?>
 	<div id="<?=$navigationBarId?>" class="crm-view-switcher"></div>
-	<div class="crm-view-switcher-buttons">
+	<?php if (isset($arResult['views']['counter_panel_html'])): ?>
+		<?= $arResult['views']['counter_panel_html']; ?>
+	<?php endif; ?>
+	<div class="crm-view-switcher-buttons pagetitle-align-right-container">
 		<?php if (!empty($arResult['views']['right'])): ?>
 			<?php $renderViews($arResult['views']['right']); ?>
 		<?php endif; ?>

@@ -215,7 +215,7 @@ class Email extends Activity\Provider\Base
 			];
 		}
 
-		switch ($settings["SENT_ERROR"])
+		switch (($settings["SENT_ERROR"] ?? null))
 		{
 			case self::ERROR_TYPE_FULL:
 				return array(

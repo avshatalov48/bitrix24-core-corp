@@ -4,6 +4,8 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Crm\Component\EntityDetails\FactoryBased;
 use Bitrix\Crm\Item;
+use Bitrix\Crm\Kanban\Entity\Deadlines\DeadlinesStageManager;
+use Bitrix\Crm\Kanban\ViewMode;
 use Bitrix\Crm\Service\EditorAdapter;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
@@ -199,6 +201,7 @@ class CrmSmartInvoiceDetailsComponent extends FactoryBased
 
 	public function saveAction(array $data): ?array
 	{
+		$data = $this->calculateDefaultDataValues($data);
 		$result = parent::saveAction($data);
 
 		if (!$this->getErrors() && $this->item && !$this->item->isNew())
@@ -211,5 +214,22 @@ class CrmSmartInvoiceDetailsComponent extends FactoryBased
 		}
 
 		return $result;
+	}
+
+	private function calculateDefaultDataValues(array $data): array
+	{
+		$deadlineStage = $data['DEADLINE_STAGE'] ?? '';
+		$viewMode = $data['VIEW_MODE'] ?? '';
+		$isNew = (int) $this->arParams['ENTITY_ID'] === 0;
+		if (
+			$isNew &&
+			$viewMode === ViewMode::MODE_DEADLINES &&
+			!empty($deadlineStage)
+		)
+		{
+			$data = (new DeadlinesStageManager($this->getEntityTypeID()))
+				->fillDeadlinesDefaultValues($data, $deadlineStage);
+		}
+		return $data;
 	}
 }

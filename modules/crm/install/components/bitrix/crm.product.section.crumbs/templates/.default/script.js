@@ -110,6 +110,10 @@ BX.Crm.ProductSectionCrumbsClass = (function ()
 		this.showOnlyDeleted = parameters.showOnlyDeleted || 0;
 		this.jsEventsMode = !!parameters.jsEventsMode;
 		this.container = BX(this.containerId);
+		this.node = {
+			productSectionLink: null,
+			productSectionLinkInner: null,
+		};
 		this.isExternalSectionSelectDisabled = false;
 		this.isSelectSectionEventDisabled = false;
 		this.ajaxUrl = "/bitrix/components/bitrix/crm.product.section.crumbs/ajax.php";
@@ -346,62 +350,99 @@ BX.Crm.ProductSectionCrumbsClass = (function ()
 					}
 					if (this.jsEventsMode)
 					{
-						crumb.appendChild(
-							BX.create(
-								'SPAN',
-								{
-									attrs: {
-										className: "bx-crm-interface-product-section-crumbs-item-link",
-										style: "cursor: pointer;"
-									},
-									events: {
-										click: BX.proxy(this.onClickCrumbLink, this)
-									},
-									children:
-										[
-											BX.create(
-												'SPAN',
-												{
-													attrs: {
-														className: "bx-crm-interface-product-section-crumbs-item-current"
-													},
-													html: BX.util.htmlspecialchars(showedItems[i]["NAME"])
-												}
-											)
-										]
-								}
-							)
-						);
+						this.node.productSectionLink = BX.create(
+							'SPAN',
+							{
+								attrs: {
+									className: "bx-crm-interface-product-section-crumbs-item-link",
+									style: "cursor: pointer;"
+								},
+								events: {
+									click: BX.proxy(this.onClickCrumbLink, this)
+								},
+								children:
+									[
+										this.node.productSectionLinkInner = BX.create(
+											'SPAN',
+											{
+												attrs: {
+													className: "bx-crm-interface-product-section-crumbs-item-current"
+												},
+												html: BX.util.htmlspecialchars(showedItems[i]["NAME"])
+											}
+										)
+									]
+							}
+						)
+						crumb.appendChild(this.node.productSectionLink);
 					}
 					else
 					{
-						crumb.appendChild(
-							BX.create(
-								'A',
-								{
-									attrs: {
-										className: "bx-crm-interface-product-section-crumbs-item-link",
-										style: "cursor: pointer;",
-										href: showedItems[i]["LINK"]
-									},
-									children:
-										[
-											BX.create(
-												'SPAN',
-												{
-													attrs: {
-														className: "bx-crm-interface-product-section-crumbs-item-current"
-													},
-													html: BX.util.htmlspecialchars(showedItems[i]["NAME"])
-												}
-											)
-										]
-								}
-							)
-						);
+						this.node.productSectionLink = BX.create(
+							'A',
+							{
+								attrs: {
+									className: "bx-crm-interface-product-section-crumbs-item-link",
+									style: "cursor: pointer;",
+									href: showedItems[i]["LINK"]
+								},
+								children:
+									[
+										this.node.productSectionLinkInner = BX.create(
+											'SPAN',
+											{
+												attrs: {
+													className: "bx-crm-interface-product-section-crumbs-item-current"
+												},
+												html: BX.util.htmlspecialchars(showedItems[i]["NAME"])
+											}
+										)
+									]
+							}
+						)
+						crumb.appendChild(this.node.productSectionLink);
 					}
 					crumb.appendChild(BX.create('SPAN', { attrs: { className: "clb" } }));
 					this.container.appendChild(crumb);
+
+					setTimeout(function() {
+						if (this.node.productSectionLinkInner.offsetWidth > this.node.productSectionLink.offsetWidth)
+						{
+							let popupTimer;
+							let targetNodeWidth = this.node.productSectionLink.offsetWidth;
+							let popupWidth = 250;
+							let offsetLeft = (targetNodeWidth / 2) - (popupWidth / 2) + BX.Main.Popup.getOption('angleLeftOffset');
+							let angleShift = BX.Main.Popup.getOption('angleLeftOffset') - BX.Main.Popup.getOption('angleMinTop');
+							let angleOffset = popupWidth / 2 - angleShift;
+							let popupHint = new BX.PopupWindow(null, this.node.productSectionLink, {
+								content: this.node.productSectionLinkInner.innerText,
+								offsetLeft: offsetLeft,
+								darkMode: true,
+								minWidth: popupWidth,
+								maxWidth: popupWidth,
+								angle: {
+									position: 'top',
+									offset: angleOffset
+								},
+								animation: 'fading-slide'
+							});
+
+							this.node.productSectionLink.addEventListener('mouseenter', function() {
+								if (popupTimer)
+								{
+									clearTimeout(popupTimer);
+								}
+								popupHint.show();
+							});
+
+							this.node.productSectionLink.addEventListener('mouseleave', function() {
+								popupTimer = setTimeout(function() {
+									popupHint.close();
+								}, 200);
+							});
+						}
+					}.bind(this), 800);
+
 				}
 			}
 

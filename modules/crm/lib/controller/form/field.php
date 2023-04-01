@@ -15,7 +15,7 @@ class Field extends Main\Engine\JsonController
 	 *
 	 * @return array
 	 */
-	public function listAction(): array
+	public function listAction(?int $presetId): array
 	{
 		if (!WebForm\Manager::checkReadPermission())
 		{
@@ -24,7 +24,7 @@ class Field extends Main\Engine\JsonController
 		}
 
 		return [
-			'tree' => WebForm\EntityFieldProvider::getFieldsTree(),
+			'tree' => WebForm\EntityFieldProvider::getFieldsTree([], $presetId),
 		];
 	}
 }

@@ -1,10 +1,10 @@
 <?php
+
 namespace Bitrix\Crm\Integration;
 
 use Bitrix\Main;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
-use \Bitrix\Main\Config\Option;
 
 /**
  * Class Bitrix24Manager
@@ -521,5 +521,31 @@ class Bitrix24Manager
 
 		return \Bitrix\Bitrix24\Feature::getVariable($name);
 	}
+
+	/**
+	 * Fetch variable with MAX value (for maximal editions)
+	 *
+	 * @param string $name Variable name
+	 *
+	 * @return int
+	 */
+	public static function getMaxVariable(string $name): int
+	{
+		if (!(ModuleManager::isModuleInstalled('bitrix24') && Loader::includeModule('bitrix24')))
+		{
+			return 0;
+		}
+
+		$allVariables = array_map(
+			fn ($edition) => \Bitrix\Bitrix24\Feature::getVariable($name, $edition),
+			\CBitrix24::MAXIMAL_EDITIONS
+		);
+
+		if (empty($allVariables))
+		{
+			return 0;
+		}
+
+		return max($allVariables);
+	}
 }
-?>

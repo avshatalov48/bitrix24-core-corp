@@ -760,7 +760,7 @@
 				item.styles.title.font = { size: 12, color: '#b1b6bb', fontStyle: 'bold' };
 				item.styles.subtitle.font = { size: 17, color: '#333' };
 			}
-			else if (entity.entityId === 'product')
+			else if (entity.entityId === 'product' || entity.entityId === 'store')
 			{
 				const parts = [];
 

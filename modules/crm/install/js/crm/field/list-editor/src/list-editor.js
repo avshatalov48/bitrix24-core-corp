@@ -31,6 +31,7 @@ export class ListEditor extends EventEmitter
 	static #defaultOptions = {
 		setId: 0,
 		autoSave: true,
+		cacheable: true,
 		fieldsPanelOptions: {},
 		debouncingDelay: 500,
 	};
@@ -233,7 +234,14 @@ export class ListEditor extends EventEmitter
 
 	loadFieldsDictionary(): Promise<any>
 	{
-		return Backend.getInstance().getFieldsList();
+		const fieldsPanelOptions = {
+			...this.getOptions().fieldsPanelOptions,
+			disabledFields: this.getValue().map((field) => {
+				return field.name;
+			}),
+		};
+
+		return Backend.getInstance().getFieldsList(fieldsPanelOptions?.presetId || null);
 	}
 
 	loadValue(): Promise<any>
@@ -395,10 +403,18 @@ export class ListEditor extends EventEmitter
 
 	save(): Promise<any>
 	{
+		const fieldsPanelOptions = {
+			...this.getOptions().fieldsPanelOptions,
+			disabledFields: this.getValue().map((field) => {
+				return field.name;
+			}),
+		};
+
 		return Backend
 			.getInstance()
 			.saveFieldsSet({
 				id: this.getOptions().setId,
+				presetId: fieldsPanelOptions?.presetId || null,
 				entityTypeId: this.getEntityTypeId(),
 				clientEntityTypeId: this.getClientEntityTypeId(),
 				...this.getData(),
@@ -439,6 +455,7 @@ export class ListEditor extends EventEmitter
 
 	showSlider()
 	{
+
 		const buttons = [];
 		if (!this.getOptions().autoSave)
 		{
@@ -457,6 +474,7 @@ export class ListEditor extends EventEmitter
 
 		BX.SidePanel.Instance.open('crm:field-list-editor', {
 			width: 600,
+			cacheable: this.getOptions().cacheable,
 			contentCallback: () => {
 				return this.#loadPromise
 					.then(() => Layout.createContent({

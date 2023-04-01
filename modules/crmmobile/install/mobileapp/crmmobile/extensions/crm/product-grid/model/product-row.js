@@ -3,7 +3,7 @@
  */
 jn.define('crm/product-grid/model/product-row', (require, exports, module) => {
 
-	const BaseProductRow = require('layout/ui/product-grid/model/product-row').ProductRow;
+	const { ProductRow: BaseProductRow } = require('layout/ui/product-grid/model');
 	const { ProductCalculator, TaxForSumStrategy } = require('crm/product-calculator');
 
 	const DiscountType = {

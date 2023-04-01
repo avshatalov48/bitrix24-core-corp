@@ -6,8 +6,7 @@ use Bitrix\Main\Localization\Loc;
 /**
  * Class CDavCrmCompanies
  */
-class CDavCrmCompanies
-	extends CDavAddressbookCrmBaseLimited
+class CDavCrmCompanies extends CDavAddressbookCrmBaseLimited
 {
 
 	const RESOURCE_SYNC_SETTINGS_NAME = 'COMPANY';
@@ -62,7 +61,7 @@ class CDavCrmCompanies
 	 * @param $maxCount
 	 * @return bool|CDBResult
 	 */
-	protected function LoadCrmResourceEntitiesListByParams($order, $filter, $selectParams = array(), $maxCount)
+	protected function LoadCrmResourceEntitiesListByParams($order, $filter, $maxCount, $selectParams = array())
 	{
 		$filter['PERMISSION'] = array('EXPORT');
 		$filter['@CATEGORY_ID'] = 0;
@@ -72,7 +71,7 @@ class CDavCrmCompanies
 			$filter,
 			false,
 			$maxCount ? array('nTopCount' => $maxCount) : array(),
-			$selectParams ? $selectParams : array('ID', 'TITLE', 'DATE_MODIFY', 'LOGO', 'ORIGIN_ID')
+			$selectParams ?: array('ID', 'TITLE', 'DATE_MODIFY', 'LOGO', 'ORIGIN_ID')
 		);
 	}
 
@@ -124,14 +123,14 @@ class CDavCrmCompanies
 	 */
 	protected function AddEntity($fields)
 	{
-		$company = new CAllCrmCompany;
-		return $company->Add($fields);
+		return (new CAllCrmCompany)->Add($fields);
 	}
 
 	/**
 	 * @param $entityParams
 	 * @param $oldEntityParams
 	 * @return array
+	 * @throws \Bitrix\Main\ArgumentException
 	 */
 	protected function Merge($entityParams, $oldEntityParams)
 	{
@@ -149,7 +148,6 @@ class CDavCrmCompanies
 	 */
 	protected function UpdateEntity($id, $fields)
 	{
-		$company = new CAllCrmCompany;
-		return $company->Update($id, $fields);
+		return (new CAllCrmCompany)->Update($id, $fields);
 	}
 }

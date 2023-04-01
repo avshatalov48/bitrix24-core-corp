@@ -131,7 +131,7 @@ class EntityRequisite
 		unset($fieldName);
 
 		// rewrite order
-		if (is_array($params['order']))
+		if (isset($params['order']) && is_array($params['order']))
 		{
 			$newOrder = array();
 			foreach ($params['order'] as $k => $v)
@@ -420,12 +420,14 @@ class EntityRequisite
 
 		foreach ($fields as $fieldName => $fieldValue)
 		{
-			if (is_array($validationMap[$fieldName]))
+			if (isset($validationMap[$fieldName]) && is_array($validationMap[$fieldName]))
 			{
 				foreach ($validationMap[$fieldName] as $validateInfo)
 				{
-					if (isset($validateInfo['type'])
-						&& is_array($validateInfo['params']))
+					if (
+						isset($validateInfo['type'])
+						&& is_array($validateInfo['params'])
+					)
 					{
 						if ($validateInfo['type'] === 'length')
 						{
@@ -2398,7 +2400,7 @@ class EntityRequisite
 				continue;
 
 			$fieldType = $fieldInfo['data_type'] ?? 'string';
-			if ($fieldsInfo[$fieldName]['TYPE'] === 'file')
+			if (($fieldsInfo[$fieldName]['TYPE'] ?? null) === 'file')
 			{
 				$fieldType = $fieldsInfo[$fieldName]['VALUE_TYPE'] == 'image' ? 'image' : 'file';
 			}
@@ -3004,7 +3006,7 @@ class EntityRequisite
 			$titleCandidate = [];
 			foreach ($titlePartFields as $fieldName)
 			{
-				if ($fieldValues[$fieldName]['value'] != '')
+				if (isset($fieldValues[$fieldName]['value']) && $fieldValues[$fieldName]['value'] != '')
 				{
 					$titleCandidate[] = $fieldValues[$fieldName]['value'];
 				}

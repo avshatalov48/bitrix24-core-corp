@@ -85,7 +85,7 @@ class Lead extends Entity
 
 	public function isActivityCountersFilterSupported(): bool
 	{
-		return true;
+		return $this->factory->isCountersEnabled();
 	}
 
 	public function isExclusionSupported(): bool
@@ -118,11 +118,6 @@ class Lead extends Entity
 			'CLIENT' => '',
 			'PROBLEM_NOTIFICATION' => '',
 		];
-	}
-
-	public function getAdditionalEditFields(): array
-	{
-		return (array)$this->getAdditionalEditFieldsFromOptions();
 	}
 
 	protected function getDetailComponentName(): ?string

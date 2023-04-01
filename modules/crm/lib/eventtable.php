@@ -5,6 +5,7 @@ namespace Bitrix\Crm;
 use Bitrix\Main\ORM\Data\DataManager;
 use Bitrix\Main\ORM\Fields\DatetimeField;
 use Bitrix\Main\ORM\Fields\IntegerField;
+use Bitrix\Main\ORM\Fields\Relations\OneToMany;
 use Bitrix\Main\ORM\Fields\StringField;
 
 /**
@@ -43,7 +44,9 @@ class EventTable extends DataManager
 			new StringField('EVENT_TEXT_1'),
 			new StringField('EVENT_TEXT_2'),
 			new IntegerField('EVENT_TYPE'),
+			// it's serialized int[]. serialization method - php. StringField instead of ArrayField for backwards compatibility
 			new StringField('FILES'),
+			(new OneToMany('EVENT_RELATION', EventRelationsTable::class, 'EVENT_BY')),
 		];
 	}
 }

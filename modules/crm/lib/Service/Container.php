@@ -9,6 +9,7 @@ use Bitrix\Crm\Integration;
 use Bitrix\Crm\Integration\PullManager;
 use Bitrix\Crm\Model\Dynamic\Type;
 use Bitrix\Crm\Model\Dynamic\TypeTable;
+use Bitrix\Crm\Relation\Registrar;
 use Bitrix\Crm\Relation\RelationManager;
 use Bitrix\Crm\Service\Factory\Dynamic;
 use Bitrix\Crm\Service\Sale\Shipment\ProductService;
@@ -297,6 +298,44 @@ class Container
 		return ServiceLocator::getInstance()->get('crm.service.converter.category');
 	}
 
+	public function getEntityBroker(int $entityTypeId): ?Broker
+	{
+		if ($entityTypeId === \CCrmOwnerType::Lead)
+		{
+			return $this->getLeadBroker();
+		}
+		elseif ($entityTypeId === \CCrmOwnerType::Deal)
+		{
+			return $this->getDealBroker();
+		}
+		elseif ($entityTypeId === \CCrmOwnerType::Contact)
+		{
+			return $this->getContactBroker();
+		}
+		elseif ($entityTypeId === \CCrmOwnerType::Company)
+		{
+			return $this->getCompanyBroker();
+		}
+		elseif ($entityTypeId === \CCrmOwnerType::Activity)
+		{
+			return $this->getActivityBroker();
+		}
+		elseif ($entityTypeId === \CCrmOwnerType::Quote)
+		{
+			return $this->getQuoteBroker();
+		}
+		elseif ($entityTypeId === \CCrmOwnerType::Order)
+		{
+			return $this->getOrderBroker();
+		}
+		elseif (\CCrmOwnerType::isUseDynamicTypeBasedApproach($entityTypeId))
+		{
+			return $this->getDynamicBroker()->setEntityTypeId($entityTypeId);
+		}
+
+		return null;
+	}
+
 	public function getUserBroker(): Broker\User
 	{
 		return ServiceLocator::getInstance()->get('crm.service.broker.user');
@@ -357,6 +396,11 @@ class Container
 		return ServiceLocator::getInstance()->get('crm.service.broker.activity');
 	}
 
+	public function getQuoteBroker(): Broker\Quote
+	{
+		return ServiceLocator::getInstance()->get('crm.service.broker.quote');
+	}
+
 	public function getBadge(string $type, string $value): Badge
 	{
 		$identifier = static::getIdentifierByClassName(Badge::class, [$type, $value]);
@@ -392,6 +436,11 @@ class Container
 	public function getEventHistory(): EventHistory
 	{
 		return ServiceLocator::getInstance()->get('crm.service.eventhistory');
+	}
+
+	public function getRelationRegistrar(): Registrar
+	{
+		return ServiceLocator::getInstance()->get('crm.service.relation.registrar');
 	}
 
 	/**

@@ -13,7 +13,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
 CUtil::InitJSCore(array('window'));
 
-if(SITE_TEMPLATE_ID === 'bitrix24' && $arParams['~STYLES_LOADED'] !== 'Y')
+if(SITE_TEMPLATE_ID === 'bitrix24' && ($arParams['~STYLES_LOADED'] ?? null) !== 'Y')
 {
 	$APPLICATION->SetAdditionalCSS('/bitrix/themes/.default/bitrix24/crm-entity-show.css');
 	$bodyClass = $APPLICATION->GetPageProperty('BodyClass');
@@ -40,7 +40,7 @@ $actionPanel = isset($arParams['~ACTION_PANEL']) && is_array($arParams['~ACTION_
 
 //region Filter
 //Skip reneding of grid filter for internal grid request (filter already created)
-if(!Bitrix\Main\Grid\Context::isInternalRequest() && $arParams['~HIDE_FILTER'] !== true)
+if(!Bitrix\Main\Grid\Context::isInternalRequest() && ($arParams['~HIDE_FILTER'] ?? null) !== true)
 {
 	if (isset($_REQUEST['IFRAME']) && $_REQUEST['IFRAME'] == 'Y' && $_REQUEST['IFRAME_TYPE'] == 'SIDE_SLIDER')
 	{
@@ -113,36 +113,36 @@ if(isset($arParams['~ENABLE_ROW_COUNT_LOADER']) && $arParams['~ENABLE_ROW_COUNT_
 $APPLICATION->IncludeComponent(
 	'bitrix:main.ui.grid',
 	'',
-	array(
+	[
 		'GRID_ID' => $gridID,
-		'HEADERS' => isset($arParams['~HEADERS']) ? $arParams['~HEADERS'] : array(),
-		'HEADERS_SECTIONS' => isset($arParams['~HEADERS_SECTIONS']) ? $arParams['~HEADERS_SECTIONS'] : array(),
-		'ENABLE_FIELDS_SEARCH' => isset($arParams['~ENABLE_FIELDS_SEARCH']) ? $arParams['~ENABLE_FIELDS_SEARCH'] : 'N',
-		'SORT' => isset($arParams['~SORT']) ? $arParams['~SORT'] : array(),
-		'SORT_VARS' => isset($arParams['~SORT_VARS']) ? $arParams['~SORT_VARS'] : array(),
-		'ROWS' => isset($arParams['~ROWS']) ? $arParams['~ROWS'] : array(),
-		'ROW_LAYOUT' => isset($arParams['~ROW_LAYOUT']) ? $arParams['~ROW_LAYOUT'] : array(),
-		'AJAX_MODE' => $arParams['~AJAX_MODE'] ? $arParams['~AJAX_MODE'] : 'Y', //Strongly required
-		'FORM_ID' => isset($arParams['~FORM_ID']) ? $arParams['~FORM_ID'] : '',
-		'TAB_ID' => isset($arParams['~TAB_ID']) ? $arParams['~TAB_ID'] : '',
-		'AJAX_ID' => isset($arParams['~AJAX_ID']) ? $arParams['~AJAX_ID'] : '',
+		'HEADERS' => $arParams['~HEADERS'] ?? [],
+		'HEADERS_SECTIONS' => $arParams['~HEADERS_SECTIONS'] ?? [],
+		'ENABLE_FIELDS_SEARCH' => $arParams['~ENABLE_FIELDS_SEARCH'] ?? 'N',
+		'SORT' => $arParams['~SORT'] ?? [],
+		'SORT_VARS' => $arParams['~SORT_VARS'] ?? [],
+		'ROWS' => $arParams['~ROWS'] ?? [],
+		'ROW_LAYOUT' => $arParams['~ROW_LAYOUT'] ?? [],
+		'AJAX_MODE' => $arParams['~AJAX_MODE'] ?? 'Y', //Strongly required
+		'FORM_ID' => $arParams['~FORM_ID'] ?? '',
+		'TAB_ID' => $arParams['~TAB_ID'] ?? '',
+		'AJAX_ID' => $arParams['~AJAX_ID'] ?? '',
 		'AJAX_OPTION_JUMP' => $arParams['~AJAX_OPTION_JUMP'],
 		'AJAX_OPTION_HISTORY' => $arParams['~AJAX_OPTION_HISTORY'],
-		"PRESERVE_HISTORY" => isset($arParams['~PRESERVE_HISTORY']) ? $arParams['~PRESERVE_HISTORY'] : false,
-		'MESSAGES' => isset($arParams['~MESSAGES']) ? $arParams['~MESSAGES'] : array(),
+		"PRESERVE_HISTORY" => $arParams['~PRESERVE_HISTORY'] ?? false,
+		'MESSAGES' => $arParams['~MESSAGES'] ?? [],
 		"NAV_STRING" => $navigationHtml,
 		"NAV_PARAM_NAME" => 'page',
 		"CURRENT_PAGE" => isset($pagination['PAGE_NUM']) ? (int)$pagination['PAGE_NUM'] : 1,
 		"ENABLE_NEXT_PAGE" => isset($pagination['ENABLE_NEXT_PAGE']) ? (bool)$pagination['ENABLE_NEXT_PAGE'] : false,
-		"PAGE_SIZES" => array(
-			array("NAME" => "5", "VALUE" => "5"),
-			array("NAME" => "10", "VALUE" => "10"),
-			array("NAME" => "20", "VALUE" => "20"),
-			array("NAME" => "50", "VALUE" => "50"),
-			array("NAME" => "100", "VALUE" => "100"),
+		"PAGE_SIZES" => [
+			["NAME" => "5", "VALUE" => "5"],
+			["NAME" => "10", "VALUE" => "10"],
+			["NAME" => "20", "VALUE" => "20"],
+			["NAME" => "50", "VALUE" => "50"],
+			["NAME" => "100", "VALUE" => "100"],
 			//Temporary limited by 100
 			//array("NAME" => "200", "VALUE" => "200"),
-		),
+		],
 		"ALLOW_COLUMNS_SORT" => true,
 		"ALLOW_ROWS_SORT" => false,
 		"ALLOW_COLUMNS_RESIZE" => true,
@@ -165,7 +165,7 @@ $APPLICATION->IncludeComponent(
 		"TOTAL_ROWS_COUNT_HTML" => $rowCountHtml,
 		"TOTAL_ROWS_COUNT" => isset($arParams['TOTAL_ROWS_COUNT']) ? (int)$arParams['TOTAL_ROWS_COUNT'] : null,
 		"ADVANCED_EDIT_MODE" => (bool)($arParams['ADVANCED_EDIT_MODE'] ?? false),
-	),
+	],
 	$component,
 	array('HIDE_ICONS' => 'Y')
 );

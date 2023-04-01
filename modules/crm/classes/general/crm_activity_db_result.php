@@ -50,6 +50,10 @@ class CCrmActivityDbResult extends CDBResult
 		{
 			$this->records[$record['ID']] = $record;
 		}
+		if (empty($this->records))
+		{
+			return $this->records;
+		}
 		$incomingChannelRecords = array_column(
 			\Bitrix\Crm\Activity\Entity\IncomingChannelTable::query()
 				->whereIn('ACTIVITY_ID', array_keys($this->records))

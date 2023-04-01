@@ -8,7 +8,13 @@ class ResponsibleChangedTrigger extends BaseTrigger
 {
 	public static function isSupported($entityTypeId)
 	{
-		if (in_array($entityTypeId, [\CCrmOwnerType::Deal, \CCrmOwnerType::Lead, \CCrmOwnerType::Order], true))
+		$supported = [
+			\CCrmOwnerType::Deal,
+			\CCrmOwnerType::Lead,
+			\CCrmOwnerType::Order,
+			\CCrmOwnerType::SmartDocument,
+		];
+		if (in_array($entityTypeId, $supported, true))
 		{
 			return true;
 		}

@@ -14,7 +14,7 @@ final class SignDocumentFromSlider extends Base
 	{
 		return (
 			!$this->isUserSeenTour()
-			&& ServiceLocator::getInstance()->get('crm.integration.sign')->isEnabled()
+			&& ServiceLocator::getInstance()->get('crm.integration.sign')::isEnabledInCurrentTariff()
 		);
 	}
 

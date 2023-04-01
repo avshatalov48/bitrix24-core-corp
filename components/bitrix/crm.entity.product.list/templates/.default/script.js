@@ -411,7 +411,8 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	      };
 
 	      var reservedQuantityLink = reservedQuantity > 0 ? "<a href=\"#\" class=\"store-available-popup-reserves-slider-link\">".concat(reservedQuantity, "</a>") : reservedQuantity;
-	      var result = main_core.Tag.render(_templateObject$2 || (_templateObject$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"store-available-popup-container\">\n\t\t\t\t<table class=\"main-grid-table\">\n\t\t\t\t\t<thead class=\"main-grid-header\">\n\t\t\t\t\t\t<tr class=\"main-grid-row-head\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</tr>\n\t\t\t\t\t</thead>\n\t\t\t\t\t<tbody>\n\t\t\t\t\t\t<tr class=\"main-grid-row main-grid-row-body\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</tr>\n\t\t\t\t\t</tbody>\n\t\t\t\t</table>\n\t\t\t</div>\n\t\t"])), renderHead(main_core.Loc.getMessage('CRM_ENTITY_PL_STORE_AVAILABLE_POPUP_QUANTITY_COMMON')), renderHead(main_core.Loc.getMessage('CRM_ENTITY_PL_STORE_AVAILABLE_POPUP_QUANTITY_RESERVED')), renderHead(main_core.Loc.getMessage('CRM_ENTITY_PL_STORE_AVAILABLE_POPUP_QUANTITY_AVAILABLE')), renderRow(storeQuantity), renderRow(reservedQuantityLink), renderRow(availableQuantity));
+	      var viewAvailableQuantity = availableQuantity <= 0 ? "<span class=\"text--danger\">".concat(availableQuantity) : availableQuantity;
+	      var result = main_core.Tag.render(_templateObject$2 || (_templateObject$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"store-available-popup-container\">\n\t\t\t\t<table class=\"main-grid-table\">\n\t\t\t\t\t<thead class=\"main-grid-header\">\n\t\t\t\t\t\t<tr class=\"main-grid-row-head\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</tr>\n\t\t\t\t\t</thead>\n\t\t\t\t\t<tbody>\n\t\t\t\t\t\t<tr class=\"main-grid-row main-grid-row-body\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</tr>\n\t\t\t\t\t</tbody>\n\t\t\t\t</table>\n\t\t\t</div>\n\t\t"])), renderHead(main_core.Loc.getMessage('CRM_ENTITY_PL_STORE_AVAILABLE_POPUP_QUANTITY_COMMON')), renderHead(main_core.Loc.getMessage('CRM_ENTITY_PL_STORE_AVAILABLE_POPUP_QUANTITY_RESERVED')), renderHead(main_core.Loc.getMessage('CRM_ENTITY_PL_STORE_AVAILABLE_POPUP_QUANTITY_AVAILABLE')), renderRow(storeQuantity), renderRow(reservedQuantityLink), renderRow(viewAvailableQuantity));
 
 	      if (reservedQuantity > 0) {
 	        reservedQuantityLink = result.querySelector('.store-available-popup-reserves-slider-link');
@@ -1425,13 +1426,20 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	      }
 
 	      var storeId = this.getField('STORE_ID');
-	      var available = this.model.getStoreCollection().getStoreAvailableAmount(storeId);
 
-	      if (!this.getModel().isCatalogExisted() || this.isRestrictedStoreInfo() || this.getModel().isService()) {
-	        availableWrapper.innerHTML = '';
-	      } else {
-	        availableWrapper.innerHTML = main_core.Text.toNumber(available) + ' ' + _classPrivateMethodGet$2(this, _getMeasureName, _getMeasureName2).call(this);
+	      if (!storeId) {
+	        return;
 	      }
+
+	      var available = this.model.getStoreCollection().getStoreAvailableAmount(storeId);
+	      var amount = main_core.Text.toNumber(available);
+	      var amountWithMeasure = '';
+
+	      if (!this.getModel().isCatalogExisted() || this.isRestrictedStoreInfo() || this.getModel().isService()) ; else {
+	        amountWithMeasure = amount + ' ' + _classPrivateMethodGet$2(this, _getMeasureName, _getMeasureName2).call(this);
+	      }
+
+	      availableWrapper.innerHTML = amount > 0 ? amountWithMeasure : "<span class=\"store-available-popup-link--danger\">".concat(amountWithMeasure, "</span>");
 	    }
 	  }, {
 	    key: "updatePropertyFields",
@@ -3912,8 +3920,12 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	      var totalBlock = BX(this.getSettingValue('totalBlockContainerId', null));
 
 	      if (main_core.Type.isElementNode(totalBlock)) {
-	        totalBlock.querySelectorAll('[data-role="currency-wrapper"]').forEach(function (row) {
-	          row.innerHTML = _this11.getCurrencyText();
+	        totalBlock.querySelectorAll('.crm-product-list-payment-side-table-column').forEach(function (column) {
+	          var valueElement = column.querySelector('.crm-product-list-result-grid-total');
+
+	          if (valueElement) {
+	            column.innerHTML = currency_currencyCore.CurrencyCore.getPriceControl(valueElement, _this11.getCurrencyId());
+	          }
 	        });
 	      }
 	    }

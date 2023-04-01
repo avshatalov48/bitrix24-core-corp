@@ -14,7 +14,13 @@ class FieldChangedTrigger extends BaseTrigger
 			return parent::isSupported($entityTypeId);
 		}
 
-		$supported = [\CCrmOwnerType::Deal, \CCrmOwnerType::Lead, \CCrmOwnerType::Quote, \CCrmOwnerType::SmartInvoice];
+		$supported = [
+			\CCrmOwnerType::Deal,
+			\CCrmOwnerType::Lead,
+			\CCrmOwnerType::Quote,
+			\CCrmOwnerType::SmartInvoice,
+			\CCrmOwnerType::SmartDocument,
+		];
 		return in_array($entityTypeId, $supported, true);
 	}
 

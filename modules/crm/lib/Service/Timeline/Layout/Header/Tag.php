@@ -13,13 +13,12 @@ class Tag extends Button
 	public const TYPE_SECONDARY = 'secondary';
 
 	protected string $type;
-	protected string $hint;
+	protected string $hint = '';
 
 	public function __construct(string $title, string $type)
 	{
 		parent::__construct($title);
 		$this->type = $type;
-		$this->hint = '';
 	}
 
 	public function getType(): string

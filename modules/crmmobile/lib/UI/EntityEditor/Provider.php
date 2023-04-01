@@ -612,6 +612,7 @@ final class Provider extends \Bitrix\Crm\Integration\UI\EntityEditor\Provider
 						'value' => [
 							'VALUE' => $item['VALUE'],
 							'VALUE_TYPE' => $valueType,
+							'VALUE_EXTRA' => $item['VALUE_EXTRA']
 						],
 					];
 				}

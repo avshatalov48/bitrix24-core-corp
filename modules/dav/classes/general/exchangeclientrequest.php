@@ -43,12 +43,18 @@ class CDavExchangeClientRequest
 	public function SetHeader($key, $value)
 	{
 		if (empty($key))
+		{
 			return;
+		}
 
 		if (array_key_exists($key, $this->arHeaders) && empty($value))
+		{
 			unset($this->arHeaders[$key]);
+		}
 		else
+		{
 			$this->arHeaders[$key] = $value;
+		}
 	}
 
 	public function SetMethod($method)
@@ -83,9 +89,13 @@ class CDavExchangeClientRequest
 		$arMapTmp = array("idonly" => "IdOnly", "id_only" => "IdOnly", "allproperties" => "AllProperties", "all_properties" => "AllProperties");
 		$itemShapeLower = mb_strtolower($itemShape);
 		if (array_key_exists($itemShapeLower, $arMapTmp))
+		{
 			$itemShape = $arMapTmp[$itemShapeLower];
+		}
 		else
+		{
 			$itemShape = "AllProperties";
+		}
 
 		$this->body  = "<"."?xml version=\"1.0\" encoding=\"utf-8\"?".">\r\n";
 		$this->body .= "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:t=\"http://schemas.microsoft.com/exchange/services/2006/types\">\r\n";
@@ -94,8 +104,8 @@ class CDavExchangeClientRequest
 		$this->body .= "   <ItemShape>\r\n";
 		$this->body .= "    <t:BaseShape>".$itemShape."</t:BaseShape>\r\n";
 
-		$bAdditionalProperties = (is_array($additionalProperties) && count($additionalProperties) > 0);
-		$bAdditionalExtendedProperties = (is_array($arAdditionalExtendedProperties) && count($arAdditionalExtendedProperties) > 0);
+		$bAdditionalProperties = (is_array($additionalProperties) && !empty($additionalProperties));
+		$bAdditionalExtendedProperties = (is_array($arAdditionalExtendedProperties) && !empty($arAdditionalExtendedProperties));
 
 		if ($bAdditionalProperties || $bAdditionalExtendedProperties)
 			$this->body .= "    <t:AdditionalProperties>\r\n";
@@ -103,7 +113,9 @@ class CDavExchangeClientRequest
 		if ($bAdditionalProperties)
 		{
 			foreach ($additionalProperties as $v)
-				$this->body .= "     <t:FieldURI FieldURI=\"".htmlspecialcharsbx($v)."\"/>\r\n";
+			{
+				$this->body .= "     <t:FieldURI FieldURI=\"" . htmlspecialcharsbx($v) . "\"/>\r\n";
+			}
 		}
 
 		if ($bAdditionalExtendedProperties)
@@ -125,7 +137,9 @@ class CDavExchangeClientRequest
 		}
 
 		if ($bAdditionalProperties || $bAdditionalExtendedProperties)
+		{
 			$this->body .= "    </t:AdditionalProperties>\r\n";
+		}
 
 		$this->body .= "   </ItemShape>\r\n";
 
@@ -133,7 +147,9 @@ class CDavExchangeClientRequest
 		{
 			$this->body .= "   <".htmlspecialcharsbx($item["type"]);
 			foreach ($item["properties"] as $key => $value)
-				$this->body .= " ".htmlspecialcharsbx($key)."=\"".htmlspecialcharsbx($value)."\"";
+			{
+				$this->body .= " " . htmlspecialcharsbx($key) . "=\"" . htmlspecialcharsbx($value) . "\"";
+			}
 			$this->body .= "/>\r\n";
 		}
 
@@ -155,7 +171,9 @@ class CDavExchangeClientRequest
 		array("id" => "calendar", "mailbox" => array("aaa@bbb.cc", "ddd@eee.ff"))
 		*/
 		if (!is_array($arParentFolderId))
-			$arParentFolderId = array("id" => $arParentFolderId);
+		{
+			$arParentFolderId = ["id" => $arParentFolderId];
+		}
 
 		if (!in_array($arParentFolderId["id"], self::$arDistinguishedFolderIdNameType))
 		{
@@ -165,7 +183,9 @@ class CDavExchangeClientRequest
 		{
 			$arMailbox = $arParentFolderId["mailbox"];
 			if (!is_array($arMailbox))
-				$arMailbox = array($arMailbox);
+			{
+				$arMailbox = [$arMailbox];
+			}
 
 			foreach ($arMailbox as $mailbox)
 			{
@@ -188,7 +208,12 @@ class CDavExchangeClientRequest
 
 	public function CreateGetItemBody($itemId = null, $itemShape = "AllProperties", $arAdditionalExtendedProperties = array())
 	{
-		$arMapTmp = array("idonly" => "IdOnly", "id_only" => "IdOnly", "allproperties" => "AllProperties", "all_properties" => "AllProperties");
+		$arMapTmp = [
+			"idonly" => "IdOnly",
+			"id_only" => "IdOnly",
+			"allproperties" => "AllProperties",
+			"all_properties" => "AllProperties"
+		];
 		$itemShapeLower = mb_strtolower($itemShape);
 		if (array_key_exists($itemShapeLower, $arMapTmp))
 		{
@@ -206,7 +231,7 @@ class CDavExchangeClientRequest
 		$this->body .= "   <ItemShape>\r\n";
 		$this->body .= "    <t:BaseShape>".$itemShape."</t:BaseShape>\r\n";
 
-		if (is_array($arAdditionalExtendedProperties) && count($arAdditionalExtendedProperties))
+		if (is_array($arAdditionalExtendedProperties) && !empty($arAdditionalExtendedProperties))
 		{
 			$this->body .= '<AdditionalProperties xmlns="http://schemas.microsoft.com/exchange/services/2006/types">' . "\r\n";
 
@@ -242,12 +267,9 @@ class CDavExchangeClientRequest
 		}
 
 		$arKeys = array_keys($itemId);
-		if (count($itemId) > 0)
+		if (!empty($itemId) && $arKeys[0] . "!" !== "0!")
 		{
-			if ($arKeys[0]."!" != "0!")
-			{
-				$itemId = array($itemId);
-			}
+			$itemId = array($itemId);
 		}
 
 		foreach ($itemId as $value)
@@ -285,7 +307,9 @@ class CDavExchangeClientRequest
 		$this->body .= "   <SavedItemFolderId>\r\n";
 
 		if (!is_array($arSavedItemFolderId))
+		{
 			$arSavedItemFolderId = array("id" => $arSavedItemFolderId);
+		}
 
 		if (!in_array($arSavedItemFolderId["id"], self::$arDistinguishedFolderIdNameType))
 		{
@@ -357,10 +381,14 @@ class CDavExchangeClientRequest
 		$this->body .= "   <ItemIds>\r\n";
 
 		if (!is_array($itemId))
-			$itemId = array($itemId);
+		{
+			$itemId = [$itemId];
+		}
 
 		foreach ($itemId as $value)
-			$this->body .= "    <t:ItemId Id=\"".htmlspecialcharsbx($value)."\"/>\r\n";
+		{
+			$this->body .= "    <t:ItemId Id=\"" . htmlspecialcharsbx($value) . "\"/>\r\n";
+		}
 
 		$this->body .= "   </ItemIds>\r\n";
 		$this->body .= "  </DeleteItem>\r\n";
@@ -373,9 +401,13 @@ class CDavExchangeClientRequest
 		$arMapTmp = array("idonly" => "IdOnly", "id_only" => "IdOnly", "allproperties" => "AllProperties", "all_properties" => "AllProperties");
 		$folderShapeLower = mb_strtolower($folderShape);
 		if (array_key_exists($folderShapeLower, $arMapTmp))
+		{
 			$folderShape = $arMapTmp[$folderShapeLower];
+		}
 		else
+		{
 			$folderShape = "AllProperties";
+		}
 
 		$this->body  = "<"."?xml version=\"1.0\" encoding=\"utf-8\"?".">\r\n";
 		$this->body .= "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:t=\"http://schemas.microsoft.com/exchange/services/2006/types\">\r\n";
@@ -448,10 +480,12 @@ class CDavExchangeClientRequest
 			$folderId = array("id" => $folderId);
 
 		$arKeys = array_keys($folderId);
-		if (count($folderId) > 0)
+		if (!empty($folderId))
 		{
 			if ($arKeys[0]."!" != "0!")
-				$folderId = array($folderId);
+			{
+				$folderId = [$folderId];
+			}
 		}
 
 		$arMapTmp = array("mailbox" => "Mailbox", "id" => "Id", "xml_id" => "Id", "changekey" => "ChangeKey", "modification_label" => "ChangeKey");

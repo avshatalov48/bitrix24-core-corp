@@ -1,4 +1,5 @@
 <?php
+
 namespace Bitrix\Crm\Timeline;
 
 use Bitrix\Crm\ItemIdentifier;
@@ -189,7 +190,7 @@ class Controller
 			return null;
 		}
 
-		$timelineEntry = Container::getInstance()->getTimelineEntryFacade()->getById($timelineEntryId);
+		$timelineEntry = $this->getTimelineEntryFacade()->getById($timelineEntryId);
 		if (!$timelineEntry)
 		{
 			return null;
@@ -325,5 +326,10 @@ class Controller
 				$timelineEntryId
 			);
 		}
+	}
+
+	protected function getTimelineEntryFacade(): TimelineEntry\Facade
+	{
+		return Container::getInstance()->getTimelineEntryFacade();
 	}
 }

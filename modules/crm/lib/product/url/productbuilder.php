@@ -155,6 +155,10 @@ if (Loader::includeModule('catalog'))
 
 			$this->urlTemplates[self::PAGE_CSV_IMPORT] = '#PATH_PREFIX#'
 				.'import/';
+
+			$this->urlTemplates[self::PAGE_CATALOG_SEO] = self::PATH_PREFIX . '#IBLOCK_ID#/seo/';
+			$this->urlTemplates[self::PAGE_ELEMENT_SEO] = self::PATH_PREFIX . '#IBLOCK_ID#/seo/product/#PRODUCT_ID#/';
+			$this->urlTemplates[self::PAGE_SECTION_SEO] = self::PATH_PREFIX . '#IBLOCK_ID#/seo/section/#SECTION_ID#/';
 		}
 
 		protected function getSliderPathTemplates(): array

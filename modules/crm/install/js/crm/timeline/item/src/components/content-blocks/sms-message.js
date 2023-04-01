@@ -1,13 +1,21 @@
 export const SmsMessage = {
 	props: {
-		contentBlock: Object,
+		text: {
+			type: String,
+			required: false,
+			default: '',
+		},
+	},
+	computed: {
+		messageHtml(): string
+		{
+			return BX.util.htmlspecialchars(this.text).replace(/\r\n|\r|\n/g, '<br/>');
+		}
 	},
 	template: `
 		<div
 			class="crm-timeline__item_sms-message">
-			<span>
-				<component v-if="contentBlock" :is="contentBlock.rendererName" v-bind="contentBlock.properties"></component>
-			</span>
+			<span v-if="messageHtml" v-html="messageHtml"></span>
 		</div>
 	`
 }

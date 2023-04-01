@@ -71,7 +71,7 @@ $pageAsset->addCss('/bitrix/js/calendar/planner-style.css');
 		<?if ((int)$activity['TYPE_ID'] === \CCrmActivityType::Email):?>
 
 			<div class="crm-activity-planner-slider-header crm-activity-planner-slider-header-icon crm-activity-planner-slider-header-icon-<?=$arResult['TYPE_ICON']?>">
-				<div class="crm-activity-planner-slider-header-title"><?=htmlspecialcharsbx($provider::getTypeName($activity['PROVIDER_TYPE_ID'], $activity['DIRECTION'])) ?></div>
+				<div class="crm-activity-planner-slider-header-title"><?=htmlspecialcharsbx($provider::getTypeName($activity['PROVIDER_TYPE_ID'], ($activity['DIRECTION'] ?? null))) ?></div>
 				<div class="crm-activity-planner-slider-header-control-block">
 					<? $APPLICATION->showViewContent('planner_slider_header') ?>
 					<div class="crm-activity-planner-slider-header-control-item crm-activity-planner-slider-header-control-important crm-activity-planner-slider-header-icon-flame-active">

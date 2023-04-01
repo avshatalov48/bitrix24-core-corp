@@ -1,4 +1,5 @@
-<?
+<?php
+
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
 	die();
@@ -74,5 +75,7 @@ return array(
 		'crm.entity-editor.field.payment-documents',
 		'crm.entity-editor.field.image',
 		'crm.placement.detailsearch',
+		'crm.entity-editor.field-configurator',
+		'crm.entity-editor.field.phone-number-input',
 	]
 );

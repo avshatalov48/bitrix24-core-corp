@@ -8,6 +8,9 @@ use Bitrix\Main\Localization\Loc;
 
 class EntityController extends Controller
 {
+	/**
+	 * @return int
+	 */
 	public function getEntityTypeID()
 	{
 		return \CCrmOwnerType::Undefined;

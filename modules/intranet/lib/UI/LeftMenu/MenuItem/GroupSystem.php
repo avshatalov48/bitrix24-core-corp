@@ -15,6 +15,7 @@ class GroupSystem extends Group
 	public function setDefaultOptions(array $options)
 	{
 		$this->defaultOptions = $options;
+
 	}
 
 	protected function getCollapseMode($itemId): ?string
@@ -42,7 +43,7 @@ class GroupSystem extends Group
 		$collapseMode = $this->getCollapseMode($this->getId());
 		if ($collapseMode === null)
 		{
-			$collapseMode = $this->defaultOptions['collapsed_mode'] === 'expanded' ? 'expanded' : 'collapsed';
+			$collapseMode = $this->defaultOptions['collapsed_mode'] ?? null === 'expanded' ? 'expanded' : 'collapsed';
 		}
 
 		$data['PARAMS']['collapse_mode'] = $collapseMode;

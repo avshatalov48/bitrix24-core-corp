@@ -496,7 +496,7 @@ class UserFieldSynchronizer
 			$typeID = $field['USER_TYPE_ID'];
 			$isMultiple = $field['MULTIPLE'] === 'Y' ? 'Y' : 'N';
 			if(isset($map[$typeID]) && isset($map[$typeID][$isMultiple]) && isset($map[$typeID][$isMultiple][$label])
-				&& !$map[$typeID][$label]['IS_BUSY'])
+				&& !($map[$typeID][$label]['IS_BUSY'] ?? null))
 			{
 				$results[$label] = array(
 					'LABEL' => $label,

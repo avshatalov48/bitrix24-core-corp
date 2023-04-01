@@ -21,7 +21,7 @@ $APPLICATION->SetTitle(GetMessage("TITLE"));
 		"PATH_TO_PRODUCT_EDIT" => "/crm/product/edit/#product_id#/",
 		"PATH_TO_PRODUCT_SHOW" => "/crm/product/show/#product_id#/",
 		"PATH_TO_USER_PROFILE" => "/company/personal/user/#user_id#/",
-		"ELEMENT_ID" => $_REQUEST["quote_id"],
+		"ELEMENT_ID" => $_REQUEST["quote_id"] ?? null,
 		"SEF_FOLDER" => "/crm/quote/",
 		"SEF_URL_TEMPLATES" => Array(
 			"index" => "index.php",

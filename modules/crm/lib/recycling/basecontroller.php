@@ -855,10 +855,30 @@ abstract class BaseController
 
 	protected function recoverCustomRelations(int $recyclingEntityId, int $newEntityId): void
 	{
-		Crm\Relation\EntityRelationTable::rebind(
+		$result = Crm\Relation\EntityRelationTable::rebind(
 			new Crm\ItemIdentifier($this->getSuspendedEntityTypeID(), $recyclingEntityId),
 			new Crm\ItemIdentifier($this->getEntityTypeID(), $newEntityId)
 		);
+
+		if (!$result->isSuccess())
+		{
+			return;
+		}
+
+		$parents = $result->getData()['affectedItems']['parents'];
+		$children = $result->getData()['affectedItems']['children'];
+
+		$registrar = Crm\Service\Container::getInstance()->getRelationRegistrar();
+		$newEntity = new ItemIdentifier($this->getEntityTypeID(), $newEntityId);
+
+		foreach ($parents as $item)
+		{
+			$registrar->registerBind($item, $newEntity);
+		}
+		foreach ($children as $item)
+		{
+			$registrar->registerBind($newEntity, $item);
+		}
 	}
 
 	protected function eraseSuspendedCustomRelations(int $recyclingEntityId): void

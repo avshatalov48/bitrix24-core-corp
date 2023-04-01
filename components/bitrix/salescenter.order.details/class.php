@@ -36,7 +36,7 @@ class SalesCenterOrderDetails extends CBitrixComponent implements Main\Engine\Co
 			$params["ACTIVE_DATE_FORMAT"] = Main\Type\Date::getFormat();
 		}
 
-		if (!is_array($params["CUSTOM_SELECT_PROPS"]))
+		if (!isset($params["CUSTOM_SELECT_PROPS"]) || !is_array($params["CUSTOM_SELECT_PROPS"]))
 		{
 			$params["CUSTOM_SELECT_PROPS"] = [];
 		}
@@ -50,12 +50,12 @@ class SalesCenterOrderDetails extends CBitrixComponent implements Main\Engine\Co
 		$params["PICTURE_HEIGHT"] = $params["PICTURE_HEIGHT"] ?? 110;
 
 		// resample type for images
-		if (!in_array($params['RESAMPLE_TYPE'], [BX_RESIZE_IMAGE_EXACT, BX_RESIZE_IMAGE_PROPORTIONAL, BX_RESIZE_IMAGE_PROPORTIONAL_ALT]))
+		if (!isset($params["RESAMPLE_TYPE"]) || !in_array($params['RESAMPLE_TYPE'], [BX_RESIZE_IMAGE_EXACT, BX_RESIZE_IMAGE_PROPORTIONAL, BX_RESIZE_IMAGE_PROPORTIONAL_ALT]))
 		{
 			$params['RESAMPLE_TYPE'] = BX_RESIZE_IMAGE_PROPORTIONAL;
 		}
 
-		if (!$params['HEADER_TITLE'])
+		if (empty($params['HEADER_TITLE']))
 		{
 			$title = '';
 			if (
@@ -234,13 +234,15 @@ class SalesCenterOrderDetails extends CBitrixComponent implements Main\Engine\Co
 		$basketItem->setFieldNoDemand('DISCOUNT_PRICE', $data['SHOW_DISCOUNT']);
 
 		$basketValues = $basketItem->getFieldValues();
+		$basketValues['BASE_PRICE_WITH_VAT'] = $basketItem->getBasePriceWithVat();
+		$basketValues['PRICE_WITH_VAT'] = $basketItem->getPriceWithVat();
 
 		$propertyCollection = $basketItem->getPropertyCollection();
 		$basketValues['PROPERTIES'] = $propertyCollection ? $propertyCollection->getPropertyValues() : [];
 		unset($basketValues['PROPERTIES']['CATALOG.XML_ID'], $basketValues['PROPERTIES']['PRODUCT.XML_ID']);
 
-		$basketValues['FORMATED_PRICE'] = SaleFormatCurrency($basketValues["PRICE"], $basketValues["CURRENCY"]);
-		$basketValues['FORMATED_BASE_PRICE'] = SaleFormatCurrency($basketValues["BASE_PRICE"], $basketValues["CURRENCY"]);
+		$basketValues['FORMATED_PRICE'] = SaleFormatCurrency($basketValues["PRICE_WITH_VAT"], $basketValues["CURRENCY"]);
+		$basketValues['FORMATED_BASE_PRICE'] = SaleFormatCurrency($basketValues["BASE_PRICE_WITH_VAT"], $basketValues["CURRENCY"]);
 
 		$iblockId = static::getIblockId($basketValues['PRODUCT_ID']);
 		if ($iblockId)
@@ -280,7 +282,7 @@ class SalesCenterOrderDetails extends CBitrixComponent implements Main\Engine\Co
 					$arFileTmp = CFile::ResizeImageGet(
 						$frontImageData['FILE_STRUCTURE'],
 						array("width" => $this->arParams['PICTURE_WIDTH'], "height" => $this->arParams['PICTURE_HEIGHT']),
-						$this->arParams['PICTURE_RESAMPLE_TYPE'],
+						$this->arParams['RESAMPLE_TYPE'],
 						true
 					);
 
@@ -350,8 +352,8 @@ class SalesCenterOrderDetails extends CBitrixComponent implements Main\Engine\Co
 
 			foreach ($this->arResult['BASKET'] as $item)
 			{
-				$this->arResult['BASE_PRODUCT_SUM'] += $item["BASE_PRICE"] * $item['QUANTITY'];
-				$this->arResult['PRODUCT_SUM'] += $item["PRICE"] * $item['QUANTITY'];
+				$this->arResult['BASE_PRODUCT_SUM'] += $item["BASE_PRICE_WITH_VAT"] * $item['QUANTITY'];
+				$this->arResult['PRODUCT_SUM'] += $item["PRICE_WITH_VAT"] * $item['QUANTITY'];
 				$this->arResult['DISCOUNT_VALUE'] += $item["DISCOUNT_PRICE"] * $item['QUANTITY'];
 			}
 		}
@@ -415,14 +417,6 @@ class SalesCenterOrderDetails extends CBitrixComponent implements Main\Engine\Co
 		{
 			$this->arResult["DISCOUNT_VALUE_FORMATED"] = SaleFormatCurrency(
 				$this->arResult["DISCOUNT_VALUE"],
-				$this->arResult["CURRENCY"]
-			);
-		}
-
-		if (doubleval($this->arResult["SUM_PAID"]))
-		{
-			$this->arResult["SUM_PAID_FORMATED"] = SaleFormatCurrency(
-				$this->arResult["SUM_PAID"],
 				$this->arResult["CURRENCY"]
 			);
 		}

@@ -485,7 +485,6 @@ export default class FieldsSelector
 			extraFields = [
 				'ID',
 				'CLOSED',
-				'CLOSEDATE',
 				'DATE_CREATE',
 				'DATE_MODIFY',
 				'COMMENTS',

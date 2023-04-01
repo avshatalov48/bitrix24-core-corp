@@ -20,7 +20,7 @@ $ind = RandString(8);
 		{
 			if (
 				$key == "CLIENT_ID"
-				&& intval($arResult["COMMUNICATION_MORE_CNT"]) > 0
+				&& intval(($arResult["COMMUNICATION_MORE_CNT"] ?? null)) > 0
 				&& !empty($arResult["CLIENTS_FOR_JS"])
 			)
 			{
@@ -177,7 +177,7 @@ if ($arResult["IS_COMPLETED"])
 				{
 					var oActivity = BX.CrmLiveFeedActivity.create(<?=$arParams["~ACTIVITY"]["ID"]?>, {
 						editorId: 'livefeed',
-						logId: <?=intval($arParams["~PARAMS"]["LOG_ID"])?>,
+						logId: <?=intval(($arParams["~PARAMS"]["LOG_ID"] ?? null))?>,
 						node: logEntryNode
 					});
 

@@ -26,6 +26,7 @@ declare type ConfigurableItemData = {
 	timestamp: ?Number,
 	sort: ?Array,
 	layout: ?Object,
+	payload: ?Object,
 }
 
 export default class ConfigurableItem extends TimelineItem
@@ -33,6 +34,7 @@ export default class ConfigurableItem extends TimelineItem
 	#container: HTMLElement = null;
 	#itemClassName: string = null;
 	#type: string = null;
+	#dataPayload: ?Object = null;
 	#timelineId: string = null;
 	#timestamp: number = null;
 	#sort: Array = null;
@@ -76,6 +78,7 @@ export default class ConfigurableItem extends TimelineItem
 		this.#timestamp = data.timestamp || null;
 		this.#sort = data.sort || [];
 		this.#layout = new Layout(data.layout || {});
+		this.#dataPayload = data.payload || {};
 	}
 
 	getLayout(): Layout
@@ -88,20 +91,19 @@ export default class ConfigurableItem extends TimelineItem
 		return this.#type;
 	}
 
+	getDataPayload(): ?Object
+	{
+		return this.#dataPayload;
+	}
+
 	layout(options): void
 	{
-		let needBindToContainer = true;
-		let bindTo = null;
-		if (Type.isPlainObject(options))
-		{
-			needBindToContainer = BX.prop.getBoolean(options, 'add', true);
-			bindTo = Type.isElementNode(options['anchor']) ? options['anchor'] : null;
-		}
 		this.setWrapper(Dom.create({tag: 'div', attrs: {className: this.#itemClassName}}));
 		this.#initLayoutApp();
 
-		if (needBindToContainer)
+		if (this.needBindToContainer(options))
 		{
+			const bindTo = this.getBindToNode(options);
 			if (bindTo && bindTo.nextSibling)
 			{
 				Dom.insertBefore(this.getWrapper(), bindTo.nextSibling);
@@ -111,6 +113,31 @@ export default class ConfigurableItem extends TimelineItem
 				Dom.append(this.getWrapper(), this.#container);
 			}
 		}
+
+		for (const controller of this.#controllers)
+		{
+			controller.onAfterItemLayout(this, options);
+		}
+	}
+
+	needBindToContainer(options): Boolean
+	{
+		if (Type.isPlainObject(options))
+		{
+			return BX.prop.getBoolean(options, 'add', true);
+		}
+
+		return true;
+	}
+
+	getBindToNode(options): ?HTMLElement
+	{
+		if (Type.isPlainObject(options))
+		{
+			return Type.isElementNode(options['anchor']) ? options['anchor'] : null;
+		}
+
+		return null;
 	}
 
 	refreshLayout(): void

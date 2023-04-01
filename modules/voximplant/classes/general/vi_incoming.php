@@ -557,7 +557,7 @@ class CVoxImplantIncoming
 		return $result;
 	}
 
-	public static function getByInternalPhoneNumber(string $phoneNumber, $checkTimeman = false)
+	public static function getByInternalPhoneNumber(string $phoneNumber, $checkTimeman = false): ?array
 	{
 		$query = \Bitrix\Voximplant\Model\UserTable::query();
 		$query

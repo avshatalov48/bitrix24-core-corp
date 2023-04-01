@@ -13,6 +13,7 @@ use Bitrix\Main\ErrorCollection;
 use Bitrix\Main\Error;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\UserTable;
+use Bitrix\Main\Web\Uri;
 
 class UserList extends \CBitrixComponent implements Controllerable, Errorable
 {
@@ -217,7 +218,7 @@ class UserList extends \CBitrixComponent implements Controllerable, Errorable
 				false
 			);
 
-			$result = '<div class="intranet-user-list-userpic ui-icon ui-icon-common-user"><i style="background-image: url(\''.\CHTTP::urnEncode($fileResized['src']).'\'); background-size: cover"></i></div>';
+			$result = '<div class="intranet-user-list-userpic ui-icon ui-icon-common-user"><i style="background-image: url(\''.Uri::urnEncode($fileResized['src']).'\'); background-size: cover"></i></div>';
 		}
 
 		return $result;

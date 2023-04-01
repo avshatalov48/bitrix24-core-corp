@@ -7,8 +7,11 @@ jn.define('layout/ui/fields/phone', (require, exports, module) => {
 	const { phoneUtils } = require('native/phonenumber');
 	const { getCountryCode } = require('utils/phone');
 	const { stringify } = require('utils/string');
+	const { BaseField } = require('layout/ui/fields/base');
+	const { arrowDown } = require('assets/common');
 
 	const DEFAULT = 'default';
+	const GLOBAL_COUNTRY_CODE = 'XX';
 
 	/**
 	 * @class PhoneField
@@ -19,26 +22,47 @@ jn.define('layout/ui/fields/phone', (require, exports, module) => {
 		{
 			super(props);
 
-			this.prevCountryCode = null;
-			this.countryCode = getCountryCode(props.value);
+			this.onChangePhone = this.onChangePhone.bind(this);
 		}
 
-		componentWillReceiveProps(newProps)
+		getFieldCountryCode()
 		{
-			super.componentWillReceiveProps(newProps);
+			const { countryCode, phoneNumber } = this.getValue();
 
-			this.prevCountryCode = this.countryCode;
-			this.countryCode = getCountryCode(newProps.value);
+			return countryCode || this.getCountryCodeByPhoneNumber(phoneNumber);
 		}
 
-		shouldComponentUpdate(nextProps, nextState)
+		getCountryCodeByPhoneNumber(phoneNumber)
 		{
-			if (this.prevCountryCode !== this.countryCode)
+			const { countryCode: userCountryCode } = this.getConfig();
+			let countryCode = userCountryCode;
+
+			if (phoneNumber && !phoneUtils.getCountryCode(phoneNumber))
 			{
-				return true;
+				countryCode = GLOBAL_COUNTRY_CODE;
 			}
 
-			return super.shouldComponentUpdate(nextProps, nextState);
+			return getCountryCode(phoneNumber, countryCode);
+		}
+
+		getValuePhoneNumber(value)
+		{
+			const { phoneNumber } = value || this.getValue();
+			const phoneCode = phoneUtils.getPhoneCode(this.getFieldCountryCode());
+
+			return !phoneNumber && phoneCode ? `+${phoneCode}` : stringify(phoneNumber || '');
+		}
+
+		prepareSingleValue(value)
+		{
+			return value;
+		}
+
+		isEmptyValue(value)
+		{
+			const { phoneNumber } = value;
+
+			return super.isEmptyValue(phoneNumber || '');
 		}
 
 		handleOnImageClick()
@@ -48,17 +72,17 @@ jn.define('layout/ui/fields/phone', (require, exports, module) => {
 				return null;
 			}
 
-			dialogs.showCountryPicker()
+			dialogs.showCountryPicker({ saveSelected: true })
 				.then(({ phoneCode }) => {
 					const newPhoneNumber = this.changePhoneNumberCode(phoneCode);
-					this.handleChange(newPhoneNumber);
+					this.onChangePhone(newPhoneNumber);
 				})
 				.catch(console.error);
 		}
 
 		changePhoneNumberCode(phoneCode)
 		{
-			const phoneNumber = stringify(this.getValue());
+			const phoneNumber = this.getValuePhoneNumber();
 			if (phoneNumber === '')
 			{
 				return phoneCode;
@@ -89,17 +113,33 @@ jn.define('layout/ui/fields/phone', (require, exports, module) => {
 			this.styles = this.getStyles();
 			const imageUri = image || this.getImage() || this.getDefaultImage();
 
-			return Image({
-				style: this.styles.leftIcon,
-				uri: imageUri,
-				onClick: this.handleOnImageClick.bind(this),
-				resizeMode: 'contain',
-				onFailure: () => {
-					this.setState({
-						image: this.getDefaultImage(),
-					});
+			return View(
+				{
+					style: this.styles.leftIconWrapper,
+					onClick: this.handleOnImageClick.bind(this),
 				},
-			});
+				Image({
+					style: this.styles.flagIcon,
+					uri: imageUri,
+					resizeMode: 'contain',
+					onFailure: () => {
+						this.setState({
+							image: this.getDefaultImage(),
+						});
+					},
+				}),
+				!this.isReadOnly() && Image(
+					{
+						style: {
+							height: 5,
+							width: 7,
+						},
+						svg: {
+							content: arrowDown(),
+						},
+					},
+				),
+			);
 		}
 
 		renderReadOnlyContent()
@@ -108,8 +148,8 @@ jn.define('layout/ui/fields/phone', (require, exports, module) => {
 			{
 				return this.renderEmptyContent();
 			}
-
-			const phoneNumber = phoneUtils.getFormattedNumber(this.getValue(), this.countryCode) || this.getValue();
+			const formattedNumber = phoneUtils.getFormattedNumber(this.getValuePhoneNumber(), this.getFieldCountryCode());
+			const phoneNumber = formattedNumber || this.getValuePhoneNumber();
 
 			return Text({
 				...this.getReadOnlyRenderParams(),
@@ -119,27 +159,38 @@ jn.define('layout/ui/fields/phone', (require, exports, module) => {
 
 		getFieldInputProps()
 		{
-			const fieldProps = super.getFieldInputProps();
-
 			return {
-				...fieldProps,
-				countryCode: this.countryCode,
+				...super.getFieldInputProps(),
+				value: this.getValuePhoneNumber(),
+				onChangeText: this.onChangePhone,
 				enable: !this.isReadOnly(),
 				style: this.styles.phoneField,
 				keyboardType: 'phone-pad',
 			};
 		}
 
+		onChangePhone(phoneNumber)
+		{
+			const { countryCode } = this.getValue();
+			this.fieldValue = { phoneNumber, countryCode };
+
+			this.handleChange({
+				phoneNumber,
+				countryCode: phoneNumber ? this.getCountryCodeByPhoneNumber(phoneNumber) : GLOBAL_COUNTRY_CODE,
+			});
+		}
+
 		getImage()
 		{
-			const flagImage = this.countryCode && sharedBundle.getImage(`flags/${this.countryCode}.png`);
+			const countryCode = this.getFieldCountryCode();
+			const flagImage = countryCode && sharedBundle.getImage(`flags/${countryCode}.png`);
 
 			return flagImage || this.getDefaultImage();
 		}
 
 		getDefaultImage()
 		{
-			return `${Fields.Base.getExtensionPath()}/phone/images/${DEFAULT}.png`;
+			return `${BaseField.getExtensionPath()}/phone/images/${DEFAULT}.png`;
 		}
 
 		getDefaultStyles()
@@ -155,12 +206,15 @@ jn.define('layout/ui/fields/phone', (require, exports, module) => {
 					fontSize: 16,
 					alignSelf: 'center',
 				},
-				leftIcon: {
+				leftIconWrapper: {
+					marginRight: 5,
+					flexDirection: 'row',
+					alignItems: 'center',
+				},
+				flagIcon: {
 					width: 22,
 					height: 18,
-					marginRight: 10,
-					alignSelf: 'center',
-					alignItems: 'center',
+					marginRight: 4,
 				},
 			};
 		}

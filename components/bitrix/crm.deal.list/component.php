@@ -1,5 +1,9 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 /**
  * @global \CMain $APPLICATION
@@ -81,8 +85,9 @@ if (!$isErrorOccured && !CModule::IncludeModule('sale'))
 }
 
 //region Export params
-$sExportType = !empty($arParams['EXPORT_TYPE']) ?
-	strval($arParams['EXPORT_TYPE']) : (!empty($_REQUEST['type']) ? strval($_REQUEST['type']) : '');
+$sExportType = !empty($arParams['EXPORT_TYPE'])
+	? strval($arParams['EXPORT_TYPE'])
+	: (!empty($_REQUEST['type']) ? strval($_REQUEST['type']) : '');
 $isInExportMode = false;
 $isStExport = false;    // Step-by-step export mode
 if (!empty($sExportType))
@@ -113,8 +118,9 @@ $isStExportProductsFields = (isset($arParams['STEXPORT_INITIAL_OPTIONS']['EXPORT
 $arResult['STEXPORT_EXPORT_PRODUCT_FIELDS'] = ($isStExport && $isStExportProductsFields) ? 'Y' : 'N';
 
 $arResult['STEXPORT_MODE'] = $isStExport ? 'Y' : 'N';
-$arResult['STEXPORT_TOTAL_ITEMS'] = isset($arParams['STEXPORT_TOTAL_ITEMS']) ?
-	(int)$arParams['STEXPORT_TOTAL_ITEMS'] : 0;
+$arResult['STEXPORT_TOTAL_ITEMS'] = isset($arParams['STEXPORT_TOTAL_ITEMS'])
+	? (int)$arParams['STEXPORT_TOTAL_ITEMS']
+	: 0;
 //endregion
 
 if (!$isErrorOccured && $isInExportMode && !CCrmDeal::CheckExportPermission($userPermissions))
@@ -143,58 +149,153 @@ $CCrmBizProc = new CCrmBizProc('DEAL');
 
 $userID = CCrmSecurityHelper::GetCurrentUserID();
 $isAdmin = CCrmPerms::IsAdmin();
+$currentPage = $APPLICATION->GetCurPage();
 
 $arResult['CURRENT_USER_ID'] = CCrmSecurityHelper::GetCurrentUserID();
-$arResult['PATH_TO_DEAL_LIST'] = $arParams['PATH_TO_DEAL_LIST'] = CrmCheckPath('PATH_TO_DEAL_LIST', $arParams['PATH_TO_DEAL_LIST'], $APPLICATION->GetCurPage());
-$arResult['PATH_TO_DEAL_WIDGET'] = $arParams['PATH_TO_DEAL_WIDGET'] = CrmCheckPath('PATH_TO_DEAL_WIDGET', $arParams['PATH_TO_DEAL_WIDGET'], $APPLICATION->GetCurPage());
-$arResult['PATH_TO_DEAL_KANBAN'] = $arParams['PATH_TO_DEAL_KANBAN'] = CrmCheckPath('PATH_TO_DEAL_KANBAN', $arParams['PATH_TO_DEAL_KANBAN'], $currentPage);
-$arResult['PATH_TO_DEAL_CALENDAR'] = $arParams['PATH_TO_DEAL_CALENDAR'] = CrmCheckPath('PATH_TO_DEAL_CALENDAR', $arParams['PATH_TO_DEAL_CALENDAR'], $currentPage);
-$arParams['PATH_TO_DEAL_CATEGORY'] = CrmCheckPath('PATH_TO_DEAL_CATEGORY', $arParams['PATH_TO_DEAL_CATEGORY'], $APPLICATION->GetCurPage().'?category_id=#category_id#');
-$arParams['IS_RECURRING'] = isset($arParams['IS_RECURRING']) ? $arParams['IS_RECURRING'] : 'N';
+$arResult['PATH_TO_DEAL_LIST'] = $arParams['PATH_TO_DEAL_LIST'] = CrmCheckPath(
+	'PATH_TO_DEAL_LIST',
+	$arParams['PATH_TO_DEAL_LIST'] ?? '',
+	$currentPage
+);
+$arResult['PATH_TO_DEAL_WIDGET'] = $arParams['PATH_TO_DEAL_WIDGET'] = CrmCheckPath(
+	'PATH_TO_DEAL_WIDGET',
+	$arParams['PATH_TO_DEAL_WIDGET'] ?? '',
+	$currentPage
+);
+$arResult['PATH_TO_DEAL_KANBAN'] = $arParams['PATH_TO_DEAL_KANBAN'] = CrmCheckPath(
+	'PATH_TO_DEAL_KANBAN',
+	$arParams['PATH_TO_DEAL_KANBAN'] ?? '',
+	$currentPage
+);
+$arResult['PATH_TO_DEAL_CALENDAR'] = $arParams['PATH_TO_DEAL_CALENDAR'] = CrmCheckPath(
+	'PATH_TO_DEAL_CALENDAR',
+	$arParams['PATH_TO_DEAL_CALENDAR'] ?? '',
+	$currentPage
+);
+$arParams['PATH_TO_DEAL_CATEGORY'] = CrmCheckPath(
+	'PATH_TO_DEAL_CATEGORY',
+	$arParams['PATH_TO_DEAL_CATEGORY'] ?? '',
+	$currentPage . '?category_id=#category_id#'
+);
+$arParams['IS_RECURRING'] = $arParams['IS_RECURRING'] ?? 'N';
 
-if ($arParams['IS_RECURRING'] == 'Y')
+if ($arParams['IS_RECURRING'] === 'Y')
 {
-	$arParams['PATH_TO_DEAL_CATEGORY'] = CrmCheckPath('PATH_TO_DEAL_RECUR_CATEGORY', $arParams['PATH_TO_DEAL_RECUR_CATEGORY'], $APPLICATION->GetCurPage().'?category_id=#category_id#');
+	$arParams['PATH_TO_DEAL_CATEGORY'] = CrmCheckPath(
+		'PATH_TO_DEAL_RECUR_CATEGORY',
+		$arParams['PATH_TO_DEAL_RECUR_CATEGORY'] ?? '',
+		$currentPage . '?category_id=#category_id#'
+	);
 }
-$arParams['PATH_TO_DEAL_WIDGETCATEGORY'] = CrmCheckPath('PATH_TO_DEAL_WIDGETCATEGORY', $arParams['PATH_TO_DEAL_WIDGETCATEGORY'], $APPLICATION->GetCurPage().'?category_id=#category_id#');
-$arParams['PATH_TO_DEAL_KANBANCATEGORY'] = CrmCheckPath('PATH_TO_DEAL_KANBANCATEGORY', $arParams['PATH_TO_DEAL_KANBANCATEGORY'], $APPLICATION->GetCurPage().'?category_id=#category_id#');//!!!
-$arParams['PATH_TO_DEAL_CALENDARCATEGORY'] = CrmCheckPath('PATH_TO_DEAL_CALENDARCATEGORY', $arParams['PATH_TO_DEAL_CALENDARCATEGORY'], $APPLICATION->GetCurPage().'?category_id=#category_id#');
 
-$arParams['PATH_TO_DEAL_DETAILS'] = CrmCheckPath('PATH_TO_DEAL_DETAILS', $arParams['PATH_TO_DEAL_DETAILS'], $APPLICATION->GetCurPage().'?deal_id=#deal_id#&details');
-$arParams['PATH_TO_DEAL_SHOW'] = CrmCheckPath('PATH_TO_DEAL_SHOW', $arParams['PATH_TO_DEAL_SHOW'], $APPLICATION->GetCurPage().'?deal_id=#deal_id#&show');
-$arParams['PATH_TO_DEAL_EDIT'] = CrmCheckPath('PATH_TO_DEAL_EDIT', $arParams['PATH_TO_DEAL_EDIT'], $APPLICATION->GetCurPage().'?deal_id=#deal_id#&edit');
-$arParams['PATH_TO_DEAL_MERGE'] = CrmCheckPath('PATH_TO_DEAL_MERGE', $arParams['PATH_TO_DEAL_MERGE'], '/deal/merge/');
-$arParams['PATH_TO_QUOTE_EDIT'] = CrmCheckPath('PATH_TO_QUOTE_EDIT', $arParams['PATH_TO_QUOTE_EDIT'], $APPLICATION->GetCurPage().'?quote_id=#quote_id#&edit');
-$arParams['PATH_TO_INVOICE_EDIT'] = CrmCheckPath('PATH_TO_INVOICE_EDIT', $arParams['PATH_TO_INVOICE_EDIT'], $APPLICATION->GetCurPage().'?invoice_id=#invoice_id#&edit');
-$arParams['PATH_TO_COMPANY_SHOW'] = CrmCheckPath('PATH_TO_COMPANY_SHOW', $arParams['PATH_TO_COMPANY_SHOW'], $APPLICATION->GetCurPage().'?company_id=#company_id#&show');
-$arParams['PATH_TO_CONTACT_SHOW'] = CrmCheckPath('PATH_TO_CONTACT_SHOW', $arParams['PATH_TO_CONTACT_SHOW'], $APPLICATION->GetCurPage().'?contact_id=#contact_id#&show');
-$arParams['PATH_TO_USER_BP'] = CrmCheckPath('PATH_TO_USER_BP', $arParams['PATH_TO_USER_BP'], '/company/personal/bizproc/');
+$arParams['PATH_TO_DEAL_WIDGETCATEGORY'] = CrmCheckPath(
+	'PATH_TO_DEAL_WIDGETCATEGORY',
+	$arParams['PATH_TO_DEAL_WIDGETCATEGORY'] ?? '',
+	$APPLICATION->GetCurPage() . '?category_id=#category_id#'
+);
+
+$arParams['PATH_TO_DEAL_KANBANCATEGORY'] = CrmCheckPath(
+	'PATH_TO_DEAL_KANBANCATEGORY',
+	$arParams['PATH_TO_DEAL_KANBANCATEGORY'] ?? '',
+	$APPLICATION->GetCurPage() . '?category_id=#category_id#'
+);//!!!
+
+$arParams['PATH_TO_DEAL_CALENDARCATEGORY'] = CrmCheckPath(
+	'PATH_TO_DEAL_CALENDARCATEGORY',
+	$arParams['PATH_TO_DEAL_CALENDARCATEGORY'] ?? '',
+	$APPLICATION->GetCurPage() . '?category_id=#category_id#'
+);
+
+$arParams['PATH_TO_DEAL_DETAILS'] = CrmCheckPath(
+	'PATH_TO_DEAL_DETAILS',
+	$arParams['PATH_TO_DEAL_DETAILS'] ?? '',
+	$APPLICATION->GetCurPage() . '?deal_id=#deal_id#&details'
+);
+
+$arParams['PATH_TO_DEAL_SHOW'] = CrmCheckPath(
+	'PATH_TO_DEAL_SHOW',
+	$arParams['PATH_TO_DEAL_SHOW'] ?? '',
+	$APPLICATION->GetCurPage() . '?deal_id=#deal_id#&show'
+);
+
+$arParams['PATH_TO_DEAL_EDIT'] = CrmCheckPath(
+	'PATH_TO_DEAL_EDIT',
+	$arParams['PATH_TO_DEAL_EDIT'] ?? '',
+	$APPLICATION->GetCurPage() . '?deal_id=#deal_id#&edit'
+);
+
+$arParams['PATH_TO_DEAL_MERGE'] = CrmCheckPath(
+	'PATH_TO_DEAL_MERGE',
+	$arParams['PATH_TO_DEAL_MERGE'] ?? '',
+	'/deal/merge/'
+);
+
+$arParams['PATH_TO_QUOTE_EDIT'] = CrmCheckPath(
+	'PATH_TO_QUOTE_EDIT',
+	$arParams['PATH_TO_QUOTE_EDIT'] ?? '',
+	$APPLICATION->GetCurPage() . '?quote_id=#quote_id#&edit'
+);
+
+$arParams['PATH_TO_INVOICE_EDIT'] = CrmCheckPath(
+	'PATH_TO_INVOICE_EDIT',
+	$arParams['PATH_TO_INVOICE_EDIT'] ?? '',
+	$APPLICATION->GetCurPage() . '?invoice_id=#invoice_id#&edit'
+);
+
+$arParams['PATH_TO_COMPANY_SHOW'] = CrmCheckPath(
+	'PATH_TO_COMPANY_SHOW',
+	$arParams['PATH_TO_COMPANY_SHOW'] ?? '',
+	$APPLICATION->GetCurPage() . '?company_id=#company_id#&show'
+);
+
+$arParams['PATH_TO_CONTACT_SHOW'] = CrmCheckPath(
+	'PATH_TO_CONTACT_SHOW',
+	$arParams['PATH_TO_CONTACT_SHOW'] ?? '',
+	$APPLICATION->GetCurPage() . '?contact_id=#contact_id#&show'
+);
+
+$arParams['PATH_TO_USER_BP'] = CrmCheckPath(
+	'PATH_TO_USER_BP',
+	$arParams['PATH_TO_USER_BP'] ?? '',
+	'/company/personal/bizproc/'
+);
+
 // $arParams['PATH_TO_USER_PROFILE'] is deprecated and will be ignored
-$arParams['PATH_TO_USER_PROFILE'] = CrmCheckPath('PATH_TO_USER_PROFILE', $arParams['PATH_TO_USER_PROFILE'], '/company/personal/user/#user_id#/');
+$arParams['PATH_TO_USER_PROFILE'] = CrmCheckPath(
+	'PATH_TO_USER_PROFILE',
+	$arParams['PATH_TO_USER_PROFILE'] ?? '',
+	'/company/personal/user/#user_id#/'
+);
 // $arParams['NAME_TEMPLATE'] is deprecated and will be ignored
-$arParams['NAME_TEMPLATE'] = empty($arParams['NAME_TEMPLATE']) ? CSite::GetNameFormat(false) : str_replace(array("#NOBR#","#/NOBR#"), array("",""), $arParams["NAME_TEMPLATE"]);
-$arResult['PATH_TO_CURRENT_LIST'] = ($arParams['IS_RECURRING'] !== 'Y') ? $arParams['PATH_TO_DEAL_LIST'] : $arParams['PATH_TO_DEAL_RECUR'];
-$arParams['ADD_EVENT_NAME'] = isset($arParams['ADD_EVENT_NAME']) ? $arParams['ADD_EVENT_NAME'] : '';
+
+$arParams['NAME_TEMPLATE'] = empty($arParams['NAME_TEMPLATE'])
+	? CSite::GetNameFormat(false)
+	: str_replace(["#NOBR#","#/NOBR#"], ["", ""], $arParams["NAME_TEMPLATE"] ?? '');
+
+$arResult['PATH_TO_CURRENT_LIST'] = ($arParams['IS_RECURRING'] !== 'Y')
+	? $arParams['PATH_TO_DEAL_LIST']
+	: $arParams['PATH_TO_DEAL_RECUR'];
+
+$arParams['ADD_EVENT_NAME'] = $arParams['ADD_EVENT_NAME'] ?? '';
 $arResult['ADD_EVENT_NAME'] = $arParams['ADD_EVENT_NAME'] !== ''
-	? preg_replace('/[^a-zA-Z0-9_]/', '', $arParams['ADD_EVENT_NAME']) : '';
+	? preg_replace('/[^a-zA-Z0-9_]/', '', $arParams['ADD_EVENT_NAME'])
+	: '';
 
 $arResult['IS_AJAX_CALL'] = isset($_REQUEST['AJAX_CALL']) || isset($_REQUEST['ajax_request']) || !!CAjax::GetSession();
 $arResult['SESSION_ID'] = bitrix_sessid();
-$arResult['NAVIGATION_CONTEXT_ID'] = isset($arParams['NAVIGATION_CONTEXT_ID']) ? $arParams['NAVIGATION_CONTEXT_ID'] : '';
-$arResult['DISABLE_NAVIGATION_BAR'] = isset($arParams['DISABLE_NAVIGATION_BAR']) ? $arParams['DISABLE_NAVIGATION_BAR'] : 'N';
-$arResult['PRESERVE_HISTORY'] = isset($arParams['PRESERVE_HISTORY']) ? $arParams['PRESERVE_HISTORY'] : false;
-
+$arResult['NAVIGATION_CONTEXT_ID'] = $arParams['NAVIGATION_CONTEXT_ID'] ?? '';
+$arResult['DISABLE_NAVIGATION_BAR'] = $arParams['DISABLE_NAVIGATION_BAR'] ?? 'N';
+$arResult['PRESERVE_HISTORY'] = $arParams['PRESERVE_HISTORY'] ?? false;
 $arResult['HAVE_CUSTOM_CATEGORIES'] = DealCategory::isCustomized();
-
-$arResult['CATEGORY_ACCESS'] = array(
+$arResult['CATEGORY_ACCESS'] = [
 	'CREATE' => \CCrmDeal::GetPermittedToCreateCategoryIDs($userPermissions),
 	'READ' => \CCrmDeal::GetPermittedToReadCategoryIDs($userPermissions),
 	'UPDATE' => \CCrmDeal::GetPermittedToUpdateCategoryIDs($userPermissions)
-);
+];
 $arResult['CATEGORY_ID'] = isset($arParams['CATEGORY_ID']) ? (int)$arParams['CATEGORY_ID'] : -1;
 $arResult['ENABLE_SLIDER'] = \Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isSliderEnabled();
 
-$arResult['ENTITY_CREATE_URLS'] = array(
+$arResult['ENTITY_CREATE_URLS'] = [
 	\CCrmOwnerType::DealName =>
 		\CCrmOwnerType::GetEntityEditPath(\CCrmOwnerType::Deal, 0, false),
 	\CCrmOwnerType::LeadName =>
@@ -207,9 +308,9 @@ $arResult['ENTITY_CREATE_URLS'] = array(
 		\CCrmOwnerType::GetEntityEditPath(\CCrmOwnerType::Quote, 0, false),
 	\CCrmOwnerType::InvoiceName =>
 		\CCrmOwnerType::GetEntityEditPath(\CCrmOwnerType::Invoice, 0, false)
-);
+];
 
-if(LayoutSettings::getCurrent()->isSimpleTimeFormatEnabled())
+if (LayoutSettings::getCurrent()->isSimpleTimeFormatEnabled())
 {
 	$arResult['TIME_FORMAT'] = array(
 		'tommorow' => 'tommorow',
@@ -227,39 +328,47 @@ else
 	$arResult['TIME_FORMAT'] = preg_replace('/:s$/', '', Main\Type\DateTime::convertFormatToPhp(FORMAT_DATETIME));
 }
 
-$arResult['CALL_LIST_UPDATE_MODE'] = isset($_REQUEST['call_list_context']) && isset($_REQUEST['call_list_id']) && IsModuleInstalled('voximplant');
-$arResult['CALL_LIST_CONTEXT'] = (string)$_REQUEST['call_list_context'];
-$arResult['CALL_LIST_ID'] = (int)$_REQUEST['call_list_id'];
-if($arResult['CALL_LIST_UPDATE_MODE'])
+$arResult['CALL_LIST_UPDATE_MODE'] = isset($_REQUEST['call_list_context'], $_REQUEST['call_list_id']) && IsModuleInstalled('voximplant');
+$arResult['CALL_LIST_CONTEXT'] = isset($_REQUEST['call_list_context']) ? (string)$_REQUEST['call_list_context'] : '';
+$arResult['CALL_LIST_ID'] = isset($_REQUEST['call_list_id']) ? (int)$_REQUEST['call_list_id'] : null;
+
+if ($arResult['CALL_LIST_UPDATE_MODE'])
 {
-	AddEventHandler('crm', 'onCrmDealListItemBuildMenu', array('\Bitrix\Crm\CallList\CallList', 'handleOnCrmDealListItemBuildMenu'));
+	AddEventHandler(
+		'crm',
+		'onCrmDealListItemBuildMenu',
+		['\Bitrix\Crm\CallList\CallList', 'handleOnCrmDealListItemBuildMenu']
+	);
 }
 
-if($arResult['CATEGORY_ID'] >= 0)
+if ($arResult['CATEGORY_ID'] >= 0)
 {
 	$arResult['PATH_TO_DEAL_CATEGORY'] = CComponentEngine::makePathFromTemplate(
-		$arParams['PATH_TO_DEAL_CATEGORY'],
-		array('category_id' => $arResult['CATEGORY_ID'])
+		$arParams['PATH_TO_DEAL_CATEGORY'] ?? '',
+		['category_id' => $arResult['CATEGORY_ID']]
 	);
+
 	$arResult['PATH_TO_DEAL_KANBANCATEGORY'] = CComponentEngine::makePathFromTemplate(
-		$arParams['PATH_TO_DEAL_KANBANCATEGORY'],
-		array('category_id' => $arResult['CATEGORY_ID'])
+		$arParams['PATH_TO_DEAL_KANBANCATEGORY'] ?? '',
+		['category_id' => $arResult['CATEGORY_ID']]
 	);
+
 	$arResult['PATH_TO_DEAL_CALENDARCATEGORY'] = CComponentEngine::makePathFromTemplate(
-		$arParams['PATH_TO_DEAL_CALENDARCATEGORY'],
-		array('category_id' => $arResult['CATEGORY_ID'])
+		$arParams['PATH_TO_DEAL_CALENDARCATEGORY'] ?? '',
+		['category_id' => $arResult['CATEGORY_ID']]
 	);
+
 	$arResult['PATH_TO_DEAL_WIDGETCATEGORY'] = CComponentEngine::makePathFromTemplate(
-		$arParams['PATH_TO_DEAL_WIDGETCATEGORY'],
-		array('category_id' => $arResult['CATEGORY_ID'])
+		$arParams['PATH_TO_DEAL_WIDGETCATEGORY'] ?? '',
+		['category_id' => $arResult['CATEGORY_ID']]
 	);
 }
 
 CCrmDeal::PrepareConversionPermissionFlags(0, $arResult, $userPermissions);
-if($arResult['CAN_CONVERT'])
+if ($arResult['CAN_CONVERT'])
 {
 	$config = \Bitrix\Crm\Conversion\DealConversionConfig::load();
-	if($config === null)
+	if ($config === null)
 	{
 		$config = \Bitrix\Crm\Conversion\DealConversionConfig::getDefault();
 	}
@@ -1104,9 +1213,7 @@ if(!$searchRestriction->isExceeded(CCrmOwnerType::Deal))
 }
 else
 {
-	$arResult['LIVE_SEARCH_LIMIT_INFO'] = $searchRestriction->prepareStubInfo(
-		array('ENTITY_TYPE_ID' => CCrmOwnerType::Deal)
-	);
+	$arResult['LIVE_SEARCH_LIMIT_INFO'] = $searchRestriction->prepareStubInfo(['ENTITY_TYPE_ID' => CCrmOwnerType::Deal]);
 }
 //endregion
 
@@ -1118,7 +1225,7 @@ CCrmEntityHelper::applyCounterFilterWrapper(
 	$arResult['GRID_ID'],
 	Bitrix\Crm\Counter\EntityCounter::internalizeExtras($_REQUEST),
 	$arFilter,
-	$entityFilter
+	$entityFilter ?? null
 );
 //endregion
 
@@ -1844,7 +1951,7 @@ $arResult['ENABLE_BIZPROC'] = $isBizProcInstalled
 
 $arResult['ENABLE_TASK'] = IsModuleInstalled('tasks');
 
-if($arResult['ENABLE_TASK'])
+if ($arResult['ENABLE_TASK'])
 {
 	$arResult['TASK_CREATE_URL'] = CHTTP::urlAddParams(
 		CComponentEngine::MakePathFromTemplate(
@@ -1874,7 +1981,7 @@ if (empty($arSelect))
 {
 	foreach ($arResult['HEADERS'] as $arHeader)
 	{
-		if ($arHeader['default'])
+		if (isset($arHeader['default']) && $arHeader['default'])
 		{
 			$arSelect[] = $arHeader['id'];
 		}
@@ -1885,7 +1992,7 @@ if (empty($arSelect))
 }
 else
 {
-	if($arResult['ENABLE_BIZPROC'])
+	if (isset($arResult['ENABLE_BIZPROC']) && $arResult['ENABLE_BIZPROC'])
 	{
 		//Check if bizproc fields selected
 		$hasBizprocFields = false;
@@ -2327,34 +2434,39 @@ $limit = $pageSize + 1;
  */
 if ($isInExportMode && $isStExport)
 {
-	$limit = $pageSize;
-	$navListOptions['QUERY_OPTIONS'] = array('LIMIT' => $limit);
-	$arSort = array('ID' => 'ASC');
-	$totalExportItems = $arParams['STEXPORT_TOTAL_ITEMS'] ? $arParams['STEXPORT_TOTAL_ITEMS'] : $total;
+	$totalExportItems = $arParams['STEXPORT_TOTAL_ITEMS'] ?: $total;
+	$arSort = ['ID' => 'DESC'];
 
-	$dbResultOnlyIds = CCrmDeal::GetListEx(
-		$arSort,
-		array_merge(
-			$arFilter,
-			array('>ID' => $arParams['STEXPORT_LAST_EXPORTED_ID'] ?? -1)
-		),
-		false,
-		false,
-		array('ID'),
-		$navListOptions
-	);
-
-	$entityIds = array();
-	while($arDealRow = $dbResultOnlyIds->GetNext())
+	// Skip the first page because the last ID isn't present yet.
+	if ($pageNum > 1)
 	{
-		$entityIds[] = (int) $arDealRow['ID'];
+		$limit = $pageSize;
+		$navListOptions['QUERY_OPTIONS'] = ['LIMIT' => $limit];
+
+		$dbResultOnlyIds = CCrmDeal::GetListEx(
+			$arSort,
+			array_merge(
+				$arFilter,
+				['<ID' => $arParams['STEXPORT_LAST_EXPORTED_ID'] ?? -1]
+			),
+			false,
+			false,
+			['ID'],
+			$navListOptions
+		);
+
+		$entityIds = [];
+		while($arDealRow = $dbResultOnlyIds->GetNext())
+		{
+			$entityIds[] = (int) $arDealRow['ID'];
+		}
+
+		$arFilter = ['@ID' => $entityIds, 'CHECK_PERMISSIONS' => 'N'];
 	}
-	$lastExportedId = end($entityIds);
 
-	if (!empty($entityIds))
+	if (!empty($entityIds) || $pageNum === 1)
 	{
-		$navListOptions['QUERY_OPTIONS'] = null;
-		$arFilter = array('@ID' => $entityIds, 'CHECK_PERMISSIONS' => 'N');
+		$navListOptions['QUERY_OPTIONS'] = $pageNum === 1 ? ['LIMIT' => $limit] : null;
 
 		$dbResult = CCrmDeal::GetListEx(
 			$arSort,
@@ -2370,15 +2482,25 @@ if ($isInExportMode && $isStExport)
 		{
 			$arResult['DEAL'][$arDeal['ID']] = $arDeal;
 			$arResult['DEAL_ID'][$arDeal['ID']] = $arDeal['ID'];
-			$arResult['DEAL_UF'][$arDeal['ID']] = array();
+			$arResult['DEAL_UF'][$arDeal['ID']] = [];
 
 			$categoryID = isset($arDeal['CATEGORY_ID']) ? (int)$arDeal['CATEGORY_ID'] : 0;
 			if(!isset($arResult['CATEGORIES'][$categoryID]))
 			{
-				$arResult['CATEGORIES'][$categoryID] = array();
+				$arResult['CATEGORIES'][$categoryID] = [];
 			}
 			$arResult['CATEGORIES'][$categoryID][] = $arDeal['ID'];
 		}
+
+		if (isset($arResult['DEAL']) && count($arResult['DEAL']) > 0)
+		{
+			$lastExportedId = end($arResult['DEAL'])['ID'];
+		}
+		else
+		{
+			$lastExportedId = -1;
+		}
+
 	}
 	$enableNextPage = $pageNum * $pageSize <= $totalExportItems;
 	unset($entityIds);
@@ -2943,7 +3065,7 @@ foreach($arResult['DEAL'] as &$arDeal)
 	{
 		$arDeal['TITLE_PREFIX'] = sprintf(
 			'<span class="crm-debug-item-label">%s</span> ',
-			GetMessage('CRM_DEAL_LIST_ITEM_DEBUG_TITLE')
+			GetMessage('CRM_DEAL_LIST_ITEM_DEBUG_TITLE_MSGVER_1')
 		);
 	}
 
@@ -3028,7 +3150,7 @@ if (empty($visibleGridColumns))
 {
 	foreach ($arResult['HEADERS'] as $arHeader)
 	{
-		if ($arHeader['default'])
+		if (isset($arHeader['default']) && $arHeader['default'])
 		{
 			$visibleGridColumns[] = $arHeader['id'];
 		}
@@ -3363,7 +3485,8 @@ if (!$isInExportMode)
 
 	$this->IncludeComponentTemplate();
 	include_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/components/bitrix/crm.deal/include/nav.php');
-	return $arResult['ROWS_COUNT'];
+
+	return $arResult['ROWS_COUNT'] ?? null;
 }
 else
 {

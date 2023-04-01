@@ -25,6 +25,7 @@ import './css/layout/header/hint.css';
 import './css/content-blocks/info-group.css';
 import './css/content-blocks/sms-message.css';
 import './css/content-blocks/money-pill.css';
+import './css/content-blocks/value-change-item.css';
 import './css/content-blocks/product-list/styles.css';
 import './css/main.css';
 

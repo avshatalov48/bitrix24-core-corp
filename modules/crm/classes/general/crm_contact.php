@@ -10,6 +10,7 @@ use Bitrix\Crm\Entity\Traits\UserFieldPreparer;
 use Bitrix\Crm\Entity\Traits\EntityFieldsNormalizer;
 use Bitrix\Crm\EntityAddress;
 use Bitrix\Crm\EntityAddressType;
+use Bitrix\Crm\Integration\Catalog\Contractor;
 use Bitrix\Crm\Integrity\DuplicateBankDetailCriterion;
 use Bitrix\Crm\Integrity\DuplicateCommunicationCriterion;
 use Bitrix\Crm\Integrity\DuplicateIndexMismatch;
@@ -21,7 +22,6 @@ use Bitrix\Crm\UtmTable;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Text\HtmlFilter;
-use Bitrix\Crm\Integration\Catalog\Contractor;
 
 Loc::loadMessages($_SERVER['DOCUMENT_ROOT'] . BX_ROOT . '/modules/crm/lib/webform/entity.php');
 
@@ -1601,21 +1601,21 @@ class CAllCrmContact
 			else
 			{
 				Bitrix\Crm\Timeline\ContactController::getInstance()->onCreate($ID, array('FIELDS' => $arFields));
-
-				CCrmEntityHelper::registerAdditionalTimelineEvents([
-					'entityTypeId' => \CCrmOwnerType::Contact,
-					'entityId' => $ID,
-					'fieldsInfo' => static::GetFieldsInfo(),
-					'previousFields' => [],
-					'currentFields' => $arFields,
-					'options' => $options,
-					'bindings' => [
-						'entityTypeId' => \CCrmOwnerType::Company,
-						'previous' => [],
-						'current' => $companyBindings,
-					]
-				]);
 			}
+
+			CCrmEntityHelper::registerAdditionalTimelineEvents([
+				'entityTypeId' => \CCrmOwnerType::Contact,
+				'entityId' => $ID,
+				'fieldsInfo' => static::GetFieldsInfo(),
+				'previousFields' => [],
+				'currentFields' => $arFields,
+				'options' => $options,
+				'bindings' => [
+					'entityTypeId' => \CCrmOwnerType::Company,
+					'previous' => [],
+					'current' => $companyBindings,
+				]
+			]);
 
 			EntityAddress::register(
 				CCrmOwnerType::Contact,
@@ -2149,19 +2149,21 @@ class CAllCrmContact
 						}
 					}
 
-					$CCrmEvent = new CCrmEvent();
-					$eventID = $CCrmEvent->Add($arEvent, $this->bCheckPermission);
-					if(is_int($eventID) && $eventID > 0)
+					if ($arEvent['ENTITY_FIELD'] !== 'CONTACT_ID' && $arEvent['ENTITY_FIELD'] !== 'COMPANY_ID')
 					{
-						$fieldID = isset($arEvent['ENTITY_FIELD']) ? $arEvent['ENTITY_FIELD'] : '';
-						if($fieldID === '')
-						{
-							continue;
-						}
+						$CCrmEvent = new CCrmEvent();
+						$eventID = $CCrmEvent->Add($arEvent, $this->bCheckPermission);
+					}
 
-						switch($fieldID)
-						{
-							case 'ASSIGNED_BY_ID':
+					$fieldID = isset($arEvent['ENTITY_FIELD']) ? $arEvent['ENTITY_FIELD'] : '';
+					if($fieldID === '')
+					{
+						continue;
+					}
+
+					switch($fieldID)
+					{
+						case 'ASSIGNED_BY_ID':
 							{
 								$sonetEventData[CCrmLiveFeedEvent::Responsible] = array(
 									'TYPE' => CCrmLiveFeedEvent::Responsible,
@@ -2177,7 +2179,7 @@ class CAllCrmContact
 								);
 							}
 							break;
-							case 'COMPANY_ID':
+						case 'COMPANY_ID':
 							{
 								if(!isset($sonetEventData[CCrmLiveFeedEvent::Owner]))
 								{
@@ -2195,16 +2197,15 @@ class CAllCrmContact
 													? $addedCompanyIDs : array(),
 												//Todo: Remove START_OWNER_COMPANY_ID and FINAL_OWNER_COMPANY_ID when log template will be ready
 												'START_OWNER_COMPANY_ID' => is_array($removedCompanyIDs)
-													&& isset($removedCompanyIDs[0]) ? $removedCompanyIDs[0] : 0,
+												&& isset($removedCompanyIDs[0]) ? $removedCompanyIDs[0] : 0,
 												'FINAL_OWNER_COMPANY_ID' => is_array($addedCompanyIDs)
-													&& isset($addedCompanyIDs[0]) ? $addedCompanyIDs[0] : 0
+												&& isset($addedCompanyIDs[0]) ? $addedCompanyIDs[0] : 0
 											)
 										)
 									);
 								}
 							}
 							break;
-						}
 					}
 				}
 			}

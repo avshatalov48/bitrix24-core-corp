@@ -1,8 +1,7 @@
 <?
 IncludeModuleLangFile(__FILE__);
 
-class CDavExchangeMail
-	extends CDavExchangeClient
+class CDavExchangeMail extends CDavExchangeClient
 {
 	public function __construct($scheme, $server, $port, $userName, $userPassword, $siteId = null)
 	{
@@ -24,12 +23,18 @@ class CDavExchangeMail
 
 		$arParentFolderId = array();
 		if (array_key_exists("Id", $arFilter))
+		{
 			$arParentFolderId["id"] = $arFilter["Id"];
+		}
 		else
+		{
 			$arParentFolderId["id"] = "inbox";
+		}
 
 		if (array_key_exists("Mailbox", $arFilter))
+		{
 			$arParentFolderId["mailbox"] = $arFilter["Mailbox"];
+		}
 
 		$request->CreateFindFolderBody($arParentFolderId, "AllProperties");
 
@@ -38,12 +43,16 @@ class CDavExchangeMail
 		$this->Disconnect();
 
 		if (is_null($response))
+		{
 			return null;
+		}
 
 		if ($this->ParseError($response))
+		{
 			return null;
+		}
 
-		$arResultFoldersList = array();
+		$arResultFoldersList = [];
 		$xmlDoc = $response->GetBodyXml();
 
 		$arResponseMessage = $xmlDoc->GetPath("/Envelope/Body/FindFolderResponse/ResponseMessages/FindFolderResponseMessage");
@@ -51,17 +60,24 @@ class CDavExchangeMail
 		{
 			$arResponseCode = $responseMessage->GetPath("/FindFolderResponseMessage/ResponseCode");
 			$responseCode = null;
-			if (count($arResponseCode) > 0)
+			if (!empty($arResponseCode))
+			{
 				$responseCode = $arResponseCode[0]->GetContent();
+			}
 
 			$responseClass = $responseMessage->GetAttribute("ResponseClass");
 
-			if ((!is_null($responseClass) && ($responseClass != "Success")) || (!is_null($responseCode) && ($responseCode != "NoError")))
+			if (
+				(!is_null($responseClass) && ($responseClass !== "Success"))
+				|| (!is_null($responseCode) && ($responseCode !== "NoError"))
+			)
 			{
 				$arMessageText = $responseMessage->GetPath("/FindFolderResponseMessage/MessageText");
 				$messageText = "Error";
-				if (count($arMessageText) > 0)
+				if (!empty($arMessageText))
+				{
 					$messageText = $arMessageText[0]->GetContent();
+				}
 
 				$this->AddError(!is_null($responseCode) ? $this->Encode($responseCode) : $this->Encode($responseClass), $this->Encode($messageText));
 				continue;
@@ -69,7 +85,9 @@ class CDavExchangeMail
 
 			$arMailFolder = $responseMessage->GetPath("/FindFolderResponseMessage/RootFolder/Folders/Folder");
 			foreach ($arMailFolder as $mailFolder)
+			{
 				$arResultFoldersList[] = $this->ConvertMailFolderToArray($mailFolder);
+			}
 		}
 
 		return $arResultFoldersList;
@@ -91,12 +109,16 @@ class CDavExchangeMail
 		$this->Disconnect();
 
 		if (is_null($response))
+		{
 			return null;
+		}
 
 		if ($this->ParseError($response))
+		{
 			return null;
+		}
 
-		$arResultFoldersList = array();
+		$arResultFoldersList = [];
 		try
 		{
 			$xmlDoc = $response->GetBodyXml();
@@ -112,17 +134,24 @@ class CDavExchangeMail
 		{
 			$arResponseCode = $responseMessage->GetPath("/GetFolderResponseMessage/ResponseCode");
 			$responseCode = null;
-			if (count($arResponseCode) > 0)
+			if (!empty($arResponseCode))
+			{
 				$responseCode = $arResponseCode[0]->GetContent();
+			}
 
 			$responseClass = $responseMessage->GetAttribute("ResponseClass");
 
-			if ((!is_null($responseClass) && ($responseClass != "Success")) || (!is_null($responseCode) && ($responseCode != "NoError")))
+			if (
+				(!is_null($responseClass) && ($responseClass !== "Success"))
+				|| (!is_null($responseCode) && ($responseCode !== "NoError"))
+			)
 			{
 				$arMessageText = $responseMessage->GetPath("/GetFolderResponseMessage/MessageText");
 				$messageText = "Error";
-				if (count($arMessageText) > 0)
+				if (!empty($arMessageText))
+				{
 					$messageText = $arMessageText[0]->GetContent();
+				}
 
 				$this->AddError(!is_null($responseCode) ? $this->Encode($responseCode) : $this->Encode($responseClass), $this->Encode($messageText));
 				continue;
@@ -130,7 +159,9 @@ class CDavExchangeMail
 
 			$arCalendarFolder = $responseMessage->GetPath("/GetFolderResponseMessage/Folders/Folder");
 			foreach ($arCalendarFolder as $calendarFolder)
+			{
 				$arResultFoldersList[] = $this->ConvertMailFolderToArray($calendarFolder);
+			}
 		}
 
 		return $arResultFoldersList;
@@ -138,30 +169,38 @@ class CDavExchangeMail
 
 	private function ConvertMailFolderToArray($mailFolder)
 	{
-		$arResultFolder = array();
+		$arResultFolder = [];
 
 		$arFolderId = $mailFolder->GetPath("/Folder/FolderId");
-		if (count($arFolderId) > 0)
+		if (!empty($arFolderId))
 		{
 			$arResultFolder["XML_ID"] = $arFolderId[0]->GetAttribute("Id");
 			$arResultFolder["MODIFICATION_LABEL"] = $arFolderId[0]->GetAttribute("ChangeKey");
 		}
 
 		$arDisplayName = $mailFolder->GetPath("/Folder/DisplayName");
-		if (count($arDisplayName) > 0)
+		if (!empty($arDisplayName))
+		{
 			$arResultFolder["NAME"] = $this->Encode($arDisplayName[0]->GetContent());
+		}
 
 		$arTotalCount = $mailFolder->GetPath("/Folder/TotalCount");
-		if (count($arTotalCount) > 0)
+		if (!empty($arTotalCount))
+		{
 			$arResultFolder["TOTAL_COUNT"] = $arTotalCount[0]->GetContent();
+		}
 
 		$arChildFolderCount = $mailFolder->GetPath("/Folder/ChildFolderCount");
-		if (count($arChildFolderCount) > 0)
+		if (!empty($arChildFolderCount))
+		{
 			$arResultFolder["CHILD_FOLDER_COUNT"] = $arChildFolderCount[0]->GetContent();
+		}
 
 		$arUnreadCount = $mailFolder->GetPath("/Folder/UnreadCount");
-		if (count($arUnreadCount) > 0)
+		if (!empty($arUnreadCount))
+		{
 			$arResultFolder["UNREAD_COUNT"] = $arUnreadCount[0]->GetContent();
+		}
 
 		return $arResultFolder;
 	}
@@ -185,7 +224,9 @@ class CDavExchangeMail
 		foreach ($arUserCustomFields as $key => $value)
 		{
 			if (array_key_exists($key, $arRequiredFields))
+			{
 				unset($arRequiredFields[$key]);
+			}
 		}
 
 		foreach ($arRequiredFields as $requiredFieldKey => $requiredFieldValue)
@@ -216,6 +257,7 @@ class CDavExchangeMail
 		{
 			CAgent::RemoveAgent("CDavExchangeMail::DataSync();", "dav");
 			COption::SetOptionString("dav", "agent_mail", "N");
+
 			return "";
 		}
 
@@ -230,12 +272,16 @@ class CDavExchangeMail
 		$maxNumber = 5;
 		$index = 0;
 
-		$paramUserId = intval($paramUserId);
+		$paramUserId = (int)$paramUserId;
 		$arUserFilter = array("ACTIVE" => "Y", "!UF_DEPARTMENT" => false);
-		if ($paramUserId > 0)
+		if ($paramUserId)
+		{
 			$arUserFilter["ID_EQUAL_EXACT"] = $paramUserId;
-		if ($exchangeUseLogin == "N")
+		}
+		if ($exchangeUseLogin === "N")
+		{
 			$arUserFilter["!UF_BXDAVEX_MAILBOX"] = false;
+		}
 
 		$dbUserList = CUser::GetList(
 			"UF_BXDAVEX_MLSYNC", "asc",
@@ -248,13 +294,17 @@ class CDavExchangeMail
 		{
 			$index++;
 			if ($index > $maxNumber)
+			{
 				break;
+			}
 
 			$GLOBALS["USER_FIELD_MANAGER"]->Update("USER", $arUser["ID"], array("UF_BXDAVEX_MLSYNC" => ConvertTimeStamp(time(), "FULL")));
 
-			$mailbox = (($exchangeUseLogin == "Y") ? $arUser["LOGIN"].$exchangeMailbox : $arUser["UF_BXDAVEX_MAILBOX"]);
+			$mailbox = (($exchangeUseLogin === "Y") ? $arUser["LOGIN"].$exchangeMailbox : $arUser["UF_BXDAVEX_MAILBOX"]);
 			if (empty($mailbox))
+			{
 				continue;
+			}
 
 			$numberOfUnread = 0;
 
@@ -264,7 +314,9 @@ class CDavExchangeMail
 				foreach ($arInbox as $inbox)
 				{
 					if (isset($inbox["UNREAD_COUNT"]))
-						$numberOfUnread += intval($inbox["UNREAD_COUNT"]);
+					{
+						$numberOfUnread += (int)$inbox["UNREAD_COUNT"];
+					}
 
 					$arInbox1 = $exchange->GetFoldersList(array("XML_ID" => $inbox["XML_ID"], "Mailbox" => $mailbox));
 					if (is_array($arInbox1))
@@ -272,14 +324,16 @@ class CDavExchangeMail
 						foreach ($arInbox1 as $inbox1)
 						{
 							if (isset($inbox1["UNREAD_COUNT"]))
-								$numberOfUnread += intval($inbox1["UNREAD_COUNT"]);
+							{
+								$numberOfUnread += (int)$inbox1["UNREAD_COUNT"];
+							}
 						}
 					}
 				}
 			}
 
 			$GLOBALS["USER_FIELD_MANAGER"]->Update("USER", $arUser["ID"], array("UF_UNREAD_MAIL_COUNT" => $numberOfUnread));
-			CUserCounter::Set($arUser["ID"], 'dav_unread_mail', $numberOfUnread, '**'); 
+			CUserCounter::Set($arUser["ID"], 'dav_unread_mail', $numberOfUnread, '**');
 		}
 
 		return "CDavExchangeMail::DataSync();";
@@ -289,7 +343,8 @@ class CDavExchangeMail
 	{
 		$exchangeServer = COption::GetOptionString("dav", "exchange_server", "");
 		$agentMail = COption::GetOptionString("dav", "agent_mail", "N");
-		return (!empty($exchangeServer) && ($agentMail == "Y"));
+
+		return (!empty($exchangeServer) && ($agentMail === "Y"));
 	}
 
 	public static function GetTicker($user)
@@ -298,30 +353,42 @@ class CDavExchangeMail
 		$numberOfUnreadMessages = null;
 
 		if (!self::IsExchangeEnabled())
+		{
 			return null;
+		}
 
 		if (is_object($user))
 		{
 			if ($user->IsAuthorized())
-				$userId = intval($user->GetID());
+			{
+				$userId = (int)$user->GetID();
+			}
 		}
 		elseif (is_array($user))
 		{
 			if (array_key_exists("UF_UNREAD_MAIL_COUNT", $user))
+			{
 				$numberOfUnreadMessages = $user["UF_UNREAD_MAIL_COUNT"];
+			}
 			elseif (array_key_exists("ID", $user))
-				$userId = intval($user["ID"]);
+			{
+				$userId = (int)$user["ID"];
+			}
 		}
-		elseif ((intval($user)."!" == $user."!") && (intval($user) > 0))
+		elseif (((int)$user ."!" == $user."!") && ((int)$user > 0))
 		{
-			$userId = intval($user);
+			$userId = (int)$user;
 		}
 
 		if (is_null($numberOfUnreadMessages) && !is_null($userId))
-			$numberOfUnreadMessages = CUserCounter::GetValue($userId, 'dav_unread_mail'); 
-			
-		if (is_null($numberOfUnreadMessages) || empty($numberOfUnreadMessages))
+		{
+			$numberOfUnreadMessages = CUserCounter::GetValue($userId, 'dav_unread_mail');
+		}
+
+		if (empty($numberOfUnreadMessages))
+		{
 			return null;
+		}
 
 		$exchangeMailboxPath = COption::GetOptionString("dav", "exchange_mailbox_path", "");
 		return array("numberOfUnreadMessages" => $numberOfUnreadMessages, "exchangeMailboxPath" => $exchangeMailboxPath);
@@ -329,26 +396,15 @@ class CDavExchangeMail
 
 	public static function handleUserChange($arFields)
 	{
-		if (is_array($arFields) && !empty($arFields['ID']))
-		{
-			$userId  = $arFields['ID'];
-
-			if (!empty($arFields['UF_BXDAVEX_MAILBOX']))
-			{
-				if (CUserOptions::GetOption('dav', 'davex_mailbox', $default = false, $userId) != 'Y')
-					CUserOptions::SetOption('dav', 'davex_mailbox', 'Y', $bCommon = false, $userId);
-			}
-			else
-			{
-				CUserOptions::SetOption('dav', 'davex_mailbox', 'N', $bCommon = false, $userId);
-			}
-		}
+		return true;
 	}
 
 	public static function handleUserTypeDelete($arField)
 	{
-		if (is_array($arField) && isset($arField['FIELD_NAME']) && $arField['FIELD_NAME'] == 'UF_BXDAVEX_MAILBOX')
+		if (is_array($arField) && isset($arField['FIELD_NAME']) && $arField['FIELD_NAME'] === 'UF_BXDAVEX_MAILBOX')
+		{
 			CUserOptions::DeleteOptionsByName('dav', 'davex_mailbox');
+		}
 	}
 }
 ?>

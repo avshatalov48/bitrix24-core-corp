@@ -12,4 +12,5 @@ class ProductCompilationType
 	public const ORDER_EXISTS = 2;
 	public const COMPILATION_VIEWED = 3;
 	public const NEW_DEAL_CREATED = 4;
+	public const COMPILATION_NOT_VIEWED = 5;
 }

@@ -64,7 +64,7 @@ trait Activity
 		$activities = $this->getAllActivities($ownerTypeId, $ownerId);
 		foreach ($activities as $activity)
 		{
-			$datetime = DateTime::createFromText($activity['DEADLINE']);
+			$datetime = DateTime::createFromUserTime($activity['DEADLINE']);
 			if ($datetime < $currentDate)
 			{
 				return true;
@@ -130,7 +130,7 @@ trait Activity
 		if ($activity)
 		{
 			$hasOnlyIncomingActivities = false;
-			$activityDeadline = DateTime::createFromText($activity['DEADLINE']);
+			$activityDeadline = DateTime::createFromUserTime($activity['DEADLINE']);
 		}
 		else
 		{

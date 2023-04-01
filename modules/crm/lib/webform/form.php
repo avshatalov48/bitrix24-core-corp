@@ -951,7 +951,7 @@ class Form
 
 	public function getFieldsDescription()
 	{
-		return EntityFieldProvider::getFieldsDescription($this->getFields());
+		return EntityFieldProvider::getFieldsDescription($this->getFields(), $this->get()['FORM_SETTINGS']['REQUISITE_PRESET_ID'] ?? null);
 	}
 
 	public function getFieldsMap()

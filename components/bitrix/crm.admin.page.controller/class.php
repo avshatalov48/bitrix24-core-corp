@@ -62,6 +62,9 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 
 		$params["MENU_ITEMS"] = array();
 		$params['MENU_MODE'] = isset($params['MENU_MODE']) && $params['MENU_MODE'] === 'Y';
+		$params["PAGE_ID"] = $params["PAGE_ID"] ?? null;
+		$params["PAGE_PATH"] = $params["PAGE_PATH"] ?? '';
+		$params["PAGE_PARAMS"] = $params["PAGE_PARAMS"] ?? null;
 
 		return $params;
 	}
@@ -130,7 +133,7 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 
 		if ($this->checkRequiredModules())
 		{
-			if (!AccessController::getCurrent()->check(ActionDictionary::ACTION_CATALOG_READ))
+			if (!self::checkCatalogReadPermission())
 			{
 				return $items;
 			}
@@ -604,6 +607,16 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 			$pageId = (!empty($item["items_id"]) ? $item["items_id"] : "");
 			if ($pageId)
 			{
+				if (!empty($item["items"]))
+				{
+					$this->setPageList($item["items"]);
+				}
+
+				if (empty($item["url"]))
+				{
+					continue;
+				}
+
 				if ($this->arParams["SEF_FOLDER"] != "/bitrix/admin/" && mb_strpos($item["url"], "/bitrix/admin/") !== false)
 				{
 					$item["url"] = str_replace("/bitrix/admin/", "", $item["url"]);
@@ -615,10 +628,6 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 					$this->pageList[$pageId]["params"] = $explode[1];
 				}
 				$this->pageList[$pageId]["fullUrl"] = $item["url"];
-				if (!empty($item["items"]))
-				{
-					$this->setPageList($item["items"]);
-				}
 			}
 		}
 	}
@@ -797,7 +806,7 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 			];
 		}
 
-		if (AccessController::getCurrent()->check(ActionDictionary::ACTION_CATALOG_READ))
+		if (self::checkCatalogReadPermission())
 		{
 			$result[] = array(
 				"parent_menu" => "global_menu_store",
@@ -951,7 +960,7 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 					"IS_LOCKED" => $item['is_locked'] ?? false,
 					"IS_DISABLED" => false,
 					"ON_CLICK" => $item["on_click"] ?? null,
-					"SORT" => $item["sort"] ?: 0
+					"SORT" => (int)($item["sort"] ?? 0)
 				);
 
 				if (!empty($item["ajax_options"]))
@@ -1008,21 +1017,17 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 	{
 		$pageId = $this->getPageId();
 
-		if ($this->pageList[$pageId])
+		if (!empty($this->pageList[$pageId]))
 		{
 			if (!empty($this->arParams["INTERNAL_PAGE_LIST"][$pageId]))
 			{
 				return $this->getInternalPagePath($pageId);
 			}
-			else
-			{
-				return array($pageId, $this->pageList[$pageId]["url"], $this->pageList[$pageId]["params"]);
-			}
+
+			return array($pageId, $this->pageList[$pageId]["url"], $this->pageList[$pageId]["params"]);
 		}
-		else
-		{
-			return $this->getInternalPagePath($pageId);
-		}
+
+		return $this->getInternalPagePath($pageId);
 	}
 
 	protected function getInternalPagePath($pageId): array
@@ -1085,8 +1090,12 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 		$this->arResult = array();
 		$this->arResult["MENU_ID"] = $this->arParams["MENU_ID"];
 		$this->arResult["MENU_ITEMS"] = $this->getFinalMenu();
-		[$this->arResult["PAGE_ID"], $this->arResult["PAGE_PATH"],
-			$this->arResult["PAGE_PARAMS"]] = $this->getPagePath();
+		$pagePath = $this->getPagePath();
+		if ($pagePath)
+		{
+			[$this->arResult["PAGE_ID"], $this->arResult["PAGE_PATH"], $this->arResult["PAGE_PARAMS"]] = $pagePath;
+		}
+
 		$this->arResult["SEF_FOLDER"] = $this->arParams["SEF_FOLDER"];
 		$this->arResult["CONNECT_PAGE"] = $this->arParams["CONNECT_PAGE"] === "Y";
 		$this->arResult["INTERNAL_PAGE"] = $this->arParams["INTERNAL_PAGE"];
@@ -1132,7 +1141,7 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 
 	private function setAdditionalParams(&$menu)
 	{
-		if (array_key_exists($menu["ID"], $this->arParams["ADDITIONAL_PARAMS"]))
+		if (isset($menu["ID"]) && array_key_exists($menu["ID"], $this->arParams["ADDITIONAL_PARAMS"]))
 		{
 			$menu = array_merge($menu, $this->arParams["ADDITIONAL_PARAMS"][$menu["ID"]]);
 		}
@@ -1167,7 +1176,7 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 			"sale_ps_handler_refund",
 		];
 
-		if (!AccessController::getCurrent()->check(ActionDictionary::ACTION_CATALOG_READ))
+		if (!self::checkCatalogReadPermission())
 		{
 			$result = array_merge(
 				$result,
@@ -1179,6 +1188,14 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 		}
 
 		return $result;
+	}
+
+	/**
+	 * @return bool
+	 */
+	private static function checkCatalogReadPermission(): bool
+	{
+		return \CCrmSaleHelper::isShopAccess();
 	}
 
 	private function getMenuItems(array &$listMenuItems, $parentPageId = ""): array

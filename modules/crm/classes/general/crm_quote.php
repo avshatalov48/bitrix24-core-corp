@@ -838,8 +838,17 @@ class CAllCrmQuote
 					if (!isset($arEvent['USER_ID']))
 						$arEvent['USER_ID'] = $iUserId;
 
-					$CCrmEvent = new CCrmEvent();
-					$CCrmEvent->Add($arEvent, $this->bCheckPermission);
+					$isRelationEvent = in_array(
+						$arEvent['ENTITY_FIELD'],
+						['DEAL_ID', 'COMPANY_ID', 'CONTACT_ID', 'MYCOMPANY_ID', 'LEAD_ID'],
+						true,
+					);
+
+					if (!$isRelationEvent)
+					{
+						$CCrmEvent = new CCrmEvent();
+						$CCrmEvent->Add($arEvent, $this->bCheckPermission);
+					}
 				}
 			}
 
@@ -3184,7 +3193,7 @@ class CAllCrmQuote
 			|| (isset($arQuote['ASSIGNED_BY_SECOND_NAME']) && !empty($arQuote['ASSIGNED_BY_SECOND_NAME'])))
 		{
 			$responsibleInfo = CUser::FormatName(
-				$site->GetNameFormat(null, $arQuote['LID']),
+				$site->GetNameFormat(null, $arQuote['LID'] ?? null),
 				array(
 					'LOGIN' => '',
 					'NAME' => isset($arQuote['ASSIGNED_BY_NAME']) ? $arQuote['ASSIGNED_BY_NAME'] : '',

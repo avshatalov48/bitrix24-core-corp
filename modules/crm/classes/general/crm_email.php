@@ -1178,7 +1178,6 @@ class CCrmEMail
 
 		$leadFields = array(
 			'COMPANY_TITLE' => \CCrmCompany::getDefaultTitle(),
-			'OPENED' => 'Y',
 		);
 
 		if (trim($msgFields['SUBJECT']))
@@ -2188,7 +2187,6 @@ class CCrmEMail
 				'STATUS_ID' => 'NEW',
 				'COMMENTS' => $comment,
 				'SOURCE_DESCRIPTION' => GetMessage('CRM_MAIL_LEAD_FROM_EMAIL_SOURCE', array('%SENDER%' => $addresserInfo['ORIGINAL'])),
-				'OPENED' => 'Y',
 				'FM' => array(
 					'EMAIL' => array()
 				)

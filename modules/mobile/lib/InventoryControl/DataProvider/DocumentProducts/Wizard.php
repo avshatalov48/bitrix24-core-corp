@@ -43,6 +43,12 @@ final class Wizard
 			]
 		]);
 
+		if (!empty($product->storeFrom))
+		{
+			$record->storeFrom = $product->storeFrom;
+			$record->storeFromId = (int)$record->storeFrom->id;
+		}
+
 		if (!empty($product->storeTo))
 		{
 			$record->storeTo = $product->storeTo;

@@ -4,6 +4,8 @@ namespace Bitrix\Crm\Component;
 
 use Bitrix\Crm\Automation;
 use Bitrix\Crm\Category\Entity\Category;
+use Bitrix\Crm\Counter\EntityCounterFactory;
+use Bitrix\Crm\Counter\EntityCounterType;
 use Bitrix\Crm\Filter\Filter;
 use Bitrix\Crm\Filter\ItemDataProvider;
 use Bitrix\Crm\Filter\ItemUfDataProvider;
@@ -39,6 +41,7 @@ abstract class ItemList extends Base
 	protected $kanbanEntity;
 	/** @var string */
 	protected $intranetBindingMenuViewHtml;
+	protected ?string $counterPanelViewHtml = null;
 
 	protected function init(): void
 	{
@@ -148,7 +151,7 @@ abstract class ItemList extends Base
 	 */
 	protected function initCategory(): ?Category
 	{
-		$categoryId = (int)$this->arParams['categoryId'];
+		$categoryId = (int) ($this->arParams['categoryId'] ?? null);
 
 		if ($categoryId <= 0)
 		{
@@ -220,15 +223,13 @@ abstract class ItemList extends Base
 				|| Container::getInstance()->getUserPermissions()->canWriteConfig()
 			)
 			{
-				$buttons[Toolbar\ButtonLocation::AFTER_TITLE][] = new Buttons\Button([
+				$buttonConfig = [
 					'icon' => defined('Bitrix\UI\Buttons\Icon::FUNNEL') ? Icon::FUNNEL : '',
 					'color' => Buttons\Color::LIGHT_BORDER,
 					'className' => 'ui-btn ui-btn-themes ui-btn-light-border ui-btn-dropdown ui-toolbar-btn-dropdown',
 					'text' => $this->category ? $this->category->getName() : Loc::getMessage('CRM_TYPE_TOOLBAR_ALL_ITEMS'),
 					'menu' => [
-						'items' => $this->getToolbarCategories(
-							$categories
-						),
+						'items' => $this->getToolbarCategories($categories), //Tools\ToolBar::mapItems(),
 					],
 					'maxWidth' => '400px',
 					'dataset' => [
@@ -237,7 +238,18 @@ abstract class ItemList extends Base
 						'category-id' => $this->category ? $this->category->getId() : null,
 						'toolbar-collapsed-icon' => defined('Bitrix\UI\Buttons\Icon::FUNNEL') ? Icon::FUNNEL : '',
 					],
-				]);
+				];
+
+				if ($this->factory->isCountersEnabled())
+				{
+					$counterValue = $this->getCounterValue(null);
+					if ($counterValue > 0)
+					{
+						$buttonConfig['counter'] = $counterValue;
+					}
+				}
+
+				$buttons[Toolbar\ButtonLocation::AFTER_TITLE][] = new Buttons\Button($buttonConfig);
 			}
 		}
 
@@ -290,6 +302,9 @@ abstract class ItemList extends Base
 			'views' => $this->getToolbarViews(),
 			'isWithFavoriteStar' => true,
 			'spotlight' => $spotlight,
+			'entityTypeName' => \CCrmOwnerType::ResolveName($this->entityTypeId),
+			'categoryId' => $this->arResult['categoryId'],
+			'pathToEntityList' => '/crm/type/' . $this->entityTypeId,
 		];
 
 		return array_merge(parent::getToolbarParameters(), $parameters);
@@ -389,6 +404,11 @@ abstract class ItemList extends Base
 	protected function getToolbarViews(): array
 	{
 		$views = [];
+
+		if ($this->factory->isCountersEnabled())
+		{
+			$views['COUNTER_PANEL'] = $this->getCounterPanelView();
+		}
 
 		if ($this->isIntranetBindingMenuViewAvailable())
 		{
@@ -492,9 +512,62 @@ abstract class ItemList extends Base
 		return $this->intranetBindingMenuViewHtml;
 	}
 
+	protected function getCounterPanelView(): array
+	{
+		// remove this after UI release
+		$position = defined('\Bitrix\UI\Toolbar\ButtonLocation::AFTER_NAVIGATION')
+			? Toolbar\ButtonLocation::AFTER_NAVIGATION
+			: 'after_navigation';
+
+		return [
+			'html' => $this->getCounterPanelViewHtml(),
+			'position' => $position,
+			'isActive' => false,
+		];
+	}
+
+	protected function getCounterPanelViewHtml(): ?string
+	{
+		if ($this->counterPanelViewHtml === null)
+		{
+			ob_start();
+
+			$this->getApplication()->IncludeComponent(
+				'bitrix:crm.entity.counter.panel',
+				'',
+				[
+					'ENTITY_TYPE_NAME' => $this->arResult['entityTypeName'],
+					'EXTRAS' => $this->arResult['categoryId'] > 0 ? ['CATEGORY_ID' => $this->arResult['categoryId']] : [],
+					'PATH_TO_ENTITY_LIST' => '/crm/type/' . $this->entityTypeId,
+					'RETURN_AS_HTML_MODE' => true
+				]
+			);
+			$this->counterPanelViewHtml = ob_get_clean();
+		}
+		return $this->counterPanelViewHtml;
+	}
+
 	protected function getToolbarCategories(array $categories): array
 	{
 		$menu = parent::getToolbarCategories($categories);
+
+		if ($this->factory->isCountersEnabled())
+		{
+			foreach ($menu as &$item)
+			{
+				$counterValue = $this->getCounterValue($item['categoryId']);
+				if ($counterValue <= 0)
+				{
+					continue;
+				}
+				$text = htmlspecialcharsbx($item['text']);
+				$item['html'] = sprintf(
+					'%s <span class="main-buttons-item-counter">%d</span>',
+					$text,
+					$counterValue
+				);
+			}
+		}
 
 		if ($this->userPermissions->canWriteConfig())
 		{
@@ -570,5 +643,22 @@ abstract class ItemList extends Base
 	{
 		$supported = [\CCrmOwnerType::SmartInvoice];
 		return in_array($this->entityTypeId, $supported);
+	}
+
+	private function getCounterValue(?int $categoryId = null): int
+	{
+		$extras = [];
+		if ($categoryId !== null)
+		{
+			$extras['CATEGORY_ID'] = $categoryId;
+		}
+
+		$totalCounter = EntityCounterFactory::create(
+			$this->factory->getEntityTypeId(),
+			EntityCounterType::ALL,
+			Container::getInstance()->getUserPermissions()->getUserId(),
+			$extras
+		);
+		return (int)$totalCounter->getValue();
 	}
 }

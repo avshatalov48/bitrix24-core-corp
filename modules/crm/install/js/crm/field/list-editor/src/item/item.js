@@ -56,12 +56,12 @@ export class Item extends EventEmitter
 			})();
 
 			return Tag.render`
-				<div class="crm-field-list-editor-item" data-name="${Text.encode(sourceData.name)}">
+				<div class="crm-field-list-editor-item" data-name="${Text.encode(sourceData?.name || '')}">
 					<div class="crm-field-list-editor-item-header">
 						<div class="crm-field-list-editor-item-drag-button"></div>
 						<div class="crm-field-list-editor-item-text">
 							<div class="crm-field-list-editor-item-text-source-title">
-								<span class="crm-field-list-editor-item-text-source-title-inner">${Text.encode(sourceData.caption)}</span>
+								<span class="crm-field-list-editor-item-text-source-title-inner">${Text.encode(sourceData?.caption || '')}</span>
 								<span class="crm-field-list-editor-item-text-source-title-inner">${preparedCategoryCaption}</span>
 							</div>
 							<div class="crm-field-list-editor-item-text-custom-title">

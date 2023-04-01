@@ -985,7 +985,7 @@ class Connector
 		{}
 		else
 		{
-			$status = \Bitrix\ImConnector\Status::getInstance($connectorId, $lineId);
+			$status = \Bitrix\ImConnector\Status::getInstance($connectorId, (int)$lineId);
 			if (!$status->isStatus() || !Config::isConfigActive($lineId))
 			{
 				$result = Array(

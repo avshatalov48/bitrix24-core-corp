@@ -19,6 +19,7 @@ return [
 		'main.core.ajax',
 		'main.loader',
 		'seo.ads.login',
+		'ui.dialogs.messagebox',
 	],
 	'skip_core' => false,
 ];

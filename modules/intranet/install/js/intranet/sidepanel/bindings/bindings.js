@@ -654,6 +654,7 @@
 					{
 						var slider = new BX.Calendar.SliderLoader(link.matches[1], {
 							entryDateFrom: BX.parseDate(link.matches[2]),
+							link: link.url,
 						});
 						slider.show();
 						event.preventDefault();

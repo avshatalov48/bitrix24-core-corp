@@ -17,6 +17,7 @@ use Bitrix\Main\Entity\BooleanField;
 use Bitrix\Main\Entity\DatetimeField;
 use Bitrix\Main\Entity\ScalarField;
 use Bitrix\Main\Error;
+use Bitrix\Main\InvalidOperationException;
 use Bitrix\Main\ORM\Fields\DateField;
 use Bitrix\Main\ORM\Fields\FieldTypeMask;
 use Bitrix\Main\ORM\Fields\FloatField;
@@ -315,7 +316,7 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 
 	private function getAllImplementations(): array
 	{
-		if (is_array($this->allImplementationsCache))
+		if (isset($this->allImplementationsCache) && is_array($this->allImplementationsCache))
 		{
 			return $this->allImplementationsCache;
 		}
@@ -418,18 +419,6 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 			if ($this->isFieldMatchesTypeMask($fieldTypeMask, $field))
 			{
 				$names[] = $field->getName();
-			}
-		}
-
-		$flatBindingsFieldNames = [
-			static::FIELD_NAME_OBSERVERS,
-			static::FIELD_NAME_CONTACT_IDS,
-		];
-		foreach ($flatBindingsFieldNames as $fieldName)
-		{
-			if ($this->hasField($fieldName))
-			{
-				$names[] = $fieldName;
 			}
 		}
 
@@ -743,7 +732,20 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 		//todo temporary decision to avoid error on jsonSerialization of EntityObjects
 		$fieldTypeMask = FieldTypeMask::SCALAR|FieldTypeMask::USERTYPE|FieldTypeMask::EXPRESSION;
 
-		$entityFieldNames = array_merge($this->getEntityFieldNames($fieldTypeMask), $this->utmTableClassName::getCodeList());
+		$entityFieldNames = array_merge(
+			$this->getEntityFieldNames($fieldTypeMask),
+			$this->utmTableClassName::getCodeList(),
+		);
+
+		if ($this->hasField(static::FIELD_NAME_OBSERVERS))
+		{
+			$entityFieldNames[] = $this->getEntityFieldNameByMap(static::FIELD_NAME_OBSERVERS);
+		}
+		if ($this->hasField(static::FIELD_NAME_CONTACT_IDS))
+		{
+			$entityFieldNames[] = $this->getEntityFieldNameByMap(static::FIELD_NAME_CONTACT_IDS);
+		}
+
 		$data = $this->collectValues($entityFieldNames, $valuesType);
 
 		$commonFieldNames = array_map([$this, 'getCommonFieldNameByMap'], array_keys($data));
@@ -862,6 +864,48 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 	protected function disableCheckUserFields(): void
 	{
 
+	}
+
+	public function fill(): void
+	{
+		if ($this->isNew())
+		{
+			throw new InvalidOperationException('Cannot fill new item');
+		}
+
+		// if we set fm again from compatible data, new values will be duplicated
+		$changedValues = array_filter(
+			$this->getCompatibleData(Values::CURRENT),
+			fn($fieldName) => $fieldName !== static::FIELD_NAME_FM,
+			ARRAY_FILTER_USE_KEY,
+		);
+
+		$entityFieldsToFill = $this->getEntityFieldNames(FieldTypeMask::SCALAR|FieldTypeMask::USERTYPE);
+		foreach ($this->getAllImplementations() as $implementation)
+		{
+			$fieldsFromImplementation = array_map(
+				[$this, 'getEntityFieldNameByMap'],
+				$implementation->getFieldNamesToFill(),
+			);
+
+			$entityFieldsToFill = array_merge($entityFieldsToFill, $fieldsFromImplementation);
+		}
+
+		if ($this->hasField(static::FIELD_NAME_OBSERVERS))
+		{
+			$entityFieldsToFill[] = $this->getEntityFieldNameByMap(static::FIELD_NAME_OBSERVERS);
+		}
+		if ($this->hasField(static::FIELD_NAME_PRODUCTS))
+		{
+			$entityFieldsToFill[] = $this->getEntityFieldNameByMap(static::FIELD_NAME_PRODUCTS);
+		}
+
+		$entityFieldsToFill = array_unique($entityFieldsToFill);
+
+		$this->entityObject->fill($entityFieldsToFill);
+		$this->fillExpressionFields($this->entityObject);
+
+		$this->setFromCompatibleData($changedValues);
 	}
 
 	public function delete(): Result
@@ -1546,7 +1590,7 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 			}
 			elseif ($valuesType === Values::CURRENT)
 			{
-				if ($this->isChanged($entityFieldName))
+				if ($this->isChanged($commonFieldName))
 				{
 					$data[$entityFieldName] = $this->get($commonFieldName);
 				}

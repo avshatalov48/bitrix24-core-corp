@@ -689,4 +689,60 @@ final class Integration
 
 		return $linkFormIntegrationResult;
 	}
+
+	protected function handleLeadsByForm(array $integration)
+	{
+		$leadsResponse = $this->getLeadsByForm(
+			$integration['ADS_TYPE'],
+			$integration['ADS_ACCOUNT_ID'],
+			$integration['ADS_FORM_ID']
+		);
+
+		/**if subscribe on webhook failed skip link add to db*/
+		if (!$leadsResponse->isSuccess())
+		{
+			return $leadsResponse;
+		}
+
+//save leads
+
+		/**if add link to db failed skip add mapping to db*/
+		if (!$linkSaveResult->isSuccess())
+		{
+			return $linkSaveResult;
+		}
+
+		$linkFormIntegrationResult = new Result();
+		$linkFormIntegrationResult->setData([
+			"LINK_ID" => $linkSaveResult->getId()
+		]);
+
+		return $linkFormIntegrationResult;
+	}
+
+	protected function getLeadsByForm(string $type, string $accountId, string $formId): Result
+	{
+		$result = new Result();
+
+		if (!$service = $this->getService())
+		{
+			$result->addError(
+				new Error(Loc::getMessage('CRM_WEBFORM_OPTIONS_LINK_MODULE_SEO_NOT_INSTALLED'))
+			);
+
+			return $result;
+		}
+
+		$form = $service->getForm($type);
+		$form->setAccountId($accountId);
+
+		$loadLeadsResult = $form->loadLeads($formId);
+		if (!$loadLeadsResult->isSuccess())
+		{
+			$result->addErrors($loadLeadsResult->getErrors());
+			return $result;
+		}
+
+		return $loadLeadsResult;
+	}
 }

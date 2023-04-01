@@ -6,34 +6,35 @@
  */
 jn.define('im/messenger/controller/dialog/dialog', (require, exports, module) => {
 
-	const { Type } = jn.require('type');
-	const { Loc } = jn.require('loc');
+	const { Type } = require('type');
+	const { Loc } = require('loc');
 	const {
 		EventType,
 		FeatureFlag,
 		DialogType,
-	} = jn.require('im/messenger/const');
+	} = require('im/messenger/const');
 	const {
 		MessageService,
 		DialogService,
 		RecentService,
-	} = jn.require('im/messenger/service');
+	} = require('im/messenger/service');
 	const {
 		ChatAvatar,
 		ChatTitle,
-	} = jn.require('im/messenger/lib/element');
+	} = require('im/messenger/lib/element');
 
-	const { Controller } = jn.require('im/messenger/controller/base');
-	const { DialogConverter } = jn.require('im/messenger/lib/converter');
-	const { DialogHelper } = jn.require('im/messenger/lib/helper');
-	const { PageNavigation } = jn.require('im/messenger/lib/page-navigation');
-	const { Logger } = jn.require('im/messenger/lib/logger');
-	const { Uuid } = jn.require('utils/uuid');
-	const { MessengerParams } = jn.require('im/messenger/lib/params');
-	const { MessengerEvent } = jn.require('im/messenger/lib/event');
-	const { Counters } = jn.require('im/messenger/lib/counters');
-	const { WebDialog } = jn.require('im/messenger/controller/dialog/web');
-	const { Calls } = jn.require('im/messenger/lib/integration/immobile/calls');
+	const { Controller } = require('im/messenger/controller/base');
+	const { DialogConverter } = require('im/messenger/lib/converter');
+	const { DialogHelper } = require('im/messenger/lib/helper');
+	const { PageNavigation } = require('im/messenger/lib/page-navigation');
+	const { Logger } = require('im/messenger/lib/logger');
+	const { Uuid } = require('utils/uuid');
+	const { MessengerParams } = require('im/messenger/lib/params');
+	const { MessengerEvent } = require('im/messenger/lib/event');
+	const { Counters } = require('im/messenger/lib/counters');
+	const { WebDialog } = require('im/messenger/controller/dialog/web');
+	const { Calls } = require('im/messenger/lib/integration/immobile/calls');
+	const { HeaderMenu } = require('im/messenger/controller/dialog/header/menu');
 
 	/**
 	 * @class Dialog

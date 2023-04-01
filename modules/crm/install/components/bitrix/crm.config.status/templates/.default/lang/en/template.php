@@ -44,5 +44,5 @@ $MESS["CRM_STATUS_UNSUCCESSFUL_DEAL_STAGE"] = "Unsuccessful stages";
 $MESS["CRM_STATUS_UNSUCCESSFUL_INVOICE_STATUS"] = "Unsuccessful statuses";
 $MESS["CRM_STATUS_UNSUCCESSFUL_QUOTE_STATUS"] = "Unsuccessful statuses";
 $MESS["CRM_STATUS_UNSUCCESSFUL_STATUS"] = "Unsuccessful statuses";
-$MESS["CRM_STATUS_VIEW_FUNNEL2"] = "Pipeline preview";
+$MESS["CRM_STATUS_VIEW_FUNNEL2_MSGVER_1"] = "Funnel preview";
 $MESS["CRM_STATUS_VIEW_SCALE"] = "Scale preview";

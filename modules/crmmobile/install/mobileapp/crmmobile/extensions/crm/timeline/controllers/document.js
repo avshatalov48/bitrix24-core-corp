@@ -53,6 +53,7 @@ jn.define('crm/timeline/controllers/document', (require, exports, module) => {
 		openDocument(actionParams)
 		{
 			const { pdfUrl, documentId } = actionParams;
+			const title = actionParams.title ? `${actionParams.title}.pdf` : 'document.pdf';
 
 			if (documentId && useDocumentViewer)
 			{
@@ -66,7 +67,7 @@ jn.define('crm/timeline/controllers/document', (require, exports, module) => {
 				return;
 			}
 
-			viewer.openDocument(withCurrentDomain(pdfUrl));
+			viewer.openDocument(withCurrentDomain(pdfUrl), title);
 		}
 
 		printDocument(actionParams)
@@ -115,21 +116,21 @@ jn.define('crm/timeline/controllers/document', (require, exports, module) => {
 			);
 		}
 
-		openShareDialog(pdfUrl)
+		openShareDialog(url, ext = 'pdf')
 		{
-			pdfUrl = withCurrentDomain(pdfUrl);
+			url = withCurrentDomain(url);
 
 			if (Feature.isShareDialogSupportsFiles())
 			{
 				Notify.showIndicatorLoading();
-				Filesystem.downloadFile(pdfUrl).then(uri => {
+				Filesystem.downloadFile(url).then(uri => {
 					Notify.hideCurrentIndicator();
 					dialogs.showSharingDialog({ uri });
 				});
 			}
 			else
 			{
-				viewer.openDocument(pdfUrl);
+				viewer.openDocument(url, `document.${ext}`);
 			}
 		}
 

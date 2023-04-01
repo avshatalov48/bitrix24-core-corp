@@ -13,14 +13,9 @@ Loc::loadLanguageFile(__FILE__);
  * @var array $arResult
  */
 
-switch (mb_strtolower($arResult['HANDLER_CLASS_NAME']))
-{
-	case mb_strtolower(\Sale\Handlers\PaySystem\RoboxchangeHandler::class):
-		$arResult['HELPDESK'] = [
-			'CODE' => 17168072,
-		];
-		break;
-}
+$arResult['HELPDESK'] = [
+	'CODE' => 17168072,
+];
 
 if (isset($arResult['HELPDESK'], $arResult['ENTITY_CONFIG']))
 {

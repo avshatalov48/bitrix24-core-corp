@@ -1,0 +1,8 @@
+.crm__info-popup_header {
+	padding: 22px 22px 22px 27px;
+	background-color: var(--ui-color-background-info, #e5f9ff);
+}
+
+.crm__info-popup_title {
+	margin: 0;
+}

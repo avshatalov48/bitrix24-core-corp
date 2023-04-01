@@ -102,7 +102,8 @@ if(isset($arResult['CATEGORY_CHANGER'])):
 	);
 </script><?
 endif;
-if (is_array($arResult['EXPORT_CSV_PARAMS']))
+$exportCsvParams = $arResult['EXPORT_CSV_PARAMS'] ?? null;
+if (is_array($exportCsvParams))
 {
 	\Bitrix\Main\UI\Extension::load('ui.stepprocessing');
 	?>

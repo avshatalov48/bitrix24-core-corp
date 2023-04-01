@@ -9,6 +9,7 @@ use Bitrix\Main\ORM\Fields\DatetimeField;
 use Bitrix\Main\ORM\Fields\IntegerField;
 use Bitrix\Main\ORM\Fields\StringField;
 use Bitrix\Main\Type\DateTime;
+use CCrmOwnerType;
 
 class BadgeTable extends \Bitrix\Main\Entity\DataManager
 {
@@ -88,5 +89,20 @@ class BadgeTable extends \Bitrix\Main\Entity\DataManager
 			. ' AND VALUE=' . $sqlHelper->convertToDbString($value)
 		;
 		Application::getConnection()->query($sql);
+	}
+
+	public static function isActivityHasBadge(int $activityId): bool
+	{
+		$row = static::getList([
+			'select' => ['ID'],
+			'filter' => [
+				'=SOURCE_PROVIDER_ID' => SourceIdentifier::CRM_OWNER_TYPE_PROVIDER,
+				'SOURCE_ENTITY_TYPE_ID' => CCrmOwnerType::Activity,
+				'SOURCE_ENTITY_ID' => $activityId
+			],
+			'limit' => 1
+		])->fetch();
+
+		return is_array($row) && isset($row['ID']);
 	}
 }

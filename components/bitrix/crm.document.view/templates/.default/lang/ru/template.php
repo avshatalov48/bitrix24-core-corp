@@ -25,10 +25,15 @@ $MESS["CRM_DOCUMENT_VIEW_PREVIEW_MESSAGE_PREPARE"] = "Готовим PDF фай�
 $MESS["CRM_DOCUMENT_VIEW_PREVIEW_MESSAGE_READY"] = "Вы можете скачать документ в формате .docx прямо сейчас или скопировать ссылку и отправить клиенту";
 $MESS["CRM_DOCUMENT_VIEW_NO_AVAILABLE_FILES"] = "Нет доступных к отправке файлов";
 $MESS["CRM_DOCUMENT_VIEW_TRY_AGAIN"] = "Попробовать ещё раз";
-$MESS["CRM_DOCUMENT_VIEW_CREATE_OR_EDIT_MY_COMPANY_REQUISITES"] = "<a href=\"#URL#\" target=\"_blank\" class=\"crm__document-view--details-link\">Заполнить <br> или редактировать</a>
-<span class=\"crm__document-view--details-text\">реквизиты моей компании</span>";
 $MESS["CRM_DOCUMENT_VIEW_PUBLIC_URL_VIEWED_TIME"] = "Клиент перешел по публичной ссылке <span>#TIME#</span>";
 $MESS["CRM_DOCUMENT_VIEW_REQUISITES_MY_COMPANY_TITLE"] = "Реквизиты моей компании";
 $MESS["CRM_DOCUMENT_VIEW_PAYMENT_BUTTON"] = "Принять оплату";
 $MESS["CRM_DOCUMENT_VIEW_SIGN_BUTTON"] = "Подписать";
 $MESS["CRM_DOCUMENT_VIEW_SIGN_CLICKED"] = "Вы уже запустили подписание документа";
+
+$MESS["CRM_DOCUMENT_VIEW_SIGN_POPUP_CLOSE"] = "Закрыть";
+$MESS["CRM_DOCUMENT_VIEW_SIGN_POPUP_TITLE"] = "Подписание";
+$MESS["CRM_DOCUMENT_VIEW_SIGN_DO_USE_PREVIOUS"] = "Этот шаблон использовался %CREATED_AT% для сделки \"%TITLE%\", ответственный \"%INITIATOR%\". Использовать снова?";
+$MESS["CRM_DOCUMENT_VIEW_SIGN_OLD_BUTTON"] = "Использовать снова";
+$MESS["CRM_DOCUMENT_VIEW_SIGN_NEW_BUTTON"] = "Другой шаблон";
+
