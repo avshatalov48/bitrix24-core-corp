@@ -7,23 +7,6 @@ use Bitrix\Main\Localization\Loc;
 
 class FieldChangedTrigger extends BaseTrigger
 {
-	public static function isSupported($entityTypeId)
-	{
-		if (\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId))
-		{
-			return parent::isSupported($entityTypeId);
-		}
-
-		$supported = [
-			\CCrmOwnerType::Deal,
-			\CCrmOwnerType::Lead,
-			\CCrmOwnerType::Quote,
-			\CCrmOwnerType::SmartInvoice,
-			\CCrmOwnerType::SmartDocument,
-		];
-		return in_array($entityTypeId, $supported, true);
-	}
-
 	public static function getCode()
 	{
 		return 'FIELD_CHANGED';
@@ -91,7 +74,7 @@ class FieldChangedTrigger extends BaseTrigger
 			\CCrmBizProcHelper::ResolveDocumentType($entityTypeId))
 		);
 
-		$filter = function ($field)
+		$filter = function ($field) use ($entityTypeId)
 		{
 			$id = $field['Id'];
 
@@ -124,8 +107,10 @@ class FieldChangedTrigger extends BaseTrigger
 				|| strpos($id, 'OPPORTUNITY') !== false
 				|| strpos($id, 'CURRENCY_ID') !== false
 				|| strpos($id, 'ASSIGNED_BY') !== false
+				|| strpos($id, 'RESPONSIBLE') !== false
 				|| strpos($id, '.') !== false
 				|| strpos($id, '_PRINTABLE') !== false
+				|| ($entityTypeId === \CCrmOwnerType::Order && strpos($id, 'UF_') === 0)
 			)
 			{
 				return false;

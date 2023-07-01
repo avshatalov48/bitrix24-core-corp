@@ -82,7 +82,7 @@ export default class InputExtended extends Input
 								${this.getLinkContainer()}
 								${copyButton}
 							</div>
-							<div class="disk-control-external-link-subtitle" onclick="${this.showSettings}">${this.getDeathTimeContainer()}, ${this.getPasswordContainer()}${this.getRightsContainer()}</div>
+							<div class="disk-control-external-link-subtitle" onclick="${this.showSettings}">${this.getDeathTimeContainer()}<span>, </span>${this.getPasswordContainer()}${this.getRightsContainer()}</div>
 							<div class="disk-control-external-link-text">${Loc.getMessage('DISK_EXTENSION_EXTERNAL_LINK_IS_NOT_PUBLISHED')}</div>
 							<div class="disk-control-external-link-skeleton"></div>
 						</div>

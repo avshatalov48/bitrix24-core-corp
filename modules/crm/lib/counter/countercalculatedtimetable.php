@@ -12,6 +12,22 @@ use Bitrix\Main\ORM\Fields\StringField;
 use Bitrix\Main\ORM\Fields\DatetimeField;
 use Bitrix\Main\SystemException;
 
+/**
+ * Class CounterCalculatedTimeTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_CounterCalculatedTime_Query query()
+ * @method static EO_CounterCalculatedTime_Result getByPrimary($primary, array $parameters = [])
+ * @method static EO_CounterCalculatedTime_Result getById($id)
+ * @method static EO_CounterCalculatedTime_Result getList(array $parameters = [])
+ * @method static EO_CounterCalculatedTime_Entity getEntity()
+ * @method static \Bitrix\Crm\Counter\EO_CounterCalculatedTime createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Counter\EO_CounterCalculatedTime_Collection createCollection()
+ * @method static \Bitrix\Crm\Counter\EO_CounterCalculatedTime wakeUpObject($row)
+ * @method static \Bitrix\Crm\Counter\EO_CounterCalculatedTime_Collection wakeUpCollection($rows)
+ */
 class CounterCalculatedTimeTable extends DataManager
 {
 	public static function getTableName(): string

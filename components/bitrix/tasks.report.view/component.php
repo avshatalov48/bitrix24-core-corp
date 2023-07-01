@@ -14,7 +14,7 @@ foreach ($requiredModules as $requiredModule)
 }
 
 // user path
-$arParams["PATH_TO_USER"] = trim($arParams["PATH_TO_USER"]);
+$arParams["PATH_TO_USER"] = trim($arParams["PATH_TO_USER"] ?? '');
 if ($arParams["PATH_TO_USER"] == '')
 {
 	$arParams["PATH_TO_USER"] = COption::GetOptionString("tasks", "paths_task_user", null, SITE_ID);

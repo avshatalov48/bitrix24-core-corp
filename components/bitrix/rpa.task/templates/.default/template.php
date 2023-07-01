@@ -1,7 +1,7 @@
 <?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
-$APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "") . "no-hidden");
+$APPLICATION->SetPageProperty("BodyClass", ($bodyClass ?? "") . " no-hidden");
 
 \Bitrix\Main\UI\Extension::load([
 	'ui.design-tokens',
@@ -51,7 +51,7 @@ endif;
 					'typeId' => $arParams['typeId'],
 					'id' => $arParams['elementId'],
 					'fieldsToShow' => $taskParams['FIELDS_TO_SHOW'],
-					'fieldsToSet' => $taskParams['FIELDS_TO_SET'],
+					'fieldsToSet' => $taskParams['FIELDS_TO_SET'] ?? [],
 					'taskId' => $task['ID'],
 				]
 		);
@@ -98,6 +98,10 @@ endif;
 						if (tasksGrid && BX.type.isFunction(tasksGrid.Reload))
 						{
 							tasksGrid.Reload();
+						}
+						else if (BX.getClass('top.BX.Bizproc.Component.TaskList.Instance'))
+						{
+							top.BX.Bizproc.Component.TaskList.Instance.reloadGrid();
 						}
 					}
 				});

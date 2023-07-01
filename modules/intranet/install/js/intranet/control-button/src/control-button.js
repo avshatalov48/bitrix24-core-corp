@@ -1,7 +1,7 @@
 import {Type, Tag, Loc, Dom, Text, ajax, Reflection} from 'main.core';
 import {Menu, Popup} from 'main.popup';
+import {Messenger} from 'im.public.iframe';
 import "pull.client";
-import {BaseEvent, EventEmitter} from 'main.core.events';
 
 export class ControlButton
 {
@@ -57,7 +57,7 @@ export class ControlButton
 		{
 			analyticsLabelParam = {};
 		}
-		
+
 		this.analyticsLabel = {
 			entity: this.entityType,
 			...analyticsLabelParam
@@ -268,10 +268,7 @@ export class ControlButton
 	{
 		if (this.entityType === 'workgroup')
 		{
-			if (top.window.BXIM)
-			{
-				top.BXIM.openMessenger('sg' + this.entityId);
-			}
+			Messenger.openChat('sg' + this.entityId);
 			return;
 		}
 
@@ -286,9 +283,9 @@ export class ControlButton
 			analyticsLabel: this.analyticsLabel
 		}).then((response) => {
 
-			if (top.window.BXIM && response.data)
+			if (response.data)
 			{
-				top.BXIM.openMessenger('chat' + parseInt(response.data));
+				Messenger.openChat('chat' + parseInt(response.data));
 			}
 
 			this.chatLockCounter = 0;
@@ -312,10 +309,7 @@ export class ControlButton
 	{
 		if (this.entityType === 'workgroup')
 		{
-			if (top.window.BXIM)
-			{
-				top.BXIM.callTo('sg' + this.entityId);
-			}
+			Messenger.startVideoCall('sg' + this.entityId);
 			return;
 		}
 
@@ -330,9 +324,9 @@ export class ControlButton
 			analyticsLabel: this.analyticsLabel
 		}).then((response) => {
 
-			if (top.window.BXIM && response.data)
+			if (response.data)
 			{
-				top.BXIM.callTo('chat' + response.data, true);
+				Messenger.startVideoCall('chat' + response.data, true);
 			}
 
 			this.chatLockCounter = 0;
@@ -381,7 +375,7 @@ export class ControlButton
 					return {id: parseInt(userId), entityId: 'user'};
 				});
 			}
-			
+
 			new (window.top.BX || window.BX).Calendar.SliderLoader(
 				0,
 				{

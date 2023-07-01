@@ -1,6 +1,9 @@
 <?php
 
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 use Bitrix\Crm\Integration;
 
@@ -29,7 +32,7 @@ if (!empty($arResult['BUTTONS']))
 		$template = SITE_TEMPLATE_ID === 'bitrix24' ? 'slider' : 'type2';
 	}
 
-	if ($arParams['TYPE'] == 'show' && \Bitrix\Main\Loader::includeModule('intranet'))
+	if ($arParams['TYPE'] === 'show' && \Bitrix\Main\Loader::includeModule('intranet'))
 	{
 		$APPLICATION->includeComponent(
 			'bitrix:intranet.binding.menu',
@@ -68,7 +71,7 @@ if (!empty($arResult['BUTTONS']))
 	);
 }
 
-if(isset($arResult['SONET_SUBSCRIBE']) && is_array($arResult['SONET_SUBSCRIBE'])):
+if (isset($arResult['SONET_SUBSCRIBE']) && is_array($arResult['SONET_SUBSCRIBE'])):
 	$subscribe = $arResult['SONET_SUBSCRIBE'];
 ?><script type="text/javascript">
 BX.ready(
@@ -86,7 +89,7 @@ BX.ready(
 );
 </script><?
 endif;
-if (is_array($arResult['EXPORT_CSV_PARAMS']))
+if (isset($arResult['EXPORT_CSV_PARAMS']) && is_array($arResult['EXPORT_CSV_PARAMS']))
 {
 	\Bitrix\Main\UI\Extension::load('ui.stepprocessing');
 	?>

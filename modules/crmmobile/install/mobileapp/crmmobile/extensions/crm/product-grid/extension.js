@@ -2,8 +2,8 @@
  * @module crm/product-grid
  */
 jn.define('crm/product-grid', (require, exports, module) => {
-
 	const { Loc } = require('loc');
+	const { getEntityMessage } = require('crm/loc');
 	const { get, clone } = require('utils/object');
 	const { ProductGrid } = require('layout/ui/product-grid');
 	const { Alert } = require('alert');
@@ -14,7 +14,7 @@ jn.define('crm/product-grid', (require, exports, module) => {
 	const { ProductRow } = require('crm/product-grid/model');
 	const { StatefulProductCard } = require('crm/product-grid/components/stateful-product-card');
 	const { ProductModelLoader } = require('crm/product-grid/services/product-model-loader');
-	const { ProductAddMenu } = require('crm/product-grid/menu/product-add');
+	const { ProductAddMenu, MenuItemId } = require('crm/product-grid/menu/product-add');
 	const { ProductCalculator } = require('crm/product-calculator');
 
 	/**
@@ -24,6 +24,11 @@ jn.define('crm/product-grid', (require, exports, module) => {
 	 */
 	class CrmProductGrid extends ProductGrid
 	{
+		static getFloatingMenuItems()
+		{
+			return ProductAddMenu.getFloatingMenuItems();
+		}
+
 		/**
 		 * @param {CrmProductGridProps} props
 		 */
@@ -69,7 +74,7 @@ jn.define('crm/product-grid', (require, exports, module) => {
 		buildState(props)
 		{
 			return {
-				products: clone(props.products).map(fields => ProductRow.createRecalculated(fields)),
+				products: clone(props.products).map((fields) => ProductRow.createRecalculated(fields)),
 				summary: clone(props.summary),
 				currencyId: props.entity.currencyId,
 			};
@@ -94,6 +99,16 @@ jn.define('crm/product-grid', (require, exports, module) => {
 
 			this.barcodeScanner = new BarcodeScanner({
 				onSelect: (productId) => this.addExistedProductById(productId),
+			});
+
+			this.menu = new ProductAddMenu({
+				callbacks: {
+					[MenuItemId.SELECTOR]: () => this.productSelector.open(),
+					[MenuItemId.BARCODE_SCANNER]: () => this.barcodeScanner.open(),
+				},
+				analytics: {
+					entityTypeName: entity.typeName,
+				},
 			});
 
 			this.productModelLoader = new ProductModelLoader({
@@ -169,6 +184,7 @@ jn.define('crm/product-grid', (require, exports, module) => {
 				vatRates: taxes.vatRates,
 				iblockId: catalog.id,
 				inventoryControlEnabled: inventoryControl.enabled,
+				showTax: this.showTaxInProductCard(),
 				entityDetailPageUrl: entity.detailPageUrl,
 				entityTypeId: entity.typeId,
 				onChange: (productRow) => {
@@ -192,13 +208,16 @@ jn.define('crm/product-grid', (require, exports, module) => {
 					{
 						text: Loc.getMessage('PRODUCT_GRID_REMOVE_CONFIRM_OK'),
 						type: 'destructive',
-						onPress: () => {
-							const products = this.getItems().filter(item => item.getId() !== productRow.getId());
-							this.setItems(products, () => this.fetchTotals());
-						},
+						onPress: () => this.onRemoveItemConfirm(productRow),
 					},
 				],
 			);
+		}
+
+		onRemoveItemConfirm(productRow)
+		{
+			const products = this.getItems().filter((item) => item.getId() !== productRow.getId());
+			this.setItems(products, () => this.fetchTotals());
 		}
 
 		/**
@@ -252,7 +271,7 @@ jn.define('crm/product-grid', (require, exports, module) => {
 			const products = this.getItems();
 			products.push(productRow);
 
-			this.setStateWithNotification({products}, () => {
+			this.setStateWithNotification({ products }, () => {
 				this.fetchTotals();
 				this.scrollListToTheEnd();
 
@@ -280,6 +299,11 @@ jn.define('crm/product-grid', (require, exports, module) => {
 			});
 		}
 
+		getFetchTotalsEndpoint()
+		{
+			return 'crmmobile.ProductGrid.loadProductGridSummary';
+		}
+
 		fetchTotals()
 		{
 			if (this.getItems().length === 0)
@@ -288,7 +312,7 @@ jn.define('crm/product-grid', (require, exports, module) => {
 					count: 0,
 					total: {
 						amount: 0,
-						currency: this.state.currencyId
+						currency: this.state.currencyId,
 					},
 				}]);
 				return;
@@ -296,36 +320,38 @@ jn.define('crm/product-grid', (require, exports, module) => {
 
 			const { entity } = this.getProps();
 
-			const action = 'crmmobile.ProductGrid.loadProductGridSummary';
+			const action = this.getFetchTotalsEndpoint();
 			const queryConfig = {
 				json: {
 					entityId: entity.id,
 					entityTypeName: entity.typeName,
 					categoryId: entity.categoryId,
 					currencyId: this.state.currencyId,
-					products: this.getItems().map(item => item.getRawValues()),
+					products: this.getItems().map((item) => item.getRawValues()),
 				},
 			};
 
 			this.forceUpdateSummary(() => new Promise((resolve, reject) => {
 				BX.ajax.runAction(action, queryConfig)
-					.then(response => {
+					.then((response) => {
 						this.state.summary = response.data;
+
+						this.onAfterSummaryUpdate(response.data);
 
 						const {
 							totalCost: amount,
 							currency,
-							totalRows: count
+							totalRows: count,
 						} = response.data;
 
 						this.customEventEmitter.emit(CatalogStoreEvents.ProductList.TotalChanged, [{
 							count,
-							total: { amount, currency},
+							total: { amount, currency },
 						}]);
 
 						resolve(response.data);
 					})
-					.catch(err => {
+					.catch((err) => {
 						if (this.props.ajaxErrorHandler)
 						{
 							return this.props.ajaxErrorHandler(err);
@@ -337,6 +363,10 @@ jn.define('crm/product-grid', (require, exports, module) => {
 					});
 			}));
 		}
+
+		// for updating products etc.
+		onAfterSummaryUpdate(responseData)
+		{}
 
 		renderAddItemButton()
 		{
@@ -360,33 +390,31 @@ jn.define('crm/product-grid', (require, exports, module) => {
 			return this.replayLastProductAddAction();
 		}
 
-		showProductAddMenu()
-		{
-			const { entity } = this.getProps();
-
-			const menu = new ProductAddMenu({
-				analytics: {
-					entityTypeName: entity.typeName,
-				},
-				onChooseBarcode: () => {
-					this.cache.set('last_product_add_action', 'barcode');
-					this.barcodeScanner.open();
-				},
-				onChooseDb: () => {
-					this.cache.set('last_product_add_action', 'db');
-					this.productSelector.open();
-				},
-			});
-
-			menu.show();
-		}
-
 		replayLastProductAddAction()
 		{
-			const defaultAction = 'db';
+			const defaultAction = MenuItemId.SELECTOR;
 			const lastAction = this.cache.get('last_product_add_action', defaultAction);
-			const widget = lastAction === 'barcode' ? this.barcodeScanner : this.productSelector;
-			widget.open();
+
+			return this.menu.handleAction(lastAction);
+		}
+
+		showProductAddMenu()
+		{
+			this.menu.show();
+		}
+
+		showProductSelector()
+		{
+			this.cache.set('last_product_add_action', MenuItemId.SELECTOR);
+
+			return this.menu.handleAction(MenuItemId.SELECTOR);
+		}
+
+		showBarcodeScanner()
+		{
+			this.cache.set('last_product_add_action', MenuItemId.BARCODE_SCANNER);
+
+			return this.menu.handleAction(MenuItemId.BARCODE_SCANNER);
 		}
 
 		/**
@@ -397,7 +425,7 @@ jn.define('crm/product-grid', (require, exports, module) => {
 			if (this.taxIncludedFlagMustBeUnified())
 			{
 				let needUpdate = false;
-				const nextItems = this.getItems().map(item => {
+				const nextItems = this.getItems().map((item) => {
 					if (item.isTaxIncluded() === source.isTaxIncluded())
 					{
 						return item;
@@ -449,17 +477,42 @@ jn.define('crm/product-grid', (require, exports, module) => {
 			}
 		}
 
+		getEntityTypeId()
+		{
+			const { entity = {} } = this.getProps();
+
+			return entity.typeId;
+		}
+
 		getEmptyScreenTitle()
 		{
-			return Loc.getMessage('M_CRM_PRODUCT_GRID_EMPTY_TITLE');
+			return getEntityMessage('M_CRM_PRODUCT_GRID_EMPTY_TITLE2', this.getEntityTypeId());
 		}
 
 		getEmptyScreenDescription()
 		{
-			return Loc.getMessage('M_CRM_PRODUCT_GRID_EMPTY_DESCRIPTION');
+			return getEntityMessage('M_CRM_PRODUCT_GRID_EMPTY_DESCRIPTION2', this.getEntityTypeId());
+		}
+
+		handleFloatingMenuAction(actionId)
+		{
+			switch (actionId)
+			{
+				case MenuItemId.SELECTOR:
+					void this.showProductSelector();
+					break;
+
+				case MenuItemId.BARCODE_SCANNER:
+					void this.showBarcodeScanner();
+					break;
+			}
+		}
+
+		showTaxInProductCard()
+		{
+			return true;
 		}
 	}
 
 	module.exports = { CrmProductGrid };
-
 });

@@ -1,10 +1,12 @@
-(() => {
+/**
+ * @module layout/ui/detail-card/toolbar/actions-panel
+ */
+jn.define('layout/ui/detail-card/toolbar/actions-panel', (require, exports, module) => {
+	const { throttle } = require('utils/function');
+	const { get } = require('utils/object');
+	const { ButtonsToolbar } = require('layout/ui/buttons-toolbar');
 
-	const { throttle } = jn.require('utils/function');
-	const { get } = jn.require('utils/object');
-	const { ButtonsToolbar } = jn.require('layout/ui/buttons-toolbar');
-
-	const Types = {
+	const ButtonTypes = {
 		PRIMARY: 'primary',
 		SECONDARY: 'secondary',
 	};
@@ -120,6 +122,8 @@
 		}
 	}
 
-	this.ActionsPanel = ActionsPanel;
-	this.ActionsPanel.ButtonType = Types;
-})();
+	module.exports = {
+		ActionsPanel,
+		ButtonTypes,
+	};
+});

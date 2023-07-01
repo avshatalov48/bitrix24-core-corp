@@ -283,7 +283,7 @@ class Task implements Tabable
 
 	public function getTitle()
 	{
-		return Loc::getMessage("TAB_NAME_TASKS_LIST");
+		return Loc::getMessage("TAB_NAME_TASKS_LIST_SHORT");
 	}
 
 	public function setContext($context)

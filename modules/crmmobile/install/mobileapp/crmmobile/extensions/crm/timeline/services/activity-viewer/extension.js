@@ -2,7 +2,6 @@
  * @module crm/timeline/services/activity-viewer
  */
 jn.define('crm/timeline/services/activity-viewer', (require, exports, module) => {
-
 	const { Alert } = require('alert');
 	const { Loc } = require('loc');
 	const { get } = require('utils/object');
@@ -98,7 +97,7 @@ jn.define('crm/timeline/services/activity-viewer', (require, exports, module) =>
 			}
 
 			// @todo Probably we should better send some event, and listen it in tasks background
-			const task = new Task({id: env.userId});
+			const task = new Task({ id: env.userId });
 			task.updateData({
 				id: taskId,
 				title: subject,
@@ -137,5 +136,4 @@ jn.define('crm/timeline/services/activity-viewer', (require, exports, module) =>
 	}
 
 	module.exports = { ActivityViewer };
-
 });

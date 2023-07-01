@@ -2,8 +2,8 @@
 
 namespace Bitrix\Crm\Timeline;
 
-use Bitrix\Crm\Timeline\Entity\TimelineTable;
 use Bitrix\Crm\Timeline\Entity\TimelineBindingTable;
+use Bitrix\Crm\Timeline\Entity\TimelineTable;
 use CCrmOwnerType;
 
 class LogMessageEntry extends TimelineEntry
@@ -21,6 +21,7 @@ class LogMessageEntry extends TimelineEntry
 			'CREATED' => $created,
 			'AUTHOR_ID' => $authorId,
 			'SETTINGS' => $settings,
+			'SOURCE_ID' => $params['SOURCE_ID'] ?? '',
 			'ASSOCIATED_ENTITY_TYPE_ID' => $params['ASSOCIATED_ENTITY_TYPE_ID'] ?? $entityTypeId,
 			'ASSOCIATED_ENTITY_ID' => $params['ASSOCIATED_ENTITY_ID'] ?? $entityId,
 		]);
@@ -56,27 +57,24 @@ class LogMessageEntry extends TimelineEntry
 		);
 	}
 
-	public static function detectIdByParams(string $sourceId, int $typeCategoryId, string $key = 'SOURCE_ID'): ?int
+	public static function detectIdByParams(string $sourceId, int $typeCategoryId): ?int
 	{
-		$items = TimelineTable::getList([
-			'select' => ['ID', 'SETTINGS'],
+		$row = TimelineTable::getRow([
+			'select' => ['ID'],
 			'filter' => [
+				'=SOURCE_ID' => $sourceId,
 				'=TYPE_ID' => TimelineType::LOG_MESSAGE,
 				'=TYPE_CATEGORY_ID' => $typeCategoryId,
 				'!=ASSOCIATED_ENTITY_TYPE_ID' => CCrmOwnerType::Activity
 			],
 			'order' => ['ID' => 'DESC']
-		])->fetchAll();
+		]);
 
-		foreach ($items as $item)
+		if (empty($row))
 		{
-			$logMessageSourceId = $item['SETTINGS']['BASE'][$key] ?? '';
-			if ($sourceId === $logMessageSourceId)
-			{
-				return (int)$item['ID'];
-			}
+			return null;
 		}
 
-		return null;
+		return $row['ID'];
 	}
 }

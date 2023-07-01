@@ -5,7 +5,7 @@ $APPLICATION->includeComponent(
 	'bitrix:signproxy.pub',
 	'',
 	array(
-		'HASH' => $_REQUEST['hash']
+		'HASH' => $_REQUEST['hash'] ?? ''
 	),
 	null,
 	array(

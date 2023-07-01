@@ -3,11 +3,12 @@
 namespace Bitrix\Disk\Volume\Module;
 
 use Bitrix\Main;
-use Bitrix\Main\ObjectException;
 use Bitrix\Main\ArgumentTypeException;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Disk;
 use Bitrix\Disk\Volume;
 use Bitrix\Disk\Internals\ObjectTable;
+use Bitrix\Disk\Internals\VolumeTable;
 
 /**
  * Disk storage volume measurement class.
@@ -19,20 +20,20 @@ class Im extends Volume\Module\Module
 	/** @var string */
 	protected static $moduleId = 'im';
 
-	/** @var \Bitrix\Disk\Storage[] */
-	private $storageList = array();
+	/** @var Disk\Storage[] */
+	private $storageList = [];
 
-	/** @var \Bitrix\Disk\Folder[] */
-	private $folderList = array();
+	/** @var Disk\Folder[] */
+	private $folderList = [];
 
 	/**
 	 * Runs measure test to get volumes of selecting objects.
 	 * @param array $collectData List types data to collect: ATTACHED_OBJECT, SHARING_OBJECT, EXTERNAL_LINK, UNNECESSARY_VERSION.
-	 * @return $this
+	 * @return static
 	 * @throws Main\ArgumentException
 	 * @throws Main\SystemException
 	 */
-	public function measure($collectData = array())
+	public function measure(array $collectData = []): self
 	{
 		if (!$this->isMeasureAvailable())
 		{
@@ -46,11 +47,11 @@ class Im extends Volume\Module\Module
 
 		// collect disk statistics
 		$this
-			->addFilter(0, array(
+			->addFilter(0, [
 				'LOGIC' => 'OR',
 				'MODULE_ID' => self::getModuleId(),
 				'ENTITY_TYPE' => \Bitrix\Im\Disk\ProxyType\Im::className(),
-			))
+			])
 			->addFilter('DELETED_TYPE', ObjectTable::DELETED_TYPE_NONE);
 
 		parent::measure();
@@ -72,7 +73,7 @@ class Im extends Volume\Module\Module
 		";
 
 		$columnList = Volume\QueryHelper::prepareInsert(
-			array(
+			[
 				'INDICATOR_TYPE',
 				'OWNER_ID',
 				'CREATE_TIME',
@@ -80,18 +81,18 @@ class Im extends Volume\Module\Module
 				'FILE_COUNT',
 				'DISK_SIZE',
 				'DISK_COUNT',
-			),
+			],
 			$this->getSelect()
 		);
 
-		$tableName = \Bitrix\Disk\Internals\VolumeTable::getTableName();
+		$tableName = VolumeTable::getTableName();
 
 		$connection->queryExecute("INSERT INTO {$tableName} ({$columnList}) {$querySql}");
 
 
 		// collect folders statistics
-		$storageListId = array();
-		$folderListId = array();
+		$storageListId = [];
+		$folderListId = [];
 		$storageList = $this->getStorageList();
 		if (count($storageList) > 0)
 		{
@@ -110,13 +111,13 @@ class Im extends Volume\Module\Module
 		}
 		if (count($storageListId) > 0 && count($folderListId) > 0)
 		{
-			$agr = new \Bitrix\Disk\Volume\FolderTree;
+			$agr = new Volume\FolderTree;
 			$agr
 				->setOwner($this->getOwner())
 				->addFilter('@STORAGE_ID', $storageListId)
 				->addFilter('@FOLDER_ID', $folderListId)
 				->purify()
-				->measure(array(self::DISK_FILE));
+				->measure([self::DISK_FILE]);
 		}
 
 		return $this;
@@ -124,20 +125,20 @@ class Im extends Volume\Module\Module
 
 	/**
 	 * Returns module storage.
-	 * @return \Bitrix\Disk\Storage[]|array
+	 * @return Disk\Storage[]|array
 	 */
-	public function getStorageList()
+	public function getStorageList(): array
 	{
-		if (count($this->storageList) == 0 || !$this->storageList[0] instanceof \Bitrix\Disk\Storage)
+		if (count($this->storageList) == 0 || !$this->storageList[0] instanceof Disk\Storage)
 		{
 			$entityTypes = self::getEntityType();
-			$storage = \Bitrix\Disk\Storage::load(array(
+			$storage = Disk\Storage::load([
 				'MODULE_ID' => self::getModuleId(),
 				//'ENTITY_TYPE' => \Bitrix\Im\Disk\ProxyType\Im::className()
 				'ENTITY_TYPE' => $entityTypes[0]
-			));
+			]);
 
-			if ($storage instanceof \Bitrix\Disk\Storage)
+			if ($storage instanceof Disk\Storage)
 			{
 				$this->storageList[] = $storage;
 			}
@@ -148,22 +149,22 @@ class Im extends Volume\Module\Module
 
 	/**
 	 * Returns folder list corresponding to module.
-	 * @param \Bitrix\Disk\Storage $storage Module's storage.
-	 * @return \Bitrix\Disk\Folder[]|array
+	 * @param Disk\Storage $storage Module's storage.
+	 * @return Disk\Folder[]|array
 	 */
-	public function getFolderList($storage)
+	public function getFolderList($storage): array
 	{
 		if (
-			$storage instanceof \Bitrix\Disk\Storage &&
-			$storage->getId() > 0
+			$storage instanceof Disk\Storage
+			&& $storage->getId() > 0
 		)
 		{
 			if (
-				!isset($this->folderList[$storage->getId()]) ||
-				empty($this->folderList[$storage->getId()])
+				!isset($this->folderList[$storage->getId()])
+				|| empty($this->folderList[$storage->getId()])
 			)
 			{
-				$this->folderList[$storage->getId()] = array();
+				$this->folderList[$storage->getId()] = [];
 				if ($this->isMeasureAvailable())
 				{
 					$this->folderList[$storage->getId()][] = $storage->getRootObject();
@@ -173,49 +174,48 @@ class Im extends Volume\Module\Module
 			return $this->folderList[$storage->getId()];
 		}
 
-		return array();
+		return [];
 	}
 
 	/**
 	 * Returns special folder code list.
 	 * @return string[]
 	 */
-	public static function getSpecialFolderCode()
+	public static function getSpecialFolderCode(): array
 	{
-		return array('IM_SAVED');
+		return ['IM_SAVED'];
 	}
 
 	/**
 	 * Returns entity type list.
 	 * @return string[]
 	 */
-	public static function getEntityType()
+	public static function getEntityType(): array
 	{
-		return array(
-			//\Bitrix\Im\Disk\ProxyType\Im::className()
-			'Bitrix\\Im\\Disk\\ProxyType\\Im'
-		);
+		return [
+			\Bitrix\Im\Disk\ProxyType\Im::class
+		];
 	}
 
 	/**
 	 * Check ability to clear storage.
-	 * @param \Bitrix\Disk\Storage $storage Storage to clear.
+	 * @param Disk\Storage $storage Storage to clear.
 	 * @return boolean
 	 */
-	public function isAllowClearStorage(\Bitrix\Disk\Storage $storage)
+	public function isAllowClearStorage(Disk\Storage $storage): bool
 	{
 		static $imStorageId;
 		if (empty($imStorageId))
 		{
 			$storageList = $this->getStorageList();
-			if ($storageList[0] instanceof \Bitrix\Disk\Storage)
+			if ($storageList[0] instanceof Disk\Storage)
 			{
 				$imStorageId = $storageList[0]->getId();
 			}
 		}
 
 		// disallow clearance if im is unavailable
-		if ($storage instanceof \Bitrix\Disk\Storage)
+		if ($storage instanceof Disk\Storage)
 		{
 			if ($imStorageId === $storage->getId())
 			{
@@ -228,10 +228,10 @@ class Im extends Volume\Module\Module
 
 	/**
 	 * Check ability to drop folder.
-	 * @param \Bitrix\Disk\Folder $folder Folder to drop.
+	 * @param Disk\Folder $folder Folder to drop.
 	 * @return boolean
 	 */
-	public function isAllowDeleteFolder(\Bitrix\Disk\Folder $folder)
+	public function isAllowDeleteFolder(Disk\Folder $folder): bool
 	{
 		if ($folder->isDeleted())
 		{
@@ -242,7 +242,7 @@ class Im extends Volume\Module\Module
 		if (empty($imStorageId))
 		{
 			$storageList = $this->getStorageList();
-			if ($storageList[0] instanceof \Bitrix\Disk\Storage)
+			if ($storageList[0] instanceof Disk\Storage)
 			{
 				$imStorageId = $storageList[0]->getId();
 			}
@@ -257,11 +257,11 @@ class Im extends Volume\Module\Module
 	 * @param array $collectedData List types of collected data to return.
 	 * @return array
 	 */
-	public function getMeasurementFolderResult($collectedData = array())
+	public function getMeasurementFolderResult($collectedData = [])
 	{
 		\Bitrix\Main\Loader::includeModule(self::getModuleId());
 
-		$chatList = array();
+		$chatList = [];
 
 		$totalSize = 0;
 		$storageList = $this->getStorageList();
@@ -270,7 +270,7 @@ class Im extends Volume\Module\Module
 			foreach ($storageList as $storage)
 			{
 				$folders = $this->getFolderList($storage);
-				$folderIds = array();
+				$folderIds = [];
 				if (count($folders) > 0)
 				{
 					foreach ($folders as $folder)
@@ -316,10 +316,8 @@ class Im extends Volume\Module\Module
 	/**
 	 * @param string[] $filter Filter with module id.
 	 * @return Volume\Fragment
-	 * @throws ArgumentTypeException
-	 * @throws ObjectException
 	 */
-	public static function getFragment(array $filter)
+	public static function getFragment(array $filter): Volume\Fragment
 	{
 		if ($filter['INDICATOR_TYPE'] == Volume\Folder::className() || $filter['INDICATOR_TYPE'] == Volume\FolderTree::className())
 		{
@@ -389,12 +387,15 @@ class Im extends Volume\Module\Module
 
 	/**
 	 * @param Volume\Fragment $fragment Folder entity object.
-	 * @return string
+	 * @return string|null
 	 * @throws ArgumentTypeException
 	 */
-	public static function getTitle(Volume\Fragment $fragment)
+	public static function getTitle(Volume\Fragment $fragment): ?string
 	{
-		if ($fragment->getIndicatorType() == Volume\Folder::className() || $fragment->getIndicatorType() == Volume\FolderTree::className())
+		if (
+			$fragment->getIndicatorType() == Volume\Folder::className()
+			|| $fragment->getIndicatorType() == Volume\FolderTree::className()
+		)
 		{
 			$specific = $fragment->getSpecific();
 			if ($specific['chat']['TITLE'] != '')
@@ -403,7 +404,7 @@ class Im extends Volume\Module\Module
 			}
 			elseif($specific['userCount'] > 0)
 			{
-				$chatUserNameList = array();
+				$chatUserNameList = [];
 				foreach ($specific['userInChat'] as $chatUserId)
 				{
 					$chatUserNameList[] = $userName = \Bitrix\Im\User::getInstance($chatUserId)->getFullName();
@@ -418,9 +419,9 @@ class Im extends Volume\Module\Module
 			else
 			{
 				$folder = $fragment->getFolder();
-				if (!$folder instanceof \Bitrix\Disk\Folder)
+				if (!$folder instanceof Disk\Folder)
 				{
-					throw new ArgumentTypeException('Fragment must be subclass of '.\Bitrix\Disk\Folder::className());
+					throw new ArgumentTypeException('Fragment must be subclass of '.Disk\Folder::className());
 				}
 				$title = $folder->getOriginalName();
 			}
@@ -438,7 +439,7 @@ class Im extends Volume\Module\Module
 	 * @return \Bitrix\Main\Type\DateTime|null
 	 * @throws ArgumentTypeException
 	 */
-	public static function getUpdateTime(Volume\Fragment $fragment)
+	public static function getUpdateTime(Volume\Fragment $fragment): ?\Bitrix\Main\Type\DateTime
 	{
 		$timestampUpdate = null;
 		if ($fragment->getIndicatorType() == Volume\Folder::className() || $fragment->getIndicatorType() == Volume\FolderTree::className())
@@ -453,9 +454,9 @@ class Im extends Volume\Module\Module
 			else
 			{
 				$folder = $fragment->getFolder();
-				if (!$folder instanceof \Bitrix\Disk\Folder)
+				if (!$folder instanceof Disk\Folder)
 				{
-					throw new ArgumentTypeException('Fragment must be subclass of '.\Bitrix\Disk\Folder::className());
+					throw new ArgumentTypeException('Fragment must be subclass of '.Disk\Folder::className());
 				}
 				$timestampUpdate = $folder->getUpdateTime()->toUserTime();
 			}

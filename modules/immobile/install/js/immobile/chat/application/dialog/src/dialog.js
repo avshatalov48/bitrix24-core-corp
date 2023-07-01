@@ -2883,6 +2883,8 @@ export class MobileDialogApplication
 			text += quoteMessage.text.replace(/^([-]{54}\n)/gm, '-'.repeat(21)+'\n');
 		}
 
+		text = text.replace(/\[url](.*?)\[\/url]/ig, (whole, link) => link);
+
 		app.exec("copyToClipboard", {text});
 
 		(new BXMobileApp.UI.NotificationBar({

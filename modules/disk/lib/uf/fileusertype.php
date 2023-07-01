@@ -52,13 +52,26 @@ final class FileUserType
 
 	public static function prepareSettings($userField)
 	{
-		$iblockID = (int)$userField["SETTINGS"]["IBLOCK_ID"];
-		$sectionID = (int)$userField["SETTINGS"]["SECTION_ID"];
+		if (!is_array($userField))
+		{
+			$userField = [];
+		}
+
+		$iblockId = null;
+		$sectionId = null;
+		if (isset($userField["SETTINGS"]["IBLOCK_ID"]))
+		{
+			$iblockId = (int)$userField["SETTINGS"]["IBLOCK_ID"];
+		}
+		if (isset($userField["SETTINGS"]["SECTION_ID"]))
+		{
+			$sectionId = (int)$userField["SETTINGS"]["SECTION_ID"];
+		}
 
 		return [
-			"IBLOCK_ID" => $iblockID,
-			"SECTION_ID" => $sectionID,
-			"UF_TO_SAVE_ALLOW_EDIT" => $userField["SETTINGS"]["UF_TO_SAVE_ALLOW_EDIT"],
+			"IBLOCK_ID" => $iblockId,
+			"SECTION_ID" => $sectionId,
+			"UF_TO_SAVE_ALLOW_EDIT" => $userField["SETTINGS"]["UF_TO_SAVE_ALLOW_EDIT"] ?? false,
 		];
 	}
 

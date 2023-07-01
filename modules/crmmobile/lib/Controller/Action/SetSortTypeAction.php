@@ -5,6 +5,7 @@ namespace Bitrix\CrmMobile\Controller\Action;
 
 
 use Bitrix\Crm\Kanban\Entity;
+use Bitrix\Crm\Service\Container;
 use Bitrix\CrmMobile\Controller\Action;
 use Bitrix\CrmMobile\Controller\PublicErrorsTrait;
 use Bitrix\Main\Error;
@@ -37,18 +38,18 @@ class SetSortTypeAction extends Action
 
 	private function setSortType(string $type, int $entityTypeId, int $categoryId): Result
 	{
-		// currently only deals are supported
-		if ($entityTypeId !== \CCrmOwnerType::Deal)
+		$factory = Container::getInstance()->getFactory($entityTypeId);
+		if (!$factory->isLastActivityEnabled())
 		{
 			$result = new Result();
 			$result->addError(
-				new Error('Sort in ' . \CCrmOwnerType::ResolveName($entityTypeId) . ' not supported')
+				new Error('Sort in ' . $factory->getEntityName() . ' not supported')
 			);
 
 			return $result;
 		}
 
-		$instance = Entity::getInstance(\CCrmOwnerType::ResolveName($entityTypeId));
+		$instance = Entity::getInstance($factory->getEntityName());
 
 		return $instance
 			->setCategoryId($categoryId)

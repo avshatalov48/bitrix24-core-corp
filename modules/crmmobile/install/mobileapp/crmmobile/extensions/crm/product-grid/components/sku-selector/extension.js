@@ -2,7 +2,6 @@
  * @module crm/product-grid/components/sku-selector
  */
 jn.define('crm/product-grid/components/sku-selector', (require, exports, module) => {
-
 	const { Loc } = require('loc');
 	const { isArray, get, clone, mergeImmutable, isEqual } = require('utils/object');
 	const { debounce } = require('utils/function');
@@ -55,7 +54,7 @@ jn.define('crm/product-grid/components/sku-selector', (require, exports, module)
 
 		initLayout()
 		{
-			this.layout.setTitle({text: Loc.getMessage('PRODUCT_GRID_CONTROL_SKU_SELECTOR_CHOOSE_VARIATION')});
+			this.layout.setTitle({ text: Loc.getMessage('PRODUCT_GRID_CONTROL_SKU_SELECTOR_CHOOSE_VARIATION') });
 			this.layout.enableNavigationBarBorder(false);
 		}
 
@@ -71,19 +70,19 @@ jn.define('crm/product-grid/components/sku-selector', (require, exports, module)
 					const currencyId = this.props.currencyId;
 					const action = 'crmmobile.ProductGrid.loadSkuCollection';
 					const queryConfig = {
-						json: { variationId, currencyId }
+						json: { variationId, currencyId },
 					};
 
 					// @todo cache this query on client
 					BX.ajax.runAction(action, queryConfig)
-						.then(response => {
+						.then((response) => {
 							this.productVariations = response.data.variations;
 							resolve(this.productVariations);
 						})
-						.catch(err => {
+						.catch((err) => {
 							void ErrorNotifier.showError(Loc.getMessage('PRODUCT_GRID_CONTROL_SKU_SELECTOR_LOADING_ERROR'));
 							console.error(err);
-							reject(err)
+							reject(err);
 						});
 				}
 				else
@@ -114,7 +113,7 @@ jn.define('crm/product-grid/components/sku-selector', (require, exports, module)
 		 */
 		get selectedPropertyValues()
 		{
-			const offer = this.skuTree.OFFERS.find(item => item.ID === this.state.selectedVariationId);
+			const offer = this.skuTree.OFFERS.find((item) => item.ID === this.state.selectedVariationId);
 			return offer ? offer.TREE : {};
 		}
 
@@ -124,7 +123,7 @@ jn.define('crm/product-grid/components/sku-selector', (require, exports, module)
 				Scrollable(
 					ProductInfo({
 						name: this.selectedVariation.NAME,
-						images: this.selectedVariation.GALLERY.map(photo => photo.previewUrl),
+						images: this.selectedVariation.GALLERY.map((photo) => photo.previewUrl),
 					}),
 					this.renderSkuTree(),
 				),
@@ -135,7 +134,7 @@ jn.define('crm/product-grid/components/sku-selector', (require, exports, module)
 		wrap(contentFn)
 		{
 			const children = this.state.loading
-				? [new LoadingScreenComponent()]
+				? [new LoadingScreenComponent({ backgroundColor: '#eef2f4' })]
 				: contentFn();
 
 			return View(
@@ -159,8 +158,8 @@ jn.define('crm/product-grid/components/sku-selector', (require, exports, module)
 			return SkuTreeContainer(
 				...allProps.map((property, index) => SkuTreeProperty(
 					property.NAME,
-					...this.renderPropertyValues(property, index)
-				))
+					...this.renderPropertyValues(property, index),
+				)),
 			);
 		}
 
@@ -170,17 +169,17 @@ jn.define('crm/product-grid/components/sku-selector', (require, exports, module)
 			const existingValues = this.filterAllowedToChoosePropertyValues(property, index);
 			const selectedValues = this.selectedPropertyValues[property.ID] || [];
 
-			const isSelected = val => isArray(selectedValues)
+			const isSelected = (val) => (isArray(selectedValues)
 				? selectedValues.includes(val)
-				: selectedValues === val;
+				: selectedValues === val);
 
-			return allValues.map(value => {
+			return allValues.map((value) => {
 				if (!existingValues.includes(value.ID))
 				{
 					return null;
 				}
 
-				if (!value.NAME.length)
+				if (value.NAME.length === 0)
 				{
 					return null;
 				}
@@ -238,12 +237,12 @@ jn.define('crm/product-grid/components/sku-selector', (require, exports, module)
 				{
 					style: {
 						width: 150,
-					}
+					},
 				},
 				new ProductGridNumberField({
 					value,
 					groupSize: 3,
-					groupSeparator: Boolean(groupSeparator) ? groupSeparator : ' ',
+					groupSeparator: groupSeparator || ' ',
 					decimalSeparator: moneyFormat.DEC_POINT,
 					placeholder: '0',
 					useIncrement: true,
@@ -254,13 +253,19 @@ jn.define('crm/product-grid/components/sku-selector', (require, exports, module)
 					labelAlign: 'center',
 					textAlign: 'center',
 					onChange: debounce((field) => {
-						if (field.value === '') return;
+						if (field.value === '')
+						{
+							return;
+						}
 						handleChange(field);
 					}, 300),
 					onBlur: (field) => {
-						if (field.value === '') handleChange(field);
+						if (field.value === '')
+						{
+							handleChange(field);
+						}
 					},
-				})
+				}),
 			);
 		}
 
@@ -272,32 +277,38 @@ jn.define('crm/product-grid/components/sku-selector', (require, exports, module)
 		filterAllowedToChoosePropertyValues(property, index)
 		{
 			const isPartOf = (subtree, tree) => {
-				for (let prop in subtree)
+				for (const prop in subtree)
 				{
-					if (!Object.keys(tree).includes(prop)) return false;
+					if (!Object.keys(tree).includes(prop))
+					{
+						return false;
+					}
 
-					if (tree[prop] !== subtree[prop]) return false;
+					if (tree[prop] !== subtree[prop])
+					{
+						return false;
+					}
 				}
 				return true;
 			};
 
-			const offerExists = (tree) => this.skuTree.OFFERS.find(offer => isPartOf(tree, offer.TREE));
+			const offerExists = (tree) => this.skuTree.OFFERS.find((offer) => isPartOf(tree, offer.TREE));
 			const possiblePropertyValues = () => {
-				const existingValues = this.skuTree.OFFERS.map(offer => offer.TREE[property.ID]);
+				const existingValues = this.skuTree.OFFERS.map((offer) => offer.TREE[property.ID]);
 				return [...new Set(existingValues)];
 			};
 			const currentlySelectedValues = this.selectedPropertyValues;
 			const allowedToChooseValues = [];
 			const allProps = Object.values(this.skuTree.OFFERS_PROP || {});
 			const potentialOffer = {};
-			allProps.map((prevProperty, prevIndex) => {
+			allProps.forEach((prevProperty, prevIndex) => {
 				if (prevIndex < index)
 				{
 					potentialOffer[prevProperty.ID] = currentlySelectedValues[prevProperty.ID];
 				}
 			});
 
-			possiblePropertyValues().forEach(valueId => {
+			possiblePropertyValues().forEach((valueId) => {
 				potentialOffer[property.ID] = valueId;
 
 				if (offerExists(potentialOffer))
@@ -316,7 +327,7 @@ jn.define('crm/product-grid/components/sku-selector', (require, exports, module)
 		toggleSelection(propertyId, valueId)
 		{
 			const propertyValue = this.preparePropertyValue(propertyId, valueId);
-			const nextVariationPropertyValues = mergeImmutable(this.selectedPropertyValues, {[propertyId]: propertyValue});
+			const nextVariationPropertyValues = mergeImmutable(this.selectedPropertyValues, { [propertyId]: propertyValue });
 			const nextVariation = this.findNextVariation(propertyId, propertyValue, nextVariationPropertyValues);
 
 			if (nextVariation !== null && this.productVariations[nextVariation.ID])
@@ -370,7 +381,7 @@ jn.define('crm/product-grid/components/sku-selector', (require, exports, module)
 			let nextVariation = null;
 			const alternativeOptions = [];
 
-			this.skuTree.OFFERS.map(offer => {
+			this.skuTree.OFFERS.forEach((offer) => {
 				if (isEqual(offer.TREE, variationValues))
 				{
 					nextVariation = offer;
@@ -381,7 +392,7 @@ jn.define('crm/product-grid/components/sku-selector', (require, exports, module)
 				}
 			});
 
-			if (nextVariation === null && alternativeOptions.length)
+			if (nextVariation === null && alternativeOptions.length > 0)
 			{
 				nextVariation = alternativeOptions.shift();
 			}
@@ -395,10 +406,15 @@ jn.define('crm/product-grid/components/sku-selector', (require, exports, module)
 				onlyMediumPosition: true,
 				swipeAllowed: true,
 				mediumPositionHeight: 250,
-				navigationBarColor: '#EEF2F4',
+				navigationBarColor: '#eef2f4',
+			};
+			const widgetParams = {
+				modal: true,
+				backgroundColor: '#eef2f4',
+				backdrop,
 			};
 
-			this.layout.openWidget('layout', { backdrop }).then(layout => {
+			this.layout.openWidget('layout', widgetParams).then((layout) => {
 				layout.showComponent(new PriceDetails({
 					layout,
 					title: Loc.getMessage('PRODUCT_GRID_CONTROL_SKU_SELECTOR_BASE_PRICE_INFO'),
@@ -442,5 +458,4 @@ jn.define('crm/product-grid/components/sku-selector', (require, exports, module)
 	}
 
 	module.exports = { SkuSelector };
-
 });

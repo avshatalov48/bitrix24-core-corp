@@ -9,8 +9,12 @@ BX.namespace("BX.Intranet.Bitrix24.ImBar");
 	var isScrollMode = false;
 	var scrollModeThreshold = 20;
 
-	function init()
+	let isV2Messenger = false;
+
+	function init(messengerV2 = false)
 	{
+		isV2Messenger = messengerV2;
+
 		var adminPanel = getAdminPanel();
 		if (adminPanel)
 		{
@@ -55,18 +59,15 @@ BX.namespace("BX.Intranet.Bitrix24.ImBar");
 		redraw();
 
 		BX.bind(BX("bx-im-bar-notify"), "click", function(){
-			if (typeof(BXIM) == 'undefined') return false;
-			BXIM.openNotify();
+			BX.Messenger.Public.openNotifications();
 		});
 
 		BX.bind(BX("bx-im-bar-search"), "click", function(){
-			if (typeof(BXIM) == 'undefined') return false;
-			BXIM.openMessenger(0, 'im');
+			BX.Messenger.Public.openRecentSearch();
 		});
 
 		BX.bind(BX("bx-im-bar-ol"), "click", function(){
-			if (typeof(BXIM) == 'undefined') return false;
-			BXIM.openMessenger(0, 'im-ol');
+			BX.Messenger.Public.openLines();
 		});
 
 		BX.bind(BX("bx-im-btn-call"), "click", function(e){

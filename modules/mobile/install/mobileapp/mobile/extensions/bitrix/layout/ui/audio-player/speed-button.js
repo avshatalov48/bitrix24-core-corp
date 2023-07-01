@@ -15,8 +15,11 @@ jn.define('layout/ui/audio-player/speed-button', (require, exports, module) => {
 
 		componentDidMount()
 		{
-			this.props.customEventEmitter.on('TopPanelAudioPlayer::onChangeSpeed', ({speed}) => {
-				return this.setPlayerSpeed(speed);
+			this.props.customEventEmitter.on('TopPanelAudioPlayer::onChangeSpeed', ({ speed, uri }) => {
+				if (this.props.uri && this.props.uri === uri)
+				{
+					return this.setPlayerSpeed(speed);
+				}
 			});
 		}
 

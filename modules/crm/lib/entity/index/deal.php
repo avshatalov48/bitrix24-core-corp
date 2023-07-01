@@ -11,9 +11,9 @@ use Bitrix\Main\Entity;
  *
  * <<< ORMENTITYANNOTATION
  * @method static EO_Deal_Query query()
- * @method static EO_Deal_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Deal_Result getByPrimary($primary, array $parameters = [])
  * @method static EO_Deal_Result getById($id)
- * @method static EO_Deal_Result getList(array $parameters = array())
+ * @method static EO_Deal_Result getList(array $parameters = [])
  * @method static EO_Deal_Entity getEntity()
  * @method static \Bitrix\Crm\Entity\Index\EO_Deal createObject($setDefaultValues = true)
  * @method static \Bitrix\Crm\Entity\Index\EO_Deal_Collection createCollection()

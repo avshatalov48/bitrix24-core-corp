@@ -29,9 +29,7 @@ class CompanyProvider extends \Bitrix\Crm\Search\Result\Provider\IndexSupportedP
 
 	protected function getPermissionEntityTypes(): array
 	{
-		return [
-			\CCrmOwnerType::CompanyName,
-		];
+		return $this->getPermissionEntityTypesByAffectedCategories();
 	}
 
 	protected function getShortIndexColumnName(): string

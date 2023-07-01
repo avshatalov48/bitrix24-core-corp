@@ -9,28 +9,29 @@ use Bitrix\Main\Entity\Query;
 use Bitrix\Main\Application;
 use Bitrix\Disk\Internals\ObjectTable;
 use Bitrix\Disk\Internals\VolumeTable;
+use Bitrix\Disk;
 use Bitrix\Disk\Volume;
 use Bitrix\Disk\Internals\Error\Error;
 use Bitrix\Disk\Internals\Error\ErrorCollection;
 use Bitrix\Disk\Internals\Error\IErrorable;
 
 
-abstract class Base implements \Bitrix\Disk\Volume\IVolumeIndicator, IErrorable
+abstract class Base implements Volume\IVolumeIndicator, IErrorable
 {
 	/** @var array */
-	protected $filter = array();
+	protected $filter = [];
 
 	/** @var int */
 	protected $filterId = -1;
 
 	/** @var array */
-	protected $select = array();
+	protected $select = [];
 
 	/** @var array */
-	protected $groupBy = array();
+	protected $groupBy = [];
 
 	/** @var array */
-	protected $order = array('FILE_SIZE' => 'DESC');
+	protected $order = ['FILE_SIZE' => 'DESC'];
 
 	/** @var int */
 	protected $limit = -1;
@@ -78,7 +79,7 @@ abstract class Base implements \Bitrix\Disk\Volume\IVolumeIndicator, IErrorable
 	protected $unnecessaryVersionCount = 0;
 
 	/** @var double */
-	protected $ownerId = \Bitrix\Disk\SystemUser::SYSTEM_USER_ID;
+	protected $ownerId = Disk\SystemUser::SYSTEM_USER_ID;
 
 	/** @var  ErrorCollection */
 	protected $errorCollection;
@@ -98,16 +99,16 @@ abstract class Base implements \Bitrix\Disk\Volume\IVolumeIndicator, IErrorable
 	protected $stageId = null;
 
 	/** @var array Indicator list available in library. */
-	public static $indicatorTypeList = array();
+	public static $indicatorTypeList = [];
 
 	/** @var string[] Clear constraint list. */
-	public static $clearConstraintList = array();
+	public static $clearConstraintList = [];
 
 	/** @var string[] Clear folder constraint list. */
-	public static $clearFolderConstraintList = array();
+	public static $clearFolderConstraintList = [];
 
 	/** @var string[] Delete constraint list. */
-	public static $deleteConstraintList = array();
+	public static $deleteConstraintList = [];
 
 	/** @var string Table lock */
 	protected static $lockName = 'volume';
@@ -121,9 +122,9 @@ abstract class Base implements \Bitrix\Disk\Volume\IVolumeIndicator, IErrorable
 	 * Runs measure test to get volumes of selecting objects.
 	 * @param array $collectData List types data to collect: ATTACHED_OBJECT, SHARING_OBJECT, EXTERNAL_LINK,
 	 *     UNNECESSARY_VERSION or PREVIEW_FILE.
-	 * @return $this
+	 * @return static
 	 */
-	abstract public function measure($collectData = [self::DISK_FILE]);
+	abstract public function measure(array $collectData = [self::DISK_FILE]): self;
 
 	/**
 	 * Returns measure process stages list.
@@ -132,24 +133,24 @@ abstract class Base implements \Bitrix\Disk\Volume\IVolumeIndicator, IErrorable
 	 */
 	public function getMeasureStages()
 	{
-		return array();
+		return [];
 	}
 
 	/**
 	 * Gets current stage id.
-	 * @return string
+	 * @return string|null
 	 */
-	public function getStage()
+	public function getStage(): ?string
 	{
 		return $this->stageId;
 	}
 
 	/**
 	 * Sets current stage id.
-	 * @param string $stageId Stage id.
-	 * @return $this
+	 * @param string|null $stageId Stage id.
+	 * @return static
 	 */
-	public function setStage($stageId)
+	public function setStage(?string $stageId): self
 	{
 		$this->stageId = $stageId;
 
@@ -158,9 +159,9 @@ abstract class Base implements \Bitrix\Disk\Volume\IVolumeIndicator, IErrorable
 
 	/**
 	 * Preforms data preparation.
-	 * @return $this
+	 * @return static
 	 */
-	public function prepareData()
+	public function prepareData(): self
 	{
 		// do nothing
 		return $this;
@@ -169,7 +170,7 @@ abstract class Base implements \Bitrix\Disk\Volume\IVolumeIndicator, IErrorable
 	/**
 	 * @return string the fully qualified name of this class.
 	 */
-	final public static function className()
+	final public static function className(): string
 	{
 		return get_called_class();
 	}
@@ -177,24 +178,24 @@ abstract class Base implements \Bitrix\Disk\Volume\IVolumeIndicator, IErrorable
 	/**
 	 * @return string The short indicator name of this class.
 	 */
-	final public static function getIndicatorId()
+	final public static function getIndicatorId(): string
 	{
-		return str_replace(array(__NAMESPACE__. '\\', '\\'), array('', '_'), static::className());
+		return str_replace([__NAMESPACE__. '\\', '\\'], ['', '_'], static::className());
 	}
 
 	/**
 	 * Deletes objects selecting by filter.
-	 * @return $this
+	 * @return static
 	 */
-	public function purify()
+	public function purify(): self
 	{
 		$connection = Application::getConnection();
 		$tableName = VolumeTable::getTableName();
 		$filter = $this->getFilter(
-			array(
+			[
 				'=INDICATOR_TYPE' => static::className(),
 				'=OWNER_ID' => $this->getOwner(),
-			),
+			],
 			VolumeTable::getEntity()
 		);
 		$where = Query::buildFilterSql(VolumeTable::getEntity(), $filter);
@@ -207,15 +208,15 @@ abstract class Base implements \Bitrix\Disk\Volume\IVolumeIndicator, IErrorable
 
 	/**
 	 * Unset calculated values.
-	 * @return $this
+	 * @return static
 	 */
-	public function resetMeasurementResult()
+	public function resetMeasurementResult(): self
 	{
 		if ($this->getFilterId() > 0)
 		{
-			\Bitrix\Disk\Internals\VolumeTable::update(
+			VolumeTable::update(
 				$this->getFilterId(),
-				array(
+				[
 					'FILE_SIZE' => 0,
 					'FILE_COUNT' => 0,
 					'DISK_SIZE' => 0,
@@ -229,7 +230,7 @@ abstract class Base implements \Bitrix\Disk\Volume\IVolumeIndicator, IErrorable
 					'UNNECESSARY_VERSION_SIZE' => 0,
 					'UNNECESSARY_VERSION_COUNT' => 0,
 					'PERCENT' => 0,
-				)
+				]
 			);
 		}
 		return $this;
@@ -241,18 +242,18 @@ abstract class Base implements \Bitrix\Disk\Volume\IVolumeIndicator, IErrorable
 	 * @param array $collectedData List types of collected data to return.
 	 * @return DB\Result
 	 */
-	public function getMeasurementResult($collectedData = array())
+	public function getMeasurementResult(array $collectedData = []): DB\Result
 	{
 		$filter = $this->getFilter(
-			array(
+			[
 				'=INDICATOR_TYPE' => static::className(),
 				'=OWNER_ID' => $this->getOwner(),
 				'>FILE_COUNT' => 0,
 				'>FILES_LEFT' => 0,
-			),
+			],
 			VolumeTable::getEntity()
 		);
-		$select = array(
+		$select = [
 			'ID',
 			'INDICATOR_TYPE',
 			'FILE_SIZE',
@@ -288,23 +289,23 @@ abstract class Base implements \Bitrix\Disk\Volume\IVolumeIndicator, IErrorable
 			'DROP_TRASHCAN',
 			'EMPTY_FOLDER',
 			'DROP_FOLDER',
-		);
+		];
 		if ($this instanceof Volume\Folder)
 		{
 			$select[] = 'FOLDER.UPDATE_TIME';
 			$filter['>FOLDER.ID'] = 0;//folder exists
 		}
 
-		$parameter = array(
-			'runtime' => array(
+		$parameter = [
+			'runtime' => [
 				new Entity\ExpressionField('PERCENT', 'ROUND(PERCENT, 1)'),
 				new Entity\ExpressionField('USING_COUNT', '(ATTACHED_COUNT + LINK_COUNT + SHARING_COUNT)'),
-			),
+			],
 			'select' => $select,
 			'filter' => $filter,
-			'order'  => $this->getOrder(array('FILE_SIZE' => 'DESC')),
+			'order'  => $this->getOrder(['FILE_SIZE' => 'DESC']),
 			'count_total' => true,
-		);
+		];
 		if ($this->getLimit() > 0)
 		{
 			$parameter['limit'] = $this->getLimit();
@@ -321,9 +322,9 @@ abstract class Base implements \Bitrix\Disk\Volume\IVolumeIndicator, IErrorable
 	 * Sets filter parameters.
 	 * @param string $key Parameter name to filter.
 	 * @param string|string[] $value Parameter value.
-	 * @return $this
+	 * @return static
 	 */
-	public function addFilter($key, $value)
+	public function addFilter($key, $value): self
 	{
 		if ($key !== 'LOGIC' && !is_numeric($key))
 		{
@@ -372,10 +373,10 @@ abstract class Base implements \Bitrix\Disk\Volume\IVolumeIndicator, IErrorable
 	/**
 	 * Gets filter parameters.
 	 * @param string[] $defaultFilter Default filter set.
-	 * @param \Bitrix\Main\Entity\Base $entity Leave only fields for this entity.
+	 * @param Main\Entity\Base $entity Leave only fields for this entity.
 	 * @return array
 	 */
-	public function getFilter(array $defaultFilter = array(), $entity = null)
+	public function getFilter(array $defaultFilter = [], $entity = null): array
 	{
 		$filter = $this->filter;
 		foreach ($defaultFilter as $defaultKey => $defaultValue)
@@ -405,7 +406,7 @@ abstract class Base implements \Bitrix\Disk\Volume\IVolumeIndicator, IErrorable
 			}
 		}
 
-		if ($entity instanceof \Bitrix\Main\Entity\Base)
+		if ($entity instanceof Main\Entity\Base)
 		{
 			foreach ($filter as $fieldName => $value)
 			{
@@ -431,9 +432,9 @@ abstract class Base implements \Bitrix\Disk\Volume\IVolumeIndicator, IErrorable
 	/**
 	 * Clear filter parameters.
 	 * @param string $key Parameter name to unset.
-	 * @return $this
+	 * @return static
 	 */
-	public function unsetFilter($key = '')
+	public function unsetFilter($key = ''): self
 	{
 		if ($key != '')
 		{
@@ -449,7 +450,7 @@ abstract class Base implements \Bitrix\Disk\Volume\IVolumeIndicator, IErrorable
 		}
 		else
 		{
-			$this->filter = array();
+			$this->filter = [];
 		}
 
 		return $this;
@@ -458,11 +459,11 @@ abstract class Base implements \Bitrix\Disk\Volume\IVolumeIndicator, IErrorable
 	/**
 	 * Restores filter state from saved $measurement result.
 	 * @param int|array $measurementResult The id of result row or row from table.
-	 * @return $this
+	 * @return static
 	 */
-	public function restoreFilter($measurementResult)
+	public function restoreFilter($measurementResult): self
 	{
-		$restoringFields = array(
+		$restoringFields = [
 			'STORAGE_ID',
 			'MODULE_ID',
 			'FOLDER_ID',
@@ -473,7 +474,7 @@ abstract class Base implements \Bitrix\Disk\Volume\IVolumeIndicator, IErrorable
 			'ENTITY_ID',
 			'IBLOCK_ID',
 			'TYPE_FILE',
-		);
+		];
 
 		if (is_array($measurementResult) && isset($measurementResult['ID']))
 		{
@@ -481,7 +482,10 @@ abstract class Base implements \Bitrix\Disk\Volume\IVolumeIndicator, IErrorable
 
 			foreach ((array)$measurementResult as $key => $value)
 			{
-				if (!in_array($key, $restoringFields)) continue;
+				if (!in_array($key, $restoringFields))
+				{
+					continue;
+				}
 				if (!is_null($value))
 				{
 					$this->addFilter("=$key", $value);
@@ -492,17 +496,14 @@ abstract class Base implements \Bitrix\Disk\Volume\IVolumeIndicator, IErrorable
 		{
 			$this->setFilterId((int)$measurementResult);
 
-			$parameter = array(
+			$parameter = [
 				'select' => $restoringFields,
-				'filter' => array(
-					//'=INDICATOR_TYPE' => static::className(),
+				'filter' => [
 					'=OWNER_ID' => $this->getOwner(),
 					'=ID' => $this->getFilterId(),
-				),
-			);
-
+				],
+			];
 			$row = VolumeTable::getList($parameter)->fetch();
-
 			foreach ($row as $key => $value)
 			{
 				if (!is_null($value))
@@ -518,11 +519,13 @@ abstract class Base implements \Bitrix\Disk\Volume\IVolumeIndicator, IErrorable
 	/**
 	 * Sets filter id.
 	 * @param int $filterId Stored filter id.
-	 * @return void
+	 * @return static
 	 */
-	public function setFilterId($filterId)
+	public function setFilterId($filterId): self
 	{
 		$this->filterId = $filterId;
+
+		return $this;
 	}
 
 	/**
@@ -538,10 +541,10 @@ abstract class Base implements \Bitrix\Disk\Volume\IVolumeIndicator, IErrorable
 	 * Sets select field.
 	 * @param string $alias Parameter alias.
 	 * @param string $statement Parameter value.
-	 * @return $this
+	 * @return static
 	 * @throws Main\ArgumentNullException
 	 */
-	public function addSelect($alias, $statement)
+	public function addSelect($alias, $statement): self
 	{
 		if (!$alias)
 		{
@@ -557,7 +560,7 @@ abstract class Base implements \Bitrix\Disk\Volume\IVolumeIndicator, IErrorable
 	 * Gets select fields.
 	 * @return array
 	 */
-	public function getSelect()
+	public function getSelect(): array
 	{
 		return $this->select;
 	}
@@ -566,7 +569,7 @@ abstract class Base implements \Bitrix\Disk\Volume\IVolumeIndicator, IErrorable
 	 * Sets group by field.
 	 * @param string $alias Parameter alias.
 	 * @param string $statement Parameter value.
-	 * @return $this
+	 * @return static
 	 * @throws Main\ArgumentNullException
 	 */
 	public function addGroupBy($alias, $statement)
@@ -594,9 +597,9 @@ abstract class Base implements \Bitrix\Disk\Volume\IVolumeIndicator, IErrorable
 	/**
 	 * Sets sort order parameters.
 	 * @param string[] $order Sort order parameters and directions.
-	 * @return $this
+	 * @return static
 	 */
-	public function setOrder($order)
+	public function setOrder($order): self
 	{
 		$this->order = $order;
 
@@ -608,7 +611,7 @@ abstract class Base implements \Bitrix\Disk\Volume\IVolumeIndicator, IErrorable
 	 * @param string[] $defaultOrder Default order set.
 	 * @return array
 	 */
-	public function getOrder(array $defaultOrder = array())
+	public function getOrder(array $defaultOrder = []): array
 	{
 		if (count($this->order) > 0)
 		{
@@ -622,9 +625,9 @@ abstract class Base implements \Bitrix\Disk\Volume\IVolumeIndicator, IErrorable
 	/**
 	 * Sets limit result rows count.
 	 * @param int $limit Limit value.
-	 * @return $this
+	 * @return static
 	 */
-	public function setLimit($limit)
+	public function setLimit($limit): self
 	{
 		$this->limit = $limit;
 
@@ -644,9 +647,9 @@ abstract class Base implements \Bitrix\Disk\Volume\IVolumeIndicator, IErrorable
 	/**
 	 * Sets offset in result.
 	 * @param int $offset Offset value.
-	 * @return $this
+	 * @return static
 	 */
-	public function setOffset($offset)
+	public function setOffset($offset): self
 	{
 		$this->offset = $offset;
 
@@ -667,7 +670,7 @@ abstract class Base implements \Bitrix\Disk\Volume\IVolumeIndicator, IErrorable
 	 * Tells true if total result is available.
 	 * @return boolean
 	 */
-	public function isResultAvailable()
+	public function isResultAvailable(): bool
 	{
 		return $this->resultAvailable;
 	}
@@ -782,9 +785,9 @@ abstract class Base implements \Bitrix\Disk\Volume\IVolumeIndicator, IErrorable
 	/**
 	 * Sets owner id.
 	 * @param int $ownerId User id.
-	 * @return $this
+	 * @return static
 	 */
-	public function setOwner($ownerId)
+	public function setOwner($ownerId): self
 	{
 		$this->ownerId = $ownerId;
 
@@ -797,7 +800,7 @@ abstract class Base implements \Bitrix\Disk\Volume\IVolumeIndicator, IErrorable
 	 */
 	public function getOwner()
 	{
-		return $this->ownerId > 0 ? $this->ownerId : \Bitrix\Disk\SystemUser::SYSTEM_USER_ID;
+		return $this->ownerId > 0 ? $this->ownerId : Disk\SystemUser::SYSTEM_USER_ID;
 	}
 
 	/**
@@ -807,16 +810,16 @@ abstract class Base implements \Bitrix\Disk\Volume\IVolumeIndicator, IErrorable
 	public function loadTotals()
 	{
 		$filter = $this->getFilter(
-			array(
+			[
 				'=INDICATOR_TYPE' => static::className(),
 				'=OWNER_ID' => $this->getOwner(),
 				'>FILE_COUNT' => 0,
 				'>FILES_LEFT' => 0,
-			),
+			],
 			VolumeTable::getEntity()
 		);
-		$row = VolumeTable::getRow(array(
-			'runtime' => array(
+		$row = VolumeTable::getRow([
+			'runtime' => [
 				new Entity\ExpressionField('CNT', 'COUNT(*)'),
 				new Entity\ExpressionField('FILE_SIZE', 'SUM(FILE_SIZE)'),
 				new Entity\ExpressionField('FILE_COUNT', 'SUM(FILE_COUNT)'),
@@ -830,8 +833,8 @@ abstract class Base implements \Bitrix\Disk\Volume\IVolumeIndicator, IErrorable
 				new Entity\ExpressionField('SHARING_COUNT', 'SUM(SHARING_COUNT)'),
 				new Entity\ExpressionField('UNNECESSARY_VERSION_SIZE', 'SUM(UNNECESSARY_VERSION_SIZE)'),
 				new Entity\ExpressionField('UNNECESSARY_VERSION_COUNT', 'SUM(UNNECESSARY_VERSION_COUNT)'),
-			),
-			'select' => array(
+			],
+			'select' => [
 				'CNT',
 				'FILE_SIZE',
 				'FILE_COUNT',
@@ -845,9 +848,9 @@ abstract class Base implements \Bitrix\Disk\Volume\IVolumeIndicator, IErrorable
 				'SHARING_COUNT',
 				'UNNECESSARY_VERSION_SIZE',
 				'UNNECESSARY_VERSION_COUNT',
-			),
+			],
 			'filter' => $filter,
-		));
+		]);
 		if ($row)
 		{
 			$this->resultAvailable = (bool)($row['CNT'] > 0);
@@ -872,9 +875,9 @@ abstract class Base implements \Bitrix\Disk\Volume\IVolumeIndicator, IErrorable
 	 * Recalculates percent from total file size per row selected by filter.
 	 * @param string|Volume\IVolumeIndicator $totalSizeIndicator Use this indicator as total volume.
 	 * @param string|Volume\IVolumeIndicator $excludeSizeIndicator Exclude indicator's volume from total volume.
-	 * @return self
+	 * @return static
 	 */
-	public function recalculatePercent($totalSizeIndicator = null, $excludeSizeIndicator = null)
+	public function recalculatePercent($totalSizeIndicator = null, $excludeSizeIndicator = null): self
 	{
 		if ($totalSizeIndicator instanceof Volume\IVolumeIndicator)
 		{
@@ -892,12 +895,12 @@ abstract class Base implements \Bitrix\Disk\Volume\IVolumeIndicator, IErrorable
 			$connection = Application::getConnection();
 			$tableName = VolumeTable::getTableName();
 			$filter = $this->getFilter(
-				array(
+				[
 					'=INDICATOR_TYPE' => static::className(),
 					'=OWNER_ID' => $this->getOwner(),
 					'>FILE_COUNT' => 0,
 					'>FILES_LEFT' => 0,
-				),
+				],
 				VolumeTable::getEntity()
 			);
 			$where = Query::buildFilterSql(VolumeTable::getEntity(), $filter);
@@ -914,11 +917,11 @@ abstract class Base implements \Bitrix\Disk\Volume\IVolumeIndicator, IErrorable
 	/**
 	 * Loads file list corresponding to indicator's filter.
 	 * @param array $additionalFilter Additional parameters to filter file list.
-	 * @return \Bitrix\Main\DB\Result
+	 * @return Main\DB\Result
 	 */
-	public function getCorrespondingFileList($additionalFilter = array())
+	public function getCorrespondingFileList(array $additionalFilter = []): Main\DB\Result
 	{
-		$filterToFileList = array();
+		$filterToFileList = [];
 
 		$storageId =  $this->getFilterValue('STORAGE_ID', '=');
 		if (!empty($storageId))
@@ -931,9 +934,9 @@ abstract class Base implements \Bitrix\Disk\Volume\IVolumeIndicator, IErrorable
 			$filterToFileList['=PATH_CHILD.PARENT_ID'] = $folderId;
 		}
 
-		$filterToFileList['=TYPE'] = \Bitrix\Disk\Internals\ObjectTable::TYPE_FILE;
+		$filterToFileList['=TYPE'] = Disk\Internals\ObjectTable::TYPE_FILE;
 
-		if ($this instanceof \Bitrix\Disk\Volume\Storage\TrashCan)
+		if ($this instanceof Volume\Storage\TrashCan)
 		{
 			$filterToFileList['>=IS_REAL_OBJECT'] = 0;
 		}
@@ -944,26 +947,25 @@ abstract class Base implements \Bitrix\Disk\Volume\IVolumeIndicator, IErrorable
 
 		if (!isset($additionalFilter['!DELETED_TYPE']))
 		{
-			$filterToFileList['=DELETED_TYPE'] = \Bitrix\Disk\Internals\ObjectTable::DELETED_TYPE_NONE;
+			$filterToFileList['=DELETED_TYPE'] = Disk\Internals\ObjectTable::DELETED_TYPE_NONE;
 		}
 
 		$filterToFileList = array_merge($filterToFileList, $additionalFilter);
 
-		$fileList = \Bitrix\Disk\File::getList(array(
-			'select'  => array('ID'),
+		$fileList = Disk\File::getList([
+			'select'  => ['ID'],
 			'filter'  => $filterToFileList,
-			'runtime' => array(
-				'IS_REAL_OBJECT' => new \Bitrix\Main\Entity\ExpressionField(
+			'runtime' => [
+				'IS_REAL_OBJECT' => new Main\Entity\ExpressionField(
 					'IS_REAL_OBJECT',
 					'CASE WHEN disk_internals_file.ID = disk_internals_file.REAL_OBJECT_ID THEN 1 ELSE 0 END'
 				),
-			),
-			'order' => array(
-				//'PATH_CHILD.DEPTH_LEVEL' => 'DESC',
+			],
+			'order' => [
 				'ID' => 'ASC',
-			),
+			],
 			'limit' => $this->getLimit(),
-		));
+		]);
 
 		return $fileList;
 	}
@@ -972,11 +974,11 @@ abstract class Base implements \Bitrix\Disk\Volume\IVolumeIndicator, IErrorable
 	/**
 	 * Loads folder list corresponding to indicator's filter.
 	 * @param array $additionalFilter Additional parameters to filter file list.
-	 * @return \Bitrix\Main\DB\Result
+	 * @return Main\DB\Result
 	 */
-	public function getCorrespondingFolderList($additionalFilter = array())
+	public function getCorrespondingFolderList(array $additionalFilter = []):Main\DB\Result
 	{
-		$filterToFolderList = array();
+		$filterToFolderList = [];
 
 		$storageId =  $this->getFilterValue('STORAGE_ID', '=');
 		if (!empty($storageId))
@@ -989,9 +991,9 @@ abstract class Base implements \Bitrix\Disk\Volume\IVolumeIndicator, IErrorable
 			$filterToFolderList['=PATH_CHILD.PARENT_ID'] = $folderId;
 		}
 
-		$filterToFolderList['=TYPE'] = \Bitrix\Disk\Internals\ObjectTable::TYPE_FOLDER;
+		$filterToFolderList['=TYPE'] = Disk\Internals\ObjectTable::TYPE_FOLDER;
 
-		if ($this instanceof \Bitrix\Disk\Volume\Storage\TrashCan)
+		if ($this instanceof Volume\Storage\TrashCan)
 		{
 			$filterToFolderList['>=IS_REAL_OBJECT'] = 0;
 		}
@@ -1002,26 +1004,26 @@ abstract class Base implements \Bitrix\Disk\Volume\IVolumeIndicator, IErrorable
 
 		if (!isset($additionalFilter['!DELETED_TYPE']))
 		{
-			$filterToFolderList['=DELETED_TYPE'] = \Bitrix\Disk\Internals\ObjectTable::DELETED_TYPE_NONE;
+			$filterToFolderList['=DELETED_TYPE'] = Disk\Internals\ObjectTable::DELETED_TYPE_NONE;
 		}
 
 		$filterToFolderList = array_merge($filterToFolderList, $additionalFilter);
 
-		$folderList = \Bitrix\Disk\Folder::getList(array(
-			'select'  => array('ID'),
+		$folderList = Disk\Folder::getList([
+			'select'  => ['ID'],
 			'filter'  => $filterToFolderList,
-			'runtime' => array(
-				'IS_REAL_OBJECT' => new \Bitrix\Main\Entity\ExpressionField(
+			'runtime' => [
+				'IS_REAL_OBJECT' => new Main\Entity\ExpressionField(
 					'IS_REAL_OBJECT',
 					'CASE WHEN disk_internals_folder.ID = disk_internals_folder.REAL_OBJECT_ID THEN 1 ELSE 0 END'
 				),
-			),
-			'order' => array(
+			],
+			'order' => [
 				'PATH_CHILD.DEPTH_LEVEL' => 'DESC',
 				'ID' => 'ASC',
-			),
+			],
 			'limit' => $this->getLimit(),
-		));
+		]);
 
 		return $folderList;
 	}
@@ -1030,9 +1032,9 @@ abstract class Base implements \Bitrix\Disk\Volume\IVolumeIndicator, IErrorable
 	/**
 	 * Loads file list corresponding to indicator's filter.
 	 * @param array $additionalFilter Additional parameters to filter file list.
-	 * @return \Bitrix\Main\DB\Result
+	 * @return Main\DB\Result
 	 */
-	public function getCorrespondingUnnecessaryVersionList($additionalFilter = array())
+	public function getCorrespondingUnnecessaryVersionList(array $additionalFilter = []): Main\DB\Result
 	{
 		$connection = Application::getConnection();
 
@@ -1045,10 +1047,10 @@ abstract class Base implements \Bitrix\Disk\Volume\IVolumeIndicator, IErrorable
 		}
 
 		$whereSql = Volume\QueryHelper::prepareWhere(
-			$this->getFilter(array(
+			$this->getFilter([
 				'DELETED_TYPE' => ObjectTable::DELETED_TYPE_NONE,
-			)),
-			array(
+			]),
+			[
 				'ENTITY_TYPE' => 'storage.ENTITY_TYPE',
 				'ENTITY_ID' => 'storage.ENTITY_ID',
 				'USER_ID' => 'storage.ENTITY_ID',
@@ -1059,7 +1061,7 @@ abstract class Base implements \Bitrix\Disk\Volume\IVolumeIndicator, IErrorable
 				'PARENT_ID' => 'files.PARENT_ID',
 				'FILE_ID' => 'files.ID',
 				'VERSION_ID' => 'ver.ID',
-			)
+			]
 		);
 		if ($whereSql != '')
 		{
@@ -1098,7 +1100,7 @@ abstract class Base implements \Bitrix\Disk\Volume\IVolumeIndicator, IErrorable
 					ON link.OBJECT_ID = ver.OBJECT_ID
 					AND link.VERSION_ID = ver.ID
 					AND link.VERSION_ID != head.ID
-					AND ifnull(link.TYPE, -1) != ". \Bitrix\Disk\Internals\ExternalLinkTable::TYPE_AUTO. "
+					AND ifnull(link.TYPE, -1) != ". Disk\Internals\ExternalLinkTable::TYPE_AUTO. "
 
 			WHERE 
 				files.TYPE = ". ObjectTable::TYPE_FILE. "
@@ -1124,7 +1126,7 @@ abstract class Base implements \Bitrix\Disk\Volume\IVolumeIndicator, IErrorable
 	 * @param string[] $filter Array filter set to find entity object.
 	 * @return Volume\Fragment
 	 */
-	public static function getFragment(array $filter)
+	public static function getFragment(array $filter): Volume\Fragment
 	{
 		return new Volume\Fragment($filter);
 	}
@@ -1132,10 +1134,10 @@ abstract class Base implements \Bitrix\Disk\Volume\IVolumeIndicator, IErrorable
 	/**
 	 * Returns title of the entity object.
 	 * @param Volume\Fragment $fragment Entity object.
-	 * @return string
+	 * @return string|null
 	 * @throws Main\NotImplementedException
 	 */
-	public static function getTitle(Volume\Fragment $fragment)
+	public static function getTitle(Volume\Fragment $fragment): ?string
 	{
 		throw new Main\NotImplementedException();
 		return '';
@@ -1144,9 +1146,9 @@ abstract class Base implements \Bitrix\Disk\Volume\IVolumeIndicator, IErrorable
 	/**
 	 * Returns last update time of the entity object.
 	 * @param Volume\Fragment $fragment Entity object.
-	 * @return \Bitrix\Main\Type\DateTime|null
+	 * @return Main\Type\DateTime|null
 	 */
-	public static function getUpdateTime(Volume\Fragment $fragment)
+	public static function getUpdateTime(Volume\Fragment $fragment): ?Main\Type\DateTime
 	{
 		return null;
 	}
@@ -1215,7 +1217,7 @@ abstract class Base implements \Bitrix\Disk\Volume\IVolumeIndicator, IErrorable
 	 */
 	private static function loadListIndicator($libraryPath = '')
 	{
-		$directory = new \Bitrix\Main\IO\Directory(__DIR__. '/'. $libraryPath);
+		$directory = new Main\IO\Directory(__DIR__. '/'. $libraryPath);
 		$fileList = $directory->getChildren();
 		foreach ($fileList as $entry)
 		{
@@ -1296,16 +1298,16 @@ abstract class Base implements \Bitrix\Disk\Volume\IVolumeIndicator, IErrorable
 
 	/**
 	 * Upends stack of errors.
-	 * @param \Bitrix\Main\Error $error Error message object.
+	 * @param Main\Error $error Error message object.
 	 * @return void
 	 */
-	public function addError(\Bitrix\Main\Error $error)
+	public function addError(Main\Error $error)
 	{
 		if (!$this->errorCollection instanceof ErrorCollection)
 		{
 			$this->errorCollection = new ErrorCollection();
 		}
-		$this->errorCollection->add(array($error));
+		$this->errorCollection->add([$error]);
 	}
 
 	/**
@@ -1345,7 +1347,7 @@ abstract class Base implements \Bitrix\Disk\Volume\IVolumeIndicator, IErrorable
 			return $this->errorCollection->toArray();
 		}
 
-		return array();
+		return [];
 	}
 
 	/**
@@ -1360,13 +1362,13 @@ abstract class Base implements \Bitrix\Disk\Volume\IVolumeIndicator, IErrorable
 			return $this->errorCollection->getErrorsByCode($code);
 		}
 
-		return array();
+		return [];
 	}
 
 	/**
 	 * Getting once error with the necessary code.
 	 * @param string $code Code of error.
-	 * @return \Bitrix\Main\Error|null
+	 * @return Main\Error|null
 	 */
 	public function getErrorByCode($code)
 	{

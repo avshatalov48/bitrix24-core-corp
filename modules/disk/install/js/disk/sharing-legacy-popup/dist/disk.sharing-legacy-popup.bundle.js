@@ -125,7 +125,7 @@ this.BX.Disk = this.BX.Disk || {};
 	                children: [BX.create('thead', {
 	                  html: '<tr>' + '<td class="bx-disk-popup-shared-people-list-head-col1">' + BX.message('JS_DISK_SHARING_LEGACY_POPUP_LABEL_OWNER') + '</td>' + '</tr>'
 	                }), BX.create('tr', {
-	                  html: '<tr>' + '<td class="bx-disk-popup-shared-people-list-col1" style="border-bottom: none;"><a class="bx-disk-filepage-used-people-link" href="' + objectOwner.link + '"><span class="bx-disk-filepage-used-people-avatar" style="background-image: url(' + objectOwner.avatar + ');"></span>' + main_core.Text.encode(objectOwner.name) + '</a></td>' + '</tr>'
+	                  html: '<tr>' + '<td class="bx-disk-popup-shared-people-list-col1" style="border-bottom: none;"><a class="bx-disk-filepage-used-people-link" href="' + objectOwner.link + '"><span class="bx-disk-filepage-used-people-avatar" style="background-image: url(\'' + encodeURI(objectOwner.avatar) + '\');"></span>' + main_core.Text.encode(objectOwner.name) + '</a></td>' + '</tr>'
 	                })]
 	              }), BX.create('table', {
 	                props: {
@@ -318,7 +318,7 @@ this.BX.Disk = this.BX.Disk || {};
 	                children: [BX.create('thead', {
 	                  html: '<tr>' + '<td class="bx-disk-popup-shared-people-list-head-col1">' + BX.message('JS_DISK_SHARING_LEGACY_POPUP_LABEL_OWNER') + '</td>' + '</tr>'
 	                }), BX.create('tr', {
-	                  html: '<tr>' + '<td class="bx-disk-popup-shared-people-list-col1" style="border-bottom: none;"><a class="bx-disk-filepage-used-people-link" href="' + objectOwner.link + '"><span class="bx-disk-filepage-used-people-avatar" style="background-image: url(' + objectOwner.avatar + ');"></span>' + main_core.Text.encode(objectOwner.name) + '</a></td>' + '</tr>'
+	                  html: '<tr>' + '<td class="bx-disk-popup-shared-people-list-col1" style="border-bottom: none;"><a class="bx-disk-filepage-used-people-link" href="' + objectOwner.link + '"><span class="bx-disk-filepage-used-people-avatar" style="background-image: url(\'' + encodeURI(objectOwner.avatar) + '\');"></span>' + main_core.Text.encode(objectOwner.name) + '</a></td>' + '</tr>'
 	                })]
 	              }), BX.create('table', {
 	                props: {

@@ -31,7 +31,7 @@ $arParams =& $this->__component->arParams;
 						<td>
 							<?if($column['SOURCE'] == 'TITLE'):?>
 								<div class="task-title-info">
-									<a class="task-title-link<?=($item['STATUS'] == 5? ' task-title-complete' : '')?>"
+									<a class="task-title-link<?=(($item['STATUS'] ?? null) == 5? ' task-title-complete' : '')?>"
 									   href="<?=htmlspecialcharsbx($item["URL"])?>"><?=htmlspecialcharsbx($item["TITLE"])?></a>
 								</div>
 							<?elseif($column['SOURCE'] == 'RESPONSIBLE_ID'):?>

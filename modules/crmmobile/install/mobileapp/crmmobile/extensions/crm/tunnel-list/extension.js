@@ -34,10 +34,10 @@ jn.define('crm/tunnel-list', (require, exports, module) => {
 
 		componentDidMount()
 		{
-			BX.addCustomEvent('Crm.TunnelList::selectCategoryOnCreateTunnel', category => {
+			BX.addCustomEvent('Crm.TunnelList::selectCategoryOnCreateTunnel', (category) => {
 				this.selectedCategory = category;
 			});
-			BX.addCustomEvent('Crm.TunnelList::selectStageOnCreateTunnel', stage => {
+			BX.addCustomEvent('Crm.TunnelList::selectStageOnCreateTunnel', (stage) => {
 				this.selectedStage = stage;
 			});
 			BX.addCustomEvent('Crm.TunnelList::onCreateTunnel', () => {
@@ -46,7 +46,7 @@ jn.define('crm/tunnel-list', (require, exports, module) => {
 					this.onCreateTunnel();
 				}
 			});
-			BX.addCustomEvent('Crm.StageDetail::onCreateTunnel', tunnel => {
+			BX.addCustomEvent('Crm.StageDetail::onCreateTunnel', (tunnel) => {
 				this.setState({
 					tunnels: [
 						...this.state.tunnels,
@@ -72,7 +72,7 @@ jn.define('crm/tunnel-list', (require, exports, module) => {
 				{
 					style: {
 						backgroundColor: '#ffffff',
-						borderRadius: 13,
+						borderRadius: 12,
 					},
 				},
 				View(
@@ -80,13 +80,14 @@ jn.define('crm/tunnel-list', (require, exports, module) => {
 						style: {
 							paddingTop: 10,
 							paddingLeft: 20,
-							paddingBottom: this.state.tunnels.length ? 9 : 0,
+							paddingBottom: this.state.tunnels.length > 0 ? 9 : 0,
 						},
 					},
 					Text({
 						style: {
 							color: '#525c69',
-							fontSize: 13,
+							fontSize: 15,
+							fontWeight: '500',
 						},
 						text: BX.message('TUNNEL_LIST_TITLE'),
 					}),
@@ -105,7 +106,7 @@ jn.define('crm/tunnel-list', (require, exports, module) => {
 
 			return View(
 				{},
-				...this.state.tunnels.map(tunnel => new TunnelListItem({
+				...this.state.tunnels.map((tunnel) => new TunnelListItem({
 					tunnel,
 					categoryId: this.props.categoryId,
 					onDeleteTunnel: this.onDeleteTunnelHandler,
@@ -177,7 +178,7 @@ jn.define('crm/tunnel-list', (require, exports, module) => {
 			const { tunnels } = this.state;
 
 			return new Promise((resolve) => {
-				const deletedTunnelIndex = tunnels.findIndex(item => item.robot.name === tunnel.robot.name);
+				const deletedTunnelIndex = tunnels.findIndex((item) => item.robot.name === tunnel.robot.name);
 				if (deletedTunnelIndex !== -1)
 				{
 					const modifiedTunnels = clone(tunnels);
@@ -245,7 +246,7 @@ jn.define('crm/tunnel-list', (require, exports, module) => {
 	}
 
 	const svgImages = {
-		addTunnelIcon: `<svg width="12" height="13" viewBox="0 0 12 13" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M7 0.5H5V5.5H0V7.5H5V12.5H7V7.5H12V5.5H7V0.5Z" fill="#828B95"/></svg>`,
+		addTunnelIcon: '<svg width="12" height="13" viewBox="0 0 12 13" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M7 0.5H5V5.5H0V7.5H5V12.5H7V7.5H12V5.5H7V0.5Z" fill="#828B95"/></svg>',
 	};
 
 	module.exports = { TunnelList };

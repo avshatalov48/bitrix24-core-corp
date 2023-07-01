@@ -125,6 +125,7 @@ export default {
 
 			actionDescription.actionParams ??= {};
 			actionDescription.actionParams.value = this.currentDateInSiteFormat;
+			actionDescription.actionParams.valueTs = this.currentTimestamp;
 
 			const action = new Action(actionDescription);
 			action.execute(this);

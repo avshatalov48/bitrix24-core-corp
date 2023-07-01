@@ -1,5 +1,9 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 /**
  * Bitrix vars
@@ -14,6 +18,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 if (!CModule::IncludeModule('crm'))
 {
 	ShowError(GetMessage('CRM_MODULE_NOT_INSTALLED'));
+
 	return;
 }
 
@@ -22,28 +27,55 @@ $userPermissions = CCrmPerms::GetCurrentUserPermissions();
 if (!CCrmDeal::CheckReadPermission(0, $userPermissions))
 {
 	ShowError(GetMessage('CRM_PERMISSION_DENIED'));
+
 	return;
 }
 
 use Bitrix\Crm\Category\DealCategory;
-use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Counter\EntityCounterFactory;
 use Bitrix\Crm\Counter\EntityCounterType;
+use Bitrix\Crm\Restriction\RestrictionManager;
 
-$arParams['PATH_TO_DEAL_LIST'] = CrmCheckPath('PATH_TO_DEAL_LIST', $arParams['PATH_TO_DEAL_LIST'], $APPLICATION->GetCurPage());
-$arParams['PATH_TO_DEAL_EDIT'] = CrmCheckPath('PATH_TO_DEAL_EDIT', $arParams['PATH_TO_DEAL_EDIT'], $APPLICATION->GetCurPage().'?deal_id=#deal_id#&edit');
-$arParams['PATH_TO_DEAL_CATEGORY'] = CrmCheckPath('PATH_TO_DEAL_CATEGORY', $arParams['PATH_TO_DEAL_CATEGORY'], $APPLICATION->GetCurPage().'?category_id=#category_id#');
-$arParams['ENABLE_CATEGORY_ALL'] = isset($arParams['ENABLE_CATEGORY_ALL']) ? $arParams['ENABLE_CATEGORY_ALL'] : 'Y';
-$arResult['PATH_TO_DEAL_CATEGORY_LIST'] = CrmCheckPath('PATH_TO_DEAL_CATEGORY_LIST', $arParams['PATH_TO_DEAL_CATEGORY_LIST'], COption::GetOptionString('crm', 'path_to_deal_category_list'));
-$arResult['PATH_TO_DEAL_CATEGORY_EDIT'] = CrmCheckPath('PATH_TO_DEAL_CATEGORY_EDIT', $arParams['PATH_TO_DEAL_CATEGORY_EDIT'], COption::GetOptionString('crm', 'path_to_deal_category_edit'));
+$curPage = $APPLICATION->GetCurPage();
+
+$arParams['PATH_TO_DEAL_LIST'] = CrmCheckPath(
+	'PATH_TO_DEAL_LIST',
+	$arParams['PATH_TO_DEAL_LIST'] ?? '',
+	$curPage
+);
+
+$arParams['PATH_TO_DEAL_EDIT'] = CrmCheckPath(
+	'PATH_TO_DEAL_EDIT',
+	$arParams['PATH_TO_DEAL_EDIT'],
+	$curPage . '?deal_id=#deal_id#&edit'
+);
+
+$arParams['PATH_TO_DEAL_CATEGORY'] = CrmCheckPath(
+	'PATH_TO_DEAL_CATEGORY',
+	$arParams['PATH_TO_DEAL_CATEGORY'] ?? '',
+	$curPage.'?category_id=#category_id#'
+);
+
+$arParams['ENABLE_CATEGORY_ALL'] = $arParams['ENABLE_CATEGORY_ALL'] ?? 'Y';
+
+$arResult['PATH_TO_DEAL_CATEGORY_LIST'] = CrmCheckPath(
+	'PATH_TO_DEAL_CATEGORY_LIST',
+	$arParams['PATH_TO_DEAL_CATEGORY_LIST'] ?? '',
+	COption::GetOptionString('crm', 'path_to_deal_category_list')
+);
+
+$arResult['PATH_TO_DEAL_CATEGORY_EDIT'] = CrmCheckPath(
+	'PATH_TO_DEAL_CATEGORY_EDIT',
+	$arParams['PATH_TO_DEAL_CATEGORY_EDIT'] ?? '',
+	COption::GetOptionString('crm', 'path_to_deal_category_edit')
+);
 
 $arResult['CATEGORY_ID'] = $arParams['CATEGORY_ID'] = isset($arParams['CATEGORY_ID']) ? (int)$arParams['CATEGORY_ID'] : -1;
 $arResult['CATEGORY_NAME'] = '';
 $arResult['CATEGORY_COUNTER_ID'] = '';
 $arResult['CATEGORY_COUNTER_VALUE'] = 0;
-$arResult['GUID'] = isset($arParams['GUID']) ? $arParams['GUID'] : 'deal_category_panel';
-$arResult['ITEMS'] = array();
-
+$arResult['GUID'] = $arParams['GUID'] ?? 'deal_category_panel';
+$arResult['ITEMS'] = [];
 $arResult['IS_CUSTOMIZED'] = false;
 $arResult['DEFAULT_INDEX'] = -1;
 $arResult['ACTIVE_INDEX'] = -1;
@@ -57,10 +89,10 @@ $arResult['CATEGORY_COUNTER_CODE'] = $totalCounter->getCode();
 $arResult['CATEGORY_COUNTER'] = $totalCounter->getValue();
 
 $map = array_fill_keys(CCrmDeal::GetPermittedToReadCategoryIDs($userPermissions), true);
-foreach(DealCategory::getAll(true) as $item)
+foreach (DealCategory::getAll(true) as $item)
 {
 	$ID = (int)$item['ID'];
-	if(!isset($map[$ID]))
+	if (!isset($map[$ID]))
 	{
 		continue;
 	}
@@ -73,32 +105,32 @@ foreach(DealCategory::getAll(true) as $item)
 	);
 
 	$isActive = $ID === $arResult['CATEGORY_ID'];
-	if($isActive)
+	if ($isActive)
 	{
-		$arResult['CATEGORY_NAME'] = isset($item['NAME']) ? $item['NAME'] : "[{$ID}]";
+		$arResult['CATEGORY_NAME'] = $item['NAME'] ?? "[{$ID}]";
 	}
 
 	$arResult['ITEMS'][] = array(
 		'ID' => $ID,
-		'NAME' => isset($item['NAME']) ? $item['NAME'] : "[{$ID}]",
+		'NAME' => $item['NAME'] ?? "[{$ID}]",
 		'IS_ACTIVE' => $isActive,
 		'COUNTER_CODE' => $counter->getCode(),
 		'COUNTER' => $counter->getValue(),
-		'URL' => CComponentEngine::makePathFromTemplate($arParams['PATH_TO_DEAL_CATEGORY'], array('category_id' => $ID)),
+		'URL' => CComponentEngine::makePathFromTemplate($arParams['PATH_TO_DEAL_CATEGORY'] ?? '', ['category_id' => $ID]),
 		'CREATE_URL' => CCrmUrlUtil::AddUrlParams(
-			CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_DEAL_EDIT'], array('deal_id' => 0)),
+			CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_DEAL_EDIT'] ?? '', ['deal_id' => 0]),
 			array('category_id' => $ID)
 		)
 	);
 
 	$index = count($arResult['ITEMS']) - 1;
-	if($isActive)
+	if ($isActive)
 	{
 		$arResult['ACTIVE_INDEX'] = $index;
 	}
 
 	$isDefault = isset($item['IS_DEFAULT']) && $item['IS_DEFAULT'] === true;
-	if($isDefault)
+	if ($isDefault)
 	{
 		$arResult['DEFAULT_INDEX'] = $index;
 	}
@@ -108,10 +140,10 @@ foreach(DealCategory::getAll(true) as $item)
 	}
 }
 
-if(!$arResult['IS_CUSTOMIZED'])
+if (!$arResult['IS_CUSTOMIZED'])
 {
 	$arResult['ITEMS'][$arResult['DEFAULT_INDEX']]['ENABLED'] = false;
-	if($arResult['DEFAULT_INDEX'] === $arResult['ACTIVE_INDEX'])
+	if ($arResult['DEFAULT_INDEX'] === $arResult['ACTIVE_INDEX'])
 	{
 		$arResult['ITEMS'][$arResult['DEFAULT_INDEX']]['IS_ACTIVE'] = false;
 		$arResult['ACTIVE_INDEX'] = -1;
@@ -131,18 +163,18 @@ elseif($arParams['ENABLE_CATEGORY_ALL'] === 'Y')
 	);
 }
 
-if($arResult['ACTIVE_INDEX'] < 0)
+if ($arResult['ACTIVE_INDEX'] < 0)
 {
 	$arResult['ACTIVE_INDEX'] = 0;
 	$arResult['ITEMS'][0]['IS_ACTIVE'] = true;
 }
 
 $arResult['CAN_CREATE_CATEGORY'] = $userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE');
-if($arResult['CAN_CREATE_CATEGORY'])
+if ($arResult['CAN_CREATE_CATEGORY'])
 {
 	$restriction = RestrictionManager::getDealCategoryLimitRestriction();
 	$limit = $restriction->getQuantityLimit();
-	if($limit <= 0 || ($limit > DealCategory::getCount()))
+	if ($limit <= 0 || ($limit > DealCategory::getCount()))
 	{
 		$arResult['CATEGORY_CREATE_URL'] = CComponentEngine::MakePathFromTemplate(
 			$arResult['PATH_TO_DEAL_CATEGORY_EDIT'],
@@ -156,7 +188,7 @@ if($arResult['CAN_CREATE_CATEGORY'])
 	}
 }
 
-if($arResult['CAN_CREATE_CATEGORY'] || $arResult['IS_CUSTOMIZED'])
+if ($arResult['CAN_CREATE_CATEGORY'] || $arResult['IS_CUSTOMIZED'])
 {
 	$this->IncludeComponentTemplate();
 }

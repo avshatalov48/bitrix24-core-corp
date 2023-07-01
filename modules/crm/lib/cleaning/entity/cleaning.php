@@ -10,9 +10,9 @@ use Bitrix\Main;
  *
  * <<< ORMENTITYANNOTATION
  * @method static EO_Cleaning_Query query()
- * @method static EO_Cleaning_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Cleaning_Result getByPrimary($primary, array $parameters = [])
  * @method static EO_Cleaning_Result getById($id)
- * @method static EO_Cleaning_Result getList(array $parameters = array())
+ * @method static EO_Cleaning_Result getList(array $parameters = [])
  * @method static EO_Cleaning_Entity getEntity()
  * @method static \Bitrix\Crm\Cleaning\Entity\EO_Cleaning createObject($setDefaultValues = true)
  * @method static \Bitrix\Crm\Cleaning\Entity\EO_Cleaning_Collection createCollection()

@@ -72,7 +72,7 @@
 			const items = [];
 			const itemSections = [];
 
-			for (let action of actions.values())
+			for (const action of actions.values())
 			{
 				items.push(action.params);
 				itemSections.push(action.params.sectionCode);
@@ -102,7 +102,7 @@
 				case Types.DESKTOP:
 					return {
 						id: 'desktop',
-						title: BX.message('UI_MENU_ITEM_TYPE_DESKTOP'),
+						title: BX.message('UI_MENU_ITEM_TYPE_DESKTOP_MSGVER_1'),
 						iconUrl: iconsPath + 'desktop.png',
 						onItemSelected: (data) => () => {
 							const promise = new Promise((resolve) => {
@@ -128,7 +128,7 @@
 								}
 
 								qrauth.open({
-									title: data.qrTitle || BX.message('UI_MENU_ITEM_TYPE_DESKTOP'),
+									title: data.qrTitle || BX.message('UI_MENU_ITEM_TYPE_DESKTOP_MSGVER_1'),
 									redirectUrl: qrUrl || '',
 									showHint: showHint,
 								});

@@ -23,7 +23,7 @@ $APPLICATION->SetTitle(GetMessage("TITLE"));
 		"PATH_TO_USER_PROFILE" => "/company/personal/user/#user_id#/",
 		"PATH_TO_PRODUCT_EDIT" => "/crm/product/edit/#product_id#/",
 		"PATH_TO_PRODUCT_SHOW" => "/crm/product/show/#product_id#/",
-		"ELEMENT_ID" => $_REQUEST["deal_id"],
+		"ELEMENT_ID" => $_REQUEST["deal_id"] ?? null,
 		"SEF_FOLDER" => "/crm/deal/",
 		"SEF_URL_TEMPLATES" => Array(
 			"index" => "index.php",

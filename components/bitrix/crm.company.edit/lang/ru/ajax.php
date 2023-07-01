@@ -1,3 +1,3 @@
 <?
-$MESS['CRM_COMPANY_EDIT_INVALID_EMAIL'] = "'#VALUE#' не является правильным e-mail адресом.";
+$MESS['CRM_COMPANY_EDIT_INVALID_EMAIL'] = "'#VALUE#' указан с ошибками, введите корректный e-mail";
 ?>

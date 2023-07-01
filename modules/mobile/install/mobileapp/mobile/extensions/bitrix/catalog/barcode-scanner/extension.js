@@ -14,11 +14,18 @@
 		render()
 		{
 			return View(
-				{},
+				{
+					style: {
+						backgroundColor: '#eef2f4',
+					},
+				},
 				CameraView({
 					style: {
 						width: '100%',
-						height: '100%'
+						height: '100%',
+						backgroundColor: '#eef2f4',
+						borderTopLeftRadius: 12,
+						borderTopRightRadius: 12,
 					},
 					scanTypes: this.getScanTypes(),
 					result: (barcode) => {
@@ -132,7 +139,10 @@
 				.openWidget('layout', widgetParams)
 				.then(layoutWidget => {
 					const barcodeScanner = new BarcodeScanner(layoutProps);
+
+					layoutWidget.enableNavigationBarBorder(false);
 					layoutWidget.showComponent(barcodeScanner);
+
 					barcodeScanner.setLayoutWidget(layoutWidget);
 				});
 		}
@@ -144,6 +154,7 @@
 				backdrop: {
 					mediumPositionPercent: 70,
 					horizontalSwipeAllowed: false,
+					navigationBarColor: '#eef2f4',
 				}
 			};
 		}

@@ -93,7 +93,7 @@ CREATE TABLE IF NOT EXISTS `b_rpa_timeline` (
   `TITLE` varchar(255) null,
   `DESCRIPTION` text null,
   `ACTION` varchar(255) null,
-  `IS_FIXED` char NOT NULL default 'N',
+  `IS_FIXED` char(1) NOT NULL default 'N',
   `DATA` text null,
   PRIMARY KEY (ID),
   INDEX ix_rpa_timeline_type_item(TYPE_ID, ITEM_ID)

@@ -1,9 +1,9 @@
 <?
 /**
- * 
+ *
  * This class is for internal use only, not a part of public API.
  * It can be changed at any time without notification.
- * 
+ *
  * @access private
  * todo: create \Bitrix\Tasks\Internals\DataBase\Structure\ClosureMesh, and then make this class deprecated
  */
@@ -246,7 +246,11 @@ abstract class Mesh extends Tree
 
 		$additionalFldsMap = array();
 		$additionalFldsValues = array();
-		if(is_array($behaviour['LINK_DATA']) && !empty($behaviour['LINK_DATA']))
+		if (
+			isset($behaviour['LINK_DATA'])
+			&& is_array($behaviour['LINK_DATA'])
+			&& !empty($behaviour['LINK_DATA'])
+		)
 		{
 			$additionalFldsMap = array_keys($behaviour['LINK_DATA']);
 			$additionalFldsValues = $behaviour['LINK_DATA'];
@@ -259,7 +263,7 @@ abstract class Mesh extends Tree
 			$mpcityColName => 	$increment > 0 ? $increment : 1,
 		), $additionalFldsValues);
 
-		if($behaviour['INCREMENT_MP_WHEN_EXISTS'] === true)
+		if(($behaviour['INCREMENT_MP_WHEN_EXISTS'] ?? false) === true)
 		{
 			$plus = '+'.($increment > 0 ? $increment : '1');
 		}

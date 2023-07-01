@@ -28,10 +28,13 @@ export class PushCrmSettings
 	#todoSkipMenu: TodoNotificationSkipMenu;
 
 	#isSetSortRequestRunning: boolean = false;
+	#smartActivityNotificationSupported: boolean = false;
 
 	constructor(params: Params)
 	{
 		this.#entityTypeId = Text.toInteger(params.entityTypeId);
+		this.#smartActivityNotificationSupported = Text.toBoolean(params.smartActivityNotificationSupported);
+
 		if (EntityType && !EntityType.isDefined(this.#entityTypeId))
 		{
 			throw new Error(`Provided entityTypeId is invalid: ${this.#entityTypeId}`);
@@ -207,15 +210,6 @@ export class PushCrmSettings
 
 	#shouldShowTodoSkipMenu(): boolean
 	{
-		let allowedTypes = [];
-		if (EntityType)
-		{
-			allowedTypes = [
-				EntityType.enumeration.deal,
-				EntityType.enumeration.lead,
-			];
-		}
-
-		return allowedTypes.includes(this.#entityTypeId);
+		return this.#smartActivityNotificationSupported;
 	}
 }

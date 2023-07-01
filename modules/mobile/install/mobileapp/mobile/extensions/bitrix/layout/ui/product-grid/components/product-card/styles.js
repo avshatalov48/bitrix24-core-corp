@@ -22,7 +22,7 @@ jn.define('layout/ui/product-grid/components/product-card/styles', (require, exp
 				height: 16,
 				left: 0,
 				top: 0,
-				backgroundColor: '#B8C0C9',
+				backgroundColor: '#bdc1c6',
 				borderTopLeftRadius: 12,
 				borderBottomRightRadius: 12,
 				alignItems: 'center',

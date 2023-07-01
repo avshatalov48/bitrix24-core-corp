@@ -50,7 +50,7 @@ class FolderListOptions
 
 	public static function extractStorageId($gridId)
 	{
-		return explode('folder_list_', $gridId)[1];
+		return explode('folder_list_', $gridId)[1] ?? null;
 	}
 
 	/**

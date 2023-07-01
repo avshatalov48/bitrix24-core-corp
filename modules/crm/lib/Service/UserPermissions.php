@@ -2,11 +2,14 @@
 
 namespace Bitrix\Crm\Service;
 
+use Bitrix\Catalog\Access\AccessController;
+use Bitrix\Catalog\Access\ActionDictionary;
 use Bitrix\Crm\Category\Entity\Category;
 use Bitrix\Crm\Category\PermissionEntityTypeHelper;
 use Bitrix\Crm\EO_Status_Collection;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\Security\AttributesProvider;
+use Bitrix\Crm\Security\EntityPermission\MyCompany;
 use Bitrix\Crm\Security\Manager;
 use Bitrix\Crm\Security\QueryBuilder;
 use Bitrix\Main\Loader;
@@ -43,6 +46,7 @@ class UserPermissions
 	protected $isAdmin;
 	/** @var AttributesProvider|null */
 	protected $attributesProvider;
+	protected ?MyCompany $myCompanyPermissions = null;
 
 	public function setCrmPermissions(\CCrmPerms $crmPermissions): UserPermissions
 	{
@@ -324,6 +328,27 @@ class UserPermissions
 	 */
 	public function checkAddPermissions(int $entityTypeId, ?int $categoryId = null, ?string $stageId = null): bool
 	{
+		if ($entityTypeId === \CCrmOwnerType::ShipmentDocument)
+		{
+			if (Loader::includeModule('catalog'))
+			{
+				return
+					AccessController::getCurrent()->check(ActionDictionary::ACTION_CATALOG_READ)
+					&& AccessController::getCurrent()->check(ActionDictionary::ACTION_INVENTORY_MANAGEMENT_ACCESS)
+					&& AccessController::getCurrent()->checkByValue(
+						ActionDictionary::ACTION_STORE_DOCUMENT_MODIFY,
+						\Bitrix\Catalog\StoreDocumentTable::TYPE_SALES_ORDERS
+					)
+				;
+			}
+
+			return \Bitrix\Crm\Order\Permissions\Shipment::checkCreatePermission($this->getCrmPermissions());
+		}
+		elseif($entityTypeId === \CCrmOwnerType::StoreDocument)
+		{
+			return Loader::includeModule('catalog') && AccessController::getCurrent()->check(ActionDictionary::ACTION_STORE_VIEW);
+		}
+
 		if (is_null($stageId))
 		{
 			return
@@ -449,6 +474,27 @@ class UserPermissions
 	 */
 	public function checkUpdatePermissions(int $entityTypeId, int $id, ?int $categoryId = null): bool
 	{
+		if ($entityTypeId === \CCrmOwnerType::ShipmentDocument)
+		{
+			if (Loader::includeModule('catalog'))
+			{
+				return
+					AccessController::getCurrent()->check(ActionDictionary::ACTION_CATALOG_READ)
+					&& AccessController::getCurrent()->check(ActionDictionary::ACTION_INVENTORY_MANAGEMENT_ACCESS)
+					&& AccessController::getCurrent()->checkByValue(
+						ActionDictionary::ACTION_STORE_DOCUMENT_MODIFY,
+						\Bitrix\Catalog\StoreDocumentTable::TYPE_SALES_ORDERS
+					)
+				;
+			}
+
+			return  \Bitrix\Crm\Order\Permissions\Shipment::checkUpdatePermission($id, $this->getCrmPermissions());
+		}
+		elseif($entityTypeId === \CCrmOwnerType::StoreDocument)
+		{
+			return Loader::includeModule('catalog') && AccessController::getCurrent()->check(ActionDictionary::ACTION_STORE_VIEW);
+		}
+
 		if (is_null($categoryId))
 		{
 			$categoryId = $this->getItemCategoryIdOrDefault($entityTypeId, $id);
@@ -484,6 +530,27 @@ class UserPermissions
 	 */
 	public function checkDeletePermissions(int $entityTypeId, int $id = 0, ?int $categoryId = null): bool
 	{
+		if($entityTypeId === \CCrmOwnerType::ShipmentDocument)
+		{
+			if (Loader::includeModule('catalog'))
+			{
+				return
+					AccessController::getCurrent()->check(ActionDictionary::ACTION_CATALOG_READ)
+					&& AccessController::getCurrent()->check(ActionDictionary::ACTION_INVENTORY_MANAGEMENT_ACCESS)
+					&& AccessController::getCurrent()->checkByValue(
+						ActionDictionary::ACTION_STORE_DOCUMENT_DELETE,
+						\Bitrix\Catalog\StoreDocumentTable::TYPE_SALES_ORDERS
+					)
+				;
+			}
+
+			return  \Bitrix\Crm\Order\Permissions\Shipment::checkDeletePermission($id, $this->getCrmPermissions());
+		}
+		elseif($entityTypeId === \CCrmOwnerType::StoreDocument)
+		{
+			return Loader::includeModule('catalog') && AccessController::getCurrent()->check(ActionDictionary::ACTION_STORE_VIEW);
+		}
+
 		if ($id === 0 && is_null($categoryId))
 		{
 			$factory = Container::getInstance()->getFactory($entityTypeId);
@@ -542,6 +609,27 @@ class UserPermissions
 	 */
 	public function checkReadPermissions(int $entityTypeId, int $id = 0, ?int $categoryId = null): bool
 	{
+		if($entityTypeId === \CCrmOwnerType::ShipmentDocument)
+		{
+			if (Loader::includeModule('catalog'))
+			{
+				return
+					AccessController::getCurrent()->check(ActionDictionary::ACTION_CATALOG_READ)
+					&& AccessController::getCurrent()->check(ActionDictionary::ACTION_INVENTORY_MANAGEMENT_ACCESS)
+					&& AccessController::getCurrent()->checkByValue(
+						ActionDictionary::ACTION_STORE_DOCUMENT_VIEW,
+						\Bitrix\Catalog\StoreDocumentTable::TYPE_SALES_ORDERS
+					)
+				;
+			}
+
+			return  \Bitrix\Crm\Order\Permissions\Shipment::checkReadPermission($id, $this->getCrmPermissions());
+		}
+		elseif($entityTypeId === \CCrmOwnerType::StoreDocument)
+		{
+			return Loader::includeModule('catalog') && AccessController::getCurrent()->check(ActionDictionary::ACTION_CATALOG_READ);
+		}
+
 		if ($id === 0)
 		{
 			return is_null($categoryId)
@@ -844,5 +932,15 @@ class UserPermissions
 		}
 
 		return $this->attributesProvider;
+	}
+
+	public function getMyCompanyPermissions(): MyCompany
+	{
+		if (!$this->myCompanyPermissions)
+		{
+			$this->myCompanyPermissions = new MyCompany($this);
+		}
+
+		return $this->myCompanyPermissions;
 	}
 }

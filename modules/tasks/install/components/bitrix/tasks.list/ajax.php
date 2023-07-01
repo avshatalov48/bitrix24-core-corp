@@ -33,7 +33,7 @@ Loc::loadMessages(__FILE__);
 
 $SITE_ID = isset($_GET["SITE_ID"]) ? $_GET["SITE_ID"] : SITE_ID;
 
-$GROUP_ID = intval($_GET["GROUP_ID"]) > 0 ? intval($_GET["GROUP_ID"]) : 0;
+$GROUP_ID = intval($_GET["GROUP_ID"] ?? null) > 0 ? intval($_GET["GROUP_ID"]) : 0;
 
 if (isset($_GET["nt"]))
 {
@@ -63,7 +63,7 @@ if (check_bitrix_sessid())
 
 	try
 	{
-		if (intval($_POST["id"]) > 0)
+		if (isset($_POST["id"]) && (int)$_POST["id"] > 0)
 		{
 			$columnsOrder = null;
 
@@ -133,6 +133,7 @@ if (check_bitrix_sessid())
 
 				unset($arFilter["PARENT_ID"]);
 				$rsChildrenCount = CTasks::GetChildrenCount($arFilter, $arTasksIDs);
+				$arChildrenCount = [];
 				if ($rsChildrenCount)
 				{
 					while ($arChildrens = $rsChildrenCount->Fetch())
@@ -156,7 +157,7 @@ if (check_bitrix_sessid())
 					echo "[";
 				}
 
-				$depth = (int)$_POST['depth'] + 1;
+				$depth = (int) ($_POST['depth'] ?? null) + 1;
 				foreach ($arTasks as $task)
 				{
 					++$i;
@@ -178,8 +179,16 @@ if (check_bitrix_sessid())
 					if ($bIsJSON)
 					{
 						tasksRenderJSON(
-							$task, $arChildrenCount["PARENT_" . $task["ID"]],
-							$arPaths, true, $bGannt, false, $nameTemplate, array(), false, array('DISABLE_IFRAME_POPUP' => !!$_REQUEST['DISABLE_IFRAME_POPUP'])
+							$task,
+							$arChildrenCount["PARENT_" . $task["ID"]] ?? null,
+							$arPaths,
+							true,
+							$bGannt,
+							false,
+							$nameTemplate,
+							[],
+							false,
+							['DISABLE_IFRAME_POPUP' => !!$_REQUEST['DISABLE_IFRAME_POPUP']],
 						);
 
 						if ($i < $iMax)

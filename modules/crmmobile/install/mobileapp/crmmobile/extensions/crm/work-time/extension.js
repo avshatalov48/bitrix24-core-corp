@@ -2,7 +2,6 @@
  * @module crm/work-time
  */
 jn.define('crm/work-time', (require, exports, module) => {
-
 	const { Moment } = require('utils/date');
 
 	const TIME_SEPARATOR = ':';
@@ -50,7 +49,7 @@ jn.define('crm/work-time', (require, exports, module) => {
 		 */
 		isDayOff()
 		{
-			const day = this.moment.format('E', 'en').toUpperCase().substring(0, 2);
+			const day = this.moment.format('E', 'en').toUpperCase().slice(0, 2);
 			return this.calendar.DAY_OFF.includes(day);
 		}
 
@@ -130,7 +129,10 @@ jn.define('crm/work-time', (require, exports, module) => {
 		getNextWorkingDay(times = 1)
 		{
 			times = Math.round(times);
-			if (times < 1) times = 1;
+			if (times < 1)
+			{
+				times = 1;
+			}
 
 			let workTimeMoment;
 			let nextDay = this.moment.clone();
@@ -159,5 +161,4 @@ jn.define('crm/work-time', (require, exports, module) => {
 	}
 
 	module.exports = { WorkTimeMoment };
-
 });

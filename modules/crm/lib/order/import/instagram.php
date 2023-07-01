@@ -338,7 +338,8 @@ class Instagram
 
 	public static function isAvailable()
 	{
-		return Option::get('crm', self::ENABLED_OPTION, 'Y') === 'Y';
+		return false;
+		// return Option::get('crm', self::ENABLED_OPTION, 'Y') === 'Y';
 	}
 
 	public static function isSiteTemplateImportable($siteTemplate)
@@ -472,46 +473,6 @@ class Instagram
 		return round($price / $exchangeRate, 2);
 	}
 
-	protected static function saveImage($url)
-	{
-		$fileId = false;
-
-		$httpClient = new HttpClient();
-		$httpClient->setTimeout(5);
-		$httpClient->setStreamTimeout(5);
-
-		$urlComponents = parse_url($url);
-
-		if ($urlComponents && $urlComponents['path'] <> '')
-		{
-			$tempPath = \CFile::GetTempName('', bx_basename($urlComponents['path']));
-		}
-		else
-		{
-			$tempPath = \CFile::GetTempName('', bx_basename($url));
-		}
-
-		$httpClient->download($url, $tempPath);
-		$fileName = $httpClient->getHeaders()->getFilename();
-		$localFile = \CFile::MakeFileArray($tempPath);
-		$localFile['MODULE_ID'] = 'iblock';
-
-		if (is_array($localFile))
-		{
-			if ($fileName <> '')
-			{
-				$localFile['name'] = $fileName;
-			}
-
-			if (\CFile::CheckImageFile($localFile, 0, 0, 0, ['IMAGE']) === null)
-			{
-				$fileId = \CFile::SaveFile($localFile, '/store/import/instagram', true);
-			}
-		}
-
-		return ($fileId === false ? null : $fileId);
-	}
-
 	public static function onAfterIblockElementDelete($fields)
 	{
 		ProductTable::deleteByProductId($fields['ID']);
@@ -532,31 +493,6 @@ class Instagram
 
 	protected static function addProduct($fields)
 	{
-		$images = $fields['IMAGES'];
-
-		$detailImage = false;
-		$imagesData = [];
-
-		foreach ($images as $image)
-		{
-			$imageId = static::saveImage($image);
-
-			// ToDo log errors
-			if ($imageId === null)
-				continue;
-
-			$imageData = \CFile::MakeFileArray($imageId);
-
-			if ($detailImage)
-			{
-				$imagesData[] = $imageData;
-			}
-			else
-			{
-				$detailImage = $imageData;
-			}
-		}
-
 		$currencyId = \CCrmCurrency::GetBaseCurrencyID();
 
 		$addFields = [
@@ -570,16 +506,6 @@ class Instagram
 			'SORT' => 100,
 			'XML_ID' => static::$source.'_'.$fields['ID'],
 		];
-
-		if (!empty($detailImage))
-		{
-			$addFields['DETAIL_PICTURE'] = $detailImage;
-		}
-
-		if (!empty($imagesData))
-		{
-			$addFields['PROPERTY_VALUES']['MORE_PHOTO'] = $imagesData;
-		}
 
 		if (isset($fields['PRICE']))
 		{

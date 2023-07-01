@@ -12,6 +12,7 @@ abstract class Adapter
 {
 	/** @var Category|null */
 	protected ?Category $category = null;
+	protected array $categoryLabels = [];
 
 	/**
 	 * Convert \Bitrix\Crm\Search\Result to array of \Bitrix\Main\Search\ResultItem
@@ -168,6 +169,22 @@ abstract class Adapter
 	public function setCategory(?Category $category): Adapter
 	{
 		$this->category = $category;
+
 		return $this;
+	}
+
+	public function addCategoryLabel(int $categoryId, string $label): self
+	{
+		$this->categoryLabels[$categoryId] = $label;
+
+		return $this;
+	}
+
+	protected function addCategoryLabelToSubtitle(int $categoryId, array &$subtitles): void
+	{
+		if (isset($this->categoryLabels[$categoryId]))
+		{
+			$subtitles[] = $this->categoryLabels[$categoryId];
+		}
 	}
 }

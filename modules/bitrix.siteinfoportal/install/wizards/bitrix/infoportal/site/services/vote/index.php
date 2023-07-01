@@ -2,7 +2,7 @@
 	die();
 if(!CModule::IncludeModule('vote'))
 	return;
-__IncludeLang(GetLangFileName(dirname(__FILE__)."/lang/", '/'.basename(__FILE__)));	
+__IncludeLang(GetLangFileName(__DIR__."/lang/", '/'.basename(__FILE__)));
 	
 global $DB;
 global $CACHE_MANAGER;	

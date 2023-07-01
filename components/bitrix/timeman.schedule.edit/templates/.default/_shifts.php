@@ -52,7 +52,8 @@ use Bitrix\Main\Localization\Loc;
 						{
 							$workdaysText = $arResult['shiftWorkdaysOptions'][$shiftForm->workDays];
 						}
-						$workdaysValue = $shiftForm->workDays ?: end(array_keys($arResult['shiftWorkdaysOptions']));
+						$shiftWorkdaysOption = array_keys($arResult['shiftWorkdaysOptions']);
+						$workdaysValue = $shiftForm->workDays ?: end($shiftWorkdaysOption);
 						?>
 						<div class="">
 							<input type="hidden"
@@ -151,7 +152,7 @@ use Bitrix\Main\Localization\Loc;
 						data-role="timeman-schedule-shift-workdays-selector">
 					<span class="timeman-schedule-form-worktime-days-inner">
 
-						<? $shiftFormWorkDays = array_map('intval', str_split($shiftForm->workDays)); ?>
+						<? $shiftFormWorkDays = array_map('intval', str_split($shiftForm->workDays ?? '')); ?>
 						<? foreach ($arResult['weekDays'] as $dayNumber => $text) : ?>
 							<span class="timeman-schedule-form-worktime-day"
 									data-role="timeman-schedule-shift-work-days">

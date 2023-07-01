@@ -13,9 +13,9 @@ use Bitrix\Sale\Registry;
  *
  * <<< ORMENTITYANNOTATION
  * @method static EO_SendingChannels_Query query()
- * @method static EO_SendingChannels_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_SendingChannels_Result getByPrimary($primary, array $parameters = [])
  * @method static EO_SendingChannels_Result getById($id)
- * @method static EO_SendingChannels_Result getList(array $parameters = array())
+ * @method static EO_SendingChannels_Result getList(array $parameters = [])
  * @method static EO_SendingChannels_Entity getEntity()
  * @method static \Bitrix\Crm\Order\SendingChannels\Internals\EO_SendingChannels createObject($setDefaultValues = true)
  * @method static \Bitrix\Crm\Order\SendingChannels\Internals\EO_SendingChannels_Collection createCollection()

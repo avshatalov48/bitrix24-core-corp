@@ -2,9 +2,7 @@
  * @module crm/timeline/controllers/call
  */
 jn.define('crm/timeline/controllers/call', (require, exports, module) => {
-
 	const { TimelineBaseController } = require('crm/controllers/base');
-	const { TimelineScheduler } = require('crm/timeline/scheduler');
 	const { Type: CrmType } = require('crm/type');
 	const { Type } = require('type');
 	const { Filesystem } = require('native/filesystem');
@@ -14,8 +12,8 @@ jn.define('crm/timeline/controllers/call', (require, exports, module) => {
 	const SupportedActions = {
 		MAKE_CALL: 'Call:MakeCall',
 		SCHEDULE_CALL: 'Call:Schedule',
-		OPEN_TOOLBAR: 'Call::OpenToolBar',
 		DOWNLOAD_RECORD: 'Call:DownloadRecord',
+		TOGGLE_PLAYER: 'Call:ChangePlayerState',
 	};
 
 	class TimelineCallController extends TimelineBaseController
@@ -33,12 +31,11 @@ jn.define('crm/timeline/controllers/call', (require, exports, module) => {
 					return this.makeCall(actionParams);
 				case SupportedActions.SCHEDULE_CALL:
 					return this.scheduleCall(actionParams);
-				case SupportedActions.OPEN_TOOLBAR:
-					return this.openToolBar(actionParams);
 				case SupportedActions.DOWNLOAD_RECORD:
 					return this.downloadRecord(actionParams);
+				case SupportedActions.TOGGLE_PLAYER:
+					return this.togglePlayer(actionParams);
 				default:
-					return;
 			}
 		}
 
@@ -50,17 +47,19 @@ jn.define('crm/timeline/controllers/call', (require, exports, module) => {
 			}
 
 			const params = {
+				SHOW_NAME: actionData.showName,
+				NAME: actionData.formattedName,
 				ENTITY_TYPE_NAME: CrmType.resolveNameById(actionData.entityTypeId),
 				ENTITY_ID: actionData.entityId,
-				AUTO_FOLD: true
-			}
+				AUTO_FOLD: true,
+			};
 
 			if (actionData.ownerTypeId !== actionData.entityTypeId || actionData.ownerId !== actionData.entityId)
 			{
 				params.BINDINGS = {
 					OWNER_TYPE_NAME: CrmType.resolveNameById(actionData.ownerTypeId),
-					OWNER_ID: actionData.ownerId
-				}
+					OWNER_ID: actionData.ownerId,
+				};
 			}
 
 			if (actionData.activityId > 0)
@@ -70,21 +69,13 @@ jn.define('crm/timeline/controllers/call', (require, exports, module) => {
 
 			BX.postComponentEvent('onPhoneTo', [{
 				number: actionData.phone,
-				params
+				params,
 			}], 'calls');
 		}
 
 		scheduleCall(actionData)
 		{
-			const scheduler = new TimelineScheduler({
-				entity: this.entity
-			});
-			scheduler.openActivityEditor(actionData);
-		}
-
-		openToolBar(actionData)
-		{
-			this.pinInTopToolbar({...actionData});
+			this.scheduler.openActivityEditor(actionData);
 		}
 
 		downloadRecord(actionData)
@@ -98,7 +89,8 @@ jn.define('crm/timeline/controllers/call', (require, exports, module) => {
 			if (Feature.isShareDialogSupportsFiles())
 			{
 				Notify.showIndicatorLoading();
-				Filesystem.downloadFile(withCurrentDomain(url)).then(uri => {
+
+				Filesystem.downloadFile(withCurrentDomain(url)).then((uri) => {
 					Notify.hideCurrentIndicator();
 					dialogs.showSharingDialog({ uri });
 				});
@@ -107,6 +99,18 @@ jn.define('crm/timeline/controllers/call', (require, exports, module) => {
 			{
 				Feature.showDefaultUnsupportedWidget();
 			}
+		}
+
+		togglePlayer(actionData = {})
+		{
+			if (!actionData.recordUri)
+			{
+				return;
+			}
+
+			this.itemScopeEventBus.emit('TimelineIconAudioPlayer::onChangePlay', [{
+				uri: withCurrentDomain(actionData.recordUri),
+			}]);
 		}
 	}
 

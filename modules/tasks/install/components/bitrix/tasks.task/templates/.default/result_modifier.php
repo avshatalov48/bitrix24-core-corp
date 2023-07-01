@@ -22,7 +22,7 @@ Loc::loadMessages(__DIR__.'/template.php');
 $folder = $this->GetFolder();
 
 // todo: use templateHelper here instead of the following:
-$id = trim((string) $this->__component->arParams['TEMPLATE_CONTROLLER_ID']);
+$id = trim((string) ($this->__component->arParams['TEMPLATE_CONTROLLER_ID'] ?? null));
 if($id)
 {
 	$id = ToLower($id);
@@ -40,7 +40,7 @@ if(!$id)
 
 $arResult['TEMPLATE_DATA'] = array(
 	'ID' => $id,
-	'EDIT_MODE' => !!$arResult['DATA']['TASK']['ID'],
+	'EDIT_MODE' => !!($arResult['DATA']['TASK']['ID'] ?? null),
 	'INPUT_PREFIX' => 'ACTION[0][ARGUMENTS][data]',
 );
 
@@ -170,7 +170,7 @@ $arResult['AUX_TEMPLATE_DATA']['EDITOR_PARAMETERS'] = array(
 		"bInitByJS" => false,
 		"lazyLoad" => 'N',
 		"bbCode" => $bbCode, // set editor mode: bbcode or html
-		"setFocusAfterShow" => !!intval($arResult['DATA']['TASK']['ID']), // when creating task, we should not
+		"setFocusAfterShow" => !!intval($arResult['DATA']['TASK']['ID'] ?? null), // when creating task, we should not
 	),
 	//"USE_CLIENT_DATABASE" => "Y",
 	//"ALLOW_EMAIL_INVITATION" => ($arResult["ALLOW_EMAIL_INVITATION"] ? 'Y' : 'N')
@@ -236,7 +236,7 @@ else
 }
 
 $arParams['PATH_TO_TASKS_TASK_ORIGINAL'] = $arParams['PATH_TO_TASKS_TASK'];
-if(is_array($arParams['TASK_URL_PARAMETERS']) && !empty($arParams['TASK_URL_PARAMETERS']))
+if (is_array($arParams['TASK_URL_PARAMETERS'] ?? null) && !empty($arParams['TASK_URL_PARAMETERS']))
 {
 	if((string) $arParams['PATH_TO_TASKS_TASK'] != '')
 	{
@@ -283,7 +283,10 @@ $APPLICATION->SetPageProperty("BodyClass", $bodyClass);
 // URLs
 
 // backurl (aka success url)
-if((string) $arResult['COMPONENT_DATA']['BACKURL'] != '')
+if(
+	isset($arResult['COMPONENT_DATA']['BACKURL'])
+	&& (string) $arResult['COMPONENT_DATA']['BACKURL'] != ''
+)
 {
     $backUrl = $arResult['COMPONENT_DATA']['BACKURL'];
 }
@@ -291,7 +294,7 @@ else
 {
     $backUrl = $arParams['PATH_TO_TASKS_TASK'];
 }
-if(intval($arResult['DATA']['TASK']['ID']))
+if(intval($arResult['DATA']['TASK']['ID'] ?? null))
 {
     $backUrl = str_replace('#task_id#', intval($arResult['DATA']['TASK']['ID']), $backUrl);
 }
@@ -299,11 +302,17 @@ $arResult['TEMPLATE_DATA']['BACKURL'] = $backUrl;
 
 // cancelurl
 $cancelUrl = $arParams['PATH_TO_TASKS'];
-if((string) $request['CANCELURL'] != '')
+if(
+	isset($request['CANCELURL'])
+	&& (string) $request['CANCELURL'] != ''
+)
 {
 	$cancelUrl = $request['CANCELURL'];
 }
-elseif((string) $request['BACKURL'] != '')
+elseif(
+	isset($request['BACKURL'])
+	&& (string) $request['BACKURL'] != ''
+)
 {
 	$cancelUrl = $request['BACKURL'];
 }
@@ -319,8 +328,11 @@ $allAdditionalChosen = true;
 $hasAdditionalUnchosenFilled = false;
 $additionalBlocks = array();
 if(
-	is_array($arResult['COMPONENT_DATA']['STATE']['BLOCKS'])
-	&& is_array($arResult['DATA']['TASK']) && !empty($arResult['DATA']['TASK'])
+	isset($arResult['COMPONENT_DATA']['STATE']['BLOCKS'])
+	&& is_array($arResult['COMPONENT_DATA']['STATE']['BLOCKS'])
+	&& isset($arResult['DATA']['TASK'])
+	&& is_array($arResult['DATA']['TASK'])
+	&& !empty($arResult['DATA']['TASK'])
 )
 {
 	$baseBlocks = array(
@@ -389,7 +401,7 @@ if(
                 }
                 if($block == 'TIMEMAN')
                 {
-                    $filled = intval($taskData['TIME_ESTIMATE']) > 0;
+                    $filled = intval($taskData['TIME_ESTIMATE'] ?? null) > 0;
                 }
 			}
 		}
@@ -428,14 +440,33 @@ $arResult['TEMPLATE_DATA']['ADDITIONAL_BLOCKS'] = $additionalBlocks;
 $arResult['TEMPLATE_DATA']['ADDITIONAL_OPENED'] = false; //$hasAdditionalUnchosenFilled;
 $arResult['TEMPLATE_DATA']['ADDITIONAL_DISPLAYED'] = !$allAdditionalChosen;
 
-$arResult['TEMPLATE_DATA']['FOOTER_PINNED'] = $arParams['ENABLE_FOOTER_UNPIN'] && $arResult['COMPONENT_DATA']['STATE']['FLAGS']['FORM_FOOTER_PIN'];
-$arResult['TEMPLATE_DATA']['SHOW_SUCCESS_MESSAGE'] = $arResult['COMPONENT_DATA']['ACTION']['SUCCESS'] && !$arParams['REDIRECT_ON_SUCCESS'] && !$arResult['COMPONENT_DATA']['EVENT_OPTIONS']['STAY_AT_PAGE'];
+$arResult['TEMPLATE_DATA']['FOOTER_PINNED'] =
+	isset($arParams['ENABLE_FOOTER_UNPIN'])
+	&& $arParams['ENABLE_FOOTER_UNPIN']
+	&& isset($arResult['COMPONENT_DATA']['STATE']['FLAGS']['FORM_FOOTER_PIN'])
+	&& $arResult['COMPONENT_DATA']['STATE']['FLAGS']['FORM_FOOTER_PIN'];
+$arResult['TEMPLATE_DATA']['SHOW_SUCCESS_MESSAGE'] =
+	isset($arResult['COMPONENT_DATA']['ACTION']['SUCCESS'])
+	&& $arResult['COMPONENT_DATA']['ACTION']['SUCCESS']
+	&&
+	(
+		!isset($arParams['REDIRECT_ON_SUCCESS'])
+		|| !$arParams['REDIRECT_ON_SUCCESS']
+	)
+	&&
+	(
+		!isset($arResult['COMPONENT_DATA']['EVENT_OPTIONS']['STAY_AT_PAGE'])
+		|| !$arResult['COMPONENT_DATA']['EVENT_OPTIONS']['STAY_AT_PAGE']
+	);
 
 // etc
-$arResult['TEMPLATE_DATA']['TAG_STRING'] = \Bitrix\Tasks\UI\Task\Tag::formatTagString($arResult['DATA']['TASK']['SE_TAG']);
+$arResult['TEMPLATE_DATA']['TAG_STRING'] = \Bitrix\Tasks\UI\Task\Tag::formatTagString($arResult['DATA']['TASK']['SE_TAG'] ?? '');
 
 // todo: remove this when tasksRenderJSON() removed
-if(Type::isIterable($arResult['DATA']['EVENT_TASK']))
+if(
+	isset($arResult['DATA']['EVENT_TASK'])
+	&& Type::isIterable($arResult['DATA']['EVENT_TASK'])
+)
 {
 	// It seems DESCRIPTION is not used anywhere, so to avoid security problems, simply dont pass DESCRIPTION.
 	unset($arResult['DATA']['EVENT_TASK']['DESCRIPTION']);
@@ -446,7 +477,7 @@ if(Type::isIterable($arResult['DATA']['EVENT_TASK']))
 // checklist pre-format
 // todo: remove this when use object with array access instead of ['ITEMS']['DATA']
 $code = \Bitrix\Tasks\Manager\Task\CheckList::getCode(true);
-if(Type::isIterable($arResult['DATA']['TASK'][$code]))
+if(Type::isIterable($arResult['DATA']['TASK'][$code] ?? null))
 {
 	foreach($arResult['DATA']['TASK'][$code] as &$item)
 	{
@@ -469,7 +500,10 @@ $arResult['DATA']['CURRENT_TASKS'] = [
 ];
 $relatedTasks = $arResult['DATA']['RELATED_TASK'];
 
-if (is_array($arResult['DATA']['TASK']['SE_RELATEDTASK']))
+if (
+	isset($arResult['DATA']['TASK']['SE_RELATEDTASK'])
+	&& is_array($arResult['DATA']['TASK']['SE_RELATEDTASK'])
+)
 {
 	foreach ($arResult['DATA']['TASK']['SE_RELATEDTASK'] as $item)
 	{
@@ -487,7 +521,10 @@ if (is_array($arResult['DATA']['TASK']['SE_RELATEDTASK']))
 	}
 }
 
-if (is_array($arResult['DATA']['TASK']['SE_PROJECTDEPENDENCE']))
+if (
+	isset($arResult['DATA']['TASK']['SE_PROJECTDEPENDENCE'])
+	&& is_array($arResult['DATA']['TASK']['SE_PROJECTDEPENDENCE'])
+)
 {
 	foreach ($arResult['DATA']['TASK']['SE_PROJECTDEPENDENCE'] as $item)
 	{
@@ -500,8 +537,12 @@ if (is_array($arResult['DATA']['TASK']['SE_PROJECTDEPENDENCE']))
 	}
 }
 
-$parentTaskId = $arResult['DATA']['TASK']['PARENT_ID'];
-if ($parentTaskId && $relatedTasks[$parentTaskId])
+$parentTaskId = $arResult['DATA']['TASK']['PARENT_ID'] ?? 0;
+if (
+	$parentTaskId
+	&& isset($relatedTasks[$parentTaskId])
+	&& $relatedTasks[$parentTaskId]
+)
 {
 	$arResult['DATA']['CURRENT_TASKS']['PARENT'][] = $relatedTasks[$parentTaskId];
 }
@@ -509,10 +550,14 @@ if ($parentTaskId && $relatedTasks[$parentTaskId])
 $validParams = ParameterTable::getLegacyMap();
 
 $params = array();
-if(Bitrix\Tasks\Util\Type::isIterable($taskData['SE_PARAMETER']))
+if(Bitrix\Tasks\Util\Type::isIterable($taskData['SE_PARAMETER'] ?? null))
 {
 	foreach($taskData['SE_PARAMETER'] as $param)
 	{
+		if (!isset($param['CODE']))
+		{
+			continue;
+		}
 		$params[$param['CODE']] = $param;
 	}
 }
@@ -520,10 +565,13 @@ if(Bitrix\Tasks\Util\Type::isIterable($taskData['SE_PARAMETER']))
 foreach ($validParams as $propCode => $property)
 {
 	$params[$propCode]['TITLE'] = Loc::getMessage('TASKS_TASK_COMPONENT_TEMPLATE_PARAMETER_' . $property);
-	$params[$propCode]['HINT'] = Loc::getMessage('TASKS_TASK_COMPONENT_TEMPLATE_PARAMETER_HINT_' . $property);
+	$params[$propCode]['HINT'] = Loc::getMessage('TASKS_TASK_COMPONENT_TEMPLATE_PARAMETER_HINT_' . $property . 'a') ?? Loc::getMessage('TASKS_TASK_COMPONENT_TEMPLATE_PARAMETER_HINT_' . $property);
 	$params[$propCode]['CODE'] = $propCode;
 
-	if(!intval($params[$propCode]['CODE']))
+	if (
+		!isset($params[$propCode]['CODE'])
+		|| !intval($params[$propCode]['CODE'])
+	)
 	{
 		$params[$propCode]['CODE'] = rand(100, 999) . rand(100, 999);
 	}
@@ -543,7 +591,11 @@ foreach ($validParams as $propCode => $property)
 }
 
 $project = array();
-if($taskData['SE_PROJECT'] && count($taskData['SE_PROJECT']))
+if(
+	isset($taskData['SE_PROJECT'])
+	&& $taskData['SE_PROJECT']
+	&& count($taskData['SE_PROJECT'])
+)
 {
 	$project = $taskData['SE_PROJECT'];
 	$project['ENTITY_TYPE'] = \Bitrix\Tasks\Integration\SocialNetwork::getGroupEntityPrefix();

@@ -1,6 +1,8 @@
 <?php
+
 return [
 	'extensions' => [
+		'layout/polyfill',
 		'layout/ui/kanban/toolbar',
 		'layout/ui/money',
 		'haptics',
@@ -11,6 +13,10 @@ return [
 		'crm:state-storage',
 	],
 	'bundle' => [
-		'./deal',
+		'./entities/base',
+		'./entities/deal',
+		'./entities/lead',
+		'./entities/smart-invoice',
+		'./entities/quote',
 	],
 ];

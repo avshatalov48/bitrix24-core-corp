@@ -2,6 +2,7 @@
 namespace Bitrix\Tasks\Grid\Task\Row;
 
 use Bitrix\Main;
+use Bitrix\Tasks\Integration\CRM\Fields\Mapper;
 
 /**
  * Class Content
@@ -100,13 +101,7 @@ class Content
 
 		if (Main\Loader::includeModule('crm'))
 		{
-			$crmFieldsMap = [
-				'UF_CRM_TASK_LEAD' => 'L',
-				'UF_CRM_TASK_CONTACT' => 'C',
-				'UF_CRM_TASK_COMPANY' => 'CO',
-				'UF_CRM_TASK_DEAL' => 'D',
-			];
-			foreach ($crmFieldsMap as $key => $fieldId)
+			foreach (Mapper::CRM_FIELDS as $key => $fieldId)
 			{
 				$this->parameters['CRM_FIELD_ID'] = $fieldId;
 				$resultRow[$key] = (new Content\CrmField($this->rowData, $this->parameters, $key))->prepare();

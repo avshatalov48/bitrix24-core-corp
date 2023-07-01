@@ -15,6 +15,7 @@ use Bitrix\Crm\Controller\Entity;
 use Bitrix\Crm\Conversion\EntityConversionWizard;
 use Bitrix\Crm\Currency;
 use Bitrix\Crm\Entity\EntityEditor;
+use Bitrix\Crm\Entity\FieldContentType;
 use Bitrix\Crm\Entity\Traits\VisibilityConfig;
 use Bitrix\Crm\EntityRequisite;
 use Bitrix\Crm\EO_Status_Collection;
@@ -26,9 +27,11 @@ use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Order;
 use Bitrix\Crm\Requisite\EntityLink;
 use Bitrix\Crm\Security\EntityAuthorization;
+use Bitrix\Crm\Security\PermissionToken;
 use Bitrix\Crm\StatusTable;
 use Bitrix\Crm\UI\EntitySelector;
 use Bitrix\Currency\CurrencyTable;
+use Bitrix\Main\Error;
 use Bitrix\Main\InvalidOperationException;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
@@ -37,6 +40,7 @@ use Bitrix\Main\Result;
 use Bitrix\Main\UserField\Dispatcher;
 use Bitrix\Main\Web\Json;
 use CCrmComponentHelper;
+use CCrmOwnerType;
 
 class EditorAdapter
 {
@@ -87,10 +91,21 @@ class EditorAdapter
 	protected $srcItemProductsEntityData;
 	protected $context = [];
 
+	private bool $isSearchHistoryEnabled = true;
+
+	private Item $item;
+
 	public function __construct(Field\Collection $fieldsCollection, array $dependantFieldsMap = [])
 	{
 		$this->fieldsCollection = $fieldsCollection;
 		$this->dependantFieldsMap = $dependantFieldsMap;
+	}
+
+	public function enableSearchHistory(bool $state): EditorAdapter
+	{
+		$this->isSearchHistoryEnabled = $state;
+
+		return $this;
 	}
 
 	/**
@@ -129,6 +144,8 @@ class EditorAdapter
 	 */
 	public function processByItem(Item $item, EO_Status_Collection $stages, array $componentParameters = []): self
 	{
+		$this->item = $item;
+
 		$mode = (int)($componentParameters['mode'] ?? ComponentMode::VIEW);
 		$componentName = (string)($componentParameters['componentName'] ?? '');
 		$fileHandlerUrl = (string)($componentParameters['fileHandlerUrl'] ?? '');
@@ -234,6 +251,12 @@ class EditorAdapter
 			);
 		}
 
+		$this->entityData = FieldContentType::prepareFieldsFromDetailsToView(
+			$item->getEntityTypeId(),
+			$item->getId(),
+			$this->entityData,
+		);
+
 		if (isset($this->context['PARENT_TYPE_ID']) && $item->isNew())
 		{
 			$parentFieldName = self::getParentFieldName($this->context['PARENT_TYPE_ID']);
@@ -317,7 +340,7 @@ class EditorAdapter
 		if(isset($srcItemData['CONTACT_IDS']))
 		{
 			$destinationItem->bindContacts(
-				EntityBinding::prepareEntityBindings(\CCrmOwnerType::Contact, (array)$srcItemData['CONTACT_IDS'])
+				EntityBinding::prepareEntityBindings(CCrmOwnerType::Contact, (array)$srcItemData['CONTACT_IDS'])
 			);
 		}
 		// CONTACT_BINDINGS are prioritized over CONTACT_IDS. if they're set, override contacts from CONTACT_IDS
@@ -501,12 +524,24 @@ class EditorAdapter
 			'mergeable' => false,
 		];
 
-		if ($type === 'text')
+		$isFlexibleContentType = $info['SETTINGS']['isFlexibleContentType'] ?? false;
+		if ($isFlexibleContentType === true)
 		{
-			$field['data'] = ['lineCount' => 6];
+			$field =
+				FieldContentType::compileFieldDescriptionForDetails(
+					$this->item->getEntityTypeId(),
+					$this->item->getId(),
+					$name,
+				)
+				+ $field
+			;
 		}
 
-		if($type === Field::TYPE_USER)
+		if ($type === Field::TYPE_TEXT)
+		{
+			$field['data']['lineCount'] = 6;
+		}
+		elseif($type === Field::TYPE_USER)
 		{
 			$field['data'] = [
 				'enableEditInView' => $editable,
@@ -552,7 +587,39 @@ class EditorAdapter
 				$enableEmbeddedEditor = (isset($info['SETTINGS']['isEmbeddedEditorEnabled']) && $info['SETTINGS']['isEmbeddedEditorEnabled'] === true);
 				if ($enableEmbeddedEditor)
 				{
-					return static::getMyCompanyFieldWithEditor();
+					$myCompanyFieldWithEditor = static::getMyCompanyFieldWithEditor();
+
+					$ownerEntityTypeId = $info['SETTINGS']['ownerEntityTypeId'] ?? null;
+					$ownerEntityId = is_array($this->entityData) ? ($this->entityData['ID'] ?? null) : null;
+					if (!is_null($ownerEntityTypeId))
+					{
+						$ownerEntityTypeId = (int)$ownerEntityTypeId;
+					}
+					if (!is_null($ownerEntityId))
+					{
+						$ownerEntityId = (int)$ownerEntityId;
+					}
+
+					if ($ownerEntityTypeId)
+					{
+						$myCompanyFieldWithEditor['data']['ownerEntityTypeId'] = $ownerEntityTypeId;
+						$myCompanyFieldWithEditor['data']['ownerEntityId'] = $ownerEntityId;
+
+						if ($info['SETTINGS']['enableCreationByOwnerEntity'] ?? false)
+						{
+							$myCompanyFieldWithEditor['data']['enableCreation'] =
+								Container::getInstance()->getUserPermissions()->getMyCompanyPermissions()->canAddByOwnerEntity($ownerEntityTypeId);
+						}
+					}
+					if (($info['SETTINGS']['usePermissionToken'] ?? false) && $ownerEntityTypeId)
+					{
+						$myCompanyFieldWithEditor['data']['permissionToken'] =  PermissionToken::createEditMyCompanyRequisitesToken(
+							$ownerEntityTypeId,
+							$ownerEntityId
+						);
+					}
+
+					return $myCompanyFieldWithEditor;
 				}
 				$myCompaniesCount = CompanyTable::getCount([
 					'=IS_MY_COMPANY' => 'Y',
@@ -563,8 +630,8 @@ class EditorAdapter
 				}
 			}
 			$field['data'] = [
-				'typeId' => \CCrmOwnerType::Company,
-				'entityTypeName' => \CCrmOwnerType::CompanyName,
+				'typeId' => CCrmOwnerType::Company,
+				'entityTypeName' => CCrmOwnerType::CompanyName,
 				'enableMyCompanyOnly' => $enableMyCompanyOnly,
 				'withRequisites' => $enableMyCompanyOnly,
 				'info' => $name . '_INFO',
@@ -582,8 +649,8 @@ class EditorAdapter
 		elseif ($type === Field::TYPE_CRM_DEAL)
 		{
 			$field['data'] = [
-				'typeId' => \CCrmOwnerType::Deal,
-				'entityTypeName' => \CCrmOwnerType::DealName,
+				'typeId' => CCrmOwnerType::Deal,
+				'entityTypeName' => CCrmOwnerType::DealName,
 				'info' => $name . '_INFO',
 				'context' => $entitySelectorContext,
 			];
@@ -591,8 +658,8 @@ class EditorAdapter
 		elseif ($type === Field::TYPE_CRM_LEAD)
 		{
 			$field['data'] = [
-				'typeId' => \CCrmOwnerType::Lead,
-				'entityTypeName' => \CCrmOwnerType::LeadName,
+				'typeId' => CCrmOwnerType::Lead,
+				'entityTypeName' => CCrmOwnerType::LeadName,
 				'info' => $name . '_INFO',
 				'context' => $entitySelectorContext,
 			];
@@ -784,20 +851,6 @@ class EditorAdapter
 		// TODO: need to detect category ID when will implement real category params feature
 		$categoryParams = CCrmComponentHelper::getEntityClientFieldCategoryParams((int)$options['entityTypeId']);
 
-		$clientEditorFieldsParams = [
-			\CCrmOwnerType::ContactName => [
-				'REQUISITES' => \CCrmComponentHelper::getFieldInfoData(\CCrmOwnerType::Contact, 'requisite'),
-			],
-			\CCrmOwnerType::CompanyName => [
-				'REQUISITES' => \CCrmComponentHelper::getFieldInfoData(\CCrmOwnerType::Company, 'requisite'),
-			],
-		];
-		if (Loader::includeModule('location'))
-		{
-			$clientEditorFieldsParams[\CCrmOwnerType::ContactName]['ADDRESS'] = \CCrmComponentHelper::getFieldInfoData(\CCrmOwnerType::Contact, 'requisite_address');
-			$clientEditorFieldsParams[\CCrmOwnerType::CompanyName]['ADDRESS'] = \CCrmComponentHelper::getFieldInfoData(\CCrmOwnerType::Company, 'requisite_address');
-		}
-
 		return [
 			'name' => $fieldName,
 			'title' => $title,
@@ -809,14 +862,14 @@ class EditorAdapter
 					[
 						'name' => 'COMPANY_ID',
 						'type' => 'company',
-						'entityTypeName' => \CCrmOwnerType::CompanyName,
-						'tagName' => \CCrmOwnerType::CompanyName,
+						'entityTypeName' => CCrmOwnerType::CompanyName,
+						'tagName' => CCrmOwnerType::CompanyName,
 					],
 					[
 						'name' => 'CONTACT_IDS',
 						'type' => 'multiple_contact',
-						'entityTypeName' => \CCrmOwnerType::ContactName,
-						'tagName' => \CCrmOwnerType::ContactName,
+						'entityTypeName' => CCrmOwnerType::ContactName,
+						'tagName' => CCrmOwnerType::ContactName,
 					],
 				],
 				'categoryParams' => $categoryParams,
@@ -826,20 +879,27 @@ class EditorAdapter
 				'lastContactInfos' => static::LAST_CONTACT_INFOS,
 				'loaders' => [
 					'primary' => [
-						\CCrmOwnerType::CompanyName => [
+						CCrmOwnerType::CompanyName => [
 							'action' => 'GET_CLIENT_INFO',
 							'url' => '/bitrix/components/bitrix/crm.company.show/ajax.php?'.bitrix_sessid_get(),
 						],
-						\CCrmOwnerType::ContactName => [
+						CCrmOwnerType::ContactName => [
 							'action' => 'GET_CLIENT_INFO',
 							'url' => '/bitrix/components/bitrix/crm.contact.show/ajax.php?'.bitrix_sessid_get(),
 						],
 					],
 				],
-				'clientEditorFieldsParams' => $clientEditorFieldsParams,
+				'clientEditorFieldsParams' =>
+					CCrmComponentHelper::prepareClientEditorFieldsParams(
+						['categoryParams' => $categoryParams]
+					)
+				,
 				'useExternalRequisiteBinding' => true,
 				'enableRequisiteSelection' => true,
 				'enableTooltip' => $enableTooltip,
+				'duplicateControl' => CCrmComponentHelper::prepareClientEditorDuplicateControlParams(
+					['entityTypes' => [CCrmOwnerType::Company, CCrmOwnerType::Contact]]
+				),
 			],
 		];
 	}
@@ -861,12 +921,12 @@ class EditorAdapter
 		foreach($customParentRelations as $customParentRelation)
 		{
 			$parentEntityTypeId = $customParentRelation->getParentEntityTypeId();
-			if (!\CCrmOwnerType::IsDefined($parentEntityTypeId))
+			if (!CCrmOwnerType::IsDefined($parentEntityTypeId))
 			{
 				continue;
 			}
 
-			$entityDescription = \CCrmOwnerType::GetDescription($parentEntityTypeId);
+			$entityDescription = CCrmOwnerType::GetDescription($parentEntityTypeId);
 
 			$parentFields[] = static::getParentField(
 				$entityDescription,
@@ -893,7 +953,7 @@ class EditorAdapter
 	): array
 	{
 		$fieldName = self::getParentFieldName($parentEntityTypeId);
-		$entityTypeName = \CCrmOwnerType::ResolveName($parentEntityTypeId);
+		$entityTypeName = CCrmOwnerType::ResolveName($parentEntityTypeId);
 
 		return [
 			'name' => $fieldName,
@@ -1189,7 +1249,7 @@ class EditorAdapter
 	{
 		$entityUserFields = [];
 		$enumerationFields = [];
-		$userFieldEntityID = \CCrmOwnerType::ResolveUserFieldEntityID($entityTypeId);
+		$userFieldEntityID = CCrmOwnerType::ResolveUserFieldEntityID($entityTypeId);
 		foreach($userFields as $userField)
 		{
 			$fieldName = $userField['FIELD_NAME'];
@@ -1363,16 +1423,35 @@ class EditorAdapter
 		{
 			if ($fieldData['type'] === 'user')
 			{
-				$fieldName = $fieldData['name'];
-				$userId = (int)$entityData[$fieldName];
+				$fieldName = $fieldData['name'] ?? '';
+				if (
+					$fieldName === Item::FIELD_NAME_ASSIGNED
+					&& empty($entityData[$fieldName])
+					&& (
+						!isset($entityData[Item::FIELD_NAME_ID])
+						|| (int)$entityData[Item::FIELD_NAME_ID] <= 0
+					)
+				)
+				{
+					$entityData[$fieldName] = Container::getInstance()->getContext()->getUserId();
+				}
+
+				$userId = (int)($entityData[$fieldName] ?? 0);
 				$userIdToFieldNamesMap[$userId][] = $fieldName;
 			}
 			elseif ($fieldData['type'] === 'multiple_user')
 			{
 				$infosKey = $fieldData['data']['infos'];
 				$userIdsKey = $fieldData['data']['map']['data'];
+
+				$userIds = $entityData[$userIdsKey] ?? [];
+				if (empty($userIds) && $fieldData['name'] === Item::FIELD_NAME_ASSIGNED)
+				{
+					$userIds = [Container::getInstance()->getContext()->getUserId()];
+				}
+
 				// 'fieldname_info' => [1, 2, 3, 4]
-				$multipleFields[$infosKey] = $entityData[$userIdsKey];
+				$multipleFields[$infosKey] = $userIds;
 			}
 		}
 
@@ -1525,14 +1604,21 @@ class EditorAdapter
 	public function prepareCrmEntityData(array $field, int $entityId, array $entityRequisiteData = null): ?array
 	{
 		$entityTypeId = $field['data']['typeId'] ?? null;
-		if (!\CCrmOwnerType::IsEntity($entityTypeId))
+		if (!CCrmOwnerType::IsEntity($entityTypeId))
 		{
 			return null;
 		}
 
-		$entityTypeName = $field['data']['entityTypeName'] ?? \CCrmOwnerType::ResolveName($entityTypeId);
+		$entityTypeName = $field['data']['entityTypeName'] ?? CCrmOwnerType::ResolveName($entityTypeId);
 
-		$canRead = EntityAuthorization::checkReadPermission($entityTypeId, $entityId);
+		if ($entityTypeId === \CCrmOwnerType::Company && \CCrmCompany::isMyCompany($entityId))
+		{
+			$canRead = Container::getInstance()->getUserPermissions()->getMyCompanyPermissions()->canReadBaseFields($entityId);
+		}
+		else
+		{
+			$canRead = EntityAuthorization::checkReadPermission($entityTypeId, $entityId);
+		}
 
 		$requireEditRequisiteData = (isset($field['data']['enableMyCompanyOnly']) && $field['data']['enableMyCompanyOnly'] === true);
 		if ($requireEditRequisiteData && $entityRequisiteData === null)
@@ -1540,18 +1626,28 @@ class EditorAdapter
 			$entityRequisiteData = $this->getMyCompanyRequisitesEntityData();
 		}
 
+		$entityInfoParams = [
+			'ENTITY_EDITOR_FORMAT' => true,
+			'IS_HIDDEN' => !$canRead,
+			'REQUIRE_REQUISITE_DATA' => true,
+			'REQUIRE_MULTIFIELDS' => true,
+			'NAME_TEMPLATE' => PersonNameFormatter::getFormat(),
+			'NORMALIZE_MULTIFIELDS' => true,
+			'REQUIRE_EDIT_REQUISITE_DATA' => $requireEditRequisiteData,
+		];
+		if (
+			$field['data']['ownerEntityTypeId'] ?? null
+			&& $field['data']['ownerEntityId'] ?? null
+		)
+		{
+			$entityInfoParams['ownerEntityTypeId'] = (int)$field['data']['ownerEntityTypeId'];
+			$entityInfoParams['ownerEntityId'] = (int)$field['data']['ownerEntityId'];
+		}
+
 		$data = \CCrmEntitySelectorHelper::PrepareEntityInfo(
 			$entityTypeName,
 			$entityId,
-			[
-				'ENTITY_EDITOR_FORMAT' => true,
-				'IS_HIDDEN' => !$canRead,
-				'REQUIRE_REQUISITE_DATA' => true,
-				'REQUIRE_MULTIFIELDS' => true,
-				'NAME_TEMPLATE' => PersonNameFormatter::getFormat(),
-				'NORMALIZE_MULTIFIELDS' => true,
-				'REQUIRE_EDIT_REQUISITE_DATA' => $requireEditRequisiteData,
-			]
+			$entityInfoParams
 		);
 
 		//in data selected always default requisites, we have to actualize it manually
@@ -1769,7 +1865,7 @@ class EditorAdapter
 		if ($item->getCompanyId() > 0)
 		{
 			$clientEntityData[static::FIELD_CLIENT . '_INFO']['COMPANY_DATA'][] = $this->generateClientInfo(
-				\CCrmOwnerType::Company,
+				CCrmOwnerType::Company,
 				$item->getCompanyId()
 			);
 		}
@@ -1782,7 +1878,7 @@ class EditorAdapter
 			{
 				// Load full edit requisites only for the first Contact (performance optimization)
 				$clientEntityData[static::FIELD_CLIENT . '_INFO']['CONTACT_DATA'][] = $this->generateClientInfo(
-					\CCrmOwnerType::Contact,
+					CCrmOwnerType::Contact,
 					$contact->getId(),
 					$isFirstContact
 				);
@@ -1790,10 +1886,16 @@ class EditorAdapter
 			}
 		}
 
-		$lastClientInfoMap = [static::LAST_COMPANY_INFOS => \CCrmOwnerType::Company, static::LAST_CONTACT_INFOS => \CCrmOwnerType::Contact];
-		foreach ($lastClientInfoMap as $arrayKey => $entityTypeId)
+		if ($this->isSearchHistoryEnabled)
 		{
-			$clientEntityData[$arrayKey] = $this->getRecentlyUsedItems($entityTypeId, $componentName);
+			$lastClientInfoMap = [
+				static::LAST_COMPANY_INFOS => CCrmOwnerType::Company,
+				static::LAST_CONTACT_INFOS => CCrmOwnerType::Contact,
+			];
+			foreach ($lastClientInfoMap as $arrayKey => $entityTypeId)
+			{
+				$clientEntityData[$arrayKey] = $this->getRecentlyUsedItems($entityTypeId, $componentName, $item->getEntityTypeId());
+			}
 		}
 
 		return $clientEntityData;
@@ -1829,7 +1931,7 @@ class EditorAdapter
 		$canReadClient = EntityAuthorization::checkReadPermission($clientEntityTypeId, $clientEntityId);
 
 		$clientInfo = \CCrmEntitySelectorHelper::PrepareEntityInfo(
-			\CCrmOwnerType::ResolveName($clientEntityTypeId),
+			CCrmOwnerType::ResolveName($clientEntityTypeId),
 			$clientEntityId,
 			[
 				'ENTITY_EDITOR_FORMAT' => true,
@@ -1851,21 +1953,29 @@ class EditorAdapter
 		return $clientInfo;
 	}
 
-	protected function getRecentlyUsedItems(int $entityTypeId, string $componentName): array
+	protected function getRecentlyUsedItems(int $entityTypeId, string $componentName, ?int $parentEntityTypeId): array
 	{
 		// TODO: need to detect category ID when will implement real category params feature
-		$categoryParams = CCrmComponentHelper::getEntityClientFieldCategoryParams($entityTypeId);
+		$categoryParams = CCrmComponentHelper::getEntityClientFieldCategoryParams($entityTypeId, 0, $parentEntityTypeId);
 
 		return SearchAction::prepareSearchResultsJson(
 			Entity::getRecentlyUsedItems(
 				$componentName,
-				mb_strtolower(\CCrmOwnerType::ResolveName($entityTypeId)),
+				mb_strtolower(CCrmOwnerType::ResolveName($entityTypeId)),
 				[
 					'EXPAND_ENTITY_TYPE_ID' => $entityTypeId,
 					'EXPAND_CATEGORY_ID' => $categoryParams[$entityTypeId]['categoryId'],
 				]
-			)
+			),
+			$parentEntityTypeId ? $this->getRecentlyUsedItemsSearchOptions($parentEntityTypeId, $entityTypeId) : []
 		);
+	}
+
+	protected function getRecentlyUsedItemsSearchOptions(int $parentEntityTypeId, int $entityTypeId): array
+	{
+		$clientCategoryParams = \CCrmComponentHelper::getEntityClientFieldCategoryParams($parentEntityTypeId);
+
+		return $clientCategoryParams[$entityTypeId] ?? [];
 	}
 
 	protected function getApplication(): \CMain
@@ -2016,13 +2126,13 @@ class EditorAdapter
 		$resultData[Item::FIELD_NAME_COMPANY_ID] = 0;
 		if ($companyData)
 		{
-			$entityResult = $this->saveClientEntity(\CCrmOwnerType::Company, $companyData);
+			$entityResult = $this->saveClientEntity(CCrmOwnerType::Company, $companyData);
 			$entityResultData = $entityResult->getData();
 			$companyId = (int)($entityResultData['id'] ?? 0);
 			if ($companyId > 0)
 			{
 				$resultData[Item::FIELD_NAME_COMPANY_ID] = $companyId;
-				$processedEntities[] = new ItemIdentifier(\CCrmOwnerType::Company, $companyId);
+				$processedEntities[] = new ItemIdentifier(CCrmOwnerType::Company, $companyId);
 
 				$requisiteBinding = $this->extractRequisiteBinding(
 					$companyData,
@@ -2041,7 +2151,7 @@ class EditorAdapter
 		{
 			foreach ($contactData as $contactIndex => &$contact)
 			{
-				$entityResult = $this->saveClientEntity(\CCrmOwnerType::Contact, $contact);
+				$entityResult = $this->saveClientEntity(CCrmOwnerType::Contact, $contact);
 				$entityResultData = $entityResult->getData();
 				$contactId = (int)($entityResultData['id'] ?? 0);
 				if ($contactId > 0)
@@ -2059,7 +2169,7 @@ class EditorAdapter
 					}
 
 					$contact['id'] = $contactId;
-					$processedEntities[] = new ItemIdentifier(\CCrmOwnerType::Contact, $contact['id']);
+					$processedEntities[] = new ItemIdentifier(CCrmOwnerType::Contact, $contact['id']);
 					$contactIds[] = $contactId;
 				}
 			}
@@ -2073,7 +2183,7 @@ class EditorAdapter
 		return (new Result())->setData($resultData);
 	}
 
-	protected function saveClientEntity(int $entityTypeId, array $data): Result
+	protected function saveClientEntity(int $entityTypeId, array $data, bool $checkPermissions = true): Result
 	{
 		$result = new Result();
 
@@ -2084,6 +2194,7 @@ class EditorAdapter
 				$data,
 				[
 					'startWorkFlows' => true,
+					'checkPermissions' => $checkPermissions,
 				]
 			);
 		}
@@ -2099,6 +2210,7 @@ class EditorAdapter
 				$data,
 				[
 					'startWorkFlows' => true,
+					'checkPermissions' => $checkPermissions,
 				]
 			);
 		}
@@ -2263,7 +2375,7 @@ class EditorAdapter
 
 		$parentEntityTypeId = (int)$data[static::CONTEXT_PARENT_TYPE_ID];
 		$parentEntityId = (int)$data[static::CONTEXT_PARENT_ID];
-		if ($parentEntityId > 0 && \CCrmOwnerType::IsDefined($parentEntityTypeId))
+		if ($parentEntityId > 0 && CCrmOwnerType::IsDefined($parentEntityTypeId))
 		{
 			$parentFieldName = ParentFieldManager::getParentFieldName($parentEntityTypeId);
 			if (!array_key_exists($parentFieldName, $data))
@@ -2293,15 +2405,9 @@ class EditorAdapter
 		$showAlways = !isset($description['showAlways']) || (bool)$description['showAlways'];
 		$enableTooltip = !isset($description['enableTooltip']) || (bool)$description['enableTooltip'];
 
-		$clientEditorFieldsParams = [
-			\CCrmOwnerType::CompanyName => [
-				'REQUISITES' => \CCrmComponentHelper::getFieldInfoData(\CCrmOwnerType::Company, 'requisite'),
-			],
-		];
-		if (Loader::includeModule('location'))
-		{
-			$clientEditorFieldsParams[\CCrmOwnerType::CompanyName]['ADDRESS'] = \CCrmComponentHelper::getFieldInfoData(\CCrmOwnerType::Company, 'requisite_address');
-		}
+		$clientEditorFieldsParams = CCrmComponentHelper::prepareClientEditorFieldsParams(
+			['entityTypes' => [CCrmOwnerType::Company]]
+		);
 
 		return [
 			'name' => $name,
@@ -2312,13 +2418,14 @@ class EditorAdapter
 			'data' => [
 				'enableMyCompanyOnly' => true,
 				'enableRequisiteSelection' => true,
-				'typeId' => \CCrmOwnerType::Company,
+				'enableCreation' => Container::getInstance()->getUserPermissions()->getMyCompanyPermissions()->canAdd(),
+				'typeId' => CCrmOwnerType::Company,
 				'compound' => [
 					[
 						'name' => $name,
 						'type' => 'company',
-						'entityTypeName' => \CCrmOwnerType::CompanyName,
-						'tagName' => \CCrmOwnerType::CompanyName,
+						'entityTypeName' => CCrmOwnerType::CompanyName,
+						'tagName' => CCrmOwnerType::CompanyName,
 					],
 				],
 				'map' => ['data' => $fieldDataName],
@@ -2329,7 +2436,7 @@ class EditorAdapter
 				'companyLegend' => $companyLegend,
 				'loaders' => [
 					'primary' => [
-						\CCrmOwnerType::CompanyName => [
+						CCrmOwnerType::CompanyName => [
 							'action' => 'GET_CLIENT_INFO',
 							'url' => '/bitrix/components/bitrix/crm.company.show/ajax.php?'.bitrix_sessid_get(),
 						],
@@ -2408,7 +2515,7 @@ class EditorAdapter
 		foreach ($collection as $company)
 		{
 			$myCompanyItems[] = [
-				'ENTITY_TYPE_ID' => \CCrmOwnerType::Company,
+				'ENTITY_TYPE_ID' => CCrmOwnerType::Company,
 				'ENTITY_ID' => $company->getId(),
 			];
 		}
@@ -2425,7 +2532,13 @@ class EditorAdapter
 	 */
 	public function saveMyCompanyDataFromEmbeddedEditor(Item $item, string $json): Result
 	{
-		$result = $this->getMyCompanyDataFromEmbeddedEditor($json);
+		$myCompanyPermissions = Container::getInstance()->getUserPermissions()->getMyCompanyPermissions();
+		$canEditMyCompany = $item->isNew()
+			? $myCompanyPermissions->canAddByOwnerEntity($item->getEntityTypeId())
+			: $myCompanyPermissions->canUpdateByOwnerEntity($item->getEntityTypeId(), $item->getId())
+		;
+
+		$result = $this->getMyCompanyDataFromEmbeddedEditor($json, !$canEditMyCompany); // check permissions only if no permissions to edit my company
 		if ($result->isSuccess())
 		{
 			$data = $result->getData();
@@ -2445,7 +2558,7 @@ class EditorAdapter
 	 * @param string $json
 	 * @return Result
 	 */
-	public function getMyCompanyDataFromEmbeddedEditor(string $json): Result
+	public function getMyCompanyDataFromEmbeddedEditor(string $json, bool $checkPermissions = true): Result
 	{
 		$result = new Result();
 
@@ -2460,7 +2573,7 @@ class EditorAdapter
 		if ($companyData)
 		{
 			$companyData['isMyCompany'] = true;
-			$entityResult = $this->saveClientEntity(\CCrmOwnerType::Company, $companyData);
+			$entityResult = $this->saveClientEntity(CCrmOwnerType::Company, $companyData, $checkPermissions);
 			$entityData = $entityResult->getData();
 			$companyId = (int)($entityData['id'] ?? 0);
 			if ($companyId > 0)

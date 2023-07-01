@@ -35,8 +35,8 @@ $prefix = mb_strtolower($guid);
 $containerID = "{$prefix}_container";
 $buttonContainerID = "{$prefix}_buttons";
 $createSectionButtonID = "{$prefix}_create_section";
-$configMenuButtonID = "{$prefix}_config_menu";
-$configIconID = "{$prefix}_config_icon";
+$configMenuButtonID = '';
+$configIconID = '';
 
 if($arResult['REST_USE'])
 {
@@ -46,14 +46,66 @@ if($arResult['REST_USE'])
 
 $htmlEditorConfigs = array();
 $htmlFieldNames = isset($arResult['ENTITY_HTML_FIELD_NAMES']) && is_array($arResult['ENTITY_HTML_FIELD_NAMES'])
-	? $arResult['ENTITY_HTML_FIELD_NAMES'] : array();
-foreach($htmlFieldNames as $fieldName)
+	? $arResult['ENTITY_HTML_FIELD_NAMES']
+	: []
+;
+$bbFieldNames = isset($arResult['ENTITY_BB_FIELD_NAMES']) && is_array($arResult['ENTITY_BB_FIELD_NAMES'])
+	? $arResult['ENTITY_BB_FIELD_NAMES']
+	: []
+;
+foreach ($htmlFieldNames as $fieldName)
 {
-	$fieldPrefix = $prefix.'_'.mb_strtolower($fieldName);
-	$htmlEditorConfigs[$fieldName] = array(
+	$fieldPrefix = $prefix.'_'.strtolower($fieldName);
+	$htmlEditorConfigs[$fieldName] = [
 		'id' => "{$fieldPrefix}_html_editor",
-		'containerId' => "{$fieldPrefix}_html_editor_container"
-	);
+		'containerId' => "{$fieldPrefix}_html_editor_container",
+		'bb' => false,
+		'controlsMap' => [
+			['id' => 'Bold',  'compact' => true, 'sort' => 10],
+			['id' => 'Italic',  'compact' => true, 'sort' => 20],
+			['id' => 'Underline',  'compact' => true, 'sort' => 30],
+			['id' => 'Strikeout',  'compact' => true, 'sort' => 40],
+			['id' => 'RemoveFormat',  'compact' => false, 'sort' => 50],
+			['id' => 'Color',  'compact' => false, 'sort' => 60],
+			['id' => 'FontSelector',  'compact' => false, 'sort' => 70],
+			['id' => 'FontSize',  'compact' => true, 'sort' => 80],
+			['separator' => true, 'compact' => false, 'sort' => 90],
+			['id' => 'OrderedList',  'compact' => true, 'sort' => 100],
+			['id' => 'UnorderedList',  'compact' => true, 'sort' => 110],
+			['id' => 'AlignList', 'compact' => false, 'sort' => 120],
+			['separator' => true, 'compact' => false, 'sort' => 130],
+			['id' => 'InsertLink',  'compact' => true, 'sort' => 140],
+			['id' => 'Code',  'compact' => false, 'sort' => 180],
+			['id' => 'Quote',  'compact' => false, 'sort' => 190],
+			['separator' => true, 'compact' => false, 'sort' => 200],
+			['id' => 'Fullscreen',  'compact' => true, 'sort' => 210],
+			['id' => 'More',  'compact' => true, 'sort' => 400]
+		],
+	];
+}
+foreach ($bbFieldNames as $fieldName)
+{
+	$fieldPrefix = $prefix.'_'.strtolower($fieldName);
+	$htmlEditorConfigs[$fieldName] = [
+		'id' => "{$fieldPrefix}_html_editor",
+		'containerId' => "{$fieldPrefix}_html_editor_container",
+		'bb' => true,
+		// only allow tags that are supported in mobile app
+		'controlsMap' => [
+			['id' => 'Bold',  'compact' => true, 'sort' => 10],
+			['id' => 'Italic',  'compact' => true, 'sort' => 20],
+			['id' => 'Underline',  'compact' => true, 'sort' => 30],
+			['id' => 'Strikeout',  'compact' => true, 'sort' => 40],
+			['id' => 'RemoveFormat',  'compact' => false, 'sort' => 50],
+			['separator' => true, 'compact' => false, 'sort' => 90],
+			['id' => 'OrderedList',  'compact' => true, 'sort' => 100],
+			['id' => 'UnorderedList',  'compact' => true, 'sort' => 110],
+			['separator' => true, 'compact' => false, 'sort' => 130],
+			['id' => 'InsertLink',  'compact' => true, 'sort' => 140],
+			['separator' => true, 'compact' => false, 'sort' => 200],
+			['id' => 'Fullscreen',  'compact' => true, 'sort' => 210],
+		],
+	];
 }
 
 if(Main\Loader::includeModule('socialnetwork'))
@@ -120,23 +172,28 @@ if($arResult['REST_USE'])
 	</span><?
 }
 
-$configIconClassName = $arResult['ENTITY_CONFIG_SCOPE'] === Crm\Entity\EntityEditorConfigScope::COMMON
-	? 'crm-entity-card-common'
-	: 'crm-entity-card-private';
+if ($arResult['ENABLE_CONFIG_CONTROL'])
+{
+	$configMenuButtonID = "{$prefix}_config_menu";
+	$configIconID = "{$prefix}_config_icon";
 
-$configCaption = Crm\Entity\EntityEditorConfigScope::getCaption(
-	$arResult['ENTITY_CONFIG_SCOPE'],
-	$arResult['CONFIG_ID'],
-	$arResult['USER_SCOPE_ID'],
-	($arParams['MODULE_ID'] ?? null)
-);
+	$configIconClassName = $arResult['ENTITY_CONFIG_SCOPE'] === Crm\Entity\EntityEditorConfigScope::COMMON
+		? 'crm-entity-card-common'
+		: 'crm-entity-card-private';
 
+	$configCaption = Crm\Entity\EntityEditorConfigScope::getCaption(
+		$arResult['ENTITY_CONFIG_SCOPE'],
+		$arResult['CONFIG_ID'],
+		$arResult['USER_SCOPE_ID'],
+		($arParams['MODULE_ID'] ?? null)
+	);
 	?><span id="<?=htmlspecialcharsbx($configIconID)?>" class="<?=$configIconClassName?>" title="<?=$configCaption?>">
 	</span><?
-
 	?><span id="<?=htmlspecialcharsbx($configMenuButtonID)?>" class="crm-entity-settings-link">
 		<?=$configCaption?>
-	</span>
+	</span><?php
+}
+?>
 </div><?
 if(!empty($htmlEditorConfigs))
 {
@@ -159,7 +216,7 @@ if(!empty($htmlEditorConfigs))
 					'showNodeNavi' => false,
 					'autoResize' => true,
 					'autoResizeOffset' => 10,
-					'bbCode' => false,
+					'bbCode' => $htmlEditorConfig['bb'],
 					'saveOnBlur' => false,
 					'bAllowPhp' => false,
 					'lazyLoad' => true,
@@ -167,27 +224,7 @@ if(!empty($htmlEditorConfigs))
 					'setFocusAfterShow' => false,
 					'askBeforeUnloadPage' => false,
 					'useFileDialogs' => false,
-					'controlsMap' => array(
-						array('id' => 'Bold',  'compact' => true, 'sort' => 10),
-						array('id' => 'Italic',  'compact' => true, 'sort' => 20),
-						array('id' => 'Underline',  'compact' => true, 'sort' => 30),
-						array('id' => 'Strikeout',  'compact' => true, 'sort' => 40),
-						array('id' => 'RemoveFormat',  'compact' => false, 'sort' => 50),
-						array('id' => 'Color',  'compact' => false, 'sort' => 60),
-						array('id' => 'FontSelector',  'compact' => false, 'sort' => 70),
-						array('id' => 'FontSize',  'compact' => true, 'sort' => 80),
-						array('separator' => true, 'compact' => false, 'sort' => 90),
-						array('id' => 'OrderedList',  'compact' => true, 'sort' => 100),
-						array('id' => 'UnorderedList',  'compact' => true, 'sort' => 110),
-						array('id' => 'AlignList', 'compact' => false, 'sort' => 120),
-						array('separator' => true, 'compact' => false, 'sort' => 130),
-						array('id' => 'InsertLink',  'compact' => true, 'sort' => 140),
-						array('id' => 'Code',  'compact' => false, 'sort' => 180),
-						array('id' => 'Quote',  'compact' => false, 'sort' => 190),
-						array('separator' => true, 'compact' => false, 'sort' => 200),
-						array('id' => 'Fullscreen',  'compact' => true, 'sort' => 210),
-						array('id' => 'More',  'compact' => true, 'sort' => 400)
-					)
+					'controlsMap' => $htmlEditorConfig['controlsMap'],
 				)
 			);
 		?></div><?
@@ -527,7 +564,16 @@ if(!empty($htmlEditorConfigs))
 				entityEditTag: "<?=GetMessageJS('CRM_ENTITY_ED_EDIT_TAG')?>",
 				notFound: "<?=GetMessageJS('CRM_ENTITY_ED_NOT_FOUND')?>",
 				unnamed: "<?=CUtil::JSEscape(\CCrmContact::GetDefaultName())?>",
-				untitled: "<?=CUtil::JSEscape(\CCrmCompany::GetDefaultTitle())?>"
+				untitled: "<?=CUtil::JSEscape(\CCrmCompany::GetDefaultTitle())?>",
+				companyChangeButtonHint: "<?=GetMessageJS('CRM_ENTITY_ED_COMPANY_CHANGE_BUTTON_HINT')?>",
+				notifyContactToDeal: "<?=GetMessageJS('CRM_CLIENT_EDITOR_NOTIFY_CONTACT_TO_DEAL')?>",
+				notifyCompanyToDeal: "<?=GetMessageJS('CRM_CLIENT_EDITOR_NOTIFY_COMPANY_TO_DEAL')?>",
+				notifyContactToLead: "<?=GetMessageJS('CRM_CLIENT_EDITOR_NOTIFY_CONTACT_TO_LEAD')?>",
+				notifyCompanyToLead: "<?=GetMessageJS('CRM_CLIENT_EDITOR_NOTIFY_COMPANY_TO_LEAD')?>",
+				notifyContactToSmartInvoice: "<?=GetMessageJS('CRM_CLIENT_EDITOR_NOTIFY_CONTACT_TO_INVOICE')?>",
+				notifyCompanyToSmartInvoice: "<?=GetMessageJS('CRM_CLIENT_EDITOR_NOTIFY_COMPANY_TO_INVOICE')?>",
+				notifyContactToCompany: "<?=GetMessageJS('CRM_CLIENT_EDITOR_NOTIFY_CONTACT_TO_COMPANY')?>",
+				notifyCompanyToContact: "<?=GetMessageJS('CRM_CLIENT_EDITOR_NOTIFY_COMPANY_TO_CONTACT')?>",
 			};
 
 			BX.Crm.ClientEditorCommunicationButton.messages =

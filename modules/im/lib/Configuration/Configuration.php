@@ -6,6 +6,8 @@ use Bitrix\Im\Model\OptionAccessTable;
 use Bitrix\Im\Model\OptionGroupTable;
 use Bitrix\Im\Model\OptionStateTable;
 use Bitrix\Im\Model\OptionUserTable;
+use Bitrix\Im\V2\Settings\CacheManager;
+use Bitrix\Im\V2\Settings\UserConfiguration;
 use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Data\Cache;
@@ -53,8 +55,11 @@ class Configuration
 		return self::$defaultPresetId;
 	}
 	/**
+	 *
 	 * Gets the current preset of the user
 	 *
+	 * @deprecated
+	 * @see \Bitrix\Im\V2\Settings\UserConfiguration
 	 * @param int $userId
 	 * @return array{notify: array, general: array}
 	 * @throws ArgumentException
@@ -89,6 +94,7 @@ class Configuration
 				'ID',
 				'NAME',
 				'SORT',
+				'USER_ID',
 				'NOTIFY_GROUP_ID' => 'OPTION_USER.NOTIFY_GROUP_ID',
 				'GENERAL_GROUP_ID' => 'OPTION_USER.GENERAL_GROUP_ID'
 			])
@@ -111,7 +117,24 @@ class Configuration
 
 		if (empty($rows))
 		{
-			return self::getDefaultUserPreset();
+			$presetId = self::restoreBindings($userId);
+
+			if ($presetId === self::getDefaultPresetId())
+			{
+				$userPreset =  self::getDefaultUserPreset();
+			}
+			else
+			{
+				$preset = self::getPreset($presetId);
+				$userPreset = [
+					'notify' => $preset,
+					'general' => $preset,
+				];
+			}
+
+			self::setUserPresetInCache($userId, $userPreset);
+
+			return $userPreset;
 		}
 
 		$notifyPreset = [];
@@ -124,6 +147,7 @@ class Configuration
 					'id' => $preset['ID'],
 					'name' => self::getPresetName($preset),
 					'sort' => $preset['SORT'],
+					'userId' => $preset['USER_ID'],
 					'settings' => Notification::getGroupSettings((int)$preset['ID'])
 				];
 			}
@@ -134,9 +158,20 @@ class Configuration
 					'id' => $preset['ID'],
 					'name' => self::getPresetName($preset),
 					'sort' => $preset['SORT'],
+					'userId' => $preset['USER_ID'],
 					'settings' => General::getGroupSettings((int)$preset['ID'])
 				];
 			}
+		}
+
+		//TODO extraordinary bag with not existing group from database
+		if (empty($notifyPreset))
+		{
+			$notifyPreset = self::getDefaultUserPreset()['notify'];
+		}
+		if (empty($generalPreset))
+		{
+			$generalPreset = self::getDefaultUserPreset()['general'];
 		}
 
 		$userPreset = [
@@ -164,7 +199,11 @@ class Configuration
 
 		$row =
 			OptionGroupTable::query()
-				->setSelect(['NAME', 'SORT'])
+				->setSelect([
+					'NAME',
+					'SORT',
+					'USER_ID'
+				])
 				->where('ID', $id)
 				->fetch()
 		;
@@ -173,6 +212,7 @@ class Configuration
 			'id' => $id,
 			'name' => $row['NAME'],
 			'sort' => (int)$row['SORT'],
+			'userId' => $row['USER_ID'],
 			'settings' => $settings,
 		];
 	}
@@ -281,17 +321,68 @@ class Configuration
 	 * @throws ArgumentException
 	 * @throws Exception
 	 */
-	public static function createUserPreset(int $userId, array $settings): int
+	public static function createUserPreset(int $userId, array $settings = []): int
 	{
 		$groupId = self::createPersonalGroup($userId);
+
+		if (empty($settings))
+		{
+			return $groupId;
+		}
 
 		Notification::setSettings($groupId, $settings['notify']);
 		General::setSettings($groupId, $settings['general']);
 
-		OptionUserTable::update($userId, ['NOTIFY_GROUP_ID' => $groupId, 'GENERAL_GROUP_ID' => $groupId]);
+		$bindingPresetToUser = [];
+		if (!empty($settings['notify']))
+		{
+			$bindingPresetToUser['NOTIFY_GROUP_ID'] = $groupId;
+		}
+		if (!empty($settings['general']))
+		{
+			$bindingPresetToUser['GENERAL_GROUP_ID'] = $groupId;
+		}
+
+		if (!empty($bindingPresetToUser))
+		{
+			OptionUserTable::update($userId, $bindingPresetToUser);
+		}
 
 
 		return $groupId;
+	}
+
+	/**
+	 * Restores the missing bindings between the user and his current preset settings
+	 * in the b_im_option_user table
+	 * @param int $userId
+	 *
+	 * @return int
+	 */
+	public static function restoreBindings(int $userId): int
+	{
+		$userPreset = OptionGroupTable::query()
+			->addSelect('ID')
+			->where('USER_ID', $userId)
+			->setLimit(1)
+			->fetch()
+		;
+
+		$presetId = $userPreset ? (int)$userPreset['ID'] : self::getDefaultPresetId();
+
+		$insertFields = [
+			'USER_ID' => $userId,
+			'GENERAL_GROUP_ID' => $presetId,
+			'NOTIFY_GROUP_ID' => $presetId
+		];
+		$updateFields = [
+			'GENERAL_GROUP_ID' => $presetId,
+			'NOTIFY_GROUP_ID' => $presetId,
+		];
+
+		OptionUserTable::merge($insertFields, $updateFields);
+
+		return $presetId;
 	}
 
 	/**
@@ -314,9 +405,9 @@ class Configuration
 	 */
 	public static function createSharedPreset(
 		array $accessCodes,
-		array $settings,
 		string $presetName,
 		int $creatorId,
+		array $settings = [],
 		int $sort = self::DEFAULT_SORT,
 		bool $force = false
 	): ?int
@@ -327,6 +418,11 @@ class Configuration
 		}
 
 		$newGroupId = self::createSharedGroup($presetName, $accessCodes, $creatorId, $sort);
+
+		if (empty($settings))
+		{
+			return $newGroupId;
+		}
 
 		Notification::setSettings($newGroupId, $settings['notify']);
 		General::setSettings($newGroupId, $settings['general']);
@@ -531,7 +627,7 @@ class Configuration
 			]
 		);
 
-		self::cleanUserCache($userId);
+		CacheManager::getUserCache($userId)->clearCache();
 	}
 
 	/**
@@ -785,31 +881,91 @@ class Configuration
 		}
 	}
 
+
 	public static function getUserPresetFromCache(int $userId): array
 	{
-		$cache = Cache::createInstance();
-		$cacheName = self::CACHE_NAME."_$userId";
+		$result = [];
+		$userCache = CacheManager::getUserCache($userId);
+		$currentUserPresets = $userCache->getValue();
 
-		$userPreset = [];
-		if ($cache->initCache(self::CACHE_TTL, $cacheName, self::CACHE_DIR))
+		if (isset($currentUserPresets['notifyPreset']))
 		{
-			$userPreset = $cache->getVars();
+			$notifyPresetCache = CacheManager::getPresetCache($currentUserPresets['notifyPreset']);
+			$notifyPreset = $notifyPresetCache->getValue();
+			if (!empty($notifyPreset))
+			{
+				$result['notify'] = [
+					'id' => $notifyPreset['id'],
+					'name' => $notifyPreset['name'],
+					'sort' => $notifyPreset['sort'],
+					'settings' => $notifyPreset['notify']
+				];
+			}
 		}
 
-		return $userPreset;
+		if (isset($currentUserPresets['generalPreset']))
+		{
+			$generalPresetCache = CacheManager::getPresetCache($currentUserPresets['generalPreset']);
+			$generalPreset = $generalPresetCache->getValue();
+			if (!empty($generalPreset))
+			{
+				$result['general'] = [
+					'id' => $generalPreset['id'],
+					'name' => $generalPreset['name'],
+					'sort' => $generalPreset['sort'],
+					'settings' => $generalPreset['general']
+				];
+			}
+		}
+
+		return $result;
 	}
 
 	private static function setUserPresetInCache(int $userId, array $preset): void
 	{
-		$cache = Cache::createInstance();
+		CacheManager::getUserCache($userId)->clearCache();
+		CacheManager::getPresetCache($preset['general']['id'])->clearCache();
+		CacheManager::getPresetCache($preset['notify']['id'])->clearCache();
 
-		$cacheName = self::CACHE_NAME . "_$userId";
-		$cache->clean($cacheName, self::CACHE_DIR);
-		$cache->initCache(self::CACHE_TTL, $cacheName, self::CACHE_DIR);
-		$cache->startDataCache();
-		$cache->endDataCache($preset);
+		CacheManager::getUserCache($userId)->setValue([
+			CacheManager::GENERAL_PRESET => $preset['general']['id'],
+			CacheManager::NOTIFY_PRESET => $preset['notify']['id'],
+		]);
+
+		if ($preset['general']['id'] === $preset['notify']['id'])
+		{
+			CacheManager::getPresetCache($preset['general']['id'])->setValue([
+				'id' => $preset['general']['id'],
+				'name' => $preset['general']['name'],
+				'sort' => $preset['general']['sort'],
+				'general' => $preset['general']['settings'],
+				'notify' => $preset['notify']['settings'],
+			]);
+
+			return;
+		}
+
+		CacheManager::getPresetCache($preset['general']['id'])->setValue([
+			'id' => $preset['general']['id'],
+			'name' => $preset['general']['name'],
+			'sort' => $preset['general']['sort'],
+			'general' => $preset['general']['settings'],
+		]);
+
+		CacheManager::getPresetCache($preset['notify']['id'])->setValue([
+			'id' => $preset['notify']['id'],
+			'name' => $preset['notify']['name'],
+			'sort' => $preset['notify']['sort'],
+			'notify' => $preset['notify']['settings'],
+		]);
 	}
 
+	/**
+	 * @deprecated
+	 * @see CacheManager
+	 * @param array $usersId
+	 * @return void
+	 */
 	public static function cleanUsersCache(array $usersId): void
 	{
 		$cache = Cache::createInstance();
@@ -820,6 +976,12 @@ class Configuration
 		}
 	}
 
+	/**
+	 * @deprecated
+	 * @see CacheManager::getUserCache()
+	 * @param int $userId
+	 * @return void
+	 */
 	public static function cleanUserCache(int $userId): void
 	{
 		$cache = Cache::createInstance();
@@ -827,6 +989,11 @@ class Configuration
 		$cache->clean($cacheName, self::CACHE_DIR);
 	}
 
+	/**
+	 * @deprecated
+	 * @see CacheManager
+	 * @return void
+	 */
 	public static function cleanAllCache(): void
 	{
 		$cache = Cache::createInstance();

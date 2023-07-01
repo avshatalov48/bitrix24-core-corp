@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\Disk\Copy\Integration;
 
+use Bitrix\Disk\BaseObject;
 use Bitrix\Disk\Driver;
 use Bitrix\Disk\Folder;
 use Bitrix\Main\Config\Option;
@@ -35,11 +36,22 @@ class Group implements Feature
 
 		if ($storage && $targetStorage)
 		{
+			if ($storage->isEnabledShowExtendedRights())
+			{
+				$targetStorage->enableShowExtendedRights();
+			}
+
 			$rootFolder = $storage->getRootObject();
 			$targetRootFolder = $targetStorage->getRootObject();
 
 			$mapFolderIds = [];
-			$this->copyFolders($rootFolder, $targetRootFolder, $mapFolderIds);
+			$this->copyFolders(
+				$groupId,
+				$copiedGroupId,
+				$rootFolder,
+				$targetRootFolder,
+				$mapFolderIds
+			);
 
 			if (!in_array("onlyFolders", $this->features))
 			{
@@ -51,7 +63,11 @@ class Group implements Feature
 					"executiveUserId" => $this->executiveUserId,
 					"mapFolderIds" => $mapFolderIds
 				];
-				Option::set(self::MODULE_ID, self::STEPPER_OPTION.$copiedGroupId, serialize($dataToCopy));
+				Option::set(
+					self::MODULE_ID,
+					self::STEPPER_OPTION . $copiedGroupId,
+					serialize($dataToCopy)
+				);
 
 				$agent = \CAgent::getList([], [
 					"MODULE_ID" => self::MODULE_ID,
@@ -65,28 +81,107 @@ class Group implements Feature
 		}
 	}
 
-	private function copyFolders(Folder $rootFolder, Folder $targetRootFolder, array &$mapFolderIds)
+	private function copyFolders(
+		int $groupId,
+		int $copiedGroupId,
+		Folder $folder,
+		Folder $targetFolder,
+		array &$mapFolderIds
+	)
 	{
-		$params = ["select" => ["*", "HAS_SUBFOLDERS"]];
-		foreach ($rootFolder->getChildren($this->securityContext, $params) as $child)
+		$mapFolderIds[$folder->getId()] = $targetFolder->getId();
+
+		$this->setFolderRights(
+			$groupId,
+			$copiedGroupId,
+			$folder,
+			$targetFolder
+		);
+
+		$children = $folder->getChildren(
+			$this->securityContext,
+			[
+				'select' => [
+					'*',
+					'HAS_SUBFOLDERS',
+				]
+			]
+		);
+		foreach ($children as $child)
 		{
 			if ($child instanceof Folder)
 			{
-				$newFolder = $targetRootFolder->addSubFolder([
-					"NAME" => $child->getName(),
-					"CREATED_BY" => $this->executiveUserId,
-				]);
+				$newFolder = $targetFolder->addSubFolder(
+					[
+						'NAME' => $child->getName(),
+						'CREATED_BY' => $this->executiveUserId,
+					]
+				);
 				if ($newFolder)
 				{
 					$mapFolderIds[$child->getId()] = $newFolder->getId();
+
 					if ($child->getChildren($this->securityContext))
 					{
-						$this->copyFolders($child, $newFolder, $mapFolderIds);
+						$this->copyFolders(
+							$groupId,
+							$copiedGroupId,
+							$child,
+							$newFolder,
+							$mapFolderIds
+						);
 					}
 				}
 			}
 		}
-		$mapFolderIds[$rootFolder->getId()] = $targetRootFolder->getId();
+	}
+
+	private function setFolderRights(
+		int $groupId,
+		int $copiedGroupId,
+		BaseObject $folder,
+		BaseObject $targetFolder
+	): void
+	{
+		$rightsManager = Driver::getInstance()->getRightsManager();
+
+		$sourceRights = $rightsManager->getSpecificRights($folder);
+
+		$targetRights = [];
+		foreach	($sourceRights as $right)
+		{
+			unset($right['ID']);
+
+			$right['OBJECT_ID'] = $targetFolder->getId();
+
+			$right['ACCESS_CODE'] = $this->prepareAccessCodeByCopiedGroup(
+				$groupId,
+				$copiedGroupId,
+				$right['ACCESS_CODE']
+			);
+
+			$targetRights[] = $right;
+		}
+
+		$rightsManager->set($targetFolder, $targetRights);
+	}
+
+	private function prepareAccessCodeByCopiedGroup(
+		int $groupId,
+		int $copiedGroupId,
+		string $accessCode
+	): string
+	{
+		if (mb_substr($accessCode, 0, 2) === 'SG')
+		{
+			[$code,] = explode('_', $accessCode);
+			if ($groupId == mb_substr($code, 2))
+			{
+				$accessCode = str_replace($groupId, $copiedGroupId, $accessCode);
+			}
+		}
+
+		return $accessCode;
 	}
 
 	private function addToQueue(int $copiedGroupId)

@@ -560,7 +560,7 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 		}
 
 		$userData = $_POST;
-		$userData["DEPARTMENT_ID"] = $this->filterDepartment($userData["UF_DEPARTMENT"]) ?: [$this->getHeadDepartmentId()];
+		$userData["DEPARTMENT_ID"] = $this->filterDepartment($userData["UF_DEPARTMENT"] ?? null) ?: [$this->getHeadDepartmentId()];
 
 		$idAdded = CIntranetInviteDialog::AddNewUser(SITE_ID, $userData, $strError);
 
@@ -599,7 +599,7 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 			return false;
 		}
 
-		if (!check_email($_POST["integrator_email"]))
+		if (!check_email($_POST["integrator_email"] ?? ''))
 		{
 			$this->addError(new \Bitrix\Main\Error(Loc::getMessage("BX24_INVITE_DIALOG_ERROR_EMAIL")));
 			return false;

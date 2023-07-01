@@ -1,3 +1,4 @@
+import { BaseEvent } from 'main.core.events';
 import { Popup } from 'main.popup';
 
 export const TodoEditorActionBtn = {
@@ -18,13 +19,15 @@ export const TodoEditorActionBtn = {
 			default: '',
 		}
 	},
+
 	data() {
 		return {
 			popup: null,
 		};
 	},
+
 	computed: {
-		iconClassname()
+		iconClassname(): Array
 		{
 			return [
 				'crm-activity__todo-editor_action-btn-icon',
@@ -32,8 +35,9 @@ export const TodoEditorActionBtn = {
 			]
 		}
 	},
+
 	methods: {
-		onMouseEnter(event): void
+		onMouseEnter(event: BaseEvent): void
 		{
 			if (!this.description) {
 				return;
@@ -45,7 +49,7 @@ export const TodoEditorActionBtn = {
 				darkMode: true,
 			});
 
-			setTimeout(() => {
+			setTimeout((): void => {
 				if (!this.popup)
 				{
 					return;
@@ -71,6 +75,7 @@ export const TodoEditorActionBtn = {
 			this.action.call(this);
 		}
 	},
+
 	template: `
 		<button
 			@mouseenter="onMouseEnter"

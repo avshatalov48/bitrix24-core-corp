@@ -83,6 +83,7 @@ const SPECIFIC_REALIZATION_ERROR_CODES = [
 	'REALIZATION_PRODUCT_NOT_FOUND',
 	'SHIPMENT_ACCESS_DENIED',
 	'PAYMENT_ACCESS_DENIED',
+	'CRM_REALIZATION_NOT_ENOUGH_PRODUCTS',
 ];
 
 const SPECIFIC_ERROR_CODES = SPECIFIC_REALIZATION_ERROR_CODES.concat([
@@ -91,6 +92,7 @@ const SPECIFIC_ERROR_CODES = SPECIFIC_REALIZATION_ERROR_CODES.concat([
 	'SALE_SHIPMENT_EXIST_SHIPPED',
 	'SALE_PAYMENT_DELETE_EXIST_PAID',
 	'DDCT_DEDUCTION_QUANTITY_STORE_ERROR',
+	'CRM_REALIZATION_NOT_ENOUGH_PRODUCTS',
 ]);
 
 type AjaxHandler = (...args: Array<any>) => any;
@@ -215,7 +217,7 @@ export class EntityEditorPaymentDocuments
 	{
 		return Tag.render`
 			<div class="crm-entity-widget-payment-detail">
-				<div class="crm-entity-widget-payment-detail-caption">${this._getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_TITLE')}</div>
+				<div class="crm-entity-widget-payment-detail-caption">${this._getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_TITLE_MSGVER_1')}</div>
 			</div>
 		`;
 	}
@@ -242,7 +244,10 @@ export class EntityEditorPaymentDocuments
 
 	_renderPaymentDocument(doc: PaymentDocument): HTMLElement
 	{
-		const title = Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_PAYMENT_DATE').replace(/#DATE#/gi, doc.FORMATTED_DATE);
+		const title = Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_PAYMENT_DATE_MSGVER_1')
+			.replace(/#DATE#/gi, doc.FORMATTED_DATE)
+			.replace(/#ACCOUNT_NUMBER#/gi, doc.ACCOUNT_NUMBER)
+		;
 		const sum = Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_PAYMENT_AMOUNT').replace(/#SUM#/gi, this._renderMoney(doc.SUM));
 		const labelOptions = {
 			text: Loc.getMessage(`CRM_ENTITY_ED_PAYMENT_DOCUMENTS_STAGE_${doc.STAGE}`),
@@ -327,8 +332,8 @@ export class EntityEditorPaymentDocuments
 				}
 				popupMenu.close();
 				MessageBox.show({
-					title: Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_REMOVE_CONFIRM_TITLE'),
-					message: Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_REMOVE_PAYMENT_CONFIRM_TEXT'),
+					title: Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_REMOVE_CONFIRM_TITLE_MSGVER_1'),
+					message: Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_REMOVE_PAYMENT_CONFIRM_TEXT_MSGVER_1'),
 					modal: true,
 					buttons: MessageBoxButtons.OK_CANCEL,
 					onOk: messageBox => {
@@ -356,7 +361,7 @@ export class EntityEditorPaymentDocuments
 			const removeDocumentMenuItem = popupMenu.itemsContainer.querySelector('.crm-entity-widget-payment-menu-item-remove');
 			if (removeDocumentMenuItem)
 			{
-				removeDocumentMenuItem.setAttribute('data-hint', Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_PAYMENT_REMOVE_TIP'));
+				removeDocumentMenuItem.setAttribute('data-hint', Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_PAYMENT_REMOVE_TIP_MSGVER_1'));
 				removeDocumentMenuItem.setAttribute('data-hint-no-icon', '');
 				BX.UI.Hint.init(popupMenu.itemsContainer);
 			}
@@ -390,7 +395,10 @@ export class EntityEditorPaymentDocuments
 			labelOptions.text = Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_STATUS_DELIVERED');
 			labelOptions.color = LabelColor.LIGHT_GREEN;
 		}
-		const title = Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_DELIVERY_DATE').replace(/#DATE#/gi, doc.FORMATTED_DATE);
+		const title = Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_DELIVERY_DATE_MSGVER_1')
+			.replace(/#DATE#/gi, doc.FORMATTED_DATE)
+			.replace(/#ACCOUNT_NUMBER#/gi, doc.ACCOUNT_NUMBER)
+		;
 		const sum = Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_PAYMENT_AMOUNT').replace(/#SUM#/gi, this._renderMoney(doc.SUM));
 
 		let popupMenu;
@@ -426,8 +434,8 @@ export class EntityEditorPaymentDocuments
 					}
 					popupMenu.close();
 					MessageBox.show({
-						title: Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_REMOVE_CONFIRM_TITLE'),
-						message: Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_REMOVE_DELIVERY_CONFIRM_TEXT'),
+						title: Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_REMOVE_CONFIRM_TITLE_MSGVER_1'),
+						message: Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_REMOVE_DELIVERY_CONFIRM_TEXT_MSGVER_1'),
 						modal: true,
 						buttons: MessageBoxButtons.OK_CANCEL,
 						onOk: messageBox => {
@@ -456,7 +464,7 @@ export class EntityEditorPaymentDocuments
 			const removeDocumentMenuItem = popupMenu.itemsContainer.querySelector('.crm-entity-widget-shipment-menu-item-remove');
 			if (removeDocumentMenuItem)
 			{
-				removeDocumentMenuItem.setAttribute('data-hint', Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_REMOVE_TIP'));
+				removeDocumentMenuItem.setAttribute('data-hint', Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_REMOVE_TIP_MSGVER_1'));
 				removeDocumentMenuItem.setAttribute('data-hint-no-icon', '');
 				BX.UI.Hint.init(popupMenu.itemsContainer);
 			}
@@ -554,7 +562,7 @@ export class EntityEditorPaymentDocuments
 						}
 						popupMenu.close();
 						MessageBox.show({
-							title: Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_REMOVE_CONFIRM_TITLE'),
+							title: Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_REMOVE_CONFIRM_TITLE_MSGVER_1'),
 							message: Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_DOCUMENT_CONFIRM_REMOVE_TEXT'),
 							modal: true,
 							buttons: MessageBoxButtons.OK_CANCEL,
@@ -585,7 +593,7 @@ export class EntityEditorPaymentDocuments
 			const removeDocumentMenuItem = popupMenu.itemsContainer.querySelector('.crm-entity-widget-realization-menu-item-remove');
 			if (removeDocumentMenuItem)
 			{
-				removeDocumentMenuItem.setAttribute('data-hint', Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_REALIZATION_REMOVE_TIP'));
+				removeDocumentMenuItem.setAttribute('data-hint', Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_REALIZATION_REMOVE_TIP_MSGVER_1'));
 				removeDocumentMenuItem.setAttribute('data-hint-no-icon', '');
 				BX.UI.Hint.init(popupMenu.itemsContainer);
 			}
@@ -658,7 +666,7 @@ export class EntityEditorPaymentDocuments
 		return Tag.render`
 			<div class="crm-entity-widget-payment-add-box">
 				<a href="#" class="crm-entity-widget-payment-add" onclick="${openMenu}">
-					+ ${Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_CREATE_DOCUMENT')}
+					+ ${Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_CREATE_DOCUMENT_MSGVER_1')}
 				</a>
 			</div>
 		`;
@@ -1102,6 +1110,7 @@ export class EntityEditorPaymentDocuments
 
 					BX.UI.Notification.Center.notify({
 						content: notifyMessage,
+						width: 'auto',
 						actions: [
 							{
 								title: Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_OPEN_REALIZATION_DOCUMENT'),
@@ -1158,7 +1167,7 @@ export class EntityEditorPaymentDocuments
 	_showCommonError()
 	{
 		BX.UI.Notification.Center.notify({
-			content: Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_COMMON_ERROR')
+			content: Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_COMMON_ERROR_MSGVER_1')
 		});
 	}
 

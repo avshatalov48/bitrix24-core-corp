@@ -24,6 +24,8 @@ class Form
 {
 	const REDIRECT_DELAY = 5;
 
+	public const PHONE_VERIFY_ENTITY = 'crm_webform';
+
 	protected $id = null;
 	protected static $defaultParams = array(
 		'TYPE_ID' => Internals\FormTable::TYPE_DEFAULT,

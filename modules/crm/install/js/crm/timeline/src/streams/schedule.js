@@ -561,7 +561,7 @@ export default class Schedule extends Stream
 		{
 			let stubClassName = "crm-entity-stream-section crm-entity-stream-section-planned crm-entity-stream-section-notTask";
 			let stubIconClassName = "crm-entity-stream-section-icon crm-entity-stream-section-icon-info";
-			const canAddTodo = this.getManager().getSetting('enableTodo', false);
+			const canAddTodo = !!BX.Crm.Timeline?.MenuBar?.getDefault()?.getItemById('todo');
 			if (canAddTodo && !this.isReadOnly())
 			{
 				stubClassName += ' --active';
@@ -649,11 +649,14 @@ export default class Schedule extends Stream
 
 	focusOnTodoEditor()
 	{
-		const menuBar = this.getManager().getMenuBar();
-		menuBar.setActiveItemById('todo');
+		const menuBar = BX.Crm.Timeline.MenuBar.getDefault();
+		if (menuBar)
+		{
+			menuBar.setActiveItemById('todo');
 
-		const todoEditor = menuBar.getTodoEditor();
-		todoEditor.setFocused();
+			const todoEditor = menuBar.getItemById('todo');
+			todoEditor?.focus();
+		}
 	}
 
 	getMessage(name)

@@ -7,18 +7,48 @@ if(!CModule::IncludeModule('crm'))
 global $USER;
 $userPermissions = CCrmPerms::GetCurrentUserPermissions();
 $arParams['ENTITY_TYPE'] = Array();
-if ($arParams['arUserField']['SETTINGS']['LEAD'] == 'Y' && !$userPermissions->HavePerm('LEAD', BX_CRM_PERM_NONE, 'READ'))
+if (
+	($arParams['arUserField']['SETTINGS']['LEAD'] ?? '') === 'Y'
+	&& !$userPermissions->HavePerm('LEAD', BX_CRM_PERM_NONE)
+)
+{
 	$arParams['ENTITY_TYPE'][] = 'LEAD';
-if ($arParams['arUserField']['SETTINGS']['CONTACT'] == 'Y' && !$userPermissions->HavePerm('CONTACT', BX_CRM_PERM_NONE, 'READ'))
+}
+if (
+	($arParams['arUserField']['SETTINGS']['CONTACT'] ?? '') === 'Y'
+	&& !$userPermissions->HavePerm('CONTACT', BX_CRM_PERM_NONE)
+)
+{
 	$arParams['ENTITY_TYPE'][] = 'CONTACT';
-if ($arParams['arUserField']['SETTINGS']['COMPANY'] == 'Y' && !$userPermissions->HavePerm('COMPANY', BX_CRM_PERM_NONE, 'READ'))
+}
+if (
+	($arParams['arUserField']['SETTINGS']['COMPANY'] ?? '') === 'Y'
+	&& !$userPermissions->HavePerm('COMPANY', BX_CRM_PERM_NONE)
+)
+{
 	$arParams['ENTITY_TYPE'][] = 'COMPANY';
-if ($arParams['arUserField']['SETTINGS']['DEAL'] == 'Y' && CCrmDeal::CheckReadPermission(0, $userPermissions))
+}
+if (
+	($arParams['arUserField']['SETTINGS']['DEAL'] ?? '') === 'Y'
+	&& CCrmDeal::CheckReadPermission(0, $userPermissions)
+)
+{
 	$arParams['ENTITY_TYPE'][] = 'DEAL';
-if ($arParams['arUserField']['SETTINGS']['QUOTE'] == 'Y' && !$userPermissions->HavePerm('QUOTE', BX_CRM_PERM_NONE, 'READ'))
+}
+if (
+	($arParams['arUserField']['SETTINGS']['QUOTE'] ?? '') === 'Y'
+	&& !$userPermissions->HavePerm('QUOTE', BX_CRM_PERM_NONE)
+)
+{
 	$arParams['ENTITY_TYPE'][] = 'QUOTE';
-if ($arParams['arUserField']['SETTINGS']['PRODUCT'] == 'Y' && $userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'READ'))
+}
+if (
+	($arParams['arUserField']['SETTINGS']['PRODUCT'] ?? '') === 'Y'
+	&& $userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG)
+)
+{
 	$arParams['ENTITY_TYPE'][] = 'PRODUCT';
+}
 
 $arResult['PREFIX'] = 'N';
 if (count($arParams['ENTITY_TYPE']) > 1)

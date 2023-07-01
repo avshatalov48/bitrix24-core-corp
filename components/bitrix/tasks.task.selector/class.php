@@ -21,8 +21,8 @@ class TasksTaskSelectorComponent extends TasksBaseComponent
 	 */
 	protected function checkParameters()
 	{
-		static::tryParseBooleanParameter($this->arParams['MULTIPLE'], false);
-		static::tryParseBooleanParameter($this->arParams['HIDE_ADD_REMOVE_CONTROLS'], false);
+		static::tryParseBooleanParameter($this->arParams['MULTIPLE']);
+		static::tryParseBooleanParameter($this->arParams['HIDE_ADD_REMOVE_CONTROLS']);
 		static::tryParseStringParameter($this->arParams['NAME']);
 		static::tryParseArrayParameter($this->arParams['SELECT']);
 		static::tryParseArrayParameter($this->arParams['FILTER']);
@@ -30,12 +30,16 @@ class TasksTaskSelectorComponent extends TasksBaseComponent
 		static::tryParseArrayParameter($this->arParams['CURRENT_TASKS']);
 
 		$this->arParams['FORM_NAME'] = (
-			preg_match('/^[a-zA-Z0-9_-]+$/', $this->arParams['FORM_NAME'])? $this->arParams['FORM_NAME'] : false
+			preg_match('/^[a-zA-Z0-9_-]+$/', ($this->arParams['FORM_NAME'] ?? ''))
+				? $this->arParams['FORM_NAME']
+				: false
 		);
 		$this->arParams['INPUT_NAME'] = (
-			preg_match('/^[a-zA-Z0-9_-]+$/', $this->arParams['INPUT_NAME'])? $this->arParams['INPUT_NAME'] : false
+			preg_match('/^[a-zA-Z0-9_-]+$/', ($this->arParams['INPUT_NAME'] ?? ''))
+				? $this->arParams['INPUT_NAME']
+				: false
 		);
-		$this->arParams['SITE_ID'] = (isset($this->arParams['SITE_ID'])? $this->arParams['SITE_ID'] : SITE_ID);
+		$this->arParams['SITE_ID'] = ($this->arParams['SITE_ID'] ?? SITE_ID);
 
 		if (!is_array($this->arParams['VALUE']))
 		{

@@ -917,13 +917,13 @@ $APPLICATION->IncludeComponent(
 	'bitrix:report.construct',
 	'',
 	Array(
-		'USER_ID' => $arParams['USER_ID'],
-		'REPORT_ID' => $arParams['REPORT_ID'],
-		'ACTION' => $arParams['ACTION'],
-		'PATH_TO_REPORT_LIST' => $arParams['PATH_TO_REPORT_REPORT'],
-		'PATH_TO_REPORT_CONSTRUCT' => $arParams['PATH_TO_REPORT_CONSTRUCT'],
-		'PATH_TO_REPORT_VIEW' => $arParams['PATH_TO_REPORT_VIEW'],
-		'REPORT_HELPER_CLASS' => $arResult['REPORT_HELPER_CLASS'],
+		'USER_ID' => $arParams['USER_ID'] ?? 0,
+		'REPORT_ID' => $arParams['REPORT_ID'] ?? 0,
+		'ACTION' => $arParams['ACTION'] ?? '',
+		'PATH_TO_REPORT_LIST' => $arParams['PATH_TO_REPORT_REPORT'] ?? '',
+		'PATH_TO_REPORT_CONSTRUCT' => $arParams['PATH_TO_REPORT_CONSTRUCT'] ?? '',
+		'PATH_TO_REPORT_VIEW' => $arParams['PATH_TO_REPORT_VIEW'] ?? '',
+		'REPORT_HELPER_CLASS' => $arResult['REPORT_HELPER_CLASS'] ?? '',
 		'USE_CHART' => true
 	),
 	$component

@@ -255,7 +255,7 @@ class CIntranetUtils
 
 		foreach ($CACHE_HONOUR as $arRes)
 		{
-			if ($arRes['PROPERTY_USER_VALUE'] == $USER_ID)
+			if (isset($arRes['PROPERTY_USER_VALUE']) && $arRes['PROPERTY_USER_VALUE'] == $USER_ID)
 				return true;
 		}
 
@@ -1067,9 +1067,16 @@ class CIntranetUtils
 				$cnt += count(array_intersect($arSection['EMPLOYEES'], $arAccessUsers));
 		}
 
-		if ($arSection['UF_HEAD'] > 0 && !in_array($arSection['UF_HEAD'], $arSection['EMPLOYEES'])
-				&& (!$arAccessUsers || in_array($arSection['UF_HEAD'], $arAccessUsers)))
+		if (
+			$arSection['UF_HEAD'] > 0 && !in_array($arSection['UF_HEAD'], $arSection['EMPLOYEES'])
+			&& (
+				!$arAccessUsers
+				|| $arSection['UF_HEAD'] > 0 && is_array($arAccessUsers) && in_array($arSection['UF_HEAD'], $arAccessUsers)
+			)
+		)
+		{
 			$cnt++;
+		}
 
 		if (self::$SECTIONS_SETTINGS_CACHE['TREE'][$section_id])
 		{
@@ -1204,10 +1211,10 @@ class CIntranetUtils
 
 			while ($arRes = $dbRes->Fetch())
 			{
-				if (!$arRes['IBLOCK_SECTION_ID'])
+				if (empty($arRes['IBLOCK_SECTION_ID']))
 					$arRes['IBLOCK_SECTION_ID'] = 0;
 
-				if (!self::$SECTIONS_SETTINGS_CACHE['TREE'][$arRes['IBLOCK_SECTION_ID']])
+				if (empty(self::$SECTIONS_SETTINGS_CACHE['TREE'][$arRes['IBLOCK_SECTION_ID']]))
 					self::$SECTIONS_SETTINGS_CACHE['TREE'][$arRes['IBLOCK_SECTION_ID']] = array();
 
 				self::$SECTIONS_SETTINGS_CACHE['TREE'][$arRes['IBLOCK_SECTION_ID']][] = $arRes['ID'];
@@ -1234,7 +1241,7 @@ class CIntranetUtils
 			while ($arRes = $dbRes->fetch())
 			{
 				$dpt = $arRes['UF_DEPARTMENT'];
-				if (is_array(self::$SECTIONS_SETTINGS_CACHE['DATA'][$dpt]))
+				if (isset(self::$SECTIONS_SETTINGS_CACHE['DATA'][$dpt]) && is_array(self::$SECTIONS_SETTINGS_CACHE['DATA'][$dpt]))
 					self::$SECTIONS_SETTINGS_CACHE['DATA'][$dpt]['EMPLOYEES'][] = $arRes['ID'];
 			}
 
@@ -1261,6 +1268,11 @@ class CIntranetUtils
 
 	public static function getDepartmentEmployees($arDepartments, $bRecursive = false, $bSkipSelf = false, $onlyActive = 'Y', $arSelect = null)
 	{
+		if (empty($arDepartments))
+		{
+			return new CDBResult();
+		}
+
 		global $USER;
 
 		return \Bitrix\Intranet\Util::getDepartmentEmployees(array(

@@ -108,6 +108,12 @@ final class Manager
 			return null;
 		}
 
+		$id = (int)$id;
+		if ($id === 0)
+		{
+			return null;
+		}
+
 		return \Bitrix\Sale\Repository\PaymentRepository::getInstance()->getById($id);
 	}
 

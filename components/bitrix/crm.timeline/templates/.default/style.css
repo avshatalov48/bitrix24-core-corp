@@ -135,10 +135,6 @@
 
 .crm-entity-stream-section.crm-entity-stream-section-planned-above-overlay .crm-entity-stream-section-icon-info .crm-entity-stream-section-content { background-color: #f1f6f6; }
 
-.crm-entity-stream-section.crm-entity-stream-section-top-fixed:before {
-	display: none;
-}
-
 .crm-entity-stream-section-top-fixed-btn {
 	position: absolute;
 	right: 10px;
@@ -1041,7 +1037,8 @@
 .crm-entity-stream-content-new-detail-todo {
 	padding: 12px;
 }
-.crm-entity-stream-content-new-detail.focus { padding-bottom: 58px; }
+.crm-entity-stream-content-new-detail.--focus { padding-bottom: 58px; }
+.crm-entity-stream-content-new-detail.--hidden { display: none; }
 
 .crm-entity-stream-content-new-comment-btn-container {
 	position: absolute;
@@ -1061,7 +1058,7 @@
 	padding-top: 15px;
 }
 
-.crm-entity-stream-content-new-detail.focus .crm-entity-stream-content-new-comment-btn-container {
+.crm-entity-stream-content-new-detail.--focus .crm-entity-stream-content-new-comment-btn-container {
 	height: 58px;
 	opacity: 1;
 }
@@ -1106,7 +1103,7 @@
 	transition: 200ms all ease;
 }
 
-.crm-entity-stream-content-new-detail.focus .crm-entity-stream-content-new-sms-btn-container {
+.crm-entity-stream-content-new-detail.--focus .crm-entity-stream-content-new-sms-btn-container {
 	height: 58px;
 	opacity: 1;
 }
@@ -1304,7 +1301,7 @@
 	padding: 6px 0 ;
 }
 
-.crm-entity-stream-content-new-detail.focus .crm-entity-stream-content-sms-salescenter-container-absolute {
+.crm-entity-stream-content-new-detail.--focus .crm-entity-stream-content-sms-salescenter-container-absolute {
 	position: absolute;
 	top: 50%;
 	right: 15px;
@@ -1574,7 +1571,8 @@
 	transition: 200ms all ease;
 }
 
-.crm-entity-stream-content-wait-detail.focus { padding-bottom: 58px; }
+.crm-entity-stream-content-wait-detail.--focus { padding-bottom: 58px; }
+.crm-entity-stream-content-wait-detail.--hidden { display: none; }
 
 .crm-entity-stream-content-wait-conditions {
 	position: relative;
@@ -1638,7 +1636,7 @@
 	transition: 200ms all ease;
 }
 
-.crm-entity-stream-content-wait-detail.focus .crm-entity-stream-content-wait-comment-btn-container {
+.crm-entity-stream-content-wait-detail.--focus .crm-entity-stream-content-wait-comment-btn-container {
 	height: 58px;
 	opacity: 1;
 }
@@ -3101,16 +3099,16 @@ table.blogquote td {
 	transition: 200ms all ease;
 }
 
-.ui-timeline-zoom-editor.focus .crm-entity-stream-content-zoom-btn-container {
+.ui-timeline-zoom-editor.--focus .crm-entity-stream-content-zoom-btn-container {
 	height: 58px;
 	opacity: 1;
 }
 
-.ui-timeline-zoom-editor.focus {
+.ui-timeline-zoom-editor.--focus {
 	padding-bottom: 58px;
 }
 
-.crm-entity-stream-content-new-detail.focus .crm-entity-stream-content-zoom-comment-btn-container {
+.crm-entity-stream-content-new-detail.--focus .crm-entity-stream-content-zoom-comment-btn-container {
 	height: 47px;
 	opacity: 1;
 }
@@ -3127,7 +3125,7 @@ table.blogquote td {
 	transition: 200ms all ease;
 }
 
-.crm-entity-stream-content-new-detail-zoom.focus {
+.crm-entity-stream-content-new-detail-zoom.--focus {
 	padding-bottom: 49px;
 }
 

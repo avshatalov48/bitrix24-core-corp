@@ -108,6 +108,12 @@ class KeyTable extends DataManager
 					'title' => Loc::getMessage('KEY_ENTITY_APP_ID_FIELD'),
 				]
 			),
+			new DatetimeField(
+				'LAST_ACTIVITY_DATE',
+				[
+					'title' => Loc::getMessage('KEY_ENTITY_LAST_ACTIVITY_DATE_FIELD')
+				]
+			),
 			new Reference(
 				'PERMISSION',
 				'\Bitrix\BIConnector\KeyUserTable',

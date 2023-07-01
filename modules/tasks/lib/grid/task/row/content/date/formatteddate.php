@@ -15,6 +15,6 @@ class FormattedDate extends Date
 	public function prepare(): string
 	{
 		$rowData = $this->getRowData();
-		return $this->formatDate($rowData[$this->fieldKey]);
+		return isset($rowData[$this->fieldKey]) ? $this->formatDate($rowData[$this->fieldKey]) : '';
 	}
 }

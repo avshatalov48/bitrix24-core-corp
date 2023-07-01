@@ -3,5 +3,6 @@
 return [
 	'extensions' => [
 		'loc',
+		'crm:loc',
 	],
 ];

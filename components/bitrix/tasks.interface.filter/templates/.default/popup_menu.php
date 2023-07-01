@@ -18,8 +18,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	(function()
 	{
 		var menuItemsOptions = [];
-		var columnId = '<?=$arParams['SORT_FIELD']?>';
-		var columnDir = '<?=$arParams['SORT_FIELD_DIR']?>';
+		var columnId = '<?= $arParams['SORT_FIELD'] ?? "" ?>';
+		var columnDir = '<?= $arParams['SORT_FIELD_DIR'] ?? "" ?>';
 
 		BX.addCustomEvent('BX.Main.grid:sort', function(column, grid) {
 			if (BX.type.isNotEmptyString(column.sort_by))
@@ -330,7 +330,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 			)
 			{
 				var hrefExport =
-					'<?=$arParams['PATH_TO_TASKS']?>'
+					'<?= $arParams['PATH_TO_TASKS'] ?? '' ?>'
 					+ '?F_STATE=sv'
 					+ '<?=CTaskListState::encodeState(CTaskListState::VIEW_MODE_LIST)?>'
 					+ '&EXPORT_AS=EXCEL&ncc=1'
@@ -361,6 +361,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 			}
 		};
 		<?php if ($arParams['SCOPE'] === 'tasks_gantt'): ?>
+		<?php
+			$pathToTask = $arParams['PATH_TO_TASKS'] ?? '';
+		?>
 		menuItemsOptions.push({
 			tabId: "popupMenuOptions",
 			text: '<?=GetMessageJS('TASKS_BTN_EXPORT')?>',
@@ -370,7 +373,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 					tabId: "popupMenuOptions",
 					text: '<?=GetMessageJS('TASKS_BTN_EXPORT_EXCEL')?>',
 					className: "tasks-interface-filter-icon-excel",
-					href: '<?=$arParams['PATH_TO_TASKS']?>?F_STATE=sV<?= CTaskListState::encodeState(CTaskListState::VIEW_MODE_LIST); ?>&EXPORT_AS=EXCEL&ncc=1',
+					href: '<?= $pathToTask ?>?F_STATE=sV<?= CTaskListState::encodeState(CTaskListState::VIEW_MODE_LIST); ?>&EXPORT_AS=EXCEL&ncc=1',
 				}
 			]
 
@@ -419,7 +422,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 					className: "tasks-interface-filter-icon-outlook",
 					onclick: function(event, item)
 					{
-						<?=CIntranetUtils::GetStsSyncURL(array('LINK_URL' => $arParams['PATH_TO_TASKS']), 'tasks')?>
+						<?=CIntranetUtils::GetStsSyncURL(array('LINK_URL' => $arParams['PATH_TO_TASKS'] ?? ''), 'tasks')?>
 					}
 				}
 			]
@@ -440,6 +443,23 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 		});
 		<?endforeach;?>
 		<?endif;?>
+
+		<?php
+		$viewKanbanFieldsPopup = [
+			\Bitrix\Tasks\UI\ScopeDictionary::SCOPE_TASKS_KANBAN,
+			\Bitrix\Tasks\UI\ScopeDictionary::SCOPE_TASKS_KANBAN_TIMELINE,
+			\Bitrix\Tasks\UI\ScopeDictionary::SCOPE_TASKS_KANBAN_PERSONAL,
+		];
+		if (in_array($arParams['SCOPE'], $viewKanbanFieldsPopup)): ?>
+		menuItemsOptions.push({
+			tabId: "popupMenuOptions",
+			text: '<?=GetMessageJS('TASKS_BTN_KANBAN_POPUP_TITLE_CONFIGURE_VIEW')?>',
+			className: "menu-popup-item-none menu-popup-no-icon",
+			onclick: function(event, item) {
+				BX.Event.EventEmitter.emit('tasks-kanban-settings-fields-view');
+			},
+		})
+		<?php endif;?>
 
 		var buttonRect = BX("tasks-popupMenuOptions").getBoundingClientRect();
 		var menu = new BX.Main.Menu({

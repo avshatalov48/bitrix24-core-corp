@@ -44,6 +44,16 @@ final class State
 			return false;
 		}
 
+		return self::isEnabledInventoryManagement();
+	}
+
+	/**
+	 * Returns true if warehouse inventory management is enabled, without feature check.
+	 *
+	 * @return bool
+	 */
+	public final static function isEnabledInventoryManagement(): bool
+	{
 		return (Main\Config\Option::get('catalog', 'default_use_store_control') === 'Y');
 	}
 
@@ -188,6 +198,40 @@ final class State
 		}
 
 		return null;
+	}
+
+	public static function getProductLimitState(int $iblockId): ?array
+	{
+		if ($iblockId <= 0)
+		{
+			return null;
+		}
+
+		if (!ModuleManager::isModuleInstalled('bitrix24'))
+		{
+			return null;
+		}
+
+		if ($iblockId !== self::getCrmCatalogId())
+		{
+			return null;
+		}
+
+		$result = [];
+		$variable = Feature::getLandingLimitVariable();
+		$result[$variable] = [
+			'LIMIT_NAME' => $variable,
+			'LIMIT_VALUE' => Feature::getLandingProductLimit(),
+			'CURRENT_VALUE' => self::getElementCount($iblockId),
+		];
+
+		$crmLimit = self::getCrmCatalogLimitState($iblockId);
+		if ($crmLimit !== null)
+		{
+			$result[$crmLimit['LIMIT_NAME']] = $crmLimit;
+		}
+
+		return $result;
 	}
 
 	/**
@@ -678,6 +722,21 @@ final class State
 		}
 
 		return Crm\Config\State::getExceedingProductLimit($iblockId);
+	}
+
+	private static function getCrmCatalogLimitState(int $iblockId): ?array
+	{
+		if (!self::isCrmIncluded())
+		{
+			return null;
+		}
+
+		if (!method_exists('\Bitrix\Crm\Config\State', 'getProductLimitState'))
+		{
+			return null;
+		}
+
+		return Crm\Config\State::getProductLimitState($iblockId);
 	}
 
 	/**

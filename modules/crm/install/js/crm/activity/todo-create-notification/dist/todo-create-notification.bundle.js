@@ -393,6 +393,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    container: editorContainer,
 	    ownerTypeId: babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId)[_entityTypeId],
 	    ownerId: babelHelpers.classPrivateFieldLooseBase(this, _entityId)[_entityId],
+	    currentUser: babelHelpers.classPrivateFieldLooseBase(this, _timeline)[_timeline].getCurrentUser(),
 	    events: {
 	      onChangeDescription: babelHelpers.classPrivateFieldLooseBase(this, _onChangeDescription)[_onChangeDescription].bind(this),
 	      onSaveHotkeyPressed: babelHelpers.classPrivateFieldLooseBase(this, _onSaveHotkeyPressed)[_onSaveHotkeyPressed].bind(this),

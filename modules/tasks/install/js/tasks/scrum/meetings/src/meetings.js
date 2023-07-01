@@ -598,44 +598,48 @@ export class Meetings
 			}
 		).show();
 
-		EventEmitter.subscribeOnce(
-			'BX.Calendar:onEntrySave',
-			(baseEvent: BaseEvent) => {
-				const data = baseEvent.getData();
-				if (sliderId === data.sliderId)
-				{
-					if (eventTemplate)
-					{
-						this.requestSender.saveEventInfo({
-							groupId: this.groupId,
-							templateId: eventTemplate.id,
-							eventId: data.responseData.entryId
-						})
-							.then(() => {
-								// todo maybe update widget or repeat request if error
-							})
-							.catch((response) => {
-								this.requestSender.showErrorAlert(response);
-							})
-						;
-					}
-
-					ajax.runAction(
-						'bitrix:tasks.scrum.info.saveAnalyticsLabel',
+		top.BX.Event.EventEmitter.subscribe('SidePanel.Slider:onLoad', (event: BaseEvent) => {
+			const [sliderEvent] = event.getCompatData();
+			if (sliderId === sliderEvent.getSlider().getUrl().toString())
+			{
+				top.BX.Event.EventEmitter.subscribeOnce(
+					'BX.Calendar:onEntrySave',
+					(baseEvent: BaseEvent) => {
+						const data = baseEvent.getData();
+						if (sliderId === data.sliderId)
 						{
-							data: {},
-							analyticsLabel: {
-								scrum: 'Y',
-								action: 'create_meet',
-								template: eventTemplate ? eventTemplate.id : 'custom'
+							if (eventTemplate)
+							{
+								this.requestSender.saveEventInfo({
+									groupId: this.groupId,
+									templateId: eventTemplate.id,
+									eventId: data.responseData.entryId
+								})
+									.then(() => {
+										this.menu.close();
+									})
+									.catch((response) => {
+										this.requestSender.showErrorAlert(response);
+									})
+								;
 							}
-						}
-					);
-				}
-			}
-		);
 
-		this.menu.close();
+							ajax.runAction(
+								'bitrix:tasks.scrum.info.saveAnalyticsLabel',
+								{
+									data: {},
+									analyticsLabel: {
+										scrum: 'Y',
+										action: 'create_meet',
+										template: eventTemplate ? eventTemplate.id : 'custom'
+									}
+								}
+							);
+						}
+					}
+				);
+			}
+		});
 	}
 
 	getEventTemplates(calendarSettings: CalendarSettings): Set<EventTemplate>

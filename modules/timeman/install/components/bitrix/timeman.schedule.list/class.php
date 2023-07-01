@@ -76,8 +76,12 @@ class ScheduleListComponent extends BaseComponent
 			->addSelect('CNT')
 			->registerRuntimeField(new Main\ORM\Fields\ExpressionField('CNT', 'COUNT(ID)'))
 			->exec()
-			->fetch();
-		$this->getGrid()->getNavigation()->setRecordCount(reset(array_values($totalSchedulesCount)));
+			->fetch()
+		;
+
+		$counts = array_values($totalSchedulesCount);
+
+		$this->getGrid()->getNavigation()->setRecordCount(reset($counts));
 
 		$this->arResult['NAVIGATION'] = $this->getGrid()->getNavigation();
 
@@ -87,7 +91,7 @@ class ScheduleListComponent extends BaseComponent
 		$this->arResult['SHOW_ROW_CHECKBOXES'] = $this->arResult['canDeleteSchedules'];
 		$this->arResult['SHOW_SELECTED_COUNTER'] = $this->arResult['canDeleteSchedules'];
 		$this->arResult['SHOW_ACTION_PANEL'] = $this->arResult['canDeleteSchedules'];
-		$arResult['SHOW_ROW_ACTIONS_MENU'] = false;
+		$this->arResult['SHOW_ROW_ACTIONS_MENU'] = false;
 		$this->arResult['addScheduleUrl'] = DependencyManager::getInstance()->getUrlManager()
 			->getUriTo(TimemanUrlManager::URI_SCHEDULE_CREATE);
 		$this->includeComponentTemplate();
@@ -105,10 +109,15 @@ class ScheduleListComponent extends BaseComponent
 		$this->arResult['SORT'] = $gridSort['sort'] ?: [];
 		$this->arResult['SORT_VARS'] = $gridSort['vars'];
 		$order = [];
-		if ($this->arResult['SORT'] && in_array(reset(array_keys($this->arResult['SORT'])), $this->getGrid()->getSortableHeaders()))
+		$sortKeys = array_keys($this->arResult['SORT']);
+		$sortValues = array_values($this->arResult['SORT']);
+		if (
+			$this->arResult['SORT']
+			&& in_array(reset($sortKeys), $this->getGrid()->getSortableHeaders())
+		)
 		{
-			$order[0] = reset(array_keys($this->arResult['SORT']));
-			$order[1] = reset(array_values($this->arResult['SORT']));
+			$order[0] = reset($sortKeys);
+			$order[1] = reset($sortValues);
 		}
 		else
 		{

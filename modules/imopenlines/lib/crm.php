@@ -27,29 +27,37 @@ Loc::loadMessages(__FILE__);
 
 class Crm
 {
-	public const FIND_BY_CODE = 'IMOL';
-	public const FIND_BY_NAME = 'NAME';
-	public const FIND_BY_EMAIL = 'EMAIL';
-	public const FIND_BY_PHONE = 'PHONE';
+	public const
+		FIND_BY_CODE = 'IMOL',
+		FIND_BY_NAME = 'NAME',
+		FIND_BY_EMAIL = 'EMAIL',
+		FIND_BY_PHONE = 'PHONE'
+	;
 
-	public const ENTITY_NONE = 'NONE';
-	public const ENTITY_LEAD = 'LEAD';
-	public const ENTITY_COMPANY = 'COMPANY';
-	public const ENTITY_CONTACT = 'CONTACT';
-	public const ENTITY_DEAL = 'DEAL';
-	public const ENTITY_ACTIVITY = 'ACTIVITY';
+	public const
+		ENTITY_NONE = 'NONE',
+		ENTITY_LEAD = 'LEAD',
+		ENTITY_COMPANY = 'COMPANY',
+		ENTITY_CONTACT = 'CONTACT',
+		ENTITY_DEAL = 'DEAL',
+		ENTITY_ACTIVITY = 'ACTIVITY'
+	;
 
-	public const FIELDS_COMPANY = 'COMPANY_ID';
-	public const FIELDS_CONTACT = 'CONTACT_IDS';
+	public const
+		FIELDS_COMPANY = 'COMPANY_ID',
+		FIELDS_CONTACT = 'CONTACT_IDS'
+	;
 
-	public const ERROR_IMOL_NO_SESSION = 'ERROR IMOPENLINES NO SESSION';
-	public const ERROR_IMOL_CREATING_CRM_ENTITY = 'ERROR IMOPENLINES CREATING CRM ENTITY';
-	public const ERROR_IMOL_NOT_LOAD_CRM = 'ERROR IMOPENLINES NOT LOAD CRM';
-	public const ERROR_IMOL_NOT_LOAD_IM = 'ERROR IMOPENLINES NOT LOAD IM';
-	public const ERROR_IMOL_NO_CRM_BINDINGS = 'ERROR IMOPENLINES NO CRM BINDINGS';
-	public const ERROR_IMOL_CRM_ACTIVITY = 'ERROR IMOPENLINES CRM ACTIVITY';
-	public const ERROR_IMOL_CRM_NO_ID_ACTIVITY = 'ERROR IMOPENLINES CRM NO ID ACTIVITY';
-	public const ERROR_IMOL_CRM_NO_REQUIRED_PARAMETERS = 'ERROR IMOPENLINES CRM NO REQUIRED PARAMETERS';
+	public const
+		ERROR_IMOL_NO_SESSION = 'ERROR IMOPENLINES NO SESSION',
+		ERROR_IMOL_CREATING_CRM_ENTITY = 'ERROR IMOPENLINES CREATING CRM ENTITY',
+		ERROR_IMOL_NOT_LOAD_CRM = 'ERROR IMOPENLINES NOT LOAD CRM',
+		ERROR_IMOL_NOT_LOAD_IM = 'ERROR IMOPENLINES NOT LOAD IM',
+		ERROR_IMOL_NO_CRM_BINDINGS = 'ERROR IMOPENLINES NO CRM BINDINGS',
+		ERROR_IMOL_CRM_ACTIVITY = 'ERROR IMOPENLINES CRM ACTIVITY',
+		ERROR_IMOL_CRM_NO_ID_ACTIVITY = 'ERROR IMOPENLINES CRM NO ID ACTIVITY',
+		ERROR_IMOL_CRM_NO_REQUIRED_PARAMETERS = 'ERROR IMOPENLINES CRM NO REQUIRED PARAMETERS'
+	;
 
 	/** @var EntityManageFacility */
 	protected $facility;
@@ -76,11 +84,11 @@ class Crm
 	 * Crm constructor.
 	 * @param Session|null $session
 	 */
-	public function __construct($session = null)
+	public function __construct(?Session $session = null)
 	{
 		$this->fields = new Fields;
 
-		if (!empty($session))
+		if ($session instanceof Session)
 		{
 			$this->fields->setSession($session);
 		}
@@ -91,7 +99,7 @@ class Crm
 	/**
 	 * @return bool
 	 */
-	public function isLoaded()
+	public function isLoaded(): bool
 	{
 		$result = false;
 
@@ -113,7 +121,7 @@ class Crm
 		return $result;
 	}
 
-	public static function loadMessages()
+	public static function loadMessages(): void
 	{
 		Loc::loadMessages(__FILE__);
 	}
@@ -121,34 +129,34 @@ class Crm
 	/**
 	 * @return Fields
 	 */
-	public function getFields()
+	public function getFields(): Fields
 	{
 		return $this->fields;
 	}
 
 	/**
-	 * @return bool
+	 * @return self
 	 */
-	public function setSkipCreate(): bool
+	public function setSkipCreate(): self
 	{
 		$this->skipCreate = true;
 
-		return true;
+		return $this;
 	}
 
 	/**
 	 * @return bool
 	 */
-	public function isSkipCreate()
+	public function isSkipCreate(): bool
 	{
 		return $this->skipCreate;
 	}
 
 	/**
 	 * @param string $mode
-	 * @return bool
+	 * @return self
 	 */
-	public function setModeCreate($mode = Config::CRM_CREATE_NONE): bool
+	public function setModeCreate($mode = Config::CRM_CREATE_NONE): self
 	{
 		if (
 			$mode !== Config::CRM_CREATE_LEAD &&
@@ -158,33 +166,35 @@ class Crm
 			$this->setSkipCreate();
 		}
 
-		return $this->isSkipCreate();
+		return $this;
 	}
 
 	/**
-	 * @return bool
+	 * @return self
 	 */
-	public function setSkipSearch(): bool
+	public function setSkipSearch(): self
 	{
 		$this->skipSearch = true;
 
-		return true;
+		return $this;
 	}
 
 	/**
 	 * @return bool
 	 */
-	public function isSkipSearch()
+	public function isSkipSearch(): bool
 	{
 		return $this->skipSearch;
 	}
 
 	/**
-	 * @return void
+	 * @return self
 	 */
-	public function setSkipAutomationTrigger(): void
+	public function setSkipAutomationTrigger(): self
 	{
 		$this->skipTrigger = true;
+
+		return $this;
 	}
 
 	/**
@@ -196,11 +206,13 @@ class Crm
 	}
 
 	/**
-	 * @return void
+	 * @return self
 	 */
-	public function setSkipAutomationTriggerFirstMessage(): void
+	public function setSkipAutomationTriggerFirstMessage(): self
 	{
 		$this->skipTriggerFirstMessage = true;
+
+		return $this;
 	}
 
 	/**
@@ -212,91 +224,91 @@ class Crm
 	}
 
 	/**
-	 * @return bool
+	 * @return self
 	 */
-	public function setIgnoreSearchCode(): bool
+	public function setIgnoreSearchCode(): self
 	{
 		$this->ignoreSearchCode = true;
 
-		return true;
+		return $this;
 	}
 
 	/**
 	 * @return bool
 	 */
-	public function isIgnoreSearchCode()
+	public function isIgnoreSearchCode(): bool
 	{
 		return $this->ignoreSearchCode;
 	}
 
 	/**
-	 * @return bool
+	 * @return self
 	 */
-	public function setIgnoreSearchUserId(): bool
+	public function setIgnoreSearchUserId(): self
 	{
 		$this->ignoreSearchUserId = true;
 
-		return true;
+		return $this;
 	}
 
 	/**
 	 * @return bool
 	 */
-	public function isIgnoreSearchUserId()
+	public function isIgnoreSearchUserId(): bool
 	{
 		return $this->ignoreSearchUserId;
 	}
 
 	/**
-	 * @return bool
+	 * @return self
 	 */
-	public function setIgnoreSearchEmails(): bool
+	public function setIgnoreSearchEmails(): self
 	{
 		$this->ignoreSearchEmails = true;
 
-		return true;
+		return $this;
 	}
 
 	/**
 	 * @return bool
 	 */
-	public function isIgnoreSearchEmails()
+	public function isIgnoreSearchEmails(): bool
 	{
 		return $this->ignoreSearchEmails;
 	}
 
 	/**
-	 * @return bool
+	 * @return self
 	 */
-	public function setIgnoreSearchPhones(): bool
+	public function setIgnoreSearchPhones(): self
 	{
 		$this->ignoreSearchPhones = true;
 
-		return true;
+		return $this;
 	}
 
 	/**
 	 * @return bool
 	 */
-	public function isIgnoreSearchPhones()
+	public function isIgnoreSearchPhones(): bool
 	{
 		return $this->ignoreSearchPhones;
 	}
 
 	/**
-	 * @return bool
+	 * @return self
 	 */
-	public function setIgnoreSearchPerson(): bool
+	public function setIgnoreSearchPerson(): self
 	{
 		$this->ignoreSearchPerson = true;
 
-		return true;
+		return $this;
 	}
 
 	/**
 	 * @return bool
 	 */
-	public function isIgnoreSearchPerson()
+	public function isIgnoreSearchPerson(): bool
 	{
 		return $this->ignoreSearchPerson;
 	}
@@ -304,7 +316,7 @@ class Crm
 	/**
 	 * @return string
 	 */
-	public function getCode()
+	public function getCode(): string
 	{
 		$result = '';
 
@@ -350,7 +362,7 @@ class Crm
 	/**
 	 * @return string
 	 */
-	public function getCodeImol()
+	public function getCodeImol(): string
 	{
 		$result = '';
 
@@ -369,7 +381,7 @@ class Crm
 	 *
 	 * @return bool
 	 */
-	public function search()
+	public function search(): bool
 	{
 		$fields = $this->getFields();
 		$filter = false;
@@ -481,7 +493,7 @@ class Crm
 	/**
 	 * @return EntityManageFacility
 	 */
-	public function getEntityManageFacility()
+	public function getEntityManageFacility(): EntityManageFacility
 	{
 		if (empty($this->facility))
 		{
@@ -1508,7 +1520,7 @@ class Crm
 	/**
 	 * @return Result
 	 */
-	public function updateUserConnector()
+	public function updateUserConnector(): Result
 	{
 		$result = new Result();
 
@@ -1553,7 +1565,7 @@ class Crm
 							'SECOND_NAME' => $entityData['SECOND_NAME'],
 						));
 
-						$relations = \CIMChat::GetRelationById($session->getData('CHAT_ID'));
+						$relations = \CIMChat::GetRelationById($session->getData('CHAT_ID'), false, true, false);
 						\Bitrix\Pull\Event::add(array_keys($relations), Array(
 							'module_id' => 'im',
 							'command' => 'userUpdate',
@@ -1578,7 +1590,7 @@ class Crm
 	/**
 	 * @return Result
 	 */
-	public function getSourceId()
+	public function getSourceId(): Result
 	{
 		$result = new Result;
 
@@ -1711,7 +1723,7 @@ class Crm
 	/**
 	 * @return Result
 	 */
-	protected function updateFlags()
+	protected function updateFlags(): Result
 	{
 		$result = new Result;
 		$fields = $this->getFields();
@@ -1850,7 +1862,7 @@ class Crm
 	/**
 	 * @return Result
 	 */
-	public function setDefaultFlags()
+	public function setDefaultFlags(): Result
 	{
 		$result = new Result;
 		$fields = $this->getFields();
@@ -2012,7 +2024,7 @@ class Crm
 	 * @param array $params
 	 * @return Result
 	 */
-	public function setSessionAnswered($params = [])
+	public function setSessionAnswered($params = []): Result
 	{
 		$result = new Result();
 		$result->setResult(false);
@@ -2056,7 +2068,7 @@ class Crm
 	 * @param array $params
 	 * @return Result
 	 */
-	public function setSessionClosed($params = [])
+	public function setSessionClosed($params = []): Result
 	{
 		$result = new Result();
 		$result->setResult(false);
@@ -2104,7 +2116,7 @@ class Crm
 	 * @param \Bitrix\Main\Type\DateTime|null $dataClose
 	 * @return Result
 	 */
-	public function setSessionDataClose($dataClose = null)
+	public function setSessionDataClose($dataClose = null): Result
 	{
 		$result = new Result();
 		$result->setResult(false);
@@ -2151,7 +2163,7 @@ class Crm
 	 * @param bool $autoMode
 	 * @return Result
 	 */
-	public function setOperatorId($id, $autoMode = false)
+	public function setOperatorId($id, $autoMode = false): Result
 	{
 		$result = new Result();
 		$result->setResult(false);

@@ -52,7 +52,7 @@ function getUserInfo(int $userId)
 		return null;
 	}
 
-	if (!$users[$userId])
+	if (!array_key_exists($userId, $users))
 	{
 		if (!($user = UserTable::getRowById($userId)))
 		{

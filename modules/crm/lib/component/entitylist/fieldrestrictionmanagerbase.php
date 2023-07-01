@@ -139,4 +139,14 @@ abstract class FieldRestrictionManagerBase
 
 		return $result;
 	}
+
+	/**
+	 * Allows return BX.Crm.Restriction.FilterFieldsRestriction component  right away
+	 *
+	 * @return bool
+	 */
+	public function returnJsComponent(): bool
+	{
+		return false;
+	}
 }

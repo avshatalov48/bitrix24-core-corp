@@ -36,7 +36,7 @@ if ($helper->checkHasFatals())
 	return;
 }
 
-$type = $arParams["GROUP_ID"] > 0 ? "group" : "user";
+$type = (($arParams['GROUP_ID'] ?? null) > 0 ? 'group' : 'user');
 $BBCodeMode = $arResult['ITEM']['DESCRIPTION_IN_BBCODE'] == 'Y';
 $groups = $arResult['DATA']['GROUP'];
 $users = $arResult['DATA']['USER'];
@@ -117,11 +117,11 @@ $arResult['TEMPLATE_DATA']['BACKURL'] = $backUrl;
 
 // cancelurl
 $cancelUrl = $arParams['PATH_TO_TEMPLATES'];
-if((string) $request['CANCELURL'] != '')
+if ((string)($request['CANCELURL'] ?? null) != '')
 {
 	$cancelUrl = $request['CANCELURL'];
 }
-elseif((string) $request['BACKURL'] != '')
+elseif ((string)($request['BACKURL'] ?? null) != '')
 {
 	$cancelUrl = $request['BACKURL'];
 }
@@ -206,7 +206,11 @@ $arResult['TEMPLATE_DATA']['BLOCKS'] = [
 	],
 ];
 
-$arResult['TEMPLATE_DATA']['SHOW_SUCCESS_MESSAGE'] = $arResult['COMPONENT_DATA']['ACTION']['SUCCESS'] && !$arParams['REDIRECT_ON_SUCCESS'] && !$arResult['COMPONENT_DATA']['EVENT_OPTIONS']['STAY_AT_PAGE'];
+$arResult['TEMPLATE_DATA']['SHOW_SUCCESS_MESSAGE'] =
+	($arResult['COMPONENT_DATA']['ACTION']['SUCCESS'] ?? null)
+	&& !$arParams['REDIRECT_ON_SUCCESS']
+	&& !$arResult['COMPONENT_DATA']['EVENT_OPTIONS']['STAY_AT_PAGE']
+;
 
 $arResult['JS_DATA']['template'] = $template->export('~'); // export data to array
 $arResult['JS_DATA']['isNewUserResponsible'] = false;

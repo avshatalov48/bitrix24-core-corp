@@ -1,7 +1,7 @@
 
 import { IconBackgroundColor } from '../enums/icon-background-color';
 import { Counter } from 'ui.cnt';
-import { Dom } from 'main.core';
+import {Dom, Text} from 'main.core';
 
 export const Icon = {
 	props: {
@@ -20,6 +20,7 @@ export const Icon = {
 			required: false,
 			default: IconBackgroundColor.PRIMARY,
 		},
+		backgroundUri: String,
 	},
 	inject: ['isLogMessage'],
 	computed: {
@@ -27,7 +28,8 @@ export const Icon = {
 			return {
 				'crm-timeline__card_icon': true,
 				[`--bg-${this.backgroundColorToken}`]: !!this.backgroundColorToken,
-				[`--code-${this.code}`]: !!this.code,
+				[`--code-${this.code}`]: !!this.code && !this.backgroundUri,
+				[`--custom-bg`]: !!this.backgroundUri,
 				['--muted']: this.isLogMessage,
 			}
 		},
@@ -35,6 +37,17 @@ export const Icon = {
 		counterNodeContainer() {
 			return this.$refs.counter;
 		},
+
+		styles() {
+			if (!this.backgroundUri)
+			{
+				return {};
+			}
+
+			return {
+				backgroundImage: "url('" + encodeURI(Text.encode(this.backgroundUri)) + "')",
+			}
+		}
 	},
 
 	methods: {
@@ -64,7 +77,7 @@ export const Icon = {
 	},
 	template: `
 		<div :class="className">
-			<i></i>
+			<i :style="styles"></i>
 			<div ref="counter" v-show="!!counterType" class="crm-timeline__card_icon_counter"></div>
 		</div>
 	`

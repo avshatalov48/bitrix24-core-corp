@@ -7,6 +7,7 @@ trait TextPropertiesMixin
 	protected ?string $fontWeight = null;
 	protected ?string $fontSize = null;
 	protected ?string $color = null;
+	protected ?string $title = null;
 
 	public function getColor(): ?string
 	{
@@ -57,6 +58,17 @@ trait TextPropertiesMixin
 	public function setFontSize(?string $fontSize): self
 	{
 		$this->fontSize = $fontSize;
+
+		return $this;
+	}
+	public function getTitle(): ?string
+	{
+		return $this->title;
+	}
+
+	public function setTitle(?string $title): self
+	{
+		$this->title = $title;
 
 		return $this;
 	}

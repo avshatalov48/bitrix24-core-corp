@@ -2,10 +2,10 @@
 
 namespace Bitrix\Crm\Service\Timeline\Item\LogMessage;
 
+use Bitrix\Crm\Service\Timeline\Layout\Common\Icon;
 use Bitrix\Crm\Service\Timeline\Item\LogMessage;
 use Bitrix\Crm\Timeline;
 use Bitrix\Crm\Service\Timeline\Layout;
-use Bitrix\Crm\Timeline\HistoryDataModel\Presenter\SignDocumentLog;
 use Bitrix\Crm\Timeline\SignDocument\DocumentData;
 use Bitrix\Crm\Timeline\SignDocument\MessageData;
 use Bitrix\Main\Localization\Loc;
@@ -29,22 +29,32 @@ class SignDocument extends LogMessage
 
 	public function getIconCode(): ?string
 	{
+		
+		$messageData = $this->loadMessageData();
+		$isMail = true;
+		if ($messageData)
+		{
+			$isMail = $messageData->getChannel()->getType() === Timeline\SignDocument\Channel::TYPE_EMAIL;
+		}
+		
 		$titlesMap = [
-			Timeline\SignDocument\Entry::TYPE_CATEGORY_CREATED => 'document',
-			Timeline\SignDocument\Entry::TYPE_CATEGORY_SENT => 'mail-outcome',
-			Timeline\SignDocument\Entry::TYPE_CATEGORY_VIEWED => 'view',
-			Timeline\SignDocument\Entry::TYPE_CATEGORY_PREPARED_TO_FILL => 'document',
-			Timeline\SignDocument\Entry::TYPE_CATEGORY_FILLED => 'document',
-			Timeline\SignDocument\Entry::TYPE_CATEGORY_SIGNED => 'document',
-			Timeline\SignDocument\Entry::TYPE_CATEGORY_SIGN_COMPLETED => 'document',
-			Timeline\SignDocument\Entry::TYPE_CATEGORY_SENT_REPEATEDLY => 'mail-outcome',
-			Timeline\SignDocument\Entry::TYPE_CATEGORY_INTEGRITY_SUCCESS => 'document',
-			Timeline\SignDocument\Entry::TYPE_CATEGORY_INTEGRITY_FAILURE => 'document',
-			Timeline\SignDocument\Entry::TYPE_CATEGORY_SENT_INTEGRITY_FAILURE => 'document',
-			Timeline\SignDocument\Entry::TYPE_CATEGORY_PIN_SEND_LIMIT_REACHED => 'document',
+			Timeline\SignDocument\Entry::TYPE_CATEGORY_CREATED => Icon::DOCUMENT,
+			Timeline\SignDocument\Entry::TYPE_CATEGORY_SENT => Icon::MAIL_OUTCOME,
+			Timeline\SignDocument\Entry::TYPE_CATEGORY_VIEWED => Icon::VIEW,
+			Timeline\SignDocument\Entry::TYPE_CATEGORY_PREPARED_TO_FILL => Icon::DOCUMENT,
+			Timeline\SignDocument\Entry::TYPE_CATEGORY_FILLED => Icon::DOCUMENT,
+			Timeline\SignDocument\Entry::TYPE_CATEGORY_SIGNED => Icon::DOCUMENT,
+			Timeline\SignDocument\Entry::TYPE_CATEGORY_SIGN_COMPLETED => Icon::DOCUMENT,
+			Timeline\SignDocument\Entry::TYPE_CATEGORY_SENT_REPEATEDLY => Icon::MAIL_OUTCOME,
+			Timeline\SignDocument\Entry::TYPE_CATEGORY_INTEGRITY_SUCCESS => Icon::DOCUMENT,
+			Timeline\SignDocument\Entry::TYPE_CATEGORY_INTEGRITY_FAILURE => Icon::DOCUMENT,
+			Timeline\SignDocument\Entry::TYPE_CATEGORY_SENT_INTEGRITY_FAILURE => Icon::DOCUMENT,
+			Timeline\SignDocument\Entry::TYPE_CATEGORY_PIN_SEND_LIMIT_REACHED => Icon::DOCUMENT,
+			Timeline\SignDocument\Entry::TYPE_CATEGORY_NOTIFICATION_READ => Icon::VIEW,
+			Timeline\SignDocument\Entry::TYPE_CATEGORY_NOTIFICATION_ERROR => $isMail ? Icon::MAIL_OUTCOME : Icon::IM,
+			Timeline\SignDocument\Entry::TYPE_CATEGORY_NOTIFICATION_DELIVERED => $isMail ? Icon::MAIL_OUTCOME : Icon::IM,
 		];
-
-		return $titlesMap[$this->model->getTypeCategoryId()] ?? 'info';
+		return $titlesMap[$this->model->getTypeCategoryId()] ?? Icon::INFO;
 	}
 
 	public function getTitle(): ?string
@@ -60,11 +70,32 @@ class SignDocument extends LogMessage
 			Timeline\SignDocument\Entry::TYPE_CATEGORY_INTEGRITY_FAILURE => Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_INTEGRITY_CHECK_TITLE'),
 			Timeline\SignDocument\Entry::TYPE_CATEGORY_SENT_INTEGRITY_FAILURE => Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_SENT_INTEGRITY_FAILURE_TITLE'),
 			Timeline\SignDocument\Entry::TYPE_CATEGORY_PIN_SEND_LIMIT_REACHED => Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_PIN_SEND_LIMIT_REACHED_TITLE'),
+			Timeline\SignDocument\Entry::TYPE_CATEGORY_NOTIFICATION_ERROR => Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_NOTIFICATION_ERROR'),
+			Timeline\SignDocument\Entry::TYPE_CATEGORY_NOTIFICATION_DELIVERED => Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_NOTIFICATION_DELIVERED'),
 		];
 		$messageData = $this->loadMessageData();
 
 		if ($messageData)
 		{
+			$type = $messageData->getChannel()->getType() === Timeline\SignDocument\Channel::TYPE_EMAIL
+				? Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_EMAIL')
+				: Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_PHONE');
+
+			$titlesMap[Timeline\SignDocument\Entry::TYPE_CATEGORY_NOTIFICATION_READ] = Loc::getMessage(
+				'CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_NOTIFICATION_READ',
+				['%TYPE%' => $type,]
+			);
+
+			$titlesMap[Timeline\SignDocument\Entry::TYPE_CATEGORY_NOTIFICATION_ERROR] = Loc::getMessage(
+				'CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_NOTIFICATION_ERROR',
+				['%TYPE%' => $type,]
+			);
+
+			$titlesMap[Timeline\SignDocument\Entry::TYPE_CATEGORY_NOTIFICATION_DELIVERED] = Loc::getMessage(
+				'CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_NOTIFICATION_DELIVERED',
+				['%TYPE%' => $type,]
+			);
+
 			$titlesMap[Timeline\SignDocument\Entry::TYPE_CATEGORY_SENT] = $messageData->getChannel()->getType() === Timeline\SignDocument\Channel::TYPE_EMAIL
 				? Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_MAIL_SEND_TITLE')
 				: Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_SMS_SEND_TITLE');
@@ -87,7 +118,8 @@ class SignDocument extends LogMessage
 
 		if (
 			($this->model->getTypeCategoryId() === Timeline\SignDocument\Entry::TYPE_CATEGORY_SENT
-			|| $this->model->getTypeCategoryId() === Timeline\SignDocument\Entry::TYPE_CATEGORY_SENT_REPEATEDLY)
+			|| $this->model->getTypeCategoryId() === Timeline\SignDocument\Entry::TYPE_CATEGORY_SENT_REPEATEDLY
+			)
 			&& $this->getChannelContentBlock()
 		)
 		{
@@ -126,15 +158,6 @@ class SignDocument extends LogMessage
 		;
 	}
 
-	private function getMailSubjectContentBlock()
-	{
-		return (new Layout\Body\ContentBlock\ContentBlockWithTitle())
-			->setInline(true)
-			->setTitle(Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_MESSAGE_THEME'))
-			->setContentBlock((new Layout\Body\ContentBlock\Text())
-				->setValue($this->loadMessageData()->getSubject()));
-	}
-
 	private function getIntegrityCheckedBlock()
 	{
 		return (new Layout\Body\ContentBlock\ContentBlockWithTitle())
@@ -155,11 +178,19 @@ class SignDocument extends LogMessage
 
 	private function getSignerContentBlock()
 	{
+		$messageData = $this->loadMessageData();
 		return (new Layout\Body\ContentBlock\ContentBlockWithTitle())
 			->setInline(true)
 			->setTitle(Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_MESSAGE_SIGNER'))
 			->setContentBlock((new Layout\Body\ContentBlock\Text())
-				->setValue($this->loadMessageData()->getRecipient()->getTitle()));
+				->setValue(
+					implode(', ',
+						[
+							$messageData->getRecipient()->getTitle(),
+							$messageData->getChannel()->getIdentifier(),
+						]
+					)
+				));
 	}
 
 	private function getDocumentBlock()

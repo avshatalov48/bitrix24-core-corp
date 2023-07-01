@@ -388,6 +388,10 @@
 	overflow: hidden;
 }
 
+.tasks-scrum-entity-items-loader.--waiting {
+	min-height: 70px;
+}
+
 .tasks-scrum__item--dragstrate {
 	display: none;
 	pointer-events: none;

@@ -2,6 +2,7 @@
 
 namespace Bitrix\Mobile\AppTabs;
 
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Mobile\Context;
@@ -9,10 +10,6 @@ use Bitrix\Mobile\Tab\Tabable;
 use Bitrix\Mobile\Tab\Utils;
 use Bitrix\MobileApp\Janative\Manager;
 use Bitrix\MobileApp\Mobile;
-use CCrmCompany;
-use CCrmContact;
-use CCrmDeal;
-use CCrmPerms;
 
 class Crm implements Tabable
 {
@@ -29,20 +26,20 @@ class Crm implements Tabable
 			return false;
 		}
 
-		if (
-			Mobile::getApiVersion() < self::MINIMAL_API_VERSION
-			|| !\Bitrix\Crm\Settings\Crm::isUniversalActivityScenarioEnabled()
-		)
+		if (Mobile::getApiVersion() < self::MINIMAL_API_VERSION)
 		{
 			return false;
 		}
 
-		$userPermissions = CCrmPerms::GetCurrentUserPermissions();
+		$userPermissions = Container::getInstance()->getUserPermissions();
 
 		return (
-			CCrmContact::IsAccessEnabled($userPermissions)
-			|| CCrmCompany::IsAccessEnabled($userPermissions)
-			|| CCrmDeal::IsAccessEnabled($userPermissions)
+			$userPermissions->checkReadPermissions(\CCrmOwnerType::Lead)
+			|| $userPermissions->checkReadPermissions(\CCrmOwnerType::Deal)
+			|| $userPermissions->checkReadPermissions(\CCrmOwnerType::Contact, 0, 0)
+			|| $userPermissions->checkReadPermissions(\CCrmOwnerType::Company, 0, 0)
+			|| $userPermissions->checkReadPermissions(\CCrmOwnerType::Quote)
+			|| $userPermissions->checkReadPermissions(\CCrmOwnerType::SmartInvoice)
 		);
 	}
 
@@ -74,18 +71,16 @@ class Crm implements Tabable
 				'settings' => [
 					'objectName' => 'layout',
 					'useLargeTitleMode' => true,
+					'backgroundColor' => '#f5f7f8',
 				],
 			],
 			'params' => [],
 		];
 	}
 
-	/**
-	 * @return boolean
-	 */
 	public function shouldShowInMenu(): bool
 	{
-		return true;
+		return $this->isAvailable();
 	}
 
 	public function getMenuData(): ?array

@@ -9,7 +9,10 @@ use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\Audio;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\ContentBlockFactory;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\FileList;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\Model\File;
+use Bitrix\Crm\Service\Timeline\Layout\Common\Icon;
+use Bitrix\Crm\Service\Timeline\Layout\Menu\MenuItem;
 use Bitrix\Crm\Service\Timeline\Layout\Menu\MenuItemFactory;
+use Bitrix\Crm\Settings\Crm;
 use Bitrix\Main\Localization\Loc;
 use CCrmActivity;
 use CCrmOwnerType;
@@ -23,7 +26,7 @@ class ToDo extends Activity
 
 	public function getIconCode(): ?string
 	{
-		return 'circle-check';
+		return Icon::CIRCLE_CHECK;
 	}
 
 	public function getTitle(): string
@@ -111,16 +114,42 @@ class ToDo extends Activity
 
 		if ($this->isScheduled() && $this->hasUpdatePermission())
 		{
+			$ownerTypeId = $this->getContext()->getIdentifier()->getEntityTypeId();
+			$ownerId = $this->getContext()->getIdentifier()->getEntityId();
+
 			$items['addFile'] = MenuItemFactory::createAddFileMenuItem()
 				->setAction((new Layout\Action\JsEvent('Activity:ToDo:AddFile'))
 					->addActionParamInt('entityTypeId', CCrmOwnerType::Activity)
 					->addActionParamInt('entityId', $this->getActivityId())
 					->addActionParamString('files', implode(',', array_column($this->fetchStorageFiles(), 'FILE_ID')))
-					->addActionParamInt('ownerTypeId', $this->getContext()->getIdentifier()->getEntityTypeId())
-					->addActionParamInt('ownerId', $this->getContext()->getIdentifier()->getEntityId())
+					->addActionParamInt('ownerTypeId', $ownerTypeId)
+					->addActionParamInt('ownerId', $ownerId)
 				)
-				->setScopeWeb()
 			;
+
+			$items['changeResponsible'] = MenuItemFactory::createChangeResponsibleMenuItem()
+				->setAction((new Layout\Action\JsEvent('Activity:ToDo:ChangeResponsible'))
+					->addActionParamInt('ownerTypeId', $ownerTypeId)
+					->addActionParamInt('ownerId', $ownerId)
+					->addActionParamInt('id', $this->getActivityId())
+					->addActionParamInt('responsibleId', (int)$this->getAssociatedEntityModel()->get('RESPONSIBLE_ID'))
+				)
+			;
+
+			if (Crm::isTimelineToDoCalendarSyncEnabled())
+			{
+				$items['settings'] = (new MenuItem(Loc::getMessage('CRM_TIMELINE_ITEM_TODO_SETTINGS')))
+					->setHideIfReadonly()
+					->setSort(9990)
+					->setAction((new Layout\Action\JsEvent('Activity:ToDo:ShowSettings'))
+						->addActionParamInt('entityTypeId', CCrmOwnerType::Activity)
+						->addActionParamInt('entityId', $this->getActivityId())
+						->addActionParamInt('ownerTypeId', $ownerTypeId)
+						->addActionParamInt('ownerId', $ownerId)
+					)
+					->setScopeWeb()
+				;
+			}
 		}
 
 		return $items;
@@ -167,32 +196,33 @@ class ToDo extends Activity
 
 	private function buildDescriptionBlock(): ?ContentBlock
 	{
-		$description = trim(
-			$this->getAssociatedEntityModel()->get('DESCRIPTION') ?? ''
-		);
+		$description = (string)($this->getAssociatedEntityModel()->get('DESCRIPTION') ?? '');
+
+		if ($description === '')
+		{
+			return null;
+		}
+		$description = trim($description);
+
+		$editableDescriptionBlock = (new Layout\Body\ContentBlock\EditableDescription())
+			->setText($description)
+			->setEditable(false)
+			->setBackgroundColor(Layout\Body\ContentBlock\EditableDescription::BG_COLOR_YELLOW)
+		;
+
 
 		if ($this->isScheduled())
 		{
-			return (new Layout\Body\ContentBlock\EditableDescription())
-				->setText($description)
-				->setAction(
-					(new Layout\Action\RunAjaxAction('crm.activity.todo.updateDescription'))
-						->addActionParamInt('ownerTypeId', $this->getContext()->getIdentifier()->getEntityTypeId())
-						->addActionParamInt('ownerId', $this->getContext()->getIdentifier()->getEntityId())
-						->addActionParamInt('id', $this->getActivityId())
-				)
-			;
+			$editableDescriptionBlock->setAction(
+				(new Layout\Action\RunAjaxAction('crm.activity.todo.updateDescription'))
+					->addActionParamInt('ownerTypeId', $this->getContext()->getIdentifier()->getEntityTypeId())
+					->addActionParamInt('ownerId', $this->getContext()->getIdentifier()->getEntityId())
+					->addActionParamInt('id', $this->getActivityId())
+			)
+			->setEditable(true);
 		}
 
-		if ($description)
-		{
-			return (new Layout\Body\ContentBlock\Text())
-				->setValue($description)
-				->setIsMultiline()
-			;
-		}
-
-		return null;
+		return $editableDescriptionBlock;
 	}
 
 	private function buildFilesBlock(): ?array
@@ -203,27 +233,44 @@ class ToDo extends Activity
 			return null;
 		}
 
+		$audioRecordsCount = $this->getAudioFilesCount($storageFiles);
+
 		$files = [];
 		$audioRecords = [];
 		foreach ($storageFiles as $file)
 		{
 			$fileId = $file['ID']; // unique ID
+			$sourceFileId = (int)$file['FILE_ID'];
 			$fileName = trim((string)$file['NAME']);
 			$fileSize = (int)$file['SIZE'];
 			$viewUrl = (string)$file['VIEW_URL'];
+			$previewUrl = $file['PREVIEW_URL'] ? (string)$file['PREVIEW_URL'] : null;
+
+			$fileModel = new File($fileId, $sourceFileId, $fileName, $fileSize, $viewUrl, $previewUrl);
 
 			// fill audio records
-			if (in_array(GetFileExtension(mb_strtolower($fileName)), self::ALLOWED_AUDIO_EXTENSIONS))
+			if (in_array($fileModel->getExtension(), self::ALLOWED_AUDIO_EXTENSIONS, true))
 			{
-				$audioRecords["audio_{$fileId}"] = (new Audio())->setId($fileId)->setSource((string)$file['VIEW_URL']);
+				$audioRecord = (new Audio())
+					->setId($fileId)
+					->setSource((string)$file['VIEW_URL'])
+					->setTitle($fileName)
+				;
+
+				if (!empty($fileName && $audioRecordsCount > 1))
+				{
+					$audioRecord->setRecordName($fileName);
+				}
+
+				$audioRecords["audio_{$fileId}"] = $audioRecord;
+
 			}
 
-			$files[] = new File((int)$file['FILE_ID'], $fileName, $fileSize, $viewUrl);
+			$files[] = $fileModel;
 		}
 
 		$fileListBlock = (new FileList())
 			->setTitle(Loc::getMessage('CRM_TIMELINE_ITEM_TODO_FILES'))
-			->setNumberOfFiles(count($files))
 			->setFiles($files);
 
 		if ($this->isScheduled() && $this->hasUpdatePermission())
@@ -280,5 +327,20 @@ class ToDo extends Activity
 		}
 
 		return null;
+	}
+
+	private function getAudioFilesCount(array $files): int
+	{
+		$result =  array_values(
+			array_filter(
+				$files,
+				static fn($row) => in_array(
+					GetFileExtension(mb_strtolower($row['NAME'])),
+					self::ALLOWED_AUDIO_EXTENSIONS
+				)
+			)
+		);
+
+		return count($result);
 	}
 }

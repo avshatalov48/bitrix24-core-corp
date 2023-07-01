@@ -1509,10 +1509,6 @@ table tr.bizproc-item-row-last td{padding-bottom: 25px;}
 	position: relative;
 }
 
-.bx-ie .disk-detail-properties-owner-name {
-	display: block;
-}
-
 .disk-detail-properties-owner-link,
 .disk-detail-properties-user-access-link {
 	flex: 1;

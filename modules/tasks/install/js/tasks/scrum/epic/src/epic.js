@@ -55,7 +55,7 @@ export class Epic extends EventEmitter
 		/* eslint-enable */
 		this.sidePanel = null;
 
-		this.id = Text.getRandom();
+		this.id = null;
 
 		this.form = null;
 		this.formData = null;
@@ -174,6 +174,8 @@ export class Epic extends EventEmitter
 
 	showAddForm()
 	{
+		this.id = Text.getRandom();
+
 		this.sidePanelManager.open(
 			'tasks-scrum-epic-add-form-side-panel',
 			{
@@ -206,6 +208,8 @@ export class Epic extends EventEmitter
 
 	showList()
 	{
+		this.id = Text.getRandom();
+
 		this.gridId = 'EntityEpicsGrid_' + this.groupId;
 
 		const sidePanelId = 'tasks-scrum-epic-list-side-panel';
@@ -247,6 +251,8 @@ export class Epic extends EventEmitter
 
 	showTasksList(completed: boolean = false)
 	{
+		this.id = Text.getRandom();
+
 		this.gridId = 'EpicTasksGrid_' + this.groupId;
 
 		this.sidePanelManager.open(
@@ -276,6 +282,8 @@ export class Epic extends EventEmitter
 
 	showViewForm()
 	{
+		this.id = Text.getRandom();
+
 		this.subscribeViewToEvents();
 
 		this.sidePanelManager.open(
@@ -323,6 +331,8 @@ export class Epic extends EventEmitter
 
 	showEditForm()
 	{
+		this.id = Text.getRandom();
+
 		this.sidePanelManager.open(
 			'tasks-scrum-epic-edit-form-side-panel',
 			{

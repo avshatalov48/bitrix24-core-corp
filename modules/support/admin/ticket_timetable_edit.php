@@ -68,7 +68,7 @@ function Tab2_JS()
 				oCellC.innerHTML = '<a title="<? echo GetMessage("MAIN_ADMIN_MENU_COPY"); ?>" href="javascript: Copy('+i+','+j+')">' +
 				'<img src="/bitrix/images/support/copy.gif" style="vertical-align:middle" width="15" height="15" border=0 hspace="2" alt="<? echo GetMessage("MAIN_ADMIN_MENU_COPY"); ?>"></a>';*/
 
-				vF = document.getElementById("MINUTE_TILL_"+i+"_"+(j-1)).value;
+				vF = BX.Text.encode(document.getElementById("MINUTE_TILL_"+i+"_"+(j-1)).value);
 				vT = "23:59"/*document.getElementById("MINUTE_TILL_"+i+"_"+(j-1)).value;*/
 				oCellF = oRow.insertCell(0);
 				oCellF.style.align="left";

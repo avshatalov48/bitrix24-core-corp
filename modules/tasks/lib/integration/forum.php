@@ -19,7 +19,7 @@ abstract class Forum extends \Bitrix\Tasks\Integration
 			return null;
 		}
 
-		$languageId = (string) $parameters['LANGUAGE_ID'] != '' ? $parameters['LANGUAGE_ID'] : LANGUAGE_ID;
+		$languageId = ((string)($parameters['LANGUAGE_ID'] ?? null) != '' ? $parameters['LANGUAGE_ID'] : LANGUAGE_ID);
 
 		static $parser;
 		if($parser == null)
@@ -27,7 +27,7 @@ abstract class Forum extends \Bitrix\Tasks\Integration
 			$parser = new \forumTextParser($languageId);
 		}
 
-		if((string) $parameters['PATH_TO_USER_PROFILE'] != '')
+		if((string) ($parameters['PATH_TO_USER_PROFILE'] ?? '') !== '')
 		{
 			$parser->pathToUser = $parameters['PATH_TO_USER_PROFILE'];
 		}

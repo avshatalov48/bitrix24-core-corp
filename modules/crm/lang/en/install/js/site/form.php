@@ -1,4 +1,8 @@
-<?
+<?php
+$MESS["CRM_SITE_FORM_ABUSE_INFO"] = "Bitrix24 is in no way affiliated with or responsible for this publisher or the publisher's content.";
+$MESS["CRM_SITE_FORM_ABUSE_INFO_HINT"] = "Bitrix24 is not responsible for information supplied in this form. However, you can always report a violation.";
+$MESS["CRM_SITE_FORM_ABUSE_INFO_TEXT"] = "Bitrix24 is not responsible for information supplied in this form.";
+$MESS["CRM_SITE_FORM_ABUSE_LINK"] = "Report abuse";
 $MESS["CRM_SITE_FORM_BASKET_DISCOUNT"] = "You save";
 $MESS["CRM_SITE_FORM_BASKET_SUM"] = "Without discount";
 $MESS["CRM_SITE_FORM_BASKET_TOTAL"] = "Total";
@@ -18,4 +22,3 @@ $MESS["CRM_SITE_FORM_STATE_DISABLED"] = "The form is disabled";
 $MESS["CRM_SITE_FORM_STATE_ERROR"] = "That's an error.";
 $MESS["CRM_SITE_FORM_STATE_SUCCESS"] = "Thank you!";
 $MESS["CRM_SITE_FORM_STATE_SUCCESS_TITLE"] = "Request has been sent!";
-?>

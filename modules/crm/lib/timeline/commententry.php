@@ -121,12 +121,14 @@ class CommentEntry extends TimelineEntry
 
 	public static function delete($ID)
 	{
-		parent::delete($ID);
+		$result = parent::delete($ID);
 
 		$GLOBALS['USER_FIELD_MANAGER']->Delete(CommentController::UF_FIELD_NAME, $ID);
 
 		$event = new Main\Event("crm", self::ON_CRM_TIMELINE_COMMENT_DELETE_EVENT, ['ID' => $ID]);
 		$event->send();
+
+		return $result;
 	}
 
 	private static function markCallTrackerActivitiesAsCompleted(array $bindings): void

@@ -1,17 +1,10 @@
 import Manager from "./manager";
 import Stream from "./stream";
-import Editor from "./editor";
 import History from "./streams/history";
 import FixedHistory from "./streams/fixedhistory";
 import EntityChat from "./streams/entitychat";
 import Schedule from "./streams/schedule";
-import Comment from "./editors/comment";
-import Wait from "./editors/wait";
-import Rest from "./editors/rest";
-import Sms from "./editors/sms";
-import WaitConfigurationDialog from "./tools/wait-configuration-dialog";
 import SchedulePostponeController from "./tools/schedule-postpone-controller";
-import MenuBar from "./tools/menubar";
 import AudioPlaybackRateSelector from "./tools/audio-playback-rate-selector";
 import * as Types from "./types";
 import Action from "./action";
@@ -76,17 +69,8 @@ const Streams = {
 	Schedule,
 }
 
-const Editors = {
-	Comment,
-	Wait,
-	Rest,
-	Sms
-}
-
 const Tools = {
-	WaitConfigurationDialog,
 	SchedulePostponeController,
-	MenuBar,
 	AudioPlaybackRateSelector,
 }
 
@@ -163,8 +147,6 @@ export {
 	Manager,
 	Stream,
 	Streams,
-	Editor,
-	Editors,
 	Tools,
 	Types,
 	Action,

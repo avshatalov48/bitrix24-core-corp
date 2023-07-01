@@ -59,7 +59,7 @@ final class Restriction
 			'select' => ['ID']
 		])->fetch();
 
-		return (int)$item['ID'] > 0;
+		return isset ($item['ID']) && (int)$item['ID'] > 0;
 	}
 
 	private static function hadUserFieldsBefore($entityCode, $forceUpdate)

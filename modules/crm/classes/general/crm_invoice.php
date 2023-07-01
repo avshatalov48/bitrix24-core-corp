@@ -2989,6 +2989,18 @@ class CAllCrmInvoice
 		$errMsg = array();
 		$bError = false;
 
+		$clearCountableFromCallListsOption = '~CRM_CLEAR_COUNTABLE_FROM_CALLISTS';
+		if ((string)COption::GetOptionString('crm', $clearCountableFromCallListsOption, 'N') === 'N')
+		{
+			COption::SetOptionString('crm', $clearCountableFromCallListsOption, 'Y');
+			$wrongRecordsExist = (bool)($DB->Query('select * from b_crm_entity_countable_act where ENTITY_TYPE_ID=12 LIMIT 1')->Fetch());
+			if ($wrongRecordsExist)
+			{
+				$DB->Query('delete from b_crm_entity_countable_act where ENTITY_TYPE_ID=12');
+				\Bitrix\Crm\Settings\CounterSettings::getInstance()->cleanCounterLimitCache();
+			}
+		}
+
 		$catalogNormalizeOption = '~CRM_CATALOG_NORMALIZE_18_5_0';
 		$catalogNormalizeStep = (string)Main\Config\Option::get('crm', $catalogNormalizeOption, 'N');
 		if ($catalogNormalizeStep === 'Y')
@@ -3648,6 +3660,7 @@ class CAllCrmInvoice
 
 		if (COption::GetOptionString('crm', '~CRM_INVOICE_INSTALL_12_5_7', 'N') !== 'Y')
 		{
+			COption::SetOptionString('crm', '~CRM_INVOICE_INSTALL_12_5_7', 'Y');
 			try
 			{
 				require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/crm/install/sale_link.php");
@@ -3660,7 +3673,6 @@ class CAllCrmInvoice
 
 			if (!$bError)
 			{
-				COption::SetOptionString('crm', '~CRM_INVOICE_INSTALL_12_5_7', 'Y');
 				LocalRedirect($GLOBALS['APPLICATION']->GetCurPageParam());
 				return true;
 			}
@@ -3668,6 +3680,7 @@ class CAllCrmInvoice
 			{
 				$errString = implode('<br>', $errMsg);
 				ShowError($errString);
+				COption::SetOptionString('crm', '~CRM_INVOICE_INSTALL_12_5_7', 'N');
 				return false;
 			}
 		}

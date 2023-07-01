@@ -5,8 +5,10 @@ namespace Bitrix\Tasks\Internals\Counter;
 use Bitrix\Main;
 use Bitrix\Main\Application;
 use Bitrix\Main\Event;
+use Bitrix\Tasks\Access\Role\RoleDictionary;
 use Bitrix\Tasks\Comments\Task\CommentPoster;
 use Bitrix\Tasks\Integration\Bizproc;
+use Bitrix\Tasks\Integration\CRM\TimeLineManager;
 use Bitrix\Tasks\Internals\Counter;
 use Bitrix\Tasks\Item\Task;
 use Bitrix\Tasks\Util\Type\DateTime;
@@ -14,6 +16,7 @@ use Bitrix\Tasks\Util\User;
 use CAgent;
 use CTasks;
 use CTimeZone;
+use Bitrix\Tasks\Integration\CRM\Timeline;
 
 /**
  * Class Agent
@@ -83,7 +86,8 @@ class Agent
 	 */
 	public static function expired($taskId): string
 	{
-		$task = Task::getInstance($taskId, User::getAdminId());
+		$adminId = User::getAdminId();
+		$task = Task::getInstance($taskId, $adminId);
 		$statesCompleted = [CTasks::STATE_DEFERRED, CTasks::STATE_COMPLETED, CTasks::STATE_SUPPOSEDLY_COMPLETED];
 
 		if (
@@ -112,6 +116,18 @@ class Agent
 		$event->send();
 
 		Bizproc\Listener::onTaskExpired($taskId, $taskData);
+		/** @var Task\Collection\Member $members */
+		$members = $taskData['SE_MEMBER'];
+		$responsibleId = 0;
+		foreach ($members as $member)
+		{
+			$memberData = $member->getData();
+			if ($memberData['TYPE'] === RoleDictionary::ROLE_RESPONSIBLE)
+			{
+				$responsibleId = (int)$memberData['USER_ID'];
+			}
+		}
+		(new TimeLineManager($taskId, $responsibleId))->onTaskExpired()->save();
 
 		return '';
 	}

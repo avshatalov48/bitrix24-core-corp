@@ -35,11 +35,11 @@ if ($helper->checkHasFatals())
 $arResult['TEMPLATE_DATA'] = array(// contains data generated in result_modifier.php
 );
 $arResult['JS_DATA'] = array(
-	'userId' => $arResult['USER_ID'],
-	'ownerId' => $arResult['OWNER_ID'],
-	'groupId' => $arParams['GROUP_ID'],
-	'filterId' => $arParams['FILTER_ID'],
-	'use_ajax_filter' => $arParams['USE_AJAX_ROLE_FILTER'] == 'Y',
+	'userId' => $arResult['USER_ID'] ?? null,
+	'ownerId' => $arResult['OWNER_ID'] ?? null,
+	'groupId' => $arParams['GROUP_ID'] ?? null,
+	'filterId' => $arParams['FILTER_ID'] ?? null,
+	'use_ajax_filter' => isset($arParams['USE_AJAX_ROLE_FILTER']) && $arParams['USE_AJAX_ROLE_FILTER'] === 'Y',
 	'text_sl_effective'=>GetMessage('TASKS_PANEL_TEXT_EFFECTIVE'),
 	'show_sl_effective'=> !CUserOptions::GetOption('spotlight', 'view_date_tasks_sl_effective', false)
 );
@@ -67,7 +67,7 @@ $arResult['ITEMS'][] = array(
 	'SUB_LINK' => array(
 		'CLASS' => '',
 		'URL' => CComponentEngine::makePathFromTemplate(
-			$arParams['PATH_TO_USER_TASKS_TASK'],
+			($arParams['PATH_TO_USER_TASKS_TASK'] ?? null),
 			array(
 				'action' => 'edit',
 				'task_id' => 0,
@@ -76,16 +76,17 @@ $arResult['ITEMS'][] = array(
 			)
 		)
 	),
-	"IS_ACTIVE" => ($arParams["MARK_TEMPLATES"] != "Y" &&
-					$arParams["MARK_SECTION_EFFECTIVE"] != "Y" &&
-					$arParams["MARK_SECTION_PROJECTS"] != "Y" &&
-					$arParams["MARK_SECTION_PROJECTS_LIST"] != "Y" &&
-					$arParams["MARK_SECTION_SCRUM_LIST"] != "Y" &&
-					$arParams["MARK_SECTION_MANAGE"] != "Y" &&
-					$arParams["MARK_SECTION_EMPLOYEE_PLAN"] != "Y" &&
-					$arParams["MARK_RECYCLEBIN"] != "Y" &&
-					$arParams["MARK_SECTION_REPORTS"] != "Y") &&
-				   ($arParams['DEFAULT_ROLEID'] == 'view_all' || $arParams['DEFAULT_ROLEID'] == ''), // need refactoring
+	"IS_ACTIVE" => (isset($arParams["MARK_TEMPLATES"]) && $arParams["MARK_TEMPLATES"] != "Y" &&
+					isset($arParams["MARK_SECTION_EFFECTIVE"]) && $arParams["MARK_SECTION_EFFECTIVE"] != "Y" &&
+					isset($arParams["MARK_SECTION_PROJECTS"]) && $arParams["MARK_SECTION_PROJECTS"] != "Y" &&
+					isset($arParams["MARK_SECTION_PROJECTS_LIST"]) && $arParams["MARK_SECTION_PROJECTS_LIST"] != "Y" &&
+					isset($arParams["MARK_SECTION_SCRUM_LIST"]) && $arParams["MARK_SECTION_SCRUM_LIST"] != "Y" &&
+					isset($arParams["MARK_SECTION_MANAGE"]) && $arParams["MARK_SECTION_MANAGE"] != "Y" &&
+					isset($arParams["MARK_SECTION_EMPLOYEE_PLAN"]) && $arParams["MARK_SECTION_EMPLOYEE_PLAN"] != "Y" &&
+					isset($arParams["MARK_RECYCLEBIN"]) && $arParams["MARK_RECYCLEBIN"] != "Y" &&
+					isset($arParams["MARK_SECTION_REPORTS"]) && $arParams["MARK_SECTION_REPORTS"] != "Y") &&
+					isset($arParams['DEFAULT_ROLEID']) &&
+					($arParams['DEFAULT_ROLEID'] == 'view_all' || $arParams['DEFAULT_ROLEID'] == ''), // need refactoring
 	'COUNTER' => $arResult['TOTAL'],
 	'COUNTER_ID' => Counter\CounterDictionary::COUNTER_MEMBER_TOTAL,
 	'COUNTER_ACTIVE' => 'Y'
@@ -103,8 +104,18 @@ foreach ($arResult['ROLES'] as $roleId => $role)
 		//			: 'BX.Tasks.Component.TopMenu.getInstance("topmenu").filter("'.strtolower($roleId).'")',
 		'ID' => mb_strtolower($roleId),
 		'CLASS' => $arParams['PROJECT_VIEW'] === 'Y' ? '' : 'tasks_role_link',
-		'IS_ACTIVE' => ($arParams['MARK_ACTIVE_ROLE'] == 'Y' && $role['IS_ACTIVE']) ||
-			$arParams['DEFAULT_ROLEID'] == mb_strtolower($roleId), // need refactoring
+		'IS_ACTIVE' =>
+			(
+				isset($arParams['MARK_ACTIVE_ROLE'])
+				&& $arParams['MARK_ACTIVE_ROLE'] === 'Y'
+				&& array_key_exists('IS_ACTIVE', $role)
+				&& $role['IS_ACTIVE']
+			)
+			||
+			(
+				isset($arParams['DEFAULT_ROLEID'])
+				&& $arParams['DEFAULT_ROLEID'] == mb_strtolower($roleId)
+			),
 		'COUNTER' => $role['COUNTER'],
 		'COUNTER_ID' => $role['COUNTER_ID'],
 		'PARENT_ITEM_ID' => 'view_all',
@@ -172,7 +183,7 @@ $efficiencyItem = [
 	"URL" => $tasksLink."effective/".$strIframe,
 	"ID" => "view_effective",
 	"MAX_COUNTER_SIZE" => 100,
-	"IS_ACTIVE" => ($arParams["MARK_SECTION_EFFECTIVE"] == "Y"),
+	"IS_ACTIVE" => (isset($arParams["MARK_SECTION_EFFECTIVE"]) && $arParams["MARK_SECTION_EFFECTIVE"] == "Y"),
 	"COUNTER" => (int)$arResult['EFFECTIVE_COUNTER'],
 ];
 if (
@@ -195,7 +206,15 @@ if (!\Bitrix\Tasks\Integration\Extranet\User::isExtranet() && !$arParams['GROUP_
 	);
 }
 
-if ($arParams["SHOW_SECTION_REPORTS"] == "Y" && (!$_REQUEST['IFRAME'] || ($_REQUEST['IFRAME'] && $_REQUEST['IFRAME']!='Y')))
+if (
+	isset($arParams["SHOW_SECTION_REPORTS"])
+	&& $arParams["SHOW_SECTION_REPORTS"] == "Y"
+	&& (
+		!isset($_REQUEST['IFRAME'])
+		|| !$_REQUEST['IFRAME']
+		|| $_REQUEST['IFRAME'] !== 'Y'
+	)
+)
 {
 	$arResult['ITEMS'][] = array(
 		"TEXT" => GetMessage("TASKS_PANEL_TAB_REPORTS"),
@@ -225,13 +244,14 @@ if ($arParams["SHOW_SECTION_TEMPLATES"] == "Y")
 		'IS_DISABLED' => true
 	);
 }
-if ($arParams["SHOW_SECTION_RECYCLEBIN"] != "N" && CModule::includeModule('recyclebin'))
+$hideRecycleBin = $arParams["SHOW_SECTION_RECYCLEBIN"] ?? 'Y';
+if ($hideRecycleBin !== 'N' && CModule::includeModule('recyclebin'))
 {
 	$arResult['ITEMS'][] = array(
 		"TEXT"      => GetMessage("TASKS_PANEL_TAB_RECYCLEBIN"),
 		"URL"       => $tasksLink.'recyclebin/'.$strIframe,
 		"ID"        => "view_recyclebin",
-		"IS_ACTIVE" => $arParams["MARK_RECYCLEBIN"] == "Y",
+		"IS_ACTIVE" => isset($arParams['MARK_RECYCLEBIN']) && $arParams['MARK_RECYCLEBIN'] === 'Y',
 		'IS_DISABLED' => true
 	);
 }
@@ -243,16 +263,12 @@ if (TaskAccessController::can($arParams['LOGGED_USER_ID'], ActionDictionary::ACT
 		'ID' => 'config_permissions',
 		'IS_ACTIVE' => false,
 		'IS_DISABLED' => true,
+		'ON_CLICK' => 'BX.Tasks.Component.TopMenu.getInstance("topmenu").showConfigPermissions();',
 	];
-	if (Bitrix24::checkFeatureEnabled(Bitrix24\FeatureDictionary::TASKS_PERMISSIONS))
+	if (!Bitrix24::checkFeatureEnabled(Bitrix24\FeatureDictionary::TASKS_PERMISSIONS))
 	{
-		$rightsButton['URL'] = '/tasks/config/permissions/';
-	}
-	else
-	{
-		$sliderCode = 'limit_task_access_permissions';
-		$rightsButton['ON_CLICK'] = "top.BX.UI.InfoHelper.show('{$sliderCode}', {isLimit: true, limitAnalyticsLabels: {module: 'tasks', source: 'topMenu'}});";
 		$rightsButton['IS_LOCKED'] = true;
 	}
+
 	$arResult['ITEMS'][] = $rightsButton;
 }

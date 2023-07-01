@@ -37,6 +37,21 @@ interface ICanSendMessage
 	public static function getUsageErrors(): array;
 
 	/**
+	 * @param Array<string, \Bitrix\Crm\MessageSender\Channel\Correspondents\To[]> $toListByType
+	 * @param int $userId
+	 * @return Channel[]
+	 */
+	public static function getChannelsList(array $toListByType, int $userId): array;
+
+	/**
+	 * Checks whether it is possible to send a message via the channel.
+	 *
+	 * @param Channel $channel
+	 * @return Result If send is not possible, contains errors with reasons (e.g. not configured, not enough credits, ...)
+	 */
+	public static function canSendMessageViaChannel(Channel $channel): Result;
+
+	/**
 	 * @return bool
 	 */
 	public static function canSendMessage();

@@ -2,7 +2,6 @@
  * @module crm/timeline/services/data-provider
  */
 jn.define('crm/timeline/services/data-provider', (require, exports, module) => {
-
 	/**
 	 * @class TimelineDataProvider
 	 */
@@ -49,5 +48,4 @@ jn.define('crm/timeline/services/data-provider', (require, exports, module) => {
 	}
 
 	module.exports = { TimelineDataProvider };
-
 });

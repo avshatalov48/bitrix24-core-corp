@@ -56,6 +56,7 @@ abstract class LazyAccess extends \Bitrix\Tasks\Util\Type\Dictionary
 	 * @param string $offset
 	 * @return string | null
 	 */
+	#[\ReturnTypeWillChange]
 	public function offsetGet($offset)
 	{
 		$map = $this->getMap();
@@ -82,7 +83,7 @@ abstract class LazyAccess extends \Bitrix\Tasks\Util\Type\Dictionary
 		return $value;
 	}
 
-	public function getIterator()
+	public function getIterator(): \Traversable
 	{
 		$iterator = array();
 		foreach($this->getMap() as $k => $v)

@@ -158,4 +158,19 @@ class Service extends AbstractController
 
 		return $this->errorResponse();
 	}
+
+	public function getAuthUrlAction($type): AjaxJson
+	{
+		if (!$service = $this->getService())
+		{
+			$this->addError(
+				new Error("Service not available.")
+			);
+
+			return $this->errorResponse();
+		}
+
+		$authUrl = $service->getAuthUrl($type);
+		return $this->successResponse(['authUrl' => $authUrl]);
+	}
 }

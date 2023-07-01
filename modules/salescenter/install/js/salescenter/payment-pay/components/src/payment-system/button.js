@@ -23,11 +23,17 @@ BitrixVue.component('salescenter-payment_pay-components-payment_system-button', 
 				'order-payment-loader': this.loading,
 			};
 		},
+		buttonClasses()
+		{
+			return {
+				'loading-button-text': this.loading,
+			};
+		},
 	},
 	// language=Vue
 	template: `
 		<div :class="classes" @click="onClick($event)">
-			<slot></slot>
+			<span :class="buttonClasses"><slot></slot></span>
 		</div>
 	`,
 });

@@ -2,14 +2,16 @@
 
 namespace Bitrix\Disk\Volume;
 
+use Bitrix\Disk;
+
 interface IClearFolderConstraint
 {
 	/**
 	 * Check ability to clear folder.
 	 *
-	 * @param \Bitrix\Disk\Folder $folder Folder to clear.
+	 * @param Disk\Folder $folder Folder to clear.
 	 *
 	 * @return boolean
 	 */
-	public function isAllowClearFolder(\Bitrix\Disk\Folder $folder);
+	public function isAllowClearFolder(Disk\Folder $folder): bool;
 }

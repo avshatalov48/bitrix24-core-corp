@@ -1,13 +1,13 @@
 /**
  * @module crm/communication/floating-button
  */
-
 jn.define('crm/communication/floating-button', (require, exports, module) => {
-
+	const { HideOnScrollAnimator } = require('animation/hide-on-scroll');
 	const { CommunicationButton } = require('crm/communication/button');
-	const { uniqBy } = require('utils/array');
-	const { isEmpty } = require('utils/object');
+	const { Feature } = require('feature');
+	const { isEmpty, isEqual } = require('utils/object');
 
+	const isIOS = Application.getPlatform() === 'ios';
 	const testId = 'CommunicationFloatingButton';
 	const BUTTON_WIDTH = 108;
 
@@ -19,62 +19,140 @@ jn.define('crm/communication/floating-button', (require, exports, module) => {
 		constructor(props = {})
 		{
 			super(props);
+
+			this.uid = null;
+			this.permissions = null;
+
+			this.showed = false;
+			this.animator = null;
 			this.buttonRef = null;
+
 			this.state = {
 				value: {},
 				ownerInfo: {},
+				clientOptions: [],
+				visible: true,
 			};
 		}
 
-		setValue(value, ownerInfo)
+		componentDidMount()
 		{
-			const { value: prevValue } = this.state;
-
-			this.setState(
-				{
-					value: this.mergeValues(value, prevValue),
-					ownerInfo,
-				},
-				() => {
-					this.show();
-				},
-			);
+			if (isIOS && Feature.isKeyboardEventsSupported())
+			{
+				Keyboard.on(Keyboard.Event.WillShow, () => this.hide(true));
+				Keyboard.on(Keyboard.Event.WillHide, () => this.show(true));
+			}
 		}
 
-		mergeValues(value, prevValue)
+		setUid(uid)
 		{
-			if (isEmpty(prevValue))
+			this.uid = uid;
+		}
+
+		setPermissions(permissions)
+		{
+			this.permissions = permissions;
+		}
+
+		/**
+		 * @public
+		 * @param {Object} value
+		 * @param {Object} ownerInfo
+		 * @param {?Array} clientOptions
+		 * @return {void}
+		 */
+		setValue(value, ownerInfo, clientOptions)
+		{
+			const {
+				value: prevValue,
+				ownerInfo: prevOwnerInfo,
+				clientOptions: prevClientOptions,
+			} = this.state;
+
+			const prevState = {
+				value: prevValue,
+				ownerInfo: prevOwnerInfo,
+			};
+
+			const newState = {
+				value,
+				ownerInfo,
+			};
+
+			if (clientOptions)
 			{
-				return value;
+				prevState.clientOptions = prevClientOptions;
+				newState.clientOptions = clientOptions;
 			}
 
-			const uniqValue = Object.keys(value).reduce((result, key) => ({
-				...result,
-				[key]: !prevValue[key]
-					? prevValue[key]
-					: uniqBy([...value[key], ...prevValue[key]], 'id'),
-			}), {});
-
-			return { ...prevValue, ...uniqValue };
+			if (!isEqual(prevState, newState))
+			{
+				this.setState(newState, () => !this.showed && this.show());
+			}
 		}
 
+		/**
+		 * @public
+		 * @return {void}
+		 */
+		animateOnScroll(scrollParams, scrollViewHeight)
+		{
+			if (!this.buttonRef)
+			{
+				return;
+			}
+
+			this.getAnimator().animateByScroll(this.buttonRef, scrollParams, scrollViewHeight);
+		}
+
+		/**
+		 * @return {HideOnScrollAnimator}
+		 */
+		getAnimator()
+		{
+			if (!this.animator)
+			{
+				this.animator = new HideOnScrollAnimator({ initialTopPosition: 22 });
+			}
+
+			return this.animator;
+		}
+
+		actualize()
+		{
+			if (this.hasEmptyValues())
+			{
+				return this.hide();
+			}
+
+			return this.show();
+		}
+
+		hasEmptyValues()
+		{
+			return Object.values(this.state.value).every((value) => isEmpty(value));
+		}
+
+		/**
+		 * @public
+		 * @return {Promise}
+		 */
 		show()
 		{
-			const delay = this.buttonRef ? 0 : 200;
+			this.showed = true;
 
-			setTimeout(() => {
-				if (this.buttonRef)
-				{
-					this.buttonRef.animate({
-						duration: 500,
-						bottom: 22,
-					});
-				}
-				else
-				{
-					this.show();
-				}
-			}, delay);
+			return this.getAnimator().show(this.buttonRef);
+		}
+
+		/**
+		 * @public
+		 * @return {Promise}
+		 */
+		hide()
+		{
+			this.showed = false;
+
+			return this.getAnimator().hide(this.buttonRef);
 		}
 
 		getCenterPosition()
@@ -92,13 +170,21 @@ jn.define('crm/communication/floating-button', (require, exports, module) => {
 
 		render()
 		{
-			const { value, ownerInfo } = this.state;
+			const { value, ownerInfo, clientOptions } = this.state;
 
 			return new CommunicationButton({
+				...this.props,
 				viewRef: (ref) => this.buttonRef = ref,
 				testId,
+				value,
+				ownerInfo,
+				clientOptions,
+				uid: this.uid,
+				permissions: this.permissions,
 				border: true,
 				horizontal: true,
+				showShadow: true,
+				showConnectionStubs: true,
 				styles: {
 					main: {
 						left: this.getCenterPosition(),
@@ -106,8 +192,6 @@ jn.define('crm/communication/floating-button', (require, exports, module) => {
 						bottom: -100,
 					},
 				},
-				value,
-				ownerInfo,
 			});
 		}
 	}

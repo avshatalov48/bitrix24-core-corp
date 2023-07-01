@@ -2,44 +2,73 @@
  * @module crm/timeline/scheduler/providers/base
  */
 jn.define('crm/timeline/scheduler/providers/base', (require, exports, module) => {
+	const { PureComponent } = require('layout/pure-component');
 
 	/**
 	 * @abstract
 	 * @class TimelineSchedulerBaseProvider
 	 */
-	class TimelineSchedulerBaseProvider extends LayoutComponent
+	class TimelineSchedulerBaseProvider extends PureComponent
 	{
 		/**
 		 * @abstract
 		 * @return {string}
 		 */
-		static getId() {}
+		static getId()
+		{}
 
 		/**
 		 * @abstract
 		 * @return {string}
 		 */
-		static getTitle() {}
+		static getTitle()
+		{}
 
 		/**
 		 * @abstract
 		 * @return {string}
 		 */
-		static getMenuTitle() {}
+		static getMenuTitle()
+		{}
+
+		/**
+		 * @return {string|null}
+		 */
+		static getMenuSubtitle()
+		{
+			return null;
+		}
+
+		/**
+		 * @return {string|null}
+		 */
+		static getMenuSubtitleType()
+		{
+			return null;
+		}
 
 		/**
 		 * @abstract
+		 * @return {string}
+		 */
+		static getMenuShortTitle()
+		{}
+
+		/**
+		 * @abstract
+		 * @param {object} context
 		 * @return {boolean}
 		 */
-		static isSupported()
+		static isSupported(context = {})
 		{
 			return false;
 		}
 
 		/**
+		 * @param {object} context
 		 * @return {boolean}
 		 */
-		static isAvailableInMenu()
+		static isAvailableInMenu(context = {})
 		{
 			return true;
 		}
@@ -48,14 +77,15 @@ jn.define('crm/timeline/scheduler/providers/base', (require, exports, module) =>
 		 * @abstract
 		 * @return {string}
 		 */
-		static getMenuIcon() {}
+		static getMenuIcon()
+		{}
 
 		/**
 		 * @return {number}
 		 */
 		static getMenuPosition()
 		{
-			return 0;
+			return Infinity;
 		}
 
 		/**
@@ -66,18 +96,68 @@ jn.define('crm/timeline/scheduler/providers/base', (require, exports, module) =>
 			return {};
 		}
 
+		/**
+		 * @return {object[]}
+		 */
+		static getMenuBadges()
+		{
+			return [];
+		}
+
+		/**
+		 * You can override this method to implement any custom logic,
+		 * for example open other component, browser, show confirm, etc.
+		 *
+		 * @public
+		 * @param {TimelineScheduler} scheduler
+		 * @param {object} context
+		 */
+		static open({ scheduler, context = {} })
+		{
+			const { parentWidget, entity, user, onActivityCreate, onClose, onCancel, onSkip } = scheduler;
+
+			parentWidget.openWidget('layout', {
+				modal: true,
+				backgroundColor: '#eef2f4',
+				backdrop: {
+					onlyMediumPosition: false,
+					showOnTop: true,
+					forceDismissOnSwipeDown: true,
+					mediumPositionPercent: 50,
+					navigationBarColor: '#EEF2F4',
+					swipeAllowed: true,
+					swipeContentAllowed: false,
+					horizontalSwipeAllowed: false,
+					...this.getBackdropParams(),
+				},
+			}).then((widget) => {
+				widget.setTitle({ text: this.getTitle() });
+				widget.enableNavigationBarBorder(false);
+				widget.showComponent(new this({
+					context,
+					entity,
+					user,
+					onActivityCreate,
+					onClose,
+					onCancel,
+					onSkip,
+					layout: widget,
+				}));
+			});
+		}
+
 		constructor(props)
 		{
 			super(props);
 
 			if (!props.layout)
 			{
-				throw new Error(`'layout' property must be specified`);
+				throw new Error('\'layout\' property must be specified');
 			}
 
 			if (!props.entity)
 			{
-				throw new Error(`'entity' property must be specified`);
+				throw new Error('\'entity\' property must be specified');
 			}
 
 			this.layout = props.layout;
@@ -130,5 +210,4 @@ jn.define('crm/timeline/scheduler/providers/base', (require, exports, module) =>
 	}
 
 	module.exports = { TimelineSchedulerBaseProvider };
-
 });

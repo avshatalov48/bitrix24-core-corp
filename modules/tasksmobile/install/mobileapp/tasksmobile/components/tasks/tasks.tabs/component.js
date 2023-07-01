@@ -1,4 +1,5 @@
 (() => {
+	const {EntityReady} = jn.require('entity-ready');
 	const {Entry} = jn.require('tasks/entry');
 
 	const SITE_ID = BX.componentParameters.get('SITE_ID', 's1');
@@ -117,6 +118,7 @@
 					return;
 				}
 
+				this.tabs.setDownMenuTasksCounter(data[0].view_all.total);
 				this.tabs.updateTasksCounter(data[0].view_all.total);
 				this.tabs.updateProjectsCounter(data.projects_major);
 
@@ -149,10 +151,13 @@
 		{
 			this.tabs = tabs;
 			this.userId = parseInt(BX.componentParameters.get('USER_ID', 0), 10);
-			this.pull = new Pull(this, this.userId);
 			this.guid = this.createGuid();
 
+			this.pull = new Pull(this, this.userId);
+			this.pull.subscribe();
+
 			this.setDownMenuTasksCounter();
+			EntityReady.wait('chat').then(() => setTimeout(() => this.setDownMenuTasksCounter(), 1000));
 
 			BX.onViewLoaded(() => {
 				this.bindEvents();
@@ -184,8 +189,6 @@
 				}
 			});
 			BX.addCustomEvent('tasks.project.list:setVisualCounter', data => this.updateProjectsCounter(data.value));
-
-			this.pull.subscribe();
 		}
 
 		onAppPaused()
@@ -252,15 +255,53 @@
 			}
 		}
 
-		setDownMenuTasksCounter()
+		setDownMenuTasksCounter(value = -1)
 		{
 			const storage = Application.sharedStorage('tasksTaskList');
-			const cache = storage.get('filterCounters_0');
 
-			if (typeof cache === 'string')
+			if (value >= 0)
 			{
-				Application.setBadges({tasks: (JSON.parse(cache).counterValue || 0)});
+				Application.setBadges({tasks: value});
+				storage.set('filterCounters_0', JSON.stringify({counterValue: value}));
+
+				return;
 			}
+
+			let counterValue = 0;
+
+			const cachedCounters = Application.sharedStorage().get('userCounters');
+			if (cachedCounters)
+			{
+				try
+				{
+					const counters = JSON.parse(cachedCounters)[SITE_ID];
+					counterValue = (counters.tasks_total || 0);
+
+					storage.set('filterCounters_0', JSON.stringify({counterValue}));
+				}
+				catch (e)
+				{
+					// do nothing
+				}
+			}
+			else
+			{
+				const cache = storage.get('filterCounters_0');
+				if (cache)
+				{
+					try
+					{
+						const counters = JSON.parse(cache);
+						counterValue = (counters.counterValue || 0);
+					}
+					catch (e)
+					{
+						// do nothing
+					}
+				}
+			}
+
+			Application.setBadges({tasks: counterValue});
 		}
 
 		updateCounters()
@@ -279,7 +320,7 @@
 				}
 				catch (e)
 				{
-					//do nothing
+					// do nothing
 				}
 			}
 

@@ -3,6 +3,7 @@ namespace Bitrix\Crm\Automation\Trigger\Sign;
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main;
+use Bitrix\Sign;
 use Bitrix\Crm;
 use Bitrix\Crm\Automation;
 
@@ -12,7 +13,9 @@ class InitiatorSignedTrigger extends Automation\Trigger\BaseTrigger
 {
 	public static function isEnabled()
 	{
-		return Main\ModuleManager::isModuleInstalled('sign');
+		return Main\Loader::includeModule('sign')
+			&& Sign\Config\Storage::instance()->isAvailable()
+		;
 	}
 
 	public static function isSupported($entityTypeId)
@@ -25,7 +28,12 @@ class InitiatorSignedTrigger extends Automation\Trigger\BaseTrigger
 		array $inputData = null
 	): Main\Result
 	{
-		$bindings = [];
+		$bindings = [
+			[
+				'OWNER_ID' => $smartDocumentId,
+				'OWNER_TYPE_ID' => \CCrmOwnerType::SmartDocument,
+			]
+		];
 		$itemId = new Crm\ItemIdentifier(
 			\CCrmOwnerType::SmartDocument,
 			$smartDocumentId

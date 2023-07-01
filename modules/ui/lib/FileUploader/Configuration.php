@@ -111,20 +111,28 @@ class Configuration
 	public function setAcceptedFileTypes(array $acceptedFileTypes): self
 	{
 		$this->acceptedFileTypes = $acceptedFileTypes;
+		$this->acceptOnlyImages = false;
 
 		return $this;
 	}
 
 	public function setAcceptOnlyImages(bool $flag = true): self
 	{
-		return $this->acceptOnlyImages($flag);
+		$this->acceptOnlyImages = $flag;
+
+		if ($flag)
+		{
+			$this->acceptOnlyImages();
+		}
+
+		return $this;
 	}
 
-	public function acceptOnlyImages(bool $flag = true): self
+	public function acceptOnlyImages(): self
 	{
-		$imageExtensions = $flag ? static::getImageExtensions() : [];
-		$this->acceptOnlyImages = $flag;
+		$imageExtensions = static::getImageExtensions();
 		$this->setAcceptedFileTypes($imageExtensions);
+		$this->acceptOnlyImages = true;
 
 		return $this;
 	}

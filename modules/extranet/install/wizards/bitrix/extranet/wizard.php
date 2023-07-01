@@ -9,7 +9,7 @@ class WelcomeStep extends CWizardStep
 		$this->SetTitle(GetMessage("WELCOME_STEP_TITLE"));
 		$this->SetStepID("welcome_step");
 
-		$wizard =& $this->GetWizard();
+		$wizard = $this->getWizard();
 
 		$templatesPath = CExtranetWizardServices::GetTemplatesPath($wizard->GetPath()."/site");
 		$arTemplates = CExtranetWizardServices::GetTemplates($templatesPath);
@@ -37,7 +37,7 @@ class WelcomeStep extends CWizardStep
 
 	function ShowStep()
 	{
-		$wizard =& $this->GetWizard();
+		$wizard = $this->GetWizard();
 		if ($wizard->GetVar("templateID") <> '')
 		{
 			$this->content .= GetMessage("WELCOME_TEXT_SHORT");
@@ -64,7 +64,7 @@ class SelectTemplateStep extends CWizardStep
 
 	function OnPostForm()
 	{
-		$wizard =& $this->GetWizard();
+		$wizard = $this->GetWizard();
 
 		if ($wizard->IsNextButtonClick())
 		{
@@ -82,7 +82,7 @@ class SelectTemplateStep extends CWizardStep
 
 	function ShowStep()
 	{
-		$wizard =& $this->GetWizard();
+		$wizard = $this->GetWizard();
 
 		$templatesPath = CExtranetWizardServices::GetTemplatesPath($wizard->GetPath()."/site");
 		$arTemplates = CExtranetWizardServices::GetTemplates($templatesPath);
@@ -155,7 +155,7 @@ class SelectThemeStep extends CWizardStep
 
 	function OnPostForm()
 	{
-		$wizard =& $this->GetWizard();
+		$wizard = $this->GetWizard();
 
 		if ($wizard->IsNextButtonClick())
 		{
@@ -173,7 +173,7 @@ class SelectThemeStep extends CWizardStep
 
 	function ShowStep()
 	{
-		$wizard =& $this->GetWizard();
+		$wizard = $this->GetWizard();
 		$templateID = $wizard->GetVar("templateID");
 
 		$templatesPath = CExtranetWizardServices::GetTemplatesPath($wizard->GetPath()."/site");
@@ -265,7 +265,7 @@ class SiteSettingsStep extends CWizardStep
 		$this->SetNextCaption(GetMessage("wiz_install"));
 		$this->SetPrevCaption(GetMessage("PREVIOUS_BUTTON"));
 
-		$wizard =& $this->GetWizard();
+		$wizard = $this->GetWizard();
 
 		if (COption::GetOptionString("extranet", "extranet_site") <> '')
 		{
@@ -306,7 +306,7 @@ class SiteSettingsStep extends CWizardStep
 
 	function OnPostForm()
 	{
-		$wizard =& $this->GetWizard();
+		$wizard = $this->GetWizard();
 
 		if (mb_strpos($wizard->GetVar("templateID"), "light") === 0)
 		{
@@ -345,11 +345,12 @@ class SiteSettingsStep extends CWizardStep
 			}
 			elseif (trim($siteFolder, " /") == '')
 			{
-				$this->SetError(GetMessage("wiz_site_folder_error"));	
+				$this->SetError(GetMessage("wiz_site_folder_error"));
 				return;
 			}
 			else
 			{
+				$bError = false;
 				$rsSites = CSite::GetList("sort", "desc");
 				while($arSite = $rsSites->Fetch())
 				{
@@ -395,7 +396,7 @@ class SiteSettingsStep extends CWizardStep
 
 	function ShowStep()
 	{
-		$wizard =& $this->GetWizard();
+		$wizard = $this->GetWizard();
 
 		$this->content .= '<table width="100%" cellspacing="0" cellpadding="0">';
 
@@ -426,11 +427,10 @@ class SiteSettingsStep extends CWizardStep
 			$this->content .= '<tr><td>&nbsp;</td></tr>';
 		}
 
-		define("WIZARD_IS_RERUN", COption::GetOptionString("extranet", "extranet_site") <> '');
-		
+		!defined('WIZARD_IS_RERUN') && define('WIZARD_IS_RERUN', COption::GetOptionString('extranet', 'extranet_site') <> '');
+
 		if(WIZARD_IS_RERUN !== true)
 		{
-		
 			$this->content .= '<tr><td><br /></td></tr>';
 
 			$this->content .= '<tr><td>';
@@ -444,7 +444,6 @@ class SiteSettingsStep extends CWizardStep
 			$this->content .= '<label for="site-folder">'.GetMessage("wiz_site_folder").'</label><br />';
 			$this->content .= $this->ShowInputField("text", "siteFolder", Array("id" => "site-folder", "style" => "width:90%"));
 			$this->content .= '</td></tr>';
-		
 		}
 
 		$this->content .= '</table>';
@@ -469,7 +468,7 @@ class DataInstallStep extends CWizardStep
 
 	function OnPostForm()
 	{
-		$wizard =& $this->GetWizard();
+		$wizard = $this->GetWizard();
 		$serviceID = $wizard->GetVar("nextStep");
 		$serviceStage = $wizard->GetVar("nextStepStage");
 
@@ -492,7 +491,7 @@ class DataInstallStep extends CWizardStep
 			$rsSites = CSite::GetByID(COption::GetOptionString("extranet", "extranet_site"));
 			if ($arSite = $rsSites->Fetch())
 				define("WIZARD_SITE_PATH", $_SERVER["DOCUMENT_ROOT"].$arSite["DIR"]);
-				
+
 			if(
 				$wizard->GetVar("installStructureData") != "Y"
 				&& !file_exists(WIZARD_SITE_PATH.".superleft.menu.php")
@@ -544,7 +543,7 @@ class DataInstallStep extends CWizardStep
 
 	function ShowStep()
 	{
-		$wizard =& $this->GetWizard();
+		$wizard = $this->GetWizard();
 
 		$arServices = CExtranetWizardServices::GetServices($_SERVER["DOCUMENT_ROOT"].$wizard->GetPath(), "/site/services/");
 
@@ -580,7 +579,7 @@ class DataInstallStep extends CWizardStep
 		<iframe style="display:none;" id="iframe-post-form" name="iframe-post-form" src="javascript:\'\'"></iframe>
 		';
 
-		$wizard =& $this->GetWizard();
+		$wizard = $this->GetWizard();
 
 		$formName = $wizard->GetFormName();
 		$NextStepVarName = $wizard->GetRealName("nextStep");
@@ -596,15 +595,21 @@ class DataInstallStep extends CWizardStep
 	function InstallService($serviceID, $serviceStage)
 	{
 
-		$wizard =& $this->GetWizard();
+		$wizard = $this->GetWizard();
 
 		$siteID =  COption::GetOptionString("main", "wizard_site_code_extranet");
 		$siteFolder =  COption::GetOptionString("main", "wizard_site_folder_extranet");
 		$siteName =  COption::GetOptionString("main", "wizard_site_name_extranet");
+		$bFound = false;
 
-		if (COption::GetOptionString("main", "wizard_extranet_rerun") == "Y")
-			define("WIZARD_IS_RERUN", true);
-		
+		if (
+			!defined('WIZARD_IS_RERUN')
+			&& COption::GetOptionString('main', 'wizard_extranet_rerun') === 'Y'
+		)
+		{
+			define('WIZARD_IS_RERUN', true);
+		}
+
 		if (
 			defined('WIZARD_IS_RERUN')
 			&& WIZARD_IS_RERUN === true
@@ -614,9 +619,9 @@ class DataInstallStep extends CWizardStep
 			if ($arSite = $rsSites->Fetch())
 			{
 				define("WIZARD_SITE_ID", $arSite["ID"]);
-				define("WIZARD_SITE_DIR", $arSite["DIR"]);				
-				define("WIZARD_SITE_NAME", $siteName);				
-				define("WIZARD_SITE_PATH", $_SERVER["DOCUMENT_ROOT"].$arSite["DIR"]);
+				define("WIZARD_SITE_DIR", $arSite["DIR"]);
+				define("WIZARD_SITE_NAME", $siteName);
+				!defined('WIZARD_SITE_PATH') && define('WIZARD_SITE_PATH', $_SERVER['DOCUMENT_ROOT'] . $arSite['DIR']);
 				define("WIZARD_SITE_LOGO", intval($wizard->GetVar("siteLogo")));
 				define("WIZARD_USE_SITE_LOGO", $wizard->GetVar("useSiteLogo") == "Y");
 				$bFound = true;
@@ -671,7 +676,7 @@ class DataInstallStep extends CWizardStep
 		$servicePath = WIZARD_RELATIVE_PATH."/site/services/".$serviceID;
 		define("WIZARD_SERVICE_RELATIVE_PATH", $servicePath);
 		define("WIZARD_SERVICE_ABSOLUTE_PATH", $_SERVER["DOCUMENT_ROOT"].$servicePath);
-		
+
 		$b24ToCp = file_exists(WIZARD_SITE_PATH.".superleft.menu.php") ? true : false;
 		define("WIZARD_B24_TO_CP", $b24ToCp);
 
@@ -685,8 +690,11 @@ class DataInstallStep extends CWizardStep
 		}
 
 		$dbGroups = CGroup::GetList("id", "asc", Array("ACTIVE" => "Y"));
-		while($arGroup = $dbGroups->Fetch())
-			define("WIZARD_".$arGroup["STRING_ID"]."_GROUP", $arGroup["ID"]);
+		while ($arGroup = $dbGroups->Fetch())
+		{
+			$name  = 'WIZARD_' . $arGroup['STRING_ID'] . '_GROUP';
+			!defined($name) && define($name, $arGroup['ID']);
+		}
 
 		if (file_exists(WIZARD_SERVICE_ABSOLUTE_PATH."/lang/".LANGUAGE_ID."/".$serviceStage))
 			__IncludeLang(WIZARD_SERVICE_ABSOLUTE_PATH."/lang/".LANGUAGE_ID."/".$serviceStage);
@@ -767,13 +775,13 @@ class FinishStep extends CWizardStep
 				$dir = $arSite["DIR"];
 			}
 		}
-		
+
 		if ($dir == '')
 			$dir = "/";
-	
-		$wizard =& $this->GetWizard();
+
+		$wizard = $this->GetWizard();
 		$wizard->SetFormActionScript($dir);
-		
+
 		$this->content .= GetMessage("FINISH_STEP_CONTENT");
 	}
 }

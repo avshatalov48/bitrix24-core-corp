@@ -74,7 +74,8 @@ class TemplateSaveRule extends \Bitrix\Main\Access\Rule\AbstractRule
 			return false;
 		}
 
-		foreach ($members[RoleDictionary::ROLE_RESPONSIBLE] as $responsibleId)
+		$responsibleList =  $members[RoleDictionary::ROLE_RESPONSIBLE] ?? [];
+		foreach ($responsibleList as $responsibleId)
 		{
 			if (!$this->canAssign($user, $responsibleId, [], $template->getGroupId()))
 			{
@@ -83,7 +84,8 @@ class TemplateSaveRule extends \Bitrix\Main\Access\Rule\AbstractRule
 			}
 		}
 
-		foreach ($members[RoleDictionary::ROLE_ACCOMPLICE] as $accompliceId)
+		$accompliceList = $members[RoleDictionary::ROLE_ACCOMPLICE] ?? [];
+		foreach ($accompliceList as $accompliceId)
 		{
 			if (!$this->canAssign($user, $accompliceId, [], $template->getGroupId()))
 			{

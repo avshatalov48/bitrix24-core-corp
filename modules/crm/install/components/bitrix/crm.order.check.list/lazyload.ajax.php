@@ -70,7 +70,7 @@ if ($action === 'delete')
 	if ($id > 0)
 	{
 		$check = \Bitrix\Sale\Cashbox\Internals\CashboxCheckTable::getRowById($id);
-		if ($check['STATUS'] == 'E' || $check['STATUS'] == 'N')
+		if ($check['STATUS'] == 'E' || $check['STATUS'] == 'N' || $check['STATUS'] == 'P')
 		{
 			\Bitrix\Sale\Cashbox\CheckManager::delete($id);
 		}

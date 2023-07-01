@@ -260,7 +260,7 @@ class DataProviderManager
 			{
 				foreach($calculatedValue as &$calcVal)
 				{
-					if($calcVal['SELECTED'] === true)
+					if(isset($calcVal['SELECTED']) && $calcVal['SELECTED'] === true)
 					{
 						$selectedFound = true;
 						break;

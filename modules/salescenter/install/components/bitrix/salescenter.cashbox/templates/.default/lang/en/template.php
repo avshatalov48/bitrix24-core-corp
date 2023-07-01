@@ -46,4 +46,6 @@ $MESS["SC_CASHBOX_ORANGE_TITLE"] = "Orange Data";
 $MESS["SC_CASHBOX_REST_DESCRITION"] = "You have to use a cash register to receive payments using cash money or credit cards.";
 $MESS["SC_CASHBOX_ROBOKASSA_DESCRITION"] = "Robochecki is available when you use Robokassa to connect payment systems. Robochecki comes to replace cloud receipts. Receipts will be sent to your customers, fiscal information sent to appropriate authorities. You don't have to buy or rent a cash register if you use Robochecki.";
 $MESS["SC_CASHBOX_ROBOKASSA_LINK_CONNECT"] = "How do I configure Robocheki?";
+$MESS["SC_CASHBOX_YOOKASSA_DESCRIPTION"] = "You don't have to pay charges for online cash register or connect it yourself. This service will create and receipts.";
+$MESS["SC_CASHBOX_YOOKASSA_LINK_CONNECT"] = "YooMoney receipts";
 $MESS["SC_MENU_TITLE"] = "Settings";

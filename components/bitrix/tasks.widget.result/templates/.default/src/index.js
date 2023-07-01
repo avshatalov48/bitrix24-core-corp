@@ -1,5 +1,7 @@
-import { ajax as Ajax, Runtime, Type } from 'main.core';
+import {ajax as Ajax, Dom, Runtime, Type, Uri, Event} from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
+
+import 'main.polyfill.intersectionobserver';
 
 class TaskResult
 {
@@ -25,11 +27,52 @@ class TaskResult
 		EventEmitter.subscribe('onPullEvent-tasks', this.onPushResult.bind(this));
 		EventEmitter.subscribe('BX.Livefeed:recalculateComments', this.onRecalculateLivefeedComments.bind(this));
 		EventEmitter.subscribe('SidePanel.Slider:onOpenComplete', this.blockResize.bind(this));
-	};
+	}
+
+	scrollToResult()
+	{
+		const resultId = this.getResultIdFromRequest();
+		if (resultId)
+		{
+			const resultItem = this.contentNode.querySelector('[data-id="' + resultId + '"]');
+			if (resultItem)
+			{
+				const scrollTo = () => {
+					this.activateBlinking(resultItem);
+
+					const itemTopPosition = Dom.getPosition(resultItem).top;
+
+					window.scrollTo({ top: itemTopPosition, behavior: 'smooth' });
+				};
+
+				if (Dom.hasClass(resultItem.parentElement, 'tasks-widget-result__item-more'))
+				{
+					Event.bindOnce(this.itemsWrapperNode, 'transitionend', scrollTo);
+
+					this.showResults();
+				}
+				else
+				{
+					scrollTo();
+				}
+			}
+		}
+	}
+
+	getResultIdFromRequest(): ?number
+	{
+		const uri = new Uri(window.location.href);
+
+		const resultId = uri.getQueryParam('RID');
+
+		return resultId ? parseInt(resultId, 10) : null;
+	}
 
 	blockResize()
 	{
 		this.contentNode.style.height = `${this.containerNode.scrollHeight}px`;
+
+		this.scrollToResult();
 	}
 
 	initExpand()
@@ -41,19 +84,7 @@ class TaskResult
 			this.blockResize();
 		}
 
-		this.targetBtnDown && this.targetBtnDown.addEventListener('click', () => {
-			this.targetBtnDown.classList.remove('--visible');
-			this.targetBtnUp.classList.add('--visible');
-
-			this.itemsContentNode.classList.add('--open');
-			this.itemsWrapperNode.style.height = `${this.itemsWrapperNode.scrollHeight}px`;
-			this.itemsWrapperNode.addEventListener('transitionend', this.setHeightAutoFunction);
-
-			if (this.contentNode)
-			{
-				this.contentNode.style.height = `${this.itemsWrapperNode.scrollHeight + this.containerNode.scrollHeight}px`;
-			}
-		});
+		this.targetBtnDown && this.targetBtnDown.addEventListener('click', this.showResults.bind(this));
 
 		this.targetBtnUp && this.targetBtnUp.addEventListener('click', () => {
 			this.targetBtnUp.classList.remove('--visible');
@@ -69,6 +100,8 @@ class TaskResult
 				this.contentNode.style.height = `${this.itemsNodes[0].offsetHeight + 35}px`;
 			}
 		});
+
+
 	}
 
 	setHeightAuto()
@@ -175,6 +208,49 @@ class TaskResult
 		}
 
 		this.blockResize();
+	}
+
+	showResults()
+	{
+		this.targetBtnDown.classList.remove('--visible');
+		this.targetBtnUp.classList.add('--visible');
+
+		this.itemsContentNode.classList.add('--open');
+		this.itemsWrapperNode.style.height = `${this.itemsWrapperNode.scrollHeight}px`;
+		this.itemsWrapperNode.addEventListener('transitionend', this.setHeightAutoFunction);
+
+		if (this.contentNode)
+		{
+			this.contentNode.style.height = `${this.itemsWrapperNode.scrollHeight + this.containerNode.scrollHeight}px`;
+		}
+	}
+
+	activateBlinking(resultNode: HTMLElement)
+	{
+		if (Type.isUndefined(IntersectionObserver))
+		{
+			return;
+		}
+
+		const observer = new IntersectionObserver((entries) =>
+			{
+				if (entries[0].isIntersecting === true)
+				{
+					Dom.addClass(resultNode, '--blink');
+
+					setTimeout(() => {
+						Dom.removeClass(resultNode, '--blink');
+					}, 300);
+
+					observer.disconnect();
+				}
+			},
+			{
+				threshold: [0]
+			}
+		);
+
+		observer.observe(resultNode);
 	}
 
 	reloadResults()

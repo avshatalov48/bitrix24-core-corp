@@ -101,7 +101,11 @@ class Conversion extends Operation
 			$result->addError(new Error($wizard->getErrorText()));
 		}
 
-		$result->setRedirectUrl(new Uri($wizard->getRedirectUrl()));
+		$redirectUrl = $wizard->getRedirectUrl();
+		if ($redirectUrl)
+		{
+			$result->setRedirectUrl(new Uri($wizard->getRedirectUrl()));
+		}
 		$result->setIsConversionFinished($wizard->isFinished());
 		$result->setData($wizard->getResultData());
 

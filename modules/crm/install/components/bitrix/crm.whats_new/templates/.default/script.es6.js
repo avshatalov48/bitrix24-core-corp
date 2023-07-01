@@ -36,6 +36,7 @@ type StepConfig = {
 	target: ?string,
 	useDynamicTarget: ?boolean,
 	eventName: ?string,
+	article: ?number
 }
 
 type Step = {
@@ -46,12 +47,19 @@ type Step = {
 	target: ?string,
 }
 
+type Option = {
+	showOverlayFromFirstStep?: boolean,
+	hideTourOnMissClick?: boolean,
+	...
+}
+
 class ActionViewMode
 {
 	slides: Array<Slide>;
 	steps: Array<Step>;
 	closeOptionName: string;
 	closeOptionCategory: string;
+	options: Option;
 	popup;
 
 	constructor({ slides, steps, options, closeOptionCategory, closeOptionName })
@@ -154,6 +162,7 @@ class ActionViewMode
 				title: stepConfig.title,
 				text: stepConfig.text,
 				position: stepConfig.position,
+				article: stepConfig.article,
 			};
 
 			if (stepConfig.useDynamicTarget)
@@ -258,6 +267,8 @@ class ActionViewMode
 			});
 
 			this.popup.show();
+
+			ActionViewMode.whatsNewInstances.push(this.popup);
 		}, this);
 	}
 
@@ -274,9 +285,15 @@ class ActionViewMode
 			const { Guide } = exports;
 			const guide = this.createGuideInstance(Guide, steps, (this.steps.length <= 1));
 
+			if (ActionViewMode.tourInstances.find((existedGuide) => existedGuide.getPopup()?.isShown()))
+			{
+				return; // do not allow many guides at the same time
+			}
+			ActionViewMode.tourInstances.push(guide);
+
 			this.setStepPopupOptions(guide.getPopup());
 
-			if (guide.steps.length > 1)
+			if (guide.steps.length > 1 || this.options.showOverlayFromFirstStep)
 			{
 				guide.start();
 			}
@@ -284,6 +301,7 @@ class ActionViewMode
 			{
 				guide.showNextStep();
 			}
+			this.save();
 		});
 	}
 
@@ -305,9 +323,9 @@ class ActionViewMode
 
 	setStepPopupOptions(popup: Popup)
 	{
-		popup.setAutoHide(false);
+		const { steps, hideTourOnMissClick = false } = this.options;
 
-		const { steps } = this.options;
+		popup.setAutoHide(hideTourOnMissClick);
 		if (steps && steps.popup)
 		{
 			if (steps.popup.width)
@@ -321,6 +339,9 @@ class ActionViewMode
 	{
 		BX.userOptions.save(this.closeOptionCategory, this.closeOptionName, 'closed', 'Y');
 	}
+
+	static tourInstances = [];
+	static whatsNewInstances = [];
 }
 
 namespaceCrmWhatsNew.ActionViewMode = ActionViewMode;

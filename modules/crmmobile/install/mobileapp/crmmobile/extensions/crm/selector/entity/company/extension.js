@@ -2,7 +2,6 @@
  * @module crm/selector/entity/company
  */
 jn.define('crm/selector/entity/company', (require, exports, module) => {
-
 	const { get } = require('utils/object');
 	const { SelectorProcessing } = require('crm/selector/utils/processing');
 
@@ -41,7 +40,22 @@ jn.define('crm/selector/entity/company', (require, exports, module) => {
 			return BX.message('SELECTOR_COMPONENT_SEARCH_PLACEHOLDER_COMPANY');
 		}
 
-		static isCreationEnabled()
+		static isCreationEnabled(providerOptions)
+		{
+			const { entities = [] } = providerOptions || {};
+			const company = entities.find(({ id }) => id === CrmCompanySelector.getEntityId());
+
+			if (company)
+			{
+				const { enableMyCompanyOnly = false } = company.options || {};
+
+				return !enableMyCompanyOnly;
+			}
+
+			return false;
+		}
+
+		static canCreateWithEmptySearch()
 		{
 			return true;
 		}
@@ -53,7 +67,7 @@ jn.define('crm/selector/entity/company', (require, exports, module) => {
 
 		static getCreatingText()
 		{
-			return BX.message('SELECTOR_COMPONENT_CREATING_COMPANY');
+			return BX.message('SELECTOR_COMPONENT_CREATE_COMPANY');
 		}
 
 		static getCreateEntityHandler(providerOptions)

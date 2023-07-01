@@ -92,28 +92,43 @@ if($mode === 'GET_CLIENT_INFO')
 		__CrmCompanyShowEndJsonResonse(array('ERROR' => 'Entity ID is not specified.'));
 	}
 
-	if(!CCrmAuthorizationHelper::CheckReadPermission($entityTypeID, $entityID, $userPermissions))
+	$isMyCompany = \CCrmCompany::isMyCompany($entityID);
+	if ($isMyCompany)
+	{
+		if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->getMyCompanyPermissions()->canReadBaseFields($entityID))
+		{
+			__CrmCompanyShowEndJsonResonse(array('ERROR' => 'Access denied.'));
+		}
+	} elseif (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->checkReadPermissions($entityTypeID, $entityID))
 	{
 		__CrmCompanyShowEndJsonResonse(array('ERROR' => 'Access denied.'));
 	}
 
 	$normalizeMultifields = isset($params['NORMALIZE_MULTIFIELDS']) && $params['NORMALIZE_MULTIFIELDS'] === 'Y';
 
-	$isReadPermitted = CCrmCompany::CheckReadPermission($entityID, $userPermissions);
+	$entityInfoParams = [
+		'ENTITY_EDITOR_FORMAT' => true,
+		'REQUIRE_REQUISITE_DATA' => true,
+		'REQUIRE_EDIT_REQUISITE_DATA' => true,
+		'REQUIRE_MULTIFIELDS' => true,
+		'USER_PERMISSIONS' => $userPermissions,
+		'NORMALIZE_MULTIFIELDS' => $normalizeMultifields,
+	];
+	$ownerEntityTypeId = $params['ownerEntityTypeId'] ?? null;
+	$ownerEntityId = $params['ownerEntityId'] ?? null;
+	if ($ownerEntityTypeId && $ownerEntityId)
+	{
+		$entityInfoParams['ownerEntityTypeId'] = (int)$ownerEntityTypeId;
+		$entityInfoParams['ownerEntityId'] = (int)$ownerEntityId;
+	}
+
 	$data = CCrmEntitySelectorHelper::PrepareEntityInfo(
 		CCrmOwnerType::CompanyName,
 		$entityID,
-		array(
-			'ENTITY_EDITOR_FORMAT' => true,
-			'REQUIRE_REQUISITE_DATA' => $isReadPermitted,
-			'REQUIRE_EDIT_REQUISITE_DATA' => true,
-			'REQUIRE_MULTIFIELDS' => $isReadPermitted,
-			'USER_PERMISSIONS' => $userPermissions,
-			'NORMALIZE_MULTIFIELDS' => $normalizeMultifields
-		)
+		$entityInfoParams
 	);
 
-	__CrmCompanyShowEndJsonResonse(array('DATA' => $data));
+	__CrmCompanyShowEndJsonResonse(['DATA' => $data]);
 }
 if($mode === 'GET_CLIENT_INFOS')
 {
@@ -149,7 +164,7 @@ if($mode === 'GET_CLIENT_INFOS')
 		__CrmCompanyShowEndJsonResonse(array('ERROR' => 'Owner ID is not specified.'));
 	}
 
-	if(!CCrmAuthorizationHelper::CheckReadPermission($ownerTypeID, $ownerID, $userPermissions))
+	if (!\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->checkReadPermissions($ownerTypeID, $ownerID))
 	{
 		__CrmCompanyShowEndJsonResonse(array('ERROR' => 'Access denied.'));
 	}

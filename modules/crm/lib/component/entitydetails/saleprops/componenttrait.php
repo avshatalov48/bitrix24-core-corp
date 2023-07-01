@@ -2,9 +2,9 @@
 
 namespace Bitrix\Crm\Component\EntityDetails\SaleProps;
 
-use Bitrix\Sale;
 use Bitrix\Crm\Order;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Sale;
 use Bitrix\Sale\Services;
 
 Loc::loadMessages(__FILE__);
@@ -32,23 +32,21 @@ trait ComponentTrait
 		bool $isNew
 	)
 	{
-		$rawProperties = array();
-		$result = array(
-			'PERSON_TYPE_ID' => $personTypeId,
-		);
+		$rawProperties = [];
+		$result = ['PERSON_TYPE_ID' => $personTypeId];
 		$allowConfig = $this->userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE');
 
-		$filter = array('ACTIVE' => 'Y');
+		$filter = ['ACTIVE' => 'Y'];
 		if ($isNew)
 		{
 			$filter['PERSON_TYPE_ID'] = $personTypeId;
 		}
 
 		$propertiesData = $entityPropertyClassname::getList(
-			array(
+			[
 				'filter' => $filter,
-				'order' => array('SORT')
-			)
+				'order' => ['SORT'],
+			]
 		);
 
 		while ($property = $propertiesData->fetch())
@@ -64,13 +62,15 @@ trait ComponentTrait
 
 			if (empty($property['ID']))
 			{
-				if(!empty($value) && !is_array($value))
+				if (!empty($value) && !is_array($value))
 				{
 					$fieldValues = $propertyValue->getFieldValues();
-					if (isset($rawProperties[$fieldValues['ORDER_PROPS_ID']])){
+					if (isset($rawProperties[$fieldValues['ORDER_PROPS_ID']]))
+					{
 						$property = $rawProperties[$fieldValues['ORDER_PROPS_ID']];
 						$property['ORDER_PROPS_ID'] = $fieldValues['ORDER_PROPS_ID'];
 					}
+
 					$property['ID'] = 'n'.$propertyValue->getId();
 					$property['ENABLE_MENU'] = false;
 					$property['IS_DRAG_ENABLED'] = false;
@@ -82,7 +82,7 @@ trait ComponentTrait
 			{
 				$property['ENABLE_MENU'] = $allowConfig;
 				$preparedData = $this->formatProperty($property);
-				if($property['IS_HIDDEN'] === 'Y')
+				if (isset($property['IS_HIDDEN']) && $property['IS_HIDDEN'] === 'Y')
 				{
 					$result["HIDDEN"][] = $preparedData;
 				}
@@ -102,8 +102,9 @@ trait ComponentTrait
 	 */
 	public function formatProperty(array $property)
 	{
-		$propertyId = (int)$property['ORDER_PROPS_ID'] > 0 ? (int)$property['ORDER_PROPS_ID'] : $property['ID'];
-		$name = 'PROPERTY_'.$property['ID'];
+		$orderPropsId = (int)($property['ORDER_PROPS_ID'] ?? 0);
+		$propertyId = $orderPropsId > 0 ? $orderPropsId : $property['ID'];
+		$name = 'PROPERTY_' . $property['ID'];
 		$data = array(
 			'propertyId' => $propertyId,
 			'personTypeId' => $property['PERSON_TYPE_ID'],
@@ -155,12 +156,12 @@ trait ComponentTrait
 			'title' => $property['NAME'],
 			'type' => $this->resolvePropertyType($property['TYPE'], $property['MULTIPLE'] === 'Y'),
 			'editable' => true,
-			'required' => $property['REQUIRED'] === 'Y',
-			'enabledMenu' => ($property['ENABLE_MENU'] === true),
+			'required' => isset($property['REQUIRED']) && $property['REQUIRED'] === 'Y',
+			'enabledMenu' => $property['ENABLE_MENU'] === true,
 			'transferable' => false,
 			'linked' => $linked,
-			'isDragEnabled' => ($property['IS_DRAG_ENABLED'] !== false),
-			'optionFlags' => ($property['SHOW_ALWAYS'] === 'Y') ? 1 : 0,
+			'isDragEnabled' => isset($property['IS_DRAG_ENABLED']) && $property['IS_DRAG_ENABLED'] !== false,
+			'optionFlags' => (isset($property['SHOW_ALWAYS']) && $property['SHOW_ALWAYS'] === 'Y') ? 1 : 0,
 			'data' => $data
 		);
 	}
@@ -172,8 +173,9 @@ trait ComponentTrait
 	 */
 	protected function getPropertyRowsCount(array $propertyParams): ?int
 	{
+		$isMultiline = isset($propertyParams['MULTILINE']) && $propertyParams['MULTILINE'] === 'Y';
 		if (
-			$propertyParams['MULTILINE'] === 'Y'
+			$isMultiline
 			&& $propertyParams['TYPE'] === 'STRING'
 			&& ((int)$propertyParams['ROWS'] > 1)
 		)
@@ -181,10 +183,7 @@ trait ComponentTrait
 			return (int)$propertyParams['ROWS'];
 		}
 
-		if (
-			$propertyParams['MULTILINE'] === 'Y'
-			&& $propertyParams['TYPE'] === 'STRING'
-		)
+		if ($isMultiline && $propertyParams['TYPE'] === 'STRING')
 		{
 			return $this->getDefaultTextareaRowsCount();
 		}

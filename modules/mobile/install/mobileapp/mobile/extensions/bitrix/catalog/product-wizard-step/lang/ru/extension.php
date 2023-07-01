@@ -6,6 +6,7 @@ $MESS['WIZARD_STEP_FOOTER_ADD_STORE'] = 'Добавить склад';
 $MESS['WIZARD_STEP_FOOTER_BIND_TO_SECTION'] = 'Привязать к разделу';
 $MESS['WIZARD_STEP_FOOTER_SECTION_BINDINGS'] = 'Выбран раздел: #SECTIONS#';
 $MESS['WIZARD_FIELD_PRODUCT_NAME'] = 'Название товара';
+$MESS['WIZARD_FIELD_PRODUCT_NEW_NAME'] = 'Новый товар';
 $MESS['WIZARD_FIELD_PRODUCT_PHOTO'] = 'Фотографии товара';
 $MESS['WIZARD_FIELD_PRODUCT_PURCHASING_PRICE'] = 'Закупочная цена';
 $MESS['WIZARD_FIELD_PRODUCT_CURRENCY'] = 'Валюта';

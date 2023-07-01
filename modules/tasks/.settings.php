@@ -58,6 +58,13 @@ return array(
 					],
 				],
 				[
+					'entityId' => 'epic-selector',
+					'provider' => [
+						'moduleId' => 'tasks',
+						'className' => '\\Bitrix\\Tasks\\Integration\\UI\\EntitySelector\\EpicSelectorProvider',
+					],
+				],
+				[
 					'entityId' => 'template-tag',
 					'provider' => [
 						'moduleId' => 'tasks',

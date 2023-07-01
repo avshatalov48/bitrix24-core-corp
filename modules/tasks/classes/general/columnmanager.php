@@ -116,7 +116,7 @@ class CTaskColumnList
 			);
 
 			// add userfields, if any
-			if(is_array($parameters['USER_FIELDS']))
+			if(is_array($parameters['USER_FIELDS'] ?? null))
 			{
 				$userfields = $parameters['USER_FIELDS'];
 			}

@@ -37,6 +37,7 @@ class MailTemplate // extends Crm\Volume\Base
 
 		if (!isset($attachments))
 		{
+			$attachments = [];
 			if (Main\Loader::includeModule('disk'))
 			{
 				/** @global \CUserTypeManager $USER_FIELD_MANAGER */

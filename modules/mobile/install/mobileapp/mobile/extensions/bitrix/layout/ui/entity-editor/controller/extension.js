@@ -1,4 +1,10 @@
-(() => {
+/**
+ * @module layout/ui/entity-editor/controller
+ */
+jn.define('layout/ui/entity-editor/controller', (require, exports, module) => {
+
+	const { EntityEditorProductController } = require('layout/ui/entity-editor/controller/product');
+
 	const Type = {
 		PRODUCT_LIST: 'product_list',
 		CATALOG_STORE_DOCUMENT_PRODUCT_LIST: 'catalog_store_document_product_list',
@@ -22,5 +28,5 @@
 		}
 	}
 
-	jnexport(EntityEditorControllerFactory);
-})();
+	module.exports = { EntityEditorControllerFactory };
+});

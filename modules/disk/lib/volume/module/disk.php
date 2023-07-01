@@ -17,13 +17,13 @@ class Disk extends Volume\Module\Module
 	 * Returns special folder code list.
 	 * @return string[]
 	 */
-	public static function getSpecialFolderCode()
+	public static function getSpecialFolderCode(): array
 	{
-		return array(
+		return [
 			\Bitrix\Disk\Folder::CODE_FOR_CREATED_FILES,
 			\Bitrix\Disk\Folder::CODE_FOR_SAVED_FILES,
 			\Bitrix\Disk\Folder::CODE_FOR_UPLOADED_FILES,
-		);
+		];
 	}
 }
 

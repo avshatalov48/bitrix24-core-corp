@@ -9,6 +9,7 @@ use Bitrix\Tasks\Control\Exception\TemplateUpdateException;
 use Bitrix\Tasks\Control\Handler\Exception\TemplateFieldValidateException;
 use Bitrix\Tasks\Control\Handler\TemplateFieldHandler;
 use Bitrix\Tasks\Internals\DataBase\Tree\TargetNodeNotFoundException;
+use Bitrix\Tasks\Internals\Task\Template\ScenarioTable;
 use Bitrix\Tasks\Internals\Task\Template\TemplateDependenceTable;
 use Bitrix\Tasks\Internals\Task\Template\TemplateMemberTable;
 use Bitrix\Tasks\Internals\Task\Template\TemplateObject;
@@ -20,6 +21,8 @@ use Bitrix\Tasks\Item\SystemLog;
 
 class Template
 {
+	private const FIELD_SCENARIO = 'SCENARIO_NAME';
+
 	private $userId;
 
 	private $db;
@@ -130,6 +133,7 @@ class Template
 		$this->setMembers($fields);
 		$this->setTags($fields);
 		$this->setDependTasks($fields);
+		$this->setScenario($fields);
 
 		$this->ufManager->Update(\Bitrix\Tasks\Util\UserField\Task\Template::getEntityCode(), $this->templateId, $fields, $this->userId);
 
@@ -219,10 +223,9 @@ class Template
 		$this->templateId = $id;
 		$template = $this->getTemplateData();
 
-		if (intval($template['BASE_TEMPLATE_ID']) > 0)
+		if ((int)($template['BASE_TEMPLATE_ID'] ?? null) > 0)
 		{
-			unset($fields['REPLICATE']);
-			unset($fields['PARENT_ID']);
+			unset($fields['REPLICATE'], $fields['PARENT_ID']);
 			$isReplicateParamsChanged = false;
 		}
 		else
@@ -289,6 +292,24 @@ class Template
 	{
 		$handler = new TemplateMember($this->userId, $this->templateId);
 		$handler->set($fields);
+	}
+
+	/**
+	 * @param array $fields
+	 * @return void
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\DB\SqlQueryException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	private function setScenario(array $fields): void
+	{
+		if (empty($fields[self::FIELD_SCENARIO]))
+		{
+			// set default scenario if none specified
+			$fields[self::FIELD_SCENARIO] = ScenarioTable::SCENARIO_DEFAULT;
+		}
+		ScenarioTable::insertIgnore($this->templateId, $fields[self::FIELD_SCENARIO]);
 	}
 
 	/**
@@ -458,6 +479,8 @@ class Template
 			'=TEMPLATE_ID' => $this->templateId,
 		]);
 
+		ScenarioTable::delete($this->templateId);
+
 		// delete sub templates
 		if ($this->deleteSubTemplates)
 		{
@@ -621,7 +644,7 @@ class Template
 	 */
 	private function setParent(array $fields)
 	{
-		if (!intval($fields['BASE_TEMPLATE_ID']))
+		if (!(int)($fields['BASE_TEMPLATE_ID'] ?? null))
 		{
 			return;
 		}

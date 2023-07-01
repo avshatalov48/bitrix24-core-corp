@@ -79,7 +79,7 @@ class Add extends Operation
 	{
 		$registrar = Container::getInstance()->getRelationRegistrar();
 
-		$result = $registrar->registerByFieldsChange(
+		$registrar->registerByFieldsChange(
 			$this->getItemIdentifier(),
 			$this->fieldsCollection->toArray(),
 			[],
@@ -90,7 +90,7 @@ class Add extends Operation
 
 		if ($this->item->hasField(Item::FIELD_NAME_CONTACT_BINDINGS))
 		{
-			$contactBindingsResult = $registrar->registerByBindingsChange(
+			$registrar->registerByBindingsChange(
 				$this->getItemIdentifier(),
 				\CCrmOwnerType::Contact,
 				[],
@@ -98,16 +98,11 @@ class Add extends Operation
 				$this->getItemsThatExcludedFromTimelineRelationEventsRegistration(),
 				$this->getContext(),
 			);
-
-			if (!$contactBindingsResult->isSuccess())
-			{
-				$result->addErrors($contactBindingsResult->getErrors());
-			}
 		}
 
 		if ($this->item->hasField(Item\Contact::FIELD_NAME_COMPANY_BINDINGS))
 		{
-			$companyBindingsResult = $registrar->registerByBindingsChange(
+			$registrar->registerByBindingsChange(
 				$this->getItemIdentifier(),
 				\CCrmOwnerType::Company,
 				[],
@@ -115,14 +110,9 @@ class Add extends Operation
 				$this->getItemsThatExcludedFromTimelineRelationEventsRegistration(),
 				$this->getContext(),
 			);
-
-			if (!$companyBindingsResult->isSuccess())
-			{
-				$result->addErrors($companyBindingsResult->getErrors());
-			}
 		}
 
-		return $result;
+		return new Result();
 	}
 
 	protected function createTimelineRecord(): void

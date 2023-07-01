@@ -2,21 +2,31 @@
 
 namespace Bitrix\Tasks\Internals\Project;
 
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\Config\Option;
 use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\Entity\Query;
 use Bitrix\Main\Entity\Query\Join;
 use Bitrix\Main\Entity\ReferenceField;
+use Bitrix\Main\Filter\Factory;
+use Bitrix\Main\Filter\UserDataProvider;
 use Bitrix\Main\Loader;
+use Bitrix\Main\ORM\Fields\Relations\Reference;
+use Bitrix\Main\SystemException;
+use Bitrix\Main\UI\Filter\Options;
+use Bitrix\Socialnetwork\Component\WorkgroupList;
+use Bitrix\Socialnetwork\Component\WorkgroupList\RuntimeFieldsManager;
+use Bitrix\Socialnetwork\Component\WorkgroupList\TasksCounter;
 use Bitrix\Socialnetwork\Helper\Workgroup;
 use Bitrix\Socialnetwork\UserToGroupTable;
+use Bitrix\Socialnetwork\WorkgroupFavoritesTable;
+use Bitrix\Socialnetwork\WorkgroupPinTable;
 use Bitrix\Socialnetwork\WorkgroupSiteTable;
 use Bitrix\Socialnetwork\WorkgroupTable;
 use Bitrix\Socialnetwork\WorkgroupTagTable;
-use Bitrix\Tasks\Integration\SocialNetwork;
 use Bitrix\Tasks\Internals\Counter\Template\ProjectCounter;
 use Bitrix\Tasks\Internals\Counter\Template\ScrumCounter;
 use Bitrix\Tasks\Internals\Effective;
-use Bitrix\Tasks\Internals\Project\UserOption\UserOptionController;
 use Bitrix\Tasks\Internals\Project\UserOption\UserOptionTypeDictionary;
 use Bitrix\Tasks\Internals\Task\ProjectLastActivityTable;
 use Bitrix\Tasks\Internals\Task\ProjectUserOptionTable;
@@ -25,13 +35,75 @@ use Bitrix\Tasks\Util\User;
 
 class Provider
 {
-	private $userId;
-	private $isScrum;
+	private int $userId;
+	private bool $isScrum;
+	private string $mode;
+	private RuntimeFieldsManager $runtimeFieldsManager;
 
-	public function __construct(int $userId = 0, bool $isScrum = false)
+	public function __construct(int $userId = 0, string $mode = '')
 	{
 		$this->userId = ($userId ?: User::getId());
-		$this->isScrum = $isScrum;
+		$this->isScrum = false;
+		$this->mode = $mode;
+		$this->runtimeFieldsManager = new RuntimeFieldsManager();
+	}
+
+	private function getFieldsList(): array
+	{
+		return [
+			'ID',
+			'NAME',
+			'PROJECT',
+			'SCRUM_MASTER_ID',
+			'CLOSED',
+			'SCRUM',
+			'LANDING',
+			'PROJECT_DATE_START',
+			'PROJECT_DATE_FINISH',
+			'ROLE',
+			'DATE_RELATION',
+			'OWNER_ID',
+			'MEMBER_ID',
+			'TAG',
+			'FAVORITES',
+			'DATE_CREATE',
+			'DATE_UPDATE',
+			'DATE_ACTIVITY',
+			'DATE_VIEW',
+			'NUMBER_OF_MEMBERS',
+			'MEMBERS',
+			'TAGS',
+			'PRIVACY_TYPE',
+			'EFFICIENCY',
+			'ACTIVITY_DATE',
+		];
+	}
+
+	private function getAvailableEntityFields(): array
+	{
+		return [
+			'ID',
+			'NAME',
+			'OPENED',
+			'CLOSED',
+			'VISIBLE',
+			'PROJECT',
+			'SCRUM_MASTER_ID',
+			'LANDING',
+			'PROJECT_DATE_START',
+			'PROJECT_DATE_FINISH',
+			'SEARCH_INDEX',
+			'OWNER_ID',
+			'DATE_CREATE',
+			'DATE_UPDATE',
+			'DATE_ACTIVITY',
+			'NUMBER_OF_MEMBERS',
+			'IMAGE_ID',
+			'AVATAR_TYPE',
+			'SCRUM',
+			'ACTIVITY_DATE',
+			'IS_PINNED',
+		];
 	}
 
 	public function prepareQuerySelect(array $select): array
@@ -56,7 +128,7 @@ class Provider
 
 		if (in_array('USER_GROUP_ID', $prepared, true))
 		{
-			$prepared['USER_GROUP_ID'] = 'UG.ID';
+			$prepared['USER_GROUP_ID'] = 'CONTEXT_RELATION.ID';
 			unset($prepared[array_search('USER_GROUP_ID', $prepared, true)]);
 		}
 		if (in_array('IS_PINNED', $prepared, true))
@@ -64,7 +136,7 @@ class Provider
 			$prepared[] = new ExpressionField(
 				'IS_PINNED',
 				ProjectUserOptionTable::getSelectExpression($this->userId, UserOptionTypeDictionary::OPTION_PINNED),
-				['ID', 'UG.USER_ID']
+				['ID', 'CONTEXT_RELATION.USER_ID']
 			);
 			unset($prepared[array_search('IS_PINNED', $prepared, true)]);
 		}
@@ -72,24 +144,20 @@ class Provider
 		return $prepared;
 	}
 
+	/**
+	 * @param array $select
+	 * @return Query
+	 * @throws ArgumentException
+	 * @throws SystemException
+	 */
 	public function getPrimaryProjectsQuery(array $select): Query
 	{
-		$siteId = SITE_ID;
-		if (
-			Loader::includeModule('extranet')
-			&& !\CExtranet::IsIntranetUser($siteId, $this->userId)
-		)
-		{
-			$siteId = \CExtranet::GetExtranetSiteID();
-		}
-
 		$query = WorkgroupTable::query();
 		$query
 			->setSelect($select)
 			->registerRuntimeField(
-				'UG',
-				new ReferenceField(
-					'UG',
+				new Reference(
+					'CONTEXT_RELATION',
 					UserToGroupTable::getEntity(),
 					Join::on('this.ID', 'ref.GROUP_ID')->where('ref.USER_ID', $this->userId),
 					['join_type' => 'left']
@@ -105,31 +173,257 @@ class Provider
 				)
 			)
 			->registerRuntimeField(
-				'GS',
-				new ReferenceField(
-					'GS',
+				null,
+				new ExpressionField('ACTIVITY_DATE', 'IFNULL(%s, %s)', ['PLA.ACTIVITY_DATE', 'DATE_UPDATE'])
+			)
+			->registerRuntimeField(
+				new Reference(
+					'SITE',
 					WorkgroupSiteTable::getEntity(),
-					Join::on('this.ID', 'ref.GROUP_ID')->where('ref.SITE_ID', $siteId),
+					Join::on('this.ID', 'ref.GROUP_ID'),
 					['join_type' => 'inner']
 				)
 			)
 			->registerRuntimeField(
-				null,
-				new ExpressionField('ACTIVITY_DATE', 'IFNULL(%s, %s)', ['PLA.ACTIVITY_DATE', 'DATE_UPDATE'])
+				'SCRUM',
+				new \Bitrix\Main\ORM\Fields\ExpressionField(
+					'SCRUM',
+					"(CASE WHEN %s = 'Y' AND %s > 0 THEN 'Y' ELSE 'N' END)",
+					['PROJECT', 'SCRUM_MASTER_ID']
+				)
 			)
-			->where((new Filter())->getProjectVisibilityCondition())
+			->registerRuntimeField(
+				new Reference(
+					'FAVORITES',
+					WorkgroupFavoritesTable::getEntity(),
+					Join::on('this.ID', 'ref.GROUP_ID')->where('ref.USER_ID', $this->userId),
+					['join_type' => 'left']
+				)
+			)
+			->registerRuntimeField(
+				new Reference(
+					'PIN',
+					WorkgroupPinTable::getEntity(),
+					Join::on('this.ID', 'ref.GROUP_ID')
+						->where('ref.USER_ID', $this->userId)
+						->where('ref.CONTEXT', $this->mode)
+					,
+					['join_type' => 'left']
+				)
+			)
+			->registerRuntimeField(
+				'IS_PINNED',
+				new ExpressionField(
+					'IS_PINNED',
+					WorkgroupPinTable::getSelectExpression(),
+					['ID', 'PIN.USER_ID', 'PIN.CONTEXT']
+				)
+			)
 		;
 
-		if ($this->isScrum)
+		$this->runtimeFieldsManager->add('CONTEXT_RELATION');
+		$this->runtimeFieldsManager->add('SITE');
+		$this->runtimeFieldsManager->add('SCRUM');
+		$this->runtimeFieldsManager->add('FAVORITES');
+		$this->runtimeFieldsManager->add('PIN');
+		$this->runtimeFieldsManager->add('IS_PINNED');
+
+		return $query;
+	}
+
+	public function getQueryWithFilter(Query $query, array $filter, string $presetId): Query
+	{
+		$filterValues = $filter;
+
+		if (array_key_exists('ID', $filterValues))
 		{
-			$query->whereNotNull('SCRUM_MASTER_ID');
+			$ids = (is_array($filterValues['ID']) ? $filterValues['ID'] : [$filterValues['ID']]);
+			$ids = array_map('intval', $ids);
+			$ids = array_filter($ids);
+
+			if (!empty($ids))
+			{
+				count($ids) > 1
+					? $query->whereIn('ID', $ids)
+					: $query->where('ID', $ids[0])
+				;
+			}
+			unset($filterValues['ID']);
 		}
-		else
+
+		if ($presetId)
 		{
-			$query->whereNull('SCRUM_MASTER_ID');
+			$filterId = $this->getFilterId();
+			$presets = $this->getPresets();
+
+			if (array_key_exists($presetId, $presets))
+			{
+				$filterOptions = new Options($filterId, $presets);
+				$filterSettings = (
+					$filterOptions->getFilterSettings($presetId)
+					?? $filterOptions->getDefaultPresets()[$presetId]
+				);
+				$filterValues = array_merge(
+					$filterValues,
+					Options::fetchFieldValuesFromFilterSettings($filterSettings, [], $this->getFilterSourceFields())
+				);
+			}
+		}
+
+		return $this->addQueryFilter($query, $filterValues);
+	}
+
+	/**
+	 * @param Query $query
+	 * @param array $filterValues
+	 * @return Query
+	 * @throws ArgumentException
+	 * @throws SystemException
+	 */
+	private function addQueryFilter(Query $query, array $filterValues): Query
+	{
+		if (!\CSocNetUser::isCurrentUserModuleAdmin())
+		{
+			$query->addFilter(
+				null,
+				[
+					'LOGIC' => 'OR',
+					'=VISIBLE' => 'Y',
+					'<=CONTEXT_RELATION.ROLE' => UserToGroupTable::ROLE_USER,
+				]
+			);
+		}
+
+		$filterManager = new WorkgroupList\FilterManager(
+			$query,
+			$this->runtimeFieldsManager,
+			[
+				'fieldsList' => $this->getFieldsList(),
+				'gridFilter' => $filterValues,
+				'currentUserId' => $this->userId,
+				'contextUserId' => $this->userId,
+				'mode' => $this->mode,
+				'hasAccessToTasksCounters' => $this->getHasAccessToTasksCounters(),
+			]
+		);
+		$filter = $filterManager->getFilter();
+		$siteId = SITE_ID;
+		if (
+			Loader::includeModule('extranet')
+			&& !\CExtranet::IsIntranetUser($siteId, $this->userId)
+		)
+		{
+			$filter['=SITE.SITE_ID'] = \CExtranet::GetExtranetSiteID();
+		}
+
+		foreach ($filter as $fieldName => $value)
+		{
+			if (
+				$fieldName === '=MEMBER_ID'
+				&& (int)$value > 0
+			)
+			{
+				$query->registerRuntimeField(
+					new Reference(
+						'MEMBER',
+						UserToGroupTable::class,
+						\Bitrix\Main\ORM\Query\Join::on('this.ID', 'ref.GROUP_ID'),
+						['join_type' => 'INNER']
+					)
+				);
+				$this->runtimeFieldsManager->add('MEMBER');
+
+				$query->addFilter('=MEMBER.USER_ID', (int)$value);
+				$query->addFilter('<=MEMBER.ROLE', UserToGroupTable::ROLE_USER);
+
+				unset($filter[$fieldName]);
+				continue;
+			}
+
+			if (
+				$fieldName === 'INCLUDED_COUNTER'
+				&& $this->runtimeFieldsManager->has('TASKS_COUNTER')
+			)
+			{
+				$query->where(
+					Query::filter()
+						->whereNotNull('CONTEXT_RELATION.ID')
+						->whereIn('CONTEXT_RELATION.ROLE', UserToGroupTable::getRolesMember())
+				);
+
+				$condition = Query::filter()->whereIn('TASKS_COUNTER.TYPE', $value);
+
+				if ($this->runtimeFieldsManager->has('EXCLUDED_COUNTER_EXISTS'))
+				{
+					$condition->whereNull('EXCLUDED_COUNTER_EXISTS');
+				}
+
+				$query->where($condition);
+
+				unset($filter[$fieldName]);
+				continue;
+			}
+
+			if (
+				$fieldName === '%=TAG'
+				&& (string)$value !== ''
+			)
+			{
+				$query->registerRuntimeField(
+					new Reference(
+						'TAG',
+						WorkgroupTagTable::class,
+						Join::on('this.ID', 'ref.GROUP_ID'),
+						['join_type' => 'INNER']
+					)
+				);
+				$this->runtimeFieldsManager->add('TAG');
+
+				$query->addFilter('%=TAG.NAME', (string)$value);
+
+				unset($filter[$fieldName]);
+				continue;
+			}
+
+			if (
+				$fieldName === '=SCRUM'
+				&& (string)$value !== ''
+				&& $this->runtimeFieldsManager->has('SCRUM')
+			)
+			{
+				$query->addFilter('=SCRUM', (string)$value);
+
+				unset($filter[$fieldName]);
+				continue;
+			}
+
+			if (!$this->checkQueryFieldName($fieldName))
+			{
+				continue;
+			}
+
+			$query->addFilter($fieldName, $value);
 		}
 
 		return $query;
+	}
+
+	private function getHasAccessToTasksCounters(): bool
+	{
+		return TasksCounter::getAccessToTasksCounters([
+			'mode' => $this->mode,
+			'contextUserId' => $this->userId,
+		]);
+	}
+
+	private function checkQueryFieldName(string $fieldName = ''): bool
+	{
+		$fieldName = trim($fieldName, '!=<>%*');
+
+		return (
+			in_array($fieldName, $this->getAvailableEntityFields())
+			|| mb_strpos($fieldName, '.') !== false
+		);
 	}
 
 	public function fillAvatars(array $projects, $mode = 'web'): array
@@ -293,7 +587,7 @@ class Provider
 				'IS_ACCESS_REQUESTING' => ($isAccessRequesting ? 'Y' : 'N'),
 				'IS_ACCESS_REQUESTING_BY_ME' => ($isAccessRequestingByMe ? 'Y' : 'N'),
 				'IS_AUTO_MEMBER' => $member['AUTO_MEMBER'],
-				'PHOTO' => $avatars[$imageIds[$memberId]],
+				'PHOTO' => (isset($imageIds[$memberId], $avatars[$imageIds[$memberId]]) ? $avatars[$imageIds[$memberId]] : null),
 			];
 		}
 
@@ -332,24 +626,54 @@ class Provider
 		return $query;
 	}
 
-	public function getLastActiveProjectIds(): array
+	public function getPresets(): array
 	{
-		$logDestination = SocialNetwork::getLogDestination();
+		$defaultPresets = $this->getFilterDefaultPresets();
+		$filterOptions = new Options($this->getFilterId(), $defaultPresets);
 
-		$projectIds = $logDestination['LAST']['SONETGROUPS'];
-		foreach ($projectIds as $key => $group)
-		{
-			$projectIds[$key] = str_replace('SG', '', $group);
-		}
+		return array_merge($defaultPresets, $filterOptions->getOptions()['filters']);
+	}
 
-		return $projectIds;
+	public function getFilterDefaultPresets(): array
+	{
+		return \Bitrix\Socialnetwork\Integration\Main\UIFilter\Workgroup::getFilterPresetList([
+			'currentUserId' => $this->userId,
+			'contextUserId' => $this->userId,
+			'extranetSiteId' => (UserDataProvider::getExtranetAvailability() ? Option::get('extranet', 'extranet_site') : ''),
+			'mode' => $this->mode,
+		]);
+	}
+
+	public function getFilterId(): string
+	{
+		$filtersByMode = [
+			WorkgroupList::MODE_USER => 'SONET_GROUP_LIST_USER',
+			WorkgroupList::MODE_TASKS_PROJECT => 'SONET_GROUP_LIST_PROJECT',
+			WorkgroupList::MODE_TASKS_SCRUM => 'SONET_GROUP_LIST_SCRUM',
+		];
+
+		return (array_key_exists($this->mode, $filtersByMode) ? $filtersByMode[$this->mode] : 'SONET_GROUP_LIST');
+	}
+
+	private function getFilterSourceFields(): array
+	{
+		$entityFilter = Factory::createEntityFilter(
+			WorkgroupTable::getUfId(),
+			['ID' => $this->getFilterId()],
+			[
+				'MODE' => $this->mode,
+				'CONTEXT_USER_ID' => $this->userId,
+			]
+		);
+
+		return $entityFilter->getFieldArrays();
 	}
 
 	public function pin(array $projectIds): void
 	{
 		foreach ($projectIds as $projectId)
 		{
-			UserOptionController::getInstance($this->userId, $projectId)->add(UserOptionTypeDictionary::OPTION_PINNED);
+			Workgroup::pin($projectId, $this->mode);
 		}
 	}
 
@@ -357,12 +681,17 @@ class Provider
 	{
 		foreach ($projectIds as $projectId)
 		{
-			UserOptionController::getInstance($this->userId, $projectId)->delete(UserOptionTypeDictionary::OPTION_PINNED);
+			Workgroup::unpin($projectId, $this->mode);
 		}
 	}
 
-	public function isScrum(): bool
+	public function getIsScrum(): bool
 	{
 		return $this->isScrum;
+	}
+
+	public function setIsScrum(bool $isScrum): void
+	{
+		$this->isScrum = $isScrum;
 	}
 }

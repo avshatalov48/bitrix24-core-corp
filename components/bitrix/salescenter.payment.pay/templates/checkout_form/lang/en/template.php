@@ -11,5 +11,5 @@ $MESS["SPP_PAID"] = "Paid";
 $MESS["SPP_PAID_TITLE"] = "Payment ##ACCOUNT_NUMBER# of #DATE_INSERT#";
 $MESS["SPP_PAY_BUTTON"] = "Pay";
 $MESS["SPP_PAY_RELOAD_BUTTON_NEW"] = "Select another method";
-$MESS["SPP_SELECT_PAYMENT_TITLE_NEW_NEW"] = "Select payment method";
+$MESS["SPP_SELECT_PAYMENT_TITLE_NEW_NEW_MSGVER_1"] = "Select payment method";
 $MESS["SPP_SUM"] = "Total: #SUM#";

@@ -468,6 +468,10 @@ Class tasks extends CModule
 				'nextExec' => Bitrix\Main\Type\DateTime::createFromTimestamp(strtotime('23:50:00')),
 				'disableTimeZone' => true,
 			],
+			[
+				'name' => '(new \Bitrix\Tasks\Integration\Recyclebin\AutoRemoveTaskAgent(new \Bitrix\Tasks\Integration\Recyclebin\RecycleBinOrmRepository()))->execute();',
+				'nextExec' => \ConvertTimeStamp(time()+\CTimeZone::GetOffset()+600, "FULL"),
+			],
 		];
 		foreach ($agents as $agent)
 		{

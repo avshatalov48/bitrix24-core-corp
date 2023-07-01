@@ -81,8 +81,10 @@ $MESS["CRM_ACTIVITY_MEETING_FILE_REMOVE"] = "A file was removed from meeting \"#
 $MESS["CRM_ACTIVITY_MEETING_NOT_RESPONSIBLE_IM_NOTIFY"] = "You are no longer responsible for the meeting \"#title#\"";
 $MESS["CRM_ACTIVITY_MEETING_REMOVE"] = "Meeting deleted";
 $MESS["CRM_ACTIVITY_MEETING_RESPONSIBLE_IM_NOTIFY"] = "You are now responsible for the meeting \"#title#\"";
-$MESS["CRM_ACTIVITY_NOTIFY_MESSAGE_INCOMING_EMAIL"] = "You have a <a target=\"_blank\" href=\"#VIEW_URL#\">new e-mail</a>.";
-$MESS["CRM_ACTIVITY_NOTIFY_MESSAGE_INCOMING_EMAIL_EXT"] = "You have an email <a target=\"_blank\" href=\"#VIEW_URL#\">#SUBJECT#</a> from #ADDRESSER#.";
+$MESS["CRM_ACTIVITY_NOTIFY_MESSAGE_INCOMING"] = "New email <a target=\"_blank\" href=\"#VIEW_URL#\">\"#SUBJECT#\"</a>";
+$MESS["CRM_ACTIVITY_NOTIFY_MESSAGE_INCOMING_1"] = "New email in <a target=\"_blank\" href=\"#VIEW_URL#\">\"#ENTITY_TITLE#\"</a><br/>Subject: \"#SUBJECT#\"";
+$MESS["CRM_ACTIVITY_NOTIFY_MESSAGE_INCOMING_EMPTY_SUBJECT_1"] = "New email in <a target=\"_blank\" href=\"#VIEW_URL#\">\"#ENTITY_TITLE#\"</a>";
+$MESS["CRM_ACTIVITY_NOTIFY_MESSAGE_INCOMING_MULTI"] = "New emails: #COUNT#. <a target=\"_blank\" href=\"#VIEW_URL#\">Open CRM</a>";
 $MESS["CRM_ACTIVITY_OUTGOING_CALL_NO_RESPONSE"] = "The contact is not answering or unavailable at this time.";
 $MESS["CRM_ACTIVITY_STATUS_AUTO_COMPLETED"] = "Completed automatically";
 $MESS["CRM_ACTIVITY_STATUS_COMPLETED"] = "Completed";

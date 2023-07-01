@@ -7,7 +7,7 @@
  */
 jn.define('im/messenger/lib/helper/soft-loader', (require, exports, module) => {
 
-	const { Type } = jn.require('type');
+	const { Type } = require('type');
 
 	/**
 	 * @class SoftLoader

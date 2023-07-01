@@ -14,7 +14,9 @@ use Bitrix\Main\Diag\Logger;
 use Bitrix\Main\Error;
 use Bitrix\Main\Result;
 use Bitrix\Sale\Basket\RefreshFactory;
+use Bitrix\Sale\BasketBase;
 use Bitrix\Sale\BasketItem;
+use Bitrix\Sale\Fuser;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\NullLogger;
@@ -153,6 +155,11 @@ class ProductRowSynchronizer implements LoggerAwareInterface
 			return $syncResult;
 		}
 
+		if ($basket->isEmpty() && !$basket->getFUserId(true))
+		{
+			$this->fillBasketFuserFromOrder($basket);
+		}
+
 		$converter = new EntityProductConverter;
 
 		$usedBasketCodes = [];
@@ -193,7 +200,7 @@ class ProductRowSynchronizer implements LoggerAwareInterface
 				$productId = (int)$dealBasketItem['PRODUCT_ID'];
 				if ($productId > 0)
 				{
-					$dealBasketItem['PRODUCT_PROVIDER_CLASS'] = CatalogProvider::class;
+					$dealBasketItem['PRODUCT_PROVIDER_CLASS'] = '\\'.CatalogProvider::class;
 				}
 
 				$basketItem = $basket->createItem('catalog', $dealBasketItem['PRODUCT_ID']);
@@ -334,5 +341,25 @@ class ProductRowSynchronizer implements LoggerAwareInterface
 		}
 
 		return $productRelationsBuilder->getRelations();
+	}
+
+	/**
+	 * Fill fuser of basket from order user id.
+	 *
+	 * @param BasketBase $basket
+	 *
+	 * @return void
+	 */
+	private function fillBasketFuserFromOrder(BasketBase $basket): void
+	{
+		$orderUserId = (int)$this->order->getUserId();
+		if ($orderUserId > 0)
+		{
+			$fuserId = Fuser::getIdByUserId($orderUserId);
+			if ($fuserId > 0)
+			{
+				$basket->setFUserId($fuserId);
+			}
+		}
 	}
 }

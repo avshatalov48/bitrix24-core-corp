@@ -71,3 +71,5 @@ $MESS["TASKS_SCRUM_KANBAN_PARENT_RENEW_OK_CAPTION"] = "Возобновить";
 $MESS["TASKS_SCRUM_KANBAN_PARENT_RENEW_CANCEL_CAPTION"] = "Не возобновлять";
 $MESS["TASKS_SCRUM_KANBAN_PARENT_RENEW_MESSAGE"] = "Возобновлена работа подзадачи \"#sub-name#\"<br><br>Вы хотите возобновить задачу \"<b>#name#</b>\"?";
 $MESS["TASKS_KANBAN_ITEM_STORY_POINTS_TITLE"] = "Стори Поинты";
+$MESS['TASKS_KANBAN_POPUP_SETTINGS_TITLE'] = 'Настроить карточку просмотра';
+$MESS['TASKS_KANBAN_POPUP_AT_LEAST_ONE_FIELD'] = 'В форме должно быть хотя бы одно поле';

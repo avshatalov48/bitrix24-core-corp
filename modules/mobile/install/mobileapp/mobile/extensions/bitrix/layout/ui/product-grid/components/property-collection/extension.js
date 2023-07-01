@@ -40,7 +40,7 @@ jn.define('layout/ui/product-grid/components/property-collection', (require, exp
 							ellipsize: 'end',
 							numberOfLines: 1,
 							style: {
-								color: '#B8BFC9',
+								color: '#bdc1c6',
 								fontSize: 14,
 							}
 						})
@@ -66,7 +66,7 @@ jn.define('layout/ui/product-grid/components/property-collection', (require, exp
 		wrapper: {
 			borderRadius: 6,
 			borderWidth: 1,
-			borderColor: '#D4DCE0',
+			borderColor: '#d5d7db',
 			paddingTop: 6,
 			paddingBottom: 6,
 			paddingLeft: 10,

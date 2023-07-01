@@ -6,6 +6,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Crm\Integration\UI\EntitySelector\CountryProvider;
+use Bitrix\Crm\Integration\UI\EntitySelector\TimelinePingProvider;
 use Bitrix\Main\Loader;
 
 if (!Loader::includeModule('crm'))
@@ -38,6 +39,13 @@ return [
 					],
 				],
 			],
+			[
+				'id' => TimelinePingProvider::ENTITY_ID,
+				'options' => [
+					'dynamicLoad' => true,
+					'dynamicSearch' => false,
+				]
+			]
 		],
 	],
 ];

@@ -311,6 +311,41 @@ ChatMessengerCommon.purifyText = function(text, params) // after change this cod
 {
 	text = text? text.toString(): '';
 
+	if (params && (params.WITH_ATTACH || params.ATTACH && params.ATTACH.length > 0))
+	{
+		if (params.ATTACH && params.ATTACH.length > 0)
+		{
+			const attachText = [];
+
+			let skipAttachBlock = false;
+			params.ATTACH.forEach(element => {
+				if (element.DESCRIPTION === 'SKIP_MESSAGE')
+				{
+					skipAttachBlock = true;
+				}
+				else if (element.DESCRIPTION)
+				{
+					attachText.push(element.DESCRIPTION);
+				}
+			});
+
+			if (!skipAttachBlock)
+			{
+				text = text
+					+ (text? ' ': '')
+					+ (attachText.length > 0? attachText.join(' '): '['+BX.message('IM_F_ATTACH')+']')
+				;
+			}
+		}
+		else if (params.WITH_ATTACH)
+		{
+			text = text
+				+ (text? ' ': '')
+				+ '['+BX.message('IM_F_ATTACH')+']'
+			;
+		}
+	}
+
 	if (text)
 	{
 		text = this.trimText(text);
@@ -329,6 +364,7 @@ ChatMessengerCommon.purifyText = function(text, params) // after change this cod
 		}
 		text = text.replace(/<br><br \/>/ig, '<br />');
 		text = text.replace(/<br \/><br>/ig, '<br />');
+		text = text.replace(/\[br]/ig, ' ');
 
 		text = text.replace(/\[CODE\]\n?([\0-\uFFFF]*?)\[\/CODE\]/ig, function(whole,text) {
 			return '['+BX.message('IM_M_CODE_BLOCK')+'] ';
@@ -348,7 +384,7 @@ ChatMessengerCommon.purifyText = function(text, params) // after change this cod
 			});
 		});
 		text = text.replace(
-			/\[dialog=(chat\d+|\d+)(?: message=(\d+))?](.*?)\[\/dialog]/gi,
+			/\[context=(chat\d+|\d+:\d+)\/(\d+)](.*?)\[\/context]/gi,
 			(whole, dialogId, messageId, message) => message
 		);
 
@@ -357,10 +393,12 @@ ChatMessengerCommon.purifyText = function(text, params) // after change this cod
 		text = text.replace(/\[url=([^\]]+)](.*?)\[\/url]/ig, '$2');
 		text = text.replace(/\[RATING=([1-5]{1})\]/ig, function(whole, rating) {return '['+BX.message('IM_F_RATING')+'] ';});
 		text = text.replace(/\[ATTACH=([0-9]{1,})\]/ig, function(whole, rating) {return '['+BX.message('IM_F_ATTACH')+'] ';});
-		text = text.replace(/\[USER=([0-9]{1,})\](.*?)\[\/USER\]/ig, '$2');
-		text = text.replace(/\[CHAT=([0-9]{1,})\](.*?)\[\/CHAT\]/ig, '$2');
+		text = text.replace(/\[USER=([0-9]+)( REPLACE)?](.*?)\[\/USER]/i, '$3');
+		text = text.replace(/\[CHAT=(imol\|)?([0-9]{1,})\](.*?)\[\/CHAT\]/ig, (whole, imol, chatId, text) => text);
 		text = text.replace(/\[CALL=(.*?)](.*?)\[\/CALL\]/ig, '$2');
 		text = text.replace(/\[PCH=([0-9]{1,})\](.*?)\[\/PCH\]/ig, '$2');
+		text = text.replace(/\[size=(\d+)](.*?)\[\/size]/ig, '$2');
+		text = text.replace(/\[color=#([0-9a-f]{3}|[0-9a-f]{6})](.*?)\[\/color]/ig, '$2');
 		text = text.replace(/<img.*?data-code="([^"]*)".*?>/ig, '$1');
 		text = text.replace(/<span.*?title="([^"]*)".*?>.*?<\/span>/ig, '($1)');
 		text = text.replace(/<img.*?title="([^"]*)".*?>/ig, '($1)');
@@ -402,6 +440,7 @@ ChatMessengerCommon.purifyText = function(text, params) // after change this cod
 			.join(' ')
 			.replace(/<\/?[^>]+>/gi, '')
 			.replace(/------------------------------------------------------(.*?)------------------------------------------------------/gmi, " ["+BX.message("IM_M_QUOTE_BLOCK")+"] ")
+			.replace(/-{54}(.*?)-{54}/gs, "["+BX.message("IM_M_QUOTE_BLOCK")+"]")
 		;
 
 		text = this.trimText(text);
@@ -412,10 +451,6 @@ ChatMessengerCommon.purifyText = function(text, params) // after change this cod
 		if (params && (params.WITH_FILE || params.FILE_ID && params.FILE_ID.length > 0))
 		{
 			text = '['+BX.message('IM_F_FILE')+']';
-		}
-		else if (params && (params.WITH_ATTACH || params.ATTACH && params.ATTACH.length > 0))
-		{
-			text = '['+BX.message('IM_F_ATTACH')+']';
 		}
 		else
 		{

@@ -39,7 +39,7 @@ class Assigned extends Field
 			$context = Container::getInstance()->getContext();
 		}
 
-		if($this->isItemValueEmpty($item))
+		if ($item->isNew() && $this->isItemValueEmpty($item))
 		{
 			$item->set($this->getName(), $context->getUserId());
 		}

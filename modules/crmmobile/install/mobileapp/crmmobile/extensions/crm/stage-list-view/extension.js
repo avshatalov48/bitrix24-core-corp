@@ -2,9 +2,11 @@
  * @module crm/stage-list-view
  */
 jn.define('crm/stage-list-view', (require, exports, module) => {
-
+	const { Alert } = require('alert');
+	const { Loc } = require('loc');
 	const { isEqual, get, mergeImmutable } = require('utils/object');
 	const { NavigationLoader } = require('navigation-loader');
+	const { getEntityMessage } = require('crm/loc');
 	const { CategoryStorage } = require('crm/storage/category');
 	const { StageList } = require('crm/stage-list');
 	const { edit } = require('crm/assets/common');
@@ -12,6 +14,7 @@ jn.define('crm/stage-list-view', (require, exports, module) => {
 	const { StageSelectActions } = require('crm/stage-list/actions');
 	const { throttle } = require('utils/function');
 	const { stringify } = require('utils/string');
+	const { TypeId } = require('crm/type');
 
 	/**
 	 * @class StageListView
@@ -23,6 +26,7 @@ jn.define('crm/stage-list-view', (require, exports, module) => {
 			return new Promise((resolve) => {
 				const params = {
 					modal: true,
+					backgroundColor: '#eef2f4',
 					backdrop: {
 						showOnTop: true,
 						forceDismissOnSwipeDown: true,
@@ -128,8 +132,8 @@ jn.define('crm/stage-list-view', (require, exports, module) => {
 				}
 			});
 
-			BX.addCustomEvent('Crm.StageDetail::onUpdateStage', stage => {
-				this.setState(state => {
+			BX.addCustomEvent('Crm.StageDetail::onUpdateStage', (stage) => {
+				this.setState((state) => {
 					if (
 						!this.hasStageChanged(state.category, 'processStages', stage)
 						&& !this.hasStageChanged(state.category, 'failedStages', stage)
@@ -162,9 +166,11 @@ jn.define('crm/stage-list-view', (require, exports, module) => {
 			}
 
 			this.isClosing = true;
-
 			this.layout.back();
-			this.layout.close();
+
+			return new Promise((resolve) => {
+				this.layout.close(resolve);
+			});
 		}
 
 		getTitleForNavigation()
@@ -176,12 +182,17 @@ jn.define('crm/stage-list-view', (require, exports, module) => {
 				return BX.message('CRM_STAGE_LIST_VIEW_FUNNEL_NOT_LOADED_TITLE2');
 			}
 
+			if (!category.categoriesEnabled)
+			{
+				return category.name;
+			}
+
 			const name = stringify(category.name).trim();
 
 			return (
-				name !== ''
-					? BX.message('CRM_STAGE_LIST_VIEW_FUNNEL_TITLE2').replace('#CATEGORY_NAME#', name)
-					: BX.message('CRM_STAGE_LIST_VIEW_FUNNEL_EMPTY_TITLE2')
+				name === ''
+					? BX.message('CRM_STAGE_LIST_VIEW_FUNNEL_EMPTY_TITLE2')
+					: BX.message('CRM_STAGE_LIST_VIEW_FUNNEL_TITLE2').replace('#CATEGORY_NAME#', name)
 			);
 		}
 
@@ -241,7 +252,7 @@ jn.define('crm/stage-list-view', (require, exports, module) => {
 		 */
 		hasStageChanged(category, stagesGroupName, stage)
 		{
-			const currentStage = category[stagesGroupName].find(item => item.id === stage.id);
+			const currentStage = category[stagesGroupName].find((item) => item.id === stage.id);
 			if (!currentStage)
 			{
 				return false;
@@ -265,13 +276,24 @@ jn.define('crm/stage-list-view', (require, exports, module) => {
 			switch (this.getSelectStageAction())
 			{
 				case StageSelectActions.ChangeEntityStage:
-					const { onStageSelect } = this.props;
-					if (typeof onStageSelect === 'function')
+					if (this.isNewLead() && this.getSuccessStagesIds().includes(stage.id))
 					{
-						onStageSelect(stage, category, data, uid);
+						Alert.confirm(
+							Loc.getMessage('CRM_STAGE_LIST_VIEW_CHANGE_NEW_LEAD_SUCCESS_STAGE_NOTIFY_TITLE'),
+							Loc.getMessage('CRM_STAGE_LIST_VIEW_CHANGE_NEW_LEAD_SUCCESS_STAGE_NOTIFY'),
+						);
+
+						return;
 					}
 
-					this.closeLayout();
+					const { onStageSelect } = this.props;
+
+					if (onStageSelect)
+					{
+						this.closeLayout().then(() => {
+							onStageSelect(stage, category, data, uid);
+						});
+					}
 					break;
 
 				case StageSelectActions.CreateTunnel:
@@ -317,6 +339,7 @@ jn.define('crm/stage-list-view', (require, exports, module) => {
 				},
 				widgetParams: {
 					modal: true,
+					backgroundColor: '#eef2f4',
 					backdrop: {
 						showOnTop: true,
 						swipeContentAllowed: false,
@@ -336,7 +359,6 @@ jn.define('crm/stage-list-view', (require, exports, module) => {
 				stageParams,
 				canMoveStages,
 				activeStageId,
-				unsuitableStages,
 			} = this.props;
 
 			return ScrollView(
@@ -354,7 +376,7 @@ jn.define('crm/stage-list-view', (require, exports, module) => {
 					},
 				},
 				category === null
-					? new LoadingScreenComponent()
+					? new LoadingScreenComponent({ backgroundColor: '#eef2f4' })
 					: new StageList({
 						title: this.getStageListTitle(),
 						readOnly: this.getStageReadOnly(),
@@ -362,7 +384,7 @@ jn.define('crm/stage-list-view', (require, exports, module) => {
 						stageParams,
 						category,
 						activeStageId,
-						unsuitableStages,
+						unsuitableStages: this.getUnsuitableStages(),
 						processStages: category.processStages,
 						finalStages: [...category.successStages, ...category.failedStages],
 						onSelectedStage: this.onSelectedStage,
@@ -371,6 +393,44 @@ jn.define('crm/stage-list-view', (require, exports, module) => {
 						disabledStageIds: this.getDisabledStageIdsByCategory(category),
 					}),
 			);
+		}
+
+		getUnsuitableStages()
+		{
+			const { unsuitableStages } = this.props;
+			let unsuitableStagesIds = unsuitableStages;
+
+			if (!Array.isArray(unsuitableStagesIds))
+			{
+				unsuitableStagesIds = [];
+			}
+
+			const successStagesIds = this.getSuccessStagesIds();
+			if (this.isNewLead() && successStagesIds.length > 0)
+			{
+				unsuitableStagesIds = [...unsuitableStagesIds, ...successStagesIds];
+			}
+
+			return unsuitableStagesIds;
+		}
+
+		getSuccessStagesIds()
+		{
+			const { category } = this.state;
+
+			if (!Array.isArray(category.successStages))
+			{
+				return [];
+			}
+
+			return category.successStages.map(({ id }) => id);
+		}
+
+		isNewLead()
+		{
+			const { entityTypeId, isNewEntity } = this.props;
+
+			return isNewEntity && entityTypeId === TypeId.Lead;
 		}
 
 		getDisabledStageIdsByCategory(category)
@@ -396,9 +456,9 @@ jn.define('crm/stage-list-view', (require, exports, module) => {
 
 		hasSameDstStage(tunnels, dstStageIds)
 		{
-			const intersection = tunnels.filter(tunnel => dstStageIds.includes(tunnel.dstStageId));
+			const intersection = tunnels.filter((tunnel) => dstStageIds.includes(tunnel.dstStageId));
 
-			return Boolean(intersection.length);
+			return intersection.length > 0;
 		}
 
 		get disabledStageIds()
@@ -416,7 +476,7 @@ jn.define('crm/stage-list-view', (require, exports, module) => {
 				return BX.message('CRM_STAGE_LIST_VIEW_BACKDROP_TUNNEL_TITLE');
 			}
 
-			return BX.message('CRM_STAGE_LIST_VIEW_STAGES_TITLE');
+			return getEntityMessage('CRM_STAGE_LIST_VIEW_TITLE', this.props.entityTypeId);
 		}
 
 		getStageReadOnly()
@@ -442,6 +502,7 @@ jn.define('crm/stage-list-view', (require, exports, module) => {
 				},
 				widgetParams: {
 					modal: true,
+					backgroundColor: '#eef2f4',
 					backdrop: {
 						showOnTop: true,
 						forceDismissOnSwipeDown: true,

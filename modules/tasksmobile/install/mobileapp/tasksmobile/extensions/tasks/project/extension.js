@@ -306,7 +306,11 @@
 			this.counter.read();
 
 			return new Promise((resolve, reject) => {
-				(new RequestExecutor('tasks.task.comment.readProject', {groupId: this.project.id}))
+				(new RequestExecutor('tasks.viewedGroup.project.markAsRead', {
+					fields: {
+						groupId: this.project.id,
+					}
+				}))
 					.call()
 					.then(
 						(response) => resolve(response),

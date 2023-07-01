@@ -1,0 +1,6 @@
+<?php
+$MESS["M_CRM_PSC_AP_OAUTH_CONNECT_TO_YOO_KASSA_AUTHORIZE"] = "I have a YooMoney account";
+$MESS["M_CRM_PSC_AP_OAUTH_CONNECT_TO_YOO_KASSA_AUTHORIZE_ERROR"] = "Error logging in to YooMoney";
+$MESS["M_CRM_PSC_AP_OAUTH_CONNECT_TO_YOO_KASSA_REGISTER"] = "Create YooMoney account";
+$MESS["M_CRM_PSC_AP_OAUTH_CONNECT_TO_YOO_KASSA_TEXT"] = "Connect YooMoney to receive payments";
+$MESS["M_CRM_PSC_AP_OAUTH_CONNECT_TO_YOO_KASSA_TITLE"] = "Connect YooMoney";

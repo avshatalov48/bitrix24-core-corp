@@ -22,9 +22,6 @@ global $APPLICATION;
 $title = Loc::getMessage('CATALOG_DOCUMENT_LIST_TITLE_' . mb_strtoupper($arResult['MODE']));
 $APPLICATION->SetTitle($title);
 
-$bodyClass = $APPLICATION->GetPageProperty("BodyClass");
-$APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'no-background');
-
 $this->setViewTarget('above_pagetitle');
 $APPLICATION->IncludeComponent(
 	'bitrix:catalog.store.document.control_panel',
@@ -187,6 +184,8 @@ if ($arResult['OPEN_INVENTORY_MANAGEMENT_SLIDER'])
 			isConductDisabled: <?= $arResult['OPEN_INVENTORY_MANAGEMENT_SLIDER_ON_ACTION'] ? 'true' : 'false' ?>,
 			masterSliderUrl: <?= CUtil::PhpToJSObject($arResult['MASTER_SLIDER_URL']) ?>,
 			inventoryManagementSource: <?= CUtil::PhpToJSObject($arResult['INVENTORY_MANAGEMENT_SOURCE']) ?>,
+			isInventoryManagementDisabled: <?= CUtil::PhpToJSObject($arResult['IS_INVENTORY_MANAGEMENT_DISABLED']) ?>,
+			inventoryManagementFeatureCode: <?= CUtil::PhpToJSObject($arResult['INVENTORY_MANAGEMENT_FEATURE_SLIDER_CODE']) ?>,
 		});
 	});
 

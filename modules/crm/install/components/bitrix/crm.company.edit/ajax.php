@@ -511,6 +511,10 @@ elseif($action === 'FIND_DUPLICATES')
 					{
 						$info['TITLE'] = $entityInfo['TITLE'];
 					}
+					if ($entityTypeID === CCrmOwnerType::Company)
+					{
+						$info['IS_MY_COMPANY'] = $entityInfo['IS_MY_COMPANY'] ? 'Y' : 'N';
+					}
 					if (isset($entityInfo['RESPONSIBLE_ID']))
 					{
 						$responsibleID = $entityInfo['RESPONSIBLE_ID'];

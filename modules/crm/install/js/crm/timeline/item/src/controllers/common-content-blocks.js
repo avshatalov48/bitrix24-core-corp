@@ -16,9 +16,11 @@ import EditableDate from '../components/content-blocks/editable-date';
 import { PlayerAlert } from '../components/content-blocks/player-alert';
 import { Note } from '../components/content-blocks/note';
 import DatePill from '../components/content-blocks/date-pill';
-import {MoneyPill} from '../components/content-blocks/money-pill';
-import {InfoGroup} from '../components/content-blocks/info-group';
+import { MoneyPill } from '../components/content-blocks/money-pill';
+import { InfoGroup } from '../components/content-blocks/info-group';
 import { FileList } from '../components/content-blocks/file-list';
+import { SmsMessage } from '../components/content-blocks/sms-message';
+import CommentContent from '../components/content-blocks/comment-content';
 
 export class CommonContentBlocks extends Base
 {
@@ -42,6 +44,8 @@ export class CommonContentBlocks extends Base
 			FileList,
 			InfoGroup,
 			MoneyPill,
+			SmsMessage,
+			CommentContent,
 		};
 	}
 

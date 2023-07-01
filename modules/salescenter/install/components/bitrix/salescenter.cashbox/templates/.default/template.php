@@ -101,6 +101,8 @@ Extension::load([
 											<a class="ui-link ui-link-dashed" onclick="BX.Salescenter.Manager.openHowToConfigBusinessRuCashBox(event);"><?=Loc::getMessage('SC_CASHBOX_BUSINESSRU_LINK_CONNECT')?></a>
 										<?php elseif (mb_strtolower($arResult['handler']) === mb_strtolower('\Bitrix\Sale\Cashbox\CashboxRobokassa')): ?>
 											<a class="ui-link ui-link-dashed" onclick="BX.Salescenter.Manager.openHowToConfigRobokassaCashBox(event);"><?=Loc::getMessage('SC_CASHBOX_ROBOKASSA_LINK_CONNECT')?></a>
+										<?php elseif (mb_strtolower($arResult['handler']) === mb_strtolower('\Bitrix\Sale\Cashbox\CashboxYooKassa')): ?>
+											<a class="ui-link ui-link-dashed" onclick="BX.Salescenter.Manager.openHowToConfigYooKassaCashBox(event);"><?=Loc::getMessage('SC_CASHBOX_YOOKASSA_LINK_CONNECT')?></a>
 										<?php else:?>
 											<a class="ui-link ui-link-dashed" onclick="BX.Salescenter.Manager.openHowToConfigCashBox(event);"><?=Loc::getMessage('SC_CASHBOX_LINK_CONNECT')?></a>
 										<?php endif; ?>

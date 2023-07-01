@@ -4,6 +4,7 @@ namespace Bitrix\Crm\Service\Timeline\Item\LogMessage;
 
 use Bitrix\Crm\Service\Timeline\Item\LogMessage;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\Text;
+use Bitrix\Crm\Service\Timeline\Layout\Common\Icon;
 use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__DIR__ . '/../Ecommerce.php');
@@ -33,6 +34,6 @@ class CustomerProceededWithOrder extends LogMessage
 
 	public function getIconCode(): ?string
 	{
-		return 'task';
+		return Icon::TASK;
 	}
 }

@@ -23,6 +23,7 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 			formName: '<?= CUtil::JSEscape($dialog->getFormName()) ?>',
 			stages: <?= \Bitrix\Main\Web\Json::encode($dialog->getRuntimeData()['stages'] ?? []) ?>,
 			chosenStages: <?= \Bitrix\Main\Web\Json::encode($dialog->getCurrentValue('target_status')) ?>,
+			isRobot: true,
 		});
 
 		script.init();

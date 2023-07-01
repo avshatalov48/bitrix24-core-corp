@@ -16,6 +16,8 @@ use Bitrix\Tasks\Access\TaskAccessController;
 use Bitrix\Tasks\CheckList\CheckListFacade;
 use Bitrix\Tasks\CheckList\Internals\CheckList;
 use Bitrix\Tasks\Comments\Task\CommentPoster;
+use Bitrix\Tasks\Integration\CRM\TimeLineManager;
+use Bitrix\Tasks\Internals\Task\ScenarioTable;
 use Bitrix\Tasks\Util\Error;
 use Bitrix\Tasks\Util;
 use Bitrix\Tasks\Item;
@@ -105,7 +107,7 @@ abstract class Task
 
 	public function getConfig($field)
 	{
-		return $this->config[$field];
+		return ($this->config[$field] ?? null);
 	}
 
 	/**
@@ -293,6 +295,9 @@ abstract class Task
 			{
 				$resultId = $dstInstance->getId();
 
+				// save scenario
+				ScenarioTable::insertIgnore($resultId, [ScenarioTable::SCENARIO_DEFAULT]);
+
 				$commentPoster = CommentPoster::getInstance($resultId, $userId);
 				$commentPoster->enableDeferredPostMode();
 				$commentPoster->clearComments();
@@ -324,6 +329,8 @@ abstract class Task
 						$saveResult->loadErrors($checkListSaveResult->getErrors());
 					}
 				}
+
+				$this->sendEvents($resultId, $userId);
 			}
 
 			if(!$saveResult->getErrors()->isEmpty())
@@ -342,5 +349,10 @@ abstract class Task
 		$creationResult->setInstance($dstInstance);
 
 		return $creationResult;
+	}
+
+	public function sendEvents(int $taskId, int $userId): void
+	{
+		(new TimeLineManager($taskId, $userId))->onTaskCreated()->save();
 	}
 }

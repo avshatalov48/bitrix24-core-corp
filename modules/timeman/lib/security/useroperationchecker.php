@@ -20,6 +20,9 @@ class UserOperationChecker implements IUserOperationChecker
 		{
 			return;
 		}
+
+		$userAccessCodes = array_filter($userAccessCodes, static fn($code) => mb_strpos($code, 'CHAT') !== 0);
+
 		if ($this->user && is_object($this->user) && $this->user->getId() > 0)
 		{
 			$this->availableOperations = array_column(

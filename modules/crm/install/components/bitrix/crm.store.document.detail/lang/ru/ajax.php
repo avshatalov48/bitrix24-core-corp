@@ -1,5 +1,6 @@
 <?php
 $MESS["CRM_STORE_DOCUMENT_SD_INSUFFICIENT_RIGHTS"] = "Недостаточно прав";
+$MESS["CRM_STORE_DOCUMENT_SD_NO_INVENTORY_MANAGEMENT_ENABLED"] = "Складской учёт недоступен на вашем тарифе";
 $MESS["CRM_STORE_DOCUMENT_SD_SHIPMENT_NOT_FOUND"] = "Отгрузка не найдена";
 $MESS["CRM_STORE_DOCUMENT_SD_FORM_DATA_MISSING"] = "Данные форм отсутствуют";
 $MESS["CRM_STORE_DOCUMENT_SD_ORDER_ID_NEGATIVE"] = "Необходим положительный идентификатор заказа, либо данные для создания нового заказа";

@@ -50,7 +50,7 @@ class EntityCounterFactory
 
 		if(!\CCrmOwnerType::IsDefined($entityTypeID))
 		{
-			throw new Main\ArgumentOutOfRangeException('entityTypeID',
+			throw new Main\ArgumentOutOfRangeException("entityTypeID: $entityTypeID",
 				\CCrmOwnerType::FirstOwnerType,
 				\CCrmOwnerType::LastOwnerType
 			);
@@ -70,17 +70,24 @@ class EntityCounterFactory
 
 	private static function createCustomSectionCounter(string $code, int $userID): AggregateCounter
 	{
-		return new AggregateCounter(
-			$code,
-			array_map(
-				fn (string $settings) => [
-					'entityTypeID' => CustomSectionProvider::getEntityTypeByPageSetting($settings),
-					'counterTypeID' => EntityCounterType::ALL,
-				],
-				CustomSectionProvider::getPagesSettingsByCustomSectionCounterId($code)
-			),
-			$userID
-		);
+		$settings = CustomSectionProvider::getPagesSettingsByCustomSectionCounterId($code);
+		$data = [];
+		foreach ($settings as $setting)
+		{
+			$entityTypeID = CustomSectionProvider::getEntityTypeByPageSetting($setting);
+
+			if(!\CCrmOwnerType::IsDefined($entityTypeID))
+			{
+				continue;
+			}
+
+			$data[] = [
+				'entityTypeID' => CustomSectionProvider::getEntityTypeByPageSetting($setting),
+				'counterTypeID' => EntityCounterType::ALL,
+			];
+		}
+
+		return new AggregateCounter($code, $data, $userID);
 	}
 
 	private static function createCustomPageCounter(string $code, int $userID): AggregateCounter

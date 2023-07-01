@@ -2,7 +2,6 @@
  * @module crm/timeline/item/log/modification
  */
 jn.define('crm/timeline/item/log/modification', (require, exports, module) => {
-
 	const { TimelineItemBase } = require('crm/timeline/item/base');
 
 	/**
@@ -17,5 +16,4 @@ jn.define('crm/timeline/item/log/modification', (require, exports, module) => {
 	}
 
 	module.exports = { Modification };
-
 });

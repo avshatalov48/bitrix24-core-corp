@@ -11,6 +11,7 @@ $MESS["CONFIG_ADD_LOGO_DELETE"] = "Delete Logo";
 $MESS["CONFIG_ADD_LOGO_DELETE_CONFIRM"] = "Are you sure you want to delete the logo?";
 $MESS["CONFIG_ALLOW_INVITE_USERS"] = "Allow everyone to invite new users to this Bitrix24 account";
 $MESS["CONFIG_ALLOW_NEW_USER_LF"] = "Notify about new hires in Activity Stream";
+$MESS["CONFIG_ALLOW_SEARCH_NETWORK"] = "Allow searching for Open Channels on Bitrix24.Network";
 $MESS["CONFIG_ALLOW_SELF_REGISTER"] = "Allow quick registration";
 $MESS["CONFIG_ALLOW_TOALL"] = "Allow \"All users\" as option in Activity Stream";
 $MESS["CONFIG_BUY_TARIFF_BY_ALL"] = "Enable all users to upgrade current Bitrix24 plan";

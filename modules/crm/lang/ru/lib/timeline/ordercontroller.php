@@ -2,19 +2,18 @@
 $MESS["CRM_ORDER_CREATION"] = "Создан заказ";
 $MESS["CRM_DEAL_CREATION_BASED_ON"] = "Создано на основании";
 $MESS["CRM_ORDER_CONVERSION"] = "Создание на основании";
-$MESS["CRM_ORDER_MODIFICATION_STATUS"] = "Статус заказа изменен";
-$MESS["CRM_ORDER_MODIFICATION_CANCELED"] = "Заказ отменен";
+$MESS["CRM_ORDER_MODIFICATION_STATUS"] = "Статус заказа изменён";
+$MESS["CRM_ORDER_MODIFICATION_CANCELED"] = "Заказ отменён";
 $MESS["CRM_ORDER_VIEWED_HTML_TITLE"] = "заказ №#TITLE#";
 $MESS["CRM_ORDER_MODIFICATION_REASON_CANCELED"] = "Причина отмены заказа";
 $MESS["CRM_ORDER_MODIFICATION_RESTORED"] = "Заказ восстановлен";
-$MESS["CRM_ORDER_CANCELLED"] = "Отменен";
+$MESS["CRM_ORDER_CANCELLED"] = "Отменён";
 $MESS["CRM_ORDER_ACTIVE"] = "В работе";
 $MESS["CRM_ORDER_CREATION_TITLE"] = "#TITLE# от #DATE_INSERT#";
 $MESS["CRM_ORDER_CREATION_MESSAGE_SUM"] = "(на сумму #PRICE_WITH_CURRENCY#)";
-$MESS["CRM_PAYMENT_VIEWED_TITLE"] = "Клиент перешел на страницу оплаты";
+$MESS["CRM_PAYMENT_VIEWED_TITLE"] = "Клиент перешёл на страницу оплаты";
 $MESS["CRM_ORDER_VIEWED_HTML_TITLE_2"] = "№#ORDER_ID# от #DATE# на сумму #SUM#";
-$MESS["CRM_ORDER_DESTINATION_TITLE_SMS"] = "через SMS";
+$MESS["CRM_ORDER_DESTINATION_TITLE_SMS"] = "через СМС";
 $MESS["CRM_ORDER_DESTINATION_TITLE_CHAT"] = "в чат";
 $MESS["CRM_ORDER_DESTINATION_TITLE_CONTROL_CENTER"] = "через Единый Центр Управления";
 $MESS["CRM_ORDER_DESTINATION_TITLE_BITRIX24"] = "через Битрикс24";
-?>

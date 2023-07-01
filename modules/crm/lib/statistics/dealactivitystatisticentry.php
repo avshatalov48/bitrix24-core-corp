@@ -91,6 +91,10 @@ class DealActivityStatisticEntry
 		$month = (int)$date->format('m');
 		$quarter = $month <= 3 ? 1 : ($month <= 6 ? 2 : ($month <= 9 ? 3 : 4));
 		$year = (int)$date->format('Y');
+		if ($year <= 0)
+		{
+			return false;
+		}
 
 		if(!is_array($entityFields))
 		{

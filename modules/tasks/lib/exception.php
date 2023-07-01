@@ -54,6 +54,14 @@ class Exception extends \Bitrix\Main\SystemException
 		{
 			$additional['FILE'] = '';
 		}
+		if(!isset($additional['LINE']))
+		{
+			$additional['LINE'] = 0;
+		}
+		if(!isset($additional['CODE']))
+		{
+			$additional['CODE'] = 0;
+		}
 		$additional['LINE'] = intval($additional['LINE']);
 		$additional['CODE'] = intval($additional['CODE']);
 		if(!isset($additional['PREVIOUS_EXCEPTION'])) // todo: remove?
@@ -73,8 +81,6 @@ class Exception extends \Bitrix\Main\SystemException
 				{
 					$this->data['AUX']['ERROR'] = array((string) $this->data['AUX']['ERROR']);
 				}
-
-				AddMessage2Log('Exception additional data: "'.$exceptionId.'": '.serialize($this->data['AUX']['ERROR']), 'tasks');
 			}
 		}
 
@@ -112,6 +118,11 @@ class Exception extends \Bitrix\Main\SystemException
 
 	public function getErrors()
 	{
+		if (!isset($this->data['ERROR']))
+		{
+			return [];
+		}
+
 		if(is_array($this->data['ERROR']))
 		{
 			return $this->data['ERROR'];
@@ -120,7 +131,8 @@ class Exception extends \Bitrix\Main\SystemException
 		{
 			return $this->data['ERROR']->getMessages();
 		}
-		return array();
+
+		return [];
 	}
 
 	protected function prepareMessage($message)

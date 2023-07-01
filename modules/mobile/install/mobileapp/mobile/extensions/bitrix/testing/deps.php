@@ -3,6 +3,7 @@
 return [
 	'extensions' => [
 		'utils/console',
+		'type',
 	],
 	'bundle' => [
 		'./test-suite',

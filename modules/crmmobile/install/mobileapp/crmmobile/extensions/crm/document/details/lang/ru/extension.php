@@ -1,14 +1,14 @@
 <?php
 
-$MESS['M_CRM_DOCUMENT_DETAILS_DOCUMENT_TITLE'] = 'Просмотр документа';
-$MESS['M_CRM_DOCUMENT_DETAILS_DOCUMENT_TITLE_LOADING'] = 'Загрузка...';
 $MESS['M_CRM_DOCUMENT_DETAILS_DOCUMENT_TITLE_DATE_CREATE'] = 'от #DATE#';
-$MESS['M_CRM_DOCUMENT_DETAILS_PDF_IN_PROGRESS'] = 'Готовим PDF файл для предпросмотра';
-$MESS['M_CRM_DOCUMENT_DETAILS_EDIT_DOCUMENT'] = 'Изм.';
-$MESS['M_CRM_DOCUMENT_DETAILS_VIEW'] = 'Просмотр';
-$MESS['M_CRM_DOCUMENT_DETAILS_DOWNLOAD'] = 'Скачать';
-$MESS['M_CRM_DOCUMENT_DETAILS_DOWNLOAD_DOCX'] = 'Скачать docx';
-$MESS['M_CRM_DOCUMENT_DETAILS_COPY_PUBLIC_LINK'] = 'Скопировать ссылку';
-$MESS['M_CRM_DOCUMENT_DETAILS_COPY_DONE'] = 'Скопировано';
-$MESS['M_CRM_DOCUMENT_DETAILS_PUBLIC_LINK_VIEWED_AT'] = 'Просмотрено #DATE#';
-$MESS['M_CRM_DOCUMENT_DETAILS_PUBLIC_LINK_NOT_VIEWED_YET'] = 'Не просмотрено';
+$MESS['M_CRM_DOCUMENT_DETAILS_PDF_IN_PROGRESS'] = 'Преобразование документа в формат PDF #BR# может занять время';
+$MESS['M_CRM_DOCUMENT_DETAILS_PDF_ERROR_TITLE'] = 'Не удалось отобразить содержимое PDF-файла';
+$MESS['M_CRM_DOCUMENT_DETAILS_PDF_ERROR_BODY'] = 'Пожалуйста, попробуйте сформировать документ повторно';
+$MESS['M_CRM_DOCUMENT_DETAILS_PDF_TRANSFORM_ERROR_TITLE'] = 'Не удалось сформировать PDF-файл документа';
+$MESS['M_CRM_DOCUMENT_DETAILS_PDF_TRANSFORM_ERROR_BODY'] = 'Пожалуйста, попробуйте позже';
+$MESS['M_CRM_DOCUMENT_DETAILS_PDF_VIEWER_NOT_SUPPORTED_ERROR_TITLE'] = 'Ваше приложение не поддерживает просмотр PDF-файлов';
+$MESS['M_CRM_DOCUMENT_DETAILS_PDF_VIEWER_NOT_SUPPORTED_ERROR_BODY'] = 'Пожалуйста, обновите приложение Bitrix24';
+$MESS['M_CRM_DOCUMENT_DETAILS_DOWNLOAD_FILE'] = 'Скачать файл';
+$MESS['M_CRM_DOCUMENT_DETAILS_DOWNLOAD_DOCX'] = 'Скачать документ в формате DOCX';
+$MESS['M_CRM_DOCUMENT_DETAILS_DOWNLOAD_IN_PROGRESS'] = 'Загрузка документа...';
+$MESS['M_CRM_DOCUMENT_DETAILS_SEND'] = 'Отправить';

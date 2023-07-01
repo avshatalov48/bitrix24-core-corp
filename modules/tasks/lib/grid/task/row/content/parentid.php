@@ -15,6 +15,6 @@ class ParentId extends Content
 	 */
 	public function prepare(): string
 	{
-		return (string)$this->getRowData()['PARENT_ID'];
+		return (string) ($this->getRowData()['PARENT_ID'] ?? '');
 	}
 }

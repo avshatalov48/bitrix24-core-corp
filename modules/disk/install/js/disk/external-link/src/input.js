@@ -158,7 +158,7 @@ export default class Input
 								${this.getLinkContainer()}
 								${copyButton}
 							</div>
-							<div class="disk-control-external-link-subtitle" onclick="${tune}">${this.getDeathTimeContainer()}, ${this.getPasswordContainer()}${this.getRightsContainer()}</div>
+							<div class="disk-control-external-link-subtitle" onclick="${tune}">${this.getDeathTimeContainer()}<span>, </span>${this.getPasswordContainer()}${this.getRightsContainer()}</div>
 							<div class="disk-control-external-link-text">${Loc.getMessage('DISK_EXTENSION_EXTERNAL_LINK_IS_NOT_PUBLISHED')}</div>
 							<div class="disk-control-external-link-skeleton"></div>
 						</div>
@@ -215,7 +215,7 @@ export default class Input
 
 	toggle({target}: BaseEvent)
 	{
-		if (target.checked)
+		if (target.isChecked())
 		{
 			this.showLoader();
 			this.getBackend().generateExternalLink(this.objectId)

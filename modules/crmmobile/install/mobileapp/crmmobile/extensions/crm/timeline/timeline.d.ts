@@ -10,12 +10,24 @@ type TimelineProps = {
 	},
 };
 
+type TimelineUserProps = {
+	detailUrl?: string,
+	imageUrl: string,
+	title: string,
+	userId: number,
+};
+
 type TimelineEntityProps = {
 	id: number,
 	typeId: number,
-	categoryId: number|null,
+	categoryId: number | null,
+	title: string | null,
 	detailPageUrl: string,
 	isEditable: boolean,
+	pushTag: string | null,
+	documentGeneratorProvider: string | null,
+	isDocumentPreviewerAvailable: boolean,
+	isGoToChatAvailable: boolean,
 };
 
 type TimelineItemProps = {
@@ -96,4 +108,15 @@ type TimelineListViewItem = {
 	type: string,
 	key: string,
 	props: object,
+};
+
+type TimelineFileListFile = {
+	id: number,
+	sourceFileId: number,
+	name: string,
+	size: number,
+	viewUrl: string,
+	previewUrl?: string,
+	attributes: object,
+	extension: string,
 };

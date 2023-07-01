@@ -15,12 +15,22 @@ this.BX = this.BX || {};
 	    value: function loadInput() {
 	      var _this = this;
 
+	      var context = {};
+
+	      if (this._schemeElement) {
+	        context.ownerEntityTypeId = this._schemeElement.getDataIntegerParam('ownerEntityTypeId', null);
+	        context.ownerEntityId = this._schemeElement.getDataIntegerParam('ownerEntityId', null);
+	        context.ownerEntityCategoryId = this._schemeElement.getDataIntegerParam('ownerEntityCategoryId', null);
+	        context.permissionToken = this._schemeElement.getDataStringParam('permissionToken', null);
+	      }
+
 	      main_core.ajax.runAction('crm.entity.renderImageInput', {
 	        data: {
 	          entityTypeName: this._editor.getEntityTypeName(),
 	          entityId: this._editor.getEntityId(),
 	          fieldName: this.getDataKey(),
-	          fieldValue: this.getValue()
+	          fieldValue: this.getValue(),
+	          context: context
 	        }
 	      }).then(function (result) {
 	        var assets = result.data.assets;

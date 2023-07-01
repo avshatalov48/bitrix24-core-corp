@@ -109,45 +109,41 @@ if (!$arParams["PUBLIC_MODE"] || $can["RENEW"])
 $arResult['CLASSES'] = $classes;
 
 //region Rest
-$this->arResult['ADDITIONAL_TABS'] = array();
-$this->arResult['ENABLE_REST'] = false;
+$additionalTabs = [];
 if (Bitrix\Main\Loader::includeModule('rest'))
 {
-	$this->arResult['ENABLE_REST'] = true;
-	\CJSCore::Init(array('marketplace'));
-	\CJSCore::Init(array('applayout'));
+	\CJSCore::Init(['applayout', 'marketplace']);
 
-	$this->arResult['REST_PLACEMENT'] = 'TASK_LIST_CONTEXT_MENU';
-	$placementHandlerList = \Bitrix\Rest\PlacementTable::getHandlersList($this->arResult['REST_PLACEMENT']);
+	$restReplacement = 'TASK_LIST_CONTEXT_MENU';
+	$placementHandlerList = \Bitrix\Rest\PlacementTable::getHandlersList($restReplacement);
 
 	if (count($placementHandlerList) > 0)
 	{
 		foreach ($placementHandlerList as $placementHandler)
 		{
-			$this->arResult['ADDITIONAL_TABS'][] = [
-				'ID'   => 'activity_rest_'.$placementHandler['APP_ID'].'_'.$placementHandler['ID'],
-				'NAME' => $placementHandler['TITLE'] <> '' ? $placementHandler['TITLE'] : $placementHandler['APP_NAME'],
-
+			$additionalTabs[] = [
+				'ID' => "activity_rest_{$placementHandler['APP_ID']}_{$placementHandler['ID']}",
+				'NAME' => ($placementHandler['TITLE'] !== '' ? $placementHandler['TITLE'] : $placementHandler['APP_NAME']),
 				'ONCLICK'=> 'BX.rest.AppLayout.openApplication(
 					"'.$placementHandler['APP_ID'].'",
 					{
 						TASK_ID: '.$data['ID'].'
 					},
 					{
-						PLACEMENT: "'.$this->arResult['REST_PLACEMENT'].'",
+						PLACEMENT: "'.$restReplacement.'",
 						PLACEMENT_ID:  "'.$placementHandler['ID'].'"
 					}
-				);'
+				);',
 			];
 		}
 	}
 
-	$this->arResult['ADDITIONAL_TABS'][] = array(
-		'ID'     => 'activity_rest_applist',
-		'NAME'   => \Bitrix\Main\Localization\Loc::getMessage('TASKS_REST_BUTTON_TITLE_2'),
+	$additionalTabs[] = [
+		'ID' => 'activity_rest_applist',
+		'NAME' => \Bitrix\Main\Localization\Loc::getMessage('TASKS_REST_BUTTON_TITLE_2'),
 		'SLIDER' => true,
-		'ONCLICK' =>'BX.rest.Marketplace.open({PLACEMENT:"'.\CUtil::JSEscape($this->arResult['REST_PLACEMENT']).'"})'
-	);
+		'ONCLICK' =>'BX.rest.Marketplace.open({PLACEMENT:"'.\CUtil::JSEscape($restReplacement).'"})',
+	];
 }
 
 if (\Bitrix\Main\ModuleManager::isModuleInstalled('rest'))
@@ -166,9 +162,9 @@ if (\Bitrix\Main\ModuleManager::isModuleInstalled('rest'))
 		array('HIDE_ICONS' => 'Y')
 	);
 
-	$eventParam = array(
-		'ID' => $row['ID']
-	);
+	$eventParam = [
+		'ID' => ($row['ID'] ?? null),
+	];
 	$actions = [];
 	foreach (GetModuleEvents('tasks', 'onTasksBuildContextMenu', true) as $event)
 	{
@@ -182,16 +178,16 @@ $arResult['JS_DATA'] = [
 	'taskId'             => $taskId,
 	'publicMode'         => $arParams["PUBLIC_MODE"],
 	'data'               => [
-		'TIME_ESTIMATE' => $taskData['TIME_ESTIMATE'],
-		'TIME_ELAPSED' => $taskData['TIME_ELAPSED'],
-		'TIMER_IS_RUNNING_FOR_CURRENT_USER' => $taskData['TIMER_IS_RUNNING_FOR_CURRENT_USER']
+		'TIME_ESTIMATE' => ($taskData['TIME_ESTIMATE'] ?? null),
+		'TIME_ELAPSED' => ($taskData['TIME_ELAPSED'] ?? null),
+		'TIMER_IS_RUNNING_FOR_CURRENT_USER' => ($taskData['TIMER_IS_RUNNING_FOR_CURRENT_USER'] ?? null),
 	],
 	'copyUrl'            => $arResult['COPY_URL'],
 	'createSubtaskUrl'   => $arResult['CREATE_SUBTASK_URL'],
 	'listUrl'            => $arParams["PATH_TO_TASKS"],
 	'goToListOnDelete'   => $arParams["REDIRECT_TO_LIST_ON_DELETE"],
 	'additional_actions' => $actions,
-	'additional_tabs'    => $this->arResult['ADDITIONAL_TABS'],
+	'additional_tabs'    => $additionalTabs,
 	'taskLimitExceeded' => $arResult['TASK_LIMIT_EXCEEDED'],
 	'groupId' => $arParams['TASK']['GROUP_ID'],
 	'parentId' => (int) $arParams['TASK']['PARENT_ID'],

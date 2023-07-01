@@ -23,7 +23,7 @@ class UserField extends Content
 			return (new UserField\Crm($row, $parameters))->prepare();
 		}
 
-		$fieldValue = $row[$fieldName];
+		$fieldValue = $row[$fieldName] ?? '';
 		$userFieldData = $parameters['UF'][$fieldName];
 
 		if ($userFieldData['USER_TYPE_ID'] !== 'boolean' && empty($fieldValue) && $fieldValue !== '0')

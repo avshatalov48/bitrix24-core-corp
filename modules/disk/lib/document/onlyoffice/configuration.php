@@ -147,7 +147,7 @@ final class Configuration
 		if ($this->secretKey === null)
 		{
 			$cloudData = $this->getCloudRegistrationData();
-			if ($cloudData['secretKey'])
+			if (isset($cloudData['secretKey']) && $cloudData['secretKey'])
 			{
 				$this->secretKey = $cloudData['secretKey'];
 			}

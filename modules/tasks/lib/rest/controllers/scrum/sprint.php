@@ -617,10 +617,10 @@ class Sprint extends Base
 	 * @return array
 	 */
 	public function listAction(
-		PageNavigation $nav,
 		$filter = [],
 		$select = [],
-		$order = []
+		$order = [],
+		PageNavigation $nav = null
 	)
 	{
 		$filter['=ENTITY_TYPE'] = EntityForm::SPRINT_TYPE;

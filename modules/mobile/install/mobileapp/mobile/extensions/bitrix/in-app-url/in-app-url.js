@@ -29,6 +29,7 @@ jn.define('in-app-url/in-app-url', (require, exports, module) => {
 		{
 			const route = new Route({ pattern, handler });
 			this.routes.push(route);
+			
 			return route;
 		}
 

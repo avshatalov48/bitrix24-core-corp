@@ -2,7 +2,6 @@
  * @module crm/in-app-url/open
  */
 jn.define('crm/in-app-url/open', (require, exports, module) => {
-
 	const { CrmUrl } = require('crm/in-app-url/url');
 	const { inAppUrl } = require('in-app-url');
 

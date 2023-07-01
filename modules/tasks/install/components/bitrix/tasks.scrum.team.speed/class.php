@@ -54,7 +54,7 @@ class TasksScrumTeamSpeedComponent extends \CBitrixComponent implements Controll
 
 	public function onPrepareComponentParams($params)
 	{
-		$params['groupId'] = (is_numeric($params['groupId']) ? (int) $params['groupId'] : 0);
+		$params['groupId'] = (is_numeric($params['groupId'] ?? null) ? (int) $params['groupId'] : 0);
 
 		return $params;
 	}

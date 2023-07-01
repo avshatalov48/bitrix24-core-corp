@@ -45,7 +45,11 @@ else
 }
 ?>
 
-<div class="tasks-widget-result__item" data-role="tasks-widget--result-item">
+<div
+	class="tasks-widget-result__item"
+	data-id="<?= $result->getId() ?>"
+	data-role="tasks-widget--result-item"
+>
 	<div class="tasks-widget-result__item--header">
 		<div class="tasks-widget-result__item--header-title"><?= Loc::getMessage('TASKS_RESULT_HEADER'); ?></div>
 			<?php if($canRemove): ?>

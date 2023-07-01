@@ -10,6 +10,7 @@ use Bitrix\Crm\Settings\LeadSettings;
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
+use PHPUnit\TextUI\TestRunnerTest;
 
 class Lead extends Entity
 {
@@ -75,7 +76,7 @@ class Lead extends Entity
 		return (new Filter\Preset\Lead())
 			->setDefaultValues($this->getFilter()->getDefaultFieldIDs())
 			->getDefaultPresets()
-		;
+			;
 	}
 
 	public function isRestPlacementSupported(): bool
@@ -177,14 +178,6 @@ class Lead extends Entity
 			return $result;
 		}
 
-		$item = $result->getData()['item'];
-
-		if ($stages[$item[$this->getStageFieldName()]]['PROGRESS_TYPE'] === 'WIN')
-		{
-			$result->addError(new Error(Loc::getMessage('CRM_KANBAN_ERROR_LEAD_ALREADY_CONVERTED')));
-			return $result;
-		}
-
 		if ($stages[$stageId]['PROGRESS_TYPE'] === 'WIN')
 		{
 			return $result;
@@ -203,5 +196,15 @@ class Lead extends Entity
 			PhaseSemantics::SUCCESS,
 			PhaseSemantics::FAILURE,
 		];
+	}
+
+	public function canAddItemToStage(string $stageId, \CCrmPerms $userPermissions, string $semantics = PhaseSemantics::UNDEFINED): bool
+	{
+		if ($semantics === PhaseSemantics::SUCCESS)
+		{
+			return false;
+		}
+
+		return parent::canAddItemToStage($stageId, $userPermissions, $semantics);
 	}
 }

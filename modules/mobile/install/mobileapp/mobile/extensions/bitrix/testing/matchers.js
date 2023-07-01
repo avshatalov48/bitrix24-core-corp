@@ -2,6 +2,8 @@
  * @module testing/matchers
  */
 jn.define('testing/matchers', (require, exports, module) => {
+	const { Type } = require('type');
+	const { isEqual } = require('utils/object');
 
 	/**
 	 * @abstract
@@ -153,8 +155,8 @@ jn.define('testing/matchers', (require, exports, module) => {
 			while (++index < objLength)
 			{
 				key = props1[index];
-				let value1 = obj1[key];
-				let value2 = obj2[key];
+				const value1 = obj1[key];
+				const value2 = obj2[key];
 
 				if (!this.isEqual(value1, value2))
 				{
@@ -234,6 +236,59 @@ jn.define('testing/matchers', (require, exports, module) => {
 		}
 	}
 
+	class MatchObjectMatcher extends TestingMatcher
+	{
+		/**
+		 * @returns {boolean}
+		 */
+		match()
+		{
+			if (Type.isPlainObject(this.actualValue) && Type.isPlainObject(this.expectedValue))
+			{
+				return this.isEqualExpectedProperties(this.actualValue, this.expectedValue);
+			}
+
+			return false;
+		}
+
+		isEqualExpectedProperties(actual, expected)
+		{
+			const actualProps = Object.keys(actual);
+			const expectedProps = Object.keys(expected);
+
+			if (expectedProps.length > actualProps.length)
+			{
+				return false;
+			}
+
+			const objLength = expectedProps.length;
+			let index = objLength;
+			let key;
+			while (index--)
+			{
+				key = expectedProps[index];
+				if (!actualProps.includes(key))
+				{
+					return false;
+				}
+			}
+
+			while (++index < objLength)
+			{
+				key = expectedProps[index];
+				const value1 = expected[key];
+				const value2 = actual[key];
+
+				if (!isEqual(value1, value2))
+				{
+					return false;
+				}
+			}
+
+			return true;
+		}
+	}
+
 	module.exports = {
 		TestingMatcher,
 		ExactMatcher,
@@ -242,6 +297,7 @@ jn.define('testing/matchers', (require, exports, module) => {
 		DefinedMatcher,
 		NullMatcher,
 		BooleanMatcher,
+		MatchObjectMatcher,
 	};
 
 });

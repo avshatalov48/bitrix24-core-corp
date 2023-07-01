@@ -1,15 +1,20 @@
 <?php
+
 /**
  * Bitrix Framework
  * @package bitrix
  * @subpackage socialnetwork
  * @copyright 2001-2017 Bitrix
  */
+
 namespace Bitrix\Crm\Integration\Main\UISelector;
 
+use Bitrix\Crm\UserField\Types\ElementType;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Event;
 use Bitrix\Main\EventResult;
+use CCrmOwnerType;
+use CCrmOwnerTypeAbbr;
 
 Loc::loadMessages(__FILE__);
 
@@ -25,11 +30,9 @@ class Handler
 	const ENTITY_TYPE_CRMSMART_INVOICES = 'SMART_INVOICES';
 	const ENTITY_TYPE_CRMDYNAMICS = 'DYNAMICS';
 
-	public static function OnUISelectorGetProviderByEntityType(Event $event)
+	public static function getProviderByEntityType(string $entityType)
 	{
-		$result = new EventResult(EventResult::UNDEFINED, null, 'crm');
-
-		$entityType = $event->getParameter('entityType');
+		$provider = null;
 
 		switch($entityType)
 		{
@@ -57,20 +60,27 @@ class Handler
 			case self::ENTITY_TYPE_CRMSMART_INVOICES:
 				$provider = new CrmSmartInvoices();
 				break;
-			case (strpos($entityType, self::ENTITY_TYPE_CRMDYNAMICS)===0):
+			case (mb_strpos($entityType, self::ENTITY_TYPE_CRMDYNAMICS) === 0):
 				$provider = new CrmDynamics;
 				break;
-			default:
-				$provider = false;
 		}
+
+		return $provider;
+	}
+
+	public static function OnUISelectorGetProviderByEntityType(Event $event)
+	{
+		$result = new EventResult(EventResult::UNDEFINED, null, 'crm');
+
+		$entityType = $event->getParameter('entityType');
+
+		$provider = static::getProviderByEntityType($entityType);
 
 		if ($provider)
 		{
 			$result = new EventResult(
 				EventResult::SUCCESS,
-				array(
-					'result' => $provider
-				),
+				['result' => $provider],
 				'crm'
 			);
 		}
@@ -83,62 +93,57 @@ class Handler
 		$result = new EventResult(EventResult::UNDEFINED, null, 'crm');
 		$code = $event->getParameter('code');
 
-		if (preg_match('/^'.CrmLeads::PREFIX_SHORT.'(\d+)$/i', $code, $matches))
+		$providerClassList = [
+			'CrmLeads',
+			'CrmCompanies',
+			'CrmContacts',
+			'CrmDeals',
+			'CrmQuotes',
+			'CrmOrders',
+			'CrmProducts',
+			'CrmQuotes',
+			'CrmSmartInvoices',
+		];
+
+		$newCode = '';
+		$isNewCodeSet = false;
+		foreach ($providerClassList as $className)
 		{
-			$newCode = preg_replace('/^'.CrmLeads::PREFIX_SHORT.'(\d+)$/', CrmLeads::PREFIX_FULL.'$1', $code);
-		}
-		elseif (preg_match('/^'.CrmCompanies::PREFIX_SHORT.'(\d+)$/i', $code, $matches))
-		{
-			$newCode = preg_replace('/^'.CrmCompanies::PREFIX_SHORT.'(\d+)$/', CrmCompanies::PREFIX_FULL.'$1', $code);
-		}
-		elseif (preg_match('/^'.CrmContacts::PREFIX_SHORT.'(\d+)$/i', $code, $matches))
-		{
-			$newCode = preg_replace('/^'.CrmContacts::PREFIX_SHORT.'(\d+)$/', CrmContacts::PREFIX_FULL.'$1', $code);
-		}
-		elseif (preg_match('/^'.CrmDeals::PREFIX_SHORT.'(\d+)$/i', $code, $matches))
-		{
-			$newCode = preg_replace('/^'.CrmDeals::PREFIX_SHORT.'(\d+)$/', CrmDeals::PREFIX_FULL.'$1', $code);
-		}
-		elseif (preg_match('/^'.CrmOrders::PREFIX_SHORT.'(\d+)$/i', $code, $matches))
-		{
-			$newCode = preg_replace('/^'.CrmOrders::PREFIX_SHORT.'(\d+)$/', CrmOrders::PREFIX_FULL.'$1', $code);
-		}
-		elseif (preg_match('/^'.CrmProducts::PREFIX_SHORT.'(\d+)$/i', $code, $matches))
-		{
-			$newCode = preg_replace('/^'.CrmProducts::PREFIX_SHORT.'(\d+)$/', CrmProducts::PREFIX_FULL.'$1', $code);
-		}
-		elseif (preg_match('/^'.CrmQuotes::PREFIX_SHORT.'(\d+)$/i', $code, $matches))
-		{
-			$newCode = preg_replace('/^'.CrmQuotes::PREFIX_SHORT.'(\d+)$/', CrmQuotes::PREFIX_FULL.'$1', $code);
-		}
-		elseif (preg_match('/^'.CrmSmartInvoices::PREFIX_SHORT.'(\d+)$/i', $code, $matches))
-		{
-			$newCode = preg_replace('/^'.CrmSmartInvoices::PREFIX_SHORT.'(\d+)$/', CrmSmartInvoices::PREFIX_FULL.'$1', $code);
-		}
-		elseif (preg_match(
-			'/^'.\CCrmOwnerTypeAbbr::DynamicTypeAbbreviationPrefix.'(\w+)_(\d+)$/i',
-			$code,
-			$matches
-		))
-		{
-			$newCode = preg_replace(
-				'/^' . \CCrmOwnerTypeAbbr::DynamicTypeAbbreviationPrefix . '(\w+)_(\d+)$/',
-				CrmDynamics::PREFIX_FULL.'$1'.'_'.'$2',
-				$code
-			);
-		}
-		else
-		{
-			$newCode = false;
+			$className = __NAMESPACE__ . '\\' . $className;
+			if (preg_match('/^' . $className::PREFIX_SHORT . '(\d+)$/i', $code, $matches))
+			{
+				$newCode = preg_replace(
+					'/^' . $className::PREFIX_SHORT . '(\d+)$/',
+					$className::PREFIX_FULL . '$1',
+					$code
+				);
+				$isNewCodeSet = true;
+				break;
+			}
 		}
 
-		if ($newCode)
+		if (
+			!$isNewCodeSet
+			&& preg_match(
+				'/^'. CCrmOwnerTypeAbbr::DynamicTypeAbbreviationPrefix . '(\w+)_(\d+)$/i',
+				$code,
+				$matches
+			)
+		)
+		{
+			$newCode = preg_replace(
+				'/^' . CCrmOwnerTypeAbbr::DynamicTypeAbbreviationPrefix . '(\w+)_(\d+)$/',
+				CrmDynamics::PREFIX_FULL . '$1' . '_' . '$2',
+				$code
+			);
+			$isNewCodeSet = true;
+		}
+
+		if ($isNewCodeSet)
 		{
 			$result = new EventResult(
 				EventResult::SUCCESS,
-				[
-					'code' => $newCode
-				],
+				['code' => $newCode],
 				'crm'
 			);
 		}
@@ -164,176 +169,123 @@ class Handler
 
 		$lastDestinationList = [];
 
-		$crmContactCounter = $crmCompanyCounter = $crmDealCounter = $crmLeadCounter = $crmOrderCounter = $crmProductCounter = $crmQuoteCounter = 0;
+		$limit = 10;
+		$conditionList = [
+			[
+				'type' => CCrmOwnerType::ContactName,
+				'index' => static::ENTITY_TYPE_CRMCONTACTS,
+				'counter' => 0,
+				'limit' => $limit,
+				'multi' => true,
+			],
+			[
+				'type' => CCrmOwnerType::CompanyName,
+				'index' => static::ENTITY_TYPE_CRMCOMPANIES,
+				'counter' => 0,
+				'limit' => $limit,
+				'multi' => true,
+			],
+			[
+				'type' => CCrmOwnerType::DealName,
+				'index' => static::ENTITY_TYPE_CRMDEALS,
+				'counter' => 0,
+				'limit' => $limit,
+				'multi' => false,
+			],
+			[
+				'type' => CCrmOwnerType::QuoteName,
+				'index' => static::ENTITY_TYPE_CRMQUOTES,
+				'counter' => 0,
+				'limit' => $limit,
+				'multi' => false,
+			],
+			[
+				'type' => CCrmOwnerType::LeadName,
+				'index' => static::ENTITY_TYPE_CRMLEADS,
+				'counter' => 0,
+				'limit' => $limit,
+				'multi' => true,
+			],
+			[
+				'type' => CCrmOwnerType::OrderName,
+				'index' => static::ENTITY_TYPE_CRMORDERS,
+				'counter' => 0,
+				'limit' => $limit,
+				'multi' => false,
+			],
+			[
+				'type' => 'PRODUCT',
+				'index' => static::ENTITY_TYPE_CRMPRODUCTS,
+				'counter' => 0,
+				'limit' => $limit,
+				'multi' => false,
+			],
+		];
+		
+		$selectorEntityTypes = ElementType::getSelectorEntityTypes();
 
 		if (is_array($destSortData))
 		{
-			$crmContactLimit = $crmCompanyLimit = $crmDealLimit = $crmLeadLimit = $crmOrderLimit = $crmProductLimit = $crmQuoteLimit = 10;
-
-			foreach($destSortData as $code => $sortInfo)
+			foreach(array_keys($destSortData) as $code)
 			{
-				if(
-					$crmContactCounter >= $crmContactLimit
-					&& $crmCompanyCounter >= $crmCompanyLimit
-					&& $crmDealCounter >= $crmDealLimit
-					&& $crmLeadCounter >= $crmLeadLimit
-					&& $crmOrderCounter >= $crmOrderLimit
-					&& $crmProductCounter >= $crmProductLimit
-					&& $crmQuoteCounter >= $crmQuoteLimit
-				)
+				$doBreak = true;
+				foreach ($conditionList as $condition)
+				{
+					if ($condition['counter'] < $condition['limit'])
+					{
+						$doBreak = false;
+						break;
+					}
+				}
+				if ($doBreak)
 				{
 					break;
 				}
+				unset($doBreak);
 
-				if(preg_match('/^CRMCONTACT(\d+)$/i', $code, $matches))
+				foreach ($conditionList as $condition)
 				{
-					if($crmContactCounter >= $crmContactLimit)
+					$matches = [];
+					if (preg_match('/^CRM' . $condition['type'] . '(\d+)$/i', $code, $matches))
 					{
-						continue;
+						if ($condition['counter'] >= $condition['limit'])
+						{
+							break;
+						}
+						if (!isset($lastDestinationList[$condition['index']]))
+						{
+							$lastDestinationList[$condition['index']] = [];
+						}
+						$lastDestinationList[$condition['index']][$code] = $code;
+						$condition['counter']++;
+						break;
 					}
-					if(!isset($lastDestinationList['CONTACTS']))
+					elseif (
+						$condition['multi']
+						&& isset($params['MULTI'])
+						&& $params['MULTI'] === 'Y'
+						&& preg_match('/^CRM' . $condition['type'] . '(\d+)(:([A-F0-9]{8}))?$/i', $code, $matches)
+					)
 					{
-						$lastDestinationList['CONTACTS'] = [];
+						if ($condition['counter'] >= $condition['limit'])
+						{
+							break;
+						}
+						$index = $condition['index'] . '_MULTI';
+						if (!isset($lastDestinationList[$index]))
+						{
+							$lastDestinationList[$index] = [];
+						}
+						$lastDestinationList[$index][$code] = $code;
+						$condition['counter']++;
+						break;
 					}
-					$lastDestinationList['CONTACTS'][$code] = $code;
-					$crmContactCounter++;
-				}
-				elseif(
-					!empty($params['MULTI'])
-					&& $params['MULTI'] == 'Y'
-					&& preg_match('/^CRMCONTACT(\d+)(:([A-F0-9]{8}))?$/i', $code, $matches)
-				)
-				{
-					if($crmContactCounter >= $crmContactLimit)
-					{
-						continue;
-					}
-					if(!isset($lastDestinationList['CONTACTS_MULTI']))
-					{
-						$lastDestinationList['CONTACTS_MULTI'] = [];
-					}
-					$lastDestinationList['CONTACTS_MULTI'][$code] = $code;
-					$crmContactCounter++;
-				}
-				elseif(preg_match('/^CRMCOMPANY(\d+)$/i', $code, $matches))
-				{
-					if($crmCompanyCounter >= $crmCompanyLimit)
-					{
-						continue;
-					}
-					if(!isset($lastDestinationList['COMPANIES']))
-					{
-						$lastDestinationList['COMPANIES'] = [];
-					}
-					$lastDestinationList['COMPANIES'][$code] = $code;
-					$crmCompanyCounter++;
-				}
-				elseif(
-					!empty($params['MULTI'])
-					&& $params['MULTI'] == 'Y'
-					&& preg_match('/^CRMCOMPANY(\d+)(:([A-F0-9]{8}))?$/i', $code, $matches)
-				)
-				{
-					if($crmCompanyCounter >= $crmCompanyLimit)
-					{
-						continue;
-					}
-					if(!isset($lastDestinationList['COMPANIES_MULTI']))
-					{
-						$lastDestinationList['COMPANIES_MULTI'] = [];
-					}
-					$lastDestinationList['COMPANIES_MULTI'][$code] = $code;
-					$crmCompanyCounter++;
-				}
-				elseif(preg_match('/^CRMDEAL(\d+)$/i', $code, $matches))
-				{
-					if($crmDealCounter >= $crmDealLimit)
-					{
-						continue;
-					}
-					if(!isset($lastDestinationList['DEALS']))
-					{
-						$lastDestinationList['DEALS'] = [];
-					}
-					$lastDestinationList['DEALS'][$code] = $code;
-					$crmDealCounter++;
-				}
-				elseif(preg_match('/^CRMLEAD(\d+)$/i', $code, $matches))
-				{
-					if($crmLeadCounter >= $crmLeadLimit)
-					{
-						continue;
-					}
-					if(!isset($lastDestinationList['LEADS']))
-					{
-						$lastDestinationList['LEADS'] = [];
-					}
-					$lastDestinationList['LEADS'][$code] = $code;
-					$crmLeadCounter++;
-				}
-				elseif(
-					!empty($params['MULTI'])
-					&& $params['MULTI'] == 'Y'
-					&& preg_match('/^CRMLEAD(\d+)(:([A-F0-9]{8}))?$/i', $code, $matches)
-				)
-				{
-					if($crmLeadCounter >= $crmLeadLimit)
-					{
-						continue;
-					}
-					if(!isset($lastDestinationList['LEADS_MULTI']))
-					{
-						$lastDestinationList['LEADS_MULTI'] = [];
-					}
-						$lastDestinationList['LEADS_MULTI'][$code] = $code;
-						$crmLeadCounter++;
-				}
-				elseif(preg_match('/^CRMORDER(\d+)$/i', $code, $matches))
-				{
-					if($crmOrderCounter >= $crmOrderLimit)
-					{
-						continue;
-					}
-					if(!isset($lastDestinationList['ORDERS']))
-					{
-						$lastDestinationList['ORDERS'] = [];
-					}
-					$lastDestinationList['ORDERS'][$code] = $code;
-					$crmOrderCounter++;
-				}
-				elseif(preg_match('/^CRMPRODUCT(\d+)$/i', $code, $matches))
-				{
-					if($crmProductCounter >= $crmProductLimit)
-					{
-						continue;
-					}
-					if(!isset($lastDestinationList['PRODUCTS']))
-					{
-						$lastDestinationList['PRODUCTS'] = [];
-					}
-					$lastDestinationList['PRODUCTS'][$code] = $code;
-					$crmProductCounter++;
-				}
-				elseif(preg_match('/^CRMQUOTE(\d+)$/i', $code, $matches))
-				{
-					if($crmQuoteCounter >= $crmQuoteLimit)
-					{
-						continue;
-					}
-					if(!isset($lastDestinationList['QUOTES']))
-					{
-						$lastDestinationList['QUOTES'] = [];
-					}
-					$lastDestinationList['QUOTES'][$code] = $code;
-					$crmQuoteCounter++;
 				}
 			}
 
 			$result = new EventResult(
 				EventResult::SUCCESS,
-				[
-					'lastDestinationList' => $lastDestinationList
-				],
+				['lastDestinationList' => $lastDestinationList],
 				'crm'
 			);
 		}

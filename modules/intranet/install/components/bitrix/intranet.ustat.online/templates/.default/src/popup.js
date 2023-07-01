@@ -1,5 +1,6 @@
 import {Type, Event, Loc, Text, Tag, Dom} from 'main.core';
 import {Popup} from 'main.popup';
+import {BaseEvent, EventEmitter} from 'main.core.events';
 
 export class UserPopup
 {
@@ -99,6 +100,11 @@ export class UserPopup
 					this.allOnlineUserPopup.destroy();
 				},
 				onAfterPopupShow: (popup) => {
+					EventEmitter.emit(EventEmitter.GLOBAL_TARGET, 'BX.Intranet.UstatOnline:showPopup', new BaseEvent({
+						data: {
+							popup: popup,
+						}
+					}));
 
 					let popupContent = Tag.render`
 						<div>
@@ -124,7 +130,12 @@ export class UserPopup
 					});
 					this.showUsersInPopup(action);
 					this.isPopupShown = true;
-				}
+				},
+				onPopupFirstShow: (popup) => {
+					EventEmitter.subscribe(EventEmitter.GLOBAL_TARGET, 'SidePanel.Slider:onOpenStart', () => {
+						popup.close();
+					});
+				},
 			},
 			className: 'intranet-ustat-online-popup'
 		});

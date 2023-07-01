@@ -2,7 +2,6 @@
  * @module crm/state-storage
  */
 jn.define('crm/state-storage', (require, exports, module) => {
-
 	const { createStore } = require('statemanager/vuex');
 
 	const { categoryCountersModel } = require('crm/state-storage/model/category-counters');
@@ -22,7 +21,7 @@ jn.define('crm/state-storage', (require, exports, module) => {
 				modules: {
 					categoryCountersModel,
 					activityCountersModel,
-				}
+				},
 			});
 		}
 
@@ -39,5 +38,4 @@ jn.define('crm/state-storage', (require, exports, module) => {
 		CategoryCountersStoreManager: new CategoryCountersStoreManager(stateStorage),
 		ActivityCountersStoreManager: new ActivityCountersStoreManager(stateStorage),
 	};
-
 });

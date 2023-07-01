@@ -375,8 +375,16 @@ class DocumentsTemplateComponent extends CBitrixComponent implements Controllera
 						'CREATE_TIME' => $template['CREATE_TIME'],
 						'SORT' => $template['SORT'],
 						'DOWNLOAD' => '<a target="_blank" href="'.$templateInstance->getDownloadUrl()->getLocator().'">'.Loc::getMessage('DOCGEN_TEMPLATE_LIST_DOWNLOAD').'</a>',
-						'CREATED_BY' => $users[$template['CREATED_BY']],
-						'UPDATED_BY' => $users[$template['UPDATED_BY']],
+						'CREATED_BY' =>
+							!empty($template['CREATED_BY']) && isset($users[$template['CREATED_BY']])
+								? $users[$template['CREATED_BY']]
+								: null
+						,
+						'UPDATED_BY' =>
+							!empty($template['UPDATED_BY']) && isset($users[$template['UPDATED_BY']])
+								? $users[$template['UPDATED_BY']]
+								: null
+						,
 					],
 				];
 			}

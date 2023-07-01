@@ -1,0 +1,3 @@
+<?php
+$MESS["TASKS_ON_TASK_CHECKLIST_ADDED_CHANGE"] = "Added by:";
+$MESS["TASKS_ON_TASK_CHECKLIST_ADDED_TITLE"] = "Task checklist added";

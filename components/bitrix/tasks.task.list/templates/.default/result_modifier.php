@@ -106,7 +106,7 @@ if (!function_exists('formatDateFieldsForOutput'))
 
 		foreach ($dateFields as $fieldName => $fieldData)
 		{
-			if (is_string($row[$fieldName]) && $row[$fieldName])
+			if (isset($row[$fieldName]) && is_string($row[$fieldName]) && $row[$fieldName])
 			{
 				$date = new DateTime($row[$fieldName]);
 				if ($date)
@@ -180,10 +180,11 @@ if (!empty($arResult['LIST']))
 
 		$preparedRow = $preparedRows[$key];
 
+		$parentId = $row['PARENT_ID'] ?? 0;
 		$arResult['ROWS'][] = [
 			'id' => $taskId,
 			'has_child' => array_key_exists($taskId, $arResult['SUB_TASK_COUNTERS']),
-			'parent_id' => (Grid\Context::isInternalRequest() ? $row['PARENT_ID'] : 0),
+			'parent_id' => (Grid\Context::isInternalRequest() ? $parentId : 0),
 			'parent_group_id' => $groupId,
 			'columns' => $preparedRow['content'],
 			'actions' => $preparedRow['actions'],
@@ -206,7 +207,9 @@ if (!empty($arResult['LIST']))
 
 $disabledActions = [];
 if (
-	$arResult['VIEW_STATE']['SPECIAL_PRESET_SELECTED']['CODENAME'] === 'FAVORITE'
+	isset($arResult['VIEW_STATE']['SPECIAL_PRESET_SELECTED']['CODENAME'])
+	&& $arResult['VIEW_STATE']['SPECIAL_PRESET_SELECTED']['CODENAME'] === 'FAVORITE'
+	&& isset($arResult['VIEW_STATE']['SECTION_SELECTED']['CODENAME'])
 	&& $arResult['VIEW_STATE']['SECTION_SELECTED']['CODENAME'] === 'VIEW_SECTION_ADVANCED_FILTER'
 )
 {

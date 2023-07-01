@@ -15,6 +15,7 @@ return [
 		'crm.stage-model',
 		'main.loader',
 		'main.popup',
+		'crm.messagesender',
 	],
 	'skip_core' => false,
 ];

@@ -43,7 +43,8 @@ export type SprintParams = {
 	items?: Array<ItemParams>,
 	info?: SprintInfo,
 	views?: Views,
-	allowedActions?: AllowedActions
+	allowedActions?: AllowedActions,
+	isShownContent: 'Y' | 'N'
 };
 
 type AllowedActions = {
@@ -64,7 +65,7 @@ export class Sprint extends Entity
 
 		this.setSprintParams(params);
 
-		this.hideCont = this.isCompleted();
+		this.toggling = false;
 	}
 
 	setSprintParams(params: SprintParams)
@@ -87,6 +88,7 @@ export class Sprint extends Entity
 		this.setItems(params.items);
 		this.setInfo(params.info);
 		this.setAllowedActions(params.allowedActions);
+		this.setContentVisibility(params.isShownContent);
 	}
 
 	static buildSprint(params: SprintParams): Sprint
@@ -386,6 +388,11 @@ export class Sprint extends Entity
 		}
 	}
 
+	setContentVisibility(isShown)
+	{
+		this.hideCont = isShown !== 'Y';
+	}
+
 	canStart(): boolean
 	{
 		return this.allowedActions.start === true;
@@ -566,7 +573,8 @@ export class Sprint extends Entity
 
 	render(): HTMLElement
 	{
-		const openClass = this.isCompleted() ? '' : '--open';
+		const openClass = this.isHideContent() ? '' : '--open';
+		const defaultContentStyle = this.isHideContent() ? 'height: 0;' : '';
 
 		this.node = Tag.render`
 			<div
@@ -575,7 +583,7 @@ export class Sprint extends Entity
 				data-sprint-id="${this.getId()}"
 			>
 				${this.header ? this.header.render() : ''}
-				<div class="tasks-scrum__content-container">
+				<div class="tasks-scrum__content-container" style="${defaultContentStyle}">
 					${this.blank ? this.blank.render() : ''}
 					${this.dropzone ? this.dropzone.render() : ''}
 					${this.emptySearchStub ? this.emptySearchStub.render() : ''}
@@ -714,11 +722,22 @@ export class Sprint extends Entity
 			Dom.style(node, 'height', 'auto');
 		}
 
-		this.emit('toggleVisibilityContent');
+		if (this.toggling)
+		{
+			this.bindItemsLoader();
+
+			this.toggling = false;
+
+			this.emit('toggleVisibilityContent');
+		}
 	}
 
 	toggleVisibilityContent(node: HTMLElement)
 	{
+		this.toggling = true;
+
+		this.unbindItemsLoader();
+
 		if (this.isHideContent())
 		{
 			this.showContent(node);
@@ -773,11 +792,6 @@ export class Sprint extends Entity
 		{
 			this.header.downTick();
 		}
-	}
-
-	isHideContent(): boolean
-	{
-		return this.hideCont;
 	}
 
 	showSprint()

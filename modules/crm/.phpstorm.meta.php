@@ -163,5 +163,6 @@ namespace PHPSTORM_META
 		'crm.service.webform.scenario' => \Bitrix\Crm\Service\WebForm\WebFormScenarioService::class,
 		'crm.model.fieldRepository' => \Bitrix\Crm\Model\FieldRepository::class,
 		'crm.integration.sign' => \Bitrix\Crm\Service\Integration\Sign::class,
+		'crm.activity.actcounterlighttimerepo' => \Bitrix\Crm\Activity\LightCounter\ActCounterLightTimeRepo::class,
 	]));
 }

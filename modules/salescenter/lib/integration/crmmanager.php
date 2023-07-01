@@ -19,6 +19,7 @@ use Bitrix\Crm\WebForm\Internals\FormTable;
 use Bitrix\Crm\Timeline;
 use Bitrix\Main\Loader;
 use Bitrix\Crm\Requisite\EntityLink;
+use Bitrix\Sale\Payment;
 use Bitrix\Salescenter\Analytics;
 use Bitrix\Main\PhoneNumber\Parser;
 use Bitrix\Crm;
@@ -28,6 +29,8 @@ use Bitrix\Crm\Workflow\PaymentWorkflow;
 use Bitrix\Crm\Workflow\PaymentStage;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm\Item\Deal;
+use Bitrix\SalesCenter\Component\PaymentSlip;
+use Bitrix\Salescenter\PaymentSlip\PaymentSlipManager;
 use CCrmOwnerType;
 
 Main\Localization\Loc::loadMessages(__FILE__);
@@ -764,6 +767,103 @@ class CrmManager extends Base
 	}
 
 	/**
+	 * Send link to payment check (slip) after success payment
+	 *
+	 * @return bool
+	 */
+	public function sendPaymentSlipBySms(Payment $payment): bool
+	{
+		$paymentSlipManager = PaymentSlipManager::getManager();
+		if (!$paymentSlipManager)
+		{
+			return false;
+		}
+
+		$paymentSlipConfig = $paymentSlipManager->getConfig();
+		if (!$paymentSlipConfig->isSendingEnabled())
+		{
+			return false;
+		}
+
+		$messageBody = str_replace(
+			'#CHECK_URL#',
+			PaymentSlip::getFullPathToSlip($payment->getId()),
+			Loc::getMessage('SALESCENTER_CRMMANAGER_TERMINAL_PAYMENT_PAID_SMS_TEMPLATE')
+		);
+
+		$senders = [];
+		if ($paymentSlipConfig->isNotificationsEnabled())
+		{
+			$senders = [
+				Crm\Integration\NotificationsManager::getSenderCode() => [
+					'ACTIVITY_PROVIDER_TYPE_ID' => Activity\Provider\Notification::PROVIDER_TYPE_NOTIFICATION,
+					'TEMPLATE_CODE' => 'ORDER_PAYMENT_SLIP',
+					'PLACEHOLDERS' => [
+						'ORDER_PAYMENT' => PaymentSlip::getFullPathToSlip($payment->getId()),
+					],
+				],
+			];
+		}
+		else if ($senderId = $paymentSlipConfig->getSelectedSmsServiceId())
+		{
+			$senders = [
+				Crm\Integration\SmsManager::getSenderCode() => [
+					'ACTIVITY_PROVIDER_TYPE_ID' => Sms::PROVIDER_TYPE_SALESCENTER_TERMINAL_PAYMENT_PAID,
+					'MESSAGE_BODY' => $messageBody,
+					'SENDER_ID' => $senderId,
+				],
+			];
+		}
+		else
+		{
+			return false;
+		}
+
+		$order = $payment->getOrder();
+
+		$entityCommunication = $order->getContactCompanyCollection()->getEntityCommunication();
+		if (!$entityCommunication)
+		{
+			return false;
+		}
+
+		$messageTo = Crm\Terminal\OrderProperty::getTerminalPhoneValue($order);
+		if (!$messageTo)
+		{
+			return false;
+		}
+
+		$result = Crm\MessageSender\MessageSender::send(
+			$senders,
+			[
+				'COMMON_OPTIONS' => [
+					'PHONE_NUMBER' => $messageTo,
+					'USER_ID' => $order->getField('RESPONSIBLE_ID'),
+					'ADDITIONAL_FIELDS' => [
+						'ENTITY_TYPE' => $entityCommunication::getEntityTypeName(),
+						'ENTITY_TYPE_ID' => $entityCommunication::getEntityType(),
+						'ENTITY_ID' => $entityCommunication->getField('ENTITY_ID'),
+						'ENTITIES' => [
+							'ORDER' => $order,
+							'PAYMENT' => $payment,
+						],
+						'BINDINGS' => [
+							[
+								'OWNER_TYPE_ID' => $entityCommunication::getEntityType(),
+								'OWNER_ID' => $entityCommunication->getField('ENTITY_ID'),
+							],
+						],
+						'ACTIVITY_AUTHOR_ID' => $order->getField('RESPONSIBLE_ID'),
+						'ACTIVITY_DESCRIPTION' => $messageBody,
+					],
+				],
+			]
+		);
+
+		return $result->isSuccess();
+	}
+
+	/**
 	 * @param string $destination
 	 * @param Main\Event $event
 	 */
@@ -861,6 +961,28 @@ class CrmManager extends Base
 		);
 	}
 
+	public function getDefaultWrappedSmsTemplate($mode = self::SMS_MODE_PAYMENT)
+	{
+		$smsOptions = $this->getSmsTemplateOptionsMap()[$mode];
+		if (!$smsOptions)
+		{
+			$smsOptions = $this->getSmsTemplateOptionsMap()[self::SMS_MODE_PAYMENT];
+		}
+
+		return $smsOptions['default_text_wrapped'] ?? null;
+	}
+
+	public function getDefaultSmsTemplate($mode = self::SMS_MODE_PAYMENT)
+	{
+		$smsOptions = $this->getSmsTemplateOptionsMap()[$mode];
+		if (!$smsOptions)
+		{
+			$smsOptions = $this->getSmsTemplateOptionsMap()[self::SMS_MODE_PAYMENT];
+		}
+
+		return $smsOptions['default_text'] ?? null;
+	}
+
 	/**
 	 * @return array
 	 */
@@ -881,6 +1003,7 @@ class CrmManager extends Base
 			self::SMS_MODE_PAYMENT => [
 				'option_name' => 'salescenter_sms_template',
 				'default_text' => Loc::getMessage('SALESCENTER_CRMMANAGER_SMS_TEMPLATE_3'),
+				'default_text_wrapped' => Loc::getMessage('SALESCENTER_CRMMANAGER_SMS_TEMPLATE_WRAPPED'),
 			],
 			self::SMS_MODE_COMPILATION => [
 				'option_name' => 'salescenter_compilation_sms_template',
@@ -955,7 +1078,8 @@ class CrmManager extends Base
 					'SHIPMENT_ID' => $options['SHIPMENT_ID'] ?? '',
 				]
 			],
-			'BINDINGS' => Order\BindingsMaker\TimelineBindingsMaker::makeByPayment($payment)
+			'BINDINGS' => Order\BindingsMaker\TimelineBindingsMaker::makeByPayment($payment),
+			'FIELDS' => $payment->getFieldValues(),
 		];
 
 		Timeline\OrderPaymentController::getInstance()->onSend($payment->getId(), $params);
@@ -1181,7 +1305,7 @@ class CrmManager extends Base
 			],
 		])->fetchAll();
 
-		$defaultAddressTypeByCategory = 
+		$defaultAddressTypeByCategory =
 			method_exists(EntityAddressType::class, 'getDefaultIdByEntityId')
 			? EntityAddressType::getDefaultIdByEntityId($entityTypeId, $contactId)
 			: EntityAddressType::Undefined
@@ -1349,5 +1473,60 @@ class CrmManager extends Base
 		}
 
 		return Crm\Color\PhaseColorScheme::fillDefaultColors($result);
+	}
+
+	public function getTerminalPlatformId(): ?int
+	{
+		return
+			Crm\Order\TradingPlatform\Terminal::getInstanceByCode(
+				Crm\Order\TradingPlatform\Terminal::TRADING_PLATFORM_CODE
+			)
+				->getIdIfInstalled()
+		;
+	}
+
+	public function isTerminalAvailable(): bool
+	{
+		return Crm\Terminal\AvailabilityManager::getInstance()->isAvailable();
+	}
+
+	public function isPaymentFromTerminal(\Bitrix\Sale\Payment $payment): bool
+	{
+		return $this->isEnabled() && Crm\Terminal\PaymentHelper::isTerminalPayment($payment);
+	}
+
+	/**
+	 * @return array
+	 */
+	public function getUsableSmsSendersList(): array
+	{
+		$result = [];
+		$restSender = null;
+
+		$senderList = Crm\Integration\SmsManager::getSenderInfoList(true);
+		foreach ($senderList as $sender)
+		{
+			if ($sender['canUse'])
+			{
+				if ($sender['id'] === 'rest')
+				{
+					$restSender = $sender;
+
+					continue;
+				}
+
+				$result[] = $sender;
+			}
+		}
+
+		if ($restSender !== null)
+		{
+			foreach ($restSender['fromList'] as $sender)
+			{
+				$result[] = $sender;
+			}
+		}
+
+		return $result;
 	}
 }

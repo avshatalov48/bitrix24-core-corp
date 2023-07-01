@@ -87,7 +87,7 @@ class Notify implements Tabable
 
 	public function shouldShowInMenu()
 	{
-		return true;
+		return false;
 	}
 
 	public function canBeRemoved()

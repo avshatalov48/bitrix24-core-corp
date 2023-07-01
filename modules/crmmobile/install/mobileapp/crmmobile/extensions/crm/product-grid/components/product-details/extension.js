@@ -2,7 +2,6 @@
  * @module crm/product-grid/components/product-details
  */
 jn.define('crm/product-grid/components/product-details', (require, exports, module) => {
-
 	const { Alert } = require('alert');
 	const { Loc } = require('loc');
 	const { ProductRow } = require('crm/product-grid/model');
@@ -21,6 +20,7 @@ jn.define('crm/product-grid/components/product-details', (require, exports, modu
 	const { notify } = require('layout/ui/product-grid/components/hint');
 	const { debounce } = require('utils/function');
 	const { isObjectLike, isArray, clone } = require('utils/object');
+	const { BannerButton } = require('layout/ui/banners');
 
 	/**
 	 * @callback calculationFn
@@ -169,9 +169,9 @@ jn.define('crm/product-grid/components/product-details', (require, exports, modu
 						this.totalSumField(),
 					),
 				),
-				this.getProps().inventoryControlEnabled && UI.BannerButton({
+				this.getProps().inventoryControlEnabled && BannerButton({
 					title: Loc.getMessage('PRODUCT_GRID_PRODUCT_DETAILS_INVENTORY_CONTROL_INTEGRATION_TITLE'),
-					description: Loc.getMessage('PRODUCT_GRID_PRODUCT_DETAILS_INVENTORY_CONTROL_INTEGRATION_BODY'),
+					description: Loc.getMessage('PRODUCT_GRID_PRODUCT_DETAILS_INVENTORY_CONTROL_INTEGRATION_BODY_MSGVER_1'),
 					onClick: () => this.openEntityDesktopPage(),
 				}),
 			);
@@ -193,7 +193,7 @@ jn.define('crm/product-grid/components/product-details', (require, exports, modu
 		{
 			return EntitySelectorField({
 				title: Loc.getMessage('PRODUCT_GRID_PRODUCT_DETAILS_FIELD_SECTIONS'),
-				value: this.productRow.getSections().map(section => section.ID),
+				value: this.productRow.getSections().map((section) => section.ID),
 				readOnly: !this.isCatalogProductFieldEditable(),
 				multiple: true,
 				config: {
@@ -204,7 +204,7 @@ jn.define('crm/product-grid/components/product-details', (require, exports, modu
 							iblockId: this.getProps().iblockId,
 						},
 					},
-					entityList: this.productRow.getSections().map(section => ({
+					entityList: this.productRow.getSections().map((section) => ({
 						title: section.NAME,
 						id: section.ID,
 						type: 'section',
@@ -212,7 +212,7 @@ jn.define('crm/product-grid/components/product-details', (require, exports, modu
 					parentWidget: this.layout,
 				},
 				onChange: (value, entityList) => {
-					const newVal = entityList.map(item => ({
+					const newVal = entityList.map((item) => ({
 						ID: item.id,
 						NAME: item.title,
 					}));
@@ -240,7 +240,7 @@ jn.define('crm/product-grid/components/product-details', (require, exports, modu
 		{
 			const gallery = this.productRow.getField('GALLERY', []);
 			const galleryInfo = {};
-			const galleryValue = gallery.map(photo => {
+			const galleryValue = gallery.map((photo) => {
 				if (photo.id && Number.isInteger(parseInt(photo.id)))
 				{
 					galleryInfo[photo.id] = clone(photo);
@@ -271,7 +271,7 @@ jn.define('crm/product-grid/components/product-details', (require, exports, modu
 					const preparedValue = [];
 
 					images = isArray(images) ? images : [];
-					images.map(image => {
+					images.forEach((image) => {
 						if (isObjectLike(image))
 						{
 							preparedValue.push(image);
@@ -313,9 +313,10 @@ jn.define('crm/product-grid/components/product-details', (require, exports, modu
 					amount: this.productRow.getQuantity(),
 					measureCode: this.productRow.getMeasureCode(),
 				},
+				readOnly: this.isReadonly(),
 				onChange: (newVal) => {
 					const { amount, measureCode } = newVal;
-					const measure = this.getProps().measures.find(item => String(item.code) === String(measureCode));
+					const measure = this.getProps().measures.find((item) => String(item.code) === String(measureCode));
 					this.recalculate((calc) => calc.calculateQuantity(amount));
 					if (measure)
 					{
@@ -342,7 +343,7 @@ jn.define('crm/product-grid/components/product-details', (require, exports, modu
 						required: true,
 						showRequired: false,
 						config: {
-							items: this.getProps().measures.map(item => ({
+							items: this.getProps().measures.map((item) => ({
 								name: item.name,
 								value: item.code,
 							})),
@@ -370,13 +371,13 @@ jn.define('crm/product-grid/components/product-details', (require, exports, modu
 					const nextDiscountType = Number(newVal.discountType);
 					const nextDiscountValue = Number(newVal.discountValue);
 
-					if (nextDiscountType !== discountType)
+					if (nextDiscountType === discountType)
 					{
-						this.recalculate(calc => calc.calculateDiscountType(nextDiscountType));
+						this.recalculate((calc) => calc.calculateDiscount(nextDiscountValue));
 					}
 					else
 					{
-						this.recalculate(calc => calc.calculateDiscount(nextDiscountValue));
+						this.recalculate((calc) => calc.calculateDiscountType(nextDiscountType));
 					}
 				}, 300),
 				config: {
@@ -416,7 +417,7 @@ jn.define('crm/product-grid/components/product-details', (require, exports, modu
 
 			let vatRates = this.getProps().vatRates;
 			let rateReadonly = this.isReadonly();
-			if (!vatRates.length)
+			if (vatRates.length === 0)
 			{
 				vatRates = [{
 					id: 0,
@@ -427,12 +428,12 @@ jn.define('crm/product-grid/components/product-details', (require, exports, modu
 			}
 
 			const vatIdByRate = (rate) => {
-				const vatRate = vatRates.find(item => item.value === rate);
+				const vatRate = vatRates.find((item) => item.value === rate);
 				return vatRate ? String(vatRate.id) : '';
 			};
 			const vatRateById = (id) => {
 				id = Number(id);
-				const vatRate = vatRates.find(item => item.id === id);
+				const vatRate = vatRates.find((item) => item.id === id);
 				return vatRate ? vatRate.value : 0;
 			};
 
@@ -441,6 +442,7 @@ jn.define('crm/product-grid/components/product-details', (require, exports, modu
 					taxRate: vatIdByRate(this.productRow.getTaxRate()),
 					taxIncluded: this.productRow.isTaxIncluded(),
 				},
+				readOnly: this.isReadonly(),
 				onChange: (newVal) => {
 					const taxRate = vatRateById(newVal.taxRate);
 					const taxIncluded = newVal.taxIncluded ? 'Y' : 'N';
@@ -462,7 +464,7 @@ jn.define('crm/product-grid/components/product-details', (require, exports, modu
 						required: true,
 						showRequired: false,
 						config: {
-							items: vatRates.map(item => ({
+							items: vatRates.map((item) => ({
 								name: item.name,
 								value: item.id,
 							})),
@@ -499,7 +501,7 @@ jn.define('crm/product-grid/components/product-details', (require, exports, modu
 
 		storeField()
 		{
-			let storeId = null;
+			const storeId = null;
 			const entityList = [];
 
 			return EntitySelectorField({
@@ -510,10 +512,10 @@ jn.define('crm/product-grid/components/product-details', (require, exports, modu
 				config: {
 					selectorType: EntitySelectorFactory.Type.STORE,
 					enableCreation: true,
-					entityList: entityList,
+					entityList,
 					provider: {
 						options: {
-							'useAddressAsTitle': true,
+							useAddressAsTitle: true,
 						},
 					},
 					parentWidget: this.layout,
@@ -597,7 +599,7 @@ jn.define('crm/product-grid/components/product-details', (require, exports, modu
 						required: true,
 						showRequired: false,
 						config: {
-							items: this.getProps().measures.map(item => ({
+							items: this.getProps().measures.map((item) => ({
 								name: item.name,
 								value: item.code,
 							})),
@@ -643,7 +645,7 @@ jn.define('crm/product-grid/components/product-details', (require, exports, modu
 		openEntityDesktopPage()
 		{
 			qrauth.open({
-				title: Loc.getMessage('PRODUCT_GRID_PRODUCT_DETAILS_DESKTOP_VERSION'),
+				title: Loc.getMessage('PRODUCT_GRID_PRODUCT_DETAILS_DESKTOP_VERSION_MSGVER_1'),
 				redirectUrl: this.getProps().entityDetailPageUrl,
 				layout: this.layout,
 			});
@@ -657,7 +659,7 @@ jn.define('crm/product-grid/components/product-details', (require, exports, modu
 				const message = Loc.getMessage('PRODUCT_GRID_PRODUCT_DETAILS_FIELD_CHANGE_NOT_PERMITTED_BODY');
 				const seconds = 5;
 
-				notify({title, message, seconds});
+				notify({ title, message, seconds });
 			}
 		}
 
@@ -687,5 +689,4 @@ jn.define('crm/product-grid/components/product-details', (require, exports, modu
 	}
 
 	module.exports = { ProductDetails };
-
 });

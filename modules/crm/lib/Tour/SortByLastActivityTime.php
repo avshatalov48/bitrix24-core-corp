@@ -13,11 +13,7 @@ class SortByLastActivityTime extends Base
 
 	protected function canShow(): bool
 	{
-		return
-			Crm::isUniversalActivityScenarioEnabled()
-			&& !$this->isUserSeenTour()
-			&& $this->isUserSeenOtherTour(ActivityViewMode::getInstance())
-		;
+		return !$this->isUserSeenTour();
 	}
 
 	protected function getSteps(): array

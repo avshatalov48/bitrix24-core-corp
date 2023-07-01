@@ -12,7 +12,7 @@ use CCrmOwnerType;
 
 abstract class Activity extends Configurable
 {
-	public const ALLOWED_AUDIO_EXTENSIONS = ['flv', 'mp3', 'mp4', 'vp6', 'aac', 'wav'];
+	public const ALLOWED_AUDIO_EXTENSIONS = ['mp3', 'mp4', 'vp6', 'aac', 'wav'];
 
 	/**
 	 * Should return unique identifier of an activity template
@@ -120,16 +120,7 @@ abstract class Activity extends Configurable
 			;
 		}
 
-		$menuItems['delete'] = MenuItemFactory::createDeleteMenuItem()
-			->setAction(
-				(new Layout\Action\JsEvent('Activity:Delete'))
-					->addActionParamInt('activityId', $activityId)
-					->addActionParamInt('ownerTypeId', $this->getContext()->getEntityTypeId())
-					->addActionParamInt('ownerId', $this->getContext()->getEntityId())
-					->addActionParamString('confirmationText', $this->getDeleteConfirmationText())
-					->setAnimation(Layout\Action\Animation::disableItem()->setForever())
-			)
-		;
+		$menuItems['delete'] = $this->createDeleteMenuItem($activityId);
 
 		return $menuItems;
 	}
@@ -145,15 +136,11 @@ abstract class Activity extends Configurable
 		{
 			return false;
 		}
-		$deadline = $this->getDeadline();
-		if ($deadline)
+		$lightCounterAt = $this->getLightCounterAt();
+		if ($lightCounterAt)
 		{
-			$deadline = $deadline->getTimestamp();
-			$dayStart = (new DateTime())->toUserTime()->setTime(0, 0)->getTimestamp();
-			$dayEnd = (new DateTime())->toUserTime()->setTime(23, 59, 59)->getTimestamp();
-			return ($deadline < $dayStart) || ($deadline >= $dayStart && $deadline <= $dayEnd);
+			return (new DateTime())->getTimestamp() > $lightCounterAt->getTimestamp();
 		}
-
 		return false;
 	}
 
@@ -191,6 +178,15 @@ abstract class Activity extends Configurable
 		;
 	}
 
+	protected function getChangeDeadlineAction(): Layout\Action\RunAjaxAction
+	{
+		return (new Layout\Action\RunAjaxAction('crm.timeline.activity.setDeadline'))
+			->addActionParamInt('activityId', $this->getActivityId())
+			->addActionParamInt('ownerTypeId', $this->getContext()->getEntityTypeId())
+			->addActionParamInt('ownerId', $this->getContext()->getEntityId())
+		;
+	}
+
 	protected function getActivityId(): int
 	{
 		return $this->getModel()->getAssociatedEntityId();
@@ -205,9 +201,31 @@ abstract class Activity extends Configurable
 		;
 	}
 
+	protected function getLightCounterAt(): ?DateTime
+	{
+		$lightCounterAt = $this->getAssociatedEntityModel()->get('LIGHT_COUNTER_AT');
+		return ($lightCounterAt && !\CCrmDateTimeHelper::IsMaxDatabaseDate($lightCounterAt))
+			? $lightCounterAt
+			: null;
+	}
+
 	protected function getDeleteConfirmationText(): string
 	{
 		return Loc::getMessage('CRM_TIMELINE_ACTIVITY_DELETION_CONFIRM');
+	}
+
+	protected function createDeleteMenuItem(int $activityId): ?Layout\Menu\MenuItem
+	{
+		return MenuItemFactory::createDeleteMenuItem()
+			->setAction(
+				(new Layout\Action\JsEvent('Activity:Delete'))
+					->addActionParamInt('activityId', $activityId)
+					->addActionParamInt('ownerTypeId', $this->getContext()->getEntityTypeId())
+					->addActionParamInt('ownerId', $this->getContext()->getEntityId())
+					->addActionParamString('confirmationText', $this->getDeleteConfirmationText())
+					->setAnimation(Layout\Action\Animation::disableItem()->setForever())
+			)
+		;
 	}
 
 	protected function createPostponeMenuItem(int $activityId): ?Layout\Menu\MenuItemSubmenu

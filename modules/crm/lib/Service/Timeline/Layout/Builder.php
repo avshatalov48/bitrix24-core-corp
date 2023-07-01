@@ -35,15 +35,7 @@ class Builder
 
 	protected function buildIcon(): ?Layout\Icon
 	{
-		$iconCode = $this->item->getIconCode();
-
-		return $iconCode
-			? (new Layout\Icon())
-				->setCode($iconCode)
-				->setCounterType($this->item->getCounterType())
-				->setBackgroundColorToken($this->item->getBackgroundColorToken())
-			: null
-		;
+		return $this->item->getIcon();
 	}
 
 	protected function buildHeader(): ?Layout\Header

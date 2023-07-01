@@ -42,6 +42,7 @@ class CrmChannelSelectorComponent extends Base
 		$arParams['configureContext'] = (string)($arParams['configureContext'] ?? null);
 		$arParams['config'] = (array)($arParams['config'] ?? null);
 		$arParams['isForceDefaultConfig'] = (bool)($arParams['isForceDefaultConfig'] ?? false);
+		$arParams['skipTemplate'] = (bool)($arParams['skipTemplate'] ?? false);
 
 		return parent::onPrepareComponentParams($arParams);
 	}
@@ -359,17 +360,28 @@ class CrmChannelSelectorComponent extends Base
 		return $identifiers;
 	}
 
-	public function executeComponent(): void
+	protected function render()
+	{
+		if (!$this->arParams['skipTemplate'])
+		{
+			$this->includeComponentTemplate();
+		}
+	}
+
+	/**
+	 * @return array|null
+	 */
+	public function executeComponent(): ?array
 	{
 		$this->init();
 		if ($this->getErrors())
 		{
-			$this->includeComponentTemplate();
-			return;
+			$this->render();
+			return null;
 		}
 
 		$this->arResult = $this->prepareResult();
-
-		$this->includeComponentTemplate();
+		$this->render();
+		return $this->arResult;
 	}
 }

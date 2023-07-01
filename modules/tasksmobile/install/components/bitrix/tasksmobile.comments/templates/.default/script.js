@@ -19,6 +19,7 @@
 	    this.userId = options.userId;
 	    this.taskId = options.taskId;
 	    this.guid = options.guid;
+	    this.canReadCommentsOnInit = true;
 	    this.timeout = 0;
 	    this.timeoutSec = 2000;
 	    this.commentsList = null;
@@ -38,7 +39,7 @@
 	        window.BX.MobileUI.TextField.show();
 	      } else {
 	        main_core_events.EventEmitter.subscribe(BX.MobileUI.events.MOBILE_UI_TEXT_FIELD_SET_PARAMS, function () {
-	          window.BX.MobileUI.TextField.show();
+	          return window.BX.MobileUI.TextField.show();
 	        });
 	      }
 	    }
@@ -175,9 +176,10 @@
 	      BXMobileApp.addCustomEvent('onPull-tasks', function () {});
 	      BXMobileApp.addCustomEvent('tasks.task.tabs:onTabSelected', function (event) {
 	        if (event.guid === _this.guid && _this.commentsList) {
-	          _this.commentsList.canCheckVisibleComments = event.tab === 'tasks.task.comments';
+	          var isCommentsTab = event.tab === 'tasks.task.comments';
+	          _this.commentsList.canCheckVisibleComments = isCommentsTab;
 
-	          if (event.tab === 'tasks.task.comments') {
+	          if (isCommentsTab) {
 	            var scroll = main_core.GetWindowScrollPos();
 	            var position = {
 	              top: scroll.scrollTop,
@@ -185,6 +187,12 @@
 	            };
 
 	            _this.commentsList.checkVisibleComments(position);
+
+	            if (_this.canReadCommentsOnInit) {
+	              _this.canReadCommentsOnInit = false;
+
+	              _this.readComments();
+	            }
 	          }
 	        }
 	      });
@@ -210,7 +218,10 @@
 	      this.commentsToRead.clear();
 	      void BX.ajax.runAction('tasks.task.view.update', {
 	        data: {
-	          taskId: this.taskId
+	          taskId: this.taskId,
+	          parameters: {
+	            IS_REAL_VIEW: 'Y'
+	          }
 	        }
 	      });
 	    }

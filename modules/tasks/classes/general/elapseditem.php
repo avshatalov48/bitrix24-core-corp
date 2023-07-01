@@ -224,7 +224,7 @@ final class CTaskElapsedItem extends CTaskSubItemAbstract
 
 		$dbResult = ElapsedTimeTable::getList($parameters, [
 			'USER_ID' => User::getId(),
-			'ROW_LIMIT' => $parameters['limit'],
+			'ROW_LIMIT' => $parameters['limit'] ?? null,
 		]);
 
 		$result = $dbResult->fetchAll();
@@ -576,4 +576,3 @@ final class CTaskElapsedItem extends CTaskSubItemAbstract
 		));
 	}
 }
-

@@ -2,7 +2,7 @@
  * @module layout/ui/buttons/add-button
  */
 jn.define('layout/ui/buttons/add-button', (require, exports, module) => {
-	const { plus, arrowRight } = require('assets/common');
+	const { plus, chevronRight } = require('assets/common');
 	const { merge } = require('utils/object');
 	const color = '#A8ADB4';
 
@@ -63,7 +63,7 @@ jn.define('layout/ui/buttons/add-button', (require, exports, module) => {
 				Image({
 					style: styles.arrow,
 					svg: {
-						content: arrowRight(),
+						content: chevronRight(),
 					},
 				}),
 			),

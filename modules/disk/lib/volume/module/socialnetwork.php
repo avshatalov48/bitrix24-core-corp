@@ -3,8 +3,11 @@
 namespace Bitrix\Disk\Volume\Module;
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Disk;
 use Bitrix\Disk\Volume;
 use Bitrix\Disk\Internals\ObjectTable;
+use Bitrix\Disk\Internals\VolumeTable;
+
 
 /**
  * Disk storage volume measurement class.
@@ -18,9 +21,9 @@ class Socialnetwork extends Volume\Module\Module
 	/**
 	 * Runs measure test to get volumes of selecting objects.
 	 * @param array $collectData List types data to collect: ATTACHED_OBJECT, SHARING_OBJECT, EXTERNAL_LINK, UNNECESSARY_VERSION.
-	 * @return $this
+	 * @return static
 	 */
-	public function measure($collectData = array())
+	public function measure(array $collectData = []): self
 	{
 		if (!$this->isMeasureAvailable())
 		{
@@ -47,7 +50,7 @@ class Socialnetwork extends Volume\Module\Module
 		}
 
 		// Scan User fields specific to module
-		$entityUserFieldSource = $this->prepareUserFieldSourceSql(null, array(\CUserTypeFile::USER_TYPE_ID));
+		$entityUserFieldSource = $this->prepareUserFieldSourceSql(null, [\CUserTypeFile::USER_TYPE_ID]);
 		if ($entityUserFieldSource != '')
 		{
 			$entityUserFieldSource = " UNION {$entityUserFieldSource} ";
@@ -57,8 +60,8 @@ class Socialnetwork extends Volume\Module\Module
 		$attachedForumCommentsSql = '';
 		if (\Bitrix\Main\ModuleManager::isModuleInstalled('forum') && \Bitrix\Main\Loader::includeModule('forum'))
 		{
-			$eventTypeXML = array();
-			$eventTypeList = array('sonet', 'forum', 'photo_photo', 'news');
+			$eventTypeXML = [];
+			$eventTypeList = ['sonet', 'forum', 'photo_photo', 'news'];
 			foreach ($eventTypeList as $eventId)
 			{
 				$forumMetaData = \CSocNetLogTools::getForumCommentMetaData($eventId);
@@ -88,7 +91,7 @@ class Socialnetwork extends Volume\Module\Module
 								INNER JOIN b_forum_message message 
 									ON message.ID = attached.ENTITY_ID
 							WHERE
-								attached.ENTITY_TYPE = '". $connection->getSqlHelper()->forSql(\Bitrix\Disk\Uf\ForumMessageConnector::className()). "'
+								attached.ENTITY_TYPE = '". $connection->getSqlHelper()->forSql(Disk\Uf\ForumMessageConnector::className()). "'
 								AND substring_index(message.XML_ID,'_', 1) IN('". implode("','", $eventTypeXML). "')
 							GROUP BY 
 								attached.OBJECT_ID
@@ -103,14 +106,14 @@ class Socialnetwork extends Volume\Module\Module
 		{
 			$logTable = \Bitrix\Socialnetwork\LogTable::getTableName();
 
-			$excludeEventType = array(
+			$excludeEventType = [
 				\CCrmLiveFeedEntity::Lead,
 				\CCrmLiveFeedEntity::Contact,
 				\CCrmLiveFeedEntity::Company,
 				\CCrmLiveFeedEntity::Deal,
 				\CCrmLiveFeedEntity::Activity,
 				\CCrmLiveFeedEntity::Invoice,
-			);
+			];
 
 			$attachedSql = "
 				SELECT
@@ -195,7 +198,7 @@ class Socialnetwork extends Volume\Module\Module
 		";
 
 		$columnList = Volume\QueryHelper::prepareInsert(
-			array(
+			[
 				'INDICATOR_TYPE',
 				'OWNER_ID',
 				'CREATE_TIME',
@@ -204,11 +207,11 @@ class Socialnetwork extends Volume\Module\Module
 				'DISK_SIZE',
 				'DISK_COUNT',
 				'VERSION_COUNT',
-			),
+			],
 			$this->getSelect()
 		);
 
-		$tableName = \Bitrix\Disk\Internals\VolumeTable::getTableName();
+		$tableName = VolumeTable::getTableName();
 
 		$connection->queryExecute("INSERT INTO {$tableName} ({$columnList}) {$querySql}");
 
@@ -219,28 +222,28 @@ class Socialnetwork extends Volume\Module\Module
 	 * Returns entity list with user field corresponding to module.
 	 * @return string[]
 	 */
-	public function getEntityList()
+	public function getEntityList(): array
 	{
 		static $entityList;
 		if (!isset($entityList))
 		{
-			$entityList = array();
+			$entityList = [];
 
-			$filter = array(
-				'=ENTITY_ID' => array(
+			$filter = [
+				'=ENTITY_ID' => [
 					\Bitrix\Socialnetwork\Livefeed\Provider::DATA_ENTITY_TYPE_BLOG_POST, //'BLOG_POST',
 					\Bitrix\Socialnetwork\Livefeed\Provider::DATA_ENTITY_TYPE_BLOG_COMMENT, //'BLOG_COMMENT',
 					\Bitrix\Socialnetwork\Livefeed\LogEvent::PROVIDER_ID, //'SONET_LOG',
 					\Bitrix\Socialnetwork\Livefeed\LogComment::PROVIDER_ID, //'SONET_COMMENT',
 					'FORUM_MESSAGE',
-				),
-				'=USER_TYPE_ID' => array(
+				],
+				'=USER_TYPE_ID' => [
 					\CUserTypeFile::USER_TYPE_ID,
-					\Bitrix\Disk\Uf\FileUserType::USER_TYPE_ID,
-					\Bitrix\Disk\Uf\VersionUserType::USER_TYPE_ID,
-				),
-			);
-			$userFieldList = \Bitrix\Main\UserFieldTable::getList(array('filter' => $filter));
+					Disk\Uf\FileUserType::USER_TYPE_ID,
+					Disk\Uf\VersionUserType::USER_TYPE_ID,
+				],
+			];
+			$userFieldList = \Bitrix\Main\UserFieldTable::getList(['filter' => $filter]);
 			if ($userFieldList->getSelectedRowsCount() > 0)
 			{
 				foreach ($userFieldList as $userField)
@@ -251,13 +254,11 @@ class Socialnetwork extends Volume\Module\Module
 						continue;
 					}
 
-					//$entity[$entityName][] = $userField;
-
 					/** @var \Bitrix\Main\Entity\Base $ent */
-					$ent = \Bitrix\Main\Entity\Base::compileEntity($entityName, array(), array(
+					$ent = \Bitrix\Main\Entity\Base::compileEntity($entityName, [], [
 						'namespace' => __NAMESPACE__,
 						'uf_id'     => $entityName,
-					));
+					]);
 
 					$entityList[$entityName] = $ent->getDataClass();
 				}
@@ -271,27 +272,24 @@ class Socialnetwork extends Volume\Module\Module
 	 * Returns entity list attached to disk object corresponding to module.
 	 * @return string[]
 	 */
-	public function getAttachedEntityList()
+	public function getAttachedEntityList(): array
 	{
-		$attachedEntityList = array(
-			\Bitrix\Disk\Uf\BlogPostConnector::className(),
-			\Bitrix\Disk\Uf\BlogPostCommentConnector::className(),
-			\Bitrix\Disk\Uf\SonetLogConnector::className(),
-			\Bitrix\Disk\Uf\SonetCommentConnector::className(),
-			//\Bitrix\Disk\Uf\ForumMessageConnector::className(),
-		);
-
-		return $attachedEntityList;
+		return [
+			Disk\Uf\BlogPostConnector::class,
+			Disk\Uf\BlogPostCommentConnector::class,
+			Disk\Uf\SonetLogConnector::class,
+			Disk\Uf\SonetCommentConnector::class,
+			//Disk\Uf\ForumMessageConnector::class,
+		];
 	}
 
 	/**
 	 * @param Volume\Fragment $fragment Module description structure.
-	 * @return string
+	 * @return string|null
 	 */
-	public static function getTitle(Volume\Fragment $fragment)
+	public static function getTitle(Volume\Fragment $fragment): ?string
 	{
 		Loc::loadMessages(__FILE__);
 		return Loc::getMessage('DISK_VOLUME_MODULE_SOCIALNETWORK');
 	}
 }
-

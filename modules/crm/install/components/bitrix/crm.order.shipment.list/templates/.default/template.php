@@ -1,5 +1,9 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 use Bitrix\Main\Localization\Loc;
 
@@ -15,10 +19,12 @@ use Bitrix\Main\Localization\Loc;
  */
 
 $APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/crm-entity-show.css");
-if(SITE_TEMPLATE_ID === 'bitrix24')
+
+if (SITE_TEMPLATE_ID === 'bitrix24')
 {
 	$APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/bitrix24/crm-entity-show.css");
 }
+
 if (CModule::IncludeModule('bitrix24') && !\Bitrix\Crm\CallList\CallList::isAvailable())
 {
 	CBitrix24::initLicenseInfoPopupJS();
@@ -33,33 +39,40 @@ Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/autorun_proc.js');
 Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/js/crm/css/autorun_proc.css');
 ?><div id="rebuildMessageWrapper"><?
 
-if($arResult['NEED_FOR_REBUILD_SEARCH_CONTENT'])
+if (!empty($arResult['NEED_FOR_REBUILD_SEARCH_CONTENT']))
 {
 	?><div id="rebuildOrderSearchWrapper"></div><?
 }
-if($arResult['NEED_FOR_BUILD_TIMELINE'])
+
+if (!empty($arResult['NEED_FOR_BUILD_TIMELINE']))
 {
 	?><div id="buildOrderTimelineWrapper"></div><?
 }
-if($arResult['NEED_FOR_REFRESH_ACCOUNTING'])
+
+if (!empty($arResult['NEED_FOR_REFRESH_ACCOUNTING']))
 {
 	?><div id="refreshOrderAccountingWrapper"></div><?
 }
-if($arResult['NEED_FOR_REBUILD_ORDER_SHIPMENT_ATTRS'])
+
+if (!empty($arResult['NEED_FOR_REBUILD_ORDER_SHIPMENT_ATTRS']))
 {
 	?><div id="rebuildOrderAttrsMsg" class="crm-view-message">
 		<?=GetMessage('CRM_ORDER_SHIPMENT_REBUILD_ACCESS_ATTRS', array('#ID#' => 'rebuildOrderAttrsLink', '#URL#' => $arResult['PATH_TO_PRM_LIST']))?>
 	</div><?
 }
+
 ?></div><?
+
 echo CCrmViewHelper::RenderOrderShipmentStatusSettings();
+
 $isInternal = $arResult['INTERNAL'];
 $callListUpdateMode = $arResult['CALL_LIST_UPDATE_MODE'];
 $allowWrite = $arResult['PERMS']['WRITE'];
 $allowDelete = $arResult['PERMS']['DELETE'];
 $currentUserID = $arResult['CURRENT_USER_ID'];
 $activityEditorID = '';
-if(!$isInternal)
+
+if (!$isInternal)
 {
 	$activityEditorID = "{$arResult['GRID_ID']}_activity_editor";
 	$APPLICATION->IncludeComponent(
@@ -80,7 +93,7 @@ if(!$isInternal)
 	);
 }
 
-$gridManagerID = $arResult['GRID_ID'].'_MANAGER';
+$gridManagerID = $arResult['GRID_ID'] . '_MANAGER';
 $gridManagerCfg = array(
 	'ownerType' => CCrmOwnerType::OrderShipmentName,
 	'gridId' => $arResult['GRID_ID'],
@@ -90,21 +103,27 @@ $gridManagerCfg = array(
 	'serviceUrl' => '/bitrix/components/bitrix/crm.activity.editor/ajax.php?siteID='.SITE_ID.'&'.bitrix_sessid_get(),
 	'filterFields' => array()
 );
+
 echo CCrmViewHelper::RenderOrderStatusSettings();
+
 $prefix = $arResult['GRID_ID'];
 $prefixLC = mb_strtolower($arResult['GRID_ID']);
 
 $arResult['GRID_DATA'] = array();
 $arColumns = array();
 foreach ($arResult['HEADERS'] as $arHead)
+{
 	$arColumns[$arHead['id']] = false;
+}
 
 $now = time() + CTimeZone::GetOffset();
 $arOrderShipmentStatusInfoValues = array();
 
-foreach($arResult['ORDER_SHIPMENT'] as $sKey => $arOrderShipment)
+foreach ($arResult['ORDER_SHIPMENT'] as $sKey => $arOrderShipment)
 {
-	$jsShowUrl = isset($arOrderShipment['PATH_TO_ORDER_SHIPMENT_SHOW']) ? CUtil::JSEscape($arOrderShipment['PATH_TO_ORDER_SHIPMENT_SHOW']) : '';
+	$jsShowUrl = isset($arOrderShipment['PATH_TO_ORDER_SHIPMENT_SHOW'])
+		? CUtil::JSEscape($arOrderShipment['PATH_TO_ORDER_SHIPMENT_SHOW'])
+		: '';
 
 	$arActivityMenuItems = array();
 	$arActivitySubMenuItems = array();
@@ -190,7 +209,7 @@ foreach($arResult['ORDER_SHIPMENT'] as $sKey => $arOrderShipment)
 					'READ_ONLY' => !(isset($arOrderShipment['EDIT']) && $arOrderShipment['EDIT'] === true)
 				)
 			),
-			'RESPONSIBLE' => $arOrderShipment['RESPONSIBLE_ID'] > 0
+			'RESPONSIBLE' => isset($arOrderShipment['RESPONSIBLE_ID']) && $arOrderShipment['RESPONSIBLE_ID'] > 0
 				? CCrmViewHelper::PrepareUserBaloonHtml(
 					array(
 						'PREFIX' => "ORDER_{$arOrderShipment['ID']}_RESPONSIBLE",
@@ -199,7 +218,7 @@ foreach($arResult['ORDER_SHIPMENT'] as $sKey => $arOrderShipment)
 						'USER_PROFILE_URL' => $arOrderShipment['PATH_TO_USER_PROFILE']
 					)
 				): '',
-			'EMP_ALLOW_DELIVERY' => $arOrderShipment['EMP_ALLOW_DELIVERY_ID'] > 0
+			'EMP_ALLOW_DELIVERY' => isset($arOrderShipment['EMP_ALLOW_DELIVERY_ID']) && $arOrderShipment['EMP_ALLOW_DELIVERY_ID'] > 0
 				? CCrmViewHelper::PrepareUserBaloonHtml(
 					array(
 						'PREFIX' => "ORDER_{$arOrderShipment['ID']}_EMP_ALLOW_DELIVERY",
@@ -208,7 +227,7 @@ foreach($arResult['ORDER_SHIPMENT'] as $sKey => $arOrderShipment)
 						'USER_PROFILE_URL' => $arOrderShipment['PATH_TO_USER_PROFILE']
 					)
 				): '',
-			'EMP_DEDUCTED' => $arOrderShipment['EMP_DEDUCTED_ID'] > 0
+			'EMP_DEDUCTED' => isset($arOrderShipment['EMP_DEDUCTED_ID']) && $arOrderShipment['EMP_DEDUCTED_ID'] > 0
 				? CCrmViewHelper::PrepareUserBaloonHtml(
 					array(
 						'PREFIX' => "ORDER_{$arOrderShipment['ID']}_EMP_DEDUCTED",
@@ -217,7 +236,7 @@ foreach($arResult['ORDER_SHIPMENT'] as $sKey => $arOrderShipment)
 						'USER_PROFILE_URL' => $arOrderShipment['PATH_TO_USER_PROFILE']
 					)
 				): '',
-			'EMP_RESPONSIBLE' => $arOrderShipment['EMP_RESPONSIBLE_ID'] > 0
+			'EMP_RESPONSIBLE' => isset($arOrderShipment['EMP_RESPONSIBLE_ID']) && $arOrderShipment['EMP_RESPONSIBLE_ID'] > 0
 				? CCrmViewHelper::PrepareUserBaloonHtml(
 					array(
 						'PREFIX' => "ORDER_{$arOrderShipment['ID']}_EMP_RESPONSIBLE",
@@ -226,7 +245,7 @@ foreach($arResult['ORDER_SHIPMENT'] as $sKey => $arOrderShipment)
 						'USER_PROFILE_URL' => $arOrderShipment['PATH_TO_USER_PROFILE']
 					)
 				): '',
-			'EMP_MARKED' => $arOrderShipment['EMP_MARKED_ID'] > 0
+			'EMP_MARKED' => isset($arOrderShipment['EMP_MARKED_ID']) && $arOrderShipment['EMP_MARKED_ID'] > 0
 				? CCrmViewHelper::PrepareUserBaloonHtml(
 					array(
 						'PREFIX' => "ORDER_{$arOrderShipment['ID']}_EMP_MARKED",
@@ -235,20 +254,28 @@ foreach($arResult['ORDER_SHIPMENT'] as $sKey => $arOrderShipment)
 						'USER_PROFILE_URL' => $arOrderShipment['PATH_TO_USER_PROFILE']
 					)
 				): '',
-			'CUSTOM_PRICE_DELIVERY' => $arOrderShipment['CUSTOM_PRICE_DELIVERY'] == 'Y' ? Loc::getMessage('MAIN_YES') : Loc::getMessage('MAIN_NO'),
-			'COMMENTS' => htmlspecialcharsbx($arOrderShipment['COMMENTS']),
-			'TRACKING_NUMBER' => htmlspecialcharsbx($arOrderShipment['TRACKING_NUMBER']),
-			'DELIVERY_DOC_NUM' => htmlspecialcharsbx($arOrderShipment['DELIVERY_DOC_NUM']),
+			'CUSTOM_PRICE_DELIVERY' => isset($arOrderShipment['CUSTOM_PRICE_DELIVERY']) && $arOrderShipment['CUSTOM_PRICE_DELIVERY'] === 'Y'
+				? Loc::getMessage('MAIN_YES')
+				: Loc::getMessage('MAIN_NO'),
+			'COMMENTS' => htmlspecialcharsbx($arOrderShipment['COMMENTS'] ?? ''),
+			'TRACKING_NUMBER' => htmlspecialcharsbx($arOrderShipment['TRACKING_NUMBER'] ?? ''),
+			'DELIVERY_DOC_NUM' => htmlspecialcharsbx($arOrderShipment['DELIVERY_DOC_NUM'] ?? ''),
 			'DATE_INSERT' => FormatDate($arResult['TIME_FORMAT'], MakeTimeStamp($arOrderShipment['DATE_INSERT']), $now),
 			'DATE_ALLOW_DELIVERY' => !empty($arOrderShipment['DATE_ALLOW_DELIVERY']) ? FormatDate($arResult['TIME_FORMAT'], MakeTimeStamp($arOrderShipment['DATE_ALLOW_DELIVERY']), $now) : '',
 			'DATE_DEDUCTED' => !empty($arOrderShipment['DATE_DEDUCTED']) ? FormatDate($arResult['TIME_FORMAT'], MakeTimeStamp($arOrderShipment['DATE_DEDUCTED']), $now) : '',
 			'DATE_MARKED' => ($arOrderShipment['DATE_MARKED'] == 'Y' ? FormatDate($arResult['TIME_FORMAT'], MakeTimeStamp($arOrderShipment['DATE_MARKED']), $now) : ''),
 			'DATE_RESPONSIBLE_ID' => FormatDate($arResult['TIME_FORMAT'], MakeTimeStamp($arOrderShipment['DATE_RESPONSIBLE_ID']), $now),
-			'MARKED' => $arOrderShipment['MARKED'] == 'Y' ? Loc::getMessage('MAIN_YES') : Loc::getMessage('MAIN_NO'),
+			'MARKED' => isset($arOrderShipment['MARKED']) && $arOrderShipment['MARKED'] === 'Y'
+				? Loc::getMessage('MAIN_YES')
+				: Loc::getMessage('MAIN_NO'),
 			'CURRENCY' => CCrmCurrency::GetEncodedCurrencyName($arOrderShipment['CURRENCY']),
 			'DELIVERY_SERVICE' => $deliveryService,
-			'ALLOW_DELIVERY' => $arOrderShipment['ALLOW_DELIVERY'] == 'Y' ? '<span style="color: green;">'.Loc::getMessage('MAIN_YES').'</span>' : '<span style="color: red;">'.Loc::getMessage('MAIN_NO').'</span>',
-			'DEDUCTED' => $arOrderShipment['DEDUCTED'] == 'Y' ? '<span style="color: green;">'.Loc::getMessage('CRM_ORDER_DEDUCTED').'</span>' : '<span style="color: red;">'.Loc::getMessage('CRM_ORDER_NOT_DEDUCTED').'</span>'
+			'ALLOW_DELIVERY' => isset($arOrderShipment['ALLOW_DELIVERY']) && $arOrderShipment['ALLOW_DELIVERY'] === 'Y'
+				? '<span style="color: green;">'.Loc::getMessage('MAIN_YES').'</span>'
+				: '<span style="color: red;">'.Loc::getMessage('MAIN_NO').'</span>',
+			'DEDUCTED' => isset($arOrderShipment['DEDUCTED']) && $arOrderShipment['DEDUCTED'] === 'Y'
+				? '<span style="color: green;">'.Loc::getMessage('CRM_ORDER_DEDUCTED').'</span>'
+				: '<span style="color: red;">'.Loc::getMessage('CRM_ORDER_NOT_DEDUCTED').'</span>'
 		)
 	);
 

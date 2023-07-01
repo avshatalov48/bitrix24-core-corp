@@ -1,75 +1,22 @@
 (() => {
-	const { Alert } = jn.require('alert');
 
-	function getAbsolutePath(url)
-	{
-		if (url && url.indexOf('file://') !== 0 && url.indexOf('http://') !== 0 && url.indexOf('https://') !== 0)
-		{
-			url = currentDomain + url;
-		}
+	const require = ext => jn.require(ext);
 
-		return url;
-	}
+	const { Alert } = require('alert');
+	const { throttle } = require('utils/function');
+	const { clone, merge } = require('utils/object');
+	const {
+		getAbsolutePath,
+		getNativeViewerMediaType,
+		getMimeType,
+		getExtension,
+		openNativeViewer,
+		NativeViewerMediaTypes,
+	} = require('utils/file');
 
-	function getType(mimeType)
-	{
-		let result = mimeType.substring(0, mimeType.indexOf('/'));
+	const throttledNativeViewer = throttle(openNativeViewer, 500);
 
-		if (!['image', 'video', 'audio'].includes(result))
-		{
-			result = 'file';
-		}
-
-		return result;
-	}
-
-	function getFileMimeType(fileType, fileName = '')
-	{
-		let mimeType = fileType.toString().toLowerCase();
-
-		if (mimeType === 'application/octet-stream')
-		{
-			mimeType = fileName.split('.').pop().toLowerCase();
-		}
-
-		const mimeTypeMap = {
-			'png': 'image/png',
-			'gif': 'image/gif',
-			'jpg': 'image/jpeg',
-			'jpeg': 'image/jpeg',
-			'heic': 'image/heic',
-			'mp3': 'audio/mpeg',
-			'mp4': 'video/mp4',
-			'mpeg': 'video/mpeg',
-			'ogg': 'video/ogg',
-			'mov': 'video/quicktime',
-			'zip': 'application/zip',
-			'php': 'text/php',
-		};
-
-		if (mimeTypeMap[mimeType])
-		{
-			return mimeTypeMap[mimeType];
-		}
-
-		if (fileType.indexOf('/') !== -1) // iOS old form
-		{
-			return fileType;
-		}
-
-		return '';
-	}
-
-	function getExtension(uri)
-	{
-		return (
-			uri && uri.indexOf('.') >= 0
-				? uri.split('.').pop().toLowerCase()
-				: ''
-		);
-	}
-
-	function getFileType(extension)
+	function getFileIconType(extension)
 	{
 		let result;
 
@@ -133,39 +80,11 @@
 		return result;
 	}
 
-	function openViewer({ fileType, url, name, images })
-	{
-		if (!url)
-		{
-			return;
-		}
-
-		if (fileType === 'video')
-		{
-			viewer.openVideo(url);
-		}
-		else if (fileType === 'image')
-		{
-			if (Array.isArray(images) && images.length)
-			{
-				viewer.openImageCollection(images);
-			}
-			else
-			{
-				viewer.openImage(url, name);
-			}
-		}
-		else
-		{
-			viewer.openDocument(url, name);
-		}
-	}
-
 	function prepareImageCollection(files, id, url)
 	{
 		return (
 			files
-				.filter(({ type, name }) => getType(getFileMimeType(type, name)) === 'image')
+				.filter(({ type, name }) => getNativeViewerMediaType(getMimeType(type, name)) === NativeViewerMediaTypes.IMAGE)
 				.map((image) => {
 					// primarily - find by id (we can have same images in different positions)
 					if (image.id && id)
@@ -207,14 +126,14 @@
 		url = encodeURI(url);
 		url = getAbsolutePath(url);
 
-		files = Array.isArray(files) ? CommonUtils.objectClone(files) : [];
+		files = Array.isArray(files) ? clone(files) : [];
 		const images = prepareImageCollection(files, id, url);
 
 		return View(
 			{
 				testId: 'pinnedFileContainer',
 				style: styles.wrapper,
-				onClick: () => openViewer({ fileType, url, name, images }),
+				onClick: () => throttledNativeViewer({ fileType, url, name, images }),
 			},
 			View(
 				{
@@ -321,13 +240,13 @@
 		attachmentFileIconFolder = getAbsolutePath(attachmentFileIconFolder);
 
 		const extension = getExtension(name || url);
-		const icon = getFileType(extension) || 'empty';
+		const icon = getFileIconType(extension) || 'empty';
 
 		return View(
 			{
 				testId: 'pinnedFileContainer',
 				style: styles.wrapper,
-				onClick: () => openViewer({ fileType, url, name }),
+				onClick: () => throttledNativeViewer({ fileType, url, name }),
 			},
 			View(
 				{
@@ -438,13 +357,13 @@
 		attachmentFileIconFolder = getAbsolutePath(attachmentFileIconFolder);
 
 		const extension = (getExtension(name || url));
-		const icon = (getFileType(extension) || 'empty');
+		const icon = (getFileIconType(extension) || 'empty');
 
 		return View(
 			{
 				testId: 'pinnedFileContainer',
 				style: styles.wrapper,
-				onClick: () => openViewer({fileType, url, name}),
+				onClick: () => throttledNativeViewer({ fileType, url, name }),
 			},
 			View(
 				{
@@ -561,7 +480,7 @@
 
 		if (externalStyles)
 		{
-			styles = CommonUtils.objectMerge(styles, externalStyles);
+			styles = merge(styles, externalStyles);
 		}
 
 		return styles;
@@ -598,17 +517,17 @@
 		attachmentCloseIcon = attachmentCloseIcon || DEFAULT_CLOSE_ICON;
 		attachmentFileIconFolder = attachmentFileIconFolder || DEFAULT_FILE_ICONS_FOLDER;
 
-		const fileType = getType(getFileMimeType(type, name));
+		const fileType = getNativeViewerMediaType(getMimeType(type, name));
 
-		if (fileType === 'image' && url.indexOf('file://') === 0)
+		if (fileType === NativeViewerMediaTypes.IMAGE && url.indexOf('file://') === 0)
 		{
 			imageUri = url;
 		}
 
-		if (
-			(fileType === 'image' || (fileType === 'video' && imageUri.indexOf('file://') === 0))
-			&& imageUri.length > 0
-		)
+		const isImage = (fileType === NativeViewerMediaTypes.IMAGE);
+		const isVideo = (fileType === NativeViewerMediaTypes.VIDEO && imageUri.indexOf('file://') === 0);
+
+		if ((isImage || isVideo) && imageUri.length > 0)
 		{
 			return renderImage({
 				...options,
@@ -643,6 +562,6 @@
 
 	this.UI = this.UI || {};
 	this.UI.File = File;
-	this.UI.File.getType = getType;
-	this.UI.File.getFileMimeType = getFileMimeType;
+	this.UI.File.getType = getNativeViewerMediaType;
+	this.UI.File.getFileMimeType = getMimeType;
 })();

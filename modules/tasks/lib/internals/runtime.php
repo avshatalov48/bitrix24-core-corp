@@ -115,7 +115,11 @@ abstract class Runtime
 
 	public static function cloneFields(array $parameters = array())
 	{
-		if(is_array($parameters['runtime']) && !empty($parameters['runtime']))
+		if (
+			isset($parameters['runtime'])
+			&& is_array($parameters['runtime'])
+			&& !empty($parameters['runtime'])
+		)
 		{
 			$runtimes = array();
 			foreach($parameters['runtime'] as $k => $runtime)

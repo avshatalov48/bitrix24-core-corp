@@ -26,6 +26,8 @@ class Manager
 
 	public const VALID_CODE_REGEX = '|^[a-z0-9_.-]+$|' . BX_UTF_PCRE_MODIFIER;
 
+	public const COUNTER_INFIX = '_custom_section_';
+
 	protected const SECTION_ROOT_URL_TEMPLATE = '/page/#customSectionCode#/';
 	protected const PAGE_URL_REGEX = "|^/page/(?'customSectionCode'[\\w]+)/(?'pageCode'[\\w]+)/?|" . BX_UTF_PCRE_MODIFIER;
 	protected const PAGE_URL_TEMPLATE = self::SECTION_ROOT_URL_TEMPLATE . '#pageCode#/';
@@ -293,6 +295,7 @@ class Manager
 			[
 				'menu_item_id' => $this->getCustomSectionMenuId($customSection->getCode()),
 				'is_custom_section' => true,
+				'counter_id' => self::buildCustomSectionCounterId($customSection->getModuleId(), $customSection->getId())
 			],
 			''
 		];
@@ -603,5 +606,25 @@ class Manager
 		}
 
 		$result->setComponentToInclude($component);
+	}
+
+	public static function isCustomSectionCounter(string $counterId, string $moduleId): bool {
+		return preg_match(sprintf('#^%s%s#', $moduleId, self::COUNTER_INFIX), $counterId);
+	}
+
+	public static function getCustomSectionIdByCounterId(string $counterId, string $moduleId): int
+	{
+		return (int)preg_replace(sprintf('#^%s%s#', $moduleId, self::COUNTER_INFIX), '', $counterId);
+	}
+
+	/**
+	 * Builds the counter code for the custom section menu. Like crm_custom_section_1 etc...
+	 * @param string $moduleId
+	 * @param int|null $customSectionId
+	 * @return string
+	 */
+	public static function buildCustomSectionCounterId(string $moduleId, ?int $customSectionId): string
+	{
+		return $moduleId . self::COUNTER_INFIX . $customSectionId;
 	}
 }

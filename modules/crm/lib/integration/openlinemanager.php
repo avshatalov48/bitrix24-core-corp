@@ -7,9 +7,11 @@ use Bitrix\Im\Counter;
 use Bitrix\ImOpenLines\Chat;
 use Bitrix\ImOpenLines\Config;
 use Bitrix\ImOpenLines\Model\SessionTable;
+use Bitrix\ImOpenLines\Operator;
 use Bitrix\Main\Loader;
-use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ModuleManager;
+use Bitrix\Main\Result;
 
 Loc::loadMessages(__FILE__);
 
@@ -124,7 +126,7 @@ class OpenLineManager
 				MESSAGE, 
 				AUTHOR_ID,
 				FILE.ID as MESSAGE_FILE,
-				ATTACH.ID as MESSAGE_ATTACH
+				ATTACH.PARAM_VALUE as MESSAGE_ATTACH
 			FROM
 			   b_imopenlines_session S
 			   INNER JOIN b_im_message M ON 
@@ -147,7 +149,7 @@ class OpenLineManager
 			$messageFields['MESSAGE'] = Im\Text::removeBbCodes(
 				$messageFields['MESSAGE'],
 				$messageFields['MESSAGE_FILE'] > 0,
-				$messageFields['MESSAGE_ATTACH'] > 0
+				$messageFields['MESSAGE_ATTACH']
 			);
 			$messageFields['IS_EXTERNAL'] = Im\User::getInstance($messageFields['AUTHOR_ID'])->isConnector();
 
@@ -230,9 +232,31 @@ class OpenLineManager
 		{
 			$counters = Counter::get($userId);
 
-			return (int)$counters['LINES'][$chatId];
+			return isset($counters['LINES'][$chatId]) ? (int)$counters['LINES'][$chatId] : 0;
 		}
 
 		return 0;
+	}
+
+	public static function closeDialog(?string $code): ?Result
+	{
+		if (
+			!isset($code)
+			|| !Loader::includeModule('im')
+			|| !Loader::includeModule('imopenlines')
+		)
+		{
+			return null;
+		}
+
+		$chatId = Chat::getChatIdByUserCode($code);
+		if (isset($chatId))
+		{
+			$control = new Operator($chatId);
+
+			return $control->closeDialog();
+		}
+
+		return null;
 	}
 }

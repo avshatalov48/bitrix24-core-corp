@@ -25,6 +25,7 @@ class JsEvent extends Action
 			'value' => $this->getEvent(),
 			'actionParams' => $this->getActionParams(),
 			'animation' => $this->getAnimation(),
+			'analytics' => $this->getAnalytics(),
 		];
 	}
 }

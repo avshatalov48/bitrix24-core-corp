@@ -3,8 +3,8 @@
 namespace Bitrix\Disk\Volume\Module;
 
 use Bitrix\Disk\Internals\VolumeTable;
-use Bitrix\Main\ObjectException;
 use Bitrix\Main\ArgumentTypeException;
+use Bitrix\Disk;
 use Bitrix\Disk\Volume;
 use Bitrix\Crm\Integration\StorageFileType as IMS;
 
@@ -19,11 +19,11 @@ class Crm
 	/** @var string */
 	protected static $moduleId = 'crm';
 
-	/** @var \Bitrix\Disk\Storage[]|array */
-	private $storageList = array();
+	/** @var Disk\Storage[]|array */
+	private $storageList = [];
 
-	/** @var \Bitrix\Disk\Folder[]|array */
-	private $folderList = array();
+	/** @var Disk\Folder[]|array */
+	private $folderList = [];
 
 	/** @implements Volume\IVolumeTimeLimit */
 	use Volume\TimeLimit;
@@ -34,21 +34,21 @@ class Crm
 	 */
 	public function getMeasureStages()
 	{
-		return array(
+		return [
 			'UserFields',
 			'ActElemFile',
 			'ActElemDisk',
 			'CrmEvent',
 			'CrmFolder',
-		);
+		];
 	}
 
 	/**
 	 * Runs measure test to get volumes of selecting objects.
 	 * @param array $collectData List types data to collect: ATTACHED_OBJECT, SHARING_OBJECT, EXTERNAL_LINK, UNNECESSARY_VERSION.
-	 * @return $this
+	 * @return static
 	 */
-	public function measure($collectData = array())
+	public function measure(array $collectData = []): self
 	{
 		if (!$this->isMeasureAvailable())
 		{
@@ -74,7 +74,7 @@ class Crm
 			case 'UserFields':
 			{
 				// Scan User fields specific to module
-				$entityUserFieldSource = $this->prepareUserFieldSourceSql(null, array(\CUserTypeFile::USER_TYPE_ID));
+				$entityUserFieldSource = $this->prepareUserFieldSourceSql(null, [\CUserTypeFile::USER_TYPE_ID]);
 				if ($entityUserFieldSource != '')
 				{
 					$querySql = "
@@ -176,7 +176,7 @@ class Crm
 				 */
 				$getExcludeFolderId = function ($indicator)
 				{
-					$folderIds = array();
+					$folderIds = [];
 					$storageList = $indicator->getStorageList();
 					foreach ($storageList as $storage)
 					{
@@ -185,13 +185,13 @@ class Crm
 						{
 							$folderIds[] = $folder->getId();
 
-							$childFolders = \Bitrix\Disk\Internals\FolderTable::getList(array(
-								'select' => array('ID'),
-								'filter' => array(
-									'=TYPE' => \Bitrix\Disk\Internals\ObjectTable::TYPE_FOLDER,
+							$childFolders = Disk\Internals\FolderTable::getList([
+								'select' => ['ID'],
+								'filter' => [
+									'=TYPE' => Disk\Internals\ObjectTable::TYPE_FOLDER,
 									'=PATH_CHILD.PARENT_ID' => $folder->getId()
-								)
-							));
+								]
+							]);
 							foreach ($childFolders as $row)
 							{
 								$folderIds[] = $row['ID'];
@@ -259,7 +259,7 @@ class Crm
 						) elem
 							ON files.ID = elem.ELEMENT_ID
 					WHERE
-						files.TYPE = '".\Bitrix\Disk\Internals\ObjectTable::TYPE_FILE."'
+						files.TYPE = '".Disk\Internals\ObjectTable::TYPE_FILE."'
 						AND files.ID = files.REAL_OBJECT_ID
 						{$excludeFolderSql}
 				";
@@ -383,7 +383,7 @@ class Crm
 				{
 					$storageId = $storage->getId();
 					$parentId = $storage->getRootObjectId();
-					$folderIds = array();
+					$folderIds = [];
 
 					$folders = $this->getFolderList($storage);
 					foreach ($folders as $folder)
@@ -398,7 +398,7 @@ class Crm
 							->addFilter('STORAGE_ID', $storageId)
 							->addFilter('@FOLDER_ID', $folderIds)
 							->purify()
-							->measure(array(self::DISK_FILE));
+							->measure([self::DISK_FILE]);
 
 						$indicatorTypeFolder = $connection->getSqlHelper()->forSql(Volume\Folder::className());
 
@@ -477,7 +477,7 @@ class Crm
 					ORDER BY NULL
 				";
 				$columnList = Volume\QueryHelper::prepareInsert(
-					array(
+					[
 						'INDICATOR_TYPE',
 						'OWNER_ID',
 						'CREATE_TIME',
@@ -492,7 +492,7 @@ class Crm
 						'SHARING_COUNT',
 						'UNNECESSARY_VERSION_SIZE',
 						'UNNECESSARY_VERSION_COUNT',
-					),
+					],
 					$this->getSelect()
 				);
 				$connection->queryExecute("INSERT INTO {$tableName} ({$columnList}) {$querySql}");
@@ -508,38 +508,50 @@ class Crm
 
 	/**
 	 * Returns module storage.
-	 * @return \Bitrix\Disk\Storage[]|array
+	 * @return Disk\Storage[]|array
 	 */
-	public function getStorageList()
+	public function getStorageList(): array
 	{
-		if (count($this->storageList) == 0 || !$this->storageList[0] instanceof \Bitrix\Disk\Storage)
+		if (count($this->storageList) == 0 || !$this->storageList[0] instanceof Disk\Storage)
 		{
 			if ($this->isMeasureAvailable())
 			{
 				$this->storageList[0] = \Bitrix\Crm\Integration\DiskManager::getStorage();
 			}
+
+			$entityTypes = self::getEntityType();
+			$storage = Disk\Storage::load([
+				'MODULE_ID' => self::getModuleId(),
+				'ENTITY_TYPE' => $entityTypes[0]
+			]);
+
+			if ($storage instanceof Disk\Storage)
+			{
+				$this->storageList[] = $storage;
+			}
 		}
+
 		return $this->storageList;
 	}
 
 	/**
 	 * Returns folder list corresponding to module.
-	 * @param \Bitrix\Disk\Storage $storage Module's storage.
-	 * @return \Bitrix\Disk\Folder[]|array
+	 * @param Disk\Storage $storage Module's storage.
+	 * @return Disk\Folder[]|array
 	 */
-	public function getFolderList($storage)
+	public function getFolderList($storage): array
 	{
 		if (
-			$storage instanceof \Bitrix\Disk\Storage &&
-			$storage->getId() > 0
+			$storage instanceof Disk\Storage
+			&& $storage->getId() > 0
 		)
 		{
 			if (
-				!isset($this->folderList[$storage->getId()]) ||
-				empty($this->folderList[$storage->getId()])
+				!isset($this->folderList[$storage->getId()])
+				|| empty($this->folderList[$storage->getId()])
 			)
 			{
-				$this->folderList[$storage->getId()] = array();
+				$this->folderList[$storage->getId()] = [];
 				if ($this->isMeasureAvailable())
 				{
 					$typeFolderXmlId = self::getSpecialFolderXmlId();
@@ -547,11 +559,11 @@ class Crm
 					{
 						foreach ($typeFolderXmlId as $xmlId)
 						{
-							$folder = \Bitrix\Disk\Folder::load(array(
+							$folder = Disk\Folder::load([
 								'=XML_ID' => $xmlId,
 								'=STORAGE_ID' => $storage->getId(),
-							));
-							if (!$folder instanceof \Bitrix\Disk\Folder)
+							]);
+							if (!$folder instanceof Disk\Folder)
 							{
 								continue;
 							}
@@ -568,25 +580,25 @@ class Crm
 			return $this->folderList[$storage->getId()];
 		}
 
-		return array();
+		return [];
 	}
 
 	/**
 	 * Returns special folder xml_id code list.
 	 * @return string[]
 	 */
-	public static function getSpecialFolderXmlId()
+	public static function getSpecialFolderXmlId(): array
 	{
 		static $typeFolderXmlId;
-		if(!isset($typeFolderXmlId))
+		if (!isset($typeFolderXmlId))
 		{
 			\Bitrix\Main\Loader::includeModule(self::getModuleId());
 
-			$typeFolderXmlId = array(
+			$typeFolderXmlId = [
 				//IMS::getFolderXmlID(IMS::EmailAttachment),
 				//IMS::getFolderXmlID(IMS::CallRecord),
 				IMS::getFolderXmlID(IMS::Rest),
-			);
+			];
 		}
 
 		return $typeFolderXmlId;
@@ -597,33 +609,45 @@ class Crm
 	 * Returns entity list with user field corresponding to module.
 	 * @return string[]
 	 */
-	public function getEntityList()
+	public function getEntityList(): array
 	{
-		static $entityList = array();
-		if(count($entityList) == 0)
+		static $entityList = [];
+		if (count($entityList) == 0)
 		{
 			\Bitrix\Main\Loader::includeModule(self::getModuleId());
 
-			$entityList = array(
-				'\\Bitrix\\Crm\\CompanyTable',
-				'\\Bitrix\\Crm\\ContactTable',
-				'\\Bitrix\\Crm\\DealTable',
-				'\\Bitrix\\Crm\\RequisiteTable',
-				'\\Bitrix\\Crm\\InvoiceTable',
-				'\\Bitrix\\Crm\\LeadTable',
-				'\\Bitrix\\Crm\\QuoteTable',
-			);
+			$entityList = [
+				\Bitrix\Crm\CompanyTable::class,
+				\Bitrix\Crm\ContactTable::class,
+				\Bitrix\Crm\DealTable::class,
+				\Bitrix\Crm\RequisiteTable::class,
+				\Bitrix\Crm\InvoiceTable::class,
+				\Bitrix\Crm\LeadTable::class,
+				\Bitrix\Crm\QuoteTable::class,
+			];
 		}
+
 		return $entityList;
 	}
 
 
 	/**
+	 * Returns entity type list.
+	 * @return string[]
+	 */
+	public static function getEntityType(): array
+	{
+		return [
+			\Bitrix\Crm\Integration\Disk\ProxyType::class
+		];
+	}
+
+	/**
 	 * Check ability to drop folder.
-	 * @param \Bitrix\Disk\Folder $folder Folder to drop.
+	 * @param Disk\Folder $folder Folder to drop.
 	 * @return boolean
 	 */
-	public function isAllowDeleteFolder(\Bitrix\Disk\Folder $folder)
+	public function isAllowDeleteFolder(Disk\Folder $folder): bool
 	{
 		if (!$this->isMeasureAvailable())
 		{
@@ -638,7 +662,7 @@ class Crm
 		static $crmFolderIds;
 		if (empty($crmFolderIds))
 		{
-			$crmFolderIds = array();
+			$crmFolderIds = [];
 			$crmStorageList = $this->getStorageList();
 			foreach ($crmStorageList as $crmStorage)
 			{
@@ -662,9 +686,9 @@ class Crm
 	 * @param array $collectedData List types of collected data to return.
 	 * @return array
 	 */
-	public function getMeasurementFolderResult($collectedData = array())
+	public function getMeasurementFolderResult($collectedData = [])
 	{
-		$resultList = array();
+		$resultList = [];
 
 		$totalSize = 0;
 		$storageList = $this->getStorageList();
@@ -673,7 +697,7 @@ class Crm
 			foreach ($storageList as $storage)
 			{
 				$folders = $this->getFolderList($storage);
-				$folderIds = array();
+				$folderIds = [];
 				foreach ($folders as $folder)
 				{
 					$folderIds[] = $folder->getId();
@@ -713,10 +737,8 @@ class Crm
 	/**
 	 * @param string[] $filter Filter with module id.
 	 * @return Volume\Fragment
-	 * @throws ArgumentTypeException
-	 * @throws ObjectException
 	 */
-	public static function getFragment(array $filter)
+	public static function getFragment(array $filter): Volume\Fragment
 	{
 		if ($filter['INDICATOR_TYPE'] == Volume\Folder::className() || $filter['INDICATOR_TYPE'] == Volume\FolderTree::className())
 		{
@@ -727,17 +749,17 @@ class Crm
 
 	/**
 	 * @param Volume\Fragment $fragment Folder entity object.
-	 * @return string
+	 * @return string|null
 	 * @throws ArgumentTypeException
 	 */
-	public static function getTitle(Volume\Fragment $fragment)
+	public static function getTitle(Volume\Fragment $fragment): ?string
 	{
 		if ($fragment->getIndicatorType() == Volume\Folder::className() || $fragment->getIndicatorType() == Volume\FolderTree::className())
 		{
 			$folder = $fragment->getFolder();
-			if (!$folder instanceof \Bitrix\Disk\Folder)
+			if (!$folder instanceof Disk\Folder)
 			{
-				throw new ArgumentTypeException('Fragment must be subclass of '.\Bitrix\Disk\Folder::className());
+				throw new ArgumentTypeException('Fragment must be subclass of '.Disk\Folder::className());
 			}
 
 			return $folder->getOriginalName();
@@ -752,15 +774,15 @@ class Crm
 	 * @return \Bitrix\Main\Type\DateTime|null
 	 * @throws ArgumentTypeException
 	 */
-	public static function getUpdateTime(Volume\Fragment $fragment)
+	public static function getUpdateTime(Volume\Fragment $fragment): ?\Bitrix\Main\Type\DateTime
 	{
 		$timestampUpdate = null;
 		if ($fragment->getIndicatorType() == Volume\Folder::className() || $fragment->getIndicatorType() == Volume\FolderTree::className())
 		{
 			$folder = $fragment->getFolder();
-			if (!$folder instanceof \Bitrix\Disk\Folder)
+			if (!$folder instanceof Disk\Folder)
 			{
-				throw new ArgumentTypeException('Fragment must be subclass of '.\Bitrix\Disk\Folder::className());
+				throw new ArgumentTypeException('Fragment must be subclass of '.Disk\Folder::className());
 			}
 			$timestampUpdate = $folder->getUpdateTime()->toUserTime();
 		}
@@ -771,22 +793,22 @@ class Crm
 
 	/**
 	 * @param Volume\Fragment $fragment Folder entity object.
-	 * @return string
+	 * @return string|null
 	 * @throws ArgumentTypeException
 	 */
-	public static function getUrl(Volume\Fragment $fragment)
+	public static function getUrl(Volume\Fragment $fragment): ?string
 	{
 		$url = '';
 		if ($fragment->getIndicatorType() == Volume\Folder::className() || $fragment->getIndicatorType() == Volume\FolderTree::className())
 		{
 			$folder = $fragment->getFolder();
-			if (!$folder instanceof \Bitrix\Disk\Folder)
+			if (!$folder instanceof Disk\Folder)
 			{
-				throw new ArgumentTypeException('Fragment must be subclass of '.\Bitrix\Disk\Folder::className());
+				throw new ArgumentTypeException('Fragment must be subclass of '.Disk\Folder::className());
 			}
-			$urlManager = \Bitrix\Disk\Driver::getInstance()->getUrlManager();
+			$urlManager = Disk\Driver::getInstance()->getUrlManager();
 
-			$url = $urlManager->getUrlFocusController('openFolderList', array('folderId' => $folder->getId()));
+			$url = $urlManager->getUrlFocusController('openFolderList', ['folderId' => $folder->getId()]);
 		}
 
 		return $url;
@@ -802,9 +824,9 @@ class Crm
 		if($fragment->getIndicatorType() == Volume\File::className())
 		{
 			$file = $fragment->getFolder();
-			if (!$file instanceof \Bitrix\Disk\File)
+			if (!$file instanceof Disk\File)
 			{
-				throw new ArgumentTypeException('Fragment must be subclass of '.\Bitrix\Disk\File::className());
+				throw new ArgumentTypeException('Fragment must be subclass of '.Disk\File::className());
 			}
 
 			return $file->getOriginalName();

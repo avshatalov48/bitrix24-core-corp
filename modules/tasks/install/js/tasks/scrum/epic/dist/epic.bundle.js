@@ -7,7 +7,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  function RequestSender() {
 	    babelHelpers.classCallCheck(this, RequestSender);
 	  }
-
 	  babelHelpers.createClass(RequestSender, [{
 	    key: "sendRequest",
 	    value: function sendRequest(controller, action) {
@@ -25,10 +24,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        console.error(response);
 	        return;
 	      }
-
 	      if (response.errors.length) {
 	        var firstError = response.errors.shift();
-
 	        if (firstError) {
 	          var errorCode = firstError.code ? firstError.code : '';
 	          var message = firstError.message + ' ' + errorCode;
@@ -42,35 +39,28 @@ this.BX.Tasks = this.BX.Tasks || {};
 	}();
 
 	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5, _templateObject6, _templateObject7, _templateObject8;
-
 	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-
 	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	var Epic = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(Epic, _EventEmitter);
-
 	  function Epic() {
 	    var _this;
-
 	    var params = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 	    babelHelpers.classCallCheck(this, Epic);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Epic).call(this, params));
-
 	    _this.setEventNamespace('BX.Tasks.Scrum.Epic');
-
 	    _this.view = main_core.Type.isString(params.view) ? params.view : '';
 	    _this.groupId = parseInt(params.groupId, 10);
 	    _this.epicId = main_core.Type.isUndefined(params.epicId) ? 0 : parseInt(params.epicId, 10);
 	    _this.gridId = main_core.Type.isUndefined(params.gridId) ? '' : params.gridId;
 	    _this.pathToTask = main_core.Type.isString(params.pathToTask) ? params.pathToTask : '';
 	    _this.requestSender = new RequestSender();
-	    /* eslint-disable */
 
+	    /* eslint-disable */
 	    _this.sidePanelManager = BX.SidePanel.Instance;
 	    /* eslint-enable */
-
 	    _this.sidePanel = null;
-	    _this.id = main_core.Text.getRandom();
+	    _this.id = null;
 	    _this.form = null;
 	    _this.formData = null;
 	    _this.listData = null;
@@ -80,7 +70,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    _this.selectedColor = '';
 	    return _this;
 	  }
-
 	  babelHelpers.createClass(Epic, [{
 	    key: "show",
 	    value: function show() {
@@ -88,23 +77,18 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        case 'add':
 	          this.showAddForm();
 	          break;
-
 	        case 'list':
 	          this.showList();
 	          break;
-
 	        case 'view':
 	          this.showViewForm();
 	          break;
-
 	        case 'edit':
 	          this.showEditForm();
 	          break;
-
 	        case 'tasks':
 	          this.showTasksList();
 	          break;
-
 	        case 'completedTasks':
 	          this.showTasksList(true);
 	          break;
@@ -114,7 +98,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "showAddForm",
 	    value: function showAddForm() {
 	      var _this2 = this;
-
+	      this.id = main_core.Text.getRandom();
 	      this.sidePanelManager.open('tasks-scrum-epic-add-form-side-panel', {
 	        cacheable: false,
 	        width: 800,
@@ -128,7 +112,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	            },
 	            buttons: function buttons(_ref) {
 	              var cancelButton = _ref.cancelButton,
-	                  SaveButton = _ref.SaveButton;
+	                SaveButton = _ref.SaveButton;
 	              return [new SaveButton({
 	                onclick: _this2.onSaveAddForm.bind(_this2)
 	              }), cancelButton];
@@ -144,7 +128,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "showList",
 	    value: function showList() {
 	      var _this3 = this;
-
+	      this.id = main_core.Text.getRandom();
 	      this.gridId = 'EntityEpicsGrid_' + this.groupId;
 	      var sidePanelId = 'tasks-scrum-epic-list-side-panel';
 	      this.subscribeListToEvents(sidePanelId);
@@ -180,8 +164,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "showTasksList",
 	    value: function showTasksList() {
 	      var _this4 = this;
-
 	      var completed = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
+	      this.id = main_core.Text.getRandom();
 	      this.gridId = 'EpicTasksGrid_' + this.groupId;
 	      this.sidePanelManager.open('tasks-scrum-epic-tasks-list-side-panel', {
 	        cacheable: false,
@@ -205,7 +189,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "showViewForm",
 	    value: function showViewForm() {
 	      var _this5 = this;
-
+	      this.id = main_core.Text.getRandom();
 	      this.subscribeViewToEvents();
 	      this.sidePanelManager.open('tasks-scrum-epic-view-form-side-panel', {
 	        cacheable: false,
@@ -223,7 +207,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	                },
 	                buttons: function buttons(_ref3) {
 	                  var cancelButton = _ref3.cancelButton,
-	                      SaveButton = _ref3.SaveButton;
+	                    SaveButton = _ref3.SaveButton;
 	                  return [new SaveButton({
 	                    text: main_core.Loc.getMessage('TASKS_SCRUM_EPIC_EDIT_BUTTON'),
 	                    onclick: function onclick() {
@@ -246,7 +230,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "showEditForm",
 	    value: function showEditForm() {
 	      var _this6 = this;
-
+	      this.id = main_core.Text.getRandom();
 	      this.sidePanelManager.open('tasks-scrum-epic-edit-form-side-panel', {
 	        cacheable: false,
 	        width: 800,
@@ -260,7 +244,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	            },
 	            buttons: function buttons(_ref4) {
 	              var cancelButton = _ref4.cancelButton,
-	                  SaveButton = _ref4.SaveButton;
+	                SaveButton = _ref4.SaveButton;
 	              return [new SaveButton({
 	                onclick: _this6.onSaveEditForm.bind(_this6)
 	              }), cancelButton];
@@ -276,7 +260,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "removeEpic",
 	    value: function removeEpic() {
 	      var _this7 = this;
-
 	      return main_core.ajax.runAction('bitrix:tasks.scrum.epic.removeEpic', {
 	        data: {
 	          groupId: this.groupId,
@@ -300,7 +283,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "subscribeListToEvents",
 	    value: function subscribeListToEvents(sidePanelId) {
 	      var _this8 = this;
-
 	      main_core_events.EventEmitter.subscribe(this.getEventNamespace() + ':' + 'afterAdd', function () {
 	        return _this8.reloadGrid();
 	      });
@@ -312,7 +294,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "subscribeViewToEvents",
 	    value: function subscribeViewToEvents() {
 	      var _this9 = this;
-
 	      main_core_events.EventEmitter.subscribe(this.getEventNamespace() + ':' + 'openEdit', function (baseEvent) {
 	        Epic.showEdit(_this9.groupId, baseEvent.getData());
 	      });
@@ -324,7 +305,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        this.sidePanelManager.reload();
 	      } else {
 	        var openSliders = this.sidePanelManager.getOpenSliders();
-
 	        if (openSliders.length > 0) {
 	          openSliders.forEach(function (slider) {
 	            if (slider.getUrl() === sidePanelId) {
@@ -338,7 +318,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "createAddContent",
 	    value: function createAddContent() {
 	      var _this10 = this;
-
 	      return new Promise(function (resolve, reject) {
 	        main_core.ajax.runAction('bitrix:tasks.scrum.epic.getDescriptionEditor', {
 	          data: {
@@ -357,7 +336,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "createListContent",
 	    value: function createListContent() {
 	      var _this11 = this;
-
 	      return new Promise(function (resolve, reject) {
 	        main_core.ajax.runAction('bitrix:tasks.scrum.epic.getList', {
 	          data: {
@@ -376,7 +354,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "createTasksListContent",
 	    value: function createTasksListContent(completed) {
 	      var _this12 = this;
-
 	      return new Promise(function (resolve, reject) {
 	        main_core.ajax.runAction('bitrix:tasks.scrum.epic.getTasksList', {
 	          data: {
@@ -397,7 +374,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "createViewContent",
 	    value: function createViewContent(epic) {
 	      var _this13 = this;
-
 	      return new Promise(function (resolve, reject) {
 	        main_core.ajax.runAction('bitrix:tasks.scrum.epic.getEpicFiles', {
 	          data: {
@@ -416,7 +392,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "createEditContent",
 	    value: function createEditContent() {
 	      var _this14 = this;
-
 	      return new Promise(function (resolve, reject) {
 	        _this14.getEpic().then(function (response) {
 	          var epic = response.data;
@@ -441,7 +416,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "getEpic",
 	    value: function getEpic() {
 	      var _this15 = this;
-
 	      return new Promise(function (resolve, reject) {
 	        main_core.ajax.runAction('bitrix:tasks.scrum.epic.getEpic', {
 	          data: {
@@ -457,18 +431,15 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      this.sidePanel = event.getSlider();
 	      this.form = this.sidePanel.getContainer().querySelector('.tasks-scrum-epic-form');
 	      var descriptionContainer = this.form.querySelector('.tasks-scrum-epic-form-description');
-
 	      if (main_core.Type.isUndefined(this.formData.html)) {
 	        return;
 	      }
-
 	      this.renderEditor(descriptionContainer);
 	    }
 	  }, {
 	    key: "onSaveAddForm",
 	    value: function onSaveAddForm() {
 	      var _this16 = this;
-
 	      main_core.ajax.runAction('bitrix:tasks.scrum.epic.createEpic', {
 	        data: this.getRequestData()
 	      }).then(function (response) {
@@ -486,17 +457,14 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "onLoadList",
 	    value: function onLoadList(event) {
 	      var _this17 = this;
-
 	      this.sidePanel = event.getSlider();
 	      var listContainer = this.sidePanel.getContainer().querySelector('.tasks-scrum-epic-list');
-
 	      if (main_core.Type.isUndefined(this.listData.html)) {
 	        main_core.Dom.append(this.renderListBlank(), listContainer);
 	        main_core.Event.bind(listContainer.querySelector('.tasks-scrum-epics-empty-button'), 'click', this.showAddForm.bind(this));
 	      } else {
 	        main_core.Runtime.html(listContainer, this.listData.html).then(function () {
 	          main_core_events.EventEmitter.subscribe('Grid::beforeRequest', _this17.onBeforeGridRequest.bind(_this17));
-
 	          _this17.prepareTagsList(listContainer);
 	        });
 	      }
@@ -505,7 +473,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "onLoadTasksList",
 	    value: function onLoadTasksList(event) {
 	      var _this18 = this;
-
 	      this.sidePanel = event.getSlider();
 	      var listContainer = this.sidePanel.getContainer().querySelector('.tasks-scrum-epic-tasks-list');
 	      main_core.Runtime.html(listContainer, this.listData.html).then(function () {
@@ -516,7 +483,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "onLoadViewForm",
 	    value: function onLoadViewForm(event) {
 	      this.sidePanel = event.getSlider();
-
 	      if (this.epicFiles) {
 	        var filesContainer = this.sidePanel.getContainer().querySelector('.tasks-scrum-epic-form-files');
 	        main_core.Runtime.html(filesContainer, this.epicFiles);
@@ -528,18 +494,15 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      this.sidePanel = event.getSlider();
 	      this.form = this.sidePanel.getContainer().querySelector('.tasks-scrum-epic-form');
 	      var descriptionContainer = this.form.querySelector('.tasks-scrum-epic-form-description');
-
 	      if (main_core.Type.isUndefined(this.formData.html)) {
 	        return;
 	      }
-
 	      this.renderEditor(descriptionContainer);
 	    }
 	  }, {
 	    key: "onSaveEditForm",
 	    value: function onSaveEditForm() {
 	      var _this19 = this;
-
 	      main_core.ajax.runAction('bitrix:tasks.scrum.epic.editEpic', {
 	        data: this.getRequestData()
 	      }).then(function (response) {
@@ -554,21 +517,18 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "onBeforeGridRequest",
 	    value: function onBeforeGridRequest(event) {
 	      var _event$getCompatData = event.getCompatData(),
-	          _event$getCompatData2 = babelHelpers.slicedToArray(_event$getCompatData, 2),
-	          gridObject = _event$getCompatData2[0],
-	          eventArgs = _event$getCompatData2[1];
+	        _event$getCompatData2 = babelHelpers.slicedToArray(_event$getCompatData, 2),
+	        gridObject = _event$getCompatData2[0],
+	        eventArgs = _event$getCompatData2[1];
+
 	      /* eslint-disable */
-
-
 	      eventArgs.sessid = BX.bitrix_sessid();
 	      /* eslint-enable */
 
 	      eventArgs.method = 'POST';
-
 	      if (!eventArgs.url) {
 	        eventArgs.url = this.getListUrl();
 	      }
-
 	      eventArgs.data = _objectSpread(_objectSpread({}, eventArgs.data), {}, {
 	        groupId: this.groupId,
 	        gridId: this.gridId,
@@ -610,14 +570,11 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "renderNameField",
 	    value: function renderNameField(epicId, name, color) {
 	      var _this20 = this;
-
 	      var nameField = main_core.Tag.render(_templateObject6 || (_templateObject6 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum-epic-form-header\">\n\t\t\t\t<div class=\"tasks-scrum-epic-form-header-title\">\n\t\t\t\t\t<input\n\t\t\t\t\t\ttype=\"text\"\n\t\t\t\t\t\tname=\"name\"\n\t\t\t\t\t\tvalue=\"", "\"\n\t\t\t\t\t\tclass=\"tasks-scrum-epic-form-header-title-control\"\n\t\t\t\t\t\tplaceholder=\"", "\"\n\t\t\t\t\t>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-scrum-epic-form-header-separate\"></div>\n\t\t\t\t<div class=\"tasks-scrum-epic-header-color\">\n\t\t\t\t\t<div\n\t\t\t\t\t\tdata-epic-id=\"", "\"\n\t\t\t\t\t\tclass=\"tasks-scrum-epic-header-color-current\"\n\t\t\t\t\t\tstyle=\"background-color: ", ";\"\n\t\t\t\t\t>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"tasks-scrum-epic-header-color-btn-angle\"></div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Text.encode(name), main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_ADD_EPIC_NAME_PLACEHOLDER'), parseInt(epicId, 10), main_core.Text.encode(color));
 	      var pickerContainer = nameField.querySelector('.tasks-scrum-epic-header-color');
 	      main_core.Event.bind(pickerContainer, 'click', function () {
 	        var colorNode = pickerContainer.querySelector('.tasks-scrum-epic-header-color-current');
-
 	        var picker = _this20.getColorPicker(colorNode);
-
 	        picker.open();
 	      });
 	      return nameField;
@@ -631,14 +588,12 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "renderEditor",
 	    value: function renderEditor(container) {
 	      var _this21 = this;
-
 	      setTimeout(function () {
 	        main_core.Runtime.html(container, _this21.formData.html).then(function () {
 	          if (window.LHEPostForm) {
 	            _this21.editorHandler = window.LHEPostForm.getHandler(_this21.id);
 	            main_core_events.EventEmitter.emit(_this21.editorHandler.eventNode, 'OnShowLHE', [true]);
 	          }
-
 	          _this21.focusToName();
 	        });
 	      }, 300);
@@ -657,7 +612,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      }
 	      /* eslint-enable */
 
-
 	      return null;
 	    }
 	  }, {
@@ -671,11 +625,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "prepareTagsList",
 	    value: function prepareTagsList(container) {
 	      var _this22 = this;
-
 	      var tagsContainers = container.querySelectorAll('.tasks-scrum-epic-grid-tags');
 	      tagsContainers.forEach(function (tagsContainer) {
 	        var tags = _this22.getTagsFromNode(tagsContainer);
-
 	        main_core.Dom.clean(tagsContainer);
 	        tags.forEach(function (tag) {
 	          main_core.Dom.append(_this22.getTagNode(tag), tagsContainer);
@@ -707,9 +659,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "getColorPicker",
 	    value: function getColorPicker(colorNode) {
 	      var _this23 = this;
-
 	      var epicId = main_core.Dom.attr(colorNode, 'data-epic-id');
-
 	      if (!this.colorPickers.has(epicId)) {
 	        /* eslint-disable */
 	        var picker = new BX.ColorPicker({
@@ -740,7 +690,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "focusToName",
 	    value: function focusToName() {
 	      var _this24 = this;
-
 	      setTimeout(function () {
 	        _this24.form.querySelector('.tasks-scrum-epic-form-header-title-control').focus();
 	      }, 50);
@@ -749,11 +698,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "getRequestData",
 	    value: function getRequestData() {
 	      var requestData = {};
-
 	      if (this.currentEpic) {
 	        requestData.epicId = this.currentEpic.id;
 	      }
-
 	      requestData.groupId = this.groupId;
 	      requestData.name = this.form.querySelector('[name=name]').value.trim();
 	      requestData.description = this.editorHandler.getEditor().GetContent();
@@ -765,13 +712,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "getAttachmentsFiles",
 	    value: function getAttachmentsFiles() {
 	      var _this25 = this;
-
 	      var files = [];
-
 	      if (!this.editorHandler || !main_core.Type.isPlainObject(this.editorHandler.arFiles) || !main_core.Type.isPlainObject(this.editorHandler.controllers)) {
 	        return files;
 	      }
-
 	      var fileControllers = [];
 	      Object.values(this.editorHandler.arFiles).forEach(function (controller) {
 	        if (!fileControllers.includes(controller)) {
@@ -848,7 +792,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      var sidePanelManager = BX.SidePanel.Instance;
 	      sidePanelManager.getOpenSliders().forEach(function (openSlider) {
 	        var frameWindow = openSlider.getWindow();
-
 	        if (!main_core.Type.isNil(frameWindow) && !main_core.Type.isNil(frameWindow.BX.Tasks.Scrum.EpicInstance)) {
 	          frameWindow.BX.Tasks.Scrum.EpicInstance.showTask(taskId);
 	        }

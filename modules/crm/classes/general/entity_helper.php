@@ -348,6 +348,10 @@ class CCrmEntityHelper
 		{
 			$context->setEventId($options['eventId']);
 		}
+		if (isset($options['PRESERVE_CONTENT_TYPE']) && is_bool($options['PRESERVE_CONTENT_TYPE']))
+		{
+			$context->setItemOption('PRESERVE_CONTENT_TYPE', $options['PRESERVE_CONTENT_TYPE']);
+		}
 		$operation->setContext($context);
 
 		if (!$checkPermissions)
@@ -377,11 +381,7 @@ class CCrmEntityHelper
 			$operation->excludeItemsFromTimelineRelationEventsRegistration($excludeFromRelationRegistration);
 		}
 
-		$isSystemAction = $options['IS_SYSTEM_ACTION'] ?? false;
-		if ($isSystemAction === true)
-		{
-			$operation->disableCheckLimits();
-		}
+		$operation->disableCheckLimits();
 
 		$isCompareEnabled = (bool)($options['IS_COMPARE_ENABLED'] ?? true);
 		if ($isCompareEnabled === false)
@@ -468,16 +468,6 @@ class CCrmEntityHelper
 			$enableFactory = (string)$request->get('enableFactory');
 
 			$settings->setFactoryEnabled(mb_strtoupper($enableFactory) === 'Y');
-		}
-	}
-
-	public static function setEnabledUniversalActivityScenarioFlagByRequest(\Bitrix\Main\Request $request): void
-	{
-		if ($request->get('enableUniversalActivityScenario') !== null)
-		{
-			$enableUniversalActivityScenario = (string)$request->get('enableUniversalActivityScenario');
-
-			\Bitrix\Crm\Settings\Crm::setUniversalActivityScenarioEnabled(mb_strtoupper($enableUniversalActivityScenario) === 'Y');
 		}
 	}
 

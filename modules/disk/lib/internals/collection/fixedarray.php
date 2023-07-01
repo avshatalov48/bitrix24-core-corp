@@ -15,7 +15,7 @@ final class FixedArray implements \IteratorAggregate, \ArrayAccess, \Countable
 		$this->fixedArray = new \SplFixedArray($size);
 	}
 
-	public function getIterator()
+	public function getIterator(): \Iterator
 	{
 		if ($this->getSplFixedArray() instanceof \IteratorAggregate)
 		{
@@ -138,7 +138,7 @@ final class FixedArray implements \IteratorAggregate, \ArrayAccess, \Countable
 	 * The return value will be casted to boolean if non-boolean was returned.
 	 * @since 5.0.0
 	 */
-	public function offsetExists($offset)
+	public function offsetExists($offset): bool
 	{
 		return $this->fixedArray->offsetExists($offset);
 	}
@@ -154,6 +154,7 @@ final class FixedArray implements \IteratorAggregate, \ArrayAccess, \Countable
 	 * @return mixed Can return all value types.
 	 * @since 5.0.0
 	 */
+	#[\ReturnTypeWillChange]
 	public function offsetGet($offset)
 	{
 		return $this->fixedArray->offsetGet($offset);
@@ -173,7 +174,7 @@ final class FixedArray implements \IteratorAggregate, \ArrayAccess, \Countable
 	 * @return void
 	 * @since 5.0.0
 	 */
-	public function offsetSet($offset, $value)
+	public function offsetSet($offset, $value): void
 	{
 		if (is_null($offset))
 		{
@@ -196,7 +197,7 @@ final class FixedArray implements \IteratorAggregate, \ArrayAccess, \Countable
 	 * @return void
 	 * @since 5.0.0
 	 */
-	public function offsetUnset($offset)
+	public function offsetUnset($offset): void
 	{
 		unset($this->fixedArray[$offset]);
 	}
@@ -210,7 +211,7 @@ final class FixedArray implements \IteratorAggregate, \ArrayAccess, \Countable
 	 * The return value is cast to an integer.
 	 * @since 5.1.0
 	 */
-	public function count()
+	public function count(): int
 	{
 		return $this->fixedArray->getSize();
 	}

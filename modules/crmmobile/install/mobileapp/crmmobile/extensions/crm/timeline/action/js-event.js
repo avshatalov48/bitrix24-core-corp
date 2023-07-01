@@ -2,7 +2,6 @@
  * @module crm/timeline/action/js-event
  */
 jn.define('crm/timeline/action/js-event', (require, exports, module) => {
-
 	const { BaseTimelineAction } = require('crm/timeline/action/base');
 
 	/** @type {typeof TimelineBaseController[]} */
@@ -16,19 +15,19 @@ jn.define('crm/timeline/action/js-event', (require, exports, module) => {
 
 			/** @type {TimelineBaseController[]} */
 			this.controllers = controllers
-				.filter(controllerClass => controllerClass.isActionSupported(this.value))
-				.map(controllerClass => new controllerClass(this.source, this.entity));
+				.filter((controllerClass) => controllerClass.isActionSupported(this.value))
+				.map((controllerClass) => new controllerClass(this.source, this.entity, this.scheduler));
 		}
 
 		execute()
 		{
-			this.controllers.map(controller => controller.onItemAction({
+			this.controllers.map((controller) => controller.onItemAction({
 				action: this.value,
 				actionParams: this.actionParams,
 			}));
+			this.sendAnalytics();
 		}
 	}
 
 	module.exports = { JsEventAction };
-
 });

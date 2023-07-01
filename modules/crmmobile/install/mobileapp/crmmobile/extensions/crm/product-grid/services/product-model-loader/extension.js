@@ -2,7 +2,6 @@
  * @module crm/product-grid/services/product-model-loader
  */
 jn.define('crm/product-grid/services/product-model-loader', (require, exports, module) => {
-
 	const { Loc } = require('loc');
 	const { mergeImmutable } = require('utils/object');
 	const { ProductRow } = require('crm/product-grid/model');
@@ -20,6 +19,11 @@ jn.define('crm/product-grid/services/product-model-loader', (require, exports, m
 			this.ajaxErrorHandler = ajaxErrorHandler;
 		}
 
+		getLoadEndpoint()
+		{
+			return 'crmmobile.ProductGrid.loadProductModel';
+		}
+
 		/**
 		 * @param {number} productId
 		 * @param {string} currencyId
@@ -28,7 +32,7 @@ jn.define('crm/product-grid/services/product-model-loader', (require, exports, m
 		 */
 		load(productId, currencyId, replacements = {})
 		{
-			const action = 'crmmobile.ProductGrid.loadProductModel';
+			const action = this.getLoadEndpoint();
 
 			const queryConfig = {
 				json: {
@@ -46,7 +50,7 @@ jn.define('crm/product-grid/services/product-model-loader', (require, exports, m
 
 			return new Promise((resolve, reject) => {
 				BX.ajax.runAction(action, queryConfig)
-					.then(response => {
+					.then((response) => {
 						Notify.hideCurrentIndicator();
 
 						const addedProductFields = mergeImmutable(response.data, replacements);
@@ -54,7 +58,7 @@ jn.define('crm/product-grid/services/product-model-loader', (require, exports, m
 
 						resolve({ productRow });
 					})
-					.catch(err => {
+					.catch((err) => {
 						Notify.hideCurrentIndicator();
 
 						if (this.ajaxErrorHandler)
@@ -71,5 +75,4 @@ jn.define('crm/product-grid/services/product-model-loader', (require, exports, m
 	}
 
 	module.exports = { ProductModelLoader };
-
 });

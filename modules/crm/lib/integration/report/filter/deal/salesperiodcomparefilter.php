@@ -77,7 +77,7 @@ class SalesPeriodCompareFilter extends Report\Filter\Base
 			}
 
 			//TODO dates fields isn't work with time period
-			if ($field['type'] === 'date')
+			if (($field['type'] ?? '') === 'date')
 			{
 				continue;
 			}

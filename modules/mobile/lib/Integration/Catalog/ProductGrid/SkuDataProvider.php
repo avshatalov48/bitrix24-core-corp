@@ -31,6 +31,10 @@ final class SkuDataProvider
 
 			/** @var \Bitrix\Catalog\v2\Product\BaseProduct $product */
 			$product = $sku->getParent();
+			if (!$product)
+			{
+				continue;
+			}
 
 			$fields = $sku->getFields();
 			$basePrice = $sku->getPriceCollection()->findBasePrice();

@@ -12,11 +12,12 @@ use Bitrix\Crm\Service\Container;
 /** @var array $arResult */
 
 $categoryId = 0;
-if ($arResult['VARIABLES']['company_id'] > 0)
+$entityId = isset($arResult['VARIABLES']['company_id']) ? (int)$arResult['VARIABLES']['company_id'] : 0;
+if ($entityId > 0)
 {
 	$categoryId = (int)Container::getInstance()
 		->getFactory(CCrmOwnerType::Company)
-		->getItemCategoryId($arResult['VARIABLES']['company_id'])
+		->getItemCategoryId($entityId)
 	;
 }
 elseif (isset($_REQUEST['category_id']))
@@ -31,7 +32,7 @@ if (isset($_REQUEST['IFRAME']) && $_REQUEST['IFRAME'] === 'Y')
 		'',
 		[
 			'ENTITY_TYPE_ID' => CCrmOwnerType::Company,
-			'ENTITY_ID' => $arResult['VARIABLES']['company_id'],
+			'ENTITY_ID' => $entityId,
 			'ENABLE_TITLE_EDIT' => true,
 			'EXTRAS' => ['CATEGORY_ID' => $categoryId],
 		]
@@ -40,7 +41,7 @@ if (isset($_REQUEST['IFRAME']) && $_REQUEST['IFRAME'] === 'Y')
 else
 {
 	Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/js/crm/css/workareainvisible.css');
-	$entityId = isset($arResult['VARIABLES']['company_id']) ? (int)$arResult['VARIABLES']['company_id'] : 0;
+	
 	$entityCategoryId = $entityId <= 0 ? $categoryId : null;
 	$viewCategoryId = $categoryId;
 

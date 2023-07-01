@@ -10,6 +10,7 @@ class EntityInfo
 	private $events = [];
 	private $templatesClosed = 'N';
 	private $sprintStagesRecoveryStatus = 'checked';
+	private $hiddenVisibilityList = [];
 
 	public function getInfoData(): array
 	{
@@ -20,6 +21,7 @@ class EntityInfo
 			$this->getEventsKey() => $this->getEvents(),
 			$this->getTemplatesClosedKey() => $this->getTemplatesClosed(),
 			$this->getSprintStagesRecoveryStatusKey() => $this->getSprintStagesRecoveryStatus(),
+			$this->getHiddenVisibilityListKey() => $this->getHiddenVisibilityList(),
 		];
 	}
 
@@ -69,6 +71,14 @@ class EntityInfo
 		{
 			$this->setSprintStagesRecoveryStatus($infoData[$this->getSprintStagesRecoveryStatusKey()]);
 		}
+
+		if (
+			isset($infoData[$this->getHiddenVisibilityListKey()])
+			&& is_array($infoData[$this->getHiddenVisibilityListKey()])
+		)
+		{
+			$this->setHiddenVisibilityList($infoData[$this->getHiddenVisibilityListKey()]);
+		}
 	}
 
 	public function getSprintGoalKey(): string
@@ -101,6 +111,11 @@ class EntityInfo
 		return 'sprintStagesRecoveryStatus';
 	}
 
+	public function getHiddenVisibilityListKey(): string
+	{
+		return 'visibilityList';
+	}
+
 	public function getSprintGoal(): string
 	{
 		return $this->sprintGoal;
@@ -131,6 +146,11 @@ class EntityInfo
 		return $this->sprintStagesRecoveryStatus;
 	}
 
+	public function getHiddenVisibilityList(): array
+	{
+		return $this->hiddenVisibilityList;
+	}
+
 	public function isTypesGenerated(): bool
 	{
 		return $this->typesGenerated === 'Y';
@@ -144,6 +164,11 @@ class EntityInfo
 	public function isTemplatesClosed(): bool
 	{
 		return $this->templatesClosed === 'Y';
+	}
+
+	public function isVisibility(int $userId): bool
+	{
+		return !in_array($userId, $this->hiddenVisibilityList, true);
 	}
 
 	public function sprintStagesRecoveryStatusIsVerified(): bool
@@ -236,5 +261,35 @@ class EntityInfo
 		}
 
 		$this->sprintStagesRecoveryStatus = $status;
+	}
+
+	public function setHiddenVisibilityList(array $list): void
+	{
+		if ($list === array_filter($list, 'is_int'))
+		{
+			$this->hiddenVisibilityList = $list;
+		}
+	}
+
+	public function showVisibility(int $userId): void
+	{
+		$userId = (int) $userId;
+
+		if (in_array($userId, $this->hiddenVisibilityList, true))
+		{
+			$this->hiddenVisibilityList = array_values(
+				array_diff($this->hiddenVisibilityList, [$userId])
+			);
+		}
+	}
+
+	public function hideVisibility(int $userId): void
+	{
+		$userId = (int) $userId;
+
+		if (!in_array($userId, $this->hiddenVisibilityList, true))
+		{
+			$this->hiddenVisibilityList[] = $userId;
+		}
 	}
 }

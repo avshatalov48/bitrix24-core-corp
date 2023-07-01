@@ -5,7 +5,12 @@ use Bitrix\Intranet\Site\Sections\TimemanSection;
 
 $APPLICATION->SetTitle("");
 
-\Bitrix\Main\UI\Extension::load(['intranet.security', 'ui.design-tokens']);
+\Bitrix\Main\UI\Extension::load([
+	'intranet.security',
+	'ui.notification',
+	'ui.design-tokens',
+	'ui.info-helper',
+]);
 $menuContainerId = 'intranet-user-profile-security-menu-'.$this->randString();
 ?>
 

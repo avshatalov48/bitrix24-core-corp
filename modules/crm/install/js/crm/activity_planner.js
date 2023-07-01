@@ -2427,7 +2427,8 @@ BX.namespace('BX.Crm.Activity');
 									me._settings['completed'] = !!result['COMPLETED'];
 									fieldCompleted.checked = !!result['COMPLETED'];
 									fieldCompleted.disabled = false;
-								}
+								},
+								{ fieldElement: fieldCompleted }
 							);
 						});
 					}

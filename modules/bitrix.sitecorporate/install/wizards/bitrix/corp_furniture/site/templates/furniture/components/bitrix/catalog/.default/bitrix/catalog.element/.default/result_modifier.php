@@ -13,11 +13,10 @@ if (!is_array($arResult['SECTION']))
 		);
 		$arIBlock["~LIST_PAGE_URL"] = preg_replace("'/+'s", "/", $arIBlock["~LIST_PAGE_URL"]);
 		$arIBlock["LIST_PAGE_URL"] = htmlspecialcharsbx($arIBlock["~LIST_PAGE_URL"]);
-		
+
 		$arResult['IBLOCK'] = $arIBlock;
 	}
 }
 
-$arResult['PRICES']['PRICE']['PRINT_VALUE'] = number_format($arResult['PROPERTIES']['PRICE']['VALUE'], 0, '.', ' ');
+$arResult['PRICES']['PRICE']['PRINT_VALUE'] = number_format((float)$arResult['PROPERTIES']['PRICE']['VALUE'], 0, '.', ' ');
 $arResult['PRICES']['PRICE']['PRINT_VALUE'] .= ' '.$arResult['PROPERTIES']['PRICECURRENCY']['VALUE_ENUM'];
-?>

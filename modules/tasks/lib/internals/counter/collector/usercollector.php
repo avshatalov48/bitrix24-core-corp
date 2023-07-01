@@ -3,6 +3,8 @@ namespace Bitrix\Tasks\Internals\Counter\Collector;
 
 use Bitrix\Main\Application;
 use Bitrix\Tasks\Comments\Internals\Comment;
+use Bitrix\Tasks\Comments\Viewed\Enum;
+use Bitrix\Tasks\Comments\Viewed\Group;
 use Bitrix\Tasks\Internals\Task\UserOptionTable;
 use Bitrix\Tasks\Internals\UserOption;
 use CTasks;
@@ -147,23 +149,25 @@ class UserCollector
 		return $counters;
 	}
 
-	/**
-	 * @param string $taskFilter
-	 * @param array $mutedTasks
-	 * @return array
-	 * @throws \Bitrix\Main\Db\SqlQueryException
-	 */
-	private function recountComments(string $taskFilter, array $mutedTasks): array
+	private function getJoinForRecountComments(): array
 	{
-		$filter = [];
+		return [
+			"
+				LEFT JOIN b_tasks_viewed TV ON TV.TASK_ID = T.ID AND TV.USER_ID = {$this->userId}
+				INNER JOIN b_tasks_member TM ON TM.TASK_ID = T.ID AND TM.USER_ID = {$this->userId}
+				INNER JOIN b_forum_message FM ON FM.TOPIC_ID = T.FORUM_TOPIC_ID
+				LEFT JOIN b_uts_forum_message BUF ON BUF.VALUE_ID = FM.ID
+			",
+			Counter::getJoinForRecountCommentsByType(Enum::USER_NAME, ['userId' => $this->userId])
+		];
+	}
 
-		$filter[] = $taskFilter;
-		$filter[] = "(
-			(TV.VIEWED_DATE IS NOT NULL AND FM.POST_DATE > TV.VIEWED_DATE)
-			OR (TV.VIEWED_DATE IS NULL AND FM.POST_DATE >= T.CREATED_DATE)
-		)";
-		$filter[] = "FM.NEW_TOPIC = 'N'";
-		$filter[] = "(
+	private function getConditionForRecountComments(): array
+	{
+		$result = [];
+
+		$result[] = "FM.NEW_TOPIC = 'N'";
+		$result[] = "(
 			(
 				FM.AUTHOR_ID <> {$this->userId}
 				AND (
@@ -179,10 +183,34 @@ class UserCollector
 		$counterFilter = $this->getCounterFilter();
 		if (!empty($counterFilter))
 		{
-			$filter[] = $counterFilter;
+			$result[] = $counterFilter;
 		}
 
-		$filter = implode(' AND ', $filter);
+		$result[] = Counter::getConditionForRecountComments();
+
+		return $result;
+	}
+
+	/**
+	 * @param string $taskFilter
+	 * @param array $mutedTasks
+	 * @return array
+	 * @throws \Bitrix\Main\Db\SqlQueryException
+	 */
+	private function recountComments(string $taskFilter, array $mutedTasks): array
+	{
+		$statement = [
+			'join' => $this->getJoinForRecountComments(),
+			'filter' => array_merge(
+				[
+					$taskFilter
+				],
+				$this->getConditionForRecountComments()
+			),
+		];
+
+		$join = implode(' ', $statement['join']);
+		$filter = implode(' AND ', $statement['filter']);
 
 		$sql = "
 			SELECT
@@ -191,10 +219,7 @@ class UserCollector
 				T.GROUP_ID,
 			   	TM.TYPE
 			FROM b_tasks T
-				LEFT JOIN b_tasks_viewed TV ON TV.TASK_ID = T.ID AND TV.USER_ID = {$this->userId}
-				INNER JOIN b_tasks_member TM ON TM.TASK_ID = T.ID AND TM.USER_ID = {$this->userId}
-				INNER JOIN b_forum_message FM ON FM.TOPIC_ID = T.FORUM_TOPIC_ID
-				LEFT JOIN b_uts_forum_message BUF ON BUF.VALUE_ID = FM.ID
+				{$join}
 			WHERE
 				{$filter}
 			GROUP BY T.ID, TM.TYPE
@@ -203,31 +228,12 @@ class UserCollector
 		$res = Application::getConnection()->query($sql);
 		$rows = $res->fetchAll();
 
-		$responsibleTasks = [];
-		foreach ($rows as $row)
-		{
-			if ($row['TYPE'] === MemberTable::MEMBER_TYPE_RESPONSIBLE)
-			{
-				$responsibleTasks[] = $row['ID'];
-			}
-		}
+		$list = static::findTaskAllowedForMemberTypeOriginator($rows);
 
 		$counters = [];
-
-		foreach ($rows as $row)
+		foreach ($list as $row)
 		{
 			$type = $row['TYPE'];
-			if (!array_key_exists($type, CounterDictionary::MAP_COMMENTS))
-			{
-				continue;
-			}
-			if (
-				$type === MemberTable::MEMBER_TYPE_ORIGINATOR
-				&& in_array($row['ID'], $responsibleTasks)
-			)
-			{
-				continue;
-			}
 
 			$counters[] = [
 				'USER_ID'	=> $this->userId,
@@ -241,6 +247,80 @@ class UserCollector
 		}
 
 		return $counters;
+	}
+
+	static protected function findTaskAllowedForMemberTypeOriginator($rows): array
+	{
+		$result = [];
+
+		$responsibleTasks = [];
+		foreach ($rows as $row)
+		{
+			if ($row['TYPE'] === MemberTable::MEMBER_TYPE_RESPONSIBLE)
+			{
+				$responsibleTasks[] = $row['ID'];
+			}
+		}
+
+		foreach ($rows as $row)
+		{
+			$type = $row['TYPE'];
+			if (!array_key_exists($type, CounterDictionary::MAP_EXPIRED))
+			{
+				continue;
+			}
+			if (
+				$type === MemberTable::MEMBER_TYPE_ORIGINATOR
+				&& in_array($row['ID'], $responsibleTasks)
+			)
+			{
+				continue;
+			}
+
+			$result[] = $row;
+		}
+
+		return $result;
+	}
+
+	public function getUnReadForumMessageByFilter($filter): array
+	{
+		$statement = [
+			'join' => $this->getJoinForRecountComments(),
+			'filter' => array_merge(
+				[
+					$this->getTasksFilter($filter['id'])
+				],
+				$this->getConditionForRecountComments()
+			),
+		];
+
+		$join = implode(' ', $statement['join']);
+		$filter = implode(' AND ', $statement['filter']);
+
+		$sql = "
+			SELECT
+				DISTINCT FM.ID, TM.TYPE
+			FROM b_tasks T
+				{$join}
+			WHERE
+				{$filter}
+		";
+
+		$res = Application::getConnection()->query($sql);
+		$rows = $res->fetchAll();
+
+		$list = static::findTaskAllowedForMemberTypeOriginator($rows);
+
+		$inx = [];
+		foreach ($list as $item)
+		{
+			$inx[] = $item['ID'];
+		}
+
+		$inx = array_unique($inx);
+
+		return $inx;
 	}
 
 	/**

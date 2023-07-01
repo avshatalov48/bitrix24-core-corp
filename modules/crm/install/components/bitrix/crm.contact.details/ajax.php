@@ -6,10 +6,10 @@ define('DisableEventsCheck', true);
 
 require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_before.php');
 
-use Bitrix\Main;
 use Bitrix\Crm;
-use Bitrix\Crm\Tracking;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Tracking;
+use Bitrix\Main;
 
 if (!CModule::IncludeModule('crm'))
 {
@@ -415,15 +415,15 @@ elseif($action === 'SAVE')
 				);
 			}
 
-			if(isset($fields['COMMENTS']))
-			{
-				$fields['COMMENTS'] = \Bitrix\Crm\Format\TextHelper::sanitizeHtml($fields['COMMENTS']);
-			}
+			$fields = Crm\Entity\FieldContentType::prepareFieldsFromDetailsToSave(\CCrmOwnerType::Contact, $ID, $fields);
 
 			Tracking\UI\Details::appendEntityFieldValue($fields, $_POST);
 
 			$entity = new \CCrmContact(false);
-			$saveOptions = ['REGISTER_SONET_EVENT' => true];
+			$saveOptions = array_merge(
+				Crm\Entity\FieldContentType::prepareSaveOptionsForDetails(\CCrmOwnerType::Contact, $ID),
+				['REGISTER_SONET_EVENT' => true],
+			);
 			if($isNew)
 			{
 				if(!isset($fields['TYPE_ID']))

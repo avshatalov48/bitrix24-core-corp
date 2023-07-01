@@ -1,6 +1,6 @@
 <?php
 $MESS["JS_DISK_ONLYOFFICE_PROMO_EDIT_POPUP_TITLE"] = "Добро пожаловать в новый редактор документов!";
-$MESS["JS_DISK_ONLYOFFICE_PROMO_VIEW_POPUP_TITLE"] = "Включен просмотр файла в Битрикс24.Документы";
+$MESS["JS_DISK_ONLYOFFICE_PROMO_VIEW_POPUP_TITLE_MSGVER_1"] = "Включен просмотр файла в Битрикс24.Документы";
 $MESS["JS_DISK_ONLYOFFICE_PROMO_VIEW_POPUP_1"] = "Битрикс24.Документы – это удобный просмотр файлов в задачах, чатах, новостной ленте, календаре.";
 $MESS["JS_DISK_ONLYOFFICE_PROMO_EDIT_POPUP_1"] = "Теперь вы сможете совместно с коллегами работать с документами в самом Битрикс24, не переключаясь на Word, Excel и другие программы.";
 $MESS["JS_DISK_ONLYOFFICE_PROMO_VIEW_POPUP_2"] = "Битрикс24.Документы поддерживают самые популярные форматы файлов: docx, pptx, xls, ppt, pdf, txt, html, csv и другие.";

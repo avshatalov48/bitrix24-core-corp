@@ -1,3 +1,0 @@
-<?php
-$MESS["SALESCENTER_FEEDBACK_INTEGRATION_REQUEST_TITLE"] = "Замовити підключення";
-$MESS["SALESCENTER_FEEDBACK_TITLE"] = "Зворотний зв'язок";

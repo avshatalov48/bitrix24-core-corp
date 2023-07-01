@@ -2,7 +2,6 @@
  * @module crm/timeline/controllers/activity
  */
 jn.define('crm/timeline/controllers/activity', (require, exports, module) => {
-
 	const { Loc } = require('loc');
 	const { TimelineBaseController } = require('crm/controllers/base');
 	const { ActivityViewer } = require('crm/timeline/services/activity-viewer');
@@ -39,7 +38,6 @@ jn.define('crm/timeline/controllers/activity', (require, exports, module) => {
 					return this.viewActivity(actionParams);
 
 				default:
-					return;
 			}
 		}
 
@@ -119,5 +117,4 @@ jn.define('crm/timeline/controllers/activity', (require, exports, module) => {
 	}
 
 	module.exports = { TimelineActivityController };
-
 });

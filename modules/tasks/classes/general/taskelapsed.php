@@ -79,8 +79,8 @@ class CTaskElapsedTime
 
 			$addResult = \Bitrix\Tasks\Internals\Task\ElapsedTimeTable::add(array(
 				"CREATED_DATE" => $createdDate,
-				"DATE_START" => Bitrix\Main\Type\DateTime::createFromUserTime($arFields['DATE_START']),
-				"DATE_STOP" => Bitrix\Main\Type\DateTime::createFromUserTime($arFields['DATE_STOP']),
+				"DATE_START" => Bitrix\Main\Type\DateTime::createFromUserTime($arFields['DATE_START'] ?? null),
+				"DATE_STOP" => Bitrix\Main\Type\DateTime::createFromUserTime($arFields['DATE_STOP'] ?? null),
 				"USER_ID" => $arFields["USER_ID"],
 				"TASK_ID" => $arFields["TASK_ID"],
 				"MINUTES" => $arFields["MINUTES"],

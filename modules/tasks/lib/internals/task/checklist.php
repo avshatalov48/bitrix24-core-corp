@@ -2,6 +2,9 @@
 namespace Bitrix\Tasks\Internals\Task;
 
 use Bitrix\Main;
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\SystemException;
 
 /**
  * Class CheckListTable
@@ -93,6 +96,12 @@ class CheckListTable extends Main\Entity\DataManager
 				'data_type' => 'integer',
 				'required' => true,
 			),
+
+			(new Main\Entity\ReferenceField(
+				'TREE_BY_CHILD',
+				CheckListTreeTable::getEntity(),
+				['this.ID' => 'ref.CHILD_ID']
+			))->configureJoinType(Main\ORM\Query\Join::TYPE_INNER)
 		);
 	}
 
@@ -117,5 +126,33 @@ class CheckListTable extends Main\Entity\DataManager
 			DELETE FROM {$tableName}
 			WHERE ID IN {$ids} 
 		");
+	}
+
+	/**
+	 * @throws ArgumentException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 */
+	public static function getByTaskId(int $taskId): ?EO_CheckList
+	{
+		return self::getList([
+			'select' => [
+				'ID',
+			],
+			'filter' => [
+				'=TASK_ID' => $taskId
+			]
+		])->fetchObject();
+	}
+
+	public static function getAllByTaskId(int $taskId): EO_CheckList_Collection
+	{
+		$query = self::query();
+		$query
+			->setSelect(['ID', 'IS_COMPLETE', 'TREE_BY_CHILD'])
+			->where('TASK_ID', $taskId)
+		;
+
+		return $query->exec()->fetchCollection();
 	}
 }

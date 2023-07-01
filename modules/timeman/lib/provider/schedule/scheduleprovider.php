@@ -25,7 +25,7 @@ class ScheduleProvider extends ScheduleRepository
 	public function findSchedulesByUserId($userId, $options = [])
 	{
 		$key = $this->buildCachedKeyForScheduleByUser($userId, $options);
-		if ($this->schedulesByUserIds[$key] === null)
+		if (!isset($this->schedulesByUserIds[$key]))
 		{
 			if ($existedKey = $this->getKeyForDataWithEnoughFields($userId, $options))
 			{
@@ -51,7 +51,7 @@ class ScheduleProvider extends ScheduleRepository
 
 	private function getKeyForDataWithEnoughFields($userId, $options)
 	{
-		if ($this->schedulesByUserIds[$userId] !== null)
+		if (isset($this->schedulesByUserIds[$userId]))
 		{
 			if (is_array($options) && isset($options['select']) && is_array($options['select']))
 			{
@@ -85,7 +85,7 @@ class ScheduleProvider extends ScheduleRepository
 		{
 			return null;
 		}
-		if ($this->schedulesWithShifts[$scheduleId] === null)
+		if (!isset($this->schedulesWithShifts[$scheduleId]))
 		{
 			$this->schedulesWithShifts[$scheduleId] = parent::findByIdWithShifts($scheduleId);
 			if ($this->schedulesWithShifts[$scheduleId] === null)

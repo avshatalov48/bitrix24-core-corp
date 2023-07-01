@@ -1,11 +1,11 @@
-import {Menu} from './footer/menu';
-import {Buttons} from './footer/buttons';
-import {Type} from 'main.core';
-import {Button} from './button';
-import {ButtonState} from '../enums/button-state';
-import {ButtonScope} from '../enums/button-scope';
-import {ButtonType} from '../enums/button-type';
-import {AdditionalButton} from './footer/add-button';
+import { Menu } from './footer/menu';
+import { Buttons } from './footer/buttons';
+import { Type } from 'main.core';
+import { Button } from './button';
+import { ButtonState } from '../enums/button-state';
+import { ButtonScope } from '../enums/button-scope';
+import { ButtonType } from '../enums/button-type';
+import { AdditionalButton } from './footer/add-button';
 
 export const Footer = {
 	components: {
@@ -130,6 +130,16 @@ export const Footer = {
 			}
 
 			return null;
+		},
+
+		getMenu(): ?Object
+		{
+			if (this.$refs.menu)
+			{
+				return this.$refs.menu;
+			}
+
+			return null;
 		}
 	},
 	template: `
@@ -146,7 +156,7 @@ export const Footer = {
 					>
 					</additional-button>
 				</div>
-				<Menu v-if="hasMenu" :buttons="moreButtons" v-bind="menu" />
+				<Menu v-if="hasMenu" :buttons="moreButtons" v-bind="menu" ref="menu"/>
 			</div>
 		</div>
 	`

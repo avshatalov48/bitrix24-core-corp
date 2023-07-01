@@ -55,7 +55,7 @@ abstract class Manager
 
 	protected static function ensureHaveErrorCollection(&$parameters)
 	{
-		if(!is_object($parameters['ERRORS']))
+		if (!array_key_exists('ERRORS', $parameters) || !is_object($parameters['ERRORS']))
 		{
 			$parameters['ERRORS'] = new Collection();
 		}
@@ -303,6 +303,11 @@ abstract class Manager
 	public static function extractPrimaryIndexes($data)
 	{
 		$result = array();
+
+		if (!is_array($data))
+		{
+			return $result;
+		}
 
 		if(static::getIsMultiple())
 		{

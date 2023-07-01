@@ -833,6 +833,11 @@ class FieldAttributeManager
 			'GROUP_TYPE_JUNK' => Loc::getMessage('CRM_FIELD_ATTRIBUTE_MANAGER_STAGE_CAPTION_GROUP_TYPE_JUNK'),
 		];
 
+		if ($entityTypeId === CCrmOwnerType::Deal)
+		{
+			return $captions;
+		}
+
 		$factory = Crm\Service\Container::getInstance()->getFactory($entityTypeId);
 		if ($factory)
 		{

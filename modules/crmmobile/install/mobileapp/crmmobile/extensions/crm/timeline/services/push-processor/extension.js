@@ -2,7 +2,6 @@
  * @module crm/timeline/services/push-processor
  */
 jn.define('crm/timeline/services/push-processor', (require, exports, module) => {
-
 	const { TimelineStreamScheduled } = require('crm/timeline/stream');
 	const { clone } = require('utils/object');
 
@@ -87,26 +86,26 @@ jn.define('crm/timeline/services/push-processor', (require, exports, module) => 
 			const activityIds = [];
 			const historyIds = [];
 
-			messages.forEach(message => {
+			messages.forEach((message) => {
 				const container = message.stream === StreamNames.SCHEDULED ? activityIds : historyIds;
 				container.push(message.id);
 			});
 
-			if (messages.length)
+			if (messages.length > 0)
 			{
 				this.timelineInstance.dataProvider.loadItems(activityIds, historyIds)
-					.then(response => {
-						messages.forEach(message => {
+					.then((response) => {
+						messages.forEach((message) => {
 							if (response.data[message.id])
 							{
 								message.item = response.data[message.id];
 							}
 							this.addToQueue(message);
-						})
+						});
 					})
-					.catch(err => {
+					.catch((err) => {
 						console.error(err);
-						messages.forEach(message => this.addToQueue(message));
+						messages.forEach((message) => this.addToQueue(message));
 					});
 			}
 		}
@@ -115,14 +114,17 @@ jn.define('crm/timeline/services/push-processor', (require, exports, module) => 
 		{
 			this.queue.push(params);
 
-			if (this.queueProcessingInProgress) return;
+			if (this.queueProcessingInProgress)
+			{
+				return;
+			}
 
 			this.processNextQueueItem();
 		}
 
 		processNextQueueItem()
 		{
-			if (!this.queue.length)
+			if (this.queue.length === 0)
 			{
 				this.queueProcessingInProgress = false;
 				return;
@@ -157,12 +159,12 @@ jn.define('crm/timeline/services/push-processor', (require, exports, module) => 
 				case 'move':
 					const source = {
 						itemId: params.params.fromId,
-						streamName: params.params.fromStream
+						streamName: params.params.fromStream,
 					};
 					const destination = {
 						itemId: params.id,
 						streamName: params.stream,
-						itemData: params.item
+						itemData: params.item,
 					};
 					results.push(this.moveItem(source, destination));
 					break;
@@ -263,7 +265,7 @@ jn.define('crm/timeline/services/push-processor', (require, exports, module) => 
 				}
 
 				return this.updateItem(itemId, itemData, StreamNames.HISTORY, false)
-					.then(() => this.addItem(itemId, itemData, StreamNames.PINNED))
+					.then(() => this.addItem(itemId, itemData, StreamNames.PINNED));
 			});
 		}
 
@@ -343,12 +345,12 @@ jn.define('crm/timeline/services/push-processor', (require, exports, module) => 
 		{
 			const context = this;
 
-			return function() {
+			return function ()
+			{
 				setTimeout(() => fn.apply(context, arguments), timeout);
 			};
 		}
 	}
 
 	module.exports = { TimelinePushProcessor };
-
 });

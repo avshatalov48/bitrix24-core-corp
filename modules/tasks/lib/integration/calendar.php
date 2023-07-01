@@ -88,6 +88,14 @@ abstract class Calendar extends Integration
 			}
 
 			$time = explode('.', (string)$calendarSettings['work_time_start']);
+			if (!isset($time[0]))
+			{
+				$time[0] = 0;
+			}
+			if (!isset($time[1]))
+			{
+				$time[1] = 0;
+			}
 			if ((int)$time[0])
 			{
 				$workSettings['HOURS']['START']['H'] = (int)$time[0];
@@ -98,6 +106,14 @@ abstract class Calendar extends Integration
 			}
 
 			$time = explode('.', (string)$calendarSettings['work_time_end']);
+			if (!isset($time[0]))
+			{
+				$time[0] = 0;
+			}
+			if (!isset($time[1]))
+			{
+				$time[1] = 0;
+			}
 			if ((int)$time[0])
 			{
 				$workSettings['HOURS']['END']['H'] = (int)$time[0];

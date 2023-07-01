@@ -102,7 +102,7 @@ class Kanban extends Base
 		}
 		$stage['SYSTEM_TYPE'] = $type;
 
-		$stage['SORT'] = is_numeric($fields['sort']) ? (int) $fields['sort'] : 100;
+		$stage['SORT'] = is_numeric($fields['sort'] ?? null) ? (int) $fields['sort'] : 100;
 		$stage['COLOR'] = array_key_exists('color', $fields) ? (string) $fields['color'] : '00C4FB';
 
 		try

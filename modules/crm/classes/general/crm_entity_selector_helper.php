@@ -65,11 +65,15 @@ class CCrmEntitySelectorHelper
 
 		$entityTypeId = \CCrmOwnerType::ResolveID($entityTypeName);
 		$serviceUserPermissions = Container::getInstance()->getUserPermissions($userPermissions->GetUserID());
+		$isMyCompany = (int)$entityTypeId === CCrmOwnerType::Company && CCrmCompany::isMyCompany((int)$entityID);
 		if (!$isHidden)
 		{
 			if ($entityTypeId > 0)
 			{
-				$isHidden = !$serviceUserPermissions->checkReadPermissions($entityTypeId, $entityID);
+				$isHidden = $isMyCompany
+					? !$serviceUserPermissions->getMyCompanyPermissions()->canReadBaseFields((int)$entityID)
+					: !$serviceUserPermissions->checkReadPermissions($entityTypeId, $entityID)
+				;
 			}
 		}
 
@@ -149,7 +153,12 @@ class CCrmEntitySelectorHelper
 			return $result;
 		}
 		$result[$permissionsKey] = [
-			$canUpdateKey => $serviceUserPermissions->checkUpdatePermissions($entityTypeId, $entityID),
+			$canUpdateKey => $isMyCompany
+				? $serviceUserPermissions->getMyCompanyPermissions()->canUpdateByOwnerEntity(
+					(int)($options['ownerEntityTypeId'] ?? $entityTypeId),
+					(int)($options['ownerEntityId'] ?? $entityID)
+				)
+				: $serviceUserPermissions->checkUpdatePermissions($entityTypeId, $entityID),
 		];
 		if($entityTypeName === 'CONTACT')
 		{
@@ -599,12 +608,11 @@ class CCrmEntitySelectorHelper
 		{
 			$obRes = CCrmQuote::GetList(
 				array(), array('=ID'=> $entityID), false, false,
-				array('QUOTE_NUMBER', 'TITLE', 'COMPANY_TITLE', 'CONTACT_FULL_NAME')
+				array('QUOTE_NUMBER', 'TITLE', 'COMPANY_TITLE', 'CONTACT_FULL_NAME', 'BEGINDATE')
 			);
 			if($arRes = $obRes->Fetch())
 			{
-				$result[$titleKey] = empty($arRes['TITLE']) ? $arRes['QUOTE_NUMBER'] : $arRes['QUOTE_NUMBER'].' - '.$arRes['TITLE'];
-
+				$result[$titleKey] = \Bitrix\Crm\Item\Quote::getTitlePlaceholderFromData($arRes);
 				$result[$urlKey] = Container::getInstance()->getRouter()->getItemDetailUrl(\CCrmOwnerType::Quote, $entityID);
 
 				$clientTitle = (!empty($arRes['COMPANY_TITLE'])) ? $arRes['COMPANY_TITLE'] : '';

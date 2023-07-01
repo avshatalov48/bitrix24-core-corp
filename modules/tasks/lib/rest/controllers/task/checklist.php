@@ -80,7 +80,7 @@ class Checklist extends Base
 
 		foreach ($items as $id => $item)
 		{
-			$item['ID'] = ((int) $item['ID'] === 0 ? null : (int) $item['ID']);
+			$item['ID'] = ((int)($item['ID'] ?? null) === 0 ? null : (int)$item['ID']);
 
 			$item['IS_COMPLETE'] = (
 				($item['IS_COMPLETE'] === true)
@@ -430,7 +430,7 @@ class Checklist extends Base
 		if ($value instanceof Result)
 		{
 			/** @var CheckListItem $checkListItem */
-			$checkListItem = $value->getData()['ITEM'];
+			$checkListItem = ($value->getData()['ITEM'] ?? null);
 			if ($checkListItem)
 			{
 				$checkListItemData = $checkListItem->getFields();
@@ -447,7 +447,7 @@ class Checklist extends Base
 
 		if ($checkListItemData)
 		{
-			$checkListItemData['TASK_ID'] = $checkListItemData['ENTITY_ID'];
+			$checkListItemData['TASK_ID'] = ($checkListItemData['ENTITY_ID'] ?? null);
 			unset($checkListItemData['ENTITY_ID']);
 		}
 

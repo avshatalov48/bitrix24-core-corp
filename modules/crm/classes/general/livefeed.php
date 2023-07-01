@@ -2,7 +2,7 @@
 
 IncludeModuleLangFile(__FILE__);
 
-use Bitrix\Crm\Binding\EntityBinding;
+use Bitrix\Crm\Activity\Provider\Tasks\Task;
 use Bitrix\Crm\Comparer\ComparerBase;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\Service\Container;
@@ -2596,16 +2596,24 @@ class CCrmLiveFeed
 						[],
 						[
 							'ID' => (int)$logFields['ENTITY_ID'],
-							'TYPE_ID' => \CCrmActivityType::Task,
 							'CHECK_PERMISSIONS' => 'N'
 						],
 						false,
 						false,
-						[ 'ID' ]
+						['ID', 'TYPE_ID', 'PROVIDER_ID']
 					);
-					if ($res->fetch())
+					if ($activityFields = $res->fetch())
 					{
-						$process = false;
+						if (
+							$activityFields['TYPE_ID'] === \CCrmActivityType::Task
+							|| (
+								$activityFields['TYPE_ID'] === \CCrmActivityType::Provider
+								&& $activityFields['PROVIDER_ID'] === Task::getId()
+							)
+						)
+						{
+							$process = false;
+						}
 					}
 				}
 			}
@@ -2882,7 +2890,7 @@ class CCrmLiveFeed
 			'TITLE' => $title,
 			'MESSAGE' => $message,
 			'TEXT_MESSAGE' => '',
-			'MODULE_ID' => ($eventID === 'crm_activity_add' && isset($options['ACTIVITY_PROVIDER_ID']) && $options['ACTIVITY_PROVIDER_ID'] === 'TASKS' ? 'crm_shared' : 'crm'),
+			'MODULE_ID' => ($eventID === 'crm_activity_add' && isset($options['ACTIVITY_PROVIDER_ID']) && ($options['ACTIVITY_PROVIDER_ID'] === \Bitrix\Crm\Activity\Provider\Task::getId() || $options['ACTIVITY_PROVIDER_ID'] === Task::getId()) ? 'crm_shared' : 'crm'),
 			'CALLBACK_FUNC' => false,
 			'ENABLE_COMMENTS' => 'Y',
 			'PARAMS' => is_array($params) && !empty($params) ? serialize($params) : '',
@@ -4203,7 +4211,23 @@ class CCrmLiveFeed
 		$arCrmActivity = $dbCrmActivity->Fetch();
 		if (!$arCrmActivity)
 		{
-			return;
+			$dbCrmActivity = CCrmActivity::GetList(
+				[],
+				[
+					'TYPE_ID' => CCrmActivityType::Provider,
+					'PROVIDER_ID' => Task::getId(),
+					'ASSOCIATED_ENTITY_ID' => $taskId,
+					'CHECK_PERMISSIONS' => 'N',
+				],
+				false,
+				false,
+				['ID']
+			);
+			$arCrmActivity = $dbCrmActivity->Fetch();
+			if (!$arCrmActivity)
+			{
+				return;
+			}
 		}
 
 		$crmActivityId = $arCrmActivity['ID'];
@@ -4338,7 +4362,13 @@ class CCrmLiveFeed
 			if ($arCrmActivity = $dbCrmActivity->Fetch())
 			{
 				if (
-					$arCrmActivity['TYPE_ID'] == CCrmActivityType::Task
+					(
+						$arCrmActivity['TYPE_ID'] == CCrmActivityType::Task
+						|| (
+							(int)$arCrmActivity['TYPE_ID'] === CCrmActivityType::Provider
+							&& $arCrmActivity['PROVIDER_ID'] === \Bitrix\Crm\Activity\Provider\Tasks\Task::getId()
+						)
+					)
 					&& CModule::IncludeModule('tasks')
 				)
 				{

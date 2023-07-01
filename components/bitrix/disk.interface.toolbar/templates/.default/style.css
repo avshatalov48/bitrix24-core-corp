@@ -54,7 +54,7 @@ div.bx-disk-interface-toolbar.bx-filepage{
 .bx-disk-interface-toolbar label.bx-disk-context-button form {
 	display: none; opacity:0;
 }
-.bx-ie8 .bx-disk-interface-toolbar label.bx-disk-context-button form,
+
 .bx-opera .bx-disk-interface-toolbar label.bx-disk-context-button form { display:block !important;}
 .bx-disk-context-button-icon{
 	line-height:20px;
@@ -114,10 +114,7 @@ div.bx-disk-interface-toolbar.bx-filepage{
 	right: 0;
 	left: 0;
 }
-.bx-ie8 .bx-disk-context-button input {
-	left: auto;
-	bottom: auto;
-}
+
 /*Bread Crumbs*/
 .bx-disk-interface-bread-crumbs{
 	-webkit-box-sizing:border-box;

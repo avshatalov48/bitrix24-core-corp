@@ -59,4 +59,4 @@ $MESS["BX_LIVECHAT_VOTE_MINUS"] = "Dislike";
 $MESS["BX_LIVECHAT_VOTE_MINUS_TITLE"] = "We are sorry we could not help you. Your opinion will help us improve our service.";
 $MESS["BX_LIVECHAT_VOTE_PLUS"] = "Like";
 $MESS["BX_LIVECHAT_VOTE_PLUS_TITLE"] = "Thank you!";
-$MESS["BX_LIVECHAT_VOTE_TITLE"] = "Please tell us how we did.";
+$MESS["BX_LIVECHAT_VOTE_TITLE"] = "Please tell us how we did";

@@ -54,10 +54,10 @@ class GroupStepper extends Stepper
 				return !$this->isQueueEmpty();
 			}
 
-			$executiveUserId = ($queueOption["executiveUserId"] ?: 0);
-			$groupId = ($queueOption["groupId"] ?: 0);
-			$copiedGroupId = ($queueOption["copiedGroupId"] ?: 0);
-			$errorOffset = ($queueOption["errorOffset"] ?: 0);
+			$executiveUserId = ($queueOption["executiveUserId"] ?? 0);
+			$groupId = ($queueOption["groupId"] ?? 0);
+			$copiedGroupId = ($queueOption["copiedGroupId"] ?? 0);
+			$errorOffset = ($queueOption["errorOffset"] ?? 0);
 
 			$limit = 3;
 			$offset = $this->getOffset($executiveUserId, $copiedGroupId) + $errorOffset;
@@ -66,10 +66,10 @@ class GroupStepper extends Stepper
 			$count = count($tasksIds);
 			$tasksIds = array_slice($tasksIds, $offset, $limit);
 
-			$mapIdsCopiedStages = ($queueOption["mapIdsCopiedStages"] ?: []);
-			$mapIdsCopiedTasks = ($queueOption["mapIdsCopiedTasks"] ?: []);
-			$features = ($queueOption["features"] ?: []);
-			$projectTerm = $queueOption["projectTerm"] ?: [];
+			$mapIdsCopiedStages = ($queueOption["mapIdsCopiedStages"] ?? []);
+			$mapIdsCopiedTasks = ($queueOption["mapIdsCopiedTasks"] ?? []);
+			$features = ($queueOption["features"] ?? []);
+			$projectTerm = $queueOption["projectTerm"] ?? [];
 
 			if ($tasksIds)
 			{

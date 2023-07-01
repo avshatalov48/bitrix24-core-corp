@@ -102,8 +102,8 @@ final class ElapsedTimeTable extends \Bitrix\Tasks\ElapsedTimeTable
 				$found = array();
 				if(preg_match('#^([A-Z0-9_]+)_((MAX|MIN|SUM|COUNT|AVG){1})$#', $key, $found) !== false)
 				{
-					$field = 	(string) $found[1];
-					$func = 	(string) $found[3];
+					$field = (string)($found[1] ?? null);
+					$func = (string)($found[3] ?? null);
 
 					if($field != '' && $func != '')
 					{

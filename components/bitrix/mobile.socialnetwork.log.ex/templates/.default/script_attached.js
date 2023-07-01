@@ -1512,20 +1512,21 @@ BitrixMSL.prototype.drawDetailPage = function(data)
 						)
 						{
 							RatingLike.Set(
-								ratingVoteId,
-								ratingVoteEntityTypeId,
-								ratingVoteEntityId,
-								'Y',
-								BX.message('USER_ID'),
 								{
-									LIKE_Y: BX.message('MOBILE_EXT_LIVEFEED_RATING_TEXT_LIKE_Y'),
-									LIKE_N: BX.message('MOBILE_EXT_LIVEFEED_RATING_TEXT_LIKE_Y'),
-									LIKE_D: BX.message('MOBILE_EXT_LIVEFEED_RATING_TEXT_LIKE_D'),
-								},
-								'like_react',
-								BX.message('MSLPathToUser'),
-								false,
-								true
+									likeId: ratingVoteId,
+									entityTypeId: ratingVoteEntityTypeId,
+									entityId: ratingVoteEntityId,
+									available: 'Y',
+									userId: BX.message('USER_ID'),
+									localize: {
+										LIKE_Y: BX.message('MOBILE_EXT_LIVEFEED_RATING_TEXT_LIKE_Y'),
+										LIKE_N: BX.message('MOBILE_EXT_LIVEFEED_RATING_TEXT_LIKE_Y'),
+										LIKE_D: BX.message('MOBILE_EXT_LIVEFEED_RATING_TEXT_LIKE_D'),
+									},
+									template: 'like_react',
+									pathToUserProfile: BX.message('MSLPathToUser'),
+									mobile: true
+								}
 							);
 						}
 					}

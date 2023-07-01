@@ -18,16 +18,26 @@ if (array_key_exists("COMPONENT_VERSION", $arParams) && $arParams["COMPONENT_VER
 
 	$arParams["ID"] = trim($arParams["ID"]);
 	if ($arParams["ID"] == '')
+	{
 		$arParams["ID"] = trim($_REQUEST["ID"]);
+	}
 	if ($arParams["ID"] == '')
+	{
 		$arParams["ID"] = trim($_REQUEST["id"]);
+	}
 
 	if ($arParams["ID"] == '')
+	{
 		$arResult["FatalErrorMessage"] .= GetMessage("BPABL_INVALID_WF").". ";
+	}
 
 	$arParams["SET_TITLE"] = ($arParams["SET_TITLE"] == "N" ? "N" : "Y"); //Turn on by default
 	$arParams["INLINE_MODE"] = ($arParams["INLINE_MODE"] == "Y" ? "Y" : "N");
-	$arResult["AJAX_MODE"] = $arParams["AJAX_MODE"] = ($arParams["AJAX_MODE"] == "N" ? "N" : "Y"); //Backward compatibility
+	$arResult['AJAX_MODE'] = $arParams['AJAX_MODE'] =
+		isset($arParams['AJAX_MODE']) && $arParams['AJAX_MODE'] == 'N'
+			? 'N'
+			: 'Y'
+	; //Backward compatibility
 
 	$arParams['NAME_TEMPLATE'] = empty($arParams['NAME_TEMPLATE']) ? COption::GetOptionString("bizproc", "name_template", CSite::GetNameFormat(false), SITE_ID) : str_replace(array("#NOBR#","#/NOBR#"), array("",""), $arParams["NAME_TEMPLATE"]);
 

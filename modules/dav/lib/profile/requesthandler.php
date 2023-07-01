@@ -13,7 +13,7 @@ use Bitrix\Main\Web\Json;
  */
 class RequestHandler
 {
-	protected static $validActions = array('payload', 'token');
+	protected static $validActions = ['payload', 'token'];
 
 	public $user;
 	protected $actionName;
@@ -30,8 +30,8 @@ class RequestHandler
 		$request = Context::getCurrent()->getRequest();
 		$this->user = $USER;
 		$action = $request->get('action');
-		$this->actionName = !empty($action) ? $action : '';
-		if (in_array($this->actionName, static::$validActions))
+		$this->actionName = $action ?? '';
+		if (in_array($this->actionName, static::$validActions, true))
 		{
 			switch ($this->actionName)
 			{
@@ -45,26 +45,34 @@ class RequestHandler
 		}
 	}
 
-
 	/**
-	 * @return true Write response (some error, token, or payload file).
+	 * @return true
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ArgumentNullException
+	 *
+	 * Write response (some error, token, or payload file).
 	 */
 	public function process()
 	{
 		$response = new HttpResponse();
 		if (!$this->getHandler() instanceof Base)
 		{
-			$response->addHeader('HTTP/1.0 404 Not Found');
-			$response->addHeader('Content-Type: application/json');
-			$response->addHeader('Content-Type: application/json');
-			$body = Json::encode(array('error_messages' => array($this->getNotAvailableActionErrorMessage())));
+			$response->setStatus(404);
+			$response->addHeader('Content-Type', 'application/json');
+			$body = Json::encode(['error_messages' => [$this->getNotAvailableActionErrorMessage()]]);
 		}
 		else
 		{
-			foreach ($this->getHandler()->getHeaders() as $header)
+			foreach ($this->getHandler()->getHeaders() as $name => $value)
 			{
-				$response->addHeader($header);
+				$response->addHeader($name, $value);
 			}
+
+			if ($this->getHandler()->getStatus())
+			{
+				$response->setStatus($this->getHandler()->getStatus());
+			}
+
 			$body = $this->getHandler()->getBody();
 		}
 

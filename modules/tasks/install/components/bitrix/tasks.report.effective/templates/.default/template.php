@@ -8,7 +8,7 @@ use Bitrix\Main\Web\Json;
 
 Extension::load(array("ui.graph.circle", "ui.buttons.icons", "ui.design-tokens", "ui.fonts.opensans"));
 
-$isIFrame = $_REQUEST['IFRAME'] == 'Y';
+$isIFrame = (isset($_REQUEST['IFRAME']) && $_REQUEST['IFRAME'] === 'Y');
 
 if (isset($arResult["ERROR"]) && !empty($arResult["ERROR"]))
 {
@@ -84,7 +84,7 @@ if ($isBitrix24Template)
 					"FILTER" => $arResult["FILTERS"],
 					"FILTER_PRESETS" => $arResult["PRESETS"],
 					"ENABLE_LABEL" => true,
-					'ENABLE_LIVE_SEARCH' => $arParams['USE_LIVE_SEARCH'] != 'N',
+					'ENABLE_LIVE_SEARCH' => (!isset($arParams['USE_LIVE_SEARCH']) || $arParams['USE_LIVE_SEARCH'] !== 'N'),
 					'RESET_TO_DEFAULT_MODE' => true,
 					'DISABLE_SEARCH'=>true,
 
@@ -185,10 +185,10 @@ if (isset($arResult['FILTERS']) && is_array($arResult['FILTERS']))
 		}
 
 		$selector = $filterItem['selector'];
-		$selectorType = isset($selector['TYPE']) ? $selector['TYPE'] : '';
-		$selectorData = isset($selector['DATA']) && is_array($selector['DATA']) ? $selector['DATA'] : null;
+		$selectorType = ($selector['TYPE'] ?? '');
+		$selectorData = (isset($selector['DATA']) && is_array($selector['DATA']) ? $selector['DATA'] : null);
 		$selectorData['MODE'] = $selectorType;
-		$selectorData['MULTI'] = $filterItem['params']['multiple'] && $filterItem['params']['multiple'] == 'Y';
+		$selectorData['MULTI'] = (isset($filterItem['params']['multiple']) && $filterItem['params']['multiple'] === 'Y');
 
 		if (!empty($selectorData) && $selectorType == 'user')
 		{

@@ -312,7 +312,7 @@ abstract class PrototypeItem extends Main\UserField\Internal\PrototypeItemDataMa
 				'=this.ID' => 'ref.ITEM_ID',
 			],
 			[
-				'join_type' => \Bitrix\Main\ORM\Query\Join::TYPE_INNER,
+				'join_type' => Join::TYPE_INNER,
 			]
 		);
 	}
@@ -325,7 +325,7 @@ abstract class PrototypeItem extends Main\UserField\Internal\PrototypeItemDataMa
 			return $result;
 		}
 
-		/** @var \Bitrix\Crm\Model\Dynamic\Item|null $item */
+		/** @var Item|null $item */
 		$item = $event->getParameter('object');
 		if (!$item)
 		{
@@ -444,6 +444,8 @@ abstract class PrototypeItem extends Main\UserField\Internal\PrototypeItemDataMa
 	{
 		$names = parent::getOwnFieldNames();
 		$names[\Bitrix\Crm\Item::FIELD_NAME_ASSIGNED] = \Bitrix\Crm\Item::FIELD_NAME_ASSIGNED;
+		$names[\Bitrix\Crm\Item::FIELD_NAME_LAST_ACTIVITY_TIME] = \Bitrix\Crm\Item::FIELD_NAME_LAST_ACTIVITY_TIME;
+		$names[\Bitrix\Crm\Item::FIELD_NAME_LAST_ACTIVITY_BY] = \Bitrix\Crm\Item::FIELD_NAME_LAST_ACTIVITY_BY;
 		$names[\Bitrix\Crm\Item\SmartInvoice::FIELD_NAME_COMMENTS] = \Bitrix\Crm\Item\SmartInvoice::FIELD_NAME_COMMENTS;
 		$names[\Bitrix\Crm\Item\SmartInvoice::FIELD_NAME_ACCOUNT_NUMBER] = \Bitrix\Crm\Item\SmartInvoice::FIELD_NAME_ACCOUNT_NUMBER;
 		$names[\Bitrix\Crm\Item\SmartInvoice::FIELD_NAME_LOCATION_ID] = \Bitrix\Crm\Item\SmartInvoice::FIELD_NAME_LOCATION_ID;
@@ -456,7 +458,7 @@ abstract class PrototypeItem extends Main\UserField\Internal\PrototypeItemDataMa
 	{
 		$result = parent::onBeforeAdd($event);
 
-		/** @var \Bitrix\Crm\Model\Dynamic\Item $item */
+		/** @var Item $item */
 		$item = $event->getParameter('object');
 		$factory = static::getFactory();
 		if ($factory && empty($item->getStageId()))

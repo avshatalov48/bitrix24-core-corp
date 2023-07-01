@@ -1,21 +1,29 @@
-<?php if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+<?php
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\UI\Extension;
 
-\Bitrix\Main\UI\Extension::load('ui.fonts.opensans');
-\Bitrix\Main\UI\Extension::load('ui.cnt');
+Extension::load(['ui.fonts.opensans', 'ui.cnt']);
 
-if ($arParams['IS_AJAX'] == 'Y')
+if ($arParams['IS_AJAX'] === 'Y')
 {
-	echo '<link rel="stylesheet" type="text/css" href="', $this->getFolder(), '/style.css?5" />';
-	echo '<script type="text/javascript" src="', $this->getFolder(), '/script.js?v13"></script>';
+	echo '<link rel="stylesheet" type="text/css" href="', $this->getFolder(), '/style.css?6" />';
+	echo '<script type="text/javascript" src="', $this->getFolder(), '/script.js?v14"></script>';
 }
 ?>
 
 <script type="text/javascript">
 	BX.message({
 		CRM_ACTIVITY_TODO_VIEW_TITLE: '<?= CUtil::JSEscape(Loc::getMessage('CRM_ACTIVITY_TODO_VIEW_TITLE'));?>',
-		CRM_ACTIVITY_TODO_CLOSE: '<?= CUtil::JSEscape(Loc::getMessage('CRM_ACTIVITY_TODO_CLOSE'));?>'
+		CRM_ACTIVITY_TODO_CLOSE: '<?= CUtil::JSEscape(Loc::getMessage('CRM_ACTIVITY_TODO_CLOSE'));?>',
+		CRM_ACTIVITY_TODO_OPENLINE_COMPLETE_CONF: '<?= CUtil::JSEscape(Loc::getMessage('CRM_ACTIVITY_TODO_OPENLINE_COMPLETE_CONF'));?>',
+		CRM_ACTIVITY_TODO_OPENLINE_COMPLETE_CONF_OK_TEXT: '<?= CUtil::JSEscape(Loc::getMessage('CRM_ACTIVITY_TODO_OPENLINE_COMPLETE_CONF_OK_TEXT'));?>',
+		CRM_ACTIVITY_TODO_OPENLINE_COMPLETE_CONF_TITLE: '<?= CUtil::JSEscape(Loc::getMessage('CRM_ACTIVITY_TODO_OPENLINE_COMPLETE_CONF_TITLE'));?>'
 	});
 	BX.ready(function()
 	{
@@ -54,7 +62,7 @@ if ($arParams['IS_AJAX'] == 'Y')
 		<div class="crm-activity-todo-item-left">
 			<input type="checkbox" id="check<?= $item['ID']?>" value="1" class="crm-activity-todo-check"<?= $item['COMPLETED']=='Y' ? ' checked="checked" disabled="disabled"' : ''?> />
 		</div>
-		<label class="crm-activity-todo-item-middle" for="check<?= $item['ID']?>">
+		<div class="crm-activity-todo-item-middle">
 			<?if (isset($item['DEADLINE']) && $item['DEADLINE'] != ''):?>
 			<div class="crm-activity-todo-date<?= $item['HIGH']=='Y' ? ' crm-activity-todo-date-alert' : ''?>"<?= $item['DEADLINED'] ? ' style="color: red"' : ''?> <?
 				?>title="<?= Loc::getMessage('CRM_ACTIVITY_TODO_DEADLINE')?><?= $item['HIGH']=='Y' ? ' '.Loc::getMessage('CRM_ACTIVITY_TODO_HOT') : ''?>">
@@ -65,35 +73,20 @@ if ($arParams['IS_AJAX'] == 'Y')
 				<?= $item['START_TIME']?>
 			</div>
 			<?endif;?>
-			<?if ($item['DETAIL_EXIST']):?>
-				<a href="<?= $uriView->getUri();?>" data-id="<?= $item['ID']?>" class="crm-activity-todo-link">
-					<span class="crm-activity-todo-link-txt"><?= $item['SUBJECT']?></span>
-					<?if ($item['IS_INCOMING_CHANNEL']) {?>
-					<span data-counter data-counter-type="success"></span>
-					<?
-					}
-					if ($item['DEADLINED']) {
-					?>
-						<span data-counter data-counter-type="danger"></span>
-					<?
-					}
-					?>
-				</a>
-			<?else:?>
-				<span data-id="<?= $item['ID']?>" class="crm-activity-todo-link">
-					<span class="crm-activity-todo-link-txt"><?= $item['SUBJECT']?></span>
-					<?if ($item['IS_INCOMING_CHANNEL']) {?>
-						<span data-counter data-counter-type="success"></span>
-						<?
-					}
-					if ($item['DEADLINED']) {
-						?>
-						<span data-counter data-counter-type="danger"></span>
-						<?
-					}
-					?>
-				</span>
-			<?endif;?>
+			<span data-id="<?= $item['ID']?>" class="crm-activity-todo-link<?if ($item['DETAIL_EXIST']) {?> --active<? } ;?>">
+				<span class="crm-activity-todo-link-txt"><?= $item['SUBJECT']?></span>
+				<?if ($item['IS_INCOMING_CHANNEL']) {?>
+				<span data-counter data-counter-type="success"></span>
+				<?
+				}
+				if ($item['DEADLINED']) {
+				?>
+					<span data-counter data-counter-type="danger"></span>
+				<?
+				}
+				?>
+			</span>
+
 			<?if (!empty($item['CONTACTS'])):?>
 			<div class="crm-activity-todo-info">
 				<?= Loc::getMessage('CRM_ACTIVITY_TODO_CONTACT')?>:
@@ -102,7 +95,7 @@ if ($arParams['IS_AJAX'] == 'Y')
 				<?endforeach;?>
 			</div>
 			<?endif;?>
-		</label>
+		</div>
 		<?if ($item['ICON'] == 'no'):?>
 		<div class="crm-activity-todo-item-right-nopadding">
 			<div class="crm-activity-todo-event crm-activity-todo-event-no">

@@ -583,7 +583,7 @@ else
 
 								?>
 									<tr>
-										<td class="task-detail-info-layout-name"><?php echo GetMessage("TASKS_MARK")?>:</td>
+										<td class="task-detail-info-layout-name"><?php echo GetMessage("TASKS_MARK_MSGVER_1")?>:</td>
 										<td class="task-detail-info-layout-value task-detail-grade-value"><span
 											class="task-detail-grade<?php
 												if($arResult["TASK"]["MARK"] == "P")

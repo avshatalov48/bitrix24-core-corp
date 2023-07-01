@@ -1,79 +1,83 @@
-<?
+<?php
+
 namespace Bitrix\Crm\Integration\Main\UISelector;
 
+use Bitrix\Main\DB;
 use Bitrix\Main\Localization\Loc;
+use CCrmProduct;
+use CDBResult;
+use CFile;
 
-class CrmProducts extends \Bitrix\Main\UI\Selector\EntityBase
+class CrmProducts extends CrmBase
 {
-	const PREFIX_SHORT = 'PROD_';
-	const PREFIX_FULL = 'CRMPRODUCT';
+	public const PREFIX_SHORT = 'PROD_';
+	public const PREFIX_FULL = 'CRMPRODUCT';
 
-	private static function getPrefix($options = [])
+	protected static function getHandlerType()
 	{
-		return (
-			is_array($options)
-			&& isset($options['prefixType'])
-			&& mb_strtolower($options['prefixType']) == 'short'
-				? self::PREFIX_SHORT
-				: self::PREFIX_FULL
-		);
+		return Handler::ENTITY_TYPE_CRMPRODUCTS;
 	}
 
-	private static function prepareEntity($data, $options = [])
+	protected static function prepareEntity($data, $options = [])
 	{
 		$img = '';
-		$imgId = $data['PREVIEW_PICTURE'] ? $data['PREVIEW_PICTURE'] : $data['DETAIL_PICTURE'];
+		$imgId = $data['PREVIEW_PICTURE'] ?? $data['DETAIL_PICTURE'];
 		if ($imgId)
 		{
-			$img = \CFile::ResizeImageGet($imgId, ['width' => 100, 'height' => 100], BX_RESIZE_IMAGE_EXACT)['src'];
+			$img = CFile::ResizeImageGet($imgId, ['width' => 100, 'height' => 100], BX_RESIZE_IMAGE_EXACT)['src'];
 		}
 
-		$prefix = self::getPrefix($options);
-		$result = [
-			'id' => $prefix.$data['ID'],
+		$prefix = static::getPrefix($options);
+
+		return [
+			'id' => $prefix . $data['ID'],
 			'entityType' => 'products',
 			'entityId' => $data['ID'],
 			'name' => htmlspecialcharsbx($data['NAME']),
 			'avatar' => $img,
-			'desc' => \CCrmProduct::formatPrice($data)
+			'desc' => CCrmProduct::formatPrice($data)
 		];
-
-		return $result;
 	}
 
-	public function getData($params = array())
+	public function getData($params = [])
 	{
 		$options = (!empty($params['options']) ? $params['options'] : []);
 
-		$entityType = Handler::ENTITY_TYPE_CRMPRODUCTS;
+		$entityType = static::getHandlerType();
 
-		$result = array(
-			'ITEMS' => array(),
-			'ITEMS_LAST' => array(),
-			'ITEMS_HIDDEN' => array(),
-			'ADDITIONAL_INFO' => array(
-				'GROUPS_LIST' => array(
-					'crmproducts' => array(
+		$result = [
+			'ITEMS' => [],
+			'ITEMS_LAST' => [],
+			'ITEMS_HIDDEN' => [],
+			'ADDITIONAL_INFO' => [
+				'GROUPS_LIST' => [
+					'crmproducts' => [
 						'TITLE' => Loc::getMessage('MAIN_UI_SELECTOR_TITLE_CRMPRODUCTS'),
 						'TYPE_LIST' => [ $entityType ],
 						'DESC_LESS_MODE' => 'N',
-						'SORT' => 70
-					)
-				),
-				'SORT_SELECTED' => 400
-			)
-		);
+						'SORT' => 70,
+					],
+				],
+				'SORT_SELECTED' => 400,
+			],
+		];
 
-		$entityOptions = (!empty($params['options']) ? $params['options'] : array());
-		$prefix = self::getPrefix($entityOptions);
+		$entityOptions = (!empty($params['options']) ? $params['options'] : []);
+		$prefix = static::getPrefix($entityOptions);
 
-		$lastItems = (!empty($params['lastItems']) ? $params['lastItems'] : array());
-		$selectedItems = (!empty($params['selectedItems']) ? $params['selectedItems'] : array());
+		$lastItems = (!empty($params['lastItems']) ? $params['lastItems'] : []);
+		$selectedItems = (!empty($params['selectedItems']) ? $params['selectedItems'] : []);
 
 		$lastProductsIdList = [];
 		if(!empty($lastItems[$entityType]))
 		{
-			$result["ITEMS_LAST"] = array_map(function($code) use ($prefix) { return preg_replace('/^'.self::PREFIX_FULL.'(\d+)$/', $prefix.'$1', $code); }, array_values($lastItems[$entityType]));
+			$result["ITEMS_LAST"] = array_map(
+				function($code) use ($prefix)
+				{
+					return preg_replace('/^'.self::PREFIX_FULL . '(\d+)$/', $prefix . '$1', $code);
+				},
+				array_values($lastItems[$entityType])
+			);
 			foreach ($lastItems[$entityType] as $value)
 			{
 				$lastProductsIdList[] = str_replace(self::PREFIX_FULL, '', $value);
@@ -91,20 +95,18 @@ class CrmProducts extends \Bitrix\Main\UI\Selector\EntityBase
 		}
 
 		$productsIdList = array_merge($selectedProductsIdList, $lastProductsIdList);
-		$productsIdList = array_slice($productsIdList, 0, count($selectedProductsIdList) > 50 ? count($selectedProductsIdList) : 50);
+		$productsIdList = array_slice($productsIdList, 0, max(count($selectedProductsIdList), 50));
 		$productsIdList = array_filter($productsIdList);
 		$productsIdList = array_unique($productsIdList);
 
 		$productsList = [];
 
-		$filter = [
-			'ACTIVE' => 'Y'
-		];
+		$filter = ['ACTIVE' => 'Y'];
 		$order = [ 'ID' => 'DESC' ];
 
-		$select = [ 'ID', 'NAME', 'PRICE', 'CURRENCY_ID', 'DETAIL_PICTURE', 'PREVIEW_PICTURE' ];
+		$select = $this->getSearchSelect();
 		$pricesSelect = $vatSelect = [];
-		$select = \CCrmProduct::distributeProductSelect($select, $pricesSelect, $vatSelect);
+		$select = CCrmProduct::distributeProductSelect($select, $pricesSelect, $vatSelect);
 
 		if ($options['addTab'] == 'Y')
 		{
@@ -113,7 +115,7 @@ class CrmProducts extends \Bitrix\Main\UI\Selector\EntityBase
 			$extraLimit = $limit - count($productsIdList);
 			if ($extraLimit > 0)
 			{
-				$extraRes = \CCrmProduct::getList(
+				$extraRes = CCrmProduct::getList(
 					$order,
 					$filter,
 					['ID'],
@@ -140,7 +142,7 @@ class CrmProducts extends \Bitrix\Main\UI\Selector\EntityBase
 			}
 		}
 
-		$res = \CCrmProduct::getList(
+		$res = CCrmProduct::getList(
 			$order,
 			$filter,
 			$select,
@@ -164,15 +166,15 @@ class CrmProducts extends \Bitrix\Main\UI\Selector\EntityBase
 			$products[$productFields['ID']] = $productFields;
 			if (in_array($productFields['ID'], $productsIdList) || empty($productsIdList))
 			{
-				$itemsLastIdList[] = $prefix.$productFields['ID'];
+				$itemsLastIdList[] = $prefix . $productFields['ID'];
 			}
 		}
-		\CCrmProduct::obtainPricesVats($products, $realProductsIdList, $pricesSelect, $vatSelect);
+		CCrmProduct::obtainPricesVats($products, $realProductsIdList, $pricesSelect, $vatSelect);
 		unset($productsIdList, $pricesSelect, $vatSelect);
 
 		foreach ($products as $product)
 		{
-			$productsList[$prefix.$product['ID']] = self::prepareEntity($product, $entityOptions);
+			$productsList[$prefix . $product['ID']] = static::prepareEntity($product, $entityOptions);
 		}
 
 		if (empty($lastProductsIdList))
@@ -196,29 +198,29 @@ class CrmProducts extends \Bitrix\Main\UI\Selector\EntityBase
 			&& $options['addTab'] == 'Y'
 		)
 		{
-			$result = array(
-				array(
+			$result = [
+				[
 					'id' => 'products',
 					'name' => Loc::getMessage('MAIN_UI_SELECTOR_TAB_CRMPRODUCTS'),
-					'sort' => 70
-				)
-			);
+					'sort' => 70,
+				],
+			];
 		}
 
 		return $result;
 	}
 
-	public function search($params = array())
+	public function search($params = [])
 	{
-		$result = array(
-			'ITEMS' => array(),
-			'ADDITIONAL_INFO' => array()
-		);
+		$result = [
+			'ITEMS' => [],
+			'ADDITIONAL_INFO' => [],
+		];
 
-		$entityOptions = (!empty($params['options']) ? $params['options'] : array());
-		$requestFields = (!empty($params['requestFields']) ? $params['requestFields'] : array());
+		$entityOptions = (!empty($params['options']) ? $params['options'] : []);
+		$requestFields = (!empty($params['requestFields']) ? $params['requestFields'] : []);
 		$search = $requestFields['searchString'];
-		$prefix = self::getPrefix($entityOptions);
+		$prefix = static::getPrefix($entityOptions);
 
 		if (
 			$search <> ''
@@ -228,16 +230,18 @@ class CrmProducts extends \Bitrix\Main\UI\Selector\EntityBase
 			)
 		)
 		{
-			$filter = [
-				'%NAME' => $search,
-				'ACTIVE' => 'Y'
-			];
+			$filter = $this->getSearchFilter($search, $entityOptions);
 
-			$select = array('ID', 'NAME', 'PRICE', 'CURRENCY_ID', 'DETAIL_PICTURE', 'PREVIEW_PICTURE');
+			if ($filter === false)
+			{
+				return $result;
+			}
+
+			$select = $this->getSearchSelect();
 			$pricesSelect = $vatSelect = [];
-			$select = \CCrmProduct::distributeProductSelect($select, $pricesSelect, $vatSelect);
-			$res = \CCrmProduct::getList(
-				[ 'ID' => 'DESC' ],
+			$select = CCrmProduct::distributeProductSelect($select, $pricesSelect, $vatSelect);
+			$res = CCrmProduct::getList(
+				$this->getSearchOrder(),
 				$filter,
 				$select,
 				50
@@ -258,44 +262,97 @@ class CrmProducts extends \Bitrix\Main\UI\Selector\EntityBase
 				$products[$productFields['ID']] = $productFields;
 			}
 
-			if (
-				!empty($entityOptions['searchById'])
-				&& $entityOptions['searchById'] == 'Y'
-				&& intval($search) == $search
-				&& intval($search) > 0
-			)
-			{
-				$res = \CCrmProduct::getList(
-					[ 'ID' => 'DESC' ],
-					[
-						'=ID' => intval($search)
-					],
-					$select,
-					1
-				);
-
-				while ($productFields = $res->fetch())
-				{
-					foreach ($pricesSelect as $fieldName)
-					{
-						$productFields[$fieldName] = null;
-					}
-					foreach ($vatSelect as $fieldName)
-					{
-						$productFields[$fieldName] = null;
-					}
-					$productsIdList[] = $productFields['ID'];
-					$products[$productFields['ID']] = $productFields;
-				}
-			}
-
-			\CCrmProduct::obtainPricesVats($products, $productsIdList, $pricesSelect, $vatSelect);
+			CCrmProduct::obtainPricesVats($products, $productsIdList, $pricesSelect, $vatSelect);
 			unset($productsIdList, $pricesSelect, $vatSelect);
 
+			$resultItems = [];
 			foreach ($products as $product)
 			{
-				$result["ITEMS"][$prefix.$product['ID']] = self::prepareEntity($product, $entityOptions);
+				$resultItems[$prefix . $product['ID']] = static::prepareEntity($product, $entityOptions);
 			}
+
+			$resultItems = $this->appendItemsByIds($resultItems, $search, $entityOptions);
+
+			$resultItems = $this->processResultItems($resultItems, $entityOptions);
+
+			$result["ITEMS"] = $resultItems;
+		}
+
+		return $result;
+	}
+
+	protected function getSearchOrder(): array
+	{
+		return [ 'ID' => 'DESC' ];
+	}
+
+	protected function getSearchSelect(): array
+	{
+		return [
+			'ID',
+			'NAME',
+			'PRICE',
+			'CURRENCY_ID',
+			'DETAIL_PICTURE',
+			'PREVIEW_PICTURE',
+		];
+	}
+
+	protected function getSearchFilter(string $search, array $options)
+	{
+		$filter = [
+			'%NAME' => $search,
+			'ACTIVE' => 'Y'
+		];
+
+		return $this->prepareOptionalFilter($filter, $options);
+	}
+
+	protected function getByIdsFilter(array $ids, array $options): array
+	{
+		return $this->prepareOptionalFilter(['ID' => $ids], $options);
+	}
+
+	protected function getByIdsRes(array $ids, array $options)
+	{
+		return null;
+	}
+
+	protected function getByIdsResultItems(array $ids, array $options): array
+	{
+		$result = [];
+
+		$prefix = static::getPrefix($options);
+		$select = $this->getSearchSelect();
+		$pricesSelect = [];
+		$vatSelect = [];
+		$select = CCrmProduct::distributeProductSelect($select, $pricesSelect, $vatSelect);
+		$res = CCrmProduct::getList(
+			$this->getByIdsOrder(),
+			$this->getByIdsFilter($ids, $options),
+			$select
+		);
+
+		$products = [];
+		while ($productFields = $res->fetch())
+		{
+			foreach ($pricesSelect as $fieldName)
+			{
+				$productFields[$fieldName] = null;
+			}
+			foreach ($vatSelect as $fieldName)
+			{
+				$productFields[$fieldName] = null;
+			}
+			$products[$productFields['ID']] = $productFields;
+		}
+
+		CCrmProduct::obtainPricesVats($products, $ids, $pricesSelect, $vatSelect);
+		unset($pricesSelect, $vatSelect);
+
+		foreach ($products as $product)
+		{
+			$result[$prefix . $product['ID']] = static::prepareEntity($product, $options);
 		}
 
 		return $result;

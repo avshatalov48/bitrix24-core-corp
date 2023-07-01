@@ -12,6 +12,7 @@ import Backend from "../backend";
 import ItemAdminCustom from "../items/item-admin-custom";
 import {Menu, MenuItem} from 'main.popup';
 import ItemGroup from "../items/item-group";
+import {Reflection} from 'main.core';
 
 export default class ItemsController extends DefaultController{
 	parentContainer: Element;
@@ -494,7 +495,12 @@ export default class ItemsController extends DefaultController{
 			const visibleValue = (this.#updateCountersLastValue > 99 ? '99+' : (
 				this.#updateCountersLastValue < 0 ? '0' : this.#updateCountersLastValue
 			));
-			BXIM.desktop.setBrowserIconBadge(visibleValue);
+
+			const desktop = Reflection.getClass('BXIM.desktop');
+			if (desktop)
+			{
+				desktop.setBrowserIconBadge(visibleValue);
+			}
 		}
 	}
 

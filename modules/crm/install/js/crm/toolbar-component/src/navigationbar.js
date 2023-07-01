@@ -27,6 +27,13 @@ export default class NavigationBar extends NavigationPanel
 				item.active = item.isActive;
 			}
 
+			if (Type.isStringFilled(item.lockedCallback))
+			{
+				item.locked = true;
+				item.url = '';
+				item.events = {click: () => eval(item.lockedCallback)}
+			}
+
 			if (Type.isStringFilled(item.url))
 			{
 				item.events = {click: () => this.openUrl(item.id, item.url)}

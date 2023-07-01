@@ -261,10 +261,13 @@ class Document extends Base
 		{
 			CreationMethod::markDocumentAsCreatedByPublic($document);
 		}
-		$stampsEnabled = (int) $stampsEnabled;
 		if($stampsEnabled === null)
 		{
 			$stampsEnabled = ($template->WITH_STAMPS === 'Y' ? 1 : 0);
+		}
+		else
+		{
+			$stampsEnabled = (int) $stampsEnabled;
 		}
 		$result = $document->enableStamps($stampsEnabled === 1)->setValues($values)->setFields($fields)->getFile(true, $this->getScope() === static::SCOPE_REST);
 		if(!$result->isSuccess())
@@ -398,10 +401,12 @@ class Document extends Base
 		]);
 		while($document = $documentList->fetch())
 		{
-			$document['DOWNLOAD_URL'] = $this->getDocumentFileLink($document['ID'], 'getfile', $document['updateTime']);
-			$document['PDF_URL'] = $this->getDocumentFileLink($document['ID'], 'getpdf', $document['updateTime']);
-			$document['IMAGE_URL'] = $this->getDocumentFileLink($document['ID'], 'getimage', $document['updateTime']);
-			$values = $document['VALUES'];
+			$updateTime = $document['UPDATE_TIME'] ?? null;
+
+			$document['DOWNLOAD_URL'] = $this->getDocumentFileLink($document['ID'], 'getfile', $updateTime);
+			$document['PDF_URL'] = $this->getDocumentFileLink($document['ID'], 'getpdf', $updateTime);
+			$document['IMAGE_URL'] = $this->getDocumentFileLink($document['ID'], 'getimage', $updateTime);
+			$values = $document['VALUES'] ?? null;
 			$document = $this->convertKeysToCamelCase($document);
 			$document['values'] = $values;
 			if(isset($values['stampsEnabled']) && $values['stampsEnabled'])

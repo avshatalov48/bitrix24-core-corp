@@ -147,7 +147,7 @@ final class Version extends Internals\Model
 	{
 		$this->errorCollection->clear();
 
-		$forkFileId = \CFile::copyFile($this->getFileId(), true);
+		$forkFileId = \CFile::CloneFile($this->getFileId());
 		if (!$forkFileId)
 		{
 			$this->errorCollection[] = new Error('Could not copy file.', self::ERROR_COULD_NOT_CREATE_NEW_FILE);

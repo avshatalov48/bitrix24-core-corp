@@ -13,8 +13,15 @@ $MESS["TAB_NAME_NOTIFY"] = "Уведомления";
 $MESS["TAB_NAME_STREAM"] = "Живая лента";
 $MESS["TAB_NAME_NEWS"] = "Новости";
 $MESS["TAB_NAME_NEWS_SHORT"] = "Новости";
+$MESS["TAB_NAME_CALENDAR"] = "Календарь";
+$MESS["TAB_NAME_CALENDAR_SHORT"] = "Календарь";
+$MESS["TAB_NAME_PROJECTS"] = "Проекты";
+$MESS["TAB_NAME_PROJECTS_SHORT"] = "Проекты";
 
 $MESS["TAB_NAME_CRM"] = "CRM";
+$MESS["TAB_NAME_TERMINAL"] = "Терминал";
+$MESS["TAB_NAME_CATALOG_STORE"] = "Складской учёт";
+$MESS["TAB_NAME_CATALOG_STORE_SHORT"] = "Склады";
 
 $MESS['TASKS_ROLE_VIEW_ALL'] = 'Все задачи';
 $MESS['TASKS_ROLE_RESPONSIBLE'] = 'Делаю';

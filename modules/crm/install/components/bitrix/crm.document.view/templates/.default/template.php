@@ -224,10 +224,7 @@ endif;
 					);
 				?></div>
 				<?php if ($arResult['isSigningEnabled'] ?? false):
-					if ($isSigningEnabledInCurrentTariff)
-					{
-						echo \Bitrix\Crm\Tour\Sign\SignDocumentFromSlider::getInstance()->build();
-					}
+					echo \Bitrix\Crm\Tour\Sign\SignDocumentFromSlider::getInstance()->build();
 					?>
 					<div class="crm__document-view--sidebar-section">
 						<div class="crm__document-view--sidebar-control" id="crm-document-sign">

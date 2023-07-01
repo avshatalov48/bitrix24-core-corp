@@ -115,7 +115,8 @@ Class extranet extends CModule
 
 	function InstallFiles($arParams = array())
 	{
-		if($_ENV["COMPUTERNAME"]!='BX')
+		$computerName = $_ENV["COMPUTERNAME"] ?? '';
+		if ($computerName != 'BX')
 		{
 			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/extranet/install/components", $_SERVER["DOCUMENT_ROOT"]."/bitrix/components", True, True);
 			CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/extranet/install/gadgets", $_SERVER["DOCUMENT_ROOT"]."/bitrix/gadgets", True, True);
@@ -179,9 +180,15 @@ Class extranet extends CModule
 		elseif($step==2)
 		{
 			$APPLICATION->ResetException();
-			if ($this->UnInstallDB(array('admin' => 'Y', 'savedata' => $_REQUEST['savedata'])))
+			$saveData = $_REQUEST['savedata'] ?? null;
+			if (
+				$this->UnInstallDB([
+					'admin' => 'Y',
+					'savedata' => $saveData
+				])
+			)
 			{
-				if($_REQUEST["savedata"] != "Y")
+				if($saveData !== "Y")
 					$this->UnInstallEvents();
 
 				$this->UnInstallFiles();

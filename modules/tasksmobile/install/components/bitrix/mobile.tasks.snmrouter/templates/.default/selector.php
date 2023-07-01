@@ -21,9 +21,9 @@ $this->__component->arResult = $APPLICATION->IncludeComponent(
 	$arParams + array(
 		"MULTIPLE" => "N",
 		"FILTER" => $filter,
-		"PATH_TO_TASKS_TASK" => $arParams["PATH_TO_TASKS_TASK"],
+		"PATH_TO_TASKS_TASK" => ($arParams["PATH_TO_TASKS_TASK"] ?? null),
 		"PATH_TO_USER_TASKS_SELECTOR" => $arParams['PATH_TO_USER_TASKS_SELECTOR'],
-		"SELECT" => array('ID', 'TITLE', 'STATUS'),
+		"SELECT" => array('ID', 'TITLE', 'STATUS', 'REAL_STATUS'),
 	),
 	$this->__component
 );

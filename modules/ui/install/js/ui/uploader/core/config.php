@@ -56,7 +56,7 @@ return [
 		'imageMaxFileSize' => $defaultConfig->getImageMaxFileSize(),
 		'imageMinFileSize' => $defaultConfig->getImageMinFileSize(),
 		'acceptOnlyImages' => $defaultConfig->shouldAcceptOnlyImages(),
-		'acceptedFileTypes' => $defaultConfig->getAcceptedFileTypes(),
+		'acceptedFileTypes' => empty($defaultConfig->getAcceptedFileTypes()) ? null : $defaultConfig->getAcceptedFileTypes(),
 		'ignoredFileNames' => $defaultConfig->getIgnoredFileNames(),
 
 		'imageExtensions' => Configuration::getImageExtensions(),

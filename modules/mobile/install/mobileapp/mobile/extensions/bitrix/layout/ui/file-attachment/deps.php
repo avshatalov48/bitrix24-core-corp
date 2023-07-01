@@ -1,7 +1,11 @@
 <?php
 
 return [
-	'assets/common',
-	'layout/ui/file',
-	'utils/color',
+	'extensions' => [
+		'assets/common',
+		'layout/ui/file',
+		'utils/color',
+		'utils/function',
+		'loc',
+	],
 ];

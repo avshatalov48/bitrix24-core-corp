@@ -1,5 +1,10 @@
 <?php
+
 return [
-	'layout/ui/entity-editor/*',
-	'layout/ui/buttons-toolbar',
+	'extensions' => [
+		'layout/ui/entity-editor',
+		'layout/ui/entity-editor/model',
+		'layout/ui/entity-editor/config',
+		'layout/ui/entity-editor/scheme',
+	],
 ];

@@ -1,5 +1,9 @@
-<?require($_SERVER["DOCUMENT_ROOT"]."/bitrix/header.php");
+<?
+use Bitrix\Intranet\Integration\Wizards\Portal\Ids;
+
+require($_SERVER["DOCUMENT_ROOT"]."/bitrix/header.php");
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/public_bitrix24/docs/index.php");
+\CModule::IncludeModule('intranet');
 $APPLICATION->SetTitle(GetMessage("TITLE"));
 ?>
 <?
@@ -10,7 +14,7 @@ if ($diskEnabled && !isModuleInstalled('webdav'))
 	$APPLICATION->IncludeComponent("bitrix:disk.common", ".default", Array(
 			"SEF_MODE" => "Y",
 			"SEF_FOLDER" => "/docs",
-			"STORAGE_ID" => $GLOBAL_STORAGE_ID["shared_files"]
+			"STORAGE_ID" => Ids::getDiskStorageId('SHARED_STORAGE_ID'),
 		)
 	);
 }
@@ -18,7 +22,7 @@ else
 {
 	$APPLICATION->IncludeComponent("bitrix:webdav", ".default", Array(
 		"IBLOCK_TYPE"	=>	"library",
-		"IBLOCK_ID"	=>	$GLOBAL_IBLOCK_ID["shared_files"],//"#SHARED_FILES_IBLOCK_ID#",
+		"IBLOCK_ID"	=> Ids::getIblockId('shared_files'),//"#SHARED_FILES_IBLOCK_ID#",
 		"BASE_URL"	=>	"/docs/",
 		"NAME_FILE_PROPERTY"	=>	"FILE",
 		"USE_AUTH"	=>	"Y",
@@ -40,7 +44,7 @@ else
 		"UPLOAD_MAX_FILE"	=>	"4",
 		"SHOW_NAVIGATION" => "Y",
 		"USE_COMMENTS" => "Y",
-		"FORUM_ID" => $GLOBAL_FORUM_ID["DOCS_SHARED_COMMENTS"],//"#SHARED_FILES_FORUM_ID#",
+		"FORUM_ID" => Ids::getForumId('DOCS_SHARED_COMMENTS'),
 		"PATH_TO_SMILE" => "/bitrix/images/forum/smile/",
 		"SET_TITLE"	=>	"Y",
 		"DISPLAY_PANEL"	=>	"N",

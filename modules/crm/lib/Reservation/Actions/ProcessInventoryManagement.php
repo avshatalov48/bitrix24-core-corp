@@ -59,12 +59,6 @@ abstract class ProcessInventoryManagement extends Base
 			foreach ($itemProductRows as $productRow)
 			{
 				$productRows[$productRow->getId()] = $productRow->toArray();
-
-				$productReservation = $productRow->getProductRowReservation();
-				if ($productReservation)
-				{
-					$productRows[$productRow->getId()] += $productReservation->toArray();
-				}
 			}
 		}
 

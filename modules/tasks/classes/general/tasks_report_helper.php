@@ -11,6 +11,7 @@ if (!CModule::IncludeModule('report'))
 	return;
 
 use Bitrix\Main;
+use Bitrix\Tasks\Integration\Intranet\Department;
 use Bitrix\Tasks\Internals\Task\LabelTable;
 
 class CTasksReportHelper extends CReportHelper
@@ -443,23 +444,19 @@ class CTasksReportHelper extends CReportHelper
 				'=CREATED_BY' => $userId
 			);
 
-			$deptsPermSql = CTasks::GetSubordinateSql('__ULTRAUNIQUEPREFIX__');
+			$deptsPermSql = self::getSubordinateSql();
 
-			if($deptsPermSql <> '')
+			if(!empty($deptsPermSql))
 			{
-				$deptsPermSql = "EXISTS(".$deptsPermSql.")";
-				$deptsPermSql = str_replace('__ULTRAUNIQUEPREFIX__T.', $DB->escL.("tasks_task").$DB->escR.'.', $deptsPermSql);
-				$deptsPermSql = str_replace('__ULTRAUNIQUEPREFIX__', '', $deptsPermSql);
-
-				$runtime['IS_SUBORDINATED_TASK'] = array(
+				$runtime['IS_SUBORDINATED_TASK'] = [
 					'data_type' => 'integer',
-					'expression' => array("(CASE WHEN ".$deptsPermSql." THEN 1 ELSE 0 END)")
-				);
+					'expression' => [$deptsPermSql],
+				];
 
-				$permFilterDepts[] = array(
+				$permFilterDepts[] = [
 					'!RESPONSIBLE_ID' => $userId,
-					'=IS_SUBORDINATED_TASK' => 1
-				);
+					'=IS_SUBORDINATED_TASK' => 1,
+				];
 			}
 
 			$permFilter[] = $permFilterDepts;
@@ -1318,5 +1315,56 @@ class CTasksReportHelper extends CReportHelper
 		$arModuleVersion = array();
 		include($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/tasks/install/version.php");
 		return $arModuleVersion['VERSION'];
+	}
+
+	private static function getSubordinateSql(): string
+	{
+		$userId = $arParams['USER_ID'] ?? 0;
+		$departmentIds = Department::getSubordinateIds($userId, true);
+		$departmentIds = array_map('intval', $departmentIds);
+		if (count($departmentIds) <= 0)
+		{
+			return '';
+		}
+		$departmentOption = CUserTypeEntity::GetList([], [
+			'ENTITY_ID' => 'USER',
+			'FIELD_NAME' => 'UF_DEPARTMENT',
+		])->Fetch();
+
+		if (!$departmentOption)
+		{
+			return '';
+		}
+
+		$fieldId = (int)$departmentOption['ID'];
+		$departmentIds = implode(',', $departmentIds);
+		$sql = "
+			(CASE
+				WHEN EXISTS
+					(SELECT 'x'
+					FROM b_utm_user BUF1
+					WHERE BUF1.FIELD_ID = {$fieldId}
+					AND BUF1.VALUE_ID = `tasks_task`.RESPONSIBLE_ID
+					AND BUF1.VALUE_INT IN ({$departmentIds})
+					) THEN 1
+				WHEN EXISTS
+					(SELECT 'x'
+					FROM b_utm_user BUF2
+					WHERE BUF2.FIELD_ID = {$fieldId}
+					AND BUF2.VALUE_ID = `tasks_task`.CREATED_BY
+					AND BUF2.VALUE_INT IN ({$departmentIds})
+					) THEN 1
+				WHEN EXISTS
+					(SELECT 'x'
+					FROM b_utm_user BUF3
+					WHERE BUF3.FIELD_ID = {$fieldId}
+					AND EXISTS(SELECT 'x' FROM b_tasks_member DSTM WHERE DSTM.TASK_ID = `tasks_task`.ID AND DSTM.USER_ID = BUF3.VALUE_ID)
+					AND BUF3.VALUE_INT IN ({$departmentIds})
+				) THEN 1
+			ELSE 0
+			END)
+		";
+
+		return $sql;
 	}
 }

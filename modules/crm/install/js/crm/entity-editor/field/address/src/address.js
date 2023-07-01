@@ -33,6 +33,7 @@ export class EntityEditorAddressField extends BX.Crm.EntityEditorField
 		settings.showAddressTypeInViewMode = this._isMultiple; //for multiple addresses only
 		settings.addressZoneConfig = BX.prop.getObject(params, "addressZoneConfig", {});
 		settings.countryId = 0;
+		settings.defaultAddressTypeByCategory = BX.prop.getInteger(params, "defaultAddressTypeByCategory", 0);
 		this._field = EntityEditorBaseAddressField.create(id, settings);
 		this._field.setMultiple(this._isMultiple);
 		if (this._isMultiple)

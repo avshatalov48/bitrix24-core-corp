@@ -1,0 +1,186 @@
+/**
+ * @module calendar/layout/sharing-switcher
+ */
+jn.define('calendar/layout/sharing-switcher', (require, exports, module) => {
+
+	const { Loc } = require('loc');
+	const { Alert } = require('alert');
+	const { ModelSharingStatus } = require('calendar/model/sharing');
+	const { calendarColor, calendarGray } = require('calendar/assets/common');
+	const { BooleanField, BooleanMode } = require('layout/ui/fields/boolean');
+
+	/**
+	 * @class SharingSwitcher
+	 */
+	class SharingSwitcher extends LayoutComponent
+	{
+		constructor(props)
+		{
+			super(props);
+
+			const { stage1, stage2 } = this.props.layoutConfigDidMount().opacity
+
+			this.opacity1 = stage1;
+			this.opacity2 = stage2;
+		}
+
+		askChangeSharingOff()
+		{
+			return new Promise((resolve, reject) => {
+
+				if( this.props.isOn )
+				{
+					Alert.confirm(
+						'',
+						Loc.getMessage('L_MS_CONFIRMATION_TEXT_1'),
+						[
+							{
+								type: 'cancel',
+								onPress: () => reject(),
+							},
+							{
+								text: BX.message('L_MS_CONFIRMATION_BUTTON_OK'),
+								type: 'destructive',
+								onPress: () => resolve(),
+							},
+						],
+					);
+				}
+				else
+				{
+					resolve()
+				}
+
+			});
+		}
+
+		render()
+		{
+			return View(
+				{
+					style: {
+						paddingLeft: 20,
+						paddingRight: 7,
+						marginBottom: 20,
+						display: 'flex',
+						flexDirection: 'row',
+						justifyContent: 'space-between',
+						alignItems: 'flex-start',
+					},
+				},
+
+				View(
+					{
+						style: {
+							width: "70%",
+							borderWidth: 1,
+						},
+
+					},
+					View(
+						{
+							style: {
+								display: 'flex',
+								justifySelf: 'flex-start',
+							}
+						},
+
+						BooleanField({
+							readOnly: false,
+							showEditIcon: false,
+							showTitle: false,
+							value: this.props.isOn,
+							config: {
+								styles: {
+									fontSize: 18,
+									lineHeight: 21,
+									fontWeight: 200,
+									color: '#000',
+									activeToggleColor: '#9DCF00',
+								},
+								deepMergeStyles: {
+									description: {
+										fontSize: 18,
+										lineHeight: 21,
+										fontWeight: 200,
+										color: '#000',
+									},
+
+								},
+								description: Loc.getMessage('L_MS_SWITCHER'),
+							},
+							testId: 'sharingSwitcher',
+							onBeforeChange: () => this.askChangeSharingOff(),
+							onChange: (value) => this.props.onChange(value
+								? ModelSharingStatus.ENABLE
+								: ModelSharingStatus.DISABLE
+							),
+						})
+					),
+					View({
+							testId: 'sharingSwitcherDescription',
+							style: {},
+						},
+						Text(
+							{
+								style: {},
+								numberOfLines: 50,
+								text: Loc.getMessage('L_MS_DESCRIPTION'),
+							},
+						),
+					),
+				),
+				View(
+					{
+						style: {
+							minWidth: 123,
+							height: 100,
+							position: 'relative',
+						}
+					},
+					View(
+						{
+							testId: 'sharingSwitcherCalendarGray',
+							style: {
+								position: 'absolute',
+								top: 0,
+								left: 0,
+								opacity: this.opacity2,
+								flexBasis: 123,
+								minWidth: 123,
+								height: 100,
+								backgroundImageSvg: calendarGray,
+								backgroundRepeat: 'no-repeat',
+								backgroundSize: 'cover',
+							},
+							ref: (ref) => this.props.setRefLayout2(ref),
+						}
+					),
+					View(
+						{
+							testId: 'sharingSwitcherCalendarColor',
+							style: {
+								position: 'absolute',
+								top: 0,
+								left: 0,
+								opacity: this.opacity1,
+								flexBasis: 123,
+								minWidth: 123,
+								height: 100,
+								backgroundImageSvg: calendarColor,
+								backgroundRepeat: 'no-repeat',
+								backgroundSize: 'cover',
+							},
+							ref: (ref) => this.props.setRefLayout1(ref),
+						}
+					),
+
+
+				),
+			)
+		}
+	}
+
+	module.exports = { SharingSwitcher };
+
+});

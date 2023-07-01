@@ -18,6 +18,7 @@ use Bitrix\Crm\Controller\Entity;
 use Bitrix\Main\Web\Json;
 use Bitrix\Crm\Binding\ContactCompanyTable;
 use Bitrix\Crm\Binding\EntityBinding;
+use CCrmOwnerType;
 
 class Provider implements IProvider
 {
@@ -91,12 +92,12 @@ class Provider implements IProvider
 		$contacts = [];
 		foreach ($storeDocumentContractors as $storeDocumentContractor)
 		{
-			if ((int)$storeDocumentContractor['ENTITY_TYPE_ID'] === \CCrmOwnerType::Company)
+			if ((int)$storeDocumentContractor['ENTITY_TYPE_ID'] === CCrmOwnerType::Company)
 			{
 				return $storeDocumentContractor;
 			}
 
-			if ((int)$storeDocumentContractor['ENTITY_TYPE_ID'] === \CCrmOwnerType::Contact)
+			if ((int)$storeDocumentContractor['ENTITY_TYPE_ID'] === CCrmOwnerType::Contact)
 			{
 				$contacts[] = $storeDocumentContractor;
 			}
@@ -217,12 +218,12 @@ class Provider implements IProvider
 	 */
 	private static function getDocumentsGridFilters(): array
 	{
-		$companyCategoryId = CategoryRepository::getIdByEntityTypeId(\CCrmOwnerType::Company);
-		$contactCategoryId = CategoryRepository::getIdByEntityTypeId(\CCrmOwnerType::Contact);
+		$companyCategoryId = CategoryRepository::getIdByEntityTypeId(CCrmOwnerType::Company);
+		$contactCategoryId = CategoryRepository::getIdByEntityTypeId(CCrmOwnerType::Contact);
 
 		return [
 			self::FILTER_CODE_CONTRACTOR_CRM_COMPANY_ID => [
-				'ENTITY_TYPE_ID' => \CCrmOwnerType::Company,
+				'ENTITY_TYPE_ID' => CCrmOwnerType::Company,
 				'FIELD_PARAMS' => [
 					'partial' => true,
 					'type' => 'entity_selector',
@@ -250,7 +251,7 @@ class Provider implements IProvider
 				],
 			],
 			self::FILTER_CODE_CONTRACTOR_CRM_CONTACT_ID => [
-				'ENTITY_TYPE_ID' => \CCrmOwnerType::Contact,
+				'ENTITY_TYPE_ID' => CCrmOwnerType::Contact,
 				'FIELD_PARAMS' => [
 					'partial' => true,
 					'type' => 'entity_selector',
@@ -297,29 +298,31 @@ class Provider implements IProvider
 	 */
 	public static function getEditorFieldData(): array
 	{
+		$categoryParams = [
+			CCrmOwnerType::Company => [
+				'categoryId' => CategoryRepository::getIdByEntityTypeId(CCrmOwnerType::Company) ?? 0,
+			],
+			CCrmOwnerType::Contact => [
+				'categoryId' => CategoryRepository::getIdByEntityTypeId(CCrmOwnerType::Contact) ?? 0,
+			],
+		];
+
 		return [
 			'compound' => [
 				[
 					'name' => 'COMPANY_ID',
 					'type' => 'company',
-					'entityTypeName' => \CCrmOwnerType::CompanyName,
-					'tagName' => \CCrmOwnerType::CompanyName,
+					'entityTypeName' => CCrmOwnerType::CompanyName,
+					'tagName' => CCrmOwnerType::CompanyName,
 				],
 				[
 					'name' => 'CONTACT_IDS',
 					'type' => 'multiple_contact',
-					'entityTypeName' => \CCrmOwnerType::ContactName,
-					'tagName' => \CCrmOwnerType::ContactName,
+					'entityTypeName' => CCrmOwnerType::ContactName,
+					'tagName' => CCrmOwnerType::ContactName,
 				]
 			],
-			'categoryParams' => [
-				\CCrmOwnerType::Company => [
-					'categoryId' => self::getCategoryIdByEntityType(\CCrmOwnerType::Company),
-				],
-				\CCrmOwnerType::Contact => [
-					'categoryId' => self::getCategoryIdByEntityType(\CCrmOwnerType::Contact),
-				],
-			],
+			'categoryParams' => $categoryParams,
 			'requiredFieldErrorMessage' => Loc::getMessage('CONTRACTORS_PROVIDER_CONTRACTOR_FIELD_REQUIRED'),
 			'map' => ['data' => 'CLIENT_DATA'],
 			'info' => 'CLIENT_INFO',
@@ -327,23 +330,25 @@ class Provider implements IProvider
 			'lastContactInfos' => 'LAST_CONTACT_INFOS',
 			'loaders' => [
 				'primary' => [
-					\CCrmOwnerType::CompanyName => [
+					CCrmOwnerType::CompanyName => [
 						'action' => 'GET_CLIENT_INFO',
 						'url' => '/bitrix/components/bitrix/crm.company.show/ajax.php?' . bitrix_sessid_get(),
 					],
-					\CCrmOwnerType::ContactName => [
+					CCrmOwnerType::ContactName => [
 						'action' => 'GET_CLIENT_INFO',
 						'url' => '/bitrix/components/bitrix/crm.contact.show/ajax.php?' . bitrix_sessid_get(),
 					]
 				],
 				'secondary' => [
-					\CCrmOwnerType::CompanyName => [
+					CCrmOwnerType::CompanyName => [
 						'action' => self::DETAIL_CARD_ACTION_GET_SECONDARY_ENTITY_INFOS,
 						'url' => '/bitrix/components/bitrix/catalog.store.document.detail/ajax.php?' . bitrix_sessid_get(),
 					]
 				]
 			],
-			'clientEditorFieldsParams' => \CCrmComponentHelper::prepareClientEditorFieldsParams(),
+			'clientEditorFieldsParams' =>
+				\CCrmComponentHelper::prepareClientEditorFieldsParams(['categoryParams' => $categoryParams])
+			,
 			'useExternalRequisiteBinding' => true,
 		];
 	}
@@ -366,11 +371,11 @@ class Provider implements IProvider
 
 			while ($storeDocumentContractor = $storeDocumentContractors->fetch())
 			{
-				if ((int)$storeDocumentContractor['ENTITY_TYPE_ID'] === \CCrmOwnerType::Company)
+				if ((int)$storeDocumentContractor['ENTITY_TYPE_ID'] === CCrmOwnerType::Company)
 				{
 					$companyId = (int)$storeDocumentContractor['ENTITY_ID'];
 				}
-				if ((int)$storeDocumentContractor['ENTITY_TYPE_ID'] === \CCrmOwnerType::Contact)
+				if ((int)$storeDocumentContractor['ENTITY_TYPE_ID'] === CCrmOwnerType::Contact)
 				{
 					$contactBindings[] = [
 						'CONTACT_ID' => (int)$storeDocumentContractor['ENTITY_ID'],
@@ -384,7 +389,7 @@ class Provider implements IProvider
 		{
 			$isEntityReadPermitted = \CCrmCompany::CheckReadPermission($companyId, self::getPermissions());
 			$companyInfo = \CCrmEntitySelectorHelper::PrepareEntityInfo(
-				\CCrmOwnerType::CompanyName,
+				CCrmOwnerType::CompanyName,
 				$companyId,
 				[
 					'ENTITY_EDITOR_FORMAT' => true,
@@ -401,7 +406,7 @@ class Provider implements IProvider
 			$clientInfo['COMPANY_DATA'] = [$companyInfo];
 		}
 
-		$contactIDs = EntityBinding::prepareEntityIDs(\CCrmOwnerType::Contact, $contactBindings);
+		$contactIDs = EntityBinding::prepareEntityIDs(CCrmOwnerType::Contact, $contactBindings);
 		$clientInfo['CONTACT_DATA'] = [];
 		$iteration= 0;
 
@@ -409,7 +414,7 @@ class Provider implements IProvider
 		{
 			$isEntityReadPermitted = \CCrmContact::CheckReadPermission($contactID, self::getPermissions());
 			$clientInfo['CONTACT_DATA'][] = \CCrmEntitySelectorHelper::PrepareEntityInfo(
-				\CCrmOwnerType::ContactName,
+				CCrmOwnerType::ContactName,
 				$contactID,
 				[
 					'ENTITY_EDITOR_FORMAT' => true,
@@ -433,8 +438,8 @@ class Provider implements IProvider
 					'crm.store.document.details',
 					'company',
 					[
-						'EXPAND_ENTITY_TYPE_ID' => \CCrmOwnerType::Company,
-						'EXPAND_CATEGORY_ID' => self::getCategoryIdByEntityType(\CCrmOwnerType::Company),
+						'EXPAND_ENTITY_TYPE_ID' => CCrmOwnerType::Company,
+						'EXPAND_CATEGORY_ID' => self::getCategoryIdByEntityType(CCrmOwnerType::Company),
 					]
 				)
 			),
@@ -443,15 +448,15 @@ class Provider implements IProvider
 					'crm.store.document.details',
 					'contact',
 					[
-						'EXPAND_ENTITY_TYPE_ID' => \CCrmOwnerType::Contact,
-						'EXPAND_CATEGORY_ID' => self::getCategoryIdByEntityType(\CCrmOwnerType::Contact),
+						'EXPAND_ENTITY_TYPE_ID' => CCrmOwnerType::Contact,
+						'EXPAND_CATEGORY_ID' => self::getCategoryIdByEntityType(CCrmOwnerType::Contact),
 					]
 				)
 			),
 		];
 
 		\CCrmComponentHelper::prepareMultifieldData(
-			\CCrmOwnerType::Company,
+			CCrmOwnerType::Company,
 			[$companyId],
 			[
 				'PHONE',
@@ -462,7 +467,7 @@ class Provider implements IProvider
 		);
 
 		\CCrmComponentHelper::prepareMultifieldData(
-			\CCrmOwnerType::Contact,
+			CCrmOwnerType::Contact,
 			$contactIDs,
 			[
 				'PHONE',
@@ -492,9 +497,9 @@ class Provider implements IProvider
 
 		$params = isset($_POST['PARAMS']) && is_array($_POST['PARAMS']) ? $_POST['PARAMS'] : [];
 		if (
-			$params['OWNER_TYPE_NAME'] !== \CCrmOwnerType::StoreDocumentName
-			|| $params['PRIMARY_TYPE_NAME'] !== \CCrmOwnerType::CompanyName
-			|| $params['SECONDARY_TYPE_NAME'] !== \CCrmOwnerType::ContactName
+			$params['OWNER_TYPE_NAME'] !== CCrmOwnerType::StoreDocumentName
+			|| $params['PRIMARY_TYPE_NAME'] !== CCrmOwnerType::CompanyName
+			|| $params['SECONDARY_TYPE_NAME'] !== CCrmOwnerType::ContactName
 		)
 		{
 			return;
@@ -512,7 +517,7 @@ class Provider implements IProvider
 			}
 
 			$contactsInfo[]  = \CCrmEntitySelectorHelper::PrepareEntityInfo(
-				\CCrmOwnerType::ContactName,
+				CCrmOwnerType::ContactName,
 				$contactId,
 				[
 					'ENTITY_EDITOR_FORMAT' => true,
@@ -576,7 +581,7 @@ class Provider implements IProvider
 				if ($companyId <= 0)
 				{
 					$companyId = BaseComponent::createEntity(
-						\CCrmOwnerType::Company,
+						CCrmOwnerType::Company,
 						$companyItem,
 						[
 							'userPermissions' => self::getPermissions(),
@@ -586,7 +591,7 @@ class Provider implements IProvider
 
 					if ($companyId > 0)
 					{
-						$createdEntities[\CCrmOwnerType::Company] = [$companyId];
+						$createdEntities[CCrmOwnerType::Company] = [$companyId];
 					}
 				}
 				elseif (
@@ -594,11 +599,11 @@ class Provider implements IProvider
 					|| (isset($companyItem['multifields']) && is_array($companyItem['multifields']))
 				)
 				{
-					if (!isset($updatedEntities[\CCrmOwnerType::Company]))
+					if (!isset($updatedEntities[CCrmOwnerType::Company]))
 					{
-						$updatedEntities[\CCrmOwnerType::Company] = [];
+						$updatedEntities[CCrmOwnerType::Company] = [];
 					}
-					$updatedEntities[\CCrmOwnerType::Company][$companyId] = $companyItem;
+					$updatedEntities[CCrmOwnerType::Company][$companyId] = $companyItem;
 				}
 			}
 
@@ -611,9 +616,9 @@ class Provider implements IProvider
 					'company',
 					[
 						[
-							'ENTITY_TYPE_ID' => \CCrmOwnerType::Company,
+							'ENTITY_TYPE_ID' => CCrmOwnerType::Company,
 							'ENTITY_ID' => $companyId,
-							'CATEGORY_ID' => self::getCategoryIdByEntityType(\CCrmOwnerType::Company),
+							'CATEGORY_ID' => self::getCategoryIdByEntityType(CCrmOwnerType::Company),
 						]
 					]
 				);
@@ -641,7 +646,7 @@ class Provider implements IProvider
 				if ($contactId <= 0)
 				{
 					$contactId = BaseComponent::createEntity(
-						\CCrmOwnerType::Contact,
+						CCrmOwnerType::Contact,
 						$contactItem,
 						[
 							'userPermissions' => self::getPermissions(),
@@ -657,11 +662,11 @@ class Provider implements IProvider
 						}
 						$contactsToCompanyBindings[] = $contactId;
 
-						if (!isset($createdEntities[\CCrmOwnerType::Contact]))
+						if (!isset($createdEntities[CCrmOwnerType::Contact]))
 						{
-							$createdEntities[\CCrmOwnerType::Contact] = [];
+							$createdEntities[CCrmOwnerType::Contact] = [];
 						}
-						$createdEntities[\CCrmOwnerType::Contact][] = $contactId;
+						$createdEntities[CCrmOwnerType::Contact][] = $contactId;
 					}
 				}
 				elseif (
@@ -670,12 +675,12 @@ class Provider implements IProvider
 					|| (isset($contactItem['requisites']) && is_array($contactItem['requisites']))
 				)
 				{
-					if (!isset($updatedEntities[\CCrmOwnerType::Contact]))
+					if (!isset($updatedEntities[CCrmOwnerType::Contact]))
 					{
-						$updatedEntities[\CCrmOwnerType::Contact] = [];
+						$updatedEntities[CCrmOwnerType::Contact] = [];
 					}
 
-					$updatedEntities[\CCrmOwnerType::Contact][$contactId] = $contactItem;
+					$updatedEntities[CCrmOwnerType::Contact][$contactId] = $contactItem;
 				}
 
 				if ($contactId > 0)
@@ -696,9 +701,9 @@ class Provider implements IProvider
 				foreach($fields['CONTACT_IDS'] as $contactId)
 				{
 					$contactBindings[] = [
-						'ENTITY_TYPE_ID' => \CCrmOwnerType::Contact,
+						'ENTITY_TYPE_ID' => CCrmOwnerType::Contact,
 						'ENTITY_ID' => $contactId,
-						'CATEGORY_ID' => self::getCategoryIdByEntityType(\CCrmOwnerType::Contact),
+						'CATEGORY_ID' => self::getCategoryIdByEntityType(CCrmOwnerType::Contact),
 					];
 				}
 
@@ -714,8 +719,8 @@ class Provider implements IProvider
 		return (new Result())->setData([
 			'COMPANY_ID' => $companyId,
 			'DOCUMENT_BINDINGS' => [
-				\CCrmOwnerType::Contact => $contactIds,
-				\CCrmOwnerType::Company => $companyIds,
+				CCrmOwnerType::Contact => $contactIds,
+				CCrmOwnerType::Company => $companyIds,
 			],
 			'CONTACT_COMPANY_BINDINGS' => $contactsToCompanyBindings,
 			'CREATED_ENTITIES' => $createdEntities,
@@ -776,8 +781,8 @@ class Provider implements IProvider
 		self::bindEntitiesToDocument(
 			$documentId,
 			[
-				\CCrmOwnerType::Company => $data['COMPANY_ID'] ?? [],
-				\CCrmOwnerType::Contact => $data['CONTACT_IDS'] ?? [],
+				CCrmOwnerType::Company => $data['COMPANY_ID'] ?? [],
+				CCrmOwnerType::Contact => $data['CONTACT_IDS'] ?? [],
 			]
 		);
 	}

@@ -161,7 +161,7 @@ class LogDestination
 
 		$cache->endDataCache(array(
 			"SONETGROUPS" => $this->destination["SONETGROUPS"],
-			"PROJECTS" => $this->destination["PROJECTS"],
+			"PROJECTS" => ($this->destination["PROJECTS"] ?? null),
 			"SONETGROUPS_LIMITED" => $this->destination["SONETGROUPS_LIMITED"]
 		));
 
@@ -261,7 +261,12 @@ class LogDestination
 				'useProjects' => (isset($this->parameters['USE_PROJECTS']) && $this->parameters['USE_PROJECTS'] == 'Y'? 'Y' : 'N'),
 				'CRM_ENTITY' => 'Y'
 			);
-			if(intval($this->parameters['AVATAR_HEIGHT']) && intval($this->parameters['AVATAR_WIDTH']))
+			if(
+				isset($this->parameters['AVATAR_HEIGHT'])
+				&& isset($this->parameters['AVATAR_WIDTH'])
+				&& intval($this->parameters['AVATAR_HEIGHT'])
+				&& intval($this->parameters['AVATAR_WIDTH'])
+			)
 			{
 				$this->destinationParams['THUMBNAIL_SIZE_WIDTH'] = intval($this->parameters['AVATAR_WIDTH']);
 				$this->destinationParams['THUMBNAIL_SIZE_HEIGHT'] = intval($this->parameters['AVATAR_HEIGHT']);

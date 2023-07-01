@@ -50,19 +50,19 @@ final class ParentTask extends \Bitrix\Tasks\Manager
 		}
 	}
 
-	public static function extendData(array &$data, array $knownTasks = array())
+	public static function extendData(array &$data, array $knownTasks = [])
 	{
 		$code = static::getCode(true);
 
-		if(array_key_exists($code, $data))
+		if (array_key_exists($code, $data))
 		{
-			if(isset($knownTasks[$data[$code]['ID']]))
+			if (isset($data[$code]['ID'], $knownTasks[$data[$code]['ID']]))
 			{
 				$data[$code] = $knownTasks[$data[$code]['ID']];
 			}
 			else
 			{
-				$data[$code] = array();
+				$data[$code] = [];
 			}
 		}
 	}

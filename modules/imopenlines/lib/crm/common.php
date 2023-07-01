@@ -469,22 +469,26 @@ class Common
 	}
 
 	/**
-	 * @param $entityType
-	 * @param $entityId
+	 * @param string $entityType
+	 * @param int $entityId
 	 * @return bool
 	 */
-	public static function hasAccessToEntity($entityType, $entityId)
+	public static function hasAccessToEntity($entityType, $entityId): bool
 	{
-		if (!Loader::includeModule("crm") || !$entityType || !$entityId || $entityType == 'NONE')
+		if (
+			!Loader::includeModule('crm')
+			|| !$entityType
+			|| !$entityId
+			|| $entityType == 'NONE'
+		)
 		{
-			$return = true;
-		}
-		else
-		{
-			$return = \CCrmAuthorizationHelper::CheckReadPermission($entityType, $entityId);
+			return true;
 		}
 
-		return $return;
+		$entityTypeId = \CCrmOwnerType::ResolveID($entityType);
+		$userPermissions = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions();
+
+		return $userPermissions->checkReadPermissions($entityTypeId, $entityId);
 	}
 
 	/**

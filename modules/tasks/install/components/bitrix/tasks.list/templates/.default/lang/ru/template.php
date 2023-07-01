@@ -1,6 +1,7 @@
 <?
 $MESS["TASKS_PRIORITY_V2"] = "Важная задача";
 $MESS["TASKS_MARK"] = "Оценка";
+$MESS["TASKS_MARK_MSGVER_1"] = "Оценка";
 $MESS["TASKS_MARK_NONE"] = "Нет оценки";
 $MESS["TASKS_MARK_P"] = "Положительная";
 $MESS["TASKS_MARK_N"] = "Отрицательная";
@@ -74,6 +75,7 @@ $MESS["TASKS_LIST_COLUMN_3"] = "Постановщик";
 $MESS["TASKS_LIST_COLUMN_4"] = "Ответственный";
 $MESS["TASKS_LIST_COLUMN_5"] = "Крайний срок";
 $MESS["TASKS_LIST_COLUMN_6"] = "Оценка";
+$MESS["TASKS_LIST_COLUMN_6_MSGVER_1"] = "Оценка";
 $MESS["TASKS_LIST_COLUMN_7"] = "CRM";
 $MESS["TASKS_LIST_COLUMN_8"] = "Приоритет";
 $MESS["TASKS_LIST_COLUMN_9"] = "Статус";

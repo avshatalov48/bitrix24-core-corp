@@ -15,9 +15,9 @@ class DiskTrashcan extends Volume\Module\Disk
 	/**
 	 * Runs measure test to get volumes of selecting objects.
 	 * @param array $collectData List types data to collect: ATTACHED_OBJECT, SHARING_OBJECT, EXTERNAL_LINK, UNNECESSARY_VERSION.
-	 * @return $this
+	 * @return static
 	 */
-	public function measure($collectData = [self::DISK_FILE])
+	public function measure(array $collectData = [self::DISK_FILE]): self
 	{
 		$this->addFilter('!DELETED_TYPE', ObjectTable::DELETED_TYPE_NONE);
 
@@ -28,9 +28,9 @@ class DiskTrashcan extends Volume\Module\Disk
 
 	/**
 	 * @param Volume\Fragment $fragment Module description structure.
-	 * @return string
+	 * @return string|null
 	 */
-	public static function getTitle(Volume\Fragment $fragment)
+	public static function getTitle(Volume\Fragment $fragment): ?string
 	{
 		Loc::loadMessages(__FILE__);
 		return Loc::getMessage('DISK_VOLUME_MODULE_DISKTRASHCAN');

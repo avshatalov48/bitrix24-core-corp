@@ -1508,7 +1508,7 @@ class Deal extends Base implements IReportSingleData, IReportMultipleData, IRepo
 						]
 					];
 
-					if ($calculatedData['amount']['successPassTime'])
+					if ($calculatedData['amount']['successPassTime'] ?? false)
 					{
 						$config['valuesAmount']['secondAdditionalAmount'] = [
 							'title' => Loc::getMessage('CRM_REPORT_DEAL_HANDLER_DEAL_PASS_AVG_TIME_SHORT_TITLE'),
@@ -1525,15 +1525,18 @@ class Deal extends Base implements IReportSingleData, IReportMultipleData, IRepo
 							$config['topAdditionalValue'] = !empty($items[0]['additionalValues']['forthAdditionalValue']['value'])
 								? $items[0]['additionalValues']['forthAdditionalValue']['value'] : 0;
 							$config['topAdditionalValueUnit'] = '%';
-							$config['valuesAmount']['firstAdditionalAmount']['value'] = $items[0]['additionalValues']['secondAdditionalValue']['value'];
-							//$config['valuesAmount']['secondAdditionalAmount']['value'] = $items[0]['additionalValues']['thirdAdditionalValue']['value'];
+							$config['valuesAmount']['firstAdditionalAmount']['value'] =
+								($items[0]['additionalValues']['secondAdditionalValue']['value'] ?? null)
+							;
+							//$config['valuesAmount']['secondAdditionalAmount']['value'] =
+							//    $items[0]['additionalValues']['thirdAdditionalValue']['value']
+							//;
 
 							if ($shortModeValue)
 							{
 								$config['mode'] = 'singleData';
 							}
 							unset($config['valuesAmount']['thirdAdditionalAmount']);
-							$config['additionalValues']['thirdAdditionalValue'];
 							break;
 					}
 			}

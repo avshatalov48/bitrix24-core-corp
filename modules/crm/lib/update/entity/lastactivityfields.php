@@ -254,21 +254,56 @@ final class LastActivityFields extends Stepper
 	{
 		if (!empty(self::getTypesToProcess()))
 		{
-			\CAgent::AddAgent(
-			/** @see self::execAgent() */
-				"\\Bitrix\\Crm\\Update\\Entity\\LastActivityFields::execAgent();",
-				'crm',
-				"Y",
-				// run once every minute
-				60,
-				"",
-				"Y",
-				// 5 min delay
-				\ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 300, 'FULL'),
-				100,
-				false,
-				false
-			);
+			self::addAgent();
 		}
+	}
+
+	public static function bindForType(int $entityTypeId): void
+	{
+		Option::set(
+			'crm',
+			'enable_last_activity_for_' . mb_strtolower(\CCrmOwnerType::ResolveName($entityTypeId)),
+			'N'
+		);
+
+		$currentTypes = self::getTypesToProcess();
+		if (!in_array($entityTypeId, $currentTypes, true))
+		{
+			$currentTypes[] = $entityTypeId;
+			Option::set('crm', self::OPTION_PREFIX . 'types', serialize($currentTypes));
+		}
+
+		self::addAgent();
+	}
+
+	private static function addAgent(): void
+	{
+		\CAgent::AddAgent(
+		/** @see self::execAgent() */
+			"\\Bitrix\\Crm\\Update\\Entity\\LastActivityFields::execAgent();",
+			'crm',
+			"Y",
+			// run once every minute
+			60,
+			"",
+			"Y",
+			// 5 min delay
+			\ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 300, 'FULL'),
+			100,
+			false,
+			false
+		);
+	}
+
+	public static function onAfterTypeDelete(int $entityTypeId): void
+	{
+		Option::delete('crm', ['name' => '~last_activity_columns_alter_success_' . $entityTypeId]);
+	}
+
+	public static function wereLastActivityColumnsAddedSuccessfullyOnModuleUpdate(int $entityTypeId): bool
+	{
+		$value = Option::get('crm', '~last_activity_columns_alter_success_' . $entityTypeId, 'Y');
+
+		return ($value === 'Y');
 	}
 }

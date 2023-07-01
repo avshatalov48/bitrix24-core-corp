@@ -11,8 +11,8 @@ class TasksTaskPreviewComponent extends \CBitrixComponent
 {
 	protected function prepareParams()
 	{
-		$this->arParams["AVATAR_SIZE"] = $this->arParams["AVATAR_SIZE"] ?: 100;
-		if(Main\Loader::includeModule('socialnetwork'))
+		$this->arParams['AVATAR_SIZE'] = (($this->arParams['AVATAR_SIZE'] ?? null) ?: 100);
+		if (Main\Loader::includeModule('socialnetwork'))
 		{
 			CSocNetLogComponent::processDateTimeFormatParams($this->arParams);
 		}
@@ -36,7 +36,7 @@ class TasksTaskPreviewComponent extends \CBitrixComponent
 			$this->arResult["TASK"]["CREATED_BY_LAST_NAME"],
 			$this->arResult["TASK"]["CREATED_BY_LOGIN"],
 			$this->arResult["TASK"]["CREATED_BY_SECOND_NAME"],
-			$this->arParams["NAME_TEMPLATE"],
+			($this->arParams["NAME_TEMPLATE"] ?? null),
 			false
 		);
 		$this->arResult['TASK']['RESPONSIBLE_FORMATTED'] = tasksFormatName(
@@ -44,7 +44,7 @@ class TasksTaskPreviewComponent extends \CBitrixComponent
 			$this->arResult["TASK"]["RESPONSIBLE_LAST_NAME"],
 			$this->arResult["TASK"]["RESPONSIBLE_LOGIN"],
 			$this->arResult["TASK"]["RESPONSIBLE_SECOND_NAME"],
-			$this->arParams["NAME_TEMPLATE"],
+			($this->arParams["NAME_TEMPLATE"] ?? null),
 			false
 		);
 

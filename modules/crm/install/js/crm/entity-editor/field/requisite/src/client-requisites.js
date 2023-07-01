@@ -17,6 +17,7 @@ export class EntityEditorClientRequisites
 		this._addressConfig = null;
 		this._requisiteList = null;
 		this._requisiteEditor = null;
+		this._permissionToken = null;
 
 		this._readonly = true;
 		this._requisiteEditUrl = null;
@@ -66,6 +67,7 @@ export class EntityEditorClientRequisites
 		this._canChangeDefaultRequisite = BX.prop.getBoolean(settings, "canChangeDefaultRequisite", true);
 		this._requisiteEditUrl = BX.prop.getString(settings, "requisiteEditUrl", null);
 		this._formElement = BX.prop.get(settings, "formElement", null);
+		this._permissionToken = BX.prop.getString(settings, "permissionToken", null);
 
 		if (BX.prop.getBoolean(settings, "enableTooltip", true) && !Type.isNull(this._requisitesConfig))
 		{
@@ -80,7 +82,8 @@ export class EntityEditorClientRequisites
 			entityTypeId: this._entityInfo.getTypeId(),
 			entityId: this._entityInfo.getId(),
 			contextId: BX.prop.getString(settings, "contextId", ""),
-			requisiteEditUrl: this._requisiteEditUrl
+			requisiteEditUrl: this._requisiteEditUrl,
+			permissionToken: this._permissionToken
 		});
 		this._requisiteEditor.setRequisiteList(this._requisiteList);
 		EventEmitter.subscribe(this._requisiteEditor, 'onAfterEditRequisite', this.onRequisiteEditorAfterEdit.bind(this));
@@ -149,7 +152,12 @@ export class EntityEditorClientRequisites
 						showFirstItemOnly: true,
 						showAddressTypeInViewMode: true,
 						addressZoneConfig: BX.prop.getObject(this._addressConfig, "addressZoneConfig", {}),
-						countryId: countryId
+						countryId: countryId,
+						defaultAddressTypeByCategory: BX.prop.getInteger(
+							this._addressConfig,
+							"defaultAddressTypeByCategory",
+							0
+						)
 					});
 					this._addressField.setMultiple(true);
 					this._addressField.setTypesList(BX.prop.getObject(this._addressConfig, "types", {}));

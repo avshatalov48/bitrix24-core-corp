@@ -25,7 +25,7 @@ if (
 	$arSonetGroups = CSocNetLogDestination::GetSocnetGroup(
 		array(
 			'features' => array(
-				"blog", 
+				"blog",
 				array("premoderate_post", "moderate_post", "write_post", "full_post")
 			)
 		)
@@ -40,9 +40,9 @@ if (
 	}
 }
 
-if (!$group_id)
+if (!isset($group_id))
 {
-	$group_id = intval($_REQUEST["group_id"]);
+	$group_id = intval($_REQUEST["group_id"] ?? 0);
 }
 
 $group_id = intval($group_id);
@@ -54,7 +54,7 @@ $APPLICATION->IncludeComponent("bitrix:main.post.form", "mobile", array(
 		"FORM_ID" => "blogPostForm",
 		"FORM_TARGET" => "_self",
 		"IS_EXTRANET" => "Y",
-		"POST_ID" => intval($_REQUEST["post_id"])
+		"POST_ID" => intval($_REQUEST["post_id"] ?? 0)
 	),
 	false,
 	Array("HIDE_ICONS" => "Y")

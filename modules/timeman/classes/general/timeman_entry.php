@@ -35,7 +35,7 @@ class CAllTimeManEntry
 
 		if ($arRes && $arRes['TASKS'] <> '')
 		{
-			$arRes['TASKS'] = unserialize($arRes['TASKS']);
+			$arRes['TASKS'] = unserialize($arRes['TASKS'], ['allowed_classes' => false]);
 		}
 
 		return $arRes;
@@ -110,8 +110,8 @@ class CAllTimeManEntry
 			return false;
 		}
 
-		$ts_start = MakeTimeStamp($arFields['DATE_START']);
-		$ts_finish = MakeTimeStamp($arFields['DATE_FINISH']);
+		$ts_start = MakeTimeStamp($arFields['DATE_START'] ?? '');
+		$ts_finish = MakeTimeStamp($arFields['DATE_FINISH'] ?? '');
 
 		if ($ts_start > 0 && $ts_finish > 0)
 		{
@@ -145,7 +145,7 @@ class CAllTimeManEntry
 			$arFields['PAUSED'] = $arFields['PAUSED'] == 'Y' ? 'Y' : 'N';
 		}
 
-		if (is_array($arFields['TASKS']))
+		if (isset($arFields['TASKS']) && is_array($arFields['TASKS']))
 		{
 			$arFields['TASKS'] = serialize($arFields['TASKS']);
 		}
@@ -168,7 +168,10 @@ class CAllTimeManEntry
 		{
 			$arFields['DURATION'] = intval($arFields['DURATION']);
 		}
-		elseif ($arFields['DATE_FINISH'] && $arFields['PAUSED'] != 'Y')
+		elseif (
+			$arFields['DATE_FINISH'] ?? null
+			&& $arFields['PAUSED'] != 'Y'
+		)
 		{
 			$arFields['DURATION'] = $arFields['TIME_FINISH'] - $arFields['TIME_START'] - $arFields['TIME_LEAKS'];
 		}
@@ -304,7 +307,7 @@ class CAllTimeManEntry
 			}
 			$DB->QueryBind($query, $arBind);
 
-			if (is_array($arFields['REPORTS']))
+			if (isset($arFields['REPORTS']) && is_array($arFields['REPORTS']))
 			{
 				foreach ($arFields['REPORTS'] as $report)
 				{

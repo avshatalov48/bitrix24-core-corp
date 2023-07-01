@@ -67,6 +67,39 @@ class EntityForm
 		return (empty($this->id));
 	}
 
+	/**
+	 * The method checks if the content of the entity (Backlog/Sprint) is hidden for the specified user.
+	 *
+	 * @param int $userId User id.
+	 * @return bool
+	 */
+	public function isShownContent(int $userId): bool
+	{
+		return $this->getInfo()->isVisibility($userId);
+	}
+
+	/**
+	 * Makes the content visible to the specified user.
+	 *
+	 * @param int $userId User id.
+	 * @return void
+	 */
+	public function showContent(int $userId): void
+	{
+		$this->getInfo()->showVisibility($userId);
+	}
+
+	/**
+	 * Makes the content invisible to the specified user.
+	 *
+	 * @param int $userId User id.
+	 * @return void
+	 */
+	public function hideContent(int $userId): void
+	{
+		$this->getInfo()->hideVisibility($userId);
+	}
+
 	public function isActiveSprint(): bool
 	{
 		return ($this->status === self::SPRINT_ACTIVE);
@@ -182,47 +215,47 @@ class EntityForm
 	 */
 	public function fillFromDatabase(array $fields): void
 	{
-		if ($fields['ID'])
+		if ($fields['ID'] ?? null)
 		{
 			$this->setId($fields['ID']);
 		}
-		if ($fields['GROUP_ID'])
+		if ($fields['GROUP_ID'] ?? null)
 		{
 			$this->setGroupId($fields['GROUP_ID']);
 		}
-		if ($fields['ENTITY_TYPE'])
+		if ($fields['ENTITY_TYPE'] ?? null)
 		{
 			$this->setEntityType($fields['ENTITY_TYPE']);
 		}
-		if ($fields['NAME'])
+		if ($fields['NAME'] ?? null)
 		{
 			$this->setName($fields['NAME']);
 		}
-		if ($fields['SORT'])
+		if ($fields['SORT'] ?? null)
 		{
 			$this->setSort($fields['SORT']);
 		}
-		if ($fields['CREATED_BY'])
+		if ($fields['CREATED_BY'] ?? null)
 		{
 			$this->setCreatedBy($fields['CREATED_BY']);
 		}
-		if ($fields['MODIFIED_BY'])
+		if ($fields['MODIFIED_BY'] ?? null)
 		{
 			$this->setModifiedBy($fields['MODIFIED_BY']);
 		}
-		if ($fields['DATE_START'])
+		if ($fields['DATE_START'] ?? null)
 		{
 			$this->setDateStart($fields['DATE_START']);
 		}
-		if ($fields['DATE_END'])
+		if ($fields['DATE_END'] ?? null)
 		{
 			$this->setDateEnd($fields['DATE_END']);
 		}
-		if ($fields['STATUS'])
+		if ($fields['STATUS'] ?? null)
 		{
 			$this->setStatus($fields['STATUS']);
 		}
-		if ($fields['INFO'])
+		if ($fields['INFO'] ?? null)
 		{
 			$this->setInfo($fields['INFO']);
 		}

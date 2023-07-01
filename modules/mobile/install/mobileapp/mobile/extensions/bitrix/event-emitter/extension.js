@@ -83,7 +83,7 @@ jn.define('event-emitter', (require, exports, module) => {
 		}
 
 		/**
-		 * @public
+		 * @private
 		 * @param {String} eventName
 		 * @param {Function} callback
 		 * @return {Function}
@@ -105,6 +105,36 @@ jn.define('event-emitter', (require, exports, module) => {
 		}
 
 		/**
+		 * @private
+		 * @param {String} eventName
+		 * @param {Function} callback
+		 */
+		clearWrappedCallback(eventName, callback)
+		{
+			if (this.hasWrapperCallback(eventName, callback))
+			{
+				callbacksByEventName.get(eventName).delete(callback);
+			}
+		}
+
+		/**
+		 * @private
+		 * @param {String} eventName
+		 * @param {Function} callback
+		 */
+		hasWrapperCallback(eventName, callback)
+		{
+			if (!callbacksByEventName.has(eventName))
+			{
+				return false;
+			}
+
+			const callbackWeakMap = callbacksByEventName.get(eventName);
+
+			return callbackWeakMap.has(callback);
+		}
+
+		/**
 		 * Binds handler {callback} to global {eventName} and checks the uid if it exists.
 		 *
 		 * @public
@@ -119,9 +149,35 @@ jn.define('event-emitter', (require, exports, module) => {
 			return this;
 		}
 
+		/**
+		 * Binds handler {callback} to global {eventName} at most once and checks the uid if it exists.
+		 *
+		 * @public
+		 * @param {String} eventName
+		 * @param {Function} callback
+		 * @return {EventEmitter}
+		 */
+		once(eventName, callback)
+		{
+			const wrappedCallback = this.getWrappedCallback(eventName, callback);
+			const onceCallback = (...args) => {
+				BX.removeCustomEvent(eventName, onceCallback);
+				wrappedCallback(...args);
+				this.clearWrappedCallback(eventName, callback);
+			};
+
+			BX.addCustomEvent(eventName, onceCallback);
+
+			return this;
+		}
+
 		off(eventName, callback)
 		{
-			BX.removeCustomEvent(eventName, this.getWrappedCallback(eventName, callback));
+			if (this.hasWrapperCallback(eventName, callback))
+			{
+				BX.removeCustomEvent(eventName, this.getWrappedCallback(eventName, callback));
+				this.clearWrappedCallback(eventName, callback);
+			}
 
 			return this;
 		}

@@ -1,8 +1,10 @@
 <?php
 $MESS["CRM_1C_START_BACKOFFICE_NAME"] = "1C:Backoffice- 2.0";
+$MESS["CRM_1C_START_BACKOFFICE_NAME_MSGVER_1"] = "Connector for 1C";
 $MESS["CRM_1C_START_DOC_ADV_1"] = "Easy connectivity";
 $MESS["CRM_1C_START_DOC_ADV_2"] = "Simple to configure";
 $MESS["CRM_1C_START_DOC_ADV_TITLE"] = "Integrated data exchange solution for 1C";
+$MESS["CRM_1C_START_DOC_ADV_TITLE_MSGVER_1"] = "Integrated data exchange solution for 1C";
 $MESS["CRM_1C_START_DOC_DO_START"] = "Connect";
 $MESS["CRM_1C_START_DOC_INFO_TEXT"] = "NEW!<br>
 <br>

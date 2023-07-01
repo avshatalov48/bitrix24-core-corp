@@ -258,8 +258,8 @@ HTML;
 			$maxInner = array(0, 0);
 			foreach ($entities as $entityId => $entityName)
 			{
-				$user["VALUE"][$entityId][0] = ($user["VALUE"][$entityId][0] ?: 0);
-				$user["VALUE"][$entityId][1] = ($user["VALUE"][$entityId][1] ?: 0);
+				$user["VALUE"][$entityId][0] = ($user["VALUE"][$entityId][0] ?? 0);
+				$user["VALUE"][$entityId][1] = ($user["VALUE"][$entityId][1] ?? 0);
 				$maxInner[0] = max($maxInner[0], $user["VALUE"][$entityId][0]);
 				$maxInner[1] = max($maxInner[1], $user["VALUE"][$entityId][1]);
 			}

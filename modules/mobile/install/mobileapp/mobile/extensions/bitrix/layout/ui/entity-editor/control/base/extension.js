@@ -1,6 +1,14 @@
-(() => {
-	const { EventEmitter } = jn.require('event-emitter');
-	const { PureComponent } = jn.require('layout/pure-component');
+/**
+ * @module layout/ui/entity-editor/control/base
+ */
+jn.define('layout/ui/entity-editor/control/base', (require, exports, module) => {
+
+	const { Type } = require('type');
+	const { EventEmitter } = require('event-emitter');
+	const { PureComponent } = require('layout/pure-component');
+	const { EntityAsyncValidator } = require('layout/ui/entity-editor/validator/async');
+	const { EntityEditorMode } = require('layout/ui/entity-editor/editor-enum/mode');
+	const { EntityEditorVisibilityPolicy } = require('layout/ui/entity-editor/editor-enum/visibility-policy');
 
 	/**
 	 * @class EntityEditorBaseControl
@@ -29,9 +37,8 @@
 
 		initialize(id, uid, type, settings)
 		{
-			this.id = CommonUtils.isNotEmptyString(id) ? id : Random.getString();
-
-			this.uid = CommonUtils.isNotEmptyString(uid) ? uid : Random.getString();
+			this.id = this.getRandomString(id);
+			this.uid = this.getRandomString(uid);
 			/** @type {EventEmitter} */
 			this.customEventEmitter = EventEmitter.createWithUid(this.uid);
 
@@ -47,10 +54,10 @@
 			this.readOnly = BX.prop.getBoolean(this.settings, 'readOnly', true);
 			this.type = type || '';
 
-			let mode = BX.prop.getInteger(this.settings, 'mode', BX.UI.EntityEditorMode.view);
-			if (mode === BX.UI.EntityEditorMode.edit && !this.isEditable())
+			let mode = BX.prop.getInteger(this.settings, 'mode', EntityEditorMode.view);
+			if (mode === EntityEditorMode.edit && !this.isEditable())
 			{
-				mode = BX.UI.EntityEditorMode.view;
+				mode = EntityEditorMode.view;
 			}
 
 			this.state.mode = mode;
@@ -58,6 +65,11 @@
 			/** @type {EntityEditorBaseControl} */
 			this.parent = BX.prop.get(this.settings, 'parent', null);
 			this.isChanged = BX.prop.getBoolean(this.settings, 'isChanged', false);
+		}
+
+		getRandomString(id)
+		{
+			return Type.isStringFilled(id) ? id : Random.getString()
 		}
 
 		initializeStateFromModel()
@@ -77,7 +89,7 @@
 				return true;
 			}
 
-			return this.getMode() === BX.UI.EntityEditorMode.edit;
+			return this.getMode() === EntityEditorMode.edit;
 		}
 
 		renderFromModel(ref)
@@ -232,7 +244,7 @@
 
 		canChangeMode(mode)
 		{
-			if (mode === BX.UI.EntityEditorMode.edit)
+			if (mode === EntityEditorMode.edit)
 			{
 				return this.isEditable();
 			}
@@ -247,14 +259,14 @@
 
 		isVisible()
 		{
-			return BX.UI.EntityEditorVisibilityPolicy.checkVisibility(this);
+			return EntityEditorVisibilityPolicy.checkVisibility(this);
 		}
 
 		getVisibilityPolicy()
 		{
 			if (this.editor && !this.editor.isVisibilityPolicyEnabled())
 			{
-				return BX.UI.EntityEditorVisibilityPolicy.always;
+				return EntityEditorVisibilityPolicy.always;
 			}
 
 			return this.schemeElement && this.schemeElement.getVisibilityPolicy();
@@ -270,14 +282,19 @@
 			return this.editor.isModeToggleEnabled();
 		}
 
+		getDataParam(name, defaultValue)
+		{
+			return this.schemeElement ? this.schemeElement.getDataParam(name, defaultValue) : defaultValue;
+		}
+
 		getDataBooleanParam(name, defaultValue)
 		{
-			return (this.schemeElement ? this.schemeElement.getDataBooleanParam(name, defaultValue) : defaultValue);
+			return this.schemeElement ? this.schemeElement.getDataBooleanParam(name, defaultValue) : defaultValue;
 		}
 
 		isActive()
 		{
-			if (this.getMode() === BX.UI.EntityEditorMode.edit)
+			if (this.getMode() === EntityEditorMode.edit)
 			{
 				return true;
 			}
@@ -291,12 +308,12 @@
 
 		switchToViewMode()
 		{
-			if (this.getMode() === BX.UI.EntityEditorMode.view)
+			if (this.getMode() === EntityEditorMode.view)
 			{
 				return this.switchControlsToViewMode();
 			}
 
-			return this.setMode(BX.UI.EntityEditorMode.view);
+			return this.setMode(EntityEditorMode.view);
 		}
 
 		switchControlsToViewMode(controlToSkip = null)
@@ -315,7 +332,7 @@
 
 		blurInlineFields(fieldToSkip = null)
 		{
-			if (this.getMode() === BX.UI.EntityEditorMode.edit)
+			if (this.getMode() === EntityEditorMode.edit)
 			{
 				return Promise.resolve();
 			}
@@ -343,5 +360,5 @@
 		}
 	}
 
-	jnexport(EntityEditorBaseControl);
-})();
+	module.exports = { EntityEditorBaseControl };
+});

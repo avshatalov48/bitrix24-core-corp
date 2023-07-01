@@ -2,6 +2,10 @@
 $MESS["CRM_SITE_FORM_SIGN"] = "Заряжено";
 $MESS["CRM_SITE_FORM_SIGN_BY"] = "Битрикс24";
 $MESS["CRM_SITE_FORM_NAV_NEXT"] = "Далее";
+$MESS["CRM_SITE_FORM_ABUSE_LINK"] = "Сообщить о нарушении";
+$MESS["CRM_SITE_FORM_ABUSE_INFO"] = "Битрикс24 не имеет отношения к этому контенту.";
+$MESS["CRM_SITE_FORM_ABUSE_INFO_TEXT"] = "Битрикс24 не несёт ответственности за содержимое формы.";
+$MESS["CRM_SITE_FORM_ABUSE_INFO_HINT"] = "Компания Битрикс24 не несёт ответственности за содержимое формы, но вы можете сообщить нам о нарушении";
 $MESS["CRM_SITE_FORM_NAV_BACK"] = "Назад";
 $MESS["CRM_SITE_FORM_BASKET_SUM"] = "Без скидки";
 $MESS["CRM_SITE_FORM_BASKET_DISCOUNT"] = "Экономия";

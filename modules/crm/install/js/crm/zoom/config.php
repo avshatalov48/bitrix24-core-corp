@@ -10,7 +10,6 @@ return [
 	'rel' => [
 		'main.core',
 		'main.core.events',
-		'ui.timeline',
 		'calendar.planner',
 		'calendar.util',
 	],

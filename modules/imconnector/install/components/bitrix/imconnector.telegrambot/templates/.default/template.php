@@ -129,7 +129,7 @@ else
 					</ul>
 
 					<div class="imconnector-field-box-content-text-light">
-						<?=Loc::getMessage('IMCONNECTOR_COMPONENT_TELEGRAMBOT_INDEX_ADDITIONAL_DESCRIPTION_NEW', [
+						<?=Loc::getMessage('IMCONNECTOR_COMPONENT_TELEGRAMBOT_INDEX_ADDITIONAL_DESCRIPTION_NEW_MSGVER_2', [
 							'#LINK_START#' => '<a id="imconnector-telegrambot-link-help" href="#">',
 							'#LINK_END#' => '</a>',
 						])?>

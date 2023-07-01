@@ -432,7 +432,7 @@ class CCrmEMail
 		if (!\CModule::includeModule('crm'))
 			return false;
 
-		$eventPid = sprintf('%x%x', time(), rand(0, 0xffffffff));
+		$eventTag = sprintf('%x%x', time(), rand(0, 0xffffffff));
 
 		$messageId = isset($msgFields['ID']) ? intval($msgFields['ID']) : 0;
 		$mailboxId = isset($msgFields['MAILBOX_ID']) ? intval($msgFields['MAILBOX_ID']) : 0;
@@ -440,7 +440,7 @@ class CCrmEMail
 		if (empty($mailboxId))
 		{
 			static::log(
-				$eventPid,
+				$eventTag,
 				'CCrmEmail: empty MAILBOX_ID',
 				array(
 					'ID' => $msgFields['ID'],
@@ -456,7 +456,7 @@ class CCrmEMail
 		if (empty($mailbox))
 		{
 			static::log(
-				$eventPid,
+				$eventTag,
 				'CCrmEmail: empty mailbox',
 				array(
 					'ID' => $msgFields['ID'],
@@ -469,7 +469,7 @@ class CCrmEMail
 
 		$crmNewEntityOptionName = empty($msgFields['IS_OUTCOME']) ? 'crm_new_entity_in' : 'crm_new_entity_out';
 		static::log(
-			$eventPid,
+			$eventTag,
 			'CCrmEmail: IMAP email message received',
 			array(
 				'ID' => $msgFields['ID'],
@@ -500,7 +500,7 @@ class CCrmEMail
 			$timestamp = makeTimestamp($msgFields['FIELD_DATE'], FORMAT_DATETIME) - \CTimeZone::getOffset();
 			if ($timestamp < (int) $mailbox['OPTIONS']['crm_sync_from'])
 			{
-				static::log($eventPid, 'CCrmEmail: too old');
+				static::log($eventTag, 'CCrmEmail: too old');
 
 				return false;
 			}
@@ -539,7 +539,7 @@ class CCrmEMail
 
 		if (!$isForced and $isDraft || $isTrash || $isSpam)
 		{
-			static::log($eventPid, 'CCrmEmail: draft|trash|spam');
+			static::log($eventTag, 'CCrmEmail: draft|trash|spam');
 
 			return false;
 		}
@@ -604,7 +604,7 @@ class CCrmEMail
 			{
 				if (mb_strtolower(trim($item)) == $defaultEmailFrom)
 				{
-					static::log($eventPid, 'CCrmEmail: system email');
+					static::log($eventTag, 'CCrmEmail: system email');
 
 					return false;
 				}
@@ -638,7 +638,7 @@ class CCrmEMail
 						false
 					);
 
-					static::log($eventPid, 'CCrmEmail: matches outgoing');
+					static::log($eventTag, 'CCrmEmail: matches outgoing');
 
 					return true;
 				}
@@ -667,7 +667,7 @@ class CCrmEMail
 					if (reset($departments) > 0)
 					{
 						static::log(
-							$eventPid,
+							$eventTag,
 							'CCrmEmail: from employee',
 							array(
 								'USER_ID' => $employee['ID'],
@@ -700,7 +700,7 @@ class CCrmEMail
 					if (!empty($employee))
 					{
 						static::log(
-							$eventPid,
+							$eventTag,
 							'CCrmEmail: from employee',
 							array(
 								'USER_ID' => $employee['USER_ID'],
@@ -738,7 +738,7 @@ class CCrmEMail
 				if (count($employeesEmails) >= count($rcpt))
 				{
 					static::log(
-						$eventPid,
+						$eventTag,
 						'CCrmEmail: to employees',
 						array(
 							'LIST' => $employees,
@@ -784,7 +784,7 @@ class CCrmEMail
 					if (count($employeesEmails) >= count($rcpt))
 					{
 						static::log(
-							$eventPid,
+							$eventTag,
 							'CCrmEmail: to employees',
 							array(
 								'LIST' => $employees,
@@ -798,13 +798,15 @@ class CCrmEMail
 			}
 		}
 
+		$mailboxOwnerId = (int)$mailbox['USER_ID'] ?? 0;
+
 		// initialize responsible queue
 		$respQueue = array();
 		{
 			$respOption = array_values(array_unique((array) $mailbox['OPTIONS']['crm_lead_resp']));
-			if (empty($respOption) && $mailbox['USER_ID'] > 0)
+			if (empty($respOption) && $mailboxOwnerId > 0)
 			{
-				$respOption = array($mailbox['USER_ID']);
+				$respOption = array($mailboxOwnerId);
 			}
 
 			if (!empty($respOption))
@@ -890,7 +892,7 @@ class CCrmEMail
 		if (!empty($targetActivity))
 		{
 			static::log(
-				$eventPid,
+				$eventTag,
 				'CCrmEmail: parent found',
 				array(
 					'ACTIVITY_ID' => $targetActivity['ID'],
@@ -930,7 +932,7 @@ class CCrmEMail
 			if (!empty($owner))
 			{
 				static::log(
-					$eventPid,
+					$eventTag,
 					'CCrmEmail: parent owner is active lead|deal',
 					array(
 						'OWNER_TYPE_ID' => $targetActivity['OWNER_TYPE_ID'],
@@ -955,7 +957,7 @@ class CCrmEMail
 
 				if ($forceNewLead = (boolean) $matches)
 				{
-					static::log($eventPid, 'CCrmEmail: force new lead', $matches);
+					static::log($eventTag, 'CCrmEmail: force new lead', $matches);
 				}
 			}
 		}
@@ -1102,7 +1104,7 @@ class CCrmEMail
 
 			$criterions = $selector->getCriteria();
 			static::log(
-				$eventPid,
+				$eventTag,
 				'CCrmEmail: search results',
 				array(
 					'SEARCH_VALUE' => reset($criterions)->getValue(),
@@ -1258,7 +1260,7 @@ class CCrmEMail
 		if ($facility->getRegisteredId() > 0)
 		{
 			static::log(
-				$eventPid,
+				$eventTag,
 				'CCrmEmail: created entity',
 				array(
 					'ENTITY_TYPE' => \CCrmOwnerType::resolveName($facility->getRegisteredTypeId()),
@@ -1566,7 +1568,7 @@ class CCrmEMail
 		if ($activityId > 0)
 		{
 			static::log(
-				$eventPid,
+				$eventTag,
 				'CCrmEmail: created activity',
 				array(
 					'ID' => $activityId,
@@ -1630,12 +1632,15 @@ class CCrmEMail
 			Channel\EmailTracker::getInstance()->registerActivity($activityId, array('ORIGIN_ID' => sprintf('%u|%u', $mailbox['USER_ID'], $mailbox['ID'])));
 		}
 
+		//Notify the responsible user if a message has been added from ajax sync to CRM
 		if ($userId > 0 && $isIncome && $completed != 'Y')
 		{
 			\CCrmActivity::notify(
 				$activityFields,
 				\CCrmNotifierSchemeType::IncomingEmail,
-				sprintf('crm_email_%u_%u', $activityFields['OWNER_TYPE_ID'], $activityFields['OWNER_ID'])
+				sprintf('crm_email_%u_%u', $activityFields['OWNER_TYPE_ID'], $activityFields['OWNER_ID']),
+				$isForced,
+				[],
 			);
 		}
 
@@ -1649,7 +1654,9 @@ class CCrmEMail
 			return false;
 		}
 
-		$date = isset($arMessageFields['FIELD_DATE']) ? $arMessageFields['FIELD_DATE'] : '';
+		$eventTag = sprintf('%x%x', time(), rand(0, 0xffffffff));
+
+		$date = $arMessageFields['FIELD_DATE'] ?? '';
 		$maxAgeDays = intval(COption::GetOptionString('crm', 'email_max_age', 7));
 		$maxAge = $maxAgeDays > 0 ? ($maxAgeDays * 86400) : 0;
 		if($maxAge > 0 && $date !== '')
@@ -1665,10 +1672,25 @@ class CCrmEMail
 
 		$crmEmail = mb_strtolower(trim(COption::GetOptionString('crm', 'mail', '')));
 
-		$msgID = isset($arMessageFields['ID']) ? intval($arMessageFields['ID']) : 0;
-		$mailboxID = isset($arMessageFields['MAILBOX_ID']) ? intval($arMessageFields['MAILBOX_ID']) : 0;
-		$from = isset($arMessageFields['FIELD_FROM']) ? $arMessageFields['FIELD_FROM'] : '';
-		$replyTo = isset($arMessageFields['FIELD_REPLY_TO']) ? $arMessageFields['FIELD_REPLY_TO'] : '';
+		$messageId = isset($arMessageFields['ID']) ? intval($arMessageFields['ID']) : 0;
+		$mailboxId = isset($arMessageFields['MAILBOX_ID']) ? intval($arMessageFields['MAILBOX_ID']) : 0;
+
+		if (empty($mailboxId))
+		{
+			static::log(
+				$eventTag,
+				'CCrmEmail: empty MAILBOX_ID',
+				array(
+					'ID' => $messageId,
+					'MAILBOX_ID' => $mailboxId,
+				)
+			);
+
+			return false;
+		}
+
+		$from = $arMessageFields['FIELD_FROM'] ?? '';
+		$replyTo = $arMessageFields['FIELD_REPLY_TO'] ?? '';
 		if($replyTo !== '')
 		{
 			// Ignore FROM if REPLY_TO EXISTS
@@ -1681,9 +1703,9 @@ class CCrmEMail
 			return false;
 		}
 
-		$to = isset($arMessageFields['FIELD_TO']) ? $arMessageFields['FIELD_TO'] : '';
-		$cc = isset($arMessageFields['FIELD_CC']) ? $arMessageFields['FIELD_CC'] : '';
-		$bcc = isset($arMessageFields['FIELD_BCC']) ? $arMessageFields['FIELD_BCC'] : '';
+		$to = $arMessageFields['FIELD_TO'] ?? '';
+		$cc = $arMessageFields['FIELD_CC'] ?? '';
+		$bcc = $arMessageFields['FIELD_BCC'] ?? '';
 
 		$addresseeEmails = array_unique(
 			array_merge(
@@ -1693,22 +1715,36 @@ class CCrmEMail
 			SORT_STRING
 		);
 
-		if($mailboxID > 0)
-		{
-			$dbMailbox = CMailBox::GetById($mailboxID);
-			$arMailbox = $dbMailbox->Fetch();
+		$mailbox = \CMailBox::getById($mailboxId)->fetch();
 
-			// POP3 mailboxes are ignored - they bound to single email
-			if ($arMailbox
-				&& $arMailbox['SERVER_TYPE'] === 'smtp'
-				&& (empty($crmEmail) || !in_array($crmEmail, $addresseeEmails, true)))
-			{
-				return false;
-			}
+		if (empty($mailbox))
+		{
+			static::log(
+				$eventTag,
+				'CCrmEmail: empty mailbox',
+				array(
+					'ID' => $messageId,
+					'MAILBOX_ID' => $mailboxId,
+				)
+			);
+
+			return false;
+		}
+
+		$mailboxOwnerId = (int)$mailbox['USER_ID'] ?? 0;
+
+		// POP3 mailboxes are ignored - they bound to single email
+		if (
+			$mailbox
+			&& $mailbox['SERVER_TYPE'] === 'smtp'
+			&& (empty($crmEmail) || !in_array($crmEmail, $addresseeEmails, true))
+		)
+		{
+			return false;
 		}
 
 		$subject = trim($arMessageFields['SUBJECT']) ?: getMessage('CRM_EMAIL_DEFAULT_SUBJECT');
-		$body = isset($arMessageFields['BODY']) ? $arMessageFields['BODY'] : '';
+		$body = $arMessageFields['BODY'] ?? '';
 		$arBodyEmails = null;
 
 		$userID = 0;
@@ -2280,7 +2316,7 @@ class CCrmEMail
 			// Try to export vcf-files before exit if email from registered user
 			if($addresserID > 0)
 			{
-				$dbAttachment = CMailAttachment::GetList(array(), array('MESSAGE_ID' => $msgID));
+				$dbAttachment = CMailAttachment::GetList(array(), array('MESSAGE_ID' => $messageId));
 				while ($arAttachment = $dbAttachment->Fetch())
 				{
 					if(GetFileExtension(mb_strtolower($arAttachment['FILE_NAME'])) === 'vcf')
@@ -2339,7 +2375,7 @@ class CCrmEMail
 		$attachmentMaxSize = $attachmentMaxSizeMb > 0 ? ($attachmentMaxSizeMb * 1048576) : 0;
 
 		$arFilesData = array();
-		$dbAttachment = CMailAttachment::GetList(array(), array('MESSAGE_ID' => $msgID));
+		$dbAttachment = CMailAttachment::GetList(array(), array('MESSAGE_ID' => $messageId));
 		$arBannedAttachments = array();
 		while ($arAttachment = $dbAttachment->Fetch())
 		{
@@ -2532,12 +2568,12 @@ class CCrmEMail
 			}
 		}
 
-		//Notity responsible user
+		//Notify the responsible user that the message was added automatically(when syncing a mailbox) to CRM
 		if($userID > 0 && $direction === CCrmActivityDirection::Incoming)
 		{
-			CCrmActivity::Notify($arActivityFields, CCrmNotifierSchemeType::IncomingEmail);
+			CCrmActivity::Notify($arActivityFields, CCrmNotifierSchemeType::IncomingEmail, '', false, []);
 		}
-		// <-- Creating new activity
+
 		return true;
 	}
 

@@ -37,9 +37,24 @@ class Input extends Base\Input
 		{
 			$this->params = $params;
 		}
-		$this->connector = Library::ID_EDNA_WHATSAPP_CONNECTOR;
-		$this->line = SmsManager::getSenderById('ednaru')->getLineId();
 		$this->data = [$this->params];
+
+		$this->connector = Library::ID_EDNA_WHATSAPP_CONNECTOR;
+
+		$sender = SmsManager::getSenderById('ednaru');
+		if ($sender instanceof \Bitrix\MessageService\Sender\Base)
+		{
+			$this->line = $sender->getLineId();
+		}
+		else
+		{
+			$this->result->addError(new \Bitrix\ImConnector\Error(
+				'Messageservice is not enabled',
+				'NO_MESSAGESERVICE_LINE',
+				__METHOD__,
+				Library::ID_EDNA_WHATSAPP_CONNECTOR
+			));
+		}
 	}
 
 	private function prepareMessageParams(array $params): array

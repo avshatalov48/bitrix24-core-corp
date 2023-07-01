@@ -25,9 +25,9 @@ jn.define('layout/ui/fields/user', (require, exports, module) => {
 		{
 			super(props);
 
-			if (this.isReadOnly() && this.isMultiple() && !this.isEmpty())
+			if (this.isReadOnly() && this.isMultiple() && this.isIconsMode() && !this.isEmpty())
 			{
-				this.props.onContentClick = () => {
+				this.customContentClickHandler = () => {
 					UserListManager.open({
 						title: (this.getTitleText() === this.props.title ? this.props.title : null),
 						users: this.state.entityList.map((user) => ({
@@ -38,8 +38,9 @@ jn.define('layout/ui/fields/user', (require, exports, module) => {
 						})),
 						testId: this.testId,
 					});
-				}
+				};
 			}
+
 			this.state.showAll = false;
 		}
 

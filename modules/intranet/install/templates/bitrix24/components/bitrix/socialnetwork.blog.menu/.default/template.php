@@ -13,11 +13,11 @@ use Bitrix\Main\Localization\Loc;
 
 $request = Context::getCurrent()->getRequest();
 
-if ($arResult["showAll"] === "Y")
+if (isset($arResult["showAll"]) && $arResult["showAll"] === "Y")
 {
 	$menuItems = [];
 
-	if($arResult["PATH_TO_MINE"] <> '')
+	if(!empty($arResult["PATH_TO_MINE"]))
 	{
 		$link = $arResult["PATH_TO_MINE"];
 		if ($request->get('IFRAME') === 'Y')
@@ -56,7 +56,7 @@ if ($arResult["showAll"] === "Y")
 	}
 
 	if (
-		$arResult["urlToDraft"] <> ''
+		!empty($arResult["urlToDraft"])
 		&& (int)$arResult["CntToDraft"] > 0
 	)
 	{

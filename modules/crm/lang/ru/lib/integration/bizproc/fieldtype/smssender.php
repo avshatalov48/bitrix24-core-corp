@@ -1,6 +1,6 @@
 <?php
 
-$MESS['CRM_BP_FIELDTYPE_SMS_SENDER'] = 'Сервис SMS';
+$MESS['CRM_BP_FIELDTYPE_SMS_SENDER'] = 'Сервис СМС';
 $MESS['CRM_BP_FIELDTYPE_SMS_SENDER_DEFAULT'] = 'По умолчанию (из настроек CRM)';
 $MESS['CRM_BP_FIELDTYPE_SMS_SENDER_MARKETPLACE'] = 'Выбрать другого провайдера';
 $MESS['CRM_BP_FIELDTYPE_SMS_SENDER_IS_DEMO'] = 'Провайдер работает в демонстрационном режиме';

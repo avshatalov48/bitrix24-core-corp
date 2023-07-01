@@ -6,7 +6,7 @@
  */
 jn.define('statemanager/vuex-manager/storage/shared-storage', (require, exports, module) => {
 
-	const { StateStorage } = jn.require('statemanager/vuex-manager/storage/base');
+	const { StateStorage } = require('statemanager/vuex-manager/storage/base');
 
 	/**
 	 * @class SharedStorage

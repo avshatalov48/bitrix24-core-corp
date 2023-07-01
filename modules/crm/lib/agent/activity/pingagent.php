@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Agent\Activity;
 
+use Bitrix\Crm\ActivityTable;
 use Bitrix\Crm\Agent\AgentBase;
 use Bitrix\Crm\Model\ActivityPingQueueTable;
 use Bitrix\Crm\Timeline\LogMessageController;
@@ -32,7 +33,17 @@ class PingAgent extends AgentBase
 
 		foreach ($result as $item)
 		{
-			$activity = CCrmActivity::GetByID($item['ACTIVITY_ID'], false);
+			$activity = ActivityTable::query()
+				->where('ID', $item['ACTIVITY_ID'])
+				->setSelect([
+					'ID',
+					'COMPLETED',
+					'RESPONSIBLE_ID',
+					'DEADLINE',
+				])
+				->fetch()
+			;
+
 			$bindings = CCrmActivity::GetBindings($item['ACTIVITY_ID']);
 			if (
 				!is_array($activity)
@@ -46,10 +57,15 @@ class PingAgent extends AgentBase
 			}
 
 			$authorId = $activity['RESPONSIBLE_ID'] ?? null;
+			$deadline = $activity['DEADLINE'] ?? null;
+			if ($deadline && \CCrmDateTimeHelper::IsMaxDatabaseDate($deadline))
+			{
+				$deadline = null;
+			}
 
 			foreach ($bindings as $binding)
 			{
-				static::addPing((int)$item['ACTIVITY_ID'], $item['PING_DATETIME'], $binding, $authorId);
+				static::addPing((int)$item['ACTIVITY_ID'], $item['PING_DATETIME'], $deadline, $binding, $authorId);
 
 				ActivityPingQueueTable::delete($item['ID']);
 			}
@@ -74,8 +90,14 @@ class PingAgent extends AgentBase
 		return false;
 	}
 
-	private static function addPing(int $activityId, DateTime $created, array $binding, ?int $authorId): void
+	private static function addPing(int $activityId, DateTime $created, ?DateTime $deadline, array $binding, ?int $authorId): void
 	{
+		$settings = [];
+		if ($created && $deadline)
+		{
+			$settings['PING_OFFSET'] = $deadline->getTimestamp() - $created->getTimestamp();
+		}
+
 		LogMessageController::getInstance()->onCreate(
 			[
 				'ENTITY_TYPE_ID' => $binding['OWNER_TYPE_ID'],
@@ -83,6 +105,7 @@ class PingAgent extends AgentBase
 				'ASSOCIATED_ENTITY_TYPE_ID' => CCrmOwnerType::Activity,
 				'ASSOCIATED_ENTITY_ID' => $activityId,
 				'CREATED' => $created,
+				'SETTINGS' => $settings,
 			],
 			LogMessageType::PING,
 			$authorId

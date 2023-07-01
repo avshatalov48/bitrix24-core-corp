@@ -672,13 +672,17 @@ class ResultEntity
 			if($isEntityDynamic)
 			{
 				$entityFields['WEBFORM_ID'] = $this->formId;
-				$dynamicFactory = Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::resolveID($entityName));
+				$dynamicFactory = Crm\Service\Container::getInstance()->getFactory($entityTypeId);
 				$dynamicItem = $dynamicFactory->createItem();
 				$dynamicItem->setFromCompatibleData($entityFields);
 				if (empty($entityFields['STAGE_ID']) && !empty($entityFields['CATEGORY_ID']))
 				{
 					$dynamicStageId = $dynamicFactory->getStages($entityFields['CATEGORY_ID'])->getStatusIdList()[0] ?? null;
-					if ($dynamicStageId)
+					if (
+						$dynamicStageId
+						&& $dynamicFactory->isStagesEnabled()
+						&& $dynamicFactory->isCategoriesEnabled()
+					)
 					{
 						$dynamicItem->setStageId($dynamicStageId);
 					}
@@ -1747,10 +1751,18 @@ class ResultEntity
 					);
 				}
 
-				if (isset($mainEntityLink) && isset($mainEntityName))
+				if (
+					isset($mainEntityLink)
+					&& isset($mainEntityName)
+					&& is_string($mainEntityName)
+				)
 				{
-					$imNotifyMessage .= "\n";
-					$imNotifyMessage .= $this->getEntityLink($mainEntityLink, $mainEntityName);
+					$additionalEntityInfo = $this->getAdditionalEntityInfo($mainEntityLink, $mainEntityName);
+					if ($additionalEntityInfo !== null)
+					{
+						$imNotifyMessage .= "\n";
+						$imNotifyMessage .= $additionalEntityInfo;
+					}
 				}
 
 				$imNotifyMessageOut = $imNotifyMessage . " (". $serverName . $url . ")";
@@ -2405,9 +2417,11 @@ class ResultEntity
 	}
 
 	/**
+	 * @param string $link
+	 * @param string $entityName
 	 * @return string|null
 	 */
-	private function getEntityLink(string $link, string $entityName): string
+	private function getAdditionalEntityInfo(string $link, string $entityName): ?string
 	{
 		return Loc::getMessage('CRM_WEBFORM_RESULT_ENTITY_NOTIFY_MESSAGE_LINK', [
 			'#ENTITY_LINK#' => '<a href="' . $link . '">' . htmlspecialcharsbx($entityName) . '</a>',

@@ -152,51 +152,59 @@ final class ProjectDependenceTable extends Mesh
 
 		$result = new AddResult();
 
-		if(is_array($behaviour['TASK_DATA']) && !empty($behaviour['TASK_DATA']))
+		if (
+			isset($behaviour['TASK_DATA'])
+			&& is_array($behaviour['TASK_DATA'])
+			&& !empty($behaviour['TASK_DATA'])
+		)
 		{
 			$toTask = $behaviour['TASK_DATA'];
 		}
 		else
 		{
-			$toTask = 	TaskTable::getById($id)->fetch();
+			$toTask = TaskTable::getById($id)->fetch();
 		}
 		if(empty($toTask))
 		{
 			throw new ActionFailedException('Task not found', $exceptionInfo);
 		}
 
-		if(is_array($behaviour['PARENT_TASK_DATA']) && !empty($behaviour['PARENT_TASK_DATA']))
+		if (
+			isset($behaviour['PARENT_TASK_DATA'])
+			&& is_array($behaviour['PARENT_TASK_DATA'])
+			&& !empty($behaviour['PARENT_TASK_DATA'])
+		)
 		{
 			$fromTask = $behaviour['PARENT_TASK_DATA'];
 		}
 		else
 		{
-			$fromTask = 	TaskTable::getById($parentId)->fetch();
+			$fromTask = TaskTable::getById($parentId)->fetch();
 		}
-		if(empty($fromTask))
+		if (empty($fromTask))
 		{
 			throw new ActionFailedException('Parent task not found', $exceptionInfo);
 		}
 
-		if((string) $toTask['CREATED_DATE'] == '')
+		if (isset($toTask['CREATED_DATE']) && (string)$toTask['CREATED_DATE'] === '')
 		{
 			$result->addError(new Error(Loc::getMessage('DEPENDENCE_ENTITY_CANT_ADD_LINK_CREATED_DATE_NOT_SET')));
 		}
-		if((string) $toTask['END_DATE_PLAN'] == '')
+		if (isset($toTask['END_DATE_PLAN']) && (string)$toTask['END_DATE_PLAN'] === '')
 		{
 			$result->addError(new Error(Loc::getMessage('DEPENDENCE_ENTITY_CANT_ADD_LINK_END_DATE_PLAN_NOT_SET')));
 		}
 
-		if((string) $fromTask['CREATED_DATE'] == '')
+		if (isset($fromTask['CREATED_DATE']) && (string)$fromTask['CREATED_DATE'] === '')
 		{
 			$result->addError(new Error(Loc::getMessage('DEPENDENCE_ENTITY_CANT_ADD_LINK_CREATED_DATE_NOT_SET_PARENT_TASK')));
 		}
-		if((string) $fromTask['END_DATE_PLAN'] == '')
+		if (isset($fromTask['END_DATE_PLAN']) && (string)$fromTask['END_DATE_PLAN'] === '')
 		{
 			$result->addError(new Error(Loc::getMessage('DEPENDENCE_ENTITY_CANT_ADD_LINK_END_DATE_PLAN_NOT_SET_PARENT_TASK')));
 		}
 
-		if(!$result->isSuccess())
+		if (!$result->isSuccess())
 		{
 			return $result;
 		}
@@ -297,7 +305,7 @@ final class ProjectDependenceTable extends Mesh
 
 		if(!empty($mixins))
 		{
-			if(!is_array($parameters['runtime']))
+			if(!isset($parameters['runtime']) || !is_array($parameters['runtime']))
 			{
 				$parameters['runtime'] = array();
 			}

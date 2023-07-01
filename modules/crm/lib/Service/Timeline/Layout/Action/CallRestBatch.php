@@ -13,6 +13,7 @@ class CallRestBatch extends Action
 			'value' => '',
 			'actionParams' => $this->getActionParams(),
 			'animation' => $this->getAnimation(),
+			'analytics' => $this->getAnalytics(),
 		];
 	}
 }

@@ -1,5 +1,9 @@
 <?
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 if (!CModule::IncludeModule('crm'))
 {
@@ -29,6 +33,7 @@ if (!CModule::IncludeModule('sale'))
 }
 
 use Bitrix\Crm;
+use Bitrix\Crm\Restriction\RestrictionManager;
 
 $showRecurring = \Bitrix\Crm\Recurring\Manager::isAllowedExpose(\Bitrix\Crm\Recurring\Manager::DEAL);
 
@@ -74,6 +79,7 @@ $arDefaultVariableAliases404 = array(
 );
 $arDefaultVariableAliases = array();
 $componentPage = '';
+$originalComponentPage = '';
 $arComponentVariables = array('deal_id', 'category_id');
 
 $arParams['NAME_TEMPLATE'] = empty($arParams['NAME_TEMPLATE']) ? CSite::GetNameFormat(false) : str_replace(array("#NOBR#","#/NOBR#"), array("",""), $arParams["NAME_TEMPLATE"]);
@@ -320,7 +326,10 @@ if(
 	}
 }
 
+$originalComponentPage = $componentPage;
+
 $arResult['NAVIGATION_CONTEXT_ID'] = 'DEAL';
+
 if($componentPage === 'index' || $componentPage === 'category')
 {
 	$componentPage = 'list';
@@ -369,9 +378,6 @@ if(isset($_GET['id']))
 	Crm\Settings\DealSettings::getCurrent(),
 	\Bitrix\Main\Application::getInstance()->getContext()->getRequest()
 );
-\CCrmEntityHelper::setEnabledUniversalActivityScenarioFlagByRequest(
-	\Bitrix\Main\Application::getInstance()->getContext()->getRequest()
-);
 
 if(\Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isSliderEnabled()
 	&& ($componentPage === 'edit' || $componentPage === 'show')
@@ -393,8 +399,17 @@ if(\Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isSliderEnabled()
 
 	LocalRedirect($redirectUrl, '301 Moved Permanently');
 }
-else
+
+if ($componentPage !== 'details')
 {
-	$this->IncludeComponentTemplate($componentPage);
+	$isActivityFieldRestricted = in_array($originalComponentPage, ['activity', 'activitycategory'], true)
+		&& RestrictionManager::getActivityFieldRestriction()->isExceeded()
+	;
+
+	if ($isActivityFieldRestricted)
+	{
+		$componentPage = 'restrictions';
+	}
 }
-?>
+
+$this->IncludeComponentTemplate($componentPage);

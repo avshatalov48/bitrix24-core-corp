@@ -201,7 +201,7 @@ jn.define('layout/ui/fields/menu-select', (require, exports, module) => {
 
 		handleAdditionalFocusActions()
 		{
-			const { menuTitle, defaultSectionCode, shouldResizeContent } = this.getConfig();
+			const { menuTitle, defaultSectionCode, shouldResizeContent, isCustomIconColor } = this.getConfig();
 
 			const contextMenu = new ContextMenu({
 				params: {
@@ -209,7 +209,8 @@ jn.define('layout/ui/fields/menu-select', (require, exports, module) => {
 					showActionLoader: false,
 					title: menuTitle,
 					showPartiallyHidden: this.shouldShowPartiallyHidden(),
-					shouldResizeContent
+					shouldResizeContent,
+					isCustomIconColor,
 				},
 				actions: this.getItems().map((item) => ({
 					id: String(item.id),

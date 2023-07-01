@@ -21,9 +21,9 @@ Loc::loadMessages(__FILE__);
  *
  * <<< ORMENTITYANNOTATION
  * @method static EO_FormStartEdit_Query query()
- * @method static EO_FormStartEdit_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_FormStartEdit_Result getByPrimary($primary, array $parameters = [])
  * @method static EO_FormStartEdit_Result getById($id)
- * @method static EO_FormStartEdit_Result getList(array $parameters = array())
+ * @method static EO_FormStartEdit_Result getList(array $parameters = [])
  * @method static EO_FormStartEdit_Entity getEntity()
  * @method static \Bitrix\Crm\WebForm\Internals\EO_FormStartEdit createObject($setDefaultValues = true)
  * @method static \Bitrix\Crm\WebForm\Internals\EO_FormStartEdit_Collection createCollection()

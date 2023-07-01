@@ -2,7 +2,6 @@
  * @module crm/timeline/item/ui/loading-overlay
  */
 jn.define('crm/timeline/item/ui/loading-overlay', (require, exports, module) => {
-
 	/**
 	 * @class TimelineItemLoadingOverlay
 	 */
@@ -49,12 +48,12 @@ jn.define('crm/timeline/item/ui/loading-overlay', (require, exports, module) => 
 				Loader({
 					style: {
 						width: 50,
-						height: 50
+						height: 50,
 					},
-					tintColor: '#82888F',
+					tintColor: '#828b95',
 					animating: true,
-					size: 'large'
-				})
+					size: 'large',
+				}),
 			);
 		}
 
@@ -63,7 +62,10 @@ jn.define('crm/timeline/item/ui/loading-overlay', (require, exports, module) => 
 		 */
 		show()
 		{
-			if (!this.nodeRef) return;
+			if (!this.nodeRef)
+			{
+				return;
+			}
 
 			this.setState({ visible: true }, () => {
 				this.nodeRef.animate({
@@ -78,7 +80,10 @@ jn.define('crm/timeline/item/ui/loading-overlay', (require, exports, module) => 
 		 */
 		hide()
 		{
-			if (!this.nodeRef) return;
+			if (!this.nodeRef)
+			{
+				return;
+			}
 
 			this.nodeRef.animate({
 				duration: 300,
@@ -90,5 +95,4 @@ jn.define('crm/timeline/item/ui/loading-overlay', (require, exports, module) => 
 	}
 
 	module.exports = { TimelineItemLoadingOverlay };
-
 });

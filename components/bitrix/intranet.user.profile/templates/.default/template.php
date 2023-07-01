@@ -935,7 +935,7 @@ if ($arResult["adminRightsRestricted"])
 		languageId: "<?=LANGUAGE_ID?>",
 		siteId: "<?=SITE_ID?>",
 		isCloud: "<?=$arResult["isCloud"] ? "Y" : "N"?>",
-		isRusCloud: "<?=$arResult["isRusCloud"] ? "Y" : "N"?>",
+		isRusCloud: "<?= (isset($arResult["isRusCloud"]) && $arResult["isRusCloud"]) ? "Y" : "N"?>",
 		adminRightsRestricted: "<?=$arResult["adminRightsRestricted"] ? "Y" : "N"?>",
 		delegateAdminRightsRestricted: "<?=$arResult["delegateAdminRightsRestricted"] ? "Y" : "N"?>",
 		isFireUserEnabled: "<?=$arResult["isFireUserEnabled"] ? "Y" : "N"?>",

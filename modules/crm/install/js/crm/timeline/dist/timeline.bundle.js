@@ -1,2474 +1,7 @@
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,crm_activity_todoEditor,main_core_events,crm_datetime,crm_timeline_tools,crm_timeline_item,main_core) {
+(function (exports,crm_datetime,crm_timeline_tools,crm_timeline_item,main_core) {
 	'use strict';
-
-	/** @memberof BX.Crm.Timeline */
-
-	let Editor = /*#__PURE__*/function () {
-	  function Editor() {
-	    babelHelpers.classCallCheck(this, Editor);
-	    this._id = "";
-	    this._settings = {};
-	    this._manager = null;
-	    this._ownerTypeId = 0;
-	    this._ownerId = 0;
-	    this._container = null;
-	    this._input = null;
-	    this._saveButton = null;
-	    this._cancelButton = null;
-	    this._ghostInput = null;
-	    this._saveButtonHandler = BX.delegate(this.onSaveButtonClick, this);
-	    this._cancelButtonHandler = BX.delegate(this.onCancelButtonClick, this);
-	    this._focusHandler = BX.delegate(this.onFocus, this);
-	    this._blurHandler = BX.delegate(this.onBlur, this);
-	    this._keyupHandler = BX.delegate(this.resizeForm, this);
-	    this._delayedKeyupHandler = BX.delegate(function () {
-	      setTimeout(this.resizeForm.bind(this), 0);
-	    }, this);
-	    this._isVisible = true;
-	    this._hideButtonsOnBlur = true;
-	  }
-
-	  babelHelpers.createClass(Editor, [{
-	    key: "initialize",
-	    value: function initialize(id, settings) {
-	      this._id = BX.type.isNotEmptyString(id) ? id : BX.util.getRandomString(4);
-	      this._settings = settings ? settings : {};
-	      this._manager = this.getSetting("manager");
-
-	      if (!(this._manager instanceof Manager)) {
-	        throw "Editor. Manager instance is not found.";
-	      }
-
-	      this._ownerTypeId = this.getSetting("ownerTypeId", 0);
-	      this._ownerId = this.getSetting("ownerId", 0);
-	      this._container = BX(this.getSetting("container"));
-	      this._input = BX(this.getSetting("input"));
-	      this._saveButton = BX(this.getSetting("button"));
-	      this._cancelButton = BX(this.getSetting("cancelButton"));
-	      BX.bind(this._saveButton, "click", this._saveButtonHandler);
-
-	      if (this._cancelButton) {
-	        BX.bind(this._cancelButton, "click", this._cancelButtonHandler);
-	      }
-
-	      this.bindInputHandlers();
-	      this.doInitialize();
-	    }
-	  }, {
-	    key: "doInitialize",
-	    value: function doInitialize() {}
-	  }, {
-	    key: "bindInputHandlers",
-	    value: function bindInputHandlers() {
-	      BX.bind(this._input, "focus", this._focusHandler);
-	      BX.bind(this._input, "blur", this._blurHandler);
-	      BX.bind(this._input, "keyup", this._keyupHandler);
-	      BX.bind(this._input, "cut", this._delayedKeyupHandler);
-	      BX.bind(this._input, "paste", this._delayedKeyupHandler);
-	    }
-	  }, {
-	    key: "getId",
-	    value: function getId() {
-	      return this._id;
-	    }
-	  }, {
-	    key: "getSetting",
-	    value: function getSetting(name, defaultval) {
-	      return this._settings.hasOwnProperty(name) ? this._settings[name] : defaultval;
-	    }
-	  }, {
-	    key: "setVisible",
-	    value: function setVisible(visible) {
-	      visible = !!visible;
-
-	      if (this._isVisible === visible) {
-	        return;
-	      }
-
-	      this._isVisible = visible;
-
-	      if (this._container) {
-	        this._container.style.display = visible ? "" : "none";
-	      }
-	    }
-	  }, {
-	    key: "isVisible",
-	    value: function isVisible() {
-	      return this._isVisible;
-	    }
-	  }, {
-	    key: "onFocus",
-	    value: function onFocus(e) {
-	      BX.addClass(this._container, "focus");
-	    }
-	  }, {
-	    key: "onBlur",
-	    value: function onBlur(e) {
-	      if (!this._hideButtonsOnBlur) {
-	        return;
-	      }
-
-	      if (this._input.value === "") {
-	        window.setTimeout(BX.delegate(function () {
-	          BX.removeClass(this._container, "focus");
-	          this._input.style.minHeight = "";
-	        }, this), 200);
-	      }
-	    }
-	  }, {
-	    key: "onSaveButtonClick",
-	    value: function onSaveButtonClick(e) {
-	      main_core.Dom.addClass(this._saveButton, 'ui-btn-wait');
-
-	      const removeButtonWaitClass = () => main_core.Dom.removeClass(this._saveButton, 'ui-btn-wait');
-
-	      const saveResult = this.save();
-
-	      if (saveResult instanceof BX.Promise || saveResult instanceof Promise) {
-	        saveResult.then(() => removeButtonWaitClass(), () => removeButtonWaitClass());
-	      } else {
-	        removeButtonWaitClass();
-	      }
-	    }
-	  }, {
-	    key: "onCancelButtonClick",
-	    value: function onCancelButtonClick() {
-	      this.cancel();
-
-	      this._manager.processEditingCancellation(this);
-	    }
-	  }, {
-	    key: "save",
-	    value: function save() {}
-	  }, {
-	    key: "cancel",
-	    value: function cancel() {}
-	  }, {
-	    key: "release",
-	    value: function release() {
-	      if (this._ghostInput) {
-	        this._ghostInput = BX.remove(this._ghostInput);
-	      }
-	    }
-	  }, {
-	    key: "ensureGhostCreated",
-	    value: function ensureGhostCreated() {
-	      if (this._ghostInput) {
-	        return this._ghostInput;
-	      }
-
-	      this._ghostInput = BX.create('div', {
-	        props: {
-	          className: 'crm-entity-stream-content-new-comment-textarea-shadow'
-	        },
-	        text: this._input.value
-	      });
-	      this._ghostInput.style.width = this._input.offsetWidth + 'px';
-	      document.body.appendChild(this._ghostInput);
-	      return this._ghostInput;
-	    }
-	  }, {
-	    key: "resizeForm",
-	    value: function resizeForm() {
-	      const ghost = this.ensureGhostCreated();
-	      const computedStyle = getComputedStyle(this._input);
-	      const diff = parseInt(computedStyle.paddingBottom) + parseInt(computedStyle.paddingTop) + parseInt(computedStyle.borderTopWidth) + parseInt(computedStyle.borderBottomWidth) || 0;
-	      ghost.innerHTML = BX.util.htmlspecialchars(this._input.value.replace(/[\r\n]{1}/g, '<br>'));
-	      this._input.style.minHeight = ghost.scrollHeight + diff + 'px';
-	    }
-	  }]);
-	  return Editor;
-	}();
-
-	/** @memberof BX.Crm.Timeline.Tools */
-
-	let WaitConfigurationDialog = /*#__PURE__*/function () {
-	  function WaitConfigurationDialog() {
-	    babelHelpers.classCallCheck(this, WaitConfigurationDialog);
-	    this._id = "";
-	    this._settings = {};
-	    this._type = Wait.WaitingType.undefined;
-	    this._duration = 0;
-	    this._target = "";
-	    this._targetDates = null;
-	    this._container = null;
-	    this._durationMeasureNode = null;
-	    this._durationInput = null;
-	    this._targetDateNode = null;
-	    this._popup = null;
-	  }
-
-	  babelHelpers.createClass(WaitConfigurationDialog, [{
-	    key: "initialize",
-	    value: function initialize(id, settings) {
-	      this._id = BX.type.isNotEmptyString(id) ? id : BX.util.getRandomString(4);
-	      this._settings = settings ? settings : {};
-	      this._type = BX.prop.getInteger(this._settings, "type", Wait.WaitingType.after);
-	      this._duration = BX.prop.getInteger(this._settings, "duration", 1);
-	      this._target = BX.prop.getString(this._settings, "target", "");
-	      this._targetDates = BX.prop.getArray(this._settings, "targetDates", []);
-	      this._menuId = this._id + "_target_date_sel";
-	    }
-	  }, {
-	    key: "getId",
-	    value: function getId() {
-	      return this._id;
-	    }
-	  }, {
-	    key: "getType",
-	    value: function getType() {
-	      return this._type;
-	    }
-	  }, {
-	    key: "setType",
-	    value: function setType(type) {
-	      this._type = type;
-	    }
-	  }, {
-	    key: "getDuration",
-	    value: function getDuration() {
-	      return this._duration;
-	    }
-	  }, {
-	    key: "setDuration",
-	    value: function setDuration(duration) {
-	      this._duration = duration;
-	    }
-	  }, {
-	    key: "getTarget",
-	    value: function getTarget() {
-	      return this._target;
-	    }
-	  }, {
-	    key: "setTarget",
-	    value: function setTarget(target) {
-	      this._target = target;
-	    }
-	  }, {
-	    key: "getMessage",
-	    value: function getMessage(name) {
-	      const m = WaitConfigurationDialog.messages;
-	      return m.hasOwnProperty(name) ? m[name] : name;
-	    }
-	  }, {
-	    key: "getDurationText",
-	    value: function getDurationText(duration, enableNumber) {
-	      return Wait.Helper.getDurationText(duration, enableNumber);
-	    }
-	  }, {
-	    key: "getTargetDateCaption",
-	    value: function getTargetDateCaption(name) {
-	      const length = this._targetDates.length;
-
-	      for (let i = 0; i < length; i++) {
-	        const info = this._targetDates[i];
-
-	        if (info["name"] === name) {
-	          return info["caption"];
-	        }
-	      }
-
-	      return "";
-	    }
-	  }, {
-	    key: "open",
-	    value: function open() {
-	      this._popup = new BX.PopupWindow(this._id, null, //this._configSelector,
-	      {
-	        autoHide: true,
-	        draggable: false,
-	        bindOptions: {
-	          forceBindPosition: false
-	        },
-	        closeByEsc: true,
-	        zIndex: 0,
-	        content: this.prepareDialogContent(),
-	        events: {
-	          onPopupShow: BX.delegate(this.onPopupShow, this),
-	          onPopupClose: BX.delegate(this.onPopupClose, this),
-	          onPopupDestroy: BX.delegate(this.onPopupDestroy, this)
-	        },
-	        buttons: [new BX.PopupWindowButton({
-	          text: this.getMessage("select"),
-	          className: "popup-window-button-accept",
-	          events: {
-	            click: BX.delegate(this.onSaveButtonClick, this)
-	          }
-	        }), new BX.PopupWindowButtonLink({
-	          text: BX.message("JS_CORE_WINDOW_CANCEL"),
-	          events: {
-	            click: BX.delegate(this.onCancelButtonClick, this)
-	          }
-	        })]
-	      });
-
-	      this._popup.show();
-	    }
-	  }, {
-	    key: "close",
-	    value: function close() {
-	      if (this._popup) {
-	        this._popup.close();
-	      }
-	    }
-	  }, {
-	    key: "prepareDialogContent",
-	    value: function prepareDialogContent() {
-	      const container = BX.create("div", {
-	        attrs: {
-	          className: "crm-wait-popup-select-block"
-	        }
-	      });
-	      const wrapper = BX.create("div", {
-	        attrs: {
-	          className: "crm-wait-popup-select-wrapper"
-	        }
-	      });
-	      container.appendChild(wrapper);
-	      this._durationInput = BX.create("input", {
-	        attrs: {
-	          type: "text",
-	          className: "crm-wait-popup-settings-input",
-	          value: this._duration
-	        },
-	        events: {
-	          keyup: BX.delegate(this.onDurationChange, this)
-	        }
-	      });
-	      this._durationMeasureNode = BX.create("span", {
-	        attrs: {
-	          className: "crm-wait-popup-settings-title"
-	        },
-	        text: this.getDurationText(this._duration, false)
-	      });
-
-	      if (this._type === Wait.WaitingType.after) {
-	        wrapper.appendChild(BX.create("span", {
-	          attrs: {
-	            className: "crm-wait-popup-settings-title"
-	          },
-	          text: this.getMessage("prefixTypeAfter")
-	        }));
-	        wrapper.appendChild(this._durationInput);
-	        wrapper.appendChild(this._durationMeasureNode);
-	      } else {
-	        wrapper.appendChild(BX.create("span", {
-	          attrs: {
-	            className: "crm-wait-popup-settings-title"
-	          },
-	          text: this.getMessage("prefixTypeBefore")
-	        }));
-	        wrapper.appendChild(this._durationInput);
-	        wrapper.appendChild(this._durationMeasureNode);
-	        wrapper.appendChild(BX.create("span", {
-	          attrs: {
-	            className: "crm-wait-popup-settings-title"
-	          },
-	          text: " " + this.getMessage("targetPrefixTypeBefore")
-	        }));
-	        this._targetDateNode = BX.create("span", {
-	          attrs: {
-	            className: "crm-automation-popup-settings-link"
-	          },
-	          text: this.getTargetDateCaption(this._target),
-	          events: {
-	            click: BX.delegate(this.toggleTargetMenu, this)
-	          }
-	        });
-	        wrapper.appendChild(this._targetDateNode);
-	      }
-
-	      return container;
-	    }
-	  }, {
-	    key: "onDurationChange",
-	    value: function onDurationChange() {
-	      let duration = parseInt(this._durationInput.value);
-
-	      if (isNaN(duration) || duration <= 0) {
-	        duration = 1;
-	      }
-
-	      this._duration = duration;
-	      this._durationMeasureNode.innerHTML = BX.util.htmlspecialchars(this.getDurationText(duration, false));
-	    }
-	  }, {
-	    key: "toggleTargetMenu",
-	    value: function toggleTargetMenu() {
-	      if (this.isTargetMenuOpened()) {
-	        this.closeTargetMenu();
-	      } else {
-	        this.openTargetMenu();
-	      }
-	    }
-	  }, {
-	    key: "isTargetMenuOpened",
-	    value: function isTargetMenuOpened() {
-	      return !!BX.PopupMenu.getMenuById(this._menuId);
-	    }
-	  }, {
-	    key: "openTargetMenu",
-	    value: function openTargetMenu() {
-	      const menuItems = [];
-	      let i = 0;
-	      const length = this._targetDates.length;
-
-	      for (; i < length; i++) {
-	        const info = this._targetDates[i];
-	        menuItems.push({
-	          text: info["caption"],
-	          title: info["caption"],
-	          value: info["name"],
-	          onclick: BX.delegate(this.onTargetSelect, this)
-	        });
-	      }
-
-	      BX.PopupMenu.show(this._menuId, this._targetDateNode, menuItems, {
-	        zIndex: 200,
-	        autoHide: true,
-	        offsetLeft: BX.pos(this._targetDateNode)["width"] / 2,
-	        angle: {
-	          position: 'top',
-	          offset: 0
-	        }
-	      });
-	    }
-	  }, {
-	    key: "closeTargetMenu",
-	    value: function closeTargetMenu() {
-	      BX.PopupMenu.destroy(this._menuId);
-	    }
-	  }, {
-	    key: "onPopupShow",
-	    value: function onPopupShow(e, item) {}
-	  }, {
-	    key: "onPopupClose",
-	    value: function onPopupClose() {
-	      if (this._popup) {
-	        this._popup.destroy();
-	      }
-
-	      this.closeTargetMenu();
-	    }
-	  }, {
-	    key: "onPopupDestroy",
-	    value: function onPopupDestroy() {
-	      if (this._popup) {
-	        this._popup = null;
-	      }
-	    }
-	  }, {
-	    key: "onSaveButtonClick",
-	    value: function onSaveButtonClick(e) {
-	      const callback = BX.prop.getFunction(this._settings, "onSave", null);
-
-	      if (!callback) {
-	        return;
-	      }
-
-	      const params = {
-	        type: this._type
-	      };
-	      params["duration"] = this._duration;
-	      params["target"] = this._type === Wait.WaitingType.before ? this._target : "";
-	      callback(this, params);
-	    }
-	  }, {
-	    key: "onCancelButtonClick",
-	    value: function onCancelButtonClick(e) {
-	      const callback = BX.prop.getFunction(this._settings, "onCancel", null);
-
-	      if (callback) {
-	        callback(this);
-	      }
-	    }
-	  }, {
-	    key: "onTargetSelect",
-	    value: function onTargetSelect(e, item) {
-	      const fieldName = BX.prop.getString(item, "value", "");
-
-	      if (fieldName !== "") {
-	        this._target = fieldName;
-	        this._targetDateNode.innerHTML = BX.util.htmlspecialchars(this.getTargetDateCaption(fieldName));
-	      }
-
-	      this.closeTargetMenu();
-	      e.preventDefault ? e.preventDefault() : e.returnValue = false;
-	    }
-	  }], [{
-	    key: "create",
-	    value: function create(id, settings) {
-	      const self = new WaitConfigurationDialog();
-	      self.initialize(id, settings);
-	      return self;
-	    }
-	  }]);
-	  return WaitConfigurationDialog;
-	}();
-
-	babelHelpers.defineProperty(WaitConfigurationDialog, "messages", {});
-
-	/** @memberof BX.Crm.Timeline.Editors */
-
-	let Wait = /*#__PURE__*/function (_Editor) {
-	  babelHelpers.inherits(Wait, _Editor);
-
-	  function Wait() {
-	    var _this;
-
-	    babelHelpers.classCallCheck(this, Wait);
-	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Wait).call(this));
-	    _this._serviceUrl = "";
-	    _this._isRequestRunning = false;
-	    _this._isLocked = false;
-	    _this._hideButtonsOnBlur = false; //region Config
-
-	    _this._type = Wait.WaitingType.after;
-	    _this._duration = 1;
-	    _this._target = "";
-	    _this._configContainer = null;
-	    _this._configSelector = null; //endregion
-
-	    _this._isMenuShown = false;
-	    _this._menu = null;
-	    _this._configDialog = null;
-	    return _this;
-	  }
-
-	  babelHelpers.createClass(Wait, [{
-	    key: "doInitialize",
-	    value: function doInitialize() {
-	      this._configContainer = BX(this.getSetting("configContainer"));
-	      this._serviceUrl = this.getSetting("serviceUrl", "");
-	      const config = BX.prop.getObject(this._settings, "config", {});
-	      this._type = Wait.WaitingType.resolveTypeId(BX.prop.getString(config, "type", Wait.WaitingType.names.after));
-	      this._duration = BX.prop.getInteger(config, "duration", 1);
-	      this._target = BX.prop.getString(config, "target", "");
-	      this._targetDates = BX.prop.getArray(this._settings, "targetDates", []);
-	      this.layoutConfigurationSummary();
-	    }
-	  }, {
-	    key: "getDurationText",
-	    value: function getDurationText(duration, enableNumber) {
-	      return Wait.Helper.getDurationText(duration, enableNumber);
-	    }
-	  }, {
-	    key: "getTargetDateCaption",
-	    value: function getTargetDateCaption(name) {
-	      let i = 0;
-	      const length = this._targetDates.length;
-
-	      for (; i < length; i++) {
-	        const info = this._targetDates[i];
-
-	        if (info["name"] === name) {
-	          return info["caption"];
-	        }
-	      }
-
-	      return "";
-	    }
-	  }, {
-	    key: "onSelectorClick",
-	    value: function onSelectorClick(e) {
-	      if (!this._isMenuShown) {
-	        this.openMenu();
-	      } else {
-	        this.closeMenu();
-	      }
-
-	      e.preventDefault ? e.preventDefault() : e.returnValue = false;
-	    }
-	  }, {
-	    key: "openMenu",
-	    value: function openMenu() {
-	      if (this._isMenuShown) {
-	        return;
-	      }
-
-	      const handler = BX.delegate(this.onMenuItemClick, this);
-	      const menuItems = [{
-	        id: "day_1",
-	        text: this.getMessage("oneDay"),
-	        onclick: handler
-	      }, {
-	        id: "day_2",
-	        text: this.getMessage("twoDays"),
-	        onclick: handler
-	      }, {
-	        id: "day_3",
-	        text: this.getMessage("threeDays"),
-	        onclick: handler
-	      }, {
-	        id: "week_1",
-	        text: this.getMessage("oneWeek"),
-	        onclick: handler
-	      }, {
-	        id: "week_2",
-	        text: this.getMessage("twoWeek"),
-	        onclick: handler
-	      }, {
-	        id: "week_3",
-	        text: this.getMessage("threeWeeks"),
-	        onclick: handler
-	      }];
-	      const customMenu = {
-	        id: "custom",
-	        text: this.getMessage("custom"),
-	        items: []
-	      };
-	      customMenu["items"].push({
-	        id: "afterDays",
-	        text: this.getMessage("afterDays"),
-	        onclick: handler
-	      });
-
-	      if (this._targetDates.length > 0) {
-	        customMenu["items"].push({
-	          id: "beforeDate",
-	          text: this.getMessage("beforeDate"),
-	          onclick: handler
-	        });
-	      }
-
-	      menuItems.push(customMenu);
-	      BX.PopupMenu.show(this._id, this._configSelector, menuItems, {
-	        offsetTop: 0,
-	        offsetLeft: 36,
-	        angle: {
-	          position: "top",
-	          offset: 0
-	        },
-	        events: {
-	          onPopupShow: BX.delegate(this.onMenuShow, this),
-	          onPopupClose: BX.delegate(this.onMenuClose, this),
-	          onPopupDestroy: BX.delegate(this.onMenuDestroy, this)
-	        }
-	      });
-	      this._menu = BX.PopupMenu.currentItem;
-	    }
-	  }, {
-	    key: "closeMenu",
-	    value: function closeMenu() {
-	      if (!this._isMenuShown) {
-	        return;
-	      }
-
-	      if (this._menu) {
-	        this._menu.close();
-	      }
-	    }
-	  }, {
-	    key: "onMenuItemClick",
-	    value: function onMenuItemClick(e, item) {
-	      this.closeMenu();
-
-	      if (item.id === "afterDays" || item.id === "beforeDate") {
-	        this.openConfigDialog(item.id === "afterDays" ? Wait.WaitingType.after : Wait.WaitingType.before);
-	        return;
-	      }
-
-	      const params = {
-	        type: Wait.WaitingType.after
-	      };
-
-	      if (item.id === "day_1") {
-	        params["duration"] = 1;
-	      } else if (item.id === "day_2") {
-	        params["duration"] = 2;
-	      } else if (item.id === "day_3") {
-	        params["duration"] = 3;
-	      }
-
-	      if (item.id === "week_1") {
-	        params["duration"] = 7;
-	      } else if (item.id === "week_2") {
-	        params["duration"] = 14;
-	      } else if (item.id === "week_3") {
-	        params["duration"] = 21;
-	      }
-
-	      this.saveConfiguration(params);
-	    }
-	  }, {
-	    key: "openConfigDialog",
-	    value: function openConfigDialog(type) {
-	      if (!this._configDialog) {
-	        this._configDialog = WaitConfigurationDialog.create("", {
-	          targetDates: this._targetDates,
-	          onSave: BX.delegate(this.onConfigDialogSave, this),
-	          onCancel: BX.delegate(this.onConfigDialogCancel, this)
-	        });
-	      }
-
-	      this._configDialog.setType(type);
-
-	      this._configDialog.setDuration(this._duration);
-
-	      let target = this._target;
-
-	      if (target === "" && this._targetDates.length > 0) {
-	        target = this._targetDates[0]["name"];
-	      }
-
-	      this._configDialog.setTarget(target);
-
-	      this._configDialog.open();
-	    }
-	  }, {
-	    key: "onConfigDialogSave",
-	    value: function onConfigDialogSave(sender, params) {
-	      this.saveConfiguration(params);
-
-	      this._configDialog.close();
-	    }
-	  }, {
-	    key: "onConfigDialogCancel",
-	    value: function onConfigDialogCancel(sender) {
-	      this._configDialog.close();
-	    }
-	  }, {
-	    key: "onMenuShow",
-	    value: function onMenuShow() {
-	      this._isMenuShown = true;
-	    }
-	  }, {
-	    key: "onMenuClose",
-	    value: function onMenuClose() {
-	      if (this._menu && this._menu.popupWindow) {
-	        this._menu.popupWindow.destroy();
-	      }
-	    }
-	  }, {
-	    key: "onMenuDestroy",
-	    value: function onMenuDestroy() {
-	      this._isMenuShown = false;
-	      this._menu = null;
-
-	      if (typeof BX.PopupMenu.Data[this._id] !== "undefined") {
-	        delete BX.PopupMenu.Data[this._id];
-	      }
-	    }
-	  }, {
-	    key: "saveConfiguration",
-	    value: function saveConfiguration(params) {
-	      //region Parse params
-	      this._type = BX.prop.getInteger(params, "type", Wait.WaitingType.after);
-	      this._duration = BX.prop.getInteger(params, "duration", 0);
-
-	      if (this._duration <= 0) {
-	        this._duration = 1;
-	      }
-
-	      this._target = this._type === Wait.WaitingType.before ? BX.prop.getString(params, "target", "") : ""; //endregion
-	      //region Save settings
-
-	      const optionName = this._manager.getId().toLowerCase();
-
-	      BX.userOptions.save("crm.timeline.wait", optionName, "type", this._type === Wait.WaitingType.after ? "after" : "before");
-	      BX.userOptions.save("crm.timeline.wait", optionName, "duration", this._duration);
-	      BX.userOptions.save("crm.timeline.wait", optionName, "target", this._target); //endregion
-
-	      this.layoutConfigurationSummary();
-	    }
-	  }, {
-	    key: "getSummaryHtml",
-	    value: function getSummaryHtml() {
-	      if (this._type === Wait.WaitingType.before) {
-	        return this.getMessage("completionTypeBefore").replace("#DURATION#", this.getDurationText(this._duration, true)).replace("#TARGET_DATE#", this.getTargetDateCaption(this._target));
-	      }
-
-	      return this.getMessage("completionTypeAfter").replace("#DURATION#", this.getDurationText(this._duration, true));
-	    }
-	  }, {
-	    key: "getSummaryText",
-	    value: function getSummaryText() {
-	      return BX.util.strip_tags(this.getSummaryHtml());
-	    }
-	  }, {
-	    key: "layoutConfigurationSummary",
-	    value: function layoutConfigurationSummary() {
-	      this._configContainer.innerHTML = this.getSummaryHtml();
-	      this._configSelector = this._configContainer.querySelector("a");
-
-	      if (this._configSelector) {
-	        BX.bind(this._configSelector, "click", BX.delegate(this.onSelectorClick, this));
-	      }
-	    }
-	  }, {
-	    key: "postpone",
-	    value: function postpone(id, offset, callback) {
-	      BX.ajax({
-	        url: this._serviceUrl,
-	        method: "POST",
-	        dataType: "json",
-	        data: {
-	          "ACTION": "POSTPONE_WAIT",
-	          "DATA": {
-	            "ID": id,
-	            "OFFSET": offset
-	          }
-	        },
-	        onsuccess: callback
-	      });
-	    }
-	  }, {
-	    key: "complete",
-	    value: function complete(id, completed, callback) {
-	      BX.ajax({
-	        url: this._serviceUrl,
-	        method: "POST",
-	        dataType: "json",
-	        data: {
-	          "ACTION": "COMPLETE_WAIT",
-	          "DATA": {
-	            "ID": id,
-	            "COMPLETED": completed ? 'Y' : 'N'
-	          }
-	        },
-	        onsuccess: callback
-	      });
-	    }
-	  }, {
-	    key: "save",
-	    value: function save() {
-	      if (this._isRequestRunning || this._isLocked) {
-	        return;
-	      }
-
-	      let description = this.getSummaryText();
-	      const comment = BX.util.trim(this._input.value);
-
-	      if (comment !== "") {
-	        description += "\n" + comment;
-	      }
-
-	      const data = {
-	        ID: 0,
-	        typeId: this._type,
-	        duration: this._duration,
-	        targetFieldName: this._target,
-	        subject: "",
-	        description: description,
-	        completed: 0,
-	        ownerType: BX.CrmEntityType.resolveName(this._ownerTypeId),
-	        ownerID: this._ownerId
-	      };
-	      BX.ajax({
-	        url: this._serviceUrl,
-	        method: "POST",
-	        dataType: "json",
-	        data: {
-	          "ACTION": "SAVE_WAIT",
-	          "DATA": data
-	        },
-	        onsuccess: BX.delegate(this.onSaveSuccess, this),
-	        onfailure: BX.delegate(this.onSaveFailure, this)
-	      });
-	      this._isRequestRunning = this._isLocked = true;
-	    }
-	  }, {
-	    key: "cancel",
-	    value: function cancel() {
-	      this._input.value = "";
-	      this._input.style.minHeight = "";
-	      this.release();
-	    }
-	  }, {
-	    key: "onSaveSuccess",
-	    value: function onSaveSuccess(data) {
-	      this._isRequestRunning = this._isLocked = false;
-	      const error = BX.prop.getString(data, "ERROR", "");
-
-	      if (error !== "") {
-	        alert(error);
-	        return;
-	      }
-
-	      this._input.value = "";
-	      this._input.style.minHeight = "";
-
-	      this._manager.processEditingCompletion(this);
-
-	      this.release();
-	    }
-	  }, {
-	    key: "onSaveFailure",
-	    value: function onSaveFailure() {
-	      this._isRequestRunning = this._isLocked = false;
-	    }
-	  }, {
-	    key: "getMessage",
-	    value: function getMessage(name) {
-	      const m = Wait.messages;
-	      return m.hasOwnProperty(name) ? m[name] : name;
-	    }
-	  }], [{
-	    key: "create",
-	    value: function create(id, settings) {
-	      const self = new Wait();
-	      self.initialize(id, settings);
-	      this.items[self.getId()] = self;
-	      return self;
-	    }
-	  }]);
-	  return Wait;
-	}(Editor);
-
-	babelHelpers.defineProperty(Wait, "WaitingType", {
-	  undefined: 0,
-	  after: 1,
-	  before: 2,
-	  names: {
-	    after: "after",
-	    before: "before"
-	  },
-	  resolveTypeId: function (name) {
-	    if (name === this.names.after) {
-	      return this.after;
-	    } else if (name === this.names.before) {
-	      return this.before;
-	    }
-
-	    return this.undefined;
-	  }
-	});
-	babelHelpers.defineProperty(Wait, "messages", {});
-	babelHelpers.defineProperty(Wait, "items", {});
-	babelHelpers.defineProperty(Wait, "Helper", {
-	  getDurationText: function (duration, enableNumber) {
-	    enableNumber = !!enableNumber;
-	    let result = "";
-	    let type = "D";
-
-	    if (enableNumber) {
-	      if (duration % 7 === 0) {
-	        duration = duration / 7;
-	        type = "W";
-	      }
-	    }
-
-	    if (type === "W") {
-	      result = BX.Loc.getMessagePlural('CRM_TIMELINE_WAIT_WEEK', duration);
-	    } else {
-	      result = BX.Loc.getMessagePlural('CRM_TIMELINE_WAIT_DAY', duration);
-	    }
-
-	    if (enableNumber) {
-	      result = duration.toString() + " " + result;
-	    }
-
-	    return result;
-	  },
-	  getMessage: function (name) {
-	    return Wait.Helper.messages.hasOwnProperty(name) ? Wait.Helper.messages[name] : name;
-	  },
-	  messages: {}
-	});
-
-	/** @memberof BX.Crm.Timeline.Editors */
-
-	let Sms = /*#__PURE__*/function (_Editor) {
-	  babelHelpers.inherits(Sms, _Editor);
-
-	  function Sms() {
-	    var _this;
-
-	    babelHelpers.classCallCheck(this, Sms);
-	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Sms).call(this));
-	    _this._history = null;
-	    _this._serviceUrl = "";
-	    _this._isRequestRunning = false;
-	    _this._isLocked = false;
-	    _this._senderId = null;
-	    _this._from = null;
-	    _this._commEntityTypeId = null;
-	    _this._commEntityId = null;
-	    _this._to = null;
-	    _this._canUse = null;
-	    _this._canSendMessage = null;
-	    _this._manageUrl = '';
-	    _this._senders = [];
-	    _this._fromList = [];
-	    _this._toList = [];
-	    _this._defaults = {};
-	    _this._communications = [];
-	    _this._menu = null;
-	    _this._isMenuShown = false;
-	    _this._shownMenuId = null;
-	    _this._documentSelector = null;
-	    _this._source = null;
-	    _this._paymentId = null;
-	    _this._shipmentId = null;
-	    _this._compilationProductIds = [];
-	    _this._templateId = null;
-	    _this._templatesContainer = null;
-	    _this._templateFieldHintNode = null;
-	    _this._templateSelectorNode = null;
-	    _this._templateTemplateTitleNode = null;
-	    _this._templatePreviewNode = null;
-	    _this._templateSelectorMenuId = 'CrmTimelineSmsEditorTemplateSelector';
-	    _this._templateFieldHintHandler = BX.delegate(_this.onTemplateHintIconClick, babelHelpers.assertThisInitialized(_this));
-	    _this._templateSeletorClickHandler = BX.delegate(_this.onTemplateSelectClick, babelHelpers.assertThisInitialized(_this));
-	    _this._selectTemplateHandler = BX.delegate(_this.onSelectTemplate, babelHelpers.assertThisInitialized(_this));
-	    return _this;
-	  }
-
-	  babelHelpers.createClass(Sms, [{
-	    key: "doInitialize",
-	    value: function doInitialize() {
-	      this._serviceUrl = BX.util.remove_url_param(this.getSetting("serviceUrl", ""), ['sessid', 'site']);
-	      const config = BX.prop.getObject(this._settings, "config", {});
-	      this._canUse = BX.prop.getBoolean(config, "canUse", false);
-	      this._canSendMessage = BX.prop.getBoolean(config, "canSendMessage", false);
-	      this._manageUrl = BX.prop.getString(config, "manageUrl", '');
-	      this._senders = BX.prop.getArray(config, "senders", []);
-	      this._defaults = BX.prop.getObject(config, "defaults", {
-	        senderId: null,
-	        from: null
-	      });
-	      this._communications = BX.prop.getArray(config, "communications", []);
-	      this._isSalescenterEnabled = BX.prop.getBoolean(config, "isSalescenterEnabled", false);
-	      this._isDocumentsEnabled = BX.prop.getBoolean(config, "isDocumentsEnabled", false);
-
-	      if (this._isDocumentsEnabled) {
-	        this._documentsProvider = BX.prop.getString(config, "documentsProvider", '');
-	        this._documentsValue = BX.prop.getString(config, "documentsValue", '');
-	      }
-
-	      this._isFilesEnabled = BX.prop.getBoolean(config, "isFilesEnabled", false);
-
-	      if (this._isFilesEnabled) {
-	        this._diskUrls = BX.prop.getObject(config, "diskUrls");
-	        this._isFilesExternalLinkEnabled = BX.prop.getBoolean(config, "isFilesExternalLinkEnabled", true);
-	      }
-
-	      this._senderSelectorNode = this._container.querySelector('[data-role="sender-selector"]');
-	      this._fromContainerNode = this._container.querySelector('[data-role="from-container"]');
-	      this._fromSelectorNode = this._container.querySelector('[data-role="from-selector"]');
-	      this._clientContainerNode = this._container.querySelector('[data-role="client-container"]');
-	      this._clientSelectorNode = this._container.querySelector('[data-role="client-selector"]');
-	      this._toSelectorNode = this._container.querySelector('[data-role="to-selector"]');
-	      this._messageLengthCounterWrapperNode = this._container.querySelector('[data-role="message-length-counter-wrap"]');
-	      this._messageLengthCounterNode = this._container.querySelector('[data-role="message-length-counter"]');
-	      this._salescenterStarter = this._container.querySelector('[data-role="salescenter-starter"]');
-	      this._smsDetailSwitcher = this._container.querySelector('[data-role="sms-detail-switcher"]');
-	      this._smsDetail = this._container.querySelector('[data-role="sms-detail"]');
-	      this._documentSelectorButton = this._container.querySelector('[data-role="sms-document-selector"]');
-	      this._fileSelectorButton = this._container.querySelector('[data-role="sms-file-selector"]');
-	      this._fileUploadZone = this._container.querySelector('[data-role="sms-file-upload-zone"]');
-	      this._fileUploadLabel = this._container.querySelector('[data-role="sms-file-upload-label"]');
-	      this._fileSelectorBitrix = this._container.querySelector('[data-role="sms-file-selector-bitrix"]');
-	      this._fileExternalLinkDisabledContent = this._container.querySelector('[data-role="sms-file-external-link-disabled"]');
-	      this._templatesContainer = BX(this.getSetting("templatesContainer"));
-
-	      if (this._templatesContainer) {
-	        this._templateFieldHintNode = this._templatesContainer.querySelector('[data-role="hint"]');
-	        this._templateSelectorNode = this._templatesContainer.querySelector('[data-role="template-selector"]');
-	        this._templateTemplateTitleNode = this._templatesContainer.querySelector('[data-role="template-title"]');
-	        this._templatePreviewNode = this._templatesContainer.querySelector('[data-role="preview"]');
-	      }
-
-	      if (this._templateFieldHintNode) {
-	        BX.bind(this._templateFieldHintNode, "click", this._templateFieldHintHandler);
-	      }
-
-	      if (this._templateSelectorNode) {
-	        BX.bind(this._templateSelectorNode, "click", this._templateSeletorClickHandler);
-	      }
-
-	      if (this._canUse && this._senders.length > 0) {
-	        this.initSenderSelector();
-	      }
-
-	      if (this._canUse && this._canSendMessage) {
-	        this.initDetailSwitcher();
-	        this.initFromSelector();
-	        this.initClientContainer();
-	        this.initClientSelector();
-	        this.initToSelector();
-	        this.initMessageLengthCounter();
-	        this.setMessageLengthCounter();
-
-	        if (this._isDocumentsEnabled) {
-	          this.initDocumentSelector();
-	        }
-
-	        if (this._isFilesEnabled) {
-	          this.initFileSelector();
-	        }
-	      }
-
-	      if (this._isSalescenterEnabled) {
-	        this.initSalescenterApplication();
-	      }
-	    }
-	  }, {
-	    key: "initDetailSwitcher",
-	    value: function initDetailSwitcher() {
-	      BX.bind(this._smsDetailSwitcher, 'click', function () {
-	        if (this._smsDetail.classList.contains('hidden')) {
-	          this._smsDetail.classList.remove('hidden');
-
-	          this._smsDetailSwitcher.innerText = BX.message('CRM_TIMELINE_COLLAPSE');
-	        } else {
-	          this._smsDetail.classList.add('hidden');
-
-	          this._smsDetailSwitcher.innerText = BX.message('CRM_TIMELINE_DETAILS');
-	        }
-	      }.bind(this));
-	    }
-	  }, {
-	    key: "initSenderSelector",
-	    value: function initSenderSelector() {
-	      const defaultSenderId = this._defaults.senderId;
-	      let defaultSender = this._senders[0].canUse ? this._senders[0] : null;
-	      let restSender = null;
-	      const menuItems = [];
-	      const handler = this.onSenderSelectorClick.bind(this);
-
-	      for (let i = 0; i < this._senders.length; ++i) {
-	        if (this._senders[i].canUse && this._senders[i].fromList.length && (this._senders[i].id === defaultSenderId || !defaultSender)) {
-	          defaultSender = this._senders[i];
-	        }
-
-	        if (this._senders[i].id === 'rest') {
-	          restSender = this._senders[i];
-	          continue;
-	        }
-
-	        menuItems.push({
-	          text: this._senders[i].name,
-	          sender: this._senders[i],
-	          onclick: handler,
-	          className: !this._senders[i].canUse || !this._senders[i].fromList.length ? 'crm-timeline-popup-menu-item-disabled menu-popup-no-icon' : ''
-	        });
-	      }
-
-	      if (restSender) {
-	        if (restSender.fromList.length > 0) {
-	          menuItems.push({
-	            delimiter: true
-	          });
-
-	          for (let i = 0; i < restSender.fromList.length; ++i) {
-	            menuItems.push({
-	              text: restSender.fromList[i].name,
-	              sender: restSender,
-	              from: restSender.fromList[i],
-	              onclick: handler
-	            });
-	          }
-	        }
-
-	        menuItems.push({
-	          delimiter: true
-	        }, {
-	          text: BX.message('CRM_TIMELINE_SMS_REST_MARKETPLACE'),
-	          href: '/marketplace/category/crm_robot_sms/',
-	          target: '_blank'
-	        });
-	      }
-
-	      if (defaultSender) {
-	        this.setSender(defaultSender);
-	      }
-
-	      BX.bind(this._senderSelectorNode, 'click', this.openMenu.bind(this, 'sender', this._senderSelectorNode, menuItems));
-	    }
-	  }, {
-	    key: "onSenderSelectorClick",
-	    value: function onSenderSelectorClick(e, item) {
-	      if (item.sender) {
-	        if (!item.sender.canUse || !item.sender.fromList.length) {
-	          const url = BX.Uri.addParam(item.sender.manageUrl, {
-	            'IFRAME': 'Y'
-	          });
-	          const slider = BX.SidePanel.Instance.getTopSlider();
-	          const options = {
-	            events: {
-	              onClose: function () {
-	                if (slider) {
-	                  slider.reload();
-	                }
-	              },
-	              onCloseComplete: function () {
-	                if (!slider) {
-	                  document.location.reload();
-	                }
-	              }
-	            }
-	          };
-
-	          if (item.sender.id === 'ednaru') {
-	            options.width = 700;
-	          }
-
-	          BX.SidePanel.Instance.open(url, options);
-	          return;
-	        }
-
-	        this.setSender(item.sender, true);
-	        const from = item.from ? item.from : item.sender.fromList[0];
-	        this.setFrom(from, true);
-	      }
-
-	      this._menu.close();
-	    }
-	  }, {
-	    key: "setSender",
-	    value: function setSender(sender, setAsDefault) {
-	      this._senderId = sender.id;
-	      this._fromList = sender.fromList;
-	      this._senderSelectorNode.textContent = sender.shortName ? sender.shortName : sender.name;
-	      this._templateId = null;
-
-	      if (sender.isTemplatesBased) {
-	        this.showNode(this._templatesContainer);
-	        this.hideNode(this._messageLengthCounterWrapperNode);
-	        this.hideNode(this._fileSelectorButton);
-	        this.hideNode(this._documentSelectorButton);
-	        this.hideNode(this._input);
-	        this.toggleTemplateSelectAvailability();
-	        this.toggleSaveButton();
-	        this._hideButtonsOnBlur = false;
-	        this.onFocus();
-	      } else {
-	        this.hideNode(this._templatesContainer);
-	        this.showNode(this._messageLengthCounterWrapperNode);
-	        this.showNode(this._fileSelectorButton);
-	        this.showNode(this._documentSelectorButton);
-	        this.showNode(this._input);
-	        this.setMessageLengthCounter();
-	        this._hideButtonsOnBlur = true;
-	      }
-
-	      const visualFn = sender.id === 'rest' ? 'hide' : 'show';
-	      BX[visualFn](this._fromContainerNode);
-
-	      if (setAsDefault) {
-	        BX.userOptions.save("crm", "sms_manager_editor", "senderId", this._senderId);
-	      }
-	    }
-	  }, {
-	    key: "showNode",
-	    value: function showNode(node) {
-	      if (node) {
-	        node.style.display = "";
-	      }
-	    }
-	  }, {
-	    key: "hideNode",
-	    value: function hideNode(node) {
-	      if (node) {
-	        node.style.display = "none";
-	      }
-	    }
-	  }, {
-	    key: "initFromSelector",
-	    value: function initFromSelector() {
-	      if (this._fromList.length > 0) {
-	        const defaultFromId = this._defaults.from || this._fromList[0].id;
-	        let defaultFrom = null;
-
-	        for (let i = 0; i < this._fromList.length; ++i) {
-	          if (this._fromList[i].id === defaultFromId || !defaultFrom) {
-	            defaultFrom = this._fromList[i];
-	          }
-	        }
-
-	        if (defaultFrom) {
-	          this.setFrom(defaultFrom);
-	        }
-	      }
-
-	      BX.bind(this._fromSelectorNode, 'click', this.onFromSelectorClick.bind(this));
-	    }
-	  }, {
-	    key: "onFromSelectorClick",
-	    value: function onFromSelectorClick(e) {
-	      const menuItems = [];
-	      const handler = this.onFromSelectorItemClick.bind(this);
-
-	      for (let i = 0; i < this._fromList.length; ++i) {
-	        menuItems.push({
-	          text: this._fromList[i].name,
-	          from: this._fromList[i],
-	          onclick: handler
-	        });
-	      }
-
-	      this.openMenu('from_' + this._senderId, this._fromSelectorNode, menuItems, e);
-	    }
-	  }, {
-	    key: "onFromSelectorItemClick",
-	    value: function onFromSelectorItemClick(e, item) {
-	      if (item.from) {
-	        this.setFrom(item.from, true);
-	      }
-
-	      this._menu.close();
-	    }
-	  }, {
-	    key: "setFrom",
-	    value: function setFrom(from, setAsDefault) {
-	      this._from = from.id;
-
-	      if (this._senderId === 'rest') {
-	        this._senderSelectorNode.textContent = from.name;
-	      } else {
-	        this._fromSelectorNode.textContent = from.name;
-	      }
-
-	      if (setAsDefault) {
-	        BX.userOptions.save("crm", "sms_manager_editor", "from", this._from);
-	      }
-	    }
-	  }, {
-	    key: "initClientContainer",
-	    value: function initClientContainer() {
-	      if (this._communications.length === 0) {
-	        BX.hide(this._clientContainerNode);
-	      }
-	    }
-	  }, {
-	    key: "initClientSelector",
-	    value: function initClientSelector() {
-	      const menuItems = [];
-	      const handler = this.onClientSelectorClick.bind(this);
-
-	      for (let i = 0; i < this._communications.length; ++i) {
-	        menuItems.push({
-	          text: this._communications[i].caption,
-	          client: this._communications[i],
-	          onclick: handler
-	        });
-
-	        if (i === 0) {
-	          this.setClient(this._communications[i]);
-	        }
-	      }
-
-	      BX.bind(this._clientSelectorNode, 'click', this.openMenu.bind(this, 'comm', this._clientSelectorNode, menuItems));
-	    }
-	  }, {
-	    key: "onClientSelectorClick",
-	    value: function onClientSelectorClick(e, item) {
-	      if (item.client) {
-	        this.setClient(item.client);
-	      }
-
-	      this._menu.close();
-	    }
-	  }, {
-	    key: "setClient",
-	    value: function setClient(client) {
-	      this._commEntityTypeId = client.entityTypeId;
-	      this._commEntityId = client.entityId;
-	      this._clientSelectorNode.textContent = client.caption;
-	      this._toList = client.phones;
-	      this.setTo(client.phones[0]);
-	    }
-	  }, {
-	    key: "initToSelector",
-	    value: function initToSelector() {
-	      BX.bind(this._toSelectorNode, 'click', this.onToSelectorClick.bind(this));
-	    }
-	  }, {
-	    key: "onToSelectorClick",
-	    value: function onToSelectorClick(e) {
-	      const menuItems = [];
-	      const handler = this.onToSelectorItemClick.bind(this);
-
-	      for (let i = 0; i < this._toList.length; ++i) {
-	        menuItems.push({
-	          text: this._toList[i].valueFormatted || this._toList[i].value,
-	          to: this._toList[i],
-	          onclick: handler
-	        });
-	      }
-
-	      this.openMenu('to_' + this._commEntityTypeId + '_' + this._commEntityId, this._toSelectorNode, menuItems, e);
-	    }
-	  }, {
-	    key: "onToSelectorItemClick",
-	    value: function onToSelectorItemClick(e, item) {
-	      if (item.to) {
-	        this.setTo(item.to);
-	      }
-
-	      this._menu.close();
-	    }
-	  }, {
-	    key: "setTo",
-	    value: function setTo(to) {
-	      this._to = to.value;
-	      this._toSelectorNode.textContent = to.valueFormatted || to.value;
-	    }
-	  }, {
-	    key: "openMenu",
-	    value: function openMenu(menuId, bindElement, menuItems, e) {
-	      if (this._shownMenuId === menuId) {
-	        return;
-	      }
-
-	      if (this._shownMenuId !== null && this._menu) {
-	        this._menu.close();
-
-	        this._shownMenuId = null;
-	      }
-
-	      BX.PopupMenu.show(this._id + menuId, bindElement, menuItems, {
-	        offsetTop: 0,
-	        offsetLeft: 36,
-	        angle: {
-	          position: "top",
-	          offset: 0
-	        },
-	        events: {
-	          onPopupClose: BX.delegate(this.onMenuClose, this)
-	        }
-	      });
-	      this._menu = BX.PopupMenu.currentItem;
-	      e.preventDefault();
-	    }
-	  }, {
-	    key: "onMenuClose",
-	    value: function onMenuClose() {
-	      this._shownMenuId = null;
-	      this._menu = null;
-	    }
-	  }, {
-	    key: "initMessageLengthCounter",
-	    value: function initMessageLengthCounter() {
-	      this._messageLengthMax = parseInt(this._messageLengthCounterNode.getAttribute('data-length-max'));
-	      BX.bind(this._input, 'keyup', this.setMessageLengthCounter.bind(this));
-	      BX.bind(this._input, 'cut', this.setMessageLengthCounterDelayed.bind(this));
-	      BX.bind(this._input, 'paste', this.setMessageLengthCounterDelayed.bind(this));
-	    }
-	  }, {
-	    key: "setMessageLengthCounterDelayed",
-	    value: function setMessageLengthCounterDelayed() {
-	      setTimeout(this.setMessageLengthCounter.bind(this), 0);
-	    }
-	  }, {
-	    key: "setMessageLengthCounter",
-	    value: function setMessageLengthCounter() {
-	      const length = this._input.value.length;
-	      this._messageLengthCounterNode.textContent = length;
-	      const classFn = length >= this._messageLengthMax ? 'addClass' : 'removeClass';
-	      BX[classFn](this._messageLengthCounterNode, 'crm-entity-stream-content-sms-symbol-counter-number-overhead');
-	      this.toggleSaveButton();
-	    }
-	  }, {
-	    key: "toggleSaveButton",
-	    value: function toggleSaveButton() {
-	      const sender = this.getSelectedSender();
-	      let enabled;
-
-	      if (!sender || !sender.isTemplatesBased) {
-	        enabled = this._input.value.length > 0;
-	      } else {
-	        enabled = !!this._templateId;
-	      }
-
-	      if (enabled) {
-	        BX.removeClass(this._saveButton, 'ui-btn-disabled');
-	      } else {
-	        BX.addClass(this._saveButton, 'ui-btn-disabled');
-	      }
-	    }
-	  }, {
-	    key: "save",
-	    value: function save() {
-	      const sender = this.getSelectedSender();
-	      let text = '';
-	      let templateId = '';
-
-	      if (!sender || !sender.isTemplatesBased) {
-	        text = this._input.value;
-
-	        if (text === '') {
-	          return;
-	        }
-	      } else {
-	        const template = this.getSelectedTemplate();
-
-	        if (!template) {
-	          return;
-	        }
-
-	        text = template.PREVIEW;
-	        templateId = template.ID;
-	      }
-
-	      if (!this._communications.length) {
-	        alert(BX.message('CRM_TIMELINE_SMS_ERROR_NO_COMMUNICATIONS'));
-	        return;
-	      }
-
-	      if (this._isRequestRunning || this._isLocked) {
-	        return;
-	      }
-
-	      this._isRequestRunning = this._isLocked = true;
-	      BX.ajax({
-	        url: BX.util.add_url_param(this._serviceUrl, {
-	          "action": "save_sms_message",
-	          "sender": this._senderId
-	        }),
-	        method: "POST",
-	        dataType: "json",
-	        data: {
-	          'site': BX.message('SITE_ID'),
-	          'sessid': BX.bitrix_sessid(),
-	          'source': this._source,
-	          "ACTION": "SAVE_SMS_MESSAGE",
-	          "SENDER_ID": this._senderId,
-	          "MESSAGE_FROM": this._from,
-	          "MESSAGE_TO": this._to,
-	          "MESSAGE_BODY": text,
-	          "MESSAGE_TEMPLATE": templateId,
-	          "OWNER_TYPE_ID": this._ownerTypeId,
-	          "OWNER_ID": this._ownerId,
-	          "TO_ENTITY_TYPE_ID": this._commEntityTypeId,
-	          "TO_ENTITY_ID": this._commEntityId,
-	          "PAYMENT_ID": this._paymentId,
-	          "SHIPMENT_ID": this._shipmentId,
-	          "COMPILATION_PRODUCT_IDS": this._compilationProductIds
-	        },
-	        onsuccess: BX.delegate(this.onSaveSuccess, this),
-	        onfailure: BX.delegate(this.onSaveFailure, this)
-	      });
-	    }
-	  }, {
-	    key: "cancel",
-	    value: function cancel() {
-	      this._input.value = "";
-	      this.setMessageLengthCounter();
-	      this._input.style.minHeight = "";
-	      this.release();
-	    }
-	  }, {
-	    key: "onSaveSuccess",
-	    value: function onSaveSuccess(data) {
-	      this._isRequestRunning = this._isLocked = false;
-	      const error = BX.prop.getString(data, "ERROR", "");
-
-	      if (error !== "") {
-	        alert(error);
-	        return;
-	      }
-
-	      this._input.value = "";
-	      this.setMessageLengthCounter();
-	      this._input.style.minHeight = "";
-
-	      this._manager.processEditingCompletion(this);
-
-	      this.release();
-	    }
-	  }, {
-	    key: "onSaveFailure",
-	    value: function onSaveFailure() {
-	      this._isRequestRunning = this._isLocked = false;
-	    }
-	  }, {
-	    key: "initSalescenterApplication",
-	    value: function initSalescenterApplication() {
-	      BX.bind(this._salescenterStarter, 'click', this.startSalescenterApplication.bind(this));
-	    }
-	  }, {
-	    key: "startSalescenterApplication",
-	    value: function startSalescenterApplication() {
-	      BX.loadExt('salescenter.manager').then(function () {
-	        BX.Salescenter.Manager.openApplication({
-	          disableSendButton: this._canSendMessage ? '' : 'y',
-	          context: 'sms',
-	          ownerTypeId: this._ownerTypeId,
-	          ownerId: this._ownerId,
-	          mode: this._ownerTypeId === BX.CrmEntityType.enumeration.deal ? 'payment_delivery' : 'payment'
-	        }).then(function (result) {
-	          if (result && result.get('action')) {
-	            if (result.get('action') === 'sendPage' && result.get('page') && result.get('page').url) {
-	              this._input.focus();
-
-	              this._input.value = this._input.value + result.get('page').name + ' ' + result.get('page').url;
-	              this.setMessageLengthCounter();
-	            } else if (result.get('action') === 'sendPayment' && result.get('order')) {
-	              this._input.focus();
-
-	              this._input.value = this._input.value + result.get('order').title;
-	              this.setMessageLengthCounter();
-	              this._source = 'order';
-	              this._paymentId = result.get('order').paymentId;
-	              this._shipmentId = result.get('order').shipmentId;
-	            } else if (result.get('action') === 'sendCompilation' && result.get('compilation')) {
-	              this._input.focus();
-
-	              this._input.value = this._input.value + result.get('compilation').title;
-	              this.setMessageLengthCounter();
-	              this._source = 'deal';
-	              this._compilationProductIds = result.get('compilation').productIds;
-	            }
-	          }
-	        }.bind(this));
-	      }.bind(this));
-	    }
-	  }, {
-	    key: "initDocumentSelector",
-	    value: function initDocumentSelector() {
-	      BX.bind(this._documentSelectorButton, 'click', this.onDocumentSelectorClick.bind(this));
-	    }
-	  }, {
-	    key: "onDocumentSelectorClick",
-	    value: function onDocumentSelectorClick() {
-	      if (!this._documentSelector) {
-	        BX.loadExt('documentgenerator.selector').then(function () {
-	          this._documentSelector = new BX.DocumentGenerator.Selector.Menu({
-	            node: this._documentSelectorButton,
-	            moduleId: 'crm',
-	            provider: this._documentsProvider,
-	            value: this._documentsValue,
-	            analyticsLabelPrefix: 'crmTimelineSmsEditor'
-	          });
-	          this.selectPublicUrl();
-	        }.bind(this));
-	      } else {
-	        this.selectPublicUrl();
-	      }
-	    }
-	  }, {
-	    key: "selectPublicUrl",
-	    value: function selectPublicUrl() {
-	      if (!this._documentSelector) {
-	        return;
-	      }
-
-	      this._documentSelector.show().then(function (object) {
-	        if (object instanceof BX.DocumentGenerator.Selector.Template) {
-	          this._documentSelector.createDocument(object).then(function (document) {
-	            this.pasteDocumentUrl(document);
-	          }.bind(this)).catch(function (error) {
-	            console.error(error);
-	          }.bind(this));
-	        } else if (object instanceof BX.DocumentGenerator.Selector.Document) {
-	          this.pasteDocumentUrl(object);
-	        }
-	      }.bind(this)).catch(function (error) {
-	        console.error(error);
-	      }.bind(this));
-	    }
-	  }, {
-	    key: "pasteDocumentUrl",
-	    value: function pasteDocumentUrl(document) {
-	      this._documentSelector.getDocumentPublicUrl(document).then(function (publicUrl) {
-	        this._input.focus();
-
-	        this._input.value = this._input.value + ' ' + document.getTitle() + ' ' + publicUrl;
-	        this.setMessageLengthCounter();
-	        this._source = 'document';
-	      }.bind(this)).catch(function (error) {
-	        console.error(error);
-	      }.bind(this));
-	    }
-	  }, {
-	    key: "initFileSelector",
-	    value: function initFileSelector() {
-	      BX.bind(this._fileSelectorButton, 'click', this.onFileSelectorClick.bind(this));
-	    }
-	  }, {
-	    key: "closeFileSelector",
-	    value: function closeFileSelector() {
-	      BX.PopupMenu.destroy('sms-file-selector');
-	    }
-	  }, {
-	    key: "onFileSelectorClick",
-	    value: function onFileSelectorClick() {
-	      BX.PopupMenu.show('sms-file-selector', this._fileSelectorButton, [{
-	        text: BX.message('CRM_TIMELINE_SMS_UPLOAD_FILE'),
-	        onclick: this.uploadFile.bind(this),
-	        className: this._isFilesExternalLinkEnabled ? '' : 'crm-entity-stream-content-sms-menu-item-with-lock'
-	      }, {
-	        text: BX.message('CRM_TIMELINE_SMS_FIND_FILE'),
-	        onclick: this.findFile.bind(this),
-	        className: this._isFilesExternalLinkEnabled ? '' : 'crm-entity-stream-content-sms-menu-item-with-lock'
-	      }]);
-	    }
-	  }, {
-	    key: "getFileUploadInput",
-	    value: function getFileUploadInput() {
-	      return document.getElementById(this._fileUploadLabel.getAttribute('for'));
-	    }
-	  }, {
-	    key: "uploadFile",
-	    value: function uploadFile() {
-	      this.closeFileSelector();
-
-	      if (this._isFilesExternalLinkEnabled) {
-	        this.initDiskUF();
-	        BX.fireEvent(this.getFileUploadInput(), 'click');
-	      } else {
-	        this.showFilesExternalLinkFeaturePopup();
-	      }
-	    }
-	  }, {
-	    key: "findFile",
-	    value: function findFile() {
-	      this.closeFileSelector();
-
-	      if (this._isFilesExternalLinkEnabled) {
-	        this.initDiskUF();
-	        BX.fireEvent(this._fileSelectorBitrix, 'click');
-	      } else {
-	        this.showFilesExternalLinkFeaturePopup();
-	      }
-	    }
-	  }, {
-	    key: "getLoader",
-	    value: function getLoader() {
-	      if (!this.loader) {
-	        this.loader = new BX.Loader({
-	          size: 50
-	        });
-	      }
-
-	      return this.loader;
-	    }
-	  }, {
-	    key: "showLoader",
-	    value: function showLoader(node) {
-	      if (node && !this.getLoader().isShown()) {
-	        this.getLoader().show(node);
-	      }
-	    }
-	  }, {
-	    key: "hideLoader",
-	    value: function hideLoader() {
-	      if (this.getLoader().isShown()) {
-	        this.getLoader().hide();
-	      }
-	    }
-	  }, {
-	    key: "initDiskUF",
-	    value: function initDiskUF() {
-	      if (this.isDiskFileUploaderInited || !this._isFilesEnabled) {
-	        return;
-	      }
-
-	      this.isDiskFileUploaderInited = true;
-	      BX.addCustomEvent(this._fileUploadZone, 'OnFileUploadSuccess', this.OnFileUploadSuccess.bind(this));
-	      BX.addCustomEvent(this._fileUploadZone, 'DiskDLoadFormControllerInit', function (uf) {
-	        uf._onUploadProgress = function () {
-	          this.showLoader(this._fileSelectorButton.parentNode.parentNode);
-	        }.bind(this);
-	      }.bind(this));
-	      BX.Disk.UF.add({
-	        UID: this._fileUploadZone.getAttribute('data-node-id'),
-	        controlName: this._fileUploadLabel.getAttribute('for'),
-	        hideSelectDialog: false,
-	        urlSelect: this._diskUrls.urlSelect,
-	        urlRenameFile: this._diskUrls.urlRenameFile,
-	        urlDeleteFile: this._diskUrls.urlDeleteFile,
-	        urlUpload: this._diskUrls.urlUpload
-	      });
-	      BX.onCustomEvent(this._fileUploadZone, 'DiskLoadFormController', ['show']);
-	    }
-	  }, {
-	    key: "OnFileUploadSuccess",
-	    value: function OnFileUploadSuccess(fileResult, uf, file, uploaderFile) {
-	      this.hideLoader();
-	      const diskFileId = parseInt(fileResult.element_id.replace('n', ''));
-	      const fileName = fileResult.element_name;
-	      this.pasteFileUrl(diskFileId, fileName);
-	    }
-	  }, {
-	    key: "pasteFileUrl",
-	    value: function pasteFileUrl(diskFileId, fileName) {
-	      this.showLoader(this._fileSelectorButton.parentNode.parentNode);
-	      BX.ajax.runAction('disk.file.generateExternalLink', {
-	        analyticsLabel: 'crmTimelineSmsEditorGetFilePublicUrl',
-	        data: {
-	          fileId: diskFileId
-	        }
-	      }).then(function (response) {
-	        this.hideLoader();
-
-	        if (response.data.externalLink && response.data.externalLink.link) {
-	          this._input.focus();
-
-	          this._input.value = this._input.value + ' ' + fileName + ' ' + response.data.externalLink.link;
-	          this.setMessageLengthCounter();
-	          this._source = 'file';
-	        }
-	      }.bind(this)).catch(function (response) {
-	        console.error(response.errors.pop().message);
-	      });
-	    }
-	  }, {
-	    key: "getFeaturePopup",
-	    value: function getFeaturePopup(content) {
-	      if (this.featurePopup != null) {
-	        return this.featurePopup;
-	      }
-
-	      this.featurePopup = new BX.PopupWindow('bx-popup-crm-sms-editor-feature-popup', null, {
-	        zIndex: 200,
-	        autoHide: true,
-	        closeByEsc: true,
-	        closeIcon: true,
-	        overlay: true,
-	        events: {
-	          onPopupDestroy: function () {
-	            this.featurePopup = null;
-	          }.bind(this)
-	        },
-	        content: content,
-	        contentColor: 'white'
-	      });
-	      return this.featurePopup;
-	    }
-	  }, {
-	    key: "showFilesExternalLinkFeaturePopup",
-	    value: function showFilesExternalLinkFeaturePopup() {
-	      this.getFeaturePopup(this._fileExternalLinkDisabledContent).show();
-	    }
-	  }, {
-	    key: "onTemplateHintIconClick",
-	    value: function onTemplateHintIconClick() {
-	      if (this._senderId === 'ednaru') {
-	        top.BX.Helper.show("redirect=detail&code=14214014");
-	      }
-	    }
-	  }, {
-	    key: "showTemplateSelectDropdown",
-	    value: function showTemplateSelectDropdown(items) {
-	      const menuItems = [];
-
-	      if (BX.Type.isArray(items)) {
-	        if (items.length) {
-	          items.forEach(function (item) {
-	            menuItems.push({
-	              value: item.ID,
-	              text: item.TITLE,
-	              onclick: this._selectTemplateHandler
-	            });
-	          }.bind(this));
-	          BX.PopupMenu.show({
-	            id: this._templateSelectorMenuId,
-	            bindElement: this._templateSelectorNode,
-	            items: menuItems,
-	            angle: false,
-	            width: this._templateSelectorNode.offsetWidth
-	          });
-	        }
-	      } else if (this._senderId) {
-	        const loaderMenuId = this._templateSelectorMenuId + 'loader';
-	        const loaderMenuLoaderId = this._templateSelectorMenuId + 'loader';
-	        BX.PopupMenu.show({
-	          id: loaderMenuId,
-	          bindElement: this._templateSelectorNode,
-	          items: [{
-	            html: '<div id="' + loaderMenuLoaderId + '"></div>'
-	          }],
-	          angle: false,
-	          width: this._templateSelectorNode.offsetWidth,
-	          height: 60,
-	          events: {
-	            onDestroy: function () {
-	              this.hideLoader();
-	            }.bind(this)
-	          }
-	        });
-	        this.showLoader(BX(loaderMenuLoaderId));
-
-	        if (!this._isRequestRunning) {
-	          this._isRequestRunning = true;
-	          const senderId = this._senderId;
-	          BX.ajax.runAction('messageservice.Sender.getTemplates', {
-	            data: {
-	              id: senderId,
-	              context: {
-	                module: 'crm',
-	                entityTypeId: this._manager._ownerTypeId,
-	                entityId: this._manager._ownerId
-	              }
-	            }
-	          }).then(function (response) {
-	            this._isRequestRunning = false;
-
-	            const sender = this._senders.find(function (sender) {
-	              return sender.id === senderId;
-	            }.bind(this));
-
-	            if (sender) {
-	              sender.templates = response.data.templates;
-	              this.toggleTemplateSelectAvailability();
-
-	              if (BX.PopupMenu.getMenuById(loaderMenuId)) {
-	                BX.PopupMenu.getMenuById(loaderMenuId).close();
-	                this.showTemplateSelectDropdown(sender.templates);
-	              }
-	            }
-	          }.bind(this)).catch(function (response) {
-	            this._isRequestRunning = false;
-
-	            if (BX.PopupMenu.getMenuById(loaderMenuId)) {
-	              if (response && response.errors && response.errors[0] && response.errors[0].message) {
-	                alert(response.errors[0].message);
-	              }
-
-	              BX.PopupMenu.getMenuById(loaderMenuId).close();
-	            }
-	          }.bind(this));
-	        }
-	      }
-	    }
-	  }, {
-	    key: "getSelectedSender",
-	    value: function getSelectedSender() {
-	      return this._senders.find(function (sender) {
-	        return sender.id === this._senderId;
-	      }.bind(this));
-	    }
-	  }, {
-	    key: "getSelectedTemplate",
-	    value: function getSelectedTemplate() {
-	      const sender = this.getSelectedSender();
-
-	      if (!this._templateId || !sender || !sender.templates) {
-	        return null;
-	      }
-
-	      const template = sender.templates.find(function (template) {
-	        return template.ID == this._templateId;
-	      }.bind(this));
-	      return template ? template : null;
-	    }
-	  }, {
-	    key: "onTemplateSelectClick",
-	    value: function onTemplateSelectClick() {
-	      const sender = this.getSelectedSender();
-
-	      if (sender) {
-	        this.showTemplateSelectDropdown(sender.templates);
-	      }
-	    }
-	  }, {
-	    key: "onSelectTemplate",
-	    value: function onSelectTemplate(e, item) {
-	      this._templateId = item.value;
-	      this.applySelectedTemplate();
-	      this.toggleSaveButton();
-	      const menu = BX.PopupMenu.getMenuById(this._templateSelectorMenuId);
-
-	      if (menu) {
-	        menu.close();
-	      }
-	    }
-	  }, {
-	    key: "toggleTemplateSelectAvailability",
-	    value: function toggleTemplateSelectAvailability() {
-	      const sender = this.getSelectedSender();
-
-	      if (sender && BX.Type.isArray(sender.templates) && !sender.templates.length) {
-	        BX.addClass(this._templateSelectorNode, 'ui-ctl-disabled');
-	        this._templateTemplateTitleNode.textContent = BX.message('CRM_TIMELINE_SMS_TEMPLATES_NOT_FOUND');
-	      } else {
-	        BX.removeClass(this._templateSelectorNode, 'ui-ctl-disabled');
-	        this.applySelectedTemplate();
-	      }
-	    }
-	  }, {
-	    key: "applySelectedTemplate",
-	    value: function applySelectedTemplate() {
-	      const sender = this.getSelectedSender();
-
-	      if (!this._templateId || !sender || !sender.templates) {
-	        this.hideNode(this._templatePreviewNode);
-	        this._templateTemplateTitleNode.textContent = '';
-	      } else {
-	        const template = this.getSelectedTemplate();
-
-	        if (template) {
-	          const preview = BX.Text.encode(template.PREVIEW).replace(/\n/g, '<br>');
-	          this.showNode(this._templatePreviewNode);
-	          this._templatePreviewNode.innerHTML = preview;
-	          this._templateTemplateTitleNode.textContent = template.TITLE;
-	        } else {
-	          this.hideNode(this._templatePreviewNode);
-	          this._templateTemplateTitleNode.textContent = '';
-	        }
-	      }
-	    }
-	  }], [{
-	    key: "create",
-	    value: function create(id, settings) {
-	      const self = new Sms();
-	      self.initialize(id, settings);
-	      Sms.items[self.getId()] = self;
-	      return self;
-	    }
-	  }]);
-	  return Sms;
-	}(Editor);
-
-	babelHelpers.defineProperty(Sms, "items", {});
-
-	/** @memberof BX.Crm.Timeline.Editors */
-
-	let Rest = /*#__PURE__*/function (_Editor) {
-	  babelHelpers.inherits(Rest, _Editor);
-
-	  function Rest() {
-	    var _this;
-
-	    babelHelpers.classCallCheck(this, Rest);
-	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Rest).call(this));
-	    _this._interfaceInitialized = false;
-	    return _this;
-	  }
-
-	  babelHelpers.createClass(Rest, [{
-	    key: "action",
-	    value: function action(_action) {
-	      if (!this._interfaceInitialized) {
-	        this._interfaceInitialized = true;
-	        this.initializeInterface();
-	      }
-
-	      if (_action === 'activity_rest_applist') {
-	        BX.rest.Marketplace.open({
-	          PLACEMENT: this.getSetting("placement", '')
-	        });
-	        top.BX.addCustomEvent(top, 'Rest:AppLayout:ApplicationInstall', BX.proxy(this.fireUpdateEvent, this));
-	      } else {
-	        const appId = _action.replace('activity_rest_', '');
-
-	        const appData = appId.split('_');
-	        BX.rest.AppLayout.openApplication(appData[0], {
-	          ID: this._ownerId
-	        }, {
-	          PLACEMENT: this.getSetting("placement", ''),
-	          PLACEMENT_ID: appData[1]
-	        });
-	      }
-	    }
-	  }, {
-	    key: "initializeInterface",
-	    value: function initializeInterface() {
-	      if (!!top.BX.rest && !!top.BX.rest.AppLayout) {
-	        const entityTypeId = this._manager._ownerTypeId,
-	              entityId = this._manager._ownerId;
-	        const PlacementInterface = top.BX.rest.AppLayout.initializePlacement(this.getSetting("placement", ''));
-
-	        PlacementInterface.prototype.reloadData = function (params, cb) {
-	          BX.Crm.EntityEvent.fireUpdate(entityTypeId, entityId, '');
-	          cb();
-	        };
-	      }
-	    }
-	  }, {
-	    key: "fireUpdateEvent",
-	    value: function fireUpdateEvent() {
-	      const entityTypeId = this._manager._ownerTypeId,
-	            entityId = this._manager._ownerId;
-	      setTimeout(function () {
-	        console.log('fireUpdate', entityId, entityTypeId);
-	        BX.Crm.EntityEvent.fire(BX.Crm.EntityEvent.names.invalidate, entityTypeId, entityId, '');
-	      }, 3000);
-	    }
-	  }], [{
-	    key: "create",
-	    value: function create(id, settings) {
-	      const self = new Rest();
-	      self.initialize(id, settings);
-	      Rest.items[self.getId()] = self;
-	      return self;
-	    }
-	  }]);
-	  return Rest;
-	}(Editor);
-
-	babelHelpers.defineProperty(Rest, "items", {});
-
-	/** @memberof BX.Crm.Timeline.Editors */
-
-	let Comment = /*#__PURE__*/function (_Editor) {
-	  babelHelpers.inherits(Comment, _Editor);
-
-	  function Comment() {
-	    var _this;
-
-	    babelHelpers.classCallCheck(this, Comment);
-	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Comment).call(this));
-	    _this._history = null;
-	    _this._serviceUrl = "";
-	    _this._postForm = null;
-	    _this._editor = null;
-	    _this._isRequestRunning = false;
-	    _this._isLocked = false;
-	    return _this;
-	  }
-
-	  babelHelpers.createClass(Comment, [{
-	    key: "doInitialize",
-	    value: function doInitialize() {
-	      this._serviceUrl = this.getSetting("serviceUrl", "");
-	      BX.unbind(this._input, "blur", this._blurHandler);
-	      BX.unbind(this._input, "keyup", this._keyupHandler);
-	    }
-	  }, {
-	    key: "loadEditor",
-	    value: function loadEditor() {
-	      this._editorName = 'CrmTimeLineComment0';
-	      if (this._postForm) return;
-	      BX.ajax.runAction("crm.api.timeline.loadEditor", {
-	        data: {
-	          name: this._editorName
-	        }
-	      }).then(this.onLoadEditorSuccess.bind(this));
-	    }
-	  }, {
-	    key: "onLoadEditorSuccess",
-	    value: function onLoadEditorSuccess(result) {
-	      const html = BX.prop.getString(BX.prop.getObject(result, "data", {}), "html", '');
-	      BX.html(this._editorContainer, html).then(BX.delegate(this.showEditor, this)).then(BX.delegate(this.addEvents, this));
-	    }
-	  }, {
-	    key: "addEvents",
-	    value: function addEvents() {
-	      BX.addCustomEvent(this._editorContainer.firstElementChild, 'onFileIsAppended', BX.delegate(function (id, item) {
-	        BX.addClass(this._saveButton, 'ui-btn-disabled');
-	        BX.addClass(this._saveButton, 'ui-btn-clock');
-
-	        this._saveButton.removeEventListener("click", this._saveButtonHandler);
-	      }, this));
-	      BX.addCustomEvent(this._editorContainer.firstElementChild, 'onFileIsAdded', BX.delegate(function (file, controller, obj, blob) {
-	        BX.removeClass(this._saveButton, 'ui-btn-clock');
-	        BX.removeClass(this._saveButton, 'ui-btn-disabled');
-
-	        this._saveButton.addEventListener("click", this._saveButtonHandler);
-	      }, this));
-	    }
-	  }, {
-	    key: "showEditor",
-	    value: function showEditor() {
-	      if (LHEPostForm) {
-	        window.setTimeout(BX.delegate(function () {
-	          this._postForm = LHEPostForm.getHandler(this._editorName);
-	          this._editor = BXHtmlEditor.Get(this._editorName);
-	          BX.onCustomEvent(this._postForm.eventNode, 'OnShowLHE', [true]);
-	        }, this), 100);
-	      }
-	    }
-	  }, {
-	    key: "getHistory",
-	    value: function getHistory() {
-	      return this._history;
-	    }
-	  }, {
-	    key: "setHistory",
-	    value: function setHistory(history) {
-	      this._history = history;
-	    }
-	  }, {
-	    key: "onFocus",
-	    value: function onFocus(e) {
-	      this._input.style.display = 'none';
-
-	      if (this._editor && this._postForm) {
-	        this._postForm.eventNode.style.display = 'block';
-
-	        this._editor.Focus();
-	      } else {
-	        if (!BX.type.isDomNode(this._editorContainer)) {
-	          this._editorContainer = BX.create("div", {
-	            attrs: {
-	              className: "crm-entity-stream-section-comment-editor"
-	            }
-	          });
-
-	          this._editorContainer.appendChild(BX.create("DIV", {
-	            attrs: {
-	              className: "crm-timeline-wait"
-	            }
-	          }));
-
-	          this._container.appendChild(this._editorContainer);
-	        }
-
-	        window.setTimeout(BX.delegate(function () {
-	          this.loadEditor();
-	        }, this), 100);
-	      }
-
-	      BX.addClass(this._container, "focus");
-	    }
-	  }, {
-	    key: "save",
-	    value: function save() {
-	      let text = "";
-	      const attachmentList = [];
-
-	      if (this._postForm) {
-	        text = this._postForm.oEditor.GetContent();
-
-	        this._postForm.eventNode.querySelectorAll('input[name="UF_CRM_COMMENT_FILES[]"]').forEach(function (input) {
-	          attachmentList.push(input.value);
-	        });
-	      } else {
-	        text = this._input.value;
-	      }
-
-	      if (text === "") {
-	        if (!this.emptyCommentMessage) {
-	          this.emptyCommentMessage = new BX.PopupWindow('timeline_empty_new_comment_' + this._ownerId, this._saveButton, {
-	            content: BX.message('CRM_TIMELINE_EMPTY_COMMENT_MESSAGE'),
-	            darkMode: true,
-	            autoHide: true,
-	            zIndex: 990,
-	            angle: {
-	              position: 'top',
-	              offset: 77
-	            },
-	            closeByEsc: true,
-	            bindOptions: {
-	              forceBindPosition: true
-	            }
-	          });
-	        }
-
-	        this.emptyCommentMessage.show();
-	        return;
-	      }
-
-	      if (this._isRequestRunning || this._isLocked) {
-	        return;
-	      }
-
-	      this._isRequestRunning = this._isLocked = true;
-	      BX.ajax({
-	        url: this._serviceUrl,
-	        method: "POST",
-	        dataType: "json",
-	        data: {
-	          "ACTION": "SAVE_COMMENT",
-	          "TEXT": text,
-	          "OWNER_TYPE_ID": this._ownerTypeId,
-	          "OWNER_ID": this._ownerId,
-	          "ATTACHMENTS": attachmentList
-	        },
-	        onsuccess: BX.delegate(this.onSaveSuccess, this),
-	        onfailure: BX.delegate(this.onSaveFailure, this)
-	      });
-	    }
-	  }, {
-	    key: "cancel",
-	    value: function cancel() {
-	      this._input.value = "";
-	      this._input.style.minHeight = "";
-	      if (BX.type.isDomNode(this._editorContainer)) this._postForm.eventNode.style.display = 'none';
-	      this._input.style.display = 'block';
-	      BX.removeClass(this._container, "focus");
-	      this.release();
-	    }
-	  }, {
-	    key: "onSaveSuccess",
-	    value: function onSaveSuccess(data) {
-	      this._isRequestRunning = false;
-
-	      if (this._postForm) {
-	        this._postForm.reinit('', {});
-	      }
-
-	      this.cancel();
-	      const itemData = BX.prop.getObject(data, "HISTORY_ITEM");
-
-	      const historyItem = this._history.createItem(itemData);
-
-	      this._history.addItem(historyItem, 0);
-
-	      const anchor = this._history.createAnchor();
-
-	      historyItem.layout({
-	        anchor: anchor
-	      });
-	      const move = BX.CrmCommentAnimation.create(historyItem.getWrapper(), anchor, BX.pos(this._input), {
-	        start: BX.delegate(this.onAnimationStart, this),
-	        complete: BX.delegate(this.onAnimationComplete, this)
-	      });
-	      move.run();
-	    }
-	  }, {
-	    key: "onSaveFailure",
-	    value: function onSaveFailure() {
-	      this._isRequestRunning = this._isLocked = false;
-	    }
-	  }, {
-	    key: "onAnimationStart",
-	    value: function onAnimationStart() {
-	      this._input.value = "";
-	    }
-	  }, {
-	    key: "onAnimationComplete",
-	    value: function onAnimationComplete() {
-	      this._isLocked = false;
-	      BX.removeClass(this._container, "focus");
-	      this._input.style.minHeight = "";
-
-	      this._manager.processEditingCompletion(this);
-
-	      this.release();
-	      this._history._anchor = null;
-
-	      this._history.refreshLayout();
-	    }
-	  }], [{
-	    key: "create",
-	    value: function create(id, settings) {
-	      const self = new Comment();
-	      self.initialize(id, settings);
-	      Comment.items[self.getId()] = self;
-	      return self;
-	    }
-	  }]);
-	  return Comment;
-	}(Editor);
-
-	babelHelpers.defineProperty(Comment, "items", {});
-
-	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration(obj, privateSet); privateSet.add(obj); }
-
-	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
-
-	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-
-	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
-	/** @memberof BX.Crm.Timeline.Editors */
-
-	var _toDoEditor = /*#__PURE__*/new WeakMap();
-
-	var _createEditor = /*#__PURE__*/new WeakSet();
-
-	var _onChangeDescription = /*#__PURE__*/new WeakSet();
-
-	let ToDo = /*#__PURE__*/function (_Editor) {
-	  babelHelpers.inherits(ToDo, _Editor);
-
-	  function ToDo(...args) {
-	    var _this;
-
-	    babelHelpers.classCallCheck(this, ToDo);
-	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(ToDo).call(this, ...args));
-
-	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _onChangeDescription);
-
-	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _createEditor);
-
-	    _classPrivateFieldInitSpec(babelHelpers.assertThisInitialized(_this), _toDoEditor, {
-	      writable: true,
-	      value: null
-	    });
-
-	    return _this;
-	  }
-
-	  babelHelpers.createClass(ToDo, [{
-	    key: "initialize",
-	    value: function initialize(id, settings) {
-	      babelHelpers.get(babelHelpers.getPrototypeOf(ToDo.prototype), "initialize", this).call(this, id, settings);
-
-	      _classPrivateMethodGet(this, _createEditor, _createEditor2).call(this);
-	    }
-	  }, {
-	    key: "save",
-	    value: function save() {
-	      if (main_core.Dom.hasClass(this._saveButton, 'ui-btn-disabled')) {
-	        return false;
-	      }
-
-	      return babelHelpers.classPrivateFieldGet(this, _toDoEditor).save().then(response => {
-	        if (main_core.Type.isArray(response.errors) && response.errors.length) {
-	          return false;
-	        }
-
-	        this.cancel();
-
-	        this._manager.processEditingCompletion(this);
-
-	        return true;
-	      });
-	    }
-	  }, {
-	    key: "cancel",
-	    value: function cancel() {
-	      babelHelpers.classPrivateFieldGet(this, _toDoEditor).clearValue();
-	      main_core.Dom.removeClass(this._container, 'focus');
-	      this.release();
-	    }
-	  }, {
-	    key: "bindInputHandlers",
-	    value: function bindInputHandlers() {// do nothing
-	    }
-	  }, {
-	    key: "setParentActivityId",
-	    value: function setParentActivityId(activityId) {
-	      babelHelpers.classPrivateFieldGet(this, _toDoEditor).setParentActivityId(activityId);
-	    }
-	  }, {
-	    key: "setDeadLine",
-	    value: function setDeadLine(deadLine) {
-	      babelHelpers.classPrivateFieldGet(this, _toDoEditor).setDeadLine(deadLine);
-	    }
-	  }, {
-	    key: "setFocused",
-	    value: function setFocused() {
-	      babelHelpers.classPrivateFieldGet(this, _toDoEditor).setFocused();
-	    }
-	  }], [{
-	    key: "create",
-	    value: function create(id, settings) {
-	      const self = new ToDo();
-	      self.initialize(id, settings);
-	      ToDo.items[self.getId()] = self;
-	      return self;
-	    }
-	  }]);
-	  return ToDo;
-	}(Editor);
-
-	function _createEditor2() {
-	  const editorContainer = main_core.Dom.create('div');
-	  main_core.Dom.prepend(editorContainer, this._container);
-	  babelHelpers.classPrivateFieldSet(this, _toDoEditor, new crm_activity_todoEditor.TodoEditor({
-	    container: editorContainer,
-	    defaultDescription: '',
-	    ownerTypeId: this._ownerTypeId,
-	    ownerId: this._ownerId,
-	    events: {
-	      onFocus: this._focusHandler,
-	      onChangeDescription: _classPrivateMethodGet(this, _onChangeDescription, _onChangeDescription2).bind(this)
-	    }
-	  }));
-	  babelHelpers.classPrivateFieldGet(this, _toDoEditor).show();
-	}
-
-	function _onChangeDescription2(event) {
-	  const {
-	    description
-	  } = event.getData();
-
-	  if (!description.length && !main_core.Dom.hasClass(this._saveButton, 'ui-btn-disabled')) {
-	    main_core.Dom.addClass(this._saveButton, 'ui-btn-disabled');
-	  } else if (description.length && main_core.Dom.hasClass(this._saveButton, 'ui-btn-disabled')) {
-	    main_core.Dom.removeClass(this._saveButton, 'ui-btn-disabled');
-	  }
-	}
-
-	babelHelpers.defineProperty(ToDo, "items", {});
 
 	/** @memberof BX.Crm.Timeline.Types */
 	const Item = {
@@ -2497,8 +30,8 @@ this.BX.Crm = this.BX.Crm || {};
 	  productCompilation: 22,
 	  signDocument: 23
 	};
-	/** @memberof BX.Crm.Timeline.Types */
 
+	/** @memberof BX.Crm.Timeline.Types */
 	const Mark = {
 	  undefined: 0,
 	  waiting: 1,
@@ -2507,15 +40,15 @@ this.BX.Crm = this.BX.Crm || {};
 	  ignored: 4,
 	  failed: 5
 	};
-	/** @memberof BX.Crm.Timeline.Types */
 
 	/** @memberof BX.Crm.Timeline.Types */
 
+	/** @memberof BX.Crm.Timeline.Types */
 	const Order = {
 	  encourageBuyProducts: 100
 	};
-	/** @memberof BX.Crm.Timeline.Types */
 
+	/** @memberof BX.Crm.Timeline.Types */
 	const EditorMode = {
 	  view: 1,
 	  edit: 2
@@ -2529,13 +62,10 @@ this.BX.Crm = this.BX.Crm || {};
 	});
 
 	/** @memberof BX.Crm.Timeline */
-
 	let CompatibleItem = /*#__PURE__*/function (_Item) {
 	  babelHelpers.inherits(CompatibleItem, _Item);
-
 	  function CompatibleItem() {
 	    var _this;
-
 	    babelHelpers.classCallCheck(this, CompatibleItem);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(CompatibleItem).call(this));
 	    _this._id = "";
@@ -2554,19 +84,15 @@ this.BX.Crm = this.BX.Crm || {};
 	    _this._existedStreamItemDeadLine = null;
 	    return _this;
 	  }
-
 	  babelHelpers.createClass(CompatibleItem, [{
 	    key: "initialize",
 	    value: function initialize(id, settings) {
 	      this._setId(id);
-
 	      this._settings = settings ? settings : {};
 	      this._container = this.getSetting("container");
-
 	      if (!BX.type.isPlainObject(settings['data'])) {
 	        throw "Item. A required parameter 'data' is missing.";
 	      }
-
 	      this._data = settings['data'];
 	      this._activityEditor = this.getSetting("activityEditor");
 	      this.doInitialize();
@@ -2601,7 +127,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "getSort",
 	    value: function getSort() {
 	      var _this$_data$sort;
-
 	      return (_this$_data$sort = this._data['sort']) !== null && _this$_data$sort !== void 0 ? _this$_data$sort : [];
 	    }
 	  }, {
@@ -2610,7 +135,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (this._associatedEntityData === null) {
 	        this._associatedEntityData = BX.type.isPlainObject(this._data["ASSOCIATED_ENTITY"]) ? this._data["ASSOCIATED_ENTITY"] : {};
 	      }
-
 	      return this._associatedEntityData;
 	    }
 	  }, {
@@ -2619,7 +143,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (this._associatedEntityTypeId === null) {
 	        this._associatedEntityTypeId = BX.prop.getInteger(this._data, "ASSOCIATED_ENTITY_TYPE_ID", 0);
 	      }
-
 	      return this._associatedEntityTypeId;
 	    }
 	  }, {
@@ -2628,7 +151,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (this._associatedEntityId === null) {
 	        this._associatedEntityId = BX.prop.getInteger(this._data, "ASSOCIATED_ENTITY_ID", 0);
 	      }
-
 	      return this._associatedEntityId;
 	    }
 	  }, {
@@ -2637,7 +159,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (!BX.type.isPlainObject(associatedEntityData)) {
 	        associatedEntityData = {};
 	      }
-
 	      const data = this._data;
 	      data.ASSOCIATED_ENTITY = associatedEntityData;
 	      this.setData(data);
@@ -2657,11 +178,9 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "setPermissions",
 	    value: function setPermissions(permissions) {
 	      const data = this._data;
-
 	      if (!main_core.Type.isPlainObject(data.ASSOCIATED_ENTITY)) {
 	        data.ASSOCIATED_ENTITY = {};
 	      }
-
 	      data.ASSOCIATED_ENTITY.PERMISSIONS = permissions;
 	      this.setData(data);
 	    }
@@ -2691,7 +210,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (this._typeCategoryId === null) {
 	        this._typeCategoryId = BX.prop.getInteger(this._data, "TYPE_CATEGORY_ID", 0);
 	      }
-
 	      return this._typeCategoryId;
 	    }
 	  }, {
@@ -2710,18 +228,14 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (!BX.type.isElementNode(this._container)) {
 	        throw "Item. Container is not assigned.";
 	      }
-
-	      this.prepareLayout(options); //region Actions
-
+	      this.prepareLayout(options);
+	      //region Actions
 	      /**/
-
 	      this.prepareActions();
 	      const actionQty = this._actions.length;
-
 	      for (let i = 0; i < actionQty; i++) {
 	        this._actions[i].layout();
 	      }
-
 	      this.showActions(actionQty > 0);
 	      /**/
 	      //endregion
@@ -2772,18 +286,14 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (!BX.type.isNumber(length)) {
 	        length = 0;
 	      }
-
 	      if (length <= 0 || text.length <= length) {
 	        return text;
 	      }
-
 	      let offset = length - 1;
 	      const whilespaceOffset = text.substring(offset).search(/\s/i);
-
 	      if (whilespaceOffset > 0) {
 	        offset += whilespaceOffset;
 	      }
-
 	      return text.substring(0, offset);
 	    }
 	  }, {
@@ -2792,18 +302,14 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (!BX.type.isNumber(length)) {
 	        length = 0;
 	      }
-
 	      if (length <= 0 || text.length <= length) {
 	        return [BX.util.htmlspecialchars(text).replace(/(?:\r\n|\r|\n)/g, '<br>')];
 	      }
-
 	      let offset = length - 1;
 	      const whilespaceOffset = text.substring(offset).search(/\s/i);
-
 	      if (whilespaceOffset > 0) {
 	        offset += whilespaceOffset;
 	      }
-
 	      return [BX.util.htmlspecialchars(text.substring(0, offset)).replace(/(?:\r\n|\r|\n)/g, '<br>') + "&hellip;&nbsp;", BX.create("A", {
 	        attrs: {
 	          className: "crm-entity-stream-content-letter-more",
@@ -2821,18 +327,14 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (!BX.type.isNumber(length)) {
 	        length = 0;
 	      }
-
 	      if (length <= 0 || text.length <= length) {
 	        return [BX.util.htmlspecialchars(text)];
 	      }
-
 	      let offset = length - 1;
 	      const whilespaceOffset = text.substring(offset).search(/\s/i);
-
 	      if (whilespaceOffset > 0) {
 	        offset += whilespaceOffset;
 	      }
-
 	      return [BX.util.htmlspecialchars(text.substring(0, offset)) + "&hellip;&nbsp;", BX.create("A", {
 	        attrs: {
 	          className: "crm-entity-stream-content-letter-more",
@@ -2848,17 +350,13 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "prepareAuthorLayout",
 	    value: function prepareAuthorLayout() {
 	      const authorInfo = this.getObjectDataParam("AUTHOR", null);
-
 	      if (!authorInfo) {
 	        return null;
 	      }
-
 	      const showUrl = BX.prop.getString(authorInfo, "SHOW_URL", "");
-
 	      if (showUrl === "") {
 	        return null;
 	      }
-
 	      const link = BX.create("A", {
 	        attrs: {
 	          className: "ui-icon ui-icon-common-user crm-entity-stream-content-detail-employee",
@@ -2869,12 +367,10 @@ this.BX.Crm = this.BX.Crm || {};
 	        children: [BX.create('i', {})]
 	      });
 	      const imageUrl = BX.prop.getString(authorInfo, "IMAGE_URL", "");
-
 	      if (imageUrl !== "") {
 	        link.children[0].style.backgroundImage = "url('" + encodeURI(imageUrl) + "')";
 	        link.children[0].style.backgroundSize = "21px";
 	      }
-
 	      return link;
 	    }
 	  }, {
@@ -2911,15 +407,12 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "openContextMenu",
 	    value: function openContextMenu() {
 	      const menuItems = this.prepareContextMenuItems();
-
 	      if (typeof IntranetExtensions !== "undefined") {
 	        menuItems.push(IntranetExtensions);
 	      }
-
 	      if (menuItems.length === 0) {
 	        return;
 	      }
-
 	      BX.PopupMenu.show(this._id, this._contextMenuButton, menuItems, {
 	        offsetTop: 0,
 	        offsetLeft: 16,
@@ -2966,7 +459,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      this._isContextMenuShown = false;
 	      BX.removeClass(this._contextMenuButton, "active");
 	      this._contextMenu = null;
-
 	      if (typeof BX.PopupMenu.Data[this._id] !== "undefined") {
 	        delete BX.PopupMenu.Data[this._id];
 	      }
@@ -2985,7 +477,6 @@ this.BX.Crm = this.BX.Crm || {};
 	  }]);
 	  return CompatibleItem;
 	}(crm_timeline_item.Item);
-
 	babelHelpers.defineProperty(CompatibleItem, "messages", {});
 
 	/** @memberof BX.Crm.Timeline.Animation */
@@ -2998,7 +489,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    this._finalItem = null;
 	    this._events = null;
 	  }
-
 	  babelHelpers.createClass(Fasten, [{
 	    key: "initialize",
 	    value: function initialize(id, settings) {
@@ -3023,13 +513,10 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "addFixedHistoryItem",
 	    value: function addFixedHistoryItem() {
 	      const node = this._finalItem.getWrapper();
-
 	      BX.addClass(node, 'crm-entity-stream-section-animate-start');
-
 	      if (this._anchor.parentNode && node) {
 	        this._anchor.parentNode.insertBefore(node, this._anchor.nextSibling);
 	      }
-
 	      setTimeout(BX.delegate(function () {
 	        BX.removeClass(node, 'crm-entity-stream-section-animate-start');
 	      }, this), 0);
@@ -3038,7 +525,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "run",
 	    value: function run() {
 	      const node = this._initialItem.getWrapper();
-
 	      this._clone = node.cloneNode(true);
 	      BX.addClass(this._clone, 'crm-entity-stream-section-animate-start crm-entity-stream-section-top-fixed');
 	      this._startPosition = BX.pos(node);
@@ -3062,18 +548,13 @@ this.BX.Crm = this.BX.Crm || {};
 	        height: _cloneHeight + 15,
 	        opacity: 1
 	      };
-
 	      const _difference = this._startPosition.top - this._anchorPosition.bottom;
-
 	      const _deepHistoryLimit = 2 * (document.body.clientHeight + this._startPosition.height);
-
 	      if (_difference > _deepHistoryLimit) {
 	        finish.top = this._startPosition.top - _deepHistoryLimit;
 	        finish.opacity = 0;
 	      }
-
 	      let _duration = Math.abs(finish.top - this._startPosition.top) * 2;
-
 	      _duration = _duration < 1500 ? 1500 : _duration;
 	      const movingEvent = new BX.easing({
 	        duration: _duration,
@@ -3101,7 +582,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      this._anchor.style.height = 0;
 	      this.addFixedHistoryItem();
 	      BX.remove(this._clone);
-
 	      if (BX.type.isFunction(this._events["complete"])) {
 	        this._events["complete"]();
 	      }
@@ -3118,13 +598,10 @@ this.BX.Crm = this.BX.Crm || {};
 	}();
 
 	/** @memberof BX.Crm.Timeline.Items */
-
 	let History = /*#__PURE__*/function (_CompatibleItem) {
 	  babelHelpers.inherits(History, _CompatibleItem);
-
 	  function History() {
 	    var _this;
-
 	    babelHelpers.classCallCheck(this, History);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(History).call(this));
 	    _this._history = null;
@@ -3135,7 +612,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    _this._headerClickHandler = BX.delegate(_this.onHeaderClick, babelHelpers.assertThisInitialized(_this));
 	    return _this;
 	  }
-
 	  babelHelpers.createClass(History, [{
 	    key: "doInitialize",
 	    value: function doInitialize() {
@@ -3148,7 +624,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (this._typeId === null) {
 	        this._typeId = BX.prop.getInteger(this._data, "TYPE_ID", Item.undefined);
 	      }
-
 	      return this._typeId;
 	    }
 	  }, {
@@ -3173,7 +648,6 @@ this.BX.Crm = this.BX.Crm || {};
 	        const time = BX.parseDate(this.getCreatedTimestamp(), false, "YYYY-MM-DD", "YYYY-MM-DD HH:MI:SS");
 	        this._createdTime = new crm_timeline_tools.DatetimeConverter(time).toUserTime().getValue();
 	      }
-
 	      return this._createdTime;
 	    }
 	  }, {
@@ -3210,12 +684,10 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "isDone",
 	    value: function isDone() {
 	      const typeId = this.getTypeId();
-
 	      if (typeId === Item.activity) {
 	        const entityData = this.getAssociatedEntityData();
 	        return BX.CrmActivityStatus.isFinal(BX.prop.getInteger(entityData, "STATUS", 0));
 	      }
-
 	      return false;
 	    }
 	  }, {
@@ -3226,7 +698,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    /**
 	     * deprecated
 	     */
-
 	  }, {
 	    key: "fasten",
 	    value: function fasten(e) {
@@ -3244,12 +715,10 @@ this.BX.Crm = this.BX.Crm || {};
 	            }
 	          });
 	        }
-
 	        this.fastenLimitPopup.show();
 	        this.closeContextMenu();
 	        return;
 	      }
-
 	      BX.ajax({
 	        url: this._history._serviceUrl,
 	        method: "POST",
@@ -3267,21 +736,15 @@ this.BX.Crm = this.BX.Crm || {};
 	    /**
 	     * deprecated
 	     */
-
 	  }, {
 	    key: "onSuccessFasten",
 	    value: function onSuccessFasten(result) {
 	      if (result && BX.type.isNotEmptyString(result.ERROR)) return;
-
 	      if (!this.isFixed()) {
 	        this._data.IS_FIXED = 'Y';
-
 	        const fixedItem = this._fixedHistory.createItem(this._data);
-
 	        fixedItem._isFixed = true;
-
 	        this._fixedHistory.addItem(fixedItem, 0);
-
 	        fixedItem.layout({
 	          add: false
 	        });
@@ -3293,13 +756,11 @@ this.BX.Crm = this.BX.Crm || {};
 	        });
 	        animation.run();
 	      }
-
 	      this.closeContextMenu();
 	    }
 	    /**
 	     * deprecated
 	     */
-
 	  }, {
 	    key: "unfasten",
 	    value: function unfasten(e) {
@@ -3320,14 +781,12 @@ this.BX.Crm = this.BX.Crm || {};
 	    /**
 	     * deprecated
 	     */
-
 	  }, {
 	    key: "onSuccessUnfasten",
 	    value: function onSuccessUnfasten(result) {
 	      if (result && BX.type.isNotEmptyString(result.ERROR)) return;
 	      let item;
 	      let historyItem;
-
 	      if (this.isFixed()) {
 	        item = this;
 	        historyItem = this._history.findItemById(this._id);
@@ -3335,14 +794,10 @@ this.BX.Crm = this.BX.Crm || {};
 	        item = this._fixedHistory.findItemById(this._id);
 	        historyItem = this;
 	      }
-
 	      if (item) {
 	        const index = this._fixedHistory.getItemIndex(item);
-
 	        item.clearAnimate();
-
 	        this._fixedHistory.removeItemByIndex(index);
-
 	        if (historyItem) {
 	          historyItem._data.IS_FIXED = 'N';
 	          historyItem.refreshLayout();
@@ -3398,13 +853,11 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "prepareContent",
 	    value: function prepareContent() {
 	      let wrapperClassName = this.getWrapperClassName();
-
 	      if (wrapperClassName !== "") {
 	        wrapperClassName = "crm-entity-stream-section crm-entity-stream-section-history" + " " + wrapperClassName;
 	      } else {
 	        wrapperClassName = "crm-entity-stream-section crm-entity-stream-section-history";
 	      }
-
 	      const wrapper = BX.create("DIV", {
 	        attrs: {
 	          className: wrapperClassName
@@ -3415,11 +868,9 @@ this.BX.Crm = this.BX.Crm || {};
 	          className: this.getIconClassName()
 	        }
 	      }));
-
 	      if (this.isContextMenuEnabled()) {
 	        main_core.Dom.append(this.prepareContextMenuButton(), wrapper);
 	      }
-
 	      const contentWrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-event"
@@ -3461,14 +912,14 @@ this.BX.Crm = this.BX.Crm || {};
 	          className: "crm-entity-stream-content-detail"
 	        },
 	        children: this.prepareContentDetails()
-	      })); //region Author
+	      }));
 
+	      //region Author
 	      const authorNode = this.prepareAuthorLayout();
-
 	      if (authorNode) {
 	        contentWrapper.appendChild(authorNode);
-	      } //endregion
-
+	      }
+	      //endregion
 
 	      return wrapper;
 	    }
@@ -3476,20 +927,16 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "prepareLayout",
 	    value: function prepareLayout(options) {
 	      this._wrapper = this.prepareContent();
-
 	      if (this._wrapper) {
 	        const enableAdd = BX.type.isPlainObject(options) ? BX.prop.getBoolean(options, "add", true) : true;
-
 	        if (enableAdd) {
 	          const anchor = BX.type.isPlainObject(options) && BX.type.isElementNode(options["anchor"]) ? options["anchor"] : null;
-
 	          if (anchor && anchor.nextSibling) {
 	            this._container.insertBefore(this._wrapper, anchor.nextSibling);
 	          } else {
 	            this._container.appendChild(this._wrapper);
 	          }
 	        }
-
 	        this.markAsTerminated(this._history.checkItemForTermination(this));
 	      }
 	    }
@@ -3522,10 +969,8 @@ this.BX.Crm = this.BX.Crm || {};
 	        }
 	      });
 	      if (isFixed) BX.addClass(this._switcher, "crm-entity-stream-section-top-fixed-btn-active");
-
 	      if (!this.isReadOnly() && !isFixed) {
 	        const manager = this._history.getManager();
-
 	        if (!manager.isSpotlightShowed()) {
 	          manager.setSpotlightShowed();
 	          BX.addClass(this._switcher, "crm-entity-stream-section-top-fixed-btn-spotlight");
@@ -3543,7 +988,6 @@ this.BX.Crm = this.BX.Crm || {};
 	          spotlight.show();
 	        }
 	      }
-
 	      return this._switcher;
 	    }
 	  }, {
@@ -3556,11 +1000,9 @@ this.BX.Crm = this.BX.Crm || {};
 	      });
 	      header.appendChild(this.prepareTitleLayout());
 	      const statusNode = this.getStatusNode();
-
 	      if (main_core.Type.isDomNode(statusNode)) {
 	        main_core.Dom.append(statusNode, header);
 	      }
-
 	      header.appendChild(BX.create("SPAN", {
 	        attrs: {
 	          className: "crm-entity-stream-content-event-time"
@@ -3585,7 +1027,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (this.isFixed()) {
 	        return this._fixedHistory.formatTime(time);
 	      }
-
 	      return this._history.formatTime(time);
 	    }
 	  }], [{
@@ -3601,7 +1042,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (!BX.type.isDate(deadline)) {
 	        return false;
 	      }
-
 	      let start = new Date();
 	      start.setHours(0);
 	      start.setMinutes(0);
@@ -3617,18 +1057,25 @@ this.BX.Crm = this.BX.Crm || {};
 	      const time = deadline.getTime();
 	      return time < start || time >= start && time <= end;
 	    }
+	  }, {
+	    key: "isCounterEnabledByLightTime",
+	    value: function isCounterEnabledByLightTime(lightTime) {
+	      if (!BX.type.isDate(lightTime)) {
+	        return false;
+	      }
+	      const now = new Date().getTime();
+	      const time = lightTime.getTime();
+	      return time < now;
+	    }
 	  }]);
 	  return History;
 	}(CompatibleItem);
 
 	/** @memberof BX.Crm.Timeline.Items */
-
 	let Scheduled = /*#__PURE__*/function (_CompatibleItem) {
 	  babelHelpers.inherits(Scheduled, _CompatibleItem);
-
 	  function Scheduled() {
 	    var _this;
-
 	    babelHelpers.classCallCheck(this, Scheduled);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Scheduled).call(this));
 	    _this._schedule = null;
@@ -3637,16 +1084,13 @@ this.BX.Crm = this.BX.Crm || {};
 	    _this._setAsDoneButtonHandler = BX.delegate(_this.onSetAsDoneButtonClick, babelHelpers.assertThisInitialized(_this));
 	    return _this;
 	  }
-
 	  babelHelpers.createClass(Scheduled, [{
 	    key: "doInitialize",
 	    value: function doInitialize() {
 	      this._schedule = this.getSetting("schedule");
-
 	      if (!(this._activityEditor instanceof BX.CrmActivityEditor)) {
 	        throw "Scheduled. The field 'activityEditor' is not assigned.";
 	      }
-
 	      if (this.hasPermissions() && !this.verifyPermissions()) {
 	        this.loadPermissions();
 	      }
@@ -3681,11 +1125,9 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "onPermissionsLoad",
 	    value: function onPermissionsLoad(result) {
 	      const permissions = BX.prop.getObject(result, "PERMISSIONS", null);
-
 	      if (!permissions) {
 	        return;
 	      }
-
 	      this.setPermissions(permissions);
 	      window.setTimeout(function () {
 	        this.refreshLayout();
@@ -3697,6 +1139,11 @@ this.BX.Crm = this.BX.Crm || {};
 	      return null;
 	    }
 	  }, {
+	    key: "getLightTime",
+	    value: function getLightTime() {
+	      return null;
+	    }
+	  }, {
 	    key: "hasDeadline",
 	    value: function hasDeadline() {
 	      return BX.type.isDate(this.getDeadline());
@@ -3705,11 +1152,10 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "isCounterEnabled",
 	    value: function isCounterEnabled() {
 	      if (this.isDone()) {
-	        return this._existedStreamItemDeadLine && History.isCounterEnabled(this._existedStreamItemDeadLine);
+	        return this._existedStreamItemDeadLine && History.isCounterEnabledByLightTime(this._existedStreamItemDeadLine);
 	      }
-
-	      const deadline = this.getDeadline();
-	      return deadline && History.isCounterEnabled(deadline);
+	      const lightTime = this.getLightTime();
+	      return lightTime && History.isCounterEnabledByLightTime(lightTime);
 	    }
 	  }, {
 	    key: "isIncomingChannel",
@@ -3727,9 +1173,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (!BX.prop.getBoolean(data, "COMPLETED")) {
 	        return;
 	      }
-
 	      this.markAsDone(true);
-
 	      this._schedule.onItemMarkedAsDone(this, {
 	        'historyItemData': BX.prop.getObject(data, "HISTORY_ITEM")
 	      });
@@ -3773,11 +1217,9 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (this.isReadOnly()) {
 	        return false;
 	      }
-
 	      if (this.isIncomingChannel()) {
 	        return false;
 	      }
-
 	      const perms = BX.prop.getObject(this.getAssociatedEntityData(), "PERMISSIONS", {});
 	      return BX.prop.getBoolean(perms, "POSTPONE", false);
 	    }
@@ -3792,7 +1234,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (this.isReadOnly()) {
 	        return false;
 	      }
-
 	      const perms = BX.prop.getObject(this.getAssociatedEntityData(), "PERMISSIONS", {});
 	      return BX.prop.getBoolean(perms, "COMPLETE", false);
 	    }
@@ -3808,20 +1249,16 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "prepareLayout",
 	    value: function prepareLayout(options) {
 	      this._wrapper = this.prepareContent();
-
 	      if (this._wrapper) {
 	        const enableAdd = BX.type.isPlainObject(options) ? BX.prop.getBoolean(options, "add", true) : true;
-
 	        if (enableAdd) {
 	          const anchor = BX.type.isPlainObject(options) && BX.type.isElementNode(options["anchor"]) ? options["anchor"] : null;
-
 	          if (anchor && anchor.nextSibling) {
 	            this._container.insertBefore(this._wrapper, anchor.nextSibling);
 	          } else {
 	            this._container.appendChild(this._wrapper);
 	          }
 	        }
-
 	        this.markAsTerminated(this._schedule.checkItemForTermination(this));
 	      }
 	    }
@@ -3860,865 +1297,6 @@ this.BX.Crm = this.BX.Crm || {};
 	  return Scheduled;
 	}(CompatibleItem);
 
-	/** @memberof BX.Crm.Timeline */
-	let Action = /*#__PURE__*/function () {
-	  function Action() {
-	    babelHelpers.classCallCheck(this, Action);
-	    this._id = "";
-	    this._settings = {};
-	    this._container = null;
-	  }
-
-	  babelHelpers.createClass(Action, [{
-	    key: "initialize",
-	    value: function initialize(id, settings) {
-	      this._id = BX.type.isNotEmptyString(id) ? id : BX.util.getRandomString(4);
-	      this._settings = settings ? settings : {};
-	      this._container = this.getSetting("container");
-
-	      if (!BX.type.isElementNode(this._container)) {
-	        throw "BX.CrmTimelineAction: Could not find container.";
-	      }
-
-	      this.doInitialize();
-	    }
-	  }, {
-	    key: "doInitialize",
-	    value: function doInitialize() {}
-	  }, {
-	    key: "getId",
-	    value: function getId() {
-	      return this._id;
-	    }
-	  }, {
-	    key: "getSetting",
-	    value: function getSetting(name, defaultval) {
-	      return this._settings.hasOwnProperty(name) ? this._settings[name] : defaultval;
-	    }
-	  }, {
-	    key: "layout",
-	    value: function layout() {
-	      this.doLayout();
-	    }
-	  }, {
-	    key: "doLayout",
-	    value: function doLayout() {}
-	  }]);
-	  return Action;
-	}();
-
-	/** @memberof BX.Crm.Timeline.Actions */
-
-	let Activity = /*#__PURE__*/function (_Action) {
-	  babelHelpers.inherits(Activity, _Action);
-
-	  function Activity() {
-	    var _this;
-
-	    babelHelpers.classCallCheck(this, Activity);
-	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Activity).call(this));
-	    _this._activityEditor = null;
-	    _this._entityData = null;
-	    _this._item = null;
-	    _this._isEnabled = true;
-	    return _this;
-	  }
-
-	  babelHelpers.createClass(Activity, [{
-	    key: "doInitialize",
-	    value: function doInitialize() {
-	      this._entityData = this.getSetting("entityData");
-
-	      if (!BX.type.isPlainObject(this._entityData)) {
-	        throw "BX.Crm.Timeline.Actions.Activity. A required parameter 'entityData' is missing.";
-	      }
-
-	      this._activityEditor = this.getSetting("activityEditor");
-
-	      if (!(this._activityEditor instanceof BX.CrmActivityEditor)) {
-	        throw "BX.Crm.Timeline.Actions.Activity. A required parameter 'activityEditor' is missing.";
-	      }
-
-	      this._item = this.getSetting("item");
-	      this._isEnabled = this.getSetting("enabled", true);
-	    }
-	  }, {
-	    key: "getActivityId",
-	    value: function getActivityId() {
-	      return BX.prop.getInteger(this._entityData, "ID", 0);
-	    }
-	  }, {
-	    key: "loadActivityCommunications",
-	    value: function loadActivityCommunications(callback) {
-	      this._activityEditor.getActivityCommunications(this.getActivityId(), function (communications) {
-	        if (BX.type.isFunction(callback)) {
-	          callback(communications);
-	        }
-	      }, true);
-	    }
-	  }, {
-	    key: "getItemData",
-	    value: function getItemData() {
-	      return this._item ? this._item.getData() : null;
-	    }
-	  }]);
-	  return Activity;
-	}(Action);
-
-	/** @memberof BX.Crm.Timeline.Actions */
-
-	let Email = /*#__PURE__*/function (_Activity) {
-	  babelHelpers.inherits(Email, _Activity);
-
-	  function Email() {
-	    var _this;
-
-	    babelHelpers.classCallCheck(this, Email);
-	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Email).call(this));
-	    _this._clickHandler = BX.delegate(_this.onClick, babelHelpers.assertThisInitialized(_this));
-	    _this._saveHandler = BX.delegate(_this.onSave, babelHelpers.assertThisInitialized(_this));
-	    return _this;
-	  }
-
-	  babelHelpers.createClass(Email, [{
-	    key: "onClick",
-	    value: function onClick(e) {
-	      const settings = {
-	        "ownerType": BX.CrmEntityType.resolveName(BX.prop.getInteger(this._entityData, "OWNER_TYPE_ID", 0)),
-	        "ownerID": BX.prop.getInteger(this._entityData, "OWNER_ID", 0),
-	        "ownerUrl": BX.prop.getString(this._entityData, "OWNER_URL", ""),
-	        "ownerTitle": BX.prop.getString(this._entityData, "OWNER_TITLE", ""),
-	        "originalMessageID": BX.prop.getInteger(this._entityData, "ID", 0),
-	        "messageType": "RE"
-	      };
-
-	      if (BX.CrmActivityProvider && top.BX.Bitrix24 && top.BX.Bitrix24.Slider) {
-	        const activity = this._activityEditor.addEmail(settings);
-
-	        activity.addOnSave(this._saveHandler);
-	      } else {
-	        this.loadActivityCommunications(BX.delegate(function (communications) {
-	          settings['communications'] = BX.type.isArray(communications) ? communications : [];
-	          settings['communicationsLoaded'] = true;
-	          BX.CrmActivityEmail.prepareReply(settings);
-
-	          const activity = this._activityEditor.addEmail(settings);
-
-	          activity.addOnSave(this._saveHandler);
-	        }, this));
-	      }
-
-	      return BX.PreventDefault(e);
-	    }
-	  }, {
-	    key: "onSave",
-	    value: function onSave(activity, data) {
-	      if (BX.type.isFunction(this._item.onActivityCreate)) {
-	        this._item.onActivityCreate(activity, data);
-	      }
-	    }
-	  }]);
-	  return Email;
-	}(Activity);
-	/** @memberof BX.Crm.Timeline.Actions */
-
-	let HistoryEmail = /*#__PURE__*/function (_Email) {
-	  babelHelpers.inherits(HistoryEmail, _Email);
-
-	  function HistoryEmail() {
-	    babelHelpers.classCallCheck(this, HistoryEmail);
-	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(HistoryEmail).call(this));
-	  }
-
-	  babelHelpers.createClass(HistoryEmail, [{
-	    key: "doLayout",
-	    value: function doLayout() {
-	      this._container.appendChild(BX.create("A", {
-	        attrs: {
-	          className: "crm-entity-stream-content-action-reply-btn"
-	        },
-	        events: {
-	          "click": this._clickHandler
-	        }
-	      }));
-	    }
-	  }], [{
-	    key: "create",
-	    value: function create(id, settings) {
-	      const self = new HistoryEmail();
-	      self.initialize(id, settings);
-	      return self;
-	    }
-	  }]);
-	  return HistoryEmail;
-	}(Email);
-	/** @memberof BX.Crm.Timeline.Actions */
-
-	let ScheduleEmail = /*#__PURE__*/function (_Email2) {
-	  babelHelpers.inherits(ScheduleEmail, _Email2);
-
-	  function ScheduleEmail() {
-	    babelHelpers.classCallCheck(this, ScheduleEmail);
-	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(ScheduleEmail).call(this));
-	  }
-
-	  babelHelpers.createClass(ScheduleEmail, [{
-	    key: "doLayout",
-	    value: function doLayout() {
-	      this._container.appendChild(BX.create("DIV", {
-	        attrs: {
-	          className: "crm-entity-stream-content-action-reply-btn"
-	        },
-	        events: {
-	          "click": this._clickHandler
-	        }
-	      }));
-	    }
-	  }], [{
-	    key: "create",
-	    value: function create(id, settings) {
-	      const self = new ScheduleEmail();
-	      self.initialize(id, settings);
-	      return self;
-	    }
-	  }]);
-	  return ScheduleEmail;
-	}(Email);
-
-	/** @memberof BX.Crm.Timeline.Items */
-
-	let HistoryActivity = /*#__PURE__*/function (_History) {
-	  babelHelpers.inherits(HistoryActivity, _History);
-
-	  function HistoryActivity() {
-	    babelHelpers.classCallCheck(this, HistoryActivity);
-	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(HistoryActivity).call(this));
-	  }
-
-	  babelHelpers.createClass(HistoryActivity, [{
-	    key: "doInitialize",
-	    value: function doInitialize() {
-	      babelHelpers.get(babelHelpers.getPrototypeOf(HistoryActivity.prototype), "doInitialize", this).call(this);
-
-	      if (!(this._activityEditor instanceof BX.CrmActivityEditor)) {
-	        throw "HistoryActivity. The field 'activityEditor' is not assigned.";
-	      }
-	    }
-	  }, {
-	    key: "getTitle",
-	    value: function getTitle() {
-	      return BX.prop.getString(this.getAssociatedEntityData(), "SUBJECT", "");
-	    }
-	  }, {
-	    key: "getTypeDescription",
-	    value: function getTypeDescription() {
-	      const entityData = this.getAssociatedEntityData();
-	      const direction = BX.prop.getInteger(entityData, "DIRECTION", 0);
-	      const typeCategoryId = this.getTypeCategoryId();
-
-	      if (typeCategoryId === BX.CrmActivityType.email) {
-	        return this.getMessage(direction === BX.CrmActivityDirection.incoming ? "incomingEmail" : "outgoingEmail");
-	      } else if (typeCategoryId === BX.CrmActivityType.call) {
-	        return this.getMessage(direction === BX.CrmActivityDirection.incoming ? "incomingCall" : "outgoingCall");
-	      } else if (typeCategoryId === BX.CrmActivityType.meeting) {
-	        return this.getMessage("meeting");
-	      } else if (typeCategoryId === BX.CrmActivityType.task) {
-	        return this.getMessage("task");
-	      } else if (typeCategoryId === BX.CrmActivityType.provider) {
-	        const providerId = BX.prop.getString(entityData, "PROVIDER_ID", "");
-
-	        if (providerId === "CRM_WEBFORM") {
-	          return this.getMessage("webform");
-	        } else if (providerId === "CRM_SMS") {
-	          return this.getMessage("sms");
-	        } else if (providerId === "CRM_REQUEST") {
-	          return this.getMessage("activityRequest");
-	        } else if (providerId === "IMOPENLINES_SESSION") {
-	          return this.getMessage("openLine");
-	        } else if (providerId === "REST_APP") {
-	          return this.getMessage("restApplication");
-	        } else if (providerId === "VISIT_TRACKER") {
-	          return this.getMessage("visit");
-	        } else if (providerId === "ZOOM") {
-	          return this.getMessage("zoom");
-	        }
-	      }
-
-	      return "";
-	    }
-	  }, {
-	    key: "prepareTitleLayout",
-	    value: function prepareTitleLayout() {
-	      return BX.create("A", {
-	        attrs: {
-	          href: "#",
-	          className: "crm-entity-stream-content-event-title"
-	        },
-	        events: {
-	          "click": this._headerClickHandler
-	        },
-	        text: this.getTypeDescription()
-	      });
-	    }
-	  }, {
-	    key: "prepareTimeLayout",
-	    value: function prepareTimeLayout() {
-	      return BX.create("SPAN", {
-	        attrs: {
-	          className: "crm-entity-stream-content-event-time"
-	        },
-	        text: this.formatTime(this.getCreatedTime())
-	      });
-	    }
-	  }, {
-	    key: "prepareMarkLayout",
-	    value: function prepareMarkLayout() {
-	      const entityData = this.getAssociatedEntityData();
-	      const markTypeId = BX.prop.getInteger(entityData, "MARK_TYPE_ID", 0);
-
-	      if (markTypeId <= 0) {
-	        return null;
-	      }
-
-	      let messageName = "";
-
-	      if (markTypeId === Mark.success) {
-	        messageName = "SuccessMark";
-	      } else if (markTypeId === Mark.renew) {
-	        messageName = "RenewMark";
-	      }
-
-	      if (messageName === "") {
-	        return null;
-	      }
-
-	      let markText = "";
-	      const typeCategoryId = this.getTypeCategoryId();
-
-	      if (typeCategoryId === BX.CrmActivityType.email) {
-	        markText = this.getMessage("email" + messageName);
-	      } else if (typeCategoryId === BX.CrmActivityType.call) {
-	        markText = this.getMessage("call" + messageName);
-	      } else if (typeCategoryId === BX.CrmActivityType.meeting) {
-	        markText = this.getMessage("meeting" + messageName);
-	      } else if (typeCategoryId === BX.CrmActivityType.task) {
-	        markText = this.getMessage("task" + messageName);
-	      }
-
-	      if (markText === "") {
-	        return null;
-	      }
-
-	      return BX.create("SPAN", {
-	        props: {
-	          className: "crm-entity-stream-content-event-skipped"
-	        },
-	        text: markText
-	      });
-	    }
-	  }, {
-	    key: "prepareActions",
-	    value: function prepareActions() {
-	      if (this.isReadOnly()) {
-	        return;
-	      }
-
-	      const typeCategoryId = this.getTypeCategoryId();
-
-	      if (typeCategoryId === BX.CrmActivityType.email) {
-	        this._actions.push(HistoryEmail.create("email", {
-	          item: this,
-	          container: this._actionContainer,
-	          entityData: this.getAssociatedEntityData(),
-	          activityEditor: this._activityEditor
-	        }));
-	      }
-	    }
-	  }, {
-	    key: "prepareContextMenuItems",
-	    value: function prepareContextMenuItems() {
-	      if (this._isMenuShown) {
-	        return;
-	      }
-
-	      const menuItems = [];
-
-	      if (!this.isReadOnly()) {
-	        if (this.isEditable()) {
-	          menuItems.push({
-	            id: "edit",
-	            text: this.getMessage("menuEdit"),
-	            onclick: BX.delegate(this.edit, this)
-	          });
-	        }
-
-	        menuItems.push({
-	          id: "remove",
-	          text: this.getMessage("menuDelete"),
-	          onclick: BX.delegate(this.processRemoval, this)
-	        });
-	        if (this.isFixed() || this._fixedHistory.findItemById(this._id)) menuItems.push({
-	          id: "unfasten",
-	          text: this.getMessage("menuUnfasten"),
-	          onclick: BX.delegate(this.unfasten, this)
-	        });else menuItems.push({
-	          id: "fasten",
-	          text: this.getMessage("menuFasten"),
-	          onclick: BX.delegate(this.fasten, this)
-	        });
-	      }
-
-	      return menuItems;
-	    }
-	  }, {
-	    key: "view",
-	    value: function view() {
-	      this.closeContextMenu();
-	      const entityData = this.getAssociatedEntityData();
-	      const id = BX.prop.getInteger(entityData, "ID", 0);
-
-	      if (id > 0) {
-	        this._activityEditor.viewActivity(id);
-	      }
-	    }
-	  }, {
-	    key: "edit",
-	    value: function edit() {
-	      this.closeContextMenu();
-	      const associatedEntityTypeId = this.getAssociatedEntityTypeId();
-
-	      if (associatedEntityTypeId === BX.CrmEntityType.enumeration.activity) {
-	        const entityData = this.getAssociatedEntityData();
-	        const id = BX.prop.getInteger(entityData, "ID", 0);
-
-	        if (id > 0) {
-	          this._activityEditor.editActivity(id);
-	        }
-	      }
-	    }
-	  }, {
-	    key: "processRemoval",
-	    value: function processRemoval() {
-	      this.closeContextMenu();
-	      this._detetionConfirmDlgId = "entity_timeline_deletion_" + this.getId() + "_confirm";
-	      let dlg = BX.Crm.ConfirmationDialog.get(this._detetionConfirmDlgId);
-
-	      if (!dlg) {
-	        dlg = BX.Crm.ConfirmationDialog.create(this._detetionConfirmDlgId, {
-	          title: this.getMessage("removeConfirmTitle"),
-	          content: this.getRemoveMessage()
-	        });
-	      }
-
-	      dlg.open().then(BX.delegate(this.onRemovalConfirm, this), BX.delegate(this.onRemovalCancel, this));
-	    }
-	  }, {
-	    key: "getRemoveMessage",
-	    value: function getRemoveMessage() {
-	      return this.getMessage('removeConfirm');
-	    }
-	  }, {
-	    key: "onRemovalConfirm",
-	    value: function onRemovalConfirm(result) {
-	      if (BX.prop.getBoolean(result, "cancel", true)) {
-	        return;
-	      }
-
-	      this.remove();
-	    }
-	  }, {
-	    key: "onRemovalCancel",
-	    value: function onRemovalCancel() {}
-	  }, {
-	    key: "remove",
-	    value: function remove() {
-	      const associatedEntityTypeId = this.getAssociatedEntityTypeId();
-
-	      if (associatedEntityTypeId === BX.CrmEntityType.enumeration.activity) {
-	        const entityData = this.getAssociatedEntityData();
-	        const id = BX.prop.getInteger(entityData, "ID", 0);
-
-	        if (id > 0) {
-	          const activityEditor = this._activityEditor;
-	          const item = activityEditor.getItemById(id);
-
-	          if (item) {
-	            activityEditor.deleteActivity(id, true);
-	          } else {
-	            const serviceUrl = BX.util.add_url_param(activityEditor.getSetting('serviceUrl', ''), {
-	              id: id,
-	              action: 'get_activity',
-	              ownertype: activityEditor.getSetting('ownerType', ''),
-	              ownerid: activityEditor.getSetting('ownerID', '')
-	            });
-	            BX.ajax({
-	              'url': serviceUrl,
-	              'method': 'POST',
-	              'dataType': 'json',
-	              'data': {
-	                'ACTION': 'GET_ACTIVITY',
-	                'ID': id,
-	                'OWNER_TYPE': activityEditor.getSetting('ownerType', ''),
-	                'OWNER_ID': activityEditor.getSetting('ownerID', '')
-	              },
-	              onsuccess: BX.delegate(function (data) {
-	                if (typeof data['ACTIVITY'] !== 'undefined') {
-	                  activityEditor._handleActivityChange(data['ACTIVITY']);
-
-	                  window.setTimeout(BX.delegate(this.remove, this), 500);
-	                }
-	              }, this),
-	              onfailure: function (data) {}
-	            });
-	          }
-	        }
-	      }
-	    }
-	  }], [{
-	    key: "create",
-	    value: function create(id, settings) {
-	      const self = new HistoryActivity();
-	      self.initialize(id, settings);
-	      return self;
-	    }
-	  }]);
-	  return HistoryActivity;
-	}(History);
-
-	babelHelpers.defineProperty(HistoryActivity, "messages", {});
-
-	/** @memberof BX.Crm.Timeline.Items */
-
-	let Document = /*#__PURE__*/function (_HistoryActivity) {
-	  babelHelpers.inherits(Document, _HistoryActivity);
-
-	  function Document() {
-	    babelHelpers.classCallCheck(this, Document);
-	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Document).call(this));
-	  }
-
-	  babelHelpers.createClass(Document, [{
-	    key: "getTitle",
-	    value: function getTitle() {
-	      const typeCategoryId = BX.prop.getInteger(this._data, "TYPE_CATEGORY_ID", 0);
-
-	      if (typeCategoryId === 3) {
-	        return BX.Loc.getMessage('CRM_TIMELINE_DOCUMENT_VIEWED');
-	      }
-
-	      return this.getMessage("document");
-	    }
-	  }, {
-	    key: "prepareTitleLayout",
-	    value: function prepareTitleLayout() {
-	      return BX.create("SPAN", {
-	        attrs: {
-	          className: "crm-entity-stream-content-event-title"
-	        },
-	        children: [BX.create("A", {
-	          attrs: {
-	            href: "#"
-	          },
-	          events: {
-	            "click": BX.delegate(this.editDocument, this)
-	          },
-	          text: this.getTitle()
-	        })]
-	      });
-	    }
-	  }, {
-	    key: "prepareTitleStatusLayout",
-	    value: function prepareTitleStatusLayout() {
-	      const typeCategoryId = BX.prop.getInteger(this._data, "TYPE_CATEGORY_ID", 0);
-
-	      if (typeCategoryId === 3) {
-	        return BX.create("SPAN", {
-	          attrs: {
-	            className: "crm-entity-stream-content-event-done"
-	          },
-	          text: BX.Loc.getMessage('CRM_TIMELINE_DOCUMENT_VIEWED_STATUS')
-	        });
-	      }
-
-	      if (typeCategoryId === 2) {
-	        return BX.create("SPAN", {
-	          attrs: {
-	            className: "crm-entity-stream-content-event-sent"
-	          },
-	          text: BX.Loc.getMessage('CRM_TIMELINE_DOCUMENT_CREATED_STATUS')
-	        });
-	      }
-
-	      return null;
-	    }
-	  }, {
-	    key: "prepareTimeLayout",
-	    value: function prepareTimeLayout() {
-	      return BX.create("SPAN", {
-	        attrs: {
-	          className: "crm-entity-stream-content-event-time"
-	        },
-	        text: this.formatTime(this.getCreatedTime())
-	      });
-	    }
-	  }, {
-	    key: "isContextMenuEnabled",
-	    value: function isContextMenuEnabled() {
-	      const typeCategoryId = BX.prop.getInteger(this._data, "TYPE_CATEGORY_ID", 0);
-	      return typeCategoryId !== 3;
-	    }
-	  }, {
-	    key: "prepareHeaderLayout",
-	    value: function prepareHeaderLayout() {
-	      const header = BX.create("DIV", {
-	        attrs: {
-	          className: "crm-entity-stream-content-header"
-	        }
-	      });
-	      header.appendChild(this.prepareTitleLayout());
-	      const statusLayout = this.prepareTitleStatusLayout();
-
-	      if (statusLayout) {
-	        header.appendChild(statusLayout);
-	      }
-
-	      header.appendChild(this.prepareTimeLayout());
-	      return header;
-	    }
-	  }, {
-	    key: "prepareContent",
-	    value: function prepareContent() {
-	      const text = this.getTextDataParam("COMMENT", "");
-	      const wrapper = BX.create("DIV", {
-	        attrs: {
-	          className: "crm-entity-stream-section crm-entity-stream-section-history crm-entity-stream-section-document"
-	        }
-	      });
-
-	      if (this.isFixed()) {
-	        BX.addClass(wrapper, 'crm-entity-stream-section-top-fixed');
-	      }
-
-	      wrapper.appendChild(BX.create("DIV", {
-	        attrs: {
-	          className: "crm-entity-stream-section-icon crm-entity-stream-section-icon-document"
-	        }
-	      }));
-
-	      if (this.isContextMenuEnabled()) {
-	        wrapper.appendChild(this.prepareContextMenuButton());
-	      }
-
-	      if (!this.isReadOnly()) {
-	        wrapper.appendChild(this.prepareFixedSwitcherLayout());
-	      }
-
-	      const contentWrapper = BX.create("DIV", {
-	        attrs: {
-	          className: "crm-entity-stream-content-event"
-	        }
-	      });
-	      wrapper.appendChild(BX.create("DIV", {
-	        attrs: {
-	          className: "crm-entity-stream-section-content"
-	        },
-	        children: [contentWrapper]
-	      }));
-	      const header = this.prepareHeaderLayout();
-	      contentWrapper.appendChild(header);
-	      const detailWrapper = BX.create("DIV", {
-	        attrs: {
-	          className: "crm-entity-stream-content-detail"
-	        },
-	        html: text
-	      });
-	      const title = BX.findChildByClassName(detailWrapper, 'document-title-link');
-
-	      if (title) {
-	        BX.bind(title, 'click', BX.proxy(this.editDocument, this));
-	      }
-
-	      contentWrapper.appendChild(detailWrapper); //region Author
-
-	      const authorNode = this.prepareAuthorLayout();
-
-	      if (authorNode) {
-	        contentWrapper.appendChild(authorNode);
-	      } //endregion
-	      //region  Actions
-
-
-	      this._actionContainer = BX.create("SPAN", {
-	        attrs: {
-	          className: "crm-entity-stream-content-detail-action"
-	        }
-	      });
-	      contentWrapper.appendChild(this._actionContainer); //endregion
-
-	      return wrapper;
-	    }
-	  }, {
-	    key: "prepareActions",
-	    value: function prepareActions() {}
-	  }, {
-	    key: "showActions",
-	    value: function showActions(show) {
-	      if (this._actionContainer) {
-	        this._actionContainer.style.display = show ? "" : "none";
-	      }
-	    }
-	  }, {
-	    key: "prepareContextMenuItems",
-	    value: function prepareContextMenuItems() {
-	      const menuItems = [];
-
-	      if (!this.isReadOnly()) {
-	        menuItems.push({
-	          id: "edit",
-	          text: this.getMessage("menuEdit"),
-	          onclick: BX.delegate(this.editDocument, this)
-	        });
-	        menuItems.push({
-	          id: "remove",
-	          text: this.getMessage("menuDelete"),
-	          onclick: BX.delegate(this.confirmDelete, this)
-	        });
-
-	        if (this.isFixed() || this._fixedHistory.findItemById(this._id)) {
-	          menuItems.push({
-	            id: "unfasten",
-	            text: this.getMessage("menuUnfasten"),
-	            onclick: BX.delegate(this.unfasten, this)
-	          });
-	        } else {
-	          menuItems.push({
-	            id: "fasten",
-	            text: this.getMessage("menuFasten"),
-	            onclick: BX.delegate(this.fasten, this)
-	          });
-	        }
-	      }
-
-	      return menuItems;
-	    }
-	  }, {
-	    key: "confirmDelete",
-	    value: function confirmDelete() {
-	      this.closeContextMenu();
-	      this._detetionConfirmDlgId = "entity_timeline_deletion_" + this.getId() + "_confirm";
-	      let dlg = BX.Crm.ConfirmationDialog.get(this._detetionConfirmDlgId);
-
-	      if (!dlg) {
-	        dlg = BX.Crm.ConfirmationDialog.create(this._detetionConfirmDlgId, {
-	          title: this.getMessage("removeConfirmTitle"),
-	          content: this.getMessage('documentRemove')
-	        });
-	      }
-
-	      dlg.open().then(BX.delegate(this.onConfirmDelete, this), BX.DoNothing);
-	    }
-	  }, {
-	    key: "onConfirmDelete",
-	    value: function onConfirmDelete(result) {
-	      if (BX.prop.getBoolean(result, "cancel", true)) {
-	        return;
-	      }
-
-	      this.deleteDocument();
-	    }
-	  }, {
-	    key: "deleteDocument",
-	    value: function deleteDocument() {
-	      if (this._isRequestRunning) {
-	        return;
-	      }
-
-	      this._isRequestRunning = true;
-	      BX.ajax({
-	        url: this._history._serviceUrl,
-	        method: "POST",
-	        dataType: "json",
-	        data: {
-	          "ACTION": "DELETE_DOCUMENT",
-	          "OWNER_TYPE_ID": this.getOwnerTypeId(),
-	          "OWNER_ID": this.getOwnerId(),
-	          "ID": this.getId()
-	        },
-	        onsuccess: BX.delegate(function (result) {
-	          this._isRequestRunning = false;
-
-	          if (BX.type.isNotEmptyString(result.ERROR)) {
-	            alert(result.ERROR);
-	          } else {
-	            const deleteItem = this._history.findItemById(this._id);
-
-	            if (deleteItem instanceof Document) {
-	              deleteItem.clearAnimate();
-	            }
-
-	            const deleteFixedItem = this._fixedHistory.findItemById(this._id);
-
-	            if (deleteFixedItem instanceof Document) {
-	              deleteFixedItem.clearAnimate();
-	            }
-	          }
-	        }, this),
-	        onfailure: BX.delegate(function () {
-	          this._isRequestRunning = false;
-	        }, this)
-	      });
-	    }
-	  }, {
-	    key: "editDocument",
-	    value: function editDocument() {
-	      const documentId = this.getData().DOCUMENT_ID || 0;
-
-	      if (documentId > 0) {
-	        let url = '/bitrix/components/bitrix/crm.document.view/slider.php';
-	        url = BX.util.add_url_param(url, {
-	          documentId: documentId
-	        });
-
-	        if (BX.SidePanel) {
-	          BX.SidePanel.Instance.open(url, {
-	            width: 1060
-	          });
-	        } else {
-	          top.location.href = url;
-	        }
-	      }
-	    }
-	  }, {
-	    key: "updateWrapper",
-	    value: function updateWrapper() {
-	      const wrapper = this.getWrapper();
-
-	      if (wrapper) {
-	        const detailWrapper = BX.findChildByClassName(wrapper, 'crm-entity-stream-content-detail');
-
-	        if (detailWrapper) {
-	          BX.adjust(detailWrapper, {
-	            html: this.getTextDataParam("COMMENT", "")
-	          });
-	          const title = BX.findChildByClassName(detailWrapper, 'document-title-link');
-
-	          if (title) {
-	            BX.bind(title, 'click', BX.proxy(this.editDocument, this));
-	          }
-	        }
-	      }
-	    }
-	  }], [{
-	    key: "create",
-	    value: function create(id, settings) {
-	      const self = new Document();
-	      self.initialize(id, settings);
-	      return self;
-	    }
-	  }]);
-	  return Document;
-	}(HistoryActivity);
-
 	/** @memberof BX.Crm.Timeline.Animation */
 	let Item$1 = /*#__PURE__*/function () {
 	  function Item() {
@@ -4729,7 +1307,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    this._finalItem = null;
 	    this._events = null;
 	  }
-
 	  babelHelpers.createClass(Item, [{
 	    key: "initialize",
 	    value: function initialize(id, settings) {
@@ -4784,7 +1361,6 @@ this.BX.Crm = this.BX.Crm || {};
 	          }
 	        })]
 	      });
-
 	      this._node.parentNode.insertBefore(this._stub, this._node);
 	    }
 	  }, {
@@ -4838,7 +1414,6 @@ this.BX.Crm = this.BX.Crm || {};
 	          if (BX.type.isFunction(this._events["complete"])) {
 	            this._events["complete"]();
 	          }
-
 	          this.addHistoryItem();
 	          this.removeGhost();
 	        }, this)
@@ -4851,9 +1426,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "addHistoryItem",
 	    value: function addHistoryItem() {
 	      const node = this._finalItem.getWrapper();
-
 	      this._anchor.parentNode.insertBefore(node, this._anchor.nextSibling);
-
 	      this._finalItemHeight = this._anchor.offsetHeight - node.offsetHeight;
 	      this._anchor.style.height = 0;
 	      node.style.marginBottom = this._finalItemHeight + "px";
@@ -4862,9 +1435,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "removeGhost",
 	    value: function removeGhost() {
 	      const ghostNode = this._ghostNode;
-
 	      const finalNode = this._finalItem.getWrapper();
-
 	      ghostNode.style.overflow = "hidden";
 	      const hideCasperItem = new BX.easing({
 	        duration: 70,
@@ -4940,7 +1511,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    this._startPosition = null;
 	    this._events = null;
 	  }
-
 	  babelHelpers.createClass(Shift, [{
 	    key: "initialize",
 	    value: function initialize(node, anchor, startPosition, shadowNode, events) {
@@ -4985,7 +1555,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (BX.type.isFunction(this._events["complete"])) {
 	        this._events["complete"]();
 	      }
-
 	      if (this._shadowNode !== false) ;
 	    }
 	  }], [{
@@ -5000,7 +1569,6 @@ this.BX.Crm = this.BX.Crm || {};
 	}();
 
 	/** @memberof BX.Crm.Timeline.Animation */
-
 	let ItemNew = /*#__PURE__*/function () {
 	  function ItemNew() {
 	    babelHelpers.classCallCheck(this, ItemNew);
@@ -5011,7 +1579,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    this._events = null;
 	    this._areAnimatedItemsVisible = null;
 	  }
-
 	  babelHelpers.createClass(ItemNew, [{
 	    key: "initialize",
 	    value: function initialize(id, settings) {
@@ -5035,16 +1602,22 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "addHistoryItem",
 	    value: function addHistoryItem() {
-	      const node = this._finalItem.getWrapper();
-
-	      this._anchor.parentNode.insertBefore(node, this._anchor.nextSibling);
+	      if (this._finalItem instanceof CompatibleItem) {
+	        const node = this._finalItem.getWrapper();
+	        this._anchor.parentNode.insertBefore(node, this._anchor.nextSibling);
+	      } else {
+	        this._finalItem.initWrapper();
+	        main_core.Dom.insertBefore(this._finalItem.getWrapper(), this._anchor.nextSibling);
+	        this._finalItem.initLayoutApp({
+	          add: false
+	        });
+	      }
 	    }
 	  }, {
 	    key: "run",
 	    value: function run() {
 	      this._node = this._initialItem.getWrapper();
 	      this._areAnimatedItemsVisible = this._node.offsetParent !== null;
-
 	      if (this._areAnimatedItemsVisible) {
 	        this.createStub();
 	        BX.addClass(this._node, 'crm-entity-stream-section-animate-start');
@@ -5084,17 +1657,16 @@ this.BX.Crm = this.BX.Crm || {};
 	          }
 	        })]
 	      });
-
 	      this._node.parentNode.insertBefore(this._stub, this._node);
 	    }
 	  }, {
 	    key: "finish",
 	    value: function finish() {
-	      this._anchor.style.height = 0; //this._anchor.parentNode.insertBefore(this._node, this._anchor.nextSibling);
+	      this._anchor.style.height = 0;
+	      //this._anchor.parentNode.insertBefore(this._node, this._anchor.nextSibling);
 
 	      if (this._areAnimatedItemsVisible) {
 	        const stubContainer = this._stub.querySelector('.crm-entity-stream-section-content');
-
 	        setTimeout(BX.delegate(function () {
 	          BX.removeClass(this._node, 'crm-entity-stream-section-animate-start');
 	        }, this), 0);
@@ -5106,15 +1678,12 @@ this.BX.Crm = this.BX.Crm || {};
 	          stubContainer.style.paddingBottom = 0;
 	        }, this), 120);
 	      }
-
 	      setTimeout(BX.delegate(function () {
 	        if (this._areAnimatedItemsVisible) {
 	          BX.remove(this._stub);
 	        }
-
 	        BX.remove(this._node);
 	        this.addHistoryItem();
-
 	        if (BX.type.isFunction(this._events["complete"])) {
 	          this._events["complete"]();
 	        }
@@ -5132,7 +1701,6 @@ this.BX.Crm = this.BX.Crm || {};
 	}();
 
 	/** @memberof BX.Crm.Timeline */
-
 	let Steam = /*#__PURE__*/function () {
 	  function Steam() {
 	    babelHelpers.classCallCheck(this, Steam);
@@ -5150,30 +1718,26 @@ this.BX.Crm = this.BX.Crm || {};
 	    this._anchor = null;
 	    this._serviceUrl = "";
 	  }
-
 	  babelHelpers.createClass(Steam, [{
 	    key: "initialize",
 	    value: function initialize(id, settings) {
 	      this._id = BX.type.isNotEmptyString(id) ? id : BX.util.getRandomString(4);
 	      this._settings = settings ? settings : {};
 	      this._container = BX(this.getSetting("container"));
-
 	      if (!BX.type.isElementNode(this._container)) {
 	        throw "Timeline. Container node is not found.";
 	      }
-
 	      this._editorContainer = BX(this.getSetting("editorContainer"));
 	      this._manager = this.getSetting("manager");
-
 	      if (!(this._manager instanceof Manager)) {
 	        throw "Timeline. Manager instance is not found.";
-	      } //
+	      }
 
-
+	      //
 	      const datetimeFormat = BX.message("FORMAT_DATETIME").replace(/:SS/, "");
 	      const dateFormat = BX.message("FORMAT_DATE");
-	      this._timeFormat = BX.date.convertBitrixFormat(BX.util.trim(datetimeFormat.replace(dateFormat, ""))); //
-
+	      this._timeFormat = BX.date.convertBitrixFormat(BX.util.trim(datetimeFormat.replace(dateFormat, "")));
+	      //
 	      this._year = new Date().getFullYear();
 	      this._activityEditor = this.getSetting("activityEditor");
 	      this._isStubMode = BX.prop.getBoolean(this._settings, "isStubMode", false);
@@ -5261,7 +1825,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function reload() {
 	      const currentUrl = this.getSetting("currentUrl");
 	      const ajaxId = this.getSetting("ajaxId");
-
 	      if (ajaxId !== "") {
 	        BX.ajax.insertToNode(BX.util.add_url_param(currentUrl, {
 	          bxajaxid: ajaxId
@@ -5280,13 +1843,11 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function getServerTimezoneOffset() {
 	      return crm_datetime.TimezoneOffset.SERVER_TO_UTC;
 	    } // @todo replace by DatetimeConverter
-
 	  }, {
 	    key: "formatTime",
 	    value: function formatTime(time, now, utc) {
 	      return BX.date.format(this._timeFormat, time, now, utc);
 	    } // @todo replace by DatetimeConverter
-
 	  }, {
 	    key: "formatDate",
 	    value: function formatDate(date) {
@@ -5298,18 +1859,14 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (!BX.type.isNumber(length)) {
 	        length = 0;
 	      }
-
 	      if (length <= 0 || text.length <= length) {
 	        return text;
 	      }
-
 	      let offset = length - 1;
 	      const whitespaceOffset = text.substring(offset).search(/\s/i);
-
 	      if (whitespaceOffset > 0) {
 	        offset += whitespaceOffset;
 	      }
-
 	      return text.substring(0, offset) + "...";
 	    }
 	  }, {
@@ -5320,7 +1877,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    /**
 	     * @abstract
 	     */
-
 	  }, {
 	    key: "setItems",
 	    value: function setItems(items) {
@@ -5347,7 +1903,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "removeItemByIndex",
 	    value: function removeItemByIndex(index) {
 	      const items = this.getItems();
-
 	      if (index < items.length) {
 	        items.splice(index, 1);
 	        this.setItems(items);
@@ -5356,7 +1911,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    /**
 	     * @abstract
 	     */
-
 	  }, {
 	    key: "createItem",
 	    value: function createItem(data) {
@@ -5368,43 +1922,34 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (item instanceof crm_timeline_item.ConfigurableItem) {
 	        return item.clone();
 	      }
-
 	      return this.createItem(item.getData());
 	    }
 	  }, {
 	    key: "refreshItem",
 	    value: function refreshItem(item, animateUpdate = true, animateMove) {
 	      const index = this.getItemIndex(item);
-
 	      if (index < 0) {
 	        return Promise.resolve();
 	      }
-
 	      this.removeItemByIndex(index);
 	      let itemPositionChanged = false;
 	      let newIndex = 0;
 	      let newItem;
-
 	      if (this.isScheduleStream()) {
 	        newItem = this.createItemCopy(item);
 	        newIndex = this.calculateItemIndex(newItem);
 	        itemPositionChanged = newIndex !== index;
 	      }
-
 	      if (!itemPositionChanged) {
 	        this.addItem(item, newIndex);
 	        item.refreshLayout();
-
 	        if (animateUpdate) {
 	          return this.animateItemAdding(item);
 	        }
-
 	        return Promise.resolve();
 	      }
-
 	      const anchor = this.createAnchor(newIndex);
 	      this.addItem(newItem, newIndex);
-
 	      if (animateMove) {
 	        newItem.layout({
 	          add: false
@@ -5444,7 +1989,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    /**
 	     * @abstract
 	     */
-
 	  }, {
 	    key: "addItem",
 	    value: function addItem(item, index) {
@@ -5453,7 +1997,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    /**
 	     * @abstract
 	     */
-
 	  }, {
 	    key: "deleteItem",
 	    value: function deleteItem(item) {
@@ -5466,7 +2009,6 @@ this.BX.Crm = this.BX.Crm || {};
 	        this.deleteItem(item);
 	        return Promise.resolve();
 	      }
-
 	      return new Promise(resolve => {
 	        const wrapperPosition = main_core.Dom.getPosition(item.getWrapper());
 	        const hideEvent = new BX.easing({
@@ -5501,11 +2043,9 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "moveItemToStream",
 	    value: function moveItemToStream(item, destinationStream, destinationItem) {
 	      this.removeItemByIndex(this.getItemIndex(item));
-
 	      if (this.getItems().length > 0) {
 	        this.refreshLayout();
 	      }
-
 	      return new Promise(resolve => {
 	        const animation = ItemNew.create('', {
 	          initialItem: item,
@@ -5532,13 +2072,10 @@ this.BX.Crm = this.BX.Crm || {};
 	}();
 
 	/** @memberof BX.Crm.Timeline.Streams */
-
 	let EntityChat = /*#__PURE__*/function (_Stream) {
 	  babelHelpers.inherits(EntityChat, _Stream);
-
 	  function EntityChat() {
 	    var _this;
-
 	    babelHelpers.classCallCheck(this, EntityChat);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(EntityChat).call(this));
 	    _this._data = null;
@@ -5554,7 +2091,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    _this._openChatHandler = BX.delegate(_this.onOpenChat, babelHelpers.assertThisInitialized(_this));
 	    return _this;
 	  }
-
 	  babelHelpers.createClass(EntityChat, [{
 	    key: "doInitialize",
 	    value: function doInitialize() {
@@ -5579,7 +2115,6 @@ this.BX.Crm = this.BX.Crm || {};
 	     * @private
 	     * @return {boolean}
 	     */
-
 	  }, {
 	    key: "isRestricted",
 	    value: function isRestricted() {
@@ -5589,12 +2124,10 @@ this.BX.Crm = this.BX.Crm || {};
 	     * @private
 	     * @return {void}
 	     */
-
 	  }, {
 	    key: "applyLockScript",
 	    value: function applyLockScript() {
 	      const lockScript = BX.prop.getString(this._data, "LOCK_SCRIPT", null);
-
 	      if (BX.Type.isString(lockScript) && lockScript !== '') {
 	        eval(lockScript);
 	      }
@@ -5645,7 +2178,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "removeUserInfo",
 	    value: function removeUserInfo(userId) {
 	      const userInfos = this.getUserInfoData();
-
 	      if (userId > 0 && BX.type.isPlainObject(userInfos[userId])) {
 	        delete userInfos[userId];
 	      }
@@ -5654,7 +2186,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "setUnreadMessageCounter",
 	    value: function setUnreadMessageCounter(userId, counter) {
 	      const userInfos = this.getUserInfoData();
-
 	      if (userId > 0 && BX.type.isPlainObject(userInfos[userId])) {
 	        userInfos[userId]["counter"] = counter;
 	      }
@@ -5665,27 +2196,22 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (!this.isEnabled() || this.isStubMode()) {
 	        return;
 	      }
-
 	      this._wrapper = BX.create("div", {
 	        props: {
 	          className: "crm-entity-stream-section crm-entity-stream-section-live-im"
 	        }
 	      });
-
 	      this._container.appendChild(this._wrapper);
-
 	      this._wrapper.appendChild(BX.create("div", {
 	        props: {
 	          className: "crm-entity-stream-section-icon crm-entity-stream-section-icon-live-im"
 	        }
 	      }));
-
 	      this._contentWrapper = BX.create("div", {
 	        props: {
 	          className: "crm-entity-stream-content-live-im-detail"
 	        }
 	      });
-
 	      this._wrapper.appendChild(BX.create("div", {
 	        props: {
 	          className: "crm-entity-stream-section-content"
@@ -5697,36 +2223,29 @@ this.BX.Crm = this.BX.Crm || {};
 	          children: [this._contentWrapper]
 	        })]
 	      }));
-
 	      this._userWrapper = BX.create("div", {
 	        props: {
 	          className: "crm-entity-stream-live-im-user-avatars"
 	        }
 	      });
-
 	      this._contentWrapper.appendChild(BX.create("div", {
 	        props: {
 	          className: "crm-entity-stream-live-im-users"
 	        },
 	        children: [this._userWrapper]
 	      }));
-
 	      this._extraUserCounter = BX.create("div", {
 	        props: {
 	          className: "crm-entity-stream-live-im-user-counter"
 	        }
 	      });
-
 	      this._contentWrapper.appendChild(this._extraUserCounter);
-
 	      this._layoutType = EntityChat.LayoutType.none;
-
 	      if (this.getChatId() > 0) {
 	        this.renderSummary();
 	      } else {
 	        this.renderInvitation();
 	      }
-
 	      BX.bind(this._contentWrapper, "click", this._openChatHandler);
 	      BX.addCustomEvent("onPullEvent-im", this.onChatEvent.bind(this));
 	    }
@@ -5739,24 +2258,19 @@ this.BX.Crm = this.BX.Crm || {};
 	          className: "crm-entity-stream-live-im-user-avatars"
 	        }
 	      });
-
 	      this._contentWrapper.appendChild(BX.create("div", {
 	        props: {
 	          className: "crm-entity-stream-live-im-users"
 	        },
 	        children: [this._userWrapper]
 	      }));
-
 	      this._extraUserCounter = BX.create("div", {
 	        props: {
 	          className: "crm-entity-stream-live-im-user-counter"
 	        }
 	      });
-
 	      this._contentWrapper.appendChild(this._extraUserCounter);
-
 	      this._layoutType = EntityChat.LayoutType.none;
-
 	      if (this.getChatId() > 0) {
 	        this.renderSummary();
 	      } else {
@@ -5773,9 +2287,7 @@ this.BX.Crm = this.BX.Crm || {};
 	          className: "crm-entity-stream-live-im-user-invite-text"
 	        }
 	      });
-
 	      this._contentWrapper.appendChild(this._messageTextNode);
-
 	      this._messageTextNode.innerHTML = this.getMessage("invite");
 	    }
 	  }, {
@@ -5783,53 +2295,41 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function renderSummary() {
 	      this._layoutType = EntityChat.LayoutType.summary;
 	      this.refreshUsers();
-
 	      this._contentWrapper.appendChild(BX.create("div", {
 	        props: {
 	          className: "crm-entity-stream-live-im-separator"
 	        }
 	      }));
-
 	      this._messageWrapper = BX.create("div", {
 	        props: {
 	          className: "crm-entity-stream-live-im-messanger"
 	        }
 	      });
-
 	      this._contentWrapper.appendChild(this._messageWrapper);
-
 	      this._messageDateNode = BX.create("div", {
 	        props: {
 	          className: "crm-entity-stream-live-im-time"
 	        }
 	      });
-
 	      this._messageWrapper.appendChild(this._messageDateNode);
-
 	      this._messageTexWraper = BX.create("div", {
 	        props: {
 	          className: "crm-entity-stream-live-im-message"
 	        }
 	      });
-
 	      this._messageWrapper.appendChild(this._messageTexWraper);
-
 	      this._messageTextNode = BX.create("div", {
 	        props: {
 	          className: "crm-entity-stream-live-im-message-text"
 	        }
 	      });
-
 	      this._messageTexWraper.appendChild(this._messageTextNode);
-
 	      this._messageCounterNode = BX.create("div", {
 	        props: {
 	          className: "crm-entity-stream-live-im-message-counter"
 	        }
 	      });
-
 	      this._messageWrapper.appendChild(this._messageCounterNode);
-
 	      this.refreshSummary();
 	    }
 	  }, {
@@ -5838,7 +2338,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      BX.cleanNode(this._userWrapper);
 	      const infos = this.getUserInfoData();
 	      const list = Object.values(infos);
-
 	      if (list.length === 0) {
 	        this._userWrapper.appendChild(BX.create("span", {
 	          props: {
@@ -5848,16 +2347,13 @@ this.BX.Crm = this.BX.Crm || {};
 	        }));
 	      } else {
 	        const count = list.length >= 3 ? 3 : list.length;
-
 	        for (let i = 0; i < count; i++) {
 	          const info = list[i];
 	          const icon = BX.create("i");
 	          const imageUrl = BX.prop.getString(info, "avatar", "");
-
 	          if (imageUrl !== "") {
 	            icon.style.backgroundImage = "url(" + encodeURI(imageUrl) + ")";
 	          }
-
 	          this._userWrapper.appendChild(BX.create("span", {
 	            props: {
 	              className: "crm-entity-stream-live-im-user-avatar ui-icon ui-icon-common-user"
@@ -5866,7 +2362,6 @@ this.BX.Crm = this.BX.Crm || {};
 	          }));
 	        }
 	      }
-
 	      if (this._layoutType === EntityChat.LayoutType.summary) {
 	        if (list.length > 3) {
 	          this._extraUserCounter.display = "";
@@ -5875,17 +2370,15 @@ this.BX.Crm = this.BX.Crm || {};
 	          if (this._extraUserCounter.innerHTML !== "") {
 	            this._extraUserCounter.innerHTML = "";
 	          }
-
 	          this._extraUserCounter.display = "none";
 	        }
-	      } else //if(this._layoutType === EntityChat.LayoutType.invitation)
+	      } else
+	        //if(this._layoutType === EntityChat.LayoutType.invitation)
 	        {
 	          if (this._extraUserCounter.innerHTML !== "") {
 	            this._extraUserCounter.innerHTML = "";
 	          }
-
 	          this._extraUserCounter.display = "none";
-
 	          this._userWrapper.appendChild(BX.create("span", {
 	            props: {
 	              className: "crm-entity-stream-live-im-user-invite-btn"
@@ -5899,11 +2392,10 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (this._layoutType !== EntityChat.LayoutType.summary) {
 	        return;
 	      }
+	      const message = this.getMessageData();
 
-	      const message = this.getMessageData(); //region Message Date
-
+	      //region Message Date
 	      const isoDate = BX.prop.getString(message, "date", "");
-
 	      if (isoDate === "") {
 	        this._messageDateNode.innerHTML = "";
 	      } else {
@@ -5911,34 +2403,31 @@ this.BX.Crm = this.BX.Crm || {};
 	        const remoteDate = new Date(isoDate).getTime() / 1000 + this.getServerTimezoneOffset() + this.getUserTimezoneOffset();
 	        const localTime = new Date().getTime() / 1000 + this.getServerTimezoneOffset() + this.getUserTimezoneOffset();
 	        this._messageDateNode.innerHTML = this.formatTime(remoteDate, localTime, true);
-	      } //endregion
+	      }
+	      //endregion
+
 	      //region Message Text
-
-
 	      let text = BX.prop.getString(message, "text", "");
 	      const params = BX.prop.getObject(message, "params", {});
-
 	      if (text === "") {
 	        this._messageTextNode.innerHTML = "";
 	      } else {
 	        if (typeof top.BX.MessengerCommon !== "undefined") {
 	          text = top.BX.MessengerCommon.purifyText(text, params);
 	        }
-
 	        this._messageTextNode.innerHTML = text;
-	      } //endregion
+	      }
+	      //endregion
+
 	      //region Unread Message Counter
-
-
 	      let counter = 0;
 	      const userId = this.getUserId();
-
 	      if (userId > 0) {
 	        counter = BX.prop.getInteger(BX.prop.getObject(BX.prop.getObject(this._data, "USER_INFOS", {}), userId, null), "counter", 0);
 	      }
-
 	      this._messageCounterNode.innerHTML = counter.toString();
-	      this._messageCounterNode.style.display = counter > 0 ? "" : "none"; //endregion
+	      this._messageCounterNode.style.display = counter > 0 ? "" : "none";
+	      //endregion
 	    }
 	  }, {
 	    key: "refreshUsersAnimated",
@@ -5972,27 +2461,22 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (typeof top.BXIM === "undefined") {
 	        return;
 	      }
-
 	      if (this.isRestricted()) {
 	        this.applyLockScript();
 	        return;
 	      }
-
 	      let slug = "";
 	      const chatId = this.getChatId();
-
 	      if (chatId > 0 && this.hasUserInfo(this.getUserId())) {
 	        slug = "chat" + chatId.toString();
 	      } else {
 	        const ownerInfo = this.getOwnerInfo();
 	        const entityId = BX.prop.getInteger(ownerInfo, "ENTITY_ID", 0);
 	        const entityTypeName = BX.prop.getString(ownerInfo, "ENTITY_TYPE_NAME", "");
-
 	        if (entityTypeName !== "" && entityId > 0) {
 	          slug = "crm|" + entityTypeName + "|" + entityId.toString();
 	        }
 	      }
-
 	      if (slug !== "") {
 	        top.BXIM.openMessengerSlider(slug, {
 	          RECENT: "N",
@@ -6004,11 +2488,9 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "onChatEvent",
 	    value: function onChatEvent(command, params, extras) {
 	      const chatId = this.getChatId();
-
 	      if (chatId <= 0 || chatId !== BX.prop.getInteger(params, "chatId", 0)) {
 	        return;
 	      }
-
 	      if (command === "chatUserAdd") {
 	        this.setUserInfoData(BX.mergeEx(this.getUserInfoData(), BX.prop.getObject(params, "users", {})));
 	        this.refreshUsersAnimated();
@@ -6026,9 +2508,7 @@ this.BX.Crm = this.BX.Crm || {};
 	          //HACK: date is not in ISO format
 	          delete params["date"];
 	        }
-
 	        const message = this.getMessageData();
-
 	        if (BX.prop.getInteger(message, "id", 0) === BX.prop.getInteger(params, "id", 0)) {
 	          this.setMessageData(BX.mergeEx(message, params));
 	          this.refreshSummaryAnimated();
@@ -6057,7 +2537,6 @@ this.BX.Crm = this.BX.Crm || {};
 	  }]);
 	  return EntityChat;
 	}(Steam);
-
 	babelHelpers.defineProperty(EntityChat, "LayoutType", {
 	  none: 0,
 	  invitation: 1,
@@ -6067,284 +2546,21 @@ this.BX.Crm = this.BX.Crm || {};
 	babelHelpers.defineProperty(EntityChat, "messages", {});
 
 	/** @memberof BX.Crm.Timeline.Tools */
-
-	let MenuBar = /*#__PURE__*/function () {
-	  function MenuBar() {
-	    babelHelpers.classCallCheck(this, MenuBar);
-	    this._id = "";
-	    this._ownerInfo = null;
-	    this._container = null;
-	    this._activityEditor = null;
-	    this._commentEditor = null;
-	    this._todoEditor = null;
-	    this._waitEditor = null;
-	    this._smsEditor = null;
-	    this._zoomEditor = null;
-	    this._readOnly = false;
-	    this._menu = null;
-	    this._manager = null;
-	  }
-
-	  babelHelpers.createClass(MenuBar, [{
-	    key: "initialize",
-	    value: function initialize(id, settings) {
-	      this._id = BX.type.isNotEmptyString(id) ? id : BX.util.getRandomString(4);
-	      this._settings = settings ? settings : {};
-	      this._ownerInfo = BX.prop.getObject(this._settings, "ownerInfo");
-
-	      if (!this._ownerInfo) {
-	        throw "MenuBar. A required parameter 'ownerInfo' is missing.";
-	      }
-
-	      this._activityEditor = BX.prop.get(this._settings, "activityEditor", null);
-	      this._commentEditor = BX.prop.get(this._settings, "commentEditor");
-	      this._todoEditor = BX.prop.get(this._settings, "todoEditor");
-	      this._waitEditor = BX.prop.get(this._settings, "waitEditor");
-	      this._smsEditor = BX.prop.get(this._settings, "smsEditor");
-	      this._zoomEditor = BX.prop.get(this._settings, "zoomEditor");
-	      this._restEditor = BX.prop.get(this._settings, "restEditor");
-	      this._manager = BX.prop.get(this._settings, "manager");
-
-	      if (!(this._manager instanceof Manager)) {
-	        throw "BX.CrmTimeline. Manager instance is not found.";
-	      }
-
-	      this._readOnly = BX.prop.getBoolean(this._settings, "readOnly", false);
-	      this._menu = BX.Main.interfaceButtonsManager.getById(BX.prop.getString(this._settings, "menuId", (this._ownerInfo['ENTITY_TYPE_NAME'] + "_menu").toLowerCase()));
-	      BX.addCustomEvent(this._manager.getId() + "_menu", function (id) {
-	        this.setActiveItemById(id);
-	      }.bind(this));
-	      this._activeItem = this._menu.getActive();
-	    }
-	  }, {
-	    key: "reset",
-	    value: function reset() {
-	      let firstId = null;
-
-	      this._menu.getAllItems().forEach(function (item) {
-	        if (firstId === null) {
-	          const id = item.dataset.id;
-
-	          if (['comment', 'wait', 'sms', 'zoom', 'todo'].indexOf(id) >= 0 && this["_" + id + "Editor"]) {
-	            firstId = id;
-	          }
-	        }
-	      }.bind(this));
-
-	      this.setActiveItemById(firstId || 'todo');
-	    }
-	  }, {
-	    key: "getId",
-	    value: function getId() {
-	      return this._id;
-	    }
-	  }, {
-	    key: "getActiveItem",
-	    value: function getActiveItem() {
-	      return this._activeItem;
-	    }
-	  }, {
-	    key: "getTodoEditor",
-	    value: function getTodoEditor() {
-	      return this._todoEditor;
-	    }
-	  }, {
-	    key: "setActiveItemById",
-	    value: function setActiveItemById(id) {
-	      if (this.processItemSelection(id) === true) {
-	        const currentDiv = this._menu.getItemById(id);
-
-	        if (currentDiv && this._activeItem !== currentDiv) {
-	          const wasActiveInMoreMenu = this._menu.isActiveInMoreMenu();
-
-	          BX.addClass(currentDiv, this._menu.classes.itemActive);
-
-	          if (this._menu.getItemData) {
-	            const currentDivData = this._menu.getItemData(currentDiv);
-
-	            currentDivData['IS_ACTIVE'] = true;
-
-	            if (BX.type.isDomNode(this._activeItem)) {
-	              BX.removeClass(this._activeItem, this._menu.classes.itemActive);
-
-	              const activeItemData = this._menu.getItemData(this._activeItem);
-
-	              activeItemData['IS_ACTIVE'] = false;
-	            }
-	          } else {
-	            // Old approach
-	            let isActiveData = {};
-
-	            try {
-	              isActiveData = JSON.parse(currentDiv.dataset.item);
-	            } catch (err) {
-	              isActiveData = {};
-	            }
-
-	            isActiveData.IS_ACTIVE = true;
-	            currentDiv.dataset.item = JSON.stringify(isActiveData);
-	            let wasActiveData = {};
-
-	            if (BX.type.isDomNode(this._activeItem)) {
-	              BX.removeClass(this._activeItem, this._menu.classes.itemActive);
-
-	              try {
-	                wasActiveData = JSON.parse(this._activeItem.dataset.item);
-	              } catch (err) {
-	                wasActiveData = {};
-	              }
-
-	              wasActiveData.IS_ACTIVE = false;
-	              this._activeItem.dataset.item = JSON.stringify(wasActiveData);
-	            }
-	          }
-
-	          const isActiveInMoreMenu = this._menu.isActiveInMoreMenu();
-
-	          if (isActiveInMoreMenu || wasActiveInMoreMenu) {
-	            const submenu = this._menu["getSubmenu"] ? this._menu.getSubmenu() : BX.PopupMenu.getMenuById("main_buttons_popup_" + String(this._ownerInfo['ENTITY_TYPE_NAME']).toLowerCase() + "_menu");
-
-	            if (submenu) {
-	              submenu.getMenuItems().forEach(function (menuItem) {
-	                const container = menuItem.getContainer();
-
-	                if (isActiveInMoreMenu && container.title === currentDiv.title) {
-	                  BX.addClass(container, this._menu.classes.itemActive);
-	                } else if (wasActiveInMoreMenu && container.title === this._activeItem.title) {
-	                  BX.removeClass(container, this._menu.classes.itemActive);
-	                }
-	              }.bind(this));
-	            }
-
-	            if (isActiveInMoreMenu) {
-	              BX.addClass(this._menu.getMoreButton(), this._menu.classes.itemActive);
-	            } else if (wasActiveInMoreMenu) {
-	              BX.removeClass(this._menu.getMoreButton(), this._menu.classes.itemActive);
-	            }
-	          }
-
-	          this._activeItem = currentDiv;
-	        }
-	      }
-
-	      this._menu.closeSubmenu();
-	    }
-	  }, {
-	    key: "processItemSelection",
-	    value: function processItemSelection(menuId) {
-	      if (this._readOnly) {
-	        return false;
-	      }
-
-	      let planner = null;
-	      const action = menuId;
-
-	      if (action === "call") {
-	        planner = new BX.Crm.Activity.Planner();
-	        planner.showEdit({
-	          "TYPE_ID": BX.CrmActivityType.call,
-	          "OWNER_TYPE_ID": this._ownerInfo['ENTITY_TYPE_ID'],
-	          "OWNER_ID": this._ownerInfo['ENTITY_ID']
-	        });
-	      }
-
-	      if (action === "meeting") {
-	        planner = new BX.Crm.Activity.Planner();
-	        planner.showEdit({
-	          "TYPE_ID": BX.CrmActivityType.meeting,
-	          "OWNER_TYPE_ID": this._ownerInfo['ENTITY_TYPE_ID'],
-	          "OWNER_ID": this._ownerInfo['ENTITY_ID']
-	        });
-	      } else if (action === "email") {
-	        this._activityEditor.addEmail({
-	          "ownerType": this._ownerInfo['ENTITY_TYPE_NAME'],
-	          "ownerID": this._ownerInfo['ENTITY_ID'],
-	          "ownerUrl": this._ownerInfo['SHOW_URL'],
-	          "ownerTitle": this._ownerInfo['TITLE'],
-	          "subject": ""
-	        });
-	      } else if (action === "delivery") {
-	        this._activityEditor.addDelivery({
-	          "ownerType": this._ownerInfo['ENTITY_TYPE_NAME'],
-	          "ownerID": this._ownerInfo['ENTITY_ID'],
-	          "orderList": this._ownerInfo['ORDER_LIST']
-	        });
-	      } else if (action === "task") {
-	        this._activityEditor.addTask({
-	          "ownerType": this._ownerInfo['ENTITY_TYPE_NAME'],
-	          "ownerID": this._ownerInfo['ENTITY_ID']
-	        });
-	      } else if (['comment', 'wait', 'sms', 'zoom', 'todo'].indexOf(action) >= 0 && this["_" + action + "Editor"]) {
-	        if (this._commentEditor) {
-	          this._commentEditor.setVisible(action === "comment");
-	        }
-
-	        if (this._todoEditor) {
-	          this._todoEditor.setVisible(action === 'todo');
-	        }
-
-	        if (this._waitEditor) {
-	          this._waitEditor.setVisible(action === "wait");
-	        }
-
-	        if (this._smsEditor) {
-	          this._smsEditor.setVisible(action === "sms");
-	        }
-
-	        if (this._zoomEditor) {
-	          this._zoomEditor.setVisible(action === "zoom");
-	        }
-
-	        return true;
-	      } else if (action === "visit") {
-	        const visitParameters = this._manager.getSetting("visitParameters");
-
-	        visitParameters['OWNER_TYPE'] = this._ownerInfo['ENTITY_TYPE_NAME'];
-	        visitParameters['OWNER_ID'] = this._ownerInfo['ENTITY_ID'];
-	        BX.CrmActivityVisit.create(visitParameters).showEdit();
-	      } else if (action.match(/^activity_rest_/)) {
-	        if (this._restEditor) {
-	          this._restEditor.action(action);
-	        }
-	      }
-
-	      return false;
-	    }
-	  }, {
-	    key: "getMenuItems",
-	    value: function getMenuItems() {
-	      return this._menu.getAllItems();
-	    }
-	  }], [{
-	    key: "create",
-	    value: function create(id, settings) {
-	      const self = new MenuBar();
-	      self.initialize(id, settings);
-	      return self;
-	    }
-	  }]);
-	  return MenuBar;
-	}();
-
-	/** @memberof BX.Crm.Timeline.Tools */
 	let AudioPlaybackRateSelector = /*#__PURE__*/function () {
 	  function AudioPlaybackRateSelector(params) {
 	    babelHelpers.classCallCheck(this, AudioPlaybackRateSelector);
 	    this.name = params.name || 'crm-timeline-audio-playback-rate-selector';
 	    this.menuId = this.name + '-menu';
-
 	    if (BX.Type.isArray(params.availableRates)) {
 	      this.availableRates = params.availableRates;
 	    } else {
 	      this.availableRates = [1, 1.5, 2, 3];
 	    }
-
 	    this.currentRate = this.normalizeRate(params.currentRate);
 	    this.textMessageCode = params.textMessageCode;
 	    this.renderedItems = [];
 	    this.players = [];
 	  }
-
 	  babelHelpers.createClass(AudioPlaybackRateSelector, [{
 	    key: "isRateCurrent",
 	    value: function isRateCurrent(rateDescription, rate) {
@@ -6356,13 +2572,11 @@ this.BX.Crm = this.BX.Crm || {};
 	      rate = parseFloat(rate);
 	      let i = 0;
 	      const length = this.availableRates.length;
-
 	      for (; i < length; i++) {
 	        if (this.isRateCurrent(this.availableRates[i], rate)) {
 	          return rate;
 	        }
 	      }
-
 	      return this.availableRates[0].rate || this.availableRates[0];
 	    }
 	  }, {
@@ -6384,10 +2598,8 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "getPopup",
 	    value: function getPopup(node) {
 	      let popupMenu = BX.Main.MenuManager.getMenuById(this.menuId);
-
 	      if (popupMenu) {
 	        const popupWindow = popupMenu.getPopupWindow();
-
 	        if (popupWindow) {
 	          popupWindow.setBindElement(node);
 	        }
@@ -6399,7 +2611,6 @@ this.BX.Crm = this.BX.Crm || {};
 	          className: 'crm-audio-cap-speed-popup'
 	        });
 	      }
-
 	      return popupMenu;
 	    }
 	  }, {
@@ -6412,22 +2623,17 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function setRate(rate) {
 	      this.getPopup().destroy();
 	      rate = this.normalizeRate(rate);
-
 	      if (this.currentRate === rate) {
 	        return;
 	      }
-
 	      this.currentRate = rate;
 	      BX.userOptions.save("crm", this.name, 'rate', rate);
-
 	      for (let i = 0, length = this.renderedItems.length; i < length; i++) {
 	        const textNode = this.renderedItems[i].querySelector('.crm-audio-cap-speed-text');
-
 	        if (textNode) {
 	          textNode.innerHTML = this.getText();
 	        }
 	      }
-
 	      for (let i = 0, length = this.players.length; i < length; i++) {
 	        this.players[i].vjsPlayer.playbackRate(this.getRate());
 	      }
@@ -6436,15 +2642,12 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "getText",
 	    value: function getText() {
 	      let text;
-
 	      if (this.textMessageCode) {
 	        text = BX.Loc.getMessage(this.textMessageCode);
 	      }
-
 	      if (!text) {
 	        text = '#RATE#';
 	      }
-
 	      return text.replace('#RATE#', '<span>' + this.getRate() + 'x</span>');
 	    }
 	  }, {
@@ -6492,7 +2695,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    babelHelpers.classCallCheck(this, SchedulePostponeController);
 	    this._item = null;
 	  }
-
 	  babelHelpers.createClass(SchedulePostponeController, [{
 	    key: "initialize",
 	    value: function initialize(id, settings) {
@@ -6534,9 +2736,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (command.indexOf("postpone") !== 0) {
 	        return false;
 	      }
-
 	      let offset = 0;
-
 	      if (command === "postpone_hour_1") {
 	        offset = 3600;
 	      } else if (command === "postpone_hour_2") {
@@ -6550,11 +2750,9 @@ this.BX.Crm = this.BX.Crm || {};
 	      } else if (command === "postpone_day_3") {
 	        offset = 259200;
 	      }
-
 	      if (offset > 0 && this._item) {
 	        this._item.postpone(offset);
 	      }
-
 	      return true;
 	    }
 	  }, {
@@ -6573,23 +2771,18 @@ this.BX.Crm = this.BX.Crm || {};
 	  }]);
 	  return SchedulePostponeController;
 	}();
-
 	babelHelpers.defineProperty(SchedulePostponeController, "messages", {});
 
 	/** @memberof BX.Crm.Timeline.Items.Scheduled */
-
-	let Activity$1 = /*#__PURE__*/function (_Scheduled) {
+	let Activity = /*#__PURE__*/function (_Scheduled) {
 	  babelHelpers.inherits(Activity, _Scheduled);
-
 	  function Activity() {
 	    var _this;
-
 	    babelHelpers.classCallCheck(this, Activity);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Activity).call(this));
 	    _this._postponeController = null;
 	    return _this;
 	  }
-
 	  babelHelpers.createClass(Activity, [{
 	    key: "getTypeId",
 	    value: function getTypeId() {
@@ -6605,13 +2798,10 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "setAsDone",
 	    value: function setAsDone(isDone) {
 	      isDone = !!isDone;
-
 	      if (this.isDone() === isDone) {
 	        return;
 	      }
-
 	      const id = BX.prop.getInteger(this.getAssociatedEntityData(), "ID", 0);
-
 	      if (id > 0) {
 	        this._activityEditor.setActivityCompleted(id, isDone, BX.delegate(this.onSetAsDoneCompleted, this));
 	      }
@@ -6620,7 +2810,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "postpone",
 	    value: function postpone(offset) {
 	      const id = this.getSourceId();
-
 	      if (id > 0 && offset > 0) {
 	        this._activityEditor.postponeActivity(id, offset, BX.delegate(this.onPosponeCompleted, this));
 	      }
@@ -6629,7 +2818,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "view",
 	    value: function view() {
 	      const id = BX.prop.getInteger(this.getAssociatedEntityData(), "ID", 0);
-
 	      if (id > 0) {
 	        this._activityEditor.viewActivity(id);
 	      }
@@ -6639,11 +2827,9 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function edit() {
 	      this.closeContextMenu();
 	      const associatedEntityTypeId = this.getAssociatedEntityTypeId();
-
 	      if (associatedEntityTypeId === BX.CrmEntityType.enumeration.activity) {
 	        const entityData = this.getAssociatedEntityData();
 	        const id = BX.prop.getInteger(entityData, "ID", 0);
-
 	        if (id > 0) {
 	          this._activityEditor.editActivity(id);
 	        }
@@ -6655,14 +2841,12 @@ this.BX.Crm = this.BX.Crm || {};
 	      this.closeContextMenu();
 	      this._detetionConfirmDlgId = "entity_timeline_deletion_" + this.getId() + "_confirm";
 	      let dlg = BX.Crm.ConfirmationDialog.get(this._detetionConfirmDlgId);
-
 	      if (!dlg) {
 	        dlg = BX.Crm.ConfirmationDialog.create(this._detetionConfirmDlgId, {
 	          title: this.getMessage("removeConfirmTitle"),
 	          content: this.getRemoveMessage()
 	        });
 	      }
-
 	      dlg.open().then(BX.delegate(this.onRemovalConfirm, this), BX.delegate(this.onRemovalCancel, this));
 	    }
 	  }, {
@@ -6676,7 +2860,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (BX.prop.getBoolean(result, "cancel", true)) {
 	        return;
 	      }
-
 	      this.remove();
 	    }
 	  }, {
@@ -6686,15 +2869,12 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "remove",
 	    value: function remove() {
 	      const associatedEntityTypeId = this.getAssociatedEntityTypeId();
-
 	      if (associatedEntityTypeId === BX.CrmEntityType.enumeration.activity) {
 	        const entityData = this.getAssociatedEntityData();
 	        const id = BX.prop.getInteger(entityData, "ID", 0);
-
 	        if (id > 0) {
 	          const activityEditor = this._activityEditor;
 	          const item = activityEditor.getItemById(id);
-
 	          if (item) {
 	            activityEditor.deleteActivity(id, true);
 	          } else {
@@ -6719,7 +2899,6 @@ this.BX.Crm = this.BX.Crm || {};
 	              onsuccess: BX.delegate(function (data) {
 	                if (typeof data['ACTIVITY'] !== 'undefined') {
 	                  activityEditor._handleActivityChange(data['ACTIVITY']);
-
 	                  window.setTimeout(BX.delegate(this.remove, this), 500);
 	                }
 	              }, this),
@@ -6734,11 +2913,19 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function getDeadline() {
 	      const entityData = this.getAssociatedEntityData();
 	      const time = BX.parseDate(entityData["DEADLINE_SERVER"], false, "YYYY-MM-DD", "YYYY-MM-DD HH:MI:SS");
-
 	      if (!time) {
 	        return null;
 	      }
-
+	      return new crm_timeline_tools.DatetimeConverter(time).toUserTime().getValue();
+	    }
+	  }, {
+	    key: "getLightTime",
+	    value: function getLightTime() {
+	      const entityData = this.getAssociatedEntityData();
+	      const time = BX.parseDate(entityData["LIGHT_TIME_SERVER"], false, "YYYY-MM-DD", "YYYY-MM-DD HH:MI:SS");
+	      if (!time) {
+	        return null;
+	      }
 	      return new crm_timeline_tools.DatetimeConverter(time).toUserTime().getValue();
 	    }
 	  }, {
@@ -6746,11 +2933,9 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function getCreatedDate() {
 	      const entityData = this.getAssociatedEntityData();
 	      const time = BX.parseDate(entityData["CREATED_SERVER"], false, "YYYY-MM-DD", "YYYY-MM-DD HH:MI:SS");
-
 	      if (!time) {
 	        return null;
 	      }
-
 	      return new crm_timeline_tools.DatetimeConverter(time).toUserTime().getValue();
 	    }
 	  }, {
@@ -6759,7 +2944,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (this.isDone()) {
 	        return false;
 	      }
-
 	      const entityData = this.getAssociatedEntityData();
 	      return entityData.hasOwnProperty('IS_INCOMING_CHANNEL') && entityData.IS_INCOMING_CHANNEL === 'Y';
 	    }
@@ -6789,14 +2973,12 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function prepareContent(options) {
 	      let timeText = '';
 	      const isIncomingChannel = this.isIncomingChannel();
-
 	      if (isIncomingChannel) {
 	        timeText = this.formatDateTime(this.getCreatedDate());
 	      } else {
 	        const deadline = this.getDeadline();
 	        timeText = deadline ? this.formatDateTime(deadline) : this.getMessage("termless");
 	      }
-
 	      const entityData = this.getAssociatedEntityData();
 	      const direction = BX.prop.getInteger(entityData, "DIRECTION", 0);
 	      const isDone = this.isDone();
@@ -6807,51 +2989,47 @@ this.BX.Crm = this.BX.Crm || {};
 	      const showUrl = BX.prop.getString(communication, "SHOW_URL", "");
 	      const communicationValue = BX.prop.getString(communication, "TYPE", "") !== "" ? BX.prop.getString(communication, "VALUE", "") : "";
 	      let wrapperClassName = this.getWrapperClassName();
-
 	      if (wrapperClassName !== "") {
 	        wrapperClassName = this._schedule.getItemClassName() + " " + wrapperClassName;
 	      } else {
 	        wrapperClassName = this._schedule.getItemClassName();
 	      }
-
 	      const wrapper = BX.create("DIV", {
 	        attrs: {
 	          className: wrapperClassName
 	        }
 	      });
 	      let iconClassName = this.getIconClassName();
-
 	      if (this.isCounterEnabled()) {
 	        iconClassName += " crm-entity-stream-section-counter";
 	      }
-
 	      if (isIncomingChannel) {
 	        iconClassName += " crm-entity-stream-section-counter --incoming-counter";
 	      }
-
 	      wrapper.appendChild(BX.create("DIV", {
 	        attrs: {
 	          className: iconClassName
 	        }
-	      })); //region Context Menu
+	      }));
 
+	      //region Context Menu
 	      if (this.isContextMenuEnabled()) {
 	        wrapper.appendChild(this.prepareContextMenuButton());
-	      } //endregion
-
+	      }
+	      //endregion
 
 	      const contentWrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-section-content"
 	        }
 	      });
-	      wrapper.appendChild(contentWrapper); //region Details
+	      wrapper.appendChild(contentWrapper);
 
+	      //region Details
 	      if (description !== "") {
 	        //trim leading spaces
 	        description = description.replace(/^\s+/, '');
 	      }
-
 	      const contentInnerWrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-event"
@@ -6876,11 +3054,9 @@ this.BX.Crm = this.BX.Crm || {};
 	        text: this.getTypeDescription(direction)
 	      }));
 	      const statusNode = this.getStatusNode();
-
 	      if (statusNode) {
 	        headerWrapper.appendChild(statusNode);
 	      }
-
 	      headerWrapper.appendChild(this._deadlineNode);
 	      contentInnerWrapper.appendChild(headerWrapper);
 	      const detailWrapper = BX.create("DIV", {
@@ -6910,27 +3086,22 @@ this.BX.Crm = this.BX.Crm || {};
 	        text: this.cutOffText(description, 128)
 	      }));
 	      const additionalDetails = this.prepareDetailNodes();
-
 	      if (BX.type.isArray(additionalDetails)) {
 	        let i = 0;
 	        const length = additionalDetails.length;
-
 	        for (; i < length; i++) {
 	          detailWrapper.appendChild(additionalDetails[i]);
 	        }
 	      }
-
 	      const members = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-detail-contact-info"
 	        }
 	      });
-
 	      if (title !== '') {
 	        members.appendChild(BX.create("SPAN", {
 	          text: this.getPrepositionText(direction) + ": "
 	        }));
-
 	        if (showUrl !== '') {
 	          members.appendChild(BX.create("A", {
 	            attrs: {
@@ -6944,18 +3115,15 @@ this.BX.Crm = this.BX.Crm || {};
 	          }));
 	        }
 	      }
-
 	      if (communicationValue !== '') {
 	        const communicationNode = this.prepareCommunicationNode(communicationValue);
-
 	        if (communicationNode) {
 	          members.appendChild(communicationNode);
 	        }
 	      }
-
-	      detailWrapper.appendChild(members); //endregion
+	      detailWrapper.appendChild(members);
+	      //endregion
 	      //region Set as Done Button
-
 	      const setAsDoneButton = BX.create("INPUT", {
 	        attrs: {
 	          type: "checkbox",
@@ -6966,34 +3134,33 @@ this.BX.Crm = this.BX.Crm || {};
 	          change: this._setAsDoneButtonHandler
 	        }
 	      });
-
 	      if (!this.canComplete()) {
 	        setAsDoneButton.disabled = true;
 	      }
-
 	      const buttonContainer = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-detail-planned-action"
 	        },
 	        children: [setAsDoneButton]
 	      });
-	      contentInnerWrapper.appendChild(buttonContainer); //endregion
+	      contentInnerWrapper.appendChild(buttonContainer);
+	      //endregion
+
 	      //region Author
-
 	      const authorNode = this.prepareAuthorLayout();
-
 	      if (authorNode) {
 	        contentInnerWrapper.appendChild(authorNode);
-	      } //endregion
+	      }
+	      //endregion
+
 	      //region  Actions
-
-
 	      this._actionContainer = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-detail-action"
 	        }
 	      });
-	      contentInnerWrapper.appendChild(this._actionContainer); //endregion
+	      contentInnerWrapper.appendChild(this._actionContainer);
+	      //endregion
 
 	      return wrapper;
 	    }
@@ -7018,7 +3185,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "prepareContextMenuItems",
 	    value: function prepareContextMenuItems() {
 	      const menuItems = [];
-
 	      if (!this.isReadOnly()) {
 	        if (this.isEditable()) {
 	          menuItems.push({
@@ -7027,34 +3193,27 @@ this.BX.Crm = this.BX.Crm || {};
 	            onclick: BX.delegate(this.edit, this)
 	          });
 	        }
-
 	        menuItems.push({
 	          id: "remove",
 	          text: this.getMessage("menuDelete"),
 	          onclick: BX.delegate(this.processRemoval, this)
 	        });
 	      }
-
 	      if (this.canPostpone()) {
 	        const handler = BX.delegate(this.onContextMenuItemSelect, this);
-
 	        if (!this._postponeController) {
 	          this._postponeController = SchedulePostponeController.create("", {
 	            item: this
 	          });
 	        }
-
 	        const postponeMenu = {
 	          id: "postpone",
 	          text: this._postponeController.getTitle(),
 	          items: []
 	        };
-
 	        const commands = this._postponeController.getCommandList();
-
 	        let i = 0;
 	        const length = commands.length;
-
 	        for (; i < length; i++) {
 	          const command = commands[i];
 	          postponeMenu.items.push({
@@ -7063,17 +3222,14 @@ this.BX.Crm = this.BX.Crm || {};
 	            onclick: handler
 	          });
 	        }
-
 	        menuItems.push(postponeMenu);
 	      }
-
 	      return menuItems;
 	    }
 	  }, {
 	    key: "onContextMenuItemSelect",
 	    value: function onContextMenuItemSelect(e, item) {
 	      this.closeContextMenu();
-
 	      if (this._postponeController) {
 	        this._postponeController.processCommand(item.id);
 	      }
@@ -7090,15 +3246,12 @@ this.BX.Crm = this.BX.Crm || {};
 	}(Scheduled);
 
 	/** @memberof BX.Crm.Timeline.Items.Scheduled */
-
-	let Email$1 = /*#__PURE__*/function (_Activity) {
+	let Email = /*#__PURE__*/function (_Activity) {
 	  babelHelpers.inherits(Email, _Activity);
-
 	  function Email() {
 	    babelHelpers.classCallCheck(this, Email);
 	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Email).call(this));
 	  }
-
 	  babelHelpers.createClass(Email, [{
 	    key: "getWrapperClassName",
 	    value: function getWrapperClassName() {
@@ -7115,7 +3268,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (this.isReadOnly()) {
 	        return;
 	      }
-
 	      this._actions.push(BX.CrmScheduleEmailAction.create("email", {
 	        item: this,
 	        container: this._actionContainer,
@@ -7150,18 +3302,15 @@ this.BX.Crm = this.BX.Crm || {};
 	    }
 	  }]);
 	  return Email;
-	}(Activity$1);
+	}(Activity);
 
 	/** @memberof BX.Crm.Timeline.Items.Scheduled */
-
 	let Call = /*#__PURE__*/function (_Activity) {
 	  babelHelpers.inherits(Call, _Activity);
-
 	  function Call() {
 	    babelHelpers.classCallCheck(this, Call);
 	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Call).call(this));
 	  }
-
 	  babelHelpers.createClass(Call, [{
 	    key: "getWrapperClassName",
 	    value: function getWrapperClassName() {
@@ -7178,7 +3327,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (this.isReadOnly()) {
 	        return;
 	      }
-
 	      this._actions.push(BX.CrmScheduleCallAction.create("call", {
 	        item: this,
 	        container: this._actionContainer,
@@ -7193,11 +3341,9 @@ this.BX.Crm = this.BX.Crm || {};
 	      const entityData = this.getAssociatedEntityData();
 	      const callInfo = BX.prop.getObject(entityData, "CALL_INFO", null);
 	      const callTypeText = callInfo !== null ? BX.prop.getString(callInfo, "CALL_TYPE_TEXT", "") : "";
-
 	      if (callTypeText !== "") {
 	        return callTypeText;
 	      }
-
 	      return this.getMessage(direction === BX.CrmActivityDirection.incoming ? "incomingCall" : "outgoingCall");
 	    }
 	  }, {
@@ -7219,32 +3365,26 @@ this.BX.Crm = this.BX.Crm || {};
 	    }
 	  }]);
 	  return Call;
-	}(Activity$1);
+	}(Activity);
 
 	/** @memberof BX.Crm.Timeline.Items.Scheduled */
-
 	let CallTracker = /*#__PURE__*/function (_Call) {
 	  babelHelpers.inherits(CallTracker, _Call);
-
 	  function CallTracker() {
 	    babelHelpers.classCallCheck(this, CallTracker);
 	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(CallTracker).call(this));
 	  }
-
 	  babelHelpers.createClass(CallTracker, [{
 	    key: "getStatusNode",
 	    value: function getStatusNode() {
 	      const entityData = this.getAssociatedEntityData();
 	      const callInfo = BX.prop.getObject(entityData, "CALL_INFO", null);
-
 	      if (!callInfo) {
 	        return false;
 	      }
-
 	      if (!BX.prop.getBoolean(callInfo, "HAS_STATUS", false)) {
 	        return false;
 	      }
-
 	      const isSuccessfull = BX.prop.getBoolean(callInfo, "SUCCESSFUL", false);
 	      const statusText = BX.prop.getString(callInfo, "STATUS_TEXT", "");
 	      return BX.create("DIV", {
@@ -7266,15 +3406,12 @@ this.BX.Crm = this.BX.Crm || {};
 	}(Call);
 
 	/** @memberof BX.Crm.Timeline.Items.Scheduled */
-
 	let Meeting = /*#__PURE__*/function (_Activity) {
 	  babelHelpers.inherits(Meeting, _Activity);
-
 	  function Meeting() {
 	    babelHelpers.classCallCheck(this, Meeting);
 	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Meeting).call(this));
 	  }
-
 	  babelHelpers.createClass(Meeting, [{
 	    key: "getWrapperClassName",
 	    value: function getWrapperClassName() {
@@ -7315,18 +3452,15 @@ this.BX.Crm = this.BX.Crm || {};
 	    }
 	  }]);
 	  return Meeting;
-	}(Activity$1);
+	}(Activity);
 
 	/** @memberof BX.Crm.Timeline.Items.Scheduled */
-
 	let Task = /*#__PURE__*/function (_Activity) {
 	  babelHelpers.inherits(Task, _Activity);
-
 	  function Task() {
 	    babelHelpers.classCallCheck(this, Task);
 	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Task).call(this));
 	  }
-
 	  babelHelpers.createClass(Task, [{
 	    key: "getWrapperClassName",
 	    value: function getWrapperClassName() {
@@ -7364,18 +3498,15 @@ this.BX.Crm = this.BX.Crm || {};
 	    }
 	  }]);
 	  return Task;
-	}(Activity$1);
+	}(Activity);
 
 	/** @memberof BX.Crm.Timeline.Items.Scheduled */
-
 	let WebForm = /*#__PURE__*/function (_Activity) {
 	  babelHelpers.inherits(WebForm, _Activity);
-
 	  function WebForm() {
 	    babelHelpers.classCallCheck(this, WebForm);
 	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(WebForm).call(this));
 	  }
-
 	  babelHelpers.createClass(WebForm, [{
 	    key: "getWrapperClassName",
 	    value: function getWrapperClassName() {
@@ -7408,22 +3539,18 @@ this.BX.Crm = this.BX.Crm || {};
 	    }
 	  }]);
 	  return WebForm;
-	}(Activity$1);
+	}(Activity);
 
 	/** @memberof BX.Crm.Timeline.Items.Scheduled */
-
-	let Wait$1 = /*#__PURE__*/function (_Scheduled) {
+	let Wait = /*#__PURE__*/function (_Scheduled) {
 	  babelHelpers.inherits(Wait, _Scheduled);
-
 	  function Wait() {
 	    var _this;
-
 	    babelHelpers.classCallCheck(this, Wait);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Wait).call(this));
 	    _this._postponeController = null;
 	    return _this;
 	  }
-
 	  babelHelpers.createClass(Wait, [{
 	    key: "getTypeId",
 	    value: function getTypeId() {
@@ -7452,11 +3579,9 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function getDeadline() {
 	      const entityData = this.getAssociatedEntityData();
 	      const time = BX.parseDate(entityData["DEADLINE_SERVER"], false, "YYYY-MM-DD", "YYYY-MM-DD HH:MI:SS");
-
 	      if (!time) {
 	        return null;
 	      }
-
 	      return new crm_timeline_tools.DatetimeConverter(time).toUserTime().getValue();
 	    }
 	  }, {
@@ -7468,16 +3593,13 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "setAsDone",
 	    value: function setAsDone(isDone) {
 	      isDone = !!isDone;
-
 	      if (this.isDone() === isDone) {
 	        return;
 	      }
-
 	      const id = this.getAssociatedEntityId();
-
 	      if (id > 0) {
-	        const editor = this._schedule.getManager().getWaitEditor();
-
+	        var _BX$Crm$Timeline, _BX$Crm$Timeline$Menu, _BX$Crm$Timeline$Menu2;
+	        const editor = (_BX$Crm$Timeline = BX.Crm.Timeline) === null || _BX$Crm$Timeline === void 0 ? void 0 : (_BX$Crm$Timeline$Menu = _BX$Crm$Timeline.MenuBar) === null || _BX$Crm$Timeline$Menu === void 0 ? void 0 : (_BX$Crm$Timeline$Menu2 = _BX$Crm$Timeline$Menu.getDefault()) === null || _BX$Crm$Timeline$Menu2 === void 0 ? void 0 : _BX$Crm$Timeline$Menu2.getItemById('wait');
 	        if (editor) {
 	          editor.complete(id, isDone, BX.delegate(this.onSetAsDoneCompleted, this));
 	        }
@@ -7487,10 +3609,9 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "postpone",
 	    value: function postpone(offset) {
 	      const id = this.getAssociatedEntityId();
-
 	      if (id > 0 && offset > 0) {
-	        const editor = this._schedule.getManager().getWaitEditor();
-
+	        var _BX$Crm$Timeline2, _BX$Crm$Timeline2$Men, _BX$Crm$Timeline2$Men2;
+	        const editor = (_BX$Crm$Timeline2 = BX.Crm.Timeline) === null || _BX$Crm$Timeline2 === void 0 ? void 0 : (_BX$Crm$Timeline2$Men = _BX$Crm$Timeline2.MenuBar) === null || _BX$Crm$Timeline2$Men === void 0 ? void 0 : (_BX$Crm$Timeline2$Men2 = _BX$Crm$Timeline2$Men.getDefault()) === null || _BX$Crm$Timeline2$Men2 === void 0 ? void 0 : _BX$Crm$Timeline2$Men2.getItemById('wait');
 	        if (editor) {
 	          editor.postpone(id, offset, BX.delegate(this.onPosponeCompleted, this));
 	        }
@@ -7510,49 +3631,46 @@ this.BX.Crm = this.BX.Crm || {};
 	      const isDone = this.isDone();
 	      let description = BX.prop.getString(entityData, "DESCRIPTION_RAW", "");
 	      let wrapperClassName = this.getWrapperClassName();
-
 	      if (wrapperClassName !== "") {
 	        wrapperClassName = "crm-entity-stream-section crm-entity-stream-section-planned" + " " + wrapperClassName;
 	      } else {
 	        wrapperClassName = "crm-entity-stream-section crm-entity-stream-section-planned";
 	      }
-
 	      const wrapper = BX.create("DIV", {
 	        attrs: {
 	          className: wrapperClassName
 	        }
 	      });
 	      let iconClassName = this.getIconClassName();
-
 	      if (this.isCounterEnabled()) {
 	        iconClassName += " crm-entity-stream-section-counter";
 	      }
-
 	      wrapper.appendChild(BX.create("DIV", {
 	        attrs: {
 	          className: iconClassName
 	        }
-	      })); //region Context Menu
+	      }));
 
+	      //region Context Menu
 	      if (this.isContextMenuEnabled()) {
 	        wrapper.appendChild(this.prepareContextMenuButton());
-	      } //endregion
-
+	      }
+	      //endregion
 
 	      const contentWrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-section-content"
 	        }
 	      });
-	      wrapper.appendChild(contentWrapper); //region Details
+	      wrapper.appendChild(contentWrapper);
 
+	      //region Details
 	      if (description !== "") {
 	        description = BX.util.trim(description);
 	        description = BX.util.strip_tags(description);
 	        description = this.cutOffText(description, 512);
 	        description = BX.util.nl2br(description);
 	      }
-
 	      const contentInnerWrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-event"
@@ -7594,9 +3712,10 @@ this.BX.Crm = this.BX.Crm || {};
 	          className: "crm-entity-stream-content-detail-contact-info"
 	        }
 	      });
-	      detailWrapper.appendChild(members); //endregion
-	      //region Set as Done Button
+	      detailWrapper.appendChild(members);
+	      //endregion
 
+	      //region Set as Done Button
 	      const setAsDoneButton = BX.create("INPUT", {
 	        attrs: {
 	          type: "checkbox",
@@ -7607,34 +3726,33 @@ this.BX.Crm = this.BX.Crm || {};
 	          change: this._setAsDoneButtonHandler
 	        }
 	      });
-
 	      if (!this.canComplete()) {
 	        setAsDoneButton.disabled = true;
 	      }
-
 	      const buttonContainer = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-detail-planned-action"
 	        },
 	        children: [setAsDoneButton]
 	      });
-	      contentInnerWrapper.appendChild(buttonContainer); //endregion
+	      contentInnerWrapper.appendChild(buttonContainer);
+	      //endregion
+
 	      //region Author
-
 	      const authorNode = this.prepareAuthorLayout();
-
 	      if (authorNode) {
 	        contentInnerWrapper.appendChild(authorNode);
-	      } //endregion
+	      }
+	      //endregion
+
 	      //region  Actions
-
-
 	      this._actionContainer = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-detail-action"
 	        }
 	      });
-	      contentInnerWrapper.appendChild(this._actionContainer); //endregion
+	      contentInnerWrapper.appendChild(this._actionContainer);
+	      //endregion
 
 	      return wrapper;
 	    }
@@ -7643,24 +3761,19 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function prepareContextMenuItems() {
 	      const menuItems = [];
 	      const handler = BX.delegate(this.onContextMenuItemSelect, this);
-
 	      if (!this._postponeController) {
 	        this._postponeController = SchedulePostponeController.create("", {
 	          item: this
 	        });
 	      }
-
 	      const postponeMenu = {
 	        id: "postpone",
 	        text: this._postponeController.getTitle(),
 	        items: []
 	      };
-
 	      const commands = this._postponeController.getCommandList();
-
 	      let i = 0;
 	      const length = commands.length;
-
 	      for (; i < length; i++) {
 	        const command = commands[i];
 	        postponeMenu.items.push({
@@ -7669,7 +3782,6 @@ this.BX.Crm = this.BX.Crm || {};
 	          onclick: handler
 	        });
 	      }
-
 	      menuItems.push(postponeMenu);
 	      return menuItems;
 	    }
@@ -7677,7 +3789,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "onContextMenuItemSelect",
 	    value: function onContextMenuItemSelect(e, item) {
 	      this.closeContextMenu();
-
 	      if (this._postponeController) {
 	        this._postponeController.processCommand(item.id);
 	      }
@@ -7699,15 +3810,12 @@ this.BX.Crm = this.BX.Crm || {};
 	}(Scheduled);
 
 	/** @memberof BX.Crm.Timeline.Items.Scheduled */
-
 	let Request = /*#__PURE__*/function (_Activity) {
 	  babelHelpers.inherits(Request, _Activity);
-
 	  function Request() {
 	    babelHelpers.classCallCheck(this, Request);
 	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Request).call(this));
 	  }
-
 	  babelHelpers.createClass(Request, [{
 	    key: "getWrapperClassName",
 	    value: function getWrapperClassName() {
@@ -7737,18 +3845,15 @@ this.BX.Crm = this.BX.Crm || {};
 	    }
 	  }]);
 	  return Request;
-	}(Activity$1);
+	}(Activity);
 
 	/** @memberof BX.Crm.Timeline.Items.Scheduled */
-
-	let Rest$1 = /*#__PURE__*/function (_Activity) {
+	let Rest = /*#__PURE__*/function (_Activity) {
 	  babelHelpers.inherits(Rest, _Activity);
-
 	  function Rest() {
 	    babelHelpers.classCallCheck(this, Rest);
 	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Rest).call(this));
 	  }
-
 	  babelHelpers.createClass(Rest, [{
 	    key: "getWrapperClassName",
 	    value: function getWrapperClassName() {
@@ -7764,10 +3869,8 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function prepareContent(options) {
 	      const wrapper = babelHelpers.get(babelHelpers.getPrototypeOf(Rest.prototype), "prepareContent", this).call(this, options);
 	      const data = this.getAssociatedEntityData();
-
 	      if (data['APP_TYPE'] && data['APP_TYPE']['ICON_SRC']) {
 	        const iconNode = wrapper.querySelector('.' + this.getIconClassName().replace(/\s+/g, '.'));
-
 	        if (iconNode) {
 	          iconNode.style.backgroundImage = "url('" + data['APP_TYPE']['ICON_SRC'] + "')";
 	          iconNode.style.backgroundPosition = "center center";
@@ -7775,18 +3878,15 @@ this.BX.Crm = this.BX.Crm || {};
 	          iconNode.style.backgroundColor = "transparent";
 	        }
 	      }
-
 	      return wrapper;
 	    }
 	  }, {
 	    key: "getTypeDescription",
 	    value: function getTypeDescription() {
 	      const entityData = this.getAssociatedEntityData();
-
 	      if (entityData['APP_TYPE'] && entityData['APP_TYPE']['NAME']) {
 	        return entityData['APP_TYPE']['NAME'];
 	      }
-
 	      return this.getMessage("restApplication");
 	    }
 	  }], [{
@@ -7798,23 +3898,113 @@ this.BX.Crm = this.BX.Crm || {};
 	    }
 	  }]);
 	  return Rest;
-	}(Activity$1);
+	}(Activity);
+
+	/** @memberof BX.Crm.Timeline */
+	let Action = /*#__PURE__*/function () {
+	  function Action() {
+	    babelHelpers.classCallCheck(this, Action);
+	    this._id = "";
+	    this._settings = {};
+	    this._container = null;
+	  }
+	  babelHelpers.createClass(Action, [{
+	    key: "initialize",
+	    value: function initialize(id, settings) {
+	      this._id = BX.type.isNotEmptyString(id) ? id : BX.util.getRandomString(4);
+	      this._settings = settings ? settings : {};
+	      this._container = this.getSetting("container");
+	      if (!BX.type.isElementNode(this._container)) {
+	        throw "BX.CrmTimelineAction: Could not find container.";
+	      }
+	      this.doInitialize();
+	    }
+	  }, {
+	    key: "doInitialize",
+	    value: function doInitialize() {}
+	  }, {
+	    key: "getId",
+	    value: function getId() {
+	      return this._id;
+	    }
+	  }, {
+	    key: "getSetting",
+	    value: function getSetting(name, defaultval) {
+	      return this._settings.hasOwnProperty(name) ? this._settings[name] : defaultval;
+	    }
+	  }, {
+	    key: "layout",
+	    value: function layout() {
+	      this.doLayout();
+	    }
+	  }, {
+	    key: "doLayout",
+	    value: function doLayout() {}
+	  }]);
+	  return Action;
+	}();
 
 	/** @memberof BX.Crm.Timeline.Actions */
+	let Activity$1 = /*#__PURE__*/function (_Action) {
+	  babelHelpers.inherits(Activity, _Action);
+	  function Activity() {
+	    var _this;
+	    babelHelpers.classCallCheck(this, Activity);
+	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Activity).call(this));
+	    _this._activityEditor = null;
+	    _this._entityData = null;
+	    _this._item = null;
+	    _this._isEnabled = true;
+	    return _this;
+	  }
+	  babelHelpers.createClass(Activity, [{
+	    key: "doInitialize",
+	    value: function doInitialize() {
+	      this._entityData = this.getSetting("entityData");
+	      if (!BX.type.isPlainObject(this._entityData)) {
+	        throw "BX.Crm.Timeline.Actions.Activity. A required parameter 'entityData' is missing.";
+	      }
+	      this._activityEditor = this.getSetting("activityEditor");
+	      if (!(this._activityEditor instanceof BX.CrmActivityEditor)) {
+	        throw "BX.Crm.Timeline.Actions.Activity. A required parameter 'activityEditor' is missing.";
+	      }
+	      this._item = this.getSetting("item");
+	      this._isEnabled = this.getSetting("enabled", true);
+	    }
+	  }, {
+	    key: "getActivityId",
+	    value: function getActivityId() {
+	      return BX.prop.getInteger(this._entityData, "ID", 0);
+	    }
+	  }, {
+	    key: "loadActivityCommunications",
+	    value: function loadActivityCommunications(callback) {
+	      this._activityEditor.getActivityCommunications(this.getActivityId(), function (communications) {
+	        if (BX.type.isFunction(callback)) {
+	          callback(communications);
+	        }
+	      }, true);
+	    }
+	  }, {
+	    key: "getItemData",
+	    value: function getItemData() {
+	      return this._item ? this._item.getData() : null;
+	    }
+	  }]);
+	  return Activity;
+	}(Action);
 
+	/** @memberof BX.Crm.Timeline.Actions */
 	let OpenLine = /*#__PURE__*/function (_Activity) {
 	  babelHelpers.inherits(OpenLine, _Activity);
-
 	  function OpenLine() {
 	    var _this;
-
 	    babelHelpers.classCallCheck(this, OpenLine);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(OpenLine).call(this));
 	    _this._clickHandler = BX.delegate(_this.onClick, babelHelpers.assertThisInitialized(_this));
 	    _this._button = null;
 	    return _this;
 	  }
-
 	  babelHelpers.createClass(OpenLine, [{
 	    key: "getButton",
 	    value: function getButton() {
@@ -7827,16 +4017,13 @@ this.BX.Crm = this.BX.Crm || {};
 	        window.alert(this.getMessage("openLineNotSupported"));
 	        return;
 	      }
-
 	      let slug = "";
 	      const communication = BX.prop.getObject(this._entityData, "COMMUNICATION", null);
-
 	      if (communication) {
 	        if (BX.prop.getString(communication, "TYPE") === "IM") {
 	          slug = BX.prop.getString(communication, "VALUE");
 	        }
 	      }
-
 	      if (slug !== "") {
 	        window.top['BXIM'].openMessengerSlider(slug, {
 	          RECENT: 'N',
@@ -7855,7 +4042,6 @@ this.BX.Crm = this.BX.Crm || {};
 	          "click": this._clickHandler
 	        }
 	      });
-
 	      this._container.appendChild(this._button);
 	    }
 	  }, {
@@ -7873,19 +4059,16 @@ this.BX.Crm = this.BX.Crm || {};
 	    }
 	  }]);
 	  return OpenLine;
-	}(Activity);
+	}(Activity$1);
 	babelHelpers.defineProperty(OpenLine, "messages", {});
 
 	/** @memberof BX.Crm.Timeline.Items.Scheduled */
-
 	let OpenLine$1 = /*#__PURE__*/function (_Activity) {
 	  babelHelpers.inherits(OpenLine$$1, _Activity);
-
 	  function OpenLine$$1() {
 	    babelHelpers.classCallCheck(this, OpenLine$$1);
 	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(OpenLine$$1).call(this));
 	  }
-
 	  babelHelpers.createClass(OpenLine$$1, [{
 	    key: "getWrapperClassName",
 	    value: function getWrapperClassName() {
@@ -7902,7 +4085,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (this.isReadOnly()) {
 	        return;
 	      }
-
 	      this._actions.push(OpenLine.create("openline", {
 	        item: this,
 	        container: this._actionContainer,
@@ -7941,12 +4123,10 @@ this.BX.Crm = this.BX.Crm || {};
 	      });
 	      wrapper.appendChild(messageWrapper);
 	      const openLineData = BX.prop.getObject(this.getAssociatedEntityData(), "OPENLINE_INFO", null);
-
 	      if (openLineData) {
 	        const messages = BX.prop.getArray(openLineData, "MESSAGES", []);
 	        let i = 0;
 	        const length = messages.length;
-
 	        for (; i < length; i++) {
 	          const message = messages[i];
 	          const isExternal = BX.prop.getBoolean(message, "IS_EXTERNAL", true);
@@ -7958,7 +4138,6 @@ this.BX.Crm = this.BX.Crm || {};
 	          }));
 	        }
 	      }
-
 	      return [wrapper];
 	    }
 	  }, {
@@ -7968,16 +4147,13 @@ this.BX.Crm = this.BX.Crm || {};
 	        window.alert(this.getMessage("openLineNotSupported"));
 	        return;
 	      }
-
 	      let slug = "";
 	      const communication = BX.prop.getObject(this.getAssociatedEntityData(), "COMMUNICATION", null);
-
 	      if (communication) {
 	        if (BX.prop.getString(communication, "TYPE") === "IM") {
 	          slug = BX.prop.getString(communication, "VALUE");
 	        }
 	      }
-
 	      if (slug !== "") {
 	        window.top['BXIM'].openMessengerSlider(slug, {
 	          RECENT: 'N',
@@ -7994,18 +4170,15 @@ this.BX.Crm = this.BX.Crm || {};
 	    }
 	  }]);
 	  return OpenLine$$1;
-	}(Activity$1);
+	}(Activity);
 
 	/** @memberof BX.Crm.Timeline.Items.Scheduled */
-
 	let Zoom = /*#__PURE__*/function (_Activity) {
 	  babelHelpers.inherits(Zoom, _Activity);
-
 	  function Zoom() {
 	    babelHelpers.classCallCheck(this, Zoom);
 	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Zoom).call(this));
 	  }
-
 	  babelHelpers.createClass(Zoom, [{
 	    key: "getWrapperClassName",
 	    value: function getWrapperClassName() {
@@ -8044,47 +4217,44 @@ this.BX.Crm = this.BX.Crm || {};
 	      const showUrl = BX.prop.getString(communication, "SHOW_URL", "");
 	      const communicationValue = BX.prop.getString(communication, "TYPE", "") !== "" ? BX.prop.getString(communication, "VALUE", "") : "";
 	      let wrapperClassName = this.getWrapperClassName();
-
 	      if (wrapperClassName !== "") {
 	        wrapperClassName = "crm-entity-stream-section crm-entity-stream-section-planned" + " " + wrapperClassName;
 	      } else {
 	        wrapperClassName = "crm-entity-stream-section crm-entity-stream-section-planned";
 	      }
-
 	      const wrapper = BX.create("DIV", {
 	        attrs: {
 	          className: wrapperClassName
 	        }
 	      });
 	      let iconClassName = this.getIconClassName();
-
 	      if (this.isCounterEnabled()) {
 	        iconClassName += " crm-entity-stream-section-counter";
 	      }
-
 	      wrapper.appendChild(BX.create("DIV", {
 	        attrs: {
 	          className: iconClassName
 	        }
-	      })); //region Context Menu
+	      }));
 
+	      //region Context Menu
 	      if (this.isContextMenuEnabled()) {
 	        wrapper.appendChild(this.prepareContextMenuButton());
-	      } //endregion
-
+	      }
+	      //endregion
 
 	      const contentWrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-section-content"
 	        }
 	      });
-	      wrapper.appendChild(contentWrapper); //region Details
+	      wrapper.appendChild(contentWrapper);
 
+	      //region Details
 	      if (description !== "") {
 	        //trim leading spaces
 	        description = description.replace(/^\s+/, '');
 	      }
-
 	      const contentInnerWrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-event"
@@ -8115,7 +4285,6 @@ this.BX.Crm = this.BX.Crm || {};
 	        }
 	      });
 	      contentInnerWrapper.appendChild(detailWrapper);
-
 	      if (entityData['ZOOM_INFO']) {
 	        const topic = entityData['ZOOM_INFO']['TOPIC'];
 	        const duration = entityData['ZOOM_INFO']['DURATION'];
@@ -8170,20 +4339,17 @@ this.BX.Crm = this.BX.Crm || {};
 	        detailWrapper.appendChild(detailZoomCopyInviteLinkWrapper);
 	        detailWrapper.appendChild(detailZoomStartConferenceButton);
 	      }
-
 	      const additionalDetails = this.prepareDetailNodes();
-
 	      if (BX.type.isArray(additionalDetails)) {
 	        let i = 0;
 	        const length = additionalDetails.length;
-
 	        for (; i < length; i++) {
 	          detailWrapper.appendChild(additionalDetails[i]);
 	        }
-	      } //endregion
+	      }
+
+	      //endregion
 	      //region Set as Done Button
-
-
 	      const setAsDoneButton = BX.create("INPUT", {
 	        attrs: {
 	          type: "checkbox",
@@ -8194,34 +4360,33 @@ this.BX.Crm = this.BX.Crm || {};
 	          change: this._setAsDoneButtonHandler
 	        }
 	      });
-
 	      if (!this.canComplete()) {
 	        setAsDoneButton.disabled = true;
 	      }
-
 	      const buttonContainer = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-detail-planned-action"
 	        },
 	        children: [setAsDoneButton]
 	      });
-	      contentInnerWrapper.appendChild(buttonContainer); //endregion
+	      contentInnerWrapper.appendChild(buttonContainer);
+	      //endregion
+
 	      //region Author
-
 	      const authorNode = this.prepareAuthorLayout();
-
 	      if (authorNode) {
 	        contentInnerWrapper.appendChild(authorNode);
-	      } //endregion
+	      }
+	      //endregion
+
 	      //region  Actions
-
-
 	      this._actionContainer = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-detail-action"
 	        }
 	      });
-	      contentInnerWrapper.appendChild(this._actionContainer); //endregion
+	      contentInnerWrapper.appendChild(this._actionContainer);
+	      //endregion
 
 	      return wrapper;
 	    }
@@ -8237,16 +4402,13 @@ this.BX.Crm = this.BX.Crm || {};
 	    }
 	  }]);
 	  return Zoom;
-	}(Activity$1);
+	}(Activity);
 
 	/** @memberof BX.Crm.Timeline.Streams */
-
 	let Schedule = /*#__PURE__*/function (_Stream) {
 	  babelHelpers.inherits(Schedule, _Stream);
-
 	  function Schedule() {
 	    var _this;
-
 	    babelHelpers.classCallCheck(this, Schedule);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Schedule).call(this));
 	    _this._items = [];
@@ -8256,22 +4418,17 @@ this.BX.Crm = this.BX.Crm || {};
 	    _this._stub = null;
 	    return _this;
 	  }
-
 	  babelHelpers.createClass(Schedule, [{
 	    key: "doInitialize",
 	    value: function doInitialize() {
 	      if (!this.isStubMode()) {
 	        let itemData = this.getSetting("itemData");
-
 	        if (!BX.type.isArray(itemData)) {
 	          itemData = [];
 	        }
-
 	        let i, length, item;
-
 	        for (i = 0, length = itemData.length; i < length; i++) {
 	          item = this.createItem(itemData[i]);
-
 	          if (item) {
 	            this._items.push(item);
 	          }
@@ -8282,9 +4439,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "layout",
 	    value: function layout() {
 	      this._wrapper = BX.create("DIV", {});
-
 	      this._container.appendChild(this._wrapper);
-
 	      const label = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-planned-label"
@@ -8292,7 +4447,6 @@ this.BX.Crm = this.BX.Crm || {};
 	        text: this.getMessage("planned")
 	      });
 	      const wrapperClassName = "crm-entity-stream-section crm-entity-stream-section-planned-label";
-
 	      this._wrapper.appendChild(BX.create("DIV", {
 	        attrs: {
 	          className: wrapperClassName
@@ -8304,12 +4458,10 @@ this.BX.Crm = this.BX.Crm || {};
 	          children: [label]
 	        })]
 	      }));
-
 	      if (this.isStubMode()) {
 	        this.addStub();
 	      } else {
 	        const length = this._items.length;
-
 	        if (length === 0) {
 	          this.addStub();
 	        } else {
@@ -8320,9 +4472,7 @@ this.BX.Crm = this.BX.Crm || {};
 	          }
 	        }
 	      }
-
 	      this.refreshLayout();
-
 	      this._manager.processSheduleLayoutChange();
 	    }
 	  }, {
@@ -8330,18 +4480,14 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function refreshLayout() {
 	      BX.onCustomEvent('Schedule:onBeforeRefreshLayout', [this]);
 	      const length = this._items.length;
-
 	      if (length === 0) {
 	        this.addStub();
-
 	        if (this._history && this._history.hasContent()) {
 	          BX.removeClass(this._stub, "crm-entity-stream-section-last");
 	        } else {
 	          BX.addClass(this._stub, "crm-entity-stream-section-last");
 	        }
-
 	        const stubIcon = this._stub.querySelector(".crm-entity-stream-section-icon");
-
 	        if (stubIcon) {
 	          if (this._manager.isStubCounterEnabled()) {
 	            BX.addClass(stubIcon, "crm-entity-stream-section-counter");
@@ -8349,16 +4495,12 @@ this.BX.Crm = this.BX.Crm || {};
 	            BX.removeClass(stubIcon, "crm-entity-stream-section-counter");
 	          }
 	        }
-
 	        return;
 	      }
-
 	      let i, item;
-
 	      if (this._history && this._history.hasContent()) {
 	        for (i = 0; i < length; i++) {
 	          item = this._items[i];
-
 	          if (item.isTerminated()) {
 	            item.markAsTerminated(false);
 	          }
@@ -8367,13 +4509,11 @@ this.BX.Crm = this.BX.Crm || {};
 	        if (length > 1) {
 	          for (i = 0; i < length - 1; i++) {
 	            item = this._items[i];
-
 	            if (item.isTerminated()) {
 	              item.markAsTerminated(false);
 	            }
 	          }
 	        }
-
 	        this._items[length - 1].markAsTerminated(true);
 	      }
 	    }
@@ -8390,7 +4530,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (this._history && this._history.getItemCount() > 0) {
 	        return false;
 	      }
-
 	      return this.getLastItem() === item;
 	    }
 	  }, {
@@ -8407,21 +4546,17 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "calculateItemIndex",
 	    value: function calculateItemIndex(item) {
 	      const sort = item.getSort();
-
 	      for (let i = 0; i < this._items.length; i++) {
 	        const curSort = this._items[i].getSort();
-
 	        for (let j = 0; j < curSort.length; j++) {
 	          if (sort.length <= j || sort[j] !== curSort[j]) {
 	            if (sort[j] < curSort[j]) {
 	              return i;
 	            }
-
 	            break;
 	          }
 	        }
 	      }
-
 	      return this._items.length;
 	    }
 	  }, {
@@ -8435,23 +4570,18 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (!BX.type.isNumber($entityTypeId)) {
 	        $entityTypeId = parseInt($entityTypeId);
 	      }
-
 	      if (!BX.type.isNumber(entityId)) {
 	        entityId = parseInt(entityId);
 	      }
-
 	      if (isNaN($entityTypeId) || $entityTypeId <= 0 || isNaN(entityId) || entityId <= 0) {
 	        return null;
 	      }
-
 	      for (let i = 0, length = this._items.length; i < length; i++) {
 	        const item = this._items[i];
-
 	        if (item.getAssociatedEntityTypeId() === $entityTypeId && item.getAssociatedEntityId() === entityId) {
 	          return item;
 	        }
 	      }
-
 	      return null;
 	    }
 	  }, {
@@ -8460,7 +4590,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (!BX.type.isPlainObject(itemData)) {
 	        return null;
 	      }
-
 	      return this.getItemByAssociatedEntity(BX.prop.getInteger(itemData, "ASSOCIATED_ENTITY_TYPE_ID", 0), BX.prop.getInteger(itemData, "ASSOCIATED_ENTITY_ID", 0));
 	    }
 	  }, {
@@ -8475,7 +4604,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      const entityID = BX.prop.getInteger(data, "ASSOCIATED_ENTITY_ID", 0);
 	      const entityData = BX.prop.getObject(data, "ASSOCIATED_ENTITY", {});
 	      let itemId = BX.CrmEntityType.resolveName(entityTypeID) + "_" + entityID.toString();
-
 	      if (data.hasOwnProperty('type')) {
 	        itemId = data.id;
 	        return crm_timeline_item.ConfigurableItem.create(itemId, {
@@ -8490,21 +4618,20 @@ this.BX.Crm = this.BX.Crm || {};
 	          data: data
 	        });
 	      }
-
 	      if (entityTypeID === BX.CrmEntityType.enumeration.wait) {
-	        return Wait$1.create(itemId, {
+	        return Wait.create(itemId, {
 	          schedule: this,
 	          container: this._wrapper,
 	          activityEditor: this._activityEditor,
 	          data: data
 	        });
-	      } else // if(entityTypeID === BX.CrmEntityType.enumeration.activity)
+	      } else
+	        // if(entityTypeID === BX.CrmEntityType.enumeration.activity)
 	        {
 	          const typeId = BX.prop.getInteger(entityData, "TYPE_ID", 0);
 	          const providerId = BX.prop.getString(entityData, "PROVIDER_ID", "");
-
 	          if (typeId === BX.CrmActivityType.email) {
-	            return Email$1.create(itemId, {
+	            return Email.create(itemId, {
 	              schedule: this,
 	              container: this._wrapper,
 	              activityEditor: this._activityEditor,
@@ -8561,7 +4688,7 @@ this.BX.Crm = this.BX.Crm || {};
 	                data: data
 	              });
 	            } else if (providerId === "REST_APP") {
-	              return Rest$1.create(itemId, {
+	              return Rest.create(itemId, {
 	                schedule: this,
 	                container: this._wrapper,
 	                activityEditor: this._activityEditor,
@@ -8577,7 +4704,6 @@ this.BX.Crm = this.BX.Crm || {};
 	            }
 	          }
 	        }
-
 	      return null;
 	    }
 	  }, {
@@ -8601,16 +4727,13 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (!BX.type.isNumber(index) || index < 0) {
 	        index = this.calculateItemIndex(item);
 	      }
-
 	      if (index < this._items.length) {
 	        this._items.splice(index, 0, item);
 	      } else {
 	        this._items.push(item);
 	      }
-
 	      this.removeStub();
 	      this.refreshLayout();
-
 	      this._manager.processSheduleLayoutChange();
 	    }
 	  }, {
@@ -8631,48 +4754,37 @@ this.BX.Crm = this.BX.Crm || {};
 	          className: "crm-entity-stream-section crm-entity-stream-section-shadow"
 	        }
 	      });
-
 	      if (index >= 0 && index < this._items.length) {
 	        this._wrapper.insertBefore(this._anchor, this._items[index].getWrapper());
 	      } else {
 	        this._wrapper.appendChild(this._anchor);
 	      }
-
 	      return this._anchor;
 	    }
 	  }, {
 	    key: "deleteItem",
 	    value: function deleteItem(item) {
 	      const index = this.getItemIndex(item);
-
 	      if (index < 0) {
 	        return;
 	      }
-
 	      item.clearLayout();
 	      this.removeItemByIndex(index);
 	      this.refreshLayout();
-
 	      this._manager.processSheduleLayoutChange();
 	    }
 	  }, {
 	    key: "transferItemToHistory",
 	    value: function transferItemToHistory(item, historyItemData) {
 	      const index = this.getItemIndex(item);
-
 	      if (index < 0) {
 	        return;
 	      }
-
 	      this.removeItemByIndex(index);
 	      this.refreshLayout();
-
 	      this._manager.processSheduleLayoutChange();
-
 	      const historyItem = this._history.createItem(historyItemData);
-
 	      this._history.addItem(historyItem, 0);
-
 	      historyItem.layout({
 	        add: false
 	      });
@@ -8690,7 +4802,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "onTransferComplete",
 	    value: function onTransferComplete() {
 	      this._history.refreshLayout();
-
 	      if (this._items.length === 0) {
 	        this.addStub();
 	      }
@@ -8702,28 +4813,23 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "addStub",
 	    value: function addStub() {
 	      if (!this._stub) {
+	        var _BX$Crm$Timeline, _BX$Crm$Timeline$Menu, _BX$Crm$Timeline$Menu2;
 	        let stubClassName = "crm-entity-stream-section crm-entity-stream-section-planned crm-entity-stream-section-notTask";
 	        let stubIconClassName = "crm-entity-stream-section-icon crm-entity-stream-section-icon-info";
-	        const canAddTodo = this.getManager().getSetting('enableTodo', false);
-
+	        const canAddTodo = !!((_BX$Crm$Timeline = BX.Crm.Timeline) !== null && _BX$Crm$Timeline !== void 0 && (_BX$Crm$Timeline$Menu = _BX$Crm$Timeline.MenuBar) !== null && _BX$Crm$Timeline$Menu !== void 0 && (_BX$Crm$Timeline$Menu2 = _BX$Crm$Timeline$Menu.getDefault()) !== null && _BX$Crm$Timeline$Menu2 !== void 0 && _BX$Crm$Timeline$Menu2.getItemById('todo'));
 	        if (canAddTodo && !this.isReadOnly()) {
 	          stubClassName += ' --active';
 	        }
-
 	        let stubMessage = this.getMessage("stub");
-
 	        const ownerTypeId = this._manager.getOwnerTypeId();
-
 	        if (ownerTypeId === BX.CrmEntityType.enumeration.lead) {
 	          stubMessage = this.getMessage("leadStub");
 	        } else if (ownerTypeId === BX.CrmEntityType.enumeration.deal) {
 	          stubMessage = this.getMessage("dealStub");
 	        }
-
 	        if (this._manager.isStubCounterEnabled()) {
 	          stubIconClassName += " crm-entity-stream-section-counter";
 	        }
-
 	        this._stub = BX.create("DIV", {
 	          attrs: {
 	            className: stubClassName
@@ -8754,14 +4860,11 @@ this.BX.Crm = this.BX.Crm || {};
 	            })]
 	          })]
 	        });
-
 	        if (canAddTodo && !this.isReadOnly()) {
 	          BX.bind(this._stub, "click", BX.delegate(this.focusOnTodoEditor, this));
 	        }
-
 	        this._wrapper.appendChild(this._stub);
 	      }
-
 	      if (this._history && this._history.getItemCount() > 0) {
 	        BX.removeClass(this._stub, "crm-entity-stream-section-last");
 	      } else {
@@ -8778,10 +4881,12 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "focusOnTodoEditor",
 	    value: function focusOnTodoEditor() {
-	      const menuBar = this.getManager().getMenuBar();
-	      menuBar.setActiveItemById('todo');
-	      const todoEditor = menuBar.getTodoEditor();
-	      todoEditor.setFocused();
+	      const menuBar = BX.Crm.Timeline.MenuBar.getDefault();
+	      if (menuBar) {
+	        menuBar.setActiveItemById('todo');
+	        const todoEditor = menuBar.getItemById('todo');
+	        todoEditor === null || todoEditor === void 0 ? void 0 : todoEditor.focus();
+	      }
 	    }
 	  }, {
 	    key: "getMessage",
@@ -8806,20 +4911,16 @@ this.BX.Crm = this.BX.Crm || {};
 	  }]);
 	  return Schedule;
 	}(Steam);
-
 	babelHelpers.defineProperty(Schedule, "items", {});
 	babelHelpers.defineProperty(Schedule, "messages", {});
 
 	/** @memberof BX.Crm.Timeline.Items */
-
 	let Modification = /*#__PURE__*/function (_History) {
 	  babelHelpers.inherits(Modification, _History);
-
 	  function Modification() {
 	    babelHelpers.classCallCheck(this, Modification);
 	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Modification).call(this));
 	  }
-
 	  babelHelpers.createClass(Modification, [{
 	    key: "getMessage",
 	    value: function getMessage(name) {
@@ -8851,7 +4952,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      });
 	      const header = this.prepareHeaderLayout();
 	      const contentChildren = [];
-
 	      if (BX.type.isNotEmptyString(this.getTextDataParam("START_NAME"))) {
 	        contentChildren.push(BX.create("SPAN", {
 	          attrs: {
@@ -8865,7 +4965,6 @@ this.BX.Crm = this.BX.Crm || {};
 	          }
 	        }));
 	      }
-
 	      if (BX.type.isNotEmptyString(this.getTextDataParam("FINISH_NAME"))) {
 	        contentChildren.push(BX.create("SPAN", {
 	          attrs: {
@@ -8874,7 +4973,6 @@ this.BX.Crm = this.BX.Crm || {};
 	          text: this.getTextDataParam("FINISH_NAME")
 	        }));
 	      }
-
 	      content.appendChild(header);
 	      content.appendChild(BX.create("DIV", {
 	        attrs: {
@@ -8886,14 +4984,14 @@ this.BX.Crm = this.BX.Crm || {};
 	          },
 	          children: contentChildren
 	        })]
-	      })); //region Author
+	      }));
 
+	      //region Author
 	      const authorNode = this.prepareAuthorLayout();
-
 	      if (authorNode) {
 	        content.appendChild(authorNode);
-	      } //endregion
-
+	      }
+	      //endregion
 
 	      wrapper.appendChild(BX.create("DIV", {
 	        attrs: {
@@ -8913,19 +5011,15 @@ this.BX.Crm = this.BX.Crm || {};
 	  }]);
 	  return Modification;
 	}(History);
-
 	babelHelpers.defineProperty(Modification, "messages", {});
 
 	/** @memberof BX.Crm.Timeline.Actions */
-
 	let Conversion = /*#__PURE__*/function (_History) {
 	  babelHelpers.inherits(Conversion, _History);
-
 	  function Conversion() {
 	    babelHelpers.classCallCheck(this, Conversion);
 	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Conversion).call(this));
 	  }
-
 	  babelHelpers.createClass(Conversion, [{
 	    key: "getMessage",
 	    value: function getMessage(name) {
@@ -8961,11 +5055,9 @@ this.BX.Crm = this.BX.Crm || {};
 	      const entityInfos = this.getArrayDataParam("ENTITIES");
 	      let i = 0;
 	      const length = entityInfos.length;
-
 	      for (; i < length; i++) {
 	        const entityInfo = entityInfos[i];
 	        let entityNode;
-
 	        if (BX.prop.getString(entityInfo, 'SHOW_URL', "") === "") {
 	          entityNode = BX.create("DIV", {
 	            attrs: {
@@ -9016,23 +5108,21 @@ this.BX.Crm = this.BX.Crm || {};
 	            })]
 	          });
 	        }
-
 	        entityNodes.push(entityNode);
 	      }
-
 	      content.appendChild(BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-detail"
 	        },
 	        children: entityNodes
-	      })); //region Author
+	      }));
 
+	      //region Author
 	      const authorNode = this.prepareAuthorLayout();
-
 	      if (authorNode) {
 	        content.appendChild(authorNode);
-	      } //endregion
-
+	      }
+	      //endregion
 
 	      wrapper.appendChild(BX.create("DIV", {
 	        attrs: {
@@ -9052,20 +5142,393 @@ this.BX.Crm = this.BX.Crm || {};
 	  }]);
 	  return Conversion;
 	}(History);
-
 	babelHelpers.defineProperty(Conversion, "messages", {});
 
-	/** @memberof BX.Crm.Timeline.Items */
-
-	let Email$2 = /*#__PURE__*/function (_HistoryActivity) {
-	  babelHelpers.inherits(Email$$1, _HistoryActivity);
-
-	  function Email$$1() {
-	    babelHelpers.classCallCheck(this, Email$$1);
-	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Email$$1).call(this));
+	/** @memberof BX.Crm.Timeline.Actions */
+	let Email$1 = /*#__PURE__*/function (_Activity) {
+	  babelHelpers.inherits(Email, _Activity);
+	  function Email() {
+	    var _this;
+	    babelHelpers.classCallCheck(this, Email);
+	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Email).call(this));
+	    _this._clickHandler = BX.delegate(_this.onClick, babelHelpers.assertThisInitialized(_this));
+	    _this._saveHandler = BX.delegate(_this.onSave, babelHelpers.assertThisInitialized(_this));
+	    return _this;
 	  }
+	  babelHelpers.createClass(Email, [{
+	    key: "onClick",
+	    value: function onClick(e) {
+	      const settings = {
+	        "ownerType": BX.CrmEntityType.resolveName(BX.prop.getInteger(this._entityData, "OWNER_TYPE_ID", 0)),
+	        "ownerID": BX.prop.getInteger(this._entityData, "OWNER_ID", 0),
+	        "ownerUrl": BX.prop.getString(this._entityData, "OWNER_URL", ""),
+	        "ownerTitle": BX.prop.getString(this._entityData, "OWNER_TITLE", ""),
+	        "originalMessageID": BX.prop.getInteger(this._entityData, "ID", 0),
+	        "messageType": "RE"
+	      };
+	      if (BX.CrmActivityProvider && top.BX.Bitrix24 && top.BX.Bitrix24.Slider) {
+	        const activity = this._activityEditor.addEmail(settings);
+	        activity.addOnSave(this._saveHandler);
+	      } else {
+	        this.loadActivityCommunications(BX.delegate(function (communications) {
+	          settings['communications'] = BX.type.isArray(communications) ? communications : [];
+	          settings['communicationsLoaded'] = true;
+	          BX.CrmActivityEmail.prepareReply(settings);
+	          const activity = this._activityEditor.addEmail(settings);
+	          activity.addOnSave(this._saveHandler);
+	        }, this));
+	      }
+	      return BX.PreventDefault(e);
+	    }
+	  }, {
+	    key: "onSave",
+	    value: function onSave(activity, data) {
+	      if (BX.type.isFunction(this._item.onActivityCreate)) {
+	        this._item.onActivityCreate(activity, data);
+	      }
+	    }
+	  }]);
+	  return Email;
+	}(Activity$1);
 
-	  babelHelpers.createClass(Email$$1, [{
+	/** @memberof BX.Crm.Timeline.Actions */
+	let HistoryEmail = /*#__PURE__*/function (_Email) {
+	  babelHelpers.inherits(HistoryEmail, _Email);
+	  function HistoryEmail() {
+	    babelHelpers.classCallCheck(this, HistoryEmail);
+	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(HistoryEmail).call(this));
+	  }
+	  babelHelpers.createClass(HistoryEmail, [{
+	    key: "doLayout",
+	    value: function doLayout() {
+	      this._container.appendChild(BX.create("A", {
+	        attrs: {
+	          className: "crm-entity-stream-content-action-reply-btn"
+	        },
+	        events: {
+	          "click": this._clickHandler
+	        }
+	      }));
+	    }
+	  }], [{
+	    key: "create",
+	    value: function create(id, settings) {
+	      const self = new HistoryEmail();
+	      self.initialize(id, settings);
+	      return self;
+	    }
+	  }]);
+	  return HistoryEmail;
+	}(Email$1);
+
+	/** @memberof BX.Crm.Timeline.Actions */
+	let ScheduleEmail = /*#__PURE__*/function (_Email2) {
+	  babelHelpers.inherits(ScheduleEmail, _Email2);
+	  function ScheduleEmail() {
+	    babelHelpers.classCallCheck(this, ScheduleEmail);
+	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(ScheduleEmail).call(this));
+	  }
+	  babelHelpers.createClass(ScheduleEmail, [{
+	    key: "doLayout",
+	    value: function doLayout() {
+	      this._container.appendChild(BX.create("DIV", {
+	        attrs: {
+	          className: "crm-entity-stream-content-action-reply-btn"
+	        },
+	        events: {
+	          "click": this._clickHandler
+	        }
+	      }));
+	    }
+	  }], [{
+	    key: "create",
+	    value: function create(id, settings) {
+	      const self = new ScheduleEmail();
+	      self.initialize(id, settings);
+	      return self;
+	    }
+	  }]);
+	  return ScheduleEmail;
+	}(Email$1);
+
+	/** @memberof BX.Crm.Timeline.Items */
+	let HistoryActivity = /*#__PURE__*/function (_History) {
+	  babelHelpers.inherits(HistoryActivity, _History);
+	  function HistoryActivity() {
+	    babelHelpers.classCallCheck(this, HistoryActivity);
+	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(HistoryActivity).call(this));
+	  }
+	  babelHelpers.createClass(HistoryActivity, [{
+	    key: "doInitialize",
+	    value: function doInitialize() {
+	      babelHelpers.get(babelHelpers.getPrototypeOf(HistoryActivity.prototype), "doInitialize", this).call(this);
+	      if (!(this._activityEditor instanceof BX.CrmActivityEditor)) {
+	        throw "HistoryActivity. The field 'activityEditor' is not assigned.";
+	      }
+	    }
+	  }, {
+	    key: "getTitle",
+	    value: function getTitle() {
+	      return BX.prop.getString(this.getAssociatedEntityData(), "SUBJECT", "");
+	    }
+	  }, {
+	    key: "getTypeDescription",
+	    value: function getTypeDescription() {
+	      const entityData = this.getAssociatedEntityData();
+	      const direction = BX.prop.getInteger(entityData, "DIRECTION", 0);
+	      const typeCategoryId = this.getTypeCategoryId();
+	      if (typeCategoryId === BX.CrmActivityType.email) {
+	        return this.getMessage(direction === BX.CrmActivityDirection.incoming ? "incomingEmail" : "outgoingEmail");
+	      } else if (typeCategoryId === BX.CrmActivityType.call) {
+	        return this.getMessage(direction === BX.CrmActivityDirection.incoming ? "incomingCall" : "outgoingCall");
+	      } else if (typeCategoryId === BX.CrmActivityType.meeting) {
+	        return this.getMessage("meeting");
+	      } else if (typeCategoryId === BX.CrmActivityType.task) {
+	        return this.getMessage("task");
+	      } else if (typeCategoryId === BX.CrmActivityType.provider) {
+	        const providerId = BX.prop.getString(entityData, "PROVIDER_ID", "");
+	        if (providerId === "CRM_WEBFORM") {
+	          return this.getMessage("webform");
+	        } else if (providerId === "CRM_SMS") {
+	          return this.getMessage("sms");
+	        } else if (providerId === "CRM_REQUEST") {
+	          return this.getMessage("activityRequest");
+	        } else if (providerId === "IMOPENLINES_SESSION") {
+	          return this.getMessage("openLine");
+	        } else if (providerId === "REST_APP") {
+	          return this.getMessage("restApplication");
+	        } else if (providerId === "VISIT_TRACKER") {
+	          return this.getMessage("visit");
+	        } else if (providerId === "ZOOM") {
+	          return this.getMessage("zoom");
+	        }
+	      }
+	      return "";
+	    }
+	  }, {
+	    key: "prepareTitleLayout",
+	    value: function prepareTitleLayout() {
+	      return BX.create("A", {
+	        attrs: {
+	          href: "#",
+	          className: "crm-entity-stream-content-event-title"
+	        },
+	        events: {
+	          "click": this._headerClickHandler
+	        },
+	        text: this.getTypeDescription()
+	      });
+	    }
+	  }, {
+	    key: "prepareTimeLayout",
+	    value: function prepareTimeLayout() {
+	      return BX.create("SPAN", {
+	        attrs: {
+	          className: "crm-entity-stream-content-event-time"
+	        },
+	        text: this.formatTime(this.getCreatedTime())
+	      });
+	    }
+	  }, {
+	    key: "prepareMarkLayout",
+	    value: function prepareMarkLayout() {
+	      const entityData = this.getAssociatedEntityData();
+	      const markTypeId = BX.prop.getInteger(entityData, "MARK_TYPE_ID", 0);
+	      if (markTypeId <= 0) {
+	        return null;
+	      }
+	      let messageName = "";
+	      if (markTypeId === Mark.success) {
+	        messageName = "SuccessMark";
+	      } else if (markTypeId === Mark.renew) {
+	        messageName = "RenewMark";
+	      }
+	      if (messageName === "") {
+	        return null;
+	      }
+	      let markText = "";
+	      const typeCategoryId = this.getTypeCategoryId();
+	      if (typeCategoryId === BX.CrmActivityType.email) {
+	        markText = this.getMessage("email" + messageName);
+	      } else if (typeCategoryId === BX.CrmActivityType.call) {
+	        markText = this.getMessage("call" + messageName);
+	      } else if (typeCategoryId === BX.CrmActivityType.meeting) {
+	        markText = this.getMessage("meeting" + messageName);
+	      } else if (typeCategoryId === BX.CrmActivityType.task) {
+	        markText = this.getMessage("task" + messageName);
+	      }
+	      if (markText === "") {
+	        return null;
+	      }
+	      return BX.create("SPAN", {
+	        props: {
+	          className: "crm-entity-stream-content-event-skipped"
+	        },
+	        text: markText
+	      });
+	    }
+	  }, {
+	    key: "prepareActions",
+	    value: function prepareActions() {
+	      if (this.isReadOnly()) {
+	        return;
+	      }
+	      const typeCategoryId = this.getTypeCategoryId();
+	      if (typeCategoryId === BX.CrmActivityType.email) {
+	        this._actions.push(HistoryEmail.create("email", {
+	          item: this,
+	          container: this._actionContainer,
+	          entityData: this.getAssociatedEntityData(),
+	          activityEditor: this._activityEditor
+	        }));
+	      }
+	    }
+	  }, {
+	    key: "prepareContextMenuItems",
+	    value: function prepareContextMenuItems() {
+	      if (this._isMenuShown) {
+	        return;
+	      }
+	      const menuItems = [];
+	      if (!this.isReadOnly()) {
+	        if (this.isEditable()) {
+	          menuItems.push({
+	            id: "edit",
+	            text: this.getMessage("menuEdit"),
+	            onclick: BX.delegate(this.edit, this)
+	          });
+	        }
+	        menuItems.push({
+	          id: "remove",
+	          text: this.getMessage("menuDelete"),
+	          onclick: BX.delegate(this.processRemoval, this)
+	        });
+	        if (this.isFixed() || this._fixedHistory.findItemById(this._id)) menuItems.push({
+	          id: "unfasten",
+	          text: this.getMessage("menuUnfasten"),
+	          onclick: BX.delegate(this.unfasten, this)
+	        });else menuItems.push({
+	          id: "fasten",
+	          text: this.getMessage("menuFasten"),
+	          onclick: BX.delegate(this.fasten, this)
+	        });
+	      }
+	      return menuItems;
+	    }
+	  }, {
+	    key: "view",
+	    value: function view() {
+	      this.closeContextMenu();
+	      const entityData = this.getAssociatedEntityData();
+	      const id = BX.prop.getInteger(entityData, "ID", 0);
+	      if (id > 0) {
+	        this._activityEditor.viewActivity(id);
+	      }
+	    }
+	  }, {
+	    key: "edit",
+	    value: function edit() {
+	      this.closeContextMenu();
+	      const associatedEntityTypeId = this.getAssociatedEntityTypeId();
+	      if (associatedEntityTypeId === BX.CrmEntityType.enumeration.activity) {
+	        const entityData = this.getAssociatedEntityData();
+	        const id = BX.prop.getInteger(entityData, "ID", 0);
+	        if (id > 0) {
+	          this._activityEditor.editActivity(id);
+	        }
+	      }
+	    }
+	  }, {
+	    key: "processRemoval",
+	    value: function processRemoval() {
+	      this.closeContextMenu();
+	      this._detetionConfirmDlgId = "entity_timeline_deletion_" + this.getId() + "_confirm";
+	      let dlg = BX.Crm.ConfirmationDialog.get(this._detetionConfirmDlgId);
+	      if (!dlg) {
+	        dlg = BX.Crm.ConfirmationDialog.create(this._detetionConfirmDlgId, {
+	          title: this.getMessage("removeConfirmTitle"),
+	          content: this.getRemoveMessage()
+	        });
+	      }
+	      dlg.open().then(BX.delegate(this.onRemovalConfirm, this), BX.delegate(this.onRemovalCancel, this));
+	    }
+	  }, {
+	    key: "getRemoveMessage",
+	    value: function getRemoveMessage() {
+	      return this.getMessage('removeConfirm');
+	    }
+	  }, {
+	    key: "onRemovalConfirm",
+	    value: function onRemovalConfirm(result) {
+	      if (BX.prop.getBoolean(result, "cancel", true)) {
+	        return;
+	      }
+	      this.remove();
+	    }
+	  }, {
+	    key: "onRemovalCancel",
+	    value: function onRemovalCancel() {}
+	  }, {
+	    key: "remove",
+	    value: function remove() {
+	      const associatedEntityTypeId = this.getAssociatedEntityTypeId();
+	      if (associatedEntityTypeId === BX.CrmEntityType.enumeration.activity) {
+	        const entityData = this.getAssociatedEntityData();
+	        const id = BX.prop.getInteger(entityData, "ID", 0);
+	        if (id > 0) {
+	          const activityEditor = this._activityEditor;
+	          const item = activityEditor.getItemById(id);
+	          if (item) {
+	            activityEditor.deleteActivity(id, true);
+	          } else {
+	            const serviceUrl = BX.util.add_url_param(activityEditor.getSetting('serviceUrl', ''), {
+	              id: id,
+	              action: 'get_activity',
+	              ownertype: activityEditor.getSetting('ownerType', ''),
+	              ownerid: activityEditor.getSetting('ownerID', '')
+	            });
+	            BX.ajax({
+	              'url': serviceUrl,
+	              'method': 'POST',
+	              'dataType': 'json',
+	              'data': {
+	                'ACTION': 'GET_ACTIVITY',
+	                'ID': id,
+	                'OWNER_TYPE': activityEditor.getSetting('ownerType', ''),
+	                'OWNER_ID': activityEditor.getSetting('ownerID', '')
+	              },
+	              onsuccess: BX.delegate(function (data) {
+	                if (typeof data['ACTIVITY'] !== 'undefined') {
+	                  activityEditor._handleActivityChange(data['ACTIVITY']);
+	                  window.setTimeout(BX.delegate(this.remove, this), 500);
+	                }
+	              }, this),
+	              onfailure: function (data) {}
+	            });
+	          }
+	        }
+	      }
+	    }
+	  }], [{
+	    key: "create",
+	    value: function create(id, settings) {
+	      const self = new HistoryActivity();
+	      self.initialize(id, settings);
+	      return self;
+	    }
+	  }]);
+	  return HistoryActivity;
+	}(History);
+	babelHelpers.defineProperty(HistoryActivity, "messages", {});
+
+	/** @memberof BX.Crm.Timeline.Items */
+	let Email$2 = /*#__PURE__*/function (_HistoryActivity) {
+	  babelHelpers.inherits(Email, _HistoryActivity);
+	  function Email() {
+	    babelHelpers.classCallCheck(this, Email);
+	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Email).call(this));
+	  }
+	  babelHelpers.createClass(Email, [{
 	    key: "prepareHeaderLayout",
 	    value: function prepareHeaderLayout() {
 	      const header = BX.create("DIV", {
@@ -9079,7 +5542,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      const statusText = emailInfo !== null ? BX.prop.getString(emailInfo, "STATUS_TEXT", "") : "";
 	      const error = emailInfo !== null ? BX.prop.getBoolean(emailInfo, "STATUS_ERROR", false) : false;
 	      const className = !error ? "crm-entity-stream-content-event-skipped" : "crm-entity-stream-content-event-missing";
-
 	      if (statusText !== "") {
 	        header.appendChild(BX.create("SPAN", {
 	          props: {
@@ -9088,13 +5550,10 @@ this.BX.Crm = this.BX.Crm || {};
 	          text: statusText
 	        }));
 	      }
-
 	      const markNode = this.prepareMarkLayout();
-
 	      if (markNode) {
 	        header.appendChild(markNode);
 	      }
-
 	      header.appendChild(this.prepareTimeLayout());
 	      return header;
 	    }
@@ -9102,7 +5561,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "prepareContextMenuItems",
 	    value: function prepareContextMenuItems() {
 	      const menuItems = [];
-
 	      if (!this.isReadOnly()) {
 	        menuItems.push({
 	          id: "view",
@@ -9124,7 +5582,6 @@ this.BX.Crm = this.BX.Crm || {};
 	          onclick: BX.delegate(this.fasten, this)
 	        });
 	      }
-
 	      return menuItems;
 	    }
 	  }, {
@@ -9147,12 +5604,10 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function prepareContent() {
 	      const entityData = this.getAssociatedEntityData();
 	      let description = BX.prop.getString(entityData, "DESCRIPTION_RAW", "");
-
 	      if (description !== "") {
 	        //trim leading spaces
 	        description = description.replace(/^\s+/, '');
 	      }
-
 	      const communication = BX.prop.getObject(entityData, "COMMUNICATION", {});
 	      const communicationTitle = BX.prop.getString(communication, "TITLE", "");
 	      const communicationShowUrl = BX.prop.getString(communication, "SHOW_URL", "");
@@ -9178,17 +5633,19 @@ this.BX.Crm = this.BX.Crm || {};
 	          className: "crm-entity-stream-section-content"
 	        },
 	        children: [wrapper]
-	      })); //Header
+	      }));
 
+	      //Header
 	      const header = this.prepareHeaderLayout();
-	      wrapper.appendChild(header); //region Context Menu
+	      wrapper.appendChild(header);
 
+	      //region Context Menu
 	      if (this.isContextMenuEnabled()) {
 	        wrapper.appendChild(this.prepareContextMenuButton());
-	      } //endregion
+	      }
+	      //endregion
+
 	      //Details
-
-
 	      const detailWrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-detail-email"
@@ -9199,8 +5656,9 @@ this.BX.Crm = this.BX.Crm || {};
 	          className: "crm-entity-stream-content-detail"
 	        },
 	        children: [detailWrapper]
-	      })); //TODO: Add status text
+	      }));
 
+	      //TODO: Add status text
 	      /*
 	      detailWrapper.appendChild(
 	      	BX.create("DIV", { attrs: { className: "crm-entity-stream-content-detail-email-read-status" } })
@@ -9226,8 +5684,9 @@ this.BX.Crm = this.BX.Crm || {};
 	          className: "crm-entity-stream-content-detail-email-to"
 	        }
 	      });
-	      detailWrapper.appendChild(communicationWrapper); //Communications
+	      detailWrapper.appendChild(communicationWrapper);
 
+	      //Communications
 	      if (communicationTitle !== "") {
 	        if (communicationShowUrl !== "") {
 	          communicationWrapper.appendChild(BX.create("A", {
@@ -9242,44 +5701,43 @@ this.BX.Crm = this.BX.Crm || {};
 	          }));
 	        }
 	      }
-
 	      if (communicationValue !== "") {
 	        if (communicationTitle !== "") {
 	          communicationWrapper.appendChild(BX.create("SPAN", {
 	            text: " "
 	          }));
 	        }
-
 	        communicationWrapper.appendChild(BX.create("SPAN", {
 	          attrs: {
 	            className: "crm-entity-stream-content-detail-email-address"
 	          },
 	          text: communicationValue
 	        }));
-	      } //Content
+	      }
 
-
+	      //Content
 	      detailWrapper.appendChild(BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-detail-email-fragment"
 	        },
 	        children: this.prepareCutOffElements(description, 128, this._headerClickHandler)
-	      })); //region Author
+	      }));
 
+	      //region Author
 	      const authorNode = this.prepareAuthorLayout();
-
 	      if (authorNode) {
 	        wrapper.appendChild(authorNode);
-	      } //endregion
+	      }
+	      //endregion
+
 	      //region  Actions
-
-
 	      this._actionContainer = BX.create("SPAN", {
 	        attrs: {
 	          className: "crm-entity-stream-content-detail-action"
 	        }
 	      });
-	      wrapper.appendChild(this._actionContainer); //endregion
+	      wrapper.appendChild(this._actionContainer);
+	      //endregion
 
 	      if (!this.isReadOnly()) wrapper.appendChild(this.prepareFixedSwitcherLayout());
 	      return outerWrapper;
@@ -9290,7 +5748,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (this.isReadOnly()) {
 	        return;
 	      }
-
 	      this._actions.push(HistoryEmail.create("email", {
 	        item: this,
 	        container: this._actionContainer,
@@ -9308,22 +5765,19 @@ this.BX.Crm = this.BX.Crm || {};
 	  }], [{
 	    key: "create",
 	    value: function create(id, settings) {
-	      const self = new Email$$1();
+	      const self = new Email();
 	      self.initialize(id, settings);
 	      return self;
 	    }
 	  }]);
-	  return Email$$1;
+	  return Email;
 	}(HistoryActivity);
 
 	/** @memberof BX.Crm.Timeline.Actions */
-
 	let Call$1 = /*#__PURE__*/function (_Activity) {
 	  babelHelpers.inherits(Call, _Activity);
-
 	  function Call() {
 	    var _this;
-
 	    babelHelpers.classCallCheck(this, Call);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Call).call(this));
 	    _this._clickHandler = BX.delegate(_this.onClick, babelHelpers.assertThisInitialized(_this));
@@ -9332,7 +5786,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    _this._menuItems = null;
 	    return _this;
 	  }
-
 	  babelHelpers.createClass(Call, [{
 	    key: "getButton",
 	    value: function getButton() {
@@ -9345,29 +5798,24 @@ this.BX.Crm = this.BX.Crm || {};
 	        window.alert(this.getMessage("telephonyNotSupported"));
 	        return;
 	      }
-
 	      let phone = "";
 	      const itemData = this.getItemData();
 	      const phones = BX.prop.getArray(itemData, "PHONE", []);
-
 	      if (phones.length === 1) {
 	        this.addCall(phones[0]['VALUE']);
 	      } else if (phones.length > 1) {
 	        this.showMenu();
 	      } else {
 	        const communication = BX.prop.getObject(this._entityData, "COMMUNICATION", null);
-
 	        if (communication) {
 	          if (BX.prop.getString(communication, "TYPE") === "PHONE") {
 	            phone = BX.prop.getString(communication, "VALUE");
-
 	            if (phone) {
 	              this.addCall(phone);
 	            }
 	          }
 	        }
 	      }
-
 	      return BX.PreventDefault(e);
 	    }
 	  }, {
@@ -9376,13 +5824,10 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (this._isMenuShown) {
 	        return;
 	      }
-
 	      this.prepareMenuItems();
-
 	      if (!this._menuItems || this._menuItems.length === 0) {
 	        return;
 	      }
-
 	      this._menu = new BX.PopupMenuWindow(this._id, this._container, this._menuItems, {
 	        offsetTop: 0,
 	        offsetLeft: 16,
@@ -9392,7 +5837,6 @@ this.BX.Crm = this.BX.Crm || {};
 	          onPopupDestroy: BX.delegate(this.onMenuDestroy, this)
 	        }
 	      });
-
 	      this._menu.popupWindow.show();
 	    }
 	  }, {
@@ -9401,7 +5845,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (!this._isMenuShown) {
 	        return;
 	      }
-
 	      if (this._menu) {
 	        this._menu.close();
 	      }
@@ -9412,25 +5855,20 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (this._menuItems) {
 	        return;
 	      }
-
 	      const itemData = this.getItemData();
 	      const phones = BX.prop.getArray(itemData, "PHONE", []);
 	      const handler = BX.delegate(this.onMenuItemClick, this);
 	      this._menuItems = [];
-
 	      if (phones.length === 0) {
 	        return;
 	      }
-
 	      let i = 0;
 	      const l = phones.length;
-
 	      for (; i < l; i++) {
 	        const value = BX.prop.getString(phones[i], "VALUE");
 	        const formattedValue = BX.prop.getString(phones[i], "VALUE_FORMATTED");
 	        const complexName = BX.prop.getString(phones[i], "COMPLEX_NAME");
 	        const itemText = (complexName ? complexName + ': ' : '') + (formattedValue ? formattedValue : value);
-
 	        if (value !== "") {
 	          this._menuItems.push({
 	            id: value,
@@ -9455,7 +5893,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "onMenuClose",
 	    value: function onMenuClose() {
 	      this._isMenuShown = false;
-
 	      this._menu.popupWindow.destroy();
 	    }
 	  }, {
@@ -9468,59 +5905,46 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function addCall(phone) {
 	      const communication = BX.prop.getObject(this._entityData, "COMMUNICATION", null);
 	      let entityTypeId = parseInt(BX.prop.getString(communication, "ENTITY_TYPE_ID", "0"));
-
 	      if (isNaN(entityTypeId)) {
 	        entityTypeId = 0;
 	      }
-
 	      let entityId = parseInt(BX.prop.getString(communication, "ENTITY_ID", "0"));
-
 	      if (isNaN(entityId)) {
 	        entityId = 0;
 	      }
-
 	      let ownerTypeId = 0;
 	      let ownerId = 0;
 	      const ownerInfo = BX.prop.getObject(this._settings, "ownerInfo");
-
 	      if (ownerInfo) {
 	        ownerTypeId = BX.prop.getInteger(ownerInfo, "ENTITY_TYPE_ID", 0);
 	        ownerId = BX.prop.getInteger(ownerInfo, "ENTITY_ID", 0);
 	      }
-
 	      if (ownerTypeId <= 0 || ownerId <= 0) {
 	        ownerTypeId = BX.prop.getInteger(this._entityData, "OWNER_TYPE_ID", 0);
 	        ownerId = BX.prop.getInteger(this._entityData, "OWNER_ID", "0");
 	      }
-
 	      if (ownerTypeId <= 0 || ownerId <= 0) {
 	        ownerTypeId = entityTypeId;
 	        ownerId = entityId;
 	      }
-
 	      let activityId = parseInt(BX.prop.getString(this._entityData, "ID", "0"));
-
 	      if (isNaN(activityId)) {
 	        activityId = 0;
 	      }
-
 	      const params = {
 	        "ENTITY_TYPE_NAME": BX.CrmEntityType.resolveName(entityTypeId),
 	        "ENTITY_ID": entityId,
 	        "AUTO_FOLD": true
 	      };
-
 	      if (ownerTypeId !== entityTypeId || ownerId !== entityId) {
 	        params["BINDINGS"] = [{
 	          "OWNER_TYPE_NAME": BX.CrmEntityType.resolveName(ownerTypeId),
 	          "OWNER_ID": ownerId
 	        }];
 	      }
-
 	      if (activityId > 0) {
 	        params["SRC_ACTIVITY_ID"] = activityId;
 	      }
-
 	      window.top['BXIM'].phoneTo(phone, params);
 	    }
 	  }, {
@@ -9531,22 +5955,19 @@ this.BX.Crm = this.BX.Crm || {};
 	    }
 	  }]);
 	  return Call;
-	}(Activity);
-	/** @memberof BX.Crm.Timeline.Actions */
+	}(Activity$1);
 
+	/** @memberof BX.Crm.Timeline.Actions */
 	babelHelpers.defineProperty(Call$1, "messages", {});
 	let HistoryCall = /*#__PURE__*/function (_Call) {
 	  babelHelpers.inherits(HistoryCall, _Call);
-
 	  function HistoryCall() {
 	    var _this2;
-
 	    babelHelpers.classCallCheck(this, HistoryCall);
 	    _this2 = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(HistoryCall).call(this));
 	    _this2._button = null;
 	    return _this2;
 	  }
-
 	  babelHelpers.createClass(HistoryCall, [{
 	    key: "getButton",
 	    value: function getButton() {
@@ -9563,7 +5984,6 @@ this.BX.Crm = this.BX.Crm || {};
 	          "click": this._clickHandler
 	        }
 	      });
-
 	      this._container.appendChild(this._button);
 	    }
 	  }], [{
@@ -9578,12 +5998,10 @@ this.BX.Crm = this.BX.Crm || {};
 	}(Call$1);
 	let ScheduleCall = /*#__PURE__*/function (_Call2) {
 	  babelHelpers.inherits(ScheduleCall, _Call2);
-
 	  function ScheduleCall() {
 	    babelHelpers.classCallCheck(this, ScheduleCall);
 	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(ScheduleCall).call(this));
 	  }
-
 	  babelHelpers.createClass(ScheduleCall, [{
 	    key: "doLayout",
 	    value: function doLayout() {
@@ -9608,13 +6026,10 @@ this.BX.Crm = this.BX.Crm || {};
 	}(Call$1);
 
 	/** @memberof BX.Crm.Timeline.Items */
-
 	let Call$2 = /*#__PURE__*/function (_HistoryActivity) {
 	  babelHelpers.inherits(Call, _HistoryActivity);
-
 	  function Call() {
 	    var _this;
-
 	    babelHelpers.classCallCheck(this, Call);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Call).call(this));
 	    _this._playerDummyClickHandler = BX.delegate(_this.onPlayerDummyClick, babelHelpers.assertThisInitialized(_this));
@@ -9623,18 +6038,15 @@ this.BX.Crm = this.BX.Crm || {};
 	    _this._mediaFileInfo = null;
 	    return _this;
 	  }
-
 	  babelHelpers.createClass(Call, [{
 	    key: "getTypeDescription",
 	    value: function getTypeDescription() {
 	      const entityData = this.getAssociatedEntityData();
 	      const callInfo = BX.prop.getObject(entityData, "CALL_INFO", null);
 	      const callTypeText = callInfo !== null ? BX.prop.getString(callInfo, "CALL_TYPE_TEXT", "") : "";
-
 	      if (callTypeText !== "") {
 	        return callTypeText;
 	      }
-
 	      const direction = BX.prop.getInteger(entityData, "DIRECTION", 0);
 	      return this.getMessage(direction === BX.CrmActivityDirection.incoming ? "incomingCall" : "outgoingCall");
 	    }
@@ -9646,14 +6058,14 @@ this.BX.Crm = this.BX.Crm || {};
 	          className: "crm-entity-stream-content-header"
 	        }
 	      });
-	      header.appendChild(this.prepareTitleLayout()); //Position is important
+	      header.appendChild(this.prepareTitleLayout());
 
+	      //Position is important
 	      const entityData = this.getAssociatedEntityData();
 	      const callInfo = BX.prop.getObject(entityData, "CALL_INFO", null);
 	      const hasCallInfo = callInfo !== null;
 	      const isSuccessfull = hasCallInfo ? BX.prop.getBoolean(callInfo, "SUCCESSFUL", false) : false;
 	      const statusText = hasCallInfo ? BX.prop.getString(callInfo, "STATUS_TEXT", "") : "";
-
 	      if (hasCallInfo && statusText.length) {
 	        header.appendChild(BX.create("DIV", {
 	          attrs: {
@@ -9662,7 +6074,6 @@ this.BX.Crm = this.BX.Crm || {};
 	          text: statusText
 	        }));
 	      }
-
 	      header.appendChild(BX.create("SPAN", {
 	        attrs: {
 	          className: "crm-entity-stream-content-event-time"
@@ -9676,12 +6087,10 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function prepareContent() {
 	      const entityData = this.getAssociatedEntityData();
 	      let description = BX.prop.getString(entityData, "DESCRIPTION_RAW", "");
-
 	      if (description !== "") {
 	        //trim leading spaces
 	        description = description.replace(/^\s+/, '');
 	      }
-
 	      const communication = BX.prop.getObject(entityData, "COMMUNICATION", {});
 	      const communicationTitle = BX.prop.getString(communication, "TITLE", "");
 	      const communicationShowUrl = BX.prop.getString(communication, "SHOW_URL", "");
@@ -9715,17 +6124,19 @@ this.BX.Crm = this.BX.Crm || {};
 	          className: "crm-entity-stream-section-content"
 	        },
 	        children: [wrapper]
-	      })); //Header
+	      }));
 
+	      //Header
 	      const header = this.prepareHeaderLayout();
-	      wrapper.appendChild(header); //region Context Menu
+	      wrapper.appendChild(header);
 
+	      //region Context Menu
 	      if (this.isContextMenuEnabled()) {
 	        wrapper.appendChild(this.prepareContextMenuButton());
-	      } //endregion
+	      }
+	      //endregion
+
 	      //Details
-
-
 	      const detailWrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-detail"
@@ -9745,15 +6156,15 @@ this.BX.Crm = this.BX.Crm || {};
 	          },
 	          text: this.getTitle()
 	        })]
-	      })); //Content
+	      }));
 
+	      //Content
 	      detailWrapper.appendChild(BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-detail-description"
 	        },
 	        children: this.prepareMultilineCutOffElements(description, 128, this._headerClickHandler)
 	      }));
-
 	      if (hasCallInfo) {
 	        const callInfoWrapper = BX.create("DIV", {
 	          attrs: {
@@ -9762,13 +6173,11 @@ this.BX.Crm = this.BX.Crm || {};
 	        });
 	        detailWrapper.appendChild(callInfoWrapper);
 	        this._mediaFileInfo = BX.prop.getObject(entityData, "MEDIA_FILE_INFO", null);
-
 	        if (this._mediaFileInfo !== null) {
 	          this._playerWrapper = this._history.getManager().renderAudioDummy(durationText, this._playerDummyClickHandler);
 	          callInfoWrapper.appendChild(this._playerWrapper);
 	          callInfoWrapper.appendChild(this._history.getManager().getAudioPlaybackRateSelector().render());
 	        }
-
 	        if (hasTranscript) {
 	          this._transcriptWrapper = BX.create("DIV", {
 	            attrs: {
@@ -9814,7 +6223,6 @@ this.BX.Crm = this.BX.Crm || {};
 	          });
 	          callInfoWrapper.appendChild(this._transcriptWrapper);
 	        }
-
 	        if (callComment) {
 	          detailWrapper.appendChild(BX.create("DIV", {
 	            attrs: {
@@ -9824,14 +6232,14 @@ this.BX.Crm = this.BX.Crm || {};
 	          }));
 	        }
 	      }
-
 	      const communicationWrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-detail-contact-info"
 	        }
 	      });
-	      detailWrapper.appendChild(communicationWrapper); //Communications
+	      detailWrapper.appendChild(communicationWrapper);
 
+	      //Communications
 	      if (communicationTitle !== "") {
 	        if (communicationShowUrl !== "") {
 	          communicationWrapper.appendChild(BX.create("A", {
@@ -9846,42 +6254,39 @@ this.BX.Crm = this.BX.Crm || {};
 	          }));
 	        }
 	      }
-
 	      if (communicationValueFormatted !== "") {
 	        if (communicationTitle !== "") {
 	          communicationWrapper.appendChild(BX.create("SPAN", {
 	            text: " "
 	          }));
 	        }
-
 	        communicationWrapper.appendChild(BX.create("SPAN", {
 	          attrs: {
 	            className: "crm-entity-stream-content-detail-email-address"
 	          },
 	          text: communicationValueFormatted
 	        }));
-	      } //region Author
+	      }
 
-
+	      //region Author
 	      const authorNode = this.prepareAuthorLayout();
-
 	      if (authorNode) {
 	        wrapper.appendChild(authorNode);
-	      } //endregion
+	      }
+	      //endregion
+
 	      //region  Actions
-
-
 	      this._actionContainer = BX.create("SPAN", {
 	        attrs: {
 	          className: "crm-entity-stream-content-detail-action"
 	        }
 	      });
-	      wrapper.appendChild(this._actionContainer); //endregion
+	      wrapper.appendChild(this._actionContainer);
+	      //endregion
 
 	      if (!this.isReadOnly()) {
 	        wrapper.appendChild(this.prepareFixedSwitcherLayout());
 	      }
-
 	      return outerWrapper;
 	    }
 	  }, {
@@ -9890,7 +6295,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (this.isReadOnly()) {
 	        return;
 	      }
-
 	      this._actions.push(HistoryCall.create("call", {
 	        item: this,
 	        container: this._actionContainer,
@@ -9912,11 +6316,9 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "onPlayerDummyClick",
 	    value: function onPlayerDummyClick(e) {
 	      const stubNode = this._playerWrapper.querySelector(".crm-audio-cap-wrap");
-
 	      if (stubNode) {
 	        BX.addClass(stubNode, "crm-audio-cap-wrap-loader");
 	      }
-
 	      this._history.getManager().getAudioPlaybackRateSelector().addPlayer(this._history.getManager().loadMediaPlayer("history_" + this.getId(), this._mediaFileInfo["URL"], this._mediaFileInfo["TYPE"], this._playerWrapper, this._mediaFileInfo["DURATION"], {
 	        playbackRate: this._history.getManager().getAudioPlaybackRateSelector().getRate()
 	      }));
@@ -9933,15 +6335,12 @@ this.BX.Crm = this.BX.Crm || {};
 	}(HistoryActivity);
 
 	/** @memberof BX.Crm.Timeline.Items */
-
 	let Meeting$1 = /*#__PURE__*/function (_HistoryActivity) {
 	  babelHelpers.inherits(Meeting, _HistoryActivity);
-
 	  function Meeting() {
 	    babelHelpers.classCallCheck(this, Meeting);
 	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Meeting).call(this));
 	  }
-
 	  babelHelpers.createClass(Meeting, [{
 	    key: "prepareHeaderLayout",
 	    value: function prepareHeaderLayout() {
@@ -9952,11 +6351,9 @@ this.BX.Crm = this.BX.Crm || {};
 	      });
 	      header.appendChild(this.prepareTitleLayout());
 	      const markNode = this.prepareMarkLayout();
-
 	      if (markNode) {
 	        header.appendChild(markNode);
 	      }
-
 	      header.appendChild(this.prepareTimeLayout());
 	      return header;
 	    }
@@ -9965,12 +6362,10 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function prepareContent() {
 	      const entityData = this.getAssociatedEntityData();
 	      let description = BX.prop.getString(entityData, "DESCRIPTION_RAW", "");
-
 	      if (description !== "") {
 	        //trim leading spaces
 	        description = description.replace(/^\s+/, '');
 	      }
-
 	      const communication = BX.prop.getObject(entityData, "COMMUNICATION", {});
 	      const communicationTitle = BX.prop.getString(communication, "TITLE", "");
 	      const communicationShowUrl = BX.prop.getString(communication, "SHOW_URL", "");
@@ -9985,11 +6380,9 @@ this.BX.Crm = this.BX.Crm || {};
 	          className: "crm-entity-stream-section-icon crm-entity-stream-section-icon-meeting"
 	        }
 	      }));
-
 	      if (this.isContextMenuEnabled()) {
 	        wrapper.appendChild(this.prepareContextMenuButton());
 	      }
-
 	      if (this.isFixed()) BX.addClass(wrapper, 'crm-entity-stream-section-top-fixed');
 	      const contentWrapper = BX.create("DIV", {
 	        attrs: {
@@ -10023,8 +6416,9 @@ this.BX.Crm = this.BX.Crm || {};
 	          },
 	          text: this.getTitle()
 	        })]
-	      })); //Content
+	      }));
 
+	      //Content
 	      detailWrapper.appendChild(BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-detail-description"
@@ -10037,12 +6431,10 @@ this.BX.Crm = this.BX.Crm || {};
 	        }
 	      });
 	      detailWrapper.appendChild(communicationWrapper);
-
 	      if (communicationTitle !== '') {
 	        communicationWrapper.appendChild(BX.create("SPAN", {
 	          text: this.getMessage("reciprocal") + ": "
 	        }));
-
 	        if (communicationShowUrl !== '') {
 	          communicationWrapper.appendChild(BX.create("A", {
 	            attrs: {
@@ -10056,25 +6448,25 @@ this.BX.Crm = this.BX.Crm || {};
 	          }));
 	        }
 	      }
-
 	      communicationWrapper.appendChild(BX.create("SPAN", {
 	        text: " " + communicationValue
-	      })); //region Author
+	      }));
 
+	      //region Author
 	      const authorNode = this.prepareAuthorLayout();
-
 	      if (authorNode) {
 	        contentWrapper.appendChild(authorNode);
-	      } //endregion
+	      }
+	      //endregion
+
 	      //region  Actions
-
-
 	      this._actionContainer = BX.create("SPAN", {
 	        attrs: {
 	          className: "crm-entity-stream-content-detail-action"
 	        }
 	      });
-	      contentWrapper.appendChild(this._actionContainer); //endregion
+	      contentWrapper.appendChild(this._actionContainer);
+	      //endregion
 
 	      if (!this.isReadOnly()) contentWrapper.appendChild(this.prepareFixedSwitcherLayout());
 	      return wrapper;
@@ -10107,15 +6499,12 @@ this.BX.Crm = this.BX.Crm || {};
 	}(HistoryActivity);
 
 	/** @memberof BX.Crm.Timeline.Items */
-
 	let Task$1 = /*#__PURE__*/function (_HistoryActivity) {
 	  babelHelpers.inherits(Task, _HistoryActivity);
-
 	  function Task() {
 	    babelHelpers.classCallCheck(this, Task);
 	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Task).call(this));
 	  }
-
 	  babelHelpers.createClass(Task, [{
 	    key: "prepareHeaderLayout",
 	    value: function prepareHeaderLayout() {
@@ -10126,11 +6515,9 @@ this.BX.Crm = this.BX.Crm || {};
 	      });
 	      header.appendChild(this.prepareTitleLayout());
 	      const markNode = this.prepareMarkLayout();
-
 	      if (markNode) {
 	        header.appendChild(markNode);
 	      }
-
 	      header.appendChild(this.prepareTimeLayout());
 	      return header;
 	    }
@@ -10139,12 +6526,10 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function prepareContent() {
 	      const entityData = this.getAssociatedEntityData();
 	      let description = BX.prop.getString(entityData, "DESCRIPTION_RAW", "");
-
 	      if (description !== "") {
 	        //trim leading spaces
 	        description = description.replace(/^\s+/, '');
 	      }
-
 	      const communication = BX.prop.getObject(entityData, "COMMUNICATION", {});
 	      const communicationTitle = BX.prop.getString(communication, "TITLE", "");
 	      const communicationShowUrl = BX.prop.getString(communication, "SHOW_URL", "");
@@ -10158,11 +6543,9 @@ this.BX.Crm = this.BX.Crm || {};
 	          className: "crm-entity-stream-section-icon crm-entity-stream-section-icon-task"
 	        }
 	      }));
-
 	      if (this.isContextMenuEnabled()) {
 	        wrapper.appendChild(this.prepareContextMenuButton());
 	      }
-
 	      if (this.isFixed()) BX.addClass(wrapper, 'crm-entity-stream-section-top-fixed');
 	      const contentWrapper = BX.create("DIV", {
 	        attrs: {
@@ -10196,8 +6579,9 @@ this.BX.Crm = this.BX.Crm || {};
 	          },
 	          text: this.getTitle()
 	        })]
-	      })); //Content
+	      }));
 
+	      //Content
 	      detailWrapper.appendChild(BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-detail-description"
@@ -10210,12 +6594,10 @@ this.BX.Crm = this.BX.Crm || {};
 	        }
 	      });
 	      detailWrapper.appendChild(communicationWrapper);
-
 	      if (communicationTitle !== '') {
 	        communicationWrapper.appendChild(BX.create("SPAN", {
 	          text: this.getMessage("reciprocal") + ": "
 	        }));
-
 	        if (communicationShowUrl !== '') {
 	          communicationWrapper.appendChild(BX.create("A", {
 	            attrs: {
@@ -10228,23 +6610,23 @@ this.BX.Crm = this.BX.Crm || {};
 	            text: communicationTitle
 	          }));
 	        }
-	      } //region Author
+	      }
 
-
+	      //region Author
 	      const authorNode = this.prepareAuthorLayout();
-
 	      if (authorNode) {
 	        contentWrapper.appendChild(authorNode);
-	      } //endregion
+	      }
+	      //endregion
+
 	      //region  Actions
-
-
 	      this._actionContainer = BX.create("SPAN", {
 	        attrs: {
 	          className: "crm-entity-stream-content-detail-action"
 	        }
 	      });
-	      contentWrapper.appendChild(this._actionContainer); //endregion
+	      contentWrapper.appendChild(this._actionContainer);
+	      //endregion
 
 	      if (!this.isReadOnly()) contentWrapper.appendChild(this.prepareFixedSwitcherLayout());
 	      return wrapper;
@@ -10277,15 +6659,12 @@ this.BX.Crm = this.BX.Crm || {};
 	}(HistoryActivity);
 
 	/** @memberof BX.Crm.Timeline.Items */
-
 	let WebForm$1 = /*#__PURE__*/function (_HistoryActivity) {
 	  babelHelpers.inherits(WebForm, _HistoryActivity);
-
 	  function WebForm() {
 	    babelHelpers.classCallCheck(this, WebForm);
 	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(WebForm).call(this));
 	  }
-
 	  babelHelpers.createClass(WebForm, [{
 	    key: "prepareHeaderLayout",
 	    value: function prepareHeaderLayout() {
@@ -10344,22 +6723,23 @@ this.BX.Crm = this.BX.Crm || {};
 	          },
 	          text: this.getTitle()
 	        })]
-	      })); //region Author
+	      }));
 
+	      //region Author
 	      const authorNode = this.prepareAuthorLayout();
-
 	      if (authorNode) {
 	        contentWrapper.appendChild(authorNode);
-	      } //endregion
+	      }
+	      //endregion
+
 	      //region  Actions
-
-
 	      this._actionContainer = BX.create("SPAN", {
 	        attrs: {
 	          className: "crm-entity-stream-content-detail-action"
 	        }
 	      });
-	      contentWrapper.appendChild(this._actionContainer); //endregion
+	      contentWrapper.appendChild(this._actionContainer);
+	      //endregion
 
 	      if (!this.isReadOnly()) contentWrapper.appendChild(this.prepareFixedSwitcherLayout());
 	      return wrapper;
@@ -10386,15 +6766,12 @@ this.BX.Crm = this.BX.Crm || {};
 	}(HistoryActivity);
 
 	/** @memberof BX.Crm.Timeline.Items */
-
 	let Request$1 = /*#__PURE__*/function (_HistoryActivity) {
 	  babelHelpers.inherits(Request, _HistoryActivity);
-
 	  function Request() {
 	    babelHelpers.classCallCheck(this, Request);
 	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Request).call(this));
 	  }
-
 	  babelHelpers.createClass(Request, [{
 	    key: "prepareHeaderLayout",
 	    value: function prepareHeaderLayout() {
@@ -10412,13 +6789,12 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function prepareContent() {
 	      const entityData = this.getAssociatedEntityData();
 	      let description = BX.prop.getString(entityData, "DESCRIPTION_RAW", "");
-
 	      if (description !== "") {
 	        //trim leading spaces
 	        description = description.replace(/^\s+/, '');
-	      } //var entityData = this.getAssociatedEntityData();
+	      }
 
-
+	      //var entityData = this.getAssociatedEntityData();
 	      const wrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-section crm-entity-stream-section-today crm-entity-stream-section-robot"
@@ -10429,11 +6805,9 @@ this.BX.Crm = this.BX.Crm || {};
 	          className: "crm-entity-stream-section-icon crm-entity-stream-section-icon-robot"
 	        }
 	      }));
-
 	      if (this.isContextMenuEnabled()) {
 	        wrapper.appendChild(this.prepareContextMenuButton());
 	      }
-
 	      if (this.isFixed()) BX.addClass(wrapper, 'crm-entity-stream-section-top-fixed');
 	      const contentWrapper = BX.create("DIV", {
 	        attrs: {
@@ -10467,29 +6841,31 @@ this.BX.Crm = this.BX.Crm || {};
 	          },
 	          text: this.getTitle()
 	        })]
-	      })); //Content
+	      }));
 
+	      //Content
 	      detailWrapper.appendChild(BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-detail-description"
 	        },
 	        children: this.prepareCutOffElements(description, 128, this._headerClickHandler)
-	      })); //region Author
+	      }));
 
+	      //region Author
 	      const authorNode = this.prepareAuthorLayout();
-
 	      if (authorNode) {
 	        contentWrapper.appendChild(authorNode);
-	      } //endregion
+	      }
+	      //endregion
+
 	      //region  Actions
-
-
 	      this._actionContainer = BX.create("SPAN", {
 	        attrs: {
 	          className: "crm-entity-stream-content-detail-action"
 	        }
 	      });
-	      contentWrapper.appendChild(this._actionContainer); //endregion
+	      contentWrapper.appendChild(this._actionContainer);
+	      //endregion
 
 	      if (!this.isReadOnly()) contentWrapper.appendChild(this.prepareFixedSwitcherLayout());
 	      return wrapper;
@@ -10521,15 +6897,12 @@ this.BX.Crm = this.BX.Crm || {};
 	}(HistoryActivity);
 
 	/** @memberof BX.Crm.Timeline.Items */
-
 	let OpenLine$2 = /*#__PURE__*/function (_HistoryActivity) {
 	  babelHelpers.inherits(OpenLine$$1, _HistoryActivity);
-
 	  function OpenLine$$1() {
 	    babelHelpers.classCallCheck(this, OpenLine$$1);
 	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(OpenLine$$1).call(this));
 	  }
-
 	  babelHelpers.createClass(OpenLine$$1, [{
 	    key: "prepareHeaderLayout",
 	    value: function prepareHeaderLayout() {
@@ -10547,12 +6920,10 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function prepareContent() {
 	      const entityData = this.getAssociatedEntityData();
 	      let description = BX.prop.getString(entityData, "DESCRIPTION_RAW", "");
-
 	      if (description !== "") {
 	        //trim leading spaces
 	        description = description.replace(/^\s+/, '');
 	      }
-
 	      const communication = BX.prop.getObject(entityData, "COMMUNICATION", {});
 	      const communicationTitle = BX.prop.getString(communication, "TITLE", "");
 	      const communicationShowUrl = BX.prop.getString(communication, "SHOW_URL", "");
@@ -10566,11 +6937,9 @@ this.BX.Crm = this.BX.Crm || {};
 	          className: "crm-entity-stream-section-icon crm-entity-stream-section-icon-IM"
 	        }
 	      }));
-
 	      if (this.isContextMenuEnabled()) {
 	        wrapper.appendChild(this.prepareContextMenuButton());
 	      }
-
 	      if (this.isFixed()) BX.addClass(wrapper, 'crm-entity-stream-section-top-fixed');
 	      const contentWrapper = BX.create("DIV", {
 	        attrs: {
@@ -10604,8 +6973,9 @@ this.BX.Crm = this.BX.Crm || {};
 	          },
 	          text: this.getTitle()
 	        })]
-	      })); //Content
+	      }));
 
+	      //Content
 	      const entityDetailWrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-detail-IM"
@@ -10619,12 +6989,10 @@ this.BX.Crm = this.BX.Crm || {};
 	      });
 	      entityDetailWrapper.appendChild(messageWrapper);
 	      const openLineData = BX.prop.getObject(this.getAssociatedEntityData(), "OPENLINE_INFO", null);
-
 	      if (openLineData) {
 	        const messages = BX.prop.getArray(openLineData, "MESSAGES", []);
 	        let i = 0;
 	        const length = messages.length;
-
 	        for (; i < length; i++) {
 	          const message = messages[i];
 	          const isExternal = BX.prop.getBoolean(message, "IS_EXTERNAL", true);
@@ -10636,19 +7004,16 @@ this.BX.Crm = this.BX.Crm || {};
 	          }));
 	        }
 	      }
-
 	      const communicationWrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-detail-contact-info"
 	        }
 	      });
 	      detailWrapper.appendChild(communicationWrapper);
-
 	      if (communicationTitle !== '') {
 	        communicationWrapper.appendChild(BX.create("SPAN", {
 	          text: this.getMessage("reciprocal") + ": "
 	        }));
-
 	        if (communicationShowUrl !== '') {
 	          communicationWrapper.appendChild(BX.create("A", {
 	            attrs: {
@@ -10661,23 +7026,23 @@ this.BX.Crm = this.BX.Crm || {};
 	            text: communicationTitle
 	          }));
 	        }
-	      } //region Author
+	      }
 
-
+	      //region Author
 	      const authorNode = this.prepareAuthorLayout();
-
 	      if (authorNode) {
 	        contentWrapper.appendChild(authorNode);
-	      } //endregion
+	      }
+	      //endregion
+
 	      //region  Actions
-
-
 	      this._actionContainer = BX.create("SPAN", {
 	        attrs: {
 	          className: "crm-entity-stream-content-detail-action"
 	        }
 	      });
-	      contentWrapper.appendChild(this._actionContainer); //endregion
+	      contentWrapper.appendChild(this._actionContainer);
+	      //endregion
 
 	      if (!this.isReadOnly()) contentWrapper.appendChild(this.prepareFixedSwitcherLayout());
 	      return wrapper;
@@ -10688,7 +7053,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (this.isReadOnly()) {
 	        return;
 	      }
-
 	      this._actions.push(OpenLine.create("openline", {
 	        item: this,
 	        container: this._actionContainer,
@@ -10704,16 +7068,13 @@ this.BX.Crm = this.BX.Crm || {};
 	        window.alert(this.getMessage("openLineNotSupported"));
 	        return;
 	      }
-
 	      let slug = "";
 	      const communication = BX.prop.getObject(this.getAssociatedEntityData(), "COMMUNICATION", null);
-
 	      if (communication) {
 	        if (BX.prop.getString(communication, "TYPE") === "IM") {
 	          slug = BX.prop.getString(communication, "VALUE");
 	        }
 	      }
-
 	      if (slug !== "") {
 	        window.top['BXIM'].openMessengerSlider(slug, {
 	          RECENT: 'N',
@@ -10733,15 +7094,12 @@ this.BX.Crm = this.BX.Crm || {};
 	}(HistoryActivity);
 
 	/** @memberof BX.Crm.Timeline.Items */
-
-	let Rest$2 = /*#__PURE__*/function (_HistoryActivity) {
+	let Rest$1 = /*#__PURE__*/function (_HistoryActivity) {
 	  babelHelpers.inherits(Rest, _HistoryActivity);
-
 	  function Rest() {
 	    babelHelpers.classCallCheck(this, Rest);
 	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Rest).call(this));
 	  }
-
 	  babelHelpers.createClass(Rest, [{
 	    key: "prepareHeaderLayout",
 	    value: function prepareHeaderLayout() {
@@ -10758,11 +7116,9 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "getTypeDescription",
 	    value: function getTypeDescription() {
 	      const entityData = this.getAssociatedEntityData();
-
 	      if (entityData['APP_TYPE'] && entityData['APP_TYPE']['NAME']) {
 	        return entityData['APP_TYPE']['NAME'];
 	      }
-
 	      return babelHelpers.get(babelHelpers.getPrototypeOf(Rest.prototype), "getTypeDescription", this).call(this);
 	    }
 	  }, {
@@ -10770,13 +7126,12 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function prepareContent() {
 	      const entityData = this.getAssociatedEntityData();
 	      let description = BX.prop.getString(entityData, "DESCRIPTION_RAW", "");
-
 	      if (description !== "") {
 	        //trim leading spaces
 	        description = description.replace(/^\s+/, '');
-	      } //var entityData = this.getAssociatedEntityData();
+	      }
 
-
+	      //var entityData = this.getAssociatedEntityData();
 	      const wrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-section crm-entity-stream-section-today crm-entity-stream-section-rest"
@@ -10788,7 +7143,6 @@ this.BX.Crm = this.BX.Crm || {};
 	        }
 	      });
 	      wrapper.appendChild(iconNode);
-
 	      if (entityData['APP_TYPE'] && entityData['APP_TYPE']['ICON_SRC']) {
 	        if (iconNode) {
 	          iconNode.style.backgroundImage = "url('" + entityData['APP_TYPE']['ICON_SRC'] + "')";
@@ -10797,7 +7151,6 @@ this.BX.Crm = this.BX.Crm || {};
 	          iconNode.style.backgroundColor = "transparent";
 	        }
 	      }
-
 	      if (this.isFixed()) BX.addClass(wrapper, 'crm-entity-stream-section-top-fixed');
 	      const contentWrapper = BX.create("DIV", {
 	        attrs: {
@@ -10831,29 +7184,31 @@ this.BX.Crm = this.BX.Crm || {};
 	          },
 	          text: this.getTitle()
 	        })]
-	      })); //Content
+	      }));
 
+	      //Content
 	      detailWrapper.appendChild(BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-detail-description"
 	        },
 	        children: this.prepareCutOffElements(description, 128, this._headerClickHandler)
-	      })); //region Author
+	      }));
 
+	      //region Author
 	      const authorNode = this.prepareAuthorLayout();
-
 	      if (authorNode) {
 	        contentWrapper.appendChild(authorNode);
-	      } //endregion
+	      }
+	      //endregion
+
 	      //region  Actions
-
-
 	      this._actionContainer = BX.create("SPAN", {
 	        attrs: {
 	          className: "crm-entity-stream-content-detail-action"
 	        }
 	      });
-	      contentWrapper.appendChild(this._actionContainer); //endregion
+	      contentWrapper.appendChild(this._actionContainer);
+	      //endregion
 
 	      if (!this.isReadOnly()) contentWrapper.appendChild(this.prepareFixedSwitcherLayout());
 	      return wrapper;
@@ -10880,13 +7235,10 @@ this.BX.Crm = this.BX.Crm || {};
 	}(HistoryActivity);
 
 	/** @memberof BX.Crm.Timeline.Actions */
-
 	let Visit = /*#__PURE__*/function (_HistoryActivity) {
 	  babelHelpers.inherits(Visit, _HistoryActivity);
-
 	  function Visit() {
 	    var _this;
-
 	    babelHelpers.classCallCheck(this, Visit);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Visit).call(this));
 	    _this._playerDummyClickHandler = BX.delegate(_this.onPlayerDummyClick, babelHelpers.assertThisInitialized(_this));
@@ -10895,7 +7247,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    _this._mediaFileInfo = null;
 	    return _this;
 	  }
-
 	  babelHelpers.createClass(Visit, [{
 	    key: "prepareHeaderLayout",
 	    value: function prepareHeaderLayout() {
@@ -10948,17 +7299,19 @@ this.BX.Crm = this.BX.Crm || {};
 	          className: "crm-entity-stream-section-content"
 	        },
 	        children: [wrapper]
-	      })); //Header
+	      }));
 
+	      //Header
 	      const header = this.prepareHeaderLayout();
-	      wrapper.appendChild(header); //region Context Menu
+	      wrapper.appendChild(header);
 
+	      //region Context Menu
 	      if (this.isContextMenuEnabled()) {
 	        wrapper.appendChild(this.prepareContextMenuButton());
-	      } //endregion
+	      }
+	      //endregion
+
 	      //Details
-
-
 	      const detailWrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-detail crm-entity-stream-content-detail-call-inline"
@@ -10966,24 +7319,23 @@ this.BX.Crm = this.BX.Crm || {};
 	      });
 	      wrapper.appendChild(detailWrapper);
 	      this._mediaFileInfo = BX.prop.getObject(entityData, "MEDIA_FILE_INFO", null);
-
 	      if (this._mediaFileInfo !== null && recordLength > 0) {
 	        this._playerWrapper = this._history.getManager().renderAudioDummy(recordLengthFormatted, this._playerDummyClickHandler);
-	        detailWrapper.appendChild( //crm-entity-stream-content-detail-call
+	        detailWrapper.appendChild(
+	        //crm-entity-stream-content-detail-call
 	        this._playerWrapper);
 	        detailWrapper.appendChild(this._history.getManager().getAudioPlaybackRateSelector().render());
 	      }
-
 	      const communicationWrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-detail-contact-info"
 	        }
 	      });
-	      wrapper.appendChild(communicationWrapper); //Communications
+	      wrapper.appendChild(communicationWrapper);
 
+	      //Communications
 	      if (communicationTitle !== "") {
 	        communicationWrapper.appendChild(document.createTextNode(BX.message("CRM_TIMELINE_VISIT_WITH") + ' '));
-
 	        if (communicationShowUrl !== "") {
 	          communicationWrapper.appendChild(BX.create("A", {
 	            attrs: {
@@ -10997,7 +7349,6 @@ this.BX.Crm = this.BX.Crm || {};
 	          }));
 	        }
 	      }
-
 	      if (BX.type.isNotEmptyString(vkProfile)) {
 	        communicationWrapper.appendChild(document.createTextNode(" "));
 	        communicationWrapper.appendChild(BX.create("a", {
@@ -11008,15 +7359,14 @@ this.BX.Crm = this.BX.Crm || {};
 	          },
 	          text: BX.message('CRM_TIMELINE_VISIT_VKONTAKTE_PROFILE')
 	        }));
-	      } //region Author
+	      }
 
-
+	      //region Author
 	      const authorNode = this.prepareAuthorLayout();
-
 	      if (authorNode) {
 	        wrapper.appendChild(authorNode);
-	      } //endregion
-
+	      }
+	      //endregion
 
 	      return outerWrapper;
 	    }
@@ -11024,11 +7374,9 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "onPlayerDummyClick",
 	    value: function onPlayerDummyClick(e) {
 	      const stubNode = this._playerWrapper.querySelector(".crm-audio-cap-wrap");
-
 	      if (stubNode) {
 	        BX.addClass(stubNode, "crm-audio-cap-wrap-loader");
 	      }
-
 	      this._history.getManager().getAudioPlaybackRateSelector().addPlayer(this._history.getManager().loadMediaPlayer("history_" + this.getId(), this._mediaFileInfo["URL"], this._mediaFileInfo["TYPE"], this._playerWrapper, this._mediaFileInfo["DURATION"], {
 	        playbackRate: this._history.getManager().getAudioPlaybackRateSelector().getRate()
 	      }));
@@ -11044,7 +7392,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (BX.getClass('BX.Crm.Restriction.Bitrix24') && BX.Crm.Restriction.Bitrix24.isRestricted('visit')) {
 	        return BX.Crm.Restriction.Bitrix24.getHandler('visit').call();
 	      }
-
 	      babelHelpers.get(babelHelpers.getPrototypeOf(Visit.prototype), "view", this).call(this);
 	    }
 	  }, {
@@ -11053,7 +7400,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (BX.getClass('BX.Crm.Restriction.Bitrix24') && BX.Crm.Restriction.Bitrix24.isRestricted('visit')) {
 	        return BX.Crm.Restriction.Bitrix24.getHandler('visit').call();
 	      }
-
 	      babelHelpers.get(babelHelpers.getPrototypeOf(Visit.prototype), "edit", this).call(this);
 	    }
 	  }], [{
@@ -11068,13 +7414,10 @@ this.BX.Crm = this.BX.Crm || {};
 	}(HistoryActivity);
 
 	/** @memberof BX.Crm.Timeline.Actions */
-
 	let Zoom$1 = /*#__PURE__*/function (_HistoryActivity) {
 	  babelHelpers.inherits(Zoom, _HistoryActivity);
-
 	  function Zoom() {
 	    var _this;
-
 	    babelHelpers.classCallCheck(this, Zoom);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Zoom).call(this));
 	    _this._videoDummy = null;
@@ -11095,7 +7438,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    _this.detailZoomCopyVideoLink = null;
 	    return _this;
 	  }
-
 	  babelHelpers.createClass(Zoom, [{
 	    key: "prepareHeaderLayout",
 	    value: function prepareHeaderLayout() {
@@ -11105,11 +7447,9 @@ this.BX.Crm = this.BX.Crm || {};
 	        }
 	      });
 	      header.appendChild(this.prepareTitleLayout());
-
 	      if (!this._data.hasOwnProperty('PROVIDER_DATA') || this._data["PROVIDER_DATA"]["ZOOM_EVENT_TYPE"] !== 'ZOOM_CONF_JOINED') {
 	        header.appendChild(this.prepareSuccessfulLayout());
 	      }
-
 	      header.appendChild(this.prepareTimeLayout());
 	      return header;
 	    }
@@ -11179,7 +7519,6 @@ this.BX.Crm = this.BX.Crm || {};
 	        }
 	      });
 	      contentWrapper.appendChild(detailWrapper);
-
 	      if (this._data.hasOwnProperty('PROVIDER_DATA') && this._data["PROVIDER_DATA"]["ZOOM_EVENT_TYPE"] === 'ZOOM_CONF_JOINED') {
 	        entityDetailWrapper = BX.create("DIV", {
 	          attrs: {
@@ -11193,10 +7532,10 @@ this.BX.Crm = this.BX.Crm || {};
 	            className: "crm-entity-stream-content-detail-description"
 	          }
 	        });
-
 	        if (this._recordings.length > 0) {
 	          if (this._recordings.length > 1) {
 	            //render video parts header
+
 	            const tabs = this._recordings.map(function (recording, index) {
 	              return {
 	                id: index,
@@ -11205,14 +7544,12 @@ this.BX.Crm = this.BX.Crm || {};
 	                active: index === 0
 	              };
 	            });
-
 	            const tabsComponent = new Zoom.TabsComponent({
 	              tabs: tabs
 	            });
 	            tabsComponent.eventEmitter.subscribe("onTabChange", this._onTabChange.bind(this));
 	            detailWrapper.appendChild(tabsComponent.render());
 	          }
-
 	          this._videoDummy = BX.create("DIV", {
 	            props: {
 	              className: "crm-entity-stream-content-detail-zoom-video-wrap"
@@ -11248,11 +7585,9 @@ this.BX.Crm = this.BX.Crm || {};
 	          BX.UI.Hint.init(this._videoDummy);
 	          this._audioDummy = this._history.getManager().renderAudioDummy("00:15", this._onAudioDummyClick.bind(this));
 	          this._audioLengthElement = this._audioDummy.querySelector('.crm-audio-cap-time');
-
 	          if (zoomData['RECORDINGS'][0]['VIDEO']) {
 	            //video download link with token valid for 24h
 	            const videoLinkExpireTS = zoomData['RECORDINGS'][0]['VIDEO']['END_DATE_TS'] * 1000 + 60 * 60 * 23 * 1000;
-
 	            if (videoLinkExpireTS < Date.now()) {
 	              const videoLinkContainer = BX.create("DIV", {
 	                props: {
@@ -11275,7 +7610,6 @@ this.BX.Crm = this.BX.Crm || {};
 	              entityDetailWrapper.appendChild(this._videoDummy);
 	            }
 	          }
-
 	          if (zoomData['RECORDINGS'][0]['AUDIO']) {
 	            const zoomAudioDetailWrapper = BX.create("DIV", {
 	              attrs: {
@@ -11286,7 +7620,6 @@ this.BX.Crm = this.BX.Crm || {};
 	            zoomAudioDetailWrapper.appendChild(this._history.getManager().getAudioPlaybackRateSelector().render());
 	            entityDetailWrapper.appendChild(zoomAudioDetailWrapper);
 	          }
-
 	          this._downloadWrapper = BX.create("DIV", {
 	            props: {
 	              className: "crm-entity-stream-content-detail-zoom-desc"
@@ -11338,7 +7671,6 @@ this.BX.Crm = this.BX.Crm || {};
 	            })]
 	          });
 	          entityDetailWrapper.appendChild(this.zoomActivitySubject);
-
 	          if (zoomData['HAS_RECORDING'] === 'Y') {
 	            entityDetailWrapper.appendChild(BX.create("DIV", {
 	              props: {
@@ -11375,18 +7707,16 @@ this.BX.Crm = this.BX.Crm || {};
 	      }*/
 	      //Content //todo
 
-
 	      if (entityDetailWrapper) {
 	        detailWrapper.appendChild(entityDetailWrapper);
-	      } //region Author
+	      }
 
-
+	      //region Author
 	      const authorNode = this.prepareAuthorLayout();
-
 	      if (authorNode) {
 	        contentWrapper.appendChild(authorNode);
-	      } //endregion
-
+	      }
+	      //endregion
 
 	      return wrapper;
 	    }
@@ -11395,11 +7725,9 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function _onVideoDummyClick() {
 	      BX.UI.Hint.hide();
 	      const recording = this._recordings[this._currentRecordingIndex]["VIDEO"];
-
 	      if (!recording) {
 	        return;
 	      }
-
 	      this._videoPlayer = this._history.getManager().loadMediaPlayer("zoom_video_" + this.getId(), recording["DOWNLOAD_URL"], "video/mp4", this._videoDummy, recording["LENGTH"], {
 	        video: true,
 	        skin: "",
@@ -11411,11 +7739,9 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "_onAudioDummyClick",
 	    value: function _onAudioDummyClick() {
 	      const recording = this._recordings[this._currentRecordingIndex]["AUDIO"];
-
 	      if (!recording) {
 	        return;
 	      }
-
 	      this._history.getManager().getAudioPlaybackRateSelector().addPlayer(this._audioPlayer = this._history.getManager().loadMediaPlayer("zoom_audio_" + this.getId(), recording["DOWNLOAD_URL"], "audio/mp4", this._audioDummy, recording["LENGTH"], {
 	        playbackRate: this._history.getManager().getAudioPlaybackRateSelector().getRate()
 	      }));
@@ -11431,72 +7757,52 @@ this.BX.Crm = this.BX.Crm || {};
 	      this._currentRecordingIndex = recordingIndex;
 	      const videoRecording = this._recordings[this._currentRecordingIndex]["VIDEO"];
 	      const audioRecording = this._recordings[this._currentRecordingIndex]["AUDIO"];
-
 	      if (videoRecording) {
 	        this._videoDummy.hidden = false;
-
 	        if (this._videoPlayer) {
 	          this._videoPlayer.pause();
-
 	          this._videoPlayer.setSource(videoRecording["DOWNLOAD_URL"]);
-
 	          this._downloadVideoLink.href = videoRecording["DOWNLOAD_URL"];
 	        }
 	      } else {
 	        this._videoDummy.hidden = true;
 	      }
-
 	      if (audioRecording) {
 	        this._audioDummy.hidden = false;
-
 	        if (this._audioPlayer) {
 	          this._audioPlayer.pause();
-
 	          this._audioPlayer.setSource(audioRecording["DOWNLOAD_URL"]);
 	        }
-
 	        this._downloadAudioLink.href = audioRecording["DOWNLOAD_URL"];
 	        this._audioLengthElement.innerText = audioRecording["LENGTH_FORMATTED"];
 	      } else {
 	        this._audioDummy.hidden = true;
 	      }
-
 	      BX.clean(this._downloadWrapper);
-
 	      if (audioRecording || videoRecording) {
 	        const lengthHuman = audioRecording ? audioRecording["LENGTH_HUMAN"] : videoRecording["LENGTH_HUMAN"];
-
 	        this._downloadWrapper.appendChild(this._downloadSubject);
-
 	        this._downloadSubject.innerHTML = BX.util.htmlspecialchars(BX.message("CRM_TIMELINE_ZOOM_MEETING_RECORD").replace("#DURATION#", lengthHuman)) + " &mdash; ";
-
 	        this._downloadWrapper.appendChild(this._downloadSubjectDetail);
 	      }
-
 	      if (videoRecording) {
 	        this._downloadSubjectDetail.appendChild(this._downloadVideoLink);
-
 	        this._downloadVideoLink.href = videoRecording['DOWNLOAD_URL'];
-
 	        if (audioRecording) {
 	          this._downloadSubjectDetail.appendChild(this._downloadSeparator);
 	        }
-
 	        if (this._playVideoLink) {
 	          this._playVideoLink.lastElementChild.href = videoRecording["PLAY_URL"];
 	          this._downloadVideoLink.href = videoRecording["PLAY_URL"];
 	        }
-
 	        if (this._detailZoomCopyVideoLink) {
 	          BX.clipboard.bindCopyClick(this._detailZoomCopyVideoLink, {
 	            text: videoRecording['PASSWORD']
 	          });
 	        }
 	      }
-
 	      if (audioRecording) {
 	        this._downloadSubjectDetail.appendChild(this._downloadAudioLink);
-
 	        this._downloadAudioLink.href = audioRecording['DOWNLOAD_URL'];
 	      }
 	    }
@@ -11507,19 +7813,18 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "create",
 	    value: function create(id, settings) {
 	      const self = new Zoom();
-	      self.initialize(id, settings); //todo: remove debug
+	      self.initialize(id, settings);
 
+	      //todo: remove debug
 	      if (!window['zoom']) {
 	        window['zoom'] = [];
 	      }
-
 	      window['zoom'].push(self);
 	      return self;
 	    }
 	  }]);
 	  return Zoom;
 	}(HistoryActivity);
-
 	Zoom$1.TabsComponent = /*#__PURE__*/function () {
 	  function _class(config) {
 	    babelHelpers.classCallCheck(this, _class);
@@ -11530,14 +7835,12 @@ this.BX.Crm = this.BX.Crm || {};
 	    };
 	    this.eventEmitter = new BX.Event.EventEmitter(this, 'Zoom.TabsComponent');
 	  }
-
 	  babelHelpers.createClass(_class, [{
 	    key: "render",
 	    value: function render() {
 	      if (this.elements.container) {
 	        return this.elements.container;
 	      }
-
 	      this.elements.container = BX.create("DIV", {
 	        props: {
 	          className: "crm-entity-stream-content-detail-zoom-section-wrapper"
@@ -11589,21 +7892,17 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (!this.elements.tabs[tabId]) {
 	        throw new Error("Tab " + tabId + " is not found");
 	      }
-
 	      for (let id in this.elements.tabs) {
 	        if (!this.elements.tabs.hasOwnProperty(id)) {
 	          continue;
 	        }
-
 	        id = Number.parseInt(id, 10);
-
 	        if (id === tabId) {
 	          this.elements.tabs[id].classList.add("crm-entity-stream-content-detail-zoom-section-active");
 	        } else {
 	          this.elements.tabs[id].classList.remove("crm-entity-stream-content-detail-zoom-section-active");
 	        }
 	      }
-
 	      this.eventEmitter.emit("onTabChange", {
 	        tabId: tabId
 	      });
@@ -11613,15 +7912,12 @@ this.BX.Crm = this.BX.Crm || {};
 	}();
 
 	/** @memberof BX.Crm.Timeline.Actions */
-
 	let OrderModification = /*#__PURE__*/function (_History) {
 	  babelHelpers.inherits(OrderModification, _History);
-
 	  function OrderModification() {
 	    babelHelpers.classCallCheck(this, OrderModification);
 	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(OrderModification).call(this));
 	  }
-
 	  babelHelpers.createClass(OrderModification, [{
 	    key: "getMessage",
 	    value: function getMessage(name) {
@@ -11642,7 +7938,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      const fieldName = this.getTextDataParam("CHANGED_ENTITY");
 	      const fields = this.getObjectDataParam('FIELDS');
 	      const entityData = this.getAssociatedEntityData();
-
 	      if (fieldName === BX.CrmEntityType.names.order) {
 	        if (BX.prop.get(fields, 'ORDER_CANCELED') === 'Y') {
 	          value = "canceled";
@@ -11658,10 +7953,8 @@ this.BX.Crm = this.BX.Crm || {};
 	          classCode = "sent";
 	        }
 	      }
-
 	      if (fieldName === BX.CrmEntityType.names.orderpayment) {
 	        const psStatusCode = BX.prop.get(fields, 'STATUS_CODE', false);
-
 	        if (psStatusCode) {
 	          if (psStatusCode === 'ERROR') {
 	            value = "orderPaymentError";
@@ -11684,12 +7977,10 @@ this.BX.Crm = this.BX.Crm || {};
 	        value = BX.prop.get(fields, 'ORDER_ALLOW_DELIVERY') === 'Y' ? "allowedDelivery" : "disallowedDelivery";
 	        classCode = BX.prop.get(fields, 'ORDER_ALLOW_DELIVERY') === 'Y' ? "allowed-delivery" : "disallowed-delivery";
 	      }
-
 	      if (value) {
 	        statusInfo.className = "crm-entity-stream-content-event-" + classCode;
 	        statusInfo.message = this.getMessage(value);
 	      }
-
 	      return statusInfo;
 	    }
 	  }, {
@@ -11705,7 +7996,6 @@ this.BX.Crm = this.BX.Crm || {};
 	        text: this.getTitle()
 	      })];
 	      const statusInfo = this.getStatusInfo();
-
 	      if (BX.type.isNotEmptyObject(statusInfo)) {
 	        children.push(BX.create("SPAN", {
 	          attrs: {
@@ -11714,7 +8004,6 @@ this.BX.Crm = this.BX.Crm || {};
 	          text: statusInfo.message
 	        }));
 	      }
-
 	      children.push(BX.create("SPAN", {
 	        attrs: {
 	          className: "crm-entity-stream-content-event-time"
@@ -11733,14 +8022,12 @@ this.BX.Crm = this.BX.Crm || {};
 	      const htmlTitle = BX.prop.getString(entityData, "HTML_TITLE", "");
 	      const showUrl = BX.prop.getString(entityData, "SHOW_URL", "");
 	      const nodes = [];
-
 	      if (title !== "") {
 	        const descriptionNode = BX.create("DIV", {
 	          attrs: {
 	            className: "crm-entity-stream-content-detail-description"
 	          }
 	        });
-
 	        if (showUrl === "" || entityTypeId === this.getOwnerTypeId() && entityId === this.getOwnerId()) {
 	          descriptionNode.appendChild(BX.create("SPAN", {
 	            text: title + " " + htmlTitle
@@ -11765,27 +8052,21 @@ this.BX.Crm = this.BX.Crm || {};
 	            }));
 	          }
 	        }
-
 	        const legend = BX.prop.getString(entityData, "LEGEND");
-
 	        if (legend !== "") {
 	          descriptionNode.appendChild(BX.create("SPAN", {
 	            html: " " + legend
 	          }));
 	        }
-
 	        const sublegend = BX.prop.getString(entityData, "SUBLEGEND", '');
-
 	        if (sublegend !== '') {
 	          descriptionNode.appendChild(BX.create("BR"));
 	          descriptionNode.appendChild(BX.create("SPAN", {
 	            text: " " + sublegend
 	          }));
 	        }
-
 	        nodes.push(descriptionNode);
 	      }
-
 	      return nodes;
 	    }
 	  }, {
@@ -11797,10 +8078,8 @@ this.BX.Crm = this.BX.Crm || {};
 	      const title = BX.prop.getString(entityData, "TITLE");
 	      const showUrl = BX.prop.getString(entityData, "SHOW_URL", "");
 	      const nodes = [];
-
 	      if (title !== "") {
 	        const sublegend = BX.prop.getString(entityData, "SUBLEGEND", '');
-
 	        if (sublegend !== "") {
 	          const descriptionNode = BX.create("DIV", {
 	            attrs: {
@@ -11810,7 +8089,6 @@ this.BX.Crm = this.BX.Crm || {};
 	          });
 	          nodes.push(descriptionNode);
 	        }
-
 	        if (entityTypeId === this.getOwnerTypeId() && entityId === this.getOwnerId()) {
 	          nodes.push(BX.create("SPAN", {
 	            text: title
@@ -11823,16 +8101,13 @@ this.BX.Crm = this.BX.Crm || {};
 	            text: title
 	          }));
 	        }
-
 	        const legend = BX.prop.getString(entityData, "LEGEND");
-
 	        if (legend !== "") {
 	          nodes.push(BX.create("SPAN", {
 	            html: " " + legend
 	          }));
 	        }
 	      }
-
 	      return nodes;
 	    }
 	  }, {
@@ -11845,14 +8120,12 @@ this.BX.Crm = this.BX.Crm || {};
 	      const showUrl = BX.prop.getString(entityData, 'SHOW_URL', '');
 	      const destination = BX.prop.getString(entityData, 'DESTINATION_TITLE', '');
 	      const nodes = [];
-
 	      if (title !== "") {
 	        const detailNode = BX.create('DIV', {
 	          attrs: {
 	            className: 'crm-entity-stream-content-detail-description'
 	          }
 	        });
-
 	        if (showUrl === "" || entityTypeId === this.getOwnerTypeId() && entityId === this.getOwnerId()) {
 	          detailNode.appendChild(BX.create("SPAN", {
 	            text: title
@@ -11865,15 +8138,12 @@ this.BX.Crm = this.BX.Crm || {};
 	            text: title
 	          }));
 	        }
-
 	        const legend = BX.prop.getString(entityData, "LEGEND");
-
 	        if (legend !== "") {
 	          detailNode.appendChild(BX.create("SPAN", {
 	            html: " " + legend
 	          }));
 	        }
-
 	        if (destination) {
 	          detailNode.appendChild(BX.create('SPAN', {
 	            attrs: {
@@ -11882,7 +8152,6 @@ this.BX.Crm = this.BX.Crm || {};
 	            text: destination
 	          }));
 	        }
-
 	        nodes.push(detailNode);
 	        const sliderLinkNode = BX.create('A', {
 	          attrs: {
@@ -11895,7 +8164,6 @@ this.BX.Crm = this.BX.Crm || {};
 	        });
 	        nodes.push(sliderLinkNode);
 	      }
-
 	      return nodes;
 	    }
 	  }, {
@@ -11903,16 +8171,16 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function startSalescenterApplication() {
 	      BX.loadExt('salescenter.manager').then(function () {
 	        const fields = this.getObjectDataParam('FIELDS'),
-	              ownerTypeId = BX.prop.get(fields, 'OWNER_TYPE_ID', BX.CrmEntityType.enumeration.deal);
+	          ownerTypeId = BX.prop.get(fields, 'OWNER_TYPE_ID', BX.CrmEntityType.enumeration.deal);
 	        let ownerId = BX.prop.get(fields, 'OWNER_ID', 0);
 	        const paymentId = BX.prop.get(fields, 'PAYMENT_ID', 0),
-	              shipmentId = BX.prop.get(fields, 'SHIPMENT_ID', 0),
-	              orderId = BX.prop.get(fields, 'ORDER_ID', 0); // compatibility
+	          shipmentId = BX.prop.get(fields, 'SHIPMENT_ID', 0),
+	          orderId = BX.prop.get(fields, 'ORDER_ID', 0);
 
+	        // compatibility
 	        if (!ownerId) {
 	          ownerId = BX.prop.get(fields, 'DEAL_ID', 0);
 	        }
-
 	        BX.Salescenter.Manager.openApplication({
 	          disableSendButton: '',
 	          context: 'deal',
@@ -11930,13 +8198,12 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "preparePaidPaymentContentDetails",
 	    value: function preparePaidPaymentContentDetails() {
 	      const entityData = this.getAssociatedEntityData(),
-	            title = BX.prop.getString(entityData, "TITLE"),
-	            date = BX.prop.getString(entityData, "DATE", ""),
-	            paySystemName = BX.prop.getString(entityData, "PAY_SYSTEM_NAME", ""),
-	            sum = BX.prop.getString(entityData, 'SUM', ''),
-	            currency = BX.prop.getString(entityData, 'CURRENCY', ''),
-	            nodes = [];
-
+	        title = BX.prop.getString(entityData, "TITLE"),
+	        date = BX.prop.getString(entityData, "DATE", ""),
+	        paySystemName = BX.prop.getString(entityData, "PAY_SYSTEM_NAME", ""),
+	        sum = BX.prop.getString(entityData, 'SUM', ''),
+	        currency = BX.prop.getString(entityData, 'CURRENCY', ''),
+	        nodes = [];
 	      if (title !== "") {
 	        const paymentDetail = BX.create("DIV", {
 	          attrs: {
@@ -11960,7 +8227,6 @@ this.BX.Crm = this.BX.Crm || {};
 	          })]
 	        }));
 	        const logotip = BX.prop.getString(entityData, "LOGOTIP", null);
-
 	        if (logotip) {
 	          paymentDetail.appendChild(BX.create("DIV", {
 	            attrs: {
@@ -11971,7 +8237,6 @@ this.BX.Crm = this.BX.Crm || {};
 	            }
 	          }));
 	        }
-
 	        nodes.push(paymentDetail);
 	        const descriptionNode = BX.create("DIV", {
 	          attrs: {
@@ -11990,19 +8255,17 @@ this.BX.Crm = this.BX.Crm || {};
 	        });
 	        nodes.push(descriptionNode);
 	      }
-
 	      return nodes;
 	    }
 	  }, {
 	    key: "prepareContent",
 	    value: function prepareContent() {
 	      const fields = this.getObjectDataParam('FIELDS'),
-	            isPaid = BX.prop.get(fields, 'ORDER_PAID') === 'Y',
-	            isClick = BX.prop.get(fields, 'PAY_SYSTEM_CLICK') === 'Y',
-	            isManualContinuePay = BX.prop.get(fields, 'MANUAL_CONTINUE_PAY') === 'Y',
-	            isManualAddCheck = BX.prop.get(fields, 'NEED_MANUAL_ADD_CHECK') === 'Y',
-	            entityId = this.getAssociatedEntityTypeId();
-
+	        isPaid = BX.prop.get(fields, 'ORDER_PAID') === 'Y',
+	        isClick = BX.prop.get(fields, 'PAY_SYSTEM_CLICK') === 'Y',
+	        isManualContinuePay = BX.prop.get(fields, 'MANUAL_CONTINUE_PAY') === 'Y',
+	        isManualAddCheck = BX.prop.get(fields, 'NEED_MANUAL_ADD_CHECK') === 'Y',
+	        entityId = this.getAssociatedEntityTypeId();
 	      if (entityId === BX.CrmEntityType.enumeration.orderpayment && isPaid) {
 	        return this.preparePaidPaymentContent();
 	      } else if (entityId === BX.CrmEntityType.enumeration.orderpayment && isClick) {
@@ -12012,7 +8275,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      } else if (entityId === BX.CrmEntityType.enumeration.orderpayment && isManualAddCheck) {
 	        return this.prepareManualAddCheck();
 	      }
-
 	      return this.prepareItemOrderContent();
 	    }
 	  }, {
@@ -12045,7 +8307,6 @@ this.BX.Crm = this.BX.Crm || {};
 	        children: this.getHeaderChildren()
 	      });
 	      let contentChildren = null;
-
 	      if (isViewed) {
 	        contentChildren = this.prepareViewedContentDetails();
 	      } else if (isSent) {
@@ -12055,21 +8316,20 @@ this.BX.Crm = this.BX.Crm || {};
 	      } else {
 	        contentChildren = this.prepareContentDetails();
 	      }
-
 	      content.appendChild(header);
 	      content.appendChild(BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-detail"
 	        },
 	        children: contentChildren
-	      })); //region Author
+	      }));
 
+	      //region Author
 	      const authorNode = this.prepareAuthorLayout();
-
 	      if (authorNode) {
 	        content.appendChild(authorNode);
-	      } //endregion
-
+	      }
+	      //endregion
 
 	      wrapper.appendChild(BX.create("DIV", {
 	        attrs: {
@@ -12130,14 +8390,14 @@ this.BX.Crm = this.BX.Crm || {};
 	          className: "crm-entity-stream-content-detail"
 	        },
 	        children: contentChildren
-	      })); //region Author
+	      }));
 
+	      //region Author
 	      const authorNode = this.prepareAuthorLayout();
-
 	      if (authorNode) {
 	        content.appendChild(authorNode);
-	      } //endregion
-
+	      }
+	      //endregion
 
 	      wrapper.appendChild(BX.create("DIV", {
 	        attrs: {
@@ -12151,11 +8411,11 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "prepareErrorPaymentContentDetails",
 	    value: function prepareErrorPaymentContentDetails() {
 	      const entityData = this.getAssociatedEntityData(),
-	            date = BX.prop.getString(entityData, 'DATE', ''),
-	            fields = this.getObjectDataParam('FIELDS'),
-	            paySystemName = BX.prop.getString(fields, 'PAY_SYSTEM_NAME', ''),
-	            paySystemError = BX.prop.getString(fields, 'STATUS_DESCRIPTION', ''),
-	            nodes = [];
+	        date = BX.prop.getString(entityData, 'DATE', ''),
+	        fields = this.getObjectDataParam('FIELDS'),
+	        paySystemName = BX.prop.getString(fields, 'PAY_SYSTEM_NAME', ''),
+	        paySystemError = BX.prop.getString(fields, 'STATUS_DESCRIPTION', ''),
+	        nodes = [];
 	      const descriptionNode = BX.create('DIV', {
 	        attrs: {
 	          className: 'crm-entity-stream-content-detail-description'
@@ -12232,14 +8492,14 @@ this.BX.Crm = this.BX.Crm || {};
 	          className: "crm-entity-stream-content-detail"
 	        },
 	        children: contentChildren
-	      })); //region Author
+	      }));
 
+	      //region Author
 	      const authorNode = this.prepareAuthorLayout();
-
 	      if (authorNode) {
 	        content.appendChild(authorNode);
-	      } //endregion
-
+	      }
+	      //endregion
 
 	      wrapper.appendChild(BX.create("DIV", {
 	        attrs: {
@@ -12253,9 +8513,8 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "prepareClickedPaymentContentDetails",
 	    value: function prepareClickedPaymentContentDetails() {
 	      const fields = this.getObjectDataParam('FIELDS'),
-	            paySystemName = BX.prop.getString(fields, 'PAY_SYSTEM_NAME', ''),
-	            nodes = [];
-
+	        paySystemName = BX.prop.getString(fields, 'PAY_SYSTEM_NAME', ''),
+	        nodes = [];
 	      if (paySystemName !== '') {
 	        const descriptionNode = BX.create("DIV", {
 	          attrs: {
@@ -12276,7 +8535,6 @@ this.BX.Crm = this.BX.Crm || {};
 	        }));
 	        nodes.push(descriptionNode);
 	      }
-
 	      return nodes;
 	    }
 	  }, {
@@ -12370,19 +8628,15 @@ this.BX.Crm = this.BX.Crm || {};
 	  }]);
 	  return OrderModification;
 	}(History);
-
 	babelHelpers.defineProperty(OrderModification, "messages", {});
 
 	/** @memberof BX.Crm.Timeline.Items */
-
 	let ExternalNoticeModification = /*#__PURE__*/function (_OrderModification) {
 	  babelHelpers.inherits(ExternalNoticeModification, _OrderModification);
-
 	  function ExternalNoticeModification() {
 	    babelHelpers.classCallCheck(this, ExternalNoticeModification);
 	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(ExternalNoticeModification).call(this));
 	  }
-
 	  babelHelpers.createClass(ExternalNoticeModification, [{
 	    key: "getIconClassName",
 	    value: function getIconClassName() {
@@ -12400,21 +8654,17 @@ this.BX.Crm = this.BX.Crm || {};
 	}(OrderModification);
 
 	/** @memberof BX.Crm.Timeline.Items */
-
 	let ExternalNoticeStatusModification = /*#__PURE__*/function (_ExternalNoticeModifi) {
 	  babelHelpers.inherits(ExternalNoticeStatusModification, _ExternalNoticeModifi);
-
 	  function ExternalNoticeStatusModification() {
 	    babelHelpers.classCallCheck(this, ExternalNoticeStatusModification);
 	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(ExternalNoticeStatusModification).call(this));
 	  }
-
 	  babelHelpers.createClass(ExternalNoticeStatusModification, [{
 	    key: "prepareContentDetails",
 	    value: function prepareContentDetails() {
 	      const nodes = [];
 	      const contentChildren = [];
-
 	      if (BX.type.isNotEmptyString(this.getTextDataParam("START_NAME"))) {
 	        contentChildren.push(BX.create("SPAN", {
 	          attrs: {
@@ -12428,7 +8678,6 @@ this.BX.Crm = this.BX.Crm || {};
 	          }
 	        }));
 	      }
-
 	      if (BX.type.isNotEmptyString(this.getTextDataParam("FINISH_NAME"))) {
 	        contentChildren.push(BX.create("SPAN", {
 	          attrs: {
@@ -12437,7 +8686,6 @@ this.BX.Crm = this.BX.Crm || {};
 	          text: this.getTextDataParam("FINISH_NAME")
 	        }));
 	      }
-
 	      nodes.push(BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-detail-info"
@@ -12458,20 +8706,16 @@ this.BX.Crm = this.BX.Crm || {};
 	}(ExternalNoticeModification);
 
 	/** @memberof BX.Crm.Timeline.Items */
-
 	let Creation = /*#__PURE__*/function (_HistoryItem) {
 	  babelHelpers.inherits(Creation, _HistoryItem);
-
 	  function Creation() {
 	    babelHelpers.classCallCheck(this, Creation);
 	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Creation).call(this));
 	  }
-
 	  babelHelpers.createClass(Creation, [{
 	    key: "doInitialize",
 	    value: function doInitialize() {
 	      babelHelpers.get(babelHelpers.getPrototypeOf(Creation.prototype), "doInitialize", this).call(this);
-
 	      if (!(this._activityEditor instanceof BX.CrmActivityEditor)) {
 	        throw "Creation. The field 'activityEditor' is not assigned.";
 	      }
@@ -12481,47 +8725,36 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function getTitle() {
 	      const entityTypeId = this.getAssociatedEntityTypeId();
 	      const entityData = this.getAssociatedEntityData();
-
 	      if (entityTypeId === BX.CrmEntityType.enumeration.activity) {
 	        const typeId = BX.prop.getInteger(entityData, "TYPE_ID");
 	        const title = this.getMessage(typeId === BX.CrmActivityType.task ? "task" : "activity");
 	        return title.replace(/#TITLE#/gi, this.cutOffText(BX.prop.getString(entityData, "SUBJECT")), 64);
 	      }
-
 	      if (entityTypeId === BX.CrmEntityType.enumeration.storeDocument) {
 	        const docType = BX.prop.getString(entityData, "DOC_TYPE");
-
 	        if (docType === 'A') {
 	          return this.getMessage('arrivalDocument');
 	        }
-
 	        if (docType === 'S') {
 	          return this.getMessage('storeAdjustmentDocument');
 	        }
-
 	        if (docType === 'M') {
 	          return this.getMessage('movingDocument');
 	        }
-
 	        if (docType === 'D') {
 	          return this.getMessage('deductDocument');
 	        }
-
 	        if (docType === 'W') {
 	          return this.getMessage('shipmentDocument');
 	        }
-
 	        return '';
 	      }
-
 	      const entityTypeName = BX.CrmEntityType.resolveName(this.getAssociatedEntityTypeId()).toLowerCase();
 	      let msg = this.getMessage(entityTypeName);
 	      const isMessageNotFound = msg === entityTypeName;
-
 	      if (!BX.type.isNotEmptyString(msg) || isMessageNotFound) {
 	        msg = this.getTextDataParam("TITLE");
 	      }
-
 	      return msg;
 	    }
 	  }, {
@@ -12533,20 +8766,15 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "prepareContent",
 	    value: function prepareContent() {
 	      const entityTypeId = this.getAssociatedEntityTypeId();
-
 	      if (entityTypeId === BX.CrmEntityType.enumeration.ordershipment || entityTypeId === BX.CrmEntityType.enumeration.orderpayment) {
 	        const data = this.getData();
 	        data.TYPE_CATEGORY_ID = Item.modification;
-
 	        if (data.hasOwnProperty('ASSOCIATED_ENTITY')) {
 	          data.ASSOCIATED_ENTITY.HTML_TITLE = '';
 	        }
-
 	        const createOrderEntityItem = this._history.createOrderEntityItem(data);
-
 	        return createOrderEntityItem.prepareContent();
 	      }
-
 	      return babelHelpers.get(babelHelpers.getPrototypeOf(Creation.prototype), "prepareContent", this).call(this);
 	    }
 	  }, {
@@ -12555,7 +8783,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      const entityTypeId = this.getAssociatedEntityTypeId();
 	      const entityId = this.getAssociatedEntityId();
 	      const entityData = this.getAssociatedEntityData();
-
 	      if (entityTypeId === BX.CrmEntityType.enumeration.activity) {
 	        const link = BX.create("A", {
 	          attrs: {
@@ -12566,19 +8793,15 @@ this.BX.Crm = this.BX.Crm || {};
 	        BX.bind(link, "click", this._headerClickHandler);
 	        return [link];
 	      }
-
 	      const title = BX.prop.getString(entityData, "TITLE", "");
 	      let htmlTitle = BX.prop.getString(entityData, "HTML_TITLE", "");
 	      const showUrl = BX.prop.getString(entityData, "SHOW_URL", "");
-
 	      if (entityTypeId === BX.CrmEntityType.enumeration.deal && BX.prop.getObject(entityData, "ORDER", null)) {
 	        const orderData = BX.prop.getObject(entityData, "ORDER", null);
 	        htmlTitle = this.getMessage('dealOrderTitle').replace("#ORDER_ID#", orderData.ID).replace("#DATE_TIME#", orderData.ORDER_DATE).replace("#HREF#", orderData.SHOW_URL).replace("#PRICE_WITH_CURRENCY#", orderData.SUM);
 	      }
-
 	      if (title !== "" || htmlTitle !== "") {
 	        const nodes = [];
-
 	        if (showUrl === "" || entityTypeId === this.getOwnerTypeId() && entityId === this.getOwnerId()) {
 	          const spanAttrs = htmlTitle !== "" ? {
 	            html: htmlTitle
@@ -12593,7 +8816,6 @@ this.BX.Crm = this.BX.Crm || {};
 	            },
 	            text: title
 	          };
-
 	          if (htmlTitle !== "") {
 	            linkAttrs = {
 	              attrs: {
@@ -12602,22 +8824,17 @@ this.BX.Crm = this.BX.Crm || {};
 	              html: htmlTitle
 	            };
 	          }
-
 	          nodes.push(BX.create("A", linkAttrs));
 	        }
-
 	        const legend = this.getTextDataParam("LEGEND");
-
 	        if (legend !== "") {
 	          nodes.push(BX.create("BR"));
 	          nodes.push(BX.create("SPAN", {
 	            text: legend
 	          }));
 	        }
-
 	        const baseEntityData = this.getObjectDataParam("BASE");
 	        const baseEntityInfo = BX.prop.getObject(baseEntityData, "ENTITY_INFO");
-
 	        if (baseEntityInfo) {
 	          nodes.push(BX.create("BR"));
 	          nodes.push(BX.create("SPAN", {
@@ -12630,21 +8847,17 @@ this.BX.Crm = this.BX.Crm || {};
 	            text: BX.prop.getString(baseEntityInfo, "TITLE", "")
 	          }));
 	        }
-
 	        return nodes;
 	      }
-
 	      return [];
 	    }
 	  }, {
 	    key: "view",
 	    value: function view() {
 	      const entityTypeId = this.getAssociatedEntityTypeId();
-
 	      if (entityTypeId === BX.CrmEntityType.enumeration.activity) {
 	        const entityData = this.getAssociatedEntityData();
 	        const id = BX.prop.getInteger(entityData, "ID", 0);
-
 	        if (id > 0) {
 	          this._activityEditor.viewActivity(id);
 	        }
@@ -12666,19 +8879,15 @@ this.BX.Crm = this.BX.Crm || {};
 	  }]);
 	  return Creation;
 	}(History);
-
 	babelHelpers.defineProperty(Creation, "messages", {});
 
 	/** @memberof BX.Crm.Timeline.Items */
-
 	let Restoration = /*#__PURE__*/function (_History) {
 	  babelHelpers.inherits(Restoration, _History);
-
 	  function Restoration() {
 	    babelHelpers.classCallCheck(this, Restoration);
 	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Restoration).call(this));
 	  }
-
 	  babelHelpers.createClass(Restoration, [{
 	    key: "getTitle",
 	    value: function getTitle() {
@@ -12714,19 +8923,15 @@ this.BX.Crm = this.BX.Crm || {};
 	  }]);
 	  return Restoration;
 	}(History);
-
 	babelHelpers.defineProperty(Restoration, "messages", {});
 
 	/** @memberof BX.Crm.Timeline.Items */
-
 	let Relation = /*#__PURE__*/function (_History) {
 	  babelHelpers.inherits(Relation, _History);
-
 	  function Relation() {
 	    babelHelpers.classCallCheck(this, Relation);
 	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Relation).call(this));
 	  }
-
 	  babelHelpers.createClass(Relation, [{
 	    key: "getTitle",
 	    value: function getTitle() {
@@ -12742,11 +8947,9 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function prepareContentDetails() {
 	      const entityData = this.getAssociatedEntityData();
 	      let link = BX.prop.getString(entityData, "SHOW_URL", "");
-
 	      if (link.indexOf('/') !== 0) {
 	        link = '#';
 	      }
-
 	      const content = this.getMessage('contentTemplate').replace('#ENTITY_TYPE_CAPTION#', BX.Text.encode(BX.prop.getString(entityData, 'ENTITY_TYPE_CAPTION', ''))).replace('#LEGEND#', '').replace('#LINK#', BX.Text.encode(link)).replace('#LINK_TITLE#', BX.Text.encode(BX.prop.getString(entityData, "TITLE", '')));
 	      const nodes = [];
 	      nodes.push(BX.create('SPAN', {
@@ -12759,15 +8962,12 @@ this.BX.Crm = this.BX.Crm || {};
 	}(History);
 
 	/** @memberof BX.Crm.Timeline.Items */
-
 	let Link = /*#__PURE__*/function (_Relation) {
 	  babelHelpers.inherits(Link, _Relation);
-
 	  function Link() {
 	    babelHelpers.classCallCheck(this, Link);
 	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Link).call(this));
 	  }
-
 	  babelHelpers.createClass(Link, [{
 	    key: "getIconClassName",
 	    value: function getIconClassName() {
@@ -12789,19 +8989,15 @@ this.BX.Crm = this.BX.Crm || {};
 	  }]);
 	  return Link;
 	}(Relation);
-
 	babelHelpers.defineProperty(Link, "messages", {});
 
 	/** @memberof BX.Crm.Timeline.Items */
-
 	let Unlink = /*#__PURE__*/function (_Relation) {
 	  babelHelpers.inherits(Unlink, _Relation);
-
 	  function Unlink() {
 	    babelHelpers.classCallCheck(this, Unlink);
 	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Unlink).call(this));
 	  }
-
 	  babelHelpers.createClass(Unlink, [{
 	    key: "getIconClassName",
 	    value: function getIconClassName() {
@@ -12823,24 +9019,19 @@ this.BX.Crm = this.BX.Crm || {};
 	  }]);
 	  return Unlink;
 	}(Relation);
-
 	babelHelpers.defineProperty(Unlink, "messages", {});
 
 	/** @memberof BX.Crm.Timeline.Items */
-
 	let Mark$1 = /*#__PURE__*/function (_History) {
 	  babelHelpers.inherits(Mark$$1, _History);
-
 	  function Mark$$1() {
 	    babelHelpers.classCallCheck(this, Mark$$1);
 	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Mark$$1).call(this));
 	  }
-
 	  babelHelpers.createClass(Mark$$1, [{
 	    key: "doInitialize",
 	    value: function doInitialize() {
 	      babelHelpers.get(babelHelpers.getPrototypeOf(Mark$$1.prototype), "doInitialize", this).call(this);
-
 	      if (!(this._activityEditor instanceof BX.CrmActivityEditor)) {
 	        throw "Mark. The field 'activityEditor' is not assigned.";
 	      }
@@ -12849,11 +9040,9 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "getMessage",
 	    value: function getMessage(name) {
 	      const m = Mark$$1.messages;
-
 	      if (m.hasOwnProperty(name)) {
 	        return m[name];
 	      }
-
 	      return babelHelpers.get(babelHelpers.getPrototypeOf(Mark$$1.prototype), "getMessage", this).call(this, name);
 	    }
 	  }, {
@@ -12863,12 +9052,10 @@ this.BX.Crm = this.BX.Crm || {};
 	      const entityData = this.getAssociatedEntityData();
 	      const associatedEntityTypeId = this.getAssociatedEntityTypeId();
 	      const typeCategoryId = this.getTypeCategoryId();
-
 	      if (associatedEntityTypeId === BX.CrmEntityType.enumeration.activity) {
 	        const entityTypeId = BX.prop.getInteger(entityData, "TYPE_ID", 0);
 	        const direction = BX.prop.getInteger(entityData, "DIRECTION", 0);
 	        const activityProviderId = BX.prop.getString(entityData, "PROVIDER_ID", '');
-
 	        if (entityTypeId === BX.CrmActivityType.email) {
 	          if (typeCategoryId === Mark.success) {
 	            title = this.getMessage((direction === BX.CrmActivityDirection.incoming ? "incomingEmail" : "outgoingEmail") + "SuccessMark");
@@ -12927,14 +9114,12 @@ this.BX.Crm = this.BX.Crm || {};
 	          }
 	        }
 	      }
-
 	      return title;
 	    }
 	  }, {
 	    key: "prepareTitleLayout",
 	    value: function prepareTitleLayout() {
 	      const associatedEntityTypeId = this.getAssociatedEntityTypeId();
-
 	      if (associatedEntityTypeId === BX.CrmEntityType.enumeration.order) {
 	        return BX.create("SPAN", {
 	          attrs: {
@@ -12965,12 +9150,13 @@ this.BX.Crm = this.BX.Crm || {};
 	          className: "crm-entity-stream-section crm-entity-stream-section-completed"
 	        }
 	      });
-	      if (this.isFixed()) BX.addClass(wrapper, 'crm-entity-stream-section-top-fixed'); //region Context Menu
+	      if (this.isFixed()) BX.addClass(wrapper, 'crm-entity-stream-section-top-fixed');
 
+	      //region Context Menu
 	      if (this.isContextMenuEnabled()) {
 	        wrapper.appendChild(this.prepareContextMenuButton());
-	      } //endregion
-
+	      }
+	      //endregion
 
 	      const content = BX.create("DIV", {
 	        attrs: {
@@ -12978,11 +9164,9 @@ this.BX.Crm = this.BX.Crm || {};
 	        }
 	      });
 	      const header = this.prepareHeaderLayout();
-
 	      if (associatedEntityTypeId === BX.CrmEntityType.enumeration.activity) {
 	        const entityTypeId = BX.prop.getInteger(entityData, "TYPE_ID", 0);
 	        let iconClassName = "crm-entity-stream-section-icon";
-
 	        if (entityTypeId === BX.CrmActivityType.email) {
 	          iconClassName += " crm-entity-stream-section-icon-email";
 	        } else if (entityTypeId === BX.CrmActivityType.call) {
@@ -12993,12 +9177,10 @@ this.BX.Crm = this.BX.Crm || {};
 	          iconClassName += " crm-entity-stream-section-icon-task";
 	        } else if (entityTypeId === BX.CrmActivityType.provider) {
 	          const providerId = BX.prop.getString(entityData, "PROVIDER_ID", "");
-
 	          if (providerId === "CRM_WEBFORM") {
 	            iconClassName += " crm-entity-stream-section-icon-crmForm";
 	          }
 	        }
-
 	        wrapper.appendChild(BX.create("DIV", {
 	          attrs: {
 	            className: iconClassName
@@ -13026,7 +9208,6 @@ this.BX.Crm = this.BX.Crm || {};
 	          })]
 	        }));
 	        const summary = this.getTextDataParam("SUMMARY");
-
 	        if (summary !== "") {
 	          detailWrapper.appendChild(BX.create("DIV", {
 	            attrs: {
@@ -13061,14 +9242,11 @@ this.BX.Crm = this.BX.Crm || {};
 	          }
 	        });
 	        const associatedEntityTitle = this.cutOffText(BX.prop.getString(entityData, "TITLE", ""), 128);
-
 	        if (BX.CrmEntityType.isDefined(associatedEntityTypeId)) {
 	          let link = BX.prop.getString(entityData, 'SHOW_URL', '');
-
 	          if (link.indexOf('/') !== 0) {
 	            link = '#';
 	          }
-
 	          const contentTemplate = this.getMessage('entityContentTemplate').replace('#ENTITY_TYPE_CAPTION#', BX.Text.encode(BX.prop.getString(entityData, 'ENTITY_TYPE_CAPTION', ''))).replace('#LINK#', BX.Text.encode(link)).replace('#LINK_TITLE#', BX.Text.encode(associatedEntityTitle));
 	          innerWrapper.appendChild(BX.create('SPAN', {
 	            html: contentTemplate
@@ -13076,17 +9254,15 @@ this.BX.Crm = this.BX.Crm || {};
 	        } else {
 	          innerWrapper.innerText = associatedEntityTitle;
 	        }
-
 	        content.appendChild(innerWrapper);
-	      } //region Author
+	      }
 
-
+	      //region Author
 	      const authorNode = this.prepareAuthorLayout();
-
 	      if (authorNode) {
 	        content.appendChild(authorNode);
-	      } //endregion
-
+	      }
+	      //endregion
 
 	      wrapper.appendChild(BX.create("DIV", {
 	        attrs: {
@@ -13101,7 +9277,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "prepareContextMenuItems",
 	    value: function prepareContextMenuItems() {
 	      const menuItems = [];
-
 	      if (!this.isReadOnly()) {
 	        if (this.isFixed() || this._fixedHistory.findItemById(this._id)) menuItems.push({
 	          id: "unfasten",
@@ -13113,7 +9288,6 @@ this.BX.Crm = this.BX.Crm || {};
 	          onclick: BX.delegate(this.fasten, this)
 	        });
 	      }
-
 	      return menuItems;
 	    }
 	  }, {
@@ -13121,16 +9295,13 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function view() {
 	      const entityData = this.getAssociatedEntityData();
 	      const associatedEntityTypeId = this.getAssociatedEntityTypeId();
-
 	      if (associatedEntityTypeId === BX.CrmEntityType.enumeration.activity) {
 	        const id = BX.prop.getInteger(entityData, "ID", 0);
-
 	        if (id > 0) {
 	          this._activityEditor.viewActivity(id);
 	        }
 	      } else {
 	        const showUrl = BX.prop.getString(entityData, "SHOW_URL", "");
-
 	        if (showUrl !== "") {
 	          BX.Crm.Page.open(showUrl);
 	        }
@@ -13146,17 +9317,13 @@ this.BX.Crm = this.BX.Crm || {};
 	  }]);
 	  return Mark$$1;
 	}(History);
-
 	babelHelpers.defineProperty(Mark$1, "messages", {});
 
 	/** @memberof BX.Crm.Timeline.Items */
-
 	let Comment$1 = /*#__PURE__*/function (_History) {
 	  babelHelpers.inherits(Comment, _History);
-
 	  function Comment() {
 	    var _this;
-
 	    babelHelpers.classCallCheck(this, Comment);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Comment).call(this));
 	    _this._isCollapsed = false;
@@ -13172,7 +9339,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    BX.Event.EventEmitter.subscribe("BX.Disk.Files:onShowFiles", BX.delegate(_this.addPlayer, babelHelpers.assertThisInitialized(_this)));
 	    return _this;
 	  }
-
 	  babelHelpers.createClass(Comment, [{
 	    key: "doInitialize",
 	    value: function doInitialize() {
@@ -13189,11 +9355,9 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function onPlayerDummyClick(file) {
 	      const playerWrapper = this._playerWrappers[file.id];
 	      const stubNode = playerWrapper.querySelector(".crm-audio-cap-wrap");
-
 	      if (stubNode) {
 	        BX.addClass(stubNode, "crm-audio-cap-wrap-loader");
 	      }
-
 	      this._history.getManager().getAudioPlaybackRateSelector().addPlayer(this._history.getManager().loadMediaPlayer("history_" + this.getId() + '_' + file.id, file.url, 'audio/mp3', playerWrapper, null, {
 	        playbackRate: this._history.getManager().getAudioPlaybackRateSelector().getRate()
 	      }));
@@ -13208,19 +9372,14 @@ this.BX.Crm = this.BX.Crm || {};
 	            if (this._playerWrappers[file.id]) {
 	              return;
 	            }
-
 	            const callInfoWrapper = BX.create("DIV", {
 	              attrs: {
 	                className: "crm-entity-stream-content-detail-call crm-entity-stream-content-detail-call-inline"
 	              }
 	            });
-
 	            this._streamContentEventBlock.appendChild(callInfoWrapper);
-
 	            this._playerWrappers[file.id] = this._history.getManager().renderAudioDummy(null, this.onPlayerDummyClick.bind(this, file));
-
 	            this._playerWrappers[file.id].firstElementChild.classList.add("crm-audio-cap-wrap-without-duration-text");
-
 	            callInfoWrapper.appendChild(this._playerWrappers[file.id]);
 	            callInfoWrapper.appendChild(this._history.getManager().getAudioPlaybackRateSelector().render());
 	          }
@@ -13235,22 +9394,21 @@ this.BX.Crm = this.BX.Crm || {};
 	          className: "crm-entity-stream-section crm-entity-stream-section-history crm-entity-stream-section-comment"
 	        }
 	      });
-
 	      if (this.isReadOnly()) {
 	        BX.addClass(wrapper, "crm-entity-stream-section-comment-read-only");
 	      }
-
 	      if (this.isFixed()) BX.addClass(wrapper, 'crm-entity-stream-section-top-fixed');
 	      wrapper.appendChild(BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-section-icon crm-entity-stream-section-icon-comment"
 	        }
-	      })); //region Context Menu
+	      }));
 
+	      //region Context Menu
 	      if (this.isContextMenuEnabled()) {
 	        wrapper.appendChild(this.prepareContextMenuButton());
-	      } //endregion
-
+	      }
+	      //endregion
 
 	      this._streamContentEventBlock = BX.create("DIV", {
 	        attrs: {
@@ -13258,12 +9416,9 @@ this.BX.Crm = this.BX.Crm || {};
 	        }
 	      });
 	      const header = this.prepareHeaderLayout();
-
 	      this._streamContentEventBlock.appendChild(header);
-
 	      if (!this.isReadOnly()) wrapper.appendChild(this.prepareFixedSwitcherLayout());
 	      const detailChildren = [];
-
 	      if (this._mode !== EditorMode.edit) {
 	        this._commentWrapper = BX.create("DIV", {
 	          attrs: {
@@ -13272,7 +9427,6 @@ this.BX.Crm = this.BX.Crm || {};
 	        });
 	        BX.html(this._commentWrapper, this.getTextDataParam("COMMENT", ""));
 	        detailChildren.push(this._commentWrapper);
-
 	        if (!this.isReadOnly()) {
 	          BX.bind(this._commentWrapper, "click", BX.delegate(this.switchToEditMode, this));
 	          BX.bind(header, "click", BX.delegate(this.switchToEditMode, this));
@@ -13308,26 +9462,21 @@ this.BX.Crm = this.BX.Crm || {};
 	        });
 	        detailChildren.push(buttons);
 	      }
-
 	      this._streamContentEventBlock.appendChild(BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-detail"
 	        },
 	        children: detailChildren
-	      })); //region Author
+	      }));
 
-
+	      //region Author
 	      const authorNode = this.prepareAuthorLayout();
-
 	      if (authorNode) {
 	        this._streamContentEventBlock.appendChild(authorNode);
-	      } //endregion
-
-
+	      }
+	      //endregion
 	      const cleanText = this.getTextDataParam("TEXT", "");
-
 	      const _hasInlineAttachment = this.getTextDataParam("HAS_INLINE_ATTACHMENT", "") === 'Y';
-
 	      if (cleanText.length <= 128 && !_hasInlineAttachment || this._mode === EditorMode.edit) {
 	        this._isCollapsed = false;
 	        wrapper.appendChild(BX.create("DIV", {
@@ -13360,7 +9509,6 @@ this.BX.Crm = this.BX.Crm || {};
 	          })]
 	        }));
 	      }
-
 	      if (this._mode === EditorMode.view && this._hasFiles) {
 	        this._textLoaded = false;
 	        this._fileBlock = BX.create("DIV", {
@@ -13385,7 +9533,6 @@ this.BX.Crm = this.BX.Crm || {};
 	          }, this), 100);
 	        }, this));
 	      }
-
 	      return wrapper;
 	    }
 	  }, {
@@ -13393,7 +9540,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function prepareActions() {
 	      if (this._mode === EditorMode.view && BX.type.isDomNode(this._commentWrapper)) {
 	        this.registerImages(this._commentWrapper);
-
 	        if (!BX.getClass('BX.Disk.apiVersion')) {
 	          BX.viewElementBind(this._commentWrapper, {
 	            showTitle: true
@@ -13423,7 +9569,6 @@ this.BX.Crm = this.BX.Crm || {};
 	            BX.remove(node);
 	            return;
 	          }
-
 	          if (BX.type.isNotEmptyString(result.BLOCK)) {
 	            const promise = BX.html(node, result.BLOCK);
 	            promise.then(BX.delegate(function () {
@@ -13438,15 +9583,11 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "loadEditor",
 	    value: function loadEditor() {
 	      this._editorName = 'CrmTimeLineComment' + this._id + BX.util.getRandomString(4);
-
 	      if (this._postForm) {
 	        this._postForm.oEditor.SetContent(this._commentMessage);
-
 	        this._editor.ReInitIframe();
-
 	        return;
 	      }
-
 	      const actionData = {
 	        data: {
 	          id: this._id,
@@ -13484,7 +9625,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      const commentImages = node.querySelectorAll('[data-bx-viewer="image"]');
 	      const commentImagesLength = commentImages.length;
 	      const idsList = [];
-
 	      if (commentImagesLength > 0) {
 	        for (let i = 0; i < commentImagesLength; ++i) {
 	          if (BX.type.isDomNode(commentImages[i])) {
@@ -13492,12 +9632,10 @@ this.BX.Crm = this.BX.Crm || {};
 	            idsList.push(commentImages[i].id);
 	          }
 	        }
-
 	        if (idsList.length > 0) {
 	          BX.LazyLoad.registerImages(idsList);
 	        }
 	      }
-
 	      BX.LazyLoad.registerImages(idsList);
 	    }
 	  }, {
@@ -13519,11 +9657,9 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "switchToEditMode",
 	    value: function switchToEditMode(e) {
 	      const tagName = e.target.tagName.toLowerCase();
-
 	      if (tagName === 'a' || tagName === 'img' || BX.hasClass(e.target, "feed-con-file-changes-link-more") || BX.hasClass(e.target, "feed-com-file-inline") || BX.type.isNotEmptyString(document.getSelection().toString())) {
 	        return;
 	      }
-
 	      this.toggleMode(EditorMode.edit);
 	      window.setTimeout(BX.delegate(function () {
 	        this.loadEditor();
@@ -13535,9 +9671,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (this._isMenuShown) {
 	        return;
 	      }
-
 	      const menuItems = [];
-
 	      if (!this.isReadOnly()) {
 	        if (this._mode !== EditorMode.edit) {
 	          menuItems.push({
@@ -13552,7 +9686,6 @@ this.BX.Crm = this.BX.Crm || {};
 	            onclick: BX.delegate(this.switchToViewMode, this)
 	          });
 	        }
-
 	        menuItems.push({
 	          id: "remove",
 	          text: this.getMessage("menuDelete"),
@@ -13568,7 +9701,6 @@ this.BX.Crm = this.BX.Crm || {};
 	          onclick: BX.delegate(this.fasten, this)
 	        });
 	      }
-
 	      return menuItems;
 	    }
 	  }, {
@@ -13576,16 +9708,13 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function save(e) {
 	      const attachmentList = [];
 	      let text = "";
-
 	      if (this._postForm) {
 	        text = this._postForm.oEditor.GetContent();
 	        this._commentMessage = text;
-
 	        this._postForm.eventNode.querySelectorAll('input[name="UF_CRM_COMMENT_FILES[]"]').forEach(function (input) {
 	          attachmentList.push(input.value);
 	        });
 	      }
-
 	      if (!BX.type.isNotEmptyString(text)) {
 	        if (!this.emptyCommentMessage) {
 	          this.emptyCommentMessage = new BX.PopupWindow('timeline_empty_comment_' + this._id, e.target, {
@@ -13603,15 +9732,12 @@ this.BX.Crm = this.BX.Crm || {};
 	            }
 	          });
 	        }
-
 	        this.emptyCommentMessage.show();
 	        return;
 	      }
-
 	      if (this._isRequestRunning && BX.type.isNotEmptyString(text)) {
 	        return;
 	      }
-
 	      this._isRequestRunning = true;
 	      BX.ajax({
 	        url: this._history._serviceUrl,
@@ -13635,14 +9761,12 @@ this.BX.Crm = this.BX.Crm || {};
 	      this.closeContextMenu();
 	      this._detetionConfirmDlgId = "entity_timeline_deletion_" + this.getId() + "_confirm";
 	      let dlg = BX.Crm.ConfirmationDialog.get(this._detetionConfirmDlgId);
-
 	      if (!dlg) {
 	        dlg = BX.Crm.ConfirmationDialog.create(this._detetionConfirmDlgId, {
 	          title: this.getMessage("removeConfirmTitle"),
 	          content: this.getMessage('commentRemove')
 	        });
 	      }
-
 	      dlg.open().then(BX.delegate(this.onRemovalConfirm, this), BX.delegate(this.onRemovalCancel, this));
 	    }
 	  }, {
@@ -13651,7 +9775,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (BX.prop.getBoolean(result, "cancel", true)) {
 	        return;
 	      }
-
 	      this.remove();
 	    }
 	  }, {
@@ -13663,14 +9786,10 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (this._isRequestRunning) {
 	        return;
 	      }
-
 	      const history = this._history._manager.getHistory();
-
 	      const deleteItem = history.findItemById(this._id);
 	      if (deleteItem instanceof Comment) deleteItem.clearAnimate();
-
 	      const fixedHistory = this._history._manager.getFixedHistory();
-
 	      const deleteFixedItem = fixedHistory.findItemById(this._id);
 	      if (deleteFixedItem instanceof Comment) deleteFixedItem.clearAnimate();
 	      this._isRequestRunning = true;
@@ -13699,24 +9818,19 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function onSaveSuccess(data) {
 	      this._isRequestRunning = false;
 	      const itemData = BX.prop.getObject(data, "HISTORY_ITEM");
-
 	      const updateFixedItem = this._fixedHistory.findItemById(this._id);
-
 	      if (updateFixedItem instanceof Comment) {
 	        if (!BX.type.isNotEmptyString(itemData['IS_FIXED'])) itemData['IS_FIXED'] = 'Y';
 	        updateFixedItem.setData(itemData);
 	        updateFixedItem._id = BX.prop.getString(itemData, "ID");
 	        updateFixedItem.switchToViewMode();
 	      }
-
 	      const updateItem = this._history.findItemById(this._id);
-
 	      if (updateItem instanceof Comment) {
 	        updateItem.setData(itemData);
 	        updateItem._id = BX.prop.getString(itemData, "ID");
 	        updateItem.switchToViewMode();
 	      }
-
 	      this._postForm = null;
 	    }
 	  }, {
@@ -13733,20 +9847,15 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (!this._wrapper) {
 	        return BX.PreventDefault(e);
 	      }
-
 	      const contentWrapper = this._wrapper.querySelector("div.crm-entity-stream-section-content");
-
 	      if (!contentWrapper) {
 	        return BX.PreventDefault(e);
 	      }
-
 	      if (this._hasFiles && BX.type.isDomNode(this._commentWrapper) && !this._textLoaded) {
 	        this._textLoaded = true;
 	        this.loadContent(this._commentWrapper, "GET_TEXT");
 	      }
-
 	      const eventWrapper = contentWrapper.querySelector(".crm-entity-stream-content-event");
-
 	      if (this._isCollapsed) {
 	        eventWrapper.style.maxHeight = eventWrapper.scrollHeight + 130 + "px";
 	        BX.removeClass(contentWrapper, "crm-entity-stream-section-content-collapsed");
@@ -13762,14 +9871,11 @@ this.BX.Crm = this.BX.Crm || {};
 	          eventWrapper.style.maxHeight = "";
 	        }, this), 0);
 	      }
-
 	      this._isCollapsed = !this._isCollapsed;
 	      const button = contentWrapper.querySelector("a.crm-entity-stream-section-content-expand-btn");
-
 	      if (button) {
 	        button.innerHTML = this.getMessage(this._isCollapsed ? "expand" : "collapse");
 	      }
-
 	      return BX.PreventDefault(e);
 	    }
 	  }], [{
@@ -13784,15 +9890,12 @@ this.BX.Crm = this.BX.Crm || {};
 	}(History);
 
 	/** @memberof BX.Crm.Timeline.Items */
-
-	let Wait$2 = /*#__PURE__*/function (_HistoryActivity) {
+	let Wait$1 = /*#__PURE__*/function (_HistoryActivity) {
 	  babelHelpers.inherits(Wait, _HistoryActivity);
-
 	  function Wait() {
 	    babelHelpers.classCallCheck(this, Wait);
 	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Wait).call(this));
 	  }
-
 	  babelHelpers.createClass(Wait, [{
 	    key: "getTitle",
 	    value: function getTitle() {
@@ -13843,13 +9946,11 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function prepareContent() {
 	      const entityData = this.getAssociatedEntityData();
 	      let description = BX.prop.getString(entityData, "DESCRIPTION_RAW", "");
-
 	      if (description !== "") {
 	        description = BX.util.trim(description);
 	        description = BX.util.strip_tags(description);
 	        description = BX.util.nl2br(description);
 	      }
-
 	      const wrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-section crm-entity-stream-section-history crm-entity-stream-section-wait"
@@ -13879,22 +9980,23 @@ this.BX.Crm = this.BX.Crm || {};
 	        },
 	        html: description
 	      });
-	      contentWrapper.appendChild(detailWrapper); //region Author
+	      contentWrapper.appendChild(detailWrapper);
 
+	      //region Author
 	      const authorNode = this.prepareAuthorLayout();
-
 	      if (authorNode) {
 	        contentWrapper.appendChild(authorNode);
-	      } //endregion
+	      }
+	      //endregion
+
 	      //region  Actions
-
-
 	      this._actionContainer = BX.create("SPAN", {
 	        attrs: {
 	          className: "crm-entity-stream-content-detail-action"
 	        }
 	      });
-	      contentWrapper.appendChild(this._actionContainer); //endregion
+	      contentWrapper.appendChild(this._actionContainer);
+	      //endregion
 
 	      return wrapper;
 	    }
@@ -13920,15 +10022,312 @@ this.BX.Crm = this.BX.Crm || {};
 	}(HistoryActivity);
 
 	/** @memberof BX.Crm.Timeline.Items */
+	let Document = /*#__PURE__*/function (_HistoryActivity) {
+	  babelHelpers.inherits(Document, _HistoryActivity);
+	  function Document() {
+	    babelHelpers.classCallCheck(this, Document);
+	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Document).call(this));
+	  }
+	  babelHelpers.createClass(Document, [{
+	    key: "getTitle",
+	    value: function getTitle() {
+	      const typeCategoryId = BX.prop.getInteger(this._data, "TYPE_CATEGORY_ID", 0);
+	      if (typeCategoryId === 3) {
+	        return BX.Loc.getMessage('CRM_TIMELINE_DOCUMENT_VIEWED');
+	      }
+	      return this.getMessage("document");
+	    }
+	  }, {
+	    key: "prepareTitleLayout",
+	    value: function prepareTitleLayout() {
+	      return BX.create("SPAN", {
+	        attrs: {
+	          className: "crm-entity-stream-content-event-title"
+	        },
+	        children: [BX.create("A", {
+	          attrs: {
+	            href: "#"
+	          },
+	          events: {
+	            "click": BX.delegate(this.editDocument, this)
+	          },
+	          text: this.getTitle()
+	        })]
+	      });
+	    }
+	  }, {
+	    key: "prepareTitleStatusLayout",
+	    value: function prepareTitleStatusLayout() {
+	      const typeCategoryId = BX.prop.getInteger(this._data, "TYPE_CATEGORY_ID", 0);
+	      if (typeCategoryId === 3) {
+	        return BX.create("SPAN", {
+	          attrs: {
+	            className: "crm-entity-stream-content-event-done"
+	          },
+	          text: BX.Loc.getMessage('CRM_TIMELINE_DOCUMENT_VIEWED_STATUS')
+	        });
+	      }
+	      if (typeCategoryId === 2) {
+	        return BX.create("SPAN", {
+	          attrs: {
+	            className: "crm-entity-stream-content-event-sent"
+	          },
+	          text: BX.Loc.getMessage('CRM_TIMELINE_DOCUMENT_CREATED_STATUS')
+	        });
+	      }
+	      return null;
+	    }
+	  }, {
+	    key: "prepareTimeLayout",
+	    value: function prepareTimeLayout() {
+	      return BX.create("SPAN", {
+	        attrs: {
+	          className: "crm-entity-stream-content-event-time"
+	        },
+	        text: this.formatTime(this.getCreatedTime())
+	      });
+	    }
+	  }, {
+	    key: "isContextMenuEnabled",
+	    value: function isContextMenuEnabled() {
+	      const typeCategoryId = BX.prop.getInteger(this._data, "TYPE_CATEGORY_ID", 0);
+	      return typeCategoryId !== 3;
+	    }
+	  }, {
+	    key: "prepareHeaderLayout",
+	    value: function prepareHeaderLayout() {
+	      const header = BX.create("DIV", {
+	        attrs: {
+	          className: "crm-entity-stream-content-header"
+	        }
+	      });
+	      header.appendChild(this.prepareTitleLayout());
+	      const statusLayout = this.prepareTitleStatusLayout();
+	      if (statusLayout) {
+	        header.appendChild(statusLayout);
+	      }
+	      header.appendChild(this.prepareTimeLayout());
+	      return header;
+	    }
+	  }, {
+	    key: "prepareContent",
+	    value: function prepareContent() {
+	      const text = this.getTextDataParam("COMMENT", "");
+	      const wrapper = BX.create("DIV", {
+	        attrs: {
+	          className: "crm-entity-stream-section crm-entity-stream-section-history crm-entity-stream-section-document"
+	        }
+	      });
+	      if (this.isFixed()) {
+	        BX.addClass(wrapper, 'crm-entity-stream-section-top-fixed');
+	      }
+	      wrapper.appendChild(BX.create("DIV", {
+	        attrs: {
+	          className: "crm-entity-stream-section-icon crm-entity-stream-section-icon-document"
+	        }
+	      }));
+	      if (this.isContextMenuEnabled()) {
+	        wrapper.appendChild(this.prepareContextMenuButton());
+	      }
+	      if (!this.isReadOnly()) {
+	        wrapper.appendChild(this.prepareFixedSwitcherLayout());
+	      }
+	      const contentWrapper = BX.create("DIV", {
+	        attrs: {
+	          className: "crm-entity-stream-content-event"
+	        }
+	      });
+	      wrapper.appendChild(BX.create("DIV", {
+	        attrs: {
+	          className: "crm-entity-stream-section-content"
+	        },
+	        children: [contentWrapper]
+	      }));
+	      const header = this.prepareHeaderLayout();
+	      contentWrapper.appendChild(header);
+	      const detailWrapper = BX.create("DIV", {
+	        attrs: {
+	          className: "crm-entity-stream-content-detail"
+	        },
+	        html: text
+	      });
+	      const title = BX.findChildByClassName(detailWrapper, 'document-title-link');
+	      if (title) {
+	        BX.bind(title, 'click', BX.proxy(this.editDocument, this));
+	      }
+	      contentWrapper.appendChild(detailWrapper);
 
+	      //region Author
+	      const authorNode = this.prepareAuthorLayout();
+	      if (authorNode) {
+	        contentWrapper.appendChild(authorNode);
+	      }
+	      //endregion
+
+	      //region  Actions
+	      this._actionContainer = BX.create("SPAN", {
+	        attrs: {
+	          className: "crm-entity-stream-content-detail-action"
+	        }
+	      });
+	      contentWrapper.appendChild(this._actionContainer);
+	      //endregion
+
+	      return wrapper;
+	    }
+	  }, {
+	    key: "prepareActions",
+	    value: function prepareActions() {}
+	  }, {
+	    key: "showActions",
+	    value: function showActions(show) {
+	      if (this._actionContainer) {
+	        this._actionContainer.style.display = show ? "" : "none";
+	      }
+	    }
+	  }, {
+	    key: "prepareContextMenuItems",
+	    value: function prepareContextMenuItems() {
+	      const menuItems = [];
+	      if (!this.isReadOnly()) {
+	        menuItems.push({
+	          id: "edit",
+	          text: this.getMessage("menuEdit"),
+	          onclick: BX.delegate(this.editDocument, this)
+	        });
+	        menuItems.push({
+	          id: "remove",
+	          text: this.getMessage("menuDelete"),
+	          onclick: BX.delegate(this.confirmDelete, this)
+	        });
+	        if (this.isFixed() || this._fixedHistory.findItemById(this._id)) {
+	          menuItems.push({
+	            id: "unfasten",
+	            text: this.getMessage("menuUnfasten"),
+	            onclick: BX.delegate(this.unfasten, this)
+	          });
+	        } else {
+	          menuItems.push({
+	            id: "fasten",
+	            text: this.getMessage("menuFasten"),
+	            onclick: BX.delegate(this.fasten, this)
+	          });
+	        }
+	      }
+	      return menuItems;
+	    }
+	  }, {
+	    key: "confirmDelete",
+	    value: function confirmDelete() {
+	      this.closeContextMenu();
+	      this._detetionConfirmDlgId = "entity_timeline_deletion_" + this.getId() + "_confirm";
+	      let dlg = BX.Crm.ConfirmationDialog.get(this._detetionConfirmDlgId);
+	      if (!dlg) {
+	        dlg = BX.Crm.ConfirmationDialog.create(this._detetionConfirmDlgId, {
+	          title: this.getMessage("removeConfirmTitle"),
+	          content: this.getMessage('documentRemove')
+	        });
+	      }
+	      dlg.open().then(BX.delegate(this.onConfirmDelete, this), BX.DoNothing);
+	    }
+	  }, {
+	    key: "onConfirmDelete",
+	    value: function onConfirmDelete(result) {
+	      if (BX.prop.getBoolean(result, "cancel", true)) {
+	        return;
+	      }
+	      this.deleteDocument();
+	    }
+	  }, {
+	    key: "deleteDocument",
+	    value: function deleteDocument() {
+	      if (this._isRequestRunning) {
+	        return;
+	      }
+	      this._isRequestRunning = true;
+	      BX.ajax({
+	        url: this._history._serviceUrl,
+	        method: "POST",
+	        dataType: "json",
+	        data: {
+	          "ACTION": "DELETE_DOCUMENT",
+	          "OWNER_TYPE_ID": this.getOwnerTypeId(),
+	          "OWNER_ID": this.getOwnerId(),
+	          "ID": this.getId()
+	        },
+	        onsuccess: BX.delegate(function (result) {
+	          this._isRequestRunning = false;
+	          if (BX.type.isNotEmptyString(result.ERROR)) {
+	            alert(result.ERROR);
+	          } else {
+	            const deleteItem = this._history.findItemById(this._id);
+	            if (deleteItem instanceof Document) {
+	              deleteItem.clearAnimate();
+	            }
+	            const deleteFixedItem = this._fixedHistory.findItemById(this._id);
+	            if (deleteFixedItem instanceof Document) {
+	              deleteFixedItem.clearAnimate();
+	            }
+	          }
+	        }, this),
+	        onfailure: BX.delegate(function () {
+	          this._isRequestRunning = false;
+	        }, this)
+	      });
+	    }
+	  }, {
+	    key: "editDocument",
+	    value: function editDocument() {
+	      const documentId = this.getData().DOCUMENT_ID || 0;
+	      if (documentId > 0) {
+	        let url = '/bitrix/components/bitrix/crm.document.view/slider.php';
+	        url = BX.util.add_url_param(url, {
+	          documentId: documentId
+	        });
+	        if (BX.SidePanel) {
+	          BX.SidePanel.Instance.open(url, {
+	            width: 1060
+	          });
+	        } else {
+	          top.location.href = url;
+	        }
+	      }
+	    }
+	  }, {
+	    key: "updateWrapper",
+	    value: function updateWrapper() {
+	      const wrapper = this.getWrapper();
+	      if (wrapper) {
+	        const detailWrapper = BX.findChildByClassName(wrapper, 'crm-entity-stream-content-detail');
+	        if (detailWrapper) {
+	          BX.adjust(detailWrapper, {
+	            html: this.getTextDataParam("COMMENT", "")
+	          });
+	          const title = BX.findChildByClassName(detailWrapper, 'document-title-link');
+	          if (title) {
+	            BX.bind(title, 'click', BX.proxy(this.editDocument, this));
+	          }
+	        }
+	      }
+	    }
+	  }], [{
+	    key: "create",
+	    value: function create(id, settings) {
+	      const self = new Document();
+	      self.initialize(id, settings);
+	      return self;
+	    }
+	  }]);
+	  return Document;
+	}(HistoryActivity);
+
+	/** @memberof BX.Crm.Timeline.Items */
 	let Sender = /*#__PURE__*/function (_HistoryActivity) {
 	  babelHelpers.inherits(Sender, _HistoryActivity);
-
 	  function Sender() {
 	    babelHelpers.classCallCheck(this, Sender);
 	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Sender).call(this));
 	  }
-
 	  babelHelpers.createClass(Sender, [{
 	    key: "getDataSetting",
 	    value: function getDataSetting(name) {
@@ -13967,7 +10366,6 @@ this.BX.Crm = this.BX.Crm || {};
 	              } else {
 	                top.location.href = self.getDataSetting('path');
 	              }
-
 	              e.preventDefault();
 	              e.stopPropagation();
 	            }
@@ -13990,7 +10388,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "prepareStatusLayout",
 	    value: function prepareStatusLayout() {
 	      let layoutClassName, textCaption;
-
 	      if (this.getDataSetting('isError')) {
 	        textCaption = this.getMessage('error');
 	        layoutClassName = "crm-entity-stream-content-event-missing";
@@ -14004,7 +10401,6 @@ this.BX.Crm = this.BX.Crm || {};
 	        textCaption = this.getMessage('read');
 	        layoutClassName = "crm-entity-stream-content-event-skipped";
 	      }
-
 	      return BX.create("SPAN", {
 	        attrs: {
 	          className: layoutClassName
@@ -14021,11 +10417,9 @@ this.BX.Crm = this.BX.Crm || {};
 	        }
 	      });
 	      header.appendChild(this.prepareTitleLayout());
-
 	      if (this.getDataSetting('isError') || this.getDataSetting('isRead') || this.getDataSetting('isUnsub')) {
 	        header.appendChild(this.prepareStatusLayout());
 	      }
-
 	      header.appendChild(this.prepareTimeLayout());
 	      return header;
 	    }
@@ -14067,14 +10461,14 @@ this.BX.Crm = this.BX.Crm || {};
 	        },
 	        html: description
 	      });
-	      contentWrapper.appendChild(detailWrapper); //region Author
+	      contentWrapper.appendChild(detailWrapper);
 
+	      //region Author
 	      const authorNode = this.prepareAuthorLayout();
-
 	      if (authorNode) {
 	        contentWrapper.appendChild(authorNode);
-	      } //endregion
-
+	      }
+	      //endregion
 
 	      return wrapper;
 	    }
@@ -14090,24 +10484,19 @@ this.BX.Crm = this.BX.Crm || {};
 	}(HistoryActivity);
 
 	/** @memberof BX.Crm.Timeline.Items */
-
 	let Bizproc = /*#__PURE__*/function (_History) {
 	  babelHelpers.inherits(Bizproc, _History);
-
 	  function Bizproc() {
 	    babelHelpers.classCallCheck(this, Bizproc);
 	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Bizproc).call(this));
 	  }
-
 	  babelHelpers.createClass(Bizproc, [{
 	    key: "getTitle",
 	    value: function getTitle() {
 	      const type = this.getTextDataParam("TYPE");
-
 	      if (type === 'AUTOMATION_DEBUG_INFORMATION') {
 	        return this.getMessage('automationDebugger');
 	      }
-
 	      return this.getMessage("bizproc");
 	    }
 	  }, {
@@ -14140,14 +10529,14 @@ this.BX.Crm = this.BX.Crm || {};
 	          },
 	          html: this.prepareContentTextHtml()
 	        })]
-	      })); //region Author
+	      }));
 
+	      //region Author
 	      const authorNode = this.prepareAuthorLayout();
-
 	      if (authorNode) {
 	        content.appendChild(authorNode);
-	      } //endregion
-
+	      }
+	      //endregion
 
 	      wrapper.appendChild(BX.create("DIV", {
 	        attrs: {
@@ -14161,28 +10550,22 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "prepareContentTextHtml",
 	    value: function prepareContentTextHtml() {
 	      const type = this.getTextDataParam("TYPE");
-
 	      if (type === 'ACTIVITY_ERROR') {
 	        return '<strong>#TITLE#</strong>: #ERROR_TEXT#'.replace('#TITLE#', BX.util.htmlspecialchars(this.getTextDataParam("ACTIVITY_TITLE"))).replace('#ERROR_TEXT#', BX.util.htmlspecialchars(this.getTextDataParam("ERROR_TEXT")));
 	      } else if (type === 'AUTOMATION_DEBUG_INFORMATION') {
 	        return BX.Text.encode(this.getTextDataParam('AUTOMATION_DEBUG_TEXT'));
 	      }
-
 	      const workflowName = this.getTextDataParam("WORKFLOW_TEMPLATE_NAME");
 	      const workflowStatus = this.getTextDataParam("WORKFLOW_STATUS_NAME");
-
 	      if (!workflowName || workflowStatus !== 'Created' && workflowStatus !== 'Completed' && workflowStatus !== 'Terminated') {
 	        return BX.util.htmlspecialchars(this.getTextDataParam("COMMENT"));
 	      }
-
 	      let label = BX.message('CRM_TIMELINE_BIZPROC_CREATED');
-
 	      if (workflowStatus === 'Completed') {
 	        label = BX.message('CRM_TIMELINE_BIZPROC_COMPLETED');
 	      } else if (workflowStatus === 'Terminated') {
 	        label = BX.message('CRM_TIMELINE_BIZPROC_TERMINATED');
 	      }
-
 	      return BX.util.htmlspecialchars(label).replace('#NAME#', '<strong>' + BX.util.htmlspecialchars(workflowName) + '</strong>');
 	    }
 	  }], [{
@@ -14197,15 +10580,12 @@ this.BX.Crm = this.BX.Crm || {};
 	}(History);
 
 	/** @memberof BX.Crm.Timeline.Actions */
-
 	let Scoring = /*#__PURE__*/function (_History) {
 	  babelHelpers.inherits(Scoring, _History);
-
 	  function Scoring() {
 	    babelHelpers.classCallCheck(this, Scoring);
 	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Scoring).call(this));
 	  }
-
 	  babelHelpers.createClass(Scoring, [{
 	    key: "prepareContent",
 	    value: function prepareContent() {
@@ -14219,7 +10599,6 @@ this.BX.Crm = this.BX.Crm || {};
 	            const ownerTypeId = this.getOwnerTypeId();
 	            const ownerId = this.getOwnerId();
 	            let ownerType;
-
 	            if (ownerTypeId === 1) {
 	              ownerType = "lead";
 	            } else if (ownerTypeId === 2) {
@@ -14227,10 +10606,8 @@ this.BX.Crm = this.BX.Crm || {};
 	            } else {
 	              return;
 	            }
-
 	            url = url.replace("#entity#", ownerType);
 	            url = url.replace("#id#", ownerId);
-
 	            if (BX.SidePanel) {
 	              BX.SidePanel.Instance.open(url, {
 	                width: 840
@@ -14242,11 +10619,9 @@ this.BX.Crm = this.BX.Crm || {};
 	        }
 	      });
 	      const scoringInfo = BX.prop.getObject(this._data, "SCORING_INFO", null);
-
 	      if (!scoringInfo) {
 	        return outerWrapper;
 	      }
-
 	      let score = BX.prop.getNumber(scoringInfo, "SCORE", 0);
 	      let scoreDelta = BX.prop.getNumber(scoringInfo, "SCORE_DELTA", 0);
 	      score = Math.round(score * 100);
@@ -14258,7 +10633,6 @@ this.BX.Crm = this.BX.Crm || {};
 	        text: score + "%"
 	      });
 	      let iconClass = "crm-entity-stream-content-scoring-total-icon";
-
 	      if (score < 50) {
 	        iconClass += " crm-entity-stream-content-scoring-total-icon-fail";
 	      } else if (score < 75) {
@@ -14266,7 +10640,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      } else {
 	        iconClass += " crm-entity-stream-content-scoring-total-icon-success";
 	      }
-
 	      const icon = BX.create("DIV", {
 	        attrs: {
 	          className: iconClass
@@ -14296,15 +10669,16 @@ this.BX.Crm = this.BX.Crm || {};
 	            },
 	            text: (scoreDelta > 0 ? "+" : "") + scoreDelta + "%"
 	          }) : null
+
 	          /*BX.create("DIV",
 	          	{
 	          		attrs: { className: "crm-entity-stream-content-scoring-event-detail" },
 	          		text: "<activity subject>"
 	          	}
-	          )*/
-	          ]
+	          )*/]
 	        })]
 	      }));
+
 	      return outerWrapper;
 	    }
 	  }], [{
@@ -14325,7 +10699,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    this._node = null;
 	    this._callback = null;
 	  }
-
 	  babelHelpers.createClass(Expand, [{
 	    key: "initialize",
 	    value: function initialize(node, callback) {
@@ -14384,7 +10757,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function onNodeOpacityComplete() {
 	      this._node.style.height = "";
 	      this._node.style.opacity = "";
-
 	      if (this._callback) {
 	        this._callback();
 	      }
@@ -14401,13 +10773,10 @@ this.BX.Crm = this.BX.Crm || {};
 	}();
 
 	/** @memberof BX.Crm.Timeline.Streams */
-
 	let History$1 = /*#__PURE__*/function (_Stream) {
 	  babelHelpers.inherits(History$$1, _Stream);
-
 	  function History$$1() {
 	    var _this;
-
 	    babelHelpers.classCallCheck(this, History$$1);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(History$$1).call(this));
 	    _this._items = [];
@@ -14432,7 +10801,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    _this._filterResultStub = null;
 	    return _this;
 	  }
-
 	  babelHelpers.createClass(History$$1, [{
 	    key: "doInitialize",
 	    value: function doInitialize() {
@@ -14440,24 +10808,18 @@ this.BX.Crm = this.BX.Crm || {};
 	      this._ownerTypeId = this.getSetting("ownerTypeId");
 	      this._ownerId = this.getSetting("ownerId");
 	      this._serviceUrl = this.getSetting("serviceUrl", "");
-
 	      if (!this.isStubMode()) {
 	        let itemData = this.getSetting("itemData");
-
 	        if (!BX.type.isArray(itemData)) {
 	          itemData = [];
 	        }
-
 	        let i, length, item;
-
 	        for (i = 0, length = itemData.length; i < length; i++) {
 	          item = this.createItem(itemData[i]);
-
 	          if (item) {
 	            this._items.push(item);
 	          }
 	        }
-
 	        this._navigation = this.getSetting("navigation", {});
 	        this._filterWrapper = BX("timeline-filter");
 	        this._filterId = BX.prop.getString(this._settings, "filterId", this._id);
@@ -14470,51 +10832,38 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "layout",
 	    value: function layout() {
 	      this._wrapper = BX.create("DIV", {});
-
 	      this._container.appendChild(this._wrapper);
-
 	      const now = BX.prop.extractDate(new Date());
 	      let i, length, item;
-
 	      if (!this.isStubMode()) {
 	        if (this._filterWrapper) {
 	          const closeFilterButton = this._filterWrapper.querySelector(".crm-entity-stream-filter-close");
-
 	          if (closeFilterButton) {
 	            BX.bind(closeFilterButton, "click", this.onFilterClose.bind(this));
 	          }
 	        }
-
 	        for (i = 0, length = this._items.length; i < length; i++) {
 	          item = this._items[i];
 	          item.setContainer(this._wrapper);
 	          const created = item.getCreatedDate();
-
 	          if (this._lastDate === null || this._lastDate.getTime() !== created.getTime()) {
 	            this._lastDate = created;
-
 	            if (now.getTime() === created.getTime()) {
 	              this._currentDaySection = this._lastDaySection = this.createCurrentDaySection();
-
 	              this._wrapper.appendChild(this._currentDaySection);
 	            } else {
 	              this._lastDaySection = this.createDaySection(this._lastDate);
-
 	              this._wrapper.appendChild(this._lastDaySection);
 	            }
 	          }
-
 	          item._lastDate = this._lastDate;
 	          item.layout();
 	        }
-
 	        this.enableLoading(this._items.length > 0);
 	        this.refreshLayout();
 	      } else {
 	        this._currentDaySection = this._lastDaySection = this.createCurrentDaySection();
-
 	        this._wrapper.appendChild(this._currentDaySection);
-
 	        this._wrapper.appendChild(BX.create("DIV", {
 	          attrs: {
 	            className: "crm-entity-stream-section crm-entity-stream-section-createEntity crm-entity-stream-section-last"
@@ -14545,7 +10894,6 @@ this.BX.Crm = this.BX.Crm || {};
 	          })]
 	        }));
 	      }
-
 	      this._manager.processHistoryLayoutChange();
 	    }
 	  }, {
@@ -14558,36 +10906,27 @@ this.BX.Crm = this.BX.Crm || {};
 	          this._wrapper.appendChild(this._filterWrapper);
 	        }
 	      }
-
 	      this.adjustFilterButton();
 	      const length = this._items.length;
-
 	      if (length === 0 && this._isFilterApplied) {
 	        if (!this._filterEmptyResultSection) {
 	          this._filterEmptyResultSection = this.createFilterEmptyResultSection();
 	        }
-
 	        this._wrapper.appendChild(this._filterEmptyResultSection);
-
 	        return;
 	      }
-
 	      if (this._filterEmptyResultSection) {
 	        this._filterEmptyResultSection = BX.remove(this._filterEmptyResultSection);
 	      }
-
 	      if (length === 0) {
 	        return;
 	      }
-
 	      for (let i = 0; i < length - 1; i++) {
 	        const item = this._items[i];
-
 	        if (item.isTerminated()) {
 	          item.markAsTerminated(false);
 	        }
 	      }
-
 	      this._items[length - 1].markAsTerminated(true);
 	    }
 	  }, {
@@ -14631,25 +10970,19 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (!BX.type.isNumber($entityTypeId)) {
 	        $entityTypeId = parseInt($entityTypeId);
 	      }
-
 	      if (!BX.type.isNumber(entityId)) {
 	        entityId = parseInt(entityId);
 	      }
-
 	      if (isNaN($entityTypeId) || $entityTypeId <= 0 || isNaN(entityId) || entityId <= 0) {
 	        return [];
 	      }
-
 	      const results = [];
-
 	      for (let i = 0, l = this._items.length; i < l; i++) {
 	        const item = this._items[i];
-
 	        if (item.getAssociatedEntityTypeId() === $entityTypeId && item.getAssociatedEntityId() === entityId) {
 	          results.push(item);
 	        }
 	      }
-
 	      return results;
 	    }
 	  }, {
@@ -14687,17 +11020,14 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (!this._filterWrapper) {
 	        return;
 	      }
-
 	      if (!this._isFilterShown && this._items.length === 0) {
 	        if (!this._emptySection) {
 	          this._emptySection = this.createEmptySection();
 	        }
-
 	        this._wrapper.insertBefore(this._emptySection, this._filterWrapper);
 	      } else if (this._emptySection) {
 	        this._emptySection = BX.remove(this._emptySection);
 	      }
-
 	      if (!this._filterButton) {
 	        this._filterButton = BX.create("BUTTON", {
 	          attrs: {
@@ -14709,19 +11039,15 @@ this.BX.Crm = this.BX.Crm || {};
 	          this.showFilter();
 	        }.bind(this));
 	      }
-
 	      const section = this._wrapper.querySelector(".crm-entity-stream-section-today-label, .crm-entity-stream-section-planned-label, .crm-entity-stream-section-history-label");
-
 	      if (section) {
 	        const sectionWrapper = section.querySelector(".crm-entity-stream-section-content");
-
 	        if (sectionWrapper) {
 	          if (this._filterButton.parentNode !== sectionWrapper) {
 	            sectionWrapper.appendChild(this._filterButton);
 	          }
 	        }
 	      }
-
 	      if (this._isFilterApplied) {
 	        BX.addClass(this._filterButton, "crm-entity-stream-filter-label-active");
 	      } else {
@@ -14734,11 +11060,9 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (!this._filterWrapper) {
 	        return;
 	      }
-
 	      BX.removeClass(this._filterWrapper, "crm-entity-stream-section-filter-hide");
 	      BX.addClass(this._filterWrapper, "crm-entity-stream-section-filter-show");
 	      this._isFilterShown = true;
-
 	      if (BX.prop.getBoolean(params, "enableAdjust", true)) {
 	        this.adjustFilterButton();
 	      }
@@ -14749,11 +11073,9 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (!this._filterWrapper) {
 	        return;
 	      }
-
 	      BX.removeClass(this._filterWrapper, "crm-entity-stream-section-filter-show");
 	      BX.addClass(this._filterWrapper, "crm-entity-stream-section-filter-hide");
 	      this._isFilterShown = false;
-
 	      if (BX.prop.getBoolean(params, "enableAdjust", true)) {
 	        this.adjustFilterButton();
 	      }
@@ -14764,7 +11086,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      this.hideFilter();
 	      window.setTimeout(function () {
 	        const filter = BX.Main.filterManager.getById(this._filterId);
-
 	        if (filter) {
 	          filter.resetFilter();
 	        }
@@ -14834,31 +11155,26 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (this._emptySection) {
 	        this._emptySection = BX.remove(this._emptySection);
 	      }
-
 	      if (this._currentDaySection === null) {
 	        this._currentDaySection = this.createCurrentDaySection();
-
 	        if (this._wrapper.firstChild) {
 	          this._wrapper.insertBefore(this._currentDaySection, this._wrapper.firstChild);
 	        } else {
 	          this._wrapper.appendChild(this._currentDaySection);
 	        }
 	      }
-
 	      if (this._anchor === null) {
 	        this._anchor = BX.create("DIV", {
 	          attrs: {
 	            className: "crm-entity-stream-section crm-entity-stream-section-shadow"
 	          }
 	        });
-
 	        if (this._currentDaySection.nextSibling) {
 	          this._wrapper.insertBefore(this._anchor, this._currentDaySection.nextSibling);
 	        } else {
 	          this._wrapper.appendChild(this._anchor);
 	        }
 	      }
-
 	      return this._anchor;
 	    }
 	  }, {
@@ -14867,11 +11183,9 @@ this.BX.Crm = this.BX.Crm || {};
 	      const typeId = BX.prop.getInteger(data, "TYPE_ID", Item.undefined);
 	      const typeCategoryId = BX.prop.getInteger(data, "TYPE_CATEGORY_ID", 0);
 	      const providerId = BX.prop.getString(BX.prop.getObject(data, "ASSOCIATED_ENTITY", {}), "PROVIDER_ID", "");
-
 	      if (typeId !== Item.activity) {
 	        return null;
 	      }
-
 	      if (typeCategoryId === BX.CrmActivityType.email) {
 	        return Email$2.create(data["ID"], {
 	          history: this._history,
@@ -14881,7 +11195,6 @@ this.BX.Crm = this.BX.Crm || {};
 	          data: data
 	        });
 	      }
-
 	      if (typeCategoryId === BX.CrmActivityType.call) {
 	        return Call$2.create(data["ID"], {
 	          history: this._history,
@@ -14932,7 +11245,7 @@ this.BX.Crm = this.BX.Crm || {};
 	            data: data
 	          });
 	        } else if (providerId === 'REST_APP') {
-	          return Rest$2.create(data["ID"], {
+	          return Rest$1.create(data["ID"], {
 	            history: this._history,
 	            fixedHistory: this._fixedHistory,
 	            container: this._wrapper,
@@ -14965,7 +11278,6 @@ this.BX.Crm = this.BX.Crm || {};
 	          });
 	        }
 	      }
-
 	      return HistoryActivity.create(data["ID"], {
 	        history: this._history,
 	        fixedHistory: this._fixedHistory,
@@ -14979,7 +11291,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function createExternalNotificationItem(data) {
 	      const typeId = BX.prop.getInteger(data, "TYPE_CATEGORY_ID", 0);
 	      const changedFieldName = BX.prop.getString(data, 'CHANGED_FIELD_NAME', '');
-
 	      if (typeId === Item.modification && changedFieldName === 'STATUS_ID') {
 	        return ExternalNoticeStatusModification.create(data["ID"], {
 	          history: this._history,
@@ -14988,7 +11299,6 @@ this.BX.Crm = this.BX.Crm || {};
 	          data: data
 	        });
 	      }
-
 	      return ExternalNoticeModification.create(data["ID"], {
 	        history: this._history,
 	        container: this._wrapper,
@@ -15013,10 +11323,8 @@ this.BX.Crm = this.BX.Crm || {};
 	          data: data
 	        });
 	      }
-
 	      const typeId = BX.prop.getInteger(data, "TYPE_ID", Item.undefined);
 	      const typeCategoryId = BX.prop.getInteger(data, "TYPE_CATEGORY_ID", 0);
-
 	      if (typeId === Item.activity) {
 	        return this.createActivityItem(data);
 	      } else if (typeId === Item.externalNotification) {
@@ -15065,7 +11373,7 @@ this.BX.Crm = this.BX.Crm || {};
 	          data: data
 	        });
 	      } else if (typeId === Item.wait) {
-	        return Wait$2.create(data["ID"], {
+	        return Wait$1.create(data["ID"], {
 	          history: this._history,
 	          fixedHistory: this._fixedHistory,
 	          container: this._wrapper,
@@ -15118,7 +11426,6 @@ this.BX.Crm = this.BX.Crm || {};
 	          data: data
 	        });
 	      }
-
 	      return History.create(data["ID"], {
 	        history: this._history,
 	        fixedHistory: this._fixedHistory,
@@ -15143,55 +11450,46 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (!BX.type.isNumber(index) || index < 0) {
 	        index = this.calculateItemIndex(item);
 	      }
-
 	      if (index < this._items.length) {
 	        this._items.splice(index, 0, item);
 	      } else {
 	        this._items.push(item);
 	      }
-
 	      this.refreshLayout();
-
 	      this._manager.processHistoryLayoutChange();
 	    }
 	  }, {
 	    key: "deleteItem",
 	    value: function deleteItem(item) {
 	      const index = this.getItemIndex(item);
-
 	      if (index < 0) {
 	        return;
 	      }
-
 	      item.clearLayout();
 	      this.removeItemByIndex(index);
 	      this.refreshLayout();
-
 	      this._manager.processHistoryLayoutChange();
 	    }
 	  }, {
 	    key: "resetLayout",
 	    value: function resetLayout() {
 	      let i;
-
 	      for (i = this._items.length - 1; i >= 0; i--) {
 	        this._items[i].clearLayout();
 	      }
-
 	      this._items = [];
 	      this._currentDaySection = this._lastDaySection = this._emptySection = this._filterEmptyResultSection = null;
 	      this._anchor = null;
-	      this._lastDate = null; //Clean wrapper. Skip filter for prevent trembling.
+	      this._lastDate = null;
 
+	      //Clean wrapper. Skip filter for prevent trembling.
 	      const children = [];
 	      let child;
-
 	      for (i = 0; child = this._wrapper.children[i]; i++) {
 	        if (child !== this._filterWrapper) {
 	          children.push(child);
 	        }
 	      }
-
 	      for (i = 0; child = children[i]; i++) {
 	        this._wrapper.removeChild(child);
 	      }
@@ -15202,9 +11500,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (!this._loadingWaiter || !this._enableLoading || this._isRequestRunning) {
 	        return;
 	      }
-
 	      const pos = this._loadingWaiter.getBoundingClientRect();
-
 	      if (pos.top <= document.documentElement.clientHeight) {
 	        this.loadItems();
 	      }
@@ -15215,7 +11511,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (id !== this._filterId) {
 	        return;
 	      }
-
 	      params.autoResolve = false;
 	      this._isFilterApplied = BX.prop.getString(data, "action", "") === "apply";
 	      this._isRequestRunning = true;
@@ -15232,11 +11527,9 @@ this.BX.Crm = this.BX.Crm || {};
 	        this.bulkCreateItems(BX.prop.getArray(result, "HISTORY_ITEMS", []));
 	        this.setNavigation(BX.prop.getObject(result, "HISTORY_NAVIGATION", {}));
 	        this.refreshLayout();
-
 	        if (this._items.length > 0) {
 	          this._manager.processHistoryLayoutChange();
 	        }
-
 	        promise.fulfill();
 	        this._isRequestRunning = false;
 	      }.bind(this));
@@ -15245,49 +11538,35 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "bulkCreateItems",
 	    value: function bulkCreateItems(itemData) {
 	      const length = itemData.length;
-
 	      if (length === 0) {
 	        return;
 	      }
-
 	      if (this._filterEmptyResultSection) {
 	        this._filterEmptyResultSection = BX.remove(this._filterEmptyResultSection);
 	      }
-
 	      const now = BX.prop.extractDate(new Date());
 	      let i, item;
-
 	      for (i = 0; i < length; i++) {
 	        const itemId = BX.prop.getInteger(itemData[i], 'id', BX.prop.getInteger(itemData[i], 'ID', 0));
-
 	        if (itemId <= 0) {
 	          continue;
 	        }
-
 	        if (this.findItemById(itemId) !== null) {
 	          continue;
 	        }
-
 	        item = this.createItem(itemData[i]);
-
 	        this._items.push(item);
-
 	        const created = item.getCreatedDate();
-
 	        if (this._lastDate === null || this._lastDate.getTime() !== created.getTime()) {
 	          this._lastDate = created;
-
 	          if (now.getTime() === created.getTime()) {
 	            this._currentDaySection = this._lastDaySection = this.createCurrentDaySection();
-
 	            this._wrapper.appendChild(this._currentDaySection);
 	          } else {
 	            this._lastDaySection = this.createDaySection(this._lastDate);
-
 	            this._wrapper.appendChild(this._lastDaySection);
 	          }
 	        }
-
 	        item.layout();
 	      }
 	    }
@@ -15308,11 +11587,9 @@ this.BX.Crm = this.BX.Crm || {};
 	        this.bulkCreateItems(BX.prop.getArray(result, "HISTORY_ITEMS", []));
 	        this.setNavigation(BX.prop.getObject(result, "HISTORY_NAVIGATION", {}));
 	        this.refreshLayout();
-
 	        if (this._items.length > 0) {
 	          this._manager.processHistoryLayoutChange();
 	        }
-
 	        this._isRequestRunning = false;
 	      }.bind(this));
 	    }
@@ -15327,7 +11604,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (!BX.type.isPlainObject(navigation)) {
 	        navigation = {};
 	      }
-
 	      this._navigation = navigation;
 	      this.enableLoading(BX.prop.getString(this._navigation, "OFFSET_TIMESTAMP", "") !== "");
 	    }
@@ -15340,25 +11616,20 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "enableLoading",
 	    value: function enableLoading(enable) {
 	      enable = !!enable;
-
 	      if (this._enableLoading === enable) {
 	        return;
 	      }
-
 	      this._enableLoading = enable;
-
 	      if (this._enableLoading) {
 	        if (this._items.length > 0) {
 	          this._loadingWaiter = this._items[this._items.length - 1].getWrapper();
 	        }
-
 	        if (!this._scrollHandler) {
 	          this._scrollHandler = BX.delegate(this.onWindowScroll, this);
 	          BX.bind(window, "scroll", this._scrollHandler);
 	        }
 	      } else {
 	        this._loadingWaiter = null;
-
 	        if (this._scrollHandler) {
 	          BX.unbind(window, "scroll", this._scrollHandler);
 	          this._scrollHandler = null;
@@ -15389,18 +11660,14 @@ this.BX.Crm = this.BX.Crm || {};
 	  }]);
 	  return History$$1;
 	}(Steam);
-
 	babelHelpers.defineProperty(History$1, "messages", {});
 	babelHelpers.defineProperty(History$1, "instances", {});
 
 	/** @memberof BX.Crm.Timeline.Streams */
-
 	let FixedHistory = /*#__PURE__*/function (_History) {
 	  babelHelpers.inherits(FixedHistory, _History);
-
 	  function FixedHistory() {
 	    var _this;
-
 	    babelHelpers.classCallCheck(this, FixedHistory);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(FixedHistory).call(this));
 	    _this._items = [];
@@ -15410,24 +11677,19 @@ this.BX.Crm = this.BX.Crm || {};
 	    _this._isRequestRunning = false;
 	    return _this;
 	  }
-
 	  babelHelpers.createClass(FixedHistory, [{
 	    key: "doInitialize",
 	    value: function doInitialize() {
 	      const datetimeFormat = BX.message("FORMAT_DATETIME").replace(/:SS/, "");
 	      this._timeFormat = BX.date.convertBitrixFormat(datetimeFormat);
 	      let itemData = this.getSetting("itemData");
-
 	      if (!BX.type.isArray(itemData)) {
 	        itemData = [];
 	      }
-
 	      let i, length, item;
-
 	      for (i = 0, length = itemData.length; i < length; i++) {
 	        item = this.createItem(itemData[i]);
 	        item._isFixed = true;
-
 	        this._items.push(item);
 	      }
 	    }
@@ -15446,17 +11708,12 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function layout() {
 	      this._wrapper = BX.create("DIV", {});
 	      this.createAnchor();
-
 	      this._container.insertBefore(this._wrapper, this._editorContainer.nextElementSibling);
-
 	      for (let i = 0; i < this._items.length; i++) {
 	        this._items[i].setContainer(this._wrapper);
-
 	        this._items[i].layout();
 	      }
-
 	      this.refreshLayout();
-
 	      this._manager.processHistoryLayoutChange();
 	    }
 	  }, {
@@ -15479,7 +11736,6 @@ this.BX.Crm = this.BX.Crm || {};
 	          className: "crm-entity-stream-section-fixed-anchor"
 	        }
 	      });
-
 	      this._wrapper.appendChild(this._anchor);
 	    }
 	  }, {
@@ -15505,7 +11761,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "addItem",
 	    value: function addItem(item, index) {
 	      babelHelpers.get(babelHelpers.getPrototypeOf(FixedHistory.prototype), "addItem", this).call(this, item, index);
-
 	      if (item instanceof CompatibleItem) {
 	        item._isFixed = true;
 	      }
@@ -15533,244 +11788,171 @@ this.BX.Crm = this.BX.Crm || {};
 	}(History$1);
 	FixedHistory.instances = {};
 
-	function _classPrivateMethodInitSpec$1(obj, privateSet) { _checkPrivateRedeclaration$1(obj, privateSet); privateSet.add(obj); }
-
-	function _classPrivateFieldInitSpec$1(obj, privateMap, value) { _checkPrivateRedeclaration$1(obj, privateMap); privateMap.set(obj, value); }
-
-	function _checkPrivateRedeclaration$1(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-
-	function _classPrivateMethodGet$1(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
-
+	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration(obj, privateSet); privateSet.add(obj); }
+	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
+	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var _scheduleStream = /*#__PURE__*/new WeakMap();
-
 	var _fixedHistoryStream = /*#__PURE__*/new WeakMap();
-
 	var _historyStream = /*#__PURE__*/new WeakMap();
-
 	var _itemsQueue = /*#__PURE__*/new WeakMap();
-
 	var _itemsQueueProcessing = /*#__PURE__*/new WeakMap();
-
 	var _reloadingMessagesQueue = /*#__PURE__*/new WeakMap();
-
 	var _ownerTypeId = /*#__PURE__*/new WeakMap();
-
 	var _ownerId = /*#__PURE__*/new WeakMap();
-
 	var _itemDataShouldBeReloaded = /*#__PURE__*/new WeakSet();
-
 	var _addToQueue = /*#__PURE__*/new WeakSet();
-
 	var _processQueueItem = /*#__PURE__*/new WeakSet();
-
 	var _addItem = /*#__PURE__*/new WeakSet();
-
 	var _updateItem = /*#__PURE__*/new WeakSet();
-
 	var _deleteItem = /*#__PURE__*/new WeakSet();
-
 	var _moveItem = /*#__PURE__*/new WeakSet();
-
 	var _pinItem = /*#__PURE__*/new WeakSet();
-
 	var _unpinItem = /*#__PURE__*/new WeakSet();
-
 	var _getStreamByName = /*#__PURE__*/new WeakSet();
-
 	var _fetchItems = /*#__PURE__*/new WeakSet();
-
 	let PullActionProcessor = /*#__PURE__*/function () {
 	  function PullActionProcessor(params) {
 	    babelHelpers.classCallCheck(this, PullActionProcessor);
-
-	    _classPrivateMethodInitSpec$1(this, _fetchItems);
-
-	    _classPrivateMethodInitSpec$1(this, _getStreamByName);
-
-	    _classPrivateMethodInitSpec$1(this, _unpinItem);
-
-	    _classPrivateMethodInitSpec$1(this, _pinItem);
-
-	    _classPrivateMethodInitSpec$1(this, _moveItem);
-
-	    _classPrivateMethodInitSpec$1(this, _deleteItem);
-
-	    _classPrivateMethodInitSpec$1(this, _updateItem);
-
-	    _classPrivateMethodInitSpec$1(this, _addItem);
-
-	    _classPrivateMethodInitSpec$1(this, _processQueueItem);
-
-	    _classPrivateMethodInitSpec$1(this, _addToQueue);
-
-	    _classPrivateMethodInitSpec$1(this, _itemDataShouldBeReloaded);
-
-	    _classPrivateFieldInitSpec$1(this, _scheduleStream, {
+	    _classPrivateMethodInitSpec(this, _fetchItems);
+	    _classPrivateMethodInitSpec(this, _getStreamByName);
+	    _classPrivateMethodInitSpec(this, _unpinItem);
+	    _classPrivateMethodInitSpec(this, _pinItem);
+	    _classPrivateMethodInitSpec(this, _moveItem);
+	    _classPrivateMethodInitSpec(this, _deleteItem);
+	    _classPrivateMethodInitSpec(this, _updateItem);
+	    _classPrivateMethodInitSpec(this, _addItem);
+	    _classPrivateMethodInitSpec(this, _processQueueItem);
+	    _classPrivateMethodInitSpec(this, _addToQueue);
+	    _classPrivateMethodInitSpec(this, _itemDataShouldBeReloaded);
+	    _classPrivateFieldInitSpec(this, _scheduleStream, {
 	      writable: true,
 	      value: null
 	    });
-
-	    _classPrivateFieldInitSpec$1(this, _fixedHistoryStream, {
+	    _classPrivateFieldInitSpec(this, _fixedHistoryStream, {
 	      writable: true,
 	      value: null
 	    });
-
-	    _classPrivateFieldInitSpec$1(this, _historyStream, {
+	    _classPrivateFieldInitSpec(this, _historyStream, {
 	      writable: true,
 	      value: null
 	    });
-
-	    _classPrivateFieldInitSpec$1(this, _itemsQueue, {
+	    _classPrivateFieldInitSpec(this, _itemsQueue, {
 	      writable: true,
 	      value: []
 	    });
-
-	    _classPrivateFieldInitSpec$1(this, _itemsQueueProcessing, {
+	    _classPrivateFieldInitSpec(this, _itemsQueueProcessing, {
 	      writable: true,
 	      value: false
 	    });
-
-	    _classPrivateFieldInitSpec$1(this, _reloadingMessagesQueue, {
+	    _classPrivateFieldInitSpec(this, _reloadingMessagesQueue, {
 	      writable: true,
 	      value: []
 	    });
-
-	    _classPrivateFieldInitSpec$1(this, _ownerTypeId, {
+	    _classPrivateFieldInitSpec(this, _ownerTypeId, {
 	      writable: true,
 	      value: void 0
 	    });
-
-	    _classPrivateFieldInitSpec$1(this, _ownerId, {
+	    _classPrivateFieldInitSpec(this, _ownerId, {
 	      writable: true,
 	      value: void 0
 	    });
-
 	    if (!main_core.Type.isObject(params.scheduleStream) || !main_core.Type.isObject(params.fixedHistoryStream) || !main_core.Type.isObject(params.historyStream)) {
 	      throw new Error(`params scheduleStream, fixedHistoryStream and historyStream are required`);
 	    }
-
 	    if (!main_core.Type.isNumber(params.ownerTypeId) || !main_core.Type.isNumber(params.ownerId)) {
 	      throw new Error('params ownerTypeId and ownerId are required');
 	    }
-
 	    babelHelpers.classPrivateFieldSet(this, _scheduleStream, params.scheduleStream);
 	    babelHelpers.classPrivateFieldSet(this, _fixedHistoryStream, params.fixedHistoryStream);
 	    babelHelpers.classPrivateFieldSet(this, _historyStream, params.historyStream);
 	    babelHelpers.classPrivateFieldSet(this, _ownerTypeId, params.ownerTypeId);
 	    babelHelpers.classPrivateFieldSet(this, _ownerId, params.ownerId);
 	  }
-
 	  babelHelpers.createClass(PullActionProcessor, [{
 	    key: "processAction",
 	    value: function processAction(actionParams) {
-	      if (_classPrivateMethodGet$1(this, _itemDataShouldBeReloaded, _itemDataShouldBeReloaded2).call(this, actionParams)) {
+	      if (_classPrivateMethodGet(this, _itemDataShouldBeReloaded, _itemDataShouldBeReloaded2).call(this, actionParams)) {
 	        babelHelpers.classPrivateFieldGet(this, _reloadingMessagesQueue).push(actionParams);
-
-	        _classPrivateMethodGet$1(this, _fetchItems, _fetchItems2).call(this);
+	        _classPrivateMethodGet(this, _fetchItems, _fetchItems2).call(this);
 	      } else {
-	        _classPrivateMethodGet$1(this, _addToQueue, _addToQueue2).call(this, actionParams);
+	        _classPrivateMethodGet(this, _addToQueue, _addToQueue2).call(this, actionParams);
 	      }
 	    }
 	  }]);
 	  return PullActionProcessor;
 	}();
-
 	function _itemDataShouldBeReloaded2(actionParams) {
 	  const {
 	    item
 	  } = actionParams;
-
 	  if (!item) {
 	    return false;
 	  }
-
 	  const appLanguage = main_core.Loc.getMessage('LANGUAGE_ID').toLowerCase();
 	  const languageId = BX.prop.getString(item, 'languageId', appLanguage).toLowerCase();
 	  const canBeReloaded = BX.prop.getBoolean(item, 'canBeReloaded', true);
 	  return languageId !== appLanguage && canBeReloaded;
 	}
-
 	function _addToQueue2(actionParams) {
 	  babelHelpers.classPrivateFieldGet(this, _itemsQueue).push(actionParams);
-
 	  if (!babelHelpers.classPrivateFieldGet(this, _itemsQueueProcessing)) {
-	    _classPrivateMethodGet$1(this, _processQueueItem, _processQueueItem2).call(this);
+	    _classPrivateMethodGet(this, _processQueueItem, _processQueueItem2).call(this);
 	  }
 	}
-
 	function _processQueueItem2() {
 	  if (!babelHelpers.classPrivateFieldGet(this, _itemsQueue).length) {
 	    babelHelpers.classPrivateFieldSet(this, _itemsQueueProcessing, false);
 	    return;
 	  }
-
 	  babelHelpers.classPrivateFieldSet(this, _itemsQueueProcessing, true);
 	  const actionParams = babelHelpers.classPrivateFieldGet(this, _itemsQueue).shift();
-
-	  const stream = _classPrivateMethodGet$1(this, _getStreamByName, _getStreamByName2).call(this, actionParams.stream);
-
+	  const stream = _classPrivateMethodGet(this, _getStreamByName, _getStreamByName2).call(this, actionParams.stream);
 	  const promises = [];
-
 	  switch (actionParams.action) {
 	    case 'add':
-	      promises.push(_classPrivateMethodGet$1(this, _addItem, _addItem2).call(this, actionParams.id, actionParams.item, stream));
+	      promises.push(_classPrivateMethodGet(this, _addItem, _addItem2).call(this, actionParams.id, actionParams.item, stream));
 	      break;
-
 	    case 'update':
-	      promises.push(_classPrivateMethodGet$1(this, _updateItem, _updateItem2).call(this, actionParams.id, actionParams.item, stream, false, true));
-
+	      promises.push(_classPrivateMethodGet(this, _updateItem, _updateItem2).call(this, actionParams.id, actionParams.item, stream, false, true));
 	      if (stream.isHistoryStream()) {
 	        // fixed history stream can contain the same item as a history stream, so both should be updated:
-	        promises.push(_classPrivateMethodGet$1(this, _updateItem, _updateItem2).call(this, actionParams.id, actionParams.item, babelHelpers.classPrivateFieldGet(this, _fixedHistoryStream), false, true));
+	        promises.push(_classPrivateMethodGet(this, _updateItem, _updateItem2).call(this, actionParams.id, actionParams.item, babelHelpers.classPrivateFieldGet(this, _fixedHistoryStream), false, true));
 	      }
-
 	      break;
-
 	    case 'delete':
-	      promises.push(_classPrivateMethodGet$1(this, _deleteItem, _deleteItem2).call(this, actionParams.id, stream));
-
+	      promises.push(_classPrivateMethodGet(this, _deleteItem, _deleteItem2).call(this, actionParams.id, stream));
 	      if (stream.isHistoryStream()) {
 	        // fixed history stream can contain the same item as a history stream, so both should be updated:
-	        promises.push(_classPrivateMethodGet$1(this, _deleteItem, _deleteItem2).call(this, actionParams.id, babelHelpers.classPrivateFieldGet(this, _fixedHistoryStream)));
+	        promises.push(_classPrivateMethodGet(this, _deleteItem, _deleteItem2).call(this, actionParams.id, babelHelpers.classPrivateFieldGet(this, _fixedHistoryStream)));
 	      }
-
 	      break;
-
 	    case 'move':
 	      // move item from one stream to another one:
-	      const sourceStream = _classPrivateMethodGet$1(this, _getStreamByName, _getStreamByName2).call(this, actionParams.params.fromStream);
-
-	      promises.push(_classPrivateMethodGet$1(this, _moveItem, _moveItem2).call(this, actionParams.params.fromId, sourceStream, actionParams.id, stream, actionParams.item));
+	      const sourceStream = _classPrivateMethodGet(this, _getStreamByName, _getStreamByName2).call(this, actionParams.params.fromStream);
+	      promises.push(_classPrivateMethodGet(this, _moveItem, _moveItem2).call(this, actionParams.params.fromId, sourceStream, actionParams.id, stream, actionParams.item));
 	      break;
-
 	    case 'changePinned':
 	      // pin or unpin item
-	      if (_classPrivateMethodGet$1(this, _getStreamByName, _getStreamByName2).call(this, actionParams.params.fromStream).isHistoryStream()) {
-	        promises.push(_classPrivateMethodGet$1(this, _pinItem, _pinItem2).call(this, actionParams.id, actionParams.item));
+	      if (_classPrivateMethodGet(this, _getStreamByName, _getStreamByName2).call(this, actionParams.params.fromStream).isHistoryStream()) {
+	        promises.push(_classPrivateMethodGet(this, _pinItem, _pinItem2).call(this, actionParams.id, actionParams.item));
 	      } else {
-	        promises.push(_classPrivateMethodGet$1(this, _unpinItem, _unpinItem2).call(this, actionParams.id, actionParams.item));
+	        promises.push(_classPrivateMethodGet(this, _unpinItem, _unpinItem2).call(this, actionParams.id, actionParams.item));
 	      }
-
 	  }
-
 	  Promise.all(promises).then(() => {
-	    _classPrivateMethodGet$1(this, _processQueueItem, _processQueueItem2).call(this);
+	    _classPrivateMethodGet(this, _processQueueItem, _processQueueItem2).call(this);
 	  });
 	}
-
 	function _addItem2(id, itemData, stream) {
 	  const existedStreamItem = stream.findItemById(id);
-
 	  if (existedStreamItem) {
 	    return Promise.resolve();
 	  }
-
 	  const streamItem = stream.createItem(itemData);
-
 	  if (!streamItem) {
 	    return Promise.resolve();
 	  }
-
 	  const index = stream.calculateItemIndex(streamItem);
 	  const anchor = stream.createAnchor(index);
 	  stream.addItem(streamItem, index);
@@ -15779,83 +11961,90 @@ this.BX.Crm = this.BX.Crm || {};
 	  });
 	  return stream.animateItemAdding(streamItem);
 	}
-
 	function _updateItem2(id, itemData, stream, animateUpdate = true, animateMove) {
 	  const isDone = BX.prop.getString(itemData['ASSOCIATED_ENTITY'], 'COMPLETED') === 'Y';
 	  const existedStreamItem = stream.findItemById(id);
-
 	  if (!existedStreamItem) {
 	    return Promise.resolve();
 	  }
-
 	  if (existedStreamItem instanceof CompatibleItem && isDone) {
-	    existedStreamItem._existedStreamItemDeadLine = existedStreamItem.getDeadline();
+	    existedStreamItem._existedStreamItemDeadLine = existedStreamItem.getLightTime();
 	  }
-
 	  existedStreamItem.setData(itemData);
 	  return stream.refreshItem(existedStreamItem, animateUpdate, animateMove);
 	}
-
 	function _deleteItem2(id, stream) {
 	  const item = stream.findItemById(id);
-
 	  if (item) {
 	    return stream.deleteItemAnimated(item);
 	  }
-
 	  return Promise.resolve();
 	}
-
 	function _moveItem2(sourceId, sourceStream, destinationId, destinationStream, destinationItemData) {
 	  const sourceItem = sourceStream.findItemById(sourceId);
-
 	  if (!sourceItem) {
-	    return _classPrivateMethodGet$1(this, _addItem, _addItem2).call(this, destinationId, destinationItemData, destinationStream);
+	    return _classPrivateMethodGet(this, _addItem, _addItem2).call(this, destinationId, destinationItemData, destinationStream);
 	  }
-
 	  const existedDestinationItem = destinationStream.findItemById(destinationId);
-
 	  if (sourceItem && existedDestinationItem) {
-	    return _classPrivateMethodGet$1(this, _deleteItem, _deleteItem2).call(this, sourceId, sourceStream);
+	    return _classPrivateMethodGet(this, _deleteItem, _deleteItem2).call(this, sourceId, sourceStream);
 	  }
-
 	  const destinationItem = destinationStream.createItem(destinationItemData);
 	  destinationStream.addItem(destinationItem, destinationStream.calculateItemIndex(destinationItem));
-	  destinationItem.layout({
-	    add: false
-	  });
+	  if (destinationItem instanceof CompatibleItem) {
+	    destinationItem.layout({
+	      add: false
+	    });
+	  }
 	  return sourceStream.moveItemToStream(sourceItem, destinationStream, destinationItem);
 	}
-
 	function _pinItem2(id, itemData) {
 	  if (babelHelpers.classPrivateFieldGet(this, _fixedHistoryStream).findItemById(id)) {
 	    return Promise.resolve();
 	  }
-
 	  const historyItem = babelHelpers.classPrivateFieldGet(this, _historyStream).findItemById(id);
-
-	  if (!historyItem) // fixed history item does not exist into history items stream, so just add to fixed history stream
+	  if (!historyItem)
+	    // fixed history item does not exist into history items stream, so just add to fixed history stream
 	    {
-	      return _classPrivateMethodGet$1(this, _addItem, _addItem2).call(this, id, itemData, babelHelpers.classPrivateFieldGet(this, _fixedHistoryStream));
+	      return _classPrivateMethodGet(this, _addItem, _addItem2).call(this, id, itemData, babelHelpers.classPrivateFieldGet(this, _fixedHistoryStream));
 	    }
-
 	  if (historyItem instanceof CompatibleItem) {
 	    historyItem.onSuccessFasten();
 	    return Promise.resolve();
 	  } else {
-	    return _classPrivateMethodGet$1(this, _updateItem, _updateItem2).call(this, id, itemData, babelHelpers.classPrivateFieldGet(this, _historyStream), false, false).then(() => {
+	    // hide files block in comment content before pin
+	    const historyCommentBlock = historyItem.getLayoutContentBlockById('commentContent');
+	    if (historyCommentBlock) {
+	      historyCommentBlock.setIsFilesBlockDisplayed(false);
+	      historyCommentBlock.setIsMoving();
+	    }
+	    return _classPrivateMethodGet(this, _updateItem, _updateItem2).call(this, id, itemData, babelHelpers.classPrivateFieldGet(this, _historyStream), false, false).then(() => {
 	      const fixedHistoryItem = babelHelpers.classPrivateFieldGet(this, _fixedHistoryStream).createItem(itemData);
+	      fixedHistoryItem.initWrapper();
 	      babelHelpers.classPrivateFieldGet(this, _fixedHistoryStream).addItem(fixedHistoryItem, 0);
-	      fixedHistoryItem.layout({
-	        add: false
-	      });
 	      return new Promise(resolve => {
 	        const animation = Fasten.create('', {
 	          initialItem: historyItem,
 	          finalItem: fixedHistoryItem,
 	          anchor: babelHelpers.classPrivateFieldGet(this, _fixedHistoryStream).getAnchor(),
 	          events: {
-	            complete: resolve
+	            complete: () => {
+	              fixedHistoryItem.initLayoutApp({
+	                add: false
+	              });
+
+	              // show files block in comment content after pin record
+	              if (historyCommentBlock) {
+	                historyCommentBlock.setIsFilesBlockDisplayed();
+	                historyCommentBlock.setIsMoving(false);
+	                const fixedHistoryCommentBlock = fixedHistoryItem.getLayoutContentBlockById('commentContent');
+	                if (fixedHistoryCommentBlock) {
+	                  fixedHistoryCommentBlock.setIsFilesBlockDisplayed();
+	                  fixedHistoryCommentBlock.setIsMoving(false);
+	                }
+	              }
+	              resolve();
+	            }
 	          }
 	        });
 	        animation.run();
@@ -15863,35 +12052,28 @@ this.BX.Crm = this.BX.Crm || {};
 	    });
 	  }
 	}
-
 	function _unpinItem2(id, itemData) {
 	  const fixedHistoryItem = babelHelpers.classPrivateFieldGet(this, _fixedHistoryStream).findItemById(id);
-
 	  if (fixedHistoryItem instanceof CompatibleItem) {
 	    fixedHistoryItem.onSuccessUnfasten();
 	    return Promise.resolve();
 	  } else {
-	    return _classPrivateMethodGet$1(this, _updateItem, _updateItem2).call(this, id, itemData, babelHelpers.classPrivateFieldGet(this, _historyStream), false, false).then(() => {
-	      return _classPrivateMethodGet$1(this, _deleteItem, _deleteItem2).call(this, id, babelHelpers.classPrivateFieldGet(this, _fixedHistoryStream));
+	    return _classPrivateMethodGet(this, _updateItem, _updateItem2).call(this, id, itemData, babelHelpers.classPrivateFieldGet(this, _historyStream), false, false).then(() => {
+	      return _classPrivateMethodGet(this, _deleteItem, _deleteItem2).call(this, id, babelHelpers.classPrivateFieldGet(this, _fixedHistoryStream));
 	    });
 	  }
 	}
-
 	function _getStreamByName2(streamName) {
 	  switch (streamName) {
 	    case 'scheduled':
 	      return babelHelpers.classPrivateFieldGet(this, _scheduleStream);
-
 	    case 'fixedHistory':
 	      return babelHelpers.classPrivateFieldGet(this, _fixedHistoryStream);
-
 	    case 'history':
 	      return babelHelpers.classPrivateFieldGet(this, _historyStream);
 	  }
-
 	  throw new Error(`Stream "${streamName}" not found`);
 	}
-
 	function _fetchItems2() {
 	  setTimeout(() => {
 	    const messages = main_core.clone(babelHelpers.classPrivateFieldGet(this, _reloadingMessagesQueue));
@@ -15902,7 +12084,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      const container = message.stream === 'scheduled' ? activityIds : historyIds;
 	      container.push(message.id);
 	    });
-
 	    if (messages.length) {
 	      const data = {
 	        activityIds,
@@ -15917,45 +12098,34 @@ this.BX.Crm = this.BX.Crm || {};
 	          if (response.data[message.id]) {
 	            message.item = response.data[message.id];
 	          }
-
-	          _classPrivateMethodGet$1(this, _addToQueue, _addToQueue2).call(this, message);
+	          _classPrivateMethodGet(this, _addToQueue, _addToQueue2).call(this, message);
 	        });
 	      }).catch(err => {
 	        console.error(err);
-	        messages.forEach(message => _classPrivateMethodGet$1(this, _addToQueue, _addToQueue2).call(this, message));
+	        messages.forEach(message => _classPrivateMethodGet(this, _addToQueue, _addToQueue2).call(this, message));
 	      });
 	    }
 	  }, 1500);
 	}
 
-	function _classPrivateFieldInitSpec$2(obj, privateMap, value) { _checkPrivateRedeclaration$2(obj, privateMap); privateMap.set(obj, value); }
-
-	function _checkPrivateRedeclaration$2(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-
+	function _classPrivateFieldInitSpec$1(obj, privateMap, value) { _checkPrivateRedeclaration$1(obj, privateMap); privateMap.set(obj, value); }
+	function _checkPrivateRedeclaration$1(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	function _classStaticPrivateFieldSpecSet(receiver, classConstructor, descriptor, value) { _classCheckPrivateStaticAccess(receiver, classConstructor); _classCheckPrivateStaticFieldDescriptor(descriptor, "set"); _classApplyDescriptorSet(receiver, descriptor, value); return value; }
-
 	function _classApplyDescriptorSet(receiver, descriptor, value) { if (descriptor.set) { descriptor.set.call(receiver, value); } else { if (!descriptor.writable) { throw new TypeError("attempted to set read only private field"); } descriptor.value = value; } }
-
 	function _classStaticPrivateFieldSpecGet(receiver, classConstructor, descriptor) { _classCheckPrivateStaticAccess(receiver, classConstructor); _classCheckPrivateStaticFieldDescriptor(descriptor, "get"); return _classApplyDescriptorGet(receiver, descriptor); }
-
 	function _classCheckPrivateStaticFieldDescriptor(descriptor, action) { if (descriptor === undefined) { throw new TypeError("attempted to " + action + " private static field before its declaration"); } }
-
 	function _classCheckPrivateStaticAccess(receiver, classConstructor) { if (receiver !== classConstructor) { throw new TypeError("Private static access of wrong provenance"); } }
-
 	function _classApplyDescriptorGet(receiver, descriptor) { if (descriptor.get) { return descriptor.get.call(receiver); } return descriptor.value; }
+
 	/** @memberof BX.Crm.Timeline */
-
 	var _itemPullActionProcessor = /*#__PURE__*/new WeakMap();
-
 	let Manager = /*#__PURE__*/function () {
 	  function Manager() {
 	    babelHelpers.classCallCheck(this, Manager);
-
-	    _classPrivateFieldInitSpec$2(this, _itemPullActionProcessor, {
+	    _classPrivateFieldInitSpec$1(this, _itemPullActionProcessor, {
 	      writable: true,
 	      value: null
 	    });
-
 	    this._id = "";
 	    this._settings = {};
 	    this._container = null;
@@ -15963,23 +12133,16 @@ this.BX.Crm = this.BX.Crm || {};
 	    this._ownerId = 0;
 	    this._ownerInfo = null;
 	    this._progressSemantics = "";
-	    this._commentEditor = null;
-	    this._todoEditor = null;
-	    this._waitEditor = null;
-	    this._smsEditor = null;
-	    this._zoomEditor = null;
 	    this._chat = null;
 	    this._schedule = null;
 	    this._history = null;
 	    this._fixedHistory = null;
 	    this._activityEditor = null;
-	    this._menuBar = null;
 	    this._userId = 0;
 	    this._readOnly = false;
 	    this._currentUser = null;
 	    this._pullTagName = "";
 	  }
-
 	  babelHelpers.createClass(Manager, [{
 	    key: "initialize",
 	    value: function initialize(id, settings) {
@@ -15992,31 +12155,24 @@ this.BX.Crm = this.BX.Crm || {};
 	      this._spotlightFastenShowed = this.getSetting("spotlightFastenShowed", true);
 	      this._audioPlaybackRate = parseFloat(this.getSetting("audioPlaybackRate", 1));
 	      const containerId = this.getSetting("containerId");
-
 	      if (!BX.type.isNotEmptyString(containerId)) {
 	        throw "Manager. A required parameter 'containerId' is missing.";
 	      }
-
 	      this._container = BX(containerId);
-
 	      if (!BX.type.isElementNode(this._container)) {
 	        throw "Manager. Container node is not found.";
 	      }
-
 	      this._editorContainer = BX(this.getSetting("editorContainer"));
 	      this._userId = BX.prop.getInteger(this._settings, "userId", 0);
 	      this._readOnly = BX.prop.getBoolean(this._settings, "readOnly", false);
 	      this._currentUser = BX.prop.getObject(this._settings, "currentUser", null);
 	      const activityEditorId = this.getSetting("activityEditorId");
-
 	      if (BX.type.isNotEmptyString(activityEditorId)) {
 	        this._activityEditor = BX.CrmActivityEditor.items[activityEditorId];
-
 	        if (!(this._activityEditor instanceof BX.CrmActivityEditor)) {
 	          throw "BX.CrmTimeline. Activity editor instance is not found.";
 	        }
 	      }
-
 	      const ajaxId = this.getSetting("ajaxId");
 	      const currentUrl = this.getSetting("currentUrl");
 	      const serviceUrl = this.getSetting("serviceUrl");
@@ -16071,108 +12227,13 @@ this.BX.Crm = this.BX.Crm || {};
 	        userId: this._userId,
 	        readOnly: this._readOnly
 	      });
-
 	      this._schedule.setHistory(this._history);
-
 	      this._fixedHistory.setHistory(this._history);
-
-	      var isTodoEnabled = BX.prop.getBoolean(this._settings, 'enableTodo', false);
-	      this._commentEditor = Comment.create(this._id, {
-	        manager: this,
-	        ownerTypeId: this._ownerTypeId,
-	        ownerId: this._ownerId,
-	        serviceUrl: this.getSetting("serviceUrl"),
-	        container: this.getSetting("editorCommentContainer"),
-	        input: this.getSetting("editorCommentInput"),
-	        editorName: this.getSetting("editorCommentEditorName"),
-	        button: this.getSetting("editorCommentButton"),
-	        cancelButton: this.getSetting("editorCommentCancelButton")
-	      });
-
-	      this._commentEditor.setVisible(!isTodoEnabled && !this._readOnly);
-
-	      this._commentEditor.setHistory(this._history);
-
-	      if (isTodoEnabled) {
-	        this._todoEditor = ToDo.create(this._id, {
-	          manager: this,
-	          ownerTypeId: this._ownerTypeId,
-	          ownerId: this._ownerId,
-	          container: this.getSetting("editorTodoContainer"),
-	          button: this.getSetting("editorTodoButton"),
-	          cancelButton: this.getSetting("editorTodoCancelButton")
-	        });
-
-	        this._todoEditor.setVisible(!this._readOnly);
-	      }
-
-	      if (BX.prop.getBoolean(this._settings, "enableWait", false)) {
-	        this._waitEditor = Wait.create(this._id, {
-	          manager: this,
-	          ownerTypeId: this._ownerTypeId,
-	          ownerId: this._ownerId,
-	          serviceUrl: this.getSetting("serviceUrl"),
-	          config: this.getSetting("editorWaitConfig", {}),
-	          targetDates: this.getSetting("editorWaitTargetDates", []),
-	          container: this.getSetting("editorWaitContainer"),
-	          configContainer: this.getSetting("editorWaitConfigContainer"),
-	          input: this.getSetting("editorWaitInput"),
-	          button: this.getSetting("editorWaitButton"),
-	          cancelButton: this.getSetting("editorWaitCancelButton")
-	        });
-
-	        this._waitEditor.setVisible(false);
-	      }
-
-	      if (BX.prop.getBoolean(this._settings, "enableSms", false)) {
-	        this._smsEditor = Sms.create(this._id, {
-	          manager: this,
-	          ownerTypeId: this._ownerTypeId,
-	          ownerId: this._ownerId,
-	          serviceUrl: this.getSetting("serviceUrl"),
-	          config: this.getSetting("editorSmsConfig", {}),
-	          container: this.getSetting("editorSmsContainer"),
-	          input: this.getSetting("editorSmsInput"),
-	          templatesContainer: this.getSetting("editorSmsTemplatesContainer"),
-	          button: this.getSetting("editorSmsButton"),
-	          cancelButton: this.getSetting("editorSmsCancelButton")
-	        });
-
-	        this._smsEditor.setVisible(false);
-	      }
-
-	      if (BX.prop.getBoolean(this._settings, "enableZoom", false) && BX.prop.getBoolean(this._settings, "statusZoom", false)) {
-	        this._zoomEditor = new BX.Crm.Zoom({
-	          id: this._id,
-	          manager: this,
-	          ownerTypeId: this._ownerTypeId,
-	          ownerId: this._ownerId,
-	          container: this.getSetting("editorZoomContainer"),
-	          userId: this._userId
-	        });
-
-	        this._zoomEditor.setVisible(false);
-	      }
-
-	      if (BX.prop.getBoolean(this._settings, "enableRest", false)) {
-	        this._restEditor = Rest.create(this._id, {
-	          manager: this,
-	          ownerTypeId: this._ownerTypeId,
-	          ownerId: this._ownerId,
-	          placement: BX.prop.getString(this._settings, "restPlacement", '')
-	        });
-	      }
-
 	      this._chat.layout();
-
 	      this._schedule.layout();
-
 	      this._fixedHistory.layout();
-
 	      this._history.layout();
-
 	      this._pullTagName = BX.prop.getString(this._settings, "pullTagName", "");
-
 	      if (this._pullTagName !== "") {
 	        BX.addCustomEvent("onPullEvent-crm", BX.delegate(this.onPullEvent, this));
 	        this.extendWatch();
@@ -16184,26 +12245,6 @@ this.BX.Crm = this.BX.Crm || {};
 	          ownerId: this._ownerId
 	        }));
 	      }
-
-	      this._menuBar = MenuBar.create(this._id, {
-	        container: BX(this.getSetting("menuBarContainer")),
-	        menuId: this.getSetting("menuBarObjectId"),
-	        ownerInfo: this._ownerInfo,
-	        activityEditor: this._activityEditor,
-	        commentEditor: this._commentEditor,
-	        todoEditor: this._todoEditor,
-	        waitEditor: this._waitEditor,
-	        smsEditor: this._smsEditor,
-	        zoomEditor: this._zoomEditor,
-	        restEditor: this._restEditor,
-	        readOnly: this._readOnly,
-	        manager: this
-	      });
-
-	      if (!this._readOnly) {
-	        this._menuBar.reset();
-	      }
-
 	      BX.addCustomEvent(window, "Crm.EntityProgress.Change", BX.delegate(this.onEntityProgressChange, this));
 	      BX.ready(function () {
 	        window.addEventListener("scroll", BX.throttle(function () {
@@ -16225,12 +12266,10 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (this._pullTagName !== BX.prop.getString(params, "TAG", "")) {
 	        return;
 	      }
-
 	      if (command === 'timeline_item_action') {
 	        babelHelpers.classPrivateFieldGet(this, _itemPullActionProcessor).processAction(params);
 	        return;
 	      }
-
 	      if (command === "timeline_chat_create") {
 	        this.processChatCreate(params);
 	      } else if (command === "timeline_activity_add") {
@@ -16266,7 +12305,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function processChatCreate(params) {
 	      if (this._chat) {
 	        this._chat.setData(BX.prop.getObject(params, "CHAT_DATA", {}));
-
 	        this._chat.refreshLayout();
 	      }
 	    }
@@ -16277,19 +12315,15 @@ this.BX.Crm = this.BX.Crm || {};
 	      entityData = BX.prop.getObject(params, "ENTITY", null);
 	      scheduleItemData = BX.prop.getObject(params, "SCHEDULE_ITEM", null);
 	      historyItemData = BX.prop.getObject(params, "HISTORY_ITEM", null);
-
 	      if (entityData && historyItemData && !BX.type.isPlainObject(historyItemData["ASSOCIATED_ENTITY"])) {
 	        historyItemData["ASSOCIATED_ENTITY"] = entityData;
 	      }
-
 	      if (scheduleItemData !== null && this._schedule.getItemByData(scheduleItemData) === null) {
 	        scheduleItem = this.addScheduleItem(scheduleItemData);
 	        scheduleItem.addWrapperClass("crm-entity-stream-section-updated", 1000);
 	      }
-
 	      if (historyItemData !== null) {
 	        historyItem = this._history.findItemById(BX.prop.getString(historyItemData, "ID"));
-
 	        if (!historyItem) {
 	          historyItem = this.addHistoryItem(historyItemData);
 	          Expand.create(historyItem.getWrapper(), null).run();
@@ -16303,44 +12337,34 @@ this.BX.Crm = this.BX.Crm || {};
 	      entityData = BX.prop.getObject(params, "ENTITY", null);
 	      scheduleItemData = BX.prop.getObject(params, "SCHEDULE_ITEM", null);
 	      historyItemData = BX.prop.getObject(params, "HISTORY_ITEM", null);
-
 	      if (entityData) {
 	        if (historyItemData && !BX.type.isPlainObject(historyItemData["ASSOCIATED_ENTITY"])) {
 	          historyItemData["ASSOCIATED_ENTITY"] = entityData;
 	        }
-
 	        const entityId = BX.prop.getInteger(entityData, "ID", 0);
-
 	        const historyItems = this._history.getItemsByAssociatedEntity(BX.CrmEntityType.enumeration.activity, entityId);
-
 	        for (let i = 0, length = historyItems.length; i < length; i++) {
 	          historyItem = historyItems[i];
 	          historyItem.setAssociatedEntityData(entityData);
 	          historyItem.refreshLayout();
 	        }
-
 	        const fixedHistoryItems = this._fixedHistory.getItemsByAssociatedEntity(BX.CrmEntityType.enumeration.activity, entityId);
-
 	        for (let i = 0, length = fixedHistoryItems.length; i < length; i++) {
 	          fixedHistoryItem = fixedHistoryItems[i];
 	          fixedHistoryItem.setAssociatedEntityData(entityData);
 	          fixedHistoryItem.refreshLayout();
 	        }
 	      }
-
 	      if (scheduleItemData !== null) {
 	        scheduleItem = this._schedule.getItemByAssociatedEntity(BX.CrmEntityType.enumeration.activity, BX.prop.getInteger(scheduleItemData, "ASSOCIATED_ENTITY_ID"));
-
 	        if (scheduleItem) {
 	          scheduleItem.setData(scheduleItemData);
-
 	          if (!scheduleItem.isDone()) {
 	            this._schedule.refreshItem(scheduleItem);
 	          } else {
 	            if (historyItemData) {
-	              this._schedule.transferItemToHistory(scheduleItem, historyItemData); //History data are already processed
-
-
+	              this._schedule.transferItemToHistory(scheduleItem, historyItemData);
+	              //History data are already processed
 	              historyItemData = null;
 	            } else {
 	              this._schedule.deleteItem(scheduleItem);
@@ -16351,10 +12375,8 @@ this.BX.Crm = this.BX.Crm || {};
 	          scheduleItem.addWrapperClass("crm-entity-stream-section-updated", 1000);
 	        }
 	      }
-
 	      if (historyItemData !== null) {
 	        historyItem = this._history.findItemById(BX.prop.getString(historyItemData, "ID"));
-
 	        if (!historyItem) {
 	          historyItem = this.addHistoryItem(historyItemData);
 	          Expand.create(historyItem.getWrapper(), null).run();
@@ -16362,7 +12384,6 @@ this.BX.Crm = this.BX.Crm || {};
 	          historyItem.setData(historyItemData);
 	          historyItem.refreshLayout();
 	          fixedHistoryItem = this._fixedHistory.findItemById(BX.prop.getString(historyItemData, "ID"));
-
 	          if (fixedHistoryItem) {
 	            fixedHistoryItem.setData(historyItemData);
 	            fixedHistoryItem.refreshLayout();
@@ -16374,21 +12395,15 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "processActivityExternalDelete",
 	    value: function processActivityExternalDelete(params) {
 	      const entityId = BX.prop.getInteger(params, "ENTITY_ID", 0);
-
 	      const historyItems = this._history.getItemsByAssociatedEntity(BX.CrmEntityType.enumeration.activity, entityId);
-
 	      for (let i = 0, length = historyItems.length; i < length; i++) {
 	        this._history.deleteItem(historyItems[i]);
 	      }
-
 	      const fixedHistoryItems = this._fixedHistory.getItemsByAssociatedEntity(BX.CrmEntityType.enumeration.activity, entityId);
-
 	      for (let i = 0, length = fixedHistoryItems.length; i < length; i++) {
 	        this._fixedHistory.deleteItem(fixedHistoryItems[i]);
 	      }
-
 	      const scheduleItem = this._schedule.getItemByAssociatedEntity(BX.CrmEntityType.enumeration.activity, entityId);
-
 	      if (scheduleItem) {
 	        this._schedule.deleteItem(scheduleItem);
 	      }
@@ -16398,7 +12413,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function processCommentExternalAdd(params) {
 	      let historyItemData, historyItem;
 	      historyItemData = BX.prop.getObject(params, "HISTORY_ITEM", null);
-
 	      if (historyItemData !== null) {
 	        window.setTimeout(BX.delegate(function () {
 	          if (!this._history.findItemById(historyItemData['ID'])) {
@@ -16413,16 +12427,12 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function processCommentExternalUpdate(params) {
 	      const entityId = BX.prop.getInteger(params, "ENTITY_ID", 0);
 	      const historyItemData = BX.prop.getObject(params, "HISTORY_ITEM", null);
-
 	      const updateItem = this._history.findItemById(entityId);
-
 	      if (updateItem instanceof Comment && historyItemData !== null) {
 	        updateItem.setData(historyItemData);
 	        updateItem.switchToViewMode();
 	      }
-
 	      const updateFixedItem = this._fixedHistory.findItemById(entityId);
-
 	      if (updateFixedItem instanceof Comment && historyItemData !== null) {
 	        updateFixedItem.setData(historyItemData);
 	        updateFixedItem.switchToViewMode();
@@ -16434,13 +12444,10 @@ this.BX.Crm = this.BX.Crm || {};
 	      const entityId = BX.prop.getInteger(params, "ENTITY_ID", 0);
 	      window.setTimeout(BX.delegate(function () {
 	        const deleteItem = this._history.findItemById(entityId);
-
 	        if (deleteItem instanceof Comment) {
 	          this._history.deleteItem(deleteItem);
 	        }
-
 	        const deleteFixedItem = this._fixedHistory.findItemById(entityId);
-
 	        if (deleteFixedItem instanceof Comment) {
 	          this._fixedHistory.deleteItem(deleteFixedItem);
 	        }
@@ -16451,18 +12458,14 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function processChangeBinding(params) {
 	      const entityId = BX.prop.getString(params, "OLD_ID", 0);
 	      const entityNewId = BX.prop.getString(params, "NEW_ID", 0);
-
 	      const item = this._history.findItemById(entityId);
-
 	      if (item instanceof crm_timeline_item.Item) {
 	        item._id = entityNewId;
 	        const itemData = item.getData();
 	        itemData.ID = entityNewId;
 	        item.setData(itemData);
 	      }
-
 	      const fixedItem = this._fixedHistory.findItemById(entityId);
-
 	      if (fixedItem instanceof crm_timeline_item.Item) {
 	        fixedItem._id = entityNewId;
 	        const fixedItemData = fixedItem.getData();
@@ -16475,14 +12478,11 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function processItemExternalUpdate(params) {
 	      const entityId = BX.prop.getInteger(params, "ENTITY_ID", 0);
 	      const historyItemData = BX.prop.getObject(params, "HISTORY_ITEM", null);
-
 	      const historyItem = this._history.findItemById(entityId);
-
 	      if (historyItem && historyItemData !== null) {
 	        historyItem.setData(historyItemData);
 	        historyItem.markAsTerminated(this._history.checkItemForTermination(historyItem));
 	        historyItem.refreshLayout();
-
 	        if (historyItem.isTerminated()) {
 	          BX.addClass(historyItem._wrapper, "crm-entity-stream-section-last");
 	        }
@@ -16492,7 +12492,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "processWaitExternalAdd",
 	    value: function processWaitExternalAdd(params) {
 	      const scheduleItemData = BX.prop.getObject(params, "SCHEDULE_ITEM", null);
-
 	      if (scheduleItemData !== null) {
 	        this.addScheduleItem(scheduleItemData);
 	      }
@@ -16504,41 +12503,32 @@ this.BX.Crm = this.BX.Crm || {};
 	      entityData = BX.prop.getObject(params, "ENTITY", null);
 	      scheduleItemData = BX.prop.getObject(params, "SCHEDULE_ITEM", null);
 	      historyItemData = BX.prop.getObject(params, "HISTORY_ITEM", null);
-
 	      if (entityData) {
 	        if (historyItemData && !BX.type.isPlainObject(historyItemData["ASSOCIATED_ENTITY"])) {
 	          historyItemData["ASSOCIATED_ENTITY"] = entityData;
 	        }
-
 	        const entityId = BX.prop.getInteger(entityData, "ID", 0);
-
 	        const historyItems = this._history.getItemsByAssociatedEntity(BX.CrmEntityType.enumeration.wait, entityId);
-
 	        let i = 0;
 	        const length = historyItems.length;
-
 	        for (; i < length; i++) {
 	          historyItem = historyItems[i];
 	          historyItem.setAssociatedEntityData(entityData);
 	          historyItem.refreshLayout();
 	        }
 	      }
-
 	      if (scheduleItemData !== null) {
 	        scheduleItem = this._schedule.getItemByAssociatedEntity(BX.CrmEntityType.enumeration.wait, BX.prop.getInteger(scheduleItemData, "ASSOCIATED_ENTITY_ID"));
-
 	        if (!scheduleItem) {
 	          this.addScheduleItem(scheduleItemData);
 	        } else {
 	          scheduleItem.setData(scheduleItemData);
-
 	          if (!scheduleItem.isDone()) {
 	            this._schedule.refreshItem(scheduleItem);
 	          } else {
 	            if (historyItemData) {
-	              this._schedule.transferItemToHistory(scheduleItem, historyItemData); //History data are already processed
-
-
+	              this._schedule.transferItemToHistory(scheduleItem, historyItemData);
+	              //History data are already processed
 	              historyItemData = null;
 	            } else {
 	              this._schedule.deleteItem(scheduleItem);
@@ -16546,10 +12536,8 @@ this.BX.Crm = this.BX.Crm || {};
 	          }
 	        }
 	      }
-
 	      if (historyItemData !== null) {
 	        historyItem = this._history.findItemById(BX.prop.getString(historyItemData, "ID"));
-
 	        if (!historyItem) {
 	          historyItem = this.addHistoryItem(historyItemData);
 	          Expand.create(historyItem.getWrapper(), null).run();
@@ -16563,18 +12551,13 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "processWaitExternalDelete",
 	    value: function processWaitExternalDelete(params) {
 	      const entityId = BX.prop.getInteger(params, "ENTITY_ID", 0);
-
 	      const historyItems = this._history.getItemsByAssociatedEntity(BX.CrmEntityType.enumeration.wait, entityId);
-
 	      let i = 0;
 	      const length = historyItems.length;
-
 	      for (; i < length; i++) {
 	        this._history.deleteItem(historyItems[i]);
 	      }
-
 	      const scheduleItem = this._schedule.getItemByAssociatedEntity(BX.CrmEntityType.enumeration.wait, entityId);
-
 	      if (scheduleItem) {
 	        this._schedule.deleteItem(scheduleItem);
 	      }
@@ -16584,7 +12567,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function processBizprocStatus(params) {
 	      let historyItemData, historyItem;
 	      historyItemData = BX.prop.getObject(params, "HISTORY_ITEM", null);
-
 	      if (historyItemData !== null) {
 	        historyItem = this.addHistoryItem(historyItemData);
 	        Expand.create(historyItem.getWrapper(), null).run();
@@ -16595,7 +12577,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function processScoringExternalAdd(params) {
 	      let historyItemData, historyItem;
 	      historyItemData = BX.prop.getObject(params, "HISTORY_ITEM", null);
-
 	      if (historyItemData !== null) {
 	        historyItem = this.addHistoryItem(historyItemData);
 	        Expand.create(historyItem.getWrapper(), null).run();
@@ -16607,15 +12588,11 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (BX.prop.getInteger(eventArgs, "entityTypeId", 0) !== this._ownerTypeId || BX.prop.getInteger(eventArgs, "entityId", 0) !== this._ownerId) {
 	        return;
 	      }
-
 	      const semantics = BX.prop.getString(eventArgs, "semantics", "");
-
 	      if (semantics === this._progressSemantics) {
 	        return;
 	      }
-
 	      this._progressSemantics = semantics;
-
 	      this._schedule.refreshLayout();
 	    }
 	  }, {
@@ -16646,15 +12623,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "isStubCounterEnabled",
 	    value: function isStubCounterEnabled() {
-	      if (this.getSetting('enableTodo', false)) {
-	        return false; // do not show counter for new scenarios
-	      }
-
-	      if (this._ownerId <= 0) {
-	        return false;
-	      }
-
-	      return (this._ownerTypeId === BX.CrmEntityType.enumeration.deal || this._ownerTypeId === BX.CrmEntityType.enumeration.lead) && this._progressSemantics === "process";
+	      return false;
 	    }
 	  }, {
 	    key: "getSchedule",
@@ -16672,26 +12641,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      return this._fixedHistory;
 	    }
 	  }, {
-	    key: "getWaitEditor",
-	    value: function getWaitEditor() {
-	      return this._waitEditor;
-	    }
-	  }, {
-	    key: "getSmsEditor",
-	    value: function getSmsEditor() {
-	      return this._smsEditor;
-	    }
-	  }, {
-	    key: "getTodoEditor",
-	    value: function getTodoEditor() {
-	      return this._todoEditor;
-	    }
-	  }, {
-	    key: "getMenuBar",
-	    value: function getMenuBar() {
-	      return this._menuBar;
-	    }
-	  }, {
 	    key: "processSheduleLayoutChange",
 	    value: function processSheduleLayoutChange() {}
 	  }, {
@@ -16700,69 +12649,12 @@ this.BX.Crm = this.BX.Crm || {};
 	      this._schedule.refreshLayout();
 	    }
 	  }, {
-	    key: "switchToDefaultEditor",
-	    value: function switchToDefaultEditor(editor) {
-	      let firstSuitableMenuItem = Array.from(this._menuBar.getMenuItems()).reduce((prev, item) => {
-	        if (prev) {
-	          return prev;
-	        }
-
-	        const id = item.dataset.id;
-
-	        if (['comment', 'wait', 'sms', 'zoom', 'todo'].indexOf(id) >= 0) {
-	          return id;
-	        }
-
-	        return null;
-	      }, null);
-	      const editorsMap = {
-	        'comment': this._commentEditor,
-	        'wait': this._waitEditor,
-	        'sms': this._smsEditor,
-	        'zoom': this._zoomEditor,
-	        'todo': this._todoEditor
-	      };
-	      let firstSuitableEditor;
-
-	      if (editorsMap.hasOwnProperty(firstSuitableMenuItem) && editorsMap[firstSuitableMenuItem] && editorsMap[firstSuitableMenuItem].setVisible) {
-	        firstSuitableEditor = editorsMap[firstSuitableMenuItem];
-	      } else if (this._todoEditor) {
-	        firstSuitableEditor = this._todoEditor;
-	        firstSuitableMenuItem = 'todo';
-	      } else {
-	        firstSuitableEditor = this._commentEditor;
-	        firstSuitableMenuItem = 'comment';
-	      }
-
-	      if (editor !== firstSuitableEditor && editor.setVisible) {
-	        editor.setVisible(false);
-	      }
-
-	      firstSuitableEditor.setVisible(true);
-
-	      this._menuBar.setActiveItemById(firstSuitableMenuItem);
-	    }
-	  }, {
-	    key: "processEditingCompletion",
-	    value: function processEditingCompletion(editor) {
-	      this.switchToDefaultEditor(editor);
-	    }
-	  }, {
-	    key: "processEditingCancellation",
-	    value: function processEditingCancellation(editor) {
-	      this.switchToDefaultEditor(editor);
-	    }
-	  }, {
 	    key: "addScheduleItem",
 	    value: function addScheduleItem(data) {
 	      const item = this._schedule.createItem(data);
-
 	      const index = this._schedule.calculateItemIndex(item);
-
 	      const anchor = this._schedule.createAnchor(index);
-
 	      this._schedule.addItem(item, index);
-
 	      item.layout({
 	        anchor: anchor
 	      });
@@ -16772,13 +12664,9 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "addHistoryItem",
 	    value: function addHistoryItem(data) {
 	      const item = this._history.createItem(data);
-
 	      const index = this._history.calculateItemIndex(item);
-
 	      const historyAnchor = this._history.createAnchor(index);
-
 	      this._history.addItem(item, index);
-
 	      item.layout({
 	        anchor: historyAnchor
 	      });
@@ -16813,11 +12701,9 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (!duration) {
 	        duration = 0;
 	      }
-
 	      if (!options) {
 	        options = {};
 	      }
-
 	      const player = new BX.Fileman.Player(id, {
 	        sources: [{
 	          src: filePath,
@@ -16835,7 +12721,6 @@ this.BX.Crm = this.BX.Crm || {};
 	          player.vjsPlayer.controlBar.removeChild('fullscreenToggle');
 	          player.vjsPlayer.controlBar.addChild('timeDivider');
 	          player.vjsPlayer.controlBar.addChild('durationDisplay');
-
 	          if (!player.isPlaying()) {
 	            player.play();
 	          }
@@ -16843,17 +12728,17 @@ this.BX.Crm = this.BX.Crm || {};
 	      });
 	      BX.cleanNode(node, false);
 	      node.appendChild(player.createElement());
-	      player.init(); // todo remove this after player will be able to get float playbackRate
-
+	      player.init();
+	      // todo remove this after player will be able to get float playbackRate
 	      if (options.playbackRate > 1) {
 	        player.vjsPlayer.playbackRate(options.playbackRate);
 	      }
-
 	      return player;
 	    }
 	  }, {
 	    key: "onActivityCreated",
-	    value: function onActivityCreated(activity, data) {//Already processed in onPullEvent
+	    value: function onActivityCreated(activity, data) {
+	      //Already processed in onPullEvent
 	    }
 	  }, {
 	    key: "isSpotlightShowed",
@@ -16868,6 +12753,9 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getCurrentUser",
 	    value: function getCurrentUser() {
+	      if (BX.type.isObject(this._currentUser) && this._userId > 0) {
+	        this._currentUser.userId = this._userId;
+	      }
 	      return this._currentUser;
 	    }
 	  }, {
@@ -16893,7 +12781,6 @@ this.BX.Crm = this.BX.Crm || {};
 	          textMessageCode: 'CRM_TIMELINE_PLAYBACK_RATE_SELECTOR_TEXT'
 	        });
 	      }
-
 	      return this.audioPlaybackRateSelector;
 	    }
 	  }, {
@@ -16927,7 +12814,6 @@ this.BX.Crm = this.BX.Crm || {};
 	  }]);
 	  return Manager;
 	}();
-
 	var _defaultInstance = {
 	  writable: true,
 	  value: null
@@ -16935,13 +12821,10 @@ this.BX.Crm = this.BX.Crm || {};
 	babelHelpers.defineProperty(Manager, "instances", {});
 
 	/** @memberof BX.Crm.Timeline.Actions */
-
 	let SchedulePostpone = /*#__PURE__*/function (_Activity) {
 	  babelHelpers.inherits(SchedulePostpone, _Activity);
-
 	  function SchedulePostpone() {
 	    var _this;
-
 	    babelHelpers.classCallCheck(this, SchedulePostpone);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(SchedulePostpone).call(this));
 	    _this._button = null;
@@ -16950,7 +12833,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    _this._menu = false;
 	    return _this;
 	  }
-
 	  babelHelpers.createClass(SchedulePostpone, [{
 	    key: "doLayout",
 	    value: function doLayout() {
@@ -16960,11 +12842,9 @@ this.BX.Crm = this.BX.Crm || {};
 	        },
 	        text: this.getMessage("postpone")
 	      });
-
 	      if (this._isEnabled) {
 	        BX.bind(this._button, "click", this._clickHandler);
 	      }
-
 	      this._container.appendChild(this._button);
 	    }
 	  }, {
@@ -16973,7 +12853,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (this._isMenuShown) {
 	        return;
 	      }
-
 	      const handler = BX.delegate(this.onMenuItemClick, this);
 	      const menuItems = [{
 	        id: "hour_1",
@@ -17017,7 +12896,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (!this._isMenuShown) {
 	        return;
 	      }
-
 	      if (this._menu) {
 	        this._menu.close();
 	      }
@@ -17028,7 +12906,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (!this._isEnabled) {
 	        return;
 	      }
-
 	      if (this._isMenuShown) {
 	        this.closeMenu();
 	      } else {
@@ -17040,7 +12917,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function onMenuItemClick(e, item) {
 	      this.closeMenu();
 	      let offset = 0;
-
 	      if (item.id === "hour_1") {
 	        offset = 3600;
 	      } else if (item.id === "hour_2") {
@@ -17054,7 +12930,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      } else if (item.id === "day_3") {
 	        offset = 259200;
 	      }
-
 	      if (offset > 0 && this._item) {
 	        this._item.postpone(offset);
 	      }
@@ -17076,7 +12951,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function onMenuDestroy() {
 	      this._isMenuShown = false;
 	      this._menu = null;
-
 	      if (typeof BX.PopupMenu.Data[this._id] !== "undefined") {
 	        delete BX.PopupMenu.Data[this._id];
 	      }
@@ -17096,12 +12970,10 @@ this.BX.Crm = this.BX.Crm || {};
 	    }
 	  }]);
 	  return SchedulePostpone;
-	}(Activity);
-
+	}(Activity$1);
 	babelHelpers.defineProperty(SchedulePostpone, "messages", {});
 
 	/** @memberof BX.Crm.Timeline.Animation */
-
 	let Comment$2 = /*#__PURE__*/function () {
 	  function Comment() {
 	    babelHelpers.classCallCheck(this, Comment);
@@ -17111,7 +12983,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    this._startPosition = null;
 	    this._events = null;
 	  }
-
 	  babelHelpers.createClass(Comment, [{
 	    key: "initialize",
 	    value: function initialize(node, anchor, startPosition, events) {
@@ -17149,7 +13020,6 @@ this.BX.Crm = this.BX.Crm || {};
 	          if (BX.type.isFunction(this._events["start"])) {
 	            this._events["start"]();
 	          }
-
 	          const shift = Shift.create(this._node, this._anchor, this._startPosition, false, {
 	            complete: BX.delegate(this.finish, this)
 	          });
@@ -17157,7 +13027,6 @@ this.BX.Crm = this.BX.Crm || {};
 	        }, this)
 	      });
 	      nodeOpacityAnim.animate();
-
 	      if (BX.type.isFunction(this._events["complete"])) {
 	        this._events["complete"]();
 	      }
@@ -17173,9 +13042,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      this._node.style.opacity = "";
 	      this._node.style.zIndex = "";
 	      this._anchor.style.height = "";
-
 	      this._anchor.parentNode.insertBefore(this._node, this._anchor.nextSibling);
-
 	      setTimeout(BX.delegate(function () {
 	        BX.removeClass(this._node, 'crm-entity-stream-section-animate-start');
 	        BX.remove(this._anchor);
@@ -17198,40 +13065,32 @@ this.BX.Crm = this.BX.Crm || {};
 	  EntityChat,
 	  Schedule
 	};
-	const Editors = {
-	  Comment,
-	  Wait,
-	  Rest,
-	  Sms
-	};
 	const Tools = {
-	  WaitConfigurationDialog,
 	  SchedulePostponeController,
-	  MenuBar,
 	  AudioPlaybackRateSelector
 	};
 	const Actions = {
-	  Activity,
+	  Activity: Activity$1,
 	  Call: Call$1,
 	  HistoryCall,
 	  ScheduleCall,
-	  Email,
+	  Email: Email$1,
 	  HistoryEmail,
 	  ScheduleEmail,
 	  OpenLine,
 	  SchedulePostpone
 	};
 	const ScheduledItems = {
-	  Activity: Activity$1,
-	  Email: Email$1,
+	  Activity: Activity,
+	  Email: Email,
 	  Call: Call,
 	  CallTracker,
 	  Meeting: Meeting,
 	  Task: Task,
 	  WebForm: WebForm,
-	  Wait: Wait$1,
+	  Wait: Wait,
 	  Request: Request,
-	  Rest: Rest$1,
+	  Rest: Rest,
 	  OpenLine: OpenLine$1,
 	  Zoom: Zoom
 	};
@@ -17251,12 +13110,12 @@ this.BX.Crm = this.BX.Crm || {};
 	  Meeting: Meeting$1,
 	  Task: Task$1,
 	  WebForm: WebForm$1,
-	  Wait: Wait$2,
+	  Wait: Wait$1,
 	  Document,
 	  Sender,
 	  Bizproc,
 	  Request: Request$1,
-	  Rest: Rest$2,
+	  Rest: Rest$1,
 	  OpenLine: OpenLine$2,
 	  Zoom: Zoom$1,
 	  Conversion,
@@ -17279,8 +13138,6 @@ this.BX.Crm = this.BX.Crm || {};
 	exports.Manager = Manager;
 	exports.Stream = Steam;
 	exports.Streams = Streams;
-	exports.Editor = Editor;
-	exports.Editors = Editors;
 	exports.Tools = Tools;
 	exports.Types = types;
 	exports.Action = Action;
@@ -17289,5 +13146,5 @@ this.BX.Crm = this.BX.Crm || {};
 	exports.Animations = Animations;
 	exports.CompatibleItem = CompatibleItem;
 
-}((this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}),BX.Crm.Activity,BX.Event,BX.Crm.DateTime,BX.Crm.Timeline,BX.Crm.Timeline,BX));
+}((this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}),BX.Crm.DateTime,BX.Crm.Timeline,BX.Crm.Timeline,BX));
 //# sourceMappingURL=timeline.bundle.js.map

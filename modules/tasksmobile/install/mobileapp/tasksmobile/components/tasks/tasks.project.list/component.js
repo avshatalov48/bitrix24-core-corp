@@ -1,21 +1,15 @@
 (() => {
+	const {debounce} = jn.require('utils/function');
+	const {EntityReady} = jn.require('entity-ready');
+	const {Loc} = jn.require('loc');
+	const {magnifierWithMenuAndDot} = jn.require('assets/common');
+	const {PresetList} = jn.require('tasks/layout/presetList');
+
 	const apiVersion = Application.getApiVersion();
 	const platform = Application.getPlatform();
 	const caches = new Map();
 
-	const { EntityReady } = jn.require('entity-ready');
-
-	class Util
-	{
-		static debounce(fn, timeout, ctx)
-		{
-			let timer = 0;
-			return function() {
-				clearTimeout(timer);
-				timer = setTimeout(() => fn.apply(ctx, arguments), timeout);
-			};
-		}
-	}
+	const isSearchByPresetsEnable = (apiVersion >= 49);
 
 	class Loading
 	{
@@ -34,20 +28,22 @@
 
 		showForList()
 		{
-			if (this.isEnabled())
+			if (this.isEnabled() && !this.isShowedForList)
 			{
 				dialogs.showSpinnerIndicator({
 					color: '#777777',
 					backgroundColor: '#77ffffff',
 				});
+				this.isShowedForList = true;
 			}
 		}
 
 		hideForList()
 		{
-			if (this.isEnabled())
+			if (this.isEnabled() && this.isShowedForList)
 			{
 				dialogs.hideSpinnerIndicator();
+				this.isShowedForList = false;
 			}
 		}
 
@@ -56,7 +52,7 @@
 			this.list.setTitle({
 				useProgress: true,
 				largeMode: true,
-				text: BX.message('MOBILE_TASKS_PROJECT_LIST_HEADER_PROJECTS'),
+				text: Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_HEADER_PROJECTS'),
 			});
 		}
 
@@ -65,7 +61,7 @@
 			this.list.setTitle({
 				useProgress: false,
 				largeMode: true,
-				text: BX.message('MOBILE_TASKS_PROJECT_LIST_HEADER_PROJECTS'),
+				text: Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_HEADER_PROJECTS'),
 			});
 		}
 	}
@@ -90,8 +86,8 @@
 			if (this.isEnabled())
 			{
 				this.list.list.welcomeScreen.show({
-					upperText: BX.message('MOBILE_TASKS_PROJECT_LIST_WELCOME_SCREEN_TITLE'),
-					lowerText: BX.message('MOBILE_TASKS_PROJECT_LIST_WELCOME_SCREEN_SUBTITLE'),
+					upperText: Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_WELCOME_SCREEN_TITLE'),
+					lowerText: Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_WELCOME_SCREEN_SUBTITLE'),
 					iconName: 'ws_open_project',
 				});
 			}
@@ -390,19 +386,6 @@
 			return order;
 		}
 
-		getForSearch()
-		{
-			const order = {
-				IS_PINNED: 'DESC',
-			};
-
-			Order.fields.activityDate.forEach((fieldData) => {
-				order[fieldData.field] = fieldData.direction;
-			});
-
-			return order;
-		}
-
 		get order()
 		{
 			return this._order || 'activityDate';
@@ -416,6 +399,14 @@
 
 	class Filter
 	{
+		static get presetTypes()
+		{
+			return {
+				none: 'none',
+				default: 'my',
+			};
+		}
+
 		static get counterTypes()
 		{
 			return {
@@ -436,10 +427,11 @@
 			this.list = list;
 			this.userId = userId;
 
+			this.preset = Filter.presetTypes.default;
 			this.counter = Filter.counterTypes.none;
 			this.counters = {};
-
-			this.isShowMine = true;
+			this.searchText = '';
+			this.isShowMine = !isSearchByPresetsEnable;
 
 			this.cache = Cache.getInstance('filterCounters');
 			this.total = this.cache.get().counterValue || 0;
@@ -501,22 +493,32 @@
 		{
 			const filter = {};
 
+			if (this.searchText)
+			{
+				filter.FIND = this.searchText;
+			}
+
+			if (this.isShowMine)
+			{
+				filter['MEMBER'] = this.userId;
+			}
+
 			switch (this.counter)
 			{
 				case Filter.counterTypes.sonetTotalExpired:
-					filter['COUNTERS'] = 'EXPIRED';
+					filter.COUNTERS = 'EXPIRED';
 					break;
 
 				case Filter.counterTypes.sonetTotalComments:
-					filter['COUNTERS'] = 'NEW_COMMENTS';
+					filter.COUNTERS = 'NEW_COMMENTS';
 					break;
 
 				case Filter.counterTypes.sonetForeignExpired:
-					filter['COUNTERS'] = 'PROJECT_EXPIRED';
+					filter.COUNTERS = 'PROJECT_EXPIRED';
 					break;
 
 				case Filter.counterTypes.sonetForeignComments:
-					filter['COUNTERS'] = 'PROJECT_NEW_COMMENTS';
+					filter.COUNTERS = 'PROJECT_NEW_COMMENTS';
 					break;
 
 				case Filter.counterTypes.none:
@@ -524,24 +526,32 @@
 					break;
 			}
 
-			if (this.isShowMine)
-			{
-				filter['MEMBER_ID'] = this.userId;
-			}
-
 			return filter;
-		}
-
-		getForSearch(text)
-		{
-			return {
-				SEARCH_INDEX: text,
-			};
 		}
 
 		getCounterValue(type)
 		{
 			return this.counters[type] || 0;
+		}
+
+		getSearchText()
+		{
+			return this.searchText;
+		}
+
+		setSearchText(searchText)
+		{
+			this.searchText = searchText;
+		}
+
+		getPreset()
+		{
+			return this.preset;
+		}
+
+		setPreset(preset)
+		{
+			this.preset = preset;
 		}
 
 		getCounter()
@@ -565,8 +575,17 @@
 		}
 	}
 
-	class MenuPopup
+	class MoreMenu
 	{
+		static get counterColors()
+		{
+			return {
+				gray: '#a8adb4',
+				green: '#9dcf00',
+				red: '#ff5752',
+			};
+		}
+
 		/**
 		 * @param {ProjectList} list
 		 */
@@ -601,32 +620,10 @@
 
 		prepareItems()
 		{
-
-		}
-
-		onItemSelected()
-		{
-
-		}
-	}
-
-	class MoreMenu extends MenuPopup
-	{
-		static get counterColors()
-		{
-			return {
-				gray: '#a8adb4',
-				green: '#9dcf00',
-				red: '#ff5752',
-			};
-		}
-
-		prepareItems()
-		{
-			return [
+			let items = [
 				{
 					id: Filter.counterTypes.sonetTotalComments,
-					title: BX.message('MOBILE_TASKS_PROJECT_LIST_FILTER_COUNTER_MY_NEW_COMMENTS'),
+					title: Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_FILTER_COUNTER_MY_NEW_COMMENTS'),
 					sectionCode: 'default',
 					checked: (this.filter.getCounter() === Filter.counterTypes.sonetTotalComments),
 					counterValue: this.filter.getCounterValue(Filter.counterTypes.sonetTotalComments),
@@ -636,7 +633,7 @@
 				},
 				{
 					id: Filter.counterTypes.sonetTotalExpired,
-					title: BX.message('MOBILE_TASKS_PROJECT_LIST_FILTER_COUNTER_MY_EXPIRED'),
+					title: Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_FILTER_COUNTER_MY_EXPIRED'),
 					sectionCode: 'default',
 					checked: (this.filter.getCounter() === Filter.counterTypes.sonetTotalExpired),
 					counterValue: this.filter.getCounterValue(Filter.counterTypes.sonetTotalExpired),
@@ -646,7 +643,7 @@
 				},
 				{
 					id: Filter.counterTypes.sonetForeignComments,
-					title: BX.message('MOBILE_TASKS_PROJECT_LIST_FILTER_COUNTER_OTHER_NEW_COMMENTS'),
+					title: Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_FILTER_COUNTER_OTHER_NEW_COMMENTS'),
 					sectionCode: 'default',
 					checked: (this.filter.getCounter() === Filter.counterTypes.sonetForeignComments),
 					counterValue: this.filter.getCounterValue(Filter.counterTypes.sonetForeignComments),
@@ -656,7 +653,7 @@
 				},
 				{
 					id: Filter.counterTypes.sonetForeignExpired,
-					title: BX.message('MOBILE_TASKS_PROJECT_LIST_FILTER_COUNTER_OTHER_EXPIRED'),
+					title: Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_FILTER_COUNTER_OTHER_EXPIRED'),
 					sectionCode: 'default',
 					checked: (this.filter.getCounter() === Filter.counterTypes.sonetForeignExpired),
 					counterValue: this.filter.getCounterValue(Filter.counterTypes.sonetForeignExpired),
@@ -666,7 +663,7 @@
 				},
 				{
 					id: 'toggleShowMine',
-					title: BX.message(
+					title: Loc.getMessage(
 						this.filter.getIsShowMine()
 							? 'MOBILE_TASKS_PROJECT_LIST_ACTION_SHOW_ALL'
 							: 'MOBILE_TASKS_PROJECT_LIST_ACTION_SHOW_MINE'
@@ -676,12 +673,19 @@
 				},
 				{
 					id: 'readAll',
-					title: BX.message('MOBILE_TASKS_PROJECT_LIST_ACTION_READ_ALL'),
+					title: Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_ACTION_READ_ALL'),
 					iconName: 'read',
 					sectionCode: SectionHandler.sections.default,
 					showTopSeparator: true,
 				},
 			];
+
+			if (isSearchByPresetsEnable)
+			{
+				items = items.filter((item) => item.id !== 'toggleShowMine');
+			}
+
+			return items;
 		}
 
 		onItemSelected(item)
@@ -726,13 +730,13 @@
 		{
 			this.list.pseudoReadProjects([...this.list.projectList.keys()]);
 
-			(new RequestExecutor('tasks.task.comment.readProject'))
+			(new RequestExecutor('tasks.viewedGroup.project.markAsRead', {fields: {groupId: 0}}))
 				.call()
 				.then((response) => {
 					if (response.result === true)
 					{
 						Notify.showIndicatorSuccess({
-							text: BX.message('MOBILE_TASKS_PROJECT_LIST_NOTIFICATION_READ_ALL'),
+							text: Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_NOTIFICATION_READ_ALL'),
 							hideAfter: 1500,
 						});
 					}
@@ -750,7 +754,7 @@
 			return {
 				about: {
 					identifier: 'about',
-					title: BX.message('MOBILE_TASKS_PROJECT_LIST_ACTION_ABOUT'),
+					title: Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_ACTION_ABOUT'),
 					iconName: 'action_project',
 					iconUrl: `${imagePrefix}about.png`,
 					color: '#f2a100',
@@ -758,7 +762,7 @@
 				},
 				members: {
 					identifier: 'members',
-					title: BX.message('MOBILE_TASKS_PROJECT_LIST_ACTION_MEMBERS'),
+					title: Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_ACTION_MEMBERS'),
 					iconName: 'action_userlist',
 					iconUrl: `${imagePrefix}members.png`,
 					color: '#2f72b9',
@@ -766,7 +770,7 @@
 				},
 				join: {
 					identifier: 'join',
-					title: BX.message('MOBILE_TASKS_PROJECT_LIST_ACTION_JOIN'),
+					title: Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_ACTION_JOIN'),
 					iconName: 'action_accept',
 					iconUrl: `${imagePrefix}join.png`,
 					color: '#468ee5',
@@ -774,7 +778,7 @@
 				},
 				// leave: {
 				// 	identifier: 'leave',
-				// 	title: BX.message('MOBILE_TASKS_PROJECT_LIST_ACTION_LEAVE'),
+				// 	title: Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_ACTION_LEAVE'),
 				// 	iconName: 'action_skip',
 				// 	iconUrl: `${imagePrefix}leave.png`,
 				// 	color: '#848e9e',
@@ -782,7 +786,7 @@
 				// },
 				read: {
 					identifier: 'read',
-					title: BX.message('MOBILE_TASKS_PROJECT_LIST_ACTION_READ'),
+					title: Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_ACTION_READ'),
 					iconName: 'action_read',
 					iconUrl: `${imagePrefix}read.png`,
 					color: '#e57bb6',
@@ -790,7 +794,7 @@
 				},
 				pin: {
 					identifier: 'pin',
-					title: BX.message('MOBILE_TASKS_PROJECT_LIST_ACTION_PIN'),
+					title: Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_ACTION_PIN'),
 					iconName: 'action_pin',
 					iconUrl: `${imagePrefix}pin.png`,
 					color: '#468ee5',
@@ -798,7 +802,7 @@
 				},
 				unpin: {
 					identifier: 'unpin',
-					title: BX.message('MOBILE_TASKS_PROJECT_LIST_ACTION_UNPIN'),
+					title: Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_ACTION_UNPIN'),
 					iconName: 'action_unpin',
 					iconUrl: `${imagePrefix}unpin.png`,
 					color: '#468ee5',
@@ -935,389 +939,11 @@
 					this.list.list.updateItem({id: projectId}, projectItem);
 				}
 			}
-			else if (this.list.search.projectList.has(projectId))
-			{
-				const project = this.list.search.projectList.get(projectId);
-
-				if (project.isOpened)
-				{
-					void project.join();
-				}
-			}
 		}
 
 		onLeaveAction(project)
 		{
 			void project.leave();
-		}
-	}
-
-	class Search
-	{
-		static get cacheKeys()
-		{
-			return {
-				selected: 'selected',
-				active: 'active',
-			};
-		}
-
-		/**
-		 * @param {ProjectList} list
-		 * @param {Integer} userId
-		 */
-		constructor(list, userId)
-		{
-			this.list = list;
-			this.userId = userId;
-
-			this.minSize = parseInt(BX.componentParameters.get('MIN_SEARCH_SIZE', 3), 10);
-			this.maxProjectCount = 30;
-			this.text = '';
-
-			this.projectList = new Map();
-
-			this.debounceFunction = this.getDebounceFunction();
-
-			BX.onViewLoaded(() => {
-				this.cache = Cache.getInstance('search');
-				this.fillCacheWithLastActiveProjects();
-			});
-		}
-
-		fillCacheWithLastActiveProjects()
-		{
-			const selected = this.cache.get()[Search.cacheKeys.selected];
-			if (selected && selected.length >= this.maxProjectCount)
-			{
-				return;
-			}
-
-			(new RequestExecutor('tasks.project.list', {
-				select: ProjectList.select,
-				order: this.list.order.get(),
-				params: {
-					GET_LAST_ACTIVE: 'Y',
-					mode: 'mobile',
-				},
-			}))
-				.call()
-				.then((response) => {
-					const cacheKey = Search.cacheKeys.active;
-					this.cache.update(cacheKey, response.result.projects.slice(0, this.maxProjectCount));
-				})
-			;
-		}
-
-		getDebounceFunction()
-		{
-			return Util.debounce((text) => {
-				const searchResultItems = [].concat(
-					this.renderProjectItems(),
-					this.renderLoadingItems()
-				);
-				const sections = [{
-					id: 'default',
-					title: BX.message('MOBILE_TASKS_PROJECT_LIST_SEARCH_RESULTS'),
-				}];
-				this.setSearchResultItems(searchResultItems, sections);
-
-				(new RequestExecutor('tasks.project.list', {
-					select: ProjectList.select,
-					filter: this.list.filter.getForSearch(text),
-					order: this.list.order.get(),
-					params: {
-						mode: 'mobile',
-					},
-				}))
-					.call()
-					.then(response => this.onSearchSuccess(response))
-				;
-			}, 100, this);
-		}
-
-		onSearchSuccess(response)
-		{
-			this.projectList.clear();
-
-			this.fillList(response.result.projects);
-			this.renderList();
-		}
-
-		fillList(rows)
-		{
-			rows.forEach((row) => {
-				const projectId = row.id.toString();
-				let project;
-
-				if (this.list.projectList.has(projectId))
-				{
-					project = this.list.projectList.get(projectId);
-				}
-				else
-				{
-					project = new Project(this.userId);
-					project.setData(row);
-				}
-
-				this.projectList.set(String(project.id), project);
-			});
-		}
-
-		renderList(fromCache = false)
-		{
-			console.log('ProjectList.Search:renderList', {projects: this.projectList.size});
-
-			let searchResultItems = this.renderEmptyResultItems();
-
-			if (this.projectList.size > 0)
-			{
-				searchResultItems = this.renderProjectItems();
-			}
-			else if (fromCache)
-			{
-				searchResultItems = this.renderEmptyCacheItems();
-			}
-
-			const sections = [{
-				id: 'default',
-				title: (
-					fromCache
-						? BX.message('MOBILE_TASKS_PROJECT_LIST_SEARCH_LAST_RESULTS')
-						: BX.message('MOBILE_TASKS_PROJECT_LIST_SEARCH_RESULTS')
-				),
-				backgroundColor: '#ffffff',
-			}];
-			this.setSearchResultItems(searchResultItems, sections);
-		}
-
-		renderProjectItems()
-		{
-			const projectItems = [];
-
-			this.projectList.forEach((project) => {
-				project.isPinned = false;
-
-				const item = this.list.prepareListItem(project, false);
-				projectItems.push(item);
-			});
-
-			return projectItems;
-		}
-
-		renderLoadingItems()
-		{
-			return [{
-				id: 0,
-				type: 'loading',
-				title: BX.message('MOBILE_TASKS_PROJECT_LIST_SEARCH_LOADING'),
-				sectionCode: 'default',
-				unselectable: true,
-			}];
-		}
-
-		renderEmptyCacheItems()
-		{
-			return [{
-				id: 0,
-				type: 'button',
-				title: BX.message('MOBILE_TASKS_PROJECT_LIST_SEARCH_HINT'),
-				sectionCode: 'default',
-				unselectable: true,
-			}];
-		}
-
-		renderEmptyResultItems()
-		{
-			return [{
-				id: 0,
-				type: 'button',
-				title: BX.message('MOBILE_TASKS_PROJECT_LIST_SEARCH_EMPTY_RESULT'),
-				sectionCode: 'default',
-				unselectable: true,
-			}];
-		}
-
-		setSearchResultItems(items, sections)
-		{
-			this.list.list.setSearchResultItems(items, sections);
-		}
-
-		onUserTypeText(event)
-		{
-			BX.onViewLoaded(() => {
-				const text = event.text.trim();
-				if (this.text === text)
-				{
-					return;
-				}
-				this.text = text;
-				if (this.text.length < this.minSize)
-				{
-					this.projectList.clear();
-
-					if (this.text === '')
-					{
-						this.loadProjectsFromCache();
-					}
-					else
-					{
-						this.fillList(this.getLocalSearches(this.text));
-					}
-					this.renderList(this.text === '');
-					return;
-				}
-				this.debounceFunction(this.text);
-			});
-		}
-
-		getLocalSearches(text)
-		{
-			const localSearches = [];
-			const added = {};
-
-			this.list.projectList.forEach((project) => {
-				added[project.id] = false;
-				const searchString = `${project.name}`.toLowerCase();
-				searchString.split(' ').forEach((word) => {
-					if (!added[project.id] && word.search(text.toLowerCase()) === 0)
-					{
-						localSearches.push(project);
-						added[project.id] = true;
-					}
-				});
-			});
-
-			return localSearches;
-		}
-
-		onSearchShow()
-		{
-			this.loadProjectsFromCache();
-			this.renderList(true);
-		}
-
-		loadProjectsFromCache()
-		{
-			const cache = this.cache.get();
-			const lastSelected = cache[Search.cacheKeys.selected] || [];
-
-			if (lastSelected && lastSelected.length >= this.maxProjectCount)
-			{
-				this.fillList(lastSelected);
-				return true;
-			}
-
-			const ids = lastSelected.map(project => Number(project.id));
-			let lastActive = cache[Search.cacheKeys.active] || [];
-			lastActive = lastActive.filter(project => !ids.includes(Number(project.id)));
-
-			const count = this.maxProjectCount - lastSelected.length;
-			const projects = lastSelected.concat(lastActive.slice(0, count));
-
-			if (projects.length)
-			{
-				this.fillList(projects);
-				return true;
-			}
-
-			return false;
-		}
-
-		onSearchHide()
-		{
-			this.projectList.clear();
-		}
-
-		onSearchItemSelected(event)
-		{
-			const projectId = String(event.id);
-
-			if (!this.projectList.has(projectId))
-			{
-				return;
-			}
-
-			(new RequestExecutor('tasks.project.list', {
-				select: ProjectList.select,
-				filter: {ID: projectId},
-				params: {
-					mode: 'mobile',
-				},
-			}))
-				.call()
-				.then((response) => {
-					const rows = response.result.projects || [];
-					const row = rows[0];
-					if (row)
-					{
-						this.saveProjectToCache(projectId, row);
-
-						setTimeout(() => {
-							const project = new Project(this.userId);
-							project.setData(row);
-
-							const newProjectList = new Map([[projectId, project]]);
-							this.projectList.forEach((value, key) => newProjectList.set(key, value));
-							this.projectList = newProjectList;
-
-							if (this.text.length < this.minSize)
-							{
-								this.renderList(this.text === '');
-							}
-						}, 500);
-					}
-				})
-			;
-
-			const project = (
-				this.list.projectList.has(projectId)
-					? this.list.projectList.get(projectId)
-					: this.projectList.get(projectId)
-			);
-
-
-			const projectItem = {
-				id: project.id,
-				title: project.name,
-				params: {
-					avatar: project.image,
-					initiatedByType: project.additionalData.initiatedByType,
-					features: (project.additionalData.features || []),
-					membersCount: (project.getHeadCount() + project.getMemberCount()),
-					role: project.additionalData.role,
-					opened: project.isOpened,
-				},
-			};
-
-			const projectData = {
-				siteId: BX.componentParameters.get('SITE_ID', env.siteId),
-				siteDir: BX.componentParameters.get('SITE_DIR', env.siteDir),
-				projectId: project.id,
-				action: 'view',
-				item: projectItem,
-				newsPathTemplate: (this.list.projectNewsPathTemplate || ''),
-				calendarWebPathTemplate: (this.list.projectCalendarWebPathTemplate || ''),
-				currentUserId: parseInt(this.list.userId || 0),
-			};
-
-			BX.postComponentEvent('projectbackground::project::action', [ projectData ], 'background');
-		}
-
-		saveProjectToCache(projectId, project)
-		{
-			const cacheKey = Search.cacheKeys.selected;
-			let projects = this.cache.get()[cacheKey] || [];
-			projects = projects.filter(item => Number(item.id) !== Number(projectId));
-			this.cache.update(cacheKey, [project].concat(projects.slice(0, this.maxProjectCount - 1)));
-		}
-
-		removeProject(projectId)
-		{
-			if (this.projectList.has(projectId))
-			{
-				this.projectList.delete(projectId);
-			}
 		}
 	}
 
@@ -1547,10 +1173,7 @@
 		onProjectRemove(data)
 		{
 			return new Promise((resolve) => {
-				const projectId = String(data.ID);
-
-				this.list.removeItem(projectId);
-				this.list.search.removeProject(projectId);
+				this.list.removeItem(String(data.ID));
 				resolve();
 			});
 		}
@@ -1753,14 +1376,24 @@
 			this.welcomeScreen = new WelcomeScreen(this);
 			this.loading = new Loading(this);
 			this.action = new Action(this);
-			this.search = new Search(this, this.userId);
 			this.pull = new Pull(this, this.userId);
+
+			this.debounceSearch = debounce(
+				(text) => {
+					this.filter.setSearchText(text);
+					this.setTopButtons();
+					this.reload(0, true);
+				},
+				500,
+				this
+			);
+			this.getPresets();
 
 			BX.onViewLoaded(() => {
 				this.list.setItems([
 					{
 						type: 'loading',
-						title: BX.message('MOBILE_TASKS_PROJECT_LIST_LOADING'),
+						title: Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_LOADING'),
 					},
 				]);
 
@@ -1776,6 +1409,130 @@
 			});
 		}
 
+		getPresets()
+		{
+			if (!isSearchByPresetsEnable)
+			{
+				return;
+			}
+
+			(new RequestExecutor('tasksmobile.Filter.getProjectListPresets'))
+				.call()
+				.then((response) => {
+					this.presets = response.result;
+					if (this.searchLayout)
+					{
+						this.searchLayout.updateState({
+							presets: this.presets,
+							currentPreset: this.filter.getPreset(),
+						});
+					}
+				})
+			;
+		}
+
+		setTopButtons()
+		{
+			const isDefaultSearch = (this.filter.getPreset() === Filter.presetTypes.default && !this.filter.getSearchText());
+
+			this.list.setRightButtons([
+				{
+					type: 'search',
+					badgeCode: 'tasksProjectListSearchButton',
+					svg: {
+						content: magnifierWithMenuAndDot('#a8adb4', (isDefaultSearch ? null : '#2fc6f6')),
+					},
+					callback: () => this.onSearchClick(),
+				},
+				{
+					type: (this.filter.getCounter() === Filter.counterTypes.none ? 'more' : 'more_active'),
+					badgeCode: `tasksProjectListMoreButton_${this.userId}`,
+					callback: () => this.moreMenu.show(),
+				},
+			]);
+			this.filter.setVisualCounters();
+		}
+
+		onSearchClick()
+		{
+			if (isSearchByPresetsEnable)
+			{
+				if (!this.isSearchInit)
+				{
+					this.isSearchInit = true;
+
+					this.list.search.mode = 'layout';
+					this.list.search.on('textChanged', ({text}) => this.debounceSearch(text));
+					this.list.search.on('cancel', () => {
+						if (
+							this.filter.getSearchText()
+							|| this.filter.getPreset() !== Filter.presetTypes.default
+						)
+						{
+							this.filter.setSearchText('');
+							this.filter.setPreset(Filter.presetTypes.default);
+
+							this.setTopButtons();
+							this.reload(0, true);
+						}
+					});
+				}
+				this.searchLayout = new PresetList({
+					presets: this.presets,
+					currentPreset: this.filter.getPreset(),
+				});
+				this.searchLayout.on('presetSelected', (preset) => {
+					if (preset.id === this.filter.getPreset())
+					{
+						this.filter.setPreset(Filter.presetTypes.none);
+					}
+					else
+					{
+						this.filter.setPreset(preset.id);
+						this.filter.setCounter(Filter.counterTypes.none);
+					}
+					this.setTopButtons();
+					this.reload(0, true);
+				});
+				this.list.search.text = this.filter.getSearchText();
+				this.list.search.show(this.searchLayout, 46);
+			}
+			else
+			{
+				if (!this.isSearchInit)
+				{
+					this.isSearchInit = true;
+
+					this.list.search.mode = 'bar';
+					this.list.search.on('textChanged', ({text}) => this.debounceSearch(text));
+					this.list.search.on('cancel', () => {
+						if (
+							this.filter.getSearchText()
+							|| this.filter.getPreset() !== Filter.presetTypes.default
+						)
+						{
+							this.filter.setSearchText('');
+							this.filter.setPreset(Filter.presetTypes.default);
+
+							this.setTopButtons();
+							this.reload(0, true);
+						}
+					});
+					this.list.search.on('clickEnter', () => this.list.search.close());
+				}
+				this.list.search.text = this.filter.getSearchText();
+				this.list.search.show();
+			}
+		}
+
+		setFloatingButton()
+		{
+			this.getCanCreateProject().then(
+				response => this.renderFloatingButton(response),
+				response => console.error(response)
+			);
+		}
+
 		getCanCreateProject()
 		{
 			return new Promise((resolve, reject) => {
@@ -1787,30 +1544,6 @@
 					)
 				;
 			});
-		}
-
-		setTopButtons()
-		{
-			this.list.setRightButtons([
-				{
-					type: 'search',
-					callback: () => this.list.showSearchBar(),
-				},
-				{
-					type: (this.filter.getCounter() === Filter.counterTypes.none ? 'more' : 'more_active'),
-					badgeCode: `tasksProjectListMoreButton_${this.userId}`,
-					callback: () => this.moreMenu.show(),
-				},
-			]);
-			this.filter.setVisualCounters();
-		}
-
-		setFloatingButton()
-		{
-			this.getCanCreateProject().then(
-				response => this.renderFloatingButton(response),
-				response => console.error(response)
-			);
 		}
 
 		renderFloatingButton(isExist = false)
@@ -1838,22 +1571,6 @@
 					},
 					context: this,
 				},
-				onUserTypeText: {
-					callback: this.search.onUserTypeText,
-					context: this.search,
-				},
-				onSearchItemSelected: {
-					callback: this.search.onSearchItemSelected,
-					context: this.search,
-				},
-				onSearchShow: {
-					callback: this.search.onSearchShow,
-					context: this.search,
-				},
-				onSearchHide: {
-					callback: this.search.onSearchHide,
-					context: this.search,
-				},
 				onItemSelected: {
 					callback: this.onItemSelected,
 					context: this,
@@ -1865,6 +1582,15 @@
 				eventJoin: {
 					callback: this.action.onJoinAction,
 					context: this.action,
+				},
+				onScroll: {
+					callback: () => {
+						if (isSearchByPresetsEnable)
+						{
+							this.list.search.close();
+						}
+					},
+					context: this,
 				},
 			};
 
@@ -1913,6 +1639,17 @@
 			}
 			this.loading.showForTitle();
 
+			const params = {
+				mode: 'mobile',
+				listMode: 'tasks_project',
+			};
+			if (isSearchByPresetsEnable)
+			{
+				params.siftThroughFilter = {
+					presetId: this.filter.getPreset(),
+				};
+			}
+
 			BX.rest.callMethod(
 				'tasks.project.list',
 				{
@@ -1920,9 +1657,7 @@
 					filter: this.filter.get(),
 					order: this.order.get(),
 					start: offset,
-					params: {
-						mode: 'mobile',
-					},
+					params,
 				},
 				response => this.onReloadSuccess(response, showLoading, offset)
 			);
@@ -1960,8 +1695,6 @@
 
 			const isNextPageExist = (this.projectList.size < response.answer.total);
 			this.renderProjectListItems(items, isFirstPage, isNextPageExist);
-
-			console.log('ProjectList.onReloadSuccess:render');
 
 			if (showLoading)
 			{
@@ -2086,7 +1819,7 @@
 			{
 				this.list.addItems([{
 					id: '-more-',
-					title: BX.message('MOBILE_TASKS_PROJECT_LIST_NEXT_PAGE'),
+					title: Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_NEXT_PAGE'),
 					type: 'button',
 					sectionCode: SectionHandler.sections.more,
 				}]);
@@ -2103,7 +1836,7 @@
 					{id: '-more-'},
 					{
 						type: 'loading',
-						title: BX.message('MOBILE_TASKS_PROJECT_LIST_LOADING'),
+						title: Loc.getMessage('MOBILE_TASKS_PROJECT_LIST_LOADING'),
 					}
 				);
 				this.reload(this.start);
@@ -2243,11 +1976,11 @@
 		runOnAppActiveRepeatedActions()
 		{
 			this.setFloatingButton();
+			this.getPresets();
 
 			this.filter.updateCounters();
 			this.reload();
 
-			this.search.fillCacheWithLastActiveProjects();
 			this.pull.onAppActive();
 		}
 
@@ -2289,12 +2022,20 @@
 		updateProjects(projectIds)
 		{
 			return new Promise((resolve, reject) => {
+				const params = {
+					mode: 'mobile',
+					listMode: 'tasks_project',
+				};
+				if (isSearchByPresetsEnable)
+				{
+					params.siftThroughFilter = {
+						presetId: this.filter.getPreset(),
+					};
+				}
 				(new RequestExecutor('tasks.project.list', {
 					select: ProjectList.select,
 					filter: {...this.filter.get(), ID: projectIds},
-					params: {
-						mode: 'mobile',
-					},
+					params,
 				}))
 					.call()
 					.then(

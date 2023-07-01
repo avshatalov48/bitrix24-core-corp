@@ -2,7 +2,6 @@
  * @module crm/timeline/controllers/openline
  */
 jn.define('crm/timeline/controllers/openline', (require, exports, module) => {
-
 	const { TimelineBaseController } = require('crm/controllers/base');
 	const { CommunicationEvents } = require('communication/events');
 	const { get } = require('utils/object');
@@ -22,11 +21,29 @@ jn.define('crm/timeline/controllers/openline', (require, exports, module) => {
 			return Object.values(SupportedActions);
 		}
 
-		getTitle()
+		getChannelTitle()
 		{
 			return get(
 				this.item.model,
-				['props', 'layout', 'body', 'blocks', 'chatTitle', 'properties', 'contentBlock', 'properties', 'text'],
+				'props.layout.body.blocks.chatTitle.properties.contentBlock.properties.value',
+				'',
+			);
+		}
+
+		getItemTitle()
+		{
+			return get(
+				this.item.model,
+				'props.layout.header.title',
+				'',
+			);
+		}
+
+		getOpenLineTitle()
+		{
+			return get(
+				this.item.model,
+				'props.layout.body.blocks.lineTitle.properties.contentBlock.properties.text',
 				'',
 			);
 		}
@@ -40,7 +57,7 @@ jn.define('crm/timeline/controllers/openline', (require, exports, module) => {
 					params: {
 						userCode: dialogId,
 						titleParams: {
-							name: this.getTitle(),
+							name: this.getChannelTitle(),
 							description: Loc.getMessage('CRM_TIMELINE_OPEN_LINE_NAME'),
 						},
 					},
@@ -54,13 +71,17 @@ jn.define('crm/timeline/controllers/openline', (require, exports, module) => {
 			{
 				case SupportedActions.OPEN_CHAT:
 					const openLineActionParams = this.prepareOpenLineActionParams(actionParams);
-					this.pinInTopToolbar(openLineActionParams);
+
+					this.openDetailCardTopToolbar('Activity:OpenLine', {
+						title: this.getItemTitle(),
+						subtitle: this.getOpenLineTitle(),
+						actionParams: openLineActionParams,
+					});
 
 					setTimeout(() => {
 						this.openChat(openLineActionParams);
 					}, 400);
-				default:
-					return;
+					break;
 			}
 		}
 
@@ -76,5 +97,4 @@ jn.define('crm/timeline/controllers/openline', (require, exports, module) => {
 	}
 
 	module.exports = { TimelineOpenlineController };
-
 });

@@ -16,9 +16,9 @@ if (IsModuleInstalled("webdav"))
 */
 $APPLICATION->IncludeComponent("bitrix:main.post.form", "mobile_comment", array(
 		"FORM_ID" => "commentEditForm",
-		"COMMENT_TYPE" => $_REQUEST["type"],
-		"COMMENT_ID" => intval($_REQUEST["comment_id"]),
-		"NODE_ID" => $_REQUEST["node_id"]
+		"COMMENT_TYPE" => $_REQUEST["type"] ?? '',
+		"COMMENT_ID" => intval($_REQUEST["comment_id"] ?? 0),
+		"NODE_ID" => $_REQUEST["node_id"] ?? ''
 	),
 	false,
 	Array("HIDE_ICONS" => "Y")

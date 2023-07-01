@@ -9,13 +9,18 @@ $arResult['entities'] = [];
 
 foreach ($possibleEntityTypeIds as $entityType => $title)
 {
-	if($arResult['additionalParameters']['bVarsFromForm'])
+	if(isset($arResult['additionalParameters']['bVarsFromForm']) && $arResult['additionalParameters']['bVarsFromForm'])
 	{
 		$arResult['entities'][$entityType] = ($GLOBALS[$arResult['additionalParameters']['NAME']][$entityType] === 'Y' ? 'Y' : 'N');
 	}
-	elseif(is_array($arResult['userField']))
+	elseif(isset($arResult['userField']) && is_array($arResult['userField']))
 	{
-		$arResult['entities'][$entityType] = ($arResult['userField']['SETTINGS'][$entityType] === 'Y' ? 'Y' : 'N');
+		$arResult['entities'][$entityType] =
+			isset($arResult['userField']['SETTINGS'][$entityType])
+			&& $arResult['userField']['SETTINGS'][$entityType] === 'Y'
+				? 'Y'
+				: 'N'
+		;
 	}
 	else
 	{

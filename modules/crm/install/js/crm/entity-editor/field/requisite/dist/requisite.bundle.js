@@ -760,6 +760,8 @@ this.BX = this.BX || {};
 	    this._requisiteList = null;
 	    this._entityTypeId = null;
 	    this._entityId = null;
+	    this._entityCategoryId = null;
+	    this._permissionToken = null;
 	    this._contextId = null;
 	    this._mode = BX.UI.EntityEditorMode.view;
 	    this.currentSliderRequisiste = null;
@@ -770,8 +772,10 @@ this.BX = this.BX || {};
 	    value: function initialize(id, settings) {
 	      this._entityTypeId = BX.prop.getInteger(settings, 'entityTypeId', 0);
 	      this._entityId = BX.prop.getInteger(settings, 'entityId', 0);
+	      this._entityCategoryId = BX.prop.getInteger(settings, 'entityCategoryId', null);
 	      this._contextId = BX.prop.getString(settings, 'contextId', "");
 	      this._requisiteEditUrl = BX.prop.getString(settings, 'requisiteEditUrl', "");
+	      this._permissionToken = BX.prop.getString(settings, 'permissionToken', null);
 	      this._onExternalEventListener = this.onExternalEvent.bind(this);
 	      main_core_events.EventEmitter.subscribe('onLocalStorageSet', this._onExternalEventListener);
 	    }
@@ -858,6 +862,10 @@ this.BX = this.BX || {};
 	        urlParams["pid"] = presetId;
 	      }
 
+	      if (!main_core.Type.isNull(this._entityCategoryId)) {
+	        urlParams.cid = this._entityCategoryId;
+	      }
+
 	      return BX.util.add_url_param(this.getRequisiteEditUrl(requisiteId), urlParams);
 	    }
 	  }, {
@@ -908,6 +916,10 @@ this.BX = this.BX || {};
 	      if (overriddenPresetId > 0) {
 	        requestParams['PRESET_ID'] = overriddenPresetId;
 	        requestParams['useFormData'] = 'Y';
+	      }
+
+	      if (!main_core.Type.isNull(this._permissionToken)) {
+	        requestParams['permissionToken'] = this._permissionToken;
 	      }
 
 	      return requestParams;
@@ -1090,7 +1102,9 @@ this.BX = this.BX || {};
 	        entityTypeId: this._editor.getEntityTypeId(),
 	        entityId: this._editor.getEntityId(),
 	        contextId: this._editor.getContextId(),
-	        requisiteEditUrl: this._editor.getRequisiteEditUrl('#requisite_id#')
+	        requisiteEditUrl: this._editor.getRequisiteEditUrl('#requisite_id#'),
+	        permissionToken: this.getConfigStringParam('permissionToken', null),
+	        entityCategoryId: BX.prop.getString(this.getConfig(), 'entityCategoryId', 0)
 	      });
 	      main_core_events.EventEmitter.subscribe(this._requisiteEditor, 'onAfterEditRequisite', this.onRequisiteEditorAfterEdit.bind(this));
 	      main_core_events.EventEmitter.subscribe(this._requisiteEditor, 'onAfterDeleteRequisite', this.onRequisiteEditorAfterDelete.bind(this));
@@ -3405,6 +3419,7 @@ this.BX = this.BX || {};
 	    this._addressConfig = null;
 	    this._requisiteList = null;
 	    this._requisiteEditor = null;
+	    this._permissionToken = null;
 	    this._readonly = true;
 	    this._requisiteEditUrl = null;
 	    this._addressContainer = null;
@@ -3450,6 +3465,7 @@ this.BX = this.BX || {};
 	      this._canChangeDefaultRequisite = BX.prop.getBoolean(settings, "canChangeDefaultRequisite", true);
 	      this._requisiteEditUrl = BX.prop.getString(settings, "requisiteEditUrl", null);
 	      this._formElement = BX.prop.get(settings, "formElement", null);
+	      this._permissionToken = BX.prop.getString(settings, "permissionToken", null);
 
 	      if (BX.prop.getBoolean(settings, "enableTooltip", true) && !main_core.Type.isNull(this._requisitesConfig)) {
 	        this._tooltip = EntityEditorRequisiteTooltip.create(this._id + '_client_requisite_details', {
@@ -3463,7 +3479,8 @@ this.BX = this.BX || {};
 	        entityTypeId: this._entityInfo.getTypeId(),
 	        entityId: this._entityInfo.getId(),
 	        contextId: BX.prop.getString(settings, "contextId", ""),
-	        requisiteEditUrl: this._requisiteEditUrl
+	        requisiteEditUrl: this._requisiteEditUrl,
+	        permissionToken: this._permissionToken
 	      });
 
 	      this._requisiteEditor.setRequisiteList(this._requisiteList);
@@ -3530,7 +3547,8 @@ this.BX = this.BX || {};
 	              showFirstItemOnly: true,
 	              showAddressTypeInViewMode: true,
 	              addressZoneConfig: BX.prop.getObject(this._addressConfig, "addressZoneConfig", {}),
-	              countryId: countryId
+	              countryId: countryId,
+	              defaultAddressTypeByCategory: BX.prop.getInteger(this._addressConfig, "defaultAddressTypeByCategory", 0)
 	            });
 
 	            this._addressField.setMultiple(true);

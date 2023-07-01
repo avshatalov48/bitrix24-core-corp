@@ -3,6 +3,7 @@
 namespace Bitrix\Crm\Kanban\Entity;
 
 use Bitrix\Crm\Binding\OrderContactCompanyTable;
+use Bitrix\Crm\Kanban\Entity;
 use Bitrix\Crm\Kanban\Exception;
 use Bitrix\Crm\Order\EntityMarker;
 use Bitrix\Crm\Order\OrderStatus;
@@ -11,15 +12,14 @@ use Bitrix\Crm\Order\PersonType;
 use Bitrix\Crm\Order\PropertyValue;
 use Bitrix\Crm\Order\PropertyVariant;
 use Bitrix\Crm\Order\Shipment;
-use Bitrix\Crm\Kanban\Entity;
+use Bitrix\Crm\Service;
+use Bitrix\Crm\Service\Display\Field;
 use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
 use Bitrix\Main\UI\Filter\FieldAdapter;
-use Bitrix\Crm\Service\Display\Field;
-use Bitrix\Crm\Service;
 
 Loc::loadMessages(__FILE__);
 
@@ -390,7 +390,7 @@ class Order extends Entity
 				$order['PERSON_TYPE_ID'] = $type['NAME'];
 			}
 			$order['CURRENCY_ID'] = $order['CURRENCY'];
-			$order['USER'] = $order['USER_ID'];
+			$order['USER'] = $order['USER_ID'] ?? null;
 			$order['CURRENCY'] = $currencies[$order['CURRENCY']];
 			$order['TITLE'] = Loc::getMessage('CRM_KANBAN_ORDER_TITLE', [
 				'#ACCOUNT_NUMBER#' => $order['ACCOUNT_NUMBER']
@@ -404,7 +404,7 @@ class Order extends Entity
 	{
 		$item['FORMAT_TIME'] = false;
 		$item['DATE'] = $item['DATE_INSERT'];
-		$item['USER'] = $item['USER_ID'];
+		$item['USER'] = $item['USER_ID'] ?? null;
 
 		$item = parent::prepareItemCommonFields($item);
 		$item['PRICE_FORMATTED'] = \CCrmCurrency::MoneyToString($item['PRICE'], $item['CURRENCY_ID']);

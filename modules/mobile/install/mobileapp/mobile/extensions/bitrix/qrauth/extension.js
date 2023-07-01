@@ -3,9 +3,9 @@
 	include("SharedBundle")
 
 	function getDomain() {
-		let domain = currentDomain
+		const domain = currentDomain
 		const regex = /^.+\.(bitrix24\.\w+|br\.\w+)$/i;
-		let components = domain.match(regex)
+		const components = domain.match(regex)
 		if (components != null && components.length === 2) {
 			return components[1];
 		}
@@ -62,7 +62,7 @@
 		}
 	}
 	const guideStepsTitles = [
-		BX.message("STEP_OPEN_SITE").replace("#DOMAIN#", getDomain()),
+		BX.message("STEP_OPEN_SITE_MSGVER_1").replace("#DOMAIN#", getDomain()),
 		BX.message(cloud ? "STEP_PRESS_CLOUD" : "STEP_PRESS_SELF_HOSTED").replace("#URL#", `${currentDomain}${pathToExtension}images/qrinline.png`),
 		BX.message("STEP_SCAN")
 	]
@@ -90,7 +90,7 @@
 					},
 					Text({
 						style: styles.guideTitle,
-						text: BX.message('QR_HOW_TO_AUTH') + '↓',
+						text: BX.message('QR_HOW_TO_AUTH_MSGVER_1') + '↓',
 					}),
 					(cloud && Application.getApiVersion() >= 41 ? this.demoVideo() : null),
 					this.guideSteps(guideStepsTitles),
@@ -152,7 +152,7 @@
 					}),
 					Text({
 						style: styles.hintText,
-						text: hintText || BX.message('QR_SCANNER_HINT'),
+						text: hintText || BX.message('QR_SCANNER_HINT_MSGVER_1'),
 					})
 				)
 			);
@@ -180,7 +180,7 @@
 							value: text
 						})
 					),
-					showBorder ? View({style:{ height:1, backgroundColor: "#EBEBEB"}}) : null
+					showBorder ? View({style:{ height:1, backgroundColor: "#edeef0"}}) : null
 				),
 			)
 		}
@@ -276,7 +276,7 @@
 						this.parent.openWidget("layout",{
 							title: BX.message("STEP_CAMERA_TITLE"),
 							onReady:ui => {
-								let component = new QRCodeScannerComponent({redirectUrl: this.redirectUrl, ui})
+								const component = new QRCodeScannerComponent({redirectUrl: this.redirectUrl, ui})
 								ui.showComponent(component)
 							}
 						})
@@ -314,7 +314,7 @@
 	class QRCodeScannerComponent extends LayoutComponent {
 		constructor(props)
 		{
-			let {
+			const {
 				ui,
 				redirectUrl = "",
 				external = false,
@@ -331,8 +331,8 @@
 		}
 
 		renderAcceptDialog(resolve) {
-			let { styles } = jn.require("qrauth/styles")
-			let action = new PrimaryButton({});
+			const { styles } = jn.require("qrauth/styles")
+			const action = new PrimaryButton({});
 			action.props = {
 				text: BX.message('ACCEPT_QR_AUTH'),
 				style: { button: styles.button, text: styles.buttonText},
@@ -343,7 +343,7 @@
 				}
 			}
 
-			let cancel = new CancelButton({});
+			const cancel = new CancelButton({});
 			cancel.props = {
 				text: BX.message('DECLINE_QR_AUTH'),
 				style: { button: styles.button, text: styles.buttonText},
@@ -393,7 +393,7 @@
 		}
 
 		render() {
-			let {external = false, accepted = false} = this.state;
+			const {external = false, accepted = false} = this.state;
 			if(external)
 			{
 				if (accepted === true) {

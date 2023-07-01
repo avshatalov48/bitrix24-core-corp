@@ -40,8 +40,10 @@ if(typeof BX.Crm.EntityEditorDupManager === "undefined")
 						serviceUrl: this._serviceUrl,
 						entityTypeName: this._entityTypeName,
 						form: this._form,
+						clientSearchBox: BX.prop.get(this._settings, 'clientSearchBox', null),
+						enableEntitySelect: BX.prop.getBoolean(this._settings, 'enableEntitySelect', false),
 						searcSummaryPosition: "right",
-						ignoredItems: this._ignoredItems
+						ignoredItems: this._ignoredItems,
 					}
 				);
 			},

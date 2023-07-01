@@ -40,7 +40,7 @@ class CBPCrmEventAddActivity extends CBPActivity
 		$arFields = array(
 			'ENTITY'  => $arEntity,
 			'EVENT_ID' => $this->EventType,
-			'EVENT_TEXT_1' => $this->EventText,
+			'EVENT_TEXT_1' => $this->getEventText(),
 			'USER_ID' => $userId ?: 0,
 		);
 		$CCrmEvent = new CCrmEvent();
@@ -167,5 +167,16 @@ class CBPCrmEventAddActivity extends CBPActivity
 		}
 
 		return parent::getDebugInfo($values, $map);
+	}
+
+	private function getEventText(): string
+	{
+		$text = $this->ParseValue($this->getRawProperty('EventText'), 'text');
+		if (is_array($text))
+		{
+			$text = implode(', ', \CBPHelper::MakeArrayFlat($text));
+		}
+
+		return (string)$text;
 	}
 }

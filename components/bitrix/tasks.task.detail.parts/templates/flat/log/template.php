@@ -182,7 +182,7 @@ $trackedFields = CTaskLog::getTrackedFields();
 			{
 				$fieldName = Loc::getMessage('TASKS_LOG_FILES');
 			}
-			elseif($fieldName == '' && $trackedFields[$record["FIELD"]]['TITLE'] != '')
+			elseif($fieldName == '' && ($trackedFields[$record["FIELD"]]['TITLE'] ?? '') != '')
 			{
 				$fieldName = $trackedFields[$record["FIELD"]]['TITLE'];
 			}

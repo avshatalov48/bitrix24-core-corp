@@ -1,19 +1,19 @@
 <?php
-if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
-{
-	die();
-}
-
 /**
- * Bitrix vars
- * @global CUser $USER
- * @global CMain $APPLICATION
+ * @var CMain $APPLICATION
+ * @var CUser $USER
  * @var array $arParams
  * @var array $arResult
  * @var CBitrixComponent $this
  */
 
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Web\Uri;
 
 $arResult['CAN_WRITE'] = $USER->CanDoOperation('biconnector_key_manage');
 $arResult['CAN_READ'] = $arResult['CAN_WRITE'] || $USER->CanDoOperation('biconnector_key_view');
@@ -52,42 +52,56 @@ if (
 
 $APPLICATION->SetTitle(Loc::getMessage('CC_BBKL_TITLE'));
 
+$select = [
+	'ID',
+	'DATE_CREATE',
+	'CREATED_BY',
+	'CREATED_USER.NAME',
+	'CREATED_USER.LAST_NAME',
+	'CREATED_USER.SECOND_NAME',
+	'CREATED_USER.EMAIL',
+	'CREATED_USER.LOGIN',
+	'CREATED_USER.PERSONAL_PHOTO',
+	'CONNECTION',
+	'ACCESS_KEY',
+	'ACTIVE',
+	'APP_ID',
+	'APPLICATION.APP_NAME',
+	'LAST_ACTIVITY_DATE',
+];
+
 $arResult['CONNECTIONS'] = \Bitrix\BIConnector\Manager::getInstance()->getConnections();
 
 $arResult['GRID_ID'] = 'biconnector_key_list';
-$arResult['SORT'] = ['ID' => 'DESC'];
+
+$defaultSort = ['ID' => 'DESC'];
+$gridOptions = new Bitrix\Main\Grid\Options($arResult['GRID_ID']);
+$sorting = $gridOptions->getSorting(['sort' => $defaultSort]);
+$by = strtoupper(key($sorting['sort']));
+if (!in_array($by, $select, true))
+{
+	$by = 'ID';
+}
+$order = current($sorting['sort']) === 'asc' ? 'asc' : 'desc';
+$arResult['SORT'] = [$by => $order];
+
 $arResult['ROWS'] = [];
 
 $filter = [];
 if (!$arResult['CAN_WRITE'] && !$USER->CanDoOperation('biconnector_key_view'))
 {
-	$filter['=PERMISSION.USER_ID'] = $USER->getId();
+	$filter['=PERMISSION.USER_ID'] = $USER->GetID();
 }
 
 $keyList = \Bitrix\BIConnector\KeyTable::getList([
-	'select' => [
-		'ID',
-		'DATE_CREATE',
-		'CREATED_BY',
-		'CREATED_USER.NAME',
-		'CREATED_USER.LAST_NAME',
-		'CREATED_USER.SECOND_NAME',
-		'CREATED_USER.EMAIL',
-		'CREATED_USER.LOGIN',
-		'CREATED_USER.PERSONAL_PHOTO',
-		'CONNECTION',
-		'ACCESS_KEY',
-		'ACTIVE',
-		'APP_ID',
-		'APPLICATION.APP_NAME',
-	],
+	'select' => $select,
 	'filter' => $filter,
 	'order' => $arResult['SORT'],
 ]);
 while ($data = $keyList->fetch())
 {
 	$accessKey = $data['ACCESS_KEY'] . LANGUAGE_ID;
-	$data['ACCESS_KEY'] = '<input type="password" class="biconnector-key-grid-access-key" readonly value="' . htmlspecialcharsBx($accessKey) . '" size="' . (strlen($accessKey) + 3) . '">'
+	$data['ACCESS_KEY'] = '<input type="password" class="biconnector-key-grid-access-key" readonly value="' . htmlspecialcharsbx($accessKey) . '" size="' . (strlen($accessKey) + 3) . '">'
 		. '<button class="biconnector-key-grid-action-link" onclick="return showText(this, \'' . CUtil::JSEscape(Loc::getMessage('CT_BBKL_KEY_SHOW')) . '\', \'' . CUtil::JSEscape(Loc::getMessage('CT_BBKL_KEY_HIDE')) . '\')">' . Loc::getMessage('CT_BBKL_KEY_SHOW') . '</button>'
 		. '<button class="biconnector-key-grid-action-link" onclick="return copyText(this, \'' . CUtil::JSEscape(Loc::getMessage('CT_BBKL_KEY_COPIED')) . '\')">' . Loc::getMessage('CT_BBKL_KEY_COPY') . '</button>'
 	;
@@ -123,7 +137,7 @@ while ($data = $keyList->fetch())
 	{
 		$userEmptyAvatar = '';
 		$photoUrl = $fileInfo['src'];
-		$userAvatar = ' style="background-image: url(\'' . $photoUrl . '\')"';
+		$userAvatar = ' style="background-image: url(\'' . Uri::urnEncode($photoUrl) . '\')"';
 	}
 
 	$userNameElement = '<span class="biconnector-key-grid-avatar ui-icon ui-icon-common-user' . $userEmptyAvatar . '">'
@@ -135,7 +149,8 @@ while ($data = $keyList->fetch())
 		. '<a class="biconnector-key-grid-username" href="/company/personal/user/' . $data['CREATED_BY'] . '/">' . $userNameElement . '</a>'
 		. '</div>';
 
-	$data['DATE_CREATE'] = preg_replace('/([0-9]{2}:[0-9]{2}):[0-9]{2}/', '\\1', $data['DATE_CREATE']);
+	$data['DATE_CREATE'] = preg_replace('/(\d{2}:\d{2}):\d{2}/', '\\1', $data['DATE_CREATE']);
+	$data['LAST_ACTIVITY_DATE'] = preg_replace('/(\d{2}:\d{2}):\d{2}/', '\\1', $data['LAST_ACTIVITY_DATE']);
 	$data['APPLICATION'] = htmlspecialcharsEx($data['BICONNECTOR_KEY_APPLICATION_APP_NAME']);
 
 	$actions = [];
@@ -164,4 +179,4 @@ while ($data = $keyList->fetch())
 	];
 }
 
-$this->IncludeComponentTemplate();
+$this->includeComponentTemplate();

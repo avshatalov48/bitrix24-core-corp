@@ -21,7 +21,7 @@ Extension::load([
 	'ui.hint',
 ]);
 
-$showViewMode = ($arParams['SHOW_VIEW_MODE'] === 'Y');
+$showViewMode = (isset($arParams['SHOW_VIEW_MODE']) && $arParams['SHOW_VIEW_MODE'] === 'Y');
 $isBitrix24Template = (SITE_TEMPLATE_ID === 'bitrix24');
 
 if ($isBitrix24Template)
@@ -52,7 +52,7 @@ if ($isBitrix24Template)
 				$active = array_key_exists('SELECTED', $view) && $view['SELECTED'] === 'Y';
 				$state = \Bitrix\Tasks\Ui\Filter\Task::getListStateInstance()->getState();
 				$url = '?F_STATE=sV'.CTaskListState::encodeState($view['ID']);
-				if ($_REQUEST['IFRAME'])
+				if (isset($_REQUEST['IFRAME']))
 				{
 					$url .= '&IFRAME='.($_REQUEST['IFRAME'] == 'Y' ? 'Y' : 'N');
 				}
@@ -80,7 +80,7 @@ if ($isBitrix24Template)
 				'GROUP_ID' => (int)$arResult['GROUP_ID'],
 				'ROLE' => $arResult['ROLE'],
 				'GRID_ID' => $arParams['GRID_ID'],
-				'COUNTERS' => ($arParams['COUNTERS'] ? : []),
+				'COUNTERS' => ($arParams['COUNTERS'] ?? []),
 				'FILTER_FIELD' => $arParams['FILTER_FIELD'],
 			],
 			$component
@@ -102,12 +102,12 @@ if ($isBitrix24Template)
 				&& Access\TaskAccessController::can($arResult['USER_ID'], Access\ActionDictionary::ACTION_TASK_ROBOT_EDIT)
 			)
 			{
-				$groupId = (int)$arParams['GROUP_ID'];
+				$groupId = (int) ($arParams['GROUP_ID'] ?? 0);
 				$projectId = ($showViewMode ? $groupId : 'this.getAttribute(\'data-project-id\')');
 
 				$showLimitSlider = ($arResult['TASK_LIMIT_EXCEEDED'] || !Factory::canUseAutomation());
 				$openLimitSliderAction = "top.BX.UI.InfoHelper.show('limit_tasks_robots', {isLimit: true, limitAnalyticsLabels: {module: 'tasks'}})";
-				$openRobotSliderAction = "BX.SidePanel.Instance.open('/bitrix/components/bitrix/tasks.automation/slider.php?site_id='+BX.message('SITE_ID')+'&amp;project_id='+{$projectId}, {cacheable: false, customLeftBoundary: 0});";
+				$openRobotSliderAction = "BX.SidePanel.Instance.open('/bitrix/components/bitrix/tasks.automation/slider.php?site_id='+BX.message('SITE_ID')+'&amp;project_id='+{$projectId}, {cacheable: false, customLeftBoundary: 0, loader: 'bizproc:automation-loader'});";
 
 				$lockClass = ($showLimitSlider ? 'ui-btn-icon-lock' : '');
 				$onClick = ($showLimitSlider ? $openLimitSliderAction : $openRobotSliderAction);
@@ -124,9 +124,9 @@ if ($isBitrix24Template)
 					'',
 					[
 						'SECTION_CODE' => 'tasks_switcher',
-						'MENU_CODE' => ($arParams['GROUP_ID'] ? 'group' : 'user'),
+						'MENU_CODE' => ((array_key_exists('GROUP_ID', $arParams) && $arParams['GROUP_ID']) ? 'group' : 'user'),
 						'CONTEXT' => (
-							$arParams['GROUP_ID']
+								(array_key_exists('GROUP_ID', $arParams) && $arParams['GROUP_ID'])
 								? ['GROUP_ID' => $arParams['GROUP_ID']]
 								: ['USER_ID' => $arParams['OWNER_ID']]
 						),
@@ -151,8 +151,10 @@ if ($isBitrix24Template)
 }
 ?>
 
-<div style="<?=$state['VIEW_SELECTED']['CODENAME'] == 'VIEW_MODE_GANTT' ? 'margin:-15px -15px 15px  -15px' : ''?>">
-    <?php
+<div class="tasks-interface-toolbar__steps"
+	 style="<?= (isset($state['VIEW_SELECTED']['CODENAME']) && $state['VIEW_SELECTED']['CODENAME'] == 'VIEW_MODE_GANTT')
+		 ? 'margin:-15px -15px 15px  -15px'
+		 : ''?>"><?php
 		echo Stepper::getHtml(
 			['tasks' => 'Bitrix\Tasks\Update\FullTasksIndexer'],
 			GetMessage('TASKS_FULL_TASK_INDEXING_TITLE')
@@ -163,9 +165,7 @@ if ($isBitrix24Template)
 				'Bitrix\Tasks\Update\TasksFilterConverter',
 			]
 		]);
-	?>
-
-	<?php if (\Bitrix\Tasks\Internals\Counter\Queue\Queue::isInQueue((int) $arParams['USER_ID'])): ?>
+	?><?php if (\Bitrix\Tasks\Internals\Counter\Queue\Queue::isInQueue((int) $arParams['USER_ID'])): ?>
 		<?php \CJSCore::Init(array('update_stepper')); ?>
 		<div class="main-stepper-block">
 			<div class="main-stepper main-stepper-show" >
@@ -195,7 +195,7 @@ if ($arResult['SPOTLIGHT_SIMPLE_COUNTERS'])
 	BX.ready(function()
 	{
 		BX.message({
-			_VIEW_TYPE: '<?=$state['VIEW_SELECTED']['CODENAME']?>'
+			_VIEW_TYPE: '<?= $state['VIEW_SELECTED']['CODENAME'] ?? "" ?>'
 		});
 
 		var robotsBtn = document.querySelector('button[data-project-id]');

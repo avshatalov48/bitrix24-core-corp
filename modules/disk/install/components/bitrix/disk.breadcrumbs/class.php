@@ -25,6 +25,8 @@ class CDiskBreadcrumbsComponent extends \Bitrix\Disk\Internals\BaseComponent
 			$this->arParams['SHOW_ONLY_DELETED'] = false;
 		}
 
+		$this->arParams['CLASS_NAME'] = $this->arParams['CLASS_NAME'] ?? '';
+
 		if(!isset($this->arParams['BREADCRUMBS']))
 		{
 			$this->arParams['BREADCRUMBS'] = array();
@@ -77,11 +79,11 @@ class CDiskBreadcrumbsComponent extends \Bitrix\Disk\Internals\BaseComponent
 		}
 	}
 
-	private function processCrumbs(array $crumbs)
+	private function processCrumbs(array $crumbs): array
 	{
-		foreach ($crumbs as &$crumb)
+		foreach ($crumbs as $i => $crumb)
 		{
-			$crumb['ENCODED_LINK'] = $crumb['ENCODED_LINK']?: $this->encodeUrn($crumb['LINK']);
+			$crumbs[$i]['ENCODED_LINK'] = $crumb['ENCODED_LINK'] ?? self::encodeUrn($crumb['LINK']);
 		}
 
 		return $crumbs;

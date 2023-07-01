@@ -2,7 +2,6 @@
  * @module crm/product-grid/model/product-row
  */
 jn.define('crm/product-grid/model/product-row', (require, exports, module) => {
-
 	const { ProductRow: BaseProductRow } = require('layout/ui/product-grid/model');
 	const { ProductCalculator, TaxForSumStrategy } = require('crm/product-calculator');
 
@@ -81,7 +80,7 @@ jn.define('crm/product-grid/model/product-row', (require, exports, module) => {
 		{
 			if (this.props.hasOwnProperty('DISCOUNT_ROW'))
 			{
-				return Number(this.props.DISCOUNT_ROW || 0.0);
+				return Number(this.props.DISCOUNT_ROW || 0);
 			}
 
 			return this.getDiscountSum() * this.getQuantity();
@@ -92,7 +91,7 @@ jn.define('crm/product-grid/model/product-row', (require, exports, module) => {
 		 */
 		getDiscountSum()
 		{
-			return Number(this.props.DISCOUNT_SUM || 0.0);
+			return Number(this.props.DISCOUNT_SUM || 0);
 		}
 
 		/**
@@ -105,7 +104,7 @@ jn.define('crm/product-grid/model/product-row', (require, exports, module) => {
 
 		getMaxPrice()
 		{
-			return Number(this.props.PRICE_BRUTTO || 0.0);
+			return Number(this.props.PRICE_BRUTTO || 0);
 		}
 
 		/**
@@ -113,7 +112,7 @@ jn.define('crm/product-grid/model/product-row', (require, exports, module) => {
 		 */
 		getPrice()
 		{
-			return Number(this.props.PRICE || 0.0);
+			return Number(this.props.PRICE || 0);
 		}
 
 		/**
@@ -123,12 +122,12 @@ jn.define('crm/product-grid/model/product-row', (require, exports, module) => {
 		{
 			if (this.props.hasOwnProperty('BASE_PRICE'))
 			{
-				return Number(this.props.BASE_PRICE || 0.0);
+				return Number(this.props.BASE_PRICE || 0);
 			}
 
 			const value = this.isTaxIncluded() ? this.props.PRICE_BRUTTO : this.props.PRICE_NETTO;
 
-			return Number(value || 0.0);
+			return Number(value || 0);
 		}
 
 		/**
@@ -146,7 +145,7 @@ jn.define('crm/product-grid/model/product-row', (require, exports, module) => {
 		{
 			if (this.props.hasOwnProperty('SUM'))
 			{
-				return Number(this.props.SUM || 0.0);
+				return Number(this.props.SUM || 0);
 			}
 
 			return this.getPrice() * this.getQuantity();
@@ -235,7 +234,7 @@ jn.define('crm/product-grid/model/product-row', (require, exports, module) => {
 		getPhotos()
 		{
 			const gallery = this.props.GALLERY || [];
-			return gallery.map(picture => picture.previewUrl);
+			return gallery.map((picture) => picture.previewUrl);
 		}
 
 		/**
@@ -280,5 +279,4 @@ jn.define('crm/product-grid/model/product-row', (require, exports, module) => {
 	}
 
 	module.exports = { ProductRow };
-
 });

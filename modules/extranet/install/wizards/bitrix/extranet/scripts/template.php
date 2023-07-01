@@ -5,7 +5,7 @@ class ExtranetWizardTemplate extends CWizardTemplate
 	function GetLayout()
 	{
 		global $arWizardConfig;
-		$wizard =& $this->GetWizard();
+		$wizard = $this->GetWizard();
 
 		$formName = htmlspecialcharsbx($wizard->GetFormName());
 		$wizardName = $wizard->GetWizardName();
@@ -17,7 +17,7 @@ class ExtranetWizardTemplate extends CWizardTemplate
 
 		$wizardPath = $wizard->GetPath();
 
-		$obStep =& $wizard->GetCurrentStep();
+		$obStep = $wizard->GetCurrentStep();
 		$arErrors = $obStep->GetErrors();
 		$strError = "";
 		if (count($arErrors) > 0)
@@ -102,7 +102,7 @@ class ExtranetWizardTemplate extends CWizardTemplate
 		$noscriptInfo = GetMessage("INST_JAVASCRIPT_DISABLED");
 		$charset = LANG_CHARSET;
 
-		$currentStep =& $wizard->GetCurrentStep();
+		$currentStep = $wizard->GetCurrentStep();
 
 		$buttons = "";
 

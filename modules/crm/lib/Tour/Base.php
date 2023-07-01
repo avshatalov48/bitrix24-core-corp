@@ -3,6 +3,7 @@
 namespace Bitrix\Crm\Tour;
 
 use Bitrix\Crm\Traits;
+use Bitrix\Main\Config\Option;
 use CUserOptions;
 
 abstract class Base
@@ -25,12 +26,16 @@ abstract class Base
 		{
 			return '';
 		}
+		if ($this->isDeactivated())
+		{
+			return '';
+		}
 
 		ob_start();
 		global $APPLICATION;
 		$APPLICATION->IncludeComponent(
 			'bitrix:crm.whats_new',
-			'',
+			$this->getComponentTemplate(),
 			[
 				'SLIDES' => $this->getSlides(),
 				'STEPS' => $this->getSteps(),
@@ -48,6 +53,11 @@ abstract class Base
 		$option = CUserOptions::GetOption(static::OPTION_CATEGORY, static::OPTION_NAME, []);
 
 		return (isset($option['closed']) && $option['closed'] === 'Y');
+	}
+
+	protected function getComponentTemplate(): string
+	{
+		return '';
 	}
 
 	protected function getSlides(): array
@@ -73,5 +83,10 @@ abstract class Base
 	protected function getOptionName(): string
 	{
 		return static::OPTION_NAME;
+	}
+
+	private function isDeactivated(): bool
+	{
+		return (Option::get(static::OPTION_CATEGORY, 'HIDE_ALL_TOURS', 'N') === 'Y');
 	}
 }

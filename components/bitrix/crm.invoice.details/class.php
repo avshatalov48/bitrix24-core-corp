@@ -50,6 +50,7 @@ class CrmSmartInvoiceDetailsComponent extends FactoryBased
 		$sections = [];
 
 		$mainElements = [
+			['name' => Item::FIELD_NAME_STAGE_ID],
 			['name' => EditorAdapter::FIELD_OPPORTUNITY],
 			['name' => Item::FIELD_NAME_BEGIN_DATE],
 			['name' => Item::FIELD_NAME_CLOSE_DATE],

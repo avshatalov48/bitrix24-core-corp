@@ -13,6 +13,7 @@
 	const { useCallback } = require('utils/function');
 	const { PureComponent } = require('layout/pure-component');
 	const { StatefulList } = require('layout/ui/stateful-list');
+	const { Type } = require('type');
 
 	let RequiredFields;
 	let CategoryStorage;
@@ -28,7 +29,7 @@
 	}
 
 	const animationTypes = {
-		automatic: 'automatic',
+		default: 'fade',
 		left: 'left',
 		right: 'right',
 		top: 'top',
@@ -48,20 +49,11 @@
 		constructor(props)
 		{
 			super(props);
-			this.actions = props.actions || {};
-			this.currentSlideName = null;
-			this.columns = new Map();
-			this.needExecuteOnNotViewableHandler = false;
-			this.slidePage = 0;
-			this.filter = null;
-			this.initSlides();
-
-			this.state = {
-				currentColumnId: null,
-			};
 
 			/** @type RefsContainer */
 			this.refsContainer = new RefsContainer();
+
+			this.init(props);
 
 			this.props.layout.on('onViewShown', () => {
 				if (this.needExecuteOnNotViewableHandler)
@@ -71,7 +63,7 @@
 				}
 			});
 
-			this.getRuntimeParams = this.getRuntimeParams.bind(this);
+			this.getRuntimeParams = this.getRuntimeParamsHandler.bind(this);
 			this.changeColumn = this.changeColumnHandler.bind(this);
 			this.reloadCurrentColumn = this.reloadCurrentColumnHandler.bind(this);
 			this.changeItemStageHandler = this.changeItemStage.bind(this);
@@ -82,10 +74,10 @@
 			this.onAccessDeniedItemHandler = this.onAccessDeniedItem.bind(this);
 		}
 
-		initSlides()
+		initSlides(props = null)
 		{
 			this.slides = new Map([
-				[this.getSlideName(), this.getPreparedActionParams()],
+				[this.getSlideName('', props), this.getPreparedActionParams(props)],
 			]);
 		}
 
@@ -132,46 +124,66 @@
 
 		animateItemAfterBackFromDetail(action, params)
 		{
+			const { entityTypeId, onBeforeReload, getMenuButtons } = this.props;
 			const owner = BX.prop.getObject(params, 'owner', {});
 			const statefulList = this.getCurrentStatefulList();
 			const isBackFromSlaveEntityType = (owner.id && statefulList.hasItem(owner.id));
-			const { props } = this;
 
-			if (props.entityTypeId === params.entityTypeId || isBackFromSlaveEntityType)
+			if (entityTypeId === params.entityTypeId || isBackFromSlaveEntityType)
 			{
-				const data = (props.onBeforeReload ? props.onBeforeReload() : {});
-				const id = (isBackFromSlaveEntityType ? owner.id : params.entityId);
-
+				const data = onBeforeReload ? onBeforeReload() : {};
+				const id = isBackFromSlaveEntityType ? owner.id : params.entityId;
 				const currentColumnId = this.getCurrentColumnId();
 
 				if (
 					!data.reload
+					&& entityTypeId === params.entityTypeId
 					&& (
 						action === EXCLUDE_ACTION
 						|| action === DELETE_ACTION
 						|| (currentColumnId && currentColumnId !== params.entityModel.STAGE_ID)
+						|| this.itemCategoryIsChanged(params)
 					)
 				)
 				{
 					void statefulList.deleteItem(id);
+
 					return;
 				}
 
 				if (!data.reload && action === UPDATE_ACTION)
 				{
-					void statefulList.updateItems([id], BX.prop.getBoolean(data, 'animate', true));
+					void statefulList.updateItems([id], BX.prop.getBoolean(data, 'animate', true), false, false);
+
 					return;
 				}
 
 				statefulList.addToAnimateIds(id);
 
 				const reloadParams = {};
-				if (props.getMenuButtons)
+				if (getMenuButtons)
 				{
-					reloadParams.menuButtons = props.getMenuButtons();
+					reloadParams.menuButtons = getMenuButtons();
 				}
 				this.reload(this.currentSlideName, true, reloadParams);
 			}
+		}
+
+		itemCategoryIsChanged(params)
+		{
+			const category = this.getCurrentCategory();
+
+			if (!category || !category.categoriesEnabled)
+			{
+				return false;
+			}
+
+			const { filterParams } = this.props;
+
+			return (
+				Type.isNumber(filterParams.CATEGORY_ID)
+				&& params.categoryId !== filterParams.CATEGORY_ID
+			);
 		}
 
 		onAccessDeniedItem(uid, params)
@@ -187,6 +199,14 @@
 			this.actions = newProps.actions;
 			this.slidePage = 0;
 
+			if (this.props.entityTypeName !== newProps.entityTypeName)
+			{
+				this.refsContainer.statefulLists = new Map();
+				this.refsContainer.toolbar = null;
+
+				this.init(newProps);
+			}
+
 			this.slides.forEach(slide => {
 				const presetId = BX.prop.getString(newProps.actionParams.loadItems.extra.filterParams, 'FILTER_PRESET_ID', null);
 				if (presetId)
@@ -195,6 +215,22 @@
 				}
 				return slide;
 			});
+		}
+
+		init(props)
+		{
+			this.actions = props.actions || {};
+			this.currentSlideName = null;
+			this.columns = new Map();
+			this.needExecuteOnNotViewableHandler = false;
+			this.slidePage = 0;
+			this.filter = null;
+
+			this.state = {
+				currentColumnId: null,
+			};
+
+			this.initSlides(props);
 		}
 
 		/**
@@ -341,6 +377,11 @@
 			const { entityTypeId, entityTypeName: entityType } = this.props;
 			const requiredParams = { entityId: itemId, entityTypeId };
 			return new Promise((resolve, reject) => {
+				if (!this.getColumnById(columnId))
+				{
+					this.fillSlides();
+				}
+
 				this.setLoadingOfItem(itemId);
 
 				BX.ajax.runAction(this.actions.updateItemStage, {
@@ -526,6 +567,8 @@
 					return animationTypes.right;
 				}
 			}
+
+			return animationTypes.default;
 		}
 
 		render()
@@ -654,7 +697,7 @@
 				this.slides.set(this.getSlideName(), actionParams);
 			}
 
-			let params = {
+			const params = {
 				needInitMenu: this.props.needInitMenu,
 				itemParams: this.getPreparedItemParams(),
 			};
@@ -672,9 +715,9 @@
 		/**
 		 * @returns {Object}
 		 */
-		getPreparedActionParams()
+		getPreparedActionParams(props = null)
 		{
-			const actionParams = this.getDefaultActionParams();
+			const actionParams = this.getDefaultActionParams(props);
 
 			actionParams.loadItems.extra = (actionParams.loadItems.extra || {});
 			actionParams.loadItems.extra.filterParams = (actionParams.loadItems.extra.filterParams || {});
@@ -694,15 +737,17 @@
 		/**
 		 * @returns {Object}
 		 */
-		getDefaultActionParams()
+		getDefaultActionParams(props = null)
 		{
+			props = props || this.props;
+
 			const actionParams = {
 				loadItems: {
-					entityType: this.props.entityTypeName,
+					entityType: props.entityTypeName,
 				},
 			};
 
-			return mergeImmutable(this.props.actionParams, actionParams);
+			return mergeImmutable(props.actionParams, actionParams);
 		}
 
 		isEnabledKanbanToolbar()
@@ -731,7 +776,12 @@
 						changeItemStage: this.changeItemStageHandler,
 						blinkItem: this.blinkItemHandler,
 						layout: this.props.layout,
-						ref: ref => this.refsContainer.setToolbar(ref),
+						ref: ref => {
+							if (ref)
+							{
+								this.refsContainer.setToolbar(ref);
+							}
+						},
 					},
 				);
 			}
@@ -798,6 +848,7 @@
 				ref: useCallback((ref) => {
 					this.refsContainer.setColumn(slideName, ref);
 				}, [slideName]),
+				analyticsLabel: this.props.analyticsLabel || {}
 			});
 		}
 
@@ -846,7 +897,7 @@
 			return {};
 		}
 
-		getRuntimeParams(data)
+		getRuntimeParamsHandler(data)
 		{
 			const cancelSearch = true;
 
@@ -992,10 +1043,7 @@
 		getColumnsFromCurrentCategory()
 		{
 			const columns = new Map();
-			const category = CategoryStorage && CategoryStorage.getCategory(
-				this.props.entityTypeId,
-				this.props.filterParams.CATEGORY_ID,
-			);
+			const category = this.getCurrentCategory();
 
 			if (!category)
 			{
@@ -1013,6 +1061,14 @@
 			});
 
 			return columns;
+		}
+
+		getCurrentCategory()
+		{
+			return CategoryStorage && CategoryStorage.getCategory(
+				this.props.entityTypeId,
+				this.props.filterParams.CATEGORY_ID,
+			);
 		}
 
 		/**
@@ -1074,6 +1130,10 @@
 
 		canUseCache()
 		{
+			if (!this.filter)
+			{
+				return false;
+			}
 			// @todo maybe need use individual cache for all preset exclude 'tmp_filter'
 			return !(Boolean(this.filter.currentFilterId) || Boolean(this.filter.search));
 		}
@@ -1101,9 +1161,10 @@
 		 * @param {string} columnId
 		 * @returns {string}
 		 */
-		getSlideName(columnId = '')
+		getSlideName(columnId = '', props = null)
 		{
-			return this.props.entityTypeName + '-' + columnId;
+			props = props || this.props;
+			return props.entityTypeName + '-' + columnId;
 		}
 
 		/**

@@ -2,7 +2,6 @@
  * @module crm/entity-tab/pull-manager
  */
 jn.define('crm/entity-tab/pull-manager', (require, exports, module) => {
-
 	const TypePull = {
 		Command: 'CRM_KANBANUPDATED',
 		EventNameItemAdded: 'ITEMADDED',
@@ -38,5 +37,5 @@ jn.define('crm/entity-tab/pull-manager', (require, exports, module) => {
 		}
 	}
 
-	module.exports = { PullManager, TypePull }
+	module.exports = { PullManager, TypePull };
 });

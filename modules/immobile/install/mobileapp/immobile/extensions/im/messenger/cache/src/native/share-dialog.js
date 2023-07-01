@@ -5,14 +5,21 @@
  */
 jn.define('im/messenger/cache/share-dialog', (require, exports, module) => {
 
-	const { utils } = jn.require('native/im');
-	const { FeatureFlag } = jn.require('im/messenger/const/feature-flag');
+	const { clone } = require('utils/object');
+	const { throttle } = require('utils/function');
+	const { utils } = require('native/im');
+	const { FeatureFlag } = require('im/messenger/const/feature-flag');
 
 	class ShareDialogCache
 	{
-		static saveRecentItemList(recentItemList)
+		constructor()
 		{
-			recentItemList = ChatUtils.objectClone(recentItemList);
+			this.saveRecentItemList = throttle(this.saveRecentItemList, 10000, this);
+		}
+
+		saveRecentItemList(recentItemList)
+		{
+			recentItemList = clone(recentItemList);
 
 			return new Promise((resolve, reject) => {
 				if (!FeatureFlag.native.imUtilsModuleSupported)
@@ -43,6 +50,6 @@ jn.define('im/messenger/cache/share-dialog', (require, exports, module) => {
 	}
 
 	module.exports = {
-		ShareDialogCache,
+		ShareDialogCache: new ShareDialogCache(),
 	};
 });

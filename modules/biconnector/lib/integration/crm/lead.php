@@ -513,6 +513,7 @@ class Lead
 				],
 				'PHONE' => [
 					'CONCAT_GROUP_BY' => ', ',
+					'CONCAT_KEY' => 'PHONE',
 					'IS_METRIC' => 'N', // 'Y'
 					'FIELD_NAME' => 'concat(\'[\', FM_PHONE.VALUE_TYPE, \'] \', FM_PHONE.VALUE)',
 					'FIELD_TYPE' => 'string',
@@ -522,6 +523,7 @@ class Lead
 				],
 				'WEB' => [
 					'CONCAT_GROUP_BY' => ', ',
+					'CONCAT_KEY' => 'WEB',
 					'IS_METRIC' => 'N', // 'Y'
 					'FIELD_NAME' => 'concat(\'[\', FM_WEB.VALUE_TYPE, \'] \', FM_WEB.VALUE)',
 					'FIELD_TYPE' => 'string',
@@ -531,6 +533,7 @@ class Lead
 				],
 				'EMAIL' => [
 					'CONCAT_GROUP_BY' => ', ',
+					'CONCAT_KEY' => 'EMAIL',
 					'IS_METRIC' => 'N', // 'Y'
 					'FIELD_NAME' => 'concat(\'[\', FM_EMAIL.VALUE_TYPE, \'] \', FM_EMAIL.VALUE)',
 					'FIELD_TYPE' => 'string',
@@ -540,6 +543,7 @@ class Lead
 				],
 				'IM' => [
 					'CONCAT_GROUP_BY' => ', ',
+					'CONCAT_KEY' => 'IM',
 					'IS_METRIC' => 'N', // 'Y'
 					'FIELD_NAME' => 'concat(\'[\', FM_IM.VALUE_TYPE, \'] \', FM_IM.VALUE)',
 					'FIELD_TYPE' => 'string',
@@ -565,7 +569,7 @@ class Lead
 				$fieldInfo['FIELD_DESCRIPTION'] = $fieldCode;
 			}
 
-			$fieldInfo['FIELD_DESCRIPTION_FULL'] = $messages['CRM_BIC_LEAD_FIELD_' . $fieldCode . '_FULL'];
+			$fieldInfo['FIELD_DESCRIPTION_FULL'] = $messages['CRM_BIC_LEAD_FIELD_' . $fieldCode . '_FULL'] ?? '';
 		}
 		unset($fieldInfo);
 	}

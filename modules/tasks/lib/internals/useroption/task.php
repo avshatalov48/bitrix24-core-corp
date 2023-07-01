@@ -98,10 +98,10 @@ class Task
 			)
 		);
 
-		$newCreator = $newFields['CREATED_BY'];
-		$newResponsible = $newFields['RESPONSIBLE_ID'];
-		$newAccomplices = $newFields['ACCOMPLICES'];
-		$newAuditors = $newFields['AUDITORS'];
+		$newCreator = ($newFields['CREATED_BY'] ?? null);
+		$newResponsible = ($newFields['RESPONSIBLE_ID'] ?? null);
+		$newAccomplices = ($newFields['ACCOMPLICES'] ?? null);
+		$newAuditors = ($newFields['AUDITORS'] ?? null);
 
 		$newParticipants = array_unique(
 			array_merge(

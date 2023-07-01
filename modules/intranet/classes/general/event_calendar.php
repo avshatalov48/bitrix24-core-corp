@@ -1959,7 +1959,6 @@ class CEventCalendar
 	public static function CreateSectionForOwner($ownerId, $ownerType, $iblockId)
 	{
 		global $DB;
-		$DB->StartTransaction();
 		$bs = new CIBlockSection;
 
 		if ($ownerType == 'USER')
@@ -1996,6 +1995,8 @@ class CEventCalendar
 
 		if ($ownerType == 'GROUP' && $ownerId > 0)
 			$arFields['SOCNET_GROUP_ID'] = $ownerId;
+
+		$DB->StartTransaction();
 
 		$ID = $bs->Add($arFields);
 		$res = ($ID > 0);
@@ -3061,7 +3062,9 @@ END:VEVENT'."\n";
 		}
 
 		$ID = $arFields['ID'];
+
 		$DB->StartTransaction();
+
 		$bs = new CIBlockSection;
 
 		if ($ownerType != 'USER' && $ownerType != 'GROUP')
@@ -3111,7 +3114,10 @@ END:VEVENT'."\n";
 			if ($exchRes !== true) //
 			{
 				if (!is_array($exchRes) || !array_key_exists("XML_ID", $exchRes))
+				{
+					$DB->Rollback();
 					return CEventCalendar::ThrowError(CEventCalendar::CollectExchangeErros($exchRes));
+				}
 
 				// It's ok, we successfuly save event to exchange calendar - and save it to DB
 				$arFields['UF_BXDAVEX_EXCH'] = $exchRes['XML_ID'];
@@ -6822,22 +6828,11 @@ window._bx_plann_mr['<?= $mrid?>'] = [
 		}
 	}
 
-	function CheckVR($Params)
+	/**
+	 * @deprecated
+	 */
+	public static function CheckVR($Params)
 	{
-		if (!$Params['allowVideoMeeting'])
-			return false;
-		if(CModule::IncludeModule("video"))
-		{
-			$vParams = Array(
-				"regularity" => $Params["regularity"],
-				"dateFrom" => $Params["dateFrom"],
-				"dateTo" => $Params["dateTo"],
-				"iblockId" => $Params["VMiblockId"],
-				"ID" => $Params["ID"],
-			);
-
-			return CVideo::CheckRooms($vParams);
-		}
 		return false;
 	}
 
@@ -7830,6 +7825,7 @@ class CECEvent
 						));
 
 						$calendar->ClearCache('event_calendar/events/'.$arHost['IBLOCK_ID'].'/');
+						$DB->Commit();
 						return true;
 					}
 				}
@@ -7852,7 +7848,10 @@ class CECEvent
 						$eventXmlId = $arElement['XML_ID'];
 						$exchRes = CDavExchangeCalendar::DoDeleteItem($ownerId, $eventXmlId);
 						if ($exchRes !== true)
+						{
+							$DB->Rollback();
 							return CEventCalendar::CollectExchangeErros($exchRes);
+						}
 					}
 
 					if (CEventCalendar::IsCalDAVEnabled() && $ownerType == 'USER' && $arElement['PROPERTY_BXDAVCD_LABEL_VALUE'] <> '' )
@@ -7862,7 +7861,10 @@ class CECEvent
 						$DAVRes = CDavGroupdavClientCalendar::DoDeleteItem($connectionId, $calendarCalDAVXmlId, $arElement['XML_ID']);
 
 						if ($DAVRes !== true)
+						{
+							$DB->Rollback();
 							return CEventCalendar::CollectCalDAVErros($DAVRes);
+						}
 					}
 				}
 

@@ -163,7 +163,7 @@ class DealSaleTarget extends DealDataSource
 				}
 				else
 				{
-					$companyValue += $ary[$name];
+					$companyValue += ($ary[$name] ?? 0);
 				}
 			}
 			$result[$widget::TYPE_COMPANY] = $companyValue;

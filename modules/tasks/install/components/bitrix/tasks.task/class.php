@@ -2075,11 +2075,11 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 			&& $request
 		)
 		{
-			if ($request['ACTION'][0]['ARGUMENTS']['taskId'])
+			if ($request['ACTION'][0]['ARGUMENTS']['taskId'] ?? null)
 			{
 				$taskId = (int) $request['ACTION'][0]['ARGUMENTS']['taskId'];
 			}
-			elseif ($request['ACTION'][0]['ARGUMENTS']['params']['TASK_ID'])
+			elseif ($request['ACTION'][0]['ARGUMENTS']['params']['TASK_ID'] ?? null)
 			{
 				$taskId = (int) $request['ACTION'][0]['ARGUMENTS']['params']['TASK_ID'];
 			}
@@ -2097,7 +2097,9 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 
 		if (
 			$request
-			&& $request['ACTION'][0]['OPERATION'] === 'task.add'
+			&& isset($request['ACTION'])
+			&& (is_array($request['ACTION']))
+			&& ($request['ACTION'][0]['OPERATION'] ?? null) === 'task.add'
 		)
 		{
 			$action = Tasks\Access\ActionDictionary::ACTION_TASK_SAVE;
@@ -2114,7 +2116,9 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 		}
 		else if (
 			$request
-			&& $request['ACTION'][0]['OPERATION'] === 'task.update'
+			&& isset($request['ACTION'])
+			&& (is_array($request['ACTION']))
+			&& ($request['ACTION'][0]['OPERATION'] ?? null) === 'task.update'
 		)
 		{
 			$action = Tasks\Access\ActionDictionary::ACTION_TASK_SAVE;
@@ -2203,11 +2207,11 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 	{
 		$request = static::getRequest()->toArray();
 
-		if(Type::isIterable($request['ADDITIONAL']))
+		if (Type::isIterable($request['ADDITIONAL'] ?? null))
 		{
 			$this->setDataSource(
-				$request['ADDITIONAL']['DATA_SOURCE']['TYPE'],
-				$request['ADDITIONAL']['DATA_SOURCE']['ID']
+				($request['ADDITIONAL']['DATA_SOURCE']['TYPE'] ?? null),
+				($request['ADDITIONAL']['DATA_SOURCE']['ID'] ?? null)
 			);
 		}
 
@@ -2479,7 +2483,7 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 
 	private static function getOperationTaskId(array $operation)
 	{
-		return intval($operation['RESULT']['DATA']['ID']); // task.add and task.update always return TASK_ID on success
+		return (int)($operation['RESULT']['DATA']['ID'] ?? null); // task.add and task.update always return TASK_ID on success
 	}
 
 	private function makeRedirectUrl(array $operation)
@@ -2734,7 +2738,7 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 	{
 		$source = $this->getDataSource();
 
-		if (!intval($source['ID']))
+		if (!(int)($source['ID'] ?? null))
 		{
 			return;
 		}
@@ -2883,7 +2887,7 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 		}
 
 		// title
-		$title = $this->hitState->get('INITIAL_TASK_DATA.TITLE');
+		$title = ($this->hitState->get('INITIAL_TASK_DATA.TITLE') ?? '');
 		if ($title !== '')
 		{
 			$data['TITLE'] = htmlspecialchars_decode($title, ENT_QUOTES);
@@ -2954,6 +2958,13 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 			$data['END_DATE_PLAN'] = $endDatePlan;
 		}
 
+		// scenario
+		$scenario = $this->request->get('SCENARIO');
+		if ($scenario && Tasks\Internals\Task\ScenarioTable::isValidScenario($scenario))
+		{
+			$data['SCENARIO'] = $scenario;
+		}
+
 		return ['DATA' => $data];
 	}
 
@@ -3012,6 +3023,20 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 		{
 			// applying form data on top, what changed
 			$data['DATA'] = Task::mergeData($this->formData, $data['DATA']);
+
+			$group = Workgroup::getById($data['DATA']['SE_PROJECT']['ID'] ?? 0);
+			$this->arParams['IS_SCRUM_TASK'] = ($group && $group->isScrumProject());
+
+			if ($this->arParams['IS_SCRUM_TASK'] && !empty($data['DATA']['EPIC']))
+			{
+				$epicService = new Tasks\Scrum\Service\EpicService();
+
+				$epic = $epicService->getEpic($data['DATA']['EPIC']);
+				if ($epic->getId())
+				{
+					$this->arResult['DATA']['SCRUM']['EPIC'] = $epic->toArray();
+				}
+			}
 
 			return $data;
 		}
@@ -3273,9 +3298,15 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 		}
 
 		// kanban stages
-		if ($data['DATA']['GROUP_ID'] > 0)
+		if (
+			isset($data['DATA']['GROUP_ID'])
+			&& $data['DATA']['GROUP_ID'] > 0
+		)
 		{
-			if ($this->arParams['IS_SCRUM_TASK'])
+			if (
+				array_key_exists('IS_SCRUM_TASK', $this->arParams)
+				&& $this->arParams['IS_SCRUM_TASK']
+			)
 			{
 				$kanbanService = new KanbanService();
 
@@ -3300,6 +3331,26 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 
 		$this->arResult['DATA']['TASK'] = $data['DATA'];
 		$this->arResult['CAN']['TASK'] = $data['CAN'];
+		$this->arResult['CAN_SHOW_MOBILE_QR_POPUP'] = $this->canShowMobileQrPopup($this->arResult['DATA']['TASK']);
+
+		$this->arResult['COMPONENT_DATA']['IM_CHAT_ID'] = 0;
+		$this->arResult['COMPONENT_DATA']['IM_MESSAGE_ID'] = 0;
+		$request = $this->getRequest();
+		if (
+			isset($request['IM_CHAT_ID'])
+			&& (int) $request['IM_CHAT_ID'] > 0
+		)
+		{
+			$this->arResult['COMPONENT_DATA']['IM_CHAT_ID'] = (int) $request['IM_CHAT_ID'];
+		}
+
+		if (
+			isset($request['IM_MESSAGE_ID'])
+			&& (int) $request['IM_MESSAGE_ID'] > 0
+		)
+		{
+			$this->arResult['COMPONENT_DATA']['IM_MESSAGE_ID'] = (int) $request['IM_MESSAGE_ID'];
+		}
 
 		// obtaining additional data: calendar settings, user fields
 		$this->getDataAux();
@@ -3509,28 +3560,37 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 	{
 		$data = $this->arResult['DATA']['TASK'];
 
-		$this->collectMembersFromArray(Task\Originator::extractPrimaryIndexes($data[Task\Originator::getCode(true)]));
-		$this->collectMembersFromArray(Task\Responsible::extractPrimaryIndexes($data[Task\Responsible::getCode(true)]));
-		$this->collectMembersFromArray(Task\Accomplice::extractPrimaryIndexes($data[Task\Accomplice::getCode(true)]));
-		$this->collectMembersFromArray(Task\Auditor::extractPrimaryIndexes($data[Task\Auditor::getCode(true)]));
+		$this->collectMembersFromArray(Task\Originator::extractPrimaryIndexes($data[Task\Originator::getCode(true)] ?? null));
+		$this->collectMembersFromArray(Task\Responsible::extractPrimaryIndexes($data[Task\Responsible::getCode(true)] ?? null));
+		$this->collectMembersFromArray(Task\Accomplice::extractPrimaryIndexes($data[Task\Accomplice::getCode(true)] ?? null));
+		$this->collectMembersFromArray(Task\Auditor::extractPrimaryIndexes($data[Task\Auditor::getCode(true)] ?? null));
 		$this->collectMembersFromArray(array(
-			$this->arResult['DATA']['TASK']['CHANGED_BY'],
+			$this->arResult['DATA']['TASK']['CHANGED_BY'] ?? null,
 			$this->userId
 		));
 	}
 
 	protected function collectRelatedTasks()
 	{
-		if($this->arResult['DATA']['TASK']['PARENT_ID'])
+		if(
+			isset($this->arResult['DATA']['TASK']['PARENT_ID'])
+			&& $this->arResult['DATA']['TASK']['PARENT_ID']
+		)
 		{
 			$this->tasks2Get[] = $this->arResult['DATA']['TASK']['PARENT_ID'];
 		}
-		elseif($this->arResult['DATA']['TASK'][Task\ParentTask::getCode(true)])
+		elseif(
+			isset($this->arResult['DATA']['TASK'][Task\ParentTask::getCode(true)])
+			&& $this->arResult['DATA']['TASK'][Task\ParentTask::getCode(true)]
+		)
 		{
 			$this->tasks2Get[] = $this->arResult['DATA']['TASK'][Task\ParentTask::getCode(true)]['ID'];
 		}
 
-		if(Type::isIterable($this->arResult['DATA']['TASK'][Task::SE_PREFIX.'PROJECTDEPENDENCE']))
+		if(
+			isset($this->arResult['DATA']['TASK'][Task::SE_PREFIX.'PROJECTDEPENDENCE'])
+			&& Type::isIterable($this->arResult['DATA']['TASK'][Task::SE_PREFIX.'PROJECTDEPENDENCE'])
+		)
 		{
 			$projdep = $this->arResult['DATA']['TASK'][Task::SE_PREFIX.'PROJECTDEPENDENCE'];
 			foreach($projdep as $dep)
@@ -3539,7 +3599,10 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 			}
 		}
 
-		if(Type::isIterable($this->arResult['DATA']['TASK'][Task::SE_PREFIX.'RELATEDTASK']))
+		if(
+			isset($this->arResult['DATA']['TASK'][Task::SE_PREFIX.'RELATEDTASK'])
+			&& Type::isIterable($this->arResult['DATA']['TASK'][Task::SE_PREFIX.'RELATEDTASK'])
+		)
 		{
 			$related = $this->arResult['DATA']['TASK'][Task::SE_PREFIX.'RELATEDTASK'];
 			foreach($related as $task)
@@ -3551,11 +3614,17 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 
 	protected function collectProjects()
 	{
-		if($this->arResult['DATA']['TASK']['GROUP_ID'])
+		if(
+			isset($this->arResult['DATA']['TASK']['GROUP_ID'])
+			&& $this->arResult['DATA']['TASK']['GROUP_ID']
+		)
 		{
 			$this->groups2Get[] = $this->arResult['DATA']['TASK']['GROUP_ID'];
 		}
-		elseif($this->arResult['DATA']['TASK'][Task\Project::getCode(true)])
+		elseif(
+			isset($this->arResult['DATA']['TASK'][Task\Project::getCode(true)])
+			&& $this->arResult['DATA']['TASK'][Task\Project::getCode(true)]
+		)
 		{
 			$this->groups2Get[] = $this->arResult['DATA']['TASK'][Task\Project::getCode(true)]['ID'];
 		}
@@ -3564,7 +3633,10 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 
 	protected function collectLogItems()
 	{
-		if (!Type::isIterable($this->arResult['DATA']['TASK'][Task::SE_PREFIX.'LOG']))
+		if (
+			!isset($this->arResult['DATA']['TASK'][Task::SE_PREFIX.'LOG'])
+			|| !Type::isIterable($this->arResult['DATA']['TASK'][Task::SE_PREFIX.'LOG'])
+		)
 		{
 			return;
 		}
@@ -3673,7 +3745,7 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 
 	protected function getCurrentUserData()
 	{
-		$currentUser = array('DATA' => $this->arResult['DATA']['USER'][$this->userId]);
+		$currentUser = array('DATA' => $this->arResult['DATA']['USER'][$this->userId] ?? null);
 
 		$currentUser['IS_SUPER_USER'] = \Bitrix\Tasks\Util\User::isSuper($this->userId);
 		$roles = array(
@@ -3742,7 +3814,7 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 			Task::extendData($data, $this->arResult['DATA']);
 
 			// left for compatibility
-			$data[Task::SE_PREFIX.'PARENT'] = $data[Task\ParentTask::getCode(true)];
+			$data[Task::SE_PREFIX.'PARENT'] = $data[Task\ParentTask::getCode(true)] ?? null;
 		}
 	}
 
@@ -3761,6 +3833,15 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 		{
 			if ($this->task != null)
 			{
+				$collector = Tasks\Internals\Counter\Collector\UserCollector::getInstance((int)CurrentUser::get()->getId());
+				$this->arResult['DATA']['GROUP_VIEWED'] = [
+					'UNREAD_MID' => $collector->getUnReadForumMessageByFilter([
+						'id' => [
+							$this->task->getId()
+						]
+					])
+				];
+
 				ViewedTable::set(
 					$this->task->getId(),
 					$this->userId,
@@ -3943,7 +4024,7 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 
 	private function getDataSource()
 	{
-		return $this->arResult['COMPONENT_DATA']['DATA_SOURCE'];
+		return ($this->arResult['COMPONENT_DATA']['DATA_SOURCE'] ?? null);
 	}
 
 	private function getEventType()
@@ -4233,5 +4314,19 @@ class TasksTaskComponent extends TasksBaseComponent implements Errorable, Contro
 		}
 
 		return [$groupId, $group->getName()];
+	}
+
+	private function canShowMobileQrPopup(array $task): bool
+	{
+		if (
+			isset($task['SCENARIO_NAME'])
+			&& $task['SCENARIO_NAME'] === Tasks\Internals\Task\ScenarioTable::SCENARIO_MOBILE
+			&& !(new Tasks\Provider\Mobile())->isMobileAppInstalled()
+		)
+		{
+			return true;
+		}
+
+		return false;
 	}
 }

@@ -136,6 +136,12 @@
 
 		renderTemplate: function (template, state)
 		{
+			state.encodeURI = () => {
+				return (text, render) => {
+					return encodeURI(render(text));
+				};
+			};
+
 			return Mustache.render(template, state);
 		},
 

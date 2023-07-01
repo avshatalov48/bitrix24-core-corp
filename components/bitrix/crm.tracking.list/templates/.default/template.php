@@ -131,10 +131,10 @@ $channelTileManagerId = 'crm-analytics-channels';
 	<script type="text/javascript">
 		BX.ready(function () {
 			BX.Crm.Tracking.Grid.init(<?=Json::encode(array(
-				'actionUri' => $arResult['ACTION_URI'],
-				"gridId" => $arParams['GRID_ID'],
-				"pathToEdit" => $arParams['PATH_TO_EDIT'],
-				"pathToAdd" => $arParams['PATH_TO_ADD'],
+				'actionUri' => $arResult['ACTION_URI'] ?? '',
+				"gridId" => $arParams['GRID_ID'] ?? '',
+				"pathToEdit" => $arParams['PATH_TO_EDIT'] ?? '',
+				"pathToAdd" => $arParams['PATH_TO_ADD'] ?? '',
 				"sourceTileManagerId" => $sourceTileManagerId,
 				"channelTileManagerId" => $channelTileManagerId,
 				'mess' => array()

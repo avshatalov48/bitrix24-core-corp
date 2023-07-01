@@ -1,6 +1,0 @@
-<?php
-$MESS["DELIVERY_SERVICE_DELETE_CONFIRM"] = "Möchten Sie diesen Lieferservice wirklich löschen?";
-$MESS["DELIVERY_SERVICE_NAME"] = "Name";
-$MESS["DELIVERY_SERVICE_NAME_PLACEHOLDER"] = "Namen eingeben";
-$MESS["DELIVERY_SERVICE_SETTINGS"] = "Konfigurieren";
-$MESS["SALESCENTER_DELIVERY_INSTALLATION_SLIDER_TITLE"] = "Lieferung";

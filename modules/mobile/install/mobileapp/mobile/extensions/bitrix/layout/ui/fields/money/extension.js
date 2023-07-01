@@ -40,6 +40,21 @@ jn.define('layout/ui/fields/money', (require, exports, module) => {
 			return this.isReadOnly();
 		}
 
+		getTitleText()
+		{
+			if (this.isReadOnly())
+			{
+				const { readOnlyTitle } = this.getConfig();
+
+				if (readOnlyTitle !== '')
+				{
+					return readOnlyTitle;
+				}
+			}
+
+			return super.getTitleText();
+		}
+
 		getConfig()
 		{
 			const config = super.getConfig();
@@ -52,10 +67,12 @@ jn.define('layout/ui/fields/money', (require, exports, module) => {
 				formatAmount: BX.prop.getBoolean(config, 'formatAmount', false),
 				largeFont: BX.prop.getBoolean(config, 'largeFont', false),
 				currencyReadOnly: BX.prop.getBoolean(config, 'currencyReadOnly', false),
+				readOnlyTitle: BX.prop.getString(config, 'readOnlyTitle', ''),
 				currencyTitle: (
 					BX.prop.getString(config, 'currencyTitle', '')
 					|| BX.message('MOBILE_LAYOUT_UI_FIELDS_MONEY_CURRENCY_TITLE')
 				),
+				defaultCurrency: BX.prop.getString(config, 'defaultCurrency', ''),
 			};
 		}
 
@@ -73,6 +90,11 @@ jn.define('layout/ui/fields/money', (require, exports, module) => {
 				decimalSeparator: formats.DEC_POINT,
 				hideZero: formats.HIDE_ZERO === 'Y',
 			};
+		}
+
+		getDefaultCurrency()
+		{
+			return this.getConfig().defaultCurrency;
 		}
 
 		canFocusTitle()
@@ -151,6 +173,7 @@ jn.define('layout/ui/fields/money', (require, exports, module) => {
 				MoneyView({
 					money: Money.create(value),
 					renderAmount: (formattedAmount) => Text({
+						testId: `${this.testId}-money-view-amount`,
 						text: formattedAmount,
 						style: {
 							...this.styles.value,
@@ -160,11 +183,12 @@ jn.define('layout/ui/fields/money', (require, exports, module) => {
 						},
 					}),
 					renderCurrency: (formattedCurrency) => Text({
+						testId: `${this.testId}-money-view-currency`,
 						text: formattedCurrency,
 						style: {
 							...this.styles.value,
 							flex: null,
-							color: '#82888f',
+							color: '#828b95',
 							fontSize: this.getAmountFontSize(),
 						},
 					}),
@@ -177,19 +201,18 @@ jn.define('layout/ui/fields/money', (require, exports, module) => {
 		{
 			if (this.isLockedAmount())
 			{
-				return Image(
-					{
-						style: {
-							marginLeft: 5,
-							width: 39,
-							height: 25,
-							alignSelf: 'flex-end',
-						},
-						svg: {
-							content: autoOpportunitySvg,
-						},
+				return Image({
+					testId: `${this.testId}-is-locked-amount`,
+					style: {
+						marginLeft: 5,
+						width: 39,
+						height: 25,
+						alignSelf: 'flex-end',
 					},
-				);
+					svg: {
+						content: autoOpportunitySvg,
+					},
+				});
 			}
 
 			return null;
@@ -277,6 +300,7 @@ jn.define('layout/ui/fields/money', (require, exports, module) => {
 				selectionOnFocus,
 				currencyTitle,
 				currencyReadOnly,
+				multiple,
 			} = this.getConfig();
 			const value = this.getValue();
 			const useFormattedAmount = amountReadOnly && formatAmount;
@@ -286,10 +310,11 @@ jn.define('layout/ui/fields/money', (require, exports, module) => {
 
 			return CombinedField({
 				ref: this.bindRef,
+				testId: this.testId,
 				value,
 				focus: this.state.focus,
 				onChange: this.onChange,
-				renderAdditionalContent: renderAdditionalContent,
+				renderAdditionalContent: !multiple && renderAdditionalContent,
 				parent: this,
 				config: {
 					primaryField: {
@@ -310,7 +335,7 @@ jn.define('layout/ui/fields/money', (require, exports, module) => {
 									flex: null,
 								},
 								editableValue: {
-									color: amountLocked && '#82888f',
+									color: amountLocked && '#828b95',
 									fontWeight: '500',
 									fontSize: this.getAmountFontSize(),
 									flex: 1,
@@ -344,11 +369,6 @@ jn.define('layout/ui/fields/money', (require, exports, module) => {
 			});
 		}
 
-		renderAdditionalContent()
-		{
-			return null;
-		}
-
 		bindRef(ref)
 		{
 			this.fieldRef = ref;
@@ -358,7 +378,7 @@ jn.define('layout/ui/fields/money', (require, exports, module) => {
 		{
 			if (!currency)
 			{
-				currency = '';
+				currency = this.getDefaultCurrency();
 			}
 
 			const currencyList = this.getCurrenciesList();
@@ -410,6 +430,7 @@ jn.define('layout/ui/fields/money', (require, exports, module) => {
 	module.exports = {
 		MoneyType: 'money',
 		MoneyField: (props) => new MoneyField(props),
+		MoneyFieldClass: MoneyField,
 	};
 
 });

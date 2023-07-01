@@ -2,7 +2,6 @@
  * @module crm/selector/entity/element
  */
 jn.define('crm/selector/entity/element', (require, exports, module) => {
-
 	const { SelectorProcessing } = require('crm/selector/utils/processing');
 	const { ComplexSelector } = require('selector/widget/entity/complex');
 	const { get } = require('utils/object');
@@ -32,12 +31,12 @@ jn.define('crm/selector/entity/element', (require, exports, module) => {
 		static getEntityWeight()
 		{
 			return {
-				'contact': 100,
-				'company': 100,
-				'smart_invoice': 90,
-				'dynamic_multiple': 80,
-				'lead': 70,
-				'deal': 70,
+				contact: 100,
+				company: 100,
+				smart_invoice: 90,
+				dynamic_multiple: 80,
+				lead: 70,
+				deal: 70,
 			};
 		}
 

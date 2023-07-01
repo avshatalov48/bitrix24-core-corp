@@ -14,6 +14,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 /* @var $arResult array */
 
 use Bitrix\Main\Localization\Loc;
+
+\Bitrix\Main\UI\Extension::load('tasks.viewed');
 ?>
 
 <div class="task-interface-toolbar--item --visible" data-role="tasks-component-counters">

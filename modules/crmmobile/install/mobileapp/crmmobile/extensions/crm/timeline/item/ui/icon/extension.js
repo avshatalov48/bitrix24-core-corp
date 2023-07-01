@@ -2,7 +2,6 @@
  * @module crm/timeline/item/ui/icon
  */
 jn.define('crm/timeline/item/ui/icon', (require, exports, module) => {
-
 	const { stringify } = require('utils/string');
 	const { get } = require('utils/object');
 	const { Haptics } = require('haptics');
@@ -17,7 +16,7 @@ jn.define('crm/timeline/item/ui/icon', (require, exports, module) => {
 			code = stringify(code).toUpperCase();
 
 			return this[code] || this.DANGER;
-		}
+		},
 	};
 
 	class TimelineItemIcon extends LayoutComponent
@@ -44,26 +43,11 @@ jn.define('crm/timeline/item/ui/icon', (require, exports, module) => {
 		{
 			if (this.props.hasPlayer)
 			{
-				this.itemScopeEventBus.on('AudioPlayer::onPlay', ({duration, currentTime, speed}) => {
+				this.itemScopeEventBus.on('AudioPlayer::onPlay', () => {
 					this.setState({
 						play: true,
 						isLoading: false,
 						isLoaded: true,
-					}, () => {
-						if (duration)
-						{
-							return this.props.onAction({
-								type: 'jsEvent',
-								value: 'Call::OpenToolBar',
-								actionParams: {
-									play: true,
-									duration,
-									currentTime,
-									speed,
-									uid: this.itemScopeEventBus.getUid(),
-								},
-							});
-						}
 					});
 				});
 
@@ -100,13 +84,9 @@ jn.define('crm/timeline/item/ui/icon', (require, exports, module) => {
 							Haptics.impactLight();
 							if (!this.state.isLoading)
 							{
-								this.setState({
-									isLoading: true
-								});
+								this.setState({ isLoading: true });
 							}
 						}
-
-						this.itemScopeEventBus.emit('onTimelineIconClicked', []);
 
 						return onAction && action && onAction(action);
 					},
@@ -133,7 +113,7 @@ jn.define('crm/timeline/item/ui/icon', (require, exports, module) => {
 		{
 			const iconType = get(this.props, 'logo.iconType', null);
 
-			return iconType ? '#ffe8e8' : '#e5f9ff'
+			return iconType ? '#ffe8e8' : '#e5f9ff';
 		}
 
 		renderIcon()
@@ -157,12 +137,12 @@ jn.define('crm/timeline/item/ui/icon', (require, exports, module) => {
 					left: 8,
 					top: 9,
 					backgroundColor: color,
-					paddingTop: 2,
-					paddingBottom: 2,
-					paddingLeft: 6,
-					paddingRight: 6,
+					width: 18,
+					height: 18,
+					alignItems: 'center',
+					justifyContent: 'center',
 					borderRadius: 44,
-				}
+				},
 			},
 			Text({
 				text: String(text),
@@ -170,11 +150,10 @@ jn.define('crm/timeline/item/ui/icon', (require, exports, module) => {
 					color: '#ffffff',
 					fontSize: 12,
 					fontWeight: '500',
-				}
-			})
-		)
+				},
+			}),
+		);
 	}
 
 	module.exports = { TimelineItemIcon };
-
 });

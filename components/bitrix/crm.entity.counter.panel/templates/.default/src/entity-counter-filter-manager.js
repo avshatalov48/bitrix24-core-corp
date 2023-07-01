@@ -5,7 +5,6 @@ import EntityCounterType from './entity-counter-type';
 export default class EntityCounterFilterManager
 {
 	static COUNTER_TYPE_FIELD = 'ACTIVITY_COUNTER';
-	static COUNTER_USER_FIELD = 'ASSIGNED_BY_ID';
 
 	static EXCLUDED_FIELDS = [
 		'FIND'
@@ -104,7 +103,6 @@ export default class EntityCounterFilterManager
 		{
 			return false;
 		}
-		
 		return this.#isFilteredByField(field);
 	}
 	
@@ -115,16 +113,18 @@ export default class EntityCounterFilterManager
 			return false;
 		}
 
-		const isFilteredByUser = entityTypeId === BX.CrmEntityType.enumeration.order
-			? true
-			: this.isFilteredByFieldEx(EntityCounterFilterManager.COUNTER_USER_FIELD)
-				&& Type.isArray(this.#fields[EntityCounterFilterManager.COUNTER_USER_FIELD])
-				&& this.#fields[EntityCounterFilterManager.COUNTER_USER_FIELD].length === 1
-				&& (
-					isOtherUsersFilter
-						? this.#fields[EntityCounterFilterManager.COUNTER_USER_FIELD][0] === EntityCounterFilterManager.FILTER_OTHER_USERS
-						: parseInt(this.#fields[EntityCounterFilterManager.COUNTER_USER_FIELD][0], 10) === userId
-				)
+		const counterUserFieldName = entityTypeId === BX.CrmEntityType.enumeration.order
+			? 'RESPONSIBLE_ID'
+			: 'ASSIGNED_BY_ID';
+
+		const isFilteredByUser = this.isFilteredByFieldEx(counterUserFieldName)
+			&& Type.isArray(this.#fields[counterUserFieldName])
+			&& this.#fields[counterUserFieldName].length === 1
+			&& (
+				isOtherUsersFilter
+					? this.#fields[counterUserFieldName][0] === EntityCounterFilterManager.FILTER_OTHER_USERS
+					: parseInt(this.#fields[counterUserFieldName][0], 10) === userId
+			)
 		;
 
 		const hasFilteredByTypeValue = this.isFilteredByFieldEx(EntityCounterFilterManager.COUNTER_TYPE_FIELD)
@@ -143,13 +143,13 @@ export default class EntityCounterFilterManager
 			|| (
 				filteredTypeValues.length === 2
 				&& typeId === EntityCounterType.CURRENT
-				&& filteredTypeValues[0] === EntityCounterType.PENDING
+				&& filteredTypeValues[0] === EntityCounterType.READY_TODO
 				&& filteredTypeValues[1] === EntityCounterType.OVERDUE
 			)
 		;
 
-		let counterFields = [
-			EntityCounterFilterManager.COUNTER_USER_FIELD,
+		const counterFields = [
+			counterUserFieldName,
 			EntityCounterFilterManager.COUNTER_TYPE_FIELD,
 			... EntityCounterFilterManager.EXCLUDED_FIELDS
 		];

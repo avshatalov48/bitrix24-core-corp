@@ -21,7 +21,7 @@ if (ModuleManager::isModuleInstalled("timeman"))
 	try
 	{
 		$APPLICATION->IncludeComponent("bitrix:timeman.worktime", "", [
-			'ACTION' => $_REQUEST['MOD_ACTION'],
+			'ACTION' => $_REQUEST['MOD_ACTION'] ?? '',
 		]);
 	}
 	catch (\Bitrix\Main\AccessDeniedException $e)

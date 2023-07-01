@@ -27,4 +27,5 @@ $MESS["SHOP_MENU_SETTINGS_USER_FIELDS"] = "Benutzerdefinierte Felder";
 $MESS["SHOP_MENU_SHOP_MARKETING"] = "Onlineshop-Marketing";
 $MESS["SHOP_MENU_SHOP_TITLE"] = "Onlineshops";
 $MESS["SHOP_MENU_SITES"] = "Websites";
+$MESS["SHOP_MENU_TERMINAL"] = "Zahlungsterminal";
 $MESS["SHOP_MENU_WEBFORMS"] = "Onlineformulare";

@@ -7,9 +7,19 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
 
 if (mb_strpos($this->__page, "show") === 0)
 {
-	$arParams["THUMB_SIZE"] = array_change_key_case(is_array($arParams["THUMB_SIZE"]) ? $arParams["THUMB_SIZE"] : array("width" => 69, "height" => 69), CASE_LOWER);
-	$arParams["MAX_SIZE"] = array_change_key_case((is_array($arParams["MAX_SIZE"]) ? $arParams["MAX_SIZE"] : array("width" => 800, "height" => 800)), CASE_LOWER);
-	$arParams["HTML_SIZE"] = array_change_key_case((is_array($arParams["HTML_SIZE"]) ? $arParams["HTML_SIZE"] : array("width" => 800, "height" => 800)), CASE_LOWER);
+	$rebuildCaseKeyParams = function (string $key, array $default) use($arParams) {
+		$newArray = $default;
+		if (isset($arParams[$key]) && is_array($arParams[$key]))
+		{
+			$newArray = $arParams[$key];
+		}
+
+		return array_change_key_case($newArray, CASE_LOWER);
+	};
+
+	$arParams["THUMB_SIZE"] = $rebuildCaseKeyParams("THUMB_SIZE", ["width" => 69, "height" => 69]);
+	$arParams["MAX_SIZE"] = $rebuildCaseKeyParams("MAX_SIZE", ["width" => 800, "height" => 800]);
+	$arParams["HTML_SIZE"] = $rebuildCaseKeyParams("HTML_SIZE", ["width" => 800, "height" => 800]);
 	$arParams["SCREEN_SIZE"] = array("width" => 1024, "height" => 1024);
 
 	$images = $files = $deletedFiles = array();

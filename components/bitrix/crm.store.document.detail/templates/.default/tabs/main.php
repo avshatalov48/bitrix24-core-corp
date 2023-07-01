@@ -105,17 +105,6 @@ global $APPLICATION;
 					'READ_ONLY' => $arResult['IS_READ_ONLY'],
 					'ENTITY_CONFIG_SCOPE' => $entityEditorInfo['ENTITY_CONFIG_SCOPE'],
 					'USER_SCOPE_ID' => $entityEditorInfo['USER_SCOPE_ID'],
-
-					'ENABLE_TODO' => false,
-					'ENABLE_TASK' => false,
-					'ENABLE_WAIT' => false,
-					'ENABLE_SMS' => false,
-					'ENABLE_EMAIL' => false,
-					'ENABLE_SALESCENTER' => false,
-					'ENABLE_CALL' => false,
-					'ENABLE_MEETING' => false,
-					'ENABLE_VISIT' => false,
-					'ENABLE_ZOOM' => false,
 				],
 				$component,
 				['HIDE_ICONS' => 'Y']

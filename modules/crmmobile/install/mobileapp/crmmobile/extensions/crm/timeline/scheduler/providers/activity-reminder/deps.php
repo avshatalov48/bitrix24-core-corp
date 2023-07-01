@@ -5,6 +5,7 @@ return [
 		'loc',
 		'haptics',
 		'crm:loc',
+		'layout/ui/banners',
 		'crm:timeline/scheduler/providers/activity',
 		'crm:timeline/ui/toolbar',
 		'crm:timeline/ui/textarea',

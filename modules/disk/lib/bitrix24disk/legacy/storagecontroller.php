@@ -11,7 +11,6 @@ use Bitrix\Disk\File;
 use Bitrix\Disk\Folder;
 use Bitrix\Disk\Integration\Bitrix24Manager;
 use Bitrix\Disk\Internals\ObjectTable;
-use Bitrix\Disk\ProxyType;
 use Bitrix\Disk\Internals\Controller;
 use Bitrix\Disk\Internals\Error\Error;
 use Bitrix\Disk\Storage;
@@ -26,7 +25,6 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\SystemException;
 use CAdminException;
-use CDiskQuota;
 use CExtranet;
 use COption;
 use CSite;
@@ -37,9 +35,10 @@ Loc::loadMessages(__FILE__);
 
 class StorageController extends Controller
 {
-	const VERSION                               = 920;
-	const MIN_API_DISK_VERSION                  = 29;
-	const MIN_API_DISK_VERSION_FOR_NEW_SNAPSHOT = 37;
+	public const VERSION = 920;
+	public const MIN_API_DISK_VERSION = 29;
+	public const MIN_API_DISK_VERSION_FOR_JSON_LIST_IN_SNAPSHOT = 74;
+	public const MIN_API_DISK_VERSION_FOR_NEW_SNAPSHOT = 37;
 
 	const STATUS_TOO_BIG         = 'too_big';
 	const STATUS_NOT_FOUND       = 'not_found';
@@ -265,7 +264,7 @@ class StorageController extends Controller
 	{
 		if(!$this->request->getCookie(self::COOKIE_DISK_USAGE))
 		{
-			list($y, $m, $d) = explode('-', date('Y-m-d'));
+			[$y, $m, $d] = explode('-', date('Y-m-d'));
 
 			//end of current day;
 			$this->getApplication()->set_cookie(self::COOKIE_DISK_USAGE, 'Y', mktime(0, 0, 0, $m, $d + 1, $y));
@@ -296,7 +295,7 @@ class StorageController extends Controller
 		{
 			$this->sendJsonErrorResponse();
 		}
-		list($startRange, $endRange, $fileSize) = $this->getContentRange();
+		[$startRange, $endRange, $fileSize] = $this->getContentRange();
 
 		$tmpFileManager = new Bitrix24Disk\UploadFileManager();
 		$tmpFileManager
@@ -351,10 +350,46 @@ class StorageController extends Controller
 				'externalLinkAllowed' => true,
 			),
 			'quota' => $this->getDiskQuotaData(),
-			'snapshot' => $items,
+			'snapshot' => $this->adjustSnapshotFormat($items),
 			'nextPageState' => $nextPageState? (string)$nextPageState : null,
 			'nextPageUrl' => $this->generateNextPageUrl($nextPageState),
 		));
+	}
+
+	protected function adjustSnapshotFormat($items)
+	{
+		$apiDiskVersion = Desktop::getApiDiskVersion();
+		if ($apiDiskVersion === 0)
+		{
+			//this is browser.
+			return $items;
+		}
+		if (!($items instanceof \SplFixedArray))
+		{
+			return $items;
+		}
+
+		$minVersion = self::MIN_API_DISK_VERSION_FOR_JSON_LIST_IN_SNAPSHOT;
+		if ($apiDiskVersion >= $minVersion)
+		{
+			//ready to work with json list
+			if (PHP_VERSION_ID >= 81000)
+			{
+				return $items;
+			}
+
+			return $items->toArray();
+		}
+
+		if (PHP_VERSION_ID < 80100)
+		{
+			return $items;
+		}
+
+		//old bdisk version and php 8.1. Need to convert to object instead array.
+		$itemsAsArray = $items->toArray();
+
+		return (object)$itemsAsArray;
 	}
 
 	protected function generateNextPageUrl(Bitrix24Disk\PageState $pageState = null)

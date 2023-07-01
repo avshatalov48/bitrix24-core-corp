@@ -86,7 +86,7 @@ Extension::load(['ui.entity-selector']);
 					class="js-id-tdp-mem-sel-sole-input"
 					type="hidden"
 					name="<?=htmlspecialcharsbx($arParams["INPUT_PREFIX"])?><?=htmlspecialcharsbx($arParams['SOLE_INPUT_POSTFIX'])?>"
-					value="<?=intval($arResult['TEMPLATE_DATA']['IDS'][0])?>"
+					value="<?=(int)($arResult['TEMPLATE_DATA']['IDS'][0] ?? null)?>"
 			/>
 		<?else:?>
 			<?// in case of all items removed, the field should be sent anyway?>

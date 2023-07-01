@@ -92,9 +92,22 @@ final class Assembler
 			$value->setValue((string)$array['VALUE']);
 		}
 
-		if (!empty($array['VALUE_COUNTRY_CODE']))
+		$countryCode = null;
+		if (isset($array['VALUE_EXTRA']['VALUE_COUNTRY_CODE']) && !empty($array['VALUE_EXTRA']['VALUE_COUNTRY_CODE']))
 		{
-			$value->setValueExtra((new ValueExtra())->setCountryCode((string)$array['VALUE_COUNTRY_CODE']));
+			$countryCode = (string)$array['VALUE_EXTRA']['VALUE_COUNTRY_CODE'];
+		}
+		elseif (isset($array['VALUE_COUNTRY_CODE']) && !empty($array['VALUE_COUNTRY_CODE']))
+		{
+			$countryCode = (string)$array['VALUE_COUNTRY_CODE'];
+		}
+
+		if (!empty($countryCode))
+		{
+			$value->setValueExtra(
+				(new ValueExtra())
+					->setCountryCode($countryCode)
+			);
 		}
 
 		return $value;
@@ -184,13 +197,29 @@ final class Assembler
 					$value->setValue((string)$compatibleValue['VALUE']);
 				}
 
-				// update extra data
-				$extra = $value->getValueExtra();
-				if ($extra instanceof ValueExtra)
+				$compatibleValueCountryCode = null;
+				if (isset($compatibleValue['VALUE_EXTRA']['COUNTRY_CODE']))
 				{
-					if ($extra->getCountryCode() !== $compatibleValue['VALUE_COUNTRY_CODE'])
+					$compatibleValueCountryCode = (string)$compatibleValue['VALUE_EXTRA']['COUNTRY_CODE'];
+				}
+				elseif (isset($compatibleValue['VALUE_COUNTRY_CODE']))
+				{
+					$compatibleValueCountryCode = (string)$compatibleValue['VALUE_COUNTRY_CODE'];
+				}
+
+				if ($compatibleValueCountryCode === null && $value->getValueExtra())
+				{
+					$value->getValueExtra()->setCountryCode(null);
+				}
+				elseif ($compatibleValueCountryCode !== null)
+				{
+					if ($value->getValueExtra() && $value->getValueExtra()->getCountryCode() !== $compatibleValueCountryCode)
 					{
-						$value->setValueExtra((new ValueExtra())->setCountryCode((string)$compatibleValue['VALUE_COUNTRY_CODE']));
+						$value->getValueExtra()->setCountryCode($compatibleValueCountryCode);
+					}
+					elseif ($value->getValueExtra() === null)
+					{
+						$value->setValueExtra((new ValueExtra())->setCountryCode($compatibleValueCountryCode));
 					}
 				}
 

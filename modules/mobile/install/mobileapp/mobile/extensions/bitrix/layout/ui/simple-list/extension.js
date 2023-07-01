@@ -7,6 +7,7 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 	const { ViewMode } = require('layout/ui/simple-list/view-mode');
 	const { SkeletonFactory, SkeletonTypes } = require('layout/ui/simple-list/skeleton');
 	const { PureComponent } = require('layout/pure-component');
+	const { Type } = require('type');
 
 	const svgImages = {
 		empty: {
@@ -80,6 +81,21 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 					callback: this.pullCallback.bind(this),
 				});
 			}
+		}
+
+		get contextMenuAnalyticsLabel()
+		{
+			const { analyticsLabel } = this.props;
+
+			if (Type.isPlainObject(analyticsLabel))
+			{
+				return {
+					event: 'list-item-menu-click',
+					...analyticsLabel,
+				};
+			}
+
+			return null;
 		}
 
 		onDetailCardUpdateHandler(uid, params)
@@ -375,7 +391,9 @@ jn.define('layout/ui/simple-list', (require, exports, module) => {
 				updateItemHandler: this.updateItemHandler,
 				params: {
 					showCancelButton: true,
+					showPartiallyHidden: actions.length > 7,
 				},
+				analyticsLabel: this.contextMenuAnalyticsLabel,
 			});
 
 			this.menu.show();

@@ -11,6 +11,7 @@
 				return `[IMG width="15" height="15"]${currentDomain}/bitrix/js/im/images/hires/dislike.png[/IMG]`;
 			});
 			text = text.replace(/\[CHAT=(imol\|)?([0-9]{1,})\](.*?)\[\/CHAT\]/ig, (whole, openlines, chatId, inner) => inner);
+			text = text.replace(/\[context=(chat\d+|\d+:\d+)\/(\d+)](.*?)\[\/context]/gi, (whole, dialogId, messageId, message) => message);
 			text = text.replace(/\[USER=([0-9]{1,})\](.*?)\[\/USER\]/ig, (whole, userId, text) => text);
 			text = text.replace(/\[PCH=([0-9]{1,})\](.*?)\[\/PCH\]/ig, (whole, historyId, text) => text);
 			text = text.replace(/\[RATING\=([1-5]{1})\]/ig, (whole, rating) => {

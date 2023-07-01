@@ -67,6 +67,11 @@ final class File implements FieldImplementation
 		unset($this->previousFileIds[$commonFieldName]);
 	}
 
+	public function getDefaultValue(string $commonFieldName)
+	{
+		return $this->entityObject->entity->getField($commonFieldName)->getDefaultValue();
+	}
+
 	public function afterSuccessfulItemSave(Item $item, EntityObject $entityObject): void
 	{
 	}
@@ -98,6 +103,11 @@ final class File implements FieldImplementation
 		$this->previousFileIds = [];
 
 		return new Result();
+	}
+
+	public function getSerializableFieldNames(): array
+	{
+		return $this->getHandledFieldNames();
 	}
 
 	public function getExternalizableFieldNames(): array
@@ -177,9 +187,9 @@ final class File implements FieldImplementation
 		$files = [];
 		foreach ($externalValue as $singleValue)
 		{
-			if (is_int($singleValue))
+			if (is_numeric($singleValue))
 			{
-				$files[] = $singleValue;
+				$files[] = (int)$singleValue;
 			}
 			elseif (is_array($singleValue))
 			{

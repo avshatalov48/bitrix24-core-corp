@@ -1,21 +1,56 @@
+.crm-timeline__editable-text_wrapper {
+	padding-bottom: 12px;
+	white-space: normal;
+}
+
 .crm-timeline__editable-text {
 	--crm-timeline__editable-text_font-size: var(--ui-font-size-xl, 14px);
 	--crm-timeline__editable-text_line-height: var(--ui-font-line-height-md, 1.4);
-	--crm-timeline__editable-text_max-line-count: 4;
 	--crm-timeline__editable-text_max-height: 124px;
 	--crm-timeline__editable-text_padding-top: 11px;
 	--crm-timeline__editable-text_padding-bottom: 11px;
+	--crm-timeline__editable-text_bg-color: var(--crm-timeline__card-color-background);
 	padding: var(--crm-timeline__editable-text_padding-top) 40px var(--crm-timeline__editable-text_padding-bottom) 17px;
 	position: relative;
 	z-index: 1;
 	border-radius: var(--ui-border-radius-lg, 12px);
 	border: 1px solid rgba(0, 0, 0, 0.1);
-	background-color: var(--crm-timeline__card-color-background);
+	background-color:  var(--crm-timeline__editable-text_bg-color);
+}
+
+.crm-timeline__editable-text.--bg-color-yellow {
+	--crm-timeline__editable-text_bg-color: #FEFCEE;
+}
+
+.crm-timeline__editable-text.--bg-color-white {
+	--crm-timeline__editable-text_bg-color: #FFFFFF;
+}
+
+.crm-timeline__editable-text.--height-short {
+	--crm-timeline__editable-text_max-height: 44px;
+}
+
+.crm-timeline__editable-text.--height-short .crm-timeline__editable-text_text {
+	display: inline-block;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	max-width: calc(100% - 1px);
+	white-space: nowrap;
+}
+
+
+.crm-timeline__editable-text.--height-short::after {
+	display: none;
 }
 
 .crm-timeline__editable-text.--is-expanded .crm-timeline__editable-text_inner {
 	max-height: none;
 	overflow: unset;
+}
+
+.crm-timeline__editable-text.--is-expanded .crm-timeline__editable-text_text {
+	display: inline;
+	white-space: break-spaces;
 }
 
 .crm-timeline__editable-text.--is-expanded::after {
@@ -42,16 +77,17 @@
 	left: 49.9%;
 	transform: translateX(-50%);
 	font-family: var(--ui-font-family-primary, 'Helvetica Neue');
-	font-size: var(--ui-font-size-xs, 12px);;
+	font-size: var(--ui-font-size-sm, 13px);
 	line-height: var(--ui-font-line-height-reset, 20px);
 	color: var(--ui-color-base-70, #828B95);
-	background-color: var(--crm-timeline__card-color-background);
+	background-color: var(--crm-timeline__editable-text_bg-color);
 	outline: none;
 	border: 1px solid rgba(0, 0, 0, 0.1);
 	border-radius: 64px;
-	box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.08);
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
 	transition: box-shadow 0.2s linear;
 	cursor: pointer;
+	white-space: nowrap;
 }
 
 .crm-timeline__editable-text_collapse-btn:hover,
@@ -70,14 +106,13 @@
 	content: '';
 	display: block;
 	position: absolute;
-	bottom: 12px;
+	bottom: 11px;
 	left: 2px;
 	border-bottom-left-radius: var(--ui-border-radius-lg, 12px);
 	border-bottom-right-radius: var(--ui-border-radius-lg, 12px);
 	width: calc(100% - 13px);
 	height: 38px;
-	background-image: linear-gradient(180deg, rgba(255, 254, 239, 0) -7.89%, var(--crm-timeline__card-color-background) 92.11%);
-	
+	background-image: linear-gradient(180deg, rgba(255, 254, 239, 0) -7.89%, var(--crm-timeline__editable-text_bg-color) 92.11%);
 }
 
 .crm-timeline__editable-text_content {
@@ -119,7 +154,6 @@
 	vertical-align: middle;
 	cursor: pointer;
 	padding: 0;
-	cursor: pointer;
 	border: none;
 	outline: none;
 }

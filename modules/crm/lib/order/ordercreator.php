@@ -88,7 +88,6 @@ class OrderCreator
 				'RESPONSIBLE_ID' => $userId,
 				'OWNER_ID' => $this->ownerId,
 				'OWNER_TYPE_ID' => $this->ownerTypeId,
-				'TRADING_PLATFORM' => $this->getDealTradingPlatformId(),
 			];
 
 			if (!empty($currencyId))
@@ -108,6 +107,7 @@ class OrderCreator
 			}
 			else
 			{
+				$fields['TRADING_PLATFORM'] = $this->getDealTradingPlatformId();
 				$fields['CLIENT'] = ClientInfo::createFromOwner($this->ownerTypeId, $this->ownerId)->toArray(false);
 			}
 

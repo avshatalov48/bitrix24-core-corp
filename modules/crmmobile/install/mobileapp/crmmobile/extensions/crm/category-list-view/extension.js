@@ -2,7 +2,6 @@
  * @module crm/category-list-view
  */
 jn.define('crm/category-list-view', (require, exports, module) => {
-
 	const { mergeImmutable, isEqual } = require('utils/object');
 	const { NotifyManager } = require('notify-manager');
 	const { CategoryStorage } = require('crm/storage/category');
@@ -27,6 +26,7 @@ jn.define('crm/category-list-view', (require, exports, module) => {
 				const params = {
 					modal: true,
 					title: this.getNavigationTitle(selectAction),
+					backgroundColor: '#eef2f4',
 					backdrop: {
 						showOnTop: true,
 						forceDismissOnSwipeDown: true,
@@ -161,37 +161,47 @@ jn.define('crm/category-list-view', (require, exports, module) => {
 
 		renderLoader()
 		{
-			return new LoadingScreenComponent();
+			return new LoadingScreenComponent({ backgroundColor: '#eef2f4' });
 		}
 
 		renderContent()
 		{
 			const showCounters = BX.prop.getBoolean(this.props, 'showCounters', true);
 			const showTunnels = BX.prop.getBoolean(this.props, 'showTunnels', true);
+			const categories = this.getCategories();
+			const {
+				currentCategoryId,
+				entityTypeId,
+				readOnly,
+				needSaveCurrentCategoryId,
+				selectAction,
+				onSelectCategory,
+				enableSelect, disabledCategoryIds, uid,
+			} = this.props;
 
-			let currentCategory = this.getCategories().find((category) => category.id === this.props.currentCategoryId);
-			if (!currentCategory)
+			let currentCategory = categories.find((category) => category.id === currentCategoryId);
+			if (!currentCategory && currentCategoryId !== null)
 			{
-				currentCategory = this.getCategories()[0];
+				currentCategory = categories[0];
 			}
 
 			return new CategoryList({
-				entityTypeId: this.props.entityTypeId,
+				entityTypeId,
 				currentCategoryId: currentCategory && currentCategory.id,
-				needSaveCurrentCategoryId: this.props.needSaveCurrentCategoryId,
-				categories: this.getCategories(),
+				needSaveCurrentCategoryId,
+				categories,
 				onCreateCategory: this.createCategoryHandler,
 				onEditCategory: this.editCategoryHandler,
 				canUserEditCategory: this.canUserEditCategory(),
 				canUserAddCategory: !this.hasDealCategoryLimitRestriction(),
-				readOnly: this.props.readOnly,
-				selectAction: this.props.selectAction,
-				onSelectCategory: this.props.onSelectCategory,
+				readOnly,
+				selectAction,
+				onSelectCategory,
 				layout: this.layout,
 				openStageListHandler: this.openStageListHandler,
-				enableSelect: this.props.enableSelect,
-				uid: this.props.uid,
-				disabledCategoryIds: this.props.disabledCategoryIds,
+				enableSelect,
+				uid,
+				disabledCategoryIds,
 				showCounters,
 				showTunnels,
 			});
@@ -210,6 +220,7 @@ jn.define('crm/category-list-view', (require, exports, module) => {
 				},
 				widgetParams: {
 					modal: true,
+					backgroundColor: '#eef2f4',
 					backdrop: {
 						showOnTop: true,
 						forceDismissOnSwipeDown: true,
@@ -223,7 +234,7 @@ jn.define('crm/category-list-view', (require, exports, module) => {
 
 		openStageList(category)
 		{
-			void StageListView.open(
+			StageListView.open(
 				{
 					entityTypeId: this.props.entityTypeId,
 					categoryId: category.id,
@@ -256,7 +267,7 @@ jn.define('crm/category-list-view', (require, exports, module) => {
 
 			if (this.hasDealCategoryLimitRestriction())
 			{
-				void PlanRestriction.open(
+				PlanRestriction.open(
 					{
 						title: BX.message('M_CRM_CATEGORY_LIST_NAVIGATION_TITLE2'),
 					},

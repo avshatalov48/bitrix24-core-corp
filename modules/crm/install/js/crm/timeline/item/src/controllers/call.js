@@ -70,20 +70,15 @@ export class Call extends Base
 
 	#scheduleCall(activityId: Number, scheduleDate: String): void
 	{
-		if (BX.CrmTimelineManager)
+		const menuBar = BX.Crm?.Timeline?.MenuBar?.getDefault();
+		if (menuBar)
 		{
-			const timeline = BX.CrmTimelineManager.getDefault();
-			if (timeline)
-			{
-				const menuBar = timeline.getMenuBar();
-				BX(menuBar.getActiveItem()).scrollIntoView({block: 'start', inline: 'nearest', behavior: 'smooth'});
-				menuBar.setActiveItemById('todo');
+			menuBar.setActiveItemById('todo');
 
-				const todoEditor = menuBar.getTodoEditor();
-				todoEditor.setFocused();
-				todoEditor.setParentActivityId(activityId);
-				todoEditor.setDeadLine(scheduleDate);
-			}
+			const todoEditor = menuBar.getItemById('todo');
+			todoEditor.focus();
+			todoEditor.setParentActivityId(activityId);
+			todoEditor.setDeadLine(scheduleDate);
 		}
 	}
 

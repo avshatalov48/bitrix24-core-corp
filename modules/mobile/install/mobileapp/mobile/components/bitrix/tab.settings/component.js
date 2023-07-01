@@ -273,7 +273,7 @@
 							imageUrl: `${availableComponents["tab.settings"].path}images/tabs/${tabId}.png`,
 							sectionCode: "active",
 							useLetterImage: true,
-							styles:{title:{color: tab["canChangeSort"] === false ? "#999999": "#000000" }},
+							styles:{title:{color: tab["canChangeSort"] === false ? "#959ca4": "#000000" }},
 							unselectable: tab["canChangeSort"] === false ,
 							params:{"remove": tab["canBeRemoved"]},
 							type: "info",

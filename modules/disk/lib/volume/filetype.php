@@ -2,14 +2,15 @@
 
 namespace Bitrix\Disk\Volume;
 
-use Bitrix\Main\Application;
 use Bitrix\Main\DB;
+use Bitrix\Main\Entity;
+use Bitrix\Main\Application;
+use Bitrix\Disk;
+use Bitrix\Disk\Volume;
+use Bitrix\Disk\TypeFile;
 use Bitrix\Disk\Internals\ObjectTable;
 use Bitrix\Disk\Internals\VolumeTable;
 use Bitrix\Disk\Internals\SharingTable;
-use Bitrix\Disk\TypeFile;
-use Bitrix\Disk\Volume;
-use Bitrix\Main\Entity;
 
 /**
  * Disk storage volume measurement class.
@@ -20,9 +21,9 @@ class FileType extends Volume\Base
 	/**
 	 * Runs measure test to get volumes of selecting objects.
 	 * @param array $collectData List types data to collect: ATTACHED_OBJECT, SHARING_OBJECT, EXTERNAL_LINK, UNNECESSARY_VERSION.
-	 * @return $this
+	 * @return static
 	 */
-	public function measure($collectData = [self::DISK_FILE])
+	public function measure(array $collectData = [self::DISK_FILE]): self
 	{
 		$connection = Application::getConnection();
 		$sqlHelper = $connection->getSqlHelper();
@@ -48,12 +49,12 @@ class FileType extends Volume\Base
 
 		$subWhereSql = Volume\QueryHelper::prepareWhere(
 			$this->getFilter(),
-			array(
+			[
 				'MODULE_ID' => 'storage.MODULE_ID',
 				'STORAGE_ID' => 'files.STORAGE_ID',
 				'FOLDER_ID' => 'files.PARENT_ID',
 				'PARENT_ID' => 'files.PARENT_ID',
-			)
+			]
 		);
 		if ($subWhereSql != '')
 		{
@@ -111,7 +112,7 @@ class FileType extends Volume\Base
 				, CNT_FILES.TYPE_FILE
 				, CNT_FILES.STORAGE_ID
 			";
-			$columns = array_merge($columns, array(
+			$columns = array_merge($columns, [
 				'DISK_SIZE',
 				'DISK_COUNT',
 				'FILE_SIZE',
@@ -119,7 +120,7 @@ class FileType extends Volume\Base
 				'VERSION_COUNT',
 				'TYPE_FILE',
 				'STORAGE_ID',
-			));
+			]);
 			if ($subSelectSql != '')
 			{
 				$sqlStatements = explode(',', $subSelectSql);
@@ -176,10 +177,10 @@ class FileType extends Volume\Base
 				, CNT_PREVIEW.PREVIEW_SIZE AS PREVIEW_SIZE
 				, CNT_PREVIEW.PREVIEW_COUNT AS PREVIEW_COUNT
 			";
-			$columns = array_merge($columns, array(
+			$columns = array_merge($columns, [
 				'PREVIEW_SIZE',
 				'PREVIEW_COUNT',
-			));
+			]);
 			// language=SQL
 			$fromSql .= "
 				/* preview */
@@ -227,9 +228,9 @@ class FileType extends Volume\Base
 			$selectSql .= "
 				, IFNULL(CNT_ATTACH.ATTACHED_COUNT, 0) AS ATTACHED_COUNT
 			";
-			$columns = array_merge($columns, array(
+			$columns = array_merge($columns, [
 				'ATTACHED_COUNT',
-			));
+			]);
 			// language=SQL
 			$fromSql .= "
 				/* attached */
@@ -274,9 +275,9 @@ class FileType extends Volume\Base
 			$selectSql .= "
 				, IFNULL(CNT_LINK.LINK_COUNT, 0) AS LINK_COUNT
 			";
-			$columns = array_merge($columns, array(
+			$columns = array_merge($columns, [
 				'LINK_COUNT',
-			));
+			]);
 			// language=SQL
 			$fromSql .= "
 				/* external_link */
@@ -292,7 +293,7 @@ class FileType extends Volume\Base
 						INNER JOIN b_disk_storage storage ON files.STORAGE_ID = storage.ID
 					WHERE 
 						files.TYPE = ". ObjectTable::TYPE_FILE. "
-						AND link.TYPE != ". \Bitrix\Disk\Internals\ExternalLinkTable::TYPE_AUTO. "
+						AND link.TYPE != ". Disk\Internals\ExternalLinkTable::TYPE_AUTO. "
 						AND files.DELETED_TYPE = ". ObjectTable::DELETED_TYPE_NONE. "
 						AND files.ID = files.REAL_OBJECT_ID
 						{$subWhereSql}
@@ -322,9 +323,9 @@ class FileType extends Volume\Base
 			$selectSql .= "
 				, IFNULL(CNT_SHARING.SHARING_COUNT, 0) AS SHARING_COUNT
 			";
-			$columns = array_merge($columns, array(
+			$columns = array_merge($columns, [
 				'SHARING_COUNT',
-			));
+			]);
 			// language=SQL
 			$fromSql .= "
 				/* sharing */
@@ -370,10 +371,10 @@ class FileType extends Volume\Base
 				, IFNULL(CNT_FREE.UNNECESSARY_VERSION_SIZE, 0) AS UNNECESSARY_VERSION_SIZE
 				, IFNULL(CNT_FREE.UNNECESSARY_VERSION_COUNT, 0) AS UNNECESSARY_VERSION_COUNT
 			";
-			$columns = array_merge($columns, array(
+			$columns = array_merge($columns, [
 				'UNNECESSARY_VERSION_SIZE',
 				'UNNECESSARY_VERSION_COUNT',
-			));
+			]);
 			// language=SQL
 			$fromSql .= "
 				/* may drop */
@@ -411,7 +412,7 @@ class FileType extends Volume\Base
 								ON link.OBJECT_ID  = ver.OBJECT_ID
 								AND link.VERSION_ID = ver.ID
 								AND link.VERSION_ID != head.ID
-								AND ifnull(link.TYPE,-1) != ". \Bitrix\Disk\Internals\ExternalLinkTable::TYPE_AUTO. "
+								AND ifnull(link.TYPE,-1) != ". Disk\Internals\ExternalLinkTable::TYPE_AUTO. "
 						WHERE
 							files.TYPE = ". ObjectTable::TYPE_FILE. "
 							AND files.ID = files.REAL_OBJECT_ID
@@ -436,11 +437,11 @@ class FileType extends Volume\Base
 			";
 		};
 
-		$columns = array(
+		$columns = [
 			'INDICATOR_TYPE',
 			'OWNER_ID',
 			'CREATE_TIME',
-		);
+		];
 
 		$selectSql = '';
 		$fromSql = '';
@@ -541,10 +542,10 @@ class FileType extends Volume\Base
 	 * @param array $collectedData List types of collected data to return.
 	 * @return DB\Result
 	 */
-	public function getMeasurementResult($collectedData = array())
+	public function getMeasurementResult(array $collectedData = []): DB\Result
 	{
-		$parameter = array(
-			'runtime' => array(
+		$parameter = [
+			'runtime' => [
 				new Entity\ExpressionField('DISK_SIZE', 'SUM(DISK_SIZE)'),
 				new Entity\ExpressionField('DISK_COUNT', 'SUM(DISK_COUNT)'),
 				new Entity\ExpressionField('FILE_SIZE', 'SUM(FILE_SIZE)'),
@@ -553,8 +554,8 @@ class FileType extends Volume\Base
 				new Entity\ExpressionField('PREVIEW_COUNT', 'SUM(PREVIEW_COUNT)'),
 				new Entity\ExpressionField('VERSION_COUNT', 'SUM(VERSION_COUNT)'),
 				new Entity\ExpressionField('PERCENT', 'ROUND(SUM(PERCENT), 1)'),
-			),
-			'select' => array(
+			],
+			'select' => [
 				'DISK_SIZE',
 				'DISK_COUNT',
 				'FILE_SIZE',
@@ -564,25 +565,25 @@ class FileType extends Volume\Base
 				'VERSION_COUNT',
 				'TYPE_FILE',
 				'PERCENT',
-			),
+			],
 			'filter' => $this->getFilter(
-				array(
+				[
 					'=INDICATOR_TYPE' => static::className(),
 					'=OWNER_ID' => $this->getOwner(),
 					'!TYPE_FILE' => null,
 					'=STORAGE_ID' => null,
 					'=FOLDER_ID' => null,
-				),
+				],
 				VolumeTable::getEntity()
 			),
-			'group' => array(
+			'group' => [
 				'TYPE_FILE',
-			),
-			'order' => $this->getOrder(array(
+			],
+			'order' => $this->getOrder([
 				'FILE_SIZE' => 'DESC'
-			)),
+			]),
 			'count_total' => true,
-		);
+		];
 		if ($this->getLimit() > 0)
 		{
 			$parameter['limit'] = $this->getLimit();
@@ -597,9 +598,9 @@ class FileType extends Volume\Base
 
 	/**
 	 * Deletes objects selecting by filter.
-	 * @return $this
+	 * @return static
 	 */
-	public function purify()
+	public function purify(): self
 	{
 		$folderId = $this->getFilterValue('FOLDER_ID', '=@');
 		if (is_null($folderId))
@@ -622,7 +623,7 @@ class FileType extends Volume\Base
 	 * @param string[] $filter Row from VolumeTable as a filter.
 	 * @return Volume\Fragment
 	 */
-	public static function getFragment(array $filter)
+	public static function getFragment(array $filter): Volume\Fragment
 	{
 		if (in_array((int)$filter['TYPE_FILE'], TypeFile::getListOfValues()))
 		{
@@ -638,9 +639,9 @@ class FileType extends Volume\Base
 
 	/**
 	 * @param Volume\Fragment $fragment File type structure.
-	 * @return string
+	 * @return string|null
 	 */
-	public static function getTitle(Volume\Fragment $fragment)
+	public static function getTitle(Volume\Fragment $fragment): ?string
 	{
 		$specific = $fragment->getSpecific();
 		return TypeFile::getName($specific['TYPE_FILE']);

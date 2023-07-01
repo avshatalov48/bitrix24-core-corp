@@ -17,7 +17,7 @@ use Bitrix\Main\Localization\Loc;
 				foreach($arResult['views'] as $view)
 				{
 					?>
-					<a class="rpa-toolbar-switcher-item<?=($view['isActive'] === true ? ' rpa-toolbar-switcher-item-active' : '');?>" href="<?=htmlspecialcharsbx($view['url']);?>"><?=htmlspecialcharsbx($view['title']);?></a>
+					<a class="rpa-toolbar-switcher-item<?= (isset($view['isActive']) && $view['isActive'] === true ? ' rpa-toolbar-switcher-item-active' : '') ?>" href="<?=htmlspecialcharsbx($view['url']);?>"><?=htmlspecialcharsbx($view['title']);?></a>
 					<?php
 				}
 				?>
@@ -41,7 +41,7 @@ use Bitrix\Main\Localization\Loc;
 		</div>
 	</div>
 	<?php
-	if($arResult['robotsUrl'])
+	if(isset($arResult['robotsUrl']) && $arResult['robotsUrl'])
 	{
 	?>
 	<div class="rpa-toolbar-right">

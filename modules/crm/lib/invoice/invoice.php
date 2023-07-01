@@ -286,7 +286,7 @@ class Invoice extends Sale\Order
 
 		if ($providerInstance === null)
 		{
-			if (is_array($mapping))
+			if (is_array($mapping) && isset($mapping['PROVIDER_KEY']))
 			{
 				switch ($mapping['PROVIDER_KEY'])
 				{
@@ -305,5 +305,4 @@ class Invoice extends Sale\Order
 
 		return $providerInstance;
 	}
-
 }

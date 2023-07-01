@@ -5,6 +5,7 @@ namespace Bitrix\Crm\Kanban\Entity;
 use Bitrix\Crm\Filter;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\Kanban\Entity;
+use Bitrix\Crm\PhaseSemantics;
 use Bitrix\Crm\Service;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Settings\QuoteSettings;
@@ -130,11 +131,12 @@ class Quote extends Entity
 		$item = parent::prepareItemCommonFields($item);
 
 		// emulating crm element user field to render value properly
-		if ($item[Item\Quote::FIELD_NAME_LEAD_ID] > 0)
+		if (isset($item[Item\Quote::FIELD_NAME_LEAD_ID]) && $item[Item\Quote::FIELD_NAME_LEAD_ID] > 0)
 		{
 			$item[Item\Quote::FIELD_NAME_LEAD_ID] = 'L_' . $item[Item\Quote::FIELD_NAME_LEAD_ID];
 		}
-		if ($item[Item\Quote::FIELD_NAME_DEAL_ID] > 0)
+
+		if (isset($item[Item\Quote::FIELD_NAME_DEAL_ID]) && $item[Item\Quote::FIELD_NAME_DEAL_ID] > 0)
 		{
 			$item[Item\Quote::FIELD_NAME_DEAL_ID] = 'D_' . $item[Item\Quote::FIELD_NAME_DEAL_ID];
 		}
@@ -171,7 +173,7 @@ class Quote extends Entity
 		);
 	}
 
-	public function canAddItemToStage(string $stageId, \CCrmPerms $userPermissions): bool
+	public function canAddItemToStage(string $stageId, \CCrmPerms $userPermissions, string $semantics = PhaseSemantics::UNDEFINED): bool
 	{
 		return Container::getInstance()->getUserPermissions()->checkAddPermissions(
 			$this->getTypeId(),

@@ -1,6 +1,10 @@
-(() => {
+/**
+ * @module layout/ui/entity-editor/controller/base
+ */
+jn.define('layout/ui/entity-editor/controller/base', (require, exports, module) => {
 
-	const { EventEmitter } = jn.require('event-emitter');
+	const { Type } = require('type');
+	const { EventEmitter } = require('event-emitter');
 
 	/**
 	 * @class EntityEditorBaseController
@@ -45,9 +49,9 @@
 
 		initialize(id, uid, settings)
 		{
-			this.id = CommonUtils.isNotEmptyString(id) ? id : Random.getString();
+			this.id = Type.isStringFilled(id) ? id : Random.getString();
 
-			this.uid = CommonUtils.isNotEmptyString(uid) ? uid : Random.getString();
+			this.uid = Type.isStringFilled(uid) ? uid : Random.getString();
 			/** @type {EventEmitter} */
 			this.customEventEmitter = EventEmitter.createWithUid(this.uid);
 
@@ -78,5 +82,5 @@
 		}
 	}
 
-	jnexport(EntityEditorBaseController);
-})();
+	module.exports = { EntityEditorBaseController };
+});

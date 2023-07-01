@@ -14,7 +14,6 @@ return [
 	'rel' => [
 		'main.polyfill.customevent',
 		'pull.component.status',
-		'ui.vue.components.smiles',
 		'im.component.dialog',
 		'im.component.textarea',
 		'im.view.quotepanel',
@@ -39,6 +38,7 @@ return [
 		'ui.vue.vuex',
 		'ui.vue',
 		'main.core.events',
+		'ui.vue.components.smiles',
 	],
 	'skip_core' => false,
 ];

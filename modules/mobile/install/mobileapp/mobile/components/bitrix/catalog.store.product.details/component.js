@@ -9,6 +9,7 @@
 	const { NumberField, NumberPrecision } = jn.require('layout/ui/fields/number');
 	const { SelectField } = jn.require('layout/ui/fields/select');
 	const { StringField } = jn.require('layout/ui/fields/string');
+	const { BannerButton } = jn.require('layout/ui/banners');
 	const {
 		clone,
 		set,
@@ -90,7 +91,7 @@
 
 		renderMoreOpportunitiesButton()
 		{
-			return UI.BannerButton({
+			return BannerButton({
 				title: BX.message('CSPD_MORE_OPPORTUNITIES'),
 				description: BX.message('CSPD_ADD_SKU'),
 				onClick: this.openDesktopVersion.bind(this),

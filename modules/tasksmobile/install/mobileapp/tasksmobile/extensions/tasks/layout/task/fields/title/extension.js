@@ -15,6 +15,16 @@ jn.define('tasks/layout/task/fields/title', (require, exports, module) => {
 				readOnly: props.readOnly,
 				title: props.title,
 			};
+			this.flag = false;
+		}
+
+		componentDidUpdate(prevProps, prevState)
+		{
+			//temporary fix for bug with auto height
+			if (!this.flag) {
+				this.flag = true;
+				this.setState({});
+			}
 		}
 
 		componentWillReceiveProps(props)
@@ -47,12 +57,12 @@ jn.define('tasks/layout/task/fields/title', (require, exports, module) => {
 					showTitle: false,
 					placeholder: Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_FIELDS_TITLE_PLACEHOLDER'),
 					config: {
+						showAll: true,
 						deepMergeStyles: {
 							...this.props.deepMergeStyles,
 							editableValue: {
 								fontSize: 17,
 								fontWeight: '700',
-								maxHeight: undefined,
 							},
 						},
 						onSubmitEditing: () => {},

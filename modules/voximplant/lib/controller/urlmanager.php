@@ -13,7 +13,7 @@ class UrlManager extends Engine\Controller
 {
 	public function getBillingUrlAction()
 	{
-		$canTopUp = \Bitrix\Voximplant\Security\Helper::isAdmin() && !\Bitrix\Voximplant\Limits::isRestOnly();
+		$canTopUp = \Bitrix\Voximplant\Security\Helper::canUpdateBalance();
 		if (!$canTopUp)
 		{
 			$this->addError(new Error("Permission denied", "permission_denied"));

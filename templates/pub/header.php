@@ -32,6 +32,12 @@ else
 	$siteName = COption::getOptionString('main', 'site_name', '');
 }
 
+$customTitle = '';
+if (defined('CUSTOM_HEADER_TITLE') && is_string(CUSTOM_HEADER_TITLE))
+{
+	$customTitle = htmlspecialcharsbx(CUSTOM_HEADER_TITLE);
+}
+
 ?>
 <title><? $APPLICATION->showTitle(); ?></title>
 </head>
@@ -50,7 +56,9 @@ $APPLICATION->ShowPanel();
 				<div class="content">
 					<h1 class="main-title">
 						<? $clientLogo = Bitrix\Intranet\Util::getClientLogo(); ?>
-						<? if ($clientLogo['logo']): ?>
+						<? if (!empty($customTitle)): ?>
+							<span class="main-title-custom"><?=$customTitle?></span>
+						<? elseif ($clientLogo['logo']): ?>
 							<img class="intranet-pub-title-user-logo" src="<?=CFile::getPath($clientLogo['logo']) ?>"
 								<? if ($clientLogo['retina']): ?> srcset="<?=CFile::getPath($clientLogo['retina']) ?> 2x"<? endif ?>>
 						<? elseif (Bitrix\Main\Config\Option::get('main', 'wizard_site_logo', '', SITE_ID)): ?>

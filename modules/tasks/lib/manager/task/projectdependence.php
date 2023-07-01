@@ -4,9 +4,9 @@
  * @package bitrix
  * @subpackage sale
  * @copyright 2001-2015 Bitrix
- * 
+ *
  * @access private
- * 
+ *
  * This class should be used in components, inside agent functions, in rest, ajax and more, bringing unification to all places and processes
  */
 
@@ -55,7 +55,7 @@ final class ProjectDependence extends \Bitrix\Tasks\Manager
 			'filter' => array('=DIRECT' => '1', '=TASK_ID' => $taskId)
 		);
 
-		if($parameters['DEPENDS_ON_DATA'])
+		if ($parameters['DEPENDS_ON_DATA'] ?? null)
 		{
 			$listParameters['select'][static::SE_PREFIX.'DEPENDS_ON_TITLE'] = 'DEPENDS_ON.TITLE';
 		}
@@ -95,7 +95,7 @@ final class ProjectDependence extends \Bitrix\Tasks\Manager
 				$item[static::SE_PREFIX.'DEPENDS_ON'] = $seDependsOn;
 			}
 
-			if($parameters['DROP_PRIMARY'])
+			if (isset($parameters['DROP_PRIMARY']))
 			{
 				unset($item['TASK_ID']);
 			}

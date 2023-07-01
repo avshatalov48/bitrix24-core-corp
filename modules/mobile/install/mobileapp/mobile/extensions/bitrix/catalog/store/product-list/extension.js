@@ -2,6 +2,7 @@
 
 	const { EventEmitter } = jn.require('event-emitter');
 	const { EmptyScreen } = jn.require('layout/ui/empty-screen');
+	const { AnalyticsLabel } = jn.require('analytics-label');
 
 	/**
 	 * @class StoreProductList
@@ -207,8 +208,8 @@
 		{
 			let documentTotal = 0.0;
 			this.state.items.map((props) => {
-				let price = parseFloat(CommonUtils.objectDeepGet(props, 'price.purchase.amount', 0.0));
-				let quantity = parseFloat(props.amount || 0);
+				const price = parseFloat(CommonUtils.objectDeepGet(props, 'price.purchase.amount', 0.0));
+				const quantity = parseFloat(props.amount || 0);
 
 				documentTotal += (price * quantity);
 			});
@@ -266,7 +267,7 @@
 
 		createSkuInDesktop()
 		{
-			const title = BX.message('CSPL_CREATE_PRODUCT_IN_DESKTOP_VERSION');
+			const title = BX.message('CSPL_CREATE_PRODUCT_IN_DESKTOP_VERSION_MSGVER_1');
 			const redirectUrl = CommonUtils.objectDeepGet(this.state, 'catalog.url.create_product', '/');
 
 			qrauth.open({title, redirectUrl});
@@ -279,7 +280,7 @@
 
 		showAddProductMenu()
 		{
-			let menu = new StoreDocumentAddProductMenu({
+			const menu = new StoreDocumentAddProductMenu({
 				onChooseProduct: () => {
 					if (!this.props.permissions['catalog_product_add'])
 					{
@@ -300,7 +301,7 @@
 
 		showProductContextMenu(itemId)
 		{
-			let menu = new StoreDocumentProductContextMenu({
+			const menu = new StoreDocumentProductContextMenu({
 				editable: Boolean(this.state.document.editable),
 				onChooseEdit: this.showProductDetailsBackdrop.bind(this, itemId),
 				onChooseRemove: this.removeProductRow.bind(this, itemId),

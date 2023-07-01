@@ -401,7 +401,8 @@ class CTasksTools
 
 		if (
 			($arUser = $rsUsers->Fetch())
-			&& (intval($arUser["UF_DEPARTMENT"][0]) > 0)
+			&& isset($arUser["UF_DEPARTMENT"][0])
+			&& (int)$arUser["UF_DEPARTMENT"][0] > 0
 		)
 		{
 			return true;

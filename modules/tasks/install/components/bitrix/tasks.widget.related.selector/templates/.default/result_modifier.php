@@ -34,13 +34,13 @@ $arResult['TEMPLATE_DATA']['PATH_TO_TEMPLATES_TEMPLATE'] = $pathTaskTemplate;
 $data = array();
 foreach($arParams['DATA'] as $i => $item)
 {
-	$arParams['DATA'][$i]['ENTITY_TYPE'] = $item['ENTITY_TYPE'] == 'TT' ? 'TT' : 'T';
+	$arParams['DATA'][$i]['ENTITY_TYPE'] = (($item['ENTITY_TYPE'] ?? null) === 'TT' ? 'TT' : 'T');
 
 	$arParams['DATA'][$i]['DISPLAY'] = $item['TITLE'];
 	$arParams['DATA'][$i]['VALUE'] = $arParams['DATA'][$i]['ENTITY_TYPE'].$item['ID'];
 	$arParams['DATA'][$i]['ITEM_SET_INVISIBLE'] = '';
 
-	if($item['ENTITY_TYPE'] == 'TT')
+	if (($item['ENTITY_TYPE'] ?? null) == 'TT')
 	{
 		$url = str_replace('#id#', $item['ID'], $pathTaskTemplate);
 	}

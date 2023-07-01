@@ -24,6 +24,19 @@ Loc::loadMessages(__FILE__);
  * Class FormTable
  *
  * @package Bitrix\Crm\WebForm\Internals
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Form_Query query()
+ * @method static EO_Form_Result getByPrimary($primary, array $parameters = [])
+ * @method static EO_Form_Result getById($id)
+ * @method static EO_Form_Result getList(array $parameters = [])
+ * @method static EO_Form_Entity getEntity()
+ * @method static \Bitrix\Crm\WebForm\Internals\EO_Form createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\WebForm\Internals\EO_Form_Collection createCollection()
+ * @method static \Bitrix\Crm\WebForm\Internals\EO_Form wakeUpObject($row)
+ * @method static \Bitrix\Crm\WebForm\Internals\EO_Form_Collection wakeUpCollection($rows)
  */
 class FormTable extends ORM\Data\DataManager
 {

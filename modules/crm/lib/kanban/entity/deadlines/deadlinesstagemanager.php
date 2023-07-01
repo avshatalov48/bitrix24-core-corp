@@ -82,7 +82,7 @@ class DeadlinesStageManager
 		{
 			if (empty($columnId))
 			{
-				$date = new Date($item[$this->dateFieldName]);
+				$date = isset($item[$this->dateFieldName]) ? new Date($item[$this->dateFieldName]) : null;
 				$item[self::FILTER_FIELD_CONTAINS_STAGE] = $this->datePeriods->stageByDate($date);
 			}
 			else

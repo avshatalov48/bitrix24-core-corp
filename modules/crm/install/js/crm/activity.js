@@ -638,12 +638,78 @@ if(typeof(BX.CrmActivityEditor) == 'undefined')
 					return;
 				}
 
-				if (providerID === 'REST_APP')
+				if (providerID === 'REST_APP' || providerID === 'CONFIGURABLE_REST_APP')
 				{
-					BX.rest.AppLayout.openApplication(item.getSetting('associatedEntityID', 0), {
-						action: 'view_activity',
-						activity_id: item.getSetting('ID', 0)
-					});
+					BX.rest.AppLayout.openApplication(
+						item.getSetting('associatedEntityID', 0),
+						{
+							action: 'view_activity',
+							activity_id: item.getSetting('ID', 0)
+						}
+					);
+					return;
+				}
+
+				if (providerID === 'CRM_TASKS_TASK' || providerID === 'CRM_TASKS_TASK_COMMENT')
+				{
+					var providerTaskId = parseInt(item.getSetting('associatedEntityID', 0));
+					if(providerTaskId <= 0)
+					{
+						return;
+					}
+
+					if(typeof(top.window['taskIFramePopup']) === 'object' && typeof(top.window['taskIFramePopup'].view) === 'function')
+					{
+						if (typeof(window['tasksIFrameList']) === 'undefined')
+						{
+							top.window['tasksIFrameList'] = [];
+						}
+
+						if (mode === BX.CrmDialogMode.edit)
+						{
+							top.window['taskIFramePopup'].edit(providerTaskId, top.window['tasksIFrameList']);
+						}
+						else
+						{
+							top.window['taskIFramePopup'].view(providerTaskId, top.window['tasksIFrameList']);
+						}
+					}
+					else
+					{
+						var providerTaskOpenPath = BX.message(mode === BX.CrmDialogMode.edit ? "CRM_TASK_EDIT_PATH" : "CRM_TASK_VIEW_PATH");
+						providerTaskOpenPath = providerTaskOpenPath.replace("#user_id#", BX.message("USER_ID"));
+						providerTaskOpenPath = providerTaskOpenPath.replace("#task_id#", providerTaskId);
+						providerTaskOpenPath = BX.util.add_url_param(providerTaskOpenPath, { "IFRAME": "Y", "IFRAME_TYPE": "SIDE_SLIDER" });
+
+						if(BX.SidePanel)
+						{
+							BX.SidePanel.Instance.open(providerTaskOpenPath);
+						}
+						else
+						{
+							window.top.location.href = providerTaskOpenPath;
+						}
+					}
+					return;
+				}
+
+				if (providerID === 'CRM_CALENDAR_SHARING')
+				{
+					var calendarEventId = parseInt(item.getSetting('calendarEventId', 0));
+					if (!calendarEventId)
+					{
+						return;
+					}
+
+					if ((window.top.BX || window.BX).Calendar.SliderLoader)
+					{
+						const sliderId = 'crm-calendar-slider-' + calendarEventId + '-' + Math.floor(Math.random() * 1000);
+
+						return new (window.top.BX || window.BX).Calendar.SliderLoader(calendarEventId, {
+							sliderId: sliderId,
+						}).show();
+					}
+
 					return;
 				}
 
@@ -715,13 +781,50 @@ if(typeof(BX.CrmActivityEditor) == 'undefined')
 		},
 		setActivityCompleted: function(id, completed, callback, options)
 		{
-			if(!BX.type.isPlainObject(options))
+			if (!BX.type.isPlainObject(options))
 			{
 				options = {};
 			}
 
-			var disableNotification = !!options['disableNotification'];
+			providerID = '';
+			var item = this.getItemById(id);
+			if (item)
+			{
+				providerID = item.getSetting('providerID', '');
+			}
 
+			if (completed && providerID === 'IMOPENLINES_SESSION')
+			{
+				BX.UI.Dialogs.MessageBox.show({
+					title: BX.message('CRM_ACTIVITY_TODO_OPENLINE_COMPLETE_CONF_TITLE'),
+					message: BX.message('CRM_ACTIVITY_TODO_OPENLINE_COMPLETE_CONF'),
+					modal: true,
+					okCaption: BX.message('CRM_ACTIVITY_TODO_OPENLINE_COMPLETE_CONF_OK_TEXT'),
+					buttons: BX.UI.Dialogs.MessageBoxButtons.OK_CANCEL,
+					onOk: (messageBox) => {
+						this._completeActivity(id, completed, callback, options);
+
+						messageBox.close();
+					},
+					onCancel: (messageBox) => {
+						if (options.fieldElement)
+						{
+							options.fieldElement.checked = false;
+							options.fieldElement.disabled = false;
+						}
+
+						messageBox.close();
+					},
+				});
+			}
+			else
+			{
+				this._completeActivity(id, completed, callback, options);
+			}
+		},
+		_completeActivity: function(id, completed, callback, options)
+		{
+			var disableNotification = !!options['disableNotification'];
 			var item = this.getItemById(id);
 			var serviceUrl = BX.util.add_url_param(this.getSetting('serviceUrl', ''),
 				{
@@ -733,6 +836,7 @@ if(typeof(BX.CrmActivityEditor) == 'undefined')
 				}
 			);
 			var self = this;
+
 			BX.ajax({
 				'url': serviceUrl,
 				'method': 'POST',
@@ -1166,11 +1270,19 @@ if(typeof(BX.CrmActivityEditor) == 'undefined')
 				settings['ownerID'] = this.getSetting('ownerID', '');
 			}
 
+			BX.ajax.runAction('tasks.analytics.hit', {
+				data: {},
+				analyticsLabel: {
+					scenario: 'task_add',
+				}
+			});
+
 			var taskData =
 			{
 				UF_CRM_TASK: [BX.CrmOwnerTypeAbbr.resolve(settings['ownerType']) + '_' + settings['ownerID']],
 				TITLE: "CRM: ",
-				TAGS: "crm"
+				TAGS: "crm",
+				SCENARIO: "crm",
 			};
 
 			if(typeof(window.top['taskIFramePopup']) === 'object'

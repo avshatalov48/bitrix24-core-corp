@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["BX_LIVECHAT_TITLE"] = "Открытая линия";
 $MESS["BX_LIVECHAT_USER"] = "консультант";
 $MESS["BX_LIVECHAT_ONLINE_LINE_1"] = "Мы онлайн";
@@ -62,7 +62,7 @@ $MESS["BX_LIVECHAT_SYSTEM_MESSAGE"] = "Системное сообщение";
 $MESS["BX_LIVECHAT_FILE_MESSAGE"] = "Файл";
 $MESS["BX_LIVECHAT_FILE_SIZE_EXCEEDED"] = "Превышен максимальный размер файла (#LIMIT# Мб).";
 
-$MESS["BX_LIVECHAT_VOTE_TITLE"] = "Пожалуйста оцените качество обслуживания.";
+$MESS["BX_LIVECHAT_VOTE_TITLE"] = "Пожалуйста оцените качество обслуживания";
 $MESS["BX_LIVECHAT_VOTE_PLUS_TITLE"] = "Спасибо за оценку!";
 $MESS["BX_LIVECHAT_VOTE_MINUS_TITLE"] = "Очень жаль, что мы не смогли помочь вам, мы постараемся стать лучше.";
 
@@ -70,4 +70,3 @@ $MESS["BX_LIVECHAT_OPERATOR_POSITION_ONLY"] = "#POSITION#";
 $MESS["BX_LIVECHAT_OPERATOR_POSITION_AND_SESSION_ID"] = "#POSITION#, диалог №#ID#";
 
 $MESS["BX_LIVECHAT_ADDITIONAL_ACTION_BUTTON_TOOLTIP"] = "Дополнительные действия";
-?>

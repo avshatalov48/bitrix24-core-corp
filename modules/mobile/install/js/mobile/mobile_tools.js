@@ -159,10 +159,6 @@
 		{
 			return BX.message('can_perform_calls') === 'Y';
 		},
-		isCrmUniversalActivityScenarioEnabled: function ()
-		{
-			return BX.message('isCrmUniversalActivityScenarioEnabled') === 'Y';
-		},
 		getMobileUrlParams: function (url)
 		{
 			var mobileRegReplace = [
@@ -345,6 +341,15 @@
 						return false;
 					}
 				},
+				{
+					resolveFunction: BX.MobileTools.blockLinkKnowledge,
+					openFunction: function(url) {
+						if (url)
+						{
+							window.location.href = url;
+						}
+					}
+				},
 			];
 
 			if (Application.getApiVersion() >= 41)
@@ -359,7 +364,7 @@
 				})
 			}
 
-			if (Application.getApiVersion() >= 45 && this.isCrmUniversalActivityScenarioEnabled())
+			if (Application.getApiVersion() >= 45)
 			{
 				resolveList.push(BX.MobileTools.resolverCrmCondition);
 			}
@@ -425,7 +430,7 @@
 					return { url, eventName };
 				}
 
-				const isValidLink = /\/crm\/(deal|company|contact)/gi.test(url);
+				const isValidLink = /\/crm\/(deal|company|contact|lead|type)/gi.test(url);
 				if(isValidLink)
 				{
 					return { url };
@@ -604,10 +609,19 @@
 		},
 		diskFileKnowledge:function(url)
 		{
-			let result = url.match(/#diskFile(\d+)/i);
+			let result = url.match(/(file:)?#diskFile(\d+)/i);
 			if (result)
 			{
-				return result[1];
+				return result[2];
+			}
+
+			return null;
+		},
+		blockLinkKnowledge:function(url)
+		{
+			if (url.match(/\/knowledge\/.*#.*$/i))
+			{
+				return url;
 			}
 
 			return null;

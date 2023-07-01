@@ -23,6 +23,7 @@ class Fields
 
 	/** @var array */
 	protected $phones = [];
+
 	/** @var array */
 	protected $person = [
 		'NAME' => '',
@@ -37,39 +38,31 @@ class Fields
 
 	/**
 	 * @param Session $session
-	 * @return bool
+	 * @return self
 	 */
-	public function setSession($session): bool
+	public function setSession(Session $session): self
 	{
-		$result = false;
-
-		if(!empty($session) && $session instanceof Session)
-		{
-			$this->session = $session;
-
-			$result = true;
-		}
-
-		return $result;
+		$this->session = $session;
+		return $this;
 	}
 
 	/**
 	 * @return Session
 	 */
-	public function getSession()
+	public function getSession(): Session
 	{
 		return $this->session;
 	}
 
 	/**
 	 * @param $field
-	 * @return bool
+	 * @return self
 	 */
-	public function setCode($field): bool
+	public function setCode($field): self
 	{
 		$this->code = $field;
 
-		return true;
+		return $this;
 	}
 
 	/**
@@ -83,13 +76,13 @@ class Fields
 
 	/**
 	 * @param $field
-	 * @return bool
+	 * @return self
 	 */
-	public function setUserId($field): bool
+	public function setUserId($field): self
 	{
 		$this->userId = $field;
 
-		return true;
+		return $this;
 	}
 
 	/**
@@ -102,10 +95,13 @@ class Fields
 
 	/**
 	 * @param bool $flag
+	 * @return self
 	 */
-	public function setSkipPhoneValidate(bool $flag)
+	public function setSkipPhoneValidate(bool $flag): self
 	{
 		$this->skipPhoneValidate = $flag;
+
+		return $this;
 	}
 
 	/**
@@ -142,30 +138,26 @@ class Fields
 
 	/**
 	 * @param $fields
-	 * @return bool
+	 * @return self
 	 */
-	public function setPhones($fields)
+	public function setPhones($fields): self
 	{
-		$result = false;
-
-		if(!empty($fields) && is_array($fields))
+		if (!empty($fields) && is_array($fields))
 		{
 			$this->phones = Tools\Phone::getArrayUniqueValidate($fields);
-
-			$result = true;
 		}
 
-		return $result;
+		return $this;
 	}
 
 	/**
-	 * @return bool
+	 * @return self
 	 */
-	public function resetPhones(): bool
+	public function resetPhones(): self
 	{
 		$this->phones = [];
 
-		return true;
+		return $this;
 	}
 
 	/**
@@ -178,48 +170,40 @@ class Fields
 
 	/**
 	 * @param $field
-	 * @return bool
+	 * @return self
 	 */
-	public function addEmail($field): bool
+	public function addEmail($field): self
 	{
-		$result = false;
-
-		if(!empty($field) && Tools\Email::validate($field) && !Tools\Email::isInArray($this->emails, $field))
+		if (!empty($field) && Tools\Email::validate($field) && !Tools\Email::isInArray($this->emails, $field))
 		{
 			$this->emails[] = $field;
-
-			$result = true;
 		}
 
-		return $result;
+		return $this;
 	}
 
 	/**
 	 * @param $fields
-	 * @return bool
+	 * @return self
 	 */
-	public function setEmails($fields): bool
+	public function setEmails($fields): self
 	{
-		$result = false;
-
-		if(!empty($fields) && is_array($fields))
+		if (!empty($fields) && is_array($fields))
 		{
 			$this->emails = Tools\Email::getArrayUniqueValidate($fields);
-
-			$result = true;
 		}
 
-		return $result;
+		return $this;
 	}
 
 	/**
-	 * @return bool
+	 * @return self
 	 */
-	public function resetEmails(): bool
+	public function resetEmails(): self
 	{
 		$this->emails = [];
 
-		return true;
+		return $this;
 	}
 
 	/**
@@ -232,61 +216,57 @@ class Fields
 
 	/**
 	 * @param array $fields
-	 * @return bool
+	 * @return self
 	 */
-	public function setPerson(array $fields): bool
+	public function setPerson(array $fields): self
 	{
-		$result = false;
-
-		if(!empty($fields) && is_array($fields))
+		if (!empty($fields) && is_array($fields))
 		{
-			if(isset($fields['NAME']))
+			if (isset($fields['NAME']))
 			{
-				$result = $this->setPersonName($fields['NAME']);
+				$this->setPersonName($fields['NAME']);
 			}
-			if(isset($fields['LAST_NAME']))
+			if (isset($fields['LAST_NAME']))
 			{
-				$result = $this->setPersonLastName($fields['LAST_NAME']);
+				$this->setPersonLastName($fields['LAST_NAME']);
 			}
-			if(isset($fields['SECOND_NAME']))
+			if (isset($fields['SECOND_NAME']))
 			{
-				$result = $this->setPersonSecondName($fields['SECOND_NAME']);
+				$this->setPersonSecondName($fields['SECOND_NAME']);
 			}
-			if(isset($fields['EMAIL']) && Tools\Email::validate($fields['EMAIL']))
+			if (isset($fields['EMAIL']) && Tools\Email::validate($fields['EMAIL']))
 			{
-				$result = $this->setPersonEmail($fields['EMAIL']);
+				$this->setPersonEmail($fields['EMAIL']);
 			}
-			if(isset($fields['PHONE']) && Tools\Phone::validate($fields['PHONE']))
+			if (isset($fields['PHONE']) && Tools\Phone::validate($fields['PHONE']))
 			{
-				$result = $this->setPersonPhone($fields['PHONE']);
+				$this->setPersonPhone($fields['PHONE']);
 			}
-			if(isset($fields['WEBSITE']))
+			if (isset($fields['WEBSITE']))
 			{
-				$result = $this->setPersonWebsite($fields['WEBSITE']);
+				$this->setPersonWebsite($fields['WEBSITE']);
 			}
 		}
 
-		return $result;
+		return $this;
 	}
 
 	/**
 	 * @param int $userId
-	 * @return bool
+	 * @return self
 	 */
-	public function setDataFromUser($userId = 0): bool
+	public function setDataFromUser($userId = 0): self
 	{
-		$result = false;
-
-		if(!empty($this->session) && !empty($this->session->getData('USER_ID')) && $this->session->getData('USER_ID') > 0)
+		if (!empty($this->session) && !empty($this->session->getData('USER_ID')) && $this->session->getData('USER_ID') > 0)
 		{
 			$userId = $this->session->getData('USER_ID');
 		}
 
-		if(!empty($userId) && $userId>0)
+		if (!empty($userId) && $userId>0)
 		{
 			$user = Im\User::getInstance($userId);
 
-			if(!empty($user))
+			if (!empty($user))
 			{
 				if (!$user->getLastName() && !$user->getName())
 				{
@@ -296,15 +276,17 @@ class Fields
 				{
 					$this->setPersonName($user->getName());
 				}
-				$this->setPersonLastName($user->getLastName());
-				$this->setPersonSecondName('');
+				$this
+					->setPersonLastName($user->getLastName())
+					->setPersonSecondName('')
+				;
 
 				$email = $user->getEmail();
-				if(!empty($email) && Tools\Email::validate($email))
+				if (!empty($email) && Tools\Email::validate($email))
 				{
 					$this->setPersonEmail($email);
 				}
-				elseif(empty($email))
+				elseif (empty($email))
 				{
 					$this->setPersonEmail('');
 				}
@@ -325,87 +307,77 @@ class Fields
 				{
 					$this->setPersonPhone($phone);
 				}
-				elseif(empty($phone))
+				elseif (empty($phone))
 				{
 					$this->setPersonPhone('');
 				}
 
 				$this->setPersonWebsite($user->getWebsite());
-
-				$result = true;
 			}
 		}
 
-		return $result;
+		return $this;
 	}
 
 	/**
 	 * @param string $field
-	 * @return bool
+	 * @return self
 	 */
-	public function setPersonName($field): bool
+	public function setPersonName($field): self
 	{
 		$this->person['NAME'] = $field;
 
-		return true;
+		return $this;
 	}
 
 	/**
 	 * @param string $field
-	 * @return bool
+	 * @return self
 	 */
-	public function setPersonLastName($field): bool
+	public function setPersonLastName($field): self
 	{
 		$this->person['LAST_NAME'] = $field;
 
-		return true;
+		return $this;
 	}
 
 	/**
 	 * @param string $field
-	 * @return bool
+	 * @return self
 	 */
-	public function setPersonSecondName($field): bool
+	public function setPersonSecondName($field): self
 	{
 		$this->person['SECOND_NAME'] = $field;
 
-		return true;
+		return $this;
 	}
 
 	/**
 	 * @param $field
-	 * @return bool
+	 * @return self
 	 */
-	public function setPersonEmail($field): bool
+	public function setPersonEmail($field): self
 	{
-		$return = false;
-
-		if(Tools\Email::validate($field))
+		if (Tools\Email::validate($field))
 		{
 			$this->person['EMAIL'] = $field;
-
-			$return = true;
 		}
 
-		return $return;
+		return $this;
 	}
 
 	/**
 	 * @param $field
-	 * @return bool
+	 * @return self
 	 */
-	public function setPersonPhone($field): bool
+	public function setPersonPhone($field): self
 	{
-		$return = false;
-
 		if (
 			$this->skipPhoneValidate !== true
 			&& Tools\Phone::validate($field)
 		)
 		{
 			$this->person['PHONE'] = $field;
-
-			$return = true;
 		}
 		elseif (
 			$this->skipPhoneValidate === true
@@ -413,22 +385,20 @@ class Fields
 		)
 		{
 			$this->person['PHONE'] = $field;
-
-			$return = true;
 		}
 
-		return $return;
+		return $this;
 	}
 
 	/**
 	 * @param string $field
-	 * @return bool
+	 * @return self
 	 */
-	public function setPersonWebsite($field): bool
+	public function setPersonWebsite($field): self
 	{
 		$this->person['WEBSITE'] = $field;
 
-		return true;
+		return $this;
 	}
 
 	/**
@@ -442,66 +412,66 @@ class Fields
 	/**
 	 * @return string
 	 */
-	public function getPersonName()
+	public function getPersonName(): string
 	{
-		return $this->person['NAME'];
+		return $this->person['NAME'] ?? '';
 	}
 
 	/**
 	 * @return string
 	 */
-	public function getPersonLastName()
+	public function getPersonLastName(): string
 	{
-		return $this->person['LAST_NAME'];
+		return $this->person['LAST_NAME'] ?? '';
 	}
 
 	/**
 	 * @return string
 	 */
-	public function getPersonSecondName()
+	public function getPersonSecondName(): string
 	{
-		return $this->person['SECOND_NAME'];
+		return $this->person['SECOND_NAME'] ?? '';
 	}
 
 	/**
 	 * @return string
 	 */
-	public function getPersonEmail()
+	public function getPersonEmail(): string
 	{
-		return $this->person['EMAIL'];
+		return $this->person['EMAIL'] ?? '';
 	}
 
 	/**
 	 * @return string
 	 */
-	public function getPersonPhone()
+	public function getPersonPhone(): string
 	{
-		return $this->person['PHONE'];
+		return $this->person['PHONE'] ?? '';
 	}
 
 	/**
 	 * @return string
 	 */
-	public function getPersonWebsite()
+	public function getPersonWebsite(): string
 	{
-		return $this->person['WEBSITE'];
+		return $this->person['WEBSITE'] ?? '';
 	}
 
 	/**
 	 * @param string $field
-	 * @return bool
+	 * @return self
 	 */
-	public function setTitle($field): bool
+	public function setTitle($field): self
 	{
 		$this->title = $field;
 
-		return true;
+		return $this;
 	}
 
 	/**
 	 * @return string
 	 */
-	public function getTitle()
+	public function getTitle(): string
 	{
 		return $this->title;
 	}

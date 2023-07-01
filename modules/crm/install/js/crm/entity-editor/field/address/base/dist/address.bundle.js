@@ -32,7 +32,12 @@ this.BX = this.BX || {};
 	      this._showAddressTypeInViewMode = BX.prop.getBoolean(this._settings, 'showAddressTypeInViewMode', false);
 	      this._addrZoneConfig = BX.prop.getObject(this._settings, 'addressZoneConfig', {});
 	      this._countryId = BX.prop.getInteger(this._settings, 'countryId', BX.prop.getInteger(this._addrZoneConfig, "countryId", 0));
-	      this._defaultAddressType = BX.prop.getInteger(this._addrZoneConfig, 'defaultAddressType', 0);
+	      this._defaultAddressType = BX.prop.getInteger(this._settings, 'defaultAddressTypeByCategory', 0);
+
+	      if (this._defaultAddressType <= 0) {
+	        this._defaultAddressType = BX.prop.getInteger(this._addrZoneConfig, 'defaultAddressType', 0);
+	      }
+
 	      this.updateAllowedTypes();
 	    }
 	  }, {

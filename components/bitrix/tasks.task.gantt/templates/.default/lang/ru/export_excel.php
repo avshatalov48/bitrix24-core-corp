@@ -28,6 +28,7 @@ $MESS["TASKS_EXCEL_TIME_ESTIMATE"] = "Планируемая длительно�
 $MESS["TASKS_EXCEL_TIME_SPENT_IN_LOGS"] = "Затрачено";
 $MESS["TASKS_EXCEL_CLOSED_DATE"] = "Дата закрытия";
 $MESS["TASKS_EXCEL_MARK"] = "Оценка";
+$MESS["TASKS_EXCEL_MARK_MSGVER_1"] = "Оценка";
 $MESS["TASKS_EXCEL_ADD_IN_REPORT"] = "В отчете";
 $MESS["TASKS_EXCEL_GROUP_ID"] = "Проект";
 $MESS["TASKS_EXCEL_GROUP_NAME"] = "Проект";

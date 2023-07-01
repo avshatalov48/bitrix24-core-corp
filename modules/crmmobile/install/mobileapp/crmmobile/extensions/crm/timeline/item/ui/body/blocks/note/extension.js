@@ -2,7 +2,6 @@
  * @module crm/timeline/item/ui/body/blocks/note
  */
 jn.define('crm/timeline/item/ui/body/blocks/note', (require, exports, module) => {
-
 	const { TimelineItemBodyBlock } = require('crm/timeline/item/ui/body/blocks/base');
 	const { TimelineItemUserAvatar } = require('crm/timeline/item/ui/user-avatar');
 	const { TimelineTextEditor } = require('crm/timeline/ui/text-editor');
@@ -63,8 +62,8 @@ jn.define('crm/timeline/item/ui/body/blocks/note', (require, exports, module) =>
 				{
 					style: {
 						paddingHorizontal: 1,
-						display: this.state.text.length ? 'flex' : 'none',
-					}
+						display: this.state.text.length > 0 ? 'flex' : 'none',
+					},
 				},
 				Shadow(
 					{
@@ -75,14 +74,14 @@ jn.define('crm/timeline/item/ui/body/blocks/note', (require, exports, module) =>
 						},
 						style: {
 							borderRadius: 1,
-						}
+						},
 					},
 					View(
 						{
 							style: {
-								backgroundColor: '#FFF8CF',
+								backgroundColor: '#fef3b8',
 								flexDirection: 'row',
-							}
+							},
 						},
 						View(
 							{},
@@ -97,7 +96,7 @@ jn.define('crm/timeline/item/ui/body/blocks/note', (require, exports, module) =>
 									flexGrow: 1,
 									paddingVertical: 12,
 									flex: 1,
-									maxHeight: this.state.expanded ? 'auto' : 200,
+									maxHeight: this.state.expanded ? null : 200,
 								},
 								onClick: () => this.toggleExpanded(),
 								onLongClick: () => this.openEditor(),
@@ -110,12 +109,12 @@ jn.define('crm/timeline/item/ui/body/blocks/note', (require, exports, module) =>
 									fontSize: 14,
 									fontWeight: '400',
 									color: '#333333',
-								}
+								},
 							}),
 						),
 						this.renderEditIcon(),
-					)
-				)
+					),
+				),
 			);
 		}
 
@@ -139,14 +138,14 @@ jn.define('crm/timeline/item/ui/body/blocks/note', (require, exports, module) =>
 					},
 					Image({
 						svg: {
-							content: `<svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M9.32707 0.776367L11.24 2.70943L3.75675 10.1725L1.84382 8.23948L9.32707 0.776367ZM0.769358 11.0047C0.751269 11.0732 0.77065 11.1455 0.819749 11.1959C0.870141 11.2463 0.942497 11.2657 1.01098 11.2463L3.14937 10.6702L1.34563 8.86699L0.769358 11.0047Z" fill="black" fill-opacity="0.2"/></svg>`
+							content: '<svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M9.32707 0.776367L11.24 2.70943L3.75675 10.1725L1.84382 8.23948L9.32707 0.776367ZM0.769358 11.0047C0.751269 11.0732 0.77065 11.1455 0.819749 11.1959C0.870141 11.2463 0.942497 11.2657 1.01098 11.2463L3.14937 10.6702L1.34563 8.86699L0.769358 11.0047Z" fill="black" fill-opacity="0.2"/></svg>',
 						},
 						style: {
 							width: 12,
 							height: 12,
-						}
-					})
-				)
+						},
+					}),
+				),
 			);
 		}
 
@@ -159,7 +158,7 @@ jn.define('crm/timeline/item/ui/body/blocks/note', (require, exports, module) =>
 				placeholder: Loc.getMessage('M_CRM_TIMELINE_BLOCK_EDITABLE_NOTE_PLACEHOLDER'),
 				onBeforeSave: (editor) => new Promise((resolve, reject) => {
 					const text = editor.value.trim();
-					if (!text.length && this.initiallyFilled)
+					if (text.length === 0 && this.initiallyFilled)
 					{
 						return Alert.confirm(
 							'',
@@ -174,7 +173,7 @@ jn.define('crm/timeline/item/ui/body/blocks/note', (require, exports, module) =>
 									type: ButtonType.DESTRUCTIVE,
 									onPress: resolve,
 								},
-							]
+							],
 						);
 					}
 
@@ -189,7 +188,7 @@ jn.define('crm/timeline/item/ui/body/blocks/note', (require, exports, module) =>
 			text = text.trim();
 			this.state.text = text;
 
-			if (text.length)
+			if (text.length > 0)
 			{
 				this.emitSaveAction();
 			}
@@ -227,5 +226,4 @@ jn.define('crm/timeline/item/ui/body/blocks/note', (require, exports, module) =>
 	}
 
 	module.exports = { TimelineItemBodyNoteBlock };
-
 });

@@ -2,12 +2,14 @@
 
 namespace Bitrix\Disk\Volume;
 
+use Bitrix\Disk;
+
 interface IDeleteConstraint
 {
 	/**
 	 * Check ability to drop folder.
-	 * @param \Bitrix\Disk\Folder $folder Folder to drop.
+	 * @param Disk\Folder $folder Folder to drop.
 	 * @return boolean
 	 */
-	public function isAllowDeleteFolder(\Bitrix\Disk\Folder $folder);
+	public function isAllowDeleteFolder(Disk\Folder $folder): bool;
 }

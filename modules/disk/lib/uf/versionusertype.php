@@ -61,17 +61,30 @@ final class VersionUserType
 
 	public static function prepareSettings($userField)
 	{
-		$iblockID = intval($userField["SETTINGS"]["IBLOCK_ID"]);
-		$sectionID = intval($userField["SETTINGS"]["SECTION_ID"]);
+		if (!is_array($userField))
+		{
+			$userField = [];
+		}
 
-		return array(
-			"IBLOCK_ID" => $iblockID,
-			"SECTION_ID" => $sectionID,
-			"UF_TO_SAVE_ALLOW_EDIT" => $userField["SETTINGS"]["UF_TO_SAVE_ALLOW_EDIT"],
-		);
+		$iblockId = null;
+		$sectionId = null;
+		if (isset($userField["SETTINGS"]["IBLOCK_ID"]))
+		{
+			$iblockId = (int)$userField["SETTINGS"]["IBLOCK_ID"];
+		}
+		if (isset($userField["SETTINGS"]["SECTION_ID"]))
+		{
+			$sectionId = (int)$userField["SETTINGS"]["SECTION_ID"];
+		}
+
+		return [
+			"IBLOCK_ID" => $iblockId,
+			"SECTION_ID" => $sectionId,
+			"UF_TO_SAVE_ALLOW_EDIT" => $userField["SETTINGS"]["UF_TO_SAVE_ALLOW_EDIT"] ?? false,
+		];
 	}
 
-	public static function getSettingsHTML($userField = false, $htmlControl, $varsFromForm)
+	public static function getSettingsHTML($userField, $htmlControl, $varsFromForm)
 	{
 		return "&nbsp;";
 	}

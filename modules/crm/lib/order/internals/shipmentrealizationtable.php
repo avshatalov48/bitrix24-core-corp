@@ -17,7 +17,20 @@ use Bitrix\Main\ORM\Fields\IntegerField;
  * </ul>
  *
  * @package Bitrix\Crm
- **/
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_ShipmentRealization_Query query()
+ * @method static EO_ShipmentRealization_Result getByPrimary($primary, array $parameters = [])
+ * @method static EO_ShipmentRealization_Result getById($id)
+ * @method static EO_ShipmentRealization_Result getList(array $parameters = [])
+ * @method static EO_ShipmentRealization_Entity getEntity()
+ * @method static \Bitrix\Crm\Order\Internals\EO_ShipmentRealization createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Order\Internals\EO_ShipmentRealization_Collection createCollection()
+ * @method static \Bitrix\Crm\Order\Internals\EO_ShipmentRealization wakeUpObject($row)
+ * @method static \Bitrix\Crm\Order\Internals\EO_ShipmentRealization_Collection wakeUpCollection($rows)
+ */
 
 class ShipmentRealizationTable extends DataManager
 {

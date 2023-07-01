@@ -1,4 +1,14 @@
-(() => {
+/**
+ * @module layout/ui/entity-editor/control/opportunity
+ */
+jn.define('layout/ui/entity-editor/control/opportunity', (require, exports, module) => {
+
+	const { EntityEditorField } = require('layout/ui/entity-editor/control/field');
+	const { EntityEditorMode } = require('layout/ui/entity-editor/editor-enum/mode');
+
+	const { OpportunityButton } = require('layout/ui/entity-editor/control/opportunity/opportunity-button');
+	const { DocumentList } = require('layout/ui/entity-editor/control/opportunity/document-list');
+	const { TypeId } = require('crm/type');
 
 	const isManualPriceFieldName = 'IS_MANUAL_OPPORTUNITY';
 
@@ -29,6 +39,118 @@
 			super.initializeStateFromModel();
 
 			this.state.amountLocked = this.guessAmountIsLocked();
+		}
+
+		renderReceivePaymentButton()
+		{
+			if (this.isReceivePaymentAvailable())
+			{
+				return new OpportunityButton({
+					uid: this.getUid(),
+				});
+			}
+
+			return null;
+		}
+
+		shouldShowDocumentList()
+		{
+			if (this.isNewEntity())
+			{
+				return false;
+			}
+
+			const entityTypeId = this.model.getField('ENTITY_TYPE_ID', 0);
+
+			return entityTypeId === TypeId.Deal && this.schemeElement.data.isReceivePaymentAvailable;
+		}
+
+		get marginBottom()
+		{
+			return this.shouldShowDocumentList() ? 2 : super.marginBottom;
+		}
+
+		renderDocumentList()
+		{
+			const entityTypeId = this.model.getField('ENTITY_TYPE_ID', 0);
+			const data = {
+				documentsData: this.model.getField('DOCUMENTS', {}),
+				uid: this.getUid(),
+				entityId: this.model.getField('ID', 0),
+				entityTypeId: entityTypeId,
+				isUsedInventoryManagement: this.model.getField('IS_USED_INVENTORY_MANAGEMENT', false),
+			};
+
+			return new DocumentList(data);
+		}
+
+		get showBorder()
+		{
+			if (this.shouldShowDocumentList())
+			{
+				return false;
+			}
+
+			return super.showBorder;
+		}
+
+		renderField()
+		{
+			return View(
+				{
+					style: {
+						marginBottom: this.marginBottom,
+					}
+				},
+				View(
+					{
+						style: {
+							flexDirection: 'row',
+							flexWrap: 'wrap',
+							justifyContent: 'space-between',
+						},
+					},
+					View(
+						{
+							style: {
+								flex: this.isReadOnly() ? 0 : 1,
+								marginRight: -17,
+							},
+						},
+						this.getFieldInstance(this.getValue()),
+					),
+					this.isReceivePaymentAvailable() && View(
+						{
+							style: {
+								alignItems: 'flex-end',
+								justifyContent: 'flex-end',
+							},
+							onClick: () => Keyboard.dismiss(),
+						},
+						View(
+							{
+								style: {
+									marginBottom: 15,
+									marginRight: 15,
+									marginLeft: 17,
+								},
+							},
+							this.renderReceivePaymentButton(),
+						),
+					),
+				),
+				this.shouldShowDocumentList()
+					? this.renderDocumentList()
+					: View(
+						{
+							style: {
+								borderBottomColor: this.isInEditMode() ? '#e4e6e7' : '#edeef0',
+								borderBottomWidth: this.showBorder ? 1 : 0,
+								marginHorizontal: 16,
+							},
+						}
+				)
+			);
 		}
 
 		guessAmountIsLocked()
@@ -94,12 +216,16 @@
 
 			return {
 				...config,
-				// ToDo it feels like it saves in db settings and should be in model
 				amountReadOnly: BX.prop.get(config, 'amountReadOnly', false),
 				amountLocked: this.state.amountLocked,
 				largeFont: true,
 				formatAmount: true,
 				currencyReadOnly: false,
+				styles: {
+					innerWrapper: {
+						flex: this.isReadOnly() ? 0 : 1,
+					},
+				},
 			};
 		}
 
@@ -141,6 +267,16 @@
 			return this.state.amountLocked;
 		}
 
+		isReceivePaymentAvailable()
+		{
+			const entityTypeId = this.model.getField('ENTITY_TYPE_ID', 0);
+
+			return this.schemeElement.data.isReceivePaymentAvailable
+				&& entityTypeId === TypeId.Deal
+				&& !this.isInEditMode()
+			;
+		}
+
 		lockAmount()
 		{
 			if (this.state.amountLocked !== true)
@@ -173,11 +309,11 @@
 			return new Promise((resolve) => {
 				this.setState({
 					amountLocked: false,
-					mode: BX.UI.EntityEditorMode.edit,
+					mode: EntityEditorMode.edit,
 				}, () => this.focusField().then(resolve));
 			});
 		}
 	}
 
-	jnexport(EntityEditorOpportunityField);
-})();
+	module.exports = { EntityEditorOpportunityField };
+});

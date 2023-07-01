@@ -27,7 +27,11 @@ $arActivityDescription = [
 		'ItemId' => [
 			'NAME' => Loc::getMessage('CRM_CDA_RETURN_ITEM_ID_1'),
 			'TYPE' => 'int',
-		]
+		],
+		'ErrorMessage' => [
+			'NAME' => Loc::getMessage('CRM_CDA_RETURN_ERROR_MESSAGE'),
+			'TYPE' => 'string',
+		],
 	],
 	'ROBOT_SETTINGS' => [
 		'CATEGORY' => 'employee',

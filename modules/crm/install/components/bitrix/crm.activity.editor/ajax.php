@@ -1584,8 +1584,11 @@ elseif($action == 'SAVE_EMAIL')
 	$siteID = !empty($_REQUEST['siteID']) ? $_REQUEST['siteID'] : SITE_ID;
 
 	$data = isset($_POST['DATA']) && is_array($_POST['DATA']) ? $_POST['DATA'] : array();
+
 	if (empty($data))
+	{
 		__CrmActivityEditorEndResponse(array('ERROR'=>'SOURCE DATA ARE NOT FOUND!'));
+	}
 
 	$rawData = (array) \Bitrix\Main\Application::getInstance()->getContext()->getRequest()->getPostList()->getRaw('DATA');
 
@@ -2752,7 +2755,7 @@ elseif($action == 'SAVE_EMAIL')
 }
 elseif($action == 'GET_ACTIVITY')
 {
-	$ID = isset($_POST['ID']) ? intval($_POST['ID']) : 0;
+	$ID = isset($_POST['ID']) ? (int)$_POST['ID'] : 0;
 
 	$arFields = CCrmActivity::GetByID($ID);
 	if(!is_array($arFields))
@@ -2782,13 +2785,24 @@ elseif($action == 'GET_ACTIVITY')
 	CCrmActivity::PrepareStorageElementIDs($arFields);
 	CCrmActivity::PrepareStorageElementInfo($arFields);
 
+	$associatedEntityId = ($arFields['ASSOCIATED_ENTITY_ID'] ?? '0');
+	if (
+		$arFields['PROVIDER_ID'] === \Bitrix\Crm\Activity\Provider\ConfigurableRestApp::getId()
+		&& ($arFields['PROVIDER_PARAMS']['clientId'] ?? null)
+		&& \Bitrix\Main\Loader::includeModule('rest')
+	)
+	{
+		$app = \Bitrix\Rest\AppTable::getByClientId($arFields['PROVIDER_PARAMS']['clientId']);
+		$associatedEntityId = (string)($app['ID'] ?? 0);
+	}
+
 	__CrmActivityEditorEndResponse(
 		array(
 			'ACTIVITY' => array(
 				'ID' => $ID,
 				'typeID' => $arFields['TYPE_ID'],
 				'providerID' => $arFields['PROVIDER_ID'],
-				'associatedEntityID' => isset($arFields['ASSOCIATED_ENTITY_ID']) ? $arFields['ASSOCIATED_ENTITY_ID'] : '0',
+				'associatedEntityID' => $associatedEntityId,
 				'ownerID' => $arFields['OWNER_ID'],
 				'ownerType' => CCrmOwnerType::ResolveName($arFields['OWNER_TYPE_ID']),
 				'ownerTitle' => CCrmOwnerType::GetCaption($arFields['OWNER_TYPE_ID'], $arFields['OWNER_ID']),
@@ -2796,22 +2810,23 @@ elseif($action == 'GET_ACTIVITY')
 				'subject' => $arFields['SUBJECT'],
 				'description' => $arFields['DESCRIPTION'],
 				'location' => $arFields['LOCATION'],
-				'direction' => intval($arFields['DIRECTION']),
+				'direction' => (int)$arFields['DIRECTION'],
 				'start' => $arFields['START_TIME'],
 				'end' => $arFields['END_TIME'],
 				'completed' => isset($arFields['COMPLETED']) && $arFields['COMPLETED'] === 'Y',
-				'notifyType' => intval($arFields['NOTIFY_TYPE']),
-				'notifyValue' => intval($arFields['NOTIFY_VALUE']),
-				'priority' => intval($arFields['PRIORITY']),
+				'notifyType' => (int)$arFields['NOTIFY_TYPE'],
+				'notifyValue' => (int)$arFields['NOTIFY_VALUE'],
+				'priority' => (int)$arFields['PRIORITY'],
 				'responsibleName' => CCrmViewHelper::GetFormattedUserName(
-					isset($arFields['RESPONSIBLE_ID']) ? intval($arFields['RESPONSIBLE_ID']) : 0
+					isset($arFields['RESPONSIBLE_ID']) ? (int)$arFields['RESPONSIBLE_ID'] : 0
 				),
 				'storageTypeID' => $storageTypeID,
-				'files' => isset($arFields['FILES']) ? $arFields['FILES'] : array(),
-				'webdavelements' => isset($arFields['WEBDAV_ELEMENTS']) ? $arFields['WEBDAV_ELEMENTS'] : array(),
-				'diskfiles' => isset($arFields['DISK_FILES']) ? $arFields['DISK_FILES'] : array(),
+				'files' => $arFields['FILES'] ?? array(),
+				'webdavelements' => $arFields['WEBDAV_ELEMENTS'] ?? array(),
+				'diskfiles' => $arFields['DISK_FILES'] ?? array(),
 				'communications' => $commData,
 				'customViewLink' => (($provider && !is_null($provider::getCustomViewLink($arFields))) ? $provider::getCustomViewLink($arFields) : ''),
+				'calendarEventId' => $arFields['CALENDAR_EVENT_ID'] ?? null,
 			)
 		)
 	);

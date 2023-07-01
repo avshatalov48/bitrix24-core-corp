@@ -27,6 +27,18 @@ CJSCore::RegisterExt(
 );
 CJSCore::Init($extensionId);
 
+if (!isset($arParams['ON_TASK_ADDED']))
+{
+	$arParams['ON_TASK_ADDED'] = '';
+}
+if (!isset($arParams['ON_TASK_CHANGED']))
+{
+	$arParams['ON_TASK_CHANGED'] = '';
+}
+if (!isset($arParams['ON_TASK_DELETED']))
+{
+	$arParams['ON_TASK_DELETED'] = '';
+}
 $arResult['CALLBACKS'] = array(
     'ADD' => (string) $arParams['ON_TASK_ADDED'] == '' || $arParams['ON_TASK_ADDED'] == 'BX.DoNothing' ? false : $arParams['ON_TASK_ADDED'],
     'UPDATE' => (string) $arParams['ON_TASK_CHANGED'] == '' || $arParams['ON_TASK_CHANGED'] == 'BX.DoNothing' ? false : $arParams['ON_TASK_CHANGED'],

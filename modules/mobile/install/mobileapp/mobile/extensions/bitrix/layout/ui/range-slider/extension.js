@@ -9,11 +9,6 @@ jn.define('layout/ui/range-slider', (require, exports, module) => {
 
 	class RangeSlider extends LayoutComponent
 	{
-		constructor(props)
-		{
-			super(props);
-		}
-
 		get enabled()
 		{
 			return BX.prop.getBoolean(this.props, 'enabled', true);
@@ -26,7 +21,7 @@ jn.define('layout/ui/range-slider', (require, exports, module) => {
 					style: {
 						flex: 1,
 					},
-					interactable: true,
+					interactable: this.enabled,
 				},
 				View(
 					{
@@ -64,6 +59,7 @@ jn.define('layout/ui/range-slider', (require, exports, module) => {
 			this.isEventsBinded = false;
 			this.state = {
 				position: 0,
+				currentValue: 0,
 			};
 
 			this.updatePosition = throttle(({position, callback}) => {
@@ -96,13 +92,10 @@ jn.define('layout/ui/range-slider', (require, exports, module) => {
 				props.player.on('timeupdate', ({currentTime}) => {
 					if (this.isTouchEnd)
 					{
-						const position = this.getPositionByValue(currentTime);
-						if (this.state.position !== position)
-						{
-							this.setState({
-								position: position,
-							});
-						}
+						this.setState({
+							position: this.getPositionByValue(currentTime),
+							currentValue: currentTime,
+						});
 					}
 				});
 			}
@@ -133,9 +126,19 @@ jn.define('layout/ui/range-slider', (require, exports, module) => {
 			return BX.prop.getBoolean(this.props, 'active', false);
 		}
 
-		get showValues()
+		get showTimings()
 		{
-			return BX.prop.getBoolean(this.props, 'showValues', true);
+			return BX.prop.getBoolean(this.props, 'showTimings', true);
+		}
+
+		get showDivisions()
+		{
+			return BX.prop.getBoolean(this.props, 'showDivisions', false);
+		}
+
+		get fileName()
+		{
+			return BX.prop.getString(this.props, 'fileName', null);
 		}
 
 		render()
@@ -148,29 +151,7 @@ jn.define('layout/ui/range-slider', (require, exports, module) => {
 						justifyContent: 'center',
 					},
 				},
-				View(
-					{
-						style: {
-							backgroundColor: '#E0F7FE',
-							maxHeight: 6,
-							flex: 1,
-							flexDirection: 'column',
-							borderRadius: 3,
-							position: "absolute",
-							top: 19,
-							left: 0,
-							right: 0,
-							height: 6,
-							marginLeft: 10,
-							marginRight: 10,
-						},
-						onLayout: ({width}) => {
-							this.rangeSliderWidth = width;
-						},
-						clickable: false,
-					},
-					this.renderDivisions(),
-				),
+				this.renderProgressBar(),
 				View(
 					{
 						style: {
@@ -180,77 +161,60 @@ jn.define('layout/ui/range-slider', (require, exports, module) => {
 						},
 						clickable: false,
 					},
-					View(
-						{
-							style: {
-								backgroundColor: '#2FC6F6',
-								height: 6,
-								width: this.state.position,
-								borderRadius: 3,
-								marginLeft: 10,
-							},
-							clickable: false,
-						},
-					),
-					//marker
-					View(
-						{
-							style: {
-								width: 20,
-								height: 20,
-								borderRadius: 10,
-								borderWidth: 1,
-								borderColor: '#CED4DA',
-								backgroundColor: '#FFFFFF',
-								marginLeft: -10,
-							},
-							clickable: false,
-						},
-					),
+					this.renderProgressBarCompleted(),
+					this.renderMarker(),
 				),
-				this.showValues && View(
-					{
-						style: {
-							position: 'absolute',
-							bottom: 0,
-							left: 0,
-							width: '100%',
-							justifyContent: 'space-between',
-							flexDirection: 'row',
-							paddingHorizontal: 10,
-						},
-						clickable: false,
+				this.renderFileName(),
+				this.renderTimings(),
+			);
+		}
+
+		renderProgressBar()
+		{
+			return View(
+				{
+					style: {
+						backgroundColor: '#E0F7FE',
+						maxHeight: 6,
+						flex: 1,
+						flexDirection: 'column',
+						borderRadius: 3,
+						position: 'absolute',
+						top: 19,
+						left: 0,
+						right: 0,
+						height: 6,
+						marginLeft: 10,
+						marginRight: 10,
 					},
-					Text(
-						{
-							style: {
-								color: this.active ? '#2FC6F6' :'#A8ADB4',
-								fontSize: 10,
-								minWidth: 50,
-							},
-							clickable: false,
-							text: this.convertSecondsToTime(this.getValueByPosition(this.state.position)),
-						},
-					),
-					Text(
-						{
-							style: {
-								color: '#A8ADB4',
-								fontSize: 10,
-								minWidth: 50,
-								textAlign: 'right',
-							},
-							clickable: false,
-							text: this.convertSecondsToTime(this.maximumValue),
-						},
-					),
-				),
+					onLayout: ({width}) => {
+						this.rangeSliderWidth = width;
+					},
+					clickable: false,
+				},
+				this.renderDivisions(),
+			);
+		}
+
+		renderProgressBarCompleted()
+		{
+			return View(
+				{
+					style: {
+						backgroundColor: '#2FC6F6',
+						height: 6,
+						width: this.state.position,
+						borderRadius: 3,
+						marginLeft: 10,
+					},
+					clickable: false,
+				},
 			);
 		}
 
 		renderDivisions()
 		{
-			if (this.maximumValue === 0)
+			if (this.maximumValue === 0 || !this.showDivisions)
 			{
 				return null;
 			}
@@ -278,6 +242,108 @@ jn.define('layout/ui/range-slider', (require, exports, module) => {
 					clickable: false,
 				},
 				...divisions,
+			);
+		}
+
+		renderMarker()
+		{
+			return View(
+				{
+					style: {
+						width: 20,
+						height: 20,
+						borderRadius: 10,
+						borderWidth: 1,
+						borderColor: '#d5d7db',
+						backgroundColor: '#FFFFFF',
+						marginLeft: -10,
+					},
+					clickable: false,
+				},
+			);
+		}
+
+		renderFileName()
+		{
+			if (!this.fileName)
+			{
+				return null;
+			}
+
+			return View(
+				{
+					style: {
+						position: 'absolute',
+						top: 0,
+						left: 0,
+						width: '100%',
+						justifyContent: 'space-between',
+						flexDirection: 'row',
+						paddingHorizontal: 10,
+					},
+					clickable: false,
+				},
+				View(), // Keep space for some element on the left side
+				Text(
+					{
+						style: {
+							color: '#A8ADB4',
+							fontSize: 10,
+							minWidth: 50,
+							textAlign: 'right',
+						},
+						ellipsize: 'end',
+						numberOfLines: 1,
+						clickable: false,
+						text: this.fileName,
+					},
+				),
+			);
+		}
+
+		renderTimings()
+		{
+			if (!this.showTimings)
+			{
+				return null;
+			}
+
+			return View(
+				{
+					style: {
+						position: 'absolute',
+						bottom: 0,
+						left: 0,
+						width: '100%',
+						justifyContent: 'space-between',
+						flexDirection: 'row',
+						paddingHorizontal: 10,
+					},
+					clickable: false,
+				},
+				Text(
+					{
+						style: {
+							color: this.active ? '#2FC6F6' :'#A8ADB4',
+							fontSize: 10,
+							minWidth: 50,
+						},
+						clickable: false,
+						text: this.convertSecondsToTime(this.state.currentValue),
+					},
+				),
+				Text(
+					{
+						style: {
+							color: '#A8ADB4',
+							fontSize: 10,
+							minWidth: 50,
+							textAlign: 'right',
+						},
+						clickable: false,
+						text: this.convertSecondsToTime(this.maximumValue),
+					},
+				),
 			);
 		}
 

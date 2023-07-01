@@ -37,6 +37,8 @@ Class mobile extends CModule
 			"im",
 			"crm",
 			"tasks",
+			"calendar",
+			"imconnector",
 		];
 	}
 

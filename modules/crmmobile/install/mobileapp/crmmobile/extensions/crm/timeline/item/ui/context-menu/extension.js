@@ -2,7 +2,6 @@
  * @module crm/timeline/item/ui/context-menu
  */
 jn.define('crm/timeline/item/ui/context-menu', (require, exports, module) => {
-
 	const { TimelineButtonVisibilityFilter, TimelineButtonSorter } = require('crm/timeline/item/ui/styles');
 	const { clone } = require('utils/object');
 
@@ -41,9 +40,9 @@ jn.define('crm/timeline/item/ui/context-menu', (require, exports, module) => {
 		prepareItems(rawItems = [])
 		{
 			return clone(rawItems)
-				.filter(item => TimelineButtonVisibilityFilter(item, this.isReadonly) && item.title !== '')
+				.filter((item) => TimelineButtonVisibilityFilter(item, this.isReadonly) && item.title !== '')
 				.sort(TimelineButtonSorter)
-				.map(item => {
+				.map((item) => {
 					if (item.menu && item.menu.items)
 					{
 						item.menu = this.prepareItems(Object.values(item.menu.items));
@@ -81,7 +80,7 @@ jn.define('crm/timeline/item/ui/context-menu', (require, exports, module) => {
 				params: {
 					showCancelButton: true,
 					showActionLoader: false,
-				}
+				},
 			});
 
 			void this.menuInstance.show();
@@ -94,7 +93,7 @@ jn.define('crm/timeline/item/ui/context-menu', (require, exports, module) => {
 		 */
 		prepareActions(items = [])
 		{
-			return items.map(item => ({
+			return items.map((item) => ({
 				id: item.id || Random.getString(4),
 				title: item.title,
 				subTitle: '',
@@ -103,7 +102,7 @@ jn.define('crm/timeline/item/ui/context-menu', (require, exports, module) => {
 					this.menuInstance.close(() => {
 						if (item.menu)
 						{
-							if (item.menu.length)
+							if (item.menu.length > 0)
 							{
 								this.openItems(item.menu);
 							}
@@ -126,5 +125,4 @@ jn.define('crm/timeline/item/ui/context-menu', (require, exports, module) => {
 	}
 
 	module.exports = { TimelineItemContextMenu };
-
 });

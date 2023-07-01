@@ -1,14 +1,14 @@
 <?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
+use Bitrix\Catalog;
 use Bitrix\Catalog\Access\AccessController;
 use Bitrix\Catalog\Access\ActionDictionary;
 use Bitrix\Catalog\Access\Permission\PermissionDictionary;
-use Bitrix\Main;
-use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm\Product\Url;
 use Bitrix\Iblock\Url\AdminPage\BuilderManager;
-use Bitrix\Catalog;
+use Bitrix\Main;
+use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
 
@@ -366,7 +366,7 @@ final class CCrmOrderShipmentProductListComponent extends \CBitrixComponent
 
 		foreach ($items as $basketId => $item)
 		{
-			$parentBasketId = $item['PARENT_BASKET_ID'];
+			$parentBasketId = (int)($item['PARENT_BASKET_ID'] ?? 0);
 			if ($parentBasketId > 0)
 			{
 				$item['IS_SET_ITEM'] = 'Y';

@@ -155,7 +155,8 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 	private $arTaskDataEscaped    = null;
 	private $arTaskFileAttachments = null;
 
-	private $lastOperationResultData = array();
+	private $lastOperationResultData = [];
+	private array $_errors = [];
 
 	private static $accessController;
 	private static $allowedActions;
@@ -764,7 +765,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 		//////////////////////////////////////////////
 		//////////////////////////////////////////////
 
-		unset($arTemplate['STATUS']);
+		unset($arTemplate['STATUS'], $arTemplate['SCENARIO']);
 
 		$userTime = \Bitrix\Tasks\Util\User::getTime();
 
@@ -1336,12 +1337,9 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 
 		if ($this->arTaskTags === null)
 		{
-			// $rsTags = \Bitrix\Tasks\Internals\Task\TagTable::getList([
-			//
-			// ])
 			$rsTags = CTaskTags::GetList(
-				array('NAME' => 'ASC'),
-				array('TASK_ID' => $this->taskId)
+				[],
+				['TASK_ID' => $this->taskId]
 			);
 
 			$arTags = array();
@@ -1421,7 +1419,11 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 	private static function getAllowedActionsArrayInternal($executiveUserId, array $arTaskData, $bmUserRoles = null)
 	{
 		$taskId = (int) $arTaskData['ID'];
-		if (!self::$allowedActions[$taskId] || !array_key_exists($executiveUserId, self::$allowedActions[$taskId]))
+		if (
+			!isset(self::$allowedActions[$taskId])
+			|| !is_array(self::$allowedActions[$taskId])
+			|| !array_key_exists($executiveUserId, self::$allowedActions[$taskId])
+		)
 		{
 			$actionMap = ActionDictionary::getLegacyActionMap();
 			$request = [];
@@ -1657,8 +1659,13 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 	}
 
 
-	public function update($arNewTaskData, array $parameters = array())
+	public function update($arNewTaskData = [], array $parameters = array())
 	{
+		if (empty($arNewTaskData))
+		{
+			return;
+		}
+
 		if (
 			!array_key_exists('PIN_IN_STAGE', $parameters) ||
 			array_key_exists('PIN_IN_STAGE', $parameters) && $parameters['PIN_IN_STAGE']
@@ -2088,7 +2095,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 				}
 
 				// fill parameters
-				if ($arParams['LOAD_PARAMETERS'])
+				if (isset($arParams['LOAD_PARAMETERS']))
 				{
 					$res = \Bitrix\Tasks\Internals\Task\ParameterTable::getList(array('filter' => array(
 						'TASK_ID' => $arTasksIDs
@@ -2224,8 +2231,8 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 		$this->markCacheAsDirty();
 		$this->lastOperationResultData['UPDATE'] = $o->getLastOperationResultData();
 
-		if(
-			$arActionArguments['SUBTASKS_CHANGE_GROUP'] !== false
+		if (
+			($arActionArguments['SUBTASKS_CHANGE_GROUP'] ?? null) !== false
 			&& array_key_exists('GROUP_ID', $arFields)
 			&& $prevGroupId !== (int) $arFields['GROUP_ID']
 		)
@@ -2482,7 +2489,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 				$isScrumTask = false;
 				if (Loader::includeModule('socialnetwork'))
 				{
-					$currentGroupId = ($arNewFields['GROUP_ID'] > 0 ? $arNewFields['GROUP_ID'] : $arTaskData['GROUP_ID']);
+					$currentGroupId = (($arNewFields['GROUP_ID'] ?? null) > 0 ? $arNewFields['GROUP_ID'] : $arTaskData['GROUP_ID']);
 					$group = Workgroup::getById($currentGroupId);
 					$isScrumTask = ($group && $group->isScrumProject());
 				}
@@ -2723,22 +2730,30 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 	{
 		$userRole = 0;
 
-		if ($taskData['CREATED_BY'] == $userId)
+		if (isset($taskData['CREATED_BY']) && (int)$taskData['CREATED_BY'] === $userId)
 		{
 			$userRole |= self::ROLE_DIRECTOR;
 		}
 
-		if ($taskData['RESPONSIBLE_ID'] == $userId)
+		if (isset($taskData['RESPONSIBLE_ID']) && (int)$taskData['RESPONSIBLE_ID'] === $userId)
 		{
 			$userRole |= self::ROLE_RESPONSIBLE;
 		}
 
-		if ($taskData['ACCOMPLICES'] && in_array($userId, $taskData['ACCOMPLICES']))
+		if (
+			array_key_exists('ACCOMPLICES', $taskData)
+			&& is_array($taskData['ACCOMPLICES'])
+			&& in_array($userId, $taskData['ACCOMPLICES'])
+		)
 		{
 			$userRole |= self::ROLE_ACCOMPLICE;
 		}
 
-		if ($taskData['AUDITORS'] && in_array($userId, $taskData['AUDITORS']))
+		if (
+			array_key_exists('AUDITORS', $taskData)
+			&& is_array($taskData['AUDITORS'])
+			&& in_array($userId, $taskData['AUDITORS'])
+		)
 		{
 			$userRole |= self::ROLE_AUDITOR;
 		}
@@ -2753,48 +2768,52 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 			if (!empty($subEmployees))
 			{
 				// Check only roles, that user doesn't have already
-				if (!($userRole & self::ROLE_DIRECTOR))
+				if (
+					!($userRole & self::ROLE_DIRECTOR)
+					&& array_key_exists('CREATED_BY', $taskData)
+					&& in_array($taskData['CREATED_BY'], $subEmployees, true)
+				)
 				{
-					if (in_array($taskData['CREATED_BY'], $subEmployees, true))
-					{
-						$userRole |= self::ROLE_DIRECTOR;
-					}
+					$userRole |= self::ROLE_DIRECTOR;
 				}
 
-				if (!($userRole & self::ROLE_RESPONSIBLE))
+				if (
+					!($userRole & self::ROLE_RESPONSIBLE)
+					&& array_key_exists('RESPONSIBLE_ID', $taskData)
+					&& in_array($taskData['RESPONSIBLE_ID'], $subEmployees, true)
+				)
 				{
-					if (in_array($taskData['RESPONSIBLE_ID'], $subEmployees, true))
-					{
-						$userRole |= self::ROLE_RESPONSIBLE;
-					}
+					$userRole |= self::ROLE_RESPONSIBLE;
 				}
 
-				if (!($userRole & self::ROLE_ACCOMPLICE))
+				if (
+					!($userRole & self::ROLE_ACCOMPLICE)
+					&& array_key_exists('ACCOMPLICES', $taskData)
+					&& is_array($taskData['ACCOMPLICES'])
+				)
 				{
-					if (is_array($taskData['ACCOMPLICES']))
+					foreach ($taskData['ACCOMPLICES'] as $accompliceId)
 					{
-						foreach ($taskData['ACCOMPLICES'] as $accompliceId)
+						if (in_array($accompliceId, $subEmployees, true))
 						{
-							if (in_array($accompliceId, $subEmployees, true))
-							{
-								$userRole |= self::ROLE_ACCOMPLICE;
-								break;
-							}
+							$userRole |= self::ROLE_ACCOMPLICE;
+							break;
 						}
 					}
 				}
 
-				if (!($userRole & self::ROLE_AUDITOR))
+				if (
+					!($userRole & self::ROLE_AUDITOR)
+					&& array_key_exists('AUDITORS', $taskData)
+					&& is_array($taskData['AUDITORS'])
+				)
 				{
-					if (is_array($taskData['AUDITORS']))
+					foreach ($taskData['AUDITORS'] as $auditorId)
 					{
-						foreach ($taskData['AUDITORS'] as $auditorId)
+						if (in_array($auditorId, $subEmployees, true))
 						{
-							if (in_array($auditorId, $subEmployees, true))
-							{
-								$userRole |= self::ROLE_AUDITOR;
-								break;
-							}
+							$userRole |= self::ROLE_AUDITOR;
+							break;
 						}
 					}
 				}
@@ -4157,7 +4176,7 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 
 	// array access
 
-	public function offsetExists($offset)
+	public function offsetExists($offset): bool
 	{
 		try
 		{
@@ -4170,6 +4189,8 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 
 		return isset($data[$offset]);
 	}
+
+	#[\ReturnTypeWillChange]
 	public function offsetGet($offset)
 	{
 		try
@@ -4183,11 +4204,13 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 
 		return $data[$offset];
 	}
-	public function offsetSet($offset , $value)
+
+	public function offsetSet($offset , $value): void
 	{
 		throw new \Bitrix\Main\NotAllowedException('Manual managing of task data is not allowed');
 	}
-	public function offsetUnset($offset)
+
+	public function offsetUnset($offset): void
 	{
 		throw new \Bitrix\Main\NotAllowedException('Manual managing of task data is not allowed');
 	}

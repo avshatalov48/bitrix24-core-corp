@@ -3,6 +3,7 @@
 namespace Bitrix\Voximplant\Rest;
 
 use Bitrix\Crm\Integration\StorageType;
+use Bitrix\Disk\File;
 use Bitrix\Main\Application;
 use Bitrix\Main\DB\SqlQueryException;
 use Bitrix\Main\Error;
@@ -15,6 +16,7 @@ use Bitrix\Main\PhoneNumber\Parser;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\UserTable;
+use Bitrix\Main\Web\Uri;
 use Bitrix\Rest\AppTable;
 use Bitrix\Rest\EventTable;
 use Bitrix\Voximplant\Call;
@@ -565,7 +567,8 @@ class Helper
 				$result->addError(new Error('RECORD_URL contains invalid symbols for UTF-8 encoding'));
 				return $result;
 			}
-			\CVoxImplantHistory::DownloadAgent($insertResult->getId(), $fields['RECORD_URL'], $call->isCrmEnabled());
+			$recordUrl = Uri::urnEncode($fields['RECORD_URL']);
+			\CVoxImplantHistory::DownloadAgent($insertResult->getId(), $recordUrl, $call->isCrmEnabled());
 		}
 
 		if($fields['ADD_TO_CHAT'])
@@ -855,7 +858,7 @@ class Helper
 			'PHONE_NUMBER' => $number,
 			'LINE_NUMBER' => $lineNumber,
 			'TYPE' => \CVoxImplantMain::CALL_OUTGOING,
-			'CRM_CREATE' => true,
+			'CRM_CREATE' => ($line['CRM_AUTO_CREATE'] ?? 'Y') === 'Y',
 			'CRM_ENTITY_TYPE' => $entityType,
 			'CRM_ENTITY_ID' => $entityId,
 			'CRM_ACTIVITY_ID' => (int)$parameters['SRC_ACTIVITY_ID'],
@@ -978,6 +981,14 @@ class Helper
 		$saveResultData = $saveResult->getData();
 		$file = $saveResultData['FILE'];
 
+		if ($statisticRecord['CALL_WEBDAV_ID'])
+		{
+			Application::getInstance()->addBackgroundJob(
+				[__CLASS__, 'deleteFile'],
+				[$statisticRecord['CALL_WEBDAV_ID'], $statisticRecord['PORTAL_USER_ID']]
+			);
+		}
+
 		$attachResult = static::attachFile($callId, $file);
 		if(!$attachResult->isSuccess())
 		{
@@ -996,7 +1007,7 @@ class Helper
 	 * Downloads and attaches record to the existing call.
 	 * @param string $callId Id of the call.
 	 * @param string $recordUrl Url of the record.
-	 * @params string $fileName [Optional] Name of the file. If omitted, file name will taken from the url.
+	 * @param string $fileName [Optional] Name of the file. If omitted, file name will taken from the url.
 	 * @return Result
 	 */
 	public static function attachRecordWithUrl($callId, $recordUrl, $fileName = '')
@@ -1010,10 +1021,46 @@ class Helper
 			return $result;
 		}
 
+		$urlPath = parse_url($recordUrl, PHP_URL_PATH);
+		if ($fileName !== '')
+		{
+			$tempPath = \CFile::GetTempName('', bx_basename($fileName));
+		}
+		else if ($urlPath && $urlPath !== '')
+		{
+			$tempPath = \CFile::GetTempName('', bx_basename($urlPath));
+		}
+		else
+		{
+			$tempPath = \CFile::GetTempName('', bx_basename($recordUrl));
+		}
+
+		try
+		{
+			IO\Directory::createDirectory(IO\Path::getDirectory($tempPath));
+			if (IO\Directory::isDirectoryExists(IO\Path::getDirectory($tempPath)) === false)
+			{
+				return $result->addError(new Error('Could not create temporary directory', 'INTERNAL_ERROR'));
+			}
+
+			$file = new IO\File($tempPath);
+			$handler = $file->open("w+");
+		}
+		catch(\Exception $exception)
+		{
+			$result->addError(new Error($exception->getMessage(), 'INTERNAL_ERROR'));
+
+			return $result;
+		}
+
 		$httpClient = HttpClientFactory::create(array(
 			"disableSslVerification" => true
 		));
+
+		$httpClient->setOutputStream($handler);
 		$queryResult = $httpClient->query('GET', $recordUrl);
+		$httpClient->getResult();
+		$file->close();
 
 		if ($queryResult === false)
 		{
@@ -1027,44 +1074,10 @@ class Helper
 			}
 		}
 
-		if ($httpClient->getStatus() != 200)
+		if ($httpClient->getStatus() !== 200)
 		{
 			return $result->addError(new Error('Server returns HTTP error code ' . $httpClient->getStatus()));
 		}
-
-		if($fileName == '')
-			$fileName = $httpClient->getHeaders()->getFilename();
-
-		$urlComponents = parse_url($recordUrl);
-		if ($fileName != '')
-		{
-			$tempPath = \CFile::GetTempName('', bx_basename($fileName));
-		}
-		else if ($urlComponents && $urlComponents["path"] <> '')
-		{
-			$tempPath = \CFile::GetTempName('', bx_basename($urlComponents["path"]));
-		}
-		else
-		{
-			$tempPath = \CFile::GetTempName('', bx_basename($recordUrl));
-		}
-
-		IO\Directory::createDirectory(IO\Path::getDirectory($tempPath));
-		if (IO\Directory::isDirectoryExists(IO\Path::getDirectory($tempPath)) === false)
-		{
-			return $result->addError(new Error('Could not create temporary directory', 'INTERNAL_ERROR'));
-		}
-
-		$file = new IO\File($tempPath);
-		$handler = $file->open("w+");
-		if ($handler === false)
-		{
-			return $result->addError(new Error('Could not open temporary file', 'INTERNAL_ERROR'));
-		}
-
-		$httpClient->setOutputStream($handler);
-		$httpClient->getResult();
-		$file->close();
 
 		//check for http errors once more
 		$httpClientErrors = $httpClient->getError();
@@ -1085,6 +1098,14 @@ class Helper
 		}
 		$saveResultData = $saveResult->getData();
 		$file = $saveResultData['FILE'];
+
+		if ($statisticRecord['CALL_WEBDAV_ID'])
+		{
+			Application::getInstance()->addBackgroundJob(
+				[__CLASS__, 'deleteFile'],
+				[$statisticRecord['CALL_WEBDAV_ID'], $statisticRecord['PORTAL_USER_ID']]
+			);
+		}
 
 		$attachResult = static::attachFile($callId, $file);
 		if(!$attachResult->isSuccess())
@@ -1253,10 +1274,15 @@ class Helper
 		return $result;
 	}
 
-	public static function addExternalLine($number, $name, $restAppId)
+	/**
+	 * @param array{NUMBER: string, NAME: string, CRM_AUTO_CREATE: string} $externalLine
+	 * @param $restAppId
+	 * @return Result
+	 */
+	public static function addExternalLine(array $externalLine, $restAppId)
 	{
 		$result = new Result();
-		$number = trim($number);
+		$number = trim($externalLine['NUMBER']);
 		if($number == '')
 		{
 			$result->addError(new Error('NUMBER should not be empty'));
@@ -1267,7 +1293,8 @@ class Helper
 		{
 			$insertResult = ExternalLineTable::add([
 				'NUMBER' => $number,
-				'NAME' => $name,
+				'NAME' => $externalLine['NAME'],
+				'CRM_AUTO_CREATE' => $externalLine['CRM_AUTO_CREATE'],
 				'REST_APP_ID' => $restAppId
 			]);
 
@@ -1299,7 +1326,7 @@ class Helper
 		return $result;
 	}
 
-	public static function updateExternalLine($number, $name, $restAppId)
+	public static function updateExternalLine($number, $updatingFields, $restAppId)
 	{
 		$result = new Result();
 		$number = trim($number);
@@ -1322,9 +1349,7 @@ class Helper
 			return $result;
 		}
 
-		$updateResult = ExternalLineTable::update($row['ID'], array(
-			'NAME' => $name
-		));
+		$updateResult = ExternalLineTable::update($row['ID'], $updatingFields);
 
 		if(!$updateResult->isSuccess())
 		{
@@ -1387,19 +1412,27 @@ class Helper
 	{
 		$result = new Result();
 
-		$cursor = ExternalLineTable::getList(array(
-			'select' => array('NUMBER', 'NAME'),
-			'filter' => array(
-				'=REST_APP_ID' =>$restAppId
-			)
-		));
+		$query =
+			ExternalLineTable::query()
+				->setSelect([
+					'NUMBER',
+					'NAME',
+					'CRM_AUTO_CREATE',
+				])
+				->where('REST_APP_ID', $restAppId)
+		;
 
-		$data = array();
-		while ($row = $cursor->fetch())
+		$data = [];
+		foreach ($query->exec() as $row)
 		{
-			$data[] = $row;
+			$data[] = [
+				'NUMBER' => $row['NUMBER'],
+				'NAME' => $row['NAME'],
+				'CRM_AUTO_CREATE' => $row['CRM_AUTO_CREATE'],
+			];
 		}
 		$result->setData($data);
+
 		return $result;
 	}
 
@@ -1443,6 +1476,15 @@ class Helper
 			[],
 			Application::JOB_PRIORITY_LOW
 		);
+	}
+
+	public static function deleteFile($fileId, $userId): void
+	{
+		$oldRecord = File::loadById($fileId);
+		if ($oldRecord instanceof File)
+		{
+			$oldRecord->delete($userId);
+		}
 	}
 
 	/**

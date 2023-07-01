@@ -14,7 +14,9 @@ class RpaToolbarComponent extends Bitrix\Rpa\Components\Base
 
 		if(!empty($this->arResult['filter']) && is_array($this->arResult['filter']))
 		{
-			\Bitrix\UI\Toolbar\Facade\Toolbar::addFilter($this->arResult['filter']);
+			\Bitrix\UI\Toolbar\Facade\Toolbar::addFilter(
+				$this->arResult['filter'] + ['THEME' => \Bitrix\Main\UI\Filter\Theme::MUTED]
+			);
 		}
 
 		if(is_array($this->arResult['buttons']))

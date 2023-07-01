@@ -1,4 +1,7 @@
-(() => {
+/**
+ * @module layout/ui/entity-editor/control/field
+ */
+jn.define('layout/ui/entity-editor/control/field', (require, exports, module) => {
 
 	const {
 		FieldFactory,
@@ -10,15 +13,19 @@
 		UrlType,
 		AddressType,
 		MoneyType,
-	} = jn.require('layout/ui/fields');
+	} = require('layout/ui/fields');
 
-	const { Loc } = jn.require('loc');
-	const { FocusManager } = jn.require('layout/ui/fields/focus-manager');
-	const { isEqual, get } = jn.require('utils/object');
-	const { stringify } = jn.require('utils/string');
-	const { PlanRestriction } = jn.require('layout/ui/plan-restriction');
-	const { DuplicateTooltip } = jn.require('layout/ui/entity-editor/tooltip/duplicate');
-	const { useCallback } = jn.require('utils/function');
+	const { Loc } = require('loc');
+	const { FocusManager } = require('layout/ui/fields/focus-manager');
+	const { isEqual, get } = require('utils/object');
+	const { stringify } = require('utils/string');
+	const { PlanRestriction } = require('layout/ui/plan-restriction');
+	const { DuplicateTooltip } = require('layout/ui/entity-editor/tooltip/duplicate');
+	const { useCallback } = require('utils/function');
+	const { EntityEditorBaseControl } = require('layout/ui/entity-editor/control/base');
+	const { EntityEditorControlOptions } = require('layout/ui/entity-editor/editor-enum/control-options');
+	const { EntityEditorMode } = require('layout/ui/entity-editor/editor-enum/mode');
+	const { EntityEditorModeOptions } = require('layout/ui/entity-editor/editor-enum/mode-options');
 
 	const EDIT_MODE_FIELD_BACKGROUND_COLOR = '#f8fafb';
 
@@ -50,6 +57,7 @@
 			this.onFocusIn = this.onFocusIn.bind(this);
 			this.onFocusOut = this.onFocusOut.bind(this);
 			this.onFieldClick = this.handleFieldClick.bind(this);
+			this.renderAdditionalContent = this.renderAdditionalContent.bind(this);
 		}
 
 		get showBorder()
@@ -117,6 +125,7 @@
 				hasSolidBorderContainer: this.hasSolidBorderContainer(),
 				hasHiddenEmptyView: true,
 				tooltip: isFunction(tooltip) ? useCallback(tooltip) : null,
+				renderAdditionalContent: this.renderAdditionalContent,
 			};
 		}
 
@@ -129,7 +138,7 @@
 					fieldType: this.getId(),
 					settings: this.settings,
 					entityId: this.editor.getEntityId(),
-					entityType: this.editor.getEntityTypeName(),
+					entityTypeName: this.editor.getEntityTypeName(),
 				});
 			}
 
@@ -149,13 +158,13 @@
 		isReadOnly()
 		{
 			const readonly = !this.isEditable();
-			const showReadOnlyOnInitialize = this.isInitialReadOnly() && this.getMode() === BX.UI.EntityEditorMode.view;
+			const showReadOnlyOnInitialize = this.isInitialReadOnly() && this.getMode() === EntityEditorMode.view;
 			return readonly || showReadOnlyOnInitialize;
 		}
 
 		isVisible()
 		{
-			if (this.checkOptionFlag(BX.UI.EntityEditorControlOptions.showAlways))
+			if (this.checkOptionFlag(EntityEditorControlOptions.showAlways))
 			{
 				return true;
 			}
@@ -168,16 +177,26 @@
 			return this.isNeedToDisplay();
 		}
 
+		get marginBottom()
+		{
+			return 6;
+		}
+
 		renderField()
 		{
 			return View(
 				{
 					style: {
-						marginBottom: this.isVisible() ? 6 : 0,
+						marginBottom: this.isVisible() ? this.marginBottom : 0,
 					},
 				},
 				this.getFieldInstance(this.getValue()),
 			);
+		}
+
+		renderAdditionalContent()
+		{
+			return null;
 		}
 
 		render()
@@ -190,7 +209,7 @@
 					ref: (ref) => this.fieldViewRef = ref,
 					onClick: this.onFieldClick,
 				},
-				this.renderField() || this.renderDefaultContent(),
+				this.renderField(),
 			);
 		}
 
@@ -198,6 +217,8 @@
 		{
 			return {
 				...this.schemeElement.getData(),
+				entityId: this.editor.getEntityId(),
+				isNewEntity: this.isNewEntity(),
 				options: this.getOptions(),
 				type: this.type,
 				enableKeyboardHide: true,
@@ -232,7 +253,7 @@
 				return this.getSolidBorderContainerColor();
 			}
 
-			return this.parent.isInEditMode() ? '#e4e6e7' : '#ebebeb';
+			return this.parent.isInEditMode() ? '#e4e6e7' : '#edeef0';
 		}
 
 		getSolidBorderContainerColor()
@@ -286,13 +307,6 @@
 			{
 				promise.then(() => this.switchToSingleEditMode());
 			}
-		}
-
-		renderDefaultContent()
-		{
-			console.warn(`Field is not supported yet - ${String(this.type)} - ${String(this.getTitle())}.`, this.getValue());
-
-			return View();
 		}
 
 		isMultiple()
@@ -399,7 +413,7 @@
 		{
 			if (
 				this.isInEditMode()
-				|| this.checkOptionFlag(BX.UI.EntityEditorControlOptions.showAlways)
+				|| this.checkOptionFlag(EntityEditorControlOptions.showAlways)
 				|| this.schemeElement.isShownAlways
 			)
 			{
@@ -416,7 +430,7 @@
 
 		checkOptionFlag(flag)
 		{
-			return BX.UI.EntityEditorControlOptions.check(this.getOptionFlags(), flag);
+			return EntityEditorControlOptions.check(this.getOptionFlags(), flag);
 		}
 
 		getOptionFlags()
@@ -424,7 +438,7 @@
 			return (
 				this.schemeElement
 					? this.schemeElement.getOptionsFlags()
-					: BX.UI.EntityEditorControlOptions.none
+					: EntityEditorControlOptions.none
 			);
 		}
 
@@ -502,8 +516,8 @@
 
 			return this.editor.switchControlMode(
 				this,
-				BX.UI.EntityEditorMode.edit,
-				BX.UI.EntityEditorModeOptions.individual,
+				EntityEditorMode.edit,
+				EntityEditorModeOptions.individual,
 			);
 		}
 
@@ -529,8 +543,8 @@
 					let promise = Promise.resolve();
 
 					if (
-						mode === BX.UI.EntityEditorMode.edit
-						&& options === BX.UI.EntityEditorModeOptions.individual
+						mode === EntityEditorMode.edit
+						&& options === EntityEditorModeOptions.individual
 					)
 					{
 						promise = promise.then(() => this.focusField());
@@ -608,11 +622,12 @@
 			},
 			wrapper: {
 				borderBottomWidth: showBorder ? 0.5 : 0,
-				borderBottomColor: parentMode === BX.UI.EntityEditorMode.edit ? '#e4e6e7' : '#ebebeb',
+				borderBottomColor: parentMode === EntityEditorMode.edit ? '#e4e6e7' : '#edeef0',
 			},
 		}),
 	};
 
-	jnexport(EntityEditorField);
 	EntityEditorField.Styles = styles;
-})();
+
+	module.exports = { EntityEditorField };
+});

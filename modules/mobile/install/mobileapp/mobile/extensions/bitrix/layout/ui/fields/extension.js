@@ -100,10 +100,16 @@ jn.define('layout/ui/fields', (require, exports, module) => {
 		iblock_section: EntitySelectorType,
 
 		employee: UserType,
-		moneyPay: MoneyType,
 		client_light: ClientType,
 
 		crm_entity: CrmElementType,
+		crm_lead: CrmElementType,
+		crm_deal: CrmElementType,
+		crm_quote: CrmElementType,
+		crm_invoice: CrmElementType,
+		// these fields render with client_light type
+		// crm_contact: CrmElementType,
+		// crm_company: CrmElementType,
 	};
 
 	const WRAPPED_WITH_MULTIPLE_FIELD = [
@@ -140,6 +146,11 @@ jn.define('layout/ui/fields', (require, exports, module) => {
 
 		static create(type, data)
 		{
+			if (!FieldFactory.has(type))
+			{
+				return null;
+			}
+
 			const fieldType = this.checkForAlias(type);
 
 			data = { ...data, type: fieldType };
@@ -250,7 +261,7 @@ jn.define('layout/ui/fields', (require, exports, module) => {
 
 			console.warn('Type ' + type + ' not found. Trying to render the field as a StringInput.');
 
-			return StringField(data);
+			return null;
 		}
 	}
 

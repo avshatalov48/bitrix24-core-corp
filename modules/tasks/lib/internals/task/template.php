@@ -15,6 +15,8 @@ use Bitrix\Main\Entity\EnumField;
 Loc::loadMessages(__FILE__);
 
 use Bitrix\Main\ORM\Fields\Relations\OneToMany;
+use Bitrix\Main\ORM\Fields\Relations\Reference;
+use Bitrix\Main\ORM\Query\Join;
 use Bitrix\Tasks\Internals\Task\Template\TemplateDependenceTable;
 use Bitrix\Tasks\Internals\Task\Template\TemplateMemberTable;
 use Bitrix\Tasks\Internals\Task\Template\TemplateObject;
@@ -239,10 +241,16 @@ class TemplateTable extends Main\Entity\DataManager
 				'data_type' => 'Bitrix\Main\User',
 				'reference' => ['=this.RESPONSIBLE_ID' => 'ref.ID']
 			],
-
 			(new OneToMany("MEMBERS", TemplateMemberTable::class, "TEMPLATE")),
 			(new OneToMany("TAG_LIST", TemplateTagTable::class, "TEMPLATE")),
 			(new OneToMany("DEPENDENCIES", TemplateDependenceTable::class, "TEMPLATE")),
+			(
+				new Reference(
+					'SCENARIO',
+					\Bitrix\Tasks\Internals\Task\Template\ScenarioTable::class,
+					Join::on('this.ID', 'ref.TEMPLATE_ID')
+				)
+			)->configureJoinType('left'),
 		);
 	}
 	/**

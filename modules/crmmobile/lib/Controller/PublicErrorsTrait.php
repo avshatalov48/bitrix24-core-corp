@@ -21,6 +21,12 @@ trait PublicErrorsTrait
 			/** @var string|array $message */
 			$message = $error->getMessage();
 			$message = isset($message['message']) && is_string($message['message']) ? $message['message'] : $message;
+
+			if (!is_string($message) || $message === '')
+			{
+				continue;
+			}
+
 			$message = str_replace(['<br>', '<br/>', '<br />'], "\n", $message);
 			$message = strip_tags($message);
 

@@ -46,7 +46,7 @@ $arResult['PATH_TO_ROLE_ADD'] = CComponentEngine::MakePathFromTemplate($arParams
 	)
 );
 $arResult['ROLE'] = array();
-$obRes = CCrmRole::GetList();
+$obRes = CCrmRole::GetList(['ID' => 'DESC',], ['=IS_SYSTEM' => 'N']);
 while ($arRole = $obRes->Fetch())
 {
 	$arRole['PATH_TO_EDIT'] = CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_ROLE_EDIT'],
@@ -70,8 +70,11 @@ $arResult['RELATION_ENTITY'] = array();
 $obRes = CCrmRole::GetRelation();
 while ($arRelation = $obRes->Fetch())
 {
-	$arResult['RELATION'][$arRelation['RELATION']] = $arRelation;
-	$arResult['RELATION_ENTITY'][$arRelation['RELATION']] = true;
+	if (isset($arResult['ROLE'][$arRelation['ROLE_ID']]))
+	{
+		$arResult['RELATION'][$arRelation['RELATION']] = $arRelation;
+		$arResult['RELATION_ENTITY'][$arRelation['RELATION']] = true;
+	}
 }
 
 $CAccess = new CAccess();

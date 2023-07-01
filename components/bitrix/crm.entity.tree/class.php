@@ -154,13 +154,13 @@ class CrmEntityTreeComponent extends \CBitrixComponent
 			{
 				if (!isset($items[$row['ELEMENT_ID']]['FM']))
 				{
-					$items[$row['ELEMENT_ID']]['FM'] = array();
-					$items[$row['ELEMENT_ID']]['FM_VALUES'] = array();
+					$items[$row['ELEMENT_ID']]['FM'] = [];
+					$items[$row['ELEMENT_ID']]['FM_VALUES'] = [];
 				}
 				if (!isset($items[$row['ELEMENT_ID']]['FM'][$row['TYPE_ID']]))
 				{
-					$items[$row['ELEMENT_ID']]['FM'][$row['TYPE_ID']] = array();
-					$items[$row['ELEMENT_ID']]['FM_VALUES'][$row['TYPE_ID']] = array();
+					$items[$row['ELEMENT_ID']]['FM'][$row['TYPE_ID']] = [];
+					$items[$row['ELEMENT_ID']]['FM_VALUES'][$row['TYPE_ID']] = [];
 				}
 				$items[$row['ELEMENT_ID']]['FM'][$row['TYPE_ID']][] = $row;
 				$items[$row['ELEMENT_ID']]['FM_VALUES'][$row['TYPE_ID']][] = $row['VALUE'];
@@ -563,7 +563,10 @@ class CrmEntityTreeComponent extends \CBitrixComponent
 		$items = $this->loadElements($entityTypeId, $filter, $this->blockPage, $this->blockSize);
 		foreach ($items as $row)
 		{
-			$children[$row['ID']] = $row;
+			if (isset($row['ID']))
+			{
+				$children[$row['ID']] = $row;
+			}
 		}
 
 		if (($entityTypeId === \CCrmOwnerType::Contact || $entityTypeId === \CCrmOwnerType::Company) && !empty($children))
@@ -666,7 +669,7 @@ class CrmEntityTreeComponent extends \CBitrixComponent
 	 */
 	protected function hideDuplicate(array $entities, $parentTimestamp)
 	{
-		static $equalDuplicate = array();
+		static $equalDuplicate = [];
 
 		foreach ($entities as $type => &$entity)
 		{
@@ -828,7 +831,7 @@ class CrmEntityTreeComponent extends \CBitrixComponent
 		{
 			$item['URL'] = Container::getInstance()->getRouter()->getItemDetailUrl(
 				$entityTypeId,
-				$item['ID']
+				$item['ID'] ?? 0
 			);
 			$item = $this->replaceCommonFields($item, $entityTypeId);
 		}

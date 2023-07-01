@@ -67,7 +67,7 @@ if(count($result['userList']) < 50)
             'id' => $t['ID'],
             'name' => $userName,
             'link' => $link,
-            'icon' => \Bitrix\Tasks\Ui\Avatar::getPerson($userFields['PERSONAL_PHOTO'])
+            'icon' => \Bitrix\Tasks\Ui\Avatar::getPerson($userFields['PERSONAL_PHOTO'] ?? null)
         ];
 
     }

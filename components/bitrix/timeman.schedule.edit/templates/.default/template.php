@@ -106,7 +106,8 @@ if (\Bitrix\Main\Loader::includeModule('ui'))
 						</div>
 						<?
 						$reportCss = '';
-						$period = $scheduleForm->reportPeriod ?: reset(ScheduleFormHelper::getReportPeriodsValues());
+						$reportPeriodsValues = ScheduleFormHelper::getReportPeriodsValues();
+						$period = $scheduleForm->reportPeriod ?: reset($reportPeriodsValues);
 						if (!in_array($period, $arResult['WEEKS_PERIODS'], true))
 						{
 							$reportCss = 'timeman-hide';

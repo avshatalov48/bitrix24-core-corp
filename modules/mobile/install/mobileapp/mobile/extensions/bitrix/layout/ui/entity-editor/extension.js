@@ -1,9 +1,20 @@
-(() => {
-	const { EventEmitter } = jn.require('event-emitter');
-	const { useCallback } = jn.require('utils/function');
-	const { PureComponent } = jn.require('layout/pure-component');
-	const { EntityEditorControlFactory } = jn.require('layout/ui/entity-editor/control');
-	const { FadeView } = jn.require('animation/components/fade-view');
+/**
+ * @module layout/ui/entity-editor
+ */
+jn.define('layout/ui/entity-editor', (require, exports, module) => {
+
+	const { EventEmitter } = require('event-emitter');
+	const { useCallback } = require('utils/function');
+	const { PureComponent } = require('layout/pure-component');
+	const { FadeView } = require('animation/components/fade-view');
+	const { EntityEditorControlFactory } = require('layout/ui/entity-editor/control');
+	const { EntityEditorColumn } = require('layout/ui/entity-editor/control/column');
+	const { EntityEditorSection } = require('layout/ui/entity-editor/control/section');
+	const { EntityEditorField } = require('layout/ui/entity-editor/control/field');
+	const { EntityEditorBaseControl } = require('layout/ui/entity-editor/control/base');
+	const { EntityAsyncValidator } = require('layout/ui/entity-editor/validator/async');
+	const { EntityEditorControllerFactory } = require('layout/ui/entity-editor/controller');
+	const { EntityEditorMode } = require('layout/ui/entity-editor/editor-enum/mode');
 
 	/**
 	 * @class EntityEditor
@@ -84,21 +95,21 @@
 			this.enableVisibilityPolicy = BX.prop.getBoolean(this.settings, 'enableVisibilityPolicy', true);
 
 			this.enableModeToggle = false;
-			let initialMode = BX.UI.EntityEditorMode.intermediate;
+			let initialMode = EntityEditorMode.intermediate;
 
 			if (!this.readOnly)
 			{
 				this.enableModeToggle = BX.prop.getBoolean(this.settings, 'enableModeToggle', true);
-				initialMode = BX.UI.EntityEditorMode.parse(BX.prop.getString(this.settings, 'initialMode', ''));
+				initialMode = EntityEditorMode.parse(BX.prop.getString(this.settings, 'initialMode', ''));
 			}
 
 			if (this.isNew && !this.readOnly)
 			{
-				this.mode = BX.UI.EntityEditorMode.edit;
+				this.mode = EntityEditorMode.edit;
 			}
 			else
 			{
-				this.mode = initialMode !== BX.UI.EntityEditorMode.intermediate ? initialMode : BX.UI.EntityEditorMode.view;
+				this.mode = initialMode !== EntityEditorMode.intermediate ? initialMode : EntityEditorMode.view;
 			}
 
 			this.processControlModeChange(this);
@@ -128,7 +139,8 @@
 
 		render()
 		{
-			const { onScroll } = this.props;
+			const { onScroll, showBottomPadding } = this.props;
+
 			return ScrollView(
 				{
 					ref: (ref) => this.scrollViewRef = ref,
@@ -160,6 +172,7 @@
 							},
 							...this.renderControls(),
 							...this.initializeControllers(),
+							showBottomPadding && View({ style: { height: 80 } }),
 						);
 					},
 				}),
@@ -409,7 +422,7 @@
 			settings['model'] = this.model;
 			settings['editor'] = this;
 
-			return EntityEditorControlFactory({ ref, type, id, uid, settings, layout: this.layout });
+			return EntityEditorControlFactory.create({ ref, type, id, uid, settings, layout: this.layout });
 		}
 
 		createController(ref, id, type, uid, settings)
@@ -440,7 +453,7 @@
 		{
 			if (!this.isModeToggleEnabled())
 			{
-				if (control.getMode() === BX.UI.EntityEditorMode.edit)
+				if (control.getMode() === EntityEditorMode.edit)
 				{
 					return control.setState({ focus: true });
 				}
@@ -456,7 +469,7 @@
 		 */
 		processControlModeChange(control)
 		{
-			if (control.getMode() === BX.UI.EntityEditorMode.edit)
+			if (control.getMode() === EntityEditorMode.edit)
 			{
 				this.emitSetEditMode(control);
 			}
@@ -503,5 +516,5 @@
 		}
 	}
 
-	jnexport(EntityEditor);
-})();
+	module.exports = { EntityEditor };
+});

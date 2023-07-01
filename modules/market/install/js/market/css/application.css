@@ -1,0 +1,22 @@
+.market_delete_confirm {
+	margin: 10px;
+}
+
+.market_install_confirm {
+	margin: 20px;
+}
+
+.market_delete_confirm_text {
+	font-weight: bold;
+	margin-bottom: 8px;
+}
+
+.market_install_confirm_text {
+	margin-bottom: 8px;
+	text-align: center;
+}
+
+.market_delete_confirm_cb input {
+	vertical-align: middle;
+	margin: 0 2px 0 0;
+}

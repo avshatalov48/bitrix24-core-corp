@@ -17,8 +17,9 @@ $this->__component->tryParseArrayParameter($arParams["COLUMNS"], array(
 $columns = array();
 foreach($arParams["COLUMNS"] as $i => $column)
 {
-	if((string) $column == $column)
+	if(!is_array($column))
 	{
+		$column = (string)$column;
 		$columns[] = array(
 			'TITLE' => Loc::getMessage('TASKS_TWRS_SGRID_FIELD_'.$column),
 			'SOURCE' => $column,
@@ -34,7 +35,7 @@ $arResult['COLUMNS'] = $columns;
 $data = array();
 foreach($arParams['DATA'] as $i => $item)
 {
-	$responsible = $arParams['USERS'][$item['RESPONSIBLE_ID']];
+	$responsible = ($arParams['USERS'][$item['RESPONSIBLE_ID']] ?? null);
 	if (
 		array_key_exists('RESPONSIBLE_NAME', $item)
 		&&
@@ -52,7 +53,7 @@ foreach($arParams['DATA'] as $i => $item)
 		];
 	}
 
-	$arParams['DATA'][$i]['ENTITY_TYPE'] = $item['ENTITY_TYPE'] == 'TT' ? 'TT' : 'T';
+	$arParams['DATA'][$i]['ENTITY_TYPE'] = (($item['ENTITY_TYPE'] ?? null) === 'TT' ? 'TT' : 'T');
 	$arParams['DATA'][$i]['URL'] = str_replace('#id#', $item['ID'], $pathTask);
 	$arParams['DATA'][$i]['RESPONSIBLE_FORMATTED_NAME'] = \Bitrix\Tasks\Util\User::formatName($responsible, false, $arParams["NAME_TEMPLATE"]);
 	$arParams['DATA'][$i]['RESPONSIBLE_URL'] = CComponentEngine::makePathFromTemplate(

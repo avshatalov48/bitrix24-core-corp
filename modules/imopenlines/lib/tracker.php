@@ -2,94 +2,96 @@
 
 namespace Bitrix\ImOpenLines;
 
-use \Bitrix\Main,
-	\Bitrix\Main\Loader,
-	\Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Loader,
+	Bitrix\Main\Type\DateTime,
+	Bitrix\Main\Security\Random,
+	Bitrix\Main\Localization\Loc;
 
-use \Bitrix\Crm\Binding\LeadContactTable,
-	\Bitrix\Crm\Binding\ContactCompanyTable;
+use Bitrix\Crm\Binding\LeadContactTable,
+	Bitrix\Crm\Binding\ContactCompanyTable;
 
-use \Bitrix\ImOpenLines\Tools,
-	\Bitrix\ImOpenLines\Model\TrackerTable;
+use Bitrix\ImOpenLines\Model\TrackerTable;
+use Bitrix\ImConnector\Connector;
 
-Loc::loadMessages(__FILE__);
-Crm::loadMessages();
 
 class Tracker
 {
-	const FIELD_PHONE = 'PHONE';
-	const FIELD_EMAIL = 'EMAIL';
-	const FIELD_IM = 'IM';
-	const FIELD_ID_FM = 'FM';
+	public const
+		FIELD_PHONE = 'PHONE',
+		FIELD_EMAIL = 'EMAIL',
+		FIELD_IM = 'IM',
+		FIELD_ID_FM = 'FM',
 
-	const ACTION_CREATE = 'CREATE';
-	const ACTION_EXTEND = 'EXTEND';
+		ACTION_CREATE = 'CREATE',
+		ACTION_EXTEND = 'EXTEND',
+		ACTION_EXPECT = 'EXPECT',
 
-	const MESSAGE_ERROR_CREATE = 'CREATE';
-	const MESSAGE_ERROR_EXTEND = 'EXTEND';
+		MESSAGE_ERROR_CREATE = 'CREATE',
+		MESSAGE_ERROR_EXTEND = 'EXTEND'
+	;
 
-	const ERROR_IMOL_TRACKER_NO_REQUIRED_PARAMETERS = 'ERROR IMOPENLINES TRACKER NO REQUIRED PARAMETERS';
+	public const ERROR_IMOL_TRACKER_NO_REQUIRED_PARAMETERS = 'ERROR IMOPENLINES TRACKER NO REQUIRED PARAMETERS';
+
+	protected const EXPECTATION_LIVE_TIME = '30 days';
+
+	/** The prefix for trckerId. */
+	public const PREFIX = 'btrx';
+
 
 	/* @var Session $session */
 	protected $session;
 
 	/**
 	 * @param Session $session
-	 * @return bool
+	 * @return self
 	 */
-	public function setSession(Session $session)
+	public function setSession(Session $session): self
 	{
-		$result = false;
-
-		if (!empty($session) && $session instanceof Session)
-		{
-			$this->session = $session;
-
-			$result = true;
-		}
-
-		return $result;
+		$this->session = $session;
+		return $this;
 	}
 
 	/**
 	 * @return Session
 	 */
-	public function getSession()
+	public function getSession(): Session
 	{
 		return $this->session;
 	}
 
 	/**
-	 * @param $params
+	 * @param array $params
 	 * @return Result
-	 * @throws Main\ArgumentException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
-	public function message($params)
+	public function trackMessage(array $params): Result
 	{
 		$result = new Result();
 		$result->setResult(false);
 		$session = $this->getSession();
+
+		self::loadPhrases();
 
 		if (empty($session))
 		{
 			$result->addError(new Error(Loc::getMessage('IMOL_CRM_ERROR_NO_SESSION'), Crm::ERROR_IMOL_NO_SESSION, __METHOD__));
 		}
 
+		if (empty($params['ID']) || empty($params['TEXT']))
+		{
+			$result->addError(new Error(Loc::getMessage('IMOL_TRACKER_ERROR_NO_REQUIRED_PARAMETERS'), self::ERROR_IMOL_TRACKER_NO_REQUIRED_PARAMETERS, __METHOD__));
+		}
+
 		if (
-			$result->isSuccess() &&
-			Loader::includeModule('crm') &&
-			$session->getConfig('CRM') === 'Y' &&
-			$session->getConfig('CRM_CHAT_TRACKER') === 'Y'
+			$result->isSuccess()
+			&& Loader::includeModule('crm')
+			&& $session->getConfig('CRM') === 'Y'
+			&& $session->getConfig('CRM_CHAT_TRACKER') === 'Y'
 		)
 		{
-			$messageOriginId = intval($params['ID']);
+			$messageOriginId = (int)$params['ID'];
 			$messageText = self::prepareMessage($params['TEXT']);
 
-			if (isset($params['ID']) && empty($messageOriginId) || $messageText == '')
+			if ($messageOriginId == 0 || $messageText == '')
 			{
 				$result->addError(new Error(Loc::getMessage('IMOL_TRACKER_ERROR_NO_REQUIRED_PARAMETERS'), self::ERROR_IMOL_TRACKER_NO_REQUIRED_PARAMETERS, __METHOD__));
 			}
@@ -100,10 +102,10 @@ class Tracker
 				$phones = $entitiesSearch['PHONES'];
 				$emails = $entitiesSearch['EMAILS'];
 
-				if(!empty($phones) || !empty($emails))
+				if (!empty($phones) || !empty($emails))
 				{
 					$crmManager = new Crm($session);
-					if($crmManager->isLoaded())
+					if ($crmManager->isLoaded())
 					{
 						$crmFieldsManager = $crmManager->getFields();
 						if (!empty($phones))
@@ -116,9 +118,11 @@ class Tracker
 							$crmFieldsManager->setEmails($emails);
 						}
 
-						$crmManager->setModeCreate($session->getConfig('CRM_CREATE'));
+						$crmManager
+							->setModeCreate($session->getConfig('CRM_CREATE'))
+							->search()
+						;
 
-						$crmManager->search();
 						$crmFieldsManager->setTitle($session->getChat()->getData('TITLE'));
 
 						$crmManager->registrationChanges();
@@ -131,7 +135,235 @@ class Tracker
 		return $result;
 	}
 
-	//OLD
+	/**
+	 * Generates link to redirect into external messenger.
+	 *
+	 * @param int $lineId
+	 * @param string $connectorId
+	 * @param array{int, array{ENTITY_TYPE_ID: int, ENTITY_ID: int}} $crmEntities
+	 * @return array{web: string, mob: string}
+	 */
+	public function getMessengerLink(int $lineId, string $connectorId, array $crmEntities = []): array
+	{
+		Loader::includeModule('imconnector');
+
+		$trackId  = $this->getExpectationTrackId($crmEntities);
+
+		return Connector::getImMessengerUrl($lineId, $connectorId, $trackId);
+	}
+
+	/**
+	 * Generates trackId code for crm entities enum.
+	 *
+	 * @param array{int, array{ENTITY_TYPE_ID: int, ENTITY_ID: int}} $params
+	 * @return string
+	 */
+	public function getExpectationTrackId(array $params): string
+	{
+		if (!Loader::includeModule('crm'))
+		{
+			return '';
+		}
+
+		$filter = [
+			'=ACTION' => Tracker::ACTION_EXPECT,
+			'>DATE_CREATE' => (new DateTime())->add('-'.self::EXPECTATION_LIVE_TIME),
+		];
+
+		$add = [];
+		foreach ($params as $entity)
+		{
+			switch ($entity['ENTITY_TYPE_ID'])
+			{
+				case \CCrmOwnerType::Deal:
+					$add['CRM_DEAL_ID'] = $entity['ENTITY_ID'];
+					$filter['=CRM_DEAL_ID'] = $entity['ENTITY_ID'];
+					if (empty($add['CRM_ENTITY_ID']))
+					{
+						$add['CRM_ENTITY_TYPE'] = \CCrmOwnerType::DealName;
+						$add['CRM_ENTITY_ID'] = $entity['ENTITY_ID'];
+					}
+					break;
+				case \CCrmOwnerType::Lead:
+					$add['CRM_LEAD_ID'] = $entity['ENTITY_ID'];
+					$filter['=CRM_LEAD_ID'] = $entity['ENTITY_ID'];
+					if (empty($add['CRM_ENTITY_ID']))
+					{
+						$add['CRM_ENTITY_TYPE'] = \CCrmOwnerType::LeadName;
+						$add['CRM_ENTITY_ID'] = $entity['ENTITY_ID'];
+					}
+					break;
+				case \CCrmOwnerType::Contact:
+					$add['CRM_CONTACT_ID'] = $entity['ENTITY_ID'];
+					$filter['=CRM_CONTACT_ID'] = $entity['ENTITY_ID'];
+					break;
+				case \CCrmOwnerType::Company:
+					$add['CRM_COMPANY_ID'] = $entity['ENTITY_ID'];
+					$filter['=CRM_COMPANY_ID'] = $entity['ENTITY_ID'];
+					break;
+				default:
+					$add['CRM_ENTITY_TYPE'] = \CCrmOwnerType::ResolveID($entity['ENTITY_TYPE_ID']);
+					$add['CRM_ENTITY_ID'] = $entity['ENTITY_ID'];
+					$filter['=CRM_ENTITY_TYPE'] = $add['CRM_ENTITY_TYPE'];
+					$filter['=CRM_ENTITY_ID'] = $entity['ENTITY_ID'];
+			}
+		}
+
+		$findResult = TrackerTable::getList([
+			'select' => ['TRACK_ID'],
+			'filter' => $filter,
+			'order' => ['ID' => 'DESC'],
+			'limit' => 1,
+		]);
+		if (
+			($row = $findResult->fetch())
+			&& !empty($row['TRACK_ID'])
+		)
+		{
+			return $row['TRACK_ID'];
+		}
+
+		$trackId = self::PREFIX . Random::getString(10);
+
+		$add['ACTION'] = Tracker::ACTION_EXPECT;
+		$add['TRACK_ID'] = $trackId;
+
+		$addResult = TrackerTable::add($add);
+		if (!$addResult->isSuccess())
+		{
+			return '';
+		}
+
+		return $trackId;
+	}
+
+	/**
+	 * @param string $trackId
+	 * @return array|null
+	 */
+	public function findExpectationByTrackId(string $trackId): ?array
+	{
+		$filter = [
+			'=TRACK_ID' => $trackId,
+			'=ACTION' => Tracker::ACTION_EXPECT,
+			'>DATE_CREATE' => (new DateTime())->add('-'.self::EXPECTATION_LIVE_TIME),
+		];
+		$select = [];
+		foreach (TrackerTable::getMap() as $field => $fieldParam)
+		{
+			if (strpos($field, 'CRM_') === 0)
+			{
+				$select[] = $field;
+			}
+		}
+		$findResult = TrackerTable::getList([
+			'select' => $select,
+			'filter' => $filter,
+			'order' => ['ID' => 'DESC'],
+			'limit' => 1,
+		]);
+		if ($row = $findResult->fetch())
+		{
+			return $row;
+		}
+
+		return null;
+	}
+
+	/**
+	 * @param string $trackId
+	 * @param Chat $chat
+	 * @param Session $session
+	 * @return void
+	 */
+	public function bindExpectationToChat(string $trackId, Chat $chat, Session $session): void
+	{
+		if (!Loader::includeModule('crm'))
+		{
+			return;
+		}
+
+		$expectation = $this->findExpectationByTrackId($trackId);
+		if ($expectation)
+		{
+			$crmManager = new Crm($session);
+			$crmManager
+				->setSkipSearch()
+				->setSkipCreate()
+				->setSkipAutomationTriggerFirstMessage();
+
+			$selector = $crmManager->getEntityManageFacility()->getSelector();
+
+			$entityType = $expectation['CRM_ENTITY_TYPE'] ?? null;
+			$entityId = (int)($expectation['CRM_ENTITY_ID'] ?? 0);
+			$contactId = (int)($expectation['CRM_CONTACT_ID'] ?? 0);
+			$companyId = (int)($expectation['CRM_COMPANY_ID'] ?? 0);
+			$dealId = (int)($expectation['CRM_DEAL_ID'] ?? 0);
+			$leadId = (int)($expectation['CRM_LEAD_ID'] ?? 0);
+
+			$crmFields = [];
+			$updateSession = [];
+			if ($dealId)
+			{
+				$crmFields['DEAL'] = $dealId;
+				$updateSession['CRM_CREATE_DEAL'] = 'Y';
+				if (!$entityId)
+				{
+					$entityType = \CCrmOwnerType::DealName;
+					$entityId = $dealId;
+				}
+				$selector->setEntity(\CCrmOwnerType::Deal, $entityId);
+			}
+			if ($leadId)
+			{
+				$crmFields['LEAD'] = $leadId;
+				$updateSession['CRM_CREATE_LEAD'] = 'Y';
+				if (!$entityId)
+				{
+					$entityType = \CCrmOwnerType::LeadName;
+					$entityId = $leadId;
+				}
+				$selector->setEntity(\CCrmOwnerType::Lead, $leadId);
+			}
+			if ($contactId)
+			{
+				$crmFields['CONTACT'] = $contactId;
+				$updateSession['CRM_CREATE_CONTACT'] = 'Y';
+				$selector->setEntity(\CCrmOwnerType::Contact, $contactId);
+			}
+			if ($companyId)
+			{
+				$crmFields['COMPANY'] = $companyId;
+				$updateSession['CRM_CREATE_COMPANY'] = 'Y';
+				$selector->setEntity(\CCrmOwnerType::Company, $companyId);
+			}
+			if ($entityType && $entityId)
+			{
+				$crmFields['ENTITY_TYPE'] = $entityType;
+				$crmFields['ENTITY_ID'] = $entityId;
+				$selector->setEntity(\CCrmOwnerType::ResolveID($entityType), $entityId);
+			}
+
+			if ($crmFields)
+			{
+				$registerActivityResult = $crmManager->registrationChanges();
+				if ($registerActivityResult->isSuccess())
+				{
+					$crmManager->sendCrmImMessages();
+
+					$updateSession['CRM_ACTIVITY_ID'] = $registerActivityResult->getResult();
+					$session->updateCrmFlags($updateSession);
+
+					$crmFields['CRM'] = 'Y';
+					$chat->setCrmFlag($crmFields);
+
+					$crmManager->updateUserConnector();
+				}
+			}
+		}
+	}
+
+	//region OLD
 
 	/**
 	 * @deprecated
@@ -567,10 +799,10 @@ class Tracker
 			return false;
 		}
 
-		$map = Model\TrackerTable::getMap();
+		$map = Model\TrackerTable::getEntity();
 		foreach ($update as $key => $value)
 		{
-			if (!isset($map[$key]))
+			if (!$map->hasField($key))
 			{
 				unset($update[$key]);
 			}
@@ -626,30 +858,29 @@ class Tracker
 
 		return true;
 	}
-	//END OLD
+	//endregion
 
 	/**
 	 * @param $messageText
 	 * @return array
-	 * @throws Main\LoaderException
 	 */
-	protected static function checkMessage($messageText)
+	protected static function checkMessage($messageText): array
 	{
-		$result = Array(
-			'PHONES' => [],
-			'EMAILS' => [],
-		);
+		return [
 
-		//Phone
-		$result['PHONES'] = Tools\Phone::parseText($messageText);
+			//Phone
+			'PHONES' => Tools\Phone::parseText($messageText),
 
-		//Email
-		$result['EMAILS'] = Tools\Email::parseText($messageText);
-
-		return $result;
+			//Email
+			'EMAILS' => Tools\Email::parseText($messageText),
+		];
 	}
 
-	protected static function prepareMessage($text)
+	/**
+	 * @param string $text
+	 * @return string
+	 */
+	protected static function prepareMessage($text): string
 	{
 		$textParser = new \CTextParser();
 		$textParser->allow = array("HTML" => "N", "USER" => "N",  "ANCHOR" => "Y", "BIU" => "Y", "IMG" => "Y", "QUOTE" => "N", "CODE" => "N", "FONT" => "N", "LIST" => "N", "SMILES" => "N", "NL2BR" => "Y", "VIDEO" => "N", "TABLE" => "N", "CUT_ANCHOR" => "N", "ALIGN" => "N");
@@ -669,5 +900,11 @@ class Tracker
 		$text = preg_replace('#\-{54}.+?\-{54}#s', " ", str_replace(array("#BR#"), Array(" "), $text));
 
 		return $text;
+	}
+
+	public static function loadPhrases(): void
+	{
+		Loc::loadMessages(__FILE__);
+		Crm::loadMessages();
 	}
 }

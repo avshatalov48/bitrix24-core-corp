@@ -71,7 +71,8 @@ class Util
 		{
 			$c = ord($str[$i]);
 			$hash = (($hash << 5) - $hash) + $c;
-			$hash = $hash & $hash;
+			$hash = (int)$hash;
+			$hash &= $hash;
 		}
 		return $hash;
 	}

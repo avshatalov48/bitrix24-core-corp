@@ -1,7 +1,14 @@
-(() => {
+/**
+ * @module layout/ui/entity-editor/control/section
+ */
+jn.define('layout/ui/entity-editor/control/section', (require, exports, module) => {
 
-	const { transition } = jn.require('animation');
-	const { FocusManager } = jn.require('layout/ui/fields/focus-manager');
+	const { transition } = require('animation');
+	const { FocusManager } = require('layout/ui/fields/focus-manager');
+	const { ToggleButton } = require('layout/ui/entity-editor/control/section/toggle-button');
+	const { EntityEditorBaseControl } = require('layout/ui/entity-editor/control/base');
+	const { EntityEditorField } = require('layout/ui/entity-editor/control/field');
+	const { EntityEditorMode } = require('layout/ui/entity-editor/editor-enum/mode');
 
 	const VIEW_MODE_SECTION_BACKGROUND_COLOR = '#ffffff';
 	const EDIT_MODE_SECTION_BACKGROUND_COLOR = '#f8fafb';
@@ -125,7 +132,7 @@
 				ref: ref => this.toggleButton = ref,
 				onToggleClick: this.onToggleButtonClick,
 				isShown: this.enableToggling && !((this.isChanged || this.editor.isNew) && this.isInEditMode()),
-				text: this.state.mode === BX.UI.EntityEditorMode.view
+				text: this.state.mode === EntityEditorMode.view
 					? BX.message('ENTITY_EDITOR_SECTION_EDIT_TITLE')
 					: BX.message('ENTITY_EDITOR_SECTION_CANCEL_TITLE'),
 			});
@@ -150,9 +157,9 @@
 			});
 
 			const mode = (
-				this.state.mode === BX.UI.EntityEditorMode.view
-					? BX.UI.EntityEditorMode.edit
-					: BX.UI.EntityEditorMode.view
+				this.state.mode === EntityEditorMode.view
+					? EntityEditorMode.edit
+					: EntityEditorMode.view
 			);
 
 			FocusManager
@@ -400,7 +407,7 @@
 		},
 		sectionContainer: (mode) => ({
 			borderRadius: 12,
-			backgroundColor: mode === BX.UI.EntityEditorMode.edit
+			backgroundColor: mode === EntityEditorMode.edit
 				? EDIT_MODE_SECTION_BACKGROUND_COLOR
 				: VIEW_MODE_SECTION_BACKGROUND_COLOR,
 		}),
@@ -470,6 +477,7 @@
 		}),
 	};
 
-	jnexport(EntityEditorSection);
 	EntityEditorSection.Styles = styles;
-})();
+
+	module.exports = { EntityEditorSection };
+});

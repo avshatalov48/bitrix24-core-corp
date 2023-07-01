@@ -1,0 +1,5 @@
+<?php
+
+$MESS['M_CRM_DOCUMENT_SHARED_PHRASES_QR_CODE_CHANGE_DISABLED_DEFAULT_REASON'] = 'Управление QR-кодом отключено для этого документа';
+$MESS['M_CRM_DOCUMENT_SHARED_PHRASES_DESKTOP_VERSION'] = 'Веб-версия CRM';
+$MESS['M_CRM_DOCUMENT_SHARED_PHRASES_LOADING'] = 'Загрузка...';

@@ -2,23 +2,29 @@
 
 namespace Bitrix\Tasks\Helper;
 
-use Bitrix\Main;
 use Bitrix\Main\Context;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Filter\Options;
 use Bitrix\Tasks\Internals\Counter;
 use Bitrix\Tasks\Internals\SearchIndex;
+use Bitrix\Tasks\Item\Task;
 use Bitrix\Tasks\Scrum\Form\EntityForm;
 use Bitrix\Tasks\Scrum\Service\EpicService;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\FilterLimit;
 use Bitrix\Tasks\Util\User;
+use Bitrix\Tasks\Util\UserField;
 
 class Filter extends Common
 {
-	protected static $instance = null;
+	protected static $instance;
+	protected static array $options = [];
 
-	protected static $options = [];
+	private bool $isFilterDataSet = false;
+	private array $filterData = [];
 
+	/**
+	 * @return false|mixed|string|null
+	 */
 	public function getDefaultRoleId()
 	{
 		static $roleId = null;
@@ -35,24 +41,26 @@ class Filter extends Common
 			$filter = $filterOptions->getFilter();
 
 			$fState = $request->get('F_STATE');
-			if ($fState && !is_array($fState) && mb_substr($fState, 0, 2) == 'sR')
+			if ($fState && !is_array($fState) && mb_strpos($fState, 'sR') === 0)
 			{
-				$roleCode = $request->get('F_STATE');
-
-				switch ($roleCode)
+				switch ($fState)
 				{
-					case 'sR400': // i do
+					case 'sR400':
 						$roleId = Counter\Role::RESPONSIBLE;
 						break;
-					case 'sR800': // acc
+
+					case 'sR800':
 						$roleId = Counter\Role::ACCOMPLICE;
 						break;
-					case 'sRc00': // au
+
+					case 'sRc00':
 						$roleId = Counter\Role::AUDITOR;
 						break;
-					case 'sRg00': // orig
+
+					case 'sRg00':
 						$roleId = Counter\Role::ORIGINATOR;
 						break;
+
 					default: // all
 						$roleId = '';
 						break;
@@ -63,8 +71,10 @@ class Filter extends Common
 
 				if (
 					is_array($filterSettings['fields'])
-					&& (!array_key_exists('ROLEID', $filterSettings['fields'])
-						|| !$filterSettings['fields']['ROLEID'])
+					&& (
+						!array_key_exists('ROLEID', $filterSettings['fields'])
+						|| !$filterSettings['fields']['ROLEID']
+					)
 				)
 				{
 					if ($roleId)
@@ -82,7 +92,7 @@ class Filter extends Common
 			}
 			else
 			{
-				$roleId = $filter['ROLEID'];
+				$roleId = ($filter['ROLEID'] ?? null);
 			}
 		}
 
@@ -92,34 +102,26 @@ class Filter extends Common
 	/**
 	 * @return Options
 	 */
-	public function getOptions()
+	public function getOptions(): Options
 	{
 		$filterId = $this->getId();
 
 		if (empty(static::$options[$filterId]))
 		{
-			static::$options[$filterId] = new Options(
-				$filterId,
-				$this->getAllPresets(),
-			);
+			static::$options[$filterId] = new Options($filterId, $this->getAllPresets());
 		}
 
 		return static::$options[$filterId];
 	}
 
-	public function getAllPresets()
+	public function getAllPresets(): array
 	{
 		$presets = static::getPresets($this);
 
 		foreach (FilterRegistry::getList() as $name)
 		{
 			$registryId = FilterRegistry::getId($name, $this->getGroupId());
-
-			$options = new Options(
-				$registryId,
-				static::getPresets($this),
-			);
-
+			$options = new Options($registryId, static::getPresets($this));
 			$presets = array_merge($presets, $options->getOptions()['filters']);
 		}
 
@@ -130,7 +132,7 @@ class Filter extends Common
 	 * @param Common|null $filterInstance
 	 * @return array[]
 	 */
-	public static function getPresets(Common $filterInstance = null)
+	public static function getPresets(Common $filterInstance = null): array
 	{
 		$presets = [];
 
@@ -154,9 +156,9 @@ class Filter extends Common
 						\CTasks::STATE_IN_PROGRESS,
 						\CTasks::STATE_SUPPOSEDLY_COMPLETED,
 						\CTasks::STATE_DEFERRED,
-						EntityForm::STATE_COMPLETED_IN_ACTIVE_SPRINT
+						EntityForm::STATE_COMPLETED_IN_ACTIVE_SPRINT,
 					],
-					'STORY_POINTS' => ''
+					'STORY_POINTS' => '',
 				],
 				'sort' => 1,
 			];
@@ -171,10 +173,9 @@ class Filter extends Common
 					\CTasks::STATE_IN_PROGRESS,
 					\CTasks::STATE_SUPPOSEDLY_COMPLETED,
 					\CTasks::STATE_DEFERRED,
-				]
+				],
 			],
 		];
-
 		if ($isScrumProject)
 		{
 			$presets['filter_tasks_in_progress']['sort'] = 2;
@@ -184,12 +185,9 @@ class Filter extends Common
 			'name' => Loc::getMessage('TASKS_PRESET_COMPLETED'),
 			'default' => false,
 			'fields' => [
-				'STATUS' => [
-					\CTasks::STATE_COMPLETED
-				]
-			]
+				'STATUS' => [\CTasks::STATE_COMPLETED],
+			],
 		];
-
 		if ($isScrumProject)
 		{
 			$presets['filter_tasks_completed']['sort'] = 3;
@@ -200,10 +198,8 @@ class Filter extends Common
 			$presets['filter_tasks_my'] = [
 				'name' => Loc::getMessage('TASKS_PRESET_MY'),
 				'default' => false,
-				'fields' => [
-					'RESPONSIBLE_ID' => $userId
-				],
-				'sort' => 4
+				'fields' => ['RESPONSIBLE_ID' => $userId],
+				'sort' => 4,
 			];
 		}
 
@@ -213,10 +209,8 @@ class Filter extends Common
 				'name' => Loc::getMessage('TASKS_PRESET_DEFERRED'),
 				'default' => false,
 				'fields' => [
-					'STATUS' => [
-						\CTasks::STATE_DEFERRED
-					]
-				]
+					'STATUS' => [\CTasks::STATE_DEFERRED],
+				],
 			];
 			$presets['filter_tasks_expire'] = [
 				'name' => Loc::getMessage('TASKS_PRESET_EXPIRED'),
@@ -224,10 +218,10 @@ class Filter extends Common
 				'fields' => [
 					'STATUS' => [
 						\CTasks::STATE_PENDING,
-						\CTasks::STATE_IN_PROGRESS
+						\CTasks::STATE_IN_PROGRESS,
 					],
-					'PROBLEM' => \CTaskListState::VIEW_TASK_CATEGORY_EXPIRED
-				]
+					'PROBLEM' => \CTaskListState::VIEW_TASK_CATEGORY_EXPIRED,
+				],
 			];
 			$presets['filter_tasks_expire_candidate'] = [
 				'name' => Loc::getMessage('TASKS_PRESET_EXPIRED_CAND'),
@@ -235,10 +229,10 @@ class Filter extends Common
 				'fields' => [
 					'STATUS' => [
 						\CTasks::STATE_PENDING,
-						\CTasks::STATE_IN_PROGRESS
+						\CTasks::STATE_IN_PROGRESS,
 					],
-					'PROBLEM' => \CTaskListState::VIEW_TASK_CATEGORY_EXPIRED_CANDIDATES
-				]
+					'PROBLEM' => \CTaskListState::VIEW_TASK_CATEGORY_EXPIRED_CANDIDATES,
+				],
 			];
 		}
 
@@ -254,17 +248,6 @@ class Filter extends Common
 			$this->processMainFilter(),
 			$this->processUFFilter()
 		);
-		$filter = $this->postProcess($filter);
-
-		return $filter;
-	}
-
-	/**
-	 * @param array $filter
-	 * @return array
-	 */
-	private function postProcess(array $filter): array
-	{
 		$filter['CHECK_PERMISSIONS'] = 'Y';
 		$filter['ONLY_ROOT_TASKS'] = 'Y';
 
@@ -282,7 +265,7 @@ class Filter extends Common
 		$filters = $this->getFilters();
 		foreach ($filters as $fieldId => $filterRow)
 		{
-			if (!array_key_exists('uf', $filterRow) || $filterRow['uf'] != true)
+			if (!array_key_exists('uf', $filterRow) || !$filterRow['uf'])
 			{
 				continue;
 			}
@@ -330,7 +313,7 @@ class Filter extends Common
 					break;
 
 				case 'dest_selector':
-					$data = $this->getDestSelectorFilterFieldData($filterRow);
+					$data = $this->getSelectorFilterFieldData($filterRow);
 					if ($data)
 					{
 						$ufFilter = array_merge($ufFilter, $data);
@@ -355,23 +338,21 @@ class Filter extends Common
 		return $ufFilter;
 	}
 
-	private function processMainFilter()
+	private function processMainFilter(): array
 	{
 		$filter = [];
-		$filters = $this->getFilters();
 
 		$this->getDefaultRoleId();
-		$groupId = $this->getGroupId();
-		$prefix = '::SUBFILTER-';
 
+		$groupId = (int)$this->getGroupId();
 		if ($groupId > 0)
 		{
 			$filter['GROUP_ID'] = $groupId;
 		}
-
-		if ($this->isFilterEmpty() && $groupId == 0)
+		else if ($this->isFilterEmpty())
 		{
-			$filter['::SUBFILTER-ROLEID']['MEMBER'] = $this->getUserId(); //TODO
+			$filter['::SUBFILTER-ROLEID']['MEMBER'] = $this->getUserId();
+
 			return $filter;
 		}
 
@@ -384,6 +365,7 @@ class Filter extends Common
 			}
 		}
 
+		$filters = $this->getFilters();
 		foreach ($filters as $fieldId => $filterRow)
 		{
 			if (array_key_exists('uf', $filterRow))
@@ -395,8 +377,7 @@ class Filter extends Common
 			switch ($filterRow['type'])
 			{
 				default:
-					$field = $this->getFilterFieldData($filterRow['id']);
-					if ($field)
+					if ($field = $this->getFilterFieldData($filterRow['id']))
 					{
 						$rawFilter[$filterRow['id']] = $field;
 					}
@@ -415,33 +396,21 @@ class Filter extends Common
 					break;
 
 				case 'dest_selector':
-					$rawFilter = $this->getDestSelectorFilterFieldData($filterRow);
-					break;
-
 				case 'entity_selector':
-					$rawFilter = $this->getEntitySelectorFilterFieldData($filterRow);
+					$rawFilter = $this->getSelectorFilterFieldData($filterRow);
 					break;
 
 				case 'string':
-					$field = $this->getFilterFieldData($filterRow['id']);
-					if ($field)
+					if ($field = $this->getFilterFieldData($filterRow['id']))
 					{
-						$rawFilter['%' . $filterRow['id']] = $field;
-					}
-					break;
-
-				case 'fulltext':
-					$field = $this->getFilterFieldData($filterRow['id']);
-					if ($field)
-					{
-						$rawFilter[$filterRow['id']] = $field;
+						$rawFilter["%{$filterRow['id']}"] = $field;
 					}
 					break;
 			}
 
 			if ($rawFilter)
 			{
-				$filter[$prefix . $fieldId] = $rawFilter;
+				$filter["::SUBFILTER-{$fieldId}"] = $rawFilter;
 			}
 		}
 
@@ -453,10 +422,6 @@ class Filter extends Common
 	/**
 	 * @param array $filter
 	 * @return array
-	 * @throws Main\ArgumentException
-	 * @throws Main\ArgumentNullException
-	 * @throws Main\ArgumentOutOfRangeException
-	 * @throws Main\SystemException
 	 */
 	private function postProcessMainFilter(array $filter): array
 	{
@@ -483,8 +448,10 @@ class Filter extends Common
 		}
 
 		if (
-			isset($filter[$statusKey])
-			&& (int) $this->getUserId() === (int) User::getId()
+			isset($filter[$statusKey]['REAL_STATUS'])
+			&& !empty($filter[$statusKey]['REAL_STATUS'])
+			&& !in_array(\CTasks::STATE_COMPLETED, $filter[$statusKey]['REAL_STATUS'])
+			&& (int)$this->getUserId() === User::getId()
 		)
 		{
 			$filter[$statusKey] = [
@@ -492,7 +459,7 @@ class Filter extends Common
 				'::SUBFILTER-1' => $filter[$statusKey],
 				'::SUBFILTER-2' => [
 					'WITH_COMMENT_COUNTERS' => 'Y',
-					'REAL_STATUS' => \CTasks::STATE_COMPLETED
+					'REAL_STATUS' => \CTasks::STATE_COMPLETED,
 				],
 			];
 		}
@@ -503,9 +470,9 @@ class Filter extends Common
 	/**
 	 * @return array
 	 */
-	public function getFilters()
+	public function getFilters(): array
 	{
-		static $filters = array();
+		static $filters = [];
 
 		if (empty($filters))
 		{
@@ -518,20 +485,20 @@ class Filter extends Common
 	/**
 	 * @return array
 	 */
-	private function getFilterRaw()
+	private function getFilterRaw(): array
 	{
+		$filter = [];
 		$fields = $this->getAvailableFields();
-		$filter = array();
 
 		$isScrumProject = $this->isScrumProject();
 
 		if (in_array('CREATED_BY', $fields))
 		{
-			$filter['CREATED_BY'] = array(
+			$filter['CREATED_BY'] = [
 				'id' => 'CREATED_BY',
 				'name' => Loc::getMessage('TASKS_HELPER_FLT_CREATED_BY'),
 				'type' => 'dest_selector',
-				'params' => array (
+				'params' => [
 					'apiVersion' => '3',
 					'context' => 'TASKS_FILTER_CREATED_BY',
 					'multiple' => 'Y',
@@ -543,17 +510,17 @@ class Filter extends Common
 					'departmentSelectDisable' => 'Y',
 					'isNumeric' => 'Y',
 					'prefix' => 'U',
-				)
-			);
+				],
+			];
 		}
 
 		if (in_array('RESPONSIBLE_ID', $fields))
 		{
-			$filter['RESPONSIBLE_ID'] = array(
+			$filter['RESPONSIBLE_ID'] = [
 				'id' => 'RESPONSIBLE_ID',
 				'name' => Loc::getMessage('TASKS_HELPER_FLT_RESPONSIBLE_ID'),
 				'type' => 'dest_selector',
-				'params' => array (
+				'params' => [
 					'apiVersion' => '3',
 					'context' => 'TASKS_FILTER_RESPONSIBLE_ID',
 					'multiple' => 'Y',
@@ -565,9 +532,9 @@ class Filter extends Common
 					'departmentSelectDisable' => 'Y',
 					'isNumeric' => 'Y',
 					'prefix' => 'U',
-				),
-				'default' => $isScrumProject
-			);
+				],
+				'default' => $isScrumProject,
+			];
 		}
 
 		if (in_array('STATUS', $fields))
@@ -581,34 +548,32 @@ class Filter extends Common
 				EntityForm::STATE_COMPLETED_IN_ACTIVE_SPRINT => Loc::getMessage('TASKS_STATUS_8'),
 			];
 
-			$filter['STATUS'] = array(
+			$filter['STATUS'] = [
 				'id' => 'STATUS',
 				'name' => Loc::getMessage('TASKS_FILTER_STATUS'),
 				'type' => 'list',
-				'params' => array(
-					'multiple' => 'Y'
-				),
+				'params' => ['multiple' => 'Y'],
 				'items' => $statusItems,
-				'default' => $isScrumProject
-			);
+				'default' => $isScrumProject,
+			];
 		}
 
 		if (in_array('DEADLINE', $fields))
 		{
-			$filter['DEADLINE'] = array(
+			$filter['DEADLINE'] = [
 				'id' => 'DEADLINE',
 				'name' => Loc::getMessage('TASKS_FILTER_DEADLINE'),
-				'type' => 'date'
-			);
+				'type' => 'date',
+			];
 		}
 
 		if (in_array('GROUP_ID', $fields))
 		{
-			$filter['GROUP_ID'] = array(
+			$filter['GROUP_ID'] = [
 				'id' => 'GROUP_ID',
 				'name' => Loc::getMessage('TASKS_HELPER_FLT_GROUP'),
 				'type' => 'dest_selector',
-				'params' => array (
+				'params' => [
 					'context' => 'TASKS_FILTER_GROUP_ID',
 					'multiple' => 'Y',
 					'contextCode' => 'SG',
@@ -619,151 +584,146 @@ class Filter extends Common
 					'allowAddSocNetGroup' => 'N',
 					'isNumeric' => 'Y',
 					'prefix' => 'SG',
-				)
-			);
+				],
+			];
 		}
 
 		if (in_array('PROBLEM', $fields))
 		{
-			$filter['PROBLEM'] = array(
+			$filter['PROBLEM'] = [
 				'id' => 'PROBLEM',
 				'name' => Loc::getMessage('TASKS_FILTER_PROBLEM'),
 				'type' => 'list',
-				'items' => $isScrumProject
-					? $this->getAllowedTaskScrumCategories()
-					: $this->getAllowedTaskCategories(),
-			);
+				'items' => ($isScrumProject ? $this->getAllowedTaskScrumCategories() : $this->getAllowedTaskCategories()),
+			];
 		}
 
 		if (in_array('PARAMS', $fields))
 		{
-			$filter['PARAMS'] = array(
+			$filter['PARAMS'] = [
 				'id' => 'PARAMS',
 				'name' => Loc::getMessage('TASKS_FILTER_PARAMS'),
 				'type' => 'list',
-				'params' => array(
-					'multiple' => 'Y'
-				),
-				'items' => array(
+				'params' => ['multiple' => 'Y'],
+				'items' => [
 					'MARKED' => Loc::getMessage('TASKS_FILTER_PARAMS_MARKED'),
 					'IN_REPORT' => Loc::getMessage('TASKS_FILTER_PARAMS_IN_REPORT'),
 					'OVERDUED' => Loc::getMessage('TASKS_FILTER_PARAMS_OVERDUED'),
-					//					'SUBORDINATE'=>Loc::getMessage('TASKS_FILTER_PARAMS_SUBORDINATE'),
 					'FAVORITE' => Loc::getMessage('TASKS_FILTER_PARAMS_FAVORITE'),
-					'ANY_TASK' => Loc::getMessage('TASKS_FILTER_PARAMS_ANY_TASK')
-				)
-			);
+					'ANY_TASK' => Loc::getMessage('TASKS_FILTER_PARAMS_ANY_TASK'),
+				],
+			];
 		}
 
 		if (in_array('ID', $fields))
 		{
-			$filter['ID'] = array(
+			$filter['ID'] = [
 				'id' => 'ID',
 				'name' => Loc::getMessage('TASKS_FILTER_ID'),
-				'type' => 'number'
-			);
+				'type' => 'number',
+			];
 		}
 		if (in_array('TITLE', $fields))
 		{
-			$filter['TITLE'] = array(
+			$filter['TITLE'] = [
 				'id' => 'TITLE',
 				'name' => Loc::getMessage('TASKS_FILTER_TITLE'),
-				'type' => 'string'
-			);
+				'type' => 'string',
+			];
 		}
 		if (in_array('PRIORITY', $fields))
 		{
-			$filter['PRIORITY'] = array(
+			$filter['PRIORITY'] = [
 				'id' => 'PRIORITY',
 				'name' => Loc::getMessage('TASKS_PRIORITY'),
 				'type' => 'list',
-				'items' => array(
+				'items' => [
 					1 => Loc::getMessage('TASKS_PRIORITY_1'),
 					2 => Loc::getMessage('TASKS_PRIORITY_2'),
-				)
-			);
+				],
+			];
 		}
 		if (in_array('MARK', $fields))
 		{
-			$filter['MARK'] = array(
+			$filter['MARK'] = [
 				'id' => 'MARK',
-				'name' => Loc::getMessage('TASKS_FILTER_MARK'),
+				'name' => Loc::getMessage('TASKS_FILTER_MARK_MSGVER_1'),
 				'type' => 'list',
-				'items' => array(
+				'items' => [
 					'P' => Loc::getMessage('TASKS_MARK_P'),
-					'N' => Loc::getMessage('TASKS_MARK_N')
-				)
-			);
+					'N' => Loc::getMessage('TASKS_MARK_N'),
+				],
+			];
 		}
 		if (in_array('ALLOW_TIME_TRACKING', $fields))
 		{
-			$filter['ALLOW_TIME_TRACKING'] = array(
+			$filter['ALLOW_TIME_TRACKING'] = [
 				'id' => 'ALLOW_TIME_TRACKING',
 				'name' => Loc::getMessage('TASKS_FILTER_ALLOW_TIME_TRACKING'),
 				'type' => 'list',
-				'items' => array(
+				'items' => [
 					'Y' => Loc::getMessage('TASKS_ALLOW_TIME_TRACKING_Y'),
 					'N' => Loc::getMessage('TASKS_ALLOW_TIME_TRACKING_N'),
-				)
-			);
+				],
+			];
 		}
 		if (in_array('CREATED_DATE', $fields))
 		{
-			$filter['CREATED_DATE'] = array(
+			$filter['CREATED_DATE'] = [
 				'id' => 'CREATED_DATE',
 				'name' => Loc::getMessage('TASKS_FILTER_CREATED_DATE'),
-				'type' => 'date'
-			);
+				'type' => 'date',
+			];
 		}
 		if (in_array('CLOSED_DATE', $fields))
 		{
-			$filter['CLOSED_DATE'] = array(
+			$filter['CLOSED_DATE'] = [
 				'id' => 'CLOSED_DATE',
 				'name' => Loc::getMessage('TASKS_FILTER_CLOSED_DATE'),
-				'type' => 'date'
-			);
+				'type' => 'date',
+			];
 		}
 		if (in_array('DATE_START', $fields))
 		{
-			$filter['DATE_START'] = array(
+			$filter['DATE_START'] = [
 				'id' => 'DATE_START',
 				'name' => Loc::getMessage('TASKS_FILTER_DATE_START'),
-				'type' => 'date'
-			);
+				'type' => 'date',
+			];
 		}
 		if (in_array('START_DATE_PLAN', $fields))
 		{
-			$filter['START_DATE_PLAN'] = array(
+			$filter['START_DATE_PLAN'] = [
 				'id' => 'START_DATE_PLAN',
 				'name' => Loc::getMessage('TASKS_FILTER_START_DATE_PLAN'),
-				'type' => 'date'
-			);
+				'type' => 'date',
+			];
 		}
 		if (in_array('END_DATE_PLAN', $fields))
 		{
-			$filter['END_DATE_PLAN'] = array(
+			$filter['END_DATE_PLAN'] = [
 				'id' => 'END_DATE_PLAN',
 				'name' => Loc::getMessage('TASKS_FILTER_END_DATE_PLAN'),
-				'type' => 'date'
-			);
+				'type' => 'date',
+			];
 		}
 
 		if (in_array('ACTIVE', $fields))
 		{
-			$filter['ACTIVE'] = array(
+			$filter['ACTIVE'] = [
 				'id' => 'ACTIVE',
 				'name' => Loc::getMessage('TASKS_FILTER_ACTIVE'),
-				'type' => 'date'
-			);
+				'type' => 'date',
+			];
 		}
 
 		if (in_array('ACCOMPLICE', $fields))
 		{
-			$filter['ACCOMPLICE'] = array(
+			$filter['ACCOMPLICE'] = [
 				'id' => 'ACCOMPLICE',
 				'name' => Loc::getMessage('TASKS_HELPER_FLT_ACCOMPLICES'),
 				'type' => 'dest_selector',
-				'params' => array (
+				'params' => [
 					'apiVersion' => '3',
 					'context' => 'TASKS_FILTER_ACCOMPLICE',
 					'multiple' => 'Y',
@@ -775,16 +735,16 @@ class Filter extends Common
 					'departmentSelectDisable' => 'Y',
 					'isNumeric' => 'Y',
 					'prefix' => 'U',
-				)
-			);
+				],
+			];
 		}
 		if (in_array('AUDITOR', $fields))
 		{
-			$filter['AUDITOR'] = array(
+			$filter['AUDITOR'] = [
 				'id' => 'AUDITOR',
 				'name' => Loc::getMessage('TASKS_HELPER_FLT_AUDITOR'),
 				'type' => 'dest_selector',
-				'params' => array (
+				'params' => [
 					'apiVersion' => '3',
 					'context' => 'TASKS_FILTER_AUDITOR',
 					'multiple' => 'Y',
@@ -796,8 +756,8 @@ class Filter extends Common
 					'departmentSelectDisable' => 'Y',
 					'isNumeric' => 'Y',
 					'prefix' => 'U',
-				)
-			);
+				],
+			];
 		}
 
 		if (in_array('TAG', $fields))
@@ -810,15 +770,15 @@ class Filter extends Common
 				'params' => [
 					'multiple' => 'Y',
 					'dialogOptions' => [
-						'context' => $isScrumProject
-							? 'TASKS_SCRUM_TAG_' . $this->getGroupId()
-							: 'TASKS_TAG'
-						,
+						'context' => ($isScrumProject ? "TASKS_SCRUM_TAG_{$this->getGroupId()}" : 'TASKS_TAG'),
 						'entities' => [
 							[
 								'id' => 'task-tag',
 								'options' => $isScrumProject
-									? ['groupId' => $this->getGroupId(), 'filter' => true]
+									? [
+										'groupId' => $this->getGroupId(),
+										'filter' => true,
+									]
 									: ['filter' => true]
 								,
 							],
@@ -832,7 +792,7 @@ class Filter extends Common
 
 		if ($isScrumProject)
 		{
-			$filter['STORY_POINTS'] = array(
+			$filter['STORY_POINTS'] = [
 				'id' => 'STORY_POINTS',
 				'name' => Loc::getMessage('TASKS_FILTER_STORY_POINTS'),
 				'type' => 'list',
@@ -840,126 +800,98 @@ class Filter extends Common
 					'Y' => Loc::getMessage('TASKS_FILTER_STORY_POINTS_Y'),
 					'N' => Loc::getMessage('TASKS_FILTER_STORY_POINTS_N'),
 				],
-				'default' => true
-			);
+				'default' => true,
+			];
 
-			$filter['EPIC'] = array(
+			$filter['EPIC'] = [
 				'id' => 'EPIC',
 				'name' => Loc::getMessage('TASKS_FILTER_EPIC'),
 				'type' => 'list',
 				'items' => $this->getEpics(),
-				'default' => true
-			);
+				'default' => true,
+			];
 		}
 
 		if (in_array('ROLEID', $fields))
 		{
-			$items = array();
+			$items = [];
 			foreach (Counter\Role::getRoles() as $roleCode => $roleName)
 			{
 				$items[$roleCode] = $roleName['TITLE'];
 			}
-			$filter['ROLEID'] = array(
+			$filter['ROLEID'] = [
 				'id' => 'ROLEID',
 				'name' => Loc::getMessage('TASKS_FILTER_ROLEID'),
 				'type' => 'list',
 				'default' => !$isScrumProject,
-				'items' => $items
-			);
+				'items' => $items,
+			];
 		}
 
 		if (in_array('COMMENT', $fields))
 		{
-			$filter['COMMENT_SEARCH_INDEX'] = array(
+			$filter['COMMENT_SEARCH_INDEX'] = [
 				'id' => 'COMMENT_SEARCH_INDEX',
 				'name' => Loc::getMessage('TASKS_FILTER_COMMENT'),
-				'type' => 'fulltext'
-			);
+				'type' => 'fulltext',
+			];
 		}
 
 		if (in_array('CREATED_DATE', $fields))
 		{
-			$filter['ACTIVITY_DATE'] = array(
+			$filter['ACTIVITY_DATE'] = [
 				'id' => 'ACTIVITY_DATE',
 				'name' => Loc::getMessage('TASKS_FILTER_ACTIVITY_DATE'),
-				'type' => 'date'
-			);
+				'type' => 'date',
+			];
 		}
 
-		$uf = $this->getUF();
-		if (!empty($uf))
+		if (!empty($uf = $this->getUF()))
 		{
 			foreach ($uf as $item)
 			{
 				$type = $item['USER_TYPE_ID'];
-				$available = ['datetime', 'string', 'double', 'boolean', 'crm'];
-				if (!in_array($type, $available))
+				if ($type === 'crm')
+				{
+					continue;
+				}
+
+				$availableTypes = ['datetime', 'string', 'double', 'boolean'];
+				if (!in_array($type, $availableTypes, true))
 				{
 					$type = 'string';
 				}
 
-				if ($type == 'datetime')
+				if ($type === 'datetime')
 				{
 					$type = 'date';
 				}
-
-				if ($type == 'double')
+				else if ($type === 'double')
 				{
 					$type = 'number';
 				}
 
-				if ($type == 'boolean')
+				if ($type === 'boolean')
 				{
-					$filter[$item['FIELD_NAME']] = array(
+					$filter[$item['FIELD_NAME']] = [
 						'id' => $item['FIELD_NAME'],
 						'name' => $item['EDIT_FORM_LABEL'],
 						'type' => 'list',
 						'items' => [
 							1 => GetMessage('TASKS_FILTER_NO'),
-							2 => GetMessage('TASKS_FILTER_YES')
+							2 => GetMessage('TASKS_FILTER_YES'),
 						],
-						'uf' => true
-					);
-				}
-				else if ($type == 'crm')
-				{
-					continue;
-					$supportedEntityTypeNames = array(
-						\CCrmOwnerType::LeadName,
-						\CCrmOwnerType::DealName,
-						\CCrmOwnerType::ContactName,
-						\CCrmOwnerType::CompanyName
-					);
-					$entityTypeNames = [];
-					foreach ($supportedEntityTypeNames as $entityTypeName)
-					{
-						$entityTypeNames[] = $entityTypeName;
-					}
-
-					$filter[$item['FIELD_NAME']] = array(
-						'id' => $item['FIELD_NAME'],
-						'name' => $item['EDIT_FORM_LABEL'],
-						'type' => 'custom_entity',
-						'params' => array('multiple' => 'Y'),
-						'selector' => array(
-							'TYPE' => 'companies',
-							'DATA' => array(
-								'ID' => mb_strtolower($item['FIELD_NAME']),
-								'FIELD_ID' => $item['FIELD_NAME'],
-								'ENTITY_TYPE_NAMES' => $entityTypeNames,
-								'IS_MULTIPLE' => 'Y'
-							)
-						)
-					);
+						'uf' => true,
+					];
 				}
 				else
 				{
-					$filter[$item['FIELD_NAME']] = array(
+					$filter[$item['FIELD_NAME']] = [
 						'id' => $item['FIELD_NAME'],
 						'name' => $item['EDIT_FORM_LABEL'],
 						'type' => $type,
-						'uf' => true
-					);
+						'uf' => true,
+					];
 				}
 			}
 		}
@@ -971,9 +903,9 @@ class Filter extends Common
 	 * Get available fields in filter.
 	 * @return array
 	 */
-	public function getAvailableFields()
+	public function getAvailableFields(): array
 	{
-		$fields = array(
+		$fields = [
 			'ID',
 			'TITLE',
 			'STATUS',
@@ -996,10 +928,10 @@ class Filter extends Common
 			'ACTIVE',
 			'ROLEID',
 			'COMMENT',
-			'ACTIVITY_DATE'
-		);
+			'ACTIVITY_DATE',
+		];
 
-		if ($this->getGroupId() == 0)
+		if ((int)$this->getGroupId() === 0)
 		{
 			$fields[] = 'GROUP_ID';
 		}
@@ -1073,7 +1005,7 @@ class Filter extends Common
 		{
 			$ignoreValues = ['', 'undefined', 'tmp_filter'];
 			$filterData = $this->getFilterData();
-			foreach($filterData as $field => $fieldValue)
+			foreach($filterData as $fieldValue)
 			{
 				if (is_array($fieldValue) && !empty($fieldValue))
 				{
@@ -1095,176 +1027,185 @@ class Filter extends Common
 		);
 	}
 
-	private function isFilterEmpty()
+	private function isFilterEmpty(): bool
 	{
+		if ($this->isFilterDataSet)
+		{
+			return empty($this->filterData);
+		}
+
 		return !$this->getFilterFieldData('FILTER_APPLIED', false);
 	}
 
+	/**
+	 * @param $field
+	 * @param $default
+	 * @return mixed|null
+	 */
 	private function getFilterFieldData($field, $default = null)
 	{
 		$filterData = $this->getFilterData();
 
-		return array_key_exists($field, $filterData) ? $filterData[$field] : $default;
+		return (array_key_exists($field, $filterData) ? $filterData[$field] : $default);
 	}
 
 	/**
 	 * @return array
 	 */
-	private function getFilterData()
+	private function getFilterData(): array
 	{
-		$filters = $this->getFilters();
-		$filterOptions = $this->getOptions();
+		if ($this->isFilterDataSet)
+		{
+			return $this->filterData;
+		}
 
-		return $filterOptions->getFilter($filters);
+		return $this->getOptions()->getFilter($this->getFilters());
 	}
 
-	private function getDateFilterFieldData($row)
+	public function setFilterData(array $filterData): void
 	{
-		$arrFilter = array();
-
-		if ($row['id'] == 'ACTIVE' && !empty($this->getFilterFieldData($row['id'].'_from')))
-		{
-			$arrFilter['ACTIVE']['START'] = $this->getFilterFieldData($row['id'].'_from');
-			$arrFilter['ACTIVE']['END'] = $this->getFilterFieldData($row['id'].'_to');
-
-			return $arrFilter;
-		}
-
-		if ($this->getFilterFieldData($row['id'].'_from'))
-		{
-			$arrFilter['>='.$row['id']] = $this->getFilterFieldData($row['id'].'_from');
-		}
-
-		if ($this->getFilterFieldData($row['id'].'_to'))
-		{
-			$arrFilter['<='.$row['id']] = $this->getFilterFieldData($row['id'].'_to');
-		}
-
-		return $arrFilter;
+		$this->filterData = $filterData;
+		$this->isFilterDataSet = true;
 	}
 
-	private function getNumberFilterFieldData($row)
+	/**
+	 * @param $row
+	 * @return array
+	 */
+	private function getDateFilterFieldData($row): array
 	{
-		$arrFilter = [];
+		$filter = [];
+
 		$rowId = $row['id'];
-		$equalSign = ($this->getFilterFieldData($rowId . '_numsel') == 'range'? '=' : '');
+		$from = $this->getFilterFieldData("{$rowId}_from");
+		$to = $this->getFilterFieldData("{$rowId}_to");
 
-		if ($this->getFilterFieldData($rowId . '_from'))
+		if ($rowId === 'ACTIVE' && !empty($from))
 		{
-			$arrFilter['>' . $equalSign . $rowId] = $this->getFilterFieldData($rowId . '_from');
-		}
-		if ($this->getFilterFieldData($rowId . '_to'))
-		{
-			$arrFilter['<' . $equalSign . $rowId] = $this->getFilterFieldData($rowId . '_to');
-		}
+			$filter['ACTIVE']['START'] = $from;
+			$filter['ACTIVE']['END'] = $to;
 
-		if (array_key_exists('>' . $equalSign . $rowId, $arrFilter) &&
-			array_key_exists('<' . $equalSign . $rowId, $arrFilter) &&
-			$arrFilter['>' . $equalSign . $rowId] == $arrFilter['<' . $equalSign . $rowId])
-		{
-			$arrFilter[$rowId] = $arrFilter['>' . $equalSign . $rowId];
-			unset($arrFilter['>' . $equalSign . $rowId], $arrFilter['<' . $equalSign . $rowId]);
+			return $filter;
 		}
 
-		return $arrFilter;
+		if ($from)
+		{
+			$filter[">={$rowId}"] = $from;
+		}
+
+		if ($to)
+		{
+			$filter["<={$rowId}"] = $to;
+		}
+
+		return $filter;
 	}
 
-	private function getListFilterFieldData($row)
+	/**
+	 * @param $row
+	 * @return array
+	 */
+	private function getNumberFilterFieldData($row): array
 	{
-		$arrFilter = array();
-		$field = $this->getFilterFieldData($row['id'], array());
+		$filter = [];
 
-		switch ($row['id'])
+		$rowId = $row['id'];
+		$equalSign = ($this->getFilterFieldData("{$rowId}_numsel") === 'range' ? '=' : '');
+
+		if ($from = $this->getFilterFieldData("{$rowId}_from"))
+		{
+			$filter[">{$equalSign}{$rowId}"] = $from;
+		}
+
+		if ($to = $this->getFilterFieldData("{$rowId}_to"))
+		{
+			$filter["<{$equalSign}{$rowId}"] = $to;
+		}
+
+		if ($from && $to && $from == $to) // values of type double may be here
+		{
+			unset(
+				$filter[">{$equalSign}{$rowId}"],
+				$filter["<{$equalSign}{$rowId}"]
+			);
+			$filter[$rowId] = $from;
+		}
+
+		return $filter;
+	}
+
+	/**
+	 * @param $row
+	 * @return array
+	 */
+	private function getListFilterFieldData($row): array
+	{
+		$filter = [];
+
+		$rowId = $row['id'];
+		$field = $this->getFilterFieldData($rowId, []);
+
+		switch ($rowId)
 		{
 			case 'STATUS':
-				$arrFilter['REAL_STATUS'] = $field; //TODO!!!
+				if (!empty($field))
+				{
+					$filter['REAL_STATUS'] = $field;
+				}
 				break;
 
 			case 'PROBLEM':
 				switch ($field)
 				{
 					case Counter\Type::TYPE_WO_DEADLINE:
-						switch ($this->getFilterFieldData('ROLEID'))
-						{
-							case Counter\Role::RESPONSIBLE:
-								$arrFilter['!CREATED_BY'] = $this->getUserId();
-								break;
-
-							case Counter\Role::ORIGINATOR:
-								$arrFilter['!RESPONSIBLE_ID'] = $this->getUserId();
-								break;
-
-							default:
-								if ($this->getGroupId() > 0)
-								{
-									$arrFilter['!REFERENCE:RESPONSIBLE_ID'] = 'CREATED_BY';
-								}
-								else
-								{
-									$userId = $this->getUserId();
-
-									$arrFilter['::SUBFILTER-OR'] = [
-										'::LOGIC' => 'OR',
-										'::SUBFILTER-R' => [
-											'!CREATED_BY' => $userId,
-											'RESPONSIBLE_ID' => $userId,
-										],
-										'::SUBFILTER-O' => [
-											'CREATED_BY' => $userId,
-											'!RESPONSIBLE_ID' => $userId,
-										],
-									];
-								}
-								break;
-						}
-						$arrFilter['DEADLINE'] = '';
+						$filter['DEADLINE'] = '';
 						break;
 
 					case Counter\Type::TYPE_EXPIRED:
 						if ($this->getGroupId() > 0)
 						{
-							$arrFilter['MEMBER'] = $this->getUserId();
+							$filter['MEMBER'] = $this->getUserId();
 						}
-						$arrFilter['<=DEADLINE'] = Counter\Deadline::getExpiredTime();
-						$arrFilter['IS_MUTED'] = 'N';
-						$arrFilter['REAL_STATUS'] = [\CTasks::STATE_PENDING, \CTasks::STATE_IN_PROGRESS];
+						$filter['<=DEADLINE'] = Counter\Deadline::getExpiredTime();
+						$filter['IS_MUTED'] = 'N';
+						$filter['REAL_STATUS'] = [\CTasks::STATE_PENDING, \CTasks::STATE_IN_PROGRESS];
 						break;
 
 					case Counter\Type::TYPE_EXPIRED_CANDIDATES:
-						$arrFilter['>=DEADLINE'] = Counter\Deadline::getExpiredTime();
-						$arrFilter['<=DEADLINE'] = Counter\Deadline::getExpiredSoonTime();
+						$filter['>=DEADLINE'] = Counter\Deadline::getExpiredTime();
+						$filter['<=DEADLINE'] = Counter\Deadline::getExpiredSoonTime();
 						break;
 
 					case Counter\Type::TYPE_WAIT_CTRL:
-						$arrFilter['REAL_STATUS'] = \CTasks::STATE_SUPPOSEDLY_COMPLETED;
-						$arrFilter['!RESPONSIBLE_ID'] = $this->getUserId();
-						$arrFilter['=CREATED_BY'] = $this->getUserId();
+						$filter['REAL_STATUS'] = \CTasks::STATE_SUPPOSEDLY_COMPLETED;
+						$filter['!RESPONSIBLE_ID'] = $this->getUserId();
+						$filter['=CREATED_BY'] = $this->getUserId();
 						break;
 
 					case Counter\Type::TYPE_NEW:
-						$arrFilter['VIEWED'] = 0;
-						$arrFilter['VIEWED_BY'] = $this->getUserId();
+						$filter['VIEWED'] = 0;
+						$filter['VIEWED_BY'] = $this->getUserId();
 						break;
 
 					case Counter\Type::TYPE_DEFERRED:
-						$arrFilter['REAL_STATUS'] = \CTasks::STATE_DEFERRED;
+						$filter['REAL_STATUS'] = \CTasks::STATE_DEFERRED;
 						break;
 
 					case Counter\Type::TYPE_NEW_COMMENTS:
 						if ($this->getGroupId() > 0)
 						{
-							$arrFilter['MEMBER'] = $this->getUserId();
+							$filter['MEMBER'] = $this->getUserId();
 						}
-						$arrFilter['WITH_NEW_COMMENTS'] = 'Y';
-						$arrFilter['IS_MUTED'] = 'N';
+						$filter['WITH_NEW_COMMENTS'] = 'Y';
+						$filter['IS_MUTED'] = 'N';
 						break;
 
 					case Counter\Type::TYPE_PROJECT_EXPIRED:
-						$arrFilter['PROJECT_EXPIRED'] = 'Y';
+						$filter['PROJECT_EXPIRED'] = 'Y';
 						break;
 
 					case Counter\Type::TYPE_PROJECT_NEW_COMMENTS:
-						$arrFilter['PROJECT_NEW_COMMENTS'] = 'Y';
+						$filter['PROJECT_NEW_COMMENTS'] = 'Y';
 						break;
 
 					default:
@@ -1276,63 +1217,66 @@ class Filter extends Common
 				switch ($field)
 				{
 					case 'view_role_responsible':
-						$arrFilter['=RESPONSIBLE_ID'] = $this->getUserId();
+						$filter['=RESPONSIBLE_ID'] = $this->getUserId();
 						break;
 
 					case 'view_role_originator':
-						$arrFilter['=CREATED_BY'] = $this->getUserId();
-						$arrFilter['!REFERENCE:RESPONSIBLE_ID'] = 'CREATED_BY';
+						$filter['=CREATED_BY'] = $this->getUserId();
+						$filter['!REFERENCE:RESPONSIBLE_ID'] = 'CREATED_BY';
 						break;
 
 					case 'view_role_accomplice':
-						$arrFilter['=ACCOMPLICE'] = $this->getUserId();
+						$filter['=ACCOMPLICE'] = $this->getUserId();
 						break;
 
 					case 'view_role_auditor':
-						$arrFilter['=AUDITOR'] = $this->getUserId();
+						$filter['=AUDITOR'] = $this->getUserId();
 						break;
 
 					default:
 						if (!$this->getGroupId())
 						{
-							$arrFilter['MEMBER'] = $this->getUserId();
+							$filter['MEMBER'] = $this->getUserId();
 						}
 						break;
 				}
 				break;
 
 			case 'PARAMS':
-				foreach ($field as $item)
+				if ($field)
 				{
-					switch ($item)
+					foreach ($field as $item)
 					{
-						case 'FAVORITE':
-							$arrFilter["FAVORITE"] = 'Y';
-							break;
+						switch ($item)
+						{
+							case 'FAVORITE':
+								$filter['FAVORITE'] = 'Y';
+								break;
 
-						case 'MARKED':
-							$arrFilter["!MARK"] = false;
-							break;
+							case 'MARKED':
+								$filter['!MARK'] = false;
+								break;
 
-						case 'OVERDUED':
-							$arrFilter["OVERDUED"] = "Y";
-							break;
+							case 'OVERDUED':
+								$filter['OVERDUED'] = 'Y';
+								break;
 
-						case 'IN_REPORT':
-							$arrFilter["ADD_IN_REPORT"] = "Y";
-							break;
+							case 'IN_REPORT':
+								$filter['ADD_IN_REPORT'] = 'Y';
+								break;
 
-						case 'SUBORDINATE':
-							// Don't set SUBORDINATE_TASKS for admin, it will cause all tasks to be showed
-							if (!\Bitrix\Tasks\Util\User::isSuper())
-							{
-								$arrFilter["SUBORDINATE_TASKS"] = "Y";
-							}
-							break;
+							case 'SUBORDINATE':
+								// Don't set SUBORDINATE_TASKS for admin, it will cause all tasks to be showed
+								if (!User::isSuper())
+								{
+									$filter['SUBORDINATE_TASKS'] = 'Y';
+								}
+								break;
 
-						case 'ANY_TASK':
-							$arrFilter['::REMOVE-MEMBER'] = true; // hack
-							break;
+							case 'ANY_TASK':
+								$filter['::REMOVE-MEMBER'] = true; // hack
+								break;
+						}
 					}
 				}
 				break;
@@ -1340,46 +1284,47 @@ class Filter extends Common
 			default:
 				if ($field)
 				{
-					$arrFilter[$row['id']] = $field;
+					$filter[$rowId] = $field;
 				}
 				break;
 		}
 
-		return $arrFilter;
+		return $filter;
 	}
 
-	private function getDestSelectorFilterFieldData($row)
+	/**
+	 * @param $row
+	 * @return array
+	 */
+	private function getSelectorFilterFieldData($row): array
 	{
-		$arrFilter = [];
+		$filter = [];
+
 		$rowId = $row['id'];
 		$value = $this->getFilterFieldData($rowId);
 
 		if (!empty($value))
 		{
-			$arrFilter[$rowId] = $value;
+			$filter[$rowId] = $value;
 		}
 
-		return $arrFilter;
+		return $filter;
 	}
 
-	private function getEntitySelectorFilterFieldData($row): array
-	{
-		$rowId = $row['id'];
-
-		return [$rowId => $this->getFilterFieldData($rowId)];
-	}
-
+	/**
+	 * @return mixed
+	 */
 	public function getDefaultPresetKey()
 	{
 		return $this->getOptions()->getDefaultFilterId();
 	}
 
 	/**
-	 * @return \Bitrix\Tasks\Util\UserField|array|null|string
+	 * @return UserField|array|null|string
 	 */
 	private function getUF()
 	{
-		$uf = \Bitrix\Tasks\Item\Task::getUserFieldControllerClass();
+		$uf = Task::getUserFieldControllerClass();
 
 		$scheme = $uf::getScheme();
 		unset($scheme['UF_TASK_WEBDAV_FILES'], $scheme['UF_MAIL_MESSAGE']);

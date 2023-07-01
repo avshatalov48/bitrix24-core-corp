@@ -63,13 +63,13 @@ jn.define('layout/ui/checkbox', (require, exports, module) => {
 
 			if (this.state.checked)
 			{
-				style.backgroundColor = (mergeStyle.backgroundColor ? mergeStyle.backgroundColor : '#378ee7');
+				style.backgroundColor = (mergeStyle.backgroundColor ? mergeStyle.backgroundColor : '#0091e3');
 			}
 			else
 			{
 				style.backgroundColor = '#ffffff';
 				style.borderWidth = 1.6;
-				style.borderColor = (mergeStyle.borderColor ? mergeStyle.borderColor : '#b8c0c9');
+				style.borderColor = (mergeStyle.borderColor ? mergeStyle.borderColor : '#bdc1c6');
 			}
 
 			if (this.state.isDisabled)

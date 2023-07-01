@@ -139,6 +139,23 @@ abstract class Configurable extends Item
 	}
 
 	/**
+	 * Icon of timeline record
+	 *
+	 */
+	public function getIcon(): ?Layout\Icon
+	{
+		$iconCode = $this->getIconCode();
+
+		return $iconCode
+			? (new Layout\Icon())
+				->setCode($iconCode)
+				->setCounterType($this->getCounterType())
+				->setBackgroundColorToken($this->getBackgroundColorToken())
+			: null
+		;
+	}
+
+	/**
 	 * Code of item icon
 	 *
 	 * @return string|null
@@ -370,6 +387,14 @@ abstract class Configurable extends Item
 	 */
 	public function getMenuItems(): ?array
 	{
+		$result = [];
+		$this->addPinMenuItems($result);
+
+		return $result;
+	}
+
+	protected function addPinMenuItems(array &$menuItems): void
+	{
 		$canBeFixed =
 			$this->isPinnable()
 			&& !$this->getModel()->isScheduled()
@@ -384,9 +409,8 @@ abstract class Configurable extends Item
 
 		if (!$canBeFixed && !$canBeUnFixed)
 		{
-			return null;
+			return;
 		}
-		$menuItems = [];
 
 		if ($canBeFixed)
 		{
@@ -409,8 +433,6 @@ abstract class Configurable extends Item
 				->setAction($this->getUnpinAction())
 			;
 		}
-
-		return $menuItems;
 	}
 
 	/**
@@ -470,7 +492,7 @@ abstract class Configurable extends Item
 		return $userData ?? [];
 	}
 
-	protected function buildClientBlock(int $options = 0): ?Layout\Body\ContentBlock
+	protected function buildClientBlock(int $options = 0, string $blockTitle = null): ?Layout\Body\ContentBlock
 	{
 		$communication = $this->getAssociatedEntityModel()->get('COMMUNICATION') ?? [];
 		$title = $communication['TITLE'] ?? null;
@@ -492,16 +514,19 @@ abstract class Configurable extends Item
 			$title = sprintf('%s %s', $title, $formattedValue);
 		}
 
+		$blockTitle = $blockTitle ?? Loc::getMessage("CRM_TIMELINE_CLIENT_TITLE");
+
 		$url = isset($communication['SHOW_URL'])
 			? new Uri($communication['SHOW_URL'])
 			: null;
 
 		$textOrLink = ContentBlockFactory::createTextOrLink($title, $url ? new Redirect($url) : null);
+		$textOrLink->setTitle($title);
 
 		if ($options & self::BLOCK_WITH_FIXED_TITLE)
 		{
 			return (new ContentBlockWithTitle())
-				->setTitle(Loc::getMessage("CRM_TIMELINE_CLIENT_TITLE"))
+				->setTitle($blockTitle)
 				->setContentBlock($textOrLink->setIsBold(isset($url))->setColor(Text::COLOR_BASE_90))
 				->setInline()
 			;
@@ -510,7 +535,7 @@ abstract class Configurable extends Item
 		return (new LineOfTextBlocks())
 			->addContentBlock(
 				'title',
-				ContentBlockFactory::createTitle(Loc::getMessage('CRM_TIMELINE_CLIENT_TITLE'))
+				ContentBlockFactory::createTitle($blockTitle)
 			)
 			->addContentBlock('data', $textOrLink->setIsBold(isset($url))->setColor(Text::COLOR_BASE_90))
 		;

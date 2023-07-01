@@ -2,6 +2,7 @@
 
 	const { FieldFactory, CrmStageType, MoneyType, ClientType, StatusType } = jn.require('layout/ui/fields');
 	const { clone } = jn.require('utils/object');
+	const { Loc } = jn.require('loc');
 
 	/**
 	 * @class ListItems.Kanban
@@ -118,6 +119,7 @@
 						value: this.state.columnId,
 						readOnly: (!permissions.write || false),
 						config: {
+							entityId: data.id,
 							entityTypeId: this.params.entityTypeId,
 							categoryId: this.params.categoryId,
 							data: {
@@ -139,9 +141,9 @@
 
 		forceUpdateCrmStages(params)
 		{
-			const {columnId, data: {itemId: id}} =  params;
-			const itemsData = { id, columnId};
-			this.props.modifyItemsListHandler([ itemsData ]);
+			const { columnId, data: { itemId: id } } = params;
+			const itemsData = { id, columnId };
+			this.props.modifyItemsListHandler([itemsData]);
 		}
 
 		renderSpecialFields(data)
@@ -245,12 +247,15 @@
 
 		getTotalSumFieldTitle()
 		{
-			if (!this.props.params.entityTypeName)
+			if (!this.params.entityTypeName)
 			{
 				return '';
 			}
 
-			return BX.message(`SIMPLELIST_KANBAN_TOTAL_SUM_${this.props.params.entityTypeName}`);
+			const code = 'SIMPLELIST_KANBAN_TOTAL_SUM';
+			const entityCode = `${code}_${this.params.entityTypeName}`;
+
+			return Loc.getMessage(entityCode) || Loc.getMessage(code);
 		}
 
 		prepareActions(actions)
@@ -262,7 +267,7 @@
 				deleteAction.isDisabled = true;
 			}
 
-			const { counters} = this.props.item.data;
+			const { counters } = this.props.item.data;
 			if (!counters)
 			{
 				return;
@@ -277,14 +282,14 @@
 			const activityCounterTotal = BX.prop.getNumber(
 				counters,
 				'activityCounterTotal',
-				0
+				0,
 			);
-			let label = ''
+			let label = '';
 			if (activityCounterTotal > 99)
 			{
 				label = '99+';
 			}
-			else if(activityCounterTotal > 0)
+			else if (activityCounterTotal > 0)
 			{
 				label = String(activityCounterTotal);
 			}

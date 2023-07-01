@@ -6,7 +6,7 @@ $MESS["BICONNECTOR_CONNECTION_NOTE"] = "
 <p>Для оптимальной настройки отредактируйте файл bitrix/.settings.php:</p>
 <ul>
 <li>Из ключа 'connections' скопируйте ключ 'default' в ключ с новым именем (например: 'biconnector');
-<li>Замените значение ключа 'className' на '\Bitrix\BIConnector\Connection';
+<li>Замените значение ключа 'className' на '\Bitrix\BIConnector\DB\MysqliConnection';
 <li>При необходимости добавьте подключение файла для донастройки подключения 'include_after_connected'.
 </ul>
 <p>Результат может выглядеть примерно так:</p>
@@ -27,7 +27,7 @@ $MESS["BICONNECTOR_CONNECTION_NOTE"] = "
       ),
       'biconnector' =>
       array (
-        'className' => '\Bitrix\BIConnector\Connection',
+        'className' => '\Bitrix\BIConnector\DB\MysqliConnection',
         'host' => 'localhost',
         'database' => 'sitemanager',
         'login' => 'user',

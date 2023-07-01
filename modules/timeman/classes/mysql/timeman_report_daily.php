@@ -44,12 +44,16 @@ class CTimeManReportDaily extends CAllTimeManReportDaily
 		{
 			foreach ($arFields as $key => $fld)
 			{
-				if (!$fld['FROM'])
+				if (!($fld['FROM'] ?? null))
+				{
 					$arSelectFields[] = $key;
+				}
 			}
 		}
 
 		$arSqls = CTimeManReportDaily::PrepareSql($arFields, $arOrder, $arFilter, $arGroupBy, $arSelectFields, $obUserFieldsSql);
+
+		$strSqlUFFilter = '';
 
 		$r = $obUserFieldsSql->GetFilter();
 		if($r <> '')

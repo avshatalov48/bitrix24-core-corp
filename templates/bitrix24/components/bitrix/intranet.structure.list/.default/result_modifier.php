@@ -32,11 +32,6 @@ if (isset($arResult['USERS']) && is_array($arResult['USERS']))
 				&& $arUser["CurrentUserPerms"]["Operations"]["videocall"]
 			)
 				$arUser['CAN_VIDEO_CALL'] = true;
-
-			if(!CModule::IncludeModule("video"))
-				$arUser['CAN_VIDEO_CALL'] = false;
-			elseif(!CVideo::CanUserMakeCall())
-				$arUser['CAN_VIDEO_CALL'] = false;
 		}
 
 		$arUser["Urls"] = array("VideoCall" => CComponentEngine::MakePathFromTemplate($arParams["PATH_TO_VIDEO_CALL"], array("user_id" => $arUser["ID"], "USER_ID" => $arUser["ID"], "ID" => $arUser["ID"])));

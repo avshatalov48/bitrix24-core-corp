@@ -20,7 +20,7 @@ final class Update214000
 	{
 		if (
 			\Bitrix\Main\Loader::includeModule('imconnector')
-			&& Connector::isConnector(Library::ID_OLX_CONNECTOR, true)
+			&& Connector::isConnector(Library::ID_OLX_CONNECTOR)
 		)
 		{
 			$statuses = Status::getInstanceAllLine(Library::ID_OLX_CONNECTOR);

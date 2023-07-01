@@ -10,6 +10,7 @@ use Bitrix\Crm\Integration;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Kanban;
 use Bitrix\Crm\Ml;
+use Bitrix\Crm\Model\FieldContentTypeTable;
 use Bitrix\Crm\ProductRowTable;
 use Bitrix\Crm\Pseudoactivity;
 use Bitrix\Crm\Relation;
@@ -61,6 +62,7 @@ final class Cleaner
 			'ENTITY_ID' => $this->getEntityId(),
 		]);
 		Badge::deleteByEntity(new ItemIdentifier($this->getEntityTypeId(), $this->getEntityId()));
+		FieldContentTypeTable::deleteByItem(new ItemIdentifier($this->getEntityTypeId(), $this->getEntityId()));
 
 		return $this->runJobs();
 	}

@@ -5,53 +5,51 @@
  */
 jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 
-	const { Type } = jn.require('type');
-	const { DateHelper } = jn.require('im/messenger/lib/helper');
+	const { Type } = require('type');
+	const { DialogType } = require('im/messenger/const');
+	const { DateHelper } = require('im/messenger/lib/helper');
+	const { Color } = require('im/messenger/const');
+	const { MessengerParams } = require('im/messenger/lib/params');
 
 	const dialogState = {
 		dialogId: '0',
 		chatId: 0,
+		type: DialogType.chat,
+		name: '',
+		description: '',
+		avatar: '',
+		color: Color.base,
+		extranet: false,
 		counter: 0,
 		userCounter: 0,
-		messageCount: 0,
-		unreadId: 0,
+		lastReadId: 0,
+		markedId: 0,
 		lastMessageId: 0,
+		lastMessageViews: {
+			countOfViewers: 0,
+			firstViewer: null,
+			messageId: 0
+		},
+		savedPositionMessageId: 0,
 		managerList: [],
-		readedList: [],
+		readList: [],
 		writingList: [],
 		muteList: [],
 		textareaMessage: '',
 		quoteId: 0,
-		editId: 0,
-		init: false,
-		name: '',
 		owner: 0,
-		extranet: false,
-		avatar: '',
-		color: '#17A3EA',
-		type: 'chat',
 		entityType: '',
 		entityId: '',
-		entityData1: '',
-		entityData2: '',
-		entityData3: '',
-		dateCreate: new Date(),
-		restrictions: {
-			avatar: true,
-			extend: true,
-			leave: true,
-			leaveOwner: true,
-			rename: true,
-			send: true,
-			userList: true,
-			mute: true,
-			call: true,
-		},
+		dateCreate: null,
 		public: {
 			code: '',
 			link: ''
-		}
-	}
+		},
+		inited: false,
+		loading: false,
+		hasPrevPage: false,
+		hasNextPage: false,
+	};
 
 	const dialoguesModel = {
 		namespaced: true,
@@ -61,67 +59,181 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 			saveChatList: [],
 		}),
 		getters: {
+			/** @function dialoguesModel/getById */
 			getById: (state) => (id) => {
 				return state.collection[id];
 			},
+
+			/** @function dialoguesModel/getByChatId */
+			getByChatId: (state) => (chatId) => {
+				chatId = Number.parseInt(chatId, 10);
+				return Object.values(state.collection).find(item => {
+					return item.chatId === chatId;
+				});
+			},
+
+			/** @function dialoguesModel/getLastReadId */
+			getLastReadId: (state) => (dialogId) => {
+				if (!state.collection[dialogId])
+				{
+					return 0;
+				}
+
+				const {lastReadId, lastMessageId} = state.collection[dialogId];
+
+				return lastReadId === lastMessageId ? 0 : lastReadId;
+			},
+
+			/** @function dialoguesModel/getInitialMessageId */
+			getInitialMessageId: (state) => (dialogId) =>
+			{
+				if (!state.collection[dialogId])
+				{
+					return 0;
+				}
+
+				const {lastReadId, markedId} = state.collection[dialogId];
+				if (markedId === 0)
+				{
+					return lastReadId;
+				}
+
+				return Math.min(lastReadId, markedId);
+			},
 		},
 		actions: {
+			/** @function dialoguesModel/set */
 			set: (store, payload) =>
 			{
-				if (!(payload instanceof Array))
+				if (!Array.isArray(payload) && Type.isPlainObject(payload))
 				{
 					payload = [payload];
 				}
 
-				payload = payload.map(dialog => {
-					return {
-						...validate(dialog),
-						...{ init: true },
-					};
+				payload.map(element => {
+					return validate(store, element);
+				}).forEach(element => {
+					const existingItem = store.state.collection[element.dialogId];
+					if (existingItem)
+					{
+						store.commit('update', {
+							dialogId: element.dialogId,
+							fields: element
+						});
+					}
+					else
+					{
+						store.commit('add', {
+							dialogId: element.dialogId,
+							fields: {...dialogState, ...element}
+						});
+					}
 				});
-
-				store.commit('set', payload);
 			},
-			delete: (store, payload) =>
+
+			/** @function dialoguesModel/add */
+			add: (store, payload) =>
 			{
-				const existingItem = store.state.collection[payload.id];
+				if (!Array.isArray(payload) && Type.isPlainObject(payload))
+				{
+					payload = [payload];
+				}
+
+				payload.map(element => {
+					return validate(store, element);
+				}).forEach(element => {
+					const existingItem = store.state.collection[element.dialogId];
+					if (!existingItem)
+					{
+						store.commit('add', {
+							dialogId: element.dialogId,
+							fields: {...dialogState, ...element},
+						});
+					}
+				});
+			},
+
+			/** @function dialoguesModel/update */
+			update: (store, payload) =>
+			{
+				const existingItem = store.state.collection[payload.dialogId];
 				if (!existingItem)
 				{
 					return false;
 				}
 
-				store.commit('delete', { id: payload.id });
+				store.commit('update', {
+					dialogId: payload.dialogId,
+					fields: validate(store, payload.fields),
+				});
+			},
+
+			/** @function dialoguesModel/delete */
+			delete: (store, payload) =>
+			{
+				const existingItem = store.state.collection[payload.dialogId];
+				if (!existingItem)
+				{
+					return false;
+				}
+
+				store.commit('delete', payload.dialogId);
+			},
+
+			/** @function dialoguesModel/decreaseCounter */
+			decreaseCounter: (store, payload) =>
+			{
+				const existingItem = store.state.collection[payload.dialogId];
+				if (!existingItem)
+				{
+					return false;
+				}
+
+				if (existingItem.counter === 100)
+				{
+					return true;
+				}
+
+				let decreasedCounter = existingItem.counter - payload.count;
+				if (decreasedCounter < 0)
+				{
+					decreasedCounter = 0;
+				}
+
+				store.commit('update', {
+					dialogId: payload.dialogId,
+					fields: {
+						counter: decreasedCounter,
+						previousCounter: existingItem.counter
+					}
+				});
 			},
 		},
 		mutations: {
-			set: (state, payload) =>
+			add: (state, payload) =>
 			{
-				for (const element of payload)
-				{
-					state.collection[element.dialogId] = {
-						...dialogState,
-						...state.collection[element.dialogId],
-						...element
-					};
-				}
+				state.collection[payload.dialogId] = payload.fields;
 			},
-			delete: (state, payload) => {
-				delete state.collection[payload.id];
+			update: (state, payload) =>
+			{
+				state.collection[payload.dialogId] = {...state.collection[payload.dialogId], ...payload.fields};
+			},
+			delete: (state, payload) =>
+			{
+				delete state.collection[payload.dialogId];
 			},
 		}
 	};
 
-	function validate(fields, options = {})
+	function validate(store, fields)
 	{
 		const result = {};
-
-		//options.host = options.host || this.getState().host;
 
 		if (!Type.isUndefined(fields.dialog_id))
 		{
 			fields.dialogId = fields.dialog_id;
 		}
-		if (Type.isNumber(fields.dialogId) || Type.isString(fields.dialogId))
+		if (Type.isNumber(fields.dialogId) || Type.isStringFilled(fields.dialogId))
 		{
 			result.dialogId = fields.dialogId.toString();
 		}
@@ -134,367 +246,277 @@ jn.define('im/messenger/model/dialogues', (require, exports, module) => {
 		{
 			fields.chatId = fields.id;
 		}
-		if (Type.isNumber(fields.chatId) || Type.isString(fields.chatId))
+		if (Type.isNumber(fields.chatId) || Type.isStringFilled(fields.chatId))
 		{
-			result.chatId = parseInt(fields.chatId);
-		}
-		if (Type.isNumber(fields.quoteId))
-		{
-			result.quoteId = parseInt(fields.quoteId);
-		}
-		if (Type.isNumber(fields.editId))
-		{
-			result.editId = parseInt(fields.editId);
+			result.chatId = Number.parseInt(fields.chatId, 10);
 		}
 
-		if (Type.isNumber(fields.counter) || Type.isString(fields.counter))
-		{
-			result.counter = parseInt(fields.counter);
-		}
-
-		if (Type.isNumber(fields.user_counter) || Type.isString(fields.user_counter))
-		{
-			result.userCounter = parseInt(fields.user_counter);
-		}
-		if (Type.isNumber(fields.userCounter) || Type.isString(fields.userCounter))
-		{
-			result.userCounter = parseInt(fields.userCounter);
-		}
-
-		if (typeof fields.message_count === "number" || typeof fields.message_count === "string")
-		{
-			result.messageCount = parseInt(fields.message_count);
-		}
-		if (typeof fields.messageCount === "number" || typeof fields.messageCount === "string")
-		{
-			result.messageCount = parseInt(fields.messageCount);
-		}
-
-		if (typeof fields.unread_id !== 'undefined')
-		{
-			fields.unreadId = fields.unread_id;
-		}
-		if (typeof fields.unreadId === "number" || typeof fields.unreadId === "string")
-		{
-			result.unreadId = parseInt(fields.unreadId);
-		}
-
-		if (typeof fields.last_message_id !== 'undefined')
-		{
-			fields.lastMessageId = fields.last_message_id;
-		}
-		if (typeof fields.lastMessageId === "number" || typeof fields.lastMessageId === "string")
-		{
-			result.lastMessageId = parseInt(fields.lastMessageId);
-		}
-
-		if (typeof fields.readed_list !== 'undefined')
-		{
-			fields.readedList = fields.readed_list;
-		}
-		if (typeof fields.readedList !== 'undefined')
-		{
-			result.readedList = [];
-
-			if (fields.readedList instanceof Array)
-			{
-				fields.readedList.forEach(element =>
-				{
-					let record = {};
-					if (typeof element.user_id !== 'undefined')
-					{
-						element.userId = element.user_id;
-					}
-					if (typeof element.user_name !== 'undefined')
-					{
-						element.userName = element.user_name;
-					}
-					if (typeof element.message_id !== 'undefined')
-					{
-						element.messageId = element.message_id;
-					}
-
-					if (!element.userId || !element.userName || !element.messageId)
-					{
-						return false;
-					}
-
-					record.userId = parseInt(element.userId);
-					record.userName = element.userName.toString();
-					record.messageId = parseInt(element.messageId);
-
-					record.date = DateHelper.toDate(element.date);
-
-					result.readedList.push(record);
-				})
-			}
-		}
-
-		if (typeof fields.writing_list !== 'undefined')
-		{
-			fields.writingList = fields.writing_list;
-		}
-		if (typeof fields.writingList !== 'undefined')
-		{
-			result.writingList = [];
-
-			if (fields.writingList instanceof Array)
-			{
-				fields.writingList.forEach(element =>
-				{
-					let record = {};
-
-					if (!element.userId)
-					{
-						return false;
-					}
-
-					record.userId = parseInt(element.userId);
-					record.userName = element.userName;//Utils.text.htmlspecialcharsback(element.userName);
-
-					result.writingList.push(record);
-				})
-			}
-		}
-
-		if (typeof fields.manager_list !== 'undefined')
-		{
-			fields.managerList = fields.manager_list;
-		}
-		if (typeof fields.managerList !== 'undefined')
-		{
-			result.managerList = [];
-
-			if (fields.managerList instanceof Array)
-			{
-				fields.managerList.forEach(userId =>
-				{
-					userId = parseInt(userId);
-					if (userId > 0)
-					{
-						result.managerList.push(userId);
-					}
-				});
-			}
-		}
-
-		if (typeof fields.mute_list !== 'undefined')
-		{
-			fields.muteList = fields.mute_list;
-		}
-		if (typeof fields.muteList !== 'undefined')
-		{
-			result.muteList = [];
-
-			if (fields.muteList instanceof Array)
-			{
-				fields.muteList.forEach(userId =>
-				{
-					userId = parseInt(userId);
-					if (userId > 0)
-					{
-						result.muteList.push(userId);
-					}
-				});
-			}
-			else if (typeof fields.muteList === 'object')
-			{
-				Object.entries(fields.muteList).forEach(entry => {
-					if (entry[1] === true)
-					{
-						const userId = parseInt(entry[0]);
-						if (userId > 0)
-						{
-							result.muteList.push(userId);
-						}
-					}
-				});
-			}
-		}
-
-		if (typeof fields.textareaMessage !== 'undefined')
-		{
-			result.textareaMessage = fields.textareaMessage.toString();
-		}
-
-		if (typeof fields.title !== 'undefined')
-		{
-			fields.name = fields.title;
-		}
-		if (typeof fields.name === "string" || typeof fields.name === "number")
-		{
-			result.name = fields.name.toString();//Utils.text.htmlspecialcharsback(fields.name.toString());
-		}
-
-		if (typeof fields.owner !== 'undefined')
-		{
-			fields.ownerId = fields.owner;
-		}
-		if (typeof fields.ownerId === "number" || typeof fields.ownerId === "string")
-		{
-			result.ownerId = parseInt(fields.ownerId);
-		}
-
-		if (typeof fields.extranet === "boolean")
-		{
-			result.extranet = fields.extranet;
-		}
-
-		if (typeof fields.avatar === 'string')
-		{
-			let avatar;
-
-			if (!fields.avatar || fields.avatar.endsWith('/js/im/images/blank.gif'))
-			{
-				avatar = '';
-			}
-			else if (fields.avatar.startsWith('http'))
-			{
-				avatar = fields.avatar;
-			}
-			else
-			{
-				avatar = options.host + fields.avatar;
-			}
-
-			if (avatar)
-			{
-				result.avatar = encodeURI(avatar);
-			}
-		}
-
-		if (typeof fields.color === "string")
-		{
-			result.color = fields.color.toString();
-		}
-
-		if (typeof fields.type === "string")
+		if (Type.isStringFilled(fields.type))
 		{
 			result.type = fields.type.toString();
 		}
 
-		if (typeof fields.entity_type !== 'undefined')
+		if (Type.isNumber(fields.quoteId))
+		{
+			result.quoteId = Number.parseInt(fields.quoteId, 10);
+		}
+
+		if (Type.isNumber(fields.counter) || Type.isStringFilled(fields.counter))
+		{
+			result.counter = Number.parseInt(fields.counter, 10);
+		}
+
+		if (!Type.isUndefined(fields.user_counter))
+		{
+			result.userCounter = fields.user_counter;
+		}
+		if (Type.isNumber(fields.userCounter) || Type.isStringFilled(fields.userCounter))
+		{
+			result.userCounter = Number.parseInt(fields.userCounter, 10);
+		}
+
+		if (!Type.isUndefined(fields.last_id))
+		{
+			fields.lastId = fields.last_id;
+		}
+		if (Type.isNumber(fields.lastId))
+		{
+			result.lastReadId = fields.lastId;
+		}
+
+		if (!Type.isUndefined(fields.marked_id))
+		{
+			fields.markedId = fields.marked_id;
+		}
+		if (Type.isNumber(fields.markedId))
+		{
+			result.markedId = fields.markedId;
+		}
+
+		if (!Type.isUndefined(fields.last_message_id))
+		{
+			fields.lastMessageId = fields.last_message_id;
+		}
+		if (Type.isNumber(fields.lastMessageId) || Type.isStringFilled(fields.lastMessageId))
+		{
+			result.lastMessageId = Number.parseInt(fields.lastMessageId, 10);
+		}
+
+		if (Type.isPlainObject(fields.last_message_views))
+		{
+			fields.lastMessageViews = fields.last_message_views;
+		}
+		if (Type.isPlainObject(fields.lastMessageViews))
+		{
+			result.lastMessageViews = prepareLastMessageViews(fields.lastMessageViews);
+		}
+
+		if (Type.isBoolean(fields.hasPrevPage))
+		{
+			result.hasPrevPage = fields.hasPrevPage;
+		}
+
+		if (Type.isBoolean(fields.hasNextPage))
+		{
+			result.hasNextPage = fields.hasNextPage;
+		}
+
+		if (!Type.isUndefined(fields.textareaMessage))
+		{
+			result.textareaMessage = fields.textareaMessage.toString();
+		}
+
+		if (!Type.isUndefined(fields.title))
+		{
+			fields.name = fields.title;
+		}
+		if (Type.isNumber(fields.name) || Type.isStringFilled(fields.name))
+		{
+			result.name = ChatUtils.htmlspecialcharsback(fields.name.toString());
+		}
+
+		if (!Type.isUndefined(fields.owner))
+		{
+			fields.ownerId = fields.owner;
+		}
+		if (Type.isNumber(fields.ownerId) || Type.isStringFilled(fields.ownerId))
+		{
+			result.owner = Number.parseInt(fields.ownerId, 10);
+		}
+
+		if (Type.isString(fields.avatar))
+		{
+			result.avatar = prepareAvatar(store, fields.avatar);
+		}
+
+		if (Type.isStringFilled(fields.color))
+		{
+			result.color = fields.color;
+		}
+
+		if (Type.isBoolean(fields.extranet))
+		{
+			result.extranet = fields.extranet;
+		}
+
+		if (!Type.isUndefined(fields.entity_type))
 		{
 			fields.entityType = fields.entity_type;
 		}
-		if (typeof fields.entityType === "string")
+		if (Type.isStringFilled(fields.entityType))
 		{
-			result.entityType = fields.entityType.toString();
+			result.entityType = fields.entityType;
 		}
-		if (typeof fields.entity_id !== 'undefined')
+		if (!Type.isUndefined(fields.entity_id))
 		{
 			fields.entityId = fields.entity_id;
 		}
-		if (typeof fields.entityId === "string" || typeof fields.entityId === "number")
+		if (Type.isNumber(fields.entityId) || Type.isStringFilled(fields.entityId))
 		{
 			result.entityId = fields.entityId.toString();
 		}
 
-		if (typeof fields.entity_data_1 !== 'undefined')
-		{
-			fields.entityData1 = fields.entity_data_1;
-		}
-		if (typeof fields.entityData1 === "string")
-		{
-			result.entityData1 = fields.entityData1.toString();
-		}
-
-		if (typeof fields.entity_data_2 !== 'undefined')
-		{
-			fields.entityData2 = fields.entity_data_2;
-		}
-		if (typeof fields.entityData2 === "string")
-		{
-			result.entityData2 = fields.entityData2.toString();
-		}
-
-		if (typeof fields.entity_data_3 !== 'undefined')
-		{
-			fields.entityData3 = fields.entity_data_3;
-		}
-		if (typeof fields.entityData3 === "string")
-		{
-			result.entityData3 = fields.entityData3.toString();
-		}
-
-		if (typeof fields.date_create !== 'undefined')
+		if (!Type.isUndefined(fields.date_create))
 		{
 			fields.dateCreate = fields.date_create;
 		}
-
-		if (typeof fields.dateCreate !== "undefined")
+		if (!Type.isUndefined(fields.dateCreate))
 		{
-			result.dateCreate = DateHelper.toDate(fields.dateCreate);
+			result.dateCreate = DateHelper.cast(fields.dateCreate);
 		}
 
-		if (typeof fields.dateLastOpen !== "undefined")
-		{
-			result.dateLastOpen = DateHelper.toDate(fields.dateLastOpen);
-		}
-
-		if (typeof fields.restrictions === 'object' && fields.restrictions)
-		{
-			result.restrictions = {};
-
-			if (typeof fields.restrictions.avatar === 'boolean')
-			{
-				result.restrictions.avatar = fields.restrictions.avatar;
-			}
-
-			if (typeof fields.restrictions.extend === 'boolean')
-			{
-				result.restrictions.extend = fields.restrictions.extend;
-			}
-
-			if (typeof fields.restrictions.leave === 'boolean')
-			{
-				result.restrictions.leave = fields.restrictions.leave;
-			}
-
-			if (typeof fields.restrictions.leave_owner === 'boolean')
-			{
-				result.restrictions.leaveOwner = fields.restrictions.leave_owner;
-			}
-
-			if (typeof fields.restrictions.rename === 'boolean')
-			{
-				result.restrictions.rename = fields.restrictions.rename;
-			}
-
-			if (typeof fields.restrictions.send === 'boolean')
-			{
-				result.restrictions.send = fields.restrictions.send;
-			}
-
-			if (typeof fields.restrictions.user_list === 'boolean')
-			{
-				result.restrictions.userList = fields.restrictions.user_list;
-			}
-
-			if (typeof fields.restrictions.mute === 'boolean')
-			{
-				result.restrictions.mute = fields.restrictions.mute;
-			}
-
-			if (typeof fields.restrictions.call === 'boolean')
-			{
-				result.restrictions.call = fields.restrictions.call;
-			}
-		}
-
-		if (typeof fields.public === 'object' && fields.public)
+		if (Type.isPlainObject(fields.public))
 		{
 			result.public = {};
 
-			if (typeof fields.public.code === 'string')
+			if (Type.isStringFilled(fields.public.code))
 			{
 				result.public.code = fields.public.code;
 			}
 
-			if (typeof fields.public.link === 'string')
+			if (Type.isStringFilled(fields.public.link))
 			{
 				result.public.link = fields.public.link;
 			}
+		}
+
+		// if (!Type.isUndefined(fields.readed_list))
+		// {
+		// 	fields.readList = fields.readed_list;
+		// }
+		// if (Type.isArray(fields.readList))
+		// {
+		// 	result.readList = this.prepareReadList(fields.readList);
+		// }
+
+		// if (!Type.isUndefined(fields.writing_list))
+		// {
+		// 	fields.writingList = fields.writing_list;
+		// }
+		// if (Type.isArray(fields.writingList))
+		// {
+		// 	result.writingList = this.prepareWritingList(fields.writingList);
+		// }
+
+		if (!Type.isUndefined(fields.manager_list))
+		{
+			fields.managerList = fields.manager_list;
+		}
+		if (Type.isArray(fields.managerList))
+		{
+			result.managerList = [];
+
+			fields.managerList.forEach(userId =>
+			{
+				userId = Number.parseInt(userId, 10);
+				if (userId > 0)
+				{
+					result.managerList.push(userId);
+				}
+			});
+		}
+
+		// if (!Type.isUndefined(fields.mute_list))
+		// {
+		// 	fields.muteList = fields.mute_list;
+		// }
+		// if (Type.isArray(fields.muteList) || Type.isPlainObject(fields.muteList))
+		// {
+		// 	result.muteList = this.prepareMuteList(fields.muteList);
+		// }
+
+		if (Type.isBoolean(fields.inited))
+		{
+			result.inited = fields.inited;
+		}
+
+		if (Type.isBoolean(fields.hasMoreUnreadToLoad))
+		{
+			result.hasMoreUnreadToLoad = fields.hasMoreUnreadToLoad;
+		}
+
+		if (Type.isString(fields.description))
+		{
+			result.description = fields.description;
+		}
+
+		return result;
+	}
+
+	function prepareLastMessageViews(rawLastMessageViews)
+	{
+		const {
+			count_of_viewers: countOfViewers,
+			first_viewers: rawFirstViewers,
+			message_id: messageId
+		} = rawLastMessageViews;
+
+		let firstViewer;
+		rawFirstViewers.forEach(rawFirstViewer => {
+			if (rawFirstViewer.user_id === MessengerParams.getUserId())
+			{
+				return;
+			}
+
+			firstViewer = {
+				userId: rawFirstViewer.user_id,
+				userName: rawFirstViewer.user_name,
+				date: DateHelper.cast(rawFirstViewer.date)
+			};
+		});
+
+		if (countOfViewers > 0 && !firstViewer)
+		{
+			throw new Error('dialoguesModel: no first viewer for message');
+		}
+
+		return {
+			countOfViewers,
+			firstViewer,
+			messageId
+		};
+	}
+
+	function prepareAvatar(store, avatar)
+	{
+		let result = '';
+
+		if (!avatar || avatar.endsWith('/js/im/images/blank.gif'))
+		{
+			result = '';
+		}
+		else if (avatar.startsWith('http'))
+		{
+			result = avatar;
+		}
+		else
+		{
+			result = store.rootState.applicationModel.common.host + avatar;
+		}
+
+		if (result)
+		{
+			result = encodeURI(result);
 		}
 
 		return result;

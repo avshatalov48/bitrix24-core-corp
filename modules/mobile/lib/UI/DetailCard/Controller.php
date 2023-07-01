@@ -125,7 +125,10 @@ abstract class Controller extends JsonController implements FallbackActionInterf
 
 		$this->setSourceParametersList(array_merge(
 			[
-				['entityId' => $entityId],
+				[
+					'entityId' => $entityId,
+					'copy' => false,
+				],
 			],
 			$this->getSourceParametersList(),
 		));

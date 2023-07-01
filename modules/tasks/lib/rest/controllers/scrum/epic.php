@@ -347,10 +347,10 @@ class Epic extends Base
 	 * @return array|null
 	 */
 	public function listAction(
-		PageNavigation $nav,
 		array $filter = [],
 		array $select = [],
-		array $order = []
+		array $order = [],
+		PageNavigation $nav = null
 	)
 	{
 		$epicService = new EpicService($this->getUserId());

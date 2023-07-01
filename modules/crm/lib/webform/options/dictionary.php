@@ -76,7 +76,7 @@ class Dictionary
 				['id' => 'image/*', 'name' => Loc::getMessage('CRM_WEBFORM_OPTIONS_DICT_FIELD_FILE_CONTENT_TYPE_IMAGE')],
 				[
 					'id' => 'x-bx/doc',
-					'name' => Loc::getMessage('CRM_WEBFORM_OPTIONS_DICT_FIELD_FILE_CONTENT_TYPE_DOC'),
+					'name' => Loc::getMessage('CRM_WEBFORM_OPTIONS_DICT_FIELD_FILE_CONTENT_TYPE_DOC_MSGVER_1'),
 					'hint' => Loc::getMessage('CRM_WEBFORM_OPTIONS_DICT_FIELD_FILE_CONTENT_TYPE_DOC_HINT'),
 				],
 				[

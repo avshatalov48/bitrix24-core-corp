@@ -5,8 +5,8 @@ use Bitrix\Crm;
 use Bitrix\Crm\Binding\EntityBinding;
 use Bitrix\Crm\Binding\LeadContactTable;
 use Bitrix\Crm\CustomerType;
-use Bitrix\Crm\Entity\Traits\UserFieldPreparer;
 use Bitrix\Crm\Entity\Traits\EntityFieldsNormalizer;
+use Bitrix\Crm\Entity\Traits\UserFieldPreparer;
 use Bitrix\Crm\EntityAddressType;
 use Bitrix\Crm\Integration\Channel\LeadChannelBinding;
 use Bitrix\Crm\Integration\PullManager;
@@ -36,6 +36,7 @@ class CAllCrmLead
 	protected $checkExceptions = array();
 
 	private static ?\Bitrix\Crm\Entity\Compatibility\Adapter $lastActivityAdapter = null;
+	private static ?Crm\Entity\Compatibility\Adapter $contentTypeIdAdapter = null;
 
 	/** @var \Bitrix\Crm\Entity\Compatibility\Adapter */
 	private $compatibilityAdapter;
@@ -150,6 +151,16 @@ class CAllCrmLead
 		return self::$lastActivityAdapter;
 	}
 
+	private static function getContentTypeIdAdapter(): Crm\Entity\Compatibility\Adapter\ContentTypeId
+	{
+		if (!self::$contentTypeIdAdapter)
+		{
+			self::$contentTypeIdAdapter = new Crm\Entity\Compatibility\Adapter\ContentTypeId(\CCrmOwnerType::Lead);
+		}
+
+		return self::$contentTypeIdAdapter;
+	}
+
 	// Service -->
 	public static function GetFieldCaption($fieldName)
 	{
@@ -179,194 +190,187 @@ class CAllCrmLead
 	{
 		if(!self::$FIELD_INFOS)
 		{
-			if (static::isFactoryEnabled())
-			{
-				self::$FIELD_INFOS = static::createCompatibilityAdapter()->getFieldsInfo();
-			}
-			else
-			{
-				self::$FIELD_INFOS = array(
-					'ID' => array(
-						'TYPE' => 'integer',
-						'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
-					),
-					'TITLE' => array(
-						'TYPE' => 'string',
-						'ATTRIBUTES' => array(CCrmFieldInfoAttr::Required)
-					),
-					'HONORIFIC' => array(
-						'TYPE' => 'crm_status',
-						'CRM_STATUS_TYPE' => 'HONORIFIC'
-					),
-					'NAME' => array(
-						'TYPE' => 'string'
-					),
-					'SECOND_NAME' => array(
-						'TYPE' => 'string'
-					),
-					'LAST_NAME' => array(
-						'TYPE' => 'string'
-					),
-					'BIRTHDATE' => array(
-						'TYPE' => 'date'
-					),
-					'BIRTHDAY_SORT' => array(
-						'TYPE' => 'integer',
-						'ATTRIBUTES' => array(CCrmFieldInfoAttr::Hidden)
-					),
-					'COMPANY_TITLE' => array(
-						'TYPE' => 'string'
-					),
-					'SOURCE_ID' => array(
-						'TYPE' => 'crm_status',
-						'CRM_STATUS_TYPE' => 'SOURCE',
-						'ATTRIBUTES' => [CCrmFieldInfoAttr::HasDefaultValue],
-					),
-					'SOURCE_DESCRIPTION' => array(
-						'TYPE' => 'string'
-					),
-					'STATUS_ID' => array(
-						'TYPE' => 'crm_status',
-						'CRM_STATUS_TYPE' => 'STATUS',
-						'ATTRIBUTES' => array(CCrmFieldInfoAttr::Progress)
-					),
-					'STATUS_DESCRIPTION' => array(
-						'TYPE' => 'string'
-					),
-					'STATUS_SEMANTIC_ID' => array(
-						'TYPE' => 'string',
-						'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
-					),
-					'POST' => array(
-						'TYPE' => 'string'
-					),
-					'ADDRESS' => array(
-						'TYPE' => 'string'
-					),
-					'ADDRESS_2' => array(
-						'TYPE' => 'string'
-					),
-					'ADDRESS_CITY' => array(
-						'TYPE' => 'string'
-					),
-					'ADDRESS_POSTAL_CODE' => array(
-						'TYPE' => 'string'
-					),
-					'ADDRESS_REGION' => array(
-						'TYPE' => 'string'
-					),
-					'ADDRESS_PROVINCE' => array(
-						'TYPE' => 'string'
-					),
-					'ADDRESS_COUNTRY' => array(
-						'TYPE' => 'string'
-					),
-					'ADDRESS_COUNTRY_CODE' => array(
-						'TYPE' => 'string'
-					),
-					'ADDRESS_LOC_ADDR_ID' => array(
-						'TYPE' => 'integer'
-					),
-					'CURRENCY_ID' => array(
-						'TYPE' => 'crm_currency'
-					),
-					'OPPORTUNITY' => array(
-						'TYPE' => 'double'
-					),
-					'IS_MANUAL_OPPORTUNITY' => array(
-						'TYPE' => 'char'
-					),
-					'OPENED' => array(
-						'TYPE' => 'char'
-					),
-					'COMMENTS' => array(
-						'TYPE' => 'string',
-						'VALUE_TYPE' => 'html',
-					),
-					'HAS_PHONE' => array(
-						'TYPE' => 'char',
-						'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
-					),
-					'HAS_EMAIL' => array(
-						'TYPE' => 'char',
-						'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
-					),
-					'HAS_IMOL' => array(
-						'TYPE' => 'char',
-						'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
-					),
-					'ASSIGNED_BY_ID' => array(
-						'TYPE' => 'user',
-					),
-					'CREATED_BY_ID' => array(
-						'TYPE' => 'user',
-						'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
-					),
-					'MODIFY_BY_ID' => array(
-						'TYPE' => 'user',
-						'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
-					),
-					'MOVED_BY_ID' => [
-						'TYPE' => 'user',
-						'ATTRIBUTES' => [CCrmFieldInfoAttr::ReadOnly],
+			self::$FIELD_INFOS = array(
+				'ID' => array(
+					'TYPE' => 'integer',
+					'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
+				),
+				'TITLE' => array(
+					'TYPE' => 'string',
+					'ATTRIBUTES' => array(CCrmFieldInfoAttr::Required)
+				),
+				'HONORIFIC' => array(
+					'TYPE' => 'crm_status',
+					'CRM_STATUS_TYPE' => 'HONORIFIC'
+				),
+				'NAME' => array(
+					'TYPE' => 'string'
+				),
+				'SECOND_NAME' => array(
+					'TYPE' => 'string'
+				),
+				'LAST_NAME' => array(
+					'TYPE' => 'string'
+				),
+				'BIRTHDATE' => array(
+					'TYPE' => 'date'
+				),
+				'BIRTHDAY_SORT' => array(
+					'TYPE' => 'integer',
+					'ATTRIBUTES' => array(CCrmFieldInfoAttr::Hidden)
+				),
+				'COMPANY_TITLE' => array(
+					'TYPE' => 'string'
+				),
+				'SOURCE_ID' => array(
+					'TYPE' => 'crm_status',
+					'CRM_STATUS_TYPE' => 'SOURCE',
+					'ATTRIBUTES' => [CCrmFieldInfoAttr::HasDefaultValue],
+				),
+				'SOURCE_DESCRIPTION' => array(
+					'TYPE' => 'string'
+				),
+				'STATUS_ID' => array(
+					'TYPE' => 'crm_status',
+					'CRM_STATUS_TYPE' => 'STATUS',
+					'ATTRIBUTES' => array(CCrmFieldInfoAttr::Progress)
+				),
+				'STATUS_DESCRIPTION' => array(
+					'TYPE' => 'string'
+				),
+				'STATUS_SEMANTIC_ID' => array(
+					'TYPE' => 'string',
+					'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
+				),
+				'POST' => array(
+					'TYPE' => 'string'
+				),
+				'ADDRESS' => array(
+					'TYPE' => 'string'
+				),
+				'ADDRESS_2' => array(
+					'TYPE' => 'string'
+				),
+				'ADDRESS_CITY' => array(
+					'TYPE' => 'string'
+				),
+				'ADDRESS_POSTAL_CODE' => array(
+					'TYPE' => 'string'
+				),
+				'ADDRESS_REGION' => array(
+					'TYPE' => 'string'
+				),
+				'ADDRESS_PROVINCE' => array(
+					'TYPE' => 'string'
+				),
+				'ADDRESS_COUNTRY' => array(
+					'TYPE' => 'string'
+				),
+				'ADDRESS_COUNTRY_CODE' => array(
+					'TYPE' => 'string'
+				),
+				'ADDRESS_LOC_ADDR_ID' => array(
+					'TYPE' => 'integer'
+				),
+				'CURRENCY_ID' => array(
+					'TYPE' => 'crm_currency'
+				),
+				'OPPORTUNITY' => array(
+					'TYPE' => 'double'
+				),
+				'IS_MANUAL_OPPORTUNITY' => array(
+					'TYPE' => 'char'
+				),
+				'OPENED' => array(
+					'TYPE' => 'char'
+				),
+				'COMMENTS' => array(
+					'TYPE' => 'string',
+					'VALUE_TYPE' => 'html',
+				),
+				'HAS_PHONE' => array(
+					'TYPE' => 'char',
+					'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
+				),
+				'HAS_EMAIL' => array(
+					'TYPE' => 'char',
+					'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
+				),
+				'HAS_IMOL' => array(
+					'TYPE' => 'char',
+					'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
+				),
+				'ASSIGNED_BY_ID' => array(
+					'TYPE' => 'user',
+				),
+				'CREATED_BY_ID' => array(
+					'TYPE' => 'user',
+					'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
+				),
+				'MODIFY_BY_ID' => array(
+					'TYPE' => 'user',
+					'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
+				),
+				'MOVED_BY_ID' => [
+					'TYPE' => 'user',
+					'ATTRIBUTES' => [CCrmFieldInfoAttr::ReadOnly],
+				],
+				'DATE_CREATE' => array(
+					'TYPE' => 'datetime',
+					'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
+				),
+				'DATE_MODIFY' => array(
+					'TYPE' => 'datetime',
+					'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
+				),
+				'MOVED_TIME' => [
+					'TYPE' => 'datetime',
+					'ATTRIBUTES' => [CCrmFieldInfoAttr::ReadOnly],
+				],
+				'COMPANY_ID' => array(
+					'TYPE' => 'crm_company',
+					'SETTINGS' => [
+						'parentEntityTypeId' => \CCrmOwnerType::Company,
 					],
-					'DATE_CREATE' => array(
-						'TYPE' => 'datetime',
-						'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
-					),
-					'DATE_MODIFY' => array(
-						'TYPE' => 'datetime',
-						'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
-					),
-					'MOVED_TIME' => [
-						'TYPE' => 'datetime',
-						'ATTRIBUTES' => [CCrmFieldInfoAttr::ReadOnly],
-					],
-					'COMPANY_ID' => array(
-						'TYPE' => 'crm_company',
-						'SETTINGS' => [
-							'parentEntityTypeId' => \CCrmOwnerType::Company,
-						],
-					),
-					'CONTACT_ID' => array(
-						'TYPE' => 'crm_contact',
-						'ATTRIBUTES' => array(CCrmFieldInfoAttr::Deprecated)
-					),
-					'CONTACT_IDS' => array(
-						'TYPE' => 'crm_contact',
-						'ATTRIBUTES' => array(CCrmFieldInfoAttr::Multiple)
-					),
-					'IS_RETURN_CUSTOMER' => array(
-						'TYPE' => 'char',
-						'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
-					),
-					'DATE_CLOSED' => array(
-						'TYPE' => 'datetime',
-						'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
-					),
-					'ORIGINATOR_ID' => array(
-						'TYPE' => 'string'
-					),
-					'ORIGIN_ID' => array(
-						'TYPE' => 'string'
-					),
-					/*'DISCOUNT_TYPE_ID' => array(
-						'TYPE' => 'integer'
-					),
-					'DISCOUNT_RATE' => array(
-						'TYPE' => 'double'
-					),
-					'DISCOUNT_SUM' => array(
-						'TYPE' => 'double'
-					)*/
-				);
+				),
+				'CONTACT_ID' => array(
+					'TYPE' => 'crm_contact',
+					'ATTRIBUTES' => array(CCrmFieldInfoAttr::Deprecated)
+				),
+				'CONTACT_IDS' => array(
+					'TYPE' => 'crm_contact',
+					'ATTRIBUTES' => array(CCrmFieldInfoAttr::Multiple)
+				),
+				'IS_RETURN_CUSTOMER' => array(
+					'TYPE' => 'char',
+					'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
+				),
+				'DATE_CLOSED' => array(
+					'TYPE' => 'datetime',
+					'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
+				),
+				'ORIGINATOR_ID' => array(
+					'TYPE' => 'string'
+				),
+				'ORIGIN_ID' => array(
+					'TYPE' => 'string'
+				),
+				/*'DISCOUNT_TYPE_ID' => array(
+					'TYPE' => 'integer'
+				),
+				'DISCOUNT_RATE' => array(
+					'TYPE' => 'double'
+				),
+				'DISCOUNT_SUM' => array(
+					'TYPE' => 'double'
+				)*/
+			);
 
-				// add utm fields
-				self::$FIELD_INFOS += UtmTable::getUtmFieldsInfo();
+			// add utm fields
+			self::$FIELD_INFOS += UtmTable::getUtmFieldsInfo();
 
-				self::$FIELD_INFOS += Crm\Service\Container::getInstance()->getParentFieldManager()->getParentFieldsInfo(\CCrmOwnerType::Lead);
-				self::$FIELD_INFOS += self::getLastActivityAdapter()->getFieldsInfo();
-			}
+			self::$FIELD_INFOS += Crm\Service\Container::getInstance()->getParentFieldManager()->getParentFieldsInfo(\CCrmOwnerType::Lead);
+			self::$FIELD_INFOS += self::getLastActivityAdapter()->getFieldsInfo();
 		}
 
 		return self::$FIELD_INFOS;
@@ -497,23 +501,27 @@ class CAllCrmLead
 			{
 				$commonActivityJoin = CCrmActivity::PrepareJoin(0, CCrmOwnerType::Lead, 'L', 'AC', 'UAC', 'ACUSR');
 
-				$result['C_ACTIVITY_ID'] = array('FIELD' => 'UAC.ACTIVITY_ID', 'TYPE' => 'int', 'FROM' => $commonActivityJoin);
-				$result['C_ACTIVITY_TIME'] = array('FIELD' => 'UAC.ACTIVITY_TIME', 'TYPE' => 'datetime', 'FROM' => $commonActivityJoin);
-				$result['C_ACTIVITY_SUBJECT'] = array('FIELD' => 'AC.SUBJECT', 'TYPE' => 'string', 'FROM' => $commonActivityJoin);
-				$result['C_ACTIVITY_RESP_ID'] = array('FIELD' => 'AC.RESPONSIBLE_ID', 'TYPE' => 'int', 'FROM' => $commonActivityJoin);
-				$result['C_ACTIVITY_RESP_LOGIN'] = array('FIELD' => 'ACUSR.LOGIN', 'TYPE' => 'string', 'FROM' => $commonActivityJoin);
-				$result['C_ACTIVITY_RESP_NAME'] = array('FIELD' => 'ACUSR.NAME', 'TYPE' => 'string', 'FROM' => $commonActivityJoin);
-				$result['C_ACTIVITY_RESP_LAST_NAME'] = array('FIELD' => 'ACUSR.LAST_NAME', 'TYPE' => 'string', 'FROM' => $commonActivityJoin);
-				$result['C_ACTIVITY_RESP_SECOND_NAME'] = array('FIELD' => 'ACUSR.SECOND_NAME', 'TYPE' => 'string', 'FROM' => $commonActivityJoin);
+				$result['C_ACTIVITY_ID'] = ['FIELD' => 'UAC.ACTIVITY_ID', 'TYPE' => 'int', 'FROM' => $commonActivityJoin];
+				$result['C_ACTIVITY_TIME'] = ['FIELD' => 'UAC.ACTIVITY_TIME', 'TYPE' => 'datetime', 'FROM' => $commonActivityJoin];
+				$result['C_ACTIVITY_SUBJECT'] = ['FIELD' => 'AC.SUBJECT', 'TYPE' => 'string', 'FROM' => $commonActivityJoin];
+				$result['C_ACTIVITY_RESP_ID'] = ['FIELD' => 'AC.RESPONSIBLE_ID', 'TYPE' => 'int', 'FROM' => $commonActivityJoin];
+				$result['C_ACTIVITY_RESP_LOGIN'] = ['FIELD' => 'ACUSR.LOGIN', 'TYPE' => 'string', 'FROM' => $commonActivityJoin];
+				$result['C_ACTIVITY_RESP_NAME'] = ['FIELD' => 'ACUSR.NAME', 'TYPE' => 'string', 'FROM' => $commonActivityJoin];
+				$result['C_ACTIVITY_RESP_LAST_NAME'] = ['FIELD' => 'ACUSR.LAST_NAME', 'TYPE' => 'string', 'FROM' => $commonActivityJoin];
+				$result['C_ACTIVITY_RESP_SECOND_NAME'] = ['FIELD' => 'ACUSR.SECOND_NAME', 'TYPE' => 'string', 'FROM' => $commonActivityJoin];
+				$result['C_ACTIVITY_TYPE_ID'] = ['FIELD' => 'AC.TYPE_ID', 'TYPE' => 'int', 'FROM' => $commonActivityJoin];
+				$result['C_ACTIVITY_PROVIDER_ID'] = ['FIELD' => 'AC.PROVIDER_ID', 'TYPE' => 'string', 'FROM' => $commonActivityJoin];
 
 				$userID = CCrmPerms::GetCurrentUserID();
 				if($userID > 0)
 				{
 					$activityJoin = CCrmActivity::PrepareJoin($userID, CCrmOwnerType::Lead, 'L', 'A', 'UA', '');
 
-					$result['ACTIVITY_ID'] = array('FIELD' => 'UA.ACTIVITY_ID', 'TYPE' => 'int', 'FROM' => $activityJoin);
-					$result['ACTIVITY_TIME'] = array('FIELD' => 'UA.ACTIVITY_TIME', 'TYPE' => 'datetime', 'FROM' => $activityJoin);
-					$result['ACTIVITY_SUBJECT'] = array('FIELD' => 'A.SUBJECT', 'TYPE' => 'string', 'FROM' => $activityJoin);
+					$result['ACTIVITY_ID'] = ['FIELD' => 'UA.ACTIVITY_ID', 'TYPE' => 'int', 'FROM' => $activityJoin];
+					$result['ACTIVITY_TIME'] = ['FIELD' => 'UA.ACTIVITY_TIME', 'TYPE' => 'datetime', 'FROM' => $activityJoin];
+					$result['ACTIVITY_SUBJECT'] = ['FIELD' => 'A.SUBJECT', 'TYPE' => 'string', 'FROM' => $activityJoin];
+					$result['ACTIVITY_TYPE_ID'] = ['FIELD' => 'A.TYPE_ID', 'TYPE' => 'int', 'FROM' => $activityJoin];
+					$result['ACTIVITY_PROVIDER_ID'] = ['FIELD' => 'A.PROVIDER_ID', 'TYPE' => 'string', 'FROM' => $activityJoin];
 				}
 			}
 		}
@@ -1832,6 +1840,8 @@ class CAllCrmLead
 		)->build($ID, ['checkExist' => true]);
 		//endregion
 
+		self::getContentTypeIdAdapter()->performAdd($arFields, $options);
+
 		if(isset($options['REGISTER_SONET_EVENT']) && $options['REGISTER_SONET_EVENT'] === true)
 		{
 			$opportunity = round((isset($arFields['OPPORTUNITY']) ? doubleval($arFields['OPPORTUNITY']) : 0.0), 2);
@@ -2791,6 +2801,11 @@ class CAllCrmLead
 				\Bitrix\Crm\Counter\Monitor::getInstance()->onEntityUpdate(CCrmOwnerType::Lead, $arRow, $currentFields);
 			}
 
+			self::getContentTypeIdAdapter()
+				->setPreviousFields((int)$ID, $arRow)
+				->performUpdate((int)$ID, $arFields, $options)
+			;
+
 			// update utm fields
 			UtmTable::updateEntityUtmFromFields(CCrmOwnerType::Lead, $ID, $arFields);
 			//region Search
@@ -3235,6 +3250,8 @@ class CAllCrmLead
 				Crm\Pseudoactivity\WaitEntry::deleteByOwner(CCrmOwnerType::Lead, $ID);
 				Crm\Observer\ObserverManager::deleteByOwner(CCrmOwnerType::Lead, $ID);
 				Crm\Ml\Scoring::onEntityDelete(CCrmOwnerType::Lead, $ID);
+
+				self::getContentTypeIdAdapter()->performDelete((int)$ID, $arOptions);
 
 				Crm\Integration\Im\Chat::deleteChat(
 					array(

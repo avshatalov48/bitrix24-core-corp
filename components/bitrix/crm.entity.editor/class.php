@@ -92,6 +92,7 @@ class CCrmEntityEditorComponent extends UIFormComponent
 		$requiredFields = array();
 		$hasEmptyRequiredFields = false;
 		$htmlFieldNames = [];
+		$bbFieldNames = [];
 		$isUfAddressConverterEnabled = $this->isUfAddressConvertionEnabled();
 		foreach($this->arResult['ENTITY_FIELDS'] as $index => $field)
 		{
@@ -105,6 +106,10 @@ class CCrmEntityEditorComponent extends UIFormComponent
 			if($typeName === 'html')
 			{
 				$htmlFieldNames[] = $name;
+			}
+			if ($typeName === 'bb')
+			{
+				$bbFieldNames[] = $name;
 			}
 
 			if ($name === 'LINK' && $typeName === 'multifield')
@@ -166,10 +171,7 @@ class CCrmEntityEditorComponent extends UIFormComponent
 					continue;
 				}
 
-				if (is_array($this->arResult['ENTITY_DATA'][$name])
-					&& isset($this->arResult['ENTITY_DATA'][$name]['IS_EMPTY'])
-					&& $this->arResult['ENTITY_DATA'][$name]['IS_EMPTY']
-				)
+				if (!empty($this->arResult['ENTITY_DATA'][$name]['IS_EMPTY']))
 				{
 					$hasEmptyRequiredFields = true;
 				}
@@ -181,6 +183,7 @@ class CCrmEntityEditorComponent extends UIFormComponent
 			'required' => $requiredFields,
 			'hasEmptyRequiredFields' => $hasEmptyRequiredFields,
 			'html' => $htmlFieldNames,
+			'bb' => $bbFieldNames,
 		];
 	}
 
@@ -251,7 +254,7 @@ class CCrmEntityEditorComponent extends UIFormComponent
 						continue;
 					}
 
-					$schemeElement = $availableFields[$name];
+					$schemeElement = $availableFields[$name] ?? [];
 					$fieldType = $schemeElement['type'] ?? '';
 
 					$title = '';
@@ -550,8 +553,11 @@ class CCrmEntityEditorComponent extends UIFormComponent
 
 		//region Permissions
 		$userPermissions = CCrmPerms::GetCurrentUserPermissions();
-		$this->arResult['CAN_CREATE_CONTACT'] = \CCrmContact::CheckCreatePermission($userPermissions);
-		$this->arResult['CAN_CREATE_COMPANY'] = \CCrmCompany::CheckCreatePermission($userPermissions);
+
+		$clientCategoryParams = \CCrmComponentHelper::getEntityClientFieldCategoryParams((int)$this->entityTypeID, $this->categoryId);
+
+		$this->arResult['CAN_CREATE_CONTACT'] = \CCrmContact::CheckCreatePermission($userPermissions, $clientCategoryParams[CCrmOwnerType::Contact]['categoryId'] ?? 0);
+		$this->arResult['CAN_CREATE_COMPANY'] = \CCrmCompany::CheckCreatePermission($userPermissions, $clientCategoryParams[CCrmOwnerType::Company]['categoryId'] ?? 0);
 		//endregion
 
 		$this->arResult['LANGUAGES'] = $this->loadLanguages();

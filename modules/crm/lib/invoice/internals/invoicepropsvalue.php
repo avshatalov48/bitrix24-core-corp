@@ -21,9 +21,9 @@ if (!Loader::includeModule('sale'))
  *
  * <<< ORMENTITYANNOTATION
  * @method static EO_InvoicePropsValue_Query query()
- * @method static EO_InvoicePropsValue_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_InvoicePropsValue_Result getByPrimary($primary, array $parameters = [])
  * @method static EO_InvoicePropsValue_Result getById($id)
- * @method static EO_InvoicePropsValue_Result getList(array $parameters = array())
+ * @method static EO_InvoicePropsValue_Result getList(array $parameters = [])
  * @method static EO_InvoicePropsValue_Entity getEntity()
  * @method static \Bitrix\Crm\Invoice\Internals\EO_InvoicePropsValue createObject($setDefaultValues = true)
  * @method static \Bitrix\Crm\Invoice\Internals\EO_InvoicePropsValue_Collection createCollection()

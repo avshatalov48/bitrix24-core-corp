@@ -245,20 +245,20 @@ abstract class BaseComponent extends \CBitrixComponent implements Errorable
 
 		$this->realActionName = null;
 		//todo? action prefix? Url Manager?
-		$action = $this->arParams[$this->actionPrefix]?: $this->request->getQuery($this->actionPrefix);
-		if($action && is_string($action) && isset($listOfActions[mb_strtolower($action)]))
+		$action = $this->arParams[$this->actionPrefix] ?? $this->request->getQuery($this->actionPrefix);
+		if($action && is_string($action) && isset($listOfActions[strtolower($action)]))
 		{
-			$this->realActionName = mb_strtolower($action);
+			$this->realActionName = strtolower($action);
 		}
 
-		if(!$this->realActionName || $this->realActionName == 'default')
+		if(!$this->realActionName || $this->realActionName === 'default')
 		{
 			$this->setProcessToDefaultAction();
 			return $this;
 		}
 
 		$description = $listOfActions[$this->realActionName];
-		if(!in_array($this->request->getRequestMethod(), $description['method']))
+		if(!in_array($this->request->getRequestMethod(), $description['method'], true))
 		{
 			$this->setProcessToDefaultAction();
 		}

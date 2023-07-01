@@ -52,7 +52,10 @@ class Component extends BaseComponent
 			$defaultVariableAliases = [];
 			$componentVariables = ['id'];
 			$variables = [];
-			$urlTemplates = CComponentEngine::makeComponentUrlTemplates($defaultUrlTemplates, $this->arParams['SEF_URL_TEMPLATES']);
+			$urlTemplates = CComponentEngine::makeComponentUrlTemplates(
+				$defaultUrlTemplates,
+				($this->arParams['SEF_URL_TEMPLATES'] ?? '')
+			);
 			$variableAliases = CComponentEngine::makeComponentVariableAliases($defaultVariableAliases, $this->arParams['VARIABLE_ALIASES']);
 			$componentPage = CComponentEngine::parseComponentPath($this->arParams['SEF_FOLDER'], $urlTemplates, $variables);
 
@@ -86,7 +89,7 @@ class Component extends BaseComponent
 				'VARIABLES' => $variables,
 				'ALIASES' => $this->arParams['SEF_MODE'] == 'Y' ? [] : $variableAliases,
 				'ID' => isset($variables['id']) ? strval($variables['id']) : '',
-				'PATH_TO_USER_PROFILE' => $this->arParams['PATH_TO_USER_PROFILE'],
+				'PATH_TO_USER_PROFILE' => $this->arParams['PATH_TO_USER_PROFILE'] ?? '',
 			],
 			is_array($this->arResult) ? $this->arResult : []
 		);

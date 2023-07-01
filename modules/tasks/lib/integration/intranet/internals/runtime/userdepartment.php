@@ -137,35 +137,6 @@ class UserDepartment extends \Bitrix\Tasks\Integration\Intranet
 
 }
 
-class UtmUserTable extends Entity\DataManager
-{
-
-	public static function getTableName()
-	{
-		return 'b_utm_user';
-	}
-
-	public static function getMap()
-	{
-		return array(
-			'ID' => array(
-				'data_type' => 'integer',
-				'primary' => true,
-			),
-			'VALUE_ID' => array(
-				'data_type' => 'integer',
-			),
-			'FIELD_ID' => array(
-				'data_type' => 'integer',
-			),
-			'VALUE_INT' => array(
-				'data_type' => 'integer',
-			),
-		);
-	}
-
-}
-
 /**
  * Class UtsIblockSectionTable
  *

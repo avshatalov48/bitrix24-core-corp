@@ -20,7 +20,7 @@ class TagEditRule extends AbstractRule
 			$this->controller->addError(static::class, 'Incorrect type');
 			return false;
 		}
-		if ($params['GROUP_ID'] > 0)
+		if ((int)($params['GROUP_ID'] ?? 0) > 0)
 		{
 			if ($this->user->isAdmin())
 			{

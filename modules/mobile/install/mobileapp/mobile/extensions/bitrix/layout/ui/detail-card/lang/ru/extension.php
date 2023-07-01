@@ -1,11 +1,11 @@
 <?php
 $MESS['DETAIL_CARD_DISCARD_CHANGES_ALERT_TITLE'] = "Сбросить правки?";
-$MESS['DETAIL_CARD_DISCARD_CHANGES_ALERT_TEXT'] = "Все внесенные изменения будут потеряны";
+$MESS['DETAIL_CARD_DISCARD_CHANGES_ALERT_TEXT'] = "Все внесённые изменения будут потеряны";
 $MESS['DETAIL_CARD_DISCARD_CHANGES_ALERT_OK'] = 'Сбросить';
 $MESS['DETAIL_CARD_DISCARD_CHANGES_ALERT_CANCEL'] = 'Продолжить редактирование';
 
 $MESS['DETAIL_CARD_EXIT_ENTITY_ALERT_TITLE'] = "Сохранить изменения?";
-$MESS['DETAIL_CARD_EXIT_ENTITY_ALERT_TEXT2'] = "Если вы сейчас выйдете, все внесенные изменения будут удалены";
+$MESS['DETAIL_CARD_EXIT_ENTITY_ALERT_TEXT2'] = "Если вы сейчас выйдете, все внесённые изменения будут удалены";
 $MESS['DETAIL_CARD_EXIT_ENTITY_ALERT_SAVE'] = 'Сохранить и выйти';
 $MESS['DETAIL_CARD_EXIT_ENTITY_ALERT_DISCARD'] = 'Выйти без сохранения';
 

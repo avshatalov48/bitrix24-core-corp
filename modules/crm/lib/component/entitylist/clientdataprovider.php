@@ -316,12 +316,14 @@ abstract class ClientDataProvider
 	{
 		$result = [];
 
+		$idFieldId = $this->fieldHelper->addPrefixToFieldId('ID');
 		$isAccessibleFieldId = $this->fieldHelper->addPrefixToFieldId('IS_ACCESSIBLE');
 
 		// by default there are no access to any $clientIds
 		foreach ($clientIds as $clientId)
 		{
 			$result[$clientId] = [
+				$idFieldId => $clientId,  // CONTACT_ID or COMPANY_ID
 				$isAccessibleFieldId => false,  // CONTACT_IS_ACCESSIBLE or COMPANY_IS_ACCESSIBLE
 			];
 		}

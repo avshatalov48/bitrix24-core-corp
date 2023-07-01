@@ -1434,6 +1434,57 @@ table.data-table td {
 	border: 1px solid #efefef !important;
 }
 
+.task-page__mobile-divider {
+	display: inline-block;
+	margin: 1px 17px 0 0;
+	width: 1px;
+	height: 14px;
+	background-color: var(--ui-color-palette-gray-20);
+	vertical-align: middle;
+}
+
+.task-page__mobile {
+	position: relative;
+	display: inline-block;
+	margin-top: 1px;
+	font-size: 12px;
+	line-height: initial;
+	vertical-align: middle;
+}
+
+.task-page__mobile_name,
+.task-page__mobile_value {
+	display: inline-block;
+}
+
+.task-page__mobile_name {
+	position: relative;
+	padding-left: 15px;
+	margin-right: 4px;
+	color: var(--ui-color-palette-gray-50);
+}
+
+.task-page__mobile_name:before {
+	content: '';
+	left: 0;
+	position: absolute;
+	top: 1px;
+	width: 8px;
+	height: 13px;
+	background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='13' fill='none'%3E%3Cpath fill='%23BDC1C6' fill-rule='evenodd' d='M6.588.11H1.411C.778.11.294.57.294 1.172v9.906c0 .566.484 1.061 1.117 1.061h5.177c.634 0 1.118-.495 1.118-1.061V1.172C7.706.57 7.222.11 6.588.11ZM4 11.786a.71.71 0 0 1-.708-.708A.71.71 0 0 1 4 10.37a.71.71 0 0 1 .707.708.71.71 0 0 1-.707.708Zm2.677-1.769H1.322V1.879h5.356l-.001 8.138Z' clip-rule='evenodd'/%3E%3C/svg%3E") no-repeat;
+}
+
+.task-page__mobile_value {
+	border-bottom: 1px dashed rgba(130, 139, 149, .4);
+	color: var(--ui-color-palette-gray-70);
+	transition: border-bottom .3s;
+	cursor: pointer;
+}
+
+.task-page__mobile_value:hover {
+	border-bottom: 1px dashed var(--ui-color-background-transparent);
+}
+
 /*=========================== main.post.list patches ======================*/
 .task-comments-block .feed-com-block,
 .task-comments-block .feed-com-add-box {

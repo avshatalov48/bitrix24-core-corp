@@ -61,8 +61,8 @@ if (isset($_REQUEST['action']) && $arResult['CAN_EDIT'] && check_bitrix_sessid()
 			switch($action)
 			{
 				case 'set_department_head':
-					$dpt = intval($_REQUEST['dpt_id']);
-					$user_id = intval($_REQUEST['user_id']);
+					$dpt = intval($_REQUEST['dpt_id'] ?? 0);
+					$user_id = intval($_REQUEST['user_id'] ?? 0);
 
 					$ok = false;
 
@@ -115,11 +115,11 @@ if (isset($_REQUEST['action']) && $arResult['CAN_EDIT'] && check_bitrix_sessid()
 						break;
 
 				case 'change_department':
-					$user_id = intval($_REQUEST['user_id']);
-					$dpt_id = intval($_REQUEST['dpt_id']);
-					$dpt_from = intval($_REQUEST['dpt_from']);
+					$user_id = intval($_REQUEST['user_id'] ?? 0);
+					$dpt_id = intval($_REQUEST['dpt_id'] ?? 0);
+					$dpt_from = intval($_REQUEST['dpt_from'] ?? 0);
 
-					$type = intval($_REQUEST['type']);
+					$type = intval($_REQUEST['type'] ?? 0);
 
 					$ok = false;
 					if ($user_id > 0 && $dpt_id > 0)
@@ -213,7 +213,7 @@ if (isset($_REQUEST['action']) && $arResult['CAN_EDIT'] && check_bitrix_sessid()
 				break;
 
 				case 'delete_department':
-					$dpt = intval($_REQUEST['dpt_id']);
+					$dpt = intval($_REQUEST['dpt_id'] ?? 0);
 
 					$dbRes = CIBlockSection::GetList(
 						array(),
@@ -273,8 +273,8 @@ if (isset($_REQUEST['action']) && $arResult['CAN_EDIT'] && check_bitrix_sessid()
 				break;
 
 				case 'move_department':
-					$dpt = intval($_REQUEST['dpt_id']);
-					$dpt_to = intval($_REQUEST['dpt_to']);
+					$dpt = intval($_REQUEST['dpt_id'] ?? 0);
+					$dpt_to = intval($_REQUEST['dpt_to'] ?? 0);
 
 					$ok = false;
 
@@ -324,17 +324,17 @@ if (isset($_REQUEST['action']) && $arResult['CAN_EDIT'] && check_bitrix_sessid()
 					}
 
 					// we should resort departments in this case
-					if (is_array($res) || !$_REQUEST['dpt_parent'])
+					if (is_array($res) || empty($_REQUEST['dpt_parent']))
 					{
 						break;
 					}
 
 				case 'sort_department':
 
-					$dpt_id = intval($_REQUEST['dpt_id']);
-					$dpt_before = intval($_REQUEST['dpt_before']);
-					$dpt_after = intval($_REQUEST['dpt_after']);
-					$dpt_parent = intval($_REQUEST['dpt_parent']);
+					$dpt_id = intval($_REQUEST['dpt_id'] ?? 0);
+					$dpt_before = intval($_REQUEST['dpt_before'] ?? 0);
+					$dpt_after = intval($_REQUEST['dpt_after'] ?? 0);
+					$dpt_parent = intval($_REQUEST['dpt_parent'] ?? 0);
 
 					$ok = false;
 
@@ -493,7 +493,7 @@ if (isset($_REQUEST['action']) && $arResult['CAN_EDIT'] && check_bitrix_sessid()
 	if ($action == 'undo')
 	{
 		$GLOBALS['VISUAL_STRUCTURE_IBLOCK_ID'] = $arParams['IBLOCK_ID'];
-		CUndo::Escape($_REQUEST['undo']);
+		CUndo::Escape($_REQUEST['undo'] ?? null);
 		$mode = 'reload';
 	}
 	else
@@ -526,10 +526,10 @@ if (isset($_REQUEST['action']) && $arResult['CAN_EDIT'] && check_bitrix_sessid()
 
 if ($mode == 'subtree')
 {
-	$arParams['LEVEL'] = intval($_REQUEST['level']);
-	$SECTION_ID = intval($_REQUEST['section']);
+	$arParams['LEVEL'] = intval($_REQUEST['level'] ?? 0);
+	$SECTION_ID = intval($_REQUEST['section'] ?? 0);
 
-	$arResult['HAS_MULTIPLE_ROOTS'] = $_REQUEST['mr'] == 'Y';
+	$arResult['HAS_MULTIPLE_ROOTS'] = isset($_REQUEST['mr']) && $_REQUEST['mr'] == 'Y';
 
 	$cache_id = $mode.'|'.$SECTION_ID.'|'.$arResult['HAS_MULTIPLE_ROOTS'].'|'.$arParams['LEVEL'];
 
@@ -642,10 +642,15 @@ if ($this->StartResultCache(false, $arParams['IBLOCK_ID'].'|'.$arResult['CAN_EDI
 			$chain    = array($nodeId);
 			while ($parentId > 0 && !in_array($parentId, $chain))
 			{
+				if (!isset($tree[$parentId]['c']))
+				{
+					$tree[$parentId]['c'] = 0;
+				}
+
 				$tree[$parentId]['c']++;
 
 				$nodeId   = $parentId;
-				$parentId = $tree[$parentId]['p'];
+				$parentId = $tree[$parentId]['p'] ?? null;
 				$chain[]  = $nodeId;
 			}
 		}
@@ -742,7 +747,7 @@ if ($this->StartResultCache(false, $arParams['IBLOCK_ID'].'|'.$arResult['CAN_EDI
 					'PROFILE_URL' => $arRes['PROFILE_URL'],
 					'PERSONAL_PHOTO' => $arRes['PERSONAL_PHOTO'],
 					'WORK_POSITION' => $arRes['WORK_POSITION'],
-					'UF_DEPARTMENT' => $arRes['UF_DEPARTMENT']
+					'UF_DEPARTMENT' => $arRes['UF_DEPARTMENT'] ?? null,
 				);
 			}
 

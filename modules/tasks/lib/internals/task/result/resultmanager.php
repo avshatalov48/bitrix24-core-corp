@@ -16,6 +16,9 @@ use Bitrix\Main\Security\Sign\Signer;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\UrlPreview\UrlPreview;
 use Bitrix\Tasks\Integration\Bizproc\Listener;
+use Bitrix\Tasks\Integration\CRM\Timeline\Exception\TimelineException;
+use Bitrix\Tasks\Integration\CRM\Timeline;
+use Bitrix\Tasks\Integration\CRM\TimeLineManager;
 use Bitrix\Tasks\Integration\Pull\PushService;
 use Bitrix\Tasks\Internals\Registry\TaskRegistry;
 use Bitrix\Tasks\Internals\Task\ParameterTable;
@@ -197,8 +200,8 @@ class ResultManager
 
 		$this->sendPush(self::COMMAND_CREATE, $result);
 		$this->log($result, self::RESULT_ADD);
-
 		$this->executeAutomationTrigger($task, $result);
+		$this->sendTimelineEvent($task);
 
 		return $result;
 	}
@@ -585,5 +588,13 @@ class ResultManager
 			'FIELD' => $field,
 			'TO_VALUE' => $result->getCommentId(),
 		]);
+	}
+
+	/**
+	 * @throws TimelineException
+	 */
+	private function sendTimelineEvent(TaskObject $task): void
+	{
+		(new TimeLineManager($task->getId(), $this->userId))->onTaskResultAdded()->save();
 	}
 }

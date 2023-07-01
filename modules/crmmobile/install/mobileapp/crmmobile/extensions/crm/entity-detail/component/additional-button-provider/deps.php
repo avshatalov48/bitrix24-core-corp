@@ -2,16 +2,15 @@
 
 return [
 	'extensions' => [
-		'crm:type',
-		'crm:communication/floating-button',
 		'layout/ui/fields/email',
 		'layout/ui/fields/im',
 		'layout/ui/fields/phone',
 		'utils/number',
 		'utils/object',
+		'crm:communication/floating-button',
+		'crm:type',
 	],
 	'bundle' => [
-		'./button-animate',
 		'./contact-info',
 	],
 ];

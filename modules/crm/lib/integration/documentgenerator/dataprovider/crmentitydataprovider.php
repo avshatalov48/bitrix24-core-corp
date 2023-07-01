@@ -1782,7 +1782,7 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 		}
 		if (empty($stampPlaceholders))
 		{
-			$data['changeStampsDisabledReason'] = GetMessage('CRM_DOCGEN_CRMENTITYDATAPROVIDER_STAMPS_DISABLED_NO_TEMPLATE');
+			$data['changeStampsDisabledReason'] = GetMessage('CRM_DOCGEN_CRMENTITYDATAPROVIDER_STAMPS_DISABLED_NO_TEMPLATE_V2');
 		}
 		else
 		{
@@ -1805,13 +1805,13 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 		$data['qrCodeEnabled'] = false;
 		if (!isset($templateFields[$qrPlaceholder]))
 		{
-			$data['changeQrCodeDisabledReason'] = 'No qr code in template';
+			$data['changeQrCodeDisabledReason'] = GetMessage('CRM_DOCGEN_CRMENTITYDATAPROVIDER_PAYMENT_QR_CODE_DISABLED_NO_TEMPLATE');
 		}
 		else
 		{
 			if (empty($this->getPaymentQrCode()))
 			{
-				$data['changeQrCodeDisabledReason'] = 'Not enough data for qr';
+				$data['changeQrCodeDisabledReason'] = GetMessage('CRM_DOCGEN_CRMENTITYDATAPROVIDER_PAYMENT_QR_CODE_DISABLED_NO_DATA');
 			}
 			else
 			{

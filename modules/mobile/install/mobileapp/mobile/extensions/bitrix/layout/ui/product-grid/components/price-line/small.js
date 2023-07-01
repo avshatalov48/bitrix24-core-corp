@@ -11,7 +11,7 @@ jn.define('layout/ui/product-grid/components/price-line/small', (require, export
 			return merge({}, Styles, {
 				titleText: {
 					fontSize: 14,
-					color: '#B8C0C9',
+					color: '#bdc1c6',
 				},
 				amount: {
 					fontSize: 14,
@@ -19,7 +19,7 @@ jn.define('layout/ui/product-grid/components/price-line/small', (require, export
 				},
 				currency: {
 					fontSize: 14,
-					color: '#B8C0C9',
+					color: '#bdc1c6',
 				},
 			});
 		}

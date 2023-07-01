@@ -29,9 +29,7 @@ class ContactProvider extends \Bitrix\Crm\Search\Result\Provider\IndexSupportedP
 
 	protected function getPermissionEntityTypes(): array
 	{
-		return [
-			\CCrmOwnerType::ContactName,
-		];
+		return $this->getPermissionEntityTypesByAffectedCategories();
 	}
 
 	protected function getShortIndexColumnName(): string

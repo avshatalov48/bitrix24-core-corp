@@ -83,7 +83,7 @@ abstract class TasksBaseComponent extends CBitrixComponent
 			if($this->errors->checkNoFatals())
 			{
                 if(
-	                $this->arParams['USE_DISPATCHER']
+	                isset($this->arParams['USE_DISPATCHER'])
 	                &&
 	                Dispatcher::isGloballyEnabled()
 	                &&
@@ -462,7 +462,7 @@ abstract class TasksBaseComponent extends CBitrixComponent
 			return $useObject ? new Dispatcher\ToDo\Plan() : array();
 		}
 
-		if(Dispatcher::isA($auxParams['DISPATCHER']))
+		if(Dispatcher::isA($auxParams['DISPATCHER'] ?? null))
 		{
 			$dispatcher = $auxParams['DISPATCHER'];
 		}
@@ -470,7 +470,7 @@ abstract class TasksBaseComponent extends CBitrixComponent
 		{
 			$dispatcher = new Dispatcher();
 		}
-		$dispatcher->addRuntimeActions($auxParams['RUNTIME_ACTIONS']);
+		$dispatcher->addRuntimeActions($auxParams['RUNTIME_ACTIONS'] ?? null);
 
 		$className = ToLower(static::getComponentClassName());
 
@@ -636,7 +636,7 @@ abstract class TasksBaseComponent extends CBitrixComponent
 	 */
 	protected function translateArResult($arResult)
 	{
-		$this->userId = $arResult['USER_ID']; // a short-cut to current user`s ID
+		$this->userId = ($arResult['USER_ID'] ?? null); // a short-cut to current user`s ID
 		unset($arResult['USER_ID']);
 
 		static::tryParseIntegerParameter($this->arParams['USER_ID'], $this->userId);

@@ -2,7 +2,6 @@
  * @module crm/entity-detail/component/right-buttons-provider
  */
 jn.define('crm/entity-detail/component/right-buttons-provider', (require, exports, module) => {
-
 	const { addImportButton } = require('crm/entity-detail/component/right-buttons-provider/import-from-contact-list');
 	const { useInDuplicates } = require('crm/entity-detail/component/right-buttons-provider/use-in-duplicates');
 
@@ -12,7 +11,6 @@ jn.define('crm/entity-detail/component/right-buttons-provider', (require, export
 	 * @returns {*[]}
 	 */
 	const rightButtonsProvider = (buttons, detailCard) => {
-
 		buttons = addImportButton(buttons, detailCard);
 		buttons = useInDuplicates(buttons, detailCard);
 

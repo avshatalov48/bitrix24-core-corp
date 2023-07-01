@@ -3,20 +3,24 @@
 namespace Bitrix\Tasks\Control;
 
 use Bitrix\Main\Application;
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\DB\SqlQueryException;
+use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\SystemException;
 use Bitrix\Tasks\Control\Exception\TemplateNotFoundException;
 use Bitrix\Tasks\Internals\Task\Template\TemplateDependenceTable;
-use Bitrix\Tasks\Internals\Task\Template\TemplateTagTable;
-use Bitrix\Tasks\Internals\Task\TemplateTable;
-use \Bitrix\Tasks\Internals\Task\Template\TemplateMemberTable;
+use Bitrix\Tasks\Internals\Task\Template\TemplateObject;
 
 class TemplateDependence
 {
+	use BaseTemplateControlTrait;
+
 	private const FIELD_DEPEND = 'DEPENDS_ON';
 
 	private $userId;
 	private $templateId;
 
-	/* @var \Bitrix\Tasks\Internals\Task\Template\TemplateObject $template */
+	/* @var TemplateObject $template */
 	private $template;
 
 	public function __construct(int $userId, int $templateId)
@@ -26,15 +30,13 @@ class TemplateDependence
 	}
 
 	/**
-	 * @param array $data
-	 * @return void
 	 * @throws TemplateNotFoundException
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\DB\SqlQueryException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
+	 * @throws ArgumentException
+	 * @throws SqlQueryException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
 	 */
-	public function set(array $data)
+	public function set(array $data): void
 	{
 		if (
 			!array_key_exists(self::FIELD_DEPEND, $data)
@@ -44,7 +46,8 @@ class TemplateDependence
 			return;
 		}
 
-		$this->loadTemplate();
+		$this->loadByTemplate();
+		$this->deleteByTemplate();
 
 		if (empty($data[self::FIELD_DEPEND]))
 		{
@@ -86,24 +89,17 @@ class TemplateDependence
 	}
 
 	/**
-	 * @return void
 	 * @throws TemplateNotFoundException
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
+	 * @throws SystemException
 	 */
-	private function loadTemplate(): void
+	private function loadByTemplate(): void
 	{
-		if ($this->template)
-		{
-			return;
-		}
-
-		$this->template = TemplateTable::getByPrimary($this->templateId)->fetchObject();
-		if (!$this->template)
-		{
-			throw new TemplateNotFoundException();
-		}
+		$this->loadTemplate();
 		$this->template->fillDependencies();
+	}
+
+	public function getTableClass(): string
+	{
+		return TemplateDependenceTable::class;
 	}
 }

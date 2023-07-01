@@ -142,7 +142,9 @@ class ProductRowReservation extends Crm\Reservation\Internals\EO_ProductRowReser
 		if ($productRowId > 0)
 		{
 			$basketReservation = new BasketReservation();
-			$basketReservation->addProduct($this->productRow->toArray());
+			$basketReservation->addProduct([
+				'ID' => $productRowId,
+			]);
 			$reservedProducts = $basketReservation->getReservedProducts();
 
 			if (isset($reservedProducts[$productRowId]))

@@ -213,7 +213,7 @@ class TimeHelper
 	public function getUserUtcOffset($userId)
 	{
 		$userId = (int)$userId;
-		if ($this->usersUtcOffsets[$userId] === null)
+		if (!isset($this->usersUtcOffsets[$userId]))
 		{
 			$dateTimeServer = new \DateTime('now', $this->createTimezoneByOffset($this->getServerUtcOffset()));
 			$this->usersUtcOffsets[$userId] = $dateTimeServer->getOffset() + $this->getUserToServerOffset($userId);
@@ -384,7 +384,7 @@ class TimeHelper
 	{
 		$offsetSeconds = (int)$offsetSeconds;
 		static $timezonesByOffset = [];
-		if ($timezonesByOffset[$offsetSeconds] === null)
+		if (!isset($timezonesByOffset[$offsetSeconds]))
 		{
 			$timezonesByOffset[$offsetSeconds] = new \DateTimeZone($this->getFormattedOffset($offsetSeconds));
 		}

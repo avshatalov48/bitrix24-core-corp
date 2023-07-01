@@ -37,6 +37,7 @@ use Bitrix\Disk\Security\SecurityContext;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Search\Content;
 use Bitrix\Main\Type\DateTime;
+use Bitrix\Main\UI\Viewer\ItemAttributes;
 use Bitrix\Main\Web\PostDecodeFilter;
 use Bitrix\Main\Web\Uri;
 use Bitrix\Socialnetwork;
@@ -296,6 +297,14 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 			{
 				/** @var BaseObject $object */
 				$object = $row['object'];
+
+				$dataSet = null;
+				$viewerAttributes = $row['data']['VIEWER_ATTRS'] ?? null;
+				if ($viewerAttributes instanceof ItemAttributes)
+				{
+					$dataSet = $viewerAttributes->toDataSet();
+				}
+
 				$info = [
 					'id' => $row['id'],
 					'name' => $object->getName(),
@@ -304,12 +313,12 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 					'canAdd' => $object instanceof Folder && $object->canAdd($securityContext),
 					'link' => $row['data']['OPEN_URL'],
 					'isSymlink' => !empty($row['data']['SHARED']) || $object->isLink(),
-					'isLocked' => $object instanceof File ? (bool)$object->getLock() : false,
-					'isDraggable' => $this->isTrashMode()? false : true,
-					'isDroppable' => $this->isTrashMode()? false : ($object instanceof Folder),
+					'isLocked' => $object instanceof File && $object->getLock(),
+					'isDraggable' => !$this->isTrashMode(),
+					'isDroppable' => !$this->isTrashMode() && ($object instanceof Folder),
 					'formattedSize' => $row['columns']['FORMATTED_SIZE'],
 					'actions' => $row['actions'],
-					'attributes' => $row['data']['VIEWER_ATTRS']? $row['data']['VIEWER_ATTRS']->toDataSet() : null,
+					'attributes' => $dataSet,
 				];
 
 				if ($object instanceof File && \Bitrix\Disk\TypeFile::isImage($object))
@@ -368,7 +377,7 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 			'SORT_MODE' => $this->gridOptions->getSortMode(),
 			'VIEW_SIZE' => $this->gridOptions->getViewSize(),
 		);
-		list($grid['SORT'], $grid['SORT_VARS']) = $this->gridOptions->getGridOptionsSorting();
+		[$grid['SORT'], $grid['SORT_VARS']] = $this->gridOptions->getGridOptionsSorting();
 
 		$possibleColumnForSorting = $this->gridOptions->getPossibleColumnForSorting();
 		$visibleColumns = array_combine(
@@ -845,7 +854,7 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 			);
 			if($isItTimeToShowBizProc && !$isFolder)
 			{
-				list($actions, $columnsBizProc, $bizprocIcon) = $this->getBizProcData($object, $securityContext, $actions, $columnsBizProc, $bizprocIcon, $exportData);
+				[$actions, $columnsBizProc, $bizprocIcon] = $this->getBizProcData($object, $securityContext, $actions, $columnsBizProc, $bizprocIcon, $exportData);
 			}
 
 			if($object->canMarkDeleted($securityContext))
@@ -901,7 +910,7 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 			}
 			else
 			{
-				$sourceUri = new \Bitrix\Main\Web\Uri($urlManager->getUrlForDownloadFile($object));
+				$sourceUri = new Uri($urlManager->getUrlForDownloadFile($object));
 				$fileData = [
 					'ID' => $object->getFileId(),
 					'CONTENT_TYPE' => $row['FILE_CONTENT_TYPE'],
@@ -1004,7 +1013,7 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 				'FORMATTED_SIZE' => $isFolder? '' : CFile::formatSize($object->getSize()),
 			);
 
-			if ($visibleColumns['CREATE_USER'])
+			if (isset($visibleColumns['CREATE_USER']))
 			{
 				$createUser = $object->getCreateUser();
 				$createdByLink = \CComponentEngine::makePathFromTemplate(
@@ -1013,12 +1022,12 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 				);
 
 				$columns['CREATE_USER'] = "
-					<div class=\"bx-disk-user-link\"><span class=\"bx-disk-fileinfo-owner-avatar\" style=\"background-image: url({$createUser->getAvatarSrc()});\"></span><a target='_blank' href=\"{$createdByLink}\" id=\"\">" . htmlspecialcharsbx(
+					<div class=\"bx-disk-user-link\"><span class=\"bx-disk-fileinfo-owner-avatar\" style=\"background-image: url('" . Uri::urnEncode($createUser->getAvatarSrc()) . "');\"></span><a target='_blank' href=\"{$createdByLink}\" id=\"\">" . htmlspecialcharsbx(
 						$createUser->getFormattedName()) . "</a></div>
 				";
 			}
 
-			if ($visibleColumns['UPDATE_USER'])
+			if (isset($visibleColumns['UPDATE_USER']))
 			{
 				$updateUser = $object->getUpdateUser()?: $object->getCreateUser();
 				$updatedByLink = \CComponentEngine::makePathFromTemplate(
@@ -1027,12 +1036,12 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 				);
 
 				$columns['UPDATE_USER'] = "
-					<div class=\"bx-disk-user-link\"><span class=\"bx-disk-fileinfo-owner-avatar\" style=\"background-image: url({$updateUser->getAvatarSrc()});\"></span><a target='_blank' href=\"{$updatedByLink}\" id=\"\">" . htmlspecialcharsbx(
+					<div class=\"bx-disk-user-link\"><span class=\"bx-disk-fileinfo-owner-avatar\" style=\"background-image: url('" . Uri::urnEncode($updateUser->getAvatarSrc()) . "');\"></span><a target='_blank' href=\"{$updatedByLink}\" id=\"\">" . htmlspecialcharsbx(
 						$updateUser->getFormattedName()) . "</a></div>
 				";
 			}
 
-			if ($visibleColumns['DELETE_USER'])
+			if (isset($visibleColumns['DELETE_USER']))
 			{
 				$deleteUser = $object->getDeleteUser()?: $object->getCreateUser();
 				$deletedByLink = \CComponentEngine::makePathFromTemplate(
@@ -1041,7 +1050,7 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 				);
 
 				$columns['DELETE_USER'] = "
-					<div class=\"bx-disk-user-link\"><span class=\"bx-disk-fileinfo-owner-avatar\" style=\"background-image: url({$deleteUser->getAvatarSrc()});\"></span><a target='_blank' href=\"{$deletedByLink}\" id=\"\">" . htmlspecialcharsbx(
+					<div class=\"bx-disk-user-link\"><span class=\"bx-disk-fileinfo-owner-avatar\" style=\"background-image: url('" . Uri::urnEncode($deleteUser->getAvatarSrc()) . "');\"></span><a target='_blank' href=\"{$deletedByLink}\" id=\"\">" . htmlspecialcharsbx(
 						$deleteUser->getFormattedName()) . "</a></div>
 				";
 			}

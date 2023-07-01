@@ -393,10 +393,10 @@ class Requisite
 			{
 				return [
 					'name' => $name,
-					'type' => $field['type'], //$field['formType'] for datetime is text
-					'label' => $field['title'],
-					'multiple' => $field['multiple'],
-					'required' => $field['required'],
+					'type' => $field['type'] ?? '', //$field['formType'] for datetime is text
+					'label' => $field['title'] ?? '',
+					'multiple' => $field['multiple'] ?? false,
+					'required' => $field['required'] ?? false,
 				];
 			},
 			$banking,

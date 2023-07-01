@@ -1,7 +1,10 @@
-import { ajax as Ajax, Loc, Text, Tag, Dom } from 'main.core';
+import {ajax as Ajax, Loc, Text, Tag, Dom, Type} from 'main.core';
 import { PopupManager } from 'main.popup';
 import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
 import 'ui.switcher';
+import {PhoneVerify} from 'bitrix24.phoneverify';
+
+const PHONE_VERIFY_FORM_ENTITY = 'crm_webform';
 
 class WebFormList
 {
@@ -71,7 +74,31 @@ class WebFormList
 			}
 
 			const data = JSON.parse(node.getAttribute(switcherAttr));
-			(new BX.Crm.Form.Qr({link: data.path})).renderTo(node);
+			if (data.needVerify)
+			{
+				const onClickVerify = () => {
+					this.#verifyPhone(
+						PHONE_VERIFY_FORM_ENTITY,
+						data.id,
+						() => {
+							(new BX.Crm.Form.Qr({link: data.path})).show();
+						},
+					);
+				}
+				node.appendChild(Tag.render`
+					<button
+						type="button"
+						class="crm-webform-qr-btn ui-btn ui-btn-xs ui-btn-light-border ui-btn-round ui-btn-no-caps ui-btn-icon-share"
+						onclick="${onClickVerify}"
+					>
+						${Loc.getMessage('CRM_WEBFORM_QR_OPEN')}
+					</button>
+				`);
+			}
+			else
+			{
+				(new BX.Crm.Form.Qr({link: data.path})).renderTo(node);
+			}
 		});
 	}
 
@@ -420,9 +447,49 @@ class WebFormList
 			});
 	}
 
-	showSiteCode(id, options = {})
+	showSiteCode(id, options = {}, needVerify: boolean = false)
 	{
-		BX.Crm.Form.Embed.openSlider(id, options);
+		if (needVerify)
+		{
+			this.#verifyPhone(
+				PHONE_VERIFY_FORM_ENTITY,
+				id,
+				() => {
+					BX.Crm.Form.Embed.openSlider(id, options);
+				}
+			);
+		}
+		else
+		{
+			BX.Crm.Form.Embed.openSlider(id, options);
+		}
+	}
+
+	#verifyPhone(entityType: string, entityId: string, runOnVerified: function)
+	{
+		const
+			sliderTitle = Loc.getMessage('CRM_WEBFORM_PHONE_VERIFY_CUSTOM_SLIDER_TITLE'),
+			title = Loc.getMessage('CRM_WEBFORM_PHONE_VERIFY_CUSTOM_TITLE'),
+			description = Loc.getMessage('CRM_WEBFORM_PHONE_VERIFY_CUSTOM_DESCRIPTION_V1');
+
+		if (typeof PhoneVerify !== 'undefined')
+		{
+			PhoneVerify.getInstance()
+				.setEntityType(entityType)
+				.setEntityId(entityId)
+				.startVerify({sliderTitle: sliderTitle, title: title, description: description})
+				.then((verified) => {
+					if (verified)
+					{
+						runOnVerified();
+						this.reloadGrid();
+					}
+				});
+		}
+		else
+		{
+			runOnVerified();
+		}
 	}
 
 	activateList(mode: boolean = true)
@@ -496,6 +563,11 @@ class WebFormList
 			if (parseInt(error.code) === 2)
 			{
 				this.showNotification(Loc.getMessage('CRM_WEBFORM_LIST_ITEM_WRITE_ACCESS_DENIED'));
+			}
+
+			if (error.code === 'ERROR_CODE_PHONE_NOT_VERIFIED')
+			{
+				this.showNotification(Loc.getMessage('CRM_WEBFORM_LIST_ITEM_PHONE_NOT_VERIFIED'));
 			}
 		});
 	}

@@ -1,17 +1,16 @@
 <?php
 namespace Bitrix\Crm\Counter;
 use Bitrix\Crm\ActivityBindingTable;
+use Bitrix\Crm\ActivityTable;
+use Bitrix\Crm\DealTable;
+use Bitrix\Crm\LeadTable;
+use Bitrix\Crm\PhaseSemantics;
 use Bitrix\Main;
-use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\DB\SqlExpression;
+use Bitrix\Main\Entity\DatetimeField;
 use Bitrix\Main\Entity\Query;
 use Bitrix\Main\Entity\ReferenceField;
-use Bitrix\Main\Entity\DatetimeField;
-
-use Bitrix\Crm\LeadTable;
-use Bitrix\Crm\DealTable;
-use Bitrix\Crm\ActivityTable;
-use Bitrix\Crm\PhaseSemantics;
+use Bitrix\Main\Type\DateTime;
 
 class ActivityCounter extends EntityCounter
 {
@@ -151,9 +150,12 @@ class ActivityCounter extends EntityCounter
 	 * Evaluate counter value
 	 * @return int
 	 */
-	public function calculateValue()
+	public function calculateValue(): int
 	{
-		if (!\Bitrix\Crm\Settings\CounterSettings::getCurrent()->isEnabled())
+		if (
+			!\Bitrix\Crm\Settings\CounterSettings::getInstance()->isEnabled()
+			|| !\Bitrix\Crm\Settings\CounterSettings::getInstance()->canBeCounted()
+		)
 		{
 			return 0; // counters feature is completely disabled
 		}

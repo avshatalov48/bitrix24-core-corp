@@ -157,8 +157,14 @@ class CategoryRepository
 	{
 		$rolesList = \CCrmRole::getList();
 
+		$systemRolesIds = \Bitrix\Crm\Security\Role\RolePermission::getSystemRolesIds();
 		while ($role = $rolesList->fetch())
 		{
+			if (in_array($role['ID'], $systemRolesIds, false)) // do not affect system roles
+			{
+				continue;
+			}
+
 			$rolePerms = \CCrmRole::getRolePerms($role['ID']);
 
 			$entityName = \CCrmOwnerType::resolveName($entityTypeId);

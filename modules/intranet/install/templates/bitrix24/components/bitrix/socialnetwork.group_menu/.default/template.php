@@ -322,7 +322,7 @@ if (
 					{
 						$menuItems[] = [
 							'TEXT' => Loc::getMessage('SONET_UM_NEWS'),
-							'URL' => ($arResult['Urls']['General'] ?: $arResult['Urls']['View']),
+							'URL' => !empty($arResult['Urls']['General']) ? $arResult['Urls']['General'] : ($arResult['Urls']['View'] ?? ''),
 							'ID' => 'general',
 							'IS_ACTIVE' => in_array($arParams['PAGE_ID'], ['group', 'group_general'], true),
 						];
@@ -438,7 +438,7 @@ if (
 
 				if (!empty($menuItems))
 				{
-					if (count(array_filter($menuItems, function($item) { return !(bool)$item['IS_DISABLED']; })) <= 0)
+					if (count(array_filter($menuItems, function($item) { return !(bool)($item['IS_DISABLED'] ?? null); })) <= 0)
 					{
 						$menuItems[0]['IS_DISABLED'] = false;
 					}

@@ -14,9 +14,9 @@ Loc::loadMessages(__FILE__);
  *
  * <<< ORMENTITYANNOTATION
  * @method static EO_ExternalChannelConnector_Query query()
- * @method static EO_ExternalChannelConnector_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_ExternalChannelConnector_Result getByPrimary($primary, array $parameters = [])
  * @method static EO_ExternalChannelConnector_Result getById($id)
- * @method static EO_ExternalChannelConnector_Result getList(array $parameters = array())
+ * @method static EO_ExternalChannelConnector_Result getList(array $parameters = [])
  * @method static EO_ExternalChannelConnector_Entity getEntity()
  * @method static \Bitrix\Crm\EO_ExternalChannelConnector createObject($setDefaultValues = true)
  * @method static \Bitrix\Crm\EO_ExternalChannelConnector_Collection createCollection()

@@ -1,9 +1,11 @@
-(() => {
-	BX.UI = BX.UI || {};
+/**
+ * @module layout/ui/entity-editor/editor-enum/control-options
+ */
+jn.define('layout/ui/entity-editor/editor-enum/control-options', (require, exports, module) => {
 	/**
-	 * @class BX.UI.EntityEditorControlOptions
+	 * @object EntityEditorControlOptions
 	 */
-	BX.UI.EntityEditorControlOptions = {
+	const EntityEditorControlOptions = {
 		none: 0,
 		showAlways: 1,
 
@@ -11,4 +13,6 @@
 			return ((options & option) === option);
 		},
 	};
-})();
+
+	module.exports = { EntityEditorControlOptions };
+});

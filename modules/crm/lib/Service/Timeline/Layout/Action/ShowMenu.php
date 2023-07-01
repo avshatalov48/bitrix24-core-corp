@@ -26,6 +26,7 @@ class ShowMenu extends Action
 			'value' => $this->getMenu(),
 			'actionParams' => $this->getActionParams(),
 			'animation' => $this->getAnimation(),
+			'analytics' => $this->getAnalytics(),
 		];
 	}
 }

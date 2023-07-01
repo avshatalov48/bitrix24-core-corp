@@ -341,7 +341,7 @@ class EmailAttachment
 					while ($row = $activityElementList->fetch())
 					{
 						// ignoring mail template attachments
-						if (in_array((int)$row['ELEMENT_ID'], $exceptMailTemplateAttachment))
+						if ($exceptMailTemplateAttachment && in_array((int)$row['ELEMENT_ID'], $exceptMailTemplateAttachment))
 						{
 							continue;
 						}

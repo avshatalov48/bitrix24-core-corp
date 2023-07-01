@@ -85,7 +85,7 @@ jn.define("user/profile.edit", (require, exports, module) => {
 			{
 
 				InAppNotifier.showNotification({
-					title: BX.message("PROFILE_EDIT"), backgroundColor: "#075776", time: 1, blur: true, message: message
+					title: BX.message("PROFILE_EDIT"), backgroundColor: "#004f69", time: 1, blur: true, message: message
 				})
 			}
 		}

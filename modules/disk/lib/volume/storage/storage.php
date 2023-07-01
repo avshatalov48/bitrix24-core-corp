@@ -5,14 +5,14 @@ namespace Bitrix\Disk\Volume\Storage;
 use Bitrix\Main\Application;
 use Bitrix\Main;
 use Bitrix\Main\DB;
-use Bitrix\Main\Entity\Query;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ArgumentTypeException;
+use Bitrix\Disk;
+use Bitrix\Disk\Volume;
 use Bitrix\Disk\Internals\ObjectTable;
 use Bitrix\Disk\Internals\VolumeTable;
 use Bitrix\Disk\Internals\SharingTable;
 use Bitrix\Disk\ProxyType;
-use Bitrix\Disk\Volume;
 
 
 /**
@@ -30,9 +30,9 @@ class Storage
 	 * Returns entity type list.
 	 * @return string[]
 	 */
-	public static function getEntityType()
+	public static function getEntityType(): array
 	{
-		return array();
+		return [];
 	}
 
 	/**
@@ -42,20 +42,20 @@ class Storage
 	 */
 	public function getMeasureStages()
 	{
-		return array(
+		return [
 			self::DISK_FILE,
 			self::UNNECESSARY_VERSION,
 			'recalculatePercent'
-		);
+		];
 	}
 
 
 	/**
 	 * Runs measure test to get volumes of selecting objects.
 	 * @param array $collectData List types data to collect: ATTACHED_OBJECT, SHARING_OBJECT, EXTERNAL_LINK, UNNECESSARY_VERSION.
-	 * @return $this
+	 * @return static
 	 */
-	public function measure($collectData = [self::DISK_FILE, self::UNNECESSARY_VERSION])
+	public function measure(array $collectData = [self::DISK_FILE, self::UNNECESSARY_VERSION]): self
 	{
 		$collectData[] = 'recalculatePercent';
 
@@ -89,11 +89,11 @@ class Storage
 				, CNT_FILES.ENTITY_TYPE
 				, CNT_FILES.ENTITY_ID
 			";
-			$columns = array_merge($columns, array(
+			$columns = array_merge($columns, [
 				'STORAGE_ID',
 				'ENTITY_TYPE',
 				'ENTITY_ID',
-			));
+			]);
 
 			if ($this instanceof Volume\Storage\Group)
 			{
@@ -159,7 +159,7 @@ class Storage
 				, CNT_FILES.ENTITY_ID
 				, CNT_FILES.TITLE
 			";
-			$columns = array_merge($columns, array(
+			$columns = array_merge($columns, [
 				'FILE_SIZE',
 				'FILE_COUNT',
 				'DISK_SIZE',
@@ -169,7 +169,7 @@ class Storage
 				'ENTITY_TYPE',
 				'ENTITY_ID',
 				'TITLE',
-			));
+			]);
 			if ($subSelectSql != '')
 			{
 				$sqlStatements = explode(',', $subSelectSql);
@@ -240,10 +240,10 @@ class Storage
 				, CNT_PREVIEW.PREVIEW_SIZE AS PREVIEW_SIZE
 				, CNT_PREVIEW.PREVIEW_COUNT AS PREVIEW_COUNT
 			";
-			$columns = array_merge($columns, array(
+			$columns = array_merge($columns, [
 				'PREVIEW_SIZE',
 				'PREVIEW_COUNT',
-			));
+			]);
 			// language=SQL
 			$fromSql .= "
 				/* preview */
@@ -290,9 +290,9 @@ class Storage
 			$selectSql .= "
 				, IFNULL(CNT_ATTACH.ATTACHED_COUNT, 0) AS ATTACHED_COUNT
 			";
-			$columns = array_merge($columns, array(
+			$columns = array_merge($columns, [
 				'ATTACHED_COUNT',
-			));
+			]);
 			// language=SQL
 			$fromSql .= "
 				/* attached */
@@ -337,9 +337,9 @@ class Storage
 			$selectSql .= "
 				, IFNULL(CNT_LINK.LINK_COUNT, 0) AS LINK_COUNT
 			";
-			$columns = array_merge($columns, array(
+			$columns = array_merge($columns, [
 				'LINK_COUNT',
-			));
+			]);
 			// language=SQL
 			$fromSql .= "
 				/* external_link */
@@ -356,7 +356,7 @@ class Storage
 						INNER JOIN b_disk_external_link link on link.OBJECT_ID = files.ID
 					WHERE
 						files.TYPE = ". ObjectTable::TYPE_FILE. "
-						AND link.TYPE != ". \Bitrix\Disk\Internals\ExternalLinkTable::TYPE_AUTO. "
+						AND link.TYPE != ". Disk\Internals\ExternalLinkTable::TYPE_AUTO. "
 						AND files.ID = files.REAL_OBJECT_ID
 						{$subWhereSql}
 					GROUP BY
@@ -385,9 +385,9 @@ class Storage
 			$selectSql .= "
 				, IFNULL(CNT_SHARING.SHARING_COUNT, 0) AS SHARING_COUNT
 			";
-			$columns = array_merge($columns, array(
+			$columns = array_merge($columns, [
 				'SHARING_COUNT',
-			));
+			]);
 			// language=SQL
 			$fromSql .= "
 				/* sharing */
@@ -434,10 +434,10 @@ class Storage
 				, IFNULL(CNT_FREE.UNNECESSARY_VERSION_SIZE, 0) AS UNNECESSARY_VERSION_SIZE
 				, IFNULL(CNT_FREE.UNNECESSARY_VERSION_COUNT, 0) AS UNNECESSARY_VERSION_COUNT
 			";
-			$columns = array_merge($columns, array(
+			$columns = array_merge($columns, [
 				'UNNECESSARY_VERSION_SIZE',
 				'UNNECESSARY_VERSION_COUNT',
-			));
+			]);
 			// language=SQL
 			$fromSql .= "
 				/* may drop */
@@ -477,7 +477,7 @@ class Storage
 								ON link.OBJECT_ID  = ver.OBJECT_ID
 								AND link.VERSION_ID = ver.ID
 								AND link.VERSION_ID != head.ID
-								AND ifnull(link.TYPE,-1) != ". \Bitrix\Disk\Internals\ExternalLinkTable::TYPE_AUTO. "
+								AND ifnull(link.TYPE,-1) != ". Disk\Internals\ExternalLinkTable::TYPE_AUTO. "
 						WHERE
 							files.TYPE = ". ObjectTable::TYPE_FILE. "
 							AND files.ID = files.REAL_OBJECT_ID
@@ -509,15 +509,15 @@ class Storage
 			$stageId = self::DISK_FILE;
 		}
 
-		$allTestTypes = array(
+		$allTestTypes = [
 			self::DISK_FILE,
 			//self::ATTACHED_OBJECT,
 			//self::EXTERNAL_LINK,
 			//self::SHARING_OBJECT,
 			self::UNNECESSARY_VERSION,
 			'recalculatePercent',
-		);
-		$executeTests = array();
+		];
+		$executeTests = [];
 		$needApply = false;
 		foreach ($allTestTypes as $testTypeId)
 		{
@@ -560,10 +560,10 @@ class Storage
 			$subSelectSql = Volume\QueryHelper::prepareSelect($this->getSelect());
 
 			$subWhereSql = Volume\QueryHelper::prepareWhere(
-				$this->getFilter(array(
+				$this->getFilter([
 					'DELETED_TYPE' => ObjectTable::DELETED_TYPE_NONE
-				)),
-				array(
+				]),
+				[
 					'ENTITY_TYPE' => 'storage.ENTITY_TYPE',
 					'ENTITY_ID' => 'storage.ENTITY_ID',
 					'USER_ID' => 'storage.ENTITY_ID',
@@ -571,7 +571,7 @@ class Storage
 					'DELETED_TYPE' => 'files.DELETED_TYPE',
 					'STORAGE_ID' => 'storage.ID',
 					'TITLE' => 'storage.NAME',
-				)
+				]
 			);
 			if ($subWhereSql != '')
 			{
@@ -581,11 +581,11 @@ class Storage
 			$selectSql = '';
 			$fromSql = '';
 			$whereSql = '';
-			$columns = array(
+			$columns = [
 				'INDICATOR_TYPE',
 				'OWNER_ID',
 				'CREATE_TIME',
-			);
+			];
 
 			if ($testTypeId != self::DISK_FILE)
 			{
@@ -689,9 +689,9 @@ class Storage
 	 * @param string|Volume\IVolumeIndicator $totalSizeIndicator Use this indicator as total volume.
 	 * @param string|Volume\IVolumeIndicator $excludeSizeIndicator Exclude indicator's volume from total volume.
 	 * @throws \Bitrix\Main\ArgumentException
-	 * @return self
+	 * @return static
 	 */
-	public function recalculatePercent($totalSizeIndicator = '\\Bitrix\\Disk\\Volume\\Module\\Disk', $excludeSizeIndicator = '')
+	public function recalculatePercent($totalSizeIndicator = '\\Bitrix\\Disk\\Volume\\Module\\Disk', $excludeSizeIndicator = ''): self
 	{
 		if (is_string($totalSizeIndicator) && !empty($totalSizeIndicator) && class_exists($totalSizeIndicator))
 		{
@@ -779,7 +779,7 @@ class Storage
 	 * @param array $collectedData List types of collected data to return.
 	 * @return DB\Result
 	 */
-	public function getMeasurementResult($collectedData = array())
+	public function getMeasurementResult(array $collectedData = []): DB\Result
 	{
 		$storageId = $this->getFilterValue('STORAGE_ID', '=@');
 		if ($storageId === null)
@@ -791,17 +791,17 @@ class Storage
 
 	/**
 	 * @param Volume\Fragment $fragment Storage entity object.
-	 * @return string
+	 * @return string|null
 	 */
-	public static function getTitle(Volume\Fragment $fragment)
+	public static function getTitle(Volume\Fragment $fragment): ?string
 	{
 		$title = $fragment->getTitle();
 
-		if ($title == '' || preg_match("/^user [0-9]+$/i", $title))
+		if ($fragment->getEntityType() == ProxyType\User::className())
 		{
 			$storage = $fragment->getStorage();
 
-			if ($storage instanceof \Bitrix\Disk\Storage)
+			if ($storage instanceof Disk\Storage)
 			{
 				$proxy = $storage->getProxyType();
 				if ($proxy instanceof ProxyType\User)
@@ -813,23 +813,40 @@ class Storage
 					$title = $storage->getName();
 				}
 			}
-		}
 
-		if ($fragment->getEntityType() == \Bitrix\Disk\ProxyType\User::className())
-		{
-			$user = \Bitrix\Disk\User::loadById($fragment->getEntityId());
-			if ($user instanceof \Bitrix\Disk\User && $user->getActive() !== 'Y')
+			$user = Disk\User::loadById($fragment->getEntityId());
+			if ($user instanceof Disk\User && $user->getActive() !== 'Y')
 			{
 				// user fired
 				Loc::loadMessages(__DIR__. '/../module/socialnetwork.php');
 
 				if($user->getPersonalGender() === 'F')
 				{
-					$title = Loc::getMessage('DISK_VOLUME_MODULE_SONET_FIRED_F', array('#USER_NAME#' => $title));
+					$title = Loc::getMessage('DISK_VOLUME_MODULE_SONET_FIRED_F', ['#USER_NAME#' => $title]);
 				}
 				else
 				{
-					$title = Loc::getMessage('DISK_VOLUME_MODULE_SONET_FIRED_M', array('#USER_NAME#' => $title));
+					$title = Loc::getMessage('DISK_VOLUME_MODULE_SONET_FIRED_M', ['#USER_NAME#' => $title]);
+				}
+			}
+		}
+		elseif ($fragment->getEntityType())
+		{
+			$storage = $fragment->getStorage();
+
+			if ($storage instanceof Disk\Storage)
+			{
+				$proxy = $storage->getProxyType();
+				if (
+					$storage->getName() == $proxy->getEntityTitle()
+					|| mb_stripos($proxy->getEntityTitle(), $storage->getName()) !== false
+				)
+				{
+					$title = $storage->getName();
+				}
+				else
+				{
+					$title = $proxy->getEntityTitle();
 				}
 			}
 		}
@@ -842,18 +859,18 @@ class Storage
 	 * @return string|null
 	 * @throws ArgumentTypeException
 	 */
-	public static function getUrl(Volume\Fragment $fragment)
+	public static function getUrl(Volume\Fragment $fragment): ?string
 	{
 		$storage = $fragment->getStorage();
-		if (!$storage instanceof \Bitrix\Disk\Storage)
+		if (!$storage instanceof Disk\Storage)
 		{
-			throw new ArgumentTypeException('Fragment must be subclass of '.\Bitrix\Disk\Storage::className());
+			throw new ArgumentTypeException('Fragment must be subclass of '.Disk\Storage::className());
 		}
 
 		if (
-			in_array($storage->getEntityType(), \Bitrix\Disk\Volume\Module\Im::getEntityType()) ||
-			in_array($storage->getEntityType(), \Bitrix\Disk\Volume\Module\Mail::getEntityType()) ||
-			in_array($storage->getEntityType(), \Bitrix\Disk\Volume\Module\Documentgenerator::getEntityType())
+			in_array($storage->getEntityType(), Volume\Module\Im::getEntityType()) ||
+			in_array($storage->getEntityType(), Volume\Module\Mail::getEntityType()) ||
+			in_array($storage->getEntityType(), Volume\Module\Documentgenerator::getEntityType())
 		)
 		{
 			$url = $storage->getProxyType()->getStorageBaseUrl();
@@ -866,8 +883,8 @@ class Storage
 		$testUrl = trim($url, '/');
 		if (
 			$testUrl == '' ||
-			$testUrl == \Bitrix\Disk\ProxyType\Base::SUFFIX_FOLDER_LIST ||
-			$testUrl == \Bitrix\Disk\ProxyType\Base::SUFFIX_DISK
+			$testUrl == Disk\ProxyType\Base::SUFFIX_FOLDER_LIST ||
+			$testUrl == Disk\ProxyType\Base::SUFFIX_DISK
 		)
 		{
 			return null;
@@ -879,13 +896,13 @@ class Storage
 
 	/**
 	 * Gets available disk space. Units ara bytes.
-	 * @param \Bitrix\Disk\Storage|null $storage Storage entity object.
+	 * @param Disk\Storage|null $storage Storage entity object.
 	 * @return int
 	 */
-	public static function getAvailableSpace(\Bitrix\Disk\Storage $storage = null)
+	public static function getAvailableSpace(Disk\Storage $storage = null)
 	{
 		$diskSpace = -1;
-		if ($storage instanceof \Bitrix\Disk\Storage)
+		if ($storage instanceof Disk\Storage)
 		{
 			if ($storage->isEnabledSizeLimitRestriction())
 			{

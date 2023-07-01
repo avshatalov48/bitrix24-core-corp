@@ -1,10 +1,10 @@
-import {Loc, Tag} from 'main.core';
-import {EventEmitter, BaseEvent} from 'main.core.events';
-import {PopupManager, Popup} from 'main.popup';
-import {TodoEditor} from 'crm.activity.todo-editor';
-import {SaveButton, CancelButton, Button, ButtonColor, ButtonState} from 'ui.buttons';
-import {TodoNotificationSkip}  from 'crm.activity.todo-notification-skip';
-import {TodoNotificationSkipMenu}  from 'crm.activity.todo-notification-skip-menu';
+import { Loc, Tag } from 'main.core';
+import { BaseEvent, EventEmitter } from 'main.core.events';
+import { Popup, PopupManager } from 'main.popup';
+import { TodoEditor } from 'crm.activity.todo-editor';
+import { Button, ButtonColor, ButtonState, CancelButton, SaveButton } from 'ui.buttons';
+import { TodoNotificationSkip } from 'crm.activity.todo-notification-skip';
+import { TodoNotificationSkipMenu } from 'crm.activity.todo-notification-skip-menu';
 
 import './todo-create-notification.css';
 
@@ -331,6 +331,7 @@ export class TodoCreateNotification
 			container: editorContainer,
 			ownerTypeId: this.#entityTypeId,
 			ownerId: this.#entityId,
+			currentUser: this.#timeline.getCurrentUser(),
 			events: {
 				onChangeDescription: this.#onChangeDescription.bind(this),
 				onSaveHotkeyPressed: this.#onSaveHotkeyPressed.bind(this),

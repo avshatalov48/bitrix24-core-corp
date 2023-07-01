@@ -6,9 +6,12 @@ namespace Bitrix\CrmMobile\ProductGrid;
 
 use Bitrix\Crm\ProductRow;
 use Bitrix\Main\Security\Random;
+use Bitrix\Main\Type\Date;
 
 final class ProductRowViewModel
 {
+	private const TYPE_PRODUCT = 1;
+
 	public ProductRow $source;
 
 	public string $currencyId;
@@ -25,7 +28,11 @@ final class ProductRowViewModel
 
 	public array $gallery = [];
 
+	public array $basketItemFields = [];
+
 	public string $barcode = '';
+
+	public int $type = self::TYPE_PRODUCT;
 
 	private string $uniqId;
 
@@ -44,12 +51,14 @@ final class ProductRowViewModel
 		$viewModel = new self($productRow, $currencyId);
 
 		$viewModel->skuTree = $fields['SKU_TREE'] ?? [];
-		$viewModel->isTaxMode = (bool)$fields['TAX_MODE'];
-		$viewModel->isPriceEditable = (bool)$fields['PRICE_EDITABLE'];
-		$viewModel->isDiscountEditable = (bool)$fields['DISCOUNT_EDITABLE'];
+		$viewModel->isTaxMode = (bool)($fields['TAX_MODE'] ?? false);
+		$viewModel->isPriceEditable = (bool)($fields['PRICE_EDITABLE'] ?? true);
+		$viewModel->isDiscountEditable = (bool)($fields['DISCOUNT_EDITABLE'] ?? true);
 		$viewModel->sections = $fields['SECTIONS'] ?? [];
 		$viewModel->gallery = $fields['GALLERY'] ?? [];
-		$viewModel->barcode = (string)$fields['BARCODE'];
+		$viewModel->basketItemFields = $fields['BASKET_FIELDS'] ?? [];
+		$viewModel->barcode = (string)($fields['BARCODE'] ?? '');
+		$viewModel->type = (int)($fields['TYPE'] ?? self::TYPE_PRODUCT);
 
 		return $viewModel;
 	}
@@ -70,7 +79,16 @@ final class ProductRowViewModel
 
 	public function toArray(): array
 	{
-		return array_merge($this->source->toArray(), [
+		$source = $this->source->toArray();
+		if (isset($source['DATE_RESERVE_END']))
+		{
+			if ($source['DATE_RESERVE_END'] instanceof Date)
+			{
+				$source['DATE_RESERVE_END'] = $source['DATE_RESERVE_END']->toString();
+			}
+		}
+
+		return array_merge($source, [
 			'ID' => $this->getId(),
 			'CURRENCY' => $this->currencyId,
 			'SKU_TREE' => $this->skuTree,
@@ -79,7 +97,9 @@ final class ProductRowViewModel
 			'DISCOUNT_EDITABLE' => $this->isDiscountEditable,
 			'SECTIONS' => $this->sections,
 			'GALLERY' => $this->gallery,
+			'BASKET_ITEM_FIELDS' => $this->basketItemFields,
 			'BARCODE' => $this->barcode,
+			'TYPE' => $this->type,
 		]);
 	}
 }

@@ -1,6 +1,5 @@
 (() => {
-
-	const require = ext => jn.require(ext);
+	const require = (ext) => jn.require(ext);
 
 	const { describe, test, expect } = require('testing');
 	const { WorkTimeMoment } = require('crm/work-time');
@@ -15,9 +14,7 @@
 	};
 
 	describe('crm: work time', () => {
-
 		test('basic next working day calculation', () => {
-
 			const currentTime = '2022-11-19T12:10:00+03:00';
 			const moment = (new Moment(currentTime)).setNow(new Moment(currentTime));
 			const workTimeMoment = new WorkTimeMoment(moment, testCalendar);
@@ -29,7 +26,6 @@
 		});
 
 		test('holidays', () => {
-
 			const januaryFirst = new Moment('2022-01-01T12:00:00+03:00');
 			const decemberFirst = new Moment('2022-12-01T12:00:00+03:00');
 
@@ -41,7 +37,6 @@
 		});
 
 		test('day offs', () => {
-
 			const sunday = new Moment('2022-12-04T12:00:00+03:00');
 			const monday = new Moment('2022-12-05T12:00:00+03:00');
 
@@ -53,7 +48,6 @@
 		});
 
 		test('working time', () => {
-
 			const before = new WorkTimeMoment(new Moment('2022-12-05T07:00:00+03:00'), testCalendar);
 			const inside = new WorkTimeMoment(new Moment('2022-12-05T12:00:00+03:00'), testCalendar);
 			const after = new WorkTimeMoment(new Moment('2022-12-05T20:00:00+03:00'), testCalendar);
@@ -62,7 +56,5 @@
 			expect(inside.isWorkingTime()).toBeTrue();
 			expect(after.isWorkingTime()).toBeFalse();
 		});
-
 	});
-
 })();

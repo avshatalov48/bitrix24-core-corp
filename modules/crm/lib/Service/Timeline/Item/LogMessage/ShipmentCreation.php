@@ -5,6 +5,7 @@ namespace Bitrix\Crm\Service\Timeline\Item\LogMessage;
 use Bitrix\Crm\Service\Timeline\Item\Interfaces;
 use Bitrix\Crm\Service\Timeline\Item\Mixin;
 use Bitrix\Crm\Service\Timeline\Item\LogMessage;
+use Bitrix\Crm\Service\Timeline\Layout\Common\Icon;
 use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__DIR__ . '/../Ecommerce.php');
@@ -28,7 +29,7 @@ class ShipmentCreation extends LogMessage implements
 
 	public function getIconCode(): ?string
 	{
-		return 'store';
+		return Icon::STORE;
 	}
 
 	public function getContentBlocks(): ?array

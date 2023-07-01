@@ -88,6 +88,7 @@ class Stage extends Controller
 		{
 			$stage->setName($fields['name']);
 		}
+
 		if (isset($fields['color']) && is_string($fields['color']))
 		{
 			$stage->setColor($fields['color']);
@@ -100,22 +101,29 @@ class Stage extends Controller
 			return false;
 		}
 
-		if (!is_array($fields['tunnels']))
+		if (!isset($fields['tunnels']) || !is_array($fields['tunnels']))
 		{
 			$fields['tunnels'] = [];
 		}
 
-		$userId = $this->getCurrentUser()->getId();
-		$tunnelManager = new \Bitrix\Crm\Automation\TunnelManager($factory->getEntityTypeId());
-		$tunnelManagerResult = $tunnelManager->updateStageTunnels(
-			$fields['tunnels'],
-			$stage->getStatusId(),
-			$userId
-		);
-		if (!$tunnelManagerResult->isSuccess())
+		$categoriesEnabled = $factory->isCategoriesEnabled();
+		$stagesEnabled = $factory->isStagesEnabled();
+
+		if ($categoriesEnabled && $stagesEnabled)
 		{
-			$this->addErrors($tunnelManagerResult->getErrors());
-			return false;
+			$userId = $this->getCurrentUser()->getId();
+			$tunnelManager = new \Bitrix\Crm\Automation\TunnelManager($factory->getEntityTypeId());
+			$tunnelManagerResult = $tunnelManager->updateStageTunnels(
+				$fields['tunnels'],
+				$stage->getStatusId(),
+				$userId
+			);
+
+			if (!$tunnelManagerResult->isSuccess())
+			{
+				$this->addErrors($tunnelManagerResult->getErrors());
+				return false;
+			}
 		}
 
 		return true;

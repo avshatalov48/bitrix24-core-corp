@@ -2,7 +2,6 @@
  * @module crm/timeline/item/ui/user-avatar
  */
 jn.define('crm/timeline/item/ui/user-avatar', (require, exports, module) => {
-
 	const { InAppLink } = require('in-app-url/components/link');
 
 	const DEFAULT_AVATAR = '/bitrix/mobileapp/crmmobile/extensions/crm/timeline/item/ui/user-avatar/default-avatar.png';
@@ -39,5 +38,4 @@ jn.define('crm/timeline/item/ui/user-avatar', (require, exports, module) => {
 	}
 
 	module.exports = { TimelineItemUserAvatar };
-
 });

@@ -149,6 +149,8 @@ class SalesCenterPaymentPay extends \CBitrixComponent implements Main\Engine\Con
 			$params['VIEW_MODE'] = 'Y';
 		}
 
+		$params['TEMPLATE_MODE'] ??= '';
+
 		return $params;
 	}
 
@@ -264,8 +266,23 @@ class SalesCenterPaymentPay extends \CBitrixComponent implements Main\Engine\Con
 			}
 		}
 
+		$this->arResult['COMPONENT_THEME'] = $this->getComponentTheme();
+
 		$this->formatResultErrors();
 		$this->includeComponentTemplate($templateName);
+	}
+
+	private function getComponentTheme(): string
+	{
+		switch ($this->arParams['TEMPLATE_MODE'])
+		{
+			case 'graymode':
+				return 'gray-theme';
+			case 'darkmode':
+				return 'bx-dark';
+			default:
+				return '';
+		}
 	}
 
 	/**
@@ -830,7 +847,8 @@ class SalesCenterPaymentPay extends \CBitrixComponent implements Main\Engine\Con
 					'PAYMENT_ID' => $payment->getId(),
 				]
 			],
-			'BINDINGS' => $bindings
+			'BINDINGS' => $bindings,
+			'FIELDS' => $payment->getFieldValues(),
 		];
 
 		Crm\Timeline\OrderPaymentController::getInstance()->onView($payment->getId(), $params);

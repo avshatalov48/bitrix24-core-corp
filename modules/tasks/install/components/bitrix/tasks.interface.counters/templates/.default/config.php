@@ -11,6 +11,7 @@ return [
 		'main.popup',
 		'main.core',
 		'main.core.events',
+		'tasks.viewed',
 		'ui.fonts.opensans',
 	],
 	'skip_core' => false,

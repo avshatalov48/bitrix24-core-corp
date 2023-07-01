@@ -7,6 +7,7 @@ $MESS["CRM_1C_START_SYNCHRO_INVOICE"] = "Счета";
 $MESS["CRM_1C_START_SYNCHRO_CATALOG"] = "Каталог";
 $MESS["CRM_1C_START_DOC"] = "1С:Бэкофис";
 $MESS["CRM_1C_START_BACKOFFICE"] = "1С:Бэкофис - 2.0";
+$MESS["CRM_1C_START_BACKOFFICE_MSGVER_1"] = "Коннектор к 1С";
 $MESS["CRM_1C_START_HELPER"] = "Помощь от партнеров в настройке";
 $MESS["CRM_1C_START_CONNECT"] = "Подключить";
 

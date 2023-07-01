@@ -3,9 +3,10 @@
  */
 jn.define('im/messenger/lib/rest-manager', (require, exports, module) => {
 
-	const { RestManager } = jn.require('im/messenger/lib/rest-manager/rest-manager');
+	const { RestManager } = require('im/messenger/lib/rest-manager/rest-manager');
 
 	module.exports = {
-		RestManager: new RestManager(),
+		RestManager,
+		restManager: new RestManager(),
 	};
 });

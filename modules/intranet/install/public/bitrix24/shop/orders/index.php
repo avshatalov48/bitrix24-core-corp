@@ -31,7 +31,7 @@ $APPLICATION->IncludeComponent(
 		"PATH_TO_PRODUCT_EDIT" => "/crm/product/edit/#product_id#/",
 		"PATH_TO_PRODUCT_SHOW" => "/crm/product/show/#product_id#/",
 		"PATH_TO_USER_PROFILE" => "/company/personal/user/#user_id#/",
-		"ELEMENT_ID" => $_REQUEST["order_id"],
+		"ELEMENT_ID" => $_REQUEST["order_id"] ?? '',
 		"SEF_FOLDER" => "/shop/orders/",
 		"SEF_URL_TEMPLATES" => array(
 			"index" => "index.php",

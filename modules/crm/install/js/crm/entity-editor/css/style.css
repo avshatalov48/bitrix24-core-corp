@@ -1259,7 +1259,7 @@ a.crm-entity-widget-client-box-name:hover { color: #3f51b5; }
 
 .crm-entity-widget-client-action-mail { background-position: center -31px; }
 
-.crm-entity-widget-client-action-im { background-position: center -62px; }
+.crm-entity-widget-client-action-im { background: url(images/open-line-message.svg) no-repeat center; }
 
 .crm-entity-widget-client-action-available.crm-entity-widget-client-action-call,
 .crm-entity-widget-client-action-available.crm-entity-widget-client-action-mail,

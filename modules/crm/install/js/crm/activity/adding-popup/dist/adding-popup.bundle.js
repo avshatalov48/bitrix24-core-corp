@@ -16,6 +16,7 @@ this.BX.Crm = this.BX.Crm || {};
 	 */
 	var _entityId = /*#__PURE__*/new WeakMap();
 	var _entityTypeId = /*#__PURE__*/new WeakMap();
+	var _currentUser = /*#__PURE__*/new WeakMap();
 	var _popup = /*#__PURE__*/new WeakMap();
 	var _popupContainer = /*#__PURE__*/new WeakMap();
 	var _todoEditor = /*#__PURE__*/new WeakMap();
@@ -29,7 +30,7 @@ this.BX.Crm = this.BX.Crm || {};
 	var _onEditorSaveHotkeyPressed = /*#__PURE__*/new WeakSet();
 	var _onChangeUploaderContainerSize = /*#__PURE__*/new WeakSet();
 	let AddingPopup = /*#__PURE__*/function () {
-	  function AddingPopup(entityTypeId, entityId, params) {
+	  function AddingPopup(entityTypeId, entityId, currentUser, params) {
 	    babelHelpers.classCallCheck(this, AddingPopup);
 	    _classPrivateMethodInitSpec(this, _onChangeUploaderContainerSize);
 	    _classPrivateMethodInitSpec(this, _onEditorSaveHotkeyPressed);
@@ -44,6 +45,10 @@ this.BX.Crm = this.BX.Crm || {};
 	      value: null
 	    });
 	    _classPrivateFieldInitSpec(this, _entityTypeId, {
+	      writable: true,
+	      value: null
+	    });
+	    _classPrivateFieldInitSpec(this, _currentUser, {
 	      writable: true,
 	      value: null
 	    });
@@ -65,6 +70,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    });
 	    babelHelpers.classPrivateFieldSet(this, _entityId, main_core.Text.toInteger(entityId));
 	    babelHelpers.classPrivateFieldSet(this, _entityTypeId, main_core.Text.toInteger(entityTypeId));
+	    babelHelpers.classPrivateFieldSet(this, _currentUser, currentUser);
 	    babelHelpers.classPrivateFieldSet(this, _eventEmitter, new main_core_events.EventEmitter());
 	    babelHelpers.classPrivateFieldGet(this, _eventEmitter).setEventNamespace('Crm.Activity.AddingPopup');
 	    if (!main_core.Type.isPlainObject(params)) {
@@ -92,6 +98,7 @@ this.BX.Crm = this.BX.Crm || {};
 	          container: babelHelpers.classPrivateFieldGet(this, _popupContainer),
 	          ownerTypeId: babelHelpers.classPrivateFieldGet(this, _entityTypeId),
 	          ownerId: babelHelpers.classPrivateFieldGet(this, _entityId),
+	          currentUser: babelHelpers.classPrivateFieldGet(this, _currentUser),
 	          events: {
 	            onChangeDescription: _classPrivateMethodGet(this, _onChangeEditorDescription, _onChangeEditorDescription2).bind(this),
 	            onSaveHotkeyPressed: _classPrivateMethodGet(this, _onEditorSaveHotkeyPressed, _onEditorSaveHotkeyPressed2).bind(this),

@@ -1,0 +1,25 @@
+<?php
+$MESS["MARKET_POPUP_INSTALL_JS_ACCESS"] = "Permissions";
+$MESS["MARKET_POPUP_INSTALL_JS_APPLICATION"] = "Application #APP_NAME#<br> was installed on your Bitrix24";
+$MESS["MARKET_POPUP_INSTALL_JS_APP_REQUESTS_PERMISSIONS_TO_WORK"] = "The app requests permissions for:";
+$MESS["MARKET_POPUP_INSTALL_JS_APP_WILL_OPEN_AUTO_AFTER"] = "The app will open in <span class=\"market-popup__info-app-launch_counter\">#COUNTER#</span> second (-s)";
+$MESS["MARKET_POPUP_INSTALL_JS_APP_WORKS_AUTOMATICALLY"] = "This app has no user interface. You can uninstall it on the \"Installed apps\" tab.";
+$MESS["MARKET_POPUP_INSTALL_JS_AVAILABLE_IN_SUBSCRIPTION"] = "Requires subscription";
+$MESS["MARKET_POPUP_INSTALL_JS_IMAGE_ESTABLISHED"] = "/bitrix/js/market/images/market-app-established-img_en.png";
+$MESS["MARKET_POPUP_INSTALL_JS_IMAGE_ESTABLISHED_INTERFACE"] = "/bitrix/js/market/images/market-app-established-interface-img_en.png";
+$MESS["MARKET_POPUP_INSTALL_JS_INSTALLED_APP_LOCATED_APP_TAB"] = "You can find your installed apps on the \"Applications\" tab in your Bitrix24's main menu.";
+$MESS["MARKET_POPUP_INSTALL_JS_INSTALLING_THE_APP_ON_YOUR_BITRIX"] = "Installing the app on your Bitrix24";
+$MESS["MARKET_POPUP_INSTALL_JS_INSTALL_TITLE"] = "Install <span class=\"market-popup__header-title_highlight\" title=\"#APP_NAME#\">#APP_NAME#</span>";
+$MESS["MARKET_POPUP_INSTALL_JS_IN_APP_PURCHASES"] = "In-app purchases";
+$MESS["MARKET_POPUP_INSTALL_JS_IS_FREE"] = "Free";
+$MESS["MARKET_POPUP_INSTALL_JS_MORE"] = "Learn more";
+$MESS["MARKET_POPUP_INSTALL_JS_NEW_VERSION"] = "New version";
+$MESS["MARKET_POPUP_INSTALL_JS_OPEN_APP"] = "Open the app";
+$MESS["MARKET_POPUP_INSTALL_JS_PREVIOUS_VERSION"] = "Previous version";
+$MESS["MARKET_POPUP_INSTALL_JS_READY"] = "Ready";
+$MESS["MARKET_POPUP_INSTALL_JS_SHOW_ALL_ACCESSES"] = "Show all permissions";
+$MESS["MARKET_POPUP_INSTALL_JS_THERE_ARE_UPDATES"] = "Updates available";
+$MESS["MARKET_POPUP_INSTALL_JS_UPDATE_TITLE"] = "Update <span class=\"market-popup__header-title_highlight\" title=\"#APP_NAME#\">#APP_NAME#</span>";
+$MESS["MARKET_POPUP_INSTALL_JS_VERSION"] = "Version #APP_VERSION#";
+$MESS["MARKET_POPUP_INSTALL_JS_VERSIONS"] = "Versions";
+$MESS["MARKET_POPUP_INSTALL_JS_YOU_HAVE_A_PREVIOUS_VERSION"] = "A new version of this app is available. Please review the updates.";

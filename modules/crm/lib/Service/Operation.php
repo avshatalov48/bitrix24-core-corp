@@ -9,10 +9,12 @@ use Bitrix\Crm\Field\Collection;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Kanban\Entity;
+use Bitrix\Crm\Multifield;
 use Bitrix\Crm\Search\SearchContentBuilderFactory;
 use Bitrix\Crm\Service\Operation\Action;
 use Bitrix\Crm\Statistics;
 use Bitrix\Crm\UserField\Visibility\VisibilityManager;
+use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentOutOfRangeException;
 use Bitrix\Main\Error;
@@ -272,10 +274,10 @@ abstract class Operation
 		if ($result->isSuccess() && $this->isBizProcEnabled())
 		{
 			$bizProcResult = $this->runBizProc();
-			if (!$bizProcResult->isSuccess())
-			{
-				$result->addErrors($bizProcResult->getErrors());
-			}
+			// if (!$bizProcResult->isSuccess())
+			// {
+			// 	$result->addErrors($bizProcResult->getErrors());
+			// }
 		}
 
 		if ($result->isSuccess() && $this->isAutomationEnabled())
@@ -402,7 +404,32 @@ abstract class Operation
 		}
 
 		$requiredFields = [];
-		$notDisplayedFields = [];
+
+		if (
+			$this->getItem()->getEntityTypeId() === \CCrmOwnerType::Lead
+			&& $this->getItem()->hasField(Item::FIELD_NAME_IS_RETURN_CUSTOMER)
+			&& $this->getItem()->getIsReturnCustomer()
+		)
+		{
+			$notDisplayedFields = [
+				Item::FIELD_NAME_HONORIFIC,
+				Item::FIELD_NAME_LAST_NAME,
+				Item::FIELD_NAME_NAME,
+				Item::FIELD_NAME_SECOND_NAME,
+				Item::FIELD_NAME_BIRTHDATE,
+				Item::FIELD_NAME_POST,
+				Item\Lead::FIELD_NAME_COMPANY_TITLE,
+				'ADDRESS',
+				Multifield\Type\Phone::ID,
+				Multifield\Type\Email::ID,
+				Multifield\Type\Web::ID,
+				Multifield\Type\Im::ID,
+			];
+		}
+		else
+		{
+			$notDisplayedFields = [];
+		}
 
 		foreach ($this->fieldsCollection as $field)
 		{
@@ -432,9 +459,7 @@ abstract class Operation
 		{
 			throw new InvalidOperationException('Factory not found');
 		}
-		if (
-			$this->isCheckRequiredUserFields()
-		)
+		if ($this->isCheckRequiredUserFields())
 		{
 			$requiredFields = array_merge($requiredFields, $this->getStageDependantRequiredFields($factory));
 		}
@@ -462,6 +487,12 @@ abstract class Operation
 				return mb_substr($fieldName, 0, 3) !== 'UF_' || in_array($fieldName, $filteredFields);
 			});
 		}
+
+		$requiredFields = VisibilityManager::filterNotAccessibleFields(
+			$this->item->getEntityTypeId(),
+			$requiredFields,
+			VisibilityManager::getUserAccessCodes($this->getContext()->getUserId()),
+		);
 
 		return array_unique(array_diff($requiredFields, $notDisplayedFields));
 	}
@@ -513,6 +544,19 @@ abstract class Operation
 					$result->addError(Field::getRequiredEmptyError($fieldName, $factory->getFieldCaption($fieldName)));
 				}
 			}
+			elseif (
+				Multifield\TypeRepository::isTypeDefined($fieldName)
+				&& $this->item->hasField(Item::FIELD_NAME_FM)
+				&& count($this->item->getFm()->filterByType($fieldName)) <= 0
+			)
+			{
+				$result->addError(
+					Field::getRequiredEmptyError(
+						$fieldName,
+						Multifield\TypeRepository::getTypeCaption($fieldName),
+					)
+				);
+			}
 		}
 
 		return $result;
@@ -526,19 +570,29 @@ abstract class Operation
 		{
 			$errors = [];
 
+			$request = Application::getInstance()->getContext()->getRequest();
+			$data = $request->getPost('data');
+			$workflowParameters = [];
+			if (is_array($data) && isset($data['bizproc_parameters']))
+			{
+				$workflowParameters = $data['bizproc_parameters'];
+			}
+
 			$this->bizProcHelper::AutoStartWorkflows(
 				$this->item->getEntityTypeId(),
 				$this->item->getId(),
 				$this->bizProcEventType,
-				$errors
+				$errors,
+				$workflowParameters,
 			);
 
-			if ($errors)
+			foreach ($errors as $singleError)
 			{
-				foreach ($errors as $errorMessage)
-				{
-					$result->addError(new Error($errorMessage));
-				}
+				$customData = array_diff_key($singleError, ['message' => '', 'code' => '']);
+
+				$result->addError(
+					new Error($singleError['message'], $singleError['code'], $customData)
+				);
 			}
 		}
 
@@ -1225,7 +1279,11 @@ abstract class Operation
 			$requiredFields = $this->fieldAttributeManager::extractNamesOfAlwaysRequiredFields($fieldsData);
 		}
 
-		return VisibilityManager::filterNotAccessibleFields($this->item->getEntityTypeId(), $requiredFields);
+		return VisibilityManager::filterNotAccessibleFields(
+			$this->item->getEntityTypeId(),
+			$requiredFields,
+			VisibilityManager::getUserAccessCodes($this->getContext()->getUserId()),
+		);
 	}
 
 	/**

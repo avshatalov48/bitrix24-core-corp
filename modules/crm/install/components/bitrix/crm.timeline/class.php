@@ -2,12 +2,9 @@
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Crm;
-use Bitrix\Crm\Activity\Provider\Zoom;
-use Bitrix\Crm\Integration;
 use Bitrix\Crm\Timeline\TimelineEntry;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\Page\Asset;
 use Bitrix\Main\Type\DateTime;
 
 Loc::loadMessages(__FILE__);
@@ -176,127 +173,6 @@ class CCrmTimelineComponent extends CBitrixComponent
 		}
 
 		$this->arResult['ACTIVITY_EDITOR_ID'] = isset($this->arParams['~ACTIVITY_EDITOR_ID']) ? $this->arParams['~ACTIVITY_EDITOR_ID'] : '';
-		$this->arResult['ENABLE_WAIT'] = isset($this->arParams['~ENABLE_WAIT']) ? (bool)$this->arParams['~ENABLE_WAIT'] : false;
-		$this->arResult['WAIT_TARGET_DATES'] = isset($this->arParams['~WAIT_TARGET_DATES']) && is_array($this->arParams['~WAIT_TARGET_DATES'])
-			? $this->arParams['~WAIT_TARGET_DATES'] : array();
-		$this->arResult['WAIT_CONFIG'] = \CUserOptions::GetOption(
-			'crm.timeline.wait',
-			mb_strtolower($this->guid),
-			array()
-		);
-
-		if (isset($this->arParams['~ENABLE_TODO']))
-		{
-			$this->arResult['ENABLE_TODO'] = (bool)$this->arParams['~ENABLE_TODO'];
-		}
-		else
-		{
-			$this->arResult['ENABLE_TODO'] = Crm\Settings\Crm::isUniversalActivityScenarioEnabled();
-		}
-
-		if (isset($this->arParams['~ENABLE_ZOOM']))
-		{
-			$this->arResult['ENABLE_ZOOM'] = (bool)$this->arParams['~ENABLE_ZOOM'];
-			$this->arResult['STATUS_ZOOM'] = true;
-		}
-		elseif (!Zoom::isAvailable())
-		{
-			$this->arResult['ENABLE_ZOOM'] = false;
-			$this->arResult['STATUS_ZOOM'] = false;
-		}
-		elseif (!Zoom::isConnected())
-		{
-			$this->arResult['ENABLE_ZOOM'] = true;
-			$this->arResult['STATUS_ZOOM'] = false;
-		}
-		else
-		{
-			$this->arResult['ENABLE_ZOOM'] = true;
-			$this->arResult['STATUS_ZOOM'] = true;
-		}
-
-		if(!Crm\Integration\SmsManager::canUse())
-		{
-			$this->arResult['ENABLE_SMS'] = false;
-		}
-		else
-		{
-			$this->arResult['ENABLE_SMS'] = isset($this->arParams['~ENABLE_SMS']) ? (bool)$this->arParams['~ENABLE_SMS'] : true;
-		}
-
-		$this->arResult['SMS_MANAGE_URL'] = \Bitrix\Crm\Integration\SmsManager::getManageUrl();
-		$this->arResult['SMS_CAN_SEND_MESSAGE'] = \Bitrix\Crm\Integration\SmsManager::canSendMessage();
-		$this->arResult['SMS_STATUS_DESCRIPTIONS'] = \Bitrix\Crm\Integration\SmsManager::getMessageStatusDescriptions();
-		$this->arResult['SMS_STATUS_SEMANTICS'] = \Bitrix\Crm\Integration\SmsManager::getMessageStatusSemantics();
-		$this->arResult['SMS_CONFIG'] = \Bitrix\Crm\Integration\SmsManager::getEditorConfig(
-			$this->entityTypeID,
-			$this->entityID
-		);
-
-		if(!Main\ModuleManager::isModuleInstalled('calendar'))
-		{
-			$this->arResult['ENABLE_CALL'] = $this->arResult['ENABLE_MEETING'] = false;
-		}
-		else
-		{
-			$this->arResult['ENABLE_CALL'] = isset($this->arParams['~ENABLE_CALL']) ? (bool)$this->arParams['~ENABLE_CALL'] : true;
-			$this->arResult['ENABLE_MEETING'] = isset($this->arParams['~ENABLE_MEETING']) ? (bool)$this->arParams['~ENABLE_MEETING'] : true;
-		}
-
-		if(Crm\Activity\Provider\Visit::isAvailable())
-		{
-			$this->arResult['ENABLE_VISIT'] = (bool)($this->arParams['~ENABLE_VISIT'] ?? true);
-			$this->arResult['IS_VISIT_RESTRICTED'] = !Crm\Restriction\RestrictionManager::getVisitRestriction()->hasPermission();
-			$this->arResult['VISIT_PARAMETERS'] = Crm\Activity\Provider\Visit::getPopupParameters();
-		}
-		else
-		{
-			$this->arResult['ENABLE_VISIT'] = false;
-		}
-
-		$this->arResult['ADDITIONAL_TABS'] = array();
-		$this->arResult['ENABLE_REST'] = false;
-		if(Main\Loader::includeModule('rest'))
-		{
-			$this->arResult['ENABLE_REST'] = true;
-			\CJSCore::Init(array('marketplace'));
-
-			$this->arResult['REST_PLACEMENT'] =
-				Integration\Rest\AppPlacement::getDetailActivityPlacementCode($this->entityTypeID)
-			;
-			$placementHandlerList = \Bitrix\Rest\PlacementTable::getHandlersList($this->arResult['REST_PLACEMENT']);
-
-			if(count($placementHandlerList) > 0)
-			{
-				\CJSCore::Init(array('applayout'));
-
-				foreach($placementHandlerList as $placementHandler)
-				{
-					$this->arResult['ADDITIONAL_TABS'][] = array(
-						'id' => 'activity_rest_'.$placementHandler['APP_ID'].'_'.$placementHandler['ID'],
-						'name' => $placementHandler['TITLE'] <> ''
-							? $placementHandler['TITLE']
-							: $placementHandler['APP_NAME'],
-					);
-				}
-			}
-
-			$this->arResult['ADDITIONAL_TABS'][] = array(
-				'id' => 'activity_rest_applist',
-				'name' => Loc::getMessage('CRM_REST_BUTTON_TITLE_2')
-			);
-		}
-
-		$this->arResult['ENABLE_EMAIL'] = isset($this->arParams['~ENABLE_EMAIL']) ? (bool)$this->arParams['~ENABLE_EMAIL'] : true;
-		$this->arResult['ENABLE_TASK'] = isset($this->arParams['~ENABLE_TASK']) ? (bool)$this->arParams['~ENABLE_TASK'] : true;
-
-		if (!\Bitrix\Crm\Settings\ActivitySettings::areOutdatedCalendarActivitiesEnabled())
-		{
-			$this->arResult['ENABLE_CALL'] = false;
-			$this->arResult['ENABLE_MEETING'] = false;
-			$this->arResult['ENABLE_WAIT'] = false;
-		}
-
 		$this->arResult['PROGRESS_SEMANTICS'] = $this->arParams['~PROGRESS_SEMANTICS'] ?? '';
 
 		$this->arResult['CURRENT_URL'] = $APPLICATION->GetCurPageParam('', array('bxajaxid', 'AJAX_CALL'));
@@ -335,7 +211,7 @@ class CCrmTimelineComponent extends CBitrixComponent
 			$this->pullTagName = $this->arResult['PULL_TAG_NAME'] = TimelineEntry::prepareEntityPushTag($this->entityTypeID, $this->entityID);
 			\CPullWatch::Add($this->userID, $this->pullTagName);
 
-			if ($this->arResult['ENABLE_SMS'])
+			if (\Bitrix\Crm\Integration\SmsManager::canUse())
 			{
 				\CPullWatch::Add($this->userID, 'MESSAGESERVICE');
 			}
@@ -347,81 +223,6 @@ class CCrmTimelineComponent extends CBitrixComponent
 		}
 		//endregion
 
-		//region salescenter
-		if(isset($this->arParams['~ENABLE_SALESCENTER']) && $this->arParams['~ENABLE_SALESCENTER'] === false)
-		{
-			$this->arResult['ENABLE_SALESCENTER'] = false;
-		}
-		else
-		{
-			$this->arResult['ENABLE_SALESCENTER'] = ($this->arResult['ENABLE_SMS'] && Crm\Integration\SalesCenterManager::getInstance()->isShowApplicationInSmsEditor());
-		}
-		if(is_array($this->arResult['SMS_CONFIG']))
-		{
-			$this->arResult['SMS_CONFIG']['isSalescenterEnabled'] = $this->arResult['ENABLE_SALESCENTER'];
-		}
-
-		$this->arResult['ENABLE_DELIVERY'] = (
-			$this->arResult['ENABLE_SALESCENTER']
-			&& $this->entityTypeID === CCrmOwnerType::Deal
-			&& Crm\Integration\SalesCenterManager::getInstance()->hasInstallableDeliveryItems()
-		);
-
-		//endregion
-
-		$documentGeneratorManager = Crm\Integration\DocumentGeneratorManager::getInstance();
-		$this->arResult['ENABLE_DOCUMENTS'] = $documentGeneratorManager->isDocumentButtonAvailable();
-		if($this->arResult['ENABLE_DOCUMENTS'])
-		{
-			$extension = Main\UI\Extension::getConfig('documentgenerator.selector');
-			if($extension)
-			{
-				$providersMap = $documentGeneratorManager->getCrmOwnerTypeProvidersMap();
-				$provider = $providersMap[$this->entityTypeID];
-				if(!$provider)
-				{
-					$this->arResult['ENABLE_DOCUMENTS'] = false;
-				}
-				else
-				{
-					$this->arResult['SMS_CONFIG']['documentsProvider'] = $provider;
-					$this->arResult['SMS_CONFIG']['documentsValue'] = $this->entityID;
-				}
-			}
-			else
-			{
-				$this->arResult['ENABLE_DOCUMENTS'] = false;
-			}
-		}
-		$this->arResult['SMS_CONFIG']['isDocumentsEnabled'] = $this->arResult['ENABLE_DOCUMENTS'];
-
-		$this->arResult['SHOW_FILES_FEATURE'] = false;
-		$this->arResult['ENABLE_FILES'] = (Main\Loader::includeModule('disk') && \Bitrix\Disk\Configuration::isPossibleToShowExternalLinkControl());
-		if($this->arResult['ENABLE_FILES'])
-		{
-			$this->arResult['SMS_CONFIG']['isFilesEnabled'] = $this->arResult['ENABLE_FILES'];
-			$this->arResult['ENABLE_FILES_EXTERNAL_LINK'] = \Bitrix\Disk\Configuration::isEnabledManualExternalLink();
-			$this->arResult['SMS_CONFIG']['isFilesExternalLinkEnabled'] = $this->arResult['ENABLE_FILES_EXTERNAL_LINK'];
-			if($this->arResult['ENABLE_FILES_EXTERNAL_LINK'])
-			{
-				Asset::getInstance()->addJs('/bitrix/components/bitrix/disk.uf.file/templates/.default/script.js');
-				Main\UI\Extension::load(['uploader']);
-				$this->arResult['SMS_CONFIG']['diskUrls'] = [
-					'urlSelect' => '/bitrix/tools/disk/uf.php?action=selectFile&SITE_ID='.SITE_ID,
-					'urlRenameFile' => '/bitrix/tools/disk/uf.php?action=renameFile',
-					'urlDeleteFile' => '/bitrix/tools/disk/uf.php?action=deleteFile',
-					'urlUpload' => '/bitrix/tools/disk/uf.php?action=uploadFile&ncc=1',
-				];
-			}
-			else
-			{
-				$this->arResult['SHOW_FILES_FEATURE'] = \Bitrix\Crm\Integration\Bitrix24Manager::isEnabled();
-			}
-		}
-		else
-		{
-			$this->arResult['SMS_CONFIG']['isFilesEnabled'] = false;
-		}
 		$defaultRateOption = [
 			'rate' => 1,
 		];

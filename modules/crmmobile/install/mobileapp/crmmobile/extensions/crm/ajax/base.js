@@ -2,7 +2,6 @@
  * @module crm/ajax/base
  */
 jn.define('crm/ajax/base', (require, exports, module) => {
-
 	/**
 	 * @class BaseAjax
 	 * @abstract
@@ -36,5 +35,4 @@ jn.define('crm/ajax/base', (require, exports, module) => {
 	}
 
 	module.exports = { BaseAjax };
-
 });

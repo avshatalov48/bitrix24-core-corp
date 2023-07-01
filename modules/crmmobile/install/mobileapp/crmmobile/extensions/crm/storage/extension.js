@@ -2,7 +2,6 @@
  * @module crm/storage
  */
 jn.define('crm/storage', (require, exports, module) => {
-
 	const { BaseStorage } = require('crm/storage/base');
 	const { CategoryStorage } = require('crm/storage/category');
 
@@ -10,5 +9,4 @@ jn.define('crm/storage', (require, exports, module) => {
 		BaseStorage,
 		CategoryStorage,
 	};
-
 });

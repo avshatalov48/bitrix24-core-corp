@@ -1,25 +1,27 @@
-<?
+<?php
+
 namespace Bitrix\Crm\Integration\Main\UISelector;
 
 use Bitrix\Main\Localization\Loc;
+use CCrmOwnerType;
+use CCrmQuote;
 
-class CrmQuotes extends \Bitrix\Main\UI\Selector\EntityBase
+class CrmQuotes extends CrmBase
 {
-	const PREFIX_SHORT = 'Q_';
-	const PREFIX_FULL = 'CRMQUOTE';
+	public const PREFIX_SHORT = 'Q_';
+	public const PREFIX_FULL = 'CRMQUOTE';
 
-	private static function getPrefix($options = [])
+	protected static function getOwnerType()
 	{
-		return (
-			is_array($options)
-			&& isset($options['prefixType'])
-			&& mb_strtolower($options['prefixType']) == 'short'
-				? self::PREFIX_SHORT
-				: self::PREFIX_FULL
-		);
+		return CCrmOwnerType::Quote;
 	}
 
-	private static function prepareEntity($data, $options = [])
+	protected static function getHandlerType()
+	{
+		return Handler::ENTITY_TYPE_CRMQUOTES;
+	}
+
+	protected static function prepareEntity($data, $options = [])
 	{
 		$clientTitle = (isset($data['COMPANY_TITLE'])) ? $data['COMPANY_TITLE'] : '';
 		$clientTitle .= (
@@ -28,14 +30,14 @@ class CrmQuotes extends \Bitrix\Main\UI\Selector\EntityBase
 			&& $data['CONTACT_FULL_NAME'] <> ''
 				? ', '
 				: ''
-		).$data['CONTACT_FULL_NAME'];
+		) . $data['CONTACT_FULL_NAME'];
 
-		$prefix = self::getPrefix($options);
+		$prefix = static::getPrefix($options);
 		$result = [
-			'id' => $prefix.$data['ID'],
+			'id' => $prefix . $data['ID'],
 			'entityType' => 'quotes',
 			'entityId' => $data['ID'],
-			'name' => $data['ID'].' - '.htmlspecialcharsbx((str_replace(array(';', ','), ' ', $data['TITLE']))),
+			'name' => $data['ID'] . ' - '.htmlspecialcharsbx((str_replace([';', ','], ' ', $data['TITLE']))),
 			'desc' => $clientTitle
 		];
 
@@ -44,44 +46,50 @@ class CrmQuotes extends \Bitrix\Main\UI\Selector\EntityBase
 			&& $options['returnItemUrl'] == 'Y'
 		)
 		{
-			$result['url'] = \CCrmOwnerType::getEntityShowPath(\CCrmOwnerType::Quote, $data['ID']);
-			$result['urlUseSlider'] = (\CCrmOwnerType::isSliderEnabled(\CCrmOwnerType::Quote) ? 'Y' : 'N');
+			$result['url'] = CCrmOwnerType::getEntityShowPath(CCrmOwnerType::Quote, $data['ID']);
+			$result['urlUseSlider'] = (CCrmOwnerType::isSliderEnabled(CCrmOwnerType::Quote) ? 'Y' : 'N');
 		}
 
 		return $result;
 	}
 
-	public function getData($params = array())
+	public function getData($params = [])
 	{
-		$entityType = Handler::ENTITY_TYPE_CRMQUOTES;
+		$entityType = static::getHandlerType();
 
-		$result = array(
-			'ITEMS' => array(),
-			'ITEMS_LAST' => array(),
-			'ITEMS_HIDDEN' => array(),
-			'ADDITIONAL_INFO' => array(
-				'GROUPS_LIST' => array(
-					'crmquotes' => array(
+		$result = [
+			'ITEMS' => [],
+			'ITEMS_LAST' => [],
+			'ITEMS_HIDDEN' => [],
+			'ADDITIONAL_INFO' => [
+				'GROUPS_LIST' => [
+					'crmquotes' => [
 						'TITLE' => Loc::getMessage('MAIN_UI_SELECTOR_TITLE_CRMQUOTES'),
 						'TYPE_LIST' => [ $entityType ],
 						'DESC_LESS_MODE' => 'N',
-						'SORT' => 80
-					)
-				),
-				'SORT_SELECTED' => 400
-			)
-		);
+						'SORT' => 80,
+					],
+				],
+				'SORT_SELECTED' => 400,
+			],
+		];
 
-		$entityOptions = (!empty($params['options']) ? $params['options'] : array());
-		$prefix = self::getPrefix($entityOptions);
+		$entityOptions = (!empty($params['options']) ? $params['options'] : []);
+		$prefix = static::getPrefix($entityOptions);
 
-		$lastItems = (!empty($params['lastItems']) ? $params['lastItems'] : array());
-		$selectedItems = (!empty($params['selectedItems']) ? $params['selectedItems'] : array());
+		$lastItems = (!empty($params['lastItems']) ? $params['lastItems'] : []);
+		$selectedItems = (!empty($params['selectedItems']) ? $params['selectedItems'] : []);
 
 		$lastQuotesIdList = [];
 		if(!empty($lastItems[$entityType]))
 		{
-			$result["ITEMS_LAST"] = array_map(function($code) use ($prefix) { return preg_replace('/^'.self::PREFIX_FULL.'(\d+)$/', $prefix.'$1', $code); }, array_values($lastItems[$entityType]));
+			$result["ITEMS_LAST"] = array_map(
+				function($code) use ($prefix)
+				{
+					return preg_replace('/^'.self::PREFIX_FULL . '(\d+)$/', $prefix . '$1', $code);
+				},
+				array_values($lastItems[$entityType])
+			);
 			foreach ($lastItems[$entityType] as $value)
 			{
 				$lastQuotesIdList[] = str_replace(self::PREFIX_FULL, '', $value);
@@ -99,14 +107,12 @@ class CrmQuotes extends \Bitrix\Main\UI\Selector\EntityBase
 		}
 
 		$quotesIdList = array_merge($selectedQuotesIdList, $lastQuotesIdList);
-		$quotesIdList = array_slice($quotesIdList, 0, count($selectedQuotesIdList) > 20 ? count($selectedQuotesIdList) : 20);
+		$quotesIdList = array_slice($quotesIdList, 0, max(count($selectedQuotesIdList), 20));
 		$quotesIdList = array_unique($quotesIdList);
 
 		$quotesList = [];
 
-		$filter = [
-			'CHECK_PERMISSIONS' => 'Y'
-		];
+		$filter = ['CHECK_PERMISSIONS' => 'Y'];
 		$order = [ 'ID' => 'DESC' ];
 
 		if (!empty($quotesIdList))
@@ -119,20 +125,17 @@ class CrmQuotes extends \Bitrix\Main\UI\Selector\EntityBase
 			$navParams = [ 'nTopCount' => 10 ];
 		}
 
-		if (!empty($quotesIdList))
-		{
-			$res = \CCrmQuote::getList(
-				$order,
-				$filter,
-				false,
-				$navParams,
-				[ 'ID', 'TITLE', 'STAGE_ID', 'COMPANY_TITLE', 'CONTACT_FULL_NAME' ]
-			);
+		$res = CCrmQuote::getList(
+			$order,
+			$filter,
+			false,
+			$navParams,
+			$this->getSearchSelect()
+		);
 
-			while ($quoteFields = $res->fetch())
-			{
-				$quotesList[$prefix.$quoteFields['ID']] = self::prepareEntity($quoteFields, $entityOptions);
-			}
+		while ($quoteFields = $res->fetch())
+		{
+			$quotesList[$prefix . $quoteFields['ID']] = static::prepareEntity($quoteFields, $entityOptions);
 		}
 
 		if (empty($lastQuotesIdList))
@@ -156,29 +159,29 @@ class CrmQuotes extends \Bitrix\Main\UI\Selector\EntityBase
 			&& $options['addTab'] == 'Y'
 		)
 		{
-			$result = array(
-				array(
+			$result = [
+				[
 					'id' => 'quotes',
 					'name' => Loc::getMessage('MAIN_UI_SELECTOR_TAB_CRMQUOTES'),
-					'sort' => 80
-				)
-			);
+					'sort' => 80,
+				],
+			];
 		}
 
 		return $result;
 	}
 
-	public function search($params = array())
+	public function search($params = [])
 	{
-		$result = array(
-			'ITEMS' => array(),
-			'ADDITIONAL_INFO' => array()
-		);
+		$result = [
+			'ITEMS' => [],
+			'ADDITIONAL_INFO' => [],
+		];
 
-		$entityOptions = (!empty($params['options']) ? $params['options'] : array());
-		$requestFields = (!empty($params['requestFields']) ? $params['requestFields'] : array());
+		$entityOptions = (!empty($params['options']) ? $params['options'] : []);
+		$requestFields = (!empty($params['requestFields']) ? $params['requestFields'] : []);
 		$search = $requestFields['searchString'];
-		$prefix = self::getPrefix($entityOptions);
+		$prefix = static::getPrefix($entityOptions);
 
 		if (
 			$search <> ''
@@ -188,52 +191,94 @@ class CrmQuotes extends \Bitrix\Main\UI\Selector\EntityBase
 			)
 		)
 		{
-			$filter = array();
-			if (is_numeric($search))
+			$filter = $this->getSearchFilter($search, $entityOptions);
+
+			if ($filter === false)
 			{
-				$filter['ID'] = (int) $search;
-				$filter['%QUOTE_NUMBER'] = $search;
-				$filter['%TITLE'] = $search;
-				$filter['LOGIC'] = 'OR';
-			}
-			else if (preg_match('/(.*)\[(\d+?)\]/i'.BX_UTF_PCRE_MODIFIER, $search, $matches))
-			{
-				$filter['ID'] = (int) $matches[2];
-				$searchString = trim($matches[1]);
-				if (is_string($searchString) && $searchString !== '')
-				{
-					$filter['%TITLE'] = $searchString;
-					$filter['LOGIC'] = 'OR';
-				}
-				unset($searchString);
-			}
-			else
-			{
-				$filter['%QUOTE_NUMBER'] = $search;
-				$filter['%TITLE'] = $search;
-				$filter['LOGIC'] = 'OR';
+				return $result;
 			}
 
-			$filter = array(
-				'SEARCH_CONTENT' => $search,
-				'__ENABLE_SEARCH_CONTENT_PHONE_DETECTION' => false,
-				'__INNER_FILTER_1' => $filter
-			);
-
-			$res = \CCrmQuote::getList(
-				[ 'TITLE' => 'ASC' ],
+			$res = CCrmQuote::getList(
+				$this->getSearchOrder(),
 				$filter,
 				false,
 				[ 'nTopCount' => 20 ],
-				[ 'ID', 'QUOTE_NUMBER', 'TITLE', 'STATUS_ID', 'COMPANY_TITLE', 'CONTACT_FULL_NAME' ]
+				$this->getSearchSelect()
 			);
 
+			$resultItems = [];
 			while ($quoteFields = $res->fetch())
 			{
-				$result["ITEMS"][$prefix.$quoteFields['ID']] = self::prepareEntity($quoteFields, $entityOptions);
+				$resultItems[$prefix . $quoteFields['ID']] = static::prepareEntity($quoteFields, $entityOptions);
 			}
+
+			$resultItems = $this->appendItemsByIds($resultItems, $search, $entityOptions);
+
+			$resultItems = $this->processResultItems($resultItems, $entityOptions);
+
+			$result["ITEMS"] = $resultItems;
 		}
 
 		return $result;
+	}
+
+	protected function getSearchOrder(): array
+	{
+		return [ 'TITLE' => 'ASC' ];
+	}
+
+	protected function getSearchSelect(): array
+	{
+		return [
+			'ID',
+			'QUOTE_NUMBER',
+			'TITLE',
+			'STATUS_ID',
+			'COMPANY_TITLE',
+			'CONTACT_FULL_NAME',
+		];
+	}
+
+	protected function getSearchFilter(string $search, array $options)
+	{
+		$filter = [];
+
+		if (is_numeric($search))
+		{
+			$filter['ID'] = (int) $search;
+			$filter['%QUOTE_NUMBER'] = $search;
+			$filter['%TITLE'] = $search;
+			$filter['LOGIC'] = 'OR';
+		}
+		else if (preg_match('/( . *)\[(\d+?)\]/i'.BX_UTF_PCRE_MODIFIER, $search, $matches))
+		{
+			$filter['ID'] = (int) $matches[2];
+			$searchString = trim($matches[1]);
+			if ($searchString !== '')
+			{
+				$filter['%TITLE'] = $searchString;
+				$filter['LOGIC'] = 'OR';
+			}
+			unset($searchString);
+		}
+		else
+		{
+			$filter['%QUOTE_NUMBER'] = $search;
+			$filter['%TITLE'] = $search;
+			$filter['LOGIC'] = 'OR';
+		}
+
+		$filter = [
+			'SEARCH_CONTENT' => $search,
+			'__ENABLE_SEARCH_CONTENT_PHONE_DETECTION' => false,
+			'__INNER_FILTER_1' => $filter
+		];
+
+		return $this->prepareOptionalFilter($filter, $options);
+	}
+
+	protected function getByIdsListMethodName(): string
+	{
+		return 'getList';
 	}
 }

@@ -1,14 +1,13 @@
 import {Type, Tag, Loc, Dom, Event, Cache} from 'main.core';
 import {BaseEvent, EventEmitter} from 'main.core.events';
-import {Timeline} from 'ui.timeline';
 import {Planner} from "calendar.planner";
 import {Util} from "calendar.util";
 
 /**
- * @memberOf BX.UI.Timeline
+ * @memberOf BX.Crm.Timeline.ToolBar
  * @mixes EventEmitter
  */
-export class Zoom extends Timeline.Editor
+export class Zoom
 {
 	TITLE = 'Zoom';
 	error = false;
@@ -18,16 +17,20 @@ export class Zoom extends Timeline.Editor
 	constructor(params: {
 		id: string,
 		container: HTMLElement,
-		manager: ?BX.CrmTimelineManager,
-		userId: string
+		ownerTypeId: Number,
+		ownerId: Number,
+		onFinishEdit: Function
 	})
 	{
-		super(params);
-		this.containerId = params.container;
-		this.manager = params.manager;
-		this.userId = +params.userId;
-		this.setEventNamespace('BX.UI.Timeline.ZoomEditor');
-		Dom.append(this.getFormContainer(), BX(this.containerId));
+		this.container = params.container;
+		this.ownerTypeId = params.ownerTypeId;
+		this.ownerId = params.ownerId;
+		this.userId = +Loc.getMessage('USER_ID');
+		this.onFinishEdit = params.onFinishEdit;
+
+		Dom.append(this.getFormContainer(), this.container);
+		Dom.append(this.renderButtons(), this.container);
+
 		Event.bind(this.getDateContainer(), 'click', (e) => {this.onDateFieldClick(e)});
 		Event.bind(this.getTimeContainer(), 'click', () => {
 			this.onTimeSwitchClick(this.getTimeInputField())
@@ -37,12 +40,15 @@ export class Zoom extends Timeline.Editor
 		Event.bind(this.getTimeContainer(), 'change', () => {this.onUpdateDateTime()});
 		Event.bind(this.getDurationInputField(), 'change', () => {this.onUpdateDateTime()});
 		Event.bind(this.getDurationTypeInputField(), 'change', () => {this.onUpdateDateTime()});
+
+		this.refreshStartTimeView();
+		this.initPlanner();
 	}
 
 	static onNotConnectedHandler(userId)
 	{
 		const url = document.location.href;
-		var userProfileUri = '/company/personal/user/' + userId + '/social_services/';
+		const userProfileUri = '/company/personal/user/' + userId + '/social_services/';
 		BX.SidePanel.Instance.open(userProfileUri, {
 			events: {
 				allowChangeHistory: false,
@@ -55,7 +61,7 @@ export class Zoom extends Timeline.Editor
 
 	static onNotAvailableHandler()
 	{
-		BX.UI.InfoHelper.show('limit_video_conference_zoom_crm');
+		BX.UI?.InfoHelper?.show('limit_video_conference_zoom_crm');
 	}
 
 	getTitle(): string
@@ -323,18 +329,6 @@ export class Zoom extends Timeline.Editor
 		});
 	}
 
-	render(): Element
-	{
-		this.refreshStartTimeView();
-		this.initPlanner();
-		this.layout.container = Tag.render`
-			<div class="ui-timeline-zoom-editor">
-				${this.renderButtons()}
-			</div>`;
-
-		return this.getContainer();
-	}
-
 	initPlanner(): Element
 	{
 		this.planner = new Planner({
@@ -402,23 +396,13 @@ export class Zoom extends Timeline.Editor
 		);
 	}
 
-	onFocus()
-	{
-		const container = this.getContainer();
-		if (container)
-		{
-			Dom.addClass(container, "focus");
-		}
-	}
-
 	save()
 	{
 		this.cleanError();
 		Dom.addClass(this.renderSaveButton(), "ui-btn-wait");
 
-		const entityInfo = this.manager.getOwnerInfo()
-		const entityId = entityInfo['ENTITY_ID'];
-		const entityType = entityInfo['ENTITY_TYPE_NAME'];
+		const entityId = this.ownerId;
+		const entityType = BX.CrmEntityType.resolveName(this.ownerTypeId);
 
 		const dateStart = this.getDateInputField().value;
 		const timeStart = this.getTimeInputField().textContent;
@@ -483,57 +467,10 @@ export class Zoom extends Timeline.Editor
 		this.refreshDuration();
 		this.planner.updateSelector(this.getStartDateTime(), this.getEndDateTime(), false);
 
-		this.setVisible(false);
-		this.manager._commentEditor.setVisible(true);
-		this.manager._menuBar.setActiveItemById("comment");
-	}
-
-	setVisible(show: boolean): void
-	{
-		let container = this.getContainer();
-		if (!show)
+		if (Type.isFunction(this.onFinishEdit))
 		{
-			if (container)
-			{
-				BX.hide(container);
-			}
+			this.onFinishEdit();
 		}
-		else
-		{
-			if (!container)
-			{
-				container = this.renderInside();
-			}
-			if (container)
-			{
-				BX.show(container);
-			}
-			this.onFocus();
-		}
-	}
-
-	renderInside(): ?Element
-	{
-		if (Type.isStringFilled(this.containerId))
-		{
-			const container = document.querySelector("#" + this.containerId);
-			this.render();
-			if (Type.isElementNode(container))
-			{
-				let node = this.layout.container.firstElementChild;
-				while (node)
-				{
-					container.appendChild(node);
-					node = node.nextSibling;
-				}
-				Dom.remove(this.layout.container);
-				Dom.addClass(container, "ui-timeline-zoom-editor");
-				this.layout.container = container;
-			}
-
-		}
-		this.containerId = null;
-		return this.getContainer();
 	}
 
 	showError()
@@ -550,7 +487,7 @@ export class Zoom extends Timeline.Editor
 				<span class="ui-alert-message">${errorText}</span>
 			</div>`;
 
-			Dom.append(this.errorElement, this.layout.container.firstElementChild);
+			Dom.append(this.errorElement, this.container.firstElementChild);
 			this.error = true;
 		}
 		Dom.removeClass(this.renderSaveButton(), 'ui-btn-wait');

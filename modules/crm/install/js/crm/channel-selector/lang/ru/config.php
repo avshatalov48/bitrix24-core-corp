@@ -7,3 +7,4 @@ $MESS["CRM_CHANNEL_SELECTOR_MESSAGE_WITH_LINK"] = "#MESSAGE# #LINK#";
 $MESS["CRM_CHANNEL_SELECTOR_SEND_BUTTON"] = "Отправить";
 $MESS["CRM_CHANNEL_SELECTOR_NO_ACTIVE_CHANNELS_TEXT"] = "Делитесь документами<br>с клиентом в один клик";
 $MESS["CRM_CHANNEL_SELECTOR_ACTIVATE_CHANNELS"] = "Подключить каналы связи";
+$MESS["CRM_CHANNEL_SELECTOR_CHOOSE_FROM_MARKET"] = "Выбрать другой сервис";

@@ -2,7 +2,6 @@
  * @module crm/entity-detail/component/on-model-ready
  */
 jn.define('crm/entity-detail/component/on-model-ready', (require, exports, module) => {
-
 	/**
 	 * @param {DetailCardComponent} detailCard
 	 */
@@ -13,5 +12,4 @@ jn.define('crm/entity-detail/component/on-model-ready', (require, exports, modul
 	};
 
 	module.exports = { onEntityModelReady };
-
 });

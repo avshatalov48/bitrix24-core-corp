@@ -1,4 +1,6 @@
 import Shift from "./shift";
+import {Dom} from 'main.core';
+import CompatibleItem from "../items/compatible-item";
 
 /** @memberof BX.Crm.Timeline.Animation */
 export default class ItemNew
@@ -37,10 +39,17 @@ export default class ItemNew
 
 	addHistoryItem()
 	{
-		const node = this._finalItem.getWrapper();
-
-		this._anchor.parentNode.insertBefore(node, this._anchor.nextSibling);
-
+		if (this._finalItem instanceof CompatibleItem)
+		{
+			const node = this._finalItem.getWrapper();
+			this._anchor.parentNode.insertBefore(node, this._anchor.nextSibling);
+		}
+		else
+		{
+			this._finalItem.initWrapper();
+			Dom.insertBefore(this._finalItem.getWrapper(), this._anchor.nextSibling);
+			this._finalItem.initLayoutApp({ add: false });
+		}
 	}
 
 	run()

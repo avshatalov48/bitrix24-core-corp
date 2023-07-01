@@ -1647,7 +1647,7 @@ class CrmActivityPlannerComponent extends \Bitrix\Crm\Component\Base
 			$communications = array();
 			foreach ($data as $item)
 			{
-				$id = 'CRM'.$item['ENTITY_TYPE'].$item['ENTITY_ID'].':'.hash('crc32b', $item['TYPE'].':'.$item['VALUE']);
+				$id = 'CRM' . $item['ENTITY_TYPE'] . $item['ENTITY_ID'].':'.hash('crc32b', $item['TYPE'] . ':' . $item['VALUE']);
 				if (!array_key_exists($id, $communications))
 				{
 					$communications[$id] = $item;

@@ -279,7 +279,10 @@ class TaskManager
 		$tasks = [];
 		while ($row = $tasksIterator->fetch())
 		{
-			$tasks[$typeInstanceIds[$row['WORKFLOW_ID']]][$row['ID']] = $row;
+			if (isset($typeInstanceIds[$row['WORKFLOW_ID']]))
+			{
+				$tasks[$typeInstanceIds[$row['WORKFLOW_ID']]][$row['ID']] = $row;
+			}
 		}
 		return $tasks;
 	}
@@ -357,7 +360,7 @@ class TaskManager
 		return array_map(
 			function($task) use ($userId, $fields)
 			{
-				$fieldsToSet = $task['PARAMETERS']['FIELDS_TO_SET'] ?
+				$fieldsToSet = !empty($task['PARAMETERS']['FIELDS_TO_SET']) ?
 					array_values(array_intersect_key($fields, array_flip($task['PARAMETERS']['FIELDS_TO_SET'])))
 					: null;
 

@@ -44,7 +44,6 @@ for ($i=0, $filterLength = sizeof($arResult['FILTER']); $i < $filterLength; $i++
 	$filterField = &$arResult['FILTER'][$i];
 	$filterID = $filterField['id'];
 	$filterType = $filterField['type'];
-	$enable_settings = $filterField['enable_settings'];
 
 	if ($filterType === 'user')
 	{

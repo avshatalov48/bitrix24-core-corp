@@ -3,6 +3,7 @@ namespace Bitrix\Crm\Controller;
 
 use Bitrix\Main;
 use Bitrix\Crm;
+use Bitrix\Main\Localization\Loc;
 
 class FieldSet extends Main\Engine\JsonController
 {
@@ -16,7 +17,7 @@ class FieldSet extends Main\Engine\JsonController
 		$item = Crm\Integration\Sign\Form::getFieldSet($entityTypeId, $presetId);
 		if (!$item)
 		{
-			$this->addError(new Main\Error("FieldSet not found for entity type `$entityTypeId`"));
+			$this->addError(new Main\Error(Loc::getMessage('CRM_CONTROLLER_FIELDSET_NOT_FOUND', ['#ENTITY_TYPE#' => $entityTypeId])));
 			return [];
 		}
 
@@ -109,7 +110,7 @@ class FieldSet extends Main\Engine\JsonController
 		$permissions = Crm\Service\Container::getInstance()->getUserPermissions();
 		if (!$permissions->canReadConfig())
 		{
-			$this->addError(new Main\Error('User permissions `read crm-config` required.'));
+			$this->addError(new Main\Error(Loc::getMessage('CRM_CONTROLLER_FIELDSET_READ_CONFIG_DENIED')));
 			return [];
 		}
 
@@ -131,7 +132,7 @@ class FieldSet extends Main\Engine\JsonController
 		$permissions = Crm\Service\Container::getInstance()->getUserPermissions();
 		if (!$permissions->canWriteConfig())
 		{
-			$this->addError(new Main\Error('User permissions `write crm-config` required.'));
+			$this->addError(new Main\Error(Loc::getMessage('CRM_CONTROLLER_FIELDSET_WRITE_CONFIG_DENIED')));
 			return [];
 		}
 

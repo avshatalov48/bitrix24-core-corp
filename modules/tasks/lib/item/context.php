@@ -102,7 +102,7 @@ final class Context
 	{
 		$class = static::getClass();
 
-		if(!static::$defaultContexts[$class])
+		if(!isset(static::$defaultContexts[$class]) || !static::$defaultContexts[$class])
 		{
 			// default context should be immutable, or else we will face disaster!
 			$ctx = new static();

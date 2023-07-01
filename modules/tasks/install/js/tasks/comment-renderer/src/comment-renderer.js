@@ -71,7 +71,7 @@ export class CommentRenderer
 					{
 						let efficiencyUrlStart = Loc.getMessage('SONET_RENDERPARTS_EFFICIENCY_PATH');
 						efficiencyUrlStart = efficiencyUrlStart.replace('#user_id#', userId);
-						efficiencyUrlStart = `<a href="${efficiencyUrlStart}">`;
+						efficiencyUrlStart = `<a href="${efficiencyUrlStart}" target="_blank">`;
 
 						message = message.replace(start, efficiencyUrlStart);
 						message = message.replace(end, '</a>');

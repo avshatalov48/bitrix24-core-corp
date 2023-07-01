@@ -2,8 +2,8 @@
  * @module crm/in-app-url/url/base
  */
 jn.define('crm/in-app-url/url/base', (require, exports, module) => {
-
 	const { Route } = require('in-app-url/route');
+	const { Type } = require('crm/type');
 
 	const LIST = 'list';
 	const DETAIL = 'detail';
@@ -16,7 +16,8 @@ jn.define('crm/in-app-url/url/base', (require, exports, module) => {
 		/**
 		 * @param {Object} props
 		 * @param {string} props.url
-		 * @param {string} props.entityTypeName
+		 * @param {?string} props.entityTypeName
+		 * @param {?number} props.entityTypeId
 		 * @param {string} props.entityId
 		 */
 		constructor(props)
@@ -26,7 +27,7 @@ jn.define('crm/in-app-url/url/base', (require, exports, module) => {
 			this.entityTypeName = null;
 			this.typePage = null;
 
-			this.initialUrlEntity();
+			this.initializeUrlEntity();
 		}
 
 		getQueryParam(key)
@@ -91,11 +92,16 @@ jn.define('crm/in-app-url/url/base', (require, exports, module) => {
 			return ['details', 'show'].includes(type) || this.getDetailId();
 		}
 
-		initialUrlEntity()
+		initializeUrlEntity()
 		{
-
 			const url = this.url.toString();
-			const { entityTypeName } = this.props;
+			const { entityTypeId } = this.props;
+			let { entityTypeName } = this.props;
+
+			if (entityTypeId)
+			{
+				entityTypeName = Type.resolveNameById(entityTypeId);
+			}
 
 			if (!url)
 			{
@@ -105,7 +111,7 @@ jn.define('crm/in-app-url/url/base', (require, exports, module) => {
 				return;
 			}
 
-			const regExp = /\/crm\/(deal|lead|company|contact)\/(show|details)?/i;
+			const regExp = /\/crm\/(deal|lead|company|contact|type)\/(show|details)?/i;
 			const type = url.match(regExp);
 
 			this.setEntityTypeName(type[1] || entityTypeName);
@@ -131,9 +137,7 @@ jn.define('crm/in-app-url/url/base', (require, exports, module) => {
 
 			return route.makeUrl(params);
 		}
-
 	}
 
 	module.exports = { CrmUrlBase };
-
 });

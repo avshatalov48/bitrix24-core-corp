@@ -1,29 +1,78 @@
-(() =>
-{
+/**
+ * @module layout/ui/wizard
+ */
+jn.define('layout/ui/wizard', (require, exports, module) => {
+
+	const BUTTON_COLORS = {
+		ENABLED: '#0065a3',
+		DISABLED: '#d5d7db',
+	};
+
+	const { StepLayout } = require('layout/ui/wizard/step-layout');
+
 	/**
 	 * @class Wizard
 	 */
 	class Wizard extends LayoutComponent
 	{
+		/**
+		 * @param {Object} props
+		 * @param {Object[]} props.steps
+		 * @param {Object} props.stepForId
+		 * @param {Object} props.parentLayout
+		 */
 		constructor(props)
 		{
 			super(props);
-			this.currentStepId = null;
-			this.currentLayout = layout;
 
+			this.currentStepId = null;
+			this.currentLayout = this.getLayoutWidget();
+			this.parentManager = this.getPageManager();
 			this.isLoading = false;
 
 			/** @type {Map<string,WizardStep>} */
 			this.steps = new Map();
 
-			layout.on("onViewShown", () => {
-				this.onLayoutViewShown(layout, this.getStepIdByIndex(0));
+			const { steps, stepForId } = this.props;
+
+			if (Array.isArray(steps) && stepForId)
+			{
+				steps.forEach((stepId) => {
+					this.addStep(stepId, stepForId(stepId));
+				});
+			}
+
+			this.stepLayouts = new Map();
+			this.stepLayouts.set(this.getStepIdByIndex(0), this.currentLayout);
+
+			this.currentLayout.on('onViewShown', () => {
+				this.onLayoutViewShown(this.getStepIdByIndex(0));
 				this.toggleTitle();
 			});
+		}
 
-			this.props.steps.forEach(stepId => {
-				this.addStep(stepId, this.props.stepForId(stepId))
-			});
+		getLayoutWidget()
+		{
+			const { parentLayout } = this.props;
+
+			if (parentLayout)
+			{
+				return parentLayout;
+			}
+
+			throw new Error('Wizard: missing required props.parentLayout');
+		}
+
+		getPageManager()
+		{
+			const { parentLayout } = this.props;
+
+			return parentLayout || PageManager;
+		}
+
+		setLayoutWidget(layoutWidget)
+		{
+			this.currentLayout = layoutWidget;
 		}
 
 		/**
@@ -36,7 +85,8 @@
 		addStep(stepId, step)
 		{
 			this.steps.set(stepId, step);
-			let currentStepId = this.getCurrentStepId();
+			const currentStepId = this.getCurrentStepId();
+
 			if (!currentStepId)
 			{
 				this.setCurrentStep(stepId);
@@ -46,8 +96,7 @@
 
 			step
 				.setTitleChangeHandler(this.onChangeTitle.bind(this))
-				.setStepAvailabilityChangeHandler(this.onChangeStepAvailability.bind(this))
-			;
+				.setStepAvailabilityChangeHandler(this.onChangeStepAvailability.bind(this));
 
 			return this;
 		}
@@ -64,15 +113,14 @@
 
 		setCurrentStep(stepId)
 		{
-			if (this.steps.has(stepId))
+			if (!this.steps.has(stepId))
 			{
-				if (this.getCurrentStepId())
-				{
-					this.getCurrentStep().onLeaveStep();
-				}
-				this.currentStepId = stepId;
-				this.getCurrentStep().onEnterStep();
+				console.error(`not find step ${stepId}`);
+				return null;
+
 			}
+
+			this.currentStepId = stepId;
 		}
 
 		/**
@@ -121,65 +169,92 @@
 		 */
 		moveToNextStep()
 		{
-			const moveToStepResult = this.getCurrentStep().onMoveToNextStep();
+			const newStepIndex = this.getStepIndexById(this.getCurrentStepId()) + 1;
+			const nextStepId = this.getStepIdByIndex(newStepIndex);
+			const moveToStepResult = this.getCurrentStep().onMoveToNextStep(nextStepId);
 
 			this.processMoveToStepResult(moveToStepResult, () => {
-				const newStepIndex = this.getStepIndexById(this.getCurrentStepId()) + 1;
+
+				this.getCurrentStep().onLeaveStep(this.getCurrentStepId());
+				this.getCurrentStep().onEnterStep(nextStepId);
 
 				if (newStepIndex >= this.getTotalStepsCount())
 				{
-					layout.close();
+					this.onFinish();
 				}
 				else
 				{
-					this.openStepWidget(this.getStepIdByIndex(newStepIndex));
+					this.openStepWidget(nextStepId);
+					this.setCurrentStep(nextStepId);
+				}
+
+				if (this.getCurrentStep().isNeedToSkip())
+				{
+					this.moveToNextStep();
 				}
 			});
 		}
 
 		openStepWidget(stepId)
 		{
-			let step = this.steps.get(stepId);
-			PageManager
-				.openWidget("layout", {
+			const step = this.steps.get(stepId);
+
+			this.parentManager
+				.openWidget('layout', {
 					titleParams: {
-						text: step.getTitle(),
-						detailText: step.getSubTitle(),
+						text: !step.isNeedToSkip() ? step.getTitle() : null,
+						detailText: !step.isNeedToSkip() ? step.getSubTitle() : null,
 					},
+					animate: !step.isNeedToSkip(),
+					backgroundColor: '#eef2f4',
 				})
-				.then(layoutWidget => {
-					layoutWidget.on('onViewShown', () =>
+				.then((layoutWidget) => {
+					if (!step.isPrevStepEnabled())
 					{
-						this.onLayoutViewShown(layoutWidget, stepId);
+						layoutWidget.setLeftButtons([]);
+					}
+					layoutWidget.on('onViewShown', () => {
+						this.stepLayouts.set(stepId, layoutWidget);
+						this.onLayoutViewShown(stepId);
 					});
-					layoutWidget.enableNavigationBarBorder(false);
-					layoutWidget.showComponent(new class extends LayoutComponent
-						{
-							render()
-							{
-								return View(
-									{
-										style: {
-											backgroundColor: '#eef2f4',
-										},
-									},
-									step.createLayout({
-										fieldFocusDelay: 500,
-									})
-								);
-							}
-						}
-					);
+					layoutWidget.enableNavigationBarBorder(this.isNavigationBarBorderEnabled());
+					layoutWidget.showComponent(new StepLayout({
+						layoutWidget,
+						step,
+						wizard: this,
+					}));
 				});
-			;
 		}
 
-		onLayoutViewShown(layout, stepId)
+		onFinish()
 		{
-			this.currentLayout = layout;
-			this.setCurrentStep(stepId);
+			this.currentLayout.close(() => {
+				this.getCurrentStep().onFinishStep();
+			});
+		}
 
+		onLayoutViewShown(stepId)
+		{
+			const layout = this.stepLayouts.get(stepId);
+			if (!layout)
+			{
+				throw new Error(`Could not find layout for stepId: ${stepId}`);
+			}
+
+			this.setLayoutWidget(layout);
+			this.setCurrentStep(stepId);
 			this.toggleChangeStepButtons();
+			this.getCurrentStep().onEnterStep(stepId);
+		}
+
+		isNavigationBarBorderEnabled()
+		{
+			if (this.props.isNavigationBarBorderEnabled === undefined)
+			{
+				return false;
+			}
+
+			return this.props.isNavigationBarBorderEnabled;
 		}
 
 		/**
@@ -214,42 +289,51 @@
 					this.toggleChangeStepButtons();
 				};
 
-				moveToStepResult.then(
-					() =>
-					{
-						finishLoading();
-						successfullyMovedCallback();
-					},
-					() =>
-					{
-						finishLoading();
-					}
-				);
+				moveToStepResult.then((result = {}) => {
+					const { finish } = result;
+					const callback = finish ? this.onFinish.bind(this) : successfullyMovedCallback;
+
+					finishLoading();
+					callback();
+				}).catch((e) => {
+					console.error(e);
+					this.onFinish();
+				});
 			}
 		}
 
 		/**
 		 * Set enabled/disabled state for prev/next wizard buttons
 		 */
-		toggleChangeStepButtons()
+		toggleChangeStepButtons(isNextStepEnabled = true)
 		{
-			const isNextStepEnabled = this.getCurrentStep().isNextStepEnabled() && !this.isLoading;
-			const nextStepButtonText = this.getCurrentStep().getNextStepButtonText();
+			if (this.getCurrentStep().isNeedToSkip())
+			{
+				return;
+			}
 
-			this.currentLayout.setRightButtons([
-				{
-					name: nextStepButtonText,
-					type: 'text',
-					...(isNextStepEnabled
-							? {
-								color: '#0B66C3',
-								callback: this.moveToNextStep.bind(this),
-							}
-							: {}
-					)
-				}
-			]);
+			if (this.getCurrentStep().isNeedToShowNextStep())
+			{
+				const isEnabled = this.getCurrentStep().isNextStepEnabled() && !this.isLoading && isNextStepEnabled;
+				const nextStepButtonText = this.getCurrentStep().getNextStepButtonText();
 
+				this.currentLayout.setRightButtons([
+					{
+						name: nextStepButtonText,
+						type: 'text',
+						...(isEnabled
+								? {
+									color: BUTTON_COLORS.ENABLED,
+									callback: this.moveToNextStep.bind(this),
+								}
+								: {
+									color: BUTTON_COLORS.DISABLED,
+									callback: () => {},
+								}
+						),
+					},
+				]);
+			}
 		}
 
 		/**
@@ -265,13 +349,10 @@
 
 		render()
 		{
-			return View({
-					style: {
-						backgroundColor: '#eef2f4',
-					},
-				},
-				this.getCurrentStepId() ? this.getCurrentStep().createLayout() : null,
-			);
+			return new StepLayout({
+				step: this.getCurrentStep(),
+				wizard: this,
+			});
 		}
 
 		/**
@@ -285,11 +366,11 @@
 		/**
 		 * If Step changes next button availability, this callback will be executed
 		 */
-		onChangeStepAvailability(isNestStepEnabled)
+		onChangeStepAvailability(isNextStepEnabled)
 		{
-			this.toggleChangeStepButtons();
+			this.toggleChangeStepButtons(isNextStepEnabled);
 		}
 	}
 
-	this.Wizard = Wizard;
-})();
+	module.exports = { Wizard };
+});

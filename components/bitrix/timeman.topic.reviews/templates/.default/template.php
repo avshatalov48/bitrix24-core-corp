@@ -3,7 +3,7 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 
 ?>
 
-		<?php if ($arResult["NAV_RESULT"] && $arResult["NAV_RESULT"]->NavPageCount > 1):?>
+		<?php if (($arResult["NAV_RESULT"] ?? null) && $arResult["NAV_RESULT"]->NavPageCount > 1):?>
 			<?php echo $arResult["NAV_STRING"]?><br />
 		<?php endif?>
 		<?php foreach ($arResult["COMMENTS"] as $res):?>
@@ -24,6 +24,6 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 				</span>
 			</div>
 		<?php endforeach?>
-		<?php if ($arResult["NAV_STRING"] <> '' && $arResult["NAV_RESULT"]->NavPageCount > 1):?>
+		<?php if (($arResult["NAV_STRING"] ?? '') <> '' && $arResult["NAV_RESULT"]->NavPageCount > 1):?>
 			<br /><?php echo $arResult["NAV_STRING"]?>
 		<?php endif?>

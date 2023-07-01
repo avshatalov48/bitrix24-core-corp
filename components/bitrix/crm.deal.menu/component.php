@@ -1,4 +1,5 @@
 <?php
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
@@ -14,14 +15,16 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
  */
 
 if (!CModule::IncludeModule('crm'))
+{
 	return;
+}
 
 \Bitrix\Crm\Service\Container::getInstance()->getLocalization()->loadMessages();
 
 use Bitrix\Crm\Category\DealCategory;
-use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Integration\Sender\Rc;
 use Bitrix\Crm\Recurring;
+use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Main\Localization\Loc;
 
 $currentUserID = CCrmSecurityHelper::GetCurrentUserID();
@@ -142,32 +145,35 @@ else
 $arResult['CONVERSION_PERMITTED'] = isset($arParams['CONVERSION_PERMITTED']) ? $arParams['CONVERSION_PERMITTED'] : true;
 
 if (!isset($arParams['TYPE']))
+{
 	$arParams['TYPE'] = 'list';
+}
 
 if (isset($_REQUEST['copy']))
+{
 	$arParams['TYPE'] = 'copy';
+}
 
 $toolbarID = 'toolbar_deal_'.$arParams['TYPE'];
-if($arParams['ELEMENT_ID'] > 0)
+if ($arParams['ELEMENT_ID'] > 0)
 {
 	$toolbarID .= '_'.$arParams['ELEMENT_ID'];
 }
+
 $arResult['TOOLBAR_ID'] = $toolbarID;
 
-$arResult['BUTTONS'] = array();
+$arResult['BUTTONS'] = [];
 
 $isInSlider = isset($arParams['IN_SLIDER']) && $arParams['IN_SLIDER'] === 'Y';
-
-$currentCategoryID = isset($arResult['CATEGORY_ID']) ? $arResult['CATEGORY_ID'] : -1;
-
+$currentCategoryID = $arResult['CATEGORY_ID'] ?? -1;
 $bConfig = false;
-if ($arParams['TYPE'] == 'list')
+if ($arParams['TYPE'] === 'list')
 {
-	$bRead   = CCrmDeal::CheckReadPermission(0, $CrmPerms, $currentCategoryID);
+	$bRead = CCrmDeal::CheckReadPermission(0, $CrmPerms, $currentCategoryID);
 	$bExport = CCrmDeal::CheckExportPermission($CrmPerms, $currentCategoryID);
 	$bImport = CCrmDeal::CheckImportPermission($CrmPerms, $currentCategoryID) && ($arParams['IS_RECURRING'] ?? null) !== 'Y';
-	$bAdd    = CCrmDeal::CheckCreatePermission($CrmPerms, $currentCategoryID);
-	$bWrite  = CCrmDeal::CheckUpdatePermission(0, $CrmPerms, $currentCategoryID);
+	$bAdd = CCrmDeal::CheckCreatePermission($CrmPerms, $currentCategoryID);
+	$bWrite = CCrmDeal::CheckUpdatePermission(0, $CrmPerms, $currentCategoryID);
 
 	$bDelete = false;
 	$bConfig = $CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE');
@@ -176,23 +182,25 @@ else
 {
 	$bExport = false;
 	$bImport = false;
-
-	$bRead   = CCrmDeal::CheckReadPermission($arParams['ELEMENT_ID'], $CrmPerms, $currentCategoryID);
-	$bAdd    = CCrmDeal::CheckCreatePermission($CrmPerms, $currentCategoryID);
-	$bWrite  = CCrmDeal::CheckUpdatePermission($arParams['ELEMENT_ID'], $CrmPerms, $currentCategoryID);
+	$bRead = CCrmDeal::CheckReadPermission($arParams['ELEMENT_ID'], $CrmPerms, $currentCategoryID);
+	$bAdd = CCrmDeal::CheckCreatePermission($CrmPerms, $currentCategoryID);
+	$bWrite = CCrmDeal::CheckUpdatePermission($arParams['ELEMENT_ID'], $CrmPerms, $currentCategoryID);
 	$bDelete = CCrmDeal::CheckDeletePermission($arParams['ELEMENT_ID'], $CrmPerms, $currentCategoryID);
 
 }
+
 $bExclude = \Bitrix\Crm\Exclusion\Access::current()->canWrite();
 
 if (isset($arParams['DISABLE_IMPORT']) && $arParams['DISABLE_IMPORT'] == 'Y')
 {
 	$bImport = false;
 }
+
 if (isset($arParams['DISABLE_DEDUPE']) && $arParams['DISABLE_DEDUPE'] == 'Y')
 {
 	$bDedupe = false;
 }
+
 if (isset($arParams['DISABLE_EXPORT']) && $arParams['DISABLE_EXPORT'] == 'Y')
 {
 	$bExport = false;
@@ -201,34 +209,37 @@ if (isset($arParams['DISABLE_EXPORT']) && $arParams['DISABLE_EXPORT'] == 'Y')
 $isSliderEnabled = \CCrmOwnerType::IsSliderEnabled(\CCrmOwnerType::Deal);
 
 if (!$bRead && !$bAdd && !$bWrite)
-	return false;
-
-//Skip COPY menu in slider mode
-if($arParams['TYPE'] == 'copy' && $isSliderEnabled)
 {
 	return false;
 }
 
-if($arParams['TYPE'] === 'details')
+//Skip COPY menu in slider mode
+if ($arParams['TYPE'] === 'copy' && $isSliderEnabled)
 {
-	if($arParams['ELEMENT_ID'] <= 0)
+	return false;
+}
+
+if ($arParams['TYPE'] === 'details')
+{
+	if ($arParams['ELEMENT_ID'] <= 0)
 	{
 		return false;
 	}
 
-	$scripts = isset($arParams['~SCRIPTS']) && is_array($arParams['~SCRIPTS']) ? $arParams['~SCRIPTS'] : array();
+	$scripts = isset($arParams['~SCRIPTS']) && is_array($arParams['~SCRIPTS']) ? $arParams['~SCRIPTS'] : [];
 
 	//region APPLICATION PLACEMENT
 	$placementGroupInfos = \Bitrix\Crm\Integration\Rest\AppPlacementManager::getHandlerInfos(
 		\Bitrix\Crm\Integration\Rest\AppPlacement::DEAL_DETAIL_TOOLBAR
 	);
-	foreach($placementGroupInfos as $placementGroupName => $placementInfos)
+
+	foreach ($placementGroupInfos as $placementGroupName => $placementInfos)
 	{
 		$arResult['BUTTONS'][] = array(
 			'TYPE' => 'rest-app-toolbar',
 			'NAME' => $placementGroupName,
 			'DATA' => array(
-				'OWNER_INFO' => isset($arParams['OWNER_INFO']) ? $arParams['OWNER_INFO'] : array(),
+				'OWNER_INFO' => $arParams['OWNER_INFO'] ?? [],
 				'PLACEMENT' => \Bitrix\Crm\Integration\Rest\AppPlacement::DEAL_DETAIL_TOOLBAR,
 				'APP_INFOS' => $placementInfos
 			)
@@ -319,8 +330,8 @@ if($arParams['TYPE'] === 'details')
 			'TYPE' => 'crm-communication-panel',
 			'DATA' => array(
 				'ENABLE_CALL' => \Bitrix\Main\ModuleManager::isModuleInstalled('calendar'),
-				'OWNER_INFO' => isset($arParams['OWNER_INFO']) ? $arParams['OWNER_INFO'] : array(),
-				'MULTIFIELDS' => isset($arParams['MULTIFIELD_DATA']) ? $arParams['MULTIFIELD_DATA'] : array()
+				'OWNER_INFO' => isset($arParams['OWNER_INFO']) ? $arParams['OWNER_INFO'] : [],
+				'MULTIFIELDS' => isset($arParams['MULTIFIELD_DATA']) ? $arParams['MULTIFIELD_DATA'] : []
 			)
 		);
 	}
@@ -625,28 +636,29 @@ if($arParams['TYPE'] === 'list')
 
 		$componentParams = array(
 			'DEAL_COUNT' => '20',
-			'PATH_TO_DEAL_LIST' => $arParams['PATH_TO_DEAL_LIST'],
-			'PATH_TO_DEAL_SHOW' => $arParams['PATH_TO_DEAL_SHOW'],
-			'PATH_TO_DEAL_EDIT' => $arParams['PATH_TO_DEAL_EDIT'],
-			'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'],
+			'PATH_TO_DEAL_LIST' => $arParams['PATH_TO_DEAL_LIST'] ?? '',
+			'PATH_TO_DEAL_SHOW' => $arParams['PATH_TO_DEAL_SHOW'] ?? '',
+			'PATH_TO_DEAL_EDIT' => $arParams['PATH_TO_DEAL_EDIT'] ?? '',
+			'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'] ?? '',
 			'NAVIGATION_CONTEXT_ID' => \CCrmOwnerType::DealName,
 			'IS_RECURRING' => $arParams['IS_RECURRING'],
-			'PATH_TO_DEAL_RECUR' => $arResult['PATH_TO_DEAL_RECUR'],
-			'PATH_TO_DEAL_RECUR_SHOW' => $arResult['PATH_TO_DEAL_RECUR_SHOW'],
-			'PATH_TO_DEAL_RECUR_EDIT' => $arResult['PATH_TO_DEAL_RECUR_EDIT'],
-			'PATH_TO_DEAL_DETAILS' => $arResult['PATH_TO_DEAL_DETAILS'],
-			'PATH_TO_DEAL_WIDGET' => $arResult['PATH_TO_DEAL_WIDGET'],
-			'PATH_TO_DEAL_KANBAN' => $arResult['PATH_TO_DEAL_KANBAN'],
-			'PATH_TO_DEAL_CALENDAR' => $arResult['PATH_TO_DEAL_CALENDAR'],
-			'PATH_TO_DEAL_CATEGORY' => $arResult['PATH_TO_DEAL_CATEGORY'],
-			'PATH_TO_DEAL_RECUR_CATEGORY' => $arResult['PATH_TO_DEAL_RECUR_CATEGORY'],
-			'PATH_TO_DEAL_WIDGETCATEGORY' => $arResult['PATH_TO_DEAL_WIDGETCATEGORY'],
-			'PATH_TO_DEAL_KANBANCATEGORY' => $arResult['PATH_TO_DEAL_KANBANCATEGORY'],
-			'PATH_TO_DEAL_CALENDARCATEGORY' => $arResult['PATH_TO_DEAL_CALENDARCATEGORY'],
+			'PATH_TO_DEAL_RECUR' => $arResult['PATH_TO_DEAL_RECUR'] ?? '',
+			'PATH_TO_DEAL_RECUR_SHOW' => $arResult['PATH_TO_DEAL_RECUR_SHOW'] ?? '',
+			'PATH_TO_DEAL_RECUR_EDIT' => $arResult['PATH_TO_DEAL_RECUR_EDIT'] ?? '',
+			'PATH_TO_DEAL_DETAILS' => $arResult['PATH_TO_DEAL_DETAILS'] ?? '',
+			'PATH_TO_DEAL_WIDGET' => $arResult['PATH_TO_DEAL_WIDGET'] ?? '',
+			'PATH_TO_DEAL_KANBAN' => $arResult['PATH_TO_DEAL_KANBAN'] ?? '',
+			'PATH_TO_DEAL_CALENDAR' => $arResult['PATH_TO_DEAL_CALENDAR'] ?? '',
+			'PATH_TO_DEAL_CATEGORY' => $arResult['PATH_TO_DEAL_CATEGORY'] ?? '',
+			'PATH_TO_DEAL_RECUR_CATEGORY' => $arResult['PATH_TO_DEAL_RECUR_CATEGORY'] ?? '',
+			'PATH_TO_DEAL_WIDGETCATEGORY' => $arResult['PATH_TO_DEAL_WIDGETCATEGORY'] ?? '',
+			'PATH_TO_DEAL_KANBANCATEGORY' => $arResult['PATH_TO_DEAL_KANBANCATEGORY'] ?? '',
+			'PATH_TO_DEAL_CALENDARCATEGORY' => $arResult['PATH_TO_DEAL_CALENDARCATEGORY'] ?? '',
 			'GRID_ID_SUFFIX' => (new \Bitrix\Crm\Component\EntityList\GridId(CCrmOwnerType::Deal))
 				->getDefaultSuffix($arResult['CATEGORY_ID']),
 			'CATEGORY_ID' => $arResult['CATEGORY_ID'],
 		);
+
 		if (isset($_REQUEST['WG']) && mb_strtoupper($_REQUEST['WG']) === 'Y')
 		{
 			$widgetDataFilter = \Bitrix\Crm\Widget\Data\DealDataSource::extractDetailsPageUrlParams($_REQUEST);
@@ -988,5 +1000,3 @@ if ($bAdd && $arParams['TYPE'] != 'list')
 }
 
 $this->IncludeComponentTemplate();
-
-?>

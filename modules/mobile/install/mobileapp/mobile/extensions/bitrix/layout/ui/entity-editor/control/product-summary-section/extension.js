@@ -1,6 +1,10 @@
-(() => {
+/**
+ * @module layout/ui/entity-editor/control/product-summary-section
+ */
+jn.define('layout/ui/entity-editor/control/product-summary-section', (require, exports, module) => {
 
-	const { isEqual } = jn.require('utils/object');
+	const { isEqual } = require('utils/object');
+	const { EntityEditorBaseControl } = require('layout/ui/entity-editor/control/base');
 
 	/**
 	 * @class ProductSummarySection
@@ -262,11 +266,11 @@
 					width: '100%',
 				},
 				productTitle: {
-					color: '#b9c0ca',
+					color: '#bdc1c6',
 					fontSize: 10,
 				},
 				productPriceTitle: {
-					color: '#b9c0ca',
+					color: '#bdc1c6',
 					fontSize: 10,
 				},
 				productContent: {
@@ -288,7 +292,7 @@
 				separator: {
 					flex: 1,
 					// height: 1,
-					// backgroundColor: '#d4dce0',
+					// backgroundColor: '#d5d7db',
 					marginLeft: 6,
 					marginRight: 6,
 				},
@@ -302,9 +306,9 @@
 
 	const svgImages = {
 		cube: {
-			content: `<svg width="14" height="15" viewBox="0 0 14 15" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M6.93984 0.793431C6.92683 0.797378 6.91326 0.805271 6.89912 0.812375L0.80446 3.22473C0.651753 3.29656 0.596329 3.45206 0.591797 3.63518V11.4025C0.593494 11.5761 0.68455 11.7411 0.80446 11.7877L6.84033 14.1746C6.91499 14.2077 7.01283 14.203 7.09371 14.1809L13.1837 11.775C13.3036 11.726 13.393 11.5579 13.3919 11.3835V3.68569C13.3953 3.44888 13.3364 3.30995 13.1792 3.23733L7.05298 0.812446C7.01113 0.791134 6.9783 0.78238 6.93984 0.793431ZM6.97604 1.62068L12.0346 3.62878L6.97604 5.62425L1.91298 3.62248L6.97604 1.62068Z" fill="#B9C0CA"/></svg>`,
+			content: `<svg width="14" height="15" viewBox="0 0 14 15" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M6.93984 0.793431C6.92683 0.797378 6.91326 0.805271 6.89912 0.812375L0.80446 3.22473C0.651753 3.29656 0.596329 3.45206 0.591797 3.63518V11.4025C0.593494 11.5761 0.68455 11.7411 0.80446 11.7877L6.84033 14.1746C6.91499 14.2077 7.01283 14.203 7.09371 14.1809L13.1837 11.775C13.3036 11.726 13.393 11.5579 13.3919 11.3835V3.68569C13.3953 3.44888 13.3364 3.30995 13.1792 3.23733L7.05298 0.812446C7.01113 0.791134 6.9783 0.78238 6.93984 0.793431ZM6.97604 1.62068L12.0346 3.62878L6.97604 5.62425L1.91298 3.62248L6.97604 1.62068Z" fill="#bdc1c6"/></svg>`,
 		},
 	};
 
-	jnexport(ProductSummarySection);
-})();
+	module.exports = { ProductSummarySection };
+});

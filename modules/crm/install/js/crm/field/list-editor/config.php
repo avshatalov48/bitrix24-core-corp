@@ -9,6 +9,7 @@ return [
 	'js' => 'dist/list-editor.bundle.js',
 	'rel' => [
 		'landing.ui.panel.fieldspanel',
+		'ui.notification',
 		'ui.draganddrop.draggable',
 		'ui.sidepanel.layout',
 		'ui.buttons',

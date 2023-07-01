@@ -10,7 +10,7 @@ if (!CModule::IncludeModule("extranet"))
 	return;
 }
 
-if (!function_exists('_FormatUser')) 
+if (!function_exists('_FormatUser'))
 {
 	function _FormatUser(&$arUser, $arPath)
 	{
@@ -61,25 +61,31 @@ if (!function_exists('_FormatUser'))
 
 		if ($arMessages = $dbMessages->GetNext())
 			$arUser['LAST_CHAT'] = $arMessages["DATE_CREATE"];
-		
+
 		return true;
 	}
 }
 
 
-if (!function_exists('_SortByLastMessage')) 
+if (!function_exists('_SortByLastMessage'))
 {
 	function _SortByLastMessage($a, $b)
 	{
-		if (MakeTimeStamp($a["LAST_CHAT"]) == MakeTimeStamp($b["LAST_CHAT"]))
+		if (!isset($a['LAST_CHAT'], $b['LAST_CHAT']))
+		{
 			return 0;
+		}
+		if (MakeTimeStamp($a['LAST_CHAT']) === MakeTimeStamp($b['LAST_CHAT']))
+		{
+			return 0;
+		}
 
 		return (MakeTimeStamp($a["LAST_CHAT"]) > MakeTimeStamp($b["LAST_CHAT"])) ? -1 : 1;
 	}
 }
 
 
-if (!function_exists('_ShowUserString')) 
+if (!function_exists('_ShowUserString'))
 {
 	$GLOBALS['APPLICATION']->SetAdditionalCSS('/bitrix/components/bitrix/main.user.link/templates/.default/style.css');
 
@@ -90,17 +96,17 @@ if (!function_exists('_ShowUserString'))
 			"PATH_TO_SONET_USER_PROFILE" => $arGadgetParams["DETAIL_URL"],
 			"PATH_TO_SONET_MESSAGES_CHAT" => $arGadgetParams["MESSAGES_CHAT_URL"],
 			"DATE_TIME_FORMAT" => $arParams["DATE_TIME_FORMAT"],
-			"SHOW_YEAR" => $arParams["SHOW_YEAR"],
+			"SHOW_YEAR" => $arParams["SHOW_YEAR"] ?? null,
 			"NAME_TEMPLATE" => $arParams["NAME_TEMPLATE"],
 			"SHOW_LOGIN" => $arParams["SHOW_LOGIN"],
-			"PATH_TO_CONPANY_DEPARTMENT" => $arParams["~PATH_TO_CONPANY_DEPARTMENT"],
+			"PATH_TO_CONPANY_DEPARTMENT" => $arParams["~PATH_TO_CONPANY_DEPARTMENT"] ?? null,
 			"PATH_TO_VIDEO_CALL" => $arParams["~PATH_TO_VIDEO_CALL"],
 		),
 		false,
 		array("HIDE_ICONS" => "Y")
 	);
 
-	function _ShowUserString($arUser, $is_public = false, $arParams, $arGadgetParams)
+	function _ShowUserString($arUser, $is_public = false, $arParams = [], $arGadgetParams = [])
 	{
 		?><tr>
 			<td colspan="2"><div class="gd-contacts-vertical-spacer"></div></td>
@@ -128,7 +134,7 @@ if (!function_exists('_ShowUserString'))
 					$arUser["PERSONAL_PHOTO"] = COption::GetOptionInt("socialnetwork", "default_user_picture_".$suffix, false, SITE_ID);
 					$arImage = CSocNetTools::InitImage($arUser["PERSONAL_PHOTO"], 30, "/bitrix/images/socialnetwork/nopic_30x30.gif", 30, $link, true);
 					$arUser["PERSONAL_PHOTO"] = $arImage["IMG"];
-				}	
+				}
 
 				?><table cellspacing="0" cellpadding="0" border="0" class="bx-user-info-anchor" bx-tooltip-user-id="<?=$arUser["ID"]?>"><?
 				?><tr><?
@@ -164,8 +170,10 @@ if (!$arGadgetParams['MESSAGES_CHAT_URL'])
 if (!$arGadgetParams['FULLLIST_URL'])
 	$arGadgetParams['FULLLIST_URL'] = SITE_DIR."contacts/";
 
-if (!$arGadgetParams['EMPLOYEES_FULLLIST_URL'])
-	$arGadgetParams['EMPLOYEES_FULLLIST_URL'] = SITE_DIR."contacts/employees.php";
+if (!isset($arGadgetParams['EMPLOYEES_FULLLIST_URL']))
+{
+	$arGadgetParams['EMPLOYEES_FULLLIST_URL'] = SITE_DIR . "contacts/employees.php";
+}
 
 
 $APPLICATION->SetAdditionalCSS('/bitrix/gadgets/bitrix/extranet_contacts/styles.css');
@@ -189,7 +197,7 @@ foreach ($arUsersInMyGroups as $arUser)
 	$arUsersInListID[] = $arUser["ID"];
 	_FormatUser($arUser, $arGadgetParams);
 	$arUsersInMyGroupsFmt[] = $arUser;
-	
+
 }
 
 uasort($arUsersInMyGroupsFmt, '_SortByLastMessage');
@@ -211,7 +219,7 @@ foreach ($arPublicUsers as $arUser)
 
 	_FormatUser($arUser, $arGadgetParams);
 	$arPublicUsersFmt[] = $arUser;
-	
+
 }
 
 uasort($arPublicUsersFmt, '_SortByLastMessage');

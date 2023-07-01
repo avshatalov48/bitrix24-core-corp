@@ -43,16 +43,13 @@ this.BX.Salescenter.PaymentPay = this.BX.Salescenter.PaymentPay || {};
 	    },
 	    startPayment: function startPayment(paySystemId) {
 	      var _this = this;
-
 	      if (this.loading) {
 	        return false;
 	      }
-
 	      this.userConsentManager.askUserToPerform(function () {
 	        _this.loading = true;
 	        _this.stages.paySystemList.selectedPaySystem = paySystemId;
 	        _this.backendProvider.paySystemId = paySystemId;
-
 	        _this.paymentProcess.start();
 	      });
 	    },
@@ -167,15 +164,12 @@ this.BX.Salescenter.PaymentPay = this.BX.Salescenter.PaymentPay || {};
 	    },
 	    startPayment: function startPayment(paySystemId) {
 	      var _this = this;
-
 	      if (this.loading) {
 	        return false;
 	      }
-
 	      this.userConsentManager.askUserToPerform(function () {
 	        _this.loading = true;
 	        _this.backendProvider.paySystemId = paySystemId;
-
 	        _this.paymentProcess.start();
 	      });
 	    },
@@ -227,11 +221,9 @@ this.BX.Salescenter.PaymentPay = this.BX.Salescenter.PaymentPay || {};
 	  computed: {
 	    classes: function classes() {
 	      var classes = ['landing-block-node-button', 'text-uppercase', 'btn', 'btn-xl', 'pr-7', 'pl-7', 'u-btn-primary', 'g-font-weight-700', 'g-font-size-12', 'g-rounded-50'];
-
 	      if (this.loading) {
 	        classes.push('loading');
 	      }
-
 	      return classes;
 	    }
 	  },
@@ -266,10 +258,15 @@ this.BX.Salescenter.PaymentPay = this.BX.Salescenter.PaymentPay || {};
 	        'pay-mode': true,
 	        'order-payment-loader': this.loading
 	      };
+	    },
+	    buttonClasses: function buttonClasses() {
+	      return {
+	        'loading-button-text': this.loading
+	      };
 	    }
 	  },
 	  // language=Vue
-	  template: "\n\t\t<div :class=\"classes\" @click=\"onClick($event)\">\n\t\t\t<slot></slot>\n\t\t</div>\n\t"
+	  template: "\n\t\t<div :class=\"classes\" @click=\"onClick($event)\">\n\t\t\t<span :class=\"buttonClasses\"><slot></slot></span>\n\t\t</div>\n\t"
 	});
 
 	ui_vue.BitrixVue.component('salescenter-payment_pay-components-payment_system-check', {
@@ -367,7 +364,7 @@ this.BX.Salescenter.PaymentPay = this.BX.Salescenter.PaymentPay || {};
 	    loading: Boolean,
 	    name: String,
 	    logo: String,
-	    id: Number
+	    id: String | Number
 	  },
 	  computed: {
 	    localize: function localize() {
@@ -409,14 +406,14 @@ this.BX.Salescenter.PaymentPay = this.BX.Salescenter.PaymentPay || {};
 	    }
 	  },
 	  // language=Vue
-	  template: "\n\t\t<div class=\"order-payment-buttons-container\">\n\t\t\t<div class=\"order-basket-section-description py-3\">\n\t\t\t\t{{ localize.PAYMENT_PAY_PAYMENT_SYSTEM_COMPONENTS_6 }}\n\t\t\t</div>\n\t\t\t<salescenter-payment_pay-components-payment_system-button @click=\"reset()\">\n\t\t\t\t{{ localize.PAYMENT_PAY_PAYMENT_SYSTEM_COMPONENTS_7 }}\n\t\t\t</salescenter-payment_pay-components-payment_system-button>\n\t\t</div>\t\n\t"
+	  template: "\n\t\t<div class=\"order-payment-buttons-container\">\n\t\t\t<div class=\"order-basket-section-description py-3\">\n\t\t\t\t{{ localize.PAYMENT_PAY_PAYMENT_SYSTEM_COMPONENTS_6 }}\n\t\t\t</div>\n\t\t\t<div class=\"order-basket-section-another-payment-button\">\n\t\t\t\t<salescenter-payment_pay-components-payment_system-button @click=\"reset()\">\n\t\t\t\t\t{{ localize.PAYMENT_PAY_PAYMENT_SYSTEM_COMPONENTS_7 }}\n\t\t\t\t</salescenter-payment_pay-components-payment_system-button>\n\t\t\t</div>\n\t\t</div>\t\n\t"
 	});
 
 	var _templateObject;
 	ui_vue.BitrixVue.component('salescenter-payment_pay-components-payment_system-user_consent', {
 	  props: {
 	    id: {
-	      type: Number,
+	      type: Number | String,
 	      required: true
 	    },
 	    title: {
@@ -436,7 +433,6 @@ this.BX.Salescenter.PaymentPay = this.BX.Salescenter.PaymentPay || {};
 	  methods: {
 	    loadBlockHtml: function loadBlockHtml() {
 	      var _this = this;
-
 	      var data = {
 	        fields: {
 	          id: this.id,
@@ -452,7 +448,6 @@ this.BX.Salescenter.PaymentPay = this.BX.Salescenter.PaymentPay || {};
 	        if (!main_core.Type.isPlainObject(response.data) || !main_core.Type.isStringFilled(response.data.html) || !BX.UserConsent) {
 	          return;
 	        }
-
 	        var html, wrapper, control;
 	        html = response.data.html;
 	        wrapper = _this.$refs.consentDiv;

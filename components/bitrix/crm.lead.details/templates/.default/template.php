@@ -1,14 +1,17 @@
 <?php
-if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 /** @var array $arParams */
 /** @var array $arResult */
 /** @global CMain $APPLICATION */
 /** @global CDatabase $DB */
 /** @var CBitrixComponentTemplate $this */
-/** @var CCrmEntityProgressBarComponent $component */
+/** @var CCrmLeadDetailsComponent $component */
 
-use Bitrix\Crm\Attribute\FieldAttributeManager;
 use Bitrix\Crm\Category\DealCategory;
 use Bitrix\Crm\Conversion\EntityConverter;
 use Bitrix\Crm\Conversion\LeadConversionType;
@@ -16,7 +19,7 @@ use Bitrix\Crm\Conversion\LeadConversionType;
 \Bitrix\Main\UI\Extension::load(["crm.scoringbutton"]);
 
 //region LEGEND
-if(isset($arResult['LEGEND']))
+if (isset($arResult['LEGEND']))
 {
 	$this->SetViewTarget('crm_details_legend');
 	echo htmlspecialcharsbx($arResult['LEGEND']);
@@ -52,16 +55,15 @@ if (\Bitrix\Crm\Restriction\RestrictionManager::getLeadsRestriction()->hasPermis
 		'bitrix:crm.lead.menu',
 		'',
 		[
-			'PATH_TO_LEAD_LIST' => $arResult['PATH_TO_LEAD_LIST'],
-			'PATH_TO_LEAD_SHOW' => $arResult['PATH_TO_LEAD_SHOW'],
-			'PATH_TO_LEAD_EDIT' => $arResult['PATH_TO_LEAD_EDIT'],
-			'PATH_TO_LEAD_IMPORT' => $arResult['PATH_TO_LEAD_IMPORT'],
-			'ELEMENT_ID' => $arResult['ENTITY_ID'],
-			'MULTIFIELD_DATA' => isset($arResult['ENTITY_DATA']['MULTIFIELD_DATA'])
-				? $arResult['ENTITY_DATA']['MULTIFIELD_DATA'] : [],
-			'OWNER_INFO' => $arResult['ENTITY_INFO'],
+			'PATH_TO_LEAD_LIST' => $arResult['PATH_TO_LEAD_LIST'] ?? '',
+			'PATH_TO_LEAD_SHOW' => $arResult['PATH_TO_LEAD_SHOW'] ?? '',
+			'PATH_TO_LEAD_EDIT' => $arResult['PATH_TO_LEAD_EDIT'] ?? '',
+			'PATH_TO_LEAD_IMPORT' => $arResult['PATH_TO_LEAD_IMPORT'] ?? '',
+			'ELEMENT_ID' => $arResult['ENTITY_ID'] ?? null,
+			'MULTIFIELD_DATA' => $arResult['ENTITY_DATA']['MULTIFIELD_DATA'] ?? [],
+			'OWNER_INFO' => $arResult['ENTITY_INFO'] ?? null,
 			'CONVERSION_PERMITTED' => $arResult['CONVERSION_PERMITTED'],
-			'BIZPROC_STARTER_DATA' => $arResult['BIZPROC_STARTER_DATA'],
+			'BIZPROC_STARTER_DATA' => $arResult['BIZPROC_STARTER_DATA'] ?? null,
 			'TYPE' => 'details',
 			'SCRIPTS' => [
 				'DELETE' => 'BX.Crm.EntityDetailManager.items["' . CUtil::JSEscape($guid) . '"].processRemoval();',
@@ -88,70 +90,32 @@ if (\Bitrix\Crm\Restriction\RestrictionManager::getLeadsRestriction()->hasPermis
 		<? endif; ?>
 </script><?
 
-//$arResult['READ_ONLY'] = true;
-$editorContext = $arResult['CONTEXT'];
-if(isset($arResult['ORIGIN_ID']) && $arResult['ORIGIN_ID'] !== '')
-{
-	$editorContext['ORIGIN_ID'] = $arResult['ORIGIN_ID'];
-}
 $APPLICATION->IncludeComponent(
 	'bitrix:crm.entity.details',
 	'',
-	array(
+	[
 		'GUID' => $guid,
 		'ENTITY_TYPE_ID' => \CCrmOwnerType::Lead,
 		'ENTITY_ID' => $arResult['IS_EDIT_MODE'] ? $arResult['ENTITY_ID'] : 0,
 		'ENTITY_INFO' => $arResult['ENTITY_INFO'],
 		'READ_ONLY' => $arResult['READ_ONLY'],
 		'TABS' => $arResult['TABS'],
-		'SERVICE_URL' => '/bitrix/components/bitrix/crm.lead.details/ajax.php?'.bitrix_sessid_get(),
-		'EDITOR' => array(
-			'GUID' => "{$guid}_editor",
-			'CONFIG_ID' => $arResult['EDITOR_CONFIG_ID'],
-			'ENTITY_CONFIG' => $arResult['ENTITY_CONFIG'],
-			'DUPLICATE_CONTROL' => $arResult['DUPLICATE_CONTROL'],
-			'ENTITY_CONTROLLERS' => $arResult['ENTITY_CONTROLLERS'],
-			'ENTITY_FIELDS' => $arResult['ENTITY_FIELDS'],
-			'ENTITY_DATA' => $arResult['ENTITY_DATA'],
-			'ENTITY_VALIDATORS' => $arResult['ENTITY_VALIDATORS'],
-			'ENABLE_SECTION_EDIT' => true,
-			'ENABLE_SECTION_CREATION' => true,
-			'ENABLE_USER_FIELD_CREATION' => $arResult['ENABLE_USER_FIELD_CREATION'],
-			'USER_FIELD_ENTITY_ID' => $arResult['USER_FIELD_ENTITY_ID'],
-			'USER_FIELD_CREATE_PAGE_URL' => $arResult['USER_FIELD_CREATE_PAGE_URL'],
-			'USER_FIELD_CREATE_SIGNATURE' => $arResult['USER_FIELD_CREATE_SIGNATURE'],
-			'USER_FIELD_FILE_URL_TEMPLATE' => $arResult['USER_FIELD_FILE_URL_TEMPLATE'],
-			'SERVICE_URL' => '/bitrix/components/bitrix/crm.lead.details/ajax.php?'.bitrix_sessid_get(),
-			'EXTERNAL_CONTEXT_ID' => $arResult['EXTERNAL_CONTEXT_ID'],
-			'CONTEXT_ID' => $arResult['CONTEXT_ID'],
-			'CONTEXT' => $editorContext,
-			'ATTRIBUTE_CONFIG' => [
-				'ENTITY_SCOPE' => $arResult['ENTITY_ATTRIBUTE_SCOPE'],
-				'CAPTIONS' => FieldAttributeManager::getCaptionsForEntityWithStages(CCrmOwnerType::Lead),
-			],
-			'COMPONENT_AJAX_DATA' => [
-				'RELOAD_ACTION_NAME' => 'LOAD',
-				'RELOAD_FORM_DATA' => [
-					'ACTION_ENTITY_ID' => $arResult['ENTITY_ID']
-				] + $editorContext
-			]
-		),
-		'TIMELINE' => array(
+		'SERVICE_URL' => '/bitrix/components/bitrix/crm.lead.details/ajax.php?' . bitrix_sessid_get(),
+		'EDITOR' => $component->getEditorConfig(),
+		'TIMELINE' => [
 			'GUID' => "{$guid}_timeline",
-			'ENABLE_WAIT' => true,
 			'PROGRESS_SEMANTICS' => $arResult['PROGRESS_SEMANTICS'],
-			'WAIT_TARGET_DATES' => $arResult['WAIT_TARGET_DATES']
-		),
+			'WAIT_TARGET_DATES' => $arResult['WAIT_TARGET_DATES'],
+		],
 		'ENABLE_PROGRESS_BAR' => true,
 		'ENABLE_PROGRESS_CHANGE' => $arResult['ENABLE_PROGRESS_CHANGE'],
-		'PROGRESS_BAR' => array('VERBOSE_MODE' => true),
+		'PROGRESS_BAR' => ['VERBOSE_MODE' => true],
 		'ACTIVITY_EDITOR_ID' => $activityEditorID,
 		'PATH_TO_USER_PROFILE' => $arResult['PATH_TO_USER_PROFILE'],
-		'CAN_CONVERT' => isset($arResult['CAN_CONVERT']) ? $arResult['CAN_CONVERT'] : false,
-		'CONVERSION_SCHEME' => isset($arResult['CONVERSION_SCHEME']) ? $arResult['CONVERSION_SCHEME'] : null,
-		'CONVERSION_TYPE_ID' => isset($arResult['CONVERSION_TYPE_ID'])
-			? $arResult['CONVERSION_TYPE_ID'] : LeadConversionType::GENERAL
-	)
+		'CAN_CONVERT' => $arResult['CAN_CONVERT'] ?? false,
+		'CONVERSION_SCHEME' => $arResult['CONVERSION_SCHEME'] ?? null,
+		'CONVERSION_TYPE_ID' => $arResult['CONVERSION_TYPE_ID'] ?? LeadConversionType::GENERAL,
+	]
 );
 
 if($arResult['CONVERSION_PERMITTED'] && $arResult['CAN_CONVERT'] && isset($arResult['CONVERSION_CONFIGS'])):
@@ -263,3 +227,5 @@ if (array_key_exists('AUTOMATION_CHECK_AUTOMATION_TOUR_GUIDE_DATA', $arResult)):
 		});
 	</script>
 <?php endif;
+
+echo \CCrmComponentHelper::prepareInitReceiverRepositoryJS(\CCrmOwnerType::Lead, (int)($arResult['ENTITY_ID'] ?? 0));

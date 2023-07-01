@@ -1,14 +1,16 @@
-<?
+<?php
+
 define('NO_KEEP_STATISTIC', 'Y');
 define('NO_AGENT_STATISTIC','Y');
 define('NO_AGENT_CHECK', true);
 define('BX_PUBLIC_MODE', true);
 define('DisableEventsCheck', true);
 
+use Bitrix\Crm\Order\Permissions;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Crm\Order\Permissions;
 use Bitrix\Sale\Delivery;
+
 require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_before.php');
 
 Loc::loadMessages(__FILE__);

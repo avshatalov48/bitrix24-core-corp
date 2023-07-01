@@ -1,17 +1,16 @@
 <?php
-if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
-{
-	die();
-}
-
 /**
- * Bitrix vars
- * @global CUser $USER
- * @global CMain $APPLICATION
+ * @var CMain $APPLICATION
+ * @var CUser $USER
  * @var array $arParams
  * @var array $arResult
  * @var CBitrixComponent $this
  */
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 use Bitrix\Main\Localization\Loc;
 
@@ -77,7 +76,7 @@ if (
 		else
 		{
 			$data['DATE_CREATE'] = new \Bitrix\Main\Type\DateTime();
-			$data['CREATED_BY'] = $USER->GetId();
+			$data['CREATED_BY'] = $USER->GetID();
 			$addResult = \Bitrix\BIConnector\DashboardTable::add($data);
 			if ($addResult->isSuccess())
 			{
@@ -95,7 +94,7 @@ if (
 				{
 					$usersForm[$userId] = [
 						'TIMESTAMP_X' => new \Bitrix\Main\Type\DateTime(),
-						'CREATED_BY' => $USER->GetId(),
+						'CREATED_BY' => $USER->GetID(),
 						'DASHBOARD_ID' => $ID,
 						'USER_ID' => $userId,
 					];
@@ -117,7 +116,7 @@ if (
 				}
 			}
 
-			foreach ($usersForm as $userId => $user)
+			foreach ($usersForm as $user)
 			{
 				$found = false;
 				foreach ($usersDb as $dbId => $dbUserId)
@@ -146,11 +145,14 @@ if (
 			$redirectUrl = str_replace('#ID#', $ID, $arParams['DASHBOARD_EDIT_URL']);
 			if (($_REQUEST['IFRAME'] == 'Y') && ($_REQUEST['IFRAME_TYPE'] == 'SIDE_SLIDER'))
 			{
-				$redirectUrl = CHTTP::urlAddParams($redirectUrl, [
-					'IFRAME' => 'Y',
-					'IFRAME_TYPE' => 'SIDE_SLIDER',
-					'sidePanelAction' => 'close',
-				]);
+				$redirectUrl = (new \Bitrix\Main\Web\Uri($redirectUrl))
+					->addParams([
+						'IFRAME' => 'Y',
+						'IFRAME_TYPE' => 'SIDE_SLIDER',
+						'sidePanelAction' => 'close',
+					])
+					->getUri()
+				;
 			}
 			LocalRedirect($redirectUrl);
 		}
@@ -214,4 +216,4 @@ if ($arResult['ERRORS'])
 	}
 }
 
-$this->IncludeComponentTemplate();
+$this->includeComponentTemplate();

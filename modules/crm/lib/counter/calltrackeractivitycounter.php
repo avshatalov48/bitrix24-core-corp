@@ -14,9 +14,9 @@ class CallTrackerActivityCounter extends ActivityCounter
 	 * Evaluate counter value
 	 * @return int
 	 */
-	public function calculateValue()
+	public function calculateValue(): int
 	{
-		if (!\Bitrix\Crm\Settings\CounterSettings::getCurrent()->isEnabled())
+		if (!\Bitrix\Crm\Settings\CounterSettings::getInstance()->isEnabled())
 		{
 			return 0; // counters feature is completely disabled
 		}

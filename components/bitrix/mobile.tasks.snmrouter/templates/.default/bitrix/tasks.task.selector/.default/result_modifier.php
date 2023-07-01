@@ -7,11 +7,22 @@
  * @var CBitrixComponent $component
  * @var CUser $USER
  */
-if (empty($arParams["DATE_TIME_FORMAT"]) ||  $arParams["DATE_TIME_FORMAT"] == "FULL")
+if (empty($arParams["DATE_TIME_FORMAT"]) ||  $arParams["DATE_TIME_FORMAT"] === "FULL")
+{
 	$arParams["DATE_TIME_FORMAT"]= $DB->DateFormatToPHP(FORMAT_DATETIME);
+}
 $arParams["DATE_TIME_FORMAT"] = preg_replace('/[\/.,\s:][s]/', '', $arParams["DATE_TIME_FORMAT"]);
-if (!$arParams["TIME_FORMAT"])
-	$arParams["TIME_FORMAT"] = preg_replace(array('/[dDjlFmMnYyo]/', '/^[\/.,\s]+/', '/[\/.,\s]+$/'), "", $arParams["DATE_TIME_FORMAT"]);
+if (
+	!isset($arParams["TIME_FORMAT"])
+	|| !$arParams["TIME_FORMAT"]
+)
+{
+	$arParams["TIME_FORMAT"] = preg_replace(
+		['/[dDjlFmMnYyo]/', '/^[\/.,\s]+/', '/[\/.,\s]+$/'],
+		'',
+		$arParams["DATE_TIME_FORMAT"]
+	);
+}
 
 $arParams["DATE_TIME_FORMAT"] = array(
 	"tomorrow" => "tomorrow, ".$arParams["TIME_FORMAT"],
@@ -52,29 +63,44 @@ foreach ($arResult["LAST_TASKS"] as $task)
 	$taskId = $task['ID'];
 	$taskTitle = htmlspecialcharsbx($task['TITLE']);
 
-	$task["STATUS"] = GetMessage("TASKS_STATUS_" . $arResult["STATUSES"][$task["REAL_STATUS"]]);
+	$status = (isset($task['REAL_STATUS']) ? $arResult['STATUSES'][$task['REAL_STATUS']] : '');
+	$task["STATUS"] = GetMessage("TASKS_STATUS_{$status}");
 	$task["STATUS"] = '<span id="bx-task-status-'.$taskId.'">' . ( empty($task["STATUS"]) ? GetMessage("TASKS_STATUS_STATE_UNKNOWN") : $task["STATUS"]) . "</span>";
+
 	if (!empty($task["DEADLINE"]))
+	{
 		$task["DEADLINE"] = '<span id="bx-task-deadline-'.$taskId.'">'.trim(FormatDate($arParams["DATE_TIME_FORMAT"], MakeTimeStamp($task["DEADLINE"])), ", .").'</span>';
-	if ($task["~STATUS"] == CTasks::METASTATE_EXPIRED)
+	}
+	if (isset($task['~STATUS']) && $task["~STATUS"] == CTasks::METASTATE_EXPIRED)
+	{
 		$task["EXPIRED"] = '<span class="mobile-grid-field-expired">'.GetMessage("TASK_EXPIRED").'</span>';
+	}
 
-	$users[] = $task["CREATED_BY"];
-	$users[] = $task["RESPONSIBLE_ID"];
+	if (array_key_exists('CREATED_BY', $task))
+	{
+		$users[] = $task["CREATED_BY"];
+	}
+	if (array_key_exists('RESPONSIBLE_ID', $task))
+	{
+		$users[] = $task["RESPONSIBLE_ID"];
+	}
 
-	$task["PRIORITY"] = ($task["~PRIORITY"] == CTasks::PRIORITY_HIGH ?
-		"<label class=\"mobile-grid-field-priority mobile-grid-field-priority-2\"><span>".GetMessage("TASKS_PRIORITY_2")."</span></label>" : "");
+	$task["PRIORITY"] = (
+		isset($task["~PRIORITY"]) && $task["~PRIORITY"] == CTasks::PRIORITY_HIGH
+			? "<label class=\"mobile-grid-field-priority mobile-grid-field-priority-2\"><span>" . GetMessage("TASKS_PRIORITY_2") . "</span></label>"
+			: ""
+	);
 
-	$arResult["ITEMS"][$taskId] = array(
-		"~TITLE" => $task["~TITLE"],
-		"ICON_HTML" => '<span id="bx-task-icon-'.$taskId.'" class="mobile-grid-fields-task-icon '.mb_strtolower($arResult["STATUSES"][$task["~STATUS"]]).'"></span>',
+	$arResult["ITEMS"][$taskId] = [
+		"~TITLE" => ($task["~TITLE"] ?? null),
+		"ICON_HTML" => '<span id="bx-task-icon-'.$taskId.'" class="mobile-grid-fields-task-icon '.$status.'"></span>',
 		"TITLE" => '<span class="mobile-grid-fields-task-title" id="bx-task-title-'.$taskId.'">'.$taskTitle.'</span>',
 		"FIELDS" => $task,
 		"ONCLICK" => "BXMobileApp.onCustomEvent('onTaskWasChosenInTasksSelector', ["
 			.(int)$_GET["id"].", ".CUtil::PhpToJSObject(["ID" => $taskId, "TITLE" => $taskTitle])
 		."], true, true);",
-		"DATA_ID" => "mobile-grid-item-".$taskId
-	);
+		"DATA_ID" => "mobile-grid-item-{$taskId}",
+	];
 }
 if (!empty($users))
 {

@@ -5,15 +5,26 @@ namespace Bitrix\Calendar\Sharing;
 use Bitrix\Calendar\Core\Base\Result;
 use Bitrix\Calendar\Core\Builders\EventBuilderFromArray;
 use Bitrix\Calendar\Core\Event\Event;
+use Bitrix\Calendar\Core\Event\Tools\Dictionary;
 use Bitrix\Calendar\Core\Mappers;
 use Bitrix\Calendar\Sharing;
+use Bitrix\Calendar\Util;
+use Bitrix\Crm;
+use Bitrix\Crm\Integration\NotificationsManager;
+use Bitrix\Main\Application;
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\Loader;
+use Bitrix\Main\LoaderException;
 use Bitrix\Main\PhoneNumber;
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Type\DateTime;
+use CUser;
 
 class SharingEventManager
 {
-	public const SHARED_EVENT_TYPE = '#shared#';
+	public const SHARED_EVENT_TYPE = Dictionary::EVENT_TYPE['shared'];
+	public const SHARED_EVENT_CRM_TYPE = Dictionary::EVENT_TYPE['shared_crm'];
 	/** @var Event  */
 	private Event $event;
 	/** @var int|null  */
@@ -21,27 +32,39 @@ class SharingEventManager
 	/** @var int|null  */
 	private ?int $ownerId;
 	/** @var string|null  */
-	private ?string $userLinkHash;
+	private ?string $parentLinkHash;
 
 	/**
 	 * @param Event $event
 	 * @param int|null $hostId
 	 * @param int|null $ownerId
+	 * @param string|null $parentLinkHash
 	 */
-	public function __construct(Event $event, ?int $hostId = null, ?int $ownerId = null, ?string $userLinkHash = null)
+	public function __construct(Event $event, ?int $hostId = null, ?int $ownerId = null, ?string $parentLinkHash = null)
 	{
 		$this->event = $event;
 		$this->hostId = $hostId;
 		$this->ownerId = $ownerId;
-		$this->userLinkHash = $userLinkHash;
+		$this->parentLinkHash = $parentLinkHash;
 	}
 
 	/**
-	 * @return Result
-	 * @throws \Bitrix\Calendar\Core\Base\BaseException
-	 * @throws \Bitrix\Main\ArgumentException
+	 * @param Event $event
+	 * @return $this
 	 */
-	public function createEvent(): Result
+	public function setEvent(Event $event): self
+	{
+		$this->event = $event;
+
+		return $this;
+	}
+
+	/**
+	 * @param bool $sendInvitations
+	 * @return Result
+	 * @throws ArgumentException
+	 */
+	public function createEvent(bool $sendInvitations = true, string $externalUserName = ''): Result
 	{
 		$result = new Result();
 
@@ -52,7 +75,10 @@ class SharingEventManager
 			return $result;
 		}
 
-		$eventId = (new Mappers\Event())->create($this->event)->getId();
+		$eventId = (new Mappers\Event())->create($this->event, [
+			'sendInvitations' => $sendInvitations
+		])->getId();
+
 		$this->event->setId($eventId);
 
 		if (!$eventId)
@@ -62,7 +88,19 @@ class SharingEventManager
 			return $result;
 		}
 
-		$eventLink = (new Sharing\Link\Factory())->createEventLink($eventId, $this->ownerId, $this->hostId, $this->userLinkHash);
+        $eventLinkParams = [
+            'eventId' => $eventId,
+            'ownerId' => $this->ownerId,
+            'hostId' => $this->hostId,
+            'parentLinkHash' => $this->parentLinkHash,
+            'expiryDate' => Helper::createSharingLinkExpireDate(
+                DateTime::createFromTimestamp($this->event->getEnd()->getTimestamp()),
+                Sharing\Link\Helper::EVENT_SHARING_TYPE
+            ),
+            'externalUserName' => $externalUserName,
+        ];
+
+		$eventLink = (new Sharing\Link\Factory())->createEventLink($eventLinkParams);
 
 		$result->setData([
 			'eventLink' => $eventLink,
@@ -73,22 +111,33 @@ class SharingEventManager
 	}
 
 	/**
-	 * @param int $linkId
 	 * @return Result
 	 * @throws \Exception
 	 */
-	public function deleteEvent(int $linkId): Result
+	public function deleteEvent(): Result
 	{
 		$result = new Result();
-		(new Mappers\Event())->delete($this->event);
-		Sharing\Link\SharingLinkTable::update($linkId, [
-			'ACTIVE' => 'N',
-		]);
 
+		(new Mappers\Event())->delete($this->event);
 		$this->notifyEventDeleted();
-		// Sharing\Link\SharingLinkTable::delete($linkId);
 
 		return $result;
+	}
+
+	/**
+	 * @return $this
+	 * @throws \Exception
+	 */
+	public function deactivateEventLink(Sharing\Link\EventLink $eventLink): self
+	{
+		$eventLink
+			->setCanceledTimestamp(time())
+			->setActive(false)
+		;
+
+		(new Sharing\Link\EventLinkMapper())->update($eventLink);
+
+		return $this;
 	}
 
 	/**
@@ -98,7 +147,8 @@ class SharingEventManager
 	public static function validateContactData(string $userContact): bool
 	{
 		return self::isEmailCorrect($userContact)
-			|| self::isPhoneNumberCorrect($userContact);
+			|| self::isPhoneNumberCorrect($userContact)
+		;
 	}
 
 	/**
@@ -123,8 +173,7 @@ class SharingEventManager
 	public static function isPhoneNumberCorrect(string $userContact): bool
 	{
 		return Helper::isPhoneFeatureEnabled()
-			&& PhoneNumber\Parser::getInstance()->parse($userContact)
-				->isValid()
+			&& PhoneNumber\Parser::getInstance()->parse($userContact)->isValid()
 		;
 	}
 
@@ -135,7 +184,6 @@ class SharingEventManager
 	 */
 	public static function prepareEventForSave($data, $userId): Event
 	{
-		global $DB;
 		$ownerId = (int)($data['ownerId'] ?? null);
 		$sectionId = self::getSectionId($userId);
 		$attendeesCodes = ['U' . $userId, 'U' . $ownerId];
@@ -150,23 +198,301 @@ class SharingEventManager
 
 		$eventData = [
 			'OWNER_ID' => $userId,
-			'NAME' => $DB->ForSql(trim($data['eventName'] ?? '')),
+			'NAME' => (string)($data['eventName'] ?? ''),
 			'DATE_FROM' => (string)($data['dateFrom'] ?? ''),
 			'DATE_TO' => (string)($data['dateTo'] ?? ''),
 			'TZ_FROM' => (string)($data['timezone'] ?? ''),
 			'TZ_TO' => (string)($data['timezone'] ?? ''),
 			'SKIP_TIME' => 'N',
 			'SECTIONS' => [$sectionId],
-			'EVENT_TYPE' => self::SHARED_EVENT_TYPE,
+			'EVENT_TYPE' => $data['eventType'],
 			'ACCESSIBILITY' => 'busy',
 			'IMPORTANCE' => 'normal',
 			'ATTENDEES_CODES' => $attendeesCodes,
 			'MEETING_HOST' => $userId,
 			'IS_MEETING' => true,
-			'MEETING' => $meeting
+			'MEETING' => $meeting,
+			'DESCRIPTION' => (string)($data['description'] ?? ''),
 		];
 
 		return (new EventBuilderFromArray($eventData))->build();
+	}
+
+	public static function getEventDataFromRequest($request): array
+	{
+		return [
+			'ownerId' => (int)($request['ownerId'] ?? 0),
+			'dateFrom' => (string)($request['dateFrom'] ?? ''),
+			'dateTo' => (string)($request['dateTo'] ?? ''),
+			'timezone' => (string)($request['timezone'] ?? ''),
+			'description' => (string)($request['description'] ?? ''),
+			'eventType' => Dictionary::EVENT_TYPE['shared'],
+		];
+	}
+
+	public static function getSharingEventNameByUserId(int $userId): string
+	{
+		$user = CUser::GetByID($userId)->Fetch();
+		$userName = ($user['NAME'] ?? '') . ' ' . ($user['LAST_NAME'] ?? '');
+
+		return self::getSharingEventNameByUserName($userName);
+	}
+
+	public static function getSharingEventNameByUserName(?string $userName): string
+	{
+		if (!empty($userName))
+		{
+			$result = Loc::getMessage('CALENDAR_SHARING_EVENT_MANAGER_EVENT_NAME', [
+				'#GUEST_NAME#' => trim($userName),
+			]);
+		}
+		else
+		{
+			$result = Loc::getMessage('CALENDAR_SHARING_EVENT_MANAGER_EVENT_NAME_WITHOUT_GUEST');
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @param $request
+	 * @return array
+	 */
+	public static function getCrmEventDataFromRequest($request): array
+	{
+		return [
+			'ownerId' =>(int)($request['ownerId'] ?? 0),
+			'dateFrom' => (string)($request['dateFrom'] ?? ''),
+			'dateTo' => (string)($request['dateTo'] ?? ''),
+			'timezone' => (string)($request['timezone'] ?? ''),
+			'description' => (string)($request['description'] ?? ''),
+			'eventType' => Dictionary::EVENT_TYPE['shared_crm'],
+		];
+	}
+
+	/**
+	 * @return string[]
+	 */
+	public static function getSharingEventTypes(): array
+	{
+		return [
+			self::SHARED_EVENT_CRM_TYPE,
+			self::SHARED_EVENT_TYPE,
+		];
+	}
+
+	/**
+	 * @param array $fields
+	 * @return void
+	 * @throws ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public static function onSharingEventEdit(array $fields): void
+	{
+		$eventId = $fields['ID'];
+		$eventLink = (new Sharing\Link\Factory())->getEventLinkByEventId($eventId);
+		if ($eventLink instanceof Sharing\Link\EventLink)
+		{
+			self::updateEventSharingLink($eventLink, $fields);
+		}
+	}
+
+	/**
+	 * @param int $eventId
+	 * @return void
+	 * @throws ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public static function setCanceledTimeOnSharedLink(int $eventId): void
+	{
+		$eventLink = (new Sharing\Link\Factory())->getEventLinkByEventId($eventId);
+		if ($eventLink instanceof Sharing\Link\EventLink)
+		{
+			$eventLink->setCanceledTimestamp(time());
+			(new Sharing\Link\EventLinkMapper())->update($eventLink);
+		}
+	}
+
+	/**
+	 * @param int $parentEventId
+	 * @param int $userId
+	 * @param string $currentMeetingStatus
+	 * @return void
+	 * @throws LoaderException
+	 */
+	public static function onSharingEventMeetingStatusChange(
+		int $parentEventId,
+		int $userId,
+		string $currentMeetingStatus
+	)
+	{
+		$userEvent = \CCalendarEvent::GetList([
+			'arFilter' => [
+				'PARENT_ID' => $parentEventId,
+				'OWNER_ID' => $userId,
+				'IS_MEETING' => 1,
+				'DELETED' => 'N'
+			],
+			'checkPermissions' => false,
+		]);
+
+		if (empty($userEvent))
+		{
+			return;
+		}
+
+		$userEvent = $userEvent[0];
+		$previousMeetingStatus = $userEvent['MEETING_STATUS'];
+
+		if (
+			$currentMeetingStatus === Dictionary::MEETING_STATUS['Yes']
+			&& $previousMeetingStatus === Dictionary::MEETING_STATUS['Question']
+		)
+		{
+			self::onSharingCrmEventConfirmed(
+				(int)$userEvent['PARENT_ID'],
+				$userEvent['DATE_FROM'] ?? null,
+				$userEvent['TZ_FROM'] ?? null,
+			);
+		}
+
+		if (
+			$currentMeetingStatus === Dictionary::MEETING_STATUS['No']
+			&& (
+				$previousMeetingStatus === Dictionary::MEETING_STATUS['Question']
+				|| $previousMeetingStatus === Dictionary::MEETING_STATUS['Yes']
+			)
+		)
+		{
+			self::onSharingCrmEventDeclined((int)$userEvent['PARENT_ID']);
+		}
+	}
+
+	/**
+	 * @param int $eventId
+	 * @param string|null $dateFrom
+	 * @param string|null $timezone
+	 * @return void
+	 * @throws LoaderException
+	 */
+	public static function onSharingCrmEventConfirmed(int $eventId, ?string $dateFrom, ?string $timezone): void
+	{
+		if (!Loader::includeModule('crm'))
+		{
+			return;
+		}
+
+		$crmDealLink = self::getCrmDealLink($eventId);
+
+		$activity = \CCrmActivity::GetByCalendarEventId($eventId, false);
+
+		if ($crmDealLink && $activity)
+		{
+			(new Sharing\Crm\NotifyManager($crmDealLink, Sharing\Crm\NotifyManager::NOTIFY_TYPE_EVENT_CONFIRMED))
+				->sendSharedCrmActionsEvent(
+					Util::getDateTimestamp($dateFrom, $timezone),
+					$activity['ID'],
+					\CCrmOwnerType::Activity,
+				)
+			;
+		}
+	}
+
+	public static function onSharingCrmEventDeclined(int $eventId): void
+	{
+		if (!Loader::includeModule('crm'))
+		{
+			return;
+		}
+
+		(new Sharing\Crm\ActivityManager($eventId))
+			->completeSharedCrmActivity(Sharing\Crm\ActivityManager::STATUS_CANCELED_BY_MANAGER)
+		;
+
+		$sharingFactory = new Sharing\Link\Factory();
+
+		/** @var Sharing\Link\EventLink $eventLink */
+		$eventLink = $sharingFactory->getEventLinkByEventId($eventId);
+
+		/** @var Sharing\Link\CrmDealLink $crmDealLink */
+		$crmDealLink = $sharingFactory->getLinkByHash($eventLink->getParentLinkHash());
+
+		/** @var Event $event */
+		$event = (new Mappers\Event())->getById($eventId);
+
+		if ($crmDealLink->getContactId() > 0)
+		{
+			Crm\Integration\Calendar\Notification\Manager::getSenderInstance($crmDealLink)
+				->setCrmDealLink($crmDealLink)
+				->setEventLink($eventLink)
+				->setEvent($event)
+				->sendCrmSharingCancelled()
+			;
+		}
+		else
+		{
+			$email = CUser::GetByID($eventLink->getHostId())->Fetch()['PERSONAL_MAILBOX'] ?? null;
+			if (!is_string($email))
+			{
+				return;
+			}
+
+			$eventLink->setCanceledTimestamp(time());
+			(new Sharing\Notification\Mail())
+				->setEventLink($eventLink)
+				->setEvent($event)
+				->notifyAboutMeetingCancelled($email)
+			;
+		}
+	}
+
+	public static function onSharingCrmEventClientDelete(int $eventId): void
+	{
+		(new Sharing\Crm\ActivityManager($eventId))
+			->completeSharedCrmActivity(Sharing\Crm\ActivityManager::STATUS_CANCELED_BY_CLIENT);
+	}
+
+	/**
+	 * @param Link\EventLink $eventLink
+	 * @param array $fields
+	 * @return void
+	 */
+	private static function updateEventSharingLink(Sharing\Link\EventLink $eventLink, array $fields): void
+	{
+		if (!empty($fields['DATE_TO']))
+		{
+			$expireDate = Helper::createSharingLinkExpireDate(
+				DateTime::createFromText($fields['DATE_TO']),
+				Sharing\Link\Helper::EVENT_SHARING_TYPE
+			);
+			$eventLink->setDateExpire($expireDate);
+		}
+
+		(new Sharing\Link\EventLinkMapper())->update($eventLink);
+	}
+
+	/**
+	 * @param int $eventId
+	 * @return Link\CrmDealLink|null
+	 */
+	private static function getCrmDealLink(int $eventId): ?Link\CrmDealLink
+	{
+		$sharingLinkFactory = new Sharing\Link\Factory();
+		/** @var Sharing\Link\EventLink $eventLink */
+		$eventLink = $sharingLinkFactory->getEventLinkByEventId($eventId);
+		if ($eventLink instanceof Sharing\Link\EventLink)
+		{
+			/** @var Sharing\Link\CrmDealLink $crmDealLink */
+			$crmDealLink = $sharingLinkFactory->getLinkByHash($eventLink->getParentLinkHash());
+			if ($crmDealLink instanceof Sharing\Link\CrmDealLink)
+			{
+				return $crmDealLink;
+			}
+		}
+
+		return null;
 	}
 
 	/**
@@ -213,6 +539,9 @@ class SharingEventManager
 		return $result[0]['ID'];
 	}
 
+	/**
+	 * @return false|null
+	 */
 	private function notifyEventDeleted()
 	{
 		return \CCalendarNotify::Send([

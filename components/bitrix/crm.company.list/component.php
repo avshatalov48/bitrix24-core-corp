@@ -7,6 +7,8 @@ use Bitrix\Crm\Agent\Duplicate\Volatile\IndexRebuild;
 use Bitrix\Crm\Agent\Requisite\CompanyAddressConvertAgent;
 use Bitrix\Crm\Agent\Requisite\CompanyUfAddressConvertAgent;
 use Bitrix\Crm\CompanyAddress;
+use Bitrix\Crm\Component\EntityList\FieldRestrictionManager;
+use Bitrix\Crm\Component\EntityList\FieldRestrictionManagerTypes;
 use Bitrix\Crm\EntityAddress;
 use Bitrix\Crm\EntityAddressType;
 use Bitrix\Crm\Format\AddressFormatter;
@@ -105,6 +107,10 @@ $arResult['STEXPORT_TOTAL_ITEMS'] = isset($arParams['STEXPORT_TOTAL_ITEMS']) ?
 	(int)$arParams['STEXPORT_TOTAL_ITEMS'] : 0;
 //endregion
 
+$fieldRestrictionManager = new FieldRestrictionManager(
+	FieldRestrictionManager::MODE_GRID,
+	[FieldRestrictionManagerTypes::ACTIVITY]
+);
 
 $CCrmCompany = new CCrmCompany();
 if (!$isErrorOccured && !empty($sExportType))
@@ -487,6 +493,10 @@ if(isset($arNavParams['nPageSize']) && $arNavParams['nPageSize'] > 100)
 }
 //endregion
 
+//region Filter fields cleanup
+$fieldRestrictionManager->removeRestrictedFields($filterOptions, $gridOptions);
+//endregion
+
 //region Filter initialization
 if (!$bInternal)
 {
@@ -733,7 +743,7 @@ if ($factory && $category)
 	}
 }
 
-$CCrmUserType->ListAddHeaders($arResult['HEADERS']);
+$CCrmUserType->appendGridHeaders($arResult['HEADERS']);
 
 $arResult['HEADERS_SECTIONS'] = [
 	[
@@ -776,6 +786,15 @@ if ($isBizProcInstalled)
 		CJSCore::Init('bp_starter');
 	}
 }
+
+//region Check and fill fields restriction
+$restrictedFields = $fieldRestrictionManager->fetchRestrictedFields(
+	$arResult['GRID_ID'] ?? '',
+	$arResult['HEADERS'] ?? [],
+	$entityFilter ?? null
+);
+$arResult = array_merge($arResult, $restrictedFields);
+//endregion
 
 // list all filds for export
 $exportAllFieldsList = [];
@@ -1166,13 +1185,13 @@ if($actionData['ACTIVE'])
 							if (!$isMyCompanyMode)
 							{
 								$arErrors = [];
-							CCrmBizProcHelper::AutoStartWorkflows(
-								CCrmOwnerType::Company,
-								$ID,
-								CCrmBizProcEventType::Edit,
-								$arErrors
-							);
-						}
+								CCrmBizProcHelper::AutoStartWorkflows(
+									CCrmOwnerType::Company,
+									$ID,
+									CCrmBizProcEventType::Edit,
+									$arErrors
+								);
+							}
 						}
 						else
 						{
@@ -1265,13 +1284,13 @@ if($actionData['ACTIVE'])
 						if (!$isMyCompanyMode)
 						{
 							$arErrors = [];
-						CCrmBizProcHelper::AutoStartWorkflows(
-							CCrmOwnerType::Company,
-							$ID,
-							CCrmBizProcEventType::Edit,
-							$arErrors
-						);
-					}
+							CCrmBizProcHelper::AutoStartWorkflows(
+								CCrmOwnerType::Company,
+								$ID,
+								CCrmBizProcEventType::Edit,
+								$arErrors
+							);
+						}
 					}
 					else
 					{
@@ -1350,13 +1369,13 @@ if($actionData['ACTIVE'])
 						if (!$isMyCompanyMode)
 						{
 							$arErrors = [];
-						CCrmBizProcHelper::AutoStartWorkflows(
-							CCrmOwnerType::Company,
-							$ID,
-							CCrmBizProcEventType::Edit,
-							$arErrors
-						);
-					}
+							CCrmBizProcHelper::AutoStartWorkflows(
+								CCrmOwnerType::Company,
+								$ID,
+								CCrmBizProcEventType::Edit,
+								$arErrors
+							);
+						}
 					}
 					else
 					{
@@ -1521,20 +1540,6 @@ else
 		$arSelectMap['ASSIGNED_BY_SECOND_NAME'] = true;
 	}
 
-	if(isset($arSelectMap['ACTIVITY_ID']))
-	{
-		$arSelectMap['ACTIVITY_TIME'] =
-		$arSelectMap['ACTIVITY_SUBJECT'] =
-		$arSelectMap['C_ACTIVITY_ID'] =
-		$arSelectMap['C_ACTIVITY_TIME'] =
-		$arSelectMap['C_ACTIVITY_SUBJECT'] =
-		$arSelectMap['C_ACTIVITY_RESP_ID'] =
-		$arSelectMap['C_ACTIVITY_RESP_LOGIN'] =
-		$arSelectMap['C_ACTIVITY_RESP_NAME'] =
-		$arSelectMap['C_ACTIVITY_RESP_LAST_NAME'] =
-		$arSelectMap['C_ACTIVITY_RESP_SECOND_NAME'] = true;
-	}
-
 	if(isset($arSelectMap['CREATED_BY']))
 	{
 		$arSelectMap['CREATED_BY_LOGIN'] =
@@ -1666,8 +1671,14 @@ if ($isMyCompanyMode)
 	}
 }
 
-
 $arSelect = array_unique(array_keys($arSelectMap), SORT_STRING);
+
+if (in_array('ACTIVITY_ID', $arSelect, true)) // Remove ACTIVITY_ID from $arSelect
+{
+	$arResult['NEED_ADD_ACTIVITY_BLOCK'] = true;
+	unset($arSelect[array_search('ACTIVITY_ID', $arSelect)]);
+	$arSelect = array_values($arSelect);
+}
 
 $arResult['COMPANY'] = [];
 $arResult['COMPANY_ID'] = [];
@@ -2235,14 +2246,6 @@ foreach($arResult['COMPANY'] as &$arCompany)
 		true,
 		false
 	);
-
-
-	if(isset($arCompany['~ACTIVITY_TIME']))
-	{
-		$time = MakeTimeStamp($arCompany['~ACTIVITY_TIME']);
-		$arCompany['~ACTIVITY_EXPIRED'] = $time <= $now;
-		$arCompany['~ACTIVITY_IS_CURRENT_DAY'] = $arCompany['~ACTIVITY_EXPIRED'] || CCrmActivity::IsCurrentDay($time);
-	}
 
 	if ($arResult['ENABLE_TASK'])
 	{

@@ -66,7 +66,7 @@ jn.define('layout/ui/detail-card/tabs/timeline/loader', (require, exports, modul
 	const renderCreateReminder = () => View(
 		{
 			style: {
-				borderRadius: 16,
+				borderRadius: 12,
 				backgroundColor: '#ffffff',
 				padding: 12,
 				marginBottom: 18,
@@ -98,7 +98,7 @@ jn.define('layout/ui/detail-card/tabs/timeline/loader', (require, exports, modul
 	const renderCallIncoming = () => View(
 		{
 			style: {
-				borderRadius: 16,
+				borderRadius: 12,
 				padding: 0,
 				marginBottom: 16,
 				backgroundColor: '#ffffff',
@@ -268,7 +268,7 @@ jn.define('layout/ui/detail-card/tabs/timeline/loader', (require, exports, modul
 	const renderRegularActivity = (titleWidth, textWidth) => View(
 		{
 			style: {
-				borderRadius: 16,
+				borderRadius: 12,
 				padding: 0,
 				marginBottom: 16,
 				backgroundColor: '#ffffff',

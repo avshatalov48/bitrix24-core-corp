@@ -6,6 +6,7 @@ use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
 use Bitrix\SalesCenter\Delivery\Handlers\HandlersRepository;
 use Bitrix\SalesCenter\Integration\CrmManager;
+use Bitrix\Salescenter\PaymentSlip\PaymentSlipManager;
 
 class SalesCenterManager
 {
@@ -69,5 +70,18 @@ class SalesCenterManager
 		}
 
 		return (new HandlersRepository())->getCollection()->hasInstallableItems();
+	}
+
+	/**
+	 * @return null|PaymentSlipManager
+	 */
+	public function getPaymentSlipSenderManager(): ?PaymentSlipManager
+	{
+		if (!$this->isEnabled)
+		{
+			return null;
+		}
+
+		return PaymentSlipManager::getManager();
 	}
 }

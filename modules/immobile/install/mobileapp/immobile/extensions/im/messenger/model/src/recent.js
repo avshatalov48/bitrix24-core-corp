@@ -5,10 +5,10 @@
  */
 jn.define('im/messenger/model/recent', (require, exports, module) => {
 
-	const { Type } = jn.require('type');
-	const { ChatTypes, MessageStatus } = jn.require('im/messenger/const');
-	const { RecentCache } = jn.require('im/messenger/cache');
-	const { DateHelper } = jn.require('im/messenger/lib/helper');
+	const { Type } = require('type');
+	const { ChatTypes, MessageStatus } = require('im/messenger/const');
+	const { RecentCache } = require('im/messenger/cache');
+	const { DateHelper } = require('im/messenger/lib/helper');
 
 	const elementState = {
 		id: 0,
@@ -39,6 +39,7 @@ jn.define('im/messenger/model/recent', (require, exports, module) => {
 			index: {},
 		}),
 		getters: {
+			/** @function recentModel/getRecentPage */
 			getRecentPage: (state) => (pageNumber, itemsPerPage) => {
 				const list = [...state.collection];
 
@@ -47,23 +48,34 @@ jn.define('im/messenger/model/recent', (require, exports, module) => {
 					.sort(sortListByMessageDateWithPinned)
 				;
 			},
+
+			/** @function recentModel/getTitleById */
 			getTitleById: (state) => (id) => {
 				return state.collection.find((item) => item.id == id).title;
 			},
+
+			/** @function recentModel/getById */
 			getById: (state) => (id) => {
 				return state.collection.find((item) => item.id == id);
 			},
+
+			/** @function recentModel/getUserList */
 			getUserList: (state) => {
 				return state.collection.filter(recentItem => recentItem.type === 'user').sort(sortListByMessageDate);
 			},
+
+			/** @function recentModel/getCollection */
 			getCollection: (state) => {
 				return state.collection;
 			},
+
+			/** @function recentModel/isEmpty */
 			isEmpty: (state) => {
 				return state.collection.length === 0;
 			},
 		},
 		actions: {
+			/** @function recentModel/setState */
 			setState: (store, payload) =>
 			{
 				if (Type.isPlainObject(payload) && Type.isArrayFilled(payload.collection))
@@ -85,6 +97,8 @@ jn.define('im/messenger/model/recent', (require, exports, module) => {
 					store.commit('setState', payload);
 				}
 			},
+
+			/** @function recentModel/set */
 			set: (store, payload) =>
 			{
 				let result = [];
@@ -141,6 +155,8 @@ jn.define('im/messenger/model/recent', (require, exports, module) => {
 					store.commit('update', existingItems);
 				}
 			},
+
+			/** @function recentModel/like */
 			like: (store, payload) => {
 				const { id, messageId, liked } = payload;
 
@@ -163,6 +179,8 @@ jn.define('im/messenger/model/recent', (require, exports, module) => {
 					fields: { liked },
 				}]);
 			},
+
+			/** @function recentModel/delete */
 			delete: (store, payload) =>
 			{
 				const existingItem = findItemById(store, payload.id);
@@ -176,6 +194,8 @@ jn.define('im/messenger/model/recent', (require, exports, module) => {
 					id: payload.id,
 				});
 			},
+
+			/** @function recentModel/clearAllCounters */
 			clearAllCounters: (store, payload) =>
 			{
 				const updatedItems = [];
@@ -308,29 +328,29 @@ jn.define('im/messenger/model/recent', (require, exports, module) => {
 			result.chat_id = Number.parseInt(fields.chatId, 10);
 		}
 
-		result.date_update = DateHelper.toDate(fields.date_update);
+		result.date_update = DateHelper.cast(fields.date_update);
 
 		//TODO: move part to file model
 		result.message = fields.message || { id: 0 };
 		if (result.message.id > 0)
 		{
-			result.message.date = DateHelper.toDate(result.message.date);
+			result.message.date = DateHelper.cast(result.message.date);
 		}
 
 		//TODO: move to user and dialog model
 		result.chat = fields.chat || { id: 0 };
 		if (result.chat.id > 0)
 		{
-			result.chat.date_create = DateHelper.toDate(result.chat.date_create);
+			result.chat.date_create = DateHelper.cast(result.chat.date_create);
 		}
 
 		result.user = fields.user || { id: 0 };
 		if (result.user.id > 0)
 		{
-			result.user.last_activity_date = DateHelper.toDate(result.user.last_activity_date);
+			result.user.last_activity_date = DateHelper.cast(result.user.last_activity_date);
 			if (result.user.mobile_last_date)
 			{
-				result.user.mobile_last_date = DateHelper.toDate(result.user.mobile_last_date);
+				result.user.mobile_last_date = DateHelper.cast(result.user.mobile_last_date);
 			}
 			else
 			{

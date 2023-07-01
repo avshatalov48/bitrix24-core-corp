@@ -2,7 +2,6 @@
  * @module crm/timeline/action/null-action
  */
 jn.define('crm/timeline/action/null-action', (require, exports, module) => {
-
 	const { BaseTimelineAction } = require('crm/timeline/action/base');
 
 	class NullAction extends BaseTimelineAction
@@ -14,5 +13,4 @@ jn.define('crm/timeline/action/null-action', (require, exports, module) => {
 	}
 
 	module.exports = { NullAction };
-
 });

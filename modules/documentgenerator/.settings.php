@@ -24,4 +24,19 @@ return array(
 		],
 		'readonly' => true,
 	],
+
+	'ui.entity-selector' => [
+		'value' => [
+			'entities' => [
+				[
+					'entityId' => 'documentgenerator-template',
+					'provider' => [
+						'moduleId' => 'documentgenerator',
+						'className' => '\\Bitrix\\DocumentGenerator\\Integration\\UI\\EntitySelector\\TemplateProvider'
+					],
+				],
+			],
+		],
+		'readonly' => true,
+	],
 );

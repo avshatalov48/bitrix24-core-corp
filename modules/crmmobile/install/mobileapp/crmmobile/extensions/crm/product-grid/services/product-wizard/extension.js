@@ -2,7 +2,6 @@
  * @module crm/product-grid/services/product-wizard
  */
 jn.define('crm/product-grid/services/product-wizard', (require, exports, module) => {
-
 	const { Loc } = require('loc');
 
 	const WizardMode = {
@@ -15,19 +14,19 @@ jn.define('crm/product-grid/services/product-wizard', (require, exports, module)
 		CRM: 'crm',
 	};
 
-    /**
-     * @class ProductWizard
-     */
-    class ProductWizard
-    {
-        constructor({currencyId, onFinish})
-        {
+	/**
+	 * @class ProductWizard
+	 */
+	class ProductWizard
+	{
+		constructor({ currencyId, onFinish })
+		{
 			this.uid = Random.getString();
 			this.currencyId = currencyId;
 			this.onFinish = onFinish;
 
 			this.on('onCatalogProductWizardFinish', (data) => this.handleFinish(data));
-        }
+		}
 
 		open(productId, productName)
 		{
@@ -37,23 +36,24 @@ jn.define('crm/product-grid/services/product-wizard', (require, exports, module)
 					mode: WizardMode.EXISTED,
 					type: WizardType.CRM,
 					entityData: {
-						'DOCUMENT_CURRENCY': this.currencyId,
-						'ID': productId,
-						'NAME': productName,
-						'WIZARD_UNIQID': this.uid,
+						DOCUMENT_CURRENCY: this.currencyId,
+						ID: productId,
+						NAME: productName,
+						WIZARD_UNIQID: this.uid,
 					},
 				},
 				widgetParams: {
 					objectName: 'layout',
 					title: Loc.getMessage('PRODUCT_GRID_SERVICE_PRODUCT_WIZARD_TITLE'),
 					modal: true,
+					backgroundColor: '#eef2f4',
 					backdrop: {
 						horizontalSwipeAllowed: false,
 						bounceEnable: true,
 						showOnTop: true,
 						navigationBarColor: '#eef2f4',
 					},
-				}
+				},
 			});
 		}
 
@@ -76,8 +76,7 @@ jn.define('crm/product-grid/services/product-wizard', (require, exports, module)
 			BX.addCustomEvent(eventName, callback);
 			return this;
 		}
-    }
+	}
 
-    module.exports = { ProductWizard };
-
+	module.exports = { ProductWizard };
 });

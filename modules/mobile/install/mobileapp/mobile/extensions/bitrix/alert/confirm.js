@@ -10,6 +10,7 @@ jn.define('alert/confirm', (require, exports, module) => {
 	};
 
 	const MIN_API_VERSION = 42;
+	const isAndroid = Application.getPlatform() === 'android';
 
 	/**
 	 * @class AlertNavigator
@@ -20,6 +21,17 @@ jn.define('alert/confirm', (require, exports, module) => {
 		{
 			this.onPress = this.handlerOnPress.bind(this);
 			this.props = this.prepareProps(props);
+		}
+
+		handlerOnPress(index)
+		{
+			const { buttons } = this.props;
+			const selectedButton = buttons[index - 1];
+
+			if (selectedButton && selectedButton.onPress)
+			{
+				selectedButton.onPress();
+			}
 		}
 
 		prepareProps(props)
@@ -45,23 +57,28 @@ jn.define('alert/confirm', (require, exports, module) => {
 			{
 				buttons.push({
 					text: BX.message('ALERT_CONFIRMATION_CONFIRM'),
-					type: ButtonType.CANCEL,
+					type: ButtonType.DEFAULT,
 				});
 			}
 
-			return buttons.map((button) =>
-				button.type === ButtonType.CANCEL ? {
-					...button,
-					text: button.text || BX.message('ALERT_CONFIRMATION_CANCEL'),
-				} : button);
-		}
+			buttons = this.moveCancelButtonLast(buttons);
 
-		getButtons()
-		{
-			let { buttons } = this.props;
-			const sortDirection = buttons.length > 2 ? -1 : 1;
+			// fix weird android behavior when last button becomes first
+			if (isAndroid && buttons.length === 3)
+			{
+				const [first, ...others] = buttons;
 
-			buttons = buttons.sort(({ type }) => type === ButtonType.CANCEL ? sortDirection : -1 * sortDirection);
+				buttons = [...others, first];
+			}
+
+			buttons = buttons.map((button) =>
+				button.type === ButtonType.CANCEL
+					? {
+						...button,
+						text: button.text || BX.message('ALERT_CONFIRMATION_CANCEL'),
+					}
+					: button,
+			);
 
 			return (
 				Application.getApiVersion() >= MIN_API_VERSION
@@ -70,26 +87,29 @@ jn.define('alert/confirm', (require, exports, module) => {
 			);
 		}
 
+		moveCancelButtonLast(buttons)
+		{
+			const cancelButton = buttons.find(({ type }) => type === ButtonType.CANCEL);
+			if (!cancelButton)
+			{
+				return buttons;
+			}
+
+			const buttonsWithoutCancel = buttons.filter(({ type }) => type !== ButtonType.CANCEL);
+
+			return [...buttonsWithoutCancel, cancelButton];
+		}
+
 		open()
 		{
-			const { title, description } = this.props;
+			const { title, description, buttons } = this.props;
 
 			navigator.notification.confirm(
 				description,
 				this.onPress,
 				title,
-				this.getButtons(),
+				buttons,
 			);
-		}
-
-		handlerOnPress(index)
-		{
-			const { buttons } = this.props;
-			const selectedButton = buttons[index - 1];
-			if (selectedButton.onPress)
-			{
-				selectedButton.onPress();
-			}
 		}
 	}
 
@@ -108,8 +128,8 @@ jn.define('alert/confirm', (require, exports, module) => {
 	const makeDestructiveButton = (text, onPress) => ({
 		text,
 		onPress,
-		type: ButtonType.DESTRUCTIVE
-	})
+		type: ButtonType.DESTRUCTIVE,
+	});
 
 	module.exports = {
 		ConfirmNavigator,

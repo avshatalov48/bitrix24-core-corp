@@ -129,6 +129,12 @@ class LogTable extends DataManager
 					'title' => Loc::getMessage('LOG_ENTITY_ROW_NUM_FIELD'),
 				]
 			),
+			new IntegerField(
+				'DATA_SIZE',
+				[
+					'title' => Loc::getMessage('LOG_ENTITY_DATA_SIZE_FIELD'),
+				]
+			),
 			new FloatField(
 				'REAL_TIME',
 				[
@@ -191,15 +197,15 @@ class LogTable extends DataManager
 	 *
 	 * @param  array $filter Delete condition.
 	 * @return void
-	 * @see \Bitrix\Main\Entity\Query::buildFilterSql
+	 * @see \Bitrix\Main\ORM\Query\Query::buildFilterSql
 	 */
 	public static function deleteByFilter(array $filter)
 	{
 		$entity = static::getEntity();
 		$sqlTableName = static::getTableName();
 
-		$where = \Bitrix\Main\Entity\Query::buildFilterSql($entity, $filter);
-		if ($where <> '')
+		$where = \Bitrix\Main\ORM\Query\Query::buildFilterSql($entity, $filter);
+		if ($where)
 		{
 			$sql = 'DELETE FROM ' . $sqlTableName . ' WHERE ' . $where;
 			$entity->getConnection()->queryExecute($sql);

@@ -1,5 +1,5 @@
 <?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
-__IncludeLang(dirname(__FILE__).'/lang/'.LANGUAGE_ID.'/'.basename(__FILE__));
+__IncludeLang(__DIR__.'/lang/'.LANGUAGE_ID.'/'.basename(__FILE__));
 ?>
 <?
 

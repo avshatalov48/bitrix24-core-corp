@@ -37,12 +37,14 @@ this.BX.Crm = this.BX.Crm || {};
 	var _renderLoader = /*#__PURE__*/new WeakSet();
 	var _renderMapper = /*#__PURE__*/new WeakSet();
 	var _checkNewProfile = /*#__PURE__*/new WeakSet();
+	var _requestAuthUrl = /*#__PURE__*/new WeakSet();
 	var Integration = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(Integration, _EventEmitter);
 	  function Integration(_options) {
 	    var _this;
 	    babelHelpers.classCallCheck(this, Integration);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Integration).call(this));
+	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _requestAuthUrl);
 	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _checkNewProfile);
 	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _renderMapper);
 	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _renderLoader);
@@ -323,9 +325,11 @@ this.BX.Crm = this.BX.Crm || {};
 	      type: this.type
 	    }
 	  }).then(function () {
+	    _classPrivateMethodGet(_this7, _requestAuthUrl, _requestAuthUrl2).call(_this7);
 	    babelHelpers.classPrivateFieldSet(_this7, _adAccounts, null);
 	    _this7.getProvider().profile = null;
 	    _classPrivateMethodGet(_this7, _renderProfileSelector, _renderProfileSelector2).call(_this7);
+	    babelHelpers.classPrivateFieldSet(_this7, _adForms, null);
 	  });
 	}
 	function _loginGroup2() {
@@ -380,7 +384,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    }).render());
 	    return babelHelpers.classPrivateFieldGet(this, _profileContainer);
 	  }
-	  babelHelpers.classPrivateFieldGet(this, _profileContainer).appendChild(main_core.Tag.render(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div>\n\t\t\t\t<div class=\"crm-ads-conversion-block\">\n\t\t\t\t\t<div class=\"crm-ads-conversion-social crm-ads-conversion-social-facebook\"  style=\"padding-bottom: 15px\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t<div class=\"crm-ads-conversion-social-user\">\n\t\t\t\t\t\t\t<a\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\ttarget=\"_top\"\n\t\t\t\t\t\t\t\tclass=\"crm-ads-conversion-social-user-link\"\n\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"crm-ads-conversion-social-shutoff\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), this.showAvatar(provider), provider.profile.url ? 'href="' + main_core.Tag.safe(_templateObject6 || (_templateObject6 = babelHelpers.taggedTemplateLiteral(["", ""])), provider.profile.url) + '"' : "", main_core.Tag.safe(_templateObject7 || (_templateObject7 = babelHelpers.taggedTemplateLiteral(["", ""])), provider.profile.name), this.createLogoutProfileButton().render()));
+	  babelHelpers.classPrivateFieldGet(this, _profileContainer).appendChild(main_core.Tag.render(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div>\n\t\t\t\t<div class=\"crm-ads-conversion-block\">\n\t\t\t\t\t<div class=\"crm-ads-conversion-social crm-ads-conversion-social-facebook\"  style=\"padding-bottom: 15px; height: 58px;\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t<div class=\"crm-ads-conversion-social-user\">\n\t\t\t\t\t\t\t<a\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\ttarget=\"_top\"\n\t\t\t\t\t\t\t\tclass=\"crm-ads-conversion-social-user-link\"\n\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"crm-ads-conversion-social-shutoff\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), this.showAvatar(provider), provider.profile.url ? 'href="' + main_core.Tag.safe(_templateObject6 || (_templateObject6 = babelHelpers.taggedTemplateLiteral(["", ""])), provider.profile.url) + '"' : "", main_core.Tag.safe(_templateObject7 || (_templateObject7 = babelHelpers.taggedTemplateLiteral(["", ""])), provider.profile.name), this.createLogoutProfileButton().render()));
 	  if (this.type === 'vkontakte') {
 	    babelHelpers.classPrivateFieldGet(this, _profileContainer).appendChild(_classPrivateMethodGet(this, _renderFormSelector, _renderFormSelector2).call(this));
 	  } else {
@@ -504,6 +508,26 @@ this.BX.Crm = this.BX.Crm || {};
 	    babelHelpers.classPrivateFieldSet(this, _formsContainer, main_core.Tag.render(_templateObject11 || (_templateObject11 = babelHelpers.taggedTemplateLiteral(["<div></div>"]))));
 	  }
 	  babelHelpers.classPrivateFieldGet(this, _formsContainer).innerHTML = '';
+
+	  // hack for vk
+	  if (!this.getCase().account.id && this.type === 'vkontakte') {
+	    babelHelpers.classPrivateFieldGet(this, _formsContainer).appendChild(_classPrivateMethodGet(this, _renderLoader, _renderLoader2).call(this));
+	    main_core_ajax.ajax.runAction('crm.api.ads.leadads.account.getProfile', {
+	      data: {
+	        type: this.type,
+	        proxyId: null
+	      }
+	    }).then(function (response) {
+	      babelHelpers.classPrivateFieldSet(_this11, _adAccounts, [{
+	        id: response.data.profile.id + '',
+	        name: response.data.profile.name + ''
+	      }]);
+	      _this11.getCase().account.id = babelHelpers.classPrivateFieldGet(_this11, _adAccounts)[0].id;
+	      _this11.getCase().account.name = babelHelpers.classPrivateFieldGet(_this11, _adAccounts)[0].name;
+	      _classPrivateMethodGet(_this11, _renderFormSelector, _renderFormSelector2).call(_this11);
+	    });
+	    return babelHelpers.classPrivateFieldGet(this, _formsContainer);
+	  }
 	  if (this.getProvider().hasPages) {
 	    var accountId = this.getAdAccountId();
 	    if (!accountId) {
@@ -675,6 +699,16 @@ this.BX.Crm = this.BX.Crm || {};
 	  }).then(function (response) {}, function (error) {
 	    _classPrivateMethodGet(_this13, _logoutProfile, _logoutProfile2).call(_this13);
 	    _this13.showBannerForOldProfile();
+	  });
+	}
+	function _requestAuthUrl2() {
+	  var _this14 = this;
+	  main_core_ajax.ajax.runAction('crm.api.ads.leadads.service.getAuthUrl', {
+	    data: {
+	      type: this.type
+	    }
+	  }).then(function (response) {
+	    _this14.getProvider().authUrl = response.data.authUrl;
 	  });
 	}
 

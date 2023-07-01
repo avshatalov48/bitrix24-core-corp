@@ -1570,9 +1570,16 @@ class CVoxImplantRestService extends IRestService
 		$row = \Bitrix\Rest\AppTable::getByClientId($clientId);
 		$appId = $row['ID'];
 
-		$result = Rest\Helper::addExternalLine($params['NUMBER'], $params['NAME'], $appId);
+		$newExternalLine = [
+			'NAME' => (string)($params['NAME'] ?? ''),
+			'NUMBER' => (string)($params['NUMBER'] ?? ''),
+			'CRM_AUTO_CREATE' => ($params['CRM_AUTO_CREATE'] ?? 'Y') === 'Y' ? 'Y' : 'N',
+		];
+		$result = Rest\Helper::addExternalLine($newExternalLine, $appId);
 		if(!$result->isSuccess())
+		{
 			throw new \Bitrix\Rest\RestException(implode('; ', $result->getErrorMessages()));
+		}
 
 		$code = $row['CODE'] ? : 'webHook' . $server->getPasswordId();
 		if ($code)
@@ -1604,9 +1611,26 @@ class CVoxImplantRestService extends IRestService
 		$row = \Bitrix\Rest\AppTable::getByClientId($clientId);
 		$appId = $row['ID'];
 
-		$result = Rest\Helper::updateExternalLine($params['NUMBER'], $params['NAME'], $appId);
+		$updatingFields = [];
+		if (isset($params['NAME']))
+		{
+			$updatingFields['NAME'] = (string)$params['NAME'];
+		}
+		if (isset($params['CRM_AUTO_CREATE']))
+		{
+			$updatingFields['CRM_AUTO_CREATE'] = $params['CRM_AUTO_CREATE'] === 'Y' ? 'Y' : 'N';
+		}
+
+		if (empty($updatingFields))
+		{
+			throw new \Bitrix\Rest\RestException('There are no fields to update');
+		}
+
+		$result = Rest\Helper::updateExternalLine($params['NUMBER'], $updatingFields, $appId);
 		if(!$result->isSuccess())
+		{
 			throw new \Bitrix\Rest\RestException(implode('; ', $result->getErrorMessages()));
+		}
 
 		return $result->getData();
 	}

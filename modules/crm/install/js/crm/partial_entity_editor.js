@@ -524,6 +524,8 @@ if(typeof BX.Crm.PartialEditorDialog === "undefined")
 				this.getEditor().release();
 			}
 
+			this.clearPresetValues();
+
 			if(!this._isAccepted)
 			{
 				BX.onCustomEvent(
@@ -600,7 +602,11 @@ if(typeof BX.Crm.PartialEditorDialog === "undefined")
 		getEditor: function()
 		{
 			return this._editor;
-		}
+		},
+		clearPresetValues: function()
+		{
+			this._presetValues = {};
+		},
 	};
 	if(typeof(BX.Crm.PartialEditorDialog.messages) == "undefined")
 	{
@@ -781,6 +787,8 @@ if(typeof BX.Crm.QuickFormPartialEditorDialog === "undefined")
 		{
 			this.getEditor().release();
 		}
+
+		this.clearPresetValues();
 
 		if(!this._isAccepted)
 		{

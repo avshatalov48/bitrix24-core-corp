@@ -12,6 +12,7 @@ use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Application;
 use Bitrix\Crm\Traits;
+use Bitrix\Main\Type\DateTime;
 
 final class Monitor
 {
@@ -31,27 +32,42 @@ final class Monitor
 		Application::getInstance()->addBackgroundJob(fn() => $this->processChanges());
 	}
 
-	public function onActivityAdd(array $activityFields, array $activityBindings): void
+	public function onActivityAdd(
+		array $activityFields,
+		array $activityBindings,
+		?DateTime $newLightTimeDate
+	): void
 	{
 		$activityChange = ActivityChange::create(
 			(int)$activityFields['ID'],
 			[],
 			[],
 			$activityFields,
-			$activityBindings
+			$activityBindings,
+			null,
+			$newLightTimeDate
 		);
 		$this->synchronizeEntityCountableTableByActivityChange($activityChange);
 		$this->activitiesChangesCollection->add($activityChange);
 	}
 
-	public function onActivityUpdate(array $oldActivityFields, array $newActivityFields, array $oldActivityBindings, array $newActivityBindings): void
+	public function onActivityUpdate(
+		array $oldActivityFields,
+		array $newActivityFields,
+		array $oldActivityBindings,
+		array $newActivityBindings,
+		?DateTime $oldLightTimeDate,
+		?DateTime $newLightTimeDate
+	): void
 	{
 		$activityChange = ActivityChange::create(
 			(int)$oldActivityFields['ID'],
 			$oldActivityFields,
 			$oldActivityBindings,
 			$newActivityFields,
-			$newActivityBindings
+			$newActivityBindings,
+			$oldLightTimeDate,
+			$newLightTimeDate
 		);
 		if ($activityChange->hasSignificantChangesForCountable())
 		{
@@ -60,14 +76,16 @@ final class Monitor
 		$this->activitiesChangesCollection->add($activityChange);
 	}
 
-	public function onActivityDelete(array $activityFields, array $activityBindings): void
+	public function onActivityDelete(array $activityFields, array $activityBindings, ?DateTime $oldLightTimeDate): void
 	{
 		$activityChange = ActivityChange::create(
 			(int)$activityFields['ID'],
 			$activityFields,
 			$activityBindings,
 			[],
-			[]
+			[],
+			$oldLightTimeDate,
+			null
 		);
 		$this->synchronizeEntityCountableTableByActivityChange($activityChange);
 		$this->activitiesChangesCollection->add($activityChange);

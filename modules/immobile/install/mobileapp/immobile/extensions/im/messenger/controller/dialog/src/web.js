@@ -6,18 +6,19 @@
  */
 jn.define('im/messenger/controller/dialog/web', (require, exports, module) => {
 
-	const { Type } = jn.require('type');
-	const { Loc } = jn.require('loc');
-	const { Controller } = jn.require('im/messenger/controller/base');
-	const { MessengerParams } = jn.require('im/messenger/lib/params');
-	const { DialogHelper } = jn.require('im/messenger/lib/helper');
-	const { PushHandler } = jn.require('im/messenger/push-handler');
-	const { OpenLinesService } = jn.require('im/messenger/service');
+	const { Type } = require('type');
+	const { Loc } = require('loc');
+	const { clone } = require('utils/object');
+	const { core } = require('im/messenger/core');
+	const { MessengerParams } = require('im/messenger/lib/params');
+	const { DialogHelper } = require('im/messenger/lib/helper');
+	const { PushHandler } = require('im/messenger/provider/push');
+	const { OpenLinesRest } = require('im/messenger/provider/rest');
 
 	/**
 	 * @class WebDialog
 	 */
-	class WebDialog extends Controller
+	class WebDialog
 	{
 		static open(options)
 		{
@@ -75,7 +76,7 @@ jn.define('im/messenger/controller/dialog/web', (require, exports, module) => {
 			const imagePath = component.path + 'images';
 			let dialogEntity = false;
 
-			const recentItem = ChatUtils.objectClone(MessengerStore.getters['recentModel/getById'](dialogId));
+			const recentItem = clone(core.getStore().getters['recentModel/getById'](dialogId));
 			if (recentItem)
 			{
 				titleParams = {
@@ -145,9 +146,6 @@ jn.define('im/messenger/controller/dialog/web', (require, exports, module) => {
 				WIDGET_CHAT_RECIPIENTS_VERSION: MessengerParams.get('WIDGET_CHAT_RECIPIENTS_VERSION', '1.0.0'),
 				WIDGET_CHAT_TRANSFER_VERSION: MessengerParams.get('WIDGET_CHAT_TRANSFER_VERSION', '1.0.0'),
 				WIDGET_BACKDROP_MENU_VERSION: MessengerParams.get('WIDGET_BACKDROP_MENU_VERSION', '1.0.0'),
-				LANG_ADDITIONAL: {
-					isCrmUniversalActivityScenarioEnabled: Loc.getMessage('isCrmUniversalActivityScenarioEnabled'),
-				},
 			};
 
 			if (this.isOpenlineDialog(dialogId, dialogTitleParams, userCode))
@@ -247,9 +245,6 @@ jn.define('im/messenger/controller/dialog/web', (require, exports, module) => {
 							WIDGET_CHAT_RECIPIENTS_VERSION: MessengerParams.get('WIDGET_CHAT_RECIPIENTS_VERSION', '1.0.0'),
 							WIDGET_CHAT_TRANSFER_VERSION: MessengerParams.get('WIDGET_CHAT_TRANSFER_VERSION', '1.0.0'),
 							WIDGET_BACKDROP_MENU_VERSION: MessengerParams.get('WIDGET_BACKDROP_MENU_VERSION', '1.0.0'),
-							LANG_ADDITIONAL: {
-								isCrmUniversalActivityScenarioEnabled: Loc.getMessage('isCrmUniversalActivityScenarioEnabled'),
-							},
 						},
 						url: '/mobile/web_mobile_component/im.dialog/?version='
 							+ MessengerParams.get('COMPONENT_CHAT_DIALOG_VERSION', '1.0.0')
@@ -276,7 +271,7 @@ jn.define('im/messenger/controller/dialog/web', (require, exports, module) => {
 		static getOpenlineDialogByUserCode(userCode)
 		{
 			return new Promise((resolve) => {
-				OpenLinesService.getByUserCode(userCode)
+				OpenLinesRest.getByUserCode(userCode)
 					.then(response => {
 						resolve(response.data());
 					})
@@ -288,7 +283,7 @@ jn.define('im/messenger/controller/dialog/web', (require, exports, module) => {
 
 		static isOpenlineDialog(dialogId, dialogTitleParams = null, userCode = null)
 		{
-			const recentItem = ChatUtils.objectClone(MessengerStore.getters['recentModel/getById'](dialogId));
+			const recentItem = clone(core.getStore().getters['recentModel/getById'](dialogId));
 
 			return (
 				recentItem

@@ -7,8 +7,7 @@ $APPLICATION->IncludeComponent(
 	array(
 		"SET_TITLE" => 'Y',
 		"NAME_TEMPLATE" => CSite::GetNameFormat(),
-	),
-	$component
+	)
 );
 
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/footer.php");

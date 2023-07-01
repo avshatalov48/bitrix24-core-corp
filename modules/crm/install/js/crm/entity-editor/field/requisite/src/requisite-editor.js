@@ -10,6 +10,8 @@ export class EntityEditorRequisiteEditor
 		this._requisiteList = null;
 		this._entityTypeId = null;
 		this._entityId = null;
+		this._entityCategoryId = null;
+		this._permissionToken = null;
 		this._contextId = null;
 		this._mode = BX.UI.EntityEditorMode.view;
 
@@ -20,8 +22,10 @@ export class EntityEditorRequisiteEditor
 	{
 		this._entityTypeId = BX.prop.getInteger(settings, 'entityTypeId', 0);
 		this._entityId = BX.prop.getInteger(settings, 'entityId', 0);
+		this._entityCategoryId = BX.prop.getInteger(settings, 'entityCategoryId', null);
 		this._contextId = BX.prop.getString(settings, 'contextId', "");
 		this._requisiteEditUrl = BX.prop.getString(settings, 'requisiteEditUrl', "");
+		this._permissionToken = BX.prop.getString(settings, 'permissionToken', null);
 
 		this._onExternalEventListener = this.onExternalEvent.bind(this);
 		EventEmitter.subscribe('onLocalStorageSet', this._onExternalEventListener);
@@ -111,6 +115,10 @@ export class EntityEditorRequisiteEditor
 		{
 			urlParams["pid"] = presetId;
 		}
+		if (!Type.isNull(this._entityCategoryId))
+		{
+			urlParams.cid = this._entityCategoryId;
+		}
 
 		return BX.util.add_url_param(
 			this.getRequisiteEditUrl(requisiteId),
@@ -161,6 +169,11 @@ export class EntityEditorRequisiteEditor
 			requestParams['PRESET_ID'] = overriddenPresetId;
 			requestParams['useFormData'] = 'Y';
 		}
+		if (!Type.isNull(this._permissionToken))
+		{
+			requestParams['permissionToken'] = this._permissionToken;
+		}
+
 		return requestParams;
 	}
 

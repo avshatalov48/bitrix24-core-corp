@@ -79,7 +79,7 @@ class RpaKanbanComponent extends \Bitrix\Rpa\Components\ItemList implements \Bit
 				'id' => $stage->getId(),
 				'name' => $stage->getName(),
 				'sort' => $stage->getSort(),
-				'total' => $stagesTotal[$stage->getId()],
+				'total' => $stagesTotal[$stage->getId()] ?? null,
 				'color' => $stage->getColor(),
 				'canSort' => !$stage->isFinal(),
 				'data' => $stageController->prepareData($stage),

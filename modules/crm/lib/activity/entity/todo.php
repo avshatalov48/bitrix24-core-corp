@@ -3,6 +3,7 @@
 namespace Bitrix\Crm\Activity\Entity;
 
 use Bitrix\Crm\Activity\Provider;
+use Bitrix\Crm\Activity\Settings\OptionallyConfigurable;
 use Bitrix\Crm\Integration\StorageType;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Service\Container;
@@ -12,13 +13,14 @@ use Bitrix\Main\Result;
 use Bitrix\Main\Type\DateTime;
 use CCrmActivity;
 
-class ToDo
+class ToDo implements OptionallyConfigurable
 {
 	private const MAX_SUBJECT_LENGTH = 500;
 
 	protected ?int $id = null;
 
 	protected string $description = '';
+	protected string $subject = '';
 	protected ?DateTime $deadline = null;
 	protected ?int $parentActivityId = null;
 
@@ -30,7 +32,11 @@ class ToDo
 
 	protected bool $checkPermissions = true;
 
+	protected int $calendarEventId = 0;
+
 	protected ?array $storageElementIds = null;
+
+	protected array $additionalFields = [];
 
 	public static function createWithDefaultDescription(
 		int $entityTypeId,
@@ -118,10 +124,12 @@ class ToDo
 				'COMPLETED',
 				'DEADLINE',
 				'DESCRIPTION',
+				'SUBJECT',
 				'RESPONSIBLE_ID',
 				'ASSOCIATED_ENTITY_ID',
 				'AUTOCOMPLETE_RULE',
 				'STORAGE_ELEMENT_IDS',
+				'CALENDAR_EVENT_ID',
 			],
 			$options
 		)->Fetch();
@@ -140,10 +148,12 @@ class ToDo
 					: null
 			)
 			->setDescription($data['DESCRIPTION'])
+			->setSubject($data['SUBJECT'])
 			->setResponsibleId($data['RESPONSIBLE_ID'])
 			->setParentActivityId($data['ASSOCIATED_ENTITY_ID'] ?: null)
 			->setAutocompleteRule($data['AUTOCOMPLETE_RULE'] ?: null)
 			->setCompleted($data['COMPLETED'])
+			->setCalendarEventId($data['CALENDAR_EVENT_ID'])
 			->setStorageElementIds($data['STORAGE_ELEMENT_IDS'] ?: null)
 		;
 
@@ -200,6 +210,11 @@ class ToDo
 		return $this;
 	}
 
+	public function getProviderId(): string
+	{
+		return Provider\ToDo::PROVIDER_ID;
+	}
+
 	public function getDescription(): string
 	{
 		return $this->description;
@@ -214,6 +229,18 @@ class ToDo
 	public function setDescription(string $description): self
 	{
 		$this->description = $description;
+
+		return $this;
+	}
+
+	public function getSubject(): string
+	{
+		return $this->subject;
+	}
+
+	public function setSubject(string $subject): self
+	{
+		$this->subject = $subject;
 
 		return $this;
 	}
@@ -276,6 +303,18 @@ class ToDo
 		return $this->storageElementIds;
 	}
 
+	public function getCalendarEventId(): int
+	{
+		return $this->calendarEventId;
+	}
+
+	public function setCalendarEventId(int $id): self
+	{
+		$this->calendarEventId = $id;
+
+		return $this;
+	}
+
 	/**
 	 * @param string|int[] $storageElementIds
 	 *
@@ -303,7 +342,7 @@ class ToDo
 		return $this;
 	}
 
-	public function save(): Result
+	public function save(array $options = []): Result
 	{
 		$result = new Result();
 
@@ -317,10 +356,13 @@ class ToDo
 		$fields = [
 			'DESCRIPTION' => $this->getDescription(),
 			'SUBJECT' => $this->getSubjectFromDescription($this->getDescription()),
+			'CALENDAR_EVENT_ID' => $this->getCalendarEventId(),
+			'RESPONSIBLE_ID' => $this->getResponsibleId(),
 		];
 
 		if ($this->getDeadline())
 		{
+			$fields['START_TIME'] = $this->getDeadline()->toString();
 			$fields['END_TIME'] = $this->getDeadline()->toString();
 		}
 		if (!is_null($this->getAutocompleteRule()))
@@ -350,6 +392,8 @@ class ToDo
 			$fields['STORAGE_TYPE_ID'] = StorageType::Disk;
 			$fields['STORAGE_ELEMENT_IDS'] = $this->getStorageElementIds();
 		}
+
+		$fields = array_merge($fields, $this->getAdditionalFields());
 
 		if($this->checkPermissions && !CCrmActivity::CheckUpdatePermission($this->getOwner()->getEntityTypeId(), $this->getOwner()->getEntityId()))
 		{
@@ -395,7 +439,8 @@ class ToDo
 
 				return $result;
 			}
-			$isSuccess = CCrmActivity::Update($this->getId(), $fields, $this->checkPermissions);
+
+			$isSuccess = CCrmActivity::Update($this->getId(), $fields, $this->checkPermissions, true, $options);
 
 			if (!$isSuccess)
 			{
@@ -404,11 +449,9 @@ class ToDo
 					$result->addError(new Error($errorMessage));
 				}
 			}
-
 		}
 		else
 		{
-			$fields['RESPONSIBLE_ID'] = $this->getResponsibleId();
 			$fields['BINDINGS'] = empty($parentActivityBindings)
 				? [
 					[
@@ -418,7 +461,7 @@ class ToDo
 				]
 				: $parentActivityBindings;
 			$provider = new \Bitrix\Crm\Activity\Provider\ToDo();
-			$result = $provider->createActivity(\Bitrix\Crm\Activity\Provider\ToDo::PROVIDER_TYPE_ID_DEFAULT, $fields);
+			$result = $provider->createActivity(\Bitrix\Crm\Activity\Provider\ToDo::PROVIDER_TYPE_ID_DEFAULT, $fields, $options);
 			if ($result->isSuccess())
 			{
 				$this->id = (int)$result->getData()['id'];
@@ -428,7 +471,7 @@ class ToDo
 					// close parent activity
 					if (!CCrmActivity::Complete($this->getParentActivityId(), true, ['REGISTER_SONET_EVENT' => true]))
 					{
-						$this->addError(new Error(implode(', ', CCrmActivity::GetErrorMessages()), 'CAN_NOT_COMPLETE'));
+						$result->addError(new Error(implode(', ', CCrmActivity::GetErrorMessages()), 'CAN_NOT_COMPLETE'));
 					}
 				}
 			}
@@ -484,5 +527,17 @@ class ToDo
 		}
 
 		return false;
+	}
+
+	public function setAdditionalFields(array $fields): self
+	{
+		$this->additionalFields = $fields;
+
+		return $this;
+	}
+
+	public function getAdditionalFields(): array
+	{
+		return $this->additionalFields;
 	}
 }

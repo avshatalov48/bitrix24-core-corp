@@ -1,33 +1,41 @@
-<?
+<?php
+
 namespace Bitrix\Crm\Integration\Main\UISelector;
 
+use Bitrix\Crm\Order\Order;
+use Bitrix\Main\DB;
+use Bitrix\Main\DB\SqlExpression;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Loader;
+use CCrmOwnerType;
+use CCrmPerms;
+use CDBResult;
 
-class CrmOrders extends \Bitrix\Main\UI\Selector\EntityBase
+class CrmOrders extends CrmBase
 {
-	const PREFIX_SHORT = 'O_';
-	const PREFIX_FULL = 'CRMORDER';
+	public const PREFIX_SHORT = 'O_';
+	public const PREFIX_FULL = 'CRMORDER';
 
-	private static function getPrefix($options = [])
+	protected static function getOwnerType()
 	{
-		return (
-			is_array($options)
-			&& isset($options['prefixType'])
-			&& mb_strtolower($options['prefixType']) == 'short'
-				? self::PREFIX_SHORT
-				: self::PREFIX_FULL
-		);
+		return CCrmOwnerType::Order;
 	}
 
-	private static function prepareEntity($data, $options = [])
+	protected static function getHandlerType()
 	{
-		$prefix = self::getPrefix($options);
+		return Handler::ENTITY_TYPE_CRMORDERS;
+	}
+
+	protected static function prepareEntity($data, $options = [])
+	{
+		$prefix = static::getPrefix($options);
 		$result = [
-			'id' => $prefix.$data['ID'],
+			'id' => $prefix . $data['ID'],
 			'entityType' => 'orders',
 			'entityId' => $data['ID'],
-			'name' => htmlspecialcharsbx($data['ACCOUNT_NUMBER'].($data['ORDER_TOPIC'] <> '' ? ' "'.$data['ORDER_TOPIC'].'"' : '')),
+			'name' => htmlspecialcharsbx(
+				$data['ACCOUNT_NUMBER'] . ($data['ORDER_TOPIC'] <> '' ? ' "' . $data['ORDER_TOPIC'] . '"' : '')
+			),
 			'desc' => ''
 		];
 
@@ -41,53 +49,59 @@ class CrmOrders extends \Bitrix\Main\UI\Selector\EntityBase
 			&& $options['returnItemUrl'] == 'Y'
 		)
 		{
-			$result['url'] = \CCrmOwnerType::getEntityShowPath(\CCrmOwnerType::Order, $data['ID']);
-			$result['urlUseSlider'] = (\CCrmOwnerType::isSliderEnabled(\CCrmOwnerType::Order) ? 'Y' : 'N');
+			$result['url'] = CCrmOwnerType::getEntityShowPath(CCrmOwnerType::Order, $data['ID']);
+			$result['urlUseSlider'] = (CCrmOwnerType::isSliderEnabled(CCrmOwnerType::Order) ? 'Y' : 'N');
 		}
 
 		return $result;
 	}
 
-	public function getData($params = array())
+	public function getData($params = [])
 	{
 		global $USER;
 
-		$entityType = Handler::ENTITY_TYPE_CRMORDERS;
+		$entityType = static::getHandlerType();
 
-		$result = array(
-			'ITEMS' => array(),
-			'ITEMS_LAST' => array(),
-			'ITEMS_HIDDEN' => array(),
-			'ADDITIONAL_INFO' => array(
-				'GROUPS_LIST' => array(
-					'crmorders' => array(
+		$result = [
+			'ITEMS' => [],
+			'ITEMS_LAST' => [],
+			'ITEMS_HIDDEN' => [],
+			'ADDITIONAL_INFO' => [
+				'GROUPS_LIST' => [
+					'crmorders' => [
 						'TITLE' => Loc::getMessage('MAIN_UI_SELECTOR_TITLE_CRMORDERS'),
 						'TYPE_LIST' => [ $entityType ],
 						'DESC_LESS_MODE' => 'N',
-						'SORT' => 60
-					)
-				),
-				'SORT_SELECTED' => 400
-			)
-		);
+						'SORT' => 60,
+					],
+				],
+				'SORT_SELECTED' => 400,
+			],
+		];
 
-		$userPermissions = \CCrmPerms::getCurrentUserPermissions();
+		$userPermissions = CCrmPerms::getCurrentUserPermissions();
 
 		if (!\Bitrix\Crm\Order\Permissions\Order::checkReadPermission(0, $userPermissions))
 		{
 			return $result;
 		}
 
-		$entityOptions = (!empty($params['options']) ? $params['options'] : array());
-		$prefix = self::getPrefix($entityOptions);
+		$entityOptions = (!empty($params['options']) ? $params['options'] : []);
+		$prefix = static::getPrefix($entityOptions);
 
-		$lastItems = (!empty($params['lastItems']) ? $params['lastItems'] : array());
-		$selectedItems = (!empty($params['selectedItems']) ? $params['selectedItems'] : array());
+		$lastItems = (!empty($params['lastItems']) ? $params['lastItems'] : []);
+		$selectedItems = (!empty($params['selectedItems']) ? $params['selectedItems'] : []);
 
 		$lastOrdersIdList = [];
 		if(!empty($lastItems[$entityType]))
 		{
-			$result["ITEMS_LAST"] = array_map(function($code) use ($prefix) { return preg_replace('/^'.self::PREFIX_FULL.'(\d+)$/', $prefix.'$1', $code); }, array_values($lastItems[$entityType]));
+			$result["ITEMS_LAST"] = array_map(
+				function($code) use ($prefix)
+				{
+					return preg_replace('/^'.self::PREFIX_FULL . '(\d+)$/', $prefix . '$1', $code);
+				},
+				array_values($lastItems[$entityType])
+			);
 			foreach ($lastItems[$entityType] as $value)
 			{
 				$lastOrdersIdList[] = intval(str_replace(self::PREFIX_FULL, '', $value));
@@ -105,7 +119,7 @@ class CrmOrders extends \Bitrix\Main\UI\Selector\EntityBase
 		}
 
 		$ordersIdList = array_merge($selectedOrdersIdList, $lastOrdersIdList);
-		$ordersIdList = array_slice($ordersIdList, 0, count($selectedOrdersIdList) > 20 ? count($selectedOrdersIdList) : 20);
+		$ordersIdList = array_slice($ordersIdList, 0, max(count($selectedOrdersIdList), 20));
 		$ordersIdList = array_unique($ordersIdList);
 
 		$ordersList = [];
@@ -117,7 +131,7 @@ class CrmOrders extends \Bitrix\Main\UI\Selector\EntityBase
 		{
 			$options = [
 				'RAW_QUERY' => true,
-				'PERMS'=> \CCrmPerms::getCurrentUserPermissions()
+				'PERMS'=> CCrmPerms::getCurrentUserPermissions()
 			];
 
 			if (!empty($ordersIdList))
@@ -125,8 +139,8 @@ class CrmOrders extends \Bitrix\Main\UI\Selector\EntityBase
 				$options['RESTRICT_BY_IDS'] = $ordersIdList;
 			}
 
-			$permissionSql = \CCrmPerms::buildSql(
-				\CCrmOwnerType::OrderName,
+			$permissionSql = CCrmPerms::buildSql(
+				CCrmOwnerType::OrderName,
 				'',
 				'READ',
 				$options
@@ -135,7 +149,7 @@ class CrmOrders extends \Bitrix\Main\UI\Selector\EntityBase
 
 		if($permissionSql <> '')
 		{
-			$filter['@ID'] = new \Bitrix\Main\DB\SqlExpression($permissionSql);
+			$filter['@ID'] = new SqlExpression($permissionSql);
 		}
 		elseif (!empty($ordersIdList))
 		{
@@ -144,9 +158,7 @@ class CrmOrders extends \Bitrix\Main\UI\Selector\EntityBase
 
 		if (empty($ordersIdList))
 		{
-			$order = [
-				'ID' => 'DESC'
-			];
+			$order = ['ID' => 'DESC'];
 			$limit = 10;
 		}
 		else
@@ -155,16 +167,16 @@ class CrmOrders extends \Bitrix\Main\UI\Selector\EntityBase
 			$limit = 0;
 		}
 
-		$res = \Bitrix\Crm\Order\Order::getList([
+		$res = Order::getList([
 			'order' =>  $order,
-			'select' =>  [ 'ID', 'ACCOUNT_NUMBER', 'DATE_INSERT', 'ORDER_TOPIC' ],
+			'select' =>  $this->getSearchSelect(),
 			'filter' =>  $filter,
 			'limit' => $limit
 		]);
 
 		while ($orderFields = $res->fetch())
 		{
-			$ordersList[$prefix.$orderFields['ID']] = self::prepareEntity($orderFields, $entityOptions);
+			$ordersList[$prefix . $orderFields['ID']] = static::prepareEntity($orderFields, $entityOptions);
 		}
 
 		if (empty($lastOrdersIdList))
@@ -188,31 +200,29 @@ class CrmOrders extends \Bitrix\Main\UI\Selector\EntityBase
 			&& $options['addTab'] == 'Y'
 		)
 		{
-			$result = array(
-				array(
+			$result = [
+				[
 					'id' => 'orders',
 					'name' => Loc::getMessage('MAIN_UI_SELECTOR_TAB_CRMORDERS'),
-					'sort' => 60
-				)
-			);
+					'sort' => 60,
+				],
+			];
 		}
 
 		return $result;
 	}
 
-	public function search($params = array())
+	public function search($params = [])
 	{
-		global $USER;
+		$result = [
+			'ITEMS' => [],
+			'ADDITIONAL_INFO' => [],
+		];
 
-		$result = array(
-			'ITEMS' => array(),
-			'ADDITIONAL_INFO' => array()
-		);
-
-		$entityOptions = (!empty($params['options']) ? $params['options'] : array());
-		$requestFields = (!empty($params['requestFields']) ? $params['requestFields'] : array());
+		$entityOptions = (!empty($params['options']) ? $params['options'] : []);
+		$requestFields = (!empty($params['requestFields']) ? $params['requestFields'] : []);
 		$search = $requestFields['searchString'];
-		$prefix = self::getPrefix($entityOptions);
+		$prefix = static::getPrefix($entityOptions);
 
 		if (
 			$search <> ''
@@ -222,67 +232,120 @@ class CrmOrders extends \Bitrix\Main\UI\Selector\EntityBase
 			)
 		)
 		{
-			$operation = (Loader::includeModule('sale') && \Bitrix\Sale\OrderTable::getEntity()->fullTextIndexEnabled('SEARCH_CONTENT') ? '*' : '*%');
+			$filter = $this->getSearchFilter($search, $entityOptions);
 
-			$filter = [
-				$operation.'SEARCH_CONTENT' => CrmEntity::prepareToken($search)
-			];
-
-			if (!(is_object($USER) && $USER->isAdmin()))
+			if ($filter === false)
 			{
-				$options = [
-					'RAW_QUERY' => true,
-					'PERMS'=> \CCrmPerms::getCurrentUserPermissions()
-				];
-
-				$permissionSql = \CCrmPerms::buildSql(
-					\CCrmOwnerType::OrderName,
-					'',
-					'READ',
-					$options
-				);
-
-				if($permissionSql <> '')
-				{
-					$filter['@ID'] = new \Bitrix\Main\DB\SqlExpression($permissionSql);
-				}
+				return $result;
 			}
 
-			$subFilter = [
-				'%ORDER_TOPIC' => $search,
-				'LOGIC' => 'OR'
-			];
+			$res = Order::getList(
+				[
+					'order' => $this->getSearchOrder(),
+					'select' => $this->getSearchSelect(),
+					'filter' => $filter,
+					'limit' => 20,
+				]
+			);
 
-			if (is_numeric($search))
-			{
-				$subFilter['ID'] = (int)$search;
-				$subFilter['%ACCOUNT_NUMBER'] = $search;
-			}
-			else if (preg_match('/(.*)\[(\d+?)\]/i' . BX_UTF_PCRE_MODIFIER, $search, $matches))
-			{
-				$subFilter['ID'] = (int)$matches[2];
-				$subFilter['%ACCOUNT_NUMBER'] = trim($matches[1]);
-			}
-			else
-			{
-				$subFilter['%ACCOUNT_NUMBER'] = $search;
-			}
-
-			if (!empty($filter))
-			{
-				$filter[] = $subFilter;
-			}
-
-			$res = \Bitrix\Crm\Order\Order::getList([
-				'select' => [ 'ID', 'ACCOUNT_NUMBER', 'DATE_INSERT', 'ORDER_TOPIC' ],
-				'filter' => $filter,
-				'limit' => 20
-			]);
+			$resultItems = [];
 
 			while ($orderFields = $res->fetch())
 			{
-				$result["ITEMS"][$prefix.$orderFields['ID']] = self::prepareEntity($orderFields, $entityOptions);
+				$resultItems[$prefix . $orderFields['ID']] =
+					static::prepareEntity($orderFields, $entityOptions)
+				;
 			}
+
+			$resultItems = $this->appendItemsByIds($resultItems, $search, $entityOptions);
+
+			$resultItems = $this->processResultItems($resultItems, $entityOptions);
+
+			$result["ITEMS"] = $resultItems;
+		}
+
+		return $result;
+	}
+
+	protected function getSearchSelect(): array
+	{
+		return [
+			'ID',
+			'ACCOUNT_NUMBER',
+			'DATE_INSERT',
+			'ORDER_TOPIC',
+		];
+	}
+
+	protected function getSearchFilter(string $search, array $options)
+	{
+		global $USER;
+
+		$operation = Loader::includeModule('sale') ? '*' : '*%';
+
+		$filter = [$operation . 'SEARCH_CONTENT' => CrmEntity::prepareToken($search)];
+
+		if (!(is_object($USER) && $USER->isAdmin()))
+		{
+			$queryOptions = [
+				'RAW_QUERY' => true,
+				'PERMS'=> CCrmPerms::getCurrentUserPermissions()
+			];
+
+			$permissionSql = CCrmPerms::buildSql(
+				static::getOwnerTypeName(),
+				'',
+				'READ',
+				$queryOptions
+			);
+
+			if($permissionSql <> '')
+			{
+				$filter['@ID'] = new SqlExpression($permissionSql);
+			}
+		}
+
+		$subFilter = [
+			'%ORDER_TOPIC' => $search,
+			'LOGIC' => 'OR'
+		];
+
+		if (is_numeric($search))
+		{
+			$subFilter['ID'] = (int)$search;
+			$subFilter['%ACCOUNT_NUMBER'] = $search;
+		}
+		else if (preg_match('/( . *)\[(\d+?)\]/i' . BX_UTF_PCRE_MODIFIER, $search, $matches))
+		{
+			$subFilter['ID'] = (int)$matches[2];
+			$subFilter['%ACCOUNT_NUMBER'] = trim($matches[1]);
+		}
+		else
+		{
+			$subFilter['%ACCOUNT_NUMBER'] = $search;
+		}
+
+		if (!empty($filter))
+		{
+			$filter[] = $subFilter;
+		}
+
+		return empty($filter) ? false : $this->prepareOptionalFilter($filter, $options);
+	}
+
+	protected function getByIdsRes(array $ids, array $options)
+	{
+		$result = Order::getList(
+			[
+				'order' => $this->getByIdsOrder(),
+				'select' => $this->getByIdsSelect(),
+				'filter' => $this->getByIdsFilter($ids, $options),
+			]
+		);
+
+		if (!is_object($result))
+		{
+			return null;
 		}
 
 		return $result;

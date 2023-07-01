@@ -10,11 +10,17 @@ $MESS['M_CRM_ENTITY_ACTION_DELETE_LEAD'] = 'Удалить лид';
 $MESS['M_CRM_ENTITY_ACTION_DELETE_DEAL'] = 'Удалить сделку';
 $MESS['M_CRM_ENTITY_ACTION_DELETE_CONTACT'] = 'Удалить контакт';
 $MESS['M_CRM_ENTITY_ACTION_DELETE_COMPANY'] = 'Удалить компанию';
+$MESS['M_CRM_ENTITY_ACTION_DELETE_QUOTE'] = 'Удалить предложение';
+$MESS['M_CRM_ENTITY_ACTION_DELETE_SMART_INVOICE'] = 'Удалить счёт';
+
 $MESS['M_CRM_ENTITY_ACTION_DELETE_CONFIRMATION'] = 'Вы уверены, что хотите удалить элемент?';
 $MESS['M_CRM_ENTITY_ACTION_DELETE_CONFIRMATION_LEAD'] = 'Вы уверены, что хотите удалить лид?';
 $MESS['M_CRM_ENTITY_ACTION_DELETE_CONFIRMATION_DEAL'] = 'Вы уверены, что хотите удалить сделку?';
 $MESS['M_CRM_ENTITY_ACTION_DELETE_CONFIRMATION_CONTACT'] = 'Вы уверены, что хотите удалить контакт?';
 $MESS['M_CRM_ENTITY_ACTION_DELETE_CONFIRMATION_COMPANY'] = 'Вы уверены, что хотите удалить компанию?';
+$MESS['M_CRM_ENTITY_ACTION_DELETE_CONFIRMATION_QUOTE'] = 'Вы уверены, что хотите удалить предложение?';
+$MESS['M_CRM_ENTITY_ACTION_DELETE_CONFIRMATION_SMART_INVOICE'] = 'Вы уверены, что хотите удалить счёт?';
+
 $MESS['M_CRM_ENTITY_ACTION_DELETE_CONFIRMATION_OK'] = 'Удалить';
 
 $MESS["M_CRM_CHANGE_MANUAL_OPPORTUNITY_SET_TO_AUTOMATIC"] = "Авторасчёт суммы";
@@ -45,6 +51,9 @@ $MESS['M_CRM_ENTITY_ACCESS_DENIED_TITLE_LEAD'] = 'Недостаточно пр�
 $MESS['M_CRM_ENTITY_ACCESS_DENIED_TITLE_DEAL'] = 'Недостаточно прав на просмотр сделки';
 $MESS['M_CRM_ENTITY_ACCESS_DENIED_TITLE_CONTACT'] = 'Недостаточно прав на просмотр контакта';
 $MESS['M_CRM_ENTITY_ACCESS_DENIED_TITLE_COMPANY'] = 'Недостаточно прав на просмотр компании';
+$MESS['M_CRM_ENTITY_ACCESS_DENIED_TITLE_QUOTE'] = 'Недостаточно прав на просмотр предложения';
+$MESS['M_CRM_ENTITY_ACCESS_DENIED_TITLE_SMART_INVOICE'] = 'Недостаточно прав на просмотр счёта';
+
 $MESS['M_CRM_ENTITY_ACCESS_DENIED_TEXT'] = 'Обратитесь к администратору вашего Битрикс24 или сотруднику, который отвечает за CRM';
 
 $MESS['M_CRM_ENTITY_NOT_FOUND_TITLE'] = 'Элемент не найден';
@@ -52,24 +61,44 @@ $MESS['M_CRM_ENTITY_NOT_FOUND_TITLE_LEAD'] = 'Лид не найден';
 $MESS['M_CRM_ENTITY_NOT_FOUND_TITLE_DEAL'] = 'Сделка не найдена';
 $MESS['M_CRM_ENTITY_NOT_FOUND_TITLE_CONTACT'] = 'Контакт не найден';
 $MESS['M_CRM_ENTITY_NOT_FOUND_TITLE_COMPANY'] = 'Компания не найдена';
+$MESS['M_CRM_ENTITY_NOT_FOUND_TITLE_QUOTE'] = 'Предложение не найдено';
+$MESS['M_CRM_ENTITY_NOT_FOUND_TITLE_SMART_INVOICE'] = 'Счёт не найден';
 
 $MESS['M_CRM_ENTITY_ALERT_CONFIRM'] = 'Понятно';
 
 $MESS["M_CRM_ACTION_SMART_ACTIVITY2"] = "Умные дела";
 $MESS["M_CRM_ACTION_SMART_ACTIVITY_ENABLED_NOTIFY_TITLE"] = "Умные дела включены";
-$MESS["M_CRM_ACTION_SMART_ACTIVITY_ENABLED_NOTIFY_TEXT"] = "Push CRM будет предлагать вам создать дело при выходе из сделки";
+$MESS["M_CRM_ACTION_SMART_ACTIVITY_ENABLED_NOTIFY_TEXT"] = "Push CRM будет предлагать вам создать дело при выходе";
+$MESS["M_CRM_ACTION_SMART_ACTIVITY_ENABLED_NOTIFY_TEXT_LEAD"] = "Push CRM будет предлагать вам создать дело при выходе из лида";
+$MESS["M_CRM_ACTION_SMART_ACTIVITY_ENABLED_NOTIFY_TEXT_DEAL"] = "Push CRM будет предлагать вам создать дело при выходе из сделки";
 $MESS["M_CRM_ACTION_SMART_ACTIVITY_DISABLED_NOTIFY_TITLE"] = "Умные дела отключены";
-$MESS["M_CRM_ACTION_SMART_ACTIVITY_DISABLED_NOTIFY_TEXT"] = "Push CRM не будет предлагать вам создать дело при выходе из сделки";
+$MESS["M_CRM_ACTION_SMART_ACTIVITY_DISABLED_NOTIFY_TEXT"] = "Push CRM не будет предлагать вам создать дело при выходе";
+$MESS["M_CRM_ACTION_SMART_ACTIVITY_DISABLED_NOTIFY_TEXT_LEAD"] = "Push CRM не будет предлагать вам создать дело при выходе из лида";
+$MESS["M_CRM_ACTION_SMART_ACTIVITY_DISABLED_NOTIFY_TEXT_DEAL"] = "Push CRM не будет предлагать вам создать дело при выходе из сделки";
 
 $MESS['M_CRM_ACTION_SMART_ACTIVITY_SKIP_TITLE'] = 'Не предлагать';
 $MESS['M_CRM_ACTION_SMART_ACTIVITY_SKIP_TITLE_LEAD'] = 'Не предлагать (для всех лидов)';
-$MESS['M_CRM_ACTION_SMART_ACTIVITY_SKIP_TITLE_DEAL'] = 'Не предлагать (для всех сделок)';
+$MESS['M_CRM_ACTION_SMART_ACTIVITY_SKIP_TITLE_DEAL'] = 'Не предлагать (для всех сделок воронки)';
 $MESS['M_CRM_ACTION_SMART_ACTIVITY_SKIP_TITLE_CONTACT'] = 'Не предлагать (для всех контактов)';
 $MESS['M_CRM_ACTION_SMART_ACTIVITY_SKIP_TITLE_COMPANY'] = 'Не предлагать (для всех компаний)';
 $MESS['M_CRM_ACTION_SMART_ACTIVITY_SKIP_TITLE_QUOTE'] = 'Не предлагать (для всех предложений)';
 $MESS['M_CRM_ACTION_SMART_ACTIVITY_SKIP_TITLE_SMART_INVOICE'] = 'Не предлагать (для всех счетов)';
-$MESS['M_CRM_ACTION_SMART_ACTIVITY_SKIP_TITLE_SMART_DOCUMENT'] = 'Не предлагать (для всех документов)';
 $MESS['M_CRM_ACTION_SMART_ACTIVITY_SKIP_DAY'] = 'Сегодня';
 $MESS['M_CRM_ACTION_SMART_ACTIVITY_SKIP_WEEK'] = 'На этой неделе';
 $MESS['M_CRM_ACTION_SMART_ACTIVITY_SKIP_MONTH'] = 'В этом месяце';
 $MESS['M_CRM_ACTION_SMART_ACTIVITY_SKIP_FOREVER'] = 'Никогда';
+
+$MESS['M_CRM_ACTION_PAYMENT_AUTOMATION'] = 'Стадия после оплаты';
+$MESS['M_CRM_ACTION_PAYMENT_AUTOMATION_TITLE'] = 'Настройки автоматизации';
+$MESS['M_CRM_ACTION_PAYMENT_AUTOMATION_STAGE_AFTER_PAYMENT'] = 'Стадия после оплаты';
+$MESS['M_CRM_ACTION_PAYMENT_AUTOMATION_STAGE_AFTER_DELIVERY'] = 'Стадия после завершения доставки';
+$MESS['M_CRM_ACTION_PAYMENT_AUTOMATION_SELECT_STAGE'] = 'Выберите стадию';
+$MESS['M_CRM_ACTION_PAYMENT_AUTOMATION_SELECT_STAGE_TEXT'] = 'Изменения будут применены для всех элементов воронки';
+$MESS['M_CRM_ACTION_PAYMENT_AUTOMATION_SELECT_STAGE_TEXT_DEAL'] = 'Изменения будут применены для всех сделок воронки';
+$MESS['M_CRM_ACTION_PAYMENT_AUTOMATION_SELECT_STAGE_TEXT_SMART_INVOICE'] = 'Изменения будут применены для всех счетов воронки';
+$MESS['M_CRM_ACTION_PAYMENT_AUTOMATION_STAGE_SAVE'] = 'Сохранить';
+$MESS['M_CRM_ACTION_PAYMENT_AUTOMATION_STAGE_SAVING'] = 'Сохранение...';
+
+$MESS['M_CRM_ENTITY_ACTION_DOCUMENTS'] = 'Документы';
+
+$MESS['M_CRM_ACTION_SMART_ACTIVITY_OPEN_LINES_TELEGRAM'] = 'Открытые линии: Telegram';

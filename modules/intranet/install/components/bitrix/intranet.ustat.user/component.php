@@ -2,6 +2,9 @@
 
 use Bitrix\Main\Type;
 
+/** @var $arParams array */
+/** @var $USER CAllUser */
+
 CModule::IncludeModule('intranet');
 
 $nowDate = new Type\DateTime();
@@ -201,9 +204,15 @@ foreach ($companyAverageData as $k => $companyData)
 }
 
 // department average
+$userDepartmentId = 0;
 $usersDepartments = \Bitrix\Intranet\UStat\UStat::getUsersDepartments();
-$userDepartments = $usersDepartments[$arParams['USER_ID']];
-$userDepartmentId = current($userDepartments);
+
+if (isset($usersDepartments[$arParams['USER_ID']]))
+{
+	$userDepartments = $usersDepartments[$arParams['USER_ID']];
+	$userDepartmentId = current($userDepartments);
+}
+
 
 $departmentAverageData = \Bitrix\Intranet\UStat\UStat::getDepartmentAverageGraphData(
 	$userDepartmentId, $fromDate, $toDate, $interval, $sectionField

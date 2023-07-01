@@ -80,8 +80,8 @@ if ($arResult['USER'] = $rsUser->Fetch())
 	$arResult['PATH_TO_USER'] = CComponentEngine::MakePathFromTemplate(($arParams["PATH_TO_USER"] <> '' ? $arParams["PATH_TO_USER"] : COption::GetOptionString('intranet', 'path_user', '/company/personal/user/#USER_ID#/')), array("USER_ID" => $arResult['USER']["ID"], "user_id" => $arResult['USER']["ID"]));
 }
 
-if ($arParams['TASK']["DESCRIPTION"])
-	if ($arParams['TASK']["~DESCRIPTION"])
+if (isset($arParams['TASK']["DESCRIPTION"]) && $arParams['TASK']["DESCRIPTION"])
+	if (isset($arParams['TASK']["~DESCRIPTION"]) && $arParams['TASK']["~DESCRIPTION"])
 		$arParams['TASK']["DESCRIPTION"] = $arParams['TASK']["~DESCRIPTION"];
 
 $folderUsers = COption::GetOptionString("socialnetwork", "user_page", false, SITE_ID);

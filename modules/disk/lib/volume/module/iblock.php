@@ -2,7 +2,9 @@
 
 namespace Bitrix\Disk\Volume\Module;
 
+use Bitrix\Disk;
 use Bitrix\Disk\Volume;
+use Bitrix\Disk\Internals\VolumeTable;
 use Bitrix\Iblock\PropertyTable;
 
 /**
@@ -17,9 +19,9 @@ class Iblock extends Volume\Module\Module
 	/**
 	 * Runs measure test to get volumes of selecting objects.
 	 * @param array $collectData List types data to collect: ATTACHED_OBJECT, SHARING_OBJECT, EXTERNAL_LINK, UNNECESSARY_VERSION.
-	 * @return $this
+	 * @return static
 	 */
-	public function measure($collectData = array())
+	public function measure(array $collectData = []): self
 	{
 		if (!$this->isMeasureAvailable())
 		{
@@ -32,7 +34,7 @@ class Iblock extends Volume\Module\Module
 		$indicatorType = $sqlHelper->forSql(static::className());
 		$ownerId = (string)$this->getOwner();
 
-		$excludeIblockIds = array();
+		$excludeIblockIds = [];
 
 		// Exclude webdav iblocks
 		$webdav = new Volume\Module\Webdav();
@@ -47,7 +49,7 @@ class Iblock extends Volume\Module\Module
 
 		$filter = $this->getFilter($excludeIblockIds ? ['!@IBLOCK_ID' => $excludeIblockIds] : []);
 
-		$includeIblockIds = array();
+		$includeIblockIds = [];
 		if (isset($filter['@IBLOCK_ID']))
 		{
 			$includeIblockIds = $filter['@IBLOCK_ID'];
@@ -63,7 +65,7 @@ class Iblock extends Volume\Module\Module
 
 		$groupSelectSql = '';
 		$groupBySql = '';
-		$groupColumns = array();
+		$groupColumns = [];
 		if (count($includeIblockIds) > 0)
 		{
 			$groupColumns[] = 'IBLOCK_ID';
@@ -96,11 +98,11 @@ class Iblock extends Volume\Module\Module
 		}
 
 		// Scan User fields specific to module
-		$entityUserFieldSource = $this->prepareUserFieldSourceSql(array(
+		$entityUserFieldSource = $this->prepareUserFieldSourceSql([
 			'table' => 'b_iblock_element',
 			'relation' => 'ID',
-			'select' => array('IBLOCK_ID' => 'ID'),
-		));
+			'select' => ['IBLOCK_ID' => 'ID'],
+		]);
 		if ($entityUserFieldSource != '')
 		{
 			$entityUserFieldSource = " UNION {$entityUserFieldSource} ";
@@ -248,17 +250,20 @@ class Iblock extends Volume\Module\Module
 		";
 
 		$columnList = Volume\QueryHelper::prepareInsert(
-			array_merge(array(
-				'INDICATOR_TYPE',
-				'OWNER_ID',
-				'CREATE_TIME',
-				'FILE_SIZE',
-				'FILE_COUNT',
-			),$groupColumns),
+			array_merge(
+				[
+					'INDICATOR_TYPE',
+					'OWNER_ID',
+					'CREATE_TIME',
+					'FILE_SIZE',
+					'FILE_COUNT',
+				],
+				$groupColumns
+			),
 			$this->getSelect()
 		);
 
-		$tableName = \Bitrix\Disk\Internals\VolumeTable::getTableName();
+		$tableName = VolumeTable::getTableName();
 
 		$connection->queryExecute("INSERT INTO {$tableName} ({$columnList}) {$querySql}");
 
@@ -269,14 +274,14 @@ class Iblock extends Volume\Module\Module
 	 * Returns entity list with user field corresponding to module.
 	 * @return string[]
 	 */
-	public function getEntityList()
+	public function getEntityList(): array
 	{
 		static $entityList;
 		if (!isset($entityList))
 		{
-			$entityList = array();
+			$entityList = [];
 
-			$excludeIblockIds = array();
+			$excludeIblockIds = [];
 
 			// Exclude webdav iblocks
 			$webdav = new Volume\Module\Webdav();
@@ -289,9 +294,9 @@ class Iblock extends Volume\Module\Module
 				}
 			}
 
-			$filter = $this->getFilter(array('!@IBLOCK_ID' => $excludeIblockIds));
+			$filter = $this->getFilter(['!@IBLOCK_ID' => $excludeIblockIds]);
 
-			$excludeIblockIds = array();
+			$excludeIblockIds = [];
 			if (isset($filter['!@IBLOCK_ID']))
 			{
 				$excludeIblockIds = $filter['!@IBLOCK_ID'];
@@ -301,7 +306,7 @@ class Iblock extends Volume\Module\Module
 				$excludeIblockIds[] = $filter['IBLOCK_ID'];
 			}
 
-			$includeIblockIds = array();
+			$includeIblockIds = [];
 			if (isset($filter['@IBLOCK_ID']))
 			{
 				$includeIblockIds = $filter['@IBLOCK_ID'];
@@ -317,7 +322,7 @@ class Iblock extends Volume\Module\Module
 
 
 			// Exclude iblocks
-			$excludeEntityIds = array();
+			$excludeEntityIds = [];
 			foreach ($excludeIblockIds as $iblockId)
 			{
 				$excludeEntityIds[] = 'IBLOCK_'.$iblockId;
@@ -325,28 +330,31 @@ class Iblock extends Volume\Module\Module
 			}
 
 			// include iblocks
-			$includeEntityIds = array();
+			$includeEntityIds = [];
 			foreach ($includeIblockIds as $iblockId)
 			{
 				$includeEntityIds[] = 'IBLOCK_'.$iblockId;
 				$includeEntityIds[] = 'IBLOCK_'.$iblockId.'_SECTION';
 			}
 
-			$filter = array(
+			$filter = [
 				'ENTITY_ID'     => 'IBLOCK_%',
-				'=USER_TYPE_ID' => array(
+				'=USER_TYPE_ID' => [
 					\CUserTypeFile::USER_TYPE_ID,
-					\Bitrix\Disk\Uf\FileUserType::USER_TYPE_ID,
-					\Bitrix\Disk\Uf\VersionUserType::USER_TYPE_ID,
-				),
-			);
-			$userFieldList = \Bitrix\Main\UserFieldTable::getList(array('filter' => $filter));
+					Disk\Uf\FileUserType::USER_TYPE_ID,
+					Disk\Uf\VersionUserType::USER_TYPE_ID,
+				],
+			];
+			$userFieldList = \Bitrix\Main\UserFieldTable::getList(['filter' => $filter]);
 			if ($userFieldList->getSelectedRowsCount() > 0)
 			{
 				foreach ($userFieldList as $userField)
 				{
 					$entityName = $userField['ENTITY_ID'];
-					if (isset($entityList[$entityName])) continue;
+					if (isset($entityList[$entityName]))
+					{
+						continue;
+					}
 
 					// exclude
 					if (count($excludeIblockIds) > 0 && in_array($entityName, $excludeIblockIds)) continue;
@@ -354,10 +362,10 @@ class Iblock extends Volume\Module\Module
 					if (count($includeEntityIds) > 0 && !in_array($entityName, $includeEntityIds)) continue;
 
 					/** @var \Bitrix\Main\Entity\Base $ent */
-					$ent = \Bitrix\Main\Entity\Base::compileEntity($entityName, array(), array(
+					$ent = \Bitrix\Main\Entity\Base::compileEntity($entityName, [], [
 						'namespace' => __NAMESPACE__,
 						'uf_id'     => $entityName,
-					));
+					]);
 
 					$entityList[$entityName] = $ent->getDataClass();
 				}

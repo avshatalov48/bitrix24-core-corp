@@ -2,16 +2,17 @@
 
 namespace Bitrix\Crm\Model;
 
+use Bitrix\Crm\CompanyTable;
 use Bitrix\Crm\Currency;
 use Bitrix\Crm\FieldMultiTable;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\Observer\Entity\ObserverTable;
 use Bitrix\Crm\ProductRowTable;
 use Bitrix\Crm\Requisite\EntityLink;
+use Bitrix\Crm\Reservation;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\StatusTable;
 use Bitrix\Crm\UtmTable;
-use Bitrix\Crm\Reservation;
 use Bitrix\Main\Application;
 use Bitrix\Main\DB\SqlHelper;
 use Bitrix\Main\Localization\Loc;
@@ -193,9 +194,6 @@ final class FieldRepository
 		return
 			(new IntegerField($fieldName))
 				->configureRequired()
-				->configureDefaultValue(static function () {
-					return Container::getInstance()->getContext()->getUserId();
-				})
 				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_ASSIGNED_BY_ID'))
 		;
 	}
@@ -224,6 +222,18 @@ final class FieldRepository
 		return
 			(new IntegerField($fieldName))
 				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_COMPANY_ID'))
+		;
+	}
+
+	public function getCompany(): Relation
+	{
+		return
+			(new Reference(
+				'COMPANY',
+				CompanyTable::class,
+				Join::on('this.COMPANY_ID', 'ref.ID')
+			))
+			->configureTitle(\CCrmOwnerType::GetDescription(\CCrmOwnerType::Company))
 		;
 	}
 

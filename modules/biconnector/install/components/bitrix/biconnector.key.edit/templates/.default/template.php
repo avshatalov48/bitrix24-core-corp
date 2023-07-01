@@ -1,16 +1,23 @@
 <?php
+/**
+ * Bitrix vars
+ * @var array $arParams
+ * @var array $arResult
+ * @var CMain $APPLICATION
+ * @var CUser $USER
+ * @var CDatabase $DB
+ * @var CBitrixComponentTemplate $this
+ * @var string $templateName
+ * @var string $templateFile
+ * @var string $templateFolder
+ * @var string $componentPath
+ * @var CBitrixComponent $component
+ */
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
-
-/**
- * Bitrix vars
- * @global CMain $APPLICATION
- * @param array $arParams
- * @param array $arResult
- * @param CBitrixComponentTemplate $this
- */
 
 use Bitrix\Main\Localization\Loc;
 
@@ -33,7 +40,7 @@ foreach ($arResult['FORM_DATA']['USERS'] as $userId)
 	$users[] = ['user', $userId];
 }
 ?>
-<form id="<?=$listDomIds['formId']?>" class="biconnector-key-edit-wrapper" method="post" action="<?=$formAction?>">
+<form class="biconnector-key-edit-wrapper" method="post">
 	<?=bitrix_sessid_post()?>
 	<input type="hidden" name="ID" value="<?=$arResult['FORM_DATA']['ID']?>">
 	<input type="hidden" name="ACCESS_KEY" value="<?=$arResult['FORM_DATA']['ACCESS_KEY']?>">
@@ -83,7 +90,7 @@ foreach ($arResult['FORM_DATA']['USERS'] as $userId)
 			}
 			$buttons[] = [ 'TYPE' => 'cancel' ];
 
-			$APPLICATION->includeComponent('bitrix:ui.button.panel', '', [
+			$APPLICATION->IncludeComponent('bitrix:ui.button.panel', '', [
 				'BUTTONS' => $buttons,
 			]);
 			?>

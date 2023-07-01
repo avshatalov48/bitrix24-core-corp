@@ -15,9 +15,11 @@ function ___writeToAreasFile($fn, $text)
 	if(file_exists($fn) && !is_writable($fn) && defined("BX_FILE_PERMISSIONS"))
 		@chmod($fn, BX_FILE_PERMISSIONS);
 
-	$fd = @fopen($fn, "wb");
-	if(!$fd)
+	$fd = file_exists($fn) ? fopen($fn, 'wb') : null;
+	if (!$fd)
+	{
 		return false;
+	}
 
 	if(false === fwrite($fd, $text))
 	{

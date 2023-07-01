@@ -14,7 +14,7 @@ final class SignDocumentFromSlider extends Base
 	{
 		return (
 			!$this->isUserSeenTour()
-			&& ServiceLocator::getInstance()->get('crm.integration.sign')::isEnabledInCurrentTariff()
+			&& ServiceLocator::getInstance()->get('crm.integration.sign')::isEnabled()
 		);
 	}
 
@@ -24,8 +24,8 @@ final class SignDocumentFromSlider extends Base
 			[
 				'id' => 'step-' . self::OPTION_NAME,
 				'target' => '#crm-document-sign',
-				'title' => Loc::getMessage('CRM_TOUR_SDFS_STEP_TITLE'),
-				'text' => Loc::getMessage('CRM_TOUR_SDFS_STEP_TEXT'),
+				'title' => Loc::getMessage('CRM_TOUR_SDFS_STEP_TITLE_2'),
+				'text' => Loc::getMessage('CRM_TOUR_SDFS_STEP_TEXT_2'),
 				'position' => 'left',
 			],
 		];
@@ -39,6 +39,8 @@ final class SignDocumentFromSlider extends Base
 					'width' => 400,
 				],
 			],
+			'showOverlayFromFirstStep' => true,
+			'hideTourOnMissClick' => true,
 		];
 	}
 }

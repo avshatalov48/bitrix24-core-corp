@@ -51,7 +51,7 @@ final class Task extends \Bitrix\Tasks\Integration
 				"tasks",
 				"paths_task_group_entry",
 				"/workgroups/group/#group_id#/tasks/task/view/#task_id#/",
-				$task["SITE_ID"]
+				$task["SITE_ID"] ?? null
 			);
 			$path = str_replace("#group_id#", $task["GROUP_ID"], $path);
 			$path = str_replace("#task_id#", $task["ID"], $path);
@@ -102,7 +102,7 @@ final class Task extends \Bitrix\Tasks\Integration
 		$arSearchIndex = array(
 			"LAST_MODIFIED" => $task["CHANGED_DATE"] ? $task["CHANGED_DATE"] : $task["CREATED_DATE"],
 			"TITLE" => $task["TITLE"],
-			"BODY" => strip_tags($task["DESCRIPTION"]) ? strip_tags($task["DESCRIPTION"]) : $task["TITLE"],
+			"BODY" => strip_tags($task["DESCRIPTION"] ?? '') ? strip_tags($task["DESCRIPTION"] ?? '') : $task["TITLE"],
 			"TAGS" => $tags,
 			"SITE_ID" => $arSite,
 			"PERMISSIONS" => \CTasks::__GetSearchPermissions($task), // todo: move this method here

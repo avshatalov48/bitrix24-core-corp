@@ -3,14 +3,41 @@
  */
 jn.define('communication/menu', (require, exports, module) => {
 
-	const EntitySvg = require('assets/communication/menu');
-	const { ImType, PhoneType, isOpenLine, getOpenLineTitle } = require('communication/connection');
+	const ConnectionTypeSvg = require('assets/communication/menu');
+	const { ImType, PhoneType, EmailType, isOpenLine, getOpenLineTitle } = require('communication/connection');
 	const { CommunicationEvents } = require('communication/events');
+	const { EventEmitter } = require('event-emitter');
+	const { WarningBlock, BlockType } = require('layout/ui/warning-block');
+	const { Loc } = require('loc');
+	const { Type } = require('type');
+	const { get, isEmpty } = require('utils/object');
 	const { getFormattedNumber } = require('utils/phone');
-	const { isEmpty } = require('utils/object');
+	const { stringify } = require('utils/string');
 
-	const CHANNELS = 'CHANNELS';
-	const MonochromeGraphite = '#767c87';
+	let MultiFieldDrawer;
+	let CrmType;
+	/** @var TypeName **/
+	let TypeName;
+	let EntitySvg;
+
+	try
+	{
+		MultiFieldDrawer = require('crm/multi-field-drawer').MultiFieldDrawer;
+		CrmType = require('crm/type').Type;
+		TypeName = require('crm/type').TypeName;
+		EntitySvg = require('crm/assets/entity').EntitySvg;
+	}
+	catch (e)
+	{
+		console.warn(e);
+	}
+
+	const ENTITY_ICONS = {
+		[TypeName.Contact]: EntitySvg.contactCreate('#6a737f'),
+		[TypeName.Company]: EntitySvg.companyCreate('#6a737f'),
+	};
+
+	const CLIENT_ACTIONS_CODE = 'CLIENT_ACTIONS';
 
 	/**
 	 * @class CommunicationMenu
@@ -19,96 +46,32 @@ jn.define('communication/menu', (require, exports, module) => {
 	{
 		constructor(props)
 		{
-			this.setConnectionTypes(props.connections);
-			this.value = props.value || {};
-			this.ownerInfo = props.ownerInfo || {};
+			this.connections = BX.prop.getArray(props, 'connections', []);
+			this.value = BX.prop.getObject(props, 'value', {});
+			this.ownerInfo = BX.prop.getObject(props, 'ownerInfo', {});
+			this.isConnectionStubsEnabled = BX.prop.getBoolean(props, 'showConnectionStubs', true);
+			this.clientOptions = BX.prop.getArray(props, 'clientOptions', []);
+			this.permissions = BX.prop.getObject(props, 'permissions', {});
+
+			const uid = BX.prop.getString(props, 'uid', null);
+			this.setUid(uid);
+
 			this.titlesBySectionCode = {};
+			this.title = Type.isStringFilled(props.title) ? props.title : Loc.getMessage('M_CRM_COMMUNICATION_MENU_TITLE');
+			this.additionalItems = Array.isArray(props.additionalItems) ? props.additionalItems : [];
+
 			this.onCloseCommunicationMenu = this.handleOnCloseMenu.bind(this);
+			this.onClickCallback = this.handleOnClickCallback.bind(this);
 		}
 
-		show(connections)
+		handleOnClickCallback(params, connectionType)
 		{
-			this.setConnectionTypes(connections);
-			const menu = this.create();
-			menu.show(PageManager);
-		}
-
-		getSvg(type)
-		{
-			return EntitySvg[type](MonochromeGraphite);
-		}
-
-		getItems()
-		{
-			return Object.keys(this.value)
-				.map((contactType) => {
-						const contactValues = this.value[contactType];
-						if (!Array.isArray(contactValues))
-						{
-							return null;
-						}
-
-						return contactValues.map((contactValue) =>
-							this.connectionTypes.map((connectionType) => {
-									const connectionValues = contactValue[connectionType];
-
-									if (!connectionValues)
-									{
-										return null;
-									}
-
-									return Array.isArray(connectionValues)
-										? connectionValues.map((connectionValue) =>
-											this.createItem({
-												...contactValue,
-												[connectionType]: connectionValue,
-												connectionType,
-											}))
-										: this.createItem({ ...contactValue, connectionType });
-								},
-							),
-						);
-					},
-				)
-				.flat(Infinity)
-				.filter(Boolean);
-		}
-
-		/**
-		 * @param {object} params
-		 * @return {{data: {svgIcon: *}, subtitle: (?string|*), closeCallback: *, sectionCode: string, id: string, title: (*|string), onClickCallback: (function(): Promise<{closeCallback: (function(): void)}>)}|null}
-		 */
-		createItem(params)
-		{
-			const { id, type, title = '', connectionType } = params;
-			const itemValue = params[connectionType];
-			const value = itemValue && itemValue.value || itemValue;
-			const complexName = itemValue && itemValue.complexName || '';
-
-			if (connectionType === ImType && !isOpenLine(value))
-			{
-				return null;
-			}
-
-			const sectionCode = `${type}_${title}`;
-			this.setTitlesSectionCode(title, type, sectionCode);
-
-			return {
-				id: `${id}_${type}`,
-				sectionCode,
-				title: this.getTitle(value, connectionType),
-				subtitle: this.getSubtitle(complexName, value, connectionType),
-				data: {
-					svgIcon: this.getSvg(connectionType),
-				},
-				closeCallback: this.onCloseCommunicationMenu,
-				onClickCallback: () => Promise.resolve({
-					closeCallback: this.handleOnCloseMenu({
-						type: connectionType,
-						props: this.prepareValue(params, connectionType),
-					}),
+			return Promise.resolve({
+				closeCallback: this.handleOnCloseMenu({
+					type: connectionType,
+					props: this.prepareValue(params, connectionType),
 				}),
-			};
+			});
 		}
 
 		handleOnCloseMenu(params)
@@ -116,11 +79,321 @@ jn.define('communication/menu', (require, exports, module) => {
 			return () => CommunicationEvents.execute(params);
 		}
 
+		/**
+		 * @public
+		 * @param parentWidget
+		 * @return {Promise}
+		 */
+		show(parentWidget = PageManager)
+		{
+			const actions = this.getActions();
+
+			if (actions.length === 0)
+			{
+				return Promise.reject();
+			}
+
+			this.parentWidget = parentWidget;
+
+			return this.create(actions).show(parentWidget);
+		}
+
+		/**
+		 * @public
+		 * @param {String} uid
+		 * @return {void}
+		 */
+		setUid(uid)
+		{
+			if (uid)
+			{
+				this.customEventEmitter = EventEmitter.createWithUid(uid);
+			}
+			else
+			{
+				this.customEventEmitter = null;
+			}
+		}
+
+		/**
+		 * @public
+		 * @param {Object} value
+		 * @return {void}
+		 */
+		setValue(value)
+		{
+			this.value = value;
+		}
+
+		/**
+		 * @private
+		 * @see CommunicationMenu::show()
+		 * @param actions
+		 */
+		create(actions)
+		{
+			return new ContextMenu({
+				testId: 'COMMUNICATION_MENU',
+				customSection: this.getInfoSection(actions),
+				actions,
+				titlesBySectionCode: this.titlesBySectionCode,
+				params: {
+					shouldResizeContent: true,
+					showCancelButton: true,
+					title: this.title,
+				},
+			});
+		}
+
+		getInfoSection(actions)
+		{
+			const hasClientActions = actions.some((action) => action.sectionCode === CLIENT_ACTIONS_CODE);
+			if (hasClientActions)
+			{
+				const { ownerTypeName } = this.ownerInfo;
+				const messagePrefix = 'M_CRM_COMMUNICATION_MENU_INFO_TITLE';
+				const title = Loc.hasMessage(`${messagePrefix}_${ownerTypeName}`)
+					? Loc.getMessage(`${messagePrefix}_${ownerTypeName}`)
+					: Loc.getMessage(messagePrefix);
+
+				return {
+					height: 85,
+					layout: new WarningBlock({
+						title,
+						description: Loc.getMessage('M_CRM_COMMUNICATION_MENU_INFO_DESCRIPTION'),
+						type: BlockType.info,
+					}),
+				};
+			}
+
+			return null;
+		}
+
+		getActions()
+		{
+			const actions = [];
+
+			this.getClientsWithLayoutOrder().forEach((clientType) => {
+				const clientValues = this.value[clientType];
+				if (!Array.isArray(clientValues))
+				{
+					return;
+				}
+
+				clientValues.forEach((clientValue) => {
+					const filledActions = [];
+					const stubActions = [];
+
+					this.connections.forEach((connectionType) => {
+							const connectionValue = clientValue[connectionType] || [];
+							const connectionValues = Array.isArray(connectionValue) ? connectionValue : [connectionValue];
+
+							if (connectionValues.length === 0)
+							{
+								const stubItem = this.createStubItem(clientValue, connectionType);
+								if (stubItem)
+								{
+									stubActions.push(stubItem);
+								}
+							}
+							else
+							{
+								const clientItems = connectionValues
+									.map((connectionValue) => this.createItem({
+										...clientValue,
+										[connectionType]: connectionValue,
+										connectionType,
+									}))
+									.filter(Boolean);
+
+								filledActions.push(...clientItems);
+							}
+
+						},
+					);
+
+					actions.push(...filledActions, ...stubActions);
+				});
+			});
+
+			actions.push(...this.addClientActions(actions));
+			actions.push(...this.addAdditionalItems(actions));
+
+			return actions;
+		}
+
+		getClientsWithLayoutOrder()
+		{
+			const valueOrder = Object.keys(this.value);
+			const entityTypeOrder = this.clientOptions.map(({ entityTypeName }) => entityTypeName);
+
+			if (entityTypeOrder.length === 0)
+			{
+				return valueOrder;
+			}
+
+			const valueOrderWithoutClientOptions = valueOrder.filter((value) => !entityTypeOrder.includes(value));
+
+			return [
+				...valueOrderWithoutClientOptions,
+				...entityTypeOrder,
+			];
+		}
+
+		/**
+		 * @param {object} entityValue
+		 * @param {string} connectionType
+		 * @return {object}
+		 */
+		createStubItem(entityValue, connectionType)
+		{
+			if (!MultiFieldDrawer)
+			{
+				return null;
+			}
+
+			if (connectionType !== PhoneType && connectionType !== EmailType)
+			{
+				return null;
+			}
+
+			const { type, id: entityId, title: entityTitle } = entityValue;
+			const entityTypeName = type.toUpperCase();
+
+			if (!this.shouldShowStubForEntityType(entityTypeName))
+			{
+				return null;
+			}
+
+			const { ownerTypeName } = this.ownerInfo;
+			if (ownerTypeName && ownerTypeName === entityTypeName)
+			{
+				return null;
+			}
+
+			const title = this.getStubTitle(connectionType);
+			if (!Type.isStringFilled(title))
+			{
+				return null;
+			}
+
+			const sectionCode = `${entityTypeName}_${entityId}`;
+
+			this.setTitleForSection(sectionCode, entityTitle, entityTypeName);
+
+			return {
+				id: `${sectionCode}_${connectionType}_STUB`,
+				sectionCode,
+				title,
+				data: {
+					svgIcon: ConnectionTypeSvg[connectionType]('#828b95'),
+				},
+				isSemitransparent: true,
+				isCustomIconColor: true,
+				onClickCallback: (action, itemId, { parentWidget }) => parentWidget.close(() => {
+					const description = Loc.getMessage(`M_CRM_COMMUNICATION_MENU_${connectionType.toUpperCase()}_DESCRIPTION`);
+					const multiFieldDrawer = new MultiFieldDrawer({
+						entityTypeId: CrmType.resolveIdByName(entityTypeName),
+						entityId,
+						fields: [connectionType.toUpperCase()],
+						warningBlock: { description },
+					});
+
+					multiFieldDrawer.show(this.parentWidget);
+				}),
+			};
+		}
+
+		shouldShowStubForEntityType(entityTypeName)
+		{
+			if (!this.isConnectionStubsEnabled)
+			{
+				return false;
+			}
+
+			if (entityTypeName !== TypeName.Contact && entityTypeName !== TypeName.Company)
+			{
+				return false;
+			}
+
+			return (
+				get(this.permissions, [entityTypeName, 'read'], false)
+				&& get(this.permissions, [entityTypeName, 'update'], false)
+			);
+		}
+
+		getStubTitle(connectionType)
+		{
+			return Loc.getMessage(`M_CRM_COMMUNICATION_MENU_${connectionType.toUpperCase()}_STUB`);
+		}
+
+		/**
+		 * @param {object} params
+		 * @return {object}
+		 */
+		createItem(params)
+		{
+			const { type, id: entityId, title: entityTitle = '', connectionType } = params;
+			const itemValue = params[connectionType];
+			if (!itemValue)
+			{
+				return null;
+			}
+
+			const value = itemValue.value || itemValue;
+			const complexName = itemValue.complexName || '';
+			const isSelected = itemValue.isSelected || false;
+			const showSelectedImage = itemValue.showSelectedImage || false;
+			const onClickCallback = itemValue.onClickCallback || this.onClickCallback;
+
+			if (connectionType === ImType && !isOpenLine(value))
+			{
+				return null;
+			}
+
+			const title = this.getTitle(value, connectionType);
+			if (!Type.isStringFilled(title))
+			{
+				return null;
+			}
+
+			const entityTypeName = type.toUpperCase();
+			const sectionCode = `${entityTypeName}_${entityId}`;
+
+			this.setTitleForSection(sectionCode, entityTitle, entityTypeName);
+
+			return {
+				id: `${sectionCode}_${connectionType}`,
+				sectionCode,
+				title,
+				subtitle: this.getSubtitle(complexName, value, connectionType),
+				isSelected,
+				showSelectedImage,
+				data: {
+					svgIcon: ConnectionTypeSvg[connectionType](),
+				},
+				closeCallback: this.onCloseCommunicationMenu,
+				onClickCallback: () => {
+					return onClickCallback(params, connectionType);
+				},
+			};
+		}
+
+		getSvg(connectionType)
+		{
+			if (EntitySvg.hasOwnProperty(connectionType))
+			{
+				return EntitySvg[connectionType]();
+			}
+
+			return null;
+		}
+
 		getTitle(value, type)
 		{
 			const preparers = {
 				[PhoneType]: getFormattedNumber,
-				[ImType]: () => BX.message('M_CRM_COMMUNICATION_MENU_OPENLINE'),
+				[ImType]: () => Loc.getMessage('M_CRM_COMMUNICATION_MENU_OPENLINE'),
 			};
 
 			if (preparers.hasOwnProperty(type))
@@ -130,7 +403,7 @@ jn.define('communication/menu', (require, exports, module) => {
 				return preparer(value);
 			}
 
-			return String(value);
+			return stringify(value);
 		}
 
 		getSubtitle(complexName, value, connectionType)
@@ -147,39 +420,54 @@ jn.define('communication/menu', (require, exports, module) => {
 			return complexName;
 		}
 
-		setTitlesSectionCode(title, type, sectionCode)
+		setTitleForSection(sectionCode, entityTitle, entityTypeName)
 		{
-			const titleContactType = BX.message(`M_CRM_COMMUNICATION_MENU_${type.toUpperCase()}`) || '';
-			this.titlesBySectionCode[sectionCode] = BBCodeText({
-				style: {
-					fontSize: 14,
-					fontWeight: '400',
-					color: '#959ca4',
-				},
-				numberOfLines: 1,
-				ellipsize: 'end',
-				value: `[COLOR=#525C69]${titleContactType}[/COLOR] ${title}`.trim(),
-			});
+			const titleContactType = Loc.getMessage(`M_CRM_COMMUNICATION_MENU_${entityTypeName}`);
+
+			if (Type.isStringFilled(titleContactType))
+			{
+				this.titlesBySectionCode[sectionCode] = BBCodeText({
+					style: {
+						fontSize: 14,
+						fontWeight: '400',
+						color: '#959ca4',
+					},
+					numberOfLines: 1,
+					ellipsize: 'end',
+					value: `[COLOR=#525C69]${titleContactType}[/COLOR] ${entityTitle}`.trim(),
+				});
+			}
 		}
 
 		prepareValue(menuValue, connectionType)
 		{
-			const connection = menuValue[connectionType];
+			let connectionValue = menuValue[connectionType];
+			if (!connectionValue)
+			{
+				return null;
+			}
+
+			if (Array.isArray(connectionValue))
+			{
+				connectionValue = connectionValue[0];
+			}
 
 			switch (connectionType)
 			{
 				case PhoneType:
-
+				{
 					const entityId = menuValue.id;
 					const entityTypeName = menuValue.type.toUpperCase();
 
 					const params = {
+						'NAME': menuValue.title,
 						'ENTITY_TYPE_NAME': entityTypeName,
 						'ENTITY_ID': entityId,
 					};
 
-					if (!isEmpty(this.ownerInfo) &&
-						(this.ownerInfo.ownerId !== entityId || this.ownerInfo.ownerTypeName !== entityTypeName)
+					if (
+						!isEmpty(this.ownerInfo)
+						&& (this.ownerInfo.ownerId !== entityId || this.ownerInfo.ownerTypeName !== entityTypeName)
 					)
 					{
 						params.BINDINGS = [
@@ -191,12 +479,27 @@ jn.define('communication/menu', (require, exports, module) => {
 					}
 
 					return {
-						number: typeof connection === 'string' ? connection : connection.value,
+						number: typeof connectionValue === 'string' ? connectionValue : connectionValue.value,
 						params,
 					};
-				case ImType:
-					const connectionValue = menuValue[connectionType];
+				}
 
+				case EmailType:
+				{
+					let { ownerId, ownerTypeName: ownerType } = this.ownerInfo;
+
+					ownerId = ownerId || menuValue.id;
+					ownerType = ownerType || menuValue.type.toUpperCase();
+
+					return {
+						email: typeof connectionValue === 'string' ? connectionValue : connectionValue.value,
+						params: {
+							owner: { ownerType, ownerId },
+						},
+					};
+				}
+
+				case ImType:
 					return {
 						event: 'openline',
 						params: {
@@ -206,39 +509,79 @@ jn.define('communication/menu', (require, exports, module) => {
 							},
 						},
 					};
-				default:
-					return menuValue[connectionType].value;
 			}
+
+			return null;
 		}
 
-		setConnectionTypes(connections = [])
+		addClientActions(actions)
 		{
-			if (!isEmpty(connections) && Array.isArray(connections))
+			if (!this.customEventEmitter || this.clientOptions.length === 0)
 			{
-				this.connectionTypes = connections;
+				return [];
 			}
+
+			const { ownerTypeName } = this.ownerInfo;
+			if (ownerTypeName && (ownerTypeName === TypeName.Contact || ownerTypeName === TypeName.Company))
+			{
+				return [];
+			}
+
+			const hasContacts = actions.some(({ id }) => id.startsWith('CONTACT_'));
+			const hasCompanies = actions.some(({ id }) => id.startsWith('COMPANY_'));
+
+			if (hasContacts || hasCompanies)
+			{
+				return [];
+			}
+
+			const filterToShowIfMultipleOrHasNoClientsByType = ({ type }) => {
+				if (type === 'contact' && hasContacts)
+				{
+					return false;
+				}
+
+				if (type === 'company' && hasCompanies)
+				{
+					return false;
+				}
+
+				return true;
+			};
+
+			return this.clientOptions
+				.filter(filterToShowIfMultipleOrHasNoClientsByType)
+				.map(({ entityTypeName, name }) => {
+					return {
+						id: `CLIENT_ADD_${entityTypeName}`,
+						sectionCode: CLIENT_ACTIONS_CODE,
+						title: Loc.getMessage(`M_CRM_COMMUNICATION_MENU_ADD_${entityTypeName}`),
+						data: { svgIcon: ENTITY_ICONS[entityTypeName] },
+						onClickCallback: () => {
+							const closeCallback = () => {
+								this.customEventEmitter.emit('UI.Fields.Client::select', [{
+									fieldName: name,
+									entityTypeName: entityTypeName.toLowerCase(),
+								}]);
+							};
+
+							return Promise.resolve({ closeCallback });
+						},
+					};
+				});
 		}
 
-		create()
+		addAdditionalItems(actions)
 		{
-			const actions = this.getItems();
+			const hasClientActions = actions.some((action) => action.sectionCode === CLIENT_ACTIONS_CODE);
+			if (hasClientActions)
+			{
+				return [];
+			}
 
-			const title = this.connectionTypes.length === 1 ? this.connectionTypes[0].toUpperCase() : CHANNELS;
-
-			return new ContextMenu({
-				testId: 'COMMUNICATION_MENU',
-				actions,
-				titlesBySectionCode: this.titlesBySectionCode,
-				params: {
-					shouldResizeContent: true,
-					showCancelButton: true,
-					title: BX.message(`M_CRM_COMMUNICATION_MENU_${title}`),
-				},
-			});
+			return this.additionalItems;
 		}
-
 	}
 
 	module.exports = { CommunicationMenu };
-
 });

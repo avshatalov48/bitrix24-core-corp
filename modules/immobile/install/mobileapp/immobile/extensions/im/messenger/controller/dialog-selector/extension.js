@@ -3,24 +3,24 @@
  */
 jn.define('im/messenger/controller/dialog-selector', (require, exports, module) => {
 
-	const { Type } = jn.require('type');
-	const { Loc } = jn.require('loc');
-	const { Controller } = jn.require('im/messenger/controller/base');
-	const { ChatSelector } = jn.require('im/chat/selector/chat');
-	const { Logger } = jn.require('im/messenger/lib/logger');
-	const { EventType } = jn.require('im/messenger/const');
-	const { SearchConverter } = jn.require('im/messenger/lib/converter');
-	const { MessengerParams } = jn.require('im/messenger/lib/params');
+	const { Type } = require('type');
+	const { Loc } = require('loc');
+	const { clone } = require('utils/object');
+	const { ChatSelector } = require('im/chat/selector/chat');
+	const { core } = require('im/messenger/core');
+	const { Logger } = require('im/messenger/lib/logger');
+	const { EventType } = require('im/messenger/const');
+	const { SearchConverter } = require('im/messenger/lib/converter');
+	const { MessengerParams } = require('im/messenger/lib/params');
+	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 
 	/**
 	 * @class DialogSelector
 	 */
-	class DialogSelector extends Controller
+	class DialogSelector
 	{
 		constructor(options = {})
 		{
-			super(options);
-
 			if (options.view)
 			{
 				this.view = options.view;
@@ -29,6 +29,9 @@ jn.define('im/messenger/controller/dialog-selector', (require, exports, module) 
 			{
 				throw new Error('DialogSelector: options.view is required');
 			}
+
+			this.store = core.getStore();
+
 			if (options.entities)
 			{
 				this.entities = options.entities;
@@ -104,13 +107,13 @@ jn.define('im/messenger/controller/dialog-selector', (require, exports, module) 
 					}
 				}
 
-				this.emitMessengerEvent(EventType.messenger.openDialog, data);
+				MessengerEmitter.emit(EventType.messenger.openDialog, data);
 			}
 		}
 
 		getUserCarouselItem()
 		{
-			const recentUserList = ChatUtils.objectClone(MessengerStore.getters['recentModel/getUserList']);
+			const recentUserList = clone(this.store.getters['recentModel/getUserList']);
 			const recentUserListIndex = {};
 			const recentUserListRemoveIndex = {};
 
@@ -135,7 +138,7 @@ jn.define('im/messenger/controller/dialog-selector', (require, exports, module) 
 				});
 			}
 
-			const colleaguesList = ChatUtils.objectClone(MessengerStore.getters['usersModel/getUserList']);
+			const colleaguesList = clone(this.store.getters['usersModel/getUserList']);
 			if (Type.isArrayFilled(colleaguesList))
 			{
 				colleaguesList.forEach((user) => {

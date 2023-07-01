@@ -2,8 +2,10 @@
 
 namespace Bitrix\Disk\Volume\Module;
 
+use Bitrix\Disk;
 use Bitrix\Disk\Volume;
 use Bitrix\Disk\Internals\ObjectTable;
+use Bitrix\Disk\Internals\VolumeTable;
 
 /**
  * Disk storage volume measurement class.
@@ -17,9 +19,9 @@ class Tasks extends Volume\Module\Module
 	/**
 	 * Runs measure test to get volumes of selecting objects.
 	 * @param array $collectData List types data to collect: ATTACHED_OBJECT, SHARING_OBJECT, EXTERNAL_LINK, UNNECESSARY_VERSION.
-	 * @return $this
+	 * @return static
 	 */
-	public function measure($collectData = array())
+	public function measure(array $collectData = []): self
 	{
 		if (!$this->isMeasureAvailable())
 		{
@@ -32,7 +34,7 @@ class Tasks extends Volume\Module\Module
 		$ownerId = (string)$this->getOwner();
 
 		// Scan User fields specific to module
-		$entityUserFieldSource = $this->prepareUserFieldSourceSql(null, array(\CUserTypeFile::USER_TYPE_ID));
+		$entityUserFieldSource = $this->prepareUserFieldSourceSql(null, [\CUserTypeFile::USER_TYPE_ID]);
 		if ($entityUserFieldSource != '')
 		{
 			$entityUserFieldSource = " UNION {$entityUserFieldSource} ";
@@ -45,7 +47,9 @@ class Tasks extends Volume\Module\Module
 			foreach ($attachedEntityList as $attachedEntity)
 			{
 				if ($attachedEntitySql != '')
+				{
 					$attachedEntitySql .= ', ';
+				}
 				$attachedEntitySql .= "'".$connection->getSqlHelper()->forSql($attachedEntity)."'";
 			}
 		}
@@ -81,7 +85,7 @@ class Tasks extends Volume\Module\Module
 								INNER JOIN b_forum_message message 
 									ON message.ID = attached.ENTITY_ID
 							WHERE
-								attached.ENTITY_TYPE = '". $connection->getSqlHelper()->forSql(\Bitrix\Disk\Uf\ForumMessageConnector::className()). "'
+								attached.ENTITY_TYPE = '". $connection->getSqlHelper()->forSql(Disk\Uf\ForumMessageConnector::className()). "'
 								AND substring_index(message.XML_ID,'_', 1) = '{$eventTypeXML}'
 							GROUP BY 
 								attached.OBJECT_ID
@@ -163,7 +167,7 @@ class Tasks extends Volume\Module\Module
 		";
 
 		$columnList = Volume\QueryHelper::prepareInsert(
-			array(
+			[
 				'INDICATOR_TYPE',
 				'OWNER_ID',
 				'CREATE_TIME',
@@ -172,11 +176,11 @@ class Tasks extends Volume\Module\Module
 				'DISK_SIZE',
 				'DISK_COUNT',
 				'VERSION_COUNT',
-			),
+			],
 			$this->getSelect()
 		);
 
-		$tableName = \Bitrix\Disk\Internals\VolumeTable::getTableName();
+		$tableName = VolumeTable::getTableName();
 
 		$connection->queryExecute("INSERT INTO {$tableName} ({$columnList}) {$querySql}");
 
@@ -188,17 +192,17 @@ class Tasks extends Volume\Module\Module
 	 * Returns entity list with user field corresponding to module.
 	 * @return string[]
 	 */
-	public function getEntityList()
+	public function getEntityList(): array
 	{
 		static $entityList;
-		if(!isset($entityList))
+		if (!isset($entityList))
 		{
 			\Bitrix\Main\Loader::includeModule(self::getModuleId());
 
-			$entityList = array(
-				'\\Bitrix\\Tasks\\Internals\\TaskTable',
-				'\\Bitrix\\Tasks\\Internals\\Task\\TemplateTable',
-			);
+			$entityList = [
+				\Bitrix\Tasks\Internals\TaskTable::class,
+				\Bitrix\Tasks\Internals\Task\TemplateTable::class,
+			];
 		}
 		return $entityList;
 	}
@@ -207,13 +211,11 @@ class Tasks extends Volume\Module\Module
 	 * Returns entity list attached to disk object corresponding to module.
 	 * @return string[]
 	 */
-	public function getAttachedEntityList()
+	public function getAttachedEntityList(): array
 	{
-		$attachedEntityList = array(
-			'Bitrix\\Tasks\\Integration\\Disk\\Connector\\Task\\Template',
-			'Bitrix\\Tasks\\Integration\\Disk\\Connector\\Task'
-		);
-
-		return $attachedEntityList;
+		return [
+			\Bitrix\Tasks\Integration\Disk\Connector\Task\Template::class,
+			\Bitrix\Tasks\Integration\Disk\Connector\Task::class,
+		];
 	}
 }

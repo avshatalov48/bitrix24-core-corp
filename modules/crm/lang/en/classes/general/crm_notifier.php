@@ -8,3 +8,4 @@ $MESS["CRM_NOTIFY_SCHEME_LIVEFEED_POST"] = "You were specified as a post recipie
 $MESS["CRM_NOTIFY_SCHEME_MERGE"] = "Duplicate control notifications";
 $MESS["CRM_NOTIFY_SCHEME_OTHER"] = "Other notifications";
 $MESS["CRM_NOTIFY_SCHEME_WEBFORM"] = "CRM form submitted";
+$MESS["CRM_NOTIFY_TITLE"] = "CRM";

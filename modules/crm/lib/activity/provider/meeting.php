@@ -49,7 +49,7 @@ class Meeting extends Activity\Provider\Base
 		$result = new Main\Result();
 
 		//Only START_TIME can be taken for DEADLINE!
-		if ($action === 'UPDATE')
+		if ($action === self::ACTION_UPDATE)
 		{
 			if (isset($fields['START_TIME']) && $fields['START_TIME'] !== '')
 			{

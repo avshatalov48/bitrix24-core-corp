@@ -14,9 +14,9 @@ Loc::loadMessages(__FILE__);
  *
  * <<< ORMENTITYANNOTATION
  * @method static EO_Tax_Query query()
- * @method static EO_Tax_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Tax_Result getByPrimary($primary, array $parameters = [])
  * @method static EO_Tax_Result getById($id)
- * @method static EO_Tax_Result getList(array $parameters = array())
+ * @method static EO_Tax_Result getList(array $parameters = [])
  * @method static EO_Tax_Entity getEntity()
  * @method static \Bitrix\Crm\Invoice\Internals\EO_Tax createObject($setDefaultValues = true)
  * @method static \Bitrix\Crm\Invoice\Internals\EO_Tax_Collection createCollection()

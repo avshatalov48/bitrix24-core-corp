@@ -2,11 +2,11 @@
 
 return [
 	'extensions' => [
-		'animation/effects/skeleton',
-		'layout/ui/loading-screen',
+		'layout/pure-component',
 		'layout/ui/detail-card/notify-manager',
 		'layout/ui/detail-card/tabs/factory',
-		'layout/pure-component',
+		'layout/ui/detail-card/tabs/loader-factory',
+		'layout/ui/loading-screen',
 		'event-emitter',
 		'notify-manager',
 		'rest',

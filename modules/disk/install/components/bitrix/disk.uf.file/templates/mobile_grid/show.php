@@ -176,7 +176,7 @@ if (!empty($arResult['FILES']))
 			"id" => "disk-attach-".$file['ID'],
 			"bx-attach-file-id" => $file['FILE_ID'],
 			"data-bx-title" => htmlspecialcharsbx($file["NAME"]),
-			"title" => htmlspecialcharsbx($file['NAVCHAIN'])
+			"title" => htmlspecialcharsbx($file['NAME'])
 		);
 		if ($file['XML_ID'])
 		{

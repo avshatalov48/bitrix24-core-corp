@@ -69,7 +69,7 @@ jn.define('layout/ui/address', (require, exports, module) => {
 			}),
 			Text({
 				style: {
-					flex: 1,
+					flexShrink: 2,
 					fontSize: 14,
 					color: clickable ? AddressViewType.getTextColor(viewType) : '#828b95',
 					textDecorationLine: viewType === AddressViewType.BLENDING ? 'underline' : 'none',

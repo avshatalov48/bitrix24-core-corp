@@ -4,14 +4,13 @@ namespace Bitrix\Disk\Volume;
 
 use Bitrix\Main;
 use Bitrix\Main\Application;
-use Bitrix\Main\Entity;
-use Bitrix\Main\Entity\Query;
 use Bitrix\Main\ArgumentTypeException;
+use Bitrix\Disk;
+use Bitrix\Disk\Volume;
 use Bitrix\Disk\Internals\ObjectTable;
 use Bitrix\Disk\Internals\VolumeTable;
 use Bitrix\Disk\Internals\SharingTable;
 use Bitrix\Disk\Internals\ObjectPathTable;
-use Bitrix\Disk\Volume;
 
 /**
  * Disk storage volume measurement class.
@@ -21,11 +20,11 @@ class Folder extends Volume\Base implements Volume\IVolumeIndicatorLink, Volume\
 {
 	/**
 	 * Preforms data preparation.
-	 * @return $this
+	 * @return static
 	 * @throws Main\ArgumentOutOfRangeException
 	 * @throws Main\ArgumentException
 	 */
-	public function prepareData()
+	public function prepareData(): self
 	{
 		$storageId = $this->getFilterValue('STORAGE_ID', '=@');
 
@@ -43,10 +42,10 @@ class Folder extends Volume\Base implements Volume\IVolumeIndicatorLink, Volume\
 	/**
 	 * Runs measure test to get volumes of selecting objects.
 	 * @param array $collectData List types data to collect: ATTACHED_OBJECT, SHARING_OBJECT, EXTERNAL_LINK, UNNECESSARY_VERSION.
-	 * @return $this
+	 * @return static
 	 * @throws Main\ArgumentException
 	 */
-	public function measure($collectData = [self::DISK_FILE, self::UNNECESSARY_VERSION])
+	public function measure(array $collectData = [self::DISK_FILE, self::UNNECESSARY_VERSION]): self
 	{
 		$connection = Application::getConnection();
 		$sqlHelper = $connection->getSqlHelper();
@@ -76,7 +75,7 @@ class Folder extends Volume\Base implements Volume\IVolumeIndicatorLink, Volume\
 		{
 			$storageList = (new $excludeInd)->getStorageList();
 			if (
-				($storageList[0] instanceof \Bitrix\Disk\Storage)
+				($storageList[0] instanceof Disk\Storage)
 				&& (int)$storageId === (int)$storageList[0]->getId()
 			)
 			{
@@ -316,7 +315,7 @@ class Folder extends Volume\Base implements Volume\IVolumeIndicatorLink, Volume\
 						LEFT JOIN b_disk_external_link link ON files.ID = link.OBJECT_ID
 					WHERE
 						files.TYPE = ".ObjectTable::TYPE_FILE."
-						AND link.TYPE != ".\Bitrix\Disk\Internals\ExternalLinkTable::TYPE_AUTO."
+						AND link.TYPE != ".Disk\Internals\ExternalLinkTable::TYPE_AUTO."
 						AND files.ID = files.REAL_OBJECT_ID
 						{$subWhereSql}
 					GROUP BY
@@ -446,7 +445,7 @@ class Folder extends Volume\Base implements Volume\IVolumeIndicatorLink, Volume\
 								ON link.OBJECT_ID  = ver.OBJECT_ID
 								AND link.VERSION_ID = ver.ID
 								AND link.VERSION_ID != head.ID
-								AND ifnull(link.TYPE,-1) != ". \Bitrix\Disk\Internals\ExternalLinkTable::TYPE_AUTO. "
+								AND ifnull(link.TYPE,-1) != ". Disk\Internals\ExternalLinkTable::TYPE_AUTO. "
 
 						WHERE
 							files.TYPE = ". ObjectTable::TYPE_FILE. "
@@ -594,53 +593,49 @@ class Folder extends Volume\Base implements Volume\IVolumeIndicatorLink, Volume\
 
 	/**
 	 * @param Volume\Fragment $fragment Folder entity object.
-	 * @return string
+	 * @return string|null
 	 * @throws ArgumentTypeException
 	 */
-	public static function getTitle(Volume\Fragment $fragment)
+	public static function getTitle(Volume\Fragment $fragment): ?string
 	{
 		$folder = $fragment->getFolder();
-		if (!$folder instanceof \Bitrix\Disk\Folder)
+		if (!$folder instanceof Disk\Folder)
 		{
-			throw new ArgumentTypeException('Fragment must be subclass of '.\Bitrix\Disk\Folder::className());
+			throw new ArgumentTypeException('Fragment must be subclass of '.Disk\Folder::className());
 		}
 
-		$title = $folder->getOriginalName();
-
-		return $title;
+		return $folder->getOriginalName();
 	}
 
 	/**
 	 * @param Volume\Fragment $fragment Folder entity object.
-	 * @return string
+	 * @return string|null
 	 * @throws ArgumentTypeException
 	 */
-	public static function getUrl(Volume\Fragment $fragment)
+	public static function getUrl(Volume\Fragment $fragment): ?string
 	{
 		$folder = $fragment->getFolder();
-		if (!$folder instanceof \Bitrix\Disk\Folder)
+		if (!$folder instanceof Disk\Folder)
 		{
-			throw new ArgumentTypeException('Fragment must be subclass of '.\Bitrix\Disk\Folder::className());
+			throw new ArgumentTypeException('Fragment must be subclass of '.Disk\Folder::className());
 		}
 
-		if (in_array($fragment->getEntityType(), \Bitrix\Disk\Volume\Module\Im::getEntityType()))
-		{
-			return null;
-		}
-		if (in_array($fragment->getEntityType(), \Bitrix\Disk\Volume\Module\Mail::getEntityType()))
+		if (in_array($fragment->getEntityType(), Volume\Module\Im::getEntityType()))
 		{
 			return null;
 		}
-		if (in_array($fragment->getEntityType(), \Bitrix\Disk\Volume\Module\Documentgenerator::getEntityType()))
+		if (in_array($fragment->getEntityType(), Volume\Module\Mail::getEntityType()))
+		{
+			return null;
+		}
+		if (in_array($fragment->getEntityType(), Volume\Module\Documentgenerator::getEntityType()))
 		{
 			return null;
 		}
 
-		$urlManager = \Bitrix\Disk\Driver::getInstance()->getUrlManager();
+		$urlManager = Disk\Driver::getInstance()->getUrlManager();
 
-		$url = $urlManager->getUrlFocusController('openFolderList', array('folderId' => $folder->getId()));
-
-		return $url;
+		return $urlManager->getUrlFocusController('openFolderList', ['folderId' => $folder->getId()]);
 	}
 
 	/**
@@ -648,15 +643,15 @@ class Folder extends Volume\Base implements Volume\IVolumeIndicatorLink, Volume\
 	 * @return string[]
 	 * @throws ArgumentTypeException
 	 */
-	public static function getParents(Volume\Fragment $fragment)
+	public static function getParents(Volume\Fragment $fragment): array
 	{
 		$folder = $fragment->getFolder();
-		if (!$folder instanceof \Bitrix\Disk\Folder)
+		if (!$folder instanceof Disk\Folder)
 		{
-			throw new ArgumentTypeException('Fragment must be subclass of '.\Bitrix\Disk\Folder::className());
+			throw new ArgumentTypeException('Fragment must be subclass of '.Disk\Folder::className());
 		}
 
-		$parents = \Bitrix\Disk\CrumbStorage::getInstance()->getByObject($folder);
+		$parents = Disk\CrumbStorage::getInstance()->getByObject($folder);
 
 		return array_slice($parents, 1, count($parents) - 1, true);
 	}
@@ -667,12 +662,12 @@ class Folder extends Volume\Base implements Volume\IVolumeIndicatorLink, Volume\
 	 * @return \Bitrix\Main\Type\DateTime|null
 	 * @throws ArgumentTypeException
 	 */
-	public static function getUpdateTime(Volume\Fragment $fragment)
+	public static function getUpdateTime(Volume\Fragment $fragment): ?\Bitrix\Main\Type\DateTime
 	{
 		$folder = $fragment->getFolder();
-		if (!$folder instanceof \Bitrix\Disk\Folder)
+		if (!$folder instanceof Disk\Folder)
 		{
-			throw new ArgumentTypeException('Fragment must be subclass of '.\Bitrix\Disk\Folder::className());
+			throw new ArgumentTypeException('Fragment must be subclass of '.Disk\Folder::className());
 		}
 
 		$updateTime = $folder->getUpdateTime()->toUserTime();
@@ -682,10 +677,10 @@ class Folder extends Volume\Base implements Volume\IVolumeIndicatorLink, Volume\
 
 	/**
 	 * Check ability to drop folder.
-	 * @param \Bitrix\Disk\Folder $folder Folder to drop.
+	 * @param Disk\Folder $folder Folder to drop.
 	 * @return boolean
 	 */
-	public function isAllowDeleteFolder(\Bitrix\Disk\Folder $folder)
+	public function isAllowDeleteFolder(Disk\Folder $folder): bool
 	{
 		return (bool)($folder->isRoot() !== true);
 	}

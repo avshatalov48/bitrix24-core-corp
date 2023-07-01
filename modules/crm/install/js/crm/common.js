@@ -4483,7 +4483,15 @@ if(typeof(BX.CrmDupController) === "undefined")
 					this._lastSummaryGroupId = groupId;
 					this._lastSummaryFieldId = fieldId;
 				}
-				this._showSearchSummary(anchorField);
+
+				if (this._isSearchSummaryShown())
+				{
+					this._replaceShownSearchSummary(anchorField);
+				}
+				else
+				{
+					this._showSearchSummary(anchorField);
+				}
 			}
 			else
 			{
@@ -4570,9 +4578,7 @@ if(typeof(BX.CrmDupController) === "undefined")
 		},
 		_showSearchSummary: function(anchorField)
 		{
-			this._closeSearchSummary();
-
-			var anchor = null;
+			let anchor = null;
 			if(anchorField)
 			{
 				anchor = anchorField ? anchorField.getElementTitle() : null;
@@ -4582,16 +4588,50 @@ if(typeof(BX.CrmDupController) === "undefined")
 				}
 			}
 
-			this._searchSummary = BX.CrmDuplicateSummaryPopup.create(
-				this._id + "_summary",
-				{
-					"controller": this,
-					"anchor": anchor,
-					"position": this.getSetting("searchSummaryPosition", "bottom")
-				}
-			);
+			const form = this.getSetting("form", null);
+			if (form && BX.Type.isFunction(form["getElementNode"]))
+			{
+				const formElement = form.getElementNode();
+				this._searchSummary = BX.Crm.Duplicate.SummaryList.create(
+					this._id + "_summary",
+					{
+						"controller": this,
+						"anchor": anchor,
+						"wrapper": formElement,
+						"clientSearchBox": this.getSetting("clientSearchBox", null),
+						"enableEntitySelect": this.getSetting("enableEntitySelect", false)
+					}
+				);
+			}
+			else
+			{
+				this._searchSummary = BX.CrmDuplicateSummaryPopup.create(
+					this._id + "_summary",
+					{
+						"controller": this,
+						"anchor": anchor,
+						"position": this.getSetting("searchSummaryPosition", "bottom")
+					}
+				);
+			}
 			this._searchSummary.show();
 		},
+
+		_replaceShownSearchSummary: function(anchorField)
+		{
+			if (BX.Type.isFunction(this._searchSummary["subscribe"]))
+			{
+				this._searchSummary.subscribe('close', () => {
+					this._showSearchSummary(anchorField);
+				});
+				this._closeSearchSummary();
+			}
+			else
+			{
+				this._showSearchSummary(anchorField);
+			}
+		},
+
 		_isSearchSummaryShown: function()
 		{
 			return this._searchSummary && this._searchSummary.isShown();
@@ -6885,7 +6925,6 @@ if(typeof(BX.CrmDuplicateSummaryItem) === "undefined")
 		this._groupId = "";
 		this._controller = null;
 		this._container = null;
-		//this._popup = null;
 	};
 	BX.CrmDuplicateSummaryItem.prototype =
 	{
@@ -12925,7 +12964,7 @@ BX.Crm.Page =
 		lead: { condition: new RegExp("/crm/lead/details/[0-9]+/", "i") },
 		leadMerge: { condition: new RegExp("/crm/lead/merge/", "i"), options: { customLeftBoundary: 0 } },
 		leadDedupeList: { condition: new RegExp("/crm/lead/dedupelist/", "i"), stopParameters: ["page", "IFRAME"] },
-		leadAutomation: { condition: new RegExp("/crm/lead/automation/[0-9]+/", "i"), stopParameters: ['grid_action', 'page'], options: { customLeftBoundary: 0 }},
+		leadAutomation: { condition: new RegExp("/crm/lead/automation/[0-9]+/", "i"), stopParameters: ['grid_action', 'page'], options: { customLeftBoundary: 0, loader: 'bizproc:automation-loader' }},
 		contact: { condition: new RegExp("/crm/contact/details/[0-9]+/", "i") },
 		contactMerge: { condition: new RegExp("/crm/contact/merge/", "i"), options: { customLeftBoundary: 0 } },
 		contactDedupeList: { condition: new RegExp("/crm/contact/dedupelist/", "i"), stopParameters: ["page", "IFRAME"] },
@@ -12934,15 +12973,15 @@ BX.Crm.Page =
 		companyDedupeList: { condition: new RegExp("/crm/company/dedupelist/", "i"), stopParameters: ["page", "IFRAME"] },
 		deal: { condition: new RegExp("/crm/deal/details/[0-9]+/", "i") },
 		dealMerge: { condition: new RegExp("/crm/deal/merge/", "i"), options: { customLeftBoundary: 0 } },
-		dealAutomation: { condition: new RegExp("/crm/deal/automation/[0-9]+/", "i"), stopParameters: ['grid_action', 'page'], options: { customLeftBoundary: 0 } },
+		dealAutomation: { condition: new RegExp("/crm/deal/automation/[0-9]+/", "i"), stopParameters: ['grid_action', 'page'], options: { customLeftBoundary: 0, loader: 'bizproc:automation-loader' } },
 		quote: { condition: new RegExp("/crm/type/7/details/[0-9]+/", "i") },
 		order: { condition: new RegExp("/shop/orders/details/[0-9]+/", "i") },
 		orderSalescenter: { condition: new RegExp("/saleshub/orders/order/", "i") }, //
 		orderShipment: { condition: new RegExp("/shop/orders/shipment/details/[0-9]+/", "i") },
 		orderPayment: { condition: new RegExp("/shop/orders/payment/details/[0-9]+/", "i") },
-		orderAutomation: { condition: new RegExp("/shop/orders/automation/[0-9]+/", "i"), stopParameters: ['grid_action', 'page'], options: { customLeftBoundary: 0 } },
+		orderAutomation: { condition: new RegExp("/shop/orders/automation/[0-9]+/", "i"), stopParameters: ['grid_action', 'page'], options: { customLeftBoundary: 0, loader: 'bizproc:automation-loader' } },
 		factoryBased: { condition: new RegExp("/type/[0-9]+/details/[0-9]+/", "i") },
-		dynamicAutomation: { condition: new RegExp("/crm/type/[0-9]+/automation/[0-9]+/", "i"), stopParameters: ['grid_action', 'page'], options: { customLeftBoundary: 0 } },
+		dynamicAutomation: { condition: new RegExp("/crm/type/[0-9]+/automation/[0-9]+/", "i"), stopParameters: ['grid_action', 'page'], options: { customLeftBoundary: 0, loader: 'bizproc:automation-loader' } },
 		activity: { condition: new RegExp("/bitrix/components/bitrix/crm.activity.planner/slider.php", "i"), options: { allowChangeHistory: false, width: 1080 }},
 	},
 	items: [],

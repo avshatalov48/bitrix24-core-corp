@@ -36,5 +36,6 @@ return [
 		'crm.datetime',
 		'crm.toolbar-component',
 		'ui.tooltip',
+		'ui.tour',
 	],
 ];

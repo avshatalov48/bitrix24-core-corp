@@ -19,15 +19,22 @@ class ActivityEntry extends TimelineEntry
 
 		$activityProviderId = $params['ACTIVITY_PROVIDER_ID'] ?? '';
 
-		$result = TimelineTable::add([
+		$data = [
 			'TYPE_ID' => TimelineType::ACTIVITY,
 			'TYPE_CATEGORY_ID' => $activityTypeId,
 			'CREATED' => $created,
 			'AUTHOR_ID' => $authorId,
 			'ASSOCIATED_ENTITY_TYPE_ID' => \CCrmOwnerType::Activity,
 			'ASSOCIATED_ENTITY_CLASS_NAME' => $activityProviderId,
-			'ASSOCIATED_ENTITY_ID' => $entityId
-		]);
+			'ASSOCIATED_ENTITY_ID' => $entityId,
+		];
+
+		if (isset($params['SOURCE_ID']))
+		{
+			$data['SOURCE_ID'] = (string)$params['SOURCE_ID'];
+		}
+
+		$result = TimelineTable::add($data);
 		if (!$result->isSuccess())
 		{
 			return 0;

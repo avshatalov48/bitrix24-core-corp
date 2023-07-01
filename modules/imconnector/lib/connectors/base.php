@@ -31,6 +31,9 @@ Library::loadMessages();
  */
 class Base
 {
+	/** The prefix for start parameter. */
+	public const REF_PREFIX = 'btrx';
+
 	/**
 	 * @var string Full (or virtual) connector id (for example "botframework.skype", NOT "botframework").
 	 */
@@ -132,6 +135,30 @@ class Base
 		return $this->processingInputUpdateMessage($message, $line);
 	}
 
+	/**
+	 * @param string $command
+	 * @param array $message
+	 * @param int $line
+	 * @return Result
+	 */
+	public function processingInputCommand(string $command, array $message, int $line): Result
+	{
+		$result = new Result();
+
+		$result->addError(new Error(
+			'Does not support this method call',
+			'ERROR_IMCONNECTOR_DOES_NOT_SUPPORT_THIS_METHOD_CALL',
+			__METHOD__
+		));
+
+		return $result;
+	}
+
+	/**
+	 * @param array $message
+	 * @param int $line
+	 * @return Result
+	 */
 	public function processingInputWelcomeMessage(array $message, int $line): Result
 	{
 		$result = new Result();
@@ -489,14 +516,14 @@ class Base
 		)
 		{
 			//Getting user id
-			$user = $this->processingUser($message['user']);
-			if ($user->isSuccess())
+			$userResult = $this->processingUser($message['user']);
+			if ($userResult->isSuccess())
 			{
-				$message['user'] = $user->getResult();
+				$message['user'] = $userResult->getResult();
 			}
 			else
 			{
-				$result->addErrors($user->getErrors());
+				$result->addErrors($userResult->getErrors());
 			}
 
 			if ($result->isSuccess())
@@ -638,6 +665,10 @@ class Base
 			{
 				$result->addError(new Error($error->getString()));
 			}
+			elseif (!empty($user->LAST_ERROR))
+			{
+				$result->addError(new Error($user->LAST_ERROR));
+			}
 		}
 
 		return $result;
@@ -670,6 +701,10 @@ class Base
 					{
 						$result->addError(new Error($error->getString()));
 					}
+					elseif (!empty($user->LAST_ERROR))
+					{
+						$result->addError(new Error($user->LAST_ERROR));
+					}
 				}
 			}
 		}
@@ -699,11 +734,8 @@ class Base
 			if (is_array($userFields))
 			{
 				$updateResult = $this->updateUser($user, $userFields);
-				if ($updateResult->isSuccess())
-				{
-					$userId = $updateResult->getResult();
-				}
-				else
+				$userId = $updateResult->getResult();
+				if (empty($userId) && !$updateResult->isSuccess())
 				{
 					$result->addErrors($updateResult->getErrors());
 				}
@@ -757,6 +789,7 @@ class Base
 	 */
 	protected function getBasicFieldsNewUser($user): array
 	{
+		$fields = [];
 		$fields['LOGIN'] = Library::MODULE_ID . '_' . md5($user['id'] . '_' . randString(5));
 		$fields['PASSWORD'] = md5($fields['LOGIN'] . '|' . rand(1000,9999) . '|' . time());
 		$fields['CONFIRM_PASSWORD'] = $fields['PASSWORD'];

@@ -47,8 +47,5 @@ $arActivityDescription = [
 		],
 		'SORT' => 1100
 	],
-	'EXCLUDED' => (
-		!\Bitrix\Main\Loader::includeModule('voximplant')
-		|| !\Bitrix\Voximplant\Limits::hasAccountBalance()
-	),
+	'EXCLUDED' => !\Bitrix\Main\Loader::includeModule('voximplant'),
 ];

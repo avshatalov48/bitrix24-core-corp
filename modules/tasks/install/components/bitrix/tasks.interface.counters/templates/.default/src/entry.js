@@ -3,6 +3,7 @@ import { EventEmitter } from 'main.core.events';
 import { Menu, MenuItem } from 'main.popup';
 import { Filter } from './counters-helper';
 import CountersItem from './counters-item';
+import { Controller as Viewed } from 'tasks.viewed';
 
 import 'ui.fonts.opensans';
 import './style.css';
@@ -425,12 +426,10 @@ export class Counters
 
 	readAllByRole()
 	{
-		Ajax.runAction('tasks.task.comment.readAll', {
-			data: {
-				groupId: this.groupId,
-				userId: this.userId,
-				role: this.role,
-			},
+		(new Viewed()).userComments({
+			groupId: this.groupId,
+			userId: this.userId,
+			role: this.role,
 		});
 	}
 
@@ -444,10 +443,8 @@ export class Counters
 			}
 		});
 
-		Ajax.runAction('tasks.task.comment.readProject', {
-			data: {
-				groupId: this.groupId,
-			},
+		(new Viewed()).projectComments({
+			groupId: this.groupId,
 		});
 	}
 
@@ -461,10 +458,8 @@ export class Counters
 			}
 		});
 
-		Ajax.runAction('tasks.task.comment.readScrum', {
-			data: {
-				groupId: this.groupId,
-			},
+		(new Viewed()).scrumComments({
+			groupId: this.groupId,
 		});
 	}
 
@@ -543,7 +538,9 @@ export class Counters
 			<div class="tasks-counters--item-counter--more">
 				<div class="tasks-counters--item-counter-wrapper">
 					<div class="tasks-counters--item-counter-title">${Loc.getMessage('TASKS_COUNTER_MORE')}:</div>
-					<div class="tasks-counters--item-counter-num">${count}</div>
+					<div class="tasks-counters--item-counter-num">
+						${this.getInnerCounter(count)}						
+					</div>
 					${this.$moreArrow}
 				</div>
 			</div>
@@ -552,6 +549,18 @@ export class Counters
 		Event.bind(this.$more, 'click', ()=> this.getPopup().show());
 
 		return this.$more;
+	}
+
+	getInnerCounter(counter: number)
+	{
+		if (!this.$innerContainer)
+		{
+			this.$innerContainer = Tag.render`
+				<div class="tasks-counters--item-counter-num-text --stop --without-animate">${counter}</div>		
+			`;
+		}
+
+		return this.$innerContainer;
 	}
 
 	getOther()

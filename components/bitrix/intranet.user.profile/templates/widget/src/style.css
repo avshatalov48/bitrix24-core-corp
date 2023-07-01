@@ -1130,3 +1130,7 @@
 	opacity: 1;
 	transition: none;
 }
+
+.popup-with-radius .popup-window-content {
+	border-radius: 22px;
+}

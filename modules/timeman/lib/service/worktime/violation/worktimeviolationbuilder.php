@@ -268,11 +268,12 @@ class WorktimeViolationBuilder
 	protected function getCalendar($calendarId, $year)
 	{
 		$key = $calendarId . $year;
-		if ($this->calendars[$key] === null)
+		if (($this->calendars[$key] ?? null) === null)
 		{
 			$this->calendars[$key] = $this->calendarRepository
 				->findByIdWithParentCalendarExclusions($calendarId, $year);
 		}
+
 		return $this->calendars[$key];
 	}
 
@@ -282,6 +283,7 @@ class WorktimeViolationBuilder
 		{
 			return false;
 		}
+
 		return true;
 	}
 

@@ -516,7 +516,9 @@ BX(function () {
 			trashLink: '<?= CUtil::JSUrlEscape($arResult['STORAGE']['TRASH_LINK']) ?>',
 			fileLinkPrefix: '<?= CUtil::JSUrlEscape($arResult['STORAGE']['FILE_LINK_PREFIX']) ?>',
 			trashFileLinkPrefix: '<?= CUtil::JSUrlEscape($arResult['STORAGE']['TRASH_FILE_LINK_PREFIX']) ?>',
+			<?php if(isset($arParams["PATH_TO_DISK_BIZPROC_WORKFLOW_ADMIN"])): ?>
 			bpListLink: '<?= CUtil::JSEscape($arParams["PATH_TO_DISK_BIZPROC_WORKFLOW_ADMIN"]) ?>',
+			<?php endif; ?>
 			name: '<?= CUtil::JSEscape($arResult['STORAGE']['NAME']) ?>',
 			rootObject: {
 				id: <?= $arResult['STORAGE']['ROOT_OBJECT_ID'] ?>

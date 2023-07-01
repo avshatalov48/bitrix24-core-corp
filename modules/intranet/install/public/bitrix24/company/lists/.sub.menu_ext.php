@@ -29,13 +29,13 @@ if (count($menuItems) > 0)
 		$_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/intranet/public_bitrix24/company/lists/.sub.menu_ext.php'
 	);
 
-	array_unshift($menuItems, [
+	$menuItems[] = [
 		Loc::getMessage('LISTS_INDEX_TITLE'),
 		SITE_DIR . 'company/lists/',
 		[],
 		[],
 		''
-	]);
+	];
 }
 
 $aMenuLinks = $menuItems;

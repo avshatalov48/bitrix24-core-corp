@@ -1,14 +1,38 @@
-(() =>
-{
+/**
+ * @module layout/ui/wizard/step
+ */
+
+jn.define('layout/ui/wizard/step', (require, exports, module) => {
 	/**
 	 * @class WizardStep
 	 */
 	class WizardStep
 	{
-		constructor()
+		constructor(props)
 		{
-			this.titleChangeCallback = () => {};
-			this.stepAvailabilityChangeCallback = () => {};
+			this.props = props;
+			this.titleChangeCallback = () => {
+			};
+			this.stepAvailabilityChangeCallback = () => {
+			};
+		}
+
+		renderNumberBlock()
+		{
+			return null;
+		}
+
+		getProgressBarSettings()
+		{
+			return {
+				isEnabled: false,
+				number: 1,
+				count: 1,
+				title: {},
+				previousLineColor: '#9dcf00',
+				currentLineColor: '#55d0e0',
+				nextLineColor: '#d5d7db',
+			};
 		}
 
 		/**
@@ -59,6 +83,16 @@
 		isNextStepEnabled()
 		{
 			return true;
+		}
+
+		isNeedToShowNextStep()
+		{
+			return true;
+		}
+
+		isNeedToSkip()
+		{
+			return false;
 		}
 
 		/**
@@ -114,7 +148,15 @@
 		}
 
 		/**
+		 * Executed when the user has passed the last step
+		 */
+		onFinishStep()
+		{
+		}
+
+		/**
 		 * Callback executed when wizard enter this step
+		 * @param stepId
 		 */
 		onEnterStep()
 		{
@@ -122,11 +164,12 @@
 
 		/**
 		 * Callback executed when wizard leave this step
+		 * @param stepId
 		 */
-		onLeaveStep()
+		onLeaveStep(stepId)
 		{
 		}
 	}
 
-	this.WizardStep = WizardStep;
-})();
+	module.exports = { WizardStep };
+});

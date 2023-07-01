@@ -425,7 +425,7 @@ endif;
 	BX.ready(
 		function()
 		{
-			var editor = BX.CrmActivityEditor.create(
+			BX.CrmActivityEditor.create(
 			'<?= CUtil::JSEscape($editorID) ?>',
 			<?= CUtil::PhpToJSObject($editorCfg) ?>,
 			<?= CUtil::PhpToJSObject(isset($arResult['EDITOR_ITEMS']) ? $arResult['EDITOR_ITEMS'] : array()) ?>
@@ -463,7 +463,10 @@ endif;
 						"CRM_TASK_CREATION_PATH": "<?=CUtil::JSEscape(\Bitrix\Main\Config\Option::get('socialnetwork', 'user_page', SITE_DIR.'company/personal/').'user/#user_id#/tasks/task/edit/0/')?>",
 						"CRM_TASK_EDIT_PATH": "<?=CUtil::JSEscape(\Bitrix\Main\Config\Option::get('socialnetwork', 'user_page', SITE_DIR.'company/personal/').'user/#user_id#/tasks/task/edit/#task_id#/')?>",
 						"CRM_TASK_VIEW_PATH": "<?=CUtil::JSEscape(\Bitrix\Main\Config\Option::get('socialnetwork', 'user_page', SITE_DIR.'company/personal/').'user/#user_id#/tasks/task/view/#task_id#/')?>",
-						"CMR_DEAL_DETAILS_PATH": "<?=CUtil::JSEscape(\Bitrix\Main\Config\Option::get('crm', 'path_to_deal_details'))?>"
+						"CMR_DEAL_DETAILS_PATH": "<?=CUtil::JSEscape(\Bitrix\Main\Config\Option::get('crm', 'path_to_deal_details'))?>",
+						"CRM_ACTIVITY_TODO_OPENLINE_COMPLETE_CONF": "<?= GetMessageJS('CRM_ACTIVITY_TODO_OPENLINE_COMPLETE_CONF')?>",
+						"CRM_ACTIVITY_TODO_OPENLINE_COMPLETE_CONF_OK_TEXT": "<?= GetMessageJS('CRM_ACTIVITY_TODO_OPENLINE_COMPLETE_CONF_OK_TEXT')?>",
+						"CRM_ACTIVITY_TODO_OPENLINE_COMPLETE_CONF_TITLE": "<?= GetMessageJS('CRM_ACTIVITY_TODO_OPENLINE_COMPLETE_CONF_TITLE')?>"
 					}
 				);
 

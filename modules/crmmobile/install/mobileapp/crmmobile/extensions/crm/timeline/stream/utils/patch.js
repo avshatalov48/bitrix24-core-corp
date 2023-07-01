@@ -2,7 +2,6 @@
  * @module crm/timeline/stream/utils/patch
  */
 jn.define('crm/timeline/stream/utils/patch', (require, exports, module) => {
-
 	class Patch
 	{
 		/**
@@ -16,10 +15,10 @@ jn.define('crm/timeline/stream/utils/patch', (require, exports, module) => {
 
 			this.itemsBeforeKeys = {};
 			this.itemsAfterKeys = {};
-			this.itemsBefore.map(item => {
+			this.itemsBefore.forEach((item) => {
 				this.itemsBeforeKeys[item.key] = item;
 			});
-			this.itemsAfter.map(item => {
+			this.itemsAfter.forEach((item) => {
 				this.itemsAfterKeys[item.key] = item;
 			});
 
@@ -37,14 +36,14 @@ jn.define('crm/timeline/stream/utils/patch', (require, exports, module) => {
 		 */
 		compare()
 		{
-			this.itemsBefore.map(item => {
+			this.itemsBefore.forEach((item) => {
 				if (!this.itemsAfterKeys[item.key])
 				{
 					this.removedItems.push(item);
 				}
 			});
 
-			this.itemsAfter.map(item => {
+			this.itemsAfter.forEach((item) => {
 				if (!this.itemsBeforeKeys[item.key])
 				{
 					this.addedItems.push(item);
@@ -77,13 +76,12 @@ jn.define('crm/timeline/stream/utils/patch', (require, exports, module) => {
 		 */
 		isItemMoved(key)
 		{
-			const indexBefore = this.itemsBefore.findIndex(itemAfter => itemAfter.key === key);
-			const indexAfter = this.itemsAfter.findIndex(itemAfter => itemAfter.key === key);
+			const indexBefore = this.itemsBefore.findIndex((itemAfter) => itemAfter.key === key);
+			const indexAfter = this.itemsAfter.findIndex((itemAfter) => itemAfter.key === key);
 
 			return (indexBefore !== indexAfter);
 		}
 	}
 
 	module.exports = { Patch };
-
 });

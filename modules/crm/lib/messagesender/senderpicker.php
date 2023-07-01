@@ -15,21 +15,19 @@ final class SenderPicker
 	public static function getCurrentSender(): ?string
 	{
 		$settingValue = SettingsManager::getValue();
-		$senders = SenderRepository::getPrioritizedList();
 
-		if ($settingValue === SettingsManager::SENDER_AUTO_SELECTION_SETTING_VALUE)
-		{
-			foreach ($senders as $sender)
-			{
-				if ($sender::isConnected())
-				{
-					return $sender;
-				}
-			}
-		}
-		else
+		if ($settingValue !== SettingsManager::SENDER_AUTO_SELECTION_SETTING_VALUE)
 		{
 			return self::getSenderByCode($settingValue);
+		}
+
+		$senders = SenderRepository::getPrioritizedList();
+		foreach ($senders as $sender)
+		{
+			if ($sender::isConnected())
+			{
+				return $sender;
+			}
 		}
 
 		return null;

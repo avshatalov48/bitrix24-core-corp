@@ -278,7 +278,7 @@
 	height: 16px;
 	-webkit-box-sizing: border-box;
 	        box-sizing: border-box;
-	padding: 0 7px;
+	padding: 0 3px;
 	background: var(--graphite_alpha_15);
 	border-radius: 8px;
 	font: 11px/16px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
@@ -371,11 +371,6 @@
 }
 
 .tasks-counters--item-counter-num-text {
-	position: absolute;
-	top: 0;
-	right: 0;
-	bottom: 0;
-	left: 0;
 	text-align: center;
 	-webkit-animation: tasks-counters--item-counter-num-text .2s linear forwards;
 	        animation: tasks-counters--item-counter-num-text .2s linear forwards;

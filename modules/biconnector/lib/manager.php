@@ -1,6 +1,8 @@
 <?php
 namespace Bitrix\BIConnector;
 
+use Bitrix\Main\Application;
+
 class Manager
 {
 	const IS_VALID_URL = 1;
@@ -13,28 +15,56 @@ class Manager
 	protected $keyId = 0;
 	protected $stime = [];
 
+	/**
+	 * Singleton instance production.
+	 *
+	 * @return Manager
+	 */
 	public static function getInstance(): Manager
 	{
 		if (static::$instance === null)
 		{
 			static::$instance = new Manager();
 		}
+
 		return static::$instance;
 	}
 
+	/**
+	 * Fires OnBIConnectorCreateServiceInstance event and returns first matched service object instance.
+	 *
+	 * @param string $serviceId Service identifier.
+	 *
+	 * @return null|Service
+	 */
 	public function createService($serviceId)
 	{
 		$this->serviceId = $serviceId;
-		switch ($serviceId)
+
+		$event = new \Bitrix\Main\Event('biconnector', 'OnBIConnectorCreateServiceInstance', [$serviceId, $this]);
+		$event->send();
+		foreach ($event->getResults() as $evenResult)
 		{
-			case 'gds':
-				return new Services\GoogleDataStudio($this);
-			case 'pbi':
-				return new Services\MicrosoftPowerBI($this);
+			if ($evenResult->getType() == \Bitrix\Main\EventResult::SUCCESS)
+			{
+				$service = $evenResult->getParameters();
+				if ($service)
+				{
+					return $service;
+				}
+			}
 		}
+
 		return null;
 	}
 
+	/**
+	 * Fires OnBIConnectorDataSources event to gather all available data sources.
+	 *
+	 * @param string $languageId Interface language.
+	 *
+	 * @return void
+	 */
 	protected function init($languageId = '')
 	{
 		if (!isset($this->dataSources[$languageId]))
@@ -45,18 +75,43 @@ class Manager
 		}
 	}
 
+	/**
+	 * Returns all available data sources descriptions.
+	 *
+	 * @param string $languageId Interface language.
+	 *
+	 * @return array
+	 */
 	public function getDataSources($languageId = '')
 	{
 		$this->init($languageId);
+
 		return $this->dataSources[$languageId];
 	}
 
+	/**
+	 * Returns data source description by its code.
+	 *
+	 * @param string $table Data source code.
+	 * @param string $languageId Interface language.
+	 *
+	 * @return null|array
+	 */
 	public function getTableDescription($table, $languageId = '')
 	{
 		$this->init($languageId);
-		return $this->dataSources[$languageId][$table];
+
+		return $this->dataSources[$languageId][$table] ?? null;
 	}
 
+	/**
+	 * Checks if the key exists and active.
+	 * Strores key connection name for future connect.
+	 *
+	 * @param string $key Access key.
+	 *
+	 * @return bool
+	 */
 	public function checkAccessKey($key)
 	{
 		if ($key)
@@ -82,19 +137,26 @@ class Manager
 				return true;
 			}
 		}
+
 		return false;
 	}
 
+	/**
+	 * Gets most recent access key available for the current user.
+	 *
+	 * @return array
+	 */
 	public function getCurrentUserAccessKey()
 	{
+		/** @var \CUser $USER */
 		global $USER;
 
 		$filter = [
 			'=ACTIVE' => 'Y',
 		];
-		if (!$USER->canDoOperation('biconnector_key_manage'))
+		if (!$USER->CanDoOperation('biconnector_key_manage'))
 		{
-			$filter['=PERMISSION.USER_ID'] = $USER->getId();
+			$filter['=PERMISSION.USER_ID'] = $USER->GetID();
 		}
 
 		$keyList = \Bitrix\BIConnector\KeyTable::getList([
@@ -103,16 +165,23 @@ class Manager
 			'order' => ['ID' => 'DESC'],
 			'cache' => ['ttl' => 36000],
 		]);
+
 		return $keyList->fetch();
 	}
 
+	/**
+	 * Returns dashboard list binded to the current user.
+	 *
+	 * @return \Bitrix\Main\DB\Result
+	 */
 	public function getCurrentUserDashboardList()
 	{
+		/** @var \CUser $USER */
 		global $USER;
 
 		$result = \Bitrix\BIConnector\DashboardTable::getList([
 			'filter' => [
-				'=PERMISSION.USER_ID' => $USER->getId(),
+				'=PERMISSION.USER_ID' => $USER->GetID(),
 			],
 			'order' => ['NAME' => 'ASC', 'ID' => 'DESC'],
 			'cache' => ['ttl' => 36000],
@@ -121,25 +190,22 @@ class Manager
 		return $result;
 	}
 
+	/**
+	 * Fires OnBIConnectorValidateDashboardUrl event and
+	 * returns true on successful check.
+	 *
+	 * @param string $url External report public url.
+	 * @param int $flag What to check.
+	 *
+	 * @return bool
+	 */
 	private function checkDashboardUrlFlag($url, $flag)
 	{
-		$found = Services\GoogleDataStudio::validateDashboardUrl($url);
-		if ($found & $flag)
-		{
-			return true;
-		}
-
-		$found = Services\MicrosoftPowerBI::validateDashboardUrl($url);
-		if ($found & $flag)
-		{
-			return true;
-		}
-
 		$event = new \Bitrix\Main\Event('biconnector', 'OnBIConnectorValidateDashboardUrl', [$url]);
 		$event->send();
-		foreach($event->getResults() as $evenResult)
+		foreach ($event->getResults() as $evenResult)
 		{
-			if ($evenResult->getResultType() == \Bitrix\Main\EventResult::SUCCESS)
+			if ($evenResult->getType() == \Bitrix\Main\EventResult::SUCCESS)
 			{
 				$found = $evenResult->getParameters();
 				if ($found & $flag)
@@ -152,16 +218,36 @@ class Manager
 		return false;
 	}
 
+	/**
+	 * Returns true if url provided is allowed.
+	 *
+	 * @param mixed $url External report public url.
+	 *
+	 * @return bool
+	 */
 	public function validateDashboardUrl($url)
 	{
 		return $this->checkDashboardUrlFlag($url, static::IS_VALID_URL);
 	}
 
+	/**
+	 * Returns true if url provided is can not be opened in a slider.
+	 *
+	 * @param mixed $url External report public url.
+	 *
+	 * @return bool
+	 */
 	public function isExternalDashboardUrl($url)
 	{
 		return $this->checkDashboardUrlFlag($url, static::IS_EXTERNAL_URL);
 	}
 
+	/**
+	 * Returns a list of available connections from .settings.php file
+	 * which can be used as a bi source.
+	 *
+	 * @return array
+	 */
 	public function getConnections()
 	{
 		$biConnections = [];
@@ -171,7 +257,10 @@ class Manager
 		{
 			foreach ($configParams as $connectionName => $connectionParams)
 			{
-				if (is_a($connectionParams['className'], '\Bitrix\BIConnector\Connection', true))
+				if (
+					is_a($connectionParams['className'], '\Bitrix\BIConnector\Connection', true)
+					|| is_a($connectionParams['className'], '\Bitrix\BIConnector\DB\MysqliConnection', true)
+				)
 				{
 					$biConnections[$connectionName] = $connectionName;
 				}
@@ -187,24 +276,62 @@ class Manager
 		return $biConnections;
 	}
 
+	/**
+	 * Returns database connection binded with last checked key.
+	 *
+	 * @return \Bitrix\BIConnector\DB\MysqliConnection
+	 * @see \Bitrix\BIConnector\Manager::checkAccessKey
+	 */
 	public function getDatabaseConnection()
 	{
 		$pool = \Bitrix\Main\Application::getInstance()->getConnectionPool();
-		$isConnectionExists = $pool->getConnection($this->connectionName) !== null;
-		if (!$isConnectionExists)
+		$connectionName = $this->connectionName ?: $pool::DEFAULT_CONNECTION_NAME;
+
+		$conn = $pool->getConnection($connectionName);
+		if (!$conn)
 		{
-			$pool->cloneConnection($pool::DEFAULT_CONNECTION_NAME, $this->connectionName, [
-				'className' => '\\Bitrix\\BIConnector\\Connection',
-			]);
+			$conn = $pool->getConnection();
+			$connectionName = $pool::DEFAULT_CONNECTION_NAME;
 		}
 
-		return $pool->getConnection($this->connectionName);
+		if (!is_a($conn, '\Bitrix\BIConnector\DB\MysqliConnection'))
+		{
+			if (is_a($conn, '\Bitrix\Main\DB\MysqlCommonConnection'))
+			{
+				$pool->cloneConnection($connectionName , $connectionName . '~', [
+					'className' => '\Bitrix\BIConnector\DB\MysqliConnection',
+				]);
+				$conn = $pool->getConnection($connectionName . '~');
+			}
+			else
+			{
+				throw new \Bitrix\Main\Config\ConfigurationException(sprintf(
+					"Class '%s' for '%s' connection is not supported", get_class($conn), $this->connectionName
+				));
+			}
+		}
+
+		return $conn;
 	}
 
-	public function startQuery($sourceId, $fields = '', $filters = '', $input = '', $request_method = '', $request_uri = '')
+	/**
+	 * Adds query log entry.
+	 *
+	 * @param int $sourceId Data source ("table") name.
+	 * @param string $fields Query select list (comma separated).
+	 * @param string $filters Query where (json).
+	 * @param string $input Raw command input.
+	 * @param string $requestMethod Request method (POST, GET, etc.).
+	 * @param string $requestUri Request URI.
+	 *
+	 * @return int|false
+	 */
+	public function startQuery($sourceId, $fields = '', $filters = '', $input = '', $requestMethod = '', $requestUri = '')
 	{
+		$now = new \Bitrix\Main\Type\DateTime();
+
 		$statData = [
-			'TIMESTAMP_X' => new \Bitrix\Main\Type\DateTime(),
+			'TIMESTAMP_X' => $now,
 			'KEY_ID' => $this->keyId,
 			'SERVICE_ID' => substr($this->serviceId, 0, 150),
 			'SOURCE_ID' => substr($sourceId, 0, 150),
@@ -221,13 +348,20 @@ class Manager
 		{
 			$statData['INPUT'] = $input;
 		}
-		if ($request_method)
+		if ($requestMethod)
 		{
-			$statData['REQUEST_METHOD'] = $request_method;
+			$statData['REQUEST_METHOD'] = $requestMethod;
 		}
-		if ($request_uri)
+		if ($requestUri)
 		{
-			$statData['REQUEST_URI'] = $request_uri;
+			$statData['REQUEST_URI'] = $requestUri;
+		}
+
+		if ($this->keyId)
+		{
+			\Bitrix\BIConnector\KeyTable::update($this->keyId, [
+				'LAST_ACTIVITY_DATE' => $now,
+			]);
 		}
 
 		$addResult = \Bitrix\BIConnector\LogTable::add($statData);
@@ -241,13 +375,23 @@ class Manager
 		return false;
 	}
 
-	public function endQuery($logId, $count)
+	/**
+	 * Updates query log.
+	 *
+	 * @param int $logId Log record identifier returned by startQuery.
+	 * @param int $count How many data records was processed.
+	 * @param int $size Http response body size in bytes.
+	 *
+	 * @return void
+	 */
+	public function endQuery($logId, $count, $size = null)
 	{
 		if (isset($this->stime[$logId]))
 		{
 			$statData = [
 				'TIMESTAMP_X' => new \Bitrix\Main\Type\DateTime(),
 				'ROW_NUM' => $count,
+				'DATA_SIZE' => $size,
 				'REAL_TIME' => microtime(true) - $this->stime[$logId],
 			];
 
@@ -256,11 +400,21 @@ class Manager
 		}
 	}
 
+	/**
+	 * Returns true if at least one menu item can be shown.
+	 *
+	 * @return bool
+	 */
 	public function isAvailable()
 	{
 		return !empty($this->getMenuItems());
 	}
 
+	/**
+	 * Returns menu items.
+	 *
+	 * @return array
+	 */
 	public function getMenuItems()
 	{
 		global $USER;
@@ -274,12 +428,80 @@ class Manager
 			}
 		}
 
-		if ($USER->canDoOperation('biconnector_key_manage'))
+		if ($USER->canDoOperation('biconnector_key_view'))
+		{
+			$licence = Application::getInstance()->getLicense();
+			if ($licence->getRegion() === 'ru' || $licence->getRegion() === 'by')
+			{
+				$items[] = [
+					'id' => 'crm_bi_templates',
+					'url' => '/biconnector/templates.php',
+					'external' => false,
+					'component_name' => 'bitrix:biconnector.templates',
+					'component_parameters' => [
+						'SHOW_TITLE' => 'N',
+					],
+				];
+			}
+
+			$items[] = [
+				'id' => 'crm_microsoft_power_bi',
+				'external' => false,
+				'component_name' => 'bitrix:biconnector.microsoftpbi',
+				'component_parameters' => [
+					'SHOW_TITLE' => 'N',
+				],
+			];
+
+			if ($licence->getRegion() === 'ru' || $licence->getRegion() === 'kz')
+			{
+				$items[] = [
+					'id' => 'crm_yandex_datalens',
+					'external' => false,
+					'component_name' => 'bitrix:biconnector.yandexdl',
+					'component_parameters' => [
+						'SHOW_TITLE' => 'N',
+					],
+				];
+			}
+
+			$items[] = [
+				'id' => 'crm_google_datastudio',
+				'external' => false,
+				'component_name' => 'bitrix:biconnector.googleds',
+				'component_parameters' => [
+					'SHOW_TITLE' => 'N',
+				],
+			];
+		}
+
+
+
+		foreach ($this->getCurrentUserDashboardList() as $dashboard)
 		{
 			$items[] = [
-				'id' => 'crm_bi_connect',
-				'url' => '/biconnector/',
+				'id' => 'crm_bi_dashboard_' . $dashboard['ID'],
+				'url' => '/biconnector/dashboard.php?id=' . $dashboard['ID'],
+				'title' => $dashboard['NAME'],
 			];
+		}
+
+		$items = array_merge($items, $this->getDashboardsForPlacement(Rest::BI_MENU_PLACEMENT));
+
+		return $items;
+	}
+
+	public function getMenuSettingsItem()
+	{
+		global $USER;
+
+		$items = [];
+		if (\Bitrix\Main\Loader::includeModule('bitrix24'))
+		{
+			if (!\Bitrix\Bitrix24\Feature::isFeatureEnabled('biconnector'))
+			{
+				return $items;
+			}
 		}
 
 		if ($USER->canDoOperation('biconnector_dashboard_manage'))
@@ -288,22 +510,41 @@ class Manager
 				'id' => 'crm_bi_dashboard_manage',
 				'url' => '/biconnector/dashboard_list.php',
 			];
-		}
 
-		if ($USER->canDoOperation('biconnector_key_manage'))
-		{
 			$items[] = [
 				'id' => 'crm_bi_key',
 				'url' => '/biconnector/key_list.php',
 			];
+			$items[] = [
+				'id' => 'crm_bi_usage',
+				'url' => '/biconnector/usage_stat.php',
+			];
 		}
 
-		foreach ($this->getCurrentUserDashboardList() as $dashboard)
+		return $items;
+	}
+
+	private function getDashboardsForPlacement(string $placementCode): array
+	{
+		$items = [];
+		global $USER;
+		if (!$USER->canDoOperation('biconnector_key_view'))
+		{
+			return $items;
+		}
+		if (!\Bitrix\Main\Loader::includeModule('rest'))
+		{
+			return $items;
+		}
+
+		$handlerList = \Bitrix\Rest\PlacementTable::getHandlersList($placementCode);
+
+		foreach ($handlerList as $handlerData)
 		{
 			$items[] = [
-				'id' => 'crm_bi_dashboard_' . $dashboard['ID'],
-				'url' => '/biconnector/dashboard.php?id=' . $dashboard['ID'],
-				'title' => $dashboard['NAME'],
+				'id' => $handlerData['APP_ID'],
+				'url' => '/biconnector/placement.php?id='.$handlerData['ID'],//'/marketplace/app/'.$handlerData['APP_ID'].'/',
+				'title' => !empty($handlerData['TITLE']) ? $handlerData['TITLE'] : $handlerData['APP_NAME'],
 			];
 		}
 

@@ -693,7 +693,10 @@ abstract class CCrmReportHelperBase extends CReportHelper
 	}
 	public static function fillFilterReferenceColumn(&$filterElement, Main\Entity\ReferenceField $field)
 	{
-		if ($field->getRefEntityName() == '\Bitrix\Crm\Company')
+		if (
+			$field->getRefEntityName() === '\Bitrix\Crm\Company'
+			|| $field->getRefEntityName() === '\Bitrix\Crm\CompanyTable'
+		)
 		{
 			// CrmCompany
 			if ($filterElement['value'])
@@ -713,7 +716,10 @@ abstract class CCrmReportHelperBase extends CReportHelper
 				$filterElement['value'] = array('id' => '');
 			}
 		}
-		elseif ($field->getRefEntityName() == '\Bitrix\Crm\Contact')
+		elseif (
+			$field->getRefEntityName() == '\Bitrix\Crm\Contact'
+			|| $field->getRefEntityName() == '\Bitrix\Crm\ContactTable'
+		)
 		{
 			// CrmContact
 			if ($filterElement['value'])
@@ -3502,7 +3508,7 @@ class CCrmActivityReportHelper extends CCrmReportHelperBase
 	public static function beforeViewDataQuery(&$select, &$filter, &$group, &$order, &$limit, &$options, &$runtime = null)
 	{
 		parent::beforeViewDataQuery($select, $filter, $group, $order, $limit, $options, $runtime);
-
+		static::rewriteTaskActivityFilter($filter);
 		// Dynamic data setup
 		//Crm\ActivityTable::ProcessQueryOptions($options);
 
@@ -3542,6 +3548,24 @@ class CCrmActivityReportHelper extends CCrmReportHelperBase
 		}
 	}
 
+	private static function rewriteTaskActivityFilter(array &$filter): void
+	{
+		foreach ($filter as $key => &$value)
+		{
+			if ($key === '=TYPE_ID' && (int)$value === CCrmActivityType::Task)
+			{
+				$filter['LOGIC'] = 'OR';
+				$filter['=PROVIDER_ID'] = Crm\Activity\Provider\Tasks\Task::getId();
+				break;
+			}
+			elseif (is_array($value))
+			{
+				self::rewriteTaskActivityFilter($value);
+			}
+		}
+	}
+
+
 	public static function formatResultValue($k, &$v, &$row, &$cInfo, $total, &$customChartValue = null)
 	{
 		// HACK: detect if 'report.view' component is rendering excel spreadsheet
@@ -3556,7 +3580,15 @@ class CCrmActivityReportHelper extends CCrmReportHelperBase
 		{
 			if ($v !== '')
 			{
-				$v = self::getActivityTypeName($v, $isHtml);
+				// nasty... I have no choice...
+				if (static::isTaskActivity((int)$row['ID'], (int)$row['TYPE_ID']))
+				{
+					$v = Crm\Activity\Provider\Tasks\Task::getName();
+				}
+				else
+				{
+					$v = self::getActivityTypeName($v, $isHtml);
+				}
 			}
 		}
 		elseif (!$aggr && $fieldName === 'DIRECTION')
@@ -3706,6 +3738,32 @@ class CCrmActivityReportHelper extends CCrmReportHelperBase
 		}
 
 		return $href;
+	}
+
+	private static function isTaskActivity(int $activityId, int $typeId): bool
+	{
+		if ($activityId <= 0)
+		{
+			return false;
+		}
+
+		if ($typeId !== CCrmActivityType::Provider)
+		{
+			return false;
+		}
+
+		$query = Crm\ActivityTable::query();
+		$query
+			->setSelect(['ID', 'PROVIDER_ID'])
+			->where('ID', $activityId);
+
+		$activity = $query->exec()->fetchObject();
+		if (is_null($activity))
+		{
+			return false;
+		}
+
+		return $activity->getProviderId() === Crm\Activity\Provider\Tasks\Task::getId();
 	}
 }
 

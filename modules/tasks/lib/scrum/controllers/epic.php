@@ -93,8 +93,8 @@ class Epic extends Controller
 
 		$epic = new EpicForm();
 
-		$epic->setGroupId($post['groupId']);
-		$epic->setName($post['name']);
+		$epic->setGroupId($post['groupId'] ?? null);
+		$epic->setName($post['name'] ?? null);
 
 		if ($epic->getName() === '')
 		{
@@ -107,17 +107,17 @@ class Epic extends Controller
 			return null;
 		}
 
-		$epic->setDescription($post['description']);
+		$epic->setDescription($post['description'] ?? null);
 		$epic->setCreatedBy($post['createdBy'] ?? $userId);
 
 		$colorList = [
 			'#aae9fc', '#bbecf1', '#98e1dc', '#e3f299', '#ffee95', '#ffdd93', '#dfd3b6', '#e3c6bb',
 			'#ffad97', '#ffbdbb', '#ffcbd8', '#ffc4e4', '#c4baed', '#dbdde0', '#bfc5cd', '#a2a8b0'
 		];
-		$color = $post['color'] ? $post['color'] : array_rand(array_flip($colorList));
+		$color = ($post['color'] ?? null) ? $post['color'] : array_rand(array_flip($colorList));
 		$epic->setColor($color);
 
-		$files = (is_array($post['files']) ? $post['files'] : []);
+		$files = (is_array($post['files'] ?? null) ? $post['files'] : []);
 
 		$epicService = new EpicService($userId);
 		$pushService = (Loader::includeModule('pull') ? new PushService() : null);

@@ -2,7 +2,6 @@
  * @module crm/duplicates
  */
 jn.define('crm/duplicates', (require, exports, module) => {
-
 	const { findDuplicates } = require('crm/duplicates/finder');
 	const { DuplicatesContent } = require('crm/duplicates/content');
 	const { get } = require('utils/object');
@@ -30,7 +29,7 @@ jn.define('crm/duplicates', (require, exports, module) => {
 
 		/**
 		 * @param {Number} props.entityId
-		 * @param {String} props.entityType
+		 * @param {String} props.entityTypeName
 		 * @param {Object[]} props.values
 		 * @param {Object} props.duplicateControl
 		 * @returns {Promise}
@@ -43,8 +42,8 @@ jn.define('crm/duplicates', (require, exports, module) => {
 		/**
 		 * @param {Object} props
 		 * @param {Object[]} props.duplicates
-		 * @param {String} props.field	Type
-		 * @param {String} props.entityType
+		 * @param {String} props.fieldType
+		 * @param {String} props.entityTypeName
 		 * @param {String} props.color
 		 * @param {String} props.parentUid
 		 * @param {Object} props.style
@@ -54,7 +53,6 @@ jn.define('crm/duplicates', (require, exports, module) => {
 		{
 			return new DuplicatesContent(props);
 		}
-
 	}
 
 	module.exports = { Duplicates };

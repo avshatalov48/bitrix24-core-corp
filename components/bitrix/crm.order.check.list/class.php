@@ -1,13 +1,17 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
-use Bitrix\Main;
-use Bitrix\Crm\Order;
-use Bitrix\Main\Localization\Loc;
-use Bitrix\Crm\Settings\LayoutSettings;
-use Bitrix\Sale\Cashbox;
-use Bitrix\Main\Loader;
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
 use Bitrix\Crm;
+use Bitrix\Crm\Order;
+use Bitrix\Crm\Settings\LayoutSettings;
+use Bitrix\Main;
+use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Sale\Cashbox;
 
 Loc::loadMessages(__FILE__);
 
@@ -33,12 +37,20 @@ class CCrmOrderCheckListComponent extends \CBitrixComponent
 			return null;
 		}
 
-		$params['PATH_TO_ORDER_CHECK_SHOW'] = isset($params['PATH_TO_ORDER_CHECK_SHOW']) ? $params['PATH_TO_ORDER_CHECK_SHOW'] : '';
-		$params['PATH_TO_ORDER_CHECK_SHOW'] = CrmCheckPath('PATH_TO_ORDER_CHECK_SHOW', $params['PATH_TO_ORDER_CHECK_SHOW'], $APPLICATION->GetCurPage().'?check_id=#check_id#');
-		$params['PATH_TO_ORDER_CHECK_EDIT'] = isset($params['PATH_TO_ORDER_CHECK_EDIT']) ? $params['PATH_TO_ORDER_CHECK_EDIT'] : '';
-		$params['PATH_TO_ORDER_CHECK_EDIT'] = CrmCheckPath('PATH_TO_ORDER_CHECK_EDIT', $params['PATH_TO_ORDER_CHECK_EDIT'], $APPLICATION->GetCurPage().'?check_id=#check_id#');
-		$params['OWNER_ID'] = (int)$params['OWNER_ID'];
-		$params['OWNER_TYPE'] = (int)$params['OWNER_TYPE'];
+		$params['PATH_TO_ORDER_CHECK_SHOW'] = $params['PATH_TO_ORDER_CHECK_SHOW'] ?? '';
+		$params['PATH_TO_ORDER_CHECK_SHOW'] = CrmCheckPath(
+			'PATH_TO_ORDER_CHECK_SHOW',
+			$params['PATH_TO_ORDER_CHECK_SHOW'] ?? '',
+			$APPLICATION->GetCurPage() . '?check_id=#check_id#'
+		);
+		$params['PATH_TO_ORDER_CHECK_EDIT'] = $params['PATH_TO_ORDER_CHECK_EDIT'] ?? '';
+		$params['PATH_TO_ORDER_CHECK_EDIT'] = CrmCheckPath(
+			'PATH_TO_ORDER_CHECK_EDIT',
+			$params['PATH_TO_ORDER_CHECK_EDIT'] ?? '',
+			$APPLICATION->GetCurPage() . '?check_id=#check_id#'
+		);
+		$params['OWNER_ID'] = (int)($params['OWNER_ID'] ?? 0);
+		$params['OWNER_TYPE'] = (int)($params['OWNER_TYPE'] ?? 0);
 
 		return $params;
 	}
@@ -51,6 +63,7 @@ class CCrmOrderCheckListComponent extends \CBitrixComponent
 		if (!Loader::includeModule('crm'))
 		{
 			$this->errors[] = Loc::getMessage('CRM_MODULE_NOT_INSTALLED');
+
 			return false;
 		}
 
@@ -63,12 +76,14 @@ class CCrmOrderCheckListComponent extends \CBitrixComponent
 		if (!Loader::includeModule('catalog'))
 		{
 			$this->errors[] = Loc::getMessage('CRM_MODULE_NOT_INSTALLED_CATALOG');
+
 			return false;
 		}
 
 		if (!Loader::includeModule('sale'))
 		{
 			$this->errors[] = Loc::getMessage('CRM_MODULE_NOT_INSTALLED_SALE');
+
 			return false;
 		}
 
@@ -123,7 +138,9 @@ class CCrmOrderCheckListComponent extends \CBitrixComponent
 	protected function showErrors()
 	{
 		foreach($this->errors as $error)
+		{
 			ShowError($error);
+		}
 	}
 
 	protected function addErrors(array $errors)
@@ -139,24 +156,24 @@ class CCrmOrderCheckListComponent extends \CBitrixComponent
 	protected function getHeaders()
 	{
 		return [
-			array("id" => "TITLE", "name" => Loc::getMessage("CRM_COLUMN_ORDER_CHECK_TITLE"), "sort" => "ID", "default" => true, 'editable' => false),
-			array("id" => "CHECK_TYPE", "name" => Loc::getMessage("CRM_COLUMN_ORDER_CHECK_TYPE"), "sort" => "TYPE", "default" => true, 'editable' => false),
-			array("id" => "CHECK_STATUS", "name" => Loc::getMessage("CRM_COLUMN_ORDER_CHECK_STATUS"), "sort" => "STATUS", "default" => true, 'editable' => false),
-			array("id" => "CASHBOX_NAME", "name" => Loc::getMessage("CRM_COLUMN_ORDER_CHECK_CASHBOX_ID"), "sort" => "CASHBOX_ID", "default" => true, 'editable' => false),
+			array('id' => 'TITLE', 'name' => Loc::getMessage('CRM_COLUMN_ORDER_CHECK_TITLE'), 'sort' => 'ID', 'default' => true, 'editable' => false),
+			array('id' => 'CHECK_TYPE', 'name' => Loc::getMessage('CRM_COLUMN_ORDER_CHECK_TYPE'), 'sort' => 'TYPE', 'default' => true, 'editable' => false),
+			array('id' => 'CHECK_STATUS', 'name' => Loc::getMessage('CRM_COLUMN_ORDER_CHECK_STATUS'), 'sort' => 'STATUS', 'default' => true, 'editable' => false),
+			array('id' => 'CASHBOX_NAME', 'name' => Loc::getMessage('CRM_COLUMN_ORDER_CHECK_CASHBOX_ID'), 'sort' => 'CASHBOX_ID', 'default' => true, 'editable' => false),
 			...(
 				CCrmSaleHelper::isWithOrdersMode()
 					? [
-						array("id" => "ORDER_ID", "name" => Loc::getMessage("CRM_COLUMN_ORDER_CHECK_ORDER_ID"), "sort" => "ORDER_ID", "default" => false, 'editable' => false),
+						array('id' => 'ORDER_ID', 'name' => Loc::getMessage('CRM_COLUMN_ORDER_CHECK_ORDER_ID'), 'sort' => 'ORDER_ID', 'default' => false, 'editable' => false),
 					]
 					: []
 			),
-			array("id" => "DATE_CREATE", "name" => Loc::getMessage("CRM_COLUMN_ORDER_CHECK_DATE_CREATE"), "sort" => "DATE_CREATE", "default" => false, 'editable' => false),
-			array("id" => "FORMATTED_SUM", "name" => Loc::getMessage("CRM_COLUMN_ORDER_CHECK_SUM"), "sort" => "SUM", "default" => true, 'editable' => false),
-			array("id" => "LINK_PARAMS", "name" => Loc::getMessage("CRM_COLUMN_ORDER_CHECK_LINK"), "default" => true, 'editable' => false),
-			array("id" => "PAYMENT", "name" => Loc::getMessage("CRM_COLUMN_ORDER_CHECK_PAYMENT_DESCR"), "sort" => "PAYMENT_ID", "default" => true, 'editable' => false),
-			array("id" => "SHIPMENT", "name" => Loc::getMessage("CRM_COLUMN_ORDER_CHECK_SHIPMENT_DESCR"), "sort" => "SHIPMENT_ID", "default" => true, 'editable' => false),
-			array("id" => "PAYMENT_ID", "name" => Loc::getMessage("CRM_COLUMN_ORDER_CHECK_PAYMENT_ID"), "sort" => "PAYMENT_ID", "default" => false, 'editable' => false),
-			array("id" => "SHIPMENT_ID", "name" => Loc::getMessage("CRM_COLUMN_ORDER_CHECK_SHIPMENT_ID"), "sort" => "SHIPMENT_ID", "default" => false, 'editable' => false),
+			array('id' => 'DATE_CREATE', 'name' => Loc::getMessage('CRM_COLUMN_ORDER_CHECK_DATE_CREATE'), 'sort' => 'DATE_CREATE', 'default' => false, 'editable' => false),
+			array('id' => 'FORMATTED_SUM', 'name' => Loc::getMessage('CRM_COLUMN_ORDER_CHECK_SUM'), 'sort' => 'SUM', 'default' => true, 'editable' => false),
+			array('id' => 'LINK_PARAMS', 'name' => Loc::getMessage('CRM_COLUMN_ORDER_CHECK_LINK'), 'default' => true, 'editable' => false),
+			array('id' => 'PAYMENT', 'name' => Loc::getMessage('CRM_COLUMN_ORDER_CHECK_PAYMENT_DESCR'), 'sort' => 'PAYMENT_ID', 'default' => true, 'editable' => false),
+			array('id' => 'SHIPMENT', 'name' => Loc::getMessage('CRM_COLUMN_ORDER_CHECK_SHIPMENT_DESCR'), 'sort' => 'SHIPMENT_ID', 'default' => true, 'editable' => false),
+			array('id' => 'PAYMENT_ID', 'name' => Loc::getMessage('CRM_COLUMN_ORDER_CHECK_PAYMENT_ID'), 'sort' => 'PAYMENT_ID', 'default' => false, 'editable' => false),
+			array('id' => 'SHIPMENT_ID', 'name' => Loc::getMessage('CRM_COLUMN_ORDER_CHECK_SHIPMENT_ID'), 'sort' => 'SHIPMENT_ID', 'default' => false, 'editable' => false),
 		];
 	}
 
@@ -164,9 +181,10 @@ class CCrmOrderCheckListComponent extends \CBitrixComponent
 	{
 		global $APPLICATION;
 
-		if(!$this->init())
+		if (!$this->init())
 		{
 			$this->showErrors();
+
 			return false;
 		}
 
@@ -175,12 +193,12 @@ class CCrmOrderCheckListComponent extends \CBitrixComponent
 		$currentPage = $APPLICATION->GetCurPage();
 		$this->arResult['CURRENT_USER_ID'] = CCrmSecurityHelper::GetCurrentUserID();
 		$this->arResult['IS_AJAX_CALL'] = isset($_REQUEST['AJAX_CALL']) || isset($_REQUEST['ajax_request']) || !!CAjax::GetSession();
-		$this->arResult['AJAX_MODE'] = isset($this->arParams['AJAX_MODE']) ? $this->arParams['AJAX_MODE'] : ($this->arResult['INTERNAL'] ? 'N' : 'Y');
-		$this->arResult['AJAX_ID'] = isset($this->arParams['AJAX_ID']) ? $this->arParams['AJAX_ID'] : '';
-		$this->arResult['AJAX_OPTION_JUMP'] = isset($this->arParams['AJAX_OPTION_JUMP']) ? $this->arParams['AJAX_OPTION_JUMP'] : 'N';
-		$this->arResult['AJAX_OPTION_HISTORY'] = isset($this->arParams['AJAX_OPTION_HISTORY']) ? $this->arParams['AJAX_OPTION_HISTORY'] : 'N';
+		$this->arResult['AJAX_MODE'] = $this->arParams['AJAX_MODE'] ?? ($this->arResult['INTERNAL'] ? 'N' : 'Y');
+		$this->arResult['AJAX_ID'] = $this->arParams['AJAX_ID'] ?? '';
+		$this->arResult['AJAX_OPTION_JUMP'] = $this->arParams['AJAX_OPTION_JUMP'] ?? 'N';
+		$this->arResult['AJAX_OPTION_HISTORY'] = $this->arParams['AJAX_OPTION_HISTORY'] ?? 'N';
 		$this->arResult['SESSION_ID'] = bitrix_sessid();
-		$this->arResult['NAVIGATION_CONTEXT_ID'] = isset($this->arParams['NAVIGATION_CONTEXT_ID']) ? $this->arParams['NAVIGATION_CONTEXT_ID'] : '';
+		$this->arResult['NAVIGATION_CONTEXT_ID'] = $this->arParams['NAVIGATION_CONTEXT_ID'] ?? '';
 		$this->arResult['ENABLE_SLIDER'] = \Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isSliderEnabled();
 
 		$dbRes = Cashbox\Internals\CashboxTable::getList([
@@ -191,7 +209,7 @@ class CCrmOrderCheckListComponent extends \CBitrixComponent
 		]);
 		$this->arResult['ENABLE_TOOLBAR'] = (bool)$dbRes->fetch() && $this->arResult['PERM']['ADD'];
 
-		if(LayoutSettings::getCurrent()->isSimpleTimeFormatEnabled())
+		if (LayoutSettings::getCurrent()->isSimpleTimeFormatEnabled())
 		{
 			$this->arResult['TIME_FORMAT'] = array(
 				'tommorow' => 'tommorow',
@@ -211,17 +229,17 @@ class CCrmOrderCheckListComponent extends \CBitrixComponent
 		$this->arResult['HEADERS'] = $this->getHeaders();
 
 		$this->arResult['OWNER_TYPE'] = ($this->arParams['OWNER_TYPE'] > 0) ? $this->arParams['OWNER_TYPE'] : \CCrmOwnerType::Order;
-		$this->arResult['OWNER_ID'] = isset($this->arParams['OWNER_ID']) ? (int)$this->arParams['OWNER_ID'] : 0;
+		$this->arResult['OWNER_ID'] = (int)($this->arParams['OWNER_ID'] ?? 0);
 
-		if($this->arResult['ENABLE_TOOLBAR'])
+		if ($this->arResult['ENABLE_TOOLBAR'])
 		{
 			$this->arResult['PATH_TO_ORDER_CHECK_ADD'] = CComponentEngine::MakePathFromTemplate(
-				$this->arParams['PATH_TO_ORDER_CHECK_EDIT'],
+				$this->arParams['PATH_TO_ORDER_CHECK_EDIT'] ?? '',
 				array('check_id' => 0)
 			);
 
 			$this->arResult['PATH_TO_ORDER_CHECK_ADD'] = CHTTP::urlAddParams(
-				$this->arResult['PATH_TO_ORDER_CHECK_ADD'],
+				$this->arResult['PATH_TO_ORDER_CHECK_ADD'] ?? '',
 				[
 					'order_id' => $this->orderId,
 					'owner_type' => $this->arResult['OWNER_TYPE'],
@@ -232,24 +250,22 @@ class CCrmOrderCheckListComponent extends \CBitrixComponent
 
 		/** @var \CBitrixComponent $this */
 		$this->arResult['COMPONENT_ID'] = $this->randString();
-
 		$this->arResult['DATE_FORMAT'] = Main\Type\Date::getFormat();
-
-
-		$this->arResult['FORM_ID'] = isset($this->arParams['FORM_ID']) ? $this->arParams['FORM_ID'] : '';
-		$this->arResult['TAB_ID'] = isset($this->arParams['TAB_ID']) ? $this->arParams['TAB_ID'] : '';
+		$this->arResult['FORM_ID'] = $this->arParams['FORM_ID'] ?? '';
+		$this->arResult['TAB_ID'] = $this->arParams['TAB_ID'] ?? '';
 		$this->arResult['GRID_ID'] = self::GRID_ID;
 		$this->arResult['HEADERS'] = $this->getHeaders();
 		$resultPrepared = $this->prepareItems();
 		$this->arResult = array_merge($this->arResult, $resultPrepared);
 
-		if ($this->arParams['SET_TITLE'])
+		if (!empty($this->arParams['SET_TITLE']))
 		{
 			$this->setTitle();
 		}
 
 		$this->IncludeComponentTemplate();
-		return $this->arResult['ROWS_COUNT'];
+
+		return $this->arResult['ROWS_COUNT'] ?? null;
 	}
 
 	/**
@@ -341,15 +357,15 @@ class CCrmOrderCheckListComponent extends \CBitrixComponent
 			'runtime' => array(
 				new \Bitrix\Main\Entity\ExpressionField('CNT', 'COUNT(1)'),
 				new \Bitrix\Main\Entity\ReferenceField(
-					"REF",
+					'REF',
 					'Bitrix\Sale\Cashbox\Internals\CheckRelatedEntitiesTable',
-					array("=this.ID"=>"ref.CHECK_ID"),
-					array("join_type"=>"left")
+					['=this.ID' => 'ref.CHECK_ID'],
+					['join_type' => 'left']
 				)
 			)
 		))->fetch();
 
-		return (int)$rowsCount['CNT'];
+		return (int)($rowsCount['CNT'] ?? 0);
 	}
 
 	/**
@@ -409,7 +425,7 @@ class CCrmOrderCheckListComponent extends \CBitrixComponent
 	 */
 	public function prepareItems()
 	{
-		$result = array();
+		$result = [];
 		$lastPageSelected = false;
 		$gridOptions = new \Bitrix\Main\Grid\Options($this->arResult['GRID_ID']);
 		$navParams = array(
@@ -417,21 +433,21 @@ class CCrmOrderCheckListComponent extends \CBitrixComponent
 		);
 		$navParams = $gridOptions->GetNavParams($navParams);
 		$navParams['bShowAll'] = false;
-		$pageSize = (int)(isset($navParams['nPageSize']) ? $navParams['nPageSize'] : $this->arParams['CHECK_COUNT']);
-
+		$pageSize = (int)($navParams['nPageSize'] ?? $this->arParams['CHECK_COUNT']);
 		$pageNum = 1;
-		if ((int)($_REQUEST['page'])>0)
+		$requestPage = (int)($_REQUEST['page'] ?? 0);
+		if ($requestPage > 0)
 		{
-			$pageNum = (int)$_REQUEST['page'];
+			$pageNum = $requestPage;
 		}
-		elseif ((int)($_REQUEST['page']) === -1)
+		elseif ($requestPage === -1)
 		{
 			$lastPageSelected = true;
 		}
 
-		if(!isset($_SESSION['CRM_PAGINATION_DATA']))
+		if (!isset($_SESSION['CRM_PAGINATION_DATA']))
 		{
-			$_SESSION['CRM_PAGINATION_DATA'] = array();
+			$_SESSION['CRM_PAGINATION_DATA'] = [];
 		}
 
 		$filter = $this->prepareFilter();
@@ -439,9 +455,8 @@ class CCrmOrderCheckListComponent extends \CBitrixComponent
 		$_SESSION['CRM_PAGINATION_DATA'][self::GRID_ID] = array('PAGE_NUM' => $pageNum, 'PAGE_SIZE' => $pageSize);
 		$_SESSION['CRM_GRID_DATA'][self::GRID_ID] = array('FILTER' => $filter);
 
-		$nav = new \Bitrix\Main\UI\PageNavigation("checkList");
-		$nav->allowAllRecords(false)
-			->setPageSize($pageSize);
+		$nav = new \Bitrix\Main\UI\PageNavigation('checkList');
+		$nav->allowAllRecords(false)->setPageSize($pageSize);
 
 		$count = $this->getCount($filter);
 
@@ -477,10 +492,10 @@ class CCrmOrderCheckListComponent extends \CBitrixComponent
 		{
 			$params['runtime'] = array(
 				new \Bitrix\Main\Entity\ReferenceField(
-					"REF",
+					'REF',
 					'Bitrix\Sale\Cashbox\Internals\CheckRelatedEntitiesTable',
-					array("=this.ID"=>"ref.CHECK_ID"),
-					array("join_type"=>"left")
+					['=this.ID' => 'ref.CHECK_ID'],
+					['join_type' => 'left']
 				)
 			);
 		}

@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Service\Timeline\Item\LogMessage;
 
+use Bitrix\Crm\Service\Timeline\Layout\Common\Icon;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\Service\Timeline\Item\LogMessage;
 use Bitrix\Crm\Service\Timeline\Layout\Action\JsEvent;
@@ -26,7 +27,7 @@ class Modification extends LogMessage
 			true
 		))
 		{
-			return 'store';
+			return Icon::STORE;
 		}
 		
 
@@ -37,11 +38,11 @@ class Modification extends LogMessage
 			case 'STATUS':
 			case 'TASK:STATUS':
 			case Item::FIELD_NAME_STAGE_ID:
-				return 'stage-change';
+				return Icon::STAGE_CHANGE;
 			case Item::FIELD_NAME_IS_MANUAL_OPPORTUNITY:
-				return 'sum';
+				return Icon::SUM;
 			case Item::FIELD_NAME_CATEGORY_ID:
-				return 'pipeline';
+				return Icon::PIPELINE;
 		}
 
 		return parent::getIconCode();

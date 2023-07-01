@@ -6,6 +6,7 @@ use Bitrix\Crm\Service\Timeline\Item\Interfaces;
 use Bitrix\Crm\Service\Timeline\Item\Mixin;
 use Bitrix\Crm\Service\Timeline\Item\LogMessage;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\Text;
+use Bitrix\Crm\Service\Timeline\Layout\Common\Icon;
 use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__DIR__ . '/../Ecommerce.php');
@@ -26,7 +27,7 @@ class OrderCheckSent extends LogMessage implements Interfaces\HasCheckDetails
 
 	public function getIconCode(): ?string
 	{
-		return 'check';
+		return Icon::CHECK;
 	}
 
 	public function getContentBlocks(): ?array

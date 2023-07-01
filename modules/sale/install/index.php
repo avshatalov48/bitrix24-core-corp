@@ -248,6 +248,8 @@ Class sale extends CModule
 		$eventManager->registerEventHandler('sale', 'OnSaleBasketItemSetField', 'sale', \Bitrix\Sale\Reservation\Event\Handler\BasketItemUpdateProductReserveHandlers::class, 'OnSaleBasketItemSetField');
 		$eventManager->registerEventHandler('sale', 'OnAfterSaleBasketItemSetField', 'sale', \Bitrix\Sale\Reservation\Event\Handler\BasketItemUpdateProductReserveHandlers::class, 'OnAfterSaleBasketItemSetField');
 
+		$eventManager->registerEventHandler('sale', 'onBeforeCashboxAdd', 'sale', \Bitrix\Sale\Cashbox\EventsHandler\CashboxYooKassa::class, 'onBeforeCashboxAdd');
+
 		COption::SetOptionString("sale", "viewed_capability", "N");
 		COption::SetOptionString("sale", "viewed_count", 10);
 		COption::SetOptionString("sale", "viewed_time", 5);
@@ -534,6 +536,8 @@ Class sale extends CModule
 
 		$eventManager->unRegisterEventHandler('sale', 'OnSaleBasketItemSetField', 'sale', \Bitrix\Sale\Reservation\Event\Handler\BasketItemUpdateProductReserveHandlers::class, 'OnSaleBasketItemSetField');
 		$eventManager->unRegisterEventHandler('sale', 'OnAfterSaleBasketItemSetField', 'sale', \Bitrix\Sale\Reservation\Event\Handler\BasketItemUpdateProductReserveHandlers::class, 'OnAfterSaleBasketItemSetField');
+
+		$eventManager->unRegisterEventHandler('sale', 'onBeforeCashboxAdd', 'sale', '\Bitrix\Sale\Cashbox\EventsHandler\CashboxYooKassa', 'onBeforeCashboxAdd');
 
 		if (\Bitrix\Main\Loader::includeModule('sale'))
 		{

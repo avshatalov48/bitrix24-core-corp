@@ -1,13 +1,11 @@
 <?php
 namespace Bitrix\BIConnector;
 
-use Bitrix\Main\DB\SqlQueryException;
-use Bitrix\Main\Diag;
-
+/**
+ * Unfortunatly we have to keep this empty class for compatibility with clients .settings php.
+ *
+ * @deprecated See \Bitrix\BIConnector\DB\MysqliConnection.
+ */
 class Result extends \Bitrix\Main\DB\MysqliResult
 {
-	public function fetchArray()
-	{
-		return $this->resource->fetch_array(MYSQLI_NUM);
-	}
 }

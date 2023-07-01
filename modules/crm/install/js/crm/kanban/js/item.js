@@ -12,9 +12,6 @@ BX.namespace("BX.CRM.Kanban");
  */
 BX.CRM.Kanban.Item = function(options)
 {
-
-	BX.Kanban.Item.apply(this, arguments);
-
 	/** @var {Element} **/
 	this.container = null;
 	this.timer = null;
@@ -30,6 +27,8 @@ BX.CRM.Kanban.Item = function(options)
 	this.notChangeTotal = false;
 	this.itemActivityZeroClass = 'crm-kanban-item-activity-zero';
 	this.activityAddingPopup = null;
+
+	BX.Kanban.Item.apply(this, arguments);
 };
 
 BX.CRM.Kanban.Item.prototype = {
@@ -40,6 +39,18 @@ BX.CRM.Kanban.Item.prototype = {
 		targetId: null
 	},
 	checked: false,
+
+	setOptions: function(options)
+	{
+		if (!options)
+		{
+			return;
+		}
+
+		BX.Kanban.Item.prototype.setOptions.call(this, options);
+
+		this.useAnimation = BX.type.isBoolean(options.useAnimation) ? options.useAnimation : false;
+	},
 
 	/**
 	 * Add <span> for last word in title.
@@ -966,9 +977,16 @@ BX.CRM.Kanban.Item.prototype = {
 
 		// common container
 
+		let containerClassname = this.getGrid().getTypeInfoParam('kanbanItemClassName');
+
+		if (this.useAnimation)
+		{
+			containerClassname += ` ${containerClassname}-new`;
+		}
+
 		this.container = BX.create("div", {
 			props: {
-				className: this.getGrid().getTypeInfoParam('kanbanItemClassName')
+				className: containerClassname,
 			},
 			events: {
 				click: function(e)
@@ -1600,7 +1618,7 @@ BX.CRM.Kanban.Item.prototype = {
 	 * Plan new activity.
 	 * @returns {void}
 	 */
-	showPlannerMenu: function(node, mode = BX.Crm.Activity.TodoEditorMode.ADD )
+	showPlannerMenu: function(node, mode = BX.Crm.Activity.TodoEditorMode.ADD, disableItem = false)
 	{
 		const id = this.getId();
 		const popupId = `kanban_planner_menu_${id}`;
@@ -1608,11 +1626,17 @@ BX.CRM.Kanban.Item.prototype = {
 
 		if (BX.CRM.Kanban.Restriction.Instance.isTodoActivityCreateAvailable())
 		{
+			if (disableItem)
+			{
+				this.disabledItem();
+			}
+
 			if (!this.activityAddingPopup)
 			{
 				this.activityAddingPopup = new BX.Crm.Activity.AddingPopup(
 					this.getGridData().entityTypeInt,
 					id,
+					this.getCurrentUser(),
 					{
 						events: {
 							onSave: function() {
@@ -1645,6 +1669,10 @@ BX.CRM.Kanban.Item.prototype = {
 			}
 
 			this.activityAddingPopup.show(bindElement, mode);
+			if (disableItem)
+			{
+				this.unDisabledItem();
+			}
 		}
 		else if (mode === BX.Crm.Activity.TodoEditorMode.ADD )
 		{
@@ -2127,16 +2155,37 @@ BX.CRM.Kanban.Item.prototype = {
 	 */
 	isItemMoveDisabled: function()
 	{
-		var grid = this.getGrid();
+		const grid = this.getGrid();
 
 		if (!grid.options.canChangeItemStage)
 		{
 			return true;
 		}
 
-		var itemColumnData = this.getColumn().getData();
-		return (grid.getTypeInfoParam('disableMoveToWin') && itemColumnData.type === "WIN");
+		if (
+			grid.getData().viewMode  === BX.Crm.Kanban.ViewMode.MODE_ACTIVITIES
+			&& this.getData().activityIncomingTotal > 0
+		)
+		{
+			return true;
+		}
+
+		const itemColumnData = this.getColumn().getData();
+
+		return (grid.getTypeInfoParam('disableMoveToWin') && itemColumnData.type === 'WIN');
 	},
+
+	getCurrentUser()
+	{
+		const userId = this.getGrid().getData().userId;
+		const currentUser = this.getGridData().currentUser;
+		if (BX.type.isObject(currentUser) && userId > 0)
+		{
+			currentUser.userId = userId;
+		}
+
+		return currentUser;
+	}
 }
 
 })();

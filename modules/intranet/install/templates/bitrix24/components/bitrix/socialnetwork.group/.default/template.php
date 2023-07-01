@@ -13,7 +13,7 @@ $component = $this->getComponent();
 use Bitrix\Main\Localization\Loc;
 use \Bitrix\Main\UI;
 
-if ($arResult["FatalError"] <> '')
+if (!empty($arResult["FatalError"]))
 {
 	$APPLICATION->IncludeComponent(
 		'bitrix:ui.sidepanel.wrapper',
@@ -42,7 +42,7 @@ UI\Extension::load([
 
 $frameMode = (\Bitrix\Main\Context::getCurrent()->getRequest()->getQuery('IFRAME') === 'Y');
 
-if ($arResult["ErrorMessage"] <> '')
+if (!empty($arResult["ErrorMessage"]))
 {
 	?><span class='errortext'><?=$arResult["ErrorMessage"]?></span><br/><br/><?
 }
@@ -186,18 +186,18 @@ elseif ($arResult["bUserCanRequestGroup"])
 				[
 					"ENTITY_TYPE" => "",
 					"GROUP_ID" => $arParams["GROUP_ID"],
-					"USER_VAR" => $arParams["VARIABLE_ALIASES"]["user_id"],
-					"GROUP_VAR" => $arParams["VARIABLE_ALIASES"]["group_id"],
+					"USER_VAR" => $arParams["VARIABLE_ALIASES"]["user_id"] ?? '',
+					"GROUP_VAR" => $arParams["VARIABLE_ALIASES"]["group_id"] ?? '',
 					"PATH_TO_USER" => $arParams["PATH_TO_USER"],
 					"PATH_TO_GROUP" => $arParams["PATH_TO_GROUP"],
 					'SET_TITLE' => 'Y',
 					"AUTH" => "Y",
 					"SET_NAV_CHAIN" => "N",
-					"PATH_TO_MESSAGES_CHAT" => $arParams["PM_URL"],
+					"PATH_TO_MESSAGES_CHAT" => $arParams["PM_URL"] ?? '',
 					"PATH_TO_VIDEO_CALL" => $arParams["PATH_TO_VIDEO_CALL"],
 					"PATH_TO_USER_BLOG_POST_IMPORTANT" => $arParams["PATH_TO_USER_BLOG_POST_IMPORTANT"],
 					"PATH_TO_CONPANY_DEPARTMENT" => $arParams["PATH_TO_CONPANY_DEPARTMENT"],
-					"PATH_TO_GROUP_PHOTO_SECTION" => $arParams["PARENT_COMPONENT_RESULT"]["PATH_TO_GROUP_PHOTO_SECTION"],
+					"PATH_TO_GROUP_PHOTO_SECTION" => $arParams["PARENT_COMPONENT_RESULT"]["PATH_TO_GROUP_PHOTO_SECTION"] ?? '',
 					"PATH_TO_SEARCH_TAG" => $arParams["PATH_TO_SEARCH_TAG"],
 					"DATE_TIME_FORMAT" => $arParams["DATE_TIME_FORMAT"],
 					"SHOW_YEAR" => $arParams["SHOW_YEAR"],
@@ -217,7 +217,7 @@ elseif ($arResult["bUserCanRequestGroup"])
 					"CONTAINER_ID" => "log_external_container",
 					"PAGE_SIZE" => 10,
 					"SHOW_RATING" => $arParams["SHOW_RATING"],
-					"RATING_TYPE" => $arParams["RATING_TYPE"],
+					"RATING_TYPE" => $arParams["RATING_TYPE"] ?? '',
 					"SHOW_SETTINGS_LINK" => "Y",
 					"AVATAR_SIZE" => $arParams["LOG_THUMBNAIL_SIZE"],
 					"AVATAR_SIZE_COMMENT" => $arParams["LOG_COMMENT_THUMBNAIL_SIZE"],

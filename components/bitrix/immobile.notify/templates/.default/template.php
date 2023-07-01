@@ -54,16 +54,21 @@ if(empty($arResult['NOTIFY'])):?>
 			);
 			$maxId = $data['id'] > $maxId? $data['id']: $maxId;
 			$data['date'] = FormatDate($arFormat, $data['date']);
-			$data['text_converted'] = preg_replace("/<img.*?data-code=\"([^\"]*)\".*?>/i", "$1", $data['text_converted']);
-			$data['text_converted'] = preg_replace("/\[USER=([0-9]{1,})\](.*?)\[\/USER\]/i", "$2", $data['text_converted']);
-			$data['text_converted'] = preg_replace("/\[RATING=([1-5]{1})\]/i", "$1", $data['text_converted']);
-			$data['text_converted'] = preg_replace("/\[CHAT=(imol\|)?([0-9]{1,})\](.*?)\[\/CHAT\]/i", "$3", $data['text_converted']);
-			$data['text_converted'] = preg_replace("/\[dialog=(chat\d+|\d+)(?: message=(\d+))?](.*?)\[\/dialog]/i", "$3", $data['text_converted']);
-			$data['text_converted'] = preg_replace("/\[LIKE\]/i", '<span class="bx-smile bx-im-smile-like"></span>', $data['text_converted']);
-			$data['text_converted'] = preg_replace("/\[DISLIKE\]/i", '<span class="bx-smile bx-im-smile-dislike"></span>', $data['text_converted']);
-			$data['text_converted'] = CMobileHelper::prepareNotificationText($data['text_converted'], $data['originalTag']);
-			$data['link'] = CMobileHelper::createLink($data['originalTag']);
 
+			$data['text'] = preg_replace("/<img.*?data-code=\"([^\"]*)\".*?>/i", "$1", $data['text']);
+			$data['text'] = preg_replace("/\[USER=([0-9]{1,})\](.*?)\[\/USER\]/i", "$2", $data['text']);
+			$data['text'] = preg_replace("/\[RATING=([1-5]{1})\]/i", "$1", $data['text']);
+			$data['text'] = preg_replace("/\[CHAT=(imol\|)?([0-9]{1,})\](.*?)\[\/CHAT\]/i", "$3", $data['text']);
+			$data['text'] = preg_replace("/\[context=(chat\d+|\d+:\d+)\/(\d+)\](.*?)\[\/context\]/i", "$3", $data['text']);
+			$data['text'] = preg_replace("/\[LIKE\]/i", '<span class="bx-smile bx-im-smile-like"></span>', $data['text']);
+			$data['text'] = preg_replace("/\[DISLIKE\]/i", '<span class="bx-smile bx-im-smile-dislike"></span>', $data['text']);
+
+			if (trim($data['text']) || !isset($data['params']))
+			{
+				$data['text'] = decodeBbCode($data['text'], false);
+				$data['text'] = CMobileHelper::prepareNotificationText($data['text'], $data['originalTag']);
+				$data['link'] = CMobileHelper::createLink($data['originalTag']);
+			}
 
 			if ($data['read'] == 'N' && !$newFlag || $data['read'] == 'Y' && $newFlag):
 				$newFlag = $newFlag? false: true;
@@ -105,8 +110,7 @@ if(empty($arResult['NOTIFY'])):?>
 					</div>
 
 					<div class="notif-inner" id="inner<?=$data['id']?>" data-fold="fold<?=$data['id']?>">
-						<div class="notif-text"><?=$data['text_converted']?></div>
-
+						<?if ($data['text']):?><div class="notif-text"><?=$data['text']?></div><?endif;?>
 						<?if(isset($data['params'])):?>
 							<?=getNotifyParamsHtml($data['params'])?>
 						<?endif;?>
@@ -483,11 +487,25 @@ if(empty($arResult['NOTIFY'])):?>
 
 	</script>
 <?
-function decodeBbCode($text)
+function decodeBbCode($text, $safe = true)
 {
-	$text = htmlspecialcharsbx($text);
+	$text = preg_replace("/<img.*?data-code=\"([^\"]*)\".*?>/i", "$1", $text);
 
-	$text = str_replace('[BR]', '<br>', $text);
+	if ($safe)
+	{
+		$text = htmlspecialcharsbx($text);
+	}
+
+	$text = preg_replace("/\n/", "[BR]", $text);
+	$text = preg_replace("/\t/", "&nbsp;&nbsp;&nbsp;&nbsp;", $text);
+
+	$text = preg_replace("/\[USER=([0-9]+)( REPLACE)?](.*?)\[\/USER]/i", "$3", $text);
+	$text = preg_replace("/\[RATING=([1-5]{1})\]/i", "$1", $text);
+	$text = preg_replace("/\[CHAT=(imol\|)?([0-9]{1,})\](.*?)\[\/CHAT\]/i", "$3", $text);
+	$text = preg_replace("/\[LIKE\]/i", '<span class="bx-smile bx-im-smile-like"></span>', $text);
+	$text = preg_replace("/\[DISLIKE\]/i", '<span class="bx-smile bx-im-smile-dislike"></span>', $text);
+
+	$text = str_replace(['[BR]', '[br]', '#br#'], '<br>', $text);
 
 	$text = preg_replace_callback('/\[url=([^\s\]]+)\s*\](.*?)\[\/url\]/i', function($match) {
 		return '<span data-url="'.$match[1].'" onclick="urlValidation(this)" style="color: #2067b0;font-weight: bold;">'.$match[2].'</a>';
@@ -524,7 +542,7 @@ function getNotifyParamsHtml($params)
 				{
 					$subResult .= '<span class="bx-messenger-attach-user">
 						<span class="bx-messenger-attach-user-avatar">
-							'.($userNode['AVATAR']? '<img src="'.$userNode['AVATAR'].'" class="bx-messenger-attach-user-avatar-img">': '<span class="bx-messenger-attach-user-avatar-img bx-messenger-attach-user-avatar-default">').'
+							'.($userNode['AVATAR']? '<img src="'.htmlspecialcharsbx($userNode['AVATAR']).'" class="bx-messenger-attach-user-avatar-img">': '<span class="bx-messenger-attach-user-avatar-img bx-messenger-attach-user-avatar-default">').'
 						</span>
 						<span class="bx-messenger-attach-user-name">'.htmlspecialcharsbx($userNode['NAME']).'</span>
 					</span>';
@@ -537,8 +555,8 @@ function getNotifyParamsHtml($params)
 				foreach ($attach['LINK'] as $linkNode)
 				{
 					$subResult .= '<span class="bx-messenger-attach-link bx-messenger-attach-link-with-preview">
-						<a class="bx-messenger-attach-link-name" href="'.$linkNode['LINK'].'">'.($linkNode['NAME']? htmlspecialcharsbx($linkNode['NAME']): $linkNode['LINK']).'</a>
-						'.(!$linkNode['PREVIEW']? '': '<span class="bx-messenger-file-image-src"><img src="'.$linkNode['PREVIEW'].'" class="bx-messenger-file-image-text"></span>').'
+						<a class="bx-messenger-attach-link-name" href="'.htmlspecialcharsbx($linkNode['LINK']).'">'.($linkNode['NAME']? htmlspecialcharsbx($linkNode['NAME']): htmlspecialcharsbx($linkNode['LINK'])).'</a>
+						'.(!$linkNode['PREVIEW']? '': '<span class="bx-messenger-file-image-src"><img src="'.htmlspecialcharsbx($linkNode['PREVIEW']).'" class="bx-messenger-file-image-text"></span>').'
 					</span>';
 				}
 				$blockResult .= '<span class="bx-messenger-attach-links">'.$subResult.'</span>';
@@ -549,7 +567,7 @@ function getNotifyParamsHtml($params)
 			}
 			else if (isset($attach['HTML']))
 			{
-				$blockResult .= '<span class="bx-messenger-attach-message">'.$attach['HTML'].'</span>';
+				$blockResult .= '<span class="bx-messenger-attach-message">'.decodeBbCode($attach['HTML']).'</span>';
 			}
 			else if (isset($attach['GRID']))
 			{
@@ -557,10 +575,33 @@ function getNotifyParamsHtml($params)
 				foreach ($attach['GRID'] as $gridNode)
 				{
 					$width = $gridNode['WIDTH'] ? 'width: '.$gridNode['WIDTH'].'px' : '';
-					$subResult .= '<span class="bx-messenger-attach-block bx-messenger-attach-block-'.(mb_strtolower($gridNode['DISPLAY'])).'" style="'.($gridNode['DISPLAY'] == 'LINE' ? $width : '').'">
-							<div class="bx-messenger-attach-block-name" style="'.($gridNode['DISPLAY'] == 'ROW' ? $width : '').'">'.htmlspecialcharsbx($gridNode['NAME']).'</div>
-							<div class="bx-messenger-attach-block-value" style="'.($gridNode['COLOR'] ? 'color: '.$gridNode['COLOR'] : '').'">'.decodeBbCode($gridNode['VALUE']).'</div>
-						</span>';
+
+					$blockValue = '';
+					if ($gridNode['LINK'])
+					{
+						$link = htmlspecialcharsbx($gridNode['LINK']);
+						$linkTitle = $gridNode['VALUE'] ? htmlspecialcharsbx($gridNode['VALUE']) : $link;
+						$blockValue =
+							'<span class="bx-messenger-attach-link">'
+								.'<a class="bx-messenger-attach-link-name" href="'.$link.'">' .$linkTitle .'</a>'
+							.'</span>'
+						;
+					}
+					else
+					{
+						$blockValue =
+							'<div class="bx-messenger-attach-block-value" style="'.($gridNode['COLOR'] ? 'color: '.$gridNode['COLOR'] : '').'">'
+								.decodeBbCode($gridNode['VALUE'])
+							.'</div>'
+						;
+					}
+
+					$subResult .=
+						'<span class="bx-messenger-attach-block bx-messenger-attach-block-'.(mb_strtolower($gridNode['DISPLAY'])).'" style="'.($gridNode['DISPLAY'] == 'LINE' ? $width : '').'">'
+							.'<div class="bx-messenger-attach-block-name" style="'.($gridNode['DISPLAY'] == 'ROW' ? $width : '').'">'.htmlspecialcharsbx($gridNode['NAME']).'</div>'
+								.$blockValue
+						.'</span>'
+					;
 				}
 				$blockResult .= '<span class="bx-messenger-attach-blocks">'.$subResult.'</span>';
 			}
@@ -573,7 +614,7 @@ function getNotifyParamsHtml($params)
 				}
 				if ($attach['DELIMITER']['COLOR'])
 				{
-					$style .= "background-color: ".htmlspecialcharsbx($attach['DELIMITER']['COLOR']);
+					$style .= "background-color: ".($attach['DELIMITER']['COLOR']);
 				}
 				if ($style)
 				{
@@ -587,7 +628,7 @@ function getNotifyParamsHtml($params)
 				foreach ($attach['IMAGE'] as $imageNode)
 				{
 					$imageNode['PREVIEW'] = $imageNode['PREVIEW']? $imageNode['PREVIEW']: $imageNode['LINK'];
-					$subResult .= '<span class="bx-messenger-file-image-src"><img src="'.$imageNode['PREVIEW'].'" class="bx-messenger-file-image-text"></span>';
+					$subResult .= '<span class="bx-messenger-file-image-src"><img src="'.htmlspecialcharsbx($imageNode['PREVIEW']).'" class="bx-messenger-file-image-text"></span>';
 				}
 				$blockResult .= '<span class="bx-messenger-attach-images">'.$subResult.'</span>';
 			}

@@ -28,8 +28,9 @@ class CIntranetPlanner
 		$cache_id = 'intranet|planner|'.$userId.'|'.$SITE_ID.'|'.intval($bFull).'|'.$today.'|'.FORMAT_DATETIME.'|'.FORMAT_DATE.'|'.LANGUAGE_ID;
 
 		$arData = null;
-
-		if ($obCache->InitCache(self::CACHE_TTL, $cache_id, $cache_dir))
+		$cacheEnabled = COption::GetOptionString('main', 'component_cache_on', 'N') === 'Y'
+			&& COption::GetOptionString('main', 'component_managed_cache_on', 'N') === 'Y';
+		if ($obCache->InitCache(self::CACHE_TTL, $cache_id, $cache_dir) && $cacheEnabled)
 		{
 			$arData = $obCache->GetVars();
 

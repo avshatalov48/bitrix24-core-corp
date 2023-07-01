@@ -68,8 +68,8 @@ final class OrderFilter
 	{
 		global $DB;
 
-		$from = $DB->CharToDateFunction($from, 'SHORT', false);
-		$to = $DB->CharToDateFunction($to, 'SHORT', false);
+		$from = $DB->CharToDateFunction($from);
+		$to = $DB->CharToDateFunction($to);
 
 		return [
 			"TYPE" => "WHERE",

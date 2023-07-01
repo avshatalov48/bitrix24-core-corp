@@ -6,12 +6,12 @@
  */
 jn.define('statemanager/vuex-manager/vuex-manager', (require, exports, module) => {
 
-	const { MutationManager } = jn.require('statemanager/vuex-manager/mutation-manager');
-	const { StateStorage } = jn.require('statemanager/vuex-manager/storage/base');
-	const { SharedStorage } = jn.require('statemanager/vuex-manager/storage/shared-storage');
-	const { Uuid } = jn.require('utils/uuid');
-	const { Logger } = jn.require('utils/logger');
-	const { Store } = jn.require('statemanager/vuex');
+	const { MutationManager } = require('statemanager/vuex-manager/mutation-manager');
+	const { StateStorage } = require('statemanager/vuex-manager/storage/base');
+	const { SharedStorage } = require('statemanager/vuex-manager/storage/shared-storage');
+	const { Uuid } = require('utils/uuid');
+	const { Logger } = require('utils/logger');
+	const { Store } = require('statemanager/vuex');
 
 	/**
 	 * @class VuexManager

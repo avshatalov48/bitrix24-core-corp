@@ -79,7 +79,7 @@ final class Scheduler extends \Bitrix\Tasks\Processor
 				$nextProcessor = $next['PROCESSOR'];
 
 				$metKey = $next['ID'].'-'.$nextProcessor->getCode();
-				if($this->met[$metKey])
+				if ($this->met[$metKey] ?? null)
 				{
 					continue; // just do not go the same way twice
 				}
@@ -91,7 +91,7 @@ final class Scheduler extends \Bitrix\Tasks\Processor
 				$processorSettings = array();
 				if($impact->getId() == $id) // root impact is being processed
 				{
-					$processorSettings['MODE'] = $settings['MODE'];
+					$processorSettings['MODE'] = ($settings['MODE'] ?? null);
 				}
 
 				$nextProcessor->processTask($impact, $result, $processorSettings);
@@ -150,7 +150,7 @@ final class Scheduler extends \Bitrix\Tasks\Processor
 
 	public function getRelationProcessor($code)
 	{
-		if(!$this->processors[$code])
+		if (!($this->processors[$code] ?? null))
 		{
 			$instance = null;
 			if($code == 'S')

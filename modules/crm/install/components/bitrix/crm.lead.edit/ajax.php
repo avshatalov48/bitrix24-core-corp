@@ -173,6 +173,7 @@ elseif($action === 'FIND_DUPLICATES')
 		$adapter = \Bitrix\Crm\EntityAdapterFactory::create($fields, CCrmOwnerType::Lead);
 		$dups = $checker->findDuplicates($adapter, new \Bitrix\Crm\Integrity\DuplicateSearchParams($fieldNames));
 
+		$ignoredEntities = (array)($params['IGNORED_ITEMS'] ?? []);
 		$entityInfoByType = array();
 		foreach($dups as &$dup)
 		{
@@ -197,6 +198,23 @@ elseif($action === 'FIND_DUPLICATES')
 
 				$entityTypeID = $entity->getEntityTypeID();
 				$entityID = $entity->getEntityID();
+
+				$isIgnoredEntity = false;
+				foreach ($ignoredEntities as $ignoredEntity)
+				{
+					if (
+						$ignoredEntity['ENTITY_TYPE_ID'] == $entityTypeID
+						&& $ignoredEntity['ENTITY_ID'] == $entityID
+					)
+					{
+						$dup->removeEntity($entity);
+						$isIgnoredEntity = true;
+					}
+				}
+				if ($isIgnoredEntity)
+				{
+					continue;
+				}
 
 				if(!isset($entityInfoByType[$entityTypeID]))
 				{
@@ -385,6 +403,7 @@ elseif($action === 'FIND_DUPLICATES')
 			'GROUP_ID' => isset($group['GROUP_ID']) ? $group['GROUP_ID'] : '',
 			'FIELD_ID' => isset($group['FIELD_ID']) ? $group['FIELD_ID'] : '',
 			'HASH_CODE' => isset($group['HASH_CODE']) ? intval($group['HASH_CODE']) : 0,
+			'TOTAL_DUPLICATES' => $totalEntities,
 			'ENTITY_TOTAL_TEXT' => \Bitrix\Crm\Integrity\Duplicate::entityCountToText($totalEntities)
 		);
 		unset($dupInfos);

@@ -626,6 +626,7 @@ class Item extends Base
 			'ENTITY_TYPE_ID' => $entityTypeId,
 			'ENTITY_ID' => $id,
 			'categoryId' => $categoryId,
+			'skipFields' => [$factory->getEntityFieldNameByMap(\Bitrix\Crm\Item::FIELD_NAME_STAGE_ID)],
 		];
 
 		$component->init();

@@ -8,8 +8,7 @@ jn.define('crm/timeline/item/ui/body/blocks/client-mark', (require, exports, mod
 		positive: '#9dcf00',
 		neutral: '#ffa900',
 		negative: '#ff5752',
-	}
-
+	};
 
 	const Mark = {
 		negative: 'negative',
@@ -44,9 +43,9 @@ jn.define('crm/timeline/item/ui/body/blocks/client-mark', (require, exports, mod
 								height: 12,
 							},
 							svg: {
-								content: this.props.mark !== Mark.negative
-									? SvgIcons.positive(color)
-									: SvgIcons.negative(color)
+								content: this.props.mark === Mark.negative
+									? SvgIcons.negative(color)
+									: SvgIcons.positive(color),
 							},
 						},
 					),

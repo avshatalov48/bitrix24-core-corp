@@ -382,7 +382,7 @@ class CTaskListState
 			$view = $this->getViewMode();
 		}
 
-		return $this->state[self::TOC_VIEW_MODE_PARAMETERS][$view];
+		return $this->state[self::TOC_VIEW_MODE_PARAMETERS][$view] ?? null;
 	}
 
 	/**
@@ -432,7 +432,7 @@ class CTaskListState
 		}
 
 
-		if(is_array($state['SUBMODES']))
+		if (is_array($state['SUBMODES'] ?? null))
 		{
 			foreach($state['SUBMODES'] as $id => $value)
 			{

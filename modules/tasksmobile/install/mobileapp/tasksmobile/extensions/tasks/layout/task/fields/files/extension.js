@@ -71,7 +71,7 @@ jn.define('tasks/layout/task/fields/files', (require, exports, module) => {
 						emptyEditableButtonStyle: {
 							borderColor: '#c9ccd0',
 							backgroundColor: '#ffffff',
-							iconColor: '#b8c0c9',
+							iconColor: '#bdc1c6',
 							textColor: '#a8adb4',
 						},
 					},

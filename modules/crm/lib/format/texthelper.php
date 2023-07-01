@@ -1,5 +1,6 @@
 <?php
 namespace Bitrix\Crm\Format;
+
 class TextHelper
 {
 	public static function convertHtmlToBbCode($html)
@@ -21,6 +22,31 @@ class TextHelper
 		$eventManager->removeEventHandler("main", "TextParserBeforeTags", $eventKey);
 		return $result;
 	}
+
+	public static function convertBbCodeToHtml($bb): string
+	{
+		$parser = new \CTextParser();
+
+		$parser->allow = [
+			'ANCHOR' => 'Y',
+			'BIU' => 'Y',
+			'IMG' => 'Y',
+			'QUOTE' => 'Y',
+			'CODE' => 'Y',
+			'FONT' => 'Y',
+			'LIST' => 'Y',
+			'SMILES' => 'Y',
+			'NL2BR' => 'Y',
+			'VIDEO' => 'Y',
+			'TABLE' => 'Y',
+			'ALIGN' => 'Y',
+			'P' => 'Y',
+			'HTML' => 'Y',
+		];
+
+		return $parser->convertText((string)$bb);
+	}
+
 	public static function onTextParserBeforeTags(&$text, &$textParser)
 	{
 		$text = preg_replace(array("/\&lt;/is".BX_UTF_PCRE_MODIFIER, "/\&gt;/is".BX_UTF_PCRE_MODIFIER),array('<', '>'),$text);

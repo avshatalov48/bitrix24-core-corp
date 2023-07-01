@@ -120,7 +120,7 @@ class Template extends Base
 	 * @throws \Bitrix\Main\NotImplementedException
 	 * @throws \Bitrix\Main\SystemException
 	 */
-	public function listAction(array $params = array(), PageNavigation $pageNavigation)
+	public function listAction(array $params = [], PageNavigation $pageNavigation = null)
 	{
 		$params['limit'] = $pageNavigation->getLimit();
 		$params['offset'] = $pageNavigation->getOffset();

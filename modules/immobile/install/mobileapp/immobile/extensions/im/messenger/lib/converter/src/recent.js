@@ -5,7 +5,9 @@
  */
 jn.define('im/messenger/lib/converter/recent', (require, exports, module) => {
 
-	const { MessengerParams } = jn.require('im/messenger/lib/params');
+	const { clone } = require('utils/object');
+	const { core } = require('im/messenger/core');
+	const { MessengerParams } = require('im/messenger/lib/params');
 
 	/**
 	 * @class RecentConverter
@@ -43,7 +45,7 @@ jn.define('im/messenger/lib/converter/recent', (require, exports, module) => {
 			const listItem = ChatDataConverter.getCallListElement(callStatus, call);
 
 			const dialogId = call.associatedEntity.id;
-			const recentItem = MessengerStore.getters['recentModel/getById'](dialogId);
+			const recentItem = core.getStore().getters['recentModel/getById'](dialogId);
 			if (recentItem && recentItem.color)
 			{
 				listItem.color = recentItem.color;
@@ -56,10 +58,10 @@ jn.define('im/messenger/lib/converter/recent', (require, exports, module) => {
 		fromPushToModel(element)
 		{
 			let newElement = {};
-			let recentItem = MessengerStore.getters['recentModel/getById'](element.id);
+			let recentItem = core.getStore().getters['recentModel/getById'](element.id);
 			if (recentItem)
 			{
-				newElement = ChatUtils.objectClone(recentItem);
+				newElement = clone(recentItem);
 			}
 			else
 			{
@@ -105,7 +107,7 @@ jn.define('im/messenger/lib/converter/recent', (require, exports, module) => {
 				newElement.message.author_id = element.message.senderId && element.message.system !== 'Y'? element.message.senderId: 0;
 				newElement.message.date = new Date(element.message.date);
 				newElement.message.file = element.message.params && element.message.params.FILE_ID? element.message.params.FILE_ID.length > 0: false;
-				newElement.message.attach = element.message.params && element.message.params.ATTACH? element.message.params.ATTACH.length > 0: false;
+				newElement.message.attach = element.message.params && element.message.params.ATTACH? element.message.params.ATTACH: false;
 				newElement.message.status = element.message.status? element.message.status: '';
 			}
 

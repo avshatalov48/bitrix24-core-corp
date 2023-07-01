@@ -241,6 +241,17 @@ class Provider
 		if (Product::isRegionRussian())
 		{
 			$list[] = [
+				'CODE' => 'vkads',
+				'ICON_CLASS' => 'ui-icon ui-icon-service-vkads',
+				'ICON_COLOR' => '#0077FF',
+				'CONFIGURABLE' => true,
+				'ADVERTISABLE' => true,
+				'HAS_PATH_TO_LIST' => true,
+				'REF_DOMAIN' => Settings::isSocialRefDomainUsed()
+					? ['www.ads.vk.com', 'ads.vk.com']
+					: [],
+			];
+			$list[] = [
 				'CODE' => 'vk',
 				'ICON_CLASS' => 'ui-icon ui-icon-service-vk',
 				'ICON_COLOR' => '#3871ba',
@@ -384,7 +395,7 @@ class Provider
 
 	/**
 	 * Get actual sources.
-	 *
+	 
 	 * @return array
 	 */
 	public static function getActualSources()
@@ -425,7 +436,7 @@ class Provider
 			$list[$index] = $item + [
 				'DESCRIPTION' => Source\Base::getDescriptionByCode($item['CODE'], $item['NAME']),
 				'ICON_CLASS' => 'ui-icon ui-icon-service-universal',
-				'CONFIGURED' => !empty($item['UTM_SOURCE']),
+				'CONFIGURED' => !empty($item['UTM_SOURCE']) || !empty($item['REF_DOMAIN']),
 				'HAS_PATH_TO_LIST' => true,
 			];
 
@@ -475,7 +486,7 @@ class Provider
 		$list = [];
 		foreach (self::getActualSources() as $source)
 		{
-			if (empty($source['UTM_SOURCE']))
+			if (empty($source['UTM_SOURCE']) && empty($source['REF_DOMAIN']))
 			{
 				continue;
 			}

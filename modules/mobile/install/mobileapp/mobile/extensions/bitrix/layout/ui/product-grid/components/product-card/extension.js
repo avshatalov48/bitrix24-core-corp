@@ -19,8 +19,11 @@ jn.define('layout/ui/product-grid/components/product-card', (require, exports, m
 
 		render()
 		{
+			const { id } = this.props;
+
 			return this.wrap(View(
 				{
+					testId: `product-grid-item-card-${id}`,
 					ref: (ref) => this.containerRef = ref,
 					style: Styles.container(this.props.style),
 					onClick: () => this.onClick(),
@@ -109,6 +112,7 @@ jn.define('layout/ui/product-grid/components/product-card', (require, exports, m
 			{
 				return View(
 					{
+						testId: 'product-grid-item-card-context-menu',
 						style: Styles.contextMenu.container,
 						onClick: () => this.props.onContextMenuClick(this),
 					},

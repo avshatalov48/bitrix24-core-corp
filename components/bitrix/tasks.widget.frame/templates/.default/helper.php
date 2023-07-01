@@ -53,13 +53,13 @@ $helper->addMethod('makeStructure', function() use ($helper) {
 
 		foreach($arParams['BLOCKS'][$name] as $block)
 		{
-			$blocks[$block['CODE']] = array();
+			$blocks[$block['CODE']] = [];
 
-			if(is_array($block['SUB']))
+			if (is_array($block['SUB'] ?? null))
 			{
-				foreach($block['SUB'] as $subBlock)
+				foreach ($block['SUB'] as $subBlock)
 				{
-					$blocks[$subBlock['CODE']] = array();
+					$blocks[$subBlock['CODE']] = [];
 				}
 			}
 

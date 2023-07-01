@@ -26,7 +26,7 @@ class Activity
 	 * @param array $params
 	 * @return Result
 	 */
-	public static function add($params = [])
+	public static function add(array $params = []): Result
 	{
 		$result = new Result;
 
@@ -119,10 +119,7 @@ class Activity
 					}
 				}
 
-				if (
-					$addFields['DIRECTION'] === \CCrmActivityDirection::Incoming
-					&& static::isNewOpenLinesScenarioEnabled()
-				)
+				if ($addFields['DIRECTION'] === \CCrmActivityDirection::Incoming)
 				{
 					$addFields['IS_INCOMING_CHANNEL'] = 'Y';
 
@@ -168,7 +165,7 @@ class Activity
 	 * @param array $params
 	 * @return Result
 	 */
-	public static function update($id, $params = []): Result
+	public static function update($id, array $params = []): Result
 	{
 		$result = new Result;
 
@@ -219,13 +216,10 @@ class Activity
 				{
 					$updateOptions = ['REGISTER_SONET_EVENT' => true];
 
-					if (static::isNewOpenLinesScenarioEnabled())
+					$activityFields = \CCrmActivity::GetByID($id, false);
+					if (isset($activityFields['RESPONSIBLE_ID']) && $activityFields['RESPONSIBLE_ID'] > 0)
 					{
-						$activityFields = \CCrmActivity::GetByID($id, false);
-						if (isset($activityFields['RESPONSIBLE_ID']) && $activityFields['RESPONSIBLE_ID'] > 0)
-						{
-							$updateOptions['CURRENT_USER'] = $activityFields['RESPONSIBLE_ID'];
-						}
+						$updateOptions['CURRENT_USER'] = $activityFields['RESPONSIBLE_ID'];
 					}
 
 					$resultUpdate = \CCrmActivity::Update($id, $updateDate, false, true, $updateOptions);
@@ -252,24 +246,5 @@ class Activity
 		}
 
 		return $result;
-	}
-
-	/**
-	 *
-	 * Temporary method for independent operation of modules imopenlines and crm
-	 *
-	 * @return bool
-	 */
-	private static function isNewOpenLinesScenarioEnabled(): bool
-	{
-		if(
-			Loader::includeModule('crm')
-			&& method_exists(\Bitrix\Crm\Settings\Crm::class, 'isUniversalActivityScenarioEnabled')
-		)
-		{
-			return \Bitrix\Crm\Settings\Crm::isUniversalActivityScenarioEnabled();
-		}
-
-		return false;
 	}
 }

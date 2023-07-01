@@ -32,9 +32,14 @@ class DefaultCategoryPermissions extends Service\Scenario
 		/** @var \CCrmRole $role */
 		$role = new $this->roleClassName;
 		$roleDbResult = $this->roleClassName::GetList();
+		$systemRolesIds = \Bitrix\Crm\Security\Role\RolePermission::getSystemRolesIds();
 		while($roleFields = $roleDbResult->Fetch())
 		{
 			$roleID = (int)$roleFields['ID'];
+			if (in_array($roleID, $systemRolesIds, false)) // do not affect system roles
+			{
+				continue;
+			}
 			$roleRelation = \CCrmRole::GetRolePerms($roleID);
 			if(isset($roleRelation[$permissionEntity]))
 			{

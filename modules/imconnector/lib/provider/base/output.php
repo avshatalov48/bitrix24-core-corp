@@ -175,6 +175,7 @@ class Output
 
 	/**
 	 * Sending a message.
+	 * @see \Bitrix\ImOpenLines\Connector::sendMessage
 	 *
 	 * @param array $data An array of data describing the message.
 	 * @return Result
@@ -196,6 +197,7 @@ class Output
 
 	/**
 	 * Update a message.
+	 * @see \Bitrix\ImOpenLines\Connector::updateMessage
 	 *
 	 * @param array $data An array of data describing the message.
 	 * @return Result
@@ -217,10 +219,9 @@ class Output
 
 	/**
 	 * Delete a message.
+	 * @see \Bitrix\ImOpenLines\Connector::deleteMessage
 	 *
 	 * @param array $data An array of data describing the message.
-	 * @return Result
-	 * @param array $data
 	 * @return Result
 	 */
 	protected function deleteMessage(array $data): Result
@@ -239,6 +240,7 @@ class Output
 	}
 
 	/**
+	 * @see \Bitrix\ImOpenLines\Connector::onSessionStart
 	 * @param array $data
 	 * @return Result
 	 */
@@ -248,6 +250,7 @@ class Output
 	}
 
 	/**
+	 * @see \Bitrix\ImOpenLines\Connector::onSessionFinish
 	 * @param array $data
 	 * @return Result
 	 */

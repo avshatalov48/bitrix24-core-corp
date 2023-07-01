@@ -12,9 +12,9 @@ use Bitrix\Crm;
  *
  * <<< ORMENTITYANNOTATION
  * @method static EO_ContactActivityMarkStatistics_Query query()
- * @method static EO_ContactActivityMarkStatistics_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_ContactActivityMarkStatistics_Result getByPrimary($primary, array $parameters = [])
  * @method static EO_ContactActivityMarkStatistics_Result getById($id)
- * @method static EO_ContactActivityMarkStatistics_Result getList(array $parameters = array())
+ * @method static EO_ContactActivityMarkStatistics_Result getList(array $parameters = [])
  * @method static EO_ContactActivityMarkStatistics_Entity getEntity()
  * @method static \Bitrix\Crm\Statistics\Entity\EO_ContactActivityMarkStatistics createObject($setDefaultValues = true)
  * @method static \Bitrix\Crm\Statistics\Entity\EO_ContactActivityMarkStatistics_Collection createCollection()

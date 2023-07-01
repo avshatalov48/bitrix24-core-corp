@@ -26,7 +26,7 @@ foreach ($arResult['FILES'] as $file)
 	if($file['IS_MARK_DELETED'])
 	{
 		?><span <?
-		?>title="<?=htmlspecialcharsbx($file["NAVCHAIN"])?>" <?
+		?>title="<?=htmlspecialcharsbx($file["NAME"])?>" <?
 		?> class="post-item-inline-attached-file post-item-attached-file-deleted-name"<?
 		?>><?
 		?><span class="feed-com-file-icon feed-file-icon-<?=htmlspecialcharsbx($file['EXTENSION'])?>"></span><?
@@ -59,7 +59,7 @@ foreach ($arResult['FILES'] as $file)
 	{
 		?><a onclick="app.openDocument({'url' : '<?=$file['DOWNLOAD_URL']?>'}); return BX.PreventDefault(event);" href="javascript:void()" <?
 			?>id="wdif-doc-<?=$file['ID']?>" <?
-			?>title="<?=htmlspecialcharsbx($file['NAVCHAIN'])?>" <?
+			?>title="<?=htmlspecialcharsbx($file['NAME'])?>" <?
 			?>alt="<?=htmlspecialcharsbx($file['NAME'])?>" class="feed-com-file-wrap post-item-inline-attached-file"><?
 			?><span class="feed-com-file-icon feed-file-icon-<?=htmlspecialcharsbx($file['EXTENSION'])?>"></span><?
 			?><span class="feed-com-file-name"><?=htmlspecialcharsbx($file['NAME'])?></span><?

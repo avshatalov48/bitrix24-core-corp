@@ -28,21 +28,18 @@ $aMenuLinks = [
 if (Loader::includeModule('lists') && CLists::isFeatureEnabled())
 {
 	$aMenuLinks[] = [
-		GetMessage('MENU_MY_PROCESS_1'),
-		'/company/personal/processes/',
-		[],
-		['menu_item_id' => 'menu_my_processes'],
-		'',
-	];
-}
-
-if (Loader::includeModule('lists') && CLists::isFeatureEnabled())
-{
-	$aMenuLinks[] = [
 		GetMessage('MENU_PROCESS_STREAM2'),
 		'/bizproc/processes/',
 		[],
 		['menu_item_id' => 'menu_processes'],
+		'',
+	];
+
+	$aMenuLinks[] = [
+		GetMessage('MENU_MY_PROCESS_1'),
+		'/company/personal/processes/',
+		[],
+		['menu_item_id' => 'menu_my_processes'],
 		'',
 	];
 }
@@ -54,3 +51,25 @@ $aMenuLinks[] = [
 	['menu_item_id' => 'menu_bizproc_active'],
 	'',
 ];
+
+if (Loader::includeModule('crm'))
+{
+	$aMenuLinks[] = [
+		GetMessage('MENU_BIZPROC_CRM'),
+		'/crm/configs/bp/',
+		[],
+		['menu_item_id' => 'menu_bizproc_crm'],
+		'',
+	];
+}
+
+if (Loader::includeModule('disk'))
+{
+	$aMenuLinks[] = [
+		GetMessage('MENU_BIZPROC_DISK'),
+		'/docs/path/',
+		[],
+		['menu_item_id' => 'menu_bizproc_disk'],
+		'',
+	];
+}

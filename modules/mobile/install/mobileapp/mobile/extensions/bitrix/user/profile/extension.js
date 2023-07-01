@@ -327,6 +327,10 @@ jn.define("user/profile", (require, exports, module) => {
 		onItemSelected(item)
 		{
 			let valueForOpening = item.subtitle;
+			const params = {
+				'NAME': this.fieldsValues["NAME_FORMATTED"],
+			};
+
 			if(item.params)
 			{
 				if(item.params.code == "communicate")
@@ -377,7 +381,7 @@ jn.define("user/profile", (require, exports, module) => {
 								}
 								else if(item.code == "callbx24")
 								{
-									BX.postComponentEvent("onPhoneTo", [{number: valueForOpening}], "calls");
+									BX.postComponentEvent("onPhoneTo", [{number: valueForOpening, params}], "calls");
 								}
 								else
 								{

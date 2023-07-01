@@ -17,19 +17,18 @@ jn.define('crm/tunnel-list/item/condition-group', (require, exports, module) => 
 		constructor(params)
 		{
 			this.type = ConditionGroupType.Field;
-			let items = [];
+			const items = [];
 
 			if (BX.type.isPlainObject(params))
 			{
-				if (params['type'])
+				if (params.type)
 				{
-					this.type = params['type'];
+					this.type = params.type;
 				}
 
-				if (BX.type.isArray(params['items']))
+				if (BX.type.isArray(params.items))
 				{
-					params['items'].forEach(function(item)
-					{
+					params.items.forEach((item) => {
 						const properties = item.properties || {};
 						const condition = new Condition(properties, this);
 						items.push([condition, item.operator]);
@@ -53,21 +52,21 @@ jn.define('crm/tunnel-list/item/condition-group', (require, exports, module) => 
 
 			if (BX.type.isPlainObject(params))
 			{
-				if (params['object'])
+				if (params.object)
 				{
-					this.setObject(params['object']);
+					this.setObject(params.object);
 				}
-				if (params['field'])
+				if (params.field)
 				{
-					this.setField(params['field']);
+					this.setField(params.field);
 				}
-				if (params['operator'])
+				if (params.operator)
 				{
-					this.setOperator(params['operator']);
+					this.setOperator(params.operator);
 				}
 				if ('value' in params)
 				{
-					this.setValue(params['value']);
+					this.setValue(params.value);
 				}
 			}
 			if (group)
@@ -115,5 +114,5 @@ jn.define('crm/tunnel-list/item/condition-group', (require, exports, module) => 
 		}
 	}
 
-	module.exports = { ConditionGroup , ConditionGroupType, ConditionGroupJoiner };
+	module.exports = { ConditionGroup, ConditionGroupType, ConditionGroupJoiner };
 });

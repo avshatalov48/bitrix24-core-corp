@@ -268,7 +268,7 @@ class Button
 			return false;
 		}
 
-		$pages = $item['PAGES']['LIST'][$item['PAGES']['MODE']];
+		$pages = $item['PAGES']['LIST'][$item['PAGES']['MODE']] ?? [];
 		trimArr($pages);
 		return (is_array($pages) && count($pages) > 0);
 	}

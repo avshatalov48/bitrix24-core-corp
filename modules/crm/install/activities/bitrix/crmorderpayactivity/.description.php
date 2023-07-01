@@ -21,6 +21,7 @@ $arActivityDescription = [
 	'FILTER' => [
 		'INCLUDE' => [
 			['crm', 'CCrmDocumentDeal'],
+			['crm', \Bitrix\Crm\Integration\BizProc\Document\SmartInvoice::class],
 		],
 	],
 	'ROBOT_SETTINGS' => [

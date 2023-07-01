@@ -66,7 +66,7 @@ abstract class Base extends BaseReport
 		$filter = $this->getFilter();
 		$filterId = $filter->getFilterParameters()['FILTER_ID'];
 
-		if (!$this->filterParameters[$filterId])
+		if (!($this->filterParameters[$filterId] ?? null))
 		{
 			//@TODO it is HACK here cant be filter class by no means
 			//maybe add some construction to collect all filters for reports in one container
@@ -199,13 +199,13 @@ abstract class Base extends BaseReport
 					{
 						$mutatedFilterParameters[$fieldId] = [
 							'type' => 'date',
-							'from' => $mutatedFilterParameters[$fieldId.'_from'],
-							'to' =>  $mutatedFilterParameters[$fieldId.'_to'],
-							'datesel' => $mutatedFilterParameters[$fieldId . '_datesel'],
-							'month' => $mutatedFilterParameters[$fieldId . '_month'],
-							'quarter' => $mutatedFilterParameters[$fieldId . '_quarter'],
-							'year' => $mutatedFilterParameters[$fieldId . '_year'],
-							'days' => $mutatedFilterParameters[$fieldId . '_days'],
+							'from' => $mutatedFilterParameters[$fieldId.'_from'] ?? null,
+							'to' =>  $mutatedFilterParameters[$fieldId.'_to'] ?? null,
+							'datesel' => $mutatedFilterParameters[$fieldId . '_datesel'] ?? null,
+							'month' => $mutatedFilterParameters[$fieldId . '_month'] ?? null,
+							'quarter' => $mutatedFilterParameters[$fieldId . '_quarter'] ?? null,
+							'year' => $mutatedFilterParameters[$fieldId . '_year'] ?? null,
+							'days' => $mutatedFilterParameters[$fieldId . '_days'] ?? null,
 						];
 					}
 
@@ -510,7 +510,7 @@ abstract class Base extends BaseReport
 			false,
 			true
 		);
-		$userIcon = $fileTmp['src'];
+		$userIcon = ($fileTmp['src'] ?? null);
 
 		$this->users[$userId] = [
 			'id' => $userId,

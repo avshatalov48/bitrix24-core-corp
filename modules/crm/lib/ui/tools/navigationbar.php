@@ -75,6 +75,7 @@ class NavigationBar
 				'id' => htmlspecialcharsbx($itemId),
 				'title' => htmlspecialcharsbx($itemName),
 				'active' => isset($row['active']) && $row['active'],
+				'lockedCallback' => $row['lockedCallback'] ?? '',
 				'url' => $itemUrl,
 			];
 		}

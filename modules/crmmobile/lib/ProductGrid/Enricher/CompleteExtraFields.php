@@ -53,6 +53,7 @@ final class CompleteExtraFields implements EnricherContract
 			$this->completeSections($productRow);
 			$this->completeGallery($productRow);
 			$this->completeBarcodes($productRow);
+			$this->completeType($productRow);
 		}
 
 		return $rows;
@@ -139,6 +140,15 @@ final class CompleteExtraFields implements EnricherContract
 			{
 				$productRow->barcode = (string)$first['BARCODE'];
 			}
+		}
+	}
+
+	private function completeType(ProductRowViewModel $productRow): void
+	{
+		$productData = $this->getProductData($productRow);
+		if (isset($productData['TYPE']))
+		{
+			$productRow->type = (int)$productData['TYPE'];
 		}
 	}
 

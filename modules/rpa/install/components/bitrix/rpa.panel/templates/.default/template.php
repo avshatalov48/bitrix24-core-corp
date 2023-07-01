@@ -30,6 +30,9 @@ $APPLICATION->SetAdditionalCSS("/bitrix/css/main/font-awesome.css");
 
 $this->getComponent()->addToolbar($this);
 \Bitrix\Rpa\Driver::getInstance()->getBitrix24Manager()->addFeedbackButtonToToolbar('panel');
+
+$grid = $arResult['grid'] ?? null;
+
 ?>
 <script>
 	BX.ready(function()
@@ -83,7 +86,7 @@ $this->getComponent()->addToolbar($this);
 		BX.message(<?=CUtil::PhpToJSObject($arResult['messages'])?>);
 		<?='BX.message('.\CUtil::PhpToJSObject(\Bitrix\Main\Localization\Loc::loadLanguageFile(__FILE__)).');'?>
 		<?php
-		if(!$arResult['grid'])
+		if(!$grid)
 		{
 		?>
 		var panelParams = <?=CUtil::PhpToJSObject($arResult['panelParams']);?>;
@@ -159,28 +162,28 @@ $this->getComponent()->addToolbar($this);
 </div>
 <div class="rpa-panel-wrapper" id="rpa-panel-wrapper">
 	<div class="rpa-panel-container<?php
-		if($arResult['grid'])
+		if($grid)
 		{
 			echo ' rpa-panel-grid';
 		}
 		?>" id="rpa-panel-container">
 		<?php
-		if($arResult['grid'])
+		if($grid)
 		{
 			$APPLICATION->IncludeComponent(
 				"bitrix:main.ui.grid",
 				"",
-				$arResult['grid']
+				$grid
 			);
 		}
 		?>
 	</div>
 	<?php
-	if(!$arResult['grid'] && $arResult['pageNavigation']->getPageCount() > 1)
+	if(!$grid && $arResult['pageNavigation']->getPageCount() > 1)
 	{
 	?>
 		<div class="rpa-navigation">
-			<?$APPLICATION->IncludeComponent(
+			<?php $APPLICATION->IncludeComponent(
 				'bitrix:main.pagenavigation',
 				'',//grid
 				array(

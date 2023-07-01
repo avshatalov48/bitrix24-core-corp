@@ -70,7 +70,7 @@ export default class Wait extends Scheduled
 		const id = this.getAssociatedEntityId();
 		if(id > 0)
 		{
-			const editor = this._schedule.getManager().getWaitEditor();
+			const editor = BX.Crm.Timeline?.MenuBar?.getDefault()?.getItemById('wait');
 			if(editor)
 			{
 				editor.complete(
@@ -87,7 +87,7 @@ export default class Wait extends Scheduled
 		const id = this.getAssociatedEntityId();
 		if(id > 0 && offset > 0)
 		{
-			const editor = this._schedule.getManager().getWaitEditor();
+			const editor = BX.Crm.Timeline?.MenuBar?.getDefault()?.getItemById('wait');
 			if(editor)
 			{
 				editor.postpone(

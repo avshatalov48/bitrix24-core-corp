@@ -12,6 +12,7 @@ use Bitrix\Main;
 use Bitrix\Main\Application;
 use Bitrix\Main\Entity\Query;
 use Bitrix\Main\Entity\ReferenceField;
+use Bitrix\Main\Grid\Actions;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ORM\Fields\ExpressionField;
@@ -592,7 +593,7 @@ class TasksTaskListComponent extends TasksBaseComponent
 
 	protected function disableGrouping(string $field, string $direction): void
 	{
-		if ($this->arParams['PROJECT_VIEW'] !== 'Y')
+		if (($this->arParams['PROJECT_VIEW'] ?? null) !== 'Y')
 		{
 			return;
 		}
@@ -707,16 +708,22 @@ class TasksTaskListComponent extends TasksBaseComponent
 		$this->arResult["FILTER"] = $this->filter->getFilters();
 		$this->arResult["PRESETS"] = $this->filter->getAllPresets();
 
-		$this->listParameters['filter'] = $this->arParams['IS_MOBILE'] ? array() : $this->filter->process(); //TODO!
+		$this->listParameters['filter'] = ($this->arParams['IS_MOBILE'] ?? null)
+			? []
+			: $this->filter->process()
+		; //TODO!
 
 		$this->processGroupActions();
 
 		if ($this->needGroupBySubTasks())
 		{
 			//TODO!!!
-			if (\Bitrix\Main\Grid\Context::isInternalRequest() &&
-				check_bitrix_sessid() &&
-				$_REQUEST['action'] == \Bitrix\Main\Grid\Actions::GRID_GET_CHILD_ROWS)
+			if (
+				\Bitrix\Main\Grid\Context::isInternalRequest()
+				&& check_bitrix_sessid()
+				&& isset($_REQUEST['action'])
+				&& $_REQUEST['action'] === Actions::GRID_GET_CHILD_ROWS
+			)
 			{
 				if (!empty($_REQUEST['parent_id']))
 				{

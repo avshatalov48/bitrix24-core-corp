@@ -1,20 +1,21 @@
-<?
+<?php
+
 define('NO_KEEP_STATISTIC', 'Y');
 define('NO_AGENT_STATISTIC','Y');
 define('NO_AGENT_CHECK', true);
 define('DisableEventsCheck', true);
 
+use Bitrix\Crm\Order\Permissions;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Crm\Order\Permissions;
-use \Bitrix\Main\Type\Date;
+use Bitrix\Main\Type\Date;
 use Bitrix\Sale\Payment;
 
 require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_before.php');
 
 Loc::loadMessages(__FILE__);
 
-if(!Loader::includeModule('crm'))
+if (!Loader::includeModule('crm'))
 {
 	die('Can\'t include module CRM');
 }
@@ -24,15 +25,14 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 {
 	protected function saveAction()
 	{
-		$id = (int)$this->request['ACTION_ENTITY_ID'] > 0 ? (int)$this->request['ACTION_ENTITY_ID'] : 0;
+		$id = (int)($this->request['ACTION_ENTITY_ID'] ?? 0);
 		$isNew = $id <= 0;
 		$paymentData = [];
 
-		if(!empty($this->request['ORDER_PAYMENT_DATA']))
+		if (!empty($this->request['ORDER_PAYMENT_DATA']))
 		{
 			$paymentData = current(\CUtil::JsObjectToPhp($this->request['ORDER_PAYMENT_DATA']));
-
-			if(!is_array($paymentData))
+			if (!is_array($paymentData))
 			{
 				$paymentData = [];
 			}
@@ -44,19 +44,21 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 
 		$paymentFields = [];
 
-		if($id > 0)
+		if ($id > 0)
 		{
 			if (!Permissions\Payment::checkUpdatePermission($id, $this->userPermissions))
 			{
 				$this->addError(Loc::getMessage("CRM_ORDER_P_ACCESS_DENIED"));
+
 				return;
 			}
 
 			$res = \Bitrix\Crm\Order\Payment::getList(['filter'=>['=ID' => $id]]);
 
-			if(!($paymentFields = $res->fetch()))
+			if (!($paymentFields = $res->fetch()))
 			{
 				$this->addError(Loc::getMessage("CRM_ORDER_P_NOT_FOUND"));
+
 				return;
 			}
 		}
@@ -65,6 +67,7 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 			if (!Permissions\Payment::checkCreatePermission($this->userPermissions))
 			{
 				$this->addError(new \Bitrix\Main\Error(Loc::getMessage('CRM_ORDER_P_ACCESS_DENIED')));
+
 				return;
 			}
 		}
@@ -85,17 +88,19 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 		if (!$verifyResult->isSuccess())
 		{
 			$this->addErrors($verifyResult->getErrors());
+
 			return;
 		}
 
 		$res = $payment->getCollection()->getOrder()->save();
-		if(!$res->isSuccess())
+		if (!$res->isSuccess())
 		{
 			$this->addErrors($res->getErrors());
+
 			return;
 		}
 
-		if($res->hasWarnings())
+		if ($res->hasWarnings())
 		{
 			$this->addWarnings($res->getWarnings());
 		}
@@ -103,7 +108,7 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 		$id = $payment->getId();
 		$this->addData(['ENTITY_ID' => $payment->getId(), 'ENTITY_DATA' => $this->createDataByComponent($payment)]);
 
-		if($isNew)
+		if ($isNew)
 		{
 			$this->addData(['REDIRECT_URL' =>\CCrmOwnerType::GetDetailsUrl(
 				\CCrmOwnerType::OrderPayment,
@@ -126,59 +131,64 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 
 	protected function setPaymentField($fieldName)
 	{
-		$paymentId = isset($this->request['FIELDS']['PAYMENT_ID']) && (int)$this->request['FIELDS']['PAYMENT_ID'] > 0 ? (int)$this->request['FIELDS']['PAYMENT_ID'] : 0;
-
-		if($paymentId <= 0)
+		$paymentId = (int)($this->request['FIELDS']['PAYMENT_ID'] ?? 0);
+		if ($paymentId <= 0)
 		{
 			$this->addError(Loc::getMessage('CRM_ORDER_PAYMENT_NOT_FOUND'));
+
 			return;
 		}
 
 		if (!in_array($fieldName, ['PAID', 'IS_RETURN']))
 		{
 			$this->addError(Loc::getMessage('CRM_ORDER_WRONG_FIELD_VALUE'));
+
 			return;
 		}
 
-		$value = isset($this->request['FIELDS'][$fieldName]) ? trim($this->request['FIELDS'][$fieldName]) : '';
+		$value = isset($this->request['FIELDS'][$fieldName])
+			? trim($this->request['FIELDS'][$fieldName])
+			: '';
 
-		if($fieldName === 'PAID' && !in_array($value, ['Y', 'N']))
+		if ($fieldName === 'PAID' && !in_array($value, ['Y', 'N']))
 		{
 			$this->addError(Loc::getMessage('CRM_ORDER_WRONG_FIELD_VALUE'));
+
 			return;
 		}
 
-		if(
+		if (
 			$fieldName === 'IS_RETURN'
 			&& !in_array($value,[Payment::RETURN_NONE, Payment::RETURN_INNER, Payment::RETURN_PS]))
 		{
 			$this->addError(Loc::getMessage('CRM_ORDER_WRONG_FIELD_VALUE'));
+
 			return;
 		}
 
 		$voucherFields = [];
 
-		if(isset($this->request['FIELDS']['PAY_VOUCHER_NUM']))
+		if (isset($this->request['FIELDS']['PAY_VOUCHER_NUM']))
 		{
 			$voucherFields['PAY_VOUCHER_NUM'] = $this->request['FIELDS']['PAY_VOUCHER_NUM'];
 		}
 
-		if(isset($this->request['FIELDS']['PAY_VOUCHER_DATE']))
+		if (isset($this->request['FIELDS']['PAY_VOUCHER_DATE']))
 		{
 			$voucherFields['PAY_VOUCHER_DATE'] = new Date($this->request['FIELDS']['PAY_VOUCHER_DATE']);
 		}
 
-		if(isset($this->request['FIELDS']['PAY_RETURN_NUM']))
+		if (isset($this->request['FIELDS']['PAY_RETURN_NUM']))
 		{
 			$voucherFields['PAY_RETURN_NUM'] = $this->request['FIELDS']['PAY_RETURN_NUM'];
 		}
 
-		if(isset($this->request['FIELDS']['PAY_RETURN_DATE']))
+		if (isset($this->request['FIELDS']['PAY_RETURN_DATE']))
 		{
 			$voucherFields['PAY_RETURN_DATE'] = new Date($this->request['FIELDS']['PAY_RETURN_DATE']);
 		}
 
-		if(isset($this->request['FIELDS']['PAY_RETURN_COMMENT']))
+		if (isset($this->request['FIELDS']['PAY_RETURN_COMMENT']))
 		{
 			$voucherFields['PAY_RETURN_COMMENT'] = $this->request['FIELDS']['PAY_RETURN_COMMENT'];
 		}
@@ -189,33 +199,36 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 
 		$payment = $res->fetch();
 
-		if(!$payment || (int)$payment['ORDER_ID'] <= 0)
+		if (!$payment || (int)($payment['ORDER_ID'] ?? 0) <= 0)
 		{
 			$this->addError(Loc::getMessage('CRM_ORDER_PAYMENT_NOT_FOUND'));
+
 			return;
 		}
 
-		if(!\Bitrix\Crm\Order\Permissions\Order::checkUpdatePermission($payment['ORDER_ID'], $this->userPermissions))
+		if (!\Bitrix\Crm\Order\Permissions\Order::checkUpdatePermission($payment['ORDER_ID'], $this->userPermissions))
 		{
 			$this->addError(Loc::getMessage('CRM_ORDER_ACCESS_DENIED'));
+
 			return;
 		}
 
 		$order = \Bitrix\Crm\Order\Order::load($payment['ORDER_ID']);
-
-		if(!$order)
+		if (!$order)
 		{
 			$this->addError(Loc::getMessage('CRM_ORDER_NOT_FOUND'));
+
 			return;
 		}
 
 		$collection = $order->getPaymentCollection();
+
 		/** @var \Bitrix\Crm\Order\Payment $paymentObj */
 		$paymentObj = $collection->getItemById($paymentId);
-
-		if(!$paymentObj)
+		if (!$paymentObj)
 		{
 			$this->addError(Loc::getMessage('CRM_ORDER_PAYMENT_NOT_FOUND'));
+
 			return;
 		}
 
@@ -228,17 +241,17 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 			$setResult = $paymentObj->setReturn($value);
 		}
 
-		if(!$setResult->isSuccess())
+		if (!$setResult->isSuccess())
 		{
 			$this->addErrors($setResult->getErrors());
+
 			return;
 		}
 
-		if(!empty($voucherFields))
+		if (!empty($voucherFields))
 		{
 			$setResult = $paymentObj->setFields($voucherFields);
-
-			if(!$setResult->isSuccess())
+			if (!$setResult->isSuccess())
 			{
 				$this->addErrors($setResult->getErrors());
 				return;
@@ -246,8 +259,7 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 		}
 
 		$res = $order->save();
-
-		if($res->isSuccess())
+		if ($res->isSuccess())
 		{
 			$this->addData([
 				'PAYMENT_DATA' => $this->createDataByComponent($paymentObj)
@@ -261,7 +273,7 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 
 	protected function refreshPaymentDataAction()
 	{
-		if(!($formData = $this->getFormData()))
+		if (!($formData = $this->getFormData()))
 		{
 			return;
 		}
@@ -271,16 +283,18 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 			if (!Permissions\Payment::checkCreatePermission($this->userPermissions))
 			{
 				$this->addError(Loc::getMessage('CRM_ORDER_P_ACCESS_DENIED'));
+
 				return;
 			}
 		}
 		elseif (!Permissions\Payment::checkUpdatePermission((int)$formData['ID'], $this->userPermissions))
 		{
 			$this->addError(Loc::getMessage('CRM_ORDER_P_ACCESS_DENIED'));
+
 			return;
 		}
 
-		if(!($payment = $this->buildPayment($formData)))
+		if (!($payment = $this->buildPayment($formData)))
 		{
 			return;
 		}
@@ -292,7 +306,7 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 
 	protected function rollbackAction()
 	{
-		if(!($formData = $this->getFormData()))
+		if (!($formData = $this->getFormData()))
 		{
 			return;
 		}
@@ -300,10 +314,11 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 		if (!Permissions\Payment::checkUpdatePermission((int)$formData['ID'], $this->userPermissions))
 		{
 			$this->addError(Loc::getMessage('CRM_ORDER_P_ACCESS_DENIED'));
+
 			return;
 		}
 
-		if(!($payment = \Bitrix\Crm\Order\Manager::getPaymentObject($formData['ID'])))
+		if (!($payment = \Bitrix\Crm\Order\Manager::getPaymentObject($formData['ID'])))
 		{
 			return;
 		}
@@ -317,7 +332,7 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 	{
 		$result = [];
 
-		if(isset($this->request['FORM_DATA']) && is_array($this->request['FORM_DATA']) && !empty($this->request['FORM_DATA']))
+		if (isset($this->request['FORM_DATA']) && is_array($this->request['FORM_DATA']) && !empty($this->request['FORM_DATA']))
 		{
 			$result = $this->request['FORM_DATA'];
 		}
@@ -338,6 +353,7 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 		);
 		$component->setEntityID($payment->getId());
 		$component->setPayment($payment);
+
 		return $component->prepareEntityData();
 	}
 
@@ -362,29 +378,33 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 
 	protected function deleteAction()
 	{
-		$id = (int)$this->request['ACTION_ENTITY_ID'] > 0 ? (int)$this->request['ACTION_ENTITY_ID'] : 0;
-
-		if($id <= 0)
+		$id = (int)($this->request['ACTION_ENTITY_ID'] ?? 0);
+		if ($id <= 0)
 		{
 			$this->addError(Loc::getMessage('CRM_ORDER_P_NOT_FOUND'));
+
 			return;
 		}
 
-		if(!Permissions\Payment::checkDeletePermission($id, $this->userPermissions))
+		if (!Permissions\Payment::checkDeletePermission($id, $this->userPermissions))
 		{
 			$this->addError(Loc::getMessage('CRM_ORDER_P_ACCESS_DENIED'));
+
 			return;
 		}
+
 		$paymentRaw = \Bitrix\Crm\Order\Payment::getList([
 			'filter' => ['=ID' => $id],
 			'select' => ['ORDER_ID'],
 			'limit' => 1
 		]);
+
 		$paymentData = $paymentRaw->fetch();
 		$order = \Bitrix\Crm\Order\Order::load($paymentData['ORDER_ID']);
-		if(!$order)
+		if (!$order)
 		{
 			$this->addError(Loc::getMessage('CRM_ORDER_P_NOT_FOUND'));
+
 			return;
 		}
 
@@ -408,14 +428,14 @@ $APPLICATION->RestartBuffer();
 $processor = new AjaxProcessor($_REQUEST);
 $result = $processor->checkConditions();
 
-if($result->isSuccess())
+if ($result->isSuccess())
 {
 	$result = $processor->processRequest();
 }
 
 $processor->sendResponse($result);
 
-if(!defined('PUBLIC_AJAX_MODE'))
+if (!defined('PUBLIC_AJAX_MODE'))
 {
 	define('PUBLIC_AJAX_MODE', true);
 }

@@ -2,6 +2,7 @@
 
 $MESS["BPSNMA_EMPTY_TASKASSIGNEDTO"] = "Свойство 'Ответственный' не указано.";
 $MESS["BPSNMA_EMPTY_TASKNAME"] = "Свойство 'Название задачи' не указано.";
+$MESS["BPSNMA_EMPTY_REQUIRED_PROPERTY"] = "Свойство '#PROPERTY_NAME#' не указано.";
 $MESS["TASK_EMPTY_GROUP"] = "Персональная задача";
 $MESS["BPSA_TRACK_OK"] = "Создана задача с ID ##VAL#";
 $MESS["BPSA_TRACK_ERROR"] = "При создании задачи произошла ошибка.";
@@ -34,6 +35,11 @@ $MESS["BPTA1A_TIME_TRACKING_H"] = "Время выполнения, часов";
 $MESS["BPTA1A_TIME_TRACKING_M"] = "Время выполнения, минут";
 $MESS["BPTA1A_TASK_TASK_PRESENCE_ERROR"] = "Не существует задачи с id \"#TASK_ID#\"";
 $MESS["BPTA1A_MAKE_SUBTASK"] = "Сделать подзадачей";
+$MESS['BPTA1A_FIELD_NAME_TAGS'] = 'Теги';
 $MESS['BPTA1A_HOLD_TO_CLOSE'] = 'Остановить процесс на время выполнения задачи';
 $MESS["BPTA1A_TASK_URL_NAME"] = "Задача";
 $MESS["BPTA1A_TASK_URL_LABEL"] = "Открыть задачу";
+$MESS['BPTA1A_REQUIRE_RESULT'] = 'Не завершать задачу без результата';
+$MESS['BPTA1A_FIELD_NAME_AS_CHILD_TASK'] = 'Создать как подзадачу к текущей';
+$MESS['BPTA1A_FIELD_NAME_AUTO_LINK_TO_CRM_ENTITY'] = 'Привязать к текущей сущности CRM';
+$MESS['BPTA1A_FIELD_NAME_DEPENDS_ON'] = 'Связанные задачи';

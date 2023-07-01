@@ -2,7 +2,6 @@
  * @module crm/product-calculator/tax-for-sum-strategy
  */
 jn.define('crm/product-calculator/tax-for-sum-strategy', (require, exports, module) => {
-
 	const { DiscountType } = require('crm/product-calculator/discount-type');
 	const { ProductRow } = require('crm/product-calculator/product-row');
 	const { TaxForPriceStrategy } = require('crm/product-calculator/tax-for-price-strategy');
@@ -31,7 +30,7 @@ jn.define('crm/product-calculator/tax-for-sum-strategy', (require, exports, modu
 				exclusivePrice = this.calculatePriceWithoutDiscount(
 					productRow.getPriceNetto(),
 					productRow.getDiscountRate(),
-					DiscountType.PERCENTAGE
+					DiscountType.PERCENTAGE,
 				);
 			}
 			else if (productRow.isDiscountMonetary())
@@ -39,7 +38,7 @@ jn.define('crm/product-calculator/tax-for-sum-strategy', (require, exports, modu
 				exclusivePrice = this.calculatePriceWithoutDiscount(
 					productRow.getPriceNetto(),
 					productRow.getDiscountSum(),
-					DiscountType.MONETARY
+					DiscountType.MONETARY,
 				);
 			}
 			else
@@ -57,7 +56,7 @@ jn.define('crm/product-calculator/tax-for-sum-strategy', (require, exports, modu
 			{
 				productRow.setField(
 					'PRICE',
-					this.calculatePriceWithTax(exclusivePrice, productRow.getTaxRate())
+					this.calculatePriceWithTax(exclusivePrice, productRow.getTaxRate()),
 				);
 			}
 		}

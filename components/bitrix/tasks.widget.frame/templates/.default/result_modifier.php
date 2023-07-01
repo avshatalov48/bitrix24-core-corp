@@ -38,18 +38,18 @@ foreach($categoryNames as $name)
 			'CATEGORY' => $name,
 		);
 
-		if(is_array($block['SUB']))
+		if (is_array($block['SUB'] ?? null))
 		{
-			foreach($block['SUB'] as $subBlock)
+			foreach ($block['SUB'] as $subBlock)
 			{
 				$subPinned = $state['BLOCKS'][$subBlock['CODE']]['PINNED'];
 
-				$layout['BLOCKS'][$subBlock['CODE']] = array(
+				$layout['BLOCKS'][$subBlock['CODE']] = [
 					'CODE' => $subBlock['CODE'],
 					'PINNED' => $subPinned,
-					'OPENED' => $subBlock['FILLED'] || $subPinned,
+					'OPENED' => ($subBlock['FILLED'] || $subPinned),
 					'CATEGORY' => $name,
-				);
+				];
 			}
 		}
 	}

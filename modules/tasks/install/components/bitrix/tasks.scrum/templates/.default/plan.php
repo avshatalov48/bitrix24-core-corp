@@ -52,7 +52,6 @@ $tagsAreConverting = TagConverter::isProceed();
 			pathToTaskCreate: '<?= \CUtil::JSEscape($pathToTaskCreate)?>',
 			pathToBurnDown: '<?= \CUtil::JSEscape($pathToBurnDown)?>',
 			mandatoryExists: '<?= $arResult['mandatoryExists'] ?>',
-			tags: <?= Json::encode($arResult['tags']) ?>,
 			backlog: <?= Json::encode($arResult['backlog']) ?>,
 			sprints: <?= Json::encode($arResult['sprints']) ?>,
 			views: <?= Json::encode($arResult['views']) ?>,
@@ -70,24 +69,3 @@ $tagsAreConverting = TagConverter::isProceed();
 		BX.Tasks.Scrum.Entry.renderTo(document.getElementById('tasks-scrum-container'));
 	});
 </script>
-<?php
-if ($arParams['BACKGROUND_FOR_TASK'])
-{
-	$ownerId = (int)$arParams['GROUP_ID'];
-	$taskId = (int)$arParams['TASK_ID'];
-
-	$factory = new SliderFactory();
-	try
-	{
-		$factory
-			->setAction($arParams['TASK_ACTION'])
-			->setQueryParams($arParams['GET_PARAMS']);
-
-		$slider = $factory->createEntitySlider($taskId, SliderFactory::TASK, $ownerId, SliderFactory::GROUP_CONTEXT);
-		$slider->open();
-	}
-	catch (SliderException $exception)
-	{
-		$exception->show();
-	}
-}

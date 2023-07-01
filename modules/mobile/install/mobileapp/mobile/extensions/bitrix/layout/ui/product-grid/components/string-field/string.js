@@ -18,6 +18,7 @@ jn.define('layout/ui/product-grid/components/string-field/string', (require, exp
 			super(props);
 			this.state = this.buildState(props);
 			this.textFieldRef = null;
+			this.testId = props.testId ? props.testId : '';
 		}
 
 		buildState(props)
@@ -76,6 +77,7 @@ jn.define('layout/ui/product-grid/components/string-field/string', (require, exp
 						justifyContent: 'center',
 					},
 					onClick: () => this.decrement(),
+					testId: `${this.testId}DecrementButton`,
 				},
 				Image({
 					style: {
@@ -108,6 +110,7 @@ jn.define('layout/ui/product-grid/components/string-field/string', (require, exp
 						paddingTop: 12,
 					},
 					onClick: () => this.increment(),
+					testId: `${this.testId}IncrementButton`,
 				},
 				Image({
 					style: {
@@ -134,11 +137,12 @@ jn.define('layout/ui/product-grid/components/string-field/string', (require, exp
 						paddingTop: 11,
 					},
 					onClick: () => this.onClick(),
+					testId: this.testId,
 				},
 				View(
 					{
 						style: {
-							borderColor: this.props.disabled ? '#EEF2F4' : '#B8BFC9',
+							borderColor: this.props.disabled ? '#EEF2F4' : '#bdc1c6',
 							borderWidth: 1,
 							borderRadius: 3,
 							paddingLeft: 10,

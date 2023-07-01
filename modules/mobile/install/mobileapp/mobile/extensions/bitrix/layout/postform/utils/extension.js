@@ -481,7 +481,7 @@
 							left: 0,
 							top: 8,
 							borderWidth: 1,
-							borderColor: '#e5e7e9',
+							borderColor: '#e6e7e9',
 							backgroundColor: '#ffffff',
 						},
 					}),

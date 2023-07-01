@@ -14,6 +14,7 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 /** @var \CDiskVolumeComponent $component */
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Web\Uri;
 
 CJSCore::Init(array('disk', 'ui.viewer', 'disk.viewer.document-item', 'ui.fonts.opensans'));
 
@@ -413,10 +414,10 @@ if (
 				<? if ($arResult["ADMIN_MODE"]): ?>
 					<? if ($arResult['Storage']['STYLE'] === 'User'): ?>
 						<div class="disk-volume-header-icon disk-volume-header-icon-default-user" <?
-						if (isset($arResult['Storage']['PICTURE'])): ?>style="background-image: url('<?= $arResult['Storage']['PICTURE'] ?>')"<? endif; ?>></div>
+						if (isset($arResult['Storage']['PICTURE'])): ?>style="background-image: url('<?= Uri::urnEncode($arResult['Storage']['PICTURE']) ?>')"<? endif; ?>></div>
 					<? elseif ($arResult['Storage']['STYLE'] === 'Group'): ?>
 						<div class="disk-volume-header-icon disk-volume-header-icon-default-group" <?
-						if (isset($arResult['Storage']['PICTURE'])): ?>style="background-image: url('<?= $arResult['Storage']['PICTURE'] ?>')"<? endif; ?>></div>
+						if (isset($arResult['Storage']['PICTURE'])): ?>style="background-image: url('<?= Uri::urnEncode($arResult['Storage']['PICTURE']) ?>')"<? endif; ?>></div>
 					<? else: ?>
 						<div class="disk-volume-header-icon disk-volume-header-icon-default-disk"></div>
 					<? endif; ?>

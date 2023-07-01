@@ -4,16 +4,17 @@ declare(strict_types = 1);
 
 namespace Bitrix\Mobile\UI\EntityEditor;
 
-use Bitrix\UI\EntityEditor\BaseProvider;
+use Bitrix\UI\EntityEditor\ReturnsEditorFields;
+use UIFormComponent;
 
 final class FormWrapper
 {
 	private const DEFAULT_FORM_COMPONENT = 'bitrix:ui.form';
 
-	private $provider;
-	private $formComponentName;
+	private ReturnsEditorFields $provider;
+	private string $formComponentName;
 
-	public function __construct(BaseProvider $provider = null, string $formComponentName = null)
+	public function __construct(ReturnsEditorFields $provider, string $formComponentName = self::DEFAULT_FORM_COMPONENT)
 	{
 		$this->provider = $provider;
 		$this->formComponentName = $formComponentName;
@@ -34,30 +35,31 @@ final class FormWrapper
 		}
 
 		$requiredFieldsToFill = [];
+		$formParams = $this->provider->getFields();
 
-		$entityData = $this->provider->getEntityData();
-		$entityFields = $this->provider->getEntityFields();
-
-		foreach ($entityFields as &$field)
+		if (!empty($formParams['ENTITY_FIELDS']) && is_array($formParams['ENTITY_FIELDS']))
 		{
-			if ($fieldCodes === null)
+			foreach ($formParams['ENTITY_FIELDS'] as &$field)
 			{
-				$isRequiredField = $field['required'] && empty($entityData[$field['name']]);
-			}
-			else
-			{
-				$isRequiredField = in_array($field['name'], $fieldCodes, true);
-			}
+				if ($fieldCodes === null)
+				{
+					$isRequiredField = $field['required'] && empty($formParams['ENTITY_DATA'][$field['name']]);
+				}
+				else
+				{
+					$isRequiredField = in_array($field['name'], $fieldCodes, true);
+				}
 
-			if ($isRequiredField)
-			{
-				$field['required'] = true;
-				$requiredFieldsToFill[] = ['name' => $field['name']];
-			}
-			else
-			{
-				// to remove additional section for required fields without sections
-				$field['required'] = false;
+				if ($isRequiredField)
+				{
+					$field['required'] = true;
+					$requiredFieldsToFill[] = ['name' => $field['name']];
+				}
+				else
+				{
+					// to remove additional section for required fields without sections
+					$field['required'] = false;
+				}
 			}
 		}
 
@@ -68,11 +70,9 @@ final class FormWrapper
 			return [];
 		}
 
-		$formParams = $this->provider->getFields();
 		$formParams['GUID'] .= '_required_fields';
 		$formParams['ENABLE_COMMON_CONFIGURATION_UPDATE'] = false;
 		$formParams['ENABLE_CONFIGURATION_UPDATE'] = false;
-		$formParams['ENTITY_FIELDS'] = $entityFields;
 		$formParams['FORCE_DEFAULT_CONFIG'] = true;
 		$formParams['INITIAL_MODE'] = 'edit';
 		$formParams['ENABLE_MODE_TOGGLE'] = false;
@@ -101,14 +101,13 @@ final class FormWrapper
 		;
 	}
 
-	private function getFormComponent(array $formParams): \UIFormComponent
+	private function getFormComponent(array $formParams): UIFormComponent
 	{
-		$componentName = $this->formComponentName ?? self::DEFAULT_FORM_COMPONENT;
-		$componentClass = \CBitrixComponent::includeComponentClass($componentName);
+		$componentClass = \CBitrixComponent::includeComponentClass($this->formComponentName);
 
-		/** @var \UIFormComponent $formComponent */
+		/** @var UIFormComponent $formComponent */
 		$formComponent = new $componentClass();
-		$formComponent->initComponent($componentName);
+		$formComponent->initComponent($this->formComponentName);
 
 		$formComponent->arParams = $formComponent->onPrepareComponentParams(array_merge(
 			$formComponent->arParams,

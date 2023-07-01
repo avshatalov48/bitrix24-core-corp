@@ -1412,7 +1412,8 @@ body table.bx-edit-table td.bx-field-name {
 
 body table#tab_section_edit_table tr td input[type=text],
 body table#tab_main_edit_table tr td input[type=text],
-body table.bx-edit-table td.bx-field-value > input[type=text] {
+body table.bx-edit-table td.bx-field-value > input[type=text],
+body table.bx-edit-table td.bx-field-value > .money-editor > input[type=text] {
 	width: 257px;
 	height: var(--ui-field-size);
 	padding: 0 11px;
@@ -1425,7 +1426,7 @@ body table.bx-edit-table td.bx-field-value > input[type=text] {
 }
 
 body table.bx-edit-table td.bx-field-value > select {
-	width: 262px;
+	width: 257px;
 }
 
 body table.bx-edit-table td.bx-field-value option {
@@ -4979,4 +4980,13 @@ div.bx-auth-serv-icons a.bx-ss-soc-serv-setup-link:hover {
 
 .bx-b24-invite-dialog-popup .popup-window-tabs {
 	white-space: nowrap;
+}
+
+/* Bitrix Debug */
+div.bx-component-debug {
+	position: relative;
+	z-index: 1000;
+}
+div.bx-debug-summary {
+	position: fixed;
 }

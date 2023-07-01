@@ -5,32 +5,32 @@
  */
 jn.define('im/messenger/controller/recent/item-action', (require, exports, module) => {
 
-	const { Loc } = jn.require('loc');
-	const { Controller } = jn.require('im/messenger/controller/base');
-	const { Logger } = jn.require('im/messenger/lib/logger');
-	const { MessengerParams } = jn.require('im/messenger/lib/params');
-	const { MessengerEvent } = jn.require('im/messenger/lib/event');
-	const { EventType } = jn.require('im/messenger/const');
-	const { Counters } = jn.require('im/messenger/lib/counters');
+	const { Loc } = require('loc');
+	const { clone } = require('utils/object');
+	const { core } = require('im/messenger/core');
+	const { Logger } = require('im/messenger/lib/logger');
+	const { MessengerParams } = require('im/messenger/lib/params');
+	const { MessengerEmitter } = require('im/messenger/lib/emitter');
+	const { EventType } = require('im/messenger/const');
+	const { Counters } = require('im/messenger/lib/counters');
 	const {
-		RecentService,
-		ChatService,
-		UserService,
-	} = jn.require('im/messenger/service');
-	const { ProfileView } = jn.require("user/profile");
+		RecentRest,
+		ChatRest,
+		UserRest,
+	} = require('im/messenger/provider/rest');
+	const { ProfileView } = require("user/profile");
 
 	/**
 	 * @class ItemAction
 	 *
 	 * @property {RecentView} view
 	 */
-	class ItemAction extends Controller
+	class ItemAction
 	{
 		/* region Init */
-
-		constructor(options = {})
+		constructor()
 		{
-			super(options);
+			this.store = core.getStore();
 		}
 
 		do(action, itemId)
@@ -93,7 +93,7 @@ jn.define('im/messenger/controller/recent/item-action', (require, exports, modul
 		{
 			const recentItem = this.getRecentItemById(itemId);
 
-			MessengerStore.dispatch('recentModel/delete', { id: recentItem.id })
+			this.store.dispatch('recentModel/delete', { id: recentItem.id })
 				.then(() => {
 					this.renderRecent();
 
@@ -101,12 +101,12 @@ jn.define('im/messenger/controller/recent/item-action', (require, exports, modul
 				})
 			;
 
-			RecentService.hideChat({ dialogId: recentItem.id })
+			RecentRest.hideChat({ dialogId: recentItem.id })
 				.catch((result) =>
 				{
 					Logger.error('Recent item hide error: ', result.error());
 
-					MessengerStore.dispatch('recentModel/set', [recentItem])
+					this.store.dispatch('recentModel/set', [recentItem])
 						.then(() => {
 							this.renderRecent();
 
@@ -121,19 +121,19 @@ jn.define('im/messenger/controller/recent/item-action', (require, exports, modul
 		{
 			const recentItem = this.getRecentItemById(itemId);
 
-			MessengerStore.dispatch('recentModel/delete', { id: recentItem.id })
+			this.store.dispatch('recentModel/delete', { id: recentItem.id })
 				.then(() => Counters.update())
 			;
 
-			ChatService.leave({ dialogId: recentItem.id })
+			ChatRest.leave({ dialogId: recentItem.id })
 				.then(() => {
-					MessengerStore.dispatch('dialoguesModel/delete', { id: itemId });
+					this.store.dispatch('dialoguesModel/delete', { id: itemId });
 				})
 				.catch((result) =>
 				{
 					Logger.error('Recent item leave error: ', result.error());
 
-					MessengerStore.dispatch('recentModel/set', [recentItem])
+					this.store.dispatch('recentModel/set', [recentItem])
 						.then(() => Counters.update())
 					;
 				})
@@ -147,12 +147,12 @@ jn.define('im/messenger/controller/recent/item-action', (require, exports, modul
 
 		pin(itemId, shouldPin)
 		{
-			MessengerStore.dispatch('recentModel/set', [{
+			this.store.dispatch('recentModel/set', [{
 				id: itemId,
 				pinned: shouldPin,
 			}]).then(() => this.renderRecent());
 
-			RecentService.pinChat({
+			RecentRest.pinChat({
 				dialogId: itemId,
 				shouldPin,
 			})
@@ -160,7 +160,7 @@ jn.define('im/messenger/controller/recent/item-action', (require, exports, modul
 				{
 					Logger.error('Recent item pin error: ', result.error());
 
-					MessengerStore.dispatch('recentModel/set', [{
+					this.store.dispatch('recentModel/set', [{
 						id: itemId,
 						pinned: !shouldPin,
 					}]).then(() => this.renderRecent());
@@ -172,7 +172,7 @@ jn.define('im/messenger/controller/recent/item-action', (require, exports, modul
 		{
 			const recentItem = this.getRecentItemById(itemId);
 
-			MessengerStore.dispatch('recentModel/set', [{
+			this.store.dispatch('recentModel/set', [{
 				id: itemId,
 				unread: false,
 				counter: 0,
@@ -182,14 +182,14 @@ jn.define('im/messenger/controller/recent/item-action', (require, exports, modul
 				Counters.update();
 			});
 
-			RecentService.readChat({
+			RecentRest.readChat({
 					dialogId: itemId,
 				})
 				.catch((result) =>
 				{
 					Logger.error('Recent item read error: ', result.error());
 
-					MessengerStore.dispatch('recentModel/set', [recentItem]).then(() => {
+					this.store.dispatch('recentModel/set', [recentItem]).then(() => {
 						this.renderRecent();
 
 						Counters.update();
@@ -202,7 +202,7 @@ jn.define('im/messenger/controller/recent/item-action', (require, exports, modul
 		{
 			const recentItem = this.getRecentItemById(itemId);
 
-			MessengerStore.dispatch('recentModel/set', [{
+			this.store.dispatch('recentModel/set', [{
 				id: itemId,
 				unread: true,
 				counter: recentItem.counter,
@@ -212,12 +212,12 @@ jn.define('im/messenger/controller/recent/item-action', (require, exports, modul
 				Counters.update();
 			});
 
-			RecentService.unreadChat({ dialogId: itemId })
+			RecentRest.unreadChat({ dialogId: itemId })
 				.catch((result) =>
 				{
 					Logger.error('Recent item unread error: ', result.error());
 
-					MessengerStore.dispatch('recentModel/set', [recentItem]).then(() => {
+					this.store.dispatch('recentModel/set', [recentItem]).then(() => {
 						this.renderRecent();
 
 						Counters.update();
@@ -247,14 +247,14 @@ jn.define('im/messenger/controller/recent/item-action', (require, exports, modul
 			const recentMuteList = {};
 			muteList.forEach(userId => recentMuteList[userId] = true);
 			recentItem.chat.mute_list = recentMuteList;
-			MessengerStore.dispatch('recentModel/set', [recentItem]).then(() => this.renderRecent());
+			this.store.dispatch('recentModel/set', [recentItem]).then(() => this.renderRecent());
 
-			MessengerStore.dispatch('dialoguesModel/set', [{
+			this.store.dispatch('dialoguesModel/set', [{
 				dialogId: itemId,
 				muteList: Array.from(muteList),
 			}]);
 
-			ChatService.mute({
+			ChatRest.mute({
 					dialogId: itemId,
 					shouldMute,
 				})
@@ -262,15 +262,15 @@ jn.define('im/messenger/controller/recent/item-action', (require, exports, modul
 				{
 					Logger.error('Recent item mute error: ', result.error());
 
-					MessengerStore.dispatch('dialoguesModel/set', [dialog]);
-					MessengerStore.dispatch('recentModel/set', [recentItem]).then(() => this.renderRecent());
+					this.store.dispatch('dialoguesModel/set', [dialog]);
+					this.store.dispatch('recentModel/set', [recentItem]).then(() => this.renderRecent());
 				})
 			;
 		}
 
 		inviteResend(itemId)
 		{
-			UserService.resendInvite({
+			UserRest.resendInvite({
 				userId: itemId,
 			})
 				.then((response) => {
@@ -302,11 +302,11 @@ jn.define('im/messenger/controller/recent/item-action', (require, exports, modul
 		{
 			const recentItem = this.getRecentItemById(itemId);
 
-			MessengerStore.dispatch('recentModel/delete', { id: recentItem.id })
+			this.store.dispatch('recentModel/delete', { id: recentItem.id })
 				.then(() => this.renderRecent())
 			;
 
-			UserService.cancelInvite({
+			UserRest.cancelInvite({
 				userId: itemId,
 			})
 				.catch((response) => {
@@ -327,7 +327,7 @@ jn.define('im/messenger/controller/recent/item-action', (require, exports, modul
 
 					Logger.error('Recent item inviteCancel error: ', response);
 
-					MessengerStore.dispatch('recentModel/set', [recentItem])
+					this.store.dispatch('recentModel/set', [recentItem])
 						.then(() => this.renderRecent())
 					;
 				})
@@ -341,17 +341,17 @@ jn.define('im/messenger/controller/recent/item-action', (require, exports, modul
 
 		getRecentItemById(id)
 		{
-			return ChatUtils.objectClone(MessengerStore.getters['recentModel/getById'](id));
+			return clone(this.store.getters['recentModel/getById'](id));
 		}
 
 		getDialogById(id)
 		{
-			return ChatUtils.objectClone(MessengerStore.getters['dialoguesModel/getById'](id));
+			return clone(this.store.getters['dialoguesModel/getById'](id));
 		}
 
 		renderRecent()
 		{
-			new MessengerEvent(EventType.messenger.renderRecent).send();
+			MessengerEmitter.emit(EventType.messenger.renderRecent);
 		}
 	}
 

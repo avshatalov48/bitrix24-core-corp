@@ -24,7 +24,7 @@ class UserFieldCollection implements \Iterator, \ArrayAccess, \Countable
 
 	public function getByName(string $fieldName): ?UserField
 	{
-		return $this->fields[$fieldName];
+		return $this->fields[$fieldName] ?? null;
 	}
 
 	public function toArray(): array

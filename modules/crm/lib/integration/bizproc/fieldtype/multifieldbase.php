@@ -1,4 +1,5 @@
 <?php
+
 namespace Bitrix\Crm\Integration\BizProc\FieldType;
 
 use Bitrix\Bizproc\BaseType;
@@ -53,6 +54,30 @@ class MultiFieldBase extends BaseType\Base
 	 */
 	public static function convertTo(FieldType $fieldType, $value, $toTypeClass)
 	{
+		if (is_array($value) && $fieldType->getTypeClass() === $toTypeClass)
+		{
+			$newValue = [];
+
+			$type = mb_strtoupper($fieldType->getType());
+			if (is_array($value[$type]))
+			{
+				$value = $value[$type];
+			}
+
+			foreach ($value as $key => $v)
+			{
+				if (is_array($v) && isset($v['VALUE'], $v['VALUE_TYPE']))
+				{
+					$newValue[$key] = [
+						'VALUE' => $v['VALUE'],
+						'VALUE_TYPE' => $v['VALUE_TYPE'],
+					];
+				}
+			}
+
+			return [$type => $newValue];
+		}
+
 		if (is_array($value))
 		{
 			if (isset($value['VALUE']))

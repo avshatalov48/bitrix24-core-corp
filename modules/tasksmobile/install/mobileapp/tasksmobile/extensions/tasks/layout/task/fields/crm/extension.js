@@ -4,6 +4,7 @@
 jn.define('tasks/layout/task/fields/crm', (require, exports, module) => {
 	const {Loc} = require('loc');
 	const {CrmElementField} = require('layout/ui/fields/crm-element');
+	const { AnalyticsLabel } = require('analytics-label');
 
 	class Crm extends LayoutComponent
 	{
@@ -85,6 +86,11 @@ jn.define('tasks/layout/task/fields/crm', (require, exports, module) => {
 							this.setState({crm: crmData});
 							this.props.onChange(crm);
 						}
+
+						AnalyticsLabel.send({
+							event: 'onCrmFieldChange',
+							scenario: 'task_add',
+						});
 					},
 				}),
 			);

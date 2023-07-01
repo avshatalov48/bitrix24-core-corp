@@ -95,7 +95,8 @@ else
 					'CONVERT_TO_SYMBOLIC_ID' => (!$arResult['USE_SYMBOLIC_ID'] ? 'N' : false),
 //				"BUTTON_SELECT_CAPTION" => Loc::getMessage("CRM_SL_EVENT_EDIT_MPF_WHERE_1"),
 					'API_VERSION' => 3,
-					'SELECTOR_OPTIONS' => $selectorOptions
+					'SELECTOR_OPTIONS' => $selectorOptions,
+					'CALLBACK_BEFORE' => $arParams['additionalParameters']['CALLBACK_BEFORE'] ?? [],
 				]
 			);
 			?>
@@ -127,24 +128,24 @@ else
 					});
 
 					BX.message({
-						CRM_ELEMENT_LEAD: '<?= Loc::getMessage('CRM_ELEMENT_LEAD')?>',
-						CRM_ELEMENT_CONTACT: '<?= Loc::getMessage('CRM_ELEMENT_CONTACT')?>',
-						CRM_ELEMENT_COMPANY: '<?= Loc::getMessage('CRM_ELEMENT_COMPANY')?>',
-						CRM_ELEMENT_DEAL: '<?= Loc::getMessage('CRM_ELEMENT_DEAL')?>',
-						CRM_ELEMENT_ORDER: '<?= Loc::getMessage('CRM_ELEMENT_ORDER')?>',
-						CRM_ELEMENT_QUOTE: '<?= Loc::getMessage('CRM_ELEMENT_QUOTE')?>',
-						CRM_ELEMENT_OK: '<?= Loc::getMessage('CRM_ELEMENT_OK')?>',
-						CRM_ELEMENT_CANCEL: '<?= Loc::getMessage('CRM_ELEMENT_CANCEL')?>',
-						CRM_ELEMENT_CLOSE: '<?= Loc::getMessage('CRM_ELEMENT_CLOSE')?>',
-						CRM_ELEMENT_SEARCH: '<?= Loc::getMessage('CRM_ELEMENT_SEARCH')?>',
-						CRM_ELEMENT_NO_RESULT: '<?= Loc::getMessage('CRM_ELEMENT_NO_RESULT')?>',
-						CRM_ELEMENT_CHOISE: '<?= Loc::getMessage('CRM_ELEMENT_CHOISE')?>',
-						CRM_ELEMENT_CHANGE: '<?= Loc::getMessage('CRM_ELEMENT_CHANGE')?>',
-						CRM_ELEMENT_LAST: '<?= Loc::getMessage('CRM_ELEMENT_LAST')?>',
-						CRM_ELEMENT_CREATE_LEAD: '<?= Loc::getMessage('CRM_ELEMENT_CREATE_LEAD')?>',
-						CRM_ELEMENT_CREATE_CONTACT: '<?= Loc::getMessage('CRM_ELEMENT_CREATE_CONTACT')?>',
-						CRM_ELEMENT_CREATE_COMPANY: '<?= Loc::getMessage('CRM_ELEMENT_CREATE_COMPANY')?>',
-						CRM_ELEMENT_CREATE_DEAL: '<?= Loc::getMessage('CRM_ELEMENT_CREATE_DEAL')?>'
+						CRM_ELEMENT_LEAD: '<?= \CUtil::JSEscape(Loc::getMessage('CRM_ELEMENT_LEAD')) ?>',
+						CRM_ELEMENT_CONTACT: '<?= \CUtil::JSEscape(Loc::getMessage('CRM_ELEMENT_CONTACT')) ?>',
+						CRM_ELEMENT_COMPANY: '<?= \CUtil::JSEscape(Loc::getMessage('CRM_ELEMENT_COMPANY')) ?>',
+						CRM_ELEMENT_DEAL: '<?= \CUtil::JSEscape(Loc::getMessage('CRM_ELEMENT_DEAL')) ?>',
+						CRM_ELEMENT_ORDER: '<?= \CUtil::JSEscape(Loc::getMessage('CRM_ELEMENT_ORDER')) ?>',
+						CRM_ELEMENT_QUOTE: '<?= \CUtil::JSEscape(Loc::getMessage('CRM_ELEMENT_QUOTE')) ?>',
+						CRM_ELEMENT_OK: '<?= \CUtil::JSEscape(Loc::getMessage('CRM_ELEMENT_OK')) ?>',
+						CRM_ELEMENT_CANCEL: '<?= \CUtil::JSEscape(Loc::getMessage('CRM_ELEMENT_CANCEL')) ?>',
+						CRM_ELEMENT_CLOSE: '<?= \CUtil::JSEscape(Loc::getMessage('CRM_ELEMENT_CLOSE')) ?>',
+						CRM_ELEMENT_SEARCH: '<?= \CUtil::JSEscape(Loc::getMessage('CRM_ELEMENT_SEARCH')) ?>',
+						CRM_ELEMENT_NO_RESULT: '<?= \CUtil::JSEscape(Loc::getMessage('CRM_ELEMENT_NO_RESULT')) ?>',
+						CRM_ELEMENT_CHOISE: '<?= \CUtil::JSEscape(Loc::getMessage('CRM_ELEMENT_CHOISE')) ?>',
+						CRM_ELEMENT_CHANGE: '<?= \CUtil::JSEscape(Loc::getMessage('CRM_ELEMENT_CHANGE')) ?>',
+						CRM_ELEMENT_LAST: '<?= \CUtil::JSEscape(Loc::getMessage('CRM_ELEMENT_LAST')) ?>',
+						CRM_ELEMENT_CREATE_LEAD: '<?= \CUtil::JSEscape(Loc::getMessage('CRM_ELEMENT_CREATE_LEAD')) ?>',
+						CRM_ELEMENT_CREATE_CONTACT: '<?= \CUtil::JSEscape(Loc::getMessage('CRM_ELEMENT_CREATE_CONTACT')) ?>',
+						CRM_ELEMENT_CREATE_COMPANY: '<?= \CUtil::JSEscape(Loc::getMessage('CRM_ELEMENT_CREATE_COMPANY')) ?>',
+						CRM_ELEMENT_CREATE_DEAL: '<?= \CUtil::JSEscape(Loc::getMessage('CRM_ELEMENT_CREATE_DEAL')) ?>'
 					});
 				});
 			</script>

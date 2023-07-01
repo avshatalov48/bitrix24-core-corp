@@ -29,9 +29,6 @@ class TaskChangeDirectorRule extends \Bitrix\Main\Access\Rule\AbstractRule
 			return false;
 		}
 
-		$this->oldTask = $task;
-		$this->newTask = $params;
-
 		if ($this->user->isAdmin())
 		{
 			return true;
@@ -44,7 +41,7 @@ class TaskChangeDirectorRule extends \Bitrix\Main\Access\Rule\AbstractRule
 			return false;
 		}
 
-		$directors = $this->newTask->getMembers(RoleDictionary::ROLE_DIRECTOR);
+		$directors = $params->getMembers(RoleDictionary::ROLE_DIRECTOR);
 		if (empty($directors))
 		{
 			$this->controller->addError(static::class, 'Director is undefined');

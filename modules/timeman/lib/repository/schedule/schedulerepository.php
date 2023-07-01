@@ -463,9 +463,14 @@ class ScheduleRepository
 		$commonScheduleId = $this->findFirstScheduleIdForAllUsers();
 		if ($commonScheduleId)
 		{
-			if (is_array(reset($entitiesPriorityTree)) && is_array(reset(reset($entitiesPriorityTree))))
+			$firstTree = reset($entitiesPriorityTree);
+			if (is_array($firstTree))
 			{
-				$assignments[$commonScheduleId][end(reset(reset($entitiesPriorityTree)))] = ScheduleDepartmentTable::INCLUDED;
+				$secondTree = reset($firstTree);
+				if (is_array($secondTree))
+				{
+					$assignments[$commonScheduleId][end($secondTree)] = ScheduleDepartmentTable::INCLUDED;
+				}
 			}
 		}
 

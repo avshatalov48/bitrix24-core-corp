@@ -29,34 +29,13 @@ $hereDocGetMessage = function ($code) {
 
 if (CModule::IncludeModule("socialnetwork"))
 {
-	$arUserActiveFeatures = CSocNetFeatures::getActiveFeatures(SONET_ENTITY_USER, $USER->getId());
-	$arSocNetFeaturesSettings = CSocNetAllowed::getAllowedFeatures();
+	$socNetFeatures = new \Bitrix\Mobile\Component\SocNetFeatures($USER->getId());
 	$allowedFeatures = [];
 	foreach (["tasks", "files", "calendar"] as $feature)
 	{
-		if ($feature === 'calendar')
-		{
-			$allowedFeatures[$feature] =
-				array_key_exists($feature, $arSocNetFeaturesSettings)
-				&& array_key_exists("allowed", $arSocNetFeaturesSettings[$feature])
-				&& (
-					(
-						in_array(SONET_ENTITY_USER, $arSocNetFeaturesSettings[$feature]["allowed"])
-						&& is_array($arUserActiveFeatures)
-						&& in_array($feature, $arUserActiveFeatures)
-					)
-					|| in_array(SONET_ENTITY_GROUP, $arSocNetFeaturesSettings[$feature]["allowed"])
-				);
-		}
-		else
-		{
-			$allowedFeatures[$feature] =
-				array_key_exists($feature, $arSocNetFeaturesSettings)
-				&& array_key_exists("allowed", $arSocNetFeaturesSettings[$feature])
-				&& in_array(SONET_ENTITY_USER, $arSocNetFeaturesSettings[$feature]["allowed"])
-				&& is_array($arUserActiveFeatures)
-				&& in_array($feature, $arUserActiveFeatures);
-		}
+		$allowedFeatures[$feature] = $feature == "calendar"
+			? $socNetFeatures->isEnabledForGroup($feature)
+			: $socNetFeatures->isEnabledForUser($feature);
 	}
 }
 
@@ -87,7 +66,8 @@ if ($isExtranetUser && $extranetSiteId)
 $imageDir = $this->getPath() . "/images/";
 
 $diskComponentVersion = \Bitrix\MobileApp\Janative\Manager::getComponentVersion("user.disk");
-$calendarComponentVersion = \Bitrix\MobileApp\Janative\Manager::getComponentVersion("calendar.events");
+$calendarComponentPath = \Bitrix\MobileApp\Janative\Manager::getComponentPath("calendar:calendar.events");
+$calendarComponentVersion = \Bitrix\MobileApp\Janative\Manager::getComponentVersion("calendar:calendar.events");
 $workgroupsComponentVersion = \Bitrix\MobileApp\Janative\Manager::getComponentVersion("workgroups");
 $catalogStoreDocumentListComponentVersion = \Bitrix\MobileApp\Janative\Manager::getComponentVersion("catalog.store.document.list");
 
@@ -101,13 +81,11 @@ $taskParams = json_encode([
 	"MESSAGES" => [],
 ]);
 
-$crmIsInitialized = true;
-$crmTabIsAvailable = false;
+$calendarMobileJSComponentsIsUsed = false;
 
-if (Loader::includeModule('crm'))
+if (Loader::includeModule('calendarmobile'))
 {
-	$crmTabIsAvailable = (new Manager())->getTabAvailabilityState('crm');
-	$crmIsInitialized = $crmTabIsAvailable || \Bitrix\Crm\Settings\Crm::wasInitiated();
+	$calendarMobileJSComponentsIsUsed = \Bitrix\CalendarMobile\JSComponent::isUsed();
 }
 
 $menuStructure = [];
@@ -128,42 +106,62 @@ if (\Bitrix\MobileApp\Mobile::getApiVersion() < 41)
 	];
 }
 
-$favoriteItems[] = [
-	"title" => "CRM",
-	"imageUrl" => $imageDir . "favorite/icon-crm.png?3",
-	"color" => "#00ACE3",
-	"type" => 'info',
-	"hidden" => $crmIsInitialized,
-	"attrs" => [
-		"onclick" => <<<JS
-				qrauth.open({
-					title: this.title,
-					type:'crm',
-					showHint: false,
-					redirectUrl: '/crm/deal/'
-				})
-JS
-		,
-	],
-];
-
-$favoriteItems[] = [
-	"title" => Loc::getMessage("MB_CALENDAR_LIST"),
-	"imageUrl" => $imageDir . "favorite/icon-calendar.png",
-	"color" => "#F5A200",
-	"actions" => [
-		[
-			"title" => Loc::getMessage("MORE_ADD"),
-			"identifier" => "add",
-			"color" => "#7CB316",
+if ($calendarMobileJSComponentsIsUsed)
+{
+	$favoriteItems[] = [
+		"title" => Loc::getMessage("MB_CALENDAR_LIST"),
+		"imageUrl" => $imageDir . "favorite/icon-calendar.png",
+		"color" => "#F5A200",
+		"hidden" => $isExtranetUser && !$allowedFeatures["calendar"],
+		"actions" => [
+			[
+				"title" => Loc::getMessage("MORE_ADD"),
+				"identifier" => "add",
+				"color" => "#7CB316",
+			],
 		],
-	],
-	"attrs" => [
-		"actionOnclick" => <<<JS
+		"attrs" => [
+			"actionOnclick" => <<<JS
 					PageManager.openPage({url:"/mobile/calendar/edit_event.php", modal:true, data:{ modal:"Y"}});
 JS
-		,
-		"onclick" => <<<JS
+			,
+			"onclick" => <<<JS
+			PageManager.openComponent("JSStackComponent",
+						{
+							scriptPath:"{$calendarComponentPath}",
+							componentCode: "calendar",							
+							rootWidget:{
+								name:"list",
+								settings:{
+									title: this.title,
+									objectName: "list",
+								}
+							}
+						});
+JS
+			,
+		],
+	];
+}
+else
+{
+	$favoriteItems[] = [
+		"title" => Loc::getMessage("MB_CALENDAR_LIST"),
+		"imageUrl" => $imageDir . "favorite/icon-calendar.png",
+		"color" => "#F5A200",
+		"actions" => [
+			[
+				"title" => Loc::getMessage("MORE_ADD"),
+				"identifier" => "add",
+				"color" => "#7CB316",
+			],
+		],
+		"attrs" => [
+			"actionOnclick" => <<<JS
+					PageManager.openPage({url:"/mobile/calendar/edit_event.php", modal:true, data:{ modal:"Y"}});
+JS
+			,
+			"onclick" => <<<JS
 
 			PageManager.openList(
 			{
@@ -189,11 +187,12 @@ JS
 				});
 			}
 JS
-		,
-	],
+			,
+		],
 
-	"hidden" => !(ModuleManager::isModuleInstalled('calendar') && !$isExtranetUser && $allowedFeatures["calendar"]),
-];
+		"hidden" => !(ModuleManager::isModuleInstalled('calendar') && !$isExtranetUser && $allowedFeatures["calendar"]),
+	];
+}
 
 if (\Bitrix\MobileApp\Mobile::getApiVersion() < 41)
 {
@@ -467,7 +466,6 @@ if (CModule::IncludeModule("rest"))
 /**
  * CRM menu
  */
-
 if (
 	!$isExtranetUser
 	&& IsModuleInstalled('crm')
@@ -475,100 +473,22 @@ if (
 	&& CCrmPerms::IsAccessEnabled()
 )
 {
-	$userPerms = CCrmPerms::GetCurrentUserPermissions();
-	$crmImageBackgroundColor = "#8590a2";
+	$crmIsInitialized = \Bitrix\Crm\Settings\Crm::wasInitiated();
 
 	$crmMenuItems = [
-		"title" => "CRM",
-		"sort" => 120,
-		"hidden" => !$crmIsInitialized,
-		"items" => [
+		'title' => 'CRM',
+		'sort' => 120,
+		'hidden' => !$crmIsInitialized,
+		'items' => [
 			[
-				"title" => Loc::getMessage("MB_CRM_ACTIVITY"),
-				"imageUrl" => $imageDir . "crm/icon-crm-mydeals.png",
-				"color" => $crmImageBackgroundColor,
-				"hidden" => false,
-				"attrs" => [
-					"url" => "/mobile/crm/activity/list.php",
-					"id" => "crm_activity_list",
+				'title' => Loc::getMessage('MB_CRM_ACTIVITY'),
+				'imageUrl' => $imageDir . 'crm/icon-crm-mydeals.png',
+				'color' => '#8590a2',
+				'hidden' => false,
+				'attrs' => [
+					'url' => '/mobile/crm/activity/list.php',
+					'id' => 'crm_activity_list',
 				],
-			],
-			[
-				"title" => Loc::getMessage("MB_CRM_CONTACT"),
-				"imageUrl" => $imageDir . "crm/icon-crm-contact.png",
-				"color" => $crmImageBackgroundColor,
-				"hidden" => $crmTabIsAvailable || $userPerms->HavePerm('CONTACT', BX_CRM_PERM_NONE, 'READ'),
-				"attrs" => [
-					"url" => "/mobile/crm/contact/",
-					"id" => "crm_contact_list",
-				],
-
-			],
-			[
-				"title" => Loc::getMessage("MB_CRM_COMPANY"),
-				"imageUrl" => $imageDir . "crm/icon-crm-company.png",
-				"color" => $crmImageBackgroundColor,
-				"hidden" => $crmTabIsAvailable || $userPerms->HavePerm('COMPANY', BX_CRM_PERM_NONE, 'READ'),
-				"attrs" => [
-					"url" => "/mobile/crm/company/",
-					"id" => "crm_company_list",
-				],
-
-			],
-			[
-				"title" => Loc::getMessage("MB_CRM_DEAL"),
-				"imageUrl" => $imageDir . "crm/icon-crm-deal.png",
-				"color" => $crmImageBackgroundColor,
-				"hidden" => $crmTabIsAvailable || !\CAllCrmDeal::IsAccessEnabled(),
-				"attrs" => [
-					"url" => "/mobile/crm/deal/",
-					"id" => "crm_deal_list",
-				],
-
-			],
-			[
-				"title" => Loc::getMessage("MB_CRM_INVOICE"),
-				"imageUrl" => $imageDir . "crm/icon-crm-invoice.png",
-				"color" => $crmImageBackgroundColor,
-				"hidden" => $userPerms->HavePerm('INVOICE', BX_CRM_PERM_NONE, 'READ'),
-				"attrs" => [
-					"url" => "/mobile/crm/invoice/",
-					"id" => "crm_invoice_list",
-				],
-
-			],
-			[
-				"title" => Loc::getMessage("MB_CRM_QUOTE"),
-				"imageUrl" => $imageDir . "crm/icon-crm-quote.png",
-				"color" => $crmImageBackgroundColor,
-				"hidden" => $userPerms->HavePerm('QUOTE', BX_CRM_PERM_NONE, 'READ'),
-				"attrs" => [
-					"url" => "/mobile/crm/quote/",
-					"id" => "crm_quote_list",
-				],
-
-			],
-			[
-				"title" => Loc::getMessage("MB_CRM_LEAD"),
-				"imageUrl" => $imageDir . "crm/icon-crm-lead.png",
-				"color" => $crmImageBackgroundColor,
-				"hidden" => $userPerms->HavePerm('LEAD', BX_CRM_PERM_NONE, 'READ'),
-				"attrs" => [
-					"url" => "/mobile/crm/lead/",
-					"id" => "crm_lead_list",
-				],
-
-			],
-			[
-				"title" => Loc::getMessage("MB_CRM_PRODUCT"),
-				"imageUrl" => $imageDir . "crm/icon-crm-catalog.png",
-				"color" => $crmImageBackgroundColor,
-				"hidden" => !$userPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'READ'),
-				"attrs" => [
-					"url" => "/mobile/crm/product/",
-					"id" => "crm_product_list",
-				],
-
 			],
 		],
 	];
@@ -591,48 +511,6 @@ if (
 	if (AccessController::getCurrent()->check(\Bitrix\Catalog\Access\ActionDictionary::ACTION_CATALOG_READ))
 	{
 		$storeItemTitle = Loc::getMessage("MENU_CATALOG_STORE");
-
-		$catalogMenuItems[] = [
-			"title" => $storeItemTitle,
-			"imageUrl" => $imageDir . "catalog/icon-catalog-store.png",
-			"color" => '#00B4AC',
-			"hidden" => false,
-			"attrs" => [
-				"id" => "catalog.store.document.list",
-				"onclick" => <<<JS
-					if (Application.getApiVersion() < 45)
-					{
-						ComponentHelper.openLayout({
-							name: 'app-update-notifier',
-							object: 'layout',
-							widgetParams: {
-								backdrop: {
-									onlyMediumPosition: false,
-									mediumPositionPercent: 70,
-									hideNavigationBar: true
-								},
-							}
-						});
-					}
-					else {
-						ComponentHelper.openLayout({
-							name: 'catalog.store.document.list',
-							object: 'layout',
-							version: "{$catalogStoreDocumentListComponentVersion}",
-							widgetParams: {
-								titleParams: {
-									text: "$storeItemTitle",
-									useLargeTitleMode: true,
-								},
-								useSearch: true
-							}
-						});
-					}
-JS
-				,
-			],
-		];
-
 		if (Option::get('mobile', 'catalog_store_test', 'N') === 'Y')
 		{
 			$catalogMenuItems[] = [
@@ -749,15 +627,24 @@ JS,
 		}
 	}
 
-	if (!empty($catalogMenuItems))
-	{
-		$menuStructure[] = [
-			"title" => Loc::getMessage("MENU_CATALOG"),
-			"sort" => 125,
-			"hidden" => false,
-			"items" => $catalogMenuItems,
-		];
-	}
+	$menuStructure[] = [
+		"title" => Loc::getMessage("MENU_CATALOG"),
+		"sort" => 125,
+		"code" => "catalog",
+		"hidden" => false,
+		"items" => $catalogMenuItems,
+	];
+}
+
+if (!$isExtranetUser)
+{
+	$menuStructure[] = [
+		"title" => Loc::getMessage("MENU_CRM_TERMINAL_V2"),
+		"sort" => 127,
+		"code" => "terminal",
+		"hidden" => false,
+		"items" => [],
+	];
 }
 
 /**
@@ -919,7 +806,7 @@ $menuStructure[] = [
 	'sort' => 1,
 	"items" => [
 		[
-			"title" => Loc::getMessage("TO_LOGIN_ON_DESKTOP"),
+			"title" => Loc::getMessage("TO_LOGIN_ON_DESKTOP_MSGVER_1"),
 			"useLetterImage" => true,
 			"color" => "#4BA3FB",
 			'type' => 'info',
@@ -961,9 +848,8 @@ JS
 						});
 JS
 				,
-
 			],
-		],
+		]
 	],
 ];
 
@@ -1042,6 +928,26 @@ JS,
 		],
 	];
 
+	$developerMenuItems[] = [
+		"title" => "telegram connector",
+		"imageUrl" => $imageDir . "favorite/stream.png",
+		"color" => '#8590a2',
+		"hidden" => false,
+		"attrs" => [
+			"id" => "imconnector:imconnector.telegram",
+			"onclick" => <<<JS
+				ComponentHelper.openLayout({
+					name: 'imconnector:imconnector.telegram',
+					object: 'layout',
+					widgetParams: {
+						title: 'Telegram',
+						modal: true,
+					}
+				});
+JS,
+		],
+	];
+
 	if (!empty($developerMenuItems))
 	{
 		$menuStructure[] = [
@@ -1068,21 +974,22 @@ JS
 
 		],
 		[
-			"title" => Loc::getMessage("MENU_SETTINGS_TABS"),
+			"title" => Loc::getMessage("MENU_PRESET_TAB"),
 			"sectionCode" => "menu",
 			"id" => "tab.settings",
 			"iconUrl" => $imageDir . "settings/tab_settings.png?9",
 			"onclick" => <<<JS
-					ComponentHelper.openList({
-					name: "tab.settings",
-					object: "list",
-					version: availableComponents["tab.settings"].version,
-					widgetParams:{
-						backdrop:{onlyMediumPosition: false, mediumPositionPercent: 80},
-						title:this.title,
-						groupStyle: true,
-					}
-				});
+				PageManager.openComponent("JSStackComponent",{
+						scriptPath: availableComponents["tab.presets"].publicUrl,
+						rootWidget:{
+							name: "layout",
+							settings:{
+									// backdrop:{},
+									objectName: "layout",
+									titleParams: { text: this.title, useLargeTitleMode: true}
+								}
+						}
+					});
 JS
 			,
 

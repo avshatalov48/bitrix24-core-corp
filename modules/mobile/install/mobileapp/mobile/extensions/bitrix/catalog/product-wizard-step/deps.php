@@ -1,5 +1,8 @@
 <?php
 
 return [
-	'layout/ui/wizard/step/field-editor',
+	'extensions' => [
+		'layout/ui/wizard/step/field-editor',
+	],
 ];
+

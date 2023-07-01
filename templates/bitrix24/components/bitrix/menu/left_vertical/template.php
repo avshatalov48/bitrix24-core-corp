@@ -97,7 +97,16 @@ $groupPopupExists = false;
 						$addLinks .= ($addLinks === "" ? "" : ",").$item["LINK"];
 					}
 
-					$curLink = isset($item["PARAMS"]["real_link"]) ? $item["PARAMS"]["real_link"] : $item["LINK"];
+					$curLink = '';
+					if (isset($item["PARAMS"]["real_link"]) && is_string($item["PARAMS"]["real_link"]))
+					{
+						$curLink = $item["PARAMS"]["real_link"];
+					}
+					else
+					{
+						$curLink = isset($item["LINK"]) && is_string($item["LINK"]) ? $item["LINK"] : '';
+					}
+
 					if (preg_match("~^".SITE_DIR."index\\.php~i", $curLink))
 					{
 						$curLink = SITE_DIR;
@@ -471,8 +480,8 @@ BX.message({
 	MENU_DELETE_CUSTOM_ITEM_FROM_ALL: '<?=GetMessageJS("MENU_DELETE_CUSTOM_ITEM_FROM_ALL")?>',
 	MENU_SETTINGS_MODE: '<?=GetMessageJS("MENU_SETTINGS_MODE")?>',
 	MENU_EDIT_READY_FULL: '<?=GetMessageJS("MENU_EDIT_READY_FULL")?>',
-	COUNTER_PROJECTS_MAJOR: '<?= CUtil::JSEscape(TasksCounterDictionary::COUNTER_PROJECTS_MAJOR) ?>',
-	COUNTER_SCRUM_TOTAL_COMMENTS: '<?= CUtil::JSEscape(TasksCounterDictionary::COUNTER_SCRUM_TOTAL_COMMENTS) ?>',
+	COUNTER_PROJECTS_MAJOR: '<?= \Bitrix\Main\Loader::includeModule('tasks') ? CUtil::JSEscape(TasksCounterDictionary::COUNTER_PROJECTS_MAJOR) : "" ?>',
+	COUNTER_SCRUM_TOTAL_COMMENTS: '<?= \Bitrix\Main\Loader::includeModule('tasks') ? CUtil::JSEscape(TasksCounterDictionary::COUNTER_SCRUM_TOTAL_COMMENTS) : "" ?>',
 });
 BX.Intranet.LeftMenu = new BX.Intranet.Menu(<?=CUtil::PhpToJSObject($arJSParams)?>);
 <?

@@ -100,7 +100,6 @@ $APPLICATION->IncludeComponent("bitrix:desktop", ".default", array(
 	"G_WORKGROUPS_PATH_TO_GROUP" => SITE_DIR . "workgroups/group/#group_id#/",
 	"G_WORKGROUPS_PATH_TO_GROUP_SEARCH" => SITE_DIR . "workgroups/",
 	"G_WORKGROUPS_CACHE_TIME" => "3600",
-	"GU_WORKGROUPS_DATE_TIME_FORMAT" => "#DATE_TIME_FORMAT#", //"d.m.Y H:i:s",
 	"GU_WORKGROUPS_DISPLAY_PICTURE" => "Y",
 	"GU_WORKGROUPS_DISPLAY_DESCRIPTION" => "Y",
 	"GU_WORKGROUPS_DISPLAY_NUMBER_OF_MEMBERS" => "Y",

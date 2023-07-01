@@ -54,7 +54,7 @@ final class ToDo implements \ArrayAccess
 
 	public function getCode()
 	{
-		return $this->parameters['CODE'];
+		return ($this->parameters['CODE'] ?? null);
 	}
 
 	public function setCode($code)
@@ -102,11 +102,12 @@ final class ToDo implements \ArrayAccess
 		);
 	}
 
-	public function offsetExists($offset)
+	public function offsetExists($offset): bool
 	{
-		return $offset == 'CODE' || $offset == 'ACTION' || $offset = 'ARGUMENTS';
+		return ($offset === 'CODE' || $offset === 'ACTION' || $offset === 'ARGUMENTS');
 	}
 
+	#[\ReturnTypeWillChange]
 	public function offsetGet($offset)
 	{
 		if($offset == 'CODE')
@@ -125,12 +126,12 @@ final class ToDo implements \ArrayAccess
 		return null;
 	}
 
-	public function offsetSet($offset, $value)
+	public function offsetSet($offset, $value): void
 	{
 		throw new NotImplementedException();
 	}
 
-	public function offsetUnset($offset)
+	public function offsetUnset($offset): void
 	{
 		throw new NotImplementedException();
 	}

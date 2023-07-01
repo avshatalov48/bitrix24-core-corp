@@ -8,16 +8,22 @@ define('NO_AGENT_CHECK', true);
 define('PUBLIC_AJAX_MODE', true);
 define('DisableEventsCheck', true);
 
-$params = isset($_REQUEST['PARAMS']) && is_array($_REQUEST['PARAMS']) ? $_REQUEST['PARAMS'] : array();
+$params = isset($_REQUEST['PARAMS']) && is_array($_REQUEST['PARAMS']) ? $_REQUEST['PARAMS'] : [];
 $siteId = (is_array($params) && isset($params['SITE_ID']))? mb_substr(preg_replace('/[^a-z0-9_]/i', '', $params['SITE_ID']), 0, 2) : '';
 if($siteId !== '')
 {
 	define('SITE_ID', $siteId);
 }
 
-$action = isset($_REQUEST['ACTION']) ? $_REQUEST['ACTION'] : '';
+$action = $_REQUEST['ACTION'] ?? '';
 
 require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_before.php');
+
+use Bitrix\Main\Application;
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\Security\Sign\BadSignatureException;
+use Bitrix\Main\Security\Sign\Signer;
+use Bitrix\Main\Web\Json;
 
 CUtil::JSPostUnescape();
 
@@ -83,7 +89,7 @@ if ($action === 'STEXPORT')
 	}
 
 	$exportType = isset($params['EXPORT_TYPE']) ? $params['EXPORT_TYPE'] : '';
-	if(!in_array($exportType, array('csv', 'excel'), true))
+	if(!in_array($exportType, ['csv', 'excel'], true))
 	{
 		__CrmContactStExportEndResponse(
 			array('ERROR' => "The export type '{$exportType}' is not supported in current context.")
@@ -112,24 +118,40 @@ if ($action === 'STEXPORT')
 	$stepStartTime = time();
 	$defaultBlockSize = 100;   // items per block
 
-	$processToken = isset($params['PROCESS_TOKEN']) ? $params['PROCESS_TOKEN'] : '';
+	$processToken = $params['PROCESS_TOKEN'] ?? '';
 	if($processToken === '')
 	{
 		__CrmContactStExportEndResponse(array('ERROR' => 'Process token is not specified.'));
 	}
 
-	$cParams = is_array($params['COMPONENT_PARAMS']) ? $params['COMPONENT_PARAMS'] : array();
+	$cParams = is_array($params['COMPONENT_PARAMS']) ? $params['COMPONENT_PARAMS'] : [];
 
-	$progressData = CUserOptions::GetOption('crm', 'crm_stexport_contact', '');
+	$application = Application::getInstance();
+	$localStorage = $application->getLocalSession('crm_stexport_contact');
+	$progressData = $localStorage->getData();
+	$progressData = $progressData["progressData"] ?? [];
+
+	if ($progressData)
+	{
+		try
+		{
+			$progressData = Json::decode((new Signer())->unsign($progressData));
+		}
+		catch (BadSignatureException|ArgumentException $exception)
+		{
+			$progressData = [];
+		}
+	}
+
 	if (!is_array($progressData))
-		$progressData = array();
+	{
+		$progressData = [];
+	}
 
-	$lastToken = isset($progressData['PROCESS_TOKEN']) ? $progressData['PROCESS_TOKEN'] : '';
+	$lastToken = $progressData['PROCESS_TOKEN'] ?? '';
 	$isNewToken = ($processToken !== $lastToken);
 	$startTime = time();
-	$initialOptions = array(
-		'REQUISITE_MULTILINE' => 'N'
-	);
+	$initialOptions = ['REQUISITE_MULTILINE' => 'N'];
 	if ($isNewToken)
 	{
 		$filePath = '';
@@ -161,7 +183,7 @@ if ($action === 'STEXPORT')
 	{
 		if (!$isNewToken)
 		{
-			CUserOptions::DeleteOption('crm', 'crm_stexport_contact');
+			$localStorage->clear();
 			$processedItems = 0;
 			$totalItems = 0;
 			$blockSize = $defaultBlockSize;
@@ -190,7 +212,8 @@ if ($action === 'STEXPORT')
 			'PROCESSED_ITEMS' => $processedItems,
 			'TOTAL_ITEMS' => $totalItems
 		);
-		CUserOptions::SetOption('crm', 'crm_stexport_contact', $progressData);
+		$progressData = ['progressData' => (new Signer())->sign(Json::encode($progressData))];
+		$localStorage->setData($progressData);
 	}
 
 	do
@@ -263,7 +286,8 @@ if ($action === 'STEXPORT')
 			'PROCESSED_ITEMS' => $processedItems,
 			'TOTAL_ITEMS' => $totalItems
 		);
-		CUserOptions::SetOption('crm', 'crm_stexport_contact', $progressData);
+		$progressData = ['progressData' => (new Signer())->sign(Json::encode($progressData))];
+		$localStorage->setData($progressData);
 
 		$stepTime = time() - $stepStartTime;
 		$timeExceeded = ($stepTime < 0 || $stepTime >= $stepTimeInterval);

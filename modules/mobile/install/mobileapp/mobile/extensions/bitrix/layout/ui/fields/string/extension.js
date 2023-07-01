@@ -5,8 +5,11 @@ jn.define('layout/ui/fields/string', (require, exports, module) => {
 
 	const { BaseField } = require('layout/ui/fields/base');
 	const { FocusManager } = require('layout/ui/fields/focus-manager');
+	const { debounce } = require('utils/function');
 	const { isEqual } = require('utils/object');
 	const { stringify } = require('utils/string');
+
+	const isIosPlatform = Application.getPlatform() === 'ios';
 
 	/**
 	 * @class StringField
@@ -22,6 +25,8 @@ jn.define('layout/ui/fields/string', (require, exports, module) => {
 
 			this.inputRef = null;
 			this.showHideButton = this.getValue().length > 180;
+
+			this.debouncedChangeText = debounce((text) => this.changeText(text), 50, this);
 		}
 
 		getConfig()
@@ -62,9 +67,10 @@ jn.define('layout/ui/fields/string', (require, exports, module) => {
 
 				this.fieldValue = null;
 
-				if(!isEqual(fieldValue, nextProps.value))
+				if (!isEqual(fieldValue, nextProps.value))
 				{
-					// console.log('!!! fieldValue not equal', this.fieldValue, nextProps.value);
+					this.logComponentDifference({ value: fieldValue }, { value: nextProps.value }, null, null);
+
 					return true;
 				}
 
@@ -75,40 +81,15 @@ jn.define('layout/ui/fields/string', (require, exports, module) => {
 				nextPropsToCompare = nextPropsWithoutValue;
 			}
 
-			return !isEqual(prevPropsToCompare, nextPropsToCompare) || !isEqual(this.state, nextState);
+			const hasChanged = !isEqual(prevPropsToCompare, nextPropsToCompare) || !isEqual(this.state, nextState);
+			if (hasChanged)
+			{
+				this.logComponentDifference(prevPropsToCompare, nextPropsToCompare, this.state, nextState);
 
-			// ToDo DEV: enable for debug
-			// if (!isEqual(prevPropsToCompare, nextPropsToCompare))
-			// {
-			// 	let found = false;
-			// 	for (const [key, value] of Object.entries(prevPropsToCompare))
-			// 	{
-			// 		if (!isEqual(prevPropsToCompare[key], nextPropsToCompare[key]))
-			// 		{
-			// 			console.log(prevPropsToCompare.title, prevPropsToCompare, key, value, nextPropsToCompare[key]);
-			// 			found = true;
-			// 		}
-			// 	}
-			//
-			// 	if (!found)
-			// 	{
-			// 		console.log('diff not found', prevPropsToCompare.title, prevPropsToCompare, nextPropsToCompare);
-			// 	}
-			// }
-			//
-			// if (!isEqual(this.state, nextState))
-			// {
-			// 	console.log('!!! state not equal', this.state, nextState);
-			// }
-			//
-			// if (!isEqual(prevPropsToCompare, nextPropsToCompare) || !isEqual(this.state, nextState))
-			// {
-			// 	return true;
-			// }
-			//
-			// console.log('OK!!! NO RENDER!!! ;)', prevPropsToCompare.title, this);
-			//
-			// return false;
+				return true;
+			}
+
+			return false;
 		}
 
 		hasKeyboard()
@@ -261,9 +242,14 @@ jn.define('layout/ui/fields/string', (require, exports, module) => {
 			return {
 				style: {
 					...this.styles.value,
-					maxHeight: this.state.showAll ? null : 50,
-				}
+					maxHeight: this.state.showAll ? null : this.getMaximusHeight(),
+				},
 			};
+		}
+
+		getMaximusHeight()
+		{
+			return isIosPlatform ? 50 : 40;
 		}
 
 		getEllipsizeParams()
@@ -296,7 +282,7 @@ jn.define('layout/ui/fields/string', (require, exports, module) => {
 				placeholderTextColor: this.styles.textPlaceholder.color,
 				onFocus: () => this.setFocus(),
 				onBlur: () => this.removeFocus(),
-				onChangeText: (text) => this.changeText(text),
+				onChangeText: this.debouncedChangeText,
 				onSubmitEditing: () => FocusManager.blurFocusedFieldIfHas(),
 				onLinkClick: this.getConfig().onLinkClick,
 			};

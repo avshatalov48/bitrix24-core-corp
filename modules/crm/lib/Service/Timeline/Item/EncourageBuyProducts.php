@@ -5,6 +5,7 @@ namespace Bitrix\Crm\Service\Timeline\Item;
 use Bitrix\Crm\Service\Timeline\Item\DealProductList\ExpandableListFactory;
 use Bitrix\Crm\Service\Timeline\Layout;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\Text;
+use Bitrix\Crm\Service\Timeline\Layout\Common\Logo;
 use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__DIR__ . '/Ecommerce.php');
@@ -32,7 +33,7 @@ class EncourageBuyProducts extends Configurable
 	 */
 	public function getIconCode(): ?string
 	{
-		return 'view';
+		return Layout\Common\Icon::VIEW;
 	}
 
 	/**
@@ -40,7 +41,9 @@ class EncourageBuyProducts extends Configurable
 	 */
 	public function getLogo(): ?Layout\Body\Logo
 	{
-		return (new Layout\Body\Logo('shop-eye'))->setInCircle();
+		return Logo::getInstance(Logo::SHOP_EYE)
+			->createLogo()
+		;
 	}
 
 	/**

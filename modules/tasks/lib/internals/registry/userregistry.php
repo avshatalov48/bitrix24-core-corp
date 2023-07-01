@@ -9,14 +9,20 @@
 namespace Bitrix\Tasks\Internals\Registry;
 
 
+use Bitrix\Main\Application;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ORM\Fields\Relations\Reference;
 use Bitrix\Main\ORM\Query\Join;
 use Bitrix\Socialnetwork\UserToGroupTable;
 use Bitrix\Socialnetwork\WorkgroupTable;
+use Bitrix\Main\Data\Cache;
 
 class UserRegistry
 {
+	private const CACHE_PREFIX = 'sonet_user2group_U';
+	private const CACHE_DIR = '/tasks/userregistry';
+	private const CACHE_TTL = 3 * 60 * 60;
+
 	public const MODE_GROUP_ALL = 'all';
 	public const MODE_GROUP = 'group';
 	public const MODE_PROJECT = 'project';
@@ -124,24 +130,41 @@ class UserRegistry
 			return;
 		}
 
-		$res = UserToGroupTable::query()
-			->addSelect('GROUP_ID')
-			->addSelect('ROLE')
-			->addSelect('WORKGROUP.PROJECT', 'PROJECT')
-			->addSelect('WORKGROUP.SCRUM_MASTER_ID', 'SCRUM_MASTER')
-			->registerRuntimeField(
-				new Reference(
-					'WORKGROUP',
-					WorkgroupTable::class,
-					Join::on('this.GROUP_ID', 'ref.ID'),
-					['join_type' => 'LEFT']
+		$cache = Cache::createInstance();
+
+		if ($cache->initCache(self::CACHE_TTL, $this->getCacheId(), $this->getCacheDir()))
+		{
+			$res = $cache->getVars();
+		}
+		else
+		{
+			$res = UserToGroupTable::query()
+				->addSelect('GROUP_ID')
+				->addSelect('ROLE')
+				->addSelect('WORKGROUP.PROJECT', 'PROJECT')
+				->addSelect('WORKGROUP.SCRUM_MASTER_ID', 'SCRUM_MASTER')
+				->registerRuntimeField(
+					new Reference(
+						'WORKGROUP',
+						WorkgroupTable::class,
+						Join::on('this.GROUP_ID', 'ref.ID'),
+						['join_type' => 'LEFT']
+					)
 				)
-			)
-			->setFilter([
-				'=USER_ID' => $this->userId,
-				'@ROLE' => [UserToGroupTable::ROLE_OWNER, UserToGroupTable::ROLE_MODERATOR, UserToGroupTable::ROLE_USER]
-			])
-			->fetchAll();
+				->setFilter([
+					'=USER_ID' => $this->userId,
+					'@ROLE' => [UserToGroupTable::ROLE_OWNER, UserToGroupTable::ROLE_MODERATOR, UserToGroupTable::ROLE_USER]
+				])
+				->fetchAll();
+
+			$taggedCache = Application::getInstance()->getTaggedCache();
+			$taggedCache->StartTagCache($this->getCacheDir());
+			$taggedCache->RegisterTag($this->getCacheTag());
+
+			$cache->startDataCache();
+			$cache->endDataCache($res);
+			$taggedCache->EndTagCache();
+		}
 
 		foreach ($res as $row)
 		{
@@ -159,5 +182,20 @@ class UserRegistry
 				$this->userWorkgroups[$row['GROUP_ID']] = $row['ROLE'];
 			}
 		}
+	}
+
+	private function getCacheTag(): string
+	{
+		return self::CACHE_PREFIX . $this->userId;
+	}
+
+	private function getCacheDir(): string
+	{
+		return self::CACHE_DIR . '/' . substr(md5($this->userId),2,2) . '/';
+	}
+
+	private function getCacheId(): string
+	{
+		return $this->getCacheTag();
 	}
 }

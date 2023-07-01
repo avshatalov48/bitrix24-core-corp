@@ -1,8 +1,8 @@
 <?php
 namespace Bitrix\Crm\Recycling;
 
-use Bitrix\Main;
 use Bitrix\Crm;
+use Bitrix\Main;
 
 Main\Localization\Loc::loadMessages(__FILE__);
 
@@ -115,7 +115,12 @@ class ContactController extends BaseController
 			throw new Main\ObjectNotFoundException("Could not find entity: #{$entityID}.");
 		}
 
-		$slots = array('FIELDS' => array_intersect_key($fields, array_flip(self::getFieldNames())));
+		$slots = [
+			'FIELDS' => Crm\Entity\FieldContentType::enrichRecycleBinFields(
+				new Crm\ItemIdentifier($this->getEntityTypeID(), $entityID),
+				array_intersect_key($fields, array_flip(self::getFieldNames())),
+			),
+		];
 
 		if(isset($fields['LEAD_ID']) && $fields['LEAD_ID'] > 0)
 		{
@@ -366,7 +371,8 @@ class ContactController extends BaseController
 			true,
 			array(
 				'IS_RESTORATION' => true,
-				'DISABLE_USER_FIELD_CHECK' => true
+				'DISABLE_USER_FIELD_CHECK' => true,
+				'PRESERVE_CONTENT_TYPE' => true,
 			)
 		);
 		if($newEntityID <= 0)

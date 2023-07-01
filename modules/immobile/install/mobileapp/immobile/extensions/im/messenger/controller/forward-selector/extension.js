@@ -3,6 +3,7 @@
  */
 jn.define('im/messenger/controller/forward-selector', (require, exports, module) => {
 
+	const { core } = require('im/messenger/core');
 	const { SingleSelector } = require('im/messenger/lib/ui/selector');
 	const { ChatTitle, ChatAvatar } = require('im/messenger/lib/element');
 	const { FileField } = require('layout/ui/fields/file');
@@ -21,6 +22,7 @@ jn.define('im/messenger/controller/forward-selector', (require, exports, module)
 		constructor(options = {})
 		{
 			this.options = options;
+			this.store = core.getStore();
 			this.emitter = new JNEventEmitter();
 			this.selector = new SingleSelector(
 				{
@@ -96,7 +98,7 @@ jn.define('im/messenger/controller/forward-selector', (require, exports, module)
 
 		getListData()
 		{
-			const chats = MessengerStore.getters['recentModel/getRecentPage'](1, 50);
+			const chats = this.store.getters['recentModel/getRecentPage'](1, 50);
 			chats.shift();
 			return chats.map((item, index) => {
 				const chatTitle = ChatTitle.createFromDialogId(item.id);

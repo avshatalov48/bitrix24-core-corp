@@ -1,16 +1,23 @@
 <?php
+/**
+ * Bitrix vars
+ * @var array $arParams
+ * @var array $arResult
+ * @var CMain $APPLICATION
+ * @var CUser $USER
+ * @var CDatabase $DB
+ * @var CBitrixComponentTemplate $this
+ * @var string $templateName
+ * @var string $templateFile
+ * @var string $templateFolder
+ * @var string $componentPath
+ * @var CBitrixComponent $component
+ */
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
-
-/**
- * Bitrix vars
- * @global CMain $APPLICATION
- * @param array $arParams
- * @param array $arResult
- * @param CBitrixComponentTemplate $this
- */
 
 use Bitrix\Main\Localization\Loc;
 
@@ -29,13 +36,13 @@ $this->SetViewTarget('inside_pagetitle');
 if ($arResult['CAN_WRITE'])
 {
 ?>
-<div class="pagetitle-container pagetitle-align-right-container <?=$pagetitleAlignRightContainer?>">
+<div class="pagetitle-container pagetitle-align-right-container">
 	<a href="<?=$arParams['KEY_ADD_URL']?>" class="ui-btn ui-btn-primary"><?=Loc::getMessage('CT_BBKL_TOOLBAR_ADD')?></a>
 </div>
 <?php
 }
 
-$this->endViewTarget();
+$this->EndViewTarget();
 
 $arResult['HEADERS'] = [
 	[
@@ -43,6 +50,7 @@ $arResult['HEADERS'] = [
 		'name' => Loc::getMessage('CT_BBKL_COLUMN_ID'),
 		'default' => true,
 		'editable' => false,
+		'sort' => 'ID',
 	],
 	[
 		'id' => 'ACTIVE',
@@ -61,6 +69,13 @@ $arResult['HEADERS'] = [
 		'name' => Loc::getMessage('CT_BBKL_COLUMN_APPLICATION'),
 		'default' => true,
 		'editable' => false,
+	],
+	[
+		'id' => 'LAST_ACTIVITY_DATE',
+		'name' => Loc::getMessage('CT_BBKL_COLUMN_LAST_ACTIVITY_DATE'),
+		'default' => true,
+		'editable' => false,
+		'sort' => 'LAST_ACTIVITY_DATE',
 	],
 ];
 

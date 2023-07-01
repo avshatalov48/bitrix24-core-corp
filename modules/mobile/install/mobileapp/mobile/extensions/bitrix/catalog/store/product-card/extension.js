@@ -194,7 +194,7 @@
 							ellipsize: 'end',
 							numberOfLines: 1,
 							style: {
-								color: '#B8BFC9',
+								color: '#bdc1c6',
 								fontSize: 14,
 							}
 						})
@@ -447,7 +447,7 @@
 					text: BX.message('CSPL_SELLING_PRICE'),
 					style: {
 						fontSize: 14,
-						color: '#B8C0C9',
+						color: '#bdc1c6',
 						textAlign: 'right',
 					}
 				}),
@@ -471,7 +471,7 @@
 							text: formattedCurrency,
 							style: {
 								...Styles.summaryRow.sellPrice,
-								color: '#B8C0C9'
+								color: '#bdc1c6'
 							}
 						}),
 					});
@@ -542,7 +542,7 @@
 				height: 16,
 				left: 0,
 				top: 0,
-				backgroundColor: '#B8C0C9',
+				backgroundColor: '#bdc1c6',
 				borderTopLeftRadius: 12,
 				borderBottomRightRadius: 12,
 				alignItems: 'center',
@@ -616,7 +616,7 @@
 			wrapper: {
 				borderRadius: 6,
 				borderWidth: 1,
-				borderColor: '#D4DCE0',
+				borderColor: '#d5d7db',
 				paddingTop: 6,
 				paddingBottom: 6,
 				paddingLeft: 10,

@@ -34,7 +34,7 @@ class VoximplantStartComponent extends \CBitrixComponent
 
 		$result['SHOW_LINES'] = $this->permissions->canPerform(\Bitrix\Voximplant\Security\Permissions::ENTITY_LINE, \Bitrix\Voximplant\Security\Permissions::ACTION_MODIFY);
 		$result['SHOW_STATISTICS'] = $this->permissions->canPerform(\Bitrix\Voximplant\Security\Permissions::ENTITY_CALL_DETAIL, \Bitrix\Voximplant\Security\Permissions::ACTION_VIEW);
-		$result['SHOW_PAY_BUTTON'] = \Bitrix\Voximplant\Security\Helper::isAdmin() && !\Bitrix\Voximplant\Limits::isRestOnly();
+		$result['SHOW_PAY_BUTTON'] = \Bitrix\Voximplant\Security\Helper::canUpdateBalance();
 		$result['SHOW_VOXIMPLANT'] = \Bitrix\Main\Application::getInstance()->getLicense()->getRegion() !== 'by';
 		$result['LINK_TO_BUY_SIP'] = CVoxImplantSip::getBuyLink();
 		$result['LINK_TO_TARIFFS'] = CVoxImplantMain::getTariffsUrl();

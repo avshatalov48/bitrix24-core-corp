@@ -27,7 +27,7 @@ $arParams['NAME_TEMPLATE'] = empty($arParams['NAME_TEMPLATE']) ? CSite::GetNameF
 $arParams['IS_SUPERVISOR'] = isset($arParams['IS_SUPERVISOR']) && $arParams['IS_SUPERVISOR'];
 $arResult['DEMO_TITLE'] = isset($arParams['~DEMO_TITLE']) ? $arParams['~DEMO_TITLE'] : '';
 $arResult['DEMO_CONTENT'] = isset($arParams['~DEMO_CONTENT']) ? $arParams['~DEMO_CONTENT'] : '';
-$arResult['CONTEXT_DATA'] = isset($arParams['CONTEXT_DATA']) && is_array($arParams['CONTEXT_DATA']) ? $arParams['CONTEXT_DATA'] : array();
+$arResult['CONTEXT_DATA'] = isset($arParams['CONTEXT_DATA']) && is_array($arParams['CONTEXT_DATA']) ? $arParams['CONTEXT_DATA'] : [];
 $arResult['ENABLE_TOOLBAR'] = true;
 
 $counterID = isset($arParams['~NAVIGATION_COUNTER_ID']) ? (int)$arParams['~NAVIGATION_COUNTER_ID'] : CCrmUserCounter::Undefined;
@@ -43,7 +43,7 @@ else
 }
 
 $entityType = isset($arParams['~ENTITY_TYPE'])? mb_strtoupper($arParams['~ENTITY_TYPE']) : '';
-$entityTypes = isset($arParams['~ENTITY_TYPES']) && is_array($arParams['~ENTITY_TYPES']) ? $arParams['~ENTITY_TYPES'] : array();
+$entityTypes = isset($arParams['~ENTITY_TYPES']) && is_array($arParams['~ENTITY_TYPES']) ? $arParams['~ENTITY_TYPES'] : [];
 if(empty($entityTypes))
 {
 	if($entityType !== '')
@@ -65,7 +65,7 @@ $options = CUserOptions::GetOption('crm.widget_panel', $arResult['GUID'], array(
 // todo tmp: a workaround to avoid updating options for all users
 if (Bitrix\Main\Loader::includeModule('bitrix24') && !Bitrix\Bitrix24\Feature::isFeatureEnabled("crm_sale_target"))
 {
-	if (is_array($options['rows']))
+	if (isset($options['rows']) && is_array($options['rows']))
 	{
 		foreach ($options['rows'] as $parentKey => $parentValue)
 		{
@@ -86,6 +86,8 @@ if(isset($options['layout']))
 	$arResult['LAYOUT'] = $options['layout'];
 }
 
+
+$notCalculateData = isset($arParams['NOT_CALCULATE_DATA']) && $arParams['NOT_CALCULATE_DATA'];
 $enableDemo = $arResult['ENABLE_DEMO'] = !isset($options['enableDemoMode']) || $options['enableDemoMode'] === 'Y';
 $arResult['USE_DEMO'] = isset($arParams['USE_DEMO']) && $arParams['USE_DEMO'] === 'N' ? false : true;
 if (!$arResult['USE_DEMO'])
@@ -93,14 +95,14 @@ if (!$arResult['USE_DEMO'])
 	$enableDemo = $arResult['ENABLE_DEMO'] = false;
 }
 
-$arParams['ROWS'] = $arParams['ROWS'] ?? array();
+$arParams['ROWS'] = $arParams['ROWS'] ?? [];
 if(!$enableDemo && isset($options['rows']))
 {
 	$arParams['ROWS'] = $options['rows'];
 }
 
 $arResult['HIDE_FILTER'] = (bool)($arParams['HIDE_FILTER'] ?? false);
-$arParams['FILTER'] = $arParams['FILTER'] ?? array();
+$arParams['FILTER'] = $arParams['FILTER'] ?? [];
 $arResult['FILTER'] = array(
 	array(
 		'id' => 'RESPONSIBLE_ID',
@@ -149,14 +151,14 @@ $arResult['FILTER_ROWS'] = array(
 );
 
 //region Filter Presets
-$monthPresetFilter = array();
+$monthPresetFilter = [];
 Filter::addDateType(
 	$monthPresetFilter,
 	'PERIOD',
 	FilterPeriodType::convertToDateType(FilterPeriodType::CURRENT_MONTH)
 );
 
-$quarterPresetFilter = array();
+$quarterPresetFilter = [];
 Filter::addDateType(
 	$quarterPresetFilter,
 	'PERIOD',
@@ -182,7 +184,7 @@ $arResult['FILTER_FIELDS'] = $filterOptions->getFilter($arResult['FILTER']);
 //region Try to apply default settings if period is not assigned
 if(Filter::getDateType($arResult['FILTER_FIELDS'], 'PERIOD') === '')
 {
-	$defaultFilter = array();
+	$defaultFilter = [];
 	Filter::addDateType(
 		$defaultFilter,
 		'PERIOD',
@@ -200,7 +202,7 @@ Filter::convertPeriodFromDateType($arResult['FILTER_FIELDS'], 'PERIOD');
 $arResult['WIDGET_FILTER'] = Filter::internalizeParams($arResult['FILTER_FIELDS']);
 
 $gridSettings = $gridOptions->GetOptions();
-$visibleRows = isset($gridSettings['filter_rows']) ? explode(',', $gridSettings['filter_rows']) : array();
+$visibleRows = isset($gridSettings['filter_rows']) ? explode(',', $gridSettings['filter_rows']) : [];
 
 if(!empty($visibleRows))
 {
@@ -242,7 +244,7 @@ if($enableDemo && $arParams['PATH_TO_DEMO_DATA'] !== '')
 	$demoRows = (include "{$arParams['PATH_TO_DEMO_DATA']}/{$demoFileName}.php");
 }
 
-$arResult['ROWS'] = array();
+$arResult['ROWS'] = [];
 $rowQty = count($arParams['ROWS']);
 
 $widgetCount = 0;
@@ -267,7 +269,7 @@ for($i = 0; $i < $rowQty; $i++)
 		$row['height'] = $rowConfig['height'];
 	}
 
-	$cellConfigs = isset($rowConfig['cells']) ? $rowConfig['cells'] : array();
+	$cellConfigs = isset($rowConfig['cells']) ? $rowConfig['cells'] : [];
 	$cellQty = count($cellConfigs);
 	for($j = 0; $j < $cellQty; $j++)
 	{
@@ -279,9 +281,9 @@ for($i = 0; $i < $rowQty; $i++)
 		$demoCell = $enableDemo && isset($demoRows[$i]['cells'][$j])
 			? $demoRows[$i]['cells'][$j] : null;
 
-		$cell = array('controls' => array(), 'data' => array());
-		$cellConfig = isset($cellConfigs[$j]) ? $cellConfigs[$j] : array();
-		$controls = isset($cellConfig['controls']) ? $cellConfig['controls'] : array();
+		$cell = array('controls' => [], 'data' => array());
+		$cellConfig = isset($cellConfigs[$j]) ? $cellConfigs[$j] : [];
+		$controls = isset($cellConfig['controls']) ? $cellConfig['controls'] : [];
 		$controlQty = count($controls);
 
 		for($k = 0; $k < $controlQty; $k++)
@@ -306,7 +308,7 @@ for($i = 0; $i < $rowQty; $i++)
 
 			$widget = Bitrix\Crm\Widget\WidgetFactory::create($control, $filter, $factoryOptions);
 			$widget->setFilterContextData($arResult['CONTEXT_DATA']);
-			if(!$enableDemo && $arParams['NOT_CALCULATE_DATA'] == false)
+			if(!$enableDemo && !$notCalculateData)
 			{
 				$cell['data'][] = $widget->prepareData();
 			}
@@ -322,7 +324,7 @@ for($i = 0; $i < $rowQty; $i++)
 				}
 				else
 				{
-					$demoData = array();
+					$demoData = [];
 				}
 
 				$cell['data'][] = $widget->initializeDemoData($demoData);
@@ -336,9 +338,9 @@ for($i = 0; $i < $rowQty; $i++)
 }
 
 $arResult['CURRENCY_FORMAT'] = CCrmCurrency::GetCurrencyFormatParams(CCrmCurrency::GetBaseCurrencyID());
+$arResult['BUILDERS'] = [];
 
-$arResult['BUILDERS'] = array();
-if($arParams['NOT_CALCULATE_DATA'] == false && !$enableDemo && CCrmPerms::IsAdmin())
+if (!$notCalculateData && !$enableDemo && CCrmPerms::IsAdmin())
 {
 	$builders = null;
 	foreach($arResult['ENTITY_TYPES'] as $entityType)
@@ -365,5 +367,5 @@ if($arParams['NOT_CALCULATE_DATA'] == false && !$enableDemo && CCrmPerms::IsAdmi
 		}
 	}
 }
-$arResult['CUSTOM_WIDGETS'] = isset($arParams['CUSTOM_WIDGETS']) && is_array($arParams['CUSTOM_WIDGETS']) ? $arParams['CUSTOM_WIDGETS'] : array();
+$arResult['CUSTOM_WIDGETS'] = isset($arParams['CUSTOM_WIDGETS']) && is_array($arParams['CUSTOM_WIDGETS']) ? $arParams['CUSTOM_WIDGETS'] : [];
 $this->IncludeComponentTemplate();

@@ -413,11 +413,11 @@ class Scalar implements \ArrayAccess
 
 	protected function makeValueSafe($value, $key, $item, array $parameters = array())
 	{
-		if($parameters['VALUE_SOURCE'] == static::VALUE_SOURCE_DB)
+		if (($parameters['VALUE_SOURCE'] ?? null) == static::VALUE_SOURCE_DB)
 		{
 			$value = $this->translateValueFromDatabase($value, $key, $item);
 		}
-		elseif($parameters['VALUE_SOURCE'] == static::VALUE_SOURCE_OUTSIDE)
+		elseif (($parameters['VALUE_SOURCE'] ?? null) == static::VALUE_SOURCE_OUTSIDE)
 		{
 			$value = $this->translateValueFromOutside($value, $key, $item);
 		}
@@ -426,11 +426,12 @@ class Scalar implements \ArrayAccess
 		return $value;
 	}
 
-	public function offsetExists($offset)
+	public function offsetExists($offset): bool
 	{
-		return $offset == 'SOURCE' || $offset == 'NAME' || $offset == 'TITLE';
+		return ($offset === 'SOURCE' || $offset === 'NAME' || $offset === 'TITLE');
 	}
 
+	#[\ReturnTypeWillChange]
 	public function offsetGet($offset)
 	{
 		if($offset == 'SOURCE')
@@ -449,12 +450,12 @@ class Scalar implements \ArrayAccess
 		return null;
 	}
 
-	public function offsetSet($offset, $value)
+	public function offsetSet($offset, $value): void
 	{
 		throw new NotImplementedException();
 	}
 
-	public function offsetUnset($offset)
+	public function offsetUnset($offset): void
 	{
 		throw new NotImplementedException();
 	}

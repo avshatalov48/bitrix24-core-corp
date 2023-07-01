@@ -766,18 +766,18 @@ class LeadConverter extends EntityConverter
 			if(is_array($presentFields))
 			{
 				$fields = array();
-				$entityUpdateOptions = array('REGISTER_SONET_EVENT' => true);
+				$entityUpdateOptions = [
+					'REGISTER_SONET_EVENT' => true,
+					// required fields were checked on a CORRECT action before, if needed.
+					// now any error in update will break the scenario
+					'DISABLE_USER_FIELD_CHECK' => true,
+				];
 
 				$statusID = isset($presentFields['STATUS_ID']) ? $presentFields['STATUS_ID'] : '';
 				if($statusID !== 'CONVERTED')
 				{
 					$fields['STATUS_ID'] = 'CONVERTED';
 					$entityUpdateOptions['ENABLE_ACTIVITY_COMPLETION'] = $this->isActivityCompletionEnabled();
-				}
-
-				if(!$this->isUserFieldCheckEnabled())
-				{
-					$entityUpdateOptions['DISABLE_USER_FIELD_CHECK'] = true;
 				}
 
 				$contactID = self::getDestinationEntityID(\CCrmOwnerType::ContactName, $this->resultData);

@@ -4,6 +4,7 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
 	die();
 }
 
+use Bitrix\Bitrix24\PhoneVerify;
 use Bitrix\Crm\WebForm\Options;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
@@ -113,7 +114,7 @@ class CCrmWebFormListComponent extends \CBitrixComponent
 
 		$this->arResult['ITEMS'] = array();
 		$filter = array();
-		if (in_array($this->arResult['FILTER_ACTIVE_CURRENT'], array('N', 'Y')))
+		if (isset($this->arResult['FILTER_ACTIVE_CURRENT']) && in_array($this->arResult['FILTER_ACTIVE_CURRENT'], array('N', 'Y')))
 		{
 			$filter['ACTIVE'] = $this->arResult['FILTER_ACTIVE_CURRENT'];
 		}
@@ -173,6 +174,7 @@ class CCrmWebFormListComponent extends \CBitrixComponent
 
 			$form['PATH_TO_WEB_FORM_FILL'] = Script::getUrlContext($form, $this->arParams['PATH_TO_WEB_FORM_FILL']);
 
+			$form['PHONE_VERIFIED'] = !$this->isPhoneVerificationRequired($form['ID']);
 
 			$form['HAS_ADS_FORM_LINKS'] = false;
 			$form['ADS_FORM'] = array();
@@ -690,7 +692,7 @@ class CCrmWebFormListComponent extends \CBitrixComponent
 	public function prepareParams()
 	{
 		//$this->errors = new ErrorCollection();
-		$this->arResult['SET_TITLE'] = (($this->arResult['SET_TITLE'] && $this->arResult['SET_TITLE'] !== 'N')? true : false);
+		$this->arResult['SET_TITLE'] = isset($this->arResult['SET_TITLE']) && $this->arResult['SET_TITLE'] !== 'N';
 		//$this->prepareAccessParams();
 		$this->prepareGridParams();
 		$this->prepareFilterParams();
@@ -703,10 +705,10 @@ class CCrmWebFormListComponent extends \CBitrixComponent
 
 	protected function prepareNavigationParams()
 	{
-		$this->arResult["PAGE_SIZE"] = is_int($this->arResult["PAGE_SIZE"]) && $this->arResult["PAGE_SIZE"] > 0
-			? $this->arResult["PAGE_SIZE"]
-			: self::DEFAULT_PAGE_SIZE
-		;
+		if (!isset($this->arResult["PAGE_SIZE"]) || (int)$this->arResult["PAGE_SIZE"] <= 0)
+		{
+			$this->arResult["PAGE_SIZE"] = self::DEFAULT_PAGE_SIZE;
+		}
 		$this->arResult["NAVIGATION_KEY"] = $this->arResult["NAVIGATION_KEY"] ?? self::DEFAULT_NAV_KEY;
 	}
 
@@ -1156,7 +1158,7 @@ class CCrmWebFormListComponent extends \CBitrixComponent
 			return null;
 		}
 
-		if(!$users[$userId])
+		if(!isset($users[$userId]) || !$users[$userId])
 		{
 			// prepare link to profile
 			$replaceList = array('user_id' => $userId);
@@ -1189,7 +1191,7 @@ class CCrmWebFormListComponent extends \CBitrixComponent
 				false,
 				true
 			);
-			$userIcon = $fileTmp['src'];
+			$userIcon = $fileTmp && isset($fileTmp['src']) ? $fileTmp['src'] : '';
 
 			$users[$userId] = array(
 				'ID' => $userId,
@@ -1247,5 +1249,21 @@ class CCrmWebFormListComponent extends \CBitrixComponent
 			return (int)$row['FORM_ID'];
 		}
 		return null;
+	}
+
+	private function isPhoneVerificationRequired(int $formId): bool
+	{
+		if (!Main\Loader::includeModule('bitrix24'))
+		{
+			return false;
+		}
+
+		$validatedLicenseType = [
+			'project',
+			'demo'
+		];
+
+		return in_array(\CBitrix24::getLicenseType(), $validatedLicenseType, true)
+			&& !(new PhoneVerify(WebForm\Form::PHONE_VERIFY_ENTITY, $formId))->isVerified();
 	}
 }

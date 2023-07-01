@@ -9,12 +9,16 @@ class CExtranetWizardServices
 
 		$arWizardTemplates = Array();
 
-		if (!$handle  = @opendir($absolutePath))
+		if (!is_dir($absolutePath))
+		{
 			return $arWizardTemplates;
+		}
+
+		$handle = opendir($absolutePath);
 
 		while(($dirName = @readdir($handle)) !== false)
 		{
-			if ($dirName == "." || $dirName == ".." || !is_dir($absolutePath."/".$dirName)) 
+			if ($dirName == "." || $dirName == ".." || !is_dir($absolutePath."/".$dirName))
 				continue;
 
 			$arTemplate = Array(
@@ -325,7 +329,7 @@ class CExtranetWizardServices
 	public static function SetIBlockFormSettings($iblockID, $settings)
 	{
 		CUserOptions::SetOption(
-			"form", 
+			"form",
 			"form_element_".$iblockID,
 			$settings,
 			$common = true
@@ -335,10 +339,10 @@ class CExtranetWizardServices
 	public static function SetUserOption($category, $option, $settings, $common = false, $userID = false)
 	{
 		CUserOptions::SetOption(
-			$category, 
-			$option, 
-			$settings, 
-			$common, 
+			$category,
+			$option,
+			$settings,
+			$common,
 			$userID
 		);
 	}
@@ -346,7 +350,7 @@ class CExtranetWizardServices
 	public static function CreateSectionProperty($iblockID, $fieldCode, $arFieldName = Array())
 	{
 		$entityID = "IBLOCK_".$iblockID."_SECTION";
-		
+
 		$dbField = CUserTypeEntity::GetList(Array(), array("ENTITY_ID" => $entityID, "FIELD_NAME" => $fieldCode));
 		if ($arField = $dbField->Fetch())
 			return $arField["ID"];
@@ -391,10 +395,21 @@ class CExtranetWizardServices
 
 					@chmod($filePath."/".$file, BX_FILE_PERMISSIONS);
 
-					if (!$handleFile = @fopen($filePath."/".$file, "rb"))
+					$fullPath = $filePath . '/' . $file;
+					if (!file_exists($fullPath))
+					{
 						return;
+					}
 
-					$content = @fread($handleFile, filesize($filePath."/".$file));
+					$handleFile = fopen($fullPath, "rb");
+					$fileSize = filesize($fullPath);
+					$content = false;
+
+					if ($fileSize > 0)
+					{
+						$content = fread($handleFile, $fileSize);
+					}
+
 					@fclose($handleFile);
 
 					$handleFile = false;
@@ -408,7 +423,7 @@ class CExtranetWizardServices
 
 						foreach ($arReplace as $search => $replace)
 						{
-							if ($skipSharp)
+							if (isset($skipSharp) && $skipSharp)
 								$arSearch[] = $search;
 							else
 								$arSearch[] = "#".$search."#";
@@ -421,7 +436,7 @@ class CExtranetWizardServices
 						@flock($handleFile, LOCK_UN);
 					}
 					@fclose($handleFile);
-				
+
 				}
 			}
 			@closedir($handle);

@@ -356,6 +356,24 @@ class ConversionManager
 		return null;
 	}
 
+	public static function loadWizardByParams(array $params): ?EntityConversionWizard
+	{
+		if(empty($params))
+		{
+			return null;
+		}
+
+		$entityId = (int)($params['ENTITY_ID'] ?? $params['entityId'] ?? 0);
+		$entityTypeId = (int)($params['ENTITY_TYPE_ID'] ?? $params['entityTypeId'] ?? 0);
+
+		if ($entityId > 0 && \CCrmOwnerType::IsDefined($entityTypeId))
+		{
+			return static::loadWizard(new ItemIdentifier($entityTypeId, $entityId));
+		}
+
+		return null;
+	}
+
 	public static function getCurrentSchemeId(int $srcEntityTypeId): ?int
 	{
 		$configClass = static::getConfigClass($srcEntityTypeId);

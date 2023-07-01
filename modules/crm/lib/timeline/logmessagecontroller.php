@@ -37,6 +37,7 @@ class LogMessageController extends Controller
 			'ENTITY_TYPE_ID' => $entityTypeId,
 			'ENTITY_ID' => $entityId
 		];
+		$sourceId = '';
 
 		// COMPANY or CONTACT
 		$baseEntityTypeId = $input['BASE_ENTITY_TYPE_ID'] ?? null;
@@ -55,16 +56,6 @@ class LogMessageController extends Controller
 				$base['ENTITY_ID'] = $baseEntityId;
 			}
 
-			if (isset($input['BASE_SOURCE']))
-			{
-				$base['SOURCE'] = $input['BASE_SOURCE'];
-			}
-
-			if (isset($input['BASE_SOURCE_ID']))
-			{
-				$base['SOURCE_ID'] = $input['BASE_SOURCE_ID'];
-			}
-
 			$settings['BASE'] = $base;
 
 			if (isset($baseEntityTypeId, $baseEntityId))
@@ -73,6 +64,16 @@ class LogMessageController extends Controller
 					'ENTITY_TYPE_ID' => $baseEntityTypeId,
 					'ENTITY_ID' => $baseEntityId
 				];
+			}
+
+			if (isset($input['BASE_SOURCE']))
+			{
+				$sourceId = $input['BASE_SOURCE'];
+			}
+
+			if (isset($input['BASE_SOURCE_ID']))
+			{
+				$sourceId = $input['BASE_SOURCE_ID'];
 			}
 		}
 
@@ -83,6 +84,7 @@ class LogMessageController extends Controller
 			'AUTHOR_ID' => ($authorId > 0) ? $authorId : static::getCurrentOrDefaultAuthorId(),
 			//'CREATED' => (new DateTime())->add('PT1S'), // for the correct order of records in the timeline
 			'SETTINGS' => $settings,
+			'SOURCE_ID' => $sourceId,
 			'BINDINGS' => $bindings,
 		];
 		if ($input['ASSOCIATED_ENTITY_TYPE_ID'])
@@ -97,8 +99,7 @@ class LogMessageController extends Controller
 		{
 			$params['CREATED'] = $input['CREATED'];
 		}
-
-
+		
 		$timelineEntryId = $this->getTimelineEntryFacade()->create(
 			Facade::LOG_MESSAGE,
 			$params

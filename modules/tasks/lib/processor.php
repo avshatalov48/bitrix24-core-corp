@@ -109,7 +109,7 @@ abstract class Processor
 	 */
 	public function getImpactById($taskId)
 	{
-		return $this->affected[$taskId];
+		return ($this->affected[$taskId] ?? null);
 	}
 
 	public function hasImpact($taskId)

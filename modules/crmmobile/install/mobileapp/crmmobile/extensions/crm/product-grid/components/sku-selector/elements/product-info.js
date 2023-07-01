@@ -2,15 +2,14 @@
  * @module crm/product-grid/components/sku-selector/elements/product-info
  */
 jn.define('crm/product-grid/components/sku-selector/elements/product-info', (require, exports, module) => {
-
-	function ProductInfo({name, images})
+	function ProductInfo({ name, images })
 	{
 		return View(
 			{
 				style: {
 					flexDirection: 'row',
 					marginBottom: 16,
-				}
+				},
 			},
 			View(
 				{
@@ -28,7 +27,7 @@ jn.define('crm/product-grid/components/sku-selector/elements/product-info', (req
 						width: 62,
 						height: 62,
 					},
-				})
+				}),
 			),
 			View(
 				{
@@ -42,12 +41,11 @@ jn.define('crm/product-grid/components/sku-selector/elements/product-info', (req
 					text: name,
 					style: {
 						fontSize: 18,
-					}
-				})
+					},
+				}),
 			),
 		);
 	}
 
 	module.exports = { ProductInfo };
-
 });

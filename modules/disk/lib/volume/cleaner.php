@@ -6,9 +6,11 @@ use Bitrix\Main;
 use Bitrix\Main\Entity;
 use Bitrix\Disk;
 use Bitrix\Disk\Volume;
+use Bitrix\Disk\Internals\VolumeTable;
 use Bitrix\Disk\Internals\Error\Error;
 use Bitrix\Disk\Internals\Error\ErrorCollection;
 use Bitrix\Disk\Internals\Error\IErrorable;
+use Bitrix\Disk\Security\SecurityContext;
 
 
 /**
@@ -29,26 +31,28 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 	/** @var int Owner id */
 	private $ownerId;
 
-	/** @var \Bitrix\Disk\User */
+	/** @var Disk\User */
 	private $owner;
 
 	// interval agent start
-	const AGENT_INTERVAL = 10;
+	public const AGENT_INTERVAL = 10;
 
 	// fix every n interaction
-	const STATUS_FIX_INTERVAL = 20;
+	public const STATUS_FIX_INTERVAL = 20;
 
 	// limit maximum number selected files
-	const MAX_FILE_PER_INTERACTION = 1000;
+	public const MAX_FILE_PER_INTERACTION = 1000;
 
 	// limit maximum number selected folders
-	const MAX_FOLDER_PER_INTERACTION = 1000;
+	public const MAX_FOLDER_PER_INTERACTION = 1000;
+
+	public const STEPPER_OPTION_ID = 'main.stepper.disk';
 
 
 	/**
 	 * @param int $ownerId Whom will mark as deleted by.
 	 */
-	public function __construct($ownerId = \Bitrix\Disk\SystemUser::SYSTEM_USER_ID)
+	public function __construct($ownerId = Disk\SystemUser::SYSTEM_USER_ID)
 	{
 		$this->ownerId = $ownerId;
 	}
@@ -58,7 +62,7 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 	 * Gets task.
 	 * @return Volume\Task
 	 */
-	public function instanceTask()
+	public function instanceTask(): Volume\Task
 	{
 		if (!($this->task instanceof Volume\Task))
 		{
@@ -74,24 +78,24 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 	 * @param int $ownerId Whom will mark as deleted by.
 	 * @return boolean
 	 */
-	public function loadTask($filterId, $ownerId = \Bitrix\Disk\SystemUser::SYSTEM_USER_ID)
+	public function loadTask($filterId, $ownerId = Disk\SystemUser::SYSTEM_USER_ID): bool
 	{
-		$this->instanceTask();
+		$task = $this->instanceTask();
 		if ($filterId > 0)
 		{
-			if(!$this->instanceTask()->loadTaskById($filterId, ($ownerId > 0 ? $ownerId : $this->ownerId)))
+			if(!$task->loadTaskById($filterId, ($ownerId > 0 ? $ownerId : $this->ownerId)))
 			{
 				$this->collectError(new Error('Cleaner task not found', 'CLEANER_TASK_NOT_FOUND'));
 				return false;
 			}
 		}
 
-		if ($this->instanceTask()->getOwnerId() > 0)
+		if ($task->getOwnerId() > 0)
 		{
-			$this->ownerId = $this->instanceTask()->getOwnerId();
+			$this->ownerId = $task->getOwnerId();
 		}
 
-		return ($this->instanceTask()->getId() > 0);
+		return ($task->getId() > 0);
 	}
 
 
@@ -99,20 +103,18 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 	 * Returns the fully qualified name of this class.
 	 * @return string
 	 */
-	public static function className()
+	public static function className(): string
 	{
 		return get_called_class();
 	}
 
-
 	/**
 	 * Returns agent's name.
-	 * @param int|string $filterId Id of saved indicator result from b_disk_volume.
 	 * @return string
 	 */
-	public static function agentName($filterId)
+	public static function agentName(): string
 	{
-		return static::className()."::runWorker({$filterId});";
+		return static::className(). '::runProcess();';
 	}
 
 	/**
@@ -121,107 +123,126 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 	 */
 	public static function isCronRun(): bool
 	{
-		$isCronRun = false;
-		if (
-			!\Bitrix\Main\ModuleManager::isModuleInstalled('bitrix24') &&
-			(php_sapi_name() === 'cli')
-		)
-		{
-			$isCronRun = true;
-		}
-
-		return $isCronRun;
+		return
+			!Main\ModuleManager::isModuleInstalled('bitrix24')
+			&& (php_sapi_name() === 'cli')
+		;
 	}
 
-
 	/**
-	 * Checks if allow run task.
-	 * @param int $filterId Id of saved indicator result from b_disk_volume.
-	 * @return bool
-	 */
-	public static function isAllowRun($filterId): bool
-	{
-		// only one interaction per hit
-		if (self::isCronRun() !== true)
-		{
-			if (defined(__NAMESPACE__ . '\\CLEANER_RUN_WORKER_LOCK'))
-			{
-				// do nothing, repeat
-				return false;
-			}
-		}
-
-		// allow only one running task
-		return Volume\Task::isAllowRun($filterId);
-	}
-
-
-	/**
-	 * Runs clean process.
-	 * @param int $filterId Id of saved indicator result from b_disk_volume.
+	 * @deprecated
+	 * @todo Remove it
+	 * @param int $filterId
 	 * @return string
 	 */
 	public static function runWorker($filterId)
 	{
-		if (!self::isAllowRun($filterId))
+		return '';
+	}
+
+	/**
+	 * @return string
+	 */
+	public static function runProcess(): string
+	{
+		$timer = new Volume\Timer();
+
+		if (!self::isCronRun() && defined('START_EXEC_TIME') && START_EXEC_TIME > 0)
 		{
-			// do nothing, repeat
-			return static::agentName($filterId);
+			$timer
+				->setTimeLimit(Volume\Timer::MAX_EXECUTION_TIME)
+				->startTimer(\START_EXEC_TIME);
+		}
+		else
+		{
+			$timer
+				->setTimeLimit(Volume\Timer::MAX_EXECUTION_TIME * 20)
+				->startTimer();
 		}
 
-		$cleaner = new static();
-		if ($cleaner->loadTask($filterId) === false)
+		$workerResult = VolumeTable::getList([
+			'select' => ['ID', 'OWNER_ID'],
+			'filter' => [
+				'=AGENT_LOCK' => [
+					Volume\Task::TASK_STATUS_WAIT,
+					Volume\Task::TASK_STATUS_RUNNING,
+				],
+			],
+			'limit' => 100
+		]);
+		if ($workerResult->getSelectedRowsCount() > 0)
 		{
-			return '';// task not found
+			while ($taskRow = $workerResult->fetch())
+			{
+				$filterId = (int)$taskRow['ID'];
+
+				$cleaner = new static();
+				$cleaner->setTimer($timer);
+
+				if ($cleaner->loadTask($filterId))
+				{
+					$cleaner->runTask();
+				}
+
+				if ($timer->hasTimeLimitReached())
+				{
+					break;
+				}
+			}
+
+			// count statistic for progress bar
+			self::countWorker();
 		}
-
-		if (Volume\Task::isRunningMode($cleaner->instanceTask()->getStatus()) === false)
-		{
-			return '';// non-running state
-		}
-
-		$cleaner->startTimer();
-
-		$indicator = $cleaner->instanceTask()->getIndicator();
-		if (!$indicator instanceof Volume\IVolumeIndicator)
+		else
 		{
 			return '';
 		}
 
-		if (!defined(__NAMESPACE__ . '\\CLEANER_RUN_WORKER_LOCK'))
+		return static::agentName();
+	}
+
+	/**
+	 * Runs cleaning process.
+	 * @return bool
+	 */
+	protected function runTask(): bool
+	{
+		$task = $this->instanceTask();
+		$indicator = $task->getIndicator();
+		if (!$indicator instanceof Volume\IVolumeIndicator)
 		{
-			define(__NAMESPACE__ . '\\CLEANER_RUN_WORKER_LOCK', true);
+			return true;
 		}
 
-		if ($cleaner->instanceTask()->getStatus() != Volume\Task::TASK_STATUS_RUNNING)
+		if ($task->getStatus() != Volume\Task::TASK_STATUS_RUNNING)
 		{
-			$cleaner->instanceTask()->setStatus(Volume\Task::TASK_STATUS_RUNNING);
+			$task->setStatus(Volume\Task::TASK_STATUS_RUNNING);
 		}
 
 		// subTask to run
 		$subTask = '';
-		if (Volume\Task::isRunningMode($cleaner->instanceTask()->getStatusSubTask(Volume\Task::DROP_TRASHCAN)))
+		if (Volume\Task::isRunningMode($task->getStatusSubTask(Volume\Task::DROP_TRASHCAN)))
 		{
 			$subTask = Volume\Task::DROP_TRASHCAN;
 		}
-		elseif (Volume\Task::isRunningMode($cleaner->instanceTask()->getStatusSubTask(Volume\Task::EMPTY_FOLDER)))
+		elseif (Volume\Task::isRunningMode($task->getStatusSubTask(Volume\Task::EMPTY_FOLDER)))
 		{
 			$subTask = Volume\Task::EMPTY_FOLDER;
 		}
-		elseif (Volume\Task::isRunningMode($cleaner->instanceTask()->getStatusSubTask(Volume\Task::DROP_FOLDER)))
+		elseif (Volume\Task::isRunningMode($task->getStatusSubTask(Volume\Task::DROP_FOLDER)))
 		{
 			$subTask = Volume\Task::DROP_FOLDER;
 		}
-		elseif (Volume\Task::isRunningMode($cleaner->instanceTask()->getStatusSubTask(Volume\Task::DROP_UNNECESSARY_VERSION)))
+		elseif (Volume\Task::isRunningMode($task->getStatusSubTask(Volume\Task::DROP_UNNECESSARY_VERSION)))
 		{
 			$subTask = Volume\Task::DROP_UNNECESSARY_VERSION;
 		}
 
-		$repeatMeasure = function () use ($cleaner, $indicator)
+		$repeatMeasure = function () use ($indicator, $task)
 		{
 			// reset offset
-			$cleaner->instanceTask()->setLastFileId(0);
-			$cleaner->instanceTask()->fixState();
+			$task->setLastFileId(0);
+			$task->fixState();
 
 			$retry = 1;
 			while ($retry <= 3)
@@ -229,7 +250,7 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 				try
 				{
 					// check final result repeat measure
-					\Bitrix\Disk\Volume\Cleaner::repeatMeasure($indicator);
+					self::repeatMeasure($indicator);
 				}
 				catch (Main\DB\SqlQueryException $exception)
 				{
@@ -247,7 +268,7 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 			}
 
 			// reload task
-			$cleaner->instanceTask()->loadTaskById($indicator->getFilterId(), $cleaner->instanceTask()->getOwnerId());
+			$task->loadTaskById($indicator->getFilterId(), $task->getOwnerId());
 		};
 
 		// run subTask
@@ -256,17 +277,17 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 		{
 			case Volume\Task::DROP_TRASHCAN:
 			{
-				if ($cleaner->instanceTask()->getStatusSubTask($subTask) != Volume\Task::TASK_STATUS_RUNNING)
+				if ($task->getStatusSubTask($subTask) != Volume\Task::TASK_STATUS_RUNNING)
 				{
-					$cleaner->instanceTask()->setStatusSubTask($subTask, Volume\Task::TASK_STATUS_RUNNING);
+					$task->setStatusSubTask($subTask, Volume\Task::TASK_STATUS_RUNNING);
 				}
 
-				if($cleaner->deleteTrashcanByFilter($indicator))
+				if($this->deleteTrashcanByFilter($indicator))
 				{
 					$repeatMeasure();
-					$taskDone = $cleaner->instanceTask()->hasTaskFinished($subTask);
+					$taskDone = $task->hasTaskFinished($subTask);
 				}
-				elseif ($cleaner->instanceTask()->hasFatalError())
+				elseif ($task->hasFatalError())
 				{
 					$taskDone = true;
 				}
@@ -277,29 +298,29 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 			case Volume\Task::EMPTY_FOLDER:
 			case Volume\Task::DROP_FOLDER:
 			{
-				if ($cleaner->instanceTask()->getStatusSubTask($subTask) != Volume\Task::TASK_STATUS_RUNNING)
+				if ($task->getStatusSubTask($subTask) != Volume\Task::TASK_STATUS_RUNNING)
 				{
-					$cleaner->instanceTask()->setStatusSubTask($subTask, Volume\Task::TASK_STATUS_RUNNING);
+					$task->setStatusSubTask($subTask, Volume\Task::TASK_STATUS_RUNNING);
 				}
 
-				$folderId = $cleaner->instanceTask()->getParam('FOLDER_ID');
-				$folder = \Bitrix\Disk\Folder::getById($folderId);
-				if ($folder instanceof \Bitrix\Disk\Folder)
+				$folderId = $task->getParam('FOLDER_ID');
+				$folder = Disk\Folder::getById($folderId);
+				if ($folder instanceof Disk\Folder)
 				{
-					if ($cleaner->deleteFolder($folder, ($subTask === Volume\Task::EMPTY_FOLDER)))
+					if ($this->deleteFolder($folder, ($subTask === Volume\Task::EMPTY_FOLDER)))
 					{
 						$repeatMeasure();
-						$taskDone = $cleaner->instanceTask()->hasTaskFinished($subTask);
+						$taskDone = $task->hasTaskFinished($subTask);
 					}
-					elseif ($cleaner->instanceTask()->hasFatalError())
+					elseif ($task->hasFatalError())
 					{
 						$taskDone = true;
 					}
 				}
 				else
 				{
-					$cleaner->instanceTask()->setLastError('Can not found folder #'.$folderId);
-					$cleaner->instanceTask()->raiseFatalError();
+					$task->setLastError('Can not found folder #'.$folderId);
+					$task->raiseFatalError();
 					$taskDone = true;
 				}
 
@@ -308,17 +329,17 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 
 			case Volume\Task::DROP_UNNECESSARY_VERSION:
 			{
-				if ($cleaner->instanceTask()->getStatusSubTask($subTask) != Volume\Task::TASK_STATUS_RUNNING)
+				if ($task->getStatusSubTask($subTask) != Volume\Task::TASK_STATUS_RUNNING)
 				{
-					$cleaner->instanceTask()->setStatusSubTask($subTask, Volume\Task::TASK_STATUS_RUNNING);
+					$task->setStatusSubTask($subTask, Volume\Task::TASK_STATUS_RUNNING);
 				}
 
-				if($cleaner->deleteUnnecessaryVersionByFilter($indicator))
+				if($this->deleteUnnecessaryVersionByFilter($indicator))
 				{
 					$repeatMeasure();
-					$taskDone = $cleaner->instanceTask()->hasTaskFinished($subTask);
+					$taskDone = $task->hasTaskFinished($subTask);
 				}
-				elseif ($cleaner->instanceTask()->hasFatalError())
+				elseif ($task->hasFatalError())
 				{
 					$taskDone = true;
 				}
@@ -335,28 +356,21 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 		if($taskDone)
 		{
 			// finish
-			$cleaner->instanceTask()->setStatusSubTask($subTask, Volume\Task::TASK_STATUS_DONE);
-			$cleaner->instanceTask()->setStatus(Volume\Task::TASK_STATUS_DONE);
+			$task->setStatusSubTask($subTask, Volume\Task::TASK_STATUS_DONE);
+			$task->setStatus(Volume\Task::TASK_STATUS_DONE);
 		}
 
 		// Fix task state
-		$cleaner->instanceTask()->fixState();
+		$task->fixState();
 
-		// count statistic for progress bar
-		self::countWorker($cleaner->instanceTask()->getOwnerId());
 
-		if($taskDone)
-		{
-			return '';
-		}
-
-		return static::agentName($filterId);
+		return $taskDone;
 	}
-
 
 	/**
 	 * Adds delayed delete worker agent.
 	 * @param array $params Named parameters:
+	 * <pre>
 	 * 		int ownerId - who is owner,
 	 * 		int filterId - as row private id from b_disk_volume as filter id,
 	 * 		int storageId - limit only one storage
@@ -365,58 +379,66 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 	 * 		bool DROP_TRASHCAN - set job to empty trashcan.
 	 * 		bool DROP_FOLDER - set job to drop everything.
 	 * 		bool EMPTY_FOLDER - set job to empty folder structure.
+	 * </pre>
 	 * @return boolean
 	 */
-	public static function addWorker($params)
+	public static function addWorker(array $params = []): bool
 	{
-		$ownerId = (int)$params['ownerId'];
-		$filterId = (int)$params['filterId'];
+		$ownerId = (int)($params['ownerId'] ?? 0);
 
-		$task = new Volume\Task();
-		if ($filterId > 0)
+		if (!empty($params))
 		{
-			if(!$task->loadTaskById($filterId, $ownerId))
+			$filterId = (int)($params['filterId'] ?? 0);
+
+			$task = new Volume\Task();
+			if ($filterId > 0)
 			{
-				return false;
+				if (!$task->loadTaskById($filterId, $ownerId))
+				{
+					return false;
+				}
+				$ownerId = $task->getOwnerId();
 			}
-			$ownerId = $task->getOwnerId();
+
+			$task->setStatus(Volume\Task::TASK_STATUS_WAIT);
+
+			$subTaskCommands = [
+				Volume\Task::DROP_UNNECESSARY_VERSION,
+				Volume\Task::DROP_TRASHCAN,
+				Volume\Task::DROP_FOLDER,
+				Volume\Task::EMPTY_FOLDER,
+			];
+			foreach ($subTaskCommands as $command)
+			{
+				if (isset($params[$command]))
+				{
+					$task->setStatusSubTask(
+						$command,
+						(($params[$command] === true) ? Volume\Task::TASK_STATUS_WAIT : Volume\Task::TASK_STATUS_NONE)
+					);
+				}
+			}
+
+			if ($filterId > 0)
+			{
+				if (isset($params['manual']))
+				{
+					$task->resetFail();
+				}
+			}
+			else
+			{
+				$task->setIndicatorType(Volume\Storage\Storage::className());
+				$task->setParam('STORAGE_ID', (int)$params['storageId']);
+				$task->setOwnerId($ownerId);
+			}
+			$task->fixState();
 		}
 
-		$task->setStatus(Volume\Task::TASK_STATUS_WAIT);
-
-		$subTaskCommands = array(
-			Volume\Task::DROP_UNNECESSARY_VERSION,
-			Volume\Task::DROP_TRASHCAN,
-			Volume\Task::DROP_FOLDER,
-			Volume\Task::EMPTY_FOLDER,
-		);
-		foreach ($subTaskCommands as $command)
+		if ($ownerId > 0)
 		{
-			if (isset($params[$command]))
-			{
-				$task->setStatusSubTask(
-					$command,
-					(($params[$command] === true) ? Volume\Task::TASK_STATUS_WAIT : Volume\Task::TASK_STATUS_NONE)
-				);
-			}
-		}
-
-		if ($filterId > 0)
-		{
-			if (isset($params['manual']))
-			{
-				$task->resetFail();
-			}
-			$agentParamsAdded = $task->fixState();
-		}
-		else
-		{
-			$task->setIndicatorType(Volume\Storage\Storage::className());
-			$task->setParam('STORAGE_ID', (int)$params['storageId']);
-			$task->setOwnerId($ownerId);
-
-			$agentParamsAdded = $task->fixState();
-			$filterId = $task->getId();
+			// count statistic for progress bar
+			self::countWorker($ownerId);
 		}
 
 		$nextExecutionTime = '';
@@ -425,30 +447,23 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 			$nextExecutionTime = \ConvertTimeStamp(\time() + \CTimeZone::getOffset() + (int)$params['delay'], "FULL");
 		}
 
-		$agentAdded = false;
-		if ($agentParamsAdded && $filterId > 0)
+		$agentAdded = true;
+		$agents = \CAgent::getList(
+			['ID' => 'DESC'],
+			['=NAME' => static::agentName()]
+		);
+		if (!$agents->fetch())
 		{
-			$agentAdded = true;
-			$agents = \CAgent::getList(
-				array('ID' => 'DESC'),
-				array('=NAME' => static::agentName($filterId))
-			);
-			if (!$agents->fetch())
-			{
-				$agentAdded = (bool)(\CAgent::addAgent(
-										static::agentName($filterId),
-										'disk',
-										(self::canAgentUseCrontab() ? 'N' : 'Y'),
-										self::AGENT_INTERVAL,
-										'',
-										'Y',
-										$nextExecutionTime
-									) !== false);
-			}
+			$agentAdded = (bool)(\CAgent::addAgent(
+				static::agentName(),
+				'disk',
+				(self::canAgentUseCrontab() ? 'N' : 'Y'),
+				self::AGENT_INTERVAL,
+				'',
+				'Y',
+				$nextExecutionTime
+			) !== false);
 		}
-
-		// count statistic for progress bar
-		self::countWorker($ownerId);
 
 		return $agentAdded;
 	}
@@ -458,12 +473,12 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 	 * Checks ability agent to use Crontab.
 	 * @return bool
 	 */
-	public static function canAgentUseCrontab()
+	public static function canAgentUseCrontab(): bool
 	{
 		$canAgentsUseCrontab = false;
-		$agentsUseCrontab = \Bitrix\Main\Config\Option::get('main', 'agents_use_crontab', 'N');
+		$agentsUseCrontab = Main\Config\Option::get('main', 'agents_use_crontab', 'N');
 		if (
-			!\Bitrix\Main\ModuleManager::isModuleInstalled('bitrix24') &&
+			!Main\ModuleManager::isModuleInstalled('bitrix24') &&
 			($agentsUseCrontab === 'Y' || (defined('BX_CRONTAB_SUPPORT') && BX_CRONTAB_SUPPORT === true))
 		)
 		{
@@ -478,65 +493,72 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 	 * @param int $ownerId Whom will mark as deleted by.
 	 * @return void
 	 */
-	public static function cancelWorkers($ownerId)
+	public static function cancelWorkers(int $ownerId = -1): void
 	{
-		$workerResult = \Bitrix\Disk\Internals\VolumeTable::getList(array(
-			'select' => array(
-				'ID',
-			),
-			'filter' => array(
-				'=OWNER_ID' => $ownerId,
-				'=AGENT_LOCK' => array(Volume\Task::TASK_STATUS_WAIT, Volume\Task::TASK_STATUS_RUNNING),
-			)
-		));
+		$filter = [
+			'=AGENT_LOCK' => [Volume\Task::TASK_STATUS_WAIT, Volume\Task::TASK_STATUS_RUNNING],
+		];
+		if ($ownerId > 0)
+		{
+			$filter['=OWNER_ID'] = $ownerId;
+		}
+		$workerResult = VolumeTable::getList([
+			'select' => ['ID'],
+			'filter' => $filter
+		]);
 		foreach ($workerResult as $row)
 		{
-			\Bitrix\Disk\Internals\VolumeTable::update($row['ID'], array('AGENT_LOCK' => Volume\Task::TASK_STATUS_CANCEL));
+			VolumeTable::update($row['ID'], ['AGENT_LOCK' => Volume\Task::TASK_STATUS_CANCEL]);
 		}
 
 		self::clearProgressInfo($ownerId);
 	}
 
-
 	/**
 	 * Count worker agent for user.
-	 * @param int $ownerId Whom will mark as deleted by.
+	 * @param int $ownerId
 	 * @return int
 	 */
-	public static function countWorker($ownerId)
+	public static function countWorker(int $ownerId = -1): int
 	{
-		$workerResult = \Bitrix\Disk\Internals\VolumeTable::getList(array(
-			'runtime' => array(
+		$filter = [
+			'=AGENT_LOCK' => [Volume\Task::TASK_STATUS_WAIT, Volume\Task::TASK_STATUS_RUNNING],
+		];
+		if ($ownerId > 0)
+		{
+			$filter['=OWNER_ID'] = $ownerId;
+		}
+		$workerResult = VolumeTable::getList([
+			'runtime' => [
 				new Entity\ExpressionField('CNT', 'COUNT(*)'),
 				new Entity\ExpressionField('FILE_COUNT', 'SUM(FILE_COUNT)'),
 				new Entity\ExpressionField('UNNECESSARY_VERSION_COUNT', 'SUM(UNNECESSARY_VERSION_COUNT)'),
 				new Entity\ExpressionField('DROPPED_FILE_COUNT', 'SUM(DROPPED_FILE_COUNT)'),
 				new Entity\ExpressionField('DROPPED_VERSION_COUNT', 'SUM(DROPPED_VERSION_COUNT)'),
 				new Entity\ExpressionField('FAIL_COUNT', 'SUM(FAIL_COUNT)'),
-			),
-			'select' => array(
+			],
+			'select' => [
+				'OWNER_ID',
 				'CNT',
 				'FILE_COUNT',
 				'UNNECESSARY_VERSION_COUNT',
 				'DROPPED_FILE_COUNT',
 				'DROPPED_VERSION_COUNT',
 				'FAIL_COUNT',
-				\Bitrix\Disk\Volume\Task::DROP_UNNECESSARY_VERSION,
-				\Bitrix\Disk\Volume\Task::DROP_TRASHCAN,
-				\Bitrix\Disk\Volume\Task::EMPTY_FOLDER,
-				\Bitrix\Disk\Volume\Task::DROP_FOLDER,
-			),
-			'group' => array(
-				\Bitrix\Disk\Volume\Task::DROP_UNNECESSARY_VERSION,
-				\Bitrix\Disk\Volume\Task::DROP_TRASHCAN,
-				\Bitrix\Disk\Volume\Task::EMPTY_FOLDER,
-				\Bitrix\Disk\Volume\Task::DROP_FOLDER,
-			),
-			'filter' => array(
-				'=OWNER_ID' => $ownerId,
-				'=AGENT_LOCK' => array(Volume\Task::TASK_STATUS_WAIT, Volume\Task::TASK_STATUS_RUNNING),
-			)
-		));
+				Volume\Task::DROP_UNNECESSARY_VERSION,
+				Volume\Task::DROP_TRASHCAN,
+				Volume\Task::EMPTY_FOLDER,
+				Volume\Task::DROP_FOLDER,
+			],
+			'group' => [
+				'OWNER_ID',
+				Volume\Task::DROP_UNNECESSARY_VERSION,
+				Volume\Task::DROP_TRASHCAN,
+				Volume\Task::EMPTY_FOLDER,
+				Volume\Task::DROP_FOLDER,
+			],
+			'filter' => $filter
+		]);
 
 		$totalFilesToDrop = 0;
 		$droppedFilesCount = 0;
@@ -549,28 +571,28 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 			{
 				$workerCount += $row['CNT'];
 				$failCount += $row['FAIL_COUNT'];
-				if (Volume\Task::isRunningMode($row[\Bitrix\Disk\Volume\Task::DROP_UNNECESSARY_VERSION]))
+				if (Volume\Task::isRunningMode($row[Volume\Task::DROP_UNNECESSARY_VERSION]))
 				{
 					$totalFilesToDrop += $row['UNNECESSARY_VERSION_COUNT'];
 					$droppedFilesCount += $row['DROPPED_VERSION_COUNT'];
 				}
-				if (Volume\Task::isRunningMode($row[\Bitrix\Disk\Volume\Task::DROP_TRASHCAN]))
+				if (Volume\Task::isRunningMode($row[Volume\Task::DROP_TRASHCAN]))
 				{
 					$totalFilesToDrop += $row['FILE_COUNT'];
 					$droppedFilesCount += $row['DROPPED_FILE_COUNT'];
 				}
-				if (Volume\Task::isRunningMode($row[\Bitrix\Disk\Volume\Task::DROP_FOLDER]))
+				if (Volume\Task::isRunningMode($row[Volume\Task::DROP_FOLDER]))
 				{
 					$totalFilesToDrop += $row['FILE_COUNT'];
 					$droppedFilesCount += $row['DROPPED_FILE_COUNT'];
 				}
-				if (Volume\Task::isRunningMode($row[\Bitrix\Disk\Volume\Task::EMPTY_FOLDER]))
+				if (Volume\Task::isRunningMode($row[Volume\Task::EMPTY_FOLDER]))
 				{
 					$totalFilesToDrop += $row['FILE_COUNT'];
 					$droppedFilesCount += $row['DROPPED_FILE_COUNT'];
 				}
 			}
-			self::setProgressInfo($ownerId, $totalFilesToDrop, $droppedFilesCount, $failCount);
+			self::setProgressInfo((int)$row['OWNER_ID'], (int)$totalFilesToDrop, (int)$droppedFilesCount, (int)$failCount);
 		}
 		else
 		{
@@ -586,73 +608,25 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 	 * @param int $ownerId Whom will mark as deleted by.
 	 * @return int
 	 */
-	public static function checkRestoreWorkers($ownerId)
+	public static function checkRestoreWorkers(int $ownerId = -1): int
 	{
-		$workerResult = \Bitrix\Disk\Internals\VolumeTable::getList(array(
-			'select' => array(
-				'ID',
-				'STORAGE_ID',
-				\Bitrix\Disk\Volume\Task::DROP_UNNECESSARY_VERSION,
-				\Bitrix\Disk\Volume\Task::DROP_TRASHCAN,
-				\Bitrix\Disk\Volume\Task::EMPTY_FOLDER,
-				\Bitrix\Disk\Volume\Task::DROP_FOLDER,
-			),
-			'filter' => array(
-				'=OWNER_ID' => $ownerId,
-				'=AGENT_LOCK' => array(Volume\Task::TASK_STATUS_WAIT, Volume\Task::TASK_STATUS_RUNNING),
-			)
-		));
-		$workerCount = 0;
-		if ($workerResult->getSelectedRowsCount() > 0)
+		$filter = [
+			'=AGENT_LOCK' => [Volume\Task::TASK_STATUS_WAIT, Volume\Task::TASK_STATUS_RUNNING]
+		];
+		if ($ownerId > 0)
 		{
-			$agents = \CAgent::GetList(
-				array('ID' => 'DESC'),
-				array('NAME' => self::agentName('%'))
+			$filter['=OWNER_ID'] = $ownerId;
+		}
+		$workerCount = VolumeTable::getCount($filter);
+		if ($workerCount > 0)
+		{
+			$agents = \CAgent::getList(
+				['ID' => 'DESC'],
+				['=NAME' => self::agentName()]
 			);
-			$agentList = array();
-			while ($agent = $agents->Fetch())
+			if ((int)$agents->selectedRowsCount() == 0)
 			{
-				$agentList[] = $agent['NAME'];
-			}
-
-			$restoredWorkerCount = 0;
-			foreach ($workerResult as $row)
-			{
-				$workerCount ++;
-				if (in_array(self::agentName($row['ID']), $agentList) === false)
-				{
-					$agentParams = array(
-						'ownerId' => $ownerId,
-						'storageId' => $row['STORAGE_ID'],
-						'filterId' => $row['ID'],
-					);
-					if (Volume\Task::isRunningMode($row[\Bitrix\Disk\Volume\Task::DROP_UNNECESSARY_VERSION]))
-					{
-						$agentParams[\Bitrix\Disk\Volume\Task::DROP_UNNECESSARY_VERSION] = true;
-					}
-					if (Volume\Task::isRunningMode($row[\Bitrix\Disk\Volume\Task::DROP_TRASHCAN]))
-					{
-						$agentParams[\Bitrix\Disk\Volume\Task::DROP_TRASHCAN] = true;
-					}
-					if (Volume\Task::isRunningMode($row[\Bitrix\Disk\Volume\Task::DROP_FOLDER]))
-					{
-						$agentParams[\Bitrix\Disk\Volume\Task::DROP_FOLDER] = true;
-					}
-					if (Volume\Task::isRunningMode($row[\Bitrix\Disk\Volume\Task::EMPTY_FOLDER]))
-					{
-						$agentParams[\Bitrix\Disk\Volume\Task::EMPTY_FOLDER] = true;
-					}
-
-					if (self::addWorker($agentParams))
-					{
-						$restoredWorkerCount ++;
-					}
-				}
-			}
-
-			if ($restoredWorkerCount > 0)
-			{
-				self::countWorker($ownerId);
+				self::addWorker(['ownerId' => $ownerId]);
 			}
 		}
 		else
@@ -669,14 +643,14 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 	 * @param Volume\IVolumeIndicator $indicator Ignited indicator for file list filter.
 	 * @return boolean
 	 */
-	public function deleteFileByFilter(Volume\IVolumeIndicator $indicator)
+	public function deleteFileByFilter(Volume\IVolumeIndicator $indicator): bool
 	{
 		$subTaskDone = true;
 
 		if ($indicator->getFilterValue('STORAGE_ID') > 0)
 		{
-			$storage = \Bitrix\Disk\Storage::loadById($indicator->getFilterValue('STORAGE_ID'));
-			if (!($storage instanceof \Bitrix\Disk\Storage))
+			$storage = Disk\Storage::loadById($indicator->getFilterValue('STORAGE_ID'));
+			if (!($storage instanceof Disk\Storage))
 			{
 				$this->collectError(
 					new Error('Can not found storage #'.$indicator->getFilterValue('STORAGE_ID'), 'STORAGE_NOT_FOUND'),
@@ -698,25 +672,27 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 			}
 		}
 
-		$filter = array();
-		if ($this->instanceTask()->getLastFileId() > 0)
+		$task = $this->instanceTask();
+
+		$filter = [];
+		if ($task->getLastFileId() > 0)
 		{
-			$filter['>=ID'] = $this->instanceTask()->getLastFileId();
+			$filter['>=ID'] = $task->getLastFileId();
 		}
 
 		$indicator->setLimit(self::MAX_FILE_PER_INTERACTION);
 
 		$fileList = $indicator->getCorrespondingFileList($filter);
 
-		$this->instanceTask()->setIterationFileCount($fileList->getSelectedRowsCount());
+		$task->setIterationFileCount($fileList->getSelectedRowsCount());
 
 		$countFileErasure = 0;
 
 		foreach ($fileList as $row)
 		{
 			$fileId = $row['ID'];
-			$file = \Bitrix\Disk\File::getById($fileId);
-			if ($file instanceof \Bitrix\Disk\File)
+			$file = Disk\File::getById($fileId);
+			if ($file instanceof Disk\File)
 			{
 				if (!$this->isAllowClearFolder($file->getParent()))
 				{
@@ -737,23 +713,23 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 				}
 			}
 
-			$this->instanceTask()->setLastFileId($fileId);
+			$task->setLastFileId($fileId);
 
 			// fix interval task state
 			if ($countFileErasure >= self::STATUS_FIX_INTERVAL)
 			{
 				$countFileErasure = 0;
 
-				if ($this->instanceTask()->hasUserCanceled())
+				if ($task->hasUserCanceled())
 				{
 					$subTaskDone = false;
 					break;
 				}
 
-				$this->instanceTask()->fixState();
+				$task->fixState();
 
 				// count statistic for progress bar
-				self::countWorker($this->instanceTask()->getOwnerId());
+				self::countWorker((int)$task->getOwnerId());
 			}
 
 			if (!$this->checkTimeEnd())
@@ -772,31 +748,32 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 	 * @param Volume\IVolumeIndicator $indicator Ignited indicator for file list filter.
 	 * @return boolean
 	 */
-	public function deleteTrashcanByFilter(Volume\IVolumeIndicator $indicator)
+	public function deleteTrashcanByFilter(Volume\IVolumeIndicator $indicator): bool
 	{
 		$subTaskDone = true;
+		$task = $this->instanceTask();
 
-		$filter = array(
-			'!DELETED_TYPE' => \Bitrix\Disk\Internals\ObjectTable::DELETED_TYPE_NONE
-		);
-		if ($this->instanceTask()->getLastFileId() > 0)
+		$filter = [
+			'!DELETED_TYPE' => Disk\Internals\ObjectTable::DELETED_TYPE_NONE
+		];
+		if ($task->getLastFileId() > 0)
 		{
-			$filter['>=ID'] = $this->instanceTask()->getLastFileId();
+			$filter['>=ID'] = $task->getLastFileId();
 		}
 
 		$indicator->setLimit(self::MAX_FILE_PER_INTERACTION);
 
 		$fileList = $indicator->getCorrespondingFileList($filter);
 
-		$this->instanceTask()->setIterationFileCount($fileList->getSelectedRowsCount());
+		$task->setIterationFileCount($fileList->getSelectedRowsCount());
 
 		$countFileErasure = 0;
 
 		foreach ($fileList as $row)
 		{
 			$fileId = $row['ID'];
-			$file = \Bitrix\Disk\File::getById($fileId);
-			if ($file instanceof \Bitrix\Disk\File)
+			$file = Disk\File::getById($fileId);
+			if ($file instanceof Disk\File)
 			{
 				$securityContext = $this->getSecurityContext($this->getOwner(), $file);
 				if($file->canDelete($securityContext))
@@ -810,23 +787,23 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 				}
 			}
 
-			$this->instanceTask()->setLastFileId($fileId);
+			$task->setLastFileId($fileId);
 
 			// fix interval task state
 			if ($countFileErasure >= self::STATUS_FIX_INTERVAL)
 			{
 				$countFileErasure = 0;
 
-				if ($this->instanceTask()->hasUserCanceled())
+				if ($task->hasUserCanceled())
 				{
 					$subTaskDone = false;
 					break;
 				}
 
-				$this->instanceTask()->fixState();
+				$task->fixState();
 
 				// count statistic for progress bar
-				self::countWorker($this->instanceTask()->getOwnerId());
+				self::countWorker((int)$task->getOwnerId());
 			}
 
 			if (!$this->checkTimeEnd())
@@ -838,12 +815,12 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 
 		$indicator->setLimit(self::MAX_FOLDER_PER_INTERACTION);
 
-		$folderList = $indicator->getCorrespondingFolderList(array('!DELETED_TYPE' => \Bitrix\Disk\Internals\ObjectTable::DELETED_TYPE_NONE));
+		$folderList = $indicator->getCorrespondingFolderList(['!DELETED_TYPE' => Disk\Internals\ObjectTable::DELETED_TYPE_NONE]);
 
 		foreach ($folderList as $row)
 		{
-			$folder = \Bitrix\Disk\Folder::getById($row['ID']);
-			if ($folder instanceof \Bitrix\Disk\Folder)
+			$folder = Disk\Folder::getById($row['ID']);
+			if ($folder instanceof Disk\Folder)
 			{
 				$this->deleteFolder($folder);
 				$countFileErasure ++;
@@ -854,16 +831,16 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 			{
 				$countFileErasure = 0;
 
-				if ($this->instanceTask()->hasUserCanceled())
+				if ($task->hasUserCanceled())
 				{
 					$subTaskDone = false;
 					break;
 				}
 
-				$this->instanceTask()->fixState();
+				$task->fixState();
 
 				// count statistic for progress bar
-				self::countWorker($this->instanceTask()->getOwnerId());
+				self::countWorker((int)$task->getOwnerId());
 			}
 
 			if (!$this->checkTimeEnd())
@@ -882,14 +859,14 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 	 * @param Volume\IVolumeIndicator $indicator Ignited indicator for file list filter.
 	 * @return boolean
 	 */
-	public function deleteUnnecessaryVersionByFilter(Volume\IVolumeIndicator $indicator)
+	public function deleteUnnecessaryVersionByFilter(Volume\IVolumeIndicator $indicator): bool
 	{
 		$subTaskDone = true;
 
 		if ($indicator->getFilterValue('STORAGE_ID') > 0)
 		{
-			$storage = \Bitrix\Disk\Storage::loadById($indicator->getFilterValue('STORAGE_ID'));
-			if (!($storage instanceof \Bitrix\Disk\Storage))
+			$storage = Disk\Storage::loadById($indicator->getFilterValue('STORAGE_ID'));
+			if (!($storage instanceof Disk\Storage))
 			{
 				$this->collectError(
 					new Error('Can not found storage #'.$indicator->getFilterValue('STORAGE_ID'), 'STORAGE_NOT_FOUND'),
@@ -911,26 +888,28 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 			}
 		}
 
-		$filter = array();
-		if ($this->instanceTask()->getLastFileId() > 0)
+		$task = $this->instanceTask();
+
+		$filter = [];
+		if ($task->getLastFileId() > 0)
 		{
-			$filter['>=FILE_ID'] = $this->instanceTask()->getLastFileId();
+			$filter['>=FILE_ID'] = $task->getLastFileId();
 		}
 
 		$indicator->setLimit(self::MAX_FILE_PER_INTERACTION);
 
 		$versionList = $indicator->getCorrespondingUnnecessaryVersionList($filter);
 
-		$this->instanceTask()->setIterationFileCount($versionList->getSelectedRowsCount());
+		$task->setIterationFileCount($versionList->getSelectedRowsCount());
 
-		$versionsPerFile = array();
+		$versionsPerFile = [];
 		foreach ($versionList as $row)
 		{
 			$fileId = $row['FILE_ID'];
 			$versionId = $row['VERSION_ID'];
 			if (!isset($versionsPerFile[$fileId]))
 			{
-				$versionsPerFile[$fileId] = array();
+				$versionsPerFile[$fileId] = [];
 			}
 			$versionsPerFile[$fileId][] = $versionId;
 		}
@@ -941,14 +920,14 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 
 		foreach ($versionsPerFile as $fileId => $versionIds)
 		{
-			$file = \Bitrix\Disk\File::getById($fileId);
+			$file = Disk\File::getById($fileId);
 
-			if ($file instanceof \Bitrix\Disk\File)
+			if ($file instanceof Disk\File)
 			{
 				$securityContext = $this->getSecurityContext($this->getOwner(), $file);
 				if($file->canDelete($securityContext))
 				{
-					$this->deleteFileUnnecessaryVersion($file, array('=ID' => $versionIds));
+					$this->deleteFileUnnecessaryVersion($file, ['=ID' => $versionIds]);
 					$countFileErasure++;
 				}
 				else
@@ -957,23 +936,23 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 				}
 			}
 
-			$this->instanceTask()->setLastFileId($fileId);
+			$task->setLastFileId($fileId);
 
 			// fix interval task state
 			if ($countFileErasure >= self::STATUS_FIX_INTERVAL)
 			{
 				$countFileErasure = 0;
 
-				if ($this->instanceTask()->hasUserCanceled())
+				if ($task->hasUserCanceled())
 				{
 					$subTaskDone = false;
 					break;
 				}
 
-				$this->instanceTask()->fixState();
+				$task->fixState();
 
 				// count statistic for progress bar
-				self::countWorker($this->instanceTask()->getOwnerId());
+				self::countWorker((int)$task->getOwnerId());
 			}
 
 			if (!$this->checkTimeEnd())
@@ -989,27 +968,27 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 
 	/**
 	 * Returns disk security context.
-	 * @param \Bitrix\Disk\User $user Task owner.
-	 * @param \Bitrix\Disk\BaseObject $object File or folder.
-	 * @return \Bitrix\Disk\Security\SecurityContext
+	 * @param Disk\User $user Task owner.
+	 * @param Disk\BaseObject $object File or folder.
+	 * @return SecurityContext
 	 */
-	private function getSecurityContext($user, $object)
+	private function getSecurityContext(Disk\User $user, Disk\BaseObject $object): SecurityContext
 	{
-		static $securityContextCache = array();
+		static $securityContextCache = [];
 
 		$userId = $user->getId();
 		$storageId = $object->getStorageId();
 
-		if (!($securityContextCache[$userId][$storageId] instanceof \Bitrix\Disk\Security\SecurityContext))
+		if (!isset($securityContextCache[$userId][$storageId]) || !($securityContextCache[$userId][$storageId] instanceof SecurityContext))
 		{
 			if (!isset($securityContextCache[$userId]))
 			{
-				$securityContextCache[$userId] = array();
+				$securityContextCache[$userId] = [];
 			}
 
 			if ($user->isAdmin())
 			{
-				$securityContextCache[$userId][$storageId] = new \Bitrix\Disk\Security\FakeSecurityContext($userId);
+				$securityContextCache[$userId][$storageId] = new Disk\Security\FakeSecurityContext($userId);
 			}
 			else
 			{
@@ -1023,25 +1002,27 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 
 	/**
 	 * Deletes file.
-	 * @param \Bitrix\Disk\File $file File to drop.
+	 * @param Disk\File $file File to drop.
 	 * @return boolean
 	 */
-	public function deleteFile(\Bitrix\Disk\File $file)
+	public function deleteFile(Disk\File $file): bool
 	{
 		try
 		{
-			$logData = $this->instanceTask()->collectLogData($file);
+			$task = $this->instanceTask();
 
-			if (!$file->delete($this->instanceTask()->getOwnerId()))
+			$logData = $task->collectLogData($file);
+
+			if (!$file->delete($task->getOwnerId()))
 			{
 				$this->collectError($file->getErrors());
 
 				return false;
 			}
 
-			$this->instanceTask()->log($logData, __FUNCTION__);
+			$task->log($logData, __FUNCTION__);
 
-			$this->instanceTask()->increaseDroppedFileCount();
+			$task->increaseDroppedFileCount();
 
 		}
 		catch (Main\SystemException $exception)
@@ -1057,33 +1038,33 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 
 	/**
 	 * Deletes file unnecessary versions.
-	 * @param \Bitrix\Disk\File $file File to purify.
+	 * @param Disk\File $file File to purify.
 	 * @param array $additionalFilter Additional filter for vertion selection.
 	 * @return boolean
 	 */
-	public function deleteFileUnnecessaryVersion(\Bitrix\Disk\File $file, $additionalFilter = array())
+	public function deleteFileUnnecessaryVersion(Disk\File $file, array $additionalFilter = []): bool
 	{
 		$subTaskDone = true;
 
-		$filter = array(
+		$filter = [
 			'=OBJECT_ID' => $file->getId(),
-		);
+		];
 		if (count($additionalFilter) > 0)
 		{
 			$filter = array_merge($filter, $additionalFilter);
 		}
 
-		$versionList = \Bitrix\Disk\Version::getList(array(
+		$versionList = Disk\Version::getList([
 			'filter' => $filter,
-			'select' => array('ID')
-		));
+			'select' => ['ID']
+		]);
 		foreach ($versionList as $row)
 		{
 			$versionId = $row['ID'];
 
-			/** @var \Bitrix\Disk\Version $version */
-			$version = \Bitrix\Disk\Version::getById($versionId);
-			if(!$version instanceof \Bitrix\Disk\Version)
+			/** @var Disk\Version $version */
+			$version = Disk\Version::getById($versionId);
+			if(!$version instanceof Disk\Version)
 			{
 				//$this->collectError(new Error('Version '.$versionId.' was not found'));
 				continue;
@@ -1097,14 +1078,14 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 			}
 
 			// attached_object
-			$attachedList = \Bitrix\Disk\AttachedObject::getList(array(
-				'filter' => array(
+			$attachedList = Disk\AttachedObject::getList([
+				'filter' => [
 					'=OBJECT_ID' => $file->getId(),
 					'=VERSION_ID' => $version->getId(),
-				),
-				'select' => array('ID'),
+				],
+				'select' => ['ID'],
 				'limit' => 1,
-			));
+			]);
 			if($attachedList->getSelectedRowsCount() > 0)
 			{
 				$this->collectError(new Error('Version '.$versionId.' has attachments'));
@@ -1112,34 +1093,36 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 			}
 
 			// external_link
-			$externalLinkList = \Bitrix\Disk\ExternalLink::getList(array(
-				'filter' => array(
+			$externalLinkList = Disk\ExternalLink::getList([
+				'filter' => [
 					'=OBJECT_ID' => $file->getId(),
 					'=VERSION_ID' => $version->getId(),
-					'!TYPE' => \Bitrix\Disk\ExternalLink::TYPE_AUTO,
-				),
-				'select' => array('ID'),
+					'!TYPE' => Disk\ExternalLink::TYPE_AUTO,
+				],
+				'select' => ['ID'],
 				'limit' => 1,
-			));
+			]);
 			if($externalLinkList->getSelectedRowsCount() > 0)
 			{
 				$this->collectError(new Error('Version '.$versionId.' has external links'));
 				continue;
 			}
 
-			$logData = $this->instanceTask()->collectLogData($version);
+			$task = $this->instanceTask();
+
+			$logData = $task->collectLogData($version);
 
 			try
 			{
 				// drop
-				if (!$version->delete($this->instanceTask()->getOwnerId()))
+				if (!$version->delete($task->getOwnerId()))
 				{
 					$this->collectError($version->getErrors());
 				}
 				else
 				{
-					$this->instanceTask()->log($logData, __FUNCTION__);
-					$this->instanceTask()->increaseDroppedVersionCount();
+					$task->log($logData, __FUNCTION__);
+					$task->increaseDroppedVersionCount();
 				}
 			}
 			catch (Main\SystemException $exception)
@@ -1160,11 +1143,11 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 
 	/**
 	 * Deletes folder.
-	 * @param \Bitrix\Disk\Folder $folder Folder to drop.
+	 * @param Disk\Folder $folder Folder to drop.
 	 * @param boolean $emptyOnly Just delete folder's content.
 	 * @return boolean
 	 */
-	public function deleteFolder(\Bitrix\Disk\Folder $folder, $emptyOnly = false)
+	public function deleteFolder(Disk\Folder $folder, bool $emptyOnly = false): bool
 	{
 		$subTaskDone = true;
 
@@ -1211,18 +1194,20 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 
 		$countFileErasure = 0;
 
-		$objectList = \Bitrix\Disk\Internals\ObjectTable::getList(array(
-			'filter' => array(
+		$objectList = Disk\Internals\ObjectTable::getList([
+			'filter' => [
 				'=PATH_CHILD.PARENT_ID' => $folder->getId(),
-			),
-			'order' => array(
+			],
+			'order' => [
 				'PATH_CHILD.DEPTH_LEVEL' => 'DESC',
 				'ID' => 'ASC'
-			),
+			],
 			'limit' => self::MAX_FOLDER_PER_INTERACTION,
-		));
+		]);
 
-		$this->instanceTask()->setIterationFileCount($objectList->getSelectedRowsCount());
+		$task = $this->instanceTask();
+
+		$task->setIterationFileCount($objectList->getSelectedRowsCount());
 
 		foreach ($objectList as $row)
 		{
@@ -1233,23 +1218,23 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 			if ($isRootFolder)
 			{
 				// allow delete only files in root folder
-				if ($row['PARENT_ID'] != $folder->getId() || $row['TYPE'] != \Bitrix\Disk\Internals\ObjectTable::TYPE_FILE)
+				if ($row['PARENT_ID'] != $folder->getId() || $row['TYPE'] != Disk\Internals\ObjectTable::TYPE_FILE)
 				{
 					continue;
 				}
 			}
 
-			$object = \Bitrix\Disk\BaseObject::buildFromArray($row);
+			$object = Disk\BaseObject::buildFromArray($row);
 
 			/** @var Disk\Folder|Disk\File $object */
-			if ($object instanceof \Bitrix\Disk\Folder)
+			if ($object instanceof Disk\Folder)
 			{
 				if ($isRootFolder)
 				{
 					// disallow recursive delete from root
 					continue;
 				}
-				/** @var \Bitrix\Disk\File $object */
+				/** @var Disk\File $object */
 				$securityContext = $this->getSecurityContext($this->getOwner(), $object);
 				if ($object->canDelete($securityContext))
 				{
@@ -1257,10 +1242,10 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 					{
 						try
 						{
-							$logData = $this->instanceTask()->collectLogData($object);
+							$logData = $task->collectLogData($object);
 
-							/** @var \Bitrix\Disk\Folder $object */
-							if (!$object->deleteTree($this->instanceTask()->getOwnerId()))
+							/** @var Disk\Folder $object */
+							if (!$object->deleteTree($task->getOwnerId()))
 							{
 								$this->collectError($object->getErrors(), false);
 
@@ -1268,8 +1253,8 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 							}
 							else
 							{
-								$this->instanceTask()->log($logData, __FUNCTION__);
-								$this->instanceTask()->increaseDroppedFolderCount();
+								$task->log($logData, __FUNCTION__);
+								$task->increaseDroppedFolderCount();
 							}
 						}
 						catch (Main\SystemException $exception)
@@ -1299,9 +1284,9 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 					);
 				}
 			}
-			elseif($object instanceof \Bitrix\Disk\File)
+			elseif($object instanceof Disk\File)
 			{
-				/** @var \Bitrix\Disk\File $object */
+				/** @var Disk\File $object */
 				$securityContext = $this->getSecurityContext($this->getOwner(), $object);
 				if($object->canDelete($securityContext))
 				{
@@ -1319,16 +1304,16 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 			{
 				$countFileErasure = 0;
 
-				if ($this->instanceTask()->hasUserCanceled())
+				if ($task->hasUserCanceled())
 				{
 					$subTaskDone = false;
 					break;
 				}
 
-				$this->instanceTask()->fixState();
+				$task->fixState();
 
 				// count statistic for progress bar
-				self::countWorker($this->instanceTask()->getOwnerId());
+				self::countWorker((int)$task->getOwnerId());
 
 			}
 
@@ -1346,17 +1331,17 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 			{
 				try
 				{
-					$logData = $this->instanceTask()->collectLogData($folder);
+					$logData = $task->collectLogData($folder);
 
-					if (!$folder->deleteTree($this->instanceTask()->getOwnerId()))
+					if (!$folder->deleteTree($task->getOwnerId()))
 					{
 						$this->collectError($folder->getErrors());
 
 						return false;
 					}
 
-					$this->instanceTask()->log($logData, __FUNCTION__);
-					$this->instanceTask()->increaseDroppedFolderCount();
+					$task->log($logData, __FUNCTION__);
+					$task->increaseDroppedFolderCount();
 				}
 				catch (Main\SystemException $exception)
 				{
@@ -1371,10 +1356,10 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 
 	/**
 	 * Check ability to drop folder.
-	 * @param \Bitrix\Disk\Folder $folder Folder to drop.
+	 * @param Disk\Folder $folder Folder to drop.
 	 * @return boolean
 	 */
-	public function isAllowDeleteFolder(\Bitrix\Disk\Folder $folder)
+	public function isAllowDeleteFolder(Disk\Folder $folder): bool
 	{
 		$allowDrop = true;
 
@@ -1383,21 +1368,21 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 			return true;
 		}
 
-		/** @var \Bitrix\Disk\Volume\IDeleteConstraint[] $deleteConstraintList */
+		/** @var Volume\IDeleteConstraint[] $deleteConstraintList */
 		static $deleteConstraintList;
 		if (empty($deleteConstraintList))
 		{
-			$deleteConstraintList = array();
+			$deleteConstraintList = [];
 
 			// full list available indicators
-			$constraintIdList = \Bitrix\Disk\Volume\Base::listDeleteConstraint();
+			$constraintIdList = Volume\Base::listDeleteConstraint();
 			foreach ($constraintIdList as $indicatorId => $indicatorIdClass)
 			{
 				$deleteConstraintList[$indicatorId] = new $indicatorIdClass();
 			}
 		}
 
-		/** @var \Bitrix\Disk\Volume\IDeleteConstraint $indicator */
+		/** @var Volume\IDeleteConstraint $indicator */
 		foreach ($deleteConstraintList as $indicatorId => $indicator)
 		{
 			if (!$indicator->isAllowDeleteFolder($folder))
@@ -1411,10 +1396,10 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 
 	/**
 	 * Check ability to empty folder.
-	 * @param \Bitrix\Disk\Folder $folder Folder to clear.
+	 * @param Disk\Folder $folder Folder to clear.
 	 * @return boolean
 	 */
-	public function isAllowClearFolder(\Bitrix\Disk\Folder $folder)
+	public function isAllowClearFolder(Disk\Folder $folder): bool
 	{
 		$allowClear = true;
 
@@ -1423,21 +1408,21 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 			return true;
 		}
 
-		/** @var \Bitrix\Disk\Volume\IClearFolderConstraint[] $clearFolderConstraintList */
+		/** @var Volume\IClearFolderConstraint[] $clearFolderConstraintList */
 		static $clearFolderConstraintList;
 		if (empty($clearFolderConstraintList))
 		{
-			$clearFolderConstraintList = array();
+			$clearFolderConstraintList = [];
 
 			// full list available indicators
-			$constraintIdList = \Bitrix\Disk\Volume\Base::listClearFolderConstraint();
+			$constraintIdList = Volume\Base::listClearFolderConstraint();
 			foreach ($constraintIdList as $indicatorId => $indicatorIdClass)
 			{
 				$clearFolderConstraintList[$indicatorId] = new $indicatorIdClass();
 			}
 		}
 
-		/** @var \Bitrix\Disk\Volume\IClearFolderConstraint $indicator */
+		/** @var Volume\IClearFolderConstraint $indicator */
 		foreach ($clearFolderConstraintList as $indicatorId => $indicator)
 		{
 			if (!$indicator->isAllowClearFolder($folder))
@@ -1451,30 +1436,30 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 
 	/**
 	 * Check ability to clear storage.
-	 * @param \Bitrix\Disk\Storage $storage Storage to clear.
+	 * @param Disk\Storage $storage Storage to clear.
 	 * @return boolean
 	 */
-	public function isAllowClearStorage(\Bitrix\Disk\Storage $storage)
+	public function isAllowClearStorage(Disk\Storage $storage): bool
 	{
 		$allowClear = true;
 
-		/** @var \Bitrix\Disk\Volume\IClearConstraint[] $clearConstraintList */
+		/** @var Volume\IClearConstraint[] $clearConstraintList */
 		static $clearConstraintList;
 		if (empty($clearConstraintList))
 		{
-			$clearConstraintList = array();
+			$clearConstraintList = [];
 
 			// full list available indicators
-			$constraintIdList = \Bitrix\Disk\Volume\Base::listClearConstraint();
+			$constraintIdList = Volume\Base::listClearConstraint();
 			foreach ($constraintIdList as $indicatorId => $indicatorIdClass)
 			{
 				$clearConstraintList[$indicatorId] = new $indicatorIdClass();
 			}
 		}
 
-		if ($storage instanceof \Bitrix\Disk\Storage)
+		if ($storage instanceof Disk\Storage)
 		{
-			/** @var \Bitrix\Disk\Volume\IClearConstraint $indicator */
+			/** @var Volume\IClearConstraint $indicator */
 			foreach ($clearConstraintList as $indicatorId => $indicator)
 			{
 				if (!$indicator->isAllowClearStorage($storage))
@@ -1492,7 +1477,7 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 	 * @param Volume\IVolumeIndicator $indicator Ignited indicator for measure.
 	 * @return boolean
 	 */
-	public static function repeatMeasure(Volume\IVolumeIndicator $indicator)
+	public static function repeatMeasure(Volume\IVolumeIndicator $indicator): bool
 	{
 		$indicator->resetMeasurementResult();
 		$indicator->measure();
@@ -1501,7 +1486,7 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 		{
 			if ($indicator::className() != Volume\Storage\Storage::className())
 			{
-				/** @var \Bitrix\Disk\Volume\IVolumeIndicator $storageIndicator */
+				/** @var Volume\IVolumeIndicator $storageIndicator */
 				$storageIndicator = new Volume\Storage\Storage();
 				$storageIndicator->setOwner($indicator->getOwner());
 
@@ -1516,7 +1501,7 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 
 			if ($indicator::className() != Volume\Storage\TrashCan::className())
 			{
-				/** @var \Bitrix\Disk\Volume\IVolumeIndicator $trashCanIndicator */
+				/** @var Volume\IVolumeIndicator $trashCanIndicator */
 				$trashCanIndicator = new Volume\Storage\TrashCan();
 				$trashCanIndicator->setOwner($indicator->getOwner());
 
@@ -1540,7 +1525,7 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 	 * Gets dropped file count.
 	 * @return int
 	 */
-	public function getDroppedFileCount()
+	public function getDroppedFileCount(): int
 	{
 		return $this->instanceTask()->getDroppedFileCount();
 	}
@@ -1549,7 +1534,7 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 	 * Gets dropped version count.
 	 * @return int
 	 */
-	public function getDroppedVersionCount()
+	public function getDroppedVersionCount(): int
 	{
 		return $this->instanceTask()->getDroppedVersionCount();
 	}
@@ -1558,7 +1543,7 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 	 * Gets dropped folder count.
 	 * @return int
 	 */
-	public function getDroppedFolderCount()
+	public function getDroppedFolderCount(): int
 	{
 		return $this->instanceTask()->getDroppedFolderCount();
 	}
@@ -1567,23 +1552,23 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 	 * Gets task owner id.
 	 * @return int
 	 */
-	public function getOwnerId()
+	public function getOwnerId(): int
 	{
 		return $this->ownerId;
 	}
 
 	/**
 	 * Gets task owner.
-	 * @return \Bitrix\Disk\User
+	 * @return Disk\User
 	 */
-	public function getOwner()
+	public function getOwner(): Disk\User
 	{
-		if (!($this->owner instanceof \Bitrix\Disk\User))
+		if (!($this->owner instanceof Disk\User))
 		{
-			$this->owner = \Bitrix\Disk\User::loadById($this->getOwnerId());
-			if (!($this->owner instanceof \Bitrix\Disk\User))
+			$this->owner = Disk\User::loadById($this->getOwnerId());
+			if (!($this->owner instanceof Disk\User))
 			{
-				$this->owner = \Bitrix\Disk\User::loadById(\Bitrix\Disk\SystemUser::SYSTEM_USER_ID);
+				$this->owner = Disk\User::loadById(Disk\SystemUser::SYSTEM_USER_ID);
 			}
 		}
 
@@ -1591,14 +1576,16 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 	}
 
 
+	//region Errors
+
 	/**
 	 * Adds an array of errors to the collection.
-	 * @param \Bitrix\Main\Error[] | \Bitrix\Main\Error $errors Raised error.
+	 * @param Main\Error[] | Main\Error $errors Raised error.
 	 * @param boolean $increaseTaskFail Increase error count in task.
 	 * @param boolean $raiseTaskFatalError Raise task fatal error.
 	 * @return void
 	 */
-	public function collectError($errors, $increaseTaskFail = true, $raiseTaskFatalError = false)
+	public function collectError($errors, bool $increaseTaskFail = true, bool $raiseTaskFatalError = false): void
 	{
 		if (!($this->errorCollection instanceof ErrorCollection))
 		{
@@ -1612,41 +1599,43 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 		}
 		else
 		{
-			$this->errorCollection->add(array($errors));
+			$this->errorCollection->add([$errors]);
 			$lastError = $errors;
 		}
 
 		if (($this->task instanceof Volume\Task) && ($lastError instanceof Error))
 		{
+			$task = $this->instanceTask();
+
 			if ($increaseTaskFail)
 			{
-				$this->instanceTask()->increaseFailCount();
+				$task->increaseFailCount();
 			}
 			if ($raiseTaskFatalError)
 			{
-				$this->instanceTask()->raiseFatalError();
+				$task->raiseFatalError();
 			}
-			$this->instanceTask()->setLastError($lastError->getMessage());
+			$task->setLastError($lastError->getMessage());
 		}
 	}
 
 	/**
 	 * @return Error[]
 	 */
-	public function getErrors()
+	public function getErrors(): array
 	{
 		if ($this->errorCollection instanceof ErrorCollection)
 		{
 			return $this->errorCollection->toArray();
 		}
 
-		return array();
+		return [];
 	}
 
 	/**
 	 * @return boolean
 	 */
-	public function hasErrors()
+	public function hasErrors(): bool
 	{
 		if ($this->errorCollection instanceof ErrorCollection)
 		{
@@ -1661,20 +1650,20 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 	 * @param string $code Code of error.
 	 * @return Error[]
 	 */
-	public function getErrorsByCode($code)
+	public function getErrorsByCode($code): array
 	{
 		if ($this->errorCollection instanceof ErrorCollection)
 		{
 			return $this->errorCollection->getErrorsByCode($code);
 		}
 
-		return array();
+		return [];
 	}
 
 	/**
 	 * Returns an error with the necessary code.
 	 * @param string|int $code The code of the error.
-	 * @return \Bitrix\Main\Error|null
+	 * @return Main\Error|null
 	 */
 	public function getErrorByCode($code)
 	{
@@ -1686,17 +1675,20 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 		return null;
 	}
 
+	//endregion
+
+	//region ProgressInfo
 
 	/**
 	 * Set up information showing at stepper progress bar.
 	 * @param int $ownerId Whom will mark as deleted by.
 	 * @return array|null
 	 */
-	public static function getProgressInfo($ownerId)
+	public static function getProgressInfo(int $ownerId): ?array
 	{
-		$optionSerialized = \Bitrix\Main\Config\Option::get(
-			'main.stepper.disk',
-			Volume\Cleaner::className(). $ownerId,
+		$optionSerialized = Main\Config\Option::get(
+			self::STEPPER_OPTION_ID,
+			self::className(). $ownerId,
 			''
 		);
 		if (!empty($optionSerialized))
@@ -1715,15 +1707,14 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 	 * @param int $failCount Failed deletion count.
 	 * @return void
 	 */
-	public static function setProgressInfo($ownerId, $totalFilesToDrop, $droppedFilesCount = 0, $failCount = 0)
+	public static function setProgressInfo(int $ownerId, int $totalFilesToDrop, int $droppedFilesCount = 0, int $failCount = 0): void
 	{
 		if ($totalFilesToDrop  > 0)
 		{
-			$option = Volume\Cleaner::getProgressInfo($ownerId);
+			$option = self::getProgressInfo($ownerId);
 			if (!empty($option) && $option['count'] > 0)
 			{
 				$prevTotalFilesToDrop = $option['count'];
-				//$prevDroppedFilesCount = $option['steps'];
 
 				// If total count decreases mean some agents finished its work.
 				if ($prevTotalFilesToDrop > $totalFilesToDrop)
@@ -1733,10 +1724,10 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 				}
 			}
 
-			\Bitrix\Main\Config\Option::set(
-				'main.stepper.disk',
+			Main\Config\Option::set(
+				self::STEPPER_OPTION_ID,
 				self::className().$ownerId,
-				serialize(array('steps' => ($droppedFilesCount + $failCount), 'count' => $totalFilesToDrop))
+				serialize(['steps' => ($droppedFilesCount + $failCount), 'count' => $totalFilesToDrop])
 			);
 		}
 		else
@@ -1750,12 +1741,22 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 	 * @param int $ownerId Whom will mark as deleted by.
 	 * @return void
 	 */
-	public static function clearProgressInfo($ownerId)
+	public static function clearProgressInfo(int $ownerId = -1): void
 	{
-		\Bitrix\Main\Config\Option::delete(
-			'main.stepper.disk',
-			array('name' => self::className(). $ownerId)
-		);
+		if ($ownerId > 0)
+		{
+			Main\Config\Option::delete(self::STEPPER_OPTION_ID, ['name' => self::className() . $ownerId]);
+		}
+		else
+		{
+			$optionList = Main\Config\Option::getForModule(self::STEPPER_OPTION_ID);
+			foreach ($optionList as $name => $value)
+			{
+				Main\Config\Option::delete(self::STEPPER_OPTION_ID, ['name' => $name]);
+			}
+		}
 	}
+
+	//endregion
 }
 

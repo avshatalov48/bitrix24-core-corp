@@ -19,9 +19,9 @@ Loc::loadMessages(__FILE__);
  *
  * <<< ORMENTITYANNOTATION
  * @method static EO_ActivityBinding_Query query()
- * @method static EO_ActivityBinding_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_ActivityBinding_Result getByPrimary($primary, array $parameters = [])
  * @method static EO_ActivityBinding_Result getById($id)
- * @method static EO_ActivityBinding_Result getList(array $parameters = array())
+ * @method static EO_ActivityBinding_Result getList(array $parameters = [])
  * @method static EO_ActivityBinding_Entity getEntity()
  * @method static \Bitrix\Crm\EO_ActivityBinding createObject($setDefaultValues = true)
  * @method static \Bitrix\Crm\EO_ActivityBinding_Collection createCollection()

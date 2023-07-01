@@ -43,7 +43,11 @@ class Tabs extends \Bitrix\Main\Engine\Controller
 			$manager->getAllTabIDs(),
 			function ($result, $tabId) use ($manager)
 			{
-				$result[$tabId] = [ "title" => $manager->getTabInstance($tabId)->getTitle() ];
+				$instance = $manager->getTabInstance($tabId);
+				$result[$tabId] = [
+					"title" => $instance->getTitle(),
+					"shortTitle" => $instance->getShortTitle(),
+				];
 				return $result;
 			}, []);
 

@@ -44,8 +44,10 @@ class Key extends Controller
 
 	/**
 	 * Adds new key.
-	 * @param $fields
-	 * @param \CRestServer $server
+	 *
+	 * @param array $fields New key fields.
+	 * @param \CRestServer $server Main rest response object.
+	 *
 	 * @return array|int
 	 * @throws \Bitrix\Main\ArgumentException
 	 * @throws \Bitrix\Main\ObjectPropertyException
@@ -53,13 +55,14 @@ class Key extends Controller
 	 */
 	public function addAction($fields, \CRestServer $server)
 	{
-		$fields['USER_ID'] = $this->prepareUserId((int)$fields['USER_ID']);
+		$userId = isset($fields['USER_ID']) ? (int)$fields['USER_ID'] : 0;
+		$fields['USER_ID'] = $this->prepareUserId($userId);
 		$res = KeyManager::save(
 			[
 				'APP_ID' => $this->getAppId($server),
 				'CONNECTION' => $fields['CONNECTION'],
 				'USER_ID' => $fields['USER_ID'],
-				'ACCESS_KEY' => $fields['ACCESS_KEY'],
+				'ACCESS_KEY' => $fields['ACCESS_KEY'] ?? '',
 				'ACTIVE' => $fields['ACTIVE'] === 'Y',
 			]
 		);
@@ -78,18 +81,20 @@ class Key extends Controller
 	/**
 	 * Returns list of key by app.
 	 *
-	 * @param array $order
-	 * @param array $filter
-	 * @param array $select
-	 * @param int $offset
-	 * @param int $limit
-	 * @param \CRestServer|null $server
+	 * @param array $order KeyTable::getList order parameter.
+	 * @param array $filter KeyTable::getList filter parameter.
+	 * @param array $select KeyTable::getList select parameter.
+	 * @param int $offset KeyTable::getList offset parameter.
+	 * @param int $limit KeyTable::getList limit parameter.
+	 * @param \CRestServer|null $server Main rest response object.
+	 *
 	 * @return array
 	 * @throws ArgumentException
 	 * @throws ObjectPropertyException
 	 * @throws SystemException
+	 * @see \Bitrix\BIConnector\KeyTable::getList
 	 */
-	public function listAction(array $order = [], array $filter = [], array $select = [], int $offset = 0, int $limit = 50, \CRestServer $server = null)
+	public function listAction(array $order = [], array $filter = [], array $select = [], $offset = 0, $limit = 50, \CRestServer $server = null)
 	{
 		$result = [];
 		$appId = 0;
@@ -125,13 +130,15 @@ class Key extends Controller
 	/**
 	 * Updates key.
 	 *
-	 * @param $id
-	 * @param $fields
-	 * @param \CRestServer $server
+	 * @param int $id Key identifier.
+	 * @param array $fields KeyTable fields.
+	 * @param \CRestServer $server Main rest response object.
+	 *
 	 * @return array|int|string[]
 	 * @throws \Bitrix\Main\ArgumentException
 	 * @throws \Bitrix\Main\ObjectPropertyException
 	 * @throws \Bitrix\Main\SystemException
+	 * @see \Bitrix\BIConnector\KeyTable::update
 	 */
 	public function updateAction($id, $fields, \CRestServer $server)
 	{
@@ -194,10 +201,11 @@ class Key extends Controller
 	}
 
 	/**
-	 * Returns key.
+	 * Deletes the key.
 	 *
-	 * @param $id
-	 * @param \CRestServer $server
+	 * @param int $id Key identifier.
+	 * @param \CRestServer $server Main rest response object.
+	 *
 	 * @return array|bool|string[]
 	 * @throws \Bitrix\Main\ArgumentException
 	 * @throws \Bitrix\Main\ObjectPropertyException
@@ -252,6 +260,12 @@ class Key extends Controller
 		return $result;
 	}
 
+	/**
+	 * prepareFilter
+	 *
+	 * @param array $filter KeyTable filter.
+	 * @return array
+	 */
 	private function prepareFilter(array $filter): array
 	{
 		$result = [];
@@ -259,7 +273,7 @@ class Key extends Controller
 		{
 			$filterType = '';
 			$matches = [];
-			if (preg_match('/^([\W]{1,2})(.+)/', $code, $matches) && $matches[2])
+			if (preg_match('/^(\W{1,2})(.+)/', $code, $matches) && $matches[2])
 			{
 				$filterType = $matches[1];
 				$code = $matches[2];
@@ -290,6 +304,13 @@ class Key extends Controller
 		return $result;
 	}
 
+	/**
+	 * prepareSelect
+	 *
+	 * @param array $select KeyTable select fields.
+	 *
+	 * @return array
+	 */
 	private function prepareSelect(array $select): array
 	{
 		$result = [];
@@ -305,7 +326,15 @@ class Key extends Controller
 		return $result ?: ['*'];
 	}
 
-	private function prepareErrorsForRest(string $errorCode, ErrorCollection $errors): array
+	/**
+	 * prepareErrorsForRest
+	 *
+	 * @param string $errorCode Error code.
+	 * @param \Bitrix\Main\ErrorCollection $errors Rest errors.
+	 *
+	 * @return array
+	 */
+	private function prepareErrorsForRest($errorCode, \Bitrix\Main\ErrorCollection $errors): array
 	{
 		$message = [];
 		$code = '';
@@ -330,6 +359,13 @@ class Key extends Controller
 		];
 	}
 
+	/**
+	 * getAppId
+	 *
+	 * @param \CRestServer $server Main rest response object.
+	 *
+	 * @return int
+	 */
 	private function getAppId(\CRestServer $server): int
 	{
 		$clientId = $server->getClientId();
@@ -339,7 +375,14 @@ class Key extends Controller
 		return $app['ID'] ? (int)$app['ID'] : 0;
 	}
 
-	private function prepareUserId(int $id = 0): int
+	/**
+	 * prepareUserId
+	 *
+	 * @param int $id User identifier.
+	 *
+	 * @return int
+	 */
+	private function prepareUserId($id = 0): int
 	{
 		if ($id === 0 || !\CRestUtil::isAdmin())
 		{
@@ -347,13 +390,18 @@ class Key extends Controller
 			global $USER;
 			if ($USER instanceof \CUser)
 			{
-				$id = (int)$USER->getId();
+				$id = (int)$USER->GetID();
 			}
 		}
 
 		return $id;
 	}
 
+	/**
+	 * Returns array of rest filters.
+	 *
+	 * @return array
+	 */
 	public function getDefaultPreFilters()
 	{
 		return [

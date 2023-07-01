@@ -6,110 +6,237 @@
  */
 jn.define('im/messenger/controller/dialog/dialog', (require, exports, module) => {
 
+	/* region import */
+
 	const { Type } = require('type');
 	const { Loc } = require('loc');
+	const { getPressedColor } = require('utils/color');
+	const { clone, isEqual } = require('utils/object');
+	const { Haptics } = require('haptics');
+	const { inAppUrl } = require('in-app-url');
+	include('InAppNotifier');
+
 	const {
 		EventType,
 		FeatureFlag,
 		DialogType,
+		MessageType,
+		ReactionType,
+		FileType,
 	} = require('im/messenger/const');
 	const {
+		MessageRest,
+	} = require('im/messenger/provider/rest');
+	const {
+		ChatService,
 		MessageService,
-		DialogService,
-		RecentService,
-	} = require('im/messenger/service');
+	} = require('im/messenger/provider/service');
 	const {
 		ChatAvatar,
 		ChatTitle,
+		MessageMenu,
+		LikeReaction,
+		KissReaction,
+		LaughReaction,
+		WonderReaction,
+		CryReaction,
+		AngryReaction,
+		FacepalmReaction,
+		CopyAction,
+		QuoteAction,
+		ProfileAction,
+		EditAction,
+		DeleteAction,
 	} = require('im/messenger/lib/element');
 
-	const { Controller } = require('im/messenger/controller/base');
-	const { DialogConverter } = require('im/messenger/lib/converter');
+	const { ReplyManager } = require('im/messenger/controller/dialog/reply-manager');
+	const { MessageRenderer } = require('im/messenger/controller/dialog/message-renderer');
+
+	const {
+		DialogView,
+		AfterScrollMessagePosition,
+	} = require('im/messenger/view/dialog');
 	const { DialogHelper } = require('im/messenger/lib/helper');
-	const { PageNavigation } = require('im/messenger/lib/page-navigation');
 	const { Logger } = require('im/messenger/lib/logger');
 	const { Uuid } = require('utils/uuid');
 	const { MessengerParams } = require('im/messenger/lib/params');
-	const { MessengerEvent } = require('im/messenger/lib/event');
+	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { Counters } = require('im/messenger/lib/counters');
+	const { AudioMessagePlayer } = require('im/messenger/controller/dialog/audio-player');
 	const { WebDialog } = require('im/messenger/controller/dialog/web');
 	const { Calls } = require('im/messenger/lib/integration/immobile/calls');
 	const { HeaderMenu } = require('im/messenger/controller/dialog/header/menu');
+	const { DateFormatter } = require('im/messenger/lib/date-formatter');
+	const { UserProfile } = require('im/messenger/controller/user-profile');
+	const { backgroundCache } = require('im/messenger/lib/background-cache');
+	const { parser } = require('im/messenger/lib/parser');
+	const { DialogConverter } = require('im/messenger/lib/converter');
+	const {
+		uploader,
+		UploadTask,
+	} = require('im/messenger/lib/uploader');
+
+	/* endregion import */
 
 	/**
 	 * @class Dialog
 	 */
-	class Dialog extends Controller
+	class Dialog
 	{
-		constructor(options = {})
+		constructor({ storeManager } = {})
 		{
-			super(options);
+			if (storeManager)
+			{
+				this.store = storeManager.store;
+				this.storeManager = storeManager;
+			}
+			else
+			{
+				throw new Error('DialogList: options.storeManager is required');
+			}
 
-			this.pageNavigation = null;
-			this.quoteMessage = null;
-			this.view = null;
+			this.dialogId = 0;
+			this.titleParams = null;
 
-			this.onSubmit = this.sendMessage.bind(this);
-			this.onLoadMore = this.loadNextPage.bind(this);
-			this.onLike = this.like.bind(this);
-			this.onReply = this.reply.bind(this);
-			this.onCancelReply = this.cancelReply.bind(this);
-			this.onViewableMessagesChanged = this.viewableMessagesChanged.bind(this);
-			this.onScrollToNewMessages = this.scrollToNewMessages.bind(this);
-			this.onClose = this.close.bind(this);
+			this.chatService = new ChatService(this.store);
+			this.messageService = null;
+			this.messageRenderer = null;
+			this.audioMessagePlayer = new AudioMessagePlayer(this.store);
 
-			this.onMessageAdd = this.drawPage.bind(this);
-			this.onMessagePush = this.drawPushMessage.bind(this);
-			this.onMessageUpdate = this.drawUpdateMessage.bind(this);
-			this.onMessageLike = this.drawLike.bind(this);
+			/* region View event handlers */
+
+			this.submitHandler = this.sendMessage.bind(this);
+			this.attachTapHandler = this.onAttachTap.bind(this);
+			this.resendHandler = this.resendMessage.bind(this);
+			this.loadTopPageHandler = this.loadTopPage.bind(this);
+			this.loadBottomPageHandler = this.loadBottomPage.bind(this);
+			this.scrollBeginHandler = this.onScrollBegin.bind(this);
+			this.scrollEndHandler = this.onScrollEnd.bind(this);
+			this.likeHandler = this.onLike.bind(this);
+			this.replyHandler = this.onReply.bind(this);
+			this.readyToReplyHandler = this.onReadyToReply.bind(this);
+			this.quoteTapHandler = this.onQuoteTap.bind(this);
+			this.cancelReplyHandler = this.onCancelReply.bind(this);
+			this.viewableMessagesChangedHandler = this.onViewableMessagesChanged.bind(this);
+			this.messageReadHandler = this.onReadMessage.bind(this);
+			this.scrollToNewMessagesHandler = this.onScrollToNewMessages.bind(this);
+			this.playAudioButtonTapHandler = this.onAudioButtonTap.bind(this);
+			this.playbackCompletedHandler = this.onPlaybackCompleted.bind(this);
+			this.urlTapHandler = this.onUrlTap.bind(this);
+			this.mentionTapHandler = this.onMentionTap.bind(this);
+			this.messageTapHandler = this.onMessageTap.bind(this);
+			this.messageAvatarTapHandler = this.onMessageAvatarTap.bind(this);
+			this.messageQuoteTapHandler = this.onMessageQuoteTap.bind(this);
+			this.messageLongTapHandler = this.onMessageLongTap.bind(this);
+			this.messageDoubleTapHandler = this.onMessageDoubleTap.bind(this);
+			this.messageMenuReactionTapHandler = this.onLike.bind(this);
+			this.messageMenuActionTapHandler = this.onMessageMenuAction.bind(this);
+			this.closeHandler = this.onClose.bind(this);
+
+			/* endregion View event handlers */
+
+			//render functions
+			this.storeHandler = this.drawMessageList.bind(this);
+			this.updateHandler = this.redrawMessage.bind(this);
+			this.dialogUpdateHandler = this.redrawHeader.bind(this);
+			this.dialogDeleteHandler = () => {};
+
+			if (FeatureFlag.dialog.nativeSupported)
+			{
+				//TODO: generalize the approach to background caching
+				Dialog.preloadAssets();
+			}
+		}
+
+		static preloadAssets()
+		{
+			backgroundCache.downloadImages([
+				CopyAction.imageUrl,
+				QuoteAction.imageUrl,
+				ProfileAction.imageUrl,
+				EditAction.imageUrl,
+				DeleteAction.imageUrl,
+			]);
+
+			backgroundCache.downloadLottieAnimations([
+				LikeReaction.lottieUrl,
+				KissReaction.lottieUrl,
+				LaughReaction.lottieUrl,
+				WonderReaction.lottieUrl,
+				CryReaction.lottieUrl,
+				AngryReaction.lottieUrl,
+				FacepalmReaction.lottieUrl,
+			]);
 		}
 
 		subscribeViewEvents()
 		{
 			this.view
-				.on(EventType.dialog.submit, this.onSubmit)
-				.on(EventType.dialog.loadMore, this.onLoadMore)
-				.on(EventType.dialog.like, this.onLike)
-				.on(EventType.dialog.reply, this.onReply)
-				.on(EventType.dialog.cancelReply, this.onCancelReply)
-				.on(EventType.dialog.viewableMessagesChanged, this.onViewableMessagesChanged)
-				.on(EventType.dialog.scrollToNewMessages, this.onScrollToNewMessages)
-				.on(EventType.view.close, this.onClose)
+				.on(EventType.dialog.submit, this.submitHandler)
+				.on(EventType.dialog.attachTap, this.attachTapHandler)
+				.on(EventType.dialog.resend, this.resendHandler)
+				.on(EventType.dialog.loadTopPage, this.loadTopPageHandler)
+				.on(EventType.dialog.loadBottomPage, this.loadBottomPageHandler)
+				.on(EventType.dialog.scrollBegin, this.scrollBeginHandler)
+				.on(EventType.dialog.scrollEnd, this.scrollEndHandler)
+				.on(EventType.dialog.like, this.likeHandler)
+				.on(EventType.dialog.reply, this.replyHandler)
+				.on(EventType.dialog.readyToReply, this.readyToReplyHandler)
+				.on(EventType.dialog.quoteTap, this.quoteTapHandler)
+				.on(EventType.dialog.cancelReply, this.cancelReplyHandler)
+				.on(EventType.dialog.viewableMessagesChanged, this.viewableMessagesChangedHandler)
+				.on(EventType.dialog.messageRead, this.messageReadHandler)
+				.on(EventType.dialog.scrollToNewMessages, this.scrollToNewMessagesHandler)
+				.on(EventType.dialog.playAudioButtonTap, this.playAudioButtonTapHandler)
+				.on(EventType.dialog.playbackCompleted, this.playbackCompletedHandler)
+				.on(EventType.dialog.urlTap, this.urlTapHandler)
+				.on(EventType.dialog.mentionTap, this.mentionTapHandler)
+				.on(EventType.dialog.messageTap, this.messageTapHandler)
+				.on(EventType.dialog.messageAvatarTap, this.messageAvatarTapHandler)
+				.on(EventType.dialog.messageQuoteTap, this.messageQuoteTapHandler)
+				.on(EventType.dialog.messageLongTap, this.messageLongTapHandler)
+				.on(EventType.dialog.messageDoubleTap, this.messageDoubleTapHandler)
+				.on(EventType.dialog.messageMenuReactionTap, this.messageMenuReactionTapHandler)
+				.on(EventType.dialog.messageMenuActionTap, this.messageMenuActionTapHandler)
+				.on(EventType.view.close, this.closeHandler)
 			;
 		}
 
 		unsubscribeViewEvents()
 		{
-			this.view
-				.off(EventType.dialog.submit, this.onSubmit)
-				.off(EventType.dialog.loadMore, this.onLoadMore)
-				.off(EventType.dialog.like, this.onLike)
-				.off(EventType.dialog.reply, this.onReply)
-				.off(EventType.dialog.cancelReply, this.onCancelReply)
-				.off(EventType.dialog.viewableMessagesChanged, this.onViewableMessagesChanged)
-				.off(EventType.dialog.scrollToNewMessages, this.onScrollToNewMessages)
-				.off(EventType.view.close, this.onClose)
-			;
+			this.view.removeAll();
 		}
 
 		subscribeStoreEvents()
 		{
-			MessengerStoreManager
-				.on('messagesModel/add', this.onMessageAdd)
-				.on('messagesModel/push', this.onMessagePush)
-				.on('messagesModel/update', this.onMessageUpdate)
-				.on('messagesModel/setLikes', this.onMessageLike)
+			this.storeManager
+				.on('messagesModel/store', this.storeHandler)
+				.on('messagesModel/update', this.updateHandler)
+				.on('messagesModel/updateWithId', this.updateHandler)
+				.on('dialoguesModel/add', this.dialogUpdateHandler)
+				.on('dialoguesModel/update', this.dialogUpdateHandler)
+				.on('dialoguesModel/delete', this.dialogDeleteHandler)
 			;
 		}
 
 		unsubscribeStoreEvents()
 		{
-			MessengerStoreManager
-				.off('messagesModel/add', this.onMessageAdd)
-				.off('messagesModel/push', this.onMessagePush)
-				.off('messagesModel/update', this.onMessageUpdate)
-				.off('messagesModel/setLikes', this.onMessageLike)
+			this.storeManager
+				.off('messagesModel/store', this.storeHandler)
+				.off('messagesModel/update', this.updateHandler)
+				.off('messagesModel/updateWithId', this.updateHandler)
+				.off('dialoguesModel/add', this.dialogUpdateHandler)
+				.off('dialoguesModel/update', this.dialogUpdateHandler)
+				.off('dialoguesModel/delete', this.dialogDeleteHandler)
 			;
+		}
+
+		initManagers()
+		{
+			this.replyManager = new ReplyManager({
+				store: this.store,
+				dialogView: this.view,
+			});
 		}
 
 		open(options)
@@ -119,22 +246,21 @@ jn.define('im/messenger/controller/dialog/dialog', (require, exports, module) =>
 				dialogTitleParams,
 			} = options;
 
-			MessengerStore.dispatch('applicationModel/setDialogId', dialogId);
+			this.dialogId = dialogId;
 
-			this.readRecent(dialogId);
-
-			MessengerStore.dispatch('recentModel/like', {
+			this.store.dispatch('applicationModel/openDialogId', dialogId);
+			this.store.dispatch('recentModel/like', {
 				id: dialogId,
 				liked: false,
 			});
 
 			const chatSettings = Application.storage.getObject('settings.chat', {
-				nativeDialogEnable: false,
+				chatBetaEnable: false,
 			});
 			const isOpenlinesChat = dialogTitleParams && dialogTitleParams.chatType === 'lines';
 			if (
 				!FeatureFlag.dialog.nativeSupported
-				|| !chatSettings.nativeDialogEnable
+				|| !chatSettings.chatBetaEnable
 				|| isOpenlinesChat
 			)
 			{
@@ -142,10 +268,6 @@ jn.define('im/messenger/controller/dialog/dialog', (require, exports, module) =>
 
 				return;
 			}
-
-			this.pageNavigation = new PageNavigation({
-				itemsPerPage: 50,
-			});
 
 			let titleParams = null;
 			if (dialogTitleParams)
@@ -157,13 +279,13 @@ jn.define('im/messenger/controller/dialog/dialog', (require, exports, module) =>
 					useLetterImage: true,
 				};
 
-				if (!dialogTitleParams.imageUrl || dialogTitleParams.imageUrl === '')
+				if (!dialogTitleParams.avatar || dialogTitleParams.avatar === '')
 				{
 					titleParams.imageColor = dialogTitleParams.color;
 				}
 			}
 
-			this.createView(titleParams);
+			this.createWidget(titleParams);
 		}
 
 		openLine(options)
@@ -173,41 +295,102 @@ jn.define('im/messenger/controller/dialog/dialog', (require, exports, module) =>
 
 		getDialogId()
 		{
-			return MessengerStore.getters['applicationModel/getDialogId'];
+			return this.dialogId;
 		}
 
-		createView(titleParams = null)
+		getDialog()
+		{
+			const dialog = this.store.getters['dialoguesModel/getById'](this.dialogId);
+
+			return dialog || {};
+		}
+
+		getChatId()
+		{
+			const dialog = this.store.getters['dialoguesModel/getById'](this.dialogId);
+			if (dialog && dialog.chatId && dialog.chatId > 0)
+			{
+				return dialog.chatId;
+			}
+
+			return 0;
+		}
+
+		createWidget(titleParams = null)
 		{
 			if (!titleParams)
 			{
-				titleParams = this.getTitleParams();
+				titleParams = this.createTitleParams();
 			}
 
+			this.titleParams = titleParams;
 			PageManager.openWidget(
 				'chat.dialog',
 				{
-					onReady: view => this.onViewReady(view),
-					onError: error => Logger.error(error),
-					titleParams,
+					titleParams: this.titleParams,
 				},
-			);
+			)
+				.then(this.onWidgetReady.bind(this))
+				.catch(error => Logger.error(error))
+			;
 		}
 
-		onViewReady(view)
+		onWidgetReady(widget)
 		{
-			this.view = view;
-
+			this.createView(widget);
 			this.drawHeaderButtons();
-
-			this.view.setInputPlaceholder(Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_INPUT_PLACEHOLDER_TEXT'));
-
 			this.subscribeViewEvents();
 			this.subscribeStoreEvents();
+			this.initManagers();
 
-			this.loadNextPage();
+			let savedMessages = [];
+			if (this.getChatId() > 0)
+			{
+				savedMessages = this.store.getters['messagesModel/getByChatId'](this.getChatId());
+			}
+
+			let loadMessagesPromise;
+			if (!Type.isArrayFilled(savedMessages) || !this.getDialog().inited)
+			{
+				Logger.info(`Dialog: dialogId: ${this.dialogId} first load`);
+				loadMessagesPromise = this.chatService.loadChatWithMessages(this.dialogId);
+				this.view.showMessageListLoader();
+			}
+			else
+			{
+				Logger.info(`Dialog: dialogId: ${this.dialogId} rerender`);
+				loadMessagesPromise = this.store.dispatch('messagesModel/forceUpdateByChatId', { chatId: this.getChatId() });
+			}
+
+			loadMessagesPromise.then(() => {
+				this.view.hideMessageListLoader();
+				this.messageService = new MessageService({
+					store: this.store,
+					chatId: this.getChatId(),
+				});
+
+				this._redrawHeader();
+			});
 		}
 
-		getTitleParams()
+		createView(widget)
+		{
+			this.view = new DialogView({
+				ui: widget,
+				dialogId: this.getDialogId(),
+				chatId: this.getChatId(),
+			});
+
+			this.messageRenderer = new MessageRenderer({
+				store: this.store,
+				view: this.view,
+				dialogId: this.getDialogId(),
+				chatId: this.getChatId(),
+			});
+
+			this.view.setInputPlaceholder(Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_INPUT_PLACEHOLDER_TEXT'));
+		}
+		createTitleParams()
 		{
 			const dialogId = this.getDialogId();
 			const avatar = ChatAvatar.createFromDialogId(dialogId);
@@ -216,7 +399,7 @@ jn.define('im/messenger/controller/dialog/dialog', (require, exports, module) =>
 			return {
 				...avatar.getTitleParams(),
 				...title.getTitleParams(),
-				callback: '1',
+				//callback: '1',
 			};
 		}
 
@@ -235,7 +418,7 @@ jn.define('im/messenger/controller/dialog/dialog', (require, exports, module) =>
 		drawUserHeaderButtons()
 		{
 			const dialogId = this.getDialogId();
-			const userData = MessengerStore.getters['usersModel/getUserById'](dialogId);
+			const userData = this.store.getters['usersModel/getUserById'](dialogId);
 			if (!userData)
 			{
 				return;
@@ -253,12 +436,9 @@ jn.define('im/messenger/controller/dialog/dialog', (require, exports, module) =>
 
 			this.view.setRightButtons([
 				{
-					type: 'call_audio',
-					callback: this.createAudioCall.bind(this),
-				},
-				{
 					type: 'call_video',
 					badgeCode: 'call_video',
+					testId: 'DIALOG_HEADER_VIDEO_CALL_BUTTON',
 					callback: this.createVideoCall.bind(this),
 				},
 			]);
@@ -267,13 +447,8 @@ jn.define('im/messenger/controller/dialog/dialog', (require, exports, module) =>
 		drawDialogHeaderButtons()
 		{
 			const dialogId = this.getDialogId();
-			const dialogData = MessengerStore.getters['dialoguesModel/getById'](dialogId);
+			const dialogData = this.store.getters['dialoguesModel/getById'](dialogId);
 			if (!dialogData)
-			{
-				return;
-			}
-
-			if (!dialogData.restrictions.call)
 			{
 				return;
 			}
@@ -289,11 +464,6 @@ jn.define('im/messenger/controller/dialog/dialog', (require, exports, module) =>
 					return;
 				}
 
-				if (!dialogData.restrictions.extend)
-				{
-					return;
-				}
-
 				this.view.setRightButtons([{
 					type: 'user_plus',
 					callback: () => {},
@@ -304,312 +474,527 @@ jn.define('im/messenger/controller/dialog/dialog', (require, exports, module) =>
 
 			this.view.setRightButtons([
 				{
-					type: 'call_audio',
-					callback: this.createAudioCall.bind(this),
-				},
-				{
 					type: 'call_video',
 					badgeCode: 'call_video',
+					testId: 'DIALOG_HEADER_VIDEO_CALL_BUTTON',
 					callback: this.createVideoCall.bind(this),
 				},
 			]);
 		}
 
-		close()
+		onClose()
 		{
-			MessengerStore.dispatch('applicationModel/setDialogId', 0)
+			const dialogId = this.getDialogId();
+			this.unsubscribeStoreEvents();
+			this.unsubscribeViewEvents();
+			this.audioMessagePlayer.stop();
+
+			this.store.dispatch('applicationModel/closeDialogId', dialogId)
 				.then(() => {
-					this.unsubscribeStoreEvents();
-					this.unsubscribeViewEvents();
-
-					this.quoteMessage = null;
-
-					this.view.back();
+					MessengerEmitter.emit(EventType.messenger.closeDialog, dialogId);
 				})
 			;
 		}
 
-		viewableMessagesChanged(indexList = [], messageList = [])
+		onViewableMessagesChanged(indexList = [], messageList = [])
 		{
-			if (indexList.includes(1))
+			if (!this.view.scrollToFirstUnreadCompleted)
+			{
+				return;
+			}
+
+			//TODO: refactor
+			const date = this.store.getters['messagesModel/getMessageById'](this.view.getTopMessage().id).date;
+			if (date)
+			{
+				const dateText = DateFormatter.getDateGroupFormat(date);
+
+				this.view.setFloatingText(dateText);
+			}
+
+			if (indexList.includes(0))
 			{
 				this.view.hideScrollToNewMessagesButton();
+
 				return;
 			}
 
 			this.view.showScrollToNewMessagesButton();
 		}
 
-		scrollToNewMessages()
+		onReadMessage(messageId)
 		{
-			//TODO: scroll to last unread message or to last message
+			if (!this.view.scrollToFirstUnreadCompleted)
+			{
+				return;
+			}
 
-			const withAnimation = true;
+			this.chatService.readMessage(this.getChatId(), messageId);
+		}
 
-			this.view.scrollToMessageByIndex(0, withAnimation);
+		onScrollToNewMessages()
+		{
+			this.view.scrollToBottomSmoothly();
+		}
+
+		onScrollBegin()
+		{
+			this.view.showFloatingText();
+		}
+
+		onScrollEnd()
+		{
+			this.view.hideFloatingText();
+		}
+
+		onAudioButtonTap(index, message, isPlaying, playingTime)
+		{
+			const shouldPlayAudio = !isPlaying;
+			if (shouldPlayAudio)
+			{
+				this.audioMessagePlayer.play(Number(message.id), playingTime);
+			}
+			else
+			{
+				this.audioMessagePlayer.stop(playingTime);
+			}
+		}
+
+		onPlaybackCompleted()
+		{
+			this.audioMessagePlayer.playNext();
+		}
+
+		onUrlTap(url)
+		{
+			Logger.log('Dialog.onUrlTap: ', url);
+
+			inAppUrl.open(url);
+		}
+
+		onMentionTap(userId)
+		{
+			MessengerEmitter.emit(EventType.messenger.openDialog, { dialogId: userId.toString() });
+		}
+
+		onMessageTap(index, message)
+		{
+			const modelMessage = this.store.getters['messagesModel/getMessageById'](Number(message.id));
+			if (!modelMessage || !modelMessage.files[0])
+			{
+				return;
+			}
+
+			const file = this.store.getters['filesModel/getById'](modelMessage.files[0]);
+			if (file && file.type === MessageType.image)
+			{
+				viewer.openImage(file.urlShow, file.name);
+			}
+
+			if (file && file.type === FileType.video)
+			{
+				viewer.openVideo(file.urlDownload);
+			}
+
+			if (file && file.type === FileType.file)
+			{
+				viewer.openDocument(file.urlDownload, file.name);
+			}
+		}
+
+		onMessageAvatarTap(index, message)
+		{
+			const messageId = Number(message.id);
+			const modelMessage = this.store.getters['messagesModel/getMessageById'](messageId);
+			if (!modelMessage)
+			{
+				return;
+			}
+
+			const authorId = modelMessage.authorId;
+			const user = this.store.getters['usersModel/getUserById'](authorId);
+			if (!user)
+			{
+				return;
+			}
+
+			if (!user.bot)
+			{
+				UserProfile.show(authorId, { backdrop: true });
+			}
+		}
+
+		onMessageLongTap(index, message)
+		{
+			const messageId = Number(message.id);
+			const isRealMessage = Type.isNumber(messageId);
+
+			const modelMessage = this.store.getters['messagesModel/getMessageById'](messageId);
+			const userId = MessengerParams.getUserId();
+			const isYourMessage = modelMessage.authorId === userId;
+			const isSystemMessage = modelMessage.authorId === 0;
+			const isDeletedMessage = modelMessage.params.IS_DELETED === 'Y';
+			const isMessageHasText = modelMessage.text !== '';
+
+			if (!isRealMessage)
+			{
+				return;
+			}
+
+			const menu =
+				MessageMenu
+					.create()
+					.addReaction(LikeReaction)
+					.addReaction(KissReaction)
+					.addReaction(LaughReaction)
+					.addReaction(WonderReaction)
+					.addReaction(CryReaction)
+					.addReaction(AngryReaction)
+					.addReaction(FacepalmReaction)
+			;
+
+			menu.addAction(QuoteAction);
+
+			if (isMessageHasText)
+			{
+				menu.addAction(CopyAction);
+			}
+
+			if (!isYourMessage && !isSystemMessage)
+			{
+				menu.addAction(ProfileAction);
+			}
+
+			if (isYourMessage && !isDeletedMessage)
+			{
+				menu.addAction(EditAction);
+				menu
+					.addSeparator()
+					.addAction(DeleteAction)
+				;
+			}
+
+			this.view.showMenuForMessage(message, menu);
+			Haptics.impactMedium();
+		}
+
+		onMessageDoubleTap(index, message)
+		{
+			if (!message.showReaction)
+			{
+				return;
+			}
+
+			this.onLike(index, message);
 		}
 
 		sendMessage(text)
 		{
+			this.view.clearInput();
+
+			let shouldScrollToBottom = true;
+			if (this.replyManager.isEditInProcess)
+			{
+				shouldScrollToBottom = false;
+
+				const editMessageId = this.replyManager.getEditMessage().id;
+				this.messageService.updateText(editMessageId, text);
+				this.replyManager.finishEditingMessage();
+
+				return;
+			}
+
 			if (text === '')
 			{
 				return;
 			}
 
-			this.view.clearInput();
-
-			if (this.quoteMessage)
+			if (this.replyManager.isQuoteInProcess)
 			{
-				text = DialogConverter.toQuote(this.quoteMessage, text);
-				this.cancelReply();
+				const quoteText = this.replyManager.getQuoteText();
+				text = quoteText + text;
+
+				this.onCancelReply();
 			}
 
 			const uuid = Uuid.getV4();
 
 			const message = {
+				chatId: this.getChatId(),
 				authorId: MessengerParams.getUserId(),
-				dialogId: this.getDialogId(),
 				text,
 				unread: false,
-				templateId: uuid,
+				uuid,
+				date: new Date(),
+				sending: true,
 			};
 
-			this.pushMessage({
-				dialogId: this.getDialogId(),
-				message,
-			}).then(() => {
-				//TODO: chatbackground::task::add
+			this.store.dispatch('messagesModel/add', message).then(() => {
+				if (shouldScrollToBottom)
+				{
+					this.view.scrollToBottomSmoothly();
+				}
 
-				// BX.postComponentEvent('chatbackground::task::add', [
-				// 	'sendMessage|' + uuid,
-				// 	[
-				// 		RestMethod.imMessageAdd,
-				// 		{
-				// 			'TEMPLATE_ID': uuid,
-				// 			'DIALOG_ID': this.getDialogId(,
-				// 			'MESSAGE': message.text,
-				// 		}
-				// 	],
-				// 	message
-				// ], 'background');
-
-				MessageService.send({
+				const message = {
 					dialogId: this.getDialogId(),
 					text,
 					messageType: 'self',
-					templateId: uuid,
-				}).then((response) => {
-					this.pushMessage({
-						dialogId: this.getDialogId(),
-						message: {
-							id: response.data(),
-							...message,
-						},
-					});
+					uuid,
+				};
+
+				this._sendMessage(message);
+			});
+		}
+
+		onAttachTap()
+		{
+			this.showComingSoonNotification();
+			return;
+
+			this.view.showAttachPicker((fileList) => {
+				fileList.forEach((file) => {
+					// const task = UploadTask.createFromFile(file);
+					//
+					// uploader.addTask(task);
 				});
 			});
 		}
 
-		like(index, message, like)
+		_sendMessage(message)
 		{
-			// const messageId = message.id;
-			//
-			// MessageService.like({ messageId });
-			//
-			// MessengerStore.dispatch('messagesModel/setLikes', {
-			// 	dialogId: this.getDialogId(),
-			// 	messageId,
-			// 	//likeList
-			// });
+			Logger.log('Dialog._sendMessage', message);
+
+			MessageRest
+				.send(message)
+				.then((response) => {
+					this.store.dispatch('messagesModel/updateWithId', {
+						id: message.uuid,
+						fields: {
+							id: response.data(),
+							error: false,
+						},
+					});
+				})
+				.catch(() => {
+					this.store.dispatch('messagesModel/update', {
+						id: message.uuid,
+						fields: {
+							error: true,
+						},
+					});
+				})
+			;
 		}
 
-		reply(index, message)
+		resendMessage(index, message)
 		{
-			this.quoteMessage = message;
-			this.view.setInputQuote(this.quoteMessage);
+			const modelMessage = this.store.getters['messagesModel/getMessageById'](message.id);
+			const messageToSend = {
+				dialogId: this.getDialogId(),
+				text: modelMessage.text,
+				messageType: 'self',
+				uuid: message.id,
+			};
+
+			this._sendMessage(messageToSend);
 		}
 
-		cancelReply()
+		onLike(index, message, like)
 		{
-			this.quoteMessage = null;
-			this.view.removeInputQuote();
+			const messageId = Number(message.id);
+			const likeList = this.store.getters['messagesModel/getMessageReaction'](messageId, ReactionType.like);
+			if (likeList.includes(MessengerParams.getUserId()))
+			{
+				this.messageService.removeReaction(ReactionType.like, Number(messageId));
+			}
+			else
+			{
+				this.messageService.addReaction(ReactionType.like, Number(messageId));
+			}
 		}
 
-		loadNextPage()
+		onMessageMenuAction(actionId, message)
 		{
-			if (!this.pageNavigation.hasNextPage || this.pageNavigation.isPageLoading)
+			const messageId = Number(message.id);
+			const modelMessage = this.store.getters['messagesModel/getMessageById'](messageId);
+			if (!message)
 			{
 				return;
 			}
 
-			this.pageNavigation.turnPage();
-			this.pageNavigation.isPageLoading = true;
-
-			if (this.pageNavigation.currentPage === 1)
+			switch (actionId)
 			{
-				const firstPage =
-					MessengerStore.getters['messagesModel/getDialogPage'](
-						this.getDialogId(),
-						1,
-						this.pageNavigation.itemsPerPage
-					)
-				;
+				case CopyAction.id:
+					Application.copyToClipboard(parser.prepareCopy(modelMessage));
 
-				if (firstPage.length > 0)
-				{
-					this.drawPage();
-					this.view.setCanLoadMore(true);
-				}
+					InAppNotifier.showNotification({
+						title: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_MESSAGE_COPIED'),
+						time: 1,
+					});
+					break;
+
+				case QuoteAction.id:
+					this.onReply(0, message);
+					break;
+
+				case ProfileAction.id:
+					UserProfile.show(modelMessage.authorId, { backdrop: true });
+					break;
+
+				case EditAction.id:
+					this.replyManager.startEditingMessage(message);
+					break;
+
+				case DeleteAction.id:
+					this.messageService.delete(modelMessage.id);
+					break;
+			}
+		}
+
+		onReply(index, message)
+		{
+			if (
+				this.replyManager.isQuoteInProcess
+				&& message.id === this.replyManager.getQuoteMessage().id
+			)
+			{
+				return;
 			}
 
-			this.getPageFromService().then((response) => {
-				const messages = response.data().messages;
+			this.replyManager.startQuotingMessage(message);
+		}
 
-				const messagesPayload = {
-					dialogId: this.getDialogId(),
-					messages,
-				};
+		onReadyToReply()
+		{
+			Haptics.impactMedium();
+		}
 
-				const usersPayload = response.data().users;
+		onQuoteTap(message)
+		{
+			const messageId = message.id;
+			const modelMessage = this.store.getters['messagesModel/getMessageById'](messageId);
+			if (!modelMessage)
+			{
+				return;
+			}
 
-				if (messages.length === 0)
+			this.view.scrollToMessageById(messageId, true, () => {
+				//TODO: temporary solution for highlight message after scroll, generalize and refactor
+				let viewMessage = DialogConverter.createMessageList([ modelMessage ])[0];
+				viewMessage.style.backgroundColor = getPressedColor('#ffffff');
+				this.view.updateMessageById(messageId, viewMessage);
+
+				setTimeout(() => {
+					viewMessage = DialogConverter.createMessageList([ modelMessage ])[0];
+					this.view.updateMessageById(messageId, viewMessage);
+				}, 500);
+			}, AfterScrollMessagePosition.center);
+		}
+
+		onMessageQuoteTap()
+		{
+			this.showComingSoonNotification();
+		}
+
+		onCancelReply()
+		{
+			if (this.replyManager.isEditInProcess)
+			{
+				this.replyManager.finishEditingMessage();
+
+				return;
+			}
+
+			if (this.replyManager.isQuoteInProcess)
+			{
+				this.replyManager.finishQuotingMessage();
+			}
+		}
+
+		loadTopPage()
+		{
+			this.messageService.loadHistory();
+		}
+
+		loadBottomPage()
+		{
+			this.messageService.loadUnread();
+		}
+
+		drawMessageList(mutation)
+		{
+			const messageList = clone(mutation.payload.messages);
+
+			const currentDialogMessageList = [];
+			messageList.forEach(message => {
+				if (message.chatId !== this.getChatId())
 				{
-					this.pageNavigation.hasNextPage = false;
-					this.pageNavigation.isPageLoading = false;
-
-					this.view.setCanLoadMore(false);
-
 					return;
 				}
 
-				this.saveUsers(usersPayload)
-					.then(() => {
-						this.saveMessages(messagesPayload);
-					})
-				;
-
-				this.pageNavigation.isPageLoading = false;
-
-				if (messages.length < this.pageNavigation.itemsPerPage)
-				{
-					this.pageNavigation.hasNextPage = false;
-					this.view.setCanLoadMore(false);
-				}
-			});
-		}
-
-		getPageFromService()
-		{
-			const options = {
-				dialogId: this.getDialogId(),
-				limit: this.pageNavigation.itemsPerPage,
-			};
-
-			if (this.pageNavigation.currentPage > 1)
-			{
-				options.toMessageId = MessengerStore.getters['messagesModel/getLastMessageIdByPage'](
-					this.getDialogId(),
-					this.pageNavigation.currentPage,
-					this.pageNavigation.itemsPerPage,
-				);
-			}
-
-			return DialogService.getMessageList(options);
-		}
-
-		drawPage()
-		{
-			let messages = MessengerStore.getters['messagesModel/getDialogPage'](
-				this.getDialogId(),
-				this.pageNavigation.currentPage,
-				this.pageNavigation.itemsPerPage
-			);
-
-			messages.map((message) => {
-				const user = MessengerStore.getters['usersModel/getUserById'](message.authorId);
-
-				message.author_name = (user && user.name) ? user.name : '';
-
-				return message;
+				currentDialogMessageList.push(message);
 			});
 
-			messages = DialogConverter.toMessageList(messages);
-
-			if (this.pageNavigation.currentPage === 1)
-			{
-				this.view.setMessages(messages);
-				return;
-			}
-
-			this.view.pushMessages(messages);
-		}
-
-		drawPushMessage(mutation, state)
-		{
-			Logger.log('drawPushMessage', mutation, state);
-
-			const pushMessage = mutation.payload.message;
-
-			if (this.getDialogId() !== String(pushMessage.dialogId))
+			if (!Type.isArrayFilled(currentDialogMessageList))
 			{
 				return;
 			}
 
-			const message = DialogConverter.toMessageItem(pushMessage);
-
-			this.view.addMessage(message);
-			this.view.scrollToNewMessage();
+			this.messageRenderer.render(currentDialogMessageList);
 		}
 
-		drawUpdateMessage(mutation, state)
+		redrawMessage(mutation)
 		{
-			Logger.log('drawPushMessage', mutation, state);
+			let messageId = mutation.payload.id;
+			const isSendError = mutation.payload.fields.error;
+			if (isSendError === false && Uuid.isV4(messageId))
+			{
+				messageId = mutation.payload.fields.id;
+			}
 
-			const pushMessage = mutation.payload.message;
-
-			if (this.getDialogId() !== String(pushMessage.dialogId))
+			const message = this.store.getters['messagesModel/getMessageById'](messageId);
+			if (!message || message.chatId !== this.getChatId())
 			{
 				return;
 			}
 
-			const message = DialogConverter.toMessageItem(pushMessage);
-
-			this.view.updateMessageById(pushMessage.id, message);
+			this.messageRenderer.render([ message ]);
 		}
 
-		drawLike(mutation, state)
+		redrawHeader(mutation)
 		{
-			// this.view.updateMessageByIndex(
-			// 	mutation.payload.index,
-			// 	DialogConverter.toMessageItem(this.memory.getMessageByIndex(mutation.payload.index))
-			// );
+			const dialogId = mutation.payload.dialogId;
+			if (dialogId !== this.getDialogId())
+			{
+				return;
+			}
+
+			this._redrawHeader();
 		}
 
-		saveMessages(messages)
+		_redrawHeader()
 		{
-			return MessengerStore.dispatch('messagesModel/add', messages);
-		}
+			const actualTitleParams = this.createTitleParams();
+			const isTitleParamsActual = isEqual(actualTitleParams, this.titleParams);
+			if (isTitleParamsActual)
+			{
+				Logger.info('Dialog._redrawHeader: header is up-to-date, redrawing is cancelled.');
 
-		pushMessage(message)
-		{
-			return MessengerStore.dispatch('messagesModel/push', message);
-		}
+				return;
+			}
 
-		saveUsers(users)
-		{
-			return MessengerStore.dispatch('usersModel/set', users);
+			Logger.info('Dialog._redrawHeader: before: ', this.titleParams, ' after: ', actualTitleParams);
+			this.view.setTitle(this.createTitleParams());
+			this.titleParams = actualTitleParams;
 		}
 
 		deleteCurrentDialog()
 		{
-			const dialogId = MessengerStore.getters['applicationModel/getDialogId'];
-
-			MessengerStore.dispatch('recentModel/delete', { id: dialogId })
+			this.store.dispatch('recentModel/delete', { id: this.getDialogId() })
 				.then(() => Counters.update())
 			;
-
-			MessengerStore.dispatch('dialoguesModel/delete', { id: dialogId });
-			MessengerStore.dispatch('usersModel/delete', { id: dialogId });
+			this.store.dispatch('dialoguesModel/delete', { id: this.getDialogId() });
+			this.store.dispatch('usersModel/delete', { id: this.getDialogId() });
 		}
 
 		openWebDialog(options)
@@ -660,37 +1045,12 @@ jn.define('im/messenger/controller/dialog/dialog', (require, exports, module) =>
 			Calls.createVideoCall(this.getDialogId());
 		}
 
-		readRecent(dialogId)
+		showComingSoonNotification()
 		{
-			const recentItem = ChatUtils.objectClone(MessengerStore.getters['recentModel/getById'](dialogId));
-			if (!recentItem)
-			{
-				return;
-			}
-
-			MessengerStore.dispatch('recentModel/set', [{
-				id: dialogId,
-				unread: false,
-			}]).then(() => {
-				new MessengerEvent(EventType.messenger.renderRecent).send();
-
-				Counters.update();
+			InAppNotifier.showNotification({
+				title: Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_COMING_SOON'),
+				time: 1,
 			});
-
-			RecentService.read({
-				dialogId,
-			})
-				.catch((result) =>
-				{
-					Logger.error('Recent item read error: ', result.error());
-
-					MessengerStore.dispatch('recentModel/set', [recentItem]).then(() => {
-						new MessengerEvent(EventType.messenger.renderRecent).send();
-
-						Counters.update();
-					});
-				})
-			;
 		}
 	}
 

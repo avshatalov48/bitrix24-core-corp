@@ -2,7 +2,6 @@
  * @module crm/entity-detail/component/right-buttons-provider/import-from-contact-list
  */
 jn.define('crm/entity-detail/component/right-buttons-provider/import-from-contact-list', (require, exports, module) => {
-
 	const { contacts } = require('native/contacts');
 	const { NotifyManager } = require('notify-manager');
 	const { get, isEmpty, mergeImmutable } = require('utils/object');
@@ -12,7 +11,6 @@ jn.define('crm/entity-detail/component/right-buttons-provider/import-from-contac
 	const { TypeId } = require('crm/type');
 
 	const addImportButton = (buttons, detailCard) => {
-
 		const { entityTypeId } = detailCard.getComponentParams();
 
 		if (
@@ -85,7 +83,7 @@ jn.define('crm/entity-detail/component/right-buttons-provider/import-from-contac
 							getEntityFields(detailCard.getEntityTypeId(), contactInfo),
 						);
 
-						const promise = detailCard.reload([{
+						const promise = detailCard.reloadWithData([{
 							id: 'main',
 							result: {
 								editor: {
@@ -209,12 +207,12 @@ jn.define('crm/entity-detail/component/right-buttons-provider/import-from-contac
 			fields.birthday = Math.round(birthday / 1000);
 		}
 
-		fields.emails = !isEmpty(emails) ? prepareEmails(emails) : [];
-		fields.phoneNumbers = !isEmpty(phoneNumbers) ? preparePhones(phoneNumbers) : [];
-		fields.im = !isEmpty(im) ? prepareMessengers(im) : [];
+		fields.emails = isEmpty(emails) ? [] : prepareEmails(emails);
+		fields.phoneNumbers = isEmpty(phoneNumbers) ? [] : preparePhones(phoneNumbers);
+		fields.im = isEmpty(im) ? [] : prepareMessengers(im);
 
 		const urlFields = prepareUrlFields(urls, socialProfiles);
-		fields.urls = !isEmpty(urlFields) ? urlFields : [];
+		fields.urls = isEmpty(urlFields) ? [] : urlFields;
 
 		return fields;
 	};
@@ -274,7 +272,7 @@ jn.define('crm/entity-detail/component/right-buttons-provider/import-from-contac
 		return (
 			values
 				.map(({ value, type }) => ({
-					id: 'n' + Math.round(Math.random() * 1000),
+					id: `n${Math.round(Math.random() * 1000)}`,
 					value: {
 						VALUE: stringify(value).trim(),
 						VALUE_TYPE: acceptedTypes.includes(type) ? type.toUpperCase() : 'OTHER',
@@ -284,8 +282,7 @@ jn.define('crm/entity-detail/component/right-buttons-provider/import-from-contac
 		);
 	};
 
-	const importContactSvg = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M10.8186 19.5701V12.1473C10.8186 11.4088 11.3967 10.8447 12.1534 10.8447H13.5269C13.575 10.5296 13.5607 10.2586 13.5607 10.2586C13.9834 10.4888 14.2587 9.46391 14.2587 9.46391C14.7586 8.04005 14.0097 8.12614 14.0097 8.12614C14.1407 7.25691 14.1407 6.37348 14.0097 5.50425C13.6767 2.62076 8.6637 3.40355 9.25812 4.34529C7.793 4.08038 8.12732 7.35262 8.12732 7.35262L8.4451 8.19999C8.00463 8.48043 8.09113 8.80227 8.18775 9.16179C8.22803 9.31167 8.27007 9.4681 8.27643 9.6308C8.30713 10.4474 8.81619 10.2782 8.81619 10.2782C8.84756 11.6259 9.52462 11.8014 9.52462 11.8014C9.6518 12.6477 9.57253 12.5037 9.57253 12.5037L8.97002 12.5752C8.97818 12.7677 8.9622 12.9604 8.92245 13.1491C8.57239 13.3022 8.35807 13.4241 8.14587 13.5447C7.92864 13.6683 7.71364 13.7905 7.35748 13.9438C5.99729 14.5289 4.51902 15.2898 4.25622 16.3144C4.13379 16.7916 4.01539 17.5308 3.92383 18.1843C5.91802 19.018 8.23089 19.5169 10.704 19.5701H10.8186Z" fill="#A8ADB4"/><path fill-rule="evenodd" clip-rule="evenodd" d="M17.5727 12.011H13.1119C12.5659 12.011 12.1488 12.3977 12.1488 12.9039V20.0599C12.1488 20.536 12.5659 20.9528 13.1119 20.9528H17.5727C18.1187 20.9528 18.5358 20.536 18.5358 20.0599V12.9039C18.5358 12.3983 18.1187 12.011 17.5727 12.011ZM15.3422 20.3424C15.0067 20.3424 14.7322 20.0745 14.7322 19.7469C14.7322 19.4193 15.0067 19.1515 15.3422 19.1515C15.6778 19.1515 15.9522 19.4193 15.9522 19.7469C15.9522 20.0745 15.6778 20.3424 15.3422 20.3424ZM17.4794 18.7194H13.2052V13.2266H17.4799L17.4794 18.7194Z" fill="#A8ADB4"/></svg>';
+	const importContactSvg = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M8 4C6.89543 4 6 4.89543 6 6C7.10457 6 8 6.89543 8 8C8 9.10457 7.10457 10 6 10C7.10457 10 8 10.8954 8 12C8 13.1046 7.10457 14 6 14C7.10457 14 8 14.8954 8 16C8 17.1046 7.10457 18 6 18C6 19.1046 6.89543 20 8 20H17C18.1046 20 19 19.1046 19 18V6C19 4.89543 18.1046 4 17 4H8ZM4 8C4 7.44772 4.44772 7 5 7H6C6.55228 7 7 7.44772 7 8C7 8.55228 6.55228 9 6 9H5C4.44772 9 4 8.55228 4 8ZM5 11C4.44772 11 4 11.4477 4 12C4 12.5523 4.44772 13 5 13H6C6.55228 13 7 12.5523 7 12C7 11.4477 6.55228 11 6 11H5ZM4 16C4 15.4477 4.44772 15 5 15H6C6.55228 15 7 15.4477 7 16C7 16.5523 6.55228 17 6 17H5C4.44772 17 4 16.5523 4 16ZM16.0512 14.3888C16.0901 14.5888 15.9849 14.7902 15.7953 14.8598C15.0063 15.1495 14.1166 15.3212 13.1732 15.3417H12.7915C11.8434 15.3211 10.9497 15.1479 10.1579 14.8556C9.97638 14.7886 9.87035 14.5999 9.90125 14.4072C9.93073 14.2233 9.96334 14.047 9.99664 13.9158C10.1106 13.4671 10.7513 13.1338 11.3409 12.8776C11.4952 12.8105 11.5884 12.7569 11.6826 12.7028L11.6826 12.7028C11.7746 12.65 11.8675 12.5966 12.0192 12.5295C12.0364 12.4469 12.0433 12.3625 12.0398 12.2782L12.301 12.2469C12.301 12.2469 12.3353 12.31 12.2802 11.9393C12.2802 11.9393 11.9867 11.8624 11.9731 11.2722C11.9731 11.2722 11.7525 11.3463 11.7392 10.9887C11.7364 10.9174 11.7182 10.8489 11.7007 10.7833C11.6589 10.6258 11.6214 10.4849 11.8123 10.362L11.6746 9.99093C11.6746 9.99093 11.5296 8.55782 12.1647 8.67384C11.907 8.2614 14.0799 7.91857 14.2242 9.18142C14.281 9.5621 14.281 9.94901 14.2242 10.3297C14.2242 10.3297 14.5488 10.292 14.3321 10.9156C14.3321 10.9156 14.2128 11.3644 14.0296 11.2636C14.0296 11.2636 14.0593 11.8308 13.7708 11.927C13.7708 11.927 13.7914 12.229 13.7914 12.2495L14.0325 12.2859C14.0325 12.2859 14.0252 12.5378 14.0733 12.5651C14.2933 12.7086 14.5344 12.8174 14.7881 12.8876C15.5367 13.0796 15.9169 13.4091 15.9169 13.6975L16.0512 14.3888Z" fill="#A8ADB4"/></svg>';
 
 	module.exports = { addImportButton };
-
 });

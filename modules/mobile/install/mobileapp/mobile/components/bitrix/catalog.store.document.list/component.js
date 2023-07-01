@@ -1,5 +1,6 @@
 (() => {
 	const { StatefulList } = jn.require('layout/ui/stateful-list');
+	const { AnalyticsLabel } = jn.require('analytics-label');
 
 	const COMPONENT_ID = 'CATALOG_STORE_LIST';
 	const PULL_MODULE_ID = 'catalog';
@@ -49,6 +50,7 @@
 					{
 						id: 'conductDocument',
 						title: BX.message('M_CSDL_CONTEXT_MENU_CONDUCT_DOCUMENT'),
+						showActionLoader: true,
 						onClickCallback: this.conductDocumentHandler.bind(this),
 						onActiveCallback: this.canConductDocumentHandler.bind(this),
 						data: {
@@ -58,6 +60,7 @@
 					{
 						id: 'cancelDocument',
 						title: BX.message('M_CSDL_CONTEXT_MENU_CANCELLATION_DOCUMENT'),
+						showActionLoader: true,
 						onClickCallback: this.cancelDocumentHandler.bind(this),
 						onActiveCallback: this.canCancelDocumentHandler.bind(this),
 						data: {
@@ -68,6 +71,7 @@
 						id: 'deleteDocument',
 						title: BX.message('M_CSDL_CONTEXT_MENU_DELETE_DOCUMENT'),
 						type: 'delete',
+						showActionLoader: true,
 						onClickCallback: this.deleteDocumentHandler.bind(this),
 						onActiveCallback: this.canDeleteDocumentHandler.bind(this),
 					},
@@ -172,7 +176,7 @@
 						else if (tab.selectable === false)
 						{
 							qrauth.open({
-								title: tab.title || BX.message('M_CSDL_TO_LOGIN_ON_DESKTOP'),
+								title: tab.title || BX.message('M_CSDL_TO_LOGIN_ON_DESKTOP_MSGVER_1'),
 								redirectUrl: this.getDesktopPageLink(tab.id),
 							});
 						}
@@ -209,7 +213,7 @@
 				return;
 			}
 
-			let tabId = this.getTabIdByDocumentType(documentType);
+			const tabId = this.getTabIdByDocumentType(documentType);
 
 			if (tabId)
 			{
@@ -343,6 +347,7 @@
 					showCancelButton: true,
 					showActionLoader: false,
 					title: BX.message('M_CSDL_CONTEXT_MENU_CREATE_DOCUMENT'),
+					isCustomIconColor: true,
 				},
 			});
 		}

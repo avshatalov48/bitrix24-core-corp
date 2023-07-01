@@ -2,8 +2,7 @@
  * @module crm/state-storage/manager/category-counters
  */
 jn.define('crm/state-storage/manager/category-counters', (require, exports, module) => {
-
-	const { Base } = jn.require('crm/state-storage/manager/base');
+	const { Base } = require('crm/state-storage/manager/base');
 
 	/**
 	 * @class CategoryCountersStoreManager

@@ -195,7 +195,8 @@ class Chat
 			return;
 		}
 
-		if ($activity['COMPLETED'] === 'Y')
+		// open activity again when user send message (but ignore system messages)
+		if ($activity['COMPLETED'] === 'Y' && $messageFields['SYSTEM'] !== 'Y')
 		{
 			\CCrmActivity::Update($activity['ID'], ['COMPLETED' => false]);
 		}

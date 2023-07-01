@@ -32,6 +32,7 @@ abstract class LimitManager
 
 	/**
 	 * Called on data export end.
+	 *
 	 * @param int $rowsCount How many data rows was exported.
 	 *
 	 * @return void
@@ -56,25 +57,31 @@ abstract class LimitManager
 	/**
 	 * Returns true if there is nothing to worry about.
 	 *
-	 * @return boolean
+	 * @return bool
 	 */
 	abstract public function checkLimitWarning();
 
 	/**
 	 * Returns true if data export and some functions is not disabled.
 	 *
-	 * @return boolean
+	 * @return bool
 	 */
 	abstract public function checkLimit();
 
 	/**
-	 * @param \Bitrix\Main\Event $event
+	 * Event OnAfterSetOption_~controller_group_name handler.
+	 *
+	 * @param \Bitrix\Main\Event $event Event parameters.
+	 *
 	 * @return void
 	 */
 	abstract public function licenseChange(\Bitrix\Main\Event $event);
 
 	/**
-	 * @param \Bitrix\Main\Event $event
+	 * Event OnAfterSetOption_~controller_group_name handler.
+	 *
+	 * @param \Bitrix\Main\Event $event Event parameters.
+	 *
 	 * @return void
 	 */
 	public static function onBitrix24LicenseChange(\Bitrix\Main\Event $event)

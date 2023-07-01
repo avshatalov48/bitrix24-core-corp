@@ -1,14 +1,16 @@
 <?php
+/** @var CMain $APPLICATION */
+
 IncludeModuleLangFile(__FILE__);
 
 $haveConnection = false;
 $configParams = \Bitrix\Main\Config\Configuration::getValue('connections');
 if (is_array($configParams))
 {
-	include_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/biconnector/lib/connection.php';
-	foreach ($configParams as $connectionName => $connectionParams)
+	include_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/biconnector/lib/db/mysqliconnection.php';
+	foreach ($configParams as $connectionParams)
 	{
-		if (is_a($connectionParams['className'], '\Bitrix\BIConnector\Connection', true))
+		if (is_a($connectionParams['className'], '\Bitrix\BIConnector\DB\MysqliConnection', true))
 		{
 			$haveConnection = true;
 		}

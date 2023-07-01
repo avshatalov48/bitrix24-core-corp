@@ -5,7 +5,7 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 
 	const { NavigationLoader } = require('navigation-loader');
 	const { debounce } = require('utils/function');
-	const { merge, mergeImmutable, get, clone, isEqual } = require('utils/object');
+	const { merge, mergeImmutable, get, set, clone, isEqual } = require('utils/object');
 	const { PureComponent } = require('layout/pure-component');
 	const { SimpleList } = require('layout/ui/simple-list');
 
@@ -365,9 +365,10 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 				this.showSearchBar();
 			}
 
-			if (this.needAnimateIds.length)
+			const simpleList = this.getSimpleList();
+			if (this.needAnimateIds.length > 0 && simpleList)
 			{
-				this.getSimpleList().lastElementIdAddedWithAnimation = this.needAnimateIds[this.needAnimateIds.length - 1];
+				simpleList.lastElementIdAddedWithAnimation = this.needAnimateIds[this.needAnimateIds.length - 1];
 				this.needAnimateIds.map(id => this.blinkItem(id));
 			}
 
@@ -555,37 +556,27 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 			return false;
 		}
 
-		updateItems(ids, showAnimateOnView = true, showAnimateImmediately = false)
+		updateItems(ids, showAnimateOnView = true, showAnimateImmediately = false, useFilter = true)
 		{
-			return new Promise(resolve => {
-				this.loadItemsByIds(ids).then(items => {
+			return new Promise((resolve) => {
+				this.loadItemsByIds(ids, useFilter).then((items) => {
 					this.prepareItems(items);
-
 					if (showAnimateOnView)
 					{
 						this.fillAnimateIds(items);
 					}
 
 					const simpleList = this.getSimpleList();
-
-					const animatePromises = [];
-					items.forEach(({ id }) => {
-						if (showAnimateImmediately)
-						{
-							animatePromises.push(simpleList.setLoading(id));
-						}
-					});
+					const animatePromises = showAnimateImmediately
+						? items.map(({ id }) => simpleList.setLoading(id))
+						: [];
 
 					Promise.all(animatePromises).then(() => {
-
-						const dropLoadingPromises = [];
-						items.forEach(({ id }) => {
-							dropLoadingPromises.push(simpleList.dropLoading(id));
-						});
+						const dropLoadingPromises = items.map(({ id }) => simpleList.dropLoading(id));
 
 						Promise.all(dropLoadingPromises).then(() => {
-							this.getSimpleList().listView.updateRows(items).then(() => {
-								items.forEach(item => {
+							simpleList.listView.updateRows(items).then(() => {
+								items.forEach((item) => {
 									const { id } = item;
 
 									if (this.state.items.has(id))
@@ -606,9 +597,10 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 
 		/**
 		 * @param {Number[]} ids
+		 * @param {boolean} useFilter
 		 * @returns {Promise}
 		 */
-		loadItemsByIds(ids)
+		loadItemsByIds(ids = [], useFilter = true)
 		{
 			return new Promise((resolve, reject) => {
 				if (!ids.length)
@@ -618,9 +610,16 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 				}
 
 				const data = clone(this.state.actionParams.loadItems || {});
-				data.extra = (data.extra || {});
-				const filterParams = (data.extra.filterParams || {});
+				data.extra = data.extra || {};
+				const filterParams = data.extra.filterParams || {};
 				filterParams.ID = ids;
+
+				if (!useFilter)
+				{
+					filterParams.FILTER_PRESET_ID = '';
+					set(data.extra, 'filter.presetId', "");
+				}
+
 				merge(data.extra, { filterParams }, { subscribeUser: true, filter: {} });
 
 				BX.ajax.runAction(this.actions.loadItems, { data })
@@ -639,15 +638,14 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 
 		fillAnimateIds(items)
 		{
-			items.forEach(item => this.addToAnimateIds(item.id));
+			items.forEach((item) => this.addToAnimateIds(item.id));
 		}
 
 		addToAnimateIds(id)
 		{
-			const { needAnimateIds } = this;
-			if (!needAnimateIds.includes(id))
+			if (!this.needAnimateIds.includes(id))
 			{
-				needAnimateIds.push(id);
+				this.needAnimateIds.push(id);
 			}
 		}
 
@@ -705,17 +703,29 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 			);
 
 			const cacheId = (useCache ? this.props.cacheName : null);
+			const uid = this.getLoadItemsRequestUid();
 
 			new RunActionExecutor(this.actions.loadItems, config.data, config.navigation)
 				.setCacheId(cacheId)
-				.setCacheHandler(response => this.drawListFromCache(response, blockPage, append))
-				.setHandler(response => this.drawListFromAjax(response, blockPage, append))
+				.setUid(uid)
+				.setCacheHandler((response, requestUid) => this.drawListFromCache(response, blockPage, append, requestUid))
+				.setHandler((response, requestUid) => this.drawListFromAjax(response, blockPage, append, requestUid))
 				.call(useCache)
 			;
 		}
 
-		drawListFromCache(response, blockPage, append)
+		getLoadItemsRequestUid()
 		{
+			return (this.props.cacheName || Random.getString());
+		}
+
+		drawListFromCache(response, blockPage, append, requestUid)
+		{
+			if (!this.isActualRequest(requestUid))
+			{
+				return;
+			}
+
 			const params = {
 				append: append,
 				incBlockPage: false,
@@ -732,8 +742,13 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 			this.drawList(response, blockPage, params);
 		}
 
-		drawListFromAjax(response, blockPage, append)
+		drawListFromAjax(response, blockPage, append, requestUid)
 		{
+			if (!this.isActualRequest(requestUid))
+			{
+				return;
+			}
+
 			const { loadItems } = this.state.actionParams;
 
 			BX.postComponentEvent('UI.StatefulList::onDrawListFromAjax', [{
@@ -751,6 +766,11 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 			};
 
 			this.drawList(response, blockPage, params);
+		}
+
+		isActualRequest(uid)
+		{
+			return (uid === this.getLoadItemsRequestUid());
 		}
 
 		drawList(response, blockPage, params = {})
@@ -841,7 +861,7 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 
 		prepareItems(items)
 		{
-			items.map(item => {
+			items.map((item) => {
 				item.type = this.generateType(item);
 				item.key = String(item.id);
 			});
@@ -875,13 +895,15 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 		 * @param {Object} loadItemsParams
 		 * @param {Function|null} callback
 		 */
-		reload(initialStateParams = {}, loadItemsParams = {}, callback = () => {})
+		reload(initialStateParams = {}, loadItemsParams = {}, callback = () => {
+		})
 		{
 			this.isRefreshing = false;
 
 			if (typeof callback !== 'function')
 			{
-				callback = () => {};
+				callback = () => {
+				};
 			}
 
 			this.setState(this.getInitialState(initialStateParams), () => {
@@ -1056,7 +1078,7 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 		 * @param {String} animationType
 		 * @returns {Promise}
 		 */
-		deleteItem(itemId, animationType = 'top')
+		deleteItem(itemId, animationType = 'fade')
 		{
 			return new Promise((resolve, reject) => {
 				const simpleList = this.getSimpleList();
@@ -1072,7 +1094,7 @@ jn.define('layout/ui/stateful-list', (require, exports, module) => {
 			});
 		}
 
-		deleteRowFromListView({ itemId, animationType = 'top', onDelete })
+		deleteRowFromListView({ itemId, animationType = 'fade', onDelete })
 		{
 			const { items } = this.state;
 			const { listView } = this.getSimpleList();

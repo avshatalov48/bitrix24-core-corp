@@ -491,13 +491,13 @@ class TasksTagList extends CBitrixComponent implements Controllerable, Errorable
 		$filterOptions = new Options(self::FILTER_ID);
 		$filterData = $filterOptions->getFilter([]);
 
-		$fromSearch = (string)$filterData['FIND'];
+		$fromSearch = (string)($filterData['FIND'] ?? '');
 		if (!empty($fromSearch))
 		{
 			return $fromSearch;
 		}
 
-		$fromField = (string)$filterData['TAG_NAME'];
+		$fromField = (string)($filterData['TAG_NAME'] ?? '');
 		if (!empty($fromField))
 		{
 			return $fromField;
@@ -531,7 +531,7 @@ class TasksTagList extends CBitrixComponent implements Controllerable, Errorable
 
 		$isGridRequest = $this->request->get('grid_action') === 'more';
 		$tagId = (int)$request['tagId'];
-		$tasksCount = (int)$request['tasksCount'];
+		$totalTasksCount = (int)$request['tasksCount'];
 		$gridId = $request['gridId'] ?? '';
 		$pathToTask = $request['pathToTask'] ?? '';
 		$pathToUser = $request['pathToUser'] ?? '';
@@ -549,6 +549,25 @@ class TasksTagList extends CBitrixComponent implements Controllerable, Errorable
 
 		$taskProvider = new TaskProvider($DB, $USER_FIELD_MANAGER);
 
+		$accessibleTasksCount = (int)$taskProvider->getCount([
+			'CHECK_PERMISSIONS' => 'Y',
+			'TAG_ID' => $tagId,
+		])->Fetch()['CNT'];
+
+		$isAllTasksNonAccessible = $totalTasksCount > 0 && $accessibleTasksCount === 0;
+		if ($isAllTasksNonAccessible)
+		{
+			return new Component(
+				'bitrix:tasks.error',
+				'',
+				[
+					'TITLE' => Loc::getMessage('TASKS_TAG_TASKS_BY_TAG_IS_NON_ACCESSIBLE'),
+				]
+			);
+		}
+
+		//old provider should be reinitialized before each new query
+		$taskProvider = new TaskProvider($DB, $USER_FIELD_MANAGER);
 		$query = $taskProvider->getList(
 			[],
 			[
@@ -564,12 +583,10 @@ class TasksTagList extends CBitrixComponent implements Controllerable, Errorable
 				'REAL_STATUS',
 			],
 			[
-
 				'NAV_PARAMS' => [
 					'nPageSize' => self::TASKS_PAGE_SIZE,
 					'iNumPage' => $nav->getCurrentPage(),
 				],
-				'count_total' => true,
 			]
 		);
 
@@ -582,7 +599,7 @@ class TasksTagList extends CBitrixComponent implements Controllerable, Errorable
 		$this->arResult['NAV_OBJECT'] = $nav;
 
 		$enableNextPage = (
-			($nav->getCurrentPage() * $nav->getPageSize() + 1) <= $tasksCount
+			($nav->getCurrentPage() * $nav->getPageSize() + 1) <= $accessibleTasksCount
 		);
 
 		$rows = [];
@@ -617,7 +634,7 @@ class TasksTagList extends CBitrixComponent implements Controllerable, Errorable
 				'AJAX_OPTION_HISTORY' => 'N',
 
 				'SHOW_ACTION_PANEL' => false,
-				'SHOW_TOTAL_COUNTER' => true,
+				'SHOW_TOTAL_COUNTER' => false,
 				'SHOW_CHECK_ALL_CHECKBOXES' => false,
 				'SHOW_ROW_CHECKBOXES' => false,
 				'SHOW_SELECTED_COUNTER' => false,
@@ -628,7 +645,7 @@ class TasksTagList extends CBitrixComponent implements Controllerable, Errorable
 				'ALLOW_INLINE_EDIT' => false,
 
 				'SHOW_PAGINATION' => true,
-				'TOTAL_ROWS_COUNT' => $tasksCount,
+				'NAV_STRING' => $this->getNavigationString($accessibleTasksCount, $totalTasksCount),
 				'SHOW_MORE_BUTTON' => true,
 				'NAV_PARAM_NAME' => 'page',
 				'ENABLE_NEXT_PAGE' => $enableNextPage,
@@ -897,5 +914,28 @@ class TasksTagList extends CBitrixComponent implements Controllerable, Errorable
 		}
 
 		return 1;
+	}
+
+	private function getNavigationString(int $accessibleTasksCount, int $totalTasksCount): string
+	{
+		$nonAccessibleTasksCount = $totalTasksCount - $accessibleTasksCount;
+		if ($nonAccessibleTasksCount === 0)
+		{
+			return Loc::getMessage(
+				'TASKS_TAG_TASKS_BY_TAG_COUNT_TOTAL',
+				[
+					'#TASKS_COUNT#' => $totalTasksCount,
+				]
+			);
+		}
+
+		return Loc::getMessagePlural(
+			'TASKS_TAG_TASKS_BY_TAG_COUNT',
+			$nonAccessibleTasksCount,
+			[
+				'#ACCESSIBLE_COUNT#' => $accessibleTasksCount,
+				'#NON_ACCESSIBLE_COUNT#' => $nonAccessibleTasksCount,
+			]
+		);
 	}
 }

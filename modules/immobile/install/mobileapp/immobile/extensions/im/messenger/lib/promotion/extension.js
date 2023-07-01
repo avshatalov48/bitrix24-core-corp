@@ -3,12 +3,12 @@
  */
 jn.define('im/messenger/lib/promotion', (require, exports, module) => {
 
-	const { Loc } = jn.require('loc');
-	const { RestManager } = jn.require('im/messenger/lib/rest-manager');
-	const { RestMethod } = jn.require('im/messenger/const');
-	const { Logger } = jn.require('im/messenger/lib/logger');
-	const { MessengerParams } = jn.require('im/messenger/lib/params');
-	const { PromotionService } = jn.require('im/messenger/service');
+	const { Loc } = require('loc');
+	const { restManager } = require('im/messenger/lib/rest-manager');
+	const { RestMethod } = require('im/messenger/const');
+	const { Logger } = require('im/messenger/lib/logger');
+	const { MessengerParams } = require('im/messenger/lib/params');
+	const { PromotionRest } = require('im/messenger/provider/rest');
 
 	/**
 	 * @class Promotion
@@ -29,7 +29,7 @@ jn.define('im/messenger/lib/promotion', (require, exports, module) => {
 
 			this.activePromoList = [];
 
-			RestManager.once(RestMethod.imPromotionGet, { DEVICE_TYPE: 'mobile' }, this.handlePromotionGet.bind(this));
+			restManager.once(RestMethod.imPromotionGet, { DEVICE_TYPE: 'mobile' }, this.handlePromotionGet.bind(this));
 		}
 
 		handlePromotionGet(response)
@@ -99,7 +99,7 @@ jn.define('im/messenger/lib/promotion', (require, exports, module) => {
 
 		read(id)
 		{
-			PromotionService.read(id);
+			PromotionRest.read(id);
 		}
 	}
 

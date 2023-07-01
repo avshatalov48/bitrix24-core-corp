@@ -12,8 +12,8 @@ jn.define('testing/expectation', (require, exports, module) => {
 		DefinedMatcher,
 		NullMatcher,
 		BooleanMatcher,
+		MatchObjectMatcher,
 	} = require('testing/matchers');
-
 
 	class TestingExpectation
 	{
@@ -80,6 +80,11 @@ jn.define('testing/expectation', (require, exports, module) => {
 		toBeFalse()
 		{
 			return this.apply(new BooleanMatcher(this.actualValue, false));
+		}
+
+		toMatchObject(expectedValue)
+		{
+			return this.apply(new MatchObjectMatcher(this.actualValue, expectedValue));
 		}
 	}
 

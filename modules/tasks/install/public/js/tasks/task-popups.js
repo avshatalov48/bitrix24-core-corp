@@ -219,8 +219,8 @@ var TaskGradeSimplePopup = function(popupId)
 		BX.message("TASKS_MARK"),
 		[
 			{ id : "NULL", name : BX.message("TASKS_MARK_NONE"), className : "none" },
-			{ id : "P", name : BX.message("TASKS_MARK_P"), className : "plus" },
-			{ id : "N", name : BX.message("TASKS_MARK_N"), className : "minus" }
+			{ id : "P", name : BX.message("TASKS_MARK_P_MSGVER_1"), className : "plus" },
+			{ id : "N", name : BX.message("TASKS_MARK_N_MSGVER_1"), className : "minus" }
 		],
 		{}
 	]);

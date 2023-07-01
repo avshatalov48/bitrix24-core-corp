@@ -2,7 +2,6 @@
  * @module crm/entity-detail/component/global-events
  */
 jn.define('crm/entity-detail/component/global-events', (require, exports, module) => {
-
 	/**
 	 * @type {(string, function(DetailCardComponent, ...*): void)[][]}
 	 */
@@ -20,11 +19,10 @@ jn.define('crm/entity-detail/component/global-events', (require, exports, module
 					return;
 				}
 
-				todoNotificationParams.isSkipped = !enabled;
+				todoNotificationParams.notificationEnabled = enabled;
 			},
 		],
 	];
 
 	module.exports = { globalEvents };
-
 });

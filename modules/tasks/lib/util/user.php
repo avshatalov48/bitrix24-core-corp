@@ -322,7 +322,7 @@ final class User
 			$user['IS_EXTRANET_USER'] = Extranet\User::isExtranet($user);
 			$user['IS_EMAIL_USER'] = Mail\User::isEmail($user);
 			$user['IS_CRM_EMAIL_USER'] = ($user['IS_EMAIL_USER'] && !empty($user['UF_USER_CRM_ENTITY']));
-			$user['IS_NETWORK_USER'] = ($user['EXTERNAL_AUTH_ID'] === Replica\User::getExternalCode());
+			$user['IS_NETWORK_USER'] = (isset($user['EXTERNAL_AUTH_ID']) && $user['EXTERNAL_AUTH_ID'] === Replica\User::getExternalCode());
 
 			$users[$user['ID']] = $user;
 		}
@@ -669,7 +669,7 @@ final class User
 	{
 	    static $users = [];
 
-	    if(!$users[$userID])
+	    if(!isset($users[$userID]))
 	    {
             if (!ModuleManager::isModuleInstalled('extranet'))
             {
@@ -800,7 +800,7 @@ final class User
 
 		foreach ($userIds as $userId)
 		{
-			$data[$userId] = self::formatName($usersData[$userId], $nameTemplate);
+			$data[$userId] = self::formatName($usersData[$userId] ?? null, $nameTemplate);
 		}
 
 		return $data;

@@ -3,7 +3,7 @@
  */
 jn.define('crm/entity-detail/toolbar', (require, exports, module) => {
 	const { Type } = require('crm/type');
-	const { ActivityToolbar } = require('crm/entity-detail/toolbar/activity');
+	const { ToolbarContent } = require('crm/entity-detail/toolbar/content');
 	const { ToolbarPanelWrapper } = require('crm/entity-detail/toolbar/panel');
 
 	/**
@@ -20,13 +20,11 @@ jn.define('crm/entity-detail/toolbar', (require, exports, module) => {
 		{
 			if (this.has({ typeId }))
 			{
-				const props = {
+				return new ToolbarPanelWrapper({
 					...data,
 					fade: false,
-					children: ActivityToolbar,
-				};
-
-				return new ToolbarPanelWrapper(props);
+					children: ToolbarContent,
+				});
 			}
 
 			return null;

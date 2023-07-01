@@ -71,7 +71,7 @@ class ContactGrowthStatisticEntry
 		}
 
 		$responsibleID = isset($entityFields['ASSIGNED_BY_ID']) ? (int)$entityFields['ASSIGNED_BY_ID'] : 0;
-		$date = new DateTime($entityFields['DATE_CREATE']);
+		$date = new DateTime($entityFields['DATE_CREATE'] ?? '');
 		$date->setTime(0, 0, 0);
 
 		$present = self::get($ownerID, $date);

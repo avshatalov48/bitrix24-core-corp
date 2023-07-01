@@ -20,8 +20,8 @@ if ((isset($_REQUEST['paySystemId']) || isset($_REQUEST['invoice_id'])) && (!iss
 			'bitrix:crm.invoice.payment',
 			'',
 			array(
-				'ORDER_ID' => $_REQUEST['invoice_id'],
-				'HASH' =>  $_REQUEST['hash'],
+				'ORDER_ID' => $_REQUEST['invoice_id'] ?? '',
+				'HASH' =>  $_REQUEST['hash'] ?? '',
 				'PUBLIC_LINK_MODE' => 'Y'
 			)
 		);
@@ -35,8 +35,8 @@ else
 
 	$accountNumber = base64_decode(
 		str_pad(
-			strtr($_REQUEST['account_number'], '-_', '+/'),
-			strlen($_REQUEST['account_number']) % 4,
+			strtr($_REQUEST['account_number'] ?? '', '-_', '+/'),
+			strlen($_REQUEST['account_number'] ?? '') % 4,
 			'='
 		)
 	);
@@ -44,7 +44,7 @@ else
 	global $APPLICATION;
 	$APPLICATION->IncludeComponent("bitrix:crm.invoice.payment.client", ".default", array(
 		'ACCOUNT_NUMBER' => $accountNumber,
-		'HASH' => $_REQUEST['hash'],
+		'HASH' => $_REQUEST['hash'] ?? '',
 		'PAY_SYSTEM_ID' => array_key_exists('paySystemId', $_REQUEST) ? $_REQUEST['paySystemId'] : 0
 	));
 

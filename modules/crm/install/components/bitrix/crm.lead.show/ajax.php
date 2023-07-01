@@ -493,7 +493,8 @@ if($mode === 'CONVERT')
 			array(
 				'DATA' => array(
 					'URL' => $wizard->getRedirectUrl(),
-					'IS_FINISHED' => $wizard->isFinished() ? 'Y' : 'N'
+					'IS_FINISHED' => $wizard->isFinished() ? 'Y' : 'N',
+					'RESULT' => $wizard->getResultData(),
 				)
 			)
 		);
@@ -507,7 +508,8 @@ if($mode === 'CONVERT')
 				array(
 					'DATA' => array(
 						'URL' => $url,
-						'IS_FINISHED' => $wizard->isFinished() ? 'Y' : 'N'
+						'IS_FINISHED' => $wizard->isFinished() ? 'Y' : 'N',
+						'RESULT' => $wizard->getResultData(),
 					)
 				)
 			);

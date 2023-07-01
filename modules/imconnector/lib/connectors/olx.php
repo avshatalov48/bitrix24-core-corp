@@ -53,7 +53,7 @@ class Olx extends Base
 			if(!empty($data) && $dataOld!==$data)
 			{
 				$status->setData($data);
-				Status::save();
+				$status->save();
 			}
 
 			if (!Library::isEmpty($message['message']['attach']))
@@ -80,7 +80,7 @@ class Olx extends Base
 	{
 		if (
 			Loader::includeModule('imconnector')
-			&& Connector::isConnector(Library::ID_OLX_CONNECTOR, true)
+			&& Connector::isConnector(Library::ID_OLX_CONNECTOR)
 		)
 		{
 			$statuses = Status::getInstanceAllLine(Library::ID_OLX_CONNECTOR);

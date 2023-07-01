@@ -2,13 +2,13 @@
  * @module crm/entity-actions/public-errors
  */
 jn.define('crm/entity-actions/public-errors', (require, exports, module) => {
-
 	/**
 	 * @function getPublicErrors
-	 * @param errors object[]
+	 * @param {object[]} errors
 	 */
-	const getPublicErrors = (errors) =>
-		errors.find(({ customData, message }) => customData && customData.public && message);
+	const getPublicErrors = (errors) => {
+		return errors.find(({ customData, message }) => customData && customData.public && message);
+	};
 
 	module.exports = { getPublicErrors };
 });

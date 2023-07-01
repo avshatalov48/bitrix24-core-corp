@@ -104,6 +104,14 @@
 	background-color: #FF5722;
 }
 
+.salescenter-cashboxyookassa-icon { width: 97px; }
+
+.salescenter-cashboxyookassa-icon i {
+	background-image: url(images/cashboxyookassa.svg);
+	background-size: 90% auto;
+	background-color: #0697F2;
+}
+
 .salescenter-angle-icon-after {
 	cursor: pointer;
 }

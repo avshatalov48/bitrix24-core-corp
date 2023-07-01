@@ -8,7 +8,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 use Bitrix\Main\Localization\Loc,
 	Bitrix\Main\Loader,
 	Bitrix\Main\Config\Option,
-	Bitrix\ImBot;
+	Bitrix\Main\HttpApplication,
+	Bitrix\ImBot
+;
 
 /**
  * @global \CMain $APPLICATION
@@ -39,13 +41,17 @@ $tabs = array(
 );
 $tabControl = new \CAdminTabControl("tabControl", $tabs);
 
+$request = HttpApplication::getInstance()->getContext()->getRequest();
+
+$isUpdate = $request->isPost() && !empty($request['Update']);
+
 $publicUrl = '';
 
-if ($_POST['Update'] <> '' && \check_bitrix_sessid())
+if ($isUpdate && \check_bitrix_sessid())
 {
 	if (!defined('BOT_CLIENT_URL'))
 	{
-		$publicUrl = trim($_POST['PUBLIC_URL'] ?? '');
+		$publicUrl = trim($request['PUBLIC_URL'] ?? '');
 		$isPublicUrlValid = false;
 
 		if (
@@ -56,7 +62,7 @@ if ($_POST['Update'] <> '' && \check_bitrix_sessid())
 			Option::set('imbot', 'portal_url', $publicUrl);
 			$isPublicUrlValid = true;
 		}
-		elseif (isset($_POST['PUBLIC_URL']) && $publicUrl === '')
+		elseif (isset($request['PUBLIC_URL']) && $publicUrl === '')
 		{
 			// gonna use domain value from 'main:server_name' option
 			Option::delete('imbot', ['name' => 'portal_url']);
@@ -78,12 +84,12 @@ if ($_POST['Update'] <> '' && \check_bitrix_sessid())
 		}
 	}
 
-	Option::set("imbot", "debug", isset($_POST['DEBUG_MODE']));
-	if (isset($_POST['DEBUG_MODE']))
+	Option::set("imbot", "debug", isset($request['DEBUG_MODE']));
+	if (isset($request['DEBUG_MODE']))
 	{
-		Option::set("imbot", "wait_response", isset($_POST['WAIT_RESPONSE']));
+		Option::set("imbot", "wait_response", isset($request['WAIT_RESPONSE']));
 	}
-	if (isset($_POST['BOT_GIPHY']))
+	if (isset($request['BOT_GIPHY']))
 	{
 		if (!ImBot\Bot\Giphy::getBotId())
 		{
@@ -97,7 +103,7 @@ if ($_POST['Update'] <> '' && \check_bitrix_sessid())
 			ImBot\Bot\Giphy::unRegister();
 		}
 	}
-	if (isset($_POST['BOT_PROPERTIES']))
+	if (isset($request['BOT_PROPERTIES']))
 	{
 		if (!ImBot\Bot\Properties::getBotId())
 		{
@@ -111,7 +117,7 @@ if ($_POST['Update'] <> '' && \check_bitrix_sessid())
 			ImBot\Bot\Properties::unRegister();
 		}
 	}
-	if (isset($_POST['BOT_PROPERTIESUA']))
+	if (isset($request['BOT_PROPERTIESUA']))
 	{
 		if (!ImBot\Bot\PropertiesUa::getBotId())
 		{
@@ -128,7 +134,7 @@ if ($_POST['Update'] <> '' && \check_bitrix_sessid())
 
 	if (!Loader::includeModule('bitrix24'))
 	{
-		if (isset($_POST['BOT_SUPPORT']))
+		if (isset($request['BOT_SUPPORT']))
 		{
 			if (!ImBot\Bot\SupportBox::register())
 			{
@@ -242,7 +248,6 @@ $tabControl->beginNextTab();
 <?endif;?>
 <? $tabControl->buttons() ?>
 <input type="submit" name="Update" value="<?= Loc::getMessage('MAIN_SAVE')?>">
-<input type="reset" name="reset" value="<?= Loc::getMessage('MAIN_RESET')?>">
 <? $tabControl->end() ?>
 </form>
 <div class="adm-info-message-wrap">

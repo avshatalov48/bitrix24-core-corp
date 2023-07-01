@@ -50,7 +50,12 @@ class CDiskUfFileComponent extends BaseComponent implements \Bitrix\Main\Engine\
 
 	protected function prepareParams()
 	{
-		if($this->arParams['EDIT'] === 'Y')
+		if (!isset($this->arParams['INLINE']))
+		{
+			$this->arParams['INLINE'] = 'N';
+		}
+
+		if(($this->arParams['EDIT'] ?? null) === 'Y')
 		{
 			$this->editMode = true;
 		}
@@ -98,9 +103,9 @@ class CDiskUfFileComponent extends BaseComponent implements \Bitrix\Main\Engine\
 		if ($this->arParams['USE_TOGGLE_VIEW'])
 		{
 			$result = [
-				'MOBILE' => $this->arParams['MOBILE'],
+				'MOBILE' => $this->arParams['MOBILE'] ?? null,
 				'PARAMS' => [],
-				'EXTENDED_PREVIEW' => $this->arParams['EXTENDED_PREVIEW'],
+				'EXTENDED_PREVIEW' => $this->arParams['EXTENDED_PREVIEW'] ?? null,
 				'INLINE' => $this->arParams['INLINE'],
 				'USE_TOGGLE_VIEW' => $this->arParams['USE_TOGGLE_VIEW'],
 			];
@@ -270,7 +275,7 @@ class CDiskUfFileComponent extends BaseComponent implements \Bitrix\Main\Engine\
 			));
 		}
 
-		$this->includeComponentTemplate($this->editMode ? 'edit' : 'show'.($this->arParams['INLINE'] == 'Y' ? '_inline' : ''));
+		$this->includeComponentTemplate($this->editMode ? 'edit' : 'show'.($this->arParams['INLINE'] === 'Y' ? '_inline' : ''));
 	}
 
 	private function loadFilesData()

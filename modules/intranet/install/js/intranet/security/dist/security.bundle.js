@@ -53,6 +53,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	        case "appPasswords":
 	        case "synchronize":
 	        case "mailingAgreement":
+	        case "sso":
 	          this.sendAction(action, {});
 	          break;
 

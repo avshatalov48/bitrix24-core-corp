@@ -4,6 +4,7 @@ declare(strict_types = 1);
 
 namespace Bitrix\CrmMobile\Timeline;
 
+use Bitrix\Crm\Engine\ActionFilter\CheckReadMyCompanyPermission;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Engine\ActionFilter\CheckReadPermission;
@@ -63,6 +64,7 @@ abstract class Controller extends JsonController
 			new ActionFilter\Scope(ActionFilter\Scope::NOT_REST),
 			new ActionFilter\CloseSession(),
 			new CheckReadPermission(),
+			new CheckReadMyCompanyPermission(),
 		];
 	}
 

@@ -7,7 +7,7 @@ BitrixVue.component('salescenter-payment_pay-components-payment_system-pay_syste
 		loading: Boolean,
 		name: String,
 		logo: String,
-		id: Number,
+		id: String|Number,
 	},
 	computed:
 	{

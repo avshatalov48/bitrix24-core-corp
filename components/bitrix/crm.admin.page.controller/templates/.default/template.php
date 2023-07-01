@@ -20,7 +20,9 @@ if (!$isSlider)
 
 $this->EndViewTarget();
 
-if ($arResult["CONNECT_PAGE"])
+$isOnlyMenu = isset($arParams['IS_ONLY_MENU']) && $arParams['IS_ONLY_MENU'] === true;
+
+if ($arResult["CONNECT_PAGE"] && !$isOnlyMenu)
 {
 	$APPLICATION->IncludeComponent(
 		"bitrix:crm.admin.page.include",

@@ -173,6 +173,10 @@ class SessionTable extends DataManager
 				'title' => Loc::getMessage('SESSION_ENTITY_END_ID_FIELD'),
 				'default_value' => '0',
 			]),
+			new IntegerField('LAST_SEND_MAIL_ID', [
+				'required' => true,
+				'default_value' => '0',
+			]),
 			new BooleanField('CRM', [
 				'values' => ['N', 'Y'],
 				'title' => Loc::getMessage('SESSION_ENTITY_CRM_FIELD'),

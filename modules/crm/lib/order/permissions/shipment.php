@@ -1,4 +1,5 @@
 <?
+
 namespace Bitrix\Crm\Order\Permissions;
 
 /**
@@ -15,18 +16,26 @@ class Shipment
 	 * @param null $userPermissions
 	 * @return bool
 	 */
-	public static function checkUpdatePermission($id, $userPermissions = null)
+	public static function checkUpdatePermission($id = 0, $userPermissions = null)
 	{
-		$result = \Bitrix\Crm\Order\Shipment::getList(array(
-			'filter' => array('=ID' => (int)$id),
-			'limit' => 1
-		));
+		$id = (int)$id;
+		$orderId = 0;
 
-		$shipmentData = $result->fetch();
-		$orderId = $shipmentData['ORDER_ID'];
-		if ($orderId <= 0)
+		if ($id > 0)
 		{
-			return false;
+			$result = \Bitrix\Crm\Order\Shipment::getList(array(
+				'filter' => [
+					'=ID' => $id,
+				],
+				'limit' => 1
+			));
+
+			$shipmentData = $result->fetch();
+			$orderId = $shipmentData['ORDER_ID'];
+			if ($orderId <= 0)
+			{
+				return false;
+			}
 		}
 
 		return Order::checkUpdatePermission($orderId, $userPermissions);
@@ -58,16 +67,24 @@ class Shipment
 	 */
 	public static function checkReadPermission($id = 0, $userPermissions = null)
 	{
-		$result = \Bitrix\Crm\Order\Shipment::getList(array(
-			'filter' => array('=ID' => (int)$id),
-			'limit' => 1
-		));
+		$id = (int)$id;
+		$orderId = 0;
 
-		$shipmentData = $result->fetch();
-		$orderId = $shipmentData['ORDER_ID'];
-		if ($orderId <= 0)
+		if ($id > 0)
 		{
-			return false;
+			$result = \Bitrix\Crm\Order\Shipment::getList(array(
+				'filter' => [
+					'=ID' => $id,
+				],
+				'limit' => 1
+			));
+
+			$shipmentData = $result->fetch();
+			$orderId = $shipmentData['ORDER_ID'];
+			if ($orderId <= 0)
+			{
+				return false;
+			}
 		}
 
 		return Order::checkReadPermission($orderId, $userPermissions);

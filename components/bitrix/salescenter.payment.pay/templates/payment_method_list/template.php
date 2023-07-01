@@ -26,8 +26,9 @@ if (is_array($arResult['PAYSYSTEMS_LIST']) && count($arResult['PAYSYSTEMS_LIST']
 	$items = CUtil::PhpToJSObject($items);
 ?>
 
-	<div id="payment_method-list"></div>
-
+	<div class="<?= $arResult['COMPONENT_THEME'] ?>">
+		<div id="payment_method-list"></div>
+	</div>
 	<script>
 		var items = <?=$items?>;
 		BX.Vue.create({

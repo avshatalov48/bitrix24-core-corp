@@ -5,10 +5,12 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Crm\Activity\Provider\Tasks\Task;
 use Bitrix\Main\Localization\Loc;
 use \Bitrix\Bizproc\Activity\PropertiesDialog;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Factory;
+use Bitrix\Crm\Order\OrderStatus;
 
 class CBPCrmCompleteTaskActivity extends CBPActivity
 {
@@ -36,8 +38,13 @@ class CBPCrmCompleteTaskActivity extends CBPActivity
 			$this->logTargetStatus();
 		}
 
-		$test = $this->TargetStatus;
-		if (array_diff((array)$this->TargetStatus, $this->getStages()))
+		if (!is_array($this->TargetStatus))
+		{
+			$this->TargetStatus = [$this->TargetStatus];
+		}
+
+		$this->TargetStatus = array_intersect($this->getStages(), $this->TargetStatus);
+		if (!$this->TargetStatus)
 		{
 			$this->WriteToTrackingService(
 				Loc::getMessage('CRM_CTA_INCORRECT_STAGE'),
@@ -48,7 +55,7 @@ class CBPCrmCompleteTaskActivity extends CBPActivity
 			return CBPActivityExecutionStatus::Closed;
 		}
 
-		foreach ((array)$this->TargetStatus as $ownerStatus)
+		foreach ($this->TargetStatus as $ownerStatus)
 		{
 			$this->completeTasks($entityTypeName, $entityId, $ownerStatus);
 		}
@@ -103,6 +110,9 @@ class CBPCrmCompleteTaskActivity extends CBPActivity
 
 			case CCrmOwnerType::DealName:
 				return $this->getDealStages($entityId);
+
+			case CCrmOwnerType::OrderName:
+				return array_keys(OrderStatus::getAllStatusesNames());
 
 			default:
 				$entityTypeId = CCrmOwnerType::ResolveID($entityTypeName);
@@ -169,6 +179,34 @@ class CBPCrmCompleteTaskActivity extends CBPActivity
 		);
 
 		$completedTasks = [];
+		for ($activity = $dbResult->Fetch(); $activity; $activity = $dbResult->Fetch())
+		{
+			if (is_array($activity['SETTINGS']) && $activity['SETTINGS']['OWNER_STAGE'] === $ownerStage)
+			{
+				$isCompleted = CCrmActivity::Update($activity['ID'], ['COMPLETED' => true], false, true);
+				if ($isCompleted)
+				{
+					$completedTasks[] = $activity['ASSOCIATED_ENTITY_ID'];
+				}
+			}
+		}
+
+		$dbResult = \CCrmActivity::GetList(
+			[],
+			[
+				'TYPE_ID' => \CCrmActivityType::Provider,
+				'PROVIDER_ID' => Task::getId(),
+				'PROVIDER_TYPE_ID' => Task::getProviderTypeId(),
+				'COMPLETED' => 'N',
+				'CHECK_PERMISSIONS' => 'N',
+				'OWNER_ID' => $ownerId,
+				'OWNER_TYPE_ID' => CCrmOwnerType::ResolveID($ownerType)
+			],
+			false,
+			false,
+			['ID', 'ASSOCIATED_ENTITY_ID', 'SETTINGS']
+		);
+
 		for ($activity = $dbResult->Fetch(); $activity; $activity = $dbResult->Fetch())
 		{
 			if (is_array($activity['SETTINGS']) && $activity['SETTINGS']['OWNER_STAGE'] === $ownerStage)
@@ -384,14 +422,21 @@ class CBPCrmCompleteTaskActivity extends CBPActivity
 		{
 			return [];
 		}
+		if (!$factory->isCategoriesSupported())
+		{
+			$categoryId = null;
+		}
 
 		$statuses = [];
 		foreach (static::getFullItemStatusesList($factory, $categoryId) as $categoryStatuses)
 		{
-			$statuses = array_merge($statuses, $categoryStatuses);
+			foreach ($categoryStatuses as $statusId => $statusName)
+			{
+				$statuses[$statusId] = $statusName;
+			}
 		}
 
-		return isset($categoryId) ? $statuses[$categoryId] : $statuses;
+		return $statuses;
 	}
 
 	protected static function getFullItemStatusesList(Factory $factory, ?int $categoryId = null): array
@@ -421,6 +466,14 @@ class CBPCrmCompleteTaskActivity extends CBPActivity
 		{
 			$categoryId = isset($category) ? $category->getId() : null;
 			$statuses[$categoryId] = [];
+
+			if ($factory->getEntityTypeId() === CCrmOwnerType::Order)
+			{
+				$statuses[$categoryId] = OrderStatus::getAllStatusesNames();
+
+				continue;
+			}
+
 			foreach ($factory->getStages($categoryId) as $status)
 			{
 				$statuses[$categoryId][$status->getStatusId()] = $status->getName();

@@ -295,53 +295,39 @@ class Filter
 			return $result;
 		}
 
-		if (!isset($filter[self::SourceId]) && !isset($filter[self::ChannelCode]))
+		if (
+			(!isset($filter[self::SourceId]) && !isset($filter[self::ChannelCode]))
+			|| (!is_array($filter[self::SourceId]) && !is_array($filter[self::ChannelCode]))
+		)
 		{
 			return $result;
 		}
 
-		$sources = isset($filter[self::SourceId]) ?
-			implode(
-				', ',
-				array_map(
-					function ($value)
-					{
-						return (int) $value;
-					},
-					$filter[self::SourceId]
-				)
-			)
-			:
-			'';
-		$isNullSource = isset($filter[self::SourceId])
-			?
-				count(
-					array_filter(
-						$filter[self::SourceId],
-						function ($value)
-						{
-							return $value === 'organic';
-						}
-					)
-				) > 0
-			: false;
+		$sources = (
+			(isset($filter[self::SourceId]) && is_array($filter[self::SourceId]))
+				? implode(', ', array_map(static fn($value) => (int) $value, $filter[self::SourceId]))
+				: ''
+		);
+		$isNullSource = (
+			isset($filter[self::SourceId])
+			&& is_array($filter[self::SourceId])
+			&& count(array_filter($filter[self::SourceId], static fn($value) => $value === 'organic')) > 0
+		);
 
-		$channels = isset($filter[self::ChannelCode]) ?
-			implode(
-				', ',
-				array_map(
-					function ($value)
-					{
-						return "'" . Application::getConnection()->getSqlHelper()->forSql($value) . "'";
-					},
-					$filter[self::ChannelCode]
+		$channels = (
+			(isset($filter[self::ChannelCode]) && is_array($filter[self::ChannelCode]))
+				? implode(
+					', ',
+					array_map(
+						static fn($value) => "'" . Application::getConnection()->getSqlHelper()->forSql($value) . "'",
+						$filter[self::ChannelCode]
+					)
 				)
-			)
-			:
-			'';
+				: ''
+		);
 
 		$sqlSource = [];
-		if (isset($filter[self::SourceId]))
+		if (isset($filter[self::SourceId]) && is_array($filter[self::SourceId]))
 		{
 			if ($sources)
 			{
@@ -357,13 +343,13 @@ class Filter
 			. Crm\Tracking\Internals\TraceEntityTable::getTableName() . ' CTTE '
 			. ' JOIN ' . Crm\Tracking\Internals\TraceTable::getTableName() . ' CTT ON CTTE.TRACE_ID=CTT.ID '
 			. (
-				isset($filter[self::ChannelCode])
+				(isset($filter[self::ChannelCode]) && is_array($filter[self::ChannelCode]))
 					? ' JOIN ' . Crm\Tracking\Internals\TraceChannelTable::getTableName() . ' CTTC ON CTTC.TRACE_ID=CTT.ID '
 					: ''
 			)
 			. " WHERE CTTE.ENTITY_TYPE_ID = $entityTypeId "
 			. (!empty($sqlSource) ? " AND (" . implode(' OR ', $sqlSource) . ") " : '')
-			. (isset($filter[self::ChannelCode]) ? " AND CTTC.CODE in ({$channels}) " : '')
+			. ((isset($filter[self::ChannelCode]) && is_array($filter[self::ChannelCode])) ? " AND CTTC.CODE in ({$channels}) " : '')
 		;
 
 		$result['isNull'] = $isNullSource

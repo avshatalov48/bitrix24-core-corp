@@ -24,8 +24,8 @@ class Title extends Content
 		$userId = User::getId();
 		$taskId = (int)$row['ID'];
 		$taskStatus = (int)$row['REAL_STATUS'];
-		$taskPriority = (int)$row['PRIORITY'];
-		$groupId = (int)$parameters['GROUP_ID'];
+		$taskPriority = (int)($row['PRIORITY'] ?? 0);
+		$groupId = (int)($parameters['GROUP_ID'] ?? 0);
 
 		$taskUrlTemplate = (
 			$groupId > 0 ? $parameters['PATH_TO_GROUP_TASKS_TASK'] : $parameters['PATH_TO_USER_TASKS_TASK']
@@ -39,9 +39,9 @@ class Title extends Content
 
 		$priorityLayout = ($taskPriority === CTasks::PRIORITY_HIGH ? '<span class="task-priority-high"></span> ' : '');
 
-		$countFiles = (int) $row['COUNT_FILES'];
-		$checkListComplete = (int) $row['CHECK_LIST']['COMPLETE'];
-		$checkListWork = (int) $row['CHECK_LIST']['WORK'];
+		$countFiles = (int) ($row['COUNT_FILES'] ?? 0);
+		$checkListComplete = (int) ($row['CHECK_LIST']['COMPLETE'] ?? 0);
+		$checkListWork = (int) ($row['CHECK_LIST']['WORK'] ?? 0);
 		$checkListAll = ($checkListComplete + $checkListWork);
 
 		$filesIcon = "<div class='task-attachment-counter ui-label ui-label-sm ui-label-light'><span class='ui-label-inner'>{$countFiles}</span></div>";
@@ -92,9 +92,9 @@ class Title extends Content
 		$parameters = $this->getParameters();
 
 		$taskId = (int)$row['ID'];
-		$timeSpentInLogs = (int)$row['TIME_SPENT_IN_LOGS'];
-		$timeEstimate = (int)$row['TIME_ESTIMATE'];
-		$allowTimeTracking = $row['ALLOW_TIME_TRACKING'] === 'Y';
+		$timeSpentInLogs = (int)($row['TIME_SPENT_IN_LOGS'] ?? 0);
+		$timeEstimate = (int)($row['TIME_ESTIMATE'] ?? 0);
+		$allowTimeTracking = ($row['ALLOW_TIME_TRACKING'] ?? '') === 'Y';
 
 		$timer = (is_array($parameters['TIMER']) ? $parameters['TIMER'] : (bool)$parameters['TIMER']);
 		$currentTaskTimerRunForUser = (

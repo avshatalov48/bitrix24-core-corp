@@ -21,7 +21,7 @@ $MESS['CRM_ENT_SEL_HLP_HIDDEN_CONTACT'] = 'Скрытый контакт';
 $MESS['CRM_ENT_SEL_HLP_HIDDEN_COMPANY'] = 'Скрытая компания';
 $MESS['CRM_ENT_SEL_HLP_HIDDEN_LEAD'] = 'Скрытый лид';
 $MESS['CRM_ENT_SEL_HLP_HIDDEN_DEAL'] = 'Скрытая сделка';
-$MESS['CRM_ENT_SEL_HLP_HIDDEN_QUOTE'] = 'Скрытое ком. предложение';
+$MESS['CRM_ENT_SEL_HLP_HIDDEN_QUOTE'] = 'Скрытое предложение';
+$MESS['CRM_ENT_SEL_HLP_HIDDEN_SMART_INVOICE'] = 'Скрытый счёт';
 $MESS['CRM_ENT_SEL_HLP_HIDDEN_DYNAMIC'] = 'Скрытый элемент';
 $MESS['CRM_ENT_SEL_HLP_HIDDEN_ORDER'] = 'Скрытый заказ';
-?>

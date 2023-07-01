@@ -22,12 +22,9 @@ class Call
 		}
 
 		$params = $event->getParameters();
-		$manager = $params[0];
+		//$manager = $params[0];
 		$result = &$params[1];
 		$languageId = $params[2];
-
-		$connection = $manager->getDatabaseConnection();
-		$helper = $connection->getSqlHelper();
 
 		$viHistoryMessages = Loc::loadLanguageFile($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/voximplant/classes/general/vi_history.php', $languageId);
 
@@ -222,7 +219,7 @@ class Call
 				$fieldInfo['FIELD_DESCRIPTION'] = $fieldCode;
 			}
 
-			$fieldInfo['FIELD_DESCRIPTION_FULL'] = $messages['VI_BIC_CALL_FIELD_' . $fieldCode . '_FULL'];
+			$fieldInfo['FIELD_DESCRIPTION_FULL'] = $messages['VI_BIC_CALL_FIELD_' . $fieldCode . '_FULL'] ?? '';
 		}
 		unset($fieldInfo);
 	}

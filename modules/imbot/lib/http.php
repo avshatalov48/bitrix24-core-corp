@@ -50,7 +50,7 @@ class Http
 		$this->botId = $botId;
 		$this->error = new Error(null, '', '');
 		$this->region = Main\Application::getInstance()->getLicense()->getRegion() ?: 'ru';
-		$this->setControllerUrl($this->getServiceEndpoint($this->region));
+		$this->setControllerUrl(self::getServiceEndpoint($this->region));
 		$this->licenceCode = $this->detectLicenceCode();
 		$this->type = $this->detectPortalType();
 		$this->setPortalDomain(self::getServerAddress());
@@ -64,7 +64,7 @@ class Http
 	 * @param string $region Portal region.
 	 * @return string
 	 */
-	public function getServiceEndpoint(string $region): string
+	public static function getServiceEndpoint(string $region): string
 	{
 		if (defined('BOT_CONTROLLER_URL'))
 		{
@@ -357,8 +357,7 @@ class Http
 		}
 		else
 		{
-			require_once($_SERVER['DOCUMENT_ROOT']. '/bitrix/modules/main/classes/general/update_client.php');
-			$licenceCode = md5('BITRIX'. \CUpdateClient::getLicenseKey(). 'LICENCE');
+			$licenceCode = Main\Application::getInstance()->getLicense()->getPublicHashKey();
 		}
 
 		return $licenceCode;
@@ -417,16 +416,17 @@ class Http
 	 */
 	public function instanceHttpClient(bool $waitResponse = false): HttpClient
 	{
-		return new HttpClient([
-			'socketTimeout' => 20,
-			'streamTimeout' => 60,
-			'waitResponse' => $waitResponse,
-			'disableSslVerification' => true,
-			'headers' => [
-				'User-Agent' => 'Bitrix Bot Client ('.$this->botId.')',
-				'x-bitrix-licence' => $this->licenceCode,
-				'x-bitrix-imbot' => $this->botId,
-			]
-		]);
+		$httpClient = new HttpClient();
+		$httpClient
+			->waitResponse($waitResponse)
+			->setTimeout(20)
+			->setStreamTimeout(60)
+			->disableSslVerification()
+			->setHeader('User-Agent', 'Bitrix Bot Client ('.$this->botId.')')
+			->setHeader('x-bitrix-licence', $this->licenceCode)
+			->setHeader('x-bitrix-imbot', $this->botId)
+		;
+
+		return $httpClient;
 	}
 }

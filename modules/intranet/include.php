@@ -2,7 +2,6 @@
 if (!CModule::IncludeModule('iblock'))
 	return false;
 
-
 $GLOBALS['INTR_DEPARTMENTS_CACHE'] = array();
 $GLOBALS['INTR_DEPARTMENTS_CACHE_VALUE'] = array();
 $GLOBALS['CACHE_HONOUR'] = null;
@@ -105,6 +104,15 @@ CJSCore::RegisterExt("sidepanel_bitrix24", ["rel" => ["intranet.sidepanel.bitrix
 
 /*patchlimitationmutatormark1*/
 
-if(!defined("ADMIN_SECTION") || ADMIN_SECTION !== true)
+if(
+	(!defined("ADMIN_SECTION") || ADMIN_SECTION !== true)
+	&& (
+		!CModule::IncludeModule('landing')
+		|| !defined("SITE_TEMPLATE_ID")
+		|| SITE_TEMPLATE_ID !== 'pub'
+	)
+)
+{
 	$GLOBALS["APPLICATION"]->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
+}
 

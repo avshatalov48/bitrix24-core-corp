@@ -2,20 +2,27 @@
 
 namespace Bitrix\Tasks\Integration\UI\EntitySelector;
 
+use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Engine\CurrentUser;
-use Bitrix\Main\Entity\ReferenceField;
+use Bitrix\Main\LoaderException;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Socialnetwork\WorkgroupTable;
+use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\ORM\Fields\ExpressionField;
+use Bitrix\Main\ORM\Fields\Relations\Reference;
+use Bitrix\Main\ORM\Query\Filter\ConditionTree;
+use Bitrix\Main\ORM\Query\Join;
+use Bitrix\Main\ORM\Query\Query;
+use Bitrix\Main\SystemException;
+use Bitrix\Tasks\Integration\UI\EntitySelector\Context\Context;
 use Bitrix\Tasks\Internals\Registry\UserRegistry;
 use Bitrix\Tasks\Internals\Task\EO_Label;
-use Bitrix\Tasks\Internals\Task\EO_Label_Collection;
 use Bitrix\Tasks\Internals\Task\LabelTable;
-use Bitrix\Tasks\Internals\Task\TaskTagTable;
 use Bitrix\Main\Loader;
+use Bitrix\Tasks\Internals\Task\TagCollection;
+use Bitrix\Tasks\Internals\Task\TaskTagTable;
 use Bitrix\UI\EntitySelector\BaseProvider;
 use Bitrix\UI\EntitySelector\Dialog;
 use Bitrix\UI\EntitySelector\Item;
-use Bitrix\UI\EntitySelector\RecentItem;
 use Bitrix\UI\EntitySelector\SearchQuery;
 use Bitrix\UI\EntitySelector\Tab;
 
@@ -24,361 +31,452 @@ use Bitrix\UI\EntitySelector\Tab;
  *
  * @package Bitrix\Tasks\Integration\UI\EntitySelector
  */
-class TaskTagProvider extends BaseProvider
+final class TaskTagProvider extends BaseProvider
 {
-	private static string $entityId = 'task-tag';
-	private static int $maxCount = 100;
+	private const LIMIT = 30;
+	private const MULTIPLIER = 50;
+	private const FAULT = 5;
+
+	private const ENTITY_ID = 'task-tag';
+	private const TAGS_TAB_ID = 'all';
+	private const LABEL_ALIAS = 'LABEL_PROVIDER';
+	private const TAGS_ORDER = 'desc nulls last';
+
 	private int $userId;
+	private int $taskId;
+	private int $groupId;
+	private string $context;
+	private array $lastActivityTagIds = [];
 
-	private static array $fields = [
-		'ID',
-		'NAME',
-		'USER_ID',
-		'GROUP_ID',
-		'GROUP.ID',
-		'USER.ID',
-		'GROUP.NAME',
-		'USER.NAME',
-		'USER.LAST_NAME',
-	];
-
+	/**
+	 * @throws LoaderException
+	 */
 	public function __construct(array $options = [])
 	{
 		parent::__construct();
-
-		$this->options['taskId'] = (int)($options['taskId'] ?? 0);
-		$this->options['groupId'] = (int)($options['groupId'] ?? 0);
-		$this->options['groupName'] = $this->getGroupName($this->options['groupId']);
-		$this->options['fromFilter'] = (bool)$options['filter'];
-		$this->options['type'] = ($options['type'] ?? 'task');
-
+		$this->taskId = (int)($options['taskId'] ?? 0);
+		$this->groupId = (int)($options['groupId'] ?? 0);
 		$this->userId = CurrentUser::get()->getId();
+		$this->resolveContext($options);
 	}
 
 	/**
-	 * @return bool
+	 * @throws ArgumentException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
 	 */
-	public function isAvailable(): bool
+	public function fillDialog(Dialog $dialog): void
 	{
-		return $GLOBALS['USER']->isAuthorized();
+		$this->addTagsTab($dialog);
+		($this->taskId > 0) && $dialog->addItems($this->getTagItems(true));
+		$dialog->addItems($this->getTagItems());
 	}
 
 	/**
-	 * @param array $ids
-	 * @return array|Item[]
+	 * @throws ObjectPropertyException
+	 * @throws ArgumentException
+	 * @throws SystemException
 	 */
-	public function getItems(array $ids): array
+	public function getTags(bool $getSelected = false): TagCollection
 	{
-		return array_map(
-			static function ($tag) {
-				return new Item([
-					'id' => $tag['ID'],
-					'entityId' => self::$entityId,
-					'title' => $tag['NAME'],
-					'selected' => false,
-					'tabs' => ['all'],
-				]);
-			},
-			$this->makeTagEntities($ids)
-		);
+		if ($getSelected)
+		{
+			return $this->getSelectedTagCollection();
+		}
+
+		switch ($this->context)
+		{
+			case Context::FILTER:
+				return $this->getFilterTagCollection();
+
+			case Context::GROUP:
+			case Context::USER:
+			default:
+				$lastActivityTagCollection = $this->getLastActivityTagCollection();
+				$ownerTagCollection = $this->getOwnerTagCollection();
+				$lastActivityTagCollection->mergeByName($ownerTagCollection);
+
+				return $lastActivityTagCollection;
+		}
 	}
 
 	/**
-	 * @param array $ids
-	 * @return array|Item[]
-	 */
-	public function getSelectedItems(array $ids): array
-	{
-		return [];
-	}
-
-	/**
-	 * @param SearchQuery $searchQuery
-	 * @param Dialog $dialog
-	 * @return void
+	 * @throws ObjectPropertyException
+	 * @throws ArgumentException
+	 * @throws SystemException
 	 */
 	public function doSearch(SearchQuery $searchQuery, Dialog $dialog): void
 	{
 		$searchQuery->setCacheable(false);
-		$query = LabelTable::query();
 
-		$query
-			->setSelect(self::$fields);
-		if ($this->options['fromFilter'])
+		switch ($this->context)
 		{
-			$groups = UserRegistry::getInstance(CurrentUser::get()->getId())->getUserGroups();
-			$groupIds = array_keys($groups);
+			case Context::FILTER:
+				$dialog->addItems($this->makeItems($this->getFilterTagCollection($searchQuery)));
+				break;
 
-			$filter = $query::filter()
-				->logic('or')
-				->whereIn('GROUP_ID', $groupIds)
-				->where('USER_ID', $this->userId)
-			;
-
-			$query
-				->whereLike('NAME',"{$searchQuery->getQuery()}%")
-				->where($filter)
-			;
-
-			$data = $query->exec()->fetchAll();
-
-			$uniqueTags = array_unique(
-				array_map(
-					static function (array $el): string {
-						return (string)$el['NAME'];
-					},
-					$data
-				)
-			);
-
-			$collection = new EO_Label_Collection();
-			foreach ($uniqueTags as $tag)
-			{
-				$collection->add(
-					new EO_Label([
-						'NAME' => $tag,
-						'ID' => $tag,
-					])
-				);
-			}
-
-			$dialog->addItems($this->makeTagItems($collection));
-
-			return;
+			case Context::GROUP:
+			case Context::USER:
+			default:
+				$dialog->addItems($this->makeItems($this->getOwnerFoundCollection($searchQuery)));
+				break;
 		}
-		if (!empty($this->options['groupId']))
-		{
-			$query->where('GROUP_ID', $this->options['groupId']);
-		}
-		else
-		{
-			$query->where('USER_ID', $this->userId);
-		}
-		$query
-			->setDistinct()
-			->whereLike('NAME', "{$searchQuery->getQuery()}%")
-		;
-
-		$searchData = $query->exec()->fetchCollection();
-
-		$dialog->addItems($this->makeTagItems($searchData));
 	}
 
 	/**
-	 * @param array $options
-	 * @return array
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
 	 */
-	public function getTagItems(array $options = []): array
+	private function getSelectedTagCollection(): TagCollection
 	{
-		return $this->makeTagItems($this->getTagCollection($options), $options);
-	}
-
-	public function getTagCollection(array $options = []): EO_Label_Collection
-	{
-		$options = array_merge($this->getOptions(), $options);
-
-		return self::getTags($options);
-	}
-
-	public static function getTags(array $options = []): EO_Label_Collection
-	{
-		$currentUserId = $GLOBALS['USER']->getId();
-
 		$query = LabelTable::query();
+		$query->setSelect(array_merge($this->getSelect(), ['TASK_TAG.TASK_ID']));
+		$query->where('TASK_TAG.TASK_ID', $this->taskId);
+		/** @var TagCollection $tagCollection */
+		$tagCollection = $query->exec()->fetchCollection();
 
-		$query
-			->setSelect(self::$fields)
+		return $tagCollection;
+	}
+
+	/**
+	 * @throws ObjectPropertyException
+	 * @throws ArgumentException
+	 * @throws SystemException
+	 */
+	private function getFilterTagCollection(SearchQuery $searchQuery = null): TagCollection
+	{
+		$userTagsQuery = LabelTable::query();
+		$userTagsQuery
+			->setSelect($this->getSelect())
 			->setOrder(['ID' => 'DESC'])
-			->setLimit(self::$maxCount)
+			->setLimit(self::LIMIT)
+			->where('USER_ID', $this->userId)
+			->where('GROUP_ID', 0)
+		;
+		!is_null($searchQuery) && $userTagsQuery->whereLike('NAME', "%{$searchQuery->getQuery()}%");
+
+		/** @var TagCollection $tagCollection */
+		$tagCollection = $userTagsQuery->exec()->fetchCollection();
+
+		if ($tagCollection->count() < self::LIMIT)
+		{
+			$groups = UserRegistry::getInstance($this->userId)->getUserGroups();
+			$groupIds = array_slice(array_keys($groups), 0, 100);
+			$groupTagsQuery = LabelTable::query();
+
+			$groupTagsQuery
+				->setSelect($this->getSelect())
+				->setOrder(['ID' => 'DESC'])
+				->setLimit(self::LIMIT - $tagCollection->count())
+				->where('USER_ID', 0)
+				->whereIn('GROUP_ID', $groupIds)
+			;
+			!is_null($searchQuery) && $groupTagsQuery->whereLike('NAME', "%{$searchQuery->getQuery()}%");
+
+			/** @var TagCollection $groupTagCollection */
+			$groupTagCollection = $groupTagsQuery->exec()->fetchCollection();
+			$tagCollection->mergeByName($groupTagCollection);
+		}
+
+		return $tagCollection;
+	}
+
+	/**
+	 * @throws ArgumentException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 */
+	private function getLastActivityTagCollection(): TagCollection
+	{
+		$this->lastActivityTagIds = $this->getLastActivityTagIds();
+		if (empty($this->lastActivityTagIds))
+		{
+			return new TagCollection();
+		}
+		$lastActivityQuery = LabelTable::query();
+		$lastActivityQuery
+			->setSelect($this->getSelect())
+			->whereIn('ID', $this->lastActivityTagIds)
+		;
+		/** @var TagCollection $lastActivityTagCollection */
+		$lastActivityTagCollection = $lastActivityQuery->exec()->fetchCollection();
+		$lastActivityTagCollection->sort($this->lastActivityTagIds);
+
+		return $lastActivityTagCollection;
+	}
+
+	/**
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 */
+	private function getOwnerTagCollection(): TagCollection
+	{
+		$count = count($this->lastActivityTagIds);
+		if ($count >= self::LIMIT)
+		{
+			return new TagCollection();
+		}
+		$query = LabelTable::query();
+		$query->where($this->getOwnerFilter());
+		$query
+			->setSelect($this->getSelect())
+			->setLimit(self::LIMIT - $count)
+		;
+		($count > 0) && $query->whereNotIn('ID', $this->lastActivityTagIds);
+		/** @var TagCollection $tagCollection */
+		$tagCollection = $query->exec()->fetchCollection();
+
+		return $tagCollection;
+	}
+
+	/**
+	 * @throws ArgumentException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 */
+	private function getOwnerFoundCollection(SearchQuery $searchQuery): TagCollection
+	{
+		$query = LabelTable::query();
+		$query
+			->where($this->getOwnerFilter())
+			->setSelect($this->getSelect())
+			->whereLike('NAME', "%{$searchQuery->getQuery()}%")
+		;
+		/** @var TagCollection $tagCollection */
+		$tagCollection = $query->exec()->fetchCollection();
+
+		return $tagCollection;
+	}
+
+	/**
+	 * @throws ArgumentException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 */
+	private function getLastActivityTagIds(): array
+	{
+		$lastActivityQuery = TaskTagTable::query();
+		$lastActivityQuery
+			->setCustomBaseTableAlias(TaskTagTable::getTableName())
+			->where($this->getOwnerFilter(self::LABEL_ALIAS . '.'))
 			->registerRuntimeField(
 				'',
-				new ReferenceField(
-					'rel',
-					TaskTagTable::getEntity(),
-					[
-						'=this.ID' => 'ref.TAG_ID',
-					],
-					[
-						'join_type' => 'left',
-					],
-				)
-			);
+				(new Reference(
+					self::LABEL_ALIAS,
+					LabelTable::class,
+					Join::on('this.TAG_ID', 'ref.ID')
+				))->configureJoinType(Join::TYPE_INNER)
+			)
+		;
 
-		if ($options['fromFilter'])
-		{
-			$groups = UserRegistry::getInstance(CurrentUser::get()->getId())->getUserGroups();
-			$groupIds = array_keys($groups);
-			$filter = $query::filter()
-				->logic('or')
-				->whereIn('GROUP_ID', $groupIds)
-				->where('USER_ID', $currentUserId)
-			;
-			$query->where($filter);
+		$distinctQuery = clone $lastActivityQuery;
 
-			return $query->exec()->fetchCollection();
-		}
-		if ($options['selected'])
+		$lastActivityQuery
+			->setOrder(['ID' => 'DESC'])
+			->setSelect(['TAG_ID'])
+			->setLimit(self::LIMIT * self::MULTIPLIER)
+		;
+		$tagCollection = $lastActivityQuery->exec()->fetchCollection();
+		$tagIds = array_unique($tagCollection->getTagIdList());
+		$tagIdsCount = count($tagIds);
+		if ($tagIdsCount + self::FAULT >= self::LIMIT)
 		{
-			$query->where('rel.TASK_ID', $options['taskId']);
-		}
-		elseif ($options['groupContext'])
-		{
-			$query->where('GROUP_ID', $options['groupId']);
-		}
-		elseif ($options['excludeSelected'])
-		{
-			$query->where('USER_ID', $currentUserId);
+			return array_splice($tagIds, 0, min($tagIdsCount, self::LIMIT));
 		}
 
-		if (!empty($options['searchQuery']) && is_string($options['searchQuery']))
-		{
-			$query->setDistinct(true);
-			$query->whereLike('NAME', "{$options['searchQuery']}%");
-		}
+		// if I am unlucky :( going to full scan with distinct...
+		$distinctQuery
+			->addSelect(new ExpressionField('U_TAG_ID', 'DISTINCT(TAG_ID)'))
+			->addSelect(new ExpressionField('M_ID', 'MAX(' . TaskTagTable::getTableName() . '.ID)'))
+			->setGroup(['TAG_ID'])
+			->addOrder('M_ID', 'DESC')
+			->setLimit(self::LIMIT)
+		;
+		$tagCollection = $distinctQuery->exec()->fetchAll();
+		$tagIds = array_column($tagCollection, 'U_TAG_ID');
 
-		return $query->exec()->fetchCollection();
+		return array_map('intval', $tagIds);
 	}
 
-	public function makeTagItems(EO_Label_Collection $tags, array $options = []): array
+	/**
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 * @throws ArgumentException
+	 */
+	public function getTagItems(bool $getSelected = false): array
 	{
-		return self::makeItems($tags, array_merge($this->getOptions(), $options));
+		return $this->makeItems($this->getTags($getSelected), $getSelected);
 	}
 
-	public static function makeItems(EO_Label_Collection $tags, array $options = []): array
+	public function makeItems(TagCollection $tags, bool $getSelected = false): array
 	{
 		$result = [];
 		foreach ($tags as $tag)
 		{
-			if ($tag->getName() !== '')
-			{
-				$result[] = self::makeItem($tag, $options);
-			}
+			$result[] = $this->makeItem($tag, $getSelected);
 		}
 
 		return $result;
 	}
 
-	public static function makeItem(EO_Label $tag, array $options = []): Item
+	public function makeItem(EO_Label $tag, bool $isSelected = false): Item
 	{
-		if ($options['fromFilter'])
-		{
-			return new Item([
-				'id' => $tag->getName(),
-				'entityId' => self::$entityId,
-				'title' => $tag->getName(),
-				'selected' => (isset($options['selected']) && $options['selected']),
-				'tabs' => ['all'],
-			]);
-		}
-
-		$badge = '';
-
-		if ($tag->getUser())
-		{
-			$badge = $tag->getUser()->getName() . " " . $tag->getUser()->getLastName();
-		}
-
-		if ($tag->getGroup())
-		{
-			$badge = $tag->getGroup()->getName();
-		}
-
-		return new Item([
-			'id' => $tag->getId(),
-			'entityId' => self::$entityId,
+		$isFilterContext = $this->context === Context::FILTER;
+		$itemData = [
+			'id' => $isFilterContext ? $tag->getName() : $tag->getId(),
+			'badges' => $isFilterContext ? null: $this->getBadge($tag),
+			'selected' => $isFilterContext ? false : $isSelected,
 			'title' => $tag->getName(),
-			'badges' => [
-				[
-					'title' => $badge,
-				],
-				[
-					'textColor' => '#bb8412',
-				],
-				[
-					'bgColor' => '#fff599',
-				],
-			],
-			'selected' => (isset($options['selected']) && $options['selected']),
-			'tabs' => ['all'],
-		]);
+			'entityId' => self::ENTITY_ID,
+			'tabs' => [self::TAGS_TAB_ID],
+		];
+
+		return new Item($itemData);
 	}
 
-	/**
-	 * @param Dialog $dialog
-	 * @return void
-	 */
-	public function fillDialog(Dialog $dialog): void
+	private function addTagsTab(Dialog $dialog): void
 	{
-		$options = $this->getOptions();
-
 		$dialog->addTab(
 			new Tab([
-				'id' => 'all',
+				'id' => self::TAGS_TAB_ID,
 				'title' => Loc::getMessage('TASKS_UI_ENTITY_SELECTOR_TAG_TAB'),
 				'stub' => true,
+				'itemOrder' => [
+					'sort' => self::TAGS_ORDER,
+				],
 			])
 		);
+	}
 
-		$dialog->addItems($this->getTagItems(['selected' => true]));
-
-		if ($options['groupId'] !== 0)
+	/**
+	 * @throws LoaderException
+	 */
+	private function resolveContext(array $options): void
+	{
+		if (($options['filter'] ?? null))
 		{
-			$dialog->addItems($this->getTagItems(['groupContext' => true]));
+			$this->context = Context::FILTER;
 		}
-		if ($options['groupId'] === 0)
+		elseif ($this->groupId > 0 && Loader::includeModule('socialnetwork'))
 		{
-			$dialog->addItems($this->getTagItems(['excludeSelected' => true]));
+			$this->context = Context::GROUP;
+		}
+		else
+		{
+			$this->context = Context::USER;
+		}
+	}
+
+	private function getBadge(EO_Label $tag): array
+	{
+		$owner = '';
+		switch ($this->context)
+		{
+			case Context::GROUP:
+				$group = $tag->getGroup();
+				if (isset($group))
+				{
+					$owner = $group->getName();
+				}
+				break;
+
+			case Context::USER:
+				$user = $tag->getUser();
+				if (isset($user))
+				{
+					$owner = \CUser::FormatName(
+						\CSite::GetNameFormat(),
+						[
+							'LOGIN' => $user->getLogin(),
+							'NAME' => $user->getName(),
+							'LAST_NAME' => $user->getLastName(),
+							'SECOND_NAME' => $user->getSecondName(),
+						],
+						true,
+						false
+					);
+				}
+				break;
+		}
+
+		return [
+			[
+				'title' => $owner,
+			],
+			[
+				'textColor' => '#bb8412',
+			],
+			[
+				'bgColor' => '#fff599',
+			],
+		];
+	}
+
+	private function getSelect(): array
+	{
+		switch ($this->context)
+		{
+			case Context::FILTER:
+				return self::getFilterContextSelect();
+
+			case Context::GROUP:
+				return self::getGroupContextSelect();
+
+			case Context::USER:
+			default:
+				return self::getUserContextSelect();
 		}
 	}
 
 	/**
-	 * @param Item $item
-	 * @return void
+	 * @throws ArgumentException
 	 */
-	public function handleBeforeItemSave(Item $item): void
+	private function getOwnerFilter(string $alias = ''): ConditionTree
 	{
-	}
+		$filter = Query::filter();
 
-	private function getGroupName(int $groupId): string
-	{
-		if (!Loader::includeModule('socialnetwork'))
+		if ($this->context === Context::USER)
 		{
-			return '';
+			$filter
+				->logic(ConditionTree::LOGIC_AND)
+				->where($alias . 'USER_ID', $this->userId)
+				->where($alias . 'GROUP_ID', 0)
+			;
+		}
+		elseif ($this->context === Context::GROUP)
+		{
+			$filter
+				->logic(ConditionTree::LOGIC_AND)
+				->where($alias . 'USER_ID', 0)
+				->where($alias . 'GROUP_ID', $this->groupId)
+			;
 		}
 
-		if (!$groupId)
-		{
-			return '';
-		}
-
-		$group = WorkgroupTable::getById($groupId)->fetchAll();
-
-		if (empty($group))
-		{
-			return '';
-		}
-
-		return $group[0]['NAME'];
-	}
-
-	private function makeTagEntities(array $titles): array
-	{
-		return LabelTable::getList([
-			'select' => [
-				'ID',
-				'NAME',
-			],
-			'filter' => array_merge($this->makeFilter(), ['@NAME' => $titles]),
-		])->fetchAll();
-	}
-
-	private function makeFilter(): array
-	{
-		$filter = ['=USER_ID' => $this->userId];
-		if (!empty($this->options['groupId']))
-		{
-			$filter = ['=GROUP_ID' => $this->options['groupId']];
-		}
 		return $filter;
+	}
+
+	private static function getGroupContextSelect(): array
+	{
+		return ['ID', 'NAME', 'GROUP.ID', 'GROUP.NAME'];
+	}
+
+	private static function getUserContextSelect(): array
+	{
+		return ['ID', 'NAME', 'USER.ID', 'USER.NAME', 'USER.LAST_NAME'];
+	}
+
+	private static function getFilterContextSelect(): array
+	{
+		return ['ID', 'NAME'];
+	}
+
+	public function isAvailable(): bool
+	{
+		return $GLOBALS['USER']->isAuthorized();
+	}
+
+	public function getItems(array $ids): array
+	{
+		return [];
 	}
 }

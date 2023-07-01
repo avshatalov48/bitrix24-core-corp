@@ -189,7 +189,7 @@ class TasksTaskTemplateComponent extends TasksBaseComponent
 		return [];
 	}
 
-	public function saveCheckListAction($templateId, $items = [], $params)
+	public function saveCheckListAction($templateId, $items = [], $params = [])
 	{
 		if (!is_array($items))
 		{
@@ -215,11 +215,11 @@ class TasksTaskTemplateComponent extends TasksBaseComponent
 
 		foreach ($items as $id => $item)
 		{
-			$item['ID'] = ((int)$item['ID'] === 0? null : (int)$item['ID']);
-			$item['IS_COMPLETE'] = (int)$item['IS_COMPLETE'] > 0;
-			$item['IS_IMPORTANT'] = (int)$item['IS_IMPORTANT'] > 0;
+			$item['ID'] = isset($item['ID']) ? (int)$item['ID'] : null;
+			$item['IS_COMPLETE'] = isset($item['IS_COMPLETE']) && (int)$item['IS_COMPLETE'] > 0;
+			$item['IS_IMPORTANT'] = isset($item['IS_IMPORTANT']) && (int)$item['IS_IMPORTANT'] > 0;
 
-			if (is_array($item['MEMBERS']))
+			if (isset($item['MEMBERS']) && is_array($item['MEMBERS']))
 			{
 				$members = [];
 
@@ -330,7 +330,7 @@ class TasksTaskTemplateComponent extends TasksBaseComponent
 		$request = $this->request->toArray();
 
 		// base template
-		$baseTemplateId = intval($request['BASE_TEMPLATE']);
+		$baseTemplateId = (int)($request['BASE_TEMPLATE'] ?? null);
 		if($baseTemplateId && !TaskLimit::isLimitExceeded())
 		{
 			$this->template['BASE_TEMPLATE_ID'] = $baseTemplateId;
@@ -408,6 +408,13 @@ class TasksTaskTemplateComponent extends TasksBaseComponent
 			{
 				$this->getDataRequest();
 			}
+		}
+
+		// scenario
+		$scenario = $this->request->get('SCENARIO');
+		if ($scenario && \Bitrix\Tasks\Internals\Task\Template\ScenarioTable::isValidScenario($scenario))
+		{
+			$this->arResult['TEMPLATE_DATA']['SCENARIO'] = $scenario;
 		}
 
 		$this->collectTaskMembers();

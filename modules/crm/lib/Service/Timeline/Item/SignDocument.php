@@ -2,8 +2,9 @@
 
 namespace Bitrix\Crm\Service\Timeline\Item;
 
+use Bitrix\Crm\Service\Timeline\Layout\Common\Icon;
 use Bitrix\Crm\Service\Timeline\Layout;
-use Bitrix\Crm\Service\Timeline\Layout\Menu\MenuItemFactory;
+use Bitrix\Crm\Service\Timeline\Layout\Common\Logo;
 use Bitrix\Crm\Timeline;
 use Bitrix\Crm\Timeline\HistoryDataModel\Presenter;
 use Bitrix\Crm\Timeline\SignDocument\DocumentData;
@@ -72,22 +73,28 @@ class SignDocument extends Configurable
 
 	public function getLogo(): ?Layout\Body\Logo
 	{
-		$channel = $this->getMessageData() && $this->messageData->getChannel() === 'whatsapp' ? 'channel-whatsapp' :'mail-outcome';
+		$channel = $this->getMessageData() && $this->messageData->getChannel() === 'phone'
+			? Logo::CHANNEL_WHATSAPP
+			: Logo::MAIL_OUTCOME
+		;
 
 		$logosMap = [
-			Timeline\SignDocument\Entry::TYPE_CATEGORY_SENT => $channel,
+			Timeline\SignDocument\Entry::TYPE_CATEGORY_SENT =>
+				[ 'type' => $channel, 'subType' => 'arrow-outgoing',],
 			Timeline\SignDocument\Entry::TYPE_CATEGORY_SIGNED =>
-				['type' => 'document', 'subType' => 'sign'],
+				['type' => Logo::DOCUMENT, 'subType' => 'sign',],
 			Timeline\SignDocument\Entry::TYPE_CATEGORY_SIGN_COMPLETED =>
-				['type' => 'document', 'subType' => 'sign'],
+				['type' => Logo::DOCUMENT, 'subType' => 'sign',],
 			Timeline\SignDocument\Entry::TYPE_CATEGORY_SENT_FINAL => $channel,
 			Timeline\SignDocument\Entry::TYPE_CATEGORY_COMPLETED =>
-				['type' => 'document', 'subType' => 'double-check'],
+				['type' => Logo::DOCUMENT, 'subType' => 'double-check',],
+			Timeline\SignDocument\Entry::TYPE_CATEGORY_PRINTED_FORM =>
+				['type' => Logo::DOCUMENT, 'subType' => 'search',],
 			Timeline\SignDocument\Entry::TYPE_CATEGORY_SENT_REPEATEDLY => $channel,
 		];
 
-		$code = $logosMap[$this->model->getTypeCategoryId()] ?? 'document';
-		$logo = new Layout\Body\Logo($code['type'] ?? $code);
+		$code = $logosMap[$this->model->getTypeCategoryId()] ?? Logo::DOCUMENT;
+		$logo = Logo::getInstance($code['type'] ?? $code)->createLogo();
 
 		if ($code['subType'] ?? false)
 		{
@@ -108,14 +115,18 @@ class SignDocument extends Configurable
 
 	public function getIconCode(): string
 	{
-		$channel = $this->getMessageData() && $this->messageData->getChannel() === 'whatsapp' ? 'code-IM' :'mail-outcome';
+		$channel = (
+			$this->getMessageData() && $this->messageData->getChannel() === 'whatsapp'
+				? Icon::IM
+				: Icon::MAIL_OUTCOME
+		);
 
 		$itemsMap = [
 			Timeline\SignDocument\Entry::TYPE_CATEGORY_SENT => $channel,
 			Timeline\SignDocument\Entry::TYPE_CATEGORY_SENT_REPEATEDLY => $channel,
 		];
 
-		return $itemsMap[$this->model->getTypeCategoryId()] ?? 'document';
+		return $itemsMap[$this->model->getTypeCategoryId()] ?? Icon::DOCUMENT;
 
 	}
 
@@ -537,10 +548,17 @@ class SignDocument extends Configurable
 				->setValue($this->getAssociatedEntityModel()->get('TITLE')));
 	}
 
-	protected function getSignerContentBlock(Signer $signer): Layout\Body\ContentBlock
+	protected function getSignerContentBlock(Signer $signer, string $value = ''): Layout\Body\ContentBlock
 	{
 		return (new Layout\Body\ContentBlock\Text())
-			->setValue($signer->getTitle())
+			->setValue(
+				!empty($value) ? implode(', ',
+					[
+						$signer->getTitle(),
+						$value,
+					]
+				) : $signer->getTitle()
+			)
 		;
 	}
 
@@ -582,7 +600,10 @@ class SignDocument extends Configurable
 		return (new Layout\Body\ContentBlock\ContentBlockWithTitle())
 			->setInline(true)
 			->setTitle(Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_BLOCK_RECIPIENT_TITLE'))
-			->setContentBlock($this->getSignerContentBlock($messageData->getRecipient()))
+			->setContentBlock($this->getSignerContentBlock(
+				$messageData->getRecipient(),
+				$messageData->getChannel()->getIdentifier()
+			))
 		;
 	}
 
@@ -592,7 +613,7 @@ class SignDocument extends Configurable
 		{
 			return null;
 		}
-		
+
 		return (new Layout\Body\ContentBlock\ContentBlockWithTitle())
 			->setTitle(Loc::getMessage('CRM_SERVICE_TIMELINE_LAYOUT_SIGNDOCUMENT_BLOCK_DATE'))
 			->setContentBlock((new Layout\Body\ContentBlock\Date())

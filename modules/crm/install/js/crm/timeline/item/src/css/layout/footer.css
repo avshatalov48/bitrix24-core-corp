@@ -39,8 +39,8 @@
 
 .crm-timeline__card-action-btn {
 	display: inline-block;
-	min-width: 120px;
-	width: 31%;
+	min-width: 126px;
+	max-width: 50%;
 	margin: 0 8px 8px 0;
 }
 
@@ -109,6 +109,14 @@
 
 .crm-timeline__card_add-button.--icon-dots {
 	mask-image: url(../../images/add-btn-icons/add-btn-icon-dots.svg);
+}
+
+.crm-timeline__card_add-button.--icon-qr-code {
+	mask-image: url(../../images/add-btn-icons/add-btn-icon-qr-code.svg);
+}
+
+.crm-timeline__card_add-button.--icon-videoconference {
+	mask-image: url(../../images/add-btn-icons/add-btn-icon-videoconference.svg);
 }
 
 .crm-timeline__card_add-button-fade-enter-active,

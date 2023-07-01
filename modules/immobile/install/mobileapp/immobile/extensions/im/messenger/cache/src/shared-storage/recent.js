@@ -5,9 +5,9 @@
  */
 jn.define('im/messenger/cache/recent', (require, exports, module) => {
 
-	const { Cache } = jn.require('im/messenger/cache/base');
-	const { throttle } = jn.require('utils/function');
-	const { clone } = jn.require('utils/object');
+	const { Cache } = require('im/messenger/cache/base');
+	const { throttle } = require('utils/function');
+	const { clone } = require('utils/object');
 
 	/**
 	 * @class RecentCache
@@ -25,7 +25,7 @@ jn.define('im/messenger/cache/recent', (require, exports, module) => {
 
 		save(state)
 		{
-			const firstPageState = ChatUtils.objectClone(state);
+			const firstPageState = clone(state);
 
 			firstPageState.collection =
 				firstPageState.collection

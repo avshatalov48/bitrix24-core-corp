@@ -1,0 +1,31 @@
+.crm-timeline-calendar-sharing-item-editable,
+.crm-timeline-calendar-sharing-item-non-editable {
+	position: relative;
+	display: inline-flex;
+	flex-direction: row;
+	align-items: center;
+	min-height: 21px;
+	padding: 0 9px;
+	font-family: var(--ui-font-family-secondary, --ui-font-family-open-sans, 'Open Sans', sans-serif);
+	font-size: var(--ui-font-size-xs, 12px);
+	font-weight: var(--ui-font-weight-semi-bold, 600);
+	line-height: var(--ui-font-line-height-xl, 1.62);
+	border-radius: 64px;
+	color: var(--ui-color-text-subtle, #828b95);
+}
+
+.crm-timeline-calendar-sharing-item-editable:last-child,
+.crm-timeline-calendar-sharing-item-non-editable:last-child {
+	margin-bottom: 0;
+}
+
+.crm-timeline-calendar-sharing-item-editable {
+	background-color: #FFE9BE;
+	padding-right: 21px;
+	cursor: pointer;
+}
+
+.crm-timeline-calendar-sharing-item-non-editable {
+	background-color: var(--ui-color-base-04, #F1F4F6);
+	cursor: default;
+}

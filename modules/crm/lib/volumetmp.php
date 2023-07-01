@@ -50,9 +50,9 @@ use Bitrix\Main\Entity;
  *
  * <<< ORMENTITYANNOTATION
  * @method static EO_VolumeTmp_Query query()
- * @method static EO_VolumeTmp_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_VolumeTmp_Result getByPrimary($primary, array $parameters = [])
  * @method static EO_VolumeTmp_Result getById($id)
- * @method static EO_VolumeTmp_Result getList(array $parameters = array())
+ * @method static EO_VolumeTmp_Result getList(array $parameters = [])
  * @method static EO_VolumeTmp_Entity getEntity()
  * @method static \Bitrix\Crm\EO_VolumeTmp createObject($setDefaultValues = true)
  * @method static \Bitrix\Crm\EO_VolumeTmp_Collection createCollection()

@@ -2,7 +2,6 @@
  * @module crm/entity-tab/filter
  */
 jn.define('crm/entity-tab/filter', (require, exports, module) => {
-
 	/**
 	 * @class Filter
 	 */
@@ -29,7 +28,7 @@ jn.define('crm/entity-tab/filter', (require, exports, module) => {
 		{
 			this.presetId = presetId;
 			this.counterId = null;
-			this.tmpFields = {}
+			this.tmpFields = {};
 			this.search = null;
 			this.currentFilterId = null;
 		}
@@ -93,7 +92,7 @@ jn.define('crm/entity-tab/filter', (require, exports, module) => {
 				tmpFields: this.tmpFields,
 				search: this.search,
 				currentFilterId: this.currentFilterId,
-			}
+			};
 		}
 
 		isActive()
@@ -103,7 +102,7 @@ jn.define('crm/entity-tab/filter', (require, exports, module) => {
 
 		hasSearchText()
 		{
-			return Boolean(this.search && this.search.length);
+			return Boolean(this.search && this.search.length > 0);
 		}
 
 		hasSelectedNotDefaultPreset(searchRef = null)

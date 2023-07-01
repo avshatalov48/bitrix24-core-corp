@@ -451,6 +451,68 @@ a.b24-form-click-btn-font-modern {
 	padding: 0 30px 10px 10px;
 	text-align: right;
 	margin: -10px 0 0;
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-ms-flex-wrap: wrap;
+	    flex-wrap: wrap;
+	-webkit-box-align: center;
+	    -ms-flex-align: center;
+	        align-items: center;
+	padding: 10px 31px;
+}
+
+.b24-form-sign-info {
+	margin-left: auto;
+}
+
+.b24-form .b24-form-sign-abuse-link {
+	-webkit-transition: .2s;
+	-o-transition: .2s;
+	transition: .2s;
+	font: 12px var(--b24-font-family);
+	opacity: 0.4;
+	text-decoration: none;
+	/*border-bottom: 1px solid var(--b24-text-color);*/
+	border-bottom: 1px solid var(--b24-text-color);
+}
+
+.b24-form .b24-form-sign-abuse-link:hover {
+	opacity: 0.7;
+}
+
+.b24-form .b24-form-sign-abuse-help {
+	display: inline-block;
+	margin-right: auto;
+	margin-left: 5px;
+	width: 20px;
+	height: 20px;
+	background: url("data:image/svg+xml;charset=utf-8,%3Csvg width='24' height='24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M20 12a8 8 0 11-16 0 8 8 0 0116 0zm-9.007 2.629v1.807h1.842v-1.807h-1.842zm-.164-3.872H9.104c.008-.422.08-.81.217-1.161.137-.352.328-.657.575-.915a2.59 2.59 0 01.891-.605 3.015 3.015 0 011.168-.217c.555 0 1.019.076 1.39.229.372.153.671.342.898.57a2.106 2.106 0 01.634 1.467c0 .374-.05.683-.147.926a2.287 2.287 0 01-.845 1.062c-.176.12-.342.242-.499.363-.156.121-.295.26-.416.417a1.197 1.197 0 00-.229.586v.446h-1.584v-.528c.024-.336.088-.618.194-.845.105-.226.228-.42.37-.58.14-.16.289-.3.445-.417a7.1 7.1 0 00.434-.352c.133-.117.24-.246.323-.387a.96.96 0 00.111-.528c0-.36-.088-.626-.264-.798-.176-.172-.42-.258-.733-.258-.211 0-.393.041-.546.123a1.089 1.089 0 00-.375.329c-.098.137-.17.297-.217.48-.047.185-.07.382-.07.593z' fill='%23525C69'/%3E%3C/svg%3E") center no-repeat;
+	background-size: 100%;
+	cursor: pointer;
+	opacity: .35;
+	-webkit-transition: .2s;
+	-o-transition: .2s;
+	transition: .2s;
+}
+
+.b24-form .b24-form-sign-abuse-help:hover {
+	opacity: .45;
+	-webkit-transition: none;
+	-o-transition: none;
+	transition: none;
+}
+
+.b24-form-sign-abuse-info {
+	font: 12px var(--b24-font-family);
+	color: var(--b24-text-color);
+	opacity: 0.4;
+}
+
+.b24-form-sign-info + .b24-form-sign-abuse-info {
+	width: 100%;
+	text-align: left;
+	margin-top: 10px;
 }
 
 .b24-form-sign-text {

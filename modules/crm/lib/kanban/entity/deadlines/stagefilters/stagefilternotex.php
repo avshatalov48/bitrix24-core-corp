@@ -38,7 +38,11 @@ final class StageFilterNotEx implements StageFilter
 				$stageFilter["<=$fieldName"] = $this->datePeriods->nextWeekLastDay();
 				break;
 			case DeadlinesStageManager::STAGE_LATER:
-				$stageFilter[">=$fieldName"] = $this->datePeriods->afterNextWeek();
+				$stageFilter['__INNER_FILTER_StageFilterNotEx_1'] = [
+					'LOGIC' => 'OR',
+					">=$fieldName" => $this->datePeriods->afterNextWeek(),
+					"=$fieldName" => false
+				];
 				break;
 			default:
 				return $stageFilter;

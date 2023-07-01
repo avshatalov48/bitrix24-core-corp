@@ -786,6 +786,13 @@ export class Selector extends EventEmitter
 								this.#selectFirstCategory();
 
 								return this.#getRenderedSliderLayout();
+							})
+							.catch(({errors}) => {
+								return Tag.render`
+									<div class="ui-alert ui-alert-danger">
+										<span class="ui-alert-message">${errors.map((item) => Text.encode(item.message)).join('\n')}</span>
+									</div>
+								`;
 							});
 					},
 					events: {

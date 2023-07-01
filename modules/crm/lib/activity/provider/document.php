@@ -98,7 +98,7 @@ final class Document extends Base
 
 		$fields['PROVIDER_TYPE_ID'] = self::PROVIDER_TYPE_ID_DOCUMENT;
 
-		if ($action === 'ADD')
+		if ($action === self::ACTION_ADD)
 		{
 			$documentId = (int)($fields['ASSOCIATED_ENTITY_ID'] ?? 0);
 			if ($documentId <= 0)

@@ -26,7 +26,12 @@ export class EntityEditorBaseAddressField
 			'countryId',
 			BX.prop.getInteger(this._addrZoneConfig, "countryId", 0)
 		);
-		this._defaultAddressType = BX.prop.getInteger(this._addrZoneConfig, 'defaultAddressType', 0);
+		this._defaultAddressType = BX.prop.getInteger(this._settings, 'defaultAddressTypeByCategory', 0);
+		if (this._defaultAddressType <= 0)
+		{
+			this._defaultAddressType = BX.prop.getInteger(this._addrZoneConfig, 'defaultAddressType', 0)
+		}
+
 		this.updateAllowedTypes();
 	}
 

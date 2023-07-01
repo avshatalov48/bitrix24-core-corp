@@ -1,4 +1,5 @@
 <?
+
 CModule::AddAutoloadClasses(
 	"mobile",
 	array(
@@ -38,11 +39,6 @@ CJSCore::RegisterExt('mobile_tools', array(
 		return array(
 			'lang_additional' => array(
 				'can_perform_calls' => \Bitrix\Main\Loader::includeModule('voximplant') && Bitrix\Voximplant\Security\Helper::canCurrentUserPerformCalls() ? 'Y' : 'N',
-				'isCrmUniversalActivityScenarioEnabled' => (
-					\Bitrix\Main\Loader::includeModule('crm')
-					&& \Bitrix\Main\Loader::includeModule('crmmobile')
-					&& \Bitrix\Crm\Settings\Crm::isUniversalActivityScenarioEnabled()
-				) ? 'Y' : 'N',
 			)
 		);
 	},

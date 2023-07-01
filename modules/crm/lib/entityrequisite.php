@@ -2381,6 +2381,8 @@ class EntityRequisite
 		return [
 			'RQ_VAT_PAYER' => 'checkbox',
 			'RQ_IDENT_TYPE' => 'crm_status',
+			'RQ_STAMP' => 'image',
+			'RQ_SIGNATURE' => 'image',
 		];
 	}
 
@@ -2582,19 +2584,13 @@ class EntityRequisite
 		return true;
 	}
 
-	public static function checkCreatePermissionOwnerEntity($entityTypeID)
+	public static function checkCreatePermissionOwnerEntity($entityTypeID, int $categoryId = 0)
 	{
-		if(!is_int($entityTypeID))
-		{
-			$entityTypeID = (int)$entityTypeID;
-		}
+		$entityTypeID = (int)$entityTypeID;
 
-		if ($entityTypeID === CCrmOwnerType::Company ||
-				$entityTypeID === CCrmOwnerType::Contact
-		)
+		if ($entityTypeID === CCrmOwnerType::Company || $entityTypeID === CCrmOwnerType::Contact)
 		{
-			$entityType = CCrmOwnerType::ResolveName($entityTypeID);
-			return \CCrmAuthorizationHelper::CheckCreatePermission($entityType);
+			return Crm\Service\Container::getInstance()->getUserPermissions()->checkAddPermissions($entityTypeID, $categoryId);
 		}
 
 		return false;
@@ -2602,22 +2598,18 @@ class EntityRequisite
 
 	public static function checkUpdatePermissionOwnerEntity($entityTypeID, $entityID)
 	{
-		if(!is_int($entityTypeID))
+		$entityTypeID = (int)$entityTypeID;
+		$entityID = (int)$entityID;
+
+		$userPermissions = Crm\Service\Container::getInstance()->getUserPermissions();
+		if ($entityTypeID === CCrmOwnerType::Company && $entityID > 0 && \CCrmCompany::isMyCompany($entityID))
 		{
-			$entityTypeID = (int)$entityTypeID;
+			return $userPermissions->getMyCompanyPermissions()->canUpdate();
 		}
 
-		if ($entityTypeID === CCrmOwnerType::Company && $entityID > 0 && \CCrmCompany::isMyCompany((int)$entityID))
+		if ($entityTypeID === CCrmOwnerType::Company || $entityTypeID === CCrmOwnerType::Contact)
 		{
-			return \CCrmAuthorizationHelper::CheckConfigurationUpdatePermission();
-		}
-
-		if ($entityTypeID === CCrmOwnerType::Company ||
-				$entityTypeID === CCrmOwnerType::Contact
-		)
-		{
-			$entityType = CCrmOwnerType::ResolveName($entityTypeID);
-			return \CCrmAuthorizationHelper::CheckUpdatePermission($entityType, $entityID);
+			return $userPermissions->checkUpdatePermissions($entityTypeID, $entityID);
 		}
 
 		return false;
@@ -2625,51 +2617,48 @@ class EntityRequisite
 
 	public static function checkDeletePermissionOwnerEntity($entityTypeID, $entityID)
 	{
-		if(!is_int($entityTypeID))
+		$entityTypeID = (int)$entityTypeID;
+		$entityID = (int)$entityID;
+
+		$userPermissions = Crm\Service\Container::getInstance()->getUserPermissions();
+		if ($entityTypeID === CCrmOwnerType::Company && $entityID > 0 && \CCrmCompany::isMyCompany($entityID))
 		{
-			$entityTypeID = (int)$entityTypeID;
+			return $userPermissions->getMyCompanyPermissions()->canDelete();
 		}
 
-		if ($entityTypeID === CCrmOwnerType::Company && $entityID > 0 && \CCrmCompany::isMyCompany((int)$entityID))
+		if ($entityTypeID === CCrmOwnerType::Company || $entityTypeID === CCrmOwnerType::Contact)
 		{
-			return \CCrmAuthorizationHelper::CheckConfigurationUpdatePermission();
-		}
-
-		if ($entityTypeID === CCrmOwnerType::Company ||
-				$entityTypeID === CCrmOwnerType::Contact
-		)
-		{
-			$entityType = CCrmOwnerType::ResolveName($entityTypeID);
-			return \CCrmAuthorizationHelper::CheckDeletePermission($entityType, $entityID);
+			return $userPermissions->checkDeletePermissions($entityTypeID, $entityID);
 		}
 
 		return false;
 	}
 
-	public static function checkReadPermissionOwnerEntity($entityTypeID = 0, $entityID = 0)
+	public static function checkReadPermissionOwnerEntity($entityTypeID = 0, $entityID = 0, $categoryId = null)
 	{
-		if(!is_int($entityTypeID))
+		$entityTypeID = (int)$entityTypeID;
+		$entityID = (int)$entityID;
+
+		$userPermissions = Crm\Service\Container::getInstance()->getUserPermissions();
+		if ($entityTypeID <= 0 && $entityID <= 0)
 		{
-			$entityTypeID = (int)$entityTypeID;
+			return
+				$userPermissions->checkReadPermissions(CCrmOwnerType::Company, 0, 0)
+				&& $userPermissions->checkReadPermissions(CCrmOwnerType::Contact, 0, 0)
+			;
 		}
 
-		if(intval($entityTypeID)<=0 && intval($entityID) <= 0)
+		if ($entityTypeID === CCrmOwnerType::Company && $entityID > 0 && \CCrmCompany::isMyCompany($entityID))
 		{
-			return (\CCrmAuthorizationHelper::CheckReadPermission(CCrmOwnerType::Company, 0) &&
-					\CCrmAuthorizationHelper::CheckReadPermission(CCrmOwnerType::Contact, 0));
+			return $userPermissions->getMyCompanyPermissions()->canReadBaseFields($entityID);
 		}
 
-		if ($entityTypeID === CCrmOwnerType::Company && $entityID > 0 && \CCrmCompany::isMyCompany((int)$entityID))
+		if ($entityTypeID === CCrmOwnerType::Company || $entityTypeID === CCrmOwnerType::Contact)
 		{
-			return true;
-		}
-
-		if ($entityTypeID === CCrmOwnerType::Company ||
-				$entityTypeID === CCrmOwnerType::Contact
-		)
-		{
-			$entityType = CCrmOwnerType::ResolveName($entityTypeID);
-			return \CCrmAuthorizationHelper::CheckReadPermission($entityType, $entityID);
+			return $entityID > 0
+				? $userPermissions->checkReadPermissions($entityTypeID, $entityID)
+				: $userPermissions->checkReadPermissions($entityTypeID, 0, (int)$categoryId) //  $categoryId should be = 0 instead of null to check access to default category by default
+			;
 		}
 
 		return false;
@@ -2678,7 +2667,7 @@ class EntityRequisite
 	public function checkUpdatePermission($id)
 	{
 		$r = static::getOwnerEntityById($id);
-		if(is_array($r))
+		if(is_array($r) && !empty($r))
 			return self::checkUpdatePermissionOwnerEntity($r['ENTITY_TYPE_ID'], $r['ENTITY_ID']);
 		else
 			return false;
@@ -2692,7 +2681,7 @@ class EntityRequisite
 		}
 
 		$r = static::getOwnerEntityById($id);
-		if(is_array($r))
+		if(is_array($r) && !empty($r))
 			return self::checkReadPermissionOwnerEntity($r['ENTITY_TYPE_ID'], $r['ENTITY_ID']);
 		else
 			return false;
@@ -2730,8 +2719,13 @@ class EntityRequisite
 
 		if ($entityTypeId === CCrmOwnerType::Company)
 		{
-			if (!\CCrmCompany::CheckReadPermission($entityId))
-				return false;
+			$userPermissions = Crm\Service\Container::getInstance()->getUserPermissions();
+			if (\CCrmCompany::isMyCompany($entityId))
+			{
+				return $userPermissions->getMyCompanyPermissions()->canReadBaseFields($entityId);
+			}
+
+			return $userPermissions->checkReadPermissions($entityTypeId, $entityId);
 		}
 		else if ($entityTypeId === CCrmOwnerType::Contact)
 		{

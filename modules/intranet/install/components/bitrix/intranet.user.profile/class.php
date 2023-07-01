@@ -89,6 +89,7 @@ class CIntranetUserProfileComponent extends UserProfile
 				isset($this->arParams["ALLOWALL_USER_PROFILE_FIELDS"])
 				&& $this->arParams["ALLOWALL_USER_PROFILE_FIELDS"] === 'Y'
 			)
+			|| $this->getTemplateName() === 'widget'
 		);
 
 		$this->arResult["EnableUserFieldCreation"] = $this->arResult["EnableCommonConfigurationUpdate"];

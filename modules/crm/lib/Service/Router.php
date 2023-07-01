@@ -351,6 +351,19 @@ class Router
 		$entityTypeId = $parameters['ENTITY_TYPE_ID'] ?? $parameters['entityTypeId'] ?? null;
 		$entityTypeId = (int)$entityTypeId;
 
+		if (
+			$entityTypeId === \CCrmOwnerType::SmartDocument
+			&& \Bitrix\Crm\Settings\Crm::isDocumentSigningEnabled()
+			&& in_array($componentName, ['bitrix:crm.item.list', 'bitrix:crm.item.kanban'])
+		)
+		{
+			return new Uri(
+				$componentName === 'bitrix:crm.item.list'
+					? '/sign/list/'
+					: '/sign/'
+			);
+		}
+
 		$event = new Event('crm', 'onGetUrlForTemplateRouter', [
 			'componentName' => $componentName,
 			'parameters' => $parameters,

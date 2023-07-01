@@ -4,38 +4,38 @@ namespace Bitrix\Tasks\Rest\Controllers;
 use Bitrix\Main\Engine;
 use Bitrix\Main\Loader;
 use Bitrix\Main\UI\PageNavigation;
+use Bitrix\Mobile\Project\Helper;
+use Bitrix\Socialnetwork\Component\WorkgroupList;
+use Bitrix\Socialnetwork\Helper\Workgroup;
 use Bitrix\Tasks\Integration\Socialnetwork;
-use Bitrix\Tasks\Internals\Project\Filter\MobileFilter;
 use Bitrix\Tasks\Internals\Project\Provider;
 
 class Project extends Base
 {
+	private const MODE_MOBILE = 'mobile';
+	private const MODE_WEB = 'web';
+
 	public function listAction(
-		PageNavigation $pageNavigation,
 		array $filter = [],
 		array $select = [],
 		array $order = [],
-		array $params = []
+		array $params = [],
+		PageNavigation $pageNavigation = null
 	): ?Engine\Response\DataType\Page
 	{
 		$projects = [];
 
-		$provider = new Provider();
-		$mobileFilter = new MobileFilter();
+		$params['listMode'] = ($params['listMode'] ?? WorkgroupList::MODE_TASKS_PROJECT);
 
-		if (array_key_exists('GET_LAST_ACTIVE', $params) && $params['GET_LAST_ACTIVE'] === 'Y')
-		{
-			$filter['ID'] = $provider->getLastActiveProjectIds();
-		}
+		$provider = new Provider($this->getUserId(), $params['listMode']);
+		$preparedSelect = $provider->prepareQuerySelect($select);
 
-		$querySelect = $provider->prepareQuerySelect($select);
-
-		$query = $provider->getPrimaryProjectsQuery($querySelect);
-		$query = $mobileFilter->process($query, $filter);
+		$query = $provider->getPrimaryProjectsQuery($preparedSelect);
+		$query = $provider->getQueryWithFilter($query, $filter, ($params['siftThroughFilter']['presetId'] ?? ''));
 		$query
 			->setOrder($order)
 			->setOffset($pageNavigation->getOffset())
-			->setLimit(($pageNavigation->getLimit()))
+			->setLimit($pageNavigation->getLimit())
 			->countTotal(true)
 		;
 		$res = $query->exec();
@@ -44,15 +44,11 @@ class Project extends Base
 			$projects[$project['ID']] = $project;
 		}
 
-		$mode = (
-			isset($params['mode'])
-			&& $params['mode'] === 'mobile'
-				? 'mobile'
-				: 'web'
-		);
-
 		if (!empty($projects))
 		{
+			$mode = ($params['mode'] ?? Project::MODE_WEB);
+			$mode = ($mode === Project::MODE_MOBILE ? Project::MODE_MOBILE : Project::MODE_WEB);
+
 			if (in_array('MEMBERS', $select, true))
 			{
 				$projects = $provider->fillMembers($projects);
@@ -73,7 +69,7 @@ class Project extends Base
 			{
 				$projects = $this->fillIsExtranet($projects);
 			}
-			if ($mode === 'mobile')
+			if ($mode === Project::MODE_MOBILE)
 			{
 				$projects = $this->fillTabsData($projects);
 			}
@@ -141,10 +137,10 @@ class Project extends Base
 		$ids = array_keys($projects);
 		if (!empty($ids))
 		{
-			$additionalData = \Bitrix\Socialnetwork\Helper\Workgroup::getAdditionalData([
+			$additionalData = Workgroup::getAdditionalData([
 				'ids' => $ids,
-				'features' => \Bitrix\Mobile\Project\Helper::getMobileFeatures(),
-				'mandatoryFeatures' => \Bitrix\Mobile\Project\Helper::getMobileMandatoryFeatures(),
+				'features' => Helper::getMobileFeatures(),
+				'mandatoryFeatures' => Helper::getMobileMandatoryFeatures(),
 				'currentUserId' => (int)$this->getCurrentUser()->getId(),
 			]);
 
@@ -162,13 +158,13 @@ class Project extends Base
 		return $projects;
 	}
 
-	public function pinAction(int $projectId): void
+	public function pinAction(int $projectId, string $mode = WorkgroupList::MODE_TASKS_PROJECT): void
 	{
-		(new Provider())->pin([$projectId]);
+		(new Provider($this->getUserId(), $mode))->pin([$projectId]);
 	}
 
-	public function unpinAction(int $projectId): void
+	public function unpinAction(int $projectId, string $mode = WorkgroupList::MODE_TASKS_PROJECT): void
 	{
-		(new Provider())->unpin([$projectId]);
+		(new Provider($this->getUserId(), $mode))->unpin([$projectId]);
 	}
 }

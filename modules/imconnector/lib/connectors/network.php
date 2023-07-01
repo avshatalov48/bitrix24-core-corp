@@ -37,7 +37,7 @@ class Network extends Base
 		$result = new Result();
 		$userId = 0;
 
-		if (!isset($message['USER']))
+		if (empty($message['USER']) || empty($message['USER']['UUID']))
 		{
 			$result->addError(new Error(
 				'User data not transmitted',
@@ -47,21 +47,9 @@ class Network extends Base
 			));
 		}
 
-		/*
-		if ($message['MESSAGE_TYPE'] !== 'P')
-		{
-			$result->addError(new Error(
-				'Invalid message type',
-				'ERROR_IMCONNECTOR_INVALID_MESSAGE_TYPE',
-				__METHOD__,
-				$message
-			));
-		}
-		*/
-
 		if ($result->isSuccess())
 		{
-			$userId = $this->getUserId($message['USER']);
+			$userId = $this->getUserId($message['USER'], true);
 
 			if (empty($userId))
 			{
@@ -391,12 +379,12 @@ class Network extends Base
 	protected function processingInputBase($message, $line): Result
 	{
 		$result = new Result();
-		$userId = $this->getUserId($message['USER']);
+		$userId = $this->getUserId($message['USER'], false);
 
 		if (empty($userId))
 		{
 			$result->addError(new Error(
-				'Failed to create or update user',
+				'Failed to find user',
 				'ERROR_IMCONNECTOR_FAILED_USER',
 				__METHOD__,
 				$message
@@ -425,10 +413,7 @@ class Network extends Base
 	{
 		$result = new Result();
 
-		if (
-			!isset($params['USER'])
-			&& $result->isSuccess()
-		)
+		if (empty($params['USER']) || empty($params['USER']['UUID']))
 		{
 			$result->addError(new Error(
 				'User data not transmitted',
@@ -441,12 +426,12 @@ class Network extends Base
 		$userId = 0;
 		if ($result->isSuccess())
 		{
-			$userId = $this->getUserId($params['USER']);
+			$userId = $this->getUserId($params['USER'], false);
 
 			if (empty($userId))
 			{
 				$result->addError(new Error(
-					'Failed to create or update user',
+					'Failed to find user',
 					'ERROR_IMCONNECTOR_FAILED_USER',
 					__METHOD__,
 					$params
@@ -493,7 +478,7 @@ class Network extends Base
 			$message = Im\Model\MessageTable::getById($messageId)->fetch();
 			if ($message)
 			{
-				$relations = \CIMChat::getRelationById($message['CHAT_ID']);
+				$relations = \CIMChat::getRelationById($message['CHAT_ID'], false, false, false);
 				if (isset($relations[$userId]))
 				{
 					$chat = Im\Model\ChatTable::getById($message['CHAT_ID'])->fetch();
@@ -542,7 +527,7 @@ class Network extends Base
 			));
 		}
 
-		if (!isset($params['USER']))
+		if (empty($params['USER']) || empty($params['USER']['UUID']))
 		{
 			$result->addError(new Error(
 				'User data not transmitted',
@@ -554,12 +539,12 @@ class Network extends Base
 
 		if ($result->isSuccess())
 		{
-			$userId = $this->getUserId($params['USER']);
+			$userId = $this->getUserId($params['USER'], false);
 
 			if (empty($userId))
 			{
 				$result->addError(new Error(
-					'Failed to create or update user',
+					'Failed to find user',
 					'ERROR_IMCONNECTOR_FAILED_USER',
 					__METHOD__,
 					$params
@@ -696,6 +681,10 @@ class Network extends Base
 	public function getUserId($params, bool $createUser = true)
 	{
 		$userId = 0;
+		if (empty($params['UUID']))
+		{
+			return $userId;
+		}
 
 		if (Loader::includeModule('im'))
 		{
@@ -794,6 +783,7 @@ class Network extends Base
 				$userEmail = $params['EMAIL'];
 
 				$cUser = new \CUser;
+				$fields = [];
 				$fields['LOGIN'] = self::MODULE_ID_IMOPENLINES . '_' . rand(1000,9999) . randString(5);
 				$fields['NAME'] = $userName;
 				$fields['LAST_NAME'] = $userLastName;

@@ -358,7 +358,12 @@ function tasksGetItemMenu($task, $arPaths, $site_id = SITE_ID, $bGantt = false, 
 	$createUrl = $createUrl.(mb_strpos($createUrl, "?") === false ? "?" : "&")."PARENT_ID=".$task["ID"];
 
 	$inFavorite = false;
-	if(is_array($params['VIEW_STATE']) && $params['VIEW_STATE']['SECTION_SELECTED']['CODENAME'] == 'VIEW_SECTION_ADVANCED_FILTER' && $params['VIEW_STATE']['SPECIAL_PRESET_SELECTED']['CODENAME'] == 'FAVORITE')
+	if(
+		isset($params['VIEW_STATE'])
+		&& is_array($params['VIEW_STATE'])
+		&& $params['VIEW_STATE']['SECTION_SELECTED']['CODENAME'] == 'VIEW_SECTION_ADVANCED_FILTER'
+		&& ($params['VIEW_STATE']['SPECIAL_PRESET_SELECTED']['CODENAME'] ?? null) == 'FAVORITE'
+	)
 	{
 		$inFavorite = true;
 	}
@@ -369,7 +374,7 @@ function tasksGetItemMenu($task, $arPaths, $site_id = SITE_ID, $bGantt = false, 
 			className : "menu-popup-item-view",
 			href : "<? echo CUtil::JSEscape($viewUrl)?>"
 			<?
-			if ($bGantt && !$params['DISABLE_IFRAME_POPUP'])
+			if ($bGantt && !($params['DISABLE_IFRAME_POPUP'] ?? null))
 			{
 				?>,
 				onclick : BX.CJSTask.fixWindow(function(window, top, event) {
@@ -397,7 +402,7 @@ function tasksGetItemMenu($task, $arPaths, $site_id = SITE_ID, $bGantt = false, 
 			className : "menu-popup-item-edit",
 			href : "<? echo CUtil::JSEscape($editUrl)?>"
 			<?
-			if ($bGantt && !$params['DISABLE_IFRAME_POPUP'])
+			if ($bGantt && !($params['DISABLE_IFRAME_POPUP'] ?? null))
 			{
 				?>,
 				onclick : BX.CJSTask.fixWindow(function(window, top, event) {
@@ -424,7 +429,7 @@ function tasksGetItemMenu($task, $arPaths, $site_id = SITE_ID, $bGantt = false, 
 			className : "menu-popup-item-create",
 			href : "<? echo CUtil::JSEscape($createUrl)?>"
 			<?
-			if ($bGantt && !$params['DISABLE_IFRAME_POPUP'])
+			if ($bGantt && !($params['DISABLE_IFRAME_POPUP'] ?? null))
 			{
 				?>,
 				onclick : BX.CJSTask.fixWindow(function(window, top, event) {
@@ -661,7 +666,7 @@ function tasksGetItemMenu($task, $arPaths, $site_id = SITE_ID, $bGantt = false, 
 			(
 			$task["RESPONSIBLE_ID"] == $userId
 			|| (
-				is_array($task['ACCOMPLICES'])
+				is_array($task['ACCOMPLICES'] ?? null)
 				&& in_array($userId, $task['ACCOMPLICES'])
 				)
 			)
@@ -846,12 +851,18 @@ function tasksRenderJSON(
 	}
 
 	$runningTaskId = $runningTaskTimer = null;
-	if ($arTask['ALLOW_TIME_TRACKING'] === 'Y')
+	if (
+		isset($arTask['ALLOW_TIME_TRACKING'])
+		&& $arTask['ALLOW_TIME_TRACKING'] === 'Y'
+	)
 	{
 		$oTimer           = CTaskTimerManager::getInstance($userId);
 		$runningTaskData  = $oTimer->getRunningTask(false);
-		$runningTaskId    = $runningTaskData['TASK_ID'];
-		$runningTaskTimer = time() - $runningTaskData['TIMER_STARTED_AT'];
+		if ($runningTaskData && is_array($runningTaskData))
+		{
+			$runningTaskId    = $runningTaskData['TASK_ID'];
+			$runningTaskTimer = time() - $runningTaskData['TIMER_STARTED_AT'];
+		}
 	}
 
 	$canCreateTasks = false;
@@ -867,7 +878,7 @@ function tasksRenderJSON(
 		name : "<?=CUtil::JSEscape($arTask["TITLE"])?>",
 		<?if ($arTask["GROUP_ID"]):?>
 			projectId : <?=intval($arTask["GROUP_ID"])?>,
-			projectName : '<?=CUtil::JSEscape($arTask['GROUP_NAME'])?>',
+			projectName : '<?=CUtil::JSEscape($arTask['GROUP_NAME'] ?? null)?>',
 			projectCanCreateTasks: <?=CUtil::PhpToJSObject($canCreateTasks)?>,
 			projectCanEditTasks: <?=CUtil::PhpToJSObject($canEditTasks)?>,
 		<?else:?>
@@ -900,7 +911,10 @@ function tasksRenderJSON(
 		director_login: '<?=CUtil::JSEscape($arTask["CREATED_BY_LOGIN"]); ?>',
 		dateCreated : <?tasksJSDateObject($arTask["CREATED_DATE"], $top)?>,
 
-		links: <?=CUtil::PhpToJSObject($arTask['LINKS'], false, false, true)?>,
+		<?php
+			$links = $arTask['LINKS'] ?? null;
+		?>
+		links: <?=CUtil::PhpToJSObject($links, false, false, true)?>,
 
 		<?php if ($arTask["START_DATE_PLAN"]):?>dateStart : <?php tasksJSDateObject($arTask["START_DATE_PLAN"], $top)?>,<?php else:?>dateStart: null,<?php endif?>
 
@@ -923,7 +937,7 @@ function tasksRenderJSON(
 		<?endif?>
 
 		<?php
-			if ($arTask["FILES"] && sizeof($arTask["FILES"])):
+			if (isset($arTask["FILES"]) && is_array($arTask["FILES"]) && sizeof($arTask["FILES"])):
 				$i = 0;
 		?>
 			files: [
@@ -937,7 +951,7 @@ function tasksRenderJSON(
 		<?php endif?>
 
 		<?php
-		if ($arTask['ACCOMPLICES'] && is_array($arTask['ACCOMPLICES']))
+		if (($arTask['ACCOMPLICES'] ?? null) && is_array($arTask['ACCOMPLICES']))
 		{
 			$i = 0;
 			echo 'accomplices: [';
@@ -953,7 +967,7 @@ function tasksRenderJSON(
 		?>
 
 		<?php
-		if ($arTask['AUDITORS'] && is_array($arTask['AUDITORS']))
+		if (($arTask['AUDITORS'] ?? null) && is_array($arTask['AUDITORS']))
 		{
 			$i = 0;
 			echo 'auditors: [';
@@ -997,7 +1011,7 @@ function tasksRenderJSON(
 		IS_TASK_TRACKING_NOW : <?php if ($runningTaskId == $arTask['ID']) echo 'true'; else echo 'false'; ?>,
 		menuItems: [<?php tasksGetItemMenu($arTask, $arPaths, SITE_ID, $bGant, $top, $bSkipJsMenu, $params)?>],
 
-		<?$arTask['SE_PARAMETER'] = is_array($arTask['SE_PARAMETER']) ? $arTask['SE_PARAMETER'] : array();?>
+		<?$arTask['SE_PARAMETER'] = is_array($arTask['SE_PARAMETER'] ?? null) ? $arTask['SE_PARAMETER'] : [];?>
 		<?$seParameters = array();?>
 		<?foreach($arTask['SE_PARAMETER'] as $k => $v):?>
 			<?if($v['VALUE'] == 'Y' || $v['VALUE'] == 'N'):?>
@@ -1110,7 +1124,8 @@ function tasksServerName($server_name = false)
 	$server_port = '';
 
 	if (
-		( ! $isServerPortAlreadyGiven )
+		!$isServerPortAlreadyGiven
+		&& isset($_SERVER['SERVER_PORT'])
 		&& ($_SERVER['SERVER_PORT'] <> '')
 		&& ($_SERVER['SERVER_PORT'] != '80')
 		&& ($_SERVER['SERVER_PORT'] != '443')

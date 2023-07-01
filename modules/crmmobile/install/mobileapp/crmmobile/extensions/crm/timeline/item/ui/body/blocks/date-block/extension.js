@@ -2,7 +2,6 @@
  * @module crm/timeline/item/ui/body/blocks/date-block
  */
 jn.define('crm/timeline/item/ui/body/blocks/date-block', (require, exports, module) => {
-
 	const { TimelineItemBodyBlock } = require('crm/timeline/item/ui/body/blocks/base');
 	const { Moment } = require('utils/date');
 	const { dayShortMonth, shortTime, mediumDate } = require('utils/date/formats');
@@ -21,18 +20,17 @@ jn.define('crm/timeline/item/ui/body/blocks/date-block', (require, exports, modu
 				{},
 				Text({
 					text: this.props.withTime
-						? moment.format(`${dateFormat}, ${shortTime()}`).toLocaleLowerCase(env.languageId)
-						: moment.format(dateFormat).toLocaleLowerCase(env.languageId),
+						? moment.format(`${dateFormat}, ${shortTime()}`)
+						: moment.format(dateFormat),
 					style: {
 						fontSize: 14,
 						color: '#525C69',
 						marginLeft: 5,
-					}
-				})
+					},
+				}),
 			);
 		}
 	}
 
 	module.exports = { TimelineItemBodyDateBlock };
-
 });

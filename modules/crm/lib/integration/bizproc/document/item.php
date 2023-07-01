@@ -391,7 +391,7 @@ class Item extends \CCrmDocument implements \IBPWorkflowDocument
 
 		$deleteOperation = $factory->getDeleteOperation($item, static::getContext());
 
-		return static::launchOperation($deleteOperation->disableBizProc())->isSuccess();
+		return static::launchOperation($deleteOperation->disableBizProc());
 	}
 
 	protected static function launchOperation(Operation $operation): Result

@@ -73,7 +73,7 @@ class ImOpenlinesMailHistoryComponent extends CBitrixComponent
 		$this->arResult['TEMPLATE_WIDGET_SESSION_ID'] = str_replace(
 			'#SESSION_ID#',
 			$session['ID'],
-			Loc::getMessage('IMOL_COMPONENT_SESSION_ID')
+			Loc::getMessage('IMOL_COMPONENT_SESSION_ID', null, $session['CONFIG_LANGUAGE_ID'] ?: null)
 		);
 
 		if ($this->arParams['TEMPLATE_TYPE'] === 'HISTORY')

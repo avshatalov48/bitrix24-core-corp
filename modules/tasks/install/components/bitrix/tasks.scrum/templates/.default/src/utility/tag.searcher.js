@@ -1,7 +1,7 @@
 import { Loc, Type, Text, Dom } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 
-import { Dialog } from 'ui.entity-selector';
+import {Dialog, ItemOptions} from 'ui.entity-selector';
 
 import { Filter } from '../service/filter';
 
@@ -10,10 +10,7 @@ import { Input } from './input';
 
 import type { EpicType } from '../item/task/epic';
 
-import { UI } from 'ui.notification';
 import {MessageBox, MessageBoxButtons} from 'ui.dialogs.messagebox';
-
-
 
 type Params = {
 	requestSender: RequestSender,
@@ -37,86 +34,59 @@ export class TagSearcher extends EventEmitter
 		this.filterService = params.filter;
 		this.groupId = parseInt(params.groupId, 10);
 		this.tagsAreConverting = params.tagsAreConverting;
-		this.allTags = new Map();
 
 		this.messageViewed = false;
 	}
 
-	addEpicToSearcher(epic: EpicType)
+	addEpicToSearcher(epic: EpicType, selected = false)
 	{
-		const epicName = epic.name.trim();
+		const epicDialogItem = this.getEpicDialogItem(epic);
 
-		this.allTags.set('epic_' + epic.id, {
-			id: epic.id,
-			entityId: 'epic',
-			tabs: 'recents',
-			title: epicName,
-			avatar: '/bitrix/components/bitrix/tasks.scrum/templates/.default/images/search-hashtag-green.svg',
-			name: epicName,
-			description: epic.description,
-			color: epic.color,
-			groupId: epic.groupId,
-			createdBy: epic.createdBy,
-			modifiedBy: epic.modifiedBy,
-		});
+		if (selected)
+		{
+			epicDialogItem.selected = true;
+			epicDialogItem.sort = 1;
+		}
+
+		if (this.epicDialog)
+		{
+			this.epicDialog.addItem(epicDialogItem);
+		}
+
+		if (this.epicSearchDialog)
+		{
+			this.epicSearchDialog.addItem(epicDialogItem);
+		}
 	}
 
 	removeEpicFromSearcher(epic: EpicType)
 	{
-		this.allTags.delete('epic_' + epic.id);
+		if (this.epicDialog)
+		{
+			this.epicDialog.removeItem(this.getEpicDialogItem(epic));
+		}
+
+		if (this.epicSearchDialog)
+		{
+			this.epicSearchDialog.removeItem(this.getEpicDialogItem(epic));
+		}
 	}
 
-	getAllList(): Array
+	getEpicDialogItem(epic: EpicType): ItemOptions
 	{
-		return [...this.allTags.values()];
-	}
-
-	getTagsList(): Array
-	{
-		const tagsList = [];
-		[...this.allTags.values()].forEach((tag) => {
-			if (tag.entityId === 'tag')
-			{
-				tagsList.push(tag);
+		return {
+			id: epic.id,
+			entityId: 'epic-selector',
+			title: epic.name,
+			tabs: 'recents',
+			avatarOptions: {
+				bgColor: epic.color,
+				bgImage: 'none',
+				borderRadius: '12px'
 			}
-		});
-		return tagsList;
+		};
 	}
 
-	getEpicList(): Array
-	{
-		const epicList = [];
-
-		[...this.allTags.values()].forEach((epic) => {
-			if (epic.entityId === 'epic')
-			{
-				epicList.push(epic);
-			}
-		});
-
-		return epicList;
-	}
-
-	getEpicByName(epicName: string): ?EpicType
-	{
-		let epic = null;
-
-		[...this.allTags.values()].forEach((tag) => {
-			if (tag.entityId === 'epic' && tag.name === epicName)
-			{
-				epic = tag;
-			}
-		});
-
-		return epic;
-	}
-
-	getEpicById(epicId: number): ?EpicType
-	{
-		return [...this.allTags.values()]
-			.find((epic) => (epic.entityId === 'epic' && epic.id === epicId))
-			;
-	}
 	// widget on scrum (ex task)
 	showTagsDialog(item: Item, targetNode: HTMLElement): Dialog
 	{
@@ -126,8 +96,8 @@ export class TagSearcher extends EventEmitter
 			return;
 		}
 		let choiceWasMade = false;
-		let groupId = this.groupId;
-		let statusSuccess = { status: false };
+		const groupId = this.groupId;
+		const statusSuccess = { status: false };
 		this.tagDialog = new Dialog({
 			id: item.getId().toString(),
 			targetNode: targetNode,
@@ -165,6 +135,9 @@ export class TagSearcher extends EventEmitter
 				'Item:onSelect': (event) => {
 					choiceWasMade = true;
 					const selectedItem = event.getData().item;
+					const dialog = event.getTarget();
+					selectedItem.setSort(1);
+					dialog.getTab('all').getRootNode().addItem(selectedItem);
 					const tag = selectedItem.getTitle();
 					this.emit('attachTagToTask', tag);
 				},
@@ -208,14 +181,10 @@ export class TagSearcher extends EventEmitter
 	{
 		const currentEpic = item.getEpic().getValue();
 
-		const selectedItems = [];
+		const preselectedItems = [];
 		if (currentEpic)
 		{
-			const currentEpicInfo = this.allTags.get('epic_' + currentEpic.id);
-			if (currentEpicInfo)
-			{
-				selectedItems.push(currentEpicInfo);
-			}
+			preselectedItems.push(['epic-selector' , currentEpic.id]);
 		}
 
 		let choiceWasMade = false;
@@ -229,8 +198,18 @@ export class TagSearcher extends EventEmitter
 			dropdownMode: true,
 			enableSearch: true,
 			offsetTop: 12,
-			selectedItems: selectedItems,
-			items: this.getEpicList(),
+			context: 'epic-selector-' + this.groupId,
+			preselectedItems: preselectedItems,
+			entities: [
+				{
+					id: 'epic-selector',
+					options: {
+						groupId: this.groupId
+					},
+					dynamicLoad: true,
+					dynamicSearch: true
+				}
+			],
 			searchOptions: {
 				allowCreateItem: true,
 				footerOptions: {
@@ -242,20 +221,15 @@ export class TagSearcher extends EventEmitter
 				'Search:onItemCreateAsync': (event) => {
 					return new Promise((resolve) => {
 						const { searchQuery } = event.getData();
-						const dialog = event.getTarget();
 						const epicName = searchQuery.getQuery();
 						this.createEpic(epicName)
 							.then((epic: EpicType) => {
-								this.addEpicToSearcher(epic);
+								this.addEpicToSearcher(epic, true);
 								this.filterService.addItemToListTypeField('EPIC', {
 									NAME: epic.name.trim(),
 									VALUE: String(epic.id),
 								});
-								const epicDialogItem = this.getEpicById(epic.id);
-								epicDialogItem.selected = true;
-								epicDialogItem.sort = 1;
-								dialog.addItem(epicDialogItem);
-								this.emit('updateItemEpic', epic.id);
+								this.emit('updateItemEpic', epic);
 								choiceWasMade = true;
 								this.epicDialog.hide();
 								resolve();
@@ -266,15 +240,18 @@ export class TagSearcher extends EventEmitter
 				'Item:onSelect': (event) => {
 					choiceWasMade = true;
 					const selectedItem = event.getData().item;
-					const epicId = selectedItem.getId();
-					this.emit('updateItemEpic', epicId);
+					this.getEpic(selectedItem.getId())
+						.then((epic: EpicType) => {
+							this.emit('updateItemEpic', epic);
+						})
+					;
 				},
 				'Item:onDeselect': () => {
 					setTimeout(() => {
 						choiceWasMade = true;
 						if (this.epicDialog.getSelectedItems().length === 0)
 						{
-							this.emit('updateItemEpic', 0);
+							this.emit('updateItemEpic', null);
 						}
 					}, 50);
 				},
@@ -333,7 +310,7 @@ export class TagSearcher extends EventEmitter
 		{
 			this.tagSearchDialog = null;
 		}
-		let groupId = this.groupId;
+		const groupId = this.groupId;
 		if (!this.tagSearchDialog)
 		{
 			this.tagSearchDialog = new Dialog({
@@ -385,6 +362,9 @@ export class TagSearcher extends EventEmitter
 							})
 						;
 						const selectedItem = event.getData().item;
+						const dialog = event.getTarget();
+						selectedItem.setSort(1);
+						dialog.getTab('all').getRootNode().addItem(selectedItem);
 						newValue = newValue + ' #' + selectedItem.getTitle();
 						input.value = newValue.trim();
 						input.focus();
@@ -455,7 +435,17 @@ export class TagSearcher extends EventEmitter
 						label: Loc.getMessage('TASKS_SCRUM_SEARCHER_ACTIONS_EPIC_ADD'),
 					},
 				},
-				items: this.getEpicList(),
+				context: 'epic-selector-' + this.groupId,
+				entities: [
+					{
+						id: 'epic-selector',
+						options: {
+							groupId: this.groupId
+						},
+						dynamicLoad: true,
+						dynamicSearch: true
+					}
+				],
 				events: {
 					'Search:onItemCreateAsync': (event) => {
 						return new Promise((resolve) => {
@@ -491,13 +481,20 @@ export class TagSearcher extends EventEmitter
 					},
 					'Item:onSelect': (event: BaseEvent) => {
 						const selectedItem = event.getData().item;
+
+						this.getEpic(selectedItem.getId())
+							.then((epic: EpicType) => {
+								inputObject.setEpic(epic);
+							})
+						;
+
 						const epicName = selectedItem.getTitle();
 						input.value = input.value.replace('@' + this.epicEnteredQuery, '').replace('@', '');
 						input.value = input.value + '@' + epicName;
 						inputObject.setSelectedEpicLength([...epicName].length);
 						input.focus();
+
 						selectedItem.deselect();
-						inputObject.setEpic(this.getEpicByName(selectedItem.getTitle()));
 					},
 				},
 			});
@@ -574,7 +571,21 @@ export class TagSearcher extends EventEmitter
 			.then((response) => {
 				return response.data;
 			})
-			;
+		;
+	}
+
+	getEpic(epicId: number): Promise
+	{
+		return this.requestSender.getEpic(
+			{
+				groupId: this.groupId,
+				epicId: epicId
+			},
+		)
+			.then((response) => {
+				return response.data;
+			})
+		;
 	}
 
 	static getHashTagNamesFromText(inputText: string): Array
@@ -619,8 +630,8 @@ export class TagSearcher extends EventEmitter
 
 	onSearchCallback(event)
 	{
-		let dialog = event.getTarget();
-		let query = event.getData().query;
+		const dialog = event.getTarget();
+		const query = event.getData().query;
 		if (query.trim() !== '')
 		{
 			dialog.getFooterContainer().querySelector('#tags-widget-custom-footer-add-new').hidden = false;
@@ -635,15 +646,15 @@ export class TagSearcher extends EventEmitter
 
 	onLoadTaskQuickCreateCallback(event, inputObject)
 	{
-		let dialog = event.getTarget();
+		const dialog = event.getTarget();
 		this.hideDialogLabel(dialog);
-		let input = inputObject.getInputNode();
+		const input = inputObject.getInputNode();
 
 		inputObject.subscribe('onMetaEnter', (event) => {
 			const regex = new RegExp('\\s|#$', 'm');
 			const currentPiece = input.value.split(regex).pop();
 			const tagName = currentPiece.replace('#', '').trim();
-			let data = {
+			const data = {
 				newTag: tagName,
 				groupId: this.groupId,
 				taskId: 0,
@@ -656,7 +667,7 @@ export class TagSearcher extends EventEmitter
 			this.requestSender.addTag(data).then(response => {
 				if (!response.data.success)
 				{
-					let alertClass = 'tasks-scrum-tag-already-exists-alert';
+					const alertClass = 'tasks-scrum-tag-already-exists-alert';
 					this.showAlert(dialog.getId(), alertClass, response.data.error);
 					setTimeout(() => {
 							this.removeAlert(dialog, alertClass);
@@ -673,7 +684,7 @@ export class TagSearcher extends EventEmitter
 				const regex = new RegExp('\\s|#$', 'm');
 				const currentPiece = input.value.split(regex).pop();
 				const tagName = currentPiece.replace('#', '').trim();
-				let data = {
+				const data = {
 					newTag: tagName,
 					groupId: this.groupId,
 					taskId: 0,
@@ -686,7 +697,7 @@ export class TagSearcher extends EventEmitter
 				this.requestSender.addTag(data).then(response => {
 					if (!response.data.success)
 					{
-						let alertClass = 'tasks-scrum-tag-already-exists-alert';
+						const alertClass = 'tasks-scrum-tag-already-exists-alert';
 						this.showAlert(dialog.getId(), alertClass, response.data.error);
 						setTimeout(() => {
 								this.removeAlert(dialog, alertClass);
@@ -701,7 +712,7 @@ export class TagSearcher extends EventEmitter
 
 	onShowTaskEditCallback(event, statusSuccess, item)
 	{
-		let dialog = event.getTarget();
+		const dialog = event.getTarget();
 		const events = ['click', 'keydown'];
 
 		const handler = event => {
@@ -728,15 +739,20 @@ export class TagSearcher extends EventEmitter
 				if (response.data.success)
 				{
 					statusSuccess.status = true;
-					let item = dialog.addItem({
+					const item = dialog.addItem({
 						id: tag,
 						entityId: 'task-tag',
 						title: tag,
-						tabs: 'all',
+						sort: 1,
+						badges: [
+							{
+								title: response.data.group,
+							},
+						],
 					});
 
+					dialog.getTab('all').getRootNode().addItem(item);
 					item.select();
-					item.setBadges([{ title: response.data.group }]);
 					dialog.getTagSelector().clearTextBox();
 					dialog.focusSearch();
 					dialog.selectFirstTab();
@@ -744,7 +760,7 @@ export class TagSearcher extends EventEmitter
 				}
 				else
 				{
-					let alertClass = 'tasks-scrum-tag-already-exists-alert';
+					const alertClass = 'tasks-scrum-tag-already-exists-alert';
 					this.showAlert(dialog.getId(), alertClass, response.data.error);
 					setTimeout(() => {
 							this.removeAlert(dialog, alertClass);
@@ -769,14 +785,14 @@ export class TagSearcher extends EventEmitter
 
 	showAlert(dialogId: string, className: string, error: string, messageType = 'ui-alert ui-alert-xs ui-alert-danger')
 	{
-		let dialog = BX.UI.EntitySelector.Dialog.getById(dialogId);
+		const dialog = BX.UI.EntitySelector.Dialog.getById(dialogId);
 
 		if (dialog.getContainer().querySelector(`div.${className}`))
 		{
 			return;
 		}
 
-		let alert = document.createElement('div');
+		const alert = document.createElement('div');
 		alert.className = className;
 		alert.innerHTML = `
 						<div class='${messageType}'  
@@ -790,8 +806,11 @@ export class TagSearcher extends EventEmitter
 
 	removeAlert(dialog: Dialog, className: string)
 	{
-		let notification = dialog.getContainer().querySelector(`div.${className}`);
-		notification && notification.remove();
+		const notification = dialog.getContainer().querySelector(`div.${className}`);
+		if (notification)
+		{
+			notification.remove();
+		}
 	}
 
 	showConvertingMessage()

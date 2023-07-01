@@ -2,10 +2,8 @@
  * @module communication/events/phone
  */
 jn.define('communication/events/phone', (require, exports, module) => {
-
-	const { isEmpty } = require('utils/object');
 	const { BaseEvent } = require('communication/events/base');
-	const { OpenPhoneMenu } = require('communication/phone-menu');
+	const { openPhoneMenu } = require('communication/phone-menu');
 
 	class PhoneEvent extends BaseEvent
 	{
@@ -16,52 +14,26 @@ jn.define('communication/events/phone', (require, exports, module) => {
 				return;
 			}
 
-			const params = this.getCallParameters();
-
-			if (this.canUseTelephony())
-			{
-				OpenPhoneMenu(params);
-			}
-			else
-			{
-				this.callUsingNativePhone(params.number);
-			}
+			openPhoneMenu(this.getCallParameters());
 		}
 
 		getCallParameters()
 		{
-			const { number, params = {} } = this.getValue();
+			const {
+				number,
+				layoutWidget,
+				params = {}
+			} = this.getValue();
 
 			return {
 				number,
+				canUseTelephony: this.canUseTelephony(),
+				layoutWidget,
 				params: {
 					...params,
 					AUTO_FOLD: true,
 				},
 			};
-		}
-
-		callUsingNativePhone(number)
-		{
-			if (!number)
-			{
-				return;
-			}
-
-			Application.openUrl(`tel:${number}`);
-		}
-
-		callUsingTelephony(params)
-		{
-			const callParameters = !isEmpty(params)
-				? params
-				: this.getCallParameters();
-
-			BX.postComponentEvent(
-				'onPhoneTo',
-				[callParameters],
-				'calls',
-			);
 		}
 
 		canUseTelephony()
@@ -72,9 +44,7 @@ jn.define('communication/events/phone', (require, exports, module) => {
 				false,
 			);
 		}
-
 	}
 
 	module.exports = { PhoneEvent };
-
 });

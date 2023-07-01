@@ -1,8 +1,9 @@
-import { ajax as Ajax, Dom, Event, Reflection, Text, Type } from "main.core";
+import { ajax as Ajax, Dom, Event, Reflection, Text, Type, Loc } from "main.core";
 import { EventEmitter } from "main.core.events";
 import { BaseButton, Button, ButtonIcon } from "ui.buttons";
 import { Router } from "crm.router";
 import { Menu } from "main.popup";
+import {Guide} from "ui.tour";
 
 import 'ui.hint';
 
@@ -72,6 +73,57 @@ export default class ToolbarComponent extends EventEmitter
 					this.reloadCategoriesMenu(button, entityTypeId, buttonNode.dataset.categoryId);
 				});
 			}
+		}
+
+		this.#bindAutomationGuide();
+	}
+
+	#bindAutomationGuide()
+	{
+		const hash = document.location.hash;
+		let guide;
+
+		if (hash === '#robots')
+		{
+			const robotsBtn = document.querySelector('.crm-robot-btn');
+			if (robotsBtn)
+			{
+				guide = new Guide({
+					steps: [
+						{
+							target: robotsBtn,
+							title: Loc.getMessage('CRM_TOOLBAR_COMPONENT_ROBOTS_GUIDE_TEXT'),
+							text: ''
+						}
+					],
+					onEvents: true,
+				});
+			}
+		}
+		else if (hash === '#scripts')
+		{
+			const scriptsBtn = document.querySelector('.intranet-binding-menu-btn');
+			if (scriptsBtn)
+			{
+				guide = new Guide({
+					steps: [
+						{
+							target: scriptsBtn,
+							title: Loc.getMessage('CRM_TOOLBAR_COMPONENT_SCRIPTS_GUIDE_TEXT'),
+							article: '13281632',
+							text: ''
+						}
+					],
+					onEvents: true,
+				});
+			}
+		}
+
+		if (guide)
+		{
+			guide.start();
+			guide.getPopup().setAutoHide(true);
+			guide.getPopup().setClosingByEsc(true);
 		}
 	}
 

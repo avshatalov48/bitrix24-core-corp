@@ -4,6 +4,7 @@ namespace Bitrix\Disk\Volume\Module;
 
 use Bitrix\Main;
 use Bitrix\Disk\Volume;
+use Bitrix\Disk\Internals\VolumeTable;
 
 /**
  * Disk storage volume measurement class.
@@ -18,11 +19,11 @@ class Faceid extends Volume\Module\Module
 	/**
 	 * Runs measure test to get volumes of selecting objects.
 	 * @param array $collectData List types data to collect: ATTACHED_OBJECT, SHARING_OBJECT, EXTERNAL_LINK, UNNECESSARY_VERSION.
-	 * @return $this
+	 * @return static
 	 * @throws Main\ArgumentException
 	 * @throws Main\SystemException
 	 */
-	public function measure($collectData = array())
+	public function measure(array $collectData = []): self
 	{
 		if (!$this->isMeasureAvailable())
 		{
@@ -51,7 +52,7 @@ class Faceid extends Volume\Module\Module
 		";
 
 		$columnList = Volume\QueryHelper::prepareInsert(
-			array(
+			[
 				'INDICATOR_TYPE',
 				'OWNER_ID',
 				'CREATE_TIME',
@@ -59,15 +60,14 @@ class Faceid extends Volume\Module\Module
 				'FILE_COUNT',
 				'DISK_SIZE',
 				'DISK_COUNT',
-			),
+			],
 			$this->getSelect()
 		);
 
-		$tableName = \Bitrix\Disk\Internals\VolumeTable::getTableName();
+		$tableName = VolumeTable::getTableName();
 
 		$connection->queryExecute("INSERT INTO {$tableName} ({$columnList}) {$querySql}");
 
 		return $this;
 	}
-
 }

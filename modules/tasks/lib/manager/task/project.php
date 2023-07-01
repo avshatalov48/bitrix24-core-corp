@@ -10,6 +10,8 @@
 
 namespace Bitrix\Tasks\Manager\Task;
 
+use Bitrix\Tasks\Integration\SocialNetwork\Group;
+
 final class Project extends \Bitrix\Tasks\Manager
 {
 	public static function getLegacyFieldName()
@@ -50,19 +52,19 @@ final class Project extends \Bitrix\Tasks\Manager
 		}
 	}
 
-	public static function extendData(array &$data, array $knownTasks = array())
+	public static function extendData(array &$data, array $knownTasks = [])
 	{
 		$code = static::getCode(true);
 
-		if(array_key_exists($code, $data))
+		if (array_key_exists($code, $data))
 		{
-			if(isset($knownTasks[$data[$code]['ID']]))
+			if (isset($data[$code]['ID'], $knownTasks[$data[$code]['ID']]))
 			{
-				$data[$code] = \Bitrix\Tasks\Integration\SocialNetwork\Group::extractPublicData($knownTasks[$data[$code]['ID']]);
+				$data[$code] = Group::extractPublicData($knownTasks[$data[$code]['ID']]);
 			}
 			else
 			{
-				$data[$code] = array();
+				$data[$code] = [];
 			}
 		}
 	}

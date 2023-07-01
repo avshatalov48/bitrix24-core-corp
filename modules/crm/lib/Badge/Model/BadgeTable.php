@@ -11,6 +11,22 @@ use Bitrix\Main\ORM\Fields\StringField;
 use Bitrix\Main\Type\DateTime;
 use CCrmOwnerType;
 
+/**
+ * Class BadgeTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Badge_Query query()
+ * @method static EO_Badge_Result getByPrimary($primary, array $parameters = [])
+ * @method static EO_Badge_Result getById($id)
+ * @method static EO_Badge_Result getList(array $parameters = [])
+ * @method static EO_Badge_Entity getEntity()
+ * @method static \Bitrix\Crm\Badge\Model\EO_Badge createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Badge\Model\EO_Badge_Collection createCollection()
+ * @method static \Bitrix\Crm\Badge\Model\EO_Badge wakeUpObject($row)
+ * @method static \Bitrix\Crm\Badge\Model\EO_Badge_Collection wakeUpCollection($rows)
+ */
 class BadgeTable extends \Bitrix\Main\Entity\DataManager
 {
 	public static function getTableName()
@@ -44,7 +60,7 @@ class BadgeTable extends \Bitrix\Main\Entity\DataManager
 		];
 	}
 
-	public static function deleteByEntity(ItemIdentifier $itemIdentifier): void
+	public static function deleteByEntity(ItemIdentifier $itemIdentifier, string $type = null, string $value = null): void
 	{
 		$sqlHelper = Application::getConnection()->getSqlHelper();
 
@@ -53,6 +69,17 @@ class BadgeTable extends \Bitrix\Main\Entity\DataManager
 			. ' WHERE ENTITY_TYPE_ID =' . $sqlHelper->convertToDbInteger($itemIdentifier->getEntityTypeId())
 			. ' AND ENTITY_ID =' . $sqlHelper->convertToDbInteger($itemIdentifier->getEntityId())
 		;
+
+		if (isset($type))
+		{
+			$sql .= ' AND TYPE =' . $sqlHelper->convertToDbString($type);
+		}
+
+		if (isset($value))
+		{
+			$sql .= ' AND VALUE =' . $sqlHelper->convertToDbString($value);
+		}
+
 		Application::getConnection()->query($sql);
 	}
 
@@ -65,6 +92,26 @@ class BadgeTable extends \Bitrix\Main\Entity\DataManager
 			. ' WHERE SOURCE_PROVIDER_ID =' . $sqlHelper->convertToDbString($sourceItemIdentifier->getProviderId())
 			. ' AND SOURCE_ENTITY_TYPE_ID =' . $sqlHelper->convertToDbInteger($sourceItemIdentifier->getEntityTypeId())
 			. ' AND SOURCE_ENTITY_ID =' . $sqlHelper->convertToDbInteger($sourceItemIdentifier->getEntityId())
+		;
+		Application::getConnection()->query($sql);
+	}
+
+	public static function deleteByIdentifiersAndType(
+		ItemIdentifier $itemIdentifier,
+		SourceIdentifier $sourceItemIdentifier,
+		string $type
+	): void
+	{
+		$sqlHelper = Application::getConnection()->getSqlHelper();
+
+		$sql =
+			'DELETE FROM b_crm_item_badge'
+			. ' WHERE ENTITY_TYPE_ID=' . $sqlHelper->convertToDbInteger($itemIdentifier->getEntityTypeId())
+			. ' AND ENTITY_ID=' . $sqlHelper->convertToDbInteger($itemIdentifier->getEntityId())
+			. ' AND SOURCE_PROVIDER_ID=' . $sqlHelper->convertToDbString($sourceItemIdentifier->getProviderId())
+			. ' AND SOURCE_ENTITY_TYPE_ID=' . $sqlHelper->convertToDbInteger($sourceItemIdentifier->getEntityTypeId())
+			. ' AND SOURCE_ENTITY_ID=' . $sqlHelper->convertToDbInteger($sourceItemIdentifier->getEntityId())
+			. ' AND TYPE=' . $sqlHelper->convertToDbString($type)
 		;
 		Application::getConnection()->query($sql);
 	}

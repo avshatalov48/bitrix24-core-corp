@@ -3,59 +3,46 @@ this.BX = this.BX || {};
 	'use strict';
 
 	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-
 	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
-
 	function _classStaticPrivateMethodGet(receiver, classConstructor, method) { _classCheckPrivateStaticAccess(receiver, classConstructor); return method; }
-
 	function _classCheckPrivateStaticAccess(receiver, classConstructor) { if (receiver !== classConstructor) { throw new TypeError("Private static access of wrong provenance"); } }
 	var Manager = /*#__PURE__*/function () {
 	  function Manager() {
 	    babelHelpers.classCallCheck(this, Manager);
 	  }
-
 	  babelHelpers.createClass(Manager, null, [{
 	    key: "init",
 	    value: function init(options) {
 	      options.connectedSiteId = parseInt(options.connectedSiteId);
-
 	      if (options.connectedSiteId > 0) {
 	        Manager.connectedSiteId = options.connectedSiteId;
 	      }
-
 	      options.sessionId = parseInt(options.sessionId);
-
 	      if (options.sessionId > 0) {
 	        Manager.sessionId = options.sessionId;
 	      }
-
 	      if (main_core.Type.isString(options.siteTemplateCode)) {
 	        Manager.siteTemplateCode = options.siteTemplateCode;
 	      }
-
 	      if (main_core.Type.isString(options.connectPath)) {
 	        Manager.connectPath = options.connectPath;
 	      }
-
 	      if (main_core.Type.isBoolean(options.isSitePublished)) {
 	        Manager.isSitePublished = options.isSitePublished;
 	      }
-
 	      if (main_core.Type.isBoolean(options.isSiteExists)) {
 	        Manager.isSiteExists = options.isSiteExists;
 	      }
-
 	      if (main_core.Type.isBoolean(options.isOrderPublicUrlAvailable)) {
 	        Manager.isOrderPublicUrlAvailable = options.isOrderPublicUrlAvailable;
 	      } else {
 	        Manager.isOrderPublicUrlAvailable = false;
 	      }
-
 	      if (!Manager.isPullInited) {
 	        main_core.Event.ready(Manager.initPull);
-	      } // the crutch to load landings dynamically
+	      }
 
-
+	      // the crutch to load landings dynamically
 	      if (!top.BX.Landing) {
 	        top.BX.Landing = {
 	          PageObject: {},
@@ -80,7 +67,6 @@ this.BX = this.BX || {};
 	     *
 	     * @returns {Promise<any>}
 	     */
-
 	  }, {
 	    key: "startConnection",
 	    value: function startConnection() {
@@ -89,13 +75,10 @@ this.BX = this.BX || {};
 	        if (!Manager.connectPath) {
 	          reject('no connect path');
 	        }
-
 	        var url = new main_core.Uri(Manager.connectPath);
-
 	        if (!main_core.Type.isPlainObject(params)) {
 	          params = {};
 	        }
-
 	        params.analyticsLabel = 'salescenterStartConnection';
 	        url.setQueryParams(params);
 	        Manager.openSlider(url.toString(), {
@@ -113,7 +96,6 @@ this.BX = this.BX || {};
 	     * @param {Object} params
 	     * @returns {Promise<any>}
 	     */
-
 	  }, {
 	    key: "connect",
 	    value: function connect(params) {
@@ -122,17 +104,13 @@ this.BX = this.BX || {};
 	          resolve();
 	        } else {
 	          var url = new main_core.Uri('/shop/stores/site/edit/0/');
-
 	          if (!main_core.Type.isPlainObject(params)) {
 	            params = {};
 	          }
-
 	          params.analyticsLabel = 'salescenterConnect';
-
 	          if (Manager.siteTemplateCode) {
 	            params.tpl = Manager.siteTemplateCode;
 	          }
-
 	          url.setQueryParams(params);
 	          Manager.openSlider(url.toString()).then(function () {
 	            resolve();
@@ -169,21 +147,19 @@ this.BX = this.BX || {};
 	    /**
 	     * @returns BX.PopupWindow
 	     */
-
 	  }, {
 	    key: "getPopup",
 	    value: function getPopup(_ref) {
 	      var _ref$id = _ref.id,
-	          id = _ref$id === void 0 ? '' : _ref$id,
-	          _ref$title = _ref.title,
-	          title = _ref$title === void 0 ? '' : _ref$title,
-	          _ref$text = _ref.text,
-	          text = _ref$text === void 0 ? '' : _ref$text,
-	          _ref$buttons = _ref.buttons,
-	          buttons = _ref$buttons === void 0 ? [] : _ref$buttons;
+	        id = _ref$id === void 0 ? '' : _ref$id,
+	        _ref$title = _ref.title,
+	        title = _ref$title === void 0 ? '' : _ref$title,
+	        _ref$text = _ref.text,
+	        text = _ref$text === void 0 ? '' : _ref$text,
+	        _ref$buttons = _ref.buttons,
+	        buttons = _ref$buttons === void 0 ? [] : _ref$buttons;
 	      var popup$$1 = BX.PopupWindowManager.getPopupById(id);
 	      var content = "<div class=\"salescenter-popup\">\n\t\t\t<div class=\"salescenter-popup-title\">".concat(title, "</div>\n\t\t\t<div class=\"salescenter-popup-text\">").concat(text, "</div>\n\t\t</div>");
-
 	      if (popup$$1) {
 	        popup$$1.setContent(content);
 	        popup$$1.setButtons(buttons);
@@ -202,7 +178,6 @@ this.BX = this.BX || {};
 	          buttons: buttons
 	        });
 	      }
-
 	      return popup$$1;
 	    }
 	  }, {
@@ -229,7 +204,6 @@ this.BX = this.BX || {};
 	    key: "copyUrl",
 	    value: function copyUrl(url, event) {
 	      BX.clipboard.copy(url);
-
 	      if (event && event.target) {
 	        Manager.showCopyLinkPopup(event.target);
 	      }
@@ -253,7 +227,6 @@ this.BX = this.BX || {};
 	        Manager.addUrlResolve(pageId);
 	        Manager.addUrlResolve = null;
 	      }
-
 	      if (isSaved && pageId > 0) {
 	        if (Manager.addingCustomPage && Manager.addingCustomPage.id && parseInt(Manager.addingCustomPage.id) === parseInt(pageId)) {
 	          Manager.showNotification(BX.message('SALESCENTER_MANAGER_UPDATE_URL_SUCCESS'));
@@ -285,15 +258,12 @@ this.BX = this.BX || {};
 	      if (!Manager.addUrlPopup) {
 	        return true;
 	      }
-
 	      if (event.target !== Manager.addUrlPopup.getPopupContainer() && !Manager.addUrlPopup.getPopupContainer().contains(event.target)) {
 	        var urlFieldsPopupWindow = null;
 	        var urlFieldsPopupMenu = BX.PopupMenu.getMenuById('salescenter-url-fields-popup');
-
 	        if (urlFieldsPopupMenu) {
 	          urlFieldsPopupWindow = urlFieldsPopupMenu.popupWindow;
 	        }
-
 	        if (!urlFieldsPopupWindow) {
 	          return true;
 	        } else {
@@ -301,14 +271,12 @@ this.BX = this.BX || {};
 	            if (!event.target.classList.contains('menu-popup-item-submenu') && !event.target.parentNode.classList.contains('menu-popup-item-submenu')) {
 	              urlFieldsPopupWindow.close();
 	            }
-
 	            return false;
 	          } else {
 	            return true;
 	          }
 	        }
 	      }
-
 	      return false;
 	    }
 	  }, {
@@ -334,13 +302,11 @@ this.BX = this.BX || {};
 	                onPopupClose: function onPopupClose() {
 	                  var newPageId = document.getElementById('salescenter-app-add-custom-url-id');
 	                  var isSaved = document.getElementById('salescenter-app-add-custom-url-is-saved').value === 'y';
-
 	                  if (newPageId) {
 	                    newPageId = newPageId.value;
 	                  } else {
 	                    newPageId = false;
 	                  }
-
 	                  Manager.resolveAddPopup(newPageId, isSaved);
 	                },
 	                onPopupDestroy: function onPopupDestroy() {
@@ -360,18 +326,15 @@ this.BX = this.BX || {};
 	    value: function addPage(fields) {
 	      return new Promise(function (resolve, reject) {
 	        var method, analyticsLabel;
-
 	        if (fields.analyticsLabel) {
 	          analyticsLabel = fields.analyticsLabel;
 	          delete fields.analyticsLabel;
 	        }
-
 	        if (fields.id > 0) {
 	          method = rest_client.rest.callMethod('salescenter.page.update', {
 	            id: fields.id,
 	            fields: fields
 	          });
-
 	          if (!analyticsLabel) {
 	            analyticsLabel = 'salescenterUpdatePage';
 	          }
@@ -379,17 +342,14 @@ this.BX = this.BX || {};
 	          method = rest_client.rest.callMethod('salescenter.page.add', {
 	            fields: fields
 	          });
-
 	          if (!analyticsLabel) {
 	            analyticsLabel = 'salescenterAddPage';
 	          }
 	        }
-
 	        method.then(function (result) {
 	          if (result.answer.result.page) {
 	            var page = result.answer.result.page;
 	            var source = 'other';
-
 	            if (page.landingId > 0) {
 	              if (parseInt(page.siteId) === parseInt(Manager.connectedSiteId)) {
 	                source = 'landing_store_chat';
@@ -397,7 +357,6 @@ this.BX = this.BX || {};
 	                source = 'landing_other';
 	              }
 	            }
-
 	            Manager.addAnalyticAction({
 	              analyticsLabel: analyticsLabel,
 	              source: source,
@@ -427,7 +386,6 @@ this.BX = this.BX || {};
 	      var isWebform = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
 	      return new Promise(function (resolve) {
 	        var siteId = Manager.connectedSiteId;
-
 	        if (siteId > 0) {
 	          BX.loadExt('landing.master').then(function () {
 	            BX.Landing.Env.getInstance().setOptions({
@@ -459,7 +417,6 @@ this.BX = this.BX || {};
 	      if (!message) {
 	        return;
 	      }
-
 	      BX.loadExt('ui.notification').then(function () {
 	        BX.UI.Notification.Center.notify({
 	          content: message
@@ -471,7 +428,6 @@ this.BX = this.BX || {};
 	    value: function hidePage(page) {
 	      var method = 'salescenter.page.hide';
 	      var source = 'other';
-
 	      if (page.landingId > 0) {
 	        if (parseInt(page.siteId) === parseInt(Manager.connectedSiteId)) {
 	          source = 'landing_store_chat';
@@ -479,7 +435,6 @@ this.BX = this.BX || {};
 	          source = 'landing_other';
 	        }
 	      }
-
 	      var data = {
 	        id: page.id,
 	        fields: {
@@ -530,7 +485,6 @@ this.BX = this.BX || {};
 	      if (!main_core.Type.isPlainObject(options)) {
 	        options = {};
 	      }
-
 	      options = _objectSpread(_objectSpread({}, {
 	        cacheable: false,
 	        allowChangeHistory: false,
@@ -541,7 +495,6 @@ this.BX = this.BX || {};
 	          options.events.onClose = function (event) {
 	            resolve(event.getSlider());
 	          };
-
 	          BX.SidePanel.Instance.open(url, options);
 	        } else {
 	          resolve();
@@ -554,11 +507,9 @@ this.BX = this.BX || {};
 	      if (!main_core.Type.isPlainObject(params)) {
 	        params = {};
 	      }
-
 	      if (Manager.sessionId > 0) {
 	        params['sessionId'] = Manager.sessionId;
 	      }
-
 	      return new main_core.Uri('/saleshub/orders/').setQueryParams(params).toString();
 	    }
 	  }, {
@@ -567,11 +518,9 @@ this.BX = this.BX || {};
 	      if (!main_core.Type.isPlainObject(params)) {
 	        params = {};
 	      }
-
 	      if (Manager.sessionId > 0) {
 	        params['sessionId'] = Manager.sessionId;
 	      }
-
 	      return new main_core.Uri('/saleshub/payments/').setQueryParams(params).toString();
 	    }
 	  }, {
@@ -590,11 +539,9 @@ this.BX = this.BX || {};
 	      if (!main_core.Type.isPlainObject(params)) {
 	        params = {};
 	      }
-
 	      if (Manager.sessionId > 0) {
 	        params['sessionId'] = Manager.sessionId;
 	      }
-
 	      return new main_core.Uri('/saleshub/orders/order/').setQueryParams(params).toString();
 	    }
 	  }, {
@@ -609,21 +556,17 @@ this.BX = this.BX || {};
 	        orderId: orderId
 	      });
 	      var listSlider = BX.SidePanel.Instance.getSlider(ordersListUrl);
-
 	      if (!listSlider) {
 	        ordersListUrl = Manager.getOrdersListUrl({
 	          orderId: orderId
 	        });
 	        listSlider = BX.SidePanel.Instance.getSlider(ordersListUrl);
 	      }
-
 	      var orderAddUrl = Manager.getOrderAddUrl();
 	      var addSlider = BX.SidePanel.Instance.getSlider(orderAddUrl);
-
 	      if (addSlider) {
 	        addSlider.destroy();
 	      }
-
 	      if (!listSlider) {
 	        Manager.showOrdersList({
 	          orderId: orderId
@@ -668,7 +611,6 @@ this.BX = this.BX || {};
 	      return new Promise(function (resolve, reject) {
 	        Manager.openSlider(Manager.getFormAddUrl()).then(function (slider) {
 	          var formId = slider.getData().get('formId');
-
 	          if (formId > 0) {
 	            Manager.addNewFormPage(formId).then(function (result) {
 	              resolve(result);
@@ -732,19 +674,16 @@ this.BX = this.BX || {};
 	    key: "openConnectedSite",
 	    value: function openConnectedSite() {
 	      var isRecycle = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
-
 	      if (Manager.connectedSiteId > 0) {
 	        var url = new main_core.Uri("/shop/stores/site/".concat(Manager.connectedSiteId, "/"));
 	        var params = {
 	          apply_filter: 'y'
 	        };
-
 	        if (isRecycle) {
 	          params.DELETED = 'Y';
 	        } else {
 	          params.clear_filter = 'y';
 	        }
-
 	        url.setQueryParams(params);
 	        window.open(url.toString(), '_blank');
 	      }
@@ -816,6 +755,11 @@ this.BX = this.BX || {};
 	      Manager.openHelper(event, 'redirect=detail&code=12849128', 'cashbox_connect');
 	    }
 	  }, {
+	    key: "openHowToConfigYooKassaCashBox",
+	    value: function openHowToConfigYooKassaCashBox(event) {
+	      Manager.openHelper(event, 'redirect=detail&code=17776800', 'cashbox_connect');
+	    }
+	  }, {
 	    key: "openHowToSetupCheckboxCashBoxAndKeys",
 	    value: function openHowToSetupCheckboxCashBoxAndKeys(event) {
 	      Manager.openHelper(event, 'redirect=detail&code=12334663', 'cashbox_connect');
@@ -823,7 +767,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "openHowToSell",
 	    value: function openHowToSell(event) {
-	      Manager.openHelper(event, 'redirect=detail&code=11274792', 'crmstore_connect');
+	      Manager.openHelper(event, 'redirect=detail&code=17615318', 'crmstore_connect');
 	    }
 	  }, {
 	    key: "openHowToWork",
@@ -838,17 +782,12 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "openHowPayDealWorks",
 	    value: function openHowPayDealWorks(event) {
-	      Manager.openHelper(event, 'redirect=detail&code=11274792', 'pay_deal');
-	    }
-	  }, {
-	    key: "openHowPayDynamicEntityWorks",
-	    value: function openHowPayDynamicEntityWorks(event) {
-	      Manager.openHelper(event, 'redirect=detail&code=11274792', 'pay_dynamic_entity');
+	      Manager.openHelper(event, 'redirect=detail&code=17615318', 'pay_deal');
 	    }
 	  }, {
 	    key: "openHowPaySmartInvoiceWorks",
 	    value: function openHowPaySmartInvoiceWorks(event) {
-	      Manager.openHelper(event, 'redirect=detail&code=11274792', 'pay_smart_invoice');
+	      Manager.openHelper(event, 'redirect=detail&code=17615318', 'pay_smart_invoice');
 	    }
 	  }, {
 	    key: "openFormPagesHelp",
@@ -863,7 +802,12 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "openBitrix24NotificationsHelp",
 	    value: function openBitrix24NotificationsHelp(event) {
-	      Manager.openHelper(event, 'redirect=detail&code=13659402', 'bitrix24_notifications');
+	      Manager.openHelper(event, 'redirect=detail&code=17615266', 'bitrix24_notifications');
+	    }
+	  }, {
+	    key: "openBitrix24NotificationsWorks",
+	    value: function openBitrix24NotificationsWorks(event) {
+	      Manager.openHelper(event, 'redirect=detail&code=13655934', 'bitrix24_notifications_work');
 	    }
 	  }, {
 	    key: "openHelper",
@@ -871,11 +815,9 @@ this.BX = this.BX || {};
 	      var event = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
 	      var url = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : '';
 	      var analyticsArticle = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : '';
-
 	      if (event) {
 	        event.preventDefault();
 	      }
-
 	      if (analyticsArticle) {
 	        Manager.addAnalyticAction({
 	          analyticsLabel: 'salescenterOpenHelp',
@@ -895,7 +837,6 @@ this.BX = this.BX || {};
 	      if (event && main_core.Type.isFunction(event.preventDefault)) {
 	        event.preventDefault();
 	      }
-
 	      return Manager.openSlider('/bitrix/components/bitrix/salescenter.feedback/slider.php', {
 	        width: 735
 	      });
@@ -904,15 +845,12 @@ this.BX = this.BX || {};
 	    key: "openFeedbackFormParams",
 	    value: function openFeedbackFormParams(event, params) {
 	      var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
-
 	      if (event && main_core.Type.isFunction(event.preventDefault)) {
 	        event.preventDefault();
 	      }
-
 	      if (!main_core.Type.isPlainObject(params)) {
 	        params = {};
 	      }
-
 	      var url = new main_core.Uri('/bitrix/components/bitrix/salescenter.feedback/slider.php').setQueryParams(params).toString();
 	      return Manager.openSlider(url, options);
 	    }
@@ -922,7 +860,6 @@ this.BX = this.BX || {};
 	      if (event && main_core.Type.isFunction(event.preventDefault)) {
 	        event.preventDefault();
 	      }
-
 	      return Manager.openSlider('/bitrix/components/bitrix/salescenter.feedback/slider.php?feedback_type=pay_order', {
 	        width: 735
 	      });
@@ -933,7 +870,6 @@ this.BX = this.BX || {};
 	      if (event && main_core.Type.isFunction(event.preventDefault)) {
 	        event.preventDefault();
 	      }
-
 	      return Manager.openSlider('/bitrix/components/bitrix/salescenter.feedback/slider.php?feedback_type=delivery_offer', {
 	        width: 735
 	      });
@@ -942,15 +878,12 @@ this.BX = this.BX || {};
 	    key: "openIntegrationRequestForm",
 	    value: function openIntegrationRequestForm(event) {
 	      var params = _classStaticPrivateMethodGet(Manager, Manager, _getDataSettingFromEventDomNode).call(Manager, event);
-
 	      if (event && main_core.Type.isFunction(event.preventDefault)) {
 	        event.preventDefault();
 	      }
-
 	      if (!main_core.Type.isPlainObject(params)) {
 	        params = {};
 	      }
-
 	      var url = new main_core.Uri('/bitrix/components/bitrix/salescenter.feedback/slider.php');
 	      url.setQueryParams({
 	        feedback_type: 'integration_request'
@@ -965,17 +898,13 @@ this.BX = this.BX || {};
 	    value: function openApplication() {
 	      var params = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 	      var url = new main_core.Uri('/saleshub/app/');
-
 	      if (main_core.Type.isPlainObject(params)) {
 	        url.setQueryParams(params);
 	      }
-
 	      var sliderOptions = params.hasOwnProperty('sliderOptions') ? params.sliderOptions : {};
-
 	      if (!sliderOptions.hasOwnProperty('width')) {
 	        sliderOptions.width = 1140;
 	      }
-
 	      return new Promise(function (resolve, reject) {
 	        Manager.openSlider(url.toString(), sliderOptions).then(function (slider) {
 	          resolve(slider.getData());
@@ -989,7 +918,6 @@ this.BX = this.BX || {};
 	        if (!main_core.Type.isPlainObject(params) || !params.analyticsLabel) {
 	          reject('wrong params');
 	        }
-
 	        params = _objectSpread(_objectSpread({}, params), {
 	          action: 'salescenter.manager.addAnalytic',
 	          sessid: BX.bitrix_sessid()
@@ -998,15 +926,12 @@ this.BX = this.BX || {};
 	        var url = new main_core.Uri('/bitrix/services/main/ajax.php');
 	        url.setQueryParams(params);
 	        request.open('GET', url.toString());
-
 	        request.onload = function () {
 	          resolve();
 	        };
-
 	        request.onerror = function () {
 	          reject();
 	        };
-
 	        request.send();
 	      });
 	    }
@@ -1018,7 +943,6 @@ this.BX = this.BX || {};
 	          resolve(Manager.fieldsMap);
 	          return;
 	        }
-
 	        main_core.ajax.runAction('salescenter.manager.getFieldsMap', {
 	          analyticsLabel: 'salescenterFieldsMapLoading'
 	        }).then(function (response) {
@@ -1037,11 +961,9 @@ this.BX = this.BX || {};
 	        if (!main_core.Type.isInteger(pageId)) {
 	          resolve(null);
 	        }
-
 	        if (!main_core.Type.isPlainObject(entities) || entities.length <= 0) {
 	          resolve(null);
 	        }
-
 	        main_core.ajax.runAction('salescenter.manager.getPageUrl', {
 	          data: {
 	            pageId: pageId,
@@ -1061,52 +983,41 @@ this.BX = this.BX || {};
 	  }]);
 	  return Manager;
 	}();
-
 	function _parseParamsDataSetting(settings) {
 	  var result = {};
-
 	  if (main_core.Type.isStringFilled(settings)) {
 	    var fields = settings.split(',');
-
 	    try {
 	      for (var inx in fields) {
 	        if (!fields.hasOwnProperty(inx)) {
 	          continue;
 	        }
-
 	        var _fields$inx$split = fields[inx].split(':'),
-	            _fields$inx$split2 = babelHelpers.slicedToArray(_fields$inx$split, 2),
-	            name = _fields$inx$split2[0],
-	            value = _fields$inx$split2[1];
-
+	          _fields$inx$split2 = babelHelpers.slicedToArray(_fields$inx$split, 2),
+	          name = _fields$inx$split2[0],
+	          value = _fields$inx$split2[1];
 	        if (main_core.Type.isStringFilled(name)) {
 	          result[name] = value;
 	        }
 	      }
 	    } catch (e) {}
 	  }
-
 	  return result;
 	}
-
 	function _getDataSettingFromEventDomNode(event) {
 	  var node = null;
-
 	  if (main_core.Type.isDomNode(event.button)) {
 	    node = event.button;
 	  } else if (main_core.Type.isDomNode(event.target)) {
 	    node = event.target;
 	  }
-
 	  if (main_core.Type.isObject(node)) {
 	    var dataset = node.dataset ? node.dataset : {};
 	    var settings = dataset.hasOwnProperty('managerOpenintegrationrequestformParams') ? dataset.managerOpenintegrationrequestformParams : '';
 	    return _classStaticPrivateMethodGet(this, Manager, _parseParamsDataSetting).call(this, settings);
 	  }
-
 	  return null;
 	}
-
 	babelHelpers.defineProperty(Manager, "sessionId", null);
 	babelHelpers.defineProperty(Manager, "connectedSiteId", null);
 	babelHelpers.defineProperty(Manager, "addUrlPopup", null);
@@ -1123,18 +1034,15 @@ this.BX = this.BX || {};
 	  if (Manager.popupOuterLink) {
 	    Manager.popupOuterLink.destroy();
 	    Manager.popupOuterLink = null;
-
 	    if (Manager.hideCopyLinkTimeout > 0) {
 	      clearTimeout(Manager.hideCopyLinkTimeout);
 	      Manager.hideCopyLinkTimeout = 0;
 	    }
-
 	    if (Manager.destroyCopyLinkTimeout > 0) {
 	      clearTimeout(Manager.destroyCopyLinkTimeout);
 	      Manager.destroyCopyLinkTimeout = 0;
 	    }
 	  }
-
 	  Manager.popupOuterLink = new BX.PopupWindow('salescenter-popup-copy-link', node, {
 	    className: 'salescenter-popup-copy-link',
 	    darkMode: true,

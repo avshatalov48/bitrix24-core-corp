@@ -82,7 +82,7 @@
 .crm-box-layout .crm-block-cont-left{width:378px; padding:0 11px 0 4px;}
 .crm-box-layout.crm-single-column .crm-block-cont-left{ padding:0 4px 0 4px;}
 table.field_crm { margin-bottom: 3px }
-table.field_crm td.field_crm_entity_type {	vertical-align: top; border-left: 1px solid #c7c7c7; padding-left: 11px;	padding-right: 7px;	text-align: right;	font-weight: var(--ui-font-weight-bold);	background: none; padding-bottom: 2px}
+table.field_crm td.field_crm_entity_type {	vertical-align: top; border-left: 1px solid #c7c7c7; padding-left: 11px;	padding-right: 7px;	text-align: right;	font-weight: var(--ui-font-weight-bold);	background: none; padding-bottom: 2px;	word-break: initial;}
 table.field_crm td.field_crm_entity {	background: none; padding-bottom: 2px}
 .crm-button-open a { border-bottom: 1px dashed #0069C4; outline: medium none; text-decoration: none;}
 .crm-button-open a:hover { border-bottom: 1px dashed #E00000;}
@@ -8325,4 +8325,14 @@ a.crm-client-contacts-block-text-mail:hover{
 .crm-list-item-status-shipped {
 	background: #e5f1bf;
 	color: #668d13;
+}
+
+.crm-timeline__user-icon {
+	width: 20px;
+	height: 20px;
+	cursor: pointer;
+}
+
+.crm-timeline__user-icon.--muted {
+	opacity: 0.5;
 }

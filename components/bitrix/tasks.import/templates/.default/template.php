@@ -34,7 +34,7 @@ if ($arResult['IFRAME'])
 	<head>
 		<? $APPLICATION->ShowHead();?>
 	</head>
-	<body class="template-<?=SITE_TEMPLATE_ID?> <?$APPLICATION->ShowProperty("BodyClass");?> <?if($isSideSlider):?>task-iframe-popup-side-slider<?endif?>" onload="window.top.BX.onCustomEvent(window.top, 'tasksIframeLoad');" onunload="window.top.BX.onCustomEvent(window.top, 'tasksIframeUnload');">
+	<body class="template-<?=SITE_TEMPLATE_ID?> <?$APPLICATION->ShowProperty("BodyClass");?>" onload="window.top.BX.onCustomEvent(window.top, 'tasksIframeLoad');" onunload="window.top.BX.onCustomEvent(window.top, 'tasksIframeUnload');">
 	<div class="tasks-iframe-header">
 		<div class="pagetitle-wrap">
 			<div class="pagetitle-inner-container">
@@ -57,12 +57,12 @@ if ($arResult['IFRAME'])
 				<form class="js-id-import-tasks-import-form" id="<?= HtmlFilter::encode($arResult['FORM_ID']) ?>" method="POST" enctype="multipart/form-data">
 					<?= bitrix_sessid_post();?>
 					<input type="hidden" name="step" id="step" value="<?= HtmlFilter::encode($arResult['STEP']) ?>">
-					<input type="hidden" name="hidden_found_file_encoding" id="hidden_found_file_encoding" value="<?= HtmlFilter::encode($arResult['IMPORT_FILE_PARAMETERS']['FOUND_FILE_ENCODING'])?>">
-					<input type="hidden" name="hidden_file_hash" id="hidden_file_hash" value="<?= HtmlFilter::encode($arResult['IMPORT_FILE_PARAMETERS']['FILE_HASH'])?>">
-					<input type="hidden" name="hidden_default_originator" id="hidden_default_originator" value="<?= HtmlFilter::encode($arResult['IMPORT_FILE_PARAMETERS']['DEFAULT_ORIGINATOR'])?>">
-					<input type="hidden" name="hidden_default_responsible" id="hidden_default_responsible" value="<?= HtmlFilter::encode($arResult['IMPORT_FILE_PARAMETERS']['DEFAULT_RESPONSIBLE'])?>">
-					<input type="hidden" name="hidden_show_encoding_choice" id="hidden_show_encoding_choice" value="<?= HtmlFilter::encode($arResult['IMPORT_FILE_PARAMETERS']['SHOW_ENCODING_CHOICE'])?>">
-					<input type="hidden" name="hidden_from_tmp_dir" id="hidden_from_tmp_dir" value="<?= ($arResult['IMPORT_FILE_PARAMETERS']['FROM_TMP_DIR']) ? 'Y' : 'N'?>">
+					<input type="hidden" name="hidden_found_file_encoding" id="hidden_found_file_encoding" value="<?= HtmlFilter::encode($arResult['IMPORT_FILE_PARAMETERS']['FOUND_FILE_ENCODING'] ?? null)?>">
+					<input type="hidden" name="hidden_file_hash" id="hidden_file_hash" value="<?= HtmlFilter::encode($arResult['IMPORT_FILE_PARAMETERS']['FILE_HASH'] ?? null)?>">
+					<input type="hidden" name="hidden_default_originator" id="hidden_default_originator" value="<?= HtmlFilter::encode($arResult['IMPORT_FILE_PARAMETERS']['DEFAULT_ORIGINATOR'] ?? null)?>">
+					<input type="hidden" name="hidden_default_responsible" id="hidden_default_responsible" value="<?= HtmlFilter::encode($arResult['IMPORT_FILE_PARAMETERS']['DEFAULT_RESPONSIBLE'] ?? null)?>">
+					<input type="hidden" name="hidden_show_encoding_choice" id="hidden_show_encoding_choice" value="<?= HtmlFilter::encode($arResult['IMPORT_FILE_PARAMETERS']['SHOW_ENCODING_CHOICE'] ?? null)?>">
+					<input type="hidden" name="hidden_from_tmp_dir" id="hidden_from_tmp_dir" value="<?= ($arResult['IMPORT_FILE_PARAMETERS']['FROM_TMP_DIR'] ?? null) ? 'Y' : 'N'?>">
 					<?php
 					if ($arResult['STEP'] == 2)
 					{
@@ -92,6 +92,10 @@ if ($arResult['IFRAME'])
 						{
 							foreach ($row as $key => $value)
 							{
+								if (!array_key_exists($rowIndex, $rows))
+								{
+									$rows[$rowIndex] = '';
+								}
 								$rows[$rowIndex] .= $key.'[/]'.$value.'[//]';
 							}
 						}
@@ -205,7 +209,7 @@ if ($arResult['IFRAME'])
 															<select class="tasks-entity-widget-content-select" id="file_encoding" name="file_encoding">
 																<?foreach ($arResult['ENCODINGS'] as $key => $name)
 																{
-																	$selected = ($arResult['IMPORT_FILE_PARAMETERS']['FILE_ENCODING'] == $key) ? " selected" : "";
+																	$selected = (($arResult['IMPORT_FILE_PARAMETERS']['FILE_ENCODING'] ?? null) == $key) ? " selected" : "";
 																	?>
 																	<option value="<?= HtmlFilter::encode($key)?>"<?= HtmlFilter::encode($selected)?>><?= HtmlFilter::encode($name)?></option>
 																<?}?>
@@ -290,7 +294,7 @@ if ($arResult['IFRAME'])
 															<select class="tasks-entity-widget-content-select" id="separator" name="separator">
 																<? foreach ($arResult['SEPARATORS'] as $key => $name)
 																{
-																	$selected = ($arResult['IMPORT_FILE_PARAMETERS']['SEPARATOR_TEXT'] == $key) ? " selected" : "";
+																	$selected = (($arResult['IMPORT_FILE_PARAMETERS']['SEPARATOR_TEXT'] ?? null) == $key) ? " selected" : "";
 																	?>
 																	<option value="<?= HtmlFilter::encode($key)?>"<?= HtmlFilter::encode($selected)?>><?= HtmlFilter::encode($name)?></option>
 																<?}?>
@@ -511,7 +515,7 @@ if ($arResult['IFRAME'])
 									if (BX('hidden_show_encoding_choice').value === 'Y')
 									{
 										encodingHandler.createPopup(
-											<?= Json::encode($arResult['ENCODED_RESULTS']) ?>,
+											<?= Json::encode($arResult['ENCODED_RESULTS'] ?? null) ?>,
 											formId,
 											'hidden_found_file_encoding'
 										);

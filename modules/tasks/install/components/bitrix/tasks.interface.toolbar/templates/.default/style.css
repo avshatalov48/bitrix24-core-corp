@@ -181,7 +181,7 @@
 	border-color: #9fa4ab;
 }
 
-@media screen and (max-width: 1500px) {
+@media screen and (max-width: 1920px) {
 	.bx-layout-table:not(.menu-collapsed-mode) .task-interface-toolbar--item--3 .task-interface-btn-toolbar.--robots.--small {
 		position: relative;
 		padding: 0;
@@ -387,7 +387,7 @@
 
 /*other*/
 
-@media screen and (max-width: 1740px) {
+@media screen and (max-width: 1920px) {
 	.bx-layout-table:not(.menu-collapsed-mode) .task-interface-toolbar--item--3 .intranet-binding-menu-btn {
 		width: 37px;
 		height: 24px;
@@ -699,4 +699,9 @@
 		width: auto;
 		margin: 0;
 	}
+}
+
+.tasks-interface-toolbar__steps.--empty,
+.tasks-interface-toolbar__steps:empty {
+	display: none;
 }

@@ -30,6 +30,7 @@ foreach ($dialog->getMap() as $fieldId => $field):?>
 			formName: '<?= CUtil::JSEscape($dialog->getFormName()) ?>',
 			stages: <?= \Bitrix\Main\Web\Json::encode($dialog->getRuntimeData()['stages'] ?? []) ?>,
 			chosenStages: <?= \Bitrix\Main\Web\Json::encode($dialog->getCurrentValue('target_status')) ?>,
+			isRobot: false,
 		});
 
 		script.init();

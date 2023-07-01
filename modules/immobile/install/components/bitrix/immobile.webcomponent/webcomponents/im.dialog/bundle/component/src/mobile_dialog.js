@@ -68,8 +68,8 @@ BX.ImMobile = function(params)
 	this.pathToCrmCompany = this.pathToRoot+"mobile/crm/company/?page=view&company_id=#ID#";
 	this.pathToCrmContact = this.pathToRoot+"mobile/crm/contact/?page=view&contact_id=#ID#";
 
-	this.historyMessageSplit = '------------------------------';
-	this.historyMessageSplitOriginal = '------------------------------------------------------';
+	this.historyMessageSplitShort = '------------------------------';
+	this.historyMessageSplit = '------------------------------------------------------';
 
 	this.notifyCount = 0;
 	this.messageCount = 0;
@@ -90,6 +90,12 @@ BX.ImMobile = function(params)
 		enable: true,
 		enableExternal: false
 	});
+
+	const SmileManager = BX.Reflection.getClass('BX.Messenger.v2.Lib.SmileManager');
+	if (SmileManager)
+	{
+		SmileManager.init();
+	}
 
 	this.messenger = new BX.ImMessengerMobile(this, {
 		'openChatEnable': false,
@@ -219,12 +225,16 @@ BX.ImMobile.prototype.initParams = function(params)
 	for (var i in params.notify)
 	{
 		params.notify[i].date = new Date(params.notify[i].date);
+		params.notify[i].textOriginal = params.notify[i].text;
+		params.notify[i].text = BX.MessengerCommon.prepareText(params.notify[i].text, true, true, true);
 		if (parseInt(i) > this.lastRecordId)
 			this.lastRecordId = parseInt(i);
 	}
 	for (var i in params.message)
 	{
 		params.message[i].date = new Date(params.message[i].date);
+		params.message[i].textOriginal = params.message[i].text;
+		params.message[i].text = BX.MessengerCommon.prepareText(params.message[i].text, true, true, true);
 		if (parseInt(i) > this.lastRecordId)
 			this.lastRecordId = parseInt(i);
 	}
@@ -634,7 +644,7 @@ BX.ImMobile.prototype.mobileActionReady = function()
 				text = data;
 			}
 
-			text = text.split(this.historyMessageSplit).join(this.historyMessageSplitOriginal);
+			text = text.split(this.historyMessageSplitShort).join(this.historyMessageSplit);
 
 			if(files != null && files.length>0)
 			{
@@ -990,7 +1000,9 @@ BX.ImMobile.prototype.mobileActionReady = function()
 			return false;
 		}
 
-		var messageText = BX.MessengerCommon.prepareTextBack(this.messenger.message[messageId].text, true);
+		var messageText = this.messenger.message[messageId].textOriginal;
+		messageText = messageText.split(this.historyMessageSplit).join(this.historyMessageSplitShort);
+
 		if (this.messenger.message[messageId].params && this.messenger.message[messageId].params['FILE_ID'] && this.messenger.message[messageId].params['FILE_ID'].length > 0)
 		{
 			for (var j = 0; j < this.messenger.message[messageId].params.FILE_ID.length; j++)
@@ -1017,7 +1029,7 @@ BX.ImMobile.prototype.mobileActionReady = function()
 			return false;
 		}
 
-		var messageText = BX.MessengerCommon.prepareTextBack(this.messenger.message[messageId].text, true);
+		var messageText = this.messenger.message[messageId].textOriginal;
 		if (this.messenger.message[messageId].params && this.messenger.message[messageId].params['FILE_ID'] && this.messenger.message[messageId].params['FILE_ID'].length > 0)
 		{
 			for (var j = 0; j < this.messenger.message[messageId].params.FILE_ID.length; j++)
@@ -1036,7 +1048,6 @@ BX.ImMobile.prototype.mobileActionReady = function()
 		}
 
 		BX.MessengerCommon.getUserParam(this.messenger.message[messageId].senderId);
-
 		var userName = this.messenger.users[this.messenger.message[messageId].senderId]? this.messenger.users[this.messenger.message[messageId].senderId].name: '';
 
 		return this.insertQuoteText(userName, this.messenger.message[messageId].date, BX.util.trim(messageText));
@@ -1073,12 +1084,13 @@ BX.ImMobile.prototype.insertQuoteText = function(name, date, text)
 	text = text.replace(/\[ATTACH=([0-9]{1,})\]/ig, BX.delegate(function(whole, command, text) {return command == 10000? '': '['+BX.message('IM_F_ATTACH')+'] ';}, this));
 	text = text.replace(/\[RATING\=([1-5]{1})\]/ig, BX.delegate(function(whole, rating) {return '['+BX.message('IM_F_RATING')+'] ';}, this));
 	text = text.replace(/&nbsp;/ig, " ");
+	text = text.replace(/-{54}(.*?)-{54}/gs, "["+BX.message("IM_M_QUOTE_BLOCK")+"]");
 
 	var arQuote = [];
-	arQuote.push(this.historyMessageSplit);
+	arQuote.push(this.historyMessageSplitShort);
 	arQuote.push(BX.util.htmlspecialcharsback(name)+' ['+BX.MessengerCommon.formatDate(date)+']');
 	arQuote.push(text);
-	arQuote.push(this.historyMessageSplit+"\n");
+	arQuote.push(this.historyMessageSplitShort+"\n");
 
 	return arQuote.join("\n");
 }
@@ -1129,7 +1141,7 @@ BX.ImMobile.prototype.addCopyableDialog = function (node, highlightBlockClass, t
 
 				if (typeof getTextFunction === "function")
 				{
-					text = getTextFunction(textBlock)
+					text = getTextFunction(textBlock);
 				}
 				else
 				{
@@ -1138,6 +1150,8 @@ BX.ImMobile.prototype.addCopyableDialog = function (node, highlightBlockClass, t
 
 				if (text !== null)
 				{
+					text = text.replace(/\[url](.*?)\[\/url]/ig, (whole, link) => link);
+
 					app.exec("copyToClipboard", {text: text});
 
 					(new BXMobileApp.UI.NotificationBar({
@@ -1414,10 +1428,6 @@ BX.ImMessengerMobile = function(BXIM, params)
 
 	this.errorMessage = {};
 	this.message = params.message;
-	for (var messageId in this.message)
-	{
-		this.message[messageId].date = new Date(this.message[messageId].date);
-	}
 
 	this.messageTmpIndex = 0;
 	this.messageCount = params.countMessage;
@@ -2365,6 +2375,10 @@ BX.ImMessengerMobile.prototype.dialogStatusRedrawDelay = function(params)
 					setTimeout(() => BXMobileApp.UI.Page.TextPanel.hide(), 100);
 				}
 				addClass.push('bx-messenger-chat-guest');
+				if (this.chat[chatId].type === 'lines')
+				{
+					addClass.push('bx-messenger-chat-lines');
+				}
 			}
 		}
 
@@ -2680,7 +2694,15 @@ BX.ImMessengerMobile.prototype.sendMessage = function(recipientId, text)
 	}
 
 	var messageTmpIndex = this.messageTmpIndex;
-	this.message['temp'+messageTmpIndex] = {'id' : 'temp'+messageTmpIndex, chatId: chatId, 'senderId' : this.BXIM.userId, 'recipientId' : recipientId, 'date' : new Date(), 'text' : BX.MessengerCommon.prepareText(text, true) };
+	this.message['temp'+messageTmpIndex] = {
+		'id' : 'temp'+messageTmpIndex,
+		chatId: chatId,
+		'senderId' : this.BXIM.userId,
+		'recipientId' : recipientId,
+		'date' : new Date(),
+		'text' : BX.MessengerCommon.prepareText(text, true, true, true),
+		'textOriginal': text
+	};
 	if (!this.showMessage[recipientId])
 		this.showMessage[recipientId] = [];
 	this.showMessage[recipientId].push('temp'+messageTmpIndex);
@@ -3319,7 +3341,8 @@ BX.ImDiskManagerMobile.prototype.uploadFromDisk = function(selected, text)
 		'senderId': this.BXIM.userId,
 		'recipientId': recipientId,
 		'date': new Date(),
-		'text': BX.MessengerCommon.prepareText(text, true),
+		'text': BX.MessengerCommon.prepareText(text, true, true, true),
+		'textOriginal': text,
 		'params': {'FILE_ID': paramsFileId, 'CLASS': olSilentMode == "Y"? "bx-messenger-content-item-system": ""}
 	};
 	if (!this.messenger.showMessage[recipientId])
@@ -3559,6 +3582,7 @@ BX.ImDiskManagerMobile.prototype.fileRegister = function(file, params)
 			'recipientId': dialogId,
 			'date': new Date(),
 			'text': '',
+			'textOriginal': '',
 			'params': {'FILE_ID': file.id, 'CLASS': silentMode? "bx-messenger-content-item-system": ""}
 		};
 		if (!this.BXIM.messenger.showMessage[dialogId])

@@ -1,9 +1,9 @@
-<?
+<?php
 $MESS["CRM_ACTIVITY_EDITOR_ADD_TASK"] = "Добавить задачу";
 $MESS["CRM_ACTIVITY_EDITOR_ADD_CALL"] = "Добавить звонок";
 $MESS["CRM_ACTIVITY_EDITOR_ADD_MEETING"] = "Добавить встречу";
 $MESS["CRM_ACTIVITY_EDITOR_ADD_EMAIL"] = "Написать письмо";
-$MESS["CRM_ACTIVITY_LIST_DELETION_CONFIRM"] = "Вы действительно желаете удалить это действие?";
+$MESS["CRM_ACTIVITY_LIST_DELETION_CONFIRM"] = "Вы действительно хотите удалить это действие?";
 $MESS["CRM_ACTIVITY_LIST_EDIT_BTN_TTL"] = "Кликнуть для редактирования";
 $MESS["CRM_ACTIVITY_LIST_DEL_BTN_TTL"] = "Кликнуть для удаления";
 $MESS["CRM_ACTIVITY_DLG_BTN_SAVE"] = "Сохранить";
@@ -13,7 +13,7 @@ $MESS["CRM_ACTIVITY_DLG_BTN_CLOSE"] = "Закрыть";
 $MESS["CRM_ACTIVITY_DLG_BTN_SEND"] = "Отправить";
 $MESS["CRM_ACTIVITY_DLG_BTN_REPLY"] = "Ответить";
 $MESS["CRM_ACTIVITY_DLG_BTN_FORWARD"] = "Переслать";
-$MESS["CRM_ACTIVITY_ERROR_INVALID_EMAIL"] = "'#VALUE#' не является правильным e-mail адресом.";
+$MESS["CRM_ACTIVITY_ERROR_INVALID_EMAIL"] = "'#VALUE#' указан с ошибками, введите корректный e-mail";
 $MESS["CRM_ACTIVITY_ERROR_INVALID_PHONE"] = "'#VALUE#' не является правильным номером телефона.";
 $MESS["CRM_ACTIVITY_EMAIL_EMPTY_FROM_FIELD"] = "Пожалуйста, укажите отправителя в поле 'от кого'.";
 $MESS["CRM_ACTIVITY_EMAIL_EMPTY_TO_FIELD"] = "Пожалуйста, укажите получателя в поле 'кому'.";
@@ -92,4 +92,6 @@ $MESS["CRM_ACTIVITY_DISK_UPLOAD_FILE"] = "Загрузить файл";
 $MESS["CRM_ACTIVITY_DISK_UPLOAD_FILE_LEGEND"] = "Перетащить с помощью Drag'n'drop";
 $MESS["CRM_SIP_MGR_UNKNOWN_RECIPIENT"] = "Неизвестный абонент";
 $MESS["CRM_SIP_MGR_MAKE_CALL"] = "Позвонить";
-?>
+$MESS["CRM_ACTIVITY_TODO_OPENLINE_COMPLETE_CONF"] = "При завершении дела диалог с клиентом автоматически закрывается";
+$MESS["CRM_ACTIVITY_TODO_OPENLINE_COMPLETE_CONF_OK_TEXT"] = "Завершить дело";
+$MESS["CRM_ACTIVITY_TODO_OPENLINE_COMPLETE_CONF_TITLE"] = "Вы уверены, что хотите завершить дело?";

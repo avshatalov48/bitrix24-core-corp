@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Controller\Timeline;
 
+use Bitrix\Crm\Controller\ErrorCode;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Error;
 
@@ -22,7 +23,9 @@ class Activity extends \Bitrix\Crm\Controller\Base
 			['FIELDS' => $activity]
 		))
 		{
-			$this->addError(\Bitrix\Crm\Controller\ErrorCode::getAccessDeniedError());
+			$provider = \CCrmActivity::GetActivityProvider($activity);
+			$error = is_null($provider) ? ErrorCode::getAccessDeniedError() : $provider::getCompletionDeniedError();
+			$this->addError($error);
 
 			return;
 		}

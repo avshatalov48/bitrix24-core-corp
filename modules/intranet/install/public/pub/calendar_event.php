@@ -11,10 +11,10 @@ if (\Bitrix\Main\Loader::includeModule('calendar'))
 		'bitrix:calendar.pub.event',
 		"",
 		[
-			'HASH' => $_REQUEST['hash'],
-			'EVENT_ID' => $_REQUEST['event_id'],
-			'DECISION' => $_REQUEST['decision'],
-			'DOWNLOAD' => $_REQUEST['download'],
+			'HASH' => $_REQUEST['hash'] ?? '',
+			'EVENT_ID' => $_REQUEST['event_id'] ?? '',
+			'DECISION' => $_REQUEST['decision'] ?? '',
+			'DOWNLOAD' => $_REQUEST['download'] ?? '',
 		]
 	);
 }

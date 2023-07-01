@@ -156,7 +156,13 @@ export class TimelineSummaryDocuments extends EntityEditorPaymentDocuments
 
 	_renderPaymentDocument(doc: PaymentDocument): HTMLElement
 	{
-		const title = Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_PAYMENT_DATE').replace(/#DATE#/gi, doc.FORMATTED_DATE);
+		const title = Loc.getMessage(
+			'CRM_ENTITY_ED_PAYMENT_DOCUMENTS_PAYMENT_DATE_MSGVER_1',
+			{
+				'#DATE#': doc.FORMATTED_DATE,
+				'#ACCOUNT_NUMBER#': doc.ACCOUNT_NUMBER,
+			},
+		);
 		const sum = Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_PAYMENT_AMOUNT').replace(/#SUM#/gi, this._renderMoney(doc.SUM));
 		const labelOptions = {
 			text: Loc.getMessage(`CRM_ENTITY_ED_PAYMENT_DOCUMENTS_STAGE_${doc.STAGE}`),
@@ -207,7 +213,13 @@ export class TimelineSummaryDocuments extends EntityEditorPaymentDocuments
 			labelOptions.text = Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_STATUS_DELIVERED');
 			labelOptions.color = LabelColor.LIGHT_GREEN;
 		}
-		const title = Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_DELIVERY_DATE').replace(/#DATE#/gi, doc.FORMATTED_DATE);
+		const title = Loc.getMessage(
+			'CRM_ENTITY_ED_PAYMENT_DOCUMENTS_DELIVERY_DATE_MSGVER_1',
+			{
+				'#DATE#': doc.FORMATTED_DATE,
+				'#ACCOUNT_NUMBER#': doc.ACCOUNT_NUMBER,
+			},
+		);
 		const sum = Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_PAYMENT_AMOUNT').replace(/#SUM#/gi, this._renderMoney(doc.SUM));
 
 		const openSlider = () => this._viewDeliverySlider(doc.ORDER_ID, doc.ID);

@@ -351,6 +351,7 @@ abstract class BaseComponent extends Crm\Component\Base
 		}
 
 		$this->arResult['COMPONENT_MODE'] = $this->mode;
+
 		return true;
 	}
 
@@ -386,6 +387,11 @@ abstract class BaseComponent extends Crm\Component\Base
 		if (is_null($wizard))
 		{
 			$wizard = $this->initializeConversionWizardFromRequest($this->request);
+		}
+
+		if (is_null($wizard) && !empty($this->arParams['CONVERSION_SOURCE']))
+		{
+			$wizard = Conversion\ConversionManager::loadWizardByParams($this->arParams['CONVERSION_SOURCE']);
 		}
 
 		if (!$wizard || !$wizard->isConvertingTo($this->getEntityTypeID()))
@@ -547,6 +553,8 @@ abstract class BaseComponent extends Crm\Component\Base
 		}
 		$userPermissions = Container::getInstance()->getUserPermissions($currentUserId);
 
+		$checkPermissions = $options['checkPermissions'] ?? true;
+
 		$title = trim($entityData['title'] ?? '');
 		if (empty($title))
 		{
@@ -554,10 +562,16 @@ abstract class BaseComponent extends Crm\Component\Base
 		}
 		$isMyCompany = isset($entityData['isMyCompany']) && $entityData['isMyCompany'] === true;
 		if (
-			!$userPermissions->checkAddPermissions($entityTypeID)
-			|| (
-				$isMyCompany
-				&& !$userPermissions->canWriteConfig()
+			$checkPermissions
+			&& (
+				(
+					!$isMyCompany
+					&& !$userPermissions->checkAddPermissions($entityTypeID)
+				)
+				|| (
+					$isMyCompany
+					&& !$userPermissions->getMyCompanyPermissions()->canAdd()
+				)
 			)
 		)
 		{
@@ -697,16 +711,23 @@ abstract class BaseComponent extends Crm\Component\Base
 			$currentUserId = $currentUserPermissions->GetUserID();
 		}
 		$userPermissions = Container::getInstance()->getUserPermissions($currentUserId);
+		$checkPermissions = $options['checkPermissions'] ?? true;
 
 		$entityTypeID = $identifier->getEntityTypeId();
 		$entityID = $identifier->getEntityId();
 
 		$isMyCompany = isset($entityData['isMyCompany']) && $entityData['isMyCompany'] === true;
 		if (
-			!$userPermissions->checkUpdatePermissions($entityTypeID, $entityID)
-			|| (
-				$isMyCompany
-				&& !$userPermissions->canWriteConfig()
+			$checkPermissions
+			&& (
+				(
+					!$isMyCompany
+					&& !$userPermissions->checkUpdatePermissions($entityTypeID, $entityID)
+				)
+				|| (
+					$isMyCompany
+					&& !$userPermissions->getMyCompanyPermissions()->canUpdate()
+				)
 			)
 		)
 		{

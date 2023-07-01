@@ -23,6 +23,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UserTable;
 use Bitrix\Tasks\CheckList\Task\TaskCheckListFacade;
 use Bitrix\Tasks\Comments\Internals\Comment;
+use Bitrix\Tasks\Control\Tag;
 use Bitrix\Tasks\Integration;
 use Bitrix\Tasks\Internals\Counter;
 use Bitrix\Tasks\Internals\Task\FavoriteTable;
@@ -124,43 +125,26 @@ class CTasks
 
 		$handler = new \Bitrix\Tasks\Control\Task($userId);
 
-		if (
-			!isset($arParams['CORRECT_DATE_PLAN'])
-			|| (
-				$arParams['CORRECT_DATE_PLAN'] !== false
-				&& $arParams['CORRECT_DATE_PLAN'] !== 'N'
-			)
-		)
+		$correctDatePlan = ($arParams['CORRECT_DATE_PLAN'] ?? true);
+		if ($correctDatePlan !== 'N' && $correctDatePlan !== false)
 		{
 			$handler->withCorrectDatePlan();
 		}
 
-		if (
-			isset($arParams['SPAWNED_BY_AGENT'])
-			&& (
-				$arParams['SPAWNED_BY_AGENT'] === 'Y'
-				|| $arParams['SPAWNED_BY_AGENT'] === true
-			)
-		)
+		$spawnedByAgent = ($arParams['SPAWNED_BY_AGENT'] ?? false);
+		if ($spawnedByAgent === 'Y' || $spawnedByAgent === true)
 		{
 			$handler->fromAgent();
 		}
 
-		if (isset($arParams['CHECK_RIGHTS_ON_FILES']))
+		$checkRightsOnFiles = ($arParams['CHECK_RIGHTS_ON_FILES'] ?? false);
+		if ($checkRightsOnFiles === 'Y' || $checkRightsOnFiles === true)
 		{
-			if (
-				$arParams['CHECK_RIGHTS_ON_FILES'] === 'Y'
-				|| $arParams['CHECK_RIGHTS_ON_FILES'] === true
-			)
-			{
-				$handler->withFilesRights();
-			}
+			$handler->withFilesRights();
 		}
 
-		if (
-			$arParams['CLONE_DISK_FILE_ATTACHMENT'] === true
-			|| $arParams['CLONE_DISK_FILE_ATTACHMENT'] === 'Y'
-		)
+		$cloneDiskFileAttachment = ($arParams['CLONE_DISK_FILE_ATTACHMENT'] ?? false);
+		if ($cloneDiskFileAttachment === 'Y' || $cloneDiskFileAttachment === true)
 		{
 			$handler->withCloneAttachments();
 		}
@@ -310,8 +294,6 @@ class CTasks
 				"text" => GetMessage("TASKS_UNKNOWN_UPDATE_ERROR"),
 				"id" => "ERROR_UNKNOWN_UPDATE_TASK_ERROR",
 			];
-
-			AddMessage2Log(serialize($e->getMessage()), 'tasks');
 
 			return false;
 		}
@@ -632,11 +614,15 @@ class CTasks
 					$columnName = "{$tableAlias}.SEARCH_INDEX";
 					$where = self::FilterCreate($columnName, $val, 'fulltext', $bFullJoin, $cOperationType);
 
-					$filterParams = $params['FILTER_PARAMS'];
-					$searchTaskOnly = isset($filterParams['SEARCH_TASK_ONLY'])
-						&& $filterParams['SEARCH_TASK_ONLY'] === 'Y';
-					$searchCommentOnly = isset($filterParams['SEARCH_COMMENT_ONLY'])
-						&& $filterParams['SEARCH_COMMENT_ONLY'] === 'Y';
+					$filterParams = ($params['FILTER_PARAMS'] ?? null);
+					$searchTaskOnly =
+						isset($filterParams['SEARCH_TASK_ONLY'])
+						&& $filterParams['SEARCH_TASK_ONLY'] === 'Y'
+					;
+					$searchCommentOnly =
+						isset($filterParams['SEARCH_COMMENT_ONLY'])
+						&& $filterParams['SEARCH_COMMENT_ONLY'] === 'Y'
+					;
 
 					$join = "";
 					if ($searchTaskOnly)
@@ -714,8 +700,8 @@ class CTasks
 						$tags = "('" . implode("','", $tags) . "')";
 						$arSqlSearch[] = "
 						{$sAliasPrefix}T.ID IN (
-								SELECT ID FROM b_tasks
-								INNER JOIN b_tasks_task_tag BTT on BTT.TASK_ID = b_tasks.ID
+								SELECT TASK_TAGS.ID FROM b_tasks AS TASK_TAGS
+								INNER JOIN b_tasks_task_tag BTT on BTT.TASK_ID = TASK_TAGS.ID
 								WHERE BTT.TAG_ID IN $tags
 						)
 					";
@@ -1424,6 +1410,17 @@ class CTasks
 						. UserOption::getFilterSql($targetUserId, $optionMap[$key], $sAliasPrefix);
 					break;
 
+				case 'SCENARIO_NAME':
+					$arSqlSearch[] = CTasks::FilterCreate(
+						$sAliasPrefix . "SCR.SCENARIO",
+						$val,
+						"string_equal",
+						$bFullJoin,
+						$cOperationType,
+						false
+					);
+					break;
+
 				default:
 					if ((mb_strlen($key) >= 3) && (mb_substr($key, 0, 3) === 'UF_'))
 					{
@@ -1891,7 +1888,7 @@ class CTasks
 		// enable legacy access if no option passed (by default)
 		// disable legacy access when ENABLE_LEGACY_ACCESS === true
 		// we can not switch legacy access off by default, because getFilter() can be used separately
-		$enableLegacyAccess = !is_array($arParams) || $arParams['ENABLE_LEGACY_ACCESS'] !== false;
+		$enableLegacyAccess = !is_array($arParams) || !array_key_exists('ENABLE_LEGACY_ACCESS', $arParams) || $arParams['ENABLE_LEGACY_ACCESS'] !== false;
 		if ($enableLegacyAccess && static::needAccessRestriction($arFilter, $arParams))
 		{
 			[$arSubSqlSearch, $fields] = static::getPermissionFilterConditions(
@@ -1912,7 +1909,10 @@ class CTasks
 
 	private static function placeFieldSql($field, $behaviour, &$fields)
 	{
-		if ($behaviour['USE_PLACEHOLDERS'])
+		if (
+			array_key_exists('USE_PLACEHOLDERS', $behaviour)
+			&& $behaviour['USE_PLACEHOLDERS']
+		)
 		{
 			$fields[] = $field;
 
@@ -1986,12 +1986,20 @@ class CTasks
 
 			// group permission check
 			if (
-				$arAllowedGroups = Integration\SocialNetwork\Group::getIdsByAllowedAction('view_all', true,
-					$arParams['USER_ID'])
+				$arAllowedGroups = Integration\SocialNetwork\Group::getIdsByAllowedAction(
+					'view_all',
+					true,
+					($arParams['USER_ID'] ?? null)
+				)
 			)
 			{
-				$arSubSqlSearch[] = "(" . static::placeFieldSql('GROUP_ID', $b, $f) . " IN (" . implode(",",
-						$arAllowedGroups) . "))";
+				$arSubSqlSearch[] =
+					'('
+					. static::placeFieldSql('GROUP_ID', $b, $f)
+					. ' IN ('
+					. implode(',', $arAllowedGroups)
+					. '))'
+				;
 			}
 
 			if (!$taskMemberJoined || ($taskMemberJoined && !empty($arSubSqlSearch)))
@@ -2648,11 +2656,26 @@ class CTasks
 
 			if (!$bSkipExtraData)
 			{
+				if (in_array('SCENARIO_NAME', $select) || in_array('*', $select))
+				{
+					$task['SCENARIO_NAME'] = [];
+					$scenarios = \Bitrix\Tasks\Internals\Task\ScenarioTable::getList([
+						'select' => ['SCENARIO'],
+						'filter' => [
+							'=TASK_ID' => $ID,
+						],
+					])->fetchAll();
+
+					foreach ($scenarios as $row)
+					{
+						$task['SCENARIO_NAME'][] = $row['SCENARIO'];
+					}
+				}
+
 				if (in_array('TAGS', $select) || in_array('*', $select))
 				{
 					$arTagsFilter = ["TASK_ID" => $ID];
-					$arTagsOrder = ["NAME" => "ASC"];
-					$rsTags = CTaskTags::GetList($arTagsOrder, $arTagsFilter);
+					$rsTags = CTaskTags::GetList([], $arTagsFilter);
 					$task["TAGS"] = [];
 					while ($arTag = $rsTags->Fetch())
 					{
@@ -3390,10 +3413,10 @@ class CTasks
 		$relatedJoins = [];
 
 		$userId = ($params['USER_ID'] ? (int)$params['USER_ID'] : User::getId());
-		$viewedBy = ($params['VIEWED_BY'] ?: $userId);
-		$sortingGroupId = (int)$params['SORTING_GROUP_ID'];
-		$joinAlias = ($params['JOIN_ALIAS'] ?: "");
-		$sourceAlias = ($params['SOURCE_ALIAS'] ?: "T");
+		$viewedBy = (int)($params['VIEWED_BY'] ?? $userId);
+		$sortingGroupId = (int)($params['SORTING_GROUP_ID'] ?? 0);
+		$joinAlias = $params['JOIN_ALIAS'] ?? '';
+		$sourceAlias = $params['SOURCE_ALIAS'] ?? 'T';
 
 		$filterKeys = static::GetFilteredKeys($filter);
 		$possibleJoins = [
@@ -3408,6 +3431,8 @@ class CTasks
 			'USER_OPTION',
 			'COUNTERS',
 			'SCRUM',
+			'SCENARIO',
+			'IM_CHAT',
 		];
 
 		foreach ($possibleJoins as $join)
@@ -3563,7 +3588,7 @@ class CTasks
 					}
 					break;
 				case 'SCRUM':
-					$isScrumRequest = ($filter['SCRUM_TASKS'] === 'Y');
+					$isScrumRequest = isset($filter['SCRUM_TASKS']) && ($filter['SCRUM_TASKS'] === 'Y');
 					$hasStatusKey = (
 						in_array('REAL_STATUS', $filterKeys, true)
 						&& self::containCompletedInActiveSprintStatus($filter)
@@ -3678,6 +3703,45 @@ class CTasks
 					$relatedJoins[$join] = $scrumJoin . $statusJoin . $storyPointsJoin . $epicJoin;
 
 					break;
+
+				case 'SCENARIO':
+					if (
+						in_array('SCENARIO_NAME', $select, true)
+						|| in_array('SCENARIO_NAME', $filterKeys, true)
+						|| array_key_exists('SCENARIO_NAME', $order)
+					)
+					{
+						$tableName = \Bitrix\Tasks\Internals\Task\ScenarioTable::getTableName();
+						$relatedJoins[$join] = "LEFT JOIN {$tableName} {$joinAlias}SCR "
+							. "ON {$joinAlias}SCR.TASK_ID = {$sourceAlias}.ID";
+					}
+					break;
+
+				case 'IM_CHAT':
+					if (
+						!Main\Loader::includeModule('im')
+						|| !class_exists(\Bitrix\Im\Model\LinkTaskTable::class)
+					)
+					{
+						break;
+					}
+
+					if (!in_array('IM_CHAT_CHAT_ID', $filterKeys))
+					{
+						break;
+					}
+
+					$dialogId = (int) $filter['IM_CHAT_CHAT_ID'];
+
+					$dialogJoin = "
+						INNER JOIN ". \Bitrix\Im\Model\LinkTaskTable::getTableName() ." {$joinAlias}CTT
+							ON {$joinAlias}CTT.TASK_ID = {$sourceAlias}.ID
+							AND {$joinAlias}CTT.CHAT_ID = {$dialogId}
+					";
+
+					$relatedJoins[$join] = $dialogJoin;
+
+					break;
 			}
 		}
 
@@ -3737,9 +3801,13 @@ class CTasks
 		{
 			foreach ($filter as $key => $value)
 			{
-				$newKey = mb_substr((string)$key, 12);
+				$newKey =
+					mb_substr((string)$key, 0, 12) === '::SUBFILTER-'
+						? mb_substr((string)$key, 12)
+						: null
+				;
 
-				if ($newKey && $fields[$newKey])
+				if ($newKey && ($fields[$newKey] ?? null))
 				{
 					$fieldRuntimeOptions = static::getFieldRuntimeOptions($newKey, $value, $parameters);
 
@@ -4025,7 +4093,7 @@ class CTasks
 
 		$key = 'ROLE_';
 		$roleType = static::getRoleFieldType($role);
-		$userId = $role[($roleType == 'MEMBER' ? '' : '=') . $roleType];
+		$userId = ($role[($roleType === 'MEMBER' ? '' : '=') . $roleType] ?? null);
 
 		$referenceFilter = Query::filter()
 			->whereColumn('ref.TASK_ID', 'this.ID')
@@ -4346,19 +4414,24 @@ class CTasks
 
 	public static function needAccessRestriction(array $arFilter, $arParams)
 	{
-		if (is_array($arParams) && array_key_exists('USER_ID', $arParams) && ($arParams['USER_ID'] > 0))
+		if (
+			is_array($arParams)
+			&& array_key_exists('USER_ID', $arParams)
+			&& $arParams['USER_ID'] > 0
+		)
 		{
-			$userID = (int)$arParams['USER_ID'];
+			$userId = (int)$arParams['USER_ID'];
 		}
 		else
 		{
-			$userID = User::getId();
+			$userId = User::getId();
 		}
 
 		return
-			!User::isSuper($userID)
-			&& $arFilter["CHECK_PERMISSIONS"] != "N" // and not setted flag "skip permissions check"
-			&& $arFilter["SUBORDINATE_TASKS"] != "Y"; // and not rights via subordination
+			!User::isSuper($userId)
+			&& ($arFilter['CHECK_PERMISSIONS'] ?? null) != 'N' // and not setted flag "skip permissions check"
+			&& ($arFilter['SUBORDINATE_TASKS'] ?? null) != 'Y' // and not rights via subordination
+		;
 	}
 
 	/**
@@ -4369,12 +4442,15 @@ class CTasks
 	 */
 	private static function GetRootSubQuery($filter = [], $aliasPrefix = '', $params = [])
 	{
-		$filter = (isset($params['SOURCE_FILTER']) ? $params['SOURCE_FILTER'] : $filter);
-		$userId = (isset($params['USER_ID']) ? $params['USER_ID'] : User::getId());
+		$filter = ($params['SOURCE_FILTER'] ?? $filter);
+		$userId = ($params['USER_ID'] ?? User::getId());
 
 		$sqlSearch = ["(PT.ID = " . $aliasPrefix . "T.PARENT_ID)"];
 
-		if ($filter["SAME_GROUP_PARENT"] == "Y")
+		if (
+			isset($filter['SAME_GROUP_PARENT'])
+			&& $filter['SAME_GROUP_PARENT'] === 'Y'
+		)
 		{
 			$sqlSearch[] = "(PT.GROUP_ID = " . $aliasPrefix . "T.GROUP_ID
 				OR (PT.GROUP_ID IS NULL AND " . $aliasPrefix . "T.GROUP_ID IS NULL)
@@ -4476,15 +4552,15 @@ class CTasks
 		// get rid of ::SUBFILTER-ROOT if can
 		if (array_key_exists('::SUBFILTER-ROOT', $filter) && count($filter) == 1)
 		{
-			if ($filter['::LOGIC'] != 'OR')
-			{
-				// we have only one element in the root, and logic is not "OR". then we could remove subfilter-root
-				$filter = $filter['::SUBFILTER-ROOT'];
-			}
+			// we have only one element in the root, and logic is not "OR". then we could remove subfilter-root
+			$filter = $filter['::SUBFILTER-ROOT'];
 		}
 
 		// we can optimize only if there is no "or-logic"
-		if ($filter['::LOGIC'] != 'OR' && $filter['LOGIC'] != 'OR')
+		if (
+			(!array_key_exists('::LOGIC', $filter) || $filter['::LOGIC'] !== 'OR')
+			&& (!array_key_exists('LOGIC', $filter) || $filter['LOGIC'] !== 'OR')
+		)
 		{
 			// MEMBER
 			if (
@@ -4805,7 +4881,8 @@ class CTasks
 
 	public static function GetSubordinateSql($sAliasPrefix = "", $arParams = [], $behaviour = [])
 	{
-		$arDepsIDs = Integration\Intranet\Department::getSubordinateIds($arParams['USER_ID'], true);
+		$userId = $arParams['USER_ID'] ?? 0;
+		$arDepsIDs = Integration\Intranet\Department::getSubordinateIds($userId, true);
 
 		if (sizeof($arDepsIDs))
 		{
@@ -4988,37 +5065,7 @@ class CTasks
 	 */
 	public static function AddTags($taskId, $userId, $sourceTags = [], $effectiveUserId = null, $groupId = null): void
 	{
-		$tagHandler = new CTaskTags();
-		$tagHandler::DeleteByTaskID($taskId);
-
-		if ($sourceTags)
-		{
-			$tags = (is_array($sourceTags) ? $sourceTags : explode(',', (string)$sourceTags));
-			$tags = array_unique(array_map('trim', $tags));
-			$addedTags = [];
-
-			foreach ($tags as $tag)
-			{
-				if (in_array(mb_strtolower($tag), $addedTags, true))
-				{
-					continue;
-				}
-
-				$tagFields = [
-					'TASK_ID' => $taskId,
-					'USER_ID' => ($effectiveUserId ?: $userId),
-					'NAME' => $tag,
-				];
-				if ($groupId)
-				{
-					$tagFields['GROUP_ID'] = $groupId;
-				}
-				$tagHandler = new CTaskTags();
-				$tagHandler->Add($tagFields, $effectiveUserId);
-
-				$addedTags[] = mb_strtolower($tag);
-			}
-		}
+		(new Tag($userId))->set($taskId, $sourceTags);
 	}
 
 	function AddPrevious($ID, $arPrevious = [])
@@ -6368,6 +6415,7 @@ class CTasks
 			'TAG' => [0, 0, 0, 1, 0],
 			'EPIC' => [1, 1, 0, 1, 0],
 			'ONLY_ROOT_TASKS' => [0, 0, 0, 1, 0],
+			'SCENARIO_NAME' => [1, 1, 0, 1, 0],
 		];
 	}
 

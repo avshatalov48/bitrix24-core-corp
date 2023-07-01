@@ -1,0 +1,3 @@
+<?php
+$MESS["TASKS_ON_TASK_AUDITOR_ADDED_CHANGE"] = "Added by:";
+$MESS["TASKS_ON_TASK_AUDITOR_ADDED_TITLE"] = "New observers added";

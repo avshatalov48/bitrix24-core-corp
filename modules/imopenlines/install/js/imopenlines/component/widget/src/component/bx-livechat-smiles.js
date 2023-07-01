@@ -10,6 +10,7 @@
 import {Vue} from "ui.vue";
 import { EventEmitter } from "main.core.events";
 import { WidgetEventType } from "../const";
+import 'ui.vue.components.smiles';
 
 Vue.cloneComponent('bx-livechat-smiles', 'bx-smiles',
 {

@@ -49,9 +49,9 @@ jn.define('layout/ui/fields/client/elements', (require, exports, module) => {
 				return null;
 			}
 
-			const { subtitle, phone, email, addresses } = this.props;
+			const { subtitle, phone, email, addresses, testId } = this.props;
 
-			return new ClientItemInfo({ subtitle, phone, email, addresses });
+			return new ClientItemInfo({ subtitle, phone, email, addresses, testId });
 		}
 
 		renderRightAction()
@@ -66,6 +66,7 @@ jn.define('layout/ui/fields/client/elements', (require, exports, module) => {
 
 			return show && View(
 				{
+					testId: 'ClientElementRightAction',
 					onClick: () => {
 						if (onClick)
 						{
@@ -92,6 +93,7 @@ jn.define('layout/ui/fields/client/elements', (require, exports, module) => {
 						style: {
 							flexDirection: 'column',
 							flex: 1,
+							flexShrink: 2,
 						},
 					},
 					this.renderTitle(),

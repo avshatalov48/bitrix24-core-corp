@@ -162,7 +162,10 @@ class ScheduleFormHelper
 			$signMap = $this->buildSignMapBySchedule($schedule);
 			foreach ($checkingCodesMap as $codeToCheck => $codeIncluded)
 			{
-				if (mb_substr($signMap[$codeToCheck], 0, 8) === 'included' && mb_substr($codeIncluded, 0, 8) === 'included')
+				if (
+					mb_substr($signMap[$codeToCheck] ?? '', 0, 8) === 'included'
+					&& mb_substr($codeIncluded, 0, 8) === 'included'
+				)
 				{
 					$result[$codeToCheck][$schedule->getId()] = $schedule;
 				}
@@ -226,16 +229,22 @@ class ScheduleFormHelper
 
 	private function getSign($parentSign, $code, $signMap)
 	{
-		if ($signMap[$code] === 'excludedByParent' && (
-				$parentSign == 'includedPersonal' || $parentSign == 'includedByParent'
-			))
+		if (
+			($signMap[$code] ?? null) === 'excludedByParent'
+			&& (
+				$parentSign == 'includedPersonal'
+				|| $parentSign == 'includedByParent'
+			)
+		)
 		{
 			return $this->buildSign($parentSign);
 		}
+
 		if (!array_key_exists($code, $signMap))
 		{
 			return $this->buildSign($parentSign);
 		}
+
 		return $signMap[$code];
 	}
 
@@ -244,7 +253,10 @@ class ScheduleFormHelper
 		$signMap[$selfCode] = $this->getSign($parentSign, $selfCode, $signMap);
 
 		static $directChildrenUsersMap = [];
-		if (EntityCodesHelper::isDepartment($selfCode) && $directChildrenUsersMap[$selfCode] === null)
+		if (
+			EntityCodesHelper::isDepartment($selfCode)
+			&& ($directChildrenUsersMap[$selfCode] ?? null) === null
+		)
 		{
 			$directChildrenUsersMap[$selfCode] = EntityCodesHelper::buildUserCodes(
 				$this->departmentRepository->getUsersOfDepartment(EntityCodesHelper::getDepartmentId($selfCode))
@@ -315,9 +327,15 @@ class ScheduleFormHelper
 
 	public function fillExtraInfoToSchedulesMap($resultSchedulesMap)
 	{
-		$schedulesForAllUsers = array_map('intval', array_column((array)$resultSchedulesMap[EntityCodesHelper::getAllUsersCode()], 'ID'));
-		$result = $this->prepareResult($resultSchedulesMap, $schedulesForAllUsers);
-		return $result;
+		$schedulesForAllUsers = array_map(
+			'intval',
+			array_column(
+				(array) ($resultSchedulesMap[EntityCodesHelper::getAllUsersCode()] ?? []),
+				'ID'
+			)
+		);
+
+		return $this->prepareResult($resultSchedulesMap, $schedulesForAllUsers);
 	}
 
 	private function prepareResult($resultSchedulesMap, $schedulesForAllUsers = [])

@@ -374,18 +374,17 @@ final class Impact extends \Bitrix\Tasks\Processor\Task\Result\Impact
 	 */
 	public function getEndDatePlan()
 	{
-		if(is_string($this->data['END_DATE_PLAN']) && !empty($this->data['END_DATE_PLAN']))
+		if (is_string($this->data['END_DATE_PLAN'] ?? null) && !empty($this->data['END_DATE_PLAN']))
 		{
 			return DateTime::createFromUserTime($this->data['END_DATE_PLAN']);
 		}
-		elseif($this->data['END_DATE_PLAN'] instanceof DateTime)
+
+		if (($this->data['END_DATE_PLAN'] ?? null) instanceof DateTime)
 		{
 			return clone $this->data['END_DATE_PLAN'];
 		}
-		else
-		{
-			return null;
-		}
+
+		return null;
 	}
 
 	/**
@@ -424,16 +423,16 @@ final class Impact extends \Bitrix\Tasks\Processor\Task\Result\Impact
 	 */
 	public function getEndDatePlanGmt()
 	{
-		if((string)$this->data['END_DATE_PLAN'] == '')
+		if ((string)($this->data['END_DATE_PLAN'] ?? null) === '')
 		{
 			return null;
 		}
 
-		if($this->endDatePlanGmt === null)
+		if ($this->endDatePlanGmt === null)
 		{
 			$date = $this->data['END_DATE_PLAN'];
 
-			if($date instanceof DateTime)
+			if ($date instanceof DateTime)
 			{
 				$date = $date->toString();
 			}
@@ -498,7 +497,7 @@ final class Impact extends \Bitrix\Tasks\Processor\Task\Result\Impact
 
 	public function getMatchWorkTime()
 	{
-		return $this->data['MATCH_WORK_TIME'] == 'Y';
+		return (($this->data['MATCH_WORK_TIME'] ?? null) === 'Y');
 	}
 
 	/**
@@ -528,14 +527,17 @@ final class Impact extends \Bitrix\Tasks\Processor\Task\Result\Impact
 
 	private function getStartDateOrCreatedDate($flag = true)
 	{
-		$date = null;
-		if(empty($this->data['START_DATE_PLAN']) && !empty($this->data['CREATED_DATE']) && $flag)
+		if (
+			$flag
+			&& empty($this->data['START_DATE_PLAN'])
+			&& !empty($this->data['CREATED_DATE'])
+		)
 		{
 			$date = $this->data['CREATED_DATE'];
 		}
 		else
 		{
-			$date = $this->data['START_DATE_PLAN'];
+			$date = ($this->data['START_DATE_PLAN'] ?? null);
 		}
 
 		return $date;

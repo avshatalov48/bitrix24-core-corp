@@ -141,9 +141,9 @@ class TasksReportEffectiveComponent extends TasksBaseComponent
 		static::tryParseStringParameter($arParams['PATH_TO_EFFECTIVE_DETAIL'], '/company/personal/user/#user_id#/tasks/effective/show/');
 		static::tryParseStringParameter($arParams['PATH_TO_TASK_ADD'], '/company/personal/user/'.User::getId().'/tasks/task/edit/0/');
 		static::tryParseStringParameter($arParams['USE_PAGINATION'], true);
-		static::tryParseStringParameter($arParams['DEFAULT_PAGE_SIZE'], $this->defaultPageSize);
+		static::tryParseStringParameter($arParams['DEFAULT_PAGE_SIZE'], null);
 		static::tryParseStringParameter($arParams['PLATFORM'], 'web');
-		static::tryParseArrayParameter($arParams['PAGE_SIZES'], $this->pageSizes);
+		static::tryParseArrayParameter($arParams['PAGE_SIZES'], null);
 		static::tryParseIntegerParameter($arParams['GROUP_ID'], 0);
 
 		$this->userId = ($this->arParams['USER_ID'] ?: User::getId());
@@ -465,7 +465,7 @@ class TasksReportEffectiveComponent extends TasksBaseComponent
 				switch ($item['type'])
 				{
 					case 'custom_entity':
-						if ($rawFilter[$item['id']])
+						if (isset($rawFilter[$item['id']]) && $rawFilter[$item['id']])
 						{
 							$filter[$item['id']] = $rawFilter[$item['id']];
 						}

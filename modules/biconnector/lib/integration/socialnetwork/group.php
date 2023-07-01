@@ -7,7 +7,7 @@ class Group
 {
 	/**
 	 * Event handler for onBIConnectorDataSources event.
-	 * Adds a key telephony_call to the second event parameter.
+	 * Adds a key socialnetwork_group to the second event parameter.
 	 * Fills it with data to retrieve information from b_sonet_group table.
 	 *
 	 * @param \Bitrix\Main\Event $event Event data.
@@ -22,12 +22,9 @@ class Group
 		}
 
 		$params = $event->getParameters();
-		$manager = $params[0];
+		//$manager = $params[0];
 		$result = &$params[1];
 		$languageId = $params[2];
-
-		$connection = $manager->getDatabaseConnection();
-		$helper = $connection->getSqlHelper();
 
 		//CREATE TABLE b_sonet_group
 		$result['socialnetwork_group'] = [
@@ -176,7 +173,7 @@ class Group
 				$fieldInfo['FIELD_DESCRIPTION'] = $fieldCode;
 			}
 
-			$fieldInfo['FIELD_DESCRIPTION_FULL'] = $messages['SN_BIC_GROUP_FIELD_' . $fieldCode . '_FULL'];
+			$fieldInfo['FIELD_DESCRIPTION_FULL'] = $messages['SN_BIC_GROUP_FIELD_' . $fieldCode . '_FULL'] ?? '';
 		}
 		unset($fieldInfo);
 	}

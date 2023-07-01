@@ -18,6 +18,11 @@ export const TimelineAudio = BitrixVue.cloneComponent(AudioPlayer, {
 			required: false,
 			default: true,
 		},
+		recordName: {
+			type: String,
+			required: false,
+			default: '',
+		},
 	},
 	data() {
 		return {
@@ -280,6 +285,7 @@ export const TimelineAudio = BitrixVue.cloneComponent(AudioPlayer, {
 				</button>
 			</div>
 			<div class="ui-vue-audioplayer-timeline-container">
+				<div class="ui-vue-audioplayer-record-name">{{ recordName }}</div>
 				<div class="ui-vue-audioplayer-track-container" @mousedown="startSeeking" ref="track">
 					<div class="ui-vue-audioplayer-track-mask"></div>
 					<div class="ui-vue-audioplayer-track" :style="progressPosition"></div>

@@ -1,12 +1,10 @@
 <?php
 
 use Bitrix\Catalog\Access\AccessController;
-use Bitrix\Catalog\Access\Permission\PermissionDictionary;
 use Bitrix\Catalog\Url\InventoryManagementSourceBuilder;
 use Bitrix\Catalog\Access\ActionDictionary;
 use Bitrix\Catalog\StoreDocumentTable;
 use Bitrix\Crm\Order\Internals\ShipmentRealizationTable;
-use Bitrix\Sale\Internals\ShipmentItemStoreTable;
 use Bitrix\Sale\Internals\ShipmentItemTable;
 use Bitrix\Main;
 use Bitrix\Main\Context;
@@ -14,7 +12,6 @@ use Bitrix\Main\Engine\Contract\Controllerable;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Web\Uri;
-use Bitrix\Main\DB\SqlExpression;
 use Bitrix\Crm;
 use Bitrix\Main\Web\Json;
 use Bitrix\Sale\Internals\ShipmentTable;
@@ -98,6 +95,8 @@ class CrmStoreDocumentListComponent extends CBitrixComponent implements Controll
 
 		$this->initInventoryManagementSlider();
 
+		$this->checkIfInventoryManagementIsDisabled();
+
 		$this->arResult['INVENTORY_MANAGEMENT_SOURCE'] =
 			InventoryManagementSourceBuilder::getInstance()->getInventoryManagementSource()
 		;
@@ -115,6 +114,19 @@ class CrmStoreDocumentListComponent extends CBitrixComponent implements Controll
 				StoreDocumentTable::TYPE_SALES_ORDERS
 			)
 		;
+	}
+
+	private function checkIfInventoryManagementIsDisabled(): void
+	{
+		$this->arResult['IS_INVENTORY_MANAGEMENT_DISABLED'] = !\Bitrix\Catalog\Config\Feature::isInventoryManagementEnabled();
+		if ($this->arResult['IS_INVENTORY_MANAGEMENT_DISABLED'])
+		{
+			$this->arResult['INVENTORY_MANAGEMENT_FEATURE_SLIDER_CODE'] = \Bitrix\Catalog\Config\Feature::getInventoryManagementHelpLink()['FEATURE_CODE'] ?? null;
+		}
+		else
+		{
+			$this->arResult['INVENTORY_MANAGEMENT_FEATURE_SLIDER_CODE'] = null;
+		}
 	}
 
 	private function checkDocumentModifyRights(): bool
@@ -898,7 +910,26 @@ class CrmStoreDocumentListComponent extends CBitrixComponent implements Controll
 		];
 		UI\Toolbar\Facade\Toolbar::addFilter($filterOptions);
 
-		if (!$this->checkDocumentModifyRights())
+		if (!\Bitrix\Catalog\Config\Feature::isInventoryManagementEnabled())
+		{
+			$addDocumentButton = UI\Buttons\CreateButton::create([
+				'text' => Loc::getMessage('CRM_DOCUMENT_LIST_ADD_DOCUMENT_BUTTON_2'),
+				'color' => \Bitrix\UI\Buttons\Color::SUCCESS,
+				'classList' => [
+					'add-document-button',
+					'ui-btn-icon-lock',
+				],
+			]);
+
+			$inventoryManagementHelpLink = \Bitrix\Catalog\Config\Feature::getInventoryManagementHelpLink();
+			if (isset($inventoryManagementHelpLink['LINK']))
+			{
+				$addDocumentButton->bindEvent('click', new \Bitrix\UI\Buttons\JsCode(
+					"{$inventoryManagementHelpLink['LINK']}",
+				));
+			}
+		}
+		elseif (!$this->checkDocumentModifyRights())
 		{
 			$addDocumentButton = LockedButton::create([
 				'text' => Loc::getMessage('CRM_DOCUMENT_LIST_ADD_DOCUMENT_BUTTON_2'),
@@ -1039,40 +1070,10 @@ class CrmStoreDocumentListComponent extends CBitrixComponent implements Controll
 
 	private function getAccessProductStoreFilter(): array
 	{
-		// TODO: move logic and use `AccessController::getEntityFilter`
-
-		$acceptedStores = AccessController::getCurrent()->getPermissionValue(
+		return AccessController::getCurrent()->getEntityFilter(
 			ActionDictionary::ACTION_STORE_VIEW,
+			ShipmentTable::class
 		);
-
-		if (!is_array($acceptedStores))
-		{
-			$acceptedStores = [];
-		}
-		elseif (in_array(PermissionDictionary::VALUE_VARIATION_ALL, $acceptedStores, true))
-		{
-			return [];
-		}
-
-		$acceptedStores[] = null;
-		$storeFilter = [
-			'=STORE_ID' => $acceptedStores,
-		];
-
-		$query =
-			ShipmentItemStoreTable::query()
-				->setSelect(['ORDER_DELIVERY_BASKET_ID'])
-				->setFilter($storeFilter)
-				->getQuery()
-		;
-
-		return [
-			[
-				'LOGIC' => 'OR',
-				'=SHIPMENT_ITEM.ID' => null,
-				'@SHIPMENT_ITEM.ID' => new SqlExpression($query),
-			]
-		];
 	}
 
 	private function getUrlToDocumentDetail($documentId, $documentType = null): string

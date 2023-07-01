@@ -1,22 +1,23 @@
 <?php
+
 define('NO_KEEP_STATISTIC', 'Y');
 define('NO_AGENT_STATISTIC','Y');
 define('NO_AGENT_CHECK', true);
 define('DisableEventsCheck', true);
 
-require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_before.php');
+require_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_before.php');
 
-use Bitrix\Main;
-use Bitrix\Main\Application;
-use Bitrix\Crm\Security\EntityAuthorization;
-use Bitrix\Crm\Synchronization\UserFieldSynchronizer;
+use Bitrix\Crm;
 use Bitrix\Crm\Conversion\DealConversionConfig;
 use Bitrix\Crm\Conversion\DealConversionWizard;
-use Bitrix\Crm\Recurring;
-use Bitrix\Crm\Tracking;
-use Bitrix\Crm;
 use Bitrix\Crm\Order\OrderDealSynchronizer;
+use Bitrix\Crm\Recurring;
+use Bitrix\Crm\Security\EntityAuthorization;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Synchronization\UserFieldSynchronizer;
+use Bitrix\Crm\Tracking;
+use Bitrix\Main;
+use Bitrix\Main\Application;
 
 if (!CModule::IncludeModule('crm'))
 {
@@ -28,7 +29,9 @@ if (!CModule::IncludeModule('crm'))
  * 'GET_DEFAULT_SECONDARY_ENTITIES'
  */
 global $DB, $APPLICATION, $USER_FIELD_MANAGER;
+
 \Bitrix\Main\Localization\Loc::loadMessages(__FILE__);
+
 Container::getInstance()->getLocalization()->loadMessages();
 
 if(!function_exists('__CrmDealDetailsEndJsonResonse'))
@@ -417,7 +420,7 @@ elseif($action === 'SAVE')
 				}
 			}
 			elseif(
-				$contactItem['title']
+				!empty($contactItem['title'])
 				|| (isset($contactItem['multifields']) && is_array($contactItem['multifields']))
 				|| (isset($contactItem['requisites']) && is_array($contactItem['requisites']))
 			)
@@ -816,15 +819,15 @@ elseif($action === 'SAVE')
 				);
 			}
 
-			if (isset($fields['COMMENTS']))
-			{
-				$fields['COMMENTS'] = \Bitrix\Crm\Format\TextHelper::sanitizeHtml($fields['COMMENTS']);
-			}
+			$fields = Crm\Entity\FieldContentType::prepareFieldsFromDetailsToSave(\CCrmOwnerType::Deal, $ID, $fields);
 
 			Tracking\UI\Details::appendEntityFieldValue($fields, $_POST);
 
 			$entity = new \CCrmDeal(!CCrmPerms::IsAdmin());
-			$saveOptions = ['REGISTER_SONET_EVENT' => true];
+			$saveOptions = array_merge(
+				Crm\Entity\FieldContentType::prepareSaveOptionsForDetails(\CCrmOwnerType::Deal, $ID),
+				['REGISTER_SONET_EVENT' => true],
+			);
 			if(!$enableRequiredUserFieldCheck)
 			{
 				$saveOptions['DISABLE_REQUIRED_USER_FIELD_CHECK'] = true;
@@ -1428,6 +1431,7 @@ elseif($action === 'CONVERT')
 				'DATA' => array(
 					'URL' => $wizard->getRedirectUrl(),
 					'IS_FINISHED' => $wizard->isFinished() ? 'Y' : 'N',
+					'RESULT' => $wizard->getResultData(),
 				),
 			)
 		);
@@ -1442,6 +1446,7 @@ elseif($action === 'CONVERT')
 					'DATA' => array(
 						'URL' => $url,
 						'IS_FINISHED' => $wizard->isFinished() ? 'Y' : 'N',
+						'RESULT' => $wizard->getResultData(),
 					),
 				)
 			);

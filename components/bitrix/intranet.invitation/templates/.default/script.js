@@ -5,30 +5,22 @@ this.BX.Intranet = this.BX.Intranet || {};
 
 	var Submit = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(Submit, _EventEmitter);
-
 	  function Submit(parent) {
 	    var _this;
-
 	    babelHelpers.classCallCheck(this, Submit);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Submit).call(this));
 	    _this.parent = parent;
-
 	    _this.setEventNamespace("BX.Intranet.Invitation.Submit");
-
 	    _this.parent.subscribe("onButtonClick", function (event) {});
-
 	    return _this;
 	  }
-
 	  babelHelpers.createClass(Submit, [{
 	    key: "parseEmailAndPhone",
 	    value: function parseEmailAndPhone(form) {
 	      var _this2 = this;
-
 	      if (!main_core.Type.isDomNode(form)) {
 	        return;
 	      }
-
 	      var errorInputData = [];
 	      var items = [];
 	      var phoneExp = /^[\d+][\d\(\)\ -]{4,22}\d$/;
@@ -39,10 +31,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 	        var nameInput = row.querySelector("input[name='NAME[]']");
 	        var lastNameInput = row.querySelector("input[name='LAST_NAME[]']");
 	        var emailValue = emailInput.value.trim();
-
 	        if (_this2.parent.isInvitationBySmsAvailable && main_core.Type.isDomNode(phoneInput)) {
 	          var phoneValue = phoneInput.value.trim();
-
 	          if (phoneValue) {
 	            if (!phoneExp.test(String(phoneValue).toLowerCase())) {
 	              errorInputData.push(phoneValue);
@@ -75,11 +65,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    value: function getGroupAndDepartmentData(requestData) {
 	      var selector = this.parent.selector;
 	      var selectorItems = selector.getItems();
-
 	      if (selectorItems["departments"].length > 0) {
 	        requestData["UF_DEPARTMENT"] = selectorItems["departments"];
 	      }
-
 	      if (selectorItems["projects"].length > 0) {
 	        requestData["SONET_GROUPS_CODE"] = selectorItems["projects"];
 	      }
@@ -88,11 +76,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    key: "submitInvite",
 	    value: function submitInvite() {
 	      var inviteForm = this.parent.contentBlocks["invite"].querySelector("form");
-
 	      var _ref = babelHelpers.toConsumableArray(this.parseEmailAndPhone(inviteForm)),
-	          items = _ref[0],
-	          errorInputData = _ref[1];
-
+	        items = _ref[0],
+	        errorInputData = _ref[1];
 	      if (errorInputData.length > 0) {
 	        var event = new main_core.Event.BaseEvent({
 	          data: {
@@ -102,18 +88,15 @@ this.BX.Intranet = this.BX.Intranet || {};
 	        this.emit("onInputError", event);
 	        return;
 	      }
-
 	      if (items.length <= 0) {
 	        var _event = new main_core.Event.BaseEvent({
 	          data: {
 	            error: main_core.Loc.getMessage("INTRANET_INVITE_DIALOG_EMAIL_OR_PHONE_EMPTY_ERROR")
 	          }
 	        });
-
 	        this.emit("onInputError", _event);
 	        return;
 	      }
-
 	      var requestData = {
 	        "ITEMS": items
 	      };
@@ -127,16 +110,13 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    key: "submitInviteWithGroupDp",
 	    value: function submitInviteWithGroupDp() {
 	      var inviteWithGroupDpForm = this.parent.contentBlocks["invite-with-group-dp"].querySelector("form");
-
 	      var _ref2 = babelHelpers.toConsumableArray(this.parseEmailAndPhone(inviteWithGroupDpForm)),
-	          items = _ref2[0],
-	          errorInputData = _ref2[1];
-
+	        items = _ref2[0],
+	        errorInputData = _ref2[1];
 	      if (errorInputData.length > 0) {
 	        this.parent.showErrorMessage(main_core.Loc.getMessage("INTRANET_INVITE_DIALOG_EMAIL_OR_PHONE_VALIDATE_ERROR") + ": " + errorInputData.join(', '));
 	        return;
 	      }
-
 	      if (items.length <= 0) {
 	        var event = new main_core.Event.BaseEvent({
 	          data: {
@@ -146,7 +126,6 @@ this.BX.Intranet = this.BX.Intranet || {};
 	        this.emit("onInputError", event);
 	        return;
 	      }
-
 	      var requestData = {
 	        "ITEMS": items
 	      };
@@ -173,16 +152,13 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    key: "submitExtranet",
 	    value: function submitExtranet() {
 	      var extranetForm = this.parent.contentBlocks["extranet"].querySelector("form");
-
 	      var _ref3 = babelHelpers.toConsumableArray(this.parseEmailAndPhone(extranetForm)),
-	          items = _ref3[0],
-	          errorInputData = _ref3[1];
-
+	        items = _ref3[0],
+	        errorInputData = _ref3[1];
 	      if (errorInputData.length > 0) {
 	        this.parent.showErrorMessage(main_core.Loc.getMessage("INTRANET_INVITE_DIALOG_EMAIL_OR_PHONE_VALIDATE_ERROR") + ": " + errorInputData.join(', '));
 	        return;
 	      }
-
 	      if (items.length <= 0) {
 	        var event = new main_core.Event.BaseEvent({
 	          data: {
@@ -192,7 +168,6 @@ this.BX.Intranet = this.BX.Intranet || {};
 	        this.emit("onInputError", event);
 	        return;
 	      }
-
 	      var requestData = {
 	        "ITEMS": items
 	      };
@@ -248,7 +223,6 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    key: "sendAction",
 	    value: function sendAction(action, requestData, analyticsLabel) {
 	      var _this3 = this;
-
 	      this.disableSubmitButton(true);
 	      requestData["userOptions"] = this.parent.userOptions;
 	      BX.ajax.runComponentAction(this.parent.componentName, action, {
@@ -258,19 +232,16 @@ this.BX.Intranet = this.BX.Intranet || {};
 	        analyticsLabel: analyticsLabel
 	      }).then(function (response) {
 	        _this3.disableSubmitButton(false);
-
 	        if (response.data) {
 	          if (action === "self") {
 	            _this3.parent.showSuccessMessage(response.data);
 	          } else {
 	            _this3.parent.changeContent("success");
-
 	            _this3.sendSuccessEvent(response.data);
 	          }
 	        }
 	      }, function (response) {
 	        _this3.disableSubmitButton(false);
-
 	        if (response.data == "user_limit") {
 	          B24.licenseInfoPopup.show("featureID", BX.message("BX24_INVITE_DIALOG_USERS_LIMIT_TITLE"), BX.message("BX24_INVITE_DIALOG_USERS_LIMIT_TEXT"));
 	        } else {
@@ -282,11 +253,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    key: "disableSubmitButton",
 	    value: function disableSubmitButton(isDisable) {
 	      var button = this.parent.button;
-
 	      if (!main_core.Type.isDomNode(button) || !main_core.Type.isBoolean(isDisable)) {
 	        return;
 	      }
-
 	      if (isDisable) {
 	        main_core.Dom.addClass(button, ["ui-btn-wait", "invite-cursor-auto"]);
 	      } else {
@@ -308,58 +277,43 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  function SelfRegister(parent) {
 	    babelHelpers.classCallCheck(this, SelfRegister);
 	    this.parent = parent;
-
 	    if (main_core.Type.isDomNode(this.parent.contentBlocks["self"])) {
 	      this.selfBlock = this.parent.contentBlocks["self"];
 	      this.bindActions();
 	    }
 	  }
-
 	  babelHelpers.createClass(SelfRegister, [{
 	    key: "bindActions",
 	    value: function bindActions() {
 	      var _this = this;
-
 	      var regenerateButton = this.selfBlock.querySelector("[data-role='selfRegenerateSecretButton']");
-
 	      if (main_core.Type.isDomNode(regenerateButton)) {
 	        main_core.Event.bind(regenerateButton, 'click', function () {
 	          _this.parent.activateButton();
-
 	          _this.regenerateSecret(_this.parent.regenerateUrlBase);
 	        });
 	      }
-
 	      var copyRegisterUrlButton = this.selfBlock.querySelector("[data-role='copyRegisterUrlButton']");
-
 	      if (main_core.Type.isDomNode(copyRegisterUrlButton)) {
 	        main_core.Event.bind(copyRegisterUrlButton, 'click', function () {
 	          _this.copyRegisterUrl();
 	        });
 	      }
-
 	      var selfToggleSettingsButton = this.selfBlock.querySelector("[data-role='selfToggleSettingsButton']");
-
 	      if (main_core.Type.isDomNode(selfToggleSettingsButton)) {
 	        main_core.Event.bind(selfToggleSettingsButton, 'change', function () {
 	          _this.parent.activateButton();
-
 	          _this.toggleSettings(selfToggleSettingsButton);
 	        });
 	      }
-
 	      var allowRegisterConfirm = this.selfBlock.querySelector("[data-role='allowRegisterConfirm']");
-
 	      if (main_core.Type.isDomNode(allowRegisterConfirm)) {
 	        main_core.Event.bind(allowRegisterConfirm, 'change', function () {
 	          _this.parent.activateButton();
-
 	          _this.toggleWhiteList(allowRegisterConfirm);
 	        });
 	      }
-
 	      var selfWhiteList = this.selfBlock.querySelector("[data-role='selfWhiteList']");
-
 	      if (main_core.Type.isDomNode(selfWhiteList)) {
 	        main_core.Event.bind(selfWhiteList, 'input', function () {
 	          _this.parent.activateButton();
@@ -371,13 +325,10 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    value: function regenerateSecret(registerUrl) {
 	      var value = main_core.Text.getRandom(8);
 	      var allowRegisterSecretNode = this.selfBlock.querySelector("[data-role='allowRegisterSecret']");
-
 	      if (main_core.Type.isDomNode(allowRegisterSecretNode)) {
 	        allowRegisterSecretNode.value = value || '';
 	      }
-
 	      var allowRegisterUrlNode = this.selfBlock.querySelector("[data-role='allowRegisterUrl']");
-
 	      if (main_core.Type.isDomNode(allowRegisterUrlNode) && registerUrl) {
 	        allowRegisterUrlNode.value = registerUrl + (value || 'yes');
 	      }
@@ -386,7 +337,6 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    key: "copyRegisterUrl",
 	    value: function copyRegisterUrl() {
 	      var allowRegisterUrlNode = this.selfBlock.querySelector("[data-role='allowRegisterUrl']");
-
 	      if (main_core.Type.isDomNode(allowRegisterUrlNode)) {
 	        BX.clipboard.copy(allowRegisterUrlNode.value);
 	        this.showHintPopup(main_core.Loc.getMessage("BX24_INVITE_DIALOG_COPY_URL"), allowRegisterUrlNode);
@@ -401,7 +351,6 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      if (!main_core.Type.isDomNode(bindNode) || !message) {
 	        return;
 	      }
-
 	      new BX.PopupWindow('inviteHint' + main_core.Text.getRandom(8), bindNode, {
 	        content: message,
 	        zIndex: 15000,
@@ -426,18 +375,14 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    key: "toggleSettings",
 	    value: function toggleSettings(inputElement) {
 	      var controlBlock = this.selfBlock.querySelector(".js-invite-dialog-fast-reg-control-container");
-
 	      if (main_core.Type.isDomNode(controlBlock)) {
 	        if (!main_core.Dom.hasClass(controlBlock, 'disallow-registration')) {
 	          var switcher = controlBlock.querySelector("[data-role='self-switcher']");
 	          this.showHintPopup(main_core.Loc.getMessage("INTRANET_INVITE_DIALOG_SELF_OFF_HINT"), switcher);
 	        }
-
 	        main_core.Dom.toggleClass(controlBlock, 'disallow-registration');
 	      }
-
 	      var settingsBlock = this.selfBlock.querySelector("[data-role='selfSettingsBlock']");
-
 	      if (main_core.Type.isDomNode(settingsBlock)) {
 	        main_core.Dom.style(settingsBlock, 'display', inputElement.checked ? 'block' : 'none');
 	      }
@@ -446,7 +391,6 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    key: "toggleWhiteList",
 	    value: function toggleWhiteList(inputElement) {
 	      var selfWhiteList = this.selfBlock.querySelector("[data-role='selfWhiteList']");
-
 	      if (main_core.Type.isDomNode(selfWhiteList)) {
 	        main_core.Dom.style(selfWhiteList, 'display', inputElement.checked ? 'block' : 'none');
 	      }
@@ -465,59 +409,54 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    this.maxCount = 5;
 	    this.inputStack = [];
 	  }
-
 	  babelHelpers.createClass(Phone, [{
 	    key: "renderPhoneRow",
 	    value: function renderPhoneRow(inputNode) {
 	      var _this = this;
-
 	      if (this.count >= this.maxCount) {
 	        return;
 	      }
-
 	      if (!main_core.Type.isDomNode(inputNode)) {
 	        return;
 	      }
-
 	      var num = inputNode.getAttribute("data-num");
-
 	      if (inputNode.parentNode.querySelector("#phone_number_" + num)) {
 	        return;
 	      }
-
 	      var element = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<span style=\"z-index: 3;\" class=\"ui-ctl-before\" data-role=\"phone-block\">\n\t\t\t\t<input type=\"hidden\" name=\"PHONE_COUNTRY[]\" id=\"phone_country_", "\" value=\"\">\n\t\t\t\t<input type=\"hidden\" name=\"PHONE[]\" id=\"phone_number_", "\" value=\"\">\n\t\t\t\t<div class=\"invite-dialog-phone-flag-block\" data-role=\"flag\">\n\t\t\t\t\t<span data-role=\"phone_flag_", "\" style=\"pointer-events: none;\"></span>\n\t\t\t\t</div>\n\t\t\t\t<input class=\"invite-dialog-phone-input\" type=\"hidden\" id=\"phone_input_", "\" value=\"\">&nbsp;\n\t\t\t</span>\n\t\t"])), num, num, num, num);
 	      inputNode.style.paddingLeft = "57px";
 	      main_core.Dom.append(element, inputNode.parentNode);
 	      var flagNode = inputNode.parentNode.querySelector("[data-role='flag']");
-
 	      if (main_core.Type.isDomNode(flagNode)) {
 	        main_core.Event.bind(inputNode.parentNode.querySelector("[data-role='flag']"), 'click', function () {
 	          _this.showCountrySelector(num);
 	        });
 	      }
-
 	      var changeCallback = function changeCallback(i, inputNode) {
 	        return function (e) {
 	          inputNode.parentNode.querySelector('#phone_number_' + i).value = e.value;
 	          inputNode.parentNode.querySelector('#phone_country_' + i).value = e.country;
 	        };
 	      };
-
 	      this.inputStack[num] = new BX.PhoneNumber.Input({
 	        node: inputNode,
 	        flagNode: inputNode.parentNode.querySelector("[data-role='phone_flag_" + num + "']"),
 	        flagSize: 16,
 	        onChange: changeCallback(num, inputNode)
-	      }); //for ctrl+v paste
+	      });
 
-	      setTimeout(function () {
-	        if (!inputNode.parentNode.querySelector('#phone_number_' + num).value) {
+	      //for ctrl+v paste
+	      var id = setInterval(function () {
+	        var _inputNode$parentNode, _inputNode$parentNode2;
+	        if (!((_inputNode$parentNode = inputNode.parentNode) !== null && _inputNode$parentNode !== void 0 && _inputNode$parentNode.querySelector('#phone_number_' + num).value) || !((_inputNode$parentNode2 = inputNode.parentNode) !== null && _inputNode$parentNode2 !== void 0 && _inputNode$parentNode2.querySelector('#phone_country_' + num).value)) {
 	          changeCallback(num, inputNode)({
 	            value: _this.inputStack[num].getValue(),
-	            country: _this.inputStack[num].getCountry()
+	            country: _this.inputStack[num].formatter ? _this.inputStack[num].getCountry() : null
 	          });
+	        } else {
+	          clearInterval(id);
 	        }
-	      }, 100);
+	      }, 1000);
 	    }
 	  }, {
 	    key: "showCountrySelector",
@@ -535,38 +474,30 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    this.parent = parent;
 	    this.contentBlock = params.contentBlock;
 	    this.inputNum = 0;
-
 	    if (main_core.Type.isDomNode(this.contentBlock)) {
 	      this.rowsContainer = this.contentBlock.querySelector("[data-role='rows-container']");
 	      this.bindActions();
 	    }
-
 	    if (this.parent.isInvitationBySmsAvailable) {
 	      this.phoneObj = new Phone(this);
 	    }
 	  }
-
 	  babelHelpers.createClass(Row, [{
 	    key: "bindActions",
 	    value: function bindActions() {
 	      var _this = this;
-
 	      var moreButton = this.contentBlock.querySelector("[data-role='invite-more']");
-
 	      if (main_core.Type.isDomNode(moreButton)) {
 	        main_core.Event.unbindAll(moreButton);
 	        main_core.Event.bind(moreButton, 'click', function () {
 	          _this.renderInputRow();
 	        });
 	      }
-
 	      var massInviteButton = this.contentBlock.querySelector("[data-role='invite-mass']");
-
 	      if (main_core.Type.isDomNode(massInviteButton)) {
 	        main_core.Event.unbindAll(massInviteButton);
 	        main_core.Event.bind(massInviteButton, 'click', function () {
 	          var massMenuNode = document.querySelector("[data-role='menu-mass-invite']");
-
 	          if (main_core.Type.isDomNode(massMenuNode)) {
 	            BX.fireEvent(massMenuNode, 'click');
 	          }
@@ -577,7 +508,6 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    key: "checkPhoneInput",
 	    value: function checkPhoneInput(element) {
 	      var phoneExp = /^[\d+][\d\(\)\ -]{2,14}\d$/;
-
 	      if (element.value && phoneExp.test(String(element.value).toLowerCase())) {
 	        this.phoneObj.renderPhoneRow(element);
 	      }
@@ -586,10 +516,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    key: "bindPhoneChecker",
 	    value: function bindPhoneChecker(element) {
 	      var _this2 = this;
-
 	      if (this.parent.isInvitationBySmsAvailable && main_core.Type.isDomNode(element)) {
 	        var inputNodes = Array.prototype.slice.call(element.querySelectorAll(".js-email-phone-input"));
-
 	        if (inputNodes) {
 	          inputNodes.forEach(function (element) {
 	            main_core.Event.bind(element, 'input', function () {
@@ -603,7 +531,6 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    key: "bindCloseIcons",
 	    value: function bindCloseIcons(container) {
 	      var _this3 = this;
-
 	      var inputNodes = Array.prototype.slice.call(container.querySelectorAll("input"));
 	      (inputNodes || []).forEach(function (node) {
 	        var closeIcon = node.nextElementSibling;
@@ -613,22 +540,16 @@ this.BX.Intranet = this.BX.Intranet || {};
 	        main_core.Event.bind(closeIcon, 'click', function (event) {
 	          event.preventDefault();
 	          node.value = "";
-
 	          if (main_core.Type.isDomNode(node.parentNode)) {
 	            var phoneBlock = node.parentNode.querySelector("[data-role='phone-block']");
-
 	            if (main_core.Type.isDomNode(phoneBlock)) {
 	              var newInput = main_core.Tag.render(_templateObject$1 || (_templateObject$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t\t<input\n\t\t\t\t\t\t\t\tname=\"EMAIL[]\"\n\t\t\t\t\t\t\t\ttype=\"text\"\n\t\t\t\t\t\t\t\tmaxlength=\"50\"\n\t\t\t\t\t\t\t\tdata-num=\"", "\"\n\t\t\t\t\t\t\t\tclass=\"ui-ctl-element js-email-phone-input\"\n\t\t\t\t\t\t\t\tplaceholder=\"", "\"\n\t\t\t\t\t\t\t/>"])), node.getAttribute('data-num'), main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_EMAIL_OR_PHONE_INPUT'));
 	              main_core.Dom.replace(node, newInput);
-
 	              _this3.bindCloseIcons(newInput.parentNode);
-
 	              _this3.bindPhoneChecker(newInput.parentNode);
-
 	              main_core.Dom.remove(phoneBlock);
 	            }
 	          }
-
 	          main_core.Dom.style(closeIcon, 'display', "none");
 	        });
 	      });
@@ -638,7 +559,6 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    value: function renderInviteInputs() {
 	      var numRows = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 3;
 	      main_core.Dom.clean(this.rowsContainer);
-
 	      for (var i = 0; i < numRows; i++) {
 	        this.renderInputRow(i === 0);
 	      }
@@ -648,13 +568,11 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    value: function renderInputRow() {
 	      var showTitles = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
 	      var emailTitle, nameTitle, lastNameTitle;
-
 	      if (showTitles) {
 	        emailTitle = "\n\t\t\t\t<div class=\"ui-ctl-label-text\">\n\t\t\t\t\t".concat(main_core.Loc.getMessage("INTRANET_INVITE_DIALOG_EMAIL_OR_PHONE_INPUT"), "\n\t\t\t\t</div>");
 	        nameTitle = "\n\t\t\t\t<div class=\"ui-ctl-label-text\">\n\t\t\t\t\t".concat(main_core.Loc.getMessage("BX24_INVITE_DIALOG_ADD_NAME_TITLE"), "\n\t\t\t\t</div>");
 	        lastNameTitle = "\n\t\t\t\t<div class=\"ui-ctl-label-text\">\n\t\t\t\t\t".concat(main_core.Loc.getMessage("BX24_INVITE_DIALOG_ADD_LAST_NAME_TITLE"), "\n\t\t\t\t</div>");
 	      }
-
 	      var element = main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"invite-form-row js-form-row\">\n\t\t\t\t<div class=\"invite-form-col\">\n\t\t\t\t\t", "\n\t\t\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-textbox ui-ctl-block ui-ctl-after-icon\">\n\t\t\t\t\t\t<input \n\t\t\t\t\t\t\tname=\"EMAIL[]\" \n\t\t\t\t\t\t\ttype=\"text\" \n\t\t\t\t\t\t\tmaxlength=\"50\"\n\t\t\t\t\t\t\tdata-num=\"", "\" \n\t\t\t\t\t\t\tclass=\"ui-ctl-element js-email-phone-input\" \n\t\t\t\t\t\t\tplaceholder=\"", "\"\n\t\t\t\t\t\t/>\n\t\t\t\t\t\t<button class=\"ui-ctl-after ui-ctl-icon-clear\" style=\"display: none\"></button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"invite-form-col\">\n\t\t\t\t\t", "\n\t\t\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-textbox ui-ctl-block ui-ctl-after-icon\">\n\t\t\t\t\t\t<input name=\"NAME[]\" type=\"text\" class=\"ui-ctl-element\" placeholder=\"", "\">\n\t\t\t\t\t\t<button class=\"ui-ctl-after ui-ctl-icon-clear\" style=\"display: none\"></button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"invite-form-col\">\n\t\t\t\t\t", "\n\t\t\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-textbox ui-ctl-block ui-ctl-after-icon\">\n\t\t\t\t\t\t<input name=\"LAST_NAME[]\" type=\"text\" class=\"ui-ctl-element\" placeholder=\"", "\">\n\t\t\t\t\t\t<button class=\"ui-ctl-after ui-ctl-icon-clear\" style=\"display: none\"></button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), showTitles ? emailTitle : '', this.inputNum++, main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_EMAIL_OR_PHONE_INPUT'), showTitles ? nameTitle : '', main_core.Loc.getMessage('BX24_INVITE_DIALOG_ADD_NAME_TITLE'), showTitles ? lastNameTitle : '', main_core.Loc.getMessage('BX24_INVITE_DIALOG_ADD_LAST_NAME_TITLE'));
 	      main_core.Dom.append(element, this.rowsContainer);
 	      this.bindCloseIcons(element);
@@ -689,7 +607,6 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    this.entities = [];
 	    this.prepareOptions();
 	  }
-
 	  babelHelpers.createClass(Selector, [{
 	    key: "prepareOptions",
 	    value: function prepareOptions() {
@@ -697,7 +614,6 @@ this.BX.Intranet = this.BX.Intranet || {};
 	        if (!this.options.hasOwnProperty(type)) {
 	          continue;
 	        }
-
 	        if (type === "department" && !!this.options[type]) {
 	          this.entities.push({
 	            id: "department",
@@ -708,7 +624,6 @@ this.BX.Intranet = this.BX.Intranet || {};
 	            }
 	          });
 	        }
-
 	        if (type === "project" && !!this.options[type]) {
 	          var optionValue = {
 	            id: "project",
@@ -716,11 +631,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 	              fillRecentTab: true
 	            }
 	          };
-
 	          if (this.options[type] === "extranet") {
 	            optionValue["options"]["extranet"] = true;
 	          }
-
 	          this.entities.push(optionValue);
 	        }
 	      }
@@ -729,11 +642,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    key: "render",
 	    value: function render() {
 	      var preselectedItems = [];
-
 	      if (this.options.hasOwnProperty('projectId') && this.options.projectId > 0) {
 	        preselectedItems.push(['project', this.options.projectId]);
 	      }
-
 	      this.tagSelector = new ui_entitySelector.TagSelector({
 	        dialogOptions: {
 	          preselectedItems: preselectedItems,
@@ -741,7 +652,6 @@ this.BX.Intranet = this.BX.Intranet || {};
 	          context: 'INTRANET_INVITATION'
 	        }
 	      });
-
 	      if (main_core.Type.isDomNode(this.contentBlock)) {
 	        main_core.Dom.clean(this.contentBlock);
 	        this.tagSelector.renderTo(this.contentBlock);
@@ -756,7 +666,6 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      tagSelectorItems.forEach(function (item) {
 	        var id = parseInt(item.getId());
 	        var type = item.getEntityId();
-
 	        if (type === "department") {
 	          departments.push(id);
 	        } else if (type === "project") {
@@ -777,7 +686,6 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    babelHelpers.classCallCheck(this, ActiveDirectory);
 	    this.parent = parent;
 	  }
-
 	  babelHelpers.createClass(ActiveDirectory, [{
 	    key: "showForm",
 	    value: function showForm() {
@@ -795,10 +703,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 
 	var Form = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(Form, _EventEmitter);
-
 	  function Form(formParams) {
 	    var _this;
-
 	    babelHelpers.classCallCheck(this, Form);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Form).call(this));
 	    var params = main_core.Type.isPlainObject(formParams) ? formParams : {};
@@ -815,7 +721,6 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    _this.isCreatorEmailConfirmed = params.isCreatorEmailConfirmed === "Y";
 	    _this.regenerateUrlBase = params.regenerateUrlBase;
 	    _this.firstInvitationBlock = params.firstInvitationBlock;
-
 	    if (main_core.Type.isDomNode(_this.contentContainer)) {
 	      var blocks = Array.prototype.slice.call(_this.contentContainer.querySelectorAll(".js-intranet-invitation-block"));
 	      (blocks || []).forEach(function (block) {
@@ -827,44 +732,33 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      _this.successMessageBlock = _this.contentContainer.querySelector("[data-role='success-message']");
 	      BX.UI.Hint.init(_this.contentContainer);
 	    }
-
 	    _this.button = document.querySelector("#intranet-invitation-btn");
-
 	    if (main_core.Type.isDomNode(_this.menuContainer)) {
 	      _this.menuItems = Array.prototype.slice.call(_this.menuContainer.querySelectorAll("a"));
 	      (_this.menuItems || []).forEach(function (item) {
 	        main_core.Event.bind(item, 'click', function () {
 	          _this.changeContent(item.getAttribute('data-action'));
 	        });
-
 	        if (item.getAttribute('data-action') === _this.firstInvitationBlock) {
 	          BX.fireEvent(item, 'click');
 	        }
 	      });
 	    }
-
 	    _this.submit = new Submit(babelHelpers.assertThisInitialized(_this));
-
 	    _this.submit.subscribe('onInputError', function (event) {
 	      _this.showErrorMessage(event.data.error);
 	    });
-
 	    if (_this.isCloud) {
 	      _this.selfRegister = new SelfRegister(babelHelpers.assertThisInitialized(_this));
 	    }
-
 	    _this.arrowBox = document.querySelector('.invite-wrap-decal-arrow');
-
 	    if (main_core.Type.isDomNode(_this.arrowBox)) {
 	      _this.arrowRect = _this.arrowBox.getBoundingClientRect();
 	      _this.arrowHeight = _this.arrowRect.height;
-
 	      _this.setSetupArrow();
 	    }
-
 	    return _this;
 	  }
-
 	  babelHelpers.createClass(Form, [{
 	    key: "renderSelector",
 	    value: function renderSelector(params) {
@@ -876,22 +770,17 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    value: function changeContent(action) {
 	      this.hideErrorMessage();
 	      this.hideSuccessMessage();
-
 	      if (action.length > 0) {
 	        if (action === 'active-directory') {
 	          if (!this.activeDirectory) {
 	            this.activeDirectory = new ActiveDirectory(this);
 	          }
-
 	          this.activeDirectory.showForm();
 	          return;
 	        }
-
 	        var projectId = this.userOptions.hasOwnProperty('groupId') ? parseInt(this.userOptions.groupId, 10) : 0;
-
 	        for (var type in this.contentBlocks) {
 	          var block = this.contentBlocks[type];
-
 	          if (type === action) {
 	            main_core.Dom.removeClass(block, 'invite-block-hidden');
 	            main_core.Dom.addClass(block, 'invite-block-shown');
@@ -899,7 +788,6 @@ this.BX.Intranet = this.BX.Intranet || {};
 	              contentBlock: this.contentBlocks[action]
 	            };
 	            var row = new Row(this, params);
-
 	            if (action === 'invite') {
 	              row.renderInviteInputs(5);
 	            } else if (action === 'invite-with-group-dp') {
@@ -946,7 +834,6 @@ this.BX.Intranet = this.BX.Intranet || {};
 	            main_core.Dom.addClass(block, 'invite-block-hidden');
 	          }
 	        }
-
 	        this.changeButton(action);
 	      }
 	    }
@@ -954,18 +841,14 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    key: "changeButton",
 	    value: function changeButton(action) {
 	      var _this2 = this;
-
 	      main_core.Event.unbindAll(this.button, 'click');
-
 	      if (!this.isCreatorEmailConfirmed) {
 	        main_core.Event.bind(this.button, 'click', function () {
 	          _this2.showErrorMessage(main_core.Loc.getMessage('INTRANET_INVITE_DIALOG_CONFIRM_CREATOR_EMAIL_ERROR'));
 	        });
 	        return;
 	      }
-
 	      this.activateButton();
-
 	      if (action === "invite") {
 	        this.button.innerText = main_core.Loc.getMessage('BX24_INVITE_DIALOG_ACTION_INVITE');
 	        main_core.Event.bind(this.button, 'click', function () {
@@ -1030,11 +913,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    key: "showSuccessMessage",
 	    value: function showSuccessMessage(successText) {
 	      this.hideErrorMessage();
-
 	      if (main_core.Type.isDomNode(this.successMessageBlock)) {
 	        this.successMessageBlock.style.display = "block";
 	        var alert = this.successMessageBlock.querySelector(".ui-alert-message");
-
 	        if (main_core.Type.isDomNode(alert)) {
 	          alert.innerHTML = BX.util.htmlspecialchars(successText);
 	        }
@@ -1051,11 +932,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    key: "showErrorMessage",
 	    value: function showErrorMessage(errorText) {
 	      this.hideSuccessMessage();
-
 	      if (main_core.Type.isDomNode(this.errorMessageBlock) && errorText) {
 	        this.errorMessageBlock.style.display = "block";
 	        var alert = this.errorMessageBlock.querySelector(".ui-alert-message");
-
 	        if (main_core.Type.isDomNode(alert)) {
 	          alert.innerHTML = BX.util.htmlspecialchars(errorText);
 	        }

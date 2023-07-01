@@ -1043,9 +1043,9 @@ class Support24 extends Network implements MenuBot, SupportBot, SupportQuestion
 			self::operatorQueueNumber([
 				'BOT_ID' => $params['BOT_ID'],
 				'DIALOG_ID' => $params['DIALOG_ID'],
-				'MESSAGE_ID' => $params['MESSAGE_ID'],
-				'SESSION_ID' => $params['SESSION_ID'],
-				'QUEUE_NUMBER' => $params['QUEUE_NUMBER'],
+				'MESSAGE_ID' => $params['MESSAGE_ID'] ?? null,
+				'SESSION_ID' => $params['SESSION_ID'] ?? null,
+				'QUEUE_NUMBER' => $params['QUEUE_NUMBER'] ?? null,
 			]);
 
 			return ['RESULT' => 'OK'];
@@ -1810,6 +1810,11 @@ class Support24 extends Network implements MenuBot, SupportBot, SupportQuestion
 	 */
 	public static function onSessionVote(array $params): bool
 	{
+		if ($params['BOT_ID'] == $params['DIALOG_ID'])
+		{
+			$params['DIALOG_ID'] = (string)$params['USER_ID'];
+		}
+
 		self::scheduleAction($params['DIALOG_ID'], self::SCHEDULE_ACTION_HIDE_DIALOG, '', self::HIDE_DIALOG_TIME);
 
 		return self::clientSessionVote($params);
@@ -2551,7 +2556,7 @@ class Support24 extends Network implements MenuBot, SupportBot, SupportQuestion
 		}
 
 		$botCache = Im\Bot::getCache(self::getBotId());
-		if ($botCache['APP_ID'] !== self::getBotCode())
+		if (!empty($botCache['APP_ID']) && $botCache['APP_ID'] !== self::getBotCode())
 		{
 			Option::delete(self::MODULE_ID, ['name' => parent::BOT_CODE.'_'.$botCache['APP_ID']."_bot_id"]);
 			Option::set(self::MODULE_ID, parent::BOT_CODE.'_'.self::getBotCode()."_bot_id", self::getBotId());

@@ -201,7 +201,15 @@ class CDiskBizprocEditComponent extends BaseComponent implements SidePanelWrappa
 			$this->application->setTitle(Loc::getMessage('BIZPROC_WFEDIT_TITLE_ADD'));
 		}
 
-		$userParamsStr = CUserOptions::GetOption('~bizprocdesigner', 'activity_settings');
+		if (class_exists(Bizproc\Activity\Settings::class))
+		{
+			$activitySettings = new Bizproc\Activity\Settings('~bizprocdesigner');
+			$userParamsStr = $activitySettings->get();
+		}
+		else
+		{
+			$userParamsStr = CUserOptions::GetOption('~bizprocdesigner', 'activity_settings');
+		}
 		if (is_array($userParamsStr))
 		{
 			$userParams = $userParamsStr;

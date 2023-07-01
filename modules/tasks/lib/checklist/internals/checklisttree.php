@@ -144,7 +144,7 @@ abstract class CheckListTree
 
 			if (static::isNodeExist($id))
 			{
-				if ($parameters['NEW_NODE'])
+				if ($parameters['NEW_NODE'] ?? null)
 				{
 					$result = static::addErrorToResult($result, $replaces, __METHOD__, 'EXISTING_NODE_ADDING');
 				}
@@ -600,12 +600,12 @@ abstract class CheckListTree
 			$childColumnName => $id
 		];
 
-		if ($parameters['DIRECT'])
+		if ($parameters['DIRECT'] ?? null)
 		{
 			$filter[$levelColumnName] = 1;
 		}
 
-		if ($parameters['BOTH_DIRECTIONS'])
+		if ($parameters['BOTH_DIRECTIONS'] ?? null)
 		{
 			$filter = [
 				'LOGIC' => 'OR',

@@ -20,6 +20,9 @@ return [
 			'crmmobile.kanban.entity.quote' => [
 				'className' => '\\Bitrix\\CrmMobile\\Kanban\\Entity\\Quote',
 			],
+			'crmmobile.kanban.entity.smartInvoice' => [
+				'className' => '\\Bitrix\\CrmMobile\\Kanban\\Entity\\SmartInvoice',
+			],
 			'crmmobile.kanban.entity.dynamicTypeBasedStatic' => [
 				'className' => '\\Bitrix\\CrmMobile\\Kanban\\Entity\\DynamicTypeBasedStatic',
 			],

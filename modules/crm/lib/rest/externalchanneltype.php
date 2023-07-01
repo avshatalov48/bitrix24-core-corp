@@ -114,7 +114,7 @@ class CCrmExternalChannelType
 
     public static function getAllDescriptions()
     {
-        if(!self::$ALL_DESCRIPTIONS[LANGUAGE_ID])
+        if(!(self::$ALL_DESCRIPTIONS[LANGUAGE_ID] ?? null))
         {
             IncludeModuleLangFile(__FILE__);
 

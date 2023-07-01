@@ -21,6 +21,7 @@ class Starter
 	protected bool $isManual = false;
 
 	private $statusFieldKey = 'STAGE_ID';
+	private string $responsibleFieldKey = 'ASSIGNED_BY_ID';
 
 	public function __construct(int $entityTypeId, int $entityId)
 	{
@@ -30,6 +31,12 @@ class Starter
 		if ($entityTypeId === \CCrmOwnerType::Lead || $entityTypeId === \CCrmOwnerType::Quote)
 		{
 			$this->statusFieldKey = 'STATUS_ID';
+		}
+
+		if ($entityTypeId === \CCrmOwnerType::Order)
+		{
+			$this->statusFieldKey = 'STATUS_ID';
+			$this->responsibleFieldKey = 'RESPONSIBLE_ID';
 		}
 	}
 
@@ -201,11 +208,11 @@ class Starter
 
 	private function isStatusChanged(array $changedFields): bool
 	{
-		return in_array($this->statusFieldKey, $changedFields);
+		return in_array($this->statusFieldKey, $changedFields, true);
 	}
 
 	private function isResponsibleChanged(array $changedFields): bool
 	{
-		return in_array('ASSIGNED_BY_ID', $changedFields);
+		return in_array($this->responsibleFieldKey, $changedFields, true);
 	}
 }

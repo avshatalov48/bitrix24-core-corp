@@ -15,6 +15,7 @@ class Permissions
 	const ENTITY_USER = 'USER';
 	const ENTITY_SETTINGS = 'SETTINGS';
 	const ENTITY_LINE = 'LINE';
+	public const ENTITY_BALANCE = 'BALANCE';
 
 	const ACTION_VIEW = 'VIEW';
 	const ACTION_LISTEN = 'LISTEN';
@@ -141,56 +142,62 @@ class Permissions
 	 */
 	public static function getMap()
 	{
-		return array(
-			self::ENTITY_CALL_DETAIL => array(
-				self::ACTION_VIEW => array(
+		return [
+			self::ENTITY_CALL_DETAIL => [
+				self::ACTION_VIEW => [
 					self::PERMISSION_NONE,
 					self::PERMISSION_SELF,
 					self::PERMISSION_DEPARTMENT,
 					self::PERMISSION_ANY
-				),
+				],
 				/*self::ACTION_MODIFY => array(
 					self::PERMISSION_NONE,
 					self::PERMISSION_ANY
 				)*/
-			),
-			self::ENTITY_CALL_RECORD => array(
-				self::ACTION_LISTEN => array(
+			],
+			self::ENTITY_CALL_RECORD => [
+				self::ACTION_LISTEN => [
 					self::PERMISSION_NONE,
 					self::PERMISSION_SELF,
 					self::PERMISSION_DEPARTMENT,
 					self::PERMISSION_ANY
-				)
-			),
-			self::ENTITY_CALL => array(
-				self::ACTION_PERFORM => array(
+				]
+			],
+			self::ENTITY_CALL => [
+				self::ACTION_PERFORM => [
 					self::PERMISSION_NONE,
 					self::PERMISSION_CALL_CRM,
 					self::PERMISSION_CALL_USERS,
 					self::PERMISSION_ANY
-				),
-			),
-			self::ENTITY_USER => array(
-				self::ACTION_MODIFY => array(
+				],
+			],
+			self::ENTITY_USER => [
+				self::ACTION_MODIFY => [
 					self::PERMISSION_NONE,
 					self::PERMISSION_SELF,
 					self::PERMISSION_DEPARTMENT,
 					self::PERMISSION_ANY
-				)
-			),
-			self::ENTITY_SETTINGS => array(
-				self::ACTION_MODIFY => array(
+				]
+			],
+			self::ENTITY_SETTINGS => [
+				self::ACTION_MODIFY => [
 					self::PERMISSION_NONE,
 					self::PERMISSION_ANY
-				)
-			),
-			self::ENTITY_LINE => array(
-				self::ACTION_MODIFY => array(
+				]
+			],
+			self::ENTITY_LINE => [
+				self::ACTION_MODIFY => [
 					self::PERMISSION_NONE,
 					self::PERMISSION_ANY
-				)
-			)
-		);
+				]
+			],
+			self::ENTITY_BALANCE => [
+				self::ACTION_MODIFY => [
+					self::PERMISSION_NONE,
+					self::PERMISSION_ANY,
+				]
+			]
+		];
 	}
 
 	/**

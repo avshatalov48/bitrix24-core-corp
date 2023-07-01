@@ -9,8 +9,8 @@ use Bitrix\Main\Web\Uri;
 use Bitrix\Tasks\Util\User;
 
 //region TITLE
-$APPLICATION->SetPageProperty("title", Loc::getMessage('TASKS_EFFECTIVE_TITLE_FULL', array('#USER_NAME#'=>htmlspecialcharsbx($arResult['USER_NAME']))));
-$APPLICATION->SetTitle(Loc::getMessage('TASKS_EFFECTIVE_TITLE_FULL', array('#USER_NAME#'=>htmlspecialcharsbx($arResult['USER_NAME']))));
+$APPLICATION->SetPageProperty('title', Loc::getMessage('TASKS_EFFECTIVE_TITLE_FULL'));
+$APPLICATION->SetTitle(Loc::getMessage('TASKS_EFFECTIVE_TITLE_FULL'));
 //endregion TITLE
 
 if (!function_exists('prepareTaskRowUserBaloonHtml'))
@@ -139,7 +139,7 @@ foreach ($rows as $key => $row)
 	}
 
 	$arResult['ROWS'][] = [
-		'id' => $row['ID'],
+		'id' => $taskId,
 		'columns' => $preparedRows[$key]['content'],
 	];
 }

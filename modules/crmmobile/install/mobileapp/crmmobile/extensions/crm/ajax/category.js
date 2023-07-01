@@ -2,7 +2,6 @@
  * @module crm/ajax/category
  */
 jn.define('crm/ajax/category', (require, exports, module) => {
-
 	const { BaseAjax } = require('crm/ajax/base');
 
 	const CategoryActions = {
@@ -67,5 +66,4 @@ jn.define('crm/ajax/category', (require, exports, module) => {
 		CategoryAjax: new CategoryAjax(),
 		CategoryActions,
 	};
-
 });

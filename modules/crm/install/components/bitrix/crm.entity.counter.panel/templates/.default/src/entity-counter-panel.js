@@ -1,6 +1,6 @@
-import {Loc, Reflection, Text, Type} from 'main.core';
+import { Loc, Reflection, Text, Type } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
-import { CounterPanel, CounterItem } from 'ui.counterpanel';
+import { CounterItem, CounterPanel } from 'ui.counterpanel';
 import EntityCounterManager from './entity-counter-manager';
 import EntityCounterType from './entity-counter-type';
 import EntityCounterFilterManager from './entity-counter-filter-manager';
@@ -25,7 +25,6 @@ class EntityCounterPanel extends CounterPanel
 	#filterManager: ?EntityCounterFilterManager;
 	#filterLastPresetId: String;
 	#filterLastPreset: Object;
-	#isNewCountersTourSeen: String;
 
 	constructor(options: EntityCounterPanelOptions): void
 	{
@@ -69,17 +68,25 @@ class EntityCounterPanel extends CounterPanel
 		this.#filterLastPreset = Type.isArray(options.filterLastPresetData)
 			? JSON.parse(options.filterLastPresetData[0])
 			: {presetId: null};
-		this.#isNewCountersTourSeen = options.isNewCountersTourSeen;
 
-		this.#bindEvents();
+		this.#bindEvents(options);
 	}
 
-	#bindEvents(): void
+	#bindEvents(options: EntityCounterPanelOptions): void
 	{
-		EventEmitter.subscribe('BX.UI.CounterPanel.Item:activate', this.#onActivateItem.bind(this));
-		EventEmitter.subscribe('BX.UI.CounterPanel.Item:deactivate', this.#onDeactivateItem.bind(this));
-		EventEmitter.subscribe('BX.Main.Filter:apply', this.#onFilterApply.bind(this));
-		EventEmitter.subscribe('BX.Crm.EntityCounterManager:onRecalculate', this.#onRecalculate.bind(this));
+		if (Type.isStringFilled(options.lockedCallback))
+		{
+			BX.bind(BX(options.id), 'click', function() {
+				eval(options.lockedCallback);
+			});
+		}
+		else
+		{
+			EventEmitter.subscribe('BX.UI.CounterPanel.Item:activate', this.#onActivateItem.bind(this));
+			EventEmitter.subscribe('BX.UI.CounterPanel.Item:deactivate', this.#onDeactivateItem.bind(this));
+			EventEmitter.subscribe('BX.Main.Filter:apply', this.#onFilterApply.bind(this));
+			EventEmitter.subscribe('BX.Crm.EntityCounterManager:onRecalculate', this.#onRecalculate.bind(this));
+		}
 	}
 
 	#onActivateItem(event: BaseEvent): void
@@ -153,17 +160,6 @@ class EntityCounterPanel extends CounterPanel
 		{
 			parentItem.updateValue(this.#getParentItemTotalValue());
 		}
-
-		if (this.#isNewCountersTourSeen === 'N' && isValueUpdated && isNoSliders)
-		{
-			EventEmitter.emit(this, 'BX.Crm.EntityCounterPanel::onShowNewCountersTour', {
-				target: '.ui-counter-panel__scope',
-				stepId: 'step-new-counters',
-				delay: 1500,
-			});
-
-			this.#isNewCountersTourSeen = 'Y';
-		}
 	}
 
 	#processItemSelection(item: CounterItem): Boolean
@@ -195,13 +191,28 @@ class EntityCounterPanel extends CounterPanel
 
 				const api = this.#filterManager.getApi();
 
-				const fields = {
-					"ASSIGNED_BY_ID": { 0: userId },
-					"ASSIGNED_BY_ID_label": [ userName ],
+				let fields = {
 					"ACTIVITY_COUNTER": BX.Type.isPlainObject(counterTypeId)
 						? counterTypeId
 						: { 0: counterTypeId }
 				};
+
+				if (this.#entityTypeId === BX.CrmEntityType.enumeration.order)
+				{
+					fields = {
+						...fields,
+						"RESPONSIBLE_ID": { 0: userId },
+						"RESPONSIBLE_ID_label": [ userName ],
+					}
+				}
+				else
+				{
+					fields = {
+						...fields,
+						"ASSIGNED_BY_ID": { 0: userId },
+						"ASSIGNED_BY_ID_label": [ userName ],
+					}
+				}
 
 				api.setFields(fields);
 				api.apply({'COUNTER': this.#makeFilterAnalyticsLabel(counterTypeId)});
@@ -231,7 +242,7 @@ class EntityCounterPanel extends CounterPanel
 		{
 			return {
 				0: EntityCounterType.OVERDUE.toString(),
-				1: EntityCounterType.PENDING.toString(),
+				1: EntityCounterType.READY_TODO.toString(),
 			}
 		}
 
@@ -339,6 +350,7 @@ class EntityCounterPanel extends CounterPanel
 	static getCounterItems(input: Object, options: EntityCounterPanelOptions): Array
 	{
 		const withExcludeUsers = Type.isBoolean(options.withExcludeUsers) ? options.withExcludeUsers : false;
+		const isRestricted = Type.isStringFilled(options.lockedCallback);
 		const parentItemId = EntityCounterPanel.getMenuParentItemId(Type.isArray(options.codes) ? options.codes : [])
 
 		let otherUsersItems = [];
@@ -370,6 +382,7 @@ class EntityCounterPanel extends CounterPanel
 				id: parentItemId,
 				title: Loc.getMessage('NEW_CRM_COUNTER_TYPE_OTHER_TITLE'),
 				value: parentTotal,
+				isRestricted: isRestricted,
 				color: 'THEME'
 			}].concat(otherUsersItems);
 		}
@@ -383,6 +396,7 @@ class EntityCounterPanel extends CounterPanel
 					id: code,
 					title: Loc.getMessage('NEW_CRM_COUNTER_TYPE_' + item.TYPE_NAME),
 					value: value,
+					isRestricted: isRestricted,
 					color: EntityCounterPanel.detectCounterItemColor(item.TYPE_NAME, value)
 				};
 			}

@@ -60,7 +60,7 @@ class UserPermissionsManager
 		{
 			return new static(new AccessDeniedOperationChecker(), null);
 		}
-		if (static::$managers[$user->getId()] === null)
+		if (!isset(static::$managers[$user->getId()]))
 		{
 			static::$managers[$user->getId()] = new static(new UserOperationChecker($user), $user->getId());
 		}

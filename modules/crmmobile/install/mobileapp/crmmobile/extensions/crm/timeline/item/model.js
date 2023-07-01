@@ -2,7 +2,6 @@
  * @module crm/timeline/item/model
  */
 jn.define('crm/timeline/item/model', (require, exports, module) => {
-
 	const { SupportedTypes } = require('crm/timeline/item/factory');
 	const { Type } = require('crm/type');
 	const { Moment } = require('utils/date');
@@ -70,10 +69,8 @@ jn.define('crm/timeline/item/model', (require, exports, module) => {
 					const entityId = BX.prop.getInteger(this.props, 'ASSOCIATED_ENTITY_ID', 0);
 					return `${Type.resolveNameById(entityTypeId)}_${entityId}`;
 				}
-				else
-				{
-					return BX.prop.getInteger(this.props, 'ID', 0);
-				}
+
+				return BX.prop.getInteger(this.props, 'ID', 0);
 			}
 			return this.props.id;
 		}
@@ -146,5 +143,4 @@ jn.define('crm/timeline/item/model', (require, exports, module) => {
 	}
 
 	module.exports = { TimelineItemModel };
-
 });

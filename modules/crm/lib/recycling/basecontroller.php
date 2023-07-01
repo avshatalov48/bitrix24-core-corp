@@ -911,4 +911,7 @@ abstract class BaseController
 		);
 	}
 	//endregion
+
+	//region Content Types
+	//endregion
 }

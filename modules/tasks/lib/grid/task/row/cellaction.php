@@ -64,7 +64,7 @@ class CellAction
 		$cellActions['TITLE'][] = [
 			'class' => [
 				Grid\CellActions::MUTE,
-				($this->rowData['IS_MUTED'] === 'Y' ? Grid\CellActionState::ACTIVE : Grid\CellActionState::SHOW_BY_HOVER),
+				(($this->rowData['IS_MUTED'] ?? '') === 'Y' ? Grid\CellActionState::ACTIVE : Grid\CellActionState::SHOW_BY_HOVER),
 			],
 			'events' => [
 				'click' => "BX.Tasks.GridActions.changeMute.bind(BX.Tasks.GridActions, {$taskId})",

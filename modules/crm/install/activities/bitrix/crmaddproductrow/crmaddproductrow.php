@@ -5,9 +5,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
-use Bitrix\Main;
 use Bitrix\Crm;
+use Bitrix\Catalog;
+use Bitrix\Sale\Basket;
 use Bitrix\Crm\Activity\Access\CatalogAccessChecker;
+use Bitrix\Main;
 
 class CBPCrmAddProductRow extends CBPActivity
 {
@@ -31,6 +33,15 @@ class CBPCrmAddProductRow extends CBPActivity
 		}
 
 		[$entityTypeId, $entityId] = \CCrmBizProcHelper::resolveEntityId($this->GetDocumentId());
+
+		if (
+			$entityTypeId === \CCrmOwnerType::Order
+			&& !Main\Loader::includeModule('sale')
+			&& !Main\Loader::includeModule('catalog')
+		)
+		{
+			return CBPActivityExecutionStatus::Closed;
+		}
 
 		$id = $this->getProductId();
 		$product = $this->getProduct($id);
@@ -75,6 +86,7 @@ class CBPCrmAddProductRow extends CBPActivity
 
 		$entity = $this->getDocumentId()[1];
 		$addResult = false;
+
 		if ($entityTypeId === CCrmOwnerType::Deal)
 		{
 			$addResult = \CCrmDeal::addProductRows($entityId, [$row], [], false);
@@ -83,6 +95,47 @@ class CBPCrmAddProductRow extends CBPActivity
 		{
 			$productRow = Crm\ProductRow::createFromArray($row);
 			$addResult = $entity::addProductRows($this->getDocumentId()[2], [$productRow])->isSuccess();
+		}
+		elseif ($entityTypeId === CCrmOwnerType::Order)
+		{
+			$order = Crm\Order\Order::load($entityId);
+			if ($order === null)
+			{
+				$this->writeToTrackingService(GetMessage('CRM_EMPTY_ORDER_ERROR'), 0, CBPTrackingType::Error);
+				return CBPActivityExecutionStatus::Closed;
+			}
+
+			$basket = $order->getBasket();
+
+			$result = Catalog\Product\Basket::addProductToBasket(
+				$basket,
+				[
+					'LID' => $order->getSiteId(),
+					'PRODUCT_ID' => $row['PRODUCT_ID'],
+					'QUANTITY' => $row['QUANTITY'],
+					'PRICE' => $row['PRICE'],
+					'CUSTOM_PRICE' => 'Y',
+					'CURRENCY' => $order->getCurrency(),
+				],
+				[]
+			);
+
+			$basketItem = $result->getData()['BASKET_ITEM'] ?? null;
+
+			if (
+				$result->isSuccess()
+				&& $basketItem !== null
+			)
+			{
+				$singleStrategy = Basket\RefreshFactory::createSingle($basketItem->getBasketCode());
+				$basket->refresh($singleStrategy);
+
+				$addResult = $order->save()->isSuccess();
+			}
+		}
+		else
+		{
+			return CBPActivityExecutionStatus::Closed;
 		}
 
 		$this->writeDebugInfo($this->getDebugInfo([
@@ -133,7 +186,7 @@ class CBPCrmAddProductRow extends CBPActivity
 			return $product;
 		}
 
-		return  null;
+		return null;
 	}
 
 	private function calculatePrices(array &$row, $price): void

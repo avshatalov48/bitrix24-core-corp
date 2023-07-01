@@ -2,9 +2,8 @@
 
 namespace Bitrix\Crm\Service\Display\Field;
 
-
-use Bitrix\Crm\Service\Display\Options;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Service\Display\Options;
 use Bitrix\Crm\UI\EntitySelector;
 
 class UserField extends BaseLinkedEntitiesField
@@ -42,7 +41,7 @@ class UserField extends BaseLinkedEntitiesField
 	protected function getPreparedValue($elementId, string $prefix)
 	{
 		$linkedEntitiesValues = $this->getLinkedEntitiesValues();
-		$user = $linkedEntitiesValues[$elementId];
+		$user = $linkedEntitiesValues[$elementId] ?? null;
 
 		if (is_array($user))
 		{

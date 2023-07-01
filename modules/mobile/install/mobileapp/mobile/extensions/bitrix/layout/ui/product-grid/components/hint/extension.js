@@ -53,7 +53,7 @@ jn.define('layout/ui/product-grid/components/hint', (require, exports, module) =
 			title,
 			message,
 			time,
-			backgroundColor: '#075776',
+			backgroundColor: '#004f69',
 			blur: true,
 		});
 

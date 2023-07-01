@@ -3,7 +3,7 @@
  */
 jn.define('layout/ui/fields/status', (require, exports, module) => {
 
-	const { arrowRight } = require('assets/common');
+	const { chevronRight } = require('assets/common');
 	const { BaseField } = require('layout/ui/fields/base');
 
 	/**
@@ -105,7 +105,7 @@ jn.define('layout/ui/fields/status', (require, exports, module) => {
 							width: 9,
 						},
 						svg: {
-							content: arrowRight(),
+							content: chevronRight(),
 						},
 					},
 				),

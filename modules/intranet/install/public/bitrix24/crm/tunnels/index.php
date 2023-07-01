@@ -5,7 +5,12 @@ $APPLICATION->SetTitle(GetMessage('TITLE'));
 
 if (CModule::IncludeModule('crm'))
 {
-	if ($_REQUEST['IFRAME'] == 'Y' && $_REQUEST['IFRAME_TYPE'] == 'SIDE_SLIDER')
+	if (
+		isset($_REQUEST['IFRAME'])
+		&& $_REQUEST['IFRAME'] === 'Y'
+		&& isset($_REQUEST['IFRAME_TYPE'])
+		&& $_REQUEST['IFRAME_TYPE'] == 'SIDE_SLIDER'
+	)
 	{
 		$APPLICATION->IncludeComponent(
 			'bitrix:ui.sidepanel.wrapper',

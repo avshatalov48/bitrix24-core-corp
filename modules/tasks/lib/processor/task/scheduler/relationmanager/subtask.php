@@ -147,7 +147,7 @@ final class SubTask extends \Bitrix\Tasks\Processor\Task\Scheduler\RelationManag
 
 		// get current value for $id
 		/** @var DateTime $newValue */
-		$newValue = $miniMaxes[$id][$key];
+		$newValue = ($miniMaxes[$id][$key] ?? null);
 		if($newValue === null) // not in min\max table, get its own dates
 		{
 			$newValue = $itemData[$isMin ? 'START_DATE_PLAN' : 'END_DATE_PLAN'];
@@ -186,7 +186,7 @@ final class SubTask extends \Bitrix\Tasks\Processor\Task\Scheduler\RelationManag
 	public static function isTaskBelong($id, $data = array())
 	{
 		// either task exists and linked, or it will be linked after save!
-		return ($id && Dependence::isNodeExist($id)) || intval($data['PARENT_ID']);
+		return ($id && Dependence::isNodeExist($id)) || (int)($data['PARENT_ID'] ?? null);
 	}
 
 	private function shiftSubTree(Impact $rootImpact, Fragment $globalTree)
@@ -265,8 +265,8 @@ final class SubTask extends \Bitrix\Tasks\Processor\Task\Scheduler\RelationManag
 				$data = $impactData;
 			}
 
-			$min = $data['START_DATE_PLAN'] ? clone $data['START_DATE_PLAN'] : null;
-			$max = $data['END_DATE_PLAN'] ? clone $data['END_DATE_PLAN'] : null;
+			$min = (($data['START_DATE_PLAN'] ?? null) ? clone $data['START_DATE_PLAN'] : null);
+			$max = (($data['END_DATE_PLAN'] ?? null) ? clone $data['END_DATE_PLAN'] : null);
 		}
 
 		return array(
@@ -288,13 +288,13 @@ final class SubTask extends \Bitrix\Tasks\Processor\Task\Scheduler\RelationManag
 		}
 
 		// todo: better to use objects here
-		if(is_array($data['SE_PARAMETER']))
+		if (is_array($data['SE_PARAMETER'] ?? null))
 		{
-			foreach($data['SE_PARAMETER'] as $param)
+			foreach ($data['SE_PARAMETER'] as $param)
 			{
-				if($param['CODE'] == ParameterTable::PARAM_SUBTASKS_TIME)
+				if ($param['CODE'] == ParameterTable::PARAM_SUBTASKS_TIME)
 				{
-					return $param['VALUE'] == 'Y';
+					return ($param['VALUE'] === 'Y');
 				}
 			}
 		}

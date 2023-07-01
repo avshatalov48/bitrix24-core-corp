@@ -8,7 +8,10 @@ jn.define('layout/ui/fields/multiple-combined', (require, exports, module) => {
 	const { BaseMultipleField } = require('layout/ui/fields/base-multiple');
 	const { titleIcons } = require('layout/ui/fields/multiple-combined/title-icons');
 	const { last } = require('utils/array');
+	const { throttle } = require('utils/function');
 	const { stringify } = require('utils/string');
+
+	const THROTTLE_INTERVAL = Application.getPlatform() === 'ios' ? 250 : 500;
 
 	/**
 	 * @class MultipleCombinedField
@@ -21,9 +24,13 @@ jn.define('layout/ui/fields/multiple-combined', (require, exports, module) => {
 
 			super(props);
 			this.state.showAll = false;
+
+			this.handleAddButtonClick = throttle(() => this.onAddField(), THROTTLE_INTERVAL);
+			this.handleDeleteButtonClick = throttle((index) => this.onDeleteField(index), THROTTLE_INTERVAL);
 		}
 
-		componentWillReceiveProps(newProps) {
+		componentWillReceiveProps(newProps)
+		{
 			super.componentWillReceiveProps(newProps);
 			this.state.showAll = !this.isEnableToEdit();
 		}
@@ -169,7 +176,7 @@ jn.define('layout/ui/fields/multiple-combined', (require, exports, module) => {
 			return AddButton({
 				text: BX.prop.getString(this.getConfig(), 'addButtonText', ''),
 				color: '#a8adb4',
-				onClick: this.onAddField.bind(this),
+				onClick: this.handleAddButtonClick,
 				deepMergeStyles: this.styles.addButton,
 			});
 		}
@@ -180,7 +187,7 @@ jn.define('layout/ui/fields/multiple-combined', (require, exports, module) => {
 
 			if (this.props.onEdit)
 			{
-				promise = promise.then(() => this.props.onEdit())
+				promise = promise.then(() => this.props.onEdit());
 			}
 
 			return promise.then(() => super.onAddField());
@@ -201,7 +208,7 @@ jn.define('layout/ui/fields/multiple-combined', (require, exports, module) => {
 			return View(
 				{
 					style: this.styles.addOrDeleteFieldButtonWrapper,
-					onClick: () => this.onDeleteField(index),
+					onClick: () => this.handleDeleteButtonClick(index),
 				},
 				Image({
 					style: this.styles.buttonContainer,

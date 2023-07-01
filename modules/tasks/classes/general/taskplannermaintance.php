@@ -82,12 +82,14 @@ class CTaskPlannerMaintance
 				// If task not found, select it
 				if ($taskOnTimer === false)
 				{
-					$neededTasks = self::getTasks(array($lastTimer['TASK_ID']));
-					$neededTask = $neededTasks[0];
-
-					if (isset($neededTask) && $neededTask['RESPONSIBLE_ID'] == self::$USER_ID)
+					$neededTasks = self::getTasks([$lastTimer['TASK_ID']]);
+					if (!empty($neededTasks))
 					{
-						$taskOnTimer = $neededTasks[0];
+						$neededTask = $neededTasks[0];
+						if (isset($neededTask) && (int)$neededTask['RESPONSIBLE_ID'] === (int)self::$USER_ID)
+						{
+							$taskOnTimer = $neededTask;
+						}
 					}
 				}
 			}
@@ -122,26 +124,28 @@ class CTaskPlannerMaintance
 	// create task with planner widget and so on...
 	public static function OnPlannerAction($action, $params)
 	{
-		$res = array();
+		$res = [];
 		$lastTaskId = 0;
-		switch($action)
+
+		switch ($action)
 		{
 			case 'task':
-				$lastTaskId = self::plannerActions(array(
-					'name' => $_REQUEST['name'],
-					'add' => $_REQUEST['add'],
-					'remove' => $_REQUEST['remove'],
-				), $params['SITE_ID']);
+				$lastTaskId = self::plannerActions(
+					[
+						'name' => ($_REQUEST['name'] ?? null),
+						'add' => ($_REQUEST['add'] ?? null),
+						'remove' => ($_REQUEST['remove'] ?? null),
+					],
+					$params['SITE_ID']
+				);
 				break;
 
 			case 'timeman_close':
-				$res = self::getTimemanCloseDayData(array(
-					'SITE_ID' => $params['SITE_ID']
-				));
+				$res = self::getTimemanCloseDayData(['SITE_ID' => $params['SITE_ID']]);
 				break;
 		}
 
-		if($lastTaskId > 0)
+		if ($lastTaskId > 0)
 		{
 			$res['TASK_LAST_ID'] = $lastTaskId;
 		}
@@ -237,7 +241,7 @@ class CTaskPlannerMaintance
 		if (!is_array($arTasks))
 			$arTasks = array();
 
-		if ($arActions['name'] <> '')
+		if (($arActions['name'] ?? null) <> '')
 		{
 			$ID = false;
 			try
@@ -289,7 +293,7 @@ class CTaskPlannerMaintance
 
 		$arTasks = array_unique($arTasks);
 
-		if (is_array($arActions['remove']))
+		if (is_array($arActions['remove'] ?? null))
 		{
 			$arActions['remove'] = array_unique($arActions['remove']);
 
@@ -438,9 +442,13 @@ class CTaskPlannerMaintance
 			if (CModule::IncludeModule('timeman') && $timeManUser = CTimeManUser::instance())
 			{
 				$info = $timeManUser->GetCurrentInfo();
-				if (is_array($info['TASKS']))
+				if (isset($info['TASKS']) && is_array($info['TASKS']))
 				{
 					$list = $info['TASKS'];
+				}
+				elseif (!isset($info['TASKS']))
+				{
+					$list = null;
 				}
 			}
 

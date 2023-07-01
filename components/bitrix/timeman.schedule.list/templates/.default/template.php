@@ -69,7 +69,7 @@ foreach ($arResult['ITEMS'] as $item)
 		'id' => $item['ID'],
 		'actions' => $gridActions,
 		'data' => $item,
-		'editable' => $arResult['CAN_EDIT'] ? true : $arColumns,
+		'editable' => (bool) ($arResult['CAN_EDIT'] ?? false),
 		'columns' => [
 			'NAME' => $item['CAN_READ_SCHEDULE'] ?
 				'<a href="' . $urlManager->getUriTo('scheduleUpdate', ['SCHEDULE_ID' => $item['ID']]) . '"' .
@@ -160,7 +160,7 @@ $APPLICATION->IncludeComponent('bitrix:main.ui.grid', '', [
 
 	'ACTION_PANEL' => $actionPanelData,
 
-	'MESSAGES' => $arResult['MESSAGES'] ?: false,
+	'MESSAGES' => $arResult['MESSAGES'] ?? '',
 ], $component, ['HIDE_ICONS' => 'Y']);
 ?>
 <script>

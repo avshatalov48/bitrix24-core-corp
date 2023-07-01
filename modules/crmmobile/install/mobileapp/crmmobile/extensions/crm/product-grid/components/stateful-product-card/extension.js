@@ -2,7 +2,6 @@
  * @module crm/product-grid/components/stateful-product-card
  */
 jn.define('crm/product-grid/components/stateful-product-card', (require, exports, module) => {
-
 	const { Loc } = require('loc');
 	const { isEmpty } = require('utils/object');
 	const { ProductCard } = require('layout/ui/product-grid/components/product-card');
@@ -84,11 +83,12 @@ jn.define('crm/product-grid/components/stateful-product-card', (require, exports
 					style: {
 						backgroundColor: '#eef2f4',
 						paddingTop: this.getProps().index === 0 ? 12 : 0,
-					}
+					},
 				},
 				new ProductCard({
 					ref: (ref) => this.statelessProductCardRef = ref,
 					index: this.getProps().index + 1,
+					id: this.state.productRow.getProductId(),
 					name: this.state.productRow.getProductName(),
 					gallery: this.state.productRow.getPhotos(),
 					renderInnerContent: () => View(
@@ -106,14 +106,15 @@ jn.define('crm/product-grid/components/stateful-product-card', (require, exports
 							onChangeQuantity: (newValue) => this.onChangeQuantity(newValue),
 							onChangeDiscountValue: (newValue) => this.onChangeDiscountValue(newValue),
 							onChangeDiscountType: (discountType, discountValue) => this.onChangeDiscountType(discountType, discountValue),
-						})
+							showTax: this.getProps().showTax,
+						}),
 					),
 					onNameClick: () => this.showProductDetailsBackdrop(),
 					onImageClick: () => this.showProductDetailsBackdrop(),
 					onLongClick: () => this.showProductContextMenu(),
 					onContextMenuClick: () => this.showProductContextMenu(),
 					onRemove: this.getProps().editable ? this.onRemove.bind(this) : null,
-				})
+				}),
 			);
 		}
 
@@ -162,7 +163,7 @@ jn.define('crm/product-grid/components/stateful-product-card', (require, exports
 			}
 		}
 
-		onChangeVariation({variationData, quantity, skuTree})
+		onChangeVariation({ variationData, quantity, skuTree })
 		{
 			const productRow = this.state.productRow;
 			const currentFields = productRow.getRawValues();
@@ -176,7 +177,7 @@ jn.define('crm/product-grid/components/stateful-product-card', (require, exports
 				BARCODE: variationData.BARCODE,
 			};
 
-			productRow.setFields({...currentFields, ...overrides});
+			productRow.setFields({ ...currentFields, ...overrides });
 
 			const basePrice = variationData.TAX_INCLUDED ? variationData.PRICE : variationData.PRICE_BEFORE_TAX;
 			const calculator = new ProductCalculator(productRow.getRawValues());
@@ -188,7 +189,7 @@ jn.define('crm/product-grid/components/stateful-product-card', (require, exports
 
 			productRow.setFields(result);
 
-			this.setState({productRow}, () => {
+			this.setState({ productRow }, () => {
 				this.blink();
 				this.onChange();
 			});
@@ -217,10 +218,11 @@ jn.define('crm/product-grid/components/stateful-product-card', (require, exports
 
 			PageManager.openWidget('layout', {
 				modal: true,
+				backgroundColor: '#eef2f4',
 				backdrop: {
 					onlyMediumPosition: false,
 					mediumPositionPercent: 80,
-					navigationBarColor: '#EEF2F4',
+					navigationBarColor: '#eef2f4',
 					swipeAllowed: true,
 					swipeContentAllowed: false,
 					horizontalSwipeAllowed: false,
@@ -239,14 +241,14 @@ jn.define('crm/product-grid/components/stateful-product-card', (require, exports
 							permissions: this.getProps().permissions,
 							onChange: (productData) => {
 								productRow.setFields(productData);
-								this.setState({productRow}, () => {
+								this.setState({ productRow }, () => {
 									this.blink();
 									this.onChange();
 								});
-							}
-						})
+							},
+						}),
 					);
-				}
+				},
 			});
 		}
 
@@ -258,10 +260,15 @@ jn.define('crm/product-grid/components/stateful-product-card', (require, exports
 				swipeAllowed: true,
 				swipeContentAllowed: false,
 				mediumPositionPercent: 80,
-				navigationBarColor: '#EEF2F4',
+				navigationBarColor: '#eef2f4',
+			};
+			const widgetParams = {
+				modal: true,
+				backgroundColor: '#eef2f4',
+				backdrop,
 			};
 
-			PageManager.openWidget('layout', { backdrop }).then(layout => {
+			PageManager.openWidget('layout', widgetParams).then((layout) => {
 				layout.showComponent(new SkuSelector({
 					layout,
 					selectedVariationId: productRow.getProductId(),
@@ -271,7 +278,7 @@ jn.define('crm/product-grid/components/stateful-product-card', (require, exports
 					measureName: productRow.getMeasureName(),
 					saveButtonCaption: Loc.getMessage('PRODUCT_GRID_PRODUCT_CARD_SELECT_SKU'),
 					onSave: (props) => this.onChangeVariation(props),
-				}))
+				}));
 			});
 		}
 
@@ -305,5 +312,4 @@ jn.define('crm/product-grid/components/stateful-product-card', (require, exports
 	}
 
 	module.exports = { StatefulProductCard };
-
 });

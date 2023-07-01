@@ -3,11 +3,13 @@
 return [
 	'extensions' => [
 		'layout/ui/detail-card/tabs',
-		'crm:product-grid',
 		'utils/error-notifier',
 		'catalog/barcode-scanner',
+		'loc',
 		'notify',
 		'helpers/component',
+		'crm:product-grid',
+		'layout/ui/detail-card/floating-button/menu/item'
 	],
 	'bundle' => [
 		'./loader',

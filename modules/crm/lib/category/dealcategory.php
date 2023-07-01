@@ -520,11 +520,16 @@ class DealCategory
 		//region Setup default rights
 		$permissionEntity = DealCategory::convertToPermissionEntityType($ID);
 
+		$systemRolesIds = \Bitrix\Crm\Security\Role\RolePermission::getSystemRolesIds();
 		$role = new \CCrmRole();
 		$roleDbResult = $role->GetList();
 		while($roleFields = $roleDbResult->Fetch())
 		{
 			$roleID = (int)$roleFields['ID'];
+			if (in_array($roleID, $systemRolesIds, false)) // do not affect system roles
+			{
+				continue;
+			}
 			$roleRelation = \CCrmRole::GetRolePerms($roleID);
 			if(isset($roleRelation[$permissionEntity]))
 			{

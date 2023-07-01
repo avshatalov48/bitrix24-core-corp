@@ -56,7 +56,7 @@ $arParams =& $helper->getComponent()->arParams; // make $arParams the same varia
 		\Bitrix\Tasks\Util\UserField\UI::showView($field, ['TEMPLATE' => 'checklist']);
 		$arResult['ATTACHMENTS'][$id] = ob_get_clean();
 	}
-	$arResult['ATTACHMENTS'] = ($arResult['ATTACHMENTS']?: []);
+	$arResult['ATTACHMENTS'] = (($arResult['ATTACHMENTS'] ?? null) ?: []);
 	?>
 
 	<div id="<?=$helper->getScopeId()?>" class="tasks">

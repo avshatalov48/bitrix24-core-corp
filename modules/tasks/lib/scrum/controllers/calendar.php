@@ -165,6 +165,16 @@ class Calendar extends Controller
 	 */
 	public function saveEventInfoAction(int $groupId, string $templateId, int $eventId): ?bool
 	{
+		$userId = User::getId();
+
+		$eventData = $this->getEventData($userId, $eventId);
+		if (empty($eventData['ID']))
+		{
+			return null;
+		}
+
+		$this->createChat($userId, $eventId, $eventData);
+
 		$backlogService = new BacklogService();
 
 		$backlog = $backlogService->getBacklogByGroupId($groupId);
@@ -459,25 +469,17 @@ class Calendar extends Controller
 			$chatId = \CIMChat::getEntityChat('CALENDAR', $event['id']);
 			if ($chatId === false)
 			{
-				$eventData = $this->getEventData($userId, $event['id']);
-				if (isset($eventData['ID']))
-				{
-					$chatId = $this->createChat($userId, $event['id'], $eventData);
-				}
-			}
-			if ($chatId === false)
-			{
 				continue;
 			}
 
 			$chatData = \CIMChat::getChatData(['ID' => $chatId, 'PHOTO_SIZE' => 32]);
 
-			if ($chatData['chat'][$chatId]['avatar'] === '/bitrix/js/im/images/blank.gif')
+			if (($chatData['chat'][$chatId]['avatar'] ?? null) === '/bitrix/js/im/images/blank.gif')
 			{
 				$chatData['chat'][$chatId]['avatar'] = '';
 			}
 
-			$userIds = $chatData['userInChat'][$chatId];
+			$userIds = $chatData['userInChat'][$chatId] ?? null;
 			if (is_array($userIds))
 			{
 				$usersInfo = $userService->getInfoAboutUsers($userIds);

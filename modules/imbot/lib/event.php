@@ -40,7 +40,7 @@ class Event
 	public static function onChatRead($params)
 	{
 		$botList = [];
-		$relations = \CIMChat::GetRelationById($params['CHAT_ID']);
+		$relations = \CIMChat::GetRelationById($params['CHAT_ID'], false, false, false);
 		foreach ($relations as $relation)
 		{
 			if ($relation['EXTERNAL_AUTH_ID'] === \Bitrix\Im\Bot::EXTERNAL_AUTH_ID)

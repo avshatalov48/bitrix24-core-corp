@@ -13,7 +13,6 @@ use Bitrix\Crm\Model\ItemCategoryTable;
 use Bitrix\Crm\Service;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Context;
-use Bitrix\Crm\Service\EventHistory\TrackedObject;
 use Bitrix\Crm\Service\Operation;
 use Bitrix\Crm\Settings\ContactSettings;
 use Bitrix\Crm\Statistics;
@@ -195,7 +194,7 @@ class Contact extends Service\Factory
 			],
 			Item::FIELD_NAME_LAST_NAME => [
 				'TYPE' => Field::TYPE_STRING,
-				'ATTRIBUTES' => [\CCrmFieldInfoAttr::HasDefaultValue, \CCrmFieldInfoAttr::CanNotBeEmptied],
+				'ATTRIBUTES' => [\CCrmFieldInfoAttr::HasDefaultValue],
 				'CLASS' => Field\LastName::class
 			],
 			Item::FIELD_NAME_FULL_NAME => [
@@ -243,7 +242,9 @@ class Contact extends Service\Factory
 			Item::FIELD_NAME_COMMENTS => [
 				'TYPE' => Field::TYPE_TEXT,
 				'ATTRIBUTES' => [],
-				'VALUE_TYPE' => Field::VALUE_TYPE_HTML,
+				'SETTINGS' => [
+					'isFlexibleContentType' => true,
+				],
 			],
 			Item::FIELD_NAME_OPENED => [
 				'TYPE' => Field::TYPE_BOOLEAN,
@@ -341,6 +342,11 @@ class Contact extends Service\Factory
 				'TYPE' => Field::TYPE_CRM_CATEGORY,
 				'ATTRIBUTES' => [\CCrmFieldInfoAttr::NotDisplayed, \CCrmFieldInfoAttr::HasDefaultValue],
 				'CLASS' => Field\Category::class,
+			],
+			Item::FIELD_NAME_FM => [
+				'TYPE' => Field::TYPE_CRM_MULTIFIELD,
+				'ATTRIBUTES' => [\CCrmFieldInfoAttr::Multiple],
+				'CLASS' => Field\Multifield::class,
 			],
 		];
 	}

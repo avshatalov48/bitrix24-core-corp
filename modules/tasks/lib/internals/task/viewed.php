@@ -3,12 +3,19 @@ namespace Bitrix\Tasks\Internals\Task;
 
 use Bitrix\Main;
 use Bitrix\Main\Application;
+use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Event;
+use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\SystemException;
 use Bitrix\Main\UserTable;
 use Bitrix\Main\Type\DateTime;
+use Bitrix\Tasks\Integration\CRM\Timeline;
+use Bitrix\Tasks\Integration\CRM\Timeline\Exception\TimelineException;
+use Bitrix\Tasks\Integration\CRM\TimeLineManager;
 use Bitrix\Tasks\Integration\Forum;
 use Bitrix\Tasks\Integration\Pull\PushService;
 use Bitrix\Tasks\Internals\Counter;
+use Bitrix\Tasks\Internals\Registry\TaskRegistry;
 use Bitrix\Tasks\Internals\TaskDataManager;
 use Bitrix\Tasks\Internals\TaskTable;
 use Bitrix\Tasks\MemberTable;
@@ -93,6 +100,11 @@ class ViewedTable extends TaskDataManager
 					'=this.USER_ID' => 'ref.USER_ID',
 				],
 			],
+			(new Main\Entity\BooleanField(
+				'IS_REAL_VIEW'
+			))
+				->configureValues('N', 'Y')
+				->configureDefaultValue('Y'),
 		];
 	}
 
@@ -113,23 +125,20 @@ class ViewedTable extends TaskDataManager
 		]);
 	}
 
-	/**
-	 * @param int $currentUserId
-	 * @param string $userJoin
-	 * @param string $groupCondition
-	 * @throws Main\ArgumentTypeException
-	 * @throws Main\DB\SqlQueryException
-	 */
-	public static function readAll(int $currentUserId, string $userJoin, string $groupCondition = ''): void
+	public static function getListForReadAll(int $currentUserId, string $userJoin, string $groupCondition = '', array $select = []) :? array
 	{
+		$result = [];
 		$connection = Main\Application::getConnection();
-		$sqlHelper = $connection->getSqlHelper();
 
-		$viewedDate = $sqlHelper->convertToDbDateTime(new DateTime());
+		$strSelect = "T.ID as ID\n";
+		foreach ($select as $key => $field)
+		{
+			$strSelect .= ",". $field["FIELD_NAME"]." AS ".$key."\n";
+		}
 
 		$sql = "
 			SELECT
-					T.ID as ID
+					{$strSelect}
 				FROM b_tasks T
 				INNER JOIN b_tasks_scorer TS
 					ON TS.TASK_ID = T.ID
@@ -150,10 +159,36 @@ class ViewedTable extends TaskDataManager
 						'".CounterDictionary::COUNTER_GROUP_COMMENTS."'
 					)
 		";
+
 		$res = $connection->query($sql);
 
-		$inserts = [];
 		while ($row = $res->fetch())
+		{
+			$result[] = $row;
+		}
+
+		return $result;
+	}
+
+
+	/**
+	 * @param int $currentUserId
+	 * @param string $userJoin
+	 * @param string $groupCondition
+	 * @throws Main\ArgumentTypeException
+	 * @throws Main\DB\SqlQueryException
+	 */
+	public static function readAll(int $currentUserId, string $userJoin, string $groupCondition = ''): void
+	{
+		$connection = Main\Application::getConnection();
+		$sqlHelper = $connection->getSqlHelper();
+
+		$viewedDate = $sqlHelper->convertToDbDateTime(new DateTime());
+
+		$list = static::getListForReadAll($currentUserId, $userJoin, $groupCondition);
+
+		$inserts = [];
+		foreach ($list as $row)
 		{
 			$inserts[] = '(' . (int)$row['ID'] . ', ' . $currentUserId . ', ' . $viewedDate . ')';
 		}
@@ -261,7 +296,7 @@ class ViewedTable extends TaskDataManager
 		$viewedDate = ($viewedDate ?? new DateTime());
 
 		static::onBeforeView($taskId, $userId, $viewedDate, $parameters);
-		static::viewTask($taskId, $userId, $viewedDate);
+		static::viewTask($taskId, $userId, $viewedDate, $parameters);
 		static::onAfterView($taskId, $userId, $viewedDate, $parameters);
 	}
 
@@ -289,7 +324,7 @@ class ViewedTable extends TaskDataManager
 	 * @throws Main\SystemException
 	 * @throws Exception
 	 */
-	private static function viewTask(int $taskId, int $userId, DateTime $viewedDate): void
+	private static function viewTask(int $taskId, int $userId, DateTime $viewedDate, array $parameters = []): void
 	{
 		$cacheKey = $taskId.'.'.$userId.'.'.$viewedDate->getTimestamp();
 		if (array_key_exists($cacheKey, self::$cache))
@@ -298,7 +333,7 @@ class ViewedTable extends TaskDataManager
 		}
 
 		$list = static::getList([
-			'select' => ['TASK_ID', 'USER_ID'],
+			'select' => ['TASK_ID', 'USER_ID', 'IS_REAL_VIEW'],
 			'filter' => [
 				'=TASK_ID' => $taskId,
 				'=USER_ID' => $userId,
@@ -307,7 +342,14 @@ class ViewedTable extends TaskDataManager
 
 		if ($item = $list->fetch())
 		{
-			static::update($item, ['VIEWED_DATE' => $viewedDate]);
+			$primary = ['TASK_ID' => $item['TASK_ID'], 'USER_ID' => $item['USER_ID']];
+			$params = ['VIEWED_DATE' => $viewedDate];
+			if ($item['IS_REAL_VIEW'] === 'N' && $parameters['IS_REAL_VIEW'])
+			{
+				$params['IS_REAL_VIEW'] = 'Y';
+				static::onFirstRealView($taskId, $userId);
+			}
+			static::update($primary, $params);
 		}
 		else
 		{
@@ -315,7 +357,13 @@ class ViewedTable extends TaskDataManager
 				'TASK_ID' => $taskId,
 				'USER_ID' => $userId,
 				'VIEWED_DATE' => $viewedDate,
+				'IS_REAL_VIEW' => $parameters['IS_REAL_VIEW'],
 			]);
+
+			if ($parameters['IS_REAL_VIEW'])
+			{
+				static::onFirstRealView($taskId, $userId);
+			}
 		}
 
 		self::$cache[$cacheKey] = true;
@@ -350,7 +398,6 @@ class ViewedTable extends TaskDataManager
 		];
 		$event = new Event('tasks', 'onTaskUpdateViewed', $eventParameters);
 		$event->send();
-
 		Counter\CounterService::addEvent(
 			Counter\Event\EventDictionary::EVENT_AFTER_TASK_VIEW,
 			[
@@ -358,5 +405,12 @@ class ViewedTable extends TaskDataManager
 				'USER_ID' => $userId,
 			]
 		);
+
+		(new TimeLineManager($taskId, $userId))->onTaskAllCommentViewed()->save();
+	}
+
+	private static function onFirstRealView(int $taskId, int $userId): void
+	{
+		(new TimeLineManager($taskId, $userId))->onTaskViewed()->save();
 	}
 }

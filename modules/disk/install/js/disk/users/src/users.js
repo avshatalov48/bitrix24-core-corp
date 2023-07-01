@@ -111,7 +111,7 @@ export default class Users {
 		return this.cache.remember('userContainer' + user['id'], () => {
 			return Tag.render`
 				<div class="ui-icon ui-icon-common-user disk-active-user-list-item" title="${Text.encode(user['name'])}">
-					<i ${user['avatar'] ? `style="background: url('${Text.encode(user['avatar'])}') no-repeat center; background-size: cover;" ` : ''}>
+					<i ${user['avatar'] ? `style="background: url('${encodeURI(Text.encode(user['avatar']))}') no-repeat center; background-size: cover;" ` : ''}>
 					</i>
 				</div>
 			`;
@@ -140,7 +140,7 @@ export default class Users {
 
 		const userRow = Tag.render`
 			<div class="ui-icon ui-icon-common-user disk-active-user-popup-icon">
-				<i ${user['avatar'] ? `style="background: url('${Text.encode(user['avatar'])}') no-repeat center; background-size: cover;" `: ''}>
+				<i ${user['avatar'] ? `style="background: url('${encodeURI(Text.encode(user['avatar']))}') no-repeat center; background-size: cover;" `: ''}>
 				</i>
 			</div>
 			<div class="disk-active-user-popup-name">${Text.encode(user['name'])}</div>

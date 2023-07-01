@@ -3,8 +3,9 @@ import {Action} from '../../action';
 import {Button} from '../layout/button';
 import {ButtonState} from '../enums/button-state';
 import {ButtonType} from '../enums/button-type';
-import {Browser, Runtime} from 'main.core';
+import {Browser, Runtime, Event} from 'main.core';
 import {MessageBox, MessageBoxButtons} from "ui.dialogs.messagebox";
+import {TextCrop} from 'ui.textcrop';
 
 export const Note = {
 	components: {
@@ -46,10 +47,63 @@ export const Note = {
 			isExist: !!this.id,
 			isSaving: false,
 			isDeleting: false,
+			isCollapsed: true,
+			shortNoteLength: 113,
 		}
 	},
 	inject: ['isReadOnly', 'currentUser'],
 	computed: {
+		noteText() {
+			if (this.isCollapsed)
+			{
+				return this.shortNote;
+			}
+
+			return this.note;
+		},
+
+		shortNote() {
+			if (this.note.length > this.shortNoteLength)
+			{
+				return `${this.note.slice(0, this.shortNoteLength)}...`;
+			}
+			else if (this.getNoteLineBreaksCount() > 2) {
+				let currentLineBreakerCount = 0;
+				for (let letterIndex = 0; letterIndex < this.note.length; letterIndex++)
+				{
+					const letter = this.note[letterIndex];
+					if (letter !== '\n')
+					{
+						continue;
+					}
+
+					currentLineBreakerCount++;
+
+					if (currentLineBreakerCount === this.maxLineBreakerCount)
+					{
+						return `${this.note.slice(0, letterIndex)}...`;
+					}
+				}
+			}
+
+			return this.note;
+		},
+
+		maxLineBreakerCount()
+		{
+			return 3;
+		},
+
+		expandNoteBtnText() {
+			if (this.isCollapsed)
+			{
+				return this.$Bitrix.Loc.getMessage('CRM_TIMELINE_ITEM_NOTE_SHOW');
+			}
+			else
+			{
+				return this.$Bitrix.Loc.getMessage('CRM_TIMELINE_ITEM_NOTE_HIDE');
+			}
+		},
 		ButtonType()
 		{
 			return ButtonType;
@@ -57,7 +111,7 @@ export const Note = {
 
 		isDeleteButtonVisible()
 		{
-			return this.isEdit && !(this.isReadOnly || this.isSaving)
+			return !(this.isReadOnly);
 		},
 
 		isEditButtonVisible()
@@ -94,8 +148,7 @@ export const Note = {
 			return this.isExist || this.isEdit;
 		},
 
-		user()
-		{
+		user() {
 			if (this.updatedBy)
 			{
 				return this.updatedBy;
@@ -109,13 +162,22 @@ export const Note = {
 				detailUrl: '',
 				imageUrl: '',
 			};
+		},
+
+		isShowExpandBtn() {
+			return !this.isEdit && (this.note.length >  this.shortNoteLength || this.getNoteLineBreaksCount() > 2);
 		}
 	},
 	methods: {
+		toggleNoteLength() {
+			this.isCollapsed = !this.isCollapsed;
+		},
+
 		startEditing()
 		{
 			this.isEdit = true;
 			this.$nextTick(() => {
+				this.isCollapsed = false;
 				const textarea = this.$refs.noteText;
 				this.adjustHeight(textarea);
 				textarea.focus();
@@ -230,6 +292,11 @@ export const Note = {
 
 		executeDeleteAction()
 		{
+			if (this.isSaving)
+			{
+				return;
+			}
+
 			this.isDeleting = true;
 
 			this.executeAction(this.deleteNoteAction).then(({status}) =>
@@ -257,6 +324,25 @@ export const Note = {
 			const action = new Action(actionObject);
 			return action.execute(this);
 		},
+
+		handleWindowResize() {
+			const windowWidth = window.innerWidth;
+
+			if (windowWidth > 1400)
+			{
+				this.shortNoteLength = 250;
+			}
+			else
+			{
+				this.shortNoteLength = 113;
+			}
+		},
+
+		getNoteLineBreaksCount() {
+			return this.note.split('').reduce((counter, elem) => {
+				return counter + (elem === '\n' ? 1 : 0);
+			}, 0);
+		}
 	},
 	watch: {
 		id(id)
@@ -289,59 +375,80 @@ export const Note = {
 			}
 		}
 	},
-	template: `
-		<div class="crm-timeline__card-note" v-show="isNoteVisible">
-		<div class="crm-timeline__card-note_user">
-			<User v-bind="user"></User>
-		</div>
-		<div class="crm-timeline__card-note_area">
-			<div class="crm-timeline__card-note_value">
-					<textarea
-						v-if="isEdit"
-						v-model="note"
-						@keydown.esc="cancelEditing"
-						@keydown.enter="onEnterHandle"
-						:disabled="!isEdit || isSaving"
-						:placeholder="$Bitrix.Loc.getMessage('CRM_TIMELINE_USER_NOTE_PLACEHOLDER')"
-						ref="noteText"
-						class="crm-timeline__card-note_text"
-					></textarea>
-					<span
-						v-else
-						class="crm-timeline__card-note_text"
-					>
-						{{note}}
-					</span>
 
-				<span
-					v-if="isEditButtonVisible"
-					class="crm-timeline__card-note_edit"
-					@click.prevent.stop="startEditing"
-				>
-						<i></i>
-					</span>
+	created() {
+		this.handleWindowResize();
+		Event.bind(window, 'resize', this.handleWindowResize);
+	},
+
+	destroyed() {
+		Event.unbind(window, 'resize', this.handleWindowResize);
+	},
+
+	template: `
+		<div
+			v-show="isNoteVisible"
+			class="crm-timeline__card-note"
+		>
+			<div class="crm-timeline__card-note_user">
+				<User v-bind="user"></User>
 			</div>
-			<div v-if="isEdit" class="crm-timeline__card-note__controls">
-				<div class="crm-timeline__card-note__control --save">
-					<Button
-						@click="saveNote"
-						:state="saveButtonState" :type="ButtonType.PRIMARY"
-						:title="$Bitrix.Loc.getMessage('CRM_TIMELINE_USER_NOTE_SAVE')"
-					/>
+			<div class="crm-timeline__card-note_area">
+				<div class="crm-timeline__card-note_value">
+						<textarea
+							v-if="isEdit"
+							v-model="note"
+							@keydown.esc.stop="cancelEditing"
+							@keydown.enter="onEnterHandle"
+							:disabled="!isEdit || isSaving"
+							:placeholder="$Bitrix.Loc.getMessage('CRM_TIMELINE_USER_NOTE_PLACEHOLDER')"
+							ref="noteText"
+							class="crm-timeline__card-note_text"
+						></textarea>
+						<span
+							v-else
+							ref="noteText"
+							class="crm-timeline__card-note_text"
+						>
+							{{noteText}}
+						</span>
+	
+					<span
+						v-if="isEditButtonVisible"
+						class="crm-timeline__card-note_edit"
+						@click.prevent.stop="startEditing"
+					>
+							<i></i>
+						</span>
 				</div>
-				<div class="crm-timeline__card-note__control --cancel">
-					<Button @click="cancelEditing"
-							:type="ButtonType.LIGHT"
-							:state="cancelButtonState"
-							:title="$Bitrix.Loc.getMessage('CRM_TIMELINE_USER_NOTE_CANCEL')"
-					/>
+				<div v-if="isEdit" class="crm-timeline__card-note__controls">
+					<div class="crm-timeline__card-note__control --save">
+						<Button
+							@click="saveNote"
+							:state="saveButtonState" :type="ButtonType.PRIMARY"
+							:title="$Bitrix.Loc.getMessage('CRM_TIMELINE_USER_NOTE_SAVE')"
+						/>
+					</div>
+					<div class="crm-timeline__card-note__control --cancel">
+						<Button @click="cancelEditing"
+								:type="ButtonType.LIGHT"
+								:state="cancelButtonState"
+								:title="$Bitrix.Loc.getMessage('CRM_TIMELINE_USER_NOTE_CANCEL')"
+						/>
+					</div>
 				</div>
 			</div>
-		</div>
-		<div v-if="isDeleteButtonVisible" class="crm-timeline__card-note_cross" @click="deleteNote">
-			<i></i>
-		</div>
-		<div v-if="isDeleting" class="crm-timeline__card-note_dimmer"></div>
+			<div v-if="isDeleteButtonVisible" class="crm-timeline__card-note_cross" @click="deleteNote">
+				<i></i>
+			</div>
+			<div v-if="isDeleting" class="crm-timeline__card-note_dimmer"></div>
+			<div
+				v-show="isShowExpandBtn"
+				@click="toggleNoteLength"
+				class="crm-timeline__card-note_expand-note-btn"
+			>
+				{{ expandNoteBtnText }}
+			</div>
 		</div>
 	`
 };

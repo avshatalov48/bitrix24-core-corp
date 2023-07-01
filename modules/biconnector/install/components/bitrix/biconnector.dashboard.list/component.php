@@ -1,19 +1,19 @@
 <?php
-if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
-{
-	die();
-}
-
 /**
- * Bitrix vars
- * @global CUser $USER
- * @global CMain $APPLICATION
+ * @var CMain $APPLICATION
+ * @var CUser $USER
  * @var array $arParams
  * @var array $arResult
  * @var CBitrixComponent $this
  */
 
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Web\Uri;
 
 $arResult['CAN_WRITE'] = $USER->CanDoOperation('biconnector_dashboard_manage');
 $arResult['CAN_READ'] = $arResult['CAN_WRITE'] || $USER->CanDoOperation('biconnector_dashboard_view');
@@ -58,7 +58,7 @@ $arResult['ROWS'] = [];
 $filter = [];
 if (!$arResult['CAN_WRITE'])
 {
-	$filter['=PERMISSION.USER_ID'] = $USER->getId();
+	$filter['=PERMISSION.USER_ID'] = $USER->GetID();
 }
 
 $keyList = \Bitrix\BIConnector\DashboardTable::getList([
@@ -105,7 +105,7 @@ while ($data = $keyList->fetch())
 	{
 		$userEmptyAvatar = '';
 		$photoUrl = $fileInfo['src'];
-		$userAvatar = ' style="background-image: url(\'' . $photoUrl . '\')"';
+		$userAvatar = ' style="background-image: url(\'' . Uri::urnEncode($photoUrl) . '\')"';
 	}
 
 	$userNameElement = '<span class="dashboard-grid-avatar ui-icon ui-icon-common-user' . $userEmptyAvatar . '">'
@@ -120,8 +120,8 @@ while ($data = $keyList->fetch())
 	$url = str_replace('#ID#', urlencode($data['ID']), $arParams['DASHBOARD_VIEW_URL']);
 
 	$displayUrl = mb_strlen($data['URL']) > 100 ? mb_substr($data['URL'], 0, 97) . '...' : $data['URL'];
-	$data['URL'] = '<a href="' . htmlspecialcharsBx('javascript:BX.SidePanel.Instance.open(\'' . CUtil::JSEscape($url) . '\')') . '">' . htmlspecialcharsEx($displayUrl) . '</a>';
-	$data['DATE_CREATE'] = preg_replace('/([0-9]{2}:[0-9]{2}):[0-9]{2}/', '\\1', $data['DATE_CREATE']);
+	$data['URL'] = '<a href="' . htmlspecialcharsbx('javascript:BX.SidePanel.Instance.open(\'' . CUtil::JSEscape($url) . '\')') . '">' . htmlspecialcharsEx($displayUrl) . '</a>';
+	$data['DATE_CREATE'] = preg_replace('/(\d{2}:\d{2}):\d{2}/', '\\1', $data['DATE_CREATE']);
 	$data['NAME'] = htmlspecialcharsEx($data['NAME']);
 
 	$actions = [];
@@ -157,4 +157,4 @@ while ($data = $keyList->fetch())
 	];
 }
 
-$this->IncludeComponentTemplate();
+$this->includeComponentTemplate();

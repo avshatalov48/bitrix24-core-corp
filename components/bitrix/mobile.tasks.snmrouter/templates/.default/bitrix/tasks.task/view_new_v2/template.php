@@ -58,9 +58,16 @@ $task['~STATUS'] = $task['STATUS'];
 $task['STATUS'] = (empty($status) ? Loc::getMessage('TASKS_STATUS_STATE_UNKNOWN') : $status);
 $task['PRIORITY'] = ((int)$task["PRIORITY"] === CTasks::PRIORITY_HIGH ? CTasks::PRIORITY_HIGH : CTasks::PRIORITY_LOW);
 
-$timerTask = ($task["ALLOW_TIME_TRACKING"] === "Y" ? CTaskTimerManager::getInstance($USER->getId())->getRunningTask(false) : []);
-$timerTask = is_array($timerTask) ? $timerTask : [];
-if ($timerTask['TASK_ID'] === $taskId)
+$timerTask = (
+	$task['ALLOW_TIME_TRACKING'] === 'Y'
+		? CTaskTimerManager::getInstance($USER->getId())->getRunningTask(false)
+		: []
+);
+$timerTask = (is_array($timerTask) ? $timerTask : ['TASK_ID' => null]);
+if (
+	array_key_exists('TASK_ID', $timerTask)
+	&& (int)$timerTask['TASK_ID'] === (int)$taskId
+)
 {
 	$task["TIME_SPENT_IN_LOGS"] += $timerTask['RUN_TIME'];
 }
@@ -413,13 +420,16 @@ $component->arResult["HTML"] = [
 <div id="task-block"><?=$taskHtml?>
 	<?php
 	$voteId = HtmlFilter::encode("TASK".'_'.$taskId.'-'.(time() + random_int(0, 1000)));
-	$userReaction = $arResult["RATING"][$arResult["Post"]["ID"]]["USER_REACTION"];
+	$userReaction = (
+		isset($arResult['Post']['ID'])
+			? $arResult['RATING'][$arResult['Post']['ID']]['USER_REACTION']
+			: []
+	);
 	$emotion = (!empty($userReaction)? mb_strtoupper($userReaction) : 'LIKE');
-
-	$userHasVoted = isset($templateData["RATING"]["USER_HAS_VOTED"]) && $templateData["RATING"]["USER_HAS_VOTED"] === 'Y';
-	$totalVotes = (int)$templateData["RATING"]["TOTAL_VOTES"];
-	$totalPositiveVotes = (int)$templateData["RATING"]["TOTAL_POSITIVE_VOTES"];
-	$totalNegativeVotes = (int)$templateData["RATING"]["TOTAL_NEGATIVE_VOTES"];
+	$userHasVoted = (isset($templateData['RATING']['USER_HAS_VOTED']) && $templateData['RATING']['USER_HAS_VOTED'] === 'Y');
+	$totalVotes = (int)($templateData['RATING']['TOTAL_VOTES'] ?? null);
+	$totalPositiveVotes = (int)($templateData['RATING']['TOTAL_POSITIVE_VOTES'] ?? null);
+	$totalNegativeVotes = (int)($templateData['RATING']['TOTAL_NEGATIVE_VOTES'] ?? null);
 	?>
 	<div class="post-item-inform-wrap-tree" id="rating-footer-wrap">
 		<div class="feed-post-emoji-top-panel-outer">
@@ -434,15 +444,15 @@ $component->arResult["HTML"] = [
 						"ENTITY_TYPE_ID" => "TASK",
 						"ENTITY_ID" => $taskId,
 						"OWNER_ID" => $task["CREATED_BY"],
-						"USER_VOTE" => $templateData["RATING"]["USER_VOTE"],
-						"USER_REACTION" => $arResult["RATING"]["USER_REACTION"],
-						"USER_HAS_VOTED" => $templateData["RATING"]["USER_HAS_VOTED"],
+						"USER_VOTE" => ($templateData["RATING"]["USER_VOTE"] ?? null),
+						"USER_REACTION" => ($arResult["RATING"]["USER_REACTION"] ?? null),
+						"USER_HAS_VOTED" => ($templateData["RATING"]["USER_HAS_VOTED"] ?? null),
 						"TOTAL_VOTES" => $totalVotes,
 						"TOTAL_POSITIVE_VOTES" => $totalPositiveVotes,
 						"TOTAL_NEGATIVE_VOTES" => $totalNegativeVotes,
-						"TOTAL_VALUE" => $templateData["RATING"]["TOTAL_VALUE"],
-						"REACTIONS_LIST" => $arResult["RATING"]["REACTIONS_LIST"],
-						"PATH_TO_USER_PROFILE" => $arParams["~PATH_TO_USER"],
+						"TOTAL_VALUE" => ($templateData["RATING"]["TOTAL_VALUE"] ?? null),
+						"REACTIONS_LIST" => ($arResult["RATING"]["REACTIONS_LIST"] ?? null),
+						"PATH_TO_USER_PROFILE" => ($arParams["~PATH_TO_USER"] ?? null),
 						'TOP_DATA' => (!empty($arResult['TOP_RATING_DATA']) ? $arResult['TOP_RATING_DATA'] : false),
 						'VOTE_ID' => $voteId,
 						'TYPE' => 'POST'

@@ -1,4 +1,4 @@
-import { ajax, Type } from 'main.core';
+import { ajax, Type, Dom } from 'main.core';
 import {rest as Rest} from 'rest.client';
 import { UI } from 'ui.notification';
 import { Menu } from "./components/layout/menu";
@@ -55,6 +55,7 @@ export class Action
 	#value: string | Object  = null;
 	#actionParams: ?Object = null;
 	#animation: ?AnimationParams = null;
+	#analytics: ?Object = null;
 
 	constructor(params)
 	{
@@ -62,9 +63,10 @@ export class Action
 		this.#value = params.value;
 		this.#actionParams = params.actionParams;
 		this.#animation = Type.isPlainObject(params.animation) ? params.animation : null;
+		this.#analytics = Type.isPlainObject(params.analytics) ? params.analytics : null;
 	}
 
-	execute(vueComponent): void
+	execute(vueComponent): Promise
 	{
 		return new Promise((resolve, reject) => {
 			if (this.isJsEvent())
@@ -79,6 +81,8 @@ export class Action
 					}
 				});
 
+				this.#sendAnalytics();
+
 				resolve(true);
 			}
 			else if (this.isJsCode())
@@ -86,6 +90,7 @@ export class Action
 				this.#startAnimation(vueComponent);
 				eval(this.#value);
 				this.#stopAnimation(vueComponent);
+				this.#sendAnalytics();
 				resolve(true);
 			}
 			else if (this.isAjaxAction())
@@ -96,11 +101,13 @@ export class Action
 					actionType: ActionType.AJAX_ACTION.STARTED,
 					actionData: this.#actionParams,
 				});
+
 				ajax.runAction(
 					this.#value,
 					{
 						data: this.#prepareRunActionParams(this.#actionParams),
-					}
+						analyticsLabel: this.#analytics,
+					},
 				).then(
 					(response) =>
 					{
@@ -115,7 +122,7 @@ export class Action
 					},
 					(response) =>
 					{
-						this.#stopAnimation(vueComponent);
+						this.#stopAnimation(vueComponent, true);
 						UI.Notification.Center.notify({
 							content: response.errors[0].message,
 							autoHideDelay: 5000,
@@ -177,14 +184,28 @@ export class Action
 			else if (this.isRedirect())
 			{
 				this.#startAnimation(vueComponent);
+
+				const linkAttrs = {
+					href: this.#value,
+				};
 				if (this.#actionParams && this.#actionParams.target)
 				{
-					window.open(this.#value, this.#actionParams.target);
+					linkAttrs.target = this.#actionParams.target;
 				}
-				else
-				{
-					location.href = this.#value;
-				}
+				// this magic allows auto opening internal links in slider if possible:
+				const link = Dom.create('a', {
+					attrs: linkAttrs,
+					text: '',
+					style: {
+						display: 'none',
+					},
+				});
+				Dom.append(link, document.body);
+				link.click();
+				setTimeout(() => Dom.remove(link), 10);
+
+				this.#sendAnalytics();
+
 				resolve(this.#value);
 			}
 			else if (this.isShowMenu())
@@ -198,6 +219,8 @@ export class Action
 						minWidth: vueComponent.$el.offsetWidth,
 					}
 				);
+
+				this.#sendAnalytics();
 
 				resolve(true);
 			}
@@ -240,6 +263,14 @@ export class Action
 	getValue(): string | Object
 	{
 		return this.#value;
+	}
+
+	getActionParam(param: string)
+	{
+		return this.#actionParams && this.#actionParams.hasOwnProperty(param)
+			? this.#actionParams[param]
+			: null
+		;
 	}
 
 	#prepareRunActionParams(params): Object
@@ -334,13 +365,13 @@ export class Action
 		}
 	}
 
-	#stopAnimation(vueComponent)
+	#stopAnimation(vueComponent, force = false)
 	{
 		if (!this.#isAnimationValid())
 		{
 			return;
 		}
-		if (this.#animation.forever)
+		if (this.#animation.forever && !force)
 		{
 			return; // should not be stopped
 		}
@@ -391,5 +422,19 @@ export class Action
 		}
 
 		return true;
+	}
+
+	#sendAnalytics()
+	{
+		if (this.#analytics && this.#analytics.hit)
+		{
+			ajax.runAction(
+				this.#analytics.hit,
+				{
+					data: {},
+					analyticsLabel: this.#analytics,
+				},
+			);
+		}
 	}
 }

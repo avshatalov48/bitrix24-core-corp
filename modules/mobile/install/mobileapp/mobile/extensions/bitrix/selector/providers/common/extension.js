@@ -1,9 +1,12 @@
-(() => {
+/**
+ * @module selector/providers/common
+ */
+jn.define('selector/providers/common', (require, exports, module) => {
 
-	const { mergeImmutable } = jn.require('utils/object');
-	const { uniqBy, unique } = jn.require('utils/array');
-	const { debounce } = jn.require('utils/function');
-	const { stringify } = jn.require('utils/string');
+	const { mergeImmutable } = require('utils/object');
+	const { uniqBy, unique } = require('utils/array');
+	const { debounce } = require('utils/function');
+	const { stringify } = require('utils/string');
 
 	const specialChars = `!"#$%&'()*+,-.\/:;<=>?@[\\]^_\`{|}`;
 	const specialCharsRegExp = new RegExp(`[${specialChars}]`, 'g');
@@ -17,8 +20,8 @@
 				'meta-user': '#dbf188',
 				group: '#ade7e4',
 				project: '#ade7e4',
-				'project-tag': '#b8c0c9',
-				'task-tag': '#b8c0c9',
+				'project-tag': '#bdc1c6',
+				'task-tag': '#bdc1c6',
 				groupExtranet: '#ffa900',
 				department: '#e2e3e5',
 				section: '#ccbcbe',
@@ -29,7 +32,9 @@
 				deal: '#8c78ef',
 				contact: '#9dcf00',
 				company: '#e89b06',
+				quote: '#00b4ac',
 				smart_invoice: '#1e6ec2',
+				order: '#af9245',
 				dynamic: '#5095de',
 				default: '#ccbcbe',
 			},
@@ -67,7 +72,7 @@
 	/**
 	 * @class CommonSelectorProvider
 	 */
-	class CommonProvider extends BaseSelectorProvider
+	class CommonSelectorProvider extends BaseSelectorProvider
 	{
 		constructor(context, options = {})
 		{
@@ -830,5 +835,5 @@
 		}
 	}
 
-	window.CommonSelectorProvider = CommonProvider;
-})();
+	module.exports = { CommonSelectorProvider };
+});

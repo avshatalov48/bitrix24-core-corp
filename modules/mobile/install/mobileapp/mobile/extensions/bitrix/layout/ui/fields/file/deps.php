@@ -14,5 +14,6 @@ return [
 		'utils/function',
 		'utils/object',
 		'utils/uuid',
+		'utils/file',
 	],
 ];

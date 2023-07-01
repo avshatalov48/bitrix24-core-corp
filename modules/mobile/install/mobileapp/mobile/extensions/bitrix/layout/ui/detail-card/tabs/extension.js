@@ -2,8 +2,6 @@
  * @module layout/ui/detail-card/tabs
  */
 jn.define('layout/ui/detail-card/tabs', (require, exports, module) => {
-
-	const { animate } = require('animation/effects/skeleton');
 	const { EventEmitter } = require('event-emitter');
 	const { TabLoaderFactory } = require('layout/ui/detail-card/tabs/loader-factory');
 	const { PureComponent } = require('layout/pure-component');
@@ -18,6 +16,7 @@ jn.define('layout/ui/detail-card/tabs', (require, exports, module) => {
 	};
 
 	/**
+	 * @abstract
 	 * @class Tab
 	 */
 	class Tab extends PureComponent
@@ -35,12 +34,12 @@ jn.define('layout/ui/detail-card/tabs', (require, exports, module) => {
 			const { result } = props;
 			this.initializeState(result);
 
-			this.layout = props.layout || layout;
 			this.active = false;
 
-			this.loadingAnimation = null;
-
 			this.scrollTop = throttle(this.scrollTop, 500, this);
+			this.handleFloatingMenuAction = this.handleFloatingMenuAction.bind(this);
+
+			this.customEventEmitter.on('DetailCard.FloatingMenu.Item::onAction', this.handleFloatingMenuAction);
 		}
 
 		componentWillReceiveProps(props)
@@ -55,7 +54,7 @@ jn.define('layout/ui/detail-card/tabs', (require, exports, module) => {
 
 		componentDidUpdate(prevProps, prevState)
 		{
-			if (this.inDoneStatus())
+			if (this.isDoneStatus())
 			{
 				const { result } = this.state;
 
@@ -63,8 +62,6 @@ jn.define('layout/ui/detail-card/tabs', (require, exports, module) => {
 				{
 					this.props.onContentLoaded(result);
 				}
-
-				clearInterval(this.loadingAnimation);
 			}
 		}
 
@@ -91,6 +88,11 @@ jn.define('layout/ui/detail-card/tabs', (require, exports, module) => {
 			}
 		}
 
+		get editor()
+		{
+			return this.props.editor;
+		}
+
 		getId()
 		{
 			return this.props.id;
@@ -114,17 +116,17 @@ jn.define('layout/ui/detail-card/tabs', (require, exports, module) => {
 			return this.props.payload;
 		}
 
-		inInitialStatus()
+		isInitialStatus()
 		{
 			return this.state.status === Status.INITIAL;
 		}
 
-		inFetchingStatus()
+		isFetchingStatus()
 		{
 			return this.state.status === Status.FETCHING;
 		}
 
-		inDoneStatus()
+		isDoneStatus()
 		{
 			return this.state.status === Status.DONE;
 		}
@@ -145,24 +147,23 @@ jn.define('layout/ui/detail-card/tabs', (require, exports, module) => {
 			return this.active;
 		}
 
-		fetch(extraPayload = {})
+		fetchIfNeeded(extraPayload = {})
 		{
 			if (this.state.status !== Status.INITIAL)
 			{
 				return;
 			}
 
+			this.fetch(extraPayload);
+		}
+
+		fetch(extraPayload = {})
+		{
 			if (this.props.endpoint)
 			{
 				this.customEventEmitter.emit('DetailCard::onSaveLock', [true]);
 
 				this.setState({ status: Status.FETCHING }, () => {
-					if (this.loaderRef)
-					{
-						clearInterval(this.loadingAnimation);
-						this.loadingAnimation = animate(this.loaderRef);
-					}
-
 					BX.ajax.runAction(this.props.endpoint, {
 						json: {
 							...this.props.payload,
@@ -259,7 +260,7 @@ jn.define('layout/ui/detail-card/tabs', (require, exports, module) => {
 			else if (this.state.status === Status.DONE)
 			{
 				return [
-					this.renderCustomLoader(),
+					this.renderCustomShimmer(),
 					this.renderResult(),
 				];
 			}
@@ -282,10 +283,10 @@ jn.define('layout/ui/detail-card/tabs', (require, exports, module) => {
 
 		renderLoader()
 		{
-			const customLoader = this.renderCustomLoader();
-			if (customLoader)
+			const customShimmer = this.renderCustomShimmer();
+			if (customShimmer)
 			{
-				return customLoader;
+				return customShimmer;
 			}
 
 			return View(
@@ -300,35 +301,17 @@ jn.define('layout/ui/detail-card/tabs', (require, exports, module) => {
 		}
 
 		/**
-		 * @returns {View|null}
+		 * @returns {LayoutComponent|null}
 		 */
-		renderCustomLoader()
+		renderCustomShimmer()
 		{
-			const loaderContent = TabLoaderFactory.createLoader(this.getType(), this.getLoaderProps());
-
-			if (loaderContent)
-			{
-				return View(
-					{
-						style: {
-							position: 'absolute',
-							top: 0,
-							left: 0,
-							right: 0,
-							display: this.inDoneStatus() ? 'none' : 'flex',
-						},
-					},
-					loaderContent,
-				);
-			}
-
-			return null;
+			return TabLoaderFactory.createLoader(this.getType(), this.getLoaderProps());
 		}
 
 		getLoaderProps()
 		{
 			return {
-				onRef: (ref) => this.loaderRef = ref,
+				animating: this.isFetchingStatus(),
 			};
 		}
 
@@ -339,6 +322,23 @@ jn.define('layout/ui/detail-card/tabs', (require, exports, module) => {
 		renderResult()
 		{
 			return null;
+		}
+
+		/**
+		 * @return {FloatingMenuItem[]}
+		 */
+		getFloatingMenuItems()
+		{
+			return [];
+		}
+
+		/**
+		 * @param {string} actionId
+		 * @param {string} tabId
+		 * @return void
+		 */
+		handleFloatingMenuAction({ actionId, tabId })
+		{
 		}
 	}
 

@@ -2,7 +2,6 @@
  * @module crm/timeline/action
  */
 jn.define('crm/timeline/action', (require, exports, module) => {
-
 	const { JsEventAction } = require('crm/timeline/action/js-event');
 	const { AjaxAction } = require('crm/timeline/action/ajax');
 	const { RedirectAction } = require('crm/timeline/action/redirect');
@@ -16,15 +15,16 @@ jn.define('crm/timeline/action', (require, exports, module) => {
 		showMenu: ShowMenuAction,
 	};
 
-    /**
-     * @class TimelineAction
-     */
-    class TimelineAction
-    {
-		static make({ type, value, actionParams, source, entity })
+	/**
+	 * @class TimelineAction
+	 */
+	class TimelineAction
+	{
+		static make(params = {})
 		{
+			const { type } = params;
 			const factory = this;
-			const props = { value, actionParams, source, entity, factory };
+			const props = { ...params, factory};
 
 			if (SupportedActions[type])
 			{
@@ -34,13 +34,12 @@ jn.define('crm/timeline/action', (require, exports, module) => {
 			return new NullAction(props);
 		}
 
-		static execute({ type, value, actionParams, source, entity })
+		static execute(params = {})
 		{
-			const action = TimelineAction.make({ type, value, actionParams, source, entity });
+			const action = TimelineAction.make(params);
 			return action.execute();
 		}
-    }
+	}
 
-    module.exports = { TimelineAction, SupportedActions };
-
+	module.exports = { TimelineAction, SupportedActions };
 });

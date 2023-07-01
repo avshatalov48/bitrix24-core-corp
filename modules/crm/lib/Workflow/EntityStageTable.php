@@ -11,6 +11,19 @@ use Bitrix\Main\Type;
 
 /**
  * ORM class represents current entity stages
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_EntityStage_Query query()
+ * @method static EO_EntityStage_Result getByPrimary($primary, array $parameters = [])
+ * @method static EO_EntityStage_Result getById($id)
+ * @method static EO_EntityStage_Result getList(array $parameters = [])
+ * @method static EO_EntityStage_Entity getEntity()
+ * @method static \Bitrix\Crm\Workflow\EO_EntityStage createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Workflow\EO_EntityStage_Collection createCollection()
+ * @method static \Bitrix\Crm\Workflow\EO_EntityStage wakeUpObject($row)
+ * @method static \Bitrix\Crm\Workflow\EO_EntityStage_Collection wakeUpCollection($rows)
  */
 final class EntityStageTable extends ORM\Data\DataManager
 {
@@ -55,7 +68,7 @@ final class EntityStageTable extends ORM\Data\DataManager
 	/**
 	 * Simple helper creates new record or updates existing.
 	 * Returns successfull UpdateResult with zero-changed rows if payment already in needed stage.
-	 * 
+	 *
 	 * @param int $entityId
 	 * @param string $workflowCode
 	 * @param string $nextStage

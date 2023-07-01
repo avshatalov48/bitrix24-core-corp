@@ -13,9 +13,9 @@ use Bitrix\Main\Type\Date;
  *
  * <<< ORMENTITYANNOTATION
  * @method static EO_DealInvoiceStatistics_Query query()
- * @method static EO_DealInvoiceStatistics_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_DealInvoiceStatistics_Result getByPrimary($primary, array $parameters = [])
  * @method static EO_DealInvoiceStatistics_Result getById($id)
- * @method static EO_DealInvoiceStatistics_Result getList(array $parameters = array())
+ * @method static EO_DealInvoiceStatistics_Result getList(array $parameters = [])
  * @method static EO_DealInvoiceStatistics_Entity getEntity()
  * @method static \Bitrix\Crm\Statistics\Entity\EO_DealInvoiceStatistics createObject($setDefaultValues = true)
  * @method static \Bitrix\Crm\Statistics\Entity\EO_DealInvoiceStatistics_Collection createCollection()

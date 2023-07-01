@@ -8,6 +8,8 @@
 
 use Bitrix\Main\Text\Emoji;
 use Bitrix\Tasks\Kanban\StagesTable;
+use Bitrix\Tasks\Scrum\Service\KanbanService;
+use Bitrix\Tasks\Scrum\Service\SprintService;
 
 class CTaskLog
 {
@@ -84,7 +86,8 @@ class CTaskLog
 		&$arFields, $ID = false
 	)
 	{
-		if ((string)$arFields['CREATED_DATE'] == '') {
+		if ((string)($arFields['CREATED_DATE'] ?? null) == '')
+		{
 			$arFields['CREATED_DATE'] = \Bitrix\Tasks\Util\Type\DateTime::getCurrentTimeString();
 		}
 
@@ -104,14 +107,14 @@ class CTaskLog
 				$createdDate = new Bitrix\Main\Type\DateTime();
 			}
 
-			$addResult = \Bitrix\Tasks\Internals\Task\LogTable::add(array(
+			$addResult = \Bitrix\Tasks\Internals\Task\LogTable::add([
 				'CREATED_DATE' => $createdDate,
 				'USER_ID' => $arFields["USER_ID"],
 				'TASK_ID' => $arFields["TASK_ID"],
 				'FIELD' => $arFields["FIELD"],
-				'FROM_VALUE' => $arFields["FROM_VALUE"],
-				'TO_VALUE' => $arFields["TO_VALUE"],
-			));
+				'FROM_VALUE' => ($arFields["FROM_VALUE"] ?? null),
+				'TO_VALUE' => ($arFields["TO_VALUE"] ?? null),
+			]);
 
 			if ($addResult->isSuccess())
 			{
@@ -253,7 +256,7 @@ class CTaskLog
 
 		foreach ($newFields as $key => $value)
 		{
-			if (array_key_exists($key, $comparedFields) && $currentFields[$key] != $newFields[$key])
+			if (array_key_exists($key, $comparedFields) && ($currentFields[$key] ?? null) != ($newFields[$key] ?? null))
 			{
 				if (!array_key_exists($key, $currentFields) || !array_key_exists($key, $newFields))
 				{
@@ -372,6 +375,34 @@ class CTaskLog
 		if ($newGroupId !== $oldGroupId)
 		{
 			return [];
+		}
+
+		$isScrum = false;
+		if (\Bitrix\Main\Loader::includeModule('socialnetwork'))
+		{
+			$group = \Bitrix\Socialnetwork\Item\Workgroup::getById($newGroupId);
+			$isScrum = ($group && $group->isScrumProject());
+		}
+
+		if ($isScrum)
+		{
+			$kanbanService = new KanbanService();
+
+			if (!$oldStageId && $oldGroupId)
+			{
+				$sprintService = new SprintService();
+
+				$sprint = $sprintService->getActiveSprintByGroupId($newGroupId);
+
+				$oldStageId = (int) $kanbanService->getDefaultStageId($sprint->getId());
+			}
+
+			$stageTitles = $kanbanService->getStageTitles([$newStageId, $oldStageId]);
+
+			return [
+				'FROM_VALUE' => $stageTitles[$oldStageId],
+				'TO_VALUE' => $stageTitles[$newStageId],
+			];
 		}
 
 		if (!$oldStageId && $oldGroupId)

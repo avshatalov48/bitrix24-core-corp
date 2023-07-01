@@ -46,9 +46,9 @@ class Reader
 	 * Prepare entities: convert string entity types to number, group by type and extract IDs
 	 * @param array $entities
 	 *
-	 * @return Reader
+	 * @return self
 	 */
-	private function prepareEntities(array $entities): Reader
+	private function prepareEntities(array $entities): self
 	{
 		$mappedEntities = array_map(static function($entity){
 			if (is_string($entity['ENTITY_TYPE']))
@@ -78,7 +78,7 @@ class Reader
 	/**
 	 * Get all types except contacts and companies
 	 */
-	private function getNonContactsAndCompanies(): Reader
+	private function getNonContactsAndCompanies(): self
 	{
 		foreach ($this->typedEntities as $entityTypeId => $entityIds)
 		{
@@ -139,7 +139,7 @@ class Reader
 	 * Get contacts info
 	 * @throws \Exception
 	 */
-	private function getContacts(): Reader
+	private function getContacts(): self
 	{
 		\Bitrix\Main\Type\Collection::normalizeArrayValuesByInt($this->contactIds);
 		if (empty($this->contactIds))
@@ -178,7 +178,7 @@ class Reader
 	 * Get companies info
 	 * @throws \Exception
 	 */
-	private function getCompanies(): Reader
+	private function getCompanies(): self
 	{
 		\Bitrix\Main\Type\Collection::normalizeArrayValuesByInt($companyIds);
 		if (empty($this->companyIds))
@@ -216,7 +216,7 @@ class Reader
 	/**
 	 * Get all multifields
 	 */
-	private function getMultiFields(): Reader
+	private function getMultiFields(): self
 	{
 		$filter = \Bitrix\Crm\FieldMultiTable::prepareFilter($this->multiFields);
 		$multiFieldsCollection = \Bitrix\Crm\FieldMultiTable::getList([

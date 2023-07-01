@@ -100,20 +100,26 @@ foreach($arResult['ITEMS'] as &$item)
 
 	if($isEditable)
 	{
-		if($item['CAN_EDIT'] && ($itemTypeID === CCrmActivityType::Call || $itemTypeID === CCrmActivityType::Meeting ||
-				(
+		if (
+			$item['CAN_EDIT']
+			&& (
+				$itemTypeID === CCrmActivityType::Call || $itemTypeID === CCrmActivityType::Meeting
+				|| (
 					$itemTypeID === CCrmActivityType::Provider
 					&& $provider
 					&& $provider::isTypeEditable($item['PROVIDER_TYPE_ID'], $item['DIRECTION'])
+					&& $provider::isActivityEditable($item, $currentUserID)
 				)
 			)
 		)
 		{
-			$arActions[] = array(
+			$arActions[] = [
 				'TITLE' => GetMessage('CRM_ACTION_EDIT'),
 				'TEXT' => GetMessage('CRM_ACTION_EDIT'),
-				'ONCLICK' => "(new BX.Crm.Activity.Planner()).showEdit({ID:{$item['ID']}});",
-			);
+				'ONCLICK' => $provider::isTask()
+					? (new $provider())->getEditAction($item['ID'], $currentUserID)
+					: "(new BX.Crm.Activity.Planner()).showEdit({ID:{$item['ID']}});",
+			];
 		}
 
 		if($item['CAN_COMPLETE'] && $itemTypeID !== CCrmActivityType::Email) //Email is always COMPLETED
@@ -371,6 +377,15 @@ foreach($arResult['ITEMS'] as &$item)
 		'associatedEntityID' => isset($item['~ASSOCIATED_ENTITY_ID']) ? intval($item['~ASSOCIATED_ENTITY_ID']) : 0,
 		'customViewLink' => (($provider && !is_null($provider::getCustomViewLink($item))) ? $provider::getCustomViewLink($item) : ''),
 	);
+	if (
+		$item['~PROVIDER_ID'] === \Bitrix\Crm\Activity\Provider\ConfigurableRestApp::getId()
+		&& ($item['PROVIDER_PARAMS']['clientId'] ?? null)
+		&& \Bitrix\Main\Loader::includeModule('rest')
+	)
+	{
+		$app = \Bitrix\Rest\AppTable::getByClientId($item['PROVIDER_PARAMS']['clientId']);
+		$editorItem['associatedEntityID'] = (int)($app['ID'] ?? 0);
+	}
 
 	if(!$commLoaded)
 	{

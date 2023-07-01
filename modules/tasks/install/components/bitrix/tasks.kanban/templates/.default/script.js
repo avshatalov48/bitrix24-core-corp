@@ -18,7 +18,8 @@ BX.Tasks.KanbanComponent.enableCustomSort = function(event, item)
 	item.menuWindow.menuItems.forEach(function(menuItem){
 		BX.removeClass(BX(menuItem.layout.item), "menu-popup-item-accept");
 		if (
-			typeof menuItem.params.order !== 'undefined'
+			menuItem.params
+			&& typeof menuItem.params.order !== 'undefined'
 			&&  menuItem.params.order === 'desc'
 		)
 		{
@@ -75,10 +76,13 @@ BX.Tasks.KanbanComponent.disableCustomSort = function(event, item)
 	var items = item.menuWindow.menuItems.slice(0);
 	items.forEach(function(paramsItem){
 		if (
-			typeof paramsItem.params.type !== 'undefined'
-			&&  paramsItem.params.type === 'sub'
+			paramsItem.params
+			&& typeof paramsItem.params.type !== 'undefined'
+			&& paramsItem.params.type === 'sub'
 		)
-		item.menuWindow.removeMenuItem(paramsItem.id);
+		{
+			item.menuWindow.removeMenuItem(paramsItem.id);
+		}
 	});
 	BX.Tasks.KanbanComponent.openedCustomSort = false;
 }

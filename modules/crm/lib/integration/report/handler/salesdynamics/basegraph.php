@@ -33,7 +33,7 @@ class BaseGraph extends Handler\Deal implements IReportMultipleGroupedData
 	public function prepare()
 	{
 		$filterParameters = $this->getFilterParameters();;
-		$categoryId = $filterParameters['CATEGORY_ID']['value'] ?: 0;
+		$categoryId = $filterParameters['CATEGORY_ID']['value'] ?? 0;
 		$userPermission = \CCrmPerms::GetCurrentUserPermissions();
 		if (!\CCrmDeal::CheckReadPermission(0, $userPermission, $categoryId))
 		{
@@ -50,7 +50,7 @@ class BaseGraph extends Handler\Deal implements IReportMultipleGroupedData
 	{
 		$filterParameters = $this->getFilterParameters();
 		$this->addToQueryFilterCase($query, $filterParameters);
-		$this->addTimePeriodToQuery($query, $filterParameters['TIME_PERIOD']);
+		$this->addTimePeriodToQuery($query, $filterParameters['TIME_PERIOD'] ?? null);
 
 		$this->addPermissionsCheck($query);
 
@@ -220,7 +220,7 @@ class BaseGraph extends Handler\Deal implements IReportMultipleGroupedData
 
 	protected function addTimePeriodToQuery(Query $query, $timePeriodValue)
 	{
-		if ($timePeriodValue['from'] !== "" && $timePeriodValue['to'] !== "")
+		if (($timePeriodValue['from'] ?? '') !== '' && ($timePeriodValue['to'] ?? '') !== '')
 		{
 			$toDateValue = new DateTime($timePeriodValue['to']);
 			$fromDateValue = new DateTime($timePeriodValue['from']);

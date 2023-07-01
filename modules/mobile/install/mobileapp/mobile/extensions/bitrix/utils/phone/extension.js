@@ -16,10 +16,9 @@ jn.define('utils/phone', (require, exports, module) => {
 	 * @param countryCode
 	 * @returns {String|String|*}
 	 */
-	const getFormattedNumber = (phoneNumber = '', countryCode = null) => {
+	const getFormattedNumber = (phoneNumber, countryCode = null) => {
 		const phone = stringify(phoneNumber);
-
-		if (!phone)
+		if (phone === '')
 		{
 			return phone;
 		}
@@ -42,7 +41,7 @@ jn.define('utils/phone', (require, exports, module) => {
 	 * @param {String} defaultCountry
 	 * @returns {String}
 	 */
-	const getCountryCode = (phoneNumber = '', defaultCountry) => {
+	const getCountryCode = (phoneNumber, defaultCountry) => {
 		const phone = stringify(phoneNumber);
 		const defaultCountryCode = defaultCountry || getMainDefaultCountryCode();
 

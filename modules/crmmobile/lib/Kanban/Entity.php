@@ -75,6 +75,11 @@ abstract class Entity
 			return ServiceLocator::getInstance()->get('crmmobile.kanban.entity.company');
 		}
 
+		if ($entityType === \CCrmOwnerType::SmartInvoiceName)
+		{
+			return ServiceLocator::getInstance()->get('crmmobile.kanban.entity.smartInvoice');
+		}
+
 		$entityTypeId = \CCrmOwnerType::ResolveID($entityType);
 
 		if (\CCrmOwnerType::isDynamicTypeBasedStaticEntity($entityTypeId))
@@ -579,6 +584,22 @@ abstract class Entity
 		return $router->getRoot();
 	}
 
+	public function getEntityLink(): ?string
+	{
+		$someMagicNumberToPassIntTypeCheck = 666;
+
+		$url = Container::getInstance()->getRouter()->getItemDetailUrl(
+			$this->getEntityTypeId(),
+			$someMagicNumberToPassIntTypeCheck
+		);
+		if ($url)
+		{
+			return str_replace($someMagicNumberToPassIntTypeCheck, '#ENTITY_ID#', $url->getLocator());
+		}
+
+		return null;
+	}
+
 	/**
 	 * @param int $userId
 	 * @param int|null $categoryId
@@ -586,9 +607,23 @@ abstract class Entity
 	 */
 	public function getCounters(int $userId, ?int $categoryId): array
 	{
+		if (
+			method_exists(\Bitrix\Crm\Settings\CounterSettings::class, 'getInstance')
+			&& !\Bitrix\Crm\Settings\CounterSettings::getInstance()->isEnabled()
+		)
+		{
+			return [];
+		}
+
 		$entityTypeId = $this->getEntityTypeId();
 
 		$factory = Container::getInstance()->getFactory($entityTypeId);
+
+		$data = [];
+		if (!$factory || !$factory->isCountersEnabled())
+		{
+			return $data;
+		}
 
 		$extra = [];
 		if ($categoryId !== null && $factory->isCategoriesEnabled())
@@ -596,9 +631,18 @@ abstract class Entity
 			$extra['CATEGORY_ID'] = $categoryId;
 		}
 
-		$data = [];
 		$this->fillCountersData($data, $userId, $extra);
-		if (Crm::isUniversalActivityScenarioEnabled() && $this->isOtherCountersSupported($categoryId))
+
+		// @todo remove after creating view mode Activity in the mobile
+		$data[] = [
+			'typeId' => '999',
+			'typeName' => 'MY_PENDING',
+			'code' => 'my_pending',
+			'value' => 0,
+			'excludeUsers' => false,
+		];
+
+		if ($this->canUseOtherCounters($categoryId))
 		{
 			$extra['EXCLUDE_USERS'] = true;
 			$this->fillCountersData($data, $userId, $extra);
@@ -634,23 +678,9 @@ abstract class Entity
 	}
 
 	// @todo fix code duplicate
-	protected function isOtherCountersSupported(?int $categoryId): bool
+	protected function canUseOtherCounters(?int $categoryId): bool
 	{
 		$entityTypeId = $this->getEntityTypeId();
-
-		$allowedEntityTypes = [
-			CCrmOwnerType::Lead,
-			CCrmOwnerType::Deal,
-			CCrmOwnerType::Contact,
-			CCrmOwnerType::Company,
-		];
-
-		$isAllowedEntity = in_array($entityTypeId, $allowedEntityTypes, true);
-
-		if (!$isAllowedEntity)
-		{
-			return false;
-		}
 
 		$uPermissions = Container::getInstance()->getUserPermissions();
 		$permissionEntityType = $uPermissions::getPermissionEntityType($entityTypeId, (int) $categoryId);
@@ -680,7 +710,7 @@ abstract class Entity
 			$data = [
 				'fields' => $preset['fields'] ?? [],
 				'preset_id' => $presetId,
-				'rows' => (empty($preset['fields'] || !is_array($preset['fields'])) ? [] : array_keys($preset['fields'])),
+				'rows' => (empty($preset['fields']) || !is_array($preset['fields'])) ? [] : array_keys($preset['fields']),
 				'name' => $preset['name'],
 			];
 		}

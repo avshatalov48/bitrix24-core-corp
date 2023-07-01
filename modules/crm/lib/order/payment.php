@@ -42,7 +42,7 @@ class Payment extends Sale\Payment
 
 		if ($this->fields->isChanged('PAID'))
 		{
-			if ($this->isPaid() && Crm\Automation\Factory::canUseAutomation())
+			if ($this->isPaid() && Crm\Automation\Factory::isAutomationAvailable(\CCrmOwnerType::Order))
 			{
 				Crm\Automation\Trigger\PaymentTrigger::execute(
 					[['OWNER_TYPE_ID' => \CCrmOwnerType::Order, 'OWNER_ID' => $this->getOrderId()]],
@@ -249,7 +249,7 @@ class Payment extends Sale\Payment
 	}
 
 	private function savePaymentStageOnUpdate()
-	{	
+	{
 		if ($this->isPaid())
 		{
 			$nextStage = PaymentStage::PAID;

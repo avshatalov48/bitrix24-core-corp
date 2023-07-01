@@ -125,7 +125,7 @@ class StoreDocument extends Base
 		;
 
 		if (
-			$action === 'UPDATE'
+			$action === self::ACTION_UPDATE
 			&& isset($fields['COMPLETED'])
 			&& $fields['COMPLETED'] === 'Y'
 			&& empty($previousFields['END_TIME'])

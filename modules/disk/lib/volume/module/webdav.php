@@ -3,6 +3,8 @@
 namespace Bitrix\Disk\Volume\Module;
 
 use Bitrix\Disk\Volume;
+use Bitrix\Disk\Internals\VolumeTable;
+
 
 /**
  * Disk storage volume measurement class.
@@ -17,22 +19,19 @@ class Webdav extends Volume\Module\Module
 	 * Returns true if module installed and available to measure.
 	 * @return boolean
 	 */
-	public function isMeasureAvailable()
+	public function isMeasureAvailable(): bool
 	{
-		$enable =
-			//parent::isMeasureAvailable() &&
-			\Bitrix\Main\ModuleManager::isModuleInstalled('iblock') &&
-			count($this->getIblockList()) > 0
-		;
-		return $enable;
+		return
+			\Bitrix\Main\ModuleManager::isModuleInstalled('iblock')
+			&& count($this->getIblockList()) > 0;
 	}
 
 	/**
 	 * Runs measure test to get volumes of selecting objects.
 	 * @param array $collectData List types data to collect: ATTACHED_OBJECT, SHARING_OBJECT, EXTERNAL_LINK, UNNECESSARY_VERSION.
-	 * @return $this
+	 * @return static
 	 */
-	public function measure($collectData = array())
+	public function measure(array $collectData = []): self
 	{
 		if (!$this->isMeasureAvailable())
 		{
@@ -45,7 +44,7 @@ class Webdav extends Volume\Module\Module
 		$indicatorIblockType = $connection->getSqlHelper()->forSql(Volume\Module\Iblock::className());
 		$ownerId = (string)$this->getOwner();
 
-		$includeIblockIds = array();
+		$includeIblockIds = [];
 
 		$webdavIblockList = $this->getIblockList();
 		if (count($webdavIblockList) > 0)
@@ -79,17 +78,17 @@ class Webdav extends Volume\Module\Module
 		";
 
 		$columnList = Volume\QueryHelper::prepareInsert(
-			array(
+			[
 				'INDICATOR_TYPE',
 				'OWNER_ID',
 				'CREATE_TIME',
 				'FILE_SIZE',
 				'FILE_COUNT',
-			),
+			],
 			$this->getSelect()
 		);
 
-		$tableName = \Bitrix\Disk\Internals\VolumeTable::getTableName();
+		$tableName = VolumeTable::getTableName();
 
 		$connection->queryExecute("INSERT INTO {$tableName} ({$columnList}) {$querySql}");
 
@@ -101,23 +100,21 @@ class Webdav extends Volume\Module\Module
 	 * Returns iblock list corresponding to module.
 	 * @return array
 	 */
-	public function getIblockList()
+	public function getIblockList(): array
 	{
 		static $iblockList;
-		if(!$iblockList)
+		if (!$iblockList)
 		{
-			$iblockList = array();
+			$iblockList = [];
 			if (\Bitrix\Main\Loader::includeModule(self::getModuleId()))
 			{
-				//\Bitrix\Disk\Configuration::isSuccessfullyConverted()
-
-				$result = \Bitrix\Iblock\IblockTable::getList(array(
-					'select' => array('ID', 'IBLOCK_TYPE_ID', 'NAME', 'CODE'),
-					'filter' => array(
+				$result = \Bitrix\Iblock\IblockTable::getList([
+					'select' => ['ID', 'IBLOCK_TYPE_ID', 'NAME', 'CODE'],
+					'filter' => [
 						'=IBLOCK_TYPE_ID' => 'library',
 						'CODE' => '%_files%',
-					)
-				));
+					]
+				]);
 				foreach ($result as $iblock)
 				{
 					$iblockList[$iblock['ID']] = $iblock;

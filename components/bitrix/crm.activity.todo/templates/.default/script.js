@@ -4,7 +4,7 @@ if (typeof(BX.CrmActivityTodo) === 'undefined')
 	{
 		this._ccontainer = settings.ccontainer || 'crm-activity-todo-items';
 		this._citem = settings.citem || 'crm-activity-todo-item';
-		this._clink = settings.clink || 'crm-activity-todo-link';
+		this._clink = settings.clink || 'crm-activity-todo-link --active';
 		this._ccheck = settings.ccheck || 'crm-activity-todo-check';
 		this._cbuttoncancel = settings.cbuttoncancel || 'popup-window-button-link-cancel';
 		this._ccheckprefix = settings.ccheckprefix || 'check';
@@ -15,7 +15,7 @@ if (typeof(BX.CrmActivityTodo) === 'undefined')
 		this._activityId = 0;
 		
 		//bind click on activity title
-		var activityLink = BX.findChild(BX(this._ccontainer), { class: this._clink, tag: 'a' }, true, true);
+		var activityLink = BX.findChild(BX(this._ccontainer), { class: this._clink }, true, true);
 		if (activityLink)
 		{
 			for (i=0; i<activityLink.length; i++)
@@ -82,7 +82,7 @@ if (typeof(BX.CrmActivityTodo) === 'undefined')
 				}
 				if (fieldCompleted)
 				{
-					BX.remove(BX.findParent(fieldCompleted, {tag: 'label'}));
+					BX.remove(BX.findParent(fieldCompleted, {tag: 'div'}));
 					/*if (fieldCompleted.checked)
 					{
 						fieldCompleted.disabled = true;
@@ -105,6 +105,33 @@ if (typeof(BX.CrmActivityTodo) === 'undefined')
 						}
 					})
 				]);
+			});
+		},
+		_completeActivity: function (context, parent)
+		{
+			BX.ajax.loadJSON(this._ajaxPath, {
+				action: 'complete',
+				id: BX.data(parent, 'id'),
+				ownerid: BX.data(parent, 'ownerid'),
+				ownertypeid: BX.data(parent, 'ownertypeid'),
+				completed: 1
+			}, function(data) {
+				if (0&&data.error)
+				{
+					alert(data.error);
+					context.checked = false;
+				}
+				else
+				{
+					BX.onCustomEvent('onCrmActivityTodoChecked', [
+						BX.data(parent, 'id'),
+						BX.data(parent, 'ownerid'),
+						BX.data(parent, 'ownertypeid'),
+						parseInt(BX.data(parent, 'deadlined')) === 1
+					]);
+					context.disabled = true;
+					BX.addClass(parent, 'crm-activity-todo-item-completed');
+				}
 			});
 		},
 		_getNodeByRole: function(container, name)
@@ -144,36 +171,44 @@ if (typeof(BX.CrmActivityTodo) === 'undefined')
 			}
 			BX.PreventDefault(e);
 		},
-		_clickCheckHandler: function(e)
+		_clickCheckHandler: function(event)
 		{
 			if (BX.proxy_context.checked)
 			{
 				var context = BX.proxy_context;
 				var parent = this._getParent(context);
-				BX.ajax.loadJSON(this._ajaxPath, {
-					action: 'complete',
-					id: BX.data(parent, 'id'),
-					ownerid: BX.data(parent, 'ownerid'),
-					ownertypeid: BX.data(parent, 'ownertypeid'),
-					completed: 1
-				}, function(data) {
-					if (0&&data.error)
-					{
-						alert(data.error);
-						context.checked = false;
-					}
-					else
-					{
-						BX.onCustomEvent('onCrmActivityTodoChecked', [
-							BX.data(parent, 'id'), 
-							BX.data(parent, 'ownerid'), 
-							BX.data(parent, 'ownertypeid'),
-							parseInt(BX.data(parent, 'deadlined')) === 1
-						]);
-						context.disabled = true;
-						BX.addClass(parent, 'crm-activity-todo-item-completed');
-					}
-				});
+
+				if (BX.data(parent, 'icon') === 'chat')
+				{
+					BX.UI.Dialogs.MessageBox.show({
+						title: BX.message('CRM_ACTIVITY_TODO_OPENLINE_COMPLETE_CONF_TITLE'),
+						message: BX.message('CRM_ACTIVITY_TODO_OPENLINE_COMPLETE_CONF'),
+						modal: true,
+						okCaption: BX.message('CRM_ACTIVITY_TODO_OPENLINE_COMPLETE_CONF_OK_TEXT'),
+						buttons: BX.UI.Dialogs.MessageBoxButtons.OK_CANCEL,
+						onOk: (messageBox) => {
+							this._completeActivity(context, parent)
+
+							messageBox.close();
+						},
+						onCancel: (messageBox) => {
+							var activityCheck = BX.findChild(BX(this._ccontainer), { class: this._ccheck }, true, true);
+							if (activityCheck)
+							{
+								for (var i = 0; i < activityCheck.length; i++)
+								{
+									activityCheck[i].checked = false; // reset check
+								}
+							}
+
+							messageBox.close();
+						},
+					});
+				}
+				else
+				{
+					this._completeActivity(context, parent);
+				}
 			}
 		}
 	};

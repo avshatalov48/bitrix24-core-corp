@@ -108,6 +108,11 @@ final class Multifield implements FieldImplementation
 		unset($this->actual, $this->current);
 	}
 
+	public function getDefaultValue(string $commonFieldName)
+	{
+		return null;
+	}
+
 	public function afterSuccessfulItemSave(Item $item, EntityObject $entityObject): void
 	{
 		$this->ownerEntityTypeId = $item->getEntityTypeId();
@@ -134,6 +139,11 @@ final class Multifield implements FieldImplementation
 		}
 
 		return $result;
+	}
+
+	public function getSerializableFieldNames(): array
+	{
+		return [];
 	}
 
 	public function getExternalizableFieldNames(): array

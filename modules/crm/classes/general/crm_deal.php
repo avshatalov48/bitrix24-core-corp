@@ -7,11 +7,13 @@ use Bitrix\Crm\Binding\EntityBinding;
 use Bitrix\Crm\Category\DealCategory;
 use Bitrix\Crm\Category\DealCategoryChangeError;
 use Bitrix\Crm\CustomerType;
+use Bitrix\Crm\Entity\Traits\EntityFieldsNormalizer;
 use Bitrix\Crm\Entity\Traits\UserFieldPreparer;
 use Bitrix\Crm\History\DealStageHistoryEntry;
 use Bitrix\Crm\Integration\Channel\DealChannelBinding;
 use Bitrix\Crm\Integration\PullManager;
 use Bitrix\Crm\Kanban\ViewMode;
+use Bitrix\Crm\Reservation\Compatibility\ProductRowReserves;
 use Bitrix\Crm\Settings\DealSettings;
 use Bitrix\Crm\Settings\HistorySettings;
 use Bitrix\Crm\Statistics\DealActivityStatisticEntry;
@@ -20,8 +22,6 @@ use Bitrix\Crm\Statistics\DealSumStatisticEntry;
 use Bitrix\Crm\Statistics\LeadConversionStatisticsEntry;
 use Bitrix\Crm\Tracking;
 use Bitrix\Crm\UserField\Visibility\VisibilityManager;
-use Bitrix\Crm\Entity\Traits\EntityFieldsNormalizer;
-use Bitrix\Crm\Reservation\Compatibility\ProductRowReserves;
 use Bitrix\Crm\UtmTable;
 
 class CAllCrmDeal
@@ -49,6 +49,7 @@ class CAllCrmDeal
 	private static $FIELD_INFOS = null;
 
 	private static ?Crm\Entity\Compatibility\Adapter $lastActivityAdapter = null;
+	private static ?Crm\Entity\Compatibility\Adapter $contentTypeIdAdapter = null;
 
 	/** @var \Bitrix\Crm\Entity\Compatibility\Adapter */
 	private $compatibilityAdapter;
@@ -145,6 +146,16 @@ class CAllCrmDeal
 		return self::$lastActivityAdapter;
 	}
 
+	private static function getContentTypeIdAdapter(): Crm\Entity\Compatibility\Adapter\ContentTypeId
+	{
+		if (!self::$contentTypeIdAdapter)
+		{
+			self::$contentTypeIdAdapter = new Crm\Entity\Compatibility\Adapter\ContentTypeId(\CCrmOwnerType::Deal);
+		}
+
+		return self::$contentTypeIdAdapter;
+	}
+
 	// Service -->
 	public static function GetFieldCaption($fieldName)
 	{
@@ -174,183 +185,176 @@ class CAllCrmDeal
 			return self::$FIELD_INFOS;
 		}
 
-		if (static::isFactoryEnabled())
-		{
-			self::$FIELD_INFOS = static::createCompatibilityAdapter()->getFieldsInfo();
-		}
-		else
-		{
-			self::$FIELD_INFOS = array(
-				'ID' => array(
-					'TYPE' => 'integer',
-					'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
-				),
-				'TITLE' => array(
-					'TYPE' => 'string',
-					'ATTRIBUTES' => array(CCrmFieldInfoAttr::Required)
-				),
-				'TYPE_ID' => array(
-					'TYPE' => 'crm_status',
-					'CRM_STATUS_TYPE' => 'DEAL_TYPE',
-					'ATTRIBUTES' => [CCrmFieldInfoAttr::HasDefaultValue],
-				),
-				'CATEGORY_ID' => array(
-					'TYPE' => 'crm_category',
-					'ATTRIBUTES' => array(CCrmFieldInfoAttr::Immutable)
-				),
-				'STAGE_ID' => array(
-					'TYPE' => 'crm_status',
-					'CRM_STATUS_TYPE' => 'DEAL_STAGE',
-					'ATTRIBUTES' => array(CCrmFieldInfoAttr::Progress)
-				),
-				'STAGE_SEMANTIC_ID' => array(
-					'TYPE' => 'string',
-					'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
-				),
-				'IS_NEW' => array(
-					'TYPE' => 'char',
-					'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
-				),
-				'IS_RECURRING' => array(
-					'TYPE' => 'char'
-				),
-				'IS_RETURN_CUSTOMER' => array(
-					'TYPE' => 'char'
-				),
-				'IS_REPEATED_APPROACH' => array(
-					'TYPE' => 'char'
-				),
-				'PROBABILITY' => array(
-					'TYPE' => 'integer'
-				),
-				'CURRENCY_ID' => array(
-					'TYPE' => 'crm_currency'
-				),
-				'OPPORTUNITY' => array(
-					'TYPE' => 'double'
-				),
-				'IS_MANUAL_OPPORTUNITY' => array(
-					'TYPE' => 'char'
-				),
-				'TAX_VALUE' => array(
-					'TYPE' => 'double'
-				),
-				'EXCH_RATE' => array(
-					'TYPE' => 'double',
-					'ATTRIBUTES' => array(CCrmFieldInfoAttr::Hidden)
-				),
-				'ACCOUNT_CURRENCY_ID' => array(
-					'TYPE' => 'string',
-					'ATTRIBUTES' => array(CCrmFieldInfoAttr::Hidden)
-				),
-				'OPPORTUNITY_ACCOUNT' => array(
-					'TYPE' => 'double',
-					'ATTRIBUTES' => array(CCrmFieldInfoAttr::Hidden)
-				),
-				'TAX_VALUE_ACCOUNT' => array(
-					'TYPE' => 'double',
-					'ATTRIBUTES' => array(CCrmFieldInfoAttr::Hidden)
-				),
-				'COMPANY_ID' => array(
-					'TYPE' => 'crm_company',
-					'SETTINGS' => [
-						'parentEntityTypeId' => \CCrmOwnerType::Company,
-					],
-				),
-				'CONTACT_ID' => array(
-					'TYPE' => 'crm_contact',
-					'ATTRIBUTES' => array(CCrmFieldInfoAttr::Deprecated)
-				),
-				'CONTACT_IDS' => array(
-					'TYPE' => 'crm_contact',
-					'ATTRIBUTES' => array(CCrmFieldInfoAttr::Multiple)
-				),
-				'QUOTE_ID' => array(
-					'TYPE' => 'crm_quote',
-					'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly),
-					'SETTINGS' => [
-						'parentEntityTypeId' => \CCrmOwnerType::Quote,
-					],
-				),
-				'BEGINDATE' => array(
-					'TYPE' => 'date',
-					'ATTRIBUTES' => [CCrmFieldInfoAttr::HasDefaultValue],
-				),
-				'CLOSEDATE' => array(
-					'TYPE' => 'date',
-					'ATTRIBUTES' => [CCrmFieldInfoAttr::HasDefaultValue],
-				),
-				'OPENED' => array(
-					'TYPE' => 'char'
-				),
-				'CLOSED' => array(
-					'TYPE' => 'char'
-				),
-				'COMMENTS' => array(
-					'TYPE' => 'string',
-					'VALUE_TYPE' => 'html',
-				),
-				'ASSIGNED_BY_ID' => array(
-					'TYPE' => 'user',
-				),
-				'CREATED_BY_ID' => array(
-					'TYPE' => 'user',
-					'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
-				),
-				'MODIFY_BY_ID' => array(
-					'TYPE' => 'user',
-					'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
-				),
-				'MOVED_BY_ID' => [
-					'TYPE' => 'user',
-					'ATTRIBUTES' => [CCrmFieldInfoAttr::ReadOnly],
+		self::$FIELD_INFOS = array(
+			'ID' => array(
+				'TYPE' => 'integer',
+				'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
+			),
+			'TITLE' => array(
+				'TYPE' => 'string',
+				'ATTRIBUTES' => array(CCrmFieldInfoAttr::Required)
+			),
+			'TYPE_ID' => array(
+				'TYPE' => 'crm_status',
+				'CRM_STATUS_TYPE' => 'DEAL_TYPE',
+				'ATTRIBUTES' => [CCrmFieldInfoAttr::HasDefaultValue],
+			),
+			'CATEGORY_ID' => array(
+				'TYPE' => 'crm_category',
+				'ATTRIBUTES' => array(CCrmFieldInfoAttr::Immutable)
+			),
+			'STAGE_ID' => array(
+				'TYPE' => 'crm_status',
+				'CRM_STATUS_TYPE' => 'DEAL_STAGE',
+				'ATTRIBUTES' => array(CCrmFieldInfoAttr::Progress)
+			),
+			'STAGE_SEMANTIC_ID' => array(
+				'TYPE' => 'string',
+				'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
+			),
+			'IS_NEW' => array(
+				'TYPE' => 'char',
+				'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
+			),
+			'IS_RECURRING' => array(
+				'TYPE' => 'char'
+			),
+			'IS_RETURN_CUSTOMER' => array(
+				'TYPE' => 'char'
+			),
+			'IS_REPEATED_APPROACH' => array(
+				'TYPE' => 'char'
+			),
+			'PROBABILITY' => array(
+				'TYPE' => 'integer'
+			),
+			'CURRENCY_ID' => array(
+				'TYPE' => 'crm_currency'
+			),
+			'OPPORTUNITY' => array(
+				'TYPE' => 'double'
+			),
+			'IS_MANUAL_OPPORTUNITY' => array(
+				'TYPE' => 'char'
+			),
+			'TAX_VALUE' => array(
+				'TYPE' => 'double'
+			),
+			'EXCH_RATE' => array(
+				'TYPE' => 'double',
+				'ATTRIBUTES' => array(CCrmFieldInfoAttr::Hidden)
+			),
+			'ACCOUNT_CURRENCY_ID' => array(
+				'TYPE' => 'string',
+				'ATTRIBUTES' => array(CCrmFieldInfoAttr::Hidden)
+			),
+			'OPPORTUNITY_ACCOUNT' => array(
+				'TYPE' => 'double',
+				'ATTRIBUTES' => array(CCrmFieldInfoAttr::Hidden)
+			),
+			'TAX_VALUE_ACCOUNT' => array(
+				'TYPE' => 'double',
+				'ATTRIBUTES' => array(CCrmFieldInfoAttr::Hidden)
+			),
+			'COMPANY_ID' => array(
+				'TYPE' => 'crm_company',
+				'SETTINGS' => [
+					'parentEntityTypeId' => \CCrmOwnerType::Company,
 				],
-				'DATE_CREATE' => array(
-					'TYPE' => 'datetime',
-					'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
-				),
-				'DATE_MODIFY' => array(
-					'TYPE' => 'datetime',
-					'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
-				),
-				'MOVED_TIME' => [
-					'TYPE' => 'datetime',
-					'ATTRIBUTES' => [CCrmFieldInfoAttr::ReadOnly],
+			),
+			'CONTACT_ID' => array(
+				'TYPE' => 'crm_contact',
+				'ATTRIBUTES' => array(CCrmFieldInfoAttr::Deprecated)
+			),
+			'CONTACT_IDS' => array(
+				'TYPE' => 'crm_contact',
+				'ATTRIBUTES' => array(CCrmFieldInfoAttr::Multiple)
+			),
+			'QUOTE_ID' => array(
+				'TYPE' => 'crm_quote',
+				'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly),
+				'SETTINGS' => [
+					'parentEntityTypeId' => \CCrmOwnerType::Quote,
 				],
-				'SOURCE_ID' => array(
-					'TYPE' => 'crm_status',
-					'CRM_STATUS_TYPE' => 'SOURCE'
-				),
-				'SOURCE_DESCRIPTION' => array(
-					'TYPE' => 'string'
-				),
-				'LEAD_ID' => array(
-					'TYPE' => 'crm_lead',
-					'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly),
-					'SETTINGS' => [
-						'parentEntityTypeId' => \CCrmOwnerType::Lead,
-					],
-				),
-				'ADDITIONAL_INFO' => array(
-					'TYPE' => 'string'
-				),
-				'LOCATION_ID' => array(
-					'TYPE' => 'location'
-				),
-				'ORIGINATOR_ID' => array(
-					'TYPE' => 'string'
-				),
-				'ORIGIN_ID' => array(
-					'TYPE' => 'string'
-				),
-			);
+			),
+			'BEGINDATE' => array(
+				'TYPE' => 'date',
+				'ATTRIBUTES' => [CCrmFieldInfoAttr::HasDefaultValue],
+			),
+			'CLOSEDATE' => array(
+				'TYPE' => 'date',
+				'ATTRIBUTES' => [CCrmFieldInfoAttr::HasDefaultValue],
+			),
+			'OPENED' => array(
+				'TYPE' => 'char'
+			),
+			'CLOSED' => array(
+				'TYPE' => 'char'
+			),
+			'COMMENTS' => array(
+				'TYPE' => 'string',
+				'VALUE_TYPE' => 'html',
+			),
+			'ASSIGNED_BY_ID' => array(
+				'TYPE' => 'user',
+			),
+			'CREATED_BY_ID' => array(
+				'TYPE' => 'user',
+				'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
+			),
+			'MODIFY_BY_ID' => array(
+				'TYPE' => 'user',
+				'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
+			),
+			'MOVED_BY_ID' => [
+				'TYPE' => 'user',
+				'ATTRIBUTES' => [CCrmFieldInfoAttr::ReadOnly],
+			],
+			'DATE_CREATE' => array(
+				'TYPE' => 'datetime',
+				'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
+			),
+			'DATE_MODIFY' => array(
+				'TYPE' => 'datetime',
+				'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
+			),
+			'MOVED_TIME' => [
+				'TYPE' => 'datetime',
+				'ATTRIBUTES' => [CCrmFieldInfoAttr::ReadOnly],
+			],
+			'SOURCE_ID' => array(
+				'TYPE' => 'crm_status',
+				'CRM_STATUS_TYPE' => 'SOURCE'
+			),
+			'SOURCE_DESCRIPTION' => array(
+				'TYPE' => 'string'
+			),
+			'LEAD_ID' => array(
+				'TYPE' => 'crm_lead',
+				'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly),
+				'SETTINGS' => [
+					'parentEntityTypeId' => \CCrmOwnerType::Lead,
+				],
+			),
+			'ADDITIONAL_INFO' => array(
+				'TYPE' => 'string'
+			),
+			'LOCATION_ID' => array(
+				'TYPE' => 'location'
+			),
+			'ORIGINATOR_ID' => array(
+				'TYPE' => 'string'
+			),
+			'ORIGIN_ID' => array(
+				'TYPE' => 'string'
+			),
+		);
 
-			// add utm fields
-			self::$FIELD_INFOS += UtmTable::getUtmFieldsInfo();
-			self::$FIELD_INFOS += Crm\Service\Container::getInstance()->getParentFieldManager()->getParentFieldsInfo(\CCrmOwnerType::Deal);
+		// add utm fields
+		self::$FIELD_INFOS += UtmTable::getUtmFieldsInfo();
+		self::$FIELD_INFOS += Crm\Service\Container::getInstance()->getParentFieldManager()->getParentFieldsInfo(\CCrmOwnerType::Deal);
 
-			self::$FIELD_INFOS += self::getLastActivityAdapter()->getFieldsInfo();
-		}
+		self::$FIELD_INFOS += self::getLastActivityAdapter()->getFieldsInfo();
 
 		return self::$FIELD_INFOS;
 	}
@@ -849,7 +853,7 @@ class CAllCrmDeal
 				{
 					$observerIds = implode(',', $observerIds);
 					$sqlData['WHERE'][] = "{$tableAlias}.ID IN (
-						SELECT obr.entity_id 
+						SELECT obr.entity_id
 						FROM b_crm_observer obr
 						WHERE obr.entity_type_id = {$entityTypeId} and obr.user_id IN ({$observerIds})
 					)";
@@ -2151,6 +2155,8 @@ class CAllCrmDeal
 			)->build($ID, ['checkExist' => true]);
 			//endregion
 
+			self::getContentTypeIdAdapter()->performAdd($arFields, $options);
+
 			if(isset($options['REGISTER_SONET_EVENT']) && $options['REGISTER_SONET_EVENT'] === true)
 			{
 				$opportunity = round((isset($arFields['OPPORTUNITY']) ? doubleval($arFields['OPPORTUNITY']) : 0.0), 2);
@@ -3315,6 +3321,11 @@ class CAllCrmDeal
 			}
 			//endregion
 
+			self::getContentTypeIdAdapter()
+				->setPreviousFields((int)$ID, $arRow)
+				->performUpdate((int)$ID, $arFields, $options)
+			;
+
 			if ($bResult)
 			{
 				\Bitrix\Crm\Counter\Monitor::getInstance()->onEntityUpdate(CCrmOwnerType::Deal, $arRow, $currentFields);
@@ -3760,6 +3771,8 @@ class CAllCrmDeal
 				\Bitrix\Crm\Pseudoactivity\WaitEntry::deleteByOwner(CCrmOwnerType::Deal, $ID);
 				\Bitrix\Crm\Observer\ObserverManager::deleteByOwner(CCrmOwnerType::Deal, $ID);
 				\Bitrix\Crm\Ml\Scoring::onEntityDelete(CCrmOwnerType::Deal, $ID);
+
+				self::getContentTypeIdAdapter()->performDelete((int)$ID, $arOptions);
 
 				Crm\Integration\Im\Chat::deleteChat(
 					array(
@@ -4220,45 +4233,7 @@ class CAllCrmDeal
 
 	public static function LoadProductRows($ID)
 	{
-		$result = [];
-
-		$factory = Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::Deal);
-		if ($factory && $factory->isInventoryManagementEnabled())
-		{
-			$items = $factory->getItems([
-				'select' => [Crm\Item::FIELD_NAME_PRODUCTS],
-				'filter' => [
-					'=' . Crm\Item::FIELD_NAME_ID => $ID,
-				]
-			]);
-			if ($items)
-			{
-				foreach ($items as $item)
-				{
-					$productRows = $item->getProductRows();
-					if ($productRows)
-					{
-						foreach ($productRows as $productRow)
-						{
-							$row = $productRow->toArray();
-							$productReservation = $productRow->getProductRowReservation();
-							if ($productReservation)
-							{
-								$row += $productReservation->toArray();
-							}
-
-							$result[] = $row;
-						}
-					}
-				}
-			}
-		}
-		else
-		{
-			$result = CCrmProductRow::LoadRows(\CCrmOwnerTypeAbbr::Deal, $ID);
-		}
-
-		return $result;
+		return CCrmProductRow::LoadRows(\CCrmOwnerTypeAbbr::Deal, $ID);
 	}
 
 	/**
@@ -4296,26 +4271,7 @@ class CAllCrmDeal
 			}
 		}
 
-		// for correct processing inventory management need row ids.
-		$isProcessInventoryManagement = CCrmSaleHelper::isProcessInventoryManagement();
-		$isWasPerRowInsert = CCrmProductRow::$perRowInsert;
-
-		try
-		{
-			if ($isProcessInventoryManagement && !$isWasPerRowInsert)
-			{
-				CCrmProductRow::setPerRowInsert(true);
-			}
-
-			$result = CCrmProductRow::SaveRows('D', $ID, $arRows, null, $checkPerms, $regEvent, $syncOwner);
-		}
-		finally
-		{
-			if ($isProcessInventoryManagement && !$isWasPerRowInsert)
-			{
-				CCrmProductRow::setPerRowInsert(false);
-			}
-		}
+		$result = CCrmProductRow::SaveRows('D', $ID, $arRows, null, $checkPerms, $regEvent, $syncOwner);
 
 		if($result)
 		{
@@ -4323,11 +4279,6 @@ class CAllCrmDeal
 			while ($event = $events->Fetch())
 			{
 				ExecuteModuleEventEx($event, array($ID, $arRows));
-			}
-
-			if ($isProcessInventoryManagement)
-			{
-				ProductRowReserves::processRows((int)$ID, $arRows);
 			}
 		}
 
@@ -5934,7 +5885,8 @@ class CAllCrmDeal
 
 		if ($ufOrderSql)
 		{
-			$result['FROM'][] = $ufOrderSql->GetJoin($dealTableFieldName);
+			$ufOrderFound = false;
+
 			foreach ($ufOrder as $orderField => $orderDirection)
 			{
 				$orderDirection = mb_strtoupper($orderDirection);
@@ -5942,7 +5894,16 @@ class CAllCrmDeal
 				{
 					$orderDirection = 'ASC';
 				}
-				$result['ORDERBY'][] = $ufOrderSql->GetOrder($orderField) . ' ' . $orderDirection;
+				$ufOrderField = $ufOrderSql->GetOrder($orderField);
+				if ($ufOrderField !== '')
+				{
+					$result['ORDERBY'][] = $ufOrderSql->GetOrder($orderField) . ' ' . $orderDirection;
+					$ufOrderFound =- true;
+				}
+			}
+			if ($ufOrderFound)
+			{
+				$result['FROM'][] = $ufOrderSql->GetJoin($dealTableFieldName);
 			}
 		}
 

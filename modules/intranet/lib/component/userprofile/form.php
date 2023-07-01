@@ -498,7 +498,7 @@ class Form
 		{
 			$ufReserved = $this->getReservedUfFields();
 			array_unshift($ufReserved, 'UF_DEPARTMENT');
-			
+
 			foreach ($userFields as $fieldName => $fieldDesc)
 			{
 				if (in_array($fieldName, $ufReserved))
@@ -782,7 +782,7 @@ class Form
 					{
 						$value = '';
 					}
-					
+
 					$data[$key] = $value;
 				}
 			}
@@ -803,7 +803,7 @@ class Form
 
 		$editFields = \Bitrix\Main\Config\Option::get("intranet", "user_profile_edit_fields", false, SITE_ID);
 		$editFields = is_string($editFields) ? explode(",", $editFields) : (
-			is_array($arParams["EDITABLE_FIELDS"]) ? $arParams["EDITABLE_FIELDS"] : []
+			is_array($arParams["EDITABLE_FIELDS"] ?? null) ? $arParams["EDITABLE_FIELDS"] : []
 		);
 
 		$arResult["SettingsFieldsEdit"] = [];

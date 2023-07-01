@@ -11,9 +11,9 @@ use Bitrix\Main\Entity;
  *
  * <<< ORMENTITYANNOTATION
  * @method static EO_TimelineSearch_Query query()
- * @method static EO_TimelineSearch_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_TimelineSearch_Result getByPrimary($primary, array $parameters = [])
  * @method static EO_TimelineSearch_Result getById($id)
- * @method static EO_TimelineSearch_Result getList(array $parameters = array())
+ * @method static EO_TimelineSearch_Result getList(array $parameters = [])
  * @method static EO_TimelineSearch_Entity getEntity()
  * @method static \Bitrix\Crm\Timeline\Entity\EO_TimelineSearch createObject($setDefaultValues = true)
  * @method static \Bitrix\Crm\Timeline\Entity\EO_TimelineSearch_Collection createCollection()

@@ -196,7 +196,7 @@ $type = $component->getType();
 				<span class="rpa-automation-title-text"><?=Loc::getMessage('RPA_TYPE_IMAGE_SECTION');?></span>
 			</div>
 			<div class="rpa-automation-section rpa-automation-section-image" data-role="icon-selector">
-				<?/*
+				<?php /*
 				<div class="rpa-type-image-wrap">
 					<div class="rpa-type-image-block">
 						<div class="rpa-type-image-inner">
@@ -251,7 +251,7 @@ $type = $component->getType();
 				],
 				'cancel'
 			];
-			if($arResult['id'] > 0)
+			if(isset($arResult['id']) && $arResult['id'] > 0)
 			{
 				$buttons[] = [
 					'TYPE' => 'remove',

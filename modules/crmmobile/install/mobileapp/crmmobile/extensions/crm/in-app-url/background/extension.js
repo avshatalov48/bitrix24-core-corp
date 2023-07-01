@@ -1,6 +1,6 @@
 (() => {
-
-	const { openCrmEntityInAppUrl } = jn.require('crm/in-app-url/open');
+	const require = (ext) => jn.require(ext);
+	const { openCrmEntityInAppUrl } = require('crm/in-app-url/open');
 
 	class CrmBackground
 	{

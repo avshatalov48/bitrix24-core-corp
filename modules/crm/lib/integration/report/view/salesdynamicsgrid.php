@@ -30,6 +30,8 @@ class SalesDynamicsGrid extends Base
 	 */
 	public function handlerFinallyBeforePassToView($dataFromReport)
 	{
+		$result = [];
+
 		$sumReport = $dataFromReport[0];
 		$countReport = $dataFromReport[1];
 		$prevSumReport = $dataFromReport[2];

@@ -121,7 +121,7 @@ if (array_filter($handlersManager->getHandlersForImport(), function($handler){
 			<input name="<?= $arResult['INPUT_NAME_OBJECT_ALLOW_EDIT'] ?>" style="display: none;" data-bx-role="settings-allow-edit" <?= (empty($arResult['SHARE_EDIT_ON_OBJECT_UF'])? '' : 'checked="checked"') ?> value="1" type="checkbox">
 		<? }
 		$templateView = $arParams['TEMPLATE_VIEW'];
-		if ($arParams['arUserField']['ENTITY_VALUE_ID'] <= 0)
+		if (empty($arParams['arUserField']['ENTITY_VALUE_ID']))
 		{
 			$settings = \CUserOptions::getOption('disk', 'disk.uf.file');
 			if (!is_array($settings))
@@ -141,13 +141,13 @@ if (array_filter($handlersManager->getHandlersForImport(), function($handler){
 			{
 				$settings['template_view'] = 'grid';
 			}
-			$templateView = $settings['template_view'];
+			$templateView = $settings['template_view'] ?? null;
 		}
 		?>
 		<input name="<?= $arResult['INPUT_NAME_TEMPLATE_VIEW'] ?>" value="gallery" type="hidden" />
 		<input name="<?= $arResult['INPUT_NAME_TEMPLATE_VIEW'] ?>" style="display: none;" <?
 			?>data-bx-role="settings-allow-grid" value="grid" type="checkbox" <?
-			?>data-bx-save="<?=$arParams['arUserField']['ENTITY_VALUE_ID'] > 0 ? 'N' : 'Y'?>" <?
+			?>data-bx-save="<?=empty($arParams['arUserField']['ENTITY_VALUE_ID']) ? 'Y' : 'N'?>" <?
 			?>data-bx-name="template_view_for_<?=htmlspecialcharsbx($arParams['arUserField']['ENTITY_ID'])?>" <?
 			?><?=$templateView === 'grid' ? 'checked' : ''?>/>
 	</div>
@@ -198,7 +198,7 @@ BX.ready(function(){
 			id: '<?=$arResult['UID']?>',
 			fieldName: '<?= CUtil::JSEscape($arResult['controlName'])?>',
 			input: BX('diskuf-input-<?=$arResult['UID']?>')<?php
-			if (is_array($arParams['PARAMS']['PARSER_PARAMS']))
+			if (isset($arParams['PARAMS']['PARSER_PARAMS']) && is_array($arParams['PARAMS']['PARSER_PARAMS']))
 			{
 			?>,
 			parserParams: <?= CUtil::PhpToJSObject(array_change_key_case($arParams['PARAMS']['PARSER_PARAMS'], CASE_LOWER))?><?php

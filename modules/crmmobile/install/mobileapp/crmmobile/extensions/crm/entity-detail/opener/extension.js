@@ -2,42 +2,27 @@
  * @module crm/entity-detail/opener
  */
 jn.define('crm/entity-detail/opener', (require, exports, module) => {
-
 	const { Alert } = require('alert');
 	const { NotifyManager } = require('notify-manager');
 	const { EntitySvg } = require('crm/assets/entity');
 	const { getEntityMessage } = require('crm/loc');
-	const { Type, TypeId } = require('crm/type');
+	const { Type } = require('crm/type');
 	const { Type: CoreType } = require('type');
 	const { mergeImmutable } = require('utils/object');
+	const { PlanRestriction } = require('layout/ui/plan-restriction');
 
-	const CACHE_TTL = 60 * 60 * 24; // 1 day
+	const CACHE_TTL = 60 * 60 * 4; // 4 hours
+	const CACHE_VERSION = 2;
 
 	let storage;
 	let inMemoryEntities = null;
 	let inMemoryTtl = null;
-
-	const SUPPORTED_ENTITIES = [
-		TypeId.Contact,
-		TypeId.Company,
-		TypeId.Deal,
-	];
 
 	/**
 	 * @class EntityDetailOpener
 	 */
 	class EntityDetailOpener
 	{
-		/**
-		 * @public
-		 * @param {Number} entityTypeId
-		 * @returns {boolean}
-		 */
-		static supportsEntityType(entityTypeId)
-		{
-			return SUPPORTED_ENTITIES.includes(entityTypeId);
-		}
-
 		/**
 		 * @public
 		 * @param {Object} payload
@@ -84,6 +69,7 @@ jn.define('crm/entity-detail/opener', (require, exports, module) => {
 		{
 			return {
 				modal: true,
+				backgroundColor: '#f5f7f8',
 				leftButtons: [{
 					// type: 'cross',
 					svg: {
@@ -116,7 +102,7 @@ jn.define('crm/entity-detail/opener', (require, exports, module) => {
 		{
 			if (!storage)
 			{
-				storage = Application.storageById(`crm/entity-detail/opener/${env.languageId}`);
+				storage = Application.storageById(`crm/entity-detail/opener/${env.languageId}/v${CACHE_VERSION}`);
 			}
 
 			return storage;
@@ -207,7 +193,7 @@ jn.define('crm/entity-detail/opener', (require, exports, module) => {
 		 * @private
 		 * @internal
 		 */
-		static prepareTitleParams({ entityId, entityTypeId }, titleParams = {})
+		static prepareTitleParams({ entityId, entityTypeId, copy = false }, titleParams = {})
 		{
 			const entity = this.findEntityType(entityTypeId);
 			if (!entity)
@@ -222,19 +208,26 @@ jn.define('crm/entity-detail/opener', (require, exports, module) => {
 
 			if (entityId)
 			{
-				if (!CoreType.isStringFilled(titleParams.text))
+				if (copy)
 				{
-					titleParams.text = `${entity.title} #${entityId}`;
+					titleParams.text = getEntityMessage('MCRM_ENTITY_DETAIL_OPENER_COPY_TEXT', entityTypeId);
 				}
+				else
+				{
+					if (!CoreType.isStringFilled(titleParams.text))
+					{
+						titleParams.text = `${entity.title} #${entityId}`;
+					}
 
-				entityTitleParams.detailText = entity.title;
+					entityTitleParams.detailText = entity.title;
+				}
 			}
 			else
 			{
-				entityTitleParams.text = getEntityMessage('MCRM_ENTITY_DETAIL_OPENER_CREATE_TEXT', entity.entityTypeName);
+				entityTitleParams.text = getEntityMessage('MCRM_ENTITY_DETAIL_OPENER_CREATE_TEXT', entityTypeId);
 			}
 
-			const iconFunctionName = entity['entityTypeName'].toLowerCase() + 'Inverted';
+			const iconFunctionName = `${Type.getCamelizedEntityTypeName(entity.entityTypeName)}Inverted`;
 			if (EntitySvg[iconFunctionName])
 			{
 				entityTitleParams.svg = {
@@ -268,36 +261,41 @@ jn.define('crm/entity-detail/opener', (require, exports, module) => {
 			return (
 				promise
 					.then(() => new Promise((resolve, reject) => {
-							let entity = this.findEntityType(entityTypeId);
-							if (entity)
-							{
-								this.resolveEntity(entity, resolve, reject);
-							}
-							else if (this.cacheExpired(5))
-							{
-								// retry first reject
-								loading = true;
-								this
-									.loadEntities(true)
-									.then(() => {
-										entity = this.findEntityType(entityTypeId);
-										if (entity)
-										{
-											this.resolveEntity(entity, resolve, reject);
-										}
-										else
-										{
-											reject();
-										}
-									})
-								;
-							}
-							else
-							{
-								reject();
-							}
-						}),
-					)
+						let entity = this.findEntityType(entityTypeId);
+						if (entity && entity.supported && !entity.restricted)
+						{
+							this.resolveEntity(entity, resolve, reject);
+							return;
+						}
+
+						if (this.cacheExpired(5))
+						{
+							// retry first reject
+							loading = true;
+							this
+								.loadEntities(true)
+								.then(() => {
+									entity = this.findEntityType(entityTypeId);
+									if (entity)
+									{
+										this.resolveEntity(entity, resolve, reject);
+									}
+									else
+									{
+										reject();
+									}
+								})
+							;
+						}
+						else if (entity)
+						{
+							this.resolveEntity(entity, resolve, reject);
+						}
+						else
+						{
+							reject();
+						}
+					}))
 					.finally(() => {
 						if (loading)
 						{
@@ -344,18 +342,22 @@ jn.define('crm/entity-detail/opener', (require, exports, module) => {
 		 */
 		static resolveEntity(entity, resolve, reject)
 		{
-			if (entity.hasOwnProperty('supported') && !entity.supported)
+			if (!entity.supported)
 			{
 				reject({
 					title: getEntityMessage('MCRM_ENTITY_DETAIL_OPENER_NOT_SUPPORTED_TITLE', entity.entityTypeId),
 					text: BX.message('MCRM_ENTITY_DETAIL_OPENER_NOT_SUPPORTED_TEXT'),
 				});
 			}
+			else if (entity.restricted)
+			{
+				reject({ restricted: true });
+			}
 			else
 			{
 				resolve();
 			}
-		};
+		}
 
 		/**
 		 * @private
@@ -363,10 +365,20 @@ jn.define('crm/entity-detail/opener', (require, exports, module) => {
 		 */
 		static showAlert(error, entityTypeId)
 		{
-			Alert.alert(
-				error && error.title || getEntityMessage('MCRM_ENTITY_DETAIL_OPENER_ALERT_TITLE2', entityTypeId),
-				error && error.text || BX.message('MCRM_ENTITY_DETAIL_OPENER_ALERT_TEXT2'),
-			);
+			if (error && error.restricted)
+			{
+				PlanRestriction.open({ title: getEntityMessage('MCRM_ENTITY_DETAIL_OPENER_RESTRICTED', entityTypeId) });
+			}
+			else
+			{
+				const title = error ? error.title : '';
+				const text = error ? error.text : '';
+
+				Alert.alert(
+					title || getEntityMessage('MCRM_ENTITY_DETAIL_OPENER_ALERT_TITLE2', entityTypeId),
+					text || BX.message('MCRM_ENTITY_DETAIL_OPENER_ALERT_TEXT2'),
+				);
+			}
 		}
 	}
 

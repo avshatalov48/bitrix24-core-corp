@@ -4,22 +4,15 @@ this.BX.Tasks = this.BX.Tasks || {};
 	'use strict';
 
 	function _classStaticPrivateFieldSpecSet(receiver, classConstructor, descriptor, value) { _classCheckPrivateStaticAccess(receiver, classConstructor); _classCheckPrivateStaticFieldDescriptor(descriptor, "set"); _classApplyDescriptorSet(receiver, descriptor, value); return value; }
-
 	function _classApplyDescriptorSet(receiver, descriptor, value) { if (descriptor.set) { descriptor.set.call(receiver, value); } else { if (!descriptor.writable) { throw new TypeError("attempted to set read only private field"); } descriptor.value = value; } }
-
 	function _classStaticPrivateFieldSpecGet(receiver, classConstructor, descriptor) { _classCheckPrivateStaticAccess(receiver, classConstructor); _classCheckPrivateStaticFieldDescriptor(descriptor, "get"); return _classApplyDescriptorGet(receiver, descriptor); }
-
 	function _classCheckPrivateStaticFieldDescriptor(descriptor, action) { if (descriptor === undefined) { throw new TypeError("attempted to " + action + " private static field before its declaration"); } }
-
 	function _classCheckPrivateStaticAccess(receiver, classConstructor) { if (receiver !== classConstructor) { throw new TypeError("Private static access of wrong provenance"); } }
-
 	function _classApplyDescriptorGet(receiver, descriptor) { if (descriptor.get) { return descriptor.get.call(receiver); } return descriptor.value; }
-
 	var Culture = /*#__PURE__*/function () {
 	  function Culture() {
 	    babelHelpers.classCallCheck(this, Culture);
 	  }
-
 	  babelHelpers.createClass(Culture, [{
 	    key: "setData",
 	    value: function setData(data) {
@@ -46,7 +39,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      if (!_classStaticPrivateFieldSpecGet(Culture, Culture, _instance)) {
 	        _classStaticPrivateFieldSpecSet(Culture, Culture, _instance, new Culture());
 	      }
-
 	      return _classStaticPrivateFieldSpecGet(Culture, Culture, _instance);
 	    }
 	  }]);
@@ -60,26 +52,20 @@ this.BX.Tasks = this.BX.Tasks || {};
 	var _templateObject, _templateObject2, _templateObject3;
 	var CreatedEvent = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(CreatedEvent, _EventEmitter);
-
 	  function CreatedEvent() {
 	    var _this;
-
 	    babelHelpers.classCallCheck(this, CreatedEvent);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(CreatedEvent).call(this));
-
 	    _this.setEventNamespace('BX.Tasks.Scrum.CreatedEvent');
-
 	    _this.node = null;
 	    return _this;
 	  }
-
 	  babelHelpers.createClass(CreatedEvent, [{
 	    key: "render",
 	    value: function render(event) {
 	      if (event === null) {
 	        return '';
 	      }
-
 	      event.color = event.color === '' ? '#86b100' : event.color;
 	      var colorBorder = this.convertHexToRGBA(event.color, 0.5);
 	      var colorBackground = this.convertHexToRGBA(event.color, 0.15);
@@ -111,11 +97,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "convertHexToRGBA",
 	    value: function convertHexToRGBA(hexCode, opacity) {
 	      var hex = hexCode.replace('#', '');
-
 	      if (hex.length === 3) {
 	        hex = "".concat(hex[0]).concat(hex[0]).concat(hex[1]).concat(hex[1]).concat(hex[2]).concat(hex[2]);
 	      }
-
 	      var r = parseInt(hex.substring(0, 2), 16);
 	      var g = parseInt(hex.substring(2, 4), 16);
 	      var b = parseInt(hex.substring(4, 6), 16);
@@ -135,15 +119,11 @@ this.BX.Tasks = this.BX.Tasks || {};
 	var _templateObject$1, _templateObject2$1, _templateObject3$1, _templateObject4, _templateObject5, _templateObject6;
 	var ListEvents = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(ListEvents, _EventEmitter);
-
 	  function ListEvents() {
 	    var _this;
-
 	    babelHelpers.classCallCheck(this, ListEvents);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(ListEvents).call(this));
-
 	    _this.setEventNamespace('BX.Tasks.Scrum.ListEvents');
-
 	    _this.listIsShown = false;
 	    _this.todayEvent = null;
 	    _this.node = null;
@@ -151,7 +131,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    _this.buttonNode = null;
 	    return _this;
 	  }
-
 	  babelHelpers.createClass(ListEvents, [{
 	    key: "setTodayEvent",
 	    value: function setTodayEvent(todayEvent) {
@@ -174,13 +153,11 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "renderList",
 	    value: function renderList(listEvents) {
 	      var _this2 = this;
-
 	      var list = new Map();
 	      var groupedList = new Map();
 	      var sort = new Map();
 	      listEvents.forEach(function (event) {
 	        var key = _this2.getFormattedDate(event.from);
-
 	        var group = groupedList.has(key) ? groupedList.get(key) : new Set();
 	        group.add(event);
 	        sort.set(key, event.from);
@@ -203,18 +180,15 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      if (!this.existsTodayEvent()) {
 	        return '';
 	      }
-
 	      return main_core.Tag.render(_templateObject3$1 || (_templateObject3$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__widget-meetings--header-separator\">\n\t\t\t\t<span>", "</span>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('TSM_PLANNING_EVENTS_TITLE'));
 	    }
 	  }, {
 	    key: "renderEvents",
 	    value: function renderEvents(list) {
 	      var _this3 = this;
-
 	      if (list.size === 0) {
 	        return '';
 	      }
-
 	      return main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__widget-meetings--timetable-wrapper\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), babelHelpers.toConsumableArray(list.values()).map(function (group, index) {
 	        return main_core.Tag.render(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t\t<div class=\"tasks-scrum__widget-meetings--timetable-day\">\n\t\t\t\t\t\t\t\t<div class=\"tasks-scrum__widget-meetings--timetable-title\">\n\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t"])), main_core.Text.encode(babelHelpers.toConsumableArray(list.keys())[index]), babelHelpers.toConsumableArray(group.values()).map(function (event) {
 	          var createdEvent = new CreatedEvent();
@@ -229,17 +203,14 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "renderButton",
 	    value: function renderButton() {
 	      var _this4 = this;
-
 	      this.buttonNode = main_core.Tag.render(_templateObject6 || (_templateObject6 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__widget-meetings-btn-box-center \">\n\t\t\t\t<button\n\t\t\t\t\tclass=\"tasks-scrum__widget-meetings--plan-btn ui-qr-popupcomponentmaker__btn --border --visible\"\n\t\t\t\t\tdata-role=\"toggle-list-events\"\n\t\t\t\t>\n\t\t\t\t\t", "\n\t\t\t\t</button>\n\t\t\t</div>\n\t\t"])), this.getButtonText());
 	      main_core.Event.bind(this.buttonNode, 'click', function () {
 	        _this4.listIsShown = !_this4.listIsShown;
-
 	        if (_this4.listIsShown) {
 	          _this4.showList();
 	        } else {
 	          _this4.hideList();
 	        }
-
 	        _this4.buttonNode.querySelector('button').textContent = _this4.getButtonText();
 	      });
 	      return this.buttonNode;
@@ -289,7 +260,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  function RequestSender() {
 	    babelHelpers.classCallCheck(this, RequestSender);
 	  }
-
 	  babelHelpers.createClass(RequestSender, [{
 	    key: "sendRequest",
 	    value: function sendRequest(controller, action) {
@@ -327,10 +297,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        console.error(response);
 	        return;
 	      }
-
 	      if (response.errors.length) {
 	        var firstError = response.errors.shift();
-
 	        if (firstError) {
 	          var errorCode = firstError.code ? firstError.code : '';
 	          var message = firstError.message + ' ' + errorCode;
@@ -355,7 +323,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    this.menu = null;
 	    this.eventTemplatesMenu = null;
 	  }
-
 	  babelHelpers.createClass(Meetings, [{
 	    key: "showMenu",
 	    value: function showMenu(targetNode) {
@@ -365,7 +332,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          return;
 	        }
 	      }
-
 	      var response = this.requestSender.getMeetings({
 	        groupId: this.groupId
 	      }).then(function (response) {
@@ -392,7 +358,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "renderMeetings",
 	    value: function renderMeetings(response) {
 	      var _this = this;
-
 	      return response.then(function (response) {
 	        _this.meetingsNode = main_core.Tag.render(_templateObject$2 || (_templateObject$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"tasks-scrum__widget-meetings tasks-scrum__widget-meetings--scope\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>"])), _this.renderMeetingsHeader(response), _this.renderEventTemplates(response), _this.renderScheduledMeetings(response));
 	        return _this.meetingsNode;
@@ -404,7 +369,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "renderChats",
 	    value: function renderChats(response) {
 	      var _this2 = this;
-
 	      return response.then(function (response) {
 	        var chats = response.data.chats;
 	        var node = main_core.Tag.render(_templateObject2$2 || (_templateObject2$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"tasks-scrum__widget-meetings tasks-scrum__widget-meetings--scope\">\n\t\t\t\t\t\t<div class=\"tasks-scrum__widget-meetings--header\">\n\t\t\t\t\t\t\t<div\n\t\t\t\t\t\t\t\tclass=\"ui-icon ui-icon-service-livechat tasks-scrum__widget-meetings--icon-chats\"\n\t\t\t\t\t\t\t><i></i></div>\n\t\t\t\t\t\t\t<div class=\"tasks-scrum__widget-meetings--header-title\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t\n\t\t\t\t\t</div>\n\t\t\t\t"])), main_core.Loc.getMessage('TSM_CHATS_HEADER_TITLE'), _this2.renderChatsList(chats), _this2.renderChatsEmpty(chats));
@@ -417,7 +381,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "renderChatsList",
 	    value: function renderChatsList(chats) {
 	      var _this3 = this;
-
 	      var visibility = chats.length > 0 ? '--visible' : '';
 	      return main_core.Tag.render(_templateObject3$2 || (_templateObject3$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__widget-meetings--chat-content ", "\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), visibility, chats.map(function (chat) {
 	        var chatIconClass = chat.icon === '' ? 'default' : '';
@@ -431,7 +394,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "openChat",
 	    value: function openChat(chat, chatNode) {
 	      var _this4 = this;
-
 	      var loader = new main_loader.Loader({
 	        target: chatNode,
 	        size: 34,
@@ -445,7 +407,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      }).then(function () {
 	        if (top.window.BXIM) {
 	          top.BXIM.openMessenger('chat' + parseInt(chat.id));
-
 	          _this4.menu.close();
 	        }
 	      })["catch"](function (response) {
@@ -484,7 +445,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "renderEventTemplates",
 	    value: function renderEventTemplates(response) {
 	      var _this5 = this;
-
 	      var mapCreatedEvents = response.data.mapCreatedEvents;
 	      var listEvents = response.data.listEvents;
 	      var isTemplatesClosed = response.data.isTemplatesClosed;
@@ -506,11 +466,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      main_core.Event.bind(closeButton, 'click', function () {
 	        main_core.Dom.removeClass(templatesNode, '--visible');
 	        var isExistsEvent = listEvents.length;
-
 	        if (!isExistsEvent) {
 	          main_core.Dom.addClass(emptyNode, '--visible');
 	        }
-
 	        _this5.requestSender.closeTemplates({
 	          groupId: _this5.groupId
 	        })["catch"](function (response) {
@@ -556,14 +514,12 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "showMenuWithEventTemplates",
 	    value: function showMenuWithEventTemplates(targetNode, calendarSettings) {
 	      var _this6 = this;
-
 	      if (this.eventTemplatesMenu) {
 	        if (this.eventTemplatesMenu.getPopupWindow().isShown()) {
 	          this.eventTemplatesMenu.close();
 	          return;
 	        }
 	      }
-
 	      this.eventTemplatesMenu = new main_popup.Menu({
 	        id: 'tsm-event-templates-menu',
 	        bindElement: targetNode,
@@ -578,7 +534,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          text: eventTemplate.name,
 	          onclick: function onclick(event, menuItem) {
 	            _this6.openCalendarSidePanel(eventTemplate);
-
 	            menuItem.getMenuWindow().close();
 	          }
 	        });
@@ -592,7 +547,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "openCalendarSidePanel",
 	    value: function openCalendarSidePanel(eventTemplate) {
 	      var _this7 = this;
-
 	      var participantsEntityList = eventTemplate ? eventTemplate.roles : [];
 	      var formData = eventTemplate ? {
 	        name: eventTemplate.name,
@@ -623,32 +577,37 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        type: 'group',
 	        ownerId: this.groupId
 	      }).show();
-	      main_core_events.EventEmitter.subscribeOnce('BX.Calendar:onEntrySave', function (baseEvent) {
-	        var data = baseEvent.getData();
-
-	        if (sliderId === data.sliderId) {
-	          if (eventTemplate) {
-	            _this7.requestSender.saveEventInfo({
-	              groupId: _this7.groupId,
-	              templateId: eventTemplate.id,
-	              eventId: data.responseData.entryId
-	            }).then(function () {// todo maybe update widget or repeat request if error
-	            })["catch"](function (response) {
-	              _this7.requestSender.showErrorAlert(response);
-	            });
-	          }
-
-	          main_core.ajax.runAction('bitrix:tasks.scrum.info.saveAnalyticsLabel', {
-	            data: {},
-	            analyticsLabel: {
-	              scrum: 'Y',
-	              action: 'create_meet',
-	              template: eventTemplate ? eventTemplate.id : 'custom'
+	      top.BX.Event.EventEmitter.subscribe('SidePanel.Slider:onLoad', function (event) {
+	        var _event$getCompatData = event.getCompatData(),
+	          _event$getCompatData2 = babelHelpers.slicedToArray(_event$getCompatData, 1),
+	          sliderEvent = _event$getCompatData2[0];
+	        if (sliderId === sliderEvent.getSlider().getUrl().toString()) {
+	          top.BX.Event.EventEmitter.subscribeOnce('BX.Calendar:onEntrySave', function (baseEvent) {
+	            var data = baseEvent.getData();
+	            if (sliderId === data.sliderId) {
+	              if (eventTemplate) {
+	                _this7.requestSender.saveEventInfo({
+	                  groupId: _this7.groupId,
+	                  templateId: eventTemplate.id,
+	                  eventId: data.responseData.entryId
+	                }).then(function () {
+	                  _this7.menu.close();
+	                })["catch"](function (response) {
+	                  _this7.requestSender.showErrorAlert(response);
+	                });
+	              }
+	              main_core.ajax.runAction('bitrix:tasks.scrum.info.saveAnalyticsLabel', {
+	                data: {},
+	                analyticsLabel: {
+	                  scrum: 'Y',
+	                  action: 'create_meet',
+	                  template: eventTemplate ? eventTemplate.id : 'custom'
+	                }
+	              });
 	            }
 	          });
 	        }
 	      });
-	      this.menu.close();
 	    }
 	  }, {
 	    key: "getEventTemplates",
@@ -771,7 +730,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      if (main_core.Type.isArray(mapCreatedEvents)) {
 	        return false;
 	      }
-
 	      return main_core.Type.isInteger(mapCreatedEvents.daily) && main_core.Type.isInteger(mapCreatedEvents.planning) && main_core.Type.isInteger(mapCreatedEvents.review) && main_core.Type.isInteger(mapCreatedEvents.retrospective);
 	    }
 	  }, {
@@ -780,13 +738,11 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      var date = new Date();
 	      var targetDate = new Date();
 	      var delta = weekStartDayNumber - date.getDay();
-
 	      if (delta >= 0) {
 	        targetDate.setDate(date.getDate() + delta);
 	      } else {
 	        targetDate.setDate(date.getDate() + 7 + delta);
 	      }
-
 	      return targetDate;
 	    }
 	  }, {

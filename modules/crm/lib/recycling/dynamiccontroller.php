@@ -297,7 +297,11 @@ class DynamicController extends BaseController
 			->prepareRecoveryFields($fields, $relationMap);
 
 		$item = $this->createItem($fields);
-		$operation = $this->getFactory()->getRestoreOperation($item);
+
+		$context = clone Crm\Service\Container::getInstance()->getContext();
+		$context->setItemOption('PRESERVE_CONTENT_TYPE', true);
+
+		$operation = $this->getFactory()->getRestoreOperation($item, $context);
 		$operation
 			->disableAllChecks()
 		;

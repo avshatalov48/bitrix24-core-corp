@@ -173,6 +173,7 @@ class Display
 		foreach ($linkedValuesIds as $fieldType => $linkedEntity)
 		{
 			$field = Field::createByType($fieldType);
+			$field->setEntityTypeId($this->entityTypeId);
 
 			// collect multi data
 			$field->loadLinkedEntities($linkedEntitiesValues, $linkedEntity);

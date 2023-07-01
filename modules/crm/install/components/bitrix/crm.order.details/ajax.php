@@ -1,4 +1,4 @@
-<?
+<?php
 
 define('NO_KEEP_STATISTIC', 'Y');
 define('NO_AGENT_STATISTIC','Y');
@@ -8,27 +8,26 @@ define('DisableEventsCheck', true);
 
 use Bitrix\Catalog;
 use Bitrix\Crm\Order\Order;
+use Bitrix\Crm\Order\Permissions;
 use Bitrix\Crm\Restriction\OrderRestriction;
 use Bitrix\Main\Context;
+use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
-use \Bitrix\Main\Localization\Loc;
-use \Bitrix\Main\Error;
-use \Bitrix\Crm\Order\Permissions;
-use Bitrix\Main\SystemException;
-use Bitrix\Sale\Delivery;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Type\Date;
 use Bitrix\Sale\Basket;
+use Bitrix\Sale\Delivery;
 use Bitrix\Sale\DiscountCouponsManager;
 use Bitrix\Sale\Helpers\Admin\OrderEdit;
 use Bitrix\Sale\Helpers\Order\Builder;
 use Bitrix\Sale\Payment;
-use Bitrix\Main\Type\Date;
 use Bitrix\SalesCenter;
 
 require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_before.php');
 
 Loc::loadMessages(__FILE__);
 
-if(!Loader::includeModule('crm'))
+if (!Loader::includeModule('crm'))
 {
 	die('Can\'t include module CRM');
 }
@@ -46,36 +45,40 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 
 		return parent::getActionMethodName($action);
 	}
+
 	protected function saveAction()
 	{
-		$id = (int)$this->request['ACTION_ENTITY_ID'] > 0 ? (int)$this->request['ACTION_ENTITY_ID'] : 0;
-		$isRefreshDataAndSaveOperation = isset($this->request['REFRESH_ORDER_DATA_AND_SAVE']) && $this->request['REFRESH_ORDER_DATA_AND_SAVE'] == 'Y';
+		$id = (int)($this->request['ACTION_ENTITY_ID'] ?? 0);
+		$isRefreshDataAndSaveOperation = isset($this->request['REFRESH_ORDER_DATA_AND_SAVE']) && $this->request['REFRESH_ORDER_DATA_AND_SAVE'] === 'Y';
 
 		$isNew = $id === 0;
 
-		if(!$isNew && !Permissions\Order::checkUpdatePermission($id, $this->userPermissions))
+		if (!$isNew && !Permissions\Order::checkUpdatePermission($id, $this->userPermissions))
 		{
 			$this->addError(Loc::getMessage('CRM_ORDER_DA_INSUFFICIENT_RIGHTS'));
+
 			return;
 		}
 
-		if($isNew && !Permissions\Order::checkCreatePermission($this->userPermissions))
+		if ($isNew && !Permissions\Order::checkCreatePermission($this->userPermissions))
 		{
 			$this->addError(Loc::getMessage('CRM_ORDER_DA_INSUFFICIENT_RIGHTS'));
+
 			return;
 		}
 
 		if ($isNew && OrderRestriction::isOrderLimitReached())
 		{
 			$this->addError('You have reached the order limit for your plan');
+
 			return;
 		}
 
-		if(!empty($this->request['ORDER_PRODUCT_DATA']))
+		if (!empty($this->request['ORDER_PRODUCT_DATA']))
 		{
 			// json can be broken sometimes; see http://jabber.bx/view.php?id=133871
 			$productData = Context::getCurrent()->getRequest()->getPostList()->getRaw('ORDER_PRODUCT_DATA');
-			if(!defined("BX_UTF"))
+			if (!defined("BX_UTF"))
 			{
 				$productData = \Bitrix\Main\Text\Encoding::convertEncoding(
 					$productData, 'UTF-8', SITE_CHARSET
@@ -86,8 +89,8 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 
 			if (!$isNew)
 			{
-				$productData['PRODUCT'] = $this->prepareRefreshBasket($id, $productData['PRODUCT']);
-				$productData['DELETED_PRODUCT_IDS'] = $_SESSION['ORDER_BASKET'][$id]['DELETED_ITEM_IDS'];
+				$productData['PRODUCT'] = $this->prepareRefreshBasket($id, $productData['PRODUCT'] ?? []);
+				$productData['DELETED_PRODUCT_IDS'] = $_SESSION['ORDER_BASKET'][$id]['DELETED_ITEM_IDS'] ?? [];
 			}
 
 			$productData = array_merge(
@@ -121,7 +124,7 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 			}
 		}
 
-		if(!empty($productData))
+		if (!empty($productData))
 		{
 			$order = $this->buildOrder(
 				$productData,
@@ -132,17 +135,18 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 				]
 			);
 		}
-		elseif($id > 0)
+		elseif ($id > 0)
 		{
 			$order = \Bitrix\Crm\Order\Order::load($id);
 		}
 		else
 		{
 			$this->addError(Loc::getMessage('CRM_ORDER_DA_ORDER_ID_NEGATIVE'));
+
 			return;
 		}
 
-		if(!$order || !$this->result->isSuccess())
+		if (!$order || !$this->result->isSuccess())
 		{
 			return;
 		}
@@ -165,7 +169,7 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 
 			$res = $basket->refresh(Basket\RefreshFactory::create(Basket\RefreshFactory::TYPE_FULL));
 
-			if(!$res->isSuccess())
+			if (!$res->isSuccess())
 			{
 				$this->addErrors($res->getErrors());
 			}
@@ -173,7 +177,7 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 
 		$res = $discount->calculate();
 
-		if(!$res->isSuccess())
+		if (!$res->isSuccess())
 		{
 			$this->addErrors($res->getErrors());
 		}
@@ -191,7 +195,7 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 			}
 		}
 
-		if ($this->request['CLIENT'] && $this->request['CLIENT'] !== '')
+		if (isset($this->request['CLIENT']) && $this->request['CLIENT'] !== '')
 		{
 			try
 			{
@@ -203,14 +207,14 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 			{
 			}
 
-			if(!isset($clientData) || !is_array($clientData))
+			if (!isset($clientData) || !is_array($clientData))
 			{
 				$clientData = array();
 			}
 
 			$clientCollection = $order->getContactCompanyCollection();
 
-			if(isset($clientData['COMPANY_DATA']) && is_array($clientData['COMPANY_DATA']))
+			if (isset($clientData['COMPANY_DATA']) && is_array($clientData['COMPANY_DATA']))
 			{
 				$companyEntity = new \CCrmCompany(false);
 				$enableCompanyCreation = \CCrmCompany::CheckCreatePermission($this->userPermissions);
@@ -246,6 +250,15 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 								'ENTITY_ID' => $companyID,
 								'IS_PRIMARY' => 'Y'
 							]);
+
+							$arErrors = [];
+
+							\CCrmBizProcHelper::AutoStartWorkflows(
+								CCrmOwnerType::Company,
+								$companyID,
+								\CCrmBizProcEventType::Create,
+								$arErrors
+							);
 						}
 					}
 					else
@@ -264,7 +277,7 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 
 			$contactIDs = null;
 			$bindContactIDs = null;
-			if(isset($clientData['CONTACT_DATA']) && is_array($clientData['CONTACT_DATA']))
+			if (isset($clientData['CONTACT_DATA']) && is_array($clientData['CONTACT_DATA']))
 			{
 				$contactEntity = new \CCrmContact(false);
 				$enableContactCreation = \CCrmContact::CheckCreatePermission($this->userPermissions);
@@ -283,7 +296,8 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 						);
 
 						$multifieldData =  isset($contactItem['multifields']) && is_array($contactItem['multifields'])
-							? $contactItem['multifields']  : array();
+							? $contactItem['multifields']
+							: array();
 
 						if(!empty($multifieldData))
 						{
@@ -307,6 +321,8 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 								'ENTITY_ID' => $contactID,
 								'IS_PRIMARY' => $clientCollection->isPrimaryItemExists(\CCrmOwnerType::Contact) ? 'N' : 'Y'
 							]);
+
+							$arErrors = [];
 
 							\CCrmBizProcHelper::AutoStartWorkflows(
 							    CCrmOwnerType::Contact,
@@ -332,13 +348,16 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 		}
 
 		$requisites = [];
-		if ((int)($this->request['REQUISITE_ID']) > 0)
+		$requisiteId = (int)($this->request['REQUISITE_ID'] ?? 0);
+		if ($requisiteId > 0)
 		{
-			$requisites['REQUISITE_ID'] = (int)($this->request['REQUISITE_ID']);
+			$requisites['REQUISITE_ID'] = $requisiteId;
 		}
-		if ((int)($this->request['BANK_DETAIL_ID'])> 0)
+
+		$bankDetailId = (int)($this->request['BANK_DETAIL_ID'] ?? 0);
+		if ($bankDetailId > 0)
 		{
-			$requisites['BANK_DETAIL_ID'] = (int)($this->request['BANK_DETAIL_ID']);
+			$requisites['BANK_DETAIL_ID'] = $bankDetailId;
 		}
 
 		if (!empty($requisites))
@@ -347,19 +366,19 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 		}
 
 		$res = $order->save();
-
-		if($isNew && $res->isSuccess())
+		if ($isNew && $res->isSuccess())
 		{
 			$id = $order->getId();
 		}
 
-		if(!$res->isSuccess())
+		if (!$res->isSuccess())
 		{
 			$this->addErrors($res->getErrors());
+
 			return;
 		}
 
-		if($res->hasWarnings())
+		if ($res->hasWarnings())
 		{
 			$this->addWarnings($res->getWarnings());
 		}
@@ -379,7 +398,7 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 			$profileId = null;
 			$error = '';
 			$profileName = '';
-			if((int)$this->request['USER_PROFILE'] > 0)
+			if ((int)$this->request['USER_PROFILE'] > 0)
 			{
 				$profileData = \Bitrix\Sale\OrderUserProperties::getList(
 					array(
@@ -440,14 +459,12 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 			$GLOBALS['USER_FIELD_MANAGER']->Update(\Bitrix\Crm\Order\Manager::getUfId(), $id, $userFields);
 		}
 
-
 		\Bitrix\Crm\Tracking\UI\Details::saveEntityData(
 			\CCrmOwnerType::Order,
 			$order->getId(),
 			$this->request,
 			$isNew
 		);
-
 
 		\CBitrixComponent::includeComponentClass('bitrix:crm.order.details');
 		$component = new \CCrmOrderDetailsComponent();
@@ -458,7 +475,12 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 		$component->setEntityID($id);
 		$order = $component->obtainOrder();
 		$entityData = $component->prepareEntityData();
-		if ((int)$this->request['USER_ID'] > 0 || (int)$this->request['PERSON_TYPE_ID'] > 0)
+
+
+		if (
+			(int)($this->request['USER_ID'] ?? 0) > 0
+			|| (int)($this->request['PERSON_TYPE_ID'] ?? 0) > 0
+		)
 		{
 			$entityData['USER_PROFILE_LIST'] = $component->loadProfiles($order->getUserId(), $order->getPersonTypeId());
 		}
@@ -470,7 +492,7 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 
 		if ($isNew)
 		{
-			$fuser = (int)$this->request['PRODUCT_COMPONENT_DATA']['params']['FUSER_ID'];
+			$fuser = (int)($this->request['PRODUCT_COMPONENT_DATA']['params']['FUSER_ID'] ?? 0);
 			if ($fuser > 0)
 			{
 				$itemsDataList = \Bitrix\Sale\Internals\BasketTable::getList(
@@ -490,14 +512,13 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 			}
 		}
 
-		if($productData['PRODUCT'])
+		if (!empty($productData['PRODUCT']))
 		{
 			$entityData['PRODUCT_COMPONENT_RESULT'] = $this->getProductComponentData($order);
 		}
 
 		$this->addData(['ENTITY_ID' => $id, 'ENTITY_DATA' => $entityData]);
-
-		if($isNew)
+		if ($isNew)
 		{
 			if (!empty($this->request['SALES_CENTER_SESSION_ID']) && Loader::includeModule('salescenter'))
 			{
@@ -517,22 +538,22 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 
 	protected function deleteAction()
 	{
-		$id = (int)$this->request['ACTION_ENTITY_ID'] > 0 ? (int)$this->request['ACTION_ENTITY_ID'] : 0;
-
-		if($id <= 0)
+		$id = (int)($this->request['ACTION_ENTITY_ID'] ?? 0);
+		if ($id <= 0)
 		{
 			$this->addError(Loc::getMessage('CRM_ORDER_NOT_FOUND'));
+
 			return;
 		}
 
-		if(!Permissions\Order::checkDeletePermission($id, $this->userPermissions))
+		if (!Permissions\Order::checkDeletePermission($id, $this->userPermissions))
 		{
 			$this->addError(Loc::getMessage('CRM_ORDER_ACCESS_DENIED'));
+
 			return;
 		}
 
 		$res = \Bitrix\Crm\Order\Order::delete($id);
-
 		if ($res->isSuccess())
 		{
 			$this->addData(['ENTITY_ID' => $id]);
@@ -545,22 +566,22 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 
 	protected function cancelAction()
 	{
-		$id = (int)$this->request['ACTION_ENTITY_ID'] > 0 ? (int)$this->request['ACTION_ENTITY_ID'] : 0;
-
-		if($id <= 0)
+		$id = (int)($this->request['ACTION_ENTITY_ID'] ?? 0);
+		if ($id <= 0)
 		{
 			$this->addError(Loc::getMessage('CRM_ORDER_NOT_FOUND'));
+
 			return;
 		}
 
-		if(!Permissions\Order::checkUpdatePermission($id, $this->userPermissions))
+		if (!Permissions\Order::checkUpdatePermission($id, $this->userPermissions))
 		{
 			$this->addError(Loc::getMessage('CRM_ORDER_ACCESS_DENIED'));
+
 			return;
 		}
 
 		$order = \Bitrix\Crm\Order\Order::load($id);
-
 		if ($order)
 		{
 			if ($this->request['VALUE'] === 'Y')
@@ -1117,40 +1138,43 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 
 	protected function refreshOrderDataAction()
 	{
-		if(!($formData = $this->getFormData()))
+		if (!($formData = $this->getFormData()))
 		{
 			return;
 		}
 
-		if ((int)$formData['ID'] <= 0)
+		if ((int)($formData['ID'] ?? 0) <= 0)
 		{
 			if (!Permissions\Order::checkCreatePermission($this->userPermissions))
 			{
 				$this->addError(Loc::getMessage('CRM_ORDER_ACCESS_DENIED'));
+
 				return;
 			}
 		}
 		elseif (!Permissions\Order::checkUpdatePermission((int)$formData['ID'], $this->userPermissions))
 		{
 			$this->addError(Loc::getMessage("CRM_ORDER_ACCESS_DENIED"));
+
 			return;
 		}
 
-		if(!($order = $this->buildOrder($formData)))
+		if (!($order = $this->buildOrder($formData)))
 		{
 			return;
 		}
 
 		if ($order->isNew())
 		{
+			$userProfile = (int)($formData['USER_PROFILE'] ?? 0);
 			if (
-				(int)$formData['USER_PROFILE'] > 0
-				&& (int)$formData['USER_PROFILE'] !== (int)$formData['OLD_USER_PROFILE']
+				$userProfile > 0
+				&& $userProfile !== (int)$formData['OLD_USER_PROFILE']
 				&& !empty($order->getUserId())
 				&& $order->getUserId() !== \Bitrix\Crm\Order\Manager::getAnonymousUserID()
 			)
 			{
-				$this->fillPropsFromProfile($order, (int)$formData['USER_PROFILE']);
+				$this->fillPropsFromProfile($order, $userProfile);
 			}
 
 			if (
@@ -1168,9 +1192,10 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 			'PRODUCT_COMPONENT_RESULT' => $this->getProductComponentData($order)
 		]);
 	}
+
 	protected function rollbackAction()
 	{
-		$orderId = (int)$this->request['FORM_DATA']['ID'];
+		$orderId = (int)($this->request['FORM_DATA']['ID'] ?? 0);
 		if ($orderId <= 0)
 		{
 			return;
@@ -1204,8 +1229,7 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 
 	protected function loadOrderAction()
 	{
-		$orderId = (int)$this->request['ORDER_ID'];
-
+		$orderId = (int)($this->request['ORDER_ID'] ?? 0);
 		if ($orderId <= 0)
 		{
 			return;
@@ -1214,11 +1238,11 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 		if (!Permissions\Order::checkReadPermission($orderId, $this->userPermissions))
 		{
 			$this->addError(Loc::getMessage("CRM_ORDER_ACCESS_DENIED"));
+
 			return;
 		}
 
 		$order = Order::load($orderId);
-
 		if (!$order)
 		{
 			return;
@@ -1240,7 +1264,7 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 	{
 		$freshData = $this->createDataByComponent($order);
 
-		$freshData['USER_PROFILE'] = $changedFields['USER_PROFILE'];
+		$freshData['USER_PROFILE'] = $changedFields['USER_PROFILE'] ?? null;
 
 		$oldDeliveryId = isset($changedFields['DELIVERY_ID']) ? (int)$changedFields['DELIVERY_ID'] : null;
 		$newDeliveryId = isset($freshData['DELIVERY_ID']) ? (int)$freshData['DELIVERY_ID'] : null;
@@ -1726,28 +1750,31 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 			$this->result->addErrors($res->getErrors());
 		}
 	}
+
 	protected function updateProductAction()
 	{
-		if(!($formData = $this->getFormData()))
+		if (!($formData = $this->getFormData()))
 		{
 			return;
 		}
 
-		if ((int)$formData['ID'] <= 0)
+		if ((int)($formData['ID'] ?? 0) <= 0)
 		{
 			if (!Permissions\Order::checkCreatePermission($this->userPermissions))
 			{
 				$this->addError(Loc::getMessage('CRM_ORDER_ACCESS_DENIED'));
+
 				return;
 			}
 		}
 		elseif (!Permissions\Order::checkUpdatePermission((int)$formData['ID'], $this->userPermissions))
 		{
 			$this->addError(Loc::getMessage("CRM_ORDER_ACCESS_DENIED"));
+
 			return;
 		}
 
-		if(!$order = $this->buildOrder($formData))
+		if (!$order = $this->buildOrder($formData))
 		{
 			return;
 		}
@@ -1761,17 +1788,21 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 			{
 				return ;
 			}
+
 			$fields = array_intersect_key($this->request['PRODUCT_DATA'], array_flip(\Bitrix\Crm\Order\BasketItem::getAvailableFields()));
 			if (isset($this->request['PRODUCT_DATA']['PRODUCT_ID']))
 			{
-				$fields['PRODUCT_ID'] = $this->request['PRODUCT_DATA']['PRODUCT_ID'];
+				$fields['PRODUCT_ID'] = $this->request['PRODUCT_DATA']['PRODUCT_ID'] ?? null;
 			}
-			$fields['QUANTITY'] = (float)$fields['QUANTITY'];
-			$fields['WEIGHT'] = (float)$fields['WEIGHT'];
+
+			$fields['QUANTITY'] = (float)($fields['QUANTITY'] ?? 0.0);
+			$fields['WEIGHT'] = (float)($fields['WEIGHT'] ?? 0.0);
+
 			if ($order->isNew())
 			{
 				$fields['BASE_PRICE'] = $fields['PRICE'];
 			}
+
 			$basketItem->setFieldsNoDemand($fields);
 			$propertyCollection = $basketItem->getPropertyCollection();
 			$propertyCollection->clearCollection();
@@ -1802,44 +1833,43 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 			'PRODUCT_COMPONENT_RESULT' => $this->getProductComponentData($order)
 		]);
 	}
+
 	protected function addProductAction()
 	{
-		if((int)($this->request['PRODUCT_ID']) > 0)
-		{
-			$productId = (int)$this->request['PRODUCT_ID'];
-		}
-		else
+		$productId = (int)($this->request['PRODUCT_ID'] ?? 0);
+		if ($productId <= 0)
 		{
 			$this->addError(Loc::getMessage('CRM_ORDER_DA_PRODUCT_ID_NOT_DEFINED'));
+
 			return;
 		}
 
-		if((float)($this->request['QUANTITY']) > 0)
-		{
-			$quantity = (float)$this->request['QUANTITY'];
-		}
-		else
+		$quantity = (float)($this->request['QUANTITY'] ?? 0.0);
+		if ($quantity <= 0)
 		{
 			$this->addError(Loc::getMessage('CRM_ORDER_DA_QUANTITY_ABSENT'));
+
 			return;
 		}
 
-		if(!($formData = $this->getFormData()))
+		if (!($formData = $this->getFormData()))
 		{
 			return;
 		}
 
-		if ((int)$formData['ID'] <= 0)
+		if ((int)($formData['ID'] ?? 0) <= 0)
 		{
 			if (!Permissions\Order::checkCreatePermission($this->userPermissions))
 			{
 				$this->addError(Loc::getMessage('CRM_ORDER_ACCESS_DENIED'));
+
 				return;
 			}
 		}
 		elseif (!Permissions\Order::checkUpdatePermission((int)$formData['ID'], $this->userPermissions))
 		{
 			$this->addError(Loc::getMessage("CRM_ORDER_ACCESS_DENIED"));
+
 			return;
 		}
 
@@ -1853,7 +1883,7 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 			];
 
 		$order = $this->buildOrder($formData, $settings);
-		if(!$order)
+		if (!$order)
 		{
 			return;
 		}
@@ -1874,12 +1904,13 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 		$options = [
 			'FILL_PRODUCT_PROPERTIES' => 'Y',
 		];
+
 		if (isset($this->request['USE_MERGE']))
 		{
 			$options['USE_MERGE'] = $this->request['USE_MERGE'] === 'Y' ? 'Y' : 'N';
 		}
 
-		if(!Loader::includeModule('catalog'))
+		if (!Loader::includeModule('catalog'))
 		{
 			$this->addError(Loc::getMessage('CRM_ORDER_DA_MODULE_CATALOG_ERROR'));
 			return;
@@ -1898,7 +1929,7 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 			$options
 		);
 
-		if($res->isSuccess())
+		if ($res->isSuccess())
 		{
 			$basketItemCode = $res->getData()['BASKET_ITEM']->getBasketCode();
 			$refreshResult = $basket->refresh(Basket\RefreshFactory::createSingle($basketItemCode));

@@ -1,0 +1,108 @@
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100% 1270"
+     preserveAspectRatio="xMinYMin meet" style="width: 100%; height: 1270px">
+    <svg height="1270px">
+        <defs>
+            <g id="block-line">
+                <g filter="url(#filter0_i_3005_70593)">
+                    <rect x="44" y="433" width="91%" height="1" fill="#e6e6e6" fill-opacity="0.15"/>
+                </g>
+            </g>
+        </defs>
+
+        <rect width="100%" height="1270" fill="#EEF2F4"/>
+
+        <g class="header">
+            <rect width="100%" height="342.708" fill="#525C69" fill-opacity="0.15"/>
+        </g>
+
+        <g class="block-1">
+            <rect x="24" y="374" width="94.7%" height="169" rx="24" fill="white"/>
+            <use xlink:href="#block-line"></use>
+        </g>
+
+        <g class="block-2">
+            <rect x="24" y="567" width="94.7%" height="252" rx="24" fill="white"/>
+            <use xlink:href="#block-line" y="193"></use>
+        </g>
+
+        <g  class="block-3">
+            <rect opacity="0.76" x="24" y="843" width="94.7%" height="398" rx="24" fill="white"/>
+            <use xlink:href="#block-line" y="475"></use>
+        </g>
+    </svg>
+
+    <svg height="1270px" id="animated-elements">
+        <defs>
+            <g id="block-title">
+                <rect x="44" y="400" width="24%" height="8" rx="3" fill="#e5e7e8"/>
+                <rect x="31%" y="400" width="9%" height="8" rx="3" fill="#e5e7e8"/>
+            </g>
+
+            <g id="block-text">
+                <rect x="44" y="457" width="80%" height="8" rx="3" fill="#e5e7e8"/>
+                <rect x="44" y="483" width="54%" height="8" rx="3" fill="#e5e7e8"/>
+                <rect x="44" y="509" width="68%" height="8" rx="3" fill="#e5e7e8"/>
+            </g>
+
+            <g id="block-3">
+                <rect x="44" y="930" width="41%" height="127" rx="22" fill="#e2e4e5"/>
+            </g>
+        </defs>
+
+        <g class="header">
+            <rect x="35%" y="134" width="31%" height="8" rx="4" fill="#ebedef"/>
+            <rect x="39%" y="154" width="22%" height="8" rx="4" fill="#ebedef"/>
+            <circle cx="51" cy="295" r="27" fill="#ebeeef"/>
+            <rect x="99" y="281" width="22%" height="8" rx="4" fill="#ebedef"/>
+            <rect x="99" y="301" width="15%" height="8" rx="4" fill="#ebedef"/>
+            <rect x="82%" y="276" width="15%" height="39" rx="19.5" fill="#ebedef"/>
+        </g>
+
+        <g class="block-1">
+            <use xlink:href="#block-title"></use>
+            <use xlink:href="#block-text"></use>
+        </g>
+
+        <g class="block-2">
+            <use xlink:href="#block-title" y="193"></use>
+            <use xlink:href="#block-text" y="193"></use>
+            <use xlink:href="#block-text" y="271"></use>
+        </g>
+
+        <g  class="block-3">
+            <use xlink:href="#block-title" y="472"></use>
+            <use xlink:href="#block-3"></use>
+            <use xlink:href="#block-3" x="47%"></use>
+            <use xlink:href="#block-3" y="153"></use>
+            <use xlink:href="#block-3" x="47%" y="153"></use>
+        </g>
+    </svg>
+
+    <defs>
+        <filter id="filter0_i_3005_70593" x="44" y="433" width="90%" height="1" filterUnits="userSpaceOnUse"
+                color-interpolation-filters="sRGB">
+            <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+            <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+            <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
+                           result="hardAlpha"/>
+            <feOffset dy="-1"/>
+            <feComposite in2="hardAlpha" operator="arithmetic" k2="-1" k3="1"/>
+            <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.1 0"/>
+            <feBlend mode="normal" in2="shape" result="effect1_innerShadow_3005_70593"/>
+        </filter>
+    </defs>
+
+    <rect id="msk1" width="100%" fill="url(#msk_gd)" mask="url(#headerMsk)" height="1270"/>
+
+    <mask id="headerMsk" fill="white">
+        <use xlink:href="#animated-elements"/>
+    </mask>
+
+    <linearGradient x1="66.6%" y1="50%" x2="33.3%" y2="50%" id="msk_gd">
+        <stop stop-color="#000000" stop-opacity="0" offset="0%"/>
+        <stop stop-color="#000000" stop-opacity="0.07" offset="50%"/>
+        <stop stop-color="#000000" stop-opacity="0" offset="100%"/>
+    </linearGradient>
+
+    <animate xlink:href="#msk1" attributeName="x" from="-100%" to="100%" dur="1s" begin="0s" repeatCount="indefinite"/>
+</svg>

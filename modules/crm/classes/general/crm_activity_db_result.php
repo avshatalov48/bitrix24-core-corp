@@ -1,5 +1,8 @@
 <?php
 
+use Bitrix\Crm\Activity\LightCounter\ActCounterLightTimeRepo;
+use Bitrix\Main\DI\ServiceLocator;
+
 class CCrmActivityDbResult extends CDBResult
 {
 	private $selectFields = null;
@@ -22,8 +25,13 @@ class CCrmActivityDbResult extends CDBResult
 
 	public function Fetch()
 	{
+		$additionalFields = [
+			'LIGHT_COUNTER_AT',
+			'IS_INCOMING_CHANNEL'
+		];
+
 		if (
-			in_array('IS_INCOMING_CHANNEL', $this->selectFields, true)
+			!empty(array_intersect($additionalFields, $this->selectFields))
 			&& in_array('ID', $this->selectFields, true)
 		)
 		{
@@ -54,21 +62,51 @@ class CCrmActivityDbResult extends CDBResult
 		{
 			return $this->records;
 		}
+
+		if (in_array('IS_INCOMING_CHANNEL', $this->selectFields, true))
+		{
+			$this->records = $this->appendIncomingChannelFieldToRecords($this->records);
+		}
+
+		if (in_array('LIGHT_COUNTER_AT', $this->selectFields, true))
+		{
+			$this->records = $this->appendLightTimeFieldToRecords($this->records);
+		}
+
+		return $this->records;
+	}
+
+	private function appendIncomingChannelFieldToRecords(array $records): array
+	{
 		$incomingChannelRecords = array_column(
 			\Bitrix\Crm\Activity\Entity\IncomingChannelTable::query()
-				->whereIn('ACTIVITY_ID', array_keys($this->records))
+				->whereIn('ACTIVITY_ID', array_keys($records))
 				->setSelect(['ACTIVITY_ID'])
 				->fetchAll()
 			,
 			'ACTIVITY_ID'
 		);
-		foreach ($this->records as $id => $record)
+		foreach ($records as $id => $record)
 		{
-			$this->records[$id]['IS_INCOMING_CHANNEL'] = (in_array($id, $incomingChannelRecords, false) ? 'Y' : 'N');
+			$records[$id]['IS_INCOMING_CHANNEL'] = (in_array($id, $incomingChannelRecords, false) ? 'Y' : 'N');
 		}
-		$this->records = array_values($this->records);
+		return array_values($records);
+	}
 
-		return $this->records;
+	private function appendLightTimeFieldToRecords(array $records): array
+	{
+		/** @var ActCounterLightTimeRepo $lightCounterRepo */
+		$lightCounterRepo = ServiceLocator::getInstance()->get('crm.activity.actcounterlighttimerepo');
+		$ids = array_column($records, 'ID');
+
+		$arrLightTimeAt = $lightCounterRepo->queryLightTimeByActivityIds($ids);
+
+		foreach ($records as &$record)
+		{
+			$actId = $record['ID'];
+			$record['LIGHT_COUNTER_AT'] = $arrLightTimeAt[$actId] ?? null;
+		}
+		return $records;
 	}
 
 	private function fetchOneRecord()

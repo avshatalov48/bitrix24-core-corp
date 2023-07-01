@@ -452,7 +452,7 @@ class UserList extends \CBitrixComponent implements Controllerable, Errorable
 
 		$componentParams = $this->arParams;
 		$componentParams['EXPORT_MODE'] = 'Y';
-		$componentParams['EXPORT_TYPE'] = $params['type'];
+		$componentParams['EXPORT_TYPE'] = $params['type'] ?? null;
 
 		$componentResult = $APPLICATION->includeComponent(
 			'bitrix:intranet.user.list',

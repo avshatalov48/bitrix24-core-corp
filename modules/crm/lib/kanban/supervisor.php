@@ -14,9 +14,9 @@ use Bitrix\Main\Localization\Loc;
  *
  * <<< ORMENTITYANNOTATION
  * @method static EO_Supervisor_Query query()
- * @method static EO_Supervisor_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Supervisor_Result getByPrimary($primary, array $parameters = [])
  * @method static EO_Supervisor_Result getById($id)
- * @method static EO_Supervisor_Result getList(array $parameters = array())
+ * @method static EO_Supervisor_Result getList(array $parameters = [])
  * @method static EO_Supervisor_Entity getEntity()
  * @method static \Bitrix\Crm\Kanban\EO_Supervisor createObject($setDefaultValues = true)
  * @method static \Bitrix\Crm\Kanban\EO_Supervisor_Collection createCollection()

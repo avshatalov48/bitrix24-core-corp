@@ -3,7 +3,7 @@
 return [
 	'extensions' => [
 		'loc',
-		'layout/ui/banner-button',
+		'layout/ui/banners',
 		'layout/ui/fields/boolean',
 		'layout/ui/fields/money',
 		'layout/ui/fields/number',

@@ -23,9 +23,9 @@ class Mark extends Content
 
 		$row = $this->getRowData();
 
-		$mark = ($row['MARK'] ? strtoupper($row['MARK']) : false);
+		$mark = (isset($row['MARK']) ? strtoupper($row['MARK']) : false);
 		$markClass = '';
-		$addInReportClass = ($row['ADD_IN_REPORT'] === 'Y' ? 'task-in-report' : '');
+		$addInReportClass = ((isset($row['ADD_IN_REPORT']) && $row['ADD_IN_REPORT'] === 'Y') ? 'task-in-report' : '');
 
 		if ($mark)
 		{

@@ -3,9 +3,9 @@ namespace Bitrix\Crm\Timeline\Entity;
 
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Service\Timeline\Monitor;
+use Bitrix\Crm\Timeline\TimelineType;
 use Bitrix\Main;
 use Bitrix\Main\Entity;
-use \Bitrix\Crm\Timeline\TimelineType;
 use Bitrix\Main\ORM\Data\UpdateResult;
 
 /**
@@ -15,9 +15,9 @@ use Bitrix\Main\ORM\Data\UpdateResult;
  *
  * <<< ORMENTITYANNOTATION
  * @method static EO_TimelineBinding_Query query()
- * @method static EO_TimelineBinding_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_TimelineBinding_Result getByPrimary($primary, array $parameters = [])
  * @method static EO_TimelineBinding_Result getById($id)
- * @method static EO_TimelineBinding_Result getList(array $parameters = array())
+ * @method static EO_TimelineBinding_Result getList(array $parameters = [])
  * @method static EO_TimelineBinding_Entity getEntity()
  * @method static \Bitrix\Crm\Timeline\Entity\EO_TimelineBinding createObject($setDefaultValues = true)
  * @method static \Bitrix\Crm\Timeline\Entity\EO_TimelineBinding_Collection createCollection()
@@ -124,6 +124,8 @@ class TimelineBindingTable  extends Entity\DataManager
 				$monitor->onTimelineEntryRemoveIfSuitable(new ItemIdentifier($binding->getEntityTypeId(), $binding->getEntityId()), (int)$ownerID);
 			}
 		}
+
+		self::cleanCache();
 	}
 
 	/**
@@ -218,6 +220,9 @@ class TimelineBindingTable  extends Entity\DataManager
 		{
 			Monitor::getInstance()->onTimelineEntryAdd(new ItemIdentifier($newEntityTypeID, $newEntityID));
 		}
+
+		self::cleanCache();
+		TimelineTable::cleanCache();
 	}
 	/**
 	 * Transfer events from old associated entity of one type to new entity of another type.
@@ -234,6 +239,8 @@ class TimelineBindingTable  extends Entity\DataManager
 		$connection->queryExecute(
 			"UPDATE b_crm_timeline SET ASSOCIATED_ENTITY_TYPE_ID = {$newEntityTypeID}, ASSOCIATED_ENTITY_ID = {$newEntityID} WHERE ASSOCIATED_ENTITY_TYPE_ID = {$oldEntityTypeID} AND ASSOCIATED_ENTITY_ID = {$oldEntityID}"
 		);
+
+		TimelineTable::cleanCache();
 	}
 	/**
 	 * Unbind events from old entity and bind them to new entity of same type.
@@ -345,6 +352,8 @@ class TimelineBindingTable  extends Entity\DataManager
 				Monitor::getInstance()->onTimelineEntryAdd(new ItemIdentifier($entityTypeID, $newEntityID));
 			}
 		}
+
+		self::cleanCache();
 	}
 
 	/**
@@ -411,6 +420,8 @@ class TimelineBindingTable  extends Entity\DataManager
 		{
 			Monitor::getInstance()->onTimelineEntryAdd(new ItemIdentifier($targEntityTypeID, $targEntityID));
 		}
+
+		self::cleanCache();
 	}
 
 	public static function detach($srcEntityTypeID, $srcEntityID, $targEntityTypeID, $targEntityID, array $typeIDs)
@@ -457,6 +468,8 @@ class TimelineBindingTable  extends Entity\DataManager
 		{
 			Monitor::getInstance()->onTimelineEntryRemove(new ItemIdentifier($targEntityTypeID, $targEntityID));
 		}
+
+		self::cleanCache();
 	}
 
 	public static function checkBindingExists(int $id, int $ownerTypeId, int $ownerId): bool

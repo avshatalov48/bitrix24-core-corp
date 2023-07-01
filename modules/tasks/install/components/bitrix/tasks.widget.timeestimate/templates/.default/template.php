@@ -23,14 +23,14 @@ $helper = $arResult['HELPER'];
 		<input class="js-id-timeestimate-allow-time-tracking" type="hidden" name="<?=$inputPrefix?>[ALLOW_TIME_TRACKING]" value="<?=($checked ? 'Y' : 'N')?>" />
 		<span class="js-id-timeestimate-inputs task-options-inp-container-time task-openable-block<?if(!$checked):?> invisible<?endif?>">
             <span class="task-options-inp-container">
-                <input type="text" class="js-id-timeestimate-time js-id-timeestimate-hour task-options-inp" value="<?=($arResult['HOURS'] ? $arResult['HOURS'] : '')?>" />
+                <input type="text" class="js-id-timeestimate-time js-id-timeestimate-hour task-options-inp" value="<?= ($arResult['HOURS'] ?: '') ?>" />
             </span>
 			<?=Loc::getMessage('TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_OF_HOURS')?>
 			<span class="task-options-inp-container">
-                <input type="text" class="js-id-timeestimate-time js-id-timeestimate-minute task-options-inp" value="<?=($arResult['MINUTES'] ? $arResult['MINUTES'] : '')?>" />
+                <input type="text" class="js-id-timeestimate-time js-id-timeestimate-minute task-options-inp" value="<?= ($arResult['MINUTES'] ?: '') ?>" />
             </span>
 			<?=Loc::getMessage('TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_OF_MINUTES')?>
-			<input class="js-id-timeestimate-second" type="hidden" name="<?=$inputPrefix?>[TIME_ESTIMATE]" value="<?=intval($data['TIME_ESTIMATE'])?>" />
+			<input class="js-id-timeestimate-second" type="hidden" name="<?=$inputPrefix?>[TIME_ESTIMATE]" value="<?= (int)($data['TIME_ESTIMATE'] ?? null) ?>" />
         </span>
 
 	</div>

@@ -334,9 +334,9 @@ if (
 	LocalRedirect($APPLICATION->GetCurPageParam("", array("sessid")));
 }
 
-__checkForum($arParams["FORUM_ID"]);
+__checkForum($arParams["FORUM_ID"] ?? null);
 
-$arParams["TASK_VAR"] = trim($arParams["TASK_VAR"]);
+$arParams["TASK_VAR"] = trim($arParams["TASK_VAR"] ?? '');
 if ($arParams["TASK_VAR"] == '')
 	$arParams["TASK_VAR"] = "task_id";
 
@@ -344,11 +344,11 @@ $arParams["GROUP_VAR"] = isset($arParams["GROUP_VAR"]) ? trim($arParams["GROUP_V
 if ($arParams["GROUP_VAR"] == '')
 	$arParams["GROUP_VAR"] = "group_id";
 
-$arParams["ACTION_VAR"] = trim($arParams["ACTION_VAR"]);
+$arParams["ACTION_VAR"] = trim($arParams["ACTION_VAR"] ?? '');
 if ($arParams["ACTION_VAR"] == '')
 	$arParams["ACTION_VAR"] = "action";
 
-if ($arParams["PAGE_VAR"] == '')
+if (($arParams["PAGE_VAR"] ?? null) == '')
 	$arParams["PAGE_VAR"] = "page";
 
 if ( ! isset($arParams['USE_FILTER_V2']) )
@@ -362,7 +362,7 @@ $arParams["TASK_ID"] = isset($arParams["TASK_ID"]) ? intval($arParams["TASK_ID"]
 
 $arResult["ACTION"] = ($arParams["TASK_ID"] > 0 ? "edit" : "create");
 
-$arParams["USER_ID"] = intval($arParams["USER_ID"]) > 0 ? intval($arParams["USER_ID"]) : $loggedInUserId;
+$arParams["USER_ID"] = (int)($arParams["USER_ID"] ?? null) > 0 ? intval($arParams["USER_ID"]) : $loggedInUserId;
 
 $arParams["GROUP_ID"] = isset($arParams["GROUP_ID"]) ? intval($arParams["GROUP_ID"]) : 0;
 
@@ -643,43 +643,43 @@ $arResult['KNOWN_COLUMNS'] = CTaskColumnList::get();
 
 //user paths
 // PATH_* block again...
-$arParams["PATH_TO_USER_TASKS"] = trim($arParams["PATH_TO_USER_TASKS"]);
+$arParams["PATH_TO_USER_TASKS"] = trim($arParams["PATH_TO_USER_TASKS"] ?? '');
 if ($arParams["PATH_TO_USER_TASKS"] == '')
 {
 	$arParams["PATH_TO_USER_TASKS"] = COption::GetOptionString("tasks", "paths_task_user", null, SITE_ID);
 }
-$arParams["PATH_TO_USER_TASKS_TASK"] = trim($arParams["PATH_TO_USER_TASKS_TASK"]);
+$arParams["PATH_TO_USER_TASKS_TASK"] = trim($arParams["PATH_TO_USER_TASKS_TASK"] ?? '');
 if ($arParams["PATH_TO_USER_TASKS_TASK"] == '')
 {
 	$arParams["PATH_TO_USER_TASKS_TASK"] = COption::GetOptionString("tasks", "paths_task_user_action", null, SITE_ID);
 }
-$arParams["PATH_TO_USER_TASKS_REPORT"] = trim($arParams["PATH_TO_USER_TASKS_REPORT"]);
+$arParams["PATH_TO_USER_TASKS_REPORT"] = trim($arParams["PATH_TO_USER_TASKS_REPORT"] ?? '');
 if ($arParams["PATH_TO_USER_TASKS_REPORT"] == '')
 {
-	$arParams["PATH_TO_USER_TASKS_REPORT"] = htmlspecialcharsbx($APPLICATION->GetCurPage()."?".$arParams["PAGE_VAR"]."=user_tasks_report&".$arParams["USER_VAR"]."=#user_id#");
+	$arParams["PATH_TO_USER_TASKS_REPORT"] = htmlspecialcharsbx($APPLICATION->GetCurPage()."?".($arParams["PAGE_VAR"] ?? '')."=user_tasks_report&".($arParams["USER_VAR"] ?? null)."=#user_id#");
 }
-$arParams["PATH_TO_USER_TASKS_TEMPLATES"] = trim($arParams["PATH_TO_USER_TASKS_TEMPLATES"]);
+$arParams["PATH_TO_USER_TASKS_TEMPLATES"] = trim($arParams["PATH_TO_USER_TASKS_TEMPLATES"] ?? '');
 if ($arParams["PATH_TO_USER_TASKS_TEMPLATES"] == '')
 {
-	$arParams["PATH_TO_USER_TASKS_TEMPLATES"] = htmlspecialcharsbx($APPLICATION->GetCurPage()."?".$arParams["PAGE_VAR"]."=user_tasks_templates&".$arParams["USER_VAR"]."=#user_id#");
+	$arParams["PATH_TO_USER_TASKS_TEMPLATES"] = htmlspecialcharsbx($APPLICATION->GetCurPage()."?".($arParams["PAGE_VAR"] ?? '')."=user_tasks_templates&".($arParams["USER_VAR"] ?? null)."=#user_id#");
 }
-$arParams["PATH_TO_USER_PROFILE"] = trim($arParams["PATH_TO_USER_PROFILE"]);
+$arParams["PATH_TO_USER_PROFILE"] = trim($arParams["PATH_TO_USER_PROFILE"] ?? '');
 
 //group paths
-$arParams["PATH_TO_GROUP_TASKS"] = trim($arParams["PATH_TO_GROUP_TASKS"]);
+$arParams["PATH_TO_GROUP_TASKS"] = trim($arParams["PATH_TO_GROUP_TASKS"] ?? '');
 if ($arParams["PATH_TO_GROUP_TASKS"] == '')
 {
 	$arParams["PATH_TO_GROUP_TASKS"] = COption::GetOptionString("tasks", "paths_task_group", null, SITE_ID);
 }
-$arParams["PATH_TO_GROUP_TASKS_TASK"] = trim($arParams["PATH_TO_GROUP_TASKS_TASK"]);
+$arParams["PATH_TO_GROUP_TASKS_TASK"] = trim($arParams["PATH_TO_GROUP_TASKS_TASK"] ?? '');
 if ($arParams["PATH_TO_GROUP_TASKS_TASK"] == '')
 {
 	$arParams["PATH_TO_GROUP_TASKS_TASK"] = COption::GetOptionString("tasks", "paths_task_group_action", null, SITE_ID);
 }
-$arParams["PATH_TO_GROUP_TASKS_REPORT"] = trim($arParams["PATH_TO_GROUP_TASKS_REPORT"]);
+$arParams["PATH_TO_GROUP_TASKS_REPORT"] = trim($arParams["PATH_TO_GROUP_TASKS_REPORT"] ?? '');
 if ($arParams["PATH_TO_GROUP_TASKS_REPORT"] == '')
 {
-	$arParams["PATH_TO_GROUP_TASKS_REPORT"] = htmlspecialcharsbx($APPLICATION->GetCurPage()."?".$arParams["PAGE_VAR"]."=group_tasks_report&".$arParams["GROUP_VAR"]."=#group_id#");
+	$arParams["PATH_TO_GROUP_TASKS_REPORT"] = htmlspecialcharsbx($APPLICATION->GetCurPage()."?".($arParams["PAGE_VAR"] ?? '')."=group_tasks_report&".$arParams["GROUP_VAR"]."=#group_id#");
 }
 $arParams["PATH_TO_USER_TASKS_TEMPLATES"] = isset($arParams["PATH_TO_USER_TASKS_TEMPLATES"]) ? trim($arParams["PATH_TO_USER_TASKS_TEMPLATES"]) : "";
 $arParams["PATH_TO_USER_TEMPLATES_TEMPLATE"] = isset($arParams["PATH_TO_USER_TEMPLATES_TEMPLATE"]) ? trim($arParams["PATH_TO_USER_TEMPLATES_TEMPLATE"]) : "";
@@ -689,7 +689,7 @@ if ($arParams["PATH_TO_USER_TEMPLATES_TEMPLATE"] == '')
 	{
 		$arParams["TEMPLATE_VAR"] = "template_id";
 	}
-	$arParams["PATH_TO_USER_TEMPLATES_TEMPLATE"] = htmlspecialcharsbx($APPLICATION->GetCurPage()."?".$arParams["PAGE_VAR"]."=user_templates_template&".$arParams["USER_VAR"]."=#user_id#&".$arParams["TEMPLATE_VAR"]."=#template_id#&".$arParams["ACTION_VAR"]."=#action#");
+	$arParams["PATH_TO_USER_TEMPLATES_TEMPLATE"] = htmlspecialcharsbx($APPLICATION->GetCurPage()."?".($arParams["PAGE_VAR"] ?? '')."=user_templates_template&".($arParams["USER_VAR"] ?? null)."=#user_id#&".$arParams["TEMPLATE_VAR"]."=#template_id#&".$arParams["ACTION_VAR"]."=#action#");
 }
 $arParams["PATH_TO_TASKS_TEMPLATES"] = str_replace("#user_id#", $arParams["USER_ID"], $arParams["PATH_TO_USER_TASKS_TEMPLATES"]);
 // PATH_* block end
@@ -1161,14 +1161,20 @@ if(is_array($arOrder))
 }
 
 // now modify sorting as required to get REAL sort
-if(!is_array($arParams['PREORDER']))
+if(!is_array($arParams['PREORDER'] ?? null))
+{
 	$arParams['PREORDER'] = array();
+}
 foreach($arParams['PREORDER'] as $sortF => $sortD)
 {
 	if(preg_match('#^[a-zA-Z0-9_-]+$#', $sortF))
+	{
 		$arParams['PREORDER'][$sortF] = ToLower($sortD) == 'asc' ? 'ASC' : 'DESC';
+	}
 	else
+	{
 		unset($arParams['PREORDER'][$sortF]);
+	}
 }
 
 if ($arResult['SORTF'] === "SORTING")
@@ -1189,7 +1195,7 @@ if ($arResult['SORTF'] === "SORTING")
 else
 {
 	$arOrder = array_merge($arParams['PREORDER'], $arOrder);
-	if ($arParams['SKIP_GROUP_SORT'] !== 'Y')
+	if (($arParams['SKIP_GROUP_SORT'] ?? null) !== 'Y')
 	{
 		$arOrder = array_merge(['GROUP_ID' => 'ASC'], $arOrder);
 	}
@@ -1214,7 +1220,7 @@ foreach ($sortingColumns as $column)
 		continue;
 	}
 
-	$ascDirection = mb_stripos($arResult["SORTD"], "ASC") !== false;
+	$ascDirection = mb_stripos(($arResult["SORTD"] ?? ''), "ASC") !== false;
 
 	$defaultDirection = "ASC";
 	$reverseDirection = "DESC";
@@ -1245,7 +1251,7 @@ if ( ! isset($arParams['USE_PAGINATION']) )
 $arGetListParams  = array();
 $itemsCount       = 10;		// show 10 items by default
 
-if ($arParams['ITEMS_COUNT'] > 0)
+if (($arParams['ITEMS_COUNT'] ?? null) > 0)
 {
 	$itemsCount = (int) abs($arParams['ITEMS_COUNT']);
 }
@@ -1485,7 +1491,7 @@ else
 		$sTitleShort = GetMessage("TASKS_TITLE_TASKS");
 	}
 }
-if ($arParams["SET_TITLE"] == "Y")
+if (($arParams["SET_TITLE"] ?? null) == "Y")
 {
 	if ($arParams["HIDE_OWNER_IN_TITLE"] == "Y")
 	{
@@ -1560,7 +1566,7 @@ if(Loader::includeModule('calendar'))
 	{
 		$wh['HOURS']['START']['H'] = intval($time[0]);
 	}
-	if(intval($time[1]))
+	if((int)($time[1] ?? null))
 	{
 		$wh['HOURS']['START']['M'] = intval($time[1]);
 	}
@@ -1570,7 +1576,7 @@ if(Loader::includeModule('calendar'))
 	{
 		$wh['HOURS']['END']['H'] = intval($time[0]);
 	}
-	if(intval($time[1]))
+	if(intval($time[1] ?? null))
 	{
 		$wh['HOURS']['END']['M'] = intval($time[1]);
 	}

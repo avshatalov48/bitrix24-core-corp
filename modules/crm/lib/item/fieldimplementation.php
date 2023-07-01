@@ -41,9 +41,22 @@ interface FieldImplementation
 
 	public function unset(string $commonFieldName): void;
 
+	public function getDefaultValue(string $commonFieldName);
+
 	public function afterSuccessfulItemSave(Item $item, EntityObject $entityObject): void;
 
 	public function save(): Result;
+
+	/**
+	 * Returns list of common field names that are included in serialization of the item (e.g. Item::getData,
+	 * Item::jsonSerialize).
+	 *
+	 * WARNING! All the fields mentioned here should have a scalar type (int, string, array of ints, ...)!
+	 * If a field has object value, serialization attempt will throw an exception.
+	 *
+	 * @return string[]
+	 */
+	public function getSerializableFieldNames(): array;
 
 	/**
 	 * Returns list of common field names that are can be externalized from this implementation

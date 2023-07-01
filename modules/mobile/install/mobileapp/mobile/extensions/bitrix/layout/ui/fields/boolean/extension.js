@@ -13,6 +13,17 @@ jn.define('layout/ui/fields/boolean', (require, exports, module) => {
 		ICON: 'icon',
 	};
 
+	const COLORS = {
+		TEXT_DEFAULT: '#333333',
+		BACKGROUND_DEFAULT: '#ffffff',
+
+		DEFAULT_TOGGLE: '#d5d7db',
+		ACTIVE_TOGGLE: '#2fc6f6',
+
+		DEFAULT_ICON: '#bdc1c6',
+		ACTIVE_ICON: '#ffc34d',
+	};
+
 	/**
 	 * @class BooleanField
 	 */
@@ -30,6 +41,34 @@ jn.define('layout/ui/fields/boolean', (require, exports, module) => {
 			}
 		}
 
+		get activeToggleColor()
+		{
+			const styles = this.getConfig().styles || {};
+
+			return BX.prop.getString(styles, 'activeToggleColor', COLORS.ACTIVE_TOGGLE);
+		}
+
+		get defaultToggleColor()
+		{
+			const styles = this.getConfig().styles || {};
+
+			return BX.prop.getString(styles, 'defaultToggleColor', COLORS.DEFAULT_TOGGLE);
+		}
+
+		get activeIconColor()
+		{
+			const styles = this.getConfig().styles || {};
+
+			return BX.prop.getString(styles, 'activeIconColor', COLORS.ACTIVE_ICON);
+		}
+
+		get defaultIconColor()
+		{
+			const styles = this.getConfig().styles || {};
+
+			return BX.prop.getString(styles, 'defaultIconColor', COLORS.DEFAULT_ICON);
+		}
+
 		getConfig()
 		{
 			const config = super.getConfig();
@@ -37,7 +76,7 @@ jn.define('layout/ui/fields/boolean', (require, exports, module) => {
 			return {
 				...config,
 				mode: BX.prop.getString(config, 'mode', Mode.SWITCHER),
-				description: BX.prop.getString(config, 'description', ''),
+				description: BX.prop.get(config, 'description', ''),
 				descriptionYes: BX.prop.getString(config, 'descriptionYes', BX.message('FIELDS_BOOLEAN_YES')),
 				descriptionNo: BX.prop.getString(config, 'descriptionNo', BX.message('FIELDS_BOOLEAN_NO')),
 				iconUriYes: BX.prop.getString(config, 'iconUriYes', false),
@@ -68,7 +107,7 @@ jn.define('layout/ui/fields/boolean', (require, exports, module) => {
 						new Promise((resolve) => {
 							this.switcherContainerRef.animate({
 								duration: 200,
-								backgroundColor: (wasChecked ? '#ced4da' : '#2fc6f6'),
+								backgroundColor: (wasChecked ? this.defaultToggleColor : this.activeToggleColor),
 							}, resolve);
 						}),
 					);
@@ -79,7 +118,7 @@ jn.define('layout/ui/fields/boolean', (require, exports, module) => {
 						new Promise((resolve) => {
 							this.iconRef.animate({
 								duration: 400,
-								backgroundColor: (wasChecked ? '#b8c0c9' : '#ffc34d'),
+								backgroundColor: (wasChecked ? this.defaultIconColor : this.activeIconColor),
 							}, resolve);
 						}),
 					);
@@ -94,8 +133,8 @@ jn.define('layout/ui/fields/boolean', (require, exports, module) => {
 			};
 
 			return (
-				FocusManager
-					.blurFocusedFieldIfHas(this)
+				this.onBeforeHandleChange()
+					.then(() => FocusManager.blurFocusedFieldIfHas(this))
 					.then(() => doToggleValue())
 			);
 		}
@@ -130,7 +169,7 @@ jn.define('layout/ui/fields/boolean', (require, exports, module) => {
 						? Text({
 							style: {
 								...this.styles.value,
-								color: '#333333',
+								color: COLORS.TEXT_DEFAULT,
 							},
 							text: (checked ? config.descriptionYes : config.descriptionNo),
 						})
@@ -161,21 +200,10 @@ jn.define('layout/ui/fields/boolean', (require, exports, module) => {
 			return View(
 				{
 					ref: ref => this.iconRef = ref,
-					style: {
-						width: 24,
-						height: 24,
-						justifyContent: 'center',
-						alignItems: 'center',
-						marginRight: 8,
-						borderRadius: 12,
-						backgroundColor: (this.getValue() ? '#ffc34d' : '#b8c0c9'),
-					},
+					style: this.styles.booleanIconContainer,
 				},
 				Image({
-					style: {
-						width: 12,
-						height: 16,
-					},
+					style: this.styles.booleanIcon,
 					uri: this.getImageUrl(this.getConfig().iconUri),
 				}),
 			);
@@ -188,27 +216,12 @@ jn.define('layout/ui/fields/boolean', (require, exports, module) => {
 			return View(
 				{
 					ref: ref => this.switcherContainerRef = ref,
-					style: {
-						borderRadius: 14,
-						backgroundColor: (checked ? '#2fc6f6' : '#ced4da'),
-						width: 37,
-						height: 17,
-						marginRight: 8,
-						opacity: (this.isReadOnly() ? 0.5 : 1),
-					},
+					style: this.styles.switcherContainer(checked),
 				},
 				View(
 					{
 						ref: ref => this.switcherRef = ref,
-						style: {
-							width: 11,
-							height: 11,
-							backgroundColor: '#ffffff',
-							borderRadius: 8,
-							position: 'absolute',
-							top: 3,
-							left: (checked ? 23 : 3),
-						},
+						style: this.styles.switcher(checked),
 					},
 				),
 			);
@@ -222,17 +235,16 @@ jn.define('layout/ui/fields/boolean', (require, exports, module) => {
 			}
 
 			const config = this.getConfig();
+			const { description: descriptionStyle } = this.getStyles();
 
 			if (!this.isBlinkable())
 			{
-				return Text({
-					style: {
-						flexShrink: 2,
-						color: '#333333',
-						fontSize: 16,
-					},
-					text: config.description,
-				});
+				return typeof config.description === 'string'
+					? Text({
+						style: this.styles.description,
+						text: config.description,
+					})
+					: config.description;
 			}
 
 			return new BlinkView({
@@ -240,11 +252,7 @@ jn.define('layout/ui/fields/boolean', (require, exports, module) => {
 				data: this.getValue(),
 				slot: (checked) => {
 					return Text({
-						style: {
-							color: '#333333',
-							fontSize: 16,
-							flexShrink: 2,
-						},
+						style: this.styles.description,
 						text: (checked ? config.descriptionYes : config.descriptionNo),
 					});
 				},
@@ -274,7 +282,7 @@ jn.define('layout/ui/fields/boolean', (require, exports, module) => {
 
 		isBlinkable()
 		{
-			const {description, descriptionYes, descriptionNo} = this.getConfig();
+			const { description, descriptionYes, descriptionNo } = this.getConfig();
 
 			return (
 				description === ''
@@ -296,14 +304,66 @@ jn.define('layout/ui/fields/boolean', (require, exports, module) => {
 
 		getDefaultStyles()
 		{
-			const styles = super.getDefaultStyles();
+			const styles = this.getChildFieldStyles();
 
 			if (this.hasHiddenEmptyView())
 			{
 				return this.getHiddenEmptyChildFieldStyles(styles);
 			}
 
-			return styles;
+			return {
+				...styles,
+				description: {
+					flexShrink: 2,
+					color: '#333333',
+					fontSize: 16,
+				},
+			};
+		}
+
+		getChildFieldStyles()
+		{
+			const styles = super.getDefaultStyles();
+
+			return {
+				...styles,
+				switcherContainer: (checked) => ({
+					borderRadius: 14,
+					backgroundColor: (checked ? this.activeToggleColor : this.defaultToggleColor),
+					width: 37,
+					height: 17,
+					marginRight: 8,
+					opacity: (this.isReadOnly() ? 0.5 : 1),
+				}),
+				switcher: (checked) => ({
+					width: 11,
+					height: 11,
+					backgroundColor: COLORS.BACKGROUND_DEFAULT,
+					borderRadius: 8,
+					position: 'absolute',
+					top: 3,
+					left: (checked ? 23 : 3),
+				}),
+				description: {
+					flexShrink: 2,
+					color: COLORS.TEXT_DEFAULT,
+					fontSize: 16,
+					...styles.description,
+				},
+				booleanIconContainer: {
+					width: 24,
+					height: 24,
+					justifyContent: 'center',
+					alignItems: 'center',
+					marginRight: 8,
+					borderRadius: 12,
+					backgroundColor: (this.getValue() ? this.activeIconColor : this.defaultIconColor),
+				},
+				booleanIcon: {
+					width: 12,
+					height: 16,
+				},
+			};
 		}
 
 		getHiddenEmptyChildFieldStyles(styles)

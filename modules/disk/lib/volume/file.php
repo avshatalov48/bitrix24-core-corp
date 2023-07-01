@@ -7,10 +7,11 @@ use Bitrix\Main\DB;
 use Bitrix\Main\Application;
 use Bitrix\Main\ObjectException;
 use Bitrix\Main\ArgumentTypeException;
+use Bitrix\Disk;
+use Bitrix\Disk\Volume;
 use Bitrix\Disk\Internals\ObjectTable;
 use Bitrix\Disk\Internals\VolumeTable;
 use Bitrix\Disk\Internals\SharingTable;
-use Bitrix\Disk\Volume;
 
 /**
  * Disk storage volume measurement class.
@@ -19,14 +20,14 @@ use Bitrix\Disk\Volume;
 class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\IVolumeIndicatorLink
 {
 	/** @var array */
-	protected $order = array('VERSION_COUNT' => 'DESC');
+	protected $order = ['VERSION_COUNT' => 'DESC'];
 
 	/**
 	 * Runs measure test to get volumes of selecting objects.
 	 * @param array $collectData List types data to collect: ATTACHED_OBJECT, SHARING_OBJECT, EXTERNAL_LINK, UNNECESSARY_VERSION.
-	 * @return $this
+	 * @return static
 	 */
-	public function measure($collectData = [self::DISK_FILE])
+	public function measure(array $collectData = [self::DISK_FILE]): self
 	{
 		$connection = Application::getConnection();
 		$sqlHelper = $connection->getSqlHelper();
@@ -77,13 +78,13 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 				, CNT_FILES.FILE_COUNT
 				, CNT_FILES.VERSION_COUNT
 			";
-			$columns = array_merge($columns, array(
+			$columns = array_merge($columns, [
 				'FILE_SIZE',
 				'FILE_COUNT',
 				'VERSION_COUNT',
 				// 'DISK_SIZE',
 				// 'DISK_COUNT',
-			));
+			]);
 			if ($subSelectSql != '')
 			{
 				$sqlStatements = explode(',', $subSelectSql);
@@ -132,10 +133,10 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 				, CNT_PREVIEW.PREVIEW_SIZE AS PREVIEW_SIZE
 				, CNT_PREVIEW.PREVIEW_COUNT AS PREVIEW_COUNT
 			";
-			$columns = array_merge($columns, array(
+			$columns = array_merge($columns, [
 				'PREVIEW_SIZE',
 				'PREVIEW_COUNT',
-			));
+			]);
 			// language=SQL
 			$fromSql .= "
 				/* preview */
@@ -170,9 +171,9 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 			$selectSql .= "
 				, IFNULL(CNT_ATTACH.ATTACHED_COUNT, 0) AS ATTACHED_COUNT
 			";
-			$columns = array_merge($columns, array(
+			$columns = array_merge($columns, [
 				'ATTACHED_COUNT',
-			));
+			]);
 			// language=SQL
 			$fromSql .= "
 				/* attached */
@@ -205,9 +206,9 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 			$selectSql .= "
 				, IFNULL(CNT_LINK.LINK_COUNT, 0) AS LINK_COUNT
 			";
-			$columns = array_merge($columns, array(
+			$columns = array_merge($columns, [
 				'LINK_COUNT',
-			));
+			]);
 			// language=SQL
 			$fromSql .= "
 				/* external_link */
@@ -220,7 +221,7 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 						INNER JOIN b_disk_storage storage ON files.STORAGE_ID = storage.ID
 					WHERE
 						files.TYPE = ". ObjectTable::TYPE_FILE. "
-						AND link.TYPE != ". \Bitrix\Disk\Internals\ExternalLinkTable::TYPE_AUTO. "
+						AND link.TYPE != ". Disk\Internals\ExternalLinkTable::TYPE_AUTO. "
 						AND files.ID = files.REAL_OBJECT_ID
 						{$subWhereSql}
 				) CNT_LINK
@@ -241,9 +242,9 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 			$selectSql .= "
 				, IFNULL(CNT_SHARING.SHARING_COUNT, 0) AS SHARING_COUNT
 			";
-			$columns = array_merge($columns, array(
+			$columns = array_merge($columns, [
 				'SHARING_COUNT',
-			));
+			]);
 			// language=SQL
 			$fromSql .= "
 				/* sharing */
@@ -278,10 +279,10 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 				, IFNULL(CNT_FREE.UNNECESSARY_VERSION_SIZE, 0) AS UNNECESSARY_VERSION_SIZE
 				, IFNULL(CNT_FREE.UNNECESSARY_VERSION_COUNT, 0) AS UNNECESSARY_VERSION_COUNT
 			";
-			$columns = array_merge($columns, array(
+			$columns = array_merge($columns, [
 				'UNNECESSARY_VERSION_SIZE',
 				'UNNECESSARY_VERSION_COUNT',
-			));
+			]);
 			// language=SQL
 			$fromSql .= "
 				/* may drop */
@@ -318,7 +319,7 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 								ON link.OBJECT_ID  = ver.OBJECT_ID
 								AND link.VERSION_ID = ver.ID
 								AND link.VERSION_ID != head.ID
-								AND ifnull(link.TYPE,-1) != ". \Bitrix\Disk\Internals\ExternalLinkTable::TYPE_AUTO. "
+								AND ifnull(link.TYPE,-1) != ". Disk\Internals\ExternalLinkTable::TYPE_AUTO. "
 
 						WHERE
 							files.TYPE = ". ObjectTable::TYPE_FILE. "
@@ -339,10 +340,10 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 		$subSelectSql = Volume\QueryHelper::prepareSelect($this->getSelect());
 
 		$subWhereSql = Volume\QueryHelper::prepareWhere(
-			$this->getFilter(array(
+			$this->getFilter([
 				'DELETED_TYPE' => ObjectTable::DELETED_TYPE_NONE,
-			)),
-			array(
+			]),
+			[
 				'MODULE_ID' => 'storage.MODULE_ID',
 				'STORAGE_ID' => 'files.STORAGE_ID',
 				'FOLDER_ID' => 'files.PARENT_ID',
@@ -350,7 +351,7 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 				'TITLE' => 'files.NAME',
 				'TYPE' => 'files.TYPE_FILE',
 				'DELETED_TYPE' => 'files.DELETED_TYPE',
-			)
+			]
 		);
 		if ($subWhereSql != '')
 		{
@@ -361,11 +362,11 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 		$fromSql = '';
 		$whereSql = '';
 
-		$columns = array(
+		$columns = [
 			'INDICATOR_TYPE',
 			'OWNER_ID',
 			'CREATE_TIME',
-		);
+		];
 
 		$buildDiskSql($selectSql, $fromSql, $whereSql, $columns, $subSelectSql, $subWhereSql);
 
@@ -454,7 +455,7 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 	 * @param array $collectedData List types of collected data to return: ATTACHED_OBJECT, SHARING_OBJECT, EXTERNAL_LINK, UNNECESSARY_VERSION.
 	 * @return DB\Result
 	 */
-	public function getMeasurementResult($collectedData = array(self::DISK_FILE, self::ATTACHED_OBJECT, self::EXTERNAL_LINK, self::UNNECESSARY_VERSION, self::CRM_OBJECT))
+	public function getMeasurementResult(array $collectedData = [self::DISK_FILE, self::ATTACHED_OBJECT, self::EXTERNAL_LINK, self::UNNECESSARY_VERSION, self::CRM_OBJECT]): DB\Result
 	{
 		$connection = Application::getConnection();
 
@@ -469,10 +470,10 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 		$this->unsetFilter('FILES_LEFT');
 
 		$whereSql = Volume\QueryHelper::prepareWhere(
-			$this->getFilter(array(
+			$this->getFilter([
 				'DELETED_TYPE' => ObjectTable::DELETED_TYPE_NONE,
-			)),
-			array(
+			]),
+			[
 				'MODULE_ID' => 'storage.MODULE_ID',
 				'STORAGE_ID' => 'files.STORAGE_ID',
 				'FOLDER_ID' => 'files.PARENT_ID',
@@ -481,7 +482,7 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 				'TYPE' => 'files.TYPE_FILE',
 				'DELETED_TYPE' => 'files.DELETED_TYPE',
 				'ENTITY_TYPE' => 'storage.ENTITY_TYPE',
-			)
+			]
 		);
 		if ($whereSql != '')
 		{
@@ -489,10 +490,10 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 		}
 
 		$orderSql = Volume\QueryHelper::prepareOrder(
-			$this->getOrder(array(
+			$this->getOrder([
 				'VERSION_COUNT' => 'DESC'
-			)),
-			array(
+			]),
+			[
 				'TITLE' => 'CNT_FILES.TITLE',
 				'SIZE_FILE' => 'CNT_FILES.SIZE_FILE',
 				'UPDATE_TIME' => 'CNT_FILES.UPDATE_TIME',
@@ -500,7 +501,7 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 				'VERSION_COUNT' => 'CNT_FILES.VERSION_COUNT',
 				'UNNECESSARY_VERSION_SIZE' => 'CNT_FREE.UNNECESSARY_VERSION_SIZE',
 				'UNNECESSARY_VERSION_COUNT' => 'CNT_FREE.UNNECESSARY_VERSION_COUNT',
-			)
+			]
 		);
 
 		$orderKeys = array_keys($this->getOrder());
@@ -645,7 +646,7 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 						INNER JOIN b_disk_storage storage ON files.STORAGE_ID = storage.ID
 					WHERE
 						files.TYPE = ". ObjectTable::TYPE_FILE. "
-						AND link.TYPE != ". \Bitrix\Disk\Internals\ExternalLinkTable::TYPE_AUTO. "
+						AND link.TYPE != ". Disk\Internals\ExternalLinkTable::TYPE_AUTO. "
 						AND files.ID = files.REAL_OBJECT_ID
 						{$whereSql}
 					GROUP BY
@@ -759,7 +760,7 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 							ON link.OBJECT_ID  = ver.OBJECT_ID
 							AND link.VERSION_ID = ver.ID
 							AND link.VERSION_ID != head.ID
-							AND ifnull(link.TYPE,-1) != ". \Bitrix\Disk\Internals\ExternalLinkTable::TYPE_AUTO. "
+							AND ifnull(link.TYPE,-1) != ". Disk\Internals\ExternalLinkTable::TYPE_AUTO. "
 
 					WHERE
 						files.TYPE = ". ObjectTable::TYPE_FILE. "
@@ -816,7 +817,7 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 
 		if ($count > 0)
 		{
-			$ids = array();
+			$ids = [];
 			foreach ($cursor as $row)
 			{
 				$ids[] = $row['FID'];
@@ -865,7 +866,7 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 
 			if (in_array(self::CRM_OBJECT, $collectedData))
 			{
-				$crmIndicator = new \Bitrix\Disk\Volume\Module\Crm();
+				$crmIndicator = new Volume\Module\Crm();
 				if ($crmIndicator->isMeasureAvailable())
 				{
 					$selectSql .= ', IFNULL(CNT_CRM.ACT_COUNT, 0) as ACT_COUNT';
@@ -901,7 +902,7 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 	 * @return Volume\Fragment
 	 * @throws ObjectException
 	 */
-	public static function getFragment(array $filter)
+	public static function getFragment(array $filter): Volume\Fragment
 	{
 		$filter['FILE_ID'] = $filter['FID'];
 		return parent::getFragment($filter);
@@ -909,15 +910,15 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 
 	/**
 	 * @param Volume\Fragment $fragment File entity.
-	 * @return string
+	 * @return string|null
 	 * @throws ArgumentTypeException
 	 */
-	public static function getTitle(Volume\Fragment $fragment)
+	public static function getTitle(Volume\Fragment $fragment): ?string
 	{
 		$file = $fragment->getFile();
-		if (!$file instanceof \Bitrix\Disk\File)
+		if (!$file instanceof Disk\File)
 		{
-			throw new ArgumentTypeException('Fragment must be subclass of '.\Bitrix\Disk\File::className());
+			throw new ArgumentTypeException('Fragment must be subclass of '.Disk\File::className());
 		}
 
 		return $file->getName();
@@ -929,12 +930,12 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 	 * @return \Bitrix\Main\Type\DateTime|null
 	 * @throws ArgumentTypeException
 	 */
-	public static function getUpdateTime(Volume\Fragment $fragment)
+	public static function getUpdateTime(Volume\Fragment $fragment): ?\Bitrix\Main\Type\DateTime
 	{
 		$file = $fragment->getFile();
-		if (!$file instanceof \Bitrix\Disk\File)
+		if (!$file instanceof Disk\File)
 		{
-			throw new ArgumentTypeException('Fragment must be subclass of '.\Bitrix\Disk\File::className());
+			throw new ArgumentTypeException('Fragment must be subclass of '.Disk\File::className());
 		}
 
 		return $file->getUpdateTime();
@@ -945,28 +946,28 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 	 * @return string[]
 	 * @throws ArgumentTypeException
 	 */
-	public static function getParents(Volume\Fragment $fragment)
+	public static function getParents(Volume\Fragment $fragment): array
 	{
 		$file = $fragment->getFile();
-		if (!$file instanceof \Bitrix\Disk\File)
+		if (!$file instanceof Disk\File)
 		{
-			throw new ArgumentTypeException('Fragment must be subclass of '.\Bitrix\Disk\File::className());
+			throw new ArgumentTypeException('Fragment must be subclass of '.Disk\File::className());
 		}
 
-		$parents = array();
+		$parents = [];
 
 		// Im
-		if (in_array($fragment->getEntityType(), \Bitrix\Disk\Volume\Module\Im::getEntityType()))
+		if (in_array($fragment->getEntityType(), Volume\Module\Im::getEntityType()))
 		{
-			$imFragment = \Bitrix\Disk\Volume\Module\Im::getFragment(array(
+			$imFragment = Volume\Module\Im::getFragment([
 				'INDICATOR_TYPE' => Volume\Folder::className(),
 				'FOLDER_ID' => $fragment->getFolderId(),
-			));
-			$parents[] = \Bitrix\Disk\Volume\Module\Im::getTitle($imFragment);
+			]);
+			$parents[] = Volume\Module\Im::getTitle($imFragment);
 		}
-		elseif ($parent = \Bitrix\Disk\Folder::loadById($file->getParentId()))
+		elseif ($parent = Disk\Folder::loadById($file->getParentId()))
 		{
-			$parents = \Bitrix\Disk\CrumbStorage::getInstance()->getByObject($parent, true);
+			$parents = Disk\CrumbStorage::getInstance()->getByObject($parent, true);
 		}
 
 		return $parents;
@@ -974,42 +975,42 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 
 	/**
 	 * @param Volume\Fragment $fragment File entity.
-	 * @return string
+	 * @return string|null
 	 * @throws ArgumentTypeException
 	 */
-	public static function getUrl(Volume\Fragment $fragment)
+	public static function getUrl(Volume\Fragment $fragment): ?string
 	{
 		$file = $fragment->getFile();
-		if (!$file instanceof \Bitrix\Disk\File)
+		if (!$file instanceof Disk\File)
 		{
-			throw new ArgumentTypeException('Fragment must be subclass of '.\Bitrix\Disk\File::className());
+			throw new ArgumentTypeException('Fragment must be subclass of '.Disk\File::className());
 		}
 
 		// Im
-		if (in_array($fragment->getEntityType(), \Bitrix\Disk\Volume\Module\Im::getEntityType()))
+		if (in_array($fragment->getEntityType(), Volume\Module\Im::getEntityType()))
 		{
 			return null;
 		}
 		// Mail
-		if (in_array($fragment->getEntityType(), \Bitrix\Disk\Volume\Module\Mail::getEntityType()))
+		if (in_array($fragment->getEntityType(), Volume\Module\Mail::getEntityType()))
 		{
 			return null;
 		}
 		// Documentgenerator
-		if (in_array($fragment->getEntityType(), \Bitrix\Disk\Volume\Module\Documentgenerator::getEntityType()))
+		if (in_array($fragment->getEntityType(), Volume\Module\Documentgenerator::getEntityType()))
 		{
 			return null;
 		}
 
-		$urlManager = \Bitrix\Disk\Driver::getInstance()->getUrlManager();
+		$urlManager = Disk\Driver::getInstance()->getUrlManager();
 
 		if ($file->isDeleted())
 		{
-			$url = $urlManager->getUrlFocusController('openTrashcanFileDetail', array('fileId' => $file->getId()));
+			$url = $urlManager->getUrlFocusController('openTrashcanFileDetail', ['fileId' => $file->getId()]);
 		}
 		else
 		{
-			$url = $urlManager->getUrlFocusController('openFileDetail', array('fileId' => $file->getId()));
+			$url = $urlManager->getUrlFocusController('openFileDetail', ['fileId' => $file->getId()]);
 		}
 
 		return $url;
@@ -1024,12 +1025,12 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 	public static function getAttachedList(Volume\Fragment $fragment, $userId)
 	{
 		$file = $fragment->getFile();
-		if (!$file instanceof \Bitrix\Disk\File)
+		if (!$file instanceof Disk\File)
 		{
-			throw new ArgumentTypeException('Fragment must be subclass of '.\Bitrix\Disk\File::className());
+			throw new ArgumentTypeException('Fragment must be subclass of '.Disk\File::className());
 		}
 
-		$attached = array();
+		$attached = [];
 
 		if ($fragment->getAttachedCount() > 0)
 		{
@@ -1038,7 +1039,7 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 			{
 				foreach($attachedObjects as $attachedObject)
 				{
-					if ($attachedObject instanceof \Bitrix\Disk\AttachedObject)
+					if ($attachedObject instanceof Disk\AttachedObject)
 					{
 						try
 						{
@@ -1047,9 +1048,9 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 							$dataToShow = $connector->getDataToShow();
 							if ($dataToShow)
 							{
-								$attached[$attachedObject->getEntityId()] = array(
+								$attached[$attachedObject->getEntityId()] = [
 									'title' => $dataToShow['TITLE'],
-								);
+								];
 								if ($attachedObject->canRead($userId))
 								{
 									if (!empty($dataToShow['DETAIL_URL']))

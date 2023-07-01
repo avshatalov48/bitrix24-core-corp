@@ -120,40 +120,12 @@ class Email extends Activity\Provider\Base
 
 	public static function onAfterAdd($activityFields, array $params = null)
 	{
-		//region Mark incoming email as completed when reply message was sent.
 		$direction = isset($activityFields['DIRECTION']) ? (int)$activityFields['DIRECTION'] : \CCrmActivityDirection::Undefined;
-		$parentID = isset($activityFields['PARENT_ID']) ? (int)$activityFields['PARENT_ID'] : 0;
 
 		if ($direction === \CCrmActivityDirection::Outgoing && Crm\Automation\Factory::canUseAutomation())
 		{
 			EmailSentTrigger::execute($activityFields['BINDINGS'], $activityFields);
 		}
-
-		if (!($direction === \CCrmActivityDirection::Outgoing && $parentID > 0))
-		{
-			return;
-		}
-
-		$dbResult = \CCrmActivity::GetList(
-			[],
-			['ID' => $parentID, 'CHECK_PERMISSIONS' => 'N'],
-			false,
-			false,
-			['ID', 'DIRECTION', 'COMPLETED']
-		);
-		$parentFields = $dbResult->Fetch();
-		if (!is_array($parentFields))
-		{
-			return;
-		}
-
-		$parentCompleted = isset($parentFields['COMPLETED']) && $parentFields['COMPLETED'] === 'Y';
-		$parentDirection = isset($parentFields['DIRECTION']) ? (int)$parentFields['DIRECTION'] : \CCrmActivityDirection::Undefined;
-		if (!$parentCompleted && $parentDirection === \CCrmActivityDirection::Incoming)
-		{
-			\CCrmActivity::Complete($parentID, true);
-		}
-		//endregion
 	}
 
 	public static function renderView(array $activity)

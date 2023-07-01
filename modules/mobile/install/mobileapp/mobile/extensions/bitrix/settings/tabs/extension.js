@@ -18,13 +18,15 @@ BX.addCustomEvent("onRegisterProvider", (addProviderHandler) =>
 		{
 			if (data.id === this.id)
 			{
-				ComponentHelper.openList({
-					name: "tab.settings",
-					object: "list",
-					version: availableComponents["tab.settings"].version,
-					widgetParams:{
-						title:data.title,
-						groupStyle: true,
+
+				PageManager.openComponent("JSStackComponent",{
+					scriptPath: availableComponents["tab.presets"].publicUrl,
+					rootWidget:{
+						name: "layout",
+						settings:{
+							objectName: "layout",
+							titleParams: { text: data.title, useLargeTitleMode: true}
+						}
 					}
 				});
 			}
@@ -45,5 +47,5 @@ BX.addCustomEvent("onRegisterProvider", (addProviderHandler) =>
 		}
 	}
 
-	addProviderHandler(new TabSettingsProvider("tab_settings", BX.message("SF_TABS_SETTINGS")));
+	addProviderHandler(new TabSettingsProvider("tab_settings", BX.message("MENU_PRESET_TAB")));
 });

@@ -86,6 +86,7 @@ jn.define('layout/ui/map-opener', (require, exports, module) => {
 				params: {
 					title: BX.message('UI_MAP_OPENER_BACKDROP_TITLE'),
 					showCancelButton: true,
+					isCustomIconColor: true,
 				},
 			});
 		}

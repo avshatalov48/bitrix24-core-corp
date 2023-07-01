@@ -98,13 +98,14 @@ class Structure
 
     private static function &deReference($name, &$ctx)
 	{
-		$name = (string) $name;
-		if(!is_array($ctx))
+		$null = null;
+		if (!is_array($ctx))
 		{
-			return null;
+			return $null;
 		}
 
-		if($name == '')
+		$name = (string)$name;
+		if ($name === '')
 		{
 			return $ctx;
 		}
@@ -113,22 +114,22 @@ class Structure
 		$len = count($name);
 		$top =& $ctx;
 
-		for($k = 0; $k < $len; $k++)
+		for ($k = 0; $k < $len; $k++)
 		{
-			if($top === null)
+			if ($top === null)
 			{
-				return null;
+				return $null;
 			}
 
 			$name[$k] = trim($name[$k]);
-			if($name[$k] == '')
+			if ($name[$k] === '')
 			{
-				return null;
+				return $null;
 			}
 
-			if($top[$name[$k]] === null)
+			if (!isset($top[$name[$k]]))
 			{
-				return null;
+				return $null;
 			}
 
 			$top =& $top[$name[$k]];

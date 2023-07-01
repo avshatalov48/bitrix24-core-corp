@@ -1,11 +1,11 @@
-import {Dom, Tag, Text, Type, Loc, Reflection} from "main.core";
-import {Menu, MenuManager} from "main.popup";
-import {EventEmitter, BaseEvent} from 'main.core.events';
-import {Router} from 'crm.router';
-import {Loader} from 'main.loader';
-import {Menu as MenuConfigurable} from 'ui.menu-configurable';
-import "ui.icons.service";
-import "ui.notification";
+import { Dom, Loc, Reflection, Tag, Text, Type } from 'main.core';
+import { Menu, MenuItem, MenuManager } from 'main.popup';
+import { BaseEvent, EventEmitter } from 'main.core.events';
+import { Router } from 'crm.router';
+import { Loader } from 'main.loader';
+import { Menu as MenuConfigurable } from 'ui.menu-configurable';
+import 'ui.icons.service';
+import 'ui.notification';
 
 const CrmActivityEditor = Reflection.namespace('BX.CrmActivityEditor');
 const UserOptions = Reflection.namespace('BX.userOptions');
@@ -16,6 +16,7 @@ const CHANNEL_TYPE_EMAIL = 'EMAIL';
 const CHANNEL_TYPE_IM = 'IM';
 
 const MAX_VISIBLE_ITEMS = 4;
+const MARKET_LINK = '/market/category/crm_robot_sms/';
 
 export type ChannelSelectorParameters = {
 	id: ?string,
@@ -384,6 +385,20 @@ export class List extends EventEmitter
 				});
 			}
 		});
+
+		settingsItems.push({
+			delimiter: true,
+		});
+		settingsItems.push({
+			text: Loc.getMessage('CRM_CHANNEL_SELECTOR_CHOOSE_FROM_MARKET'),
+			id: 'market',
+			href: MARKET_LINK,
+			onclick: (event: PointerEvent, item: MenuItem) => {
+				const menu = item.getMenuWindow()?.getRootMenuWindow() || item.getMenuWindow();
+				menu?.close();
+			},
+		});
+
 		settingsItems.push({
 			delimiter: true
 		});

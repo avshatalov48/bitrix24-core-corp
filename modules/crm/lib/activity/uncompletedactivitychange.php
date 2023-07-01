@@ -19,8 +19,18 @@ class UncompletedActivityChange
 	private ?bool $newIsCompleted;
 	private array $oldBindings;
 	private array $newBindings;
+	private ?DateTime $oldLightTime;
+	private ?DateTime $newLightTime;
 
-	public static function create(int $id, array $oldFields, array $oldBindings, array $newFields, array $newBindings): self
+	public static function create(
+		int $id,
+		array $oldFields,
+		array $oldBindings,
+		array $newFields,
+		array $newBindings,
+		?DateTime $oldLightTime,
+		?DateTime $newLightTime
+	): self
 	{
 		$oldDeadline = (isset($oldFields['DEADLINE']) && $oldFields['DEADLINE'] && !\CCrmDateTimeHelper::IsMaxDatabaseDate($oldFields['DEADLINE']))
 			? DateTime::createFromUserTime($oldFields['DEADLINE'])
@@ -42,7 +52,9 @@ class UncompletedActivityChange
 			($oldFields['COMPLETED'] ?? null) ? ($oldFields['COMPLETED'] === 'Y') : null,
 			($newFields['COMPLETED'] ?? null) ? ($newFields['COMPLETED'] === 'Y') : null,
 			self::prepareBindings($oldBindings),
-			self::prepareBindings($newBindings)
+			self::prepareBindings($newBindings),
+			$oldLightTime,
+			$newLightTime
 		);
 	}
 
@@ -76,7 +88,9 @@ class UncompletedActivityChange
 		?bool $oldIsCompleted,
 		?bool $newIsCompleted,
 		array $oldBindings,
-		array $newBindings
+		array $newBindings,
+		?DateTime $oldLightTime,
+		?DateTime $newLightTime
 	)
 	{
 		$this->id = $id;
@@ -90,6 +104,8 @@ class UncompletedActivityChange
 		$this->newIsCompleted = $newIsCompleted;
 		$this->oldBindings = $oldBindings;
 		$this->newBindings = $newBindings;
+		$this->oldLightTime = $oldLightTime;
+		$this->newLightTime = $newLightTime;
 	}
 
 	public function getId(): int
@@ -166,6 +182,14 @@ class UncompletedActivityChange
 		return ($this->oldIsCompleted !== $this->newIsCompleted);
 	}
 
+	public function isLightTimeChanges(): bool
+	{
+		$oldLt = $this->oldLightTime ? $this->oldLightTime->getTimestamp() : 0;
+		$newLt = $this->newLightTime ? $this->newLightTime->getTimestamp() : 0;
+
+		return $oldLt !== $newLt;
+	}
+
 	/**
 	 * @return ItemIdentifier[]
 	 */
@@ -184,11 +208,17 @@ class UncompletedActivityChange
 
 	public function hasChanges(): bool
 	{
+		if ($this->isChangedAlreadyCompletedActivity())
+		{
+			return false;
+		}
+
 		return
 			$this->isIncomingChannelChanged()
 			|| $this->isDeadlineChanged()
 			|| $this->isResponsibleIdChanged()
 			|| $this->isCompletedChanged()
+			|| $this->isLightTimeChanges()
 		;
 	}
 
@@ -219,4 +249,20 @@ class UncompletedActivityChange
 	{
 		return $this->getOldIsCompleted() && $this->getNewIsCompleted() === false;
 	}
+
+	public function getOldLightTime(): ?DateTime
+	{
+		return $this->oldLightTime;
+	}
+
+	public function getNewLightTime(): ?DateTime
+	{
+		return $this->newLightTime;
+	}
+
+	public function isChangedAlreadyCompletedActivity(): bool
+	{
+		return $this->getOldIsCompleted() && $this->getNewIsCompleted();
+	}
+
 }

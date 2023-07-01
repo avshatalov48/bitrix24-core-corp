@@ -15,6 +15,8 @@ export class Modification extends Base
 
 	static isItemSupported(item: ConfigurableItem): boolean
 	{
-		return (item.getType() === 'Modification');
+		return (item.getType() === 'Modification')
+			|| (item.getType() === 'TasksTaskModification')
+			;
 	}
 }

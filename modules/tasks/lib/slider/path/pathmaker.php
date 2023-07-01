@@ -21,7 +21,19 @@ abstract class PathMaker
 
 	public function setQueryParams(string $queryParams): self
 	{
-		$this->queryParams = $queryParams;
+		if (empty($queryParams))
+		{
+			return $this;
+		}
+		if ($queryParams[0] === '?')
+		{
+			$this->queryParams = $queryParams;
+		}
+		else
+		{
+			$this->queryParams = '?' . $queryParams;
+		}
+
 		return $this;
 	}
 

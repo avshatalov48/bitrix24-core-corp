@@ -2637,7 +2637,7 @@ var BitrixDisk = {
 		var notifyHtml = BX.create("div", {attrs : {'data-notifyId' : notify.id, 'data-notifyType' : notify.type}, props : { className: "bx-notifier-item"}, children : [
 			BX.create('span', {props : { className : "bx-notifier-item-content" }, children : [
 				BX.create('span', {props : { className : "bx-notifier-item-avatar" }, children : [
-					BX.create('img', {props : { className : "bx-notifier-item-avatar-img" },attrs : {src : notify.userAvatar}})
+					BX.create('img', {props : { className : "bx-notifier-item-avatar-img" },attrs : {src : encodeURI(notify.userAvatar)}})
 				]}),
 				BX.create("a", {attrs : {href : '#', 'data-notifyId' : notify.id, 'data-notifyType' : notify.type}, props : { className: "bx-notifier-item-delete"}}),
 				BX.create('span', {props : { className : "bx-notifier-item-date" }, html: DiskFormatDate(notify.date)}),

@@ -1,5 +1,5 @@
 <?php
-$MESS["CSPL_CREATE_PRODUCT_IN_DESKTOP_VERSION"] = "Create product in the full version";
+$MESS["CSPL_CREATE_PRODUCT_IN_DESKTOP_VERSION_MSGVER_1"] = "Create product in web version";
 $MESS["CSPL_DOCUMENT_HAS_NO_PRODUCTS"] = "Inventory object has no products";
 $MESS["CSPL_MENU"] = "Menu";
 $MESS["CSPL_MENU_ADD_NEW_PRODUCT_TITLE"] = "New product";

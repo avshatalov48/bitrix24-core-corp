@@ -57,7 +57,7 @@ class TasksDepartmentsOverviewComponent extends TasksBaseComponent
 		static::tryParseIntegerParameter($this->arParams['FILTER_ID'], 'TASKS_MANAGE_GRID_ID');
 		static::tryParseIntegerParameter($this->arParams['GRID_ID'], $this->arParams['FILTER_ID']);
 
-		static::tryParseIntegerParameter($this->arParams['DEPARTMENT_ID'], (int)$_REQUEST['DEPARTMENT_ID']);
+		static::tryParseIntegerParameter($this->arParams['DEPARTMENT_ID'], (int)($_REQUEST['DEPARTMENT_ID'] ?? null));
 
 		return $this->errors->checkNoFatals();
 	}
@@ -87,6 +87,25 @@ class TasksDepartmentsOverviewComponent extends TasksBaseComponent
 
 		$this->arResult['GRID']['DATA'] = $users;
 		$this->arResult['TASK_LIMIT_EXCEEDED'] = $taskLimitExceeded;
+		$this->arResult['SUMMARY'] = [
+			'RESPONSIBLE' => [
+				'ALL' => 0,
+				'NOTICE' => 0,
+			],
+			'ORIGINATOR' => [
+				'ALL' => 0,
+				'NOTICE' => 0,
+			],
+			'AUDITOR' => [
+				'ALL' => 0,
+				'NOTICE' => 0,
+			],
+			'ACCOMPLICE' => [
+				'ALL' => 0,
+				'NOTICE' => 0,
+			],
+			'EFFECTIVE' => 0,
+		];
 
 		if (!empty($users))
 		{
@@ -185,9 +204,9 @@ class TasksDepartmentsOverviewComponent extends TasksBaseComponent
 			foreach ($roles as $roleName => $roleParameters)
 			{
 				$list[$userId][$roleName] = [
-					'NOTICE' => (int)$tasksToNotice[$userId][$roleName],
-					'ALL' => (int)$tasksByRoles[$userId][$roleParameters['LETTER']],
-					'URL' => $url.'&ROLEID='.$roleParameters['ROLE'].'&STATUS[]=2&STATUS[]=3',
+					'NOTICE' => (int)($tasksToNotice[$userId][$roleName] ?? null),
+					'ALL' => (int)($tasksByRoles[$userId][$roleParameters['LETTER']] ?? null),
+					'URL' => "{$url}&ROLEID={$roleParameters['ROLE']}&STATUS[]=2&STATUS[]=3",
 				];
 			}
 		}

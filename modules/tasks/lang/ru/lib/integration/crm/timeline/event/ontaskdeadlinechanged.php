@@ -1,0 +1,2 @@
+<?php
+$MESS["TASKS_ON_DEADLINE_CHANGED_EVENT_NO_DEADLINE"] = "Без срока";

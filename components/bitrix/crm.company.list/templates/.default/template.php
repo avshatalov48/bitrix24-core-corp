@@ -17,6 +17,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Crm\Integration;
 use Bitrix\Crm\Restriction\RestrictionManager;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Tracking;
 use Bitrix\Crm\UI\NavigationBarPanel;
 use Bitrix\Main\Localization\Loc;
@@ -32,7 +33,15 @@ if (CModule::IncludeModule('bitrix24') && !\Bitrix\Crm\CallList\CallList::isAvai
 {
 	CBitrix24::initLicenseInfoPopupJS();
 }
-Bitrix\Main\UI\Extension::load(['crm.merger.batchmergemanager', 'ui.icons.b24', 'ui.fonts.opensans']);
+
+Bitrix\Main\UI\Extension::load(
+	[
+		'crm.merger.batchmergemanager',
+		'crm.restriction.filter-fields',
+		'ui.icons.b24',
+		'ui.fonts.opensans',
+	]
+);
 
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/activity.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/interface_grid.js');
@@ -43,6 +52,8 @@ Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/batch_deletion.js')
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/dialog.js');
 
 ?><div id="batchDeletionWrapper"></div><?
+
+echo (\Bitrix\Crm\Tour\NumberOfClients::getInstance())->build();
 
 if($arResult['NEED_TO_CONVERT_ADDRESSES']):
 	?><div id="convertCompanyAddressesWrapper"></div><?
@@ -146,6 +157,16 @@ foreach ($arResult['HEADERS'] as $arHead)
 }
 
 $now = time() + CTimeZone::GetOffset();
+
+$fieldContentTypeMap = \Bitrix\Crm\Model\FieldContentTypeTable::loadForMultipleItems(
+	\CCrmOwnerType::Company,
+	array_keys($arResult['COMPANY']),
+);
+
+if ($arResult['NEED_ADD_ACTIVITY_BLOCK'] ?? false)
+{
+	$arResult['COMPANY'] = (new \Bitrix\Crm\Component\EntityList\NearestActivity\Manager(CCrmOwnerType::Company))->appendNearestActivityBlock($arResult['COMPANY']);
+}
 
 foreach($arResult['COMPANY'] as $sKey =>  $arCompany)
 {
@@ -296,9 +317,10 @@ foreach($arResult['COMPANY'] as $sKey =>  $arCompany)
 		{
 			if (\Bitrix\Crm\Settings\Crm::isUniversalActivityScenarioEnabled())
 			{
+				$currentUser = CUtil::PhpToJSObject(CCrmViewHelper::getUserInfo(true, false));
 				$arActivitySubMenuItems[] = [
 					'TEXT' => Loc::getMessage('CRM_COMPANY_ADD_TODO'),
-					'ONCLICK' => "BX.CrmUIGridExtension.showActivityAddingPopupFromMenu('".$preparedGridId."', " . CCrmOwnerType::Company . ", " . (int)$arCompany['ID'] . ");"
+					'ONCLICK' => "BX.CrmUIGridExtension.showActivityAddingPopupFromMenu('".$preparedGridId."', " . CCrmOwnerType::Company . ", " . (int)$arCompany['ID'] . ", " . $currentUser . ");"
 				];
 			}
 
@@ -534,84 +556,26 @@ foreach($arResult['COMPANY'] as $sKey =>  $arCompany)
 		$resultItem['columns']
 	);
 
+	$resultItem['columns'] = \Bitrix\Crm\Entity\FieldContentType::enrichGridRow(
+		\CCrmOwnerType::Company,
+		$fieldContentTypeMap[$arCompany['ID']] ?? [],
+		$arCompany,
+		$resultItem['columns'],
+	);
+
 	if ($arResult['ENABLE_OUTMODED_FIELDS'])
 	{
 		$resultItem['columns']['ADDRESS'] = nl2br($arCompany['ADDRESS']);
 		$resultItem['columns']['ADDRESS_LEGAL'] = nl2br($arCompany['ADDRESS_LEGAL']);
 	}
 
-	$userActivityID = isset($arCompany['~ACTIVITY_ID']) ? intval($arCompany['~ACTIVITY_ID']) : 0;
-	$commonActivityID = isset($arCompany['~C_ACTIVITY_ID']) ? intval($arCompany['~C_ACTIVITY_ID']) : 0;
-	if ($userActivityID > 0)
+	if (isset($arCompany['ACTIVITY_BLOCK']) && $arCompany['ACTIVITY_BLOCK'] instanceof \Bitrix\Crm\Component\EntityList\NearestActivity\Block)
 	{
-		$resultItem['columns']['ACTIVITY_ID'] = CCrmViewHelper::RenderNearestActivity(
-			[
-				'ENTITY_TYPE_NAME' => CCrmOwnerType::ResolveName(CCrmOwnerType::Company),
-				'ENTITY_ID' => $arCompany['~ID'],
-				'ENTITY_RESPONSIBLE_ID' => $arCompany['~ASSIGNED_BY'],
-				'GRID_MANAGER_ID' => $gridManagerID,
-				'ACTIVITY_ID' => $userActivityID,
-				'ACTIVITY_SUBJECT' => $arCompany['~ACTIVITY_SUBJECT'] ?? '',
-				'ACTIVITY_TIME' => $arCompany['~ACTIVITY_TIME'] ?? '',
-				'ACTIVITY_EXPIRED' => $arCompany['~ACTIVITY_EXPIRED'] ?? '',
-				'ALLOW_EDIT' => $arCompany['EDIT'],
-				'MENU_ITEMS' => $arActivityMenuItems,
-				'USE_GRID_EXTENSION' => true
-			]
-		);
-
-		$counterData = [
-			'CURRENT_USER_ID' => $currentUserID,
-			'ENTITY' => $arCompany,
-			'ACTIVITY' => [
-				'RESPONSIBLE_ID' => $currentUserID,
-				'TIME' => $arCompany['~ACTIVITY_TIME'] ?? '',
-				'IS_CURRENT_DAY' => $arCompany['~ACTIVITY_IS_CURRENT_DAY'] ?? false
-			],
-		];
-
-		if (CCrmUserCounter::IsReckoned(CCrmUserCounter::CurrentCompanyActivies, $counterData))
+		$resultItem['columns']['ACTIVITY_ID'] = $arCompany['ACTIVITY_BLOCK']->render($gridManagerID);
+		if ($arCompany['ACTIVITY_BLOCK']->needHighlight())
 		{
 			$resultItem['columnClasses'] = ['ACTIVITY_ID' => 'crm-list-deal-today'];
 		}
-	}
-	elseif($commonActivityID > 0)
-	{
-		$resultItem['columns']['ACTIVITY_ID'] = CCrmViewHelper::RenderNearestActivity(
-			array(
-				'ENTITY_TYPE_NAME' => CCrmOwnerType::ResolveName(CCrmOwnerType::Company),
-				'ENTITY_ID' => $arCompany['~ID'],
-				'ENTITY_RESPONSIBLE_ID' => $arCompany['~ASSIGNED_BY'],
-				'GRID_MANAGER_ID' => $gridManagerID,
-				'ACTIVITY_ID' => $commonActivityID,
-				'ACTIVITY_SUBJECT' => $arCompany['~C_ACTIVITY_SUBJECT'] ?? '',
-				'ACTIVITY_TIME' => $arCompany['~C_ACTIVITY_TIME'] ?? '',
-				'ACTIVITY_RESPONSIBLE_ID' => isset($arCompany['~C_ACTIVITY_RESP_ID']) ? intval($arCompany['~C_ACTIVITY_RESP_ID']) : 0,
-				'ACTIVITY_RESPONSIBLE_LOGIN' => $arCompany['~C_ACTIVITY_RESP_LOGIN'] ?? '',
-				'ACTIVITY_RESPONSIBLE_NAME' => $arCompany['~C_ACTIVITY_RESP_NAME'] ?? '',
-				'ACTIVITY_RESPONSIBLE_LAST_NAME' => $arCompany['~C_ACTIVITY_RESP_LAST_NAME'] ?? '',
-				'ACTIVITY_RESPONSIBLE_SECOND_NAME' => $arCompany['~C_ACTIVITY_RESP_SECOND_NAME'] ?? '',
-				'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'] ?? '',
-				'PATH_TO_USER_PROFILE' => $arParams['PATH_TO_USER_PROFILE'] ?? '',
-				'ALLOW_EDIT' => $arCompany['EDIT'],
-				'MENU_ITEMS' => $arActivityMenuItems,
-				'USE_GRID_EXTENSION' => true
-			)
-		);
-	}
-	else
-	{
-		$resultItem['columns']['ACTIVITY_ID'] = CCrmViewHelper::RenderNearestActivity(
-			[
-				'ENTITY_TYPE_NAME' => CCrmOwnerType::ResolveName(CCrmOwnerType::Company),
-				'ENTITY_ID' => $arCompany['~ID'],
-				'ENTITY_RESPONSIBLE_ID' => $arCompany['~ASSIGNED_BY'],
-				'GRID_MANAGER_ID' => $gridManagerID,
-				'ALLOW_EDIT' => $arCompany['EDIT'],
-				'MENU_ITEMS' => $arActivityMenuItems,
-				'USE_GRID_EXTENSION' => true
-			]
-		);
 	}
 
 	$arResult['GRID_DATA'][] = &$resultItem;
@@ -1043,6 +1007,7 @@ $APPLICATION->IncludeComponent(
 
 				/** @see BX.Crm.PushCrmSettings */
 				new exports.PushCrmSettings({
+					smartActivityNotificationSupported: <?= Container::getInstance()->getFactory(\CCrmOwnerType::Company)->isSmartActivityNotificationSupported() ? 'true' : 'false' ?>,
 					entityTypeId: <?= (int)\CCrmOwnerType::Company ?>,
 					rootMenu: settingsButton ? settingsButton.getMenuWindow() : undefined,
 					grid: BX.Reflection.getClass('BX.Main.gridManager') ? BX.Main.gridManager.getInstanceById('<?= \CUtil::JSEscape($arResult['GRID_ID']) ?>') : undefined,
@@ -1516,3 +1481,5 @@ if ($arResult['NEED_TO_SHOW_DUP_VOL_DATA_PREPARE'])
 		});
 	</script><?
 }
+
+echo $arResult['ACTIVITY_FIELD_RESTRICTIONS'] ?? '';

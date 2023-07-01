@@ -2,12 +2,12 @@
  * @module crm/timeline/item/ui/body/blocks
  */
 jn.define('crm/timeline/item/ui/body/blocks', (require, exports, module) => {
-
 	const { TimelineItemBodyTextBlock: TextBlock } = require('crm/timeline/item/ui/body/blocks/text-block');
 	const { TimelineItemBodyLinkBlock: LinkBlock } = require('crm/timeline/item/ui/body/blocks/link-block');
 	const { TimelineItemBodyWithTitleBlock: WithTitle } = require('crm/timeline/item/ui/body/blocks/with-title');
 	const { TimelineItemBodyValueChangeBlock: ValueChange } = require('crm/timeline/item/ui/body/blocks/value-change');
 	const { TimelineItemBodyLineOfTextBlocks: LineOfTextBlocks } = require('crm/timeline/item/ui/body/blocks/line-of-text-blocks');
+	const { TimelineItemBodySmsMessageBlock: SmsMessage } = require('crm/timeline/item/ui/body/blocks/sms-message');
 	const { TimelineItemBodyAudioBlock: TimelineAudio } = require('crm/timeline/item/ui/body/blocks/audio-block');
 	const { TimelineItemBodyClientMark: ClientMark } = require('crm/timeline/item/ui/body/blocks/client-mark');
 	const { TimelineItemBodyDatePillBlock: DatePill } = require('crm/timeline/item/ui/body/blocks/date-pill');
@@ -16,6 +16,9 @@ jn.define('crm/timeline/item/ui/body/blocks', (require, exports, module) => {
 	const { TimelineItemBodyEditableDescriptionBlock: EditableDescription } = require('crm/timeline/item/ui/body/blocks/editable-description');
 	const { TimelineItemBodyNoteBlock: Note } = require('crm/timeline/item/ui/body/blocks/note');
 	const { TimelineItemBodyFileList: FileList } = require('crm/timeline/item/ui/body/blocks/file-list');
+	const { TimelineItemBodyMoney: Money } = require('crm/timeline/item/ui/body/blocks/money');
+	const { TimelineItemBodyMoneyPill: MoneyPill } = require('crm/timeline/item/ui/body/blocks/money-pill');
+	const { TimelineItemBodyEcommerceDocumentsList: EcommerceDocumentsList } = require('crm/timeline/item/ui/body/blocks/ecommerce-documents-list');
 
 	const AvailableBlocks = {
 		TextBlock,
@@ -23,6 +26,7 @@ jn.define('crm/timeline/item/ui/body/blocks', (require, exports, module) => {
 		WithTitle,
 		ValueChange,
 		LineOfTextBlocks,
+		SmsMessage,
 		TimelineAudio,
 		ClientMark,
 		DatePill,
@@ -31,13 +35,16 @@ jn.define('crm/timeline/item/ui/body/blocks', (require, exports, module) => {
 		EditableDescription,
 		Note,
 		FileList,
+		Money,
+		MoneyPill,
+		EcommerceDocumentsList,
 	};
 
-    /**
+	/**
      * @class TimelineItemBodyBlockFactory
      */
-    class TimelineItemBodyBlockFactory
-    {
+	class TimelineItemBodyBlockFactory
+	{
 		/**
 		 * @param {TimelineItemModel} model
 		 * @param {EventEmitter} itemScopeEventBus
@@ -55,9 +62,9 @@ jn.define('crm/timeline/item/ui/body/blocks', (require, exports, module) => {
 		/**
 		 * @param {string} rendererName
 		 * @param {object} props
-		 * @returns {LayoutComponent|null}
+		 * @returns {TimelineItemBodyBlock|null}
 		 */
-        make(rendererName, props = {})
+		make(rendererName, props = {})
 		{
 			if (AvailableBlocks[rendererName])
 			{
@@ -68,8 +75,7 @@ jn.define('crm/timeline/item/ui/body/blocks', (require, exports, module) => {
 
 			return null;
 		}
-    }
+	}
 
-    module.exports = { TimelineItemBodyBlockFactory };
-
+	module.exports = { TimelineItemBodyBlockFactory };
 });

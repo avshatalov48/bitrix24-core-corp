@@ -2,6 +2,8 @@
 
 namespace Bitrix\Disk\Volume;
 
+use Bitrix\Disk;
+
 
 class Fragment
 {
@@ -48,24 +50,24 @@ class Fragment
 	private $unnecessaryVersionCount = -1;
 
 	/** @var array */
-	private $specific = array();
+	private $specific = [];
 
 	/** @var int */
 	private $storageId;
 
-	/** @var \Bitrix\Disk\Storage */
+	/** @var Disk\Storage */
 	private $storage;
 
 	/** @var int */
 	private $folderId;
 
-	/** @var \Bitrix\Disk\Folder */
+	/** @var Disk\Folder */
 	private $folder;
 
 	/** @var int */
 	private $fileId;
 
-	/** @var \Bitrix\Disk\File */
+	/** @var Disk\File */
 	private $file;
 
 	/** @var string */
@@ -173,12 +175,12 @@ class Fragment
 	 * Returns title of the entity object.
 	 * @return string
 	 */
-	public function getTitle()
+	public function getTitle(): string
 	{
 		/*
 		if ($this->title == '')
 		{
-			/** @var \Bitrix\Disk\Volume\IVolumeIndicator $class * /
+			/** @var Disk\Volume\IVolumeIndicator $class * /
 			$class = $this->indicatorType;
 			$this->title = $class::getTitle($this);
 		}
@@ -190,7 +192,7 @@ class Fragment
 	 * Returns entity specific corresponding to module.
 	 * @return array
 	 */
-	public function getSpecific()
+	public function getSpecific(): array
 	{
 		return $this->specific;
 	}
@@ -199,7 +201,7 @@ class Fragment
 	 * Returns type of the entity object.
 	 * @return string
 	 */
-	public function getIndicatorType()
+	public function getIndicatorType(): string
 	{
 		return $this->indicatorType;
 	}
@@ -322,13 +324,13 @@ class Fragment
 
 	/**
 	 * Returns disk storage.
-	 * @return \Bitrix\Disk\Storage|null
+	 * @return Disk\Storage|null
 	 */
 	public function getStorage()
 	{
-		if (!$this->storage instanceof \Bitrix\Disk\Storage && $this->storageId > 0)
+		if (!$this->storage instanceof Disk\Storage && $this->storageId > 0)
 		{
-			$this->storage = \Bitrix\Disk\Storage::loadById($this->storageId);
+			$this->storage = Disk\Storage::loadById($this->storageId);
 		}
 		return $this->storage;
 	}
@@ -344,13 +346,13 @@ class Fragment
 
 	/**
 	 * Returns disk folder.
-	 * @return \Bitrix\Disk\Folder|null
+	 * @return Disk\Folder|null
 	 */
 	public function getFolder()
 	{
-		if (!$this->folder instanceof \Bitrix\Disk\Folder && $this->folderId > 0)
+		if (!$this->folder instanceof Disk\Folder && $this->folderId > 0)
 		{
-			$this->folder = \Bitrix\Disk\Folder::loadById($this->folderId);
+			$this->folder = Disk\Folder::loadById($this->folderId);
 		}
 		return $this->folder;
 	}
@@ -366,13 +368,13 @@ class Fragment
 
 	/**
 	 * Returns disk file.
-	 * @return \Bitrix\Disk\File|null
+	 * @return Disk\File|null
 	 */
 	public function getFile()
 	{
-		if (!$this->file instanceof \Bitrix\Disk\File && $this->fileId > 0)
+		if (!$this->file instanceof Disk\File && $this->fileId > 0)
 		{
-			$this->file = \Bitrix\Disk\File::loadById($this->fileId);
+			$this->file = Disk\File::loadById($this->fileId);
 		}
 		return $this->file;
 	}

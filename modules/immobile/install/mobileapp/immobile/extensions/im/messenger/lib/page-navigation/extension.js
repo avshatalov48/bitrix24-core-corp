@@ -6,7 +6,7 @@
  */
 jn.define('im/messenger/lib/page-navigation', (require, exports, module) => {
 
-	const { Type } = jn.require('type');
+	const { Type } = require('type');
 
 	class PageNavigation
 	{

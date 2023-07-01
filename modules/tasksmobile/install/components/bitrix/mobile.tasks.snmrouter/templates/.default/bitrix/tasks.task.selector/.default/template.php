@@ -13,7 +13,7 @@ $APPLICATION->SetPageProperty('BodyClass', 'task-list');
 	"FIELDS" => $arResult["FIELDS"],
 	"ITEMS" => $arResult["ITEMS"],
 	"RELOAD_GRID_AFTER_EVENT" => "N",
-	"AJAX_PAGE_PATH" => $APPLICATION->GetCurPageParam("", array("PAGEN_".$arResult["NAV_PARAMS"]["PAGEN"])),
+	"AJAX_PAGE_PATH" => $APPLICATION->GetCurPageParam("", array("PAGEN_".($arResult["NAV_PARAMS"]["PAGEN"] ?? null))),
 	"SHOW_SEARCH" => "Y"
 ));
 

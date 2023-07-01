@@ -4,6 +4,6 @@ return [
 		'helpers/component',
 	],
 	'components' => [
-		'tab.settings',
+		'tab.presets',
 	],
 ];

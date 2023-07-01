@@ -24,27 +24,27 @@ jn.define('layout/ui/fields/textarea', (require, exports, module) => {
 		getDefaultStyles()
 		{
 			const styles = super.getDefaultStyles();
+			if (this.showAllFromProps)
+			{
+				return {
+					...styles,
+					editableValue: {
+						...styles.editableValue,
+						flex: 1,
+					},
+				};
+			}
 
 			return {
 				...styles,
 				editableValue: {
 					...styles.editableValue,
 					flex: 1,
-					height: this.getFieldHeight(),
+					height: 'auto',
 					minHeight: this.state.height ? 20 : 1,
 					maxHeight: this.state.showAll ? null : 88,
 				},
 			};
-		}
-
-		getFieldHeight()
-		{
-			if (Application.getPlatform() === 'ios')
-			{
-				return this.initialValue !== '' && this.initialValue === this.getValue() ? 'auto' : this.state.height
-			}
-
-			return 'auto';
 		}
 
 		getEllipsizeParams()
@@ -63,7 +63,7 @@ jn.define('layout/ui/fields/textarea', (require, exports, module) => {
 						flex: 1,
 						flexDirection: 'column',
 						minHeight: this.state.height ? 20 : 1,
-						height: this.getFieldHeight(),
+						height: 'auto',
 					}
 				},
 				View(
@@ -72,7 +72,7 @@ jn.define('layout/ui/fields/textarea', (require, exports, module) => {
 							flexDirection: 'row',
 							flexGrow: 2,
 						},
-						interactable: Application.getPlatform() !== 'ios' && this.state.focus,
+						interactable: Application.getPlatform() !== 'ios' && this.state.focus && !this.state.showAll
 					},
 					TextInput(this.getFieldInputProps()),
 				),
@@ -88,16 +88,7 @@ jn.define('layout/ui/fields/textarea', (require, exports, module) => {
 				enable: !(Application.getPlatform() === 'ios' && !this.state.focus),
 				multiline: (this.props.multiline || true),
 				onSubmitEditing: this.getConfig().onSubmitEditing,
-				onContentSizeChange: ({height}) => setTimeout(() => this.resizeContent(height), 50),
 			};
-		}
-
-		resizeContent(height)
-		{
-			if (this.state.showAll || !this.state.showAll && !this.state.focus)
-			{
-				this.setState({height})
-			}
 		}
 	}
 

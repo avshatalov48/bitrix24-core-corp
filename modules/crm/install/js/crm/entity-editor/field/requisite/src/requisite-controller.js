@@ -69,7 +69,9 @@ export class EntityEditorRequisiteController extends BX.Crm.EntityEditorControll
 			entityTypeId: this._editor.getEntityTypeId(),
 			entityId: this._editor.getEntityId(),
 			contextId: this._editor.getContextId(),
-			requisiteEditUrl: this._editor.getRequisiteEditUrl('#requisite_id#')
+			requisiteEditUrl: this._editor.getRequisiteEditUrl('#requisite_id#'),
+			permissionToken: this.getConfigStringParam('permissionToken', null),
+			entityCategoryId: BX.prop.getString(this.getConfig(), 'entityCategoryId', 0)
 		});
 		EventEmitter.subscribe(this._requisiteEditor, 'onAfterEditRequisite', this.onRequisiteEditorAfterEdit.bind(this));
 		EventEmitter.subscribe(this._requisiteEditor, 'onAfterDeleteRequisite', this.onRequisiteEditorAfterDelete.bind(this));

@@ -10,7 +10,7 @@ jn.define('layout/ui/fields/client/elements/title', (require, exports, module) =
 	 */
 	function ClientItemTitle(props)
 	{
-		const { id, hidden, title, type, onOpenBackdrop } = props;
+		const { id, hidden, title, type, onOpenBackdrop, testId } = props;
 
 		const onClick = () => {
 			if (id && !hidden && onOpenBackdrop)
@@ -36,6 +36,7 @@ jn.define('layout/ui/fields/client/elements/title', (require, exports, module) =
 					onClick,
 				},
 				Text({
+						testId: `${testId}-name`,
 						style: {
 							color: !id || hidden ? '#333333' : '#0b66c3',
 							fontSize: 18,
@@ -61,13 +62,13 @@ jn.define('layout/ui/fields/client/elements/title', (require, exports, module) =
 					onClick,
 				},
 				Text({
-						style: {
-							fontSize: 10,
-							marginBottom: Application.getPlatform() === 'android' ? 3 : 2,
-						},
-						text: Loc.getMessage(`FIELDS_CLIENT_TITLE_${type.toUpperCase()}_MSGVER_1`),
+					testId: `${testId}-type`,
+					style: {
+						fontSize: 10,
+						marginBottom: Application.getPlatform() === 'android' ? 3 : 2,
 					},
-				),
+					text: Loc.getMessage(`FIELDS_CLIENT_TITLE_${type.toUpperCase()}_MSGVER_1`),
+				}),
 			),
 		);
 	}

@@ -1,5 +1,7 @@
 <?php
+
 return [
-	'utils',
-	'layout/ui/entity-editor/config/base'
+	'extensions' => [
+		'layout/ui/entity-editor/config/base',
+	],
 ];

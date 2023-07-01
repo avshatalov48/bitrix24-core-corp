@@ -69,7 +69,8 @@ class PingQueue extends Base
 	{
 		foreach ($offsets as $offset)
 		{
-			$pingDateTime = $offset <= 0 ? $deadLine : $deadLine->add('-' . $offset . ' minutes');
+			$deadlineClone = clone $deadLine; // to avoid influence of ->add(...) to original $deadLine
+			$pingDateTime = $offset <= 0 ? $deadlineClone : $deadlineClone->add('-' . $offset . ' minutes');
 			if ($pingDateTime->getTimestamp() > (new DateTime())->getTimestamp())
 			{
 				ActivityPingQueueTable::add([
@@ -84,10 +85,15 @@ class PingQueue extends Base
 	{
 		foreach ($existedIds as $index => $existedId)
 		{
-			$pingDateTime = $offsets[$index] <= 0 ? $deadLine : $deadLine->add('-' . $offsets[$index] . ' minutes');
+			$deadlineClone = clone $deadLine; // to avoid influence of ->add(...) to original $deadLine
+			$pingDateTime = $offsets[$index] <= 0 ? $deadlineClone : $deadlineClone->add('-' . $offsets[$index] . ' minutes');
 			if ($pingDateTime->getTimestamp() > (new DateTime())->getTimestamp())
 			{
 				ActivityPingQueueTable::update($existedId, ['PING_DATETIME' => $pingDateTime]);
+			}
+			else
+			{
+				ActivityPingQueueTable::delete($existedId);
 			}
 		}
 	}

@@ -1,10 +1,16 @@
-(() => {
+/**
+ * @module layout/ui/entity-editor/config/field
+ */
+jn.define('layout/ui/entity-editor/config/field', (require, exports, module) => {
+
+	const { EntityConfigBaseItem } = require('layout/ui/entity-editor/config/base');
 	class EntityConfigField extends EntityConfigBaseItem
 	{
 		static create(settings)
 		{
 			const self = new EntityConfigField();
 			self.initialize(settings);
+
 			return self;
 		}
 
@@ -28,5 +34,5 @@
 		}
 	}
 
-	jnexport(EntityConfigField);
-})();
+	module.exports = { EntityConfigField };
+});

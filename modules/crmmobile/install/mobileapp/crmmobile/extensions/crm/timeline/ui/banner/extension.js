@@ -2,10 +2,9 @@
  * @module crm/timeline/ui/banner
  */
 jn.define('crm/timeline/ui/banner', (require, exports, module) => {
-
 	const { mergeImmutable } = require('utils/object');
 
-	function Banner({title, description, onClick, style = {}})
+	function Banner({ title, description, onClick, style = {} })
 	{
 		style.backgroundColor = BX.prop.getString(style, 'backgroundColor', '#ffffff');
 		style.marginBottom = BX.prop.getNumber(style, 'marginBottom', 0);
@@ -18,7 +17,7 @@ jn.define('crm/timeline/ui/banner', (require, exports, module) => {
 			{
 				style: {
 					padding: 16,
-					borderRadius: 20,
+					borderRadius: 12,
 					flexDirection: 'row',
 					justifyContent: 'space-between',
 					backgroundColor: style.backgroundColor,
@@ -50,7 +49,7 @@ jn.define('crm/timeline/ui/banner', (require, exports, module) => {
 						fontWeight: '400',
 						color: '#828B95',
 					},
-				})
+				}),
 			),
 		);
 	}
@@ -76,24 +75,24 @@ jn.define('crm/timeline/ui/banner', (require, exports, module) => {
 						position: 'absolute',
 						bottom: 0,
 						width: '100%',
-					}
+					},
 				},
 				View(
 					{
 						style: {
 							backgroundColor,
 							borderWidth: 1,
-							borderColor: '#dde0e7',
-							borderRadius: 20,
+							borderColor: '#dfe0e3',
+							borderRadius: 12,
 							opacity: 0.8,
 							padding: 16,
-						}
+						},
 					},
-				)
+				),
 			),
 			Shadow(
 				{
-					color: '#e6e6e6',
+					color: '#e6e7e9',
 					radius: 3,
 					offset: {
 						y: 3,
@@ -103,19 +102,18 @@ jn.define('crm/timeline/ui/banner', (require, exports, module) => {
 						right: 3,
 					},
 					style: {
-						borderRadius: 20,
+						borderRadius: 12,
 					},
 				},
 				Banner(mergeImmutable(props, {
 					style: {
 						opacity: 1,
 						marginBottom: 0,
-					}
-				}))
-			)
+					},
+				})),
+			),
 		);
 	}
 
-    module.exports = { Banner, BannerStack };
-
+	module.exports = { Banner, BannerStack };
 });

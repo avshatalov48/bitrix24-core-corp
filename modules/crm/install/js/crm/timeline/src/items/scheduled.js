@@ -70,6 +70,11 @@ export default class Scheduled extends CompatibleItem
 		return null;
 	}
 
+	getLightTime()
+	{
+		return null;
+	}
+
 	hasDeadline()
 	{
 		return BX.type.isDate(this.getDeadline());
@@ -79,12 +84,12 @@ export default class Scheduled extends CompatibleItem
 	{
 		if (this.isDone())
 		{
-			return this._existedStreamItemDeadLine && History.isCounterEnabled(this._existedStreamItemDeadLine);
+			return this._existedStreamItemDeadLine && History.isCounterEnabledByLightTime(this._existedStreamItemDeadLine);
 		}
 
-		const deadline = this.getDeadline();
+		const lightTime = this.getLightTime();
 
-		return deadline && History.isCounterEnabled(deadline);
+		return lightTime && History.isCounterEnabledByLightTime(lightTime);
 	}
 
 	isIncomingChannel()

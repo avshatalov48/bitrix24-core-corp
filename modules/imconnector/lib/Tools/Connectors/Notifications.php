@@ -126,6 +126,25 @@ class Notifications
 		return (bool)$result;
 	}
 
+	/**
+	 * @return bool
+	 */
+	public function isUserConsentAgreementTerms(): bool
+	{
+		$result = false;
+
+		$agreementId = self::getIdAgreementTerms();
+		if(!empty($agreementId))
+		{
+			$result = Consent::getByContext(
+				$agreementId,
+				self::DATA_PROVIDER_CODE
+			);
+		}
+
+		return (bool)$result;
+	}
+
 	public static function getWidgetScript(): string
 	{
 		if (!Loader::includeModule('imconnector'))
@@ -261,10 +280,11 @@ JS;
 			->setActive(true)
 			->setConnection(true)
 			->setRegister(true)
-			->setData($resultRegister->getResult());
+			->setData($resultRegister->getResult())
+			->save()
+		;
 
-		Status::deleteLinesExcept(Library::ID_NOTIFICATIONS_CONNECTOR, (int)$lineId);
-		Status::save();;
+		Status::deleteLinesExcept(Library::ID_NOTIFICATIONS_CONNECTOR, $lineId);
 
 		\Bitrix\ImConnector\InfoConnectors::updateInfoConnectors($lineId);
 		if (Loader::includeModule('crm') && method_exists(\Bitrix\Crm\SiteButton\Manager::class, 'updateScriptCacheWithLineId'))

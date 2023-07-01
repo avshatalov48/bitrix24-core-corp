@@ -6,15 +6,18 @@ use Bitrix\Crm\Activity\Provider\ProviderManager;
 use Bitrix\Crm\Badge\Model\BadgeTable;
 use Bitrix\Crm\Integration\OpenLineManager;
 use Bitrix\Crm\Service\Timeline\Item\Activity;
+use Bitrix\Crm\Service\Timeline\Layout;
 use Bitrix\Crm\Service\Timeline\Layout\Action;
+use Bitrix\Crm\Service\Timeline\Layout\Action\Animation;
 use Bitrix\Crm\Service\Timeline\Layout\Action\JsEvent;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\ClientMark;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\ContentBlockFactory;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\ContentBlockWithTitle;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\Link;
-use Bitrix\Crm\Service\Timeline\Layout\Body\Logo;
+use Bitrix\Crm\Service\Timeline\Layout\Common\Icon;
 use Bitrix\Crm\Service\Timeline\Layout\Footer\Button;
+use Bitrix\Crm\Service\Timeline\Layout\Header\ChangeStreamButton;
 use Bitrix\Crm\Service\Timeline\Layout\Header\Tag;
 use Bitrix\Main\Localization\Loc;
 use CCrmActivity;
@@ -28,7 +31,7 @@ class OpenLine extends Activity
 
 	public function getIconCode(): ?string
 	{
-		return 'IM';
+		return Icon::OPENLINE_INCOMING_MESSAGE;
 	}
 
 	public function getTitle(): string
@@ -45,29 +48,29 @@ class OpenLine extends Activity
 		return $this->getOpenChatAction();
 	}
 
-	public function getLogo(): ?Logo
+	public function getLogo(): ?Layout\Body\Logo
 	{
-		$logoCode = 'channel-chat'; // default icon
+		$logoCode = Layout\Common\Logo::CHANNEL_CHAT; // default icon
 
 		// logos map, see connector codes OpenLineManager::$supportedConnectors
 		$logoMap = [
-			'avito' => 'channel-avito',
-			'imessage' => 'channel-apple',
-			'facebook' => 'channel-fb',
-			'facebookmessenger' => 'channel-fb-chat',
-			'facebookcomments' => 'channel-fb-chat',
-			'fbinstagram' => 'channel-instagram-direct',
-			'fbinstagramdirect' => 'channel-instagram-direct',
-			'livechat' => 'channel-chat',
-			'network' => 'channel-bitrix',
-			'ok' => 'channel-ok',
-			'telegram' => 'channel-telegram',
-			'telegrambot' => 'channel-telegram',
-			'viber' => 'channel-viber',
-			'vkgroup' => 'channel-vk',
-			'vkgrouporder' => 'channel-vk-order',
-			'whatsappbytwilio' => 'channel-whatsapp-bitrix',
-			'whatsappbyedna' => 'channel-edna',
+			'avito' => Layout\Common\Logo::CHANNEL_AVITO,
+			'imessage' => Layout\Common\Logo::CHANNEL_APPLE,
+			'facebook' => Layout\Common\Logo::CHANNEL_FACEBOOK,
+			'facebookmessenger' => Layout\Common\Logo::CHANNEL_FACEBOOK_CHAT,
+			'facebookcomments' => Layout\Common\Logo::CHANNEL_FACEBOOK_CHAT,
+			'fbinstagram' => Layout\Common\Logo::CHANNEL_INSTAGRAM_DIRECT,
+			'fbinstagramdirect' => Layout\Common\Logo::CHANNEL_INSTAGRAM_DIRECT,
+			'livechat' => Layout\Common\Logo::CHANNEL_CHAT,
+			'network' => Layout\Common\Logo::CHANNEL_BITRIX,
+			'ok' => Layout\Common\Logo::CHANNEL_ODNOKLASSNIKI,
+			'telegram' => Layout\Common\Logo::CHANNEL_TELEGRAM,
+			'telegrambot' => Layout\Common\Logo::CHANNEL_TELEGRAM,
+			'viber' => Layout\Common\Logo::CHANNEL_VIBER,
+			'vkgroup' => Layout\Common\Logo::CHANNEL_VK,
+			'vkgrouporder' => Layout\Common\Logo::CHANNEL_VK_ORDER,
+			'whatsappbytwilio' => Layout\Common\Logo::CHANNEL_WHATSAPP_BITRIX,
+			'whatsappbyedna' => Layout\Common\Logo::CHANNEL_EDNA,
 		];
 		$userCode = $this->getAssociatedEntityModel()->get('PROVIDER_PARAMS')['USER_CODE'];
 		if (isset($userCode))
@@ -79,9 +82,9 @@ class OpenLine extends Activity
 			}
 		}
 
-		return (new Logo($logoCode))
+		return Layout\Common\Logo::getInstance($logoCode)
+			->createLogo()
 			->setAction($this->getOpenChatAction())
-			->setInCircle(true)
 		;
 	}
 
@@ -179,7 +182,10 @@ class OpenLine extends Activity
 		$responsibleId = $this->getAssociatedEntityModel()->get('RESPONSIBLE_ID');
 
 		// the tag will not be removed until the responsible user reads all messages
-		if (OpenLineManager::getChatUnReadMessages($userCode, $responsibleId) > 0)
+		if (
+			$this->isScheduled()
+			&& OpenLineManager::getChatUnReadMessages($userCode, $responsibleId) > 0
+		)
 		{
 			$tags['notReadChat'] = new Tag(
 				Loc::getMessage('CRM_TIMELINE_TAG_CHAT_NOT_READ'),
@@ -214,6 +220,27 @@ class OpenLine extends Activity
 
 		return (new JsEvent('Openline:OpenChat'))
 			->addActionParamString('dialogId', $dialogId)
+		;
+	}
+
+	protected function getCompleteButton(): ?ChangeStreamButton
+	{
+		if (!$this->isScheduled())
+		{
+			return null;
+		}
+
+		$completeAction =  (new JsEvent('Openline:Complete'))
+			->addActionParamInt('activityId', $this->getActivityId())
+			->addActionParamInt('ownerTypeId', $this->getContext()->getEntityTypeId())
+			->addActionParamInt('ownerId', $this->getContext()->getEntityId())
+			->setAnimation(Animation::disableItem()->setForever())
+		;
+
+		return (new ChangeStreamButton())
+			->setTypeComplete()
+			->setDisableIfReadonly()
+			->setAction($completeAction)
 		;
 	}
 

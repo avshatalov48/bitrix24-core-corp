@@ -5,8 +5,13 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Bizproc\Activity\PropertiesDialog;
+use Bitrix\Bizproc\FieldType;
+use Bitrix\Crm\Activity\Provider\Tasks\Task;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Text\Emoji;
+use Bitrix\Tasks;
 
 class CBPTask2Activity extends CBPActivity implements
 	IBPEventActivity,
@@ -17,12 +22,27 @@ class CBPTask2Activity extends CBPActivity implements
 	private static $cycleCounter = [];
 	const CYCLE_LIMIT = 3;
 
-	private static $arAllowedTasksFieldNames = array(
-		'TITLE', 'CREATED_BY', 'RESPONSIBLE_ID', 'ACCOMPLICES',
-		'START_DATE_PLAN', 'END_DATE_PLAN', 'DEADLINE', 'DESCRIPTION',
-		'PRIORITY', 'GROUP_ID', 'ALLOW_CHANGE_DEADLINE', 'TASK_CONTROL',
-		'ADD_IN_REPORT', 'AUDITORS', 'ALLOW_TIME_TRACKING', 'PARENT_ID'
-	);
+	private static array $arAllowedTasksFieldNames = [
+		'TITLE',
+		'CREATED_BY',
+		'RESPONSIBLE_ID',
+		'ACCOMPLICES',
+		'START_DATE_PLAN',
+		'END_DATE_PLAN',
+		'DEADLINE',
+		'DESCRIPTION',
+		'PRIORITY',
+		'GROUP_ID',
+		'ALLOW_CHANGE_DEADLINE',
+		'TASK_CONTROL',
+		'ADD_IN_REPORT',
+		'AUDITORS',
+		'ALLOW_TIME_TRACKING',
+		'PARENT_ID',
+		'TAG_NAMES',
+		'REQUIRED_RESULT',
+		'DEPENDS_ON',
+	];
 
 	public function __construct($name)
 	{
@@ -74,6 +94,11 @@ class CBPTask2Activity extends CBPActivity implements
 
 	public function Execute()
 	{
+		$this->HoldToClose = CBPHelper::getBool($this->HoldToClose);
+		$this->AUTO_LINK_TO_CRM_ENTITY = CBPHelper::getBool($this->AUTO_LINK_TO_CRM_ENTITY);
+		$this->AsChildTask = CBPHelper::getBool($this->AsChildTask);
+		$this->REQUIRED_RESULT = CBPHelper::getBool($this->REQUIRED_RESULT);
+
 		if ($this->isInEventActivityMode)
 		{
 			return CBPActivityExecutionStatus::Closed;
@@ -115,12 +140,12 @@ class CBPTask2Activity extends CBPActivity implements
 		$fields["ACCOMPLICES"] = CBPHelper::ExtractUsers($this->Fields["ACCOMPLICES"], $documentId);
 		$fields["AUDITORS"] = CBPHelper::ExtractUsers($this->Fields["AUDITORS"], $documentId);
 
-		if (!$fields["SITE_ID"])
+		if (!isset($fields['SITE_ID']) || !$fields["SITE_ID"])
 		{
 			$fields["SITE_ID"] = SITE_ID;
 		}
 
-		if(!is_array($fields['UF_CRM_TASK']))
+		if(!is_array($fields['UF_CRM_TASK'] ?? null))
 		{
 			$fields['UF_CRM_TASK'] = isset($fields['UF_CRM_TASK']) ? [$fields['UF_CRM_TASK']] : [];
 		}
@@ -164,14 +189,14 @@ class CBPTask2Activity extends CBPActivity implements
 				$this->writeDebugInfo($this->getDebugInfo(['PARENT_ID' => $parentId], ['PARENT_ID' => $parentIdModifiedProperty]));
 
 				$this->WriteToTrackingService(
-					GetMessage('BPTA1A_TASK_TASK_PRESENCE_ERROR', ['#TASK_ID#' => $parentId]),
+					Loc::getMessage('BPTA1A_TASK_TASK_PRESENCE_ERROR', ['#TASK_ID#' => $parentId]),
 					0,
 					CBPTrackingType::Error
 				);
 
 				return false;
 			}
-			elseif(empty($arFieldsChecked['GROUP_ID']))
+			elseif(empty($fields['GROUP_ID']))
 			{
 				$res = \CTasks::GetList(
 					array(),
@@ -212,36 +237,50 @@ class CBPTask2Activity extends CBPActivity implements
 			)
 			{
 				$rawFields = $this->getRawProperty('Fields');
-				if('UF_TASK_WEBDAV_FILES' == $fieldName && $this->canUploadFilesToDisk($rawFields[$fieldName])
-					&& CModule::IncludeModule('disk') && Bitrix\Disk\Configuration::isSuccessfullyConverted())
+				if ($fieldName === 'UF_TASK_WEBDAV_FILES' && Loader::includeModule('disk'))
 				{
-					$fields[$fieldName] = $this->uploadFilesToDisk($fields[$fieldName], $fields['CREATED_BY']);
-				}
-				elseif('UF_TASK_WEBDAV_FILES' == $fieldName && is_array($fields[$fieldName]))
-				{
-					foreach($fields[$fieldName] as $key => $fileId)
-					{
-						if(!empty($fileId) && is_string($fileId) && mb_substr($fileId, 0, 1) != 'n')
-						{
-							if(CModule::IncludeModule("disk") && \Bitrix\Disk\Configuration::isSuccessfullyConverted())
-							{
-								$item = \Bitrix\Disk\Internals\FileTable::getList(array(
-									'select' => array('ID'),
-									'filter' => array('=XML_ID' => $fileId, 'TYPE' => \Bitrix\Disk\Internals\FileTable::TYPE_FILE)
-								))->fetch();
+					$canUseDisk = \Bitrix\Disk\Configuration::isSuccessfullyConverted();
 
-								if($item)
+					if ($canUseDisk && $this->canUploadFilesToDisk($rawFields[$fieldName]))
+					{
+						$fields[$fieldName] = $this->uploadFilesToDisk($fields[$fieldName], $fields['CREATED_BY']);
+					}
+					elseif (is_array($fields[$fieldName]))
+					{
+						$filesToUpload = [];
+						foreach ($fields[$fieldName] as $key => $fileId)
+						{
+							if ($canUseDisk && !empty($fileId))
+							{
+								$diskFile = \Bitrix\Disk\File::load(['XML_ID' => (string)$fileId]);
+
+								if ((!is_string($fileId) || mb_substr($fileId, 0, 1) !== 'n') && is_null($diskFile))
 								{
-									$fields[$fieldName][$key] = 'n'.$item['ID'];
+									$filesToUpload[] = $fileId;
+									unset($fields[$fieldName][$key]);
+								}
+								elseif (is_string($fileId) && mb_substr($fileId, 0, 1) !== 'n')
+								{
+									$fields[$fieldName][$key] = 'n' . $diskFile->getId();
 								}
 							}
 						}
+
+						$fields[$fieldName] = array_merge(
+							$fields[$fieldName],
+							$this->uploadFilesToDisk($filesToUpload, $fields['CREATED_BY'])
+						);
 					}
-					unset($fileId);
 				}
 
 				$arFieldsChecked[$fieldName] = $fields[$fieldName];
 			}
+		}
+
+		if (isset($arFieldsChecked['TAG_NAMES']))
+		{
+			$arFieldsChecked['TAGS'] = $arFieldsChecked['TAG_NAMES'];
+			unset($arFieldsChecked['TAG_NAMES']);
 		}
 
 		if (empty($arFieldsChecked['CREATED_BY']))
@@ -254,7 +293,7 @@ class CBPTask2Activity extends CBPActivity implements
 			);
 
 			$this->WriteToTrackingService(
-				GetMessage("BPSA_CREATED_BY_ERROR"),
+				Loc::getMessage("BPSA_CREATED_BY_ERROR"),
 				0,
 				CBPTrackingType::Error
 			);
@@ -269,7 +308,7 @@ class CBPTask2Activity extends CBPActivity implements
 		foreach ($allDateFields as $dateField)
 		{
 			$dateFieldName = is_array($dateField) ? $dateField['Name'] : $dateField;
-			$checkedDateField = $this->assertDateField($dateField, $arFieldsChecked[$dateFieldName]);
+			$checkedDateField = $this->assertDateField($dateField, $arFieldsChecked[$dateFieldName] ??  null);
 			if(!$checkedDateField)
 			{
 				unset($arFieldsChecked[$dateFieldName]);
@@ -281,6 +320,7 @@ class CBPTask2Activity extends CBPActivity implements
 		}
 
 		$this->checkPlanDates($arFieldsChecked);
+		$this->checkSeParameter($arFieldsChecked);
 
 		if ($fields['ALLOW_TIME_TRACKING'] === 'Y')
 		{
@@ -331,7 +371,7 @@ class CBPTask2Activity extends CBPActivity implements
 				}
 
 				$this->WriteToTrackingService(
-					GetMessage("BPSA_TRACK_ERROR").(!empty($errorDesc) ? ' '.implode(', ', $errorDesc) : ''),
+					Loc::getMessage("BPSA_TRACK_ERROR").(!empty($errorDesc) ? ' '.implode(', ', $errorDesc) : ''),
 					0,
 					CBPTrackingType::Error
 				);
@@ -369,7 +409,7 @@ class CBPTask2Activity extends CBPActivity implements
 					['CHECK_LIST_ITEMS' => $checkListItems],
 					[
 						"CHECK_LIST_ITEMS" => [
-							"Name" => GetMessage("BPSA_CHECK_LIST_ITEMS"),
+							"Name" => Loc::getMessage("BPSA_CHECK_LIST_ITEMS"),
 							"Type" => "string",
 							"Required" => false,
 							"Multiple" => true,
@@ -386,7 +426,7 @@ class CBPTask2Activity extends CBPActivity implements
 
 		$this->TaskId = $result;
 		$this->markAsBPTask($result);
-		$this->WriteToTrackingService(str_replace("#VAL#", $result, GetMessage("BPSA_TRACK_OK")));
+		$this->WriteToTrackingService(str_replace("#VAL#", $result, Loc::getMessage("BPSA_TRACK_OK")));
 
 		if ($this->workflow->isDebug())
 		{
@@ -483,6 +523,26 @@ class CBPTask2Activity extends CBPActivity implements
 		}
 	}
 
+	private function checkSeParameter(&$fields): void
+	{
+		$parameters = [];
+		if (isset($fields['REQUIRED_RESULT']))
+		{
+			$parameters[\Bitrix\Tasks\Internals\Task\ParameterTable::PARAM_RESULT_REQUIRED] = [
+				'VALUE' => CBPHelper::getBool($fields['REQUIRED_RESULT']) ? 'Y' : 'N',
+				'CODE' => \Bitrix\Tasks\Internals\Task\ParameterTable::PARAM_RESULT_REQUIRED,
+				'ID' => '0'
+			];
+
+			unset($fields['REQUIRED_RESULT']);
+		}
+
+		if ($parameters)
+		{
+			$fields['SE_PARAMETER'] = $parameters;
+		}
+	}
+
 	protected function markAsBPTask(int $taskId): void
 	{
 		if(!CModule::IncludeModule('crm'))
@@ -518,6 +578,33 @@ class CBPTask2Activity extends CBPActivity implements
 					false
 				);
 			}
+			else
+			{
+				$activity = CCrmActivity::GetList(
+					[],
+					[
+						'OWNER_ID' => $documentId,
+						'OWNER_TYPE_ID' => CCrmOwnerType::ResolveID($documentType),
+						'TYPE_ID' => CCrmActivityType::Provider,
+						'PROVIDER_ID' => Task::getId(),
+						'PROVIDER_TYPE_ID' => Task::getProviderTypeId(),
+						'ASSOCIATED_ENTITY_ID' => $taskId,
+					],
+					false,
+					false,
+					['ID', 'SETTINGS']
+				)->Fetch();
+				if ($activity)
+				{
+					$settings = array_merge(['OWNER_STAGE' => $documentStage], $activity['SETTINGS']);
+					CCrmActivity::Update(
+						$activity['ID'],
+						['SETTINGS' => $settings],
+						false,
+						false
+					);
+				}
+			}
 		}
 	}
 
@@ -537,9 +624,12 @@ class CBPTask2Activity extends CBPActivity implements
 		{
 			case CCrmOwnerType::LeadName:
 			case CCrmOwnerType::QuoteName:
+			case CCrmOwnerType::OrderName:
 				return $document['STATUS_ID'] ?? '';
 
 			case CCrmOwnerType::DealName:
+			case CCrmOwnerType::SmartDocumentName:
+			case CCrmOwnerType::SmartInvoiceName:
 				return $document['STAGE_ID'] ?? '';
 
 			default:
@@ -579,7 +669,7 @@ class CBPTask2Activity extends CBPActivity implements
 		$schedulerService->SubscribeOnEvent($this->workflow->GetInstanceId(), $this->name, "tasks", "OnTaskDelete", $taskId);
 
 		$this->workflow->AddEventHandler($this->name, $eventHandler);
-		$this->WriteToTrackingService(GetMessage("BPSA_TRACK_SUBSCR"));
+		$this->WriteToTrackingService(Loc::getMessage("BPSA_TRACK_SUBSCR"));
 	}
 
 	public function Unsubscribe(IBPActivityExternalEventListener $eventHandler)
@@ -625,7 +715,7 @@ class CBPTask2Activity extends CBPActivity implements
 			if (isset($arEventParameters['eventName']) && $arEventParameters['eventName'] === 'OnTaskDelete')
 			{
 				$this->IsDeleted = 'Y';
-				$this->WriteToTrackingService(GetMessage("BPSA_TRACK_DELETED"));
+				$this->WriteToTrackingService(Loc::getMessage("BPSA_TRACK_DELETED"));
 				return true;
 			}
 			elseif ($arEventParameters[1]["STATUS"] == 5)
@@ -633,106 +723,20 @@ class CBPTask2Activity extends CBPActivity implements
 				$this->ClosedBy = "user_".$arEventParameters[1]["CLOSED_BY"];
 				$this->ClosedDate = $arEventParameters[1]["CLOSED_DATE"];
 
-				$this->WriteToTrackingService(str_replace("#DATE#", $arEventParameters[1]["CLOSED_DATE"], GetMessage("BPSA_TRACK_CLOSED")));
+				$this->WriteToTrackingService(str_replace("#DATE#", $arEventParameters[1]["CLOSED_DATE"], Loc::getMessage("BPSA_TRACK_CLOSED")));
 				return true;
 			}
 		}
 	}
 
-	public static function GetPropertiesDialog($documentType, $activityName, $arWorkflowTemplate, $arWorkflowParameters, $arWorkflowVariables, $arCurrentValues = null, $formName = "", $popupWindow = null, $currentSiteId = null)
+	public static function getPropertiesDialog($documentType, $activityName, $arWorkflowTemplate, $arWorkflowParameters, $arWorkflowVariables, $arCurrentValues = null, $formName = "", $popupWindow = null, $currentSiteId = null)
 	{
-		if (!is_array($arWorkflowParameters))
+		if (!\Bitrix\Main\Loader::includeModule('tasks'))
 		{
-			$arWorkflowParameters = array();
-		}
-		if (!is_array($arWorkflowVariables))
-		{
-			$arWorkflowVariables = array();
+			return false;
 		}
 
-		$rawValues = array();
-
-		if (!is_array($arCurrentValues))
-		{
-			$arCurrentValues = array();
-
-			$arCurrentActivity = &CBPWorkflowTemplateLoader::FindActivityByName($arWorkflowTemplate, $activityName);
-			if (is_array($arCurrentActivity["Properties"])
-				&& array_key_exists("Fields", $arCurrentActivity["Properties"])
-				&& is_array($arCurrentActivity["Properties"]["Fields"]))
-			{
-				$textUserFields = ["UF_TASK_WEBDAV_FILES", "UF_CRM_TASK"];
-
-				foreach ($arCurrentActivity["Properties"]["Fields"] as $k => $v)
-				{
-					$arCurrentValues[$k] = $v;
-
-					if (in_array($k, array("CREATED_BY", "RESPONSIBLE_ID", "ACCOMPLICES", "AUDITORS")))
-					{
-						if (!is_array($arCurrentValues[$k]))
-							$arCurrentValues[$k] = array($arCurrentValues[$k]);
-
-						$ar = (array) $arCurrentValues[$k];
-						/*foreach ($arCurrentValues[$k] as $val)
-						{
-							if (intval($val)."!" == $val."!")
-								$val = "user_".$val;
-							$ar[] = $val;
-						}*/
-
-						$rawValues[$k] = $ar;
-						$arCurrentValues[$k] = CBPHelper::UsersArrayToString($ar, $arWorkflowTemplate, $documentType);
-					}
-					if(in_array($k, $textUserFields)
-						&& is_string($arCurrentValues[$k])
-						&& CBPActivity::isExpression($arCurrentValues[$k]))
-					{
-						$arCurrentValues["{$k}_text"] = $arCurrentValues[$k];
-						unset($arCurrentValues[$k]);
-					}
-					elseif('UF_TASK_WEBDAV_FILES' == $k && is_array($arCurrentValues[$k]) && CModule::IncludeModule("disk") && \Bitrix\Disk\Configuration::isSuccessfullyConverted())
-					{
-						foreach($arCurrentValues[$k] as $key => $fileId)
-						{
-							if(!empty($fileId) && is_string($fileId) && mb_substr($fileId, 0, 1) != 'n')
-							{
-								$item = \Bitrix\Disk\Internals\FileTable::getList(array(
-									'select' => array('ID'),
-									'filter' => array('=XML_ID' => $fileId, 'TYPE' => \Bitrix\Disk\Internals\FileTable::TYPE_FILE)
-								))->fetch();
-
-								if($item)
-								{
-									$arCurrentValues[$k][$key] = 'n'.$item['ID'];
-								}
-							}
-						}
-						unset($fileId);
-					}
-				}
-			}
-
-			$arCurrentValues["HOLD_TO_CLOSE"] = ($arCurrentActivity["Properties"]["HoldToClose"] ? "Y" : "N");
-			$arCurrentValues["AS_CHILD_TASK"] = ($arCurrentActivity["Properties"]["AsChildTask"] ? "Y" : "N");
-			$arCurrentValues["AUTO_LINK_TO_CRM_ENTITY"] = ($arCurrentActivity["Properties"]["AUTO_LINK_TO_CRM_ENTITY"] ? "Y" : "N");
-			$arCurrentValues["CHECK_LIST_ITEMS"] = $arCurrentActivity["Properties"]["CheckListItems"];
-			$arCurrentValues["TIME_ESTIMATE_H"] = $arCurrentActivity["Properties"]["TimeEstimateHour"];
-			$arCurrentValues["TIME_ESTIMATE_M"] = $arCurrentActivity["Properties"]["TimeEstimateMin"];
-		}
-		else
-		{
-			foreach (static::$arAllowedTasksFieldNames as $field)
-			{
-				if ((!is_array($arCurrentValues[$field]) && ($arCurrentValues[$field] == '')
-					|| is_array($arCurrentValues[$field]) && (count($arCurrentValues[$field]) <= 0))
-					&& ($arCurrentValues[$field."_text"] <> ''))
-				{
-					$arCurrentValues[$field] = $arCurrentValues[$field."_text"];
-				}
-			}
-		}
-
-		$dialog = new \Bitrix\Bizproc\Activity\PropertiesDialog(__FILE__, array(
+		$dialog = new PropertiesDialog(__FILE__, array(
 			'documentType' => $documentType,
 			'activityName' => $activityName,
 			'workflowTemplate' => $arWorkflowTemplate,
@@ -743,376 +747,571 @@ class CBPTask2Activity extends CBPActivity implements
 			'siteId' => $currentSiteId
 		));
 
-		$dialog->setRuntimeData(array(
-			"formName" => $formName,
-			"documentType" => $documentType,
-			"popupWindow" => &$popupWindow,
-			"arDocumentFields" => self::__GetFields(),
-			'currentSiteId' => $currentSiteId,
-			'allowedTaskFields' => static::$arAllowedTasksFieldNames,
-			'rawValues' => $rawValues
-		));
+		$map = static::getPropertiesDialogMap();
+		foreach ($map['Fields']['Map'] as &$field)
+		{
+			if ($field['Type'] === FieldType::USER && $field['Required'])
+			{
+				$field['Default'] = \Bitrix\Bizproc\Automation\Helper::getResponsibleUserExpression($documentType);
+			}
+		}
+
+		unset($field);
+		$dialog->setMap($map);
+
+		$currentValues = $dialog->getCurrentValues();
+
+		// compatibility
+		foreach ($map as $field)
+		{
+			$fieldName = $field['FieldName'];
+			if (isset($currentValues[$fieldName], $field['Type']) && $field['Type'] === FieldType::BOOL)
+			{
+				$currentValues[$fieldName] = CBPHelper::getBool($currentValues[$fieldName]) ? 'Y' : 'N';
+			}
+		}
+
+		$dialog->setCurrentValues($currentValues);
+
+		$runtimeData = [
+			'tags' => [],
+			'dependsOn' => [],
+		];
+		if (isset($currentValues['Fields']))
+		{
+			if (isset($currentValues['Fields']['TAG_NAMES']) && $currentValues['Fields']['TAG_NAMES'])
+			{
+				$runtimeData['tags'] = static::getTagsByNames($currentValues['Fields']['TAG_NAMES']);
+			}
+			if (isset($currentValues['Fields']['DEPENDS_ON']) && $currentValues['Fields']['DEPENDS_ON'])
+			{
+				$runtimeData['dependsOn'] = static::getDependsOnByTaskIds($currentValues['Fields']['DEPENDS_ON']);
+			}
+		}
+
+		$dialog->setRuntimeData($runtimeData);
 
 		return $dialog;
 	}
 
-	public static function GetPropertiesDialogValues($documentType, $activityName, &$arWorkflowTemplate, &$arWorkflowParameters, &$arWorkflowVariables, $arCurrentValues, &$errors)
+	private static function getTagsByNames(array $tagNames): array
 	{
-		$errors = [];
-		$properties = ["Fields" => []];
-
-		$arTaskPriority = array(0, 1, 2);
-		foreach ($arTaskPriority as $k => $v)
-		{
-			$arTaskPriority[$v] = GetMessage("TASK_PRIORITY_".$v);
-		}
-
-		$arGroups = array(GetMessage("TASK_EMPTY_GROUP"));
-		if (CModule::IncludeModule("socialnetwork"))
-		{
-			$db = CSocNetGroup::GetList(array("NAME" => "ASC"), array("ACTIVE" => "Y"), false, false, array("ID", "NAME"));
-			while ($ar = $db->GetNext())
-			{
-				$arGroups[$ar["ID"]] = "[" . $ar["ID"] . "]" . Emoji::decode($ar["NAME"]);
-			}
-		}
-
-		$arDF = self::__GetFields();
-
-		foreach (static::$arAllowedTasksFieldNames as $field)
-		{
-			$r = null;
-
-			if (in_array($field, array("CREATED_BY", "RESPONSIBLE_ID", "ACCOMPLICES", "AUDITORS")))
-			{
-				$value = $arCurrentValues[$field];
-				if ($value <> '')
-				{
-					$arErrorsTmp = array();
-					$r = CBPHelper::UsersStringToArray($value, $documentType, $arErrorsTmp);
-					if (count($arErrorsTmp) > 0)
-					{
-						$errors = array_merge($errors, $arErrorsTmp);
-					}
-				}
-			}
-			elseif (array_key_exists($field, $arCurrentValues) || array_key_exists($field."_text", $arCurrentValues))
-			{
-				$arValue = array();
-				if (array_key_exists($field, $arCurrentValues))
-				{
-					$arValue = $arCurrentValues[$field];
-					if (!is_array($arValue) || is_array($arValue) && CBPHelper::IsAssociativeArray($arValue))
-						$arValue = array($arValue);
-				}
-				if (array_key_exists($field."_text", $arCurrentValues))
-					$arValue[] = $arCurrentValues[$field."_text"];
-
-				foreach ($arValue as $value)
-				{
-					if($field != 'DESCRIPTION')
-					{
-						$value = trim($value);
-					}
-
-					if (!CBPDocument::IsExpression($value)) // checks if this is constant field?
-					{
-						if ($field == "PRIORITY")
-						{
-							if ($value == '')
-								$value = null;
-
-							if ($value != null && !array_key_exists($value, $arTaskPriority))
-							{
-								$value = null;
-								$errors[] = array(
-									"code" => "ErrorValue",
-									"message" => "Priority is empty",
-									"parameter" => $field,
-								);
-							}
-						}
-						elseif ($field == "GROUP_ID")
-						{
-							if ($value == '')
-								$value = null;
-							if ($value != null && !array_key_exists($value, $arGroups))
-							{
-								$value = null;
-								$errors[] = array(
-									"code" => "ErrorValue",
-									"message" => "Group is empty",
-									"parameter" => $field,
-								);
-							}
-						}
-						elseif (in_array($field, array("ALLOW_CHANGE_DEADLINE", "TASK_CONTROL", "ADD_IN_REPORT", 'ALLOW_TIME_TRACKING')))
-						{
-							if (mb_strtoupper($value) == "Y" || $value === true || $value."!" == "1!")
-								$value = "Y";
-							elseif (mb_strtoupper($value) == "N" || $value === false || $value."!" == "0!")
-								$value = "N";
-							else
-								$value = null;
-						}
-						else
-						{
-							if (!is_array($value) && $value == '')
-								$value = null;
-						}
-					}
-
-					if ($value != null)
-						$r[] = $value;
-				}
-			}
-
-			$r_orig = $r;
-
-			if (!in_array($field, array("ACCOMPLICES", "AUDITORS")))
-			{
-				if ($r && count($r) > 0)
-					$r = $r[0];
-				else
-					$r = null;
-			}
-
-			if (in_array($field, array("TITLE", "CREATED_BY", "RESPONSIBLE_ID")) && ($r == null || is_array($r) && count($r) <= 0))
-			{
-				$errors[] = array(
-					"code" => "emptyRequiredField",
-					"message" => str_replace("#FIELD#", $arDF[$field]["Name"], GetMessage("BPCDA_FIELD_REQUIED")),
-				);
-			}
-
-			$properties["Fields"][$field] = $r;
-
-			if (array_key_exists($field."_text", $arCurrentValues) && isset($r_orig[1]))
-			{
-				$properties["Fields"][$field . '_text'] = $r_orig[1];
-			}
-		}
-
-		$arUserFields = \Bitrix\Tasks\Util\Userfield\Task::getScheme();
-		foreach ($arUserFields as $field)
-		{
-			$fieldValue = $arCurrentValues[$field["FIELD_NAME"]];
-			$fieldValueText = $arCurrentValues["{$field['FIELD_NAME']}_text"];
-			if(CBPHelper::isEmptyValue($fieldValue) && !CBPHelper::isEmptyValue($fieldValueText))
-			{
-				$fieldValue = $fieldValueText;
-			}
-
-			if($field["MANDATORY"] == "Y")
-			{
-				if (($field["MULTIPLE"] == "Y" && (!$fieldValue || CBPHelper::isEmptyValue($fieldValue))) ||
-					($field["MULTIPLE"] == "N" && $fieldValue === '' && $field['USER_TYPE_ID'] !== 'boolean'))
-				{
-					$errors[] = array(
-						"code" => "emptyRequiredField",
-						"message" => str_replace("#FIELD#", $field["EDIT_FORM_LABEL"], GetMessage("BPCDA_FIELD_REQUIED")),
-					);
-				}
-			}
-
-			$properties["Fields"][$field["FIELD_NAME"]] = $fieldValue;
-		}
-
-		$properties["HoldToClose"] = ((mb_strtoupper($arCurrentValues["HOLD_TO_CLOSE"]) == "Y") ? true : false);
-		$properties["AsChildTask"] = ((mb_strtoupper($arCurrentValues["AS_CHILD_TASK"]) == "Y") ? 1 : 0);
-		$properties["CheckListItems"] = $arCurrentValues["CHECK_LIST_ITEMS"];
-		$properties["TimeEstimateHour"] = $arCurrentValues["TIME_ESTIMATE_H"];
-		$properties["TimeEstimateMin"] = $arCurrentValues["TIME_ESTIMATE_M"];
-		$properties["AUTO_LINK_TO_CRM_ENTITY"] = ((mb_strtoupper($arCurrentValues["AUTO_LINK_TO_CRM_ENTITY"]) == "Y") ? true : false);
-
-		if (count($errors) > 0)
-		{
-			return false;
-		}
-
-		$currentActivity = &CBPWorkflowTemplateLoader::FindActivityByName($arWorkflowTemplate, $activityName);
-		$currentActivity["Properties"] = $properties;
-
-		return true;
-	}
-
-	private static function __GetFields()
-	{
-		if(!CModule::IncludeModule("tasks"))
+		if (!$tagNames)
 		{
 			return [];
 		}
 
-		$arTaskPriority[1] = GetMessage('TASKS_COMMON_NO');
-		$arTaskPriority[2] = GetMessage('TASKS_COMMON_YES');
+		$tagsIterator = \Bitrix\Tasks\Internals\Task\LabelTable::getList([
+			'select' => ['ID', 'NAME'],
+			'filter' => ['@NAME' => $tagNames],
+		]);
 
-		$arGroups = array(GetMessage("TASK_EMPTY_GROUP"));
-		if (CModule::IncludeModule("socialnetwork"))
+		$knownTags = [];
+		while ($tag = $tagsIterator->fetchObject())
 		{
-			$db = CSocNetGroup::GetList(array("NAME" => "ASC"), array("ACTIVE" => "Y"), false, false, array("ID", "NAME"));
-			while ($ar = $db->GetNext())
+			$knownTags[$tag->getName()] = $tag;
+		}
+
+		$tags = [];
+		foreach ($tagNames as $name)
+		{
+			if (CBPDocument::isExpression($name))
 			{
-				$arGroups[$ar["ID"]] = "[" . $ar["ID"] . "]" . htmlspecialcharsback(Emoji::decode($ar["NAME"]));
+				$tags[] = [
+					'type' => 'expression',
+					'name' => $name,
+				];
+			}
+			elseif (isset($knownTags[$name]))
+			{
+				$tags[] = [
+					'type' => 'simple',
+					'id' => $knownTags[$name]->getId(),
+					'name' => $name,
+				];
+			}
+			else
+			{
+				$tags[] = [
+					'type' => 'new',
+					'name' => $name,
+				];
 			}
 		}
 
-		$arFields = array(
-			"TITLE" => array(
-				"Name" => GetMessage("BPTA1A_TASKNAME"),
-				"Type" => "S",
-				"Editable" => true,
-				"Required" => true,
-				"Multiple" => false,
-				"BaseType" => "string"
-			),
-			"CREATED_BY" => array(
-				"Name" => GetMessage("BPTA1A_TASKCREATEDBY"),
-				"Type" => "S:UserID",
-				"Editable" => true,
-				"Required" => true,
-				"Multiple" => false,
-				"BaseType" => "user",
-				"Settings" => [
-					'allowEmailUsers' => true,
-				],
-			),
-			"RESPONSIBLE_ID" => array(
-				"Name" => GetMessage("BPTA1A_TASKASSIGNEDTO"),
-				"Type" => "S:UserID",
-				"Editable" => true,
-				"Required" => true,
-				"Multiple" => false,
-				"BaseType" => "user",
-				"Settings" => [
-					'allowEmailUsers' => true,
-				],
-			),
-			"DESCRIPTION" => array(
-				"Name" => GetMessage("BPTA1A_TASKDETAILTEXT"),
-				"Type" => "T",
-				"Editable" => true,
-				"Required" => false,
-				"Multiple" => false,
-				"BaseType" => "text"
-			),
-			"ACCOMPLICES" => array(
-				"Name" => GetMessage("BPTA1A_TASKACCOMPLICES"),
-				"Type" => "S:UserID",
-				"Editable" => true,
-				"Required" => false,
-				"Multiple" => true,
-				"BaseType" => "user",
-				"Settings" => [
-					'allowEmailUsers' => true,
-				],
-			),
-			"START_DATE_PLAN" => array(
-				"Name" => GetMessage("BPTA1A_TASKACTIVEFROM"),
-				"Type" => "S:DateTime",
-				"Editable" => true,
-				"Required" => false,
-				"Multiple" => false,
-				"BaseType" => "datetime"
-			),
-			"END_DATE_PLAN" => array(
-				"Name" => GetMessage("BPTA1A_TASKACTIVETO"),
-				"Type" => "S:DateTime",
-				"Editable" => true,
-				"Required" => false,
-				"Multiple" => false,
-				"BaseType" => "datetime"
-			),
-			"DEADLINE" => array(
-				"Name" => GetMessage("BPTA1A_TASKDEADLINE"),
-				"Type" => "S:DateTime",
-				"Editable" => true,
-				"Required" => false,
-				"Multiple" => false,
-				"BaseType" => "datetime"
-			),
-			"PRIORITY" => array(
-				"Name" => GetMessage("BPTA1A_TASKPRIORITY_V3"),
-				"Type" => "L",
-				"Options" => $arTaskPriority,
-				"Editable" => true,
-				"Required" => false,
-				"Multiple" => false,
-				"BaseType" => "select"
-			),
-			"GROUP_ID" => array(
-				"Name" => GetMessage("BPTA1A_TASKGROUPID"),
-				"Type" => "L",
-				"Options" => $arGroups,
-				"Editable" => true,
-				"Required" => false,
-				"Multiple" => false,
-				"BaseType" => "select"
-			),
-			"ALLOW_CHANGE_DEADLINE" => array(
-				"Name" => GetMessage("BPTA1A_CHANGE_DEADLINE"),
-				"Type" => "B",
-				"Editable" => true,
-				"Required" => false,
-				"Multiple" => false,
-				"BaseType" => "bool"
-			),
-			"ALLOW_TIME_TRACKING" => array(
-				"Name" => GetMessage("BPTA1A_ALLOW_TIME_TRACKING"),
-				"Type" => "B",
-				"Editable" => true,
-				"Required" => false,
-				"Multiple" => false,
-				"BaseType" => "bool"
-			),
-			"TASK_CONTROL" => array(
-				"Name" => GetMessage("BPTA1A_CHECK_RESULT_V2"),
-				"Type" => "B",
-				"Editable" => true,
-				"Required" => false,
-				"Multiple" => false,
-				"BaseType" => "bool"
-			),
-			"AUDITORS" => array(
-				"Name" => GetMessage("BPTA1A_TASKTRACKERS"),
-				"Type" => "S:UserID",
-				"Editable" => true,
-				"Required" => false,
-				"Multiple" => true,
-				"BaseType" => "user",
-				"Settings" => [
-					'allowEmailUsers' => true,
-				],
-			),
-			"PARENT_ID" => array(
-				"Name" => GetMessage('BPTA1A_MAKE_SUBTASK'),
-				"Type" => "S",
-				"Editable" => true,
-				"Required" => false,
-				"Multiple" => false,
-				"BaseType" => "int"
-			)
-		);
+		return $tags;
+	}
 
-		$arUserFields = \Bitrix\Tasks\Util\Userfield\Task::getScheme();
-		foreach($arUserFields as $field)
+	public static function getDependsOnByTaskIds(array $taskIds): array
+	{
+		$dependsOn = [];
+
+		foreach ($taskIds as $id)
 		{
-			if (in_array($field['USER_TYPE_ID'], array('mail_message')))
+			$dependsOn[] = CBPDocument::isExpression($id) ? $id : (int)$id;
+		}
+
+		return $dependsOn;
+	}
+
+	public static function GetPropertiesDialogValues(
+		$documentType,
+		$activityName,
+		&$workflowTemplate,
+		&$workflowParameters,
+		&$workflowVariables,
+		$currentValues,
+		&$errors
+	)
+	{
+		$errors = [];
+		$properties = ['Fields' => []];
+
+		$documentService = CBPRuntime::getRuntime()->getDocumentService();
+
+		$map = static::getPropertiesDialogMap();
+		foreach ($map['Fields']['Map'] as $taskFieldId => $taskField)
+		{
+			$field = $documentService->getFieldTypeObject($documentType, $taskField);
+			if (!$field)
+			{
+				if (mb_substr($taskFieldId, 0, 3) === 'UF_')
+				{
+					$extractResult = static::extractUserField($taskField, $currentValues);
+					if ($extractResult->isSuccess())
+					{
+						$properties['Fields'][$taskFieldId] = $extractResult->getData()['value'];
+					}
+					else
+					{
+						foreach ($extractResult->getErrors() as $extractError)
+						{
+							$errors[] = [
+								'code' => $extractError->getCode(),
+								'message' => $extractError->getMessage(),
+								'parameter' => $taskField,
+							];
+						}
+					}
+				}
+				continue;
+			}
+
+			$properties['Fields'][$taskFieldId] = $field->extractValue(
+				['Field' => $taskField['FieldName']],
+				$currentValues,
+				$errors,
+			);
+		}
+
+		$simpleMap = $map;
+		unset($simpleMap['Fields']);
+		foreach ($simpleMap as $fieldId => $fieldProperty)
+		{
+			$field = $documentService->getFieldTypeObject($documentType, $fieldProperty);
+			if (!$field)
 			{
 				continue;
 			}
 
-			$arFields[$field["FIELD_NAME"]] = array(
-				"Name" => $field["EDIT_FORM_LABEL"] ?: $field['USER_TYPE']['DESCRIPTION'],
-				"Type" => $field["USER_TYPE_ID"],
-				"Editable" => true,
-				"Required" => ($field["MANDATORY"] == "Y"),
-				"Multiple" => ($field["MULTIPLE"] == "Y"),
-				"BaseType" => $field["USER_TYPE_ID"] === 'boolean' ? 'bool' : $field['USER_TYPE_ID'],
-				"UserField" => $field
+			$properties[$fieldId] = $field->extractValue(
+				['Field' => $fieldProperty['FieldName']],
+				$currentValues,
+				$errors,
 			);
 		}
 
-		return $arFields;
+		if (!$errors)
+		{
+			$errors = array_merge($errors, static::validateProperties($properties));
+		}
+		if ($errors)
+		{
+			return false;
+		}
+
+		$currentActivity = &CBPWorkflowTemplateLoader::FindActivityByName($workflowTemplate, $activityName);
+		$currentActivity['Properties'] = $properties;
+
+		return true;
+	}
+
+	private static function extractUserField(array $field, array $currentValues): \Bitrix\Main\Result
+	{
+		$fieldValue = $currentValues[$field['FieldName']] ?? null;
+		$fieldValueText = $currentValues["{$field['FieldName']}_text"] ?? null;
+
+		if(CBPHelper::isEmptyValue($fieldValue) && !CBPHelper::isEmptyValue($fieldValueText))
+		{
+			$fieldValue = $fieldValueText;
+		}
+
+		$result = new \Bitrix\Main\Result();
+
+		$result->setData(['value' => $fieldValue]);
+
+		if($field['Required'])
+		{
+			if (
+				($field['Multiple'] && (!$fieldValue || CBPHelper::isEmptyValue($fieldValue)))
+				|| (!$field['Multiple'] && $fieldValue === '' && $field['Type'] !== FieldType::BOOL))
+			{
+				$result->addError(
+					new \Bitrix\Main\Error(
+						Loc::getMessage(
+							'BPSNMA_EMPTY_REQUIRED_PROPERTY',
+							['#PROPERTY_NAME#' => $field['Name']]
+						)
+					)
+				);
+			}
+		}
+
+		return $result;
+	}
+
+	public static function validateProperties($testProperties = [], CBPWorkflowTemplateUser $user = null)
+	{
+		$errors = [];
+
+		$testProperties = array_merge($testProperties['Fields'] ?? [], $testProperties);
+
+		$map = static::getPropertiesDialogMap();
+		$map = array_merge($map['Fields']['Map'], $map);
+		unset($map['Fields']);
+
+		foreach ($map as $propertyKey => $fieldProperties)
+		{
+			if(
+				\CBPHelper::getBool($fieldProperties['Required'] ?? false)
+				&& \CBPHelper::isEmptyValue($testProperties[$propertyKey] ?? null)
+			)
+			{
+				$errors[] = [
+					'code' => 'NotExist',
+					'parameter' => 'FieldValue',
+					'message' => Loc::getMessage(
+						'BPSNMA_EMPTY_REQUIRED_PROPERTY',
+						['#PROPERTY_NAME#' => $fieldProperties['Name']]
+					),
+				];
+			}
+		}
+
+		return array_merge($errors, parent::validateProperties($testProperties, $user));
+	}
+
+	private static function getPropertiesDialogMap(): array
+	{
+		return [
+			'Fields' => [
+				'FieldName' => 'Fields',
+				'Map' => static::getTaskFieldsMap(),
+				'Getter' => function($dialog, $property, $currentActivity, $compatible) {
+					$fields = $currentActivity['Properties']['Fields'];
+					$files = $fields['UF_TASK_WEBDAV_FILES'] ?? null;
+
+					if(
+						isset($files)
+						&& is_array($files)
+						&& Loader::includeModule('disk')
+						&& \Bitrix\Disk\Configuration::isSuccessfullyConverted()
+					)
+					{
+						foreach($files as $key => $fileId)
+						{
+							if(!empty($fileId) && is_string($fileId) && mb_substr($fileId, 0, 1) != 'n')
+							{
+								$item = \Bitrix\Disk\Internals\FileTable::getList([
+									'select' => ['ID'],
+									'filter' => [
+										'=XML_ID' => $fileId,
+										'TYPE' => \Bitrix\Disk\Internals\FileTable::TYPE_FILE,
+									],
+								])->fetchObject();
+
+								if($item)
+								{
+									$files[$key] = 'n' . $item->getId();
+								}
+							}
+						}
+
+						$fields['UF_TASK_WEBDAV_FILES'] = $files;
+					}
+
+					return $fields;
+				},
+			],
+			'HoldToClose' => [
+				'Name' => Loc::getMessage('BPTA1A_HOLD_TO_CLOSE'),
+				'FieldName' => 'HOLD_TO_CLOSE',
+				'Type' => FieldType::BOOL,
+				'Required' => true,
+				'Default' => false,
+			],
+			'AUTO_LINK_TO_CRM_ENTITY' => [
+				'Name' => Loc::getMessage('BPTA1A_FIELD_NAME_AUTO_LINK_TO_CRM_ENTITY'),
+				'FieldName' => 'AUTO_LINK_TO_CRM_ENTITY',
+				'Type' => FieldType::BOOL,
+				'Default' => false,
+			],
+			'AsChildTask' => [
+				'Name' => Loc::getMessage('BPTA1A_FIELD_NAME_AS_CHILD_TASK'),
+				'FieldName' => 'AS_CHILD_TASK',
+				'Type' => FieldType::BOOL,
+				'Default' => false,
+			],
+			'CheckListItems' => [
+				'Name' => Loc::getMessage('BPSA_CHECK_LIST_ITEMS'),
+				'FieldName' => 'CHECK_LIST_ITEMS',
+				'Type' => FieldType::STRING,
+				'Multiple' => true,
+			],
+			'TimeEstimateHour' => [
+				'Name' => Loc::getMessage('BPTA1A_TIME_TRACKING_H'),
+				'FieldName' => 'TIME_ESTIMATE_H',
+				'Type' => FieldType::INT,
+			],
+			'TimeEstimateMin' => [
+				'Name' => Loc::getMessage('BPTA1A_TIME_TRACKING_M'),
+				'FieldName' => 'TIME_ESTIMATE_M',
+				'Type' => FieldType::INT,
+			],
+		];
+	}
+
+	private static function getTaskFieldsMap(): array
+	{
+		if (!Loader::includeModule('tasks'))
+		{
+			return [];
+		}
+
+		$fields = [
+			'TITLE' => [
+				'Name' => Loc::getMessage('BPTA1A_TASKNAME'),
+				'FieldName' => 'TITLE',
+				'Type' => \Bitrix\Bizproc\FieldType::STRING,
+				'Editable' => true,
+				'Required' => true,
+				'Multiple' => false,
+			],
+			'CREATED_BY' => [
+				'Name' => Loc::getMessage('BPTA1A_TASKCREATEDBY'),
+				'FieldName' => 'CREATED_BY',
+				'Type' => FieldType::USER,
+				'Editable' => true,
+				'Required' => true,
+				'Multiple' => false,
+				'Default' => 'author',
+				'Settings' => [
+					'allowEmailUsers' => true,
+				],
+			],
+			'RESPONSIBLE_ID' => [
+				'Name' => Loc::getMessage('BPTA1A_TASKASSIGNEDTO'),
+				'FieldName' => 'RESPONSIBLE_ID',
+				'Type' => FieldType::USER,
+				'Editable' => true,
+				'Required' => true,
+				'Multiple' => false,
+				'Default' => 'author',
+				'Settings' => [
+					'allowEmailUsers' => true,
+				],
+			],
+			'DESCRIPTION' => [
+				'Name' => Loc::getMessage('BPTA1A_TASKDETAILTEXT'),
+				'FieldName' => 'DESCRIPTION',
+				'Type' => FieldType::TEXT,
+				'Editable' => true,
+				'Required' => false,
+				'Multiple' => false,
+			],
+			'ACCOMPLICES' => [
+				'Name' => Loc::getMessage('BPTA1A_TASKACCOMPLICES'),
+				'FieldName' => 'ACCOMPLICES',
+				'Type' => FieldType::USER,
+				'Editable' => true,
+				'Required' => false,
+				'Multiple' => true,
+				'Settings' => [
+					'allowEmailUsers' => true,
+				],
+			],
+			'START_DATE_PLAN' => [
+				'Name' => Loc::getMessage('BPTA1A_TASKACTIVEFROM'),
+				'FieldName' => 'START_DATE_PLAN',
+				'Type' => FieldType::DATETIME,
+				'Editable' => true,
+				'Required' => false,
+				'Multiple' => false,
+			],
+			'END_DATE_PLAN' => [
+				'Name' => Loc::getMessage('BPTA1A_TASKACTIVETO'),
+				'FieldName' => 'END_DATE_PLAN',
+				'Type' => FieldType::DATETIME,
+				'Editable' => true,
+				'Required' => false,
+				'Multiple' => false,
+			],
+			'DEADLINE' => [
+				'Name' => Loc::getMessage('BPTA1A_TASKDEADLINE'),
+				'FieldName' => 'DEADLINE',
+				'Type' => FieldType::DATETIME,
+				'Editable' => true,
+				'Required' => false,
+				'Multiple' => false,
+			],
+			'PRIORITY' => [
+				'Name' => Loc::getMessage('BPTA1A_TASKPRIORITY_V3'),
+				'FieldName' => 'PRIORITY',
+				'Type' => FieldType::SELECT,
+				'Options' => [
+					CTasks::PRIORITY_AVERAGE => Loc::getMessage('TASKS_COMMON_NO'),
+					CTasks::PRIORITY_HIGH => Loc::getMessage('TASKS_COMMON_YES'),
+				],
+				'Editable' => true,
+				'Required' => false,
+				'Multiple' => false,
+			],
+			'GROUP_ID' => [
+				'Name' => Loc::getMessage('BPTA1A_TASKGROUPID'),
+				'FieldName' => 'GROUP_ID',
+				'Type' => FieldType::SELECT,
+				'Options' => static::fetchTaskGroups(),
+				'Editable' => true,
+				'Required' => false,
+				'Multiple' => false,
+				'Default' => 0,
+			],
+			'ALLOW_CHANGE_DEADLINE' => [
+				'Name' => Loc::getMessage('BPTA1A_CHANGE_DEADLINE'),
+				'FieldName' => 'ALLOW_CHANGE_DEADLINE',
+				'Type' => FieldType::BOOL,
+				'Editable' => true,
+				'Required' => false,
+				'Multiple' => false,
+				'Default' => 'Y',
+				'Settings' => [
+					'display' => 'checkbox',
+				],
+			],
+			'ALLOW_TIME_TRACKING' => [
+				'Name' => Loc::getMessage('BPTA1A_ALLOW_TIME_TRACKING'),
+				'FieldName' => 'ALLOW_TIME_TRACKING',
+				'Type' => FieldType::BOOL,
+				'Editable' => true,
+				'Required' => false,
+				'Multiple' => false,
+				'Default' => 'Y',
+				'Settings' => [
+					'display' => 'checkbox',
+				],
+			],
+			'TASK_CONTROL' => [
+				'Name' => Loc::getMessage('BPTA1A_CHECK_RESULT_V2'),
+				'FieldName' => 'TASK_CONTROL',
+				'Type' => FieldType::BOOL,
+				'Editable' => true,
+				'Required' => false,
+				'Multiple' => false,
+				'Default' => 'Y',
+				'Settings' => [
+					'display' => 'checkbox',
+				],
+			],
+			'AUDITORS' => [
+				'Name' => Loc::getMessage('BPTA1A_TASKTRACKERS'),
+				'FieldName' => 'AUDITORS',
+				'Type' => FieldType::USER,
+				'Editable' => true,
+				'Required' => false,
+				'Multiple' => true,
+				'Settings' => [
+					'allowEmailUsers' => true,
+				],
+			],
+			'PARENT_ID' => [
+				'Name' => Loc::getMessage('BPTA1A_MAKE_SUBTASK'),
+				'FieldName' => 'PARENT_ID',
+				'Type' => FieldType::INT,
+				'Editable' => true,
+				'Required' => false,
+				'Multiple' => false,
+			],
+			'TAG_NAMES' => [
+				'Name' => Loc::getMessage('BPTA1A_FIELD_NAME_TAGS'),
+				'FieldName' => 'TAG_NAMES',
+				'Type' => FieldType::STRING,
+				'Editable' => true,
+				'Required' => false,
+				'Multiple' => true,
+			],
+			'REQUIRED_RESULT' => [
+				'Name' => Loc::getMessage('BPTA1A_REQUIRE_RESULT'),
+				'FieldName' => 'REQUIRED_RESULT',
+				'Type' => FieldType::BOOL,
+				'Editable' => true,
+				'Required' => false,
+				'Multiple' => false,
+				'Default' => 'N',
+				'Settings' => [
+					'display' => 'checkbox',
+				],
+			],
+			'DEPENDS_ON' => [
+				'Name' => Loc::getMessage('BPTA1A_FIELD_NAME_DEPENDS_ON'),
+				'FieldName' => 'DEPENDS_ON',
+				'Type' => FieldType::INT,
+				'Editable' => true,
+				'Multiple' => true,
+			],
+		];
+
+		foreach (\Bitrix\Tasks\Util\Userfield\Task::getScheme() as $field)
+		{
+			if ($field['USER_TYPE_ID'] === 'mail_message')
+			{
+				continue;
+			}
+
+			$fields[$field['FIELD_NAME']] = [
+				'Name' => $field['EDIT_FORM_LABEL'] ?: $field['USER_TYPE']['DESCRIPTION'],
+				'FieldName' => $field['FIELD_NAME'],
+				'Type' => $field['USER_TYPE_ID'] === 'boolean' ? FieldType::BOOL : $field['USER_TYPE_ID'],
+				'Editable' => true,
+				'Required' => ($field['MANDATORY'] == 'Y'),
+				'Multiple' => ($field['MULTIPLE'] == 'Y'),
+				'BaseType' => $field['USER_TYPE_ID'] === 'boolean' ? 'bool' : $field['USER_TYPE_ID'],
+				'UserField' => $field,
+			];
+		}
+
+		return $fields;
+	}
+
+	private static function fetchTaskGroups(): array
+	{
+		$groups = [Loc::getMessage('TASK_EMPTY_GROUP')];
+
+		if (Loader::includeModule('socialnetwork'))
+		{
+			$groupIterator = CSocNetGroup::GetList(
+				['NAME' => 'ASC'],
+				['ACTIVE' => 'Y'],
+				false,
+				false,
+				['ID', 'NAME']
+			);
+			while ($group = $groupIterator->GetNext())
+			{
+				$groups[$group['ID']] = "[{$group['ID']}]" . htmlspecialcharsback(Emoji::decode($group['NAME']));
+			}
+		}
+
+		return $groups;
 	}
 
 	private function checkCycling(array $documentId)
@@ -1133,14 +1332,18 @@ class CBPTask2Activity extends CBPActivity implements
 		self::$cycleCounter[$key]++;
 		if (self::$cycleCounter[$key] > self::CYCLE_LIMIT)
 		{
-			$this->WriteToTrackingService(GetMessage("BPSA_CYCLING_ERROR_1"), 0, CBPTrackingType::Error);
+			$this->WriteToTrackingService(Loc::getMessage('BPSA_CYCLING_ERROR_1'), 0, CBPTrackingType::Error);
 			throw new Exception();
 		}
 	}
 
 	protected static function getPropertiesMap(array $documentType, array $context = []): array
 	{
-		$fields = self::__GetFields();
+		$fields = static::getTaskFieldsMap();
+		$fields['TAGS'] = $fields['TAG_NAMES'];
+		unset($fields['TAG_NAMES']);
+		$fields['DEPENDS_ON']['Type'] = FieldType::STRING;
+
 		$bpOptions = [
 			'HoldToClose' => [
 				'Name' => Loc::getMessage('BPTA1A_HOLD_TO_CLOSE'),
@@ -1170,13 +1373,6 @@ class CBPTask2Activity extends CBPActivity implements
 		{
 			if (array_key_exists($key, $values))
 			{
-				// hack
-				if ($key === 'PRIORITY')
-				{
-					$map[$key]['BaseType'] = 'bool';
-					$values[$key]= ((int)$values['PRIORITY'] === 2);
-				}
-
 				// temporary
 				if (in_array($key, $onlyDesignerFields))
 				{
@@ -1192,8 +1388,35 @@ class CBPTask2Activity extends CBPActivity implements
 				continue;
 			}
 
+			// SE_PARAMETER
+			if (
+				$key === 'REQUIRED_RESULT'
+				&& isset($values['SE_PARAMETER'][Tasks\Internals\Task\ParameterTable::PARAM_RESULT_REQUIRED])
+			)
+			{
+				$values['REQUIRED_RESULT'] =
+					$values['SE_PARAMETER'][Tasks\Internals\Task\ParameterTable::PARAM_RESULT_REQUIRED]['VALUE'];
+
+				continue;
+			}
+
 			unset($map[$key]);
 		}
+
+		if (is_array($fields['DEPENDS_ON'] ?? null))
+		{
+			$map['DEPENDS_ON']['TrackValue'] = [];
+			foreach ($fields['DEPENDS_ON'] as $taskId)
+			{
+				$task = Tasks\Internals\TaskTable::getById($taskId)->fetchObject();
+				if ($task)
+				{
+					$map['DEPENDS_ON']['TrackValue'][] = $task->getTitle();
+				}
+			}
+		}
+
+		unset($values['SE_PARAMETER']);
 
 		return parent::getDebugInfo($values, $map);
 	}
@@ -1204,7 +1427,7 @@ class CBPTask2Activity extends CBPActivity implements
 		$documentService = $this->workflow->getService('DocumentService');
 
 		$url = $documentService->getDocumentAdminPage(
-			\Bitrix\Tasks\Integration\Bizproc\Document\Task::resolveDocumentId($taskId)
+			Tasks\Integration\Bizproc\Document\Task::resolveDocumentId($taskId)
 		);
 
 		$toWrite = [

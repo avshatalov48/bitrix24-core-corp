@@ -1,0 +1,84 @@
+.market-category-list-container {
+	--market-category-list-gap: 31px;
+	--market-category-list-column: 5;
+	display: block;
+}
+
+.market-category-list-header {
+	margin-bottom: 30px;
+	display: block;
+}
+
+.market-category-list-title {
+	font: 26px/35px "OpenSans-Bold", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	color: #000;
+	margin: 0;
+	padding: 0;
+	display: block;
+}
+
+.market-category-list-content {
+	display: flex;
+	flex-wrap: wrap;
+	flex-direction: row;
+	justify-content: start;
+	align-items: stretch;
+	align-content: stretch;
+	gap: var(--market-category-list-gap);
+	box-sizing: border-box;
+}
+
+.market-category-list-item {
+	display: block;
+	flex: 1 1 calc((100% - var(--market-category-list-gap) * (var(--market-category-list-column) - 1)) / var(--market-category-list-column));
+	max-width: calc((100% - var(--market-category-list-gap) * (var(--market-category-list-column) - 1)) / var(--market-category-list-column));
+	box-sizing: border-box;
+}
+
+.market-category-list-item-inner {
+	border: 8px solid rgba(255, 255, 255, 0.7);
+	box-shadow: 0 2px 32px rgba(0, 0, 0, 0.1);
+	border-radius: 24px;
+	background-clip: padding-box;
+	padding: 13px 19px;
+	background-position: bottom right;
+	background-size: 157px auto;
+	background-repeat: no-repeat;
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	min-height: 140px;
+	box-sizing: border-box;
+	background-color: #008AC6;
+}
+
+.market-category-list-item-title {
+	font: 22px/28px "OpenSans-Bold", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	color: #fff;
+	max-width: 100%;
+	text-overflow: ellipsis;
+	overflow: hidden;
+	padding-right: 10px;
+	display: block;
+}
+
+.market-category-list-item-counter {
+	font: 20px/27px "OpenSans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	text-align: right;
+	color: #fff;
+	opacity: 0.7;
+	display: block;
+}
+
+@media (max-width: 1450px) {
+	.market-category-list-item {
+		--market-category-list-column: 3;
+	}
+}
+
+
+@media (max-width: 1140px) {
+	.market-category-list-item {
+		--market-category-list-column: 3;
+	}
+}

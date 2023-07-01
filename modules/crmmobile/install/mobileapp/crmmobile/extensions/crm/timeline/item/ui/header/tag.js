@@ -2,7 +2,6 @@
  * @module crm/timeline/item/ui/header/tag
  */
 jn.define('crm/timeline/item/ui/header/tag', (require, exports, module) => {
-
 	const TagType = {
 		PRIMARY: 'primary',
 		SECONDARY: 'secondary',
@@ -13,26 +12,27 @@ jn.define('crm/timeline/item/ui/header/tag', (require, exports, module) => {
 
 	const TagColors = {
 		[TagType.PRIMARY]: {
-			backgroundColor: '#dcf6fe',
-			color: '#1097c2',
+			backgroundColor: '#e5f9ff',
+			color: '#008dba',
 		},
 		[TagType.SECONDARY]: {
-			backgroundColor: '#e0e2e4',
-			color: '#79818b',
+			backgroundColor: '#dfe0e3',
+			color: '#828b95',
 		},
 		[TagType.SUCCESS]: {
-			backgroundColor: '#e0f5c2',
-			color: '#589309',
+			backgroundColor: '#eaf6c3',
+			color: '#688800',
 		},
 		[TagType.WARNING]: {
-			backgroundColor: '#faf4a0',
-			color: '#9d7e2b',
+			backgroundColor: '#fef3b8',
+			color: '#ae914b',
 		},
 		[TagType.FAILURE]: {
-			backgroundColor: '#ffe3e2',
-			color: '#cf1515',
+			backgroundColor: '#ffe8e8',
+			color: '#c21b16',
 		},
-		getColorByType(tagType) {
+		getColorByType(tagType)
+		{
 			return this[tagType] || this[TagType.SECONDARY];
 		},
 	};
@@ -60,13 +60,13 @@ jn.define('crm/timeline/item/ui/header/tag', (require, exports, module) => {
 
 			return View(
 				{
+					testId: `TimelineItemHeaderTag_${this.type}`,
 					style: {
 						backgroundColor,
 						paddingHorizontal: 8,
 						paddingVertical: 4,
 						borderRadius: 10,
 						marginRight: 4,
-						marginBottom: 8,
 					},
 				},
 				Text(

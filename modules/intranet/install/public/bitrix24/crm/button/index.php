@@ -15,7 +15,7 @@ $APPLICATION->SetTitle(GetMessage("CRM_TITLE"));
 		"PATH_TO_DEAL_SHOW" => "/crm/deal/show/#deal_id#/",
 		"PATH_TO_DEAL_EDIT" => "/crm/deal/edit/#deal_id#/",
 		"PATH_TO_USER_PROFILE" => "/company/personal/user/#user_id#/",
-		"ELEMENT_ID" => $_REQUEST["id"],
+		"ELEMENT_ID" => $_REQUEST["id"] ?? '',
 		"SEF_FOLDER" => "/crm/button/",
 		"SEF_URL_TEMPLATES" => Array(
 			"list" => "list/",

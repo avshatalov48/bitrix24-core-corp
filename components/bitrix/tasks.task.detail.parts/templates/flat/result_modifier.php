@@ -14,7 +14,7 @@ if ($arResult["BLOCK"] !== "")
 	$arResult["TEMPLATE_FOLDER"] = $folder;
     $arResult["TEMPLATE_DATA"] = $arParams["TEMPLATE_DATA"];
 
-    if($arResult["TEMPLATE_DATA"]["ID"] == "")
+    if (($arResult["TEMPLATE_DATA"]["ID"] ?? null) == "")
     {
         $arResult["TEMPLATE_DATA"]["ID"] = md5($folder);
     }

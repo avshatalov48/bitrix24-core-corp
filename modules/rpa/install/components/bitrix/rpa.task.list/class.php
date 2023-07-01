@@ -14,8 +14,8 @@ class RpaAutomationTaskListComponent extends Rpa\Components\Base
 {
 	public function onPrepareComponentParams($arParams)
 	{
-		$arParams["typeId"] = (int) $arParams["typeId"];
-		$arParams["SET_TITLE"] = ($arParams["SET_TITLE"] === "N" ? "N" : "Y");
+		$arParams["typeId"] = (int)($arParams["typeId"] ?? 0);
+		$arParams["SET_TITLE"] = (($arParams["SET_TITLE"] ?? '') === "N" ? "N" : "Y");
 
 		return $arParams;
 	}
@@ -26,7 +26,7 @@ class RpaAutomationTaskListComponent extends Rpa\Components\Base
 			$this->arParams['typeId']
 		);
 
-		$this->arResult['DOCUMENT_STATUS'] = $this->arParams['stage'];
+		$this->arResult['DOCUMENT_STATUS'] = $this->arParams['stage'] ?? null;
 
 		if ($this->arParams['SET_TITLE'] === 'Y')
 		{

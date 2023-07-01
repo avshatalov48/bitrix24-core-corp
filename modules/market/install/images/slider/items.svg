@@ -1,0 +1,43 @@
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100% 696"
+    preserveAspectRatio="xMinYMin meet" style="width: 100%; height: 696px;" fill="none">
+
+    <svg height="100%">
+        <rect width="100%" height="100%" fill="white" />
+    </svg>
+<!-- 60 -->
+    <svg height="100%" id="animated-elements">
+        <defs>
+            <svg id="item--animat">
+                <rect x="50" y="12" width="20%" height="141" rx="4" fill="#F5F7F8" />
+                <rect x="50" y="172" width="16%" height="16" rx="4" fill="#F5F7F8" />
+                <rect x="50" y="201" width="12%" height="16" rx="4" fill="#F5F7F8" />
+                <rect x="50" y="225" width="6%" height="16" rx="4" fill="#F5F7F8" />
+            </svg>
+
+            <g id="block-line--animat">
+                <use xlink:href="#item--animat" y="20"></use>
+                <use xlink:href="#item--animat" y="20" x="24%"></use>
+                <use xlink:href="#item--animat" y="20" x="49%"></use>
+                <use xlink:href="#item--animat" y="20" x="73%"></use>
+            </g>
+        </defs>
+
+        <use xlink:href="#block-line--animat"/>
+        <use xlink:href="#block-line--animat" y="294" />
+    </svg>
+
+    <rect id="msk1" width="100%" fill="url(#msk_gd)" mask="url(#headerMsk)" height="1270"/>
+
+    <mask id="headerMsk" fill="white">
+        <use xlink:href="#animated-elements"/>
+        <use xlink:href="#animated-elements-1"/>
+    </mask>
+
+    <linearGradient x1="66.6%" y1="50%" x2="33.3%" y2="50%" id="msk_gd">
+        <stop stop-color="#000000" stop-opacity="0" offset="0%"/>
+        <stop stop-color="#000000" stop-opacity="0.07" offset="50%"/>
+        <stop stop-color="#000000" stop-opacity="0" offset="100%"/>
+    </linearGradient>
+
+    <animate xlink:href="#msk1" attributeName="x" from="-100%" to="100%" dur="1s" begin="0s" repeatCount="indefinite"/> 
+</svg>

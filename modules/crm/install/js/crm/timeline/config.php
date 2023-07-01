@@ -8,8 +8,6 @@ return [
 	'css' => 'dist/timeline.bundle.css',
 	'js' => 'dist/timeline.bundle.js',
 	'rel' => [
-		'crm.activity.todo-editor',
-		'main.core.events',
 		'crm.datetime',
 		'crm.timeline.tools',
 		'crm.timeline.item',

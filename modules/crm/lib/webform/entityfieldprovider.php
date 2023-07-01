@@ -308,7 +308,7 @@ class EntityFieldProvider
 	public static function getFieldsInternal($entityName, $entity, array $options = []): array
 	{
 		$fieldInfoMethodName = $entity['GET_FIELDS_CALL'] ?? Entity::getDefaultFieldsInfoMethod();
-		if(is_array($fieldInfoMethodName) || is_callable($fieldInfoMethodName))
+		if (is_array($fieldInfoMethodName) || is_callable($fieldInfoMethodName))
 		{
 			$fieldsFunction = $fieldInfoMethodName;
 			$isAlreadyPreparedFields = true;
@@ -318,22 +318,22 @@ class EntityFieldProvider
 		{
 			$className = $entity['CLASS_NAME'];
 			$ufEntityId = $className::$sUFEntityID;
-			$fieldsFunction = array($className, $fieldInfoMethodName);
+			$fieldsFunction = [$className, $fieldInfoMethodName];
 			$isAlreadyPreparedFields = false;
 		}
 
-		if(!is_callable($fieldsFunction))
+		if (!is_callable($fieldsFunction))
 		{
 			throw new SystemException('Provider fields method not found in "' . $entity['CLASS_NAME'] . '".');
 		}
 
-		$fieldsInfo = call_user_func_array($fieldsFunction, array());
-		if($isAlreadyPreparedFields)
+		$fieldsInfo = call_user_func_array($fieldsFunction, []);
+		if ($isAlreadyPreparedFields)
 		{
 			$commonExcludedFields = Entity::getEntityMapCommonExcludedFields();
-			foreach($fieldsInfo as $fieldId => $fieldData)
+			foreach ($fieldsInfo as $fieldId => $fieldData)
 			{
-				if(!in_array($fieldId, $commonExcludedFields))
+				if (!in_array($fieldId, $commonExcludedFields))
 				{
 					continue;
 				}
@@ -343,7 +343,7 @@ class EntityFieldProvider
 		}
 		else
 		{
-			$userFieldsInfo = array();
+			$userFieldsInfo = [];
 			self::prepareUserFieldsInfo($userFieldsInfo, $ufEntityId);
 			$fieldsInfo = $fieldsInfo + $userFieldsInfo;
 		}
@@ -354,7 +354,7 @@ class EntityFieldProvider
 		}
 
 		$fieldsInfo = self::prepareFields($fieldsInfo);
-		$fieldsMap =  self::prepareWebFormFields($entityName, $fieldsInfo);
+		$fieldsMap = self::prepareWebFormFields($entityName, $fieldsInfo);
 		//Add delivery address to company/contact/lead fields
 		if (in_array($entityName, [\CCrmOwnerType::CompanyName, \CCrmOwnerType::ContactName], true))
 		{
@@ -398,17 +398,18 @@ class EntityFieldProvider
 				{
 					if (mb_strpos($field['name'], 'RQ_') !== 0)
 					{
-						$field['name'] = 'RQ_'. $field['name'];
+						$field['name'] = 'RQ_' . $field['name'];
 					}
 
+					$fieldName = $field['name'] ?? '';
 					$fieldsMap[] = [
 						'type' => $field['type'],
-						'entity_field_name' => $field['name'],
+						'entity_field_name' => $fieldName,
 						'entity_name' => $entityName,
-						'name' => "{$entityName}_{$field['name']}",
-						'caption' => $field['label'],
-						'multiple' => $field['multiple'],
-						'required' => $field['required'],
+						'name' => "{$entityName}_$fieldName",
+						'caption' => $field['label'] ?? '',
+						'multiple' => $field['multiple'] ?? false,
+						'required' => $field['required'] ?? false,
 						'size' => $field['size'] ?? null,
 					];
 				}

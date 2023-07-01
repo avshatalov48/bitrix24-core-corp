@@ -1,197 +1,149 @@
 <?php
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
+{
 	die();
-?>
-<tr>
-	<td align="right" width="40%" valign="top"><?= GetMessage("BPCGHLP_HOLD_TO_CLOSE") ?>:</td>
-	<td width="60%" valign="top">
-		<select name="HOLD_TO_CLOSE">
-			<option value="Y"<?= ("Y" == $arCurrentValues["HOLD_TO_CLOSE"] ? ' selected' : '') ?>><?= GetMessage("BPCGHLP_YES") ?></option>
-			<option value="N"<?= ("N" == $arCurrentValues["HOLD_TO_CLOSE"] ? ' selected' : '') ?>><?= GetMessage("BPCGHLP_NO") ?></option>
-		</select>
-	</td>
-</tr>
-<?php
-if ($dialog->getDocumentType()[0] === 'tasks'):
-?>
-	<tr>
-		<td align="right" width="40%" valign="top"><?= GetMessage("TASKS_BP_PD_AS_CHILD_TASK") ?>:</td>
-		<td width="60%" valign="top">
-			<select name="AS_CHILD_TASK">
-				<option value="Y"<?= ("Y" == $arCurrentValues["AS_CHILD_TASK"] ? ' selected' : '') ?>><?= GetMessage("BPCGHLP_YES") ?></option>
-				<option value="N"<?= ("N" == $arCurrentValues["AS_CHILD_TASK"] ? ' selected' : '') ?>><?= GetMessage("BPCGHLP_NO") ?></option>
-			</select>
-		</td>
-	</tr>
-<?php
-endif;
+}
 
-foreach ($arDocumentFields as $fieldKey => $fieldValue)
+/** @var \Bitrix\Bizproc\Activity\PropertiesDialog $dialog */
+
+$currentValues = $dialog->getCurrentValues();
+$map = $dialog->getMap();
+$taskFieldsMap = $map['Fields']['Map'];
+
+$documentValues = $dialog->getCurrentValue('Fields') ?? $dialog->getCurrentValues();
+
+$getUserFieldValueControl = function (array $field, $value = null) use ($dialog)
+{
+	$fieldValue = $value ?? $dialog->getCurrentValue($field);
+
+	if ($fieldValue)
+	{
+		if ($field['UserField']['USER_TYPE_ID'] === 'boolean')
+		{
+			$field['UserField']['VALUE'] = ($fieldValue == 'Y' ? 1 : 0);
+		}
+		else
+		{
+			$field['UserField']['VALUE'] = $fieldValue;
+		}
+		$field['UserField']['ENTITY_VALUE_ID'] = 1; //hack to not empty value
+	}
+
+	ob_start();
+	$GLOBALS['APPLICATION']->IncludeComponent(
+		'bitrix:system.field.edit',
+		$field['UserField']['USER_TYPE']['USER_TYPE_ID'],
+		[
+			'bVarsFromForm' => false,
+			'arUserField' => $field['UserField'],
+			'form_name' => $dialog->getFormName(),
+			'SITE_ID' => $dialog->getSiteId(),
+		],
+		null,
+		['HIDE_ICONS' => 'Y'],
+	);
+	$controlHtml = ob_get_clean();
+
+	if ($field['FieldName'] === 'UF_TASK_WEBDAV_FILES' || $field['FieldName'] === 'UF_CRM_TASK')
+	{
+		$fieldMap = [
+			'FieldName' => $field['UserField']['FIELD_NAME'] . '_text',
+			'Type' => \Bitrix\Bizproc\FieldType::STRING,
+			'Required' => $field['Required'],
+			'Multiple' => $field['Multiple'],
+		];
+
+		$fieldType = $dialog->getFieldTypeObject($fieldMap);
+
+		$controlHtml .= $fieldType->renderControl(
+			[
+				'Form' => $dialog->getFormName(),
+				'Field' => $fieldMap['FieldName']
+			],
+			is_array($fieldValue) ? array_filter($fieldValue, [CBPDocument::class, 'isExpression']) : $fieldValue,
+		true,
+		0
+		);
+	}
+
+	return $controlHtml;
+};
+
+$renderField = function (array $field, $value = null) use ($dialog, $getUserFieldValueControl)
+{
+	$userFieldTypes = [
+		\Bitrix\Bizproc\FieldType::STRING,
+		\Bitrix\Bizproc\FieldType::DOUBLE,
+		\Bitrix\Bizproc\FieldType::DATETIME,
+		\Bitrix\Bizproc\FieldType::BOOL,
+	];
+
+	$controlHtml = null;
+	if (
+		!isset($field['UserField'])
+		|| (
+			in_array($field['Type'], $userFieldTypes, true)
+			&& mb_substr($field['UserField']['FIELD_NAME'], 0, mb_strlen('UF_AUTO_')) === 'UF_AUTO_'
+		)
+	)
+	{
+		$controlHtml = $dialog->renderFieldControl(
+			$field,
+			$value ?? $dialog->getCurrentValue($field),
+			true,
+			\Bitrix\Bizproc\FieldType::RENDER_MODE_DESIGNER,
+		);
+	}
+
+	$fieldName =
+		($field['Required'] ?? null)
+			? sprintf('<span class="adm-required-field">%s</span>', htmlspecialcharsbx($field['Name']))
+			: htmlspecialcharsbx($field['Name'])
+	;
+
+	echo sprintf(
+		'<tr><td align="right" width="40%%">%s:</td><td width="60%%">%s</td></tr>',
+		$fieldName,
+		$controlHtml ?? $getUserFieldValueControl($field, $value),
+	);
+};
+
+$renderDocumentField = function (array $field) use ($documentValues, $renderField)
+{
+	// compatibility
+	$textFieldValue = $documentValues["{$field['FieldName']}_text"] ?? null;
+	if (isset($textFieldValue))
+	{
+		$documentValues[$field['FieldName']] = $textFieldValue;
+	}
+	// end of compatibility
+
+	$renderField($field, $documentValues[$field['FieldName']] ?? null);
+};
+
+$renderField($map['HoldToClose']);
+if ($dialog->getDocumentType()[0] === 'tasks')
+{
+	$renderField($map['AsChildTask']);
+}
+
+foreach ($taskFieldsMap as $fieldId => $fieldValue)
 {
 	if (
-		($fieldValue['UserField']['USER_TYPE']['USER_TYPE_ID'] === 'crm')
+		(($fieldValue['UserField']['USER_TYPE']['USER_TYPE_ID'] ?? null) === 'crm')
 		&& CModule::IncludeModule('crm')
 	)
 	{
-		?>
-		<tr>
-			<td align="right" width="40%" valign="top"><?= GetMessage("TASKS_BP_AUTO_LINK_TO_CRM_ENTITY") ?>:</td>
-			<td width="60%" valign="top">
-				<select name="AUTO_LINK_TO_CRM_ENTITY">
-					<option value="Y"<?= ("Y" == $arCurrentValues["AUTO_LINK_TO_CRM_ENTITY"] ? ' selected' : '') ?>><?= GetMessage("BPCGHLP_YES") ?></option>
-					<option value="N"<?= ("N" == $arCurrentValues["AUTO_LINK_TO_CRM_ENTITY"] ? ' selected' : '') ?>><?= GetMessage("BPCGHLP_NO") ?></option>
-				</select>
-			</td>
-		</tr>
-		<?php
+		$renderField($map['AUTO_LINK_TO_CRM_ENTITY']);
 	}
-	?>
-	<tr>
-		<td align="right" width="40%" valign="top"><?= ($fieldValue["Required"]) ? "<span class=\"adm-required-field\">".htmlspecialcharsbx($fieldValue["Name"])."</span>:" : htmlspecialcharsbx($fieldValue["Name"]) .":" ?></td>
-		<td width="60%" id="td_<?= htmlspecialcharsbx($fieldKey) ?>" valign="top">
-			<?
-			if ($fieldValue["UserField"])
-			{
-				if ($arCurrentValues[$fieldKey])
-				{
-					if ($fieldValue["UserField"]["USER_TYPE_ID"] == "boolean")
-					{
-						$fieldValue["UserField"]["VALUE"] = ($arCurrentValues[$fieldKey] == "Y" ? 1 : 0);
-					}
-					else
-					{
-						$fieldValue["UserField"]["VALUE"] = $arCurrentValues[$fieldKey];
-					}
-					$fieldValue["UserField"]["ENTITY_VALUE_ID"] = 1; //hack to not empty value
-				}
-				$userFieldTypes = [
-					\Bitrix\Bizproc\FieldType::STRING,
-					\Bitrix\Bizproc\FieldType::DOUBLE,
-					\Bitrix\Bizproc\FieldType::DATETIME,
-					'boolean'
-				];
-				if(in_array($fieldValue['UserField']['USER_TYPE_ID'], $userFieldTypes)
-					&& mb_substr($fieldValue['UserField']['FIELD_NAME'], 0, mb_strlen('UF_AUTO_')) === 'UF_AUTO_')
-				{
-					$fieldType = $fieldValue['UserField']['USER_TYPE_ID'];
-					$fieldMap = [
-						'Name' => $fieldValue['Name'],
-						'FieldName' => $fieldValue['UserField']['FIELD_NAME'],
-						'Type' => $fieldType === 'boolean' ? 'bool' : $fieldType,
-						'Required' => $fieldValue['UserField']['MANDATORY'],
-						'Multiple' => $fieldValue['UserField']['MULTIPLE']
-					];
-					$field = $dialog->getFieldTypeObject($fieldMap);
-					echo $field->renderControl(array(
-						'Form' => $dialog->getFormName(),
-						'Field' => $fieldMap['FieldName']
-					), $dialog->getCurrentValue($fieldMap['FieldName']), true, 0);
-				}
-				else
-				{
-					$GLOBALS["APPLICATION"]->IncludeComponent(
-						"bitrix:system.field.edit",
-						$fieldValue["UserField"]["USER_TYPE"]["USER_TYPE_ID"],
-						array(
-							"bVarsFromForm" => false,
-							"arUserField" => $fieldValue["UserField"],
-							"form_name" => $formName,
-							'SITE_ID' => $currentSiteId,
-						), null, array("HIDE_ICONS" => "Y")
-					);
-					if ($fieldKey === "UF_TASK_WEBDAV_FILES" || $fieldKey === "UF_CRM_TASK")
-					{
-						$fieldMap = [
-							'FieldName' => $fieldValue['UserField']['FIELD_NAME'] . '_text',
-							'Type' => \Bitrix\Bizproc\FieldType::STRING,
-							'Required' => $fieldValue['MANDATORY'] === 'Y',
-							'Multiple' => $fieldValue['MULTIPLE'] === 'Y'
-						];
+	$renderDocumentField($fieldValue);
 
-						$fieldType = $dialog->getFieldTypeObject($fieldMap);
-
-						echo $fieldType->renderControl(array(
-							'Form' => $dialog->getFormName(),
-							'Field' => $fieldMap['FieldName']
-						), $dialog->getCurrentValue($fieldMap['FieldName']), true, 0);
-					}
-				}
-			}
-			else
-			{
-				$fieldValueTmp = $arCurrentValues[$fieldKey];
-
-				if($fieldKey == 'PRIORITY')
-				{
-					$fieldValueTmp == CTasks::PRIORITY_HIGH ? CTasks::PRIORITY_HIGH : CTasks::PRIORITY_AVERAGE;
-				}
-
-				$fieldValueTextTmp = '';
-				if (isset($arCurrentValues[$fieldKey . '_text']))
-					$fieldValueTextTmp = $arCurrentValues[$fieldKey . '_text'];
-
-				switch ($fieldValue["Type"])
-				{
-					case "S:UserID":
-						echo CBPDocument::ShowParameterField('user', $fieldKey, $fieldValueTmp, Array('rows' => 1));
-						break;
-					case "S:DateTime":
-						echo CBPDocument::ShowParameterField('datetime', $fieldKey, $fieldValueTmp);
-						break;
-					case "L":
-						?>
-						<select id="id_<?= $fieldKey ?>" name="<?= $fieldKey ?>">
-							<?
-							foreach ($fieldValue["Options"] as $k => $v)
-							{
-								echo '<option value="'.htmlspecialcharsbx($k).'"'.($k."!" === $fieldValueTmp."!" ? ' selected' : '').'>'.htmlspecialcharsbx($v).'</option>';
-								if ($k."!" === $fieldValueTmp."!")
-									$fieldValueTmp = "";
-							}
-							?>
-						</select>
-						<?
-						echo CBPDocument::ShowParameterField("string", $fieldKey.'_text', $fieldValueTextTmp, Array('size'=> 30));
-						break;
-					case "B":
-						?>
-						<select id="id_<?= $fieldKey ?>" name="<?= $fieldKey ?>">
-							<option value="Y"<?= ("Y" == $fieldValueTmp ? ' selected' : '') ?>><?= GetMessage("BPCGHLP_YES") ?></option>
-							<option value="N"<?= ("N" == $fieldValueTmp ? ' selected' : '') ?>><?= GetMessage("BPCGHLP_NO") ?></option>
-						</select>
-						<?
-						if (in_array($fieldValueTmp, array("Y", "N")))
-						{
-							$fieldValueTmp = "";
-						}
-						echo CBPDocument::ShowParameterField("string", $fieldKey.'_text', $fieldValueTextTmp, Array('size'=> 20));
-						break;
-					case "T":
-						echo CBPDocument::ShowParameterField("text", $fieldKey, $fieldValueTmp, ['rows'=> 7, 'cols' => 40]);
-						break;
-					default:
-						echo CBPDocument::ShowParameterField("string", $fieldKey, $fieldValueTmp, Array('size'=> 40));
-						break;
-				}
-			}
-
-			if ($fieldKey === 'ALLOW_TIME_TRACKING'):?>
-				<div style="padding: 10px">
-					<div><?=GetMessage('BPTA1A_TIME_TRACKING_H')?>:</div>
-					<?=CBPDocument::ShowParameterField("int", 'TIME_ESTIMATE_H', $arCurrentValues['TIME_ESTIMATE_H'], ['size' => 20])?>
-					<div><?=GetMessage('BPTA1A_TIME_TRACKING_M')?>:</div>
-					<?=CBPDocument::ShowParameterField("int", 'TIME_ESTIMATE_M', $arCurrentValues['TIME_ESTIMATE_M'], ['size' => 20])?>
-				</div>
-			<?php endif; ?>
-		</td>
-	</tr>
-	<?php
+	if ($fieldId === 'ALLOW_TIME_TRACKING')
+	{
+		$renderField($map['TimeEstimateHour']);
+		$renderField($map['TimeEstimateMin']);
+	}
 }
-?>
-<tr>
-	<td align="right" width="40%" valign="top"><?= GetMessage('BPSA_CHECK_LIST_ITEMS') ?>:</td>
-	<td width="60%" valign="top">
-		<?=$dialog->renderFieldControl(['FieldName' => 'CHECK_LIST_ITEMS', 'Type' => 'string', 'Multiple' => true], $arCurrentValues['CHECK_LIST_ITEMS'], true, \Bitrix\Bizproc\FieldType::RENDER_MODE_DESIGNER)?>
-	</td>
-</tr>
-<?php echo $GLOBALS["APPLICATION"]->GetCSS();?>
+$renderField($map['CheckListItems']);
+
+echo $GLOBALS["APPLICATION"]->GetCSS();

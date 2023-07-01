@@ -1,0 +1,239 @@
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100% 2041"
+     preserveAspectRatio="xMinYMin meet" style="width: 100%; height: 2041px">
+    <style>
+        @media (min-width: 1200px) {
+        .small {display: none}
+        }
+        @media (max-width: 1200px) {
+        .large {display: none}
+        }
+    </style>
+    <g clip-path="url(#clip0_3005_66611)">
+        <svg height="2041px">
+
+            <rect width="100%" height="2041" fill="white"/>
+            <rect width="100%" height="5913" fill="#EEF2F4"/>
+            <rect width="100%" height="646" fill="#525C69" fill-opacity="0.15"/>
+
+            <g class="block-1">
+                <rect class="large" x="43" y="696" width="46%" height="324" rx="24" fill="white" fill-opacity="0.7"/>
+                <rect class="large" x="77" y="778" width="20.6%" height="208" rx="8" fill="#525C69" fill-opacity="0.15"/>
+                <rect class="large" x="27.6%" y="778" width="19%" height="208" rx="8" fill="#525C69" fill-opacity="0.15"/>
+
+                <rect class="small" x="43" y="696" width="42%" height="324" rx="24" fill="white" fill-opacity="0.7"/>
+                <rect class="small" x="77" y="778" width="31%" height="208" rx="8" fill="#525C69" fill-opacity="0.15"/>
+
+            </g>
+
+            <g class="block-2" clip-path="url(#clip2_3005_66611)">
+                <rect x="51.1%" y="696" width="45.6%" height="470" rx="24" fill="white" fill-opacity="0.7"/>
+                <rect class="large" x="55.7%" y="798" width="19.5%" height="72" rx="32" fill="#525C69" fill-opacity="0.15"/>
+                <rect class="large" x="55.7%" y="892" width="16.8%" height="72" rx="32" fill="#525C69" fill-opacity="0.15"/>
+                <rect class="large" x="55.7%" y="986" width="23%" height="72" rx="32" fill="#525C69" fill-opacity="0.15"/>
+                <rect class="large" x="55.5%" y="1096" width="39%" height="37" rx="18.5" fill="#525C69" fill-opacity="0.15"/>
+
+                <rect class="small" x="57%" y="798" width="19.5%" height="72" rx="32" fill="#525C69" fill-opacity="0.15"/>
+                <rect class="small" x="57%" y="892" width="16.8%" height="72" rx="32" fill="#525C69" fill-opacity="0.15"/>
+                <rect class="small" x="57%" y="986" width="23%" height="72" rx="32" fill="#525C69" fill-opacity="0.15"/>
+                <rect class="small" x="57%" y="1096" width="39%" height="37" rx="18.5" fill="#525C69" fill-opacity="0.15"/>
+            </g>
+
+            <g class="block-3">
+                <rect class="large" x="43" y="1052" width="46%" height="325" rx="24" fill="white" fill-opacity="0.7"/>
+                <rect class="small" x="43" y="1052" width="42%" height="325" rx="24" fill="white" fill-opacity="0.7"/>
+            </g>
+
+            <g class="block-4">
+                <rect x="51.1%" y="1197" width="28%" height="180" rx="24" fill="white" fill-opacity="0.7"/>
+            </g>
+
+            <g class="block-5">
+                <rect x="81.5%" y="1197" width="15.4%" height="180" rx="24" fill="white" fill-opacity="0.7"/>
+            </g>
+
+            <g class="block-6" clip-path="url(#clip1_3005_66611)">
+                <rect opacity="0.7" x="43" y="1511" width="62.3%" height="402" rx="24" fill="white"/>
+                <rect x="59%" y="1599" width="6%" height="289" fill="url(#paint0_linear_3005_66611)"/>
+                <rect x="77" y="1599" width="374" height="127" rx="22" fill="#525C69" fill-opacity="0.15"/>
+                <rect x="501" y="1599" width="374" height="127" rx="22" fill="#525C69" fill-opacity="0.15"/>
+                <rect x="925" y="1599" width="374" height="127" rx="22" fill="#525C69" fill-opacity="0.15"/>
+                <rect x="501" y="1752" width="374" height="127" rx="22" fill="#525C69" fill-opacity="0.15"/>
+                <rect x="925" y="1752" width="374" height="127" rx="22" fill="#525C69" fill-opacity="0.15"/>
+                <rect x="77" y="1752" width="374" height="127" rx="22" fill="#525C69" fill-opacity="0.15"/>
+            </g>
+
+            <g class="block-7">
+                <rect x="68.4%" y="1511" width="29.4%" height="402" rx="22" fill="#525C69" fill-opacity="0.15"/>
+            </g>
+        </svg>
+
+        <svg height="2041px" id="animated-elements">
+            <defs>
+                <g id="block-1-animation">
+                    <rect x="99" y="805" width="11%" height="8" rx="3" fill="#F0F2F2" />
+                    <rect x="99" y="825" width="7.6%" height="8" rx="4" fill="#F0F2F2" />
+                    <rect x="99" y="845" width="9.3%" height="8" rx="4" fill="#F0F2F2" />
+                </g>
+
+                <g id="block-2-pattern-circle-animation">
+                    <circle cx="54%" cy="816.5" r="18.5" fill="#E1E4E9"/>
+                </g>
+
+                <g id="block-2-pattern-text-animation">
+                    <rect class="large" x="57%" y="821" width="11%" height="8" rx="3" fill="#F0F2F5" />
+                    <rect class="large" x="57%" y="841" width="7%" height="8" rx="4" fill="#F0F2F5" />
+
+                    <rect class="small" x="59%" y="821" width="11%" height="8" rx="3" fill="#F0F2F5" />
+                    <rect class="small" x="59%" y="841" width="7%" height="8" rx="4" fill="#F0F2F5" />
+                </g>
+
+                <g id="block-3-pattern-text-animation">
+                    <rect x="70" y="1102" width="20%" height="8" rx="4" fill="#E1E4E5"/>
+                    <rect x="70" y="1122" width="24%" height="8" rx="4" fill="#E1E4E5"/>
+                </g>
+
+                <g id="block-3-pattern-bth-animation">
+                    <rect x="70" y="1304" width="11%" height="39" rx="19.5" fill="#E1E4E5"/>
+                </g>
+
+                <g id="block-4-pattern-text-animation">
+                    <rect x="52.6%" y="1247" width="7%" height="8" rx="4" fill="#E1E4E5"/>
+                    <rect x="52.6%" y="1267" width="9%" height="8" rx="4" fill="#E1E4E5"/>
+                </g>
+
+            </defs>
+            <g id="header">
+                <g class="left-column">
+                    <rect x="47" y="54" width="70" height="8" rx="4" fill="#EBEEEF" />
+                    <rect x="47" y="94" width="363" height="8" rx="4" fill="#EBEEEF" />
+                    <rect x="47" y="114" width="251" height="8" rx="4" fill="#EBEEEF" />
+                    <rect x="47" y="174" width="195" height="8" rx="4" fill="#EBEEEF" />
+                    <rect x="47" y="194" width="135" height="8" rx="4" fill="#EBEEEF" />
+                    <rect x="47" y="214" width="165" height="8" rx="4" fill="#EBEEEF" />
+                    <rect x="47" y="234" width="195" height="8" rx="4" fill="#EBEEEF" />
+                    <rect x="47" y="254" width="135" height="8" rx="4" fill="#EBEEEF" />
+                    <rect x="47" y="274" width="165" height="8" rx="4" fill="#EBEEEF" />
+                    <rect x="47" y="486" width="53" height="8" rx="4" fill="#EBEEEF" />
+                    <rect x="108" y="486" width="53" height="8" rx="4" fill="#EBEEEF" />
+                    <rect x="169" y="486" width="53" height="8" rx="4" fill="#EBEEEF" />
+                    <rect x="47" y="520" width="135" height="39" rx="19.5" fill="#EBEEEF" />
+                </g>
+                <rect class="large" x="35%" y="148" width="350" height="350" rx="32" fill="#EBEEEF" />
+                <rect class="large" x="74%" y="62" width="295" height="158" rx="8" fill="#EBEEEF" />
+                <rect class="large" x="74%" y="244" width="295" height="158" rx="8" fill="#EBEEEF" />
+                <rect class="large" x="74%" y="426" width="295" height="158" rx="8" fill="#EBEEEF" />
+
+                <rect class="small" x="56%" y="115" width="250" height="250" rx="32" fill="#EBEEEF" />
+                <rect class="small" x="35%" y="437" width="295" height="158" rx="8" fill="#EBEEEF" />
+                <rect class="small" x="65%" y="437" width="295" height="158" rx="8" fill="#EBEEEF" />
+
+            </g>
+
+            <g class="block-1">
+                <rect x="77" y="734" width="12%" height="8" rx="3" fill="#E1E4E5"/>
+                <rect x="18%" y="734" width="5%" height="8" rx="3" fill="#E1E4E5"/>
+                <use fill="dodgerblue" xlink:href="#block-1-animation"></use>
+                <use class="large" fill="dodgerblue" xlink:href="#block-1-animation" x="23.5%"></use>
+            </g>
+
+            <g class="block-2" clip-path="url(#clip2_3005_66611)">
+                <rect x="53%" y="734" width="12%" height="8" rx="3" fill="#E1E4E5"/>
+                <rect x="67%" y="734" width="5%" height="8" rx="3" fill="#E1E4E5"/>
+                <rect x="53%" y="750" width="5%" height="8" rx="3" fill="#E1E4E5"/>
+
+                <use fill="dodgerblue" xlink:href="#block-2-pattern-circle-animation"></use>
+                <use fill="dodgerblue" xlink:href="#block-2-pattern-circle-animation" y="94"></use>
+                <use fill="dodgerblue" xlink:href="#block-2-pattern-circle-animation" y="188"></use>
+                <use fill="dodgerblue" xlink:href="#block-2-pattern-circle-animation" y="298"></use>
+                <use fill="dodgerblue" xlink:href="#block-2-pattern-text-animation"></use>
+                <use fill="dodgerblue" xlink:href="#block-2-pattern-text-animation" y="93"></use>
+                <use fill="dodgerblue" xlink:href="#block-2-pattern-text-animation" y="187"></use>
+            </g>
+
+            <g class="block-3">
+                <rect x="70" y="1082" width="28%" height="8" rx="3" fill="#E1E4E5"/>
+                <use fill="dodgerblue" xlink:href="#block-3-pattern-text-animation"></use>
+                <use fill="dodgerblue" xlink:href="#block-3-pattern-text-animation" y="52"></use>
+                <use fill="dodgerblue" xlink:href="#block-3-pattern-bth-animation"></use>
+                <use fill="dodgerblue" xlink:href="#block-3-pattern-bth-animation" x="13%"></use>
+            </g>
+
+            <g class="block-4">
+                <rect x="52.6%" y="1227" width="11%" height="8" rx="3" fill="#E1E4E5"/>
+                <use fill="dodgerblue" xlink:href="#block-4-pattern-text-animation"></use>
+                <use fill="dodgerblue" xlink:href="#block-4-pattern-text-animation" y="52"></use>
+            </g>
+
+            <g class="block-5">
+                <rect x="83%" y="1227" width="11%" height="8" rx="4" fill="#E1E4E5"/>
+                <rect x="83%" y="1247" width="7%" height="8" rx="4" fill="#E1E4E5"/>
+                <rect x="83%" y="1267" width="9%" height="8" rx="4" fill="#E1E4E5"/>
+                <rect x="83%" y="1314" width="11%" height="39" rx="19.5" fill="#E1E4E5"/>
+            </g>
+
+            <g class="block-6" clip-path="url(#clip1_3005_66611)">
+                <rect x="77" y="1549" width="220" height="8" rx="3" fill="#E1E4E5"/>
+                <rect x="313" y="1549" width="81" height="8" rx="3" fill="#E1E4E5"/>
+                <rect x="102" y="1623" width="195" height="8" rx="3" fill="#F0F2F2" />
+                <rect x="102" y="1643" width="135" height="8" rx="4" fill="#F0F2F2" />
+                <rect x="102" y="1663" width="165" height="8" rx="4" fill="#F0F2F2" />
+                <rect x="526" y="1623" width="195" height="8" rx="3" fill="#F0F2F2" />
+                <rect x="950" y="1623" width="195" height="8" rx="3" fill="#F0F2F2" />
+                <rect x="526" y="1643" width="135" height="8" rx="4" fill="#F0F2F2" />
+                <rect x="526" y="1663" width="165" height="8" rx="4" fill="#F0F2F2" />
+                <rect x="950" y="1643" width="135" height="8" rx="4" fill="#F0F2F2" />
+                <rect x="950" y="1663" width="165" height="8" rx="4" fill="#F0F2F2" />
+                <rect x="102" y="1775" width="195" height="8" rx="3" fill="#F0F2F2" />
+                <rect x="102" y="1795" width="135" height="8" rx="4" fill="#F0F2F2" />
+                <rect x="102" y="1815" width="165" height="8" rx="4" fill="#F0F2F2" />
+                <rect x="526" y="1775" width="195" height="8" rx="3" fill="#F0F2F2" />
+                <rect x="526" y="1795" width="135" height="8" rx="4" fill="#F0F2F2" />
+                <rect x="526" y="1815" width="165" height="8" rx="4" fill="#F0F2F2" />
+                <rect x="950" y="1775" width="195" height="8" rx="3" fill="#F0F2F2" />
+                <rect x="950" y="1795" width="135" height="8" rx="4" fill="#F0F2F2" />
+                <rect x="950" y="1815" width="165" height="8" rx="4" fill="#F0F2F2" />
+            </g>
+
+            <g class="block-7">
+                <rect x="77.6%" y="1649" width="11%" height="8" rx="4" fill="#EBEEEF" />
+                <rect x="79.3%" y="1669" width="7.6%" height="8" rx="4" fill="#EBEEEF" />
+                <rect x="78.5%" y="1689" width="9.2%" height="8" rx="4" fill="#EBEEEF" />
+                <rect x="77.6%" y="1736" width="11%" height="39" rx="19.5" fill="#EBEEEF" />
+            </g>
+        </svg>
+
+    </g>
+
+
+    <defs>
+        <linearGradient id="paint0_linear_3005_66611" x1="1154" y1="1711.1" x2="1054" y2="1711.1"
+                        gradientUnits="userSpaceOnUse">
+            <stop stop-color="white"/>
+            <stop offset="1" stop-color="white" stop-opacity="0"/>
+        </linearGradient>
+        <clipPath id="clip0_3005_66611">
+            <rect width="100%" height="2041" fill="white"/>
+        </clipPath>
+        <clipPath id="clip1_3005_66611">
+            <rect width="62.3%" height="402" fill="white" transform="translate(43 1511)"/>
+        </clipPath>
+        <clipPath id="clip2_3005_66611">
+            <rect x="51.1%" y="696" width="45.6%" height="469" rx="24" fill="white"/>
+        </clipPath>
+    </defs>
+
+    <rect id="msk1" width="100%" fill="url(#msk_gd)" mask="url(#headerMsk)" height="2041"/>
+
+    <mask id="headerMsk" fill="white">
+        <use xlink:href="#animated-elements"/>
+    </mask>
+
+    <linearGradient x1="66.6%" y1="50%" x2="33.3%" y2="50%" id="msk_gd">
+        <stop stop-color="#000000" stop-opacity="0" offset="0%"/>
+        <stop stop-color="#000000" stop-opacity="0.07" offset="50%"/>
+        <stop stop-color="#000000" stop-opacity="0" offset="100%"/>
+    </linearGradient>
+
+    <animate xlink:href="#msk1" attributeName="x" from="-100%" to="100%" dur="1s" begin="0s" repeatCount="indefinite"/>
+
+</svg>

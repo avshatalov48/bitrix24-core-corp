@@ -11,8 +11,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 use Bitrix\Main\Localization\Loc;
 
 $arActivityDescription = [
-	'NAME' => Loc::getMessage('CRM_CMPR_NAME_1'),
-	'DESCRIPTION' => Loc::getMessage('CRM_CMPR_DESC_1'),
+	'NAME' => Loc::getMessage('CRM_CMPR_NAME_2'),
+	'DESCRIPTION' => Loc::getMessage('CRM_CMPR_DESC_2'),
 	'TYPE' => ['activity', 'robot_activity'],
 	'CLASS' => 'CrmCopyMoveProductRow',
 	'JSCLASS' => 'BizProcActivity',
@@ -26,7 +26,8 @@ $arActivityDescription = [
 			['crm', 'CCrmDocumentDeal'],
 			['crm', \Bitrix\Crm\Integration\BizProc\Document\SmartInvoice::class],
 			['crm', \Bitrix\Crm\Integration\BizProc\Document\SmartDocument::class],
-			//['crm', 'Bitrix\Crm\Integration\BizProc\Document\Order'],
+			['crm', \Bitrix\Crm\Integration\BizProc\Document\Quote::class],
+			['crm', \Bitrix\Crm\Integration\BizProc\Document\Order::class],
 		],
 	],
 	'ROBOT_SETTINGS' => [

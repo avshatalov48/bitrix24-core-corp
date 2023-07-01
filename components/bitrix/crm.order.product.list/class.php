@@ -1,15 +1,20 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
-use Bitrix\Main;
-use Bitrix\Main\Loader;
-use Bitrix\Main\Localization\Loc;
-use Bitrix\Catalog\Product\Price;
-use Bitrix\Crm\Product\Url;
-use Bitrix\Iblock\Url\AdminPage\BuilderManager;
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
 use Bitrix\Catalog;
 use Bitrix\Catalog\Access\AccessController;
 use Bitrix\Catalog\Access\ActionDictionary;
+use Bitrix\Catalog\Product\Price;
+use Bitrix\Crm\Product\Url;
+use Bitrix\Iblock\Url\AdminPage\BuilderManager;
+use Bitrix\Main;
+use Bitrix\Main\Application;
+use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
 
@@ -27,27 +32,31 @@ final class CCrmOrderProductListComponent extends \CBitrixComponent
 
 	private function init()
 	{
-		if(!Loader::includeModule('crm'))
+		if (!Loader::includeModule('crm'))
 		{
 			$this->errors[] = Loc::getMessage('CRM_MODULE_NOT_INSTALLED');
+
 			return false;
 		}
 
-		if(!Loader::includeModule('currency'))
+		if (!Loader::includeModule('currency'))
 		{
 			$this->errors[] = Loc::getMessage('CRM_MODULE_NOT_INSTALLED_CURRENCY');
+
 			return false;
 		}
 
-		if(!Loader::includeModule('catalog'))
+		if (!Loader::includeModule('catalog'))
 		{
 			$this->errors[] = Loc::getMessage('CRM_MODULE_NOT_INSTALLED_CATALOG');
+
 			return false;
 		}
 
 		if (!Loader::includeModule('sale'))
 		{
 			$this->errors[] = Loc::getMessage('CRM_MODULE_NOT_INSTALLED_SALE');
+
 			return false;
 		}
 
@@ -56,53 +65,63 @@ final class CCrmOrderProductListComponent extends \CBitrixComponent
 		if (!\Bitrix\Crm\Order\Permissions\Order::checkReadPermission(0, $this->userPermissions))
 		{
 			$this->errors[] = new Main\Error(Loc::getMessage('CRM_PERMISSION_DENIED'));
+
 			return false;
 		}
 
-		if(!empty($this->arParams['ORDER']))
+		if (!empty($this->arParams['ORDER']))
 		{
 			$this->order = $this->arParams['ORDER'];
 			$this->arResult['SITE_ID'] = $this->order->getSiteId();
 		}
-		elseif(!empty($this->arParams['ORDER_ID']))
+		elseif (!empty($this->arParams['ORDER_ID']))
 		{
 			$this->order = \Bitrix\Crm\Order\Order::load((int)$this->arParams['ORDER_ID']);
 
 			if($this->order)
 			{
 				$this->arResult['SITE_ID'] = $this->order->getSiteId();
-				if ((int)$this->arParams['FUSER_ID'] > 0)
+
+				$fuserId = (int)($this->arParams['FUSER_ID'] ?? 0);
+				if ($fuserId > 0)
 				{
-					$basket = \Bitrix\Crm\Order\Basket::loadItemsForFUser((int)$this->arParams['FUSER_ID'], $this->order->getSiteId());
+					$basket = \Bitrix\Crm\Order\Basket::loadItemsForFUser($fuserId, $this->order->getSiteId());
+
 					$this->order->setBasket($basket);
 				}
 			}
 		}
 
-		if(empty($this->arResult['SITE_ID']))
+		if (empty($this->arResult['SITE_ID']))
 		{
-			$this->arResult['SITE_ID'] = !empty($this->arParams['SITE_ID']) ? htmlspecialcharsbx($this->arParams['SITE_ID']) : SITE_ID;
+			$this->arResult['SITE_ID'] = !empty($this->arParams['SITE_ID'])
+				? htmlspecialcharsbx($this->arParams['SITE_ID'])
+				: SITE_ID;
 		}
 
-		if(!$this->order)
+		if (!$this->order)
 		{
 			$this->order = \Bitrix\Crm\Order\Manager::createEmptyOrder($this->arResult['SITE_ID']);
 		}
 
 		$this->arResult['IS_CHANGED'] = (!empty($this->arParams['ORDER']) || isset($this->arParams['SESSION_BASKET']));
 
-		if (!$this->arResult['IS_CHANGED'] && isset($_SESSION['ORDER_BASKET'][$this->order->getId()]))
+		$session = Application::getInstance()->getSession();
+		$sessionOrderBasket = $session->has('ORDER_BASKET') ? $session->get('ORDER_BASKET') : [];
+		if (!$this->arResult['IS_CHANGED'] && isset($sessionOrderBasket[$this->order->getId()]))
 		{
-			unset($_SESSION['ORDER_BASKET'][$this->order->getId()]);
+			unset($sessionOrderBasket[$this->order->getId()]);
+			$session->set('ORDER_BASKET', $sessionOrderBasket);
 		}
 
-		if(!$this->order)
+		if (!$this->order)
 		{
 			$this->errors[] = new Main\Error(Loc::getMessage('CRM_ORDER_PLC_FAILED_TO_CREATE_OBJECT'));
+
 			return false;
 		}
 
-		if ((int)($this->arParams['ORDER_PRODUCT_COUNT']) <= 0)
+		if ((int)($this->arParams['ORDER_PRODUCT_COUNT'] ?? 0) <= 0)
 		{
 			$this->arParams['ORDER_PRODUCT_COUNT'] = 20;
 		}
@@ -110,6 +129,7 @@ final class CCrmOrderProductListComponent extends \CBitrixComponent
 		$this->initCouponsData($this->order->getUserId(), $this->order->getId());
 		$this->userId = CCrmSecurityHelper::GetCurrentUserID();
 		CUtil::InitJSCore(['ajax', 'tooltip']);
+
 		return true;
 	}
 
@@ -192,15 +212,22 @@ final class CCrmOrderProductListComponent extends \CBitrixComponent
 
 	protected function getBasketItemsValues()
 	{
-		if ($this->order->getId() > 0 && isset($_SESSION['ORDER_BASKET'][$this->order->getId()]))
+		$session = Application::getInstance()->getSession();
+		$sessionOrderBasket = $session->has('ORDER_BASKET') ? $session->get('ORDER_BASKET') : [];
+		if ($this->order->getId() > 0 && isset($sessionOrderBasket[$this->order->getId()]))
 		{
-			return $_SESSION['ORDER_BASKET'][$this->order->getId()]['ITEMS'];
+			return $sessionOrderBasket[$this->order->getId()]['ITEMS'];
 		}
 
 		$values = [];
 		$basket = $this->order->getBasket();
+		if (!$basket)
+		{
+			return [];
+		}
+
 		/** @var \Bitrix\Sale\BasketItem $basketItem */
-		foreach($basket->getBasketItems() as $basketItem)
+		foreach ($basket->getBasketItems() as $basketItem)
 		{
 			$item = $basketItem->getFieldValues();
 			$item['VAT'] = $basketItem->getVat();
@@ -214,8 +241,10 @@ final class CCrmOrderProductListComponent extends \CBitrixComponent
 			}
 			$values[] = $item;
 		}
+
 		return $values;
 	}
+
 	protected function getSetItems()
 	{
 		if (!Main\Loader::includeModule('catalog'))
@@ -223,19 +252,24 @@ final class CCrmOrderProductListComponent extends \CBitrixComponent
 			return [];
 		}
 
-		$productId =
-		$parentQuantity =
-		$provider = null;
-		if (isset($_SESSION['ORDER_BASKET'][$this->order->getId()]['ITEMS'][$_REQUEST['parent_id']]))
+		$context = Application::getInstance()->getContext();
+		$session = Application::getInstance()->getSession();
+		$request = $context->getRequest();
+		$parentId = (int)($request->get('parent_id') ?? 0);
+
+		$productId = null;
+		$parentQuantity = null;
+		$sessionOrderBasket = $session->has('ORDER_BASKET') ? $session->get('ORDER_BASKET') : null;
+		if (isset($sessionOrderBasket[$this->order->getId()]['ITEMS'][$parentId]))
 		{
-			$item = $_SESSION['ORDER_BASKET'][$this->order->getId()]['ITEMS'][$_REQUEST['parent_id']];
+			$item = $sessionOrderBasket[$this->order->getId()]['ITEMS'][$parentId];
 			$productId = $item['PRODUCT_ID'];
 			$parentQuantity = (float)$item['QUANTITY'];
 		}
-		elseif ((int)$_REQUEST['parent_id'] > 0)
+		elseif ($parentId > 0)
 		{
 			$basket = $this->order->getBasket();
-			if ($basketItem = $basket->getItemByBasketCode((int)$_REQUEST['parent_id']))
+			if ($basket && $basketItem = $basket->getItemByBasketCode($parentId))
 			{
 				$productId = $basketItem->getProductId();
 				$parentQuantity = (float)$basketItem->getQuantity();
@@ -278,22 +312,26 @@ final class CCrmOrderProductListComponent extends \CBitrixComponent
 			$item['PRICE'] = $price['DISCOUNT_PRICE'];
 			$item['BASE_PRICE'] = $price['DISCOUNT_PRICE'];
 			$item['CURRENCY'] = $this->order->getCurrency();
-			$item['PARENT_ID'] = $_REQUEST['parent_id'];
+			$item['PARENT_ID'] = $parentId;
 			$item['QUANTITY'] = $item['QUANTITY'] * $parentQuantity;
 		}
 		Price\Calculation::popConfig();
 
 		$this->arResult['READ_ONLY'] = 'Y';
 		$this->arResult['IS_SET_ITEMS'] = true;
+
 		return $set['ITEMS'];
 	}
 
 	private function getProductsFields($visibleColumns)
 	{
+		$context = Application::getInstance()->getContext();
+		$request = $context->getRequest();
+
 		$rows = [];
 		$flippedVisibleColumns = array_flip($visibleColumns);
 		$catalogProductIds = [];
-		if ($_REQUEST['action'] !== \Bitrix\Main\Grid\Actions::GRID_GET_CHILD_ROWS)
+		if ($request->get('action')  !== \Bitrix\Main\Grid\Actions::GRID_GET_CHILD_ROWS)
 		{
 			$rawValues = $this->getBasketItemsValues();
 		}
@@ -560,7 +598,7 @@ final class CCrmOrderProductListComponent extends \CBitrixComponent
 		{
 			foreach ($headers as $header)
 			{
-				if ($header['default'])
+				if (isset($header['default']) && $header['default'])
 				{
 					$visibleColumns[] = $header['id'];
 				}
@@ -615,6 +653,9 @@ final class CCrmOrderProductListComponent extends \CBitrixComponent
 
 	private function preparePagination()
 	{
+		$context = Application::getInstance()->getContext();
+		$session = Application::getInstance()->getSession();
+		$request = $context->getRequest();
 		$pageNum = 0;
 		$navParams = array(
 			'nPageSize' => $this->arParams['ORDER_PRODUCT_COUNT']
@@ -627,44 +668,50 @@ final class CCrmOrderProductListComponent extends \CBitrixComponent
 		$enableNextPage = true;
 
 		$count = count($this->arResult['PRODUCTS']);
-
-		if(isset($_REQUEST['apply_filter']) && $_REQUEST['apply_filter'] === 'Y')
+		$page = $request->get('page');
+		if($request->get('apply_filter') === 'Y')
 		{
 			$pageNum = 1;
 		}
-		elseif($pageSize > 0 && isset($_REQUEST['page']))
+		elseif($pageSize > 0 && isset($page))
 		{
+			$page = (int)$page;
 			$nav = new \Bitrix\Main\UI\PageNavigation("orderProductList");
 			$nav->allowAllRecords(false)
 				->setPageSize($pageSize);
 			$nav->setRecordCount($count);
-			if ((int)$_REQUEST['page'] * $pageSize >= $count || (int)($_REQUEST['page']) < 0)
+			if ($page * $pageSize >= $count || $page < 0)
 			{
 				$pageNum = $nav->getPageCount();
 			}
 			else
 			{
-				$pageNum = (int)$_REQUEST['page'];
+				$pageNum = $page;
 			}
 		}
 
-		if($pageNum > 0)
+		if ($pageNum > 0)
 		{
-			if(!isset($_SESSION['CRM_PAGINATION_DATA']))
+			if (!$session->has('CRM_PAGINATION_DATA'))
 			{
-				$_SESSION['CRM_PAGINATION_DATA'] = array();
+				$session->set('CRM_PAGINATION_DATA', []);
 			}
-			$_SESSION['CRM_PAGINATION_DATA'][$this->arResult['GRID_ID']] = array('PAGE_NUM' => $pageNum, 'PAGE_SIZE' => $pageSize);
+			$paginationData = $session->get('CRM_PAGINATION_DATA');
+			$paginationData[$this->arResult['GRID_ID']] = ['PAGE_NUM' => $pageNum, 'PAGE_SIZE' => $pageSize];
+			$session->set('CRM_PAGINATION_DATA', $paginationData);
 		}
 		else
 		{
-			if( !(isset($_REQUEST['clear_nav']) && $_REQUEST['clear_nav'] === 'Y')
-				&& isset($_SESSION['CRM_PAGINATION_DATA'])
-				&& isset($_SESSION['CRM_PAGINATION_DATA'][$this->arResult['GRID_ID']])
-			)
+			if ( $request->get('clear_nav') !== 'Y'	&& $session->has('CRM_PAGINATION_DATA'))
 			{
-				$paginationData = $_SESSION['CRM_PAGINATION_DATA'][$this->arResult['GRID_ID']];
-				if(isset($paginationData['PAGE_NUM'])
+				$allPaginationData =
+					$session->has('CRM_PAGINATION_DATA')
+						? $session->get('CRM_PAGINATION_DATA')
+						: []
+				;
+				$paginationData = $allPaginationData[$this->arResult['GRID_ID']] ?? [];
+				if (
+					isset($paginationData['PAGE_NUM'])
 					&& isset($paginationData['PAGE_SIZE'])
 					&& $paginationData['PAGE_SIZE'] == $pageSize
 				)
@@ -673,11 +720,12 @@ final class CCrmOrderProductListComponent extends \CBitrixComponent
 				}
 			}
 
-			if($pageNum <= 0)
+			if ($pageNum <= 0)
 			{
 				$pageNum  = 1;
 			}
 		}
+
 		$offset = 0;
 		if (isset($navParams['nTopCount']))
 		{
@@ -756,13 +804,17 @@ final class CCrmOrderProductListComponent extends \CBitrixComponent
 
 		$this->arResult['GRID_ID'] = 'crm_order_product_list';
 		$this->arResult['HEADERS'] = $this->getHeaders();
-		$this->arResult['AJAX_OPTION_JUMP'] = isset($this->arParams['AJAX_OPTION_JUMP']) ? $this->arParams['AJAX_OPTION_JUMP'] : 'N';
-		$this->arResult['AJAX_OPTION_HISTORY'] = isset($this->arParams['AJAX_OPTION_HISTORY']) ? $this->arParams['AJAX_OPTION_HISTORY'] : 'N';
-		$this->arResult['PRESERVE_HISTORY'] = isset($this->arParams['PRESERVE_HISTORY']) ? $this->arParams['PRESERVE_HISTORY'] : false;
-		$this->arResult['FORM_ID'] = isset($this->arParams['FORM_ID']) ? $this->arParams['FORM_ID'] : 'form_'.$this->arResult['GRID_ID'];
-		$this->arResult['TAB_ID'] = isset($this->arParams['TAB_ID']) ? $this->arParams['TAB_ID'] : '';
-		$this->arResult['AJAX_ID'] = isset($this->arParams['AJAX_ID']) ? $this->arParams['AJAX_ID'] : '';
-		$this->arResult['PATH_TO_ORDER_PRODUCT_LIST'] = $this->arParams['PATH_TO_ORDER_PRODUCT_LIST'] = CrmCheckPath('PATH_TO_ORDER_PRODUCT_LIST', $this->arParams['PATH_TO_ORDER_PRODUCT_LIST'], $APPLICATION->GetCurPage());
+		$this->arResult['AJAX_OPTION_JUMP'] = $this->arParams['AJAX_OPTION_JUMP'] ?? 'N';
+		$this->arResult['AJAX_OPTION_HISTORY'] = $this->arParams['AJAX_OPTION_HISTORY'] ?? 'N';
+		$this->arResult['PRESERVE_HISTORY'] = $this->arParams['PRESERVE_HISTORY'] ?? false;
+		$this->arResult['FORM_ID'] = $this->arParams['FORM_ID'] ?? 'form_'.$this->arResult['GRID_ID'];
+		$this->arResult['TAB_ID'] = $this->arParams['TAB_ID'] ?? '';
+		$this->arResult['AJAX_ID'] = $this->arParams['AJAX_ID'] ?? '';
+		$this->arResult['PATH_TO_ORDER_PRODUCT_LIST'] = $this->arParams['PATH_TO_ORDER_PRODUCT_LIST'] = CrmCheckPath(
+			'PATH_TO_ORDER_PRODUCT_LIST',
+			$this->arParams['PATH_TO_ORDER_PRODUCT_LIST'] ?? '',
+			$APPLICATION->GetCurPage()
+		);
 		$this->arResult['ORDER_SITE_ID'] = $this->order->getSiteId();
 		$this->arResult['ORDER_ID'] = $this->order->getId();
 		$this->arResult['CAN_UPDATE_ORDER'] = \Bitrix\Crm\Order\Permissions\Order::checkUpdatePermission(intval($this->arResult['ORDER_ID']), $this->userPermissions);
@@ -770,11 +822,14 @@ final class CCrmOrderProductListComponent extends \CBitrixComponent
 
 		$this->arResult["DISCOUNTS_LIST"] = \Bitrix\Sale\Helpers\Admin\OrderEdit::getOrderedDiscounts($this->order);
 
-		if(is_array($this->arResult["DISCOUNTS_LIST"]['DISCOUNT_LIST']))
+		if (
+			isset($this->arResult["DISCOUNTS_LIST"]['DISCOUNT_LIST'])
+			&& is_array($this->arResult["DISCOUNTS_LIST"]['DISCOUNT_LIST'])
+		)
 		{
-			foreach($this->arResult["DISCOUNTS_LIST"]['DISCOUNT_LIST'] as $id => $discount)
+			foreach ($this->arResult["DISCOUNTS_LIST"]['DISCOUNT_LIST'] as $id => $discount)
 			{
-				if(!empty($discount['EDIT_PAGE_URL']))
+				if (!empty($discount['EDIT_PAGE_URL']))
 				{
 					$this->arResult["DISCOUNTS_LIST"]['DISCOUNT_LIST'][$id]['EDIT_PAGE_URL'] = $this->prepareAdminLink($discount['EDIT_PAGE_URL']);
 				}

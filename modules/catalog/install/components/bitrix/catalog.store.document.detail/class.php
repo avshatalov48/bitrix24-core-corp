@@ -4,6 +4,7 @@ use Bitrix\Catalog;
 use Bitrix\Catalog\Access\AccessController;
 use Bitrix\Catalog\Access\ActionDictionary;
 use Bitrix\Catalog\Access\Model\StoreDocumentElement;
+use Bitrix\Catalog\Config\Feature;
 use Bitrix\Catalog\StoreDocumentBarcodeTable;
 use Bitrix\Catalog\StoreDocumentElementTable;
 use Bitrix\Catalog\StoreDocumentTable;
@@ -148,6 +149,8 @@ class CatalogStoreDocumentDetailComponent extends CBitrixComponent implements Co
 		$this->getAdditionalEntityEditorActions();
 
 		$this->collectRightColumnContent();
+
+		$this->checkIfInventoryManagementIsDisabled();
 
 		$this->checkIfInventoryManagementIsUsed();
 
@@ -369,6 +372,14 @@ class CatalogStoreDocumentDetailComponent extends CBitrixComponent implements Co
 
 	public function saveAction($fields = []): array
 	{
+		$actionValidateResult = $this->validateRequestBeforeAction();
+		if (!$actionValidateResult->isSuccess())
+		{
+			return [
+				'ERROR' => implode('<br>', $actionValidateResult->getErrorMessages()),
+			];
+		}
+
 		if (!$this->checkDocumentWriteRights())
 		{
 			return [
@@ -417,6 +428,14 @@ class CatalogStoreDocumentDetailComponent extends CBitrixComponent implements Co
 
 	public function saveAndConductAction($fields = []): array
 	{
+		$actionValidateResult = $this->validateRequestBeforeAction();
+		if (!$actionValidateResult->isSuccess())
+		{
+			return [
+				'ERROR' => implode('<br>', $actionValidateResult->getErrorMessages()),
+			];
+		}
+
 		if (!$this->checkDocumentWriteRights() || !$this->checkDocumentConductRights())
 		{
 			return [
@@ -518,6 +537,14 @@ class CatalogStoreDocumentDetailComponent extends CBitrixComponent implements Co
 
 	public function conductAction(): array
 	{
+		$actionValidateResult = $this->validateRequestBeforeAction();
+		if (!$actionValidateResult->isSuccess())
+		{
+			return [
+				'ERROR' => implode('<br>', $actionValidateResult->getErrorMessages()),
+			];
+		}
+
 		if (!$this->checkDocumentConductRights())
 		{
 			return [
@@ -573,6 +600,14 @@ class CatalogStoreDocumentDetailComponent extends CBitrixComponent implements Co
 
 	public function cancelConductAction(): array
 	{
+		$actionValidateResult = $this->validateRequestBeforeAction();
+		if (!$actionValidateResult->isSuccess())
+		{
+			return [
+				'ERROR' => implode('<br>', $actionValidateResult->getErrorMessages()),
+			];
+		}
+
 		if (!$this->checkDocumentCancelRights())
 		{
 			return [
@@ -602,6 +637,18 @@ class CatalogStoreDocumentDetailComponent extends CBitrixComponent implements Co
 		return [
 			'ERROR' => Loc::getMessage('CATALOG_STORE_DOCUMENT_DETAIL_CANCEL_ERROR'),
 		];
+	}
+
+	private function validateRequestBeforeAction(): \Bitrix\Main\Result
+	{
+		$result = new Bitrix\Main\Result();
+
+		if (!Feature::isInventoryManagementEnabled())
+		{
+			$result->addError(new Main\Error(Loc::getMessage('CATALOG_STORE_DOCUMENT_DETAIL_NO_INVENTORY_MANAGEMENT_ENABLED_ERROR')));
+		}
+
+		return $result;
 	}
 
 	/**
@@ -1189,6 +1236,8 @@ class CatalogStoreDocumentDetailComponent extends CBitrixComponent implements Co
 				$elementFields['DOC_ID'] = $this->documentId;
 			}
 
+			$elementFields['STORE_TO'] = null;
+			$elementFields['STORE_FROM'] = null;
 			switch ($this->getDocumentType())
 			{
 				case StoreDocumentTable::TYPE_ARRIVAL:
@@ -1256,6 +1305,7 @@ class CatalogStoreDocumentDetailComponent extends CBitrixComponent implements Co
 				$barcode = $documentBarcode['BARCODE'];
 				if (
 					!empty($barcode)
+					&& isset($productBarcodes[$barcode])
 					&& $productBarcodes[$barcode] > 0
 					&& $documentBarcode['SKU_ID'] !== $productBarcodes[$barcode]
 				)
@@ -1419,6 +1469,19 @@ class CatalogStoreDocumentDetailComponent extends CBitrixComponent implements Co
 		else
 		{
 			$this->arResult['MASTER_SLIDER_URL'] = null;
+		}
+	}
+
+	private function checkIfInventoryManagementIsDisabled(): void
+	{
+		$this->arResult['IS_INVENTORY_MANAGEMENT_DISABLED'] = !Feature::isInventoryManagementEnabled();
+		if ($this->arResult['IS_INVENTORY_MANAGEMENT_DISABLED'])
+		{
+			$this->arResult['INVENTORY_MANAGEMENT_FEATURE_SLIDER_CODE'] = Feature::getInventoryManagementHelpLink()['FEATURE_CODE'] ?? null;
+		}
+		else
+		{
+			$this->arResult['INVENTORY_MANAGEMENT_FEATURE_SLIDER_CODE'] = null;
 		}
 	}
 

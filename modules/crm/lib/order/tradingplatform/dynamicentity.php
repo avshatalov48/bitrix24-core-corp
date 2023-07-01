@@ -50,6 +50,11 @@ class DynamicEntity
 		return \CCrmOwnerType::ResolveID($this->getCode());
 	}
 
+	public function getAnalyticCode()
+	{
+		return $this->getCode();
+	}
+
 	/**
 	 * @param $id
 	 * @return string

@@ -7,10 +7,10 @@ $MESS["MOBILEAPP_ERROR_AUTH"] = "Ошибка авторизации";
 $MESS["MOBILEAPP_ERROR_VIDEO"] = "Ошибка согласования параметров видео";
 $MESS["MOBILEAPP_ERROR_NETWORK"] = "Сетевая ошибка";
 $MESS["IM_PHONE_REC_ON"] = "Разговор будет записан";
-$MESS["IM_PHONE_REC_NOW"] = "Идет запись разговора";
+$MESS["IM_PHONE_REC_NOW"] = "Идёт запись разговора";
 $MESS["IM_PHONE_REC_DONE"] = "Запись разговора сохранена";
 $MESS["IM_PHONE_REC_OFF"] = "Разговор не будет записан, включить запись можно в настройках телефонии";
-$MESS["IM_PHONE_LEAD_SAVED"] = "Лид сохранен, вы сможете продолжить работу с ним позже";
+$MESS["IM_PHONE_LEAD_SAVED"] = "Лид сохранён, вы сможете продолжить работу с ним позже";
 
 $MESS["IM_PHONE_ACTIONS"] = "Выберите действие";
 $MESS["IM_PHONE_ACTION_C_DEAL"] = "Создать сделку";
@@ -22,7 +22,7 @@ $MESS["IM_PHONE_ACTION_T_DEAL"] = "Перейти в сделку";
 $MESS["IM_PHONE_ACTION_C_MENU"] = "Создать на основании сделки";
 $MESS["IM_PHONE_ACTION_CRM_COMMENT"] = "Комментарий";
 $MESS["IM_PHONE_ACTION_CRM_DEAL"] = "Сделку";
-$MESS["IM_PHONE_ACTION_CRM_INVOICE"] = "Счет";
+$MESS["IM_PHONE_ACTION_CRM_INVOICE"] = "Счёт";
 
 $MESS["IM_PHONE_CALL_VOICE_FROM"] = "Звонок от #PHONE#";
 $MESS["IM_PHONE_CALL_TO_PHONE"] = "поступил на номер #PHONE#";
@@ -59,7 +59,7 @@ $MESS["IM_PHONE_ERR_LICENSE"] = "Ошибка проверки лицензии.
 $MESS["IM_PHONE_ERR_NO_MIC"] = "Не удалось получить доступ к микрофону";
 $MESS["IM_PHONE_NO_EMERGENCY"] = "Телефонию в Битрикс24 нельзя использовать для вызова экстренной помощи";
 $MESS["IM_PHONE_NO_MONEY"] = "У вас недостаточно средств для совершения звонка";
-$MESS["IM_PHONE_PAY_URL_NEW"] = "Пополнить счет вы можете в разделе \"Настройки телефонии\"";
+$MESS["IM_PHONE_PAY_URL_NEW"] = "Пополнить счёт вы можете в разделе \"Настройки телефонии\"";
 $MESS["IM_PHONE_OUTGOING"] = "исходящий звонок";
 $MESS["IM_PHONE_OUTGOING_REST"] = "Звонок выполняется через приложение #APP_NAME#";
 
@@ -94,3 +94,6 @@ $MESS["IM_M_CALL_ERR_NO_USER_ID"] = "Ошибка: пользователь не
 $MESS["IM_CRM_BTN_NEW_CONTACT"] = "Создать новый контакт";
 $MESS["IM_CRM_BTN_NEW_LEAD"] = "Создать новый лид";
 
+$MESS["IM_M_CALL_NEW_DEAL"] = "Новая сделка";
+$MESS["IM_M_CALL_NEW_LEAD"] = "Новый лид";
+$MESS["IM_M_CALL_NEW_CONTACT"] = "Новый контакт";

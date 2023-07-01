@@ -3,7 +3,7 @@
  */
 jn.define('layout/ui/fields/select', (require, exports, module) => {
 
-	const { arrowDown } = require('assets/common');
+	const { chevronDown } = require('assets/common');
 	const { BaseSelectField } = require('layout/ui/fields/base-select');
 	const { stringify } = require('utils/string');
 	const { isEqual } = require('utils/object');
@@ -196,7 +196,7 @@ jn.define('layout/ui/fields/select', (require, exports, module) => {
 					Image({
 						style: this.styles.arrowImage,
 						svg: {
-							content: arrowDown(),
+							content: chevronDown(),
 						},
 					}),
 				),
@@ -589,7 +589,7 @@ jn.define('layout/ui/fields/select', (require, exports, module) => {
 							height: 5,
 						},
 						svg: {
-							content: arrowDown(this.getTitleColor()),
+							content: chevronDown(this.getTitleColor()),
 						},
 					},
 				),

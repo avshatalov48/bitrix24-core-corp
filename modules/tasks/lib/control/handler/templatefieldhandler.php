@@ -180,8 +180,8 @@ class TemplateFieldHandler
 		}
 
 		if (
-			(string) $this->fields['SITE_ID'] === ''
-			|| (string) $this->fields['SITE_ID'] === \CTaskTemplates::CURRENT_SITE_ID
+			(string)($this->fields['SITE_ID'] ?? null) === ''
+			|| (string)($this->fields['SITE_ID'] ?? null) === \CTaskTemplates::CURRENT_SITE_ID
 		)
 		{
 			$this->fields['SITE_ID'] = SITE_ID;
@@ -408,7 +408,7 @@ class TemplateFieldHandler
 		if (
 			(
 				!$this->templateId
-				&& (int) $this->fields['TPARAM_TYPE'] !== \CTaskTemplates::TYPE_FOR_NEW_USER
+				&& (int)($this->fields['TPARAM_TYPE'] ?? null) !== \CTaskTemplates::TYPE_FOR_NEW_USER
 			)
 			||
 			(
@@ -500,7 +500,7 @@ class TemplateFieldHandler
 		}
 
 		if (
-			$this->fields['TPARAM_TYPE']
+			($this->fields['TPARAM_TYPE'] ?? null)
 			&& (int) $this->fields['TPARAM_TYPE'] !== \CTaskTemplates::TYPE_FOR_NEW_USER
 		)
 		{
@@ -510,12 +510,12 @@ class TemplateFieldHandler
 		if (
 			(
 				!$this->templateId
-				&& (int) $this->fields['TPARAM_TYPE'] === \CTaskTemplates::TYPE_FOR_NEW_USER
+				&& (int)($this->fields['TPARAM_TYPE'] ?? null) === \CTaskTemplates::TYPE_FOR_NEW_USER
 			)
 			||
 			(
 				$this->templateId
-				&& (int) $this->templateData['TPARAM_TYPE'] === \CTaskTemplates::TYPE_FOR_NEW_USER
+				&& (int)($this->templateData['TPARAM_TYPE'] ?? null) === \CTaskTemplates::TYPE_FOR_NEW_USER
 			)
 		)
 		{

@@ -6,6 +6,7 @@ use Bitrix\Main\Application;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
 use Bitrix\Tasks\Internals\Log\Log;
+use Bitrix\Tasks\Internals\Registry\TaskRegistry;
 use Bitrix\Tasks\Internals\Task\LabelTable;
 use Bitrix\Tasks\Internals\Task\TagTable;
 use Exception;
@@ -67,11 +68,19 @@ class TagConverter
 			$id = $this->getIdInLabelTable($tag);
 			if (is_null($id))
 			{
-				$result = LabelTable::add([
-					'NAME' => trim($tag['NAME']),
-					'USER_ID' => (int)$tag['GROUP_ID'] === 0 ? $tag['USER_ID'] : 0,
-					'GROUP_ID' => $tag['GROUP_ID'],
-				]);
+				try
+				{
+					$result = LabelTable::add([
+						'NAME' => trim($tag['NAME']),
+						'USER_ID' => (int)$tag['GROUP_ID'] === 0 ? $tag['USER_ID'] : 0,
+						'GROUP_ID' => $tag['GROUP_ID'],
+					]);
+				}
+				catch (\Exception $e)
+				{
+					(new Log())->collect("Unable to convert tag {$tag['NAME']}: {$e->getMessage()}");
+					continue;
+				}
 
 				$id = $result->isSuccess() ? $result->getId() : null;
 			}
@@ -115,7 +124,7 @@ class TagConverter
 			],
 			'filter' => [
 				'=USER_ID' => (int)$tag['GROUP_ID'] === 0 ? $tag['USER_ID'] : 0,
-				'=NAME' => $tag['NAME'],
+				'=NAME' => trim($tag['NAME']),
 				'=GROUP_ID' => $tag['GROUP_ID'],
 			],
 		])->fetch();

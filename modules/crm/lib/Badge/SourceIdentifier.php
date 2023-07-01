@@ -11,6 +11,7 @@ class SourceIdentifier
 	private int $entityId;
 
 	public const CRM_OWNER_TYPE_PROVIDER = 'crm_owner';
+	public const CALENDAR_SHARING_TYPE_PROVIDER = 'calendar_sharing';
 
 	public function __construct(string $providerId, int $entityTypeId, int $entityId)
 	{
@@ -37,7 +38,7 @@ class SourceIdentifier
 
 	private function setEntityTypeId(int $entityTypeId): SourceIdentifier
 	{
-		if ($entityTypeId <= 0)
+		if ($entityTypeId < 0)
 		{
 			throw new ArgumentOutOfRangeException('The provided $entityTypeId is invalid', 1);
 		}

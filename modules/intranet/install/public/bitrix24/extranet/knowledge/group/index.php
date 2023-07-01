@@ -15,7 +15,10 @@ require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php');?>
 		array(
 			'NOT_CHECK_DOMAIN' => 'Y',
 			'SITE_TYPE' => 'GROUP',
-			'SHOW_EDIT_PANEL' => 'N',
+			'PAGE_URL_LANDING_VIEW' => SITE_DIR . 'kb/group/wiki/#site_edit#/view/#landing_edit#/',
+			'PAGE_URL_SITE_SHOW' => SITE_DIR . 'kb/group/wiki/#site_edit#/',
+			'PAGE_URL_SITES' => SITE_DIR . 'kb/group/',
+			'SHOW_EDIT_PANEL' => 'Y',
 			'CHECK_PERMISSIONS' => 'Y',
 			'DRAFT_MODE' => 'Y'
 		),

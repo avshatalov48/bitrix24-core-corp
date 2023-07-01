@@ -5,6 +5,14 @@ export class EntityEditorImage extends BX.UI.EntityEditorImage
 {
 	loadInput()
 	{
+		const context = {};
+		if (this._schemeElement)
+		{
+			context.ownerEntityTypeId = this._schemeElement.getDataIntegerParam('ownerEntityTypeId', null);
+			context.ownerEntityId = this._schemeElement.getDataIntegerParam('ownerEntityId', null);
+			context.ownerEntityCategoryId = this._schemeElement.getDataIntegerParam('ownerEntityCategoryId', null);
+			context.permissionToken = this._schemeElement.getDataStringParam('permissionToken', null);
+		}
 		Ajax.runAction(
 			'crm.entity.renderImageInput',
 			{
@@ -12,7 +20,8 @@ export class EntityEditorImage extends BX.UI.EntityEditorImage
 					entityTypeName: this._editor.getEntityTypeName(),
 					entityId: this._editor.getEntityId(),
 					fieldName: this.getDataKey(),
-					fieldValue: this.getValue()
+					fieldValue: this.getValue(),
+					context,
 				}
 			}
 		).then((result) => {

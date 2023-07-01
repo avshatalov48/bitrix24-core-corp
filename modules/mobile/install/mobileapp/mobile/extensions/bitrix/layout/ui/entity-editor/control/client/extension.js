@@ -5,6 +5,7 @@ jn.define('layout/ui/entity-editor/control/client', (require, exports, module) =
 
 	const { get } = require('utils/object');
 	const { CRM_COMPANY, CRM_CONTACT } = EntitySelectorFactory.Type;
+	const { EntityEditorField } = require('layout/ui/entity-editor/control/field');
 
 	let SelectorProcessing;
 
@@ -33,14 +34,21 @@ jn.define('layout/ui/entity-editor/control/client', (require, exports, module) =
 				selectorTitle: this.getTitle(),
 				reloadEntityListFromProps: get(this.editor, ['settings', 'loadFromModel'], false),
 				entityList: this.prepareEntityList(),
+				compound: this.getDataParam('compound', []),
 				clientLayout: Number(get(this.editor, ['settings', 'config', 'options', 'client_layout'], 2)),
 				owner: { id: this.editor.entityId },
 			};
 		}
 
+		isMyCompany()
+		{
+			return this.getDataParam('enableMyCompanyOnly', false);
+		}
+
 		getModelDataByType(type)
 		{
-			const entityInfo = get(this.model, ['data', 'CLIENT_INFO', `${type.toUpperCase()}_DATA`], []);
+			const entityInfoName = this.getDataParam('info', `${this.id}_INFO`);
+			const entityInfo = get(this.model, ['data', entityInfoName, `${type.toUpperCase()}_DATA`], []);
 
 			return entityInfo.map(SelectorProcessing.prepareContact);
 		}
@@ -52,43 +60,51 @@ jn.define('layout/ui/entity-editor/control/client', (require, exports, module) =
 				return {};
 			}
 
-			const entityTypeName = this.editor.entityTypeName;
-			const companyKey = CRM_COMPANY.toUpperCase();
-			const companyValue = this.getValueByType(CRM_COMPANY);
-			const contactKey = CRM_CONTACT.toUpperCase();
-			const contactValue = this.getValueByType(CRM_CONTACT);
+			const result = {};
+			const compound = this.getDataParam('compound', []);
 
-			switch (entityTypeName)
+			for (const entity of compound)
 			{
-				case companyKey:
-					return {
-						[`${contactKey}_ID`]: contactValue,
-					};
+				const { name, type, entityTypeName } = entity;
 
-				case contactKey:
-					return {
-						[`${companyKey}_IDS`]: companyValue,
-					};
-
-				default:
-					return {
-						[`${companyKey}_ID`]: companyValue,
-						[`${contactKey}_IDS`]: contactValue,
-					};
+				result[name] = this.getValueByType(entityTypeName, type);
 			}
+
+			return result;
 		}
 
-		getValueByType(type)
+		getValueByType(entityTypeName, type)
 		{
-			const entityValue = get(this.state, ['value', type], []);
-			const entityIds = entityValue.length ? entityValue.map(({ id }) => (Number(id))) : [];
+			const entityValueName = entityTypeName.toLowerCase();
+			const entityValue = get(this.state, ['value', entityValueName], []);
+			const entityIds = Array.isArray(entityValue)
+				? entityValue
+					.filter(({ deleted = false }) => !deleted)
+					.map(({ id }) => (Number(id)))
+				: [];
 
-			if (this.editor.entityTypeName === 'DEAL' && type === CRM_COMPANY)
+			let isMultiple = true;
+
+			if (entityValueName === CRM_COMPANY)
 			{
-				return entityIds.length ? entityIds[0] : '';
+				isMultiple = type === 'multiple_company';
+			}
+			else if (entityValueName === CRM_CONTACT)
+			{
+				isMultiple = type === 'multiple_contact';
 			}
 
-			return entityIds;
+			if (isMultiple)
+			{
+				return entityIds;
+			}
+
+			if (this.editor.entityTypeName === 'store_document' && entityValueName === CRM_COMPANY)
+			{
+				return entityIds;
+			}
+
+			return entityIds.length ? entityIds[0] : '';
 		}
 
 		getValueFromModel(defaultValue = '')

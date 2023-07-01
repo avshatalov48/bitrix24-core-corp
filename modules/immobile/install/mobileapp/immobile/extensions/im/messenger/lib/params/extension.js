@@ -6,7 +6,7 @@
  */
 jn.define('im/messenger/lib/params', (require, exports, module) => {
 
-	const { Loc } = jn.require('loc');
+	const { Loc } = require('loc');
 
 	/**
 	 * @class MessengerParams
@@ -30,6 +30,11 @@ jn.define('im/messenger/lib/params', (require, exports, module) => {
 		set(key, value)
 		{
 			BX.componentParameters.set(key, value);
+		}
+
+		getSiteDir()
+		{
+			return this.get('SITE_DIR', '/');
 		}
 
 		getUserId()

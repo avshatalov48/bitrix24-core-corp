@@ -47,7 +47,7 @@ $tzOffset = intval($arResult['AUX_DATA']['UTC_TIME_ZONE_OFFSET']);
                 </span>
 					<span class="task-option-fn"><?=Loc::getMessage('TASKS_TTDP_REPLICATION_DAY_INTERVAL')?></span>
 	                <span class="task-options-inp-container task-options-inp-int">
-	                    <input type="text" name="<?=$prefix?>[DAILY_MONTH_INTERVAL]" value="<?=intval($data['DAILY_MONTH_INTERVAL'])?>" class="js-id-replication-daily-month-interval task-options-inp">
+	                    <input type="text" name="<?=$prefix?>[DAILY_MONTH_INTERVAL]" value="<?= (int)($data['DAILY_MONTH_INTERVAL'] ?? null) ?>" class="js-id-replication-daily-month-interval task-options-inp">
 	                </span>
 					<span class="task-option-fn"><?=Loc::getMessage('TASKS_TTDP_REPLICATION_MONTH_SHORT')?></span>
 				</div>

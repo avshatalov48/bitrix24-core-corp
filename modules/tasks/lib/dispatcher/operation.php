@@ -25,6 +25,7 @@ final class Operation
 	protected $namespace = 	false;
 
 	protected $parsed = 	array();
+	private Collection $errors;
 
 	public function __construct($operation, array $parameters = array())
 	{
@@ -155,30 +156,38 @@ final class Operation
 	protected function getMethodSignature()
 	{
 		$info = new \ReflectionMethod($this->parsed['CLASS'], $this->parsed['METHOD']);
-
-		$result = array(
+		$result = [
 			'STATIC' => $info->isStatic(),
-			'ARGUMENTS' => array()
-		);
+			'ARGUMENTS' => [],
+		];
 		$arguments = $info->getParameters();
-		if(is_array($arguments))
+		if (is_array($arguments))
 		{
-			foreach($arguments as $arg)
+			foreach ($arguments as $arg)
 			{
 				$optional = $arg->isOptional();
-				$default = null;
-				if($optional)
+				$argName = ToLower($arg->getName());
+				$argType = $arg->getType();
+				if (!$argType)
 				{
-					$default = $arg->getDefaultValue();
+					$isArrayType = false;
+				}
+				else
+				{
+					$types = ($argType instanceof \ReflectionUnionType ? $argType->getTypes() : [$argType]);
+					$isArrayType = in_array(
+						'array',
+						array_map(static fn (\ReflectionNamedType $t) => $t->getName(), $types),
+						true
+					);
 				}
 
-				$argName = ToLower($arg->getName());
-				$result['ARGUMENTS'][$argName] = array(
-					'NAME' => 		    $argName,
-					'TYPE' => 		    $arg->isArray() ? self::ARGUMENT_TYPE_ARRAY : self::ARGUMENT_TYPE_STRING,
-					'REQUIRED' => 	    !$optional,
-					'DEFAULT_VALUE' =>  $default,
-				);
+				$result['ARGUMENTS'][$argName] = [
+					'NAME' => $argName,
+					'TYPE' => ($isArrayType ? self::ARGUMENT_TYPE_ARRAY : self::ARGUMENT_TYPE_STRING),
+					'REQUIRED' => !$optional,
+					'DEFAULT_VALUE' => ($optional ? $arg->getDefaultValue() : null),
+				];
 			}
 		}
 

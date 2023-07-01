@@ -1,5 +1,9 @@
-<?
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+<?php
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 use Bitrix\Bizproc\BaseType\Value;
 use Bitrix\Crm\EntityBankDetail;
@@ -187,7 +191,7 @@ class CBPCrmGenerateEntityDocumentActivity
 			$result = $document->enablePublicUrl();
 			if ($result->isSuccess())
 			{
-				$this->DocumentUrl = $document->getPublicUrl();
+				$this->DocumentUrl = (string)$document->getPublicUrl();
 			}
 		}
 
@@ -657,6 +661,8 @@ class CBPCrmGenerateEntityDocumentActivity
 
 		if($isRobot)
 		{
+			$value = htmlspecialcharsbx($value);
+
 			$result = '<div class="bizproc-automation-popup-settings" data-placeholder="'.$placeholder.'">';
 			$result .= '<span class="bizproc-automation-popup-settings-title bizproc-automation-popup-settings-title-autocomplete">';
 			if($placeholderUri)

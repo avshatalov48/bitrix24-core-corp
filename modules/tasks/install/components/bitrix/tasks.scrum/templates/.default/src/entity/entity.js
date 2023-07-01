@@ -41,6 +41,8 @@ export class Entity extends EventEmitter
 
 		this.setEntityParams(params);
 
+		this.observerLoadItems = null;
+
 		this.node = null;
 		this.listItems = null;
 
@@ -50,6 +52,8 @@ export class Entity extends EventEmitter
 		this.blank = null;
 		this.dropzone = null;
 		this.emptySearchStub = null;
+
+		this.hideCont = false;
 	}
 
 	setEntityParams(params: EntityParams)
@@ -144,6 +148,11 @@ export class Entity extends EventEmitter
 	isBacklog(): boolean
 	{
 		return this.getEntityType() === 'backlog';
+	}
+
+	isHideContent(): boolean
+	{
+		return this.hideCont;
 	}
 
 	isActive(): boolean
@@ -324,7 +333,10 @@ export class Entity extends EventEmitter
 		if (!this.isCompleted())
 		{
 			this.itemsLoaderNode = this.getNode().querySelector('.tasks-scrum-entity-items-loader');
-			this.bindItemsLoader(this.itemsLoaderNode);
+			if (this.getNumberItems() >= this.pageSize)
+			{
+				this.bindItemsLoader();
+			}
 		}
 
 		this.adjustListItemsWidth();
@@ -509,31 +521,33 @@ export class Entity extends EventEmitter
 		return this.groupModeItems.has(item.getId());
 	}
 
-	getGroupModeItems(): Map
+	getGroupModeItems(): Map<number, Item>
 	{
 		return this.groupModeItems;
 	}
 
-	bindItemsLoader(loader?: HTMLElement)
+	bindItemsLoader()
 	{
-		if (!loader)
+		if (!this.itemsLoaderNode)
 		{
-			if (this.itemsLoaderNode)
-			{
-				loader = this.itemsLoaderNode;
-			}
-			else
-			{
-				return;
-			}
+			return;
 		}
+
+		Dom.addClass(this.itemsLoaderNode, '--waiting');
+
+		this.showItemsLoader();
 
 		if (Type.isUndefined(IntersectionObserver))
 		{
 			return;
 		}
 
-		const observer = new IntersectionObserver((entries) =>
+		if (this.observerLoadItems)
+		{
+			this.observerLoadItems.disconnect();
+		}
+
+		this.observerLoadItems = new IntersectionObserver((entries) =>
 			{
 				if (entries[0].isIntersecting === true)
 				{
@@ -548,7 +562,22 @@ export class Entity extends EventEmitter
 			}
 		);
 
-		observer.observe(loader);
+		this.observerLoadItems.observe(this.itemsLoaderNode);
+	}
+
+	unbindItemsLoader()
+	{
+		if (this.observerLoadItems)
+		{
+			this.observerLoadItems.disconnect();
+		}
+
+		if (this.itemsLoaderNode)
+		{
+			this.hideItemsLoader();
+
+			Dom.removeClass(this.itemsLoaderNode, '--waiting');
+		}
 	}
 
 	setActiveLoadItems(value: boolean)
@@ -586,6 +615,14 @@ export class Entity extends EventEmitter
 		}
 
 		return this.itemLoader;
+	}
+
+	hideItemsLoader()
+	{
+		if (this.itemLoader)
+		{
+			this.itemLoader.hide();
+		}
 	}
 
 	setStats() {}

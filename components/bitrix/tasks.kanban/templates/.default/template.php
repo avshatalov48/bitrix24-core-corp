@@ -29,7 +29,9 @@ use Bitrix\Tasks\UI\ScopeDictionary;
 
 Loc::loadMessages(__FILE__);
 
-$isIFrame = $_REQUEST['IFRAME'] == 'Y';
+$isBitrix24Template = (SITE_TEMPLATE_ID === 'bitrix24');
+
+$isIFrame = isset($_REQUEST['IFRAME']) && $_REQUEST['IFRAME'] === 'Y';
 
 $data = $arResult['DATA'];
 
@@ -68,7 +70,8 @@ $clientTime = date(Date::convertFormatToPhp(FORMAT_DATETIME), (time() + \CTimeZo
 	'ui.dialogs.messagebox',
 	'ui.counter',
 	'ui.label',
-	'ui.tour'
+	'ui.tour',
+	'tasks.runtime',
 ]);
 
 $APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
@@ -108,7 +111,10 @@ if (isset($arParams['INCLUDE_INTERFACE_HEADER']) && $arParams['INCLUDE_INTERFACE
     }
 
 	$showViewMode = (
-		$arParams['KANBAN_SHOW_VIEW_MODE'] == 'Y'
+		(
+			isset($arParams['KANBAN_SHOW_VIEW_MODE'])
+			&& $arParams['KANBAN_SHOW_VIEW_MODE'] === 'Y'
+		)
 		|| $isMyPlan
 		|| $isTimeline
 		|| !($workMode == StagesTable::WORK_MODE_GROUP && $arParams['GROUP_ID'] > 0)
@@ -193,26 +199,28 @@ if (isset($arParams['INCLUDE_INTERFACE_HEADER']) && $arParams['INCLUDE_INTERFACE
             'FILTER' => $filter,
             'PRESETS' => $presets,
 
-            'USER_ID' => $arParams['USER_ID'],
-            'GROUP_ID' => $arParams['GROUP_ID'],
-            'SPRINT_ID' => $arParams['SPRINT_ID'],
-            'SPRINT_SELECTED' => $arParams['SPRINT_SELECTED'],
-            'MENU_GROUP_ID' => !$arParams['GROUP_ID_FORCED'] || $arParams['PERSONAL'] == 'Y'
-                ? $arParams['GROUP_ID'] : 0,
+            'USER_ID' => $arParams['USER_ID'] ?? null,
+            'GROUP_ID' => $arParams['GROUP_ID'] ?? null,
+            'SPRINT_ID' => $arParams['SPRINT_ID'] ?? null,
+            'SPRINT_SELECTED' => $arParams['SPRINT_SELECTED'] ?? null,
+            'MENU_GROUP_ID' =>
+				!array_key_exists('GROUP_ID_FORCED', $arParams) || !$arParams['GROUP_ID_FORCED'] || (isset($arParams['PERSONAL']) && $arParams['PERSONAL'] === 'Y')
+                ? $arParams['GROUP_ID']
+				: 0,
 
             'SHOW_VIEW_MODE' => ($showViewMode ? 'Y' : 'N'),
 			'SHOW_FILTER' => ($isSprintView && $group->isScrumProject() ? 'N' : 'Y'),
             'USE_AJAX_ROLE_FILTER' => $arParams['PERSONAL'] == 'Y' ? 'Y' : 'N',
 
-            'MARK_ACTIVE_ROLE' => $arParams['MARK_ACTIVE_ROLE'],
-            'MARK_SECTION_ALL' => $arParams['MARK_SECTION_ALL'],
+            'MARK_ACTIVE_ROLE' => $arParams['MARK_ACTIVE_ROLE'] ?? null,
+            'MARK_SECTION_ALL' => $arParams['MARK_SECTION_ALL'] ?? null,
 //			'MARK_SPECIAL_PRESET' => $arParams['MARK_SPECIAL_PRESET'],
-			'MARK_SECTION_PROJECTS' => $arParams['MARK_SECTION_PROJECTS'],
-			'PROJECT_VIEW' => $arParams['PROJECT_VIEW'],
+			'MARK_SECTION_PROJECTS' => $arParams['MARK_SECTION_PROJECTS'] ?? null,
+			'PROJECT_VIEW' => $arParams['PROJECT_VIEW'] ?? null,
 
-            'PATH_TO_USER_TASKS' => $arParams['~PATH_TO_USER_TASKS'],
-            'PATH_TO_USER_TASKS_TASK' => $arParams['~PATH_TO_USER_TASKS_TASK'],
-            'PATH_TO_USER_TASKS_TEMPLATES' => $arParams['~PATH_TO_USER_TASKS_TEMPLATES'],
+            'PATH_TO_USER_TASKS' => $arParams['~PATH_TO_USER_TASKS'] ?? null,
+            'PATH_TO_USER_TASKS_TASK' => $arParams['~PATH_TO_USER_TASKS_TASK'] ?? null,
+            'PATH_TO_USER_TASKS_TEMPLATES' => $arParams['~PATH_TO_USER_TASKS_TEMPLATES'] ?? null,
             'PATH_TO_USER_TASKS_VIEW' =>
                 isset($arParams['PATH_TO_USER_TASKS_VIEW'])
                     ? $arParams['PATH_TO_USER_TASKS_VIEW'] : '',
@@ -223,8 +231,8 @@ if (isset($arParams['INCLUDE_INTERFACE_HEADER']) && $arParams['INCLUDE_INTERFACE
                 isset($arParams['PATH_TO_USER_TASKS_PROJECTS_OVERVIEW'])
                     ? $arParams['PATH_TO_USER_TASKS_PROJECTS_OVERVIEW'] : '',
 
-            'PATH_TO_GROUP_TASKS_TASK' => $arParams['~PATH_TO_GROUP_TASKS_TASK'],
-            'PATH_TO_GROUP_TASKS' => $arParams['~PATH_TO_GROUP_TASKS'],
+            'PATH_TO_GROUP_TASKS_TASK' => $arParams['~PATH_TO_GROUP_TASKS_TASK'] ?? null,
+            'PATH_TO_GROUP_TASKS' => $arParams['~PATH_TO_GROUP_TASKS'] ?? null,
             'PATH_TO_GROUP' =>
                 isset($arParams['PATH_TO_GROUP'])
                     ? $arParams['PATH_TO_GROUP'] : '',
@@ -235,7 +243,7 @@ if (isset($arParams['INCLUDE_INTERFACE_HEADER']) && $arParams['INCLUDE_INTERFACE
                 isset($arParams['PATH_TO_GROUP_TASKS_REPORT'])
                     ? $arParams['PATH_TO_GROUP_TASKS_REPORT'] : '',
 
-            'PATH_TO_USER_PROFILE' => $arParams['~PATH_TO_USER_PROFILE'],
+            'PATH_TO_USER_PROFILE' => $arParams['~PATH_TO_USER_PROFILE'] ?? null,
             'PATH_TO_MESSAGES_CHAT' =>
                 isset($arParams['PATH_TO_MESSAGES_CHAT'])
                     ? $arParams['PATH_TO_MESSAGES_CHAT'] : '',
@@ -246,21 +254,41 @@ if (isset($arParams['INCLUDE_INTERFACE_HEADER']) && $arParams['INCLUDE_INTERFACE
                 isset($arParams['PATH_TO_CONPANY_DEPARTMENT'])
                     ? $arParams['PATH_TO_CONPANY_DEPARTMENT'] : '',
 
-            'USE_GROUP_SELECTOR' => $arParams['GROUP_ID'] > 0 && !$arParams['GROUP_ID_FORCED'] || $arParams['PERSONAL'] == 'Y'
+            'USE_GROUP_SELECTOR' =>
+				(isset($arParams['GROUP_ID']) && $arParams['GROUP_ID'] > 0)
+				&& (!array_key_exists('GROUP_ID_FORCED', $arParams) || !$arParams['GROUP_ID_FORCED'])
+				|| (isset($arParams['PERSONAL']) && $arParams['PERSONAL'] === 'Y')
                 ? 'N' : 'Y',
             'USE_EXPORT' => 'N',
             'SHOW_QUICK_FORM' => 'N',
 
 
 			'POPUP_MENU_ITEMS' =>
-				($arParams['PERSONAL'] == 'Y' && $arResult['ACCESS_SORT_PERMS'])
-				|| (
-					$arParams['PERSONAL'] != 'Y' && !$emptyKanban &&
-					!($arParams['SPRINT_SELECTED'] == 'Y' && !$arParams['SPRINT_ID'])
+				(
+					isset($arParams['PERSONAL'])
+					&& $arParams['PERSONAL'] == 'Y'
+					&& isset($arResult['ACCESS_SORT_PERMS'])
+					&& $arResult['ACCESS_SORT_PERMS']
+				)
+				||
+				(
+					isset($arParams['PERSONAL'])
+					&& $arParams['PERSONAL'] !== 'Y'
+					&& !$emptyKanban
+					&&
+					!(
+						isset($arParams['SPRINT_SELECTED'])
+						&& $arParams['SPRINT_SELECTED'] === 'Y'
+						&&
+						(
+							!array_key_exists('SPRINT_ID', $arParams)
+							|| !$arParams['SPRINT_ID']
+						)
+					)
 				)
 					? $popupSortItems
 					: [],
-            'DEFAULT_ROLEID' => $arParams['DEFAULT_ROLEID'],
+            'DEFAULT_ROLEID' => $arParams['DEFAULT_ROLEID'] ?? null,
 
 			'SCOPE' => $scope,
         ),
@@ -370,7 +398,8 @@ if (isset($arParams['INCLUDE_INTERFACE_HEADER']) && $arParams['INCLUDE_INTERFACE
                     canAddItem: <?= $arResult['ACCESS_CREATE_PERMS'] ? 'true' : 'false'?>,
                     canSortItem: <?= $arResult['ACCESS_SORT_PERMS'] ? 'true' : 'false'?>
                 },
-                admins: <?= \CUtil::PhpToJSObject(array_values($arResult['ADMINS']))?>
+                admins: <?= \CUtil::PhpToJSObject(array_values($arResult['ADMINS']))?>,
+				customSectionsFields: <?= \CUtil::phpToJSObject($arResult['POPUP_FIELDS_SECTIONS']);?>,
             },
             messages: {
                 ITEM_TITLE_PLACEHOLDER: "<?= \CUtil::JSEscape(Loc::getMessage('KANBAN_ITEM_TITLE_PLACEHOLDER'))?>",
@@ -505,34 +534,3 @@ CJSCore::Init("spotlight");
         TASKS_CLOSE_PAGE_CONFIRM: '<?=GetMessageJS('TASKS_CLOSE_PAGE_CONFIRM')?>'
     });
 </script>
-<?php //endif
-if ($arParams['BACKGROUND_FOR_TASK'])
-{
-	if ((int)$arParams['GROUP_ID'] > 0 )
-	{
-		$context = SliderFactory::GROUP_CONTEXT;
-		$ownerId = (int)$arParams['GROUP_ID'];
-	}
-	else
-	{
-		$context = SliderFactory::PERSONAL_CONTEXT;
-		$ownerId = (int)$arParams['USER_ID'];
-	}
-
-	$taskId = (int)$arParams['TASK_ID'];
-
-	$factory = new SliderFactory();
-	try
-	{
-		$factory
-			->setAction($arParams['TASK_ACTION'])
-			->setQueryParams($arParams['GET_PARAMS']);
-
-		$slider = $factory->createEntitySlider($taskId, SliderFactory::TASK, $ownerId, $context);
-		$slider->open();
-	}
-	catch (SliderException $exception)
-	{
-		$exception->show();
-	}
-}

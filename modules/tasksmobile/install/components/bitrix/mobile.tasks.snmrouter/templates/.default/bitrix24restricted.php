@@ -13,8 +13,8 @@ if (false && $USER->CanDoOperation('bitrix24_config'))
 ?>
 <div class="mobile-grid mobile-grid-empty" >
 	<div class="mobile-grid-stub">
-		<div class="mobile-grid-stub-text2"><?=GetMessage("TASK_RESTRICTED_ADMIN1")?></div>
-		<a href="/settings/business_tools.php" target="_blank" class="webform-small-button webform-small-button-blue"><?=GetMessage("TASK_RESTRICTED_ADMIN2")?></a>
+		<div class="mobile-grid-stub-text2"><?=GetMessage("TASK_RESTRICTED_ADMIN1_MSGVER_1")?></div>
+		<a href="/settings/business_tools.php" target="_blank" class="webform-small-button webform-small-button-blue"><?=GetMessage("TASK_RESTRICTED_ADMIN2_MSGVER_1")?></a>
 	</div>
 </div>
 <?

@@ -14,9 +14,9 @@ use Bitrix\Main\Type;
  *
  * <<< ORMENTITYANNOTATION
  * @method static EO_CallListItem_Query query()
- * @method static EO_CallListItem_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_CallListItem_Result getByPrimary($primary, array $parameters = [])
  * @method static EO_CallListItem_Result getById($id)
- * @method static EO_CallListItem_Result getList(array $parameters = array())
+ * @method static EO_CallListItem_Result getList(array $parameters = [])
  * @method static EO_CallListItem_Entity getEntity()
  * @method static \Bitrix\Crm\CallList\Internals\EO_CallListItem createObject($setDefaultValues = true)
  * @method static \Bitrix\Crm\CallList\Internals\EO_CallListItem_Collection createCollection()

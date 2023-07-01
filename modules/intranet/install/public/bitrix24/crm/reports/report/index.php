@@ -7,7 +7,7 @@ $APPLICATION->SetTitle(GetMessage("TITLE")/*"־עקועû"*/);
 	"",
 	Array(
 		"SEF_MODE" => "Y",
-		"REPORT_ID" => $_REQUEST["report_id"],
+		"REPORT_ID" => $_REQUEST["report_id"] ?? '',
 		"SEF_FOLDER" => "/crm/reports/report/",
 		"SEF_URL_TEMPLATES" => Array(
 			"index" => "index.php",

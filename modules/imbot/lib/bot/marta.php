@@ -648,6 +648,7 @@ class Marta extends Base
 				'FULL' => true,
 				'USER_ID' => $userId
 			));
+			$eventsForMessage = [];
 			if (is_array($events['DATA']['EVENTS']))
 			{
 				foreach ($events['DATA']['EVENTS'] as $event)
@@ -660,6 +661,10 @@ class Marta extends Base
 					{
 						$eventTimeFormatted = Loc::getMessage('IMBOT_BOT_MESSAGE_CALEND_3', Array('#TIME_1#' => $event['TIME_FROM'], '#TIME_2#' => $event['TIME_TO']), $language);
 					}
+					// if (count($eventsForMessage) <= 10)
+					// {
+					// 	$eventsForMessage[] = $eventTimeFormatted . ' - ' .$event['NAME'];
+					// }
 					$attach->AddGrid(Array(
 						Array(
 							"VALUE" => $eventTimeFormatted,
@@ -682,6 +687,10 @@ class Marta extends Base
 			if (!$attach->IsEmpty())
 			{
 				$answer .= Loc::getMessage('IMBOT_BOT_MESSAGE_CALEND_1_'.mt_rand(1, 4), null, $language);
+				// if (!empty($eventsForMessage))
+				// {
+				// 	$attach->SetDescription(implode(', ', $eventsForMessage));
+				// }
 				$attaches[] = $attach;
 			}
 		}

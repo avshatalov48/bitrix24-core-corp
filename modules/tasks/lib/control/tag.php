@@ -44,15 +44,22 @@ class Tag
 			{
 				$this->moveToGroup($taskId, $newGroupId);
 			}
-			self::invalidateCache();
 
-			return;
+			$currentTags = $this->getTaskTags($taskId);
+			if (
+				empty(array_diff($currentTags, $tags))
+				&& empty(array_diff($tags, $currentTags))
+			)
+			{
+				self::invalidateCache();
+				return;
+			}
 		}
 
 		$add = $this->getTagsForAdd($taskId, $tags);
 		$delete = $onlyAdd ? [] : $this->getTagsToDelete($taskId, $tags);
 
-		$groupId = $this->getGroupId($taskId);
+		$groupId = $newGroupId > 0 ? $newGroupId : $this->getGroupId($taskId);
 
 		if (!$groupId)
 		{
@@ -206,13 +213,7 @@ class Tag
 		{
 			return;
 		}
-		$this->cacheUserTags();
-		$tagNames = $this->getNames(self::$storage[self::USER_TAGS_CACHE]);
 
-		if (in_array($newName, $tagNames, true))
-		{
-			return;
-		}
 		LabelTable::update($tagId, [
 			'NAME' => $newName,
 		]);
@@ -482,7 +483,7 @@ class Tag
 	public function getGroupId(int $taskId): int
 	{
 		$task = TaskRegistry::getInstance()->get($taskId);
-		if ($task)
+		if (isset($task))
 		{
 			return $task['GROUP_ID'];
 		}
@@ -509,7 +510,7 @@ class Tag
 
 		$implode = implode(',', $implode);
 
-		$sql = 'INSERT INTO ' . LabelTable::getTableName() . " (`NAME`, `GROUP_ID`) VALUES {$implode}";
+		$sql = 'INSERT IGNORE INTO ' . LabelTable::getTableName() . " (`NAME`, `GROUP_ID`) VALUES {$implode}";
 		Application::getConnection()->query($sql);
 
 		$idRows = LabelTable::getList([
@@ -550,7 +551,7 @@ class Tag
 
 		$implode = implode(',', $implode);
 
-		$sql = 'INSERT INTO ' . LabelTable::getTableName() . " (`NAME`, `USER_ID`) VALUES {$implode}";
+		$sql = 'INSERT IGNORE INTO ' . LabelTable::getTableName() . " (`NAME`, `USER_ID`) VALUES {$implode}";
 		Application::getConnection()->query($sql);
 
 		$idRows = LabelTable::getList([
@@ -743,15 +744,7 @@ class Tag
 			return;
 		}
 
-		try
-		{
-			$this->addToGroupTask($taskId, $groupId, $taskTags);
-		}
-		catch (Exception $e)
-		{
-			(new Log())->collect("Error while moving tags to group: {$e->getMessage()}");
-		}
-
+		$this->addToGroupTask($taskId, $groupId, $taskTags);
 		$ids = array_map(function ($el) {
 			return $el['ID'];
 		}, $taskTags);
@@ -790,15 +783,8 @@ class Tag
 		{
 			return;
 		}
-		try
-		{
-			$this->addToTask($taskId, $tagsFromGroup, $userId);
-		}
-		catch (Exception $e)
-		{
-			(new Log())->collect("Error while moving tags to task: {$e->getMessage()}");
-		}
 
+		$this->addToTask($taskId, $tagsFromGroup, $userId);
 		$ids = array_map(function ($el) {
 			return $el['ID'];
 		}, $tagsFromGroup);

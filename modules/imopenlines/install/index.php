@@ -16,7 +16,7 @@ final class imopenlines extends \CModule
 
 	public function __construct()
 	{
-		$arModuleVersion = array();
+		$arModuleVersion = [];
 
 		include(__DIR__.'/version.php');
 
@@ -154,6 +154,9 @@ final class imopenlines extends \CModule
 		$eventManager->registerEventHandlerCompatible('im', 'OnAfterMessagesDelete', 'imopenlines', '\Bitrix\ImOpenLines\Connector', 'onMessageDelete');
 		$eventManager->registerEventHandlerCompatible('im', 'OnGetNotifySchema', 'imopenlines', '\Bitrix\ImOpenLines\Chat', 'onGetNotifySchema');
 
+		/** @see \Bitrix\Imopenlines\MessageParameter::onInitTypes */
+		$eventManager->registerEventHandler('im', 'OnMessageParamTypesInit', 'imopenlines', '\Bitrix\ImOpenLines\MessageParameter', 'onInitTypes');
+
 		$eventManager->registerEventHandler('imconnector', 'OnReceivedPost', 'imopenlines', '\Bitrix\ImOpenLines\Connector', 'onReceivedPost');
 		$eventManager->registerEventHandler('imconnector', 'OnReceivedMessageUpdate', 'imopenlines', '\Bitrix\ImOpenLines\Connector', 'onReceivedPostUpdate');
 		$eventManager->registerEventHandler('imconnector', 'OnReceivedMessage', 'imopenlines', '\Bitrix\ImOpenLines\Connector', 'onReceivedMessage');
@@ -164,6 +167,8 @@ final class imopenlines extends \CModule
 		$eventManager->registerEventHandler('imconnector', 'OnReceivedStatusWrites', 'imopenlines', '\Bitrix\ImOpenLines\Connector', 'onReceivedStatusWrites');
 		$eventManager->registerEventHandler('imconnector', 'OnReceivedStatusBlock', 'imopenlines', '\Bitrix\ImOpenLines\Connector', 'OnReceivedStatusBlock');
 		$eventManager->registerEventHandler('imconnector', 'OnReceivedError', 'imopenlines', '\Bitrix\ImOpenLines\Connector', 'OnReceivedError');
+		/** @see \Bitrix\ImOpenLines\Connector::onReceivedCommandStart */
+		$eventManager->registerEventHandler('imconnector', 'OnReceivedCommandStart', 'imopenlines', '\Bitrix\ImOpenLines\Connector', 'OnReceivedCommandStart');
 		$eventManager->registerEventHandler('main', 'OnAfterSetOption_~controller_group_name', 'imopenlines', '\Bitrix\ImOpenLines\Limit', 'onBitrix24LicenseChange');
 		$eventManager->registerEventHandler('rest', 'OnRestServiceBuildDescription', 'imopenlines', '\Bitrix\ImOpenLines\Rest', 'onRestServiceBuildDescription');
 		$eventManager->registerEventHandler('imopenlines', 'OnSessionStart', 'imopenlines', '\Bitrix\ImOpenLines\Connector', 'onSessionStart');
@@ -233,6 +238,8 @@ final class imopenlines extends \CModule
 		\CAgent::AddAgent('\Bitrix\ImOpenLines\Session\Agent::sendAutomaticMessage();', 'imopenlines', 'N', 60);
 		/** @see \Bitrix\ImOpenLines\KpiManager::setExpiredMessagesAgent */
 		\CAgent::AddAgent('\Bitrix\ImOpenLines\KpiManager::setExpiredMessagesAgent();', 'imopenlines', "N", 60, "", "Y", \ConvertTimeStamp(time()+\CTimeZone::GetOffset()+60, "FULL"));
+		/** @see \Bitrix\ImOpenLines\Session\Agent::correctionStatusClosedSessionsAgent */
+		\CAgent::AddAgent('\Bitrix\ImOpenLines\Session\Agent::correctionStatusClosedSessionsAgent();', 'imopenlines', "N", 86400, "", "Y", \ConvertTimeStamp(time()+\CTimeZone::GetOffset()+86400, "FULL"));
 
 		if (!\Bitrix\Main\ModuleManager::isModuleInstalled('bitrix24'))
 		{

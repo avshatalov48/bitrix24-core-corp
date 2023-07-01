@@ -276,7 +276,8 @@ class CVoxImplantConfig
 							'SHORT_NAME' => $externalNumber['NUMBER'],
 							'FULL_NAME' => GetMessage("VI_CONFIG_REST_APP").": ".$restAppName. ": " . ($externalNumber['NAME'] ?  $externalNumber['NUMBER'] . " - " . $externalNumber['NAME'] : $externalNumber['NUMBER']),
 							'TYPE' => 'REST',
-							'REST_APP_ID' => $restAppId
+							'REST_APP_ID' => $restAppId,
+							'CRM_AUTO_CREATE' => $externalNumber['CRM_AUTO_CREATE'],
 						) ;
 					}
 				}

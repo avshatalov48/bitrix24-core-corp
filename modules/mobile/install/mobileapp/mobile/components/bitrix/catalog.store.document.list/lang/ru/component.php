@@ -1,5 +1,5 @@
 <?php
-$MESS['M_CSDL_TO_LOGIN_ON_DESKTOP'] = 'Перейти в полную версию';
+$MESS['M_CSDL_TO_LOGIN_ON_DESKTOP_MSGVER_1'] = 'Перейти в веб-версию';
 $MESS['M_CSDL_DETAIL_CARD_NEW_DOCUMENT'] = 'Новый документ';
 
 $MESS['M_CSDL_CONTEXT_MENU_CONDUCT_DOCUMENT'] = 'Провести документ';

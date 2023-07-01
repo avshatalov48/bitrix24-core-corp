@@ -197,6 +197,16 @@ class All extends Queue
 					$updateSessionCheck['UNDISTRIBUTED'] = 'Y';
 				}
 
+				if (
+					Im\User::getInstance($this->session['OPERATOR_ID'])->isBot()
+					&& $this->config['NO_ANSWER_RULE'] == Session::RULE_TEXT
+					&& $this->session['SEND_NO_ANSWER_TEXT'] !== 'Y'
+					&& $this->session['STATUS'] <= Session::STATUS_CLIENT
+				)
+				{
+					$updateSessionCheck['DATE_NO_ANSWER'] = (new DateTime())->add($this->config['NO_ANSWER_TIME'] . ' SECONDS');
+				}
+
 				$updateSessionCheck['DATE_QUEUE'] = $resultOperatorQueue['DATE_QUEUE'];
 
 				SessionCheckTable::update($this->session['ID'], $updateSessionCheck);

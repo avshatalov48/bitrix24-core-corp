@@ -59,7 +59,7 @@ if($_SERVER["REQUEST_METHOD"]=="POST" && $_POST["action"] <> '' && check_bitrix_
 				}
 			}
 			$userOptionLastCheckNotificationsParamName = 'lastCheckNotificationsTime';
-			if ($_POST[$userOptionLastCheckNotificationsParamName] === 'Y')
+			if (isset($_POST[$userOptionLastCheckNotificationsParamName]) && $_POST[$userOptionLastCheckNotificationsParamName] === 'Y')
 			{
 				$notify[$userOptionLastCheckNotificationsParamName] = time();
 				$needUpdate = true;

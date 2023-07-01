@@ -1738,7 +1738,7 @@ if(typeof(BX.CrmUIGridExtension) === "undefined")
 			this.items[extensionId].viewActivity(activityId, options);
 		}
 	};
-	BX.CrmUIGridExtension.showActivityAddingPopupFromMenu = function(gridManagerId, entityTypeId, entityId)
+	BX.CrmUIGridExtension.showActivityAddingPopupFromMenu = function(gridManagerId, entityTypeId, entityId, currentUser)
 	{
 		if (!BX.Main || !BX.Main.MenuManager || !BX.Main.MenuManager.Data)
 		{
@@ -1748,11 +1748,11 @@ if(typeof(BX.CrmUIGridExtension) === "undefined")
 		var menu = menus.length ? BX.Main.MenuManager.Data[menus[0]] : null;
 		if (menu && menu.bindElement)
 		{
-			BX.CrmUIGridExtension.showActivityAddingPopup(menu.bindElement, gridManagerId, entityTypeId, entityId);
+			BX.CrmUIGridExtension.showActivityAddingPopup(menu.bindElement, gridManagerId, entityTypeId, entityId, currentUser);
 			menu.close();
 		}
 	};
-	BX.CrmUIGridExtension.showActivityAddingPopup = function(bindElement, gridManagerId, entityTypeId, entityId)
+	BX.CrmUIGridExtension.showActivityAddingPopup = function(bindElement, gridManagerId, entityTypeId, entityId, currentUser)
 	{
 		BX.Dom.addClass(bindElement, '--active');
 		var key = entityTypeId + '_' + entityId;
@@ -1762,6 +1762,7 @@ if(typeof(BX.CrmUIGridExtension) === "undefined")
 				BX.CrmUIGridExtension.activityAddingPopup[key] = new exports.AddingPopup(
 					entityTypeId,
 					entityId,
+					currentUser,
 					{
 						events: {
 							onClose: function() {

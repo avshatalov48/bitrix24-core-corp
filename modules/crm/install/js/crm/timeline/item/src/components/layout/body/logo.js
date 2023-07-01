@@ -1,4 +1,5 @@
 import {Action} from "../../../action";
+import {Text} from "main.core";
 
 export const Logo = {
 	props: {
@@ -56,12 +57,12 @@ export const Logo = {
 
 			if (this.backgroundUrl)
 			{
-				result.backgroundImage = 'url(' + this.backgroundUrl + ')';
+				result.backgroundImage = 'url(' + encodeURI(Text.encode(this.backgroundUrl)) + ')';
 			}
 
 			if (this.backgroundSize)
 			{
-				result.backgroundSize = this.backgroundSize + 'px';
+				result.backgroundSize = parseInt(this.backgroundSize) + 'px';
 			}
 
 			return result;

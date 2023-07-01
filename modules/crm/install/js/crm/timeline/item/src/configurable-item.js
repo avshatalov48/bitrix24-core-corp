@@ -1,4 +1,4 @@
-import {ajax, Dom, Text, Type} from 'main.core';
+import { ajax, Dom, Text, Type } from 'main.core';
 import TimelineItem from './item';
 import { Item } from './components/item';
 import Layout from './layout';
@@ -120,6 +120,36 @@ export default class ConfigurableItem extends TimelineItem
 		}
 	}
 
+	initWrapper(): HTMLElement
+	{
+		this.setWrapper(Dom.create({tag: 'div', attrs: {className: this.#itemClassName}}));
+
+		return this._wrapper;
+	}
+
+	initLayoutApp(options): void
+	{
+		this.#initLayoutApp();
+
+		if (this.needBindToContainer(options))
+		{
+			const bindTo = this.getBindToNode(options);
+			if (bindTo && bindTo.nextSibling)
+			{
+				Dom.insertBefore(this.getWrapper(), bindTo.nextSibling);
+			}
+			else
+			{
+				Dom.append(this.getWrapper(), this.#container);
+			}
+		}
+
+		for (const controller of this.#controllers)
+		{
+			controller.onAfterItemLayout(this, options);
+		}
+	}
+
 	needBindToContainer(options): Boolean
 	{
 		if (Type.isPlainObject(options))
@@ -150,6 +180,7 @@ export default class ConfigurableItem extends TimelineItem
 			{
 				controller.onAfterItemRefreshLayout(this);
 			}
+			this.#layoutComponent.showLoader(false);
 		}
 		else
 		{
@@ -170,6 +201,11 @@ export default class ConfigurableItem extends TimelineItem
 	getLayoutFooterButtonById(id: string): ?Object
 	{
 		return this.#layoutComponent.getFooterButtonById(id);
+	}
+
+	getLayoutFooterMenu(): ?Object
+	{
+		return this.#layoutComponent.getFooterMenu();
 	}
 
 	getLayoutHeaderChangeStreamButton(): ?Object

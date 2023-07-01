@@ -2,7 +2,6 @@
  * @module crm/duplicates/content
  */
 jn.define('crm/duplicates/content', (require, exports, module) => {
-
 	const { DuplicatesPanel } = require('crm/duplicates/panel');
 	const { EventEmitter } = require('event-emitter');
 	const { Loc } = require('loc');
@@ -41,9 +40,9 @@ jn.define('crm/duplicates/content', (require, exports, module) => {
 
 		openPanel(duplicates)
 		{
-			const { isAllowed, entityType } = this.props;
+			const { isAllowed, entityTypeName } = this.props;
 			const panel = new DuplicatesPanel({
-				entityType,
+				entityTypeName,
 				isAllowed,
 				duplicates,
 				onUseContact: this.onUseContact,
@@ -57,6 +56,8 @@ jn.define('crm/duplicates/content', (require, exports, module) => {
 		{
 			const { duplicates, fieldType, style, color } = this.props;
 			const { DUPLICATES, ENTITY_TOTAL_TEXT } = duplicates;
+			const tooltipMessageType = Loc.hasMessage(`FIELDS_PHONE_DUPLICATE_WARNING_${fieldType}`)
+				? fieldType : 'TITLE';
 
 			return View(
 				{
@@ -68,7 +69,7 @@ jn.define('crm/duplicates/content', (require, exports, module) => {
 					{
 						style,
 						text: Loc.getMessage(
-							`FIELDS_PHONE_DUPLICATE_WARNING_${fieldType}`,
+							`FIELDS_PHONE_DUPLICATE_WARNING_${tooltipMessageType}`,
 							{ '#ENTITY_TOTAL_TEXT#': ENTITY_TOTAL_TEXT },
 						),
 					},
@@ -76,7 +77,7 @@ jn.define('crm/duplicates/content', (require, exports, module) => {
 				View(
 					{
 						onClick: () => {
-							if (Array.isArray(DUPLICATES) && DUPLICATES.length)
+							if (Array.isArray(DUPLICATES) && DUPLICATES.length > 0)
 							{
 								this.openPanel(DUPLICATES[0]);
 							}
@@ -88,7 +89,7 @@ jn.define('crm/duplicates/content', (require, exports, module) => {
 								...style,
 								marginLeft: 4,
 								backgroundColor: color,
-								color: '#F6D9A1',
+								color: '#ffe1a6',
 							},
 							text: Loc.getMessage('FIELDS_PHONE_DUPLICATE_WARNING_MORE'),
 						},

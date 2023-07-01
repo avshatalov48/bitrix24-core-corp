@@ -7,7 +7,13 @@ if (defined('BX_IM_FULLSCREEN'))
 }
 use Bitrix\Main\Localization\Loc;
 
-\Bitrix\Main\UI\Extension::load(['ui.tutor', 'ui.design-tokens']);
+$enabledMessengerV2 = (isset($arResult['MESSENGER_V2']) && $arResult['MESSENGER_V2'] === true);
+
+if ($enabledMessengerV2)
+{
+	\Bitrix\Main\UI\Extension::load("im.v2.application.quick-access");
+}
+\Bitrix\Main\UI\Extension::load(['ui.tutor', 'ui.design-tokens', 'im.public']);
 $this->SetViewTarget("im-fullscreen");
 ?>
 <div class="bx-desktop bx-im-fullscreen-popup" id="im-workarea-popup">
@@ -198,7 +204,7 @@ if (\Bitrix\Main\Loader::includeModule("ui"))
 ?>
 <script>
 	BX.ready(function() {
-		BX.Intranet.Bitrix24.ImBar.init();
+		BX.Intranet.Bitrix24.ImBar.init(<?= \Bitrix\Main\Web\Json::encode($enabledMessengerV2) ?>);
 		if(BX.UI && BX.UI.Tutor && BX.UI.Tutor.Manager)
 		{
 			BX.UI.Tutor.Manager.init(
@@ -208,6 +214,15 @@ if (\Bitrix\Main\Loader::includeModule("ui"))
 			);
 		}
 	});
-	<?=CIMMessenger::GetTemplateJS([], $arResult)?>
+	<?php
+	if ($enabledMessengerV2)
+	{
+		echo CIMMessenger::GetV2TemplateJS($arResult);
+	}
+	else
+	{
+		echo CIMMessenger::GetTemplateJS([], $arResult);
+	}
+	?>
 </script>
 <?$frame->end()?>

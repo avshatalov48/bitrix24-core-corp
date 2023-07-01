@@ -1,11 +1,25 @@
-import {Base} from './base';
+import { Base } from './base';
 import ConfigurableItem from '../configurable-item';
-import {ajax as Ajax} from 'main.core';
 import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
-import {UI} from 'ui.notification';
 
 export class Activity extends Base
 {
+	getDeleteActionMethod(): string
+	{
+		return 'crm.timeline.activity.delete';
+	}
+
+	getDeleteActionCfg(recordId: Number, ownerTypeId: Number, ownerId: Number): Object
+	{
+		return {
+			data: {
+				activityId: recordId,
+				ownerTypeId: ownerTypeId,
+				ownerId: ownerId,
+			}
+		};
+	}
+
 	onItemAction(item: ConfigurableItem, actionParams: ActionParams): void
 	{
 		const {action, actionType, actionData, animationCallbacks} = actionParams;
@@ -32,7 +46,7 @@ export class Activity extends Base
 					modal: true,
 					buttons: MessageBoxButtons.YES_NO,
 					onYes: () => {
-						return this.#deleteActivity(actionData.activityId, actionData.ownerTypeId, actionData.ownerId, animationCallbacks);
+						return this.runDeleteAction(actionData.activityId, actionData.ownerTypeId, actionData.ownerId, animationCallbacks);
 					},
 					onNo: (messageBox) => {
 						messageBox.close();
@@ -41,7 +55,7 @@ export class Activity extends Base
 			}
 			else
 			{
-				this.#deleteActivity(actionData.activityId, actionData.ownerTypeId, actionData.ownerId);
+				this.runDeleteAction(actionData.activityId, actionData.ownerTypeId, actionData.ownerId);
 			}
 		}
 	}
@@ -64,42 +78,6 @@ export class Activity extends Base
 		}
 	}
 
-	#deleteActivity(activityId: Number, ownerTypeId: Number, ownerId: Number, animationCallbacks: ?Object)
-	{
-		if (animationCallbacks.onStart)
-		{
-			animationCallbacks.onStart();
-		}
-		return Ajax.runAction(
-			'crm.timeline.activity.delete',
-			{
-				data: {
-					activityId,
-					ownerTypeId,
-					ownerId,
-				}
-			}
-		).then(() => {
-			if (animationCallbacks.onStop)
-			{
-				animationCallbacks.onStop();
-			}
-			return true;
-		}, (response) =>
-		{
-			UI.Notification.Center.notify({
-				content: response.errors[0].message,
-				autoHideDelay: 5000,
-			});
-			if (animationCallbacks.onStop)
-			{
-				animationCallbacks.onStop();
-			}
-
-			return true;
-		});
-	}
-
 	#getActivityEditor(): BX.CrmActivityEditor
 	{
 		return BX.CrmActivityEditor.getDefault();
@@ -115,4 +93,3 @@ export class Activity extends Base
 		);
 	}
 }
-

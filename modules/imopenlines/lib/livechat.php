@@ -90,8 +90,7 @@ class LiveChat
 		}
 		else
 		{
-			require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/classes/general/update_client.php");
-			$licence = md5("BITRIX".\CUpdateClient::GetLicenseKey()."LICENCE");
+			$licence = Main\Application::getInstance()->getLicense()->getPublicHashKey();
 
 			$this->sessionId = md5(time().bitrix_sessid().$licence);
 		}
@@ -130,7 +129,7 @@ class LiveChat
 			}
 			$this->chat = $chat;
 
-			$ar = \CIMChat::GetRelationById($this->chat['ID']);
+			$ar = \CIMChat::GetRelationById($this->chat['ID'], false, true, false);
 			if (!isset($ar[$this->userId]))
 			{
 				$chatManager = new \CIMChat(0);

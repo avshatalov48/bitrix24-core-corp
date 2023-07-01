@@ -159,21 +159,31 @@ if (check_bitrix_sessid())
 							if (empty($arPsActFields[$val]))
 								continue;
 
-							$typeTmp = $_POST["TYPE_".$val];
-							$valueTmp = $_POST["VALUE1_".$val];
+							$typeTmp = $_POST["TYPE_".$val] ?? null;
+							$valueTmp = $_POST["VALUE1_".$val] ?? null;
+							$value2Tmp = $_POST["VALUE2_".$val] ?? null;
 
 							if (is_string($typeTmp) && $typeTmp == '')
-								$valueTmp = $_POST["VALUE2_".$val];
+							{
+								$valueTmp = $value2Tmp;
+							}
 
 							if ($val == 'USER_COLUMNS')
 							{
-								if (is_array($_POST["VALUE2_".$val]))
+								if (is_array($value2Tmp))
 								{
-									$valueTmp = array_replace_recursive($_POST["VALUE2_".$val], $valueTmp);
+									if (!is_array($valueTmp))
+									{
+										$valueTmp = [];
+									}
+
+									$valueTmp = array_replace_recursive($value2Tmp, $valueTmp);
 									foreach ($valueTmp as $propId => $columns)
 									{
 										if (!isset($columns['ACTIVE']))
+										{
 											unset($valueTmp[$propId]);
+										}
 									}
 								}
 							}

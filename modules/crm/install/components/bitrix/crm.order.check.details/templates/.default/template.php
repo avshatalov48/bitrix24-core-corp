@@ -1,5 +1,9 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 /** @var \CCrmRequisiteFormEditorComponent $component */
 
@@ -13,10 +17,11 @@ CJSCore::Init(array('date', 'popup', 'ajax', 'tooltip', 'ui.fonts.opensans'));
 \Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/js/crm/css/crm.css');
 \Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/themes/.default/crm-entity-show.css');
 
-if(SITE_TEMPLATE_ID === 'bitrix24')
+if (SITE_TEMPLATE_ID === 'bitrix24')
 {
 	\Bitrix\Main\Page\Asset::getInstance()->addCss("/bitrix/themes/.default/bitrix24/crm-entity-show.css");
 }
+
 $guid = $arResult['GUID']."_editor";
 $prefix = mb_strtolower($guid);
 $activityEditorID = "{$prefix}_editor";
@@ -26,9 +31,10 @@ $containerId = "{$guid}_container";
 $wrapperId = "wrapper_".mb_strtolower($prefix);
 
 $editorContext = array(
-	'CATEGORY_ID' => $arResult['CATEGORY_ID'],
-	'PARAMS' => $arResult['CONTEXT_PARAMS']
+	'CATEGORY_ID' => $arResult['CATEGORY_ID'] ?? null,
+	'PARAMS' => $arResult['CONTEXT_PARAMS'] ?? null
 );
+
 ?>
 <div id="<?=htmlspecialcharsbx($wrapperId)?>">
 	<?
@@ -39,11 +45,11 @@ $editorContext = array(
 			'ENTITY_TYPE_ID' => \CCrmOwnerType::OrderCheck,
 			'ENTITY_ID' => $arResult['ENTITY_ID'],
 			'READ_ONLY' => true,
-			'INITIAL_MODE' => $arResult['INITIAL_MODE'],
+			'INITIAL_MODE' => $arResult['INITIAL_MODE'] ?? null,
 			'GUID' => $guid,
 			'CONFIG_ID' => $arResult['EDITOR_CONFIG_ID'],
 			'ENTITY_CONFIG' => $arResult['ENTITY_CONFIG'],
-			'ENTITY_CONTROLLERS' => $arResult['ENTITY_CONTROLLERS'],
+			'ENTITY_CONTROLLERS' => $arResult['ENTITY_CONTROLLERS'] ?? null,
 			'ENTITY_FIELDS' => $arResult['ENTITY_FIELDS'],
 			'ENTITY_DATA' => $arResult['ENTITY_DATA'],
 			'ENABLE_BOTTOM_PANEL' => false,
@@ -54,7 +60,7 @@ $editorContext = array(
 			'ENABLE_SECTION_EDIT' => false,
 			'ENABLE_SECTION_CREATION' => false,
 			'DISABLE_REST' => true,
-			'ENABLE_USER_FIELD_CREATION' => $arResult['ENABLE_USER_FIELD_CREATION'],
+			'ENABLE_USER_FIELD_CREATION' => $arResult['ENABLE_USER_FIELD_CREATION'] ?? null,
 			'SERVICE_URL' => '/bitrix/components/bitrix/crm.order.check.details/ajax.php?'.bitrix_sessid_get(),
 			'EXTERNAL_CONTEXT_ID' => $arResult['EXTERNAL_CONTEXT_ID'],
 			'CONTEXT_ID' => $arResult['CONTEXT_ID'],

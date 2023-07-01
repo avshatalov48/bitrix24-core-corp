@@ -38,6 +38,8 @@ Library::loadMessages();
  * @method Result updateMessage(array $data)
  * @method Result deleteMessage(array $data)
  *
+ * @method Result registerEshop(array $data)
+ *
  * @see \Bitrix\ImConnectorServer\Connector::infoConnectorsLine
  * @method static Result infoConnectorsLine(int $lineId)
  *

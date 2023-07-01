@@ -610,11 +610,11 @@ abstract class BaseObject extends Internals\Model implements \JsonSerializable
 		}
 		if($generateUniqueName)
 		{
-			$newName = $this->generateUniqueName($newName, $this->getParentId());
+			$newName = static::generateUniqueName($newName, $this->getParentId());
 		}
 
 		$opponentId = null;
-		if(!$this->isUniqueName($newName, $this->parentId, null, $opponentId))
+		if(!static::isUniqueName($newName, $this->parentId, null, $opponentId))
 		{
 			if($opponentId != $this->id)
 			{
@@ -764,11 +764,11 @@ abstract class BaseObject extends Internals\Model implements \JsonSerializable
 		$possibleNewName = $this->name;
 		if($generateUniqueName)
 		{
-			$possibleNewName = $this->generateUniqueName($this->name, $realFolderId);
+			$possibleNewName = static::generateUniqueName($this->name, $realFolderId);
 		}
 		$needToRename = $possibleNewName != $this->name;
 
-		if(!$this->isUniqueName($possibleNewName, $realFolderId))
+		if(!static::isUniqueName($possibleNewName, $realFolderId))
 		{
 			$this->errorCollection->add(array(new Error(Loc::getMessage('DISK_OBJECT_MODEL_ERROR_NON_UNIQUE_NAME'), self::ERROR_NON_UNIQUE_NAME)));
 			return null;
@@ -1065,7 +1065,7 @@ abstract class BaseObject extends Internals\Model implements \JsonSerializable
 
 		if (!static::isUniqueName($nameAfterDelete, $this->getParentId(), $this->getId()))
 		{
-			$nameAfterDelete = $this->generateUniqueName($nameAfterDelete, $this->getParentId());
+			$nameAfterDelete = static::generateUniqueName($nameAfterDelete, $this->getParentId());
 		}
 
 		$data = [
@@ -1142,9 +1142,9 @@ abstract class BaseObject extends Internals\Model implements \JsonSerializable
 	 */
 	public function restoreInternal($restoredBy)
 	{
-		if(!$this->isUniqueName($this->getNameWithoutTrashCanSuffix(), $this->parentId, $this->id))
+		if(!static::isUniqueName($this->getNameWithoutTrashCanSuffix(), $this->parentId, $this->id))
 		{
-			$this->name = $this->generateUniqueName($this->getNameWithoutTrashCanSuffix(), $this->parentId);
+			$this->name = static::generateUniqueName($this->getNameWithoutTrashCanSuffix(), $this->parentId);
 		}
 
 		/** @var ObjectTable $tableClassName */
@@ -1353,24 +1353,41 @@ abstract class BaseObject extends Internals\Model implements \JsonSerializable
 		return false;
 	}
 
+	private static function extractSuffixAndMainPart(string $name): array
+	{
+		$mainParts = explode('.', $name);
+		$partsCount = count($mainParts);
+		//name without extension
+		if ($partsCount <= 1)
+		{
+			return [$name, null];
+		}
+
+		$suffix = array_pop($mainParts);
+
+		//name with a few dots like "example.tar.gz"
+		if ($partsCount > 2 && preg_match('/^[a-zA-Z0-9]{1,3}$/', $mainParts[$partsCount - 2]))
+		{
+			$suffix = array_pop($mainParts)  . '.' . $suffix;
+		}
+
+		$mainPart = implode('.', $mainParts);
+
+		return [$mainPart, $suffix];
+	}
+
 	/**
 	 * Appends (1), (2), etc. if name is non unique in target dir
 	 * @param string $potentialName Potential name.
 	 * @param int $underObjectId Id of parent object.
 	 * @return string
 	 */
-	protected static function generateUniqueName($potentialName, $underObjectId)
+	protected static function generateUniqueName(string $potentialName, int $underObjectId): string
 	{
 		$count = 0;
-		$newName = $mainPartName = $potentialName;
+		$newName = $potentialName;
 
-		$suffix = null;
-		$mainParts = explode('.', $mainPartName);
-		if (count($mainParts) > 1)
-		{
-			$suffix = array_pop($mainParts);
-			$mainPartName = implode('.', $mainParts);
-		}
+		[$mainPartName, $suffix] = self::extractSuffixAndMainPart($potentialName);
 		while (!static::isUniqueName($newName, $underObjectId))
 		{
 			$count++;
@@ -1804,7 +1821,7 @@ abstract class BaseObject extends Internals\Model implements \JsonSerializable
 	 * which is a value of any type other than a resource.
 	 * @since 5.4.0
 	 */
-	public function jsonSerialize()
+	public function jsonSerialize(): array
 	{
 		return [
 			'id' => (int)$this->getId(),

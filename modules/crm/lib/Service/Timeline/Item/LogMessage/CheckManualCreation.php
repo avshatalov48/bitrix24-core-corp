@@ -7,6 +7,7 @@ use Bitrix\Crm\Service\Timeline\Layout\Action\JsEvent;
 use Bitrix\Crm\Service\Timeline\Layout\Action\Redirect;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\Link;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\Text;
+use Bitrix\Crm\Service\Timeline\Layout\Common\Icon;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Uri;
 
@@ -28,7 +29,7 @@ class CheckManualCreation extends LogMessage
 
 	public function getIconCode(): ?string
 	{
-		return 'attention';
+		return Icon::ATTENTION;
 	}
 
 	public function getContentBlocks(): ?array

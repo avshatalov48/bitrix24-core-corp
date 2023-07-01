@@ -8,6 +8,7 @@ jn.define('layout/ui/fields/combined-v2', (require, exports, module) => {
 	const { CombinedFieldClass } = require('layout/ui/fields/combined');
 	const { ImType, ImFieldClass } = require('layout/ui/fields/im');
 	const { PhoneType } = require('layout/ui/fields/phone');
+	const { EmailType } = require('layout/ui/fields/email');
 	const { WebType, WebFieldClass } = require('layout/ui/fields/web');
 	const { get } = require('utils/object');
 	const { getHttpPath } = require('utils/url');
@@ -71,7 +72,7 @@ jn.define('layout/ui/fields/combined-v2', (require, exports, module) => {
 
 			const items = config.items.map((menuItem) => ({
 				...menuItem,
-				img: getImages(menuItem.id.toLowerCase()),
+				img: menuItem.id && getImages(menuItem.id.toLowerCase()),
 			}));
 
 			const deepMergeStyles = {
@@ -162,6 +163,20 @@ jn.define('layout/ui/fields/combined-v2', (require, exports, module) => {
 							'ENTITY_ID': primaryConfig.entityId,
 						},
 						alert: true,
+					};
+				case EmailType:
+					const {
+						entityTypeName,
+						entityId
+					} = primaryConfig;
+					return {
+						email: VALUE,
+						params: {
+							owner: {
+								ownerType: entityTypeName,
+								ownerId: entityId,
+							}
+						},
 					};
 
 				case WebType:

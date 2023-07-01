@@ -120,7 +120,7 @@ class CTaskAssert
 
 		if ($showBacktrace && function_exists('debug_backtrace'))
 		{
-			$strMessage .= "\nStack trace:, referer: " 
+			$strMessage .= "\nStack trace:, referer: "
 				. $_SERVER['REQUEST_METHOD'] . ' '
 				. $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'] . "\n";
 			$arBacktraces = debug_backtrace();
@@ -155,7 +155,7 @@ class CTaskAssert
 					$strMessage .=  implode(', ', $arArgsFormatted);
 				}
 
-				$strMessage .= ') ' . $arBacktrace['file'] 
+				$strMessage .= ') ' . $arBacktrace['file']
 					. ':' . $arBacktrace['line'] . "\n";
 			}
 		}
@@ -188,7 +188,6 @@ class CTaskAssert
 
 			if ( ! is_resource($fp) )
 			{
-				AddMessage2Log('[ERROR] CTaskAssert: cannot open/create log file with name: ' . $fullPathToLogFile, 'tasks');
 				return (false);
 			}
 
@@ -239,7 +238,6 @@ class CTaskAssert
 
 		if (self::$fp === null)
 		{
-			AddMessage2Log('[ERROR] CTaskAssert::enableLogging(): Log file cannot be used or not set. Logging not enabled.', 'tasks');
 			return (false);
 		}
 
@@ -247,13 +245,12 @@ class CTaskAssert
 		if (($enableLogLevels !== null) && ( ! is_int($enableLogLevels) ))
 		{
 			$enableLogLevels = null;
-			AddMessage2Log('[ERROR] CTaskAssert::enableLogging(): Invalid log errors level set, using defaults', 'tasks');
 		}
 
 		// If null given, than use default value (all levels enabled)
 		if ($enableLogLevels === null)
 		{
-			$enableLogLevels = self::ELL_TRACE | self::ELL_DEBUG 
+			$enableLogLevels = self::ELL_TRACE | self::ELL_DEBUG
 				| self::ELL_INFO | self::ELL_WARNING | self::ELL_ERROR
 				| self::ELL_FATAL;
 		}

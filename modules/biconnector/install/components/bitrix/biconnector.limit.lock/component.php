@@ -1,18 +1,16 @@
 <?php
+/**
+ * @var CMain $APPLICATION
+ * @var CUser $USER
+ * @var array $arParams
+ * @var array $arResult
+ * @var CBitrixComponent $this
+ */
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
-
-/**
- * Bitrix vars
- * @global CUser $USER
- * @global CMain $APPLICATION
- * @var array $arParams
- * @var array $arResult
- * @var CBitrixComponent $this
- */
 
 use Bitrix\Main\Localization\Loc;
 
@@ -37,7 +35,7 @@ $fullLock = $limitManager->checkLimit() ? 'N' : 'Y';
 if (\Bitrix\Main\Loader::includeModule('bitrix24'))
 {
 	$licensePath = \CBitrix24::PATH_LICENSE_ALL;
-	if ($fullLock == 'Y')
+	if ($fullLock === 'Y')
 	{
 		$content = Loc::getMessage('CC_BLL_CONTENT_BLOCKED', [
 			'#LIMIT#' => $limitManager->getLimit(),
@@ -79,7 +77,7 @@ else
 		break;
 	}
 
-	if ($fullLock == 'Y')
+	if ($fullLock === 'Y')
 	{
 		$content = Loc::getMessage('CC_BLL_CONTENT_BLOCKED_BOX', [
 			'#SHORT_DATE#' => $limitManager->getLimitDate(),
@@ -104,4 +102,4 @@ $arResult['JS_PARAMS'] = [
 	'FULL_LOCK' => $fullLock,
 ];
 
-$this->IncludeComponentTemplate();
+$this->includeComponentTemplate();

@@ -10,6 +10,7 @@ use Bitrix\Crm\ProductRowTable;
 use Bitrix\Crm\ProductType;
 use Bitrix\Crm\Reservation\BasketReservation;
 use Bitrix\Crm\Reservation\Internals\ProductReservationMapTable;
+use Bitrix\Crm\Reservation\Internals\ProductRowReservationTable;
 use Bitrix\Crm\Reservation\Strategy\Factory\OptionStrategyFactory;
 use Bitrix\Crm\Reservation\Strategy\Reserve\ReservationResult;
 use Bitrix\Crm\Reservation\Strategy\ReservePaidProductsStrategy;
@@ -24,7 +25,6 @@ use Bitrix\Main\Type\Date;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Sale\Configuration;
 use Bitrix\Sale\Order;
-use Bitrix\Sale\Reservation\BasketReservationService;
 use CCrmOwnerType;
 use CCrmOwnerTypeAbbr;
 
@@ -173,6 +173,8 @@ class ReservationService
 	}
 
 	/**
+	 * @deprecated use `::reservationProductsByEntityProductRows` method.
+	 *
 	 * Reservation products of deal.
 	 *
 	 * @param int $dealId
@@ -181,6 +183,20 @@ class ReservationService
 	 * @return Result
 	 */
 	public function reservationProductsByDealProductRows(int $dealId, array $productRows): Result
+	{
+		return $this->reservationProductsByEntityProductRows(CCrmOwnerType::Deal, $dealId, $productRows);
+	}
+
+	/**
+	 * Reservation products of entity.
+	 *
+	 * @param int $entityTypeId
+	 * @param int $entityId
+	 * @param array $productRows
+	 *
+	 * @return Result
+	 */
+	public function reservationProductsByEntityProductRows(int $entityTypeId, int $entityId, array $productRows): Result
 	{
 		$result = new Result();
 
@@ -219,7 +235,7 @@ class ReservationService
 
 		if (!$isHasManualReserves)
 		{
-			return $this->reservationProducts(CCrmOwnerType::Deal, $dealId);
+			return $this->reservationProducts($entityTypeId, $entityId);
 		}
 
 		return $result;
@@ -311,14 +327,81 @@ class ReservationService
 	}
 
 	/**
+	 * Fill crm reserves.
+	 *
+	 * @param array[] $productRows
+	 *
+	 * @return array[]
+	 */
+	public function fillCrmReserves(array $productRows): array
+	{
+		$productRowIds = array_filter(
+			array_column($productRows, 'ID')
+		);
+
+		$crmReserves = [];
+		if (!empty($productRowIds))
+		{
+			$rows = ProductRowReservationTable::getList([
+				'select' => [
+					'ROW_ID',
+					'STORE_ID',
+					'DATE_RESERVE_END',
+					'RESERVE_QUANTITY',
+					'RESERVE_ID' => 'PRODUCT_RESERVATION_MAP.BASKET_RESERVATION_ID',
+				],
+				'filter' => [
+					'=ROW_ID' => $productRowIds,
+				],
+			]);
+			foreach ($rows as $row)
+			{
+				$rowId = (int)$row['ROW_ID'];
+				$crmReserves[$rowId] = [
+					'STORE_ID' => isset($row['STORE_ID']) ? (int)$row['STORE_ID'] : null,
+					'RESERVE_ID' => isset($row['RESERVE_ID']) ? (int)$row['RESERVE_ID'] : null,
+					'RESERVE_QUANTITY' => isset($row['RESERVE_QUANTITY']) ? (float)$row['RESERVE_QUANTITY'] : null,
+					'DATE_RESERVE_END' => isset($row['DATE_RESERVE_END']) ? (string)$row['DATE_RESERVE_END'] : null,
+				];
+			}
+		}
+
+		$defaulValues = [
+			'STORE_ID' => null,
+			'RESERVE_ID' => null,
+			'DATE_RESERVE_END' => null,
+			'RESERVE_QUANTITY' => null,
+		];
+		foreach ($productRows as &$row)
+		{
+			$rowId = $row['ID'];
+
+			$reserve = $crmReserves[$rowId] ?? null;
+			if ($reserve !== null)
+			{
+				foreach ($defaulValues as $key => $defaulValue)
+				{
+					$row[$key] = $reserve[$key] ?? $defaulValue;
+				}
+			}
+			else
+			{
+				$row += $defaulValues;
+			}
+		}
+		unset($row);
+
+		return $productRows;
+	}
+
+	/**
 	 * Filling basket item fields `RESERVE_QUANTITY` and `RESERVE_ID` for product rows.
 	 *
 	 * @param array $productRows
-	 * @param bool $fillOnlyReserveId
 	 *
 	 * @return array
 	 */
-	public function fillBasketReserves(array $productRows, bool $fillOnlyReserveId = false): array
+	public function fillBasketReserves(array $productRows): array
 	{
 		if (empty($productRows))
 		{
@@ -333,11 +416,7 @@ class ReservationService
 		{
 			$reservedProductData = $reservedProducts[$row['ID']] ?? null;
 			$row['RESERVE_ID'] = $reservedProductData['RESERVE_ID'] ?? null;
-
-			if (!$fillOnlyReserveId)
-			{
-				$row['RESERVE_QUANTITY'] = $reservedProductData['RESERVE_QUANTITY'] ?? 0.0;
-			}
+			$row['RESERVE_QUANTITY'] = $reservedProductData['RESERVE_QUANTITY'] ?? 0.0;
 		}
 		unset($row);
 
@@ -355,7 +434,7 @@ class ReservationService
 	private function synchronizeOrderReservesForDealByReservationResult(int $dealId, ReservationResult $result): void
 	{
 		$syncronizer = new OrderDealSynchronizer();
-		$syncronizer->syncOrderReservesFromDeal($dealId, $result);
+		$syncronizer->syncOrderReservesFromDeal($dealId, $result, true);
 	}
 
 	/**

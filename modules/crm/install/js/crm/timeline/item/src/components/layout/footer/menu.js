@@ -15,6 +15,13 @@ export const Menu = {
 		'isReadOnly',
 	],
 	computed: {
+		isMenuFilled(): boolean
+		{
+			const menuItems = this.menuItems;
+
+			return menuItems.length > 0;
+		},
+
 		itemsArray(): Array
 		{
 			if (!this.items)
@@ -27,6 +34,7 @@ export const Menu = {
 				.sort((a, b) => (a.sort - b.sort))
 			;
 		},
+
 		menuItems(): Array
 		{
 			let result = this.buttons;
@@ -38,13 +46,16 @@ export const Menu = {
 
 			return result;
 		},
-		buttonProps() {
+
+		buttonProps()
+		{
 			return {
 				color: AdditionalButtonColor.DEFAULT,
 				icon: AdditionalButtonIcon.DOTS,
 			}
 		},
 	},
+
 	beforeUnmount(): void
 	{
 		const menu = MenuManager.getMenuById(MenuId);
@@ -53,6 +64,7 @@ export const Menu = {
 			menu.destroy();
 		}
 	},
+
 	methods: {
 		showMenu(): void
 		{
@@ -70,10 +82,11 @@ export const Menu = {
 			);
 		},
 	},
+
 	// language=Vue
 	template: `
-		<div class="crm-timeline__card-action_menu-item" @click="showMenu">
-		<AdditionalButton iconName="dots" color="default"></AdditionalButton>
+		<div v-if="isMenuFilled" class="crm-timeline__card-action_menu-item" @click="showMenu">
+			<AdditionalButton iconName="dots" color="default"></AdditionalButton>
 		</div>
 	`
 };

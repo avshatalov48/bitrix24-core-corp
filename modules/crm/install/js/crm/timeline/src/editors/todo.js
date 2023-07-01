@@ -26,7 +26,8 @@ export default class ToDo extends Editor
 			events: {
 				onFocus: this._focusHandler,
 				onChangeDescription: this.#onChangeDescription.bind(this),
-			}
+			},
+			enableCalendarSync: this._settings.enableTodoCalendarSync || false,
 		});
 
 		this.#toDoEditor.show();

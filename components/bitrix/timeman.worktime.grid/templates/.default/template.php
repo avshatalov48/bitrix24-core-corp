@@ -35,7 +35,7 @@ Extension::load([
 	'FILTER_ID' => $arResult['FILTER']['ID'],
 	'GRID_ID' => $arResult['GRID_ID'],
 	'FILTER' => $arResult['FILTER']['FIELDS'],
-	'FILTER_ROWS' => $arResult['FILTER']['ROWS'],
+	'FILTER_ROWS' => $arResult['FILTER']['ROWS'] ?? [],
 	'FILTER_PRESETS' => $arResult['FILTER']['PRESETS'],
 	'ENABLE_LIVE_SEARCH' => false,
 	'ENABLE_LABEL' => true,
@@ -176,7 +176,7 @@ endif; ?>
 	$APPLICATION->includeComponent('bitrix:main.ui.grid', '', [
 		'GRID_ID' => $arResult['GRID_ID'],
 		'HEADERS' => $arResult['HEADERS'],
-		'ROWS' => $arResult['ROWS'],
+		'ROWS' => $arResult['ROWS'] ?? [],
 
 		'NAV_OBJECT' => $navigation,
 		'PAGE_SIZES' => $navigation->getPageSizes(),
@@ -210,9 +210,9 @@ endif; ?>
 		'ALLOW_SORT' => false,
 		'ALLOW_PIN_HEADER' => false,
 
-		'ACTION_PANEL' => $arResult['GROUP_ACTIONS'],
+		'ACTION_PANEL' => $arResult['GROUP_ACTIONS'] ?? [],
 
-		'MESSAGES' => $arResult['MESSAGES'] ?: false,
+		'MESSAGES' => $arResult['MESSAGES'] ?? false,
 		'FLEXIBLE_LAYOUT' => true,
 	], $component, ['HIDE_ICONS' => 'Y']);
 

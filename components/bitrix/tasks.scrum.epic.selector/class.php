@@ -45,12 +45,12 @@ class TasksScrumEpicSelectorComponent extends \CBitrixComponent implements Contr
 
 	public function onPrepareComponentParams($params)
 	{
-		$params['epic'] = (is_array($params['epic']) ? $params['epic'] : []);
-		$params['groupId'] = (is_numeric($params['groupId']) ? (int) $params['groupId'] : 0);
-		$params['taskId'] = (is_numeric($params['taskId']) ? (int) $params['taskId'] : 0);
+		$params['epic'] = (is_array($params['epic'] ?? null) ? $params['epic'] : []);
+		$params['groupId'] = (is_numeric($params['groupId'] ?? null) ? (int) $params['groupId'] : 0);
+		$params['taskId'] = (is_numeric($params['taskId'] ?? null) ? (int) $params['taskId'] : 0);
 		$params['canEdit'] = ($params['canEdit'] ?? false);
-		$params['mode'] = ($params['mode'] === 'edit' ? 'edit' : 'view');
-		$params['inputName'] = (is_string($params['inputName']) ? $params['inputName'] : '');
+		$params['mode'] = (($params['mode'] ?? null) === 'edit' ? 'edit' : 'view');
+		$params['inputName'] = (is_string($params['inputName'] ?? null) ? $params['inputName'] : '');
 
 		return $params;
 	}
@@ -75,24 +75,6 @@ class TasksScrumEpicSelectorComponent extends \CBitrixComponent implements Contr
 		{
 			$this->includeErrorTemplate($exception->getMessage());
 		}
-	}
-
-	public function getEpicsAction(int $groupId)
-	{
-		$this->checkModules();
-
-		$userId = Util\User::getId();
-
-		if (!$this->canReadGroupTasks($userId, $groupId))
-		{
-			$this->errorCollection->setError(new Error('Access denied.'));
-
-			return null;
-		}
-
-		$epicService = new EpicService();
-
-		return array_values($epicService->getEpics($groupId));
 	}
 
 	public function changeTaskEpicAction(int $taskId, int $epicId)

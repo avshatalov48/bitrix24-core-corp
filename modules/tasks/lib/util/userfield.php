@@ -207,23 +207,24 @@ abstract class UserField // todo: extends Dictionary, to iterate over user field
 
 	public static function getField($id)
 	{
-		$id = trim((string) $id);
-		if($id == '')
+		$id = trim((string)$id);
+		if ($id == '')
 		{
 			return null;
 		}
 
 		$scheme = static::getScheme();
 
-		if(static::isUFKey($id))
+		if (static::isUFKey($id))
 		{
-			return $scheme[$id];
+			return ($scheme[$id] ?? null);
 		}
-		elseif(is_numeric($id))
+
+		if (is_numeric($id))
 		{
 			foreach($scheme as $fData)
 			{
-				if($fData['ID'] == $id)
+				if ($fData['ID'] == $id)
 				{
 					return $fData;
 				}
@@ -293,8 +294,11 @@ abstract class UserField // todo: extends Dictionary, to iterate over user field
 				!static::isValueEmpty($data[$field]) // the source field is not empty
 			)
 			{
-				$skip = Filter::isA($parameters['FILTER']) && !$parameters['FILTER']->match($desc);
-
+				$skip =
+					isset($parameters['FILTER'])
+					&& Filter::isA($parameters['FILTER'])
+					&& !$parameters['FILTER']->match($desc)
+				;
 				$typeClass = \Bitrix\Tasks\Util\UserField\Type::getClass($scheme[$field]['USER_TYPE_ID']);
 
 				// even if $skip == true here, we must call cloneValue(), because it may affect other entity fields
@@ -323,16 +327,6 @@ abstract class UserField // todo: extends Dictionary, to iterate over user field
 		}
 
 		$result->setData($newData);
-
-		(new \Bitrix\Tasks\Internals\Log\Log('DEBUG_TASKS_TEMPLATE_REPLICATION_FILE_CLONE'))->collect([
-			$userId,
-			$values['UF_TASK_WEBDAV_FILES'],
-			array_keys($scheme),
-			array_keys($toScheme),
-			$scheme['UF_TASK_WEBDAV_FILES'],
-			$toScheme['UF_TASK_WEBDAV_FILES'],
-			$data['UF_TASK_WEBDAV_FILES'],
-		]);
 
 		return $result;
 	}

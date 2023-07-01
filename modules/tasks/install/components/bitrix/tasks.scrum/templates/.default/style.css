@@ -442,6 +442,10 @@
 	overflow: hidden;
 }
 
+.tasks-scrum-entity-items-loader.--waiting {
+	min-height: 70px;
+}
+
 .tasks-scrum__item--dragstrate {
 	display: none;
 	pointer-events: none;
@@ -2322,6 +2326,10 @@
 
 .tasks-scrum__item.--full-view.--item-sprint .tasks-scrum__item--tags {
 	margin-top: 9px;
+}
+
+.tasks-scrum__item.--full-view.--item-backlog.--subtasks {
+	display: none;
 }
 
 .tasks-scrum__item--epic-full-view {

@@ -51,14 +51,14 @@ class TasksTaskDetailPartsComponent extends TasksBaseComponent
 		{
 			$this->arResult['LOGGED_IN_USER'] = $userId;
 			$this->arResult['DEFER_LOAD'] = 'N';
-			$this->arResult['IS_IFRAME'] = $this->arParams['~IS_IFRAME'];
+			$this->arResult['IS_IFRAME'] = ($this->arParams['~IS_IFRAME'] ?? null);
 
 			$this->arResult['TASK_LIMIT_EXCEEDED'] = static::tryParseBooleanParameter($this->arParams['TASK_LIMIT_EXCEEDED']);
 
 			$alreadyEscaped = ['ALLOWED_ACTIONS', 'CHECKLIST_ITEMS', 'TASK', 'TASK_ID', 'NAME_TEMPLATE', 'TIMER'];
 			foreach ($alreadyEscaped as $paramName)
 			{
-				$param = $this->arParams['~'.$paramName];
+				$param = ($this->arParams["~{$paramName}"] ?? null);
 				if (isset($param))
 				{
 					$this->arResult[$paramName] = $param;
@@ -82,7 +82,7 @@ class TasksTaskDetailPartsComponent extends TasksBaseComponent
 			$this->arParams["PUBLIC_MODE"] = isset($this->arParams["PUBLIC_MODE"])
 				&& ($this->arParams["PUBLIC_MODE"] === true || $this->arParams["PUBLIC_MODE"] === "Y");
 
-			$this->arResult['INNER_HTML'] = ($this->arParams['INNER_HTML'] === 'Y' ? 'Y' : 'N');
+			$this->arResult['INNER_HTML'] = (($this->arParams['INNER_HTML'] ?? null) === 'Y' ? 'Y' : 'N');
 
 			$arWhiteList = [];
 			$arKnownModes = ['VIEW TASK', 'CREATE TASK FORM'];

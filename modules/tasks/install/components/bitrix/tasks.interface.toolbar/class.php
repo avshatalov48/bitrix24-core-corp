@@ -39,7 +39,10 @@ class TasksToolbarComponent extends TasksBaseComponent
 		static::tryParseStringParameter($arParams['SCOPE'], '');
 		static::tryParseStringParameter($arParams['FILTER_FIELD'], 'PROBLEM');
 
-		if ($arParams['GROUP_ID'] > 0)
+		if (
+			isset($arParams['GROUP_ID'])
+			&& $arParams['GROUP_ID'] > 0
+		)
 		{
 			$arParams['SHOW_TOOLBAR'] = 'N';
 		}
@@ -58,16 +61,17 @@ class TasksToolbarComponent extends TasksBaseComponent
 
 		$this->arResult['SHOW_COUNTERS'] = $this->hasAccessToCounters();
 		$this->arResult['SPOTLIGHT_SIMPLE_COUNTERS'] = (
-			$this->arParams['SHOW_VIEW_MODE'] === 'Y'
+			isset($this->arParams['SHOW_VIEW_MODE'])
+			&& $this->arParams['SHOW_VIEW_MODE'] === 'Y'
 			&& $this->showSpotlight('simple_counters')
 		);
 		$this->arResult['VIEW_LIST'] = $this->getViewList();
 		$this->arResult['TASK_LIMIT_EXCEEDED'] = TaskLimit::isLimitExceeded();
 
-		$this->arResult['USER_ID'] = $this->arParams['USER_ID'];
-		$this->arResult['OWNER_ID'] = $this->arParams['OWNER_ID'];
-		$this->arResult['GROUP_ID'] = $this->arParams['GROUP_ID'];
-		$this->arResult['COUNTERS'] = ($this->arParams['COUNTERS'] ?: []);
+		$this->arResult['USER_ID'] = $this->arParams['USER_ID'] ?? null;
+		$this->arResult['OWNER_ID'] = $this->arParams['OWNER_ID'] ?? null;
+		$this->arResult['GROUP_ID'] = $this->arParams['GROUP_ID'] ?? null;
+		$this->arResult['COUNTERS'] = ($this->arParams['COUNTERS'] ?? []);
 
 		$this->arResult['ROLE'] = $this->getFilterRole();
 	}

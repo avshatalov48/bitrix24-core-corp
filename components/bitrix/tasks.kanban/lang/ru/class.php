@@ -1,13 +1,18 @@
-<?
+<?php
+
 $MESS["TASK_LIST_TASK_NOT_INSTALLED"] = "Модуль управления задачами не установлен.";
 $MESS["TASK_LIST_SOCNET_NOT_INSTALLED"] = "Модуль социальной сети не установлен.";
-$MESS["TASK_LIST_NOT_AVAILABLE_IN_THIS_EDITION"] = "Модуль управления задачами не доступен в данной редакции продукта.";
+$MESS["TASK_LIST_NOT_AVAILABLE_IN_THIS_EDITION"] = "Модуль управления задачами недоступен в данной редакции продукта.";
 $MESS["TASK_LIST_ACCESS_DENIED"] = "Вы не можете просматривать список задач.";
+$MESS["TASK_LIST_ACCESS_DENIED_V2"] = "Недостаточно прав для просмотра списка задач. Обратитесь к вашему руководителю или администратору Битрикс24.";
 $MESS["TASK_LIST_ACCESS_TO_GROUP_DENIED"] = "Вы не можете просматривать список задач в этой группе.";
+$MESS["TASK_LIST_ACCESS_TO_GROUP_DENIED_V2"] = "Недостаточно прав для просмотра списка задач в этой группе. Обратитесь к вашему руководителю или администратору Битрикс24.";
 $MESS["TASK_LIST_USER_NOT_FOUND"] = "Пользователь не найден.";
 $MESS["TASK_LIST_GROUP_NOT_FOUND"] = "Группа не найдена.";
 $MESS["TASK_LIST_TASK_ACTION_DENIED"] = "Запрещено выполнять данное действие.";
+$MESS["TASK_LIST_TASK_ACTION_DENIED_V2"] = "Недостаточно прав для выполнения этого действия. Обратитесь к вашему руководителю или администратору Битрикс24.";
 $MESS["TASK_LIST_TASK_CREATE_DENIED"] = "Вы не можете создавать задачи.";
+$MESS["TASK_LIST_TASK_CREATE_DENIED_V2"] = "Недостаточно прав для создания задач. Обратитесь к вашему руководителю или администратору Битрикс24.";
 $MESS["TASK_LIST_TITLE"] = "Задачи";
 $MESS["TASK_KANBAN_TITLE"] = "Канбан";
 $MESS["TASK_KANBAN_PERSONAL_TITLE"] = "Мой план";
@@ -23,7 +28,9 @@ $MESS["TASK_LIST_ERROR_CHANGE_DEADLINE"] = "Запрещено менять кр
 $MESS["TASK_ACCESS_NOTIFY_MESSAGE"] = "Прошу вас <a href=\"#URL#\">настроить стадии</a> для работы с задачами на канбане в проекте или делегировать право управления настройками мне.";
 $MESS["TASK_LIST_TASK_MANDATORY_EXISTS"] = "В задаче присутствуют обязательные поля, воспользуйтесь расширенной формой.";
 $MESS["TASK_PROJECT_TITLE"] = "Проект";
-$MESS["TASKS_KANBAN_RESULT_REQUIRED"] = "Постановщик запросил результат работы.<br> Оставьте комментарий к задаче и отметьте его как отчет.";
+$MESS["TASKS_KANBAN_RESULT_REQUIRED"] = "Постановщик запросил результат работы.<br> Оставьте комментарий к задаче и отметьте его как отчёт.";
 $MESS['KANBAN_SORT_MY_SORT'] = 'Моя сортировка';
 $MESS['KANBAN_SORT_MY_SORT_V2'] = 'Моя сортировка';
-?>
+$MESS["TASKS_MARK_NONE"] = "Нет оценки";
+$MESS["TASKS_MARK_P"] = "Положительная";
+$MESS["TASKS_MARK_N"] = "Отрицательная";

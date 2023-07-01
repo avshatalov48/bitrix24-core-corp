@@ -7,6 +7,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
  * @var array $voiceLanguage
  * @var array $voiceSpeed
  * @var array $voiceVolume
+ * @var bool $isEnableText
  */
 
 if (empty($outputNumber)):?>
@@ -45,7 +46,9 @@ if (empty($outputNumber)):?>
 			}
 		</script>
 		<select name="use_audio_file" onchange="__BPVICA_change(this.value)">
-			<option value="N"<?= $currentValues['use_audio_file'] != 'Y' ? " selected" : "" ?>><?= GetMessage("BPVICA_PD_CALL_TYPE_TEXT") ?></option>
+			<?php if ($isEnableText): ?>
+				<option value="N"<?= $currentValues['use_audio_file'] != 'Y' ? " selected" : "" ?>><?= GetMessage("BPVICA_PD_CALL_TYPE_TEXT") ?></option>
+			<?php endif; ?>
 			<option value="Y"<?= $currentValues['use_audio_file'] == 'Y' ? " selected" : "" ?>><?= GetMessage("BPVICA_PD_CALL_TYPE_AUDIO") ?></option>
 		</select>
 	</td>

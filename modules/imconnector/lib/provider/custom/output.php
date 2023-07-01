@@ -16,10 +16,6 @@ class Output extends Base\Output
 	 *
 	 * @param $lineId
 	 * @return Result
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	protected function infoConnectorsLine($lineId): Result
 	{
@@ -28,14 +24,16 @@ class Output extends Base\Output
 
 		if($result->isSuccess())
 		{
+			Status::getInstanceAllConnector($lineId);
+
 			$event = new Event(Library::MODULE_ID, Library::EVENT_INFO_LINE_CUSTOM_CONNECTOR, ['LINE_ID' => $lineId]);
 			$event->send();
 
 			foreach ($event->getResults() as $eventResult)
 			{
 				if (
-					$eventResult != EventResult::ERROR &&
-					$params = $eventResult->getParameters()
+					$eventResult != EventResult::ERROR
+					&& ($params = $eventResult->getParameters())
 				)
 				{
 					$connectorStatus = Status::getInstance($params['connector_id'], (int)$lineId);

@@ -26,16 +26,16 @@ class ControllerTask
 					arParams: context.arParams
 				}
 			)
-			.then(() =>
-			{
-				const repository = taskRepository.get();
+				.then(() =>
+				{
+					const repository = taskRepository.get();
 
-				EventEmitter.emit('BX.Tasks.ControllerTask:onGetRepository', {
-					params: { items, repository }
-				});
+					EventEmitter.emit('BX.Tasks.ControllerTask:onGetRepository', {
+						params: { items, repository }
+					});
 
-				resolve();
-			})
+					resolve();
+				})
 		})
 	}
 
@@ -48,7 +48,7 @@ class ControllerTask
 		return new Promise((resolve, reject) =>
 		{
 			eventLib.batchEmitByParams(params)
-			.then(() => resolve())
+				.then(() => resolve())
 		})
 	}
 

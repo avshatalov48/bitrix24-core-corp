@@ -401,8 +401,7 @@ else
 	);
 }
 
-$CCrmUserType->ListAddHeaders($arResult['HEADERS']);
-
+$CCrmUserType->appendGridHeaders($arResult['HEADERS']);
 
 // list all filds for export
 $exportAllFieldsList = array();

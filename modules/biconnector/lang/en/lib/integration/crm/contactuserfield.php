@@ -1,0 +1,4 @@
+<?php
+$MESS["CRM_BIC_CONTACT_UF_FIELD_CONTACT_ID"] = "Contact ID";
+$MESS["CRM_BIC_CONTACT_UF_FIELD_DATE_CREATE"] = "Created on";
+$MESS["CRM_BIC_CONTACT_UF_TABLE"] = "Contact: custom fields";

@@ -9,23 +9,14 @@ use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Service\Accounting;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Loader;
-use Bitrix\Mobile\Query;
 
 Loader::requireModule('crm');
 
-final class SummaryQuery extends Query
+final class SummaryQuery extends BaseSummaryQuery
 {
-	private Item $entity;
+	protected Item $entity;
 
-	private string $currencyId;
-
-	private array $products;
-
-	private Accounting $accounting;
-
-	private int $precision;
-
-	public function __construct(Item $entity, ?array $products = null, ?string $currencyId = null)
+	public function __construct(Item $entity, ?array $products = null, ?string $currencyId = null, array $additionalConfig = [])
 	{
 		$this->entity = $entity;
 		if ($products === null)
@@ -37,6 +28,7 @@ final class SummaryQuery extends Query
 		$this->currencyId = $currencyId ?? $this->entity->getCurrencyId();
 		$this->accounting = Container::getInstance()->getAccounting();
 		$this->precision = \CCrmCurrency::GetCurrencyDecimals($this->currencyId);
+		$this->additionalConfig = $additionalConfig;
 	}
 
 	public function execute(): array
@@ -58,12 +50,15 @@ final class SummaryQuery extends Query
 		$totalTax = isset($result['TAX_VALUE']) ? round((float)$result['TAX_VALUE'], $this->precision) : 0.0;
 
 		$totalBeforeDiscount = round($totalSum + $totalDiscount, $this->precision);
-		
+
 		$totalDelivery = $this->entity->getId()
 			? $this->accounting->calculateDeliveryTotal(ItemIdentifier::createByItem($this->entity))
 			: 0.0;
 
-		$totalSum = $totalSum + $totalDelivery;
+		if ($this->additionalConfig['addDeliveryToTotal'] ?? true)
+		{
+			$totalSum += $totalDelivery;
+		}
 
 		return [
 			'totalRows' => count($this->products),
@@ -91,47 +86,5 @@ final class SummaryQuery extends Query
 			$locationId = $this->entity->get(Item::FIELD_NAME_LOCATION_ID);
 		}
 		return $locationId;
-	}
-
-	private function getTotalDiscount(): float
-	{
-		$result = 0.0;
-		foreach ($this->products as $productRow)
-		{
-			$result += ($productRow['DISCOUNT_SUM'] * $productRow['QUANTITY']);
-		}
-		return round($result, $this->precision);
-	}
-
-	private function isTaxIncluded(): bool
-	{
-		foreach ($this->products as $productRow)
-		{
-			if ($productRow['TAX_INCLUDED'] === 'Y')
-			{
-				return true;
-			}
-		}
-		return false;
-	}
-
-	private function isTaxPartlyIncluded(): bool
-	{
-		$hasItemsWithTaxIncluded = null;
-		$hasItemsWithNoTaxIncluded = null;
-
-		foreach ($this->products as $productRow)
-		{
-			if ($productRow['TAX_INCLUDED'] === 'Y')
-			{
-				$hasItemsWithTaxIncluded = true;
-			}
-			elseif ($productRow['TAX_RATE'] > 0)
-			{
-				$hasItemsWithNoTaxIncluded = true;
-			}
-		}
-
-		return ($hasItemsWithNoTaxIncluded && $hasItemsWithTaxIncluded);
 	}
 }

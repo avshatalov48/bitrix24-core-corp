@@ -7,6 +7,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm;
 use Bitrix\Crm\Activity;
 use Bitrix\Crm\Integration;
+use Bitrix\Tasks\Integration\CRM\TimeLineManager;
 
 Loc::loadMessages(__FILE__);
 
@@ -71,7 +72,7 @@ class Task extends Activity\Provider\Base
 
 		$result = new Main\Result();
 		if (
-			$action === 'UPDATE'
+			$action === self::ACTION_UPDATE
 			&& isset($fields['COMPLETED'])
 			&& $fields['COMPLETED'] === 'Y'
 			&& empty($previousFields['END_TIME'])
@@ -97,8 +98,17 @@ class Task extends Activity\Provider\Base
 		return $result;
 	}
 
-	public static function updateAssociatedEntity($entityId, array $activity, array $options = array())
+	public static function updateAssociatedEntity(
+		$entityId,
+		array $activity,
+		array $options = array()
+	)
 	{
+		// nasty, very nasty.
+		$skipResponsibleChange = isset($options['SKIP_RESPONSIBLE_CHANGE']) && $options['SKIP_RESPONSIBLE_CHANGE'] === true;
+		$skipDeadlineChange = isset($options['SKIP_DEADLINE_CHANGE']) && $options['SKIP_DEADLINE_CHANGE'] === true;
+		$skipRenew = isset($options['SKIP_RENEW']) && $options['SKIP_RENEW'] === true;
+		$skipSubject = isset($options['SKIP_SUBJECT']) && $options['SKIP_SUBJECT'] === true;
 		$responsibleId = isset($activity['RESPONSIBLE_ID']) ? (int)$activity['RESPONSIBLE_ID'] : 0;
 		$entityId = (int) $entityId;
 
@@ -111,16 +121,16 @@ class Task extends Activity\Provider\Base
 		$task = $itemIterator->fetch();
 
 		$taskFields = array();
-		if (isset($activity['SUBJECT']) && $activity['SUBJECT'] !== $task['TITLE'])
+		if (!$skipSubject && isset($activity['SUBJECT']) && $activity['SUBJECT'] !== $task['TITLE'])
 		{
 			$taskFields['TITLE'] = $activity['SUBJECT'];
 			$taskFields['DESCRIPTION'] = $task['DESCRIPTION']; //for TAGS save
 		}
-		if (isset($activity['END_TIME'] ))
+		if (!$skipDeadlineChange && isset($activity['END_TIME'] ))
 		{
 			$taskFields['DEADLINE'] = $activity['END_TIME'];
 		}
-		if (isset($activity['RESPONSIBLE_ID']))
+		if (!$skipResponsibleChange && isset($activity['RESPONSIBLE_ID']))
 		{
 			$taskFields['RESPONSIBLE_ID'] = $activity['RESPONSIBLE_ID'];
 		}
@@ -148,9 +158,9 @@ class Task extends Activity\Provider\Base
 				{
 					$taskItem->complete(['SKIP_ACCESS_CONTROL' => true]);
 				}
-				else
+				elseif (!$skipRenew)
 				{
-					$taskItem->renew();
+					$taskItem->renew(['SKIP_ACCESS_CONTROL' => true]);
 				}
 				$result = true;
 			}
@@ -435,7 +445,7 @@ class Task extends Activity\Provider\Base
 			*/
 		}
 
-		if(!$isFound)
+		if(!$isFound && !TimeLineManager::isNewIntegrationEnabled())
 		{
 			$activity = array();
 			self::setFromTask($taskId, $task, $activity);
@@ -981,8 +991,18 @@ class Task extends Activity\Provider\Base
 		$associatedEntityID = isset($activityFields['ASSOCIATED_ENTITY_ID'])
 			? (int)$activityFields['ASSOCIATED_ENTITY_ID'] : 0;
 
+		$providerId = $activityFields['PROVIDER_ID'] ?? null;
+
 		$result = new Main\Result();
-		if($activityTypeID === \CCrmActivityType::Task && $associatedEntityID > 0)
+		if(
+			$associatedEntityID > 0
+			&& (
+				$activityTypeID === \CCrmActivityType::Task ||
+				(
+					$activityTypeID === \CCrmActivityType::Provider && $providerId === Activity\Provider\Tasks\Task::getId()
+				)
+			)
+		)
 		{
 			if(isset($params['deletionParams']) && is_array($params['deletionParams']))
 			{
@@ -1013,8 +1033,17 @@ class Task extends Activity\Provider\Base
 		$bindings = isset($activityFields['BINDINGS']) && is_array($activityFields['BINDINGS'])
 			? $activityFields['BINDINGS'] : array();
 
+		$providerId = $activityFields['PROVIDER_ID'] ?? null;
 		$result = new Main\Result();
-		if($activityTypeID === \CCrmActivityType::Task && $associatedEntityID > 0 && !empty($bindings))
+		if(
+			$associatedEntityID > 0 && !empty($bindings)
+			&& (
+				$activityTypeID === \CCrmActivityType::Task ||
+				(
+					$activityTypeID === \CCrmActivityType::Provider && $providerId === Activity\Provider\Tasks\Task::getId()
+				)
+			)
+		)
 		{
 			if(isset($params['creationParams']) && is_array($params['creationParams']))
 			{

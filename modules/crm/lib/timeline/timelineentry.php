@@ -265,6 +265,9 @@ class TimelineEntry
 			"DELETE FROM b_crm_timeline WHERE ASSOCIATED_ENTITY_TYPE_ID = {$entityTypeID} AND ASSOCIATED_ENTITY_ID = {$entityID}"
 		);
 		//endregion
+
+		Entity\TimelineTable::cleanCache();
+		Entity\TimelineBindingTable::cleanCache();
 	}
 
 	public static function getEntriesIdsByAssociatedEntity(int $entityTypeId, int $entityId, int $limit)
@@ -315,20 +318,23 @@ class TimelineEntry
 
 		return $query;
 	}
+
 	public static function delete($ID)
 	{
-		if(!is_int($ID))
+		if (!is_int($ID))
 		{
 			$ID = (int)$ID;
 		}
 
-		if($ID <= 0)
+		if ($ID <= 0)
 		{
 			throw new Main\ArgumentException('Entity ID must be greater than zero.', 'ID');
 		}
+
 		Entity\TimelineBindingTable::deleteByOwner($ID);
 		Entity\TimelineSearchTable::deleteByOwner($ID);
-		Entity\TimelineTable::delete($ID);
+
+		return Entity\TimelineTable::delete($ID);
 	}
 
 	public static function prepareEntityPushTag($entityTypeID, $entityID)

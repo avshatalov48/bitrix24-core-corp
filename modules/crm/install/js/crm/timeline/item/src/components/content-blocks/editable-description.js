@@ -1,8 +1,10 @@
 import { Action } from "../../action";
-import {Runtime, Browser} from "main.core";
-import {Button} from '../layout/button';
-import {ButtonState} from '../enums/button-state';
-import {ButtonType} from '../enums/button-type';
+import { Browser, Runtime } from "main.core";
+import { Button } from '../layout/button';
+import { ButtonState } from '../enums/button-state';
+import { ButtonType } from '../enums/button-type';
+import { EditableDescriptionHeight } from "../enums/editable-description-height";
+import { EditableDescriptionBackgroundColor } from "../enums/editable-description-background-color";
 
 export const EditableDescription = {
 	components: {
@@ -17,8 +19,23 @@ export const EditableDescription = {
 		saveAction: {
 			type: Object,
 			required: false,
-			default: () => ({}),
+			default: null,
 		},
+		editable: {
+			type: Boolean,
+			required: false,
+			default: true,
+		},
+		height: {
+			type: String,
+			required: false,
+			default: EditableDescriptionHeight.SHORT,
+		},
+		backgroundColor: {
+			type: String,
+			required: false,
+			default: '',
+		}
 	},
 
 	data() {
@@ -32,12 +49,16 @@ export const EditableDescription = {
 		};
 	},
 
-	inject: ['isReadOnly'],
+	inject: ['isReadOnly', 'isLogMessage'],
 
 	computed: {
-		className() {
+		className()
+		{
 			return [
-				'crm-timeline__editable-text', {
+				'crm-timeline__editable-text',
+				[`${this.heightClassnameModifier}`, `${this.bgColorClassnameModifier}`],
+				{
+				'--is-read-only': this.isLogMessage,
 				'--is-edit': this.isEdit,
 				'--is-long': this.isLongText,
 				'--is-expanded': this.isCollapsed || !this.isLongText,
@@ -45,7 +66,33 @@ export const EditableDescription = {
 			]
 		},
 
-		saveTextButtonProps() {
+		heightClassnameModifier()
+		{
+			switch (this.height)
+			{
+				case EditableDescriptionHeight.LONG: return '--height-long';
+				case EditableDescriptionHeight.SHORT: return '--height-short';
+				default: return '--height-short';
+			}
+		},
+
+		bgColorClassnameModifier()
+		{
+			switch (this.backgroundColor)
+			{
+				case EditableDescriptionBackgroundColor.YELLOW: return '--bg-color-yellow';
+				case EditableDescriptionBackgroundColor.WHITE: return '--bg-color-white';
+				default: return '';
+			};
+		},
+
+		isEditable()
+		{
+			return this.editable && this.saveAction && !this.isReadOnly;
+		},
+
+		saveTextButtonProps()
+		{
 			return {
 				state: this.saveTextButtonState,
 				type: ButtonType.PRIMARY,
@@ -53,7 +100,8 @@ export const EditableDescription = {
 			}
 		},
 
-		cancelEditingButtonProps() {
+		cancelEditingButtonProps()
+		{
 			return {
 				type: ButtonType.LIGHT,
 				title: this.$Bitrix.Loc.getMessage('CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_CANCEL'),
@@ -61,7 +109,8 @@ export const EditableDescription = {
 			}
 		},
 
-		saveTextButtonState() {
+		saveTextButtonState()
+		{
 			const trimValue = this.value.trim();
 			if (trimValue.length === 0) {
 				return ButtonState.DISABLED;
@@ -73,10 +122,16 @@ export const EditableDescription = {
 
 		},
 
-		expandButtonText() {
+		expandButtonText()
+		{
 			return this.isCollapsed
 				? this.$Bitrix.Loc.getMessage('CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_HIDE')
 				: this.$Bitrix.Loc.getMessage('CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_SHOW');
+		},
+
+		isEditButtonVisible(): Boolean
+		{
+			return !(this.isReadOnly || this.isEdit);
 		},
 	},
 
@@ -195,7 +250,10 @@ export const EditableDescription = {
 			if (!textBlock) return false;
 			const textBlockMaxHeightStyle = window.getComputedStyle(textBlock).getPropertyValue('--crm-timeline__editable-text_max-height');
 			const textBlockMaxHeight = parseFloat(textBlockMaxHeightStyle.slice(0, -2));
-			return this.$refs.rootElement?.offsetHeight > textBlockMaxHeight;
+			const parentComputedStyles = this.$refs.rootElement ? window.getComputedStyle(this.$refs.rootElement) : {};
+			const parentHeight = this.$refs.rootElement?.offsetHeight -  parseFloat(parentComputedStyles.paddingTop) - parseFloat(parentComputedStyles.paddingBottom);
+
+			return parentHeight > textBlockMaxHeight;
 		},
 	},
 
@@ -227,7 +285,7 @@ export const EditableDescription = {
 		<div class="crm-timeline__editable-text_wrapper">
 			<div ref="rootElement" :class="className">
 				<button
-					v-if="isEdit"
+					v-if="isEdit && isEditable"
 					:disabled="isSaving"
 					@click="clearText"
 					class="crm-timeline__editable-text_clear-btn"
@@ -235,7 +293,7 @@ export const EditableDescription = {
 					<i class="crm-timeline__editable-text_clear-icon"></i>
 				</button>
 				<button
-					v-if="isLongText && !isEdit && !isReadOnly"
+					v-if="isLongText && !isEdit && isEditable && isEditButtonVisible"
 					:disabled="isSaving"
 					@click="startEditing"
 					class="crm-timeline__editable-text_edit-btn"
@@ -262,7 +320,7 @@ export const EditableDescription = {
 							{{value}}
 						</span>
 						<span
-							v-if="!isEdit && !isLongText && !isReadOnly"
+							v-if="!isEdit && !isLongText && isEditable && isEditButtonVisible"
 							@click="startEditing"
 							class="crm-timeline__editable-text_text-edit-icon"
 						>

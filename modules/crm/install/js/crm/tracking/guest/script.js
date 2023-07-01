@@ -210,7 +210,7 @@
 				pages: {
 					list: PageTracker.list()
 				},
-				gid: b24Tracker.guest.getGidCookie()
+				gid: b24Tracker.guest.getGidCookie(),
 			};
 
 			if (options.previous !== false)
@@ -336,6 +336,16 @@
 				{
 					id = window['yaCounter' + yaId].getClientID();
 				}
+			}
+
+			if (
+				!id
+				&& window.ym
+				&& typeof window.ym === 'function'
+				&& window.ym?.a[0] !== undefined
+			)
+			{
+				id = window.ym.a[0][0];
 			}
 
 			if (!id)

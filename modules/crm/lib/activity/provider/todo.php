@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Activity\Provider;
 
+use Bitrix\Crm\Settings\Crm;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
 
@@ -51,9 +52,35 @@ class ToDo extends Base
 
 	public static function checkFields($action, &$fields, $id, $params = null)
 	{
-		if (isset($fields['END_TIME']) && $fields['END_TIME'] != '')
+		$isInitiatedByCalendar = (
+			!empty($params['INITIATED_BY_CALENDAR'])
+			|| !empty($fields['CALENDAR_EVENT_ID'])
+		);
+
+		if (isset($fields['END_TIME']) && (string)($fields['END_TIME']) !== '')
 		{
 			$fields['DEADLINE'] = $fields['END_TIME'];
+		}
+
+		if ($action === self::ACTION_UPDATE && $isInitiatedByCalendar)
+		{
+			if (isset($fields['START_TIME']) && (string)$fields['START_TIME'] !== '')
+			{
+				$fields['DEADLINE'] = $fields['START_TIME'];
+			}
+			elseif (isset($fields['~START_TIME']) && (string)$fields['~START_TIME'] !== '')
+			{
+				$fields['~DEADLINE'] = $fields['~START_TIME'];
+			}
+		}
+
+		if (
+			$action === self::ACTION_UPDATE
+			&& isset($fields['SUBJECT'])
+			&& (empty($fields['DESCRIPTION']) || $isInitiatedByCalendar)
+		)
+		{
+			$fields['DESCRIPTION'] = $fields['SUBJECT'];
 		}
 
 		return new Result();
@@ -62,5 +89,20 @@ class ToDo extends Base
 	public static function getDefaultPingOffsets(): array
 	{
 		return [0, 15];
+	}
+
+	public static function canUseCalendarEvents($providerTypeId = null): bool
+	{
+		return Crm::isTimelineToDoCalendarSyncEnabled();
+	}
+
+	public static function skipCalendarSync(array $activityFields, array $options = []): bool
+	{
+		if (!empty($activityFields['CALENDAR_EVENT_ID']))
+		{
+			return false;
+		}
+
+		return (bool) ($options['SKIP_CURRENT_CALENDAR_EVENT'] ?? true);
 	}
 }

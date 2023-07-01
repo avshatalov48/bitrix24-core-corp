@@ -2,7 +2,6 @@
  * @module crm/timeline/ui/sticky-date
  */
 jn.define('crm/timeline/ui/sticky-date', (require, exports, module) => {
-
 	const { Moment } = require('utils/date');
 	const { DateDivider } = require('crm/timeline/ui/divider');
 
@@ -42,7 +41,7 @@ jn.define('crm/timeline/ui/sticky-date', (require, exports, module) => {
 		{
 			breakpointsMap[offsetTop] = moment;
 			sortedBreakpoints = Object.keys(breakpointsMap)
-				.map(item => Number(item))
+				.map(Number)
 				.sort((a, b) => b - a);
 		}
 
@@ -147,11 +146,11 @@ jn.define('crm/timeline/ui/sticky-date', (require, exports, module) => {
 						width: '100%',
 						opacity: this.state.transparent ? 0 : DEFAULT_OPACITY,
 						display: this.state.visible ? 'flex' : 'none',
-					}
+					},
 				},
 				Shadow(
 					{
-						color: '#e6e6e6',
+						color: '#e6e7e9',
 						radius: 3,
 						offset: {
 							y: 3,
@@ -165,18 +164,17 @@ jn.define('crm/timeline/ui/sticky-date', (require, exports, module) => {
 						{
 							style: {
 								paddingTop: INNER_PADDING,
-							}
+							},
 						},
 						DateDivider({
 							moment: this.state.moment,
 							showLine: false,
-						})
-					)
+						}),
+					),
 				),
 			);
 		}
 	}
 
 	module.exports = { StickyDate };
-
 });

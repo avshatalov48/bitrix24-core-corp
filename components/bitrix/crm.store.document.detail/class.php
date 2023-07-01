@@ -9,6 +9,8 @@ use Bitrix\Catalog\Access\AccessController;
 use Bitrix\Catalog\Access\ActionDictionary;
 use Bitrix\Catalog\StoreDocumentTable;
 use Bitrix\Crm;
+use Bitrix\Crm\Integration\Catalog\Contractor\CategoryRepository;
+use Bitrix\Crm\Integration\Catalog\Contractor\Provider;
 use Bitrix\Main;
 use Bitrix\Crm\Order;
 use Bitrix\Crm\Service\EditorAdapter;
@@ -306,7 +308,7 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 		//region Page title
 		if ($this->mode === ComponentMode::CREATION)
 		{
-			$APPLICATION->SetTitle(Loc::getMessage('CRM_STORE_DOCUMENT_SHIPMENT_CREATION_PAGE_TITLE'));
+			$APPLICATION->SetTitle(Loc::getMessage('CRM_STORE_DOCUMENT_SHIPMENT_CREATION_PAGE_TITLE_MSGVER_1'));
 		}
 		elseif (!empty($this->entityData['TITLE']))
 		{
@@ -359,6 +361,7 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 		}
 
 		$this->checkIfInventoryManagementIsUsed();
+		$this->checkIfInventoryManagementIsDisabled();
 
 		$this->arResult['DOCUMENT_PERMISSIONS'] = [
 			'conduct' => $this->checkDocumentConductRight(),
@@ -423,6 +426,11 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 			($this->shipment->getId() === 0)
 		);
 
+		$categoryParams = [
+			CCrmOwnerType::Company => CategoryRepository::getIdByEntityTypeId(CCrmOwnerType::Company) ?? 0,
+			CCrmOwnerType::Contact => CategoryRepository::getIdByEntityTypeId(CCrmOwnerType::Contact) ?? 0,
+		];
+
 		$this->arResult['ENTITY_FIELDS'] = [
 			[
 				'name' => 'CLIENT',
@@ -458,7 +466,9 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 							],
 						],
 					],
-					'clientEditorFieldsParams' => $this->prepareClientEditorFieldsParams(),
+					'clientEditorFieldsParams' => CCrmComponentHelper::prepareClientEditorFieldsParams(
+						['categoryParams' => $categoryParams]
+					),
 				],
 			],
 			[
@@ -1027,25 +1037,6 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 		);
 	}
 
-	protected function prepareClientEditorFieldsParams(): array
-	{
-		$result = [
-			\CCrmOwnerType::ContactName => [
-				'REQUISITES' => \CCrmComponentHelper::getFieldInfoData(\CCrmOwnerType::Contact, 'requisite'),
-			],
-			\CCrmOwnerType::CompanyName => [
-				'REQUISITES' => \CCrmComponentHelper::getFieldInfoData(\CCrmOwnerType::Company, 'requisite'),
-			],
-		];
-		if (Main\Loader::includeModule('location'))
-		{
-			$result[\CCrmOwnerType::ContactName]['ADDRESS'] = \CCrmComponentHelper::getFieldInfoData(\CCrmOwnerType::Contact,'requisite_address');
-			$result[\CCrmOwnerType::CompanyName]['ADDRESS'] = \CCrmComponentHelper::getFieldInfoData(\CCrmOwnerType::Company,'requisite_address');
-		}
-
-		return $result;
-	}
-
 	protected function prepareClientData(): void
 	{
 		$companyId = 0;
@@ -1305,6 +1296,19 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 			$sliderPath = \CComponentEngine::makeComponentPath('bitrix:catalog.warehouse.master.clear');
 			$sliderPath = getLocalPath('components' . $sliderPath . '/slider.php');
 			$this->arResult['MASTER_SLIDER_URL'] = $sliderPath;
+		}
+	}
+
+	private function checkIfInventoryManagementIsDisabled(): void
+	{
+		$this->arResult['IS_INVENTORY_MANAGEMENT_DISABLED'] = !\Bitrix\Catalog\Config\Feature::isInventoryManagementEnabled();
+		if ($this->arResult['IS_INVENTORY_MANAGEMENT_DISABLED'])
+		{
+			$this->arResult['INVENTORY_MANAGEMENT_FEATURE_SLIDER_CODE'] = \Bitrix\Catalog\Config\Feature::getInventoryManagementHelpLink()['FEATURE_CODE'] ?? null;
+		}
+		else
+		{
+			$this->arResult['INVENTORY_MANAGEMENT_FEATURE_SLIDER_CODE'] = null;
 		}
 	}
 

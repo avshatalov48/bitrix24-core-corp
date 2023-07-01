@@ -7,6 +7,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\Helper\RestrictionUrl;
+use Bitrix\Tasks\Integration\Bitrix24\User;
 use Bitrix\Tasks\Util\Type;
 use Bitrix\Tasks\Util;
 use Bitrix\Tasks\Integration\CRM;
@@ -111,7 +112,11 @@ if ($arParams['ENABLE_MENU_TOOLBAR'])
 			$APPLICATION->IncludeComponent('bitrix:ui.info.helper', '', []);
 		}
 
-		$taskUrlTemplate = str_replace(array('#task_id#', '#action#'), array('{{VALUE}}', 'view'), $arParams['PATH_TO_TASKS_TASK_ORIGINAL']);
+		$taskUrlTemplate = str_replace(
+			['#task_id#', '#action#'],
+			['{{VALUE}}', 'view'],
+			($arParams['PATH_TO_TASKS_TASK_ORIGINAL'] ?? '')
+		);
 		$userProfileUrlTemplate = str_replace('#user_id#', '{{VALUE}}', $arParams['PATH_TO_USER_PROFILE']);
 		?>
 
@@ -135,6 +140,10 @@ if ($arParams['ENABLE_MENU_TOOLBAR'])
 
 			<input type="hidden" name="SITE_ID" value="<?=SITE_ID?>" />
 
+			<?php if(isset($arResult['TEMPLATE_DATA']['SCENARIO'])):?>
+				<input type="hidden" name="<?=htmlspecialcharsbx($inputPrefix)?>[SCENARIO_NAME]" value="<?=htmlspecialcharsbx($arResult['TEMPLATE_DATA']['SCENARIO'])?>" />
+			<?php endif?>
+
 			<?php if($_REQUEST['IFRAME']):?>
 			<input type="hidden" name="IFRAME" value="<?=$_REQUEST['IFRAME']=='Y'?'Y':'N'?>" />
 			<?php endif?>
@@ -155,12 +164,12 @@ if ($arParams['ENABLE_MENU_TOOLBAR'])
 			<input type="hidden" name="ACTION[0][PARAMETERS][CODE]" value="task_template_action" />
 
 			<?// todo: move to hit state?>
-			<?if(Type::isIterable($arResult['COMPONENT_DATA']['DATA_SOURCE'])):?>
+			<?if(Type::isIterable($arResult['COMPONENT_DATA']['DATA_SOURCE'] ?? null)):?>
 				<input type="hidden" name="ADDITIONAL[DATA_SOURCE][TYPE]" value="<?=htmlspecialcharsbx($arResult['COMPONENT_DATA']['DATA_SOURCE']['TYPE'])?>" />
 				<input type="hidden" name="ADDITIONAL[DATA_SOURCE][ID]" value="<?=intval($arResult['COMPONENT_DATA']['DATA_SOURCE']['ID'])?>" />
 			<?endif?>
 
-			<?if(is_array($arResult['COMPONENT_DATA']['HIT_STATE'])):?>
+			<?if (is_array($arResult['COMPONENT_DATA']['HIT_STATE'] ?? null)):?>
 				<?foreach($arResult['COMPONENT_DATA']['HIT_STATE'] as $field => $value):?>
 					<input type="hidden" name="HIT_STATE[<?=htmlspecialcharsbx(str_replace('.', '][', $field))?>]" value="<?=htmlspecialcharsbx($value)?>" />
 				<?endforeach?>
@@ -448,10 +457,11 @@ if ($arParams['ENABLE_MENU_TOOLBAR'])
 			<div class="task-options-field-container">
 
 				<?$typeNewEnabled = !$template->getId() && !$template['BASE_TEMPLATE_ID'] && $template['REPLICATE'] != 'Y';?>
-				<?$canCustomizeCalendar =
-					!$arResult['AUX_DATA']['USER']['IS_EXTRANET_USER'] &&
-					$arResult['COMPONENT_DATA']['MODULES']['bitrix24'] &&
-					\Bitrix\Tasks\Integration\Bitrix24\User::isAdmin($arParams['USER_ID']);?>
+				<?php $canCustomizeCalendar =
+					!($arResult['AUX_DATA']['USER']['IS_EXTRANET_USER'] ?? null)
+					&& $arResult['COMPONENT_DATA']['MODULES']['bitrix24']
+					&& User::isAdmin($arParams['USER_ID'])
+				; ?>
 
 				<?
 				$options = array(
@@ -851,14 +861,14 @@ if ($arParams['ENABLE_MENU_TOOLBAR'])
 				}
 				$html = ob_get_clean();
 
-				$blocks['DYNAMIC'][] = array(
+				$blocks['DYNAMIC'][] = [
 					'CODE' => $blockCode,
-					'TITLE' => Loc::getMessage('TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_BLOCK_TITLE_'.$blockCode),
-					'TITLE_SHORT' => Loc::getMessage('TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_BLOCK_HEADER_'.$blockCode),
+					'TITLE' => Loc::getMessage("TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_BLOCK_TITLE_{$blockCode}"),
+					'TITLE_SHORT' => Loc::getMessage("TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_BLOCK_HEADER_{$blockCode}"),
 					'HTML' => $html,
 					'IS_PINABLE' => true,
-					'FILLED' => $blockData[$blockCode]['FILLED'],
-				);
+					'FILLED' => ($blockData[$blockCode]['FILLED'] ?? null),
+				];
 			}
 
 			//////// OUTPUT FRAME ////////////////////////////////////////////

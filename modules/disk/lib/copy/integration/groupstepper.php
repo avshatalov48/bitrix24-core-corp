@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\Disk\Copy\Integration;
 
+use Bitrix\Disk\BaseObject;
 use Bitrix\Disk\Driver;
 use Bitrix\Disk\File;
 use Bitrix\Disk\Folder;
@@ -92,7 +93,8 @@ class GroupStepper extends Stepper
 					{
 						$queueOption["errorOffset"] += 1;
 					}
-					$copiedFileIds[] = ($copiedFile && $copiedFile->getId() ? $fileId : 0);
+					$this->setFileRights($groupId, $copiedGroupId, $file, $copiedFile);
+					$copiedFileIds[] = ($copiedFile->getId() ? $fileId : 0);
 				}
 				catch (\Throwable $exception)
 				{
@@ -175,6 +177,54 @@ class GroupStepper extends Stepper
 		}
 
 		return $fileIds;
+	}
+
+	private function setFileRights(
+		int $groupId,
+		int $copiedGroupId,
+		BaseObject $sourceFile,
+		BaseObject $copiedFile
+	): void
+	{
+		$rightsManager = Driver::getInstance()->getRightsManager();
+
+		$sourceRights = $rightsManager->getSpecificRights($sourceFile);
+
+		$newRights = [];
+		foreach	($sourceRights as $right)
+		{
+			unset($right['ID']);
+
+			$right['OBJECT_ID'] = $copiedFile->getId();
+
+			$right['ACCESS_CODE'] = $this->prepareAccessCodeByCopiedGroup(
+				$groupId,
+				$copiedGroupId,
+				$right['ACCESS_CODE']
+			);
+
+			$newRights[] = $right;
+		}
+
+		$rightsManager->set($copiedFile, $newRights);
+	}
+
+	private function prepareAccessCodeByCopiedGroup(
+		int $groupId,
+		int $copiedGroupId,
+		string $accessCode
+	): string
+	{
+		if (mb_substr($accessCode, 0, 2) === 'SG')
+		{
+			[$code,] = explode('_', $accessCode);
+			if ($groupId == mb_substr($code, 2))
+			{
+				$accessCode = str_replace($groupId, $copiedGroupId, $accessCode);
+			}
+		}
+
+		return $accessCode;
 	}
 
 	private function getOffset(?Folder $targetRootFolder): int

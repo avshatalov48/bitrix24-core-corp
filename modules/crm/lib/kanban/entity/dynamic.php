@@ -6,6 +6,7 @@ use Bitrix\Crm\Filter;
 use Bitrix\Crm\Filter\ItemDataProvider;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\Kanban;
+use Bitrix\Crm\PhaseSemantics;
 use Bitrix\Crm\Search\SearchEnvironment;
 use Bitrix\Crm\Service;
 use Bitrix\Crm\Service\Container;
@@ -259,6 +260,7 @@ class Dynamic extends Kanban\Entity
 		$item['PRICE'] = $item[Item::FIELD_NAME_OPPORTUNITY_ACCOUNT];
 		$item['ASSIGNED_BY'] = $item[Item::FIELD_NAME_ASSIGNED];
 		$item['DATE'] = $item['CREATED_TIME'];
+		$item['DATE_CREATE'] = $item['CREATED_TIME'];
 
 		return parent::prepareItemCommonFields($item);
 	}
@@ -469,7 +471,7 @@ class Dynamic extends Kanban\Entity
 		);
 	}
 
-	public function canAddItemToStage(string $stageId, \CCrmPerms $userPermissions): bool
+	public function canAddItemToStage(string $stageId, \CCrmPerms $userPermissions, string $semantics = PhaseSemantics::UNDEFINED): bool
 	{
 		return Container::getInstance()->getUserPermissions()->checkAddPermissions(
 			$this->getTypeId(),

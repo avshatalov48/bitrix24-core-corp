@@ -13,8 +13,8 @@ return array(
 	'rel' => [
 		'main.core',
 		'main.popup',
+		'im.public.iframe',
 		'pull.client',
-		'main.core.events',
 	],
 	'skip_core' => false,
 );

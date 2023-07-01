@@ -2,7 +2,6 @@
  * @module crm/timeline
  */
 jn.define('crm/timeline', (require, exports, module) => {
-
 	const { FadeView } = require('animation/components/fade-view');
 	const { StickyDate } = require('crm/timeline/ui/sticky-date');
 	const { Divider, DateDivider } = require('crm/timeline/ui/divider');
@@ -23,26 +22,33 @@ jn.define('crm/timeline', (require, exports, module) => {
 	const { EventEmitter } = require('event-emitter');
 	const { Loc } = require('loc');
 
-    /**
-     * @class Timeline
-     */
-    class Timeline extends LayoutComponent
-    {
-        constructor(props)
-        {
-			console.log('timeline props', props);
-            super(props);
+	/**
+	 * @class Timeline
+	 */
+	class Timeline extends LayoutComponent
+	{
+		static getFloatingMenuItems(context)
+		{
+			return TimelineScheduler.getFloatingMenuItems(context);
+		}
+
+		constructor(props)
+		{
+			super(props);
 
 			this.uid = props.uid || Random.getString();
 			this.timelineScopeEventBus = EventEmitter.createWithUid(this.uid);
 			this.pushProcessor = new TimelinePushProcessor({
 				timeline: this,
 			});
+
+			const { entity, user } = this.props;
 			this.timelineScheduler = new TimelineScheduler({
-				entity: this.props.entity,
+				entity,
+				user,
 			});
 			this.dataProvider = new TimelineDataProvider({
-				entity: this.props.entity,
+				entity,
 			});
 
 			this.initStreams();
@@ -52,7 +58,7 @@ jn.define('crm/timeline', (require, exports, module) => {
 			this.listViewRef = null;
 
 			this.openDesktopEntityPage = this.openDesktopEntityPage.bind(this);
-        }
+		}
 
 		initStreams()
 		{
@@ -68,7 +74,7 @@ jn.define('crm/timeline', (require, exports, module) => {
 			this.historyStream = new TimelineStreamHistory(commonSettings);
 
 			const itemPositionCalculator = new ItemPositionCalculator(this.streams);
-			this.streams.map(stream => stream.setItemPositionCalculator(itemPositionCalculator));
+			this.streams.map((stream) => stream.setItemPositionCalculator(itemPositionCalculator));
 		}
 
 		buildState(props)
@@ -126,8 +132,8 @@ jn.define('crm/timeline', (require, exports, module) => {
 			this.pushProcessor.handleMessage(message);
 		}
 
-        render()
-        {
+		render()
+		{
 			return View(
 				{
 					style: Styles.fullscreenContainer,
@@ -146,24 +152,23 @@ jn.define('crm/timeline', (require, exports, module) => {
 						new StickyDate({
 							// ref: (ref) => StickyDate.useRef(ref),
 						}),
-						this.renderAddItemButton()
 					),
-				})
+				}),
 			);
-        }
+		}
 
 		renderItems()
 		{
-			const items = this.streams.flatMap(stream => stream.exportToListView());
+			const items = this.streams.flatMap((stream) => stream.exportToListView());
 			items.unshift({
 				type: 'PaddingTop',
 				key: 'padding-top',
-				props: { value: 16 }
+				props: { value: 16 },
 			});
 			items.push({
 				type: 'PaddingBottom',
 				key: 'padding-bottom',
-				props: { value: 75 }
+				props: { value: 75 },
 			});
 
 			items.map((item, index) => item.index = index);
@@ -187,7 +192,7 @@ jn.define('crm/timeline', (require, exports, module) => {
 						{
 							style: {
 								backgroundColor: '#eef2f4',
-							}
+							},
 						},
 						this.renderItemContent(props),
 					);
@@ -200,7 +205,7 @@ jn.define('crm/timeline', (require, exports, module) => {
 			if (ref)
 			{
 				this.listViewRef = ref;
-				this.streams.map(stream => stream.registerListViewRef(ref));
+				this.streams.map((stream) => stream.registerListViewRef(ref));
 			}
 		}
 
@@ -213,7 +218,7 @@ jn.define('crm/timeline', (require, exports, module) => {
 				case 'PaddingTop':
 				case 'PaddingBottom':
 					return View({
-						style: { height: Number(props.value) }
+						style: { height: Number(props.value) },
 					});
 				case 'DateDivider':
 					const moment = new Moment(props.date);
@@ -223,6 +228,7 @@ jn.define('crm/timeline', (require, exports, module) => {
 					});
 				case 'CreateReminder':
 					return CreateReminder({
+						entityTypeId: this.props.entity.typeId,
 						style: {
 							marginBottom: 16,
 						},
@@ -253,39 +259,16 @@ jn.define('crm/timeline', (require, exports, module) => {
 			{
 				return this.pinnedStream.renderItem(props.id, index);
 			}
-			else if (type.startsWith('TimelineItem:scheduled'))
+			if (type.startsWith('TimelineItem:scheduled'))
 			{
 				return this.scheduledStream.renderItem(props.id, index);
 			}
-			else if (type.startsWith('TimelineItem:history'))
+			if (type.startsWith('TimelineItem:history'))
 			{
 				return this.historyStream.renderItem(props.id, index);
 			}
 
 			return null;
-		}
-
-		renderAddItemButton()
-		{
-			if (this.isEditable)
-			{
-				return new UI.FloatingButtonComponent({
-					onClick: () => this.onAddItemButtonClick(),
-					onLongClick: () => this.onAddItemButtonLongClick(),
-				});
-			}
-
-			return null;
-		}
-
-		onAddItemButtonClick()
-		{
-			this.timelineScheduler.openMenu();
-		}
-
-		onAddItemButtonLongClick()
-		{
-			this.timelineScheduler.openActivityEditor();
 		}
 
 		scrollToTheTop(animate = true)
@@ -336,15 +319,18 @@ jn.define('crm/timeline', (require, exports, module) => {
 			});
 		}
 
-		onItemAction({ type, value, actionParams, source })
+		onItemAction(params = {})
 		{
 			TimelineAction.execute({
-				type,
-				value,
-				actionParams,
-				source,
+				...params,
 				entity: this.props.entity,
+				scheduler: this.timelineScheduler,
 			});
+		}
+
+		handleFloatingMenuAction(providerId)
+		{
+			this.timelineScheduler.openEditorByProviderId(providerId, { detailCard: this.props.detailCard });
 		}
 	}
 
@@ -369,6 +355,5 @@ jn.define('crm/timeline', (require, exports, module) => {
 		},
 	};
 
-    module.exports = { Timeline };
-
+	module.exports = { Timeline };
 });

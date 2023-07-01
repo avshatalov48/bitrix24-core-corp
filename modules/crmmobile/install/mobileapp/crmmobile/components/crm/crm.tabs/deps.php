@@ -4,15 +4,18 @@ return [
 	'extensions' => [
 		'layout/ui/menu',
 		'layout/pure-component',
+		'layout/ui/plan-restriction',
 		'layout/ui/stateful-list',
 		'qrauth/utils',
 		'rest',
 		'utils/object',
 		'utils/function',
-		'crm:entity-tab/search',
+
+		'crm:type',
+		'crm:state-storage',
 		'crm:entity-tab/list',
 		'crm:entity-tab/kanban',
-		'crm:state-storage',
-		'crm:type',
+		'crm:entity-tab/search',
+		'crm:ui/loading-progress'
 	],
 ];

@@ -4,6 +4,7 @@ namespace Bitrix\Disk\Volume\Module;
 
 use Bitrix\Disk\Internals\ObjectTable;
 use Bitrix\Main;
+use Bitrix\Disk;
 use Bitrix\Disk\Volume;
 
 
@@ -18,21 +19,21 @@ class Documentgenerator
 	/** @var string */
 	protected static $moduleId = 'documentgenerator';
 
-	/** @var \Bitrix\Disk\Storage[] */
-	private $storageList = array();
+	/** @var Disk\Storage[] */
+	private $storageList = [];
 
-	/** @var \Bitrix\Disk\Folder[] */
-	private $folderList = array();
+	/** @var Disk\Folder[] */
+	private $folderList = [];
 
 
 	/**
 	 * Runs measure test to get volumes of selecting objects.
 	 * @param array $collectData List types data to collect: ATTACHED_OBJECT, SHARING_OBJECT, EXTERNAL_LINK, UNNECESSARY_VERSION.
-	 * @return $this
+	 * @return static
 	 * @throws Main\ArgumentException
 	 * @throws Main\SystemException
 	 */
-	public function measure($collectData = array())
+	public function measure(array $collectData = []): self
 	{
 		if (!$this->isMeasureAvailable())
 		{
@@ -42,10 +43,10 @@ class Documentgenerator
 
 		// collect disk statistics
 		$this
-			->addFilter(0, array(
+			->addFilter(0, [
 				'MODULE_ID' => self::getModuleId(),
-				'ENTITY_TYPE' => 'Bitrix\\DocumentGenerator\\Integration\\Disk\\ProxyType',
-			))
+				'ENTITY_TYPE' => \Bitrix\DocumentGenerator\Integration\Disk\ProxyType::class,
+			])
 			->addFilter('DELETED_TYPE', ObjectTable::DELETED_TYPE_NONE);
 
 		parent::measure();
@@ -55,16 +56,16 @@ class Documentgenerator
 
 	/**
 	 * Returns module storage.
-	 * @return \Bitrix\Disk\Storage[]|array
+	 * @return Disk\Storage[]|array
 	 */
-	public function getStorageList()
+	public function getStorageList(): array
 	{
 		if (count($this->storageList) == 0)
 		{
 			if ($this->isMeasureAvailable())
 			{
 				$storage = \Bitrix\DocumentGenerator\Storage\Disk::getDiskStorage();
-				if ($storage instanceof \Bitrix\Disk\Storage)
+				if ($storage instanceof Disk\Storage)
 				{
 					$this->storageList[] = $storage;
 				}
@@ -77,13 +78,13 @@ class Documentgenerator
 
 	/**
 	 * Returns folder list corresponding to module.
-	 * @param \Bitrix\Disk\Storage $storage Module's storage.
-	 * @return \Bitrix\Disk\Folder[]|array
+	 * @param Disk\Storage $storage Module's storage.
+	 * @return Disk\Folder[]|array
 	 */
-	public function getFolderList($storage)
+	public function getFolderList($storage): array
 	{
 		if (
-			$storage instanceof \Bitrix\Disk\Storage &&
+			$storage instanceof Disk\Storage &&
 			$storage->getId() > 0
 		)
 		{
@@ -92,7 +93,7 @@ class Documentgenerator
 				empty($this->folderList[$storage->getId()])
 			)
 			{
-				$this->folderList[$storage->getId()] = array();
+				$this->folderList[$storage->getId()] = [];
 				if ($this->isMeasureAvailable())
 				{
 					$typeFolderCodeList = self::getSpecialFolderCode();
@@ -100,12 +101,12 @@ class Documentgenerator
 					{
 						foreach ($typeFolderCodeList as $code)
 						{
-							$folder = \Bitrix\Disk\Folder::load(array(
+							$folder = Disk\Folder::load([
 								'=CODE' => $code,
 								'=STORAGE_ID' => $storage->getId(),
-							));
+							]);
 							if (
-								!($folder instanceof \Bitrix\Disk\Folder) ||
+								!($folder instanceof Disk\Folder) ||
 								($folder->getCode() !== $code)
 							)
 							{
@@ -120,36 +121,36 @@ class Documentgenerator
 			return $this->folderList[$storage->getId()];
 		}
 
-		return array();
+		return [];
 	}
 
 	/**
 	 * Returns special folder code list.
 	 * @return string[]
 	 */
-	public static function getSpecialFolderCode()
+	public static function getSpecialFolderCode(): array
 	{
 		/** @see \Bitrix\DocumentGenerator\Storage\Disk::TEMPLATES_FOLDER_CODE */
-		return array('FOR_DOCUMENTGENERATOR_TEMPLATES');
+		return ['FOR_DOCUMENTGENERATOR_TEMPLATES'];
 	}
 
 	/**
 	 * Returns entity type list.
 	 * @return string[]
 	 */
-	public static function getEntityType()
+	public static function getEntityType(): array
 	{
-		return array(
-			'Bitrix\\DocumentGenerator\\Integration\\Disk\\ProxyType',
-		);
+		return [
+			\Bitrix\DocumentGenerator\Integration\Disk\ProxyType::class
+		];
 	}
 
 	/**
 	 * Check ability to drop folder.
-	 * @param \Bitrix\Disk\Folder $folder Folder to drop.
+	 * @param Disk\Folder $folder Folder to drop.
 	 * @return boolean
 	 */
-	public function isAllowDeleteFolder(\Bitrix\Disk\Folder $folder)
+	public function isAllowDeleteFolder(Disk\Folder $folder): bool
 	{
 		if (!$this->isMeasureAvailable())
 		{
@@ -163,11 +164,11 @@ class Documentgenerator
 		static $folderIds;
 		if (empty($folderIds))
 		{
-			$folderIds = array();
+			$folderIds = [];
 			$storageList = $this->getStorageList();
 			foreach ($storageList as $storage)
 			{
-				/** @var \Bitrix\Disk\Folder $fldr */
+				/** @var Disk\Folder $fldr */
 				foreach ($this->getFolderList($storage) as $fldr)
 				{
 					$folderIds[] = $fldr->getId();
@@ -182,11 +183,11 @@ class Documentgenerator
 	/**
 	 * Check ability to clear folder.
 	 *
-	 * @param \Bitrix\Disk\Folder $folder Folder to clear.
+	 * @param Disk\Folder $folder Folder to clear.
 	 *
 	 * @return boolean
 	 */
-	public function isAllowClearFolder(\Bitrix\Disk\Folder $folder)
+	public function isAllowClearFolder(Disk\Folder $folder): bool
 	{
 		return $this->isAllowDeleteFolder($folder);
 	}

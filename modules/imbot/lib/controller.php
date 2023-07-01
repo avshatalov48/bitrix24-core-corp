@@ -22,7 +22,7 @@ class Controller
 		{
 			$params = self::prepareParams($params);
 
-			if ($params['BOT_ID'])
+			if (!empty($params['BOT_ID']))
 			{
 				$bot = \Bitrix\Im\Bot::getCache($params['BOT_ID']);
 				if ($bot && class_exists($bot['CLASS']) && method_exists($bot['CLASS'], 'onAnswerAdd'))

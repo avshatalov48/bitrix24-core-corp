@@ -46,8 +46,8 @@ jn.define('tasks/layout/task/fields/timeTrackingTime', (require, exports, module
 							paddingTop: undefined,
 							paddingBottom: undefined,
 						},
-						primaryFieldWrapper: this.props.deepMergeStyles.wrapper,
-						secondaryFieldWrapper: this.props.deepMergeStyles.wrapper,
+						primaryFieldWrapper: this.props.deepMergeStyles.externalWrapper,
+						secondaryFieldWrapper: this.props.deepMergeStyles.externalWrapper,
 						secondaryFieldContainer: {
 							flex: 1,
 							width: undefined,

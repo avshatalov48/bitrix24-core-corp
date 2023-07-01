@@ -163,7 +163,7 @@ class CrmDocumentViewComponent extends ViewComponent
 				$this->arResult['clientRequisites'] = [
 					'title' =>
 						Format\Requisite::formatOrganizationName($clientRequisiteData)
-						?? $companyProvider->getValue('NAME')
+						?? $companyProvider->getValue('TITLE')
 						?: $this->arResult['clientRequisites']['title']
 					,
 					'link' =>
@@ -200,6 +200,9 @@ class CrmDocumentViewComponent extends ViewComponent
 			}
 			$this->arResult['isSigningEnabled'] =
 				($provider instanceof \Bitrix\Crm\Integration\DocumentGenerator\DataProvider\Deal)
+				&& \Bitrix\Crm\Service\Container::getInstance()
+					->getUserPermissions()
+					->checkAddPermissions(\CCrmOwnerType::SmartDocument)
 				&& \Bitrix\Crm\Settings\Crm::isDocumentSigningEnabled()
 				&& \Bitrix\Sign\Config\Storage::instance()->isAvailable()
 			;

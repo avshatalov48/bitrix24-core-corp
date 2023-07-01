@@ -455,8 +455,7 @@ class CBPCrmGetDataEntityActivity extends CBPActivity
 			return false;
 		}
 
-		$currentFields = current($currentValues['EntityFields']);
-		if (empty($currentFields))
+		if (empty($currentValues['EntityFields']))
 		{
 			$errors[] = [
 				'code'    => 'emptyRequiredField',

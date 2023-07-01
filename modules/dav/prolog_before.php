@@ -4,6 +4,17 @@ if (isset($_SERVER['SCRIPT_NAME']) && mb_strpos($_SERVER['SCRIPT_NAME'], "/bitri
 	return;
 }
 
+$application = \Bitrix\Main\Application::getInstance();
+if ($application->hasCurrentRoute())
+{
+	$route = $application->getCurrentRoute();
+	//it means that route has specific methods, not set just "any"
+	if ($route->getOptions()->getMethods())
+	{
+		return;
+	}
+}
+
 if (
 	isset($_SERVER['REQUEST_METHOD'])
 	&& ($_SERVER['REQUEST_METHOD'] === 'PROPFIND' || $_SERVER['REQUEST_METHOD'] === 'OPTIONS')

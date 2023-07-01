@@ -517,10 +517,6 @@ RecentList.getOpenDialogParams = function(dialogId, modern, push)
 			WIDGET_CHAT_TRANSFER_VERSION : BX.componentParameters.get('WIDGET_CHAT_TRANSFER_VERSION', '1.0.0'),
 
 			WIDGET_BACKDROP_MENU_VERSION : BX.componentParameters.get('WIDGET_BACKDROP_MENU_VERSION', '1.0.0'),
-
-			LANG_ADDITIONAL: {
-				isCrmUniversalActivityScenarioEnabled: BX.message('isCrmUniversalActivityScenarioEnabled'),
-			},
 		};
 	}
 	else
@@ -2014,16 +2010,9 @@ RecentList.push.updateList = function()
 
 		event.params.userInChat[event.params.chatId] = [this.base.userId];
 
-		event.params.message.text  = senderMessage.toString().replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-
 		if (push.senderCut)
 		{
 			event.params.message.text = event.params.message.text.substr(push.senderCut)
-		}
-
-		if (!event.params.message.textOriginal)
-		{
-			event.params.message.textOriginal = event.params.message.text;
 		}
 
 		let storedEvent = ChatUtils.objectClone(event.params);
@@ -2360,7 +2349,9 @@ RecentList.pull.eventExecute = function(data)
 
 		let messageOriginal = Object.assign({}, params.message);
 
+		params.message.textOriginal = params.message.text;
 		params.message.text = ChatMessengerCommon.purifyText(params.message.text, params.message.params);
+
 		params.message.status = params.message.senderId == this.base.userId? 'received': '';
 
 		if (params.lines)

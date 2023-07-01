@@ -1,13 +1,17 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
-use Bitrix\Main;
-use Bitrix\Crm\Order\Payment;
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
 use Bitrix\Crm\Order\Manager;
-use Bitrix\Main\Localization\Loc;
+use Bitrix\Crm\Order\Payment;
+use Bitrix\Crm\Service;
 use Bitrix\Crm\Settings\LayoutSettings;
 use Bitrix\Crm\WebForm\Manager as WebFormManager;
-use Bitrix\Crm\Service;
+use Bitrix\Main;
+use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
 
@@ -22,13 +26,41 @@ class CCrmOrderPaymentListComponent extends \CBitrixComponent
 	{
 		global $APPLICATION;
 
-		$arParams['PATH_TO_ORDER_PAYMENT_SHOW'] = CrmCheckPath('PATH_TO_ORDER_PAYMENT_SHOW', $arParams['PATH_TO_ORDER_PAYMENT_SHOW'], $APPLICATION->GetCurPage().'?payment_id=#payment_id#&show');
-		$arParams['PATH_TO_ORDER_PAYMENT_EDIT'] = CrmCheckPath('PATH_TO_ORDER_PAYMENT_EDIT', $arParams['PATH_TO_ORDER_PAYMENT_EDIT'], $APPLICATION->GetCurPage().'?payment_id=#payment_id#&edit');
-		$arParams['PATH_TO_USER_PROFILE'] = CrmCheckPath('PATH_TO_USER_PROFILE', $arParams['PATH_TO_USER_PROFILE'], '/company/personal/user/#user_id#/');
-		$arParams['PATH_TO_BUYER_PROFILE'] = CrmCheckPath('PATH_TO_BUYER_PROFILE', $arParams['PATH_TO_BUYER_PROFILE'], 'shop/settings/sale_buyers_profile/?USER_ID=#user_id#');
-		$arParams['NAME_TEMPLATE'] = empty($arParams['NAME_TEMPLATE']) ? CSite::GetNameFormat(false) : str_replace(array("#NOBR#","#/NOBR#"), array("",""), $arParams["NAME_TEMPLATE"]);
-		$arParams['SHOW_ROW_CHECKBOXES'] = empty($arParams['SHOW_ROW_CHECKBOXES']) ? false : $arParams['SHOW_ROW_CHECKBOXES'];
-		$arParams['SALESCENTER_MODE'] = empty($arParams['SALESCENTER_MODE']) ? false : $arParams['SALESCENTER_MODE'];
+		$arParams['PATH_TO_ORDER_PAYMENT_SHOW'] = CrmCheckPath(
+			'PATH_TO_ORDER_PAYMENT_SHOW',
+			$arParams['PATH_TO_ORDER_PAYMENT_SHOW'] ?? '',
+			$APPLICATION->GetCurPage() . '?payment_id=#payment_id#&show'
+		);
+
+		$arParams['PATH_TO_ORDER_PAYMENT_EDIT'] = CrmCheckPath(
+			'PATH_TO_ORDER_PAYMENT_EDIT',
+			$arParams['PATH_TO_ORDER_PAYMENT_EDIT'] ?? '',
+			$APPLICATION->GetCurPage() . '?payment_id=#payment_id#&edit'
+		);
+
+		$arParams['PATH_TO_USER_PROFILE'] = CrmCheckPath(
+			'PATH_TO_USER_PROFILE',
+			$arParams['PATH_TO_USER_PROFILE'] ?? '',
+			'/company/personal/user/#user_id#/'
+		);
+
+		$arParams['PATH_TO_BUYER_PROFILE'] = CrmCheckPath(
+			'PATH_TO_BUYER_PROFILE',
+			$arParams['PATH_TO_BUYER_PROFILE'] ?? '',
+			'shop/settings/sale_buyers_profile/?USER_ID=#user_id#'
+		);
+
+		$arParams['NAME_TEMPLATE'] = empty($arParams['NAME_TEMPLATE'])
+			? CSite::GetNameFormat(false)
+			: str_replace(['#NOBR#', '#/NOBR#'], ['', ''], $arParams['NAME_TEMPLATE'] ?? '');
+
+		$arParams['SHOW_ROW_CHECKBOXES'] = empty($arParams['SHOW_ROW_CHECKBOXES'])
+			? false
+			: $arParams['SHOW_ROW_CHECKBOXES'];
+
+		$arParams['SALESCENTER_MODE'] = empty($arParams['SALESCENTER_MODE'])
+			? false
+			: $arParams['SALESCENTER_MODE'];
 
 		return $arParams;
 	}
@@ -343,19 +375,21 @@ class CCrmOrderPaymentListComponent extends \CBitrixComponent
 			$this->arResult['TIME_FORMAT'] = preg_replace('/:s$/', '', Main\Type\DateTime::convertFormatToPhp(FORMAT_DATETIME));
 		}
 
-		$this->arResult['CALL_LIST_UPDATE_MODE'] = isset($_REQUEST['call_list_context']) && isset($_REQUEST['call_list_id']) && IsModuleInstalled('voximplant');
-		$this->arResult['CALL_LIST_CONTEXT'] = (string)$_REQUEST['call_list_context'];
-		$this->arResult['CALL_LIST_ID'] = (int)$_REQUEST['call_list_id'];
+		$this->arResult['CALL_LIST_UPDATE_MODE'] = isset($_REQUEST['call_list_context'])
+			&& isset($_REQUEST['call_list_id'])
+			&& IsModuleInstalled('voximplant');
+		$this->arResult['CALL_LIST_CONTEXT'] = (string)($_REQUEST['call_list_context'] ?? '');
+		$this->arResult['CALL_LIST_ID'] = (int)($_REQUEST['call_list_id'] ?? 0);
 
 		if($this->arResult['CALL_LIST_UPDATE_MODE'])
 		{
 			AddEventHandler('crm', 'onCrmOrderListItemBuildMenu', array('\Bitrix\Crm\CallList\CallList', 'handleOnCrmOrderListItemBuildMenu'));
 		}
 
-		$sort = array();
-		$runtime = array();
-		$this->arResult['FORM_ID'] = isset($this->arParams['FORM_ID']) ? $this->arParams['FORM_ID'] : '';
-		$this->arResult['TAB_ID'] = isset($this->arParams['TAB_ID']) ? $this->arParams['TAB_ID'] : '';
+		$sort = [];
+		$runtime = [];
+		$this->arResult['FORM_ID'] = $this->arParams['FORM_ID'] ?? '';
+		$this->arResult['TAB_ID'] = $this->arParams['TAB_ID'] ?? '';
 		$this->arResult['INTERNAL'] = $this->isInternal;
 		$this->arResult['ORDER_ID'] = isset($this->arParams['ORDER_ID']) && intval($this->arParams['ORDER_ID']) > 0 ? $this->arParams['ORDER_ID'] : false;
 
@@ -385,17 +419,18 @@ class CCrmOrderPaymentListComponent extends \CBitrixComponent
 		$this->arResult['PERMS']['WRITE'] = \Bitrix\Crm\Order\Permissions\Order::checkUpdatePermission($this->arResult['ORDER_ID'], $this->userPermissions);
 		$this->arResult['PERMS']['DELETE'] = \Bitrix\Crm\Order\Permissions\Order::checkDeletePermission($this->arResult['ORDER_ID'], $this->userPermissions);
 
-		$this->arResult['AJAX_MODE'] = isset($this->arParams['AJAX_MODE']) ? $this->arParams['AJAX_MODE'] : ($this->arResult['INTERNAL'] ? 'N' : 'Y');
-		$this->arResult['AJAX_ID'] = isset($this->arParams['AJAX_ID']) ? $this->arParams['AJAX_ID'] : '';
-		$this->arResult['AJAX_OPTION_JUMP'] = isset($this->arParams['AJAX_OPTION_JUMP']) ? $this->arParams['AJAX_OPTION_JUMP'] : 'N';
-		$this->arResult['AJAX_OPTION_HISTORY'] = isset($this->arParams['AJAX_OPTION_HISTORY']) ? $this->arParams['AJAX_OPTION_HISTORY'] : 'N';
+		$this->arResult['AJAX_MODE'] = $this->arParams['AJAX_MODE'] ?? ($this->arResult['INTERNAL'] ? 'N' : 'Y');
+		$this->arResult['AJAX_ID'] = $this->arParams['AJAX_ID'] ?? '';
+		$this->arResult['AJAX_OPTION_JUMP'] = $this->arParams['AJAX_OPTION_JUMP'] ?? 'N';
+		$this->arResult['AJAX_OPTION_HISTORY'] = $this->arParams['AJAX_OPTION_HISTORY'] ?? 'N';
 
 		$this->arResult['HEADERS'] = $this->getHeaders();
 
 		$filter = isset($this->arParams['INTERNAL_FILTER']) && is_array($this->arParams['INTERNAL_FILTER'])
-			? $this->arParams['INTERNAL_FILTER'] : array();
+			? $this->arParams['INTERNAL_FILTER']
+			: [];
 
-		if (intval($this->arParams['ORDER_PAYMENT_COUNT']) <= 0)
+		if ((int)($this->arParams['ORDER_PAYMENT_COUNT'] ?? 0) <= 0)
 		{
 			$this->arParams['ORDER_PAYMENT_COUNT'] = 20;
 		}
@@ -424,7 +459,7 @@ class CCrmOrderPaymentListComponent extends \CBitrixComponent
 		{
 			foreach ($this->arResult['HEADERS'] as $headers)
 			{
-				if ($headers['default'])
+				if (!empty($headers['default']))
 				{
 					$visibleColumns[] = $headers['id'];
 				}
@@ -437,7 +472,6 @@ class CCrmOrderPaymentListComponent extends \CBitrixComponent
 		{
 			$selectFields[] = 'ACCOUNT_NUMBER';
 		}
-
 
 		if (in_array('SUM', $selectFields, true))
 		{
@@ -542,7 +576,7 @@ class CCrmOrderPaymentListComponent extends \CBitrixComponent
 				$lastPageSelected = true;
 			}
 
-			$nav = new \Bitrix\Main\UI\PageNavigation("orderPaymentList");
+			$nav = new \Bitrix\Main\UI\PageNavigation('orderPaymentList');
 			$nav->allowAllRecords(false)
 				->setPageSize($pageSize);
 
@@ -713,13 +747,19 @@ class CCrmOrderPaymentListComponent extends \CBitrixComponent
 		foreach($this->arResult['ORDER_PAYMENT'] as &$payment)
 		{
 			$entityID = $payment['ID'];
-			$payment['DATE_BILL'] = !empty($payment['DATE_BILL']) ? CCrmComponentHelper::TrimDateTimeString(ConvertTimeStamp(MakeTimeStamp($payment['DATE_BILL']), 'SHORT', SITE_ID)) : '';
-			$payment['DATE_PAID'] = !empty($payment['DATE_PAID']) ? CCrmComponentHelper::TrimDateTimeString(ConvertTimeStamp(MakeTimeStamp($payment['DATE_PAID']), 'SHORT', SITE_ID)) : '';
-			$payment['DATE_RESPONSIBLE_ID'] = !empty($payment['DATE_RESPONSIBLE_ID']) ? CCrmComponentHelper::TrimDateTimeString(ConvertTimeStamp(MakeTimeStamp($payment['DATE_RESPONSIBLE_ID']), 'SHORT', SITE_ID)) : '';
+			$payment['DATE_BILL'] = !empty($payment['DATE_BILL'])
+				? CCrmComponentHelper::TrimDateTimeString(ConvertTimeStamp(MakeTimeStamp($payment['DATE_BILL']), 'SHORT', SITE_ID))
+				: '';
+			$payment['DATE_PAID'] = !empty($payment['DATE_PAID'])
+				? CCrmComponentHelper::TrimDateTimeString(ConvertTimeStamp(MakeTimeStamp($payment['DATE_PAID']), 'SHORT', SITE_ID))
+				: '';
+			$payment['DATE_RESPONSIBLE_ID'] = !empty($payment['DATE_RESPONSIBLE_ID'])
+				? CCrmComponentHelper::TrimDateTimeString(ConvertTimeStamp(MakeTimeStamp($payment['DATE_RESPONSIBLE_ID']), 'SHORT', SITE_ID))
+				: '';
 
-			$currencyID =  isset($payment['CURRENCY']) ? $payment['CURRENCY'] : CCrmCurrency::GetBaseCurrencyID();
+			$currencyID = $payment['CURRENCY'] ?? CCrmCurrency::GetBaseCurrencyID();
 			$payment['CURRENCY'] = htmlspecialcharsbx($currencyID);
-			$payment['PAY_SYSTEM_NAME'] = htmlspecialcharsbx($payment['PAY_SYSTEM_NAME']);
+			$payment['PAY_SYSTEM_NAME'] = htmlspecialcharsbx($payment['PAY_SYSTEM_NAME'] ?? '');
 			$payment['PATH_TO_ORDER_PAYMENT_DETAILS'] = Service\Sale\EntityLinkBuilder\EntityLinkBuilder::getInstance()
 				->getPaymentDetailsLink(
 					$entityID,
@@ -727,27 +767,29 @@ class CCrmOrderPaymentListComponent extends \CBitrixComponent
 				);
 			$payment['PATH_TO_ORDER_PAYMENT_SHOW'] = $payment['PATH_TO_ORDER_PAYMENT_DETAILS'];
 			$payment['PATH_TO_ORDER_PAYMENT_EDIT'] = CCrmUrlUtil::AddUrlParams(
-				$payment['PATH_TO_ORDER_PAYMENT_DETAILS'],
+				$payment['PATH_TO_ORDER_PAYMENT_DETAILS'] ?? '',
 				array('init_mode' => 'edit')
 			);
 
 			$payment['PATH_TO_ORDER_PAYMENT_DELETE'] =  CHTTP::urlAddParams(
-				$this->isInternal ? $APPLICATION->GetCurPage() : $this->arParams['PATH_TO_ORDER_PAYMENT_LIST'],
+				$this->isInternal
+					? $APPLICATION->GetCurPage()
+					: ($this->arParams['PATH_TO_ORDER_PAYMENT_LIST'] ?? ''),
 				array('action_'.$this->arResult['GRID_ID'] => 'delete', 'ID' => $entityID, 'sessid' => $this->arResult['SESSION_ID'])
 			);
 
 			$payment['PATH_TO_USER_PROFILE'] = CComponentEngine::MakePathFromTemplate(
-				$this->arParams['PATH_TO_USER_PROFILE'],
-				array('user_id' => $payment['RESPONSIBLE_ID'])
+				$this->arParams['PATH_TO_USER_PROFILE'] ?? '',
+				array('user_id' => (int)($payment['RESPONSIBLE_ID'] ?? 0))
 			);
 
 			$payment['RESPONSIBLE'] = CUser::FormatName(
-				$this->arParams['NAME_TEMPLATE'],
+				$this->arParams['NAME_TEMPLATE'] ?? '',
 				array(
-					'LOGIN' => isset($payment['RESPONSIBLE_LOGIN']) ? $payment['RESPONSIBLE_LOGIN'] : '',
-					'NAME' => isset($payment['RESPONSIBLE_NAME']) ? $payment['RESPONSIBLE_NAME'] : '',
-					'LAST_NAME' => isset($payment['RESPONSIBLE_LAST_NAME']) ? $payment['RESPONSIBLE_LAST_NAME'] : '',
-					'SECOND_NAME' => isset($payment['RESPONSIBLE_SECOND_NAME']) ? $payment['RESPONSIBLE_SECOND_NAME'] : ''
+					'LOGIN' => $payment['RESPONSIBLE_LOGIN'] ?? '',
+					'NAME' => $payment['RESPONSIBLE_NAME'] ?? '',
+					'LAST_NAME' => $payment['RESPONSIBLE_LAST_NAME'] ?? '',
+					'SECOND_NAME' => $payment['RESPONSIBLE_SECOND_NAME'] ?? '',
 				),
 				true
 			);
@@ -757,22 +799,22 @@ class CCrmOrderPaymentListComponent extends \CBitrixComponent
 				'#DATE_BILL#' => $payment['DATE_BILL']
 			));
 
-			if((int)$payment['USER_ID'] > 0)
+			if((int)($payment['USER_ID'] ?? 0) > 0)
 			{
 				$payment['BUYER_FORMATTED_NAME'] = \CUser::FormatName(
 					\CSite::getNameFormat(false),
 					array(
-						'LOGIN' => $payment['USER_LOGIN'],
-						'NAME' => $payment['USER_NAME'],
-						'LAST_NAME' => $payment['USER_LAST_NAME'],
-						'SECOND_NAME' => $payment['USER_SECOND_NAME']
+						'LOGIN' => $payment['USER_LOGIN'] ?? '',
+						'NAME' => $payment['USER_NAME'] ?? '',
+						'LAST_NAME' => $payment['USER_LAST_NAME'] ?? '',
+						'SECOND_NAME' => $payment['USER_SECOND_NAME'] ?? '',
 					),
 					true,
 					true
 				);
 
 				$payment['PATH_TO_BUYER'] = CComponentEngine::MakePathFromTemplate(
-					$this->arParams['PATH_TO_BUYER_PROFILE'],
+					$this->arParams['PATH_TO_BUYER_PROFILE'] ?? '',
 					array('user_id' => $payment['USER_ID'])
 				);
 			}
@@ -802,7 +844,7 @@ class CCrmOrderPaymentListComponent extends \CBitrixComponent
 				);
 
 			$this->arResult['PATH_TO_ORDER_PAYMENT_ADD'] = CHTTP::urlAddParams(
-				$this->arResult['PATH_TO_ORDER_PAYMENT_ADD'],
+				$this->arResult['PATH_TO_ORDER_PAYMENT_ADD'] ?? '',
 				array('order_id' => (int)$this->arParams['INTERNAL_FILTER']['ORDER_ID'])
 			);
 		}
@@ -836,9 +878,9 @@ class CCrmOrderPaymentListComponent extends \CBitrixComponent
 		}
 
 		$this->IncludeComponentTemplate();
+
 		include_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/components/bitrix/crm.order/include/nav.php');
-		return $this->arResult['ROWS_COUNT'];
+
+		return $this->arResult['ROWS_COUNT'] ?? null;
 	}
 }
-?>
-

@@ -4,6 +4,7 @@
 jn.define('im/messenger/controller/dialog-creator/dialog-info/view', (require, exports, module) => {
 
 	const { Loc } = require('loc');
+	const { core } = require('im/messenger/core');
 	const { List } = require('im/messenger/lib/ui/base/list');
 	const { cross } = require('im/messenger/assets/common');
 	const { MessengerParams } = require('im/messenger/lib/params');
@@ -26,6 +27,7 @@ jn.define('im/messenger/controller/dialog-creator/dialog-info/view', (require, e
 
 			/** @type DialogDTO */
 			this.dialogDTO = props.dialogDTO;
+			this.store = core.getStore();
 		}
 
 		render()
@@ -128,7 +130,7 @@ jn.define('im/messenger/controller/dialog-creator/dialog-info/view', (require, e
 
 		getCreatorItem()
 		{
-			const creatorData = MessengerStore.getters['usersModel/getUserById'](MessengerParams.getUserId());
+			const creatorData = this.store.getters['usersModel/getUserById'](MessengerParams.getUserId());
 
 			const chatTitle = ChatTitle.createFromDialogId(MessengerParams.getUserId(), {showItsYou: true});
 			const chatAvatar = ChatAvatar.createFromDialogId(MessengerParams.getUserId());
@@ -162,6 +164,7 @@ jn.define('im/messenger/controller/dialog-creator/dialog-info/view', (require, e
 		{
 			return View(
 				{
+					testId: 'btn_add_avatar',
 					onClick: () => this.props.callback(),
 				},
 				Image(

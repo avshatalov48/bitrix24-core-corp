@@ -12,7 +12,10 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Page\Asset;
 
 $APPLICATION->SetPageProperty('BodyClass', 'task-card-page');
-if ($arResult["TEMPLATE_DATA"]["ERROR"])
+if (
+	isset($arResult["TEMPLATE_DATA"]["ERROR"])
+	&& $arResult["TEMPLATE_DATA"]["ERROR"]
+)
 {
 	echo $arResult["TEMPLATE_DATA"]["ERROR"]["MESSAGE"];
 	return;
@@ -29,7 +32,8 @@ $task = &$arResult["DATA"]["TASK"];
 $can = $arResult["CAN"]["TASK"]["ACTION"];
 
 $statuses = CTaskItem::getStatusMap();
-$status = Loc::getMessage("TASKS_STATUS_".$statuses[$task["REAL_STATUS"]]);
+$status = (isset($task['REAL_STATUS']) ? $statuses[$task['REAL_STATUS']] : '');
+$status = Loc::getMessage("TASKS_STATUS_{$status}");
 
 $task["STATUS"] = (empty($status) ? GetMessage("TASKS_STATUS_STATE_UNKNOWN") : $status);
 
@@ -132,7 +136,7 @@ $APPLICATION->IncludeComponent(
 						"id" => "data[DEADLINE]",
 						"name" => GetMessage("MB_TASKS_TASK_SETTINGS_DEADLINE"),
 						"placeholder" => GetMessage("MB_TASKS_TASK_SETTINGS_DEADLINE_PLACEHOLDER"),
-						"value" => $task["DEADLINE"]
+						"value" => ($task["DEADLINE"] ?? null),
 					),
 					($task["ID"] > 0 && !$taskLimitExceeded ? [
 						"type" => "select",
@@ -159,7 +163,7 @@ $APPLICATION->IncludeComponent(
 						"id" => "data[START_DATE_PLAN]",
 						"name" => GetMessage("MB_TASKS_TASK_SETTINGS_DATETIME"),
 						"placeholder" => GetMessage("MB_TASKS_TASK_SETTINGS_DATETIME_PLACEHOLDER"),
-						"value" => $task["START_DATE_PLAN"]
+						"value" => ($task["START_DATE_PLAN"] ?? null),
 					),
 					array(
 						"type" => "datetime",
@@ -167,7 +171,7 @@ $APPLICATION->IncludeComponent(
 						"id" => "data[END_DATE_PLAN]",
 						"name" => GetMessage("MB_TASKS_TASK_SETTINGS_END_DATE_PLAN"),
 						"placeholder" => GetMessage("MB_TASKS_TASK_SETTINGS_END_DATE_PLAN_PLACEHOLDER"),
-						"value" => $task["END_DATE_PLAN"]
+						"value" => ($task["END_DATE_PLAN"] ?? null),
 					),
 					array(
 						"type" => "label",
@@ -180,7 +184,7 @@ $APPLICATION->IncludeComponent(
 							"<span id='durationType".$task["ID"]."Label' class=\"bx-tasks-duration-type\">".($task["DURATION_TYPE"] == "hours" ?
 								GetMessage("MB_TASKS_TASK_SETTINGS_DURATION_PLAN_HOURS") : GetMessage("MB_TASKS_TASK_SETTINGS_DURATION_PLAN_DAYS")).
 							"</span>".
-							"<input type='number' name='data[DURATION_PLAN]' value='".intval($task["DURATION_PLAN"])."' />"
+							"<input type='number' name='data[DURATION_PLAN]' value='".(int)($task["DURATION_PLAN"] ?? null)."' />"
 					),
 					[
 						"type" => ($can["EDIT.ORIGINATOR"] ? "select-user" : "user"),
@@ -264,7 +268,7 @@ $APPLICATION->IncludeComponent(
 										'<span class="mobile-grid-title">'.GetMessage("MB_TASKS_TIMETRACKING_TIME").'</span>'.
 										'<div class="mobile-grid-block">'.
 											'<div class="mobile-grid-data-label-container">'.
-												'<input type="hidden" id="timeEstimate'.$task["ID"].'Seconds" value="'.$task["TIME_ESTIMATE"].'" name="data[TIME_ESTIMATE]" />'.
+												'<input type="hidden" id="timeEstimate'.$task["ID"].'Seconds" value="'.($task["TIME_ESTIMATE"] ?? null).'" name="data[TIME_ESTIMATE]" />'.
 												'<input type="number" id="timeEstimate'.$task["ID"].'Hours" placeholder="0" min="0" value="0" />' . '<label for="timeEstimate'.$task["ID"].'Hours">'.GetMessage("MB_TASKS_TIMETRACKING_HOURS").'</label>' .
 												'<input type="number" id="timeEstimate'.$task["ID"].'Minutes" placeholder="0" min="0" value="0" />' . '<label for="timeEstimate'.$task["ID"].'Minutes">'.GetMessage("MB_TASKS_TIMETRACKING_MINUTES").'</label>' .
 											'</div>'.
@@ -291,8 +295,8 @@ $APPLICATION->IncludeComponent(
 						"id" => "data[SE_PROJECT][ID]",
 						"class" => "mobile-grid-field-taskgroups",
 						"name" => GetMessage("MB_TASKS_TASK_SETTINGS_GROUP_ID"),
-						"item" => ($task["GROUP_ID"] > 0 ? $arResult["DATA"]["GROUP"][$task["GROUP_ID"]] : null),
-						"value" => $task["GROUP_ID"],
+						"item" => (isset($task["GROUP_ID"]) && $task["GROUP_ID"] > 0 ? $arResult["DATA"]["GROUP"][$task["GROUP_ID"]] : null),
+						"value" => ($task["GROUP_ID"] ?? null),
 					),
 					array(
 						"type" => "custom",
@@ -300,13 +304,13 @@ $APPLICATION->IncludeComponent(
 						"class" => "mobile-grid-field-parent-id",
 						"value" =>
 						'<div>'.
-							'<input name="data[PARENT_ID]" type="hidden" value="'.intval(isset($task["SE_PARENTTASK"]) ? $task["SE_PARENTTASK"]["ID"] : 0).'" id="parentId'.$task["ID"].'" />'.
+							'<input name="data[PARENT_ID]" type="hidden" value="'.(int)($task["SE_PARENTTASK"]['ID'] ?? 0).'" id="parentId'.$task["ID"].'" />'.
 							'<div class="mobile-grid-field-custom-item">'.
 								'<del></del>'.
 								'<span id="parentId'.$task["ID"].'Container" onclick="var n = BX(\'parentId'.$task['ID'].'\').value; if(parseInt(n)>0){BXMobileApp.PageManager.loadPageUnique({url:(\''.
 									CUtil::JSEscape(CComponentEngine::MakePathFromTemplate(
 										$arParams["PATH_TO_USER_TASKS_VIEW"],
-										array("USER_ID" => $arParams["USER_ID"]))).'\').replace(/#TASK_ID#/gi, n), bx24ModernStyle:true});}">'.($task["SE_PARENTTASK"] ? $task["SE_PARENTTASK"]["TITLE"] : "")."</span>".
+										array("USER_ID" => $arParams["USER_ID"]))).'\').replace(/#TASK_ID#/gi, n), bx24ModernStyle:true});}">'.(isset($task["SE_PARENTTASK"]) && $task["SE_PARENTTASK"] ? $task["SE_PARENTTASK"]["TITLE"] : "")."</span>".
 							"</div>".
 							"<a class=\"mobile-grid-button select-parent add\" id=\"parentId".$task["ID"]."Select\" href=\"#\"><span>".GetMessage("MB_TASKS_TASK_ADD")."</span><span>".GetMessage("MB_TASKS_TASK_CHANGE")."</span></a>".
 						'</div>'
@@ -349,8 +353,8 @@ BX.ready(function(){
 	BX.message({ PAGE_TITLE : ""} );
 	new BX.Mobile.Tasks.edit(<?=CUtil::PhpToJSObject(array(
 		"taskData" => array(
-				"ID" => $task["ID"],
-				"CHECKLIST" => $task["CHECKLIST"],
+			"ID" => $task["ID"],
+			"CHECKLIST" => ($task["CHECKLIST"] ?? null),
 		),
 		"formId" => $arResult['FORM_ID'],
 		"guid" => $arParams["GUID"],

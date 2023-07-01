@@ -6,7 +6,6 @@
  * @module crm/entity-detail/component/ajax-error-handler
  */
 jn.define('crm/entity-detail/component/ajax-error-handler', (require, exports, module) => {
-
 	const { Alert } = require('alert');
 	const { NotifyManager } = require('notify-manager');
 	const { getEntityMessage } = require('crm/loc');
@@ -20,23 +19,23 @@ jn.define('crm/entity-detail/component/ajax-error-handler', (require, exports, m
 	const ajaxErrorHandler = (detailCard, response, payload) => {
 		const { error, errors = [] } = response;
 
-		if (!error && !errors.length)
+		if (!error && errors.length === 0)
 		{
 			return Promise.resolve(response);
 		}
 
 		console.warn('Detail card: handle ajax errors', response);
 
-		const hasAccessDeniedError = (errors) => {
-			return errors.some(({ code }) => code === 'ACCESS_DENIED');
+		const hasAccessDeniedError = (errorsToCheck) => {
+			return errorsToCheck.some(({ code }) => code === 'ACCESS_DENIED');
 		};
 
-		const hasNotFoundError = (errors) => {
-			return errors.some(({ code }) => code === 'NOT_FOUND');
+		const hasNotFoundError = (errorsToCheck) => {
+			return errorsToCheck.some(({ code }) => code === 'NOT_FOUND');
 		};
 
-		const hasPublicError = (errors) => {
-			return errors.some(({ customData, message }) => customData && customData.public && message);
+		const hasPublicError = (errorsToCheck) => {
+			return errorsToCheck.some(({ customData, message }) => customData && customData.public && message);
 		};
 
 		const showAlertAndCloseDetailCard = (title = null, text = null) => {
@@ -63,12 +62,12 @@ jn.define('crm/entity-detail/component/ajax-error-handler', (require, exports, m
 			showAlertAndCloseDetailCard(null, getEntityMessage('M_CRM_ENTITY_NOT_FOUND_TITLE', entityTypeId));
 		};
 
-		const showPublicAlert = (errors, reject) => {
-			const error = errors.find(({ customData, message }) => customData && customData.public && message);
+		const showPublicAlert = (errorsToShow, reject) => {
+			const showedError = errorsToShow.find(({ customData, message }) => customData && customData.public && message);
 
 			Alert.alert(
 				BX.message('M_CRM_ENTITY_ERROR_ON_SAVE'),
-				error.message,
+				showedError.message,
 				() => reject([]),
 				BX.message('M_CRM_ENTITY_ALERT_CONFIRM'),
 			);

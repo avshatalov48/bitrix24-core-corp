@@ -43,6 +43,13 @@ class PullManager
 		$this->isEnabled = $this->includeModule();
 	}
 
+	public function setEnabled(bool $enabled): self
+	{
+		$this->isEnabled = $enabled && $this->includeModule();
+
+		return $this;
+	}
+
 	private function __clone()
 	{
 	}
@@ -81,6 +88,7 @@ class PullManager
 	}
 
 	/**
+	 * In some cases may not contain additional payload about `action`.
 	 * @param array $item
 	 * @param array|null $params
 	 * @return bool

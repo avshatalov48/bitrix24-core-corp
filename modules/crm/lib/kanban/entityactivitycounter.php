@@ -5,23 +5,29 @@ namespace Bitrix\Crm\Kanban;
 
 
 use Bitrix\Crm\Activity\Entity\IncomingChannelTable;
+use Bitrix\Crm\Activity\LightCounter\ActCounterLightTimeRepo;
 use Bitrix\Crm\ActivityBindingTable;
+use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Entity\Query\Join;
 use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\Type\DateTime;
 
 class EntityActivityCounter
 {
+	private ActCounterLightTimeRepo $lightCounterRepo;
+
 	private int $entityTypeId;
 	private array $entityIds;
 	private array $deadlines;
 	private array $incoming = [];
 	private array $counters = [];
 	private array $activities = [];
-	private DateTime $deadlineDate;
+	private DateTime $nextDayMidnight;
 
 	public function __construct(int $entityTypeId, array $entityIds, array $deadlines = [])
 	{
+		$this->lightCounterRepo = ServiceLocator::getInstance()->get('crm.activity.actcounterlighttimerepo');
+
 		$this->entityTypeId = $entityTypeId;
 		$this->entityIds = array_unique($entityIds);
 		$this->deadlines = $deadlines;
@@ -31,8 +37,7 @@ class EntityActivityCounter
 			->add('+1 day')
 			->setTime(0, 0, 0)
 		;
-
-		$this->deadlineDate = \CCrmDateTimeHelper::getServerTime($userTimezoneDeadlineTime); // $this->deadlineDate use server timezone
+		$this->nextDayMidnight = \CCrmDateTimeHelper::getServerTime($userTimezoneDeadlineTime); // $this->deadlineDate use server timezone
 
 		$this->prepareCounters();
 	}
@@ -55,23 +60,14 @@ class EntityActivityCounter
 
 	private function prepareActivities(): void
 	{
-		$list = \CCrmActivity::GetList(
-			[],
-			$this->getFilter(),
-			false,
-			false,
-			[
-				'ID',
-				'COMPLETED',
-				'OWNER_ID',
-				'OWNER_TYPE_ID',
-				'RESPONSIBLE_ID',
-				'DEADLINE',
-			]
-		);
+		$activities = $this->lightCounterRepo
+			->activitiesWithLightTimeByEntityIds($this->entityTypeId, $this->entityIds);
 
-		while ($activity = $list->fetch())
+		foreach ($activities as $activity)
 		{
+			// have to use owner_id and owner_type_id from binding table instead activity table
+			$activity['OWNER_ID'] = $activity['BIND_OWNER_ID'];
+			$activity['OWNER_TYPE_ID'] = $activity['BIND_OWNER_TYPE_ID'];
 			if ($activity['DEADLINE'])
 			{
 				$activity['DEADLINE'] = $activity['DEADLINE'] && !\CCrmDateTimeHelper::IsMaxDatabaseDate($activity['DEADLINE'])
@@ -79,26 +75,8 @@ class EntityActivityCounter
 					: null
 				;
 			}
-
 			$this->activities[] = $activity;
 		}
-	}
-
-	private function getFilter(): array
-	{
-		$filter = [
-			'BINDINGS' => [],
-		];
-
-		foreach ($this->entityIds as $id)
-		{
-			$filter['BINDINGS'][] = [
-				'OWNER_ID' => $id,
-				'OWNER_TYPE_ID' => $this->entityTypeId,
-			];
-		}
-
-		return $filter;
 	}
 
 	private function prepareDeadlines(): void
@@ -136,11 +114,16 @@ class EntityActivityCounter
 
 	private function isDeadlineActivity(array $activity): bool
 	{
-		return (
-			$activity['DEADLINE'] instanceof DateTime
-			&& $activity['DEADLINE']->getTimestamp() < $this->deadlineDate->getTimestamp()
-			&& $activity['COMPLETED'] === 'N'
-		);
+		if ($activity['COMPLETED'] === 'Y')
+		{
+			return false;
+		}
+
+		if ($activity['LIGHT_COUNTER_AT'] instanceof DateTime)
+		{
+			return $activity['LIGHT_COUNTER_AT']->getTimestamp() < (new DateTime())->getTimestamp();
+		}
+		return false;
 	}
 
 	private function prepareIncomings(): void

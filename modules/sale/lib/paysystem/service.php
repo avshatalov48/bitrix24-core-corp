@@ -119,6 +119,11 @@ class Service implements RestrictableService
 			$error = implode("\n", $initResult->getErrorMessages());
 			Logger::addError(get_class($this->handler).". InitiatePay: ".$error);
 
+			(new PaymentMarker($this, $payment))
+				->mark($initResult)
+				->save()
+			;
+
 			$this->callEventOnInitiatePayError($payment, $initResult);
 		}
 
@@ -375,22 +380,23 @@ class Service implements RestrictableService
 
 				$serviceResult->setResultApplied(false);
 			}
+
+			PullManager::onSuccessfulPayment($payment);
 		}
 		else
 		{
 			$serviceResult->setResultApplied(false);
 			$processResult->addErrors($serviceResult->getErrors());
 
-			$markerClassName = $registry->getEntityMarkerClassName();
-			$markerResult = new Result();
-			$markerResult->addWarnings($serviceResult->getErrors());
-			$markerClassName::addMarker($order, $payment, $markerResult);
-			$payment->setField('MARKED', 'Y');
-
-			$order->save();
-
 			$error = implode("\n", $serviceResult->getErrorMessages());
 			Logger::addError(get_class($this->handler).'. ProcessRequest Error: '.$error);
+
+			(new PaymentMarker($this, $payment))
+				->mark($serviceResult)
+				->save()
+			;
+
+			PullManager::onFailurePayment($payment);
 		}
 
 		$event = new Event(
@@ -537,23 +543,21 @@ class Service implements RestrictableService
 	public function canPrintCheckSelf(Payment $payment): bool
 	{
 		$service = $payment->getPaySystem();
-		if (!$this->isSupportPrintCheck() || !$this->canPrintCheck())
+		if (!$service || !$this->isSupportPrintCheck() || !$this->canPrintCheck())
 		{
 			return false;
 		}
 
 		/** @var Cashbox\CashboxPaySystem $cashboxClass */
 		$cashboxClass = $this->getCashboxClass();
-
-		$paySystemParams = $service->getParamsBusValue($payment);
-		$paySystemCodeForKkm = $cashboxClass::getPaySystemCodeForKkm();
+		$kkm = $cashboxClass::getKkmValue($service);
 
 		return (bool)Cashbox\Manager::getList([
 			'select' => ['ID'],
 			'filter' => [
 				'=ACTIVE' => 'Y',
 				'=HANDLER' => $cashboxClass,
-				'=KKM_ID' => $paySystemParams[$paySystemCodeForKkm],
+				'=KKM_ID' => $kkm,
 			],
 		])->fetch();
 	}

@@ -39,9 +39,9 @@ else
 	$APPLICATION->SetTitle($arResult['TITLE']);?>
 <div class="docs-template-wrap">
 <?}
-if(!$arResult['ERROR'])
+if(empty($arResult['ERROR']))
 {
-	if(!$arResult['TOP_VIEW_TARGET_ID'])
+	if(empty($arResult['TOP_VIEW_TARGET_ID']))
 	{?>
 		<div class="pagetitle-wrap">
 			<div class="docs-template-pagetitle-wrap">
@@ -70,7 +70,7 @@ if(!$arResult['ERROR'])
 						<button class="ui-btn ui-btn-md ui-btn-light-border ui-btn-icon-setting" id="docgen-templates-settings-button"></button>
 						<button class="ui-btn ui-btn-md ui-btn-primary ui-btn-primary-docs-template" onclick="BX.DocumentGenerator.TemplateList.edit();"><?=\Bitrix\Main\Localization\Loc::getMessage('DOCGEN_TEMPLATE_LIST_UPLOAD');?></button>
 					</div>
-	<?if(!$arResult['TOP_VIEW_TARGET_ID'])
+	<?if(empty($arResult['TOP_VIEW_TARGET_ID']))
 	{?>
 				</div>
 			</div>
@@ -83,7 +83,7 @@ if(!$arResult['ERROR'])
 }?>
 	<div class="docs-template-info-inner">
 		<div class="docs-template-info-message docs-template-error-message" id="docgen-templates-error-message"<?
-		if($arResult['ERROR'])
+		if(!empty($arResult['ERROR']))
 		{
 			?> style="display: block;"><?=htmlspecialcharsbx($arResult['ERROR']);
 		}
@@ -91,14 +91,14 @@ if(!$arResult['ERROR'])
 		{
 			?>><?
 		}?></div>
-		<?if(!$arResult['ERROR'])
+		<?if(empty($arResult['ERROR']))
 		{?>
 			<div class="docs-template-info-message"><?=\Bitrix\Main\Localization\Loc::getMessage('DOCGEN_TEMPLATE_LIST_MORE_INFO');?>
 				<a class="docs-template-info-link" onclick="BX.DocumentGenerator.TemplateList.openMoreLink(event);"><?=\Bitrix\Main\Localization\Loc::getMessage('DOCGEN_TEMPLATE_LIST_MORE');?></a>
 			</div>
 		<?}?>
 	</div>
-	<?if(!$arResult['ERROR'])
+	<?if(empty($arResult['ERROR']))
 	{?>
 		<div class="docs-template-grid">
 				<?$APPLICATION->IncludeComponent(
@@ -109,7 +109,7 @@ if(!$arResult['ERROR'])
 		</div>
 		<?}?>
 </div>
-<?if(!$arResult['ERROR'])
+<?if(empty($arResult['ERROR']))
 {?>
 <script>
 	BX.ready(function()

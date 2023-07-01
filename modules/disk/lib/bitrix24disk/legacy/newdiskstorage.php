@@ -32,6 +32,7 @@ class NewDiskStorage extends DiskStorage
 
 	/** @var TreeNode[] */
 	private $treeData = array();
+	private int $treeVersion = 0;
 	/** @var bool */
 	private $isLoadedTree = false;
 
@@ -62,7 +63,7 @@ class NewDiskStorage extends DiskStorage
 	{
 		foreach ($items as $i => $item)
 		{
-			if ($item && !$item['id'])
+			if ($item && empty($item['id']))
 			{
 				$items[$i] = array();
 			}
@@ -111,7 +112,7 @@ class NewDiskStorage extends DiskStorage
 			throw new ArgumentException("Invalid step name {$stepName}");
 		}
 
-		list($object, $method) = $step;
+		[$object, $method] = $step;
 		$reflectionMethod = new \ReflectionMethod($object, $method);
 		$reflectionMethod->setAccessible(true);
 
@@ -351,16 +352,17 @@ class NewDiskStorage extends DiskStorage
 
 	private function formatFolderRowToResponse(array $row)
 	{
-		$path = $this->getPath($row['ID'], true);
-		if(!$path)
+		$objectSyncVersion = $row['SYNC_UPDATE_TIME']->getTimestamp();
+		$path = $this->requireActualPathByObjectId($row['ID'], $objectSyncVersion, true);
+		if (!$path)
 		{
-			return array();
+			return [];
 		}
 
 		$isLink = !empty($row['REAL_OBJECT_ID']) && $row['REAL_OBJECT_ID'] != $row['ID'];
 		$name = Ui\Text::cleanTrashCanSuffix($row['NAME']);
-		$result = array(
-			'id' => $this->generateId(array('FILE' => false, 'ID' => $row['ID'])),
+		$result = [
+			'id' => $this->generateId(['FILE' => false, 'ID' => $row['ID']]),
 			'isDirectory' => true,
 			'isShared' => (bool)$this->isSharedObject($row['ID']),
 			'isSymlinkDirectory' => $isLink,
@@ -368,24 +370,24 @@ class NewDiskStorage extends DiskStorage
 			'storageId' => $this->getStringStorageId(),
 			'path' => '/' . trim($path, '/'),
 			'name' => (string)$name,
-			'version' => (string)$this->generateTimestamp($row['SYNC_UPDATE_TIME']->getTimestamp()),
+			'version' => (string)$this->generateTimestamp($objectSyncVersion),
 			'originalTimestamp' => (string)$this->generateTimestamp($row['UPDATE_TIME']->getTimestamp()),
-			'extra' => array(
+			'extra' => [
 				'id' => (string)$row['ID'],
 				'iblockId' => (string)$row['STORAGE_ID'],
 				'sectionId' => (string)$row['PARENT_ID'],
-				'linkSectionId' => (string)($isLink? $row['REAL_OBJECT_ID'] : ''),
+				'linkSectionId' => (string)($isLink ? $row['REAL_OBJECT_ID'] : ''),
 				'rootSectionId' => (string)$this->storage->getRootObjectId(),
 				'name' => (string)$name,
-			),
+			],
 			'permission' => 'W',
 			'createdBy' => (string)$row['CREATED_BY'],
 			'modifiedBy' => (string)$row['UPDATED_BY'],
-		);
+		];
 
-		if($this->storage->getRootObjectId() != $row['PARENT_ID'])
+		if ($this->storage->getRootObjectId() != $row['PARENT_ID'])
 		{
-			$result['parentId'] = $this->generateId(array('FILE' => false, 'ID' => $row['PARENT_ID']));
+			$result['parentId'] = $this->generateId(['FILE' => false, 'ID' => $row['PARENT_ID']]);
 		}
 
 		return $result;
@@ -393,62 +395,62 @@ class NewDiskStorage extends DiskStorage
 
 	private function formatFileRowToResponse(array $row)
 	{
-		if(empty($row['PARENT_ID']))
+		if (empty($row['PARENT_ID']))
 		{
-			return array();
+			return [];
 		}
 
+		$syncUpdateTime = $row['SYNC_UPDATE_TIME']->getTimestamp();
 		$path = $this->getPath($row['PARENT_ID']);
-		if(!$path)
+		if (!$path)
 		{
-			return array();
+			return [];
 		}
 
 		$isLink = !empty($row['REAL_OBJECT_ID']) && $row['REAL_OBJECT_ID'] != $row['ID'];
 		$name = Ui\Text::cleanTrashCanSuffix($row['NAME']);
-		$result = array(
-			'id' => $this->generateId(array('FILE' => true, 'ID' => $row['ID'])),
+		$result = [
+			'id' => $this->generateId(['FILE' => true, 'ID' => $row['ID']]),
 			'isDirectory' => false,
 			'isShared' => (bool)$this->isSharedObject($row['ID']),
 			'isSymlinkFile' => $isLink,
 			'isDeleted' => !empty($row['DELETED_TYPE']),
 			'storageId' => $this->getStringStorageId(),
-			'path' => $path === '/'? '/' . $name : '/' . trim($path, '/') . '/' . $name,
+			'path' => $path === '/' ? '/' . $name : '/' . trim($path, '/') . '/' . $name,
 			'name' => (string)$name,
 			'revision' => $row['FILE_ID'],
 			'etag' => $row['ETAG'],
-			'version' => (string)$this->generateTimestamp($row['SYNC_UPDATE_TIME']->getTimestamp()),
+			'version' => (string)$this->generateTimestamp($syncUpdateTime),
 			'originalTimestamp' => (string)$this->generateTimestamp($row['UPDATE_TIME']->getTimestamp()),
-			'extra' => array(
+			'extra' => [
 				'id' => (string)$row['ID'],
 				'iblockId' => (string)$row['STORAGE_ID'],
 				'sectionId' => (string)$row['PARENT_ID'],
 				'rootSectionId' => (string)$this->storage->getRootObjectId(),
 				'name' => (string)$name,
-			),
+			],
 			'size' => (string)$row['SIZE'],
 			'permission' => 'W',
 			'createdBy' => (string)$row['CREATED_BY'],
 			'modifiedBy' => (string)$row['UPDATED_BY'],
-		);
-		if($this->storage->getRootObjectId() != $row['PARENT_ID'])
+		];
+		if ($this->storage->getRootObjectId() != $row['PARENT_ID'])
 		{
-			$result['parentId'] = $this->generateId(array('FILE' => false, 'ID' => $row['PARENT_ID']));
+			$result['parentId'] = $this->generateId(['FILE' => false, 'ID' => $row['PARENT_ID']]);
 		}
 
-		if($this->isEnabledObjectLock)
+		if ($this->isEnabledObjectLock)
 		{
 			$lock = $this->getLockFromRow($row);
-			if($lock)
+			if ($lock)
 			{
-				$result['lock'] = array(
+				$result['lock'] = [
 					'createdBy' => (string)$lock->getCreatedBy(),
 					'createTimestamp' => (string)$this->generateTimestamp($lock->getCreateTime()->getTimestamp()),
 					'canUnlock' => $lock->canUnlock($this->getUser()->getId()),
-				);
+				];
 			}
 		}
-
 
 		return $result;
 	}
@@ -805,7 +807,7 @@ class NewDiskStorage extends DiskStorage
 		);
 	}
 
-	private function buildSelfTree()
+	private function buildSelfTree(): array
 	{
 		$deletedTypeNone = ObjectTable::DELETED_TYPE_NONE;
 		$typeFolder = ObjectTable::TYPE_FOLDER;
@@ -814,6 +816,8 @@ class NewDiskStorage extends DiskStorage
 		/** @var TreeNode[] $firstLevelLinks */
 		$firstLevelLinks = array();
 		$this->treeData = array();
+
+		$maxVersion = -1;
 
 		$query = new Internals\Entity\Query(ObjectTable::getEntity());
 		$query
@@ -824,13 +828,14 @@ class NewDiskStorage extends DiskStorage
 				'PARENT_ID',
 				'CODE',
 				'CREATE_TIME',
+				'SYNC_UPDATE_TIME',
 			))
 			->addFilter('STORAGE_ID', $storageId)
 			->addFilter('DELETED_TYPE', $deletedTypeNone)
 			->addFilter('TYPE', $typeFolder)
 		;
 
-		foreach($query->exec() as $folderRow)
+		foreach ($query->exec() as $folderRow)
 		{
 			if($folderRow['CODE'] === SpecificFolder::CODE_FOR_UPLOADED_FILES)
 			{
@@ -842,33 +847,38 @@ class NewDiskStorage extends DiskStorage
 			{
 				$firstLevelLinks[] = $node;
 			}
+
+			$maxVersion = max($maxVersion, $folderRow['SYNC_UPDATE_TIME']->getTimestamp());
 		}
 
-		if(isset($this->treeData[$this->storage->getRootObjectId()]))
+		if (isset($this->treeData[$this->storage->getRootObjectId()]))
 		{
 			$this->treeData[$this->storage->getRootObjectId()]->setAsRoot();
 		}
 
-		return $firstLevelLinks;
+		return [$firstLevelLinks, $maxVersion];
 	}
 
 	/**
 	 * @param TreeNode[] $firstLevelLinks
 	 * @return array
 	 */
-	private function buildTreeFromFirstLevelLinks(array $firstLevelLinks)
+	private function buildTreeFromFirstLevelLinks(array $firstLevelLinks): array
 	{
-		$deepLinks = array();
-		if(!$firstLevelLinks)
+		$maxVersion = -1;
+		$deepLinks = [];
+		if (!$firstLevelLinks)
 		{
-			return array();
+			return [[], $maxVersion];
 		}
-		if(count($firstLevelLinks) < self::MAX_COUNT_LINKS_FOR_CYCLE)
+		if (count($firstLevelLinks) < self::MAX_COUNT_LINKS_FOR_CYCLE)
 		{
 			/** @var TreeNode[] $firstLevelLinks */
 			foreach($firstLevelLinks as $link)
 			{
-				$deepLinks = array_merge($deepLinks, $this->buildTreeFromLink($link));
+				[$tree, $version] = $this->buildTreeFromLink($link);
+				$deepLinks = array_merge($deepLinks, $tree);
+				$maxVersion = max($maxVersion, $version);
 			}
 		}
 		else
@@ -880,7 +890,7 @@ class NewDiskStorage extends DiskStorage
 			$rightExists = $securityContext->getSqlExpressionForList('object.ID', 'object.CREATED_BY');
 
 			$sqlQuery = "
-				SELECT object_pl1.ID, object_pl1.NAME, object_pl1.REAL_OBJECT_ID, object_pl1.PARENT_ID, object_pl1.CREATE_TIME
+				SELECT object_pl1.ID, object_pl1.NAME, object_pl1.REAL_OBJECT_ID, object_pl1.PARENT_ID, object_pl1.CREATE_TIME, object_pl1.SYNC_UPDATE_TIME
 				FROM b_disk_object object
 				INNER JOIN b_disk_object_path p ON p.PARENT_ID = object.REAL_OBJECT_ID
 				INNER JOIN b_disk_object object_pl1 ON object_pl1.ID = p.OBJECT_ID
@@ -895,6 +905,7 @@ class NewDiskStorage extends DiskStorage
 			foreach($iterator as $folderRow)
 			{
 				$node = $this->fillTreeData($folderRow);
+				$maxVersion = max($maxVersion, $folderRow['SYNC_UPDATE_TIME']->getTimestamp());
 				if ($node->isLink() && !$this->isRealObjectExists($node))
 				{
 					$deepLinks[] = $node;
@@ -902,85 +913,101 @@ class NewDiskStorage extends DiskStorage
 			}
 		}
 
-		return $deepLinks;
+		return [$deepLinks, $maxVersion];
 	}
 
 	protected function flushTreeCache()
 	{
 		$this->isLoadedTree = false;
 		TreeNode::$__pathNodes = [];
+
+		Driver::getInstance()->cleanCacheTreeBitrixDisk([$this->storage->getId()]);
 	}
 
-	public function loadTree()
+	public function loadTree(): void
 	{
-		if($this->isLoadedTree)
+		if ($this->isLoadedTree)
 		{
 			return;
 		}
 
 		$cache = Data\Cache::createInstance();
-		if($cache->initCache(15768000, 'new_storage_tr_' . $this->storage->getId(), 'disk'))
+		if ($cache->initCache(15768000, 'new_storage_tr_' . $this->storage->getId(), 'disk'))
 		{
-			list($this->treeData,) = $cache->getVars();
+			$cachedVars = $cache->getVars();
+			$this->treeData = $cachedVars[0];
+			if (isset($cachedVars[1]))
+			{
+				$this->treeVersion = $cachedVars[1];
+			}
 		}
 		else
 		{
 			$this->buildTree();
 
 			$cache->startDataCache();
-			$cache->endDataCache(array($this->treeData,));
+			$cache->endDataCache([$this->treeData, $this->treeVersion]);
 		}
 
 		$this->isLoadedTree = true;
 	}
 
-	private function buildTree()
+	private function buildTree(): void
 	{
 		TreeNode::$__pathNodes = [];
 		$this->treeData = [];
-		$firstLevelLinks = $this->buildSelfTree();
-		$deepLinks = $this->buildTreeFromFirstLevelLinks($firstLevelLinks);
-		$theDeepestLinks = $this->buildTreeRecursiveFromLinks($deepLinks);
 
-		foreach($firstLevelLinks as $node)
+		[$firstLevelLinks, $firstLevelLinksVersion] = $this->buildSelfTree();
+		[$deepLinks, $deepLinksVersion] = $this->buildTreeFromFirstLevelLinks($firstLevelLinks);
+		[$theDeepestLinks, $theDeepestLinksVersion] = $this->buildTreeRecursiveFromLinks($deepLinks);
+
+		$this->treeVersion = max($firstLevelLinksVersion, $deepLinksVersion, $theDeepestLinksVersion);
+
+		foreach ($firstLevelLinks as $node)
 		{
-			if(isset($this->treeData[$node->realObjectId]))
+			if (isset($this->treeData[$node->realObjectId]))
 			{
 				$this->treeData[$node->realObjectId]->setLink($node);
 			}
 		}
-		foreach($deepLinks as $node)
+		foreach ($deepLinks as $node)
 		{
-			if(isset($this->treeData[$node->realObjectId]))
+			if (isset($this->treeData[$node->realObjectId]))
 			{
 				$this->treeData[$node->realObjectId]->setLink($node);
 			}
 		}
-		foreach($theDeepestLinks as $node)
+		foreach ($theDeepestLinks as $node)
 		{
-			if(isset($this->treeData[$node->realObjectId]))
+			if (isset($this->treeData[$node->realObjectId]))
 			{
 				$this->treeData[$node->realObjectId]->setLink($node);
 			}
 		}
 	}
 
-	private function buildTreeRecursiveFromLinks(array $links)
+	private function buildTreeRecursiveFromLinks(array $links): array
 	{
-		if(!$links)
+		$maxVersion = -1;
+		if (!$links)
 		{
-			return array();
+			return [[], $maxVersion];
 		}
 
-		$subLinks = array();
+		$subLinks = [];
 		/** @var TreeNode[] $links */
-		foreach($links as $link)
+		foreach ($links as $link)
 		{
-			$subLinks = array_merge($subLinks, $this->buildTreeFromLink($link));
+			[$tree, $version] = $this->buildTreeFromLink($link);
+			$subLinks = array_merge($subLinks, $tree);
+			$maxVersion = max($maxVersion, $version);
 		}
-		unset($link);
 
-		return array_merge($subLinks, $this->buildTreeRecursiveFromLinks($subLinks));
+		[$tree, $version] = $this->buildTreeRecursiveFromLinks($subLinks);
+		$tree = array_merge($subLinks, $tree);
+		$maxVersion = max($maxVersion, $version);
+
+		return [$tree, $maxVersion];
 	}
 
 	private function getStorageIdByRealObjectId(int $realObjectId): int
@@ -992,13 +1019,14 @@ class NewDiskStorage extends DiskStorage
 		return (int)$storageId;
 	}
 
-	private function buildTreeFromLink(TreeNode $link)
+	private function buildTreeFromLink(TreeNode $link): array
 	{
+		$maxVersion = -1;
 		if ($this->isRealObjectExists($link))
 		{
 			$link->markAsReplica();
 
-			return array();
+			return [[], $maxVersion];
 		}
 
 		$deletedTypeNone = ObjectTable::DELETED_TYPE_NONE;
@@ -1008,7 +1036,7 @@ class NewDiskStorage extends DiskStorage
 		$storageId = $this->getStorageIdByRealObjectId($link->realObjectId);
 
 		$sqlQuery = "
-			SELECT object.ID, object.NAME, object.REAL_OBJECT_ID, object.PARENT_ID, object.CREATE_TIME
+			SELECT object.ID, object.NAME, object.REAL_OBJECT_ID, object.PARENT_ID, object.CREATE_TIME, object.SYNC_UPDATE_TIME
 			FROM b_disk_object object
 			INNER JOIN b_disk_object_path path ON path.OBJECT_ID = object.ID
 			WHERE 
@@ -1019,22 +1047,23 @@ class NewDiskStorage extends DiskStorage
 		";
 		$iterator = $this->connection->query($sqlQuery);
 		$subLinks = array();
-		foreach($iterator as $folderRow)
+		foreach ($iterator as $folderRow)
 		{
 			//prevent possible cycle
-			if($this->isTreeNodeExists($folderRow))
+			if ($this->isTreeNodeExists($folderRow))
 			{
 				continue;
 			}
 
 			$node = $this->fillTreeData($folderRow);
+			$maxVersion = max($maxVersion, $folderRow['SYNC_UPDATE_TIME']->getTimestamp());
 			if ($node->isLink() && !$this->isRealObjectExists($node))
 			{
 				$subLinks[] = $node;
 			}
 		}
 
-		return $subLinks;
+		return [$subLinks, $maxVersion];
 	}
 
 	/**
@@ -1117,13 +1146,28 @@ class NewDiskStorage extends DiskStorage
 		return $path?: $this->treeData[$id]->getPath();
 	}
 
-	protected function getPathByObject(BaseObject $object)
+	protected function requireActualPathByObjectId(int $objectId, int $objectSyncVersion, bool $getDirectPathIfPossible = false): ?string
 	{
-		if($object instanceof Folder)
+		if ($objectSyncVersion > $this->treeVersion)
 		{
-			return $this->getPath($object->getId());
+			$this->flushTreeCache();
+			$this->loadTree();
 		}
 
+		return $this->getPath($objectId, $getDirectPathIfPossible);
+	}
+
+	protected function getPathByObject(BaseObject $object)
+	{
+		if ($object instanceof Folder)
+		{
+			return $this->requireActualPathByObjectId(
+				$object->getId(), $object->getSyncUpdateTime()->getTimestamp()
+			);
+		}
+
+		//we don't use requireActualPathByObjectId for parent because it'll add additional query for every file.
+		//above we cover just one case when we have folder with new version. http://jabber.bx/view.php?id=94730
 		$parentPath = $this->getPath($object->getParentId());
 		if(!$parentPath)
 		{

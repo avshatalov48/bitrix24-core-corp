@@ -2,15 +2,13 @@
 
 namespace Bitrix\Crm\Counter;
 
-use Bitrix\Crm\Counter\QueryBuilder\DeadlineBased;
-use Bitrix\Crm\Counter\QueryBuilder\IncomingChannel;
-use Bitrix\Crm\Counter\QueryBuilder\Idle;
-use Bitrix\Crm\Order\OrderStatus;
+use Bitrix\Crm\Counter\CounterQueryBuilder\CounterQueryBuilder;
+use Bitrix\Crm\Counter\CounterQueryBuilder\CounterQueryBuilderFactory;
+use Bitrix\Crm\Counter\CounterQueryBuilder\FactoryConfig;
+use Bitrix\Crm\Counter\CounterQueryBuilder\BuilderParams\QueryParamsBuilder;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main;
-use Bitrix\Main\DB\SqlExpression;
 use Bitrix\Main\Entity\Query;
-use Bitrix\Crm\PhaseSemantics;
 
 class EntityCounter extends CounterBase
 {
@@ -103,21 +101,6 @@ class EntityCounter extends CounterBase
 		}
 
 		$this->entityTypeID = $entityTypeID;
-	}
-
-	protected function isOneDay(): bool
-	{
-		return $this->typeID === EntityCounterType::PENDING
-			|| $this->typeID === EntityCounterType::OVERDUE
-			|| $this->typeID === EntityCounterType::CURRENT
-			|| $this->typeID === EntityCounterType::ALL_DEADLINE_BASED
-			|| $this->typeID === EntityCounterType::ALL
-		;
-	}
-
-	protected function isExpired(): bool
-	{
-		return $this->isOneDay() && !$this->isValidLastCalculatedTime();
 	}
 
 	public function getExtras()
@@ -234,16 +217,6 @@ class EntityCounter extends CounterBase
 		return EntityCounterManager::prepareCode($entityTypeID, $typeID, $extras);
 	}
 
-	protected function isValidLastCalculatedTime(): bool
-	{
-		if($this->code === '')
-		{
-			return false;
-		}
-
-		return $this->calculatedTime->wasCalculatedToday();
-	}
-
 	public function getValue($recalculate = false)
 	{
 		if($this->currentValue !== null)
@@ -252,7 +225,7 @@ class EntityCounter extends CounterBase
 		}
 
 		$this->currentValue  = -1;
-		if($this->code !== '' && !$recalculate && !$this->isExpired())
+		if($this->code !== '' && !$recalculate)
 		{
 			if($this->typeID === EntityCounterType::IDLE
 				&& !\CCrmUserCounterSettings::GetValue(\CCrmUserCounterSettings::ReckonActivitylessItems, true))
@@ -294,20 +267,20 @@ class EntityCounter extends CounterBase
 			$options = [];
 		}
 
-		$select = isset($options['SELECT']) ? $options['SELECT'] : '';
-		if($select !== QueryBuilder::SELECT_TYPE_QUANTITY && $select !== QueryBuilder::SELECT_TYPE_ENTITIES)
+		$selectType = $options['SELECT'] ?? '';
+		if (!in_array($selectType, [CounterQueryBuilder::SELECT_TYPE_QUANTITY, CounterQueryBuilder::SELECT_TYPE_ENTITIES]))
 		{
-			$select = QueryBuilder::SELECT_TYPE_QUANTITY;
+			$selectType = CounterQueryBuilder::SELECT_TYPE_QUANTITY;
 		}
 
-		$distinct = ($select === QueryBuilder::SELECT_TYPE_ENTITIES); // SELECT_TYPE_QUANTITY should not use distinct
-		if($select === QueryBuilder::SELECT_TYPE_ENTITIES && isset($options['DISTINCT']))
+		$distinct = ($selectType === CounterQueryBuilder::SELECT_TYPE_ENTITIES); // SELECT_TYPE_QUANTITY should not use distinct
+		if($selectType === CounterQueryBuilder::SELECT_TYPE_ENTITIES && isset($options['DISTINCT']))
 		{
 			$distinct = (bool)$options['DISTINCT'];
 		}
 		$needExcludeUsers = (bool)($options['EXCLUDE_USERS'] ?? false);
 		$hasAnyIncomingChannel = $this->getExtraParam('HAS_ANY_INCOMING_CHANEL', null); // option can be used in select entities only
-		if ($select !== QueryBuilder::SELECT_TYPE_ENTITIES)
+		if ($selectType !== CounterQueryBuilder::SELECT_TYPE_ENTITIES)
 		{
 			$hasAnyIncomingChannel = null;
 		}
@@ -322,171 +295,123 @@ class EntityCounter extends CounterBase
 		$countersSettings = $factory->getCountersSettings();
 
 		$typeIDs = EntityCounterType::splitType($entityCounterTypeID);
-		$isCurrentCounter = in_array(EntityCounterType::PENDING, $typeIDs) && in_array(EntityCounterType::OVERDUE, $typeIDs);
+		$isCurrentCounter = in_array(EntityCounterType::READY_TODO, $typeIDs) && in_array(EntityCounterType::OVERDUE, $typeIDs);
+		if ($isCurrentCounter)
+		{
+			$typeIDs = array_diff($typeIDs, [EntityCounterType::OVERDUE, EntityCounterType::READY_TODO]);
+			$typeIDs[] = EntityCounterType::CURRENT;
+		}
+
+		$qbBuilderFactory = new CounterQueryBuilderFactory();
 		foreach($typeIDs as $typeID)
 		{
-			if ($select === QueryBuilder::SELECT_TYPE_QUANTITY && !$countersSettings->isCounterTypeEnabled($typeID))
+			$queryParams = null;
+			if ($selectType === CounterQueryBuilder::SELECT_TYPE_QUANTITY && !$countersSettings->isCounterTypeEnabled($typeID))
 			{
 				continue;
 			}
-			$useUncompletedActivityTable = ($select === QueryBuilder::SELECT_TYPE_ENTITIES);
-			$query = $factory->getDataClass()::query();
 
-			$stageSemanticId = isset($options['STAGE_SEMANTIC_ID']) && $options['STAGE_SEMANTIC_ID']
-				? $options['STAGE_SEMANTIC_ID']
-				: PhaseSemantics::PROCESS
-			;
-			if($entityTypeID === \CCrmOwnerType::Deal)
+			if ($entityTypeID === \CCrmOwnerType::Order && !Main\Loader::includeModule('sale'))
 			{
-				$query->addFilter('=STAGE_SEMANTIC_ID', $stageSemanticId);
-				$query->addFilter('=IS_RECURRING', 'N');
+				continue;
+			}
 
-				if(isset($options['CATEGORY_ID']) && $options['CATEGORY_ID'] >= 0)
-				{
-					$query->addFilter('=CATEGORY_ID', new SqlExpression('?i', $options['CATEGORY_ID']));
-				}
-			}
-			else if($entityTypeID === \CCrmOwnerType::Contact)
-			{
-				if (isset($options['CATEGORY_ID']))
-				{
-					$query->where('CATEGORY_ID', $options['CATEGORY_ID']);
-				}
-			}
-			else if($entityTypeID === \CCrmOwnerType::Company)
-			{
-				$query->addFilter('=IS_MY_COMPANY', 'N');
-				if (isset($options['CATEGORY_ID']))
-				{
-					$query->where('CATEGORY_ID', $options['CATEGORY_ID']);
-				}
-			}
-			elseif($entityTypeID === \CCrmOwnerType::Order)
-			{
-				if(!Main\Loader::includeModule('sale'))
-				{
-					continue;
-				}
-				$query->addFilter('=CANCELED', 'N');
-				$query->addFilter('@STATUS_ID', OrderStatus::getSemanticProcessStatuses());
-			}
-			elseif($entityTypeID === \CCrmOwnerType::Lead)
-			{
-				$query->addFilter('=STATUS_SEMANTIC_ID', $stageSemanticId);
-			}
-			elseif(\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeID) && isset($options['CATEGORY_ID']))
-			{
-				$query->where('CATEGORY_ID', $options['CATEGORY_ID']);
-			}
+			$useUncompletedActivityTable = ($selectType === CounterQueryBuilder::SELECT_TYPE_ENTITIES);
+
+			$queryBuilderParams = (new QueryParamsBuilder($entityTypeID, $userID, $selectType))
+				->setUseDistinct($distinct)
+				->setExcludeUsers($needExcludeUsers)
+				->setCounterLimit($needExcludeUsers ? self::COUNTER_LIMIT : null)
+				->setHasAnyIncomingChannel($hasAnyIncomingChannel)
+				->setOptions($options);
 
 			if($typeID === EntityCounterType::IDLE)
 			{
-				$results[] = (new Idle($entityTypeID, $userID))
-					->setUseDistinct($distinct)
-					->setExcludeUsers($needExcludeUsers)
-					->setSelectType($select)
-					->setUseUncompletedActivityTable(true)
-					->build($query)
-				;
+				$config = FactoryConfig::create(true);
+				$queryBuilder = $qbBuilderFactory->make(EntityCounterType::IDLE, $config);
+				$queryParams = $queryBuilderParams->build();
+
+				$results[] = $queryBuilder->build($factory, $queryParams);
 			}
 			elseif ($typeID === EntityCounterType::PENDING)
 			{
-				if ($isCurrentCounter)
+				if ($useUncompletedActivityTable)
 				{
-					$periodFrom = null;
-					$periodTo = \CCrmDateTimeHelper::getUserDate(new Main\Type\DateTime(), $this->userID); // today (time 23:59:59 will applied by counter itself)
-					if (array_key_exists('PERIOD_FROM', $this->extras))
-					{
-						$periodFrom = $this->extras['PERIOD_FROM'];
-					}
-					if (array_key_exists('PERIOD_TO', $this->extras))
-					{
-						$periodTo = $this->extras['PERIOD_TO'];
-					}
-					$results[] = (new DeadlineBased($entityTypeID, $userID))
-						->setUseDistinct($distinct)
-						->setExcludeUsers($needExcludeUsers)
-						->setCounterLimit($needExcludeUsers ? self::COUNTER_LIMIT : null)
-						->setSelectType($select)
-						->setPeriodFrom($periodFrom)
-						->setPeriodTo($periodTo)
-						->setUseUncompletedActivityTable($useUncompletedActivityTable)
-						->setHasAnyIncomingChannel($hasAnyIncomingChannel)
-						->build($query)
-					;
+					// do not use UncompletedActivityTable by default for PENDING counter
+					$useUncompletedActivityTable = $this->getExtraParam('ONLY_MIN_DEADLINE', false);
 				}
-				else
+
+				$config = FactoryConfig::create($useUncompletedActivityTable);
+
+				$periodFrom = \CCrmDateTimeHelper::getUserDate(new Main\Type\DateTime(), $this->userID);
+				$periodTo = \CCrmDateTimeHelper::getUserDate(new Main\Type\DateTime(), $this->userID);
+				if (array_key_exists('PERIOD_FROM', $this->extras))
 				{
-					if ($useUncompletedActivityTable)
-					{
-						// do not use UncompletedActivityTable by default for PENDING counter
-						$useUncompletedActivityTable = $this->getExtraParam('ONLY_MIN_DEADLINE', false);
-					}
-					$results[] = (new DeadlineBased($entityTypeID, $userID))
-						->setUseDistinct($distinct)
-						->setExcludeUsers($needExcludeUsers)
-						->setCounterLimit($needExcludeUsers ? self::COUNTER_LIMIT : null)
-						->setSelectType($select)
-						->setPeriodFrom(\CCrmDateTimeHelper::getUserDate(new Main\Type\DateTime(), $this->userID)) // today (time 00:00:00 will applied by counter itself)
-						->setPeriodTo(\CCrmDateTimeHelper::getUserDate(new Main\Type\DateTime(), $this->userID)) // today (time 23:59:59 will applied by counter itself)
-						->setUseUncompletedActivityTable($useUncompletedActivityTable)
-						->setHasAnyIncomingChannel($hasAnyIncomingChannel)
-						->build($query)
-					;
+					$periodFrom = $this->extras['PERIOD_FROM'];
 				}
+				if (array_key_exists('PERIOD_TO', $this->extras))
+				{
+					$periodTo = $this->extras['PERIOD_TO'];
+				}
+
+				$queryBuilder = $qbBuilderFactory->make($typeID, $config);
+				$queryParams = $queryBuilderParams
+					->setPeriodFrom($periodFrom) // today (time 00:00:00 will applied by counter itself)
+					->setPeriodTo($periodTo) // today (time 23:59:59 will applied by counter itself)
+					->build();
+
+				$results[] = $queryBuilder->build($factory, $queryParams);
+			}
+			elseif ($typeID === EntityCounterType::READY_TODO)
+			{
+				$config = FactoryConfig::create($useUncompletedActivityTable);
+				$queryBuilder = $qbBuilderFactory->make($typeID, $config);
+				$queryParams = $queryBuilderParams
+					->setPeriodFrom($this->extras['PERIOD_FROM'] ?? null)
+					->setPeriodTo($this->extras['PERIOD_TO'] ?? null)
+					->build();
+
+				$results[] = $queryBuilder->build($factory, $queryParams);
+			}
+			elseif ($typeID === EntityCounterType::CURRENT)
+			{
+				$config = FactoryConfig::create($useUncompletedActivityTable);
+
+				$queryParams = $queryBuilderParams
+					->setPeriodFrom($this->extras['PERIOD_FROM'] ?? null)
+					->setPeriodTo($this->extras['PERIOD_TO'] ?? null)
+					->build();
+				$queryBuilder = $qbBuilderFactory->make(EntityCounterType::CURRENT, $config);
+
+				$results[] = $queryBuilder->build($factory, $queryParams);
 			}
 			elseif ($typeID === EntityCounterType::OVERDUE)
 			{
-				if ($isCurrentCounter)
-				{
-					continue;
-				}
-				$results[] = (new DeadlineBased($entityTypeID, $userID))
-					->setUseDistinct($distinct)
-					->setExcludeUsers($needExcludeUsers)
-					->setCounterLimit($needExcludeUsers ? self::COUNTER_LIMIT : null)
-					->setSelectType($select)
-					->setPeriodTo(\CCrmDateTimeHelper::getUserDate(new Main\Type\DateTime(), $this->userID)->add('-1 day')) // yesterday (time 23:59:59 will applied by counter itself)
-					->setUseUncompletedActivityTable($useUncompletedActivityTable)
-					->setHasAnyIncomingChannel($hasAnyIncomingChannel)
-					->build($query)
-				;
+				$config = FactoryConfig::create(
+					$useUncompletedActivityTable,
+					false
+				);
+				$queryBuilder = $qbBuilderFactory->make(EntityCounterType::OVERDUE, $config);
+				$queryParams = $queryBuilderParams->build();
+
+				$results[] = $queryBuilder->build($factory, $queryParams);
 			}
 			else if($typeID === EntityCounterType::INCOMING_CHANNEL)
 			{
-				if ($useUncompletedActivityTable && $this->getExtraParam('ONLY_MIN_INCOMING_CHANNEL', false))
-				{
-					$periodFrom = null;
-					$periodTo = null;
-					if (array_key_exists('INCOMING_CHANNEL_PERIOD_FROM', $this->extras))
-					{
-						$periodFrom = $this->extras['INCOMING_CHANNEL_PERIOD_FROM'];
-					}
-					if (array_key_exists('INCOMING_CHANNEL_PERIOD_TO', $this->extras))
-					{
-						$periodTo = $this->extras['INCOMING_CHANNEL_PERIOD_TO'];
-					}
-					$results[] = (new DeadlineBased($entityTypeID, $userID))
-						->setUseDistinct($distinct)
-						->setExcludeUsers($needExcludeUsers)
-						->setCounterLimit($needExcludeUsers ? self::COUNTER_LIMIT : null)
-						->setSelectType($select)
-						->setPeriodFrom($periodFrom)
-						->setPeriodTo($periodTo)
-						->setUseUncompletedActivityTable(true)
-						->setHasAnyIncomingChannel(true)
-						->build($query)
-					;
-				}
-				else
-				{
-					$results[] = (new IncomingChannel($entityTypeID, $userID))
-						->setUseDistinct($distinct)
-						->setExcludeUsers($needExcludeUsers)
-						->setCounterLimit($needExcludeUsers ? self::COUNTER_LIMIT : null)
-						->setSelectType($select)
-						->build($query);
-				}
+
+				$config = FactoryConfig::create(
+					$useUncompletedActivityTable,
+					$this->getExtraParam('ONLY_MIN_INCOMING_CHANNEL', false)
+				);
+				$queryBuilder = $qbBuilderFactory->make(EntityCounterType::INCOMING_CHANNEL, $config);
+
+				$queryParams = $queryBuilderParams
+					->setPeriodFrom($this->extras['INCOMING_CHANNEL_PERIOD_FROM'] ?? null)
+					->setPeriodTo($this->extras['INCOMING_CHANNEL_PERIOD_TO'] ?? null)
+					->setHasAnyIncomingChannel(true)
+					->build();
+
+				$results[] = $queryBuilder->build($factory, $queryParams);
 			}
 			else
 			{
@@ -502,7 +427,7 @@ class EntityCounter extends CounterBase
 	 * @param array|null $options Options.
 	 * @return Query[]
 	 */
-	protected function prepareQueries(array $options = null)
+	private function prepareQueries(array $options = null)
 	{
 		if(is_array($options) && isset($options['USER_IDS']) && is_array($options['USER_IDS']))
 		{
@@ -533,7 +458,10 @@ class EntityCounter extends CounterBase
 	 */
 	public function calculateValue(): int
 	{
-		if (!\Bitrix\Crm\Settings\CounterSettings::getCurrent()->isEnabled())
+		if (
+			!\Bitrix\Crm\Settings\CounterSettings::getInstance()->isEnabled()
+			|| !\Bitrix\Crm\Settings\CounterSettings::getInstance()->canBeCounted()
+		)
 		{
 			return 0; // counters feature is completely disabled
 		}

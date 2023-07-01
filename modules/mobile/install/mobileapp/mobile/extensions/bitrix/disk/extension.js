@@ -904,7 +904,7 @@ include("InAppNotifier");
 			{
 				InAppNotifier.showNotification({
 					title: title,
-					backgroundColor: "#075776",
+					backgroundColor: "#004f69",
 					time: 2,
 					blur: true,
 					message: message

@@ -32,6 +32,14 @@ class MenuItemFactory
 		;
 	}
 
+	public static function createChangeResponsibleMenuItem(): MenuItem
+	{
+		return (new MenuItem(Loc::getMessage('CRM_TIMELINE_MENU_CHANGE_RESPONSIBLE')))
+			->setHideIfReadonly()
+			->setSort(9991)
+		;
+	}
+
 	public static function createDownloadFileMenuItem(string $filename = null): MenuItem
 	{
 		$title = (string)Loc::getMessage('CRM_TIMELINE_MENU_DOWNLOAD_FILE');

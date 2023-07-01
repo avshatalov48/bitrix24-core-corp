@@ -1,7 +1,6 @@
 <?php
 namespace Bitrix\Crm\Conversion;
 use Bitrix\Main;
-use Bitrix\Crm\Conversion\LeadConversionType;
 
 class LeadConversionScheme
 {
@@ -185,7 +184,7 @@ class LeadConversionScheme
 	*/
 	public static function getAllDescriptions()
 	{
-		if(!self::$allDescriptions[LANGUAGE_ID])
+		if(empty(self::$allDescriptions[LANGUAGE_ID]))
 		{
 			Main\Localization\Loc::loadMessages(__FILE__);
 			self::$allDescriptions[LANGUAGE_ID] = array(

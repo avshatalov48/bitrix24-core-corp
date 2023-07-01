@@ -11,9 +11,9 @@ namespace Bitrix\Tasks\Internals\Counter\Collector;
 
 use Bitrix\Main\Application;
 use Bitrix\Main\Loader;
-use Bitrix\Main\Type\DateTime;
 use Bitrix\Tasks\Comments\Internals\Comment;
-use Bitrix\Tasks\Internals\Task\MemberTable;
+use Bitrix\Tasks\Comments\Viewed\Enum;
+use Bitrix\Tasks\Comments\Viewed\Group;
 use Bitrix\Tasks\Internals\Counter\CounterDictionary;
 use Bitrix\Tasks\Internals\Counter\Deadline;
 
@@ -142,6 +142,15 @@ class ProjectCollector
 	 */
 	private function recountComments(array $groupIds = [], array $taskIds = [], array $userIds = []): array
 	{
+		$statement = [
+			'join' => [
+				Counter::getJoinForRecountCommentsByType(Enum::PROJECT_NAME, [])
+			],
+			'filter' => [
+				Counter::getConditionForRecountComments()
+			],
+		];
+
 		$filter = [];
 		$joinFilter = [];
 
@@ -174,10 +183,6 @@ class ProjectCollector
 		}
 
 		$filter[] = "(
-			(TV.VIEWED_DATE IS NOT NULL AND FM.POST_DATE > TV.VIEWED_DATE)
-			OR (TV.VIEWED_DATE IS NULL AND FM.POST_DATE >= T.CREATED_DATE)
-		)";
-		$filter[] = "(
 			FM.POST_DATE >= SU.DATE_CREATE
 			OR TM.USER_ID IS NOT NULL
 		)";
@@ -201,6 +206,9 @@ class ProjectCollector
 			$filter[] = "FM.POST_DATE > '". $startCounterDate ."'";
 		}
 
+		$join = implode('\n\r', $statement['join']);
+		$filter = array_merge($filter, $statement['filter']);
+
 		$filter = implode(' AND ', $filter);
 		$joinFilter = implode(' AND ', $joinFilter);
 
@@ -210,7 +218,7 @@ class ProjectCollector
 			   	T.GROUP_ID as GROUP_ID,
 				SU.USER_ID as USER_ID,
 				COUNT(DISTINCT FM.ID) AS COUNT
-			FROM b_tasks T
+			FROM b_tasks T				
 				INNER JOIN b_sonet_user2group SU
 					ON {$joinFilter}
 				LEFT JOIN b_tasks_viewed TV
@@ -221,6 +229,7 @@ class ProjectCollector
 					ON BUF.VALUE_ID = FM.ID
 				LEFT JOIN b_tasks_member TM
 					ON TM.TASK_ID = T.ID AND TM.USER_ID = SU.USER_ID
+				{$join}
 			WHERE
 				{$filter}
 			GROUP BY T.ID, SU.USER_ID

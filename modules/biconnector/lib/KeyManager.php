@@ -2,6 +2,7 @@
 
 namespace Bitrix\BIConnector;
 
+use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\ErrorCollection;
 use Bitrix\Main\Error;
 use Bitrix\Main\Type\DateTime;
@@ -22,6 +23,12 @@ class KeyManager
 		'USERS' => [],
 	];
 
+	/**
+	 * Returns key fields array with default values set.
+	 *
+	 * @param array $data Access key fields.
+	 * @return array
+	 */
 	private static function fillDefaultData($data)
 	{
 		if (empty($data['ACCESS_KEY']))
@@ -32,6 +39,14 @@ class KeyManager
 		return array_merge(static::DEFAULT_DATA, $data);
 	}
 
+	/**
+	 * Checks the key fields.
+	 * Returns an empty collection if no errors was found.
+	 *
+	 * @param  mixed $data Access key fields.
+	 *
+	 * @return \Bitrix\Main\ErrorCollection
+	 */
 	private static function check($data): ErrorCollection
 	{
 		$errorCollection = new ErrorCollection();
@@ -53,10 +68,11 @@ class KeyManager
 	}
 
 	/**
-	 * Saves key with permission
+	 * Saves key with permission.
 	 *
-	 * @param $data array similar to self::DEFAULT_DATA
-	 * @return ErrorCollection|int
+	 * @param array $data Array similar to self::DEFAULT_DATA.
+	 *
+	 * @return \Bitrix\Main\ErrorCollection|int
 	 * @throws \Bitrix\Main\ArgumentException
 	 * @throws \Bitrix\Main\ObjectPropertyException
 	 * @throws \Bitrix\Main\SystemException
@@ -147,7 +163,7 @@ class KeyManager
 				}
 			}
 
-			foreach ($usersForm as $userId => $user)
+			foreach ($usersForm as $user)
 			{
 				$found = false;
 				foreach ($usersDb as $dbId => $dbUserId)
@@ -167,7 +183,7 @@ class KeyManager
 				}
 			}
 
-			foreach ($usersDb as $dbId => $dbUserId)
+			foreach ($usersDb as $dbId => $_)
 			{
 				$deleteResult = KeyUserTable::delete($dbId);
 				$deleteResult->isSuccess();
@@ -190,4 +206,67 @@ class KeyManager
 			| \Bitrix\Main\Security\Random::ALPHABET_ALPHAUPPER
 		);
 	}
+
+	public static function createAccessKey(CurrentUser $user): \Bitrix\Main\Result
+	{
+		$result = new \Bitrix\Main\Result();
+		$key = \Bitrix\BIConnector\KeyManager::generateAccessKey();
+		$resultSave = \Bitrix\BIConnector\KeyManager::save([
+			'USER_ID' => $user->getId(),
+			'ACTIVE' => true,
+			'ACCESS_KEY' => $key,
+		]);
+		if (!($resultSave instanceof ErrorCollection))
+		{
+			$result->setData(['ACCESS_KEY' => $key]);
+		}
+		else
+		{
+			$result->addErrors($resultSave->getValues());
+		}
+
+		return $result;
+	}
+
+	public static function getAccessKey(): ?string
+	{
+		$key = \Bitrix\BIConnector\KeyTable::getList([
+			'select' => [
+				'ACCESS_KEY',
+			],
+			'filter' => [
+				'=ACTIVE' => 'Y',
+				'=APP_ID' => false,
+			],
+			'order' => [
+				'ID' => 'DESC',
+			],
+			'limit' => 1,
+		])->fetch();
+		if ($key === false)
+		{
+			return null;
+		}
+
+		return $key['ACCESS_KEY'] ?? null;
+	}
+
+	public static function getOrCreateAccessKey(CurrentUser $user, $checkPermission = true): ?string
+	{
+		if ($user->canDoOperation('biconnector_key_manage') || !$checkPermission)
+		{
+			$accessKey = \Bitrix\BIConnector\KeyManager::getAccessKey();
+			if (!$accessKey)
+			{
+				$createdResult = \Bitrix\BIConnector\KeyManager::createAccessKey($user);
+				if ($createdResult->isSuccess())
+				{
+					return $createdResult->getData()['ACCESS_KEY'] ?? null;
+				}
+			}
+		}
+
+		return null;
+	}
+
 }

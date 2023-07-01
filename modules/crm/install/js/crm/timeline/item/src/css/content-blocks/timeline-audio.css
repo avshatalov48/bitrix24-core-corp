@@ -2,14 +2,16 @@
 	--crm-timeline__audioplayer_transition-duration: 0.2s;
 	--crm-timeline__audioplayer_transition-timing-function: 0.2s;
 	position: static;
+	height: 40px;
+	padding: 8px 0 12px 0;
 	top: 0;
 	left: 0;
 	bottom: 0;
 	right: 0;
 	display: flex;
 	flex-direction: row;
-	align-items: flex-start;
-	justify-content: flex-start;
+	align-items: center;
+	justify-content: center;
 }
 
 .crm-timeline__audioplayer-contianer .ui-vue-audioplayer-controls-container {
@@ -148,7 +150,7 @@
 	flex-direction: row;
 	justify-content: space-between;
 	align-items: center;
-	margin-top: 8px;
+	margin-top: 12px;
 }
 
 .ui-vue-audioplayer-total-time.--hidden {
@@ -171,7 +173,6 @@
 	font-size: var(--ui-font-size-md, 14px);
 	font-weight: var(--ui-font-weight-bold, 700);
 	color: var(--ui-color-base-40, #bdc1c6);
-	margin-top: 6px;
 	margin-left: var(--ui-space-inline-sm, 12px);
 	text-align: left;
 	cursor: pointer;
@@ -196,4 +197,17 @@
 .playback-speed-menu-item .menu-popup-item-text {
 	line-height: var(--ui-font-line-height-md, 1.4);
 	font-size: var(--crm-timeline__playback-menu-font-size);
+}
+
+.crm-timeline__audioplayer-contianer .ui-vue-audioplayer-record-name {
+	font: 10px/12px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
+	color: var(--ui-color-base-50, #a8adb4);
+	text-align: end;
+	height: 12px;
+	white-space: nowrap;
+	display: block;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	max-width: 100%;
 }

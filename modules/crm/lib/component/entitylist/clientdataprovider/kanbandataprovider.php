@@ -62,7 +62,7 @@ class KanbanDataProvider extends \Bitrix\Crm\Component\EntityList\ClientDataProv
 		$itemsWithClientsInfo = $items;
 		foreach ($itemsWithClientsInfo as $id => $item)
 		{
-			$clientId = $item[$clientFieldId];
+			$clientId = $item[$clientFieldId] ?? 0;
 			if ($this->addRawIdToSelect && $clientId > 0)
 			{
 				$item[$rawIdFieldId] = $clientId;
@@ -81,7 +81,7 @@ class KanbanDataProvider extends \Bitrix\Crm\Component\EntityList\ClientDataProv
 
 		foreach ($items as $id => $item)
 		{
-			$clientId = $item[$clientFieldId];
+			$clientId = $item[$clientFieldId] ?? 0;
 			if ($clientId > 0 && isset($clientsInfo[$clientId]))
 			{
 				$title = $this->formatTitle($clientsInfo[$clientId]);

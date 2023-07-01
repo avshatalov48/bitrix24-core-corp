@@ -3,9 +3,9 @@
 namespace Bitrix\Tasks\Internals\Task;
 
 use Bitrix\Main\Entity\ReferenceField;
-use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ORM\Fields\IntegerField;
 use Bitrix\Main\ORM\Query\Join;
+use Bitrix\Main\SystemException;
 use Bitrix\Tasks\Internals\TaskDataManager;
 use Bitrix\Tasks\Internals\TaskTable;
 
@@ -41,7 +41,7 @@ class TaskTagTable extends TaskDataManager
 	 *
 	 * @return string
 	 */
-	public static function getTableName()
+	public static function getTableName(): string
 	{
 		return 'b_tasks_task_tag';
 	}
@@ -55,23 +55,28 @@ class TaskTagTable extends TaskDataManager
 	 * Returns entity map definition.
 	 *
 	 * @return array
+	 * @throws SystemException
 	 */
-	public static function getMap()
+	public static function getMap(): array
 	{
 		return [
 			new IntegerField(
-				'TAG_ID',
+				'ID',
 				[
 					'primary' => true,
+					'autocomplete' => true,
+				]
+			),
+			new IntegerField(
+				'TAG_ID',
+				[
 					'required' => true,
-					'title' => Loc::getMessage('TASK_TAG_ENTITY_TAG_ID_FIELD'),
 				]
 			),
 			new IntegerField(
 				'TASK_ID',
 				[
 					'required' => true,
-					'title' => Loc::getMessage('TASK_TAG_ENTITY_TASK_ID_FIELD'),
 				]
 			),
 

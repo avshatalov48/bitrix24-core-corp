@@ -14,6 +14,8 @@ use Bitrix\Tasks\Internals\Task\Result\ResultTable;
 
 class Result extends StubConnector
 {
+	public $canRead;
+
 	public function canRead($userId)
 	{
 		if($this->canRead !== null)

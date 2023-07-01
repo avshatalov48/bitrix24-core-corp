@@ -63,6 +63,10 @@ class CBPCrmDeleteDynamicActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 		{
 			$errorCollection->setError(new \Bitrix\Main\Error(Loc::getMessage('CRM_DDA_DELETE_ERROR')));
 		}
+		elseif ($deletionResult instanceof \Bitrix\Main\Result)
+		{
+			$errorCollection->add($deletionResult->getErrors());
+		}
 
 		[$currentEntityTypeId, $currentEntityId] = CCrmBizProcHelper::resolveEntityId($this->GetDocumentId());
 		if ($currentEntityTypeId === $this->EntityTypeId && $currentEntityId === $this->EntityId)

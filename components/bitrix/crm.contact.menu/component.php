@@ -14,6 +14,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
  * @global CDatabase $DB
  */
 
+use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Main\Localization\Loc;
 
@@ -22,24 +23,24 @@ if (!CModule::IncludeModule('crm'))
 	return;
 }
 
-\Bitrix\Crm\Service\Container::getInstance()->getLocalization()->loadMessages();
+Container::getInstance()->getLocalization()->loadMessages();
 
 $currentUserID = CCrmSecurityHelper::GetCurrentUserID();
 $CrmPerms = CCrmPerms::GetCurrentUserPermissions();
 
 $arParams['PATH_TO_CONTACT_LIST'] = CrmCheckPath(
 	'PATH_TO_CONTACT_LIST',
-		$arParams['PATH_TO_CONTACT_LIST'] ?? '',
+	$arParams['PATH_TO_CONTACT_LIST'] ?? '',
 	$APPLICATION->GetCurPage()
 );
 $arParams['PATH_TO_CONTACT_DETAILS'] = CrmCheckPath(
 	'PATH_TO_CONTACT_DETAILS',
-		$arParams['PATH_TO_CONTACT_DETAILS'] ?? '',
+	$arParams['PATH_TO_CONTACT_DETAILS'] ?? '',
 	$APPLICATION->GetCurPage() . '?contact_id=#contact_id#&details'
 );
 $arParams['PATH_TO_CONTACT_SHOW'] = CrmCheckPath(
 	'PATH_TO_CONTACT_SHOW',
-		$arParams['PATH_TO_CONTACT_SHOW'] ?? '',
+	$arParams['PATH_TO_CONTACT_SHOW'] ?? '',
 	$APPLICATION->GetCurPage() . '?contact_id=#contact_id#&show'
 );
 $arParams['PATH_TO_CONTACT_EDIT'] = CrmCheckPath(
@@ -77,7 +78,7 @@ $arParams['ELEMENT_ID'] = isset($arParams['ELEMENT_ID']) ? intval($arParams['ELE
 
 if ($arParams['ELEMENT_ID'] > 0)
 {
-	$arResult['CATEGORY_ID'] =(int)\Bitrix\Crm\Service\Container::getInstance()
+	$arResult['CATEGORY_ID'] =(int)Container::getInstance()
 		->getFactory(CCrmOwnerType::Contact)
 		->getItemCategoryId($arParams['ELEMENT_ID'])
 	;
@@ -116,7 +117,7 @@ $arResult['TOOLBAR_ID'] = $toolbarID;
 
 $arResult['BUTTONS'] = [];
 
-$isInSlider = ($arParams['IN_SLIDER'] === 'Y');
+$isInSlider = (isset($arParams['IN_SLIDER']) && $arParams['IN_SLIDER'] === 'Y');
 
 if ($arParams['TYPE'] === 'list')
 {

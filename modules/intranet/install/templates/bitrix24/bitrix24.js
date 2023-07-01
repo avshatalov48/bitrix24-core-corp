@@ -119,6 +119,30 @@
 		}
 	}, this));
 
+	if (typeof(window.frameRequestStart) !== "undefined" && BX.PULL)
+	{
+		BX.PULL.subscribe({
+			moduleId: "main",
+			command: "composite-cache-up",
+			callback: function () {
+				setTimeout(function () {
+					const value = BX.localStorage.get('ajax-composite-cache-up-lock');
+					if (!value)
+					{
+						BX.localStorage.set('ajax-composite-cache-up-lock', 'EXECUTE', 2);
+						BX.ajax({
+							url: '/blank.php',
+							method: 'GET',
+							processData: false,
+							skipBxHeader: true,
+							emulateOnload: false,
+						});
+					}
+				}, Math.floor(Math.random() * 500));
+			}
+		});
+	}
+
 	BX.addCustomEvent(window, "onImUpdateCounter", function(counters){
 
 		if (!counters)
@@ -586,30 +610,58 @@ function showPartnerForm(arParams)
 	BX.Bitrix24PartnerForm.arParams = arParams;
 	BX.message(arParams['MESS']);
 	BX.Bitrix24PartnerForm.popup = BX.PopupWindowManager.create("BXPartner", null, {
+		className: 'bitrix24-partner__popup',
 		autoHide: false,
 		zIndex: 0,
 		offsetLeft: 0,
 		offsetTop: 0,
+		width: 540,
+		height: 350,
 		overlay : true,
 		draggable: {restrict:true},
 		closeByEsc: true,
 		titleBar: BX.message('BX24_PARTNER_TITLE'),
 		closeIcon: { right : "12px", top : "10px"},
 		buttons: [
-			new BX.PopupWindowButtonLink({
-				text: BX.message('BX24_CLOSE_BUTTON'),
-				className: "popup-window-button-link-cancel",
+			new BX.PopupWindowButton({
+				text: BX.message('BX24_BUTTON_SEND'),
+				className: "ui-btn ui-btn-success",
 				events: { click : function()
 				{
 					this.popupWindow.close();
+					BX.UI.Feedback.Form.open({
+						id: 'intranet-license-partner-form-' + parseInt(Math.random() * 1000),
+						portalUri: 'https://bitrix24.team',
+						forms: [
+							{ zones: ['de'], id: 883, lang: 'de', sec: 'a12ty8', },
+							{ zones: ['com', 'in', 'eu', 'uk'], id: 735, lang: 'en', sec: 'vlhmlv'},
+							{ zones: ['es', 'co', 'mx'], id: 900, lang: 'es', sec: 'w3qmwq'},
+							{ zones: ['com.br'], id: 901, lang: 'pt', sec: 'prnm4x', },
+							{ zones: ['cn/tc'], id: 902, lang: 'cn-tc', sec: 'z8isyg', },
+							{ zones: ['cn'], id: 903, lang: 'cn-sc', sec: 'hsxnam', },
+							{ zones: ['pl'], id: 904, lang: 'pl', sec: '2ph9ph', },
+							{ zones: ['it'], id: 905, lang: 'it', sec: '2r3owa', },
+							{ zones: ['fr'], id: 906, lang: 'fr', sec: 'jt2fii' },
+							{ zones: ['com.tr'], id: 907, lang: 'tr', sec: 'ovevp8' },
+							{ zones: ['id'], id: 908, lang: 'id', sec: '7kq7v2' },
+							{ zones: ['com/my'], id: 909, lang: 'ms', sec: 'kmncmj' },
+							{ zones: ['com/th'], id: 910, lang: 'th', sec: 'sknbp9' },
+							{ zones: ['vn'], id: 911, lang: 'vn', sec: 'a573fy' },
+							{ zones: ['jp'], id: 912, lang: 'jp', sec: '3purdq' },
+							{ zones: ['ru'], id: 2122, lang: 'ru', sec: '8vralr' },
+							{ zones: ['kz'], id: 2128, lang: 'ru', sec: '054phh' },
+							{ zones: ['by'], id: 2129, lang: 'ru', sec: 'srs85j' },
+						],
+						defaultForm: { id: 735, lang: 'en', sec: 'vlhmlv' },
+					});
 				}}
 			})
 		],
-		content: '<div style="width:450px;height:230px"></div>',
 		events: {
-			onAfterPopupShow: function()
+			onPopupFirstShow: function()
 			{
-				this.setContent('<div style="width:450px;height:230px">'+BX.message('BX24_LOADING')+'</div>');
+				var loader = new BX.Loader({ size: 80 });
+				loader.show(this.getPopupContainer());
 				BX.ajax.post(
 					'/bitrix/tools/b24_site_partner.php',
 					{
@@ -619,6 +671,7 @@ function showPartnerForm(arParams)
 					},
 					BX.delegate(function(result)
 						{
+							loader.hide();
 							this.setContent(result);
 						},
 						this)
@@ -1274,5 +1327,3 @@ B24.PopupBlur.prototype = {
 		}
 	}
 };
-
-

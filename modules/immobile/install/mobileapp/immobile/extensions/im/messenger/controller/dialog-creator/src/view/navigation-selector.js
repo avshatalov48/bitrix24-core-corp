@@ -93,28 +93,26 @@ jn.define('im/messenger/controller/dialog-creator/navigation-selector/view', (re
 
 		getNewChannelButton()
 		{
-			return ButtonFactory.createFullWidthButton(
-				{
-					text: Loc.getMessage('IMMOBILE_DIALOG_CREATOR_NEW_CHANNEL'),
-					svgIcon: openChatIcon,
-					callback: () => {
-						this.props.onCreateOpenChat();
-					}
+			return ButtonFactory.createFullWidthButton({
+				testId: 'create_channel',
+				text: Loc.getMessage('IMMOBILE_DIALOG_CREATOR_NEW_CHANNEL'),
+				svgIcon: openChatIcon,
+				callback: () => {
+					this.props.onCreateOpenChat();
 				}
-			)
+			});
 		}
 
 		getNewChatButton()
 		{
-			return ButtonFactory.createFullWidthButton(
-				{
-					text: Loc.getMessage('IMMOBILE_DIALOG_CREATOR_NEW_CHAT'),
-					svgIcon: privateChatIcon,
-					callback: () => {
-						this.props.onCreatePrivateChat();
-					}
+			return ButtonFactory.createFullWidthButton({
+				testId: 'create_group_chat',
+				text: Loc.getMessage('IMMOBILE_DIALOG_CREATOR_NEW_CHAT'),
+				svgIcon: privateChatIcon,
+				callback: () => {
+					this.props.onCreatePrivateChat();
 				}
-			)
+			});
 		}
 		getInviteButton()
 		{

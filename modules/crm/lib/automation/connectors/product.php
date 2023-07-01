@@ -117,7 +117,7 @@ class Product
 
 		$fieldsMap = [
 			'ID' => [
-				'Name' => \CCrmProductRow::GetFieldCaption('ID'),
+				'Name' => Loc::getMessage('CRM_AUTOMATION_CONNECTORS_PRODUCT_FIELD_ID'),
 				'Type' => FieldType::INT,
 			],
 			'OWNER_ID' => [
@@ -131,7 +131,7 @@ class Product
 				'Required' => true,
 			],
 			'PRODUCT_ID' => [
-				'Name' => \CCrmProductRow::GetFieldCaption('PRODUCT_ID'),
+				'Name' => Loc::getMessage('CRM_AUTOMATION_CONNECTORS_PRODUCT_FIELD_PRODUCT_ID'),
 				'Type' => FieldType::INT,
 				'Default' => 0,
 			],

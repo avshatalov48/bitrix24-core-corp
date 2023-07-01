@@ -19,10 +19,13 @@ class SliderFactory
 
 	public const PERSONAL_CONTEXT = PathMaker::PERSONAL_CONTEXT;
 	public const GROUP_CONTEXT = PathMaker::GROUP_CONTEXT;
+	public const EDIT_ACTION = PathMaker::EDIT_ACTION;
+	public const VIEW_ACTION = PathMaker::DEFAULT_ACTION;
 
 	private string $action = PathMaker::DEFAULT_ACTION;
 
 	private string $queryParams = '';
+	private bool $skipEvents = false;
 
 	public function setAction(string $action): self
 	{
@@ -46,11 +49,22 @@ class SliderFactory
 		return $this->queryParams;
 	}
 
+	public function skipEvents(): self
+	{
+		$this->skipEvents = true;
+		return $this;
+	}
+
 	/**
 	 * @throws UnknownEntityTypeException
 	 * @throws UnknownEntityContextException
 	 */
-	public function createEntitySlider(int $entityId, string $entityType, int $ownerId, string $context): TasksSliderInterface
+	public function createEntitySlider(
+		int $entityId,
+		string $entityType,
+		int $ownerId,
+		string $context
+	): TasksSliderInterface
 	{
 		switch ($entityType)
 		{
@@ -76,7 +90,7 @@ class SliderFactory
 		$entityPath = $pathService->makeEntityPath();
 		$entityListPath = $pathService->makeEntitiesListPath();
 
-		return new TasksSlider($entityPath, $entityListPath);
+		return new TasksSlider($entityPath, $entityListPath, $this->skipEvents);
 	}
 
 	/**

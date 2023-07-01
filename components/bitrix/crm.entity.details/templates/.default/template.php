@@ -288,6 +288,13 @@ $exclusionDialogTitle = $arResult['MESSAGES']['EXCLUDE_DIALOG_TITLE'] ?? GetMess
 $exclusionConfirmDialogContent = $arResult['MESSAGES']['EXCLUDE_DIALOG_MESSAGE'] ?? GetMessage("CRM_ENT_DETAIL_{$entityTypeName}_EXCLUDE_DIALOG_MESSAGE");
 $exclusionConfirmDialogContentHelp = GetMessage("CRM_ENT_DETAIL_EXCLUDE_DIALOG_MESSAGE_HELP");
 
+// prepare tabs for JS
+$tabs = array_map(static function(array $tab) {
+	unset($tab['html']);
+
+	return $tab;
+}, $tabs);
+
 ?><script type="text/javascript">
 	BX.ready(
 		function()

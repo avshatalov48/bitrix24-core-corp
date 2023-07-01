@@ -29,6 +29,8 @@ if(!CModule::IncludeModule('socialnetwork'))
 	return;
 }
 
+$arParams['CACHE_TIME'] = (int)($arParams['CACHE_TIME'] ?? 3600);
+
 $arResult['POST_FORM_URI'] = isset($arParams['POST_FORM_URI']) ? $arParams['POST_FORM_URI'] : '';
 
 $entityTypeID = isset($arParams['ENTITY_TYPE_ID']) ? intval($arParams['ENTITY_TYPE_ID']) : CCrmOwnerType::Undefined;

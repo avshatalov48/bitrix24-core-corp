@@ -1,13 +1,19 @@
-(() => {
-	const { merge, mergeImmutable, isEqual, clone } = jn.require('utils/object');
-	const { Haptics } = jn.require('haptics');
-	const { Alert } = jn.require('alert');
-	const { EventEmitter } = jn.require('event-emitter');
-	const { NotifyManager } = jn.require('notify-manager');
-	const { ToolbarPadding } = jn.require('layout/ui/detail-card/toolbar/toolbar-padding');
-	const { TabFactory } = jn.require('layout/ui/detail-card/tabs/factory');
-	const { FocusManager } = jn.require('layout/ui/fields/focus-manager');
-	const { debounce } = jn.require('utils/function');
+/**
+ * @module layout/ui/detail-card
+ */
+jn.define('layout/ui/detail-card', (require, exports, module) => {
+	const { Alert } = require('alert');
+	const { AnalyticsLabel } = require('analytics-label');
+	const { EventEmitter } = require('event-emitter');
+	const { Haptics } = require('haptics');
+	const { NotifyManager } = require('notify-manager');
+	const { ActionsPanel } = require('layout/ui/detail-card/toolbar/actions-panel');
+	const { FloatingButton } = require('layout/ui/detail-card/floating-button');
+	const { ToolbarPadding } = require('layout/ui/detail-card/toolbar/toolbar-padding');
+	const { TabFactory } = require('layout/ui/detail-card/tabs/factory');
+	const { FocusManager } = require('layout/ui/fields/focus-manager');
+	const { debounce } = require('utils/function');
+	const { merge, mergeImmutable, isEqual, clone } = require('utils/object');
 
 	const CACHE_ID = 'DETAIL_CARD';
 	const TAB_HEADER_HEIGHT = 44;
@@ -42,6 +48,7 @@
 			this.header = null;
 
 			this.sliderRef = null;
+			this.sliderViewCoords = null;
 			this.tabViewRef = null;
 
 			/** @type {ToolbarPadding} */
@@ -56,6 +63,14 @@
 
 			/** @type {ToolbarPanelWrapper} */
 			this.topToolbarRef = null;
+
+			this.isFloatingButtonEnabled = false;
+			this.floatingButtonProvider = null;
+			/** @type {FloatingButton} */
+			this.floatingButtonRef = null;
+			this.ahaMomentRef = null;
+
+			this.ahaMomentsManager = null;
 
 			this.readOnly = true;
 			this.entityModel = null;
@@ -107,15 +122,18 @@
 			this.handleTabPreloadRequest = this.handleTabPreloadRequest.bind(this);
 			this.handleOnSaveLock = this.setLoading.bind(this);
 			this.handleClose = this.close.bind(this);
+			this.reloadTabs = this.reloadTabs.bind(this);
 			this.handleEntityModelReady = this.handleEntityModelReady.bind(this);
 			this.handleEntityModelChange = this.handleEntityModelChange.bind(this);
 			this.handleEntityEditorInit = this.handleEntityEditorInit.bind(this);
 
 			this.handleSave = this.handleSave.bind(this);
+			this.handleValidate = this.validate.bind(this);
 			this.handleCancel = this.handleCancel.bind(this);
 			this.handleExitFromEntity = this.handleExitFromEntity.bind(this);
 			this.showMenu = this.showMenu.bind(this);
 			this.setTabCounter = this.setTabCounter.bind(this);
+			this.showTopToolbar = this.showTopToolbar.bind(this);
 
 			/** @type {Function} */
 			this.checkToolbarPanelDebounced = debounce(this.checkToolbarPanel, 50, this);
@@ -123,6 +141,7 @@
 
 		componentDidMount()
 		{
+			this.customEventEmitter.emit('DetailCard::didMount');
 			this.mounted = true;
 
 			this.bindEvents();
@@ -139,8 +158,11 @@
 				.off('DetailCard::onTabEdit', this.handleTabEdit)
 				.off('DetailCard::onTabPreloadRequest', this.handleTabPreloadRequest)
 				.off('DetailCard::onTabCounterChange', this.setTabCounter)
+				.off('DetailCard::onShowTopToolbar', this.showTopToolbar)
 				.off('DetailCard::onSaveLock', this.handleOnSaveLock)
 				.off('DetailCard::close', this.handleClose)
+				.off('DetailCard::validate', this.handleValidate)
+				.off('DetailCard::reloadTabs', this.reloadTabs)
 				.off('UI.EntityEditor.Model::onReady', this.handleEntityModelReady)
 				.off('UI.EntityEditor.Model::onChange', this.handleEntityModelChange)
 				.off('UI.EntityEditor::onInit', this.handleEntityEditorInit)
@@ -157,9 +179,11 @@
 				.on('DetailCard::onTabEdit', this.handleTabEdit)
 				.on('DetailCard::onTabPreloadRequest', this.handleTabPreloadRequest)
 				.on('DetailCard::onTabCounterChange', this.setTabCounter)
-				.on('DetailCard::onShowTopToolbar', this.showTopToolbar.bind(this))
+				.on('DetailCard::onShowTopToolbar', this.showTopToolbar)
 				.on('DetailCard::onSaveLock', this.handleOnSaveLock)
 				.on('DetailCard::close', this.handleClose)
+				.on('DetailCard::validate', this.handleValidate)
+				.on('DetailCard::reloadTabs', this.reloadTabs)
 				.on('UI.EntityEditor.Model::onReady', this.handleEntityModelReady)
 				.on('UI.EntityEditor.Model::onChange', this.handleEntityModelChange)
 				.on('UI.EntityEditor::onInit', this.handleEntityEditorInit)
@@ -268,7 +292,7 @@
 						name: this.getSaveButtonTitle(),
 						type: 'text',
 						badgeCode: 'save_entity',
-						color: this.isLoading ? '#8ebad4' : '#0065a3',
+						color: this.isLoading ? '#8ebad4' : '#2066b0',
 						callback: this.handleSave,
 					});
 				}
@@ -319,14 +343,14 @@
 			}
 		}
 
-		showTopToolbar(model, actionParams)
+		showTopToolbar(template, data = {})
 		{
 			if (!this.topPaddingRef || !this.topToolbarRef)
 			{
 				return Promise.resolve();
 			}
 
-			return this.topToolbarRef.show(model, actionParams);
+			return this.topToolbarRef.show(template, data);
 		}
 
 		hideToolbars()
@@ -437,25 +461,107 @@
 			const tabRef = this.tabRefMap.get(tabId);
 			if (tabRef)
 			{
-				tabRef.fetch(extraPayload);
+				tabRef.fetchIfNeeded(extraPayload);
 			}
 		}
 
-		showTab(activeTabId, animate = true)
+		showTab(selectedTabId, animate = true)
 		{
-			this.activeTab = activeTabId;
+			this.activeTab = selectedTabId;
 
-			this.preloadTab(activeTabId);
+			this.preloadTab(selectedTabId);
 			this.dismissKeyboard();
 
 			if (this.sliderRef)
 			{
-				const tabPosition = this.availableTabs.findIndex((tab) => tab.id === activeTabId);
+				const tabPosition = this.availableTabs.findIndex((tab) => tab.id === selectedTabId);
 				if (tabPosition >= 0)
 				{
 					this.sliderRef.scrollToPage(tabPosition, animate);
 				}
 			}
+		}
+
+		/**
+		 * @public
+		 * @param {string} selectedTabId
+		 * @return {Promise}
+		 */
+		showAndLoadTab(selectedTabId)
+		{
+			return new Promise((resolve, reject) => {
+				const tabRef = this.tabRefMap.get(selectedTabId);
+				if (!tabRef)
+				{
+					return reject();
+				}
+
+				if (selectedTabId !== this.activeTab)
+				{
+					this.showTab(selectedTabId);
+				}
+
+				if (tabRef.isDoneStatus())
+				{
+					return resolve();
+				}
+
+				const listener = (tabId) => {
+					if (tabId === selectedTabId)
+					{
+						if (this.activeTab === selectedTabId)
+						{
+							resolve();
+						}
+						else
+						{
+							reject();
+						}
+					}
+					else
+					{
+						resolve();
+					}
+				};
+
+				this.customEventEmitter.once('DetailCard::onTabContentLoaded', listener);
+			});
+		}
+
+		isTabLoaded(tabId)
+		{
+			const tabRef = this.tabRefMap.get(tabId);
+			if (!tabRef)
+			{
+				return false;
+			}
+
+			return tabRef.isDoneStatus();
+		}
+
+		/**
+		 * @public
+		 * @param {string} tabId
+		 * @return {Promise}
+		 */
+		loadTab(tabId)
+		{
+			return new Promise((resolve, reject) => {
+				const tabRef = this.tabRefMap.get(tabId);
+				if (!tabRef)
+				{
+					return reject();
+				}
+
+				if (tabRef.isDoneStatus())
+				{
+					return resolve();
+				}
+
+				this.customEventEmitter.once('DetailCard::onTabContentLoaded', resolve);
+
+				this.preloadTab(tabId);
+			});
 		}
 
 		renderTabHeader()
@@ -468,7 +574,7 @@
 				params: {
 					styles: {
 						tabTitle: {
-							underlineColor: '#2985e2',
+							underlineColor: '#207ede',
 						},
 					},
 					items: this.availableTabs.map((tab) => this.prepareTabViewItem(tab)),
@@ -554,6 +660,11 @@
 
 		isNewEntity()
 		{
+			if (this.isCopyMode())
+			{
+				return true;
+			}
+
 			const entityId = this.getEntityId();
 
 			return !BX.type.isNumber(Number(entityId)) || Number(entityId) <= 0;
@@ -660,6 +771,7 @@
 					ref: (ref) => this.sliderRef = ref,
 					onPageWillChange: this.handleSliderPageWillChange.bind(this),
 					onPageChange: this.handleSliderPageChange.bind(this),
+					onLayout: (coords) => this.sliderViewCoords = coords,
 				},
 				...this.getEachTabContent(),
 			);
@@ -673,15 +785,42 @@
 				animation: {
 					duration: DURATION,
 				},
-				content: View(
-					{
-						style: {
-							width: '100%',
-							height: 80,
-						},
+				content: View({
+					style: {
+						width: '100%',
+						height: 80,
 					},
-				),
+				}),
 			});
+		}
+
+		renderFloatingButton()
+		{
+			if (this.isFloatingButtonEnabled)
+			{
+				return new FloatingButton({
+					ref: (ref) => this.floatingButtonRef = ref,
+					detailCard: this,
+					provider: this.floatingButtonProvider,
+				});
+			}
+
+			return null;
+		}
+
+		renderAhaMoments()
+		{
+			if (this.ahaMomentsManager)
+			{
+				const goToChat = this.ahaMomentsManager('goToChat');
+
+				return new goToChat({
+					detailCard: this,
+					ref: (ref) => this.ahaMomentRef = ref,
+				});
+			}
+
+			return null;
 		}
 
 		renderTopContent()
@@ -735,7 +874,7 @@
 		handleActionSuccess(action, data)
 		{
 			this
-				.reload(data.load)
+				.reloadWithData(data.load)
 				.then(() => {
 					NotifyManager.hideLoadingIndicator(true);
 					this.emitEntityUpdate();
@@ -794,7 +933,7 @@
 			return this.isNewEntity() || this.isChanged;
 		}
 
-		reload(tabsData)
+		reloadWithData(tabsData)
 		{
 			this.entityModel = null;
 
@@ -851,13 +990,14 @@
 					return TabFactory.create(tab.type, {
 						id: tabId,
 						uid: this.getUid(),
+						editor: this,
 						ref: (ref) => {
 							if (ref)
 							{
 								this.tabRefMap.set(tabId, ref);
 							}
 						},
-						detailCardRef: this,
+						detailCard: this,
 						endpoint: `${this.props.endpoint}.load`,
 						payload: {
 							tabId,
@@ -869,6 +1009,7 @@
 						onErrorHandler: this.ajaxErrorHandler,
 						onContentLoaded: this.handleTabContentLoaded.bind(this, tabId),
 						onScroll: (scrollParams) => this.handleTabScroll(scrollParams, tabId),
+						externalFloatingButton: this.isFloatingButtonEnabled,
 					});
 				});
 		}
@@ -911,6 +1052,19 @@
 				this.setActiveTab(selectedTab.id);
 
 				this.tabRefMap.forEach((tabRef) => tabRef.setActive(tabRef.id === selectedTab.id));
+
+				// ToDo rethink this
+				this.customEventEmitter.emit('DetailCard::onSliderPageChange', [selectedTab.id]);
+
+				if (this.floatingButtonRef)
+				{
+					this.floatingButtonRef.actualize();
+				}
+
+				if (this.ahaMomentRef)
+				{
+					this.ahaMomentRef.actualize();
+				}
 			}
 		}
 
@@ -995,7 +1149,7 @@
 
 			this.entityModel = entityModel;
 
-			if (this.getEntityIdFromParams() && !this.getEntityIdFromModel())
+			if (this.getEntityIdFromParams() && !this.getEntityIdFromModel() && !this.isCopyMode())
 			{
 				this.emitEntityUpdate();
 				this.close();
@@ -1028,6 +1182,13 @@
 			}
 		}
 
+		isCopyMode()
+		{
+			const { copy } = this.getComponentParams();
+
+			return Boolean(copy);
+		}
+
 		handleEntityModelChange(entityModel)
 		{
 			this.entityModel = entityModel;
@@ -1047,7 +1208,14 @@
 
 		handleTabScroll(scrollParams, tabId)
 		{
-			this.customEventEmitter.emit('DetailCard::onScroll', [scrollParams, tabId]);
+			let scrollViewHeight = 0;
+
+			if (this.sliderViewCoords && device)
+			{
+				scrollViewHeight = this.sliderViewCoords.height - device.screen.safeArea.bottom;
+			}
+
+			this.customEventEmitter.emit('DetailCard::onScroll', [scrollParams, tabId, scrollViewHeight]);
 		}
 
 		handleSave(additionalData = {})
@@ -1058,10 +1226,10 @@
 			}
 
 			const isNewEntity = this.isNewEntity();
+			const previousActiveTab = this.activeTab;
 
 			this.isSaving = true;
 			this.setLoading(true);
-			this.dismissKeyboard();
 
 			return (
 				this
@@ -1071,8 +1239,15 @@
 					.then(() => NotifyManager.showLoadingIndicator())
 					.then(() => this.getData())
 					.then((payload) => this.runSave(payload, additionalData))
-					.then((response) => this.processSave(response))
-					.then(() => this.showTabAndScrollActions(isNewEntity))
+					.then((response) => {
+						if (isNewEntity)
+						{
+							this.activeTab = this.availableTabs[0].id;
+						}
+
+						return this.processSave(response);
+					})
+					.then(() => this.scrollTabsToTop(isNewEntity, previousActiveTab))
 					.then(() => this.emitSaveEvents(isNewEntity))
 					.then(() => NotifyManager.hideLoadingIndicator(true))
 					.catch((errors) => {
@@ -1140,10 +1315,32 @@
 				this.onTabContentLoadedHandler(tabId, response, this);
 			}
 
+			if (this.floatingButtonRef)
+			{
+				this.floatingButtonRef.actualize();
+			}
+
+			if (this.ahaMomentRef)
+			{
+				this.ahaMomentRef.actualize();
+			}
+
 			if (this.activeTab !== MAIN_TAB)
 			{
 				this.preloadTab(MAIN_TAB);
 			}
+		}
+
+		reloadTabs()
+		{
+			return Promise.all([
+				...[...this.tabRefMap.values()].map((tabRef) => {
+					if (!tabRef.isInitialStatus())
+					{
+						tabRef.fetch();
+					}
+				}),
+			]);
 		}
 
 		setLoading(isLoading)
@@ -1412,13 +1609,15 @@
 
 		runSave(payload, additionalData = {}, sendAnalytics = true)
 		{
+			const componentParamsForSave = this.getComponentParamsForSave();
+
 			payload = mergeImmutable(payload, additionalData);
 
 			return (
 				BX.ajax
 					.runAction(this.getSaveEndpoint(), {
 						json: {
-							...this.getComponentParams(),
+							...componentParamsForSave,
 							data: payload,
 							loadedTabs: this.getLoadedTabs(),
 						},
@@ -1449,12 +1648,29 @@
 			return `${this.props.endpoint}.${action}`;
 		}
 
+		/**
+		 * @internal
+		 * @returns {Object}
+		 */
+		getComponentParamsForSave()
+		{
+			const componentParams = clone(this.getComponentParams());
+
+			if (this.isCopyMode())
+			{
+				componentParams.sourceEntityId = componentParams.entityId;
+				componentParams.entityId = 0;
+			}
+
+			return componentParams;
+		}
+
 		getLoadedTabs()
 		{
 			return (
 				[...this.tabRefMap]
 					.map(([tabId, tabRef]) => {
-						if (!tabRef.inInitialStatus())
+						if (!tabRef.isInitialStatus())
 						{
 							return tabId;
 						}
@@ -1522,7 +1738,7 @@
 
 			if (entityId)
 			{
-				this.setComponentParams({ entityId, title });
+				this.setComponentParams({ entityId, title, copy: false });
 				this.entityModel.ID = entityId;
 			}
 
@@ -1536,7 +1752,7 @@
 				return Promise.resolve();
 			}
 
-			return this.reload(load);
+			return this.reloadWithData(load);
 		}
 
 		setHeaderProcessor(headerProcessor)
@@ -1560,16 +1776,16 @@
 			}
 		}
 
-		showTabAndScrollActions(isNewEntity)
+		scrollTabsToTop(isNewEntity, previousActiveTab)
 		{
-			const activeTabId = this.activeTab;
-
 			if (isNewEntity)
 			{
-				this.setActiveTab(this.availableTabs[0].id);
+				const animatedTab = previousActiveTab === this.activeTab ? this.activeTab : null;
+
+				this.setActiveTab(this.activeTab);
 
 				this.getTabs().forEach((tab) => {
-					tab.scrollTop(this.activeTab === activeTabId);
+					tab.scrollTop(tab.getId() === animatedTab);
 				});
 			}
 		}
@@ -1596,7 +1812,6 @@
 					style: {
 						backgroundColor: '#eef2f4',
 					},
-					// onPan: () => this.dismissKeyboard(),
 				},
 				this.renderTabHeader(),
 				this.renderTopPadding(),
@@ -1604,7 +1819,9 @@
 				this.renderBottomPadding(),
 				this.renderActionsPanel(),
 				...this.getAdditionalElements(),
+				this.renderFloatingButton(),
 				this.renderTopContent(),
+				this.renderAhaMoments(),
 			);
 		}
 
@@ -1865,6 +2082,11 @@
 			;
 		}
 
+		emitReloadEntityDocumentList()
+		{
+			this.customEventEmitter.emit('EntityDocuments::reload');
+		}
+
 		close()
 		{
 			this.isClosing = true;
@@ -1898,12 +2120,44 @@
 			return this;
 		}
 
+		/**
+		 * @param {Boolean} status
+		 * @return {DetailCardComponent}
+		 */
+		enableFloatingButton(status)
+		{
+			this.isFloatingButtonEnabled = status;
+
+			return this;
+		}
+
+		/**
+		 * @param {function} provider
+		 * @return {DetailCardComponent}
+		 */
+		setFloatingButtonProvider(provider)
+		{
+			this.floatingButtonProvider = provider;
+
+			return this;
+		}
+
+		/**
+		 * @param {function} manager
+		 * @return {DetailCardComponent}
+		 */
+		setAhaMomentsManager(manager)
+		{
+			this.ahaMomentsManager = manager;
+
+			return this;
+		}
+
 		static create(result)
 		{
 			return new DetailCardComponent(result);
 		}
 	}
 
-	this.UI = this.UI || {};
-	this.UI.DetailCardComponent = DetailCardComponent;
-})();
+	module.exports = { DetailCardComponent };
+});

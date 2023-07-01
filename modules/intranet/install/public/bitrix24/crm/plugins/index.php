@@ -16,7 +16,7 @@ require($_SERVER['DOCUMENT_ROOT'].'/bitrix/header.php');
 	'bitrix:crm.config.external_plugins',
 	'',
 	Array(
-		'CMS_ID' => $_REQUEST['cms'],
+		'CMS_ID' => $_REQUEST['cms'] ?? '',
 	)
 );?>
 

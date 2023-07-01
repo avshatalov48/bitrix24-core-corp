@@ -272,10 +272,10 @@ class Folder extends BaseObject
 
 		if($generateUniqueName)
 		{
-			$data['NAME'] = $this->generateUniqueName($data['NAME'], $this->id);
+			$data['NAME'] = static::generateUniqueName($data['NAME'], $this->id);
 		}
 
-		if(!$this->isUniqueName($data['NAME'], $this->id))
+		if(!static::isUniqueName($data['NAME'], $this->id))
 		{
 			$this->errorCollection->add(array(new Error(Loc::getMessage('DISK_FOLDER_MODEL_ERROR_NON_UNIQUE_NAME'), self::ERROR_NON_UNIQUE_NAME)));
 			return null;
@@ -322,7 +322,7 @@ class Folder extends BaseObject
 					);
 				}
 
-				$data['NAME'] = $this->generateUniqueName($data['NAME'], $this->id);
+				$data['NAME'] = static::generateUniqueName($data['NAME'], $this->id);
 
 				return $this->processAdd(
 					$data,
@@ -482,10 +482,10 @@ class Folder extends BaseObject
 
 		if($generateUniqueName)
 		{
-			$data['NAME'] = $this->generateUniqueName($data['NAME'], $this->id);
+			$data['NAME'] = static::generateUniqueName($data['NAME'], $this->id);
 		}
 
-		if(!$this->isUniqueName($data['NAME'], $this->id))
+		if(!static::isUniqueName($data['NAME'], $this->id))
 		{
 			$this->errorCollection->add(array(new Error(Loc::getMessage('DISK_FOLDER_MODEL_ERROR_NON_UNIQUE_NAME'), self::ERROR_NON_UNIQUE_NAME)));
 			return null;
@@ -549,7 +549,7 @@ class Folder extends BaseObject
 
 		if($generateUniqueName)
 		{
-			$data['NAME'] = $this->generateUniqueName($data['NAME'], $this->id);
+			$data['NAME'] = static::generateUniqueName($data['NAME'], $this->id);
 		}
 
 		if (isset($data['DELETED_TYPE']) && $data['DELETED_TYPE'] == ObjectTable::DELETED_TYPE_ROOT)
@@ -557,7 +557,7 @@ class Folder extends BaseObject
 			$data['NAME'] = Ui\Text::appendTrashCanSuffix($data['NAME']);
 		}
 
-		if(!$this->isUniqueName($data['NAME'], $this->id))
+		if(!static::isUniqueName($data['NAME'], $this->id))
 		{
 			$this->errorCollection->add(array(new Error(Loc::getMessage('DISK_FOLDER_MODEL_ERROR_NON_UNIQUE_NAME'), self::ERROR_NON_UNIQUE_NAME)));
 			return null;

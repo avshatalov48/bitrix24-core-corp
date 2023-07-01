@@ -3,9 +3,13 @@
 namespace Bitrix\Crm\Badge;
 
 use Bitrix\Crm\Badge\Model\BadgeTable;
+use Bitrix\Crm\Badge\Type\CalendarSharingStatus;
 use Bitrix\Crm\Badge\Type\CallStatus;
 use Bitrix\Crm\Badge\Type\OpenLineStatus;
 use Bitrix\Crm\Badge\Type\PaymentStatus;
+use Bitrix\Crm\Badge\Type\RestAppStatus;
+use Bitrix\Crm\Badge\Type\SmsStatus;
+use Bitrix\Crm\Badge\Type\TaskStatus;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Result;
@@ -17,6 +21,10 @@ abstract class Badge
 	public const CALL_STATUS_TYPE = 'call_status';
 	public const PAYMENT_STATUS_TYPE = 'payment_status';
 	public const OPENLINE_STATUS_TYPE = 'open_line_status';
+	public const REST_APP_TYPE = 'rest_app_status';
+	public const SMS_STATUS_TYPE = 'sms_status';
+	public const CALENDAR_SHARING_STATUS_TYPE = 'calendar_sharing_status';
+	public const TASK_STATUS_TYPE = 'task_status';
 
 	public static function createByType(string $type, string $value): Badge
 	{
@@ -38,6 +46,26 @@ abstract class Badge
 		if ($type === self::OPENLINE_STATUS_TYPE)
 		{
 			return new OpenLineStatus($value);
+		}
+
+		if ($type === self::REST_APP_TYPE)
+		{
+			return new RestAppStatus($value);
+		}
+
+		if ($type === self::SMS_STATUS_TYPE)
+		{
+			return new SmsStatus($value);
+		}
+
+		if ($type === self::CALENDAR_SHARING_STATUS_TYPE)
+		{
+			return new CalendarSharingStatus($value);
+		}
+
+		if ($type === self::TASK_STATUS_TYPE)
+		{
+			return new TaskStatus($value);
 		}
 
 		throw new ArgumentException('Unknown badge type: ' . $type);
@@ -125,14 +153,25 @@ abstract class Badge
 		return BadgeTable::add($data);
 	}
 
+	public function upsert(ItemIdentifier $itemIdentifier, SourceIdentifier $sourceItemIdentifier): void
+	{
+		$this->unbind($itemIdentifier, $sourceItemIdentifier);
+		$this->bind($itemIdentifier, $sourceItemIdentifier);
+	}
+
 	public function unbind(ItemIdentifier $itemIdentifier, SourceIdentifier $sourceItemIdentifier): void
 	{
 		BadgeTable::deleteByAllIdentifier($itemIdentifier, $sourceItemIdentifier, $this->getType(), $this->getValue());
 	}
 
-	public static function deleteByEntity(ItemIdentifier $itemIdentifier): void
+	public function unbindWithAnyValue(ItemIdentifier $itemIdentifier, SourceIdentifier $sourceItemIdentifier): void
 	{
-		BadgeTable::deleteByEntity($itemIdentifier);
+		BadgeTable::deleteByIdentifiersAndType($itemIdentifier, $sourceItemIdentifier, $this->getType());
+	}
+
+	public static function deleteByEntity(ItemIdentifier $itemIdentifier, string $type = null, string $value = null): void
+	{
+		BadgeTable::deleteByEntity($itemIdentifier, $type, $value);
 	}
 
 	public static function deleteBySource(SourceIdentifier $sourceItemIdentifier): void

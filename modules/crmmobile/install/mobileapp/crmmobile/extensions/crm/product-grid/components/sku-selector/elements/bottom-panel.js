@@ -2,7 +2,6 @@
  * @module crm/product-grid/components/sku-selector/elements/bottom-panel
  */
 jn.define('crm/product-grid/components/sku-selector/elements/bottom-panel', (require, exports, module) => {
-
 	function BottomPanel(props)
 	{
 		return new UI.BottomToolbar({
@@ -17,7 +16,7 @@ jn.define('crm/product-grid/components/sku-selector/elements/bottom-panel', (req
 					style: {
 						flexDirection: 'column',
 						flexGrow: 1,
-					}
+					},
 				},
 				View(
 					{
@@ -25,7 +24,7 @@ jn.define('crm/product-grid/components/sku-selector/elements/bottom-panel', (req
 							flexDirection: 'row',
 							justifyContent: 'space-between',
 							marginBottom: 40,
-						}
+						},
 					},
 					props.price,
 					props.quantity,
@@ -35,19 +34,18 @@ jn.define('crm/product-grid/components/sku-selector/elements/bottom-panel', (req
 						style: {
 							paddingLeft: 40,
 							paddingRight: 40,
-						}
+						},
 					},
 					new PrimaryButton({
 						text: props.saveButtonCaption,
 						rounded: true,
 						style: {},
 						onClick: () => props.onSave(),
-					})
+					}),
 				),
 			),
 		});
 	}
 
 	module.exports = { BottomPanel };
-
 });

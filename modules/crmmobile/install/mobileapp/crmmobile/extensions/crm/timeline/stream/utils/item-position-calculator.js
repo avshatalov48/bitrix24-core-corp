@@ -2,7 +2,6 @@
  * @module crm/timeline/stream/utils/item-position-calculator
  */
 jn.define('crm/timeline/stream/utils/item-position-calculator', (require, exports, module) => {
-
 	class ItemPositionCalculator
 	{
 		constructor(streams)
@@ -24,7 +23,7 @@ jn.define('crm/timeline/stream/utils/item-position-calculator', (require, export
 			{
 				const stream = this.streams[i];
 				const exported = stream.exportToListView();
-				const index = exported.findIndex(item => item.key === key);
+				const index = exported.findIndex((item) => item.key === key);
 				if (index > -1)
 				{
 					return index + offset;
@@ -33,9 +32,7 @@ jn.define('crm/timeline/stream/utils/item-position-calculator', (require, export
 			}
 			return -1;
 		}
-
 	}
 
 	module.exports = { ItemPositionCalculator };
-
 });

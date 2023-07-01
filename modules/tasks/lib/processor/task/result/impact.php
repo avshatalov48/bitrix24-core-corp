@@ -71,7 +71,7 @@ abstract class Impact implements \ArrayAccess
 
 	public function getId()
 	{
-		return intval($this->data['ID']);
+		return (int)($this->data['ID'] ?? null);
 	}
 
 	public function getFieldValueTitle()
@@ -185,22 +185,23 @@ abstract class Impact implements \ArrayAccess
 		);
 	}
 
-	public function offsetExists($offset)
+	public function offsetExists($offset): bool
 	{
-		return array_intersect_key($offset, $this->data);
+		return (is_array($offset) && array_intersect_key($offset, $this->data));
 	}
 
+	#[\ReturnTypeWillChange]
 	public function offsetGet($offset)
 	{
-		return $this->data[$offset];
+		return ($this->data[$offset] ?? null);
 	}
 
-	public function offsetSet($offset, $value)
+	public function offsetSet($offset, $value): void
 	{
 		throw new NotImplementedException();
 	}
 
-	public function offsetUnset($offset)
+	public function offsetUnset($offset): void
 	{
 		throw new NotImplementedException();
 	}

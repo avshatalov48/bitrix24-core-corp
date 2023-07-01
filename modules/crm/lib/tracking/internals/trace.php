@@ -16,9 +16,9 @@ use Bitrix\Crm\Tracking\Channel;
  *
  * <<< ORMENTITYANNOTATION
  * @method static EO_Trace_Query query()
- * @method static EO_Trace_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Trace_Result getByPrimary($primary, array $parameters = [])
  * @method static EO_Trace_Result getById($id)
- * @method static EO_Trace_Result getList(array $parameters = array())
+ * @method static EO_Trace_Result getList(array $parameters = [])
  * @method static EO_Trace_Entity getEntity()
  * @method static \Bitrix\Crm\Tracking\Internals\EO_Trace createObject($setDefaultValues = true)
  * @method static \Bitrix\Crm\Tracking\Internals\EO_Trace_Collection createCollection()

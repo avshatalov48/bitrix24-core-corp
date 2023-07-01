@@ -168,6 +168,11 @@ class CCrmConfigCatalogSettings extends \CBitrixComponent implements Controllera
 		return [];
 	}
 
+	protected function getInventoryManagementFeatureCode(): ?string
+	{
+		return Feature::getInventoryManagementHelpLink()['FEATURE_CODE'] ?? null;
+	}
+
 	/**
 	 * @return array
 	 */
@@ -176,7 +181,7 @@ class CCrmConfigCatalogSettings extends \CBitrixComponent implements Controllera
 		$accessController = AccessController::getCurrent();
 
 		return [
-			'isStoreControlUsed' => UseStore::isUsed(),
+			'isStoreControlUsed' => \Bitrix\Catalog\Config\State::isEnabledInventoryManagement(),
 			'isBitrix24' => static::isBitrix24(),
 			'productsCnt' => $this->getProductsCnt(),
 			'reservationEntities' => $this->getReservationEntities(),

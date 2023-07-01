@@ -443,34 +443,67 @@ class SalesCenterCashboxPanel extends CBitrixComponent implements Controllerable
 				continue;
 			}
 
-			if ($cashbox['HANDLER'] === '\\' . Sale\Cashbox\CashboxRobokassa::class)
+			/**
+			 * @var $handler Sale\Cashbox\CashboxPaySystem
+			 */
+			$handler = $cashbox['HANDLER'];
+
+			if ($handler === '\\' . Sale\Cashbox\CashboxRobokassa::class)
 			{
-				$paySystemCashbox = $cashbox;
-				break;
+				$code = $handler::getCode();
+
+				if (in_array($code, $paySystemCashbox, true))
+				{
+					continue;
+				}
+
+				$paySystemCashbox[] = $code;
+				$result[] = [
+					'id' => $code,
+					'title' => Sale\Cashbox\CashboxRobokassa::getName(),
+					'image' => $this->getImagePath() . $code . '.svg',
+					'itemSelectedColor' => '#FF5722',
+					'itemSelectedImage' => $this->getImagePath() . $code . '_s.svg',
+					'itemSelected' => true,
+					'data' => [
+						'paySystem' => true,
+						'type' => 'cashbox',
+						'handler' => $handler,
+						'connectPath' => $this->getCashboxEditUrl([
+							'handler' => $handler,
+						]),
+						'showMenu' => false,
+					]
+				];
 			}
-		}
 
-		if ($paySystemCashbox)
-		{
-			$code = $paySystemCashbox['HANDLER']::getCode();
+			if ($handler === '\\' . Sale\Cashbox\CashboxYooKassa::class)
+			{
+				$code = $handler::getCode();
+				if (in_array($code, $paySystemCashbox, true))
+				{
+					continue;
+				}
 
-			$result[] = [
-				'id' => $code,
-				'title' => Sale\Cashbox\CashboxRobokassa::getName(),
-				'image' => $this->getImagePath().$code.'.svg',
-				'itemSelectedColor' => '#FF5722',
-				'itemSelectedImage' => $this->getImagePath().$code.'_s.svg',
-				'itemSelected' => true,
-				'data' => [
-					'paySystem' => true,
-					'type' => 'cashbox',
-					'handler' => $paySystemCashbox['HANDLER'],
-					'connectPath' => $this->getCashboxEditUrl([
-						'handler' => $paySystemCashbox['HANDLER'],
-					]),
-					'showMenu' => false,
-				]
-			];
+				$paySystemCashbox[] = $code;
+				$result[] = [
+					'id' => $code,
+					'title' => Sale\Cashbox\CashboxYookassa::getName(),
+					'image' => $this->getImagePath() . $code . '.svg',
+					'itemSelectedColor' => '#0697F2',
+					'itemSelectedImage' => $this->getImagePath() . $code . '_s.svg',
+					'itemSelected' => true,
+					'data' => [
+						'paySystem' => true,
+						'type' => 'cashbox',
+						'handler' => $handler,
+						'connectPath' => $this->getCashboxEditUrl([
+							'handler' => $handler,
+						]),
+						'showMenu' => false,
+					]
+				];
+			}
 		}
 
 		return $result;

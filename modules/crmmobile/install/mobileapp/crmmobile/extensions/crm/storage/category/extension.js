@@ -2,7 +2,6 @@
  * @module crm/storage/category
  */
 jn.define('crm/storage/category', (require, exports, module) => {
-
 	const { merge, mergeImmutable } = require('utils/object');
 	const { Type } = require('crm/type');
 	const { CategoryAjax } = require('crm/ajax');
@@ -86,10 +85,10 @@ jn.define('crm/storage/category', (require, exports, module) => {
 				throw new Error(`Wrong entity type id {${entityTypeId}}.`);
 			}
 
-			categoryId = parseInt(categoryId);
+			categoryId = parseInt(categoryId, 10);
 			if (!Number.isInteger(categoryId))
 			{
-				throw new Error(`Wrong category id {${categoryId}}.`);
+				throw new TypeError(`Wrong category id {${categoryId}}.`);
 			}
 
 			const pathToCategory = this.getPathToCategory(entityTypeId, categoryId);
@@ -134,7 +133,7 @@ jn.define('crm/storage/category', (require, exports, module) => {
 				this.getAjax()
 					.create(entityTypeId, fields)
 					.then((response) => {
-						if (response.errors && response.errors.length)
+						if (response.errors && response.errors.length > 0)
 						{
 							reject(response);
 							return;
@@ -166,7 +165,7 @@ jn.define('crm/storage/category', (require, exports, module) => {
 					.getAjax()
 					.update(entityTypeId, categoryId, fields)
 					.then((response) => {
-						if (response.errors && response.errors.length)
+						if (response.errors && response.errors.length > 0)
 						{
 							reject(response);
 							return;
@@ -224,7 +223,7 @@ jn.define('crm/storage/category', (require, exports, module) => {
 					.getAjax()
 					.delete(entityTypeId, categoryId)
 					.then((response) => {
-						if (response.errors && response.errors.length)
+						if (response.errors && response.errors.length > 0)
 						{
 							reject(response);
 							return;
@@ -300,17 +299,15 @@ jn.define('crm/storage/category', (require, exports, module) => {
 
 				return categoryTtl > categoryListTtl ? categoryData : categoryListData;
 			}
-			else if (categoryData)
+
+			if (categoryData)
 			{
 				return categoryData;
 			}
-			else
-			{
-				return categoryListData;
-			}
+
+			return categoryListData;
 		}
 	}
 
 	module.exports = { CategoryStorage: new CategoryStorage() };
-
 });

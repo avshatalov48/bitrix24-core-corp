@@ -33,6 +33,15 @@ class CIntranetUstatOnlineComponent extends UstatOnline
 				$this->arResult['MAX_USER_TO_SHOW'] = $this->arParams['MAX_USER_TO_SHOW'];
 			}
 		}
+
+		if (isset($this->arParams['CREATE_FRAME']))
+		{
+			$this->arParams['CREATE_FRAME'] = $this->arParams['CREATE_FRAME'] == 'N' ? 'N' : 'Y';
+		}
+		else
+		{
+			$this->arParams['CREATE_FRAME'] = 'Y';
+		}
 	}
 
 	public function executeComponent(): void

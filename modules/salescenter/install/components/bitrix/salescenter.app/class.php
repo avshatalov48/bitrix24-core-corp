@@ -4,14 +4,13 @@ use Bitrix\Catalog\Access\AccessController;
 use Bitrix\Catalog\Access\ActionDictionary;
 use Bitrix\Catalog\v2\Integration\Seo\Facebook\FacebookFacade;
 use Bitrix\Catalog\v2\IoC\ServiceContainer;
-use Bitrix\Crm\Activity\Provider\Sms;
 use Bitrix\Main\ObjectNotFoundException;
-use Bitrix\MessageService;
 use Bitrix\Main;
 use Bitrix\Crm;
 use Bitrix\Main\Application;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Currency\CurrencyManager;
+use Bitrix\SalesCenter\Component\ReceivePaymentHelper;
 use Bitrix\SalesCenter\Driver;
 use Bitrix\SalesCenter\Integration\CatalogManager;
 use Bitrix\SalesCenter\Integration\ImOpenLinesManager;
@@ -509,11 +508,19 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 
 		if (!$this->arResult['sendingMethod'] && $this->arResult['context'] === SalesCenter\Component\ContextDictionary::SMS)
 		{
-			$this->arResult['sendingMethodDesc'] = $this->getSendingMethodDescByType('sms');
+			$this->arResult['sendingMethodDesc'] = ReceivePaymentHelper::getSendingMethodDescByType(
+				'sms',
+				$this->arParams['templateMode'],
+				$this->payment
+			);
 		}
 		else
 		{
-			$this->arResult['sendingMethodDesc'] = $this->getSendingMethodDescByType($this->arResult['sendingMethod']);
+			$this->arResult['sendingMethodDesc'] = ReceivePaymentHelper::getSendingMethodDescByType(
+				$this->arResult['sendingMethod'],
+				$this->arParams['templateMode'],
+				$this->payment
+			);
 		}
 
 		$this->arResult['isAutomationAvailable'] = Crm\Automation\Factory::isAutomationAvailable($ownerTypeId);
@@ -696,34 +703,33 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 				{
 					/** @var \Bitrix\Main\Type\DateTime $dateBill */
 					$dateBill = $this->payment->getField('DATE_BILL');
-
-					return sprintf(
-						'%s %s (%s %s)',
-						Loc::getMessage('SALESCENTER_PAYMENT_CREATED_AT'),
-						ConvertTimeStamp($dateBill->getTimestamp(),'SHORT'),
-						Loc::getMessage('SALESCENTER_AMOUNT_TO_PAY'),
-						SaleFormatCurrency(
-							$this->payment->getField('SUM'),
-							$this->payment->getField('CURRENCY')
-						)
+					$paymentSum = SaleFormatCurrency(
+						$this->payment->getField('SUM'),
+						$this->payment->getField('CURRENCY')
 					);
+
+					return Loc::getMessage('SALESCENTER_PAYMENT_DETAILS_TITLE', [
+						'#ACCOUNT_NUMBER#' => $this->payment->getField('ACCOUNT_NUMBER'),
+						'#DATE#' => ConvertTimeStamp($dateBill->getTimestamp()),
+						'#SUM#' => $paymentSum,
+					]);
 				}
 				elseif ($this->arResult['mode'] === self::DELIVERY_MODE && $this->shipment)
 				{
 					/** @var \Bitrix\Main\Type\DateTime $dateInsert */
 					$dateInsert = $this->shipment->getField('DATE_INSERT');
-
-					return sprintf(
-						'%s %s (%s, %s %s)',
-						Loc::getMessage('SALESCENTER_SHIPMENT_CREATED_AT'),
-						ConvertTimeStamp($dateInsert->getTimestamp(),'SHORT'),
-						$this->shipment->getDelivery() ? $this->shipment->getDelivery()->getNameWithParent() : '',
-						Loc::getMessage('SALESCENTER_AMOUNT_TO_PAY'),
-						SaleFormatCurrency(
-							$this->shipment->getPrice(),
-							$this->shipment->getCurrency()
-						)
+					$deliveryName = $this->shipment->getDelivery() ? $this->shipment->getDelivery()->getNameWithParent() : '';
+					$deliverySum = SaleFormatCurrency(
+						$this->shipment->getPrice(),
+						$this->shipment->getCurrency()
 					);
+
+					return Loc::getMessage('SALESCENTER_SHIPMENT_DETAILS_TITLE', [
+						'#ACCOUNT_NUMBER#' => $this->shipment->getField('ACCOUNT_NUMBER'),
+						'#DATE#' => ConvertTimeStamp($dateInsert->getTimestamp()),
+						'#DELIVERY_NAME#' => $deliveryName,
+						'#SUM#' => $deliverySum,
+					]);
 				}
 				else
 				{
@@ -773,41 +779,6 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 			$result['discount'] += $product['discount'] * $product['quantity'];
 			$result['result'] += $product['price'] * $product['quantity'];
 			$result['sum'] += $product['basePrice'] * $product['quantity'];
-		}
-
-		return $result;
-	}
-
-	/**
-	 * @return array
-	 */
-	private function getSmsSenderList(): array
-	{
-		$result = [];
-		$restSender = null;
-
-		$senderList = Crm\Integration\SmsManager::getSenderInfoList(true);
-		foreach ($senderList as $sender)
-		{
-			if ($sender['canUse'])
-			{
-				if ($sender['id'] === 'rest')
-				{
-					$restSender = $sender;
-
-					continue;
-				}
-
-				$result[] = $sender;
-			}
-		}
-
-		if ($restSender !== null)
-		{
-			foreach ($restSender['fromList'] as $sender)
-			{
-				$result[] = $sender;
-			}
 		}
 
 		return $result;
@@ -1268,6 +1239,12 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 				->setMeasureCode((int)$product['MEASURE_CODE'])
 				->setMeasureName($product['MEASURE_NAME'])
 			;
+
+			if (Main\Loader::includeModule('sale'))
+			{
+				$type = Sale\Internals\Catalog\ProductTypeMapper::getCatalogType($product['TYPE']);
+				$item->setType($type);
+			}
 
 			$this->fillVat($item, $product);
 
@@ -2205,11 +2182,12 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 				{
 					$culture = \Bitrix\Main\Application::getInstance()->getContext()->getCulture();
 					$result[] = [
-						'type'=>'check',
-						'url'=>$item['CHECK_URL'],
-						'content'=>Loc::getMessage('SALESCENTER_TIMELINE_CHECK_CONTENT',[
-							'#ID#'=>$item['ASSOCIATED_ENTITY_ID'],
-							'#DATE_CREATED#'=>$this->prepareTimeLineItemsDateTime($item['CREATED'], $culture->getLongDateFormat())]),
+						'type' => 'check',
+						'url' => $item['CHECK_URL'] ?? '',
+						'content' => Loc::getMessage('SALESCENTER_TIMELINE_CHECK_CONTENT', [
+							'#ID#' => $item['ASSOCIATED_ENTITY_ID'],
+							'#DATE_CREATED#' => $this->prepareTimeLineItemsDateTime($item['CREATED'], $culture->getLongDateFormat())
+						]),
 					];
 				}
 			}
@@ -2296,78 +2274,6 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 	}
 
 	/**
-	 * @return string[]
-	 */
-	private function getAvailableSmsProviderIds(): array
-	{
-		$result = [];
-		$list = $this->getSmsSenderList();
-		foreach ($list as $provider)
-		{
-			if (isset($provider['id']) && $provider['id'] !== '')
-			{
-				$result[] = (string)$provider['id'];
-			}
-		}
-		return $result;
-	}
-
-	/**
-	 * @param $type
-	 * @return array
-	 */
-	private function getSendingMethodDescByType($type)
-	{
-		if ($type === 'sms')
-		{
-			$lastPaymentSms = null;
-			$provider = null;
-			$availableProviders = $this->getAvailableSmsProviderIds();
-			$defaultProvider = $availableProviders[0] ?? '';
-
-			if ($this->payment && $this->arParams['templateMode'] === self::TEMPLATE_VIEW_MODE)
-			{
-				$lastPaymentSmsParams = $this->getLastPaymentSmsParams();
-				if (is_array($lastPaymentSmsParams))
-				{
-					if (isset($lastPaymentSmsParams['SENDER_ID']))
-					{
-						$provider = $lastPaymentSmsParams['SENDER_ID'];
-					}
-
-					if (isset($lastPaymentSmsParams['MESSAGE_BODY']))
-					{
-						$lastPaymentSms = $lastPaymentSmsParams['MESSAGE_BODY'];
-					}
-				}
-			}
-			else
-			{
-				$userOptions = \CUserOptions::GetOption('salescenter', 'payment_sms_provider_options');
-				if (is_array($userOptions) && isset($userOptions['latest_selected_provider']))
-				{
-					$provider = $userOptions['latest_selected_provider'];
-				}
-			}
-
-			return [
-				'provider' => in_array($provider, $availableProviders) ? $provider : $defaultProvider,
-				'text' => $lastPaymentSms ?? CrmManager::getInstance()->getSmsTemplate(),
-				'sent' => $lastPaymentSms ? true : false,
-				'text_modes' => CrmManager::getInstance()->getAllSmsTemplates(),
-			];
-		}
-
-		if ($type === 'chat')
-		{
-			return [
-				'text' => ImOpenLinesManager::getInstance()->getImMessagePreview(),
-				'text_modes' => ImOpenLinesManager::getInstance()->getAllImMessagePreviews(),
-			];
-		}
-	}
-
-	/**
 	 * @return string|null
 	 */
 	private function getZone(): ?string
@@ -2430,50 +2336,6 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 		unset($vatRow, $vatList);
 		sort($productVatList, SORT_NUMERIC);
 		return $productVatList;
-	}
-
-	/**
-	 * @return ?array
-	 */
-	private function getLastPaymentSmsParams(): ?array
-	{
-		if (!$this->payment || !Main\Loader::includeModule('messageservice'))
-		{
-			return null;
-		}
-
-		$activity = \CCrmActivity::GetList(
-			['ID' => 'DESC'],
-			[
-				'BINDINGS' => [
-					[
-						'OWNER_ID' => $this->payment->getId(),
-						'OWNER_TYPE_ID' => CCrmOwnerType::OrderPayment,
-					]
-				],
-				'PROVIDER_ID' => Bitrix\Crm\Activity\Provider\Sms::getId(),
-				'PROVIDER_TYPE_ID' => Sms::PROVIDER_TYPE_SALESCENTER_PAYMENT_SENT,
-			]
-		)->fetch();
-
-		if (!$activity)
-		{
-			return null;
-		}
-
-		$message = MessageService\Message::getFieldsById((int)$activity['ASSOCIATED_ENTITY_ID']);
-
-		return is_array($message) ? $message : null;
-	}
-
-	/**
-	 * @return string|null
-	 */
-	private function getLastPaymentSms(): ?string
-	{
-		$message = $this->getLastPaymentSmsParams();
-
-		return $message ? $message['MESSAGE_BODY'] : null;
 	}
 
 	/**
@@ -2545,23 +2407,7 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 	 */
 	private function fillSendersData(array &$result): void
 	{
-		$senders = Crm\MessageSender\SenderRepository::getPrioritizedList();
-		foreach ($senders as $sender)
-		{
-			$senderData = [
-				'code' => $sender::getSenderCode(),
-				'isAvailable' => $sender::isAvailable(),
-				'isConnected' => $sender::isConnected(),
-				'connectUrl' => $sender::getConnectUrl(),
-				'usageErrors' =>  $sender::getUsageErrors()
-			];
-			if ($sender::getSenderCode() === Crm\Integration\SmsManager::getSenderCode())
-			{
-				$senderData['smsSenders'] = $this->getSmsSenderList();
-			}
-
-			$result['senders'][] = $senderData;
-		}
+		$result['senders'] = \Bitrix\SalesCenter\Component\ReceivePaymentHelper::getSendersData();
 
 		/** @var Crm\MessageSender\ICanSendMessage|null $currentSender */
 		$currentSender = Crm\MessageSender\SenderPicker::getCurrentSender();

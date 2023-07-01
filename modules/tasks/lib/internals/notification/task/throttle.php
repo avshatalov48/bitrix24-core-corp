@@ -97,7 +97,7 @@ class ThrottleTable extends Main\Entity\DataManager
 		}
 
 		$item = static::getByTaskId($taskId);
-		if($item['ID'])
+		if ($item['ID'] ?? null)
 		{
 			$last = unserialize($item['STATE_LAST'], ['allowed_classes' => false]);
 			if(is_array($last) && is_array($stateLast))

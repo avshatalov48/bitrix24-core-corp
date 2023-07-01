@@ -23,7 +23,7 @@ $tokenValue = $arResult['edit']
 			(<?=Loc::getMessage('DELIVERY_SERVICE_ACCOUNT_BALANCE_NOTICE', ['#SERVICE_NAME#' => $handler->getName()])?>)
 		</label>
 		<div class="ui-ctl ui-ctl-textbox ui-ctl-w75" style="margin-bottom: 17px;">
-			<input value="<?=htmlspecialcharsbx($tokenValue)?>" placeholder="AgAAAADwyXIkAAAPeCbgc3eEsklvvwh8uKMUBKk" required type="text" name="OAUTH_TOKEN" class="ui-ctl-element" />
+			<input value="<?=htmlspecialcharsbx($tokenValue)?>" placeholder="y2_AgAAAAD0Wcn4AAAPeAAAAAACJXtV-u9qs8IzQzWzJ0Cdt9pv-Wh1YS8" required type="text" name="OAUTH_TOKEN" class="ui-ctl-element" />
 		</div>
 		<a href="https://helpdesk.bitrix24.ru/open/11604358" class="ui-link ui-link-dashed">
 			<?=Loc::getMessage('DELIVERY_SERVICE_YANDEX_TAXI_WHERE_TO_FIND_TOKEN')?>

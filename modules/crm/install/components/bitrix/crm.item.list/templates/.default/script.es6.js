@@ -1,7 +1,7 @@
-import { ajax as Ajax, Event, Loc, Reflection, Runtime, Text, Type, Uri } from "main.core";
+import { ajax as Ajax, Event, Loc, Reflection, Runtime, Text, Type, Uri } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
-import { MessageBox, MessageBoxButtons } from "ui.dialogs.messagebox";
-import { Router } from "crm.router";
+import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
+import { Router } from 'crm.router';
 import 'ui.notification';
 
 const namespace = Reflection.namespace('BX.Crm');
@@ -18,6 +18,9 @@ class ItemListComponent
 	exportPopups: Object;
 	#isUniversalActivityScenarioEnabled: boolean = false;
 	#isIframe: boolean = false;
+	#smartActivityNotificationSupported: boolean = false;
+	// is the list is embedded in another entity detail tab
+	#isEmbedded: boolean = false;
 
 	constructor(params): void
 	{
@@ -27,6 +30,7 @@ class ItemListComponent
 			this.entityTypeId = Text.toInteger(params.entityTypeId);
 			this.entityTypeName = params.entityTypeName;
 			this.categoryId = Text.toInteger(params.categoryId);
+			this.#smartActivityNotificationSupported = Text.toBoolean(params.smartActivityNotificationSupported);
 
 			if (Type.isString(params.gridId))
 			{
@@ -67,6 +71,10 @@ class ItemListComponent
 			if (Type.isBoolean(params.isIframe))
 			{
 				this.#isIframe = params.isIframe;
+			}
+			if (Type.isBoolean(params.isEmbedded))
+			{
+				this.#isEmbedded = params.isEmbedded;
 			}
 		}
 
@@ -180,7 +188,7 @@ class ItemListComponent
 
 	#initPushCrmSettings(): void
 	{
-		if (!this.#isUniversalActivityScenarioEnabled || this.#isIframe)
+		if (!this.#isUniversalActivityScenarioEnabled || this.#isIframe || this.#isEmbedded)
 		{
 			return;
 		}
@@ -195,6 +203,7 @@ class ItemListComponent
 		Runtime.loadExtension('crm.push-crm-settings').then(({PushCrmSettings}) => {
 			/** @see BX.Crm.PushCrmSettings */
 			new PushCrmSettings({
+				smartActivityNotificationSupported: this.#smartActivityNotificationSupported,
 				entityTypeId: this.entityTypeId,
 				rootMenu: toolbar.getSettingsButton()?.getMenuWindow(),
 				grid: this.grid,

@@ -212,11 +212,11 @@ if ($_REQUEST['MODE'] == 'SEARCH')
 				)
 				{
 					$item = &$contactIndex[$arRes['ELEMENT_ID']];
-					if (!is_array($item['advancedInfo']))
+					if (!is_array($item['advancedInfo'] ?? null))
 					{
 						$item['advancedInfo'] = [];
 					}
-					if (!is_array($item['advancedInfo']['multiFields']))
+					if (!is_array($item['advancedInfo']['multiFields'] ?? null))
 					{
 						$item['advancedInfo']['multiFields'] = [];
 					}

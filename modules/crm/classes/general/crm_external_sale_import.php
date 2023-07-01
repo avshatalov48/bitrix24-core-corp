@@ -2294,14 +2294,21 @@ class CCrmExternalSaleImport
 					case 'ItemPrice':
 						if (!isset($arResultTmp["PRICE"]))
 						{
-							$priceTotal = str_replace($arSettings["SumFormat"]["CRD"], ".", $arItem["Amount"][0]["#"]);
-							$priceUnit = str_replace($arSettings["SumFormat"]["CRD"], ".", $arItem["ItemPrice"][0]["#"]);
-							$quantity = str_replace($arSettings["QuantityFormat"]["CRD"], ".", $arItem["Quantity"][0]["#"]);
-							$price = $priceTotal / $quantity;
+							$priceTotal = (float)str_replace($arSettings["SumFormat"]["CRD"], ".", $arItem["Amount"][0]["#"]);
+							$priceUnit = (float)str_replace($arSettings["SumFormat"]["CRD"], ".", $arItem["ItemPrice"][0]["#"]);
+							$quantity = (float)str_replace($arSettings["QuantityFormat"]["CRD"], ".", $arItem["Quantity"][0]["#"]);
+
+							$price = $priceTotal;
+							if ($quantity > 0)
+							{
+								$price /= $quantity;
+							}
 
 							$discountPrice = 0;
 							if ($priceUnit != $price)
+							{
 								$discountPrice = $priceUnit - $price;
+							}
 
 							$arResultTmp["PRICE"] = $price;
 							$arResultTmp["DISCOUNT_PRICE"] = $discountPrice;

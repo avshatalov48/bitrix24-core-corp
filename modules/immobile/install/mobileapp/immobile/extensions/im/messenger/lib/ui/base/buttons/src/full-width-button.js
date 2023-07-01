@@ -12,6 +12,7 @@ jn.define('im/messenger/lib/ui/base/buttons/full-width-button', (require, export
 		 * @param {string} props.text
 		 * @param {Function} props.callback
 		 * @param {string} [props.icon]
+		 * @param {string} [props.testId]
 		 */
 		constructor(props)
 		{
@@ -22,8 +23,10 @@ jn.define('im/messenger/lib/ui/base/buttons/full-width-button', (require, export
 
 		render()
 		{
+			console.log(this.props.testId);
 			return View(
 				{
+					testId: this.props.testId,
 					clickable: true,
 					onClick : () => this.content.onClick(),
 					onTouchesBegan: params => this.content.onTouchesBegan(params),

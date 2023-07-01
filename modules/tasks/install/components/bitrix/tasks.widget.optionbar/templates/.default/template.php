@@ -76,12 +76,12 @@ $arParams =& $helper->getComponent()->arParams; // make $arParams the same varia
 					<?if($option['LINK']):?>
                         <a href="<?=htmlspecialcharsbx($option['LINK']['URL'])?>" target="_blank"><?=htmlspecialcharsbx($option['LINK']['TEXT'])?></a>
 					<?endif?>
-					<?if($option['LINKS']):?>
+					<?if ($option['LINKS'] ?? null):?>
                         <?foreach($option['LINKS'] as $link):?>
                             <a href="<?=htmlspecialcharsbx($link['URL'])?>" target="_blank"><?=htmlspecialcharsbx($link['TEXT'])?></a>
                         <?endforeach?>
 					<?endif?>
-					<?if($option['FIELDS']):?>
+					<?if ($option['FIELDS'] ?? null):?>
                     <div id="js-id-wg-optbar-fields" class="js-id-wg-optbar-fields">
                         <?foreach($option['FIELDS'] as $field):
                             if(!isset($field['ID']))

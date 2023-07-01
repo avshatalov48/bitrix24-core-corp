@@ -1,5 +1,10 @@
 <?php
-if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
+use Bitrix\Tasks\Integration\Bitrix24;
 
 if ($arParams['MENU_MODE'])
 {
@@ -55,4 +60,5 @@ if(SITE_TEMPLATE_ID === "bitrix24")
 
 $arResult['HELPER']->initializeExtension([
 	'isScrumLimitExceeded' => \Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\ScrumLimit::isLimitExceeded(),
+	'isTaskAccessPermissionsLimit' => !(Bitrix24::checkFeatureEnabled(Bitrix24\FeatureDictionary::TASKS_PERMISSIONS)),
 ]);

@@ -10,6 +10,22 @@ use Bitrix\Main\ORM\Data\DataManager;
 use Bitrix\Main\ORM\Fields\IntegerField;
 use Bitrix\Main\ORM\Fields\StringField;
 
+/**
+ * Class DuplicateIndexTypeSettingsTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_DuplicateIndexTypeSettings_Query query()
+ * @method static EO_DuplicateIndexTypeSettings_Result getByPrimary($primary, array $parameters = [])
+ * @method static EO_DuplicateIndexTypeSettings_Result getById($id)
+ * @method static EO_DuplicateIndexTypeSettings_Result getList(array $parameters = [])
+ * @method static EO_DuplicateIndexTypeSettings_Entity getEntity()
+ * @method static \Bitrix\Crm\Integrity\EO_DuplicateIndexTypeSettings createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Integrity\EO_DuplicateIndexTypeSettings_Collection createCollection()
+ * @method static \Bitrix\Crm\Integrity\EO_DuplicateIndexTypeSettings wakeUpObject($row)
+ * @method static \Bitrix\Crm\Integrity\EO_DuplicateIndexTypeSettings_Collection wakeUpCollection($rows)
+ */
 class DuplicateIndexTypeSettingsTable extends DataManager
 {
 	public static function getTableName(): string

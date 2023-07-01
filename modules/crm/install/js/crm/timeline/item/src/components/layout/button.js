@@ -33,23 +33,6 @@ export const Button  = BitrixVue.cloneComponent(BaseButton, {
 	},
 
 	computed: {
-		buttonOptions(): ButtonOptions {
-			const upperCaseIconName = Type.isString(this.iconName) ? this.iconName.toUpperCase() : '';
-			const upperCaseButtonSize = Type.isString(this.size) ? this.size.toUpperCase() : 'extra_small';
-			const color = this.itemTypeToButtonColorDict[this.type] || UIButton.Color.LIGHT_BORDER;
-			const text = this.type === ButtonType.ICON ? '' : this.title;
-			return {
-				id: this.id,
-				round: true,
-				dependOnTheme: false,
-				size: UIButton.Size[upperCaseButtonSize],
-				text: text,
-				color: color,
-				state: this.itemStateToButtonStateDict[this.currentState],
-				icon: UIButton.Icon[upperCaseIconName],
-			}
-		},
-
 		itemTypeToButtonColorDict(): Object {
 			return {
 				[ButtonType.PRIMARY]: UIButton.Color.PRIMARY,
@@ -65,6 +48,24 @@ export const Button  = BitrixVue.cloneComponent(BaseButton, {
 	},
 
 	methods: {
+		getButtonOptions(): ButtonOptions {
+			const upperCaseIconName = Type.isString(this.iconName) ? this.iconName.toUpperCase() : '';
+			const upperCaseButtonSize = Type.isString(this.size) ? this.size.toUpperCase() : 'extra_small';
+			const color = this.itemTypeToButtonColorDict[this.type] || UIButton.Color.LIGHT_BORDER;
+			const text = this.type === ButtonType.ICON ? '' : this.title;
+
+			return {
+				id: this.id,
+				round: true,
+				dependOnTheme: false,
+				size: UIButton.Size[upperCaseButtonSize],
+				text: text,
+				color: color,
+				state: this.itemStateToButtonStateDict[this.currentState],
+				icon: UIButton.Icon[upperCaseIconName],
+			}
+		},
+
 		getUiButton(): ?UIButton
 		{
 			return this.uiButton;
@@ -117,7 +118,7 @@ export const Button  = BitrixVue.cloneComponent(BaseButton, {
 				return;
 			}
 			this.buttonContainerRef.innerHTML = '';
-			const button = new UIButton(this.buttonOptions);
+			const button = new UIButton(this.getButtonOptions());
 			button.renderTo(this.buttonContainerRef);
 			this.uiButton = button;
 		},

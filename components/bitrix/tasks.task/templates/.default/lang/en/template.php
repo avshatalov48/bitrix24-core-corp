@@ -73,6 +73,7 @@ $MESS["TASKS_TASK_COMPONENT_TEMPLATE_PARAMETER_1"] = "Derive task dates from sub
 $MESS["TASKS_TASK_COMPONENT_TEMPLATE_PARAMETER_2"] = "Auto complete task when all subtasks are completed (and vice versa)";
 $MESS["TASKS_TASK_COMPONENT_TEMPLATE_PARAMETER_3"] = "Task status summary";
 $MESS["TASKS_TASK_COMPONENT_TEMPLATE_PARAMETER_HINT_1"] = "The planned start and end dates for this task will be calculated based on the dates specified for subtasks. The start date will be set to the earliest start date across all subtasks; the end date will be set to the latest end date of those subtasks.";
+$MESS["TASKS_TASK_COMPONENT_TEMPLATE_PARAMETER_HINT_1a"] = "The planned start and end dates for this task will be defined by the earliest start date and the latest end date across the subtasks.";
 $MESS["TASKS_TASK_COMPONENT_TEMPLATE_PARAMETER_HINT_2"] = "The parent task will be auto completed as soon as all its subtasks have been completed. Completing the parent task automatically completes all its subtasks.";
 $MESS["TASKS_TASK_COMPONENT_TEMPLATE_PARAMETER_HINT_3"] = "Require task status summary";
 $MESS["TASKS_TASK_COMPONENT_TEMPLATE_PARAMETER_HINT_4"] = "Task status summary is required";

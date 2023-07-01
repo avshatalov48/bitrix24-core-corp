@@ -5,28 +5,26 @@
  */
 jn.define('im/messenger/view/recent', (require, exports, module) => {
 
-	const { Loc } = jn.require('loc');
-	const { Runtime } = jn.require('runtime');
-	const { View } = jn.require('im/messenger/view/base');
-	const { EventType, FeatureFlag } = jn.require('im/messenger/const');
-	const { MessengerParams } = jn.require('im/messenger/lib/params');
+	const { Loc } = require('loc');
+	const { Runtime } = require('runtime');
+	const { View } = require('im/messenger/view/base');
+	const { EventType, FeatureFlag } = require('im/messenger/const');
+	const { MessengerParams } = require('im/messenger/lib/params');
 
 	class RecentView extends View
 	{
 		constructor(options = {})
 		{
-			options.ui = dialogList;
-
 			super(options);
-
-			this._isLoaderShown = false;
-			this.loadNextPageItemId = 'loadNextPage';
 
 			this.setCustomEvents([
 				EventType.recent.createChat,
 				EventType.recent.readAll,
 				EventType.recent.loadNextPage,
 			]);
+
+			this._isLoaderShown = false;
+			this.loadNextPageItemId = 'loadNextPage';
 
 			this.subscribeEvents();
 			this.initTopMenu();
@@ -68,10 +66,41 @@ jn.define('im/messenger/view/recent', (require, exports, module) => {
 				},
 			];
 
+			if (FeatureFlag.isDevelopmentEnvironment)
+			{
+				topMenuButtons.push([
+					{
+						id: 'developer-menu',
+						title: 'Developer menu',
+						sectionCode: 'general',
+						iconName: 'start',
+					},
+				]);
+			}
+
 			const topMenuButtonHandler = (event, item) => {
 				if (event === 'onItemSelected' && item.id === 'readAll')
 				{
 					this.emitCustomEvent(EventType.recent.readAll);
+
+					return;
+				}
+
+				if (
+					FeatureFlag.isDevelopmentEnvironment
+					&& event === 'onItemSelected'
+					&& item.id === 'developer-menu'
+				)
+				{
+					jn.import('im:messenger/lib/dev')
+						.then(()=>{
+							const { showDeveloperMenu } = require('im/messenger/lib/dev');
+							showDeveloperMenu();
+						})
+						.catch((error) => {
+							console.error(error)
+						})
+					;
 				}
 			};
 

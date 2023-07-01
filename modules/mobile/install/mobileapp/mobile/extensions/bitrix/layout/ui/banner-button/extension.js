@@ -12,7 +12,7 @@
 	function BannerButton({title, description, onClick, ...options})
 	{
 		options = options || {};
-		options.backgroundColor = BX.prop.getString(options, 'backgroundColor', '#C3F2FF');
+		options.backgroundColor = BX.prop.getString(options, 'backgroundColor', '#c3f0ff');
 		options.showArrow = BX.prop.getBoolean(options, 'showArrow', true);
 
 		const emptyCallback = () => {};
@@ -83,7 +83,7 @@
 
 	const SvgImages = {
 		arrowRight: {
-			content: `<svg width="10" height="16" viewBox="0 0 10 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M0.160156 2.34343L4.68721 6.87048L5.85979 7.99985L4.68721 9.12989L0.160156 13.6569L1.75762 15.2544L9.01178 8.00025L1.75762 0.746094L0.160156 2.34343Z" fill="#767C87"/></svg>`
+			content: `<svg width="10" height="16" viewBox="0 0 10 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M0.160156 2.34343L4.68721 6.87048L5.85979 7.99985L4.68721 9.12989L0.160156 13.6569L1.75762 15.2544L9.01178 8.00025L1.75762 0.746094L0.160156 2.34343Z" fill="#6a737f"/></svg>`
 		}
 	};
 

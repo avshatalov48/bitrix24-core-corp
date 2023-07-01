@@ -1,3 +1,0 @@
-<?php
-$MESS["DISK_FILE_EDITOR_TEMPLATES_SUBTITLE"] = "Готові шаблони";
-$MESS["DISK_FILE_EDITOR_TEMPLATES_TITLE"] = "Оберіть шаблон";

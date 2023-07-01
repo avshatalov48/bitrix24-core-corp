@@ -6,19 +6,28 @@ use Bitrix\Crm\Filter\ItemDataProvider;
 use Bitrix\Crm\Filter\ItemSettings;
 use Bitrix\Crm\Item\Dynamic;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Main\DB;
 use Bitrix\Main\Text\HtmlFilter;
+use CCrmOwnerType;
+use CCrmOwnerTypeAbbr;
+use CDBResult;
 
 class CrmDynamics extends CrmEntity
 {
 	public const PREFIX_FULL = 'CRMDYNAMIC-';
 
-	protected static function getPrefix($options = [])
+	protected static function getHandlerType()
+	{
+		return Handler::ENTITY_TYPE_CRMDYNAMICS;
+	}
+
+	protected static function getPrefix($options = []): string
 	{
 		$prefix = (
 			is_array($options)
 			&& isset($options['prefixType'])
 			&& mb_strtolower($options['prefixType']) === 'short'
-				? \CCrmOwnerTypeAbbr::ResolveByTypeID($options['typeId'])
+				? CCrmOwnerTypeAbbr::ResolveByTypeID($options['typeId'])
 				: self::PREFIX_FULL . $options['typeId']
 		);
 
@@ -27,10 +36,10 @@ class CrmDynamics extends CrmEntity
 
 	protected static function prepareEntity(Dynamic $item, ?array $options = [])
 	{
-		$prefix = self::getPrefix($options);
+		$prefix = static::getPrefix($options);
 		$result = [
-			'id' => $prefix.$item->getId(),
-			'entityType' => 'dynamic_'.$item->getEntityTypeId(),
+			'id' => $prefix . $item->getId(),
+			'entityType' => 'dynamic_' . $item->getEntityTypeId(),
 			'entityId' => $item->getId(),
 			'name' => HtmlFilter::encode($item->getTitle()),
 			'desc' => '',
@@ -57,7 +66,7 @@ class CrmDynamics extends CrmEntity
 		}
 
 		$entityTypeId = (int)$params['options']['typeId'];
-		$entityType = Handler::ENTITY_TYPE_CRMDYNAMICS . '_' . $entityTypeId;
+		$entityType = static::getHandlerType() . '_' . $entityTypeId;
 
 		$result = [
 			'ITEMS' => [],
@@ -77,7 +86,7 @@ class CrmDynamics extends CrmEntity
 		];
 
 		$entityOptions = (!empty($params['options']) ? $params['options'] : []);
-		$prefix = self::getPrefix($entityOptions);
+		$prefix = static::getPrefix($entityOptions);
 
 		$lastItemIds = [];
 		$selectedItemIds = [];
@@ -89,7 +98,7 @@ class CrmDynamics extends CrmEntity
 		{
 			$result['ITEMS_LAST'] = array_map(
 				static function($code) use ($prefix) {
-					return preg_replace('/^'.self::PREFIX_FULL.'(\d+)$/', $prefix.'$1', $code);
+					return preg_replace('/^'.self::PREFIX_FULL . '(\d+)$/', $prefix . '$1', $code);
 				},
 				array_values($lastItems[$entityType])
 			);
@@ -126,9 +135,7 @@ class CrmDynamics extends CrmEntity
 			if (!empty($itemIds))
 			{
 				$parameters = [
-					'filter' => [
-						'@ID' => $itemIds,
-					],
+					'filter' => ['@ID' => $itemIds],
 				];
 			}
 			$list = $factory->getItemsFilteredByPermissions($parameters);
@@ -136,7 +143,7 @@ class CrmDynamics extends CrmEntity
 
 		foreach ($list as $item)
 		{
-			$entitiesList[$prefix.$item['ID']] = self::prepareEntity($item, $entityOptions);
+			$entitiesList[$prefix . $item['ID']] = static::prepareEntity($item, $entityOptions);
 		}
 
 		if (empty($lastItemIds))
@@ -164,7 +171,7 @@ class CrmDynamics extends CrmEntity
 		{
 			$result = [
 				[
-					'id' => 'dynamics_'.(int) $params['options']['typeId'],
+					'id' => 'dynamics_' . (int) $params['options']['typeId'],
 					'name' => $params['options']['title'],
 					'sort' => 50
 				]
@@ -184,37 +191,87 @@ class CrmDynamics extends CrmEntity
 		$entityOptions = (!empty($params['options']) ? $params['options'] : []);
 		$requestFields = (!empty($params['requestFields']) ? $params['requestFields'] : []);
 		$search = $requestFields['searchString'];
-		$prefix = self::getPrefix($entityOptions);
+		$prefix = static::getPrefix($entityOptions);
 		$entityTypeId = (int)$params['options']['typeId'];
 
 		if (
 			$search <> ''
 			&& (empty($entityOptions['enableSearch']) || $entityOptions['enableSearch'] !== 'N')
-			&& ($type = Container::getInstance()->getTypeByEntityTypeId($entityTypeId))
 		)
 		{
-			$filter = [];
+			$filter = $this->getSearchFilter($search, $entityOptions);
 
-			$settings = new ItemSettings([
-				'ID' => 'crm-element-field-'.$entityTypeId,
-			], $type);
-			$factory = Container::getInstance()->getFactory($entityTypeId);
-			$provider = new ItemDataProvider($settings, $factory);
-			$provider->prepareListFilter($filter, ['FIND' => $search]);
-
-			$list = Container::getInstance()->getFactory($entityTypeId)->getItemsFilteredByPermissions([
-				'select' => ['*'],
-				'limit' => 20,
-				'filter' => $filter,
-			]);
-
-			$resultItems = [];
-			foreach ($list as $item)
+			if ($filter === false)
 			{
-				$resultItems[$prefix.$item->getId()] = self::prepareEntity($item, $entityOptions);
+				return $result;
 			}
 
-			$result['ITEMS'] = $resultItems;
+			$list = Container::getInstance()->getFactory($entityTypeId)->getItemsFilteredByPermissions(
+				[
+					'order' => $this->getSearchOrder(),
+					'select' => $this->getSearchSelect(),
+					'limit' => 20,
+					'filter' => $filter,
+				]
+			);
+
+			$resultItems = [];
+
+			foreach ($list as $item)
+			{
+				$resultItems[$prefix . $item->getId()] = static::prepareEntity($item, $entityOptions);
+			}
+
+			$resultItems = $this->appendItemsByIds($resultItems, $search, $entityOptions);
+
+			$resultItems = $this->processResultItems($resultItems, $entityOptions);
+
+			$result["ITEMS"] = $resultItems;
+		}
+
+		return $result;
+	}
+
+	protected function getSearchFilter(string $search, array $options)
+	{
+		$filter = [];
+		$entityTypeId = (int)$options['typeId'];
+		$type = Container::getInstance()->getTypeByEntityTypeId($entityTypeId);
+		$settings = new ItemSettings(['ID' => 'crm-element-field-' . $entityTypeId], $type);
+		$factory = Container::getInstance()->getFactory($entityTypeId);
+		$provider = new ItemDataProvider($settings, $factory);
+		$provider->prepareListFilter($filter, ['FIND' => $search]);
+
+		return
+			empty($filter)
+				? false
+				: $this->prepareOptionalFilter($filter, $options)
+		;
+	}
+
+	protected function getByIdsRes(array $ids, array $options)
+	{
+		return null;
+	}
+
+	protected function getByIdsResultItems(array $ids, array $options): array
+	{
+		$result = [];
+
+		$prefix = static::getPrefix($options);
+		$entityTypeId = (int)($options['typeId'] ?? CCrmOwnerType::Undefined);
+
+		$list = Container::getInstance()->getFactory($entityTypeId)->getItemsFilteredByPermissions(
+			[
+				'order' => $this->getByIdsOrder(),
+				'select' => $this->getByIdsSelect(),
+				'filter' => $this->getByIdsFilter($ids, $options),
+			]
+		);
+
+		foreach ($list as $item)
+		{
+			$result[$prefix . $item->getId()] = static::prepareEntity($item, $options);
 		}
 
 		return $result;

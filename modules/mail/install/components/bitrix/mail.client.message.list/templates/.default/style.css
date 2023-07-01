@@ -450,6 +450,7 @@
 .mail-msg-list-grid .main-grid-row-head .main-grid-cell-head {
 	height: 55px;
 	border-bottom: 27px solid transparent;
+	background: transparent;
 }
 
 .mail-msg-list-grid .main-grid-cell-inner {

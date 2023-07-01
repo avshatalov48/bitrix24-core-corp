@@ -22,7 +22,7 @@ if (!function_exists('intr_SelectorTplShowSection'))
 	{
 		if (0 == $ID)
 		{
-			$num = count($arSections[$ID]);
+			$num = count($arSections[$ID] ?? []);
 
 			if ($num <= 0) return;
 

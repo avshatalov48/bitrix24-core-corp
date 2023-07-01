@@ -2,25 +2,16 @@
 
 namespace Bitrix\Disk\Internals\Collection;
 
-use Bitrix\Main\ArgumentTypeException;
-
 class CustomHeap extends \SplHeap
 {
-	/** @var callable */
-	protected $comparator;
+	protected \Closure $comparator;
 
 	/**
 	 * CustomHeap constructor.
-	 * @param callable $comparator Comparator.
-	 * @throws ArgumentTypeException
+	 * @param \Closure $comparator Comparator.
 	 */
-	public function __construct($comparator)
+	public function __construct(\Closure $comparator)
 	{
-		if(!is_callable($comparator))
-		{
-			throw new ArgumentTypeException('callable', 'Callable');
-		}
-
 		$this->comparator = $comparator;
 	}
 
@@ -41,7 +32,7 @@ class CustomHeap extends \SplHeap
 	 * </p>
 	 * @since 5.3.0
 	 */
-	public function compare($element1, $element2)
+	public function compare($element1, $element2): int
 	{
 		return call_user_func($this->comparator, $element1, $element2);
 	}
@@ -51,15 +42,13 @@ class CustomHeap extends \SplHeap
 	 *
 	 * @return array
 	 */
-	public function toArray()
+	public function toArray(): array
 	{
-		$data = array();
-
-		foreach($this as $item)
+		$data = [];
+		foreach ($this as $item)
 		{
 			$data[] = $item;
 		}
-		unset($item);
 
 		return $data;
 	}

@@ -7,9 +7,10 @@ use Bitrix\Crm\Integration\VoxImplantManager;
 use Bitrix\Crm\Format\Duration;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Timeline\Item\Activity;
+use Bitrix\Crm\Service\Timeline\Layout;
+use Bitrix\Crm\Service\Timeline\Layout\Common\Icon;
 use Bitrix\Crm\Service\Timeline\Layout\Action\JsEvent;
 use Bitrix\Crm\Service\Timeline\Layout\Action\Redirect;
-use Bitrix\Crm\Service\Timeline\Layout\Action\RunAjaxAction;
 use Bitrix\Crm\Service\Timeline\Layout\Action\ShowMenu;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\Audio;
@@ -18,7 +19,6 @@ use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\ContentBlockFactory;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\ContentBlockWithTitle;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\LineOfTextBlocks;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\Text;
-use Bitrix\Crm\Service\Timeline\Layout\Body\Logo;
 use Bitrix\Crm\Service\Timeline\Layout\Footer\Button;
 use Bitrix\Crm\Service\Timeline\Layout\Footer\IconButton;
 use Bitrix\Crm\Service\Timeline\Layout\Header\Tag;
@@ -50,15 +50,15 @@ class Call extends Activity
 			case CCrmActivityDirection::Incoming:
 				if ($this->isMissedCall())
 				{
-					return 'call-incoming-missed';
+					return Icon::CALL_INCOMING_MISSED;
 				}
 
-				return $this->isScheduled() ? 'call-incoming' : 'call-completed';
+				return $this->isScheduled() ? Icon::CALL_INCOMING : Icon::CALL_COMPLETED;
 			case CCrmActivityDirection::Outgoing:
-				return 'call-outcoming';
+				return Icon::CALL_OUTCOMING;
 		}
 
-		return 'call';
+		return Icon::CALL;
 	}
 
 	public function getTitle(): string
@@ -101,11 +101,14 @@ class Call extends Activity
 		return Loc::getMessage('CRM_TIMELINE_CALL_TITLE_DEFAULT');
 	}
 
-	public function getLogo(): ?Logo
+	public function getLogo(): ?Layout\Body\Logo
 	{
-		$isAudioExist = !empty($this->fetchAudioRecordList());
+		$recordUrls = array_unique(array_column($this->fetchAudioRecordList(), 'VIEW_URL'));
+		$isAudioExist = !empty($recordUrls);
+
 		$changePlayerStateAction = (new JsEvent('Call:ChangePlayerState'))
 			->addActionParamInt('recordId', $this->getAssociatedEntityModel()->get('ID'))
+			->addActionParamString('recordUri', $isAudioExist ? (string)$recordUrls[0] : null)
 		;
 
 		switch ($this->fetchDirection())
@@ -114,28 +117,37 @@ class Call extends Activity
 				if ($this->isMissedCall())
 				{
 					return $isAudioExist
-						? (new Logo('call-play-record'))->setAction($changePlayerStateAction)
-						: (new Logo('call-default'))
-							->setInCircle(true)
-							->setIconType(Logo::ICON_TYPE_FAILURE)
-							->setAdditionalIconType(Logo::ICON_TYPE_FAILURE)
+						? (Layout\Common\Logo::getInstance(Layout\Common\Logo::CALL_PLAY_RECORD))
+							->createLogo()
+							->setAction($changePlayerStateAction)
+						: Layout\Common\Logo::getInstance(Layout\Common\Logo::CALL_DEFAULT)
+							->createLogo()
+							->setIconType(Layout\Body\Logo::ICON_TYPE_FAILURE)
+							->setAdditionalIconType(Layout\Body\Logo::ICON_TYPE_FAILURE)
 							->setAdditionalIconCode('arrow')
-						;
+					;
 				}
 
 				return $isAudioExist
-					? (new Logo('call-play-record'))->setAction($changePlayerStateAction)
-					: (new Logo('call-incoming'))->setInCircle(true);
+					? Layout\Common\Logo::getInstance(Layout\Common\Logo::CALL_PLAY_RECORD)
+						->createLogo()
+						->setAction($changePlayerStateAction)
+					: Layout\Common\Logo::getInstance(Layout\Common\Logo::CALL_INCOMING)
+						->createLogo()
+				;
 
 			case CCrmActivityDirection::Outgoing:
 				$logo = $isAudioExist
-					? (new Logo('call-play-record'))->setAction($changePlayerStateAction)
-					: (new Logo('call-outgoing'))->setInCircle(true);
+					? Layout\Common\Logo::getInstance(Layout\Common\Logo::CALL_PLAY_RECORD)
+						->createLogo()->setAction($changePlayerStateAction)
+					: Layout\Common\Logo::getInstance(Layout\Common\Logo::CALL_OUTGOING)
+						->createLogo()
+				;
 
 				if (!$this->isPlanned() && !$this->fetchInfo()['SUCCESSFUL'])
 				{
 					$logo
-						->setAdditionalIconType(Logo::ICON_TYPE_FAILURE)
+						->setAdditionalIconType(Layout\Body\Logo::ICON_TYPE_FAILURE)
 						->setAdditionalIconCode('cross')
 					;
 				}
@@ -143,7 +155,8 @@ class Call extends Activity
 				return $logo;
 		}
 
-		return (new Logo('call-default'))->setInCircle(true);
+		return  Layout\Common\Logo::getInstance(Layout\Common\Logo::CALL_DEFAULT)
+			->createLogo();
 	}
 
 	public function getContentBlocks(): array
@@ -156,11 +169,7 @@ class Call extends Activity
 			$updateDeadlineAction = null;
 			if ($this->isScheduled())
 			{
-				$updateDeadlineAction = (new RunAjaxAction('crm.timeline.activity.setDeadline'))
-					->addActionParamInt('activityId', $this->getActivityId())
-					->addActionParamInt('ownerTypeId', $this->getContext()->getEntityTypeId())
-					->addActionParamInt('ownerId', $this->getContext()->getEntityId())
-				;
+				$updateDeadlineAction = $this->getChangeDeadlineAction();
 			}
 
 			$result['deadline'] = (new ContentBlockWithTitle())
@@ -244,15 +253,24 @@ class Call extends Activity
 		$description = $this->fetchDescription(
 			(string)$this->getAssociatedEntityModel()->get($this->isScheduled() ? 'DESCRIPTION' : 'DESCRIPTION_RAW')
 		);
+
 		if (!empty($description))
 		{
-			$result['description'] = (new Text())->setValue($description)->setFontSize(Text::COLOR_BASE_70);
+			$result['description'] = (new ContentBlock\EditableDescription())
+				->setText($description)
+				->setEditable(false)
+				->setHeight(ContentBlock\EditableDescription::HEIGHT_LONG)
+			;
 		}
 
 		$comment = (string) ($this->fetchInfo()['COMMENT'] ?? null);
 		if (!empty($comment))
 		{
-			$result['comment'] = (new Text())->setValue($comment)->setFontSize(Text::COLOR_BASE_70);
+			$result['comment'] = (new ContentBlock\EditableDescription())
+				->setText($comment)
+				->setEditable(false)
+				->setHeight(ContentBlock\EditableDescription::HEIGHT_LONG)
+			;
 		}
 
 		return $result;
@@ -340,7 +358,7 @@ class Call extends Activity
 
 		if ($this->isPlanned())
 		{
-			if ($items['edit'])
+			if (isset($items['edit']))
 			{
 				$items['edit']->setScopeWeb();
 			}
@@ -570,6 +588,8 @@ class Call extends Activity
 				->addActionParamInt('ownerTypeId', $this->getContext()->getEntityTypeId())
 				->addActionParamInt('ownerId', $this->getContext()->getEntityId())
 				->addActionParamString('phone', $phone)
+				->addActionParamString('formattedName', $communication['TITLE'])
+				->addActionParamBoolean('showName', $communication['SHOW_NAME'])
 			;
 		};
 		$phoneList = $this->fetchPhoneList($communication['ENTITY_TYPE_ID'], $communication['ENTITY_ID']);
@@ -627,7 +647,7 @@ class Call extends Activity
 			? VoxImplantManager::getCallInfo(mb_substr($originId, 3)) ?? []
 			: [];
 	}
-	
+
 	private function fetchAudioRecordList(): array
 	{
 		$originId = $this->fetchOriginId();
@@ -686,7 +706,7 @@ class Call extends Activity
 
 		return $result;
 	}
-	
+
 	private function fetchDescription(string $input): string
 	{
 		if (empty($input))

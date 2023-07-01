@@ -2,15 +2,16 @@
  * @module layout/ui/fields/crm-stage
  */
 jn.define('layout/ui/fields/crm-stage', (require, exports, module) => {
-
+	const { ShimmerView } = require('layout/polyfill');
 	const { BaseField } = require('layout/ui/fields/base');
 
-	let StageSelector, AnimationMode;
+	let StageSelector, AnimationMode, CategoryStorage;
 
 	try
 	{
-		StageSelector = jn.require('crm/stage-selector').StageSelector;
-		AnimationMode = jn.require('crm/stage-selector').AnimationMode;
+		StageSelector = require('crm/stage-selector').StageSelector;
+		AnimationMode = require('crm/stage-selector').AnimationMode;
+		CategoryStorage = require('crm/storage/category').CategoryStorage;
 	}
 	catch (e)
 	{
@@ -31,6 +32,50 @@ jn.define('layout/ui/fields/crm-stage', (require, exports, module) => {
 			this.handleChange = this.handleChange.bind(this);
 			this.afterContentStyles = null;
 			this.forceUpdateHandler = this.forceUpdate.bind(this);
+
+			this.state.isCategoryEmpty = this.isCategoryEmpty(this.props);
+		}
+
+		componentWillReceiveProps(newProps)
+		{
+			super.componentWillReceiveProps(newProps);
+
+			this.state.isCategoryEmpty = this.isCategoryEmpty(newProps);
+		}
+
+		componentDidMount()
+		{
+			super.componentDidMount();
+
+			CategoryStorage
+				.subscribeOnChange(() => this.reloadCategory())
+				.markReady()
+			;
+		}
+
+		isCategoryEmpty(props)
+		{
+			const entityTypeId = BX.prop.getInteger(props.config, 'entityTypeId', null);
+			const categoryId = BX.prop.getInteger(props.config, 'categoryId', null);
+
+			if (entityTypeId === null || categoryId === null)
+			{
+				return true;
+			}
+
+			return CategoryStorage.getCategory(entityTypeId, categoryId) === null;
+		}
+
+		reloadCategory()
+		{
+			const isCategoryEmptyNow = this.isCategoryEmpty(this.props);
+
+			if (this.state.isCategoryEmpty !== isCategoryEmptyNow)
+			{
+				this.setState({
+					isCategoryEmpty: isCategoryEmptyNow,
+				});
+			}
 		}
 
 		get animationMode()
@@ -86,37 +131,13 @@ jn.define('layout/ui/fields/crm-stage', (require, exports, module) => {
 
 		renderEditableContent()
 		{
-			const {
-				entityTypeId,
-				categoryId,
-				data,
-				uid,
-				useStageChangeMenu,
-				showReadonlyNotification,
-			} = this.getConfig();
-
 			return View(
 				{
 					style: {
 						flex: 1,
 					},
 				},
-				new StageSelector({
-					activeStageId: this.getValue(),
-					readOnly: this.isReadOnly(),
-					entityTypeId,
-					categoryId,
-					data,
-					uid,
-					useStageChangeMenu,
-					showReadonlyNotification,
-					onStageSelect: this.handleChange,
-					hasHiddenEmptyView: this.hasHiddenEmptyView(),
-					showBorder: this.showBorder(),
-					borderColor: this.getExternalWrapperBorderColor(),
-					forceUpdate: this.forceUpdateHandler,
-					animationMode: this.animationMode,
-				}),
+				this.renderStages(),
 				View(
 					{
 						style: {
@@ -129,6 +150,124 @@ jn.define('layout/ui/fields/crm-stage', (require, exports, module) => {
 					},
 				),
 			);
+		}
+
+		renderStages()
+		{
+			if (this.state.isCategoryEmpty)
+			{
+				return this.renderStub();
+			}
+
+			return this.renderStageSelector();
+		}
+
+		renderStageSelector()
+		{
+			const {
+				entityTypeId,
+				categoryId,
+				entityId,
+				isNewEntity,
+				data,
+				uid: configUid,
+				useStageChangeMenu,
+				showReadonlyNotification,
+			} = this.getConfig();
+
+			return new StageSelector({
+				activeStageId: this.getValue(),
+				readOnly: this.isReadOnly(),
+				entityTypeId,
+				entityId,
+				categoryId,
+				isNewEntity,
+				data,
+				uid: configUid || this.uid,
+				useStageChangeMenu,
+				showReadonlyNotification,
+				onStageSelect: this.handleChange,
+				hasHiddenEmptyView: this.hasHiddenEmptyView(),
+				showBorder: this.showBorder(),
+				borderColor: this.getExternalWrapperBorderColor(),
+				forceUpdate: this.forceUpdateHandler,
+				animationMode: this.animationMode,
+			});
+		}
+
+		renderStub()
+		{
+			return View(
+				{
+					style: {
+						flexDirection: 'column',
+						width: '100%',
+					},
+				},
+				View(
+					{
+						style: {
+							flexDirection: 'row',
+							alignItems: 'flex-start',
+							marginTop: 7,
+							marginBottom: 9,
+						},
+					},
+					View(
+						{
+							style: {
+								flexDirection: 'row',
+								marginRight: 6,
+								paddingLeft: 18,
+							},
+						},
+						this.renderLine(170, 34),
+						Image({
+							style: {
+								width: 25,
+								height: 34,
+								marginLeft: -10,
+							},
+							svg: {
+								content: '<svg width="25" height="34" viewBox="0 0 25 34" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M0 6C0 2.68629 2.68629 0 6 0H12.1383C14.2817 0 16.2623 1.1434 17.3342 2.99956L24.5526 15.4998C25.0887 16.4281 25.0887 17.5719 24.5526 18.5002L17.3342 31.0004C16.2623 32.8566 14.2817 34 12.1383 34H6C2.68629 34 0 31.3137 0 28V6Z" fill="#dfe0e3"/></svg>',
+							},
+						}),
+					),
+					View(
+						{
+							style: {
+								flexDirection: 'row',
+								marginLeft: 5,
+							},
+						},
+						this.renderLine('100%', 34),
+					),
+				),
+				View(
+					{
+						style: {
+							marginHorizontal: 16,
+							padding: 4,
+							flexDirection: 'row',
+							flex: 1,
+							borderBottomWidth: 1,
+							borderBottomColor: this.showBorder() ? this.getExternalWrapperBorderColor() : null,
+						},
+					},
+				),
+			);
+		}
+
+		renderLine(width, height)
+		{
+			return View({
+				style: {
+					width,
+					height,
+					borderRadius: 3,
+					backgroundColor: '#dfe0e3',
+				},
+			});
 		}
 
 		forceUpdate(params)

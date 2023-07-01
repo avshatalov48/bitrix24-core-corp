@@ -74,7 +74,7 @@ jn.define('layout/ui/fields/image-select', (require, exports, module) => {
 						alignSelf: 'center',
 					},
 					svg: {
-						content: '<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M20 40C31.0457 40 40 31.0457 40 20C40 8.95431 31.0457 0 20 0C8.95431 0 0 8.95431 0 20C0 31.0457 8.95431 40 20 40Z" fill="#767C87" fill-opacity="0.12"/><path fill-rule="evenodd" clip-rule="evenodd" d="M21.3805 13.3687H18.6203V18.6198H13.3691V21.3801H18.6203V26.6313H21.3805V21.3801H26.6318V18.6198H21.3805V13.3687Z" fill="#A8ADB4"/></svg>',
+						content: '<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M20 40C31.0457 40 40 31.0457 40 20C40 8.95431 31.0457 0 20 0C8.95431 0 0 8.95431 0 20C0 31.0457 8.95431 40 20 40Z" fill="#6a737f" fill-opacity="0.12"/><path fill-rule="evenodd" clip-rule="evenodd" d="M21.3805 13.3687H18.6203V18.6198H13.3691V21.3801H18.6203V26.6313H21.3805V21.3801H26.6318V18.6198H21.3805V13.3687Z" fill="#A8ADB4"/></svg>',
 					},
 					onClick: () => this.showImagePicker(),
 				}),

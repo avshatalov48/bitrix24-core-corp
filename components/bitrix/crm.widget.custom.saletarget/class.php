@@ -1,7 +1,10 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
-use Bitrix\Main;
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
+{
+	die();
+}
+
 use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
@@ -10,7 +13,11 @@ class CrmWidgetSaleTargetComponent extends CBitrixComponent
 {
 	public function executeComponent()
 	{
-		$this->arResult['PATH_TO_DEAL_CATEGORY_LIST'] = CrmCheckPath('PATH_TO_DEAL_CATEGORY_LIST', $this->arParams['PATH_TO_DEAL_CATEGORY_LIST'], COption::GetOptionString('crm', 'path_to_deal_category_list'));
+		$this->arResult['PATH_TO_DEAL_CATEGORY_LIST'] = CrmCheckPath(
+			'PATH_TO_DEAL_CATEGORY_LIST',
+			$this->arParams['PATH_TO_DEAL_CATEGORY_LIST'] ?? '',
+			COption::GetOptionString('crm', 'path_to_deal_category_list')
+		);
 		$this->arResult['USER_SELECTOR_DATA'] = $this->getUserSelectorData();
 		$this->arResult['DEAL_CATEGORIES'] = $this->getDealCategories();
 		$this->includeComponentTemplate();
@@ -18,7 +25,11 @@ class CrmWidgetSaleTargetComponent extends CBitrixComponent
 
 	private function getUserSelectorData()
 	{
-		$result = array('users' => array(), 'last' => array());
+		$result = array(
+			'users' => [],
+			'last' => []
+		);
+		
 		if (CModule::includeModule('socialnetwork'))
 		{
 			$arStructure = CSocNetLogDestination::GetStucture(array());
@@ -34,7 +45,7 @@ class CrmWidgetSaleTargetComponent extends CBitrixComponent
 				$result['last']
 			);
 
-			$users = array();
+			$users = [];
 			if (isset($result["last"]["USERS"]) && is_array($result["last"]["USERS"]))
 			{
 				foreach ($result["last"]["USERS"] as $value)
@@ -50,7 +61,7 @@ class CrmWidgetSaleTargetComponent extends CBitrixComponent
 
 	private function getDealCategories()
 	{
-		$result = array();
+		$result = [];
 		foreach (\Bitrix\Crm\Category\DealCategory::getAll(true) as $category)
 		{
 			$result[] = array(
@@ -58,6 +69,7 @@ class CrmWidgetSaleTargetComponent extends CBitrixComponent
 				'name' => $category['NAME']
 			);
 		}
+
 		return $result;
 	}
 }

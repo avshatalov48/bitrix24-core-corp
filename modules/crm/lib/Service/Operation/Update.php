@@ -197,7 +197,7 @@ class Update extends Operation
 
 		$registrar = Container::getInstance()->getRelationRegistrar();
 
-		$relationsByFieldsChange = $registrar->registerByFieldsChange(
+		$registrar->registerByFieldsChange(
 			$this->getItemIdentifier(),
 			$this->fieldsCollection->toArray(),
 			$this->itemBeforeSave->getData(Values::ACTUAL),
@@ -205,14 +205,10 @@ class Update extends Operation
 			$this->getItemsThatExcludedFromTimelineRelationEventsRegistration(),
 			$this->getContext(),
 		);
-		if (!$relationsByFieldsChange->isSuccess())
-		{
-			$updateResult->addErrors($relationsByFieldsChange->getErrors());
-		}
 
 		if ($this->item->hasField(Item::FIELD_NAME_CONTACT_BINDINGS))
 		{
-			$contactBindingsResult = $registrar->registerByBindingsChange(
+			$registrar->registerByBindingsChange(
 				$this->getItemIdentifier(),
 				\CCrmOwnerType::Contact,
 				$this->itemBeforeSave->remindActual(Item::FIELD_NAME_CONTACT_BINDINGS),
@@ -220,16 +216,11 @@ class Update extends Operation
 				$this->getItemsThatExcludedFromTimelineRelationEventsRegistration(),
 				$this->getContext(),
 			);
-
-			if (!$contactBindingsResult->isSuccess())
-			{
-				$updateResult->addErrors($contactBindingsResult->getErrors());
-			}
 		}
 
 		if ($this->item->hasField(Item\Contact::FIELD_NAME_COMPANY_BINDINGS))
 		{
-			$companyBindingsResult = $registrar->registerByBindingsChange(
+			$registrar->registerByBindingsChange(
 				$this->getItemIdentifier(),
 				\CCrmOwnerType::Company,
 				$this->itemBeforeSave->remindActual(Item\Contact::FIELD_NAME_COMPANY_BINDINGS),
@@ -237,11 +228,6 @@ class Update extends Operation
 				$this->getItemsThatExcludedFromTimelineRelationEventsRegistration(),
 				$this->getContext(),
 			);
-
-			if (!$companyBindingsResult->isSuccess())
-			{
-				$updateResult->addErrors($companyBindingsResult->getErrors());
-			}
 		}
 
 		return $updateResult;

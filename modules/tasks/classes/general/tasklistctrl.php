@@ -193,10 +193,10 @@ class CTaskListCtrl
 
 				$arFilter['DEADLINE'] = '';
 
-				if($userRoleId == CTaskListState::VIEW_ROLE_RESPONSIBLE)
-				{
-					$arFilter['!CREATED_BY'] = $userId;
-				}
+				// if($userRoleId == CTaskListState::VIEW_ROLE_RESPONSIBLE)
+				// {
+				// 	$arFilter['!CREATED_BY'] = $userId;
+				// }
 			break;
 
 			default:

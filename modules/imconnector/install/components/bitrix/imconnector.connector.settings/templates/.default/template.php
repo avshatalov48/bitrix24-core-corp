@@ -77,7 +77,6 @@ if (empty($arResult['RELOAD']) && empty($arResult['URL_RELOAD']))
 		<?= $arResult['LANG_JS_SETTING']; ?>
 		<?
 		$status = Status::getInstance($arResult['ID'], (int)$arResult['ACTIVE_LINE']['ID'])->isStatus();
-		Status::cleanCache($arResult['ID'], (int)$arResult['ACTIVE_LINE']['ID']);
 		if ($status || count($arResult['LIST_LINE']) > 1)
 		{
 			?>

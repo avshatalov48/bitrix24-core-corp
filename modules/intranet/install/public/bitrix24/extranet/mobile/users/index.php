@@ -2,7 +2,7 @@
 require($_SERVER["DOCUMENT_ROOT"]."/mobile/headers.php");
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/header.php");
 
-$USER_ID = intval($_GET["user_id"]) > 0 ? intval($_GET["user_id"]) : false;
+$USER_ID = isset($_GET["user_id"]) && intval($_GET["user_id"]) > 0 ? intval($_GET["user_id"]) : false;
 ?>
 <?$APPLICATION->IncludeComponent("bitrix:socialnetwork.user_profile", "mobile", array(
 		"PATH_TO_USER" => SITE_DIR."mobile/users/?user_id=#user_id#",

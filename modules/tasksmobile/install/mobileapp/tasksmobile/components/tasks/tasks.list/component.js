@@ -1,23 +1,56 @@
 include('InAppNotifier');
 
 (() => {
+	const {BatchRequestsExecutor} = jn.require('rest/batch-requests-executor');
+	const {debounce} = jn.require('utils/function');
+	const {EntityReady} = jn.require('entity-ready');
+	const {Entry} = jn.require('tasks/entry');
+	const {Loc} = jn.require('loc');
+	const {magnifierWithMenuAndDot} = jn.require('assets/common');
+	const {PresetList} = jn.require('tasks/layout/presetList');
+	const {Spotlight} = jn.require('spotlight');
+	const {TaskCreate} = jn.require('tasks/layout/task/create');
+
 	const apiVersion = Application.getApiVersion();
 	const platform = Application.getPlatform();
 	const caches = new Map();
 
-	const {EntityReady} = jn.require('entity-ready');
-	const {Entry} = jn.require('tasks/entry');
-	const {TaskCreateManager} = jn.require('tasks/layout/task/create');
+	const isSearchByPresetsEnable = (apiVersion >= 49);
 
-	class Util
+	class Loading
 	{
-		static debounce(fn, timeout, ctx)
+		/**
+		 * @param {TaskList} list
+		 */
+		constructor(list)
 		{
-			let timer = 0;
-			return function() {
-				clearTimeout(timer);
-				timer = setTimeout(() => fn.apply(ctx, arguments), timeout);
-			};
+			this.list = list.list;
+		}
+
+		isEnabled()
+		{
+			return (apiVersion >= 34);
+		}
+
+		show()
+		{
+			if (this.isEnabled() && !this.isShowed)
+			{
+				dialogs.showSpinnerIndicator({
+					color: '#777777',
+					backgroundColor: '#77ffffff',
+				});
+				this.isShowed = true;
+			}
+		}
+
+		hide()
+		{
+			if (this.isEnabled() && this.isShowed)
+			{
+				dialogs.hideSpinnerIndicator();
+				this.isShowed = false;
+			}
 		}
 	}
 
@@ -52,14 +85,14 @@ include('InAppNotifier');
 
 				if (type === WelcomeScreen.type.privateProject)
 				{
-					upperText = BX.message('MOBILE_TASKS_LIST_WELCOME_SCREEN_PRIVATE_PROJECT_TITLE');
-					lowerText = BX.message('MOBILE_TASKS_LIST_WELCOME_SCREEN_PRIVATE_PROJECT_SUBTITLE');
+					upperText = Loc.getMessage('MOBILE_TASKS_LIST_WELCOME_SCREEN_PRIVATE_PROJECT_TITLE');
+					lowerText = Loc.getMessage('MOBILE_TASKS_LIST_WELCOME_SCREEN_PRIVATE_PROJECT_SUBTITLE');
 					iconName = 'ws_private_project';
 				}
 				else
 				{
-					upperText = BX.message('MOBILE_TASKS_LIST_WELCOME_SCREEN_EMPTY_TITLE');
-					lowerText = BX.message('MOBILE_TASKS_LIST_WELCOME_SCREEN_EMPTY_SUBTITLE');
+					upperText = Loc.getMessage('MOBILE_TASKS_LIST_WELCOME_SCREEN_EMPTY_TITLE');
+					lowerText = Loc.getMessage('MOBILE_TASKS_LIST_WELCOME_SCREEN_EMPTY_SUBTITLE');
 					iconName = 'ws_create_task';
 				}
 
@@ -465,85 +498,55 @@ include('InAppNotifier');
 		}
 	}
 
-	class Order
+	class Select
 	{
-		static get fields()
-		{
-			return {
-				activityDate: [
-					{field: 'ACTIVITY_DATE', direction: 'DESC'},
-					{field: 'ID', direction: 'DESC'},
-				],
-				deadline: [
-					{field: 'DEADLINE', direction: 'ASC,NULLS'},
-					{field: 'ID', direction: 'DESC'},
-				],
-			};
-		}
-
-		static get sectionOrderFields()
-		{
-			return {
-				activityDate: 'desc',
-				deadline: 'asc',
-			};
-		}
-
 		constructor()
 		{
-			this.order = BX.componentParameters.get('ORDER', 'activityDate');
+			this.getPinned = true;
 		}
 
 		get()
 		{
-			const order = {};
+			let fields = [
+				'ID',
+				'TITLE',
+				'DESCRIPTION',
+				'STATUS',
+				'GROUP_ID',
 
-			Order.fields[this.order].forEach((fieldData) => {
-				order[fieldData.field] = fieldData.direction;
-			});
+				'CREATED_BY',
+				'RESPONSIBLE_ID',
+				'ACCOMPLICES',
+				'AUDITORS',
 
-			return order;
+				'DEADLINE',
+				'ACTIVITY_DATE',
+
+				'FAVORITE',
+				'NOT_VIEWED',
+				'IS_MUTED',
+				'IS_PINNED',
+				'MATCH_WORK_TIME',
+				'TIME_SPENT_IN_LOGS',
+				'TIME_ESTIMATE',
+				'PRIORITY',
+
+				'COUNTERS',
+				'COMMENTS_COUNT',
+				'SERVICE_COMMENTS_COUNT',
+			];
+
+			if (!this.getPinned)
+			{
+				fields = fields.filter(field => field !== 'IS_PINNED');
+			}
+
+			return fields;
 		}
 
-		getForSearch()
+		setGetPinned(getPinned)
 		{
-			const order = {};
-
-			Order.fields.activityDate.forEach((fieldData) => {
-				order[fieldData.field] = fieldData.direction;
-			});
-
-			return order;
-		}
-
-		changeOrder()
-		{
-			this.order = Object.keys(Order.fields).filter(key => key !== this.order)[0];
-		}
-
-		isDeadline()
-		{
-			return this.checkOrder('deadline');
-		}
-
-		isActivityDate()
-		{
-			return this.checkOrder('activityDate');
-		}
-
-		checkOrder(order)
-		{
-			return this.order === order;
-		}
-
-		get order()
-		{
-			return this._order || 'activityDate';
-		}
-
-		set order(order)
-		{
-			this._order = order;
+			this.getPinned = getPinned;
 		}
 	}
 
@@ -559,6 +562,14 @@ include('InAppNotifier');
 			}
 
 			return columnItems;
+		}
+
+		static get presetType()
+		{
+			return {
+				none: 'none',
+				default: 'filter_tasks_in_progress',
+			};
 		}
 
 		static get roleType()
@@ -674,9 +685,12 @@ include('InAppNotifier');
 			this.owner = owner;
 			this.groupId = (groupId || 0);
 
+			this.searchText = '';
+
+			this.preset = Filter.presetType.default;
 			this.role = BX.componentParameters.get('ROLE', Filter.roleType.all);
 			this.counter = BX.componentParameters.get('COUNTER', Filter.counterType.none);
-			this.showCompleted = BX.componentParameters.get('SHOW_COMPLETED', false);
+			this.showCompleted = false;
 
 			this.counters = {};
 			this.cache = Cache.getInstance(`filterCounters_${this.groupId}`);
@@ -864,12 +878,6 @@ include('InAppNotifier');
 
 		get()
 		{
-			const filterRoleMap = {
-				[Filter.roleType.responsible]: 'R',
-				[Filter.roleType.accomplice]: 'A',
-				[Filter.roleType.originator]: 'O',
-				[Filter.roleType.auditor]: 'U',
-			};
 			const currentUserId = (this.owner.id || this.currentUser.id);
 			const filter = {
 				MEMBER: currentUserId,
@@ -877,15 +885,20 @@ include('InAppNotifier');
 				CHECK_PERMISSIONS: 'Y',
 				IS_PINNED: 'N',
 			};
-
+			const filterRoleMap = {
+				[Filter.roleType.responsible]: 'R',
+				[Filter.roleType.accomplice]: 'A',
+				[Filter.roleType.originator]: 'O',
+				[Filter.roleType.auditor]: 'U',
+			};
 			if (filterRoleMap[this.role])
 			{
 				filter.ROLE = filterRoleMap[this.role];
 			}
 
-			if (!this.isMyList())
+			if (this.searchText)
 			{
-				delete filter.IS_PINNED;
+				filter.SEARCH_INDEX = this.searchText;
 			}
 
 			if (this.groupId > 0)
@@ -894,7 +907,11 @@ include('InAppNotifier');
 				delete filter.MEMBER;
 			}
 
-			if (!this.showCompleted)
+			if (isSearchByPresetsEnable)
+			{
+				delete filter.MEMBER;
+			}
+			else if (!this.showCompleted)
 			{
 				filter['::SUBFILTER-STATUS-OR'] = {
 					'::LOGIC': 'OR',
@@ -958,37 +975,6 @@ include('InAppNotifier');
 			return filter;
 		}
 
-		getForPinned()
-		{
-			const filter = this.get();
-			filter.IS_PINNED = 'Y';
-
-			return filter;
-		}
-
-		getForSearch(text)
-		{
-			const filter = {
-				SEARCH_INDEX: text,
-				MEMBER: this.currentUser.id,
-			};
-
-			if (!this.showCompleted)
-			{
-				filter['::SUBFILTER-STATUS-OR'] = {
-					'::LOGIC': 'OR',
-					'::SUBFILTER-1': {
-						REAL_STATUS: [2, 3, 4, 6],
-					},
-					'::SUBFILTER-2': {
-						WITH_NEW_COMMENTS: 'Y',
-					},
-				};
-			}
-
-			return filter;
-		}
-
 		isGroupList()
 		{
 			return (this.groupId > 0);
@@ -1002,6 +988,26 @@ include('InAppNotifier');
 		isMyList()
 		{
 			return (!this.isGroupList() && !this.isAnotherUserList());
+		}
+
+		getSearchText()
+		{
+			return this.searchText;
+		}
+
+		setSearchText(text)
+		{
+			this.searchText = text;
+		}
+
+		getPreset()
+		{
+			return this.preset;
+		}
+
+		setPreset(preset)
+		{
+			this.preset = preset;
 		}
 
 		getRole()
@@ -1025,7 +1031,127 @@ include('InAppNotifier');
 		}
 	}
 
-	class MenuPopup
+	class Order
+	{
+		static get fields()
+		{
+			return {
+				activityDate: [
+					{field: 'ACTIVITY_DATE', direction: 'DESC'},
+					{field: 'ID', direction: 'DESC'},
+				],
+				deadline: [
+					{field: 'DEADLINE', direction: 'ASC,NULLS'},
+					{field: 'ID', direction: 'DESC'},
+				],
+			};
+		}
+
+		static get sectionOrderFields()
+		{
+			return {
+				activityDate: 'desc',
+				deadline: 'asc',
+			};
+		}
+
+		constructor()
+		{
+			this.order = BX.componentParameters.get('ORDER', 'activityDate');
+		}
+
+		get()
+		{
+			const order = {};
+
+			Order.fields[this.order].forEach((fieldData) => {
+				order[fieldData.field] = fieldData.direction;
+			});
+
+			return order;
+		}
+
+		changeOrder()
+		{
+			this.order = Object.keys(Order.fields).filter(key => key !== this.order)[0];
+		}
+
+		isDeadline()
+		{
+			return this.checkOrder('deadline');
+		}
+
+		isActivityDate()
+		{
+			return this.checkOrder('activityDate');
+		}
+
+		checkOrder(order)
+		{
+			return this.order === order;
+		}
+
+		get order()
+		{
+			return this._order || 'activityDate';
+		}
+
+		set order(order)
+		{
+			this._order = order;
+		}
+	}
+
+	class Params
+	{
+		/**
+		 * @param {TaskList} list
+		 * @param {Filter} filter
+		 */
+		constructor(list, filter)
+		{
+			this.list = list;
+			this.filter = filter;
+
+			this.getPlusOne = false;
+		}
+
+		get()
+		{
+			const params = {
+				MODE: 'mobile',
+				RETURN_ACCESS: 'Y',
+				RETURN_USER_INFO: 'Y',
+				RETURN_GROUP_INFO: 'Y',
+				WITH_RESULT_INFO: 'Y',
+				WITH_TIMER_INFO: 'Y',
+				WITH_PARSED_DESCRIPTION: 'Y',
+			};
+
+			if (this.getPlusOne)
+			{
+				params.GET_PLUS_ONE = 'Y';
+			}
+
+			if (isSearchByPresetsEnable)
+			{
+				params.SIFT_THROUGH_FILTER = {
+					userId: this.list.owner.id,
+					groupId: this.list.groupId,
+					presetId: this.filter.getPreset(),
+				};
+			}
+
+			return params;
+		}
+
+		setGetPlusOne(getPlusOne)
+		{
+			this.getPlusOne = getPlusOne;
+		}
+	}
+
+	class MoreMenu
 	{
 		/**
 		 * @param {TaskList} list
@@ -1062,199 +1188,11 @@ include('InAppNotifier');
 
 		prepareItems()
 		{
-
-		}
-
-		onItemSelected()
-		{
-
-		}
-	}
-
-	class OptionMenu extends MenuPopup
-	{
-		prepareItems()
-		{
-			const urlPrefix = `${component.path}images/mobile-tasks-list-popup-`;
-
-			return [
-				{
-					id: Filter.roleType.all,
-					title: BX.message('TASKS_POPUP_MENU_ROLE_ALL'),
-					iconUrl: `${urlPrefix}role-all.png`,
-					iconName: 'finished_tasks',
-					sectionCode: SectionHandler.sections.default,
-					checked: (this.filter.getRole() === Filter.roleType.all),
-					counterValue: this.filter.getCounterValue(),
-					counterStyle: {
-						backgroundColor: '#FF5752',
-					},
-				},
-				{
-					id: Filter.roleType.responsible,
-					title: BX.message('TASKS_POPUP_MENU_ROLE_RESPONSIBLE'),
-					iconUrl: `${urlPrefix}role-responsible.png`,
-					sectionCode: SectionHandler.sections.default,
-					checked: (this.filter.getRole() === Filter.roleType.responsible),
-					counterValue: this.filter.getCounterValue(Filter.roleType.responsible),
-					counterStyle: {
-						backgroundColor: '#FF5752',
-					},
-				},
-				{
-					id: Filter.roleType.accomplice,
-					title: BX.message('TASKS_POPUP_MENU_ROLE_ACCOMPLICE'),
-					iconUrl: `${urlPrefix}role-accomplice.png`,
-					sectionCode: SectionHandler.sections.default,
-					checked: (this.filter.getRole() === Filter.roleType.accomplice),
-					counterValue: this.filter.getCounterValue(Filter.roleType.accomplice),
-					counterStyle: {
-						backgroundColor: '#FF5752',
-					},
-				},
-				{
-					id: Filter.roleType.originator,
-					title: BX.message('TASKS_POPUP_MENU_ROLE_ORIGINATOR'),
-					iconUrl: `${urlPrefix}role-originator.png`,
-					sectionCode: SectionHandler.sections.default,
-					checked: (this.filter.getRole() === Filter.roleType.originator),
-					counterValue: this.filter.getCounterValue(Filter.roleType.originator),
-					counterStyle: {
-						backgroundColor: '#FF5752',
-					},
-				},
-				{
-					id: Filter.roleType.auditor,
-					title: BX.message('TASKS_POPUP_MENU_ROLE_AUDITOR'),
-					iconUrl: `${urlPrefix}role-auditor.png`,
-					sectionCode: SectionHandler.sections.default,
-					checked: (this.filter.getRole() === Filter.roleType.auditor),
-					counterValue: this.filter.getCounterValue(Filter.roleType.auditor),
-					counterStyle: {
-						backgroundColor: '#FF5752',
-					},
-				},
-				{
-					id: 'toggleOrder',
-					title: BX.message(
-						this.order.isDeadline() ? 'TASKS_POPUP_MENU_ORDER_ACTIVITY' : 'TASKS_POPUP_MENU_ORDER_DEADLINE'
-					),
-					iconName: 'term',
-					sectionCode: SectionHandler.sections.default,
-					showTopSeparator: true,
-				},
-				{
-					id: 'toggleCompletedTasks',
-					title: BX.message(`TASKS_POPUP_MENU_${(!this.filter.showCompleted ? 'SHOW' : 'HIDE')}_CLOSED_TASKS`),
-					iconUrl: `${urlPrefix}${(!this.filter.showCompleted ? 'show' : 'hide')}-completed.png`,
-					sectionCode: SectionHandler.sections.default,
-					disable: this.order.isDeadline(),
-				},
-				{
-					id: 'readAll',
-					title: BX.message('TASKS_POPUP_MENU_READ_ALL'),
-					iconName: 'read',
-					sectionCode: SectionHandler.sections.default,
-				},
-			];
-		}
-
-		onItemSelected(item)
-		{
-			const {id} = item;
-
-			switch (id)
-			{
-				case Filter.roleType.all:
-				case Filter.roleType.responsible:
-				case Filter.roleType.accomplice:
-				case Filter.roleType.originator:
-				case Filter.roleType.auditor:
-					this.onRoleClick(id);
-					break;
-
-				case 'toggleOrder':
-					this.onDeadlineSwitchClick();
-					break;
-
-				case 'readAll':
-					this.onReadAllClick();
-					break;
-
-				case 'toggleCompletedTasks':
-					this.onToggleCompleted();
-					break;
-			}
-		}
-
-		onRoleClick(newRole)
-		{
-			const currentRole = this.filter.getRole();
-
-			if (currentRole === newRole)
-			{
-				this.filter.setRole(Filter.roleType.all);
-			}
-			else
-			{
-				this.filter.setRole(newRole);
-			}
-
-			this.list.updateTitle();
-			this.list.reload(0, true);
-		}
-
-		onDeadlineSwitchClick()
-		{
-			this.order.changeOrder();
-			if (this.order.isDeadline())
-			{
-				this.filter.showCompleted = false;
-			}
-
-			this.list.updateTitle();
-			this.list.reload(0, true);
-		}
-
-		onToggleCompleted()
-		{
-			this.filter.showCompleted = !this.filter.showCompleted;
-			this.list.reload();
-		}
-
-		onReadAllClick()
-		{
-			this.list.pseudoReadTasks([...this.list.taskList.keys()], true);
-
-			(new RequestExecutor('tasks.task.comment.readAll', {
-				groupId: this.list.groupId || null,
-				userId: this.list.owner.id || this.list.currentUser.id,
-				role: this.filter.getRole(),
-			}))
-				.call()
-				.then((response) => {
-					console.log(response);
-					if (response.result === true)
-					{
-						Notify.showIndicatorSuccess({
-							text: BX.message('TASKS_LIST_READ_ALL_NOTIFICATION'),
-							hideAfter: 1500,
-						});
-					}
-				})
-			;
-		}
-	}
-
-	class MoreMenu extends MenuPopup
-	{
-		prepareItems()
-		{
 			const urlPrefix = `${component.path}images/mobile-tasks-list-popup-`;
 			const roles = [
 				{
 					id: Filter.roleType.all,
-					title: BX.message('TASKS_POPUP_MENU_ROLE_ALL'),
+					title: Loc.getMessage('TASKS_POPUP_MENU_ROLE_ALL'),
 					iconUrl: `${urlPrefix}role-all.png`,
 					iconName: 'finished_tasks',
 					sectionCode: SectionHandler.sections.default,
@@ -1266,7 +1204,7 @@ include('InAppNotifier');
 				},
 				{
 					id: Filter.roleType.responsible,
-					title: BX.message('TASKS_POPUP_MENU_ROLE_RESPONSIBLE'),
+					title: Loc.getMessage('TASKS_POPUP_MENU_ROLE_RESPONSIBLE'),
 					iconUrl: `${urlPrefix}role-responsible.png`,
 					sectionCode: SectionHandler.sections.default,
 					checked: (this.filter.getRole() === Filter.roleType.responsible),
@@ -1277,7 +1215,7 @@ include('InAppNotifier');
 				},
 				{
 					id: Filter.roleType.accomplice,
-					title: BX.message('TASKS_POPUP_MENU_ROLE_ACCOMPLICE'),
+					title: Loc.getMessage('TASKS_POPUP_MENU_ROLE_ACCOMPLICE'),
 					iconUrl: `${urlPrefix}role-accomplice.png`,
 					sectionCode: SectionHandler.sections.default,
 					checked: (this.filter.getRole() === Filter.roleType.accomplice),
@@ -1288,7 +1226,7 @@ include('InAppNotifier');
 				},
 				{
 					id: Filter.roleType.originator,
-					title: BX.message('TASKS_POPUP_MENU_ROLE_ORIGINATOR'),
+					title: Loc.getMessage('TASKS_POPUP_MENU_ROLE_ORIGINATOR'),
 					iconUrl: `${urlPrefix}role-originator.png`,
 					sectionCode: SectionHandler.sections.default,
 					checked: (this.filter.getRole() === Filter.roleType.originator),
@@ -1299,7 +1237,7 @@ include('InAppNotifier');
 				},
 				{
 					id: Filter.roleType.auditor,
-					title: BX.message('TASKS_POPUP_MENU_ROLE_AUDITOR'),
+					title: Loc.getMessage('TASKS_POPUP_MENU_ROLE_AUDITOR'),
 					iconUrl: `${urlPrefix}role-auditor.png`,
 					sectionCode: SectionHandler.sections.default,
 					checked: (this.filter.getRole() === Filter.roleType.auditor),
@@ -1312,7 +1250,7 @@ include('InAppNotifier');
 			const counters = [
 				{
 					id: Filter.counterType.newComments,
-					title: BX.message('TASKS_POPUP_MENU_COUNTER_NEW_COMMENTS'),
+					title: Loc.getMessage('TASKS_POPUP_MENU_COUNTER_NEW_COMMENTS'),
 					sectionCode: SectionHandler.sections.default,
 					checked: (this.filter.getCounter() === Filter.counterType.newComments),
 					counterValue: this.filter.getCounterValue(this.filter.getRole(), Filter.counterType.newComments),
@@ -1322,7 +1260,7 @@ include('InAppNotifier');
 				},
 				{
 					id: Filter.counterType.expired,
-					title: BX.message('TASKS_POPUP_MENU_COUNTER_EXPIRED'),
+					title: Loc.getMessage('TASKS_POPUP_MENU_COUNTER_EXPIRED'),
 					sectionCode: SectionHandler.sections.default,
 					checked: (this.filter.getCounter() === Filter.counterType.expired),
 					counterValue: this.filter.getCounterValue(this.filter.getRole(), Filter.counterType.expired),
@@ -1332,15 +1270,15 @@ include('InAppNotifier');
 				},
 				{
 					id: Filter.counterType.supposedlyCompleted,
-					title: BX.message('TASKS_POPUP_MENU_COUNTER_SUPPOSEDLY_COMPLETED'),
+					title: Loc.getMessage('TASKS_POPUP_MENU_COUNTER_SUPPOSEDLY_COMPLETED'),
 					sectionCode: SectionHandler.sections.default,
 					checked: (this.filter.getCounter() === Filter.counterType.supposedlyCompleted),
 				},
 			];
-			const actions = [
+			let actions = [
 				{
 					id: 'toggleOrder',
-					title: BX.message(
+					title: Loc.getMessage(
 						this.order.isDeadline() ? 'TASKS_POPUP_MENU_ORDER_ACTIVITY' : 'TASKS_POPUP_MENU_ORDER_DEADLINE'
 					),
 					iconName: 'term',
@@ -1356,12 +1294,16 @@ include('InAppNotifier');
 				},
 				{
 					id: 'readAll',
-					title: BX.message('TASKS_POPUP_MENU_READ_ALL'),
+					title: Loc.getMessage('TASKS_POPUP_MENU_READ_ALL'),
 					iconName: 'read',
 					sectionCode: SectionHandler.sections.default,
 					showTopSeparator: true,
 				},
 			];
+			if (isSearchByPresetsEnable)
+			{
+				actions = actions.filter(action => action.id !== 'toggleCompletedTasks');
+			}
 			const menuItems = [];
 
 			roles.forEach((role) => {
@@ -1411,6 +1353,8 @@ include('InAppNotifier');
 		onRoleClick(newRole)
 		{
 			newRole = (this.filter.getRole() === newRole ? Filter.roleType.all : newRole);
+
+			this.filter.setPreset(Filter.presetType.default);
 			this.filter.setRole(newRole);
 			this.filter.setCounter(Filter.counterType.none);
 
@@ -1422,6 +1366,7 @@ include('InAppNotifier');
 		onCounterClick(newCounter)
 		{
 			newCounter = (this.filter.getCounter() === newCounter ? Filter.counterType.none : newCounter);
+
 			this.filter.setCounter(newCounter);
 
 			this.list.updateTitle();
@@ -1464,7 +1409,7 @@ include('InAppNotifier');
 			if (result)
 			{
 				Notify.showIndicatorSuccess({
-					text: BX.message('TASKS_LIST_READ_ALL_NOTIFICATION'),
+					text: Loc.getMessage('TASKS_LIST_READ_ALL_NOTIFICATION'),
 					hideAfter: 1500,
 				});
 			}
@@ -1475,7 +1420,8 @@ include('InAppNotifier');
 			const options = {
 				groupId: this.list.groupId,
 			};
-			return (new RequestExecutor('tasks.task.comment.readProject', options));
+
+			return (new RequestExecutor('tasks.viewedGroup.project.markAsRead', {fields: options}));
 		}
 
 		getReadAllByRole()
@@ -1485,7 +1431,8 @@ include('InAppNotifier');
 				userId: (this.list.owner.id || this.list.currentUser.id),
 				role: this.filter.getRole(),
 			};
-			return (new RequestExecutor('tasks.task.comment.readAll', options));
+
+			return (new RequestExecutor('tasks.viewedGroup.user.markAsRead', {fields: options}));
 		}
 	}
 
@@ -1493,11 +1440,16 @@ include('InAppNotifier');
 	{
 		constructor()
 		{
+			this.cache = Cache.getInstance('options');
+			this.cache.setDefaultData(this.getDefaultOptions());
+		}
+
+		getDefaultOptions()
+		{
 			const now = new Date();
 			now.setDate(now.getDate() - 1);
 
-			this.cache = Cache.getInstance('options');
-			this.cache.setDefaultData({
+			return {
 				swipeShowHelper: {
 					value: 0,
 					limit: 2,
@@ -1506,7 +1458,7 @@ include('InAppNotifier');
 					lastTime: now.getTime(),
 					value: result.deadlines,
 				},
-			});
+			};
 		}
 
 		get()
@@ -1522,508 +1474,6 @@ include('InAppNotifier');
 		update(optionName, optionValue)
 		{
 			this.cache.update(optionName, optionValue);
-		}
-	}
-
-	class Search
-	{
-		static get cacheKeys()
-		{
-			return {
-				tasks: 'tasks',
-				lastActiveProjects: 'lastActiveProjects',
-				lastSearchedProjects: 'lastSearchedProjects',
-			};
-		}
-
-		/**
-		 * @param {TaskList} list
-		 */
-		constructor(list)
-		{
-			this.list = list;
-
-			this.minSize = parseInt(BX.componentParameters.get('MIN_SEARCH_SIZE', 3), 10);
-			this.maxTaskCount = 50;
-			this.maxProjectCount = 15;
-			this.text = '';
-
-			this.taskList = new Map();
-			this.projectList = new Map();
-			this.commonProjectList = new Map();
-
-			this.debounceFunction = this.getDebounceFunction();
-
-			this.cache = Cache.getInstance('search');
-			this.fillCacheWithLastActiveProjects();
-		}
-
-		fillCacheWithLastActiveProjects()
-		{
-			if (apiVersion >= 41)
-			{
-				return;
-			}
-
-			(new RequestExecutor('mobile.tasks.group.lastActive.get'))
-				.call()
-				.then((response) => {
-					const cacheKey = Search.cacheKeys.lastActiveProjects;
-					this.cache.update(cacheKey, response.result.slice(0, this.maxProjectCount + 1));
-				})
-			;
-		}
-
-		getDebounceFunction()
-		{
-			return Util.debounce((text) => {
-				console.log('Search:fnUserTypeText');
-
-				const searchResultItems = [].concat(
-					this.renderProjectItems(),
-					this.renderTaskItems(),
-					this.renderLoadingItems()
-				);
-				const sections = [
-					{id: 'project'},
-					{id: 'default', title: BX.message('TASKS_LIST_SEARCH_SECTION_SEARCH_RESULTS')},
-				];
-				this.setSearchResultItems(searchResultItems, sections);
-
-				const batchOperations = {
-					projects: ['mobile.tasks.group.search', {
-						searchText: text,
-					}],
-					tasks: ['tasks.task.list', {
-						select: TaskList.selectFields,
-						filter: this.list.filter.getForSearch(text),
-						order: this.list.order.getForSearch(),
-						params: TaskList.queryParams,
-					}],
-				};
-				BX.rest.callBatch(batchOperations, response => this.onSearchSuccess(response));
-			}, 100, this);
-		}
-
-		onSearchSuccess(response)
-		{
-			const projects = response.projects.answer.result;
-			const {tasks} = response.tasks.answer.result;
-
-			this.projectList.clear();
-			this.taskList.clear();
-
-			this.fillProjectList(projects);
-			this.fillTaskList(tasks);
-			this.renderList();
-		}
-
-		fillProjectList(rows)
-		{
-			rows.forEach((row) => {
-				this.projectList.set(row.id, row);
-				this.commonProjectList.set(row.id, row);
-			});
-		}
-
-		fillTaskList(rows)
-		{
-			rows.forEach((row) => {
-				const rowId = row.id.toString();
-				let task;
-
-				if (this.list.taskList.has(rowId))
-				{
-					task = this.list.taskList.get(rowId);
-				}
-				else
-				{
-					task = new Task(this.list.currentUser);
-					task.setData(row);
-				}
-				this.taskList.set(task.id, task);
-			});
-		}
-
-		renderList(fromCache = false)
-		{
-			console.log('Search:renderList', {tasks: this.taskList.size, projects: this.projectList.size});
-
-			let searchResultItems = this.renderProjectItems();
-			let nextItems = this.renderEmptyResultItems();
-
-			if (this.taskList.size > 0)
-			{
-				nextItems = this.renderTaskItems();
-			}
-			else if (fromCache)
-			{
-				nextItems = this.renderEmptyCacheItems();
-			}
-			searchResultItems = searchResultItems.concat(nextItems);
-
-			const title = (fromCache ? 'TASKS_LIST_SEARCH_SECTION_LAST' : 'TASKS_LIST_SEARCH_SECTION_SEARCH_RESULTS');
-			const sections = [
-				{id: 'project'},
-				{id: 'default', title: BX.message(title), backgroundColor: '#ffffff'},
-			];
-			console.log({title: 'search', searchResultItems, sections});
-			this.setSearchResultItems(searchResultItems, sections);
-		}
-
-		renderProjectItems()
-		{
-			if (apiVersion >= 41)
-			{
-				return [];
-			}
-
-			const projectItems = [];
-
-			this.projectList.forEach((project) => {
-				projectItems.push({
-					id: project.id,
-					title: project.name,
-					imageUrl: project.image,
-					type: 'project',
-				});
-			});
-
-			if (projectItems.length < 1)
-			{
-				return [];
-			}
-			return [{type: 'carousel', sectionCode: 'project', childItems: projectItems}];
-		}
-
-		renderTaskItems()
-		{
-			const taskItems = [];
-
-			this.taskList.forEach((task) => {
-				const item = this.list.getItemDataFromTask(task, false);
-				item.sectionCode = 'default';
-				taskItems.push(item);
-			});
-
-			return taskItems;
-		}
-
-		renderLoadingItems()
-		{
-			return [{
-				id: 0,
-				type: 'loading',
-				title: BX.message('TASKS_LIST_BUTTON_NEXT_PROCESS'),
-				sectionCode: 'default',
-				unselectable: true,
-			}];
-		}
-
-		renderEmptyCacheItems()
-		{
-			return [{
-				id: 0,
-				type: 'button',
-				title: BX.message('TASKS_LIST_SEARCH_HINT'),
-				sectionCode: 'default',
-				unselectable: true,
-			}];
-		}
-
-		renderEmptyResultItems()
-		{
-			console.log('Empty');
-			return [{
-				id: 0,
-				type: 'button',
-				title: BX.message('TASKS_LIST_SEARCH_EMPTY_RESULT'),
-				sectionCode: 'default',
-				unselectable: true,
-			}];
-		}
-
-		setSearchResultItems(items, sections)
-		{
-			this.list.list.setSearchResultItems(items, sections);
-		}
-
-		onUserTypeText(event)
-		{
-			console.log('Search:onUserTypeText');
-
-			BX.onViewLoaded(() => {
-				const text = event.text.trim();
-				if (this.text === text)
-				{
-					return;
-				}
-				this.text = text;
-				if (this.text.length < this.minSize)
-				{
-					this.projectList.clear();
-					this.taskList.clear();
-
-					if (this.text === '')
-					{
-						this.loadProjectsFromCache();
-						this.loadTasksFromCache();
-					}
-					else
-					{
-						this.fillProjectList(this.getLocalSearchedProjects(this.text));
-						this.fillTaskList(this.getLocalSearchedTasks(this.text));
-					}
-					this.renderList(this.text === '');
-					return;
-				}
-				this.debounceFunction(this.text);
-			});
-		}
-
-		getLocalSearchedProjects(text)
-		{
-			const localSearchedProjects = [];
-			const added = {};
-
-			this.commonProjectList.forEach((project) => {
-				added[project.id] = false;
-				const searchString = `${project.name}`.toLowerCase();
-				searchString.split(' ').forEach((word) => {
-					if (!added[project.id] && word.search(text.toLowerCase()) === 0)
-					{
-						localSearchedProjects.push(project);
-						added[project.id] = true;
-					}
-				});
-			});
-
-			return localSearchedProjects;
-		}
-
-		getLocalSearchedTasks(text)
-		{
-			const localSearchedTasks = [];
-			const added = {};
-
-			this.list.taskList.forEach((task) => {
-				added[task.id] = false;
-				const searchString = `${task.title} ${task.creator.name} ${task.responsible.name}`.toLowerCase();
-				searchString.split(' ').forEach((word) => {
-					if (!added[task.id] && word.search(text.toLowerCase()) === 0)
-					{
-						localSearchedTasks.push(task);
-						added[task.id] = true;
-					}
-				});
-			});
-
-			return localSearchedTasks;
-		}
-
-		onSearchShow()
-		{
-			this.loadProjectsFromCache();
-			this.loadTasksFromCache();
-
-			this.renderList(true);
-		}
-
-		loadProjectsFromCache()
-		{
-			console.log('Search:loadProjectsFromCache');
-
-			const cache = this.cache.get();
-			const lastSearchedProjects = cache[Search.cacheKeys.lastSearchedProjects] || [];
-			let lastActiveProjects = cache[Search.cacheKeys.lastActiveProjects] || [];
-
-			const ids = lastSearchedProjects.map(project => Number(project.id));
-			lastActiveProjects = lastActiveProjects.filter(project => !ids.includes(Number(project.id)));
-
-			let projects = lastSearchedProjects;
-			if (projects.length < this.maxProjectCount)
-			{
-				const count = this.maxProjectCount - projects.length + 1;
-				projects = projects.concat(lastActiveProjects.slice(0, count));
-			}
-			if (projects.length)
-			{
-				this.fillProjectList(projects);
-				return true;
-			}
-
-			return false;
-		}
-
-		loadTasksFromCache()
-		{
-			console.log('Search:loadTasksFromCache');
-
-			const tasks = this.cache.get()[Search.cacheKeys.tasks] || [];
-			if (tasks.length)
-			{
-				this.fillTaskList(tasks);
-				return true;
-			}
-
-			return false;
-		}
-
-		onSearchHide()
-		{
-			this.taskList.clear();
-			this.projectList.clear();
-		}
-
-		onSearchItemSelected(event)
-		{
-			if (event.type === 'task')
-			{
-				this.onTaskSelected(event.id.toString());
-			}
-			else if (event.type === 'project')
-			{
-				this.onProjectSelected(event);
-			}
-		}
-
-		onTaskSelected(taskId)
-		{
-			if (!this.taskList.has(taskId))
-			{
-				return;
-			}
-
-			(new RequestExecutor('tasks.task.list', {
-				select: TaskList.selectFields,
-				filter: {ID: taskId},
-				params: TaskList.queryParams,
-			}))
-				.call()
-				.then((response) => {
-					const rows = response.result.tasks || [];
-					const row = rows[0];
-					if (row)
-					{
-						const cacheKey = Search.cacheKeys.tasks;
-						let cachedTasks = this.cache.get()[cacheKey] || [];
-						cachedTasks = cachedTasks.filter(item => Number(item.id) !== Number(taskId));
-						this.cache.update(cacheKey, [row].concat(cachedTasks.slice(0, this.maxTaskCount)));
-
-						setTimeout(() => {
-							const task = new Task(this.list.currentUser);
-							task.setData(row);
-
-							const newTaskList = new Map([[taskId, task]]);
-							this.taskList.forEach((value, key) => newTaskList.set(key, value));
-							this.taskList = newTaskList;
-
-							if (this.text.length < this.minSize)
-							{
-								this.renderList(this.text === '');
-							}
-						}, 500);
-					}
-				})
-			;
-
-			this.taskList.get(taskId).open();
-		}
-
-		onProjectSelected(data)
-		{
-			const project = {
-				id: data.id,
-				name: data.title,
-				image: data.imageUrl,
-			};
-			const cacheKey = Search.cacheKeys.lastSearchedProjects;
-			let projects = this.cache.get()[cacheKey] || [];
-			projects = projects.filter(item => Number(item.id) !== Number(project.id));
-			this.cache.update(cacheKey, [project].concat(projects.slice(0, this.maxProjectCount)));
-
-			if (apiVersion >= 41)
-			{
-				let projectFromList = null;
-				this.list.taskList.forEach((task) => {
-					if (Number(task.group.id) === Number(data.id))
-					{
-						projectFromList = task.group;
-					}
-				});
-
-				const projectItem = {
-					id: project.id,
-					title: project.name,
-					params: {
-						avatar: (projectFromList ? projectFromList.image : project.image),
-						initiatedByType: (
-							projectFromList && projectFromList.additionalData
-								? projectFromList.additionalData.initiatedByType
-								: null
-						),
-						features: (
-							projectFromList && projectFromList.additionalData
-								? projectFromList.additionalData.features
-								: []
-						),
-						membersCount: (projectFromList ? projectFromList.membersCount : 0),
-						role: (
-							projectFromList && projectFromList.additionalData
-								? projectFromList.additionalData.role
-								: null
-						),
-						opened: project.opened || false,
-					},
-				};
-
-				const projectData = {
-					siteId: BX.componentParameters.get('SITE_ID', env.siteId),
-					siteDir: BX.componentParameters.get('SITE_DIR', env.siteDir),
-					projectId: project.id,
-					action: 'view',
-					item: projectItem,
-					newsPathTemplate: this.list.projectNewsPathTemplate,
-					calendarWebPathTemplate: this.list.projectCalendarWebPathTemplate,
-					currentUserId: parseInt(this.list.owner.id),
-				};
-
-				BX.postComponentEvent('projectbackground::project::action', [ projectData ], 'background');
-			}
-			else
-			{
-				(new Entry()).openTaskList({
-					groupId: project.id,
-					groupName: project.name,
-					groupImageUrl: project.image,
-					ownerId: this.list.owner.id,
-					getProjectData: true,
-				});
-			}
-
-			setTimeout(() => {
-				const newProjectList = new Map([[project.id, project]]);
-				this.projectList.forEach((value, key) => newProjectList.set(key, value));
-				this.projectList = newProjectList;
-
-				const newCommonProjectList = new Map([[project.id, project]]);
-				this.commonProjectList.forEach((value, key) => newCommonProjectList.set(key, value));
-				this.commonProjectList = newCommonProjectList;
-
-				if (this.text.length < this.minSize)
-				{
-					this.renderList(this.text === '');
-				}
-			}, 500);
-		}
-
-		removeTask(taskId)
-		{
-			if (this.taskList.has(taskId))
-			{
-				this.taskList.delete(taskId);
-				this.list.list.removeItem(taskId);
-			}
 		}
 	}
 
@@ -2308,10 +1758,14 @@ include('InAppNotifier');
 					{
 						const taskData = this.convertFields(fields.data);
 
-						this.list.taskList.has(taskId)
-							? this.updateTask(taskId, taskData)
-							: this.addTask(taskData)
-						;
+						if (this.list.taskList.has(taskId))
+						{
+							this.updateTask(taskId, taskData);
+						}
+						else
+						{
+							this.addTask(taskData);
+						}
 						break;
 					}
 
@@ -2351,7 +1805,6 @@ include('InAppNotifier');
 
 		removeTask(taskId)
 		{
-			this.list.search.removeTask(taskId);
 			this.list.removeItem(taskId);
 		}
 
@@ -2438,54 +1891,6 @@ include('InAppNotifier');
 			};
 		}
 
-		static get selectFields()
-		{
-			return [
-				'ID',
-				'TITLE',
-				'DESCRIPTION',
-				'STATUS',
-				'GROUP_ID',
-
-				'CREATED_BY',
-				'RESPONSIBLE_ID',
-				'ACCOMPLICES',
-				'AUDITORS',
-
-				'DEADLINE',
-				'ACTIVITY_DATE',
-				// 'START_DATE_PLAN',
-				// 'END_DATE_PLAN',
-
-				'FAVORITE',
-				'NOT_VIEWED',
-				'IS_MUTED',
-				'IS_PINNED',
-				'MATCH_WORK_TIME',
-				'TIME_SPENT_IN_LOGS',
-				'TIME_ESTIMATE',
-				'PRIORITY',
-
-				'COUNTERS',
-				'COMMENTS_COUNT',
-				'SERVICE_COMMENTS_COUNT',
-			];
-		}
-
-		static get queryParams()
-		{
-			return {
-				RETURN_ACCESS: 'Y',
-				RETURN_USER_INFO: 'Y',
-				RETURN_GROUP_INFO: 'Y',
-				SEND_PULL: 'Y',
-				MODE: 'mobile',
-				WITH_RESULT_INFO: 'Y',
-				WITH_TIMER_INFO: 'Y',
-				WITH_PARSED_DESCRIPTION: 'Y',
-			};
-		}
-
 		static get statusList()
 		{
 			return Task.statusList;
@@ -2494,12 +1899,12 @@ include('InAppNotifier');
 		static get titles()
 		{
 			return {
-				[Filter.roleType.all]: BX.message('TASKS_LIST_HEADER_ROLE_ALL_V2'),
-				[Filter.roleType.responsible]: BX.message('TASKS_LIST_HEADER_ROLE_RESPONSIBLE'),
-				[Filter.roleType.accomplice]: BX.message('TASKS_LIST_HEADER_ROLE_ACCOMPLICE'),
-				[Filter.roleType.originator]: BX.message('TASKS_LIST_HEADER_ROLE_ORIGINATOR'),
-				[Filter.roleType.auditor]: BX.message('TASKS_LIST_HEADER_ROLE_AUDITOR'),
-				deadlines: BX.message('TASKS_LIST_HEADER_DEADLINES'),
+				[Filter.roleType.all]: Loc.getMessage('TASKS_LIST_HEADER_ROLE_ALL_V2'),
+				[Filter.roleType.responsible]: Loc.getMessage('TASKS_LIST_HEADER_ROLE_RESPONSIBLE'),
+				[Filter.roleType.accomplice]: Loc.getMessage('TASKS_LIST_HEADER_ROLE_ACCOMPLICE'),
+				[Filter.roleType.originator]: Loc.getMessage('TASKS_LIST_HEADER_ROLE_ORIGINATOR'),
+				[Filter.roleType.auditor]: Loc.getMessage('TASKS_LIST_HEADER_ROLE_AUDITOR'),
+				deadlines: Loc.getMessage('TASKS_LIST_HEADER_DEADLINES'),
 			};
 		}
 
@@ -2587,7 +1992,7 @@ include('InAppNotifier');
 		{
 			this.list = list;
 			this.owner = {id: owner};
-			this.currentUser = result.settings.userInfo;
+			this.currentUser = result.settings.currentUser;
 			this.isTabsMode = params.isTabsMode;
 			this.projectNewsPathTemplate = (params.projectNewsPathTemplate || '');
 			this.projectCalendarWebPathTemplate = (params.projectCalendarWebPathTemplate || '');
@@ -2608,7 +2013,6 @@ include('InAppNotifier');
 				getData: data.getProjectData,
 			};
 
-			this.search = new Search(this);
 			this.welcomeScreen = new WelcomeScreen(this);
 			this.joinButton = new JoinButton(this);
 
@@ -2624,24 +2028,36 @@ include('InAppNotifier');
 			this.start = 0;
 			this.pageSize = 50;
 			this.canShowSwipeActions = true;
-			this.isRepeating = false;
 
+			this.select = new Select();
 			this.filter = new Filter(this, this.currentUser, this.owner, this.groupId);
 			this.order = new Order();
+			this.params = new Params(this, this.filter);
 			this.options = new Options();
-
-			// this.optionMenu = new OptionMenu(this);
 			this.moreMenu = new MoreMenu(this);
+			this.loading = new Loading(this);
 
 			this.pull = new Pull(this);
 			this.push = new Push(this);
 			this.fileStorage = new TaskUploadFilesStorage();
+			this.batchRequestsExecutor = new BatchRequestsExecutor();
 
 			this.cache = TasksCache.getInstance(`tasksList_${this.owner.id}_${this.groupId}`);
+
+			this.debounceSearch = debounce(
+				(text) => {
+					this.filter.setSearchText(text);
+					this.setTopButtons();
+					this.reload(0, true);
+				},
+				500,
+				this
+			);
 
 			this.getTaskLimitExceeded();
 			this.checkDeadlinesUpdate();
 			this.getOwnerData();
+			this.getPresets();
 
 			BX.addCustomEvent('onPullEvent-tasks', (command, params) => {
 				if (command === 'user_counter')
@@ -2654,7 +2070,7 @@ include('InAppNotifier');
 				this.list.setItems([
 					{
 						type: 'loading',
-						title: BX.message('TASKS_LIST_BUTTON_NEXT_PROCESS'),
+						title: Loc.getMessage('TASKS_LIST_BUTTON_NEXT_PROCESS'),
 					},
 				]);
 
@@ -2662,6 +2078,11 @@ include('InAppNotifier');
 				this.setFloatingButton();
 				this.setJoinButton();
 				this.bindEvents();
+
+				if (platform === 'ios')
+				{
+					this.showSpotlights();
+				}
 
 				this.filter.updateCounters();
 
@@ -2721,33 +2142,14 @@ include('InAppNotifier');
 			const eventHandlers = {
 				onRefresh: {
 					callback: () => {
-						if (!this.isRepeating)
-						{
-							this.reload();
-							this.filter.updateCounters();
-						}
+						this.reload();
+						this.filter.updateCounters();
 					},
 					context: this,
 				},
 				onNewItem: {
 					callback: this.onNewItem,
 					context: this,
-				},
-				onUserTypeText: {
-					callback: this.search.onUserTypeText,
-					context: this.search,
-				},
-				onSearchItemSelected: {
-					callback: this.search.onSearchItemSelected,
-					context: this.search,
-				},
-				onSearchShow: {
-					callback: this.search.onSearchShow,
-					context: this.search,
-				},
-				onSearchHide: {
-					callback: this.search.onSearchHide,
-					context: this.search,
 				},
 				onProjectSelected: {
 					callback: this.onProjectSelected,
@@ -2769,7 +2171,24 @@ include('InAppNotifier');
 					callback: this.joinButton.onClick,
 					context: this.joinButton,
 				},
+				onScroll: {
+					callback: () => {
+						if (isSearchByPresetsEnable)
+						{
+							this.list.search.close();
+						}
+					},
+					context: this,
+				},
 			};
+
+			if (platform !== 'ios')
+			{
+				eventHandlers.onViewShown = {
+					callback: this.showSpotlights,
+					context: this,
+				};
+			}
 
 			this.list.setListener((event, data) => {
 				console.log(`Fire event: app.${event}`);
@@ -2811,11 +2230,16 @@ include('InAppNotifier');
 		{
 			const isDefaultRole = this.filter.getRole() === Filter.roleType.all;
 			const isDefaultCounter = this.filter.getCounter() === Filter.counterType.none;
+			const isDefaultSearch = (this.filter.getPreset() === Filter.presetType.default && !this.filter.getSearchText());
 
 			this.list.setRightButtons([
 				{
 					type: 'search',
-					callback: () => this.list.showSearchBar(),
+					badgeCode: 'tasksTaskListSearchButton',
+					svg: {
+						content: magnifierWithMenuAndDot('#a8adb4', (isDefaultSearch ? null : '#2fc6f6')),
+					},
+					callback: () => this.onSearchClick(),
 				},
 				{
 					type: (isDefaultRole && isDefaultCounter ? 'more' : 'more_active'),
@@ -2824,6 +2248,79 @@ include('InAppNotifier');
 				},
 			]);
 			this.filter.setVisualCounters();
+		}
+
+		onSearchClick()
+		{
+			if (isSearchByPresetsEnable)
+			{
+				if (!this.isSearchInit)
+				{
+					this.isSearchInit = true;
+
+					this.list.search.mode = 'layout';
+					this.list.search.on('textChanged', ({text}) => this.debounceSearch(text));
+					this.list.search.on('cancel', () => {
+						if (
+							this.filter.getSearchText()
+							|| this.filter.getPreset() !== Filter.presetType.default
+						)
+						{
+							this.filter.setSearchText('');
+							this.filter.setPreset(Filter.presetType.default);
+
+							this.setTopButtons();
+							this.reload(0, true);
+						}
+					});
+				}
+				this.searchLayout = new PresetList({
+					presets: this.presets,
+					currentPreset: this.filter.getPreset(),
+				});
+				this.searchLayout.on('presetSelected', (preset) => {
+					if (preset.id === this.filter.getPreset())
+					{
+						this.filter.setPreset(Filter.presetType.none);
+					}
+					else
+					{
+						this.filter.setPreset(preset.id);
+						this.filter.setRole(Filter.roleType.all);
+						this.filter.setCounter(Filter.counterType.none);
+					}
+					this.setTopButtons();
+					this.reload(0, true);
+				});
+				this.list.search.text = this.filter.getSearchText();
+				this.list.search.show(this.searchLayout, 46);
+			}
+			else
+			{
+				if (!this.isSearchInit)
+				{
+					this.isSearchInit = true;
+
+					this.list.search.mode = 'bar';
+					this.list.search.on('textChanged', ({text}) => this.debounceSearch(text));
+					this.list.search.on('cancel', () => {
+						if (
+							this.filter.getSearchText()
+							|| this.filter.getPreset() !== Filter.presetType.default
+						)
+						{
+							this.filter.setSearchText('');
+							this.filter.setPreset(Filter.presetType.default);
+
+							this.setTopButtons();
+							this.reload(0, true);
+						}
+					});
+					this.list.search.on('clickEnter', () => this.list.search.close());
+				}
+				this.list.search.text = this.filter.getSearchText();
+				this.list.search.show();
+			}
 		}
 
 		setFloatingButton()
@@ -2869,21 +2366,22 @@ include('InAppNotifier');
 						{
 							const taskCreateParameters = {
 								currentUser: this.currentUser,
-								responsible: this.owner,
-								groupId: this.groupId,
-								groupData: {},
 								diskFolderId: result.diskFolderId,
 								deadlines: this.options.get().deadlines.value,
+								initialTaskData: {
+									responsible: this.owner,
+								},
 							};
 							if (this.groupId > 0)
 							{
-								taskCreateParameters.groupData = {
+								taskCreateParameters.initialTaskData.groupId = this.groupId;
+								taskCreateParameters.initialTaskData.group = {
 									id: this.group.id,
 									name: this.group.name,
 									image: this.group.imageUrl,
 								};
 							}
-							TaskCreateManager.open(taskCreateParameters);
+							TaskCreate.open(taskCreateParameters);
 						}
 						else
 						{
@@ -2903,6 +2401,18 @@ include('InAppNotifier');
 			if (this.group.id > 0 && this.group.isOpened && !this.isMember())
 			{
 				this.joinButton.showForOpened();
+			}
+		}
+
+		showSpotlights()
+		{
+			if (isSearchByPresetsEnable)
+			{
+				const searchButtonSpotlight = new Spotlight({
+					target: 'tasksTaskListSearchButton',
+					text: Loc.getMessage('TASKS_LIST_SEARCH_SPOTLIGHT_TEXT'),
+				});
+				searchButtonSpotlight.show();
 			}
 		}
 
@@ -2926,7 +2436,17 @@ include('InAppNotifier');
 					console.log('tasks cache is empty');
 					return;
 				}
-				cachedTasks = cachedTasks.map(task => ({...task, checkable: false}));
+				cachedTasks = cachedTasks.map(cachedTaskData => {
+					try {
+						const task = new Task(this.currentUser);
+						task.setData(cachedTaskData.rowData);
+						this.taskList.set(task.id.toString(), task);
+					} catch (e) {
+						console.log(e);
+					}
+
+					return {...cachedTaskData, checkable: false};
+				});
 
 				this.list.setItems(cachedTasks, null, false);
 			});
@@ -2937,51 +2457,55 @@ include('InAppNotifier');
 			BX.onViewLoaded(() => {
 				console.log('reload');
 
-				if (!this.isRepeating)
+				if (showLoading)
 				{
-					if (showLoading)
-					{
-						this.showLoading();
-					}
-					this.updateTitle(true);
+					this.loading.show();
 				}
+				this.updateTitle(true);
 
-				let select = TaskList.selectFields;
-				if (!this.isMyList())
-				{
-					select = select.filter(field => field !== 'IS_PINNED');
-				}
+				this.select.setGetPinned(this.isMyList());
+				this.params.setGetPlusOne(true);
 
 				const batchOperations = {
 					all: ['tasks.task.list', {
-						select,
+						select: this.select.get(),
 						filter: this.filter.get(),
 						order: this.order.get(),
+						params: this.params.get(),
 						start: taskListOffset,
-						params: {
-							...TaskList.queryParams,
-							...{GET_PLUS_ONE: 'Y'},
-						},
 					}],
 				};
 
 				if (!taskListOffset && this.isMyList())
 				{
 					batchOperations.pinned = ['tasks.task.list', {
-						select,
-						filter: this.filter.getForPinned(),
-						order: this.order.get(),
-						params: {
-							...TaskList.queryParams,
-							...{GET_PLUS_ONE: 'Y'},
+						select: this.select.get(),
+						filter: {
+							...this.filter.get(),
+							IS_PINNED: 'Y',
 						},
+						order: this.order.get(),
+						params: this.params.get(),
 					}];
 				}
 
-				BX.rest.callBatch(batchOperations, (result) => {
-					this.onReloadSuccess(result, showLoading, taskListOffset);
-				});
+				this.batchRequestsExecutor.execute(batchOperations)
+					.then((result) => {
+						this.onReloadSuccess(result, showLoading, taskListOffset);
+					}).catch((error) => {
+						this.onReloadFail(error, showLoading);
+					});
 			});
+		}
+
+		onReloadFail(error, showLoading)
+		{
+			console.log('onReloadFail', error);
+			if (showLoading)
+			{
+				this.loading.hide();
+			}
+			this.list.stopRefreshing();
 		}
 
 		onReloadSuccess(response, showLoading, taskListOffset)
@@ -2989,15 +2513,6 @@ include('InAppNotifier');
 			console.log('onReloadSuccess', response);
 
 			const {all, pinned} = response;
-
-			// if (Number(all.status) !== 200 || (pinned && Number(pinned.status) !== 200))
-			// {
-			// 	this.isRepeating = true;
-			// 	setTimeout(() => this.reload(taskListOffset, showLoading), 5000);
-			// 	return;
-			// }
-			// this.isRepeating = false;
-
 			const tasks = (all ? all.answer.result.tasks : []) || [];
 			const isNextPageExist = tasks.length > this.pageSize;
 			if (isNextPageExist)
@@ -3023,6 +2538,7 @@ include('InAppNotifier');
 				const task = new Task(this.currentUser);
 				task.setData(row);
 				const item = this.getItemDataFromTask(task);
+				item.rowData = row;
 
 				items.push(item);
 				this.taskList.set(task.id, task);
@@ -3037,7 +2553,7 @@ include('InAppNotifier');
 
 			if (showLoading)
 			{
-				this.hideLoading();
+				this.loading.hide();
 			}
 			this.updateTitle();
 			this.list.stopRefreshing();
@@ -3107,7 +2623,7 @@ include('InAppNotifier');
 			{
 				this.list.addItems([{
 					id: '-more-',
-					title: BX.message('TASKS_LIST_BUTTON_NEXT'),
+					title: Loc.getMessage('TASKS_LIST_BUTTON_NEXT'),
 					type: 'button',
 					sectionCode: SectionHandler.sections.more,
 				}]);
@@ -3116,7 +2632,12 @@ include('InAppNotifier');
 
 		handleSwipeActionsShow(items)
 		{
-			const {swipeShowHelper} = this.options.get();
+			let {swipeShowHelper} = this.options.get();
+			if (!swipeShowHelper)
+			{
+				swipeShowHelper = this.options.getDefaultOptions().swipeShowHelper;
+				this.options.update('swipeShowHelper', swipeShowHelper);
+			}
 
 			if ((swipeShowHelper.value < swipeShowHelper.limit) && this.canShowSwipeActions)
 			{
@@ -3125,30 +2646,10 @@ include('InAppNotifier');
 				items[0].showSwipeActions = true;
 				swipeShowHelper.value += 1;
 
-				const name = (obj => Object.keys(obj)[0]);
-				this.options.update(name({swipeShowHelper}), swipeShowHelper);
+				this.options.update('swipeShowHelper', swipeShowHelper);
 			}
 
 			return items;
-		}
-
-		showLoading()
-		{
-			if (apiVersion >= 34)
-			{
-				dialogs.showSpinnerIndicator({
-					color: '#777777',
-					backgroundColor: '#77FFFFFF',
-				});
-			}
-		}
-
-		hideLoading()
-		{
-			if (apiVersion >= 34)
-			{
-				dialogs.hideSpinnerIndicator();
-			}
 		}
 
 		onTabSelected(data)
@@ -3176,7 +2677,7 @@ include('InAppNotifier');
 		onAppActiveBefore()
 		{
 			BX.onViewLoaded(() => {
-				if (this.push)
+				if (this.push && !isSearchByPresetsEnable)
 				{
 					this.push.updateList();
 				}
@@ -3214,7 +2715,7 @@ include('InAppNotifier');
 			setTimeout(() => {
 				const tasksToUpdate = new Map([
 					...this.pull.processTaskEvents(),
-					...this.push.processedTasks
+					...this.push.processedTasks,
 				]);
 				const taskIds = [...tasksToUpdate.keys()].map(taskId => taskId.toString());
 
@@ -3224,7 +2725,7 @@ include('InAppNotifier');
 				}
 				else
 				{
-					let promises = [
+					const promises = [
 						new Promise((resolve) => {
 							this.pull.setCanExecute(true);
 							this.pull.freeQueue().then(() => resolve());
@@ -3244,10 +2745,13 @@ include('InAppNotifier');
 			return new Promise((resolve, reject) => {
 				const {IS_PINNED, ...filter} = {...this.filter.get(), ID: taskIds};
 
+				this.select.setGetPinned(true);
+				this.params.setGetPlusOne(false);
+
 				(new RequestExecutor('tasks.task.list', {
-					select: TaskList.selectFields,
+					select: this.select.get(),
 					filter,
-					params: TaskList.queryParams,
+					params: this.params.get(),
 				}))
 					.call()
 					.then(
@@ -3288,26 +2792,34 @@ include('InAppNotifier');
 				const task = this.taskList.get(taskId);
 				task.setData(row);
 
-				(this.isTaskSuitList(task) || isMyNewTask)
-					? this.updateItem(taskId, task)
-					: this.removeItem(taskId)
-				;
+				if (this.isTaskSuitList(task) || isMyNewTask)
+				{
+					this.updateItem(taskId, task);
+				}
+				else
+				{
+					this.removeItem(taskId);
+				}
 			}
 			else if (!isMyNewTask)
 			{
 				const task = new Task(this.currentUser);
 				task.setData(row);
 
-				this.isTaskSuitList(task)
-					? this.addItem(task, sectionId)
-					: this.removeItem(taskId)
-				;
+				if (this.isTaskSuitList(task))
+				{
+					this.addItem(task, sectionId);
+				}
+				else
+				{
+					this.removeItem(taskId);
+				}
 			}
 		}
 
 		isTaskSuitList(task)
 		{
-			return (this.isTaskSuitFilter(task) && this.isTaskSuitGroup(task));
+			return (isSearchByPresetsEnable || (this.isTaskSuitFilter(task) && this.isTaskSuitGroup(task)));
 		}
 
 		isTaskSuitFilter(task)
@@ -3344,7 +2856,6 @@ include('InAppNotifier');
 
 			this.setFloatingButton();
 
-			this.search.fillCacheWithLastActiveProjects();
 			this.pull.setCanExecute(true);
 		}
 
@@ -3387,14 +2898,41 @@ include('InAppNotifier');
 			;
 		}
 
+		getPresets()
+		{
+			if (!isSearchByPresetsEnable)
+			{
+				return;
+			}
+
+			(new RequestExecutor('tasksmobile.Filter.getTaskListPresets', {groupId: this.groupId}))
+				.call()
+				.then((response) => {
+					this.presets = response.result;
+					if (this.searchLayout)
+					{
+						this.searchLayout.updateState({
+							presets: this.presets,
+							currentPreset: this.filter.getPreset(),
+						});
+					}
+				})
+			;
+		}
+
 		onTabsSelected(tabName)
 		{
-			const isDefaultRole = this.filter.getRole() === Filter.roleType.all;
-			const isDefaultCounter = this.filter.getCounter() === Filter.counterType.none;
+			const isDefaultPreset = (this.filter.getPreset() === Filter.presetType.default);
+			const isDefaultRole = (this.filter.getRole() === Filter.roleType.all);
+			const isDefaultCounter = (this.filter.getCounter() === Filter.counterType.none);
 
-			if (tabName !== 'tasks' && (!isDefaultRole || !isDefaultCounter || this.order.isDeadline()))
+			if (
+				tabName !== 'tasks'
+				&& (!isDefaultPreset || !isDefaultRole || !isDefaultCounter || this.order.isDeadline())
+			)
 			{
 				setTimeout(() => {
+					this.filter.setPreset(Filter.presetType.default);
 					this.filter.setRole(Filter.roleType.all);
 					this.filter.setCounter(Filter.counterType.none);
 
@@ -3567,11 +3105,7 @@ include('InAppNotifier');
 		{
 			return new Promise((resolve) => {
 				console.log('onPullDelete');
-				const taskId = data.TASK_ID.toString();
-
-				this.search.removeTask(taskId);
-				this.removeItem(taskId);
-
+				this.removeItem(data.TASK_ID.toString());
 				resolve();
 			});
 		}
@@ -3776,7 +3310,7 @@ include('InAppNotifier');
 					)
 					{
 						InAppNotifier.showNotification({
-							backgroundColor: '#075776',
+							backgroundColor: '#004f69',
 							time: 5,
 							blur: true,
 							message: `${eventData.errors[0].message}: ${eventData.file.name}`,
@@ -3901,6 +3435,7 @@ include('InAppNotifier');
 
 				this.taskList.set(taskId, task);
 				this.list.addItems([taskData]);
+				this.list.blinkItems([taskId], Task.backgroundColors.blinking);
 				this.cache.addTask({[taskId]: {task, taskData}});
 			});
 		}
@@ -4023,7 +3558,7 @@ include('InAppNotifier');
 					{id: '-more-'},
 					{
 						type: 'loading',
-						title: BX.message('TASKS_LIST_BUTTON_NEXT_PROCESS'),
+						title: Loc.getMessage('TASKS_LIST_BUTTON_NEXT_PROCESS'),
 					}
 				);
 				this.reload(this.start);
@@ -4301,7 +3836,7 @@ include('InAppNotifier');
 			this.updateItem(task.id, {activityDate: Date.now()});
 
 			Notify.showIndicatorSuccess({
-				text: BX.message('TASKS_LIST_PING_NOTIFICATION'),
+				text: Loc.getMessage('TASKS_LIST_PING_NOTIFICATION'),
 				hideAfter: 1500,
 			});
 		}
@@ -4312,7 +3847,7 @@ include('InAppNotifier');
 		onChangeDeadlineAction(task)
 		{
 			const pickerParams = {
-				title: BX.message('TASKS_LIST_POPUP_SELECT_DATE'),
+				title: Loc.getMessage('TASKS_LIST_POPUP_SELECT_DATE'),
 				type: 'datetime',
 				value: task.deadline,
 			};
@@ -4479,7 +4014,7 @@ include('InAppNotifier');
 		{
 			(new RecipientSelector('TASKS_MEMBER_SELECTOR_EDIT_responsible', ['user']))
 				.setSingleChoose(true)
-				.setTitle(BX.message('TASKS_LIST_POPUP_RESPONSIBLE'))
+				.setTitle(Loc.getMessage('TASKS_LIST_POPUP_RESPONSIBLE'))
 				.setSelected({
 					user: [{
 						id: task.responsible.id,
@@ -4525,7 +4060,7 @@ include('InAppNotifier');
 		{
 			(new RecipientSelector('TASKS_MEMBER_SELECTOR_EDIT_responsible', ['user']))
 				.setSingleChoose(true)
-				.setTitle(BX.message('TASKS_LIST_POPUP_RESPONSIBLE'))
+				.setTitle(Loc.getMessage('TASKS_LIST_POPUP_RESPONSIBLE'))
 				.setSelected({
 					user: [{
 						id: task.responsible.id,
@@ -4570,7 +4105,7 @@ include('InAppNotifier');
 
 			(new RecipientSelector('TASKS_PROJECT', ['project']))
 				.setSingleChoose(true)
-				.setTitle(BX.message('TASKS_LIST_POPUP_PROJECT'))
+				.setTitle(Loc.getMessage('TASKS_LIST_POPUP_PROJECT'))
 				.setSelected({project: selected})
 				.open()
 				.then((recipients) => {
@@ -4635,7 +4170,7 @@ include('InAppNotifier');
 		onRemoveAction(task)
 		{
 			dialogs.showActionSheet({
-				title: BX.message('TASKS_CONFIRM_DELETE'),
+				title: Loc.getMessage('TASKS_CONFIRM_DELETE'),
 				callback: (item) => {
 					if (item.code === 'YES')
 					{
@@ -4649,8 +4184,8 @@ include('InAppNotifier');
 					}
 				},
 				items: [
-					{title: BX.message('TASKS_CONFIRM_DELETE_YES'), code: 'YES'},
-					{title: BX.message('TASKS_CONFIRM_DELETE_NO'), code: 'NO'},
+					{title: Loc.getMessage('TASKS_CONFIRM_DELETE_YES'), code: 'YES'},
+					{title: Loc.getMessage('TASKS_CONFIRM_DELETE_NO'), code: 'NO'},
 				],
 			});
 		}
@@ -4714,7 +4249,7 @@ include('InAppNotifier');
 			}
 			else
 			{
-				const subHeader = (this.order.isDeadline() ? BX.message('TASKS_LIST_SUB_HEADER_DEADLINES') : '');
+				const subHeader = (this.order.isDeadline() ? Loc.getMessage('TASKS_LIST_SUB_HEADER_DEADLINES') : '');
 				titleParams.text = TaskList.titles[this.filter.getRole()].replace('#DEADLINES#', subHeader);
 			}
 

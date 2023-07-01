@@ -26,6 +26,11 @@ jn.define('layout/ui/product-grid/components/summary', (require, exports, module
 		 *     countCaption: (String|null),
 		 *     taxIncluded: (Boolean|null),
 		 *     taxPartlyIncluded: (Boolean|null),
+		 *     additionalSummary: (LayoutComponent),
+		 *     showSummaryAmount: (Boolean|null),
+		 *     showSummaryTax: (Boolean|null),
+		 *     discountCaption: (String|null),
+		 *     totalSumCaption: (String|null),
 		 * }} props
 		 * @param props
 		 */
@@ -65,12 +70,13 @@ jn.define('layout/ui/product-grid/components/summary', (require, exports, module
 						},
 						ref: (ref) => this.containerRef = ref,
 					},
+					this.state.additionalSummary,
 					Summary(
-						ItemsCount(this.state),
+						this.state.showSummaryAmount ? ItemsCount(this.state) : View(),
 						Sum(this.state),
 					),
 					Discount(this.state),
-					Taxes(this.state),
+					this.state.showSummaryTax && Taxes(this.state),
 				)
 			);
 		}
@@ -97,7 +103,7 @@ jn.define('layout/ui/product-grid/components/summary', (require, exports, module
 		}
 	}
 
-	function Discount({totalDiscount, totalWithoutDiscount, currency})
+	function Discount({totalDiscount, totalWithoutDiscount, currency, discountCaption})
 	{
 		if (totalDiscount === 0)
 		{
@@ -116,6 +122,13 @@ jn.define('layout/ui/product-grid/components/summary', (require, exports, module
 					marginBottom: 2,
 				},
 			},
+			discountCaption && Text({
+				style: {
+					color: '#A8ADB4',
+					fontSize: 12,
+				},
+				text: discountCaption,
+			}),
 			DiscountPrice({
 				discount,
 				oldPrice,
@@ -171,9 +184,17 @@ jn.define('layout/ui/product-grid/components/summary', (require, exports, module
 					text: Loc.getMessage('PRODUCT_GRID_SUMMARY_TOTAL_TAX'),
 				}),
 				MoneyView({
-					money: Money.create({amount: totalTax, currency}),
-					renderAmount: text => Text({text, style: bold}),
-					renderCurrency: text => Text({text, style: bold}),
+					money: Money.create({ amount: totalTax, currency }),
+					renderAmount: text => Text({
+						testId: 'product-grid-summary-tax-total-amount',
+						text,
+						style: bold,
+					}),
+					renderCurrency: text => Text({
+						testId: 'product-grid-summary-tax-total-currency',
+						text,
+						style: bold,
+					}),
 				}),
 			),
 			(totalTax > 0) && View(
@@ -202,6 +223,7 @@ jn.define('layout/ui/product-grid/components/summary', (require, exports, module
 				}
 			},
 			Text({
+				testId: 'product-grid-summary-items-count',
 				text: countCaption,
 				style: {
 					fontSize: 18,
@@ -212,8 +234,10 @@ jn.define('layout/ui/product-grid/components/summary', (require, exports, module
 		);
 	}
 
-	function Sum({totalCost, currency})
+	function Sum({totalCost, currency, totalSumCaption})
 	{
+		const totalCaption = totalSumCaption || Loc.getMessage('PRODUCT_GRID_SUMMARY_TOTAL');
+
 		return View(
 			{
 				style: {
@@ -225,7 +249,7 @@ jn.define('layout/ui/product-grid/components/summary', (require, exports, module
 			View(
 				{},
 				Text({
-					text: Loc.getMessage('PRODUCT_GRID_SUMMARY_TOTAL'),
+					text: totalCaption,
 					style: {
 						color: '#525C69',
 						fontSize: 18,
@@ -237,6 +261,7 @@ jn.define('layout/ui/product-grid/components/summary', (require, exports, module
 			MoneyView({
 				money: Money.create({amount: totalCost, currency}),
 				renderAmount: (formattedAmount) => Text({
+					testId: 'product-grid-summary-total-amount',
 					text: formattedAmount,
 					style: {
 						fontSize: 20,
@@ -245,6 +270,7 @@ jn.define('layout/ui/product-grid/components/summary', (require, exports, module
 					}
 				}),
 				renderCurrency: (formattedCurrency) => Text({
+					testId: 'product-grid-summary-total-currency',
 					text: formattedCurrency,
 					style: {
 						fontSize: 20,
@@ -257,6 +283,6 @@ jn.define('layout/ui/product-grid/components/summary', (require, exports, module
 	}
 
 
-	module.exports = { ProductGridSummary };
+	module.exports = { ProductGridSummary, Discount, ItemsCount, Taxes, Sum };
 
 });

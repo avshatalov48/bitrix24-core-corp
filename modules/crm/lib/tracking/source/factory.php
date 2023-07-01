@@ -66,6 +66,7 @@ final class Factory
 			case Base::Fb:
 				$class = Service\Facebook\Source::class;
 				break;
+			case Base::Vkads:
 			case Base::Vk:
 				//$class = Vk::class;
 				break;

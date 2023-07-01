@@ -80,4 +80,7 @@ $MESS["CRM_WEBFORM_LIST_BTN_CHOOSE_ACTION"] = "Выберите действие
 $MESS["CRM_WEBFORM_LIST_NOT_ACTIVE"] = "Не активна";
 $MESS["CRM_WEBFORM_LIST_BTN_DETAILS"] = "Подробнее";
 $MESS["CRM_WEBFORM_LIST_ITEM_WRITE_ACCESS_DENIED"] = "У вас нет прав для редактирования форм, обратитесь к администратору";
-?>
+$MESS["CRM_WEBFORM_LIST_ITEM_PHONE_NOT_VERIFIED"] = "Для работы с этой формой необходимо пройти проверку номера телефона";
+$MESS["CRM_WEBFORM_PHONE_VERIFY_CUSTOM_SLIDER_TITLE"] = "Публикация формы";
+$MESS["CRM_WEBFORM_PHONE_VERIFY_CUSTOM_TITLE"] = "Получите проверочный код в CMC";
+$MESS["CRM_WEBFORM_PHONE_VERIFY_CUSTOM_DESCRIPTION_V1"] = "В целях безопасности для публикации формы вам необходимо указать проверочный код из СМС. Это выполняется однократно для каждой формы.";

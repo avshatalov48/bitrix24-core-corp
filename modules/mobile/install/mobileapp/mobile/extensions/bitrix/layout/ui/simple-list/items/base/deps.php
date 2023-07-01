@@ -5,7 +5,6 @@ return [
 		'animation',
 		'haptics',
 		'layout/ui/detail-card/tabs/factory/type',
-		'layout/ui/simple-list/items/base/counter',
 		'crm:communication/button',
 		'layout/ui/fields',
 		'layout/ui/counter-view',

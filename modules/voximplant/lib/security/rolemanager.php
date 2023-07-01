@@ -10,7 +10,7 @@ use Bitrix\Voximplant\Model\RoleTable;
 
 class RoleManager
 {
-	protected static $userRoles = array(); // 'USER_ID' => 'ROLE_ID'
+	protected static $userRoles = []; // 'USER_ID' => 'ROLE_ID'
 	protected static $roles; // 'ROLE_ID' => 'NAME'
 	protected static $permissions; // array:  ['ROLE_ID']['ENTITY']['ACTION']['PERMISSION']
 	protected static $accessCodeToRole; //array: 'ACCESS_CODE' => string[] 'ROLES'
@@ -120,16 +120,20 @@ class RoleManager
 	public static function getUserRoles($userId)
 	{
 		if(isset(self::$userRoles[$userId]))
+		{
 			return self::$userRoles[$userId];
+		}
 
 		static::loadPermission();
 		static::loadRoleAccess();
 
-		$result = array();
+		$result = [];
 		$userAccessCodes = \CAccess::GetUserCodesArray($userId);
 
 		if(!is_array($userAccessCodes) || empty($userAccessCodes))
-			return array();
+		{
+			return [];
+		}
 
 		foreach ($userAccessCodes as $accessCode)
 		{
@@ -141,6 +145,7 @@ class RoleManager
 		$result = array_unique($result);
 
 		self::$userRoles[$userId] = $result;
+
 		return $result;
 	}
 
@@ -160,7 +165,9 @@ class RoleManager
 	{
 		$roleId = (int)$roleId;
 		if($roleId <= 0)
+		{
 			throw new ArgumentException('Role id should be greater than zero', 'roleId');
+		}
 
 		$normalizedPermissions = Permissions::getNormalizedPermissions($permissions);
 		RolePermissionTable::deleteByRoleId($roleId);
@@ -172,12 +179,12 @@ class RoleManager
 		{
 			foreach ($actions as $action => $permission)
 			{
-				RolePermissionTable::add(array(
+				RolePermissionTable::add([
 					'ROLE_ID' => $roleId,
 					'ENTITY' => $entity,
 					'ACTION' => $action,
 					'PERMISSION' => $permission
-				));
+				]);
 
 				if(static::$permissions)
 				{
@@ -204,7 +211,7 @@ class RoleManager
 		}
 
 		//everybody else's permissions are defined by their role
-		$result = array();
+		$result = [];
 
 		$userRoles = static::getUserRoles($userId);
 		foreach ($userRoles as $roleId)
@@ -221,6 +228,7 @@ class RoleManager
 				}
 			}
 		}
+
 		return $result;
 	}
 
@@ -230,7 +238,7 @@ class RoleManager
 	 */
 	protected static function getAdminPermissions()
 	{
-		$result = array();
+		$result = [];
 		$permissionMap = Permissions::getMap();
 
 		foreach ($permissionMap as $entity => $actions)
@@ -240,7 +248,9 @@ class RoleManager
 				foreach ($permissions as $permission)
 				{
 					if(!isset($result[$entity][$action]) || $result[$entity][$action] < $permission)
+					{
 						$result[$entity][$action] = $permission;
+					}
 				}
 			}
 		}

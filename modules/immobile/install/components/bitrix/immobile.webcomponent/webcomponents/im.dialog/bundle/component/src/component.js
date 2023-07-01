@@ -451,101 +451,21 @@ ChatDialog.message.init = function(callback)
 {
 	this.dialogCache = new ChatDialogCache();
 	this.dialogCache.setDatabase(this.base.database);
-	this.dialogCache.getDialog(this.base.dialogId).then(dialog =>
-	{
-		let messageData = {
-			message: {},
-			files: {},
-			users: {},
-			showMessage: {},
-			unreadMessage: {},
-			readedList: {},
-			phones: {},
-		};
+	this.dialogCache.getDialog(this.base.dialogId)
+		.then(dialog => {})
+		.catch(error => {})
+	;
 
-		if (dialog.userList)
-		{
-			for (let userId in dialog.userList)
-			{
-				if (!dialog.userList.hasOwnProperty(userId))
-				{
-					continue;
-				}
-
-				messageData.users[userId] = ChatDataConverter.getUserDataFormat(dialog.userList[userId], {dateAtom: true});
-			}
-		}
-
-		if (dialog.phoneList)
-		{
-			messageData.phones[this.base.dialogId] = dialog.phoneList;
-		}
-
-		if (this.base.dialogId.toString().startsWith('chat'))
-		{
-			messageData.readedList[this.base.dialogId] = dialog.readList;
-		}
-		else
-		{
-			messageData.readedList[this.base.dialogId] = dialog.readList[this.base.dialogId]? dialog.readList[this.base.dialogId]: {};
-		}
-
-		dialog.messages.forEach((data, messageId) =>
-		{
-			messageId = parseInt(messageId);
-			messageData.message[messageId] = data.message;
-
-			if (!messageData.showMessage[this.base.dialogId])
-				messageData.showMessage[this.base.dialogId] = [];
-
-			messageData.showMessage[this.base.dialogId].push(messageId);
-
-			data.users.forEach((user, userId) => {
-				userId = parseInt(userId);
-				messageData.users[userId] = ChatDataConverter.getUserDataFormat(user, {dateAtom: true});
-			});
-
-			data.files.forEach((file, fileId) =>
-			{
-				fileId = parseInt(fileId);
-				if (!messageData.files[data.message.chatId])
-					messageData.files[data.message.chatId] = {};
-
-				messageData.files[data.message.chatId][fileId] = file;
-			});
-		});
-
-		dialog.unreadList.forEach(messageId =>
-		{
-			if (!messageData.unreadMessage[this.base.dialogId])
-				messageData.unreadMessage[this.base.dialogId] = [];
-
-			messageData.unreadMessage[this.base.dialogId].push(messageId);
-		});
-
-		BXMobileApp.Events.postToComponent("onDialogIsOpen", {dialogId : this.base.dialogId}, 'im.recent');
-
-		if (this.dialogCache.dialogs.has(this.base.dialogId.toString()))
-		{
-			this.dialogCache.dialogs.get(this.base.dialogId.toString()).unreadList = [];
-		}
-
-		callback(messageData);
-
-	}).catch(error => {
-		console.error('ChatDialog.message.init: ', error);
-
-		let messageData = {
-			message: {},
-			files: {},
-			users: {},
-			phones: {},
-			showMessage: {},
-			unreadMessage: {},
-			readedList: {},
-		};
-		callback(messageData);
-	});
+	let messageData = {
+		message: {},
+		files: {},
+		users: {},
+		phones: {},
+		showMessage: {},
+		unreadMessage: {},
+		readedList: {},
+	};
+	callback(messageData);
 
 	BX.addCustomEvent('onImLoadLastMessage', this.onLoadLastMessage.bind(this));
 

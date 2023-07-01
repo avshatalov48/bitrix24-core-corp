@@ -7,7 +7,7 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 use Bitrix\Crm;
 
 global $APPLICATION;
-if ($_REQUEST['IFRAME'] <> 'Y' && CCrmPerms::IsAccessEnabled())
+if ((!isset($_REQUEST['IFRAME']) || $_REQUEST['IFRAME'] !== 'Y') && CCrmPerms::IsAccessEnabled())
 {
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.control_panel',

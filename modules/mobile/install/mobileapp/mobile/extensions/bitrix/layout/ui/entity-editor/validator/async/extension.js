@@ -1,4 +1,7 @@
-(() => {
+/**
+ * @module layout/ui/entity-editor/validator/async
+ */
+jn.define('layout/ui/entity-editor/validator/async', (require, exports, module) => {
 	/**
 	 * @class EntityAsyncValidator
 	 */
@@ -25,5 +28,5 @@
 		}
 	}
 
-	jnexport(EntityAsyncValidator);
-})();
+	module.exports = { EntityAsyncValidator };
+});

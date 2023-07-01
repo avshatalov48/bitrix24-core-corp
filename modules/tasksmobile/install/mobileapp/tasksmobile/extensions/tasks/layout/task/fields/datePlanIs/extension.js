@@ -43,12 +43,8 @@ jn.define('tasks/layout/task/fields/datePlanIs', (require, exports, module) => {
 				config: {
 					deepMergeStyles: {
 						...this.props.deepMergeStyles,
-						wrapper: {
-							...this.props.deepMergeStyles.wrapper,
-							height: 52,
-						},
-						readOnlyWrapper: {
-							...this.props.deepMergeStyles.readOnlyWrapper,
+						externalWrapper: {
+							...this.props.deepMergeStyles.externalWrapper,
 							height: 52,
 						},
 					},

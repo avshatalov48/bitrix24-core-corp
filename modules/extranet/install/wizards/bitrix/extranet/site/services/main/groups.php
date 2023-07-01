@@ -84,14 +84,18 @@ foreach ($arGroups as $arGroup)
 	if ($arGroup["STRING_ID"] == "EXTRANET")
 	{
 		COption::SetOptionString("extranet", "extranet_group", $groupID);
-		define("WIZARD_EXTRANET_GROUP", $groupID);
+		!defined('WIZARD_EXTRANET_GROUP') && define('WIZARD_EXTRANET_GROUP', $groupID);
 	}
 
-	if ($arGroup["STRING_ID"] == "EXTRANET_ADMIN")
-		define("WIZARD_EXTRANET_ADMIN_GROUP", $groupID);
+	if ($arGroup['STRING_ID'] == 'EXTRANET_ADMIN')
+	{
+		!defined('WIZARD_EXTRANET_ADMIN_GROUP') && define('WIZARD_EXTRANET_ADMIN_GROUP', $groupID);
+	}
 
-	if ($arGroup["STRING_ID"] == "EXTRANET_CREATE_WG")
-		define("WIZARD_EXTRANET_CREATE_WG_GROUP", $groupID);
+	if ($arGroup['STRING_ID'] == 'EXTRANET_CREATE_WG')
+	{
+		!defined('WIZARD_EXTRANET_CREATE_WG_GROUP') && define('WIZARD_EXTRANET_CREATE_WG_GROUP', $groupID);
+	}
 
 	if (!file_exists(WIZARD_SITE_PATH.".superleft.menu.php")) // don't use in cloud->box master
 	{

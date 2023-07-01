@@ -1,4 +1,4 @@
-import { Tag, Event, Type, Loc } from 'main.core';
+import { Tag, Event, Type, Loc, Dom } from 'main.core';
 import { EventEmitter } from 'main.core.events';
 
 export default class CountersItem
@@ -14,6 +14,7 @@ export default class CountersItem
 		this.filter = options.filter;
 
 		this.$container = null;
+		this.$innerContainer = null;
 		this.$remove = null;
 		this.$counter = null;
 
@@ -29,17 +30,63 @@ export default class CountersItem
 
 	getCounter()
 	{
-		if(!this.$counter)
+		if (!this.$counter)
 		{
 			const count = this.count > 99 ? '99+' : this.count;
 			this.$counter = Tag.render`
 				<div class="tasks-counters--item-counter-num ${this.getCounterColor()}">
-					<div class="tasks-counters--item-counter-num-text --stop --without-animate">${count}</div>					
+					${this.getInnerCounter(count)}
 				</div>
 			`;
 		}
 
 		return this.$counter;
+	}
+
+	getInnerCounter(counter: number)
+	{
+		if (!this.$innerContainer)
+		{
+			this.$innerContainer = Tag.render`
+				<div class="tasks-counters--item-counter-num-text --stop --without-animate">${counter}</div>		
+			`;
+		}
+
+		return this.$innerContainer;
+	}
+
+	animateCounter(start, value)
+	{
+		if (start > 99 && value > 99)
+		{
+			return;
+		}
+
+		if (value > 99)
+		{
+			value = '99+';
+		}
+
+		if (start > 99)
+		{
+			start = 99;
+		}
+
+		if (value === 0)
+		{
+			this.getContainer().classList.add('--fade');
+		}
+
+		if (value > 0)
+		{
+			this.getContainer().classList.remove('--fade');
+		}
+
+		Dom.clean(this.getCounter());
+		this.getInnerCounter().innerHTML = value;
+		this.getCounter().appendChild(this.getInnerCounter());
+		this.getCounter().classList.remove('--update');
+		this.getCounter().classList.remove('--update-multi');
 	}
 
 	getCounterColor()
@@ -50,63 +97,6 @@ export default class CountersItem
 		}
 
 		return `--${this.color}`;
-	}
-
-	animateCounter(start, value)
-	{
-		if(start > 99 && value > 99)
-			return;
-
-		value > 99
-			? value = 99
-			: null;
-
-		if(start > 99)
-			start = 99;
-
-		let duration = start - value;
-		if(duration < 0)
-			duration = duration * -1;
-
-		this.$counter.innerHTML = '';
-		this.getCounter().classList.remove('--update');
-		this.getCounter().classList.remove('--update-multi');
-
-		if(duration > 5)
-		{
-			setTimeout(()=> {
-				this.getCounter().style.animationDuration = (duration * 50) + 'ms';
-				this.getCounter().classList.add('--update-multi');
-			});
-		}
-		const timer = setInterval(()=> {
-			value < start
-				? start--
-				: start++;
-
-			const node = Tag.render`
-				<div class="tasks-counters--item-counter-num-text ${value < start ? '--decrement' : ''}">${start}</div>
-			`;
-
-			if(start === value)
-			{
-				node.classList.add('--stop');
-
-				if(duration < 5)
-					this.getCounter().classList.add('--update');
-
-				clearInterval(timer);
-				start === 0 ? this.fade() : this.unFade();
-			}
-
-			if(start !== value)
-			{
-				Event.bind(node, 'animationend', ()=> {
-					node.parentNode.removeChild(node);
-				});
-			}
-			this.$counter.appendChild(node);
-		}, 50);
 	}
 
 	updateCount(param: number)

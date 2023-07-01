@@ -4,9 +4,9 @@
 jn.define('layout/ui/detail-card/tabs/loader-factory', (require, exports, module) => {
 
 	const { TabType } = require('layout/ui/detail-card/tabs/factory/type');
-	const { EditorTabLoader } = require('layout/ui/detail-card/tabs/editor/loader');
-	const { CrmProductTabLoader } = require('layout/ui/detail-card/tabs/crm-product/loader');
-	const { TimelineTabLoader } = require('layout/ui/detail-card/tabs/timeline/loader');
+	const { EditorTabShimmer } = require('layout/ui/detail-card/tabs/shimmer/editor');
+	const { CrmProductTabShimmer } = require('layout/ui/detail-card/tabs/shimmer/crm-product');
+	const { TimelineTabShimmer } = require('layout/ui/detail-card/tabs/shimmer/timeline');
 
 	/**
 	 * @class TabLoaderFactory
@@ -18,13 +18,13 @@ jn.define('layout/ui/detail-card/tabs/loader-factory', (require, exports, module
 			switch (type)
 			{
 				case TabType.EDITOR:
-					return EditorTabLoader(props);
+					return new EditorTabShimmer(props);
 
 				case TabType.CRM_PRODUCT:
-					return CrmProductTabLoader(props);
+					return new CrmProductTabShimmer(props);
 
 				case TabType.TIMELINE:
-					return TimelineTabLoader(props);
+					return new TimelineTabShimmer(props);
 			}
 
 			return null;

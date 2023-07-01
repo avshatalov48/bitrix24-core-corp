@@ -10,7 +10,7 @@
 			bottom: 0,
 		},
 		shadow: (componentStyle) => ({
-			color: get(componentStyle, 'shadowColor', '#e6e6e6'),
+			color: get(componentStyle, 'shadowColor', '#e6e7e9'),
 			radius: 3,
 			offset: {
 				y: -3,

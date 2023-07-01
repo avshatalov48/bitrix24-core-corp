@@ -10,6 +10,7 @@ use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Timeline\Context;
 use Bitrix\Crm\Timeline\Entity\NoteTable;
 use Bitrix\Main;
+use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\Type\DateTime;
@@ -84,8 +85,7 @@ class ActivityController extends EntityController
 		$historyEntryID = 0;
 		if($typeID === \CCrmActivityType::Email)
 		{
-			//We must register all incoming emails and completed outcoming emails.
-			if($status === \CCrmActivityStatus::Completed || $direction === \CCrmActivityDirection::Incoming)
+			if($status === \CCrmActivityStatus::Completed)
 			{
 				$historyEntryID = ActivityEntry::create(
 					array(
@@ -93,7 +93,7 @@ class ActivityController extends EntityController
 						'ACTIVITY_PROVIDER_ID' => $providerID,
 						'ENTITY_ID' => $ownerID,
 						'AUTHOR_ID' => $authorID,
-						'CREATED' => $created,
+						'CREATED' => new DateTime(),
 						'BINDINGS' => self::mapBindings($bindings)
 					)
 				);
@@ -134,16 +134,22 @@ class ActivityController extends EntityController
 			&& self::isActivityProviderSupported($fields['PROVIDER_ID'])
 		)
 		{
-			$historyEntryID = ActivityEntry::create(
-				array(
-					'ACTIVITY_TYPE_ID' => $typeID,
-					'ACTIVITY_PROVIDER_ID' => $providerID,
-					'ENTITY_ID' => $ownerID,
-					'AUTHOR_ID' => $authorID,
-					'CREATED' => $created,
-					'BINDINGS' => self::mapBindings($bindings)
-				)
-			);
+			$timelineParams = [
+				'ACTIVITY_TYPE_ID' => $typeID,
+				'ACTIVITY_PROVIDER_ID' => $providerID,
+				'ENTITY_ID' => $ownerID,
+				'AUTHOR_ID' => $authorID,
+				'CREATED' => $created,
+				'BINDINGS' => self::mapBindings($bindings),
+			];
+
+			$provider = \CCrmActivity::GetProviderById($providerID);
+			if (!is_null($provider) && $provider::isTask())
+			{
+				$taskId = $fields['ASSOCIATED_ENTITY_ID'];
+				$timelineParams['SOURCE_ID'] = $taskId;
+			}
+			$historyEntryID = ActivityEntry::create($timelineParams);
 		}
 		elseif($typeID === \CCrmActivityType::Provider
 			&& isset($fields['PROVIDER_ID'])
@@ -204,7 +210,12 @@ class ActivityController extends EntityController
 
 		foreach($bindings as $binding)
 		{
-			$entityItemIdentifier = new Crm\ItemIdentifier($binding['OWNER_TYPE_ID'], $binding['OWNER_ID']);
+			$entityItemIdentifier = Crm\ItemIdentifier::createFromArray($binding);
+			if (!$entityItemIdentifier)
+			{
+				continue;
+			}
+
 			if ($enableSchedulePush)
 			{
 				$this->sendPullEventOnAddScheduled(
@@ -254,25 +265,13 @@ class ActivityController extends EntityController
 		$historyEntryID = 0;
 		if(!$prevCompleted && $curCompleted)
 		{
-			if($typeID == \CCrmActivityType::Email)
+			if (
+				$typeID === \CCrmActivityType::Provider && $providerID === Activity\Provider\Tasks\Comment::getId()
+			)
 			{
-				//Email: Add success event only if there is no child emails
-				if(!\CAllCrmActivity::HasChildren($ownerID))
-				{
-					$historyEntryID = MarkEntry::create(
-						array(
-							'MARK_TYPE_ID' => TimelineMarkType::SUCCESS,
-							'ENTITY_TYPE_ID' => \CCrmOwnerType::Activity,
-							'ENTITY_CLASS_NAME' => $providerID,
-							'ENTITY_ID' => $ownerID,
-							'AUTHOR_ID' => $authorID,
-							'BINDINGS' => self::mapBindings($currentBindings),
-							'SETTINGS' => array('IS_REPLIED' => false)
-						)
-					);
-				}
+				// do nothing...
 			}
-			else if($typeID == \CCrmActivityType::Task)
+			elseif ($typeID == \CCrmActivityType::Task)
 			{
 				$historyEntryID = MarkEntry::create(
 					array(
@@ -294,6 +293,12 @@ class ActivityController extends EntityController
 					'AUTHOR_ID' => $authorID,
 					'BINDINGS' => self::mapBindings($currentBindings),
 				];
+				$provider = \CCrmActivity::GetProviderById($providerID);
+				if (!is_null($provider) && $provider::isTask())
+				{
+					$taskId = $currentFields['ASSOCIATED_ENTITY_ID'];
+					$historyData['SOURCE_ID'] = $taskId;
+				}
 
 				// workaround to correct sort timeline history of completed calls
 				// when it automatically close
@@ -325,7 +330,10 @@ class ActivityController extends EntityController
 					$providerID,
 					[
 						Activity\Provider\ToDo::getId(),
+						Activity\Provider\ConfigurableRestApp::getId(),
 						Activity\Provider\Zoom::getId(),
+						Activity\Provider\Tasks\Task::getId(),
+						Activity\Provider\Tasks\Comment::getId(),
 					]
 				)
 			)
@@ -368,7 +376,12 @@ class ActivityController extends EntityController
 
 		foreach($currentBindings as $binding)
 		{
-			$entityItemIdentifier = new Crm\ItemIdentifier($binding['OWNER_TYPE_ID'], $binding['OWNER_ID']);
+			$entityItemIdentifier = Crm\ItemIdentifier::createFromArray($binding);
+			if (!$entityItemIdentifier)
+			{
+				continue;
+			}
+
 			if (!$prevCompleted && $curCompleted && $enableHistoryPush && $enableActivityPush)
 			// if activity has been completed and timeline history item has been produced,
 			// need actually move one to another on the timeline instead of separate remove and add events:
@@ -461,10 +474,14 @@ class ActivityController extends EntityController
 			{
 				foreach ($bindings as $binding)
 				{
-					$this->sendPullEventOnDelete(
-						new Crm\ItemIdentifier($binding['OWNER_TYPE_ID'], $binding['OWNER_ID']),
-						$timelineEntryId
-					);
+					$entityItemIdentifier = Crm\ItemIdentifier::createFromArray($binding);
+					if ($entityItemIdentifier)
+					{
+						$this->sendPullEventOnDelete(
+							$entityItemIdentifier,
+							$timelineEntryId
+						);
+					}
 				}
 			}
 		}
@@ -630,6 +647,10 @@ class ActivityController extends EntityController
 			Activity\Provider\SignDocument::getId(),
 			Activity\Provider\ToDo::getId(),
 			Activity\Provider\Payment::getId(),
+			Activity\Provider\ConfigurableRestApp::getId(),
+			Activity\Provider\CalendarSharing::getId(),
+			Activity\Provider\Tasks\Comment::getId(),
+			Activity\Provider\Tasks\Task::getId(),
 		];
 	}
 
@@ -648,6 +669,10 @@ class ActivityController extends EntityController
 			|| $providerID === Activity\Provider\Document::getId()
 			|| $providerID === Activity\Provider\SignDocument::getId()
 			|| $providerID === Activity\Provider\ToDo::getId()
+			|| $providerID === Activity\Provider\ConfigurableRestApp::getId()
+			|| $providerID === Activity\Provider\CalendarSharing::getId()
+			|| $providerID === Activity\Provider\Tasks\Comment::getId()
+			|| $providerID === Activity\Provider\Tasks\Task::getId()
 		);
 	}
 
@@ -707,6 +732,23 @@ class ActivityController extends EntityController
 		else
 		{
 			$sort = [PHP_INT_MAX, (int)$data['ID']];
+		}
+
+		$lightCounterAt = null;
+		if (isset($data['LIGHT_COUNTER_AT']))
+		{
+			$lightCounterAt = $data['LIGHT_COUNTER_AT'];
+		}
+		else
+		{
+			$lightCounterAt = ServiceLocator::getInstance()->get('crm.activity.actcounterlighttimerepo')->queryLightTimeByActivityId((int)$data['ID']);
+		}
+		if ($lightCounterAt instanceof DateTime)
+		{
+			$data['LIGHT_TIME_SERVER'] = date(
+				'Y-m-d H:i:s',
+				$lightCounterAt->getTimestamp()
+			);
 		}
 
 		$ID = isset($data['ID']) ? (int)$data['ID'] : 0;
@@ -830,9 +872,15 @@ class ActivityController extends EntityController
 
 		if ($providerID !== Activity\Provider\ToDo::getId())
 		{
+			$notLimitedDescriptionProviders = [
+				Activity\Provider\Call::getId(),
+				Activity\Provider\Meeting::getId(),
+			];
+			$descriptionLimit = in_array($providerID, $notLimitedDescriptionProviders) ? 0 : 512;
+
 			\CCrmActivity::PrepareDescriptionFields(
 				$fields,
-				['ENABLE_HTML' => false, 'ENABLE_BBCODE' => false, 'LIMIT' => 512]
+				['ENABLE_HTML' => false, 'ENABLE_BBCODE' => false, 'LIMIT' => $descriptionLimit]
 			);
 		}
 
@@ -879,10 +927,16 @@ class ActivityController extends EntityController
 		}
 		elseif($providerID === Activity\Provider\Sms::getId())
 		{
+			// first, check original message fields
 			$smsFields = Integration\SmsManager::getMessageFields($fields['ASSOCIATED_ENTITY_ID']);
-			if ($smsFields)
+			if (!$smsFields)
 			{
-				$fields['SMS_INFO'] = array(
+				$smsFields = $fields['SETTINGS']['ORIGINAL_MESSAGE']; // check message fields stored in CRM
+			}
+
+			if (!empty($smsFields) && is_array($smsFields))
+			{
+				$fields['SMS_INFO'] = [
 					'id' => $smsFields['ID'],
 					'senderId' => $smsFields['SENDER_ID'],
 					'senderShortName' => Integration\SmsManager::getSenderShortName($smsFields['SENDER_ID']),
@@ -891,12 +945,9 @@ class ActivityController extends EntityController
 						$smsFields['SENDER_ID'],
 						$smsFields['MESSAGE_FROM']
 					),
-					'statusId' => $smsFields['STATUS_ID']
-				);
-				if (Integration\SmsManager::isMessageErrorStatus($smsFields['STATUS_ID']))
-				{
-					$fields['SMS_INFO']['errorText'] = $smsFields['EXEC_ERROR'];
-				}
+					'statusId' => $smsFields['STATUS_ID'],
+					'errorText' => $smsFields['EXEC_ERROR'],
+				];
 			}
 		}
 		elseif($providerID === Activity\Provider\Notification::getId())
@@ -1030,7 +1081,9 @@ class ActivityController extends EntityController
 				'AUTHOR_ID', 'EDITOR_ID', 'RESPONSIBLE_ID',
 				'DIRECTION', 'SUBJECT', 'STATUS', 'DEADLINE', 'CREATED',
 				'DESCRIPTION', 'DESCRIPTION_TYPE', 'ASSOCIATED_ENTITY_ID',
-				'STORAGE_TYPE_ID', 'STORAGE_ELEMENT_IDS', 'ORIGIN_ID', 'SETTINGS'
+				'STORAGE_TYPE_ID', 'STORAGE_ELEMENT_IDS', 'ORIGIN_ID', 'SETTINGS',
+				'IS_INCOMING_CHANNEL',
+				'LIGHT_COUNTER_AT',
 			)
 		);
 		return is_object($dbResult) ? $dbResult->Fetch() : null;
@@ -1227,13 +1280,25 @@ class ActivityController extends EntityController
 	protected function notifyTimelinesAboutActivityUpdateForBindings(array $activity, array $bindings, ?int $userId = null, bool $forceUpdateHistoryItems = false): void
 	{
 		$identifiers = array_map(
-			fn(array $binding) => new ItemIdentifier((int)$binding['OWNER_TYPE_ID'], (int)$binding['OWNER_ID']),
+			fn(array $binding) => ItemIdentifier::createFromArray($binding),
 			$bindings,
 		);
+		$identifiers = array_filter($identifiers);
 
 		if (empty($identifiers))
 		{
 			return;
+		}
+
+		$activityId = (int)$activity['ID'];
+
+		if (!array_key_exists('IS_INCOMING_CHANNEL', $activity))
+		{
+			$activity['IS_INCOMING_CHANNEL'] = \Bitrix\Crm\Activity\IncomingChannel::getInstance()->isIncomingChannel($activityId) ? 'Y' : 'N';
+		}
+		if (!array_key_exists('LIGHT_COUNTER_AT', $activity))
+		{
+			$activity['LIGHT_COUNTER_AT'] = ServiceLocator::getInstance()->get('crm.activity.actcounterlighttimerepo')->queryLightTimeByActivityId($activityId);
 		}
 
 		$isCompleted = ($activity['COMPLETED'] ?? 'N') === 'Y';
@@ -1241,7 +1306,7 @@ class ActivityController extends EntityController
 		{
 			$timelineEntryIds = TimelineEntry::getEntriesIdsByAssociatedEntity(
 				\CCrmOwnerType::Activity,
-				(int)$activity['ID'],
+				$activityId,
 				self::MAX_SIMULTANEOUS_PULL_EVENT_COUNT,
 			);
 
@@ -1257,7 +1322,7 @@ class ActivityController extends EntityController
 		if (!$isCompleted)
 		{
 			$scheduledData = $activity;
-			$items = [$activity['ID'] => &$scheduledData];
+			$items = [$activityId => &$scheduledData];
 
 			self::loadCommunicationsAndMultifields(
 				$items,

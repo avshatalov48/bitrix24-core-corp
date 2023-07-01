@@ -206,3 +206,8 @@ DROP TABLE IF EXISTS b_crm_timeline_note;
 DROP TABLE IF EXISTS b_crm_entity_countable_act;
 DROP TABLE IF EXISTS b_crm_store_document_contractor;
 DROP TABLE IF EXISTS b_crm_contractor_conversion;
+DROP TABLE IF EXISTS b_crm_custom_badge;
+DROP TABLE IF EXISTS b_crm_timeline_custom_icon;
+DROP TABLE IF EXISTS b_crm_timeline_custom_logo;
+DROP TABLE IF EXISTS b_crm_field_content_type;
+DROP TABLE IF EXISTS b_crm_act_counter_light;

@@ -13,9 +13,9 @@ use Bitrix\Main\Entity;
  *
  * <<< ORMENTITYANNOTATION
  * @method static EO_EntityRecovery_Query query()
- * @method static EO_EntityRecovery_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_EntityRecovery_Result getByPrimary($primary, array $parameters = [])
  * @method static EO_EntityRecovery_Result getById($id)
- * @method static EO_EntityRecovery_Result getList(array $parameters = array())
+ * @method static EO_EntityRecovery_Result getList(array $parameters = [])
  * @method static EO_EntityRecovery_Entity getEntity()
  * @method static \Bitrix\Crm\Recovery\EO_EntityRecovery createObject($setDefaultValues = true)
  * @method static \Bitrix\Crm\Recovery\EO_EntityRecovery_Collection createCollection()

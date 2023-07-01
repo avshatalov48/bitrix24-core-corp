@@ -84,7 +84,27 @@ final class Binding implements FieldImplementation
 	{
 		if ($this->fieldNameMap->isSingleIdFilled() && $commonFieldName === $this->fieldNameMap->getSingleId())
 		{
-			$bindings = EntityBinding::prepareEntityBindings($this->boundEntityTypeId, [(int)$value]);
+			$value = (int)$value;
+			if ($value < 0)
+			{
+				$value = 0;
+			}
+
+			$currentIds = EntityBinding::prepareEntityIDs(
+				$this->boundEntityTypeId,
+				$this->get($this->fieldNameMap->getBindings()),
+			);
+
+			if (in_array($value, $currentIds, true))
+			{
+				// we have nothing to do, its bound already
+				return;
+			}
+			else
+			{
+				// remove all old bindings and bind this new item
+				$bindings = EntityBinding::prepareEntityBindings($this->boundEntityTypeId, [(int)$value]);
+			}
 		}
 		elseif ($this->fieldNameMap->isMultipleIdsFilled() && $commonFieldName === $this->fieldNameMap->getMultipleIds())
 		{
@@ -170,6 +190,11 @@ final class Binding implements FieldImplementation
 		$this->entityObject->unset($this->fieldNameMap->getBindings());
 	}
 
+	public function getDefaultValue(string $commonFieldName)
+	{
+		return null;
+	}
+
 	public function afterSuccessfulItemSave(Item $item, EntityObject $entityObject): void
 	{
 	}
@@ -178,6 +203,17 @@ final class Binding implements FieldImplementation
 	{
 		// everything was saved at entityObject save
 		return new Result();
+	}
+
+	public function getSerializableFieldNames(): array
+	{
+		$result = [];
+		if ($this->fieldNameMap->isMultipleIdsFilled())
+		{
+			$result[] = $this->fieldNameMap->getMultipleIds();
+		}
+
+		return $result;
 	}
 
 	public function getExternalizableFieldNames(): array

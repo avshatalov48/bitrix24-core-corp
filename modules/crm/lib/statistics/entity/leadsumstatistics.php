@@ -12,9 +12,9 @@ use Bitrix\Main\Entity\DatetimeField;
  *
  * <<< ORMENTITYANNOTATION
  * @method static EO_LeadSumStatistics_Query query()
- * @method static EO_LeadSumStatistics_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_LeadSumStatistics_Result getByPrimary($primary, array $parameters = [])
  * @method static EO_LeadSumStatistics_Result getById($id)
- * @method static EO_LeadSumStatistics_Result getList(array $parameters = array())
+ * @method static EO_LeadSumStatistics_Result getList(array $parameters = [])
  * @method static EO_LeadSumStatistics_Entity getEntity()
  * @method static \Bitrix\Crm\Statistics\Entity\EO_LeadSumStatistics createObject($setDefaultValues = true)
  * @method static \Bitrix\Crm\Statistics\Entity\EO_LeadSumStatistics_Collection createCollection()

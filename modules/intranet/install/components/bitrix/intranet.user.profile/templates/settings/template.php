@@ -11,7 +11,8 @@ use \Bitrix\Main\Web\Json;
 \Bitrix\Main\UI\Extension::load([
 	'ui.buttons',
 	'ui.common',
-	'ui.design-tokens'
+	'ui.design-tokens',
+	'ui.entity-editor',
 ]);
 
 ?>

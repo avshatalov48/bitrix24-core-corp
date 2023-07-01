@@ -15,6 +15,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
 use Bitrix\Disk\Ui\FileAttributes;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Web\Uri;
 
 Loc::loadMessages(__DIR__ . '/template.php');
 Loc::loadMessages(__FILE__);
@@ -101,7 +102,7 @@ if (!isset($diskTitleFormat) || !is_callable($diskTitleFormat))
 				'<div class="tasks-grid-username-wrapper '.$extraClass.'">'.
 				'<a class="tasks-grid-username disk-volume-storage-link" target="_self" href="'.$row['ACTION_URL'].'" '.$linkStorageReload($row).'>'.
 				'<span class="tasks-grid-avatar" '.
-				($row['PICTURE'] ? 'style="background-image: url(\''.$row['PICTURE'].'\')"' : '').
+				($row['PICTURE'] ? 'style="background-image: url(\''. Uri::urnEncode($row['PICTURE']).'\')"' : '').
 				'></span>'.
 				'<span class="tasks-grid-username-inner">'.
 				$row['TITLE'].
@@ -134,7 +135,7 @@ if (!isset($diskTitleFormat) || !is_callable($diskTitleFormat))
 				'<div class="tasks-grid-username-wrapper '.$extraClass.'">'.
 				'<a class="tasks-grid-username tasks-grid-groupname disk-volume-storage-link" target="_self" href="'.$row['ACTION_URL'].'" '.$linkStorageReload($row).'>'.
 				'<span class="tasks-grid-avatar tasks-grid-avatar-group" '.
-				($row['PICTURE'] ? 'style="background-image: url(\''.$row['PICTURE'].'\')"' : '').
+				($row['PICTURE'] ? 'style="background-image: url(\''.Uri::urnEncode($row['PICTURE']).'\')"' : '').
 				'></span>'.
 				'<span class="tasks-grid-username-inner">'.
 				$row['TITLE'].
@@ -234,7 +235,7 @@ if (!isset($folderTitleFormat) || !is_callable($folderTitleFormat))
 
 					'<a class="tasks-grid-username disk-volume-folder-link" target="_self" href="'.$row['ACTION_URL'].'" '.$linkFolderReload($row).'>'.
 					'<span class="bx-disk-volume-im-avatar" '.(!empty($specific['chat']['color']) ? 'style="background-color:'.$specific['chat']['color'].'"' : '').'>'.
-						'<span class="bx-disk-volume-im-avatar-default '.$specific['chat']['style'].'" '.(!empty($specific['chat']['avatar']) ? 'style="background-image: url('.$specific['chat']['avatar'].')"' : '').'></span>'.
+						'<span class="bx-disk-volume-im-avatar-default '.$specific['chat']['style'].'" '.(!empty($specific['chat']['avatar']) ? 'style="background-image: url(\''. Uri::urnEncode($specific['chat']['avatar']).'\')"' : '').'></span>'.
 					'</span>'.
 					'<span class="tasks-grid-username-inner">'.
 						Loc::getMessage('DISK_VOLUME_IM_'.mb_strtoupper($specific['chat']['type'])).': '.
@@ -298,7 +299,7 @@ if (!isset($fileTitleFormat) || !is_callable($fileTitleFormat))
 			{
 				$iconClass = \Bitrix\Disk\Ui\Icon::getIconClassByObject($file);
 				$urlManager = \Bitrix\Disk\Driver::getInstance()->getUrlManager();
-				$sourceUri = new \Bitrix\Main\Web\Uri($urlManager->getUrlForDownloadFile($file));
+				$sourceUri = new Uri($urlManager->getUrlForDownloadFile($file));
 				$dataAttributesForViewer = FileAttributes::tryBuildByFileId($file->getFileId(), $sourceUri)
 					->setObjectId($file->getId())
 					->setTitle($file->getName())

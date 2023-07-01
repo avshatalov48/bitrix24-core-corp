@@ -10,6 +10,7 @@ class Audio extends ContentBlock
 	protected string $source = '';
 	protected ?string $title = null;
 	protected ?string $imageUrl = null;
+	protected ?string $recordName = null;
 
 	public function getRendererName(): string
 	{
@@ -64,6 +65,18 @@ class Audio extends ContentBlock
 		return $this->imageUrl;
 	}
 
+	public function setRecordName(?string $recordName): self
+	{
+		$this->recordName = $recordName;
+
+		return $this;
+	}
+
+	public function getRecordName(): ?string
+	{
+		return $this->recordName;
+	}
+
 	protected function getProperties(): array
 	{
 		return [
@@ -71,6 +84,7 @@ class Audio extends ContentBlock
 			'src' => $this->getSource(),
 			'title' => $this->getTitle(),
 			'imageUrl' => $this->getImageUrl(),
+			'recordName' => $this->getRecordName(),
 		];
 	}
 }

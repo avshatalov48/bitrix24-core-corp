@@ -4,7 +4,6 @@ namespace Bitrix\Crm\Entity\Compatibility\Adapter;
 
 use Bitrix\Crm\Comparer\ComparerBase;
 use Bitrix\Crm\Entity\Compatibility\Adapter;
-use Bitrix\Crm\Reservation;
 use Bitrix\Crm\Service;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Error;
@@ -115,11 +114,6 @@ final class Operation extends Adapter
 		$this->exposedOnlyAfterUpdateFields = $fieldNames;
 
 		return $this;
-	}
-
-	protected function doGetFieldsInfo(): array
-	{
-		return $this->factory->getFieldsInfoByMap();
 	}
 
 	protected function doPerformAdd(array &$fields, array $compatibleOptions): Result
@@ -237,7 +231,7 @@ final class Operation extends Adapter
 			$this->exposedOnlyAfterAddFields,
 		);
 
-		return $this->exposeFields($compatibleData, $providedFields, $fieldsToExposeAdditionally);
+		return $this->exposeFields($compatibleData, $providedFields, $fieldsToExposeAdditionally, true);
 	}
 
 	/**
@@ -268,7 +262,7 @@ final class Operation extends Adapter
 			$changedFields,
 		);
 
-		return $this->exposeFields($currentCompatibleData, $providedFields, $fieldsToExposeAdditionally);
+		return $this->exposeFields($currentCompatibleData, $providedFields, $fieldsToExposeAdditionally, false);
 	}
 
 	/**
@@ -277,7 +271,12 @@ final class Operation extends Adapter
 	 * @param string[] $fieldsToExposeAdditionally
 	 * @return Array<string, mixed>
 	 */
-	private function exposeFields(array $compatibleData, array $providedFields, array $fieldsToExposeAdditionally): array
+	private function exposeFields(
+		array $compatibleData,
+		array $providedFields,
+		array $fieldsToExposeAdditionally,
+		bool $exposeAllUserFields
+	): array
 	{
 		$result = [];
 		foreach ($providedFields as $providedFieldName => $providedValue)
@@ -294,7 +293,10 @@ final class Operation extends Adapter
 
 		foreach ($compatibleData as $fieldName => $value)
 		{
-			if (in_array($fieldName, $fieldsToExposeAdditionally, true) || mb_strpos($fieldName, 'UF_') === 0)
+			if (
+				in_array($fieldName, $fieldsToExposeAdditionally, true)
+				|| ($exposeAllUserFields && mb_strpos($fieldName, 'UF_') === 0)
+			)
 			{
 				$result[$fieldName] = $value;
 			}

@@ -40,11 +40,11 @@ final class ItemIndicator
 		return [
 			self::OWN_TYPE => [
 				'id' => self::OWN_TYPE,
-				'color' => '#378ee7',
+				'color' => '#0091e3',
 			],
 			self::SOMEONE_TYPE => [
 				'id' => self::SOMEONE_TYPE,
-				'color' => '#b8c0c9',
+				'color' => '#bdc1c6',
 			],
 		];
 	}

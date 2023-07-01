@@ -8,4 +8,5 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	'ui.design-tokens',
 	'ui.fonts.opensans',
 	'ui.dialogs.messagebox',
+	'bitrix24.phoneverify',
 ]);

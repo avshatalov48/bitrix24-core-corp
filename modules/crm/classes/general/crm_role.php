@@ -37,7 +37,25 @@ class CCrmRole
 				'FIELD_NAME' => 'R.NAME',
 				'FIELD_TYPE' => 'string',
 				'JOIN' => false
-			)
+			),
+			'IS_SYSTEM' => array(
+				'TABLE_ALIAS' => 'R',
+				'FIELD_NAME' => 'R.IS_SYSTEM',
+				'FIELD_TYPE' => 'string',
+				'JOIN' => false
+			),
+			'CODE' => array(
+				'TABLE_ALIAS' => 'R',
+				'FIELD_NAME' => 'R.CODE',
+				'FIELD_TYPE' => 'string',
+				'JOIN' => false
+			),
+			'GROUP_CODE' => array(
+				'TABLE_ALIAS' => 'R',
+				'FIELD_NAME' => 'R.GROUP_CODE',
+				'FIELD_TYPE' => 'string',
+				'JOIN' => false
+			),
 		);
 
 		$obQueryWhere = new CSQLWhere();
@@ -77,7 +95,7 @@ class CCrmRole
 
 		$sSql = "
 			SELECT
-				ID, NAME
+				ID, NAME, IS_SYSTEM, CODE, GROUP_CODE
 			FROM
 				b_crm_role R
 			WHERE
@@ -99,11 +117,17 @@ class CCrmRole
 		return $obRes;
 	}
 
-	public function SetRelation($arRelation)
+	public function SetRelation($arRelation, $ignoreSystem = true)
 	{
 		$this->log('SetRelation', $arRelation);
 		global $DB;
-		$sSql = 'DELETE FROM b_crm_role_relation';
+		
+		$sSql = $ignoreSystem
+			? 'DELETE RR FROM b_crm_role_relation RR '.
+			' LEFT JOIN b_crm_role AS R ON R.ID = RR.ROLE_ID WHERE IS_SYSTEM != \'Y\''
+			: 'DELETE FROM b_crm_role_relation'
+		;
+		
 		$DB->Query($sSql, false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
 		foreach ($arRelation as $sRel => $arRole)
 		{

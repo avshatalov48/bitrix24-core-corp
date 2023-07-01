@@ -1,31 +1,36 @@
 <?php
-if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
+use Bitrix\Catalog;
 use Bitrix\Crm;
-use Bitrix\Crm\Restriction\RestrictionManager;
+use Bitrix\Crm\Binding;
+use Bitrix\Crm\Component\ComponentError;
+use Bitrix\Crm\Component\EntityDetails\ComponentMode;
+use Bitrix\Crm\Order;
+use Bitrix\Crm\Product\Url;
+use Bitrix\Crm\Security\EntityPermissionType;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\EditorAdapter;
 use Bitrix\Main;
-use Bitrix\Salescenter;
-use Bitrix\Sale;
-use Bitrix\Crm\Order;
-use Bitrix\Crm\Binding;
-use Bitrix\Sale\Delivery;
-use Bitrix\Sale\PaySystem;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Sale\Services;
-use Bitrix\Crm\Component\ComponentError;
-use Bitrix\Crm\Security\EntityPermissionType;
-use Bitrix\Crm\Component\EntityDetails\ComponentMode;
+use Bitrix\Sale;
+use Bitrix\Sale\Delivery;
 use Bitrix\Sale\Helpers\Order\Builder;
-use Bitrix\Crm\Product\Url;
-use Bitrix\Catalog;
+use Bitrix\Sale\PaySystem;
+use Bitrix\Sale\Services;
+use Bitrix\Salescenter;
 
-if(!Main\Loader::includeModule('crm'))
+if (!Main\Loader::includeModule('crm'))
 {
 	ShowError(Loc::getMessage('CRM_MODULE_NOT_INSTALLED'));
+
 	return;
 }
+
 if (!Main\Loader::includeModule('catalog'))
 {
 	ShowError(Loc::getMessage('CATALOG_MODULE_NOT_INSTALLED'));
@@ -54,13 +59,21 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 		/** @global \CMain $APPLICATION */
 		global $APPLICATION;
 
-		$this->arResult['ENTITY_ID'] = isset($this->arParams['~ENTITY_ID']) ? (int)$this->arParams['~ENTITY_ID'] : 0;
+		$this->arResult['ENTITY_ID'] = (int)($this->arParams['~ENTITY_ID'] ?? 0);
 
 		$this->arResult['PATH_TO_USER_PROFILE'] = $this->arParams['PATH_TO_USER_PROFILE'] =
-			CrmCheckPath('PATH_TO_USER_PROFILE', $this->arParams['PATH_TO_USER_PROFILE'], '/company/personal/user/#user_id#/');
+			CrmCheckPath(
+				'PATH_TO_USER_PROFILE',
+				$this->arParams['PATH_TO_USER_PROFILE'] ?? '',
+				'/company/personal/user/#user_id#/'
+			);
 
 		$this->arResult['PATH_TO_BUYER_PROFILE'] = $this->arParams['PATH_TO_BUYER_PROFILE'] =
-			CrmCheckPath('PATH_TO_BUYER_PROFILE', $this->arParams['PATH_TO_BUYER_PROFILE'], '/shop/settings/sale_buyers_profile/?USER_ID=#user_id#&lang=' . LANGUAGE_ID);
+			CrmCheckPath(
+				'PATH_TO_BUYER_PROFILE',
+				$this->arParams['PATH_TO_BUYER_PROFILE'] ?? '',
+				'/shop/settings/sale_buyers_profile/?USER_ID=#user_id#&lang=' . LANGUAGE_ID
+			);
 
 		$this->arResult['NAME_TEMPLATE'] = empty($this->arParams['NAME_TEMPLATE'])
 			? CSite::GetNameFormat(false)
@@ -68,23 +81,26 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 
 		$this->arResult['PATH_TO_ORDER_CHECK_SHOW'] = CrmCheckPath(
 			'PATH_TO_ORDER_CHECK_DETAILS',
-			$this->arParams['PATH_TO_ORDER_CHECK_DETAILS'],
+			$this->arParams['PATH_TO_ORDER_CHECK_DETAILS'] ?? '',
 			$APPLICATION->GetCurPage() . '?check_id=#check_id#&check&show'
 		);
 
 		$this->arResult['PATH_TO_ORDER_CHECK_CHECK_STATUS'] = CrmCheckPath(
 			'PATH_TO_ORDER_CHECK_DETAILS',
-			$APPLICATION->GetCurPage() . '?check_id=#check_id#&action=check_status', null
+			$APPLICATION->GetCurPage() . '?check_id=#check_id#&action=check_status',
+			null
 		);
 
 		$this->arResult['PATH_TO_ORDER_CHECK_DELETE'] = CrmCheckPath(
 			'PATH_TO_ORDER_CHECK_DELETE',
-			'/bitrix/components/bitrix/crm.order.check.list/lazyload.ajax.php?id=#check_id#&action=delete&site=' . $this->arResult['SITE_ID'] . '&' . bitrix_sessid_get(), null
+			'/bitrix/components/bitrix/crm.order.check.list/lazyload.ajax.php?id=#check_id#&action=delete&site=' . ($this->arResult['SITE_ID'] ?? '') . '&' . bitrix_sessid_get(),
+			null
 		);
 
 		$this->arResult['PATH_TO_ORDER_CHECK_EDIT'] = CrmCheckPath(
 			'PATH_TO_ORDER_CHECK_EDIT',
-			'/shop/orders/check/details/#check_id#/?init_mode=edit', null
+			'/shop/orders/check/details/#check_id#/?init_mode=edit',
+			null
 		);
 
 		$enableUfCreation = \CCrmAuthorizationHelper::CheckConfigurationUpdatePermission();
@@ -235,8 +251,9 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 			'CONTACT_IDS' => []
 		];
 		if (
-			$this->arParams["EXTRAS"]['IS_SALESCENTER_ORDER_CREATION'] === 'Y' &&
-			Crm\Integration\SalesCenterManager::getInstance()->isEnabled()
+			isset($this->arParams["EXTRAS"]['IS_SALESCENTER_ORDER_CREATION'])
+			&& $this->arParams["EXTRAS"]['IS_SALESCENTER_ORDER_CREATION'] === 'Y'
+			&& Crm\Integration\SalesCenterManager::getInstance()->isEnabled()
 		)
 		{
 			if(isset($this->arParams['EXTRAS']['CLIENT_INFO']))
@@ -418,11 +435,8 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 		$this->prepareEntityData($this->mode);
 
 		//region GUID
-		$this->guid = $this->arResult['GUID'] = isset($this->arParams['GUID'])
-			? $this->arParams['GUID'] : "order_{$this->entityID}_details";
-
-		$this->arResult['EDITOR_CONFIG_ID'] = isset($this->arParams['EDITOR_CONFIG_ID'])
-			? $this->arParams['EDITOR_CONFIG_ID'] : 'order_details';
+		$this->guid = $this->arResult['GUID'] = $this->arParams['GUID'] ?? "order_{$this->entityID}_details";
+		$this->arResult['EDITOR_CONFIG_ID'] = $this->arParams['EDITOR_CONFIG_ID'] ?? 'order_details';
 		//endregion
 
 		$this->arResult['ENABLE_PROGRESS_CHANGE'] = $this->mode !== ComponentMode::VIEW;
@@ -452,7 +466,10 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 			"dataFieldName" => $this->arResult['PRODUCT_DATA_FIELD_NAME']
 		];
 
-		if ($this->arParams["EXTRAS"]['IS_SALESCENTER_ORDER_CREATION'] === 'Y')
+		if (
+			isset($this->arParams["EXTRAS"]['IS_SALESCENTER_ORDER_CREATION'])
+			&& $this->arParams["EXTRAS"]['IS_SALESCENTER_ORDER_CREATION'] === 'Y'
+		)
 		{
 			$controllerConfig['isSalesCenterOrder'] = 'Y';
 			$controllerConfig['salesCenterSessionId'] = htmlspecialcharsbx($this->arParams["EXTRAS"]['SALESCENTER_SESSION_ID']);
@@ -833,7 +850,8 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 				'name' => 'TRADING_PLATFORM',
 				'title' => Loc::getMessage('CRM_ORDER_FIELD_TRADING_PLATFORM'),
 				'type' => 'order_trading_platform',
-				'editable' => count($tradingPlatforms) > 0 && ($this->arParams['EXTRAS']['IS_SALESCENTER_ORDER_CREATION'] !== 'Y') ,
+				'editable' => count($tradingPlatforms) > 0
+					&& (string)($this->arParams['EXTRAS']['IS_SALESCENTER_ORDER_CREATION'] ?? '') !== 'Y' ,
 				'data' => array(
 					'items'=> \CCrmInstantEditorHelper::PrepareListOptions($tradingPlatforms)
 				)
@@ -877,7 +895,7 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 				'name' => 'USER_ID',
 				'title' => Loc::getMessage('CRM_ORDER_FIELD_USER_ID'),
 				'type' => 'order_user',
-				'editable' => !($this->arParams['EXTRAS']['IS_SALESCENTER_ORDER_CREATION'] === 'Y' && $this->order->getUserId()) ,
+				'editable' => !(isset($this->arParams['EXTRAS']['IS_SALESCENTER_ORDER_CREATION']) && $this->arParams['EXTRAS']['IS_SALESCENTER_ORDER_CREATION'] === 'Y' && $this->order->getUserId()) ,
 				'requiredConditionally' => true,
 				'data' => array(
 					'enableEditInView' => true,
@@ -886,7 +904,7 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 					'photoUrl' => 'USER_PHOTO_URL',
 					'showUrl' => 'PATH_TO_USER',
 					'defaultUserList' => 'USER_LIST_SELECT',
-					'pathToProfile' => $this->arResult['PATH_TO_BUYER_PROFILE'],
+					'pathToProfile' => $this->arResult['PATH_TO_BUYER_PROFILE'] ?? '',
 					'pathToUserSelector' => '/shop/settings/user_search.php?lang='.LANGUAGE_ID.'&FN=#form_id#&FC=USER_ID'
 				)
 			),
@@ -901,7 +919,7 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 					'position' => 'RESPONSIBLE_WORK_POSITION',
 					'photoUrl' => 'RESPONSIBLE_PERSONAL_PHOTO',
 					'showUrl' => 'PATH_TO_RESPONSIBLE_USER',
-					'pathToProfile' => $this->arResult['PATH_TO_USER_PROFILE']
+					'pathToProfile' => $this->arResult['PATH_TO_USER_PROFILE'] ?? ''
 				)
 			),
 			array(
@@ -963,7 +981,7 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 							)
 						)
 					),
-					'clientEditorFieldsParams' => $this->prepareClientEditorFieldsParams(),
+					'clientEditorFieldsParams' => CCrmComponentHelper::prepareClientEditorFieldsParams(),
 				)
 			)
 		);
@@ -989,8 +1007,12 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 			'isDragEnabled' => $this->userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'),
 			'elements' => [],
 			'sortedElements' => [
-				'active' => is_array($this->arResult['SHIPMENT_PROPERTIES']["ACTIVE"]) ? $this->arResult['SHIPMENT_PROPERTIES']["ACTIVE"] : [],
-				'hidden' => is_array($this->arResult['SHIPMENT_PROPERTIES']["HIDDEN"]) ? $this->arResult['SHIPMENT_PROPERTIES']["HIDDEN"] : [],
+				'active' => isset($this->arResult['SHIPMENT_PROPERTIES']["ACTIVE"]) && is_array($this->arResult['SHIPMENT_PROPERTIES']["ACTIVE"])
+					? $this->arResult['SHIPMENT_PROPERTIES']["ACTIVE"]
+					: [],
+				'hidden' => isset($this->arResult['SHIPMENT_PROPERTIES']["HIDDEN"]) && is_array($this->arResult['SHIPMENT_PROPERTIES']["HIDDEN"])
+					? $this->arResult['SHIPMENT_PROPERTIES']["HIDDEN"]
+					: [],
 			],
 			'data' => [
 				'entityType' => 'shipment',
@@ -1035,8 +1057,12 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 			'isDragEnabled' => $this->userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'),
 			'elements' => [],
 			'sortedElements' => [
-				'active' => is_array($this->arResult['ORDER_PROPERTIES']["ACTIVE"]) ? $this->arResult['ORDER_PROPERTIES']["ACTIVE"] : [],
-				'hidden' => is_array($this->arResult['ORDER_PROPERTIES']["HIDDEN"]) ? $this->arResult['ORDER_PROPERTIES']["HIDDEN"] : [],
+				'active' => isset($this->arResult['ORDER_PROPERTIES']["ACTIVE"]) && is_array($this->arResult['ORDER_PROPERTIES']["ACTIVE"])
+					? $this->arResult['ORDER_PROPERTIES']["ACTIVE"]
+					: [],
+				'hidden' => isset($this->arResult['ORDER_PROPERTIES']["HIDDEN"]) && is_array($this->arResult['ORDER_PROPERTIES']["HIDDEN"])
+					? $this->arResult['ORDER_PROPERTIES']["HIDDEN"]
+					: [],
 			],
 			'data' => array(
 				'managerUrl' => '/shop/orderform/#person_type_id#/',
@@ -1044,8 +1070,11 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 				'entityType' => 'order',
 			)
 		);
-		$personTypeList = is_array($this->arResult['PERSON_TYPES']) ? $this->arResult['PERSON_TYPES'] : array();
+		$personTypeList = isset($this->arResult['PERSON_TYPES']) && is_array($this->arResult['PERSON_TYPES'])
+			? $this->arResult['PERSON_TYPES']
+			: [];
 		$personTypeOptions = [];
+
 		if (empty($personTypeList))
 		{
 			$personTypeOptions = [
@@ -1073,7 +1102,10 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 			'editable' => ($this->mode === ComponentMode::CREATION),
 			'visibilityPolicy' => 'edit',
 			'data' => array(
-				'items'=> $this->loadProfiles($this->order->getUserId(), $this->entityData['PERSON_TYPE_ID'])
+				'items'=> $this->loadProfiles(
+					$this->order->getUserId(),
+					$this->entityData['PERSON_TYPE_ID'] ?? null
+				)
 			)
 		);
 
@@ -1278,7 +1310,7 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 				$this->entityData['TRADING_PLATFORM'] = $item->getField('TRADING_PLATFORM_ID');
 			}
 
-			$this->entityData['OLD_TRADING_PLATFORM'] = $this->entityData['TRADING_PLATFORM'];
+			$this->entityData['OLD_TRADING_PLATFORM'] = $this->entityData['TRADING_PLATFORM'] ?? null;
 			//endregion
 		}
 		$this->entityData = array_merge(
@@ -1287,21 +1319,21 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 		);
 
 		//region Responsible
-		if(isset($this->entityData['RESPONSIBLE_ID']) && $this->entityData['RESPONSIBLE_ID'] > 0)
+		$responsibleId = (int)($this->entityData['RESPONSIBLE_ID'] ?? 0);
+		if ($responsibleId > 0)
 		{
-			$responsibleId = (int)$this->entityData['RESPONSIBLE_ID'];
 			$this->entityData += $this->getUserEntityData($responsibleId, 'RESPONSIBLE');
 			$this->entityData['PATH_TO_RESPONSIBLE_USER'] = CComponentEngine::MakePathFromTemplate(
 				$this->arResult['PATH_TO_USER_PROFILE'],
-				array('user_id' => $responsibleId)
+				['user_id' => $responsibleId]
 			);
 		}
 		//endregion
 
 		//region User ID
-		if(isset($this->entityData['USER_ID']) && $this->entityData['USER_ID'] > 0)
+		$userId = (int)($this->entityData['USER_ID'] ?? 0);
+		if ($userId > 0)
 		{
-			$userId = (int)$this->entityData['USER_ID'];
 			$this->entityData += $this->getUserEntityData($userId, 'USER');
 			$this->entityData['PATH_TO_USER'] = CComponentEngine::MakePathFromTemplate(
 				$this->arResult['PATH_TO_BUYER_PROFILE'],
@@ -1312,12 +1344,12 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 
 		//region PRICE & Currency
 		$this->entityData['FORMATTED_PRICE_WITH_CURRENCY'] = \CCrmCurrency::MoneyToString(
-			$this->entityData['PRICE'],
+			$this->entityData['PRICE'] ?? 0.0,
 			$this->entityData['CURRENCY'],
 			''
 		);
 		$this->entityData['FORMATTED_PRICE'] = str_replace('&nbsp;', ' ', \CCrmCurrency::MoneyToString(
-			$this->entityData['PRICE'],
+			$this->entityData['PRICE'] ?? 0.0,
 			$this->entityData['CURRENCY'],
 			'#'
 		));
@@ -1505,12 +1537,12 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 			$title = Loc::getMessage(
 				'CRM_ORDER_TITLE2',
 				array(
-					'#ACCOUNT_NUMBER#' => $this->entityData['ACCOUNT_NUMBER']
+					'#ACCOUNT_NUMBER#' => $this->entityData['ACCOUNT_NUMBER'] ?? ''
 				));
 
-			if($this->entityData['ORDER_TOPIC'] <> '')
+			if (!empty($this->entityData['ORDER_TOPIC']))
 			{
-				$title .= ' "'.$this->entityData['ORDER_TOPIC'].'"';
+				$title .= ' "' . $this->entityData['ORDER_TOPIC'] . '"';
 			}
 		}
 
@@ -1518,13 +1550,11 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 		$this->entityData['STORAGE_TYPE_ID'] =  Bitrix\Crm\Integration\StorageType::File;
 
 		//region User Fields
-		foreach($this->userFields as $fieldName => $userField)
+		foreach ($this->userFields as $fieldName => $userField)
 		{
-			$fieldValue = isset($userField['VALUE']) ? $userField['VALUE'] : '';
-			$fieldData = isset($this->userFieldInfos[$fieldName])
-				? $this->userFieldInfos[$fieldName] : null;
-
-			if(!is_array($fieldData))
+			$fieldValue = $userField['VALUE'] ?? '';
+			$fieldData = $this->userFieldInfos[$fieldName] ?? null;
+			if (!is_array($fieldData))
 			{
 				continue;
 			}
@@ -1532,7 +1562,8 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 			$isEmptyField = true;
 			$fieldParams = $fieldData['data']['fieldInfo'];
 
-			if((is_string($fieldValue) && $fieldValue !== '')
+			if(
+				(is_string($fieldValue) && $fieldValue !== '')
 				|| (is_array($fieldValue) && !empty($fieldValue))
 			)
 			{
@@ -1579,29 +1610,27 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 			return $userFields;
 		}
 
-		$userFields["{$name}_LOGIN"] = $user['LOGIN'];
-		$userFields["{$name}_NAME"] = isset($user['NAME']) ? $user['NAME'] : '';
-		$userFields["{$name}_SECOND_NAME"] = isset($user['SECOND_NAME']) ? $user['SECOND_NAME'] : '';
-		$userFields["{$name}_LAST_NAME"] = isset($user['LAST_NAME']) ? $user['LAST_NAME'] : '';
-		$userFields["{$name}_PERSONAL_PHOTO"] = isset($user['PERSONAL_PHOTO']) ? $user['PERSONAL_PHOTO'] : '';
+		$userFields["{$name}_LOGIN"] = $user['LOGIN'] ?? '';
+		$userFields["{$name}_NAME"] = $user['NAME'] ?? '';
+		$userFields["{$name}_SECOND_NAME"] = $user['SECOND_NAME'] ?? '';
+		$userFields["{$name}_LAST_NAME"] = $user['LAST_NAME'] ?? '';
+		$userFields["{$name}_PERSONAL_PHOTO"] = $user['PERSONAL_PHOTO'] ?? '';
 
 		$userFields["{$name}_FORMATTED_NAME"] =
 			\CUser::FormatName(
 				$this->arResult['NAME_TEMPLATE'],
 				array(
-					'LOGIN' => $userFields["{$name}_LOGIN"],
-					'NAME' => $userFields["{$name}_NAME"],
-					'LAST_NAME' => $userFields["{$name}_LAST_NAME"],
-					'SECOND_NAME' => $userFields["{$name}_SECOND_NAME"]
+					'LOGIN' => $userFields["{$name}_LOGIN"] ?? '',
+					'NAME' => $userFields["{$name}_NAME"] ?? '',
+					'LAST_NAME' => $userFields["{$name}_LAST_NAME"] ?? '',
+					'SECOND_NAME' => $userFields["{$name}_SECOND_NAME"] ?? '',
 				),
 				true,
 				false
 			);
 
-		$assignedByPhotoID = isset($userFields["{$name}_PERSONAL_PHOTO"])
-			? (int)$userFields["{$name}_PERSONAL_PHOTO"] : 0;
-
-		if($assignedByPhotoID > 0)
+		$assignedByPhotoID = (int)($userFields["{$name}_PERSONAL_PHOTO"] ?? 0);
+		if ($assignedByPhotoID > 0)
 		{
 			$file = new CFile();
 			$fileInfo = $file->ResizeImageGet(
@@ -1609,7 +1638,8 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 				array('width' => 60, 'height'=> 60),
 				BX_RESIZE_IMAGE_EXACT
 			);
-			if(is_array($fileInfo) && isset($fileInfo['src']))
+
+			if (is_array($fileInfo) && isset($fileInfo['src']))
 			{
 				$userFields["{$name}_PERSONAL_PHOTO"] = $fileInfo['src'];
 			}
@@ -2430,25 +2460,6 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 			'elements' => []
 		];
 		return $scheme;
-	}
-
-	protected function prepareClientEditorFieldsParams(): array
-	{
-		$result = [
-			CCrmOwnerType::ContactName => [
-				'REQUISITES' => \CCrmComponentHelper::getFieldInfoData(CCrmOwnerType::Contact, 'requisite')
-			],
-			CCrmOwnerType::CompanyName => [
-				'REQUISITES' => \CCrmComponentHelper::getFieldInfoData(CCrmOwnerType::Company, 'requisite')
-			]
-		];
-		if (Main\Loader::includeModule('location'))
-		{
-			$result[CCrmOwnerType::ContactName]['ADDRESS'] = \CCrmComponentHelper::getFieldInfoData(CCrmOwnerType::Contact,'requisite_address');
-			$result[CCrmOwnerType::CompanyName]['ADDRESS'] = \CCrmComponentHelper::getFieldInfoData(CCrmOwnerType::Company,'requisite_address');
-		}
-
-		return $result;
 	}
 
 	protected function getEventTabParams(): array

@@ -1,6 +1,7 @@
 <?php
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Web\Uri;
 
 if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 /** @var array $arParams */
@@ -135,7 +136,7 @@ foreach ($jsTemplates->getChildren() as $jsTemplate)
 
 				<div class="disk-detail-sidebar-owner-title"><?= Loc::getMessage('DISK_FILE_VIEW_FILE_OWNER') ?>:</div>
 				<div class="disk-detail-sidebar-owner">
-					<div class="disk-detail-sidebar-owner-avatar" style="background-image: url(<?= $arResult['FILE']['CREATE_USER']['AVA'] ?>);"></div>
+					<div class="disk-detail-sidebar-owner-avatar" style="background-image: url('<?= Uri::urnEncode($arResult['FILE']['CREATE_USER']['AVA']) ?>');"></div>
 					<div class="disk-detail-sidebar-owner-name">
 						<a class="disk-detail-sidebar-owner-link" target="_top" href="<?= $arResult['FILE']['CREATE_USER']['LINK'] ?>"><?= htmlspecialcharsbx($arResult['FILE']['CREATE_USER']['NAME']) ?></a>
 						<div class="disk-detail-sidebar-owner-position"><?= htmlspecialcharsbx($arResult['FILE']['CREATE_USER']['WORK_POSITION']) ?></div>
@@ -170,7 +171,7 @@ foreach ($jsTemplates->getChildren() as $jsTemplate)
 						<div class="disk-file-info-users-title"><?= Loc::getMessage('DISK_FILE_VIEW_ENTITY_MEMBERS') ?></div>
 						<? foreach($entity['MEMBERS'] as $member){?>
 						<div class="disk-file-info-user">
-							<div class="disk-file-info-user-avatar" <?= (!empty($member['AVATAR_SRC'])? "style=\"background-image: url({$member['AVATAR_SRC']});\"" : '') ?>></div>
+							<div class="disk-file-info-user-avatar" <?= (!empty($member['AVATAR_SRC'])? "style=\"background-image: url('" . Uri::urnEncode($member['AVATAR_SRC']) . "');\"" : '') ?>></div>
 							<? if(empty($member['LINK'])) {?>
 							<div class="disk-file-info-user-name"><?= htmlspecialcharsbx($member['NAME']) ?></div>
 							<? } else { ?>
@@ -369,7 +370,7 @@ BX(function () {
 			externalLink: BX(document.querySelector('[data-entity="external-link-place"]'))
 		},
 		externalLinkInfo: {
-			<? if ($arResult['EXTERNAL_LINK']['ID']) { ?>
+			<? if (isset($arResult['EXTERNAL_LINK']['ID'])) { ?>
 				id: <?= $arResult['EXTERNAL_LINK']['ID']?>,
 				objectId: <?= $arResult['EXTERNAL_LINK']['OBJECT_ID']?>,
 				link: '<?= $arResult['EXTERNAL_LINK']['LINK']?>',

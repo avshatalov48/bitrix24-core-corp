@@ -4,15 +4,11 @@ namespace Bitrix\Tasks\Rest\Controllers\Task;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentTypeException;
 use Bitrix\Main\Db\SqlQueryException;
-use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
-use Bitrix\Tasks\Integration\Forum\Task\UserTopic;
-use Bitrix\Tasks\Integration\Pull\PushService;
-use Bitrix\Tasks\Internals\Counter;
-use Bitrix\Tasks\Internals\Registry\UserRegistry;
-use Bitrix\Tasks\Internals\Task\ViewedTable;
+use Bitrix\Tasks\Comments\Viewed\Group;
+use Bitrix\Tasks\Comments\Viewed\Task;
 use Bitrix\Tasks\Rest\Controllers\Base;
 
 /**
@@ -92,6 +88,9 @@ class Comment extends Base
 	}
 
 	/**
+	 * @deprecated Use more perf service
+	 * @see \Bitrix\Tasks\Rest\Controllers\ViewedGroup\User
+	 *
 	 * @param null $groupId
 	 * @param null $userId
 	 * @return bool
@@ -104,57 +103,13 @@ class Comment extends Base
 	 */
 	public function readAllAction($groupId = null, $userId = null, string $role = null): bool
 	{
-		$currentUserId = (int)CurrentUser::get()->getId();
-
-		$groupId = (int)$groupId;
-
-		$groupCondition = '';
-		if ($groupId)
-		{
-			$groupCondition = "AND TS.GROUP_ID = {$groupId}";
-		}
-
-		$userJoin = "INNER JOIN b_tasks_member TM ON TM.TASK_ID = T.ID AND TM.USER_ID = {$currentUserId}";
-
-		$memberRole = null;
-		if (
-			$role
-			&& array_key_exists($role, Counter\Role::ROLE_MAP)
-		)
-		{
-			$memberRole = Counter\Role::ROLE_MAP[$role];
-		}
-
-		if ($memberRole)
-		{
-			$userJoin .= " AND TM.TYPE = '". $memberRole ."'";
-		}
-
-		$this->readAll($currentUserId, $userJoin, $groupCondition);
-
-		Counter\CounterService::addEvent(
-			Counter\Event\EventDictionary::EVENT_AFTER_COMMENTS_READ_ALL,
-			[
-				'USER_ID' => $currentUserId,
-				'GROUP_ID' => $groupId,
-				'ROLE' => $memberRole
-			]
-		);
-
-		PushService::addEvent($currentUserId, [
-			'module_id' => 'tasks',
-			'command' => 'comment_read_all',
-			'params' => [
-				'USER_ID' => $currentUserId,
-				'GROUP_ID' => $groupId,
-				'ROLE' => $role,
-			]
-		]);
-
-		return true;
+		return (new Task())->readAll($groupId, $userId, $role);
 	}
 
 	/**
+	 * @deprecated Use more perf service
+	 * @see \Bitrix\Tasks\Rest\Controllers\ViewedGroup\Project
+	 *
 	 * @param null $groupId
 	 * @return bool
 	 * @throws ArgumentException
@@ -164,106 +119,22 @@ class Comment extends Base
 	 * @throws SqlQueryException
 	 * @throws SystemException
 	 */
-	public function readProjectAction($groupId = null)
+	public function readProjectAction($groupId = null): bool
 	{
-		$currentUserId = (int)CurrentUser::get()->getId();
-
-		$groupId = (int)$groupId;
-
-		if ($groupId)
-		{
-			$groupCondition = "AND TS.GROUP_ID = {$groupId}";
-		}
-		else
-		{
-			$scrum = UserRegistry::getInstance($currentUserId)->getUserGroups(UserRegistry::MODE_SCRUM);
-			$scrumIds = array_keys($scrum);
-			$scrumIds[] = 0;
-			$groupCondition = "AND TS.GROUP_ID NOT IN (". implode(',', $scrumIds) .")";
-		}
-
-		$userJoin = '';
-
-		$this->readAll($currentUserId, $userJoin, $groupCondition);
-
-		Counter\CounterService::addEvent(
-			Counter\Event\EventDictionary::EVENT_AFTER_PROJECT_READ_ALL,
-			[
-				'USER_ID' => $currentUserId,
-				'GROUP_ID' => $groupId
-			]
-		);
-
-		PushService::addEvent($currentUserId, [
-			'module_id' => 'tasks',
-			'command' => 'project_read_all',
-			'params' => [
-				'USER_ID' => $currentUserId,
-				'GROUP_ID' => $groupId,
-			]
-		]);
-
-		return true;
+		return (new Task())->readProject($groupId);
 	}
 
 	/**
+	 * @deprecated Use more perf service
+	 * @see \Bitrix\Tasks\Rest\Controllers\ViewedGroup\Scrum
+	 *
 	 * @param null $groupId
 	 * @return bool
 	 * @throws ArgumentTypeException
 	 * @throws SqlQueryException
 	 */
-	public function readScrumAction($groupId = null)
+	public function readScrumAction($groupId = null): bool
 	{
-		$currentUserId = (int)CurrentUser::get()->getId();
-
-		$groupId = (int)$groupId;
-
-		if ($groupId)
-		{
-			$groupCondition = "AND TS.GROUP_ID = {$groupId}";
-		}
-		else
-		{
-			$scrum = UserRegistry::getInstance($currentUserId)->getUserGroups(UserRegistry::MODE_SCRUM);
-			$scrumIds = array_keys($scrum);
-			$scrumIds[] = 0;
-			$groupCondition = "AND TS.GROUP_ID IN (". implode(',', $scrumIds) .")";
-		}
-
-		$userJoin = '';
-
-		$this->readAll($currentUserId, $userJoin, $groupCondition);
-
-		Counter\CounterService::addEvent(
-			Counter\Event\EventDictionary::EVENT_AFTER_SCRUM_READ_ALL,
-			[
-				'USER_ID' => $currentUserId,
-				'GROUP_ID' => $groupId
-			]
-		);
-
-		PushService::addEvent($currentUserId, [
-			'module_id' => 'tasks',
-			'command' => 'scrum_read_all',
-			'params' => [
-				'USER_ID' => $currentUserId,
-				'GROUP_ID' => $groupId,
-			]
-		]);
-
-		return true;
-	}
-
-	/**
-	 * @param int $userId
-	 * @param string $userJoin
-	 * @param string $groupCondition
-	 * @throws ArgumentTypeException
-	 * @throws SqlQueryException
-	 */
-	private function readAll(int $userId, string $userJoin, string $groupCondition = ''): void
-	{
-		UserTopic::onReadAll($userId, $userJoin, $groupCondition);
-		ViewedTable::readAll($userId, $userJoin, $groupCondition);
+		return (new Task())->readScrum($groupId);
 	}
 }

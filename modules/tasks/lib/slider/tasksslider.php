@@ -8,16 +8,18 @@ class TasksSlider implements TasksSliderInterface
 	private string $closeUrl;
 	private string $js;
 	private int $width = 0;
+	private bool $skipEvents;
 
-	public function __construct(string $openUrl, string $closeUrl)
+	public function __construct(string $openUrl, string $closeUrl, bool $skipEvents = false)
 	{
 		$this->openUrl = $openUrl;
 		$this->closeUrl = $closeUrl;
+		$this->skipEvents = $skipEvents;
 	}
 
 	public function open(): void
 	{
-		echo $this->getJs();
+		echo '<script>' . $this->getJs() . '</script>';
 	}
 
 	public function getJs(): string
@@ -33,25 +35,39 @@ class TasksSlider implements TasksSliderInterface
 
 	private function setJs(): void
 	{
-		$this->js = "
-			<script>
+		if ($this->skipEvents)
+		{
+			$this->js = "
+				BX.ready(function() {
+					BX.SidePanel.Instance.open(
+						'{$this->openUrl}',
+						{
+							{$this->getWidth()}
+						},
+					);
+				});
+		";
+		}
+		else
+		{
+			$this->js = "
 				BX.ready(function() {
 					BX.SidePanel.Instance.open(
 						'{$this->openUrl}',
 						{
 							{$this->getWidth()}
 							events: {
-								onCloseComplete: function() {
-									setTimeout(function() {
-										window.history.replaceState({}, '', '{$this->closeUrl}');
-									}, 500);
+								onClose: function() {
+									location.href = '{$this->closeUrl}';
 								},
 							},
 						},
 					);
 				});
-			</script>
 		";
+		}
+
+
 	}
 
 	public function getOpenUrl(): string

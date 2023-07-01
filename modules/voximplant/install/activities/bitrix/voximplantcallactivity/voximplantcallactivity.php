@@ -191,7 +191,7 @@ class CBPVoximplantCallActivity extends CBPActivity
 				'Type' => 'bool',
 				'FieldName' => "use_audio_file",
 				'Required' => true,
-				'Default' => 'N'
+				'Default' => \Bitrix\Voximplant\Limits::hasAccountBalance() ? 'N' : 'Y',
 			),
 			"Text" => array(
 				'Description' => GetMessage('BPVICA_PROPERTY_TEXT'),
@@ -247,6 +247,7 @@ class CBPVoximplantCallActivity extends CBPActivity
 			"voiceLanguage" => $voiceLanguage,
 			"voiceSpeed" => $voiceSpeed,
 			"voiceVolume" => $voiceVolume,
+			"isEnableText" => \Bitrix\Voximplant\Limits::hasAccountBalance(),
 		));
 
 		return $dialog;

@@ -987,6 +987,7 @@ if(!BX.Disk.pathToUser)
 					right: right
 				};
 
+				console.log('params', params);
 				function pseudoCompareTaskName(taskName1, taskName2)
 				{
 					var taskName1Pos;
@@ -1056,7 +1057,7 @@ if(!BX.Disk.pathToUser)
 													className: 'bx-disk-filepage-used-people-avatar ' + (type != 'users'? ' group' : '')
 												},
 												style: {
-													backgroundImage: entityAvatar? 'url(' + entityAvatar + ')' : null
+													backgroundImage: entityAvatar? 'url("' + encodeURI(entityAvatar) + '")' : null
 												}
 											}),
 											BX.util.htmlspecialchars(entityName)
@@ -1307,7 +1308,7 @@ if(!BX.Disk.pathToUser)
 													className: 'bx-disk-filepage-used-people-avatar ' + (type != 'users'? ' group' : '')
 												},
 												style: {
-													backgroundImage: entityAvatar? 'url(' + entityAvatar + ')' : null
+													backgroundImage: entityAvatar? 'url("' + encodeURI(entityAvatar) + '")' : null
 												}
 											}),
 											BX.util.htmlspecialchars(entityName)
@@ -1424,7 +1425,7 @@ if(!BX.Disk.pathToUser)
 													className: 'bx-disk-filepage-used-people-avatar ' + (type != 'users'? ' group' : '')
 												},
 												style: {
-													backgroundImage: entityAvatar? 'url(' + entityAvatar + ')' : null
+													backgroundImage: entityAvatar? 'url("' + encodeURI(entityAvatar) + '")' : null
 												}
 											}),
 											BX.util.htmlspecialchars(entityName)
@@ -1563,7 +1564,7 @@ if(!BX.Disk.pathToUser)
 													}),
 													BX.create('tr', {
 														html: '<tr>' +
-															'<td class="bx-disk-popup-shared-people-list-col1" style="border-bottom: none;"><a class="bx-disk-filepage-used-people-link" href="' + objectOwner.link + '"><span class="bx-disk-filepage-used-people-avatar" style="background-image: url(' + objectOwner.avatar + ');"></span>' + BX.util.htmlspecialchars(objectOwner.name) + '</a></td>' +
+															'<td class="bx-disk-popup-shared-people-list-col1" style="border-bottom: none;"><a class="bx-disk-filepage-used-people-link" href="' + objectOwner.link + '"><span class="bx-disk-filepage-used-people-avatar" style="background-image: url(\'' + encodeURI(objectOwner.avatar) + '\');"></span>' + BX.util.htmlspecialchars(objectOwner.name) + '</a></td>' +
 														'</tr>'
 													})
 												]

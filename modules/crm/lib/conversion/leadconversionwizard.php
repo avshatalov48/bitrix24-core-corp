@@ -181,7 +181,7 @@ class LeadConversionWizard extends EntityConversionWizard
 							false,
 							$options
 						),
-						array('lead_id' => $converter->getEntityID())
+						array('lead_id' => $converter->getEntityID(), 'entityTypeId' => $e->getDestinationEntityTypeID())
 					);
 				}
 			}

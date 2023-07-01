@@ -172,7 +172,7 @@ class Zoom extends Base
 
 	public static function checkFields($action, &$fields, $id, $params = null)
 	{
-		if ($action === 'UPDATE')
+		if ($action === self::ACTION_UPDATE)
 		{
 			if (isset($fields['START_TIME']) && $fields['START_TIME'] !== '')
 			{

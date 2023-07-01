@@ -1,11 +1,16 @@
 <?php
-if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 use Bitrix\Crm\Component\EntityDetails\ComponentMode;
 use Bitrix\Main\Loader;
 use Bitrix\Main\UI\Extension;
 
 CJSCore::Init(array('crm_entity_editor'));
+
 if (Loader::includeModule('sale'))
 {
 	Extension::load('sale.address');
@@ -22,6 +27,7 @@ $guid = $arResult['GUID'];
 $jsGuid = CUtil::JSEscape($guid);
 $prefix = mb_strtolower($guid);
 $activityEditorID = "{$prefix}_editor";
+$statusViewTemplate = '';
 
 $APPLICATION->IncludeComponent(
 	'bitrix:crm.activity.editor',
@@ -44,13 +50,12 @@ $APPLICATION->IncludeComponent(
 	'bitrix:crm.order.shipment.menu',
 	'',
 	array(
-		'PATH_TO_ORDER_SHIPMENT_LIST' => $arResult['PATH_TO_ORDER_SHIPMENT_LIST'],
-		'PATH_TO_ORDER_SHIPMENT_SHOW' => $arResult['PATH_TO_ORDER_SHIPMENT_SHOW'],
-		'PATH_TO_ORDER_SHIPMENT_EDIT' => $arResult['PATH_TO_ORDER_SHIPMENT_EDIT'],
+		'PATH_TO_ORDER_SHIPMENT_LIST' => $arResult['PATH_TO_ORDER_SHIPMENT_LIST'] ?? '',
+		'PATH_TO_ORDER_SHIPMENT_SHOW' => $arResult['PATH_TO_ORDER_SHIPMENT_SHOW'] ?? '',
+		'PATH_TO_ORDER_SHIPMENT_EDIT' => $arResult['PATH_TO_ORDER_SHIPMENT_EDIT'] ?? '',
 		'ELEMENT_ID' => $arResult['ENTITY_ID'],
-		'MULTIFIELD_DATA' => isset($arResult['ENTITY_DATA']['MULTIFIELD_DATA'])
-			? $arResult['ENTITY_DATA']['MULTIFIELD_DATA'] : array(),
-		'OWNER_INFO' => $arResult['ENTITY_INFO'],
+		'MULTIFIELD_DATA' => $arResult['ENTITY_DATA']['MULTIFIELD_DATA'] ?? [],
+		'OWNER_INFO' => $arResult['ENTITY_INFO'] ?? [],
 		'TYPE' => 'details',
 		'SCRIPTS' => array(
 			'DELETE' => 'BX.Crm.EntityDetailManager.items["'.$jsGuid.'"].processRemoval();'
@@ -75,12 +80,12 @@ $editorContext = array(
 	'PRODUCT_COMPONENT_DATA' => $arResult['PRODUCT_COMPONENT_DATA']
 );
 
-if(isset($arResult['ORIGIN_ID']) && $arResult['ORIGIN_ID'] !== '')
+if (!empty($arResult['ORIGIN_ID']))
 {
 	$editorContext['ORIGIN_ID'] = $arResult['ORIGIN_ID'];
 }
 
-if($arResult['ENTITY_DATA']['TRACKING_NUMBER'] <> '')
+if (!empty($arResult['ENTITY_DATA']['TRACKING_NUMBER']))
 {
 	$trackingNumber  = CUtil::JSEscape($arResult['ENTITY_DATA']['TRACKING_NUMBER']);
 	$onClick = "crmOrderShipment_{$jsGuid}.trackingStatusUpdate({$arResult['ENTITY_DATA']['ID']}, \"{$trackingNumber}\"); return false;";
@@ -113,18 +118,18 @@ $APPLICATION->IncludeComponent(
 		'EDITOR' => array(
 			'GUID' => "{$guid}_editor",
 			'CONFIG_ID' => $arResult['EDITOR_CONFIG_ID'],
-			'ENTITY_CONFIG' => $arResult['ENTITY_CONFIG'],
-			'DUPLICATE_CONTROL' => $arResult['DUPLICATE_CONTROL'],
+			'ENTITY_CONFIG' => $arResult['ENTITY_CONFIG'] ?? null,
+			'DUPLICATE_CONTROL' => $arResult['DUPLICATE_CONTROL'] ?? null,
 			'ENTITY_CONTROLLERS' => $arResult['ENTITY_CONTROLLERS'],
 			'ENTITY_FIELDS' => $arResult['ENTITY_FIELDS'],
 			'ENTITY_DATA' => $arResult['ENTITY_DATA'],
 			'ENABLE_SECTION_EDIT' => true,
 			'ENABLE_SECTION_CREATION' => true,
-			'ENABLE_USER_FIELD_CREATION' => $arResult['ENABLE_USER_FIELD_CREATION'],
-			'USER_FIELD_ENTITY_ID' => $arResult['USER_FIELD_ENTITY_ID'],
-			'USER_FIELD_CREATE_PAGE_URL' => $arResult['USER_FIELD_CREATE_PAGE_URL'],
-			'USER_FIELD_CREATE_SIGNATURE' => $arResult['USER_FIELD_CREATE_SIGNATURE'],
-			'SERVICE_URL' => '/bitrix/components/bitrix/crm.order.shipment.details/ajax.php?'.bitrix_sessid_get(),
+			'ENABLE_USER_FIELD_CREATION' => $arResult['ENABLE_USER_FIELD_CREATION'] ?? null,
+			'USER_FIELD_ENTITY_ID' => $arResult['USER_FIELD_ENTITY_ID'] ?? null,
+			'USER_FIELD_CREATE_PAGE_URL' => $arResult['USER_FIELD_CREATE_PAGE_URL'] ?? null,
+			'USER_FIELD_CREATE_SIGNATURE' => $arResult['USER_FIELD_CREATE_SIGNATURE'] ?? null,
+			'SERVICE_URL' => '/bitrix/components/bitrix/crm.order.shipment.details/ajax.php?' . bitrix_sessid_get(),
 			'EXTERNAL_CONTEXT_ID' => $arResult['EXTERNAL_CONTEXT_ID'],
 			'CONTEXT_ID' => $arResult['CONTEXT_ID'],
 			'CONTEXT' => $editorContext
@@ -140,7 +145,6 @@ $APPLICATION->IncludeComponent(
 			'ENTITY_ID' => $arResult['ENTITY_DATA']['ORDER_ID'],
 			'ENTITY_TYPE_ID' => \CCrmOwnerType::Order,
 			'GUID' => "{$guid}_timeline",
-			'ENABLE_WAIT' => true,
 			'WAIT_TARGET_DATES' => $arResult['WAIT_TARGET_DATES'],
 			'ENABLE_SALESCENTER' => false,
 		),
@@ -162,10 +166,9 @@ $APPLICATION->IncludeComponent(
 				{
 					trackingStatusNameNodeId: 'crm-order-shipment-tracking-status-name',
 					editorId: '<?=CUtil::JSEscape($activityEditorID)?>',
-					statusViewTemplate: '<?=CUtil::JSEscape($statusViewTemplate)?>'
+					statusViewTemplate: '<?=CUtil::JSEscape($statusViewTemplate )?>'
 				}
 			);
 		}
 	);
 </script>
-

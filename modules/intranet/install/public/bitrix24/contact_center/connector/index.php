@@ -4,11 +4,10 @@ use Bitrix\Main\Localization\Loc;
 
 require($_SERVER['DOCUMENT_ROOT'].'/bitrix/header.php');
 global $APPLICATION;
-if($_GET['IFRAME'] !== 'Y')
-{
-	IncludeModuleLangFile($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/intranet/public_bitrix24/contact_center/index.php');
-	$APPLICATION->SetTitle(Loc::getMessage('TITLE'));
-}
+
+IncludeModuleLangFile($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/intranet/public_bitrix24/contact_center/index.php');
+$APPLICATION->SetTitle(Loc::getMessage('TITLE'));
+
 
 $showConnector = Context::getCurrent()->getRequest()->get('showConnectorInNewSlider') !== 'Y'
 	&& Context::getCurrent()->getRequest()->get('IFRAME') === 'Y'

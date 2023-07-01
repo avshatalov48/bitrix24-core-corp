@@ -15,9 +15,15 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Disk\Driver;
 use Bitrix\Main\ORM\Fields\Relations\ManyToMany;
 use Bitrix\Main\ORM\Fields\Relations\OneToMany;
+use Bitrix\Main\ORM\Fields\Relations\Reference;
+use Bitrix\Main\ORM\Query\Join;
+use Bitrix\Tasks\Integration\CRM\TimeLineManager;
+use Bitrix\Tasks\Internals\Task\CheckListTable;
 use Bitrix\Tasks\Internals\Task\MemberTable;
 use Bitrix\Tasks\Internals\Task\Result\ResultTable;
 use Bitrix\Tasks\Internals\Task\LabelTable;
+use Bitrix\Tasks\Internals\Task\ScenarioTable;
+use Bitrix\Tasks\Internals\Task\UtsTasksTaskTable;
 use Bitrix\Tasks\Util\Entity\DateTimeField;
 use Bitrix\Tasks\Util\Type\DateTime;
 use Bitrix\Tasks\Util\UserField;
@@ -264,6 +270,13 @@ class TaskTable extends TaskDataManager
 					'=this.ID'=>'ref.TASK_ID'
 				],
 			],
+			(
+				new Reference(
+					'SCENARIO',
+					ScenarioTable::class,
+					Join::on('this.ID', 'ref.TASK_ID')
+				)
+			)->configureJoinType('left'),
 
 			// socialnetwork module should be present
 			'GROUP' => array(
@@ -297,7 +310,23 @@ class TaskTable extends TaskDataManager
 			'DEADLINE_COUNTED' => [
 				'data_type' => 'integer',
 			],
+			(new Reference(
+				'UTS_DATA',
+				UtsTasksTaskTable::getEntity(),
+				['this.ID' => 'ref.VALUE_ID']
+			))->configureJoinType(Join::TYPE_LEFT),
 
+			(new OneToMany(
+				'RESULT',
+				ResultTable::class,
+				'TASK'
+			))->configureJoinType(Join::TYPE_LEFT),
+
+			(new Reference(
+				'CHECKLIST_DATA',
+				CheckListTable::getEntity(),
+				['this.ID' => 'ref.TASK_ID'],
+			))->configureJoinType(Join::TYPE_LEFT)
 		);
 	}
 	/**

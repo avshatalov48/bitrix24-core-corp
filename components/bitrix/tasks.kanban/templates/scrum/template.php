@@ -36,6 +36,7 @@ Extension::load([
 	'ui.counter',
 	'ui.label',
 	'ui.fonts.opensans',
+	'tasks.runtime',
 ]);
 
 $isBitrix24Template = (SITE_TEMPLATE_ID === 'bitrix24');

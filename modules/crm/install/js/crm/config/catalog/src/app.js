@@ -584,7 +584,7 @@ export default Vue.extend({
 							class="ui-slider-heading-4"
 						>
 							{{loc.CRM_CFG_C_SETTINGS_TITLE}}
-							<div v-if="isStoreControlUsed" class="catalog-settings-main-header-feedback-container">
+							<div v-if="isStoreControlUsed && hasAccessToCatalogSettings" class="catalog-settings-main-header-feedback-container">
 								<div
 									@click.prevent="showSettingsMenu"
 									class="ui-toolbar-right-buttons"
@@ -598,7 +598,7 @@ export default Vue.extend({
 								{{description}}
 							</p>
 						</div>
-						<div class="catalog-settings-button-container">
+						<div v-if="hasAccessToCatalogSettings" class="catalog-settings-button-container">
 							<template v-if="isStoreControlUsed">
 								<a
 									@click="openStoreControlMaster('edit')"

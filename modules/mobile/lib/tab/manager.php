@@ -99,7 +99,6 @@ class Manager
 			$this->tabList[$tabData["code"]] = $instance;
 		}
 
-		$this->config["presets"]["manual"][] = [];
 		if ($savedConfig = $this->getUserPresetConfig())
 		{
 			$this->config["presets"]["manual"] = $savedConfig;
@@ -165,13 +164,17 @@ class Manager
 	{
 		$permanentTabs = $this->getRequiredTabs();
 		$presetConfig = $this->getPresetConfig();
+		if (empty($presetConfig))
+		{
+			$presetConfig = $this->setDefaultUserPreset();
+		}
 		return $this->resolveTabs($presetConfig, $permanentTabs);
 	}
 
-	public function getAllTabIDs()
+	public function getAllTabIDs($includeUnavailable = false)
 	{
-		return array_filter(array_keys($this->tabList), function ($tabId) {
-			return $this->getTabInstance($tabId)->isAvailable();
+		return array_filter(array_keys($this->tabList), function ($tabId) use ($includeUnavailable) {
+			return $this->getTabInstance($tabId)->isAvailable() || $includeUnavailable;
 		});
 	}
 
@@ -289,12 +292,12 @@ class Manager
 	public function getPresetConfig()
 	{
 		$preset = $this->getPresetName();
-		if (is_array($this->config["presets"][$preset]))
+		if (isset($this->config["presets"][$preset]) && is_array($this->config["presets"][$preset]))
 		{
 			return $this->config["presets"][$preset];
 		}
 
-		return $this->config["presets"]["default"];
+		return $this->config["defaultUserPreset"];
 	}
 
 	/**
@@ -328,7 +331,7 @@ class Manager
 				 * @type Tabable $tab
 				 */
 				$tab = $this->tabList[$tabId];
-				if ($tab->canBeRemoved() === false & $tab->isAvailable())
+				if ($tab->canBeRemoved() === false && $tab->isAvailable())
 				{
 					$result[$tabId] = $tab->defaultSortValue();
 				}
@@ -353,22 +356,62 @@ class Manager
 	 */
 	public function getPresetList()
 	{
-		return array_filter($this->config["presets"], function ($tabs) {
+		$result = [];
+		$presets = $this->config["presets"];
+		$optionalTabs = $this->config["presetOptionalTabs"] ?? [];
+		foreach ($presets as $presetId => $tabs) {
 			$tabsIDs = array_keys($tabs);
-			foreach ($tabsIDs as $tabId)
+			$available = true;
+			$unavailableOptionalTabs = [];
+			if (count($tabsIDs) === 0)
 			{
-				if ($this->getTabInstance($tabId) == null)
+				$available = false;
+			}
+			else
+			{
+				foreach ($tabsIDs as $tabId)
 				{
-					return true;
-				}
+					if ($this->getTabInstance($tabId) == null)
+					{
+						break;
+					}
 
-				if (!$this->getTabInstance($tabId)->isAvailable())
-				{
-					return false;
+					if (!$this->getTabInstance($tabId)->isAvailable())
+					{
+						if (isset($optionalTabs[$presetId]) && is_array($optionalTabs[$presetId])) {
+							if (in_array($tabId, $optionalTabs[$presetId])) {
+								$unavailableOptionalTabs[] = $tabId;
+								continue;
+							}
+						}
+
+						$available = false;
+						break;
+					}
 				}
 			}
 
-			return true;
-		});
+			if ($available)
+			{
+				$tabs = array_filter($tabs, function( $sort, $id) use ($unavailableOptionalTabs) {
+					return !in_array($id, $unavailableOptionalTabs);
+				}, ARRAY_FILTER_USE_BOTH);
+
+				$result[$presetId] = [
+					"tabs" => $tabs,
+					"title" => Loc::getMessage(mb_strtoupper("TAB_PRESET_NAME_$presetId"))
+				];
+			}
+
+		}
+
+		return $result;
+	}
+
+	private function setDefaultUserPreset()
+	{
+		$defaultTabs = $this->config["defaultUserPreset"];
+		$this->setCustomConfig($defaultTabs);
+		return $defaultTabs;
 	}
 }

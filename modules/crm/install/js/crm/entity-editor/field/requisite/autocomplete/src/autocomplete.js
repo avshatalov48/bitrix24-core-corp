@@ -853,10 +853,10 @@ class Dropdown extends BX.UI.Dropdown
 		this.placementParams = BX.prop.getObject(options, "placementParams", {});
 		this.installDefaultAppHandler = this.onClickInstallDefaultApp.bind(this);
 		this.installDefaultAppTimeout = 7000;
-		this.installDefaultAppTimeoutHandler = this.onInstallDefaultAppTimeout.bind(this);
 		this.afterInstallDefaultAppHandler = this.onAfterInstallDefaultApp.bind(this);
 		this.popupAlertContainer = null;
 		this.defaultAppInstallLoader = null;
+		this.isDefaultAppInstalled = false;
 	}
 
 	setPlacementParams(params)
@@ -915,7 +915,7 @@ class Dropdown extends BX.UI.Dropdown
 			Type.isStringFilled(BX.prop.get(defaultAppInfo, "code", ""))
 			&& Type.isStringFilled(BX.prop.get(defaultAppInfo, "title", ""))
 			&& BX.prop.get(defaultAppInfo, "isAvailable", "N") === "Y"
-			&& BX.prop.get(defaultAppInfo, "isInstalled", "N") !== "Y"
+			/*&& BX.prop.get(defaultAppInfo, "isInstalled", "N") !== "Y"*/
 		);
 	}
 
@@ -1090,9 +1090,18 @@ class Dropdown extends BX.UI.Dropdown
 
 		if (this.isDefaultAppCanInstall())
 		{
+			this.isDefaultAppInstalled = false;
 			BX.loadExt('marketplace').then(
 				() => {
-					setTimeout(this.installDefaultAppTimeoutHandler, this.installDefaultAppTimeout, event.target);
+					setTimeout(
+						() => {
+							if (!this.isDefaultAppInstalled)
+							{
+								this.finalInstallDefaultApp();
+							}
+						},
+						this.installDefaultAppTimeout
+					);
 					top.BX.addCustomEvent(
 						top,
 						"Rest:AppLayout:ApplicationInstall",
@@ -1102,8 +1111,7 @@ class Dropdown extends BX.UI.Dropdown
 						{
 							CODE: this.placementParams["defaultAppInfo"]["code"],
 							SILENT_INSTALL: "Y",
-							REDIRECT_PRIORITY: false,
-							IFRAME: true
+							DO_NOTHING: "Y"
 						}
 					);
 				}
@@ -1119,28 +1127,87 @@ class Dropdown extends BX.UI.Dropdown
 		}
 	}
 
-	onInstallDefaultAppTimeout(elementToShow)
+	wait(ms)
 	{
-		top.BX.removeCustomEvent(top, "Rest:AppLayout:ApplicationInstall", this.afterInstallDefaultAppHandler);
+		return new Promise((resolve) => setTimeout(resolve, parseInt(ms)));
+	}
 
-		if (this.defaultAppInstallLoader)
-		{
-			this.defaultAppInstallLoader.destroy();
-			this.defaultAppInstallLoader = null;
-		}
+	checkDefAppHandler()
+	{
+		const countryId = BX.prop.getInteger(this.placementParams, "countryId", 0);
 
-		if (Type.isDomNode(elementToShow))
-		{
-			Dom.show(elementToShow);
-		}
+		return new Promise(
+			(resolve, reject) => {
+				BX.ajax.runAction(
+					'crm.requisite.autocomplete.checkDefaultAppHandler',
+					{ data: { countryId: countryId } }
+				).then(
+					(data) => {
+						if (
+							Type.isPlainObject(data)
+							&& data.hasOwnProperty("data")
+							&& data.hasOwnProperty("status")
+							&& data["status"] === "success"
+							&& Type.isBoolean(data["data"])
+							&& data["data"]
+						)
+						{
+							resolve();
+						}
+						else
+						{
+							reject();
+						}
+					}
+				);
+			}
+		);
+	}
+
+	awaitHandler(context)
+	{
+		this.wait(context.waitTime)
+			.then(() => {
+				this.checkDefAppHandler()
+					.then(() => {
+						this.finalInstallDefaultAppSuccess();
+					})
+					.catch(() => {
+						if (--context.numberOfTimes > 0) {
+							this.awaitHandler(context)
+						}
+						else {
+							this.finalInstallDefaultApp();
+						}
+					});
+			});
 	}
 
 	onAfterInstallDefaultApp(installed, eventResult)
 	{
+		this.isDefaultAppInstalled = true;
 		top.BX.removeCustomEvent(top, "Rest:AppLayout:ApplicationInstall", this.afterInstallDefaultAppHandler);
 
-		BX.onCustomEvent(this, "Dropdown:onAfterInstallDefaultApp", [this]);
+		const numberOfTimes = 3;
+		const waitTime = Math.floor(this.installDefaultAppTimeout / numberOfTimes);
+		if (!!installed)
+		{
+			this.awaitHandler({waitTime: waitTime, numberOfTimes: 3})
+		}
+		else
+		{
+			this.finalInstallDefaultApp();
+		}
+	}
 
+	finalInstallDefaultAppSuccess()
+	{
+		BX.onCustomEvent(this, "Dropdown:onAfterInstallDefaultApp", [this]);
+		this.finalInstallDefaultApp();
+	}
+
+	finalInstallDefaultApp()
+	{
 		if (this.defaultAppInstallLoader)
 		{
 			this.defaultAppInstallLoader.destroy();

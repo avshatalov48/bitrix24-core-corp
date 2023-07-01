@@ -1,4 +1,7 @@
 <?php
+
+use Bitrix\Crm\Activity\Provider\Tasks\Task;
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
 if (!CModule::IncludeModule('crm'))
@@ -500,6 +503,13 @@ $arNavParams = $gridOptions->GetNavParams($arNavParams);
 $arNavParams['bShowAll'] = false;
 
 $arGridFilter = $filterOptions->getFilter($arResult['FILTER']);
+if (
+	is_array($arGridFilter['TYPE_ID'] ?? null)
+	&& in_array(CCrmActivityType::Task, $arGridFilter['TYPE_ID'])
+)
+{
+	$arGridFilter['TYPE_ID'][] = Task::getKey();
+}
 if(!$enableWidgetFilter)
 {
 	$arFilter += $arGridFilter;
@@ -1058,6 +1068,8 @@ else
 $arOptions = isset($arNavParams['nTopCount']) && $arNavParams['nTopCount'] > 0
 	? array('QUERY_OPTIONS' => array('LIMIT' => $arNavParams['nTopCount']))
 	: array('QUERY_OPTIONS' => array('LIMIT' => $pageSize + 1, 'OFFSET' => $pageSize * ($pageNum - 1)));
+
+$arSelect[] = 'PROVIDER_PARAMS';
 
 $dbRes = CCrmActivity::GetList($arSort, $arFilter, false, false, $arSelect, $arOptions);
 $arResult['ITEMS'] = array();

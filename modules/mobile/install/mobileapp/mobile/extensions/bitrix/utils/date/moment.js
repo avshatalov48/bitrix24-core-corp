@@ -194,7 +194,6 @@ jn.define('utils/date/moment', (require, exports, module) => {
 		 */
 		format(format, locale = null, ...rest)
 		{
-			locale = locale || env.languageId;
 			const formatStr = typeof format === 'function' ? format(this, locale, ...rest) : format;
 			return DateFormatter.getDateString(this.timestamp, formatStr, locale);
 		}

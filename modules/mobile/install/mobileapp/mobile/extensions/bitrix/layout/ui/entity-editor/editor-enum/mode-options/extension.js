@@ -1,10 +1,12 @@
-(() => {
-	BX.UI = BX.UI || {};
+/**
+ * @module layout/ui/entity-editor/editor-enum/mode-options
+ */
+jn.define('layout/ui/entity-editor/editor-enum/mode-options', (require, exports, module) => {
 
 	/**
-	 * @class BX.UI.EntityEditorModeOptions
+	 * @object EntityEditorModeOptions
 	 */
-	BX.UI.EntityEditorModeOptions = {
+	const EntityEditorModeOptions = {
 		none: 0x0,
 		exclusive: 0x1,
 		individual: 0x2,
@@ -14,4 +16,6 @@
 			return ((options & option) === option);
 		},
 	};
-})();
+
+	module.exports = { EntityEditorModeOptions };
+});

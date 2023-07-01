@@ -9,19 +9,18 @@
 	 * @subpackage imopenlines
 	 * @copyright 2001-2019 Bitrix
 	 */
+
 	function GetObjectValues(source) {
 	  var destination = [];
-
 	  for (var value in source) {
 	    if (source.hasOwnProperty(value)) {
 	      destination.push(source[value]);
 	    }
 	  }
-
 	  return destination;
 	}
-	/* region 01. Constants */
 
+	/* region 01. Constants */
 
 	var VoteType = Object.freeze({
 	  none: 'none',
@@ -127,7 +126,6 @@
 	});
 
 	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-
 	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	var FormType$1 = Object.freeze({
 	  none: 'none',
@@ -147,7 +145,6 @@
 	      if (!this.message.params || !this.message.params.IMOL_FORM) {
 	        return true;
 	      }
-
 	      if (this.message.params.IMOL_FORM === FormType$1.like) {
 	        if (parseInt(this.message.params.IMOL_VOTE) === this.widget.dialog.sessionId && this.widget.dialog.userVote === VoteType$1.none) {
 	          main_core_events.EventEmitter.emit(WidgetEventType.showForm, {
@@ -166,22 +163,18 @@
 	      if (!this.message.params) {
 	        return false;
 	      }
-
 	      if (!this.message.params.IMOL_SID) {
 	        return false;
 	      }
-
 	      return this.$Bitrix.Loc.getMessage('IMOL_MESSAGE_DIALOG_ID').replace('#ID#', this.message.params.IMOL_SID);
 	    },
 	    showMessage: function showMessage() {
 	      if (!this.message.params) {
 	        return true;
 	      }
-
 	      if (this.message.params.IMOL_FORM && this.message.params.IMOL_FORM === 'like') {
 	        return false;
 	      }
-
 	      return true;
 	    }
 	  }, ui_vue_vuex.Vuex.mapState({

@@ -4,26 +4,34 @@ declare(strict_types = 1);
 
 namespace Bitrix\CrmMobile\Controller;
 
-use Bitrix\Crm\Activity\TodoCreateNotification;
+use Bitrix\Crm\Component\EntityDetails\ComponentMode;
+use Bitrix\Crm\Engine\ActionFilter\CheckReadMyCompanyPermission;
 use Bitrix\Crm\Engine\ActionFilter\CheckReadPermission;
 use Bitrix\Crm\Engine\ActionFilter\CheckWritePermission;
+use Bitrix\Crm\Entity\PaymentDocumentsRepository;
 use Bitrix\Crm\Exclusion\Manager;
+use Bitrix\Crm\Field\Collection;
+use Bitrix\Crm\Integration\DocumentGeneratorManager;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\Item\Company;
 use Bitrix\Crm\Item\Contact;
 use Bitrix\Crm\Kanban\EntityActivityCounter;
 use Bitrix\Crm\PhaseSemantics;
+use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Factory;
-use Bitrix\Crm\Settings\Crm;
 use Bitrix\Crm\Settings\HistorySettings;
 use Bitrix\Crm\Timeline\TimelineEntry;
 use Bitrix\Crm\UI\EntitySelector;
+use Bitrix\CrmMobile\AhaMoments\GoToChat;
 use Bitrix\CrmMobile\Command\SaveEntityCommand;
+use Bitrix\CrmMobile\Controller\Filter\CheckRestrictions;
 use Bitrix\CrmMobile\Entity\FactoryProvider;
 use Bitrix\CrmMobile\ProductGrid\ProductGridQuery;
 use Bitrix\CrmMobile\Query\EntityEditor;
-use Bitrix\CrmMobile\UI\EntityEditor\Provider;
+use Bitrix\ImOpenlines\Security\Permissions;
+use Bitrix\Main\Config\Option;
+use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Engine\ActionFilter\CloseSession;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Error;
@@ -35,7 +43,7 @@ use Bitrix\Mobile\Helpers\ReadsApplicationErrors;
 use Bitrix\Mobile\UI\DetailCard\Configurator;
 use Bitrix\Mobile\UI\DetailCard\Controller;
 use Bitrix\Mobile\UI\DetailCard\Tabs;
-use Bitrix\Mobile\UI\EntityEditor\FormWrapper;
+use Bitrix\Crm\Conversion;
 
 Loader::requireModule('crm');
 
@@ -56,6 +64,19 @@ class EntityDetails extends Controller
 	/** @var Configurator */
 	private $tabConfigurator;
 	private ?array $header = null;
+
+	private const ALLOWED_ENTITY_TYPES_WITH_TODO_NOTIFICATION = [
+		\CCrmOwnerType::DealName,
+		\CCrmOwnerType::LeadName,
+	];
+
+	private const STATIC_CONVERSION_QUERY_PARAMS = [
+		'lead_id',
+		'quote_id',
+		'deal_id',
+		Conversion\QuoteConversionWizard::QUERY_PARAM_SRC_ID,
+		Conversion\DealConversionWizard::QUERY_PARAM_SRC_ID,
+	];
 
 	public function configureActions(): array
 	{
@@ -78,6 +99,7 @@ class EntityDetails extends Controller
 				'+prefilters' => [
 					new CloseSession(),
 					new CheckReadPermission(),
+					new CheckReadMyCompanyPermission(),
 				],
 			];
 		}
@@ -90,6 +112,11 @@ class EntityDetails extends Controller
 					new CheckWritePermission(),
 				],
 			];
+		}
+
+		foreach ($actions as &$action)
+		{
+			$action['+prefilters'][] = new CheckRestrictions();
 		}
 
 		return $actions;
@@ -132,11 +159,6 @@ class EntityDetails extends Controller
 
 	public function getAvailableEntityTypesAction(): array
 	{
-		if (!Crm::isUniversalActivityScenarioEnabled())
-		{
-			return [];
-		}
-
 		return FactoryProvider::getFactoriesMetaData();
 	}
 
@@ -214,20 +236,16 @@ class EntityDetails extends Controller
 	 * @param Factory $factory
 	 * @param Item $entity
 	 * @param CurrentUser $currentUser
-	 * @param int|null $categoryId
 	 * @return array|null
 	 */
-	public function loadMainAction(Factory $factory, Item $entity, CurrentUser $currentUser,
-		int $categoryId = null): array
+	public function loadMainAction(Factory $factory, Item $entity, CurrentUser $currentUser): array
 	{
 		$this->registerEntityViewedEvent($factory, $entity);
 
-		$entityEditorQuery = (new EntityEditor($factory, $entity, [
-			'CATEGORY_ID' => $categoryId,
-			'ENABLE_SEARCH_HISTORY' => 'N',
-		]));
-
-		$result = $entityEditorQuery->execute();
+		$entityEditorQuery = new EntityEditor($factory, $entity, $this->getEditorParams($entity));
+		$result = [
+			'editor' => $entityEditorQuery->execute(),
+		];
 
 		if ($entity->isNew())
 		{
@@ -242,12 +260,86 @@ class EntityDetails extends Controller
 				'header' => $this->getEntityHeader($entity),
 				'params' => [
 					'permissions' => $permissions,
+					'restrictions' => [
+						'conversion' => RestrictionManager::isConversionPermitted(),
+					],
 					'qrUrl' => $this->getDesktopLink($entity),
 					'timelinePushTag' => $this->subscribeToTimelinePushEvents($entity, $currentUser),
 					'todoNotificationParams' => $this->getTodoNotificationParams($factory, $entity, $permissions),
+					'isAutomationAvailable' => $this->getIsAutomationAvailable($entity->getEntityTypeId()),
+					'isDocumentPreviewerAvailable' => Option::get('crmmobile', 'release-spring-2023', true),
+					'documentGeneratorProvider' => $this->getDocumentGeneratorProvider($entity->getEntityTypeId()),
+					'shouldShowAutomationMenuItem' => Option::get('crmmobile', 'release-spring-2023', true),
+					'isAvailableReceivePayment' => Option::get('crmmobile', 'release-spring-2023', true),
+					'isGoToChatAvailable' => Option::get('crmmobile', 'release-spring-2023', true),
+					'ahaMoments' => [
+						'goToChat' => (GoToChat::getInstance())->canShow(),
+					],
 				],
 			]
 		);
+	}
+
+	private function getEditorParams(Item $entity): array
+	{
+		$params = [
+			'ENABLE_SEARCH_HISTORY' => 'N',
+			'ENTITY_TYPE_ID' => $entity->getEntityTypeId(),
+			'ENTITY_ID' => $entity->getId(),
+		];
+
+		if ($entity->isCategoriesSupported())
+		{
+			$params['CATEGORY_ID'] = $entity->getCategoryId();
+		}
+
+		$categoryId = $this->findInSourceParametersList('categoryId');
+		if ($this->findInSourceParametersList('categoryId'))
+		{
+			$params['CATEGORY_ID'] = (int)($categoryId ?? 0);
+		}
+
+		if ($this->isCopyMode())
+		{
+			$params['COMPONENT_MODE'] = ComponentMode::COPING;
+		}
+
+		$this->prepareEditorConversionParams($params, $entity->getEntityTypeId());
+
+		$contactId = $this->findInSourceParametersList('contact_id');
+		if ($contactId)
+		{
+			$params['DEFAULT_CONTACT_ID'] = $contactId;
+		}
+
+		$phone = $this->findInSourceParametersList('phone');
+		if ($phone)
+		{
+			$params['DEFAULT_PHONE_VALUE'] = $phone;
+		}
+
+		$originId = $this->findInSourceParametersList('origin_id');
+		if ($originId)
+		{
+			$params['ORIGIN_ID'] = $originId;
+		}
+
+		return $params;
+	}
+
+	private function prepareEditorConversionParams(&$params, $entityTypeId)
+	{
+		$conversionWizard = $this->getConversionWizard();
+		if ($conversionWizard !== null)
+		{
+			$conversionContextParams = $conversionWizard->prepareEditorContextParams(\CCrmOwnerType::ResolveName($entityTypeId));
+			$params = array_merge($params, $conversionContextParams);
+		}
+	}
+
+	private function isCopyMode(): bool
+	{
+		return (bool)$this->findInSourceParametersList('copy');
 	}
 
 	public function loadToDoNotificationParamsAction(Factory $factory, Item $entity): ?array
@@ -262,13 +354,15 @@ class EntityDetails extends Controller
 			$permissions = $this->getPermissions($entity);
 		}
 
-		if (empty($permissions['update']) || $factory->getEntityTypeId() !== \CCrmOwnerType::Deal)
+		if (
+			empty($permissions['update'])
+			|| !in_array($factory->getEntityName(), self::ALLOWED_ENTITY_TYPES_WITH_TODO_NOTIFICATION, true)
+		)
 		{
 			return null;
 		}
 
-		$todoNotificationAvailable = Crm::isUniversalActivityScenarioEnabled() && $factory->isStagesEnabled();
-		if (!$todoNotificationAvailable)
+		if (!$factory->isStagesEnabled())
 		{
 			return null;
 		}
@@ -276,13 +370,32 @@ class EntityDetails extends Controller
 		$counter = new EntityActivityCounter($entity->getEntityTypeId(), [$entity->getId()]);
 
 		return [
-			'isSkipped' => (new TodoCreateNotification($factory->getEntityTypeId()))->isSkipped(),
+			'notificationSupported' => $factory->isSmartActivityNotificationSupported(),
+			'notificationEnabled' => $factory->isSmartActivityNotificationEnabled(),
 			'plannedActivityCounter' => $counter->getCounters()[$entity->getId()]['N'] ?? 0,
+			'user' => \CCrmViewHelper::getUserInfo(),
 			'isFinalStage' => (
 				$factory->isStagesSupported()
 				&& $factory->getStageSemantics($entity->getStageId()) !== PhaseSemantics::PROCESS
 			),
 		];
+	}
+
+	private function getIsAutomationAvailable($entityTypeId): bool
+	{
+		return \Bitrix\Crm\Automation\Factory::isAutomationAvailable($entityTypeId);
+	}
+
+	private function getDocumentGeneratorProvider(int $entityTypeId): ?string
+	{
+		$manager = DocumentGeneratorManager::getInstance();
+		if (!$manager->isEnabled())
+		{
+			return null;
+		}
+
+		$providersMap = $manager->getCrmOwnerTypeProvidersMap();
+		return $providersMap[$entityTypeId] ?? null;
 	}
 
 	private function getPermissions(Item $entity): array
@@ -292,14 +405,45 @@ class EntityDetails extends Controller
 
 		$entityTypeId = $entity->getEntityTypeId();
 		$entityId = $entity->getId();
+
+		$openLinesAccess = $this->hasOpenLinesAccess();
+
+		if ($entityTypeId === \CCrmOwnerType::Company && \CCrmCompany::isMyCompany($entityId))
+		{
+			$myCompanyPermissions = $userPermissions->getMyCompanyPermissions();
+
+			return [
+				'add' => $myCompanyPermissions->canAdd(),
+				'read' => $myCompanyPermissions->canRead(),
+				'update' => $myCompanyPermissions->canUpdate(),
+				'delete' => $myCompanyPermissions->canDelete(),
+				'exclude' => false,
+				'openLinesAccess' => $openLinesAccess,
+			];
+		}
+
 		$categoryId = $entity->isCategoriesSupported() ? $entity->getCategoryId() : null;
 
 		return [
+			'add' => $userPermissions->checkAddPermissions($entityTypeId, $categoryId),
 			'read' => $userPermissions->checkReadPermissions($entityTypeId, $entityId, $categoryId),
 			'update' => $userPermissions->checkUpdatePermissions($entityTypeId, $entityId, $categoryId),
 			'delete' => $userPermissions->checkDeletePermissions($entityTypeId, $entityId, $categoryId),
 			'exclude' => !$crmPermissions->HavePerm('EXCLUSION', BX_CRM_PERM_NONE, 'WRITE'),
+			'openLinesAccess' => $openLinesAccess,
 		];
+	}
+
+	private function hasOpenLinesAccess(): bool
+	{
+		if (!Loader::includeModule('imopenlines'))
+		{
+			return false;
+		}
+
+		return Permissions::createWithCurrentUser()
+			->canPerform(Permissions::ENTITY_LINES, Permissions::ACTION_MODIFY)
+		;
 	}
 
 	public function getDesktopLink(Item $entity): ?string
@@ -325,6 +469,7 @@ class EntityDetails extends Controller
 			$pushTag = TimelineEntry::prepareEntityPushTag($entity->getEntityTypeId(), $entity->getId());
 			\CPullWatch::Add($currentUser->getId(), $pushTag);
 		}
+
 		return $pushTag;
 	}
 
@@ -339,7 +484,21 @@ class EntityDetails extends Controller
 
 	public function loadProductsAction(Item $entity, ?string $currencyId = null): array
 	{
+		$this->prepareConversionItemProducts($entity);
+
 		return (new ProductGridQuery($entity, $currencyId))->execute();
+	}
+
+	private function prepareConversionItemProducts(Item $entity): void
+	{
+		$conversionWizard = $this->getConversionWizard();
+		if ($conversionWizard !== null)
+		{
+			$conversionWizard->converter->fillDestinationItemWithDataFromSourceItem(
+				$entity,
+				[Item::FIELD_NAME_PRODUCTS]
+			);
+		}
 	}
 
 	public function loadTimelineAction(Factory $factory, Item $entity, CurrentUser $currentUser): array
@@ -362,9 +521,9 @@ class EntityDetails extends Controller
 	 */
 	public function getRequiredFieldsAction(Factory $factory, Item $entity, array $fieldCodes = []): array
 	{
-		$provider = new Provider($factory, $entity);
+		$entityEditorQuery = new EntityEditor($factory, $entity, $this->getEditorParams($entity));
 
-		return (new FormWrapper($provider, 'bitrix:crm.entity.editor'))->getRequiredFields($fieldCodes);
+		return $entityEditorQuery->execute($fieldCodes);
 	}
 
 	public function excludeEntityAction(Item $entity): void
@@ -408,10 +567,29 @@ class EntityDetails extends Controller
 		{
 			$data[Item::FIELD_NAME_CATEGORY_ID] = $categoryId;
 		}
+		$entityTypeName = $factory->getEntityName();
+
+		//When converting from a lead, you do not need to create a link between the elements, because it happens in crm.lead.show
+		$isNeedAttachConversionItem = true;
+		$conversionWizard = $this->getConversionWizard();
+		if ($conversionWizard !== null)
+		{
+			$isNeedAttachConversionItem = $this->prepareConversionData($conversionWizard, $entityTypeName, $data);
+
+			if (!isset($data[Item::FIELD_NAME_PRODUCTS]) || !is_array($data[Item::FIELD_NAME_PRODUCTS]))
+			{
+				$this->prepareConversionItemProducts($entity);
+			}
+		}
 
 		if (!empty($client['company']) && $entity->getEntityTypeId() === \CCrmOwnerType::Contact)
 		{
 			$data['COMPANY_IDS'] = $client['company'];
+		}
+
+		if ($this->isCopyMode())
+		{
+			$this->prepareCopyData($factory, $entity, $data);
 		}
 
 		$command = new SaveEntityCommand($factory, $entity, $data);
@@ -427,12 +605,196 @@ class EntityDetails extends Controller
 
 		$entityId = (int)$result->getData()['ID'];
 
+		if ($conversionWizard !== null && $isNeedAttachConversionItem)
+		{
+			$conversionWizard->attachNewlyCreatedEntity($entityTypeName, $entityId);
+		}
+
 		if ($isCreationFromSelector && $entityId)
 		{
 			$this->saveEntityInSelectorRecent($factory, $entityId);
 		}
 
 		return $entityId;
+	}
+
+	private function getConversionParams(): ?array
+	{
+		$entityId = null;
+		$entityTypeId = null;
+		$conversionQueryParams = Conversion\EntityConversionWizard::getQueryParamSource();
+		$conversionParamList = [...self::STATIC_CONVERSION_QUERY_PARAMS, $conversionQueryParams['ENTITY_ID']];
+		foreach ($conversionParamList as $key)
+		{
+			$value = (int)($this->findInSourceParametersList($key) ?? 0);
+			if ($value > 0)
+			{
+				$entityId = $value;
+			}
+			else
+			{
+				continue;
+			}
+
+			if ($key === $conversionQueryParams['ENTITY_ID'])
+			{
+				$entityTypeId = $this->findInSourceParametersList($conversionQueryParams['ENTITY_TYPE_ID']);
+			}
+			elseif ($key === Conversion\QuoteConversionWizard::QUERY_PARAM_SRC_ID || $key === 'quote_id')
+			{
+				$entityTypeId = \CCrmOwnerType::Quote;
+			}
+			elseif ($key === 'lead_id')
+			{
+				$entityTypeId = \CCrmOwnerType::Lead;
+			}
+			elseif ($key === Conversion\DealConversionWizard::QUERY_PARAM_SRC_ID || $key === 'deal_id')
+			{
+				$entityTypeId = \CCrmOwnerType::Deal;
+			}
+		}
+
+		if (\CCrmOwnerType::IsDefined($entityTypeId) && $entityId > 0)
+		{
+			return [
+				'ENTITY_TYPE_ID' => (int)($entityTypeId ?? 0),
+				'ENTITY_ID' => $entityId ?? 0,
+			];
+		}
+
+		return null;
+	}
+
+	private function getConversionWizard(): ?Conversion\EntityConversionWizard
+	{
+		$conversionParams = $this->getConversionParams();
+		if ($conversionParams !== null)
+		{
+			return Conversion\ConversionManager::loadWizardByParams($conversionParams);
+		}
+
+		return null;
+	}
+
+	private function prepareConversionData($conversionWizard, $entityTypeName, &$data): bool
+	{
+		$conversionContext = $conversionWizard->prepareEditorContextParams($entityTypeName);
+		$isConversionLead = $conversionContext['CONVERSION_SOURCE']['entityTypeId'] === \CCrmOwnerType::Lead;
+		if ($isConversionLead)
+		{
+			$data = array_merge($data, $conversionContext);
+
+			return false;
+		}
+
+		return true;
+	}
+
+	private function prepareCopyData(Factory $factory, Item $entity, array &$data): void
+	{
+		$sourceFields = $this->getSourceEntityFields($factory, $entity);
+		if (empty($sourceFields))
+		{
+			return;
+		}
+
+		if ($factory->isLinkWithProductsEnabled())
+		{
+			$this->prepareCopyProductRows($data, $sourceFields);
+		}
+
+		$this->prepareCopyFileFields($factory->getFieldsCollection(), $data, $sourceFields);
+	}
+
+	private function getSourceEntityFields(Factory $factory, Item $entity): array
+	{
+		$sourceEntityId = (int)$this->findInSourceParametersList('sourceEntityId');
+		if (!$sourceEntityId)
+		{
+			return [];
+		}
+
+		$userPermissions = Container::getInstance()->getUserPermissions();
+		$hasReadPermission = $userPermissions->checkReadPermissions(
+			$entity->getEntityTypeId(),
+			$sourceEntityId,
+			$entity->isCategoriesSupported() ? $entity->getCategoryId() : null
+		);
+		if (!$hasReadPermission)
+		{
+			return [];
+		}
+
+		$sourceEntity = $factory->getItem($sourceEntityId);
+		if (!$sourceEntity)
+		{
+			return [];
+		}
+
+		return $sourceEntity->getCompatibleData();
+	}
+
+	private function prepareCopyProductRows(array &$data, array $sourceFields): void
+	{
+		if (!isset($data[Item::FIELD_NAME_PRODUCTS]) && isset($sourceFields[Item::FIELD_NAME_PRODUCTS]))
+		{
+			$data[Item::FIELD_NAME_PRODUCTS] = $sourceFields[Item::FIELD_NAME_PRODUCTS];
+		}
+
+		if (!empty($data[Item::FIELD_NAME_PRODUCTS]) && is_array($data[Item::FIELD_NAME_PRODUCTS]))
+		{
+			foreach ($data[Item::FIELD_NAME_PRODUCTS] as &$productRow)
+			{
+				unset($productRow['ID']);
+			}
+		}
+	}
+
+	private function prepareCopyFileFields(Collection $fieldCollection, array &$data, array $sourceFields): void
+	{
+		foreach ($fieldCollection as $fieldName => $field)
+		{
+			if ($field->getType() !== 'file')
+			{
+				continue;
+			}
+
+			if (empty($data[$fieldName]))
+			{
+				continue;
+			}
+
+			// check if the file id is in the source entity to which we have permissions, exclude random file ids
+			if ($field->isMultiple())
+			{
+				foreach ($data[$fieldName] as &$value)
+				{
+					if (
+						is_numeric($value)
+						&& !empty($sourceFields[$fieldName])
+						&& is_array($sourceFields[$fieldName])
+						&& in_array($value, $sourceFields[$fieldName], true)
+					)
+					{
+						$value = [
+							'value' => \CFile::MakeFileArray((int)$value),
+							'copy' => true,
+						];
+					}
+				}
+			}
+			elseif (
+				is_numeric($data[$fieldName])
+				&& !empty($sourceFields[$fieldName])
+				&& $data[$fieldName] === $sourceFields[$fieldName]
+			)
+			{
+				$data[$fieldName] = [
+					'value' => \CFile::MakeFileArray((int)$data[$fieldName]),
+					'copy' => true,
+				];
+			}
+		}
 	}
 
 	private function saveEntityInSelectorRecent(Factory $factory, int $entityId): void
@@ -482,8 +844,20 @@ class EntityDetails extends Controller
 
 			if ($entity && !$entity->isNew())
 			{
-				$text = (string)$entity->getHeading();
-				$detailText = $this->getHeaderDetailText($entity);
+				if ($this->isCopyMode())
+				{
+					$typeName = mb_strtoupper(\CCrmOwnerType::ResolveName($entity->getEntityTypeId()));
+					$text = Loc::getMessage("M_CRM_ENTITY_DETAILS_COPY_TEXT_{$typeName}");
+					if (!$text)
+					{
+						$text = Loc::getMessage('M_CRM_ENTITY_DETAILS_COPY_TEXT');
+					}
+				}
+				else
+				{
+					$text = (string)$entity->getHeading();
+					$detailText = $this->getHeaderDetailText($entity);
+				}
 
 				$logo = null;
 				$size = null;
@@ -546,5 +920,34 @@ class EntityDetails extends Controller
 		}
 
 		return $this->getFactory()->getEntityDescription();
+	}
+
+	public function getEntityTotalAmountAction(int $entityId, int $entityTypeId): array
+	{
+		/**
+		 * @var PaymentDocumentsRepository $repository
+		 */
+		$repository = ServiceLocator::getInstance()->get('crm.entity.paymentDocumentsRepository');
+		$data = $repository->getDocumentsForEntity($entityTypeId, $entityId)->getData();
+
+		return [
+			'totalAmount' => $data['TOTAL_AMOUNT'] ?? 0,
+			'currencyId' => $data['CURRENCY_ID'] ?? '',
+		];
+	}
+
+	public function getEntityDocumentsAction(int $entityId, int $entityTypeId): array
+	{
+		/**
+		 * @var PaymentDocumentsRepository $repository
+		 */
+		$repository = ServiceLocator::getInstance()->get('crm.entity.paymentDocumentsRepository');
+		$data = $repository->getDocumentsForEntity($entityTypeId, $entityId)->getData();
+
+		return [
+			'documents' => $data['DOCUMENTS'] ?? [],
+			'totalAmount' => $data['TOTAL_AMOUNT'] ?? 0,
+			'currencyId' => $data['CURRENCY_ID'] ?? '',
+		];
 	}
 }

@@ -2,7 +2,6 @@
  * @module crm/product-calculator
  */
 jn.define('crm/product-calculator', (require, exports, module) => {
-
 	const { DiscountType } = require('crm/product-calculator/discount-type');
 	const { ProductCalculator } = require('crm/product-calculator/product-calculator');
 	const { TaxForPriceStrategy } = require('crm/product-calculator/tax-for-price-strategy');
@@ -16,5 +15,4 @@ jn.define('crm/product-calculator', (require, exports, module) => {
 		TaxForSumStrategy,
 		ProductRow,
 	};
-
 });

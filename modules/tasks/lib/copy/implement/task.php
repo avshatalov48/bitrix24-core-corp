@@ -122,10 +122,10 @@ class Task extends Base
 	 */
 	public function setProjectTerm(array $projectTerm)
 	{
-		$projectTerm["project"] = $projectTerm["project"] ?: false;
-		$projectTerm["old_start_point"] = $projectTerm["old_start_point"] ?: "";
-		$projectTerm["start_point"] = $projectTerm["start_point"] ?: "";
-		$projectTerm["end_point"] = $projectTerm["end_point"] ?: "";
+		$projectTerm['project'] = $projectTerm['project'] ?? false;
+		$projectTerm['old_start_point'] = $projectTerm['old_start_point'] ?? '';
+		$projectTerm['start_point'] = $projectTerm['start_point'] ?? '';
+		$projectTerm['end_point'] = $projectTerm['end_point'] ?? '';
 		$this->projectTerm = $projectTerm;
 	}
 

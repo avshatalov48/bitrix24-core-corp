@@ -3,7 +3,7 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 //delayed function must return a string
 
-__IncludeLang(dirname(__FILE__).'/lang/'.LANGUAGE_ID.'/'.basename(__FILE__));
+__IncludeLang(__DIR__.'/lang/'.LANGUAGE_ID.'/'.basename(__FILE__));
 
 $curPage = $GLOBALS['APPLICATION']->GetCurPage($get_index_page=false);
 

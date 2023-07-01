@@ -19,8 +19,18 @@ class ActivityChange
 	private ?int $newResponsibleId;
 	private array $oldBindings;
 	private array $newBindings;
+	private ?DateTime $oldLightTime;
+	private ?DateTime $newLightTime;
 
-	public static function create(int $id, array $oldFields, array $oldBindings, array $newFields, array $newBindings): self
+	public static function create(
+		int $id,
+		array $oldFields,
+		array $oldBindings,
+		array $newFields,
+		array $newBindings,
+		?DateTime $oldLightTime,
+		?DateTime $newLightTime
+	): self
 	{
 		$oldDeadline = (isset($oldFields['DEADLINE']) && $oldFields['DEADLINE'] && !\CCrmDateTimeHelper::IsMaxDatabaseDate($oldFields['DEADLINE']))
 			? DateTime::createFromUserTime($oldFields['DEADLINE'])
@@ -42,7 +52,9 @@ class ActivityChange
 			isset($oldFields['RESPONSIBLE_ID']) ? (int)$oldFields['RESPONSIBLE_ID'] : null,
 			isset($newFields['RESPONSIBLE_ID']) ? (int)$newFields['RESPONSIBLE_ID'] : null,
 			self::prepareBindings($oldBindings),
-			self::prepareBindings($newBindings)
+			self::prepareBindings($newBindings),
+			$oldLightTime,
+			$newLightTime
 		);
 
 		return $change;
@@ -78,7 +90,9 @@ class ActivityChange
 		?int $oldResponsibleId,
 		?int $newResponsibleId,
 		array $oldBindings,
-		array $newBindings
+		array $newBindings,
+		?DateTime $oldLightTime,
+		?DateTime $newLightTime
 	)
 	{
 		$this->id = $id;
@@ -92,6 +106,8 @@ class ActivityChange
 		$this->newResponsibleId = $newResponsibleId;
 		$this->oldBindings = $oldBindings;
 		$this->newBindings = $newBindings;
+		$this->oldLightTime = $oldLightTime;
+		$this->newLightTime = $newLightTime;
 	}
 
 	public function applyNewChange(self $activityChange): void
@@ -234,14 +250,24 @@ class ActivityChange
 	{
 		$isIncomingChannelChanged = $this->isIncomingChannelChanged();
 		$isDeadlineChanged = $this->isDeadlineChanged();
+		$isLightTimeChanged = $this->isLightTimeChanges();
 		$affectedTypeIds = [];
-		if (($isDeadlineChanged && $isIncomingChannelChanged) || $this->isCompletedChanged() || $this->areBindingsChanged())
+		if (
+			($isDeadlineChanged && $isIncomingChannelChanged)
+			|| ($isLightTimeChanged && $isIncomingChannelChanged)
+			|| $this->isCompletedChanged()
+			|| $this->areBindingsChanged()
+		)
 		{
 			$affectedTypeIds = EntityCounterType::getAll(true);
 		}
 		elseif ($isDeadlineChanged)
 		{
 			$affectedTypeIds = EntityCounterType::getAllDeadlineBased(true);
+		}
+		elseif ($isLightTimeChanged)
+		{
+			$affectedTypeIds = EntityCounterType::getAllLightTimeBased(true);
 		}
 		elseif ($isIncomingChannelChanged)
 		{
@@ -263,6 +289,26 @@ class ActivityChange
 			|| $this->isCompletedChanged()
 			|| $this->isResponsibleIdChanged()
 			|| $this->areBindingsChanged()
+			|| $this->isLightTimeChanges()
 		;
     }
+
+	public function isLightTimeChanges(): bool
+	{
+		$oldLt = $this->oldLightTime ? $this->oldLightTime->getTimestamp() : 0;
+		$newLt = $this->newLightTime ? $this->newLightTime->getTimestamp() : 0;
+
+		return $oldLt !== $newLt;
+	}
+
+	public function getOldLightTime(): ?DateTime
+	{
+		return $this->oldLightTime;
+	}
+
+	public function getNewLightTime(): ?DateTime
+	{
+		return $this->newLightTime;
+	}
+
 }

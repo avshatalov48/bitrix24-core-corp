@@ -204,7 +204,8 @@ class BFile extends File
 	protected function getPath(array $file)
 	{
 		$path = Driver::MODULE_ID;
-		if($file['isTemplate'] === true)
+		$isTemplate = $file['isTemplate'] ?? false;
+		if ($isTemplate === true)
 		{
 			$path = Path::combine('templates', $path);
 		}

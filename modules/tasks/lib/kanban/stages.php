@@ -532,7 +532,7 @@ class StagesTable extends Entity\DataManager
 		{
 			if ($entityType == self::WORK_MODE_ACTIVE_SPRINT)
 			{
-				$systemType = $stage['SYSTEM_TYPE'];
+				$systemType = $stage['SYSTEM_TYPE'] ?? '';
 			}
 			else
 			{
@@ -925,9 +925,10 @@ class StagesTable extends Entity\DataManager
 		foreach ($users as $userId)
 		{
 			if (
-				!in_array($userId, self::$disablePin) &&
-				!in_array($userId, $currentUsers) &&
-				isset($personaleDefStages[$userId])
+				$userId
+				&& !in_array($userId, self::$disablePin)
+				&& !in_array($userId, $currentUsers)
+				&& isset($personaleDefStages[$userId])
 			)
 			{
 				// get order
@@ -938,8 +939,7 @@ class StagesTable extends Entity\DataManager
 					$userId
 				);
 
-				$targetId = (new Sort())->getPositionForUser((int) $taskId, $order, (int)$userId);
-
+				$targetId = (new Sort())->getPositionForUser((int)$taskId, $order, (int)$userId);
 				if ($targetId)
 				{
 					SortingTable::setSorting(
@@ -947,7 +947,7 @@ class StagesTable extends Entity\DataManager
 						0,
 						$taskId,
 						$targetId,
-						$order == 'asc' ? false : true
+						($order == 'asc' ? false : true)
 					);
 				}
 			}

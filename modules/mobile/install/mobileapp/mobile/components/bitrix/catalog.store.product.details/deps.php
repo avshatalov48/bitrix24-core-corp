@@ -12,7 +12,7 @@ return [
 		'layout/ui/fields/select',
 		'layout/ui/fields/string',
 		'layout/ui/fields-wrapper',
-		'layout/ui/banner-button',
+		'layout/ui/banners',
 		'qrauth/utils',
 		'utils',
 		'alert',

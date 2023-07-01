@@ -14,13 +14,11 @@
 
 .crm-timeline__card-container_info-title {
 	display: block;
-	font-family: var(--crm-timeline__font-helvetica);
 	font-size: var(--ui-font-size-sm, 13px);
 	color: var(--ui-color-palette-gray-50, rgba(168, 173, 180, 1));
 }
 
 .crm-timeline__card-container_info.--inline .crm-timeline__card-container_info-title {
-	width: 100px;
 	font-size: var(--ui-font-size-sm, 13px);
 	color: var(--ui-color-palette-gray-70, #828b95);
 	overflow: hidden;
@@ -28,14 +26,26 @@
 	text-overflow: ellipsis;
 }
 
+.crm-timeline__card-container_info.--fixed-width .crm-timeline__card-container_info-title {
+	width: 100px;
+}
+
 .crm-timeline__card-container_info-value {
 	display: block;
 	overflow: hidden;
-	font-family: var(--crm-timeline__font-helvetica);
 	font-size: var(--ui-font-size-md, 14px);
 	color: var(--ui-color-text-secondary, rgba(82, 92, 105, .9));
 	white-space: nowrap;
 	text-overflow: ellipsis;
+}
+
+.crm-timeline__card-container_info.--word-wrap .crm-timeline__card-container_info-title {
+	align-self: flex-start;
+}
+
+.crm-timeline__card-container_info.--word-wrap .crm-timeline__card-container_info-value {
+	white-space: normal;
+	overflow: auto;
 }
 
 .crm-timeline__card-container_info-value.--link span {

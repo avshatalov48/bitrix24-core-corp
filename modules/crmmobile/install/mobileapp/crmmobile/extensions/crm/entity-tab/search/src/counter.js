@@ -2,8 +2,8 @@
  * @module crm/entity-tab/search/counter
  */
 jn.define('crm/entity-tab/search/counter', (require, exports, module) => {
-
 	const { BaseItem } = require('crm/entity-tab/search/base-item');
+	const { Loc } = require('loc');
 
 	const countersColors = {
 		INCOMINGCHANNEL: {
@@ -16,7 +16,14 @@ jn.define('crm/entity-tab/search/counter', (require, exports, module) => {
 			title: BX.message('M_CRM_ET_SEARCH_COUNTER_TYPE_FILTER_CURRENT_2'),
 			titleOtherUsers: BX.message('M_CRM_ET_SEARCH_COUNTER_TYPE_FILTER_CURRENT_2_OTHER_USERS'),
 		},
-	}
+
+		// @todo remove after creating view mode Activity in the mobile
+		MY_PENDING: {
+			value: '#2FC6F6',
+			title: BX.message('M_CRM_ET_SEARCH_COUNTER_TYPE_FILTER_INCOMINGCHANNEL'),
+			titleOtherUsers: BX.message('M_CRM_ET_SEARCH_COUNTER_TYPE_FILTER_INCOMINGCHANNEL_OTHER_USERS'),
+		},
+	};
 
 	/**
 	 * @class Counter
@@ -27,7 +34,7 @@ jn.define('crm/entity-tab/search/counter', (require, exports, module) => {
 		{
 			super(props);
 
-			this.counter =  {
+			this.counter = {
 				id: props.typeId,
 				code: props.code,
 				typeName: props.typeName,
@@ -41,13 +48,16 @@ jn.define('crm/entity-tab/search/counter', (require, exports, module) => {
 
 			const value = this.getCounterValue();
 
+			// @todo remove after creating view mode Activity in the mobile
+			const showValue = (this.counter.code !== 'my_pending');
+
 			const content = [
 				Text({
 					style: this.styles.title,
 					text: this.getTitle(),
 					ellipsize: 'middle',
 				}),
-				Text({
+				showValue && Text({
 					style: styles.value(typeName, parseInt(value, 10)),
 					text: value,
 				}),
@@ -61,7 +71,7 @@ jn.define('crm/entity-tab/search/counter', (require, exports, module) => {
 						svg: {
 							content: this.icon,
 						},
-					})
+					}),
 				);
 			}
 
@@ -75,6 +85,12 @@ jn.define('crm/entity-tab/search/counter', (require, exports, module) => {
 
 		getTitle()
 		{
+			// @todo remove after creating view mode Activity in the mobile
+			if (this.counter.code === 'my_pending')
+			{
+				return Loc.getMessage('M_CRM_ET_SEARCH_COUNTER_TYPE_FILTER_MY_PENDING');
+			}
+
 			const config = this.getCounterConfig();
 			return (this.counter.excludeUsers ? config.titleOtherUsers : config.title);
 		}
@@ -106,18 +122,18 @@ jn.define('crm/entity-tab/search/counter', (require, exports, module) => {
 	const styles = {
 		value: (name, value) => {
 			return {
-				color: '#FFFFFF',
+				color: '#ffffff',
 				borderRadius: 8,
 				fontSize: 12,
 				height: 17,
-				backgroundColor: value ? countersColors[name].value : '#b8c0c9',
+				backgroundColor: value ? countersColors[name].value : '#bdc1c6',
 				marginLeft: 5,
 				paddingHorizontal: Application.getPlatform() === 'android' ? 4 : 7,
 				textAlign: 'center',
 				fontWeight: '700',
-			}
+			};
 		},
-	}
+	};
 
-	module.exports = { Counter }
+	module.exports = { Counter };
 });

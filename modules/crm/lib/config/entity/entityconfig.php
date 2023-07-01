@@ -12,9 +12,9 @@ use Bitrix\Crm;
  *
  * <<< ORMENTITYANNOTATION
  * @method static EO_EntityConfig_Query query()
- * @method static EO_EntityConfig_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_EntityConfig_Result getByPrimary($primary, array $parameters = [])
  * @method static EO_EntityConfig_Result getById($id)
- * @method static EO_EntityConfig_Result getList(array $parameters = array())
+ * @method static EO_EntityConfig_Result getList(array $parameters = [])
  * @method static EO_EntityConfig_Entity getEntity()
  * @method static \Bitrix\Crm\Config\Entity\EO_EntityConfig createObject($setDefaultValues = true)
  * @method static \Bitrix\Crm\Config\Entity\EO_EntityConfig_Collection createCollection()

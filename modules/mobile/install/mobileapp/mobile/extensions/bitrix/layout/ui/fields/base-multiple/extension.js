@@ -200,6 +200,7 @@ jn.define('layout/ui/fields/base-multiple', (require, exports, module) => {
 
 			return {
 				...config,
+				multiple: true,
 				styles: this.getInnerFieldStyles(styles),
 			};
 		}

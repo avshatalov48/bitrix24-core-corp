@@ -1,48 +1,27 @@
 this.BX = this.BX || {};
-(function (exports,main_core,main_popup,pull_client,main_core_events) {
+(function (exports,main_core,main_popup,im_public_iframe) {
 	'use strict';
 
-	function _templateObject2() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<button class=\"ui-btn ", "\" onclick=\"", "\">", "</button>"]);
-
-	  _templateObject2 = function _templateObject2() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"ui-btn-split ", "\">\n\t\t\t\t\t\t<button class=\"ui-btn-main\" onclick=\"", "\">", "</button>\n\t\t\t\t\t\t<button class=\"ui-btn-menu\" onclick=\"", "\"></button> \n\t\t\t\t\t</div>\n\t\t\t\t"]);
-
-	  _templateObject = function _templateObject() {
-	    return data;
-	  };
-
-	  return data;
-	}
+	var _templateObject, _templateObject2;
+	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	var ControlButton = /*#__PURE__*/function () {
 	  function ControlButton() {
 	    var params = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 	    babelHelpers.classCallCheck(this, ControlButton);
 	    this.container = params.container;
-
 	    if (!main_core.Type.isDomNode(this.container)) {
 	      return;
 	    }
-
 	    this.entityType = params.entityType || '';
 	    this.entityId = params.entityId || '';
-
 	    if (!this.entityType || !this.entityId) {
 	      return;
 	    }
-
 	    this.items = params.items || [];
 	    this.mainItem = params.mainItem || 'videocall';
 	    this.entityData = params.entityData || {};
 	    var analyticsLabelParam = params.analyticsLabel || {};
-
 	    if (this.items.length === 0) {
 	      if (this.entityType === 'task') {
 	        this.items = ['chat', 'videocall', 'blog_post', 'calendar_event'];
@@ -54,24 +33,20 @@ this.BX = this.BX || {};
 	        this.items = ['chat', 'videocall', 'blog_post', 'task', 'calendar_event'];
 	      }
 	    }
-
 	    this.contextBx = window.top.BX || window.BX;
 	    this.sliderId = "controlButton:".concat(this.entityType + this.entityId).concat(Math.floor(Math.random() * 1000));
 	    this.isVideoCallEnabled = main_core.Reflection.getClass("".concat(this.contextBx, ".Call.Util")) ? this.contextBx.Call.Util.isWebRTCSupported() : true;
 	    this.chatLockCounter = 0;
-
 	    if (!main_core.Type.isPlainObject(analyticsLabelParam)) {
 	      analyticsLabelParam = {};
 	    }
-
-	    this.analyticsLabel = babelHelpers.objectSpread({
+	    this.analyticsLabel = _objectSpread({
 	      entity: this.entityType
 	    }, analyticsLabelParam);
 	    this.buttonClassName = params.buttonClassName || '';
 	    this.renderButton();
 	    this.subscribeEvents();
 	  }
-
 	  babelHelpers.createClass(ControlButton, [{
 	    key: "destroy",
 	    value: function destroy() {
@@ -89,7 +64,6 @@ this.BX = this.BX || {};
 	    value: function onCalendarSave(event) {
 	      if (event instanceof this.contextBx.Event.BaseEvent) {
 	        var data = event.getData();
-
 	        if (data.sliderId === this.sliderId) {
 	          var params = {
 	            postEntityType: this.entityType.toUpperCase(),
@@ -107,12 +81,10 @@ this.BX = this.BX || {};
 	    key: "onPostSave",
 	    value: function onPostSave(event) {
 	      var _event$getCompatData = event.getCompatData(),
-	          _event$getCompatData2 = babelHelpers.slicedToArray(_event$getCompatData, 1),
-	          sliderEvent = _event$getCompatData2[0];
-
+	        _event$getCompatData2 = babelHelpers.slicedToArray(_event$getCompatData, 1),
+	        sliderEvent = _event$getCompatData2[0];
 	      if (sliderEvent.getEventId() === 'Socialnetwork.PostForm:onAdd') {
 	        var data = sliderEvent.getData();
-
 	        if (data.originatorSliderId === this.sliderId) {
 	          var params = {
 	            postEntityType: this.entityType.toUpperCase(),
@@ -133,7 +105,7 @@ this.BX = this.BX || {};
 	      var onClickValue = isChatButton ? this.openChat.bind(this) : this.startVideoCall.bind(this);
 	      var buttonTitle = isChatButton ? main_core.Loc.getMessage('INTRANET_JS_CONTROL_BUTTON_CHAT') : main_core.Loc.getMessage('INTRANET_JS_CONTROL_BUTTON_NAME');
 	      var buttonClass = "".concat(isChatButton ? 'ui-btn-icon-chat-blue' : 'ui-btn-icon-camera-blue', " intranet-control-btn ui-btn-light-border ui-btn-icon-inline ").concat(this.buttonClassName);
-	      this.button = this.items.length > 1 ? main_core.Tag.render(_templateObject(), buttonClass, onClickValue, buttonTitle, this.showMenu.bind(this)) : main_core.Tag.render(_templateObject2(), buttonClass, onClickValue, buttonTitle);
+	      this.button = this.items.length > 1 ? main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"ui-btn-split ", "\">\n\t\t\t\t\t\t<button class=\"ui-btn-main\" onclick=\"", "\">", "</button>\n\t\t\t\t\t\t<button class=\"ui-btn-menu\" onclick=\"", "\"></button> \n\t\t\t\t\t</div>\n\t\t\t\t"])), buttonClass, onClickValue, buttonTitle, this.showMenu.bind(this)) : main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["<button class=\"ui-btn ", "\" onclick=\"", "\">", "</button>"])), buttonClass, onClickValue, buttonTitle);
 	      main_core.Dom.append(this.button, this.container);
 	    }
 	  }, {
@@ -150,24 +122,18 @@ this.BX = this.BX || {};
 	    key: "getAvailableItems",
 	    value: function getAvailableItems() {
 	      var _this = this;
-
 	      return new Promise(function (resolve, reject) {
 	        var availableItems = window.sessionStorage.getItem('b24-controlbutton-available-items');
-
 	        if (availableItems) {
 	          resolve(availableItems);
 	          return;
 	        }
-
 	        _this.showLoader();
-
 	        main_core.ajax.runAction('intranet.controlbutton.getAvailableItems', {
 	          data: {}
 	        }).then(function (response) {
 	          window.sessionStorage.setItem('b24-controlbutton-available-items', response.data);
-
 	          _this.hideLoader();
-
 	          resolve(response.data);
 	        });
 	      });
@@ -176,13 +142,11 @@ this.BX = this.BX || {};
 	    key: "showMenu",
 	    value: function showMenu() {
 	      var _this2 = this;
-
 	      this.getAvailableItems().then(function (availableItems) {
 	        _this2.items = _this2.items.filter(function (item) {
 	          return item && availableItems.indexOf(item) !== -1;
 	        });
 	        var menuItems = [];
-
 	        _this2.items.forEach(function (item) {
 	          switch (item) {
 	            case 'videocall':
@@ -192,71 +156,59 @@ this.BX = this.BX || {};
 	                  className: 'menu-popup-item-videocall',
 	                  onclick: function onclick() {
 	                    _this2.startVideoCall();
-
 	                    _this2.popupMenu.close();
 	                  }
 	                });
 	              }
-
 	              break;
-
 	            case 'chat':
 	              menuItems.push({
 	                text: main_core.Loc.getMessage('INTRANET_JS_CONTROL_BUTTON_CHAT'),
 	                className: 'menu-popup-item-chat',
 	                onclick: function onclick() {
 	                  _this2.openChat();
-
 	                  _this2.popupMenu.close();
 	                }
 	              });
 	              break;
-
 	            case 'task':
 	              menuItems.push({
 	                text: main_core.Loc.getMessage('INTRANET_JS_CONTROL_BUTTON_TASK'),
 	                className: 'menu-popup-item-task',
 	                onclick: function onclick() {
 	                  _this2.openTaskSlider();
-
 	                  _this2.popupMenu.close();
 	                }
 	              });
 	              break;
-
 	            case 'calendar_event':
 	              menuItems.push({
 	                text: main_core.Loc.getMessage('INTRANET_JS_CONTROL_BUTTON_MEETING'),
 	                className: 'menu-popup-item-meeting',
 	                onclick: function onclick() {
 	                  _this2.openCalendarSlider();
-
 	                  _this2.popupMenu.close();
 	                }
 	              });
 	              break;
-
 	            case 'blog_post':
 	              menuItems.push({
 	                text: main_core.Loc.getMessage('INTRANET_JS_CONTROL_BUTTON_POST'),
 	                className: 'menu-popup-item-post',
 	                onclick: function onclick() {
 	                  _this2.openPostSlider();
-
 	                  _this2.popupMenu.close();
 	                }
 	              });
 	              break;
 	          }
 	        });
-
 	        _this2.popupMenu = new main_popup.Menu({
 	          bindElement: _this2.button,
 	          items: menuItems,
 	          offsetLeft: 80,
 	          offsetTop: 5
 	        });
-
 	        _this2.popupMenu.show();
 	      });
 	    }
@@ -264,15 +216,10 @@ this.BX = this.BX || {};
 	    key: "openChat",
 	    value: function openChat() {
 	      var _this3 = this;
-
 	      if (this.entityType === 'workgroup') {
-	        if (top.window.BXIM) {
-	          top.BXIM.openMessenger('sg' + this.entityId);
-	        }
-
+	        im_public_iframe.Messenger.openChat('sg' + this.entityId);
 	        return;
 	      }
-
 	      this.showLoader();
 	      main_core.ajax.runAction('intranet.controlbutton.getChat', {
 	        data: {
@@ -282,21 +229,17 @@ this.BX = this.BX || {};
 	        },
 	        analyticsLabel: this.analyticsLabel
 	      }).then(function (response) {
-	        if (top.window.BXIM && response.data) {
-	          top.BXIM.openMessenger('chat' + parseInt(response.data));
+	        if (response.data) {
+	          im_public_iframe.Messenger.openChat('chat' + parseInt(response.data));
 	        }
-
 	        _this3.chatLockCounter = 0;
-
 	        _this3.hideLoader();
 	      }, function (response) {
 	        if (response.errors[0].code === 'lock_error' && _this3.chatLockCounter < 4) {
 	          _this3.chatLockCounter++;
-
 	          _this3.openChat();
 	        } else {
 	          _this3.showHintPopup(response.errors[0].message);
-
 	          _this3.hideLoader();
 	        }
 	      });
@@ -305,15 +248,10 @@ this.BX = this.BX || {};
 	    key: "startVideoCall",
 	    value: function startVideoCall() {
 	      var _this4 = this;
-
 	      if (this.entityType === 'workgroup') {
-	        if (top.window.BXIM) {
-	          top.BXIM.callTo('sg' + this.entityId);
-	        }
-
+	        im_public_iframe.Messenger.startVideoCall('sg' + this.entityId);
 	        return;
 	      }
-
 	      this.showLoader();
 	      main_core.ajax.runAction('intranet.controlbutton.getVideoCallChat', {
 	        data: {
@@ -323,21 +261,17 @@ this.BX = this.BX || {};
 	        },
 	        analyticsLabel: this.analyticsLabel
 	      }).then(function (response) {
-	        if (top.window.BXIM && response.data) {
-	          top.BXIM.callTo('chat' + response.data, true);
+	        if (response.data) {
+	          im_public_iframe.Messenger.startVideoCall('chat' + response.data, true);
 	        }
-
 	        _this4.chatLockCounter = 0;
-
 	        _this4.hideLoader();
 	      }, function (response) {
 	        if (response.errors[0].code === 'lock_error' && _this4.chatLockCounter < 4) {
 	          _this4.chatLockCounter++;
-
 	          _this4.startVideoCall();
 	        } else {
 	          _this4.showHintPopup(response.errors[0].message);
-
 	          _this4.hideLoader();
 	        }
 	      });
@@ -355,7 +289,6 @@ this.BX = this.BX || {};
 	    key: "openCalendarSlider",
 	    value: function openCalendarSlider() {
 	      var _this5 = this;
-
 	      this.showLoader();
 	      main_core.ajax.runAction('intranet.controlbutton.getCalendarLink', {
 	        data: {
@@ -365,7 +298,6 @@ this.BX = this.BX || {};
 	        analyticsLabel: this.analyticsLabel
 	      }).then(function (response) {
 	        var users = [];
-
 	        if (main_core.Type.isArrayLike(response.data.userIds)) {
 	          users = response.data.userIds.map(function (userId) {
 	            return {
@@ -374,14 +306,12 @@ this.BX = this.BX || {};
 	            };
 	          });
 	        }
-
 	        new (window.top.BX || window.BX).Calendar.SliderLoader(0, {
 	          sliderId: _this5.sliderId,
 	          participantsEntityList: users,
 	          entryName: response.data.name,
 	          entryDescription: response.data.desc
 	        }).show();
-
 	        _this5.hideLoader();
 	      });
 	    }
@@ -389,7 +319,6 @@ this.BX = this.BX || {};
 	    key: "openTaskSlider",
 	    value: function openTaskSlider() {
 	      var _this6 = this;
-
 	      this.showLoader();
 	      main_core.ajax.runAction('intranet.controlbutton.getTaskLink', {
 	        data: {
@@ -403,7 +332,6 @@ this.BX = this.BX || {};
 	          requestMethod: 'post',
 	          requestParams: response.data
 	        });
-
 	        _this6.hideLoader();
 	      });
 	    }
@@ -411,7 +339,6 @@ this.BX = this.BX || {};
 	    key: "openPostSlider",
 	    value: function openPostSlider() {
 	      var _this7 = this;
-
 	      this.showLoader();
 	      main_core.ajax.runAction('intranet.controlbutton.getPostLink', {
 	        data: {
@@ -432,7 +359,6 @@ this.BX = this.BX || {};
 	            sliderId: _this7.sliderId
 	          }
 	        });
-
 	        _this7.hideLoader();
 	      });
 	    }
@@ -442,7 +368,6 @@ this.BX = this.BX || {};
 	      if (!message) {
 	        return;
 	      }
-
 	      new main_popup.Popup('inviteHint' + main_core.Text.getRandom(8), this.button, {
 	        content: message,
 	        zIndex: 15000,
@@ -469,5 +394,5 @@ this.BX = this.BX || {};
 
 	exports.ControlButton = ControlButton;
 
-}((this.BX.Intranet = this.BX.Intranet || {}),BX,BX.Main,BX,BX.Event));
+}((this.BX.Intranet = this.BX.Intranet || {}),BX,BX.Main,BX.Messenger.v2.Lib));
 //# sourceMappingURL=control-button.bundle.js.map

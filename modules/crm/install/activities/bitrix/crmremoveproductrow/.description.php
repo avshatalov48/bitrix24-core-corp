@@ -8,8 +8,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 use Bitrix\Main\Localization\Loc;
 
 $arActivityDescription = [
-	'NAME' => Loc::getMessage('CRM_RMPR_NAME_1'),
-	'DESCRIPTION' => Loc::getMessage('CRM_RMPR_DESC_1'),
+	'NAME' => Loc::getMessage('CRM_RMPR_NAME'),
+	'DESCRIPTION' => Loc::getMessage('CRM_RMPR_DESC_2'),
 	'TYPE' => ['activity', 'robot_activity'],
 	'CLASS' => 'CrmRemoveProductRow',
 	'JSCLASS' => 'BizProcActivity',
@@ -22,8 +22,9 @@ $arActivityDescription = [
 		'INCLUDE' => [
 			['crm', 'CCrmDocumentDeal'],
 			['crm', \Bitrix\Crm\Integration\BizProc\Document\SmartInvoice::class],
+			['crm', \Bitrix\Crm\Integration\BizProc\Document\Quote::class],
+			['crm', \Bitrix\Crm\Integration\BizProc\Document\Order::class],
 			['crm', \Bitrix\Crm\Integration\BizProc\Document\SmartDocument::class],
-			//['crm', 'Bitrix\Crm\Integration\BizProc\Document\Order'],
 		],
 	],
 	'ROBOT_SETTINGS' => [

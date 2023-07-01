@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Order\Import;
 
+use Bitrix\Main\Application;
 use Bitrix\Main\Context;
 use Bitrix\Main\Error;
 use Bitrix\Main\ModuleManager;
@@ -40,6 +41,11 @@ final class Provider
 		if (defined('BX24_HOST_NAME'))
 		{
 			$this->licenceCode = BX24_HOST_NAME;
+		}
+		elseif (method_exists(\Bitrix\Main\License::class, 'getPublicHashKey'))
+		{
+
+			$this->licenceCode = Application::getInstance()->getLicense()->getPublicHashKey();
 		}
 		else
 		{

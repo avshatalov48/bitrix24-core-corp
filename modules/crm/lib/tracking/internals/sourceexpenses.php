@@ -12,9 +12,9 @@ use Bitrix\Main;
  *
  * <<< ORMENTITYANNOTATION
  * @method static EO_SourceExpenses_Query query()
- * @method static EO_SourceExpenses_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_SourceExpenses_Result getByPrimary($primary, array $parameters = [])
  * @method static EO_SourceExpenses_Result getById($id)
- * @method static EO_SourceExpenses_Result getList(array $parameters = array())
+ * @method static EO_SourceExpenses_Result getList(array $parameters = [])
  * @method static EO_SourceExpenses_Entity getEntity()
  * @method static \Bitrix\Crm\Tracking\Internals\EO_SourceExpenses createObject($setDefaultValues = true)
  * @method static \Bitrix\Crm\Tracking\Internals\EO_SourceExpenses_Collection createCollection()

@@ -1,20 +1,24 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 use Bitrix\Crm;
-use Bitrix\Crm\Restriction\RestrictionManager;
-use Bitrix\Main;
-use Bitrix\Crm\Order;
-use Bitrix\Sale\Delivery;
-use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm\Component\ComponentError;
-use Bitrix\Crm\Security\EntityPermissionType;
 use Bitrix\Crm\Component\EntityDetails\ComponentMode;
+use Bitrix\Crm\Order;
+use Bitrix\Crm\Security\EntityPermissionType;
+use Bitrix\Main;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Sale\Delivery;
 use Bitrix\Sale\Internals\AccountNumberGenerator;
 
-if(!Main\Loader::includeModule('crm'))
+if (!Main\Loader::includeModule('crm'))
 {
 	ShowError(GetMessage('CRM_MODULE_NOT_INSTALLED'));
+
 	return;
 }
 
@@ -55,10 +59,11 @@ class CCrmOrderShipmentDetailsComponent extends Crm\Component\EntityDetails\Base
 
 	protected function getErrorMessage($error)
 	{
-		if($error === ComponentError::ENTITY_NOT_FOUND)
+		if ($error === ComponentError::ENTITY_NOT_FOUND)
 		{
 			return Loc::getMessage('CRM_ORDER_SHIPMENT_SHIPMENT_NOT_FOUND');
 		}
+
 		return ComponentError::getMessage($error);
 	}
 
@@ -66,20 +71,20 @@ class CCrmOrderShipmentDetailsComponent extends Crm\Component\EntityDetails\Base
 	{
 		foreach($params as $k => $v)
 		{
-			if(!is_string($v))
+			if (!is_string($v))
 			{
 				continue;
 			}
 
-			if($k === 'PATH_TO_PRODUCT_SHOW')
+			if ($k === 'PATH_TO_PRODUCT_SHOW')
 			{
 				$this->arResult['PATH_TO_PRODUCT_SHOW'] = $this->arParams['PATH_TO_PRODUCT_SHOW'] = $v;
 			}
-			elseif($k === 'NAME_TEMPLATE')
+			elseif ($k === 'NAME_TEMPLATE')
 			{
 				$this->arResult['NAME_TEMPLATE'] = $this->arParams['NAME_TEMPLATE'] = $v;
 			}
-			elseif($k === 'ORDER_SHIPMENT_ID')
+			elseif ($k === 'ORDER_SHIPMENT_ID')
 			{
 				$this->arResult[$k] = $this->arParams[$k] = (int)$v;
 			}
@@ -88,9 +93,9 @@ class CCrmOrderShipmentDetailsComponent extends Crm\Component\EntityDetails\Base
 
 	public function obtainShipment()
 	{
-		if($this->shipment === null)
+		if ($this->shipment === null)
 		{
-			if($this->entityID > 0)
+			if ($this->entityID > 0)
 			{
 				$this->shipment = Order\Manager::getShipmentObject($this->entityID);
 			}
@@ -111,35 +116,39 @@ class CCrmOrderShipmentDetailsComponent extends Crm\Component\EntityDetails\Base
 		global $APPLICATION;
 
 		//region Params
-		$this->arResult['ENTITY_ID'] = isset($this->arParams['~ENTITY_ID']) ? (int)$this->arParams['~ENTITY_ID'] : 0;
+		$this->arResult['ENTITY_ID'] = (int)($this->arParams['~ENTITY_ID'] ?? 0);
 
 		$this->arResult['PATH_TO_USER_PROFILE'] = $this->arParams['PATH_TO_USER_PROFILE'] =
-			CrmCheckPath('PATH_TO_USER_PROFILE', $this->arParams['PATH_TO_USER_PROFILE'], '/company/personal/user/#user_id#/');
+			CrmCheckPath(
+				'PATH_TO_USER_PROFILE',
+				$this->arParams['PATH_TO_USER_PROFILE'] ?? '',
+				'/company/personal/user/#user_id#/'
+			);
 
 		$this->arResult['NAME_TEMPLATE'] = empty($this->arParams['NAME_TEMPLATE'])
 			? CSite::GetNameFormat(false)
-			: str_replace(array("#NOBR#","#/NOBR#"), array("",""), $this->arParams['NAME_TEMPLATE']);
+			: str_replace(['#NOBR#', '#/NOBR#'], ['', ''], $this->arParams['NAME_TEMPLATE'] ?? '');
 
 		$this->arResult['PATH_TO_ORDER_SHIPMENT_SHOW'] = CrmCheckPath(
 			'PATH_TO_ORDER_SHIPMENT_SHOW',
-			$this->arParams['PATH_TO_ORDER_SHIPMENT_SHOW'],
+			$this->arParams['PATH_TO_ORDER_SHIPMENT_SHOW'] ?? '',
 			$APPLICATION->GetCurPage().'?shipment_id=#shipment_id#&show'
 		);
 		$this->arResult['PATH_TO_ORDER_SHIPMENT_EDIT'] = CrmCheckPath(
 			'PATH_TO_ORDER_SHIPMENT_EDIT',
-			$this->arParams['PATH_TO_ORDER_SHIPMENT_EDIT'],
+			$this->arParams['PATH_TO_ORDER_SHIPMENT_EDIT'] ?? '',
 			$APPLICATION->GetCurPage().'?shipment_id=#shipment_id#&edit'
 		);
 
 		$this->arResult['PATH_TO_PRODUCT_EDIT'] = CrmCheckPath(
 			'PATH_TO_PRODUCT_EDIT',
-			$this->arParams['PATH_TO_PRODUCT_EDIT'],
+			$this->arParams['PATH_TO_PRODUCT_EDIT'] ?? '',
 			$APPLICATION->GetCurPage().'?product_id=#product_id#&edit'
 		);
 
 		$this->arResult['PATH_TO_PRODUCT_SHOW'] = CrmCheckPath(
 			'PATH_TO_PRODUCT_SHOW',
-			$this->arParams['PATH_TO_PRODUCT_SHOW'],
+			$this->arParams['PATH_TO_PRODUCT_SHOW'] ?? '',
 			$APPLICATION->GetCurPage().'?product_id=#product_id#&show'
 		);
 
@@ -149,32 +158,34 @@ class CCrmOrderShipmentDetailsComponent extends Crm\Component\EntityDetails\Base
 
 		$this->arResult['CONTEXT_ID'] = \CCrmOwnerType::OrderShipmentName.'_'.$this->arResult['ENTITY_ID'];
 		$this->arResult['CONTEXT_PARAMS'] = array(
-			'PATH_TO_PRODUCT_SHOW' => $this->arResult['PATH_TO_PRODUCT_SHOW'],
-			'PATH_TO_USER_PROFILE' => $this->arResult['PATH_TO_USER_PROFILE'],
-			'NAME_TEMPLATE' => $this->arResult['NAME_TEMPLATE']
+			'PATH_TO_PRODUCT_SHOW' => $this->arResult['PATH_TO_PRODUCT_SHOW'] ?? '',
+			'PATH_TO_USER_PROFILE' => $this->arResult['PATH_TO_USER_PROFILE'] ?? '',
+			'NAME_TEMPLATE' => $this->arResult['NAME_TEMPLATE'] ?? '',
 		);
 
 		$this->arResult['EXTERNAL_CONTEXT_ID'] = $this->request->get('external_context_id');
-		if($this->arResult['EXTERNAL_CONTEXT_ID'] === null)
+		if ($this->arResult['EXTERNAL_CONTEXT_ID'] === null)
 		{
 			$this->arResult['EXTERNAL_CONTEXT_ID'] = $this->request->get('external_context');
-			if($this->arResult['EXTERNAL_CONTEXT_ID'] === null)
+
+			if ($this->arResult['EXTERNAL_CONTEXT_ID'] === null)
 			{
 				$this->arResult['EXTERNAL_CONTEXT_ID'] = '';
 			}
 		}
 
 		$this->arResult['ORIGIN_ID'] = $this->request->get('origin_id');
-		if($this->arResult['ORIGIN_ID'] === null)
+		if ($this->arResult['ORIGIN_ID'] === null)
 		{
 			$this->arResult['ORIGIN_ID'] = '';
 		}
 
 		$this->setEntityID($this->arResult['ENTITY_ID']);
 
-		if(!$this->tryToDetectMode())
+		if (!$this->tryToDetectMode())
 		{
 			$this->showErrors();
+
 			return;
 		}
 
@@ -182,20 +193,20 @@ class CCrmOrderShipmentDetailsComponent extends Crm\Component\EntityDetails\Base
 
 		if ($this->arResult['ORDER_ID'] <= 0)
 		{
-			if($this->entityID > 0)
+			if ($this->entityID > 0)
 			{
 				$this->shipment = Crm\Order\Manager::getShipmentObject($this->entityID);
 
-				if(!$this->shipment)
+				if (!$this->shipment)
 				{
 					$this->addError(new Main\Error(Loc::getMessage('CRM_ORDER_SD_SHIPMENT_NOT_FOUND')));
 					$this->showErrors();
+
 					return;
 				}
 
 				$order = $this->shipment->getCollection()->getOrder();
-
-				if($order)
+				if ($order)
 				{
 					$this->arResult['ORDER_ID'] = $order->getId();
 				}
@@ -204,6 +215,7 @@ class CCrmOrderShipmentDetailsComponent extends Crm\Component\EntityDetails\Base
 			{
 				$this->addError(self::COMPONENT_ERROR_EMPTY_ORDER_ID);
 				$this->showErrors();
+
 				return;
 			}
 		}
@@ -212,10 +224,11 @@ class CCrmOrderShipmentDetailsComponent extends Crm\Component\EntityDetails\Base
 			$order = Order\Order::load($this->arResult['ORDER_ID']);
 		}
 
-		if(!$order)
+		if (!$order)
 		{
 			$this->addError(new Main\Error(Loc::getMessage('CRM_ORDER_SD_ORDER_NOT_FOUND')));
 			$this->showErrors();
+
 			return;
 		}
 
@@ -225,14 +238,14 @@ class CCrmOrderShipmentDetailsComponent extends Crm\Component\EntityDetails\Base
 		{
 			$this->shipment = $shipments->createItem();
 		}
-		elseif(!$this->shipment)
+		elseif (!$this->shipment)
 		{
 			$this->shipment = $shipments->getItemById($this->entityID);
-
-			if(!$this->shipment)
+			if (!$this->shipment)
 			{
 				$this->addError(new Main\Error(Loc::getMessage('CRM_ORDER_SD_SHIPMENT_NOT_FOUND')));
 				$this->showErrors();
+
 				return;
 			}
 		}
@@ -241,17 +254,18 @@ class CCrmOrderShipmentDetailsComponent extends Crm\Component\EntityDetails\Base
 		$this->prepareEntityData();
 
 		//region GUID
-		$this->guid = $this->arResult['GUID'] = isset($this->arParams['GUID'])
-			? $this->arParams['GUID'] : "order_shipment_{$this->entityID}_details";
-
-		$this->arResult['EDITOR_CONFIG_ID'] = isset($this->arParams['EDITOR_CONFIG_ID'])
-			? $this->arParams['EDITOR_CONFIG_ID'] : 'order_shipment_details';
+		$this->guid = $this->arResult['GUID'] = $this->arParams['GUID'] ?? "order_shipment_{$this->entityID}_details";
+		$this->arResult['EDITOR_CONFIG_ID'] = $this->arParams['EDITOR_CONFIG_ID'] ?? 'order_shipment_details';
 		//endregion
 
 		if($this->entityData['STATUS_ID'] <> '' )
+		{
 			$this->arResult['PROGRESS_SEMANTICS'] = Order\OrderStatus::getStatusSemantics($this->entityData['STATUS_ID']);
+		}
 		else
+		{
 			$this->arResult['PROGRESS_SEMANTICS'] = '';
+		}
 
 		$this->arResult['ENABLE_PROGRESS_CHANGE'] = $this->mode !== ComponentMode::VIEW;
 
@@ -266,15 +280,15 @@ class CCrmOrderShipmentDetailsComponent extends Crm\Component\EntityDetails\Base
 		//endregion
 
 		//region Page title
-		if($this->mode === ComponentMode::CREATION)
+		if ($this->mode === ComponentMode::CREATION)
 		{
 			$APPLICATION->SetTitle(Loc::getMessage('CRM_ORDER_SHIPMENT_CREATION_PAGE_TITLE'));
 		}
-		elseif($this->mode === ComponentMode::COPING)
+		elseif ($this->mode === ComponentMode::COPING)
 		{
 			$APPLICATION->SetTitle(Loc::getMessage('CRM_ORDER_SHIPMENT_COPY_PAGE_TITLE'));
 		}
-		elseif(!empty($this->entityData['TITLE']))
+		elseif (!empty($this->entityData['TITLE']))
 		{
 			$APPLICATION->SetTitle($this->entityData['TITLE']);
 		}
@@ -321,20 +335,20 @@ class CCrmOrderShipmentDetailsComponent extends Crm\Component\EntityDetails\Base
 		//region CONTROLLERS
 		$this->arResult['ENTITY_CONTROLLERS'] = array(
 			array(
-				"name" => "ORDER_SHIPMENT_CONTROLLER",
-				"type" => "order_shipment_controller",
-				"config" => array(
-					"editorId" => $this->arResult['PRODUCT_EDITOR_ID'],
-					"serviceUrl" => '/bitrix/components/bitrix/crm.order.shipment.details/ajax.php',
-					"productDataFieldName" => $this->arResult['PRODUCT_DATA_FIELD_NAME'],
-					"orderId" => $this->arResult['ORDER_ID'],
+				'name' => 'ORDER_SHIPMENT_CONTROLLER',
+				'type' => 'order_shipment_controller',
+				'config' => array(
+					'editorId' => $this->arResult['PRODUCT_EDITOR_ID'],
+					'serviceUrl' => '/bitrix/components/bitrix/crm.order.shipment.details/ajax.php',
+					'productDataFieldName' => $this->arResult['PRODUCT_DATA_FIELD_NAME'],
+					'orderId' => $this->arResult['ORDER_ID'],
 				)
 			)
 		);
 		//endregion
 
 		$this->arResult['PRODUCT_COMPONENT_DATA'] = array(
-			'template' => $_REQUEST['product_html'] == 'y' ? '.html': '.default',
+			'template' => isset($_REQUEST['product_html']) && $_REQUEST['product_html'] === 'y' ? '.html' : '.default',
 			'params' => array(
 				'INTERNAL_FILTER' => array('SHIPMENT_ID' => $this->entityID),
 				'PATH_TO_ORDER_SHIPMENT_PRODUCT_LIST' => '/bitrix/components/bitrix/crm.order.shipment.product.list/class.php?&shipmentId='.$this->shipment->getId().'&'.bitrix_sessid_get(),
@@ -362,7 +376,7 @@ class CCrmOrderShipmentDetailsComponent extends Crm\Component\EntityDetails\Base
 			)
 		);
 
-		if($this->entityID > 0)
+		if ($this->entityID > 0)
 		{
 			$this->arResult['TABS'][] = array(
 				'id' => 'tab_tree',
@@ -391,9 +405,9 @@ class CCrmOrderShipmentDetailsComponent extends Crm\Component\EntityDetails\Base
 		if ($this->userType)
 		{
 			$userFields = $this->userType->GetFields();
-			foreach($userFields as $userField)
+			foreach ($userFields as $userField)
 			{
-				if($userField['USER_TYPE_ID'] === 'date' && $userField['MULTIPLE'] !== 'Y')
+				if ($userField['USER_TYPE_ID'] === 'date' && $userField['MULTIPLE'] !== 'Y')
 				{
 					$this->arResult['WAIT_TARGET_DATES'][] = [
 						'name' => $userField['FIELD_NAME'],
@@ -405,7 +419,7 @@ class CCrmOrderShipmentDetailsComponent extends Crm\Component\EntityDetails\Base
 		//endregion
 
 		//region VIEW EVENT
-		if($this->entityID > 0 && \Bitrix\Crm\Settings\HistorySettings::getCurrent()->isViewEventEnabled())
+		if ($this->entityID > 0 && \Bitrix\Crm\Settings\HistorySettings::getCurrent()->isViewEventEnabled())
 		{
 			CCrmEvent::RegisterViewEvent(CCrmOwnerType::OrderShipment, $this->entityID, $this->userID);
 		}
@@ -420,6 +434,7 @@ class CCrmOrderShipmentDetailsComponent extends Crm\Component\EntityDetails\Base
 
 		$this->includeComponentTemplate();
 	}
+
 	protected function prepareFieldInfos()
 	{
 		if(isset($this->arResult['ENTITY_FIELDS']))
@@ -787,15 +802,19 @@ class CCrmOrderShipmentDetailsComponent extends Crm\Component\EntityDetails\Base
 			'isDragEnabled' => $this->userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'),
 			'elements' => [],
 			'sortedElements' => [
-				'active' => is_array($this->arResult['SHIPMENT_PROPERTIES']["ACTIVE"]) ? $this->arResult['SHIPMENT_PROPERTIES']["ACTIVE"] : [],
-				'hidden' => is_array($this->arResult['SHIPMENT_PROPERTIES']["HIDDEN"]) ? $this->arResult['SHIPMENT_PROPERTIES']["HIDDEN"] : [],
+				'active' => isset($this->arResult['SHIPMENT_PROPERTIES']['ACTIVE']) && is_array($this->arResult['SHIPMENT_PROPERTIES']['ACTIVE'])
+					? $this->arResult['SHIPMENT_PROPERTIES']['ACTIVE']
+					: [],
+				'hidden' => isset($this->arResult['SHIPMENT_PROPERTIES']['HIDDEN']) && is_array($this->arResult['SHIPMENT_PROPERTIES']['HIDDEN'])
+					? $this->arResult['SHIPMENT_PROPERTIES']['HIDDEN']
+					: [],
 			],
 			'data' => [
 				'entityType' => 'shipment',
 			],
 		);
 
-		if($this->entityData['EXTRA_SERVICES_DATA'])
+		if (!empty($this->entityData['EXTRA_SERVICES_DATA']))
 		{
 			$this->arResult['ENTITY_FIELDS'][] = array(
 				'name' => 'EXTRA_SERVICES_DATA',
@@ -815,8 +834,10 @@ class CCrmOrderShipmentDetailsComponent extends Crm\Component\EntityDetails\Base
 
 	public function prepareEntityData()
 	{
-		if($this->entityData)
+		if ($this->entityData)
+		{
 			return $this->entityData;
+		}
 
 		$this->entityData = $this->shipment->getFieldValues();
 
@@ -836,7 +857,7 @@ class CCrmOrderShipmentDetailsComponent extends Crm\Component\EntityDetails\Base
 
 		$this->entityData['STATUS_CONTROL'] = CCrmViewHelper::RenderOrderShipmentStatusControl(
 			array(
-				'PREFIX' => "SHIPMENT_PROGRESS_BAR_". $this->shipment->getId(),
+				'PREFIX' => 'SHIPMENT_PROGRESS_BAR_'. $this->shipment->getId(),
 				'ENTITY_ID' =>  $this->shipment->getId(),
 				'CURRENT_ID' => $this->entityData['STATUS_ID'],
 				'SERVICE_URL' => '/bitrix/components/bitrix/crm.order.shipment.list/list.ajax.php',
@@ -1194,8 +1215,8 @@ class CCrmOrderShipmentDetailsComponent extends Crm\Component\EntityDetails\Base
 	protected function prepareAdminLink($url)
 	{
 		return str_replace(
-			[".php","/bitrix/admin/"],
-			["/", "/shop/settings/"],
+			['.php', '/bitrix/admin/'],
+			['/', '/shop/settings/'],
 			$url
 		);
 	}

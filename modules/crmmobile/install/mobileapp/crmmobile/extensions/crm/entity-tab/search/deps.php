@@ -2,6 +2,7 @@
 return [
 	'extensions' => [
 		'haptics',
+		'loc',
 		'qrauth/utils',
 		'rest',
 		'utils/object',

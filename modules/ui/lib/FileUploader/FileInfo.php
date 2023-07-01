@@ -2,37 +2,38 @@
 
 namespace Bitrix\UI\FileUploader;
 
+use Bitrix\Main\Type\Dictionary;
+
 class FileInfo implements \JsonSerializable
 {
 	protected $id;
 	protected string $contentType;
-	protected string $filename;
-	protected int $fileSize;
+	protected string $name;
+	protected int $size;
 	protected int $fileId = 0;
-	protected ?string $originalName = null;
 	protected int $width = 0;
 	protected int $height = 0;
 	protected ?string $downloadUrl = null;
-	protected ?string $removeUrl = null;
 	protected ?string $previewUrl = null;
 	protected int $previewWidth = 0;
 	protected int $previewHeight = 0;
+	protected ?Dictionary $customData = null;
 
 	/**
 	 * @param {string | int} $id
-	 * @param string $filename
+	 * @param string $name
 	 * @param string $contentType
-	 * @param int $fileSize
+	 * @param int $size
 	 */
-	public function __construct($id, string $filename, string $contentType, int $fileSize)
+	public function __construct($id, string $name, string $contentType, int $size)
 	{
 		$this->id = $id;
 		$this->contentType = $contentType;
-		$this->filename = $filename;
-		$this->fileSize = $fileSize;
+		$this->name = $name;
+		$this->size = $size;
 	}
 
-	public static function getFileInfo(int $id): ?FileInfo
+	public static function createFromBFile(int $id): ?FileInfo
 	{
 		$file = \CFile::getFileArray($id);
 		if (!is_array($file))
@@ -40,8 +41,8 @@ class FileInfo implements \JsonSerializable
 			return null;
 		}
 
-		$fileInfo = new static($id, $file['FILE_NAME'], $file['CONTENT_TYPE'], (int)$file['FILE_SIZE']);
-		$fileInfo->setOriginalName($file['ORIGINAL_NAME']);
+		$fileName = !empty($file['ORIGINAL_NAME']) ? $file['ORIGINAL_NAME'] : $file['FILE_NAME'];
+		$fileInfo = new static($id, $fileName, $file['CONTENT_TYPE'], (int)$file['FILE_SIZE']);
 		$fileInfo->setWidth($file['WIDTH']);
 		$fileInfo->setHeight($file['HEIGHT']);
 		$fileInfo->setFileId($id);
@@ -49,7 +50,7 @@ class FileInfo implements \JsonSerializable
 		return $fileInfo;
 	}
 
-	public static function getTempFileInfo(string $tempFileId): ?FileInfo
+	public static function createFromTempFile(string $tempFileId): ?FileInfo
 	{
 		[$guid, $signature] = explode('.', $tempFileId);
 
@@ -66,7 +67,6 @@ class FileInfo implements \JsonSerializable
 		}
 
 		$fileInfo = new static($tempFileId, $tempFile->getFilename(), $tempFile->getMimetype(), $tempFile->getSize());
-		$fileInfo->setOriginalName($tempFile->getFilename());
 		$fileInfo->setWidth($tempFile->getWidth());
 		$fileInfo->setHeight($tempFile->getHeight());
 		$fileInfo->setFileId($tempFile->getFileId());
@@ -80,6 +80,14 @@ class FileInfo implements \JsonSerializable
 	public function getId()
 	{
 		return $this->id;
+	}
+
+	public function setId($id): void
+	{
+		if (is_int($id) || is_string($id))
+		{
+			$this->id = $id;
+		}
 	}
 
 	public function getFileId(): int
@@ -97,24 +105,19 @@ class FileInfo implements \JsonSerializable
 		return $this->contentType;
 	}
 
-	public function getFilename(): string
+	public function getName(): string
 	{
-		return $this->filename;
+		return $this->name;
 	}
 
-	public function getFileSize(): int
+	public function setName(string $name): void
 	{
-		return $this->fileSize;
+		$this->name = $name;
 	}
 
-	public function getOriginalName(): ?string
+	public function getSize(): int
 	{
-		return $this->originalName;
-	}
-
-	public function setOriginalName(string $originalName): void
-	{
-		$this->originalName = $originalName;
+		return $this->size;
 	}
 
 	public function getWidth(): int
@@ -137,6 +140,11 @@ class FileInfo implements \JsonSerializable
 		$this->height = $height;
 	}
 
+	public function isImage(): bool
+	{
+		return \CFile::isImage($this->getName()) && $this->getWidth() > 0 && $this->getHeight() > 0;
+	}
+
 	public function getDownloadUrl(): ?string
 	{
 		return $this->downloadUrl;
@@ -147,24 +155,16 @@ class FileInfo implements \JsonSerializable
 		$this->downloadUrl = $downloadUrl;
 	}
 
-	public function getRemoveUrl(): ?string
-	{
-		return $this->removeUrl;
-	}
-
-	public function setRemoveUrl(string $removeUrl): void
-	{
-		$this->removeUrl = $removeUrl;
-	}
-
 	public function getPreviewUrl(): ?string
 	{
 		return $this->previewUrl;
 	}
 
-	public function setPreviewUrl(string $previewUrl): void
+	public function setPreviewUrl(string $previewUrl, int $previewWidth, int $previewHeight): void
 	{
 		$this->previewUrl = $previewUrl;
+		$this->previewWidth = $previewWidth;
+		$this->previewHeight = $previewHeight;
 	}
 
 	public function getPreviewWidth(): int
@@ -172,36 +172,46 @@ class FileInfo implements \JsonSerializable
 		return $this->previewWidth;
 	}
 
-	public function setPreviewWidth(int $previewWidth): void
-	{
-		$this->previewWidth = $previewWidth;
-	}
-
 	public function getPreviewHeight(): int
 	{
 		return $this->previewHeight;
 	}
 
-	public function setPreviewHeight(int $previewHeight): void
+	public function setCustomData(array $customData): self
 	{
-		$this->previewHeight = $previewHeight;
+		$this->getCustomData()->setValues($customData);
+
+		return $this;
+	}
+
+	/**
+	 * @return Dictionary
+	 */
+	public function getCustomData(): Dictionary
+	{
+		if ($this->customData === null)
+		{
+			$this->customData = new Dictionary();
+		}
+
+		return $this->customData;
 	}
 
 	public function jsonSerialize(): array
 	{
 		return [
-			'serverId' => $this->getId(),
+			'serverFileId' => $this->getId(),
+			'serverId' => $this->getId(), // compatibility
 			'type' => $this->getContentType(),
-			'name' => $this->getFilename(),
-			'originalName' => $this->getOriginalName(),
-			'size' => $this->getFileSize(),
+			'name' => $this->getName(),
+			'size' => $this->getSize(),
 			'width' => $this->getWidth(),
 			'height' => $this->getHeight(),
 			'downloadUrl' => $this->getDownloadUrl(),
-			'removeUrl' => $this->getRemoveUrl(),
 			'serverPreviewUrl' => $this->getPreviewUrl(),
 			'serverPreviewWidth' => $this->getPreviewWidth(),
 			'serverPreviewHeight' => $this->getPreviewHeight(),
+			'customData' => $this->customData !== null ? $this->getCustomData()->getValues() : [],
 		];
 	}
 }

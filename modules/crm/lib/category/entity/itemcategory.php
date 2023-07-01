@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Category\Entity;
 
+use Bitrix\Crm\EntityAddressType;
 use Bitrix\Crm\Model\EO_ItemCategory;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Localization\Loc;
@@ -181,6 +182,25 @@ class ItemCategory extends Category
 		return (isset($settings['uiSettings']) && is_array($settings['uiSettings']))
 			? $settings['uiSettings']
 			: [];
+	}
+
+	public function getDefaultAddressType()
+	{
+		$result = EntityAddressType::Undefined;
+
+		/** @noinspection PhpUndefinedMethodInspection */
+		$settings = $this->entityObject->getSettings();
+
+		if (is_array($settings) && isset($settings['defAddressType']))
+		{
+			$addressTypeId = (int)$settings['defAddressType'];
+			if (EntityAddressType::isDefined($addressTypeId))
+			{
+				$result = $addressTypeId;
+			}
+		}
+
+		return $result;
 	}
 
 	public function save(): Result

@@ -262,7 +262,7 @@ class Invoice extends Entity
 		);
 	}
 
-	public function canAddItemToStage(string $stageId, \CCrmPerms $userPermissions): bool
+	public function canAddItemToStage(string $stageId, \CCrmPerms $userPermissions, string $semantics = PhaseSemantics::UNDEFINED): bool
 	{
 		return ($this->getAddItemToStagePermissionType($stageId, $userPermissions) !== BX_CRM_PERM_NONE);
 	}

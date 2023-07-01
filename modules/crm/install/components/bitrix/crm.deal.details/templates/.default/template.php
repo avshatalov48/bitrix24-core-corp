@@ -1,11 +1,10 @@
 <?php
 
-if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
 
-use Bitrix\Crm\Attribute\FieldAttributeManager;
 use Bitrix\Main\Localization\Loc;
 
 /** @var array $arParams */
@@ -13,11 +12,12 @@ use Bitrix\Main\Localization\Loc;
 /** @global CMain $APPLICATION */
 /** @global CDatabase $DB */
 /** @var CBitrixComponentTemplate $this */
-/** @var CCrmEntityProgressBarComponent $component */
+/** @var CCrmDealDetailsComponent $component */
 
 $guid = $arResult['GUID'];
 $prefix = mb_strtolower($guid);
 $activityEditorID = "{$prefix}_editor";
+$isRecurring = isset($arResult['ENTITY_DATA']['IS_RECURRING']) && $arResult['ENTITY_DATA']['IS_RECURRING'] === 'Y';
 
 \Bitrix\Main\UI\Extension::load([
 	'crm.scoringbutton',
@@ -66,22 +66,23 @@ $APPLICATION->IncludeComponent(
 	'bitrix:crm.deal.menu',
 	'',
 	array(
-		'PATH_TO_DEAL_LIST' => $arResult['PATH_TO_DEAL_LIST'] ?? null,
-		'PATH_TO_DEAL_SHOW' => $arResult['PATH_TO_DEAL_SHOW'],
-		'PATH_TO_DEAL_EDIT' => $arResult['PATH_TO_DEAL_EDIT'],
-		'PATH_TO_DEAL_FUNNEL' => $arResult['PATH_TO_DEAL_FUNNEL'] ?? null,
-		'PATH_TO_DEAL_IMPORT' => $arResult['PATH_TO_DEAL_IMPORT'] ?? null,
+		'PATH_TO_DEAL_LIST' => $arResult['PATH_TO_DEAL_LIST'] ?? '',
+		'PATH_TO_DEAL_SHOW' => $arResult['PATH_TO_DEAL_SHOW'] ?? '',
+		'PATH_TO_DEAL_EDIT' => $arResult['PATH_TO_DEAL_EDIT'] ?? '',
+		'PATH_TO_DEAL_FUNNEL' => $arResult['PATH_TO_DEAL_FUNNEL'] ?? '',
+		'PATH_TO_DEAL_IMPORT' => $arResult['PATH_TO_DEAL_IMPORT'] ?? '',
 		'ELEMENT_ID' => $arResult['ENTITY_ID'],
 		'CATEGORY_ID' => $arResult['CATEGORY_ID'],
 		'MULTIFIELD_DATA' => isset($arResult['ENTITY_DATA']['MULTIFIELD_DATA'])
-			? $arResult['ENTITY_DATA']['MULTIFIELD_DATA'] : array(),
-		'OWNER_INFO' => $arResult['ENTITY_INFO'],
+			? $arResult['ENTITY_DATA']['MULTIFIELD_DATA']
+			: [],
+		'OWNER_INFO' => $arResult['ENTITY_INFO'] ?? [],
 		'CONVERSION_PERMITTED' => $arResult['CONVERSION_PERMITTED'],
 		'CONVERSION_CONTAINER_ID' => $arResult['CONVERSION_CONTAINER_ID'],
 		'CONVERSION_LABEL_ID' => $arResult['CONVERSION_LABEL_ID'],
 		'CONVERSION_BUTTON_ID' => $arResult['CONVERSION_BUTTON_ID'],
-		'IS_RECURRING' => $arResult['ENTITY_DATA']['IS_RECURRING'],
-		'BIZPROC_STARTER_DATA' => $arResult['BIZPROC_STARTER_DATA'],
+		'IS_RECURRING' => $isRecurring ? 'Y' : 'N' ,
+		'BIZPROC_STARTER_DATA' => $arResult['BIZPROC_STARTER_DATA'] ?? [],
 		'TYPE' => 'details',
 		'SCRIPTS' => array(
 			'DELETE' => 'BX.Crm.EntityDetailManager.items["'.CUtil::JSEscape($guid).'"].processRemoval();',
@@ -108,70 +109,36 @@ $APPLICATION->IncludeComponent(
 	<? endif; ?>
 </script><?
 
-$editorContext = $arResult['CONTEXT'];
-if(isset($arResult['ORIGIN_ID']) && $arResult['ORIGIN_ID'] !== '')
-{
-	$editorContext['ORIGIN_ID'] = $arResult['ORIGIN_ID'];
-}
-if(isset($arResult['INITIAL_DATA']))
-{
-	$editorContext['INITIAL_DATA'] = $arResult['INITIAL_DATA'];
-}
 $APPLICATION->IncludeComponent(
 	'bitrix:crm.entity.details',
 	'',
-	array(
+	[
 		'GUID' => $guid,
-		'ENTITY_TYPE_ID' => ($arResult['ENTITY_DATA']['IS_RECURRING'] !== 'Y') ? \CCrmOwnerType::Deal : \CCrmOwnerType::DealRecurring,
+		'ENTITY_TYPE_ID' => $isRecurring ? \CCrmOwnerType::DealRecurring : \CCrmOwnerType::Deal,
 		'ENTITY_ID' => $arResult['IS_EDIT_MODE'] ? $arResult['ENTITY_ID'] : 0,
 		'ENTITY_INFO' => $arResult['ENTITY_INFO'],
 		'READ_ONLY' => $arResult['READ_ONLY'],
 		'TABS' => $arResult['TABS'],
-		'SERVICE_URL' => '/bitrix/components/bitrix/crm.deal.details/ajax.php?'.bitrix_sessid_get(),
-		'EDITOR' => array(
-			'GUID' => "{$guid}_editor",
-			'CONFIG_ID' => $arResult['EDITOR_CONFIG_ID'],
-			'ENTITY_CONFIG' => $arResult['ENTITY_CONFIG'],
-			'ENTITY_CONTROLLERS' => $arResult['ENTITY_CONTROLLERS'],
-			'ENTITY_FIELDS' => $arResult['ENTITY_FIELDS'],
-			'ENTITY_DATA' => $arResult['ENTITY_DATA'],
-			'ENTITY_VALIDATORS' => $arResult['ENTITY_VALIDATORS'],
-			'ENABLE_SECTION_EDIT' => true,
-			'ENABLE_SECTION_CREATION' => true,
-			'ENABLE_USER_FIELD_CREATION' => $arResult['ENABLE_USER_FIELD_CREATION'],
-			'USER_FIELD_ENTITY_ID' => $arResult['USER_FIELD_ENTITY_ID'],
-			'USER_FIELD_CREATE_PAGE_URL' => $arResult['USER_FIELD_CREATE_PAGE_URL'],
-			'USER_FIELD_CREATE_SIGNATURE' => $arResult['USER_FIELD_CREATE_SIGNATURE'],
-			'USER_FIELD_FILE_URL_TEMPLATE' => $arResult['USER_FIELD_FILE_URL_TEMPLATE'],
-			'SERVICE_URL' => '/bitrix/components/bitrix/crm.deal.details/ajax.php?'.bitrix_sessid_get(),
-			'EXTERNAL_CONTEXT_ID' => $arResult['EXTERNAL_CONTEXT_ID'],
-			'CONTEXT_ID' => $arResult['CONTEXT_ID'],
-			'CONTEXT' => $editorContext,
-			'ATTRIBUTE_CONFIG' => array(
-				'ENTITY_SCOPE' => $arResult['ENTITY_ATTRIBUTE_SCOPE'],
-				'CAPTIONS' => FieldAttributeManager::getCaptionsForEntityWithStages(),
-			),
-			'COMPONENT_AJAX_DATA' => [
-				'RELOAD_ACTION_NAME' => 'LOAD',
-				'RELOAD_FORM_DATA' => [
-					'ACTION_ENTITY_ID' => $arResult['ENTITY_ID']
-				] + $editorContext
-			]
-		),
-		'TIMELINE' => array(
+		'SERVICE_URL' => '/bitrix/components/bitrix/crm.deal.details/ajax.php?' . bitrix_sessid_get(),
+		'EDITOR' => $component->getEditorConfig(),
+		'TIMELINE' => [
 			'GUID' => "{$guid}_timeline",
-			'ENABLE_WAIT' => true,
 			'PROGRESS_SEMANTICS' => $arResult['PROGRESS_SEMANTICS'],
 			'WAIT_TARGET_DATES' => $arResult['WAIT_TARGET_DATES']
-		),
+		],
 		'ENABLE_PROGRESS_BAR' => true,
-		'ENABLE_PROGRESS_CHANGE' => ($arResult['ENTITY_DATA']['IS_RECURRING'] !== 'Y' && !$arResult['READ_ONLY']),
+		'ENABLE_PROGRESS_CHANGE' => (!$isRecurring && !$arResult['READ_ONLY']),
 		'ACTIVITY_EDITOR_ID' => $activityEditorID,
-		'EXTRAS' => array('CATEGORY_ID' => $arResult['CATEGORY_ID']),
-		'ANALYTIC_PARAMS' => array('deal_category' => $arResult['CATEGORY_ID']),
-		'PATH_TO_USER_PROFILE' => $arResult['PATH_TO_USER_PROFILE']
-	)
+		'EXTRAS' => ['CATEGORY_ID' => $arResult['CATEGORY_ID']],
+		'ANALYTIC_PARAMS' => ['deal_category' => $arResult['CATEGORY_ID']],
+		'PATH_TO_USER_PROFILE' => $arResult['PATH_TO_USER_PROFILE'] ?? ''
+	]
 );
+
+if ($arResult['IS_EDIT_MODE'] ?? false)
+{
+	echo \Bitrix\Crm\Tour\Sign\CreateDocumentFromDeal::getInstance()->build();
+}
 
 /** @var \Bitrix\Crm\Conversion\EntityConversionConfig|null $conversionConfig */
 $conversionConfig = $arResult['CONVERSION_CONFIG'] ?? null;
@@ -367,3 +334,5 @@ endif;
 		});
 	</script>
 <?php endif;
+
+echo \CCrmComponentHelper::prepareInitReceiverRepositoryJS(\CCrmOwnerType::Deal, (int)($arResult['ENTITY_ID'] ?? 0));

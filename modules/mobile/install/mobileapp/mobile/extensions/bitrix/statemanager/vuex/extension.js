@@ -11,7 +11,7 @@
  */
 jn.define('statemanager/vuex', (require, exports, module) => {
 
-	const { inject, reactive, watch } = jn.require('statemanager/vuex/reactivity');
+	const { inject, reactive, watch } = require('statemanager/vuex/reactivity');
 	const Vue = { inject, reactive, watch };
 
 	// origin-start

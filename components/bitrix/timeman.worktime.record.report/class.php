@@ -76,7 +76,7 @@ class WorktimeRecordReportComponent extends Timeman\Component\BaseComponent
 	public function executeComponent()
 	{
 		$this->getApplication()->setTitle(htmlspecialcharsbx(Loc::getMessage('JS_CORE_TMR_TITLE')));
-		$this->arResult['isShiftplan'] = $this->getExtraInfo()['isShiftplan'];
+		$this->arResult['isShiftplan'] = $this->getExtraInfo()['isShiftplan'] ?? null;
 		$record = null;
 		$this->arResult['URL_TEMPLATES_PROFILE_VIEW'] = UserHelper::getInstance()->getProfilePath('#USER_ID#');
 		if ($this->arResult['RECORD_ID'])
@@ -576,7 +576,10 @@ class WorktimeRecordReportComponent extends Timeman\Component\BaseComponent
 			$this->arResult['WORKTIME_REPORT']['REPORT'] = $arRes['REPORT'];
 			if ((CBXFeatures::isFeatureEnabled('Tasks') && \Bitrix\Main\Loader::includeModule('tasks')))
 			{
-				$this->arResult['WORKTIME_REPORT']['TASKS'] = unserialize($arRes['TASKS'], ['allowed_classes' => false]);
+				$this->arResult['WORKTIME_REPORT']['TASKS'] = unserialize(
+					$arRes['TASKS'] ?? '',
+					['allowed_classes' => false]
+				);
 				if (!is_array($this->arResult['WORKTIME_REPORT']['TASKS']))
 				{
 					$this->arResult['WORKTIME_REPORT']['TASKS'] = [];
@@ -593,7 +596,10 @@ class WorktimeRecordReportComponent extends Timeman\Component\BaseComponent
 
 			if (CBXFeatures::IsFeatureEnabled('Calendar'))
 			{
-				$this->arResult['WORKTIME_REPORT']['EVENTS'] = unserialize($arRes['EVENTS'], ['allowed_classes' => false]);
+				$this->arResult['WORKTIME_REPORT']['EVENTS'] = unserialize(
+					$arRes['EVENTS'] ?? '',
+					['allowed_classes' => false]
+				);
 				if (!is_array($this->arResult['WORKTIME_REPORT']['EVENTS']))
 				{
 					$this->arResult['WORKTIME_REPORT']['EVENTS'] = [];

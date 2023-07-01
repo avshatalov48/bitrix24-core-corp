@@ -108,12 +108,24 @@ class TaskCounter
 		}
 
 		$counters = Counter::getInstance($this->userId)->getTaskCounters($taskId);
-		$counters = [
-			'expired' => $counters[CounterDictionary::COUNTER_MY_EXPIRED],
-			'new_comments' => $counters[CounterDictionary::COUNTER_MY_NEW_COMMENTS],
-			'project_expired' => $counters[CounterDictionary::COUNTER_GROUP_EXPIRED],
-			'project_new_comments' => $counters[CounterDictionary::COUNTER_GROUP_COMMENTS],
-		];
+		if (!isset($counters))
+		{
+			$counters = [
+				'expired' => 0,
+				'new_comments' => 0,
+				'project_expired' => 0,
+				'project_new_comments' => 0,
+			];
+		}
+		else
+		{
+			$counters = [
+				'expired' => $counters[CounterDictionary::COUNTER_MY_EXPIRED],
+				'new_comments' => $counters[CounterDictionary::COUNTER_MY_NEW_COMMENTS],
+				'project_expired' => $counters[CounterDictionary::COUNTER_GROUP_EXPIRED],
+				'project_new_comments' => $counters[CounterDictionary::COUNTER_GROUP_COMMENTS],
+			];
+		}
 
 		$result['COUNTERS'] = $counters;
 		$result['VALUE'] = array_sum($counters);

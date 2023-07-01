@@ -241,6 +241,9 @@ Class voximplant extends CModule
 						),
 						'LINE' => array(
 							'MODIFY' => 'X'
+						),
+						'BALANCE' => array(
+							'MODIFY' => 'X'
 						)
 					)
 				),

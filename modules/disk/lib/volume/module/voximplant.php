@@ -4,7 +4,7 @@ namespace Bitrix\Disk\Volume\Module;
 
 use Bitrix\Main;
 use Bitrix\Main\ArgumentTypeException;
-use Bitrix\Main\ObjectException;
+use Bitrix\Disk;
 use Bitrix\Disk\Volume;
 use Bitrix\Disk\Internals\VolumeTable;
 
@@ -17,20 +17,18 @@ class Voximplant extends Volume\Module\Module implements Volume\IVolumeIndicator
 	/** @var string */
 	protected static $moduleId = 'voximplant';
 
-	/** @var \Bitrix\Disk\Storage[] */
-	private $storageList = array();
+	/** @var Disk\Storage[] */
+	private $storageList = [];
 
-	/** @var \Bitrix\Disk\Folder[] */
-	private $folderList = array();
+	/** @var Disk\Folder[] */
+	private $folderList = [];
 
 	/**
 	 * Runs measure test to get volumes of selecting objects.
 	 * @param array $collectData List types data to collect: ATTACHED_OBJECT, SHARING_OBJECT, EXTERNAL_LINK, UNNECESSARY_VERSION.
-	 * @return $this
-	 * @throws Main\ArgumentException
-	 * @throws Main\SystemException
+	 * @return static
 	 */
-	public function measure($collectData = array())
+	public function measure(array $collectData = []): self
 	{
 		if (!$this->isMeasureAvailable())
 		{
@@ -177,9 +175,9 @@ class Voximplant extends Volume\Module\Module implements Volume\IVolumeIndicator
 
 	/**
 	 * Returns module storage.
-	 * @return \Bitrix\Disk\Storage[]|array
+	 * @return Disk\Storage[]|array
 	 */
-	public function getStorageList()
+	public function getStorageList(): array
 	{
 		if (count($this->storageList) == 0)
 		{
@@ -187,11 +185,11 @@ class Voximplant extends Volume\Module\Module implements Volume\IVolumeIndicator
 			{
 				$siteID = SITE_ID;
 				if (
-					(defined('ADMIN_SECTION') && ADMIN_SECTION) ||
-					\Bitrix\Disk\Volume\Cleaner::isCronRun()
+					(defined('ADMIN_SECTION') && ADMIN_SECTION)
+					|| Volume\Cleaner::isCronRun()
 				)
 				{
-					$sites = \CSite::getList('sort', 'desc', array('DEF' => 'Y'));
+					$sites = \CSite::getList('sort', 'desc', ['DEF' => 'Y']);
 					if ($site = $sites->fetch())
 					{
 						$siteID = $site['LID'];
@@ -199,7 +197,7 @@ class Voximplant extends Volume\Module\Module implements Volume\IVolumeIndicator
 				}
 
 				$storage = \CVoxImplantDiskHelper::getStorageModel($siteID);
-				if ($storage instanceof \Bitrix\Disk\Storage)
+				if ($storage instanceof Disk\Storage)
 				{
 					$this->storageList[] = $storage;
 				}
@@ -212,22 +210,22 @@ class Voximplant extends Volume\Module\Module implements Volume\IVolumeIndicator
 
 	/**
 	 * Returns folder list corresponding to module.
-	 * @param \Bitrix\Disk\Storage $storage Module's storage.
-	 * @return \Bitrix\Disk\Folder[]|array
+	 * @param Disk\Storage $storage Module's storage.
+	 * @return Disk\Folder[]|array
 	 */
-	public function getFolderList($storage)
+	public function getFolderList($storage): array
 	{
 		if (
-			$storage instanceof \Bitrix\Disk\Storage &&
-			$storage->getId() > 0
+			$storage instanceof Disk\Storage
+			&& $storage->getId() > 0
 		)
 		{
 			if (
-				!isset($this->folderList[$storage->getId()]) ||
-				empty($this->folderList[$storage->getId()])
+				!isset($this->folderList[$storage->getId()])
+				|| empty($this->folderList[$storage->getId()])
 			)
 			{
-				$this->folderList[$storage->getId()] = array();
+				$this->folderList[$storage->getId()] = [];
 				if ($this->isMeasureAvailable())
 				{
 					$typeFolderCodeList = self::getSpecialFolderCode();
@@ -235,13 +233,13 @@ class Voximplant extends Volume\Module\Module implements Volume\IVolumeIndicator
 					{
 						foreach ($typeFolderCodeList as $code)
 						{
-							$folder = \Bitrix\Disk\Folder::load(array(
+							$folder = Disk\Folder::load([
 								'=CODE' => $code,
 								'=STORAGE_ID' => $storage->getId(),
-							));
+							]);
 							if (
-								!($folder instanceof \Bitrix\Disk\Folder) ||
-								($folder->getCode() !== $code)
+								!($folder instanceof Disk\Folder)
+								|| ($folder->getCode() !== $code)
 							)
 							{
 								continue;
@@ -255,24 +253,24 @@ class Voximplant extends Volume\Module\Module implements Volume\IVolumeIndicator
 			return $this->folderList[$storage->getId()];
 		}
 
-		return array();
+		return [];
 	}
 
 	/**
 	 * Returns special folder code list.
 	 * @return string[]
 	 */
-	public static function getSpecialFolderCode()
+	public static function getSpecialFolderCode(): array
 	{
-		return array('VI_CALLS');
+		return ['VI_CALLS'];
 	}
 
 	/**
 	 * Check ability to drop folder.
-	 * @param \Bitrix\Disk\Folder $folder Folder to drop.
+	 * @param Disk\Folder $folder Folder to drop.
 	 * @return boolean
 	 */
-	public function isAllowDeleteFolder(\Bitrix\Disk\Folder $folder)
+	public function isAllowDeleteFolder(Disk\Folder $folder): bool
 	{
 		if (!$this->isMeasureAvailable())
 		{
@@ -286,7 +284,7 @@ class Voximplant extends Volume\Module\Module implements Volume\IVolumeIndicator
 		static $voxFolderIds;
 		if (empty($voxFolderIds))
 		{
-			$voxFolderIds = array();
+			$voxFolderIds = [];
 			$voxStorageList = $this->getStorageList();
 			foreach ($voxStorageList as $voxStorage)
 			{
@@ -310,16 +308,16 @@ class Voximplant extends Volume\Module\Module implements Volume\IVolumeIndicator
 	 * @param array $collectedData List types of collected data to return.
 	 * @return array
 	 */
-	public function getMeasurementFolderResult($collectedData = array())
+	public function getMeasurementFolderResult($collectedData = [])
 	{
-		$resultList = array();
+		$resultList = [];
 
 		$totalSize = 0;
 		$storageList = $this->getStorageList();
 		foreach ($storageList as $storage)
 		{
 			$folders = $this->getFolderList($storage);
-			$folderIds = array();
+			$folderIds = [];
 			foreach ($folders as $folder)
 			{
 				$folderIds[] = $folder->getId();
@@ -358,29 +356,27 @@ class Voximplant extends Volume\Module\Module implements Volume\IVolumeIndicator
 	/**
 	 * @param string[] $filter Filter with module id.
 	 * @return Volume\Fragment
-	 * @throws ArgumentTypeException
-	 * @throws ObjectException
 	 */
-	public static function getFragment(array $filter)
+	public static function getFragment(array $filter): Volume\Fragment
 	{
 		if ($filter['INDICATOR_TYPE'] == Volume\Folder::className() || $filter['INDICATOR_TYPE'] == Volume\FolderTree::className())
 		{
 			// Chat specific
-			$chatList = \Bitrix\Im\Model\ChatTable::getList(array(
-				'select' => array('ID', 'TITLE', 'LAST_MESSAGE_ID'),
-				'filter' => array('=DISK_FOLDER_ID' => $filter['FOLDER_ID'])
-			));
+			$chatList = \Bitrix\Im\Model\ChatTable::getList([
+				'select' => ['ID', 'TITLE', 'LAST_MESSAGE_ID'],
+				'filter' => ['=DISK_FOLDER_ID' => $filter['FOLDER_ID']],
+			]);
 			if ($chat = $chatList->fetch())
 			{
-				$filter['SPECIFIC'] = array(
+				$filter['SPECIFIC'] = [
 					'chat' => $chat,
-					'userInChat' => array(),
+					'userInChat' => [],
 					'userCount' => 0
-				);
-				$chatUserList = \Bitrix\Im\Model\RelationTable::getList(array(
-					'select' => array('USER_ID'),
-					'filter' => array('=CHAT_ID' => $chat['ID'])
-				));
+				];
+				$chatUserList = \Bitrix\Im\Model\RelationTable::getList([
+					'select' => ['USER_ID'],
+					'filter' => ['=CHAT_ID' => $chat['ID']]
+				]);
 				if ($chatUserList->getSelectedRowsCount() > 0)
 				{
 					foreach ($chatUserList as $chatUser)
@@ -390,29 +386,31 @@ class Voximplant extends Volume\Module\Module implements Volume\IVolumeIndicator
 					}
 				}
 			}
+
 			return new Volume\Fragment($filter);
 		}
+
 		return parent::getFragment($filter);
 	}
 
 	/**
 	 * @param Volume\Fragment $fragment Folder entity object.
-	 * @return string
+	 * @return string|null
 	 * @throws ArgumentTypeException
 	 */
-	public static function getTitle(Volume\Fragment $fragment)
+	public static function getTitle(Volume\Fragment $fragment): ?string
 	{
 		if ($fragment->getIndicatorType() == Volume\Folder::className() || $fragment->getIndicatorType() == Volume\FolderTree::className())
 		{
 			$folder = $fragment->getFolder();
-			if (!$folder instanceof \Bitrix\Disk\Folder)
+			if (!$folder instanceof Disk\Folder)
 			{
-				throw new ArgumentTypeException('Fragment must be subclass of '.\Bitrix\Disk\Folder::className());
+				throw new ArgumentTypeException('Fragment must be subclass of '.Disk\Folder::className());
 			}
-			$title = $folder->getOriginalName();
 
-			return $title;
+			return $folder->getOriginalName();
 		}
+
 		return parent::getTitle($fragment);
 	}
 
@@ -422,15 +420,15 @@ class Voximplant extends Volume\Module\Module implements Volume\IVolumeIndicator
 	 * @return \Bitrix\Main\Type\DateTime|null
 	 * @throws ArgumentTypeException
 	 */
-	public static function getUpdateTime(Volume\Fragment $fragment)
+	public static function getUpdateTime(Volume\Fragment $fragment): ?\Bitrix\Main\Type\DateTime
 	{
 		$timestampUpdate = null;
 		if ($fragment->getIndicatorType() == Volume\Folder::className() || $fragment->getIndicatorType() == Volume\FolderTree::className())
 		{
 			$folder = $fragment->getFolder();
-			if (!$folder instanceof \Bitrix\Disk\Folder)
+			if (!$folder instanceof Disk\Folder)
 			{
-				throw new ArgumentTypeException('Fragment must be subclass of '.\Bitrix\Disk\Folder::className());
+				throw new ArgumentTypeException('Fragment must be subclass of '.Disk\Folder::className());
 			}
 			$timestampUpdate = $folder->getUpdateTime()->toUserTime();
 		}
@@ -444,19 +442,19 @@ class Voximplant extends Volume\Module\Module implements Volume\IVolumeIndicator
 	 * @return string
 	 * @throws ArgumentTypeException
 	 */
-	public static function getUrl(Volume\Fragment $fragment)
+	public static function getUrl(Volume\Fragment $fragment): string
 	{
 		$url = '';
 		if ($fragment->getIndicatorType() == Volume\Folder::className() || $fragment->getIndicatorType() == Volume\FolderTree::className())
 		{
 			$folder = $fragment->getFolder();
-			if (!$folder instanceof \Bitrix\Disk\Folder)
+			if (!$folder instanceof Disk\Folder)
 			{
-				throw new ArgumentTypeException('Fragment must be subclass of '.\Bitrix\Disk\Folder::className());
+				throw new ArgumentTypeException('Fragment must be subclass of '.Disk\Folder::className());
 			}
-			$urlManager = \Bitrix\Disk\Driver::getInstance()->getUrlManager();
+			$urlManager = Disk\Driver::getInstance()->getUrlManager();
 
-			$url = $urlManager->getUrlFocusController('openFolderList', array('folderId' => $folder->getId()));
+			$url = $urlManager->getUrlFocusController('openFolderList', ['folderId' => $folder->getId()]);
 		}
 
 		return $url;

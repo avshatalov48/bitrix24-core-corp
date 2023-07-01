@@ -12,6 +12,8 @@ use Bitrix\Tasks\Util\User;
 
 class TasksMobileCommentsComponent extends CBitrixComponent
 {
+	private Collection $errors;
+
 	private function checkModules(): bool
 	{
 		if (!Loader::includeModule('forum'))

@@ -1,10 +1,15 @@
 <?php
-if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 use Bitrix\Crm\Component\EntityDetails\ComponentMode;
 
-CJSCore::Init(array('ui'));
-if(\Bitrix\Main\Loader::includeModule('sale'))
+CJSCore::Init(['ui']);
+
+if (\Bitrix\Main\Loader::includeModule('sale'))
 {
 	Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/sale/core_ui_widget.js');
 	Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/sale/core_ui_etc.js');
@@ -12,6 +17,7 @@ if(\Bitrix\Main\Loader::includeModule('sale'))
 	Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/components/bitrix/sale.location.selector.search/templates/.default/script.js');
 	Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/components/bitrix/sale.location.selector.search/templates/.default/style.css');
 }
+
 Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/components/bitrix/crm.order.product.list/templates/.default/style.css');
 
 /** @var array $arParams */
@@ -24,6 +30,7 @@ Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/components/bitrix/crm.ord
 $guid = $arResult['GUID'];
 $prefix = mb_strtolower($guid);
 $activityEditorID = "{$prefix}_editor";
+
 echo CCrmViewHelper::RenderOrderShipmentStatusSettings();
 
 $APPLICATION->IncludeComponent(
@@ -48,21 +55,20 @@ $APPLICATION->IncludeComponent(
 	'bitrix:crm.order.menu',
 	'',
 	array(
-		'PATH_TO_ORDER_LIST' => $arResult['PATH_TO_ORDER_LIST'],
-		'PATH_TO_ORDER_FUNNEL' => $arResult['PATH_TO_ORDER_FUNNEL'],
-		'PATH_TO_ORDER_IMPORT' => $arResult['PATH_TO_ORDER_IMPORT'],
+		'PATH_TO_ORDER_LIST' => $arResult['PATH_TO_ORDER_LIST'] ?? '',
+		'PATH_TO_ORDER_FUNNEL' => $arResult['PATH_TO_ORDER_FUNNEL'] ?? '',
+		'PATH_TO_ORDER_IMPORT' => $arResult['PATH_TO_ORDER_IMPORT'] ?? '',
 		'ELEMENT_ID' => $arResult['ENTITY_ID'],
-		'CATEGORY_ID' => $arResult['CATEGORY_ID'],
-		'MULTIFIELD_DATA' => isset($arResult['ENTITY_DATA']['MULTIFIELD_DATA'])
-			? $arResult['ENTITY_DATA']['MULTIFIELD_DATA'] : array(),
+		'CATEGORY_ID' => $arResult['CATEGORY_ID'] ?? null,
+		'MULTIFIELD_DATA' => $arResult['ENTITY_DATA']['MULTIFIELD_DATA'] ?? [],
 		'OWNER_INFO' => $arResult['ENTITY_INFO'],
-		'CONVERSION_PERMITTED' => $arResult['CONVERSION_PERMITTED'],
-		'BIZPROC_STARTER_DATA' => $arResult['BIZPROC_STARTER_DATA'],
+		'CONVERSION_PERMITTED' => $arResult['CONVERSION_PERMITTED'] ?? true,
+		'BIZPROC_STARTER_DATA' => $arResult['BIZPROC_STARTER_DATA'] ?? [],
 		'CANCELED' => $arResult['ENTITY_DATA']['CANCELED'],
 		'TYPE' => 'details',
-		'SCRIPTS' => array(
+		'SCRIPTS' => [
 			'DELETE' => 'BX.Crm.EntityDetailManager.items["'.CUtil::JSEscape($guid).'"].processRemoval();',
-		)
+		]
 	),
 	$component
 );
@@ -82,7 +88,8 @@ $editorContext = array(
 	'SITE_ID' => $arResult['SITE_ID'],
 	'PRODUCT_COMPONENT_DATA' => $arResult['PRODUCT_COMPONENT_DATA']
 );
-if(isset($arResult['ORIGIN_ID']) && $arResult['ORIGIN_ID'] !== '')
+
+if (isset($arResult['ORIGIN_ID']) && $arResult['ORIGIN_ID'] !== '')
 {
 	$editorContext['ORIGIN_ID'] = $arResult['ORIGIN_ID'];
 }
@@ -103,7 +110,7 @@ $APPLICATION->IncludeComponent(
 			'GUID' => "{$guid}_editor",
 			'CONFIG_ID' => $arResult['EDITOR_CONFIG_ID'],
 			'ENTITY_CONFIG' => $arResult['ENTITY_CONFIG'],
-			'DUPLICATE_CONTROL' => $arResult['DUPLICATE_CONTROL'],
+			'DUPLICATE_CONTROL' => $arResult['DUPLICATE_CONTROL'] ?? [],
 			'ENTITY_CONTROLLERS' => $arResult['ENTITY_CONTROLLERS'],
 			'ENTITY_FIELDS' => $arResult['ENTITY_FIELDS'],
 			'ENTITY_DATA' => $arResult['ENTITY_DATA'],
@@ -120,7 +127,6 @@ $APPLICATION->IncludeComponent(
 		),
 		'TIMELINE' => array(
 			'GUID' => "{$guid}_timeline",
-			'ENABLE_WAIT' => true,
 			'WAIT_TARGET_DATES' => $arResult['WAIT_TARGET_DATES'],
 			'ENABLE_SALESCENTER' => false,
 		),
@@ -133,13 +139,16 @@ $APPLICATION->IncludeComponent(
 	)
 );
 
-$arOrderStatusInfoValues[$arResult['ENTITY_ID']] = array(
-	'REASON_CANCELED' => ($arResult['ENTITY_DATA']['REASON_CANCELED'] != '') ? $arResult['ENTITY_DATA']['REASON_CANCELED'] : ''
-);
+$arOrderStatusInfoValues[$arResult['ENTITY_ID']] = [
+	'REASON_CANCELED' => empty($arResult['ENTITY_DATA']['REASON_CANCELED'])
+		? ''
+		: $arResult['ENTITY_DATA']['REASON_CANCELED']
+];
 
-if ($arResult['IS_AJAX_CALL'])
+if (!empty($arResult['IS_AJAX_CALL']))
 {
 	$GLOBALS['OnCrmCrmOrderListAfterAjaxHandlerParams']['arOrderStatusInfoValues'] = $arOrderStatusInfoValues;
+
 	function OnCrmCrmOrderListAfterAjaxHandler()
 	{
 		?>

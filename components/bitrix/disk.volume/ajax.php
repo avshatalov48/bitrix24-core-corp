@@ -752,7 +752,7 @@ class DiskVolumeController extends \Bitrix\Disk\Internals\Controller
 	 */
 	protected function processActionCancelWorkers()
 	{
-		Volume\Cleaner::cancelWorkers($this->getUser()->getId());
+		Volume\Cleaner::cancelWorkers((int)$this->getUser()->getId());
 
 		if ($this->errorCollection->hasErrors())
 		{

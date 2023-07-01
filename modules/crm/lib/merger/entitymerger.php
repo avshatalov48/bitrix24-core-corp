@@ -1,11 +1,11 @@
 <?php
 namespace Bitrix\Crm\Merger;
+use Bitrix\Crm;
+use Bitrix\Crm\Binding\EntityBinding;
+use Bitrix\Crm\Integrity;
+use Bitrix\Crm\Recovery;
 use Bitrix\Fileman\UserField\Types\AddressType;
 use Bitrix\Main;
-use Bitrix\Crm;
-use Bitrix\Crm\Recovery;
-use Bitrix\Crm\Integrity;
-use Bitrix\Crm\Binding\EntityBinding;
 
 abstract class EntityMerger
 {
@@ -1120,7 +1120,12 @@ abstract class EntityMerger
 			$destinationID,
 			$destinationFields,
 			self::ROLE_TARG,
-			array('DISABLE_USER_FIELD_CHECK' => true)
+			[
+				'DISABLE_USER_FIELD_CHECK' => true,
+				'EXCLUDE_FROM_RELATION_REGISTRATION' => [
+					new Crm\ItemIdentifier((int)$sourceMerger->getEntityTypeID(), (int)$sourceID),
+				],
+			]
 		);
 	}
 
@@ -1385,7 +1390,7 @@ abstract class EntityMerger
 			$type = ($fieldInfo['TYPE'] ?? 'string');
 
 			$fieldConflictResolver = static::getFieldConflictResolver($fieldID, $type);
-			$fieldConflictResolver->addSeed((int)$seed['ID'], $seed);
+			$fieldConflictResolver->addSeed((int)($seed['ID'] ?? 0), $seed);
 			$fieldConflictResolver->setTarget($targ);
 			if($targFlg
 				&& $seedFlg
@@ -1442,7 +1447,7 @@ abstract class EntityMerger
 		if(!$skipEmpty)
 		{
 			$type = ($fieldInfo['TYPE'] ?? 'string');
-			$fieldValue = $fields[$fieldId];
+			$fieldValue = $fields[$fieldId] ?? '';
 
 			if (!$hasValue = ($hasValue && static::isFieldNotEmpty($fieldInfo, $fields, $fieldId)))
 			{
@@ -1516,12 +1521,12 @@ abstract class EntityMerger
 		$this->mergeBoundEntitiesBatch($seeds, $targ, $skipEmpty, $options);
 	}
 
-	protected function mergeBoundEntitiesBatch(array &$seeds, array &$targ, $skipEmpty = false, array $options = array())
+	protected function mergeBoundEntitiesBatch(array &$seeds, array &$targ, $skipEmpty = false, array $options = [])
 	{
-		$targID = isset($targ['ID']) ? (int)$targ['ID'] : 0;
-		$targMultiFields = $targID > 0 ? $this->getEntityMultiFields($targID, self::ROLE_TARG) : array();
+		$targID = (int)($targ['ID'] ?? 0);
+		$targMultiFields = $targID > 0 ? $this->getEntityMultiFields($targID, self::ROLE_TARG) : [];
 
-		$seedMap = array();
+		$seedMap = [];
 		foreach($seeds as $seed)
 		{
 			$seedMap[$seed['ID']] = $seed;

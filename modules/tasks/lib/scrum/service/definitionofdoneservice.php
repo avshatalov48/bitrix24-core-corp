@@ -13,12 +13,8 @@ use Bitrix\Tasks\Util\Result;
 
 class DefinitionOfDoneService implements Errorable
 {
-	const ERROR_COULD_NOT_MERGE_LIST = 'TASKS_DOD_01';
-	const ERROR_COULD_NOT_GET_DATA = 'TASKS_DOD_02';
-	const ERROR_COULD_NOT_IS_EMPTY = 'TASKS_DOD_03';
-	const ERROR_COULD_NOT_ADD_DEFAULT_LIST = 'TASKS_DOD_04';
-	const ERROR_COULD_NOT_REMOVE_LIST = 'TASKS_DOD_05';
-	const ERROR_COULD_NOT_SAVE_SETTINGS = 'TASKS_DOD_06';
+	const ERROR_COULD_NOT_ADD_DEFAULT_LIST_1 = 'TASKS_DOD_01';
+	const ERROR_COULD_NOT_ADD_DEFAULT_LIST_2 = 'TASKS_DOD_02';
 
 	private $executiveUserId;
 	private $errorCollection;
@@ -34,46 +30,23 @@ class DefinitionOfDoneService implements Errorable
 	{
 		$result = new Result();
 
-		try
+		foreach ($items as $id => $item)
 		{
-			foreach ($items as $id => $item)
-			{
-				$item['ID'] = ((int) $item['ID'] === 0 ? null : (int) $item['ID']);
-				$item['IS_COMPLETE'] = ($item['IS_COMPLETE'] === "true");
-				$item['IS_IMPORTANT'] = ($item['IS_IMPORTANT'] === "true");
+			$item['ID'] = ((int) ($item['ID'] ?? null) === 0 ? null : (int) $item['ID']);
+			$item['IS_COMPLETE'] = ($item['IS_COMPLETE'] === "true");
+			$item['IS_IMPORTANT'] = ($item['IS_IMPORTANT'] === "true");
 
-				$items[$item['NODE_ID']] = $item;
-				unset($items[$id]);
-			}
-
-			$result = $facade::merge($entityId, $this->executiveUserId, $items, []);
-		}
-		catch (\Exception $exception)
-		{
-			$this->errorCollection->setError(
-				new Error($exception->getMessage(), self::ERROR_COULD_NOT_MERGE_LIST)
-			);
+			$items[$item['NODE_ID']] = $item;
+			unset($items[$id]);
 		}
 
-		return $result;
+		return $facade::merge($entityId, $this->executiveUserId, $items, []);
 	}
 
 	public function removeList(string $facade, int $entityId): void
 	{
-		try
-		{
-			$facade::$currentAccessAction = CheckListFacade::ACTION_REMOVE;
-			$facade::deleteByEntityId($entityId, $this->executiveUserId);
-		}
-		catch (\Exception $exception)
-		{
-			$this->errorCollection->setError(
-				new Error(
-					$exception->getMessage(),
-					self::ERROR_COULD_NOT_REMOVE_LIST
-				)
-			);
-		}
+		$facade::$currentAccessAction = CheckListFacade::ACTION_REMOVE;
+		$facade::deleteByEntityId($entityId, $this->executiveUserId);
 	}
 
 	public function getComponent(int $entityId, string $entityType, array $items): Component
@@ -98,25 +71,11 @@ class DefinitionOfDoneService implements Errorable
 
 	public function getTypeItems(int $entityId): array
 	{
-		$items = [];
-
-		try
+		$items = TypeChecklistFacade::getItemsForEntity($entityId, $this->executiveUserId);
+		foreach (array_keys($items) as $id)
 		{
-			$items = TypeChecklistFacade::getItemsForEntity($entityId, $this->executiveUserId);
-			foreach (array_keys($items) as $id)
-			{
-				$items[$id]['COPIED_ID'] = $id;
-				unset($items[$id]['ID']);
-			}
-		}
-		catch (\Exception $exception)
-		{
-			$this->errorCollection->setError(
-				new Error(
-					$exception->getMessage(),
-					self::ERROR_COULD_NOT_GET_DATA
-				)
-			);
+			$items[$id]['COPIED_ID'] = $id;
+			unset($items[$id]['ID']);
 		}
 
 		return $items;
@@ -124,21 +83,7 @@ class DefinitionOfDoneService implements Errorable
 
 	public function isTypeListEmpty(int $entityId): bool
 	{
-		try
-		{
-			return empty(TypeChecklistFacade::getItemsForEntity($entityId, $this->executiveUserId));
-		}
-		catch (\Exception $exception)
-		{
-			$this->errorCollection->setError(
-				new Error(
-					$exception->getMessage(),
-					self::ERROR_COULD_NOT_IS_EMPTY
-				)
-			);
-
-			return false;
-		}
+		return empty(TypeChecklistFacade::getItemsForEntity($entityId, $this->executiveUserId));
 	}
 
 	public function createDefaultList(int $entityId): void
@@ -172,7 +117,7 @@ class DefinitionOfDoneService implements Errorable
 				$this->errorCollection->setError(
 					new Error(
 						$exception->getMessage(),
-						self::ERROR_COULD_NOT_ADD_DEFAULT_LIST
+						self::ERROR_COULD_NOT_ADD_DEFAULT_LIST_1
 					)
 				);
 			}
@@ -180,7 +125,7 @@ class DefinitionOfDoneService implements Errorable
 			$this->errorCollection->setError(
 				new Error(
 					$exception->getMessage(),
-					self::ERROR_COULD_NOT_ADD_DEFAULT_LIST
+					self::ERROR_COULD_NOT_ADD_DEFAULT_LIST_2
 				)
 			);
 		}

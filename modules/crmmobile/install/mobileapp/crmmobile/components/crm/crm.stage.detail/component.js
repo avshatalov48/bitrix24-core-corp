@@ -1,15 +1,16 @@
 (() => {
+	const require = (ext) => jn.require(ext);
 
 	const SUCCESS_SEMANTICS = 'S';
 
-	const { Alert } = jn.require('alert');
-	const { NotifyManager } = jn.require('notify-manager');
-	const { throttle } = jn.require('utils/function');
-	const { stringify } = jn.require('utils/string');
-	const { getStageNavigationIcon } = jn.require('crm/assets/stage');
-	const { EntityName } = jn.require('crm/entity-name');
-	const { TunnelList } = jn.require('crm/tunnel-list');
-	const { StageStorage } = jn.require('crm/storage/stage');
+	const { Alert } = require('alert');
+	const { NotifyManager } = require('notify-manager');
+	const { throttle } = require('utils/function');
+	const { stringify } = require('utils/string');
+	const { getStageNavigationIcon } = require('crm/assets/stage');
+	const { EntityName } = require('crm/entity-name');
+	const { TunnelList } = require('crm/tunnel-list');
+	const { StageStorage } = require('crm/storage/stage');
 
 	class CrmStageDetail extends LayoutComponent
 	{
@@ -24,6 +25,7 @@
 				color: this.props.stage.color,
 			};
 
+			this.tunnelsEnabled = BX.prop.getBoolean(this.props, 'tunnelsEnabled', false);
 			this.tunnels = this.props.stage.tunnels;
 
 			this.isChanged = false;
@@ -40,7 +42,7 @@
 				{
 					name: BX.message('M_CRM_STAGE_DETAIL_SAVE'),
 					type: 'text',
-					color: '#0065a3',
+					color: '#2066b0',
 					callback: () => this.saveAndClose(),
 				},
 			]);
@@ -145,6 +147,11 @@
 
 		renderTunnelList()
 		{
+			if (!this.tunnelsEnabled)
+			{
+				return null;
+			}
+
 			const { entityTypeId } = this.props;
 
 			return View(
@@ -194,9 +201,9 @@
 		getTitleForNavigation()
 		{
 			return (
-				stringify(this.stageName) !== ''
-					? BX.message('M_CRM_STAGE_DETAIL_FUNNEL').replace('#STAGE_NAME#', this.stageName)
-					: BX.message('M_CRM_STAGE_DETAIL_FUNNEL_EMPTY')
+				stringify(this.stageName) === ''
+					? BX.message('M_CRM_STAGE_DETAIL_FUNNEL_EMPTY')
+					: BX.message('M_CRM_STAGE_DETAIL_FUNNEL').replace('#STAGE_NAME#', this.stageName)
 			);
 		}
 
@@ -348,7 +355,7 @@
 				return [];
 			}
 
-			return this.tunnels.map(tunnel => {
+			return this.tunnels.map((tunnel) => {
 				if (tunnel.isNewTunnel)
 				{
 					return {
@@ -417,7 +424,7 @@
 	};
 
 	const svgImages = {
-		deleteIcon: `<svg width="16" height="21" viewBox="0 0 16 21" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9.22602 0H6.15062V1.54677H1.43631C0.64306 1.54677 0 2.18983 0 2.98309V4.64037H15.377V2.98309C15.377 2.18983 14.7339 1.54677 13.9407 1.54677H9.22602V0Z" fill="#828B95"/><path d="M1.53777 6.18721H13.8394L12.6864 19.2351C12.6427 19.7294 12.2287 20.1084 11.7326 20.1084H3.64459C3.14842 20.1084 2.73444 19.7294 2.69077 19.2351L1.53777 6.18721Z" fill="#828B95"/></svg>`,
+		deleteIcon: '<svg width="16" height="21" viewBox="0 0 16 21" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9.22602 0H6.15062V1.54677H1.43631C0.64306 1.54677 0 2.18983 0 2.98309V4.64037H15.377V2.98309C15.377 2.18983 14.7339 1.54677 13.9407 1.54677H9.22602V0Z" fill="#828B95"/><path d="M1.53777 6.18721H13.8394L12.6864 19.2351C12.6427 19.7294 12.2287 20.1084 11.7326 20.1084H3.64459C3.14842 20.1084 2.73444 19.7294 2.69077 19.2351L1.53777 6.18721Z" fill="#828B95"/></svg>',
 	};
 
 	BX.onViewLoaded(() => {
@@ -425,6 +432,7 @@
 			entityTypeId: BX.componentParameters.get('entityTypeId'),
 			stage: BX.componentParameters.get('stage'),
 			categoryId: BX.componentParameters.get('categoryId'),
+			tunnelsEnabled: BX.componentParameters.get('tunnelsEnabled'),
 			documentFields: BX.componentParameters.get('documentFields'),
 		}));
 	});

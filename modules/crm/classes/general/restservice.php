@@ -393,11 +393,8 @@ final class CCrmRestService extends IRestService
 		//endregion
 		//region Timeline
 		'crm.timeline.comment.fields',
-		'crm.timeline.comment.add',
 		'crm.timeline.comment.list',
 		'crm.timeline.comment.get',
-		'crm.timeline.comment.delete',
-		'crm.timeline.comment.update',
 		'crm.timeline.bindings.fields',
 		'crm.timeline.bindings.list',
 		'crm.timeline.bindings.bind',
@@ -481,6 +478,7 @@ final class CCrmRestService extends IRestService
 			Tracking\Rest::register($bindings);
 			WebForm\Embed\Rest::register($bindings);
 			\Bitrix\Crm\Controller\CallList::register($bindings);
+			\Bitrix\Crm\Activity\Entity\ConfigurableRestApp\EventHandler::register($bindings);
 
 			self::$DESCRIPTION = array('crm' => $bindings);
 		}
@@ -2523,6 +2521,16 @@ abstract class CCrmRestProxyBase implements ICrmRestProxy
 				$this->externalizeFields($fields[$k], $fieldsInfo[$k]['FIELDS']);
 			}
 		}
+
+		$id = (int)($fields['ID'] ?? 0);
+		if ($id > 0 && \CCrmOwnerType::IsDefined($this->getOwnerTypeID()))
+		{
+			$fields = \Bitrix\Crm\Entity\FieldContentType::prepareFieldsFromCompatibleRestToRead(
+				$this->getOwnerTypeID(),
+				$id,
+				$fields,
+			);
+		}
 	}
 	protected function tryExternalizeFileField(&$fields, $fieldName, $multiple = false, $dynamic = true)
 	{
@@ -3887,8 +3895,16 @@ class CCrmProductRestProxy extends CCrmRestProxyBase
 			$descriptionType = (isset($fields['DESCRIPTION_TYPE']) && $fields['DESCRIPTION_TYPE'] === 'html') ?
 				'html' : 'text';
 			$fields['DESCRIPTION_TYPE'] = $descriptionType;
-			$description = (isset($fields['DESCRIPTION']) && is_string($fields['DESCRIPTION'])) ? trim($fields['DESCRIPTION']) : '';
-			$isNeedSanitize = ($descriptionType === 'html' && $description !== '' && mb_strpos($description, '<'));
+			$description =
+				(isset($fields['DESCRIPTION']) && is_string($fields['DESCRIPTION']))
+					? trim($fields['DESCRIPTION'])
+					: ''
+			;
+			$isNeedSanitize = (
+				$descriptionType === 'html'
+				&& $description !== ''
+				&& mb_strpos($description, '<') !== false
+			);
 			if ($isNeedSanitize)
 			{
 				$description = self::sanitizeHtml($description);
@@ -4260,8 +4276,16 @@ class CCrmProductRestProxy extends CCrmRestProxyBase
 				$descriptionType = 'text';
 			}
 
-			$description = (isset($fields['DESCRIPTION']) && is_string($fields['DESCRIPTION'])) ? trim($fields['DESCRIPTION']) : '';
-			$isNeedSanitize = ($descriptionType === 'html' && $description !== '' && mb_strpos($description, '<'));
+			$description =
+				(isset($fields['DESCRIPTION']) && is_string($fields['DESCRIPTION']))
+					? trim($fields['DESCRIPTION'])
+					: ''
+			;
+			$isNeedSanitize = (
+				$descriptionType === 'html'
+				&& $description !== ''
+				&& mb_strpos($description, '<') !== false
+			);
 			if ($isNeedSanitize)
 			{
 				$description = self::sanitizeHtml($description);
@@ -5430,6 +5454,26 @@ class CCrmProductRowRestProxy extends CCrmRestProxyBase
 				$fields['PRODUCT_NAME'] ??= $productRow['PRODUCT_NAME'];
 			}
 		}
+
+		if (isset($fields['TAX_RATE']))
+		{
+			if (
+				(float)$fields['TAX_RATE'] > 0
+				|| $fields['TAX_RATE'] === 0
+				|| (
+					is_string($fields['TAX_RATE'])
+					&& isset($fields['TAX_RATE'][0])
+					&& $fields['TAX_RATE'][0] === '0'
+				)
+			)
+			{
+				$fields['TAX_RATE'] = (float)$fields['TAX_RATE'];
+			}
+			else
+			{
+				$fields['TAX_RATE'] = null;
+			}
+		}
 	}
 }
 
@@ -5484,10 +5528,10 @@ class CCrmLeadRestProxy extends CCrmRestProxyBase
 			return false;
 		}
 
-		if(isset($fields['COMMENTS']))
-		{
-			$fields['COMMENTS'] = $this->sanitizeHtml($fields['COMMENTS']);
-		}
+		$fields = \Bitrix\Crm\Entity\FieldContentType::prepareFieldsFromCompatibleRestToSave(
+			\CCrmOwnerType::Lead,
+			$fields,
+		);
 
 		$entity = self::getEntity();
 		$options = [];
@@ -5552,6 +5596,12 @@ class CCrmLeadRestProxy extends CCrmRestProxyBase
 			$errors[] = 'Not found';
 			return false;
 		}
+
+		$result = \Bitrix\Crm\Entity\FieldContentType::prepareFieldsFromCompatibleRestToRead(
+			\CCrmOwnerType::Lead,
+			$ID,
+			$result,
+		);
 
 		$result['FM'] = array();
 		$fmResult = CCrmFieldMulti::GetList(
@@ -5625,10 +5675,10 @@ class CCrmLeadRestProxy extends CCrmRestProxyBase
 			return false;
 		}
 
-		if(isset($fields['COMMENTS']))
-		{
-			$fields['COMMENTS'] = $this->sanitizeHtml($fields['COMMENTS']);
-		}
+		$fields = \Bitrix\Crm\Entity\FieldContentType::prepareFieldsFromCompatibleRestToSave(
+			\CCrmOwnerType::Lead,
+			$fields,
+		);
 
 		$entity = self::getEntity();
 		$compare = true;
@@ -5899,10 +5949,7 @@ class CCrmDealRestProxy extends CCrmRestProxyBase
 			return false;
 		}
 
-		if(isset($fields['COMMENTS']))
-		{
-			$fields['COMMENTS'] = $this->sanitizeHtml($fields['COMMENTS']);
-		}
+		$fields = \Bitrix\Crm\Entity\FieldContentType::prepareFieldsFromCompatibleRestToSave(\CCrmOwnerType::Deal, $fields);
 
 		$defaultRequisiteLinkParams = Requisite\EntityLink::determineRequisiteLinkBeforeSave(
 			CCrmOwnerType::Deal, 0, Requisite\EntityLink::ENTITY_OPERATION_ADD, $fields
@@ -5987,6 +6034,12 @@ class CCrmDealRestProxy extends CCrmRestProxyBase
 		}
 		unset($ufData);
 
+		$result = \Bitrix\Crm\Entity\FieldContentType::prepareFieldsFromCompatibleRestToRead(
+			\CCrmOwnerType::Deal,
+			$ID,
+			$result,
+		);
+
 		return $result;
 	}
 	protected function innerGetList($order, $filter, $select, $navigation, &$errors)
@@ -6033,10 +6086,7 @@ class CCrmDealRestProxy extends CCrmRestProxyBase
 			return false;
 		}
 
-		if(isset($fields['COMMENTS']))
-		{
-			$fields['COMMENTS'] = $this->sanitizeHtml($fields['COMMENTS']);
-		}
+		$fields = \Bitrix\Crm\Entity\FieldContentType::prepareFieldsFromCompatibleRestToSave(\CCrmOwnerType::Deal, $fields);
 
 		$entity = self::getEntity(false);
 		$compare = true;
@@ -7565,10 +7615,10 @@ class CCrmCompanyRestProxy extends CCrmRestProxyBase
 			return false;
 		}
 
-		if(isset($fields['COMMENTS']))
-		{
-			$fields['COMMENTS'] = $this->sanitizeHtml($fields['COMMENTS']);
-		}
+		$fields = \Bitrix\Crm\Entity\FieldContentType::prepareFieldsFromCompatibleRestToSave(
+			$this->getOwnerTypeID(),
+			$fields,
+		);
 
 		$entity = self::getEntity();
 		$options = [];
@@ -7634,6 +7684,12 @@ class CCrmCompanyRestProxy extends CCrmRestProxyBase
 		{
 			static::$isMyCompany = true;
 		}
+
+		$result = \Bitrix\Crm\Entity\FieldContentType::prepareFieldsFromCompatibleRestToRead(
+			$this->getOwnerTypeID(),
+			$ID,
+			$result,
+		);
 
 		$result['FM'] = array();
 		$fmResult = CCrmFieldMulti::GetList(
@@ -7703,10 +7759,10 @@ class CCrmCompanyRestProxy extends CCrmRestProxyBase
 			return false;
 		}
 
-		if(isset($fields['COMMENTS']))
-		{
-			$fields['COMMENTS'] = $this->sanitizeHtml($fields['COMMENTS']);
-		}
+		$fields = \Bitrix\Crm\Entity\FieldContentType::prepareFieldsFromCompatibleRestToSave(
+			$this->getOwnerTypeID(),
+			$fields,
+		);
 
 		if(isset($fields['LOGO']) )
 		{
@@ -7881,10 +7937,10 @@ class CCrmContactRestProxy extends CCrmRestProxyBase
 			return false;
 		}
 
-		if(isset($fields['COMMENTS']))
-		{
-			$fields['COMMENTS'] = $this->sanitizeHtml($fields['COMMENTS']);
-		}
+		$fields = \Bitrix\Crm\Entity\FieldContentType::prepareFieldsFromCompatibleRestToSave(
+			$this->getOwnerTypeID(),
+			$fields,
+		);
 
 		$entity = self::getEntity();
 		$options = [];
@@ -7945,6 +8001,12 @@ class CCrmContactRestProxy extends CCrmRestProxyBase
 			$errors[] = 'Not found';
 			return false;
 		}
+
+		$result = \Bitrix\Crm\Entity\FieldContentType::prepareFieldsFromCompatibleRestToRead(
+			$this->getOwnerTypeID(),
+			$ID,
+			$result,
+		);
 
 		$result['FM'] = array();
 		$fmResult = CCrmFieldMulti::GetList(
@@ -8014,10 +8076,10 @@ class CCrmContactRestProxy extends CCrmRestProxyBase
 			return false;
 		}
 
-		if(isset($fields['COMMENTS']))
-		{
-			$fields['COMMENTS'] = $this->sanitizeHtml($fields['COMMENTS']);
-		}
+		$fields = \Bitrix\Crm\Entity\FieldContentType::prepareFieldsFromCompatibleRestToSave(
+			$this->getOwnerTypeID(),
+			$fields,
+		);
 
 		if(isset($fields['PHOTO']) )
 		{
@@ -8932,6 +8994,11 @@ class CCrmActivityRestProxy extends CCrmRestProxyBase
 					'CAPTION' => Loc::getMessage('CRM_REST_ACTIVITY_FIELD_WEBDAV_ELEMENTS')
 				);
 			}
+
+			$this->FIELDS_INFO['IS_INCOMING_CHANNEL'] = [
+				'TYPE' => 'char',
+				'ATTRIBUTES' => [CCrmFieldInfoAttr::ReadOnly]
+			];
 		}
 		return $this->FIELDS_INFO;
 	}
@@ -9065,6 +9132,13 @@ class CCrmActivityRestProxy extends CCrmRestProxyBase
 		}
 
 		$isRestActivity = isset($fields['PROVIDER_ID']) && $fields['PROVIDER_ID'] === \Bitrix\Crm\Activity\Provider\RestApp::getId();
+
+		if (($fields['PROVIDER_ID'] ?? null) === \Bitrix\Crm\Activity\Provider\ConfigurableRestApp::getId())
+		{
+			$errors[] = 'Use crm.activity.configurable.add for this activity provider';
+
+			return false;
+		}
 
 		if ($isRestActivity)
 		{
@@ -9262,7 +9336,15 @@ class CCrmActivityRestProxy extends CCrmRestProxyBase
 		$dbResult = CCrmActivity::GetList(array(), array('ID' => $ID));
 		if($dbResult)
 		{
-			return $dbResult->Fetch();
+			$result = $dbResult->Fetch();
+			if ($result['PROVIDER_ID'] === \Bitrix\Crm\Activity\Provider\ConfigurableRestApp::getId())
+			{
+				$errors[] = 'Use crm.activity.configurable.get for this activity provider';
+
+				return null;
+			}
+
+			return $result;
 		}
 
 		$errors[] = 'Activity is not found.';
@@ -9351,6 +9433,12 @@ class CCrmActivityRestProxy extends CCrmRestProxyBase
 				$errors[] = 'Access denied.';
 				return false;
 			}
+		}
+		if (($currentFields['PROVIDER_ID'] ?? null) === \Bitrix\Crm\Activity\Provider\ConfigurableRestApp::getId())
+		{
+			$errors[] = 'Use crm.activity.configurable.update for this activity provider';
+
+			return false;
 		}
 
 		$communications = isset($fields['COMMUNICATIONS']) && is_array($fields['COMMUNICATIONS'])
@@ -11299,20 +11387,10 @@ class CCrmQuoteRestProxy extends CCrmRestProxyBase
 			return false;
 		}
 
-		if(isset($fields['COMMENTS']))
-		{
-			$fields['COMMENTS'] = $this->sanitizeHtml($fields['COMMENTS']);
-		}
-
-		if(isset($fields['CONTENT']))
-		{
-			$fields['CONTENT'] = $this->sanitizeHtml($fields['CONTENT']);
-		}
-
-		if(isset($fields['TERMS']))
-		{
-			$fields['TERMS'] = $this->sanitizeHtml($fields['TERMS']);
-		}
+		$fields = \Bitrix\Crm\Entity\FieldContentType::prepareFieldsFromCompatibleRestToSave(
+			$this->getOwnerTypeID(),
+			$fields,
+		);
 
 		$defaultRequisiteLinkParams = Requisite\EntityLink::determineRequisiteLinkBeforeSave(
 			CCrmOwnerType::Quote, 0, Requisite\EntityLink::ENTITY_OPERATION_ADD, $fields
@@ -11369,6 +11447,12 @@ class CCrmQuoteRestProxy extends CCrmRestProxyBase
 			return false;
 		}
 
+		$result = \Bitrix\Crm\Entity\FieldContentType::prepareFieldsFromCompatibleRestToRead(
+			$this->getOwnerTypeID(),
+			$ID,
+			$result,
+		);
+
 		$userFields = $GLOBALS['USER_FIELD_MANAGER']->GetUserFields(CCrmQuote::$sUFEntityID, $ID, LANGUAGE_ID);
 		foreach($userFields as $ufName => &$ufData)
 		{
@@ -11414,20 +11498,10 @@ class CCrmQuoteRestProxy extends CCrmRestProxyBase
 			return false;
 		}
 
-		if(isset($fields['COMMENTS']))
-		{
-			$fields['COMMENTS'] = $this->sanitizeHtml($fields['COMMENTS']);
-		}
-
-		if(isset($fields['CONTENT']))
-		{
-			$fields['CONTENT'] = $this->sanitizeHtml($fields['CONTENT']);
-		}
-
-		if(isset($fields['TERMS']))
-		{
-			$fields['TERMS'] = $this->sanitizeHtml($fields['TERMS']);
-		}
+		$fields = \Bitrix\Crm\Entity\FieldContentType::prepareFieldsFromCompatibleRestToSave(
+			$this->getOwnerTypeID(),
+			$fields,
+		);
 
 		$entity = self::getEntity();
 		$compare = true;
@@ -13732,6 +13806,20 @@ class CCrmAddressTypeRestProxy extends CCrmRestProxyBase
 
 			return EntityAddressType::getDefaultIdByZone($addressZoneId);
 		}
+		else if ($name === 'GETDEFAULTIDBYENTITYCATEGORY')
+		{
+			$entityTypeId = (int)$this->resolveParam($arParams, 'ENTITY_TYPE_ID');
+			$categoryId = (int)$this->resolveParam($arParams, 'CATEGORY_ID');
+
+			return EntityAddressType::getDefaultIdByEntityCategory($entityTypeId, $categoryId);
+		}
+		else if ($name === 'GETDEFAULTIDBYENTITYID')
+		{
+			$entityTypeId = (int)$this->resolveParam($arParams, 'ENTITY_TYPE_ID');
+			$entityId = (int)$this->resolveParam($arParams, 'ENTITY_ID');
+
+			return EntityAddressType::getDefaultIdByEntityId($entityTypeId, $entityId);
+		}
 		else if ($name === 'GETBYZONESORVALUES')
 		{
 			$zoneIds = $this->resolveArrayParam($arParams, 'ID');
@@ -15062,207 +15150,6 @@ class CCrmTimelineCommentRestProxy extends CCrmRestProxyBase
 		return $result;
 	}
 
-	protected function innerAdd(&$fields, &$errors, array $params = null)
-	{
-		$entityId = (int)$fields['ENTITY_ID'];
-		$entityTypeId = CCrmOwnerType::ResolveID($fields['ENTITY_TYPE']);
-		$info = [];
-		if (!\CCrmOwnerType::TryGetInfo($entityTypeId, $entityId, $info))
-		{
-			$errors[] = 'Entity not found.';
-			return false;
-		}
-
-		if (!Bitrix\Crm\Security\EntityAuthorization::checkUpdatePermission($entityTypeId, $entityId))
-		{
-			$errors[] = 'Access denied.';
-			return false;
-		}
-		try
-		{
-			$settings = [];
-			$authorId = isset($fields['AUTHOR_ID']) ? (int)$fields['AUTHOR_ID'] : 0;
-			if($authorId <= 0)
-			{
-				$authorId = \CCrmSecurityHelper::GetCurrentUserID();
-			}
-			$filesList = $this->getFileIds($fields['FILES'], $authorId);
-			if (!empty($filesList))
-			{
-				$settings['HAS_FILES'] = 'Y';
-			}
-			$entryID = \Bitrix\Crm\Timeline\CommentEntry::create(
-				array(
-					'TEXT' => $fields['COMMENT'],
-					'SETTINGS' => $settings,
-					'AUTHOR_ID' => $authorId,
-					'FILES' => $filesList,
-					'BINDINGS' => array(array('ENTITY_TYPE_ID' => $entityTypeId, 'ENTITY_ID' => $entityId))
-				)
-			);
-
-			$saveData = array(
-				'COMMENT' => $fields['COMMENT'],
-				'ENTITY_TYPE_ID' => $entityTypeId,
-				'ENTITY_ID' => $entityId,
-			);
-			Bitrix\Crm\Timeline\CommentController::getInstance()->onCreate($entryID, $saveData);
-			return $entryID;
-		}
-		catch(Main\SystemException $ex)
-		{
-			$errors[] = $ex->getMessage();
-			return false;
-		}
-	}
-	protected function innerUpdate($ID, &$fields, &$errors, array $params = null)
-	{
-		$entityTypeId =
-		$entityId = null;
-
-		$currentCommentRaw = \Bitrix\Crm\Timeline\Entity\TimelineTable::getList([
-			'filter' => ['ID' => $ID],
-			'limit' => 1
-		]);
-		if (!($oldComment = $currentCommentRaw->fetch()))
-		{
-			$errors[] = 'Not found.';
-			return false;
-		}
-		$bindingsDataRaw = \Bitrix\Crm\Timeline\Entity\TimelineBindingTable::getList([
-			'filter' => ['OWNER_ID' => $ID]
-		]);
-		while ($binding = $bindingsDataRaw->fetch())
-		{
-			if (Bitrix\Crm\Security\EntityAuthorization::checkUpdatePermission($binding['ENTITY_TYPE_ID'], $binding['ENTITY_ID']))
-			{
-				$entityId = $binding['ENTITY_ID'];
-				$entityTypeId = $binding['ENTITY_TYPE_ID'];
-				break;
-			}
-		}
-
-		if (empty($entityId))
-		{
-			$errors[] = 'Access denied.';
-			return false;
-		}
-		try
-		{
-			$updateFields = [];
-			if (isset($fields['COMMENT']))
-			{
-				$updateFields['COMMENT'] = $fields['COMMENT'];
-			}
-
-			if (isset($fields['FILES']))
-			{
-				$updateFields['FILES'] = $this->getFileIds($fields['FILES'], \CCrmSecurityHelper::GetCurrentUserID());
-				$updateFields['SETTINGS']['HAS_FILES'] = !empty($updateFields['FILES']) ? 'Y' : 'N';
-			}
-
-			if (!empty($updateFields))
-			{
-				\Bitrix\Crm\Timeline\CommentEntry::update($ID, $updateFields);
-				$onModifyData = array(
-					'ENTITY_TYPE_ID' => $entityTypeId,
-					'ENTITY_ID' => $entityId,
-				);
-				if (isset($updateFields['COMMENT']))
-				{
-					$onModifyData['COMMENT'] = $updateFields['COMMENT'];
-					$onModifyData['OLD_MENTION_LIST'] = \Bitrix\Crm\Timeline\CommentController::getMentionIds($oldComment['COMMENT']);
-				}
-				Bitrix\Crm\Timeline\CommentController::getInstance()->onModify($ID, $onModifyData);
-			}
-			return true;
-		}
-		catch(Main\SystemException $ex)
-		{
-			$errors[] = $ex->getMessage();
-			return false;
-		}
-	}
-	private function getFileIds($loadedFiles, $authorId)
-	{
-		$filesList = [];
-		if (
-			is_array($loadedFiles)
-			&& Main\Config\Option::get('disk', 'successfully_converted', false)
-			&& Main\Loader::includeModule('disk')
-			&& ($storage = \Bitrix\Disk\Driver::getInstance()->getStorageByUserId($authorId))
-			&& ($folder = $storage->getFolderForUploadedFiles())
-		)
-		{
-			foreach($loadedFiles as $tmp)
-			{
-				$fileFields = \CRestUtil::saveFile($tmp);
-
-				if(is_array($fileFields))
-				{
-					$file = $folder->uploadFile(
-						$fileFields, // file array
-						array(
-							'NAME' => $fileFields["name"],
-							'CREATED_BY' => $authorId
-						),
-						array(),
-						true
-					);
-
-					if ($file)
-					{
-						$filesList[] = \Bitrix\Disk\Uf\FileUserType::NEW_FILE_PREFIX.$file->getId();
-					}
-				}
-			}
-		}
-		return $filesList;
-	}
-	protected function innerDelete($ID, &$errors, array $params = null)
-	{
-		$bindingsDataRaw = \Bitrix\Crm\Timeline\Entity\TimelineBindingTable::getList([
-			'filter' => ['OWNER_ID' => $ID]
-		]);
-
-		$bindingData = $bindingsDataRaw->fetchAll();
-		$count = count($bindingData);
-		if ($count <= 0)
-		{
-			$errors[] = 'Not found.';
-			return false;
-		}
-		elseif ($count > 1)
-		{
-			$errors[] = 'Error deletion. The comment has multiple bindings.';
-			return false;
-		}
-
-		$binding = $bindingData[0];
-		$entityTypeId = $binding['ENTITY_TYPE_ID'];
-		$entityId = $binding['ENTITY_ID'];
-		if (!\Bitrix\Crm\Security\EntityAuthorization::checkUpdatePermission($entityTypeId, $entityId))
-		{
-			$errors[] = 'Access denied.';
-			return false;
-		}
-
-		try
-		{
-			\Bitrix\Crm\Timeline\CommentEntry::delete($ID);
-			\Bitrix\Crm\Timeline\CommentController::getInstance()->onDelete($ID, [
-				'ENTITY_TYPE_ID' => $entityTypeId,
-				'ENTITY_ID' => $entityId,
-			]);
-		}
-		catch(Main\SystemException $ex)
-		{
-			$errors[] = $ex->getMessage();
-			return false;
-		}
-
-		return true;
-	}
 	public function processMethodRequest($name, $nameDetails, $arParams, $nav, $server)
 	{
 		$name = mb_strtoupper($name);

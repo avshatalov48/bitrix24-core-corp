@@ -1,9 +1,9 @@
 module.exports = {
-	input: './src/index.js',
+	input: './src/widget.js',
 	output: {
 		js: './script.js',
 		css: './style.css',
 	},
-	namespace: 'BX.Intranet.LicenseWidget',
+	namespace: 'BX.Intranet',
 	adjustConfigPhp: false,
 };

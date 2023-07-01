@@ -2,7 +2,6 @@
  * @module crm/timeline/item/ui/body/blocks/link-block
  */
 jn.define('crm/timeline/item/ui/body/blocks/link-block', (require, exports, module) => {
-
 	const { TimelineItemBodyBlock } = require('crm/timeline/item/ui/body/blocks/base');
 	const { TimelineFontWeight } = require('crm/timeline/item/ui/styles');
 
@@ -24,7 +23,7 @@ jn.define('crm/timeline/item/ui/body/blocks/link-block', (require, exports, modu
 						color: '#0B66C3',
 						fontWeight: this.props.bold ? TimelineFontWeight.BOLD : TimelineFontWeight.NORMAL,
 					},
-				})
+				}),
 			);
 		}
 
@@ -44,5 +43,4 @@ jn.define('crm/timeline/item/ui/body/blocks/link-block', (require, exports, modu
 	}
 
 	module.exports = { TimelineItemBodyLinkBlock };
-
 });

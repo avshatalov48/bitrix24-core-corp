@@ -142,7 +142,7 @@ jn.define('crm/category-list', (require, exports, module) => {
 			const showBottomBorder = !isLast || (!this.isReadOnly() && canUserEditCategory);
 
 			return new CategoryListItem({
-				category: category,
+				category,
 				layout: this.layout,
 				active: this.state.currentCategoryId === category.id,
 				onSelectCategory: this.onSelectCategoryHandler,
@@ -259,7 +259,7 @@ jn.define('crm/category-list', (require, exports, module) => {
 
 		onDeleteCategory(categoryId)
 		{
-			const categoryIndex = this.state.categories.findIndex(category => category.id === categoryId);
+			const categoryIndex = this.state.categories.findIndex((category) => category.id === categoryId);
 			if (categoryIndex !== -1)
 			{
 				const categories = [...this.state.categories];
@@ -271,15 +271,15 @@ jn.define('crm/category-list', (require, exports, module) => {
 		onUpdateCategory(data)
 		{
 			const categories = [...this.state.categories];
-			const categoryIndex = this.state.categories.findIndex(category => category.id === data.category.id);
+			const categoryIndex = this.state.categories.findIndex((category) => category.id === data.category.id);
 			if (categoryIndex !== -1)
 			{
 				categories[categoryIndex] = data.category;
 			}
 
-			for (let i = 0; i < categories.length; i++)
+			for (const category of categories)
 			{
-				categories[i].tunnels = categories[i].tunnels.reduce((acc, tunnel) => {
+				category.tunnels = category.tunnels.reduce((acc, tunnel) => {
 					if (tunnel.dstCategoryId === data.category.id)
 					{
 						return [
@@ -365,13 +365,13 @@ jn.define('crm/category-list', (require, exports, module) => {
 		onDeleteTunnel(tunnel)
 		{
 			const categories = [...this.state.categories];
-			const categoryIndex = categories.findIndex(category => {
-				return category.tunnels.find(item => item.srcCategoryId === tunnel.srcCategoryId);
+			const categoryIndex = categories.findIndex((category) => {
+				return category.tunnels.find((item) => item.srcCategoryId === tunnel.srcCategoryId);
 			});
 			if (categoryIndex !== -1)
 			{
 				const tunnels = [...categories[categoryIndex].tunnels];
-				const tunnelIndex = tunnels.findIndex(item => item.robot.name === tunnel.robot.name);
+				const tunnelIndex = tunnels.findIndex((item) => item.robot.name === tunnel.robot.name);
 				if (tunnelIndex !== -1)
 				{
 					tunnels.splice(tunnelIndex, 1);
@@ -395,11 +395,11 @@ jn.define('crm/category-list', (require, exports, module) => {
 			}
 
 			const categories = [...this.state.categories];
-			const categoryIndex = categories.findIndex((category => category.id === tunnel.srcCategoryId));
+			const categoryIndex = categories.findIndex(((category) => category.id === tunnel.srcCategoryId));
 			if (categoryIndex !== -1)
 			{
-				const tunnels = [...categories[categoryIndex].tunnels, tunnel];
-				categories[categoryIndex].tunnels = tunnels;
+				categories[categoryIndex].tunnels = [...categories[categoryIndex].tunnels, tunnel];
+
 				this.setState({
 					categories,
 				});
@@ -410,7 +410,7 @@ jn.define('crm/category-list', (require, exports, module) => {
 		{
 			const { categories } = this.state;
 			const modifiedCategories = clone(categories);
-			const categoryIndex = modifiedCategories.findIndex(category => category.id === categoryId);
+			const categoryIndex = modifiedCategories.findIndex((category) => category.id === categoryId);
 			if (categoryIndex !== -1)
 			{
 				modifiedCategories[categoryIndex] = {
@@ -434,7 +434,7 @@ jn.define('crm/category-list', (require, exports, module) => {
 	};
 
 	const svgImages = {
-		createCategoryButtonIcon: `<svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 0H7V12H5V0Z" fill="#525C69"/><path d="M12 5V7L0 7L1.19209e-07 5L12 5Z" fill="#525C69"/></svg>`,
+		createCategoryButtonIcon: '<svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 0H7V12H5V0Z" fill="#525C69"/><path d="M12 5V7L0 7L1.19209e-07 5L12 5Z" fill="#525C69"/></svg>',
 	};
 
 	module.exports = { CategoryList };

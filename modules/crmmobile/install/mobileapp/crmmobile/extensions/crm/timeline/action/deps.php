@@ -1,6 +1,9 @@
 <?php
 
 return [
+	'extensions' => [
+		'analytics-label',
+	],
 	'bundle' => [
 		'./base',
 		'./ajax',

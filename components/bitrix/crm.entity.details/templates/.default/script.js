@@ -427,6 +427,9 @@ if(typeof BX.Crm.EntityDetailManager === "undefined")
 
 			BX.Crm.EntityEvent.fireDelete(this._entityTypeId, this._entityId, "", eventParams);
 
+			eventParams['id'] = this._entityId;
+			BX.onCustomEvent(window, BX.Crm.EntityEvent.names.delete, [eventParams]);
+
 			if(current)
 			{
 				window.setTimeout(function() { current.close(true); }, 100);

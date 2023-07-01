@@ -9,7 +9,7 @@ $APPLICATION->IncludeComponent(
 		'POPUP_COMPONENT_TEMPLATE_NAME' => '',
 		'POPUP_COMPONENT_PARAMS' => [
 			'PATH_TO_LETTER_ADD' => '/marketing/letter/edit/0/',
-			'IS_CRM_MARKETING_TITLE' => $_REQUEST['marketing_title'] === 'Y' ? true : false,
+			'IS_CRM_MARKETING_TITLE' => isset($_REQUEST['marketing_title']) && $_REQUEST['marketing_title'] === 'Y',
 		]
 	]
 );

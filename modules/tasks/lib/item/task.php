@@ -11,6 +11,7 @@ namespace Bitrix\Tasks\Item;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\Access\TaskAccessController;
 use Bitrix\Tasks\Comments\Task\CommentPoster;
+use Bitrix\Tasks\Integration\CRM\TimeLineManager;
 use Bitrix\Tasks\Integration\Search;
 use Bitrix\Tasks\Integration\Pull;
 use Bitrix\Tasks\Integration\SocialNetwork\Group;
@@ -19,11 +20,11 @@ use Bitrix\Tasks\Internals\SearchIndex;
 use Bitrix\Tasks\Internals\Task\ProjectLastActivityTable;
 use Bitrix\Tasks\Internals\Task\Result\ResultManager;
 use Bitrix\Tasks\Internals\Task\Result\ResultTable;
+use Bitrix\Tasks\Internals\Task\ScenarioTable;
 use Bitrix\Tasks\Internals\TaskTable;
 use Bitrix\Tasks\Internals\Task\FavoriteTable;
 use Bitrix\Tasks\Internals\Task\LogTable;
 use Bitrix\Tasks\Internals\Helper\Task\Dependence;
-use Bitrix\Tasks\Internals\UserOption;
 use Bitrix\Tasks\Kanban\StagesTable;
 use Bitrix\Tasks\UI;
 use Bitrix\Tasks\Util;
@@ -60,11 +61,34 @@ final class Task extends \Bitrix\Tasks\Item
 
 	public function save($settings = array())
 	{
+		$parentTaskId = (isset($this->values['PARENT_ID']))
+			? (int)$this->values['PARENT_ID']
+			: null;
 		$result = parent::save($settings);
 		$id = (int) $this->getId();
 		if ($id)
 		{
+			if ($parentTaskId && $parentTaskId !== $id)
+			{
+				$parentTaskScenarios = ScenarioTable::getList([
+					'filter' => [
+						'TASK_ID' => $parentTaskId,
+					],
+					'select' => ['SCENARIO']
+				])->fetchCollection();
+				$scenarios = [ScenarioTable::SCENARIO_DEFAULT];
+				if ($parentTaskScenarios && $parentTaskScenarios->count())
+				{
+					$scenarios = [];
+					foreach ($parentTaskScenarios as $parent)
+					{
+						$scenarios[] = $parent->getScenario();
+					}
+				}
+				ScenarioTable::insertIgnore($id, $scenarios);
+			}
 			TaskAccessController::dropItemCache($id);
+			(new TimeLineManager($id, $this->userId))->onTaskCreated()->save();
 		}
 		return $result;
 	}
@@ -323,7 +347,11 @@ final class Task extends \Bitrix\Tasks\Item
 
 			\CTaskNotifications::sendAddMessage(
 				array_merge($data, ['CHANGED_BY' => $occurAsUserId]),
-				['SPAWNED_BY_AGENT' => $data['SPAWNED_BY_AGENT'] === 'Y' || $data['SPAWNED_BY_AGENT'] === true]
+				[
+					'SPAWNED_BY_AGENT' =>
+						($data['SPAWNED_BY_AGENT'] ?? null) === 'Y'
+						|| ($data['SPAWNED_BY_AGENT'] ?? null) === true,
+				]
 			);
 
 			\Bitrix\Tasks\Internals\UserOption\Task::onTaskAdd($data);
@@ -346,7 +374,7 @@ final class Task extends \Bitrix\Tasks\Item
 
 			\CTaskSync::addItem($data); // MS Exchange
 
-			$commentPoster = CommentPoster::getInstance($taskId, $data['CREATED_BY']);
+			$commentPoster = CommentPoster::getInstance($taskId, $data['CREATED_BY'] ?? 0);
 			$commentPoster->postCommentsOnTaskAdd($data);
 
 			$this->sendPullEvents($data, $result);
@@ -715,6 +743,9 @@ final class Task extends \Bitrix\Tasks\Item
 				'AFTER' => array(
 					'GROUP_ID' => $groupId
 				),
+				'params' => [
+					'addCommentExists' => false
+				],
 				'TS' => time(),
 				'event_GUID' => isset($data['META::EVENT_GUID']) ? $data['META::EVENT_GUID'] : sha1(uniqid('AUTOGUID', true)),
 				'taskRequireResult' => \Bitrix\Tasks\Internals\Task\Result\ResultManager::requireResult((int)$id) ? "Y" : "N",

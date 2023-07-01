@@ -23,6 +23,7 @@ class SmartDocument extends Dynamic
 	public const USER_FIELD_ENTITY_ID = 'CRM_SMART_DOCUMENT';
 	public const SUSPENDED_USER_FIELD_ENTITY_ID = 'CRM_SMART_DOCUMENT_SPD';
 	public const NUMERATOR_TYPE = 'CRM_SMART_DOCUMENT';
+	public const CONTACT_CATEGORY_CODE = 'SMART_DOCUMENT_CONTACT';
 
 	public function getEntityDescription(): string
 	{
@@ -113,6 +114,8 @@ class SmartDocument extends Dynamic
 
 		$clientField = $adapter->getAdditionalField($adapter::FIELD_CLIENT);
 		$clientField['data']['fixedLayoutType'] = 'CONTACT';
+
+		unset($clientField['data']['duplicateControl']);
 		$adapter->addEntityField($clientField);
 
 		return $adapter;
@@ -177,6 +180,9 @@ class SmartDocument extends Dynamic
 	{
 		$settings = parent::getFieldsSettings();
 		$settings[Item::FIELD_NAME_MYCOMPANY_ID]['SETTINGS']['isEmbeddedEditorEnabled'] = true;
+		$settings[Item::FIELD_NAME_MYCOMPANY_ID]['SETTINGS']['usePermissionToken'] = true;
+		$settings[Item::FIELD_NAME_MYCOMPANY_ID]['SETTINGS']['enableCreationByOwnerEntity'] = true;
+		$settings[Item::FIELD_NAME_MYCOMPANY_ID]['SETTINGS']['ownerEntityTypeId'] = $this->getEntityTypeId();
 
 		$settings[Item\SmartDocument::FIELD_NAME_NUMBER] = [
 			'TYPE' => Field::TYPE_STRING,

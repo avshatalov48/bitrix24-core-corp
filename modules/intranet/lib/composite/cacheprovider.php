@@ -67,7 +67,7 @@ class CacheProvider extends StaticCacheProvider
 		return "/".$userId."/".md5(\CMain::GetServerUniqID().$userId);
 	}
 
-	public static function deleteUserCache($userId = false, $sendHeader = true)
+	public static function deleteUserCache($userId = false, $sendHeader = true, $sendPush = true)
 	{
 		global $USER;
 
@@ -86,6 +86,19 @@ class CacheProvider extends StaticCacheProvider
 				$realPrivateKey = \CHTMLPagesCache::getRealPrivateKey($privateKey, $item);
 				$staticCache = new StaticHtmlCache("/", null, $realPrivateKey);
 				$staticCache->delete();
+			}
+
+			if ($sendPush && \Bitrix\Main\Loader::includeModule('pull'))
+			{
+				\Bitrix\Pull\Event::add([$userId], [
+						'module_id' => 'main',
+						'command' => 'composite-cache-up',
+						'params' => [],
+						'user_params' => [],
+						'dictionary' => [],
+						'expiry' => 0,
+					]
+				);
 			}
 
 			if ($sendHeader === true)
@@ -115,7 +128,7 @@ class CacheProvider extends StaticCacheProvider
 
 		while ($user = $users->fetch())
 		{
-			self::deleteUserCache($user["ID"], false);
+			self::deleteUserCache($user["ID"], false, false);
 		}
 
 		$response = \Bitrix\Main\Context::getCurrent()->getResponse();

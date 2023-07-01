@@ -1882,3 +1882,10 @@ if (!\Bitrix\Catalog\Access\Permission\PermissionTable::getCount())
 }
 
 \Bitrix\Main\Config\Option::set('crm', 'enable_entity_commodity_item_creation', 'N');
+
+$platformCode = \Bitrix\Crm\Order\TradingPlatform\Terminal::TRADING_PLATFORM_CODE;
+$platform = \Bitrix\Crm\Order\TradingPlatform\Terminal::getInstanceByCode($platformCode);
+if (!$platform->isInstalled())
+{
+	$platform->install();
+}

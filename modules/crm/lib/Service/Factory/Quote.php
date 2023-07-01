@@ -138,17 +138,23 @@ class Quote extends Factory
 			Item\Quote::FIELD_NAME_CONTENT => [
 				'TYPE' => Field::TYPE_TEXT,
 				'ATTRIBUTES' => [],
-				'VALUE_TYPE' => Field::VALUE_TYPE_HTML,
+				'SETTINGS' => [
+					'isFlexibleContentType' => true,
+				],
 			],
 			Item\Quote::FIELD_NAME_TERMS => [
 				'TYPE' => Field::TYPE_TEXT,
 				'ATTRIBUTES' => [],
-				'VALUE_TYPE' => Field::VALUE_TYPE_HTML,
+				'SETTINGS' => [
+					'isFlexibleContentType' => true,
+				],
 			],
 			Item::FIELD_NAME_COMMENTS => [
 				'TYPE' => Field::TYPE_TEXT,
 				'ATTRIBUTES' => [],
-				'VALUE_TYPE' => Field::VALUE_TYPE_HTML,
+				'SETTINGS' => [
+					'isFlexibleContentType' => true,
+				],
 			],
 			Item\Quote::FIELD_NAME_DEAL_ID => [
 				'TYPE' => Field::TYPE_CRM_DEAL,
@@ -313,6 +319,7 @@ class Quote extends Factory
 				'SETTINGS' => [
 					'isMyCompany' => true,
 					'parentEntityTypeId' => \CCrmOwnerType::Company,
+					'isEmbeddedEditorEnabled' => true,
 				],
 			];
 		}

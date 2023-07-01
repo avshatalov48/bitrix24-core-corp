@@ -1,0 +1,26 @@
+<?php
+$MESS["MARKET_POPUP_INSTALL_JS_INSTALL_TITLE"] = "Установить <span class=\"market-popup__header-title_highlight\" title=\"#APP_NAME#\">#APP_NAME#</span>?";
+$MESS["MARKET_POPUP_INSTALL_JS_UPDATE_TITLE"] = "Обновить <span class=\"market-popup__header-title_highlight\" title=\"#APP_NAME#\">#APP_NAME#</span>?";
+$MESS["MARKET_POPUP_INSTALL_JS_VERSION"] = "Версия #APP_VERSION#";
+$MESS["MARKET_POPUP_INSTALL_JS_AVAILABLE_IN_SUBSCRIPTION"] = "Доступно в подписке";
+$MESS["MARKET_POPUP_INSTALL_JS_IS_FREE"] = "Бесплатно";
+$MESS["MARKET_POPUP_INSTALL_JS_IN_APP_PURCHASES"] = "Встроенные покупки";
+$MESS["MARKET_POPUP_INSTALL_JS_ACCESS"] = "Доступы";
+$MESS["MARKET_POPUP_INSTALL_JS_MORE"] = "Подробнее";
+$MESS["MARKET_POPUP_INSTALL_JS_APP_REQUESTS_PERMISSIONS_TO_WORK"] = "Приложение запрашивает разрешения на работу с:";
+$MESS["MARKET_POPUP_INSTALL_JS_THERE_ARE_UPDATES"] = "Есть обновления";
+$MESS["MARKET_POPUP_INSTALL_JS_VERSIONS"] = "Версии";
+$MESS["MARKET_POPUP_INSTALL_JS_YOU_HAVE_A_PREVIOUS_VERSION"] = "У вас установлена предыдущая версия приложения, ознакомьтесь с обновлениями";
+$MESS["MARKET_POPUP_INSTALL_JS_NEW_VERSION"] = "Новая версия";
+$MESS["MARKET_POPUP_INSTALL_JS_PREVIOUS_VERSION"] = "Предыдущая версия";
+$MESS["MARKET_POPUP_INSTALL_JS_INSTALLING_THE_APP_ON_YOUR_BITRIX"] = "Установка приложения на ваш Битрикс24";
+$MESS["MARKET_POPUP_INSTALL_JS_APPLICATION"] = "Приложение #APP_NAME#<br> установлено на ваш Битрикс24";
+$MESS["MARKET_POPUP_INSTALL_JS_APP_WORKS_AUTOMATICALLY"] = "Приложение работает в автоматическом режиме. Удалить приложение можно во вкладке 'Установленные приложения'";
+$MESS["MARKET_POPUP_INSTALL_JS_INSTALLED_APP_LOCATED_APP_TAB"] = "Все ваши установленные приложения находятся во вкладке 'Приложения' в главном меню Битрикс24";
+$MESS["MARKET_POPUP_INSTALL_JS_READY"] = "Готово";
+$MESS["MARKET_POPUP_INSTALL_JS_APP_WILL_OPEN_AUTO_AFTER"] = "Приложение откроется автоматически через <span class=\"market-popup__info-app-launch_counter\">#COUNTER#</span>";
+$MESS["MARKET_POPUP_INSTALL_JS_OPEN_APP"] = "Открыть приложение";
+$MESS["MARKET_POPUP_INSTALL_JS_SHOW_ALL_ACCESSES"] = "Показать все доступы";
+$MESS["MARKET_POPUP_INSTALL_JS_OPEN_APP"] = "Открыть приложение";
+$MESS["MARKET_POPUP_INSTALL_JS_IMAGE_ESTABLISHED"] = "/bitrix/js/market/images/market-app-established-img.jpg";
+$MESS["MARKET_POPUP_INSTALL_JS_IMAGE_ESTABLISHED_INTERFACE"] = "/bitrix/js/market/images/market-app-established-interface-img.jpg";

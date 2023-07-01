@@ -174,7 +174,7 @@ class ActivityStatusStatistics extends DataSource
 				{
 					$resultAry = array(
 						'STATUS' => $streamDescription,
-						$name => (int)$ary['STATUS_'.$status]
+						$name => (int)($ary['STATUS_'.$status] ?? 0)
 					);
 
 					if($enableGroupKey)

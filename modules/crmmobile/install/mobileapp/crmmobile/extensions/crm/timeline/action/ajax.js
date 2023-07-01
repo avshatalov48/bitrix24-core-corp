@@ -2,7 +2,6 @@
  * @module crm/timeline/action/ajax
  */
 jn.define('crm/timeline/action/ajax', (require, exports, module) => {
-
 	const { BaseTimelineAction } = require('crm/timeline/action/base');
 	const { Haptics } = require('haptics');
 
@@ -17,6 +16,7 @@ jn.define('crm/timeline/action/ajax', (require, exports, module) => {
 				.then(() => {
 					this.source.hideLoader();
 					Haptics.impactLight();
+					this.sendAnalytics();
 				})
 				.catch((response) => {
 					ErrorNotifier.showError(response.errors[0].message).finally(() => this.source.hideLoader());
@@ -26,5 +26,4 @@ jn.define('crm/timeline/action/ajax', (require, exports, module) => {
 	}
 
 	module.exports = { AjaxAction };
-
 });

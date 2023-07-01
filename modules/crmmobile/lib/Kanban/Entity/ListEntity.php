@@ -59,7 +59,6 @@ abstract class ListEntity extends Entity
 
 		return [
 			'items' => $items,
-			'restrictedValueClickCallback' => null, // @todo it's need?
 		];
 	}
 

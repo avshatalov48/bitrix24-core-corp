@@ -6,6 +6,7 @@ use Bitrix\Crm\Settings\LeadSettings;
 use Bitrix\Crm\WebForm\EntityFieldProvider;
 use Bitrix\Main;
 use Bitrix\Crm\WebForm;
+use Bitrix\Main\Localization\Loc;
 
 class Selector extends Main\Engine\JsonController
 {
@@ -28,7 +29,7 @@ class Selector extends Main\Engine\JsonController
 	{
 		if (!WebForm\Manager::checkReadPermission())
 		{
-			$this->addError(new Main\Error('Access denied.', 510));
+			$this->addError(new Main\Error(Loc::getMessage('CRM_CONTROLLER_FORM_FIELD_ACCESS_DENIED'), 510));
 			return [];
 		}
 

@@ -548,4 +548,21 @@ class Bitrix24Manager
 
 		return max($allVariables);
 	}
+
+	/**
+	 * Method determines if the installed license is an ENTERPRISE
+	 *
+	 * @return bool
+	 */
+	public static function isEnterprise(): bool
+	{
+		if (!(ModuleManager::isModuleInstalled('bitrix24') && Loader::includeModule('bitrix24')))
+		{
+			return false;
+		}
+
+		$licenseFamily = \CBitrix24::getLicenseFamily();
+
+		return $licenseFamily === 'ent';
+	}
 }

@@ -820,6 +820,7 @@ class CVoximplantStatisticDetailComponent extends \CBitrixComponent implements \
 			$this->errorCollection[] = new Bitrix\Main\Error('Link to call recording is missing or expired.');
 			return null;
 		}
+		$recordUrl = Uri::urnEncode($recordUrl);
 
 		return \CVoxImplantHistory::DownloadAgent($historyId, $recordUrl, false, false);
 	}

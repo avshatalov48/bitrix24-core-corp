@@ -2,11 +2,13 @@
 
 namespace Bitrix\Crm\Service;
 
+use Bitrix\Crm\Activity\TodoCreateNotification;
 use Bitrix\Crm\Category\Entity\Category;
 use Bitrix\Crm\Cleaning\CleaningManager;
 use Bitrix\Crm\Conversion\EntityConversionConfig;
 use Bitrix\Crm\Counter\EntityCounterSettings;
 use Bitrix\Crm\Currency;
+use Bitrix\Crm\Entity\FieldContentType;
 use Bitrix\Crm\EO_Status;
 use Bitrix\Crm\EO_Status_Collection;
 use Bitrix\Crm\Field;
@@ -14,10 +16,12 @@ use Bitrix\Crm\Item;
 use Bitrix\Crm\PhaseSemantics;
 use Bitrix\Crm\RelationIdentifier;
 use Bitrix\Crm\Service\EventHistory\TrackedObject;
+use Bitrix\Crm\Settings\Crm;
 use Bitrix\Crm\Settings\HistorySettings;
 use Bitrix\Crm\Statistics;
 use Bitrix\Crm\StatusTable;
 use Bitrix\Crm\UI\Filter\EntityHandler;
+use Bitrix\Crm\UserField\Visibility\VisibilityManager;
 use Bitrix\Crm\UtmTable;
 use Bitrix\Main\Application;
 use Bitrix\Main\Config\Option;
@@ -79,11 +83,10 @@ abstract class Factory
 
 		if ($this->isCrmTrackingEnabled())
 		{
-			/** @noinspection AdditionOperationOnArraysInspection */
 			$settings += UtmTable::getUtmFieldsInfo();
 		}
-		/** @noinspection AdditionOperationOnArraysInspection */
 		$settings += Container::getInstance()->getParentFieldManager()->getParentFieldsInfo($this->getEntityTypeId());
+		$settings += FieldContentType::compileFieldsInfo($settings);
 
 		foreach ($settings as $name => &$field)
 		{
@@ -191,6 +194,19 @@ abstract class Factory
 		{
 			$item->refreshCategoryDependentDisabledFields();
 		}
+
+		$flexibleContentTypeFields = [];
+		foreach ($this->getFieldsCollection()->getFieldsByType(Field::TYPE_TEXT) as $field)
+		{
+			$isFlexibleContentType = $field->getSettings()['isFlexibleContentType'] ?? false;
+			if ($isFlexibleContentType === true)
+			{
+				$flexibleContentTypeFields[] = $field;
+			}
+		}
+		$item->addImplementation(
+			new Item\FieldImplementation\ContentTypeId($item, new Field\Collection($flexibleContentTypeFields)),
+		);
 	}
 
 	/**
@@ -582,6 +598,9 @@ abstract class Factory
 		$rawSelect = empty($parameters['select']) ? ['*'] : $parameters['select'];
 		$parameters['select'] = $this->prepareSelect($rawSelect);
 
+		$rawFilter = empty($parameters['filter']) ? [] : $parameters['filter'];
+		$parameters['filter'] = $this->prepareFilter($rawFilter);
+
 		return $this->replaceCommonFieldNames($parameters);
 	}
 
@@ -600,11 +619,17 @@ abstract class Factory
 
 	protected function prepareSelect(array $select): array
 	{
+		$select = array_filter($select, fn(string $fieldName) => !FieldContentType::isContentTypeIdFieldName($fieldName));
+
 		if (in_array('*', $select, true))
 		{
 			$select[] = 'UF_*';
 			$select[] = 'PARENT_ID_*';
 
+			if ($this->isFieldExists(Item::FIELD_NAME_COMPANY))
+			{
+				$select[] = Item::FIELD_NAME_COMPANY;
+			}
 			if ($this->isFieldExists(Item::FIELD_NAME_CONTACTS))
 			{
 				$select[] = Item::FIELD_NAME_CONTACTS;
@@ -622,6 +647,8 @@ abstract class Factory
 		$selectWithoutContacts = array_diff($select, [Item::FIELD_NAME_CONTACTS, Item::FIELD_NAME_CONTACT_IDS]);
 		$isContactsInSelect = ($select !== $selectWithoutContacts);
 
+		$isCompanyInSelect = in_array(Item::FIELD_NAME_COMPANY, $select, true);
+
 		$select = $selectWithoutContacts;
 
 		if ($isContactsInSelect)
@@ -633,6 +660,12 @@ abstract class Factory
 			}
 		}
 
+		if ($isCompanyInSelect)
+		{
+			$select[] = Item::FIELD_NAME_COMPANY_ID;
+			$select[] = Item::FIELD_NAME_COMPANY;
+		}
+
 		if (in_array(Item::FIELD_NAME_PRODUCTS, $select, true))
 		{
 			$select[] = Item::FIELD_NAME_PRODUCTS . '.IBLOCK_ELEMENT';
@@ -640,6 +673,42 @@ abstract class Factory
 		}
 
 		return $select;
+	}
+
+	private function prepareFilter(array $filter): array
+	{
+		$processed = [];
+		foreach ($filter as $key => $value)
+		{
+			if (is_array($value))
+			{
+				$value = $this->prepareFilter($value);
+			}
+
+			if (is_string($key) && !$this->isReference($key))
+			{
+				if (mb_strpos($key, Item::FIELD_NAME_CONTACT_IDS) !== false)
+				{
+					$key = str_replace(Item::FIELD_NAME_CONTACT_IDS, Item::FIELD_NAME_CONTACT_BINDINGS . '.CONTACT_ID', $key);
+				}
+				elseif (mb_strpos($key, Item\Contact::FIELD_NAME_COMPANY_IDS) !== false)
+				{
+					$key = str_replace(
+						Item\Contact::FIELD_NAME_COMPANY_IDS,
+						Item\Contact::FIELD_NAME_COMPANY_BINDINGS . '.COMPANY_ID',
+						$key,
+					);
+				}
+				elseif (mb_strpos($key, Item::FIELD_NAME_OBSERVERS) !== false)
+				{
+					$key = str_replace(Item::FIELD_NAME_OBSERVERS, Item::FIELD_NAME_OBSERVERS . '.USER_ID', $key);
+				}
+			}
+
+			$processed[$key] = $value;
+		}
+
+		return $processed;
 	}
 
 	/**
@@ -690,9 +759,7 @@ abstract class Factory
 
 	protected function replaceCommonFieldName(string $key): string
 	{
-		$isReference = (mb_strpos($key, '.') !== false);
-
-		if ($isReference)
+		if ($this->isReference($key))
 		{
 			$regex = '|^[!=%@><]*#COMMON_FIELD_NAME#\.|';
 		}
@@ -713,6 +780,11 @@ abstract class Factory
 		}
 
 		return $key;
+	}
+
+	private function isReference(string $key): bool
+	{
+		return (strpos($key, '.') !== false);
 	}
 
 	/**
@@ -1101,6 +1173,11 @@ abstract class Factory
 		return $this;
 	}
 
+	/**
+	 * Returns fields info of all user fields of this entity type. (Even those, that are not visible for current user).
+	 *
+	 * @return array
+	 */
 	public function getUserFieldsInfo(): array
 	{
 		$fieldsInfo = [];
@@ -1109,20 +1186,33 @@ abstract class Factory
 			return $fieldsInfo;
 		}
 
-		$this->getUserType()->PrepareFieldsInfo($fieldsInfo);
+		$this->getUserType()->PrepareFieldsInfo($fieldsInfo, ['skipUserFieldVisibilityCheck' => true]);
 
 		return $fieldsInfo;
 	}
 
+	/**
+	 * Returns all user fields of this entity type. (Even those, that are not visible for current user).
+	 *
+	 * @return array
+	 */
 	public function getUserFields(): array
 	{
 		if (empty($this->getUserFieldEntityId()))
 		{
 			return [];
 		}
-		return $this->getUserType()->GetFields();
+
+		return $this->getUserType()->GetAbstractFields([
+			'skipUserFieldVisibilityCheck' => true,
+		]);
 	}
 
+	/**
+	 * Returns collection of all fields of this entity type. (Even those, that are not visible for current user).
+	 *
+	 * @return Field\Collection
+	 */
 	public function getFieldsCollection(): Field\Collection
 	{
 		if ($this->fieldsCollection === null)
@@ -1710,6 +1800,23 @@ abstract class Factory
 		return ($isEnabled === 'Y');
 	}
 
+	public function isSmartActivityNotificationEnabled(): bool
+	{
+		if (!$this->isSmartActivityNotificationSupported() || !Crm::isUniversalActivityScenarioEnabled())
+		{
+			return false;
+		}
+
+		$todoCreateNotification = new TodoCreateNotification($this->getEntityTypeId());
+
+		return !$todoCreateNotification->isSkipped();
+	}
+
+	public function isSmartActivityNotificationSupported(): bool
+	{
+		return false;
+	}
+
 	/**
 	 * Return actual counters settings.
 	 *
@@ -1738,7 +1845,24 @@ abstract class Factory
 	{
 		if (!$this->editorAdapter)
 		{
-			$this->editorAdapter = new EditorAdapter($this->getFieldsCollection(), $this->getDependantFieldsMap());
+			$fieldsThatAreAccessibleToCurrentUser = VisibilityManager::filterNotAccessibleFields(
+				$this->getEntityTypeId(),
+				$this->getFieldsCollection()->getFieldNameList(),
+			);
+			$fieldsThatAreAccessibleToCurrentUserMap = array_flip($fieldsThatAreAccessibleToCurrentUser);
+			$editorFields = [];
+			foreach ($this->getFieldsCollection() as $field)
+			{
+				if (isset($fieldsThatAreAccessibleToCurrentUserMap[$field->getName()]))
+				{
+					$editorFields[] = $field;
+				}
+			}
+
+			$this->editorAdapter = new EditorAdapter(
+				new Field\Collection($editorFields),
+				$this->getDependantFieldsMap(),
+			);
 
 			if ($this->isClientEnabled())
 			{

@@ -34,6 +34,7 @@ class Link extends ContentBlock implements TextPropertiesInterface
 		return [
 			'text' => html_entity_decode($this->getValue()),
 			'bold' => $this->getIsBold(),
+			'title' => $this->getTitle(),
 			'action' => $this->getAction(),
 		];
 	}

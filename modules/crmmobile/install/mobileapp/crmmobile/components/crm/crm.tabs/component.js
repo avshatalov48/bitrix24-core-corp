@@ -1,18 +1,22 @@
 (() => {
+	const require = (ext) => jn.require(ext);
+
+	const { PureComponent } = require('layout/pure-component');
+	const { PlanRestriction } = require('layout/ui/plan-restriction');
 	const {
 		clone,
 		get,
 		isEqual,
 		merge,
 		mergeImmutable,
-	} = jn.require('utils/object');
-	const { throttle } = jn.require('utils/function');
-	const { KanbanTab } = jn.require('crm/entity-tab/kanban');
-	const { ListTab } = jn.require('crm/entity-tab/list');
-	const { Search } = jn.require('crm/entity-tab/search');
-	const { ActivityCountersStoreManager } = jn.require('crm/state-storage');
-	const { Type } = jn.require('crm/type');
-	const { PureComponent } = jn.require('layout/pure-component');
+	} = require('utils/object');
+	const { throttle } = require('utils/function');
+	const { KanbanTab } = require('crm/entity-tab/kanban');
+	const { ListTab } = require('crm/entity-tab/list');
+	const { Search } = require('crm/entity-tab/search');
+	const { ActivityCountersStoreManager } = require('crm/state-storage');
+	const { Type } = require('crm/type');
+	const { LoadingProgressBar } = require('crm/ui/loading-progress');
 
 	const TAB_BIG_LABEL = '99+';
 
@@ -28,17 +32,20 @@
 			this.kanbanTabRef = null;
 			this.listTabRef = null;
 			this.searchRef = null;
-			this.tabsCacheName = 'crm:crm.tabs.list.' + env.userId;
+			this.tabsCacheName = `crm:crm.tabs.list.${env.userId}.v2`;
 			this.tabViewRef = null;
 			this.pullUnsubscribe = null;
 
 			const data = this.getTabsFromCache();
-			const tabs = data.tabs || [];
+			const {
+				tabs = [],
+				connectors = {},
+				permissions = {},
+				restrictions = {},
+			} = data;
 
 			this.prepareTabs(props, tabs);
 			const activeTab = tabs.find((tab) => tab.active);
-
-			const permissions = data.permissions || {};
 
 			this.onPanBySearch = this.onPanBySearchHandler.bind(this);
 
@@ -47,18 +54,26 @@
 				activeTabTypeName: activeTab && activeTab.typeName,
 				activeTabId: activeTab && activeTab.id,
 				permissions,
+				connectors,
+				restrictions,
+				isProgress: false,
 			};
 
 			this.currentMoneyFormats = Money.formats;
 			this.rightButtonsIsSetted = false;
 
+			this.userInfo = null;
+
 			this.loadTabs();
 
 			this.onTabsReSelected = this.onTabsReSelected.bind(this);
 			this.onMoneyLoad = this.onMoneyLoad.bind(this);
+			this.loadTabs = this.loadTabs.bind(this);
+			this.reloadKanbanTab = this.reloadKanbanTab.bind(this);
 			this.updateCounters = this.updateCounters.bind(this);
 			this.setActiveTab = this.setActiveTab.bind(this);
 			this.updateEntityTypeData = this.updateEntityTypeData.bind(this);
+			this.onLoadingProgress = this.onLoadingProgress.bind(this);
 
 			this.scrollOnTop = throttle(this.scrollOnTop, 500, this);
 		}
@@ -95,7 +110,7 @@
 				}
 			}
 
-			if (Object.keys(preparedCounters).length)
+			if (Object.keys(preparedCounters).length > 0)
 			{
 				ActivityCountersStoreManager.setCounters(preparedCounters);
 			}
@@ -105,6 +120,9 @@
 		{
 			BX.addCustomEvent('onTabsReSelected', this.onTabsReSelected);
 			BX.addCustomEvent('Money::onLoad', this.onMoneyLoad);
+			BX.addCustomEvent('CrmTabs::loadTabs', this.loadTabs);
+			BX.addCustomEvent('CrmTabs::reloadKanbanTab', this.reloadKanbanTab);
+			BX.addCustomEvent('CrmTabs::onLoadingProgress', this.onLoadingProgress);
 
 			ActivityCountersStoreManager
 				.subscribe('activityCountersModel/setCounters', this.updateCounters)
@@ -125,6 +143,9 @@
 		{
 			BX.removeCustomEvent('onTabsReSelected', this.onTabsReSelected);
 			BX.removeCustomEvent('Money::onLoad', this.onMoneyLoad);
+			BX.removeCustomEvent('CrmTabs::loadTabs', this.loadTabs);
+			BX.removeCustomEvent('CrmTabs::reloadKanbanTab', this.reloadKanbanTab);
+			BX.removeCustomEvent('CrmTabs::onLoadingProgress', this.onLoadingProgress);
 
 			ActivityCountersStoreManager
 				.unsubscribe('activityCountersModel/setCounters', this.updateCounters)
@@ -161,8 +182,8 @@
 
 		updateTabs(counters)
 		{
-			this.state.tabs.forEach(tab => {
-				const code = 'crm_' + tab.typeName.toLowerCase() + '_all';
+			this.state.tabs.forEach((tab) => {
+				const code = `crm_${tab.typeName.toLowerCase()}_all`;
 
 				if (counters.hasOwnProperty(code) && counters[code] >= 0)
 				{
@@ -172,7 +193,7 @@
 						&& (counters[code] <= 99 || currentValue <= 99)
 					)
 					{
-						const item = this.getTab(tab.typeName);
+						const item = this.getTabByTypeName(tab.typeName);
 						item.label = this.getPreparedLabel(counters[code]);
 						const preparedItem = this.getPreparedTabItem(item);
 						this.updateTabItem(preparedItem);
@@ -216,7 +237,7 @@
 				tabId = this.state.activeTabId;
 			}
 
-			const currentTab = cache.data.tabs.find(tab => tab.id === tabId);
+			const currentTab = cache.data.tabs.find((tab) => tab.id === tabId);
 			if (currentTab === null)
 			{
 				return;
@@ -226,17 +247,53 @@
 			Application.storage.setObject(cacheName, cache);
 		}
 
+		onLoadingProgress(params)
+		{
+			const { isProgress: stateIsProgress } = this.state;
+			const { isProgress, progress } = params;
+
+			if (isProgress !== stateIsProgress)
+			{
+				this.setState({
+					isProgress,
+					progressParams: progress,
+				});
+			}
+		}
+
+		getProgressLayout()
+		{
+			const { progressParams, isProgress } = this.state;
+
+			if (!isProgress)
+			{
+				return null;
+			}
+
+			return new LoadingProgressBar(progressParams);
+		}
+
 		render()
 		{
+			const { isProgress, activeTabTypeName, tabs } = this.state;
 			const activeTab = this.getActiveTab();
-
-			if (!activeTab && this.state.tabs[0])
+			if (!activeTab && tabs[0])
 			{
-				qrauth.open({
-					title: this.state.tabs[0].title,
-					redirectUrl: this.getDesktopPageLink(this.state.tabs[0].typeName),
-				});
-				return;
+				const { hasRestrictions, title, typeName } = tabs[0];
+
+				if (hasRestrictions)
+				{
+					PlanRestriction.open({ title });
+				}
+				else
+				{
+					qrauth.open({
+						title,
+						redirectUrl: this.getDesktopPageLink(typeName),
+					});
+				}
+
+				return null;
 			}
 
 			return View(
@@ -248,19 +305,19 @@
 						height: 44,
 						backgroundColor: '#f5f7f8',
 					},
-					ref: ref => this.tabViewRef = ref,
+					ref: (ref) => this.tabViewRef = ref,
 					params: {
 						styles: {
 							tabTitle: {
-								underlineColor: '#2985E2',
+								underlineColor: '#207ede',
 							},
 						},
 						items: this.getTabItems(),
 					},
 					onTabSelected: (tab, changed) => this.handleTabSelected(tab, changed),
 				}),
-				this.state.activeTabTypeName && activeTab && this.renderTab(),
-				this.state.activeTabTypeName && activeTab && new Search({
+				activeTabTypeName && activeTab && this.renderTab(),
+				activeTabTypeName && activeTab && new Search({
 					entityTypeName: activeTab.typeName,
 					categoryId: activeTab.data.currentCategoryId,
 					getSearchDataAction: result.actions.getSearchData,
@@ -274,6 +331,7 @@
 						}
 					},
 				}),
+				isProgress && this.getProgressLayout(),
 			);
 		}
 
@@ -282,9 +340,14 @@
 			return this.getTabById(this.state.activeTabId);
 		}
 
-		getTabById(id)
+		getTabById(entityTypeId)
 		{
-			return this.state.tabs.find(tab => tab.id === id);
+			return this.state.tabs.find(({ id }) => id === entityTypeId);
+		}
+
+		getTabByTypeName(entityTypeName)
+		{
+			return this.state.tabs.find(({ typeName }) => typeName === entityTypeName);
 		}
 
 		onPanBySearchHandler()
@@ -303,13 +366,27 @@
 			if (changed)
 			{
 				this.rightButtonsIsSetted = false;
-				const typeId = this.getTab(tab.id).id;
+				const typeId = this.getTabByTypeName(tab.id).id;
 
 				let promise;
+				let cancelReload = false;
 
+				const { activeTabTypeName } = this.state;
 				// skip rerender at first load when data is from cache
-				if (this.state.activeTabTypeName !== tab.id)
+				if (activeTabTypeName === tab.id)
 				{
+					promise = Promise.resolve();
+				}
+				else
+				{
+					if (
+						this.getTabByTypeName(activeTabTypeName).isStagesEnabled
+						&& this.getTabByTypeName(tab.id).isStagesEnabled
+					)
+					{
+						cancelReload = true;
+					}
+
 					promise = new Promise((resolve) => {
 						this.setState({
 							activeTabTypeName: tab.id,
@@ -317,31 +394,33 @@
 						}, resolve);
 					});
 				}
-				else
+
+				if (cancelReload)
 				{
-					promise = Promise.resolve();
+					return;
 				}
 
 				promise.then(() => {
-					this.searchRef.setState(this.searchRef.getInitialState());
+					if (this.searchRef)
+					{
+						this.searchRef.setState(this.searchRef.getInitialState());
+					}
 
-					const loadItemsParams = {
-						clearFilter: true,
-					};
+					this.reloadKanbanTab();
 
-					this.kanbanTabRef && this.kanbanTabRef.reload(loadItemsParams);
-					this.listTabRef && this.listTabRef.reload(loadItemsParams);
+					if (this.listTabRef)
+					{
+						this.listTabRef.reload(this.getLoadItemsParams());
+					}
 				});
 			}
 			else if (tab.selectable === false)
 			{
-				const desiredTab = this.getTab(tab.id);
+				const desiredTab = this.getTabByTypeName(tab.id);
 
-				if (desiredTab.pageUrl)
+				if (desiredTab.hasRestrictions)
 				{
-					PageManager.openPage({
-						url: desiredTab.pageUrl,
-					});
+					PlanRestriction.open({ title: tab.title });
 				}
 				else
 				{
@@ -357,6 +436,26 @@
 			}
 		}
 
+		reloadKanbanTab()
+		{
+			if (this.kanbanTabRef)
+			{
+				this.kanbanTabRef.reload(this.getLoadItemsParams());
+			}
+		}
+
+		getLoadItemsParams()
+		{
+			return {
+				clearFilter: true,
+				initMenu: true,
+
+				// @todo may be needed when changing an entityType
+				// skipFillSlides: false,
+				// force: true,
+			};
+		}
+
 		scrollOnTop()
 		{
 			if (this.kanbanTabRef)
@@ -369,50 +468,66 @@
 			}
 		}
 
-		loadTabs()
+		loadTabs(params = {})
 		{
 			new RunActionExecutor(result.actions.loadTabs)
 				.setCacheId(this.tabsCacheName)
-				.setCacheHandler(response => this.setTabs(response))
-				.setHandler(response => this.setTabs(response))
+				.setCacheHandler((response) => this.setTabs({ ...response, ...params }))
+				.setHandler((response) => this.setTabs({ ...response, ...params }))
 				.call(true);
 		}
 
 		setTabs(response)
 		{
-			if (response.data.tabs && !isEqual(response.data.tabs, this.state.tabs))
-			{
-				const { data } = response;
+			const { tabs, permissions, isProgress: stateIsProgress, connectors } = this.state;
+			const { data, isProgress = false } = response;
+			const isChangeViewProgress = isProgress !== stateIsProgress;
 
+			if ((data.tabs && !isEqual(data.tabs, tabs)) || isChangeViewProgress)
+			{
 				this.prepareTabs(this.props, data.tabs);
 				const tab = data.tabs.find((item) => item.active);
 
 				this.setState({
+					isProgress,
 					tabs: data.tabs,
 					activeTabTypeName: tab.typeName,
 					activeTabId: tab.id,
 					permissions: data.permissions,
+					connectors: data.connectors,
+					restrictions: data.restrictions,
 				});
 			}
-			else if (response.data.permissions && !isEqual(response.data.permissions, this.state.permissions))
+			else if (data.permissions && !isEqual(data.permissions, permissions))
 			{
 				this.setState({
-					permissions: response.data.permissions,
+					isProgress,
+					permissions: data.permissions,
 				});
 			}
+			else if (data.connectors && !isEqual(data.connectors, connectors))
+			{
+				this.setState({
+					connectors: data.connectors,
+				});
+			}
+
+			const { user } = data;
+
+			this.userInfo = user;
 		}
 
 		prepareTabs(props, tabs)
 		{
 			if (props.activeTabName)
 			{
-				tabs.forEach(tab => tab.active = (tab.typeName === props.activeTabName));
+				tabs.forEach((tab) => tab.active = (tab.typeName === props.activeTabName));
 			}
 		}
 
 		getDesktopPageLink(tabName)
 		{
-			const tab = this.getTab(tabName);
+			const tab = this.getTabByTypeName(tabName);
 			if (tab)
 			{
 				return tab.link;
@@ -432,31 +547,28 @@
 
 		isUseColumns()
 		{
-			const { activeTabTypeName } = this.state;
-			const activeTab = this.getTab(activeTabTypeName);
-			return activeTab.isStagesEnabled;
-		}
+			const { isStagesEnabled } = this.getActiveTab();
 
-		getTab(tabName)
-		{
-			return this.state.tabs.find(tab => tab.typeName === tabName);
+			return isStagesEnabled;
 		}
 
 		createKanban()
 		{
 			this.listTabRef = null;
-			return new KanbanTab(this.getEntityTabConfig(ref => this.kanbanTabRef = ref));
+
+			return new KanbanTab(this.getEntityTabConfig((ref) => this.kanbanTabRef = ref));
 		}
 
 		createList()
 		{
 			this.kanbanTabRef = null;
-			return new ListTab(this.getEntityTabConfig(ref => this.listTabRef = ref));
+
+			return new ListTab(this.getEntityTabConfig((ref) => this.listTabRef = ref));
 		}
 
 		getTabItems()
 		{
-			return this.state.tabs.map(tab => this.getPreparedTabItem(tab));
+			return this.state.tabs.map((tab) => this.getPreparedTabItem(tab));
 		}
 
 		getPreparedTabItem(tab)
@@ -478,7 +590,7 @@
 			}
 
 			const counter = Number(label);
-			if (isNaN(counter))
+			if (Number.isNaN(counter))
 			{
 				return String(label);
 			}
@@ -500,40 +612,63 @@
 		{
 			const rightButtonsIsSetted = this.rightButtonsIsSetted;
 			this.rightButtonsIsSetted = true;
+			const { activeTabId, activeTabTypeName } = this.state;
 
 			return {
-				entityTypeName: this.state.activeTabTypeName,
-				entityTypeId: this.state.activeTabId,
+				entityTypeName: activeTabTypeName,
+				entityTypeId: activeTabId,
 				entityTypes: this.getEntityTypes(),
 				updateEntityTypeData: this.updateEntityTypeData,
 				setActiveTab: this.setActiveTab,
 				actions: result.actions || {},
 				actionParams: {
 					loadItems: {
-						entityType: this.state.activeTabTypeName,
+						entityType: activeTabTypeName,
 					},
 				},
 				permissions: this.getPermissions(),
+				restrictions: this.getRestrictions(),
 				itemParams: this.getItemParams(),
-				cacheName: 'crm:crm.kanban.' + env.userId + '.' + this.state.activeTabTypeName,
-				layout: layout,
+				cacheName: `crm:crm.kanban.${env.userId}.${activeTabTypeName}`,
+				layout,
 				needInitMenu: !rightButtonsIsSetted,
 				onPanList: this.onPanBySearch,
 				searchRef: this.searchRef,
+				userInfo: this.userInfo,
 				ref,
 			};
 		}
 
 		getPermissions()
 		{
-			return mergeImmutable(this.state.permissions, this.getTab(this.state.activeTabTypeName).permissions);
+			const { permissions, activeTabTypeName } = this.state;
+			const { permissions: tabPermissions } = this.getTabByTypeName(activeTabTypeName);
+
+			return mergeImmutable(permissions, tabPermissions);
+		}
+
+		getRestrictions()
+		{
+			const { restrictions } = this.state;
+			const { restrictions: tabRestrictions } = this.getActiveTab();
+
+			return mergeImmutable(restrictions, tabRestrictions);
 		}
 
 		getItemParams()
 		{
+			const {
+				activeTabTypeName: entityTypeName,
+				activeTabId: entityTypeId,
+				permissions: entityPermissions,
+				connectors,
+			} = this.state;
+
 			return {
-				entityTypeName: this.state.activeTabTypeName,
-				entityTypeId: this.state.activeTabId,
+				entityTypeName,
+				entityTypeId,
+				entityPermissions,
+				connectors,
 			};
 		}
 
@@ -545,7 +680,7 @@
 		updateEntityTypeData(entityTypeId, data, callback = null)
 		{
 			const tabs = clone(this.state.tabs);
-			const tab = tabs.find(tab => tab.id === entityTypeId);
+			const tab = tabs.find((currentTab) => currentTab.id === entityTypeId);
 
 			let needUpdateState = false;
 
@@ -569,7 +704,7 @@
 				modifyData.link = link;
 			}
 
-			if (!isNaN(Number(data.categoryId)) && tab.data.currentCategoryId !== data.categoryId)
+			if (!Number.isNaN(Number(data.categoryId)) && tab.data.currentCategoryId !== data.categoryId)
 			{
 				const { categoryId } = data;
 				tab.data.currentCategoryId = categoryId;
@@ -599,16 +734,17 @@
 				needUpdateState = true;
 			}
 
-			if (!isEqual(tab.restrictions, data.restrictions))
+			if (data.restrictions && !isEqual(tab.restrictions, data.restrictions))
 			{
-				const { restrictions } = data;
+				const restrictions = mergeImmutable(tab.restrictions, data.restrictions);
+
 				tab.restrictions = restrictions;
 
 				needUpdateState = true;
 				modifyData.restrictions = restrictions;
 			}
 
-			if (Object.keys(modifyData).length)
+			if (Object.keys(modifyData).length > 0)
 			{
 				this.modifyCache(modifyData, tab.id);
 			}
@@ -631,5 +767,4 @@
 			activeTabName: BX.componentParameters.get('activeTabName', null),
 		}));
 	});
-
 })();

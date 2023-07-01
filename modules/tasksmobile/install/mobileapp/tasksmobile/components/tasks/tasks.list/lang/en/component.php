@@ -47,6 +47,7 @@ $MESS["TASKS_LIST_SEARCH_EMPTY_RESULT"] = "Your search request returned no resul
 $MESS["TASKS_LIST_SEARCH_HINT"] = "Enter task name, responsible person name or some other search term";
 $MESS["TASKS_LIST_SEARCH_SECTION_LAST"] = "RECENT SEARCH";
 $MESS["TASKS_LIST_SEARCH_SECTION_SEARCH_RESULTS"] = "SEARCH RESULTS";
+$MESS["TASKS_LIST_SEARCH_SPOTLIGHT_TEXT"] = "Your custom filters are now available in mobile app. Use them to find tasks as fast as in web version.";
 $MESS["TASKS_LIST_STATE_INPROGRESS"] = "In progress";
 $MESS["TASKS_LIST_SUB_HEADER_DEADLINES"] = " (Deadlines)";
 $MESS["TASKS_NO_INTERNET_CONNECTION"] = "There is probably no internet connection. Please try again later.";

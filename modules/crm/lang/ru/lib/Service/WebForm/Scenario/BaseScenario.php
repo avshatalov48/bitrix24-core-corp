@@ -27,8 +27,8 @@ $MESS['CRM_SERVICE_FORM_SCENARIO_CALLBACK_FAILURE_TEXT'] = 'Не удалось 
 $MESS['CRM_SERVICE_FORM_SCENARIO_EXPERT'] = 'Индивидуальная настройка';
 $MESS['CRM_SERVICE_FORM_SCENARIO_EXPERT_DESCRIPTION'] = 'Расширенные настройки форм';
 
-$MESS['CRM_SERVICE_FORM_SCENARIO_VK'] = 'Лид-форма ВКонтакте';
-$MESS['CRM_SERVICE_FORM_SCENARIO_VK_DESCRIPTION'] = 'Собирайте в CRM заявки клиентов из форм ВКонтакте';
+$MESS['CRM_SERVICE_FORM_SCENARIO_VK'] = 'Лид-формы VK Реклама';
+$MESS['CRM_SERVICE_FORM_SCENARIO_VK_DESCRIPTION'] = 'Собирайте в CRM заявки из форм VK Рекламы';
 
 $MESS['CRM_SERVICE_FORM_SCENARIO_FACEBOOK'] = 'Лид-форма Facebook';
 $MESS['CRM_SERVICE_FORM_SCENARIO_FACEBOOK_DESCRIPTION'] = 'Собирайте в CRM заявки из моментальных форм Facebook';
@@ -39,7 +39,6 @@ $MESS['CRM_SERVICE_FORM_SCENARIO_PERSONALISATION_DESCRIPTION'] = 'Если у в
 $MESS['CRM_SERVICE_FORM_SCENARIO_PRODUCT1'] = 'Товары без картинок';
 $MESS['CRM_SERVICE_FORM_SCENARIO_PRODUCT1_DESCRIPTION'] = 'Заказ товара без изображения (например, билеты)';
 
-$MESS['CRM_SERVICE_FORM_SCENARIO_PRODUCT2'] = 'Товары с оплатой';
 $MESS['CRM_SERVICE_FORM_SCENARIO_PRODUCT2_DESCRIPTION'] = 'Оплата товара прямо из формы';
 
 $MESS['CRM_SERVICE_FORM_SCENARIO_PRODUCT3'] = 'Товары с маленькой фотографией';
@@ -113,7 +112,7 @@ $MESS['CRM_SERVICE_FORM_MENU_ITEM_EMBED'] = 'Размещение формы';
 $MESS['CRM_SERVICE_FORM_MENU_ITEM_CALLBACK'] = 'Обратный звонок';
 $MESS['CRM_SERVICE_FORM_MENU_ITEM_OTHER'] = 'Другие настройки';
 $MESS['CRM_SERVICE_FORM_MENU_ITEM_FACEBOOK'] = 'Facebook Lead Ads';
-$MESS['CRM_SERVICE_FORM_MENU_ITEM_VK'] = 'ВКонтакте';
+$MESS['CRM_SERVICE_FORM_MENU_ITEM_VK'] = 'VK Реклама';
 $MESS['CRM_SERVICE_FORM_MENU_ITEM_DESIGN'] = 'Дизайн';
 $MESS['CRM_SERVICE_FORM_MENU_ITEM_PAY_SYSTEMS'] = 'Оплата';
 $MESS['CRM_SERVICE_FORM_SCENARIO_DELIVERY_BUTTON'] = 'Заказать';

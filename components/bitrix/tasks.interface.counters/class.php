@@ -82,9 +82,9 @@ class TasksInterfaceCountersComponent extends \CBitrixComponent
 	 */
 	public function onPrepareComponentParams($params)
 	{
-		$params['GROUP_ID'] = (is_numeric($params['GROUP_ID']) ? (int)$params['GROUP_ID'] : 0);
-		$params['TARGET_USER_ID'] = is_numeric($params['USER_ID']) ? (int)$params['USER_ID'] : 0;
-		$params['COUNTERS'] = is_array($params['COUNTERS']) ? $params['COUNTERS'] : [];
+		$params['GROUP_ID'] = (isset($params['GROUP_ID']) && is_numeric($params['GROUP_ID'])) ? (int)$params['GROUP_ID'] : 0;
+		$params['TARGET_USER_ID'] = (isset($params['USER_ID']) && is_numeric($params['USER_ID'])) ? (int)$params['USER_ID'] : 0;
+		$params['COUNTERS'] = (isset($params['COUNTERS']) && is_array($params['COUNTERS'])) ? $params['COUNTERS'] : [];
 		$params['ROLE'] = isset($params['ROLE']) ? $params['ROLE'] : null;
 
 		return $params;

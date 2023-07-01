@@ -10,6 +10,8 @@ use Bitrix\Crm\Timeline\MarkEntry;
 use Bitrix\Crm\Timeline\ModificationEntry;
 use Bitrix\Crm\Timeline\RestorationEntry;
 use Bitrix\Crm\Timeline\SignDocument;
+use Bitrix\Crm\Timeline\CalendarSharing;
+use Bitrix\Crm\Timeline\Tasks;
 use Bitrix\Crm\Timeline\TimelineEntry;
 use Bitrix\Crm\Timeline\UnlinkEntry;
 use Bitrix\Crm\Timeline\FinalSummaryEntry;
@@ -30,6 +32,8 @@ class Facade
 	public const SIGN_DOCUMENT = SignDocument\Entry::class;
 	public const SIGN_DOCUMENT_LOG = SignDocument\LogEntry::class;
 	public const LOG_MESSAGE = LogMessageEntry::class;
+	public const CALENDAR_SHARING = CalendarSharing\Entry::class;
+	public const TASK = Tasks\Entry::class;
 
 	/** @var TimelineEntry */
 	protected $timelineEntryClass = TimelineEntry::class;

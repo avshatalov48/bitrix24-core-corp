@@ -2,6 +2,12 @@
 
 class CCrmSecurityHelper
 {
+	/**
+	 * @deprecated No longer used by internal code and not recommended. It is recommended to use the new API
+	 * @see Bitrix\Crm\Service\Container::getInstance()->getContext()->getUserId()
+	 *
+	 * @return int
+	 */
 	public static function GetCurrentUserID()
 	{
 		//CUser::GetID may return null

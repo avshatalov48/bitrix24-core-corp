@@ -8,6 +8,7 @@ $MESS["CRM_AUTOMATION_CMP_TITLE_ORDER_VIEW"] = "Текущее состояни�
 $MESS["CRM_AUTOMATION_CMP_TITLE_ORDER_EDIT"] = "Настройка роботов для всех заказов";
 $MESS["CRM_AUTOMATION_CMP_OPENLINE_MESSAGE_TEXT_CONDITION"] = "Текст сообщения содержит";
 $MESS["CRM_AUTOMATION_CMP_FIELD_CHANGED_FIELDS"] = "Отслеживать поля";
+$MESS["CRM_AUTOMATION_CMP_FIELD_CHANGED_FIELDS_1"] = "Отслеживать поля";
 $MESS["CRM_AUTOMATION_CMP_FIELD_CHANGED_FIELDS_CHOOSE"] = "Выбрать поля";
 $MESS["CRM_AUTOMATION_CMP_FILL_TRACKNUM_DELIVERY"] = "Служба доставки";
 $MESS["CRM_AUTOMATION_CMP_FILL_TRACKNUM_DELIVERY_ANY"] = "любая";

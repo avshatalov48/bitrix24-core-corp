@@ -11,6 +11,19 @@ use Bitrix\Main\ORM\Fields\IntegerField;
  * Class StoreDocumentContractorTable
  *
  * @package Bitrix\Crm\Integration\Catalog\Contractor
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_StoreDocumentContractor_Query query()
+ * @method static EO_StoreDocumentContractor_Result getByPrimary($primary, array $parameters = [])
+ * @method static EO_StoreDocumentContractor_Result getById($id)
+ * @method static EO_StoreDocumentContractor_Result getList(array $parameters = [])
+ * @method static EO_StoreDocumentContractor_Entity getEntity()
+ * @method static \Bitrix\Crm\Integration\Catalog\Contractor\EO_StoreDocumentContractor createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Integration\Catalog\Contractor\EO_StoreDocumentContractor_Collection createCollection()
+ * @method static \Bitrix\Crm\Integration\Catalog\Contractor\EO_StoreDocumentContractor wakeUpObject($row)
+ * @method static \Bitrix\Crm\Integration\Catalog\Contractor\EO_StoreDocumentContractor_Collection wakeUpCollection($rows)
  */
 class StoreDocumentContractorTable extends DataManager
 {

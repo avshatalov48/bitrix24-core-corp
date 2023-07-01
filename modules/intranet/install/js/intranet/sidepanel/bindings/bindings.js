@@ -1,15 +1,19 @@
 (function() {
 
-	var iframeMode = window !== window.top;
-	var search = window.location.search;
-	var sliderMode = search.indexOf("IFRAME=") !== -1 || search.indexOf("IFRAME%3D") !== -1;
+	const iframeMode = window !== window.top;
+	const search = window.location.search;
+	const sliderMode = search.indexOf("IFRAME=") !== -1 || search.indexOf("IFRAME%3D") !== -1;
+
+	const CMR_SMART_INVOICE_TYPE_ID = 31;
+	const CMR_QUOTE_TYPE_ID = 7;
+	const CMR_SMART_DOCUMENT_TYPE_ID = 36;
 
 	if (iframeMode && sliderMode)
 	{
 		return;
 	}
 
-	var siteDir = ('/' + (BX.message.SITE_DIR || '/').replace(/[\\*+?.()|[\]{}]/g, '\\$&') + '/').replace(/\/+/g, '/');
+	const siteDir = ('/' + (BX.message.SITE_DIR || '/').replace(/[\\*+?.()|[\]{}]/g, '\\$&') + '/').replace(/\/+/g, '/');
 
 	this.mailLoader = BX.create("div", {
 		props: {
@@ -32,7 +36,7 @@
 					if (!sliderMode)
 					{
 						event.preventDefault();
-						BX.SidePanel.Instance.open(link.url, {cacheable: false});
+						BX.SidePanel.Instance.open(link.url, {cacheable: false, customLeftBoundary: 60});
 					}
 				},
 				customLeftBoundary: 240
@@ -258,12 +262,65 @@
 					new RegExp("/devops\/"),
 				],
 				options: {
-					cacheable: false
+					cacheable: false,
 				}
 			},
 			{
 				condition: [
-					/\?(IM_DIALOG|IM_HISTORY)=(.+)/i
+					new RegExp("/market/detail/")
+				],
+				options: {
+					customLeftBoundary: 0,
+					cacheable: false,
+					loader: "market:detail",
+					width: 1162,
+				}
+			},
+			{
+				condition: [
+					new RegExp("/market/collection/page/[0-9]+/")
+				],
+				options: {
+					cacheable: false,
+					loader: "market:page",
+					width: 900,
+				}
+			},
+			{
+				condition: [
+					new RegExp("/market/reviews/")
+				],
+				options: {
+					cacheable: false,
+					width: 617,
+				}
+			},
+			{
+				condition: [
+					new RegExp("/market/collection/"),
+					new RegExp("/market/category/"),
+					new RegExp("/market/favorites/"),
+					new RegExp("/market/installed/"),
+				],
+				options: {
+					cacheable: false,
+					loader: "market:list",
+					customLeftBoundary: 0,
+				}
+			},
+			{
+				condition: [
+					new RegExp("\\/market\\/(\\?[\\w=&]+)*$"),
+				],
+				options: {
+					cacheable: false,
+					loader: "market:main",
+					customLeftBoundary: 0,
+				}
+			},
+			{
+				condition: [
+					/\?(IM_DIALOG|IM_HISTORY)=([^&]+)/i
 				],
 				handler: function(event, link)
 				{
@@ -376,6 +433,16 @@
 			},
 			{
 				condition: [
+					new RegExp("/terminal/details/[0-9]+/", "i"),
+				],
+				options: {
+					allowChangeHistory: false,
+					cacheable: false,
+					width: 450,
+				}
+			},
+			{
+				condition: [
 					new RegExp("/shop/settings/cat_store_document_edit.php", "i"),
 				],
 				options: {
@@ -461,6 +528,36 @@
 							});
 						},
 					},
+				}
+			},
+			{
+				condition: [ new RegExp(`/crm/type/${CMR_SMART_INVOICE_TYPE_ID}/details/[0-9]+`, "i") ],
+				loader: "intranet:crm-entity-details-loader",
+				options: {
+					label: {
+						text: BX.message("INTRANET_BINDINGS_SMART_INVOICE"),
+						bgColor: "#1E6EC2"
+					}
+				}
+			},
+			{
+				condition: [ new RegExp(`/crm/type/${CMR_QUOTE_TYPE_ID}/details/[0-9]+`, "i") ],
+				loader: "intranet:crm-entity-details-loader",
+				options: {
+					label: {
+						text: BX.message("INTRANET_BINDINGS_QUOTE"),
+						bgColor: "#00B4AC"
+					}
+				}
+			},
+			{
+				condition: [ new RegExp(`/crm/type/${CMR_SMART_DOCUMENT_TYPE_ID}/details/[0-9]+`, "i") ],
+				loader: "intranet:crm-entity-details-loader",
+				options: {
+					label: {
+						text: BX.message("INTRANET_BINDINGS_SMART_DOCUMENT_MSGVER_1"),
+						bgColor: "#C48300"
+					}
 				}
 			},
 			{
@@ -593,7 +690,7 @@
 			},
 			{
 				condition: [
-					'^' + siteDir + 'mail/message/\\d+'
+					new RegExp(siteDir + 'mail/message/\\d+'),
 				],
 				options: {
 					width: 1080,

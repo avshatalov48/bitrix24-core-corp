@@ -1,5 +1,9 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 use Bitrix\Crm\Activity\CommunicationStatistics;
 use Bitrix\Crm\Binding\DealContactTable;
@@ -29,19 +33,69 @@ class CrmClientPortraitComponent extends \CBitrixComponent
 	{
 		global $APPLICATION;
 		
-		$arParams['PATH_TO_CONTACT_LIST'] = CrmCheckPath('PATH_TO_CONTACT_LIST', $arParams['PATH_TO_CONTACT_LIST'], $APPLICATION->GetCurPage());
-		$arResult['PATH_TO_CONTACT_SHOW'] = $arParams['PATH_TO_CONTACT_SHOW'] = CrmCheckPath('PATH_TO_CONTACT_SHOW', $arParams['PATH_TO_CONTACT_SHOW'], $APPLICATION->GetCurPage().'?contact_id=#contact_id#&show');
-		$arParams['PATH_TO_CONTACT_EDIT'] = CrmCheckPath('PATH_TO_CONTACT_EDIT', $arParams['PATH_TO_CONTACT_EDIT'], $APPLICATION->GetCurPage().'?contact_id=#contact_id#&edit');
-		$arParams['PATH_TO_LEAD_SHOW'] = CrmCheckPath('PATH_TO_LEAD_SHOW', $arParams['PATH_TO_LEAD_SHOW'], $APPLICATION->GetCurPage().'?lead_id=#lead_id#&show');
-		$arParams['PATH_TO_LEAD_EDIT'] = CrmCheckPath('PATH_TO_LEAD_EDIT', $arParams['PATH_TO_LEAD_EDIT'], $APPLICATION->GetCurPage().'?lead_id=#lead_id#&edit');
-		$arParams['PATH_TO_LEAD_CONVERT'] = CrmCheckPath('PATH_TO_LEAD_CONVERT', $arParams['PATH_TO_LEAD_CONVERT'], $APPLICATION->GetCurPage().'?lead_id=#lead_id#&convert');
-		$arParams['PATH_TO_COMPANY_SHOW'] = CrmCheckPath('PATH_TO_COMPANY_SHOW', $arParams['PATH_TO_COMPANY_SHOW'], $APPLICATION->GetCurPage().'?company_id=#company_id#&show');
-		$arParams['PATH_TO_COMPANY_EDIT'] = CrmCheckPath('PATH_TO_COMPANY_EDIT', $arParams['PATH_TO_COMPANY_EDIT'], $APPLICATION->GetCurPage().'?company_id=#company_id#&edit');
-		$arParams['PATH_TO_DEAL_SHOW'] = CrmCheckPath('PATH_TO_DEAL_SHOW', $arParams['PATH_TO_DEAL_SHOW'], $APPLICATION->GetCurPage().'?deal_id=#deal_id#&show');
-		$arParams['PATH_TO_DEAL_EDIT'] = CrmCheckPath('PATH_TO_DEAL_EDIT', $arParams['PATH_TO_DEAL_EDIT'], $APPLICATION->GetCurPage().'?deal_id=#deal_id#&edit');
-		$arParams['PATH_TO_REQUISITE_EDIT'] = CrmCheckPath('PATH_TO_REQUISITE_EDIT', $arParams['PATH_TO_REQUISITE_EDIT'], $APPLICATION->GetCurPage().'?id=#id#&edit');
-		$arParams['PATH_TO_USER_PROFILE'] = CrmCheckPath('PATH_TO_USER_PROFILE', $arParams['PATH_TO_USER_PROFILE'], '/company/personal/user/#user_id#/');
-		$arParams['NAME_TEMPLATE'] = empty($arParams['NAME_TEMPLATE']) ? CSite::GetNameFormat(false) : str_replace(array("#NOBR#","#/NOBR#"), array("",""), $arParams["NAME_TEMPLATE"]);
+		$arParams['PATH_TO_CONTACT_LIST'] = CrmCheckPath(
+			'PATH_TO_CONTACT_LIST',
+			$arParams['PATH_TO_CONTACT_LIST'] ?? '',
+			$APPLICATION->GetCurPage()
+		);
+		$arResult['PATH_TO_CONTACT_SHOW'] = $arParams['PATH_TO_CONTACT_SHOW'] = CrmCheckPath(
+			'PATH_TO_CONTACT_SHOW',
+			$arParams['PATH_TO_CONTACT_SHOW'] ?? '',
+			$APPLICATION->GetCurPage() . '?contact_id=#contact_id#&show'
+		);
+		$arParams['PATH_TO_CONTACT_EDIT'] = CrmCheckPath(
+			'PATH_TO_CONTACT_EDIT',
+			$arParams['PATH_TO_CONTACT_EDIT'] ?? '',
+			$APPLICATION->GetCurPage() . '?contact_id=#contact_id#&edit'
+		);
+		$arParams['PATH_TO_LEAD_SHOW'] = CrmCheckPath(
+			'PATH_TO_LEAD_SHOW',
+			$arParams['PATH_TO_LEAD_SHOW'] ?? '',
+			$APPLICATION->GetCurPage() . '?lead_id=#lead_id#&show'
+		);
+		$arParams['PATH_TO_LEAD_EDIT'] = CrmCheckPath(
+			'PATH_TO_LEAD_EDIT',
+			$arParams['PATH_TO_LEAD_EDIT'] ?? '',
+			$APPLICATION->GetCurPage() . '?lead_id=#lead_id#&edit'
+		);
+		$arParams['PATH_TO_LEAD_CONVERT'] = CrmCheckPath(
+			'PATH_TO_LEAD_CONVERT',
+			$arParams['PATH_TO_LEAD_CONVERT'] ?? '',
+			$APPLICATION->GetCurPage() . '?lead_id=#lead_id#&convert'
+		);
+		$arParams['PATH_TO_COMPANY_SHOW'] = CrmCheckPath(
+			'PATH_TO_COMPANY_SHOW',
+			$arParams['PATH_TO_COMPANY_SHOW'] ?? '',
+			$APPLICATION->GetCurPage() . '?company_id=#company_id#&show'
+		);
+		$arParams['PATH_TO_COMPANY_EDIT'] = CrmCheckPath(
+			'PATH_TO_COMPANY_EDIT',
+			$arParams['PATH_TO_COMPANY_EDIT'] ?? '',
+			$APPLICATION->GetCurPage() . '?company_id=#company_id#&edit'
+		);
+		$arParams['PATH_TO_DEAL_SHOW'] = CrmCheckPath(
+			'PATH_TO_DEAL_SHOW',
+			$arParams['PATH_TO_DEAL_SHOW'] ?? '',
+			$APPLICATION->GetCurPage() . '?deal_id=#deal_id#&show'
+		);
+		$arParams['PATH_TO_DEAL_EDIT'] = CrmCheckPath(
+			'PATH_TO_DEAL_EDIT',
+			$arParams['PATH_TO_DEAL_EDIT'] ?? '',
+			$APPLICATION->GetCurPage().'?deal_id=#deal_id#&edit'
+		);
+		$arParams['PATH_TO_REQUISITE_EDIT'] = CrmCheckPath(
+			'PATH_TO_REQUISITE_EDIT',
+			$arParams['PATH_TO_REQUISITE_EDIT'] ?? '',
+			$APPLICATION->GetCurPage() . '?id=#id#&edit'
+		);
+		$arParams['PATH_TO_USER_PROFILE'] = CrmCheckPath(
+			'PATH_TO_USER_PROFILE',
+			$arParams['PATH_TO_USER_PROFILE'] ?? '',
+			'/company/personal/user/#user_id#/'
+		);
+		$arParams['NAME_TEMPLATE'] = empty($arParams['NAME_TEMPLATE'])
+			? CSite::GetNameFormat(false)
+			: str_replace(['#NOBR#', '#/NOBR#'], ['', ''], $arParams['NAME_TEMPLATE']);
 
 		return $arParams;
 	}
@@ -69,6 +123,7 @@ class CrmClientPortraitComponent extends \CBitrixComponent
 				$type = 'CONTACT';
 				break;
 		}
+		
 		return $type;
 	}
 
@@ -82,14 +137,14 @@ class CrmClientPortraitComponent extends \CBitrixComponent
 		{
 			case CCrmOwnerType::Company:
 				$iterator = CCrmCompany::GetListEx(
-					array(),
+					[],
 					array('ID' => $elementId, '@CATEGORY_ID' => 0,)
 				);
 				break;
 				
 			case CCrmOwnerType::Contact:
 				$iterator = CCrmContact::GetListEx(
-					array(),
+					[],
 					array('ID' => $elementId, '@CATEGORY_ID' => 0,)
 				);
 				break;
@@ -99,7 +154,7 @@ class CrmClientPortraitComponent extends \CBitrixComponent
 
 		if ($element)
 		{
-			$element['FM'] = array();
+			$element['FM'] = [];
 			$multiFieldsIterator = CCrmFieldMulti::GetList(
 				array('ID' => 'asc'),
 				array('ENTITY_ID' => $this->getEntityType(), 'ELEMENT_ID' => $elementId)
@@ -241,7 +296,7 @@ class CrmClientPortraitComponent extends \CBitrixComponent
 				break;
 
 			default:
-				return array();
+				return [];
 		}
 
 		$query->registerRuntimeField('', new ExpressionField('CNT', 'SUM(TOTAL_QTY)'));
@@ -252,7 +307,7 @@ class CrmClientPortraitComponent extends \CBitrixComponent
 		$query->addFilter('=OWNER_ID', $this->getElementId());
 		$query->addGroup('PROVIDER_ID');
 
-		$result = array('ITEMS' => array(), 'CNT' => 0);
+		$result = array('ITEMS' => [], 'CNT' => 0);
 		$dbResult = $query->exec();
 
 		while($row = $dbResult->fetch())
@@ -445,7 +500,7 @@ class CrmClientPortraitComponent extends \CBitrixComponent
 				$this->manualTargetOptions = unserialize($this->manualTargetOptions, ['allowed_classes' => false]);
 
 			if (!is_array($this->manualTargetOptions))
-				$this->manualTargetOptions = array();
+				$this->manualTargetOptions = [];
 		}
 
 		$optionId = $dealCategoryId === null ? 'primary' : (int)$dealCategoryId;

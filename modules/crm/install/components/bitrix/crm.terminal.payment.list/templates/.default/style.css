@@ -1,0 +1,106 @@
+.terminal-payment-grid-avatar.ui-icon.ui-icon-common-user,
+.terminal-payment-grid-avatar.ui-icon.ui-icon-common-user-group {
+	width: 22px;
+	min-width: 22px;
+	height: 22px;
+}
+
+.terminal-payment-grid-username-inner {
+	display: inline-block;
+	vertical-align: middle;
+	max-width: 155px;
+	height: 20px;
+	line-height: 20px;
+	color: #525C69;
+	padding-left: 11px;
+	overflow: hidden;
+	text-overflow: ellipsis
+}
+
+.terminal-payment-grid-username {
+	display: inline-block;
+	overflow: hidden;
+	vertical-align: middle;
+	color: #525c69;
+	text-decoration: none;
+	white-space: nowrap;
+	padding: 5px 0;
+	margin: -5px 0;
+}
+
+.terminal-payment-grid-username:hover {
+	background: #C0EDFD;
+	text-decoration: none !important;
+}
+
+.terminal-payment-grid-username:hover {
+	color: #525c69;
+	text-decoration: none;
+}
+
+.terminal-payment-grid-avatar-empty {
+	border-radius: 0;
+}
+
+.terminal-payment-grid-user {
+	display: block;
+	overflow: hidden;
+	white-space: nowrap;
+}
+
+.terminal-payment-grid-username {
+	max-width: 100%;
+	display: inline-flex;
+	align-items: center;
+	overflow: hidden;
+	vertical-align: middle;
+	color: #525c69;
+	text-decoration: none;
+	white-space: nowrap;
+	padding: 3.5px 13px 3.5px 4px;
+	margin: -4px 0;
+	transition: 250ms linear all;
+	box-sizing: border-box;
+	height: 29px;
+	background: transparent;
+	border-radius: 14.5px;
+}
+
+.main-grid-cell-content a:hover {
+	transition: .1s;
+	opacity: 1;
+}
+
+.label-uppercase {
+	text-transform: uppercase;
+}
+
+.terminal-payment-grid-link {
+	margin: 20px auto 0 auto;
+	width: fit-content;
+}
+
+.document-list-stub-description {
+	margin: 0 auto;
+}
+
+div.client-info-wrapper .client-info-description-wrapper {
+	color: #484848;
+	font-size: 11px;
+}
+
+a.client-info-wrapper {
+	display: block;
+	border: 1px solid transparent;
+	border-radius: 4px;
+	transition: initial;
+}
+
+tr.bx-over a.client-info-wrapper { border-color: #f5f5f5; }
+
+tr.bx-over a.client-info-wrapper:hover { border-color: #bbd7f2; }
+
+a.client-info-wrapper > .client-info-description-wrapper {
+	color: #484848;
+	font-size: 11px;
+}

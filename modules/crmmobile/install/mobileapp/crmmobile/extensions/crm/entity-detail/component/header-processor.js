@@ -6,7 +6,6 @@
  * @module crm/entity-detail/component/header-processor
  */
 jn.define('crm/entity-detail/component/header-processor', (require, exports, module) => {
-
 	const { Type } = require('crm/type');
 	const { EntitySvg } = require('crm/assets/entity');
 
@@ -26,9 +25,9 @@ jn.define('crm/entity-detail/component/header-processor', (require, exports, mod
 				header.imageUrl = encodeURI(header.imageUrl);
 				header.imageUrl = header.imageUrl.replace(`${currentDomain}`, '');
 				header.imageUrl = (
-					header.imageUrl.indexOf('http') !== 0
-						? `${currentDomain}${header.imageUrl}`
-						: header.imageUrl
+					header.imageUrl.indexOf('http') === 0
+						? header.imageUrl
+						: `${currentDomain}${header.imageUrl}`
 				);
 			}
 		}
@@ -38,7 +37,7 @@ jn.define('crm/entity-detail/component/header-processor', (require, exports, mod
 			const entityTypeName = Type.resolveNameById(entityTypeId);
 			if (entityTypeName)
 			{
-				const iconFunctionName = entityTypeName.toLowerCase() + 'Inverted';
+				const iconFunctionName = `${entityTypeName.toLowerCase()}Inverted`;
 				if (EntitySvg[iconFunctionName])
 				{
 					header.svg = {

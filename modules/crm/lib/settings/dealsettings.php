@@ -39,7 +39,7 @@ class DealSettings
 		$this->isOpened = new BooleanSetting('deal_opened_flag', true);
 		$this->enableDeferredCleaning = new BooleanSetting('enable_deal_deferred_cleaning', true);
 		$this->enableRecycleBin = new BooleanSetting('enable_deal_recycle_bin', true);
-		$this->initIsFactoryEnabledSetting(\CCrmOwnerType::Deal, false);
+		$this->initIsFactoryEnabledSetting(\CCrmOwnerType::Deal);
 	}
 	/**
 	 * Get current instance
@@ -185,9 +185,7 @@ class DealSettings
 
 			self::$descriptions= array(
 				self::VIEW_LIST => GetMessage('CRM_COMMON_LIST'),
-				self::VIEW_KANBAN => Crm::isUniversalActivityScenarioEnabled()
-					? GetMessage('CRM_COMMON_PIPELINE')
-					: GetMessage('CRM_DEAL_SETTINGS_VIEW_KANBAN')
+				self::VIEW_KANBAN => GetMessage('CRM_DEAL_SETTINGS_VIEW_KANBAN')
 			);
 		}
 		return self::$descriptions;

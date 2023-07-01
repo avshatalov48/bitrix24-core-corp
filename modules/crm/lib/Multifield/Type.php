@@ -9,4 +9,16 @@ namespace Bitrix\Crm\Multifield;
 abstract class Type
 {
 	public const ID = 'UNDEFINED';
+
+	final public static function getCaption(): string
+	{
+		$caption = (string)\CCrmFieldMulti::GetEntityTypeCaption(static::ID);
+		if ($caption === static::ID)
+		{
+			// caption not found
+			return '';
+		}
+
+		return $caption;
+	}
 }

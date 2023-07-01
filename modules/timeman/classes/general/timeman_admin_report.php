@@ -15,20 +15,19 @@ class CTimeManAdminReport
 
 	public function __construct($arParams)
 	{
-		if ($arParams['ts'] <= 0)
+		if (($arParams['ts'] ?? 0) <= 0)
+		{
 			$arParams['ts'] = time();
+		}
 
-		$this->bShowAll = $arParams['show_all'];
+		$this->bShowAll = $arParams['show_all'] ?? false	;
 		$this->ts = date('U', intval($arParams['ts'])+86401);
-		$this->path_user = $arParams['path_user'];
-		$this->nav_handler = $arParams['nav_handler'];
+		$this->path_user = $arParams['path_user'] ?? '';
+		$this->nav_handler = $arParams['nav_handler'] ?? '';
 
-		if ($arParams['page'] > 0)
-			$this->page = intval($arParams['page']);
-		if ($arParams['amount'] > 0)
-			$this->amount = intval($arParams['amount']);
-		if ($arParams['department'] > 0)
-			$this->department = intval($arParams['department']);
+		$this->page = (int) ($arParams['page'] ?? 0) > 0 ? $arParams['page'] : 0;
+		$this->amount = (int) ($arParams['amount'] ?? 0) > 0 ? $arParams['amount'] : 0;
+		$this->department = (int) ($arParams['department'] ?? 0) > 0 ? $arParams['department'] : 0;
 	}
 
 	public function GetData()
@@ -273,12 +272,12 @@ class CTimeManAdminReport
 						'NAME' => $sect['NAME'],
 						'URL' => str_replace('#ID#', $sect['ID'], $section_url)
 					);
-				}
-			}
 
-			if (!isset($arChains[$sect['ID']]))
-			{
-				$arChains[$sect['ID']] = $arRes['CHAIN'];
+					if (!isset($arChains[$sect['ID']]))
+					{
+						$arChains[$sect['ID']] = $arRes['CHAIN'];
+					}
+				}
 			}
 
 			if (null === $chain_root)

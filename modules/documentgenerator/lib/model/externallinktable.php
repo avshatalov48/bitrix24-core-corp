@@ -3,9 +3,9 @@
 namespace Bitrix\DocumentGenerator\Model;
 
 use Bitrix\DocumentGenerator\Driver;
-use Bitrix\Main\ORM;
 use Bitrix\Main\Engine\UrlManager;
 use Bitrix\Main\Entity\Event;
+use Bitrix\Main\ORM;
 use Bitrix\Main\ORM\Data\DeleteResult;
 
 /**
@@ -71,7 +71,7 @@ class ExternalLinkTable extends ORM\Data\DataManager
 		}
 		if(!isset(static::$cache[$documentId]))
 		{
-			$item = static::getList(['filter' => ['DOCUMENT_ID' => $documentId]])->fetch();
+			$item = static::getList(['filter' => ['=DOCUMENT_ID' => $documentId]])->fetch();
 			if($item)
 			{
 				static::$cache[$documentId] = $item;
@@ -120,7 +120,7 @@ class ExternalLinkTable extends ORM\Data\DataManager
 	 */
 	public static function deleteByDocumentId(int $documentId): DeleteResult
 	{
-		$link = static::getList(['select' => ['ID'], 'filter' => ['DOCUMENT_ID' => $documentId]])->fetch();
+		$link = static::getList(['select' => ['ID'], 'filter' => ['=DOCUMENT_ID' => $documentId]])->fetch();
 		if($link)
 		{
 			return static::delete($link['ID']);
@@ -137,7 +137,7 @@ class ExternalLinkTable extends ORM\Data\DataManager
 	{
 		if($hash)
 		{
-			return static::getList(['filter' => ['HASH' => $hash]])->fetch();
+			return static::getList(['filter' => ['=HASH' => $hash]])->fetch();
 		}
 
 		return false;
@@ -155,7 +155,7 @@ class ExternalLinkTable extends ORM\Data\DataManager
 		{
 			$item = static::getList([
 				'select' => ['HASH', 'DOCUMENT_PDF_ID' => 'DOCUMENT.PDF_ID', 'DOCUMENT_IMAGE_ID' => 'DOCUMENT.IMAGE_ID'],
-				'filter' => ['DOCUMENT_ID' => $documentId],
+				'filter' => ['=DOCUMENT_ID' => $documentId],
 			])->fetch();
 			if($item)
 			{

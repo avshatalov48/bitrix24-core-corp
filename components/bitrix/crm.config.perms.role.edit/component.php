@@ -98,6 +98,12 @@ if (!$bVarsFromForm)
 	{
 		$obRes = CCrmRole::GetList(array(), array('ID' => $arParams['ROLE_ID']));
 		$arResult['ROLE'] = $obRes->Fetch();
+
+		if ($arResult['ROLE']['IS_SYSTEM'] === 'Y')
+		{
+			$url = CComponentEngine::makePathFromTemplate('/crm/configs/perms/');
+			LocalRedirect($url);
+		}
 		if ($arResult['ROLE'] == false)
 			$arParams['ROLE_ID'] = 0;
 	}
@@ -148,12 +154,22 @@ $arResult['ENTITY'] = [];
 
 $arResult['ENTITY']['CONTACT'] = GetMessage('CRM_ENTITY_TYPE_CONTACT');
 $factory = Service\Container::getInstance()->getFactory(CCrmOwnerType::Contact);
+
+$hiddenContactCategories = [
+	Service\Factory\SmartDocument::CONTACT_CATEGORY_CODE,
+];
+
 foreach ($factory->getCategories() as $category)
 {
 	if ($category->getIsDefault())
 	{
 		continue;
 	}
+	if (in_array($category->getCode(), $hiddenContactCategories))
+	{
+		continue;
+	}
+
 	$entityName = htmlspecialcharsbx(Service\UserPermissions::getPermissionEntityType($factory->getEntityTypeId(), $category->getId()));
 	$entityTitle = $category->getSingleNameIfPossible();
 	$arResult['ENTITY'][$entityName] =  htmlspecialcharsbx($entityTitle);

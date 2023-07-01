@@ -2,7 +2,6 @@
  * @module crm/entity-detail/component/communication-button/button-animate
  */
 jn.define('crm/entity-detail/component/communication-button/button-animate', (require, exports, module) => {
-
 	const { inRange } = require('utils/number');
 
 	const SCROLL_DIRECTION = {
@@ -19,7 +18,6 @@ jn.define('crm/entity-detail/component/communication-button/button-animate', (re
 	 * @function animateScrollButton
 	 */
 	const animateScrollButton = (scrollParams, button, scrollTab, activeTab) => {
-
 		if (scrollTab !== activeTab || inProgress)
 		{
 			return;
@@ -63,7 +61,6 @@ jn.define('crm/entity-detail/component/communication-button/button-animate', (re
 		});
 
 		directionOffset = direction;
-
 	};
 
 	module.exports = { animateScrollButton };

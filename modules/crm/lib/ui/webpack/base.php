@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\UI\Webpack;
 
+use Bitrix\Main;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\InvalidOperationException;
 use Bitrix\Main\Type\Date;
@@ -355,6 +356,11 @@ abstract class Base
 	 */
 	public function build()
 	{
+		if (!$this->lock())
+		{
+			return false;
+		}
+
 		$this->configureOnce();
 		$result = $this->controller->build();
 		if ($result->isSuccess())
@@ -367,7 +373,8 @@ abstract class Base
 			Internals\WebpackTable::add($data);
 		}
 
-		// add agent!
+		$this->unlock();
+		(new Internals\FileChecker())->addItem($this::$type, $this->getId());
 
 		return $result->isSuccess();
 	}
@@ -408,5 +415,43 @@ abstract class Base
 		}
 
 		return true;
+	}
+
+	private function lock(): bool
+	{
+		$ttl = 30;
+		$now = time();
+		$name = $this->getLockFilename();
+		if (!$name)
+		{
+			return true;
+		}
+
+		$file = new Main\IO\File($name);
+		if ($file->isExists())
+		{
+			$ts = (int)$file->getContents();
+			if ($ts > ($now - $ttl))
+			{
+				return false;
+			}
+		}
+
+		$file->putContents((string)$now);
+		return true;
+	}
+
+	private function unlock(): void
+	{
+		if ($name = $this->getLockFilename())
+		{
+			Main\IO\File::deleteFile($name);
+		}
+	}
+
+	private function getLockFilename(): ?string
+	{
+		$type = basename($this::$type);
+		return rtrim(\CTempFile::GetAbsoluteRoot(), '/') . "/crm_webpack_{$type}_{$this->id}.lock";
 	}
 }

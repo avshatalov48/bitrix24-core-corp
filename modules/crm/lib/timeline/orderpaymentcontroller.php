@@ -165,7 +165,7 @@ class OrderPaymentController extends EntityController
 										'PAYMENT_ID' => $payment->getId(),
 									],
 								],
-								'PAYMENT_FIELDS' => $payment->getFieldValues(),
+								'FIELDS' => $payment->getFieldValues(),
 								'BINDINGS' => Order\BindingsMaker\TimelineBindingsMaker::makeByPayment($payment),
 							]
 						);

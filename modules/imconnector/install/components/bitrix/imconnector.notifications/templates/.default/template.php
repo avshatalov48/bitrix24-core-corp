@@ -49,8 +49,7 @@ if (!empty($arResult['error']))
 				<div class="imconnector-field-box-content">
 					<p><?=Loc::getMessage('IMCONNECTOR_COMPONENT_NOTIFICATIONS_INDEX_DESCRIPTION')?></p>
 					<p>
-						<?=Loc::getMessage('IMCONNECTOR_COMPONENT_NOTIFICATIONS_INDEX_DESCRIPTION_1')?>
-						<a href="<?=UI\Util::getArticleUrlByCode('13655934')?>"><?=Loc::getMessage('IMCONNECTOR_COMPONENT_NOTIFICATIONS_INDEX_DETAILS')?></a>
+						<a href="<?=UI\Util::getArticleUrlByCode('13655934')?>"><?=Loc::getMessage('IMCONNECTOR_COMPONENT_NOTIFICATIONS_INDEX_DETAILS_MSGVER_2')?></a>
 					</p>
 				</div>
 				<div class="ui-btn-container">
@@ -93,8 +92,7 @@ if (!empty($arResult['error']))
 					</div>
 
 					<div class="imconnector-field-box-content-text-light">
-						<?=Loc::getMessage('IMCONNECTOR_COMPONENT_NOTIFICATIONS_INDEX_ADDITIONAL_DESCRIPTION')?>
-						<a href="<?=UI\Util::getArticleUrlByCode('13655934')?>"><?=Loc::getMessage('IMCONNECTOR_COMPONENT_NOTIFICATIONS_INDEX_DETAILS')?></a>
+						<a href="<?=UI\Util::getArticleUrlByCode('13655934')?>"><?=Loc::getMessage('IMCONNECTOR_COMPONENT_NOTIFICATIONS_INDEX_DETAILS_MSGVER_2')?></a>
 					</div>
 
 					<div class="imconnector-field-box-content-btn">

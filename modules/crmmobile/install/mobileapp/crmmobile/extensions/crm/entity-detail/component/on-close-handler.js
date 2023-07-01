@@ -2,10 +2,10 @@
  * @module crm/entity-detail/component/on-close-handler
  */
 jn.define('crm/entity-detail/component/on-close-handler', (require, exports, module) => {
-
 	const { CategoryStorage } = require('crm/storage/category');
 	const { TimelineScheduler } = require('crm/timeline/scheduler');
 	const { Haptics } = require('haptics');
+	const { TypeId } = require('crm/type');
 
 	/**
 	 * @param {DetailCardComponent} detailCard
@@ -23,13 +23,13 @@ jn.define('crm/entity-detail/component/on-close-handler', (require, exports, mod
 		}
 
 		const { todoNotificationParams } = detailCard.getComponentParams();
-		if (!todoNotificationParams)
+		if (!todoNotificationParams || !todoNotificationParams.notificationSupported)
 		{
 			return promise;
 		}
 
-		const { isSkipped, plannedActivityCounter, isFinalStage } = todoNotificationParams;
-		if (isSkipped || plannedActivityCounter > 0)
+		const { notificationEnabled, plannedActivityCounter, isFinalStage } = todoNotificationParams;
+		if (!notificationEnabled || plannedActivityCounter > 0)
 		{
 			return promise;
 		}
@@ -54,13 +54,14 @@ jn.define('crm/entity-detail/component/on-close-handler', (require, exports, mod
 	const checkIfFinalStage = (detailCard) => {
 		const { entityTypeId, categoryId } = detailCard.getComponentParams();
 
-		const category = CategoryStorage.getCategory(entityTypeId, categoryId);
+		const category = CategoryStorage.getCategory(entityTypeId, categoryId || 0);
 		if (!category)
 		{
 			return true;
 		}
 
-		const stageId = detailCard.getFieldFromModel('STAGE_ID');
+		const fieldName = (entityTypeId === TypeId.Lead ? 'STATUS_ID' : 'STAGE_ID');
+		const stageId = detailCard.getFieldFromModel(fieldName);
 		if (!stageId)
 		{
 			return true;
@@ -79,10 +80,11 @@ jn.define('crm/entity-detail/component/on-close-handler', (require, exports, mod
 	 * @param {DetailCardComponent} detailCard
 	 */
 	const showTodoNotification = (detailCard) => {
-		const { entityTypeId, entityId, categoryId } = detailCard.getComponentParams();
+		const { entityTypeId, entityId, categoryId, todoNotificationParams: { user } } = detailCard.getComponentParams();
 
 		return new Promise((resolve) => {
 			const timelineScheduler = new TimelineScheduler({
+				user,
 				entity: {
 					id: entityId,
 					typeId: entityTypeId,

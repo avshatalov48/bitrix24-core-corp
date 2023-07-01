@@ -27,6 +27,7 @@ if (!$arResult['isIframe'])
 				condition: [
 					"type/(\\d+)/automation/(\\d+)/",
 				],
+				loader: 'bizproc:automation-loader',
 				stopParameters: ['id'],
 				options: {
 					cacheable: false,
@@ -37,6 +38,7 @@ if (!$arResult['isIframe'])
 				condition: [
 					"type/(\\d+)/automation/(\\d+)/",
 				],
+				loader: 'bizproc:automation-loader',
 				options: {
 					cacheable: false
 				}

@@ -2,7 +2,6 @@
  * @module crm/timeline/item/ui/background
  */
 jn.define('crm/timeline/item/ui/background', (require, exports, module) => {
-
 	const { transition, pause, chain } = require('animation');
 
 	/**
@@ -41,8 +40,8 @@ jn.define('crm/timeline/item/ui/background', (require, exports, module) => {
 						bottom: 0,
 						backgroundColor: this.color,
 						opacity: this.opacity,
-					}
-				}
+					},
+				},
 			);
 		}
 
@@ -60,16 +59,16 @@ jn.define('crm/timeline/item/ui/background', (require, exports, module) => {
 			const start = () => {
 				this.animating = true;
 				return Promise.resolve();
-			}
+			};
 
 			const finish = () => {
 				this.animating = false;
 				return Promise.resolve();
-			}
+			};
 
 			const toYellow = transition(this.nodeRef, {
 				duration: 300,
-				backgroundColor: '#FFECC4', // same as in kanban
+				backgroundColor: '#ffe9be', // same as in kanban
 				opacity: 1,
 			});
 
@@ -90,5 +89,4 @@ jn.define('crm/timeline/item/ui/background', (require, exports, module) => {
 	}
 
 	module.exports = { TimelineItemBackgroundLayer };
-
 });

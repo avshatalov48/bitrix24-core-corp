@@ -779,11 +779,11 @@ class CDiskVolumeComponent extends BaseComponent
 			($actionName === self::ACTION_DISKS && $this->isExpertMode())
 		)
 		{
-			$this->arResult['WORKER_COUNT'] = \Bitrix\Disk\Volume\Cleaner::checkRestoreWorkers($this->getUser()->getId());
+			$this->arResult['WORKER_COUNT'] = \Bitrix\Disk\Volume\Cleaner::checkRestoreWorkers((int)$this->getUser()->getId());
 		}
 		else
 		{
-			$this->arResult['WORKER_COUNT'] = \Bitrix\Disk\Volume\Cleaner::countWorker($this->getUser()->getId());
+			$this->arResult['WORKER_COUNT'] = \Bitrix\Disk\Volume\Cleaner::countWorker((int)$this->getUser()->getId());
 		}
 		$this->arResult["NEED_RELOAD"] = $this->isNeedReload();
 
@@ -2246,7 +2246,7 @@ class CDiskVolumeComponent extends BaseComponent
 		{
 			VolumeTable::deleteByFilter($fullClearFilter);
 			// clear statistic for progress bar
-			Volume\Cleaner::clearProgressInfo($this->getUser()->getId());
+			Volume\Cleaner::clearProgressInfo((int)$this->getUser()->getId());
 		}
 		elseif ($indicatorType !== '')
 		{
@@ -2266,7 +2266,7 @@ class CDiskVolumeComponent extends BaseComponent
 			$indicator->purify();
 		}
 
-		Volume\Cleaner::countWorker($this->getUser()->getId());
+		Volume\Cleaner::countWorker((int)$this->getUser()->getId());
 
 		return self::STATUS_SUCCESS;
 	}
@@ -3110,7 +3110,7 @@ class CDiskVolumeComponent extends BaseComponent
 	 */
 	public function hasWorkerInProcess()
 	{
-		$option = Volume\Cleaner::getProgressInfo($this->getUser()->getId());
+		$option = Volume\Cleaner::getProgressInfo((int)$this->getUser()->getId());
 		if (!empty($option))
 		{
 			return (bool)($option['count'] > 0 && $option['steps'] < $option['count']);

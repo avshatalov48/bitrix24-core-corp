@@ -2,8 +2,8 @@
  * @module crm/stage-list
  */
 jn.define('crm/stage-list', (require, exports, module) => {
-
 	const { clone } = require('utils/object');
+	const { Loc } = require('loc');
 	const { CategoryCountersStoreManager } = require('crm/state-storage');
 	const {
 		StageListItem,
@@ -14,6 +14,9 @@ jn.define('crm/stage-list', (require, exports, module) => {
 
 	const ALL_STAGES_ITEM_ID = 0;
 	const ALL_STAGES_ITEM_STATUS_ID = '';
+
+	const STAY_STAGE_ITEM_ID = 0;
+	const STAY_STAGE_ITEM_STATUS_ID = '';
 
 	/**
 	 * @class StageList
@@ -45,6 +48,7 @@ jn.define('crm/stage-list', (require, exports, module) => {
 			this.showCount = BX.prop.get(stageParams, 'showCount', false);
 			this.showCounters = BX.prop.get(stageParams, 'showCounters', false);
 			this.showAllStagesItem = BX.prop.get(stageParams, 'showAllStagesItem', false);
+			this.showStayStageItem = BX.prop.get(stageParams, 'showStayStageItem', false);
 		}
 
 		prepareStagesData(stages)
@@ -87,7 +91,7 @@ jn.define('crm/stage-list', (require, exports, module) => {
 			return {
 				id: ALL_STAGES_ITEM_ID,
 				statusId: ALL_STAGES_ITEM_STATUS_ID,
-				color: '#e6ecef',
+				color: '#eef2f4',
 				name: BX.message('CRM_STAGE_LIST_ALL_STAGES_TITLE'),
 				count: allStageItem.count,
 				total: allStageItem.total,
@@ -96,6 +100,14 @@ jn.define('crm/stage-list', (require, exports, module) => {
 				showContentBorder: true,
 				listMode: true,
 			};
+		}
+
+		/**
+		 * @returns {{color: string, statusId: string, name: *, id: number}}
+		 */
+		getStayStageItem()
+		{
+			return stayStageItem(true);
 		}
 
 		handlerOnOpenStageDetail(stage)
@@ -164,7 +176,7 @@ jn.define('crm/stage-list', (require, exports, module) => {
 			return stages.reduce((height, stage) => {
 				height += MIN_STAGE_HEIGHT;
 
-				if (this.showTunnels && stage.tunnels.length)
+				if (this.showTunnels && stage.tunnels.length > 0)
 				{
 					height += FIRST_TUNNEL_ADDITIONAL_HEIGHT;
 					height += TUNNEL_HEIGHT * stage.tunnels.length;
@@ -193,7 +205,7 @@ jn.define('crm/stage-list', (require, exports, module) => {
 			const { categoryCounters } = this.state;
 
 			let stageData = { ...stage, active };
-			const counters = categoryCounters.find(stageCounters => stageCounters.id === stage.id);
+			const counters = categoryCounters.find((stageCounters) => stageCounters.id === stage.id);
 
 			if (stage.id && counters)
 			{
@@ -239,16 +251,17 @@ jn.define('crm/stage-list', (require, exports, module) => {
 
 		render()
 		{
-			const { processStages, finalStages, title } = this.props;
+			const { processStages, finalStages } = this.props;
 
 			return View(
 				{
 					style: styles.stagesContainer,
 				},
 				Text({
-					text: title || BX.message('CRM_STAGE_LIST_TITLE'),
+					text: this.getStageListTitle(),
 					style: styles.stagesTitle,
 				}),
+				this.renderStayStageItem(),
 				this.renderAllStagesItem(processStages),
 				this.renderProcessStageList(this.prepareStagesData(processStages)),
 				finalStages.length && View({ style: styles.delimeter }),
@@ -256,24 +269,63 @@ jn.define('crm/stage-list', (require, exports, module) => {
 			);
 		}
 
+		getStageListTitle()
+		{
+			if (this.props.title)
+			{
+				return this.props.title;
+			}
+
+			if (this.showTunnels)
+			{
+				return BX.message('CRM_STAGE_LIST_TITLE');
+			}
+
+			return BX.message('CRM_STAGE_LIST_WITHOUT_TUNNELS_TITLE');
+		}
+
 		renderAllStagesItem(stages)
 		{
 			const { stageParams } = this.props;
 
-			if (stageParams && stageParams.showAllStagesItem && !stages.find(stage => stage.id === 0))
+			if (stageParams && stageParams.showAllStagesItem && !stages.some((stage) => stage.id === 0))
 			{
 				return this.renderStageListItem(this.getAllStagesItem());
 			}
 
 			return null;
 		}
+
+		renderStayStageItem()
+		{
+			if (this.showStayStageItem)
+			{
+				return this.renderStageListItem(this.getStayStageItem());
+			}
+
+			return null;
+		}
 	}
+
+	const stayStageItem = (showContentBorder = false) => ({
+		id: STAY_STAGE_ITEM_ID,
+		statusId: STAY_STAGE_ITEM_STATUS_ID,
+		color: '#ffffff',
+		borderColor: '#62c4f1',
+		name: Loc.getMessage('CRM_STAGE_LIST_STAY_STAGE_TITLE'),
+		count: null,
+		total: null,
+		currency: null,
+		tunnels: [],
+		showContentBorder,
+		listMode: false,
+	});
 
 	const styles = {
 		stagesContainer: {
 			borderRadius: 12,
-			backgroundColor: '#fff',
-			paddingTop: 9,
+			backgroundColor: '#ffffff',
+			paddingTop: 13,
 			flexDirection: 'column',
 			marginBottom: 8,
 		},
@@ -286,10 +338,10 @@ jn.define('crm/stage-list', (require, exports, module) => {
 			marginBottom: 4,
 		},
 		delimeter: {
-			backgroundColor: '#d9dce2',
+			backgroundColor: '#d5d7db',
 			height: 4,
 		},
 	};
 
-	module.exports = { StageList };
+	module.exports = { StageList, stayStageItem };
 });

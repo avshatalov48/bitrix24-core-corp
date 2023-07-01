@@ -71,7 +71,7 @@ jn.define('tasks/layout/task/fields/taskResultList', (require, exports, module) 
 							bottom: 6,
 							backgroundColor: '#ffffff',
 							borderWidth: 1,
-							borderColor: '#1a767c87',
+							borderColor: '#1a6a737f',
 							borderRadius: 20,
 							paddingHorizontal: 12,
 							paddingVertical: 4,

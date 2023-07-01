@@ -13,6 +13,8 @@ class Logo extends Base
 	public const ICON_TYPE_FAILURE = 'failure';
 	public const ICON_TYPE_SUCCESS = 'success';
 
+	protected const BODY_LOGO_BACKGROUND_SIZE = 60;
+
 	protected string $iconCode;
 	protected ?string $iconType = null;
 	protected ?string $backgroundUrl = null;
@@ -76,9 +78,9 @@ class Logo extends Base
 	 * @param int|null $backgroundSize
 	 * @return Logo
 	 */
-	public function setBackgroundSize(?int $backgroundSize): Logo
+	public function setBackgroundSize(?int $backgroundSize = null): Logo
 	{
-		$this->backgroundSize = $backgroundSize;
+		$this->backgroundSize = ($backgroundSize ?? self::BODY_LOGO_BACKGROUND_SIZE);
 
 		return $this;
 	}

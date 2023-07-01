@@ -5,8 +5,12 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
-/** @var array $arResult */
-/** @var \CBitrixComponentTemplate $this */
+/**
+ * @var array $arParams
+ * @var array $arResult
+ * @global \CMain $APPLICATION
+ * @var \CBitrixComponentTemplate $this
+ */
 
 if (isset($arResult['ERROR']))
 {
@@ -21,6 +25,8 @@ use Bitrix\Crm\Conversion\LeadConversionScheme;
 use Bitrix\Crm\Integration\NotificationsManager;
 use Bitrix\Crm\Integration\PullManager;
 use Bitrix\Crm\Kanban\Helper;
+use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Settings\CounterSettings;
 use Bitrix\Crm\Tour;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
@@ -54,6 +60,7 @@ Extension::load(
 if (
 	!empty($arResult['CLIENT_FIELDS_RESTRICTIONS'])
 	|| !empty($arResult['OBSERVERS_FIELD_RESTRICTIONS'])
+	|| !empty($arResult['ACTIVITY_FIELD_RESTRICTIONS'])
 )
 {
 	Extension::load(['crm.restriction.filter-fields']);
@@ -91,14 +98,24 @@ if (
 
 include 'editors.php';
 
-$isMergeEnabled = ($arParams['PATH_TO_MERGE'] != '');
-
+$isMergeEnabled = isset($arParams['PATH_TO_MERGE']) && $arParams['PATH_TO_MERGE'] !== '';
 if ($isMergeEnabled)
 {
 	Extension::load(['crm.merger.batchmergemanager']);
 }
 
 $gridId = Helper::getGridId($arParams['ENTITY_TYPE_CHR']);
+
+$entityTypeId = (int) $arParams['ENTITY_TYPE_INT'];
+
+if (CounterSettings::getInstance()->isEnabled())
+{
+	$showActivity = isset($arParams['SHOW_ACTIVITY']) && $arParams['SHOW_ACTIVITY'] === 'Y' ? 'true' : 'false';
+}
+else
+{
+	$showActivity = 'false';
+}
 ?>
 
 <div id="crm_kanban"></div>
@@ -205,7 +222,7 @@ $gridId = Helper::getGridId($arParams['ENTITY_TYPE_CHR']);
 							reckonActivitylessItems: <?= \CCrmUserCounterSettings::getValue(\CCrmUserCounterSettings::ReckonActivitylessItems, true) ? 'true' : 'false';?>,
 							ajaxHandlerPath: ajaxHandlerPath,
 							entityType: "<?= \CUtil::JSEscape($arParams['ENTITY_TYPE_CHR'])?>",
-							entityTypeInt: "<?= \CUtil::JSEscape($arParams['ENTITY_TYPE_INT'])?>",
+							entityTypeInt: "<?= $entityTypeId ?>",
 							typeInfo: <?= \CUtil::PhpToJSObject($arParams['ENTITY_TYPE_INFO'])?>,
 							viewMode: "<?= \CUtil::JSEscape($arParams['VIEW_MODE'])?>",
 							isDynamicEntity: <?= ($arParams['IS_DYNAMIC_ENTITY'] ? 'true' : 'false') ?>,
@@ -215,11 +232,11 @@ $gridId = Helper::getGridId($arParams['ENTITY_TYPE_CHR']);
 								lead: "/bitrix/components/bitrix/crm.lead.details/ajax.php?<?= bitrix_sessid_get();?>",
 								deal: "/bitrix/components/bitrix/crm.deal.details/ajax.php?<?= bitrix_sessid_get();?>"
 							},
-							headersSections: <?= \CUtil::PhpToJSObject($arResult['HEADERS_SECTIONS'])?>,
-							defaultHeaderSectionId: "<?= \CUtil::JSEscape($arResult['DEFAULT_HEADER_SECTION_ID']) ?>",
+							headersSections: <?= \CUtil::PhpToJSObject($arResult['HEADERS_SECTIONS'] ?? [])?>,
+							defaultHeaderSectionId: "<?= \CUtil::JSEscape($arResult['DEFAULT_HEADER_SECTION_ID'] ?? '') ?>",
 							params: <?= json_encode($arParams['EXTRA'])?>,
 							gridId: "<?=\CUtil::JSEscape($gridId)?>",
-							showActivity: <?= $arParams['SHOW_ACTIVITY'] == 'Y' ? 'true' : 'false'?>,
+							showActivity: <?= $showActivity ?>,
 							currency: "<?= $arParams['CURRENCY']?>",
 							lastId: <?= (int)$data['last_id']?>,
 							rights:
@@ -228,13 +245,14 @@ $gridId = Helper::getGridId($arParams['ENTITY_TYPE_CHR']);
 									canEditColumn: <?= $arResult['ACCESS_CONFIG_PERMS'] ? 'true' : 'false'?>,
 									canRemoveColumn: <?= $arResult['ACCESS_CONFIG_PERMS'] ? 'true' : 'false'?>,
 									canSortColumn: <?= $arResult['ACCESS_CONFIG_PERMS'] ? 'true' : 'false'?>,
-									canImport: <?= $arResult['ACCESS_IMPORT'] ? 'true' : 'false'?>,
+									canImport: <?= isset($arResult['ACCESS_IMPORT']) && $arResult['ACCESS_IMPORT'] ? 'true' : 'false'?>,
 									canSortItem: true,
 									canUseVisit: <?= \Bitrix\Crm\Activity\Provider\Visit::isAvailable() ? 'true' : 'false';?>
 								},
 							visitParams: <?= \CUtil::PhpToJSObject(\Bitrix\Crm\Activity\Provider\Visit::getPopupParameters(), false, false, true)?>,
 							admins: <?= \CUtil::PhpToJSObject(array_values($arResult['ADMINS']))?>,
 							userId: <?= $arParams['USER_ID'];?>,
+							currentUser: <?=\Bitrix\Main\Web\Json::encode($arParams['LAYOUT_CURRENT_USER'])?>,
 							customFields: <?= \CUtil::phpToJSObject(array_keys($arResult['MORE_FIELDS']));?>,
 							customEditFields: <?= \CUtil::phpToJSObject(array_keys($arResult['MORE_EDIT_FIELDS']));?>,
 							customSectionsFields: <?= \CUtil::phpToJSObject($arResult['FIELDS_SECTIONS']);?>,
@@ -315,24 +333,26 @@ $gridId = Helper::getGridId($arParams['ENTITY_TYPE_CHR']);
 					"<?=\CUtil::JSEscape($gridId)?>",
 					{
 						kanban: Kanban,
-						entityTypeId: "<?=\CUtil::JSEscape($arParams['ENTITY_TYPE_INT'])?>",
+						entityTypeId: "<?= $entityTypeId ?>",
 						mergerUrl: "<?=\CUtil::JSEscape($arParams['PATH_TO_MERGE'])?>"
 					}
 				);
 			<?endif;?>
 
-			<?php if (\Bitrix\Crm\Settings\Crm::isUniversalActivityScenarioEnabled()):
-				$todoCreateNotificationSkipPeriod =
-					(new \Bitrix\Crm\Activity\TodoCreateNotification((int)$arParams['ENTITY_TYPE_INT']))
-						->getCurrentSkipPeriod()
-				;
+			<?php
+				if (\Bitrix\Crm\Settings\Crm::isUniversalActivityScenarioEnabled()):
+					$todoCreateNotification = (new \Bitrix\Crm\Activity\TodoCreateNotification($entityTypeId));
+					$todoCreateNotificationSkipPeriod = $todoCreateNotification->getCurrentSkipPeriod();
+					$factory = Container::getInstance()->getFactory($entityTypeId);
+					$smartActivityNotificationSupported = $factory && $factory->isSmartActivityNotificationSupported();
 			?>
 				BX.Runtime.loadExtension('crm.push-crm-settings').then((exports) => {
 					const PushCrmSettings = exports.PushCrmSettings;
 
 					/** @see BX.Crm.PushCrmSettings */
 					new PushCrmSettings({
-						entityTypeId: <?= (int)$arParams['ENTITY_TYPE_INT'] ?>,
+						smartActivityNotificationSupported: <?= $smartActivityNotificationSupported ? 'true' : 'false' ?>,
+						entityTypeId: <?= $entityTypeId ?>,
 						rootMenu: Kanban.getSettingsButtonMenu(),
 						targetItemId: 'crm_kanban_cc_delimiter',
 						controller: BX.CRM.Kanban.Sort.SettingsController.Instance,
@@ -349,7 +369,9 @@ $gridId = Helper::getGridId($arParams['ENTITY_TYPE_CHR']);
 
 <?include $_SERVER['DOCUMENT_ROOT'] . $this->getFolder() . '/popups.php'?>
 
-<?if ($arParams['ENTITY_TYPE_CHR'] == 'LEAD'):
+<?if (isset($arParams['ENTITY_TYPE_CHR']) && $arParams['ENTITY_TYPE_CHR'] === 'LEAD'):
+	print (Tour\NumberOfClients::getInstance())->build();
+
 	Loc::loadMessages($_SERVER['DOCUMENT_ROOT'].'/bitrix/components/bitrix/crm.lead.list/templates/.default/template.php');
 	?>
 	<script type="text/javascript">
@@ -413,10 +435,10 @@ $gridId = Helper::getGridId($arParams['ENTITY_TYPE_CHR']);
 			}
 		);
 	</script>
-<?elseif ($arParams['ENTITY_TYPE_CHR'] === 'DEAL'):
+<?elseif (isset($arParams['ENTITY_TYPE_CHR']) && $arParams['ENTITY_TYPE_CHR'] === 'DEAL'):
+	print (Tour\NumberOfClients::getInstance())->build();
+
 	NotificationsManager::showSignUpFormOnCrmShopCreated();
-	print (Tour\ActivityViewMode::getInstance())->build();
-	print (Tour\NewCountersMode::getInstance())->build();
 	print (Tour\SortByLastActivityTime::getInstance())->build();
 endif;
 if (!empty($arResult['CLIENT_FIELDS_RESTRICTIONS'])):?>
@@ -442,4 +464,6 @@ if (!empty($arResult['CLIENT_FIELDS_RESTRICTIONS'])):?>
 			}
 		);
 	</script>
-<?endif;?>
+<?endif;
+
+echo $arResult['ACTIVITY_FIELD_RESTRICTIONS'] ?? '';

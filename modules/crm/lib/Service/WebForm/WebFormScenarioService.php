@@ -146,7 +146,8 @@ class WebFormScenarioService
 					$baseScenario,
 					false,
 					Entity::ENUM_ENTITY_SCHEME_DEAL_INVOICE,
-					true
+					true,
+					Loc::getMessage('CRM_SERVICE_FORM_SCENARIO_PRODUCT2')
 				);
 			case BaseScenario::SCENARIO_PRODUCT4:
 				return $this->prepareProductsScenario($baseScenario, true);
@@ -672,7 +673,8 @@ class WebFormScenarioService
 		BaseScenario $baseScenario,
 		bool $bigPic = false,
 		int $schema = Entity::ENUM_ENTITY_SCHEME_DEAL,
-		bool $usePayment = false
+		bool $usePayment = false,
+		string $title = null
 	): BaseScenario
 	{
 		$optionScenario = (new ScenarioOptionBuilder())
@@ -702,6 +704,7 @@ class WebFormScenarioService
 				ScenarioMenuItem::DESIGN['id'],
 				ScenarioMenuItem::OTHER['id'],
 			])
+			->setTitle($title)
 		;
 	}
 

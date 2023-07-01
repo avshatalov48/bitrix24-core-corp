@@ -1,5 +1,9 @@
 <?php
+
 return [
-	'utils',
-	'layout/ui/entity-editor/scheme/element',
+	'extensions' => [
+		'layout/ui/entity-editor/control',
+		'layout/ui/entity-editor/scheme/element',
+		'type',
+	],
 ];

@@ -132,6 +132,7 @@ abstract class DocumentHandler implements IErrorable
 	 */
 	public static function isEditable($extension)
 	{
+		$extension = mb_strtolower($extension);
 		$editableExtensions = static::listEditableExtensions();
 
 		return

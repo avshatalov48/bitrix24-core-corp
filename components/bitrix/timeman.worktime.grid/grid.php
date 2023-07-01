@@ -251,7 +251,7 @@ class Grid
 				continue;
 			}
 			$schedule = $scheduleCollection->getByPrimary($record->getScheduleId());
-			$plan = $shiftPlansByUserShiftDate[$record->getUserId()][$record->getShiftId()][$periodDateFormatted];
+			$plan = $shiftPlansByUserShiftDate[$record->getUserId()][$record->getShiftId()][$periodDateFormatted] ?? null;
 			$shift = null;
 			if ($schedule)
 			{
@@ -538,7 +538,7 @@ class Grid
 						'default' => true,
 					];
 				}
-				if ($this->options['FILTER_FIELDS_SHIFTS_EXISTENCE'])
+				if ($this->options['FILTER_FIELDS_SHIFTS_EXISTENCE'] ?? false)
 				{
 					$this->filter['FIELDS'][] = [
 						'id' => 'SHIFTS_EXISTENCE',
@@ -710,6 +710,7 @@ class Grid
 					'name' => $this->timeHelper->formatDateTime($this->getPeriodDateTimes()[$date], $headerDateFormat),
 					'date' => $this->getPeriodDateTimes()[$date],
 					'default' => true,
+					'class' => '',
 				];
 				if ($this->getPeriodDateTimes()[$date]->format($this->dateTimeFormat) == $userNow)
 				{
@@ -782,7 +783,8 @@ class Grid
 	public function getDepartmentCodes()
 	{
 		$result = [];
-		if ($this->getFilter()['DATA'] && $this->getFilter()['DATA']['USERS_DEPARTMENTS']
+		if (
+			$this->getFilter()['DATA']
 			&& !empty($this->getFilter()['DATA']['USERS_DEPARTMENTS']))
 		{
 			foreach ($this->getFilter()['DATA']['USERS_DEPARTMENTS'] as $departmentCode)
@@ -798,8 +800,10 @@ class Grid
 
 	public function showWithShiftPlansOnly()
 	{
-		return $this->getFilter() && $this->getFilter()['DATA']
-			   && $this->getFilter()['DATA']['SHIFTS_EXISTENCE'] === 'Y';
+		return $this->getFilter()
+			&& $this->getFilter()['DATA']
+			&& ($this->getFilter()['DATA']['SHIFTS_EXISTENCE'] ?? '') === 'Y'
+		;
 	}
 
 	public function isUserFilterApplied()
@@ -829,7 +833,10 @@ class Grid
 	public function getUserCodes()
 	{
 		$userCodes = [];
-		if ($this->getFilter()['DATA'] && $this->getFilter()['DATA']['USERS_DEPARTMENTS'])
+		if (
+			$this->getFilter()['DATA']
+			&& ($this->getFilter()['DATA']['USERS_DEPARTMENTS'] ?? [])
+		)
 		{
 			foreach ($this->getFilter()['DATA']['USERS_DEPARTMENTS'] as $userCode)
 			{
@@ -844,9 +851,10 @@ class Grid
 
 	public function isShowUsersWithRecordsOnly()
 	{
-		return $this->getFilter() &&
-			   $this->getFilter()['DATA'] &&
-			   $this->getFilter()['DATA']['SHOW_ALL'] === 'N';
+		return $this->getFilter()
+			&& $this->getFilter()['DATA']
+			&& ($this->getFilter()['DATA']['SHOW_ALL'] ?? '') === 'N'
+		;
 	}
 
 	public function getFilterFindText()
@@ -862,12 +870,15 @@ class Grid
 
 	public function getFilterByApproved()
 	{
-		if ($this->getFilter() &&
-			$this->getFilter()['DATA'] &&
-			$this->getFilter()['DATA']['IS_REPORT_APPROVED'])
+		if (
+			$this->getFilter()
+			&& $this->getFilter()['DATA']
+			&& ($this->getFilter()['DATA']['IS_REPORT_APPROVED'] ?? null)
+		)
 		{
 			return $this->getFilter()['DATA']['IS_REPORT_APPROVED'];
 		}
+
 		return null;
 	}
 
@@ -1300,7 +1311,7 @@ class Grid
 
 	private function isTimemanEnabled($userId)
 	{
-		if ($this->timemanEnabledSettings[$userId] === null)
+		if (($this->timemanEnabledSettings[$userId] ?? null) === null)
 		{
 			$timemanUser = new \CTimeManUser($userId);
 			$settings = $timemanUser->getSettings(['UF_TIMEMAN']);
@@ -1317,11 +1328,14 @@ class Grid
 	private function buildAbsenceByUserDate($user, $periodDateFormatted, &$absenceData)
 	{
 		static $drawnAbsences = [];
-		if ($drawnAbsences[$user['ID']] === null)
+		if (($drawnAbsences[$user['ID']] ?? null) === null)
 		{
 			$drawnAbsences[$user['ID']] = [];
 		}
-		foreach ((array)$absenceData[$user['ID']] as $absIndex => $absenceItem)
+
+		$absenceUserData = (array) ($absenceData[$user['ID']] ?? []);
+
+		foreach ($absenceUserData as $absIndex => $absenceItem)
 		{
 			$absItem = [];
 			/*-*/
@@ -1409,7 +1423,7 @@ class Grid
 		$recordManager = null;
 		if ($record)
 		{
-			if ($this->recordManagers[$record->getId()] === null)
+			if (($this->recordManagers[$record->getId()] ?? null) === null)
 			{
 				$this->recordManagers[$record->getId()] = DependencyManager::getInstance()
 					->buildWorktimeRecordManager(

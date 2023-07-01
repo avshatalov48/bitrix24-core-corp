@@ -12,7 +12,7 @@ class MoneyField extends BaseSimpleField
 	{
 		if ($this->isMultiple())
 		{
-			$results = [];
+			$result = [];
 
 			if (!is_array($fieldValue))
 			{
@@ -21,14 +21,19 @@ class MoneyField extends BaseSimpleField
 
 			foreach ($fieldValue as $value)
 			{
-				$results[] = $this->getValue($value);
+				$result[] = $this->getValue($value);
 			}
-
-			return $results;
+		}
+		else
+		{
+			$result = $this->getValue($fieldValue);
 		}
 
 		return [
-			'value' => $this->getValue($fieldValue),
+			'value' => $result,
+			'config' => [
+				'defaultCurrency' => \CCrmCurrency::GetBaseCurrencyID(),
+			],
 		];
 	}
 

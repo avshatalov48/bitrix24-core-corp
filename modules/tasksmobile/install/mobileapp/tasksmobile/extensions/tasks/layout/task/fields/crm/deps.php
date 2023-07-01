@@ -4,5 +4,6 @@ return [
 	'extensions' => [
 		'layout/ui/fields/crm-element',
 		'loc',
+		'analytics-label',
 	],
 ];

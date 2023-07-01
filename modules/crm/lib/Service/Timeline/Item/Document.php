@@ -6,6 +6,8 @@ use Bitrix\Crm\Integration\DocumentGenerator\DataProvider;
 use Bitrix\Crm\Integration\DocumentGenerator\DataProvider\CrmEntityDataProvider;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Timeline\Layout;
+use Bitrix\Crm\Service\Timeline\Layout\Common\Icon;
+use Bitrix\Crm\Service\Timeline\Layout\Common\Logo;
 use Bitrix\Crm\Service\Timeline\Layout\Menu\MenuItem;
 use Bitrix\Crm\Service\Timeline\Layout\Menu\MenuItemFactory;
 use Bitrix\Main\DI\ServiceLocator;
@@ -29,13 +31,14 @@ final class Document extends Configurable
 
 	public function getIconCode(): ?string
 	{
-		return 'document';
+		return Icon::DOCUMENT;
 	}
 
 	public function getLogo(): ?Layout\Body\Logo
 	{
 		return
-			(new Layout\Body\Logo('document-print'))
+			Logo::getInstance(Logo::DOCUMENT_PRINT)
+				->createLogo()
 				->setAdditionalIconCode('search')
 				->setAction($this->getOpenDocumentAction())
 		;
@@ -201,14 +204,19 @@ final class Document extends Configurable
 		{
 			if ($signIntegration::isEnabledInCurrentTariff())
 			{
-				$signButton = (new Layout\Footer\Button(Loc::getMessage('CRM_COMMON_ACTION_SIGN'), Layout\Footer\Button::TYPE_SECONDARY))
-					->setAction(
-						(new Layout\Action\JsEvent('Document:ConvertDeal'))
-							->addActionParamInt('documentId', $this->getDocumentId())
-							->setAnimation(Layout\Action\Animation::showLoaderForBlock())
-					)
-					->setScopeWeb()
-				;
+				if (\Bitrix\Crm\Service\Container::getInstance()
+				->getUserPermissions()
+				->checkAddPermissions(\CCrmOwnerType::SmartDocument))
+				{
+					$signButton = (new Layout\Footer\Button(Loc::getMessage('CRM_COMMON_ACTION_SIGN'), Layout\Footer\Button::TYPE_SECONDARY))
+						->setAction(
+							(new Layout\Action\JsEvent('Document:ConvertDeal'))
+								->addActionParamInt('documentId', $this->getDocumentId())
+								->setAnimation(Layout\Action\Animation::showLoaderForBlock())
+						)
+						->setScopeWeb()
+					;
+				}
 			}
 			else
 			{
@@ -221,7 +229,10 @@ final class Document extends Configurable
 				;
 			}
 
-			$buttons['sign'] = $signButton;
+			if (isset($signButton))
+			{
+				$buttons['sign'] = $signButton;
+			}
 		}
 
 		return $buttons;
@@ -265,8 +276,12 @@ final class Document extends Configurable
 	{
 		$menuItems = parent::getMenuItems();
 
-		$downloadPdfAction = (new Layout\Action\JsEvent('Document:DownloadPdf'));
 		$pdfUrl = $this->getPdfUrl();
+		$docxUrl = (string)$this->getDownloadUrl();
+
+		$downloadPdfAction = (new Layout\Action\JsEvent('Document:DownloadPdf'))
+			->addActionParamString('docxUrl', $docxUrl);
+
 		if ($pdfUrl)
 		{
 			$downloadPdfAction->addActionParamString('pdfUrl', (string)$pdfUrl);
@@ -275,7 +290,6 @@ final class Document extends Configurable
 		$menuItems['downloadPdf'] =
 			(new MenuItem(Loc::getMessage('CRM_COMMON_ACTION_DOWNLOAD_FORMAT', ['#FORMAT#' => 'PDF'])))
 				->setAction($downloadPdfAction)
-				->setScopeWeb()
 		;
 
 		$menuItems['downloadDocx'] =
@@ -284,7 +298,6 @@ final class Document extends Configurable
 					(new Layout\Action\JsEvent('Document:DownloadDocx'))
 						->addActionParamString('docxUrl', (string)$this->getDownloadUrl())
 				)
-				->setScopeWeb()
 		;
 
 		$menuItems['delete'] = MenuItemFactory::createDeleteMenuItem()

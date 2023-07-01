@@ -4,6 +4,7 @@ namespace Bitrix\Crm\Service\Timeline\Item;
 
 use Bitrix\Crm\Service\Timeline\Item\DealProductList\ExpandableListFactory;
 use Bitrix\Crm\Service\Timeline\Layout;
+use Bitrix\Crm\Service\Timeline\Layout\Common\Logo;
 use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__DIR__ . '/Ecommerce.php');
@@ -31,7 +32,7 @@ class ProductCompilationSentToCustomer extends Configurable
 	 */
 	public function getIconCode(): ?string
 	{
-		return 'store';
+		return Layout\Common\Icon::STORE;
 	}
 
 	/**
@@ -39,7 +40,9 @@ class ProductCompilationSentToCustomer extends Configurable
 	 */
 	public function getLogo(): ?Layout\Body\Logo
 	{
-		return (new Layout\Body\Logo('shop'))->setInCircle();
+		return Logo::getInstance(Logo::SHOP)
+			->createLogo()
+		;
 	}
 
 	/**

@@ -16,9 +16,9 @@ use Bitrix\Main\Type\DateTime;
  *
  * <<< ORMENTITYANNOTATION
  * @method static EO_PredictionQueue_Query query()
- * @method static EO_PredictionQueue_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_PredictionQueue_Result getByPrimary($primary, array $parameters = [])
  * @method static EO_PredictionQueue_Result getById($id)
- * @method static EO_PredictionQueue_Result getList(array $parameters = array())
+ * @method static EO_PredictionQueue_Result getList(array $parameters = [])
  * @method static EO_PredictionQueue_Entity getEntity()
  * @method static \Bitrix\Crm\Ml\PredictionQueue createObject($setDefaultValues = true)
  * @method static \Bitrix\Crm\Ml\Internals\EO_PredictionQueue_Collection createCollection()

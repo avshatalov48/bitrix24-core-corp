@@ -4,6 +4,7 @@ namespace Bitrix\CrmMobile\Entity;
 
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Factory;
+use Bitrix\Crm\Settings\Crm;
 use Bitrix\Crm\Settings\LeadSettings;
 
 final class FactoryProvider
@@ -15,8 +16,8 @@ final class FactoryProvider
 	{
 		$factories = Container::getInstance()->getTypesMap()->getFactories();
 
-		$factories = static::filterSupportedFactories($factories);
-		$factories = static::filterPermittedFactories($factories);
+		$factories = self::filterSupportedFactories($factories);
+		$factories = self::filterPermittedFactories($factories);
 
 		return $factories;
 	}
@@ -30,44 +31,63 @@ final class FactoryProvider
 
 		$factories = Container::getInstance()->getTypesMap()->getFactories();
 		$userPermissions = Container::getInstance()->getUserPermissions();
-		$supportedEntityNames = static::getSupportedEntityNames();
+		$supportedEntityTypeIds = self::getSupportedEntityTypeIds();
 
 		foreach ($factories as $factory)
 		{
 			$entityTypeId = $factory->getEntityTypeId();
-			if (!$userPermissions->checkReadPermissions($entityTypeId))
+			$categoryId = self::getCategoryIdForCheckPermission($factory);
+
+			if (!$userPermissions->checkReadPermissions($entityTypeId, 0, $categoryId))
 			{
 				continue;
 			}
 
-			$entityTypeName = $factory->getEntityName();
 			$result[] = [
 				'entityTypeId' => $entityTypeId,
-				'entityTypeName' => $entityTypeName,
+				'entityTypeName' => $factory->getEntityName(),
 				'title' => $factory->getEntityDescription(),
-				'supported' => in_array($entityTypeName, $supportedEntityNames, true),
+				'supported' => in_array($entityTypeId, $supportedEntityTypeIds, true),
+				'restricted' => RestrictionManager::isEntityRestricted($entityTypeId),
 			];
 		}
 
 		return $result;
 	}
 
-	public static function getSupportedEntityNames(): array
+	public static function getSupportedEntityTypeIds(): array
 	{
 		$entities = [];
+		$dynamicEntities = [];
 
 		if (LeadSettings::isEnabled())
 		{
-			$entities[] = \CCrmOwnerType::LeadName;
+			$entities[] = \CCrmOwnerType::Lead;
+		}
+
+		if (Crm::isMobileDynamicTypesEnabled())
+		{
+			$dynamicTypesMap = Container::getInstance()->getDynamicTypesMap()->load([
+				'isLoadStages' => false,
+				'isLoadCategories' => false,
+			]);
+
+			$dynamicEntities = array_map(
+				static fn ($type) => $type->getEntityTypeId(),
+				$dynamicTypesMap->getTypes()
+			);
 		}
 
 		return array_merge(
 			$entities,
 			[
-				\CCrmOwnerType::DealName,
-				\CCrmOwnerType::ContactName,
-				\CCrmOwnerType::CompanyName,
-			]
+				\CCrmOwnerType::Deal,
+				\CCrmOwnerType::Contact,
+				\CCrmOwnerType::Company,
+				\CCrmOwnerType::SmartInvoice,
+				\CCrmOwnerType::Quote,
+			],
+			$dynamicEntities
 		);
 	}
 
@@ -76,14 +96,14 @@ final class FactoryProvider
 		$factoryMap = [];
 		foreach ($factories as $factory)
 		{
-			$factoryMap[$factory->getEntityName()] = $factory;
+			$factoryMap[$factory->getEntityTypeId()] = $factory;
 		}
 
 		$result = [];
 
-		foreach (static::getSupportedEntityNames() as $entityName)
+		foreach (self::getSupportedEntityTypeIds() as $entityTypeId)
 		{
-			$factory = $factoryMap[$entityName] ?? null;
+			$factory = $factoryMap[$entityTypeId] ?? null;
 			if ($factory)
 			{
 				$result[] = $factory;
@@ -100,12 +120,22 @@ final class FactoryProvider
 
 		foreach ($factories as $factory)
 		{
-			if ($userPermissions->checkReadPermissions($factory->getEntityTypeId()))
+			$categoryId = self::getCategoryIdForCheckPermission($factory);
+			if ($userPermissions->checkReadPermissions($factory->getEntityTypeId(), 0, $categoryId))
 			{
 				$result[] = $factory;
 			}
 		}
 
 		return $result;
+	}
+
+	private static function getCategoryIdForCheckPermission(Factory $factory): ?int
+	{
+		return (
+			$factory->getEntityTypeId() === \CCrmOwnerType::Contact
+				? $factory->getDefaultCategory()->getId()
+				: null
+		);
 	}
 }

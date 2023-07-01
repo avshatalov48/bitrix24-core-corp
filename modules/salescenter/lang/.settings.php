@@ -7,4 +7,7 @@ return [
 			'en',
 		],
 	],
+	'lib/component/paymentslip.php' => [
+		'languages' => ['ru']
+	],
 ];

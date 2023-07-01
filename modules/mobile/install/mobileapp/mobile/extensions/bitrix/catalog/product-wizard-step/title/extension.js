@@ -1,7 +1,10 @@
 (() => {
-	const { BarcodeType } = jn.require('layout/ui/fields/barcode');
-	const { StringType } = jn.require('layout/ui/fields/string');
-	const { FocusManager } = jn.require('layout/ui/fields/focus-manager');
+	const require = (ext) => jn.require(ext);
+
+	const { BarcodeType } = require('layout/ui/fields/barcode');
+	const { StringType } = require('layout/ui/fields/string');
+	const { FocusManager } = require('layout/ui/fields/focus-manager');
+	const { Loc } = require('loc');
 
 	class FooterComponent extends LayoutComponent
 	{
@@ -10,7 +13,7 @@
 			super(props);
 
 			this.state = {
-				sections: []
+				sections: [],
 			};
 		}
 
@@ -19,7 +22,7 @@
 			return View({
 					style: CatalogProductWizardStepStyles.footer.container,
 				},
-				this.renderSections()
+				this.renderSections(),
 			);
 		}
 
@@ -35,17 +38,17 @@
 				},
 				Text({
 					style: CatalogProductWizardStepStyles.footer.link,
-					text: BX.message('WIZARD_STEP_FOOTER_BIND_TO_SECTION')
+					text: Loc.getMessage('WIZARD_STEP_FOOTER_BIND_TO_SECTION'),
 				}),
 				sections.length ?
 					Text({
 						style: {
 							paddingTop: 8,
 							fontSize: 13,
-							color: '#A8ADB4',
+							color: '#a8adb4',
 
 						},
-						text: BX.message('WIZARD_STEP_FOOTER_SECTION_BINDINGS').replace('#SECTIONS#', sections.join(', ')),
+						text: Loc.getMessage('WIZARD_STEP_FOOTER_SECTION_BINDINGS').replace('#SECTIONS#', sections.join(', ')),
 					})
 					: null,
 			);
@@ -65,9 +68,9 @@
 				initSelectedIds: this.state.sections.map(section => section.id),
 				events: {
 					onClose: (sections) => {
-						this.setState({sections});
+						this.setState({ sections });
 						this.props.onChangeSection(sections);
-					}
+					},
 				},
 				widgetParams: {
 					backdrop: {
@@ -93,19 +96,24 @@
 		{
 			this.clearFields();
 
+			const productName = this.entity.get('NAME', '');
+
 			this.addField(
 				'NAME',
 				StringType,
-				BX.message('WIZARD_FIELD_PRODUCT_NAME'),
+				Loc.getMessage('WIZARD_FIELD_PRODUCT_NAME'),
 				this.entity.get('NAME', ''),
 				{
-					required: true
-				}
+					required: true,
+					config: {
+						selectionOnFocus: productName === Loc.getMessage('WIZARD_FIELD_PRODUCT_NEW_NAME'),
+					},
+				},
 			);
 			this.addField(
 				'BARCODE',
 				BarcodeType,
-				BX.message('WIZARD_FIELD_PRODUCT_BARCODE'),
+				Loc.getMessage('WIZARD_FIELD_PRODUCT_BARCODE'),
 				this.entity.get('BARCODE', ''),
 			);
 		}
@@ -113,8 +121,7 @@
 		onMoveToNextStep()
 		{
 			return super.onMoveToNextStep()
-				.then(() => this.entity.save())
-			;
+				.then(() => this.entity.save());
 		}
 
 		renderFooter()
@@ -126,7 +133,7 @@
 					this.onChange('SECTION', sections.length ? sections[0] : null);
 				},
 				iblockId: this.entity.getIblockId(),
-			})
+			});
 		}
 	}
 

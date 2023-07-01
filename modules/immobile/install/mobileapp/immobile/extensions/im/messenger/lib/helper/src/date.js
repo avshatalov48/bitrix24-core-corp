@@ -5,14 +5,14 @@
  */
 jn.define('im/messenger/lib/helper/date', (require, exports, module) => {
 
-	const { Type } = jn.require('type');
+	const { Type } = require('type');
 
 	/**
 	 * @class DateHelper
 	 */
 	class DateHelper
 	{
-		toDate(date, defaultValue = new Date())
+		cast(date, defaultValue = new Date())
 		{
 			let result = defaultValue;
 

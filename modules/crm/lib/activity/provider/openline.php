@@ -206,7 +206,6 @@ class OpenLine extends Base
 			$logMessageId = LogMessageEntry::detectIdByParams(
 				$activityFields['PROVIDER_PARAMS']['USER_CODE'],
 				LogMessageType::OPEN_LINE_INCOMING,
-				'SOURCE'
 			);
 			if (isset($logMessageId))
 			{
@@ -215,6 +214,18 @@ class OpenLine extends Base
 					'ASSOCIATED_ENTITY_ID' => $activityFields['ID'],
 				]);
 			}
+		}
+	}
+
+	public static function onBeforeComplete(int $id, array $activityFields, array $params = null)
+	{
+		if (
+			isset($activityFields['COMPLETED'])
+			&& $activityFields['COMPLETED'] === 'N'
+			&& !empty($activityFields['PROVIDER_PARAMS']['USER_CODE'])
+		)
+		{
+			OpenLineManager::closeDialog($activityFields['PROVIDER_PARAMS']['USER_CODE']);
 		}
 	}
 

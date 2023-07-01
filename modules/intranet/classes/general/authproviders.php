@@ -179,7 +179,7 @@ class CIntranetAuthProvider extends CAuthProvider implements IProviderInterface
 				$arItem = Array(
 					"ID" => "IU".$arUser["ID"],
 					"NAME" => CUser::FormatName(CSite::GetNameFormat(false), $arUser, true, false),
-					"AVATAR" => $arPhoto['CACHE']['src'],
+					"AVATAR" => $arPhoto['CACHE']['src'] ?? '',
 					"DESC" => $arUser['WORK_POSITION'] ? $arUser['WORK_POSITION'] : $arUser['PERSONAL_PROFESSION'],
 				);
 				$elements .= CFinder::GetFinderItem($arFinderParams, $arItem);
@@ -439,7 +439,7 @@ class CIntranetAuthProvider extends CAuthProvider implements IProviderInterface
 
 			foreach($arLRU as $val)
 			{
-				$elements .= $arElements[$val];
+				$elements .= $arElements[$val] ?? '';
 			}
 		}
 
@@ -475,7 +475,7 @@ class CIntranetAuthProvider extends CAuthProvider implements IProviderInterface
 				{
 					$iblockSectionID = intval($arRes['IBLOCK_SECTION_ID']);
 
-					if (!is_array($arStructure[$iblockSectionID]))
+					if (!isset($arStructure[$iblockSectionID]) || !is_array($arStructure[$iblockSectionID]))
 						$arStructure[$iblockSectionID] = array($arRes['ID']);
 					else
 						$arStructure[$iblockSectionID][] = $arRes['ID'];
@@ -565,7 +565,7 @@ class CIntranetAuthProvider extends CAuthProvider implements IProviderInterface
 					"DR#ID#" => GetMessage("authprov_check_dr"),
 				),
 			);
-			if (is_array($arStructure[$ID]))
+			if (isset($arStructure[$ID]) && is_array($arStructure[$ID]))
 			{
 				$arItem['CHILD'] = self::InEmployeeDrawStructure($arStructure, $arSections, $ID);
 			}
@@ -610,7 +610,7 @@ class CIntranetAuthProvider extends CAuthProvider implements IProviderInterface
 
 	public static function OnAfterUserAdd($arFields)
 	{
-		if (isset($arFields["UF_DEPARTMENT"]))
+		if (isset($arFields["UF_DEPARTMENT"]) && isset($arFields["ID"]))
 		{
 			// recalculate for user himself
 			CAccess::RecalculateForUser($arFields["ID"], self::ID);

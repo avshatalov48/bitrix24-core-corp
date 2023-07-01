@@ -1,5 +1,4 @@
-(() =>
-{
+(() => {
 	/**
 	 * @class RequestExecutor
 	 * @alias RestExecutor
@@ -31,34 +30,31 @@
 				{
 					if (!this.cacheId)
 					{
-						this.cacheId = Object.toMD5(this.options) + "/" + this.method;
+						this.cacheId = Object.toMD5(this.options) + '/' + this.method;
 					}
-					let cache = Application.storage.getObject(this.cacheId, null);
-					if(cache != null)
+					const cache = Application.storage.getObject(this.cacheId, null);
+					if (cache != null)
 					{
 						cacheExists = true;
 						this.onCacheFetched(cache);
 					}
 				}
 
-
-				if(this.onRequestStart)
+				if (this.onRequestStart)
 				{
-					this.onRequestStart(cacheExists)
+					this.onRequestStart(cacheExists);
 				}
 				BX.rest.callMethod(this.method, this.options, null, this.onRequestCreate.bind(this))
-					.then(res =>
-					{
-						let result = res.answer.result;
+					.then(res => {
+						const result = res.answer.result;
 						if (this.cacheId && res.answer.error == null)
 						{
-							Application.storage.setObject(this.cacheId, result)
+							Application.storage.setObject(this.cacheId, result);
 						}
 
 						return this.__internalHandler(res, false, resolve);
 					})
-					.catch(res =>
-					{
+					.catch(res => {
 						this.__internalHandler(res, false, reject);
 					});
 			});
@@ -72,12 +68,10 @@
 				{
 					this.abortCurrentRequest();
 					this.currentAnswer.next()
-						.then((res) =>
-						{
-							this.__internalHandler(res, true,resolve);
+						.then((res) => {
+							this.__internalHandler(res, true, resolve);
 						})
-						.catch((res) =>
-						{
+						.catch((res) => {
 							this.__internalHandler(res, true, reject);
 						});
 				}
@@ -100,14 +94,14 @@
 
 		hasNext()
 		{
-			return (this.currentAnswer != null && typeof this.currentAnswer.answer.next != "undefined");
+			return (this.currentAnswer != null && typeof this.currentAnswer.answer.next !== 'undefined');
 		}
 
 		getNextCount()
 		{
 			if (this.hasNext())
 			{
-				let countLeft = this.currentAnswer.answer.total - this.currentAnswer.answer.next;
+				const countLeft = this.currentAnswer.answer.total - this.currentAnswer.answer.next;
 				return countLeft > 50 ? 50 : countLeft;
 			}
 
@@ -133,22 +127,22 @@
 		 */
 		__internalHandler(ajaxAnswer, loadMore, promiseCallback)
 		{
-			let result = ajaxAnswer.answer.result;
+			const result = ajaxAnswer.answer.result;
 			let error;
 			if (ajaxAnswer.answer.hasOwnProperty('error'))
 			{
-				error = {code: ajaxAnswer.answer.error, description: ajaxAnswer.answer.error_description};
+				error = { code: ajaxAnswer.answer.error, description: ajaxAnswer.answer.error_description };
 			}
 			this.currentAnswer = ajaxAnswer;
 
-			if (typeof this.handler == "function")
+			if (typeof this.handler === 'function')
 			{
-				this.handler(result, loadMore, error)
+				this.handler(result, loadMore, error);
 			}
 
-			if(promiseCallback)
+			if (promiseCallback)
 			{
-				promiseCallback({result, loadMore, error});
+				promiseCallback({ result, loadMore, error });
 			}
 		}
 
@@ -162,6 +156,7 @@
 			this.handler = func;
 			return this;
 		}
+
 		/**
 		 *
 		 * @param {function<object>} func
@@ -217,10 +212,13 @@
 			this.timeoutId = 0;
 			this.delay = 500;
 		}
+
 		setDelay(delay)
 		{
-			if(typeof delay !== "undefined")
+			if (typeof delay !== 'undefined')
+			{
 				this.delay = Number(delay);
+			}
 
 			return this;
 		}
@@ -234,28 +232,49 @@
 		call()
 		{
 			this.abortCurrentRequest();
-			return new Promise((resolve, reject)=>{
-				this.timeoutId = setTimeout(()=> super.call().then().catch(reject), this.delay);
-			})
+			return new Promise((resolve, reject) => {
+				this.timeoutId = setTimeout(() => super.call().then().catch(reject), this.delay);
+			});
 
 		}
 	}
 
-	let ActionPromiseWrapper = promise => {
+	const ActionPromiseWrapper = promise => {
 		return new Promise((resolve, reject) =>
 			promise
 				.then(result => {
-					if (result["status"] === "error")
+					if (result['status'] === 'error')
 					{
-						reject(result)
+						reject(result);
 					}
 					else
 					{
-						resolve(result)
+						resolve(result);
 					}
 				})
-				.catch(result => reject.call(null, result)));
-	}
+				.catch(result => {
+					if (result && result.status && result.hasOwnProperty('data'))
+					{
+						reject(result);
+					}
+					else
+					{
+						reject({
+							status: 'error',
+							data: {
+								ajaxRejectData: result,
+							},
+							errors: [
+								{
+									code: 'NETWORK_ERROR',
+									message: 'Network error',
+								},
+							],
+						});
+					}
+				}),
+		);
+	};
 
 	/**
 	 *
@@ -279,19 +298,23 @@
 	 * @param {number} [config.navigation.page]
 	 * @param {function} [config.onCreate]
 	 */
-	BX.ajax.runAction = (action, config = {} )=>{
+	BX.ajax.runAction = (action, config = {}) => {
 
-		let getParameters = prepareAjaxGetParameters(config);
+		const getParameters = prepareAjaxGetParameters(config);
 		getParameters.action = action;
-		let onCreate = (typeof config["onCreate"] == "function"? config["onCreate"]: ()=>{});
-		let url = '/bitrix/services/main/ajax.php?' + BX.ajax.prepareData(getParameters, null, false);
-		let prepareData = true
 
-		if (typeof config.prepareData !== "undefined") {
-			prepareData = Boolean(config.prepareData)
+		const onCreate = typeof config['onCreate'] === 'function' ? config['onCreate'] : () => {
+		};
+		const url = '/bitrix/services/main/ajax.php?' + BX.ajax.prepareData(getParameters, null, false);
+		let prepareData = true;
+
+		if (typeof config.prepareData !== 'undefined')
+		{
+			prepareData = Boolean(config.prepareData);
 		}
 
-		if (config.json) {
+		if (config.json)
+		{
 			prepareData = false;
 			config.data = JSON.stringify(config.json);
 			config.headers = config.headers || {};
@@ -300,16 +323,17 @@
 
 		config = {
 			url: url,
-			method:"POST",
+			method: 'POST',
 			uploadBinary: Boolean(config.binary),
-			dataType:"json",
+			dataType: 'json',
 			data: config.data,
 			headers: config.headers,
-			onUploadProgress: config.onprogressupload || function(){},
-			prepareData: prepareData
+			onUploadProgress: config.onprogressupload || function() {
+			},
+			prepareData: prepareData,
 		};
 
-		let ajaxPromise = BX.ajax(config);
+		const ajaxPromise = BX.ajax(config);
 		onCreate(config.xhr);
 		return ActionPromiseWrapper(ajaxPromise);
 	};
@@ -330,13 +354,12 @@
 	 * @param {function} [config.onCreate]
 	 */
 
-	BX.ajax.runComponentAction = (component, action, config = {} )=>{
-		config.mode = config.mode || 'ajax';
-		let getParameters = prepareAjaxGetParameters(config);
+	BX.ajax.runComponentAction = (component, action, config = {}) => {
+		const getParameters = prepareAjaxGetParameters(config);
 		getParameters.action = action;
 		getParameters.c = component;
-		let onCreate = (typeof config["onCreate"] == "function"? config["onCreate"]: ()=>{});
-		let url = '/bitrix/services/main/ajax.php?' + BX.ajax.prepareData(
+		const onCreate = typeof config['onCreate'] === 'function' ? config['onCreate'] : () => {};
+		const url = '/bitrix/services/main/ajax.php?' + BX.ajax.prepareData(
 			getParameters,
 			null,
 			/**
@@ -345,35 +368,41 @@
 			 *
 			 * Until we are passing URL here without domain here we are safe to not encode parameters
 			 */
-			false
+			false,
 		);
 		config = {
 			url: url,
-			method:"POST",
-			dataType:"json",
+			method: 'POST',
+			dataType: 'json',
 			data: config.data,
 		};
-		let ajaxPromise = BX.ajax(config);
+
+		const ajaxPromise = BX.ajax(config);
 		onCreate(config.xhr);
 		return ActionPromiseWrapper(ajaxPromise);
 	};
 
-	BX.ajax.prepareData = (originalData, prefix, encode = true) =>
-	{
-		var data = '';
+	BX.ajax.prepareData = (originalData, prefix, encode = true) => {
+		let data = '';
 		if (null !== originalData)
 		{
-			for (var paramName in originalData)
+			for (const paramName in originalData)
 			{
 				if (originalData.hasOwnProperty(paramName))
 				{
 					if (data.length > 0)
+					{
 						data += '&';
-					var name = encode ? encodeURIComponent(paramName) : paramName;
+					}
+					let name = encode ? encodeURIComponent(paramName) : paramName;
 					if (prefix)
+					{
 						name = prefix + '[' + name + ']';
+					}
 					if (typeof originalData[paramName] === 'object')
-						data += BX.ajax.prepareData(originalData[paramName], name);
+					{
+						data += BX.ajax.prepareData(originalData[paramName], name, encode);
+					}
 					else
 					{
 						data += name + '=' + (encode ? encodeURIComponent(originalData[paramName]) : originalData[paramName]);
@@ -384,30 +413,33 @@
 		return data;
 	};
 
-	let prepareAjaxGetParameters = function(config)
-	{
-		let getParameters = config.getParameters || {};
-		if (typeof config.analyticsLabel == "string")
+	const prepareAjaxGetParameters = function(config) {
+		const getParameters = config.getParameters || {};
+
+		if (typeof config.analyticsLabel === 'string')
 		{
 			getParameters.analyticsLabel = config.analyticsLabel;
 		}
-		else if (typeof config.analyticsLabel == "object")
+		else if (typeof config.analyticsLabel === 'object')
 		{
 			getParameters.analyticsLabel = config.analyticsLabel;
 		}
+
 		if (typeof config.mode !== 'undefined')
 		{
-			getParameters.mode = config.mode;
+			getParameters.mode = config.mode || 'ajax';
 		}
+
 		if (config.navigation)
 		{
-			if(config.navigation.page)
+			if (config.navigation.page)
 			{
 				getParameters.nav = 'page-' + config.navigation.page;
 			}
-			if(config.navigation.size)
+
+			if (config.navigation.size)
 			{
-				if(getParameters.nav)
+				if (getParameters.nav)
 				{
 					getParameters.nav += '-';
 				}
@@ -439,6 +471,7 @@
 			 */
 			this.onCacheFetched = null;
 			this.cacheId = null;
+			this.uid = null;
 			this.jsonEnabled = false;
 		}
 
@@ -456,14 +489,14 @@
 			{
 				if (!this.cacheId)
 				{
-					this.cacheId = Object.toMD5(this.options) + '/' + Object.toMD5(this.navigation)  + '/' + this.action;
+					this.cacheId = Object.toMD5(this.options) + '/' + Object.toMD5(this.navigation) + '/' + this.action;
 				}
 				if (useCache)
 				{
 					const cache = Application.storage.getObject(this.cacheId, null);
 					if (cache !== null)
 					{
-						this.onCacheFetched(cache);
+						this.onCacheFetched(cache, this.uid);
 					}
 				}
 			}
@@ -471,14 +504,14 @@
 			const dataKey = this.jsonEnabled ? 'json' : 'data';
 
 			BX.ajax.runAction(this.action, {
-				[dataKey]:this.options,
-				navigation:this.navigation,
-				onCreate:this.onRequestCreate.bind(this)
-			})
+					[dataKey]: this.options,
+					navigation: this.navigation,
+					onCreate: this.onRequestCreate.bind(this),
+				})
 				.then(response => {
 					if (this.cacheId && (!response.errors || response.errors.length === 0))
 					{
-						Application.storage.setObject(this.cacheId, response)
+						Application.storage.setObject(this.cacheId, response);
 					}
 					return this.__internalHandler(response);
 				})
@@ -507,7 +540,7 @@
 		{
 			if (typeof this.handler === 'function')
 			{
-				this.handler(ajaxAnswer)
+				this.handler(ajaxAnswer, this.uid);
 			}
 		}
 
@@ -543,9 +576,24 @@
 			return this;
 		}
 
+		/**
+		 * @param {String} uid
+		 */
+		setUid(uid)
+		{
+			this.uid = uid;
+
+			return this;
+		}
+
+		getUid()
+		{
+			return this.uid;
+		}
+
 		updateOptions(options = null)
 		{
-			if(options != null && typeof options === "object")
+			if (options != null && typeof options === 'object')
 			{
 				this.options = Object.assign(this.options, options);
 			}
@@ -555,7 +603,7 @@
 
 		updateNavigation(navigation = null)
 		{
-			if(navigation !== null && typeof navigation === "object")
+			if (navigation !== null && typeof navigation === 'object')
 			{
 				this.navigation = Object.assign(this.navigation, navigation);
 			}
@@ -585,7 +633,7 @@
 		call()
 		{
 			clearTimeout(this.timeoutId);
-			this.timeoutId = setTimeout(() => super.call(), this.timeout)
+			this.timeoutId = setTimeout(() => super.call(), this.timeout);
 		}
 	}
 
@@ -594,7 +642,7 @@
 		RequestExecutor,
 		RunActionExecutor,
 		DelayedRestRequest,
-		[RequestExecutor, "RestExecutor"]
-	)
+		[RequestExecutor, 'RestExecutor'],
+	);
 
 })();

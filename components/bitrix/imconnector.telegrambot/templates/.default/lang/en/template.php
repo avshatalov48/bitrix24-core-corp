@@ -17,7 +17,7 @@ $MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_CREATE_BOT"] = "<span class=\"imconnect
 $MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_ESHOP_LINK"] = "Online store link";
 $MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_FINAL_FORM_DESCRIPTION"] = "Telegram is now connected to your Open channel. All messages sent via the bot will end up in Bitrix24";
 $MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_INDEX_ADDITIONAL_DESCRIPTION"] = "You have to <a href=\"#\" onclick=\"top.BX.Helper.show(\'#ID#\'); return false;\">create a Telegram bot</a> or use the one you already have. If you don't have a bot, we will help you create one and connect it to your Bitrix24.";
-$MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_INDEX_ADDITIONAL_DESCRIPTION_NEW"] = "You have to #LINK_START#create a Telegram bot#LINK_END# or use the one you already have. If you don't have an account, we will help you create it and connect it to your Bitrix24.";
+$MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_INDEX_ADDITIONAL_DESCRIPTION_NEW_MSGVER_2"] = "To connect Telegram to your Bitrix24, #LINK_START#create a Telegram bot#LINK_END# or connect the one you already have. If you don't have a public account, we'll help you create it in a few steps.";
 $MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_INDEX_LIST_ITEM_1"] = "Save contacts and communication history to the CRM";
 $MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_INDEX_LIST_ITEM_2"] = "Guide the customer through the sales funnel in the CRM";
 $MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_INDEX_LIST_ITEM_3"] = "Reply to your customers when and where they prefer";

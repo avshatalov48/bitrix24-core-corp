@@ -2,7 +2,6 @@
  * @module crm/entity-detail/component/timeline-push-processor
  */
 jn.define('crm/entity-detail/component/timeline-push-processor', (require, exports, module) => {
-
 	const { debounce } = require('utils/function');
 
 	const LISTEN_PUSH_COMMAND = 'timeline_item_action';
@@ -10,13 +9,14 @@ jn.define('crm/entity-detail/component/timeline-push-processor', (require, expor
 	/** @type {Function|null} */
 	let unsubscribe = null;
 
+	const alreadySubscribed = () => unsubscribe !== null;
+
 	/**
 	 * @param {string} tabId
 	 * @param {object} content
 	 * @param {DetailCardComponent} detailCard
 	 */
 	const listenTimelinePush = (tabId, content, detailCard) => {
-
 		if (tabId !== 'main')
 		{
 			return;
@@ -24,6 +24,11 @@ jn.define('crm/entity-detail/component/timeline-push-processor', (require, expor
 
 		const { timelinePushTag } = detailCard.getComponentParams();
 		if (!timelinePushTag)
+		{
+			return;
+		}
+
+		if (alreadySubscribed())
 		{
 			return;
 		}
@@ -61,7 +66,6 @@ jn.define('crm/entity-detail/component/timeline-push-processor', (require, expor
 	 * @param {DetailCardComponent} detailCard
 	 */
 	const onReceiveMessage = (message, detailCard) => {
-
 		/** @type {TimelineTab|undefined} */
 		const timelineTab = detailCard.getTab('timeline');
 
@@ -79,6 +83,11 @@ jn.define('crm/entity-detail/component/timeline-push-processor', (require, expor
 			{
 				reloadToDoNotificationParams(detailCard);
 			}
+		}
+
+		if (message.stream === 'history')
+		{
+			reloadEntityDocumentList(detailCard);
 		}
 	};
 
@@ -111,6 +120,7 @@ jn.define('crm/entity-detail/component/timeline-push-processor', (require, expor
 
 	const reloadToDoNotificationParams = debounce((detailCard) => fetchToDoNotificationParams(detailCard), 500, this);
 
-	module.exports = { listenTimelinePush };
+	const reloadEntityDocumentList = debounce((detailCard) => detailCard.emitReloadEntityDocumentList(), 500, this);
 
+	module.exports = { listenTimelinePush };
 });

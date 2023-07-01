@@ -31,7 +31,7 @@ $arResult['PATH_TO_DEAL_LIST'] = $arParams['PATH_TO_DEAL_LIST'] = CrmCheckPath(
 );
 $arParams['PATH_TO_DEAL_CATEGORY'] = CrmCheckPath(
 	'PATH_TO_DEAL_CATEGORY',
-		$arParams['PATH_TO_DEAL_CATEGORY'],
+		$arParams['PATH_TO_DEAL_CATEGORY'] ?? '',
 		$APPLICATION->GetCurPage().'?category_id=#category_id#'
 );
 
@@ -428,20 +428,23 @@ if ($arParams['DISABLE_COMPENSATION'] !== 'Y')
 // calculate procent
 foreach ($arResult['STAGE_LIST'] as $k => $v)
 {
-	$info = $arResult['STAGE_COUNT'][$k];
-	$info['PROCENT'] = ($iDealCount > 0 ? round(($arResult['STAGE_COUNT'][$k]['COUNT_FUNNEL']*100)/$iDealCount) : 0);
-	$info['TITLE'] = $v;
-	$info['STAGE_ID'] = $k;
-
-	foreach ($arResult['CURRENCY_LIST'] as $currencyID => $currencyName)
+	$info = $arResult['STAGE_COUNT'][$k] ?? null;
+	if (is_array($info))
 	{
-		$sum = isset($info['OPPORTUNITY_FUNNEL']) && isset($info['OPPORTUNITY_FUNNEL'][$currencyID])
-			? (double)$info['OPPORTUNITY_FUNNEL'][$currencyID] : 0.0;
+		$info['PROCENT'] = ($iDealCount > 0 ? round(($info['COUNT_FUNNEL'] * 100) / $iDealCount) : 0);
+		$info['TITLE'] = $v;
+		$info['STAGE_ID'] = $k;
 
-		$info['OPPORTUNITY_FUNNEL_'.$currencyID] = $sum;
+		foreach ($arResult['CURRENCY_LIST'] as $currencyID => $currencyName)
+		{
+			$sum = isset($info['OPPORTUNITY_FUNNEL']) && isset($info['OPPORTUNITY_FUNNEL'][$currencyID])
+				? (double)$info['OPPORTUNITY_FUNNEL'][$currencyID] : 0.0;
+
+			$info['OPPORTUNITY_FUNNEL_'.$currencyID] = $sum;
+		}
+
+		$arResult['FUNNEL'][] = &$info;
 	}
-
-	$arResult['FUNNEL'][] = &$info;
 	unset($info);
 }
 

@@ -6,4 +6,4 @@ $MESS['CRM_TIMELINE_POSTPONE_3H'] = '3 часа';
 $MESS['CRM_TIMELINE_POSTPONE_1D'] = '1 день';
 $MESS['CRM_TIMELINE_POSTPONE_2D'] = '2 дня';
 $MESS['CRM_TIMELINE_POSTPONE_3D'] = '3 дня';
-$MESS['CRM_TIMELINE_ACTIVITY_DELETION_CONFIRM'] = 'Вы действительно желаете удалить это событие?';
+$MESS['CRM_TIMELINE_ACTIVITY_DELETION_CONFIRM'] = 'Вы действительно хотите удалить это событие?';

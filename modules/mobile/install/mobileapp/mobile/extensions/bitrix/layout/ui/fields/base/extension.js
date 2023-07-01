@@ -6,14 +6,15 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 	const { transition } = require('animation');
 	const { Haptics } = require('haptics');
 	const { FocusManager } = require('layout/ui/fields/focus-manager');
+	const { PureComponent } = require('layout/pure-component');
 	const { throttle, debounce } = require('utils/function');
 	const { isEqual, mergeImmutable, isEmpty } = require('utils/object');
 	const { capitalize, stringify } = require('utils/string');
 	const { isNil } = require('utils/type');
-	const { arrowDown, arrowUp } = require('assets/common');
+	const { chevronDown, chevronUp } = require('assets/common');
 
 	const ERROR_TEXT_COLOR = '#ff5752';
-	const TOOLTIP_COLOR = '#E89B06';
+	const TOOLTIP_COLOR = '#e89b06';
 
 	const TitlePosition = {
 		top: 'top',
@@ -39,13 +40,12 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 	 * @class BaseField
 	 * @abstract
 	 */
-	class BaseField extends LayoutComponent
+	class BaseField extends PureComponent
 	{
 		constructor(props)
 		{
 			super(props);
 
-			this.testId = props.testId || '';
 			this.state = {
 				focus: (props.focus || false),
 				errorMessage: null,
@@ -110,48 +110,21 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 				// componentDidUpdate still doesn't work correctly on Android, so we use this workaround
 				setTimeout(() => this.handleAdditionalFocusActions(), 0/*30*/);
 			}
-
-			this.testId = newProps.testId || '';
 		}
 
-		shouldComponentUpdate(nextProps, nextState)
+		get testId()
 		{
-			nextState = Array.isArray(nextState) ? nextState[0] : nextState;
+			return this.props.testId;
+		}
 
-			return !isEqual(this.props, nextProps) || !isEqual(this.state, nextState);
+		get showAllFromProps()
+		{
+			return BX.prop.getBoolean(this.getConfig(), 'showAll', false);
+		}
 
-			// ToDo DEV: enable for debug
-			// if (!isEqual(this.props, nextProps))
-			// {
-			// 	let found = false;
-			// 	for (const [key, value] of Object.entries(this.props))
-			// 	{
-			// 		if (!isEqual(this.props[key], nextProps[key]))
-			// 		{
-			// 			console.log(this.props.title, this.props, key, value, nextProps[key]);
-			// 			found = true;
-			// 		}
-			// 	}
-			//
-			// 	if (!found)
-			// 	{
-			// 		console.log('diff not found', this.props.title, this.props, nextProps);
-			// 	}
-			// }
-			//
-			// if (!isEqual(this.state, nextState))
-			// {
-			// 	console.log('!!! state not equal', this.state, nextState);
-			// }
-			//
-			// if (!isEqual(this.props, nextProps) || !isEqual(this.state, nextState))
-			// {
-			// 	return true;
-			// }
-			//
-			// console.log('OK!!! NO RENDER!!! ;)', this.props.title, this);
-			//
-			// return false;
+		isLogSuppressed()
+		{
+			return this.hasNestedFields();
 		}
 
 		useHapticOnChange()
@@ -204,6 +177,11 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 			return BX.prop.getBoolean(this.props, 'required', false);
 		}
 
+		showLeftIcon()
+		{
+			return BX.prop.getBoolean(this.props, 'showLeftIcon', true);
+		}
+
 		showRequired()
 		{
 			return BX.prop.getBoolean(this.props, 'showRequired', true);
@@ -253,7 +231,15 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 		{
 			const styles = this.getConfig().styles || {};
 
-			return BX.prop.getString(styles, 'externalWrapperBorderColor', null);
+			const borderColor = BX.prop.getString(styles, 'externalWrapperBorderColor', null);
+			const borderColorFocused = BX.prop.getString(styles, 'externalWrapperBorderColorFocused', null);
+
+			if (borderColorFocused !== null && this.state.focus)
+			{
+				return borderColorFocused;
+			}
+
+			return borderColor;
 		}
 
 		getExternalWrapperBackgroundColor()
@@ -318,6 +304,16 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 			return Promise.resolve();
 		}
 
+		onBeforeHandleChange()
+		{
+			if (typeof this.props.onBeforeChange === 'function')
+			{
+				return this.props.onBeforeChange();
+			}
+
+			return Promise.resolve();
+		}
+
 		getStyles()
 		{
 			let compiledStyles = this.getDefaultStyles();
@@ -355,7 +351,7 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 			};
 			const value = {
 				...base,
-				color: this.isDisabled() ? '#82888f' : '#333333',
+				color: this.isDisabled() ? '#828b95' : '#333333',
 			};
 
 			let styles = this.getBaseFieldStyles();
@@ -391,9 +387,14 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 					paddingTop: 8,
 					paddingBottom: this.hasErrorOrTooltip() ? 5 : 12,
 				},
+				contentWrapper: {
+					flexDirection: 'row',
+					alignItems: 'center',
+				},
 				innerWrapper: {
 					flexDirection: 'column',
 					flex: 1,
+					flexShrink: 2,
 				},
 				title: {
 					marginBottom: 2,
@@ -466,7 +467,17 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 				};
 			}
 
-			return {};
+			return {
+				marginHorizontal: 0,
+				paddingHorizontal: 0,
+				paddingVertical: 0,
+				backgroundColor: null,
+				borderRadius: 0,
+				borderColor: null,
+				borderWidth: 0,
+				borderBottomWidth: 0,
+				borderBottomColor: null,
+			};
 		}
 
 		getHiddenEmptyFieldStyles()
@@ -541,6 +552,13 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 				return null;
 			}
 
+			let leftIcons = null;
+
+			if (this.showLeftIcon())
+			{
+				leftIcons = this.renderLeftIcons();
+			}
+
 			this.styles = this.getStyles();
 
 			const titleContent = this.isLeftTitlePosition()
@@ -560,12 +578,9 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 					},
 					View(
 						{
-							style: {
-								flexDirection: 'row',
-								alignItems: 'center',
-							},
+							style: this.styles.contentWrapper,
 						},
-						this.renderLeftIcons(),
+						leftIcons,
 						titleContent,
 						this.renderRightIcons(),
 						this.renderAdditionalContent(),
@@ -623,7 +638,7 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 
 		getContentClickHandler()
 		{
-			if (this.isReadOnly() && !this.props.onContentClick)
+			if (this.isReadOnly() && !this.props.onContentClick && !this.customContentClickHandler)
 			{
 				return null;
 			}
@@ -820,6 +835,13 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 		isEmptyValue(value)
 		{
 			return stringify(value) === '';
+		}
+
+		isValid()
+		{
+			const error = this.getValidationError() || this.getValidationErrorOnFocusOut();
+
+			return !error;
 		}
 
 		validate(checkFocusOut = true)
@@ -1283,7 +1305,7 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 
 		renderShowAllButton(hiddenFieldsCount = null)
 		{
-			if (this.state.showAll || isNil(hiddenFieldsCount) || Number.isInteger(hiddenFieldsCount) && hiddenFieldsCount <= 0)
+			if (this.showAllFromProps || this.state.showAll || isNil(hiddenFieldsCount) || Number.isInteger(hiddenFieldsCount) && hiddenFieldsCount <= 0)
 			{
 				return null;
 			}
@@ -1317,7 +1339,7 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 						},
 						resizeMode: 'cover',
 						svg: {
-							content: arrowDown(),
+							content: chevronDown(),
 						},
 					}),
 				),
@@ -1334,7 +1356,7 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 
 		renderHideButton()
 		{
-			if (this.state.showAll && this.showHideButton)
+			if (!this.showAllFromProps && this.state.showAll && this.showHideButton)
 			{
 				return View(
 					{
@@ -1365,7 +1387,7 @@ jn.define('layout/ui/fields/base', (require, exports, module) => {
 							},
 							resizeMode: 'cover',
 							svg: {
-								content: arrowUp(),
+								content: chevronUp(),
 							},
 						}),
 					),

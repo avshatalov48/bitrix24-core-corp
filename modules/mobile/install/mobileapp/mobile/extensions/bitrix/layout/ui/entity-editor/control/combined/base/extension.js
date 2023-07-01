@@ -4,6 +4,7 @@
 jn.define('layout/ui/entity-editor/control/combined/base', (require, exports, module) => {
 
 	const { MultipleCombinedType } = require('layout/ui/fields/multiple-combined');
+	const { EntityEditorField } = require('layout/ui/entity-editor/control/field');
 	const { stringify } = require('utils/string');
 
 	/**

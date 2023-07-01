@@ -18,9 +18,9 @@ use Bitrix\Main\Result;
  *
  * <<< ORMENTITYANNOTATION
  * @method static EO_EntityRelation_Query query()
- * @method static EO_EntityRelation_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_EntityRelation_Result getByPrimary($primary, array $parameters = [])
  * @method static EO_EntityRelation_Result getById($id)
- * @method static EO_EntityRelation_Result getList(array $parameters = array())
+ * @method static EO_EntityRelation_Result getList(array $parameters = [])
  * @method static EO_EntityRelation_Entity getEntity()
  * @method static \Bitrix\Crm\Relation\EO_EntityRelation createObject($setDefaultValues = true)
  * @method static \Bitrix\Crm\Relation\EO_EntityRelation_Collection createCollection()

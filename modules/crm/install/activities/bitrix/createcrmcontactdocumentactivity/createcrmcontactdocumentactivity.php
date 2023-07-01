@@ -8,12 +8,21 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 $runtime = CBPRuntime::GetRuntime();
 $runtime->IncludeActivityFile('CreateDocumentActivity');
 
+/** @property-write string|null ErrorMessage */
 class CBPCreateCrmContactDocumentActivity extends CBPCreateDocumentActivity
 {
 	public function __construct($name)
 	{
 		parent::__construct($name);
+
+		//return
 		$this->arProperties["ContactId"] = 0;
+		$this->arProperties["ErrorMessage"] = null;
+
+		$this->setPropertiesTypes([
+			'ContactId' => ['Type' => 'int'],
+			'ErrorMessage' => ['Type' => 'string'],
+		]);
 	}
 
 	public function Execute()
@@ -32,9 +41,24 @@ class CBPCreateCrmContactDocumentActivity extends CBPCreateDocumentActivity
 			$fields = $this->prepareFieldsValues($documentType, $fields);
 		}
 
-		$this->ContactId = $documentService->CreateDocument($documentType, $fields);
+		try
+		{
+			$this->ContactId = $documentService->CreateDocument($documentType, $fields);
+		}
+		catch (Exception $e)
+		{
+			$this->WriteToTrackingService($e->getMessage(), 0, CBPTrackingType::Error);
+			$this->ErrorMessage = $e->getMessage();
+		}
 
 		return CBPActivityExecutionStatus::Closed;
+	}
+
+	protected function reInitialize()
+	{
+		parent::reInitialize();
+		$this->ContactId = 0;
+		$this->ErrorMessage = null;
 	}
 
 	public static function ValidateProperties($arTestProperties = array(), CBPWorkflowTemplateUser $user = null)

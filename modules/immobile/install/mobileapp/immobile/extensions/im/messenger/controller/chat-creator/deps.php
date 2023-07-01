@@ -4,11 +4,11 @@ return [
 	'extensions' => [
 		'type',
 		'loc',
-		'im:messenger/controller/base',
+		'utils/object',
+		'im:messenger/core',
 		'im:messenger/lib/params',
 		'im:chat/dataconverter',
 		'im:chat/searchscopes',
-		'im:chat/utils',
 	],
 	'bundle' => [
 		'./src/chat-creator',

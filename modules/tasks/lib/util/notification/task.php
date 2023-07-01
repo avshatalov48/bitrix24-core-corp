@@ -32,7 +32,7 @@ final class Task
 	public static function createOverdueChats(): void
 	{
 		if (
-			$GLOBALS['__TASKS_DEVEL_ENV__']
+			isset($GLOBALS['__TASKS_DEVEL_ENV__'])
 			|| Option::get('tasks', 'create_overdue_chats', 'N') === 'N'
 		)
 		{

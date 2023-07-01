@@ -9,13 +9,14 @@ use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
 use Bitrix\Sale\Registry;
 use Bitrix\SalesCenter\Integration\LandingManager;
+use Bitrix\Sale;
 
 class Payment extends Base
 {
 	public function getPrimaryAutoWiredParameter()
 	{
 		return new ExactParameter(
-			\Bitrix\Sale\Payment::class,
+			Sale\Payment::class,
 			'payment',
 			function($className, $id) {
 
@@ -26,33 +27,15 @@ class Payment extends Base
 				}
 
 				$id = (int)$id;
+				$payment = Sale\Repository\PaymentRepository::getInstance()->getById($id);
 
-				$registry = Registry::getInstance(Registry::REGISTRY_TYPE_ORDER);
-
-				/** @var \Bitrix\Sale\Payment $paymentClass */
-				$paymentClass = $registry->getPaymentClassName();
-
-				$r = $paymentClass::getList([
-					'select' => ['ORDER_ID'],
-					'filter' => ['=ID' => $id]
-				]);
-
-				if ($row = $r->fetch())
+				if ($payment)
 				{
-					/** @var \Bitrix\Sale\Order $orderClass */
-					$orderClass = $registry->getOrderClassName();
+					return $payment;
+				}
 
-					$order = $orderClass::load($row['ORDER_ID']);
-					$payment = $order->getPaymentCollection()->getItemById($id);
-					if ($payment)
-					{
-						return $payment;
-					}
-				}
-				else
-				{
-					$this->addError(new Error('payment is not exists', 200640400001));
-				}
+				$this->addError(new Error('payment is not exists', 200640400001));
+
 				return null;
 			}
 		);
@@ -92,10 +75,11 @@ class Payment extends Base
 	}
 
 	/**
-	 * @param \Bitrix\Sale\Payment $payment
+	 * @param Sale\Payment $payment
+	 * @param array $options
 	 * @return array[]|false
 	 */
-	public function getPublicUrlAction(\Bitrix\Sale\Payment $payment)
+	public function getPublicUrlAction(Sale\Payment $payment, array $options = [])
 	{
 		if (LandingManager::getInstance()->isOrderPublicUrlAvailable())
 		{
@@ -117,10 +101,14 @@ class Payment extends Base
 		}
 
 		return [
-				'payment' => [
-					'url' => $urlInfo['url'],
-					'shortUrl' => $urlInfo['shortUrl'],
-				]
+			'payment' => [
+				'url' => $urlInfo['url'],
+				'shortUrl' => $urlInfo['shortUrl'],
+				'qr' => base64_encode(
+					(new Sale\PaySystem\BarcodeGenerator($options['qr'] ?? null))
+						->generate($urlInfo['shortUrl'])
+				),
+			]
 		];
 	}
 }

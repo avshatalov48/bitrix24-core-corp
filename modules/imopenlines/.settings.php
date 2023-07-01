@@ -14,16 +14,19 @@ return [
 	'services' => [
 		'value' => [
 			'ImOpenLines.Config' => [
-				'className' => '\\Bitrix\\ImOpenLines\\Config',
+				'className' => \Bitrix\ImOpenLines\Config::class,
 			],
 			'ImOpenLines.Services.SessionManager' => [
-				'className' => '\\Bitrix\\ImOpenLines\\Services\\SessionManager',
+				'className' => \Bitrix\ImOpenLines\Services\SessionManager::class,
 			],
 			'ImOpenLines.Services.Message' => [
-				'className' => '\\Bitrix\\ImOpenLines\\Services\\Message',
+				'className' => \Bitrix\ImOpenLines\Services\Message::class,
 			],
 			'ImOpenLines.Services.ChatDispatcher' => [
-				'className' => '\\Bitrix\\ImOpenLines\\Services\\ChatDispatcher',
+				'className' => \Bitrix\ImOpenLines\Services\ChatDispatcher::class,
+			],
+			'ImOpenLines.Services.Tracker' => [
+				'className' => \Bitrix\ImOpenLines\Tracker::class,
 			],
 		],
 		'readonly' => true,
@@ -35,7 +38,7 @@ return [
 					'entityId' => 'imopenlines-crm-form',
 					'provider' => [
 						'moduleId' => 'imopenlines',
-						'className' => '\\Bitrix\\ImOpenlines\\Integrations\\UI\\EntitySelector\\CrmFormProvider',
+						'className' => \Bitrix\ImOpenlines\Integrations\UI\EntitySelector\CrmFormProvider::class,
 					],
 				]
 			],

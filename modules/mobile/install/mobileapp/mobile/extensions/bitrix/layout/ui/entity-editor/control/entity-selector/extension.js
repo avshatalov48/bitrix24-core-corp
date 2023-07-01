@@ -1,4 +1,10 @@
-(() => {
+/**
+ * @module layout/ui/entity-editor/control/entity-selector
+ */
+jn.define('layout/ui/entity-editor/control/entity-selector', (require, exports, module) => {
+
+	const { EntityEditorField } = require('layout/ui/entity-editor/control/field');
+
 	/**
 	 * @class EntitySelectorField
 	 */
@@ -62,5 +68,5 @@
 		}
 	}
 
-	jnexport(EntitySelectorField);
-})();
+	module.exports = { EntitySelectorField };
+});

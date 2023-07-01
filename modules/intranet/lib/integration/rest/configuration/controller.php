@@ -32,7 +32,7 @@ class Controller
 	protected static function check(Event $event)
 	{
 		$code = $event->getParameter('CODE');
-		if(!static::$entityList[$code])
+		if(!isset(static::$entityList[$code]) || !static::$entityList[$code])
 		{
 			return false;
 		}

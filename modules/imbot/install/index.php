@@ -155,7 +155,10 @@ final class imbot extends \CModule
 		$eventManager->registerEventHandlerCompatible('perfmon', 'OnGetTableSchema', 'imbot', 'imbot', 'getTableSchema');
 
 		/** @see \Bitrix\ImBot\DialogSession::clearClosedSessions */
-		\CAgent::AddAgent('\Bitrix\ImBot\DialogSession::clearClosedSessions();', 'imbot', 'N', 86400, '', 'Y', \ConvertTimeStamp(time() + 86400, 'FULL'));
+		\CAgent::AddAgent('\Bitrix\ImBot\DialogSession::clearClosedSessions();', 'imbot', 'N', 3600);
+
+		/** @see \Bitrix\ImBot\DialogSession::clearDeprecatedSessions */
+		\CAgent::AddAgent('\Bitrix\ImBot\DialogSession::clearDeprecatedSessions();', 'imbot');
 
 		Loader::includeModule('imbot');
 

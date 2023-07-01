@@ -1,10 +1,14 @@
-(() => {
-	BX.UI = BX.UI || {};
+/**
+ * @module layout/ui/entity-editor/editor-enum/visibility-policy
+ */
+jn.define('layout/ui/entity-editor/editor-enum/visibility-policy', (require, exports, module) => {
+
+	const { EntityEditorMode } = require('layout/ui/entity-editor/editor-enum/mode');
 
 	/**
-	 * @class BX.UI.EntityEditorVisibilityPolicy
+	 * @object EntityEditorVisibilityPolicy
 	 */
-	BX.UI.EntityEditorVisibilityPolicy = {
+	const EntityEditorVisibilityPolicy = {
 		always: 0,
 		view: 1,
 		edit: 2,
@@ -33,14 +37,16 @@
 
 			if (policy === this.view)
 			{
-				return mode === BX.UI.EntityEditorMode.view;
+				return mode === EntityEditorMode.view;
 			}
 			else if (policy === this.edit)
 			{
-				return mode === BX.UI.EntityEditorMode.edit;
+				return mode === EntityEditorMode.edit;
 			}
 
 			return true;
 		},
 	};
-})();
+
+	module.exports = { EntityEditorVisibilityPolicy };
+});

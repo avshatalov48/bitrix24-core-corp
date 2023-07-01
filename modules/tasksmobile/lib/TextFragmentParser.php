@@ -192,14 +192,9 @@ class TextFragmentParser
 		];
 		foreach ($replaceMap as $replaceData)
 		{
-			$textBefore = $text;
 			$text = preg_replace($replaceData['PATTERN'], $replaceData['REPLACE'], $text);
 			if (!isset($text))
 			{
-				(new \Bitrix\Tasks\Internals\Log\Log('TASKSMOBILE_TEXT_FRAGMENT_PARSER'))->collect([
-					'pattern' => $replaceData['PATTERN'],
-					'text' => $textBefore,
-				]);
 				return '';
 			}
 		}

@@ -15,6 +15,9 @@ use Bitrix\Tasks\Control\Exception\TaskUpdateException;
 use Bitrix\Tasks\Control\Handler\TaskFieldHandler;
 use Bitrix\Tasks\Control\Handler\Exception\TaskFieldValidateException;
 use Bitrix\Tasks\Integration\Bizproc\Listener;
+use Bitrix\Tasks\Integration\CRM\Timeline;
+use Bitrix\Tasks\Integration\CRM\Timeline\Exception\TimelineException;
+use Bitrix\Tasks\Integration\CRM\TimeLineManager;
 use Bitrix\Tasks\Integration\Disk;
 use Bitrix\Tasks\Integration\Forum\Task\Topic;
 use Bitrix\Tasks\Integration\Pull\PushService;
@@ -22,6 +25,7 @@ use Bitrix\Tasks\Integration\SocialNetwork\User;
 use Bitrix\Tasks\Internals\Counter\CounterService;
 use Bitrix\Tasks\Internals\Counter\Event\EventDictionary;
 use Bitrix\Tasks\Internals\SearchIndex;
+use Bitrix\Tasks\Internals\Task\EO_Scenario;
 use Bitrix\Tasks\Internals\Task\FavoriteTable;
 use Bitrix\Tasks\Internals\Task\MemberTable;
 use Bitrix\Tasks\Internals\Task\ParameterTable;
@@ -29,6 +33,7 @@ use Bitrix\Tasks\Internals\Task\ProjectDependenceTable;
 use Bitrix\Tasks\Internals\Task\ProjectLastActivityTable;
 use Bitrix\Tasks\Internals\Task\Result\ResultManager;
 use Bitrix\Tasks\Internals\Task\Result\ResultTable;
+use Bitrix\Tasks\Internals\Task\ScenarioTable;
 use Bitrix\Tasks\Internals\Task\SearchIndexTable;
 use Bitrix\Tasks\Internals\Task\SortingTable;
 use Bitrix\Tasks\Internals\Task\Template\TemplateDependenceTable;
@@ -46,6 +51,7 @@ class Task
 	private const REGEX_TAG = '/\s#([^\s,\[\]<>]+)/is';
 
 	private const PUSH_COMMAND_ADD = 'task_add';
+	private const FIELD_SCENARIO = 'SCENARIO_NAME';
 
 	private $userId;
 	private $taskId = 0;
@@ -162,6 +168,7 @@ class Task
 			throw new TaskAddException($e->getMessage());
 		}
 
+		$this->setScenario($fields);
 		$this->addToFavorite($fields);
 		$this->setMembers($fields);
 		$this->addParameters($fields);
@@ -182,13 +189,14 @@ class Task
 
 		$this->addLog();
 		$fields = $this->onTaskAdd($fields);
-
 		$this->setSearchIndex();
 		$this->resetCache();
 		$this->updateLastActivity();
 		$this->postAddComment($fields);
 		$this->sendAddPush($fields);
 		$this->saveDependencies($fields);
+
+		$this->sendAddIntegrationEvent($fields);
 
 		return $task;
 	}
@@ -214,14 +222,13 @@ class Task
 			return false;
 		}
 
-
 		$this->taskId = $taskId;
 
 		CounterService::getInstance()->collectData($this->taskId);
 
-		$taskData = $this->getFullTaskData();
+		$taskBeforeUpdate = $this->fetchTaskObjectById($this->taskId);
 
-		if (!$taskData)
+		if (!$taskBeforeUpdate)
 		{
 			return false;
 		}
@@ -294,11 +301,14 @@ class Task
 		$this->closeResult();
 		$this->updatePins();
 		$this->updateTopicTitle();
+		(new TimeLineManager($taskId, $this->userId))->onTaskUpdated($taskBeforeUpdate)->save();
 
 		$updateComment = $this->postUpdateComments($fields);
 		$this->sendUpdatePush($updateComment);
 
 		Listener::onTaskUpdate($this->taskId, $fields, $this->eventTaskData);
+
+		$this->sendUpdateIntegrationEvent($fields);
 
 		return $task;
 	}
@@ -337,6 +347,9 @@ class Task
 			return false;
 		}
 
+		$timeLineManager = new TimeLineManager($taskId, $this->userId);
+		$timeLineManager->onTaskDeleted();
+
 		$this->stopTimer(true);
 		$this->deleteRelations();
 
@@ -366,6 +379,8 @@ class Task
 			Application::getConnection()->query($sql);
 		}
 
+		ScenarioTable::delete($taskId);
+
 		$tagService = new Tag($this->userId);
 		$tagService->unlinkTags($taskId);
 
@@ -375,6 +390,9 @@ class Task
 			EventDictionary::EVENT_AFTER_TASK_DELETE,
 			$taskData
 		);
+
+		$timeLineManager->save();
+		$this->sendDeleteIntegrationEvent($safeDelete);
 
 		return true;
 	}
@@ -496,6 +514,97 @@ class Task
 	{
 		$this->correctDatePlanDependent = true;
 		return $this;
+	}
+
+	/**
+	 * @param array $fields
+	 * @return void
+	 * @throws TaskNotFoundException
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\LoaderException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	private function sendAddIntegrationEvent(array $fields): void
+	{
+		$application = Application::getInstance();
+
+		if (
+			array_key_exists('IM_CHAT_ID', $fields)
+			&& $fields['IM_CHAT_ID'] > 0
+			&& Loader::includeModule('im')
+			&& method_exists(\Bitrix\Im\V2\Service\Messenger::class, 'registerTask')
+		)
+		{
+			$task = $this->getTask();
+			$application && $application->addBackgroundJob(
+				function () use ($fields, $task)
+				{
+					$messageId = 0;
+
+					if (isset($fields['IM_MESSAGE_ID']) && $fields['IM_MESSAGE_ID'] > 0)
+					{
+						$messageId = $fields['IM_MESSAGE_ID'];
+					}
+
+					\Bitrix\Im\V2\Service\Locator::getMessenger()->registerTask($fields['IM_CHAT_ID'], $messageId, $task);
+				}
+			);
+		}
+	}
+
+	/**
+	 * @param array $fields
+	 * @return void
+	 * @throws TaskNotFoundException
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\LoaderException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	private function sendUpdateIntegrationEvent(array $fields): void
+	{
+		$application = Application::getInstance();
+
+		if (
+			Loader::includeModule('im')
+			&& method_exists(\Bitrix\Im\V2\Service\Messenger::class, 'updateTask')
+		)
+		{
+			$task = $this->getTask();
+			$application && $application->addBackgroundJob(
+				function () use ($task)
+				{
+					\Bitrix\Im\V2\Service\Locator::getMessenger()->updateTask($task);
+				}
+			);
+		}
+	}
+
+	/**
+	 * @return void
+	 * @throws TaskNotFoundException
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\LoaderException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	private function sendDeleteIntegrationEvent(bool $saveDelete): void
+	{
+		$application = Application::getInstance();
+
+		if (
+			Loader::includeModule('im')
+			&& method_exists(\Bitrix\Im\V2\Service\Messenger::class, 'unregisterTask')
+		)
+		{
+			$application && $application->addBackgroundJob(
+				function () use ($saveDelete)
+				{
+					\Bitrix\Im\V2\Service\Locator::getMessenger()->unregisterTask($this->getFullTaskData(), $saveDelete);
+				}
+			);
+		}
 	}
 
 	/**
@@ -822,6 +931,7 @@ class Task
 	/**
 	 * @param array $fields
 	 * @return array
+	 * @throws TaskUpdateException
 	 */
 	private function onUpdate(array $fields): array
 	{
@@ -829,28 +939,16 @@ class Task
 
 		try
 		{
-			$lastEventName = '';
-			foreach (GetModuleEvents('tasks', 'OnTaskUpdate', true) as $arEvent)
+			foreach (GetModuleEvents('tasks', 'OnTaskUpdate', true) as $event)
 			{
-				$lastEventName = $arEvent['TO_CLASS'].'::'.$arEvent['TO_METHOD'].'()';
-				ExecuteModuleEventEx($arEvent, array($this->taskId, &$fields, &$this->eventTaskData));
+				ExecuteModuleEventEx($event, array($this->taskId, &$fields, &$this->eventTaskData));
 			}
 		}
 		catch (\Exception $e)
 		{
-			\CTaskAssert::logWarning(
-				'[0xee8999a8] exception in module event: '.
-				$lastEventName.
-				'; at file: '.
-				$e->getFile().
-				':'.
-				$e->getLine().
-				";\n"
+			throw new TaskUpdateException(
+				$this->getApplicationError(Loc::getMessage('TASKS_UNKNOWN_UPDATE_ERROR'))
 			);
-			\Bitrix\Tasks\Util::log($e);
-
-			$message = $this->getApplicationError(Loc::getMessage('TASKS_UNKNOWN_UPDATE_ERROR'));
-			throw new TaskUpdateException($message);
 		}
 
 		unset($fields['META:PREV_FIELDS']);
@@ -877,10 +975,11 @@ class Task
 		$notificationFields = array_merge($fields, ['CHANGED_BY' => $this->getOccurUserId()]);
 
 		$statusChanged =
-			($status = (int)$fields['STATUS'])
+			($status = (int)($this->fullTaskData['STATUS'] ?? null))
 			&& $status >= \CTasks::STATE_NEW
 			&& $status <= \CTasks::STATE_DECLINED
-			&& ($status !== (int)$this->sourceTaskData['STATUS']);
+			&& $status !== (int)$this->sourceTaskData['STATUS']
+		;
 
 		if ($statusChanged)
 		{
@@ -910,10 +1009,11 @@ class Task
 		}
 
 		$statusChanged =
-			($status = (int)$fields['STATUS'])
+			($status = (int)($fields['STATUS'] ?? null))
 			&& $status >= \CTasks::STATE_NEW
 			&& $status <= \CTasks::STATE_DECLINED
-			&& ($status !== (int)$this->fullTaskData['STATUS']);
+			&& $status !== (int)$this->fullTaskData['STATUS']
+		;
 
 		if ($statusChanged && $status === \CTasks::STATE_DECLINED)
 		{
@@ -921,6 +1021,11 @@ class Task
 		}
 
 		$fields['ID'] = $this->taskId;
+
+		$this->getTask(true);
+		/** @var EO_Scenario $scenarioObject */
+		$scenarioObject = $this->task->getScenario();
+		$fields['SCENARIO'] = is_null($scenarioObject) ? ScenarioTable::SCENARIO_DEFAULT : $scenarioObject->getScenario();
 
 		return $fields;
 	}
@@ -1705,6 +1810,8 @@ class Task
 	 */
 	private function onTaskAdd(array $fields): array
 	{
+		(new TimeLineManager($this->taskId, $this->userId))->onTaskCreated()->save();
+
 		try
 		{
 			foreach (GetModuleEvents('tasks', 'OnTaskAdd', true) as $arEvent)
@@ -2129,9 +2236,29 @@ class Task
 			throw new TaskUpdateException($message);
 		}
 
-		$task = TaskTable::getByPrimary($this->taskId)->fetchObject();
+		return $this->fetchTaskObjectById($this->taskId);
+	}
 
-		return $task;
+	private function fetchTaskObjectById(int $taskId): ?TaskObject
+	{
+		$memberList = MemberTable::getList([
+			'select' => [
+				'*'
+			],
+			'filter' => [
+				'=TASK_ID' => $taskId
+			],
+		])->fetchCollection();
+		if ($memberList->count() === 0)
+		{
+			$select = ['select' => ['*', 'UTS_DATA']];
+		}
+		else
+		{
+			$select = ['select' => ['*', 'UTS_DATA', 'MEMBER_LIST']];
+		}
+
+		return TaskTable::getByPrimary($taskId, $select)->fetchObject();
 	}
 
 	/**
@@ -2442,7 +2569,8 @@ class Task
 			->prepareTags()
 			->prepareChangedBy()
 			->prepareDates()
-			->prepareId();
+			->prepareId()
+			->prepareIntegration();
 
 		return $handler->getFields();
 	}
@@ -2454,9 +2582,12 @@ class Task
 	 * @throws \Bitrix\Main\ObjectPropertyException
 	 * @throws \Bitrix\Main\SystemException
 	 */
-	private function getTask(): TaskObject
+	private function getTask(bool $refresh = false): TaskObject
 	{
-		if ($this->task)
+		if (
+			$this->task
+			&& !$refresh
+		)
 		{
 			return $this->task;
 		}
@@ -2469,6 +2600,7 @@ class Task
 
 		$this->task->fillMemberList();
 		$this->task->fillTagList();
+		$this->task->fillScenario();
 
 		return $this->task;
 	}
@@ -2522,5 +2654,27 @@ class Task
 		}
 
 		return $this->occurUserId;
+	}
+
+	/**
+	 * @param array $fields
+	 * @return void
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\DB\SqlQueryException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	private function setScenario(array $fields): void
+	{
+		if (empty($fields[self::FIELD_SCENARIO]))
+		{
+			// set default scenario if none specified
+			ScenarioTable::insertIgnore($this->taskId, [ScenarioTable::SCENARIO_DEFAULT]);
+			return;
+		}
+
+		$scenarios = is_array($fields[self::FIELD_SCENARIO]) ? $fields[self::FIELD_SCENARIO]
+			: [$fields[self::FIELD_SCENARIO]];
+		ScenarioTable::insertIgnore($this->taskId, $scenarios);
 	}
 }

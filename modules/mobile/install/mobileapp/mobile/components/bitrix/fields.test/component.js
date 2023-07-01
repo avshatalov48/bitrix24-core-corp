@@ -1,16 +1,53 @@
 (() => {
+
+	const {
+		FieldFactory,
+		BarcodeType,
+		MoneyType,
+		StringType,
+		NumberType,
+		DateTimeType,
+		FileType,
+		MenuSelectType,
+		SelectType,
+		StatusType,
+		BooleanType,
+		UrlType,
+		UserType,
+		CombinedType,
+		EntitySelectorType,
+	} = jn.require('layout/ui/fields');
+
+	const { useCallback } = jn.require('utils/function');
+
 	class FieldComponent extends LayoutComponent
 	{
 		constructor(props)
 		{
 			super(props);
 			this.state = {
-				test: ['1', '2', '3'],
+				test: [
+					{
+						id: 1,
+						value: '11',
+					},
+					{
+						id: 2,
+						value: '22',
+					},
+					{
+						id: 3,
+						value: '33',
+					},
+				],
 				text: 'new',
+				text2: 'aaa',
 				number: '',
 				list: '1',
 				files: [],
 				date: '',
+				url: 'https://bitrix.ru/test/',
+				boolean: true,
 				dateTime: '',
 				imageSelect: '',
 				menuSelect: '',
@@ -20,59 +57,57 @@
 					entityList: [
 						{
 							id: 1,
-							title: 'admin'
-						}
-					]
+							title: 'admin',
+						},
+					],
 				},
 				multipleUser: {
 					value: [],
-					entityList: []
+					entityList: [],
 				},
 				status: [
 					{
 						name: 'FIRST',
 						backgroundColor: '#eaebed',
-						color: '#535c69'
+						color: '#535c69',
 					},
 					{
 						name: 'SECOND',
 						backgroundColor: '#e4f5c8',
-						color: '#589308'
+						color: '#589308',
 					},
 					{
 						name: 'THIRD',
 						backgroundColor: '#ffdfa1',
-						color: '#b47a00'
-					}
+						color: '#b47a00',
+					},
 				],
-				money: {amount: 555, currency: 'RUB'},
+				money: { amount: 555, currency: 'RUB' },
 				barcode: '',
 				multipleSelector: {
 					value: [],
-					entityList: []
+					entityList: [],
 				},
 				singleSelector: {
 					value: 1,
 					entityList: [
 						{
 							id: 1,
-							title: 'admin'
-						}
-					]
+							title: 'admin',
+						},
+					],
 				},
 			};
 		}
 
-		onChangeText(text)
+		shouldComponentUpdate(nextProps, nextState)
 		{
-			this.setState({ text })
+			console.time('render');
 		}
 
-		onChangeList(value)
+		componentDidUpdate(prevProps, prevState)
 		{
-			this.setState({
-				list: value
-			})
+			console.timeEnd('render');
 		}
 
 		getInputs(fieldOptions)
@@ -80,24 +115,41 @@
 			const fields = [];
 
 			fieldOptions.forEach((options) => {
-				fields.push(
-					FieldFactory.create(options.type, {
+				const onChange = useCallback((value) => this.setState({ [options.stateVar]: value }), [options.stateVar]);
+
+				if (options.type === MoneyType)
+				{
+					console.log('a');
+					console.log({
+						id: options.stateVar,
 						title: `Title for {${options.type}}, readOnly: false`,
 						value: this.state[options.stateVar],
 						readOnly: false,
-						onChange: (value) => this.setState({[options.stateVar]: value}),
-						...options.config
-					})
+						onChange,
+						...options.config,
+					});
+				}
+
+				fields.push(
+					FieldFactory.create(options.type, {
+						id: options.stateVar,
+						title: `Title for {${options.type}}, readOnly: false`,
+						value: this.state[options.stateVar],
+						readOnly: false,
+						onChange,
+						...options.config,
+					}),
 				);
 
 				fields.push(
 					FieldFactory.create(options.type, {
+						id: options.stateVar,
 						title: `Title for {${options.type}}, readOnly: true`,
 						value: this.state[options.stateVar],
 						readOnly: true,
-						onChange: (value) => this.setState({[options.stateVar]: value}),
-						...options.config
-					})
+						onChange,
+						...options.config,
+					}),
 				);
 			});
 
@@ -108,183 +160,224 @@
 		{
 			const fieldOptions = [
 				{
-					type: FieldFactory.Type.BARCODE,
+					type: BarcodeType,
 					stateVar: 'barcode',
 				},
 				{
-					type: FieldFactory.Type.MONEY,
+					type: MoneyType,
 					stateVar: 'money',
 				},
 				{
-					type: FieldFactory.Type.MONEY,
+					type: MoneyType,
 					stateVar: 'money',
 					config: {
 						config: {
 							amountReadOnly: true,
 							currencyReadOnly: false,
 						},
-					}
+					},
 				},
 				{
-					type: FieldFactory.Type.STRING,
-					stateVar: 'text'
+					type: StringType,
+					stateVar: 'text',
 				},
 				{
-					type: FieldFactory.Type.NUMBER,
-					stateVar: 'number'
+					type: NumberType,
+					stateVar: 'number',
 				},
 				{
-					type: FieldFactory.Type.DATE,
-					stateVar: 'date'
+					type: DateTimeType,
+					config: {
+						config: {
+							enableTime: false,
+						},
+					},
+					stateVar: 'date',
 				},
 				{
-					type: FieldFactory.Type.DATETIME,
-					stateVar: 'dateTime'
+					type: DateTimeType,
+					stateVar: 'dateTime',
 				},
 				{
-					type: FieldFactory.Type.FILE,
+					type: FileType,
 					stateVar: 'files',
 				},
 				{
-					type: FieldFactory.Type.MENU_SELECT,
+					type: MenuSelectType,
 					stateVar: 'menuSelect',
+					config: {
+						config: {
+							menuItems: [
+								{
+									id: '1',
+									title: 'First',
+								},
+								{
+									id: '2',
+									title: 'Second',
+								},
+								{
+									id: '3',
+									title: 'Third',
+								},
+							],
+						},
+					},
 				},
 				{
-					type: FieldFactory.Type.SELECT,
+					type: SelectType,
 					stateVar: 'select',
 					config: {
-						items: [
-							{
-								name: 'First',
-								value: '1',
-							},
-							{
-								name: 'Second',
-								value: '2',
-							},
-							{
-								name: 'Third',
-								value: '3',
-							},
-						],
-					}
+						config: {
+							items: [
+								{
+									name: 'First',
+									value: '1',
+								},
+								{
+									name: 'Second',
+									value: '2',
+								},
+								{
+									name: 'Third',
+									value: '3',
+								},
+							],
+						},
+					},
 				},
 				{
-					type: FieldFactory.Type.STATUS,
-					stateVar: 'status'
-				}
+					type: StatusType,
+					stateVar: 'status',
+				},
+				{
+					type: BooleanType,
+					stateVar: 'boolean',
+				},
+				{
+					type: UrlType,
+					stateVar: 'url',
+					config: {
+						config: {
+							showFavicon: true,
+						},
+					},
+				},
 				// {
-				// 	type: FieldFactory.Type.IMAGE_SELECT,
+				// 	type: ImageSelectType,
 				// 	stateVar: 'imageSelect',
 				// }
 			];
 
-			const singleUser = FieldFactory.create(
-				FieldFactory.Type.USER,
-				{
-					title: 'User Title, readOnly: false, multiple: false',
-					readOnly: false,
-					multiple: false,
-					value: this.state.singleUser.value,
-					config: {
-						provider: {
-							context: 'TEST_PICKER_CONTEXT',
-						},
-						entityList: this.state.singleUser.entityList
+			const singleUser = FieldFactory.create(UserType, {
+				title: 'User Title, readOnly: false, multiple: false',
+				readOnly: false,
+				multiple: false,
+				value: this.state.singleUser.value,
+				config: {
+					provider: {
+						context: 'TEST_PICKER_CONTEXT',
 					},
-					onChange: (value, entityList) => this.setState({singleUser: {value, entityList}})
-				}
-			);
-
-			const singleUserReadOnly = FieldFactory.create(
-				FieldFactory.Type.USER,
-				{
-					title: 'User Title, readOnly: false, multiple: false',
-					readOnly: true,
-					multiple: false,
-					value: this.state.singleUser.value,
-					config: {
-						provider: {
-							context: 'TEST_PICKER_CONTEXT',
-						},
-						entityList: this.state.singleUser.entityList,
-						reloadEntityListFromProps: true
-					}
-				}
-			);
-
-			const multipleUser = FieldFactory.create(
-				FieldFactory.Type.USER,
-				{
-					title: 'User Title, readOnly: false, multiple: false',
-					readOnly: false,
-					multiple: true,
-					value: this.state.multipleUser.value,
-					config: {
-						provider: {
-							context: 'TEST_PICKER_CONTEXT',
-						},
-						entityList: this.state.multipleUser.entityList
+					entityList: this.state.singleUser.entityList,
+				},
+				onChange: useCallback((value, entityList) => this.setState({
+					singleUser: {
+						value,
+						entityList,
 					},
-					onChange: (value, entityList) => this.setState({multipleUser: {value, entityList}})
-				}
-			);
-
-			const multipleUserReadOnly = FieldFactory.create(
-				FieldFactory.Type.USER,
-				{
-					title: 'User Title, readOnly: false, multiple: false',
-					readOnly: true,
-					multiple: true,
-					value: this.state.multipleUser.value,
-					config: {
-						provider: {
-							context: 'TEST_PICKER_CONTEXT',
-						},
-						entityList: this.state.multipleUser.entityList,
-						reloadEntityListFromProps: true
-					}
-				}
-			);
-
-			const combined = FieldFactory.create('combined', {
-				primaryField: FieldFactory.create('string',
-					{
-						title: 'Select Title readOnly: false',
-						readOnly: false,
-						value: this.state.text,
-						config: {
-							defaultListTitle: 'Title'
-						},
-						onChange: this.onChangeText.bind(this)
-					}
-				),
-				secondaryField: FieldFactory.create('select', {
-					title: 'Select Title readOnly: false',
-					readOnly: false,
-					value: this.state.list,
-					items: [
-						{
-							name: 'Select Title readOnly: false',
-							value: '1'
-						},
-						{
-							name: '1',
-							value: '2'
-						},
-						{
-							name: 'Some text',
-							value: '3'
-						}
-					],
-					config: {
-						defaultListTitle: 'Title'
-					},
-					onChange: this.onChangeList.bind(this)
-				})
+				}), []),
 			});
 
-			const selector1 = FieldFactory.create('entity-selector', {
+			const singleUserReadOnly = FieldFactory.create(UserType, {
+				title: 'User Title, readOnly: false, multiple: false',
+				readOnly: true,
+				multiple: false,
+				value: this.state.singleUser.value,
+				config: {
+					provider: {
+						context: 'TEST_PICKER_CONTEXT',
+					},
+					entityList: this.state.singleUser.entityList,
+					reloadEntityListFromProps: true,
+				},
+			});
+
+			const multipleUser = FieldFactory.create(UserType, {
+				title: 'User Title, readOnly: false, multiple: false',
+				readOnly: false,
+				multiple: true,
+				value: this.state.multipleUser.value,
+				config: {
+					provider: {
+						context: 'TEST_PICKER_CONTEXT',
+					},
+					entityList: this.state.multipleUser.entityList,
+				},
+				onChange: useCallback((value, entityList) => this.setState({
+					multipleUser: {
+						value,
+						entityList,
+					},
+				}), []),
+			});
+
+			const multipleUserReadOnly = FieldFactory.create(UserType, {
+				title: 'User Title, readOnly: false, multiple: false',
+				readOnly: true,
+				multiple: true,
+				value: this.state.multipleUser.value,
+				config: {
+					provider: {
+						context: 'TEST_PICKER_CONTEXT',
+					},
+					entityList: this.state.multipleUser.entityList,
+					reloadEntityListFromProps: true,
+				},
+			});
+
+			const combined = FieldFactory.create(CombinedType, {
+				onChange: useCallback(({ first, second }) => this.setState({ text2: first, list: second }), []),
+				value: {
+					first: this.state.text2,
+					second: this.state.list,
+				},
+				config: {
+					primaryField: {
+						id: 'first',
+						type: 'string',
+						title: 'Combined Title readOnly: false',
+						readOnly: false,
+						config: {
+							defaultListTitle: 'Title',
+						},
+					},
+					secondaryField: {
+						id: 'second',
+						type: 'select',
+						title: 'Select Title readOnly: false',
+						readOnly: false,
+						config: {
+							defaultListTitle: 'Title',
+							items: [
+								{
+									name: 'Select Title readOnly: false',
+									value: '1',
+								},
+								{
+									name: '1',
+									value: '2',
+								},
+								{
+									name: 'Some text',
+									value: '3',
+								},
+							],
+						},
+					},
+				},
+			});
+
+			const selector1 = FieldFactory.create(EntitySelectorType, {
 				title: 'multiple SELECTOR',
 				value: this.state.multipleSelector.value,
 				readOnly: false,
@@ -293,14 +386,19 @@
 					selectorType: 'section',
 					enableCreation: true,
 					provider: {
-						options: result['section']
+						options: result['section'],
 					},
 					entityList: this.state.multipleSelector.entityList,
 				},
-				onChange: (value, entityList) => this.setState({multipleSelector: {value, entityList}})
+				onChange: useCallback((value, entityList) => this.setState({
+					multipleSelector: {
+						value,
+						entityList,
+					},
+				}), []),
 			});
 
-			const selector2 = FieldFactory.create('entity-selector', {
+			const selector2 = FieldFactory.create(EntitySelectorType, {
 				title: 'single SELECTOR',
 				value: this.state.singleSelector.value,
 				readOnly: false,
@@ -309,58 +407,56 @@
 					selectorType: 'section',
 					enableCreation: true,
 					provider: {
-						options: result['section']
+						options: result['section'],
 					},
 					entityList: this.state.singleSelector.entityList,
 				},
-				onChange: (value, entityList) => this.setState({singleSelector: {value, entityList}})
+				onChange: useCallback((value, entityList) => this.setState({
+					singleSelector: {
+						value,
+						entityList,
+					},
+				}), []),
 			});
 
-			const multiField = FieldFactory.create('string', {
+			const multiField = FieldFactory.create(StringType, {
 				title: 'multiple String',
 				multiple: true,
 				value: this.state.test,
 				readOnly: false,
-				onChange: (value) => {
+				onChange: useCallback((value) => {
 					this.setState({
-						test: value
-					})
-				},
-				config: {
-					formatTitle: (index) => `multiple String #${index}`
-				}
+						test: value,
+					});
+				}, []),
 			});
 
-			const multiFieldReadOnly = FieldFactory.create('string', {
+			const multiFieldReadOnly = FieldFactory.create(StringType, {
 				title: 'multiple String',
 				multiple: true,
 				value: this.state.test,
 				readOnly: true,
-				onChange: (value) => {
+				onChange: useCallback((value) => {
 					this.setState({
-						test: value
-					})
-				},
+						test: value,
+					});
+				}, []),
 				config: {
-					formatTitle: (index) => `multiple String #${index}`
-				}
+					formatTitle: useCallback((index) => `multiple String #${index}`, []),
+				},
 			});
 
 			return ScrollView(
 				{},
 				View
-
 				(
 					{
 						style: {
 							padding: 16,
-							width: '100%'
-						}
-						,
-						resizableByKeyboard: true
-					}
-
-					,
+							width: '100%',
+						},
+						resizableByKeyboard: true,
+					},
 					multiField,
 					multiFieldReadOnly,
 					...this.getInputs(fieldOptions),
@@ -370,10 +466,11 @@
 					multipleUserReadOnly,
 					combined,
 					selector1,
-					selector2
-				)
-			)
+					selector2,
+				),
+			);
 		}
 	}
+
 	layout.showComponent(new FieldComponent());
 })();

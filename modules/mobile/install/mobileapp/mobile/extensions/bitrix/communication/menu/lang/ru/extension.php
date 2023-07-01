@@ -1,8 +1,19 @@
 <?php
-$MESS['M_CRM_COMMUNICATION_MENU_PHONE'] = 'Позвонить';
 $MESS['M_CRM_COMMUNICATION_MENU_COMPANY'] = 'Компания';
 $MESS['M_CRM_COMMUNICATION_MENU_CONTACT'] = 'Контакт';
-$MESS['M_CRM_COMMUNICATION_MENU_EMAIL'] = 'Написать письмо';
+$MESS['M_CRM_COMMUNICATION_MENU_LEAD'] = 'Лид';
 $MESS['M_CRM_COMMUNICATION_MENU_OPENLINE'] = 'Открытая линия';
-$MESS['M_CRM_COMMUNICATION_MENU_CHANNELS'] = 'Каналы связи';
-$MESS['M_CRM_COMMUNICATION_MENU_IM'] = 'Написать в мессенджере';
+$MESS['M_CRM_COMMUNICATION_MENU_PHONE_STUB'] = 'Добавить телефон';
+$MESS['M_CRM_COMMUNICATION_MENU_PHONE_TITLE'] = 'Вы сможете звонить прямо из CRM, отправлять сообщения или делиться документами в СМС и мессенджерах';
+$MESS['M_CRM_COMMUNICATION_MENU_PHONE_DESCRIPTION'] = 'Вы сможете звонить прямо из CRM, отправлять сообщения или делиться документами в СМС и мессенджерах';
+$MESS['M_CRM_COMMUNICATION_MENU_EMAIL_STUB'] = 'Добавить почту';
+$MESS['M_CRM_COMMUNICATION_MENU_EMAIL_DESCRIPTION'] = 'Вы сможете отправлять и получать письма прямо в CRM';
+$MESS['M_CRM_COMMUNICATION_MENU_ADD_CONTACT'] = 'Добавить контакт';
+$MESS['M_CRM_COMMUNICATION_MENU_ADD_COMPANY'] = 'Добавить компанию';
+$MESS['M_CRM_COMMUNICATION_MENU_TITLE'] = 'Каналы коммуникации';
+$MESS['M_CRM_COMMUNICATION_MENU_INFO_TITLE'] = 'В элементе ещё нет клиента';
+$MESS['M_CRM_COMMUNICATION_MENU_INFO_TITLE_LEAD'] = 'В лиде ещё нет клиента';
+$MESS['M_CRM_COMMUNICATION_MENU_INFO_TITLE_DEAL'] = 'В сделке ещё нет клиента';
+$MESS['M_CRM_COMMUNICATION_MENU_INFO_TITLE_QUOTE'] = 'В предложении ещё нет клиента';
+$MESS['M_CRM_COMMUNICATION_MENU_INFO_TITLE_SMART_INVOICE'] = 'В счёте ещё нет клиента';
+$MESS['M_CRM_COMMUNICATION_MENU_INFO_DESCRIPTION'] = 'Добавьте клиента, чтобы позвонить, написать письмо или отправить сообщение в чат';

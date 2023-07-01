@@ -6,7 +6,7 @@ jn.define('im/messenger/controller/dialog-creator/navigation-selector', (require
 	const { Loc } = require('loc');
 	const { EventType } = require('im/messenger/const');
 	const { RecipientSelector } = require('im/messenger/controller/dialog-creator/recipient-selector');
-	const { MessengerEvent } = require('im/messenger/lib/event');
+	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { NavigationSelectorView } = require('im/messenger/controller/dialog-creator/navigation-selector/view');
 	const { DialogDTO } = require('im/messenger/controller/dialog-creator/dialog-dto');
 
@@ -35,7 +35,7 @@ jn.define('im/messenger/controller/dialog-creator/navigation-selector', (require
 					this.layout.close();
 				},
 				onItemSelected: (itemData) => {
-					new MessengerEvent(EventType.messenger.openDialog, itemData).send();
+					MessengerEmitter.emit(EventType.messenger.openDialog, itemData);
 					this.layout.close();
 				},
 				onCreateOpenChat: () => {

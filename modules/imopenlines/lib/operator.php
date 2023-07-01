@@ -23,7 +23,6 @@ class Operator
 	 * Operator constructor.
 	 * @param $chatId
 	 * @param null $userId
-	 * @throws Main\LoaderException
 	 */
 	public function __construct($chatId, $userId = null)
 	{
@@ -190,11 +189,6 @@ class Operator
 	/**
 	 * @param array $params
 	 * @return bool
-	 * @throws Main\ArgumentException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
 	public function transfer(array $params)
 	{
@@ -268,12 +262,6 @@ class Operator
 
 	/**
 	 * @return Result
-	 * @throws Main\ArgumentException
-	 * @throws Main\Db\SqlQueryException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
 	public function closeDialog()
 	{
@@ -300,12 +288,6 @@ class Operator
 
 	/**
 	 * @return Result
-	 * @throws Main\ArgumentException
-	 * @throws Main\Db\SqlQueryException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
 	public function closeDialogOtherOperator()
 	{
@@ -360,13 +342,8 @@ class Operator
 
 	/**
 	 * @return Result
-	 * @throws Main\ArgumentException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
-	public function createLead()
+	public function createLead(): Result
 	{
 		$result = new Result();
 
@@ -504,11 +481,6 @@ class Operator
 	/**
 	 * @param $messageId
 	 * @return bool
-	 * @throws Main\ArgumentException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
 	public function startSessionByMessage($messageId)
 	{
@@ -529,10 +501,6 @@ class Operator
 	/**
 	 * @param $messageId
 	 * @return bool
-	 * @throws Main\ArgumentException
-	 * @throws Main\ArgumentNullException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
 	public function saveToQuickAnswers($messageId)
 	{

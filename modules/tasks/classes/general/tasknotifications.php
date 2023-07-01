@@ -9,11 +9,17 @@
 
 IncludeModuleLangFile(__FILE__);
 
+use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\SystemException;
+use Bitrix\Tasks\Integration\CRM\Timeline;
+use Bitrix\Tasks\Integration\CRM\TimeLineManager;
 use Bitrix\Tasks\Integration\SocialNetwork;
 use Bitrix\Tasks\Internals\Counter;
 use Bitrix\Tasks\Internals\Notification\Task\ThrottleTable;
+use Bitrix\Tasks\Internals\Registry\TaskRegistry;
 use Bitrix\Tasks\Internals\TaskTable;
 use Bitrix\Tasks\Internals\UserOption;
 use Bitrix\Tasks\UI;
@@ -126,13 +132,13 @@ class CTaskNotifications
 		{
 			$arRecipientsIDs = array_unique($arRecipientsIDs);
 
-			$strResponsible = CTaskNotifications::__Users2String($arFields["RESPONSIBLE_ID"], $arUsers, $arFields["NAME_TEMPLATE"]);
+			$strResponsible = CTaskNotifications::__Users2String(($arFields["RESPONSIBLE_ID"] ?? null), $arUsers, ($arFields["NAME_TEMPLATE"] ?? null));
 			$invariantDescription = GetMessage("TASKS_MESSAGE_RESPONSIBLE_ID").': '.$strResponsible."\r\n";
-			if ($strAccomplices = CTaskNotifications::__Users2String($arFields["ACCOMPLICES"], $arUsers, $arFields["NAME_TEMPLATE"]))
+			if ($strAccomplices = CTaskNotifications::__Users2String(($arFields["ACCOMPLICES"] ?? null), $arUsers, ($arFields["NAME_TEMPLATE"] ?? null)))
 			{
 				$invariantDescription .= GetMessage("TASKS_MESSAGE_ACCOMPLICES").": ".$strAccomplices."\r\n";
 			}
-			if ($strAuditors = CTaskNotifications::__Users2String($arFields["AUDITORS"], $arUsers, $arFields["NAME_TEMPLATE"]))
+			if ($strAuditors = CTaskNotifications::__Users2String(($arFields["AUDITORS"] ?? null), $arUsers, ($arFields["NAME_TEMPLATE"] ?? null)))
 			{
 				$invariantDescription .= GetMessage("TASKS_MESSAGE_AUDITORS").": ".$strAuditors."\r\n";
 			}
@@ -141,7 +147,7 @@ class CTaskNotifications
 			$arVolatileDescriptions = [];
 
 			// Is there correct deadline (it cause volatile part of message for different timezones)?
-			if ($arFields['DEADLINE'] && MakeTimeStamp($arFields['DEADLINE']) > 0)
+			if (($arFields['DEADLINE'] ?? null) && MakeTimeStamp($arFields['DEADLINE']) > 0)
 			{
 				// Get unix timestamp for DEADLINE
 				$utsDeadline = MakeTimeStamp($arFields['DEADLINE']) - self::getUserTimeZoneOffset();
@@ -190,7 +196,7 @@ class CTaskNotifications
 				}
 			}
 
-			$taskName = self::formatTaskName($arFields['ID'], $arFields['TITLE'], $arFields['GROUP_ID']);
+			$taskName = self::formatTaskName($arFields['ID'], $arFields['TITLE'], ($arFields['GROUP_ID'] ?? 0));
 			$addMessage = self::getGenderMessage($occurAsUserId, 'TASKS_NEW_TASK_MESSAGE');
 
 			$messages = [
@@ -262,7 +268,7 @@ class CTaskNotifications
 		in case of that, message author is defined as $arTask['CRAETED_BY'] (below)
 		*/
 
-		if(!$bSpawnedByAgent && $parameters['THROTTLE_MESSAGES'])
+		if (!$bSpawnedByAgent && ($parameters['THROTTLE_MESSAGES'] ?? null))
 		{
 			AgentManager::checkAgentIsAlive("notificationThrottleRelease", 300);
 			ThrottleTable::submitUpdateMessage($arTask['ID'], $occurAsUserId, $arTask, $arFields);
@@ -388,14 +394,14 @@ class CTaskNotifications
 					{
 						$arInvariantChangesStrs[] =
 							GetMessage("TASKS_MESSAGE_{$key}_ADDED")
-							. CTaskNotifications::__Users2String($addedUsers, $arUsers, $arFields['NAME_TEMPLATE'])
+							. CTaskNotifications::__Users2String($addedUsers, $arUsers, ($arFields['NAME_TEMPLATE'] ?? null))
 						;
 					}
 					if (count($removedUsers) > 0)
 					{
 						$arInvariantChangesStrs[] =
 							GetMessage("TASKS_MESSAGE_{$key}_REMOVED")
-							. CTaskNotifications::__Users2String($removedUsers, $arUsers, $arFields['NAME_TEMPLATE'])
+							. CTaskNotifications::__Users2String($removedUsers, $arUsers, ($arFields['NAME_TEMPLATE'] ?? null))
 						;
 					}
 					continue;
@@ -403,7 +409,7 @@ class CTaskNotifications
 
 				++$i;
 				$actionMessage = GetMessage("TASKS_MESSAGE_".$key);
-				if($actionMessage == '' && isset($trackedFields[$key]) && $trackedFields[$key]['TITLE'] != '')
+				if($actionMessage == '' && isset($trackedFields[$key]) && ($trackedFields[$key]['TITLE'] ?? null) != '')
 				{
 					$actionMessage = $trackedFields[$key]['TITLE'];
 				}
@@ -427,9 +433,10 @@ class CTaskNotifications
 
 						case "RESPONSIBLE_ID":
 							$tmpStr .=
-								CTaskNotifications::__Users2String($value["FROM_VALUE"], $arUsers, $arFields["NAME_TEMPLATE"])
-								.' -> '
-								.CTaskNotifications::__Users2String($value["TO_VALUE"], $arUsers, $arFields["NAME_TEMPLATE"]);
+								CTaskNotifications::__Users2String($value["FROM_VALUE"], $arUsers, ($arFields["NAME_TEMPLATE"] ?? null))
+								. ' -> '
+								. CTaskNotifications::__Users2String($value["TO_VALUE"], $arUsers, ($arFields["NAME_TEMPLATE"] ?? null))
+							;
 							break;
 
 						case "DEADLINE":
@@ -661,7 +668,11 @@ class CTaskNotifications
 						'BEFORE_SEND' => function($message) use($isBbCodeDescription, $invariantDescription, $arVolatileDescriptions, $recp2tz)
 						{
 							$rcp = $message['TO_USER_IDS'][0];
-							$volatile = $arVolatileDescriptions[$recp2tz[$rcp]];
+							$volatile = (
+								isset($recp2tz[$rcp], $arVolatileDescriptions[$recp2tz[$rcp]])
+									? $arVolatileDescriptions[$recp2tz[$rcp]]
+									: null
+							);
 
 							if(is_array($volatile))
 							{
@@ -1224,6 +1235,7 @@ class CTaskNotifications
 		$responsibleId = (int)$taskData['RESPONSIBLE_ID'];
 		$accomplices = array_map('intval', $taskData['ACCOMPLICES']);
 		$recipients = array_unique(array_merge([$responsibleId], $accomplices));
+		static::onPingAction($taskData['ID'], $authorId);
 
 		if (in_array($authorId, $recipients, true))
 		{
@@ -1261,6 +1273,11 @@ class CTaskNotifications
 		{
 			self::disableStaticCache();
 		}
+	}
+
+	private static function onPingAction(int $taskId, int $authorId): void
+	{
+		(new TimeLineManager($taskId, $authorId))->onTaskPingSent()->save();
 	}
 
 	############################
@@ -1314,7 +1331,7 @@ class CTaskNotifications
 		}
 
 		$entityCode = 'TASK';
-		if ((string)$parameters['ENTITY_CODE'] !== '')
+		if ((string)($parameters['ENTITY_CODE'] ?? null) !== '')
 		{
 			$entityCode = $parameters['ENTITY_CODE'];
 			unset($parameters['ENTITY_CODE']);
@@ -1342,8 +1359,8 @@ class CTaskNotifications
 		}
 
 		$eventData = $parameters['EVENT_DATA'];
-		$notifyEvent = $parameters['NOTIFY_EVENT'];
-		$callbacks = $parameters['CALLBACK'];
+		$notifyEvent = ($parameters['NOTIFY_EVENT'] ?? null);
+		$callbacks = ($parameters['CALLBACK'] ?? null);
 
 		unset($parameters['EVENT_DATA'], $parameters['NOTIFY_EVENT'], $parameters['CALLBACK']);
 
@@ -1362,7 +1379,7 @@ class CTaskNotifications
 		}
 
 		$entityOperation = 'ADD';
-		if ((string)$parameters['ENTITY_OPERATION'] !== '')
+		if ((string)($parameters['ENTITY_OPERATION'] ?? null) !== '')
 		{
 			$entityOperation = $parameters['ENTITY_OPERATION'];
 			unset($parameters['ENTITY_OPERATION']);
@@ -1514,7 +1531,7 @@ class CTaskNotifications
 					);
 
 					$oldForumTopicId = $arTask['FORUM_TOPIC_ID'];
-					$newForumTopicId = $arFields['FORUM_TOPIC_ID'];
+					$newForumTopicId = ($arFields['FORUM_TOPIC_ID'] ?? null);
 					$forumTopicAdded = $oldForumTopicId == 0 && isset($newForumTopicId) && $newForumTopicId > 0;
 
 					// Add author to list of users that view log about task in livefeed
@@ -1615,29 +1632,27 @@ class CTaskNotifications
 			if (!$bCrmTask)
 			{
 				if (
-					(($arFields["GROUP_ID"] === NULL) && $arTask['GROUP_ID'])	// If tasks has group and it not deleted
-					|| ($arFields['GROUP_ID'])	// Or new group_id set
+					(($arFields["GROUP_ID"] ?? null) === null && $arTask['GROUP_ID']) // If tasks has group and it not deleted
+					|| ($arFields['GROUP_ID'] ?? null) // Or new group_id set
 				)
 				{
 					$arSoFields["ENTITY_TYPE"] = SONET_ENTITY_GROUP;
-					$arSoFields["ENTITY_ID"] = ($arFields["GROUP_ID"] ? $arFields["GROUP_ID"] : $arTask['GROUP_ID']);
+					$arSoFields["ENTITY_ID"] = (($arFields["GROUP_ID"] ?? null) ?: $arTask['GROUP_ID']);
 				}
 				else
 				{
 					$arSoFields["ENTITY_TYPE"] = SONET_ENTITY_USER;
-					$arSoFields["ENTITY_ID"] = ($arFields["CREATED_BY"] ? $arFields["CREATED_BY"] : $arTask["CREATED_BY"]);
+					$arSoFields["ENTITY_ID"] = ($arFields["CREATED_BY"] ?: $arTask["CREATED_BY"]);
 				}
 			}
 
-			$arSoFields['PARAMS'] = serialize(
-				array(
-					'TYPE' => 'modify',
-					'CHANGED_FIELDS' => $arChangesFields,
-					'CREATED_BY'  => ($arFields["CREATED_BY"] ? $arFields["CREATED_BY"] : $arTask["CREATED_BY"]),
-					'CHANGED_BY' => ($occurAsUserId ? $occurAsUserId : $arFields['CHANGED_BY']),
-					'PREV_REAL_STATUS' => isset($arTask['REAL_STATUS']) ? $arTask['REAL_STATUS'] : false
-				)
-			);
+			$arSoFields['PARAMS'] = serialize([
+				'TYPE' => 'modify',
+				'CHANGED_FIELDS' => $arChangesFields,
+				'CREATED_BY'  => ($arFields["CREATED_BY"] ?: $arTask["CREATED_BY"]),
+				'CHANGED_BY' => ($occurAsUserId ?: $arFields['CHANGED_BY']),
+				'PREV_REAL_STATUS' => ($arTask['REAL_STATUS'] ?? false),
+			]);
 
 			if (!empty($arLogFilter))
 			{
@@ -1658,7 +1673,7 @@ class CTaskNotifications
 		}
 		else	// Prepare "add" message here
 		{
-			if ($arFields["CREATED_DATE"] <> '')
+			if (($arFields["CREATED_DATE"] ?? null) <> '')
 			{
 				$createdDateTimestamp = MakeTimeStamp(
 					$arFields["CREATED_DATE"],
@@ -1677,7 +1692,7 @@ class CTaskNotifications
 
 			$arSoFields['TEXT_MESSAGE'] = GetMessage('TASKS_SONET_NEW_TASK_MESSAGE');
 
-			if($arFields["GROUP_ID"])
+			if (isset($arFields["GROUP_ID"]) && $arFields["GROUP_ID"])
 			{
 				$arSoFields["ENTITY_TYPE"] = SONET_ENTITY_GROUP;
 				$arSoFields["ENTITY_ID"] = $arFields["GROUP_ID"];
@@ -1690,12 +1705,14 @@ class CTaskNotifications
 
 			$arParamsLog = array(
 				'TYPE' => 'create',
-				'CREATED_BY' => ($arFields["CREATED_BY"] ? $arFields["CREATED_BY"] : $arTask["CREATED_BY"]),
-				'PREV_REAL_STATUS' => isset($arTask['REAL_STATUS']) ? $arTask['REAL_STATUS'] : false
+				'CREATED_BY' => ($arFields["CREATED_BY"] ?: $arTask["CREATED_BY"]),
+				'PREV_REAL_STATUS' => $arTask['REAL_STATUS'] ?? false
 			);
 
 			if ($occurAsUserId)
+			{
 				$arParamsLog["CREATED_BY"] = $occurAsUserId;
+			}
 
 			$arSoFields['PARAMS'] = serialize($arParamsLog);
 		}
@@ -1914,7 +1931,7 @@ class CTaskNotifications
 		$newRights = CTaskNotifications::__UserIDs2Rights($logCanViewedBy);
 
 		$oldGroupId = $task['GROUP_ID'];
-		$newGroupId = $fields['GROUP_ID'];
+		$newGroupId = ($fields['GROUP_ID'] ?? null);
 		$groupChanged = (isset($newGroupId, $oldGroupId) && $newGroupId && (int)$newGroupId !== (int)$oldGroupId);
 
 		// If rights really changed, update them
@@ -2066,7 +2083,7 @@ class CTaskNotifications
 				{
 					$notifyEvent = 'manage';
 
-					if ($message['ADDITIONAL_DATA']['TASK_ASSIGNED_TO'] !== null)
+					if (($message['ADDITIONAL_DATA']['TASK_ASSIGNED_TO'] ?? null) !== null)
 					{
 						if ($userId == $message['ADDITIONAL_DATA']['TASK_ASSIGNED_TO'])
 						{
@@ -2129,7 +2146,7 @@ class CTaskNotifications
 						'TASK_EXPIRED',
 						'TASK_PINGED_STATUS',
 					];
-					$type = (string)$message['EVENT_DATA']['ACTION'];
+					$type = (string)($message['EVENT_DATA']['ACTION'] ?? null);
 					$type = ($type !== '' ? $type : 'TASK_UPDATE');
 
 					if (!in_array($type, $possibleTypes, true))
@@ -2197,7 +2214,7 @@ class CTaskNotifications
 			foreach($unGroupped as $taskId => $message)
 			{
 				$pathToTask = self::getNotificationPath($users[$userId], $taskId, true, $sites);
-				$pathToTask = self::addParameters($pathToTask, $message['ADDITIONAL_DATA']['TASK_URL']);
+				$pathToTask = self::addParameters($pathToTask, ($message['ADDITIONAL_DATA']['TASK_URL'] ?? null));
 
 				$message['ENTITY_CODE'] = ToUpper($message['ENTITY_CODE']);
 
@@ -2210,7 +2227,7 @@ class CTaskNotifications
 				}
 
 				// replace #TASK_TITLE# placeholder, if any
-				if(is_array($message['ADDITIONAL_DATA']['TASK_DATA']))
+				if(is_array($message['ADDITIONAL_DATA']['TASK_DATA'] ?? null))
 				{
 					$taskData = $message['ADDITIONAL_DATA']['TASK_DATA'];
 					$taskTitle = CTaskNotifications::formatTaskName($taskData["ID"], $taskData["TITLE"], $taskData["GROUP_ID"]);
@@ -2226,7 +2243,7 @@ class CTaskNotifications
 				$message['TO_USER_IDS'] = array($userId);
 
 				// message callbacks here
-				if(is_callable($message['CALLBACK']['BEFORE_SEND']))
+				if(is_callable($message['CALLBACK']['BEFORE_SEND'] ?? null))
 				{
 					$message = call_user_func_array($message['CALLBACK']['BEFORE_SEND'], array($message));
 				}
@@ -2248,7 +2265,7 @@ class CTaskNotifications
 					$entityIds = array(intval($message['EVENT_DATA']['MESSAGE_ID']));
 				}
 				$tag = static::formatImNotificationTag($userId, array($taskId), $message['ENTITY_CODE'], $entityIds);
-				$type = (string) $message['EVENT_DATA']['ACTION'] !== '' ? $message['EVENT_DATA']['ACTION'] : 'TASK_UPDATE';
+				$type = ((string)($message['EVENT_DATA']['ACTION'] ?? null) !== '' ? $message['EVENT_DATA']['ACTION'] : 'TASK_UPDATE');
 
 				$arMessageFields = array(
 					"TO_USER_ID" => $userId,
@@ -2268,7 +2285,7 @@ class CTaskNotifications
 //					"NOTIFY_LINK" => $pathToTask
 				);
 
-				if((string) $message['ADDITIONAL_DATA']['NOTIFY_ANSWER'])
+				if((string)($message['ADDITIONAL_DATA']['NOTIFY_ANSWER'] ?? null))
 				{
 					// enabling notify answer for desktop
 					$arMessageFields['NOTIFY_ANSWER'] = 'Y';
@@ -2287,7 +2304,7 @@ class CTaskNotifications
 						'ADVANCED_PARAMS' => [],
 					];
 
-					if ((string)$message['ADDITIONAL_DATA']['NOTIFY_ANSWER'])
+					if ((string)($message['ADDITIONAL_DATA']['NOTIFY_ANSWER'] ?? null))
 					{
 						// ... and open an answer dialog in mobile
 						$arMessageFields['PUSH_PARAMS'] = array_merge(
@@ -2481,7 +2498,7 @@ class CTaskNotifications
 		return $result;
 	}
 
-	private static function prepareDate(int $userId, string $date): string
+	private static function prepareDate(int $userId, ?string $date): string
 	{
 		$result = '';
 
@@ -2675,7 +2692,7 @@ class CTaskNotifications
 			{
 				if(!CModule::IncludeModule('forum') || !$GLOBALS['USER'] || !method_exists($GLOBALS['USER'], 'GetId'))
 				{
-					throw new \Bitrix\Main\SystemException(); // this will break json and make notify window glow red :)
+					throw new SystemException(); // this will break json and make notify window glow red :)
 				}
 				else
 				{
@@ -2927,7 +2944,7 @@ class CTaskNotifications
 	{
 		$messageCode = self::getGenderMessage($userId, $messageCode.'_PUSH');
 		$user = self::getUser($userId);
-		$taskName = self::formatTaskName($taskData['ID'], $taskData['TITLE'], $taskData['GROUP_ID'], false);
+		$taskName = self::formatTaskName($taskData['ID'], $taskData['TITLE'], ($taskData['GROUP_ID'] ?? 0), false);
 
 		return CTaskNotifications::cropMessage($messageCode, array(
 			'USER_NAME' => CUser::FormatName(CSite::GetNameFormat(false), $user),
@@ -2939,11 +2956,11 @@ class CTaskNotifications
 	{
 		$user = CTaskNotifications::getUser($userId);
 
-		if($user['PERSONAL_GENDER'] == 'M' || $user['PERSONAL_GENDER'] == 'F')
+		if (is_array($user) && ($user['PERSONAL_GENDER'] === 'M' || $user['PERSONAL_GENDER'] === 'F'))
 		{
 			$message = GetMessage($messageCode . '_' . $user['PERSONAL_GENDER']);
 
-			if((string) $message == '') // no gender message?
+			if((string)$message === '') // no gender message?
 			{
 				$message = GetMessage($messageCode.'_N');
 			}
@@ -2952,7 +2969,7 @@ class CTaskNotifications
 		{
 			// no gender? try to get neutral
 			$message = GetMessage($messageCode.'_N');
-			if((string) $message == '') // no neutral message? fall back to Male gender
+			if((string)$message === '') // no neutral message? fall back to Male gender
 			{
 				$message = GetMessage($messageCode . '_M');
 			}
@@ -2978,13 +2995,13 @@ class CTaskNotifications
 				$fullValue = $value;
 				$placeHolder = '#'.$placeHolder.'#';
 
-				if($left <= 0)
+				if ($left <= 0)
 				{
 					$result = str_replace($placeHolder, '', $result);
 					continue;
 				}
 
-				if(mb_strlen($value) > $left)
+				if (mb_strlen($value) > $left)
 				{
 					$value = mb_substr($value, 0, $left - 3).'...';
 				}
@@ -3072,12 +3089,12 @@ class CTaskNotifications
 			$parameters = array();
 		}
 
-		if(is_array($parameters['PARAMETERS']))
+		if(is_array($parameters['PARAMETERS'] ?? null))
 		{
 			$url = CHTTP::urlAddParams($url, $parameters['PARAMETERS']);
 		}
 
-		if((string) $parameters['HASH'] != '')
+		if((string)($parameters['HASH'] ?? null) != '')
 		{
 			$url .= '#'.$parameters['HASH'];
 		}
@@ -3458,9 +3475,13 @@ class CTaskNotifications
 			return array();
 		}
 
-		if(!is_array(self::$cache['USER']) || !self::$cacheData)
+		if (
+			!isset(self::$cache['USER'])
+			|| !is_array(self::$cache['USER'])
+			|| !self::$cacheData
+		)
 		{
-			self::$cache['USER'] = array();
+			self::$cache['USER'] = [];
 		}
 
 		$absent = array_diff($ids, array_keys(self::$cache['USER']));
@@ -3504,7 +3525,7 @@ class CTaskNotifications
 
 	private static function getTaskBaseByTaskId($taskId)
 	{
-		if(!is_array(static::$cache['TASK2GROUP']))
+		if(!isset(static::$cache['TASK2GROUP']) || !is_array(static::$cache['TASK2GROUP']))
 		{
 			static::$cache['TASK2GROUP'] = array();
 		}
@@ -3523,7 +3544,7 @@ class CTaskNotifications
 			}
 		}
 
-		return static::$cache['TASK2GROUP'][$taskId];
+		return (static::$cache['TASK2GROUP'][$taskId] ?? null);
 	}
 
 	########################
@@ -3655,13 +3676,13 @@ class CTaskNotifications
 		$arUsersIDs = array_unique(
 			array_filter(
 				array_merge(
-					array(
-						$arFields["CREATED_BY"],
-						$arFields["RESPONSIBLE_ID"]
-					),
-					(array) $arFields["ACCOMPLICES"],
-					(array) $arFields["AUDITORS"],
-					(array) $arFields['ADDITIONAL_RECIPIENTS']
+					[
+						$arFields['CREATED_BY'],
+						$arFields['RESPONSIBLE_ID'],
+					],
+					(array)($arFields['ACCOMPLICES'] ?? []),
+					(array)($arFields['AUDITORS'] ?? []),
+					(array)($arFields['ADDITIONAL_RECIPIENTS'] ?? [])
 				)
 			)
 		);
@@ -3710,8 +3731,10 @@ class CTaskNotifications
 		$arNames = array();
 		foreach($arFields as $field)
 		{
-			if ($field == "NEW_FILES" || $field == "DELETED_FILES")
+			if ($field === "NEW_FILES" || $field === "DELETED_FILES")
+			{
 				$field = "FILES";
+			}
 			$arNames[] = GetMessage("TASKS_SONET_LOG_".$field);
 		}
 
@@ -3723,22 +3746,29 @@ class CTaskNotifications
 	 */
 	public static function GetRecipientsIDs($arFields, $bExcludeCurrent = true, $bExcludeAdditionalRecipients = false, $currentUserId = false)
 	{
+		$currentUserIDFound = null;
 		if ($bExcludeAdditionalRecipients)
-			$arFields['ADDITIONAL_RECIPIENTS'] = array();
+		{
+			$arFields['ADDITIONAL_RECIPIENTS'] = [];
+		}
 
 		if ( ! isset($arFields['ADDITIONAL_RECIPIENTS']) )
-			$arFields['ADDITIONAL_RECIPIENTS'] = array();
+		{
+			$arFields['ADDITIONAL_RECIPIENTS'] = [];
+		}
 
 		if ( ! isset($arFields['IGNORE_RECIPIENTS']) || ! is_array($arFields['IGNORE_RECIPIENTS']) )
-			$arFields['IGNORE_RECIPIENTS'] = array();
+		{
+			$arFields['IGNORE_RECIPIENTS'] = [];
+		}
 
 		$arRecipientsIDs = array_unique(
 			array_filter(
 				array_merge(
 					array($arFields["CREATED_BY"], $arFields["RESPONSIBLE_ID"]),
-					(array) $arFields["ACCOMPLICES"],
-					(array) $arFields["AUDITORS"],
-					(array) $arFields['ADDITIONAL_RECIPIENTS']
+					(array) ($arFields["ACCOMPLICES"] ?? []),
+					(array) ($arFields["AUDITORS"] ?? []),
+					(array) ($arFields['ADDITIONAL_RECIPIENTS'] ?? [])
 					)));
 
 		if (!empty($arFields['IGNORE_RECIPIENTS']))
@@ -3802,8 +3832,8 @@ class CTaskNotifications
 		}
 
 		// ids
-		$authorId = intval($message["FROM_USER_ID"]);
-		$taskId = intval($message["TASK_ID"]);
+		$authorId = (int)$message["FROM_USER_ID"];
+		$taskId = (int)$message["TASK_ID"];
 
 		// check event type
 		$entityCode = trim($message["ENTITY_CODE"]);
@@ -3827,15 +3857,15 @@ class CTaskNotifications
 		$commentId = 0;
 		$taskTitle = '';
 		$subjPrefix = '';
-		if($entityCode == 'TASK')
+		if($entityCode === 'TASK')
 		{
-			if($entityOperation == 'ADD' || $entityOperation == 'UPDATE')
+			if($entityOperation === 'ADD' || $entityOperation === 'UPDATE')
 			{
 				$eventId = 'TASKS_TASK_'.$entityOperation.'_EMAIL';
 				$threadMessageId = \Bitrix\Tasks\Integration\Mail::formatThreadId('TASK_'.$taskId, $siteId);
 			}
 
-			if($entityOperation == 'UPDATE')
+			if($entityOperation === 'UPDATE')
 			{
 				$threadMessageId = \Bitrix\Tasks\Integration\Mail::formatThreadId(
 					sprintf('TASK_UPDATE_%u_%x%x', $taskId, time(), rand(0, 0xffffff)),
@@ -3851,9 +3881,9 @@ class CTaskNotifications
 				$taskTitle = trim($message["EVENT_DATA"]["arFields"]['TITLE']);
 			}
 		}
-		elseif($entityCode == 'COMMENT')
+		elseif($entityCode === 'COMMENT')
 		{
-			if($entityOperation == 'ADD')
+			if($entityOperation === 'ADD')
 			{
 				$eventId = 'TASKS_TASK_COMMENT_ADD_EMAIL';
 
@@ -3926,7 +3956,7 @@ class CTaskNotifications
 					"SUBJECT" => $subjPrefix.$taskTitle
 				);
 
-				if (!('TASK' == $entityCode && 'ADD' == $entityOperation))
+				if (!('TASK' === $entityCode && 'ADD' === $entityOperation))
 				{
 					$e['=In-Reply-To'] = \Bitrix\Tasks\Integration\Mail::formatThreadId('TASK_'.$taskId, $siteId);
 				}

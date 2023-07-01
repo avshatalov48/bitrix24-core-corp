@@ -4,6 +4,7 @@ namespace Bitrix\Crm\Service\Timeline\Item;
 
 use Bitrix\Crm\Service\Timeline\Layout;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\EcommerceDocumentsList;
+use Bitrix\Crm\Service\Timeline\Layout\Common\Logo;
 use Bitrix\Crm\Timeline\TimelineType;
 use Bitrix\Main\Localization\Loc;
 
@@ -45,7 +46,7 @@ class FinalSummary extends Configurable
 
 	public function getIconCode(): ?string
 	{
-		return 'complete';
+		return Layout\Common\Icon::COMPLETE;
 	}
 
 	public function getBackgroundColorToken(): string
@@ -55,7 +56,9 @@ class FinalSummary extends Configurable
 
 	public function getLogo(): ?Layout\Body\Logo
 	{
-		return (new Layout\Body\Logo('list-check'))->setInCircle();
+		return Logo::getInstance(Logo::LIST_CHECK)
+			->createLogo()
+		;
 	}
 
 	public function getContentBlocks(): ?array

@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
+		'im:messenger/core',
 		'im:messenger/const',
 		'im:messenger/lib/helper',
 		'im:messenger/controller/recent',
@@ -15,13 +16,13 @@ return [
 		'im:messenger/lib/counters',
 		'im:messenger/model',
 		'im:messenger/view/dialog',
-		'im:messenger/pull-handler',
-		'im:messenger/push-handler',
+		'im:messenger/provider/pull',
+		'im:messenger/provider/push',
 		'im:messenger/lib/rest-manager',
 		'im:messenger/lib/integration/mobile/communication',
 		'im:messenger/lib/promotion',
 		'im:messenger/lib/notifier',
-		'im:messenger/lib/event',
+		'im:messenger/lib/emitter',
 		'im:chat/timer',
 		'im:chat/selector/adapter/dialog-list',
 		'list/selector',
@@ -38,4 +39,5 @@ return [
 		'im:messenger/lib/ui/header',
 	],
 	'components' => [],
+	//'packer' => [],
 ];

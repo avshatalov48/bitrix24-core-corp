@@ -136,6 +136,14 @@ class salescenter extends CModule
 			'onFacebookCompilationExportFinishedHandler'
 		);
 
+		\Bitrix\Main\EventManager::getInstance()->registerEventHandler(
+			'sale',
+			'OnSaleAfterPsServiceProcessRequest',
+			'salescenter',
+			'\Bitrix\SalesCenter\Integration\SaleManager',
+			'onPaySystemServiceProcessRequest'
+		);
+
 		RegisterModule($this->MODULE_ID);
 
 		if(\Bitrix\Main\Loader::includeModule($this->MODULE_ID))
@@ -226,6 +234,14 @@ class salescenter extends CModule
 			'salescenter',
 			'\Bitrix\SalesCenter\Controller\Compilation',
 			'onFacebookCompilationExportFinishedHandler'
+		);
+
+		\Bitrix\Main\EventManager::getInstance()->unRegisterEventHandler(
+			'sale',
+			'OnSaleAfterPsServiceProcessRequest',
+			'salescenter',
+			'\Bitrix\SalesCenter\Integration\SaleManager',
+			'onPaySystemServiceProcessRequest'
 		);
 
 		\Bitrix\SalesCenter\Integration\ImManager::unInstallApplication();

@@ -14,10 +14,13 @@ use Bitrix\Main\ObjectException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\Tasks\Access\ActionDictionary;
-use Bitrix\Tasks\Access\Model\ChecklistModel;
 use Bitrix\Tasks\CheckList\Internals\CheckList;
 use Bitrix\Tasks\CheckList\Internals\CheckListTree;
+use Bitrix\Tasks\Integration\CRM\Timeline;
+use Bitrix\Tasks\Integration\CRM\TimeLineManager;
 use Bitrix\Tasks\Integration\Disk\Rest\Attachment;
+use Bitrix\Tasks\Internals\Registry\TaskRegistry;
+use Bitrix\Tasks\Internals\TaskTable;
 use Bitrix\Tasks\Util\Result;
 use Bitrix\Tasks\Util\User;
 use Bitrix\Tasks\Util\UserField;
@@ -32,6 +35,7 @@ Loc::loadMessages(__FILE__);
  */
 abstract class CheckListFacade
 {
+	public const TASK_ADD_CONTEXT = 'TASK_ADD';
 	const ACTION_ADD = 0x01;
 	const ACTION_MODIFY = 0x02;
 	const ACTION_REMOVE = 0x03;
@@ -305,6 +309,7 @@ abstract class CheckListFacade
 		$checkList->setFields($fields);
 		$updateResult = $checkList->save();
 
+		static::onAfterUpdate($entityId);
 		return $updateResult;
 	}
 
@@ -662,6 +667,7 @@ abstract class CheckListFacade
 		static::doMergePostActions($entityId, $userId, ['ITEMS' => $traversedItems, 'PARAMETERS' => $parameters]);
 
 		static::disableDeferredActionsMode();
+		static::onAfterMerge($traversedItems, $userId, $entityId, $parameters);
 
 		return $mergeResult;
 	}
@@ -1340,9 +1346,15 @@ abstract class CheckListFacade
 			$processedItem['MEMBERS'] = [];
 
 			$id = $processedItem['ID'];
-			$userId = $processedItem['USER_ID'];
+			$userId = $processedItem['USER_ID'] ?? null;
 
-			if (isset($userId) || $items[$id])
+			if (
+				isset($userId)
+				|| (
+					array_key_exists($id, $items)
+					&& $items[$id]
+				)
+			)
 			{
 				$userFields = [];
 
@@ -1356,7 +1368,7 @@ abstract class CheckListFacade
 					'NAME' => User::formatName($userFields),
 				];
 
-				if ($items[$id])
+				if (isset($items[$id]))
 				{
 					$items[$id]['MEMBERS'][$userId] = $member;
 					return $items[$id];
@@ -1393,7 +1405,7 @@ abstract class CheckListFacade
 
 			$processedItem['ATTACHMENTS'] = [];
 
-			if ($processedItem['UF_CHECKLIST_FILES'])
+			if ($processedItem['UF_CHECKLIST_FILES'] ?? null)
 			{
 				$userFields = $USER_FIELD_MANAGER->GetUserFields(static::$userFieldsEntityIdName, $item['ID'], LANGUAGE_ID);
 				$value = $userFields['UF_CHECKLIST_FILES']['VALUE'];
@@ -1615,5 +1627,13 @@ abstract class CheckListFacade
 	protected static function fillItemAccessActions($entityId, $checkList, $userId)
 	{
 		return [];
+	}
+
+	protected static function onAfterMerge(array $traversedItems, int $userId, int $taskId, array $parameters): void
+	{
+	}
+
+	protected static function onAfterUpdate(int $taskId): void
+	{
 	}
 }

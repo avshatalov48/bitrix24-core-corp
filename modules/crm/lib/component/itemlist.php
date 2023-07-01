@@ -418,11 +418,7 @@ abstract class ItemList extends Base
 		if ($this->factory->isStagesEnabled())
 		{
 			$views[Service\Router::LIST_VIEW_KANBAN] = [
-				'title' =>
-					Crm::isUniversalActivityScenarioEnabled()
-					? Loc::getMessage('CRM_COMMON_PIPELINE')
-					: Loc::getMessage('CRM_COMMON_KANBAN')
-				,
+				'title' => Loc::getMessage('CRM_COMMON_KANBAN'),
 				'url' => Container::getInstance()->getRouter()->getKanbanUrl($this->entityTypeId, $this->getCategoryId()),
 				'isActive' => false,
 			];

@@ -1,17 +1,16 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
-{
-	die();
-}
-
 /**
- * Bitrix vars
- * @global CUser $USER
- * @global CMain $APPLICATION
+ * @var CMain $APPLICATION
+ * @var CUser $USER
  * @var array $arParams
  * @var array $arResult
  * @var CBitrixComponent $this
  */
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 use Bitrix\Main\Localization\Loc;
 
@@ -27,7 +26,7 @@ $filter = [
 
 if (!$USER->CanDoOperation('biconnector_dashboard_view'))
 {
-	$filter['=PERMISSION.USER_ID'] = $USER->getId();
+	$filter['=PERMISSION.USER_ID'] = $USER->GetID();
 }
 
 $arResult = \Bitrix\BIConnector\DashboardTable::getList([
@@ -39,4 +38,4 @@ if ($arResult && $arParams['SET_TITLE'] == 'Y')
 	$APPLICATION->SetTitle(htmlspecialcharsEx($arResult['NAME']));
 }
 
-$this->IncludeComponentTemplate();
+$this->includeComponentTemplate();

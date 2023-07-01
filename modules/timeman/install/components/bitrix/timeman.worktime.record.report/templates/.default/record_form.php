@@ -45,15 +45,36 @@ $APPLICATION->IncludeComponent(
 	<form data-role="worktime-record-form">
 		<input type="hidden" name="<?php echo $arResult['WORKTIME_RECORD_FORM_NAME']; ?>[useEmployeesTimezone]"
 				value="<?= $arResult['useEmployeesTimezone'] ? '1' : '0' ?>">
-		<input type="hidden" name="<?php echo $arResult['WORKTIME_RECORD_FORM_NAME']; ?>[id]" value="<?= htmlspecialcharsbx($arResult['record']['ID']) ?>">
-		<input type="hidden" name="<?php echo $arResult['WORKTIME_RECORD_FORM_NAME']; ?>[recordedStartDateFormatted]" data-role="start-date">
-		<input type="hidden" name="<?php echo $arResult['WORKTIME_RECORD_FORM_NAME']; ?>[recordedStopDateFormatted]" data-role="end-date">
-		<input type="hidden" name="<?= htmlspecialcharsbx($startTimeInputName); ?>"
-				value="<?= htmlspecialcharsbx($arResult['RECORDED_START_TIME']) ?>">
-		<input type="hidden" name="<?= htmlspecialcharsbx($endTimeInputName); ?>"
-				value="<?= htmlspecialcharsbx($arResult['RECORDED_STOP_TIME']) ?>">
-		<input type="hidden" name="<?= htmlspecialcharsbx($breakLengthInputName); ?>"
-				value="<?= htmlspecialcharsbx($arResult['BREAK_LENGTH_RECORDED_TIME']) ?>">
+		<input
+			type="hidden"
+			name="<?php echo $arResult['WORKTIME_RECORD_FORM_NAME']; ?>[id]"
+			value="<?= htmlspecialcharsbx($arResult['record']['ID']) ?>"
+		>
+		<input
+			type="hidden"
+			name="<?php echo $arResult['WORKTIME_RECORD_FORM_NAME']; ?>[recordedStartDateFormatted]"
+			data-role="start-date"
+		>
+		<input
+			type="hidden"
+			name="<?php echo $arResult['WORKTIME_RECORD_FORM_NAME']; ?>[recordedStopDateFormatted]"
+			data-role="end-date"
+		>
+		<input
+			type="hidden"
+			name="<?= htmlspecialcharsbx($startTimeInputName); ?>"
+			value="<?= htmlspecialcharsbx($arResult['RECORDED_START_TIME'] ?? '') ?>"
+		>
+		<input
+			type="hidden"
+			name="<?= htmlspecialcharsbx($endTimeInputName); ?>"
+			value="<?= htmlspecialcharsbx($arResult['RECORDED_STOP_TIME'] ?? '') ?>"
+		>
+		<input
+			type="hidden"
+			name="<?= htmlspecialcharsbx($breakLengthInputName); ?>"
+			value="<?= htmlspecialcharsbx($arResult['BREAK_LENGTH_RECORDED_TIME'] ?? '') ?>"
+		>
 
 		<div class="timeman-report-time-list">
 			<? foreach ($arResult['FIELD_CELLS'] as $index => $fieldCell) : ?>
@@ -74,8 +95,10 @@ $APPLICATION->IncludeComponent(
 						<? endforeach; ?>
 					<? endif; ?>
 				<? endif; ?>
-				<div class="timeman-report-time-item <?= htmlspecialcharsbx($cssClasses); ?> <?= $fieldCell['HIDE'] && !$fieldCell['CHANGED_TIME'] ? 'timeman-hide' : ''; ?>"
-						data-role="<?= htmlspecialcharsbx($fieldCell['DATA_ROLE']) ?>-container">
+				<div
+					class="timeman-report-time-item <?= htmlspecialcharsbx($cssClasses); ?> <?= ($fieldCell['HIDE'] ?? null) && !($fieldCell['CHANGED_TIME'] ?? null) ? 'timeman-hide' : ''; ?>"
+					data-role="<?= htmlspecialcharsbx($fieldCell['DATA_ROLE']) ?>-container"
+				>
 					<div class="timeman-report-time-item-title">
 						<span class="timeman-report-time-item-title-text"><?= htmlspecialcharsbx($fieldCell['TITLE']) ?></span>
 					</div>
@@ -96,7 +119,7 @@ $APPLICATION->IncludeComponent(
 									'(' . htmlspecialcharsbx($fieldCell['DATE']) . ')';
 									?></span>
 							<? endif; ?>
-							<div class="<?= $fieldCell['CHANGED_TIME'] ? '' : 'timeman-hide'; ?>">
+							<div class="<?= ($fieldCell['CHANGED_TIME'] ?? null) ? '' : 'timeman-hide'; ?>">
 								<span class="timeman-report-time-item-value-real" <?
 								if (!empty($fieldCell['ACTUAL_VALUE_HINT'])): ?>
 									data-hint-no-icon
@@ -114,10 +137,10 @@ $APPLICATION->IncludeComponent(
 								<? endif; ?>>
 									<div class="timeman-report-time-item-edited">
 										<span class="timeman-record-violation-icon <?php echo $recordFormHelper->getCssClassForViolations(
-											$fieldCell['EDITED_VIOLATIONS'], $fieldCell['OTHER_VIOLATIONS'], $arResult['record']
+											$fieldCell['EDITED_VIOLATIONS'] ?? null, $fieldCell['OTHER_VIOLATIONS'] ?? null, $arResult['record']
 										) ?>"></span>
 										<span><?php echo
-											htmlspecialcharsbx(Loc::getMessage('JS_CORE_TMR_A') . ' ' . $fieldCell['ACTUAL_INFO']['EDITED_USER_TIME'])
+											htmlspecialcharsbx(Loc::getMessage('JS_CORE_TMR_A') . ' ' . ($fieldCell['ACTUAL_INFO']['EDITED_USER_TIME'] ?? ''))
 											?></span>
 									</div>
 								</div>

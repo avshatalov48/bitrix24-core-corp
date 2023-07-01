@@ -8,7 +8,8 @@
  */
 jn.define('im/messenger/cache/messages', (require, exports, module) => {
 
-	const { Cache } = jn.require('im/messenger/cache/base');
+	const { clone } = require('utils/object');
+	const { Cache } = require('im/messenger/cache/base');
 
 	/**
 	 * @class MessagesCache
@@ -26,7 +27,7 @@ jn.define('im/messenger/cache/messages', (require, exports, module) => {
 		{
 			return Promise.resolve();
 
-			const firstPageState = ChatUtils.objectClone(state);
+			const firstPageState = clone(state);
 			firstPageState.saveMessageList = {};
 
 			for (const dialogId in firstPageState.collection)
@@ -39,6 +40,8 @@ jn.define('im/messenger/cache/messages', (require, exports, module) => {
 				const firstPageLength = 50;
 				firstPageState.collection[dialogId] = firstPageState.collection[dialogId].splice(0, firstPageLength);
 				firstPageState.collection[dialogId].forEach(message => {
+					message.isPlaying = false;
+
 					if (!firstPageState.saveMessageList[dialogId])
 					{
 						firstPageState.saveMessageList[dialogId] = {};

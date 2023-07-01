@@ -138,7 +138,7 @@ class CallTracker extends Base
 						?: $phoneNumber
 					);
 				},
-				$source['PHONE']
+				$source['PHONE'] ?: []
 			);
 			$result[] = [
 				'code' => $withNames ? $source['UTM_SOURCE'][0] : null,

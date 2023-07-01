@@ -58,10 +58,10 @@ class Chat implements Tabable
 					'COMPONENT_CODE' => 'im.messenger',
 					'MESSAGES' => [
 						'COMPONENT_TITLE' => Loc::getMessage('TAB_NAME_IM_RECENT_FULL'),
-						'isCrmUniversalActivityScenarioEnabled' => $this->getIsCrmUniversalActivityScenarioEnabledMessage(),
 					],
 					'MIN_SEARCH_SIZE' => \Bitrix\Main\ORM\Query\Filter\Helper::getMinTokenSize(),
 					'IS_NETWORK_SEARCH_AVAILABLE' => $this->isNetworkSearchAvailable(),
+					'IS_DEVELOPMENT_ENVIRONMENT' => $this->isDevelopmentEnvironment(),
 				]
 			),
 			'settings' => [
@@ -88,7 +88,6 @@ class Chat implements Tabable
 					"COMPONENT_CODE" => "im.recent",
 					"MESSAGES" => [
 						"COMPONENT_TITLE" => Loc::getMessage("TAB_NAME_IM_RECENT_FULL"),
-						'isCrmUniversalActivityScenarioEnabled' => $this->getIsCrmUniversalActivityScenarioEnabledMessage(),
 					]
 				]
 			),
@@ -132,7 +131,6 @@ class Chat implements Tabable
 								"COMPONENT_CODE" => "im.openlines.recent",
 								"MESSAGES" => [
 									"COMPONENT_TITLE" => Loc::getMessage("TAB_NAME_IM_RECENT_FULL"),
-									'isCrmUniversalActivityScenarioEnabled' => $this->getIsCrmUniversalActivityScenarioEnabledMessage(),
 								]
 							]
 						),
@@ -397,17 +395,8 @@ class Chat implements Tabable
 		return "chats";
 	}
 
-	public function isCrmUniversalActivityScenarioEnabled(): bool
+	public function isDevelopmentEnvironment(): bool
 	{
-		return (
-			Loader::includeModule('crm')
-			&& Loader::includeModule('crmmobile')
-			&& \Bitrix\Crm\Settings\Crm::isUniversalActivityScenarioEnabled()
-		);
-	}
-
-	public function getIsCrmUniversalActivityScenarioEnabledMessage(): string
-	{
-		return $this->isCrmUniversalActivityScenarioEnabled() ? 'Y' : 'N';
+		return \Bitrix\Main\Config\Option::get('immobile', 'IS_DEVELOPMENT_ENVIRONMENT', 'N') === 'Y';
 	}
 }

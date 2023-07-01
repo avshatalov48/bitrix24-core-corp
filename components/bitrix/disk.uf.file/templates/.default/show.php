@@ -185,8 +185,8 @@ include_once(str_replace(array("\\", "//"), "/", __DIR__."/messages.php"));
 						?> class="feed-com-file-name" <?
 						?> title="<?=htmlspecialcharsbx($file['NAME'])?>" <?
 						?> bx-attach-file-id="<?=$file['FILE_ID']?>"<?
-						if ($file['XML_ID']): ?> bx-attach-xml-id="<?=$file['XML_ID']?>"<?endif;
-						if ($file['TYPE_FILE']): ?> bx-attach-file-type="<?=$file['TYPE_FILE']?>"<?endif;
+						if (isset($file['XML_ID'])): ?> bx-attach-xml-id="<?=$file['XML_ID']?>"<?endif;
+						if (isset($file['TYPE_FILE'])): ?> bx-attach-file-type="<?=$file['TYPE_FILE']?>"<?endif;
 						?> data-bx-baseElementId="disk-attach-<?=$file['ID']?>" <?=
 							$file['ATTRIBUTES_FOR_VIEWER']
 						?> alt="<?=htmlspecialcharsbx($file['NAME'])?>"<?

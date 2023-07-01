@@ -1423,6 +1423,7 @@
 			return {
 				default: '#FFFFFF',
 				pinned: '#F4F5F7',
+				blinking: '#FFFEDF',
 			};
 		}
 
@@ -2294,7 +2295,7 @@
 					identifier: Action.types.ping,
 					title: Loc.getMessage(`${titlePrefix}_PING`),
 					iconName: 'action_ping',
-					color: '#00B4AC',
+					color: '#05b5ab',
 					position: 'right',
 				},
 				share: {
@@ -2343,7 +2344,7 @@
 					identifier: Action.types.renew,
 					title: Loc.getMessage(`${titlePrefix}_RENEW`),
 					iconName: 'action_reload',
-					color: '#00B4AC',
+					color: '#05b5ab',
 					position: 'right',
 				},
 				mute: {

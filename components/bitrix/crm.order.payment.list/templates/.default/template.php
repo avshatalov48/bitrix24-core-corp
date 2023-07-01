@@ -1,5 +1,9 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 use Bitrix\Main\Localization\Loc;
 
@@ -15,10 +19,12 @@ use Bitrix\Main\Localization\Loc;
  */
 
 $APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/crm-entity-show.css");
-if(SITE_TEMPLATE_ID === 'bitrix24')
+
+if (SITE_TEMPLATE_ID === 'bitrix24')
 {
 	$APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/bitrix24/crm-entity-show.css");
 }
+
 if (CModule::IncludeModule('bitrix24') && !\Bitrix\Crm\CallList\CallList::isAvailable())
 {
 	CBitrix24::initLicenseInfoPopupJS();
@@ -31,27 +37,32 @@ Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/activity.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/interface_grid.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/autorun_proc.js');
 Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/js/crm/css/autorun_proc.css');
+
 ?><div id="rebuildMessageWrapper"><?
 
-if($arResult['NEED_FOR_REBUILD_SEARCH_CONTENT'])
+if (!empty($arResult['NEED_FOR_REBUILD_SEARCH_CONTENT']))
 {
 	?><div id="rebuildOrderSearchWrapper"></div><?
 }
-if($arResult['NEED_FOR_BUILD_TIMELINE'])
+
+if (!empty($arResult['NEED_FOR_BUILD_TIMELINE']))
 {
 	?><div id="buildOrderTimelineWrapper"></div><?
 }
-if($arResult['NEED_FOR_REFRESH_ACCOUNTING'])
+
+if (!empty($arResult['NEED_FOR_REFRESH_ACCOUNTING']))
 {
 	?><div id="refreshOrderAccountingWrapper"></div><?
 }
-if($arResult['NEED_FOR_REBUILD_ORDER_PAYMENT_ATTRS'])
+
+if (!empty($arResult['NEED_FOR_REBUILD_ORDER_PAYMENT_ATTRS']))
 {
 	?><div id="rebuildOrderAttrsMsg" class="crm-view-message">
 		<?=GetMessage('CRM_ORDER_PAYMENT_REBUILD_ACCESS_ATTRS', array('#ID#' => 'rebuildOrderAttrsLink', '#URL#' => $arResult['PATH_TO_PRM_LIST']))?>
 	</div><?
 }
 ?></div><?
+
 //echo CCrmViewHelper::RenderOrderShipmentStatusSettings();
 $isInternal = $arResult['INTERNAL'];
 $callListUpdateMode = $arResult['CALL_LIST_UPDATE_MODE'];
@@ -65,7 +76,7 @@ $salescenterMode = ($arParams['SALESCENTER_MODE']
 );
 
 $activityEditorID = '';
-if(!$isInternal)
+if (!$isInternal)
 {
 	$activityEditorID = "{$arResult['GRID_ID']}_activity_editor";
 	$APPLICATION->IncludeComponent(
@@ -86,24 +97,28 @@ if(!$isInternal)
 	);
 }
 
-$gridManagerID = $arResult['GRID_ID'].'_MANAGER';
+$gridManagerID = $arResult['GRID_ID'] . '_MANAGER';
 $gridManagerCfg = array(
 	'ownerType' => CCrmOwnerType::OrderPaymentName,
 	'gridId' => $arResult['GRID_ID'],
 	'formName' => "form_{$arResult['GRID_ID']}",
 	'allRowsCheckBoxId' => "actallrows_{$arResult['GRID_ID']}",
 	'activityEditorId' => $activityEditorID,
-	'serviceUrl' => '/bitrix/components/bitrix/crm.activity.editor/ajax.php?siteID='.SITE_ID.'&'.bitrix_sessid_get(),
+	'serviceUrl' => '/bitrix/components/bitrix/crm.activity.editor/ajax.php?siteID=' . SITE_ID . '&' . bitrix_sessid_get(),
 	'filterFields' => array()
 );
+
 echo CCrmViewHelper::RenderOrderStatusSettings();
+
 $prefix = $arResult['GRID_ID'];
 $prefixLC = mb_strtolower($arResult['GRID_ID']);
 
 $arResult['GRID_DATA'] = array();
 $arColumns = array();
 foreach ($arResult['HEADERS'] as $arHead)
+{
 	$arColumns[$arHead['id']] = false;
+}
 
 $now = time() + CTimeZone::GetOffset();
 $arOrderShipmentStatusInfoValues = array();
@@ -184,37 +199,45 @@ foreach($arResult['ORDER_PAYMENT'] as $sKey => $payment)
 		'editable' => !$payment['EDIT'] ? ($arResult['INTERNAL'] ? 'N' : $arColumns) : 'Y',
 		'columns' => array(
 			'PAYMENT_SUMMARY' => CCrmViewHelper::RenderInfo(
-				$payment['PATH_TO_ORDER_PAYMENT_DETAILS'],
+				$payment['PATH_TO_ORDER_PAYMENT_DETAILS'] ?? '',
 				htmlspecialcharsbx($paymentSummaryText),
 				'', // type
 				array('TARGET' => '_self')
 			),
 
-			'RESPONSIBLE' => $payment['RESPONSIBLE_ID'] > 0
+			'RESPONSIBLE' => isset($payment['RESPONSIBLE_ID']) && $payment['RESPONSIBLE_ID'] > 0
 				? CCrmViewHelper::PrepareUserBaloonHtml(
 					array(
 						'PREFIX' => " PAYMENT_{$payment['ID']}_RESPONSIBLE",
 						'USER_ID' => $payment['RESPONSIBLE_ID'],
 						'USER_NAME'=> $payment['RESPONSIBLE'],
-						'USER_PROFILE_URL' => $payment['PATH_TO_USER_PROFILE']
+						'USER_PROFILE_URL' => $payment['PATH_TO_USER_PROFILE'] ?? ''
 					)
-				): '',
+				)
+				: '',
 			'DATE_BILL' => FormatDate($arResult['TIME_FORMAT'], MakeTimeStamp($payment['DATE_BILL']), $now),
-			'DATE_PAID' => !empty($payment['DATE_PAID']) ? FormatDate($arResult['TIME_FORMAT'], MakeTimeStamp($payment['DATE_PAID']), $now) : '',
-			'DATE_MARKED' => ($payment['DATE_MARKED'] == 'Y' ? FormatDate($arResult['TIME_FORMAT'], MakeTimeStamp($payment['DATE_MARKED']), $now) : ''),
+			'DATE_PAID' => !empty($payment['DATE_PAID'])
+				? FormatDate($arResult['TIME_FORMAT'], MakeTimeStamp($payment['DATE_PAID']), $now)
+				: '',
+			'DATE_MARKED' => isset($payment['DATE_MARKED']) && $payment['DATE_MARKED'] === 'Y'
+				? FormatDate($arResult['TIME_FORMAT'], MakeTimeStamp($payment['DATE_MARKED']), $now)
+				: '',
 			'DATE_RESPONSIBLE_ID' => FormatDate($arResult['TIME_FORMAT'], MakeTimeStamp($payment['DATE_RESPONSIBLE_ID']), $now),
 			'SUM' => CCrmCurrency::MoneyToString($payment['SUM'], $payment['CURRENCY']),
 			'CURRENCY' => CCrmCurrency::GetEncodedCurrencyName($payment['CURRENCY']),
 			'PAY_SYSTEM_FULL' => $paySystemFull,
 			'PAID' => Loc::getMessage($messageCode),
 			'ACCOUNT_NUMBER' => htmlspecialcharsbx($payment['ACCOUNT_NUMBER']),
-			'USER_ID' => $payment['BUYER_FORMATTED_NAME'] <> '' ? '<a href="/'.$payment['PATH_TO_BUYER'].'">'.$payment['BUYER_FORMATTED_NAME'].'</a>' : ''
+			'USER_ID' => empty($payment['BUYER_FORMATTED_NAME'])
+				? ''
+				: '<a href="/' . $payment['PATH_TO_BUYER'] . '">' . $payment['BUYER_FORMATTED_NAME'] . '</a>'
 		)
 	);
 
 	$arResult['GRID_DATA'][] = &$resultItem;
 	unset($resultItem);
 }
+
 $APPLICATION->IncludeComponent('bitrix:main.user.link',
 	'',
 	array(
@@ -248,7 +271,7 @@ if(($allowWrite || $allowDelete))
 		array('NAME' => GetMessage('MAIN_NO'), 'VALUE' => 'N')
 	);
 
-	if($allowWrite && $arParams['IS_RECURRING'] !== "Y")
+	if ($allowWrite && $arParams['IS_RECURRING'] !== "Y")
 	{
 		$actionList[] = array(
 			'NAME' => GetMessage('CRM_ORDER_PAYMENT_ACTION_PAID'),
@@ -290,7 +313,7 @@ if(($allowWrite || $allowDelete))
 					'SHOW_EXTRANET_USERS' => 'NONE',
 					'POPUP' => 'Y',
 					'SITE_ID' => SITE_ID,
-					'NAME_TEMPLATE' => $arResult['NAME_TEMPLATE']
+					'NAME_TEMPLATE' => $arResult['NAME_TEMPLATE'] ?? ''
 				),
 				null,
 				array('HIDE_ICONS' => 'Y')
@@ -381,13 +404,14 @@ $APPLICATION->IncludeComponent(
 		'AJAX_ID' => $arResult['AJAX_ID'],
 		'AJAX_OPTION_JUMP' => $arResult['AJAX_OPTION_JUMP'],
 		'AJAX_OPTION_HISTORY' => $arResult['AJAX_OPTION_HISTORY'],
-		'AJAX_LOADER' => isset($arParams['AJAX_LOADER']) ? $arParams['AJAX_LOADER'] : null,
-		'FILTER' => $arResult['FILTER'],
+		'AJAX_LOADER' => $arParams['AJAX_LOADER'] ?? null,
+		'FILTER' => $arResult['FILTER'] ?? [],
 		'FILTER_PRESETS' => $arResult['FILTER_PRESETS'],
 		'ENABLE_LIVE_SEARCH' => true,
 		'ACTION_PANEL' => $controlPanel,
 		'PAGINATION' => isset($arResult['PAGINATION']) && is_array($arResult['PAGINATION'])
-			? $arResult['PAGINATION'] : array(),
+			? $arResult['PAGINATION']
+			: array(),
 		'ENABLE_ROW_COUNT_LOADER' => true,
 		'PRESERVE_HISTORY' => $arResult['PRESERVE_HISTORY'],
 		'MESSAGES' => $messages,

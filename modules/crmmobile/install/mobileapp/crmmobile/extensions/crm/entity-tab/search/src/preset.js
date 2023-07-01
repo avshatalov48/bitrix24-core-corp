@@ -2,7 +2,6 @@
  * @module crm/entity-tab/search/preset
  */
 jn.define('crm/entity-tab/search/preset', (require, exports, module) => {
-
 	const { BaseItem } = require('crm/entity-tab/search/base-item');
 
 	/**
@@ -27,7 +26,7 @@ jn.define('crm/entity-tab/search/preset', (require, exports, module) => {
 					style: this.styles.title,
 					text: this.props.name,
 					ellipsize: 'middle',
-				})
+				}),
 			];
 
 			if (this.props.active)
@@ -38,7 +37,7 @@ jn.define('crm/entity-tab/search/preset', (require, exports, module) => {
 						svg: {
 							content: this.icon,
 						},
-					})
+					}),
 				);
 			}
 
@@ -64,5 +63,5 @@ jn.define('crm/entity-tab/search/preset', (require, exports, module) => {
 		}
 	}
 
-	module.exports = { Preset }
+	module.exports = { Preset };
 });

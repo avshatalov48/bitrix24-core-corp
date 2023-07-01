@@ -647,7 +647,7 @@ class BizProcDocument
 				}
 				if($ufFields[$userField['FIELD_NAME']] != $userField['VALUE'])
 				{
-					$forkFileId = \CFile::copyFile($ufFields[$userField['FIELD_NAME']], true);
+					$forkFileId = \CFile::CloneFile($ufFields[$userField['FIELD_NAME']]);
 					if($forkFileId)
 					{
 						$filesToDelete[] = $userField['VALUE'];

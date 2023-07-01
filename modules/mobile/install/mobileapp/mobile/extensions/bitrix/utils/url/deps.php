@@ -1,7 +1,7 @@
 <?php
 
 return [
-	'extension' => [
+	'extensions' => [
 		'utils/string',
 	],
 	'bundle' => [

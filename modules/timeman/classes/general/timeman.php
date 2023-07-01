@@ -60,7 +60,7 @@ class CTimeMan
 		}
 
 		$arSettings = $TMUSER->GetSettings(['UF_TM_REPORT_REQ']);
-		$info['REPORT_REQ'] = $arSettings['UF_TM_REPORT_REQ'];
+		$info['REPORT_REQ'] = $arSettings['UF_TM_REPORT_REQ'] ?? null;
 		$info['TM_FREE'] = false;
 		if ($arInfo = $TMUSER->GetCurrentInfo())
 		{
@@ -109,11 +109,11 @@ class CTimeMan
 					}
 				}
 			}
-			if ($arInfo['LAST_PAUSE'])
+			if (isset($arInfo['LAST_PAUSE']) && $arInfo['LAST_PAUSE'])
 			{
 				$info['LAST_PAUSE'] = $arInfo['LAST_PAUSE'];
 			}
-			elseif ($arInfo['PAUSED'] == 'Y')
+			elseif (isset($arInfo['PAUSED']) && $arInfo['PAUSED'] === 'Y')
 			{
 				$info['LAST_PAUSE'] = [
 					'DATE_START' => $info['INFO']['DATE_FINISH'],
@@ -336,7 +336,7 @@ class CTimeMan
 			}
 			elseif ($userPermissionManager->canUpdateWorktimeSubordinate())
 			{
-				if ($arAccessSettings['WRITE']['EMPLOYEE'] >= 2)
+				if (($arAccessSettings['WRITE']['EMPLOYEE'] ?? 0) >= 2)
 				{
 					$access['WRITE'][] = '*';
 				}
@@ -708,14 +708,14 @@ class CTimeMan
 			return $time % 86400;
 		}
 
-		$amPmTime = explode(' ', $time);
+		$amPmTime = explode(' ', $time ?? '');
 		if (count($amPmTime) > 1)
 		{
 			$time = $amPmTime[0];
 			$mt = $amPmTime[1];
 		}
 
-		$arValues = explode(':', $time);
+		$arValues = explode(':', $time ?? '');
 
 		$cnt = count($arValues);
 		if ($cnt <= 1)

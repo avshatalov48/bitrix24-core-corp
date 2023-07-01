@@ -78,7 +78,7 @@ export default class PullQueue
 					this.#isProgress = true;
 					this.
 						#grid
-						.loadNew(ids, false, true, true)
+						.loadNew(ids, false, true, true, true)
 						.then(loadNextOnSuccess, doNothingOnError)
 					;
 				}

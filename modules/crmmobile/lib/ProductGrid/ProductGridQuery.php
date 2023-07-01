@@ -5,6 +5,7 @@ declare(strict_types = 1);
 namespace Bitrix\CrmMobile\ProductGrid;
 
 use Bitrix\Crm\Item;
+use Bitrix\Crm\ProductRowCollection;
 use Bitrix\Crm\Service\Accounting;
 use Bitrix\Crm\Service\Container;
 use Bitrix\CrmMobile\Dto\VatRate;
@@ -22,15 +23,15 @@ use Bitrix\Mobile\Query;
 Loader::requireModule('crm');
 Loader::requireModule('catalog');
 
-final class ProductGridQuery extends Query
+class ProductGridQuery extends Query
 {
-	private Item $entity;
+	protected Item $entity;
 
-	private Accounting $accounting;
+	protected Accounting $accounting;
 
-	private string $currencyId;
+	protected string $currencyId;
 
-	private PermissionsProvider $permissionsProvider;
+	protected PermissionsProvider $permissionsProvider;
 
 	public function __construct(Item $entity, ?string $currencyId = null)
 	{
@@ -43,7 +44,7 @@ final class ProductGridQuery extends Query
 	public function execute(): array
 	{
 		$products = $this->fetchItems();
-		$summaryQuery = new SummaryQuery($this->entity, $products, $this->currencyId);
+		$summaryQuery = $this->getSummaryQuery($products);
 
 		return [
 			'entity' => $this->prepareEntityData(),
@@ -67,6 +68,11 @@ final class ProductGridQuery extends Query
 		];
 	}
 
+	protected function getSummaryQuery(array $products): SummaryQuery
+	{
+		return new SummaryQuery($this->entity, $products, $this->currencyId);
+	}
+
 	private function prepareEntityData(): array
 	{
 		$categoryId = $this->entity->isCategoriesSupported() ? $this->entity->getCategoryId() : null;
@@ -84,26 +90,35 @@ final class ProductGridQuery extends Query
 
 	private function fetchItems(): array
 	{
-		$rowsCollection = $this->entity->getProductRows();
-
 		$items = array_map(
 			fn ($row) => new ProductRowViewModel($row, $this->entity->getCurrencyId()),
-			$rowsCollection ? $rowsCollection->getAll() : []
+			$this->getEntityProductRows()
 		);
 
+		$enrichers = $this->getEnrichers();
 		/** @var EnricherContract[] $enrichers */
-		$enrichers = [
-			new UpdateFieldsForTaxMode($this->accounting, $this->entity),
-			new CompleteExtraFields($this->accounting, $this->permissionsProvider, $this->entity),
-			new ConvertCurrency($this->currencyId),
-		];
-
 		foreach ($enrichers as $enricher)
 		{
 			$items = $enricher->enrich($items);
 		}
 
 		return array_map(static fn ($item) => $item->toArray(), $items);
+	}
+
+	protected function getEnrichers(): array
+	{
+		return [
+			new UpdateFieldsForTaxMode($this->accounting, $this->entity),
+			new CompleteExtraFields($this->accounting, $this->permissionsProvider, $this->entity),
+			new ConvertCurrency($this->currencyId),
+		];
+	}
+
+	protected function getEntityProductRows(): array
+	{
+		$result = $this->entity->getProductRows();
+
+		return $result ? $result->getAll() : [];
 	}
 
 	/**

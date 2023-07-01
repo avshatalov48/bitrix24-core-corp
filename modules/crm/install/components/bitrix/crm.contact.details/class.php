@@ -5,23 +5,26 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
-use Bitrix\Crm\Controller\Action\Entity\SearchAction;
-use Bitrix\Crm\Category\EditorHelper;
-use Bitrix\Crm\Service\Container;
-use Bitrix\Crm\Service\ParentFieldManager;
-use Bitrix\Main;
-use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm;
 use Bitrix\Crm\Attribute\FieldAttributeManager;
+use Bitrix\Crm\Category\EditorHelper;
+use Bitrix\Crm\Component\EntityDetails\Traits;
+use Bitrix\Crm\Controller\Action\Entity\SearchAction;
+use Bitrix\Crm\Conversion\LeadConversionWizard;
 use Bitrix\Crm\EntityAddress;
 use Bitrix\Crm\Format\AddressFormatter;
+use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Service\ParentFieldManager;
 use Bitrix\Crm\Tracking;
 use Bitrix\Crm\UserField\Router;
 use Bitrix\Crm\UtmTable;
+use Bitrix\Main;
+use Bitrix\Main\Localization\Loc;
 
-if(!Main\Loader::includeModule('crm'))
+if (!Main\Loader::includeModule('crm'))
 {
 	ShowError(GetMessage('CRM_MODULE_NOT_INSTALLED'));
+
 	return;
 }
 
@@ -33,6 +36,12 @@ class CCrmContactDetailsComponent
 {
 	private const UTM_FIELD_CODE = 'UTM';
 
+	use Traits\EditorConfig;
+	use Traits\InitializeAttributeScope;
+	use Traits\InitializeExternalContextId;
+	use Traits\InitializeGuid;
+	use Traits\InitializeMode;
+	use Traits\InitializeUFConfig;
 	use Crm\Entity\Traits\VisibilityConfig;
 
 	/** @var string */
@@ -111,29 +120,53 @@ class CCrmContactDetailsComponent
 			$this->editorAdapter = $this->factory->getEditorAdapter();
 		}
 	}
+
 	public function initializeParams(array $params)
 	{
-		foreach($params as $k => $v)
+		foreach ($params as $k => $v)
 		{
-			if(!is_string($v))
+			if ($k === 'COMPONENT_MODE' && is_numeric($v))
+			{
+				$this->arParams['COMPONENT_MODE'] = (int)$v;
+			}
+			elseif ($k === 'CATEGORY_ID' && is_numeric($v))
+			{
+				$this->setCategoryID((int)$v);
+			}
+			elseif ($k === 'LEAD_ID')
+			{
+				$this->leadID = $this->arResult['LEAD_ID'] = $this->arParams['LEAD_ID'] = (int)$v;
+			}
+			elseif($k === 'ORIGIN_ID')
+			{
+				$this->arResult['ORIGIN_ID'] = $v;
+				$this->arParams['ORIGIN_ID'] = $v;
+			}
+
+			if (!is_string($v))
 			{
 				continue;
 			}
 
-			if($k === 'PATH_TO_USER_PROFILE')
+			if ($k === 'PATH_TO_USER_PROFILE')
 			{
 				$this->arResult['PATH_TO_USER_PROFILE'] = $this->arParams['PATH_TO_USER_PROFILE'] = $v;
 			}
-			elseif($k === 'NAME_TEMPLATE')
+			elseif ($k === 'NAME_TEMPLATE')
 			{
 				$this->arResult['NAME_TEMPLATE'] = $this->arParams['NAME_TEMPLATE'] = $v;
 			}
-			elseif($k === 'LEAD_ID')
+			elseif($k === 'DEFAULT_PHONE_VALUE')
 			{
-				$this->arResult['LEAD_ID'] = $this->arParams['LEAD_ID'] = (int)$v;
+				$this->arResult['DEFAULT_PHONE_VALUE'] = $this->arParams['DEFAULT_PHONE_VALUE'] = (int)$v;
+			}
+			elseif ($k === 'ENABLE_SEARCH_HISTORY')
+			{
+				$this->enableSearchHistory($v === 'Y');
 			}
 		}
 	}
+
 	public function executeComponent()
 	{
 		/** @global \CMain $APPLICATION */
@@ -145,51 +178,8 @@ class CCrmContactDetailsComponent
 		//region Params
 		$this->arResult['ENTITY_ID'] = isset($this->arParams['~ENTITY_ID']) ? (int)$this->arParams['~ENTITY_ID'] : 0;
 
-		$this->arResult['PATH_TO_USER_PROFILE'] = $this->arParams['PATH_TO_USER_PROFILE'] =
-			\CrmCheckPath('PATH_TO_USER_PROFILE', $this->arParams['PATH_TO_USER_PROFILE'], '/company/personal/user/#user_id#/');
-
-		$this->arResult['NAME_TEMPLATE'] = empty($this->arParams['NAME_TEMPLATE'])
-			? CSite::GetNameFormat(false)
-			: str_replace(array("#NOBR#","#/NOBR#"), array("",""), $this->arParams['NAME_TEMPLATE']);
-
-		$this->arResult['PATH_TO_CONTACT_SHOW'] = \CrmCheckPath(
-			'PATH_TO_CONTACT_SHOW',
-			$this->arParams['PATH_TO_CONTACT_SHOW'],
-			$APPLICATION->GetCurPage().'?contact_id=#contact_id#&show'
-		);
-		$this->arResult['PATH_TO_CONTACT_EDIT'] = \CrmCheckPath(
-			'PATH_TO_CONTACT_EDIT',
-			$this->arParams['PATH_TO_CONTACT_EDIT'],
-			$APPLICATION->GetCurPage().'?contact_id=#contact_id#&edit'
-		);
-
 		$this->arResult['ENABLE_TASK'] = IsModuleInstalled('tasks');
 		$this->arResult['ACTION_URI'] = $this->arResult['POST_FORM_URI'] = POST_FORM_ACTION_URI;
-
-		$this->arResult['CONTEXT_ID'] = \CCrmOwnerType::ContactName.'_'.$this->arResult['ENTITY_ID'];
-		$this->arResult['CONTEXT'] = [
-			'PARAMS' => [
-				'PATH_TO_USER_PROFILE' => $this->arResult['PATH_TO_USER_PROFILE'],
-				'NAME_TEMPLATE' => $this->arResult['NAME_TEMPLATE'],
-			],
-		];
-		Crm\Service\EditorAdapter::addParentItemToContextIfFound($this->arResult['CONTEXT']);
-
-		$this->arResult['EXTERNAL_CONTEXT_ID'] = $this->request->get('external_context_id');
-		if($this->arResult['EXTERNAL_CONTEXT_ID'] === null)
-		{
-			$this->arResult['EXTERNAL_CONTEXT_ID'] = $this->request->get('external_context');
-			if($this->arResult['EXTERNAL_CONTEXT_ID'] === null)
-			{
-				$this->arResult['EXTERNAL_CONTEXT_ID'] = '';
-			}
-		}
-
-		$this->arResult['ORIGIN_ID'] = $this->request->get('origin_id');
-		if($this->arResult['ORIGIN_ID'] === null)
-		{
-			$this->arResult['ORIGIN_ID'] = '';
-		}
 
 		$this->arResult['SHOW_EMPTY_FIELDS'] = isset($this->arParams['SHOW_EMPTY_FIELDS'])
 			&& $this->arParams['SHOW_EMPTY_FIELDS'];
@@ -204,174 +194,50 @@ class CCrmContactDetailsComponent
 
 		$this->setEntityID($this->arResult['ENTITY_ID']);
 
-		//region Is Editing or Copying?
-		if($this->entityID > 0)
+		if ($this->entityID > 0 && !\CCrmContact::Exists($this->entityID))
 		{
-			if(!\CCrmContact::Exists($this->entityID))
-			{
-				ShowError(GetMessage('CRM_CONTACT_NOT_FOUND'));
-				return;
-			}
-
-			if($this->request->get('copy') !== null)
-			{
-				$this->isCopyMode = true;
-				$this->arResult['CONTEXT']['PARAMS']['CONTACT_ID'] = $this->entityID;
-			}
-			else
-			{
-				$this->isEditMode = true;
-			}
+			ShowError(GetMessage('CRM_CONTACT_NOT_FOUND'));
+			return;
 		}
-		$this->arResult['IS_EDIT_MODE'] = $this->isEditMode;
-		$this->arResult['IS_COPY_MODE'] = $this->isCopyMode;
-		//endregion
-
-		//region Is Control of Duplicates enabled?
-		$this->arResult['DUPLICATE_CONTROL'] = array();
-		$this->enableDupControl = $this->arResult['DUPLICATE_CONTROL']['enabled'] =
-			!$this->isEditMode && \Bitrix\Crm\Integrity\DuplicateControl::isControlEnabledFor(CCrmOwnerType::Contact);
-
-		if($this->enableDupControl)
-		{
-			$this->arResult['DUPLICATE_CONTROL']['serviceUrl'] = '/bitrix/components/bitrix/crm.contact.edit/ajax.php?'.bitrix_sessid_get();
-			$this->arResult['DUPLICATE_CONTROL']['entityTypeName'] = CCrmOwnerType::ContactName;
-			$this->arResult['DUPLICATE_CONTROL']['groups'] = array(
-				'fullName' => array(
-					'groupType' => 'fullName',
-					'groupSummaryTitle' => Loc::getMessage('CRM_CONTACT_DUP_CTRL_FULL_NAME_SUMMARY_TITLE')
-				),
-				'email' => array(
-					'groupType' => 'communication',
-					'communicationType' => 'EMAIL',
-					'groupSummaryTitle' => Loc::getMessage('CRM_CONTACT_DUP_CTRL_EMAIL_SUMMARY_TITLE')
-				),
-				'phone' => array(
-					'groupType' => 'communication',
-					'communicationType' => 'PHONE',
-					'groupSummaryTitle' => Loc::getMessage('CRM_CONTACT_DUP_CTRL_PHONE_SUMMARY_TITLE')
-				)
-			);
-		}
-		//endregion
-
-		//region Conversion Scheme
-		if(isset($this->arResult['LEAD_ID']) && $this->arResult['LEAD_ID'] > 0)
-		{
-			$this->leadID = $this->arResult['LEAD_ID'];
-		}
-		else
-		{
-			$leadID = $this->request->getQuery('lead_id');
-			if($leadID > 0)
-			{
-				$this->leadID = $this->arResult['LEAD_ID'] = (int)$leadID;
-				if(!$this->entityID)
-				{
-					$this->arResult['DUPLICATE_CONTROL']['ignoredItems'] = [];
-					$this->arResult['DUPLICATE_CONTROL']['ignoredItems'][] = [
-						'ENTITY_TYPE_ID' => CCrmOwnerType::Lead,
-						'ENTITY_ID' => $this->leadID,
-					];
-					$leadCompany = Crm\CompanyTable::query()
-							->where('LEAD_ID', $this->leadID)
-							->setSelect(['ID'])
-							->setOrder(['ID' => 'desc'])
-							->setLimit(1)
-							->exec()
-							->fetch()['ID'] ?? null;
-					if ($leadCompany)
-					{
-						$this->arResult['DUPLICATE_CONTROL']['ignoredItems'][] = [
-							'ENTITY_TYPE_ID' => CCrmOwnerType::Company,
-							'ENTITY_ID' => $leadCompany,
-						];
-					}
-				}
-			}
-		}
-
-		if($this->leadID > 0)
-		{
-			$this->conversionWizard = \Bitrix\Crm\Conversion\LeadConversionWizard::load($this->leadID);
-			if($this->conversionWizard !== null)
-			{
-				$this->arResult['CONTEXT']['PARAMS'] = array_merge(
-					$this->arResult['CONTEXT']['PARAMS'],
-					$this->conversionWizard->prepareEditorContextParams(\CCrmOwnerType::Contact)
-				);
-			}
-		}
-		//endregion
 
 		$this->arResult['CATEGORY_ID'] = $this->getCategoryId();
-		$enableUfCreation = \CCrmAuthorizationHelper::CheckConfigurationUpdatePermission();
-		$this->arResult['ENABLE_USER_FIELD_CREATION'] = $enableUfCreation;
-		$this->arResult['USER_FIELD_ENTITY_ID'] = $this->userFieldEntityID;
-		$this->arResult['USER_FIELD_CREATE_PAGE_URL'] = (new Router($this->userFieldEntityID))
-			->getEditUrlByCategory($this->arResult['CATEGORY_ID']);
-		$this->arResult['USER_FIELD_CREATE_SIGNATURE'] = $enableUfCreation
-			? $this->userFieldDispatcher->getCreateSignature(['ENTITY_ID' => $this->userFieldEntityID])
-			: '';
-
-		if(!isset($this->arResult['CONTEXT']['PARAMS']['CATEGORY_ID']))
-		{
-			$this->arResult['CONTEXT']['PARAMS']['CATEGORY_ID'] = $this->arResult['CATEGORY_ID'];
-		}
 
 		//region Permissions check
-		if($this->isCopyMode)
+		$this->initializeMode();
+
+		if ($this->isCopyMode)
 		{
-			if(!(\CCrmContact::CheckReadPermission($this->entityID, $this->userPermissions, $this->arResult['CATEGORY_ID'])
-				&& \CCrmContact::CheckCreatePermission($this->userPermissions, $this->arResult['CATEGORY_ID']))
+			if (
+				!\CCrmContact::CheckReadPermission($this->entityID, $this->userPermissions, $this->arResult['CATEGORY_ID'])
+				|| !\CCrmContact::CheckCreatePermission($this->userPermissions, $this->arResult['CATEGORY_ID'])
 			)
 			{
 				ShowError(GetMessage('CRM_PERMISSION_DENIED'));
 				return;
 			}
 		}
-		elseif($this->isEditMode)
+		elseif ($this->isEditMode)
 		{
-			if(\CCrmContact::CheckUpdatePermission($this->entityID, $this->userPermissions, $this->arResult['CATEGORY_ID']))
-			{
-				$this->arResult['READ_ONLY'] = false;
-			}
-			elseif(\CCrmContact::CheckReadPermission($this->entityID, $this->userPermissions, $this->arResult['CATEGORY_ID']))
-			{
-				$this->arResult['READ_ONLY'] = true;
-			}
-			else
+			if (
+				!\CCrmContact::CheckUpdatePermission($this->entityID, $this->userPermissions, $this->arResult['CATEGORY_ID'])
+				&& !\CCrmContact::CheckReadPermission($this->entityID, $this->userPermissions, $this->arResult['CATEGORY_ID'])
+			)
 			{
 				ShowError(GetMessage('CRM_PERMISSION_DENIED'));
 				return;
 			}
 		}
-		else
+		elseif (!\CCrmContact::CheckCreatePermission($this->userPermissions, $this->arResult['CATEGORY_ID']))
 		{
-			if(\CCrmContact::CheckCreatePermission($this->userPermissions, $this->arResult['CATEGORY_ID']))
-			{
-				$this->arResult['READ_ONLY'] = false;
-			}
-			else
-			{
-				ShowError(GetMessage('CRM_PERMISSION_DENIED'));
-				return;
-			}
+			ShowError(GetMessage('CRM_PERMISSION_DENIED'));
+			return;
 		}
 		//endregion
 
 		$this->prepareEntityUserFields();
 		$this->prepareEntityUserFieldInfos();
-		$this->initializeData();
 
-		//region GUID
-		$this->arResult['GUID'] = $this->arParams['GUID'] ?? $this->getDefaultGuid();
-		$this->guid = $this->arResult['GUID'];
-
-		$this->arResult['EDITOR_CONFIG_ID'] = $this->getEditorConfigId(
-			(string)($this->arParams['EDITOR_CONFIG_ID'] ?? '')
-		);
-		//endregion
+		$this->initializeEditorData();
 
 		//region Entity Info
 		$this->arResult['ENTITY_INFO'] = array(
@@ -408,29 +274,6 @@ class CCrmContactDetailsComponent
 		}
 		//endregion
 
-		//region Fields
-		$this->arResult['ENTITY_FIELDS'] = $this->prepareFieldInfos();
-		$this->arResult['ENTITY_ATTRIBUTE_SCOPE'] = FieldAttributeManager::resolveEntityScope(
-			CCrmOwnerType::Contact,
-			$this->entityID,
-			[
-				'CATEGORY_ID' => $this->arResult['CATEGORY_ID'],
-			]
-		);
-		//endregion
-
-		//region Config
-		$this->prepareConfiguration();
-		//endregion
-
-		//region CONTROLLERS
-		$this->prepareEntityControllers();
-		//endregion
-
-		//region Validators
-		$this->prepareValidators();
-		//endregion
-
 		//region TABS
 		$this->arResult['TABS'] = array();
 
@@ -463,13 +306,17 @@ class CCrmContactDetailsComponent
 							'template' => '',
 							'signedParameters' => \CCrmInstantEditorHelper::signComponentParams([
 								'DEAL_COUNT' => '20',
-								'PATH_TO_DEAL_SHOW' => $this->arResult['PATH_TO_DEAL_SHOW'],
-								'PATH_TO_DEAL_EDIT' => $this->arResult['PATH_TO_DEAL_EDIT'],
-								'INTERNAL_FILTER' => ['ASSOCIATED_CONTACT_ID' => $this->entityID],
-								'INTERNAL_CONTEXT' => ['CONTACT_ID' => $this->entityID],
+								'PATH_TO_DEAL_SHOW' => $this->arResult['PATH_TO_DEAL_SHOW'] ?? '',
+								'PATH_TO_DEAL_EDIT' => $this->arResult['PATH_TO_DEAL_EDIT'] ?? '',
+								'INTERNAL_FILTER' => [
+									'ASSOCIATED_CONTACT_ID' => $this->entityID,
+								],
+								'INTERNAL_CONTEXT' => [
+									'CONTACT_ID' => $this->entityID,
+								],
 								'GRID_ID_SUFFIX' => 'CONTACT_DETAILS',
 								'TAB_ID' => 'tab_deal',
-								'NAME_TEMPLATE' => $this->arResult['NAME_TEMPLATE'],
+								'NAME_TEMPLATE' => $this->arResult['NAME_TEMPLATE'] ?? '',
 								'ENABLE_TOOLBAR' => true,
 								'PRESERVE_HISTORY' => true,
 								'ADD_EVENT_NAME' => 'CrmCreateDealFromContact'
@@ -489,13 +336,13 @@ class CCrmContactDetailsComponent
 							'template' => '',
 							'signedParameters' => \CCrmInstantEditorHelper::signComponentParams([
 								'QUOTE_COUNT' => '20',
-								'PATH_TO_QUOTE_SHOW' => $this->arResult['PATH_TO_QUOTE_SHOW'],
-								'PATH_TO_QUOTE_EDIT' => $this->arResult['PATH_TO_QUOTE_EDIT'],
+								'PATH_TO_QUOTE_SHOW' => $this->arResult['PATH_TO_QUOTE_SHOW'] ?? '',
+								'PATH_TO_QUOTE_EDIT' => $this->arResult['PATH_TO_QUOTE_EDIT'] ?? '',
 								'INTERNAL_FILTER' => ['ASSOCIATED_CONTACT_ID' => $this->entityID],
 								'INTERNAL_CONTEXT' => ['CONTACT_ID' => $this->entityID],
 								'GRID_ID_SUFFIX' => 'CONTACT_DETAILS',
 								'TAB_ID' => 'tab_quote',
-								'NAME_TEMPLATE' => $this->arResult['NAME_TEMPLATE'],
+								'NAME_TEMPLATE' => $this->arResult['NAME_TEMPLATE'] ?? '',
 								'ENABLE_TOOLBAR' => true,
 								'PRESERVE_HISTORY' => true,
 								'ADD_EVENT_NAME' => 'CrmCreateQuoteFromContact'
@@ -515,17 +362,17 @@ class CCrmContactDetailsComponent
 							'template' => '',
 							'signedParameters' => \CCrmInstantEditorHelper::signComponentParams([
 								'INVOICE_COUNT' => '20',
-								'PATH_TO_COMPANY_SHOW' => $this->arResult['PATH_TO_COMPANY_SHOW'],
-								'PATH_TO_COMPANY_EDIT' => $this->arResult['PATH_TO_COMPANY_EDIT'],
-								'PATH_TO_CONTACT_EDIT' => $this->arResult['PATH_TO_CONTACT_EDIT'],
-								'PATH_TO_DEAL_EDIT' => $this->arResult['PATH_TO_DEAL_EDIT'],
-								'PATH_TO_INVOICE_EDIT' => $this->arResult['PATH_TO_INVOICE_EDIT'],
-								'PATH_TO_INVOICE_PAYMENT' => $this->arResult['PATH_TO_INVOICE_PAYMENT'],
+								'PATH_TO_COMPANY_SHOW' => $this->arResult['PATH_TO_COMPANY_SHOW'] ?? '',
+								'PATH_TO_COMPANY_EDIT' => $this->arResult['PATH_TO_COMPANY_EDIT'] ?? '',
+								'PATH_TO_CONTACT_EDIT' => $this->arResult['PATH_TO_CONTACT_EDIT'] ?? '',
+								'PATH_TO_DEAL_EDIT' => $this->arResult['PATH_TO_DEAL_EDIT'] ?? '',
+								'PATH_TO_INVOICE_EDIT' => $this->arResult['PATH_TO_INVOICE_EDIT'] ?? '',
+								'PATH_TO_INVOICE_PAYMENT' => $this->arResult['PATH_TO_INVOICE_PAYMENT'] ?? '',
 								'INTERNAL_FILTER' => ['UF_CONTACT_ID' => $this->entityID],
 								'SUM_PAID_CURRENCY' => \CCrmCurrency::GetBaseCurrencyID(),
 								'GRID_ID_SUFFIX' => 'CONTACT_DETAILS',
 								'TAB_ID' => 'tab_invoice',
-								'NAME_TEMPLATE' => $this->arResult['NAME_TEMPLATE'],
+								'NAME_TEMPLATE' => $this->arResult['NAME_TEMPLATE'] ?? '',
 								'ENABLE_TOOLBAR' => 'Y',
 								'PRESERVE_HISTORY' => true,
 								'ADD_EVENT_NAME' => 'CrmCreateInvoiceFromContact'
@@ -544,25 +391,26 @@ class CCrmContactDetailsComponent
 					'id' => 'tab_order',
 					'name' => Loc::getMessage('CRM_CONTACT_TAB_ORDERS'),
 					'loader' => array(
-						'serviceUrl' => '/bitrix/components/bitrix/crm.order.list/lazyload.ajax.php?&site'.SITE_ID.'&'.bitrix_sessid_get(),
+						'serviceUrl' => '/bitrix/components/bitrix/crm.order.list/lazyload.ajax.php?&site='.SITE_ID.'&'.bitrix_sessid_get(),
 						'componentData' => array(
 							'template' => '',
 							'signedParameters' => \CCrmInstantEditorHelper::signComponentParams([
 								'INVOICE_COUNT' => '20',
-								'PATH_TO_COMPANY_SHOW' => $this->arResult['PATH_TO_COMPANY_SHOW'],
-								'PATH_TO_COMPANY_EDIT' => $this->arResult['PATH_TO_COMPANY_EDIT'],
-								'PATH_TO_CONTACT_EDIT' => $this->arResult['PATH_TO_CONTACT_EDIT'],
-								'PATH_TO_DEAL_EDIT' => $this->arResult['PATH_TO_DEAL_EDIT'],
-								'PATH_TO_INVOICE_EDIT' => $this->arResult['PATH_TO_INVOICE_EDIT'],
-								'PATH_TO_INVOICE_PAYMENT' => $this->arResult['PATH_TO_INVOICE_PAYMENT'],
+								'PATH_TO_COMPANY_SHOW' => $this->arResult['PATH_TO_COMPANY_SHOW'] ?? '',
+								'PATH_TO_COMPANY_EDIT' => $this->arResult['PATH_TO_COMPANY_EDIT'] ?? '',
+								'PATH_TO_CONTACT_EDIT' => $this->arResult['PATH_TO_CONTACT_EDIT'] ?? '',
+								'PATH_TO_DEAL_EDIT' => $this->arResult['PATH_TO_DEAL_EDIT'] ?? '',
+								'PATH_TO_INVOICE_EDIT' => $this->arResult['PATH_TO_INVOICE_EDIT'] ?? '',
+								'PATH_TO_INVOICE_PAYMENT' => $this->arResult['PATH_TO_INVOICE_PAYMENT'] ?? '',
 								'INTERNAL_FILTER' => array('ASSOCIATED_CONTACT_ID' => $this->entityID),
 								'SUM_PAID_CURRENCY' => \CCrmCurrency::GetBaseCurrencyID(),
 								'GRID_ID_SUFFIX' => 'CONTACT_DETAILS',
 								'TAB_ID' => 'tab_order',
-								'NAME_TEMPLATE' => $this->arResult['NAME_TEMPLATE'],
+								'NAME_TEMPLATE' => $this->arResult['NAME_TEMPLATE'] ?? '',
 								'ENABLE_TOOLBAR' => 'Y',
 								'PRESERVE_HISTORY' => true,
-								'ADD_EVENT_NAME' => 'CrmCreateOrderFromContact'
+								'ADD_EVENT_NAME' => 'CrmCreateOrderFromContact',
+								'BUILDER_CONTEXT' => Crm\Product\Url\ProductBuilder::TYPE_ID,
 							], 'crm.order.list')
 						)
 					)
@@ -721,9 +569,17 @@ class CCrmContactDetailsComponent
 		}
 		//endregion
 
-		$this->arResult['USER_FIELD_FILE_URL_TEMPLATE'] = $this->getFileUrlTemplate();
-
 		$this->includeComponentTemplate();
+	}
+
+	public function loadConversionWizard(): void
+	{
+		if ($this->conversionWizard !== null || $this->leadID === 0)
+		{
+			return;
+		}
+
+		$this->conversionWizard = LeadConversionWizard::load($this->leadID);
 	}
 
 	public function getDefaultGuid(): string
@@ -819,6 +675,7 @@ class CCrmContactDetailsComponent
 					'config' => [
 						'requisiteFieldId' => 'REQUISITES',
 						'addressFieldId' => 'ADDRESS',
+						'entityCategoryId' => $this->getCategoryId(),
 					],
 				],
 			];
@@ -833,11 +690,7 @@ class CCrmContactDetailsComponent
 	}
 	public function enableSearchHistory($enable)
 	{
-		if(!is_bool($enable))
-		{
-			$enable = (bool)$enable;
-		}
-		$this->enableSearchHistory = $enable;
+		$this->enableSearchHistory = (bool)$enable;
 	}
 	public function getEntityID()
 	{
@@ -846,6 +699,7 @@ class CCrmContactDetailsComponent
 	public function setEntityID($entityID)
 	{
 		$this->entityID = $entityID;
+		$this->arResult['ENTITY_ID'] = $this->entityID;
 
 		$this->userFields = null;
 		$this->prepareEntityUserFields();
@@ -903,6 +757,10 @@ class CCrmContactDetailsComponent
 		$dateFormat = Main\Type\Date::convertFormatToPhp(Main\Application::getInstance()->getContext()->getCulture()->getDateFormat());
 
 		$fakeValue = '';
+		$categoryParams = CCrmComponentHelper::getEntityClientFieldCategoryParams(
+			CCrmOwnerType::Contact,
+			(int)($this->arResult['CATEGORY_ID'] ?? $this->getCategoryId())
+		);
 		$this->entityFieldInfos = array(
 			array(
 				'name' => 'ID',
@@ -983,12 +841,7 @@ class CCrmContactDetailsComponent
 				'type' => 'text',
 				'editable' => true
 			),
-			array(
-				'name' => 'COMMENTS',
-				'title' => Loc::getMessage('CRM_CONTACT_FIELD_COMMENTS'),
-				'type' => 'html',
-				'editable' => true
-			),
+			Crm\Entity\FieldContentType::compileFieldDescriptionForDetails(\CCrmOwnerType::Contact, $this->entityID, 'COMMENTS'),
 			array(
 				'name' => 'ASSIGNED_BY_ID',
 				'title' => Loc::getMessage('CRM_CONTACT_FIELD_ASSIGNED_BY_ID'),
@@ -1081,10 +934,7 @@ class CCrmContactDetailsComponent
 							'tagName' => \CCrmOwnerType::CompanyName
 						)
 					),
-					'categoryParams' => CCrmComponentHelper::getEntityClientFieldCategoryParams(
-						CCrmOwnerType::Contact,
-						$this->arResult['CATEGORY_ID'] ?? $this->getCategoryId()
-					),
+					'categoryParams' => $categoryParams,
 					'map' => array('data' => 'CLIENT_DATA'),
 					'info' => 'CLIENT_INFO',
 					'fixedLayoutType' => 'COMPANY',
@@ -1099,7 +949,12 @@ class CCrmContactDetailsComponent
 							)
 						)
 					),
-					'clientEditorFieldsParams' => $this->prepareClientEditorFieldsParams()
+					'clientEditorFieldsParams' => CCrmComponentHelper::prepareClientEditorFieldsParams(
+						['categoryParams' => $categoryParams]
+					),
+					'duplicateControl' => CCrmComponentHelper::prepareClientEditorDuplicateControlParams(
+						['entityTypes' => [CCrmOwnerType::Company, CCrmOwnerType::Contact]]
+					),
 				)
 			),
 			array(
@@ -1161,14 +1016,16 @@ class CCrmContactDetailsComponent
 				'editable' => true,
 				'enableAttributes' => false,
 				'virtual' => true,
-				'data' => \CCrmComponentHelper::getFieldInfoData(CCrmOwnerType::Contact,'requisite_address')
+				'data' => \CCrmComponentHelper::getRequisiteAddressFieldData(
+					CCrmOwnerType::Contact,
+					$this->getCategoryId()
+				)
 			);
 		}
 
 		foreach($this->multiFieldInfos as $typeName => $typeInfo)
 		{
-			$valueTypes = isset($this->multiFieldValueTypeInfos[$typeName])
-				? $this->multiFieldValueTypeInfos[$typeName] : array();
+			$valueTypes = $this->multiFieldValueTypeInfos[$typeName] ?? [];
 
 			$valueTypeItems = array();
 			foreach($valueTypes as $valueTypeId => $valueTypeInfo)
@@ -1259,6 +1116,8 @@ class CCrmContactDetailsComponent
 				)
 			);
 		}
+
+		$this->arResult['ENTITY_FIELDS'] = $this->entityFieldInfos;
 
 		return $this->entityFieldInfos;
 	}
@@ -1423,6 +1282,8 @@ class CCrmContactDetailsComponent
 			$this->entityFieldInfos
 		);
 
+		$this->arResult['ENTITY_FIELDS'] = $this->entityFieldInfos;
+
 		//region Update entity data
 		// This block allows in the component crm.entity.editor to determine the presence of mandatory
 		if (!empty($requiredByAttributesFieldNames))
@@ -1433,22 +1294,18 @@ class CCrmContactDetailsComponent
 				$entityFieldInfoMap[$this->entityFieldInfos[$i]['name']] = $i;
 			}
 
-			$isEntityDataModified = false;
 			foreach ($requiredByAttributesFieldNames as $fieldName)
 			{
 				if ($this->isEntityFieldHasEmpyValue($this->entityFieldInfos[$entityFieldInfoMap[$fieldName]]))
 				{
 					$this->entityData['EMPTY_REQUIRED_SYSTEM_FIELD_MAP'][$fieldName] = true;
-					$isEntityDataModified = true;
 				}
 			}
 
-			if ($isEntityDataModified)
-			{
-				$this->arResult['ENTITY_DATA'] = $this->entityData;
-			}
+			$this->arResult['ENTITY_DATA'] = $this->entityData;
 		}
 	}
+
 	protected function isEntityFieldHasEmpyValue($fieldInfo)
 	{
 		$result = false;
@@ -1499,7 +1356,7 @@ class CCrmContactDetailsComponent
 					'TYPE_ID',                           // list
 					'SOURCE_ID',                         // list
 					'SOURCE_DESCRIPTION',                // text
-					'COMMENTS'                           // html
+					'COMMENTS'                           // html or bb
 				];
 				if (in_array($fieldName, $fieldsToCheck, true))
 				{
@@ -1507,6 +1364,7 @@ class CCrmContactDetailsComponent
 					{
 						case 'text':
 						case 'html':
+						case 'bb':
 						case 'list':
 							if (array_key_exists($fieldName, $this->entityData)
 								&& (!is_string($this->entityData[$fieldName])
@@ -1681,6 +1539,16 @@ class CCrmContactDetailsComponent
 					$this->entityData
 				);
 			}
+
+			if(!empty($this->arResult['DEFAULT_PHONE_VALUE']))
+			{
+				$this->defaultFieldValues['phone'] = $this->arResult['DEFAULT_PHONE_VALUE'];
+			}
+
+			if(!empty($this->arResult['ORIGIN_ID']))
+			{
+				$this->defaultFieldValues['ORIGIN_ID'] = $this->arResult['ORIGIN_ID'];
+			}
 		}
 		else
 		{
@@ -1718,6 +1586,12 @@ class CCrmContactDetailsComponent
 
 				unset($this->entityData['PHOTO']);
 			}
+
+			$this->entityData = Crm\Entity\FieldContentType::prepareFieldsFromDetailsToView(
+				\CCrmOwnerType::Contact,
+				$this->entityID,
+				$this->entityData,
+			);
 
 			//region UTM
 			ob_start();
@@ -1923,7 +1797,7 @@ class CCrmContactDetailsComponent
 				array(
 					'ENTITY_EDITOR_FORMAT' => true,
 					'IS_HIDDEN' => !$isEntityReadPermitted,
-					'REQUIRE_REQUISITE_DATA' => false,
+					'REQUIRE_REQUISITE_DATA' => true,
 					'REQUIRE_MULTIFIELDS' => true,
 					'NORMALIZE_MULTIFIELDS' => true,
 					'REQUIRE_BINDINGS' => true,
@@ -1937,7 +1811,7 @@ class CCrmContactDetailsComponent
 		{
 			$categoryParams = CCrmComponentHelper::getEntityClientFieldCategoryParams(
 				CCrmOwnerType::Contact,
-				$this->arResult['CATEGORY_ID'] ?? $this->getCategoryId()
+				(int)($this->arResult['CATEGORY_ID'] ?? $this->getCategoryId())
 			);
 			$this->entityData['LAST_COMPANY_INFOS'] = SearchAction::prepareSearchResultsJson(
 				Crm\Controller\Entity::getRecentlyUsedItems(
@@ -2013,7 +1887,9 @@ class CCrmContactDetailsComponent
 			}
 		}
 
-		return ($this->arResult['ENTITY_DATA'] = $this->entityData);
+		$this->arResult['ENTITY_DATA'] = $this->entityData;
+
+		return $this->entityData;
 	}
 	protected function prepareTypeList()
 	{
@@ -2052,30 +1928,6 @@ class CCrmContactDetailsComponent
 		return true;
 	}
 
-	protected function getFileUrlTemplate(): string
-	{
-		return '/bitrix/components/bitrix/crm.contact.show/show_file.php?ownerId=#owner_id#&fieldName=#field_name#&fileId=#file_id#';
-	}
-
-	protected function prepareClientEditorFieldsParams(): array
-	{
-		$result = [
-			CCrmOwnerType::ContactName => [
-				'REQUISITES' => \CCrmComponentHelper::getFieldInfoData(CCrmOwnerType::Contact, 'requisite')
-			],
-			CCrmOwnerType::CompanyName => [
-				'REQUISITES' => \CCrmComponentHelper::getFieldInfoData(CCrmOwnerType::Company, 'requisite')
-			]
-		];
-		if ($this->isLocationModuleIncluded)
-		{
-			$result[CCrmOwnerType::ContactName]['ADDRESS'] = \CCrmComponentHelper::getFieldInfoData(CCrmOwnerType::Contact,'requisite_address');
-			$result[CCrmOwnerType::CompanyName]['ADDRESS'] = \CCrmComponentHelper::getFieldInfoData(CCrmOwnerType::Company,'requisite_address');
-		}
-
-		return $result;
-	}
-
 	protected function getEventTabParams(): array
 	{
 		return CCrmComponentHelper::getEventTabParams(
@@ -2086,8 +1938,200 @@ class CCrmContactDetailsComponent
 		);
 	}
 
+	public function initializeEditorData(): void
+	{
+		$this->initializeMode();
+		$this->initializeReadOnly();
+		$this->initializeGuid();
+		$this->initializeConfigId();
+		$this->initializeConversionScheme();
+		$this->initializeDuplicateControl();
+		$this->initializePath();
+		$this->initializeData();
+		$this->prepareConfiguration();
+		$this->prepareEntityControllers();
+		$this->prepareValidators();
+		$this->initializeAttributeScope();
+		$this->initializeUFConfig();
+		$this->initializeContext();
+		$this->initializeExternalContextId();
+	}
+
+	private function initializeReadOnly(): void
+	{
+		$this->arResult['READ_ONLY'] = true;
+
+		if ($this->isEditMode)
+		{
+			if (\CCrmContact::CheckUpdatePermission($this->entityID, $this->userPermissions))
+			{
+				$this->arResult['READ_ONLY'] = false;
+			}
+		}
+		elseif (\CCrmContact::CheckCreatePermission($this->userPermissions))
+		{
+			$this->arResult['READ_ONLY'] = false;
+		}
+	}
+
+	private function initializeConfigId(): void
+	{
+		$this->arResult['EDITOR_CONFIG_ID'] = $this->getEditorConfigId(
+			(string)($this->arParams['EDITOR_CONFIG_ID'] ?? '')
+		);
+	}
+
+	private function initializeConversionScheme(): void
+	{
+		if (!empty($this->arResult['LEAD_ID']))
+		{
+			$this->leadID = $this->arResult['LEAD_ID'];
+		}
+		else
+		{
+			$leadID = $this->request->getQuery('lead_id');
+			if ($leadID > 0)
+			{
+				$this->leadID = $this->arResult['LEAD_ID'] = (int)$leadID;
+			}
+		}
+
+		if ($this->leadID > 0)
+		{
+			$this->loadConversionWizard();
+		}
+	}
+
+	private function initializeDuplicateControl(): void
+	{
+		$this->enableDupControl = (
+			!$this->isEditMode
+			&& Crm\Integrity\DuplicateControl::isControlEnabledFor(CCrmOwnerType::Contact)
+		);
+
+		$this->arResult['DUPLICATE_CONTROL'] = [
+			'enabled' => $this->enableDupControl,
+		];
+
+		if ($this->enableDupControl)
+		{
+			$this->arResult['DUPLICATE_CONTROL']['serviceUrl'] = '/bitrix/components/bitrix/crm.contact.edit/ajax.php?'
+				. bitrix_sessid_get();
+			$this->arResult['DUPLICATE_CONTROL']['entityTypeName'] = CCrmOwnerType::ContactName;
+			$this->arResult['DUPLICATE_CONTROL']['groups'] = [
+				'fullName' => [
+					'groupType' => 'fullName',
+					'groupSummaryTitle' => Loc::getMessage('CRM_CONTACT_DUP_CTRL_FULL_NAME_SUMMARY_TITLE'),
+				],
+				'email' => [
+					'groupType' => 'communication',
+					'communicationType' => 'EMAIL',
+					'groupSummaryTitle' => Loc::getMessage('CRM_CONTACT_DUP_CTRL_EMAIL_SUMMARY_TITLE'),
+				],
+				'phone' => [
+					'groupType' => 'communication',
+					'communicationType' => 'PHONE',
+					'groupSummaryTitle' => Loc::getMessage('CRM_CONTACT_DUP_CTRL_PHONE_SUMMARY_TITLE'),
+				],
+			];
+
+			if (!$this->entityID)
+			{
+				$this->arResult['DUPLICATE_CONTROL']['ignoredItems'] = [];
+				$this->arResult['DUPLICATE_CONTROL']['ignoredItems'][] = [
+					'ENTITY_TYPE_ID' => CCrmOwnerType::Lead,
+					'ENTITY_ID' => $this->leadID,
+				];
+				$leadCompany = Crm\CompanyTable::query()
+					->where('LEAD_ID', $this->leadID)
+					->setSelect(['ID'])
+					->setOrder(['ID' => 'desc'])
+					->setLimit(1)
+					->exec()
+					->fetch()['ID'] ?? null;
+				if ($leadCompany)
+				{
+					$this->arResult['DUPLICATE_CONTROL']['ignoredItems'][] = [
+						'ENTITY_TYPE_ID' => CCrmOwnerType::Company,
+						'ENTITY_ID' => $leadCompany,
+					];
+				}
+			}
+		}
+	}
+
+	private function initializePath(): void
+	{
+		global $APPLICATION;
+
+		$this->arResult['PATH_TO_USER_PROFILE'] = $this->arParams['PATH_TO_USER_PROFILE'] = \CrmCheckPath(
+			'PATH_TO_USER_PROFILE',
+			$this->arParams['PATH_TO_USER_PROFILE'] ?? '',
+			'/company/personal/user/#user_id#/'
+		);
+
+		$this->arResult['NAME_TEMPLATE'] = empty($this->arParams['NAME_TEMPLATE'])
+			? CSite::GetNameFormat(false)
+			: str_replace(["#NOBR#", "#/NOBR#"], ["", ""], $this->arParams['NAME_TEMPLATE']);
+
+		$this->arResult['PATH_TO_CONTACT_SHOW'] = \CrmCheckPath(
+			'PATH_TO_CONTACT_SHOW',
+			$this->arParams['PATH_TO_CONTACT_SHOW'] ?? '',
+			$APPLICATION->GetCurPage() . '?contact_id=#contact_id#&show'
+		);
+
+		$this->arResult['PATH_TO_CONTACT_EDIT'] = \CrmCheckPath(
+			'PATH_TO_CONTACT_EDIT',
+			$this->arParams['PATH_TO_CONTACT_EDIT'] ?? '',
+			$APPLICATION->GetCurPage() . '?contact_id=#contact_id#&edit'
+		);
+	}
+
+	private function initializeContext(): void
+	{
+		$this->arResult['CONTEXT_ID'] = \CCrmOwnerType::ContactName . '_' . $this->entityID;
+
+		$this->arResult['CONTEXT'] = [
+			'PARAMS' => [
+				'PATH_TO_USER_PROFILE' => $this->arResult['PATH_TO_USER_PROFILE'],
+				'NAME_TEMPLATE' => $this->arResult['NAME_TEMPLATE'],
+			],
+		];
+		Crm\Service\EditorAdapter::addParentItemToContextIfFound($this->arResult['CONTEXT']);
+
+		if ($this->isCopyMode)
+		{
+			$this->arResult['CONTEXT']['PARAMS']['CONTACT_ID'] = $this->entityID;
+		}
+
+		if (!isset($this->arResult['CONTEXT']['PARAMS']['CATEGORY_ID']))
+		{
+			$this->arResult['CONTEXT']['PARAMS']['CATEGORY_ID'] = $this->getCategoryId();
+		}
+
+		if ($this->conversionWizard !== null)
+		{
+			$this->arResult['CONTEXT']['PARAMS'] = array_merge(
+				$this->arResult['CONTEXT']['PARAMS'],
+				$this->conversionWizard->prepareEditorContextParams(\CCrmOwnerType::Contact)
+			);
+		}
+
+		$this->arResult['ORIGIN_ID'] = $this->request->get('origin_id');
+		if ($this->arResult['ORIGIN_ID'] === null)
+		{
+			$this->arResult['ORIGIN_ID'] = '';
+		}
+
+		if (isset($this->arResult['ORIGIN_ID']) && $this->arResult['ORIGIN_ID'] !== '')
+		{
+			$this->arResult['CONTEXT']['ORIGIN_ID'] = $this->arResult['ORIGIN_ID'];
+		}
+	}
+
 	public function initializeData()
 	{
+		$this->loadConversionWizard();
 		$this->prepareFieldInfos();
 		$this->prepareEntityData();
 		$this->prepareEntityFieldAttributes();

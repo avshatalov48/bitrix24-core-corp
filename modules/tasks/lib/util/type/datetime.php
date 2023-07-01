@@ -169,7 +169,7 @@ final class DateTime extends \Bitrix\Main\Type\DateTime
 	public static function createFromTimestampGmt($unix)
 	{
 		$obj = new static(ConvertTimeStamp(0, "FULL"), null, new \DateTimeZone("GMT"));
-		$obj->value->setTimestamp($unix);
+		$obj->value->setTimestamp($unix ?? 0);
 
 		return $obj;
 	}

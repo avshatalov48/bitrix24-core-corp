@@ -1088,17 +1088,7 @@
 
 /* Header */
 
-.crm-task-list-header,
-.chat,
-.onec,
-.cmsplugins,
-.form,
-.call,
-.live-feed,
-.meet,
-.mail-send,
-.mail-accept,
-.visit-tracker {
+.crm-task-list-header {
 	position: relative;
 	margin: 0 0 0 60px;
 }
@@ -2017,16 +2007,6 @@ table.quote td { padding: 0.95em 1.5em; }
 }
 
 /* Call */
-
-.call:before {
-	height: 39px;
-	background-position: 0 -71px;
-}
-
-.call-outgoing:before {
-	height: 37px;
-	background-position: 0 -308px;
-}
 
 .crm-task-list-call-walkman { margin: 23px 0 0; }
 

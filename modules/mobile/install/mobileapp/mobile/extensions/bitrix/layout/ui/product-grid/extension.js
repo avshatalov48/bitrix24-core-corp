@@ -29,6 +29,9 @@ jn.define('layout/ui/product-grid', (require, exports, module) => {
 			this.state = this.buildState(props);
 			this.listViewRef = null;
 
+			/** @type {{function():LayoutComponent}} */
+			this.additionalSummary = null;
+
 			/** @type {ProductGridSummary|null} */
 			this.summaryRef = null;
 
@@ -82,9 +85,7 @@ jn.define('layout/ui/product-grid', (require, exports, module) => {
 						flexGrow: 1,
 						backgroundColor: '#eef2f4',
 					},
-					onClick() {
-						FocusContext.blur();
-					}
+					onClick: () => FocusContext.blur(),
 				},
 				new FadeView({
 					visible: false,
@@ -186,7 +187,12 @@ jn.define('layout/ui/product-grid', (require, exports, module) => {
 						}
 					}
 				},
-				...props
+				...props,
+				additionalSummary: this.additionalSummary,
+				showSummaryAmount: this.showSummaryAmount,
+				showSummaryTax: this.showSummaryTax,
+				discountCaption: this.discountCaption,
+				totalSumCaption: this.totalSumCaption,
 			});
 		}
 
@@ -231,14 +237,55 @@ jn.define('layout/ui/product-grid', (require, exports, module) => {
 		}
 
 		/**
+		 * @return {boolean}
+		 */
+		get showFloatingButton()
+		{
+			return BX.prop.getBoolean(this.props, 'showFloatingButton', true);
+		}
+
+		/**
+		 * @return {boolean}
+		 */
+		get showSummaryAmount()
+		{
+			return BX.prop.getBoolean(this.props, 'showSummaryAmount', true);
+		}
+
+		/**
+		 * @return {boolean}
+		 */
+		get showSummaryTax()
+		{
+			return BX.prop.getBoolean(this.props, 'showSummaryTax', true);
+		}
+
+		/**
+		 * @return {string}
+		 */
+		get discountCaption()
+		{
+			return BX.prop.getString(this.props, 'discountCaption', '');
+		}
+
+		/**
+		 * @return {string}
+		 */
+		get totalSumCaption()
+		{
+			return BX.prop.getString(this.props, 'totalSumCaption', '');
+		}
+
+		/**
 		 * Renders floating button to add new items (only to editable grid).
 		 * @returns {LayoutComponent|null}
 		 */
 		renderAddItemButton()
 		{
-			if (this.isEditable())
+			if (this.isEditable() && this.showFloatingButton)
 			{
 				return new UI.FloatingButtonComponent({
+					testId: 'productGridAddItemButton',
 					onClick: () => this.onAddItemButtonClick(),
 					onLongClick: () => this.onAddItemButtonLongClick(),
 				});

@@ -277,6 +277,16 @@ class Router
 		);
 	}
 
+	openCalendarEventSlider(eventId: number, isSharing: boolean): Promise<?BX.SidePanel.Slider>
+	{
+		const sliderId = 'crm-calendar-slider-' + eventId + '-' + Math.floor(Math.random() * 1000);
+
+		return new (window.top.BX || window.BX).Calendar.SliderLoader(eventId, {
+			sliderId: sliderId,
+			isSharing: isSharing
+		}).show();
+	}
+
     closeSettingsMenu(event, item)
     {
         if(item && Type.isFunction(item.getMenuWindow))

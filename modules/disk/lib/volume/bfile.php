@@ -4,6 +4,7 @@ namespace Bitrix\Disk\Volume;
 
 use Bitrix\Disk\Volume;
 use Bitrix\Disk\Internals\ObjectTable;
+use Bitrix\Disk\Internals\VolumeTable;
 
 /**
  * Calculate total count at b_file table/
@@ -14,9 +15,9 @@ class Bfile extends Volume\Base
 	/**
 	 * Runs measure test to get volumes of selecting objects.
 	 * @param array $collectData List types data to collect: ATTACHED_OBJECT, SHARING_OBJECT, EXTERNAL_LINK, UNNECESSARY_VERSION.
-	 * @return $this
+	 * @return static
 	 */
-	public function measure($collectData = array())
+	public function measure(array $collectData = []): self
 	{
 		$connection = \Bitrix\Main\Application::getConnection();
 		$indicatorType = $connection->getSqlHelper()->forSql(static::className());
@@ -56,7 +57,7 @@ class Bfile extends Volume\Base
 			) disk_file
 		";
 		$columnList = Volume\QueryHelper::prepareInsert(
-			array(
+			[
 				'INDICATOR_TYPE',
 				'OWNER_ID',
 				'CREATE_TIME',
@@ -65,11 +66,11 @@ class Bfile extends Volume\Base
 				'DISK_SIZE',
 				'DISK_COUNT',
 				'VERSION_COUNT',
-			),
+			],
 			$this->getSelect()
 		);
 
-		$tableName = \Bitrix\Disk\Internals\VolumeTable::getTableName();
+		$tableName = VolumeTable::getTableName();
 
 		$connection->queryExecute("INSERT INTO {$tableName} ({$columnList}) {$querySql}");
 
@@ -79,9 +80,9 @@ class Bfile extends Volume\Base
 	/**
 	 * Returns title of the entity object.
 	 * @param Volume\Fragment $fragment Entity object.
-	 * @return string
+	 * @return string|null
 	 */
-	public static function getTitle(Volume\Fragment $fragment)
+	public static function getTitle(Volume\Fragment $fragment): ?string
 	{
 		return '';
 	}

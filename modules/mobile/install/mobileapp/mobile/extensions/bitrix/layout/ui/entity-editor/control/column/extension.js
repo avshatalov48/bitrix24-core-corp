@@ -1,4 +1,10 @@
-(() => {
+/**
+ * @module layout/ui/entity-editor/control/column
+ */
+jn.define('layout/ui/entity-editor/control/column', (require, exports, module) => {
+
+	const { EntityEditorBaseControl } = require('layout/ui/entity-editor/control/base');
+
 	/**
 	 * @class EntityEditorColumn
 	 */
@@ -48,5 +54,5 @@
 		}
 	}
 
-	jnexport(EntityEditorColumn);
-})();
+	module.exports = { EntityEditorColumn };
+});

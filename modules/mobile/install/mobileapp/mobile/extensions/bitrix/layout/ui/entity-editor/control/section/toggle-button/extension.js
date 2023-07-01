@@ -1,4 +1,7 @@
-(() => {
+/**
+ * @module layout/ui/entity-editor/control/section/toggle-button
+ */
+jn.define('layout/ui/entity-editor/control/section/toggle-button', (require, exports, module) => {
 	/**
 	 * @class ToggleButton
 	 */
@@ -81,5 +84,5 @@
 		},
 	};
 
-	jnexport(ToggleButton);
-})();
+	module.exports = { ToggleButton };
+});

@@ -10,6 +10,9 @@
 
 namespace Bitrix\Tasks\Util;
 
+use Bitrix\Main\Config\Option;
+use Bitrix\Main\Loader;
+
 final class Site
 {
 	private static $cache = array();
@@ -21,7 +24,7 @@ final class Site
 
 	public static function getServerName($siteId = '')
 	{
-		return \Bitrix\Main\Config\Option::get("main", "server_name");
+		return Option::get("main", "server_name");
 	}
 
 	/**
@@ -63,43 +66,41 @@ final class Site
 
 	private static function getSiteStruct()
 	{
-		if(empty(self::$cache['SITE']))
+		if (empty(self::$cache['SITE']))
 		{
-			if(\Bitrix\Main\Loader::includeModule("extranet"))
-			{
-				$extranetSiteId = \CExtranet::getExtranetSiteID();
-			}
-			else
-			{
-				$extranetSiteId = false;
-			}
-
-			$siteList = array(
-				'LIST' => array(),
-				'PAIR' => array(
+			$extranetSiteId = (Loader::includeModule('extranet') ? \CExtranet::getExtranetSiteID() : false);
+			$siteList = [
+				'LIST' => [],
+				'PAIR' => [
 					'EXTRANET' => false,
-					'INTRANET' => false
-				)
-			);
-			$res = \CSite::getList("sort", "desc", array("ACTIVE" => "Y"));
-			while($site = $res->Fetch())
+					'INTRANET' => false,
+				],
+			];
+			$res = \CSite::getList('sort', 'desc', ['ACTIVE' => 'Y']);
+			while ($site = $res->Fetch())
 			{
-				$siteList['LIST'][$site['ID']] = array(
-					'SITE_ID' => $site['ID'],
-					'DIR' => (trim($site["DIR"]) <> '' ? $site["DIR"] : "/"),
-					'SERVER_NAME' => (trim($site["SERVER_NAME"]) <> '' ? $site["SERVER_NAME"] : \Bitrix\Main\Config\Option::get("main", "server_name", $_SERVER["HTTP_HOST"])),
-				);
+				$siteId = $site['ID'];
+				$siteDir = $site['DIR'];
+				$siteServerName = $site['SERVER_NAME'];
 
-				if($site["ID"] == $extranetSiteId)
+				$siteList['LIST'][$siteId] = [
+					'SITE_ID' => $siteId,
+					'DIR' => ($siteDir && trim($siteDir) !== '' ? $siteDir : '/'),
+					'SERVER_NAME' => (
+						$siteServerName && trim($siteServerName) !== ''
+							? $siteServerName
+							: Option::get('main', 'server_name', $_SERVER['HTTP_HOST'] ?? null)
+					),
+				];
+
+				if ($siteId == $extranetSiteId)
 				{
-					$siteList['PAIR']['EXTRANET'] =& $siteList['LIST'][$site['ID']];
+					$siteList['PAIR']['EXTRANET'] =& $siteList['LIST'][$siteId];
 				}
-				else // type == intranet
+				// type == intranet
+				elseif (!(isset($siteList['PAIR']['INTRANET']) && $site['DEF'] !== 'Y'))
 				{
-					if(!(isset($siteList['PAIR']['INTRANET']) && $site['DEF'] !== 'Y'))
-					{
-						$siteList['PAIR']['INTRANET'] =& $siteList['LIST'][$site['ID']];
-					}
+					$siteList['PAIR']['INTRANET'] =& $siteList['LIST'][$siteId];
 				}
 			}
 

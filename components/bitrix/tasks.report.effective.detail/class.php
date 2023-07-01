@@ -56,7 +56,7 @@ class TasksReportEffectiveDetailComponent extends TasksBaseComponent
 		// todo
 		$arParams = &$this->arParams;
 		static::tryParseStringParameter($arParams['GRID_ID'], \TasksReportEffectiveComponent::getFilterId());
-		static::tryParseStringParameter($arParams['GROUP_ID'], $_GET['group_id']);
+		static::tryParseStringParameter($arParams['GROUP_ID'], ($_GET['group_id'] ?? null));
 
 		static::tryParseStringParameter($arParams['PATH_TO_USER_PROFILE'], '/company/personal/user/#user_id#/');
 		static::tryParseStringParameter(
@@ -138,7 +138,7 @@ class TasksReportEffectiveDetailComponent extends TasksBaseComponent
 			]
 		];
 
-		if ($filterData['GROUP_ID'] > 0)
+		if (isset($filterData['GROUP_ID']) && $filterData['GROUP_ID'] > 0)
 		{
 			$violationFilter['GROUP_ID'] = $filterData['GROUP_ID'];
 		}

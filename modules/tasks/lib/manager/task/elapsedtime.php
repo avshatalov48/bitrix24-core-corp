@@ -4,9 +4,9 @@
  * @package bitrix
  * @subpackage sale
  * @copyright 2001-2015 Bitrix
- * 
+ *
  * @access private
- * 
+ *
  * This class should be used in components, inside agent functions, in rest, ajax and more, bringing unification to all places and processes
  */
 
@@ -47,7 +47,7 @@ final class ElapsedTime extends \Bitrix\Tasks\Manager
 		}
 
 		return array(
-			'DATA' => $data, 
+			'DATA' => $data,
 			'CAN' => $can
 		);
 	}
@@ -145,7 +145,7 @@ final class ElapsedTime extends \Bitrix\Tasks\Manager
 			if (isset($items[0]))
 			{
 				$item = $items[0];
-				$itemData = $item->getData($parameters['ESCAPE_DATA']);
+				$itemData = $item->getData($parameters['ESCAPE_DATA'] ?? null);
 				$data = $itemData;
 				$can = array(
 					'MODIFY' => $item->isActionAllowed(\CTaskElapsedItem::ACTION_ELAPSED_TIME_MODIFY),

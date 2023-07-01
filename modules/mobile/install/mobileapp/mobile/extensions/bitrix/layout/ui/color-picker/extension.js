@@ -187,7 +187,8 @@
 		},
 		colorPickerTitle: {
 			color: '#525c69',
-			fontSize: 13,
+			fontSize: 15,
+			fontWeight: '500',
 			marginBottom: 9,
 			marginLeft: 20,
 			marginRight: 20,

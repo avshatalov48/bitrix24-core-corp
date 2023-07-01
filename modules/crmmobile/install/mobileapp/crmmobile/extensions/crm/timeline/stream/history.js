@@ -2,7 +2,6 @@
  * @module crm/timeline/stream/history
  */
 jn.define('crm/timeline/stream/history', (require, exports, module) => {
-
 	const { TimelineStreamBase } = require('crm/timeline/stream/base');
 
 	/**
@@ -26,8 +25,7 @@ jn.define('crm/timeline/stream/history', (require, exports, module) => {
 
 			const groupedItems = {};
 
-			this.items.forEach(item => {
-
+			this.items.forEach((item) => {
 				const deadline = item.deadline;
 				if (deadline)
 				{
@@ -54,13 +52,13 @@ jn.define('crm/timeline/stream/history', (require, exports, module) => {
 				props: {},
 			});
 
-			Object.keys(groupedItems).map(groupDate => {
+			Object.keys(groupedItems).forEach((groupDate) => {
 				result.push({
 					type: 'DateDivider',
 					key: `DateDivider_${groupDate}`,
 					props: {
-						date: groupDate
-					}
+						date: groupDate,
+					},
 				});
 
 				result = [
@@ -74,5 +72,4 @@ jn.define('crm/timeline/stream/history', (require, exports, module) => {
 	}
 
 	module.exports = { TimelineStreamHistory };
-
 });

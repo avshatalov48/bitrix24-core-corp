@@ -38,12 +38,13 @@ class View extends Base
 	 *
 	 * @param CTaskItem $task
 	 * @param null|string $viewedDate
+	 * @param array $parameters
 	 * @throws ArgumentException
+	 * @throws LoaderException
 	 * @throws ObjectPropertyException
 	 * @throws SystemException
-	 * @throws LoaderException
 	 */
-	public function updateAction(CTaskItem $task, $viewedDate = null): void
+	public function updateAction(CTaskItem $task, $viewedDate = null, $parameters = []): void
 	{
 		if (!$task->checkCanRead())
 		{
@@ -59,6 +60,6 @@ class View extends Base
 			$viewedDateToSave = DateTime::createFromTimestamp($timestamp);
 		}
 
-		ViewedTable::set($taskId, $userId, $viewedDateToSave);
+		ViewedTable::set($taskId, $userId, $viewedDateToSave, $parameters);
 	}
 }

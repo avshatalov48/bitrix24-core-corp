@@ -5,10 +5,16 @@
  */
 jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 
-	const { Type } = jn.require('type');
-	const { Loc } = jn.require('loc');
-	const { DialogHelper } = jn.require('im/messenger/lib/helper');
+	const { Type } = require('type');
+	const { Loc } = require('loc');
+	const { core } = require('im/messenger/core');
+	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { MessengerParams } = require('im/messenger/lib/params');
+
+	const ChatType = Object.freeze({
+		user: 'user',
+		chat: 'chat',
+	});
 
 	const DialogSpecialType = Object.freeze({
 		group: 'chat',
@@ -41,28 +47,33 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 		 */
 		constructor(dialogId, options = {})
 		{
+			this.store = core.getStore();
 			this.name = null;
 			this.description = null;
+			this.userCounter = 0;
 
 			if (DialogHelper.isDialogId(dialogId))
 			{
+				this.type = ChatType.chat;
 				this.createDialogTitle(dialogId, options);
 			}
 			else
 			{
+				this.type = ChatType.user;
 				this.createUserTitle(dialogId, options);
 			}
 		}
 
 		createDialogTitle(dialogId, options = {})
 		{
-			const dialog = MessengerStore.getters['dialoguesModel/getById'](dialogId);
+			const dialog = this.store.getters['dialoguesModel/getById'](dialogId);
 			if (!dialog)
 			{
 				return;
 			}
 
 			this.name = dialog.name;
+			this.userCounter = dialog.userCounter;
 
 			//TODO: add special types like announcement, call etc.
 			if (dialog.type && dialog.type === DialogSpecialType.channel)
@@ -77,7 +88,7 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 
 		createUserTitle(userId, options = {})
 		{
-			const user = MessengerStore.getters['usersModel/getUserById'](userId);
+			const user = this.store.getters['usersModel/getUserById'](userId);
 			if (!user)
 			{
 				return;
@@ -116,9 +127,22 @@ jn.define('im/messenger/lib/element/chat-title', (require, exports, module) => {
 				titleParams.text = this.name;
 			}
 
-			if (this.description)
+			if (this.type === ChatType.user && this.description)
 			{
 				titleParams.detailText = this.description;
+			}
+
+			if (this.type === ChatType.chat && this.userCounter)
+			{
+				titleParams.detailText =
+					Loc.getMessagePlural(
+						'IMMOBILE_ELEMENT_CHAT_TITLE_USER_COUNT',
+						this.userCounter,
+						{
+							'#COUNT#': this.userCounter
+						}
+					)
+				;
 			}
 
 			return titleParams;

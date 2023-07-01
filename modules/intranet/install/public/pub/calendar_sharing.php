@@ -11,7 +11,7 @@ if (\Bitrix\Main\Loader::includeModule('calendar'))
 		'bitrix:calendar.pub.sharing',
 		"",
 		[
-			'HASH' => $_REQUEST['hash'],
+			'HASH' => $_REQUEST['hash'] ?? '',
 		]
 	);
 }

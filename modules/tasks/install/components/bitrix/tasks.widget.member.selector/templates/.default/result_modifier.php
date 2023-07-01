@@ -80,7 +80,7 @@ foreach($arParams['DATA'] as $i => $item)
 	$display = $item['ID'];
 	if($entityType == $uPref)
 	{
-		$display = $item['LOGIN'];
+		$display = ($item['LOGIN'] ?? null);
 		if($arParams["NAME_TEMPLATE"])
 		{
 			$formatted = \Bitrix\Tasks\Util\User::formatName($item, false, $arParams["NAME_TEMPLATE"]);
@@ -111,15 +111,15 @@ foreach($arParams['DATA'] as $i => $item)
 	$typeSet = array();
 	if($entityType == $uPref)
 	{
-		if($item['IS_EXTRANET_USER'])
+		if($item['IS_EXTRANET_USER'] ?? null)
 		{
 			$typeSet[] = 'extranet';
 		}
-		if($item['IS_CRM_EMAIL_USER'])
+		if($item['IS_CRM_EMAIL_USER'] ?? null)
 		{
 			$typeSet[] = 'crmemail';
 		}
-		if($item['IS_EMAIL_USER'])
+		if($item['IS_EMAIL_USER'] ?? null)
 		{
 			$typeSet[] = 'mail';
 		}

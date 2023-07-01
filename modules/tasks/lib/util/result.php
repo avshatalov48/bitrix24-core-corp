@@ -82,7 +82,14 @@ class Result
 			$message = $e->getMessage();
 		}
 
-		if(!is_array($settings) || $settings['DUMP'] != false)
+		if(
+			!is_array($settings)
+			||
+			(
+				array_key_exists('DUMP', $settings)
+				&& $settings['DUMP'] != false
+			)
+		)
 		{
 			Util::log($e);
 		}

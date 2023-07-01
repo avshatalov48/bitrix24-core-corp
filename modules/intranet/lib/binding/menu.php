@@ -834,7 +834,7 @@ class Menu
 						];
 					}
 					$returnItems[] = [
-						'href' => '/marketplace/?placement=' . $placementMap[$marketCode],
+						'href' => Marketplace::getMainDirectory() . '?placement=' . $placementMap[$marketCode],
 						'text' => Loc::getMessage('INTRANET_BIND_MENU_APPS_2')
 					];
 				}

@@ -40,6 +40,7 @@ if(!CCrmPerms::IsAccessEnabled())
 }
 
 $currentUserID = CCrmSecurityHelper::GetCurrentUserID();
+$userPerms = Crm\Service\Container::getInstance()->getUserPermissions();
 
 /** @global CMain $APPLICATION */
 global $APPLICATION;
@@ -745,6 +746,38 @@ if (
 	}
 }
 
+if (
+	isset($this->counterPartyCategories[\CCrmOwnerType::Contact])
+	&& \Bitrix\Crm\Settings\Crm::isDocumentSigningEnabled()
+	&& $userPerms->canReadTypeInCategory(\CCrmOwnerType::Contact, $this->counterPartyCategories[\CCrmOwnerType::Contact])
+)
+{
+	$counterPartyContactMenuId = $this->resolveCounterpartyMenuId(\CCrmOwnerType::Contact);
+
+	$counter = EntityCounterFactory::create(
+		\CCrmOwnerType::Contact,
+		EntityCounterType::ALL,
+		$userPerms->getUserId(),
+		array_merge(
+			$counterExtras,
+			[
+				'CATEGORY_ID' => $this->counterPartyCategories[\CCrmOwnerType::Contact],
+			]
+		)
+	);
+
+	$stdItems[$counterPartyContactMenuId] = [
+		'ID' => $counterPartyContactMenuId,
+		'MENU_ID' => CrmControlPanel::MENU_ID_CRM_SIGN_COUNTERPARTY_CONTACTS,
+		'NAME' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_CONTACT'),
+		'TITLE' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_CONTACT'),
+		'COUNTER' => $counter->getValue(),
+		'COUNTER_ID' => $counter->getCode(),
+		'URL' => SITE_DIR."sign/contact/",
+		'ON_CLICK' => 'event.preventDefault();BX.SidePanel.Instance.open("/sign/contact/", {cacheable: false, customLeftBoundary: 0,});',
+	];
+}
+
 $stdItems['SETTINGS'] = array(
 	'ID' => 'SETTINGS',
 	'MENU_ID' => 'menu_crm_configs',
@@ -1068,6 +1101,16 @@ if (Loader::includeModule('salescenter'))
 	];
 }
 
+if (Crm\Terminal\AvailabilityManager::getInstance()->isAvailable())
+{
+	$stdItems['TERMINAL'] = [
+		'ID' => 'TERMINAL',
+		'NAME' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_TERMINAL'),
+		'URL' => '/crm/terminal/',
+		'MENU_ID' => 'menu_terminal',
+	];
+}
+
 if (Loader::includeModule('voximplant') && \Bitrix\Voximplant\Security\Helper::isMainMenuEnabled())
 {
 	$stdItems['TELEPHONY'] = [
@@ -1193,12 +1236,11 @@ if ($show1cSection)
 {
 	$stdItems['ONEC'] = [
 		'ID' => 'ONEC',
-		'NAME' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_ONEC'),
+		'NAME' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_ONEC_MSGVER_1'),
 		'URL' => '/onec/',
 	];
 }
 
-$userPerms = Crm\Service\Container::getInstance()->getUserPermissions();
 if ($isAdmin || $userPerms->canWriteConfig())
 {
 	$stdItems['DYNAMIC_LIST'] =  [

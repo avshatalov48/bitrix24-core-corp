@@ -5,6 +5,7 @@ namespace Bitrix\Crm\Service\Timeline\Item\Activity;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Sale\EntityLinkBuilder\EntityLinkBuilder;
 use Bitrix\Crm\Service\Timeline\Item\Activity;
+use Bitrix\Crm\Service\Timeline\Layout;
 use Bitrix\Crm\Service\Timeline\Layout\Action;
 use Bitrix\Crm\Service\Timeline\Layout\Action\JsEvent;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock;
@@ -12,7 +13,7 @@ use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\ContentBlockFactory;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\ContentBlockWithTitle;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\LineOfTextBlocks;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\Money;
-use Bitrix\Crm\Service\Timeline\Layout\Body\Logo;
+use Bitrix\Crm\Service\Timeline\Layout\Common\Icon;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Web\Uri;
@@ -41,12 +42,14 @@ class Payment extends Activity
 
 	public function getIconCode(): ?string
 	{
-		return 'wallet';
+		return Icon::WALLET;
 	}
 
-	public function getLogo(): ?Logo
+	public function getLogo(): ?Layout\Body\Logo
 	{
-		return (new Logo('bank-card'))->setInCircle();
+		return  Layout\Common\Logo::getInstance(Layout\Common\Logo::BANK_CARD)
+			->createLogo()
+		;
 	}
 
 	public function getContentBlocks(): ?array
@@ -237,6 +240,10 @@ class Payment extends Activity
 		{
 			$ownerTypeId = $this->getContext()->getEntityTypeId();
 
+			$payment = $this->getPayment();
+			$formattedDate = $payment ? ConvertTimeStamp($payment->getField('DATE_BILL')->getTimestamp()) : null;
+			$accountNumber = $payment ? $payment->getField('ACCOUNT_NUMBER') : null;
+
 			return
 				(new JsEvent('SalescenterApp:Start'))
 					->addActionParamString(
@@ -260,6 +267,14 @@ class Payment extends Activity
 					->addActionParamInt(
 						'ownerId',
 						$this->getContext()->getEntityId()
+					)
+					->addActionParamString(
+						'formattedDate',
+						$formattedDate,
+					)
+					->addActionParamString(
+						'accountNumber',
+						$accountNumber,
 					)
 					->addActionParamString(
 						'analyticsLabel',

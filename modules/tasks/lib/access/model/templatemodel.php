@@ -26,6 +26,7 @@ class TemplateModel
 
 	public const ROLE_OWNER = 'OWNER';
 
+	private ?string $description = null;
 	private $id = 0;
 	private $members;
 	private $groupId;
@@ -286,7 +287,10 @@ class TemplateModel
 			{
 				continue;
 			}
-			$value = ($permissions[$ac][$permissionId] > $value) ? $permissions[$ac][$permissionId] : $value;
+			if (isset($permissions[$ac][$permissionId]))
+			{
+				$value = ($permissions[$ac][$permissionId] > $value) ? $permissions[$ac][$permissionId] : $value;
+			}
 		}
 
 		return $value;
@@ -300,9 +304,20 @@ class TemplateModel
 		if (is_null($this->groupId))
 		{
 			$template = $this->loadTemplate();
-			$this->groupId = $template ? $template['GROUP_ID'] : 0;
+			$this->groupId = $template ? (int)$template['GROUP_ID'] : 0;
 		}
 		return $this->groupId;
+	}
+
+	public function getDescription(): string
+	{
+		if (is_null($this->description))
+		{
+			$template = $this->loadTemplate() ;
+			$this->description = $template ? $template['DESCRIPTION'] : '';
+		}
+
+		return $this->description;
 	}
 
 	/**
@@ -329,7 +344,8 @@ class TemplateModel
 	public function isDeleted(): bool
 	{
 		$template = $this->loadTemplate();
-		return $template['ZOMBIE'] === 'Y';
+
+		return ($template && $template['ZOMBIE'] === 'Y');
 	}
 
 	/**
@@ -442,6 +458,7 @@ class TemplateModel
 		{
 			$res = TemplateTable::query()
 				->addSelect('ID')
+				->addSelect('DESCRIPTION')
 				->addSelect('ZOMBIE')
 				->addSelect('GROUP_ID')
 				->addSelect('REPLICATE')

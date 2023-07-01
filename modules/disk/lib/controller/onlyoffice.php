@@ -539,12 +539,14 @@ final class OnlyOffice extends Engine\Controller
 			return;
 		}
 
-		$countOnlineUsers = count($payloadData['users'] ?? []);
+		$onlineUsers = $payloadData['users'] ?? [];
+		$onlineUsers = array_map('intval', $onlineUsers);
+
 		$documentInfo = $documentSession->getInfo();
 		if ($documentInfo)
 		{
 			$documentInfo->markAsEditing();
-			$documentInfo->setUserCount($countOnlineUsers);
+			$documentInfo->setUserCount(count($onlineUsers));
 		}
 
 		$userIds = [];
@@ -576,11 +578,14 @@ final class OnlyOffice extends Engine\Controller
 
 			if ($type === self::ACTION_TYPE_DISCONNECT)
 			{
-				$documentSession->setAsNonActive();
+				if (!in_array($userId, $onlineUsers, true))
+				{
+					$userSession->setAsNonActive();
+				}
 			}
-			else if (($type === self::STATUS_IS_BEING_EDITED) && $documentSession->isNonActive())
+			elseif (($type === self::STATUS_IS_BEING_EDITED) && $userSession->isNonActive())
 			{
-				$documentSession->setAsActive();
+				$userSession->setAsActive();
 			}
 		}
 	}
@@ -996,7 +1001,12 @@ final class OnlyOffice extends Engine\Controller
 			->setAttachedObject($attachedObject)
 		;
 
-		$sessionManager->lock();
+		if (!$sessionManager->lock())
+		{
+			$this->addError(new Error('Could not getting lock for the session.'));
+
+			return null;
+		}
 		$documentSession = $sessionManager->findOrCreateSession();
 		if (!$documentSession)
 		{

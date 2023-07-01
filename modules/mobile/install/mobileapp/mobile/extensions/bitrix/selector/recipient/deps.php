@@ -1,2 +1,8 @@
 <?php
-return ['selector/entity','selector/providers/common'];
+
+return [
+	'extensions' => [
+		'selector/entity',
+		'selector/providers/common',
+	],
+];

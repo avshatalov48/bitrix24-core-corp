@@ -789,7 +789,6 @@
 
 .crm__document-view--sidebar-control.--disabled {
 	opacity: 0.5;
-	pointer-events: none;
 }
 
 .crm__document-view--sidebar-control.--in-details{

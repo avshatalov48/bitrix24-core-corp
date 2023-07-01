@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Bitrix\CrmMobile\Controller;
 
+use Bitrix\Crm\Integration\DocumentGeneratorManager;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\Service\Factory;
 use Bitrix\CrmMobile\Timeline\Controller;
@@ -16,6 +17,7 @@ use Bitrix\Crm\Timeline\TimelineEntry;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ObjectNotFoundException;
+use Bitrix\Main\Config\Option;
 
 class Timeline extends Controller
 {
@@ -43,13 +45,18 @@ class Timeline extends Controller
 				'id' => $entity->getId(),
 				'typeId' => $entity->getEntityTypeId(),
 				'categoryId' => $factory->isCategoriesSupported() ? $entity->getCategoryId() : null,
+				'title' => $entity->getHeading(),
 				'pushTag' => $pushTag,
 				'detailPageUrl' => \CCrmOwnerType::GetDetailsUrl($entity->getEntityTypeId(), $entity->getId()),
 				'isEditable' => $this->isEntityEditable($entity),
+				'documentGeneratorProvider' => $this->getDocumentGeneratorProvider($entity->getEntityTypeId()),
+				'isDocumentPreviewerAvailable' => Option::get('crmmobile', 'release-spring-2023', true),
+				'isGoToChatAvailable' => Option::get('crmmobile', 'release-spring-2023', true),
 			],
 			'scheduled' => $scheduled,
 			'pinned' => $pinned,
 			'history' => $history,
+			'user' => \CCrmViewHelper::getUserInfo(),
 		];
 	}
 
@@ -90,5 +97,17 @@ class Timeline extends Controller
 			'typeId' => (int)$activity['TYPE_ID'],
 			'associatedEntityId' => isset($activity['ASSOCIATED_ENTITY_ID']) ? (int)$activity['ASSOCIATED_ENTITY_ID'] : 0,
 		];
+	}
+
+	private function getDocumentGeneratorProvider(int $entityTypeId): ?string
+	{
+		$manager = DocumentGeneratorManager::getInstance();
+		if (!$manager->isEnabled())
+		{
+			return null;
+		}
+
+		$providersMap = $manager->getCrmOwnerTypeProvidersMap();
+		return $providersMap[$entityTypeId] ?? null;
 	}
 }

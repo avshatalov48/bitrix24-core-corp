@@ -14,7 +14,7 @@ class RpaAutomationComponent extends Rpa\Components\Base
 	public function onPrepareComponentParams($arParams)
 	{
 		$arParams["typeId"] = (int) $arParams["typeId"];
-		$arParams["SET_TITLE"] = ($arParams["SET_TITLE"] === "N" ? "N" : "Y");
+		$arParams["SET_TITLE"] = (isset($arParams["SET_TITLE"]) && $arParams["SET_TITLE"] === "N" ? "N" : "Y");
 
 		return $arParams;
 	}

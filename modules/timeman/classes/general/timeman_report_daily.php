@@ -22,9 +22,9 @@ abstract class CAllTimeManReportDaily
 		if (isset($arFields['ACTIVE']))
 			$arFields['ACTIVE'] = $arFields['ACTIVE'] == 'N' ? 'N' : 'Y';
 
-		if (is_array($arFields['TASKS']))
+		if (is_array($arFields['TASKS'] ?? null))
 			$arFields['TASKS'] = serialize($arFields['TASKS']);
-		if (is_array($arFields['EVENTS']))
+		if (is_array($arFields['EVENTS'] ?? null))
 			$arFields['EVENTS'] = serialize($arFields['EVENTS']);
 
 		if ($action == 'UPDATE')

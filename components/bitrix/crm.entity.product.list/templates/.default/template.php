@@ -196,17 +196,23 @@ $grid['ROWS']['template_0'] = [
 	'TYPE' => Crm\ProductType::TYPE_PRODUCT,
 	'SKU_PROPERTIES' => [],
 	'PRODUCT_PROPERTIES' => [],
+	'STORE_MAP' => [],
 ];
+
+$visibleColumnsIds = array_column($grid['VISIBLE_COLUMNS'], 'id');
 
 $rows = [];
 foreach ($grid['ROWS'] as $product)
 {
-	$rawProduct = $product;
+	$columns = [];
 
+	$rawProduct = $product;
 	$rowId = $rowIdPrefix.$rawProduct['ID'];
 
 	$rawProduct['MEASURE_CODE'] = (string)$rawProduct['MEASURE_CODE'];
+	$measureName = htmlspecialcharsbx($rawProduct['MEASURE_NAME']);
 
+	// region editorConfig
 	$productName = $rawProduct['PRODUCT_NAME'] ?? '';
 	if ($productName === '' && is_numeric($rawProduct['ID']) && $rawProduct['ID'] !== $productIdMask)
 	{
@@ -221,8 +227,6 @@ foreach ($grid['ROWS'] as $product)
 	{
 		$fixedProductName = '';
 	}
-
-	$measureName = htmlspecialcharsbx($rawProduct['MEASURE_NAME']);
 
 	$item = [
 		'ROW_ID' => $rowId,
@@ -273,8 +277,21 @@ foreach ($grid['ROWS'] as $product)
 		'SKU_TREE' => $rawProduct['SKU_TREE'] ?? null,
 		'DETAIL_URL' => $rawProduct['DETAIL_URL'] ?? null,
 		'IMAGE_INFO' => $rawProduct['IMAGE_INFO'] ?? null,
+		'STORE_MAP' => $rawProduct['STORE_MAP'] ?? [],
 		'TYPE' => $rawProduct['TYPE'] ?? Crm\ProductType::TYPE_PRODUCT,
 	];
+
+	// clear overhead fields
+	if (!in_array('MAIN_INFO', $visibleColumnsIds, true))
+	{
+		unset(
+			$item['SKU_TREE'],
+			$item['IMAGE_INFO'],
+			$product['SKU_TREE'],
+			$product['IMAGE_INFO'],
+		);
+	}
+
 	$selectorId = 'crm_grid_'.$rowId;
 	if ($rawProduct['ID'] !== $productIdMask)
 	{
@@ -284,43 +301,58 @@ foreach ($grid['ROWS'] as $product)
 			'fields' => $item,
 		];
 	}
+	// endregion editorConfig
 
 	// region MAIN_INFO
-	$mainInfoColumn = HtmlFilter::encode($item['PRODUCT_NAME']);
-	if ($isReadOnly)
+	if (in_array('MAIN_INFO', $visibleColumnsIds, true))
 	{
-		ob_start();
-		$APPLICATION->IncludeComponent(
-			'bitrix:catalog.grid.product.field',
-			'',
-			[
-				'IS_NEW' => $rawProduct['IS_NEW'],
-				'BUILDER_CONTEXT' => \Bitrix\Crm\Product\Url\ProductBuilder::TYPE_ID,
-				'GRID_ID' => $gridId,
-				'ROW_ID' => $rowId,
-				'GUID' => $selectorId,
-				'PRODUCT_FIELDS' => [
-					'ID' => $rawProduct['PARENT_PRODUCT_ID'],
-					'NAME' => $item['PRODUCT_NAME'],
-					'IBLOCK_ID' => $item['IBLOCK_ID'],
-					'SKU_IBLOCK_ID' => $item['OFFERS_IBLOCK_ID'],
-					'SKU_ID' => $item['OFFER_ID'],
-					'BASE_PRICE_ID' => $item['BASE_PRICE_ID'],
-				],
-				'SKU_TREE' => $rawProduct['SKU_TREE'],
-				'MODE' => 'view',
-				'ENABLE_SEARCH' => false,
-				'ENABLE_IMAGE_CHANGE_SAVING' => false,
-				'ENABLE_EMPTY_PRODUCT_ERROR' => false,
-				'ENABLE_INPUT_DETAIL_LINK' => true,
-				'ENABLE_SKU_SELECTION' => false,
-				'HIDE_UNSELECTED_ITEMS' => true,
-			]
-		);
-		$mainInfoColumn = '<div class="main-grid-row-number"></div>' . ob_get_clean();
-	}
+		if ($isReadOnly)
+		{
+			ob_start();
+			$APPLICATION->IncludeComponent(
+				'bitrix:catalog.grid.product.field',
+				'',
+				[
+					'IS_NEW' => $rawProduct['IS_NEW'],
+					'BUILDER_CONTEXT' => \Bitrix\Crm\Product\Url\ProductBuilder::TYPE_ID,
+					'GRID_ID' => $gridId,
+					'ROW_ID' => $rowId,
+					'GUID' => $selectorId,
+					'PRODUCT_FIELDS' => [
+						'ID' => $rawProduct['PARENT_PRODUCT_ID'],
+						'NAME' => $item['PRODUCT_NAME'],
+						'IBLOCK_ID' => $item['IBLOCK_ID'],
+						'SKU_IBLOCK_ID' => $item['OFFERS_IBLOCK_ID'],
+						'SKU_ID' => $item['OFFER_ID'],
+						'BASE_PRICE_ID' => $item['BASE_PRICE_ID'],
+					],
+					'SKU_TREE' => $rawProduct['SKU_TREE'],
+					'MODE' => 'view',
+					'ENABLE_SEARCH' => false,
+					'ENABLE_IMAGE_CHANGE_SAVING' => false,
+					'ENABLE_EMPTY_PRODUCT_ERROR' => false,
+					'ENABLE_INPUT_DETAIL_LINK' => true,
+					'ENABLE_SKU_SELECTION' => false,
+					'HIDE_UNSELECTED_ITEMS' => true,
+				]
+			);
+			$mainInfoColumn = '<div class="main-grid-row-number"></div>' . ob_get_clean();
+		}
+		else
+		{
+			$mainInfoColumn = HtmlFilter::encode($item['PRODUCT_NAME']);
+		}
 
-	// end region MAIN_INFO
+		$columns['MAIN_INFO'] = $mainInfoColumn;
+	}
+	// endregion MAIN_INFO
+
+	// region STORE_INFO
+	if (in_array('STORE_INFO', $visibleColumnsIds, true))
+	{
+		$columns['STORE_INFO'] = HtmlFilter::encode($product['STORE_TITLE']);
+	}
+	// endregion STORE_INFO
 
 	// region PRICE
 	$price = $rawProduct['TAX_INCLUDED'] === 'N' ? $rawProduct['PRICE_NETTO'] : $rawProduct['PRICE_BRUTTO'];
@@ -328,7 +360,6 @@ foreach ($grid['ROWS'] as $product)
 	{
 		$price = number_format($price, $pricePrecision, '.', '');
 	}
-	$priceColumn = CCrmCurrency::MoneyToString($price, $currency['ID']);
 
 	$isDisabledPrice =
 		!$arResult['ALLOW_CATALOG_PRICE_EDIT']
@@ -348,10 +379,14 @@ foreach ($grid['ROWS'] as $product)
 			'DISABLED' => true,
 		],
 	];
-	// end region PRICE
+
+	if (in_array('PRICE', $visibleColumnsIds, true))
+	{
+		$columns['PRICE'] = CCrmCurrency::MoneyToString($price, $currency['ID']);
+	}
+	// endregion PRICE
 
 	// region QUANTITY
-	$quantityColumn = (float)$rawProduct['QUANTITY'] . ' ' . $measureName;
 	$product['QUANTITY'] = [
 		'PRICE' => [
 			'NAME' => $rowId.'_QUANTITY',
@@ -363,11 +398,14 @@ foreach ($grid['ROWS'] as $product)
 			'DISABLED' => !$arResult['IS_PRODUCT_EDITABLE'] && $rawProduct['PRODUCT_ID'] > 0,
 		],
 	];
-	// end region QUANTITY
+
+	if (in_array('QUANTITY', $visibleColumnsIds, true))
+	{
+		$columns['QUANTITY'] = (float)$rawProduct['QUANTITY'] . ' ' . $measureName;
+	}
+	// endregion QUANTITY
 
 	// region DISCOUNT_PRICE
-	$discountColumn = CCrmCurrency::MoneyToString($rawProduct['DISCOUNT_SUM'], $currency['ID']);
-
 	if ($rawProduct['DISCOUNT_TYPE_ID'] === Crm\Discount::PERCENTAGE)
 	{
 		$discountValue = rtrim(rtrim(number_format($rawProduct['DISCOUNT_RATE'], $commonPrecision, '.', ''), '0'), '.');
@@ -387,12 +425,17 @@ foreach ($grid['ROWS'] as $product)
 			'VALUE' => $rawProduct['DISCOUNT_TYPE_ID'],
 		],
 	];
-	// end region DISCOUNT_PRICE
+
+	if (in_array('DISCOUNT_PRICE', $visibleColumnsIds, true))
+	{
+		$discountColumn = CCrmCurrency::MoneyToString($rawProduct['DISCOUNT_SUM'], $currency['ID']);
+		$columns['DISCOUNT_PRICE'] = "<span data-name='DISCOUNT_PRICE'>{$discountColumn}</span>";
+	}
+	// endregion DISCOUNT_PRICE
 
 	// region DISCOUNT_ROW
 	$discountRowValue = (float)$rawProduct['QUANTITY'] * (float)$rawProduct['DISCOUNT_SUM'];
 	$discountRowValue = number_format($discountRowValue, $pricePrecision, '.', '');
-	$discountRowColumn = CCrmCurrency::MoneyToString($discountRowValue, $currency['ID']);
 	$product['DISCOUNT_ROW'] = [
 		'PRICE' => [
 			'NAME' => $rowId.'_DISCOUNT_ROW',
@@ -404,82 +447,98 @@ foreach ($grid['ROWS'] as $product)
 			'DISABLED' => true,
 		],
 	];
+
+	if (in_array('DISCOUNT_ROW', $visibleColumnsIds, true))
+	{
+		$discountRowColumn = CCrmCurrency::MoneyToString($discountRowValue, $currency['ID']);
+		$columns['DISCOUNT_ROW'] = "<span data-name='DISCOUNT_ROW'>{$discountRowColumn}</span>";
+	}
 	// end region DISCOUNT_ROW
 
 	// region TAX
-	$taxRateColumn = '';
-	$taxIncludedColumn = '';
-	$taxSumColumn = '';
-
 	if ($arResult['ALLOW_TAX'])
 	{
 		// region TAX_RATE
-		if (isset($rawProduct['TAX_RATE']))
+		if (in_array('TAX_RATE', $visibleColumnsIds, true))
 		{
-			$taxRateSelected = round((float)$rawProduct['TAX_RATE'], $commonPrecision);
-			$taxRateColumn = htmlspecialcharsbx($taxRateSelected).' %';
-		}
-		else
-		{
-			$taxRateSelected = null;
-			$taxRateColumn = \CCrmTax::GetVatRateNameByValue($rawProduct['TAX_RATE']);
-		}
-
-		$taxRates = $arResult['PRODUCT_VAT_LIST'];
-
-		if (!in_array($taxRateSelected, $taxRates, true))
-		{
-			$taxRates['custom'] = $taxRateSelected;
-		}
-
-		asort($taxRates, SORT_NUMERIC);
-
-		$taxRateHtml = '<select class="crm-entity-product-control-select-field"'
-			.' id="'.$rowId.'_TAX_RATE"'
-			.' data-field-code="TAX_RATE"'
-			.' data-product-field="Y" data-parent-id="'.$rowId.'"'
-			.'>';
-
-		foreach ($taxRates as $taxId => $taxRate)
-		{
-			if (isset($taxRate))
+			if (isset($rawProduct['TAX_RATE']))
 			{
-				$taxRate = (float)$taxRate;
-				$name = $taxRate.' %';
+				$taxRateSelected = round((float)$rawProduct['TAX_RATE'], $commonPrecision);
+				$columns['TAX_RATE'] = htmlspecialcharsbx($taxRateSelected).' %';
 			}
 			else
 			{
-				$name = \CCrmTax::GetVatRateNameByValue($taxRate);
+				$taxRateSelected = null;
+				$columns['TAX_RATE'] = \CCrmTax::GetVatRateNameByValue($rawProduct['TAX_RATE']);
 			}
 
-			$selected = ($taxRateSelected === $taxRate) ? 'selected' : '';
-			$taxRate = htmlspecialcharsbx($taxRate);
-			$taxRateHtml .= "<option value='{$taxRate}' data-tax-id='{$taxId}' {$selected}>{$name}</option>";
+			$taxRates = $arResult['PRODUCT_VAT_LIST'];
+
+			if (!in_array($taxRateSelected, $taxRates, true))
+			{
+				$taxRates['custom'] = $taxRateSelected;
+			}
+
+			asort($taxRates, SORT_NUMERIC);
+
+			$taxRateHtml = '<select class="crm-entity-product-control-select-field"'
+				.' id="'.$rowId.'_TAX_RATE"'
+				.' data-field-code="TAX_RATE"'
+				.' data-product-field="Y" data-parent-id="'.$rowId.'"'
+				.'>';
+
+			foreach ($taxRates as $taxId => $taxRate)
+			{
+				if (isset($taxRate))
+				{
+					$taxRate = (float)$taxRate;
+					$name = $taxRate.' %';
+				}
+				else
+				{
+					$name = \CCrmTax::GetVatRateNameByValue($taxRate);
+				}
+
+				$selected = ($taxRateSelected === $taxRate) ? 'selected' : '';
+				$taxRate = htmlspecialcharsbx($taxRate);
+				$taxRateHtml .= "<option value='{$taxRate}' data-tax-id='{$taxId}' {$selected}>{$name}</option>";
+			}
+
+			$taxRateHtml .= '</select>';
+
+			$product['TAX_RATE'] = '<div class="crm-entity-product-control-select">'.$taxRateHtml.'</div>';
 		}
-
-		$taxRateHtml .= '</select>';
-
-		$product['TAX_RATE'] = '<div class="crm-entity-product-control-select">'.$taxRateHtml.'</div>';
 		// end region TAX_RATE
 
 		// region TAX_INCLUDED
-		$taxIncludedColumn = $rawProduct['TAX_INCLUDED']
-			? Loc::getMessage('CRM_ENTITY_PL_YES')
-			: Loc::getMessage('CRM_ENTITY_PL_NO');
-		$product['TAX_INCLUDED'] = '<div class="crm-entity-product-control-checkbox">'
-			.'<input type="checkbox"'
-			.' id="'.$rowId.'_TAX_INCLUDED"'
-			.' data-field-code="TAX_INCLUDED"'
-			.' data-product-field="Y" data-parent-id="'.$rowId.'"'
-			.($rawProduct['TAX_INCLUDED'] === 'Y' ? ' checked' : '')
-			.'>'
-			.'</div>';
+		if (in_array('TAX_INCLUDED', $visibleColumnsIds, true))
+		{
+			$columns['TAX_INCLUDED'] =
+				$rawProduct['TAX_INCLUDED']
+					? Loc::getMessage('CRM_ENTITY_PL_YES')
+					: Loc::getMessage('CRM_ENTITY_PL_NO')
+			;
+			$product['TAX_INCLUDED'] =
+				'<div class="crm-entity-product-control-checkbox">'
+					. '<input type="checkbox"'
+					. ' id="' . $rowId . '_TAX_INCLUDED"'
+					. ' data-field-code="TAX_INCLUDED"'
+					. ' data-product-field="Y" data-parent-id="' . $rowId . '"'
+					. ($rawProduct['TAX_INCLUDED'] === 'Y' ? ' checked' : '')
+					. '>'
+					. '</div>'
+			;
+		}
+
 		// end region TAX_INCLUDED
 
 		// region TAX_SUM
-		$taxSum = CCrmCurrency::MoneyToString($rawProduct['TAX_SUM'], $currency['ID']);
-		$taxSumColumn = $taxSum;
-		$product['TAX_SUM'] = '<div class="crm-entity-product-control-tax-sum-field" id="'.$rowId.'_TAX_SUM">'.$taxSum.'</div>';
+		if (in_array('TAX_SUM', $visibleColumnsIds, true))
+		{
+			$taxSum = CCrmCurrency::MoneyToString($rawProduct['TAX_SUM'], $currency['ID']);
+			$columns['TAX_SUM'] = '<span data-name="TAX_SUM">' . $taxSum . '</span>';
+			$product['TAX_SUM'] = '<div class="crm-entity-product-control-tax-sum-field" id="' . $rowId . '_TAX_SUM">' . $taxSum . '</div>';
+		}
 		// end region TAX_SUM
 	}
 	// end region TAX
@@ -487,7 +546,6 @@ foreach ($grid['ROWS'] as $product)
 	// region SUM
 	$sum = $rawProduct['PRICE'] * $rawProduct['QUANTITY'];
 	$sum = number_format($sum, $pricePrecision, '.', '');
-	$sumColumn = CCrmCurrency::MoneyToString($sum, $currency['ID']);
 
 	$product['SUM'] = [
 		'PRICE' => [
@@ -500,67 +558,82 @@ foreach ($grid['ROWS'] as $product)
 			'DISABLED' => true,
 		],
 	];
-	// end region SUM
 
+	if (in_array('SUM', $visibleColumnsIds, true))
+	{
+		$columns['SUM'] = CCrmCurrency::MoneyToString($sum, $currency['ID']);
+	}
+	// endregion SUM
 
 	// region PURCHASING_PRICE
-
-	$purchasingPriceColumn = $rawProduct['SKU_PROPERTIES']['PURCHASING_PRICE_FORMATTED'] ?? null;
-
-	// end region PURCHASING_PRICE
-
-	$reserveInfo =
-		$rawProduct['INPUT_RESERVE_QUANTITY'] !== null
-			? $rawProduct['INPUT_RESERVE_QUANTITY'] . " " . $measureName
-			: ''
-	;
-	$deductedInfo =
-		$rawProduct['DEDUCTED_QUANTITY'] !== null
-			? $rawProduct['DEDUCTED_QUANTITY'] . " " . $measureName
-			: ''
-	;
-	$rowReserved =
-		$rawProduct['ROW_RESERVED'] !== null
-			? $rawProduct['ROW_RESERVED'] . " " . $measureName
-			: ''
-	;
-	$storeAvailable =
-		$rawProduct['STORE_AVAILABLE'] !== null && in_array((int)($rawProduct['STORE_ID'] ?? 0), $component->getAllowedStories(), true)
-			? $rawProduct['STORE_AVAILABLE'] . " " . $measureName
-			: ''
-	;
-
-	$columns = [
-		'MAIN_INFO' => $mainInfoColumn,
-		'STORE_INFO' => HtmlFilter::encode($product['STORE_TITLE']),
-		'RESERVE_INFO' => "<span data-name='INPUT_RESERVE_QUANTITY'>{$reserveInfo}</span>",
-		'DEDUCTED_INFO' => "<span data-name='DEDUCTED_QUANTITY'>{$deductedInfo}</span>",
-		'ROW_RESERVED' => "<span data-name='ROW_RESERVED'>{$rowReserved}</span>",
-		'STORE_AVAILABLE' => "<a href='#' data-name='STORE_AVAILABLE'>{$storeAvailable}</a>",
-		'PRICE' => $priceColumn,
-		'QUANTITY' => $quantityColumn,
-		'SUM' => $sumColumn,
-		'DISCOUNT_PRICE' => "<span data-name='DISCOUNT_PRICE'>{$discountColumn}</span>",
-		'DISCOUNT_ROW' => "<span data-name='DISCOUNT_ROW'>{$discountRowColumn}</span>",
-	];
-	if ($arResult['ALLOW_TAX'])
+	if (in_array('PURCHASING_PRICE_FORMATTED', $visibleColumnsIds, true))
 	{
-		$columns['TAX_RATE'] = $taxRateColumn;
-		$columns['TAX_INCLUDED'] = $taxIncludedColumn;
-		$columns['TAX_SUM'] = '<span data-name="TAX_SUM">' . $taxSumColumn . '</span>';
+		$purchasingPriceColumn = $rawProduct['SKU_PROPERTIES']['PURCHASING_PRICE_FORMATTED'] ?? null;
+		$columns['PURCHASING_PRICE_FORMATTED'] = "<span data-name='PURCHASING_PRICE_FORMATTED'>{$purchasingPriceColumn}</a>";
 	}
+	// endregion PURCHASING_PRICE
 
+	// region RESERVE_INFO
+	if (in_array('RESERVE_INFO', $visibleColumnsIds, true))
+	{
+		$reserveInfo =
+			$rawProduct['INPUT_RESERVE_QUANTITY'] !== null
+				? $rawProduct['INPUT_RESERVE_QUANTITY'] . " " . $measureName
+				: ''
+		;
+		$columns['RESERVE_INFO'] = "<span data-name='INPUT_RESERVE_QUANTITY'>{$reserveInfo}</span>";
+	}
+	// endregion RESERVE_INFO
 
+	// region DEDUCTED_INFO
+	if (in_array('DEDUCTED_INFO', $visibleColumnsIds, true))
+	{
+		$deductedInfo =
+			$rawProduct['DEDUCTED_QUANTITY'] !== null
+				? $rawProduct['DEDUCTED_QUANTITY'] . " " . $measureName
+				: ''
+		;
+		$columns['DEDUCTED_INFO'] = "<span data-name='DEDUCTED_QUANTITY'>{$deductedInfo}</span>";
+	}
+	// endregion DEDUCTED_INFO
+
+	// region ROW_RESERVED
+	if (in_array('ROW_RESERVED', $visibleColumnsIds, true))
+	{
+		$rowReserved =
+			$rawProduct['ROW_RESERVED'] !== null
+				? $rawProduct['ROW_RESERVED'] . " " . $measureName
+				: ''
+		;
+		$columns['ROW_RESERVED'] = "<span data-name='ROW_RESERVED'>{$rowReserved}</span>";
+	}
+	// endregion ROW_RESERVED
+
+	// region STORE_AVAILABLE
+	if (in_array('STORE_AVAILABLE', $visibleColumnsIds, true))
+	{
+		$storeAvailable =
+			$rawProduct['STORE_AVAILABLE'] !== null && in_array((int)($rawProduct['STORE_ID'] ?? 0), $component->getAllowedStories(), true)
+				? $rawProduct['STORE_AVAILABLE'] . " " . $measureName
+				: ''
+		;
+		$columns['STORE_AVAILABLE'] = "<a href='#' data-name='STORE_AVAILABLE'>{$storeAvailable}</a>";
+	}
+	// endregion STORE_AVAILABLE
+
+	// region USER_FIELD_COLUMNS
 	if (!empty($arResult['USER_FIELD_COLUMNS']))
 	{
 		foreach ($arResult['USER_FIELD_COLUMNS'] as $propName)
 		{
-			$value = $rawProduct[$propName] ?? '';
-			$columns[$propName] = "<span data-name='{$propName}'>{$value}</a>";
+			if (in_array($propName, $visibleColumnsIds, true))
+			{
+				$value = $rawProduct[$propName] ?? '';
+				$columns[$propName] = "<span data-name='{$propName}'>{$value}</a>";
+			}
 		}
 	}
-
-	$columns['PURCHASING_PRICE_FORMATTED'] = "<span data-name='PURCHASING_PRICE_FORMATTED'>{$purchasingPriceColumn}</a>";
+	// endregion USER_FIELD_COLUMNS
 
 	$rows[] = [
 		'id' => $rawProduct['ID'] === $productIdMask ? 'template_0' : $rawProduct['ID'],

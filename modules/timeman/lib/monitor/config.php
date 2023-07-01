@@ -29,9 +29,9 @@ final class Config
 
 	public static function isAvailable(): bool
 	{
-		$enabled = Configuration::getValue('timeman_pwt')['enabled'];
+		$timemanPwt = Configuration::getValue('timeman_pwt');
 
-		return $enabled ? true : false;
+		return (isset($timemanPwt['enabled']) && $timemanPwt['enabled']) ? true : false;
 	}
 
 	public static function get(): array

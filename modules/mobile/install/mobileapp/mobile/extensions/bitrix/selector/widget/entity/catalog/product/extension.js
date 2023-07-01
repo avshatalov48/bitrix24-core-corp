@@ -1,4 +1,7 @@
 (() => {
+	const require = (ext) => jn.require(ext);
+	const { Loc } = require('loc');
+
 	/**
 	 * @class CatalogProductSelector
 	 */
@@ -16,22 +19,22 @@
 
 		static getStartTypingText()
 		{
-			return BX.message('SELECTOR_COMPONENT_START_TYPING_TO_SEARCH_PRODUCT');
+			return Loc.getMessage('SELECTOR_COMPONENT_START_TYPING_TO_SEARCH_PRODUCT');
 		}
 
 		static getStartTypingWithCreationText()
 		{
-			return BX.message('SELECTOR_COMPONENT_START_TYPING_TO_CREATE_PRODUCT');
+			return Loc.getMessage('SELECTOR_COMPONENT_START_TYPING_TO_CREATE_PRODUCT');
 		}
 
 		static getSearchPlaceholderWithCreation()
 		{
-			return BX.message('SELECTOR_COMPONENT_SEARCH_WITH_CREATION_PLACEHOLDER_PRODUCT');
+			return Loc.getMessage('SELECTOR_COMPONENT_SEARCH_WITH_CREATION_PLACEHOLDER_PRODUCT');
 		}
 
 		static getSearchPlaceholderWithoutCreation()
 		{
-			return BX.message('SELECTOR_COMPONENT_SEARCH_WITHOUT_CREATION_PLACEHOLDER_PRODUCT');
+			return Loc.getMessage('SELECTOR_COMPONENT_SEARCH_WITHOUT_CREATION_PLACEHOLDER_PRODUCT');
 		}
 
 		static isCreationEnabled()
@@ -41,17 +44,24 @@
 
 		static getCreateText()
 		{
-			return BX.message('SELECTOR_COMPONENT_CREATE_PRODUCT');
+			return Loc.getMessage('SELECTOR_COMPONENT_CREATE_PRODUCT');
 		}
 
 		static getCreatingText()
 		{
-			return BX.message('SELECTOR_COMPONENT_CREATING_PRODUCT');
+			return Loc.getMessage('SELECTOR_COMPONENT_CREATING_PRODUCT');
+		}
+
+		static canCreateWithEmptySearch()
+		{
+			return true;
 		}
 
 		static getCreateEntityHandler(providerOptions)
 		{
 			return (text) => {
+				text = text || Loc.getMessage('SELECTOR_COMPONENT_NEW_PRODUCT_NAME');
+
 				return BX.ajax.runAction(
 					'catalog.productSelector.createProduct',
 					{
@@ -59,17 +69,17 @@
 							fields: {
 								'NAME': text,
 								'IBLOCK_ID': providerOptions.iblockId,
-								'CURRENCY': providerOptions.currency
-							}
-						}
-					}
+								'CURRENCY': providerOptions.currency,
+							},
+						},
+					},
 				).then((response) => {
 					if (response.data && response.data.id)
 					{
 						return {
 							id: response.data.id,
 							entityId: this.getEntityId(),
-							title: text
+							title: text,
 						};
 					}
 
@@ -80,7 +90,7 @@
 
 		static getTitle()
 		{
-			return BX.message('SELECTOR_COMPONENT_PICK_PRODUCT_2');
+			return Loc.getMessage('SELECTOR_COMPONENT_PICK_PRODUCT_2');
 		}
 
 		static getSearchFields()

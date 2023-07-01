@@ -2,7 +2,6 @@
  * @module crm/entity-tab/type/company
  */
 jn.define('crm/entity-tab/type/company', (require, exports, module) => {
-
 	const { TypeId, TypeName } = require('crm/type');
 	const { Base: BaseEntityType } = require('crm/entity-tab/type/base');
 
@@ -28,5 +27,5 @@ jn.define('crm/entity-tab/type/company', (require, exports, module) => {
 		}
 	}
 
-	module.exports = { Company }
+	module.exports = { Company };
 });

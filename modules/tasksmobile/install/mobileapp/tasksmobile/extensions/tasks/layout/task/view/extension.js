@@ -382,6 +382,20 @@ jn.define('tasks/layout/task/view', (require, exports, module) => {
 			};
 		}
 
+		static open(data)
+		{
+			const taskView = new this({
+				layoutWidget: data.layoutWidget,
+				userId: data.userId,
+				taskId: data.taskId,
+				guid: data.guid,
+				taskObject: data.taskObject,
+				showLoading: !data.taskObject,
+			});
+
+			data.layoutWidget.showComponent(taskView);
+		}
+
 		constructor(props)
 		{
 			super(props);
@@ -506,7 +520,7 @@ jn.define('tasks/layout/task/view', (require, exports, module) => {
 								Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_VIEW_NO_TASK_ALERT_DESCRIPTION'),
 								[{
 									text: Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_VIEW_NO_TASK_ALERT_BUTTON_OK'),
-									onPress: () => this.layoutWidget.back(),
+									onPress: () => this.close(),
 								}]
 							);
 						}
@@ -671,13 +685,9 @@ jn.define('tasks/layout/task/view', (require, exports, module) => {
 		{
 			const storage = Application.sharedStorage('tasksTaskList');
 			const optionsCache = storage.get('options');
-
-			if (Type.isString(optionsCache))
-			{
-				const currentOption = JSON.parse(optionsCache);
-				currentOption.deadlines = value;
-				storage.set('options', JSON.stringify(currentOption));
-			}
+			const currentOption = (Type.isString(optionsCache) ? JSON.parse(optionsCache) : {});
+			currentOption.deadlines = value;
+			storage.set('options', JSON.stringify(currentOption));
 		}
 
 		getCurrentUserData()
@@ -752,6 +762,10 @@ jn.define('tasks/layout/task/view', (require, exports, module) => {
 			this.taskEventEmitter.on(
 				'tasks.task.actionMenu:delegate',
 				() => this.updateFields([TaskView.field.responsible, TaskView.field.auditors])
+			);
+			this.taskEventEmitter.on(
+				'tasks.task.actionMenu:remove',
+				() => this.close()
 			);
 		}
 
@@ -933,7 +947,7 @@ jn.define('tasks/layout/task/view', (require, exports, module) => {
 							? 'TASKSMOBILE_LAYOUT_TASK_VIEW_SAVING_BUTTON'
 							: 'TASKSMOBILE_LAYOUT_TASK_VIEW_SAVE_BUTTON'
 					),
-					color: (this.isSaving ? '#bdc1c6' : '#0065a3'),
+					color: (this.isSaving ? '#bdc1c6' : '#2066b0'),
 					callback: () => void this.save(),
 				});
 			}
@@ -1067,7 +1081,7 @@ jn.define('tasks/layout/task/view', (require, exports, module) => {
 			{
 				style.marginHorizontal = 6;
 				style.borderWidth = 1;
-				style.borderColor = '#e6e6e6';
+				style.borderColor = '#e6e7e9';
 				style.borderRadius = 7;
 			}
 
@@ -1077,14 +1091,7 @@ jn.define('tasks/layout/task/view', (require, exports, module) => {
 		getDeepMergeStylesForField(isExpandable = false)
 		{
 			const deepMergeStyles = {
-				wrapper: (isExpandable) => ({
-					height: (isExpandable ? undefined : fieldHeight),
-					minHeight: (isExpandable ? fieldHeight : undefined),
-					justifyContent: 'center',
-					paddingTop: 10,
-					paddingBottom: 10,
-				}),
-				readOnlyWrapper: (isExpandable) => ({
+				externalWrapper: (isExpandable) => ({
 					height: (isExpandable ? undefined : fieldHeight),
 					minHeight: (isExpandable ? fieldHeight : undefined),
 					justifyContent: 'center',
@@ -1247,7 +1254,7 @@ jn.define('tasks/layout/task/view', (require, exports, module) => {
 					style: {
 						...this.getStyleForField(),
 						height: 0.5,
-						backgroundColor: '#e6e6e6',
+						backgroundColor: '#e6e7e9',
 					},
 				}),
 				content,
@@ -1983,22 +1990,5 @@ jn.define('tasks/layout/task/view', (require, exports, module) => {
 		}
 	}
 
-	class TaskViewManager
-	{
-		static open(data)
-		{
-			const taskView = new TaskView({
-				layoutWidget: data.layoutWidget,
-				userId: data.userId,
-				taskId: data.taskId,
-				guid: data.guid,
-				taskObject: data.taskObject,
-				showLoading: !data.taskObject,
-			});
-
-			data.layoutWidget.showComponent(taskView);
-		}
-	}
-
-	module.exports = {TaskView, TaskViewManager};
+	module.exports = {TaskView};
 });

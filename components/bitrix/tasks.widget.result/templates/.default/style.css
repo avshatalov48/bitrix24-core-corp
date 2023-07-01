@@ -78,6 +78,11 @@
 	border-radius: var(--ui-border-radius-md);
 }
 
+.tasks-widget-result__item.--blink {
+	background: rgba(228,246,254,1);
+	border: 1px solid rgba(47,198,246,1);
+}
+
 .tasks-widget-result__item-more {
 	overflow: hidden;
 	transition: .2s;

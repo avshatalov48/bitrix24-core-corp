@@ -21,7 +21,7 @@ use Bitrix\Main\Localization\Loc;
 /** @var \Bitrix\Timeman\Form\Worktime\WorktimeRecordForm $recordForm */
 $recordForm = $arResult['recordForm'];
 /** @var \Bitrix\Timeman\Helper\UserHelper $userHelper */
-$userHelper = $arResult['userHelper'];
+$userHelper = $arResult['userHelper'] ?? null;
 
 ?>
 <div class="<?= $arResult['isSlider'] ? 'timeman-report-slider' : ''; ?>">

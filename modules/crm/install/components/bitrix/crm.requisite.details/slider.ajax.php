@@ -1,6 +1,7 @@
 <?
 
 use Bitrix\Crm\Security\EntityAuthorization;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Context;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
@@ -21,16 +22,31 @@ else
 	$entityTypeId = isset($_REQUEST['etype']) ? (int)$_REQUEST['etype'] : 0;
 	$entityId = isset($_REQUEST['eid']) ? (int)$_REQUEST['eid'] : 0;
 
-	if(!(check_bitrix_sessid()
+	$categoryId = null;
+	$checkPermissionsParams = null;
+	if ($entityId <= 0 && isset($_REQUEST['cid']))
+	{
+		$categoryId = (int)$_REQUEST['cid'];
+		$checkPermissionsParams['CATEGORY_ID'] = $categoryId;
+	}
+	$permissionToken = (string)($_REQUEST['permissionToken'] ?? '');
+
+	$hasPermissions = (
+		check_bitrix_sessid()
 		&& EntityAuthorization::isAuthorized()
-		&& EntityAuthorization::checkReadPermission($entityTypeId, $entityId))
-	)
+		&& (
+			EntityAuthorization::checkReadPermission($entityTypeId, $entityId, null, $checkPermissionsParams)
+			|| \Bitrix\Crm\Security\PermissionToken::canEditRequisites($permissionToken, $entityTypeId, $entityId)
+		)
+	);
+
+	if(!$hasPermissions)
 	{
 		ShowError(Loc::getMessage('CRM_ACCESS_DENIED'));
 	}
 	else
 	{
-		$action = isset($_POST['ACTION']) ? $_POST['ACTION'] : '';
+		$action = $_POST['ACTION'] ?? '';
 		$isAction = (
 			$_SERVER['REQUEST_METHOD'] === 'POST'
 			&& check_bitrix_sessid()
@@ -39,12 +55,18 @@ else
 		$isReaload = ($isAction && $action === 'RELOAD');
 		unset($action, $isAction);
 
-		$useFormData = (isset($_REQUEST['useFormData']) && mb_strtoupper($_REQUEST['useFormData']) === 'Y' || $isSave || $isReaload);
+		$useFormData = (
+			isset($_REQUEST['useFormData'])
+			&& mb_strtoupper($_REQUEST['useFormData']) === 'Y'
+			|| $isSave
+			|| $isReaload
+		);
 
-		$mode = isset($_REQUEST['mode']) ? $_REQUEST['mode'] : '';
+		$mode = $_REQUEST['mode'] ?? '';
+		$requisiteId = (int)($_REQUEST['requisite_id'] ?? 0);
 		if (!in_array($mode, ['create', 'edit', 'copy', 'delete'], true))
 		{
-			if (isset($_REQUEST['requisite_id']) && $_REQUEST['requisite_id'] > 0)
+			if ($requisiteId > 0)
 			{
 				if (isset($_REQUEST['copy']) && !empty($_REQUEST['copy']))
 				{
@@ -68,20 +90,28 @@ else
 
 		$componentParams = [
 			'ENTITY_TYPE_ID' => $entityTypeId,
+			'CATEGORY_ID' => $categoryId,
 			'ENTITY_ID' => $entityId,
-			'REQUISITE_ID' => isset($_REQUEST['requisite_id']) ? (int)$_REQUEST['requisite_id'] : 0,
-			'PSEUDO_ID' => isset($_REQUEST['pseudoId']) ? $_REQUEST['pseudoId'] : '',
-			'PRESET_ID' => isset($_REQUEST['pid']) ? (int)$_REQUEST['pid'] : 0,
+			'REQUISITE_ID' => $requisiteId,
+			'PSEUDO_ID' => $_REQUEST['pseudoId'] ?? '',
+			'PRESET_ID' => (int)($_REQUEST['pid'] ?? 0),
 			'MODE' => $mode,
 			'DO_SAVE' => (isset($_REQUEST['doSave']) && mb_strtoupper($_REQUEST['doSave']) === 'Y') ? 'Y' : 'N',
 			'USE_EXTERNAL_DATA' => isset($_REQUEST['externalData']) ? 'Y' : 'N',
-			'EXTERNAL_DATA' => isset($_REQUEST['externalData']) ? $_REQUEST['externalData'] : [],
+			'EXTERNAL_DATA' => $_REQUEST['externalData'] ?? [],
 			'USE_FORM_DATA' => $useFormData ? 'Y' : 'N',
 			'FORM_DATA' => $useFormData ? $_POST : [],
-			'EXTERNAL_CONTEXT_ID' => isset($_REQUEST['external_context_id']) ? $_REQUEST['external_context_id'] : '',
+			'EXTERNAL_CONTEXT_ID' => $_REQUEST['external_context_id'] ?? '',
 			'IS_SAVE' => $isSave ? 'Y' : 'N',
 			'IS_RELOAD' => $isReaload ? 'Y' : 'N',
-			'ADD_BANK_DETAILS_ITEM' => (isset($_REQUEST['addBankDetailsItem']) && mb_strtoupper($_REQUEST['addBankDetailsItem']) === 'Y') ? 'Y' : 'N'
+			'ADD_BANK_DETAILS_ITEM' =>
+				(
+					isset($_REQUEST['addBankDetailsItem'])
+					&& mb_strtoupper($_REQUEST['addBankDetailsItem']) === 'Y'
+				)
+					? 'Y'
+					: 'N',
+			'PERMISSION_TOKEN' => $permissionToken,
 		];
 
 		$APPLICATION->IncludeComponent(

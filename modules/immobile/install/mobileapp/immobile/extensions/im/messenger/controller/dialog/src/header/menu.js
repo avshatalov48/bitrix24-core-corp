@@ -3,6 +3,7 @@
  */
 jn.define('im/messenger/controller/dialog/header/menu', (require, exports, module) => {
 
+	const { core } = require('im/messenger/core');
 	const { DialogHelper } = require('im/messenger/lib/helper');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { getHeaderIcon, headerIconType } = require('im/messenger/controller/dialog/header/icon');
@@ -22,10 +23,11 @@ jn.define('im/messenger/controller/dialog/header/menu', (require, exports, modul
 		constructor(dialogId)
 		{
 			this.dialogId = dialogId;
+			this.store = core.getStore();
 			this.isUser = DialogHelper.isChatId(dialogId);
 			this.dialogData = this.isUser
-				? ChatUtils.objectClone(MessengerStore.getters['usersModel/getUserById'](dialogId))
-				: ChatUtils.objectClone(MessengerStore.getters['dialoguesModel/getById'](dialogId))
+				? ChatUtils.objectClone(this.store.getters['usersModel/getUserById'](dialogId))
+				: ChatUtils.objectClone(this.store.getters['dialoguesModel/getById'](dialogId))
 			;
 		}
 

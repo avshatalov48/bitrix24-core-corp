@@ -516,7 +516,7 @@ class LiveChatManager
 			'main.core.minimal',
 			'imopenlines.component.widget',
 		], [
-			'skip_extensions' => ['core', 'main.core', 'main.polyfill.core', 'ui.fonts.opensans', 'main.popup'],
+			'skip_extensions' => ['core', 'main.core', 'main.polyfill.core', 'ui.fonts.opensans', 'main.popup', 'im.v2.lib.parser'],
 			'get_resolved_extension_list' => true,
 		]);
 

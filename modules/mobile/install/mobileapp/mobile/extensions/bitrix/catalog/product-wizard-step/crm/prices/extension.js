@@ -4,6 +4,7 @@
 	const { MoneyType } = jn.require('layout/ui/fields/money');
 	const { NumberType, NumberPrecision } = jn.require('layout/ui/fields/number');
 	const { SelectType } = jn.require('layout/ui/fields/select');
+	const { BannerButton } = jn.require('layout/ui/banners');
 
 	/**
 	 * @class CrmProductPricesStep
@@ -116,7 +117,7 @@
 							marginTop: 12,
 						}
 					},
-					UI.BannerButton({
+					BannerButton({
 						title: Loc.getMessage('CRM_PRODUCT_WIZARD_PRICES_INVENTORY_CONTROL_TITLE'),
 						description: Loc.getMessage('CRM_PRODUCT_WIZARD_PRICES_INVENTORY_CONTROL_BODY'),
 						showArrow: false,

@@ -2,6 +2,7 @@
  * @module crm/timeline/action/base
  */
 jn.define('crm/timeline/action/base', (require, exports, module) => {
+	const { AnalyticsLabel } = require('analytics-label');
 
 	/**
 	 * @abstract
@@ -12,14 +13,16 @@ jn.define('crm/timeline/action/base', (require, exports, module) => {
 		/**
 		 * @param {any} value
 		 * @param {any} actionParams
+		 * @param {any} analytics
 		 * @param {TimelineItemBase} source
 		 * @param {TimelineEntityProps} entity
 		 * @param {TimelineAction} factory
 		 */
-		constructor({ value, actionParams, source, entity, factory })
+		constructor({ value, actionParams, analytics, source, entity, factory, scheduler })
 		{
 			this.value = value;
 			this.actionParams = actionParams;
+			this.analytics = analytics;
 
 			/** @type TimelineItemBase */
 			this.source = source;
@@ -29,14 +32,25 @@ jn.define('crm/timeline/action/base', (require, exports, module) => {
 
 			/** @type {typeof TimelineAction} */
 			this.factory = factory;
+
+			/** @type {typeof TimelineScheduler} */
+			this.scheduler = scheduler;
 		}
 
 		/**
 		 * @abstract
 		 */
-		execute() {}
+		execute()
+		{}
+
+		sendAnalytics()
+		{
+			if (this.analytics)
+			{
+				AnalyticsLabel.send(this.analytics);
+			}
+		}
 	}
 
 	module.exports = { BaseTimelineAction };
-
 });

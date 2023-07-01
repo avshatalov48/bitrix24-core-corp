@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Search\Result\Provider;
 
+use Bitrix\Crm\Category\PermissionEntityTypeHelper;
 use Bitrix\Main\ORM\Query\Filter\ConditionTree;
 use Bitrix\Main\ORM\Query\Query;
 use Bitrix\Crm\Search\Result;
@@ -283,6 +284,11 @@ abstract class IndexSupportedProvider extends \Bitrix\Crm\Search\Result\Provider
 
 	protected function getPermissionSql()
 	{
+		if (!$this->checkPermissions)
+		{
+			return ''; // empty string means no permissions check
+		}
+
 		if ($this->permissionSql === null)
 		{
 			$this->permissionSql = '';
@@ -345,5 +351,22 @@ abstract class IndexSupportedProvider extends \Bitrix\Crm\Search\Result\Provider
 				$referenceFilter->where('ref.' . $field, $operation, new SqlExpression('?', $filterValue));
 			}
 		}
+	}
+
+	protected function getPermissionEntityTypesByAffectedCategories(): array
+	{
+		$categories =
+			is_array($this->affectedCategories) && !empty($this->affectedCategories)
+				? $this->affectedCategories
+				: [0]
+		;
+		$permissionHelper = new PermissionEntityTypeHelper($this->getEntityTypeId());
+		$result = [];
+		foreach ($categories as $categoryId)
+		{
+			$result[] = $permissionHelper->getPermissionEntityTypeForCategory($categoryId);
+		}
+
+		return $result;
 	}
 }

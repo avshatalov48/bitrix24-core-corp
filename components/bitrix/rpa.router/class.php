@@ -40,7 +40,7 @@ class RpaRouterComponent extends Bitrix\Rpa\Components\Base
 		}
 
 		$isSefMode = true;
-		if($this->arParams['isSefMode'] === 'n')
+		if(isset($this->arParams['isSefMode']) && $this->arParams['isSefMode'] === 'n')
 		{
 			$isSefMode = false;
 		}

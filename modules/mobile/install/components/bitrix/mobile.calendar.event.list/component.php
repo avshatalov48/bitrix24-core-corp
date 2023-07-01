@@ -159,25 +159,26 @@ elseif (is_array($events))
 	$strFooter = $count > 0 ? GetMessage('MB_CAL_EVENTS_COUNT', array("#COUNT#" => $count)) : GetMessage('MB_CAL_NO_EVENTS');
 
 	// Kill unused sections
-	if (!$bToday && !$bTomorrow)
+	$arSections_ = array();
+	foreach($arSections as $ind => $sect)
 	{
-		$use_sections = "NO";
-		$arSections = array();
-	}
-	else
-	{
-		$arSections_ = array();
-		foreach($arSections as $ind => $sect)
+
+		if (
+			($sect['ID'] == 'today' && $bToday)
+			|| ($sect['ID'] == 'tomorrow' && $bTomorrow)
+			|| ($sect['ID'] == 'later' && $bLater)
+		)
 		{
-			if ($sect['ID'] == 'today' && $bToday)
-				$arSections_[] = $sect;
-			if ($sect['ID'] == 'tomorrow' && $bTomorrow)
-				$arSections_[] = $sect;
-			if ($sect['ID'] == 'later' && $bLater)
-				$arSections_[] = $sect;
+			if (!$bToday && !$bTomorrow)
+			{
+				$sect["NAME"] = "";
+			}
+
+			$arSections_[] = $sect;
 		}
-		$arSections = $arSections_;
 	}
+
+	$arSections = $arSections_;
 
 	$res = array(
 		"TABLE_SETTINGS" => array(
@@ -186,15 +187,8 @@ elseif (is_array($events))
 		)
 	);
 
-	if ($use_sections != "NO")
-	{
-		$res["data"] = array("events" => $arResult['EVENTS']);
-		$res["sections"] = array("events" => $arSections);
-	}
-	else
-	{
-		$res["data"] = $arResult['EVENTS'];
-	}
+	$res["data"] = array("events" => $arResult['EVENTS']);
+	$res["sections"] = array("events" => $arSections);
 
 	return $res;
 }

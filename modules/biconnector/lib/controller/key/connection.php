@@ -16,7 +16,8 @@ class Connection extends Controller
 	/**
 	 * Returns list of connection.
 	 *
-	 * @param \CRestServer $server
+	 * @param \CRestServer $server Main rest response object.
+	 *
 	 * @return array
 	 */
 	public function listAction(\CRestServer $server)
@@ -31,6 +32,11 @@ class Connection extends Controller
 		return $result;
 	}
 
+	/**
+	 * Returns array of rest filters.
+	 *
+	 * @return array
+	 */
 	public function getDefaultPreFilters()
 	{
 		return [

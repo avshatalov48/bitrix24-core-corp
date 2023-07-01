@@ -8,6 +8,22 @@ use Bitrix\Main\ORM\Fields\DateTimeField;
 use Bitrix\Main\ORM\Fields\IntegerField;
 use Bitrix\Main\ORM\Fields\StringField;
 
+/**
+ * Class NoteTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Note_Query query()
+ * @method static EO_Note_Result getByPrimary($primary, array $parameters = [])
+ * @method static EO_Note_Result getById($id)
+ * @method static EO_Note_Result getList(array $parameters = [])
+ * @method static EO_Note_Entity getEntity()
+ * @method static \Bitrix\Crm\Timeline\Entity\EO_Note createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Timeline\Entity\EO_Note_Collection createCollection()
+ * @method static \Bitrix\Crm\Timeline\Entity\EO_Note wakeUpObject($row)
+ * @method static \Bitrix\Crm\Timeline\Entity\EO_Note_Collection wakeUpCollection($rows)
+ */
 class NoteTable extends Entity\DataManager
 {
 	public const NOTE_TYPE_HISTORY = 1;
@@ -29,7 +45,10 @@ class NoteTable extends Entity\DataManager
 			new DateTimeField('CREATED_TIME', ['required' => true]),
 			new IntegerField('UPDATED_BY_ID', ['required' => true]),
 			new DateTimeField('UPDATED_TIME', ['required' => true]),
-			new StringField('TEXT', ['required' => true]),
+			(new StringField('TEXT', ['required' => true]))
+				->addSaveDataModifier([\Bitrix\Main\Text\Emoji::class, 'encode'])
+				->addFetchDataModifier([\Bitrix\Main\Text\Emoji::class, 'decode'])
+			,
 		];
 	}
 

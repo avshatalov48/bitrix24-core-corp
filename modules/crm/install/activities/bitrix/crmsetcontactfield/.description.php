@@ -18,13 +18,21 @@ $arActivityDescription = [
 		'OWN_ID' => 'crm',
 		'OWN_NAME' => 'CRM',
 	],
+	'RETURN' => [
+		'ErrorMessage' => [
+			'NAME' => GetMessage('CRM_ACTIVITY_SET_CONTACT_ERROR_MESSAGE'),
+			'TYPE' => 'string',
+		],
+	],
 	'FILTER' => [
 		'INCLUDE' => [
 			['crm', 'CCrmDocumentLead'],
 			['crm', 'CCrmDocumentDeal'],
-			['crm', 'Bitrix\Crm\Integration\BizProc\Document\Dynamic'],
-			['crm', 'Bitrix\Crm\Integration\BizProc\Document\Quote'],
 			['crm', \Bitrix\Crm\Integration\BizProc\Document\SmartDocument::class],
+			['crm', \Bitrix\Crm\Integration\BizProc\Document\Dynamic::class],
+			['crm', \Bitrix\Crm\Integration\BizProc\Document\Quote::class],
+			['crm', \Bitrix\Crm\Integration\BizProc\Document\SmartInvoice::class],
+			['crm', \Bitrix\Crm\Integration\BizProc\Document\Order::class],
 		],
 	],
 	'ROBOT_SETTINGS' => [

@@ -229,6 +229,8 @@ $tabContainerClassName .= ' ui-entity-stream-section-planned-above-overlay';
 				isDeductLocked: <?= CUtil::PhpToJSObject($arResult['IS_DEDUCT_LOCKED']) ?>,
 				permissions: <?= CUtil::PhpToJSObject($arResult['DOCUMENT_PERMISSIONS']) ?>,
 				masterSliderUrl: <?= CUtil::PhpToJSObject($arResult['MASTER_SLIDER_URL']) ?>,
+				isInventoryManagementDisabled: <?= CUtil::PhpToJSObject($arResult['IS_INVENTORY_MANAGEMENT_DISABLED']) ?>,
+				inventoryManagementFeatureCode: <?= CUtil::PhpToJSObject($arResult['INVENTORY_MANAGEMENT_FEATURE_SLIDER_CODE']) ?>,
 				copyLinkButtonId: 'page_url_copy_btn',
 				inventoryManagementSource: <?= CUtil::PhpToJSObject($arResult['INVENTORY_MANAGEMENT_SOURCE']) ?>,
 			}

@@ -1,6 +1,7 @@
 import {EventEmitter, BaseEvent} from 'main.core.events';
 import {Cache, Dom, Text, Loc, Tag, Type, Runtime, Event} from 'main.core';
 import {FieldsPanel} from 'landing.ui.panel.fieldspanel';
+import {Notification} from 'ui.notification';
 import {Draggable} from 'ui.draganddrop.draggable';
 import {Layout} from 'ui.sidepanel.layout';
 import {SaveButton} from 'ui.buttons';
@@ -466,6 +467,12 @@ export class ListEditor extends EventEmitter
 						this.save().then(() => {
 							button.setWaiting(false);
 							BX.SidePanel.Instance.close();
+						}).catch((data) => {
+							top.BX.UI.Notification.Center.notify({
+								content: data.errors.map((item) => Text.encode(item.message)).join('\n'),
+								autoHide: false
+							});
+							button.setWaiting(false);
 						});
 					}
 				}),
@@ -492,7 +499,7 @@ export class ListEditor extends EventEmitter
 						extensions: ['ui.sidepanel-content'],
 						design: {section: false},
 						content: () => {
-							const title = Loc.getMessage('CRM_FIELD_LIST_EDITOR_ERROR_LOAD');
+							const title = Loc.getMessage('CRM_FIELD_LIST_EDITOR_ERROR_IN_LOAD');
 							const msg = ((errors||[])[0]||{}).message || 'Unknown error';
 							return Tag.render`
 								<div class="ui-slider-no-access">

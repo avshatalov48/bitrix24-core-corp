@@ -3,11 +3,19 @@
 namespace Bitrix\Crm\Activity\Provider;
 
 use Bitrix\Crm\Activity\CommunicationStatistics;
+use Bitrix\Crm\Badge;
+use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Order\Payment;
+use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Timeline\ActivityController;
+use Bitrix\Crm\Timeline\LogMessageController;
+use Bitrix\Crm\Timeline\LogMessageType;
+use Bitrix\Main\Error;
 use Bitrix\Main\Event;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\Error;
 use Bitrix\Main\Result;
+use CCrmActivity;
+use CCrmOwnerType;
 
 /**
  * Class Message
@@ -16,7 +24,36 @@ use Bitrix\Main\Result;
 abstract class BaseMessage extends Base
 {
 	public const PROVIDER_TYPE_SALESCENTER_PAYMENT_SENT = 'SALESCENTER_PAYMENT_SENT';
+	public const PROVIDER_TYPE_SALESCENTER_TERMINAL_PAYMENT_PAID = 'SALESCENTER_TERMINAL_PAYMENT_PAID';
 	public const PROVIDER_TYPE_SALESCENTER_DELIVERY = 'SALESCENTER_DELIVERY';
+
+	public const MESSAGE_FAILURE = 0;
+	public const MESSAGE_SUCCESS = 1;
+	public const MESSAGE_READ = 2;
+
+	/**
+	 * @return string
+	 */
+	abstract protected static function getDefaultTypeId(): string;
+
+	/**
+	 * @return string
+	 */
+	abstract protected static function getRenderViewComponentName(): string;
+
+	/**
+	 * @param Event $event
+	 *
+	 * @return array
+	 */
+	abstract protected static function fetchEventParams(Event $event): array;
+
+	/**
+	 * @param int $id
+	 *
+	 * @return array
+	 */
+	abstract protected static function fetchActivityByMessageId(int $id): array;
 
 	/**
 	 * @inheritDoc
@@ -117,14 +154,6 @@ abstract class BaseMessage extends Base
 	}
 
 	/**
-	 * @return array
-	 */
-	protected static function getAvailableProviderTypeIds(): array
-	{
-		return array_column(static::getTypes(), 'PROVIDER_TYPE_ID');
-	}
-
-	/**
 	 * @inheritDoc
 	 */
 	public static function getTypes()
@@ -158,6 +187,7 @@ abstract class BaseMessage extends Base
 
 		$availableProviderTypeIds = [
 			static::PROVIDER_TYPE_SALESCENTER_PAYMENT_SENT,
+			static::PROVIDER_TYPE_SALESCENTER_TERMINAL_PAYMENT_PAID,
 			static::PROVIDER_TYPE_SALESCENTER_DELIVERY,
 		];
 		foreach ($availableProviderTypeIds as $providerTypeId)
@@ -220,46 +250,54 @@ abstract class BaseMessage extends Base
 		{
 			$fields['PROVIDER_TYPE_ID'] = static::getTypeId($fields);
 		}
+
 		if (!isset($fields['DIRECTION']))
 		{
 			$fields['DIRECTION'] = \CCrmActivityDirection::Outgoing;
 		}
+
 		if (empty($fields['SUBJECT']))
 		{
 			$fields['SUBJECT'] = static::generateSubject($fields['PROVIDER_TYPE_ID'], $fields['DIRECTION']);
 		}
+
 		if (!isset($fields['START_TIME']))
 		{
 			$fields['START_TIME'] = \ConvertTimeStamp(time() + \CTimeZone::GetOffset(), 'FULL');
 		}
+
 		if (!isset($fields['DESCRIPTION_TYPE']))
 		{
 			$fields['DESCRIPTION_TYPE'] = \CCrmContentType::PlainText;
 		}
+
 		if (!isset($fields['COMPLETED']))
 		{
 			$fields['COMPLETED'] = 'Y';
 		}
+
 		if (!isset($fields['RESPONSIBLE_ID']))
 		{
 			$fields['RESPONSIBLE_ID'] = $fields['AUTHOR_ID'];
 		}
 
-		return \CCrmActivity::Add($fields, $checkPerms, true, ['REGISTER_SONET_EVENT' => true]);
+		return CCrmActivity::Add($fields, $checkPerms, true, ['REGISTER_SONET_EVENT' => true]);
 	}
 
 	/**
 	 * @param Event $event
 	 */
-	public static function onMessageSent(Event $event)
+	public static function onMessageSent(Event $event): void
 	{
-		/** @var int $id */
 		$id = (int)$event->getParameter('ID');
 
 		/** @var array $additionalFields */
 		$additionalFields = $event->getParameter('ADDITIONAL_FIELDS');
-
-		if ($id <= 0 || !is_array($additionalFields) || !isset($additionalFields['ACTIVITY_PROVIDER_TYPE_ID']))
+		if (
+			$id <= 0 ||
+			!is_array($additionalFields)
+			|| !isset($additionalFields['ACTIVITY_PROVIDER_TYPE_ID'])
+		)
 		{
 			return;
 		}
@@ -282,9 +320,102 @@ abstract class BaseMessage extends Base
 				],
 				'SETTINGS' => [
 					'FIELDS' => self::makeActivityFields($additionalFields),
+					'ORIGINAL_MESSAGE' => static::fetchOriginalMessageFields($id),
 				],
 			]
 		);
+	}
+
+	public static function onMessageStatusUpdated(Event $event): void
+	{
+		[$id, $statusId] = static::fetchEventParams($event);
+		if ($id <= 0 || $statusId <= 0)
+		{
+			return;
+		}
+
+		$status = static::getMessageStatusCode($statusId, $event);
+		if (is_null($status))
+		{
+			return;
+		}
+
+		// do not show error messages for WhatsApp (SMS will be sent after)
+		if ($status === static::MESSAGE_FAILURE && static::isWhatsappMessage($event))
+		{
+			return;
+		}
+
+		$activity = static::fetchActivityByMessageId($id);
+		if (empty($activity))
+		{
+			return;
+		}
+
+		$bindings = CCrmActivity::GetBindings($activity['ID']);
+		if (!$bindings)
+		{
+			return;
+		}
+
+		$logMessageController = LogMessageController::getInstance();
+		foreach ($bindings as $binding)
+		{
+			$logMessageController->onCreate(
+				[
+					'ENTITY_TYPE_ID' => $binding['OWNER_TYPE_ID'],
+					'ENTITY_ID' => $binding['OWNER_ID'],
+					'ASSOCIATED_ENTITY_TYPE_ID' => $activity['TYPE_ID'],
+					'ASSOCIATED_ENTITY_ID' => $activity['ID'],
+					'SETTINGS' => [
+						'ACTIVITY_DATA' => [
+							'STATUS' => $status,
+						]
+					]
+				],
+				LogMessageType::SMS_STATUS,
+				$activity['AUTHOR_ID'] ?? null
+			);
+		}
+
+		if (in_array($status, [static::MESSAGE_FAILURE, static::MESSAGE_SUCCESS], true))
+		{
+			ActivityController::getInstance()->notifyTimelinesAboutActivityUpdate(
+				$activity,
+				null,
+				true
+			);
+
+			ProviderManager::syncBadgesOnActivityUpdate((int)$activity['ID'], $activity);
+		}
+	}
+
+	/**
+	 * @return array
+	 */
+	protected static function getAvailableProviderTypeIds(): array
+	{
+		return array_column(static::getTypes(), 'PROVIDER_TYPE_ID');
+	}
+
+	/**
+	 * @return string
+	 */
+	protected static function getLangProviderId(): string
+	{
+		return str_replace('CRM_', '', static::getId());
+	}
+
+	/**
+	 * Fetch message additional field from storage
+	 *
+	 * @param int $messageId
+	 *
+	 * @return array
+	 */
+	protected static function fetchOriginalMessageFields(int $messageId): array
+	{
+		return [];
 	}
 
 	private static function makeActivityFields(array $additionalFields): array
@@ -307,22 +438,37 @@ abstract class BaseMessage extends Base
 		return $result;
 	}
 
-	/**
-	 * @return string
-	 */
-	abstract protected static function getDefaultTypeId(): string;
-
-	/**
-	 * @return string
-	 */
-	abstract protected static function getRenderViewComponentName(): string;
-
-	/**
-	 * @return string
-	 */
-	protected static function getLangProviderId(): string
+	protected static function bindBadge(int $activityId, string $badgeItemValue, array $bindings): void
 	{
-		return str_replace('CRM_', '', static::getId());
+		$badge = Container::getInstance()->getBadge(Badge\Badge::SMS_STATUS_TYPE, $badgeItemValue);
+		$sourceIdentifier = new Badge\SourceIdentifier(
+			Badge\SourceIdentifier::CRM_OWNER_TYPE_PROVIDER,
+			CCrmOwnerType::Activity,
+			$activityId,
+		);
+
+		foreach ($bindings as $singleBinding)
+		{
+			$itemIdentifier = new ItemIdentifier((int)$singleBinding['OWNER_TYPE_ID'], (int)$singleBinding['OWNER_ID']);
+			$badge->bind($itemIdentifier, $sourceIdentifier);
+		}
+	}
+
+	protected static function unBindBadge(string $badgeItemValue, array $bindings): void
+	{
+		foreach ($bindings as $singleBinding)
+		{
+			Badge\Badge::deleteByEntity(
+				new ItemIdentifier((int)$singleBinding['OWNER_TYPE_ID'], (int)$singleBinding['OWNER_ID']),
+				Badge\Badge::SMS_STATUS_TYPE,
+				$badgeItemValue
+			);
+		}
+	}
+
+	protected static function isWhatsappMessage(Event $event): bool
+	{
+		return false;
 	}
 
 	public static function checkFields($action, &$fields, $id, $params = null)

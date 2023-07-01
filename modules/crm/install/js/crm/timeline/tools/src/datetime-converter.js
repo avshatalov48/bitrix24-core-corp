@@ -68,12 +68,12 @@ export default class DatetimeConverter
 			],
 			this.#datetime,
 			now
-		);
+		).replaceAll('\\', '');
 	}
 
 	toTimeString(now: Date, utc: boolean): string
 	{
-		return DateTimeFormat.format(this.#timeFormat, this.#datetime, now, utc);
+		return DateTimeFormat.format(this.#timeFormat, this.#datetime, now, utc).replaceAll('\\', '');
 	}
 
 	toDateString(): string
@@ -87,13 +87,13 @@ export default class DatetimeConverter
 					['', (this.#datetime.getFullYear() === (Factory.getUserNow()).getFullYear() ?  this.#shortDateFormat :  this.#fullDateFormat)]
 				],
 				this.#datetime
-			)
+			).replaceAll('\\', '')
 		);
 	}
 
 	toFormatString(format: string, now: Date, utc: boolean): string
 	{
-		return DateTimeFormat.format(format, this.#datetime, now, utc);
+		return DateTimeFormat.format(format, this.#datetime, now, utc).replaceAll('\\', '');
 	}
 
 	static getSiteDateFormat(): string

@@ -3,6 +3,7 @@
 namespace Bitrix\Crm\Service\Timeline\Item\LogMessage;
 
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Service\Timeline\Layout\Common\Icon;
 use Bitrix\Crm\Service\Timeline\Item\LogMessage;
 use Bitrix\Crm\Service\Timeline\Item\Mixin;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\Link;
@@ -26,7 +27,7 @@ final class DocumentViewed extends LogMessage
 
 	public function getIconCode(): ?string
 	{
-		return 'view';
+		return Icon::VIEW;
 	}
 
 	public function getContentBlocks(): ?array

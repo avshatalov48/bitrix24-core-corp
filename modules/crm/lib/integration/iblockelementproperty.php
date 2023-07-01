@@ -91,6 +91,10 @@ class IBlockElementProperty
 						$listValue[] = $dataValue['VALUE'];
 					}
 				}
+				elseif (is_scalar($dataValue) && $dataValue !== '')
+				{
+					$listValue[] = $dataValue;
+				}
 				else
 				{
 					$listValue[] = null;

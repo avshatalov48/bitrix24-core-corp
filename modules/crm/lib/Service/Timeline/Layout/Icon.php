@@ -12,7 +12,7 @@ class Icon extends Base
 	public const BACKGROUND_FAILURE = 'failure';
 
 	protected string $code = '';
-	protected ?bool $showCounter = null;
+	protected ?string $backgroundUri = null;
 	protected ?string $counterType = null;
 	protected ?string $backgroundColorToken = null;
 
@@ -53,12 +53,25 @@ class Icon extends Base
 		return $this;
 	}
 
+	public function getBackgroundUri(): ?string
+	{
+		return $this->backgroundUri;
+	}
+
+	public function setBackgroundUri(?string $backgroundUri): self
+	{
+		$this->backgroundUri = $backgroundUri;
+
+		return $this;
+	}
+
 	public function toArray(): array
 	{
 		return [
 			'code' => $this->getCode(),
 			'counterType' => $this->getCounterType(),
 			'backgroundColorToken' => $this->getBackgroundColorToken(),
+			'backgroundUri' => $this->getBackgroundUri(),
 		];
 	}
 }

@@ -152,13 +152,13 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 		global $APPLICATION;
 
 		$urls = [
-			'Security' => \CComponentEngine::MakePathFromTemplate($this->arParams['PATH_TO_USER_SECURITY'], [
+			'Security' => \CComponentEngine::MakePathFromTemplate($this->arParams['PATH_TO_USER_SECURITY'] ?? null, [
 				"user_id" => (int) $this->arParams["ID"]
 			]),
-			'Passwords' => \CComponentEngine::MakePathFromTemplate($this->arParams['PATH_TO_USER_PASSWORDS'], [
+			'Passwords' => \CComponentEngine::MakePathFromTemplate($this->arParams['PATH_TO_USER_PASSWORDS'] ?? null, [
 				'user_id' => (int) $this->arParams['ID']
 			]),
-			'CommonSecurity' => \CComponentEngine::MakePathFromTemplate($this->arParams["PATH_TO_USER_COMMON_SECURITY"], [
+			'CommonSecurity' => \CComponentEngine::MakePathFromTemplate($this->arParams["PATH_TO_USER_COMMON_SECURITY"] ?? null, [
 				'user_id' => (int) $this->arParams['ID']
 			]),
 		];
@@ -395,6 +395,8 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 			}
 		}
 
+
+
 		$fields = [
 			'NAME', 'LAST_NAME', 'SECOND_NAME', 'PERSONAL_GENDER', 'PERSONAL_BIRTHDAY',
 			'EMAIL', 'PERSONAL_MOBILE', 'PERSONAL_WWW',  'PERSONAL_COUNTRY', 'PERSONAL_CITY', 'PERSONAL_STATE',
@@ -408,7 +410,7 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 		$newFields = [];
 		foreach ($fields as $key)
 		{
-			if ($key === 'PASSWORD' && $data['PASSWORD'] == '')
+			if ($key === 'PASSWORD' && isset($data['PASSWORD']) && $data['PASSWORD'] == '')
 			{
 				unset($data['PASSWORD']);
 				unset($data['CONFIRM_PASSWORD']);
@@ -433,12 +435,44 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 				unset($data[$fieldName]);
 			}
 		}
-
 		$USER_FIELD_MANAGER->EditFormAddFields('USER', $newFields, [ 'FORM' => $data ]);
 		if (!$USER->Update($this->arParams['ID'], $newFields))
 		{
 			$this->errorCollection[] = new Error($USER->LAST_ERROR);
 			return null;
+		}
+
+		if (
+			isset($newFields['UF_DEPARTMENT']) &&
+			is_array($newFields['UF_DEPARTMENT']) &&
+			(int)$this->arParams['ID'] > 0
+		)
+		{
+			$iblockID = \COption::GetOptionInt("intranet", "iblock_structure");
+			$rsDepartments = \CIBlockSection::GetList(
+				[],
+				[
+					'UF_HEAD' => (int)$this->arParams['ID'],
+					'IBLOCK_ID' => $iblockID],
+				false,
+				[
+					'UF_HEAD',
+					'ID',
+					'IBLOCK_ID'
+				]
+			);
+			while ($arDepartment = $rsDepartments->Fetch())
+			{
+				if (in_array($arDepartment['ID'], $newFields['UF_DEPARTMENT']))
+				{
+					continue;
+				}
+				$depFields = [
+					"UF_HEAD" => false
+				];
+				$section = new \CIBlockSection;
+				$section->Update($arDepartment['ID'], $depFields);
+			}
 		}
 
 		if (defined('BX_COMP_MANAGED_CACHE'))

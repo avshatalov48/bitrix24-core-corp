@@ -17,6 +17,7 @@ use Bitrix\Rest\AppTable;
 use Bitrix\Rest\Marketplace;
 use Bitrix\Rest\PlacementTable;
 use Bitrix\Socialservices;
+use CRestUtil;
 
 class ClientResolver
 {
@@ -34,6 +35,18 @@ class ClientResolver
 	private static $isOnline = null;
 
 	protected static $allowedCountries = array(1, 14);
+
+	protected static function isRestModuleIncluded(): bool
+	{
+		static $result = null;
+
+		if ($result === null)
+		{
+			$result = Loader::includeModule('rest');
+		}
+
+		return $result;
+	}
 
 	protected static function getClient()
 	{
@@ -553,7 +566,7 @@ class ClientResolver
 		if ($result === null || $noStaticCache)
 		{
 			$result = [];
-			if (Loader::includeModule('rest'))
+			if (static::isRestModuleIncluded())
 			{
 				$allowedCountriesMap = array_fill_keys(EntityRequisite::getAllowedRqFieldCountries(), true);
 				$handlers = PlacementTable::getHandlersList(AppPlacement::REQUISITE_AUTOCOMPLETE);
@@ -622,18 +635,15 @@ class ClientResolver
 			if (!is_array($result))
 			{
 				$result = [
+					'COUNTRY_ID' => $countryId,
 					'VALUE' => 'PLACEMENT_' . $detailSearchHandlersByCountry[$countryId][0]['ID'],
 					'TITLE' => $detailSearchHandlersByCountry[$countryId][0]['TITLE'],
 					'IS_PLACEMENT' => 'Y',
-					'COUNTRY_ID' => $countryId
 				];
 			}
 			$result['PLACEMENTS'] = $detailSearchHandlersByCountry[$countryId];
 		}
 
-		/*
-		 * Blocking applications until silent installation is implemented in the REST module.
-		 *
 		if (!is_array($result))
 		{
 			$defaultAppInfo = static::getDefaultClientResolverApplicationParams($countryId);
@@ -641,13 +651,31 @@ class ClientResolver
 			{
 				if (!is_array($result))
 				{
-					$result = [];
+					$result = ['COUNTRY_ID' => $countryId];
 				}
 				$result['DEFAULT_APP_INFO'] = $defaultAppInfo;
 			}
-		}*/
+		}
 
 		return $result;
+	}
+
+	protected static function getAppInfo(string $appCode, bool $noCache = false): array
+	{
+		static $appInfo = [];
+
+		if (!isset($appInfo[$appCode]))
+		{
+			if (static::isRestModuleIncluded())
+			{
+				$info = Marketplace\Client::getInstall($appCode);
+				$info = (is_array($info) && isset($info['ITEMS']) && is_array($info['ITEMS'])) ? $info['ITEMS'] : [];
+			}
+
+			$appInfo[$appCode] = (!empty($info) && CRestUtil::canInstallApplication($info)) ? $info : [];
+		}
+
+		return $appInfo[$appCode];
 	}
 
 	protected static function getDefaultClientResolverApplicationCodeByCountryMap()
@@ -676,42 +704,21 @@ class ClientResolver
 
 		$map = static::getDefaultClientResolverApplicationCodeByCountryMap();
 
-		if (isset($map[$countryId]))
+		$appCode = $map[$countryId] ?? '';
+
+		if ($appCode !== '' && static::isRestModuleIncluded())
 		{
-			$result['code'] = $map[$countryId];
-		}
-		
-		if ($result['code'] !== '' && Loader::includeModule('rest'))
-		{
-			$appInfo = Marketplace\Client::getApp($result['code']);
+			$appInfo = static::getAppInfo($appCode);
 
 			if (
-				is_array($appInfo['ITEMS'])
-				&& isset($appInfo['ITEMS']['NAME'])
-				&& is_string($appInfo['ITEMS']['NAME'])
-				&& $appInfo['ITEMS']['NAME'] !== ''
+				isset($appInfo['NAME'])
+				&& is_string($appInfo['NAME'])
+				&& $appInfo['NAME'] !== ''
 			)
 			{
+				$result['code'] = $appCode;
 				$result['isAvailable'] = 'Y';
-				$result['title'] = $appInfo['ITEMS']['NAME'];
-			}
-
-			$appInfo = AppTable::getList(
-				[
-					'filter' => [
-						'=CODE' => $result['code'],
-						'=ACTIVE' => AppTable::ACTIVE,
-						'=INSTALLED' => AppTable::INSTALLED,
-					],
-					'limit' => 1,
-				]
-			)->fetch();
-
-			$result['isInstalled'] =  $appInfo ? 'Y' : 'N';
-
-			if (isset($appInfo['APP_NAME']) && is_string($appInfo['APP_NAME']) && $appInfo['APP_NAME'] !== '')
-			{
-				$result['title'] = $appInfo['APP_NAME'];
+				$result['title'] = $appInfo['NAME'];
 			}
 		}
 

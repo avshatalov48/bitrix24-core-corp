@@ -510,4 +510,17 @@ export default class History extends CompatibleItem
 		const time = deadline.getTime();
 		return time < start || (time >= start && time <= end);
 	}
+
+	static isCounterEnabledByLightTime(lightTime)
+	{
+		if(!BX.type.isDate(lightTime))
+		{
+			return false;
+		}
+
+		const now = (new Date()).getTime();
+
+		const time = lightTime.getTime();
+		return time < now;
+	}
 }

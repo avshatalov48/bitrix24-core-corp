@@ -1,13 +1,13 @@
-import {Icon} from './layout/icon';
-import {Header} from './layout/header';
-import {Body} from './layout/body';
-import {Footer} from './layout/footer';
-import {MarketPanel} from './layout/marketPanel';
-import {UserPick} from './layout/userPick';
-import {Dom, Runtime} from "main.core";
-import {BaseEvent} from "main.core.events";
-import {Loader} from "main.loader";
-import {StreamType} from '../stream-type';
+import { Icon } from './layout/icon';
+import { Header } from './layout/header';
+import { Body } from './layout/body';
+import { Footer } from './layout/footer';
+import { MarketPanel } from './layout/marketPanel';
+import { UserPick } from './layout/userPick';
+import { Dom, Runtime } from "main.core";
+import { BaseEvent } from "main.core.events";
+import { Loader } from "main.loader";
+import { StreamType } from '../stream-type';
 
 export const Item = {
 	components: {
@@ -132,6 +132,16 @@ export const Item = {
 			}
 
 			return this.$refs.footer.getButtonById(buttonId);
+		},
+
+		getFooterMenu(): ?Object
+		{
+			if (!this.$refs.footer)
+			{
+				return null;
+			}
+
+			return this.$refs.footer.getMenu();
 		},
 
 		highlightContentBlockById(blockId: string, isHighlighted: boolean): void

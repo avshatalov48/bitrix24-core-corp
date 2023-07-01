@@ -2,7 +2,7 @@
  * @module im/chat/selector/chat
  */
 jn.define('im/chat/selector/chat', (require, exports, module) => {
-	const { ChatProvider } = jn.require('im/chat/selector/providers/chat');
+	const { ChatProvider } = require('im/chat/selector/providers/chat');
 
 	const defaultEntities = ['user', 'im-chat', 'im-bot', 'im-chat-user'];
 

@@ -27,7 +27,7 @@ class CTimeManNotify
 		}
 
 		$dbEntry = CTimeManEntry::GetList(
-			array(), 
+			array(),
 			array(
 				"ID" => $ENTRY_ID
 			),
@@ -331,7 +331,15 @@ class CTimeManNotify
 
 		$arResult = array();
 
-		$user_url = ($arParams["PATH_TO_USER"] <> '' ? $arParams["PATH_TO_USER"] : COption::GetOptionString('intranet', 'path_user', '/company/personal/user/#USER_ID#/', $arFields["SITE_ID"]));
+		$user_url = (($arParams["PATH_TO_USER"] ?? '') <> ''
+			? $arParams["PATH_TO_USER"]
+			: COption::GetOptionString(
+				'intranet',
+				'path_user',
+				'/company/personal/user/#USER_ID#/',
+				$arFields["SITE_ID"]
+			)
+		);
 
 		$arManagers = CTimeMan::GetUserManagers($arFields["ENTITY_ID"]);
 		$arManagers[] = $arFields["ENTITY_ID"];
@@ -402,16 +410,22 @@ class CTimeManNotify
 			}
 
 			ob_start();
-			$APPLICATION->IncludeComponent('bitrix:timeman.livefeed.workday', ($arParams["MOBILE"] == "Y" ? 'mobile' : ''), array(
-				'USER' => $arUser,
-				'MANAGER' => $arCurrentUserManagers[0],
-				'ENTRY' => $arEntry,
-				'PARAMS' => $arParams
-			), null, array('HIDE_ICONS' => 'Y'));
+			$APPLICATION->IncludeComponent(
+				'bitrix:timeman.livefeed.workday',
+				(($arParams["MOBILE"] ?? '') === 'Y' ? 'mobile' : ''),
+				[
+					'USER' => $arUser,
+					'MANAGER' => $arCurrentUserManagers[0],
+					'ENTRY' => $arEntry,
+					'PARAMS' => $arParams
+				],
+				null,
+				['HIDE_ICONS' => 'Y']
+			);
 			$html_message = ob_get_contents();
 			ob_end_clean();
 
-			if ($arParams["MOBILE"] == "Y")
+			if (($arParams["MOBILE"] ?? '') == "Y")
 				$arResult = array(
 					'EVENT' => $arFields,
 					'EVENT_FORMATTED' => array(
@@ -464,8 +478,8 @@ class CTimeManNotify
 			$arResult['CREATED_BY']['TOOLTIP_FIELDS'] = CSocNetLog::FormatEvent_FillTooltip($arFieldsTooltip, $arParams);
 
 			if (
-				$arParams["MOBILE"] != "Y" 
-				&& $arParams["NEW_TEMPLATE"] != "Y"
+				($arParams["MOBILE"] ?? '') != "Y"
+				&& ($arParams["NEW_TEMPLATE"] ?? '') != "Y"
 			)
 				$arResult['EVENT_FORMATTED']['IS_MESSAGE_SHORT'] = CSocNetLog::FormatEvent_IsMessageShort($arFields['MESSAGE']);
 		}
@@ -500,13 +514,13 @@ class CTimeManNotify
 		if (!$arEntry = $dbEntry->Fetch())
 			return $arResult;
 
-		if(!$bMail && $arParams["USE_COMMENT"] != "Y")
+		if(!$bMail && (!isset($arParams["USE_COMMENT"]) || $arParams["USE_COMMENT"] != "Y"))
 		{
 			$arLog["ENTITY_ID"] = $arFields["ENTITY_ID"];
 			$arLog["ENTITY_TYPE"] = $arFields["ENTITY_TYPE"];
 		}
 
-		$news_tmp = $arLog["TITLE"];
+		$news_tmp = $arLog["TITLE"] ?? '';
 		$title_tmp = GetMessage("TIMEMAN_NEW_COMMENT", array(
 			'#DATE#' => FormatDate('j F', MakeTimeStamp($arEntry['DATE_START'])),
 		))."\n";
@@ -517,12 +531,12 @@ class CTimeManNotify
 
 		$title = str_replace(
 			array("#TITLE#", "#ENTITY#"),
-			array($news_tmp, ($bMail ? $arResult["ENTITY"]["FORMATTED"] : $arResult["ENTITY"]["FORMATTED"]["NAME"])),
+			array($news_tmp, ($bMail ? ($arResult["ENTITY"]["FORMATTED"] ?? '') : ($arResult["ENTITY"]["FORMATTED"]["NAME"] ?? ''))),
 			$title_tmp
 		);
 
 		$arResult["EVENT_FORMATTED"] = array(
-			"TITLE" => ($bMail || $arParams["USE_COMMENT"] != "Y" ? $title : ""),
+			"TITLE" => ($bMail || ($arParams["USE_COMMENT"] ?? null) != "Y" ? $title : ""),
 			"MESSAGE" => ($bMail ? $arFields["TEXT_MESSAGE"] : $arFields["MESSAGE"])
 		);
 
@@ -554,7 +568,7 @@ class CTimeManNotify
 					"MULTIPLE_BR" => "N",
 					"VIDEO" => "Y", "LOG_VIDEO" => "N",
 					"USERFIELDS" => $arFields["UF"],
-					"USER" => ($arParams["IM"] == "Y" ? "N" : "Y")
+					"USER" => (($arParams["IM"] ?? null) == "Y" ? "N" : "Y")
 				);
 
 				if (!$parserLog)
@@ -562,7 +576,7 @@ class CTimeManNotify
 
 				$parserLog->arUserfields = $arFields["UF"];
 				$parserLog->pathToUser = $parserLog->userPath = $arParams["PATH_TO_USER"];
-				$parserLog->bMobile = ($arParams["MOBILE"] == "Y");
+				$parserLog->bMobile = (isset($arParams["MOBILE"]) && $arParams["MOBILE"] == "Y");
 				$arResult["EVENT_FORMATTED"]["MESSAGE"] = htmlspecialcharsbx($parserLog->convert(htmlspecialcharsback($arResult["EVENT_FORMATTED"]["MESSAGE"]), $arAllow));
 				$arResult["EVENT_FORMATTED"]["MESSAGE"] = preg_replace("/\[user\s*=\s*([^\]]*)\](.+?)\[\/user\]/is".BX_UTF_PCRE_MODIFIER, "\\2", $arResult["EVENT_FORMATTED"]["MESSAGE"]);
 			}
@@ -591,8 +605,8 @@ class CTimeManNotify
 			}
 
 			if (
-				$arParams["MOBILE"] != "Y"
-				&& $arParams["NEW_TEMPLATE"] != "Y"
+				($arParams["MOBILE"] ?? null) != "Y"
+				&& ($arParams["NEW_TEMPLATE"] ?? null) != "Y"
 			)
 			{
 				if (CModule::IncludeModule("forum"))
@@ -883,7 +897,7 @@ class CTimeManNotify
 		)
 		{
 			$date_text = "";
-			
+
 			$dbEntry = CTimeManEntry::GetList(array(), array("ID" => $arFields["ENTRY_ID"]));
 			if ($arEntry = $dbEntry->Fetch())
 			{
@@ -949,7 +963,7 @@ class CTimeManNotify
 					$arTmp = CSocNetLogTools::ProcessPath(array("REPORTS_PAGE" => $reports_page), $user_id);
 
 					$sender_type = ($arEntry["USER_ID"] == $user_id ? "1" : ($arEntry["USER_ID"] == $arFields["USER_ID"] ? "2" : "3"));
-				
+
 					$arMessageFields["NOTIFY_MESSAGE"] = GetMessage("TIMEMAN_ENTRY_IM_COMMENT_".$sender_type.$gender_suffix, Array(
 						"#period#" => "<a href=\"".$arTmp["URLS"]["REPORTS_PAGE"]."\" class=\"bx-notifier-item-action\">".htmlspecialcharsbx($date_text)."</a>",
 					));
@@ -1037,7 +1051,7 @@ class CTimeManNotify
 				$arNewRights = self::GetRights($arFields["ID"]);
 
 				$rsLog = CSocNetLog::GetList(
-					array(), 
+					array(),
 					array(
 						'ENTITY_TYPE' => SONET_TIMEMAN_ENTRY_ENTITY,
 						'ENTITY_ID' => $arFields["ID"],
@@ -1068,6 +1082,43 @@ class CTimeManNotify
 					{
 						CSocNetLogRights::DeleteByLogID($arLog["ID"]);
 						CSocNetLogRights::Add($arLog["ID"], $arNewRights);
+					}
+				}
+			}
+
+			if ($arDept)
+			{
+				$settingKeys = [
+					'UF_TIMEMAN',
+					'UF_TM_REPORT_REQ',
+				];
+
+				$timemanUser = new \CTimeManUser($arFields['ID']);
+
+				$currentSettings = $timemanUser->getPersonalSettings($settingKeys);
+
+				$isInheritDepartmentSettings = (
+					$currentSettings['UF_TIMEMAN'] === null
+					&& $currentSettings['UF_TM_REPORT_REQ'] === null
+				);
+				if ($isInheritDepartmentSettings)
+				{
+					$user = new \CUser();
+					$user->update(
+						$arFields['ID'],
+						[
+							'UF_TIMEMAN' => null,
+							'UF_TM_REPORT_REQ' => null,
+						]
+					);
+
+					if (defined('BX_COMP_MANAGED_CACHE'))
+					{
+						global $CACHE_MANAGER;
+
+						$CACHE_MANAGER->CleanDir('timeman_structure_'
+							. \COption::getOptionInt('intranet', 'iblock_structure')
+						);
 					}
 				}
 			}

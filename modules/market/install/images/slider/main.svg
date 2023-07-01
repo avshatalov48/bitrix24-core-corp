@@ -1,0 +1,216 @@
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100% 2475"
+         preserveAspectRatio="xMinYMin meet" style="width: 100%; height: 2475px">
+
+    <rect width="100%" height="2475" fill="#EEF2F4"/>
+
+    <svg height="2475px" x="2%" width="96%">
+        <defs>
+            <g id="block-1">
+                <rect y="467" width="31%" height="402" rx="22" fill="#525C69" fill-opacity="0.15"/>
+            </g>
+
+            <g id="block-2">
+                <rect y="467" width="65.4%" height="402" rx="24" fill="#f9fbfc"/>
+            </g>
+
+            <g id="block-3-post">
+                <rect x="34" y="1009" width="374" height="127" rx="22" fill="#e1e4e6"/>
+            </g>
+
+            <g id="block-8-post">
+                <rect y="2028" width="18.5%" height="140" rx="22" fill="#525C69" fill-opacity="0.15"/>
+            </g>
+        </defs>
+
+        <g class="header">
+            <rect y="13" width="100%" height="402" rx="22" fill="#525C69" fill-opacity="0.15"/>
+        </g>
+
+        <g class="block-1">
+            <use xlink:href="#block-1"></use>
+        </g>
+
+        <g class="block-2">
+            <use xlink:href="#block-2" x="35%"></use>
+        </g>
+
+        <g class="block-3" clip-path="url(#clip1_3005_68485)">
+            <rect opacity="0.7" y="921" width="65.4%" height="402" rx="24" fill="white"/>
+
+            <use xlink:href="#block-3-post"></use>
+            <use xlink:href="#block-3-post" x="424"></use>
+            <use xlink:href="#block-3-post" x="848"></use>
+            <use xlink:href="#block-3-post" y="153"></use>
+            <use xlink:href="#block-3-post" x="424" y="153"></use>
+            <use xlink:href="#block-3-post" x="848" y="153"></use>
+        </g>
+
+        <g class="block-4">
+            <use xlink:href="#block-1" x="69%" y="454"></use>
+        </g>
+
+        <g class="block-5">
+            <use xlink:href="#block-1" y="908"></use>
+        </g>
+
+        <g class="block-6">
+            <use fill="dodgerblue" xlink:href="#block-2" x="35%" y="908"></use>
+        </g>
+
+        <g class="block-7">
+            <rect x="" y="1856" width="39%" height="1" fill="#c4c4c4"/>
+            <rect x="61%" y="1856" width="39%" height="1" fill="#c4c4c4"/>
+        </g>
+
+        <g class="block-8">
+            <use xlink:href="#block-8-post" x=""></use>
+            <use xlink:href="#block-8-post" x="20.3%"></use>
+            <use xlink:href="#block-8-post" x="40.7%"></use>
+            <use xlink:href="#block-8-post" x="61%"></use>
+            <use xlink:href="#block-8-post" x="81.4%"></use>
+
+            <use xlink:href="#block-8-post" x="" y="171"></use>
+            <use xlink:href="#block-8-post" x="20.3%" y="171"></use>
+            <use xlink:href="#block-8-post" x="40.7%" y="171"></use>
+            <use xlink:href="#block-8-post" x="61%" y="171"></use>
+            <use xlink:href="#block-8-post" x="81.4%" y="171"></use>
+        </g>
+
+    </svg>
+
+    <svg height="2475px" id="animated-elements" x="2%" width="96%">
+        <defs>
+            <g id="block-1-animated">
+                <rect x="9.7%" y="605" width="11.5%" height="8" rx="4" fill="#ebeeef"/>
+                <rect x="11.5%" y="625" width="8%" height="8" rx="4" fill="#ebeeef"/>
+                <rect x="10.6%" y="645" width="9.7%" height="8" rx="4" fill="#ebeeef"/>
+                <rect x="9.4%" y="692" width="12%" height="39" rx="19.5" fill="#ebeeef"/>
+            </g>
+
+            <g id="block-2-post-animated">
+                <!--                <rect x="34" y="557" width="20%" height="191" rx="8" fill="#e1e4e5" />-->
+                <!--                <rect x="34" y="770" width="18%" height="8" rx="4" fill="#e1e4e5" />-->
+                <!--                <rect x="34" y="788" width="11%" height="8" rx="4" fill="#e1e4e5" />-->
+                <!--                <rect x="34" y="806" width="7%" height="8" rx="4" fill="#e1e4e5" />-->
+                <rect x="34" y="557" width="340" height="191" rx="8" fill="#e1e4e5" />
+                <rect x="34" y="770" width="306" height="8" rx="4" fill="#e1e4e5" />
+                <rect x="34" y="788" width="190" height="8" rx="4" fill="#e1e4e5" />
+                <rect x="34" y="806" width="121" height="8" rx="4" fill="#e1e4e5" />
+            </g>
+
+            <g id="block-2-animated">
+                <!--                <rect x="34" y="508" width="13%" height="8" rx="3" fill="#e1e4e5"/>-->
+                <!--                <rect x="270" y="508" width="5%" height="8" rx="3" fill="#e1e4e5"/>-->
+                <rect x="34" y="508" width="220" height="8" rx="3" fill="#e1e4e5"/>
+                <rect x="270" y="508" width="81" height="8" rx="3" fill="#e1e4e5"/>
+
+                <g clip-path="url(#clip0_3005_68485)">
+                    <use xlink:href="#block-2-post-animated" x=""></use>
+                    <use xlink:href="#block-2-post-animated" x="372"></use>
+                    <use xlink:href="#block-2-post-animated" x="744"></use>
+                </g>
+            </g>
+
+            <g id="block-3-post-animated">
+                <rect x="56" y="1032" width="135" height="8" rx="4" fill="#f0f2f2"/>
+                <rect x="56" y="1052" width="165" height="8" rx="4" fill="#f0f2f2"/>
+            </g>
+
+            <g id="block-8-post-animated">
+                <rect x="23" y="2055" width="8%" height="8" rx="4" fill="#ebedef"/>
+                <rect x="23" y="2075" width="10%" height="8" rx="4" fill="#ebedef"/>
+            </g>
+        </defs>
+
+        <g class="header">
+            <rect x="41%" y="147" width="17%" height="8" rx="4" fill="#ebeeef"/>
+            <rect x="44%" y="167" width="12%" height="8" rx="4" fill="#ebeeef"/>
+            <rect x="46%" y="229" width="8%" height="39" rx="19.5" fill="#ebeeef"/>
+        </g>
+
+        <g class="block-1">
+            <use xlink:href="#block-1-animated"></use>
+        </g>
+
+        <g class="block-2">
+            <use fill="dodgerblue" xlink:href="#block-2-animated" x="35%"></use>
+        </g>
+
+        <g class="block-3" clip-path="url(#clip1_3005_68485)">
+            <rect x="34" y="959" width="220" height="8" rx="3" fill="#e1e4e5"/>
+            <rect x="270" y="959" width="81" height="8" rx="3" fill="#e1e4e5"/>
+
+            <use xlink:href="#block-3-post-animated"></use>
+            <use xlink:href="#block-3-post-animated" x="424"></use>
+            <use xlink:href="#block-3-post-animated" x="848"></use>
+            <use xlink:href="#block-3-post-animated" y="153"></use>
+            <use xlink:href="#block-3-post-animated" x="424" y="153"></use>
+            <use xlink:href="#block-3-post-animated" x="848" y="153"></use>
+        </g>
+
+        <g class="block-4">
+            <use xlink:href="#block-1-animated" x="69%" y="454"></use>
+        </g>
+
+        <g class="block-5">
+            <use xlink:href="#block-1-animated" y="908"></use>
+        </g>
+
+        <g class="block-6">
+            <use fill="dodgerblue" xlink:href="#block-2-animated" x="35%" y="908"></use>
+        </g>
+
+        <g class="block-7">
+            <rect x="41.5%" y="1830" width="17%" height="53" rx="24" fill="#d7dcdf"/>
+        </g>
+
+        <g class="block-8">
+            <rect y="1980" width="220" height="8" rx="3" fill="#e5e7e8"/>
+            <rect x="236" y="1980" width="81" height="8" rx="3" fill="#e5e7e8"/>
+
+            <use xlink:href="#block-8-post-animated" x=""></use>
+            <use xlink:href="#block-8-post-animated" x="20.3%"></use>
+            <use xlink:href="#block-8-post-animated" x="40.7%"></use>
+            <use xlink:href="#block-8-post-animated" x="61%"></use>
+            <use xlink:href="#block-8-post-animated" x="81.4%"></use>
+
+            <use xlink:href="#block-8-post-animated" x="" y="171"></use>
+            <use xlink:href="#block-8-post-animated" x="20.3%" y="171"></use>
+            <use xlink:href="#block-8-post-animated" x="40.7%" y="171"></use>
+            <use xlink:href="#block-8-post-animated" x="61%" y="171"></use>
+            <use xlink:href="#block-8-post-animated" x="81.4%" y="171"></use>
+        </g>
+    </svg>
+
+    <defs>
+        <linearGradient id="paint0_linear_3005_68485" x1="1111" y1="1121.1" x2="1011" y2="1121.1"
+                        gradientUnits="userSpaceOnUse">
+            <stop stop-color="white"/>
+            <stop offset="1" stop-color="white" stop-opacity="0"/>
+        </linearGradient>
+        <clipPath id="clip0_3005_68485">
+            <rect width="65.4%" height="327" fill="white" transform="translate(0 530)"/>
+        </clipPath>
+        <clipPath id="clip1_3005_68485">
+            <rect width="65.4%" height="402" fill="white" transform="translate(0 921)"/>
+        </clipPath>
+        <clipPath id="clip2_3005_68485">
+            <rect width="65.4%" height="327" fill="white" transform="translate(588 1438)"/>
+        </clipPath>
+    </defs>
+
+    <rect id="msk1" width="100%" fill="url(#msk_gd)" mask="url(#headerMsk)" height="2475"/>
+
+    <mask id="headerMsk" fill="white">
+        <use xlink:href="#animated-elements"/>
+    </mask>
+
+    <linearGradient x1="66.6%" y1="50%" x2="33.3%" y2="50%" id="msk_gd">
+        <stop stop-color="#000000" stop-opacity="0" offset="0%"/>
+        <stop stop-color="#000000" stop-opacity="0.07" offset="50%"/>
+        <stop stop-color="#000000" stop-opacity="0" offset="100%"/>
+    </linearGradient>
+
+    <animate xlink:href="#msk1" attributeName="x" from="-100%" to="100%" dur="1s" begin="0s" repeatCount="indefinite"/>
+
+</svg>

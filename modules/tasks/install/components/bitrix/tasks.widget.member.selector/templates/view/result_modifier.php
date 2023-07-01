@@ -70,7 +70,7 @@ $arResult['JS_DATA'] = array(
 	'fieldName' => $arParams['FIELD_NAME'],
 	'min' => $arParams['MIN'],
 	'max' => is_infinite($arParams['MAX']) ? 999999 : $arParams['MAX'],
-	'pathToTasks' => $arParams['PATH_TO_TASKS'],
+	'pathToTasks' => ($arParams['PATH_TO_TASKS'] ?? null),
 	'user' => $helper->formatUser($arParams['USER'], $arParams),
 
 	'path' => array(

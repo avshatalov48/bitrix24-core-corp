@@ -7,6 +7,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 $urlMan = \Bitrix\Rpa\Driver::getInstance()->getUrlManager();
 $editRobotUrl = $urlMan->getAutomationEditRobotUrl($arParams["typeId"]);
 $stageId = $arParams["stage"];
+$bodyClass = false; // $APPLICATION->GetPageProperty('BodyClass');
 $APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "") . "no-background no-hidden");
 \Bitrix\Main\UI\Extension::load(["ui.fonts.opensans", "ui.design-tokens"]);
 
@@ -28,7 +29,7 @@ $icons = [
 			</div>
 			<span class="rpa-add-robot-icon"></span>
 		</a>
-	<?endforeach;?>
+	<?php endforeach;?>
 </div>
 <script>
 	BX.ready(function()

@@ -41,3 +41,4 @@ $MESS["TASKS_TTDP_TEMPLATE_USER_VIEW_LEAVE_AUDITOR_CONFIRM"] = "You may be unabl
 $MESS["TASKS_TTDP_TEMPLATE_USER_VIEW_ORIGINATOR"] = "Created by";
 $MESS["TASKS_TTDP_TEMPLATE_USER_VIEW_RESPONSIBLE"] = "Responsible person";
 $MESS["TASK_RESULT_SIDEBAR_HINT"] = "Task status summary is required";
+$MESS["TASK_RESULT_SIDEBAR_HINT_MSGVER_1"] = "Require task status summary";

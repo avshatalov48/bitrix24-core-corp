@@ -2,7 +2,7 @@
 $MESS["CRM_MODULE_NOT_INSTALLED"] = "Модуль \"CRM\" не установлен.";
 $MESS["SALESCENTER_MODULE_NOT_INSTALLED"] = "Модуль \"Центр продаж\" не установлен";
 $MESS["CATALOG_MODULE_NOT_INSTALLED"] = "Модуль \"Торговый каталог\" не установлен";
-$MESS["CRM_STORE_DOCUMENT_SHIPMENT_CREATION_PAGE_TITLE"] = "Создание реализации";
+$MESS["CRM_STORE_DOCUMENT_SHIPMENT_CREATION_PAGE_TITLE_MSGVER_1"] = "Создание реализации";
 $MESS["CRM_STORE_DOCUMENT_SHIPMENT_FIELD_ID"] = "ID";
 $MESS["CRM_STORE_DOCUMENT_SHIPMENT_FIELD_CLIENT"] = "Клиент";
 $MESS["CRM_STORE_DOCUMENT_SHIPMENT_FIELD_RESPONSIBLE_ID"] = "Ответственный";

@@ -180,7 +180,7 @@ this.BX = this.BX || {};
 	    key: "getUserContainer",
 	    value: function getUserContainer(user) {
 	      return this.cache.remember('userContainer' + user['id'], function () {
-	        return main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"ui-icon ui-icon-common-user disk-active-user-list-item\" title=\"", "\">\n\t\t\t\t\t<i ", ">\n\t\t\t\t\t</i>\n\t\t\t\t</div>\n\t\t\t"])), main_core.Text.encode(user['name']), user['avatar'] ? "style=\"background: url('".concat(main_core.Text.encode(user['avatar']), "') no-repeat center; background-size: cover;\" ") : '');
+	        return main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"ui-icon ui-icon-common-user disk-active-user-list-item\" title=\"", "\">\n\t\t\t\t\t<i ", ">\n\t\t\t\t\t</i>\n\t\t\t\t</div>\n\t\t\t"])), main_core.Text.encode(user['name']), user['avatar'] ? "style=\"background: url('".concat(encodeURI(main_core.Text.encode(user['avatar'])), "') no-repeat center; background-size: cover;\" ") : '');
 	      });
 	    }
 	    /**
@@ -200,7 +200,7 @@ this.BX = this.BX || {};
 	        wrapper = main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"disk-active-user-popup-item\">\n\t\t\t\t</div>>\n\t\t\t"])));
 	      }
 
-	      var userRow = main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-icon ui-icon-common-user disk-active-user-popup-icon\">\n\t\t\t\t<i ", ">\n\t\t\t\t</i>\n\t\t\t</div>\n\t\t\t<div class=\"disk-active-user-popup-name\">", "</div>\n\t\t"])), user['avatar'] ? "style=\"background: url('".concat(main_core.Text.encode(user['avatar']), "') no-repeat center; background-size: cover;\" ") : '', main_core.Text.encode(user['name']));
+	      var userRow = main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-icon ui-icon-common-user disk-active-user-popup-icon\">\n\t\t\t\t<i ", ">\n\t\t\t\t</i>\n\t\t\t</div>\n\t\t\t<div class=\"disk-active-user-popup-name\">", "</div>\n\t\t"])), user['avatar'] ? "style=\"background: url('".concat(encodeURI(main_core.Text.encode(user['avatar'])), "') no-repeat center; background-size: cover;\" ") : '', main_core.Text.encode(user['name']));
 
 	      (_wrapper = wrapper).append.apply(_wrapper, babelHelpers.toConsumableArray(userRow));
 

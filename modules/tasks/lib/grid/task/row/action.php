@@ -35,8 +35,8 @@ class Action
 		$actions = $this->rowData['ACTION'];
 
 		$urlPath = ($groupId > 0 ? $this->parameters['PATH_TO_GROUP_TASKS_TASK'] : $this->parameters['PATH_TO_USER_TASKS_TASK']);
-		$pinAction = ($this->rowData['IS_PINNED'] === 'Y' ? 'UNPIN' : 'PIN');
-		$muteAction = ($this->rowData['IS_MUTED'] === 'Y' ? 'UNMUTE' : 'MUTE');
+		$pinAction = (($this->rowData['IS_PINNED'] ?? '') === 'Y' ? 'UNPIN' : 'PIN');
+		$muteAction = (($this->rowData['IS_MUTED'] ?? '') === 'Y' ? 'UNMUTE' : 'MUTE');
 
 		$taskRowActions = [
 			[
@@ -199,7 +199,7 @@ class Action
 
 		$userId = User::getId();
 		$isResponsible = (int)$this->rowData['RESPONSIBLE_ID'] === $userId;
-		$isAccomplice = $this->rowData['ACCOMPLICES'] && in_array($userId, $this->rowData['ACCOMPLICES'], true);
+		$isAccomplice = isset($this->rowData['ACCOMPLICES']) && in_array($userId, $this->rowData['ACCOMPLICES'], true);
 		$isIntranet = Main\Loader::includeModule('intranet');
 		$isExtranet = Main\Loader::includeModule('extranet') && CExtranet::IsExtranetSite();
 
@@ -212,7 +212,7 @@ class Action
 				$tasksInPlan = CTaskPlannerMaintance::getCurrentTasksList();
 			}
 
-			if (is_array($tasksInPlan) && in_array($this->rowData['ID'], $tasksInPlan, true))
+			if (is_array($tasksInPlan) && in_array((int)$this->rowData['ID'], $tasksInPlan, true))
 			{
 				$can = 'N';
 			}

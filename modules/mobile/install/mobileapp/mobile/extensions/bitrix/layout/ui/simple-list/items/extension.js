@@ -2,6 +2,7 @@
 	const Type = {
 		Base: 'Base',
 		Kanban: 'Kanban',
+		Terminal: 'Terminal',
 		LoadingElement: 'LoadingElement',
 		EmptySpace: 'EmptySpace',
 	}
@@ -18,6 +19,11 @@
 			if (type === Type.Kanban)
 			{
 				return new ListItems.Kanban(data);
+			}
+
+			if (type === Type.Terminal)
+			{
+				return new ListItems.Terminal(data);
 			}
 
 			if (type === Type.LoadingElement)

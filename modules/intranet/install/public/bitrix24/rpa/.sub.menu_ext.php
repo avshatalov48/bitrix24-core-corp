@@ -26,16 +26,7 @@ if($taskManager)
 
 $aMenuLinks = [
 	[
-		Loc::getMessage('RPA_SUB_MENU_PROCESSES'),
-		'/rpa/',
-		[],
-		[
-			'menu_item_id' => 'rpa-top-panel-main-section',
-		],
-		'',
-	],
-	[
-		Loc::getMessage('RPA_SUB_MENU_TASKS_MSGVER_1'),
+		Loc::getMessage('RPA_SUB_MENU_TASKS_2'),
 		'/rpa/tasks/',
 		[],
 		[
@@ -43,5 +34,14 @@ $aMenuLinks = [
 			'counter_num' => $tasksCounter,
 			'counter_id' => 'rpa_tasks',
 		],
-	]
+	],
+	[
+		Loc::getMessage('RPA_SUB_MENU_PROCESSES_1'),
+		'/rpa/',
+		[],
+		[
+			'menu_item_id' => 'rpa-top-panel-main-section',
+		],
+		'',
+	],
 ];

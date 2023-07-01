@@ -76,8 +76,10 @@ $MESS["CRM_ACTIVITY_EMAIL_DIRECTION_INCOMING"] = "Полученное пись�
 $MESS["CRM_ACTIVITY_EMAIL_DIRECTION_OUTGOING"] = "Отправленное письмо";
 $MESS["CRM_ACTIVITY_FROM_DEAL_EVENT_CALL"] = "Телефонный звонок";
 $MESS["CRM_ACTIVITY_FROM_DEAL_EVENT_INFO"] = "Информация";
-$MESS["CRM_ACTIVITY_NOTIFY_MESSAGE_INCOMING_EMAIL"] = "Вам пришло <a target=\"_blank\" href=\"#VIEW_URL#\">новое письмо</a>.";
-$MESS["CRM_ACTIVITY_NOTIFY_MESSAGE_INCOMING_EMAIL_EXT"] = "Вам пришло письмо <a target=\"_blank\" href=\"#VIEW_URL#\">#SUBJECT#</a> от #ADDRESSER#.";
+$MESS["CRM_ACTIVITY_NOTIFY_MESSAGE_INCOMING"] = "Новое письмо <a target=\"_blank\" href=\"#VIEW_URL#\">\"#SUBJECT#\"</a>";
+$MESS["CRM_ACTIVITY_NOTIFY_MESSAGE_INCOMING_1"] = "Новое письмо в <a target=\"_blank\" href=\"#VIEW_URL#\">\"#ENTITY_TITLE#\"</a><br/>Тема: \"#SUBJECT#\"";
+$MESS["CRM_ACTIVITY_NOTIFY_MESSAGE_INCOMING_MULTI"] = "Новые письма: #COUNT#. <a target=\"_blank\" href=\"#VIEW_URL#\">Перейти в CRM</a>";
+$MESS["CRM_ACTIVITY_NOTIFY_MESSAGE_INCOMING_EMPTY_SUBJECT_1"] = "Новое письмо в <a target=\"_blank\" href=\"#VIEW_URL#\">\"#ENTITY_TITLE#\"</a>";
 $MESS["CRM_ACTIVITY_SUBJECT"] = "Тема";
 $MESS["CRM_ACTIVITY_LOCATION"] = "Место";
 $MESS["CRM_ACTIVITY_FIELD_COMPARE_EMPTY"] = "-Пусто-";

@@ -3,6 +3,7 @@
 namespace Bitrix\Crm\FieldSet;
 
 use Bitrix\Crm\Requisite\Country;
+use Bitrix\Crm\WebForm\EntityFieldProvider;
 use Bitrix\Main;
 use Bitrix\Crm\Model;
 use Bitrix\Crm\EntityRequisite;
@@ -10,6 +11,8 @@ use CCrmOwnerType;
 
 class Factory
 {
+	private const MAX_REQUISITES_FIELDS_COUNT = 3;
+	
 	public function list(): array
 	{
 		$rows = Model\FieldSetTable::query()
@@ -174,20 +177,28 @@ class Factory
 			}
 
 			$typeName = CCrmOwnerType::resolveName($typeId);
+			
+			$prepareFieldsToInsert = function (string $name) use ($typeName)
+			{
+				return [
+					'name' => "{$typeName}_{$name}",
+					'required' => true,
+					'multiple' => false,
+				];
+			};
+			
 			$item
+				->setRequisitePresetId($rqPresetId)
 				->setFields(array_map(
-					function (string $name) use ($typeName)
-					{
-						return [
-							'name' => "{$typeName}_{$name}",
-							'required' => true,
-							'multiple' => false,
-						];
-					},
+					$prepareFieldsToInsert,
 					$fields
 				))
-				->setRequisitePresetId($rqPresetId)
 			;
+			
+			if (empty($item->getFields()))
+			{
+				$this->setDefaultFieldsForItems($prepareFieldsToInsert, $typeId, $item);
+			}
 
 			$result[] = $item;
 		}
@@ -196,6 +207,24 @@ class Factory
 		return $result;
 	}
 
+	private function getDefaultItemFieldMap(): array
+	{
+		return [
+			CCrmOwnerType::Contact => [
+				'NAME',
+				'LAST_NAME',
+				'PHONE',
+				'EMAIL',
+				'RQ_ADDR_PRIMARY'
+			],
+			CCrmOwnerType::Company => [
+				'TITLE',
+				'EMAIL',
+				'PHONE',
+				'RQ_ADDR_PRIMARY',
+			],
+		];
+	}
 	private function getDefaultItemRegionFieldMap(): array
 	{
 		return [
@@ -314,5 +343,37 @@ class Factory
 		}
 
 		return $list;
+	}
+	
+	/**
+	 * @param \Closure $prepareFieldsToInsert
+	 * @param int $typeId
+	 * @param Item $item
+	 * @return void
+	 */
+	private function setDefaultFieldsForItems(\Closure $prepareFieldsToInsert, int $typeId, Item $item): void
+	{
+		$presetFields = EntityFieldProvider::getFields([], $item->getRequisitePresetId());
+		$defaultItemFields = array_map(
+			$prepareFieldsToInsert,
+			$this->getDefaultItemFieldMap()[$typeId]
+		);
+		
+		$fields = [];
+		$fieldCounter = 0;
+		foreach ($presetFields as $presetField) {
+			if (mb_strpos($presetField['entity_field_name'], 'RQ_') === false
+				|| !in_array($presetField['type'], ['string', 'typed_string'])
+				|| $fieldCounter >= self::MAX_REQUISITES_FIELDS_COUNT
+			) {
+				continue;
+			}
+			
+			$fieldCounter++;
+			$fields[] = $presetField;
+		}
+		
+		$fields = array_merge($fields, $defaultItemFields ?? []);
+		$item->setFields($fields);
 	}
 }

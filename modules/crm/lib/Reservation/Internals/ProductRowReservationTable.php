@@ -102,6 +102,11 @@ class ProductRowReservationTable extends DataManager
 				ProductRowTable::class,
 				Join::on('this.ROW_ID', 'ref.ID')
 			),
+			new Reference(
+				'PRODUCT_RESERVATION_MAP',
+				ProductReservationMapTable::class,
+				Join::on('this.ROW_ID', 'ref.PRODUCT_ROW_ID')
+			),
 		];
 	}
 

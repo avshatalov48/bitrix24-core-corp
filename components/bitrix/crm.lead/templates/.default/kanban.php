@@ -1,4 +1,9 @@
-<?php if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
+<?php
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 //show the crm type popup (with or without leads)
 if (!\Bitrix\Crm\Settings\LeadSettings::isEnabled())
@@ -15,8 +20,8 @@ $asset = Bitrix\Main\Page\Asset::getInstance();
 $asset->addJs('/bitrix/js/crm/common.js');
 
 // some common langs
-use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm\UI\NavigationBarPanel;
+use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages($_SERVER['DOCUMENT_ROOT'].'/bitrix/components/bitrix/crm.lead.menu/component.php');
 Loc::loadMessages($_SERVER['DOCUMENT_ROOT'].'/bitrix/components/bitrix/crm.lead.list/templates/.default/template.php');
@@ -128,10 +133,11 @@ else
 
 	// filter
 	$activeItemId = (
-		$arResult['KANBAN_VIEW_MODE'] === \Bitrix\Crm\Kanban\ViewMode::MODE_ACTIVITIES
+		isset($arResult['KANBAN_VIEW_MODE']) && $arResult['KANBAN_VIEW_MODE'] === \Bitrix\Crm\Kanban\ViewMode::MODE_ACTIVITIES
 			? NavigationBarPanel::ID_ACTIVITY
 			: NavigationBarPanel::ID_KANBAN
 	);
+	
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.kanban.filter',
 		'',

@@ -105,15 +105,19 @@ class KeyUserTable extends DataManager
 	}
 
 	/**
-	 * @param array $filter
+	 * Deletes key to user bindings by filter.
+	 *
+	 * @param array $filter Delete filter.
+	 *
+	 * @return void
 	 */
 	public static function deleteByFilter(array $filter)
 	{
 		$entity = static::getEntity();
 		$sqlTableName = static::getTableName();
 
-		$where = \Bitrix\Main\Entity\Query::buildFilterSql($entity, $filter);
-		if ($where <> '')
+		$where = \Bitrix\Main\ORM\Query\Query::buildFilterSql($entity, $filter);
+		if ($where)
 		{
 			$sql = 'DELETE FROM ' . $sqlTableName . ' WHERE ' . $where;
 			$entity->getConnection()->queryExecute($sql);

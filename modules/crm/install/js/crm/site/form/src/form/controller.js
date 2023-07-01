@@ -35,6 +35,7 @@ class Controller extends Event
 	basket: Basket;
 	analytics: Analytics;
 	recaptcha: ReCaptcha;
+	abuse: Type.Abuse;
 
 	title: string;
 	buttonCaption: string;
@@ -83,6 +84,7 @@ class Controller extends Event
 		this.#dependence = new Dependence(this);
 		this.analytics = new Analytics(this);
 		this.recaptcha = new ReCaptcha();
+		this.abuse = options.abuse;
 
 		this.emit(Type.EventTypes.initBefore, options);
 

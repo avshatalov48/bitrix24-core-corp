@@ -1,5 +1,4 @@
 <?php
-$MESS["ENTITY_EDITOR_SECTION_QR_TITLE"] = "Перейти в полную версию";
 $MESS["ENTITY_EDITOR_SECTION_EDIT_TITLE"] = "изменить";
 $MESS["ENTITY_EDITOR_SECTION_CANCEL_TITLE"] = "отмена";
 

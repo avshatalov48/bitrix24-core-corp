@@ -62,7 +62,11 @@ BX.Tasks.GridActions = {
 		var statusSuccess = false;
 
 		var onTagsChange = function(event) {
-			var dialog = event.getTarget();
+			const dialog = event.getTarget();
+			const selectedItem = event.getData().item;
+			selectedItem.setSort(1);
+			dialog.getTab('all').getRootNode().addItem(selectedItem);
+
 			if (statusSuccess)
 			{
 				dialog.clearSearch();
@@ -153,23 +157,27 @@ BX.Tasks.GridActions = {
 					if (response.data.success)
 					{
 						statusSuccess = true;
-						var item = dialog.addItem({
+						const item = dialog.addItem({
 							id: newTag,
 							entityId: 'task-tag',
 							title: newTag,
-							tabs: 'all',
+							sort: 1,
+							badges: [
+								{
+									title: response.data.owner,
+								},
+							],
 						});
 
-						var badge = { title: response.data.owner };
-						item.setBadges([badge]);
+						dialog.getTab('all').getRootNode().addItem(item);
 						item.select();
 					}
 					else
 					{
-						var alertClass = 'tasks-list-tag-already-exists-alert';
+						const alertClass = 'tasks-list-tag-already-exists-alert';
 						showAlert(alertClass, response.data.error);
-						var removeAlert = function() {
-							var notification = dialog.getContainer().querySelector(`div.${alertClass}`);
+						const removeAlert = function() {
+							const notification = dialog.getContainer().querySelector(`div.${alertClass}`);
 							notification && notification.remove();
 						};
 						setTimeout(removeAlert, 2000);
@@ -221,6 +229,7 @@ BX.Tasks.GridActions = {
 			return target;
 		};
 
+		//widget in tasks list
 		var dialog = new BX.UI.EntitySelector.Dialog({
 			id: 'tasks-task-list-tag-widget',
 			targetNode: getTargetContainer(),

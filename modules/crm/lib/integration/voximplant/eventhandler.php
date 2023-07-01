@@ -39,7 +39,10 @@ class EventHandler
 
 		if (isset($data['CALL_ID']))
 		{
-			$logMessageId = LogMessageEntry::detectIdByParams($data['CALL_ID'], LogMessageType::CALL_INCOMING);
+			$logMessageId = LogMessageEntry::detectIdByParams(
+				$data['CALL_ID'],
+				LogMessageType::CALL_INCOMING
+			);
 			if (isset($logMessageId))
 			{
 				return; // record already created

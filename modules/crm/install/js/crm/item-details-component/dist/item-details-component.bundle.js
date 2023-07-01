@@ -1,5 +1,5 @@
 this.BX = this.BX || {};
-(function (exports,main_core,main_core_events,ui_dialogs_messagebox,ui_stageflow,crm_stageModel,main_loader,main_popup) {
+(function (exports,main_core,main_core_events,ui_dialogs_messagebox,ui_stageflow,crm_stageModel,main_loader,main_popup,crm_messagesender) {
 	'use strict';
 
 	var _templateObject, _templateObject2, _templateObject3;
@@ -11,6 +11,7 @@ this.BX = this.BX || {};
 	    var _this = this;
 	    babelHelpers.classCallCheck(this, ItemDetailsComponent);
 	    babelHelpers.defineProperty(this, "categoryId", null);
+	    babelHelpers.defineProperty(this, "receiversJSONString", '');
 	    if (main_core.Type.isPlainObject(params)) {
 	      this.entityTypeId = main_core.Text.toInteger(params.entityTypeId);
 	      this.entityTypeName = params.entityTypeName;
@@ -45,6 +46,9 @@ this.BX = this.BX || {};
 	      this.pullTag = params.pullTag;
 	      this.bizprocStarterConfig = params.bizprocStarterConfig;
 	      this.automationCheckAutomationTourGuideData = main_core.Type.isPlainObject(params.automationCheckAutomationTourGuideData) ? params.automationCheckAutomationTourGuideData : null;
+	      if (main_core.Type.isString(params.receiversJSONString)) {
+	        this.receiversJSONString = params.receiversJSONString;
+	      }
 	      this.isPageTitleEditable = Boolean(params.isPageTitleEditable);
 	    }
 	    this.container = document.querySelector('[data-role="crm-item-detail-container"]');
@@ -137,6 +141,7 @@ this.BX = this.BX || {};
 	      this.initStageFlow();
 	      this.bindEvents();
 	      this.initDocumentButton();
+	      this.initReceiversRepository();
 	      if (this.id > 0) {
 	        this.initPageTitleButtons();
 	        this.initPull();
@@ -150,6 +155,11 @@ this.BX = this.BX || {};
 	        this.documentButton = new BX.DocumentGenerator.Button(this.documentButtonParameters.buttonId, this.documentButtonParameters);
 	        this.documentButton.init();
 	      }
+	    }
+	  }, {
+	    key: "initReceiversRepository",
+	    value: function initReceiversRepository() {
+	      crm_messagesender.ReceiverRepository.onDetailsLoad(this.entityTypeId, this.id, this.receiversJSONString);
 	    }
 	  }, {
 	    key: "initPageTitleButtons",
@@ -597,5 +607,5 @@ this.BX = this.BX || {};
 
 	exports.ItemDetailsComponent = ItemDetailsComponent;
 
-}((this.BX.Crm = this.BX.Crm || {}),BX,BX.Event,BX.UI.Dialogs,BX.UI,BX.Crm.Models,BX,BX.Main));
+}((this.BX.Crm = this.BX.Crm || {}),BX,BX.Event,BX.UI.Dialogs,BX.UI,BX.Crm.Models,BX,BX.Main,BX.Crm.MessageSender));
 //# sourceMappingURL=item-details-component.bundle.js.map

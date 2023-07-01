@@ -18,17 +18,17 @@ class Group extends Volume\Storage\Storage
 	 * Returns entity type list.
 	 * @return string[]
 	 */
-	public static function getEntityType()
+	public static function getEntityType(): array
 	{
-		return array(ProxyType\Group::className());
+		return [ProxyType\Group::className()];
 	}
 
 	/**
 	 * Runs measure test to get volumes of selecting objects.
 	 * @param array $collectData List types data to collect: ATTACHED_OBJECT, SHARING_OBJECT, EXTERNAL_LINK, UNNECESSARY_VERSION.
-	 * @return $this
+	 * @return static
 	 */
-	public function measure($collectData = [self::DISK_FILE, self::UNNECESSARY_VERSION])
+	public function measure(array $collectData = [self::DISK_FILE, self::UNNECESSARY_VERSION]): self
 	{
 		$this
 			->addFilter('@ENTITY_TYPE', self::getEntityType())
@@ -45,7 +45,7 @@ class Group extends Volume\Storage\Storage
 	 * @param array $collectedData List types of collected data to return.
 	 * @return DB\Result
 	 */
-	public function getMeasurementResult($collectedData = array())
+	public function getMeasurementResult(array $collectedData = []): DB\Result
 	{
 		$this->addFilter('!GROUP_ID', null);
 		return parent::getMeasurementResult($collectedData);

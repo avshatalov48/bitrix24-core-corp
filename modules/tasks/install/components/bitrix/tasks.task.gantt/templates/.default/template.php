@@ -8,7 +8,8 @@ use Bitrix\Tasks\Slider\Exception\SliderException;
 use Bitrix\Tasks\UI\ScopeDictionary;
 use Bitrix\Tasks\Slider\Factory\SliderFactory;
 
-$isIFrame = $_REQUEST['IFRAME'] == 'Y';
+$isIFrame = isset($_REQUEST['IFRAME']) && $_REQUEST['IFRAME'] === 'Y';
+$isBitrix24Template = (SITE_TEMPLATE_ID === 'bitrix24');
 
 Loc::loadMessages(__FILE__);
 
@@ -51,8 +52,8 @@ $APPLICATION->IncludeComponent(
 );
 
 $arPaths = [
-	"PATH_TO_TASKS_TASK" => $arParams['GROUP_ID'] > 0 ? $arParams['PATH_TO_GROUP_TASKS_TASK'] : $arParams["PATH_TO_USER_TASKS_TASK"],
-	"PATH_TO_USER_PROFILE" => $arParams["PATH_TO_USER_PROFILE"]
+	"PATH_TO_TASKS_TASK" => (isset($arParams['GROUP_ID']) && $arParams['GROUP_ID'] > 0) ? $arParams['PATH_TO_GROUP_TASKS_TASK'] : $arParams["PATH_TO_USER_TASKS_TASK"],
+	"PATH_TO_USER_PROFILE" => $arParams["PATH_TO_USER_PROFILE"] ?? null
 ];
 
 $cs = \Bitrix\Tasks\UI::translateCalendarSettings($arResult['CALENDAR_SETTINGS']);
@@ -83,7 +84,7 @@ else
 <script type="text/javascript">
     BX.message({
         TASKS_PATH_TO_USER_PROFILE: "<?php echo CUtil::JSEscape($arParams["PATH_TO_USER_PROFILE"])?>",
-        TASKS_PATH_TO_TASK: "<?php echo CUtil::JSEscape($arParams['GROUP_ID'] > 0 ? $arParams["PATH_TO_GROUP_TASKS_TASK"] : $arParams["PATH_TO_USER_TASKS_TASK"])?>",
+        TASKS_PATH_TO_TASK: "<?php echo CUtil::JSEscape((isset($arParams['GROUP_ID']) && $arParams['GROUP_ID'] > 0) ? $arParams["PATH_TO_GROUP_TASKS_TASK"] : $arParams["PATH_TO_USER_TASKS_TASK"])?>",
         TASKS_CANNOT_ADD_DEPENDENCY: "<?=GetMessage("TASKS_CANNOT_ADD_DEPENDENCY")?>",
 		TASKS_CLOSE_PAGE_CONFIRM: '<?=GetMessageJS('TASKS_CLOSE_PAGE_CONFIRM')?>'
     });
@@ -94,7 +95,7 @@ else
 	?>
     var arFilter = <?php echo CUtil::PhpToJSObject($filter)?>;
     var arOrder = <?php echo CUtil::PhpToJSObject($arResult["GET_LIST_PARAMS"]["order"])?>;
-    var tasksListAjaxUrl = "/bitrix/components/bitrix/tasks.list/ajax.php?SITE_ID=<?php echo SITE_ID?><?=$arParams['GROUP_ID'] ? "&GROUP_ID=" . $arParams["GROUP_ID"] : ""?>";
+    var tasksListAjaxUrl = "/bitrix/components/bitrix/tasks.list/ajax.php?SITE_ID=<?php echo SITE_ID?><?=(isset($arParams['GROUP_ID']) && $arParams['GROUP_ID'] > 0) ? "&GROUP_ID=" . $arParams["GROUP_ID"] : ""?>";
     var ajaxUrl = tasksListAjaxUrl;
     var tasksIFrameList = <?php echo CUtil::PhpToJSObject(array_keys($arResult["LIST"]))?>;
     var ganttChart;
@@ -506,19 +507,20 @@ else
 			$i = 0;
 			foreach($arResult["LIST"] as $arTask)
 			{
-			$i++;
-			tasksRenderJSON(
-				$arTask, $arResult["SUB_TASK_COUNTERS"][$arTask["ID"]],
-				$arPaths, false, true, false, $arParams["NAME_TEMPLATE"], array(), false, array(
-					'DISABLE_IFRAME_POPUP' => true,
-					'USER_ID'              => $arParams['USER_ID']
-				)
-			);
+				$i++;
+				$subCounter = $arResult["SUB_TASK_COUNTERS"][$arTask["ID"]] ?? null;
+				tasksRenderJSON(
+					$arTask, $subCounter,
+					$arPaths, false, true, false, $arParams["NAME_TEMPLATE"], array(), false, array(
+						'DISABLE_IFRAME_POPUP' => true,
+						'USER_ID'              => $arParams['USER_ID']
+					)
+				);
 
-			if ($i != sizeof($arResult["LIST"]))
-			{
-			?>,<?php
-			}
+				if ($i != sizeof($arResult["LIST"]))
+				{
+					?>,<?php
+				}
 			}
 			?>
         ];
@@ -597,46 +599,46 @@ $APPLICATION->IncludeComponent(
 	'bitrix:tasks.interface.header',
 	'',
 	[
-		'FILTER_ID' => $arParams['FILTER_ID'],
-		'GRID_ID' => $arParams['GRID_ID'],
-		'FILTER' => $arResult['FILTER'],
-		'PRESETS' => $arResult['PRESETS'],
-		'GET_LIST_PARAMS' => $arResult['GET_LIST_PARAMS'],
-		'COMPANY_WORKTIME' => $arResult['COMPANY_WORKTIME'],
-		'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'],
-		'PROJECT_VIEW' => $arParams['PROJECT_VIEW'],
-		'USER_ID' => $arParams['USER_ID'],
-		'GROUP_ID' => $arParams['GROUP_ID'],
-		'MARK_ACTIVE_ROLE' => $arParams['MARK_ACTIVE_ROLE'],
-		'MARK_SECTION_ALL' => $arParams['MARK_SECTION_ALL'],
-		'MARK_SPECIAL_PRESET' => $arParams['MARK_SPECIAL_PRESET'],
-		'MARK_SECTION_PROJECTS' => $arParams['MARK_SECTION_PROJECTS'],
-		'PATH_TO_USER_TASKS' => $arParams['PATH_TO_USER_TASKS'],
-		'PATH_TO_USER_TASKS_TASK' => $arParams['PATH_TO_USER_TASKS_TASK'],
-		'PATH_TO_USER_TASKS_VIEW' => $arParams['PATH_TO_USER_TASKS_VIEW'],
-		'PATH_TO_USER_TASKS_REPORT' => $arParams['PATH_TO_USER_TASKS_REPORT'],
-		'PATH_TO_USER_TASKS_TEMPLATES' => $arParams['PATH_TO_USER_TASKS_TEMPLATES'],
-		'PATH_TO_USER_TASKS_PROJECTS_OVERVIEW' => $arParams['PATH_TO_USER_TASKS_PROJECTS_OVERVIEW'],
-		'PATH_TO_GROUP' => $arParams['PATH_TO_GROUP'],
-		'PATH_TO_GROUP_TASKS' => $arParams['PATH_TO_GROUP_TASKS'],
-		'PATH_TO_GROUP_TASKS_TASK' => $arParams['PATH_TO_GROUP_TASKS_TASK'],
-		'PATH_TO_GROUP_TASKS_VIEW' => $arParams['PATH_TO_GROUP_TASKS_VIEW'],
-		'PATH_TO_GROUP_TASKS_REPORT' => $arParams['PATH_TO_GROUP_TASKS_REPORT'],
-		'PATH_TO_USER_PROFILE' => $arParams['PATH_TO_USER_PROFILE'],
-		'PATH_TO_MESSAGES_CHAT' => $arParams['PATH_TO_MESSAGES_CHAT'],
-		'PATH_TO_VIDEO_CALL' => $arParams['PATH_TO_VIDEO_CALL'],
-		'PATH_TO_CONPANY_DEPARTMENT' => $arParams['PATH_TO_CONPANY_DEPARTMENT'],
+		'FILTER_ID' => $arParams['FILTER_ID'] ?? null,
+		'GRID_ID' => $arParams['GRID_ID'] ?? null,
+		'FILTER' => $arResult['FILTER'] ?? null,
+		'PRESETS' => $arResult['PRESETS'] ?? null,
+		'GET_LIST_PARAMS' => $arResult['GET_LIST_PARAMS'] ?? null,
+		'COMPANY_WORKTIME' => $arResult['COMPANY_WORKTIME'] ?? null,
+		'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'] ?? null,
+		'PROJECT_VIEW' => $arParams['PROJECT_VIEW'] ?? null,
+		'USER_ID' => $arParams['USER_ID'] ?? null,
+		'GROUP_ID' => $arParams['GROUP_ID'] ?? null,
+		'MARK_ACTIVE_ROLE' => $arParams['MARK_ACTIVE_ROLE'] ?? null,
+		'MARK_SECTION_ALL' => $arParams['MARK_SECTION_ALL'] ?? null,
+		'MARK_SPECIAL_PRESET' => $arParams['MARK_SPECIAL_PRESET'] ?? null,
+		'MARK_SECTION_PROJECTS' => $arParams['MARK_SECTION_PROJECTS'] ?? null,
+		'PATH_TO_USER_TASKS' => $arParams['PATH_TO_USER_TASKS'] ?? null,
+		'PATH_TO_USER_TASKS_TASK' => $arParams['PATH_TO_USER_TASKS_TASK'] ?? null,
+		'PATH_TO_USER_TASKS_VIEW' => $arParams['PATH_TO_USER_TASKS_VIEW'] ?? null,
+		'PATH_TO_USER_TASKS_REPORT' => $arParams['PATH_TO_USER_TASKS_REPORT'] ?? null,
+		'PATH_TO_USER_TASKS_TEMPLATES' => $arParams['PATH_TO_USER_TASKS_TEMPLATES'] ?? null,
+		'PATH_TO_USER_TASKS_PROJECTS_OVERVIEW' => $arParams['PATH_TO_USER_TASKS_PROJECTS_OVERVIEW'] ?? null,
+		'PATH_TO_GROUP' => $arParams['PATH_TO_GROUP'] ?? null,
+		'PATH_TO_GROUP_TASKS' => $arParams['PATH_TO_GROUP_TASKS'] ?? null,
+		'PATH_TO_GROUP_TASKS_TASK' => $arParams['PATH_TO_GROUP_TASKS_TASK'] ?? null,
+		'PATH_TO_GROUP_TASKS_VIEW' => $arParams['PATH_TO_GROUP_TASKS_VIEW'] ?? null,
+		'PATH_TO_GROUP_TASKS_REPORT' => $arParams['PATH_TO_GROUP_TASKS_REPORT'] ?? null,
+		'PATH_TO_USER_PROFILE' => $arParams['PATH_TO_USER_PROFILE'] ?? null,
+		'PATH_TO_MESSAGES_CHAT' => $arParams['PATH_TO_MESSAGES_CHAT'] ?? null,
+		'PATH_TO_VIDEO_CALL' => $arParams['PATH_TO_VIDEO_CALL'] ?? null,
+		'PATH_TO_CONPANY_DEPARTMENT' => $arParams['PATH_TO_CONPANY_DEPARTMENT'] ?? null,
 		'SHOW_QUICK_FORM' => 'Y',
 		'USE_EXPORT' => 'Y',
 		'USE_GROUP_BY_SUBTASKS' => 'Y',
-		'USE_GROUP_BY_GROUPS' => ($arParams['NEED_GROUP_BY_GROUPS'] === 'Y' ? 'Y' : 'N'),
-		'GROUP_BY_PROJECT' => $arResult['GROUP_BY_PROJECT'],
+		'USE_GROUP_BY_GROUPS' => ((isset($arParams['NEED_GROUP_BY_GROUPS']) && $arParams['NEED_GROUP_BY_GROUPS'] === 'Y') ? 'Y' : 'N'),
+		'GROUP_BY_PROJECT' => $arResult['GROUP_BY_PROJECT'] ?? null,
 		'SHOW_USER_SORT' => 'Y',
-		'SORT_FIELD' => $arParams['SORT_FIELD'],
-		'SORT_FIELD_DIR' => $arParams['SORT_FIELD_DIR'],
+		'SORT_FIELD' => $arParams['SORT_FIELD'] ?? null,
+		'SORT_FIELD_DIR' => $arParams['SORT_FIELD_DIR'] ?? null,
 		'USE_LIVE_SEARCH' => 'N',
-		'SHOW_SECTION_TEMPLATES' => ($arParams['GROUP_ID'] > 0 ? 'N' : 'Y'),
-		'DEFAULT_ROLEID' => $arParams['DEFAULT_ROLEID'],
+		'SHOW_SECTION_TEMPLATES' => ((isset($arParams['GROUP_ID']) && $arParams['GROUP_ID'] > 0) ? 'N' : 'Y'),
+		'DEFAULT_ROLEID' => $arParams['DEFAULT_ROLEID'] ?? null,
 		'USE_AJAX_ROLE_FILTER' => 'Y',
 		'SCOPE' => ScopeDictionary::SCOPE_TASKS_GANTT,
 	],
@@ -646,7 +648,11 @@ $APPLICATION->IncludeComponent(
 ?>
 
 <?php
-if (is_array($arResult['ERROR']['FATAL']) && !empty($arResult['ERROR']['FATAL'])):
+if (
+	isset($arResult['ERROR']['FATAL'])
+	&& is_array($arResult['ERROR']['FATAL'])
+	&& !empty($arResult['ERROR']['FATAL'])
+):
 	foreach ($arResult['ERROR']['FATAL'] as $error):
 		echo ShowError($error['MESSAGE']);
 	endforeach;
@@ -654,7 +660,10 @@ if (is_array($arResult['ERROR']['FATAL']) && !empty($arResult['ERROR']['FATAL'])
 endif
 ?>
 
-<? if (is_array($arResult['ERROR']['WARNING'])): ?>
+<? if (
+	isset($arResult['ERROR']['WARNING'])
+	&& is_array($arResult['ERROR']['WARNING'])
+): ?>
 	<? foreach ($arResult['ERROR']['WARNING'] as $error): ?>
 		<?= ShowError($error['MESSAGE']) ?>
 	<? endforeach ?>
@@ -671,21 +680,15 @@ if ($isBitrix24Template)
 
 <br/>
 <?php
-$currentPagePath = $APPLICATION->GetCurPageParam('F_STATE=sVg0', [ 'F_STATE' ]);
-if ($arParams['BACKGROUND_FOR_TASK'])
-{
-	$currentPagePath = $arResult['ASSEMBLED_PATH_TO_TASKS'] . '?F_STATE=sVg0';
-}
-
 //region Navigation
 ob_start();
 $APPLICATION->IncludeComponent(
 	'bitrix:tasks.interface.pagenavigation',
 	'',
 	[
-		'PAGE_NUM' => $arResult['CURRENT_PAGE'],
-		'ENABLE_NEXT_PAGE' => $arResult['ENABLE_NEXT_PAGE'],
-		'URL' => $currentPagePath,
+		'PAGE_NUM' => $arResult['CURRENT_PAGE'] ?? null,
+		'ENABLE_NEXT_PAGE' => $arResult['ENABLE_NEXT_PAGE'] ?? null,
+		'URL' => $APPLICATION->GetCurPageParam('F_STATE=sVg0', [ 'F_STATE' ]),
 	],
 	$component,
 	array('HIDE_ICONS' => 'Y')
@@ -702,34 +705,3 @@ ob_end_clean();
 		TASKS_DELETE_SUCCESS: '<?=GetMessage('TASKS_DELETE_SUCCESS')?>'
 	});
 </script>
-<?php
-if ($arParams['BACKGROUND_FOR_TASK'])
-{
-	if ((int)$arParams['GROUP_ID'] > 0 )
-	{
-		$context = SliderFactory::GROUP_CONTEXT;
-		$ownerId = (int)$arParams['GROUP_ID'];
-	}
-	else
-	{
-		$context = SliderFactory::PERSONAL_CONTEXT;
-		$ownerId = (int)$arParams['USER_ID'];
-	}
-
-	$taskId = (int)$arParams['TASK_ID'];
-
-	$factory = new SliderFactory();
-	try
-	{
-		$factory
-			->setAction($arParams['TASK_ACTION'])
-			->setQueryParams($arParams['GET_PARAMS']);
-
-		$slider = $factory->createEntitySlider($taskId, SliderFactory::TASK, $ownerId, $context);
-		$slider->open();
-	}
-	catch (SliderException $exception)
-	{
-		$exception->show();
-	}
-}

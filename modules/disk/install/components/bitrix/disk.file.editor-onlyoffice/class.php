@@ -365,7 +365,7 @@ class CDiskFileEditorOnlyOfficeComponent extends BaseComponent implements Contro
 
 	protected function getLinkToEdit(OnlyOffice\Models\DocumentSession $documentSession)
 	{
-		if ($this->arParams['LINK_TO_EDIT'])
+		if (isset($this->arParams['LINK_TO_EDIT']))
 		{
 			return $this->arParams['LINK_TO_EDIT'];
 		}
@@ -382,7 +382,7 @@ class CDiskFileEditorOnlyOfficeComponent extends BaseComponent implements Contro
 
 	protected function getLinkToDownload(OnlyOffice\Models\DocumentSession $documentSession)
 	{
-		if ($this->arParams['LINK_TO_DOWNLOAD'])
+		if (isset($this->arParams['LINK_TO_DOWNLOAD']))
 		{
 			return $this->arParams['LINK_TO_DOWNLOAD'];
 		}

@@ -63,6 +63,7 @@ jn.define('im/messenger/lib/ui/search/input', (require, exports, module) => {
 						},
 					},
 					TextInput({
+						testId: 'search_field',
 						placeholder: Loc.getMessage('IMMOBILE_MESSENGER_UI_SEARCH_INPUT_PLACEHOLDER_TEXT'),
 						placeholderTextColor: '#8e8d92',
 						multiline: false,
@@ -89,6 +90,7 @@ jn.define('im/messenger/lib/ui/search/input', (require, exports, module) => {
 				),
 				View(
 					{
+						testId: 'search_field_clear',
 						clickable: true,
 						onClick: () => {
 							this.textRef.clear();

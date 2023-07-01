@@ -64,9 +64,9 @@ class CTaskTags
 			$arMsg[] = ["text" => GetMessage("TASKS_BAD_NAME"), "id" => "ERROR_BAD_TASKS_NAME"];
 		}
 
-		if (!is_set($arFields, "GROUP_ID"))
+		if (!isset($arFields['GROUP_ID']))
 		{
-			$arMsg[] = ["text" => GetMessage("TASKS_BAD_NAME"), "id" => "ERROR_BAD_GROUP_ID"];
+			$arFields['GROUP_ID'] = 0;
 		}
 
 		if (!empty($arMsg))

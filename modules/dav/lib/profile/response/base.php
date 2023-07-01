@@ -2,6 +2,7 @@
 
 namespace Bitrix\Dav\Profile\Response;
 
+use Bitrix\Main\ArgumentException;
 use Bitrix\Main\IO\File;
 use Bitrix\Main\Web\Json;
 
@@ -12,8 +13,9 @@ use Bitrix\Main\Web\Json;
 abstract class Base
 {
 	protected $body = '';
-	protected $headers = array();
-	protected $errors = array();
+	protected $headers = [];
+	protected $errors = [];
+	protected $status = '';
 
 	/**
 	 * @return mixed Headers will set in response.
@@ -24,12 +26,32 @@ abstract class Base
 	}
 
 	/**
-	 * @param string $header Header string for add to existing response headers array.
+	 * @param $name
+	 * @param $value
+	 *
 	 * @return void
 	 */
-	public function setHeader($header)
+	public function setHeader($name, $value): void
 	{
-		$this->headers[] = $header;
+		$this->headers[$name] = $value;
+	}
+
+	/**
+	 * @return mixed|string
+	 */
+	public function getStatus()
+	{
+		return $this->status;
+	}
+
+	/**
+	 * @param $status
+	 *
+	 * @return void
+	 */
+	public function setStatus($status)
+	{
+		$this->status = $status;
 	}
 
 	/**
@@ -52,6 +74,7 @@ abstract class Base
 
 	/**
 	 * @return void
+	 * @throws ArgumentException
 	 */
 	protected function setErrorBodyContent()
 	{
@@ -71,7 +94,7 @@ abstract class Base
 	public static function render($templateUrl, $params)
 	{
 		$baseTemplate = File::getFileContents($templateUrl);
-		$keys = array_map(function ($element)
+		$keys = array_map(static function ($element)
 		{
 			return '#' . $element . '#';
 		}, array_keys($params));

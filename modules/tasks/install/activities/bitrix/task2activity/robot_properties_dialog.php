@@ -1,86 +1,96 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
+\Bitrix\Main\Page\Asset::getInstance()->addJs(getLocalPath('activities/bitrix/task2activity/script.js'));
+
+\Bitrix\Main\UI\Extension::load(['ui.entity-selector', 'tasks.entity-selector']);
 
 /** @var \Bitrix\Bizproc\Activity\PropertiesDialog $dialog */
 
+$map = $dialog->getMap();
 $data = $dialog->getRuntimeData();
-$errors = array();
+$errors = [];
 
-$checkboxes = array();
+$documentValues = $dialog->getCurrentValue('Fields') ?? $dialog->getCurrentValues();
 
-$renderField = function ($fieldId, $field, $value) use ($dialog, $rawValues)
+$renderCheckbox = function (array $field, $value = null) use ($dialog)
 {
-	?>
-	<div class="bizproc-automation-popup-settings">
-		<span class="bizproc-automation-popup-settings-title bizproc-automation-popup-settings-title-autocomplete"><?=htmlspecialcharsbx($field['Name'])?>: </span>
-		<?
-		switch ($field['BaseType'])
-		{
-			case 'user':
-				$userValue = $rawValues[$fieldId];
-				if (!$userValue && $field['Required'])
-				{
-					$userValue = method_exists(\Bitrix\Bizproc\Automation\Helper::class, 'getResponsibleUserExpression')
-						? \Bitrix\Bizproc\Automation\Helper::getResponsibleUserExpression($dialog->getDocumentType()) : 'author';
-				}
+	$fieldValue = $value ?? $dialog->getCurrentValue($field);
+	if (is_string($fieldValue))
+	{
+		$fieldValue = $fieldValue === 'Y';
+	}
 
-				if (method_exists($dialog, 'renderFieldControl'))
-				{
-					$field['Type'] = 'user';
-					$field['FieldName'] = $fieldId;
-					echo $dialog->renderFieldControl($field, $userValue);
-				}
-				else
-				{
-					?>
-					<div data-role="user-selector" data-config="<?=htmlspecialcharsbx(
-						\Bitrix\Main\Web\Json::encode(array(
-							'valueInputName' => $fieldId,
-							'selected' => \Bitrix\Bizproc\Automation\Helper::prepareUserSelectorEntities(
-								$dialog->getDocumentType(),
-								$userValue
-							),
-							'multiple' => $field['Multiple'],
-							'required' => $field['Required'],
-						))
-					)?>"></div>
-					<?
-				}
-				break;
-			case 'text':
-				?>
-				<textarea name="<?=htmlspecialcharsbx($fieldId)?>"
-						  class="bizproc-automation-popup-textarea"
-						  data-role="inline-selector-target"
-				><?=htmlspecialcharsbx($value)?></textarea>
-				<?
-				break;
-			case 'select':
-				$options = isset($field['Options']) && is_array($field['Options'])
-					? $field['Options'] : array();
-				?>
-				<select class="bizproc-automation-popup-settings-dropdown" name="<?=htmlspecialcharsbx($fieldId)?>">
-					<?
-					foreach ($options as $k => $v)
-					{
-						echo '<option value="'.htmlspecialcharsbx($k).'"'.($k == $value ? ' selected' : '').'>'.htmlspecialcharsbx($v).'</option>';
-					}
-					?>
-				</select>
-				<?
-				break;
-			default:
-				$field['Type'] = $field['BaseType'];
-				$field['FieldName'] = $fieldId;
-				echo $dialog->renderFieldControl($field, $value);
-				break;
-		}
-		?>
-	</div>
-	<?
+	echo sprintf(
+		'<div class="bizproc-automation-popup-checkbox-item">
+				<label class="bizproc-automation-popup-chk-label">
+					<input type="hidden" name="%1$s" value="N">
+					<input type="checkbox" name="%1$s" value="Y" class="bizproc-automation-popup-chk" %3$s>
+					%2$s
+				</label>
+			</div>',
+			htmlspecialcharsbx($field['FieldName']),
+			htmlspecialcharsbx($field['Name']),
+			htmlspecialcharsbx($fieldValue ? 'checked' : ''),
+	);
 };
 
-unset($arDocumentFields['PRIORITY']);
+$renderField = function (array $field, $value = null) use ($dialog, $renderCheckbox)
+{
+	if (
+		$field['Type'] === \Bitrix\Bizproc\FieldType::BOOL
+		&& isset($field['Settings'], $field['Settings']['display'])
+		&& $field['Settings']['display'] === 'checkbox'
+	)
+	{
+		$renderCheckbox($field, $value);
+	}
+	else
+	{
+		$customRenderedFieldIds = [
+			'GROUP_ID' => 'group-id',
+			'TAG_NAMES' => 'tags',
+			'DEPENDS_ON' => 'depends-on',
+		];
+
+		$controlHtml = null;
+		if (isset($customRenderedFieldIds[$field['FieldName']]))
+		{
+			$elementIdSuffix = htmlspecialcharsbx($customRenderedFieldIds[$field['FieldName']]);
+			$fieldType = $dialog->getFieldTypeObject($field);
+
+			$selectorAttributes = sprintf(
+				'data-role="inline-selector-target" data-property="%s"',
+				htmlspecialcharsbx(\Bitrix\Main\Web\Json::encode($fieldType->getProperty())),
+			);
+
+			$controlHtml = "<div class=\"bizproc-type-control-string\" id=\"bizproc-task2activity-{$elementIdSuffix}\" {$selectorAttributes}></div>";
+		}
+		else
+		{
+			$controlHtml = $dialog->renderFieldControl($field, $value ?? $dialog->getCurrentValue($field));
+		}
+		echo sprintf(
+			'<div class="bizproc-automation-popup-settings">
+				<span class="bizproc-automation-popup-settings-title bizproc-automation-popup-settings-title-autocomplete">%s: </span>
+				%s
+			</div>',
+			htmlspecialcharsbx($field['Name']),
+			$controlHtml,
+		);
+	}
+};
+
+$renderDocumentField = function (array $field) use ($documentValues, $renderField)
+{
+	$renderField($field, $documentValues[$field['FieldName']] ?? null);
+};
+
+$taskFieldsMap = $map['Fields']['Map'];
 
 //Visible fields
 $visibleFields = array_merge(
@@ -89,9 +99,8 @@ $visibleFields = array_merge(
 );
 foreach ($visibleFields as $fieldId)
 {
-	$value = $arCurrentValues[$fieldId];
-	$renderField($fieldId, $arDocumentFields[$fieldId], $value);
-	unset($arDocumentFields[$fieldId]);
+	$renderDocumentField($taskFieldsMap[$fieldId]);
+	unset($taskFieldsMap[$fieldId]);
 }
 ?>
 <style type="text/css">
@@ -155,80 +164,94 @@ foreach ($visibleFields as $fieldId)
 
 <span class="tasks-task2activity-additional"
 	  onclick="BX.toggleClass(this.nextElementSibling, 'tasks-task2activity-additional-content-up'); BX.toggleClass(this, 'tasks-task2activity-additional-up'); return false;">
-	<?=GetMessage('TASKS_BP_RPD_ADDITIONAL')?>
+	<?= Bitrix\Main\Localization\Loc::getMessage('TASKS_BP_RPD_ADDITIONAL') ?>
 </span>
 <div class="tasks-task2activity-additional-content">
-<?
-	$holdToCloseField = [
-		'Name' => \Bitrix\Main\Localization\Loc::getMessage('TASKS_BP_RPD_HOLD_TO_CLOSE'),
-		'BaseType' => \Bitrix\Bizproc\FieldType::BOOL,
-		'Required' => true,
-		'Default' => 'N',
-	];
-	$renderField('HOLD_TO_CLOSE', $holdToCloseField, $arCurrentValues['HOLD_TO_CLOSE'] ?? 'N');
+	<?php
+		$renderField($map['HoldToClose']);
 
-	foreach ($arDocumentFields as $fieldId => $field)
-	{
-		if (!in_array($fieldId, $allowedTaskFields))
-			continue;
+		$priorityField = $taskFieldsMap['PRIORITY'];
+		unset($taskFieldsMap['PRIORITY']);
 
-		if ($field['BaseType'] === 'bool')
+		$checkboxes = [];
+		foreach ($taskFieldsMap as $fieldId => $field)
 		{
-			$checkboxes[$fieldId] = $field;
-			continue;
+			if (isset($field['UserField']))
+			{
+				continue;
+			}
+			elseif ($field['Type'] === \Bitrix\Bizproc\FieldType::BOOL)
+			{
+				$checkboxes[$fieldId] = $field;
+			}
+			else
+			{
+				$renderDocumentField($field);
+			}
 		}
+		$renderField($map['CheckListItems']);
 
-		$value = $arCurrentValues[$fieldId];
-
-		$renderField($fieldId, $field, $value);
-	}
+		$priorityFieldValue = $documentValues[$priorityField['FieldName']] ?? null;
 	?>
-	<div class="bizproc-automation-popup-settings">
-		<span class="bizproc-automation-popup-settings-title bizproc-automation-popup-settings-title-autocomplete"><?=GetMessage('BPSA_CHECK_LIST_ITEMS')?>: </span>
-		<?=$dialog->renderFieldControl(['FieldName' => 'CHECK_LIST_ITEMS', 'Type' => 'string', 'Multiple' => true], $arCurrentValues['CHECK_LIST_ITEMS'])?>
-	</div>
 	<div class="bizproc-automation-popup-checkbox">
 		<div class="bizproc-automation-popup-checkbox-item">
 			<label class="bizproc-automation-popup-chk-label">
 				<input type="hidden" name="PRIORITY" value="1">
-				<input type="checkbox" name="PRIORITY" value="2" class="bizproc-automation-popup-chk" <?=$arCurrentValues['PRIORITY'] == 2 ? 'checked' : ''?>>
+				<input
+					type="checkbox"
+					name="PRIORITY"
+					value="2"
+					class="bizproc-automation-popup-chk"
+					<?= $priorityFieldValue == 2 ? 'checked' : ''?>
+				>
 				<?=GetMessage('TASKS_BP_RPD_PRIORITY')?>
 			</label>
 		</div>
-		<?foreach ($checkboxes as $fieldId => $field):?>
-			<div class="bizproc-automation-popup-checkbox-item">
-				<label class="bizproc-automation-popup-chk-label">
-					<input type="hidden" name="<?=htmlspecialcharsbx($fieldId)?>" value="N">
-					<input type="checkbox" name="<?=htmlspecialcharsbx($fieldId)?>" value="Y" class="bizproc-automation-popup-chk" <?=$arCurrentValues[$fieldId] != 'N' ? 'checked' : ''?>>
-					<?=htmlspecialcharsbx($field['Name'])?>
-				</label>
-			</div>
-			<?php if ($fieldId === 'ALLOW_TIME_TRACKING'):?>
-				<div class="bizproc-automation-popup-settings" style="padding-left: 20px; margin-top: 10px">
-					<span class="bizproc-automation-popup-settings-title bizproc-automation-popup-settings-title-autocomplete"><?=GetMessage('BPTA1A_TIME_TRACKING_H')?>: </span>
-					<input name="TIME_ESTIMATE_H" type="text" class="bizproc-automation-popup-input bizproc-automation-popup-input-numeric"
-						   value="<?=htmlspecialcharsbx($arCurrentValues['TIME_ESTIMATE_H'])?>"
-						   data-role="inline-selector-target"
-					>
-				</div>
-				<div class="bizproc-automation-popup-settings" style="padding-left: 20px">
-					<span class="bizproc-automation-popup-settings-title bizproc-automation-popup-settings-title-autocomplete"><?=GetMessage('BPTA1A_TIME_TRACKING_M')?>: </span>
-					<input name="TIME_ESTIMATE_M" type="text" class="bizproc-automation-popup-input bizproc-automation-popup-input-numeric"
-						   value="<?=htmlspecialcharsbx($arCurrentValues['TIME_ESTIMATE_M'])?>"
-						   data-role="inline-selector-target"
-					>
-				</div>
-			<?php endif;?>
-		<?endforeach;?>
+		<?php
+			foreach ($checkboxes as $fieldId => $field)
+			{
+				$renderDocumentField($field);
+				if ($fieldId === 'ALLOW_TIME_TRACKING')
+				{
+					$renderField($map['TimeEstimateHour']);
+					$renderField($map['TimeEstimateMin']);
+				}
+			}
+		?>
 		<?if ($dialog->getDocumentType()[0] === 'tasks'):?>
 			<div class="bizproc-automation-popup-checkbox-item">
 				<label class="bizproc-automation-popup-chk-label">
-					<input type="hidden" name="AS_CHILD_TASK" value="N">
-					<input type="checkbox" name="AS_CHILD_TASK" value="Y" class="bizproc-automation-popup-chk" <?=$arCurrentValues['AS_CHILD_TASK'] == 'Y' ? 'checked' : ''?>>
-					<?=GetMessage('TASKS_BP_RPD_AS_CHILD_TASK')?>
+					<?php $renderField($map['AsChildTask']) ?>
 				</label>
 			</div>
 		<?endif;?>
 	</div>
 </div>
 <input type="hidden" name="AUTO_LINK_TO_CRM_ENTITY" value="Y">
+<?php
+
+$selectedGroupId = $documentValues['GROUP_ID'] ?? null;
+if (isset($selectedGroupId) && (!is_string($selectedGroupId) || !CBPDocument::isExpression($selectedGroupId)))
+{
+	$selectedGroupId = $selectedGroupId ? (int)$selectedGroupId : null;
+}
+elseif (is_string($selectedGroupId))
+{
+	$selectedGroupId = '"' . CUtil::JSEscape($selectedGroupId) . '"';
+}
+
+$runtimeData = $dialog->getRuntimeData();
+
+?>
+<script>
+	BX.ready(function()
+	{
+		const script = new BX.Tasks.Automation.Activity.Task2Activity({
+			formName: '<?= CUtil::JSEscape($dialog->getFormName()) ?>',
+			selectedGroupId: <?= $selectedGroupId ?? 'undefined' ?>,
+			selectedTags: <?= \Bitrix\Main\Web\Json::encode($runtimeData['tags']) ?>,
+			dependsOn: <?= \Bitrix\Main\Web\Json::encode($runtimeData['dependsOn']) ?>,
+		});
+		script.render();
+	});
+</script>

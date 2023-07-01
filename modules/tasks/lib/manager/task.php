@@ -15,6 +15,7 @@ namespace Bitrix\Tasks\Manager;
 use Bitrix\Socialnetwork\Internals\Registry\FeaturePermRegistry;
 use Bitrix\Tasks\Access\ActionDictionary;
 use Bitrix\Tasks\Access\Model\UserModel;
+use Bitrix\Tasks\CheckList\CheckListFacade;
 use Bitrix\Tasks\Comments;
 use Bitrix\Tasks\Integration\Extranet;
 use Bitrix\Tasks\Integration\SocialNetwork\Group;
@@ -120,6 +121,9 @@ final class Task extends \Bitrix\Tasks\Manager
 
 		$fieldMap[ 'RESPONSIBLES' ] = array(0, 1, 0, 0, 0); // just for compatibility
 
+		$fieldMap[ 'IM_CHAT_ID' ] = array(0, 1, 0, 0, 0);
+		$fieldMap[ 'IM_MESSAGE_ID' ] = array(0, 1, 0, 0, 0);
+
 		return $fieldMap;
 	}
 
@@ -145,7 +149,7 @@ final class Task extends \Bitrix\Tasks\Manager
 			$commentPoster->clearComments();
 
 			if (
-				$data['ADD_TO_TIMEMAN'] === 'Y'
+				($data['ADD_TO_TIMEMAN'] ?? null) === 'Y'
 				&& $userId === (int)$data['RESPONSIBLE_ID']
 				&& $userId === User::getId()
 				&& !Extranet\User::isExtranet($userId)
@@ -154,7 +158,7 @@ final class Task extends \Bitrix\Tasks\Manager
 				// add the task to planner only if the user this method executed under is current and responsible for the task
 				\CTaskPlannerMaintance::plannerActions(['add' => [$taskId]]);
 			}
-			if ($data['ADD_TO_FAVORITE'] == "Y")
+			if (($data['ADD_TO_FAVORITE'] ?? null) === "Y")
 			{
 				$task->addToFavorite();
 			}
@@ -178,7 +182,10 @@ final class Task extends \Bitrix\Tasks\Manager
 					$taskId,
 					$userId,
 					$data[CheckList::getCode(true)],
-					['analyticsData' => $parameters['ANALYTICS_DATA']]
+					[
+						'analyticsData' => $parameters['ANALYTICS_DATA'],
+						'context' => CheckListFacade::TASK_ADD_CONTEXT,
+					]
 				);
 			}
 
@@ -231,7 +238,7 @@ final class Task extends \Bitrix\Tasks\Manager
 
 		// special case: responsibles
 		Responsible::adaptSet($data);
-		if (is_array($data[ Responsible::getLegacyFieldName() ]))
+		if (is_array($data[Responsible::getLegacyFieldName()] ?? null))
 		{
 			$data[ Responsible::getLegacyFieldName() ] = array_shift($data[ Responsible::getLegacyFieldName() ]);
 		}
@@ -324,14 +331,14 @@ final class Task extends \Bitrix\Tasks\Manager
 			$cacheAFWasDisabled = \CTasks::disableCacheAutoClear();
 			$notifADWasDisabled = \CTaskNotifications::disableAutoDeliver();
 
-			$updateParams = array(
-				'TASK_ACTION_UPDATE_PARAMETERS' => array(
-					'THROTTLE_MESSAGES' => $parameters[ 'THROTTLE_MESSAGES' ]
-				),
-				'PUBLIC_MODE' => $parameters[ 'PUBLIC_MODE' ],
+			$updateParams = [
+				'TASK_ACTION_UPDATE_PARAMETERS' => [
+					'THROTTLE_MESSAGES' => ($parameters['THROTTLE_MESSAGES'] ?? null),
+				],
+				'PUBLIC_MODE' => $parameters['PUBLIC_MODE'],
 				'ERRORS' => $errors,
 				'ANALYTICS_DATA' => static::getAnalyticsData($data),
-			);
+			];
 
 			$task = static::doUpdate($userId, $taskId, $data, $updateParams);
 
@@ -346,9 +353,9 @@ final class Task extends \Bitrix\Tasks\Manager
 
 			if ($errors->checkNoFatals())
 			{
-				$data = array('ID' => $task->getId());
+				$data = ['ID' => $task->getId()];
 
-				if ($parameters[ 'RETURN_ENTITY' ])
+				if ($parameters['RETURN_ENTITY'] ?? null)
 				{
 					try
 					{
@@ -502,8 +509,8 @@ final class Task extends \Bitrix\Tasks\Manager
 			$can = array(static::ACT_KEY => &$data[ static::ACT_KEY ]); // for compatibility
 
 			// select sub-entity related data
-
-			if (!is_array($parameters[ 'ENTITY_SELECT' ]))
+			$parameters['ENTITY_SELECT'] = $parameters['ENTITY_SELECT'] ?? null;
+			if (!is_array($parameters['ENTITY_SELECT']))
 			{
 				// by default none is selected
 				$parameters[ 'ENTITY_SELECT' ] = array();
@@ -676,14 +683,14 @@ final class Task extends \Bitrix\Tasks\Manager
 
 			if ($task !== null)
 			{
-				$data = $task->getData(!!$parameters[ 'ESCAPE_DATA' ]);
+				$data = $task->getData((bool)($parameters['ESCAPE_DATA'] ?? null));
 				$data[ static::ACT_KEY ] = static::translateAllowedActionNames($task->getAllowedActions(true));
 
-				if (!intval($data[ 'FORUM_ID' ]))
+				if (!isset($data['FORUM_ID']) || !is_numeric($data['FORUM_ID']))
 				{
-					$data[ 'FORUM_ID' ] = \CTasksTools::getForumIdForIntranet();
+					$data['FORUM_ID'] = \CTasksTools::getForumIdForIntranet();
 				}
-				$data[ 'COMMENTS_COUNT' ] = intval($data[ 'COMMENTS_COUNT' ]);
+				$data['COMMENTS_COUNT'] = (int)($data['COMMENTS_COUNT'] ?? 0);
 
 				// get task parameters
 				$res = ParameterTable::getList(array('filter' => array('=TASK_ID' => $taskId)));
@@ -693,7 +700,7 @@ final class Task extends \Bitrix\Tasks\Manager
 				}
 			}
 
-			if ($parameters[ 'DROP_PRIMARY' ])
+			if ($parameters['DROP_PRIMARY'] ?? null)
 			{
 				unset($data[ 'ID' ]);
 				$data[ static::ACT_KEY ] = static::getFullRights($userId);
@@ -792,7 +799,11 @@ final class Task extends \Bitrix\Tasks\Manager
 		$runningTaskData = \CTaskTimerManager::getInstance($userId)->getRunningTask(false);
 		foreach ($data as $k => &$task)
 		{
-			if ($task[ 'ID' ] == $runningTaskData[ 'TASK_ID' ] && $task[ 'ALLOW_TIME_TRACKING' ] == 'Y')
+			if (
+				$runningTaskData
+				&& (int)$task['ID'] === (int)$runningTaskData['TASK_ID']
+				&& $task['ALLOW_TIME_TRACKING'] === 'Y'
+			)
 			{
 				$task[ 'TIME_ELAPSED' ] += (time() - $runningTaskData[ 'TIMER_STARTED_AT' ]); // elapsed time is a sum of times in task log plus time of the current timer
 				$task[ 'TIME_ELAPSED' ] = (string)$task[ 'TIME_ELAPSED' ]; // for consistency
@@ -821,10 +832,10 @@ final class Task extends \Bitrix\Tasks\Manager
 		else
 		{
 			$navParams = static::prepareNav(
-				$listParameters['limit'],
-				$listParameters['offset'],
-				$listParameters['page'],
-				$parameters['PUBLIC_MODE']
+				($listParameters['limit'] ?? null),
+				($listParameters['offset'] ?? null),
+				($listParameters['page'] ?? null),
+				($parameters['PUBLIC_MODE'] ?? null)
 			);
 			if (!empty($navParams))
 			{
@@ -844,7 +855,7 @@ final class Task extends \Bitrix\Tasks\Manager
 		$getNewCommentsCount = in_array('NEW_COMMENTS_COUNT', $listParameters['select'], true);
 
 		if (
-			array_key_exists('SORTING', (array)$listParameters['order'])
+			array_key_exists('SORTING', (array)($listParameters['order'] ?? []))
 			&& array_key_exists('GROUP_ID', $listParameters['legacyFilter'])
 		)
 		{
@@ -879,8 +890,8 @@ final class Task extends \Bitrix\Tasks\Manager
 		// an exception about sql error may fall here
 		[$items, $res] = \CTaskItem::fetchListArray(
 			$userId,
-			$listParameters['order'],
-			$listParameters['legacyFilter'],
+			($listParameters['order'] ?? null),
+			$listParameters['legacyFilter'] ?? null,
 			$params,
 			$listParameters['select']
 		);
@@ -1163,7 +1174,11 @@ final class Task extends \Bitrix\Tasks\Manager
 				// custom fields
 				case 'CHECKLIST':
 					/** Bitrix\Tasks\Item\Task\Collection\CheckList */
-					$checkList = (is_object($task['SE_CHECKLIST'])? $task['SE_CHECKLIST']->export() : (array)$task['CHECKLIST']);
+					$checkList = (
+						is_object($task['SE_CHECKLIST'] ?? null)
+							? $task['SE_CHECKLIST']->export()
+							: (array)($task['CHECKLIST'] ?? [])
+					);
 					foreach ($checkList as $item)
 					{
 						$index[] = $item['TITLE'];
@@ -1203,7 +1218,11 @@ final class Task extends \Bitrix\Tasks\Manager
 				case 'CRM':
 					if (\Bitrix\Main\ModuleManager::isModuleInstalled('crm'))
 					{
-						$uf = (is_object($task['UF_CRM_TASK'])? $task['UF_CRM_TASK']->toArray() : (array)$task['UF_CRM_TASK']);
+						$uf = (
+							is_object($task['UF_CRM_TASK'] ?? null)
+								? $task['UF_CRM_TASK']->toArray()
+								: (array)($task['UF_CRM_TASK'] ?? [])
+						);
 						foreach ($uf as $item)
 						{
 							$crmElement = explode('_', $item);
@@ -1217,14 +1236,18 @@ final class Task extends \Bitrix\Tasks\Manager
 					break;
 
 				case 'TAGS':
-					$tags = (is_object($task['TAGS'])? $task['TAGS']->export() : (array)$task['TAGS']);
+					$tags = (
+						is_object($task['TAGS'] ?? null)
+							? $task['TAGS']->export()
+							: (array)($task['TAGS'] ?? [])
+					);
 					$index[] = join(' ', $tags);
 					break;
 
 				case 'GROUP':
 					$groupId = $task['GROUP_ID'];
 					$groups = Group::getData([$groupId]);
-					$groupName = $groups[$groupId]['NAME'];
+					$groupName = ($groups[$groupId]['NAME'] ?? null);
 
 					$index[] = $groupName;
 					break;
@@ -1274,7 +1297,7 @@ final class Task extends \Bitrix\Tasks\Manager
 	protected static function getAnalyticsData(&$data)
 	{
 		$code = Checklist::getCode(true);
-		$checklistData = $data[$code];
+		$checklistData = ($data[$code] ?? null);
 
 		if (!$checklistData)
 		{
@@ -1293,7 +1316,7 @@ final class Task extends \Bitrix\Tasks\Manager
 			'checklistCount' => count($checklistParents),
 		];
 
-		if ($checklistData['analyticsData'])
+		if ($checklistData['analyticsData'] ?? null)
 		{
 			foreach (explode(',', $checklistData['analyticsData']) as $key => $value)
 			{
@@ -1301,7 +1324,7 @@ final class Task extends \Bitrix\Tasks\Manager
 			}
 		}
 
-		if ($checklistData['fromDescription'])
+		if ($checklistData['fromDescription'] ?? null)
 		{
 			$analyticsData['fromDescription'] = 1;
 		}

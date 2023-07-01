@@ -271,13 +271,13 @@ final class Calendar
 		$month = 	$date->getMonthGmt(true);
 		$day = 		$date->getDayGmt();
 
-		return $this->holidays[$month.'_'.$day] ? true : false;
+		return array_key_exists($month.'_'.$day, $this->holidays) && $this->holidays[$month.'_'.$day];
 	}
 
 	public function isWeekend(DateTime $date)
 	{
 		$day = $date->getWeekDayGmt();
-		return $this->weekEnds[$day] ? true : false;
+		return array_key_exists($day, $this->weekEnds) && $this->weekEnds[$day];
 	}
 
 	/**
@@ -452,24 +452,24 @@ final class Calendar
 				}
 			}
 
-			[$startHours, $startMinutes] = explode('.', (string)$calendarSettings['work_time_start']);
-			if(isset($startHours))
+			$timeStart = explode('.', (string)$calendarSettings['work_time_start']);
+			if(isset($timeStart[0]))
 			{
-				$result['HOURS']['START']['H'] = (int)$startHours;
+				$result['HOURS']['START']['H'] = (int)$timeStart[0];
 			}
-			if(isset($startMinutes))
+			if(isset($timeStart[1]))
 			{
-				$result['HOURS']['START']['M'] = (int)$startMinutes;
+				$result['HOURS']['START']['M'] = (int)$timeStart[1];
 			}
 
-			[$endHours, $endMinutes] = explode('.', (string)$calendarSettings['work_time_end']);
-			if(isset($endHours))
+			$timeEnd = explode('.', (string)$calendarSettings['work_time_end']);
+			if(isset($timeEnd[0]))
 			{
-				$result['HOURS']['END']['H'] = (int)$endHours;
+				$result['HOURS']['END']['H'] = (int)$timeEnd[0];
 			}
-			if(isset($endMinutes))
+			if(isset($timeEnd[1]))
 			{
-				$result['HOURS']['END']['M'] = (int)$endMinutes;
+				$result['HOURS']['END']['M'] = (int)$timeEnd[1];
 			}
 		}
 

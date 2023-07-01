@@ -48,11 +48,30 @@ final class UpdateCatalogProductsCommand extends Command
 			/** @var BaseSku $sku */
 			/** @var array<string, mixed> $productRow */
 
-			$this->updateName($sku, (string)$productRow['PRODUCT_NAME']);
-			$this->updateMeasure($sku, (string)$productRow['MEASURE_CODE']);
-			$this->updateSections($sku, (array)$productRow['SECTIONS']);
-			$this->updateBarcode($sku, (string)$productRow['BARCODE']);
-			$this->updateImages($sku, $productRow['GALLERY']);
+			if (isset($productRow['PRODUCT_NAME']))
+			{
+				$this->updateName($sku, (string)$productRow['PRODUCT_NAME']);
+			}
+
+			if (isset($productRow['MEASURE_CODE']))
+			{
+				$this->updateMeasure($sku, (string)$productRow['MEASURE_CODE']);
+			}
+
+			if (isset($productRow['SECTIONS']))
+			{
+				$this->updateSections($sku, (array)$productRow['SECTIONS']);
+			}
+
+			if (isset($productRow['BARCODE']))
+			{
+				$this->updateBarcode($sku, (string)$productRow['BARCODE']);
+			}
+
+			if (isset($productRow['GALLERY']))
+			{
+				$this->updateImages($sku, $productRow['GALLERY']);
+			}
 		});
 	}
 

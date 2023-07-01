@@ -1,11 +1,15 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
-use Bitrix\Main;
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
 use Bitrix\Crm\Order\Shipment;
-use Bitrix\Main\Localization\Loc;
-use Bitrix\Crm\Settings\LayoutSettings;
 use Bitrix\Crm\Service;
+use Bitrix\Crm\Settings\LayoutSettings;
+use Bitrix\Main;
+use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
 
@@ -20,37 +24,59 @@ class CCrmOrderShipmentListComponent extends \CBitrixComponent
 	{
 		global  $APPLICATION;
 
-		$arParams['PATH_TO_ORDER_SHIPMENT_SHOW'] = CrmCheckPath('PATH_TO_ORDER_SHIPMENT_SHOW', $arParams['PATH_TO_ORDER_SHIPMENT_SHOW'], $APPLICATION->GetCurPage().'?order_id=#order_id#&show');
-		$arParams['PATH_TO_ORDER_SHIPMENT_EDIT'] = CrmCheckPath('PATH_TO_ORDER_SHIPMENT_EDIT', $arParams['PATH_TO_ORDER_SHIPMENT_EDIT'], $APPLICATION->GetCurPage().'?order_id=#order_id#&edit');
-		$arParams['PATH_TO_USER_PROFILE'] = CrmCheckPath('PATH_TO_USER_PROFILE', $arParams['PATH_TO_USER_PROFILE'], '/company/personal/user/#user_id#/');
-		$arParams['NAME_TEMPLATE'] = empty($arParams['NAME_TEMPLATE']) ? CSite::GetNameFormat(false) : str_replace(array("#NOBR#","#/NOBR#"), array("",""), $arParams["NAME_TEMPLATE"]);
+		$arParams['PATH_TO_ORDER_SHIPMENT_SHOW'] = CrmCheckPath(
+			'PATH_TO_ORDER_SHIPMENT_SHOW',
+			$arParams['PATH_TO_ORDER_SHIPMENT_SHOW'] ?? '',
+			$APPLICATION->GetCurPage() . '?order_id=#order_id#&show'
+		);
+
+		$arParams['PATH_TO_ORDER_SHIPMENT_EDIT'] = CrmCheckPath(
+			'PATH_TO_ORDER_SHIPMENT_EDIT',
+			$arParams['PATH_TO_ORDER_SHIPMENT_EDIT'] ?? '',
+			$APPLICATION->GetCurPage() . '?order_id=#order_id#&edit'
+		);
+
+		$arParams['PATH_TO_USER_PROFILE'] = CrmCheckPath(
+			'PATH_TO_USER_PROFILE',
+			$arParams['PATH_TO_USER_PROFILE'] ?? '',
+			'/company/personal/user/#user_id#/'
+		);
+
+		$arParams['NAME_TEMPLATE'] = empty($arParams['NAME_TEMPLATE'])
+			? CSite::GetNameFormat(false)
+			: str_replace(['#NOBR#', '#/NOBR#'], ['', ''], $arParams['NAME_TEMPLATE'] ?? '');
 
 		return $arParams;
 	}
 
 	protected function init()
 	{
-		if(!CModule::IncludeModule('crm'))
+		if (!CModule::IncludeModule('crm'))
 		{
 			$this->errors[] = Loc::getMessage('CRM_MODULE_NOT_INSTALLED');
+
 			return false;
 		}
 
-		if(!CModule::IncludeModule('currency'))
+		if (!CModule::IncludeModule('currency'))
 		{
 			$this->errors[] = Loc::getMessage('CRM_MODULE_NOT_INSTALLED_CURRENCY');
+
 			return false;
 		}
 
-		if(!CModule::IncludeModule('catalog'))
+		if (!CModule::IncludeModule('catalog'))
 		{
 			$this->errors[] = Loc::getMessage('CRM_MODULE_NOT_INSTALLED_CATALOG');
+
 			return false;
+
 		}
 
 		if (!CModule::IncludeModule('sale'))
 		{
 			$this->errors[] = Loc::getMessage('CRM_MODULE_NOT_INSTALLED_SALE');
+
 			return false;
 		}
 
@@ -59,19 +85,23 @@ class CCrmOrderShipmentListComponent extends \CBitrixComponent
 		if (!\Bitrix\Crm\Order\Permissions\Order::checkReadPermission(0, $this->userPermissions))
 		{
 			$this->errors[] = new Main\Error(Loc::getMessage('CRM_PERMISSION_DENIED'));
+
 			return false;
 		}
 
 		$this->userId = CCrmSecurityHelper::GetCurrentUserID();
 		$this->isInternal = !empty($this->arParams['INTERNAL_FILTER']);
 		CUtil::InitJSCore(array('ajax', 'tooltip'));
+
 		return true;
 	}
 
 	protected function showErrors()
 	{
-		foreach($this->errors as $error)
+		foreach ($this->errors as $error)
+		{
 			ShowError($error);
+		}
 	}
 
 	protected function addErrors(array $errors)
@@ -95,8 +125,10 @@ class CCrmOrderShipmentListComponent extends \CBitrixComponent
 				array('join_type' => 'LEFT')
 			);
 
-		foreach(array('LOGIN', 'NAME', 'LAST_NAME', 'SECOND_NAME') as $field)
+		foreach (array('LOGIN', 'NAME', 'LAST_NAME', 'SECOND_NAME') as $field)
+		{
 			$select[$prefix.'_'.$field] = 'USER_'.$prefix.'.'.$field;
+		}
 	}
 
 	/*
@@ -321,11 +353,16 @@ class CCrmOrderShipmentListComponent extends \CBitrixComponent
 		}
 
 		$this->arResult['CURRENT_USER_ID'] = CCrmSecurityHelper::GetCurrentUserID();
-		$this->arResult['PATH_TO_ORDER_SHIPMENT_LIST'] = $this->arParams['PATH_TO_ORDER_SHIPMENT_LIST'] = CrmCheckPath('PATH_TO_ORDER_SHIPMENT_LIST', $this->arParams['PATH_TO_ORDER_SHIPMENT_LIST'], $APPLICATION->GetCurPage());
+		$this->arResult['PATH_TO_ORDER_SHIPMENT_LIST'] = $this->arParams['PATH_TO_ORDER_SHIPMENT_LIST'] = CrmCheckPath(
+			'PATH_TO_ORDER_SHIPMENT_LIST',
+			$this->arParams['PATH_TO_ORDER_SHIPMENT_LIST'] ?? '',
+			$APPLICATION->GetCurPage()
+		);
+
 		$this->arResult['IS_AJAX_CALL'] = isset($_REQUEST['AJAX_CALL']) || isset($_REQUEST['ajax_request']) || !!CAjax::GetSession();
 		$this->arResult['SESSION_ID'] = bitrix_sessid();
-		$this->arResult['NAVIGATION_CONTEXT_ID'] = isset($this->arParams['NAVIGATION_CONTEXT_ID']) ? $this->arParams['NAVIGATION_CONTEXT_ID'] : '';
-		$this->arResult['PRESERVE_HISTORY'] = isset($this->arParams['PRESERVE_HISTORY']) ? $this->arParams['PRESERVE_HISTORY'] : false;
+		$this->arResult['NAVIGATION_CONTEXT_ID'] = $this->arParams['NAVIGATION_CONTEXT_ID'] ?? '';
+		$this->arResult['PRESERVE_HISTORY'] = $this->arParams['PRESERVE_HISTORY'] ?? false;
 		$this->arResult['STATUS_LIST'] = [];
 		$this->arResult['ERRORS'] = [];
 
@@ -338,7 +375,7 @@ class CCrmOrderShipmentListComponent extends \CBitrixComponent
 		$this->arResult['ENABLE_SLIDER'] = \Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isSliderEnabled();
 		$this->arResult['PATH_TO_ORDER_SHIPMENT_DELETE'] =  CHTTP::urlAddParams($this->arParams['PATH_TO_ORDER_SHIPMENT_LIST'], array('sessid' => bitrix_sessid()));
 
-		if(LayoutSettings::getCurrent()->isSimpleTimeFormatEnabled())
+		if (LayoutSettings::getCurrent()->isSimpleTimeFormatEnabled())
 		{
 			$this->arResult['TIME_FORMAT'] = array(
 				'tommorow' => 'tommorow',
@@ -357,8 +394,8 @@ class CCrmOrderShipmentListComponent extends \CBitrixComponent
 		}
 
 		$this->arResult['CALL_LIST_UPDATE_MODE'] = isset($_REQUEST['call_list_context']) && isset($_REQUEST['call_list_id']) && IsModuleInstalled('voximplant');
-		$this->arResult['CALL_LIST_CONTEXT'] = (string)$_REQUEST['call_list_context'];
-		$this->arResult['CALL_LIST_ID'] = (int)$_REQUEST['call_list_id'];
+		$this->arResult['CALL_LIST_CONTEXT'] = (string)($_REQUEST['call_list_context'] ?? '');
+		$this->arResult['CALL_LIST_ID'] = (int)($_REQUEST['call_list_id'] ?? 0);
 
 		if($this->arResult['CALL_LIST_UPDATE_MODE'])
 		{
@@ -367,8 +404,8 @@ class CCrmOrderShipmentListComponent extends \CBitrixComponent
 
 		$arSort = array();
 		$runtime = array();
-		$this->arResult['FORM_ID'] = isset($this->arParams['FORM_ID']) ? $this->arParams['FORM_ID'] : '';
-		$this->arResult['TAB_ID'] = isset($this->arParams['TAB_ID']) ? $this->arParams['TAB_ID'] : '';
+		$this->arResult['FORM_ID'] = $this->arParams['FORM_ID'] ?? '';
+		$this->arResult['TAB_ID'] = $this->arParams['TAB_ID'] ?? '';
 		$this->arResult['INTERNAL'] = $this->isInternal;
 
 		if (!empty($this->arParams['INTERNAL_FILTER']) && is_array($this->arParams['INTERNAL_FILTER']))
@@ -380,7 +417,9 @@ class CCrmOrderShipmentListComponent extends \CBitrixComponent
 		}
 
 		if (!empty($this->arParams['INTERNAL_SORT']) && is_array($this->arParams['INTERNAL_SORT']))
+		{
 			$arSort = $this->arParams['INTERNAL_SORT'];
+		}
 
 		$this->arResult['IS_EXTERNAL_FILTER'] = false;
 		$this->arResult['GRID_ID'] = 'CRM_ORDER_SHIPMENT_SHIPMENT_LIST_V12'.($this->isInternal && !empty($this->arParams['GRID_ID_SUFFIX']) ? '_'.$this->arParams['GRID_ID_SUFFIX'] : '');
@@ -395,10 +434,14 @@ class CCrmOrderShipmentListComponent extends \CBitrixComponent
 		$this->arResult['HEADERS'] = $this->getHeaders();
 
 		$filter = isset($this->arParams['INTERNAL_FILTER']) && is_array($this->arParams['INTERNAL_FILTER'])
-			? $this->arParams['INTERNAL_FILTER'] : array();
+			? $this->arParams['INTERNAL_FILTER']
+			: array();
 
-		if (intval($this->arParams['ORDER_SHIPMENT_COUNT']) <= 0)
+		$orderShipmentCount = (int)($this->arParams['ORDER_SHIPMENT_COUNT'] ?? 0);
+		if ($orderShipmentCount <= 0)
+		{
 			$this->arParams['ORDER_SHIPMENT_COUNT'] = 20;
+		}
 
 		$arNavParams = array(
 			'nPageSize' => $this->arParams['ORDER_SHIPMENT_COUNT']
@@ -416,6 +459,7 @@ class CCrmOrderShipmentListComponent extends \CBitrixComponent
 			'sort' => array('date_create' => 'desc'),
 			'vars' => array('by' => 'by', 'order' => 'order')
 		));
+
 		$this->arResult['SORT'] = !empty($arSort) ? $arSort : $_arSort['sort'];
 		$this->arResult['SORT_VARS'] = $_arSort['vars'];
 		$visibleColumns = $gridOptions->GetVisibleColumns();
@@ -424,7 +468,7 @@ class CCrmOrderShipmentListComponent extends \CBitrixComponent
 		{
 			foreach ($this->arResult['HEADERS'] as $arHeader)
 			{
-				if ($arHeader['default'])
+				if (!empty($arHeader['default']))
 				{
 					$visibleColumns[] = $arHeader['id'];
 				}
@@ -554,7 +598,7 @@ class CCrmOrderShipmentListComponent extends \CBitrixComponent
 				$lastPageSelected = true;
 			}
 
-			$nav = new \Bitrix\Main\UI\PageNavigation("orderShipmentList");
+			$nav = new \Bitrix\Main\UI\PageNavigation('orderShipmentList');
 			$nav->allowAllRecords(false)
 				->setPageSize($pageSize);
 			$count = $this->getCount($filter);
@@ -733,9 +777,12 @@ class CCrmOrderShipmentListComponent extends \CBitrixComponent
 		$this->arResult['PAGINATION']['URL'] = $APPLICATION->GetCurPageParam('', array('apply_filter', 'clear_filter', 'save', 'page', 'sessid', 'internal'));
 		$orderIds = $orderPermissions = array();
 
-		foreach($this->arResult['ORDER_SHIPMENT'] as $shipment)
+		foreach ($this->arResult['ORDER_SHIPMENT'] as $shipment)
 		{
-			$orderIds[] = $shipment['ORDER_ID'];
+			if (isset($shipment['ORDER_ID']))
+			{
+				$orderIds[] = $shipment['ORDER_ID'];
+			}
 		}
 
 		if (!empty($orderIds) && !(is_object($USER) && $USER->IsAdmin()))
@@ -767,7 +814,7 @@ class CCrmOrderShipmentListComponent extends \CBitrixComponent
 			$arOrderShipment['DATE_MARKED'] = !empty($arOrderShipment['DATE_MARKED']) ? CCrmComponentHelper::TrimDateTimeString(ConvertTimeStamp(MakeTimeStamp($arOrderShipment['DATE_MARKED']), 'SHORT', SITE_ID)) : '';
 			$arOrderShipment['DATE_RESPONSIBLE_ID'] = !empty($arOrderShipment['DATE_RESPONSIBLE_ID']) ? CCrmComponentHelper::TrimDateTimeString(ConvertTimeStamp(MakeTimeStamp($arOrderShipment['DATE_RESPONSIBLE_ID']), 'SHORT', SITE_ID)) : '';
 
-			$currencyID =  isset($arOrderShipment['CURRENCY']) ? $arOrderShipment['CURRENCY'] : CCrmCurrency::GetBaseCurrencyID();
+			$currencyID = $arOrderShipment['CURRENCY'] ?? CCrmCurrency::GetBaseCurrencyID();
 			$arOrderShipment['CURRENCY'] = htmlspecialcharsbx($currencyID);
 			$arOrderShipment['PATH_TO_ORDER_SHIPMENT_DETAILS'] = Service\Sale\EntityLinkBuilder\EntityLinkBuilder::getInstance()->getShipmentDetailsLink(
 				$entityID,
@@ -775,79 +822,81 @@ class CCrmOrderShipmentListComponent extends \CBitrixComponent
 			);
 
 			$arOrderShipment['PATH_TO_ORDER_SHIPMENT_DETAILS'] = CHTTP::urlAddParams(
-				$arOrderShipment['PATH_TO_ORDER_SHIPMENT_DETAILS'],
-				array('order_id' => (int)$this->arParams['INTERNAL_FILTER']['ORDER_ID'])
+				$arOrderShipment['PATH_TO_ORDER_SHIPMENT_DETAILS'] ?? '',
+				['order_id' => (int)($this->arParams['INTERNAL_FILTER']['ORDER_ID'] ?? 0)]
 			);
 
-			$arOrderShipment['PATH_TO_ORDER_SHIPMENT_SHOW'] = $arOrderShipment['PATH_TO_ORDER_SHIPMENT_DETAILS'];
+			$arOrderShipment['PATH_TO_ORDER_SHIPMENT_SHOW'] = $arOrderShipment['PATH_TO_ORDER_SHIPMENT_DETAILS'] ?? '';
 			$arOrderShipment['PATH_TO_ORDER_SHIPMENT_EDIT'] = CCrmUrlUtil::AddUrlParams(
-				$arOrderShipment['PATH_TO_ORDER_SHIPMENT_DETAILS'],
+				$arOrderShipment['PATH_TO_ORDER_SHIPMENT_DETAILS'] ?? '',
 				array('init_mode' => 'edit')
 			);
 
 			$arOrderShipment['PATH_TO_ORDER_SHIPMENT_DELETE'] =  CHTTP::urlAddParams(
-				$this->isInternal ? $APPLICATION->GetCurPage() : $this->arParams['PATH_TO_ORDER_SHIPMENT_LIST'],
+				$this->isInternal
+					? $APPLICATION->GetCurPage()
+					: ($this->arParams['PATH_TO_ORDER_SHIPMENT_LIST'] ?? ''),
 				array('action_'.$this->arResult['GRID_ID'] => 'delete', 'ID' => $entityID, 'sessid' => $this->arResult['SESSION_ID'])
 			);
 
 			$arOrderShipment['PATH_TO_USER_PROFILE'] = CComponentEngine::MakePathFromTemplate(
-				$this->arParams['PATH_TO_USER_PROFILE'],
-				array('user_id' => $arOrderShipment['RESPONSIBLE_ID'])
+				$this->arParams['PATH_TO_USER_PROFILE'] ?? '',
+				array('user_id' => (int)($arOrderShipment['RESPONSIBLE_ID'] ?? 0))
 			);
 
-			$arOrderShipment['STATUS_ID'] = isset($arOrderShipment['STATUS_ID']) ? $arOrderShipment['STATUS_ID'] : '';
+			$arOrderShipment['STATUS_ID'] = $arOrderShipment['STATUS_ID'] ?? '';
 
 			$arOrderShipment['RESPONSIBLE'] = CUser::FormatName(
-				$this->arParams['NAME_TEMPLATE'],
+				$this->arParams['NAME_TEMPLATE'] ?? '',
 				array(
-					'LOGIN' => isset($arOrderShipment['RESPONSIBLE_LOGIN']) ? $arOrderShipment['RESPONSIBLE_LOGIN'] : '',
-					'NAME' => isset($arOrderShipment['RESPONSIBLE_NAME']) ? $arOrderShipment['RESPONSIBLE_NAME'] : '',
-					'LAST_NAME' => isset($arOrderShipment['RESPONSIBLE_LAST_NAME']) ? $arOrderShipment['RESPONSIBLE_LAST_NAME'] : '',
-					'SECOND_NAME' => isset($arOrderShipment['RESPONSIBLE_SECOND_NAME']) ? $arOrderShipment['RESPONSIBLE_SECOND_NAME'] : ''
+					'LOGIN' => $arOrderShipment['RESPONSIBLE_LOGIN'] ?? '',
+					'NAME' => $arOrderShipment['RESPONSIBLE_NAME'] ?? '',
+					'LAST_NAME' => $arOrderShipment['RESPONSIBLE_LAST_NAME'] ?? '',
+					'SECOND_NAME' => $arOrderShipment['RESPONSIBLE_SECOND_NAME'] ?? '',
 				),
 				true
 			);
 
 			$arOrderShipment['EMP_ALLOW_DELIVERY'] = CUser::FormatName(
-				$this->arParams['NAME_TEMPLATE'],
+				$this->arParams['NAME_TEMPLATE'] ?? '',
 				array(
-					'LOGIN' => isset($arOrderShipment['EMP_ALLOW_DELIVERY_LOGIN']) ? $arOrderShipment['EMP_ALLOW_DELIVERY_LOGIN'] : '',
-					'NAME' => isset($arOrderShipment['EMP_ALLOW_DELIVERY_NAME']) ? $arOrderShipment['EMP_ALLOW_DELIVERY_NAME'] : '',
-					'LAST_NAME' => isset($arOrderShipment['EMP_ALLOW_DELIVERY_LAST_NAME']) ? $arOrderShipment['EMP_ALLOW_DELIVERY_LAST_NAME'] : '',
-					'SECOND_NAME' => isset($arOrderShipment['EMP_ALLOW_DELIVERY_SECOND_NAME']) ? $arOrderShipment['EMP_ALLOW_DELIVERY_SECOND_NAME'] : ''
+					'LOGIN' => $arOrderShipment['EMP_ALLOW_DELIVERY_LOGIN'] ?? '',
+					'NAME' => $arOrderShipment['EMP_ALLOW_DELIVERY_NAME'] ?? '',
+					'LAST_NAME' => $arOrderShipment['EMP_ALLOW_DELIVERY_LAST_NAME'] ?? '',
+					'SECOND_NAME' => $arOrderShipment['EMP_ALLOW_DELIVERY_SECOND_NAME'] ?? '',
 				),
 				true
 			);
 
 			$arOrderShipment['EMP_DEDUCTED'] = CUser::FormatName(
-				$this->arParams['NAME_TEMPLATE'],
+				$this->arParams['NAME_TEMPLATE'] ?? '',
 				array(
-					'LOGIN' => isset($arOrderShipment['EMP_DEDUCTED_LOGIN']) ? $arOrderShipment['EMP_DEDUCTED_LOGIN'] : '',
-					'NAME' => isset($arOrderShipment['EMP_DEDUCTED_NAME']) ? $arOrderShipment['EMP_DEDUCTED_NAME'] : '',
-					'LAST_NAME' => isset($arOrderShipment['EMP_DEDUCTED_LAST_NAME']) ? $arOrderShipment['EMP_DEDUCTED_LAST_NAME'] : '',
-					'SECOND_NAME' => isset($arOrderShipment['EMP_DEDUCTED_SECOND_NAME']) ? $arOrderShipment['EMP_DEDUCTED_SECOND_NAME'] : ''
+					'LOGIN' => $arOrderShipment['EMP_DEDUCTED_LOGIN'] ?? '',
+					'NAME' => $arOrderShipment['EMP_DEDUCTED_NAME'] ?? '',
+					'LAST_NAME' => $arOrderShipment['EMP_DEDUCTED_LAST_NAME'] ?? '',
+					'SECOND_NAME' => $arOrderShipment['EMP_DEDUCTED_SECOND_NAME'] ?? '',
 				),
 				true
 			);
 
 			$arOrderShipment['EMP_MARKED'] = CUser::FormatName(
-				$this->arParams['NAME_TEMPLATE'],
+				$this->arParams['NAME_TEMPLATE'] ?? '',
 				array(
-					'LOGIN' => isset($arOrderShipment['EMP_MARKED_LOGIN']) ? $arOrderShipment['EMP_MARKED_LOGIN'] : '',
-					'NAME' => isset($arOrderShipment['EMP_MARKED_NAME']) ? $arOrderShipment['EMP_MARKED_NAME'] : '',
-					'LAST_NAME' => isset($arOrderShipment['EMP_MARKED_LAST_NAME']) ? $arOrderShipment['EMP_MARKED_LAST_NAME'] : '',
-					'SECOND_NAME' => isset($arOrderShipment['EMP_MARKED_SECOND_NAME']) ? $arOrderShipment['EMP_MARKED_SECOND_NAME'] : ''
+					'LOGIN' => $arOrderShipment['EMP_MARKED_LOGIN'] ?? '',
+					'NAME' => $arOrderShipment['EMP_MARKED_NAME'] ?? '',
+					'LAST_NAME' => $arOrderShipment['EMP_MARKED_LAST_NAME'] ?? '',
+					'SECOND_NAME' => $arOrderShipment['EMP_MARKED_SECOND_NAME'] ?? '',
 				),
 				true
 			);
 
 			$arOrderShipment['EMP_RESPONSIBLE'] = CUser::FormatName(
-				$this->arParams['NAME_TEMPLATE'],
+				$this->arParams['NAME_TEMPLATE'] ?? '',
 				array(
-					'LOGIN' => isset($arOrderShipment['EMP_RESPONSIBLE_LOGIN']) ? $arOrderShipment['EMP_RESPONSIBLE_LOGIN'] : '',
-					'NAME' => isset($arOrderShipment['EMP_RESPONSIBLE_NAME']) ? $arOrderShipment['EMP_RESPONSIBLE_NAME'] : '',
-					'LAST_NAME' => isset($arOrderShipment['EMP_RESPONSIBLE_LAST_NAME']) ? $arOrderShipment['EMP_RESPONSIBLE_LAST_NAME'] : '',
-					'SECOND_NAME' => isset($arOrderShipment['EMP_RESPONSIBLE_SECOND_NAME']) ? $arOrderShipment['EMP_RESPONSIBLE_SECOND_NAME'] : ''
+					'LOGIN' => $arOrderShipment['EMP_RESPONSIBLE_LOGIN'] ?? '',
+					'NAME' => $arOrderShipment['EMP_RESPONSIBLE_NAME'] ?? '',
+					'LAST_NAME' => $arOrderShipment['EMP_RESPONSIBLE_LAST_NAME'] ?? '',
+					'SECOND_NAME' => $arOrderShipment['EMP_RESPONSIBLE_SECOND_NAME'] ?? '',
 				),
 				true
 			);
@@ -858,10 +907,19 @@ class CCrmOrderShipmentListComponent extends \CBitrixComponent
 					'#NUMBER#' => htmlspecialcharsbx($arOrderShipment['ACCOUNT_NUMBER']),
 					'#DATE#' => $arOrderShipment['DATE_INSERT']
 			));
-			$arOrderShipment['PRICE_DELIVERY_CURRENCY'] = CCrmCurrency::MoneyToString($arOrderShipment['PRICE_DELIVERY'], $arOrderShipment['CURRENCY']);
-			$arOrderShipment['BASE_PRICE_DELIVERY'] = CCrmCurrency::MoneyToString($arOrderShipment['BASE_PRICE_DELIVERY'], $arOrderShipment['CURRENCY']);
+			$arOrderShipment['PRICE_DELIVERY_CURRENCY'] = CCrmCurrency::MoneyToString(
+				$arOrderShipment['PRICE_DELIVERY'] ?? 0.0,
+				$arOrderShipment['CURRENCY']
+			);
+			$arOrderShipment['BASE_PRICE_DELIVERY'] = CCrmCurrency::MoneyToString(
+				$arOrderShipment['BASE_PRICE_DELIVERY'] ?? 0.0,
+				$arOrderShipment['CURRENCY']
+			);
 
-			if(isset($arOrderShipment['DELIVERY_SERVICE_LOGOTIP']) && intval($arOrderShipment['DELIVERY_SERVICE_LOGOTIP']) > 0)
+			if (
+				isset($arOrderShipment['DELIVERY_SERVICE_LOGOTIP'])
+				&& intval($arOrderShipment['DELIVERY_SERVICE_LOGOTIP']) > 0
+			)
 			{
 				$arOrderShipment['DELIVERY_SERVICE_LOGOTIP'] = \CFile::GetPath($arOrderShipment['DELIVERY_SERVICE_LOGOTIP']);
 			}
@@ -876,7 +934,7 @@ class CCrmOrderShipmentListComponent extends \CBitrixComponent
 
 			$arOrderShipment['DELETE'] = $arOrderShipment['EDIT'] = !$arOrderShipment['INTERNAL'];
 
-			if (isset($orderPermissions[$arOrderShipment['ORDER_ID']]))
+			if (isset($arOrderShipment['ORDER_ID'], $orderPermissions[$arOrderShipment['ORDER_ID']]))
 			{
 				$arOrderShipment['EDIT'] = $orderPermissions[$arOrderShipment['ORDER_ID']]['EDIT'];
 				$arOrderShipment['DELETE'] = $orderPermissions[$arOrderShipment['ORDER_ID']]['DELETE'];
@@ -895,7 +953,7 @@ class CCrmOrderShipmentListComponent extends \CBitrixComponent
 			);
 
 			$this->arResult['PATH_TO_ORDER_SHIPMENT_ADD'] = CHTTP::urlAddParams(
-				$this->arResult['PATH_TO_ORDER_SHIPMENT_ADD'],
+				$this->arResult['PATH_TO_ORDER_SHIPMENT_ADD'] ?? '',
 				array('order_id' => (int)$this->arParams['INTERNAL_FILTER']['ORDER_ID'])
 			);
 		}
@@ -929,9 +987,9 @@ class CCrmOrderShipmentListComponent extends \CBitrixComponent
 		}
 
 		$this->IncludeComponentTemplate();
+
 		include_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/components/bitrix/crm.order/include/nav.php');
-		return $this->arResult['ROWS_COUNT'];
+
+		return $this->arResult['ROWS_COUNT'] ?? null;
 	}
 }
-?>
-

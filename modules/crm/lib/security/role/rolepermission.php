@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Security\Role;
 
+use Bitrix\Crm\Security\Role\Model\RoleTable;
 use Bitrix\Main;
 use Bitrix\Crm\Security\Role\Model\RolePermissionTable;
 
@@ -101,12 +102,18 @@ class RolePermission
 	 * @param string $entityId
 	 * @return array it is an array like [roleId => ["READ" => ["-" => "X"], ...]]]
 	 */
-	public static function getByEntityId(string $entityId)
+	public static function getByEntityId(string $entityId, bool $skipSystemRoles = true)
 	{
 		$result = [];
+		$systemRolesIds = self::getSystemRolesIds();
 
 		foreach (self::getAll() as $roleId => $entities)
 		{
+			if (in_array($roleId, $systemRolesIds, false) && $skipSystemRoles)
+			{
+				continue;
+			}
+
 			$result[$roleId] =
 				array_key_exists($entityId, $entities)
 					? $entities[$entityId]
@@ -125,9 +132,10 @@ class RolePermission
 	 * @param bool $skipAdminRoles Skip roles with "Allow edit config" checkbox to avoid decreasing permissions level in them
 	 * @return Main\Result
 	 */
-	public static function setByEntityId(string $entityId, array $permissionSet, $skipAdminRoles = false)
+	public static function setByEntityId(string $entityId, array $permissionSet, $skipAdminRoles = false, $skipSystemRoles = true)
 	{
 		static::$cache = null;
+		$systemRolesIds = self::getSystemRolesIds();
 
 		$result = new Main\Result();
 
@@ -146,6 +154,11 @@ class RolePermission
 					continue;
 				}
 			}
+			if (in_array($roleId, $systemRolesIds, false) && $skipSystemRoles) // do not affect system roles
+			{
+				continue;
+			}
+
 			if (array_key_exists($roleId, $permissionSet))
 			{
 				$entities[$entityId] = $permissionSet[$roleId];
@@ -172,6 +185,7 @@ class RolePermission
 	{
 		static::$cache = null;
 
+		$systemRolesIds = self::getSystemRolesIds();
 		$result = new Main\Result();
 
 		$role = new \CCrmRole();
@@ -185,6 +199,10 @@ class RolePermission
 					continue;
 				}
 			}
+			if (in_array($roleId, $systemRolesIds, false)) // do not affect system roles
+			{
+				continue;
+			}
 			$entities[$entityId] = $permissionSet;
 
 			$fields = ["RELATION" => $entities];
@@ -195,5 +213,13 @@ class RolePermission
 		}
 
 		return $result;
+	}
+
+	public static function getSystemRolesIds(): array
+	{
+		return array_column(RoleTable::query()
+			->where('IS_SYSTEM', 'Y')
+			->setSelect(['ID'])
+			->fetchAll(), 'ID');
 	}
 }

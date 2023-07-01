@@ -37,6 +37,7 @@ $MESS["MENU_TELEPHONY_CALL"] = "Позвонить";
 $MESS["MENU_CHANGE_ACCOUNT"] = "Сменить аккаунт";
 $MESS["MENU_SETTINGS"] = "Настройки";
 $MESS["MENU_SETTINGS_TABS"] = "Нижнее меню";
+$MESS["MENU_PRESET_TAB"] = "Главный инструмент";
 $MESS["MENU_AI"] = "Лаборатория AI";
 $MESS["MENU_CATALOG"] = "Торговый каталог";
 $MESS["MENU_CATALOG_STORE"] = "Складской учёт";
@@ -47,5 +48,6 @@ $MESS['TASKS_ROLE_AUDITOR'] = 'Наблюдаю';
 $MESS['TASKS_ROLE_ORIGINATOR'] = 'Поручил';
 $MESS["MEASURE_STRESS"] = "Замерить";
 $MESS["MB_SEC_B24"] = "ВАШ БИТРИКС24";
-$MESS["TO_LOGIN_ON_DESKTOP"] = "Перейти в полную версию";
-
+$MESS["TO_LOGIN_ON_DESKTOP_MSGVER_1"] = "Войти в веб-версию";
+$MESS["MENU_CRM_TERMINAL"] = "Терминал";
+$MESS["MENU_CRM_TERMINAL_V2"] = "Платёжный терминал";

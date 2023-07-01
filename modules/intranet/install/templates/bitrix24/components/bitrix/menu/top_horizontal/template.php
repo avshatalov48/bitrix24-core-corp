@@ -58,6 +58,11 @@ foreach ($arResult as $item)
 		}
 	}
 
+	if (isset($item['PARAMS']['sub_menu']) && is_array($item['PARAMS']['sub_menu']))
+	{
+		$menuItem['ITEMS'] = $item['PARAMS']['sub_menu'];
+	}
+
 	$index = $item['DEPTH_LEVEL'] - 1;
 	if (isset($parents[$index]))
 	{

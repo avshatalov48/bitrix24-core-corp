@@ -6,6 +6,19 @@ use Bitrix\Main;
 
 /**
  * Class QrTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Qr_Query query()
+ * @method static EO_Qr_Result getByPrimary($primary, array $parameters = [])
+ * @method static EO_Qr_Result getById($id)
+ * @method static EO_Qr_Result getList(array $parameters = [])
+ * @method static EO_Qr_Entity getEntity()
+ * @method static \Bitrix\Crm\Automation\QR\EO_Qr createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Automation\QR\EO_Qr_Collection createCollection()
+ * @method static \Bitrix\Crm\Automation\QR\EO_Qr wakeUpObject($row)
+ * @method static \Bitrix\Crm\Automation\QR\EO_Qr_Collection wakeUpCollection($rows)
  */
 class QrTable extends Main\Entity\DataManager
 {

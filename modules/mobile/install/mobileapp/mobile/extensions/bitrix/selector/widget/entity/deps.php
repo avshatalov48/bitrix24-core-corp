@@ -1,5 +1,7 @@
 <?php
 
 return [
-	'selector/widget',
+	'extensions' => [
+		'selector/widget',
+	],
 ];

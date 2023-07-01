@@ -1,0 +1,22 @@
+<?php
+
+$MESS['M_CRM_DOCUMENT_SHARE_DIALOG_TITLE'] = 'Отправить клиенту';
+$MESS['M_CRM_DOCUMENT_SHARE_DIALOG_SYSTEM_SHARE_TITLE'] = 'Поделиться документом';
+$MESS['M_CRM_DOCUMENT_SHARE_DIALOG_SYSTEM_SHARE_SUBTITLE'] = 'Скачать или отправить контактам в телефоне';
+$MESS['M_CRM_DOCUMENT_SHARE_DIALOG_SIGN_TITLE'] = 'Подписать';
+$MESS['M_CRM_DOCUMENT_SHARE_DIALOG_SIGN_SUBTITLE'] = 'Отправка через сервис подписания документов';
+$MESS['M_CRM_DOCUMENT_SHARE_DIALOG_CANCEL'] = 'Отмена';
+$MESS['M_CRM_DOCUMENT_SHARE_DIALOG_COPY_LINK_TITLE'] = 'Скопировать ссылку';
+$MESS['M_CRM_DOCUMENT_SHARE_DIALOG_COPY_LINK_SUBTITLE'] = 'Доступ по ссылке';
+$MESS['M_CRM_DOCUMENT_SHARE_DIALOG_COPY_LINK_DONE'] = 'Скопировано';
+$MESS['M_CRM_DOCUMENT_SHARE_DIALOG_COPY_LINK_ERROR'] = 'Не удалось создать ссылку';
+$MESS['M_CRM_DOCUMENT_SHARE_DIALOG_SMS_TITLE'] = 'СМС/Whatsapp';
+$MESS['M_CRM_DOCUMENT_SHARE_DIALOG_PHONE_NOT_FOUND'] = 'Не указан телефон клиента';
+$MESS['M_CRM_DOCUMENT_SHARE_DIALOG_EMAIL_TITLE'] = 'E-mail';
+$MESS['M_CRM_DOCUMENT_SHARE_DIALOG_EMAIL_NOT_FOUND'] = 'Не указан e-mail клиента';
+$MESS['M_CRM_DOCUMENT_SHARE_DIALOG_EMAIL_FILE_ATTACHED'] = 'Посмотрите документ во вложении';
+$MESS['M_CRM_DOCUMENT_SHARE_DIALOG_CHECK_OUT_FILE_BY_LINK'] = 'Посмотрите документ #URL#';
+$MESS['M_CRM_DOCUMENT_SHARE_DIALOG_OPENLINE_TITLE'] = 'Открытая линия';
+$MESS['M_CRM_DOCUMENT_SHARE_DIALOG_OPENLINE_NOT_FOUND'] = 'Нет связанной открытой линии';
+$MESS['M_CRM_DOCUMENT_SHARE_DIALOG_TARIFF_RESTRICTION'] = 'Недоступно на вашем тарифе';
+$MESS['M_CRM_DOCUMENT_SHARE_DIALOG_CHANNEL_NOT_AVAILABLE'] = 'Способ отправки недоступен';

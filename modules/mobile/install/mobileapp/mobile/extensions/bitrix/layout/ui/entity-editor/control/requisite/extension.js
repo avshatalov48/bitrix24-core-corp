@@ -1,4 +1,9 @@
-(() => {
+/**
+ * @module layout/ui/entity-editor/control/requisite
+ */
+jn.define('layout/ui/entity-editor/control/requisite', (require, exports, module) => {
+
+	const { EntityEditorField } = require('layout/ui/entity-editor/control/field');
 
 	/**
 	 * @class RequisiteField
@@ -28,5 +33,5 @@
 		}
 	}
 
-	jnexport(RequisiteField);
-})();
+	module.exports = { RequisiteField };
+});

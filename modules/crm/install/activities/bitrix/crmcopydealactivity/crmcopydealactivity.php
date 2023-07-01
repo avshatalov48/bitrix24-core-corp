@@ -303,6 +303,33 @@ class CBPCrmCopyDealActivity extends CBPActivity
 			$properties['StageId'] = $arCurrentValues['stage_id_text'];
 		}
 
+		if (
+			(!$properties['CategoryId'] || !$properties['StageId'])
+			&& \Bitrix\Main\Loader::includeModule('crm')
+		)
+		{
+			$entityTypeId = CCrmOwnerType::ResolveID($documentType[2]);
+			$factory = Crm\Service\Container::getInstance()->getFactory($entityTypeId);
+
+			if (isset($factory))
+			{
+				if ($properties['CategoryId'] === '' && $factory->isCategoriesSupported())
+				{
+					$category = $factory->createDefaultCategoryIfNotExist();
+					$stage = $factory->getStages($category->getId())->getAll()[0];
+
+					$properties['CategoryId'] = $category->getId();
+					$properties['StageId'] = $stage->getStatusId();
+				}
+				elseif ($properties['StageId'] === '' && !is_null($factory->getCategory((int)$properties['CategoryId'])))
+				{
+					$stage = $factory->getStages((int)$properties['CategoryId'])->getAll()[0];
+
+					$properties['StageId'] = $stage->getStatusId();
+				}
+			}
+		}
+
 		if (count($errors) > 0)
 		{
 			return false;

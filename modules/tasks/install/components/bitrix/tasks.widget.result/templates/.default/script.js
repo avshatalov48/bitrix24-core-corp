@@ -24,37 +24,61 @@ this.BX = this.BX || {};
 	      main_core_events.EventEmitter.subscribe('SidePanel.Slider:onOpenComplete', this.blockResize.bind(this));
 	    }
 	  }, {
+	    key: "scrollToResult",
+	    value: function scrollToResult() {
+	      var _this = this;
+	      var resultId = this.getResultIdFromRequest();
+	      if (resultId) {
+	        var resultItem = this.contentNode.querySelector('[data-id="' + resultId + '"]');
+	        if (resultItem) {
+	          var scrollTo = function scrollTo() {
+	            _this.activateBlinking(resultItem);
+	            var itemTopPosition = main_core.Dom.getPosition(resultItem).top;
+	            window.scrollTo({
+	              top: itemTopPosition,
+	              behavior: 'smooth'
+	            });
+	          };
+	          if (main_core.Dom.hasClass(resultItem.parentElement, 'tasks-widget-result__item-more')) {
+	            main_core.Event.bindOnce(this.itemsWrapperNode, 'transitionend', scrollTo);
+	            this.showResults();
+	          } else {
+	            scrollTo();
+	          }
+	        }
+	      }
+	    }
+	  }, {
+	    key: "getResultIdFromRequest",
+	    value: function getResultIdFromRequest() {
+	      var uri = new main_core.Uri(window.location.href);
+	      var resultId = uri.getQueryParam('RID');
+	      return resultId ? parseInt(resultId, 10) : null;
+	    }
+	  }, {
 	    key: "blockResize",
 	    value: function blockResize() {
 	      this.contentNode.style.height = "".concat(this.containerNode.scrollHeight, "px");
+	      this.scrollToResult();
 	    }
 	  }, {
 	    key: "initExpand",
 	    value: function initExpand() {
-	      var _this = this;
+	      var _this2 = this;
 	      this.initExpandButton();
 	      if (this.contentNode) {
 	        this.blockResize();
 	      }
-	      this.targetBtnDown && this.targetBtnDown.addEventListener('click', function () {
-	        _this.targetBtnDown.classList.remove('--visible');
-	        _this.targetBtnUp.classList.add('--visible');
-	        _this.itemsContentNode.classList.add('--open');
-	        _this.itemsWrapperNode.style.height = "".concat(_this.itemsWrapperNode.scrollHeight, "px");
-	        _this.itemsWrapperNode.addEventListener('transitionend', _this.setHeightAutoFunction);
-	        if (_this.contentNode) {
-	          _this.contentNode.style.height = "".concat(_this.itemsWrapperNode.scrollHeight + _this.containerNode.scrollHeight, "px");
-	        }
-	      });
+	      this.targetBtnDown && this.targetBtnDown.addEventListener('click', this.showResults.bind(this));
 	      this.targetBtnUp && this.targetBtnUp.addEventListener('click', function () {
-	        _this.targetBtnUp.classList.remove('--visible');
-	        _this.targetBtnDown.classList.add('--visible');
-	        _this.itemsContentNode.classList.remove('--open');
-	        _this.itemsWrapperNode.style.height = "".concat(_this.itemsWrapperNode.scrollHeight, "px");
-	        _this.itemsWrapperNode.clientHeight; // it's needed, P.Rafeev magic
-	        _this.itemsWrapperNode.style.height = 0;
-	        if (_this.contentNode) {
-	          _this.contentNode.style.height = "".concat(_this.itemsNodes[0].offsetHeight + 35, "px");
+	        _this2.targetBtnUp.classList.remove('--visible');
+	        _this2.targetBtnDown.classList.add('--visible');
+	        _this2.itemsContentNode.classList.remove('--open');
+	        _this2.itemsWrapperNode.style.height = "".concat(_this2.itemsWrapperNode.scrollHeight, "px");
+	        _this2.itemsWrapperNode.clientHeight; // it's needed, P.Rafeev magic
+	        _this2.itemsWrapperNode.style.height = 0;
+	        if (_this2.contentNode) {
+	          _this2.contentNode.style.height = "".concat(_this2.itemsNodes[0].offsetHeight + 35, "px");
 	        }
 	      });
 	    }
@@ -130,9 +154,40 @@ this.BX = this.BX || {};
 	      this.blockResize();
 	    }
 	  }, {
+	    key: "showResults",
+	    value: function showResults() {
+	      this.targetBtnDown.classList.remove('--visible');
+	      this.targetBtnUp.classList.add('--visible');
+	      this.itemsContentNode.classList.add('--open');
+	      this.itemsWrapperNode.style.height = "".concat(this.itemsWrapperNode.scrollHeight, "px");
+	      this.itemsWrapperNode.addEventListener('transitionend', this.setHeightAutoFunction);
+	      if (this.contentNode) {
+	        this.contentNode.style.height = "".concat(this.itemsWrapperNode.scrollHeight + this.containerNode.scrollHeight, "px");
+	      }
+	    }
+	  }, {
+	    key: "activateBlinking",
+	    value: function activateBlinking(resultNode) {
+	      if (main_core.Type.isUndefined(IntersectionObserver)) {
+	        return;
+	      }
+	      var observer = new IntersectionObserver(function (entries) {
+	        if (entries[0].isIntersecting === true) {
+	          main_core.Dom.addClass(resultNode, '--blink');
+	          setTimeout(function () {
+	            main_core.Dom.removeClass(resultNode, '--blink');
+	          }, 300);
+	          observer.disconnect();
+	        }
+	      }, {
+	        threshold: [0]
+	      });
+	      observer.observe(resultNode);
+	    }
+	  }, {
 	    key: "reloadResults",
 	    value: function reloadResults() {
-	      var _this2 = this;
+	      var _this3 = this;
 	      main_core.ajax.runComponentAction('bitrix:tasks.widget.result', 'getResults', {
 	        mode: 'class',
 	        data: {
@@ -142,9 +197,9 @@ this.BX = this.BX || {};
 	        if (!response.data) {
 	          return;
 	        }
-	        _this2.containerNode.innerHTML = response.data;
-	        main_core.Runtime.html(_this2.containerNode, response.data).then(function () {
-	          _this2.initExpand();
+	        _this3.containerNode.innerHTML = response.data;
+	        main_core.Runtime.html(_this3.containerNode, response.data).then(function () {
+	          _this3.initExpand();
 	        });
 	      });
 	    }

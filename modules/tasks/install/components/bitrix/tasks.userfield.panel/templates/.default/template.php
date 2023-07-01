@@ -104,9 +104,13 @@ $APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
 					<?foreach($arResult['DATA']['STATE'] as $id => $state):?>
 
 						<?
-						$uf = $arResult['DATA']['FIELDS'][$arResult['TEMPLATE_DATA']['ID2CODE'][$id]];
-						$ufPublic = $arResult['JS_DATA']['scheme'][$id];
-						$code = $uf['CODE'];
+						$uf = (
+							isset($arResult['TEMPLATE_DATA']['ID2CODE'][$id], $arResult['DATA']['FIELDS'][$arResult['TEMPLATE_DATA']['ID2CODE'][$id]])
+								? $arResult['DATA']['FIELDS'][$arResult['TEMPLATE_DATA']['ID2CODE'][$id]]
+								: null
+						);
+						$ufPublic = ($arResult['JS_DATA']['scheme'][$id] ?? null);
+						$code = ($uf['CODE'] ?? null);
 
 						if(!$uf || in_array($code, $arParams['EXCLUDE']))
 						{
@@ -118,9 +122,11 @@ $APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
 						{
 							$uf['FIELD_NAME'] = $arParams['INPUT_PREFIX'].'['.$uf['FIELD_NAME'].']';
 							ob_start();
-							\Bitrix\Tasks\Util\UserField\UI::showEdit($uf, array(
-								'PREFER_DEFAULT' => !intval($arParams['DATA']['ID'])
-							), $this->__component);
+							\Bitrix\Tasks\Util\UserField\UI::showEdit(
+								$uf,
+								['PREFER_DEFAULT' => !(int)($arParams['DATA']['ID'] ?? null)],
+								$this->__component
+							);
 							$html = ob_get_clean();
 
 							// replace date icon, no ability to do it in other way

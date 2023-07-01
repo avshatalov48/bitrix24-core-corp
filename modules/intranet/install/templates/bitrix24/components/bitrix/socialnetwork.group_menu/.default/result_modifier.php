@@ -382,7 +382,7 @@ $arResult["HideArchiveLinks"] = (
 
 $arResult["bUserCanRequestGroup"] = (
 	$arResult["Group"]["VISIBLE"] === "Y"
-	&& !$arResult["bExtranet"]
+	&& (!isset($arResult["bExtranet"]) || !$arResult["bExtranet"])
 	&& !$arResult["HideArchiveLinks"]
 	&& (
 		!$arResult["CurrentUserPerms"]["UserRole"]

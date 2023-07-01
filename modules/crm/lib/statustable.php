@@ -28,9 +28,9 @@ Loc::loadMessages(__FILE__);
  *
  * <<< ORMENTITYANNOTATION
  * @method static EO_Status_Query query()
- * @method static EO_Status_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Status_Result getByPrimary($primary, array $parameters = [])
  * @method static EO_Status_Result getById($id)
- * @method static EO_Status_Result getList(array $parameters = array())
+ * @method static EO_Status_Result getList(array $parameters = [])
  * @method static EO_Status_Entity getEntity()
  * @method static \Bitrix\Crm\EO_Status createObject($setDefaultValues = true)
  * @method static \Bitrix\Crm\EO_Status_Collection createCollection()
@@ -270,13 +270,14 @@ class StatusTable extends Entity\DataManager
 	public static function onBeforeDelete(Event $event): EventResult
 	{
 		$data = static::getByPrimary($event->getParameter('id'))->fetch();
-		static::getTemporaryStorage()->saveData($event->getParameter('id'), $data);
 
 		$result = new EventResult();
 		if (!$data)
 		{
 			return $result;
 		}
+
+		static::getTemporaryStorage()->saveData($event->getParameter('id'), $data);
 
 		$entityId = $data['ENTITY_ID'];
 		$entity = \CCrmStatus::GetEntityTypes()[$entityId] ?? null;

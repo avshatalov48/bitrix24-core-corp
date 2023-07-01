@@ -32,10 +32,11 @@ class CrmSmartDocumentDetailsComponent extends FactoryBased
 			'name' => 'main',
 			'title' => Loc::getMessage('CRM_COMPONENT_FACTORYBASED_EDITOR_MAIN_SECTION_TITLE'),
 			'type' => 'section',
-			'elements' => [],
+			'elements' => [
+				['name' => Item::FIELD_NAME_TITLE],
+				['name' => EditorAdapter::FIELD_OPPORTUNITY],
+			],
 		];
-		$sectionMain['elements'][] = ['name' => Item::FIELD_NAME_TITLE];
-		$sectionMain['elements'][] = ['name' =>  EditorAdapter::FIELD_OPPORTUNITY];
 
 		$sections[] = $sectionMain;
 
@@ -43,11 +44,12 @@ class CrmSmartDocumentDetailsComponent extends FactoryBased
 			'name' => 'additional',
 			'title' => Loc::getMessage('CRM_TYPE_ITEM_EDITOR_SECTION_ADDITIONAL'),
 			'type' => 'section',
-			'elements' => [],
+			'elements' => [
+				['name' => EditorAdapter::FIELD_CLIENT],
+				['name' => Item::FIELD_NAME_MYCOMPANY_ID],
+				['name' => Item::FIELD_NAME_ASSIGNED],
+			],
 		];
-		$sectionAdditional['elements'][] = ['name' => EditorAdapter::FIELD_CLIENT];
-		$sectionAdditional['elements'][] = ['name' => Item::FIELD_NAME_MYCOMPANY_ID];
-		$sectionAdditional['elements'][] = ['name' => Item::FIELD_NAME_ASSIGNED];
 
 		$sections[] = $sectionAdditional;
 

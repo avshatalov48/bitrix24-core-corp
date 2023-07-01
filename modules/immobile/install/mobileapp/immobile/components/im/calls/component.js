@@ -6,6 +6,8 @@
 
 (function ()
 {
+	const { CallsCardController } = jn.require('im/calls-card');
+
 	const Sound = {
 		incoming: "incoming",
 		startCall: "startcall"
@@ -116,14 +118,13 @@
 	}
 
 // region Mobile telephony
+	const isNewCallUI = Application.getApiVersion() > 48;
 
 	class MobileTelephony
 	{
 		constructor()
 		{
-			this.ui = new VoiceCallForm({
-				eventListener: this.onUiEvent.bind(this)
-			});
+			this.ui = this.createUI();
 
 			//from checkout
 			this.userId = parseInt(BX.componentParameters.get('userId', 0));
@@ -183,6 +184,7 @@
 			this.isRestCall = false;
 			this.formShown = false;
 			this.portalCall = false;
+			this.showName = true;
 
 			Object.defineProperty(this, "nativeCall", {
 				get: () => {
@@ -203,6 +205,132 @@
 			this._onNativeCallEndedHandler = this._onNativeCallEnded.bind(this);
 			this._onNativeCallMutedHandler = this._onNativeCallMuted.bind(this);
 			this.init();
+		}
+
+		createUI()
+		{
+			if (isNewCallUI)
+			{
+				return  new CallsCardController({
+					onUiEvent: this.onUiEvent.bind(this)
+				})
+			}
+
+			return new VoiceCallForm({
+				eventListener: this.onUiEvent.bind(this)
+			});
+		}
+
+		/**
+		 * @typedef {Object} params
+		 * VoiceCallForm properties
+		 * @property {?String} headerLabels.firstHeader.text - phoneNumber / crmContactName
+		 * @property {?String} headerLabels.firstHeader.textColor
+		 * @property {?String} headerLabels.firstSmallHeader.text - example IM_PHONE_CALL_TO_PHONE
+		 * @property {?String} headerLabels.firstSmallHeader.textColor
+		 * @property {?String} headerLabels.secondSmallHeader.text - crmCompanyName
+		 * @property {?String} headerLabels.secondSmallHeader.textColor
+		 * @property {?String} headerLabels.thirdSmallHeader.text - record text
+		 * @property {?String} headerLabels.thirdSmallHeader.textColor
+		 *
+		 * @property {?String} middleLabels.infoTitle.text
+		 * @property {?String} middleLabels.infoHeader.text - stage name
+		 * @property {?String} middleLabels.infoHeader.textColor - stage color
+		 * @property {?String} middleLabels.infoDesc.text - deal title
+		 * @property {?String} middleLabels.infoSum.text - deal opportunity
+		 * @property {?String} middleLabels.imageStub.backgroundColor
+		 * @property {?String} middleLabels.imageStub.display
+		 *
+		 * @property {?Object} middleButtons - links to crm entities
+		 * @property {?{text: string, textColor: string, eventName: string, sort: number}} middleButtons.buttons
+		 *
+		 * @property {?String} footerLabels.callStateLabel.text - state info / error text
+		 * @property {?String} avatarUrl
+		 * @property {?String} state - see TelephonyUiState
+		 *
+		 * CallsCardController properties
+		 * @property {?String} crmContactName
+		 * @property {?String} phoneNumber
+		 * @property {?String} status
+		 * @property {?String} statusColor
+		 * @property {?String} errorText
+		 * @property {?String} type - see TelephonyUiState
+		 * @property {?String} avatarUrl
+		 * @property {?String} recordText
+		 * @property {?Function} onUiEvent
+		 *
+		 * @property {?Object} crmData
+		 * @property {?String} crmData.TITLE
+		 * @property {?String} crmData.REPEATED_TEXT
+		 * @property {?number} crmData.OPPORTUNITY_VALUE
+		 * @property {?String} crmData.CURRENCY_ID
+		 * @property {?String} crmData.STAGE_COLOR
+		 * @property {?String} crmData.STAGE
+		 * @property {?Number} crmData.CREATED_TIME
+		 *
+		 * @property {?Object} crmStatus
+		 *
+		 * @property {?String} crmData.openLeadEventName
+		 * @property {?String} crmData.createLeadEventName
+		 * @property {?String} crmData.openDealEventName
+		 * @property {?String} crmData.createDealEventName
+		 * @property {?String} crmData.openContactEventName
+		 * @property {?String} crmData.createContactEventName
+		 * @property {?String} crmData.openCompanyEventName
+		 * @property {?String} crmData.createCompanyEventName
+ 		 */
+		updateUI(params)
+		{
+			if (!this.formShown)
+			{
+				return;
+			}
+
+			const {
+				headerLabels,
+				middleLabels,
+				middleButtons,
+				footerLabels,
+				state,
+				...restParams
+			} = params;
+
+			if (isNewCallUI)
+			{
+				this.ui.update({...restParams});
+			}
+			else
+			{
+				if (headerLabels)
+				{
+					this.ui.updateHeader({headerLabels});
+				}
+
+				if (restParams.avatarUrl)
+				{
+					this.ui.updateHeader({avatarUrl: restParams.avatarUrl});
+				}
+
+				if (middleLabels && middleButtons)
+				{
+					this.ui.updateMiddle({middleLabels});
+				}
+
+				if (middleButtons)
+				{
+					this.ui.updateMiddle({middleButtons});
+				}
+
+				if (footerLabels)
+				{
+					this.ui.updateFooter({footerLabels});
+				}
+
+				if (state)
+				{
+					this.ui.updateFooter({state});
+				}
+			}
 		}
 
 		init()
@@ -305,7 +433,7 @@
 			{
 				handlers[eventName].call(this, params);
 			}
-			else if (eventName.substr(0, 4) == "crm_")
+			else if (eventName.substring(0, 4) == "crm_")
 			{
 				let crmParams = eventName.split("_");
 				this._onUiCrmLinkClick({
@@ -313,6 +441,72 @@
 					'entityId': crmParams[2]
 				});
 			}
+			else if (eventName.substring(0, 12) === "create_deal_")
+			{
+				const crmParams = eventName.split("_");
+				this._onUiCrmCreateDealLinkClick(crmParams[1], crmParams[2]);
+			}
+			else if (eventName.substring(0, 16) === "create_by_phone_")
+			{
+				const crmParams = eventName.split("_");
+				this._onUiCrmCreateByPhoneLinkClick(crmParams[3], crmParams[4], crmParams[5]);
+			}
+		}
+
+		_onUiCrmCreateDealLinkClick(entityType, contactId)
+		{
+			const crmUrl = getCrmShowPath(entityType, 0);
+			if(!crmUrl)
+			{
+				return;
+			}
+			const inAppUrl = inAppOpener();
+
+			if (Application.getApiVersion() >= 45 && inAppUrl)
+			{
+				inAppUrl.open(
+					`/crm/${entityType}/details/0/?contact_id=${contactId}`,
+					{
+						categoryId: 0,
+						canOpenInDefault: true,
+						bx24ModernStyle: true,
+						linkText: BX.message(`IM_M_CALL_NEW_${entityType.toUpperCase()}`),
+					},
+					() => {
+						this._onOpenPage(crmUrl);
+					}
+				);
+			}
+
+			this.ui.rollUp();
+		}
+
+		_onUiCrmCreateByPhoneLinkClick(entityType, phone, originId)
+		{
+			const crmUrl = getCrmShowPath(entityType, 0);
+			if(!crmUrl)
+			{
+				return;
+			}
+
+			const inAppUrl = inAppOpener();
+			if (Application.getApiVersion() >= 45 && inAppUrl)
+			{
+				inAppUrl.open(
+					`/crm/${entityType}/details/0/?phone=${phone}&page=edit&origin_id=${this.crmData.ORIGIN_ID}`,
+					{
+						categoryId: 0,
+						canOpenInDefault: true,
+						bx24ModernStyle: true,
+						linkText: BX.message(`IM_M_CALL_NEW_${entityType.toUpperCase()}`),
+					},
+					() => {
+						this._onOpenPage(crmUrl);
+					}
+				);
+			}
+
+			this.ui.rollUp();
 		}
 
 		onPullEvent(command, params, extra)
@@ -360,12 +554,24 @@
 				return;
 			}
 			this.answered = true;
-			this.setUiState(TelephonyUiState.WAITING);
-			this.setUiStateLabel(BX.message('IM_M_CALL_ST_CONNECT'));
+			this.updateUI({
+				state: TelephonyUiState.WAITING,
+				footerLabels: {
+					callStateLabel: {
+						text: BX.message('IM_M_CALL_ST_CONNECT'),
+					},
+				},
+
+				type: TelephonyUiState.WAITING,
+				status: BX.message('IM_M_CALL_ST_CONNECT'),
+			});
+
 			TelephonySignaling.sendAnswer((this.callId)).catch(
 				(data) =>
 				{
 					let answer = data.answer;
+					let statusLabel = null;
+
 					this.log('voximplant.call.answer error: ', answer);
 
 					// call could be already finished by this moment
@@ -374,20 +580,31 @@
 						return;
 					}
 
-					this.setUiState(TelephonyUiState.FINISHED);
 					this.ui.stopSound();
 					if (answer.error === 'ERROR_NOT_FOUND')
 					{
-						this.setUiStateLabel(BX.message("IM_M_CALL_ALREADY_FINISHED"));
+						statusLabel = BX.message("IM_M_CALL_ALREADY_FINISHED");
 					}
 					else if (answer.error === 'ERROR_WRONG_STATE')
 					{
-						this.setUiStateLabel(BX.message("IM_M_CALL_ALREADY_ANSWERED"));
+						statusLabel = BX.message("IM_M_CALL_ALREADY_ANSWERED");
 					}
 					else
 					{
-						this.setUiStateLabel(BX.message("IM_PHONE_ERROR"));
+						statusLabel = BX.message("IM_PHONE_ERROR");
 					}
+
+					this.updateUI({
+						footerLabels: {
+							callStateLabel: {
+								text: statusLabel,
+							},
+						},
+						state: TelephonyUiState.FINISHED,
+
+						type: TelephonyUiState.FINISHED,
+						error: statusLabel,
+					});
 				}
 			).then(
 				() => VIClientWrapper.getClient()
@@ -451,6 +668,20 @@
 			this.phoneNumber = correctNumber;
 			this.phoneFullNumber = correctNumber;
 
+			if (params['NAME'])
+			{
+				this.crmData = {
+					CONTACT: {
+						NAME: params['NAME'],
+					},
+				};
+			}
+
+			if (typeof params['SHOW_NAME'] === 'boolean')
+			{
+				this.showName = params['SHOW_NAME'];
+			}
+
 			this.phoneParams = params;
 			var matches = /(\+?\d+)([;#]*)([\d,]*)/.exec(correctNumber);
 			if (matches)
@@ -483,16 +714,31 @@
 			}).catch((error) =>
 			{
 				console.error(error);
-				this.setUiState(TelephonyUiState.FINISHED);
+				let stateLabel = null;
+
 				if (error instanceof DeviceAccessError)
 				{
-					this.setUiStateLabel(BX.message("IM_PHONE_ERR_NO_MIC"));
+					stateLabel = BX.message("IM_PHONE_ERR_NO_MIC");
+
 					CallUtil.showDeviceAccessConfirm(false, () => Application.openSettings());
 				}
 				else
 				{
-					this.setUiStateLabel(BX.message("MOBILEAPP_SOME_ERROR"));
+					stateLabel = BX.message("MOBILEAPP_SOME_ERROR");
 				}
+
+				this.updateUI({
+					state: TelephonyUiState.FINISHED,
+					footerLabels: {
+						callStateLabel: {
+							text: stateLabel,
+						},
+					},
+
+					type: TelephonyUiState.FINISHED,
+					error: stateLabel,
+				});
+
 				this.finishCall();
 			});
 		}
@@ -553,8 +799,10 @@
 			this.isTransfer = false;
 			this.isRestCall = false;
 			this.portalCall = false;
+			this.showName = true;
 
 			this.ui.pauseTimer();
+			device.setProximitySensorEnabled(false);
 		}
 
 		sendSkip()
@@ -581,23 +829,34 @@
 			let middleLabels = {};
 			let middleButtons = {};
 			let avatarUrl = '';
+			const crmData = {};
+			let crmContactName = null;
+			let crmCompanyName = null;
+			let recordText = null;
+			let crmStatus = null;
 
 			if (this.crmData.FOUND == 'Y')
 			{
-				let crmContactName = this.crmData.CONTACT && this.crmData.CONTACT.NAME ? this.crmData.CONTACT.NAME : '';
+				crmContactName = this.crmData.CONTACT && this.crmData.CONTACT.NAME ? this.crmData.CONTACT.NAME : '';
 				let crmContactPhoto = this.crmData.CONTACT && this.crmData.CONTACT.PHOTO ? this.crmData.CONTACT.PHOTO : '';
 				let crmContactPost = this.crmData.CONTACT && this.crmData.CONTACT.POST ? this.crmData.CONTACT.POST : '';
-				let crmCompanyName = this.crmData.COMPANY ? this.crmData.COMPANY : '';
+				crmCompanyName = this.crmData.COMPANY ? this.crmData.COMPANY : '';
+				crmStatus = {
+					text: this.crmData.STATUS_TEXT || null,
+					color: this.crmData.STATUS_COLOR || null,
+				}
 
 				if (!this.portalCall && !this.isRestCall && this.callConfig.hasOwnProperty('RECORDING'))
 				{
 					if (this.callConfig.RECORDING == "Y")
 					{
 						headerLabels.thirdSmallHeader = {'text': BX.message('IM_PHONE_REC_ON'), textColor: "#ecd748"};
+						recordText = BX.message('IM_PHONE_REC_ON');
 					}
 					else
 					{
 						headerLabels.thirdSmallHeader = {'text': BX.message('IM_PHONE_REC_OFF'), textColor: "#ee423f"};
+						recordText = BX.message('IM_PHONE_REC_OFF');
 					}
 				}
 
@@ -629,6 +888,8 @@
 
 				if (this.crmData.DEALS && this.crmData.DEALS.length > 0)
 				{
+					crmData.deal = this.crmData.DEALS[0];
+
 					middleLabels = {
 						infoTitle: {
 							text: ""
@@ -647,12 +908,18 @@
 
 					if (this.crmData.DEAL_URL)
 					{
+						crmData.openDealEventName = "crm_deal_" + this.crmData.DEALS[0].ID;
 						middleButtons['button1'] = {
 							text: BX.message('IM_PHONE_ACTION_T_DEAL'),
 							sort: 100,
 							eventName: "crm_deal_" + this.crmData.DEALS[0].ID
 						};
 					}
+				}
+				else if (this.crmData.LEAD && this.crmData.LEAD.ID)
+				{
+					crmData.lead = this.crmData.LEAD ? this.crmData.LEAD : null;
+					crmData.openLeadEventName = "crm_lead_" + this.crmData.LEAD.ID;
 				}
 
 				let dataSelect = [];
@@ -691,6 +958,8 @@
 					{
 						if (type == 'CONTACT_DATA')
 						{
+							crmData.openContactEventName = "crm_contact_" + this.crmData[type].ID;
+
 							middleButtons['buttonData' + i] = {
 								text: BX.message('IM_PHONE_ACTION_T_CONTACT'),
 								sort: 200 + i,
@@ -699,6 +968,8 @@
 						}
 						else if (type == 'COMPANY_DATA')
 						{
+							crmData.openCompanyEventName = "crm_company_" + this.crmData[type].ID;
+
 							middleButtons['buttonData' + i] = {
 								text: BX.message('IM_PHONE_ACTION_T_COMPANY'),
 								sort: 200 + i,
@@ -707,6 +978,8 @@
 						}
 						else if (type == 'LEAD_DATA')
 						{
+							crmData.openLeadEventName = "crm_lead_" + this.crmData[type].ID;
+
 							middleButtons['buttonData' + i] = {
 								text: BX.message('IM_PHONE_ACTION_T_LEAD'),
 								sort: 200 + i,
@@ -738,6 +1011,24 @@
 				}
 				headerLabels.firstHeader = {'text': phoneNumber};
 
+				if (isNewCallUI)
+				{
+					if (this.crmData.CONTACT && this.crmData.CONTACT.NAME)
+					{
+						crmContactName = this.crmData.CONTACT.NAME;
+					}
+
+					if (this.crmData.COMPANY && this.crmData.COMPANY.NAME)
+					{
+						crmCompanyName = this.crmData.COMPANY.NAME;
+					}
+				}
+				else
+				{
+					crmContactName = phoneNumber;
+				}
+
+
 				headerLabels.firstSmallHeader = {};
 				if (this.isIncoming)
 				{
@@ -754,10 +1045,12 @@
 					if (this.callConfig.RECORDING == "Y")
 					{
 						headerLabels.thirdSmallHeader = {text: BX.message('IM_PHONE_REC_ON'), textColor: "#ecd748"};
+						recordText = BX.message('IM_PHONE_REC_ON');
 					}
 					else
 					{
 						headerLabels.thirdSmallHeader = {text: BX.message('IM_PHONE_REC_OFF'), textColor: "#ee423f"};
+						recordText = BX.message('IM_PHONE_REC_OFF');
 					}
 				}
 
@@ -778,7 +1071,35 @@
 				this.ui.updateMiddle({}, middleButtons);*/
 			}
 
-			return {headerLabels, middleLabels, middleButtons, avatarUrl};
+			if (this.crmData.LEAD_URL && this.crmData.CAN_CREATE_LEAD)
+			{
+				crmData.createLeadEventName = 'create_by_phone_lead_' + this.phoneNumber;
+			}
+
+			if (this.crmData.CONTACT_URL)
+			{
+				crmData.createContactEventName = 'create_by_phone_contact_' + this.phoneNumber;
+			}
+
+			if (this.crmData.DEAL_URL && this.crmData.CONTACT_DATA)
+			{
+				crmData.createDealEventName = 'create_deal_' + this.crmData.CONTACT_DATA.ID;
+			}
+
+
+			return {
+				headerLabels,
+				middleLabels,
+				middleButtons,
+				avatarUrl,
+				phoneNumber: this.phoneNumber && this.phoneNumber.toString(),
+				crmData,
+				crmContactName,
+				crmCompanyName,
+				recordText,
+				crmStatus,
+				showName: this.showName,
+			};
 		}
 
 		showCallForm(params)
@@ -787,6 +1108,8 @@
 
 			if (params.status)
 			{
+				callFormParams.status = params.status;
+
 				callFormParams.footerLabels =
 					{
 						callStateLabel:
@@ -798,6 +1121,7 @@
 			if (params.state)
 			{
 				callFormParams.state = params.state;
+				callFormParams.type = params.state;
 			}
 
 			this.log('callFormParams: ', callFormParams);
@@ -806,19 +1130,6 @@
 
 			device.setProximitySensorEnabled(true);
 			device.setIdleTimerDisabled(true);
-		}
-
-		updateCallForm()
-		{
-			if (!this.formShown)
-			{
-				return false;
-			}
-
-			let {headerLabels, middleLabels, middleButtons, avatarUrl} = this.getUiFields();
-
-			this.ui.updateHeader({headerLabels, avatarUrl});
-			this.ui.updateMiddle({middleLabels, middleButtons});
 		}
 
 		closeCallForm()
@@ -841,73 +1152,89 @@
 			this.crmData = crmData;
 			if (this.crmData.FOUND === 'Y')
 			{
-				this.updateCallForm();
+				this.updateUI(this.getUiFields());
 			}
 		}
 
-		setUiStateLabel(stateLabel)
-		{
-			if (this.formShown)
-			{
-				this.ui.updateFooter({footerLabels: {callStateLabel: {text: stateLabel}}});
-			}
-		}
-
-		setUiState(uiState)
-		{
-			if (this.formShown)
-			{
-				this.ui.updateFooter({state: uiState})
-			}
-		}
-
-		setProgress(progress)
+		setProgress(progress, stateLabel = '')
 		{
 			if (progress == 'connect')
 			{
 			}
 			else if (progress == 'wait')
 			{
-				this.setUiState(TelephonyUiState.WAITING);
+				this.updateUI({
+					footerLabels: {
+						callStateLabel: {
+							text: stateLabel,
+						},
+					},
+					state: TelephonyUiState.WAITING,
+					type: TelephonyUiState.WAITING,
+					error: stateLabel,
+				});
 			}
 			else if (progress == 'online')
 			{
+				let headerLabels = {
+					thirdSmallHeader: {
+						text: ''
+					},
+				};
 				if (!this.portalCall && this.callConfig.hasOwnProperty('RECORDING'))
 				{
-					let headerLabels = {};
 					if (this.callConfig.RECORDING == "Y")
 					{
-						headerLabels.thirdSmallHeader = {'text': BX.message('IM_PHONE_REC_NOW'), textColor: "#7fc62c"};
+						if (!isNewCallUI)
+						{
+							headerLabels.thirdSmallHeader = {'text': BX.message('IM_PHONE_REC_NOW'), textColor: "#7fc62c"};
+						}
 					}
 					else
 					{
 						headerLabels.thirdSmallHeader = {'text': BX.message('IM_PHONE_REC_OFF'), textColor: "#ee423f"};
 					}
-
-					this.ui.updateHeader({headerLabels});
 				}
 
-				this.setUiState(TelephonyUiState.STARTED);
+				this.updateUI({
+					headerLabels,
+					footerLabels: {
+						callStateLabel: {
+							text: stateLabel,
+						},
+					},
+					status: stateLabel,
+					state: TelephonyUiState.STARTED,
+					type: TelephonyUiState.STARTED,
+					recordText: headerLabels.thirdSmallHeader.text,
+				});
 			}
 			else if (progress == 'offline' || progress == 'error')
 			{
+				let headerLabels = {};
+				let footerLabels = {
+					callStateLabel: {
+						text: stateLabel,
+					},
+				};
+				let recordText = null;
+
 				if (progress == 'offline')
 				{
 					if (!this.portalCall)
 					{
-						let headerLabels = {};
 						if (this.callConfig.RECORDING == "Y" && this.phoneCallTime > 0)
 						{
 							headerLabels.thirdSmallHeader = {
 								'text': BX.message('IM_PHONE_REC_DONE'),
 								textColor: "#7fc62c"
 							};
+							recordText = BX.message('IM_PHONE_REC_DONE');
 						}
 						else
 						{
 							headerLabels.thirdSmallHeader = {'text': ''};
 						}
-						this.ui.updateHeader({headerLabels});
 
 						let footerLabels = {};
 						if (this.crmData.LEAD_DATA && !this.crmData.CONTACT_DATA && !this.crmData.COMPANY_DATA && this.callConfig.CRM_CREATE == 'lead')
@@ -918,21 +1245,22 @@
 						{
 							footerLabels.actionDoneHint = {'text': ''};
 						}
-						this.ui.updateFooter({footerLabels});
 					}
 				}
 				else
 				{
-					let headerLabels = {};
 					headerLabels.thirdSmallHeader = {'text': ''};
-					this.ui.updateHeader({headerLabels});
-
-					let footerLabels = {};
 					footerLabels.actionDoneHint = {'text': ''};
-					this.ui.updateFooter({footerLabels});
 				}
 
-				this.setUiState(TelephonyUiState.FINISHED);
+				this.updateUI({
+					headerLabels,
+					footerLabels,
+					state: TelephonyUiState.FINISHED,
+					type: TelephonyUiState.FINISHED,
+					recordText,
+					error: stateLabel,
+				});
 				if (this.formShown)
 				{
 					this.ui.expand();
@@ -1041,16 +1369,27 @@
 			}).catch((error) =>
 			{
 				console.error(error);
-				this.setUiState(TelephonyUiState.FINISHED);
+				let stateLabel = null;
 				if (error instanceof DeviceAccessError)
 				{
-					this.setUiStateLabel(BX.message("IM_PHONE_ERR_NO_MIC"));
+					stateLabel = BX.message("IM_PHONE_ERR_NO_MIC");
 					CallUtil.showDeviceAccessConfirm(false, () => Application.openSettings());
 				}
 				else
 				{
-					this.setUiStateLabel(BX.message("MOBILEAPP_SOME_ERROR"));
+					stateLabel = BX.message("MOBILEAPP_SOME_ERROR");
 				}
+
+				this.updateUI({
+					footerLabels: {
+						callStateLabel: {
+							text: stateLabel,
+						},
+					},
+					state: TelephonyUiState.FINISHED,
+					type: TelephonyUiState.FINISHED,
+					error: stateLabel,
+				});
 				this.finishCall();
 			});
 		}
@@ -1070,8 +1409,7 @@
 			this.authorized = false;
 			if (this.callInit || this.callActive)
 			{
-				this.setProgress('error');
-				this.setUiStateLabel(BX.message('IM_M_CALL_ERR'));
+				this.setProgress('error', BX.message('IM_M_CALL_ERR'));
 				this.finishCall();
 			}
 		}
@@ -1084,8 +1422,7 @@
 
 			if (this.callInit || this.callActive)
 			{
-				this.setProgress('error');
-				this.setUiStateLabel(BX.message('IM_M_CALL_ERR'));
+				this.setProgress('error', BX.message('IM_M_CALL_ERR'));
 				this.finishCall();
 			}
 		}
@@ -1094,8 +1431,8 @@
 		{
 			this.log("_onCallConnected", e);
 
-			this.setProgress('online');
-			this.setUiStateLabel(BX.message('IM_M_CALL_ST_ONLINE'));
+			const status = isNewCallUI ? '' : BX.message('IM_M_CALL_ST_ONLINE')
+			this.setProgress('online', status);
 			this.callActive = true;
 		}
 
@@ -1110,7 +1447,12 @@
 		{
 			this.log("_onCallFailed", e);
 
-			let errorText = BX.message('IM_PHONE_END');
+			let status = null;
+			if (isNewCallUI)
+			{
+				status =  BX.message('IM_PHONE_END');
+			}
+			let errorText = isNewCallUI ? '' : BX.message('IM_PHONE_END');
 			if (this.phoneNumber == 911 || this.phoneNumber == 112)
 			{
 				errorText = BX.message('IM_PHONE_NO_EMERGENCY');
@@ -1165,16 +1507,33 @@
 			}
 
 			this.finishCall();
-			this.setUiState(TelephonyUiState.FINISHED);
-			this.setUiStateLabel(errorText);
+
+			this.updateUI({
+				state: TelephonyUiState.FINISHED,
+				footerLabels: {
+					callStateLabel: {
+						text: errorText,
+					},
+				},
+
+				errorText,
+				type: TelephonyUiState.FINISHED,
+				status,
+			});
+
+			setTimeout(() => {
+				this.closeCallForm();
+			}, 3000);
 		}
 
 		_onCallProgressToneStart(e)
 		{
 			this.log("_onCallProgressToneStart", e);
 			this.phoneRinging++;
-			this.setUiState(TelephonyUiState.WAITING);
-			this.setUiStateLabel(BX.message('IM_PHONE_WAIT_ANSWER'));
+			this.updateUI({
+				state: TelephonyUiState.FINISHED,
+				type: TelephonyUiState.WAITING,
+			});
 		}
 
 		_onCallProgressToneStop(e)
@@ -1200,6 +1559,22 @@
 
 			//todo
 			//this.call.setUseLoudSpeaker(speakerState);
+			if (isNewCallUI)
+			{
+				this.selectAudioDevice(speakerState);
+			}
+		}
+
+		selectAudioDevice(speakerState)
+		{
+			if (speakerState)
+			{
+				JNVIAudioManager.selectAudioDevice("speaker");
+			}
+			else
+			{
+				JNVIAudioManager.selectAudioDevice("receiver");
+			}
 		}
 
 		_onUiMuteChanged(e)
@@ -1433,7 +1808,7 @@
 
 			this.showCallForm({
 				status: BX.message('IM_PHONE_INITIALIZATION'),
-				state: TelephonyUiState.OUTGOING
+				state: TelephonyUiState.INCOMING,
 			});
 
 			BX.rest.callMethod('voximplant.call.sendWait', {
@@ -1452,8 +1827,18 @@
 
 				if (data.SUCCESS)
 				{
-					this.setUiState(TelephonyUiState.INCOMING);
-					this.setUiStateLabel(params.isCallback ? BX.message('IM_PHONE_INVITE_CALLBACK') : BX.message('IM_PHONE_INVITE'));
+					this.updateUI({
+						state: TelephonyUiState.INCOMING,
+						footerLabels: {
+							callStateLabel: {
+								text: params.isCallback ? BX.message('IM_PHONE_INVITE_CALLBACK') : BX.message('IM_PHONE_INVITE'),
+							},
+						},
+
+						type: TelephonyUiState.INCOMING,
+						status: params.isCallback ? BX.message('IM_PHONE_INVITE_CALLBACK') : BX.message('IM_PHONE_INVITE'),
+					});
+
 					if (params.autoAnswer)
 					{
 						this._onUiAnswerClicked();
@@ -1461,13 +1846,23 @@
 				}
 				else
 				{
-					this.setUiState(TelephonyUiState.FINISHED);
-					this.setUiStateLabel(BX.message("IM_PHONE_ERROR"));
+					this.updateUI({
+						state: TelephonyUiState.FINISHED,
+						footerLabels: {
+							callStateLabel: {
+								text: BX.message('IM_PHONE_ERROR'),
+							},
+						},
+
+						type: TelephonyUiState.FINISHED,
+						error: BX.message("IM_PHONE_ERROR"),
+					});
 					this.ui.stopSound();
 				}
 			}).catch((data) =>
 			{
 				let answer = data.answer;
+				let errorText = null;
 				this.log('voximplant.call.sendWait' + ' error: ', answer);
 
 				// call could be already finished by this moment
@@ -1476,20 +1871,31 @@
 					return;
 				}
 
-				this.setUiState(TelephonyUiState.FINISHED);
 				this.ui.stopSound();
 				if (answer.error === 'ERROR_NOT_FOUND')
 				{
-					this.setUiStateLabel(BX.message("IM_M_CALL_ALREADY_FINISHED"));
+					errorText = BX.message("IM_M_CALL_ALREADY_FINISHED");
 				}
 				else if (answer.error === 'ERROR_WRONG_STATE')
 				{
-					this.setUiStateLabel(BX.message("IM_M_CALL_ALREADY_ANSWERED"));
+					errorText = BX.message("IM_M_CALL_ALREADY_ANSWERED");
 				}
 				else
 				{
-					this.setUiStateLabel(BX.message("IM_PHONE_ERROR"));
+					errorText = BX.message("IM_PHONE_ERROR");
 				}
+
+				this.updateUI({
+					state: TelephonyUiState.FINISHED,
+					footerLabels: {
+						callStateLabel: {
+							text: errorText,
+						},
+					},
+
+					type: TelephonyUiState.FINISHED,
+					error: errorText,
+				});
 			});
 		}
 
@@ -1552,8 +1958,7 @@
 			{
 				if (!this.callId)
 				{
-					this.setProgress('connect');
-					this.setUiStateLabel(BX.message('IM_PHONE_WAIT_ANSWER'));
+					this.setProgress('connect', BX.message('IM_PHONE_WAIT_ANSWER'));
 
 					this.callConfig = params.config || {};
 					this.callId = params.callId;

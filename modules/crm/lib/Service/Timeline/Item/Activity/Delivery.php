@@ -85,6 +85,7 @@ class Delivery extends Activity
 				(new ContentBlockWithTitle())
 					->setTitle(Loc::getMessage('CRM_TIMELINE_ACTIVITY_DELIVERY_COMPLETE_UNTIL'))
 					->setInline(true)
+					->setFixedWidth(false)
 					->setContentBlock(
 						(new EditableDate())
 							->setStyle(EditableDate::STYLE_PILL)

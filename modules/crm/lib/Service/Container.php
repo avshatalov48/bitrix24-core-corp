@@ -268,6 +268,11 @@ class Container
 		return ServiceLocator::getInstance()->get('crm.service.converter.ormObject');
 	}
 
+	public function getConverterCaseCache(): Converter\CaseCache
+	{
+		return ServiceLocator::getInstance()->get('crm.service.converter.caseCache');
+	}
+
 	public function getItemConverter(): Converter\Item
 	{
 		return ServiceLocator::getInstance()->get('crm.service.converter.item');

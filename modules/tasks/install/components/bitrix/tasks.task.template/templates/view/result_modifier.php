@@ -35,7 +35,7 @@ if($helper->checkHasFatals())
 	return;
 }
 
-$type = $arParams["GROUP_ID"] > 0 ? "group" : "user";
+$type = (($arParams["GROUP_ID"] ?? null) > 0 ? 'group' : 'user');
 $editMode = !!$template->getId();
 $request = \Bitrix\Main\HttpApplication::getInstance()->getContext()->getRequest()->toArray();
 $groups = $arResult['DATA']['GROUP'];
@@ -130,16 +130,25 @@ if($template["DESCRIPTION"] != '')
 		);
 	}
 }
+if ($type === 'user')
+{
+	$navChainParams = [
+		CUser::FormatName($arParams["NAME_TEMPLATE"], $users[$arParams["USER_ID"]]),
+		CComponentEngine::MakePathFromTemplate($arParams["~PATH_TO_USER_PROFILE"],
+			["user_id" => $arParams["USER_ID"]]),
+	];
+}
+else
+{
+	$navChainParams = [
+		$groups[$arParams["GROUP_ID"]]["NAME"] ?? null,
+		CComponentEngine::MakePathFromTemplate($arParams["~PATH_TO_GROUP"], ["group_id" => $arParams["GROUP_ID"]]),
+	];
+}
 
-$helper->setNavChain(array(
-	($type == "user" ?
-		array(CUser::FormatName($arParams["NAME_TEMPLATE"], $users[$arParams["USER_ID"]]), CComponentEngine::MakePathFromTemplate($arParams["~PATH_TO_USER_PROFILE"], array("user_id" => $arParams["USER_ID"]))) :
-		array($groups[$arParams["GROUP_ID"]]["NAME"], CComponentEngine::MakePathFromTemplate($arParams["~PATH_TO_GROUP"], array("group_id" => $arParams["GROUP_ID"])))
-	),
-	array($title, '')
-));
+$helper->setNavChain([$navChainParams, [$title, '']]);
 
-$users = array_map(function($item){
+$users = array_map(function ($item){
 	$item['ENTITY_TYPE'] = SocialNetwork::getUserEntityPrefix();
 	return $item;
 }, $users);

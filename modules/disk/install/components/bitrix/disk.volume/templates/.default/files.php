@@ -35,7 +35,7 @@ $isTrashcan = ($arResult['INDICATOR'] === \Bitrix\Disk\Volume\FileDeleted::getIn
 		<a href="<?= $component->getActionUrl(array('action' => $component::ACTION_STORAGE, 'storageId' => $arResult['STORAGE_ID'])) ?>" class="disk-volume-list-back"><?= Loc::getMessage('DISK_VOLUME_LIST_BACK'); ?></a>
 	<? endif ?>
 
-	<? if (count($arResult['BREAD_CRUMB']) > 0): ?>
+	<? if (!empty($arResult['BREAD_CRUMB']) && count($arResult['BREAD_CRUMB']) > 0): ?>
 		<div id="bx-disk-volume-bread-crumb" class="bx-disk-volume-bread-crumbs">
 			<? foreach ($arResult['BREAD_CRUMB'] as $item): ?>
 				<span class="bx-disk-volume-bread-crumbs-item-container">

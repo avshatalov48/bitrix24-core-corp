@@ -133,6 +133,7 @@ class Ad
 		$map = [
 			Tracking\Source\Base::Ga => Seo\Analytics\Service::TYPE_GOOGLE,
 			Tracking\Source\Base::Vk => Seo\Analytics\Service::TYPE_VKONTAKTE,
+			Tracking\Source\Base::Vkads => Seo\Analytics\Service::TYPE_VKADS,
 			Tracking\Source\Base::Ya => Seo\Analytics\Service::TYPE_YANDEX,
 			Tracking\Source\Base::Fb => Seo\Analytics\Service::TYPE_FACEBOOK,
 			Tracking\Source\Base::Ig => Seo\Analytics\Service::TYPE_INSTAGRAM,

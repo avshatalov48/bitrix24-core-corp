@@ -141,7 +141,7 @@ export default class LegacyPopup
 											}),
 											BX.create('tr', {
 												html: '<tr>' +
-													'<td class="bx-disk-popup-shared-people-list-col1" style="border-bottom: none;"><a class="bx-disk-filepage-used-people-link" href="' + objectOwner.link + '"><span class="bx-disk-filepage-used-people-avatar" style="background-image: url(' + objectOwner.avatar + ');"></span>' + Text.encode(objectOwner.name) + '</a></td>' +
+													'<td class="bx-disk-popup-shared-people-list-col1" style="border-bottom: none;"><a class="bx-disk-filepage-used-people-link" href="' + objectOwner.link + '"><span class="bx-disk-filepage-used-people-avatar" style="background-image: url(\'' + encodeURI(objectOwner.avatar) + '\');"></span>' + Text.encode(objectOwner.name) + '</a></td>' +
 													'</tr>'
 											})
 										]
@@ -363,7 +363,7 @@ export default class LegacyPopup
 											}),
 											BX.create('tr', {
 												html: '<tr>' +
-													'<td class="bx-disk-popup-shared-people-list-col1" style="border-bottom: none;"><a class="bx-disk-filepage-used-people-link" href="' + objectOwner.link + '"><span class="bx-disk-filepage-used-people-avatar" style="background-image: url(' + objectOwner.avatar + ');"></span>' + Text.encode(objectOwner.name) + '</a></td>' +
+													'<td class="bx-disk-popup-shared-people-list-col1" style="border-bottom: none;"><a class="bx-disk-filepage-used-people-link" href="' + objectOwner.link + '"><span class="bx-disk-filepage-used-people-avatar" style="background-image: url(\'' + encodeURI(objectOwner.avatar) + '\');"></span>' + Text.encode(objectOwner.name) + '</a></td>' +
 												'</tr>'
 											})
 										]

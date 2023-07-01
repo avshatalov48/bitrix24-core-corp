@@ -140,6 +140,7 @@ if (CBXFeatures::IsFeatureEnabled("Workgroups") && CBXFeatures::IsFeatureEnabled
 			),
 			"menu_item_id"=>"menu_all_groups",
 			"top_menu_id" => "sonetgroups_panel_menu",
+			// todo oh 'counter_id' => 'workgroups',
 		),
 		""
 	);

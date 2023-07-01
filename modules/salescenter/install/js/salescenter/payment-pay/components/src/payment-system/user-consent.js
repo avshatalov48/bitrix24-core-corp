@@ -6,7 +6,7 @@ import {BitrixVue} from "ui.vue";
 BitrixVue.component('salescenter-payment_pay-components-payment_system-user_consent', {
 	props: {
 		id: {
-			type: Number,
+			type: Number|String,
 			required: true,
 		},
 		title: {
@@ -25,7 +25,7 @@ BitrixVue.component('salescenter-payment_pay-components-payment_system-user_cons
 	},
 	methods: {
 		loadBlockHtml() {
-			let data = {
+			const data = {
 				fields: {
 					id: this.id,
 					title: this.title,

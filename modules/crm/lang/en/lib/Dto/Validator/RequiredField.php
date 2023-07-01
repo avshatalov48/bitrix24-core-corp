@@ -1,0 +1,2 @@
+<?php
+$MESS["CRM_DTO_VALIDATOR_FIELD_IS_REQUIRED"] = "Field #FIELD# is required for #PARENT_OBJECT#.";

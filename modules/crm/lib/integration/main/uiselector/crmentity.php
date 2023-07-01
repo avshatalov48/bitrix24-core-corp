@@ -1,26 +1,12 @@
-<?
+<?php
+
 namespace Bitrix\Crm\Integration\Main\UISelector;
 
-class CrmEntity extends \Bitrix\Main\UI\Selector\EntityBase
+class CrmEntity extends CrmBase
 {
-	private static function getOwnerType()
-	{
-		return '';
-	}
-
-	private static function getOwnerTypeName()
-	{
-		return '';
-	}
-
-	private static function getHandlerType()
-	{
-		return '';
-	}
-
 	public static function getMultiKey($key, $email)
 	{
-		return $key.':'.mb_substr(md5($email), 0, 8);
+		return $key . ':'.mb_substr(md5($email), 0, 8);
 	}
 
 	protected static function processMultiFields(array $entityList = [], array $entityOptions = [])
@@ -29,7 +15,7 @@ class CrmEntity extends \Bitrix\Main\UI\Selector\EntityBase
 
 		if (
 			empty($entityOptions['returnMultiEmail'])
-			|| $entityOptions['returnMultiEmail'] != 'Y'
+			|| $entityOptions['returnMultiEmail'] !== 'Y'
 		)
 		{
 			return $result;
@@ -41,7 +27,7 @@ class CrmEntity extends \Bitrix\Main\UI\Selector\EntityBase
 			{
 				foreach($entity['multiEmailsList'] as $email)
 				{
-					$newKey = self::getMultiKey($key, $email);
+					$newKey = static::getMultiKey($key, $email);
 					$result[$newKey] = $entity;
 					$result[$newKey]['id'] = $newKey;
 					$result[$newKey]['email'] = $email;
@@ -67,5 +53,10 @@ class CrmEntity extends \Bitrix\Main\UI\Selector\EntityBase
 	public static function prepareToken($str)
 	{
 		return str_rot13($str);
+	}
+
+	public function processResultItems(array $items, array $options = []): array
+	{
+		return static::processMultiFields($items, $options);
 	}
 }

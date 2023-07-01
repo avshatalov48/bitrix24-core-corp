@@ -687,9 +687,7 @@ input.bx-disk-folder-title{
 	height:14px;
 	background:url(/bitrix/images/disk/sprite.png) no-repeat -17px -320px;
 }
-.bx-ie8 .bx-disk-checkbox-container .input-fantom{
-	display:none;
-}
+
 .bx-disk-checkbox-container input[type='checkbox']{
 	position:absolute;
 	z-index:11;
@@ -698,9 +696,7 @@ input.bx-disk-folder-title{
 	cursor:pointer;
 	opacity:0;
 }
-.bx-ie8 .bx-disk-checkbox-container input[type='checkbox']{
-	opacity:1;
-}
+
 .bx-disk-checkbox-container input:checked+.input-fantom .input-fantom-checked{
 	width:14px;
 	-webkit-transition:width .1s linear;

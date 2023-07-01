@@ -62,7 +62,11 @@ export class RobotButton extends EventEmitter
 			const url = '/bitrix/components/bitrix/tasks.automation/slider.php?site_id='
 				+ Loc.getMessage('SITE_ID') + '&project_id=' + this.groupId;
 
-			this.sidePanel.openSidePanel(url, {customLeftBoundary: 0, cacheable: false});
+			this.sidePanel.openSidePanel(url, {
+				customLeftBoundary: 0,
+				cacheable: false,
+				loader: 'bizproc:automation-loader',
+			});
 		}
 	}
 

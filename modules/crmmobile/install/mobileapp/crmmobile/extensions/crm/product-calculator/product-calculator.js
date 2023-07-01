@@ -2,7 +2,6 @@
  * @module crm/product-calculator/product-calculator
  */
 jn.define('crm/product-calculator/product-calculator', (require, exports, module) => {
-
 	const { TaxForPriceStrategy } = require('crm/product-calculator/tax-for-price-strategy');
 	const { ProductRow } = require('crm/product-calculator/product-row');
 
@@ -77,7 +76,7 @@ jn.define('crm/product-calculator/product-calculator', (require, exports, module
 		 */
 		getFields()
 		{
-			return {...this.fields};
+			return { ...this.fields };
 		}
 
 		/**
@@ -86,7 +85,7 @@ jn.define('crm/product-calculator/product-calculator', (require, exports, module
 		 */
 		setSettings(settings = {})
 		{
-			this.settings = {...settings};
+			this.settings = { ...settings };
 
 			return this;
 		}
@@ -96,7 +95,7 @@ jn.define('crm/product-calculator/product-calculator', (require, exports, module
 		 */
 		getSettings()
 		{
-			return {...this.settings};
+			return { ...this.settings };
 		}
 
 		/**
@@ -249,5 +248,4 @@ jn.define('crm/product-calculator/product-calculator', (require, exports, module
 	ProductCalculator.DEFAULT_PRECISION = 2;
 
 	module.exports = { ProductCalculator };
-
 });

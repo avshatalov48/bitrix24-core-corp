@@ -70,8 +70,15 @@
 
 .salescenter-editor-section-content {
 	position: relative;
-	padding: 15px 0;
 	transition: 250ms linear padding, 250ms linear height;
+}
+
+.ui-slider-section .salescenter-editor-section-content {
+	padding: 0;
+}
+
+#salescenter-paysystem-cashbox .salescenter-editor-section-content {
+	padding: 15px 0;
 }
 
 .salescenter-editor-block-title {
@@ -646,6 +653,13 @@
 .salescenter-paysystem-angle-icon-after {
 	cursor: pointer;
 }
+
+.salescenter-paysystem-section-title-block {
+	display: flex;
+	flex-direction: row;
+	align-items: baseline;
+}
+
 .salescenter-paysystem-angle-icon {
 	width: 10px;
 	height: 10px;

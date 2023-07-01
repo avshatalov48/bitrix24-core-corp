@@ -4,6 +4,8 @@ export default {
 	props: {
 		title: String,
 		inline: Boolean,
+		wordWrap: Boolean,
+		fixedWidth: Boolean,
 		contentBlock: Object,
 	},
 	computed: {
@@ -12,6 +14,8 @@ export default {
 			return {
 				'crm-timeline__card-container_info': true,
 				'--inline': this.inline,
+				'--word-wrap': this.wordWrap,
+				'--fixed-width': this.fixedWidth,
 			}
 		}
 	},

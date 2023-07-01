@@ -1,8 +1,21 @@
 <?php
-$MESS["M_CRM_COMMUNICATION_MENU_CHANNELS"] = "Communication channels";
+$MESS["M_CRM_COMMUNICATION_MENU_ADD_COMPANY"] = "Add company";
+$MESS["M_CRM_COMMUNICATION_MENU_ADD_CONTACT"] = "Add contact";
 $MESS["M_CRM_COMMUNICATION_MENU_COMPANY"] = "Company";
 $MESS["M_CRM_COMMUNICATION_MENU_CONTACT"] = "Contact";
 $MESS["M_CRM_COMMUNICATION_MENU_EMAIL"] = "Send message";
+$MESS["M_CRM_COMMUNICATION_MENU_EMAIL_DESCRIPTION"] = "Send and receive emails inside the CRM";
+$MESS["M_CRM_COMMUNICATION_MENU_EMAIL_STUB"] = "Add email";
 $MESS["M_CRM_COMMUNICATION_MENU_IM"] = "Send live chat message";
+$MESS["M_CRM_COMMUNICATION_MENU_INFO_DESCRIPTION"] = "Add a customer to call, send email or post a chat message";
+$MESS["M_CRM_COMMUNICATION_MENU_INFO_TITLE"] = "There is no customer here so far";
+$MESS["M_CRM_COMMUNICATION_MENU_INFO_TITLE_DEAL"] = "Deal does not have customer so far";
+$MESS["M_CRM_COMMUNICATION_MENU_INFO_TITLE_LEAD"] = "Lead does not have customer so far";
+$MESS["M_CRM_COMMUNICATION_MENU_INFO_TITLE_QUOTE"] = "Quote does not have customer so far";
+$MESS["M_CRM_COMMUNICATION_MENU_INFO_TITLE_SMART_INVOICE"] = "Invoice does not have customer so far";
+$MESS["M_CRM_COMMUNICATION_MENU_LEAD"] = "Lead";
 $MESS["M_CRM_COMMUNICATION_MENU_OPENLINE"] = "Open Channel";
-$MESS["M_CRM_COMMUNICATION_MENU_PHONE"] = "Call";
+$MESS["M_CRM_COMMUNICATION_MENU_PHONE_DESCRIPTION"] = "Call without leaving the CRM, send messages and share documents in SMS and messengers";
+$MESS["M_CRM_COMMUNICATION_MENU_PHONE_STUB"] = "Add phone";
+$MESS["M_CRM_COMMUNICATION_MENU_PHONE_TITLE"] = "Call without leaving the CRM, send messages and share documents in SMS and messengers";
+$MESS["M_CRM_COMMUNICATION_MENU_TITLE"] = "Communication channels";

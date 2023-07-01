@@ -12,7 +12,7 @@ $helper = $arResult['HELPER'];
 <?$helper->displayFatals();?>
 <?if(!$helper->checkHasFatals()):?>
 
-	<div id="<?=$helper->getScopeId()?>" class="tasks task-form-field <?=$arParams['DISPLAY']?> <?=($arParams['READ_ONLY'] ? 'readonly' : '')?>" <?if($arParams['MAX_WIDTH'] > 0):?>style="max-width: <?=$arParams['MAX_WIDTH']?>px"<?endif?>>
+	<div id="<?=$helper->getScopeId()?>" class="tasks task-form-field <?=$arParams['DISPLAY']?> <?=(($arParams['READ_ONLY'] ?? null) ? 'readonly' : '')?>" <?if($arParams['MAX_WIDTH'] > 0):?>style="max-width: <?=$arParams['MAX_WIDTH']?>px"<?endif?>>
 
 		<?$helper->displayWarnings();?>
 

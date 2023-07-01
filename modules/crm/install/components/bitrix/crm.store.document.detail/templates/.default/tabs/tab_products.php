@@ -27,11 +27,11 @@ $APPLICATION->IncludeComponent(
 		'ALLOW_ADD_PRODUCT' => 'Y',
 		'ALLOW_CREATE_NEW_PRODUCT' => 'Y',
 		'DOCUMENT_ID' => $arResult['DOCUMENT_ID'] ?? null,
-		'DOCUMENT_TYPE' => 'REALIZATION',
+		'DOCUMENT_TYPE' => \Bitrix\Catalog\StoreDocumentTable::TYPE_SALES_ORDERS,
 		'PRODUCT_DATA_FIELD_NAME' => 'DOCUMENT_PRODUCTS',
 		'PRODUCTS' => $arResult['COMPONENT_PRODUCTS'],
 		'EXTERNAL_DOCUMENT' => [
-			'TYPE' => 'REALIZATION',
+			'TYPE' => \Bitrix\Catalog\StoreDocumentTable::TYPE_SALES_ORDERS,
 			'TOTAL_CALCULATION_FIELD' => 'BASE_PRICE',
 			'DEFAULT_COLUMNS' =>
 				$allowEdit ?

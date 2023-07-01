@@ -323,7 +323,7 @@ if(typeof BX.Crm.EntityEditorMoney === "undefined")
 				);
 			}
 
-			this._amountInput.disabled = this._model.isFieldLocked(amountFieldName);
+			this.setInputDisabled(this._model.isFieldLocked(amountFieldName));
 
 			if (this._amountManualInput)
 			{
@@ -447,7 +447,7 @@ if(typeof BX.Crm.EntityEditorMoney === "undefined")
 
 		if (BX.prop.getString(params, "name", "") === 'IS_MANUAL_OPPORTUNITY')
 		{
-			if (this._amountInput && !this._amountInput.disabled)
+			if (this._amountInput && !this._amountInput.isInputDisabled())
 			{
 				this._amountInput.focus();
 			}
@@ -3943,6 +3943,21 @@ if(typeof BX.Crm.EntityEditorPhone === "undefined")
 			this._maskedPhoneInput.setAttribute("placeholder", placeholder);
 		}
 
+		if(this._editor.isDuplicateControlEnabled())
+		{
+			var dupControlConfig = this.getDuplicateControlConfig();
+			if(dupControlConfig)
+			{
+				if(!BX.type.isPlainObject(dupControlConfig["field"]))
+				{
+					dupControlConfig["field"] = {};
+				}
+				dupControlConfig["field"]["id"] = this.getId();
+				dupControlConfig["field"]["element"] = this._maskedPhoneInput;
+				this._editor.getDuplicateManager().registerField(dupControlConfig);
+			}
+		}
+
 		return [
 			BX.create(
 				"div",
@@ -3973,6 +3988,20 @@ if(typeof BX.Crm.EntityEditorPhone === "undefined")
 	};
 	BX.Crm.EntityEditorPhone.prototype.doClearLayout = function(options)
 	{
+		if(this._editor.isDuplicateControlEnabled())
+		{
+			var dupControlConfig = this.getDuplicateControlConfig();
+			if(dupControlConfig)
+			{
+				if(!BX.type.isPlainObject(dupControlConfig["field"]))
+				{
+					dupControlConfig["field"] = {};
+				}
+				dupControlConfig["field"]["id"] = this.getId();
+				this._editor.getDuplicateManager().unregisterField(dupControlConfig);
+			}
+		}
+
 		BX.Crm.EntityEditorPhone.superclass.doClearLayout.apply(this, arguments);
 		this._maskedPhoneInput = null;
 		this._maskedPhone = null;
@@ -7397,6 +7426,18 @@ if(typeof BX.Crm.EntityEditorClientLight === "undefined")
 				{
 					contactSettings['canChangeDefaultRequisite'] = enableRequisite;
 				}
+				var categoryParams = BX.prop.getObject(
+					this._schemeElement.getDataObjectParam('categoryParams', {}),
+					BX.CrmEntityType.enumeration.contact,
+					{}
+				);
+				contactSettings['categoryId'] = BX.prop.getInteger(categoryParams, 'categoryId', 0);
+
+				var permissionToken = this._schemeElement.getDataStringParam('permissionToken', null);
+				if (permissionToken)
+				{
+					contactSettings['permissionToken'] = permissionToken;
+				}
 
 				var contactPanel = BX.Crm.ClientEditorEntityPanel.create(
 					this._id +  "_" + contactInfo.getId().toString(),
@@ -7569,6 +7610,18 @@ if(typeof BX.Crm.EntityEditorClientLight === "undefined")
 				{
 					companySettings['canChangeDefaultRequisite'] = enableRequisite;
 				}
+				var categoryParams = BX.prop.getObject(
+					this._schemeElement.getDataObjectParam('categoryParams', {}),
+					BX.CrmEntityType.enumeration.company,
+					{}
+				);
+				companySettings['categoryId'] = BX.prop.getInteger(categoryParams, 'categoryId', 0);
+
+				var permissionToken = this._schemeElement.getDataStringParam('permissionToken', null);
+				if (permissionToken)
+				{
+					companySettings['permissionToken'] = permissionToken;
+				}
 
 				var companyPanel = BX.Crm.ClientEditorEntityPanel.create(
 					this._id +  "_" + companyInfo.getId().toString(),
@@ -7595,7 +7648,7 @@ if(typeof BX.Crm.EntityEditorClientLight === "undefined")
 			entityInfo = null;
 		}
 
-		var enableCreation = this._editor.canCreateCompany();
+		var enableCreation = this._schemeElement.getDataBooleanParam('enableCreation', this._editor.canCreateCompany());
 		if(enableCreation)
 		{
 			//Check if creation of company is disabled by configuration.
@@ -7638,7 +7691,9 @@ if(typeof BX.Crm.EntityEditorClientLight === "undefined")
 					requisiteBinding: this._model.getField("REQUISITE_BINDING", {}),
 					isRequired: (this.isRequired() || this.isRequiredByAttribute()),
 					enableMyCompanyOnly: this._schemeElement.getDataBooleanParam('enableMyCompanyOnly', false),
-					enableRequisiteSelection: this._schemeElement.getDataBooleanParam('enableRequisiteSelection', false)
+					enableRequisiteSelection: this._schemeElement.getDataBooleanParam('enableRequisiteSelection', false),
+					permissionToken: this._schemeElement.getDataStringParam('permissionToken', null),
+					duplicateControl: this.getDuplicateControlConfig(BX.CrmEntityType.enumeration.company)
 				}
 			)
 		);
@@ -7709,6 +7764,25 @@ if(typeof BX.Crm.EntityEditorClientLight === "undefined")
 		}
 		return -1;
 	};
+	BX.Crm.EntityEditorClientLight.prototype.getDuplicateControlConfig = function(entityTypeId)
+	{
+		let result = {};
+
+		if (BX.CrmEntityType.isDefined(entityTypeId))
+		{
+			const duplicateControlConfigs = this._schemeElement.getDataObjectParam("duplicateControl", {});
+
+			if (
+				duplicateControlConfigs.hasOwnProperty(entityTypeId)
+				&& BX.Type.isPlainObject(duplicateControlConfigs[entityTypeId])
+			)
+			{
+				result = duplicateControlConfigs[entityTypeId];
+			}
+		}
+
+		return result;
+	};
 	BX.Crm.EntityEditorClientLight.prototype.createContactSearchBox = function(params)
 	{
 		var entityInfo = BX.prop.get(params, "entityInfo", null);
@@ -7717,7 +7791,7 @@ if(typeof BX.Crm.EntityEditorClientLight === "undefined")
 			entityInfo = null;
 		}
 
-		var enableCreation = this._editor.canCreateContact();
+		var enableCreation = this._schemeElement.getDataBooleanParam('enableCreation', this._editor.canCreateContact());
 		if(enableCreation)
 		{
 			//Check if creation of contact is disabled by configuration.
@@ -7768,7 +7842,9 @@ if(typeof BX.Crm.EntityEditorClientLight === "undefined")
 					clientEditorFieldsParams: this.getClientEditorFieldsParams(BX.CrmEntityType.names.contact),
 					requisiteBinding: this._model.getField("REQUISITE_BINDING", {}),
 					isRequired: (this.isRequired() || this.isRequiredByAttribute()),
-					enableRequisiteSelection: enableRequisiteSelection
+					enableRequisiteSelection: enableRequisiteSelection,
+					permissionToken: this._schemeElement.getDataStringParam('permissionToken', null),
+					duplicateControl: this.getDuplicateControlConfig(BX.CrmEntityType.enumeration.contact)
 				}
 			)
 		);

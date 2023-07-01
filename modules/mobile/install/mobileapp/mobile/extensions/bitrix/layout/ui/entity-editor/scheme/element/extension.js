@@ -1,4 +1,11 @@
-(() => {
+/**
+ * @module layout/ui/entity-editor/scheme/element
+ */
+jn.define('layout/ui/entity-editor/scheme/element', (require, exports, module) => {
+
+	const { EntityEditorControlFactory } = require('layout/ui/entity-editor/control');
+	const { EntityEditorVisibilityPolicy } = require('layout/ui/entity-editor/editor-enum/visibility-policy');
+
 	/**
 	 * @class EntitySchemeElement
 	 */
@@ -8,6 +15,7 @@
 		{
 			const self = new EntitySchemeElement();
 			self.initialize(settings);
+
 			return self;
 		}
 
@@ -19,7 +27,7 @@
 			this.title = '';
 			this.originalTitle = '';
 
-			this.visibilityPolicy = BX.UI.EntityEditorVisibilityPolicy.always;
+			this.visibilityPolicy = EntityEditorVisibilityPolicy.always;
 			this.optionFlags = 0;
 			this.options = {};
 
@@ -27,7 +35,6 @@
 			this.multiple = false;
 			this.required = false;
 			this.requiredConditionally = false;
-			this.requiredByAttribute = false;
 
 			this.data = null;
 			/** @type {EntitySchemeElement[]} */
@@ -51,7 +58,6 @@
 			this.required = BX.prop.getBoolean(this.settings, 'required', false);
 			this.showRequired = BX.prop.getBoolean(this.settings, 'showRequired', true);
 			this.requiredConditionally = BX.prop.getBoolean(this.settings, 'requiredConditionally', false);
-			this.requiredByAttribute = this.getRequiredByAttributeConfiguration();
 
 			let title = BX.prop.getString(this.settings, 'title', '');
 			let originalTitle = BX.prop.getString(this.settings, 'originalTitle', '');
@@ -68,7 +74,7 @@
 			this.title = title;
 			this.originalTitle = originalTitle;
 
-			this.visibilityPolicy = BX.UI.EntityEditorVisibilityPolicy.parse(
+			this.visibilityPolicy = EntityEditorVisibilityPolicy.parse(
 				BX.prop.getString(this.settings, 'visibilityPolicy', ''),
 			);
 
@@ -76,15 +82,15 @@
 			this.options = BX.prop.getObject(this.settings, 'options', {});
 
 			this.elements = [];
-			const elementData = BX.prop.getArray(this.settings, 'elements', []);
-			elementData.forEach((data) => {
-				this.elements.push(EntitySchemeElement.create(data));
+
+			const elementsData = BX.prop.getArray(this.settings, 'elements', []);
+			elementsData.forEach((data) => {
+				const element = EntitySchemeElement.create(data);
+				if (EntityEditorControlFactory.has(element.getType()))
+				{
+					this.elements.push(element);
+				}
 			});
-		}
-
-		getRequiredByAttributeConfiguration()
-		{
-
 		}
 
 		getData()
@@ -170,5 +176,5 @@
 		}
 	}
 
-	jnexport(EntitySchemeElement);
-})();
+	module.exports = { EntitySchemeElement };
+});

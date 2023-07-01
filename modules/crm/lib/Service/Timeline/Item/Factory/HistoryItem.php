@@ -9,9 +9,11 @@ use Bitrix\Crm\Service\Timeline\Item\Model;
 use Bitrix\Crm\Settings\Crm;
 use Bitrix\Crm\Timeline\DeliveryCategoryType;
 use Bitrix\Crm\Timeline\LogMessageType;
-use Bitrix\Crm\Timeline\ProductCompilationType;
 use Bitrix\Crm\Timeline\OrderCategoryType;
+use Bitrix\Crm\Timeline\ProductCompilationType;
+use Bitrix\Crm\Timeline\Tasks\CategoryType;
 use Bitrix\Crm\Timeline\TimelineType;
+use Bitrix\Crm\Timeline\CalendarSharing;
 use CCrmOwnerType;
 
 class HistoryItem
@@ -34,6 +36,12 @@ class HistoryItem
 
 		if ($typeId === TimelineType::ACTIVITY && $assocEntityTypeId === CCrmOwnerType::Activity)
 		{
+			$responsibleId = (int)($rawData['ASSOCIATED_ENTITY']['RESPONSIBLE_ID'] ?? 0);
+			if ($responsibleId > 0)
+			{
+				$model->setAuthorId($responsibleId);
+			}
+
 			$activityTypeId = (int)($rawData['ASSOCIATED_ENTITY']['TYPE_ID'] ?? 0);
 			$activityProviderId = (string)($rawData['ASSOCIATED_ENTITY']['PROVIDER_ID'] ?? '');
 
@@ -80,6 +88,16 @@ class HistoryItem
 			return new Item\LogMessage\Binding\Unlink($context, $model);
 		}
 
+		if ($typeId === TimelineType::CONVERSION)
+		{
+			return new Item\LogMessage\Conversion($context, $model);
+		}
+
+		if ($typeId === TimelineType::COMMENT)
+		{
+			return new Item\Comment($context, $model);
+		}
+
 		if ($typeId === TimelineType::SIGN_DOCUMENT && Item\SignDocument::isActive())
 		{
 			return new Item\SignDocument($context, $model);
@@ -101,7 +119,32 @@ class HistoryItem
 				case LogMessageType::TODO_CREATED:
 					return new Item\LogMessage\TodoCreated($context, $model);
 				case LogMessageType::PING:
+					$associatedActivityProvider = $rawData['ASSOCIATED_ENTITY']['PROVIDER_ID'] ?? '';
+					if ($associatedActivityProvider === \Bitrix\Crm\Activity\Provider\CalendarSharing::getId())
+					{
+						return new Item\LogMessage\CalendarSharing\CalendarSharingPing($context, $model);
+					}
+					if ($associatedActivityProvider === \Bitrix\Crm\Activity\Provider\Tasks\Task::getId())
+					{
+						return new Item\LogMessage\Tasks\TaskPing($context, $model);
+					}
 					return new Item\LogMessage\Ping($context, $model);
+				case LogMessageType::REST:
+					return new Item\LogMessage\Rest($context, $model);
+				case LogMessageType::SMS_STATUS:
+					return new Item\LogMessage\SmsStatus($context, $model);
+				case LogMessageType::CALENDAR_SHARING_NOT_VIEWED:
+					return new Item\LogMessage\CalendarSharing\NotViewed($context, $model);
+				case LogMessageType::CALENDAR_SHARING_VIEWED:
+					return new Item\LogMessage\CalendarSharing\Viewed($context, $model);
+				case LogMessageType::CALENDAR_SHARING_EVENT_CREATED:
+					return new Item\LogMessage\CalendarSharing\EventCreated($context, $model);
+				case LogMessageType::CALENDAR_SHARING_EVENT_DOWNLOADED:
+					return new Item\LogMessage\CalendarSharing\EventDownloaded($context, $model);
+				case LogMessageType::CALENDAR_SHARING_EVENT_CONFIRMED:
+					return new Item\LogMessage\CalendarSharing\EventConfirmed($context, $model);
+				case LogMessageType::CALENDAR_SHARING_LINK_COPIED:
+					return new Item\LogMessage\CalendarSharing\LinkCopied($context, $model);
 			}
 		}
 
@@ -322,6 +365,69 @@ class HistoryItem
 				case DeliveryCategoryType::TAXI_RETURNED_FINISH:
 					return new Item\LogMessage\Delivery\Taxi\ReturnedFinish($context, $model);
 				// endregion
+			}
+		}
+
+		if ($typeId === TimelineType::CALENDAR_SHARING)
+		{
+			switch ($typeCategoryId)
+			{
+				case CalendarSharing\Entry::SHARING_TYPE_INVITATION_SENT:
+					return new Item\LogMessage\CalendarSharing\InvitationSent($context, $model);
+			}
+		}
+
+		if ($typeId === TimelineType::TASK)
+		{
+			switch ($typeCategoryId)
+			{
+				case CategoryType::DESCRIPTION_CHANGED:
+					return new Item\LogMessage\Tasks\TaskDescriptionChanged($context, $model);
+
+				case CategoryType::RESULT_ADDED:
+					return new Item\LogMessage\Tasks\TaskResultAdded($context, $model);
+
+				case CategoryType::CHECKLIST_ADDED:
+					return new Item\LogMessage\Tasks\TaskChecklistAdded($context, $model);
+
+				case CategoryType::DEADLINE_CHANGED:
+					return new Item\LogMessage\Tasks\TaskDeadlineChanged($context, $model);
+
+				case CategoryType::VIEWED:
+					return new Item\LogMessage\Tasks\TaskViewed($context, $model);
+
+				case CategoryType::PING_SENT:
+					return new Item\LogMessage\Tasks\TaskPingSent($context, $model);
+
+				case CategoryType::COMMENT_ADD:
+					return new Item\LogMessage\Tasks\TaskCommentAdded($context, $model);
+
+				case CategoryType::ALL_COMMENT_VIEWED:
+					return new Item\LogMessage\Tasks\TaskCommentsViewed($context, $model);
+
+				case CategoryType::TASK_ADDED:
+					return new Item\LogMessage\Tasks\TaskCreation($context, $model);
+
+				case CategoryType::STATUS_CHANGED:
+					return new Item\LogMessage\Tasks\TaskStatusChanged($context, $model);
+
+				case CategoryType::EXPIRED:
+					return new Item\LogMessage\Tasks\TaskDeadlineExpired($context, $model);
+
+				case CategoryType::DISAPPROVED:
+					return new Item\LogMessage\Tasks\TaskDisapproved($context, $model);
+
+				case CategoryType::RESPONSIBLE_CHANGED:
+					return new Item\LogMessage\Tasks\TaskResponsibleChanged($context, $model);
+
+				case CategoryType::ACCOMPLICE_ADDED:
+					return new Item\LogMessage\Tasks\TaskAccompliceAdded($context, $model);
+
+				case CategoryType::AUDITOR_ADDED:
+					return new Item\LogMessage\Tasks\TaskAuditorAdded($context, $model);
+
+				case CategoryType::GROUP_CHANGED:
+					return new Item\LogMessage\Tasks\TaskGroupChanged($context, $model);
 			}
 		}
 

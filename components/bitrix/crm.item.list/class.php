@@ -1,5 +1,8 @@
 <?php
 
+use Bitrix\Crm\Component\EntityList\FieldRestrictionManager;
+use Bitrix\Crm\Component\EntityList\FieldRestrictionManagerTypes;
+use Bitrix\Crm\Filter\UiFilterOptions;
 use Bitrix\Crm\Integration;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\ItemIdentifier;
@@ -10,6 +13,7 @@ use Bitrix\Crm\Service\Display;
 use Bitrix\Crm\Service\Router;
 use Bitrix\Crm\Settings\HistorySettings;
 use Bitrix\Crm\UserField\Visibility\VisibilityManager;
+use Bitrix\Main\Grid;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\PageNavigation;
 use Bitrix\UI\Buttons;
@@ -25,8 +29,9 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 	protected $defaultGridSort = [
 		'ID' => 'desc',
 	];
-	/** @var Bitrix\Main\Grid\Options */
-	protected $gridOptions;
+
+	protected Grid\Options $gridOptions;
+	protected UiFilterOptions $filterOptions;
 	protected $visibleColumns;
 	protected $parentEntityTypeId;
 	protected $parentEntityId;
@@ -34,6 +39,7 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 	protected $webForms = [];
 	protected $exportType;
 	protected $notAccessibleFields;
+	protected FieldRestrictionManager $fieldRestrictionManager;
 
 	protected function init(): void
 	{
@@ -70,7 +76,14 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 			}
 		}
 
-		$this->gridOptions = new Bitrix\Main\Grid\Options($this->getGridId());
+		$this->filterOptions = new UiFilterOptions($this->getGridId(), $this->kanbanEntity->getFilterPresets());
+		$this->gridOptions = new Grid\Options($this->getGridId());
+
+		$this->fieldRestrictionManager = new FieldRestrictionManager(
+			FieldRestrictionManager::MODE_GRID,
+			[FieldRestrictionManagerTypes::ACTIVITY]
+		);
+
 	}
 
 	public function executeComponent()
@@ -112,6 +125,8 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 			null
 		);
 
+		$this->fieldRestrictionManager->removeRestrictedFields($this->filterOptions, $this->gridOptions);
+
 		$navParams = $this->gridOptions->getNavParams(['nPageSize' => static::DEFAULT_PAGE_SIZE]);
 		$pageSize = (int)$navParams['nPageSize'];
 		$pageNavigation = $this->getPageNavigation($pageSize);
@@ -129,11 +144,20 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 			'gridId' => $this->getGridId(),
 			'backendUrl' => $this->arParams['backendUrl'] ?? null,
 			'isUniversalActivityScenarioEnabled' => \Bitrix\Crm\Settings\Crm::isUniversalActivityScenarioEnabled(),
+			'smartActivityNotificationSupported' => $this->factory->isSmartActivityNotificationSupported(),
 			'isIframe' => $this->isIframe(),
+			'isEmbedded' => ($this->arParams['isEmbedded'] ?? false) === true,
 		];
 		$this->arResult['entityTypeName'] = $entityTypeName;
 		$this->arResult['categoryId'] = $this->category ? $this->category->getId() : 0;
 		$this->arResult['entityTypeDescription'] = $this->factory->getEntityDescription();
+
+		$restrictedFields = $this->fieldRestrictionManager->fetchRestrictedFields(
+			$this->getGridId() ?? '',
+			[],
+				$this->filter
+		);
+		$this->arResult = array_merge($this->arResult, $restrictedFields);
 
 		$this->includeComponentTemplate();
 	}
@@ -349,9 +373,8 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 			return $filter;
 		}
 
-		$filterOptions = new \Bitrix\Crm\Filter\UiFilterOptions($this->getGridId(), $this->kanbanEntity->getFilterPresets());
 		$filterFields = $this->getDefaultFilterFields();
-		$requestFilter = $filterOptions->getFilter($filterFields);
+		$requestFilter = $this->filterOptions->getFilter($filterFields);
 
 		$filter = [];
 		$this->provider->prepareListFilter($filter, $requestFilter);
@@ -480,25 +503,43 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 	protected function getSelect(): array
 	{
 		// Some columns use references to compile their display data
-		$referenceToDependantColumnsMap = [
-			Item::FIELD_NAME_COMPANY => [Item::FIELD_NAME_CONTACT_ID, Item::FIELD_NAME_COMPANY_ID, 'CLIENT_INFO'],
-			// Item::FIELD_NAME_CONTACTS => [Item::FIELD_NAME_CONTACT_ID, 'CLIENT_INFO'],
-			Item::FIELD_NAME_MYCOMPANY => [Item::FIELD_NAME_MYCOMPANY_ID],
-			// Item::FIELD_NAME_PRODUCTS => [Item::FIELD_NAME_PRODUCTS.'.PRODUCT_ID'],
+		$displayedFieldToDependenciesMap = [
+			Item::FIELD_NAME_CONTACT_ID => [Item::FIELD_NAME_COMPANY, /* Item::FIELD_NAME_CONTACTS */],
+			Item::FIELD_NAME_COMPANY_ID => [Item::FIELD_NAME_COMPANY],
+			'CLIENT_INFO' => [Item::FIELD_NAME_CONTACT_ID, Item::FIELD_NAME_COMPANY_ID, Item::FIELD_NAME_COMPANY],
+			Item::FIELD_NAME_MYCOMPANY_ID => [Item::FIELD_NAME_MYCOMPANY],
+			'OPPORTUNITY_WITH_CURRENCY' => [Item::FIELD_NAME_OPPORTUNITY, Item::FIELD_NAME_CURRENCY_ID],
+			// Item::FIELD_NAME_PRODUCTS . '.PRODUCT_ID' => [Item::FIELD_NAME_PRODUCTS],
+			Item::FIELD_NAME_TITLE => [
+				Item::FIELD_NAME_ID,
+				Item\SmartInvoice::FIELD_NAME_ACCOUNT_NUMBER,
+				Item\Quote::FIELD_NAME_BEGIN_DATE,
+				Item\Quote::FIELD_NAME_NUMBER,
+			],
 		];
 
 		$visibleColumns = $this->getVisibleColumns();
 
-		$select = ['*'];
-		foreach ($referenceToDependantColumnsMap as $referenceName => $columnNames)
+		$select = [];
+		foreach ($visibleColumns as $columnName)
 		{
-			if (array_intersect($visibleColumns, $columnNames) && $this->factory->isFieldExists($referenceName))
+			if ($this->factory->isFieldExists($columnName))
 			{
-				$select[] = $referenceName;
+				$select[] = $columnName;
+			}
+			elseif (isset($displayedFieldToDependenciesMap[$columnName]))
+			{
+				foreach ($displayedFieldToDependenciesMap[$columnName] as $dependencyField)
+				{
+					if ($this->factory->isFieldExists($dependencyField))
+					{
+						$select[] = $dependencyField;
+					}
+				}
 			}
 		}
 
-		return $select;
+		return array_unique($select);
 	}
 
 	protected function isColumnVisible(string $columnName): bool
@@ -777,9 +818,28 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 
 		if ($this->factory->isLinkWithProductsEnabled())
 		{
-			$columns['OPPORTUNITY_WITH_CURRENCY'] = Bitrix\Crm\Format\Money::format($item->getOpportunity(), $item->getCurrencyId());
-			$columns[Item::FIELD_NAME_OPPORTUNITY] = number_format($item->getOpportunity(), 2, '.', '');
-			$columns[Item::FIELD_NAME_CURRENCY_ID] = htmlspecialcharsbx(\Bitrix\Crm\Currency::getCurrencyCaption($item->getCurrencyId()));
+			if ($this->isColumnVisible('OPPORTUNITY_WITH_CURRENCY'))
+			{
+				$columns['OPPORTUNITY_WITH_CURRENCY'] = Bitrix\Crm\Format\Money::format(
+					(float)$item->getOpportunity(),
+					(string)$item->getCurrencyId()
+				);
+			}
+			if ($this->isColumnVisible(Item::FIELD_NAME_OPPORTUNITY))
+			{
+				$columns[Item::FIELD_NAME_OPPORTUNITY] = number_format(
+					(float)$item->getOpportunity(),
+					2,
+					'.',
+					''
+				);
+			}
+			if ($this->isColumnVisible(Item::FIELD_NAME_CURRENCY_ID))
+			{
+				$columns[Item::FIELD_NAME_CURRENCY_ID] = htmlspecialcharsbx(
+					\Bitrix\Crm\Currency::getCurrencyCaption((string)$item->getCurrencyId())
+				);
+			}
 		}
 
 		// if ($this->factory->isCrmTrackingEnabled())

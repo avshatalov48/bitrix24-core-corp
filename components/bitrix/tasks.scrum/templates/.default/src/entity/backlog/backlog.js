@@ -62,7 +62,7 @@ export class Backlog extends Entity
 		this.header.subscribe('taskClick', (baseEvent: BaseEvent) => {
 			if (this.mandatoryExists)
 			{
-				this.emit('openAddTaskForm');
+				this.emit('openAddTaskForm', baseEvent.getTarget());
 			}
 			else
 			{

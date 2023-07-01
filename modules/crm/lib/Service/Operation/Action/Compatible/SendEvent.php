@@ -44,7 +44,7 @@ class SendEvent extends Action
 
 	protected function executeEvent(array $event, Item $item): Result
 	{
-		$fields = $item->getData();
+		$fields = $item->getCompatibleData();
 		ExecuteModuleEventEx($event, [&$fields]);
 
 		return new Result();

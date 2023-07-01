@@ -22,7 +22,7 @@ class PingOffset extends Base
 		}
 		elseif (count($existedIds) === count($offsets))
 		{
-				$this->updateOffsets($existedIds, $offsets);
+			$this->updateOffsets($existedIds, $offsets);
 		}
 		else
 		{
@@ -35,6 +35,11 @@ class PingOffset extends Base
 	public function unregister(int $activityId): void
 	{
 		ActivityPingOffsetsTable::deleteByActivityId($activityId);
+	}
+
+	public function getOffsetsByActivityId(int $activityId): array
+	{
+		return array_unique(array_map('intval', ActivityPingOffsetsTable::getOffsetsByActivityId($activityId)));
 	}
 
 	protected function getEventNamePrefix(): string

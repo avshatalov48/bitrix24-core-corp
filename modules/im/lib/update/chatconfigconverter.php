@@ -197,7 +197,7 @@ class ChatConfigConverter extends Stepper
 	{
 		if (empty(self::$notifyDefaultSettings))
 		{
-			self::$notifyDefaultSettings = Manager::getSimpleNotifySettings(General::getDefaultSettings());
+			self::$notifyDefaultSettings = Notification::getSimpleNotifySettings(General::getDefaultSettings());
 		}
 
 		$newFormatSettings = [];
@@ -259,7 +259,7 @@ class ChatConfigConverter extends Stepper
 		$generalDefaultSettings = General::getDefaultSettings();
 		General::setSettings($defaultGroupId, $generalDefaultSettings);
 
-		$notifySettings = Manager::getSimpleNotifySettings($generalDefaultSettings);
+		$notifySettings = Notification::getSimpleNotifySettings($generalDefaultSettings);
 		Notification::setSettings($defaultGroupId, $notifySettings);
 
 
@@ -308,7 +308,7 @@ class ChatConfigConverter extends Stepper
 
 				if ($generalSettings['notifyScheme'] === 'simple' || empty($notifySettings))
 				{
-					$notifySettings = Manager::getSimpleNotifySettings($generalSettings);
+					$notifySettings = Notification::getSimpleNotifySettings($generalSettings);
 				}
 				else
 				{
@@ -370,7 +370,7 @@ class ChatConfigConverter extends Stepper
 		return (int)$row['ID'];
 	}
 
-	private function bindExistingGroupToUser($userId, $groupId, $defaultGroupId): bool
+	private function bindExistingGroupToUser($userId, $groupId, $defaultGroupId): void
 	{
 		$notifyCount = OptionStateTable::getCount([
 			'=GROUP_ID' => $groupId,
@@ -387,13 +387,19 @@ class ChatConfigConverter extends Stepper
 
 		if ($notifyGroupId === $groupId && $generalGroupId === $groupId)
 		{
-			$result = OptionUserTable::add([
+			$insertFields = [
 				'USER_ID' => $userId,
-				'NOTIFY_GROUP_ID' => $notifyGroupId,
-				'GENERAL_GROUP_ID' => $generalGroupId
-			]);
+				'GENERAL_GROUP_ID' => $generalGroupId,
+				'NOTIFY_GROUP_ID' => $notifyGroupId
+			];
+			$updateFields = [
+				'GENERAL_GROUP_ID' => $generalGroupId,
+				'NOTIFY_GROUP_ID' => $notifyGroupId
+			];
 
-			return $result->isSuccess();
+			OptionUserTable::merge($insertFields, $updateFields);
+
+			return;
 		}
 
 		$generalSettings = \CUserOptions::GetOption('im', 'settings', [], $userId);
@@ -413,7 +419,7 @@ class ChatConfigConverter extends Stepper
 			if ($generalSettings['notifyScheme'] === 'simple')
 			{
 				$generalSettings = $this->convertGeneralSettings($generalSettings);
-				$notifySettings = Manager::getSimpleNotifySettings($generalSettings);
+				$notifySettings = Notification::getSimpleNotifySettings($generalSettings);
 			}
 
 			if (!empty($notifySettings))
@@ -424,13 +430,17 @@ class ChatConfigConverter extends Stepper
 			}
 		}
 
-		$result = OptionUserTable::add([
+		$insertFields = [
 			'USER_ID' => $userId,
-			'NOTIFY_GROUP_ID' => $notifyGroupId,
-			'GENERAL_GROUP_ID' => $generalGroupId
-		]);
+			'GENERAL_GROUP_ID' => $generalGroupId,
+			'NOTIFY_GROUP_ID' => $notifyGroupId
+		];
+		$updateFields = [
+			'GENERAL_GROUP_ID' => $generalGroupId,
+			'NOTIFY_GROUP_ID' => $notifyGroupId
+		];
 
-		return $result->isSuccess();
+		OptionUserTable::merge($insertFields, $updateFields);
 	}
 
 }

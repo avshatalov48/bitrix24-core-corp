@@ -83,7 +83,7 @@ class Order extends Sale\Order
 
 	protected function enableAutomaticDealCreation()
 	{
-		if ($this->isSetRealizationDocumentTradeBinding())
+		if ($this->isSetNotAvailableTradePlatformForDeal())
 		{
 			return false;
 		}
@@ -109,23 +109,27 @@ class Order extends Sale\Order
 		return false;
 	}
 
-	private function isSetRealizationDocumentTradeBinding(): bool
+	private function isSetNotAvailableTradePlatformForDeal(): bool
 	{
+		$notAvailableTradePlatform = [
+			TradingPlatform\RealizationDocument::TRADING_PLATFORM_CODE,
+			TradingPlatform\Terminal::TRADING_PLATFORM_CODE,
+		];
+
+		$setTradePlatform = [];
+
 		$collection = $this->getTradeBindingCollection();
 		/** @var TradeBindingEntity $binding */
 		foreach ($collection as $binding)
 		{
 			$platform = $binding->getTradePlatform();
-			if (
-				$platform
-				&& $platform->getCode() === TradingPlatform\RealizationDocument::TRADING_PLATFORM_CODE
-			)
+			if ($platform)
 			{
-				return true;
+				$setTradePlatform[] = $platform->getCode();
 			}
 		}
 
-		return false;
+		return (bool)(array_intersect($notAvailableTradePlatform, $setTradePlatform));
 	}
 
 	private function needCreateContactCompany(): bool
@@ -252,7 +256,11 @@ class Order extends Sale\Order
 			$this->processOnStoreV3OrderCreate();
 		}
 
-		if ($this->fields->isChanged('CANCELED') && $this->isCanceled() && Crm\Automation\Factory::canUseAutomation())
+		if (
+			$this->fields->isChanged('CANCELED')
+			&& $this->isCanceled()
+			&& Crm\Automation\Factory::isAutomationAvailable(\CCrmOwnerType::Order)
+		)
 		{
 			Crm\Automation\Trigger\OrderCanceledTrigger::execute(
 				[['OWNER_TYPE_ID' => \CCrmOwnerType::Order, 'OWNER_ID' => $this->getId()]],
@@ -282,7 +290,6 @@ class Order extends Sale\Order
 		{
 			if ($this->fields->isChanged('STATUS_ID'))
 			{
-				$this->runAutomationOnStatusChanged();
 				$this->addTimelineEntryOnStatusModify();
 
 				if (
@@ -321,7 +328,11 @@ class Order extends Sale\Order
 
 		if ($this->fields->isChanged('RESPONSIBLE_ID') || $this->fields->isChanged('STATUS_ID'))
 		{
-			if($this->fields->isChanged('RESPONSIBLE_ID') && Crm\Automation\Factory::canUseAutomation())
+			if(
+				$this->fields->isChanged('RESPONSIBLE_ID')
+				&& Crm\Automation\Factory::isAutomationAvailable(\CCrmOwnerType::Order)
+				&& $this->isNew()
+			)
 			{
 				Crm\Automation\Trigger\ResponsibleChangedTrigger::execute(
 					[['OWNER_TYPE_ID' => \CCrmOwnerType::Order, 'OWNER_ID' => $this->getId()]],
@@ -368,7 +379,7 @@ class Order extends Sale\Order
 				&& $binding->getOwnerTypeId() === \CCrmOwnerType::Deal
 			)
 			{
-				if (Crm\Automation\Factory::canUseAutomation())
+				if (Crm\Automation\Factory::isAutomationAvailable(\CCrmOwnerType::Deal))
 				{
 					Crm\Automation\Trigger\DeliveryFinishedTrigger::execute(
 						[['OWNER_TYPE_ID' => \CCrmOwnerType::Deal, 'OWNER_ID' => $binding->getOwnerId()]],
@@ -395,6 +406,11 @@ class Order extends Sale\Order
 		}
 
 		Crm\Search\SearchContentBuilderFactory::create(\CCrmOwnerType::Order)->build($this->getId());
+
+		if (!$this->isNew() && Crm\Automation\Factory::isAutomationAvailable(\CCrmOwnerType::Order))
+		{
+			$this->runAutomationOnUpdate($this->fields->getChangedValues(), $this->fields->getOriginalValues());
+		}
 
 		return $result;
 	}
@@ -574,10 +590,10 @@ class Order extends Sale\Order
 	/**
 	 * @return void;
 	 */
-	private function runAutomationOnStatusChanged()
+	private function runAutomationOnUpdate(array $fields, array $prevFields)
 	{
-		//TODO: use Crm\Automation\Starter
-		Crm\Automation\Factory::runOnStatusChanged(\CCrmOwnerType::Order, $this->getId());
+		$starter = new Crm\Automation\Starter(\CCrmOwnerType::Order, $this->getId());
+		$starter->runOnUpdate($fields, $prevFields);
 	}
 
 	private function addTimelineEntryOnCreate(): void

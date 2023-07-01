@@ -1,6 +1,11 @@
-(() => {
+/**
+ * @module layout/ui/entity-editor/controller/product
+ */
+jn.define('layout/ui/entity-editor/controller/product', (require, exports, module) => {
 
-	const { Alert } = jn.require('alert');
+	const { Alert } = require('alert');
+	const { EntityEditorBaseController } = require('layout/ui/entity-editor/controller/base');
+	const { EntityEditorOpportunityField } = require('layout/ui/entity-editor/control/opportunity');
 
 	const isManualPriceFieldName = 'IS_MANUAL_OPPORTUNITY';
 
@@ -186,11 +191,38 @@
 			this.showEnableManualOpportunityAlert(true);
 		}
 
+		getEntityTypeName()
+		{
+			return this.model.getField('ENTITY_TYPE_ID');
+		}
+
+		getEntityDescription(code)
+		{
+			let description;
+
+			const entityTypeName = this.getEntityTypeName();
+			if (entityTypeName)
+			{
+				const entityDescription = BX.message(`${code}_${entityTypeName}`);
+				if (entityDescription)
+				{
+					description = entityDescription;
+				}
+			}
+
+			if (!description)
+			{
+				description = BX.message(code);
+			}
+
+			return description;
+		}
+
 		showEnableManualOpportunityAlert(focus = false)
 		{
 			Alert.confirm(
 				BX.message('M_CRM_ENABLE_MANUAL_OPPORTUNITY_CONFIRMATION_TITLE2'),
-				BX.message('M_CRM_ENABLE_MANUAL_OPPORTUNITY_CONFIRMATION_TEXT2'),
+				this.getEntityDescription('M_CRM_ENABLE_MANUAL_OPPORTUNITY_CONFIRMATION_TEXT3'),
 				[
 					{
 						text: BX.message('M_CRM_ENABLE_MANUAL_OPPORTUNITY_CONFIRMATION_BUTTON'),
@@ -213,7 +245,7 @@
 		{
 			Alert.confirm(
 				BX.message('M_CRM_DISABLE_MANUAL_OPPORTUNITY_CONFIRMATION_TITLE'),
-				BX.message('M_CRM_DISABLE_MANUAL_OPPORTUNITY_CONFIRMATION_TEXT'),
+				this.getEntityDescription('M_CRM_DISABLE_MANUAL_OPPORTUNITY_CONFIRMATION_TEXT2'),
 				[
 					{
 						text: BX.message('M_CRM_DISABLE_MANUAL_OPPORTUNITY_CONFIRMATION_BUTTON'),
@@ -236,7 +268,7 @@
 		{
 			Notify.showUniqueMessage(
 				BX.message('M_CRM_CHANGE_MANUAL_OPPORTUNITY_NOTIFY_HINT_TEXT'),
-				BX.message('M_CRM_CHANGE_MANUAL_OPPORTUNITY_NOTIFY_HINT_TITLE'),
+				this.getEntityDescription('M_CRM_CHANGE_MANUAL_OPPORTUNITY_NOTIFY_HINT_TITLE2'),
 				{ time: 5 },
 			);
 		}
@@ -440,7 +472,7 @@
 			return new Promise((resolve) => {
 				Alert.confirm(
 					BX.message('M_CRM_DISABLE_MANUAL_OPPORTUNITY_CONFIRMATION_TITLE'),
-					BX.message('M_CRM_DISABLE_MANUAL_OPPORTUNITY_CONFIRMATION_TEXT'),
+					this.getEntityDescription('M_CRM_DISABLE_MANUAL_OPPORTUNITY_CONFIRMATION_TEXT2'),
 					[
 						{
 							text: BX.message('M_CRM_DISABLE_MANUAL_OPPORTUNITY_CONFIRMATION_BUTTON'),
@@ -482,7 +514,13 @@
 
 		updateTotalSumField({ total })
 		{
-			if (this.isManualPriceSwitchingEnabled() && this.isManualPrice())
+			if ((this.isManualPriceSwitchingEnabled() && this.isManualPrice()))
+			{
+				return Promise.resolve();
+			}
+
+			//IS_MANUAL OPPORTUNITY is not passed with conversion, so check if it exists
+			if(!this.model.hasField(isManualPriceFieldName))
 			{
 				return Promise.resolve();
 			}
@@ -534,5 +572,5 @@
 		}
 	}
 
-	jnexport(EntityEditorProductController);
-})();
+	module.exports = { EntityEditorProductController };
+});

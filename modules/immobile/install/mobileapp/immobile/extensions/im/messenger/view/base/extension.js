@@ -3,8 +3,6 @@
  */
 jn.define('im/messenger/view/base', (require, exports, module) => {
 
-	const { EventManager } = jn.require('im/messenger/lib/event-manager');
-
 	class View
 	{
 		constructor(options = {})
@@ -16,8 +14,8 @@ jn.define('im/messenger/view/base', (require, exports, module) => {
 
 			this.ui = options.ui;
 
-			this.customUiEventManager = new EventManager();
-			this.customUiEventList = null;
+			this.customUiEventEmitter = new JNEventEmitter();
+			this.customUiEventList = new Set();
 		}
 
 		setCustomEvents(eventList = [])
@@ -32,14 +30,14 @@ jn.define('im/messenger/view/base', (require, exports, module) => {
 				throw new Error('View: You cannot send an unregistered event, use setCustomEvents(eventList).');
 			}
 
-			this.customUiEventManager.emit(eventName, eventData);
+			this.customUiEventEmitter.emit(eventName, [ eventData ]);
 		}
 
 		on(eventName, eventHandler)
 		{
 			if (this.customUiEventList.has(eventName))
 			{
-				this.customUiEventManager.on(eventName, eventHandler);
+				this.customUiEventEmitter.on(eventName, eventHandler);
 
 				return this;
 			}
@@ -53,7 +51,7 @@ jn.define('im/messenger/view/base', (require, exports, module) => {
 		{
 			if (this.customUiEventList.has(eventName))
 			{
-				this.customUiEventManager.off(eventName, eventHandler);
+				this.customUiEventEmitter.off(eventName, eventHandler);
 
 				return this;
 			}
@@ -65,9 +63,22 @@ jn.define('im/messenger/view/base', (require, exports, module) => {
 
 		once(eventName, eventHandler)
 		{
+			if (this.customUiEventList.has(eventName))
+			{
+				this.customUiEventEmitter.once(eventName, eventHandler);
+
+				return this;
+			}
+
 			this.ui.once(eventName, eventHandler);
 
 			return this;
+		}
+
+		removeAll()
+		{
+			this.customUiEventEmitter.removeAll();
+			this.ui.removeAll();
 		}
 	}
 

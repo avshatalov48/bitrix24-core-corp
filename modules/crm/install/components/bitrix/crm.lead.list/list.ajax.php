@@ -338,7 +338,7 @@ elseif ($action === 'SAVE_PROGRESS' && check_bitrix_sessid())
 
 		//Region automation
 		$starter = new \Bitrix\Crm\Automation\Starter(\CCrmOwnerType::Lead, $ID);
-		$starter->setUserIdFromCurrent()->runOnUpdate($arFields, []);
+		$starter->setUserIdFromCurrent()->runOnUpdate(['STATUS_ID' => $statusID], []);
 		//end region
 
 		__CrmLeadListEndResponse(array('TYPE' => $targetTypeName, 'ID' => $ID, 'VALUE' => $statusID));

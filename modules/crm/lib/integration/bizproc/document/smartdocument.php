@@ -8,7 +8,12 @@ class SmartDocument extends Item
 {
 	public static function getEntityName($entity)
 	{
-		return Loc::getMessage('CRM_BP_DOCUMENT_SMART_DOCUMENT_ENTITY_NAME');
+		return Loc::getMessage('CRM_BP_DOCUMENT_SMART_DOCUMENT_ENTITY_NAME_1');
+	}
+
+	public static function getDocumentTypeName($documentType)
+	{
+		return static::getEntityName(static::class);
 	}
 
 	protected static function GetDocumentInfo($documentId)

@@ -7,6 +7,7 @@
  * @copyright 2001-2014 Bitrix
  */
 
+use Bitrix\Main\Application;
 use Bitrix\Main\Event;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
@@ -996,7 +997,7 @@ class CIntranetInviteDialog
 	{
 		if (Loader::includeModule("bitrix24"))
 		{
-			$UserMaxCount = (int)Option::get("main", "PARAM_MAX_USERS");
+			$UserMaxCount = Application::getInstance()->getLicense()->getMaxUsers();
 			$currentUserCount = CBitrix24::getActiveUserCount();
 			return $UserMaxCount <= 0 || $cnt <= $UserMaxCount - $currentUserCount;
 		}

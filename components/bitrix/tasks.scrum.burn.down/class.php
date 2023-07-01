@@ -49,8 +49,8 @@ class TasksScrumBurnDownComponent extends \CBitrixComponent implements Controlle
 
 	public function onPrepareComponentParams($params)
 	{
-		$params['groupId'] = (is_numeric($params['groupId']) ? (int) $params['groupId'] : 0);
-		$params['sprintId'] = (is_numeric($params['sprintId']) ? (int) $params['sprintId'] : 0);
+		$params['groupId'] = (is_numeric($params['groupId'] ?? null) ? (int) $params['groupId'] : 0);
+		$params['sprintId'] = (is_numeric($params['sprintId'] ?? null) ? (int) $params['sprintId'] : 0);
 
 		return $params;
 	}

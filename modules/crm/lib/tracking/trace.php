@@ -7,6 +7,7 @@
  */
 namespace Bitrix\Crm\Tracking;
 
+use Bitrix\Main\Event;
 use Bitrix\Main\Text\Encoding;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Web\Json;
@@ -30,6 +31,7 @@ class Trace
 	protected $isMobile = false;
 	protected $utm = [];
 	protected $pages = [];
+	protected $analyticsClient = [];
 
 	/** @var Channel\Collection|null $channelCollection Channel collection. */
 	protected $channelCollection;
@@ -243,6 +245,12 @@ class Trace
 
 				$this->channelCollection->setChannel($channel);
 			}
+		}
+
+		$client = self::getValueByKey($data, 'client');
+		if ($client)
+		{
+			$this->analyticsClient = $client;
 		}
 
 		$this->setReferrer(self::getValueByKey($data, 'ref'));
@@ -624,8 +632,35 @@ class Trace
 			}
 
 			Source\Level\TraceSplitter::instance()->split($this);
+			$this->sendEventForAnalytics();
 		}
 
 		return $this->id;
+	}
+
+	public function getChannelCollection(): ?Channel\Collection
+	{
+		return $this->channelCollection;
+	}
+
+	public function getAnalyticsClient()
+	{
+		return $this->analyticsClient;
+	}
+
+	private function sendEventForAnalytics(): void
+	{
+		if (empty($this->analyticsClient))
+		{
+			return;
+		}
+
+		$event = new Event(
+			'crm',
+			'onGetAnalyticsAfterSaveTrace',
+			['instance' => $this]
+		);
+
+		$event->send();
 	}
 }

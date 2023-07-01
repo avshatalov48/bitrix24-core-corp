@@ -21,6 +21,7 @@ class Base
 	const Ga = 'google';
 	const Fb = 'fb';
 	const Vk = 'vk';
+	const Vkads = 'vkads';
 	const Ya = 'yandex';
 	const Ig = 'instagram';
 	const Organic = 'organic';

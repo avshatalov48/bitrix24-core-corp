@@ -1,7 +1,11 @@
-(() => {
+/**
+ * @module selector/widget
+ */
+jn.define('selector/widget', (require, exports, module) => {
 
-	const { uniqBy } = jn.require('utils/array');
-	const { isEqual } = jn.require('utils/object');
+	const { uniqBy } = require('utils/array');
+	const { isEqual, get } = require('utils/object');
+	const { CommonSelectorProvider } = require('selector/providers/common');
 
 	const SERVICE_SECTION_CODE = 'service';
 	const COMMON_SECTION_CODE = 'common';
@@ -157,7 +161,7 @@
 									: BX.message('PROVIDER_WIDGET_SELECT')
 							),
 							type: 'text',
-							color: '#0065a3',
+							color: '#2066b0',
 							callback: () => this.close(),
 						}]);
 
@@ -297,6 +301,11 @@
 			;
 		}
 
+		getEntityType(item)
+		{
+			return get(item, ['params', 'type'], null);
+		}
+
 		/**
 		 * Specific method call from widget.setListener().
 		 *
@@ -337,6 +346,7 @@
 		onViewHiddenListener()
 		{
 			this.onViewHidden();
+			this.onViewHiddenStrict();
 		}
 
 		/**
@@ -354,7 +364,7 @@
 		 */
 		onViewRemovedListener()
 		{
-			this.onViewHidden();
+			this.onViewRemoved();
 		}
 
 		// endregion
@@ -538,12 +548,14 @@
 
 		getCommonSectionButtonText(isRecent)
 		{
-			if (!this.createOptions.enableCreation || isRecent)
+			const { canCreateWithEmptySearch, enableCreation } = this.createOptions;
+
+			if (enableCreation && (canCreateWithEmptySearch || !isRecent))
 			{
-				return '';
+				return this.getCreateButtonItemTitle();
 			}
 
-			return this.getCreateButtonItemTitle();
+			return '';
 		}
 
 		getCommonSectionStyles()
@@ -558,7 +570,7 @@
 				button: {
 					font: {
 						size: 15,
-						color: this.getIsItemCreating() ? '#525c69' : '#0065a3',
+						color: this.getIsItemCreating() ? '#525c69' : '#2066b0',
 					},
 				},
 			};
@@ -580,8 +592,12 @@
 				return;
 			}
 
-			items = uniqBy(items, 'id');
+			if (this.selectOptions.singleEntityByType)
+			{
+				items = this.filterTypeToOneEntity(items);
+			}
 
+			items = uniqBy(items, 'id');
 			if (!isEqual(this.currentSelectedItems, items))
 			{
 				this.currentSelectedItems = items;
@@ -589,9 +605,23 @@
 			}
 		}
 
+		filterTypeToOneEntity(items)
+		{
+			const filterItems = {};
+			items.forEach((item) => {
+				const entityType = this.getEntityType(item);
+				if (!filterItems[entityType] || (filterItems[entityType] && !this.isInSelected(item)))
+				{
+					filterItems[entityType] = item;
+				}
+			});
+
+			return Object.values(filterItems);
+		}
+
 		isInSelected(item)
 		{
-			return (this.currentSelectedItems.find(selectedItem => selectedItem.id === item.id) !== undefined);
+			return this.currentSelectedItems.find(({ id }) => id === item.id) !== undefined;
 		}
 
 		getIsItemCreating()
@@ -637,6 +667,23 @@
 				{
 					this.events.onViewHidden();
 				}
+			}
+		}
+
+		onViewHiddenStrict()
+		{
+			if (this.events.onViewHiddenStrict)
+			{
+				this.events.onViewHiddenStrict();
+			}
+		}
+
+		onViewRemoved()
+		{
+			this.widget = null;
+			if (this.events.onViewRemoved)
+			{
+				this.events.onViewRemoved();
 			}
 		}
 
@@ -733,5 +780,5 @@
 		}
 	}
 
-	this.EntitySelectorWidget = EntitySelectorWidget;
-})();
+	module.exports = { EntitySelectorWidget };
+});

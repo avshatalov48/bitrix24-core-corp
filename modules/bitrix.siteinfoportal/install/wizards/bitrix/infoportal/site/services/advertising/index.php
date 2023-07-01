@@ -5,7 +5,7 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
 if(!CModule::IncludeModule('advertising'))
 	return;
 
-__IncludeLang(GetLangFileName(dirname(__FILE__)."/lang/", '/'.basename(__FILE__)));	
+__IncludeLang(GetLangFileName(__DIR__."/lang/", '/'.basename(__FILE__)));
 
 //Matrix
 $arWeekday = Array(
@@ -80,7 +80,7 @@ if ($contractId == false){
 		CAdvType::Set($arFields, "", $CHECK_RIGHTS="N");
 	}
 	
-	$pathToBanner = str_replace("\\", "/", dirname(__FILE__));
+	$pathToBanner = str_replace("\\", "/", __DIR__);
 	$lang = (in_array(LANGUAGE_ID, array("ru", "en", "de"))) ? LANGUAGE_ID : \Bitrix\Main\Localization\Loc::getDefaultLang(LANGUAGE_ID);
 	$pathToBanner = $pathToBanner."/lang/".$lang;
 	

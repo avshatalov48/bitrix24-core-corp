@@ -3,9 +3,9 @@
  */
 jn.define('im/messenger/lib/integration/mobile/communication', (require, exports, module) => {
 
-	const { RestManager } = jn.require('im/messenger/lib/rest-manager');
-	const { RestMethod } = jn.require('im/messenger/const');
-	const { Logger } = jn.require('im/messenger/lib/logger');
+	const { restManager } = require('im/messenger/lib/rest-manager');
+	const { RestMethod } = require('im/messenger/const');
+	const { Logger } = require('im/messenger/lib/logger');
 
 	/**
 	 * @class Communication
@@ -14,9 +14,9 @@ jn.define('im/messenger/lib/integration/mobile/communication', (require, exports
 	{
 		constructor()
 		{
-			RestManager.on(RestMethod.userCounters, {}, this.handleUserCountersGet.bind(this));
-			RestManager.on(RestMethod.serverTime, {}, this.handleServerTime.bind(this));
-			RestManager.on(RestMethod.imDesktopStatusGet, {}, this.handleDesktopStatusGet.bind(this));
+			restManager.on(RestMethod.userCounters, {}, this.handleUserCountersGet.bind(this));
+			restManager.on(RestMethod.serverTime, {}, this.handleServerTime.bind(this));
+			restManager.on(RestMethod.imDesktopStatusGet, {}, this.handleDesktopStatusGet.bind(this));
 		}
 
 		handleUserCountersGet(response)

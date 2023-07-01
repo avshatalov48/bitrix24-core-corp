@@ -2,8 +2,8 @@
 
 namespace Bitrix\Crm\Integration\BizProc\Document\ValueCollection;
 
-use Bitrix\Main;
 use Bitrix\Crm;
+use Bitrix\Main;
 
 class Order extends Base
 {
@@ -196,8 +196,8 @@ class Order extends Base
 			}
 
 			$data = $platform->getInfo();
-			$this->document['SHOP_TITLE'] = $data['TITLE'];
-			$this->document['SHOP_PUBLIC_URL'] = $data['PUBLIC_URL'];
+			$this->document['SHOP_TITLE'] = $data['TITLE'] ?? '';
+			$this->document['SHOP_PUBLIC_URL'] = $data['PUBLIC_URL'] ?? '';
 			break;
 		}
 

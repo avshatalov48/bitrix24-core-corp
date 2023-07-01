@@ -6,7 +6,7 @@ require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_befo
 IncludeModuleLangFile(__FILE__);
 
 $SITE_ID = '';
-if($_REQUEST["site_id"] <> '')
+if(!empty($_REQUEST["site_id"]))
 {
 	$res = CSite::GetByID($_REQUEST["site_id"]);
 	if($arSite = $res->Fetch())
@@ -66,7 +66,7 @@ function AddDepartment($SITE_ID, $arFields)
 	}
 	else
 	{
-		if (intval($arFields["UF_HEAD"]) > 0)
+		if ((int)$arFields["UF_HEAD"] > 0)
 		{
 			$result = updateUserEmployee(intval($arFields["UF_HEAD"]), intval($ID));
 			if ($result !== true)
@@ -101,7 +101,7 @@ function EditDepartment($SITE_ID, $arFields)
 	}
 	else
 	{
-		if (intval($arFields["UF_HEAD"]) > 0)
+		if ((int)$arFields["UF_HEAD"] > 0)
 		{
 			$result = updateUserEmployee(intval($arFields["UF_HEAD"]), intval($arFields["CURRENT_DEPARTMENT_ID"]));
 			if ($result !== true)
@@ -133,14 +133,26 @@ function DeleteDepartment($arFields)
 			$dbRes = CUser::GetList(
 				'', '',
 				array('UF_DEPARTMENT' => $dpt),
-				array('SELECT' => array('ID'))
+				array('SELECT' => array('ID', 'UF_DEPARTMENT'))
 			);
 
 			$GLOBALS['DB']->StartTransaction();
 
 			$obUser = new CUser();
 			while ($arRes = $dbRes->fetch())
-				$obUser->update($arRes['ID'], array('UF_DEPARTMENT' => array($arSection['IBLOCK_SECTION_ID'])));
+			{
+				$departments = array_filter($arRes['UF_DEPARTMENT'], function ($departmentId) use($arSection) {
+					return (int)$departmentId !== (int)$arSection['ID']
+						&& (int)$departmentId !== (int)$arSection['IBLOCK_SECTION_ID'];
+				});
+				$departments[] = $arSection['IBLOCK_SECTION_ID'];
+				$obUser->update(
+					$arRes['ID'],
+					[
+						'UF_DEPARTMENT' => $departments
+					]
+				);
+			}
 
 			$dbRes = CIBlockSection::GetList(array(), array('IBLOCK_ID' => $iblockID, 'SECTION_ID' => $arSection['ID']), false, array('ID', 'IBLOCK_ID'));
 
@@ -200,7 +212,13 @@ else
 			die("close");
 	}
 
-	if($_SERVER["REQUEST_METHOD"] === "GET" && check_bitrix_sessid() && $_GET["action"] = "delete_department" && CIBlockSectionRights::UserHasRightTo($iblockID, intval($_GET['dpt_id']), 'section_delete'))
+	if (
+		$_SERVER["REQUEST_METHOD"] === "GET"
+		&& check_bitrix_sessid()
+		&& isset($_GET["action"])
+		&& $_GET["action"] = "delete_department"
+		&& CIBlockSectionRights::UserHasRightTo($iblockID, intval($_GET['dpt_id']), 'section_delete')
+	)
 	{
 		DeleteDepartment($_GET);
 		return;
@@ -210,7 +228,7 @@ else
 	if ($ID>1)
 	{
 	?>
-	<form method="POST" action="<?echo BX_ROOT."/tools/intranet_structure.php?site_id=".$SITE_ID."&IBLOCK_SECTION_ID=".intval($_POST["IBLOCK_SECTION_ID"])?>" id="STRUCTURE_FORM">
+	<form method="POST" action="<?echo BX_ROOT."/tools/intranet_structure.php?site_id=".$SITE_ID."&IBLOCK_SECTION_ID=".intval($_POST["IBLOCK_SECTION_ID"] ?? 0)?>" id="STRUCTURE_FORM">
 		<p><?=GetMessage("INTR_STRUCTURE_SUCCESS")?></p>
 		<input type="hidden" name="reload" value="Y">
 	</form><?
@@ -379,7 +397,7 @@ else
 
 		var myPopup = myBX.IntranetStructure.popup;
 		var myButton = myPopup.buttons[0];
-		<?if(isset($arParams["UF_DEPARTMENT_ID"]) || $_POST['CURRENT_DEPARTMENT_ID']):?>
+		<?if(isset($arParams["UF_DEPARTMENT_ID"]) || !empty($_POST['CURRENT_DEPARTMENT_ID'])):?>
 			myButton.setName('<?=\CUtil::jsEscape(getMessage('INTR_STRUCTURE_EDIT')) ?>');
 			myPopup.setTitleBar('<?=\CUtil::jsEscape(getMessage('INTR_EDIT_TITLE')) ?>');
 		<?elseif ($ID > 1):?>

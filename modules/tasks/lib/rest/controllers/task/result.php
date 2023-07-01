@@ -9,6 +9,7 @@ use Bitrix\Tasks\Integration\Disk;
 use Bitrix\Tasks\Integration\TasksMobile;
 use Bitrix\Tasks\Internals\Task\Result\ResultManager;
 use Bitrix\Tasks\Internals\Task\Result\ResultTable;
+use Bitrix\Tasks\Internals\TaskObject;
 use Bitrix\Tasks\Rest\Controllers\Base;
 use Bitrix\Tasks\Access\Model\UserModel;
 use Bitrix\Tasks\Access\ActionDictionary;
@@ -226,6 +227,96 @@ class Result extends Base
 		}
 
 		return $list;
+	}
+
+	public function getFirstAction(int $taskId): ?array
+	{
+		if ($taskId <= 0)
+		{
+			$this->errorCollection->setError(new Error('Task not found.'));
+			return null;
+		}
+
+		if ($this->getUserId() <= 0)
+		{
+			$this->errorCollection->setError(new Error('Access denied.'));
+			return null;
+		}
+
+		if (!Loader::includeModule('tasks'))
+		{
+			$this->errorCollection->setError(new Error('Module not loaded.'));
+			return null;
+		}
+
+		if (!TaskAccessController::can($this->getUserId(), ActionDictionary::ACTION_TASK_READ, $taskId))
+		{
+			$this->errorCollection->setError(new Error('Access denied.'));
+			return null;
+		}
+
+		try
+		{
+			$task = new TaskObject(['ID' => $taskId]);
+			$result = $task->getFirstResult();
+			if (is_null($result))
+			{
+				return ['result' => 0];
+			}
+			$resultId = $result->getId();
+		}
+		catch (\Exception $exception)
+		{
+			$this->errorCollection->setError(new Error($exception->getMessage()));
+			return null;
+		}
+
+		return ['result' => $resultId];
+	}
+
+	public function getLastAction(int $taskId): ?array
+	{
+		if ($taskId <= 0)
+		{
+			$this->errorCollection->setError(new Error('Task not found.'));
+			return null;
+		}
+
+		if ($this->getUserId() <= 0)
+		{
+			$this->errorCollection->setError(new Error('Access denied.'));
+			return null;
+		}
+
+		if (!Loader::includeModule('tasks'))
+		{
+			$this->errorCollection->setError(new Error('Module not loaded.'));
+			return null;
+		}
+
+		if (!TaskAccessController::can($this->getUserId(), ActionDictionary::ACTION_TASK_READ, $taskId))
+		{
+			$this->errorCollection->setError(new Error('Access denied.'));
+			return null;
+		}
+
+		try
+		{
+			$task = new TaskObject(['ID' => $taskId]);
+			$result = $task->getLastResult();
+			if (is_null($result))
+			{
+				return ['result' => 0];
+			}
+			$resultId = $result->getId();
+		}
+		catch (\Exception $exception)
+		{
+			$this->errorCollection->setError(new Error($exception->getMessage()));
+			return null;
+		}
+
+		return ['result' => $resultId];
 	}
 
 	private function fillWithUserInfo(array $results): array

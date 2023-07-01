@@ -13,7 +13,7 @@ use Bitrix\Crm\Category\NamingHelper;
 /** @global CMain $APPLICATION */
 /** @global CDatabase $DB */
 /** @var CBitrixComponentTemplate $this */
-/** @var CCrmEntityProgressBarComponent $component */
+/** @var CCrmCompanyDetailsComponent $component */
 
 $guid = $arResult['GUID'];
 $prefix = mb_strtolower($guid);
@@ -80,13 +80,6 @@ $APPLICATION->IncludeComponent(
 			}
 		);
 </script><?
-
-$editorContext = $arResult['CONTEXT'];
-if (isset($arResult['ORIGIN_ID']) && $arResult['ORIGIN_ID'] !== '')
-{
-	$editorContext['ORIGIN_ID'] = $arResult['ORIGIN_ID'];
-}
-
 $APPLICATION->IncludeComponent(
 	'bitrix:crm.entity.details',
 	'',
@@ -97,47 +90,10 @@ $APPLICATION->IncludeComponent(
 		'ENTITY_INFO' => $arResult['ENTITY_INFO'],
 		'READ_ONLY' => $arResult['READ_ONLY'],
 		'TABS' => $arResult['TABS'],
-		'SERVICE_URL' => '/bitrix/components/bitrix/crm.company.details/ajax.php?'.bitrix_sessid_get(),
-		'EDITOR' => [
-			'GUID' => "{$guid}_editor",
-			'CONFIG_ID' => $arResult['EDITOR_CONFIG_ID'],
-			'ENTITY_CONFIG' => $arResult['ENTITY_CONFIG'],
-			'ENTITY_CONTROLLERS' => $arResult['ENTITY_CONTROLLERS'],
-			'DUPLICATE_CONTROL' => $arResult['DUPLICATE_CONTROL'],
-			'ENTITY_FIELDS' => $arResult['ENTITY_FIELDS'],
-			'ENTITY_DATA' => $arResult['ENTITY_DATA'],
-			'ENTITY_VALIDATORS' => $arResult['ENTITY_VALIDATORS'],
-			'ENABLE_SECTION_EDIT' => true,
-			'ENABLE_SECTION_CREATION' => true,
-			'ENABLE_USER_FIELD_CREATION' => $arResult['ENABLE_USER_FIELD_CREATION'],
-			'USER_FIELD_ENTITY_ID' => $arResult['USER_FIELD_ENTITY_ID'],
-			'USER_FIELD_CREATE_PAGE_URL' => $arResult['USER_FIELD_CREATE_PAGE_URL'],
-			'USER_FIELD_CREATE_SIGNATURE' => $arResult['USER_FIELD_CREATE_SIGNATURE'],
-			'USER_FIELD_FILE_URL_TEMPLATE' => $arResult['USER_FIELD_FILE_URL_TEMPLATE'],
-			'SERVICE_URL' => '/bitrix/components/bitrix/crm.company.details/ajax.php?'.bitrix_sessid_get(),
-			'EXTERNAL_CONTEXT_ID' => $arResult['EXTERNAL_CONTEXT_ID'],
-			'CONTEXT_ID' => $arResult['CONTEXT_ID'],
-			'CONTEXT' => $editorContext,
-			'ENABLE_PAGE_TITLE_CONTROLS' => $arResult['IS_EDIT_MODE'],
-			'ATTRIBUTE_CONFIG' => [
-				'ENTITY_SCOPE' => $arResult['ENTITY_ATTRIBUTE_SCOPE'],
-				'CAPTIONS' => FieldAttributeManager::getCaptionsForEntityWithStages(CCrmOwnerType::Company),
-			],
-			'COMPONENT_AJAX_DATA' => [
-				'RELOAD_ACTION_NAME' => 'LOAD',
-				'RELOAD_FORM_DATA' => [
-					'ACTION_ENTITY_ID' => $arResult['ENTITY_ID']
-				] + $editorContext
-			]
-		],
+		'SERVICE_URL' => '/bitrix/components/bitrix/crm.company.details/ajax.php?' . bitrix_sessid_get(),
+		'EDITOR' => $component->getEditorConfig(),
 		'TIMELINE' => [
 			'GUID' => "{$guid}_timeline",
-			'ENABLE_WAIT' => false,
-			'ENABLE_CALL' => $isClientCompany,
-			'ENABLE_EMAIL' => $isClientCompany,
-			'ENABLE_MEETING' => $isClientCompany,
-			'ENABLE_TASK' => $isClientCompany,
-			'ENABLE_SMS' => $isClientCompany
 		],
 		'ACTIVITY_EDITOR_ID' => $activityEditorID,
 		'PATH_TO_USER_PROFILE' => $arResult['PATH_TO_USER_PROFILE'],
@@ -179,3 +135,5 @@ if ($arResult['ENTITY_ID'] <= 0 && !empty($arResult['FIELDS_SET_DEFAULT_VALUE'])
 		});
 	</script><?php
 }
+
+echo \CCrmComponentHelper::prepareInitReceiverRepositoryJS(\CCrmOwnerType::Company, (int)($arResult['ENTITY_ID'] ?? 0));

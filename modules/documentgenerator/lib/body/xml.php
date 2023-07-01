@@ -106,6 +106,11 @@ abstract class Xml extends Body
 		return '';
 	}
 
+	public function isFileProcessable()
+	{
+		return !empty($this->content);
+	}
+
 	/**
 	 * Construct $this->document and $this->xpath from actual content.
 	 */

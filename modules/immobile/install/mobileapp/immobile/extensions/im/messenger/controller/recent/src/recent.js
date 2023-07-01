@@ -1,41 +1,45 @@
 /* eslint-disable flowtype/require-return-type */
+/* eslint-disable bitrix-rules/no-bx */
 
 /**
  * @module im/messenger/controller/recent/recent
  */
 jn.define('im/messenger/controller/recent/recent', (require, exports, module) => {
 
-	const { Logger } = jn.require('im/messenger/lib/logger');
-	const { Controller } = jn.require('im/messenger/controller/base');
-	const { ItemAction } = jn.require('im/messenger/controller/recent/item-action');
-	const { Worker } = jn.require('im/messenger/lib/helper');
-	const { PageNavigation } = jn.require('im/messenger/lib/page-navigation');
-	const { RecentConverter } = jn.require('im/messenger/lib/converter');
-	const { RestManager } = jn.require('im/messenger/lib/rest-manager');
-	const { RecentRenderer } = jn.require('im/messenger/controller/recent/renderer');
-	const { ShareDialogCache } = jn.require('im/messenger/cache/share-dialog');
+	const { clone } = require('utils/object');
+	const { core } = require('im/messenger/core');
+	const { Counters } = require('im/messenger/lib/counters');
+	const { Calls } = require('im/messenger/lib/integration/immobile/calls');
+	const { Logger } = require('im/messenger/lib/logger');
+	const { MessengerEmitter } = require('im/messenger/lib/emitter');
+	const { ItemAction } = require('im/messenger/controller/recent/item-action');
+	const { Worker } = require('im/messenger/lib/helper');
+	const { PageNavigation } = require('im/messenger/lib/page-navigation');
+	const { RecentConverter } = require('im/messenger/lib/converter');
+	const { restManager } = require('im/messenger/lib/rest-manager');
+	const { RecentRenderer } = require('im/messenger/controller/recent/renderer');
+	const { ShareDialogCache } = require('im/messenger/cache/share-dialog');
 	const {
 		EventType,
 		RestMethod,
-	} = jn.require('im/messenger/const');
+		DialogType,
+	} = require('im/messenger/const');
 	const {
-		RecentService,
-		DialogService,
-	} = jn.require('im/messenger/service');
+		RecentRest,
+		DialogRest,
+	} = require('im/messenger/provider/rest');
 
 	/**
 	 * @class Recent
 	 *
 	 * @property {RecentView} view
 	 */
-	class Recent extends Controller
+	class Recent
 	{
 		/* region Init */
 
 		constructor(options = {})
 		{
-			super(options);
-
 			if (options.view)
 			{
 				this.view = options.view;
@@ -48,6 +52,9 @@ jn.define('im/messenger/controller/recent/recent', (require, exports, module) =>
 			{
 				throw new Error('DialogList: options.view is required');
 			}
+
+			this.store = core.getStore();
+			this.storeManager = core.getStoreManager();
 
 			this.lastMessageDate = null;
 			this.isFirstLoad = true;
@@ -89,13 +96,13 @@ jn.define('im/messenger/controller/recent/recent', (require, exports, module) =>
 
 		initRequests()
 		{
-			RestManager.on(
+			restManager.on(
 				RestMethod.imRecentList,
 				{ SKIP_OPENLINES: 'Y' },
 				this.handleFirstPage.bind(this)
 			);
 
-			RestManager.once(
+			restManager.once(
 				RestMethod.imDepartmentColleaguesGet,
 				{
 					USER_DATA: 'Y',
@@ -120,7 +127,7 @@ jn.define('im/messenger/controller/recent/recent', (require, exports, module) =>
 
 		subscribeStoreEvents()
 		{
-			MessengerStoreManager
+			this.storeManager
 				.on('recentModel/add', this.drawItems.bind(this))
 				.on('recentModel/update', this.redrawItems.bind(this))
 				.on('recentModel/delete', this.deleteItem.bind(this))
@@ -129,8 +136,8 @@ jn.define('im/messenger/controller/recent/recent', (require, exports, module) =>
 
 		subscribeMessengerEvents()
 		{
-			this.onMessengerEvent(EventType.messenger.afterRefreshSuccess, this.stopRefreshing.bind(this));
-			this.onMessengerEvent(EventType.messenger.renderRecent, this.renderInstant.bind(this));
+			BX.addCustomEvent(EventType.messenger.afterRefreshSuccess, this.stopRefreshing.bind(this));
+			BX.addCustomEvent(EventType.messenger.renderRecent, this.renderInstant.bind(this));
 		}
 
 		/* endregion Init */
@@ -148,28 +155,22 @@ jn.define('im/messenger/controller/recent/recent', (require, exports, module) =>
 			{
 				if (recentItem.params.canJoin)
 				{
-					this.joinCall({
-						callId: recentItem.params.call.id,
-					});
+					this.joinCall(recentItem.params.call.id);
 				}
 				else
 				{
-					this.openDialog({
-						dialogId: recentItem.params.call.associatedEntity.id,
-					});
+					this.openDialog(recentItem.params.call.associatedEntity.id);
 				}
 
 				return;
 			}
 			
-			this.openDialog({
-				dialogId: recentItem.id,
-			});
+			this.openDialog(recentItem.id);
 		}
 
 		onShowSearchDialog()
 		{
-			this.emitMessengerEvent(EventType.messenger.showSearch);
+			MessengerEmitter.emit(EventType.messenger.showSearch);
 		}
 
 		onLoadNextPage()
@@ -197,44 +198,38 @@ jn.define('im/messenger/controller/recent/recent', (require, exports, module) =>
 
 		onCreateChat()
 		{
-			this.emitMessengerEvent(EventType.messenger.createChat);
+			MessengerEmitter.emit(EventType.messenger.createChat);
 		}
 
 		onReadAll()
 		{
-			DialogService.readAllMessages()
+			DialogRest.readAllMessages()
 				.then(result => {
-					Logger.log('DialogService.readAllMessages result:', result);
+					Logger.log('DialogRest.readAllMessages result:', result);
 
-					MessengerStore.dispatch('recentModel/clearAllCounters');
+					this.store.dispatch('recentModel/clearAllCounters');
 				})
 				.catch(error => {
-					Logger.error('DialogService.readAllMessages error:', error);
+					Logger.error('DialogRest.readAllMessages error:', error);
 				})
 			;
 		}
 
 		onRefresh()
 		{
-			this.emitMessengerEvent(EventType.messenger.refresh);
+			MessengerEmitter.emit(EventType.messenger.refresh);
 		}
 
-		openDialog(options)
+		openDialog(dialogId)
 		{
-			const eventData = {
-				dialogId: options.dialogId,
-			};
+			this.removeUnreadState(dialogId);
 
-			this.emitMessengerEvent(EventType.messenger.openDialog, eventData);
+			MessengerEmitter.emit(EventType.messenger.openDialog, { dialogId });
 		}
 
-		joinCall(options)
+		joinCall(callId)
 		{
-			const eventData = {
-				callId: options.callId,
-			};
-
-			this.emitMessengerEvent(EventType.messenger.joinCall, eventData);
+			Calls.joinCall(callId);
 		}
 		
 		addCall(call, callStatus)
@@ -328,7 +323,7 @@ jn.define('im/messenger/controller/recent/recent', (require, exports, module) =>
 				options.lastMessageDate = this.lastMessageDate;
 			}
 
-			return RecentService.getList(options);
+			return RecentRest.getList(options);
 		}
 
 		handleFirstPage(response)
@@ -399,8 +394,8 @@ jn.define('im/messenger/controller/recent/recent', (require, exports, module) =>
 
 		drawCacheItems()
 		{
-			let firstPage = ChatUtils.objectClone(
-				MessengerStore.getters['recentModel/getRecentPage'](1, this.pageNavigation.itemsPerPage)
+			let firstPage = clone(
+				this.store.getters['recentModel/getRecentPage'](1, this.pageNavigation.itemsPerPage)
 			);
 
 			if (firstPage.length === 0)
@@ -422,7 +417,7 @@ jn.define('im/messenger/controller/recent/recent', (require, exports, module) =>
 		drawItems(mutation, state)
 		{
 			const recentList = [];
-			const payload = ChatUtils.objectClone(mutation.payload);
+			const payload = clone(mutation.payload);
 
 			payload.forEach(item => recentList.push(item.fields));
 
@@ -440,7 +435,7 @@ jn.define('im/messenger/controller/recent/recent', (require, exports, module) =>
 			const recentList = [];
 
 			mutation.payload.forEach((item) => {
-				recentList.push(ChatUtils.objectClone(MessengerStore.state.recentModel.collection[item.index]));
+				recentList.push(clone(this.store.state.recentModel.collection[item.index]));
 			});
 
 			this.renderer.do('update', recentList);
@@ -486,6 +481,17 @@ jn.define('im/messenger/controller/recent/recent', (require, exports, module) =>
 					});
 				}
 
+				if (item.user)
+				{
+					result.dialogues.push({
+						dialogId: item.user.id,
+						avatar: item.user.avatar,
+						color: item.user.color,
+						name: item.user.name,
+						type: DialogType.user
+					});
+				}
+
 				result.recent.push({
 					...item,
 					avatar: item.avatar.url,
@@ -500,9 +506,9 @@ jn.define('im/messenger/controller/recent/recent', (require, exports, module) =>
 		{
 			const modelData = this.prepareDataForModels(recentItems);
 
-			const usersPromise = MessengerStore.dispatch('usersModel/set', modelData.users);
-			const dialoguesPromise = MessengerStore.dispatch('dialoguesModel/set', modelData.dialogues);
-			const recentPromise = MessengerStore.dispatch('recentModel/set', modelData.recent);
+			const usersPromise = this.store.dispatch('usersModel/set', modelData.users);
+			const dialoguesPromise = this.store.dispatch('dialoguesModel/set', modelData.dialogues);
+			const recentPromise = this.store.dispatch('recentModel/set', modelData.recent);
 
 			if (this.pageNavigation.currentPage === 1)
 			{
@@ -510,7 +516,7 @@ jn.define('im/messenger/controller/recent/recent', (require, exports, module) =>
 				modelData.recent.forEach(item => recentIndex.push(item.id.toString()));
 
 				const idListForDeleteFromCache = [];
-				MessengerStore.getters['recentModel/getCollection']
+				this.store.getters['recentModel/getCollection']
 					.forEach((item) => {
 						if (!recentIndex.includes(item.id.toString()))
 						{
@@ -519,7 +525,7 @@ jn.define('im/messenger/controller/recent/recent', (require, exports, module) =>
 					});
 
 				idListForDeleteFromCache.forEach(id => {
-					MessengerStore.dispatch('recentModel/delete', { id });
+					this.store.dispatch('recentModel/delete', { id });
 				});
 
 				ShareDialogCache.saveRecentItemList(modelData.recent)
@@ -549,12 +555,12 @@ jn.define('im/messenger/controller/recent/recent', (require, exports, module) =>
 
 			Logger.log('Recent.handleDepartmentColleaguesGet', userList);
 
-			MessengerStore.dispatch('usersModel/set', userList);
+			this.store.dispatch('usersModel/set', userList);
 		}
 
 		enableSwipeHelperPromo()
 		{
-			const firstItem = ChatUtils.objectClone(MessengerStore.getters['recentModel/getCollection'][0]);
+			const firstItem = clone(this.store.getters['recentModel/getCollection'][0]);
 			if (!firstItem)
 			{
 				return;
@@ -568,7 +574,7 @@ jn.define('im/messenger/controller/recent/recent', (require, exports, module) =>
 
 		checkEmpty()
 		{
-			if (MessengerStore.getters['recentModel/isEmpty'])
+			if (this.store.getters['recentModel/isEmpty'])
 			{
 				this.view.showWelcomeScreen();
 
@@ -595,11 +601,11 @@ jn.define('im/messenger/controller/recent/recent', (require, exports, module) =>
 		updateUserStatuses()
 		{
 			const timeStart = new Date();
-			const recentDialogIdList = Object.keys(MessengerStore.getters['recentModel/getCollection']);
+			const recentDialogIdList = Object.keys(this.store.getters['recentModel/getCollection']);
 			const listUpdate = [];
 
 			recentDialogIdList.forEach(dialogId => {
-				const recentItem = ChatUtils.objectClone(MessengerStore.getters['recentModel/getById'](dialogId));
+				const recentItem = clone(this.store.getters['recentModel/getById'](dialogId));
 				if(
 					!recentItem
 					|| recentItem.type !== 'user'
@@ -613,7 +619,7 @@ jn.define('im/messenger/controller/recent/recent', (require, exports, module) =>
 				{
 					recentItem.user.status = currentStatus;
 
-					MessengerStore.dispatch('recentModel/set', [ recentItem ]);
+					this.store.dispatch('recentModel/set', [ recentItem ]);
 					listUpdate.push(recentItem);
 				}
 			});
@@ -629,6 +635,37 @@ jn.define('im/messenger/controller/recent/recent', (require, exports, module) =>
 					+ 'ms.'
 				);
 			}
+		}
+
+		removeUnreadState(dialogId)
+		{
+			const recentItem = clone(this.store.getters['recentModel/getById'](dialogId));
+			if (!recentItem)
+			{
+				return;
+			}
+
+			const unreadBeforeChange = recentItem.unread;
+
+			this.store.dispatch('recentModel/set', [{
+				id: dialogId,
+				unread: false,
+			}]).then(() => {
+				this.renderInstant();
+
+				Counters.update();
+			});
+
+			RecentRest.read({ dialogId }).catch((result) => {
+				Logger.error('Recent item read error: ', result.error());
+
+				this.store.dispatch('recentModel/set', [{
+					id: dialogId,
+					unread: unreadBeforeChange,
+				}]).then(() => {
+					Counters.update();
+				});
+			});
 		}
 	}
 

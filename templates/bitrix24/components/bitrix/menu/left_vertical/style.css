@@ -61,6 +61,8 @@
 }
 
 .menu-items-header {
+	display: flex;
+	align-items: center;
 	height: 63px;
 	position: relative;
 	white-space: nowrap;
@@ -98,7 +100,7 @@
 }
 
 .menu-collapsed-mode .menu-items-header {
-	display: block;
+	display: flex;
 }
 
 .menu-collapsed-mode .menu-items-header:after {
@@ -1207,7 +1209,7 @@
 .menu-collapsed-mode.menu-sliding-mode .menu-help-btn-text,
 .menu-invite-employees-text,
 .menu-collapsed-mode.menu-sliding-mode .menu-invite-employees-text {
-	display: inline-block;
+	display: block;
 	position: relative;
 	padding-left: 23px;
 	height: 20px;
@@ -1354,7 +1356,7 @@
 	text-transform: uppercase;
 	font: 11px/19px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
 	font-weight: var(--ui-font-weight-bold, 700);
-	padding: 9px 0 9px 23px;
+	padding: 9px 0 9px 21px;
 	margin-top: 0;
 	width: 100%;
 	/*transition: all .2s linear;*/
@@ -1372,6 +1374,7 @@
 .menu-license-all.menu-license-all-default {
 	display: flex !important;
 	max-width: 237px;
+	max-height: 40px;
 }
 
 .bitrix24-default-theme .menu-collapsed-mode.menu-sliding-mode .menu-license-all,
@@ -2410,7 +2413,8 @@
 }
 
 .menu-marketplace-sect .menu-item-icon {
-	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2214%22%20height%3D%2215%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M6.934.23c-.014.003-.029.012-.044.02L.24%202.882c-.166.078-.227.248-.232.447v8.474c.002.19.101.37.232.42l6.585%202.604a.433.433%200%200%200%20.276.007l6.644-2.625c.13-.053.228-.237.227-.427V3.384c.004-.258-.06-.41-.232-.489L7.058.25C7.012.227%206.976.217%206.934.23zm.04.902l5.518%202.19L6.974%205.5%201.45%203.315l5.524-2.183z%22%20fill%3D%22%23FFF%22%20fill-rule%3D%22evenodd%22%20/%3E%3C/svg%3E');
+	/*background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2214%22%20height%3D%2215%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M6.934.23c-.014.003-.029.012-.044.02L.24%202.882c-.166.078-.227.248-.232.447v8.474c.002.19.101.37.232.42l6.585%202.604a.433.433%200%200%200%20.276.007l6.644-2.625c.13-.053.228-.237.227-.427V3.384c.004-.258-.06-.41-.232-.489L7.058.25C7.012.227%206.976.217%206.934.23zm.04.902l5.518%202.19L6.974%205.5%201.45%203.315l5.524-2.183z%22%20fill%3D%22%23FFF%22%20fill-rule%3D%22evenodd%22%20/%3E%3C/svg%3E');*/
+	background-image: url("data:image/svg+xml,%3Csvg width='28' height='28' viewBox='0 0 28 28' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M16.3169 9.11501C17.2292 7.39464 19.3539 6.75727 21.0625 7.69141C21.1693 7.74979 21.2096 7.88428 21.1526 7.99181L14.6017 20.3451C14.1171 21.2591 12.9883 21.5977 12.0806 21.1014C11.1729 20.6052 10.83 19.462 11.3147 18.548L16.3169 9.11501Z' fill='white'/%3E%3Cpath d='M10.1216 9.11501C11.0339 7.39464 13.1585 6.75727 14.8671 7.69141C14.9739 7.74979 15.0143 7.88428 14.9573 7.99181L8.40642 20.3451C7.92176 21.2591 6.79303 21.5977 5.88533 21.1014C4.97763 20.6052 4.63469 19.462 5.11935 18.548L10.1216 9.11501Z' fill='white'/%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M18.0327 16.2334C18.0112 16.2713 18 16.3136 18 16.3566L18.0001 19.0975C18.0002 20.148 18.8965 21 20.0016 21C21.1056 21 22.0001 20.1496 22 19.1002L21.9995 10.2601C21.9995 9.9903 21.6203 9.89944 21.4858 10.137L18.0327 16.2334Z' fill='white'/%3E%3C/svg%3E%0A");
 }
 
 .menu-tariff .menu-item-icon, .menu-updates .menu-item-icon {
@@ -2608,7 +2612,8 @@
 
 .bitrix24-default-theme .menu-marketplace-sect .menu-item-icon,
 .bitrix24-dark-theme .menu-marketplace-sect .menu-item-icon {
-	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2214%22%20height%3D%2215%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cg%3E%3Cpath%20d%3D%22M6.934.23c-.014.003-.029.012-.044.02L.24%202.882c-.166.078-.227.248-.232.447v8.474c.002.19.101.37.232.42l6.585%202.604a.433.433%200%200%200%20.276.007l6.644-2.625c.13-.053.228-.237.227-.427V3.384c.004-.258-.06-.41-.232-.489L7.058.25C7.012.227%206.976.217%206.934.23zm.04.902l5.518%202.19L6.974%205.5%201.45%203.315l5.524-2.183z%22%20fill%3D%22%23525C69%22%20fill-rule%3D%22evenodd%22/%3E%3C/g%3E%3C/svg%3E');
+	/*background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2214%22%20height%3D%2215%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cg%3E%3Cpath%20d%3D%22M6.934.23c-.014.003-.029.012-.044.02L.24%202.882c-.166.078-.227.248-.232.447v8.474c.002.19.101.37.232.42l6.585%202.604a.433.433%200%200%200%20.276.007l6.644-2.625c.13-.053.228-.237.227-.427V3.384c.004-.258-.06-.41-.232-.489L7.058.25C7.012.227%206.976.217%206.934.23zm.04.902l5.518%202.19L6.974%205.5%201.45%203.315l5.524-2.183z%22%20fill%3D%22%23525C69%22%20fill-rule%3D%22evenodd%22/%3E%3C/g%3E%3C/svg%3E');*/
+	background-image: url("data:image/svg+xml,%3Csvg width='28' height='28' viewBox='0 0 28 28' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M16.3169 9.11501C17.2292 7.39464 19.3539 6.75727 21.0625 7.69141C21.1693 7.74979 21.2096 7.88428 21.1526 7.99181L14.6017 20.3451C14.1171 21.2591 12.9883 21.5977 12.0806 21.1014C11.1729 20.6052 10.83 19.462 11.3147 18.548L16.3169 9.11501Z' fill='%23525C69'/%3E%3Cpath d='M10.1216 9.11501C11.0339 7.39464 13.1585 6.75727 14.8671 7.69141C14.9739 7.74979 15.0143 7.88428 14.9573 7.99181L8.40642 20.3451C7.92176 21.2591 6.79303 21.5977 5.88533 21.1014C4.97763 20.6052 4.63469 19.462 5.11935 18.548L10.1216 9.11501Z' fill='%23525C69'/%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M18.0327 16.2334C18.0112 16.2713 18 16.3136 18 16.3566L18.0001 19.0975C18.0002 20.148 18.8965 21 20.0016 21C21.1056 21 22.0001 20.1496 22 19.1002L21.9995 10.2601C21.9995 9.9903 21.6203 9.89944 21.4858 10.137L18.0327 16.2334Z' fill='%23525C69'/%3E%3C/svg%3E%0A");
 }
 
 .bitrix24-default-theme .menu-shop .menu-item-icon,
@@ -2797,6 +2802,7 @@
 /*region Burger Menu */
 
 .menu-switcher {
+	flex-shrink: 0;
 	display: inline-block;
 	position: relative;
 	width: 33px;
@@ -2930,12 +2936,9 @@
 	display: inline-flex;
 }
 
-.menu-scroll-mode .header-logo-block .logo {
-	/*visibility: hidden;*/
-}
-
 .menu-scroll-mode.menu-logo-mask-mode .menu-items-block .logo {
 	width: 197px;
+	max-width: 197px;
 	margin-right: 0;
 	padding-right: 0;
 	-webkit-mask-image: linear-gradient(to right, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 84%, rgba(0,0,0,0) 100%);

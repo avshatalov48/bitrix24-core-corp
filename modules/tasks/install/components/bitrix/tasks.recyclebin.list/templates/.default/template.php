@@ -4,9 +4,14 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Main\Localization\Loc;
 
+\Bitrix\Main\UI\Extension::load('ui.design-tokens');
+
 Loc::loadMessages(__FILE__);
 ?>
 
+<div class="tasks-rec-list__toolbar">
+	<div class="tasks-rec-list__toolbar-item --float-left"><?= GetMessage('TASKS_RECYCLEBIN_FILE_LIFETIME'); ?></div>
+</div>
 
 <?php $APPLICATION->IncludeComponent(
 	'bitrix:tasks.interface.topmenu',
@@ -14,7 +19,7 @@ Loc::loadMessages(__FILE__);
 	[
 		'USER_ID' => $arParams['USER_ID'],
 
-		'GROUP_ID'           => $arParams['MENU_GROUP_ID'],
+		'GROUP_ID'           => ($arParams['MENU_GROUP_ID'] ?? null),
 		'SECTION_URL_PREFIX' => '',
 
 		'MARK_RECYCLEBIN' => 'Y',

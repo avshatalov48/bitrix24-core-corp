@@ -9,10 +9,6 @@ pull.client
 pull.protobuf
 rest.client
 promise
-ui.vue.components.smiles
-ui.vue.directives.lazyload
-main.polyfill.intersectionobserver
-ui.dexie
 im.component.dialog
 im.view.message
 im.view.message.body
@@ -20,6 +16,7 @@ im.view.element.media
 ui.progressbarjs.uploader
 ui.progressbarjs
 ui.vue.vuex
+ui.dexie
 main.md5
 im.model
 im.lib.logger
@@ -27,6 +24,8 @@ im.lib.utils
 im.const
 main.date
 ui.vue.components.audioplayer
+main.polyfill.intersectionobserver
+ui.vue.directives.lazyload
 ui.icons
 ui.icons.base
 ui.icons.b24
@@ -53,3 +52,4 @@ im.lib.cookie
 im.lib.uploader
 im.event-handler
 im.lib.clipboard
+ui.vue.components.smiles

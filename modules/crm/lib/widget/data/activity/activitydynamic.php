@@ -284,7 +284,7 @@ HTML;
 
 					$item["PERCENTAGE"][\CCrmActivityDirection::Incoming] = 0;
 					$item["PERCENTAGE"][\CCrmActivityDirection::Outgoing] = 0;
-					if (is_null($group) || $group["hidden"] === "Y")
+					if (is_null($group) || ($group["hidden"] ?? '') === "Y")
 					{
 						if ($maxCounter[\CCrmActivityDirection::Incoming] > 0)
 							$item["PERCENTAGE"][\CCrmActivityDirection::Incoming] = intval($item["COUNTERS"][\CCrmActivityDirection::Incoming] * 100 / $maxCounter[\CCrmActivityDirection::Incoming]);
@@ -538,20 +538,20 @@ HTML;
 				if ($info->isInUse())
 				{
 					self::$data["groupItems"][$groupID]["IS_IN_USE"] = true;
-					if (self::$data["groupItems"][$parentId])
+					if (self::$data["groupItems"][$parentId] ?? false)
 						self::$data["groupItems"][$parentId]["IS_IN_USE"] = true;
 					self::$data["groupItems"][$groupID]["ACTIVE_ITEMS_COUNT"]++;
-					if (self::$data["groupItems"][$parentId])
+					if (self::$data["groupItems"][$parentId] ?? false)
 						self::$data["groupItems"][$parentId]["ACTIVE_ITEMS_COUNT"]++;
 				}
 				if ($info->checkConfigurationPermission())
 				{
 					self::$data["groupItems"][$groupID]["IS_CONFIGURABLE"] = true;
-					if (self::$data["groupItems"][$parentId])
+					if (self::$data["groupItems"][$parentId] ?? false)
 						self::$data["groupItems"][$parentId]["IS_CONFIGURABLE"] = true;
 				}
 				self::$data["groupItems"][$groupID]["ITEMS_COUNT"]++;
-				if (self::$data["groupItems"][$parentId])
+				if (self::$data["groupItems"][$parentId] ?? false)
 					self::$data["groupItems"][$parentId]["ITEMS_COUNT"]++;
 			}
 			$key = $info->getKey();

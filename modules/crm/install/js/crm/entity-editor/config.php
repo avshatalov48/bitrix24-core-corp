@@ -77,5 +77,7 @@ return array(
 		'crm.placement.detailsearch',
 		'crm.entity-editor.field-configurator',
 		'crm.entity-editor.field.phone-number-input',
+		'crm.entity-editor.duplicate.summary-list',
+		'main.popup',
 	]
 );

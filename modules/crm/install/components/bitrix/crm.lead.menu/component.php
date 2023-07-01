@@ -1,5 +1,9 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 /**
  * @var array $arParams
@@ -11,63 +15,123 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
  */
 
 if (!CModule::IncludeModule('crm'))
+{
 	return;
+}
 
 \Bitrix\Crm\Service\Container::getInstance()->getLocalization()->loadMessages();
 
-use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm\Integration\Sender\Rc;
+use Bitrix\Main\Localization\Loc;
 
 $currentUserID = CCrmSecurityHelper::GetCurrentUserID();
 $CrmPerms = CCrmPerms::GetCurrentUserPermissions();
 if ($CrmPerms->HavePerm('LEAD', BX_CRM_PERM_NONE))
+{
 	return;
+}
 
-$arParams['PATH_TO_LEAD_LIST'] = CrmCheckPath('PATH_TO_LEAD_LIST', $arParams['PATH_TO_LEAD_LIST'], $APPLICATION->GetCurPage());
-$arParams['PATH_TO_LEAD_EDIT'] = CrmCheckPath('PATH_TO_LEAD_EDIT', $arParams['PATH_TO_LEAD_EDIT'], $APPLICATION->GetCurPage().'?lead_id=#lead_id#&edit');
-$arParams['PATH_TO_LEAD_DETAILS'] = CrmCheckPath('PATH_TO_LEAD_DETAILS', $arParams['PATH_TO_LEAD_DETAILS'], $APPLICATION->GetCurPage().'?lead_id=#lead_id#&details');
-$arParams['PATH_TO_LEAD_SHOW'] = CrmCheckPath('PATH_TO_LEAD_SHOW', $arParams['PATH_TO_LEAD_SHOW'], $APPLICATION->GetCurPage().'?lead_id=#lead_id#&show');
-$arParams['PATH_TO_LEAD_CONVERT'] = CrmCheckPath('PATH_TO_LEAD_CONVERT', $arParams['PATH_TO_LEAD_CONVERT'], $APPLICATION->GetCurPage().'?lead_id=#lead_id#&convert');
-$arParams['PATH_TO_LEAD_IMPORT'] = CrmCheckPath('PATH_TO_LEAD_IMPORT', $arParams['PATH_TO_LEAD_IMPORT'], $APPLICATION->GetCurPage().'?import');
-$arParams['PATH_TO_LEAD_DEDUPE'] = CrmCheckPath('PATH_TO_LEAD_DEDUPE', $arParams['PATH_TO_LEAD_DEDUPE'], $APPLICATION->GetCurPage());
-$arParams['PATH_TO_MIGRATION'] = SITE_DIR."marketplace/category/migration/";
-$arResult['PATH_TO_LEAD_WIDGET'] = CrmCheckPath('PATH_TO_LEAD_WIDGET', $arParams['PATH_TO_LEAD_WIDGET'],$APPLICATION->GetCurPage()."?widget");
-$arResult['PATH_TO_LEAD_KANBAN'] = CrmCheckPath('PATH_TO_LEAD_KANBAN', $arParams['PATH_TO_LEAD_KANBAN'],$APPLICATION->GetCurPage()."?kanban");
-$arResult['PATH_TO_LEAD_CALENDAR'] = CrmCheckPath('PATH_TO_LEAD_CALENDAR', $arParams['PATH_TO_LEAD_CALENDAR'],$APPLICATION->GetCurPage()."?calendar");
+$curPage =  $APPLICATION->GetCurPage();
+
+$arParams['PATH_TO_LEAD_LIST'] = CrmCheckPath(
+	'PATH_TO_LEAD_LIST',
+	$arParams['PATH_TO_LEAD_LIST'] ?? '',
+	$curPage
+);
+$arParams['PATH_TO_LEAD_EDIT'] = CrmCheckPath(
+	'PATH_TO_LEAD_EDIT',
+	$arParams['PATH_TO_LEAD_EDIT'] ?? '',
+	$curPage . '?lead_id=#lead_id#&edit'
+);
+$arParams['PATH_TO_LEAD_DETAILS'] = CrmCheckPath(
+	'PATH_TO_LEAD_DETAILS',
+	$arParams['PATH_TO_LEAD_DETAILS'] ?? '',
+	$curPage . '?lead_id=#lead_id#&details'
+);
+$arParams['PATH_TO_LEAD_SHOW'] = CrmCheckPath(
+	'PATH_TO_LEAD_SHOW',
+	$arParams['PATH_TO_LEAD_SHOW'] ?? '',
+	$curPage . '?lead_id=#lead_id#&show'
+);
+$arParams['PATH_TO_LEAD_CONVERT'] = CrmCheckPath(
+	'PATH_TO_LEAD_CONVERT',
+	$arParams['PATH_TO_LEAD_CONVERT'] ?? '',
+	$curPage . '?lead_id=#lead_id#&convert'
+);
+$arParams['PATH_TO_LEAD_IMPORT'] = CrmCheckPath(
+	'PATH_TO_LEAD_IMPORT',
+	$arParams['PATH_TO_LEAD_IMPORT'] ?? '',
+	$curPage . '?import'
+);
+$arParams['PATH_TO_LEAD_DEDUPE'] = CrmCheckPath(
+	'PATH_TO_LEAD_DEDUPE',
+	$arParams['PATH_TO_LEAD_DEDUPE'] ?? '',
+	$curPage
+);
+
+$arParams['PATH_TO_MIGRATION'] = SITE_DIR . "marketplace/category/migration/";
+
+$arResult['PATH_TO_LEAD_WIDGET'] = CrmCheckPath(
+	'PATH_TO_LEAD_WIDGET',
+	$arParams['PATH_TO_LEAD_WIDGET'] ?? '',
+	$curPage . "?widget"
+);
+
+$arResult['PATH_TO_LEAD_KANBAN'] = CrmCheckPath(
+	'PATH_TO_LEAD_KANBAN',
+	$arParams['PATH_TO_LEAD_KANBAN'] ?? '',
+	$curPage . "?kanban"
+);
+
+$arResult['PATH_TO_LEAD_CALENDAR'] = CrmCheckPath(
+	'PATH_TO_LEAD_CALENDAR',
+	$arParams['PATH_TO_LEAD_CALENDAR'] ?? '',
+	$curPage."?calendar"
+);
+
 $arResult['PATH_TO_CONFIG_CHECKER'] = CComponentEngine::MakePathFromTemplate(\COption::GetOptionString('crm', 'path_to_config_checker'));
-$arResult['PATH_TO_LEAD_STATUS_LIST'] = CrmCheckPath('PATH_TO_LEAD_STATUS_LIST', $arParams['PATH_TO_LEAD_STATUS_LIST'], COption::GetOptionString('crm', 'path_to_lead_status_list'));
 
-$arParams['ELEMENT_ID'] = isset($arParams['ELEMENT_ID']) ? intval($arParams['ELEMENT_ID']) : 0;
+$arResult['PATH_TO_LEAD_STATUS_LIST'] = CrmCheckPath(
+	'PATH_TO_LEAD_STATUS_LIST',
+	$arParams['PATH_TO_LEAD_STATUS_LIST'] ?? '',
+	COption::GetOptionString('crm', 'path_to_lead_status_list')
+);
+
+$arParams['ELEMENT_ID'] = (int)($arParams['ELEMENT_ID'] ?? 0);
 
 if (!isset($arParams['TYPE']))
+{
 	$arParams['TYPE'] = 'list';
+}
 
 if (isset($_REQUEST['copy']))
+{
 	$arParams['TYPE'] = 'copy';
-
-$toolbarID = 'toolbar_lead_'.$arParams['TYPE'];
-if($arParams['ELEMENT_ID'] > 0)
-{
-	$toolbarID .= '_'.$arParams['ELEMENT_ID'];
 }
-$arResult['TOOLBAR_ID'] = $toolbarID;
 
-$arResult['BUTTONS'] = array();
+$toolbarID = 'toolbar_lead_' . $arParams['TYPE'];
 
-$isInSlider = ($arParams['IN_SLIDER'] === 'Y');
-
-if($arParams['ELEMENT_ID'] > 0)
+if ($arParams['ELEMENT_ID'] > 0)
 {
-	$dbRes = CCrmLead::GetListEx(array(), array('=ID' => $arParams['ELEMENT_ID'],  'CHECK_PERMISSIONS' => 'N'), false, false, array('ID', 'STATUS_ID', 'IS_RETURN_CUSTOMER'));
+	$toolbarID .= '_' . $arParams['ELEMENT_ID'];
+}
+
+$arResult['TOOLBAR_ID'] = $toolbarID;
+$arResult['BUTTONS'] = [];
+$isInSlider = isset($arParams['IN_SLIDER']) && $arParams['IN_SLIDER'] === 'Y';
+
+if ($arParams['ELEMENT_ID'] > 0)
+{
+	$dbRes = CCrmLead::GetListEx([], array('=ID' => $arParams['ELEMENT_ID'],  'CHECK_PERMISSIONS' => 'N'), false, false, array('ID', 'STATUS_ID', 'IS_RETURN_CUSTOMER'));
 	$arFields = $dbRes->Fetch();
 }
 else
 {
-	$arFields = array();
+	$arFields = [];
 }
 
 $bConfig = false;
-if ($arParams['TYPE'] == 'list')
+if ($arParams['TYPE'] === 'list')
 {
 	$bRead   = !$CrmPerms->HavePerm('LEAD', BX_CRM_PERM_NONE, 'READ');
 	$bExport = !$CrmPerms->HavePerm('LEAD', BX_CRM_PERM_NONE, 'EXPORT');
@@ -93,21 +157,23 @@ else
 	$bExclude = \Bitrix\Crm\Exclusion\Access::current()->canWrite();
 }
 
-if (isset($arParams['DISABLE_IMPORT']) && $arParams['DISABLE_IMPORT'] == 'Y')
+if (isset($arParams['DISABLE_IMPORT']) && $arParams['DISABLE_IMPORT'] === 'Y')
 {
 	$bImport = false;
 }
-if (isset($arParams['DISABLE_DEDUPE']) && $arParams['DISABLE_DEDUPE'] == 'Y')
+if (isset($arParams['DISABLE_DEDUPE']) && $arParams['DISABLE_DEDUPE'] === 'Y')
 {
 	$bDedupe = false;
 }
-if (isset($arParams['DISABLE_EXPORT']) && $arParams['DISABLE_EXPORT'] == 'Y')
+if (isset($arParams['DISABLE_EXPORT']) && $arParams['DISABLE_EXPORT'] === 'Y')
 {
 	$bExport = false;
 }
 
 if (!$bRead && !$bAdd && !$bWrite)
+{
 	return false;
+}
 
 $conversionConfig = \Bitrix\Crm\Conversion\LeadConversionDispatcher::getConfiguration(array('FIELDS' => $arFields));
 $conversionTypeID = $conversionConfig->getTypeID();
@@ -133,7 +199,7 @@ if($arParams['TYPE'] === 'details')
 		return false;
 	}
 
-	$scripts = isset($arParams['~SCRIPTS']) && is_array($arParams['~SCRIPTS']) ? $arParams['~SCRIPTS'] : array();
+	$scripts = isset($arParams['~SCRIPTS']) && is_array($arParams['~SCRIPTS']) ? $arParams['~SCRIPTS'] : [];
 
 
 	//region APPLICATION PLACEMENT
@@ -146,7 +212,7 @@ if($arParams['TYPE'] === 'details')
 			'TYPE' => 'rest-app-toolbar',
 			'NAME' => $placementGroupName,
 			'DATA' => array(
-				'OWNER_INFO' => isset($arParams['OWNER_INFO']) ? $arParams['OWNER_INFO'] : array(),
+				'OWNER_INFO' => isset($arParams['OWNER_INFO']) ? $arParams['OWNER_INFO'] : [],
 				'PLACEMENT' => \Bitrix\Crm\Integration\Rest\AppPlacement::LEAD_DETAIL_TOOLBAR,
 				'APP_INFOS' => $placementInfos
 			)
@@ -194,8 +260,8 @@ if($arParams['TYPE'] === 'details')
 			'TYPE' => 'crm-communication-panel',
 			'DATA' => array(
 				'ENABLE_CALL' => \Bitrix\Main\ModuleManager::isModuleInstalled('calendar'),
-				'OWNER_INFO' => isset($arParams['OWNER_INFO']) ? $arParams['OWNER_INFO'] : array(),
-				'MULTIFIELDS' => isset($arParams['MULTIFIELD_DATA']) ? $arParams['MULTIFIELD_DATA'] : array()
+				'OWNER_INFO' => isset($arParams['OWNER_INFO']) ? $arParams['OWNER_INFO'] : [],
+				'MULTIFIELDS' => isset($arParams['MULTIFIELD_DATA']) ? $arParams['MULTIFIELD_DATA'] : []
 			)
 		);
 	}
@@ -355,14 +421,15 @@ if($arParams['TYPE'] === 'list')
 
 		$componentParams = array(
 			'LEAD_COUNT' => '20',
-			'PATH_TO_LEAD_SHOW' => $arResult['PATH_TO_LEAD_SHOW'],
-			'PATH_TO_LEAD_EDIT' => $arResult['PATH_TO_LEAD_EDIT'],
-			'PATH_TO_LEAD_CONVERT' => $arResult['PATH_TO_LEAD_CONVERT'],
-			'PATH_TO_LEAD_WIDGET' => $arResult['PATH_TO_LEAD_WIDGET'],
-			'PATH_TO_LEAD_KANBAN' => $arResult['PATH_TO_LEAD_KANBAN'],
-			'PATH_TO_LEAD_CALENDAR' => $arResult['PATH_TO_LEAD_CALENDAR'],
+			'PATH_TO_LEAD_SHOW' => $arResult['PATH_TO_LEAD_SHOW'] ?? '',
+			'PATH_TO_LEAD_EDIT' => $arResult['PATH_TO_LEAD_EDIT'] ?? '',
+			'PATH_TO_LEAD_CONVERT' => $arResult['PATH_TO_LEAD_CONVERT'] ?? '',
+			'PATH_TO_LEAD_WIDGET' => $arResult['PATH_TO_LEAD_WIDGET'] ?? '',
+			'PATH_TO_LEAD_KANBAN' => $arResult['PATH_TO_LEAD_KANBAN'] ?? '',
+			'PATH_TO_LEAD_CALENDAR' => $arResult['PATH_TO_LEAD_CALENDAR'] ?? '',
 			'NAVIGATION_CONTEXT_ID' => $entityType
 		);
+
 		if (isset($_REQUEST['WG']) && mb_strtoupper($_REQUEST['WG']) === 'Y')
 		{
 			$widgetDataFilter = \Bitrix\Crm\Widget\Data\LeadDataSource::extractDetailsPageUrlParams($_REQUEST);
@@ -524,7 +591,11 @@ if($arParams['TYPE'] === 'list')
 		);
 	}
 
-	if(is_array($arParams['ADDITIONAL_SETTINGS_MENU_ITEMS']) && !$isInSlider)
+	if (
+		isset($arParams['ADDITIONAL_SETTINGS_MENU_ITEMS'])
+		&& is_array($arParams['ADDITIONAL_SETTINGS_MENU_ITEMS'])
+		&& !$isInSlider
+	)
 	{
 		$arResult['BUTTONS'] = array_merge($arResult['BUTTONS'], $arParams['ADDITIONAL_SETTINGS_MENU_ITEMS']);
 	}
@@ -705,4 +776,3 @@ if ($bAdd && $arParams['TYPE'] != 'list')
 }
 
 $this->IncludeComponentTemplate();
-?>

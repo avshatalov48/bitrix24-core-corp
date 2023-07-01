@@ -197,11 +197,13 @@ final class Task extends \Bitrix\Tasks\Integration\Socialnetwork
 			Loc::getMessage("TASKS_SONET_GL_EVENT_TITLE_TASK")
 		);
 
-		if($arFields["PARAMS"] && $arFields["PARAMS"]["CREATED_BY"])
+		if(isset($arFields["PARAMS"]["CREATED_BY"]))
 		{
 			$suffix = (
-			is_array($GLOBALS["arExtranetUserID"])
-			&& in_array($arFields["PARAMS"]["CREATED_BY"], $GLOBALS["arExtranetUserID"]) ? Loc::getMessage("TASKS_SONET_LOG_EXTRANET_SUFFIX") : "");
+				isset($GLOBALS['arExtranetUserID']) && is_array($GLOBALS['arExtranetUserID']) && in_array($arFields['PARAMS']['CREATED_BY'], $GLOBALS['arExtranetUserID'])
+					? Loc::getMessage('TASKS_SONET_LOG_EXTRANET_SUFFIX')
+					: ''
+			);
 
 			$rsUser = \CUser::GetList(
 				'id',
@@ -253,7 +255,7 @@ final class Task extends \Bitrix\Tasks\Integration\Socialnetwork
 				$task_datetime = $arTask["CHANGED_DATE"];
 				if ($arFields["PARAMS"]["TYPE"] == "create")
 				{
-					if ($arParams["MOBILE"] == "Y")
+					if (isset($arParams["MOBILE"]) && $arParams["MOBILE"] == "Y")
 					{
 						$message_24_1 = $taskHtmlTitle;
 					}
@@ -268,7 +270,10 @@ final class Task extends \Bitrix\Tasks\Integration\Socialnetwork
 					$arChangesFields = $arFields["PARAMS"]["CHANGED_FIELDS"];
 					$changes_24 = implode(", ", \CTaskNotifications::__Fields2Names($arChangesFields));
 
-					if ($arParams["MOBILE"] == "Y")
+					if (
+						isset($arParams["MOBILE"])
+						&& $arParams["MOBILE"] == "Y"
+					)
 					{
 						$message_24_1 = $taskHtmlTitle;
 					}
@@ -310,18 +315,25 @@ final class Task extends \Bitrix\Tasks\Integration\Socialnetwork
 					$prevRealStatus = $arFields['PARAMS']['PREV_REAL_STATUS'];
 
 				ob_start();
+				$template = '';
+				$isMobile = 'N';
+				if (isset($arParams["MOBILE"]) && $arParams["MOBILE"] === 'Y')
+				{
+					$template = 'mobile';
+					$isMobile = 'Y';
+				}
 				$GLOBALS['APPLICATION']->IncludeComponent(
 					"bitrix:tasks.task.livefeed",
-					($arParams["MOBILE"] == "Y" ? 'mobile' : ''),
+					$template,
 					array(
-						"MOBILE"        => ($arParams["MOBILE"] == "Y" ? "Y" : "N"),
+						"MOBILE"        => $isMobile,
 						"TASK"          => $arTask,
-						"MESSAGE"       => $message,
-						"MESSAGE_24_1"  => $message_24_1,
-						"MESSAGE_24_2"  => $message_24_2,
+						"MESSAGE"       => ($message ?? null),
+						"MESSAGE_24_1"  => ($message_24_1 ?? null),
+						"MESSAGE_24_2"  => ($message_24_2 ?? null),
 						"CHANGES_24"    => $changes_24,
-						"NAME_TEMPLATE"	=> $arParams["NAME_TEMPLATE"],
-						"PATH_TO_USER"	=> $arParams["PATH_TO_USER"],
+						"NAME_TEMPLATE"	=> ($arParams["NAME_TEMPLATE"] ?? null),
+						"PATH_TO_USER"	=> ($arParams["PATH_TO_USER"] ?? null),
 						'TYPE'          => $arFields["PARAMS"]["TYPE"],
 						'task_tmp'      => $taskHtmlTitle,
 						'taskHtmlTitle' => $taskHtmlTitle,
@@ -335,7 +347,7 @@ final class Task extends \Bitrix\Tasks\Integration\Socialnetwork
 			}
 		}
 
-		if ($arParams["MOBILE"] == "Y")
+		if (isset($arParams['MOBILE']) && $arParams["MOBILE"] === "Y")
 		{
 			$arResult["EVENT_FORMATTED"] = array(
 				"TITLE"             => '',
@@ -348,7 +360,8 @@ final class Task extends \Bitrix\Tasks\Integration\Socialnetwork
 		else
 		{
 			$strMessage      = $arFields['MESSAGE'];
-			$strShortMessage = $arFields['~MESSAGE'];
+			$strShortMessage = ($arFields['~MESSAGE'] ?? null);
+			$url = ($arFields['~URL'] ?? '');
 
 			$arResult["EVENT_FORMATTED"] = array(
 				"TITLE"            => $title,
@@ -356,23 +369,26 @@ final class Task extends \Bitrix\Tasks\Integration\Socialnetwork
 				"SHORT_MESSAGE"    => $strShortMessage,
 				"IS_MESSAGE_SHORT" => true,
 				"STYLE"            => 'tasks-info',
-				"COMMENT_URL"      => $arFields['~URL'].(mb_strpos($arFields['~URL'], '?') > 0 ? '&' : '?').'MID=#ID##com#ID#'
+				"COMMENT_URL"      => $url . (mb_strpos($url, '?') > 0 ? '&' : '?') . 'MID=#ID##com#ID#'
 			);
 		}
 
-		if($arFields["ENTITY_TYPE"] == SONET_SUBSCRIBE_ENTITY_GROUP)
+		if ($arFields["ENTITY_TYPE"] == SONET_SUBSCRIBE_ENTITY_GROUP)
 		{
-			$arResult["EVENT_FORMATTED"]["DESTINATION"] = array(
-				array(
-					"STYLE" => "sonetgroups",
-					"TITLE" => $arResult["ENTITY"]["FORMATTED"]["NAME"],
-					"URL"   => $arResult["ENTITY"]["FORMATTED"]["URL"],
-					"IS_EXTRANET" => (is_array($GLOBALS["arExtranetGroupID"]) && in_array($arFields["ENTITY_ID"], $GLOBALS["arExtranetGroupID"]))
-				)
-			);
+			$arResult['EVENT_FORMATTED']['DESTINATION'] = [
+				[
+					'STYLE' => 'sonetgroups',
+					'TITLE' => $arResult['ENTITY']['FORMATTED']['NAME'],
+					'URL' => $arResult['ENTITY']['FORMATTED']['URL'],
+					'IS_EXTRANET' =>
+						is_array($GLOBALS["arExtranetGroupID"] ?? null)
+						&& in_array($arFields['ENTITY_ID'], $GLOBALS['arExtranetGroupID'])
+					,
+				],
+			];
 		}
 
-		if($task_datetime <> '')
+		if ($task_datetime !== '')
 		{
 			$arResult["EVENT_FORMATTED"]["LOG_DATE_FORMAT"] = $task_datetime;
 		}

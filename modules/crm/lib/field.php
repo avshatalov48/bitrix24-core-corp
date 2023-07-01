@@ -43,6 +43,7 @@ class Field
 	public const TYPE_CRM_QUOTE = 'crm_quote';
 	public const TYPE_CRM_PRODUCT_ROW = 'crm_product_row';
 	public const TYPE_CRM_ENTITY = 'crm_entity';
+	public const TYPE_CRM_MULTIFIELD = 'crm_multifield';
 
 	public const VALUE_TYPE_PLAIN_TEXT = 'text';
 	public const VALUE_TYPE_HTML = 'html';

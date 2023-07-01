@@ -3,7 +3,7 @@
  */
 jn.define('tasks/layout/task/actionMenu', (require, exports, module) => {
 	const {Loc} = require('loc');
-	const {TaskCreateManager} = require('tasks/layout/task/create');
+	const {TaskCreate} = require('tasks/layout/task/create');
 	const {EventEmitter} = require('event-emitter');
 
 	class ActionMenu
@@ -81,7 +81,7 @@ jn.define('tasks/layout/task/actionMenu', (require, exports, module) => {
 						imgUri: `${imagePrefix}addTask.png`,
 					},
 					onClickCallback: () => {
-						TaskCreateManager.open({
+						TaskCreate.open({
 							layoutWidget: this.layoutWidget,
 							currentUser: this.task.currentUser,
 							diskFolderId: this.diskFolderId,
@@ -96,15 +96,17 @@ jn.define('tasks/layout/task/actionMenu', (require, exports, module) => {
 						imgUri: `${imagePrefix}addTask.png`,
 					},
 					onClickCallback: () => {
-						TaskCreateManager.open({
+						TaskCreate.open({
 							layoutWidget: this.layoutWidget,
 							currentUser: this.task.currentUser,
 							diskFolderId: this.diskFolderId,
 							deadlines: this.deadlines,
-							parentId: this.task.id,
-							parentTask: {
-								id: this.task.id,
-								title: this.task.title,
+							initialTaskData: {
+								parentId: this.task.id,
+								parentTask: {
+									id: this.task.id,
+									title: this.task.title,
+								},
 							},
 						});
 					},
@@ -347,8 +349,7 @@ jn.define('tasks/layout/task/actionMenu', (require, exports, module) => {
 											(response) => {
 												if (response.result.task === true)
 												{
-													this.layoutWidget.back();
-													Notify.showMessage(Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_ACTION_MENU_ACTION_REMOVE_NOTIFICATION'));
+													this.eventEmitter.emit('tasks.task.actionMenu:remove');
 												}
 											},
 											() => Notify.hideCurrentIndicator()

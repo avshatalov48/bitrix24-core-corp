@@ -1,5 +1,6 @@
 <?php
 
+use Bitrix\Main\Localization\Loc;
 IncludeModuleLangFile(__FILE__);
 
 class CCrmNotifier
@@ -22,6 +23,7 @@ class CCrmNotifier
 		}
 
 		$arMessage = array(
+			'NOTIFY_TITLE' => Loc::getMessage('CRM_NOTIFY_TITLE'),
 			'TO_USER_ID' => $addresseeID,
 			'FROM_USER_ID' => 0,
 			'NOTIFY_TYPE' => IM_NOTIFY_SYSTEM,
@@ -116,34 +118,43 @@ class CCrmNotifierSchemeType
 			'crm' => [
 				'incoming_email' => [
 					'NAME' => GetMessage('CRM_NOTIFY_SCHEME_ACTIVITY_EMAIL_INCOMING'),
-					'MAIL' => true,
-					'XMPP' => true,
+					'MAIL' => 'Y',
+					'XMPP' => 'Y',
+					'PUSH' => 'N',
 				],
-				"post" => [
-					"NAME" => GetMessage('CRM_NOTIFY_SCHEME_LIVEFEED_POST'),
+				'post' => [
+					'NAME' => GetMessage('CRM_NOTIFY_SCHEME_LIVEFEED_POST'),
+					'PUSH' => 'N',
 				],
 				'mention' => [
 					'NAME' => GetMessage('CRM_NOTIFY_SCHEME_LIVEFEED_MENTION'),
+					'PUSH' => 'N',
 				],
 				self::WebFormName => [
 					'NAME' => GetMessage('CRM_NOTIFY_SCHEME_WEBFORM'),
-					"LIFETIME" => 86400 * 7,
+					'LIFETIME' => 86400 * 7,
+					'PUSH' => 'N',
 				],
 				self::CallbackName => [
 					'NAME' => GetMessage('CRM_NOTIFY_SCHEME_CALLBACK'),
-					"LIFETIME" => 86400 * 7,
+					'LIFETIME' => 86400 * 7,
+					'PUSH' => 'N',
 				],
 				'changeAssignedBy' => [
 					'NAME' => GetMessage('CRM_NOTIFY_SCHEME_ENTITY_ASSIGNED_BY'),
+					'PUSH' => 'N',
 				],
 				'changeStage' => [
 					'NAME' => GetMessage('CRM_NOTIFY_SCHEME_ENTITY_STAGE'),
+					'PUSH' => 'N',
 				],
 				'merge' => [
 					'NAME' => GetMessage('CRM_NOTIFY_SCHEME_MERGE'),
+					'PUSH' => 'N',
 				],
 				'other' => [
 					'NAME' => GetMessage('CRM_NOTIFY_SCHEME_OTHER'),
+					'PUSH' => 'N',
 				],
 			],
 		];

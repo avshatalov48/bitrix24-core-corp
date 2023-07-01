@@ -23,18 +23,18 @@ $component = new class {
 
 	private const NOT_CONDUCTED_STATUS_PARAMS = [
 		'value' => self::NOT_CONDUCTED,
-		'textColor' => '#79818b',
-		'backgroundColor' => '#e0e2e4',
+		'textColor' => '#828b95',
+		'backgroundColor' => '#dfe0e3',
 	];
 	private const CONDUCTED_STATUS_PARAMS = [
 		'value' => self::CONDUCTED,
-		'textColor' => '#589309',
-		'backgroundColor' => '#e0f5c2',
+		'textColor' => '#688800',
+		'backgroundColor' => '#eaf6c3',
 	];
 	private const CANCELLED_STATUS_PARAMS = [
 		'value' => self::CANCELLED,
-		'textColor' => '#9d7e2b',
-		'backgroundColor' => '#faf4a0',
+		'textColor' => '#ae914b',
+		'backgroundColor' => '#fef3b8',
 	];
 
 	private const TYPE_LOGO_PATTERN = '/bitrix/mobileapp/mobile/components/bitrix/catalog.store.document.details/images/type_#DOCUMENT_TYPE#.png';

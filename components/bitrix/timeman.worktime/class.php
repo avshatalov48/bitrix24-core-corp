@@ -44,9 +44,19 @@ class WorktimeComponent extends BaseComponent
 			$defaultVariableAliases = [];
 			$componentVariables = ['id'];
 			$variables = [];
-			$urlTemplates = CComponentEngine::makeComponentUrlTemplates($defaultUrlTemplates, $this->arParams['SEF_URL_TEMPLATES']);
-			$variableAliases = CComponentEngine::makeComponentVariableAliases($defaultVariableAliases, $this->arParams['VARIABLE_ALIASES']);
-			$componentPage = CComponentEngine::parseComponentPath($this->arParams['SEF_FOLDER'], $urlTemplates, $variables);
+			$urlTemplates = CComponentEngine::makeComponentUrlTemplates(
+				$defaultUrlTemplates,
+				$this->arParams['SEF_URL_TEMPLATES'] ?? null
+			);
+			$variableAliases = CComponentEngine::makeComponentVariableAliases(
+				$defaultVariableAliases,
+				$this->arParams['VARIABLE_ALIASES']
+			);
+			$componentPage = CComponentEngine::parseComponentPath(
+				$this->arParams['SEF_FOLDER'],
+				$urlTemplates,
+				$variables
+			);
 
 			if (!(is_string($componentPage) && !empty($componentPage) && isset($defaultUrlTemplates[$componentPage])))
 			{
@@ -78,7 +88,7 @@ class WorktimeComponent extends BaseComponent
 				'VARIABLES' => $variables,
 				'ALIASES' => $this->arParams['SEF_MODE'] == 'Y' ? [] : $variableAliases,
 				'ID' => isset($variables['id']) ? strval($variables['id']) : '',
-				'PATH_TO_USER_PROFILE' => $this->arParams['PATH_TO_USER_PROFILE'],
+				'PATH_TO_USER_PROFILE' => $this->arParams['PATH_TO_USER_PROFILE'] ?? '',
 			],
 			is_array($this->arResult) ? $this->arResult : []
 		);

@@ -62,13 +62,8 @@ class CIntranetMailCheckComponent extends CBitrixComponent
 				$settedUp = true;
 				$hasSuccessSync = true;
 				$failedToSyncMailboxId = $mailboxesSyncManager->getFirstFailedToSyncMailboxId();
-				$isTimeToMailCheck = count($mailboxesSyncManager->getNeedToBeSyncedMailboxes()) > 0;
-				$nextTimeToCheckMailboxes = [];
-				foreach ($mailboxesSuccessSynced as $mailboxId => $lastMailCheckData)
-				{
-					$nextTimeToCheckMailboxes[] = $mailboxesSyncManager->getNextTimeToSync($lastMailCheckData);
-				}
-				$nextTimeToCheck = !empty($nextTimeToCheckMailboxes) && min($nextTimeToCheckMailboxes) > 0 ? min($nextTimeToCheckMailboxes) : 0;
+				$isTimeToMailCheck = $mailboxesSyncManager->isMailNeedsToBeSynced();
+				$nextTimeToCheck = $mailboxesSyncManager->getTimeBeforeNextSync();
 			}
 		}
 

@@ -177,8 +177,6 @@ class calendar extends CModule
 		$eventManager->registerEventHandler("dav", "OnExchandeCalendarDataSync", "calendar", "CCalendar", "OnExchangeCalendarSync");
 		$eventManager->registerEventHandler('socialnetwork', 'onLogIndexGetContent', 'calendar', '\Bitrix\Calendar\Integration\Socialnetwork\Log', 'onIndexGetContent');
 
-		$eventManager->registerEventHandler('socialnetwork', 'OnGetProfileView', 'calendar', '\Bitrix\Calendar\Sharing\SharingUser', 'OnGetProfileView');
-
 		$eventManager->registerEventHandler('main', 'OnBeforeUserTypeAdd', 'calendar', '\Bitrix\Calendar\UserField\ResourceBooking', 'onBeforeUserTypeAdd');
 
 		$eventManager->registerEventHandlerCompatible("main", "OnUserTypeBuildList", "calendar", "\\Bitrix\\Calendar\\UserField\\ResourceBooking", "getUserTypeDescription", 154);
@@ -221,19 +219,9 @@ class calendar extends CModule
 		CAgent::AddAgent("\\Bitrix\\Calendar\\Rooms\\Util\\CleanLocationEventsAgent::cleanAgent();", 'calendar', 'N', 86400);
 		CAgent::AddAgent("Bitrix\\Calendar\\Core\\Queue\\Agent\\EventsWithEntityAttendeesFindAgent::runAgent();", "calendar", "N", 3600);
 		CAgent::AddAgent("Bitrix\\Calendar\\Core\\Queue\\Agent\\EventAttendeesUpdateAgent::runAgent();", "calendar", "N", 3600);
+		CAgent::AddAgent("\\Bitrix\\Calendar\\Sharing\\Util\\ExpiredLinkCleanAgent::runAgent();", "calendar");
 
-		$siteId = \CSite::GetDefSite();
-		if ($siteId)
-		{
-			$fields = [
-				'SORT' => 0,
-				'SITE_ID' => $siteId,
-				'CONDITION' => "CSite::InDir('/pub/calendar-sharing/')",
-				'TEMPLATE' => 'calendar_sharing'
-			];
-
-			\Bitrix\Main\SiteTemplateTable::add($fields);
-		}
+		$this->InstallTemplateRules();
 
 		return true;
 	}
@@ -279,7 +267,6 @@ class calendar extends CModule
 		$eventManager->unRegisterEventHandler("dav", "OnDavCalendarProperties", "calendar", "CCalendar", "OnDavCalendarSync");
 		$eventManager->unRegisterEventHandler("dav", "OnExchandeCalendarDataSync", "calendar", "CCalendar", "OnExchangeCalendarSync");
 		$eventManager->unRegisterEventHandler('socialnetwork', 'onLogIndexGetContent', 'calendar', '\Bitrix\Calendar\Integration\Socialnetwork\Log', 'onIndexGetContent');
-		$eventManager->unregisterEventHandler('socialnetwork', 'OnGetProfileView', 'calendar', '\Bitrix\Calendar\Sharing\SharingUser', 'OnGetProfileView');
 		$eventManager->unRegisterEventHandler('main', 'OnBeforeUserTypeAdd', 'calendar', '\Bitrix\Calendar\UserField\ResourceBooking', 'onBeforeUserTypeAdd');
 		$eventManager->unRegisterEventHandler('mail', 'onReplyReceivedICAL_INVENT', 'calendar', '\Bitrix\Calendar\ICal\MailInvitation\IncomingInvitationReplyHandler', 'handleFromRequest');
 		$eventManager->unregisterEventHandler('socialnetwork', 'onSocNetUserToGroupAdd', 'calendar', '\Bitrix\Calendar\Watcher\Membership\Handler\SocNetGroup', 'onSocNetUserToGroupAdd');
@@ -358,6 +345,7 @@ class calendar extends CModule
 		CAgent::RemoveAgent("Bitrix\\Calendar\\Core\\Queue\\Agent\\EventsWithEntityAttendeesFindAgent::runAgent();", "calendar");
 		CAgent::RemoveAgent("Bitrix\\Calendar\\Core\\Queue\\Agent\\EventAttendeesUpdateAgent::runAgent();", "calendar");
 		CAgent::RemoveAgent("Bitrix\\Calendar\\Core\\Queue\\Agent\\EventDelayedSyncAgent::runAgent();", "calendar");
+		CAgent::RemoveAgent("Bitrix\\Calendar\\Core\\Queue\\Agent\\EventDelayedSyncAgent::runAgent();", "calendar");
 		CAgent::RemoveAgent("\\Bitrix\\Calendar\\Sync\\Managers\\EventQueueManager::checkEvents();", 'calendar');
 		CAgent::RemoveAgent("\\Bitrix\\Calendar\\Rooms\\Util\\CleanLocationEventsAgent::cleanAgent();", 'calendar');
 
@@ -369,6 +357,61 @@ class calendar extends CModule
 		if ($templateCheck)
 		{
 			\Bitrix\Main\SiteTemplateTable::delete($templateCheck['ID']);
+		}
+
+		return true;
+	}
+
+	function InstallTemplateRules()
+	{
+		if (
+			file_exists($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/install/templates/pub/")
+			&& !file_exists($_SERVER["DOCUMENT_ROOT"]."/bitrix/templates/pub/")
+		)
+		{
+			CopyDirFiles(
+				$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/install/templates/pub/",
+				$_SERVER["DOCUMENT_ROOT"]."/bitrix/templates/pub/",
+				$rewrite = true,
+				$recursive = true,
+				$delete_after_copy = false
+			);
+		}
+
+		$default_site_id = CSite::GetDefSite();
+		if ($default_site_id)
+		{
+			$sharingTemplateFound = false;
+			$sharingTemplate = [
+				'SORT' => 0,
+				'CONDITION' => "CSite::InDir('/pub/calendar-sharing/')",
+				'TEMPLATE' => 'calendar_sharing'
+			];
+
+			$arFields = ["TEMPLATE"=>[]];
+			$dbTemplates = CSite::GetTemplateList($default_site_id);
+			while($template = $dbTemplates->Fetch())
+			{
+				if ($template["CONDITION"] === "CSite::InDir('/pub/calendar-sharing/')")
+				{
+					$sharingTemplateFound = true;
+					$template = $sharingTemplate;
+				}
+
+				$arFields["TEMPLATE"][] = [
+					"SORT" => $template['SORT'],
+					"CONDITION" => $template['CONDITION'],
+					"TEMPLATE" => $template['TEMPLATE'],
+				];
+			}
+			if (!$sharingTemplateFound)
+			{
+				$arFields["TEMPLATE"][] = $sharingTemplate;
+			}
+
+			$obSite = new CSite;
+			$arFields["LID"] = $default_site_id;
+			$obSite->Update($default_site_id, $arFields);
 		}
 
 		return true;
@@ -469,8 +512,6 @@ class calendar extends CModule
 
 	function InstallFiles()
 	{
-		global $APPLICATION;
-
 		if($_ENV["COMPUTERNAME"]!='BX')
 		{
 			CopyDirFiles(
@@ -538,6 +579,11 @@ class calendar extends CModule
 
 	function UnInstallFiles()
 	{
+		if($_ENV["COMPUTERNAME"]!='BX')
+		{
+			DeleteDirFilesEx('/bitrix/templates/calendar_sharing/');
+		}
+
 		return true;
 	}
 
@@ -563,6 +609,12 @@ class calendar extends CModule
 		if($USER->IsAdmin())
 		{
 			$step = intval($step);
+
+			if (\Bitrix\Main\ModuleManager::isModuleInstalled('calendarmobile'))
+			{
+				$APPLICATION->throwException(GetMessage('CAL_MODULE_UNINSTALL_ERROR_CALENDARMOBILE'));
+			}
+
 			if($step < 2)
 			{
 				$APPLICATION->IncludeAdminFile(GetMessage("CAL_UNINSTALL_TITLE"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/calendar/install/unstep1.php");

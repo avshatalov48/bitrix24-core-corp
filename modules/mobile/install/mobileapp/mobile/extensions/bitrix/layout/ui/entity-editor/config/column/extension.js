@@ -1,4 +1,11 @@
-(() => {
+/**
+ * @module layout/ui/entity-editor/config/column
+ */
+jn.define('layout/ui/entity-editor/config/column', (require, exports, module) => {
+
+	const { EntityConfigBaseItem } = require('layout/ui/entity-editor/config/base');
+	const { EntityConfigSection } = require('layout/ui/entity-editor/config/section');
+
 	/**
 	 * @class EntityConfigColumn
 	 */
@@ -8,6 +15,7 @@
 		{
 			const self = new EntityConfigColumn();
 			self.initialize(settings);
+
 			return self;
 		}
 
@@ -19,11 +27,11 @@
 
 		doInitialize()
 		{
-			const elements = BX.prop.getArray(this.data, "elements", []);
-			elements.forEach(element => {
-				if (element.type === "section")
+			const elements = BX.prop.getArray(this.data, 'elements', []);
+			elements.forEach((element) => {
+				if (element.type === 'section')
 				{
-					const config = EntityConfigFactory.createByType(element.type, {data: element});
+					const config = EntityConfigSection.create({ data: element });
 					this.addSection(config);
 				}
 			});
@@ -35,5 +43,5 @@
 		}
 	}
 
-	jnexport(EntityConfigColumn);
-})();
+	module.exports = { EntityConfigColumn };
+});

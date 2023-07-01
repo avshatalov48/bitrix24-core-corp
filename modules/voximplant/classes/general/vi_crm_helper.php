@@ -2,6 +2,7 @@
 IncludeModuleLangFile(__FILE__);
 
 use Bitrix\Main\Event;
+use Bitrix\Main\PhoneNumber\Parser;
 use Bitrix\Voximplant as VI;
 use Bitrix\Crm\Activity\Provider;
 use Bitrix\Crm\Tracking;
@@ -965,10 +966,10 @@ class CVoxImplantCrmHelper
 			break;
 		}
 
-		$arFields = array(
-			'TITLE' => $params['PHONE_NUMBER'].' - '.$title,
+		$arFields = [
+			'TITLE' => Parser::getInstance()->parse($params['PHONE_NUMBER'] ?? '')->format() . ' - ' . $title,
 			'PHONE_WORK' => $params['PHONE_NUMBER'],
-		);
+		];
 
 		$statuses = CCrmStatus::GetStatusList("SOURCE");
 		if (isset($statuses[$params['CRM_SOURCE']]))

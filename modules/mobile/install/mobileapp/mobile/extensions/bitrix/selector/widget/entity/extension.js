@@ -1,4 +1,9 @@
 (() => {
+
+	const require = (ext) => jn.require(ext);
+
+	const { EntitySelectorWidget } = require('selector/widget');
+
 	/**
 	 * @class BaseSelectorEntity
 	 * @abstract
@@ -134,10 +139,10 @@
 
 			if (!createOptions.hasOwnProperty('enableCreation'))
 			{
-				createOptions.enableCreation = this.isCreationEnabled();
+				createOptions.enableCreation = this.isCreationEnabled(providerOptions);
 			}
 
-			if (!this.isCreationEnabled())
+			if (!this.isCreationEnabled(providerOptions))
 			{
 				createOptions.enableCreation = false;
 			}
@@ -145,6 +150,11 @@
 			if (!createOptions.hasOwnProperty('closeAfterCreation'))
 			{
 				createOptions.closeAfterCreation = true;
+			}
+
+			if (!createOptions.hasOwnProperty('canCreateWithEmptySearch'))
+			{
+				createOptions.canCreateWithEmptySearch = this.canCreateWithEmptySearch();
 			}
 
 			if (!createOptions['createText'])
@@ -222,7 +232,12 @@
 			return null;
 		}
 
-		static isCreationEnabled()
+		static isCreationEnabled(providerOptions)
+		{
+			return false;
+		}
+
+		static canCreateWithEmptySearch()
 		{
 			return false;
 		}

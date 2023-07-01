@@ -6,6 +6,7 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Main\Localization\Loc;
 
+$bodyClass = false; //$APPLICATION->GetPageProperty('BodyClass');
 $APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "") . "no-all-paddings no-background");
 
 if($this->getComponent()->getErrors())

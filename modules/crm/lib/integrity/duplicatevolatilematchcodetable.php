@@ -7,6 +7,22 @@ use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
 
+/**
+ * Class DuplicateVolatileMatchCodeTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_DuplicateVolatileMatchCode_Query query()
+ * @method static EO_DuplicateVolatileMatchCode_Result getByPrimary($primary, array $parameters = [])
+ * @method static EO_DuplicateVolatileMatchCode_Result getById($id)
+ * @method static EO_DuplicateVolatileMatchCode_Result getList(array $parameters = [])
+ * @method static EO_DuplicateVolatileMatchCode_Entity getEntity()
+ * @method static \Bitrix\Crm\Integrity\EO_DuplicateVolatileMatchCode createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Integrity\EO_DuplicateVolatileMatchCode_Collection createCollection()
+ * @method static \Bitrix\Crm\Integrity\EO_DuplicateVolatileMatchCode wakeUpObject($row)
+ * @method static \Bitrix\Crm\Integrity\EO_DuplicateVolatileMatchCode_Collection wakeUpCollection($rows)
+ */
 class DuplicateVolatileMatchCodeTable extends Entity\DataManager
 {
 	public static function getTableName(): string

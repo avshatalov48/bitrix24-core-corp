@@ -1355,8 +1355,7 @@ ChatDataConverter.preparePushFormat = function(element)
 		404: "external_auth_id",
 		406: "network",
 
-
-		60: "textOriginal",
+		65: "textLegacy",
 		61: "date",
 		62: "prevId",
 		63: "params",

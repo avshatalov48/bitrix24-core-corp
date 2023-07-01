@@ -53,7 +53,7 @@ class Timer implements IVolumeTimeLimit
 	 * @param float $startTimestamp Start timestamp.
 	 * @return void
 	 */
-	public function startTimer($startTimestamp = 0)
+	public function startTimer($startTimestamp = 0): void
 	{
 		if ($startTimestamp > 0)
 		{
@@ -69,7 +69,7 @@ class Timer implements IVolumeTimeLimit
 	 * Checks timer for time limitation.
 	 * @return bool
 	 */
-	public function checkTimeEnd()
+	public function checkTimeEnd(): bool
 	{
 		if ($this->timeLimit > 0 && $this->startTime > 0)
 		{
@@ -88,7 +88,7 @@ class Timer implements IVolumeTimeLimit
 	 * Tells true if time limit reached.
 	 * @return boolean
 	 */
-	public function hasTimeLimitReached()
+	public function hasTimeLimitReached(): bool
 	{
 		return $this->timeLimitReached;
 	}
@@ -97,7 +97,7 @@ class Timer implements IVolumeTimeLimit
 	 * Gets limitation time in seconds.
 	 * @return int
 	 */
-	public function getTimeLimit()
+	public function getTimeLimit(): int
 	{
 		return $this->timeLimit;
 	}
@@ -105,9 +105,9 @@ class Timer implements IVolumeTimeLimit
 	/**
 	 * Sets limitation time in seconds.
 	 * @param int $timeLimit Timeout in seconds.
-	 * @return $this
+	 * @return static
 	 */
-	public function setTimeLimit($timeLimit)
+	public function setTimeLimit(int $timeLimit): self
 	{
 		$this->timeLimit = $timeLimit;
 

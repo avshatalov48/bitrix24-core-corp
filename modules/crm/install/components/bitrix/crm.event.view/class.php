@@ -29,16 +29,16 @@ final class CrmEventViewComponent extends \Bitrix\Crm\Component\Base
 		{
 			$desc =
 				'<div id="event_desc_short_'
-				. $event['ID']
+				. (int)$event['ID']
 				. '"><a href="#more" onclick="crm_event_desc('
-				. $event['ID']
+				. (int)$event['ID']
 				. '); return false;">'
 				. GetMessage('CRM_EVENT_DESC_MORE').'</a></div>'
 			;
 
 			$desc .=
 				'<div id="event_desc_full_'
-				. $event['ID']
+				. (int)$event['ID']
 				. '" style="display: none"><b>'
 				. GetMessage('CRM_EVENT_DESC_BEFORE')
 				. '</b>:<br>'

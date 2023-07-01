@@ -70,15 +70,22 @@ export class Phone
 		});
 
 		//for ctrl+v paste
-		setTimeout(() => {
-			if (!inputNode.parentNode.querySelector('#phone_number_' + num).value)
+		const id = setInterval(() => {
+			if (
+				!inputNode.parentNode?.querySelector('#phone_number_' + num).value
+				|| !inputNode.parentNode?.querySelector('#phone_country_' + num).value
+			)
 			{
 				changeCallback(num, inputNode)({
 					value: this.inputStack[num].getValue(),
-					country: this.inputStack[num].getCountry()
+					country: this.inputStack[num].formatter ? this.inputStack[num].getCountry() : null,
 				});
 			}
-		}, 100);
+			else
+			{
+				clearInterval(id);
+			}
+		}, 1000);
 	}
 
 	showCountrySelector(i)

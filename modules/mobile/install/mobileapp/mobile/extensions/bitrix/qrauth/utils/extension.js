@@ -3,7 +3,7 @@
 	 * @global {{open: qrauth.open}} qrauth
 	 */
 
-	let qrauth = {
+	const qrauth = {
 		urlTemplate: "https://b24.to/a/",
 		open: ({
 			title,
@@ -15,8 +15,8 @@
 			hintText,
 			layout
 		}) => {
-			layout = layout || null;
-			let componentUrl = availableComponents["qrcodeauth"].publicUrl;
+			layout = (layout && layout !== PageManager) ? layout : null;
+			const componentUrl = availableComponents["qrcodeauth"].publicUrl;
 			PageManager.openComponent("JSStackComponent", {
 				scriptPath: componentUrl,
 				componentCode: "qrauth",
@@ -32,7 +32,7 @@
 					name: "layout",
 					settings: {
 						objectName: "layout",
-						title: title || BX.message('LOGIN_ON_DESKTOP_DEFAULT_TITLE'),
+						title: title || BX.message('LOGIN_ON_DESKTOP_DEFAULT_TITLE_MSGVER_1'),
 						backdrop: {
 							bounceEnable: true,
 							mediumPositionHeight:500
@@ -42,7 +42,7 @@
 			}, layout);
 		},
 		listenUniversalLink: () => {
-			let handler = (data)=> {
+			const handler = (data)=> {
 				if (!data["url"] || !String(data["url"]).startsWith("https://b24.to/a/"))
 				{
 					return;
@@ -53,7 +53,7 @@
 					title: BX.message("QR_EXTERNAL_AUTH")
 				})
 			};
-			let unhandled = Application.getUnhandledUniversalLink();
+			const unhandled = Application.getUnhandledUniversalLink();
 			if (unhandled)
 			{
 				handler(unhandled)
@@ -65,8 +65,8 @@
 			return new Promise((resolve, reject) => {
 				if (url && url.startsWith(qrauth.urlTemplate))
 				{
-					let path = url.replace(qrauth.urlTemplate, "")
-					let [siteId, uniqueId, channelTag] = path.split("/");
+					const path = url.replace(qrauth.urlTemplate, "")
+					const [siteId, uniqueId, channelTag] = path.split("/");
 					BX.ajax.runAction('main.qrcodeauth.pushToken', {data: {channelTag, siteId, uniqueId, redirectUrl}})
 						.then(({status, errors}) => {
 								if (status === "success")

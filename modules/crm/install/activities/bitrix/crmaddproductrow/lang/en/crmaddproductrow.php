@@ -6,3 +6,4 @@ $MESS["CRM_APR_PRODUCT_ID"] = "Product ID";
 $MESS["CRM_APR_ROW_DISCOUNT_RATE"] = "Discount, %";
 $MESS["CRM_APR_ROW_PRICE_ACCOUNT"] = "Price";
 $MESS["CRM_APR_ROW_QUANTITY"] = "Quantity";
+$MESS["CRM_EMPTY_ORDER_ERROR"] = "Order was not found";

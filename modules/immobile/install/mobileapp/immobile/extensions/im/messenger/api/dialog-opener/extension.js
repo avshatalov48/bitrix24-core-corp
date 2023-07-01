@@ -3,12 +3,12 @@
  */
 jn.define('im/messenger/api/dialog-opener', (require, exports, module) => {
 
-	const { Type } = jn.require('type');
-	const { EntityReady } = jn.require('entity-ready');
+	const { Type } = require('type');
+	const { EntityReady } = require('entity-ready');
 	const {
 		EventType,
 		FeatureFlag,
-	} = jn.require('im/messenger/const');
+	} = require('im/messenger/const');
 
 	/**
 	 * @class DialogOpener

@@ -1,5 +1,6 @@
 <?php
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php';
+/** @var CMain $APPLICATION */
 
 $APPLICATION->IncludeComponent(
 	'bitrix:ui.sidepanel.wrapper',

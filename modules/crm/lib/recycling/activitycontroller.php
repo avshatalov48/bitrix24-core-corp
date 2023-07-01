@@ -33,7 +33,7 @@ class ActivityController extends BaseController
 
 	public static function getFieldNames()
 	{
-		return array(
+		return [
 			'ID', 'TYPE_ID',
 			'PROVIDER_ID', 'PROVIDER_TYPE_ID', 'PROVIDER_GROUP_ID',
 			'OWNER_TYPE_ID', 'OWNER_ID',
@@ -45,8 +45,8 @@ class ActivityController extends BaseController
 			'STORAGE_TYPE_ID', 'STORAGE_ELEMENT_IDS', 'PARENT_ID', 'THREAD_ID', 'URN', 'SETTINGS',
 			'ORIGINATOR_ID', 'ORIGIN_ID', 'AUTHOR_ID', 'EDITOR_ID', 'PROVIDER_PARAMS',
 			'RESULT_STATUS', 'RESULT_STREAM', 'RESULT_SOURCE_ID', 'RESULT_MARK', 'RESULT_VALUE', 'RESULT_SUM', 'RESULT_CURRENCY_ID',
-			'AUTOCOMPLETE_RULE', 'IS_INCOMING_CHANNEL',
-		);
+			'AUTOCOMPLETE_RULE', 'IS_INCOMING_CHANNEL', 'PROVIDER_DATA',
+		];
 	}
 
 	/**

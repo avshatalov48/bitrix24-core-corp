@@ -25,7 +25,7 @@ $helper = $arResult['HELPER'];
 
 			<span class="js-id-ms-plink-item task-group-field <?=($empty ? 'invisible' : '')?>"><?
 				?><span class="task-group-field-inner"><?
-					?><a href="<?=$group['URL']?>" class="js-id-ms-plink-item-link task-group-field-label" target="_top"><?=htmlspecialcharsbx($group['DISPLAY'])?></a><?
+					?><a href="<?= ($group['URL'] ?? null) ?>" class="js-id-ms-plink-item-link task-group-field-label" target="_top"><?=htmlspecialcharsbx($group['DISPLAY'] ?? null)?></a><?
 					?><?if(!$readOnly):?><span class="js-id-ms-plink-deselect task-group-field-title-del"></span><?endif?><?
 				?></span><?
 			?></span>

@@ -1338,8 +1338,6 @@ class Network extends Base implements NetworkBot
 	 */
 	protected static function clientMessageDelete($messageId, $messageFields)
 	{
-		$messageFields['MESSAGE'] = self::removeMentions($messageFields['MESSAGE'] ?? '');
-
 		$user = self::getUserInfo((int)($messageFields['FROM_USER_ID'] ?? $messageFields['AUTHOR_ID']));
 
 		$http = self::instanceHttpClient();
@@ -2246,6 +2244,7 @@ class Network extends Base implements NetworkBot
 		$botId = static::getBotId() ?: (int)$messageFields['BOT_ID'];
 		if (
 			$botId > 0
+			&& isset($messageFields['MESSAGE'], $messageFields['COMMAND_CONTEXT'])
 			&& $messageFields['COMMAND_CONTEXT'] === 'TEXTAREA'
 			&& ($messageFields['MESSAGE'] === '1' || $messageFields['MESSAGE'] === '0')
 		)
@@ -3400,8 +3399,11 @@ class Network extends Base implements NetworkBot
 			return false;
 		}
 
-		$send['LINE_NAME'] = trim($fields['NAME']);
-		if ($send['LINE_NAME'] == '')
+		if (!empty($fields['NAME']) && trim($fields['NAME']) != '')
+		{
+			$send['LINE_NAME'] = trim($fields['NAME']);
+		}
+		else
 		{
 			$send['LINE_NAME'] = $config['LINE_NAME'];
 		}
@@ -3415,14 +3417,13 @@ class Network extends Base implements NetworkBot
 		$send['FIRST_MESSAGE'] = isset($fields['FIRST_MESSAGE']) ? $fields['FIRST_MESSAGE'] : '';
 
 		$send['AVATAR'] = '';
-
-		$fields['AVATAR'] = (int)$fields['AVATAR'];
-		if ($fields['AVATAR'])
+		if (!empty($fields['AVATAR']) && (int)$fields['AVATAR'] > 0)
 		{
+			$fields['AVATAR'] = (int)$fields['AVATAR'];
 			$fileTmp = \CFile::resizeImageGet(
 				$fields['AVATAR'],
 				['width' => 300, 'height' => 300],
-				BX_RESIZE_IMAGE_EXACT,
+				\BX_RESIZE_IMAGE_EXACT,
 				false,
 				false,
 				true
@@ -3456,11 +3457,12 @@ class Network extends Base implements NetworkBot
 				'NAME' => $send['LINE_NAME'],
 				'DESC' => $send['LINE_DESC'],
 				'FIRST_MESSAGE' => $send['FIRST_MESSAGE'],
-				'AVATAR' => $fields['AVATAR'],
+				'AVATAR' => ($fields['AVATAR'] ?? ''),
 				'ACTIVE' => $send['ACTIVE'],
 				'HIDDEN' => $send['HIDDEN'],
 			];
 		}
+
 		return $result;
 	}
 

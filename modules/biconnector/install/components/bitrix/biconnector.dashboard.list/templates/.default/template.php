@@ -1,16 +1,23 @@
 <?php
+/**
+ * Bitrix vars
+ * @var array $arParams
+ * @var array $arResult
+ * @var CMain $APPLICATION
+ * @var CUser $USER
+ * @var CDatabase $DB
+ * @var CBitrixComponentTemplate $this
+ * @var string $templateName
+ * @var string $templateFile
+ * @var string $templateFolder
+ * @var string $componentPath
+ * @var CBitrixComponent $component
+ */
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
-
-/**
- * Bitrix vars
- * @global CMain $APPLICATION
- * @param array $arParams
- * @param array $arResult
- * @param CBitrixComponentTemplate $this
- */
 
 use Bitrix\Main\Localization\Loc;
 
@@ -27,13 +34,13 @@ $this->SetViewTarget('inside_pagetitle');
 if ($arResult['CAN_WRITE'])
 {
 ?>
-<div class="pagetitle-container pagetitle-align-right-container <?=$pagetitleAlignRightContainer?>">
+<div class="pagetitle-container pagetitle-align-right-container">
 	<a href="<?=$arParams['DASHBOARD_ADD_URL']?>" class="ui-btn ui-btn-primary"><?=Loc::getMessage('CT_BBDL_TOOLBAR_ADD')?></a>
 </div>
 <?php
 }
 
-$this->endViewTarget();
+$this->EndViewTarget();
 
 $arResult['HEADERS'] = [
 	[

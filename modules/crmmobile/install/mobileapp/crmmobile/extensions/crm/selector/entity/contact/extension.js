@@ -2,7 +2,6 @@
  * @module crm/selector/entity/contact
  */
 jn.define('crm/selector/entity/contact', (require, exports, module) => {
-
 	const { get } = require('utils/object');
 	const { SelectorProcessing } = require('crm/selector/utils/processing');
 
@@ -46,6 +45,11 @@ jn.define('crm/selector/entity/contact', (require, exports, module) => {
 			return true;
 		}
 
+		static canCreateWithEmptySearch()
+		{
+			return true;
+		}
+
 		static getCreateText()
 		{
 			return BX.message('SELECTOR_COMPONENT_CREATE_CONTACT');
@@ -53,7 +57,7 @@ jn.define('crm/selector/entity/contact', (require, exports, module) => {
 
 		static getCreatingText()
 		{
-			return BX.message('SELECTOR_COMPONENT_CREATING_CONTACT');
+			return BX.message('SELECTOR_COMPONENT_CREATE_CONTACT');
 		}
 
 		static getCreateEntityHandler(providerOptions)

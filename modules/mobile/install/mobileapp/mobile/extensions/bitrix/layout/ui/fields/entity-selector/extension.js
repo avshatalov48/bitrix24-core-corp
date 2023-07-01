@@ -3,7 +3,7 @@
  */
 jn.define('layout/ui/fields/entity-selector', (require, exports, module) => {
 
-	const { arrowDown, pen } = require('assets/common');
+	const { chevronDown, pen } = require('assets/common');
 	const { Haptics } = require('haptics');
 	const { BaseField } = require('layout/ui/fields/base');
 	const { isEqual } = require('utils/object');
@@ -484,7 +484,7 @@ jn.define('layout/ui/fields/entity-selector', (require, exports, module) => {
 								width: 7,
 							},
 							svg: {
-								content: arrowDown(this.getTitleColor()),
+								content: chevronDown(this.getTitleColor()),
 							},
 						},
 					),

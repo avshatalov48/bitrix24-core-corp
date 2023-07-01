@@ -90,7 +90,7 @@ class ChecklistSaveRule extends \Bitrix\Main\Access\Rule\AbstractRule
 			}
 		}
 
-		foreach ($delta[self::STATUS_CHANGED] as $row)
+		foreach ($delta[self::STATUS_CHANGED] ?? [] as $row)
 		{
 			if (!$this->controller->check(ActionDictionary::ACTION_CHECKLIST_TOGGLE, $task, $row))
 			{
@@ -120,6 +120,11 @@ class ChecklistSaveRule extends \Bitrix\Main\Access\Rule\AbstractRule
 		{
 			$delta[self::ADDED] = true;
 			unset($new['']);
+		}
+
+		if (empty($old))
+		{
+			$delta[self::ADDED] = true;
 		}
 
 		foreach ($old as $id => $row)
@@ -203,7 +208,7 @@ class ChecklistSaveRule extends \Bitrix\Main\Access\Rule\AbstractRule
 				continue;
 			}
 
-			if ($old[$field] != $new[$field])
+			if (($old[$field] ?? null) != ($new[$field] ?? null))
 			{
 				return true;
 			}

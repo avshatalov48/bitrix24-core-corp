@@ -177,6 +177,7 @@ this.BX = this.BX || {};
 	var _gridController = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("gridController");
 	var _todoSkipMenu = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("todoSkipMenu");
 	var _isSetSortRequestRunning = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("isSetSortRequestRunning");
+	var _smartActivityNotificationSupported = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("smartActivityNotificationSupported");
 	var _bindEvents = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("bindEvents");
 	var _shouldShowPushCrmSettings = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("shouldShowPushCrmSettings");
 	var _getItems = /*#__PURE__*/babelHelpers.classPrivateFieldLooseKey("getItems");
@@ -243,7 +244,12 @@ this.BX = this.BX || {};
 	      writable: true,
 	      value: false
 	    });
+	    Object.defineProperty(this, _smartActivityNotificationSupported, {
+	      writable: true,
+	      value: false
+	    });
 	    babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$1)[_entityTypeId$1] = main_core.Text.toInteger(params.entityTypeId);
+	    babelHelpers.classPrivateFieldLooseBase(this, _smartActivityNotificationSupported)[_smartActivityNotificationSupported] = main_core.Text.toBoolean(params.smartActivityNotificationSupported);
 	    if (EntityType && !EntityType.isDefined(babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$1)[_entityTypeId$1])) {
 	      throw new Error(`Provided entityTypeId is invalid: ${babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$1)[_entityTypeId$1]}`);
 	    }
@@ -356,11 +362,7 @@ this.BX = this.BX || {};
 	  }
 	}
 	function _shouldShowTodoSkipMenu2() {
-	  let allowedTypes = [];
-	  if (EntityType) {
-	    allowedTypes = [EntityType.enumeration.deal, EntityType.enumeration.lead];
-	  }
-	  return allowedTypes.includes(babelHelpers.classPrivateFieldLooseBase(this, _entityTypeId$1)[_entityTypeId$1]);
+	  return babelHelpers.classPrivateFieldLooseBase(this, _smartActivityNotificationSupported)[_smartActivityNotificationSupported];
 	}
 
 	const namespace = main_core.Reflection.namespace('BX.Crm');

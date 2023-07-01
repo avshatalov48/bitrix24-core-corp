@@ -43,7 +43,7 @@ class TasksWidgetMemberSelectorComponent extends TasksBaseComponent
 		{
 			foreach ($this->arParams['DATA'] as $k => $row)
 			{
-				if (!(int)$row['ID'])
+				if (!(int)($row['ID'] ?? null))
 				{
 					unset($this->arParams['DATA'][$k]);
 				}
@@ -282,7 +282,7 @@ class TasksWidgetMemberSelectorComponent extends TasksBaseComponent
 			if (!empty($groupId))
 			{
 				$group = WorkgroupTable::getById($groupId)->fetch();
-				$owner = $group && $group['NAME'];
+				$owner = $group === false ? '' : $group['NAME'];
 			}
 			else
 			{

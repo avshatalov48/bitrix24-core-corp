@@ -11,24 +11,6 @@ BX.CrmEntityChatLayoutType = BX.Crm.Timeline.Streams.EntityChat.LayoutType;
 
 BX.CrmEntityChat = BX.Crm.Timeline.Streams.EntityChat;
 
-//region Editors
-BX.CrmTimelineBaseEditor = BX.Crm.Timeline.Editor;
-
-BX.CrmTimelineCommentEditor = BX.Crm.Timeline.Editors.Comment;
-
-BX.CrmTimelineWaitType = BX.Crm.Timeline.Editors.Wait.WaitingType;
-
-BX.CrmTimelineWaitHelper = BX.Crm.Timeline.Editors.Wait.Helper
-
-BX.CrmTimelineWaitEditor = BX.Crm.Timeline.Editors.Wait;
-
-BX.CrmTimelineSmsEditor = BX.Crm.Timeline.Editors.Sms;
-
-BX.CrmTimelineRestEditor = BX.Crm.Timeline.Editors.Rest;
-//endregion
-
-BX.CrmTimelineWaitConfigurationDialog = BX.Crm.Timeline.Tools.WaitConfigurationDialog;
-
 BX.CrmTimelineType = BX.Crm.Timeline.Types.Item;
 
 BX.CrmTimelineMarkType = BX.Crm.Timeline.Types.Mark;

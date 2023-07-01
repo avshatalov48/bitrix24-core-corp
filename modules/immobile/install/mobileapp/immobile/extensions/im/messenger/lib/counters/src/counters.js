@@ -6,12 +6,13 @@
  */
 jn.define('im/messenger/lib/counters/counters', (require, exports, module) => {
 
-	const { Logger } = jn.require('im/messenger/lib/logger');
-	const { Counter } = jn.require('im/messenger/lib/counters/counter');
-	const { RestManager } = jn.require('im/messenger/lib/rest-manager');
-	const { RestMethod, EventType } = jn.require('im/messenger/const');
-	const { MessengerEvent } = jn.require('im/messenger/lib/event');
-	const { MessengerParams } = jn.require('im/messenger/lib/params');
+	const { core } = require('im/messenger/core');
+	const { Logger } = require('im/messenger/lib/logger');
+	const { Counter } = require('im/messenger/lib/counters/counter');
+	const { restManager } = require('im/messenger/lib/rest-manager');
+	const { RestMethod, EventType } = require('im/messenger/const');
+	const { MessengerEmitter } = require('im/messenger/lib/emitter');
+	const { MessengerParams } = require('im/messenger/lib/params');
 
 	/**
 	 * @class Counters
@@ -20,6 +21,7 @@ jn.define('im/messenger/lib/counters/counters', (require, exports, module) => {
 	{
 		constructor()
 		{
+			this.store = core.getStore();
 			this.updateTimeout = null;
 			this.updateInterval = 300;
 
@@ -27,7 +29,7 @@ jn.define('im/messenger/lib/counters/counters', (require, exports, module) => {
 			this.openlinesCounter = new Counter();
 			this.notificationCounter = new Counter();
 
-			RestManager.on(RestMethod.imCountersGet, { JSON: 'Y' }, this.handleCountersGet.bind(this));
+			restManager.on(RestMethod.imCountersGet, { JSON: 'Y' }, this.handleCountersGet.bind(this));
 		}
 
 		handleCountersGet(response)
@@ -68,7 +70,7 @@ jn.define('im/messenger/lib/counters/counters', (require, exports, module) => {
 			this.openlinesCounter.value = counters.type.lines;
 			this.notificationCounter.value = counters.type.notify;
 
-			new MessengerEvent(EventType.notification.reload).send();
+			MessengerEmitter.emit(EventType.notification.reload);
 
 			this.update();
 		}
@@ -94,7 +96,7 @@ jn.define('im/messenger/lib/counters/counters', (require, exports, module) => {
 			const userId = MessengerParams.getUserId();
 
 			this.chatCounter.value =
-				MessengerStore.getters['recentModel/getCollection']
+				this.store.getters['recentModel/getCollection']
 					.reduce((counter, item) => {
 						delete this.chatCounter.detail[item.id];
 

@@ -1,5 +1,8 @@
 <?php
 
 return [
-	'selector/widget/entity',
+	'extensions' => [
+		'loc',
+		'selector/widget/entity',
+	],
 ];

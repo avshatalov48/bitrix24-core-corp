@@ -80,7 +80,7 @@ $APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", []);
 				"VALUE" => [],
 				"LAST_TASKS" => $arParams['DATA']['LAST_TASKS'],
 				"CURRENT_TASKS" => $arParams['DATA']['CURRENT_TASKS'],
-				"PATH_TO_TASKS_TASK" => $arParams["PATH_TO_TASKS_TASK"],
+				"PATH_TO_TASKS_TASK" => ($arParams["PATH_TO_TASKS_TASK"] ?? null),
 				"SITE_ID" => SITE_ID,
 				"SELECT" => array('ID', 'TITLE', 'STATUS'),
 			), null, array("HIDE_ICONS" => "Y")

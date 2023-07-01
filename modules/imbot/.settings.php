@@ -13,4 +13,13 @@ return [
 			],
 		],
 	],
+	'controllers' => [
+		'value' => [
+			'defaultNamespace' => '\\Bitrix\\ImBot\\Controller',
+			'restIntegration' => [
+				'enabled' => true,
+			]
+		],
+		'readonly' => true,
+	],
 ];

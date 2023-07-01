@@ -2,19 +2,23 @@
 
 return [
 	'extensions' => [
+		'loc',
 		'notify',
 		'haptics',
-		'loc',
-		'crm:entity-tab',
-		'crm:assets/category',
-		'crm:category-list/actions',
-		'crm:category-list-view',
-		'crm:entity-detail/component',
-		'crm:kanban/toolbar',
-		'crm:state-storage',
-		'crm:storage/category',
 		'utils/object',
-		'layout/ui/loading-screen',
 		'layout/ui/kanban',
+		'layout/ui/plan-restriction',
+
+		'crm:type',
+		'crm:entity-tab',
+		'crm:state-storage',
+		'crm:entity-actions',
+		'crm:kanban/toolbar',
+		'crm:assets/category',
+		'crm:storage/category',
+		'crm:category-list-view',
+		'crm:ui/loading-progress',
+		'crm:category-list/actions',
+		'crm:entity-detail/component',
 	],
 ];

@@ -31,7 +31,7 @@ foreach ($arResult['FILES'] as $id => $file)
 	if ($file['IS_MARK_DELETED'])
 	{
 		?><span <?php
-		?>title="<?= htmlspecialcharsbx($file["NAVCHAIN"]) ?>" <?php
+		?>title="<?= htmlspecialcharsbx($file["NAME"]) ?>" <?php
 		?> class="feed-com-file-inline feed-com-file-wrap diskuf-files-entity"<?php
 		?>><?php
 		?><span class="feed-com-file-inline feed-com-file-icon feed-file-icon-<?= htmlspecialcharsbx($file["EXTENSION"]) ?>"></span><?php
@@ -71,7 +71,7 @@ foreach ($arResult['FILES'] as $id => $file)
 				?> alt="<?= htmlspecialcharsbx($file["NAME"]) ?>"<?php
 				?> <?= $file['ATTRIBUTES_FOR_VIEWER']
 				?> bx-attach-file-id="<?= $file['FILE_ID'] ?>"<?php
-				if ($file['XML_ID'])
+				if (isset($file['XML_ID']))
 				{
 					?> bx-attach-xml-id="<?= $file['XML_ID'] ?>"<?php
 				}
@@ -99,14 +99,10 @@ foreach ($arResult['FILES'] as $id => $file)
 				? ""
 				: "WDInlineElementClickDispatcher(this, 'disk-attach-" . $file['ID'] . "'); return false;"
 		);
-		$href = (
-			SITE_TEMPLATE_ID === 'landing24'
-				? htmlspecialcharsbx($file["DOWNLOAD_URL"])
-				: htmlspecialcharsbx($file["PATH"])
-		);
+		$href = $file["DOWNLOAD_URL"];
 
 		?><a target="_blank" href="<?= $href ?>" <?php
-			?>title="<?= htmlspecialcharsbx($file["NAVCHAIN"]) ?>" <?php
+			?>title="<?= htmlspecialcharsbx($file["NAME"]) ?>" <?php
 			?>onclick="<?= $onClick ?>" <?php
 			?> alt="<?= htmlspecialcharsbx($file["NAME"]) ?>" <?php
 			?> class="feed-com-file-inline feed-com-file-wrap diskuf-files-entity"<?php

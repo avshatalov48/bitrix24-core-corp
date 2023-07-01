@@ -14,6 +14,9 @@ abstract class Provider
 	protected $additionalFilter = [];
 	protected $useDenominationSearch = false;
 
+	protected ?array $affectedCategories = null;
+	protected bool $checkPermissions = true;
+
 	public function __construct()
 	{
 		$this->limit = self::DEFAULT_LIMIT;
@@ -40,9 +43,19 @@ abstract class Provider
 		$this->additionalFilter = $filter;
 	}
 
+	public function setAffectedCategories(?array $categoriesIds): void
+	{
+		$this->affectedCategories = $categoriesIds;
+	}
+
 	public function setUseDenominationSearch(bool $useDenominationSearch)
 	{
 		$this->useDenominationSearch = $useDenominationSearch;
+	}
+
+	public function setCheckPermissions(bool $checkPermissions): void
+	{
+		$this->checkPermissions = $checkPermissions;
 	}
 
 	abstract public function getSearchResult(string $searchQuery): Result;

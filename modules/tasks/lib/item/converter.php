@@ -222,7 +222,7 @@ abstract class Converter
 		if($srcUFCtrl && $dstUFCtrl)
 		{
 			$parameters = array();
-			if($this->config['UF.FILTER'])
+			if ($this->config['UF.FILTER'] ?? null)
 			{
 				$parameters['FILTER'] = new Filter($this->config['UF.FILTER']);
 			}
@@ -291,7 +291,7 @@ abstract class Converter
 			}
 		}
 
-		return $this->subConverterCache[$name];
+		return ($this->subConverterCache[$name] ?? null);
 	}
 
 	public static function getClass()

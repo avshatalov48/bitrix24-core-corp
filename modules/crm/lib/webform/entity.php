@@ -41,110 +41,110 @@ class Entity
 			$invoiceDefaultStatusId = \CAllCrmInvoice::getDefaultStatusId();
 		}
 
-		$entityTypeMap =  array(
-			\CCrmOwnerType::LeadName => array(
+		$entityTypeMap = [
+			\CCrmOwnerType::LeadName => [
 				'CLASS_NAME' => 'CCrmLead',
-				'DUPLICATE_CHECK' => array(
-					'CHECKER_CLASS_NAME' => '\Bitrix\Crm\Integrity\LeadDuplicateChecker',
+				'DUPLICATE_CHECK' => [
+					'CHECKER_CLASS_NAME' => \Bitrix\Crm\Integrity\LeadDuplicateChecker::class,
 					'MERGER_CLASS_NAME' => Merger\LeadMerger::class,
-				),
+				],
 				'HAS_MULTI_FIELDS' => true,
-				'FIELD_AUTO_FILL_TEMPLATE' => array(
-					'TITLE' => array(
+				'FIELD_AUTO_FILL_TEMPLATE' => [
+					'TITLE' => [
 						'TEMPLATE' => Loc::getMessage('CRM_WEBFORM_ENTITY_FIELD_NAME_TEMPLATE'),
-					),
-					'OPENED' => [
-						'TEMPLATE' => LeadSettings::getCurrent()->getOpenedFlag() ? 'Y' : 'N'
 					],
-					'SOURCE_ID' => array(
-						'TEMPLATE' => 'WEBFORM'
-					)
-				)
-			),
-			\CCrmOwnerType::ContactName => array(
+					'OPENED' => [
+						'TEMPLATE' => LeadSettings::getCurrent()->getOpenedFlag() ? 'Y' : 'N',
+					],
+					'SOURCE_ID' => [
+						'TEMPLATE' => 'WEBFORM',
+					],
+				],
+			],
+			\CCrmOwnerType::ContactName => [
 				'CLASS_NAME' => 'CCrmContact',
-				'DUPLICATE_CHECK' => array(
-					'CHECKER_CLASS_NAME' => '\Bitrix\Crm\Integrity\ContactDuplicateChecker',
+				'DUPLICATE_CHECK' => [
+					'CHECKER_CLASS_NAME' => \Bitrix\Crm\Integrity\ContactDuplicateChecker::class,
 					'MERGER_CLASS_NAME' => Merger\ContactMerger::class,
-				),
+				],
 				'HAS_MULTI_FIELDS' => true,
-				'FIELD_AUTO_FILL_TEMPLATE' => array(
-					'NAME' => array(
+				'FIELD_AUTO_FILL_TEMPLATE' => [
+					'NAME' => [
 						'TEMPLATE' => Loc::getMessage('CRM_WEBFORM_ENTITY_FIELD_NAME_CONTACT_TEMPLATE'),
-					),
-					'OPENED' => [
-						'TEMPLATE' => ContactSettings::getCurrent()->getOpenedFlag() ? 'Y' : 'N'
 					],
-					'EXPORT' => array(
-						'TEMPLATE' => 'Y'
-					),
-					'SOURCE_ID' => array(
-						'TEMPLATE' => 'WEBFORM'
-					)
-				),
-				'EXCLUDED_FIELDS' => array()
-			),
-			\CCrmOwnerType::CompanyName => array(
-				'CLASS_NAME' => 'CCrmCompany',
-				'DUPLICATE_CHECK' => array(
-					'CHECKER_CLASS_NAME' => '\Bitrix\Crm\Integrity\CompanyDuplicateChecker',
-					'MERGER_CLASS_NAME' => Merger\CompanyMerger::class,
-				),
-				'HAS_MULTI_FIELDS' => true,
-				'FIELD_AUTO_FILL_TEMPLATE' => array(
-					'TITLE' => array(
-						'TEMPLATE' => Loc::getMessage('CRM_WEBFORM_ENTITY_FIELD_NAME_COMPANY_TEMPLATE'),
-					),
 					'OPENED' => [
-						'TEMPLATE' => CompanySettings::getCurrent()->getOpenedFlag() ? 'Y' : 'N'
-					]
-				)
-			),
-			\CCrmOwnerType::DealName => array(
+						'TEMPLATE' => ContactSettings::getCurrent()->getOpenedFlag() ? 'Y' : 'N',
+					],
+					'EXPORT' => [
+						'TEMPLATE' => 'Y',
+					],
+					'SOURCE_ID' => [
+						'TEMPLATE' => 'WEBFORM',
+					],
+				],
+				'EXCLUDED_FIELDS' => [],
+			],
+			\CCrmOwnerType::CompanyName => [
+				'CLASS_NAME' => 'CCrmCompany',
+				'DUPLICATE_CHECK' => [
+					'CHECKER_CLASS_NAME' => \Bitrix\Crm\Integrity\CompanyDuplicateChecker::class,
+					'MERGER_CLASS_NAME' => Merger\CompanyMerger::class,
+				],
+				'HAS_MULTI_FIELDS' => true,
+				'FIELD_AUTO_FILL_TEMPLATE' => [
+					'TITLE' => [
+						'TEMPLATE' => Loc::getMessage('CRM_WEBFORM_ENTITY_FIELD_NAME_COMPANY_TEMPLATE'),
+					],
+					'OPENED' => [
+						'TEMPLATE' => CompanySettings::getCurrent()->getOpenedFlag() ? 'Y' : 'N',
+					],
+				],
+			],
+			\CCrmOwnerType::DealName => [
 				'CLASS_NAME' => 'CCrmDeal',
-				'DUPLICATE_CHECK' => array(
+				'DUPLICATE_CHECK' => [
 					'CHECKER_CLASS_NAME' => null,
 					'MERGER_CLASS_NAME' => Merger\DealMerger::class,
-				),
-				'FIELD_AUTO_FILL_TEMPLATE' => array(
-					'TITLE' => array(
+				],
+				'FIELD_AUTO_FILL_TEMPLATE' => [
+					'TITLE' => [
 						'TEMPLATE' => Loc::getMessage('CRM_WEBFORM_ENTITY_FIELD_NAME_TEMPLATE'),
-					),
-					'OPENED' => [
-						'TEMPLATE' => DealSettings::getCurrent()->getOpenedFlag() ? 'Y' : 'N'
 					],
-					'SOURCE_ID' => array(
-						'TEMPLATE' => 'WEBFORM'
-					)
-				)
-			),
-			\CCrmOwnerType::QuoteName => array(
-				'CLASS_NAME' => 'CCrmQuote',
-				'FIELD_AUTO_FILL_TEMPLATE' => array(
-					'TITLE' => array(
-						'TEMPLATE' => Loc::getMessage('CRM_WEBFORM_ENTITY_FIELD_NAME_TEMPLATE'),
-					),
 					'OPENED' => [
-						'TEMPLATE' => QuoteSettings::getCurrent()->getOpenedFlag() ? 'Y' : 'N'
-					]
-				)
-			),
-			\CCrmOwnerType::InvoiceName => array(
-				'CLASS_NAME' => 'CCrmInvoice',
-				'FIELD_AUTO_FILL_TEMPLATE' => array(
-					'ORDER_TOPIC' => array(
+						'TEMPLATE' => DealSettings::getCurrent()->getOpenedFlag() ? 'Y' : 'N',
+					],
+					'SOURCE_ID' => [
+						'TEMPLATE' => 'WEBFORM',
+					],
+				],
+			],
+			\CCrmOwnerType::QuoteName => [
+				'CLASS_NAME' => 'CCrmQuote',
+				'FIELD_AUTO_FILL_TEMPLATE' => [
+					'TITLE' => [
 						'TEMPLATE' => Loc::getMessage('CRM_WEBFORM_ENTITY_FIELD_NAME_TEMPLATE'),
-					),
-					'STATUS_ID' => array(
+					],
+					'OPENED' => [
+						'TEMPLATE' => QuoteSettings::getCurrent()->getOpenedFlag() ? 'Y' : 'N',
+					],
+				],
+			],
+			\CCrmOwnerType::InvoiceName => [
+				'CLASS_NAME' => 'CCrmInvoice',
+				'FIELD_AUTO_FILL_TEMPLATE' => [
+					'ORDER_TOPIC' => [
+						'TEMPLATE' => Loc::getMessage('CRM_WEBFORM_ENTITY_FIELD_NAME_TEMPLATE'),
+					],
+					'STATUS_ID' => [
 						'TEMPLATE' => $invoiceDefaultStatusId,
-					),
-				)
-			),
-		);
+					],
+				],
+			],
+		];
 
 		$entityTypeMap += self::getDynamicMap();
 
-		if($entityTypeName)
+		if ($entityTypeName)
 		{
 			return $entityTypeMap[$entityTypeName];
 		}
@@ -212,7 +212,7 @@ class Entity
 
 	public static function getCommonExcludedFieldCodes()
 	{
-		return array(
+		return [
 			'INVOICE_STATUS_ID',
 			'QUOTE_CLIENT_EMAIL',
 			'QUOTE_CLIENT_PHONE',
@@ -228,12 +228,12 @@ class Entity
 			'SMART_DOCUMENT_TAX_VALUE',
 			'SMART_DOCUMENT_SOURCE_ID',
 			'SMART_DOCUMENT_SOURCE_DESCRIPTION',
-		);
+		];
 	}
 
 	public static function getEntityMapCommonExcludedFields()
 	{
-		$fieldCodes = array(
+		$fieldCodes = [
 			'ASSIGNED_BY_ID',
 
 			//'PROBABILITY', 'DATE_PAY_BEFORE',
@@ -265,7 +265,7 @@ class Entity
 			'ORIGIN_ID', 'ORIGINATOR_ID', 'ADDRESS_LOC_ADDR_ID', 'REG_ADDRESS_LOC_ADDR_ID',
 
 			'MOVED_BY', 'MOVED_BY_ID', 'MOVED_TIME',
-		);
+		];
 
 		$fieldCodes = array_merge($fieldCodes, UtmTable::getCodeList());
 
@@ -285,19 +285,19 @@ class Entity
 
 	public static function getSchemesByInvoice($selectedSchemeId = null, $allowedEntitySchemes = null)
 	{
-		$result = array(
+		$result = [
 			'HAS_DEAL' => false,
 			'HAS_DYNAMIC' => false,
 			'HAS_INVOICE' => false,
 			'SELECTED_DESCRIPTION' => '',
-			'BY_INVOICE' => array(),
-			'BY_NON_INVOICE' => array(),
-		);
+			'BY_INVOICE' => [],
+			'BY_NON_INVOICE' => [],
+		];
 		$schemes = self::getSchemes();
 		$previousSchemeId = null;
-		foreach($schemes as $schemeId => $scheme)
+		foreach ($schemes as $schemeId => $scheme)
 		{
-			if(!$selectedSchemeId)
+			if (!$selectedSchemeId)
 			{
 				$selectedSchemeId = $schemeId;
 			}
@@ -314,7 +314,7 @@ class Entity
 			$result[$section][$searchSchemeId] = $scheme;
 			$previousSchemeId = $schemeId;
 
-			if($schemeId == $selectedSchemeId)
+			if ($schemeId == $selectedSchemeId)
 			{
 				$result['SELECTED_ID'] = $selectedSchemeId;
 				$result['HAS_DEAL'] = $hasDeal;

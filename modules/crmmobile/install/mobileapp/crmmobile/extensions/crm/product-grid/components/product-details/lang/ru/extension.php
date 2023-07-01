@@ -28,8 +28,8 @@ $MESS['PRODUCT_GRID_PRODUCT_DETAILS_FIELD_RESERVE_TILL'] = 'Дата оконч�
 $MESS['PRODUCT_GRID_PRODUCT_DETAILS_MORE_OPPORTUNITIES'] = 'Дополнительные возможности';
 $MESS['PRODUCT_GRID_PRODUCT_DETAILS_INVENTORY_CONTROL_INTEGRATION'] = 'Остатки на складах и резервирование прямо в карточке сделки';
 $MESS['PRODUCT_GRID_PRODUCT_DETAILS_INVENTORY_CONTROL_INTEGRATION_TITLE'] = 'Остатки и резервирование';
-$MESS['PRODUCT_GRID_PRODUCT_DETAILS_INVENTORY_CONTROL_INTEGRATION_BODY'] = 'Пока доступно только в полной версии';
-$MESS['PRODUCT_GRID_PRODUCT_DETAILS_DESKTOP_VERSION'] = 'Открыть в полной версии';
+$MESS['PRODUCT_GRID_PRODUCT_DETAILS_INVENTORY_CONTROL_INTEGRATION_BODY_MSGVER_1'] = 'Пока доступно только в веб-версии';
+$MESS['PRODUCT_GRID_PRODUCT_DETAILS_DESKTOP_VERSION_MSGVER_1'] = 'Открыть в веб-версии';
 
 $MESS['PRODUCT_GRID_PRODUCT_DETAILS_PHOTOS_UPLOADING'] = 'Фотографии товара загружаются';
 $MESS['PRODUCT_GRID_PRODUCT_DETAILS_PHOTOS_UPLOADING_DESC'] = 'Дождитесь загрузки или удалите загружаемые фотографии';

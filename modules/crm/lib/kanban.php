@@ -1,8 +1,6 @@
 <?php
 
-
 namespace Bitrix\Crm;
-
 
 use Bitrix\Crm\Color\PhaseColorScheme;
 use Bitrix\Crm\Format\PersonNameFormatter;
@@ -20,7 +18,6 @@ use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Text\HtmlFilter;
-use Bitrix\Main\Type\DateTime;
 use Bitrix\Rest\Marketplace\Url;
 use CCrmEntityHelper;
 
@@ -450,6 +447,7 @@ abstract class Kanban
 			if (
 				isset($params['VIEW_MODE'])
 				&& $params['VIEW_MODE'] === ViewMode::MODE_ACTIVITIES
+				&& isset($filter['CATEGORY_ID'])
 				&& $filter['CATEGORY_ID'] === -1
 			)
 			{
@@ -481,19 +479,19 @@ abstract class Kanban
 				}
 				// format column
 				$column = [
-					'real_id' => $status['ID'],
-					'real_sort' => $status['SORT'],
-					'id' => $status['STATUS_ID'],
-					'name' => $status['NAME'],
+					'real_id' => $status['ID'] ?? null,
+					'real_sort' => $status['SORT'] ?? null,
+					'id' => $status['STATUS_ID'] ?? null,
+					'name' => $status['NAME'] ?? null,
 					'color' => $this->getColumnColor($status),
-					'type' => $status['PROGRESS_TYPE'],
+					'type' => $status['PROGRESS_TYPE'] ?? null,
 					'sort' => $sort,
 					'count' => 0,
 					'total' => 0,
 					'currency' => $baseCurrency,
 					'dropzone' => $isDropZone,
 					'alwaysShowInDropzone' => $this->isAlwaysShowInDropzone($status),
-					'canAddItem' => $this->entity->canAddItemToStage($status['STATUS_ID'], $userPerms),
+					'canAddItem' => $this->entity->canAddItemToStage($status['STATUS_ID'], $userPerms, $status['SEMANTICS']),
 					'blockedIncomingMoving' => ($status['BLOCKED_INCOMING_MOVING'] ?? false),
 				];
 
@@ -962,7 +960,8 @@ abstract class Kanban
 		}
 		//endregion
 
-		\CCrmEntityHelper::prepareMultiFieldFilter($filter, [], '=%', false);
+		CCrmEntityHelper::prepareMultiFieldFilter($filter, [], '=%', false);
+
 		return $filter;
 	}
 
@@ -1090,11 +1089,11 @@ abstract class Kanban
 		{
 			$status['STATUS_ID'] = $this->sanitizeString((string)$status['STATUS_ID']);
 
-			if($status['SEMANTICS'] === PhaseSemantics::SUCCESS)
+			if (isset($status['SEMANTICS']) && $status['SEMANTICS'] === PhaseSemantics::SUCCESS)
 			{
 				$status['PROGRESS_TYPE'] = 'WIN';
 			}
-			elseif($status['SEMANTICS'] === PhaseSemantics::FAILURE)
+			elseif(isset($status['SEMANTICS']) && $status['SEMANTICS'] === PhaseSemantics::FAILURE)
 			{
 				$status['PROGRESS_TYPE'] = 'LOOSE';
 			}
@@ -1316,11 +1315,12 @@ abstract class Kanban
 				$row = $this->mergeItemFieldsValues($row, $renderedRows[$rowId]);
 			}
 
-			if ($row['CONTACT_ID'] > 0)
+			if (isset($row['CONTACT_ID']) && $row['CONTACT_ID'] > 0)
 			{
 				$row['CONTACT_TYPE'] = 'CRM_CONTACT';
 			}
-			if ($row['COMPANY_ID'] > 0)
+
+			if (isset($row['COMPANY_ID']) && $row['COMPANY_ID'] > 0)
 			{
 				$row['CONTACT_TYPE'] = 'CRM_COMPANY';
 			}
@@ -1431,7 +1431,7 @@ abstract class Kanban
 				'currency' => $row['CURRENCY_ID'],
 				'entity_currency' => $row['ENTITY_CURRENCY_ID'],
 				'date' => $row['DATE_FORMATTED'],
-				'dateCreate' => $row['DATE_CREATE'],
+				'dateCreate' => $row['DATE_CREATE'] ?? '',
 				'contactId' => (int)$row['CONTACT_ID'],
 				'companyId' => (!empty($row['COMPANY_ID']) ? (int)$row['COMPANY_ID'] : null),
 				'contactType' => $row['CONTACT_TYPE'],

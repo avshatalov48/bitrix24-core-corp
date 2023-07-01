@@ -105,7 +105,7 @@ const Form = {
 			
 			<recaptcha-block :form="form" />
 			
-			<div class="b24-form-sign" v-if="form.useSign">
+			<div class="b24-form-sign">
 				<select v-show="false" v-model="form.messages.language">
 					<option 
 						v-for="language in form.languages" 
@@ -114,10 +114,16 @@ const Form = {
 						{{ language }}
 					</option>				
 				</select>
-			
-				<span class="b24-form-sign-text">{{ form.messages.get('sign') }}</span>
-				<span class="b24-form-sign-bx">{{ getSignBy() }}</span>
-				<span class="b24-form-sign-24">24</span>			
+			 	
+				<a :href="abuseLink" target="_blank" class="b24-form-sign-abuse-link" v-if="abuseEnabled">
+					{{ form.messages.get('abuseLink') }}
+				</a>
+				<span class="b24-form-sign-abuse-help" :title="form.messages.get('abuseInfoHint')"></span>
+				<div class="b24-form-sign-info" v-if="form.useSign">
+					<span class="b24-form-sign-text">{{ form.messages.get('sign') }}</span>
+					<span class="b24-form-sign-bx">{{ getSignBy() }}</span>
+					<span class="b24-form-sign-24">24</span>
+				</div>
 			</div>			
 		</div>
 	`,
@@ -126,8 +132,26 @@ const Form = {
 		{
 			return this.form.validated && !this.form.valid();
 		},
+		abuseEnabled()
+		{
+			return !!this.form?.abuse?.link;
+		},
+		abuseLink()
+		{
+			return this.abuseEnabled ? this.getQueryParametersForAbuseLink() : '';
+		},
 	},
 	methods: {
+		getQueryParametersForAbuseLink()
+		{
+			const url = new URL(this.form.abuse.link);
+
+			url.searchParams.set('b24_form_id', this.form.identification.id);
+			url.searchParams.set('b24_address', this.form.identification.address);
+			url.searchParams.set('b24_form_address', window.location.href);
+
+			return url;
+		},
 		prevPage()
 		{
 			this.form.loading = true;

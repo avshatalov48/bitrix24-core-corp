@@ -10,9 +10,8 @@ $APPLICATION->includeComponent('bitrix:crm.control_panel', '',
 		'ID' => 'CONFIG',
 		'ACTIVE_ITEM_ID' => 'SETTINGS'
 	),
-	$component
 );
 
-$APPLICATION->includeComponent('bitrix:crm.configs', '', array('SHOW_TITLE' => 'N'), $component);
+$APPLICATION->includeComponent('bitrix:crm.configs', '', array('SHOW_TITLE' => 'N'));
 
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/footer.php");?>

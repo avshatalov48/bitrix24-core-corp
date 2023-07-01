@@ -25,7 +25,7 @@
 				title: BX.message('ACTIVATION_WIZARD_BACKDROP_TITLE'),
 				redirectUrl: '/shop/documents/',
 				showHint: true,
-				hintText: BX.message('ACTIVATION_WIZARD_BACKDROP_HINT_TEXT'),
+				hintText: BX.message('ACTIVATION_WIZARD_BACKDROP_HINT_TEXT_MSGVER_1'),
 			};
 		}
 

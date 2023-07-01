@@ -4,6 +4,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Rpa\Driver;
 
+$bodyClass = false; // $APPLICATION->GetPageProperty('BodyClass');
 $APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "") . "no-background no-hidden");
 
 \Bitrix\Main\UI\Extension::load(['ui.forms', 'ui.buttons', 'ui.switcher', 'ui.alerts']);
@@ -22,7 +23,7 @@ $APPLICATION->includeComponent(
 	]
 );
 
-if ($_POST['save_action'] === 'Y'):
+if (isset($_POST['save_action']) && $_POST['save_action'] === 'Y'):
 	if ($errors = $this->getComponent()->getErrors()):?>
 		<div class="ui-alert ui-alert-danger">
 			<span class="ui-alert-message"><?= reset($errors)->getMessage() ?></span>
@@ -65,7 +66,7 @@ if ($_POST['save_action'] === 'Y'):
 endif;
 ?>
 	<div class="rpa-edit-robot">
-		<?
+		<?php
 		$menu = [];
 		$propsMap = $arResult['dialog']->getMap();
 
@@ -111,21 +112,21 @@ endif;
 		]);
 		?>
 
-		<? if ($arResult['AVAILABLE_ROBOTS']):
+		<?php if ($arResult['AVAILABLE_ROBOTS']):
 		$this->setViewTarget("below_pagetitle", 100); ?>
 		<div class="rpa-edit-robot-menu-block">
-			<? if(!empty($arParams['robotName'])):?>
+			<?php if(!empty($arParams['robotName'])):?>
 				<span class="rpa-edit-robot-menu-title"><?=htmlspecialcharsbx($arResult['AVAILABLE_ROBOT_CURRENT_NAME'])?></span>
-			<?else:?>
+			<?php else:?>
 			<span class="rpa-edit-robot-menu-title"><?=Loc::getMessage('RPA_AUTOMATION_EDITROBOT_SCENARIO')?></span>
 			<a class="rpa-edit-robot-menu-link" data-role="rpa-edit-robot-menu-scenario"><?=htmlspecialcharsbx($arResult['AVAILABLE_ROBOT_CURRENT_NAME'])?></a>
-			<?endif?>
+			<?php endif?>
 		</div>
-		<? $this->endViewTarget();
+		<?php $this->endViewTarget();
 		endif?>
 
 		<div class="rpa-edit-robot-menu">
-			<? $APPLICATION->ShowViewContent("left-panel-robot-edit"); ?>
+			<?php $APPLICATION->ShowViewContent("left-panel-robot-edit"); ?>
 		</div>
 		<form id="rpa-robot-edit" method="post" enctype="multipart/form-data" action="" class="rpa-edit-robot-content">
 			<input type="hidden" name="save_action" value="Y">

@@ -153,9 +153,15 @@ class TaskRegistry
 			->addSelect('ALLOW_CHANGE_DEADLINE')
 			->addSelect('ALLOW_TIME_TRACKING')
 			->addSelect('DEADLINE')
+			->addSelect('TASK_CONTROL')
+			->addSelect('PRIORITY')
+			->addSelect('DESCRIPTION')
 			->addSelect('FORUM_TOPIC_ID')
 			->addSelect('RESPONSIBLE_ID')
 			->addSelect('CREATED_BY')
+			->addSelect('CLOSED_DATE')
+			->addSelect('START_DATE_PLAN')
+			->addSelect('END_DATE_PLAN')
 			->whereIn('ID', $taskIds)
 			->exec();
 

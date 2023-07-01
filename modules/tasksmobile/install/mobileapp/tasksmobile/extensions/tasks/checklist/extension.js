@@ -117,7 +117,7 @@ jn.define('tasks/checklist', (require, exports, module) => {
 			this.emitter.removeAll();
 		}
 
-		save(taskId)
+		save(taskId, context = '')
 		{
 			if (!this.isRoot())
 			{
@@ -130,11 +130,13 @@ jn.define('tasks/checklist', (require, exports, module) => {
 			}
 
 			const items = this.getRequestData();
-
 			return new Promise((resolve, reject) => {
 				(new RequestExecutor('tasks.task.checklist.save', {
 					taskId: taskId,
 					items: items.length > 0 ? items : null,
+					parameters: {
+						context: context,
+					},
 				}))
 					.call()
 					.then(

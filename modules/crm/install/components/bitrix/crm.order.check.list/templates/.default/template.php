@@ -1,14 +1,19 @@
-<?if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
+<?php
 
-use Bitrix\Main\Localization\Loc;
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
 use Bitrix\Crm\Service;
+use Bitrix\Main\Localization\Loc;
 
 /** @var \CBitrixComponent $component */
 
 global $APPLICATION;
 
 $APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/crm-entity-show.css");
-if(SITE_TEMPLATE_ID === 'bitrix24')
+if (SITE_TEMPLATE_ID === 'bitrix24')
 {
 	$APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/bitrix24/crm-entity-show.css");
 }
@@ -24,7 +29,7 @@ $jsData = [
 	'GRID_ID' => $arResult['GRID_ID'],
 ];
 
-$arResult['GRID_DATA'] = array();
+$arResult['GRID_DATA'] = [];
 
 if ($arResult['ENABLE_TOOLBAR'])
 {
@@ -38,14 +43,15 @@ if ($arResult['ENABLE_TOOLBAR'])
 		'bitrix:crm.interface.toolbar',
 		'',
 		array(
-			'TOOLBAR_ID' => mb_strtolower($arResult['GRID_ID']).'_toolbar',
+			'TOOLBAR_ID' => mb_strtolower($arResult['GRID_ID']) . '_toolbar',
 			'BUTTONS' => array($addButton)
 		),
 		$component,
 		array('HIDE_ICONS' => 'Y')
 	);
 }
-$columns = array();
+
+$columns = [];
 foreach ($arResult['HEADERS'] as $arHead)
 {
 	$columns[$arHead['id']] = false;
@@ -56,32 +62,32 @@ foreach($arResult['ROWS'] as $key => $check)
 	$check['CASHBOX_NAME'] = htmlspecialcharsbx($check['CASHBOX_NAME']);
 
 	$check['PATH_TO_ORDER_CHECK_SHOW'] = CComponentEngine::makePathFromTemplate(
-		$arParams['PATH_TO_ORDER_CHECK_SHOW'],
+		$arParams['PATH_TO_ORDER_CHECK_SHOW'] ?? '',
 		array('check_id' => $check['ID'])
 	);
 	$check['PATH_TO_ORDER_CHECK_EDIT'] = CComponentEngine::makePathFromTemplate(
-		$arParams['PATH_TO_ORDER_CHECK_EDIT'],
+		$arParams['PATH_TO_ORDER_CHECK_EDIT'] ?? '',
 		array('check_id' => $check['ID'])
 	);
 
 	$check['PATH_TO_ORDER_CHECK_CHECK_STATUS'] = CComponentEngine::makePathFromTemplate(
-		$arParams['PATH_TO_ORDER_CHECK_CHECK_STATUS'],
+		$arParams['PATH_TO_ORDER_CHECK_CHECK_STATUS'] ?? '',
 		array('check_id' => $check['ID'])
 	);
 
 	$check['PATH_TO_ORDER_CHECK_DELETE'] = CComponentEngine::makePathFromTemplate(
-		$arParams['PATH_TO_ORDER_CHECK_DELETE'],
+		$arParams['PATH_TO_ORDER_CHECK_DELETE'] ?? '',
 		array('check_id' => $check['ID'])
 	);
 
-	$arActivityMenuItems = array();
-	$arActivitySubMenuItems = array();
-	$actions = array();
+	$arActivityMenuItems = [];
+	$arActivitySubMenuItems = [];
+	$actions = [];
 
 	$actions[] = array(
 		'TITLE' => GetMessage('CRM_ORDER_CHECK_SHOW_TITLE'),
 		'TEXT' => GetMessage('CRM_ORDER_CHECK_SHOW'),
-		'ONCLICK' => 'BX.Crm.Page.openSlider("'.$check['PATH_TO_ORDER_CHECK_SHOW'].'", { width: 500 });',
+		'ONCLICK' => 'BX.Crm.Page.openSlider("' . $check['PATH_TO_ORDER_CHECK_SHOW'] . '", { width: 500 });',
 		'DEFAULT' => true
 	);
 
@@ -90,12 +96,12 @@ foreach($arResult['ROWS'] as $key => $check)
 		$actions[] = [
 			'TITLE' => GetMessage('CRM_ORDER_CHECK_CHECK_STATUS_TITLE'),
 			'TEXT' => GetMessage('CRM_ORDER_CHECK_CHECK_STATUS'),
-			"ONCLICK" => 'BX.Crm.OrderPaymentCheckList.refreshCheck('.$check['ID'].', ' . CUtil::PhpToJSObject($jsData) .');'
+			"ONCLICK" => 'BX.Crm.OrderPaymentCheckList.refreshCheck(' . $check['ID'] . ', ' . CUtil::PhpToJSObject($jsData) . ');'
 		];
 
 	}
 
-	if ($check['STATUS'] == 'E' || $check['STATUS'] == 'N')
+	if (isset($check['STATUS']) && in_array($check['STATUS'], ['E', 'N', 'P'], true))
 	{
 		$actions[] = array(
 			'TITLE' => GetMessage('CRM_ORDER_CHECK_DELETE_TITLE'),
@@ -111,7 +117,7 @@ foreach($arResult['ROWS'] as $key => $check)
 	$check['DATE_CREATE'] = FormatDate($arResult['TIME_FORMAT'], MakeTimeStamp($check['DATE_CREATE']));
 	$checkDate = FormatDate($arResult['DATE_FORMAT'], MakeTimeStamp($check['DATE_CREATE']));
 
-	$paymentList = array();
+	$paymentList = [];
 	$paymentValue = "";
 	if (!empty($check['PAYMENT']))
 	{
@@ -123,21 +129,21 @@ foreach($arResult['ROWS'] as $key => $check)
 	}
 	foreach ($paymentList as $paymentId)
 	{
-		$paymentData = $arResult['PAYMENT_LIST'][$paymentId];
+		$paymentData = $arResult['PAYMENT_LIST'][$paymentId] ?? [];
 		$paymentTitle = Loc::getMessage("CRM_ORDER_PAYMENT_TITLE",array(
-			"#ACCOUNT_NUMBER#" => htmlspecialcharsbx($paymentData['ACCOUNT_NUMBER']),
-			"#DATE_BILL#" =>   FormatDate($arResult['DATE_FORMAT'], MakeTimeStamp($paymentData['DATE_BILL'])),
+			"#ACCOUNT_NUMBER#" => htmlspecialcharsbx($paymentData['ACCOUNT_NUMBER'] ?? ''),
+			"#DATE_BILL#" =>   FormatDate($arResult['DATE_FORMAT'], MakeTimeStamp($paymentData['DATE_BILL'] ?? '')),
 		));
 		$paymentValue .= CCrmViewHelper::RenderInfo(
 			Service\Sale\EntityLinkBuilder\EntityLinkBuilder::getInstance()
 				->getPaymentDetailsLink($paymentId),
 			$paymentTitle,
-			htmlspecialcharsbx($paymentData['PAY_SYSTEM_NAME']),
+			htmlspecialcharsbx($paymentData['PAY_SYSTEM_NAME'] ?? ''),
 			array('TARGET' => '_self')
 		);
 	}
 
-	$shipmentList = array();
+	$shipmentList = [];
 	$shipmentValue = "";
 	if (!empty($check['SHIPMENT']))
 	{
@@ -184,7 +190,7 @@ foreach($arResult['ROWS'] as $key => $check)
 		'SHIPMENT' => $shipmentValue
 	];
 
-	if ($check['URL'])
+	if (isset($check['URL']) && $check['URL'])
 	{
 		$columnsData['LINK_PARAMS'] = CCrmViewHelper::RenderInfo(
 			$check['URL'],
@@ -193,17 +199,23 @@ foreach($arResult['ROWS'] as $key => $check)
 			array('TARGET' => '_blank')
 		);
 	}
+	
+	$isEditable = 'Y';
+	if (empty($check['EDIT']))
+	{
+		$isEditable = empty($arResult['INTERNAL']) ? $columns : 'N';
+	}
 
-	$resultItem = array(
+	$resultItem = [
 		'id' => $check['ID'],
 		'actions' => $actions,
 		'data' => $check,
-		'editable' => !$check['EDIT'] ? ($arResult['INTERNAL'] ? 'N' : $columns) : 'Y',
+		'editable' => $isEditable,
 		'columns' => $columnsData
-	);
+	];
 
-	$userActivityID = isset($check['USER_ACTIVITY_ID']) ? intval($check['USER_ACTIVITY_ID']) : 0;
-	$commonActivityID = isset($check['C_USER_ACTIVITY_ID']) ? intval($check['C_USER_ACTIVITY_ID']) : 0;
+	$userActivityID = (int)($check['USER_ACTIVITY_ID'] ?? 0);
+	$commonActivityID = (int)($check['C_USER_ACTIVITY_ID'] ?? 0);
 
 	$arResult['GRID_DATA'][] = $resultItem;
 	unset($resultItem);
@@ -217,8 +229,8 @@ $APPLICATION->IncludeComponent(
 	array(
 		'GRID_ID' => $arResult['GRID_ID'],
 		'HEADERS' => $arResult['HEADERS'],
-		'SORT' => $arResult['SORT'],
-		'SORT_VARS' => $arResult['SORT_VARS'],
+		'SORT' => $arResult['SORT'] ?? null,
+		'SORT_VARS' => $arResult['SORT_VARS'] ?? null,
 		'ROWS' => $arResult['GRID_DATA'],
 		'FORM_ID' => $arResult['FORM_ID'],
 		'TAB_ID' => $arResult['TAB_ID'],
@@ -226,13 +238,14 @@ $APPLICATION->IncludeComponent(
 		'AJAX_MODE' => $arParams['AJAX_MODE'],
 		'AJAX_OPTION_JUMP' => $arResult['AJAX_OPTION_JUMP'],
 		'AJAX_OPTION_HISTORY' => $arResult['AJAX_OPTION_HISTORY'],
-		'AJAX_LOADER' => isset($arParams['AJAX_LOADER']) ? $arParams['AJAX_LOADER'] : null,
+		'AJAX_LOADER' => $arParams['AJAX_LOADER'] ?? null,
 		'ENABLE_LIVE_SEARCH' => false,
 		'HIDE_FILTER' => true,
 		'ACTION_PANEL' => $controlPanel,
 		'PAGINATION' => isset($arResult['PAGINATION']) && is_array($arResult['PAGINATION'])
-			? $arResult['PAGINATION'] : array(),
-		'PRESERVE_HISTORY' => $arResult['PRESERVE_HISTORY'],
+			? $arResult['PAGINATION']
+			: [],
+		'PRESERVE_HISTORY' => $arResult['PRESERVE_HISTORY'] ?? false,
 		'EXTENSION' => array(
 			'ID' => $gridManagerID,
 			'CONFIG' => array(
@@ -241,8 +254,8 @@ $APPLICATION->IncludeComponent(
 				'activityEditorId' => '',
 				'activityServiceUrl' => '',
 				'taskCreateUrl'=> '',
-				'serviceUrl' => '/bitrix/components/bitrix/crm.order.check.list/list.ajax.php?siteID='.SITE_ID.'&'.bitrix_sessid_get(),
-				'loaderData' => isset($arParams['AJAX_LOADER']) ? $arParams['AJAX_LOADER'] : null
+				'serviceUrl' => '/bitrix/components/bitrix/crm.order.check.list/list.ajax.php?siteID=' . SITE_ID . '&' . bitrix_sessid_get(),
+				'loaderData' => $arParams['AJAX_LOADER'] ?? null
 			),
 			'MESSAGES' => array(
 				'deletionDialogTitle' => GetMessage('CRM_ORDER_CHECK_DELETE_TITLE'),
@@ -255,7 +268,7 @@ $APPLICATION->IncludeComponent(
 		'SHOW_ROW_CHECKBOXES' => false,
 		'SHOW_CHECK_ALL_CHECKBOXES' => false,
 		'SHOW_ACTION_PANEL' => false,
-		'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'],
+		'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'] ?? '',
 		'STYLES_LOADED' => 'Y',
 	),
 	$component
@@ -263,7 +276,9 @@ $APPLICATION->IncludeComponent(
 ?>
 
 <?
-$jsData['ADD_CHECK_URL'] = $arResult['PATH_TO_ORDER_CHECK_ADD'];
+
+$jsData['ADD_CHECK_URL'] = $arResult['PATH_TO_ORDER_CHECK_ADD'] ?? '';
+
 ?>
 <script type="text/javascript">
 	BX.ready(

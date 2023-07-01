@@ -98,7 +98,15 @@ class SalesDynamicsGraph extends LinearGraph
 			$totalAmountFormatted_2 = \CCrmCurrency::MoneyToString($sums[2], $baseCurrency);
 			$totalAmountFormatted_2 = str_replace("&nbsp;", " ", $totalAmountFormatted_2);
 
+			if (!isset($result['graphs'][0]['title']))
+			{
+				$result['graphs'][0]['title'] = '';
+			}
 			$result['graphs'][0]['title'] .= " (" . $totalAmountFormatted_1 . ")";
+			if (!isset($result['graphs'][1]['title']))
+			{
+				$result['graphs'][1]['title'] = '';
+			}
 			$result['graphs'][1]['title'] .= " (" . $totalAmountFormatted_2 . ")";
 		}
 

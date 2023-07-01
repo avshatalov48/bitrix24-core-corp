@@ -15,7 +15,7 @@ $MESS["CRM_ENTITY_QPV_DRAG_DROP_ERROR_FIELD_ALREADY_EXISTS"] = "Поле уже 
 $MESS["CRM_ENTITY_QPV_RESPONSIBLE_CHANGE"] = "сменить";
 $MESS["CRM_ENTITY_QPV_CONTROL_FIELD_DATA_NOT_SAVED"] = "Данные в поле '#FIELD#' не сохранены.";
 $MESS["CRM_ENTITY_QPV_NOT_SELECTED"] = "не выбрано";
-$MESS["CRM_ENTITY_QPV_DELETION_CONFIRMATION"] = "Вы действительно желаете скрыть это поле?";
+$MESS["CRM_ENTITY_QPV_DELETION_CONFIRMATION"] = "Вы действительно хотите скрыть это поле?";
 $MESS["CRM_ENTITY_QPV_EDIT_CONTEXT_MENU_ITEM"] = "Редактировать";
 $MESS["CRM_ENTITY_QPV_DELETE_CONTEXT_MENU_ITEM"] = "Удалить";
 $MESS["CRM_ENTITY_QPV_DD_BIN_PROMPTING"] = "Чтобы удалить поле, просто перетащите его в <a id=\"#DEMO_BTN_ID#\" href=\"#\">расположенную на правом краю формы корзину</a> или воспользуйтесь контекстным меню на иконке рядом с названием поля. <a id=\"#CLOSE_BTN_ID#\" href=\"#\">Закрыть</a>";

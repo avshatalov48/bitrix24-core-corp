@@ -23,6 +23,7 @@ class CBPCrmSetContactField extends CBPSetFieldActivity
 		if (!$documentId)
 		{
 			$this->WriteToTrackingService(GetMessage('CRM_ACTIVITY_SET_CONTACT_ERROR'), 0, \CBPTrackingType::Error);
+
 			return CBPActivityExecutionStatus::Closed;
 		}
 
@@ -39,13 +40,25 @@ class CBPCrmSetContactField extends CBPSetFieldActivity
 		}
 
 		$documentService = $this->workflow->GetService("DocumentService");
-		$map = $this->getDebugInfo(
-			$fieldValue,
-			$documentService->GetDocumentFields(\CCrmBizProcHelper::ResolveDocumentType(\CCrmOwnerType::Contact))
-		);
-		$this->writeDebugInfo($map);
 
-		$documentService->UpdateDocument($documentId, $fieldValue, $this->ModifiedBy);
+		try
+		{
+			if ($this->workflow->isDebug())
+			{
+				$map = $this->getDebugInfo(
+					$fieldValue,
+					$documentService->GetDocumentFields(\CCrmBizProcHelper::ResolveDocumentType(\CCrmOwnerType::Contact))
+				);
+				$this->writeDebugInfo($map);
+			}
+
+			$documentService->UpdateDocument($documentId, $fieldValue, $this->ModifiedBy);
+		}
+		catch (Exception $e)
+		{
+			$this->writeToTrackingService($e->getMessage(), 0, CBPTrackingType::Error);
+			$this->ErrorMessage = $e->getMessage();
+		}
 
 		return CBPActivityExecutionStatus::Closed;
 	}
@@ -64,7 +77,7 @@ class CBPCrmSetContactField extends CBPSetFieldActivity
 		if (!CModule::IncludeModule('crm'))
 		{
 			return '';
-		};
+		}
 
 		$documentType = \CCrmBizProcHelper::ResolveDocumentType(\CCrmOwnerType::Contact);
 
@@ -93,7 +106,7 @@ class CBPCrmSetContactField extends CBPSetFieldActivity
 		if (!CModule::IncludeModule('crm'))
 		{
 			return false;
-		};
+		}
 
 		$documentType = \CCrmBizProcHelper::ResolveDocumentType(\CCrmOwnerType::Contact);
 
@@ -112,25 +125,48 @@ class CBPCrmSetContactField extends CBPSetFieldActivity
 	{
 		$id = null;
 
-		[$entityType, $entityId] = mb_split('_(?=[^_]*$)', $this->GetDocumentId()[2]);
+		[$entityTypeId, $entityId] = CCrmBizProcHelper::resolveEntityId($this->getDocumentId());
 
-		if ($entityType === \CCrmOwnerType::LeadName)
+		if ($entityTypeId === \CCrmOwnerType::Lead)
 		{
 			$entity = \CCrmLead::GetByID($entityId, false);
-			$id = isset($entity['CONTACT_ID']) ? intval($entity['CONTACT_ID']) : 0;
+			if ($entity)
+			{
+				$id = isset($entity['CONTACT_ID']) ? (int)($entity['CONTACT_ID']) : 0;
+			}
 		}
-		elseif ($entityType === \CCrmOwnerType::DealName)
+		elseif ($entityTypeId === \CCrmOwnerType::Deal)
 		{
 			$entity = \CCrmDeal::GetByID($entityId, false);
-			$id = isset($entity['CONTACT_ID']) ? intval($entity['CONTACT_ID']) : 0;
+			if ($entity)
+			{
+				$id = isset($entity['CONTACT_ID']) ? (int)($entity['CONTACT_ID']) : 0;
+			}
+		}
+		elseif ($entityTypeId === \CCrmOwnerType::Order)
+		{
+			$entity = \Bitrix\Crm\Order\Order::load($entityId);
+			if ($entity)
+			{
+				$contacts = $entity->getContactCompanyCollection()->getContacts();
+
+				foreach ($contacts as $contact)
+				{
+					$id = $contact->getField('ENTITY_ID');
+					break;
+				}
+			}
 		}
 		else
 		{
-			$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory(CCrmOwnerType::ResolveID($entityType));
+			$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory($entityTypeId);
 			if (isset($factory) && $factory->isAutomationEnabled())
 			{
 				$entity = $factory->getItem($entityId);
-				$id = (int)$entity->getContactId();
+				if ($entity)
+				{
+					$id = (int)$entity->getContactId();
+				}
 			}
 		}
 

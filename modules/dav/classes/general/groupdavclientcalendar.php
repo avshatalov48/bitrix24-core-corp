@@ -56,10 +56,10 @@ class CDavGroupdavClientCalendar extends CDavGroupdavClient
 		foreach ($arResponse as $response)
 		{
 			$arResourceType = $response->GetPath("/response/propstat/prop/resourcetype/calendar");
-			if (count($arResourceType) > 0)
+			if (!empty($arResourceType))
 			{
 				$arHref = $response->GetPath("/response/href");
-				if (count($arHref) > 0)
+				if (!empty($arHref))
 				{
 					$arCalendar = [
 						"href" => urldecode($arHref[0]->GetContent()),
@@ -90,7 +90,7 @@ class CDavGroupdavClientCalendar extends CDavGroupdavClient
 			if (is_null($calendarHomeSet))
 			{
 				$arCalendarHomeSet = $response->GetPath("/response/propstat/prop/calendar-home-set/href");
-				if (count($arCalendarHomeSet) > 0)
+				if (!empty($arCalendarHomeSet))
 				{
 					$calendarHomeSet = urldecode($arCalendarHomeSet[0]->GetContent());
 				}
@@ -99,15 +99,19 @@ class CDavGroupdavClientCalendar extends CDavGroupdavClient
 			if (is_null($currentUserPrincipal))
 			{
 				$arCurrentUserPrincipal = $response->GetPath("/response/propstat/prop/current-user-principal/href");
-				if (count($arCurrentUserPrincipal) > 0)
+				if (!empty($arCurrentUserPrincipal))
+				{
 					$currentUserPrincipal = urldecode($arCurrentUserPrincipal[0]->GetContent());
+				}
 			}
 
 			if (is_null($principalUrl))
 			{
 				$arPrincipalUrl = $response->GetPath("/response/propstat/prop/principal-URL/href");
-				if (count($arPrincipalUrl) > 0)
+				if (!empty($arPrincipalUrl))
+				{
 					$principalUrl = urldecode($arPrincipalUrl[0]->GetContent());
+				}
 			}
 		}
 
@@ -184,11 +188,13 @@ class CDavGroupdavClientCalendar extends CDavGroupdavClient
 		foreach ($arPropstat as $propstat)
 		{
 			$arStatus = $propstat->GetPath("/propstat/status");
-			if (count($arStatus) > 0 && preg_match("#\s200\s+OK#i", $arStatus[0]->GetContent()))
+			if (!empty($arStatus) && preg_match("#\s200\s+OK#i", $arStatus[0]->GetContent()))
 			{
 				$arGetCTag = $propstat->GetPath("/propstat/prop/getctag");
-				if (count($arGetCTag) > 0)
+				if (!empty($arGetCTag))
+				{
 					$getctag = $arGetCTag[0]->GetContent();
+				}
 			}
 		}
 
@@ -227,7 +233,7 @@ class CDavGroupdavClientCalendar extends CDavGroupdavClient
 			"resourcetype",
 			"getetag",
 		);
-		if ($calendarData && (count($arHrefsNew) > 0))
+		if ($calendarData && !empty($arHrefsNew))
 		{
 			$arProperties[] = array("calendar-data", "urn:ietf:params:xml:ns:caldav");
 		}
@@ -239,7 +245,7 @@ class CDavGroupdavClientCalendar extends CDavGroupdavClient
 			$arFilterNew = array("time-range" => array("start" => ConvertDateTime($arFilter["start"], "YYYYMMDD\THHMISS\Z")));
 		}
 
-		if (count($arHrefsNew) > 0)
+		if (!empty($arHrefsNew))
 		{
 			$result = $this->Report(
 				$path,
@@ -276,7 +282,7 @@ class CDavGroupdavClientCalendar extends CDavGroupdavClient
 		foreach ($arResponse as $response)
 		{
 			$arHref = $response->GetPath("/response/href");
-			if (count($arHref) > 0)
+			if (!empty($arHref))
 			{
 				$arItem = array(
 					"href" => urldecode($arHref[0]->GetContent()),
@@ -295,7 +301,7 @@ class CDavGroupdavClientCalendar extends CDavGroupdavClient
 				if ($calendarData)
 				{
 					$arCalendarData = $response->GetPath("/response/propstat/prop/calendar-data");
-					if (count($arCalendarData) > 0)
+					if (!empty($arCalendarData))
 					{
 						$cal = new CDavICalendar($this->Encode($arCalendarData[0]->GetContent()));
 
@@ -305,7 +311,7 @@ class CDavGroupdavClientCalendar extends CDavGroupdavClient
 						}
 
 						$arEvents = $cal->GetComponents('VTIMEZONE', false);
-						if (count($arEvents) > 0)
+						if (!empty($arEvents))
 						{
 							$arItem["calendar-data"] = $this->ConvertICalToArray($arEvents[0], $cal);
 							if (count($arEvents) > 1)
@@ -354,7 +360,7 @@ class CDavGroupdavClientCalendar extends CDavGroupdavClient
 		foreach ($arResponse as $response)
 		{
 			$arHref = $response->GetPath("/response/href");
-			if (count($arHref) > 0)
+			if (!empty($arHref))
 			{
 				$arItem = [
 					"href" => urldecode($arHref[0]->GetContent()),
@@ -1048,63 +1054,66 @@ class CDavGroupdavClientCalendar extends CDavGroupdavClient
 					}
 
 					$arCalendarItemsList = $client->GetCalendarItemsList($userCalendar["XML_ID"], $arHrefs, true);
-					$tmpNumItems += count($arCalendarItemsList);
-
-					foreach ($arCalendarItemsList as $value)
+					if (is_array($arCalendarItemsList))
 					{
-						if (!array_key_exists($value["href"], $arIdMap))
-						{
-							continue;
-						}
+						$tmpNumItems += count($arCalendarItemsList);
 
-						$arModifyEventArray = [
-							"ID" => $arIdMap[$value["href"]],
-							"NAME" => $value["calendar-data"]["NAME"],
-							"DETAIL_TEXT" => $value["calendar-data"]["DETAIL_TEXT"],
-							"DETAIL_TEXT_TYPE" => $value["calendar-data"]["DETAIL_TEXT_TYPE"],
-							"XML_ID" => self::getBasenameWithoutExtension($value["href"]),
-							"PROPERTY_LOCATION" => $value["calendar-data"]["PROPERTY_LOCATION"],
-							"DATE_FROM" => $value["calendar-data"]["DATE_FROM"],
-							"DATE_TO" => $value["calendar-data"]["DATE_TO"],
-							"TZ_FROM" => $value["calendar-data"]["TZ_FROM"],
-							"TZ_TO" => $value["calendar-data"]["TZ_TO"],
-							"DT_LENGTH" => $value["calendar-data"]["DT_LENGTH"] ?? null,
-							"SKIP_TIME" => $value["calendar-data"]["SKIP_TIME"] ?? null,
-							"PROPERTY_IMPORTANCE" => $value["calendar-data"]["PROPERTY_IMPORTANCE"] ?? null,
-							"PROPERTY_ACCESSIBILITY" => $value["calendar-data"]["PROPERTY_ACCESSIBILITY"] ?? null,
-							"PROPERTY_REMIND_SETTINGS" => $value["calendar-data"]["PROPERTY_REMIND_SETTINGS"] ?? null,
-							"PROPERTY_PERIOD_TYPE" => "NONE",
-							"PROPERTY_BXDAVCD_LABEL" => $value["getetag"] ?? null,
-							"VERSION" => $value["calendar-data"]["VERSION"] ?? null,
-							"ORGANIZER" => $value["calendar-data"]["ORGANIZER"] ?? null,
-						];
-
-						if (isset($value["calendar-data"]["PROPERTY_PERIOD_TYPE"]) && $value["calendar-data"]["PROPERTY_PERIOD_TYPE"] !== "NONE")
+						foreach ($arCalendarItemsList as $value)
 						{
-							$arModifyEventArray["PROPERTY_PERIOD_TYPE"] = $value["calendar-data"]["PROPERTY_PERIOD_TYPE"] ?? null;
-							$arModifyEventArray["PROPERTY_PERIOD_COUNT"] = $value["calendar-data"]["PROPERTY_PERIOD_COUNT"] ?? null;
-							$arModifyEventArray["PROPERTY_PERIOD_ADDITIONAL"] = $value["calendar-data"]["PROPERTY_PERIOD_ADDITIONAL"] ?? null;
-							$arModifyEventArray["PROPERTY_EVENT_LENGTH"] = $value["calendar-data"]["PROPERTY_EVENT_LENGTH"] ?? null;
-							$arModifyEventArray["PROPERTY_PERIOD_UNTIL"] = $value["calendar-data"]["PROPERTY_PERIOD_UNTIL"] ?? null;
-							$arModifyEventArray["EXDATE"] = $value["calendar-data"]["EXDATE"] ?? null;
-							$arModifyEventArray["PROPERTY_RRULE_COUNT"] = $value["calendar-data"]["PROPERTY_RRULE_COUNT"] ?? null;
-						}
-						$k = CCalendarSync::ModifyEvent(
-							$userCalendar["CALENDAR_ID"],
-							$arModifyEventArray,
-						);
+							if (!array_key_exists($value["href"], $arIdMap))
+							{
+								continue;
+							}
 
-						if (
-							isset($value['calendar-data-ex'])
-							&& is_array($value['calendar-data-ex'])
-							&& !empty($value['calendar-data-ex'])
-						)
-						{
-							CCalendarSync::ModifyReccurentInstances([
-                                'events' => $value['calendar-data-ex'],
-                                'parentId' => $k,
-                                'calendarId' => $userCalendar['CALENDAR_ID'],
-                            ]);
+							$arModifyEventArray = [
+								"ID" => $arIdMap[$value["href"]],
+								"NAME" => $value["calendar-data"]["NAME"],
+								"DETAIL_TEXT" => $value["calendar-data"]["DETAIL_TEXT"],
+								"DETAIL_TEXT_TYPE" => $value["calendar-data"]["DETAIL_TEXT_TYPE"],
+								"XML_ID" => self::getBasenameWithoutExtension($value["href"]),
+								"PROPERTY_LOCATION" => $value["calendar-data"]["PROPERTY_LOCATION"],
+								"DATE_FROM" => $value["calendar-data"]["DATE_FROM"],
+								"DATE_TO" => $value["calendar-data"]["DATE_TO"],
+								"TZ_FROM" => $value["calendar-data"]["TZ_FROM"],
+								"TZ_TO" => $value["calendar-data"]["TZ_TO"],
+								"DT_LENGTH" => $value["calendar-data"]["DT_LENGTH"] ?? null,
+								"SKIP_TIME" => $value["calendar-data"]["SKIP_TIME"] ?? null,
+								"PROPERTY_IMPORTANCE" => $value["calendar-data"]["PROPERTY_IMPORTANCE"] ?? null,
+								"PROPERTY_ACCESSIBILITY" => $value["calendar-data"]["PROPERTY_ACCESSIBILITY"] ?? null,
+								"PROPERTY_REMIND_SETTINGS" => $value["calendar-data"]["PROPERTY_REMIND_SETTINGS"] ?? null,
+								"PROPERTY_PERIOD_TYPE" => "NONE",
+								"PROPERTY_BXDAVCD_LABEL" => $value["getetag"] ?? null,
+								"VERSION" => $value["calendar-data"]["VERSION"] ?? null,
+								"ORGANIZER" => $value["calendar-data"]["ORGANIZER"] ?? null,
+							];
+
+							if (isset($value["calendar-data"]["PROPERTY_PERIOD_TYPE"]) && $value["calendar-data"]["PROPERTY_PERIOD_TYPE"] !== "NONE")
+							{
+								$arModifyEventArray["PROPERTY_PERIOD_TYPE"] = $value["calendar-data"]["PROPERTY_PERIOD_TYPE"] ?? null;
+								$arModifyEventArray["PROPERTY_PERIOD_COUNT"] = $value["calendar-data"]["PROPERTY_PERIOD_COUNT"] ?? null;
+								$arModifyEventArray["PROPERTY_PERIOD_ADDITIONAL"] = $value["calendar-data"]["PROPERTY_PERIOD_ADDITIONAL"] ?? null;
+								$arModifyEventArray["PROPERTY_EVENT_LENGTH"] = $value["calendar-data"]["PROPERTY_EVENT_LENGTH"] ?? null;
+								$arModifyEventArray["PROPERTY_PERIOD_UNTIL"] = $value["calendar-data"]["PROPERTY_PERIOD_UNTIL"] ?? null;
+								$arModifyEventArray["EXDATE"] = $value["calendar-data"]["EXDATE"] ?? null;
+								$arModifyEventArray["PROPERTY_RRULE_COUNT"] = $value["calendar-data"]["PROPERTY_RRULE_COUNT"] ?? null;
+							}
+							$k = CCalendarSync::ModifyEvent(
+								$userCalendar["CALENDAR_ID"],
+								$arModifyEventArray,
+							);
+
+							if (
+								isset($value['calendar-data-ex'])
+								&& is_array($value['calendar-data-ex'])
+								&& !empty($value['calendar-data-ex'])
+							)
+							{
+								CCalendarSync::ModifyReccurentInstances([
+									'events' => $value['calendar-data-ex'],
+									'parentId' => $k,
+									'calendarId' => $userCalendar['CALENDAR_ID'],
+								]);
+							}
 						}
 					}
 				}

@@ -1,203 +1,216 @@
 (function ()
 {
-	class EventList extends BaseList
+	class EventList
 	{
-
-		constructor(listObject)
+		constructor(list)
 		{
-			super(listObject);
+			this.list = list
+			this.items = []
+			this.sections = []
+			this.initEmptyState()
+			this.list.on("onRefresh", () => {
+				this.load()
+			})
+			this.list.on("onItemSelected", (item) => {
+				console.log(item)
+				this.onItemSelected(item)
+			})
+
 			BX.addCustomEvent("onCalendarEventChanged", this.onEventChanged.bind(this))
+			BX.addCustomEvent('onCalendarEventRemoved', this.onEventRemove.bind(this));
+			this.configureSearch()
+			this.setMenu()
 		}
 
-		setParams(options = {})
+		initEmptyState()
 		{
-			this.options = options;
-			return this;
+			this.sections.push({id: "footer"})
+			this.items.push({unselectable: true, sectionCode: "footer", id: "ignore", type: "loading", title: ""})
+			this.list.setItems(this.items, this.sections)
+		}
+
+		configureSearch()
+		{
+			this.list.search.mode = "bar"
+			this.list.search.on("show", () => {
+				this.list.search.once("hide", () => this.list.setItems(this.items, this.sections))
+				this.list.search.once("cancel", () => this.list.setItems(this.items, this.sections))
+			})
+
+			this.list.search.on("textChanged", ({text}) => {
+				let result = this.items;
+				if (text !== "")
+				{
+					result = this.items.filter(item => {
+						let words = item.title.toLowerCase().split(" ")
+						for (let i = 0; i < words.length; i++)
+						{
+							let word = words[i]
+							if (word.indexOf(text.toLowerCase()) === 0)
+							{
+								return true
+							}
+						}
+
+						return false;
+					})
+
+					if (result.length === 0)
+					{
+						this.list.setItems(
+							[{
+								unselectable: true,
+								id: "ignore",
+								title: BX.message('CALENDAR_EMPTY'),
+								type: "button",
+								sectionCode: "default"
+							}],
+							[{id: "default"}]
+						)
+
+						return;
+					}
+				}
+
+				this.list.setItems(result, this.sections)
+			})
+		}
+
+		load()
+		{
+			this.list.search.close()
+			BX.ajax({url: "/mobile/?mobile_action=calendar", dataType: "json"}).then(result => {
+				this.list.stopRefreshing()
+				let footerText = ""
+				if (result.TABLE_SETTINGS && result.TABLE_SETTINGS.footer)
+				{
+					footerText = result.TABLE_SETTINGS.footer
+				}
+
+				if (result.data)
+				{
+					this.items = [];
+					this.sections = [];
+					if (result.data.events)
+					{
+						this.items = result.data.events.map(EventList.prepareItemForDrawing)
+						this.sections = result.sections.events.map(data => {
+							return {
+								title: data.NAME,
+								id: data.ID,
+								height: 30,
+								backgroundColor: "#ffffff",
+								styles: {
+									title: {
+										padding: {left: 0, right: 0, top: 10, bottom: 0},
+										font: {size: 14, color: "#BE333333", fontStyle: "medium"},
+
+									}
+								}
+							}
+						})
+					}
+				}
+
+				if (footerText !== "")
+				{
+					this.sections.push({id: "footer"})
+					this.items.push(
+						{unselectable: true, sectionCode: "footer", id: "ignore", type: "button", title: footerText})
+				}
+				console.log(this.items);
+				list.setItems(this.items, this.sections, true)
+			})
 		}
 
 		onEventChanged(event)
 		{
-			console.log("onCalendarEventChanged", event);
-			if (event.name)
+			console.log("onEventChanged", event);
+			this.closeEditForm()
+			this.load()
+		}
+
+		onEventRemove(event)
+		{
+			console.log("onEventRemove", event);
+			this.closeEditForm()
+			this.load()
+		}
+
+		onItemSelected(item)
+		{
+			if (item.id === "ignore")
 			{
-				if(event.event_id === 0)
-				{
-					this._list.addItems([
-						EventList.prepareItemForDrawing(event)
-					]);
-				}
-				else
-				{
-					this._list.updateItems([
-						{
-							filter: {id: event.event_id}, element: {
-								title: event.name,
-								subtitle: event.from_date,
-							}
-						},
-					]);
-				}
-
+				return
 			}
+
+			PageManager.openWidget("web", {
+				// title:"Task №777",
+				backdrop: {shouldResizeContent: true, showOnTop: true, topPosition: 100},
+				page: {
+					url: `/mobile/calendar/edit_event.php?event_id=${item.id}`,
+				}
+			}).then(widget => {
+				this.editForm = widget
+			});
 		}
 
-		static method()
+		setMenu()
 		{
-			return "calendar.event.get"
-		}
-
-		static id()
-		{
-			return "events";
-		}
-
-		params()
-		{
-			return this.options;
-		}
-
-		sections(items = [])
-		{
-			return super.sections(items)
-				.map(section=>{
-				if(section.id === this.constructor.id())
+			list.setRightButtons([
 				{
-					section.height = 40;
-					section.backgroundColor = "#f0f0f0";
-					section.styles = {
-						title: {
-							padding:{left:0, right:0, top:0, bottom:0},
-							font:{size: 15, color:"#333333", fontStyle:"bold"},
-
-						}
+					type: "search",
+					callback: () => {
+						this.list.search.show()
 					}
 				}
+			])
+			this.list.setFloatingButton({
+				icon: "plus",
+				callback: () => {
+					PageManager.openPage({
+						url: `/mobile/calendar/edit_event.php`,
+						modal: true,
+						data: {modal: "Y"}
+					})
+				},
+			});
+		}
 
-				return section;
-			})
-
-
+		closeEditForm()
+		{
+			if (this.editForm)
+			{
+				this.editForm.close()
+				this.editForm = null
+			}
 		}
 
 		static prepareItemForDrawing(event)
 		{
 			return {
 				title: event.NAME,
-				subtitle: event.DATE_FROM,
-				sectionCode: EventList.id(),
-				color: "#f07f75",
-				height: 80,
-				imageUrl: `${component.path}/images/event.png`,
+				subtitle: event.TAGS,
+				sectionCode: event.SECTION_ID,
+				// color: "#f07f75",
+				height: 60,
+				imageUrl: event.IMAGE,
 				styles: {
 					title: {font: {size: 16}},
 					subtitle: {font: {size: 12}},
-					image: {image: {height: 44, borderRadius: 50}}
+					image: {image: {height: 44, borderRadius: 0}}
 				},
 				type: "info",
-				useLetterImage: true,
 				id: event.ID,
-				sortValues: {
-					name: event.NAME
-				},
 				params: {
-					id: event.ID,
+					url: event.URL,
 				},
 			}
 		}
 	}
 
-	const handlers = {
-		prepareItems: items => items.map(event => EventList.prepareItemForDrawing(event)),
-		onRefresh: function ()
-		{
-			reload()
-		},
-		onItemSelected: item => PageManager.openPage({
-			url: `/mobile/calendar/edit_event.php?event_id=${item.id}`,
-			backdrop: {shouldResizeContent: true, showOnTop: true, topPosition: 100},
-			data: {modal: "Y"}
-		})
-	};
-
-	class Calendar
-	{
-		constructor(list)
-		{
-			this.list = list;
-			this.personal = (new EventList(list))
-				.setParams({type: "user", ownerId: env.userId})
-				.setHandlers(handlers);
-
-			this.company = (new EventList(list))
-				.setParams({type: "company_calendar", ownerId: ""})
-				.setHandlers(handlers);
-
-			this.switchTo("personal");
-
-			setTimeout(()=>{
-				let spotlight = dialogs.createSpotlight();
-				spotlight.setTarget("calendar_menu_button");
-				spotlight.setHint({text:"Вы можете переключаться между календарями из меню"});
-				spotlight.show();
-			}, 200);
-		}
-
-		setMenu(id)
-		{
-			let check = `${component.path}/images/check.png`;
-			let items =this.getMenuItems().map(item =>
-			{
-				item.iconUrl = item.id === id ? check : "";
-				return item;
-			});
-
-			Menu.setButtonMenu(list, {
-				code: "calendar_menu_button",
-				items: items,
-				sections: [
-					{title: "", id: "main"}
-				],
-				callback: item => this.switchTo(item.id)
-			});
-
-			if(typeof this.list["setFloatingButton"] !== "undefined")
-			{
-				this.list.setFloatingButton({
-					icon:"plus",
-					callback:()=>{
-						PageManager.openPage({
-							url: `/mobile/calendar/edit_event.php`,
-							modal: true,
-							data: {modal: "Y"}
-						})
-					},
-				});
-			}
-
-
-		}
-
-		getMenuItems()
-		{
-			return [
-				{title: "Личный календарь", id: "personal", sectionCode: "main"},
-				{title: "Календарь компании", id: "company", sectionCode: "main"}
-			]
-		}
-
-		switchTo(id)
-		{
-			let eventList = id === "personal" ? this.personal : this.company;
-			eventList.listenToListEvents();
-			eventList.init().catch(()=>eventList.draw());
-			this.setMenu(id);
-			this.list.setTitle({
-				text: this.getMenuItems().find(item => item.id === id).title
-			})
-		}
-	}
-
-	new Calendar(list);
+	const events = new EventList(list)
+	events.load()
 
 }).bind(this)();
 

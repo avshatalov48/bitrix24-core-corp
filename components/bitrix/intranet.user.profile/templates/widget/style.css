@@ -1299,6 +1299,10 @@
 	transition: none;
 }
 
+.popup-with-radius .popup-window-content {
+	border-radius: 22px;
+}
+
 .system-auth-form__item [data-role="empty-info"],
 .system-auth-form__item.--without-stat [data-role="my-position"],
 .system-auth-form__item.--without-stat [data-role="user-list"] {

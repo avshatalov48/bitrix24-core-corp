@@ -10,11 +10,15 @@
 
 namespace Bitrix\Tasks\Integration\Forum\Task;
 
+use Bitrix\Disk\Internals\AttachedObjectTable;
+use Bitrix\Disk\Uf\ForumMessageConnector;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Json;
 use Bitrix\Tasks\Comments;
+use Bitrix\Tasks\Integration\CRM\Timeline;
+use Bitrix\Tasks\Integration\CRM\TimeLineManager;
 use Bitrix\Tasks\Integration\IM;
 use Bitrix\Tasks\Integration\Pull\PushService;
 use Bitrix\Tasks\Integration\SocialNetwork;
@@ -40,6 +44,8 @@ Loc::loadMessages(__FILE__);
 
 final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 {
+	private static array $fileAttachments = [];
+
 	public static function getForumId()
 	{
 		// todo: refactor
@@ -327,6 +333,31 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 		self::processResultData(parseInt($commentId));
 	}
 
+	public static function onPrepareComments($component)
+	{
+		if(Comments\Viewed\Group::isOn())
+		{
+			$arResult =& $component->arResult;
+			$arParams =& $component->arParams;
+
+			$arMessages = &$arResult['MESSAGES'];
+
+			$template = $arParams['TEMPLATE_DATA'] ?? [];
+			$data = $template['DATA'] ?? [];
+			$viewed = $data['GROUP_VIEWED'] ?? [];
+			$unRead = $viewed['UNREAD_MID'] ?? [];
+
+			$component = \CBitrixComponent::includeComponentClass('bitrix:forum.comments');
+			/** @var \ForumCommentsComponent $component */
+
+			foreach ($arMessages as $messageId => $messageFields)
+			{
+				$arResult['MESSAGES'][$messageId]['NEW'] = in_array($messageId, $unRead) ? $component::MID_NEW : $component::MID_OLD;
+				// $arResult['MESSAGES'][$messageId]['NEW'] = $component::MID_NEW;
+			}
+		}
+	}
+
 	private static function processResultData($commentId = 0): void
 	{
 		$isTaskResult = false;
@@ -343,35 +374,38 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 
 		if ($commentId > 0)
 		{
-			$handlerId = AddEventHandler('forum', 'onBeforeMessageUpdate', static function($id, &$fields) use ($handlerId, $isTaskResult)
-			{
-				if (
-					!array_key_exists('SERVICE_TYPE', $fields)
-					|| !$fields['SERVICE_TYPE']
-				)
-				{
-					$fields['SERVICE_DATA'] = $isTaskResult ? ResultManager::COMMENT_SERVICE_DATA : null;
-				}
-				RemoveEventHandler('forum', 'onBeforeMessageUpdate', $handlerId);
-			});
-		}
-		else
-		{
-			$handlerId = AddEventHandler('forum', 'onBeforeMessageAdd', static function(&$fields) use ($handlerId, $isTaskResult)
-			{
-				if (
-					$isTaskResult
-					&&
-					(
+			AddEventHandler(
+				'forum',
+				'onBeforeMessageUpdate',
+				static function($id, &$fields) use ($isTaskResult) {
+					if (
 						!array_key_exists('SERVICE_TYPE', $fields)
 						|| !$fields['SERVICE_TYPE']
 					)
-				)
-				{
-					$fields['SERVICE_DATA'] = ResultManager::COMMENT_SERVICE_DATA;
+					{
+						$fields['SERVICE_DATA'] = ($isTaskResult ? ResultManager::COMMENT_SERVICE_DATA : null);
+					}
 				}
-				RemoveEventHandler('forum', 'onBeforeMessageAdd', $handlerId);
-			});
+			);
+		}
+		else
+		{
+			AddEventHandler(
+				'forum',
+				'onBeforeMessageAdd',
+				static function(&$fields) use ($isTaskResult) {
+					if (
+						$isTaskResult
+						&& (
+							!array_key_exists('SERVICE_TYPE', $fields)
+							|| !$fields['SERVICE_TYPE']
+						)
+					)
+					{
+						$fields['SERVICE_DATA'] = ResultManager::COMMENT_SERVICE_DATA;
+					}
+				}
+			);
 		}
 	}
 
@@ -415,6 +449,7 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 			return;
 		}
 
+		self::collectFileAttachments($data['MESSAGE_ID']);
 		$taskId = (int)$taskId;
 		Counter\CounterService::getInstance()->collectData($taskId);
 	}
@@ -495,6 +530,9 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 				'pullComment' => true,
 			],
 		]);
+
+		(new TimeLineManager($taskId, (int)$message['AUTHOR_ID']))->onTaskCommentDeleted(self::$fileAttachments)->save();
+		self::$fileAttachments = [];
 	}
 
 	/**
@@ -684,7 +722,7 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 				}
 			}
 
-			if (intval($log_id) > 0)
+			if ((int)($log_id ?? null) > 0)
 			{
 				$filtered = (\COption::GetOptionString("forum", "FILTER", "Y") == "Y");
 				$sText = ($filtered ? $arMessage["POST_MESSAGE_FILTER"] : $arMessage["POST_MESSAGE"]);
@@ -963,6 +1001,12 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 			}
 
 			static::fireEvent('Add', $taskId, $arData, $fileIds, $urlPreviewId);
+			// skip system comments
+			if (!isset($arData['PARAMS']['AUX']) || $arData['PARAMS']['AUX'] !== 'Y')
+			{
+				$message = Forum\MessageTable::getById($messageId)->fetchObject();
+				(new TimeLineManager($taskId, $occurAsUserId))->onTaskCommentAdd($message)->save();
+			}
 		}
 	}
 
@@ -1854,5 +1898,17 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 				}
 			}
 		}
+	}
+
+	private static function collectFileAttachments(int $messageId): void
+	{
+		$query = AttachedObjectTable::query();
+		$query
+			->setSelect(['ID'])
+			->where('ENTITY_TYPE', ForumMessageConnector::class)
+			->where('ENTITY_ID', $messageId)
+		;
+
+		self::$fileAttachments = $query->exec()->fetchCollection()->getIdList();
 	}
 }

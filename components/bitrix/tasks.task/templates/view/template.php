@@ -14,11 +14,6 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
 UI\Extension::load(['ui.design-tokens', 'ui.fonts.opensans', 'tasks.comment-action-controller']);
 
-if ($arResult["LIKE_TEMPLATE"] == 'like_react')
-{
-	UI\Extension::load("main.rating");
-}
-
 $templateData = $arResult["TEMPLATE_DATA"];
 
 if (isset($templateData["ERROR"]))
@@ -27,9 +22,14 @@ if (isset($templateData["ERROR"]))
 	return;
 }
 
-$taskData = isset($arResult["DATA"]["TASK"]) ? $arResult["DATA"]["TASK"] : array();
-$can = isset($arResult["CAN"]["TASK"]["ACTION"]) ? $arResult["CAN"]["TASK"]["ACTION"] : array();
-$userFields = isset($arResult["AUX_DATA"]["USER_FIELDS"]) ? $arResult["AUX_DATA"]["USER_FIELDS"] : array();
+if ($arResult["LIKE_TEMPLATE"] == 'like_react')
+{
+	UI\Extension::load("main.rating");
+}
+
+$taskData = $arResult["DATA"]["TASK"] ?? [];
+$can = $arResult["CAN"]["TASK"]["ACTION"] ?? [];
+$userFields = $arResult["AUX_DATA"]["USER_FIELDS"] ?? [];
 $diskUfCode = \Bitrix\Tasks\Integration\Disk\UserField::getMainSysUFCode();
 $mailUfCode = \Bitrix\Tasks\Integration\Mail\UserField::getMainSysUFCode();
 $isBitrix24Template = (SITE_TEMPLATE_ID == "bitrix24");
@@ -41,6 +41,42 @@ if ($taskLimitExceeded || $taskRecurrentRestrict)
 	$APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", []);
 }
 
+if (isset($arResult['CAN_SHOW_MOBILE_QR_POPUP']) && $arResult['CAN_SHOW_MOBILE_QR_POPUP'] === true)
+{
+	\Bitrix\Main\UI\Extension::load(['ui.qrauthorization']);
+
+	$this->SetViewTarget('mobileqrpopup'); ?>
+	<span class="task-page__mobile-divider"></span>
+	<span class="task-page__mobile" title="<?=Loc::getMessage('TASKS_TASK_CREATED_IN_MOBILE_TITLE') ?>">
+		<?= Loc::getMessage('TASKS_TASK_CREATED_IN_MOBILE_CONTENT', [
+			'#HTML_START#' => '<span class="task-page__mobile_name">',
+			'#HTML_UNDERLINE_START#' => '<span class="task-page__mobile_value" onclick="showPopupWithQRCode()">',
+			'#HTML_UNDERLINE_END#' => '</span>',
+			'#HTML_END#' => '</span>',
+		]) ?>
+	</span>
+	<script>
+		function showPopupWithQRCode()
+		{
+			const popup = new BX.UI.QrAuthorization({
+				title: {
+					text: '<?=Loc::getMessage('TASKS_TASK_POPUP_TITLE')?>',
+					size: 'sm'
+				},
+				bottomText: {
+					text: '<?=Loc::getMessage('TASKS_TASK_POPUP_BOTTOM_TEXT')?>',
+					size: 'sm'
+				},
+				popupParam: {
+					overlay: true
+				}
+			});
+			popup.show();
+		}
+	</script>
+	<?php $this->EndViewTarget();
+}
+
 $APPLICATION->ShowViewContent("task_menu");
 
 //Menu and Page Title Buttons
@@ -49,25 +85,25 @@ if ($arParams["ENABLE_MENU_TOOLBAR"])
 	$APPLICATION->IncludeComponent(
 		'bitrix:tasks.interface.topmenu',
 		'.default',
-		array(
-			'USER_ID' => $arParams['USER_ID'],
-			'GROUP_ID' => $arParams['GROUP_ID'],
+		[
+			'USER_ID' => ($arParams['USER_ID'] ?? null),
+			'GROUP_ID' => ($arParams['GROUP_ID'] ?? null),
 			'SECTION_URL_PREFIX' => '',
-			'PATH_TO_GROUP_TASKS' => $arParams['PATH_TO_GROUP_TASKS'],
-			'PATH_TO_GROUP_TASKS_TASK' => $arParams['PATH_TO_GROUP_TASKS_TASK'],
-			'PATH_TO_GROUP_TASKS_VIEW' => $arParams['PATH_TO_GROUP_TASKS_VIEW'],
-			'PATH_TO_GROUP_TASKS_REPORT' => $arParams['PATH_TO_GROUP_TASKS_REPORT'],
-			'PATH_TO_USER_TASKS' => $arParams['PATH_TO_USER_TASKS'],
-			'PATH_TO_USER_TASKS_TASK' => $arParams['PATH_TO_USER_TASKS_TASK'],
-			'PATH_TO_USER_TASKS_VIEW' => $arParams['PATH_TO_USER_TASKS_VIEW'],
-			'PATH_TO_USER_TASKS_REPORT' => $arParams['PATH_TO_USER_TASKS_REPORT'],
-			'PATH_TO_USER_TASKS_TEMPLATES' => $arParams['PATH_TO_USER_TASKS_TEMPLATES'],
-			'PATH_TO_USER_TASKS_PROJECTS_OVERVIEW' => $arParams['PATH_TO_USER_TASKS_PROJECTS_OVERVIEW'],
-			'PATH_TO_CONPANY_DEPARTMENT' => $arParams['PATH_TO_CONPANY_DEPARTMENT'],
-			'PARENT_COMPONENT' => 'tasks.task'
-		),
+			'PATH_TO_GROUP_TASKS' => ($arParams['PATH_TO_GROUP_TASKS'] ?? null),
+			'PATH_TO_GROUP_TASKS_TASK' => ($arParams['PATH_TO_GROUP_TASKS_TASK'] ?? null),
+			'PATH_TO_GROUP_TASKS_VIEW' => ($arParams['PATH_TO_GROUP_TASKS_VIEW'] ?? null),
+			'PATH_TO_GROUP_TASKS_REPORT' => ($arParams['PATH_TO_GROUP_TASKS_REPORT'] ?? null),
+			'PATH_TO_USER_TASKS' => ($arParams['PATH_TO_USER_TASKS'] ?? null),
+			'PATH_TO_USER_TASKS_TASK' => ($arParams['PATH_TO_USER_TASKS_TASK'] ?? null),
+			'PATH_TO_USER_TASKS_VIEW' => ($arParams['PATH_TO_USER_TASKS_VIEW'] ?? null),
+			'PATH_TO_USER_TASKS_REPORT' => ($arParams['PATH_TO_USER_TASKS_REPORT'] ?? null),
+			'PATH_TO_USER_TASKS_TEMPLATES' => ($arParams['PATH_TO_USER_TASKS_TEMPLATES'] ?? null),
+			'PATH_TO_USER_TASKS_PROJECTS_OVERVIEW' => ($arParams['PATH_TO_USER_TASKS_PROJECTS_OVERVIEW'] ?? null),
+			'PATH_TO_CONPANY_DEPARTMENT' => ($arParams['PATH_TO_CONPANY_DEPARTMENT'] ?? null),
+			'PARENT_COMPONENT' => 'tasks.task',
+		],
 		$component,
-		array('HIDE_ICONS' => true)
+		['HIDE_ICONS' => true]
 	);
 
 	$APPLICATION->IncludeComponent(
@@ -240,7 +276,7 @@ if (
 
 						?><div class="feed-post-emoji-top-panel-outer"><?
 
-							?><div id="feed-post-emoji-top-panel-container-<?=htmlspecialcharsbx($voteId)?>" class="feed-post-emoji-top-panel-box <?=(intval($templateData["RATING"]["TOTAL_POSITIVE_VOTES"]) > 0 ? 'feed-post-emoji-top-panel-container-active' : '')?>"><?
+							?><div id="feed-post-emoji-top-panel-container-<?=htmlspecialcharsbx($voteId)?>" class="feed-post-emoji-top-panel-box <?=((int)($templateData["RATING"]["TOTAL_POSITIVE_VOTES"] ?? null) > 0 ? 'feed-post-emoji-top-panel-container-active' : '')?>"><?
 
 							$APPLICATION->IncludeComponent(
 								"bitrix:rating.vote",
@@ -249,18 +285,18 @@ if (
 									"ENTITY_TYPE_ID" => "TASK",
 									"ENTITY_ID" => $taskData["ID"],
 									"OWNER_ID" => $taskData["CREATED_BY"],
-									"USER_VOTE" => $templateData["RATING"]["USER_VOTE"],
-									"USER_HAS_VOTED" => $templateData["RATING"]["USER_HAS_VOTED"],
-									"TOTAL_VOTES" => $templateData["RATING"]["TOTAL_VOTES"],
-									"TOTAL_POSITIVE_VOTES" => $templateData["RATING"]["TOTAL_POSITIVE_VOTES"],
-									"TOTAL_NEGATIVE_VOTES" => $templateData["RATING"]["TOTAL_NEGATIVE_VOTES"],
-									"TOTAL_VALUE" => $templateData["RATING"]["TOTAL_VALUE"],
+									"USER_VOTE" => ($templateData["RATING"]["USER_VOTE"] ?? null),
+									"USER_HAS_VOTED" => ($templateData["RATING"]["USER_HAS_VOTED"] ?? null),
+									"TOTAL_VOTES" => ($templateData["RATING"]["TOTAL_VOTES"] ?? null),
+									"TOTAL_POSITIVE_VOTES" => ($templateData["RATING"]["TOTAL_POSITIVE_VOTES"] ?? null),
+									"TOTAL_NEGATIVE_VOTES" => ($templateData["RATING"]["TOTAL_NEGATIVE_VOTES"] ?? null),
+									"TOTAL_VALUE" => ($templateData["RATING"]["TOTAL_VALUE"] ?? null),
 									"PATH_TO_USER_PROFILE" => $arParams["PATH_TO_USER_PROFILE"],
 									"PUBLIC_MODE" => $arParams["PUBLIC_MODE"],
 									"LIKE_TEMPLATE" => "light_no_anim",
 									"TOP_DATA" => (!empty($arResult['TOP_RATING_DATA']) ? $arResult['TOP_RATING_DATA'] : false),
-									"REACTIONS_LIST" => $templateData["RATING"]["REACTIONS_LIST"],
-									"VOTE_ID" => $voteId
+									"REACTIONS_LIST" => ($templateData["RATING"]["REACTIONS_LIST"] ?? null),
+									"VOTE_ID" => $voteId,
 								),
 								$component,
 								array("HIDE_ICONS" => "Y")
@@ -325,7 +361,7 @@ if (
 					</div>
 				<? endif ?>
 
-				<?if($arResult["AUX_DATA"]['MAIL']['FORWARD']):?>
+				<?if ($arResult["AUX_DATA"]['MAIL']['FORWARD'] ?? null):?>
 					<div class="task-detail-group"><?
 						?><span class="task-detail-group-label"><?=Loc::getMessage("TASKS_MAIL_FORWARD")?>:</span><?
 						?><span class="task-detail-group-name">
@@ -388,9 +424,9 @@ if (
 				"IS_SCRUM_TASK" => $arParams['IS_SCRUM_TASK'],
 				"TASK" => $taskData,
 				"TIMER_IS_RUNNING_FOR_CURRENT_USER" => !!$templateData["TIMER_IS_RUNNING_FOR_CURRENT_USER"],
-				"TIMER" => $templateData["TIMER"],
+				"TIMER" => ($templateData["TIMER"] ?? null),
 				"PUBLIC_MODE" => $arParams["PUBLIC_MODE"],
-				"REDIRECT_TO_LIST_ON_DELETE" => $arParams['REDIRECT_TO_LIST_ON_DELETE'],
+				"REDIRECT_TO_LIST_ON_DELETE" => $arParams['REDIRECT_TO_LIST_ON_DELETE'] ?? null,
 				"TASK_LIMIT_EXCEEDED" => $taskLimitExceeded,
 			),
 			null,
@@ -412,7 +448,7 @@ if (
 					'HIDE_GROUP_ACTIONS' => 'Y',
 					'FORCE_LIST_MODE' => 'Y',
 					'PREVENT_PAGE_ONE_COLUMN' => 'Y',
-					'PREVENT_FLEXIBLE_LAYOUT' => ($arResult['IS_IFRAME'] ? 'N' : 'Y'),
+					'PREVENT_FLEXIBLE_LAYOUT' => (($arResult['IS_IFRAME'] ?? null) ? 'N' : 'Y'),
 					'COMMON_FILTER' => [],
 					'ORDER' => ['GROUP_ID'  => 'ASC'],
 					'PREORDER' => ['REAL_STATUS' => 'ASC'],
@@ -527,7 +563,7 @@ if (
 					<span class="task-switcher-text">
 						<span class="task-switcher-text-inner">
 							<?=Loc::getMessage("TASKS_TASK_COMMENTS")?>
-							<span class="task-switcher-text-counter"><?= ($taskData["COMMENTS_COUNT"] - $taskData["SERVICE_COMMENTS_COUNT"]) ?></span>
+							<span class="task-switcher-text-counter"><?= (($taskData["COMMENTS_COUNT"] ?? 0) - ($taskData["SERVICE_COMMENTS_COUNT"] ?? 0)) ?></span>
 						</span>
 					</span>
 				</span>
@@ -535,7 +571,7 @@ if (
 					<span class="task-switcher-text">
 						<span class="task-switcher-text-inner">
 							<?=Loc::getMessage("TASKS_TASK_LOG_SHORT")?>
-							<span class="task-switcher-text-counter" id="task-switcher-text-log-count"><?=count($taskData["SE_LOG"])?></span>
+							<span class="task-switcher-text-counter" id="task-switcher-text-log-count"><?=count($taskData["SE_LOG"] ?? [])?></span>
 						</span>
 					</span>
 				</span>
@@ -594,12 +630,12 @@ if (
 							"ENTITY_XML_ID" => "TASK_".$taskData["ID"],
 							"URL_TEMPLATES_PROFILE_VIEW" => $arParams["PATH_TO_USER_PROFILE"],
 							"CACHE_TYPE" => $arParams["CACHE_TYPE"],
-							"CACHE_TIME" => $arParams["CACHE_TIME"],
+							"CACHE_TIME" => ($arParams["CACHE_TIME"] ?? null),
 							"IMAGE_HTML_SIZE" => 400,
-							"MESSAGES_PER_PAGE" => $arParams["ITEM_DETAIL_COUNT"],
+							"MESSAGES_PER_PAGE" => ($arParams["ITEM_DETAIL_COUNT"] ?? null),
 							"PAGE_NAVIGATION_TEMPLATE" => "arrows",
 							"DATE_TIME_FORMAT" => \Bitrix\Tasks\UI::getDateTimeFormat(),
-							"PATH_TO_SMILE" => $arParams["PATH_TO_FORUM_SMILE"],
+							"PATH_TO_SMILE" => ($arParams["PATH_TO_FORUM_SMILE"] ?? null),
 							"EDITOR_CODE_DEFAULT" => "N",
 							"SHOW_MODERATION" => "Y",
 							"SHOW_AVATAR" => "Y",
@@ -620,6 +656,11 @@ if (
 							"PUBLIC_MODE" => $arParams["PUBLIC_MODE"],
 							"ALLOW_MENTION" => $arParams["PUBLIC_MODE"] ? "N" : "Y",
 							'ALLOW_MENTION_EMAIL_USER' => 'Y',
+							"TEMPLATE_DATA" => [
+								"DATA" => [
+									"GROUP_VIEWED" => $arResult["DATA"]["GROUP_VIEWED"]
+								],
+							],
 							"USER_FIELDS_SETTINGS" =>
 								$arParams["PUBLIC_MODE"]
 								? array(
@@ -775,9 +816,9 @@ $APPLICATION->IncludeComponent(
 			"DATA" => $arResult["DATA"],
 			"AUX_DATA" => $arResult["AUX_DATA"],
 			"TIMER_IS_RUNNING_FOR_CURRENT_USER" => $templateData["TIMER_IS_RUNNING_FOR_CURRENT_USER"],
-			"TIMER" => $templateData["TIMER"]
+			"TIMER" => ($templateData["TIMER"] ?? null),
 		),
-		"SHOW_COPY_URL_LINK" => $arParams['SHOW_COPY_URL_LINK'],
+		"SHOW_COPY_URL_LINK" => $arParams['SHOW_COPY_URL_LINK'] ?? null,
 		"TASK_LIMIT_EXCEEDED" => $taskLimitExceeded,
 		'CALENDAR_SETTINGS' => $arResult['CALENDAR_SETTINGS'],
 		'IS_SCRUM_TASK' => $arParams['IS_SCRUM_TASK'],
@@ -790,9 +831,8 @@ $this->EndViewTarget();
 ?>
 
 <script>
-
 	<?/*todo: move php function tasksRenderJSON() to javascript, use CUtil::PhpToJSObject() here for EVENT_TASK, and then remove the following code*/?>
-	<?if (is_array($arResult["DATA"]["EVENT_TASK"])):?>
+	<?if (is_array($arResult["DATA"]["EVENT_TASK"] ?? null)):?>
 		<?CJSCore::Init("CJSTask"); // ONLY to make BX.CJSTask.fixWin() available?>
 		var eventTaskUgly = <?tasksRenderJSON(
 			$arResult["DATA"]["EVENT_TASK_SAFE"],
@@ -852,8 +892,8 @@ $this->EndViewTarget();
 		groupId: <?= (int)$arParams['GROUP_ID'] ?>,
 		eventTaskUgly: eventTaskUgly,
 		componentData: {
-			EVENT_TYPE: "<?=CUtil::JSEscape($arResult["COMPONENT_DATA"]["EVENT_TYPE"])?>",
-			EVENT_OPTIONS: <?=CUtil::PhpToJsObject($arResult["COMPONENT_DATA"]["EVENT_OPTIONS"])?>,
+			EVENT_TYPE: "<?=CUtil::JSEscape($arResult["COMPONENT_DATA"]["EVENT_TYPE"] ?? null)?>",
+			EVENT_OPTIONS: <?=CUtil::PhpToJsObject($arResult["COMPONENT_DATA"]["EVENT_OPTIONS"] ?? null)?>,
 			OPEN_TIME: <?=CUtil::PhpToJsObject($arResult["COMPONENT_DATA"]["OPEN_TIME"])?>
 		},
 		can: {

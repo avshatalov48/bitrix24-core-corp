@@ -84,6 +84,6 @@ class BIConnectorStartComponent extends CBitrixComponent
 			}
 		}
 
-		$this->IncludeComponentTemplate();
+		$this->includeComponentTemplate();
 	}
 }

@@ -278,8 +278,8 @@ class TasksImportAjaxController extends Main\Engine\Controller
 				$this->importParameters['DEFAULT_RESPONSIBLE']
 			);
 
-			try
-			{
+			// try
+			// {
 				$userId = $this->getCurrentUser()->getId();
 				$newTask = Task::add($userId, $taskProperties, ['PUBLIC_MODE' => true, 'RETURN_ENTITY' => false]);
 
@@ -293,16 +293,16 @@ class TasksImportAjaxController extends Main\Engine\Controller
 				{
 					$this->addImportError(implode('; ', $errors->getMessages()));
 				}
-			}
-			catch (\TasksException $e)
-			{
-				$message = unserialize($e->getMessage(), ['allowed_classes' => false]);
-				$this->addImportError($message[0]['text']);
-			}
-			catch (Exception $e)
-			{
-				$this->addImportError($e->getMessage());
-			}
+			// }
+			// catch (\TasksException $e)
+			// {
+			// 	$message = unserialize($e->getMessage(), ['allowed_classes' => false]);
+			// 	$this->addImportError($message[0]['text']);
+			// }
+			// catch (Exception $e)
+			// {
+			// 	$this->addImportError($e->getMessage());
+			// }
 
 			$maxExecutionTime = $this->importParameters['MAX_EXECUTION_TIME'];
 			if (($maxExecutionTime > 0) && ((getmicrotime() - START_EXEC_TIME) > $maxExecutionTime))
@@ -450,7 +450,7 @@ class TasksImportAjaxController extends Main\Engine\Controller
 		];
 		foreach ($booleanValuesToCheck as $key)
 		{
-			if ($taskProperties[$key] !== 'Y')
+			if (($taskProperties[$key] ?? null) !== 'Y')
 			{
 				$taskProperties[$key] = 'N';
 			}

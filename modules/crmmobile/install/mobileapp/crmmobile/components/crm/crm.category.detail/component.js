@@ -1,19 +1,21 @@
 (() => {
-	const { isEqual, isEmpty } = jn.require('utils/object');
-	const { NavigationLoader } = jn.require('navigation-loader');
-	const { NotifyManager } = jn.require('notify-manager');
-	const { CategoryStorage } = jn.require('crm/storage/category');
-	const { CategorySvg } = jn.require('crm/assets/category');
-	const { CategoryPermissions } = jn.require('crm/category-permissions');
-	const { StageStorage } = jn.require('crm/storage/stage');
-	const { StageList } = jn.require('crm/stage-list');
-	const { Alert } = jn.require('alert');
-	const { Haptics } = jn.require('haptics');
-	const { throttle } = jn.require('utils/function');
-	const { stringify } = jn.require('utils/string');
-	const { EntityName } = jn.require('crm/entity-name');
+	const require = (ext) => jn.require(ext);
 
-	const DEFAULT_PROCESS_STAGE_COLOR = '#ace9fb';
+	const { isEqual, isEmpty } = require('utils/object');
+	const { NavigationLoader } = require('navigation-loader');
+	const { NotifyManager } = require('notify-manager');
+	const { CategoryStorage } = require('crm/storage/category');
+	const { CategorySvg } = require('crm/assets/category');
+	const { CategoryPermissions } = require('crm/category-permissions');
+	const { StageStorage } = require('crm/storage/stage');
+	const { StageList } = require('crm/stage-list');
+	const { Alert } = require('alert');
+	const { Haptics } = require('haptics');
+	const { throttle } = require('utils/function');
+	const { stringify } = require('utils/string');
+	const { EntityName } = require('crm/entity-name');
+
+	const DEFAULT_PROCESS_STAGE_COLOR = '#c3f0ff';
 	const DEFAULT_FAILED_STAGE_COLOR = '#ff5752';
 
 	const SEMANTICS = {
@@ -62,7 +64,7 @@
 				{
 					name: BX.message('M_CRM_CATEGORY_DETAIL_SAVE'),
 					type: 'text',
-					color: '#0065a3',
+					color: '#2066b0',
 					callback: () => this.saveAndClose(),
 				},
 			]);
@@ -98,13 +100,13 @@
 		changeCategory(category)
 		{
 			return new Promise((resolve) => {
-				if (!isEqual(this.state.category, category))
+				if (isEqual(this.state.category, category))
 				{
-					this.setState({ category }, () => resolve());
+					resolve();
 				}
 				else
 				{
-					resolve();
+					this.setState({ category }, () => resolve());
 				}
 			});
 		}
@@ -112,7 +114,7 @@
 		getCategoryFields()
 		{
 			return {
-				...(this.state.category || {}),
+				...this.state.category,
 				...this.changedFields,
 			};
 		}
@@ -186,12 +188,17 @@
 				return BX.message('M_CRM_CATEGORY_DETAIL_FUNNEL_NOT_LOADED2');
 			}
 
+			if (!category.categoriesEnabled)
+			{
+				return category.name;
+			}
+
 			const name = stringify(category.name).trim();
 
 			return (
-				name !== ''
-					? BX.message('M_CRM_CATEGORY_DETAIL_FUNNEL2').replace('#CATEGORY_NAME#', name)
-					: BX.message('M_CRM_CATEGORY_DETAIL_FUNNEL_EMPTY2')
+				name === ''
+					? BX.message('M_CRM_CATEGORY_DETAIL_FUNNEL_EMPTY2')
+					: BX.message('M_CRM_CATEGORY_DETAIL_FUNNEL2').replace('#CATEGORY_NAME#', name)
 			);
 		}
 
@@ -218,7 +225,7 @@
 
 		renderLoader()
 		{
-			return new LoadingScreenComponent();
+			return new LoadingScreenComponent({ backgroundColor: '#eef2f4' });
 		}
 
 		renderContent()
@@ -255,7 +262,11 @@
 
 		renderCategoryName()
 		{
-			const { name } = this.getCategoryFields();
+			const { name, categoriesEnabled } = this.getCategoryFields();
+			if (!categoriesEnabled)
+			{
+				return null;
+			}
 
 			return View(
 				{
@@ -283,10 +294,11 @@
 
 		renderPermissions()
 		{
-			const { access } = this.getCategoryFields();
+			const { access, categoriesEnabled } = this.getCategoryFields();
 
 			return new CategoryPermissions({
 				access,
+				categoriesEnabled,
 				entityTypeId: this.props.entityTypeId,
 				categoryId: this.props.categoryId,
 				onChange: (access) => {
@@ -298,7 +310,7 @@
 		renderStageList()
 		{
 			const category = this.getCategoryFields();
-			const { processStages, successStages, failedStages } = category;
+			const { processStages, successStages, failedStages, tunnelsEnabled } = category;
 
 			return new StageList({
 				category,
@@ -312,7 +324,7 @@
 					this.setState({});
 				},
 				stageParams: {
-					showTunnels: true,
+					showTunnels: tunnelsEnabled,
 				},
 			});
 		}
@@ -320,6 +332,11 @@
 		renderDeleteButton()
 		{
 			const { category } = this.state;
+
+			if (!category || !category.categoriesEnabled)
+			{
+				return null;
+			}
 
 			return new BaseButton({
 				style: {
@@ -438,16 +455,20 @@
 
 		openStageDetail(stage)
 		{
+			const { id: categoryId, tunnelsEnabled, documentFields } = this.getCategoryFields();
+
 			ComponentHelper.openLayout({
 				name: 'crm:crm.stage.detail',
 				componentParams: {
 					entityTypeId: this.props.entityTypeId,
 					stage,
-					categoryId: this.state.category.id,
-					documentFields: this.state.category.documentFields,
+					categoryId,
+					tunnelsEnabled,
+					documentFields,
 				},
 				widgetParams: {
 					modal: true,
+					backgroundColor: '#eef2f4',
 					backdrop: {
 						showOnTop: true,
 						forceDismissOnSwipeDown: true,
@@ -545,7 +566,7 @@
 			this.sort = sort || 0;
 			this.semantics = semantics || SEMANTICS.PROCESS;
 			this.color = this.getColorByProps(color) || this.getColorBySemantics(semantics);
-			this.type = type !== undefined ? type : Stage.getType(this.semantics);
+			this.type = type === undefined ? Stage.getType(this.semantics) : type;
 			this.tunnels = tunnels || [];
 			this.statusId = statusId || null;
 			this.total = total;
@@ -569,7 +590,7 @@
 
 		getColorByProps(color)
 		{
-			return color && color.length !== 0 ? color : null;
+			return color && color.length > 0 ? color : null;
 		}
 
 		getColorBySemantics(semantics)
@@ -653,8 +674,8 @@
 	};
 
 	const svgImages = {
-		deleteIcon: `<svg width="16" height="21" viewBox="0 0 16 21" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9.22602 0H6.15062V1.54677H1.43631C0.64306 1.54677 0 2.18983 0 2.98309V4.64037H15.377V2.98309C15.377 2.18983 14.7339 1.54677 13.9407 1.54677H9.22602V0Z" fill="#828B95"/><path d="M1.53777 6.18721H13.8394L12.6864 19.2351C12.6427 19.7294 12.2287 20.1084 11.7326 20.1084H3.64459C3.14842 20.1084 2.73444 19.7294 2.69077 19.2351L1.53777 6.18721Z" fill="#828B95"/></svg>`,
-		createIcon: `<svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 0H7V12H5V0Z" fill="#525C69"/><path d="M12 5V7L0 7L1.19209e-07 5L12 5Z" fill="#525C69"/></svg>`,
+		deleteIcon: '<svg width="16" height="21" viewBox="0 0 16 21" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9.22602 0H6.15062V1.54677H1.43631C0.64306 1.54677 0 2.18983 0 2.98309V4.64037H15.377V2.98309C15.377 2.18983 14.7339 1.54677 13.9407 1.54677H9.22602V0Z" fill="#828B95"/><path d="M1.53777 6.18721H13.8394L12.6864 19.2351C12.6427 19.7294 12.2287 20.1084 11.7326 20.1084H3.64459C3.14842 20.1084 2.73444 19.7294 2.69077 19.2351L1.53777 6.18721Z" fill="#828B95"/></svg>',
+		createIcon: '<svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 0H7V12H5V0Z" fill="#525C69"/><path d="M12 5V7L0 7L1.19209e-07 5L12 5Z" fill="#525C69"/></svg>',
 	};
 
 	BX.onViewLoaded(() => {

@@ -87,9 +87,9 @@ final class TemplateHelper
 				$this->setTitle($title);
 			}
 
-			if(!is_array($parameters['RELATION']))
+			if (!is_array($parameters['RELATION'] ?? null))
 			{
-				$parameters['RELATION'] = array();
+				$parameters['RELATION'] = [];
 			}
 			$this->registerExtension($parameters['RELATION']);
 
@@ -147,7 +147,7 @@ final class TemplateHelper
 		$component = $this->template->__component;
 
 		$arResult = $component->arResult;
-		$jsData = $arResult['JS_DATA'];
+		$jsData = ($arResult['JS_DATA'] ?? null);
 
 		$data = array_merge((is_array($jsData) ? $jsData : array()), $data, array(
 			'id' => $this->id, // to register in dispatcher
@@ -156,9 +156,9 @@ final class TemplateHelper
 			'componentClassName' => $component->getComponentClassName(),
 			'componentId' => $component->getId(), // md5() from component signature :)
 			'hintState' => UI::getHintState(), // todo: when collection implemented, move this outside, leave handy shortcut in component.js
-			'user' => is_array($arResult['AUX_DATA']['USER']) ? $arResult['AUX_DATA']['USER'] : array(), // todo: the same as above
+			'user' => (isset($arResult['AUX_DATA']['USER']) && is_array($arResult['AUX_DATA']['USER'])) ? $arResult['AUX_DATA']['USER'] : array(), // todo: the same as above
 			'userNameTemplate' => $this->findParameterValue('NAME_TEMPLATE'), // todo: the same as above
-			'modulesAvailable' => $this->getComponent()->arResult['COMPONENT_DATA']['MODULES'],
+			'modulesAvailable' => ($this->getComponent()->arResult['COMPONENT_DATA']['MODULES'] ?? null),
 		));
 		?>
 		<script>new BX.Tasks.Component.<?=$this->name?>(<?=UI::toJSON($data)?>);</script>
@@ -167,7 +167,7 @@ final class TemplateHelper
 
 	public function pickId()
 	{
-		$id = trim((string) $this->template->__component->arParams['TEMPLATE_CONTROLLER_ID']);
+		$id = trim((string) ($this->template->__component->arParams['TEMPLATE_CONTROLLER_ID'] ?? ''));
 		if($id)
 		{
 			$id = ToLower($id);

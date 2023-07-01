@@ -2,42 +2,51 @@
  * @module crm/duplicates/finder
  */
 jn.define('crm/duplicates/finder', (require, exports, module) => {
-
 	const { isEmpty } = require('utils/object');
-	const { Type } = require('crm/type');
+	const { Type, TypeName } = require('crm/type');
+	const COMPONENT_MAP = {
+		[TypeName.Contact]: 'crm.contact.edit',
+		[TypeName.Company]: 'crm.company.edit',
+		[TypeName.Lead]: 'crm.lead.edit',
+	};
 
 	/**
 	 * @function findDuplicates
 	 */
 	const findDuplicates = (props) => {
-		const { duplicateControl, values, entityType, entityId } = props;
+		const { duplicateControl, values, entityTypeName, entityId } = props;
+		const component = COMPONENT_MAP[entityTypeName];
 
-		if (!duplicateControl || isEmpty(values) || !Type.existsByName(entityType))
+		if (
+			!duplicateControl
+			|| isEmpty(values)
+			|| !Type.existsByName(entityTypeName)
+			|| !component
+		)
 		{
 			return Promise.resolve([]);
 		}
 
 		const { groupId, field } = duplicateControl;
 		const ignoredCurrentItem = {
-			ENTITY_TYPE_ID: Type.resolveIdByName(entityType),
+			ENTITY_TYPE_ID: Type.resolveIdByName(entityTypeName),
 			ENTITY_ID: entityId,
 		};
 
-		const fetchDuplicates = (PARAMS) =>
-			BX.ajax.runComponentAction(
-				`bitrix:crm.${entityType.toLowerCase()}.edit`,
-				'FIND_DUPLICATES',
-				{
-					mode: 'ajax',
-					data: {
-						ACTION: 'FIND_DUPLICATES',
-						PARAMS,
-					},
+		const fetchDuplicates = (PARAMS) => BX.ajax.runComponentAction(
+			`bitrix:${component}`,
+			'FIND_DUPLICATES',
+			{
+				mode: 'ajax',
+				data: {
+					ACTION: 'FIND_DUPLICATES',
+					PARAMS,
 				},
-			);
+			},
+		);
 
 		return new Promise((resolve) => {
-			const findParams = { ENTITY_TYPE_NAME: entityType, ENTITY_ID: entityId };
+			const findParams = { ENTITY_TYPE_NAME: entityTypeName, ENTITY_ID: entityId };
 			const groups = { GROUP_ID: groupId };
 			Object.keys(values).forEach((key) => {
 				groups[key] = values[key];
@@ -45,7 +54,7 @@ jn.define('crm/duplicates/finder', (require, exports, module) => {
 
 			if (field)
 			{
-				groups['FIELD_ID'] = field.id;
+				groups.FIELD_ID = field.id;
 			}
 
 			return fetchDuplicates({
@@ -61,10 +70,8 @@ jn.define('crm/duplicates/finder', (require, exports, module) => {
 
 				resolve(GROUP_RESULTS[0]);
 			});
-
 		});
 	};
 
 	module.exports = { findDuplicates };
-
 });

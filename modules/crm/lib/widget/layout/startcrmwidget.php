@@ -8,8 +8,8 @@ class StartCrmWidget
 {
 	public static function getDefaultRows(array $params = [])
 	{
-		$isSupervisor = $params['isSupervisor'];
-		$showSaleTarget = $params['showSaleTarget'];
+		$isSupervisor = ($params['isSupervisor'] ?? false);
+		$showSaleTarget = ($params['showSaleTarget'] ?? false);
 
 		$rowData = array(
 			array(

@@ -95,15 +95,20 @@ class RobotService implements Errorable
 		}
 
 		$has = false;
-		foreach ($robotIds as $robotId)
+		$queryResult = \CBPWorkflowTemplateLoader::getList(
+			[],
+			['ID' => $robotIds],
+			false,
+			false,
+			['DOCUMENT_STATUS']
+		);
+		while ($fields = $queryResult->fetch())
 		{
-			$queryResult = \CBPWorkflowTemplateLoader::getList([], ['ID' => $robotId]);
-			if ($fields = $queryResult->fetch())
+			if (in_array($fields['DOCUMENT_STATUS'], $stageIds))
 			{
-				if (in_array($fields['DOCUMENT_STATUS'], $stageIds))
-				{
-					$has = true;
-				}
+				$has = true;
+
+				break;
 			}
 		}
 
@@ -112,15 +117,19 @@ class RobotService implements Errorable
 			return true;
 		}
 
-		foreach ($triggerIds as $triggerId)
+		$queryResult = TriggerTable::getList(
+			[
+				'select' => ['DOCUMENT_STATUS'],
+				'filter' => ['=ID' => $triggerIds]
+			]
+		);
+		while ($fields = $queryResult->fetch())
 		{
-			$queryResult = TriggerTable::getList(['filter' => ['=ID' => $triggerId]]);
-			if ($fields = $queryResult->fetch())
+			if (in_array($fields['DOCUMENT_STATUS'], $stageIds))
 			{
-				if (in_array($fields['DOCUMENT_STATUS'], $stageIds))
-				{
-					$has = true;
-				}
+				$has = true;
+
+				break;
 			}
 		}
 

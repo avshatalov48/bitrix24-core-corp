@@ -6,14 +6,21 @@ use Bitrix\Crm\Attribute\FieldAttributeManager;
 use Bitrix\Crm\Automation\Starter;
 use Bitrix\Crm\Component\EntityDetails\BaseComponent;
 use Bitrix\Crm\Component\EntityList\ClientDataProvider;
+use Bitrix\Crm\Component\EntityList\ClientDataProvider\KanbanDataProvider;
+use Bitrix\Crm\Component\EntityList\FieldRestrictionManager;
+use Bitrix\Crm\Component\EntityList\FieldRestrictionManagerTypes;
 use Bitrix\Crm\Component\EntityList\GridId;
 use Bitrix\Crm\Counter\EntityCounter;
+use Bitrix\Crm\Entity\EntityEditorConfigScope;
 use Bitrix\Crm\Exclusion;
 use Bitrix\Crm\Filter;
 use Bitrix\Crm\Item;
-use Bitrix\Crm\Entity\EntityEditorConfigScope;
+use Bitrix\Crm\Observer\Entity\ObserverTable;
+use Bitrix\Crm\PhaseSemantics;
 use Bitrix\Crm\Security\EntityAuthorization;
 use Bitrix\Crm\Service;
+use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Service\Display\Field;
 use Bitrix\Crm\Statistics\StatisticEntryManager;
 use Bitrix\Crm\UserField\Visibility\VisibilityManager;
 use Bitrix\Main\Application;
@@ -28,10 +35,6 @@ use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\UI\Filter\FieldAdapter;
 use Bitrix\Main\UI\Filter\Options;
 use Bitrix\UI\Form\EntityEditorConfiguration;
-use Bitrix\Crm\Component\EntityList\ClientDataProvider\KanbanDataProvider;
-use Bitrix\Crm\Service\Container;
-use Bitrix\Crm\Observer\Entity\ObserverTable;
-use Bitrix\Crm\Service\Display\Field;
 
 abstract class Entity
 {
@@ -53,6 +56,8 @@ abstract class Entity
 	protected $loadedItems = [];
 	protected $displayedFields;
 	protected $dateFormatter;
+	protected FieldRestrictionManager $fieldRestrictionManager;
+
 	/** @var Service\Factory */
 	protected $factory;
 
@@ -90,6 +95,11 @@ abstract class Entity
 	{
 		Service\Container::getInstance()->getLocalization()->loadMessages();
 		$this->dateFormatter = new \Bitrix\Crm\Format\Date();
+		$this->fieldRestrictionManager = new FieldRestrictionManager(
+			FieldRestrictionManager::MODE_KANBAN,
+			[FieldRestrictionManagerTypes::ACTIVITY]
+		);
+
 		$this->initFactory();
 	}
 
@@ -965,12 +975,8 @@ abstract class Entity
 
 	/**
 	 * Returns true if user with $userPermissions can add item to stage with identifier $stageId.
-	 *
-	 * @param string $stageId
-	 * @param \CCrmPerms $userPermissions
-	 * @return bool
 	 */
-	public function canAddItemToStage(string $stageId, \CCrmPerms $userPermissions): bool
+	public function canAddItemToStage(string $stageId, \CCrmPerms $userPermissions, string $semantics = PhaseSemantics::UNDEFINED): bool
 	{
 		if (!$this->isInlineEditorSupported())
 		{
@@ -1169,7 +1175,7 @@ abstract class Entity
 			$item['PRICE'] = $item['OPPORTUNITY_ACCOUNT'];
 		}
 
-		$item['ENTITY_CURRENCY_ID'] = $item['CURRENCY_ID'];
+		$item['ENTITY_CURRENCY_ID'] = $item['CURRENCY_ID'] ?? null;
 		if (!empty($item['ACCOUNT_CURRENCY_ID']))
 		{
 			$item['CURRENCY_ID'] = $item['ACCOUNT_CURRENCY_ID'];
@@ -1180,25 +1186,31 @@ abstract class Entity
 		$currency = $this->getCurrency();
 		if (empty($item['CURRENCY_ID']) || $item['CURRENCY_ID'] === $currency)
 		{
-			$item['PRICE'] = (float)$item['PRICE'];
-			$item['PRICE_FORMATTED'] = \CCrmCurrency::MoneyToString($item['OPPORTUNITY'], $item['ENTITY_CURRENCY_ID']);
+			$item['PRICE'] = (float)($item['PRICE'] ?? 0.0);
+			$item['PRICE_FORMATTED'] = \CCrmCurrency::MoneyToString(
+				$item['OPPORTUNITY'] ?? 0.0,
+				$item['ENTITY_CURRENCY_ID']
+			);
 		}
 		else
 		{
 			$item['PRICE'] = \CCrmCurrency::ConvertMoney($item['PRICE'], $item['CURRENCY_ID'], $currency);
-			$item['PRICE_FORMATTED'] = \CCrmCurrency::MoneyToString($item['OPPORTUNITY'], $item['ENTITY_CURRENCY_ID']);
+			$item['PRICE_FORMATTED'] = \CCrmCurrency::MoneyToString(
+				$item['OPPORTUNITY'] ?? 0.0,
+				$item['ENTITY_CURRENCY_ID']
+			);
 		}
 
-		$item['OPPORTUNITY_VALUE'] = $item['OPPORTUNITY'];
+		$item['OPPORTUNITY_VALUE'] = $item['OPPORTUNITY'] ?? 0.0;
 
 		$item['OPPORTUNITY'] = [
-			'SUM' => $item['OPPORTUNITY'],
+			'SUM' => $item['OPPORTUNITY'] ?? 0.0,
 			'CURRENCY' => $item['ENTITY_CURRENCY_ID'],
 		];
 
 		$opened = $item['OPENED'] ?? null;
 		$item['OPENED'] = in_array($opened, ['Y', '1', 1, true], true) ? 'Y' : 'N';
-		$item['DATE_FORMATTED'] = $this->dateFormatter->format($item['DATE'], (bool)$item['FORMAT_TIME']);
+		$item['DATE_FORMATTED'] = $this->dateFormatter->format($item['DATE'] ?? '', (bool)$item['FORMAT_TIME']);
 
 		return $item;
 	}
@@ -1552,7 +1564,11 @@ abstract class Entity
 
 	public function getFilterOptions(): Options
 	{
-		return new Options($this->getGridId(), $this->getFilterPresets());
+		$options = new Options($this->getGridId(), $this->getFilterPresets());
+
+		$this->fieldRestrictionManager->removeRestrictedFields($options);
+
+		return $options;
 	}
 
 	protected function getFilter(): Filter\Filter
@@ -2163,14 +2179,13 @@ abstract class Entity
 		}
 	}
 
-	public function getClientFieldsRestrictions(): ?array
+	public function getFieldsRestrictions(): array
 	{
-		return null;
-	}
-
-	public function getObserversFieldRestrictions(): ?array
-	{
-		return null;
+		return $this->fieldRestrictionManager->fetchRestrictedFields(
+			$this->getGridId(),
+			[],
+			$this->getFilter()
+		);
 	}
 
 	protected function getContactDataProvider()
@@ -2244,22 +2259,7 @@ abstract class Entity
 			$itemMultifieldValues = $multifieldValues[$itemId] ?? [];
 			foreach ($itemMultifieldValues as $code => $values)
 			{
-				if ($code === 'im') // we need only chat for im
-				{
-					if ($isOpenLinesInstalled)
-					{
-						foreach ($values as $val)
-						{
-							$val = $val['value'];
-							if ((mb_strpos($val, 'imol|') === 0))
-							{
-								$item[$code] = $val;
-								break;
-							}
-						}
-					}
-				}
-				elseif($clientType)
+				if($clientType)
 				{
 					$item[$code][$clientType] = $values;
 				}
@@ -2677,6 +2677,16 @@ abstract class Entity
 	private function isLastActivitySupported(): bool
 	{
 		return ($this->factory && $this->factory->isLastActivitySupported());
+	}
+
+	public function isSmartActivityNotificationEnabled(): bool
+	{
+		return ($this->factory && $this->factory->isSmartActivityNotificationEnabled());
+	}
+
+	public function isSmartActivityNotificationSupported(): bool
+	{
+		return ($this->factory && $this->factory->isSmartActivityNotificationSupported());
 	}
 
 	protected function getItemViaLoadedItems(int $id): Result

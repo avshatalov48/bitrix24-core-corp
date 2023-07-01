@@ -84,8 +84,13 @@ class ActivityStatisticEntry
 
 		if (!is_object($date))
 		{
-			$date = new Main\Type\DateTime($date);
+			$date = Main\Type\DateTime::createFromUserTime($date);
 			$date->setTime(0, 0, 0);
+		}
+
+		if ($date instanceof Main\Type\DateTime && (int)$date->format('Y') <= 0)
+		{
+			return false;
 		}
 
 		$providerId = $provider::getId();

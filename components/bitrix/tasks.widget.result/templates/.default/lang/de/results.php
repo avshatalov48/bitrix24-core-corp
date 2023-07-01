@@ -1,3 +1,0 @@
-<?php
-$MESS["TASKS_RESULT_COLLAPSE_BUTTON"] = "Minimieren";
-$MESS["TASKS_RESULT_EXPAND_BUTTON"] = "Noch #NUM#";

@@ -141,13 +141,7 @@ class DealTable extends Main\ORM\Data\DataManager
 				->configureTitle(Loc::getMessage('CRM_DEAL_ENTITY_COMPANY_BY_FIELD'))
 			,
 
-			(new ReferenceField(
-				'COMPANY',
-				CompanyTable::class,
-				Join::on('this.COMPANY_ID', 'ref.ID'),
-			))
-				->configureTitle(\CCrmOwnerType::GetDescription(\CCrmOwnerType::Company))
-			,
+			$fieldRepository->getCompany(),
 
 			$fieldRepository->getContactId(),
 

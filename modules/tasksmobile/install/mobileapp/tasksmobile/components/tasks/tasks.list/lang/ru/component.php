@@ -93,6 +93,7 @@ $MESS['TASKS_LIST_PING_NOTIFICATION'] = 'Пинг отправлен';
 $MESS['TASKS_LIST_SEARCH_SECTION_LAST'] = "НЕДАВНИЙ ПОИСК";
 $MESS['TASKS_LIST_SEARCH_SECTION_SEARCH_RESULTS'] = "РЕЗУЛЬТАТЫ ПОИСКА";
 $MESS['TASKS_LIST_SEARCH_EMPTY_RESULT'] = "По вашему запросу ничего не найдено";
+$MESS['TASKS_LIST_SEARCH_SPOTLIGHT_TEXT'] = "В поиске теперь доступны ваши сохранённые фильтры. Они помогут вам находить нужные задачи так же быстро, как в веб-версии.";
 $MESS['TASKS_LIST_EMPTY_RESULT'] = "Нет элементов для отображения";
 $MESS['TASKS_LIST_NOTHING_NOT_FOUND'] = "Задач не найдено";
 $MESS['TASKS_LIST_ACTION_DONT_FOLLOW'] = "Не следить";

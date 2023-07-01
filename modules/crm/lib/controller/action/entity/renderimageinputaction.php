@@ -3,6 +3,7 @@
 namespace Bitrix\Crm\Controller\Action\Entity;
 
 use Bitrix\Crm\EntityRequisite;
+use Bitrix\Crm\Security\PermissionToken;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Engine\Response\Component;
 
@@ -10,7 +11,7 @@ class RenderImageInputAction extends \Bitrix\Main\Engine\Action
 {
 	protected $requisites = [];
 
-	public function run(string $fieldName, string $entityTypeName, int $entityId = 0, string $fieldValue = ''): ?Component
+	public function run(string $fieldName, string $entityTypeName, int $entityId = 0, string $fieldValue = '', array $context = []): ?Component
 	{
 		$entityTypeId = \CCrmOwnerType::ResolveId($entityTypeName);
 		$fileControlId = mb_strtolower($fieldName) . '_uploader';
@@ -18,7 +19,7 @@ class RenderImageInputAction extends \Bitrix\Main\Engine\Action
 
 		if ($isRequisiteEntity)
 		{
-			$hasAccess = $this->checkRequisiteAccess($entityId);
+			$hasAccess = $this->checkRequisiteAccess($entityId, $context);
 		}
 		else
 		{
@@ -82,11 +83,8 @@ class RenderImageInputAction extends \Bitrix\Main\Engine\Action
 		);
 	}
 
-	protected function checkRequisiteAccess(int $entityId): bool
+	protected function checkRequisiteAccess(int $entityId, array $context = []): bool
 	{
-		$ownerEntityTypeId = 0;
-		$ownerEntityId = 0;
-
 		if ($entityId > 0)
 		{
 			$requisite = $this->getRequisite($entityId);
@@ -97,9 +95,21 @@ class RenderImageInputAction extends \Bitrix\Main\Engine\Action
 
 			$ownerEntityTypeId = (int)$requisite['ENTITY_TYPE_ID'];
 			$ownerEntityId = (int)$requisite['ENTITY_ID'];
+
+			return \Bitrix\Crm\EntityRequisite::checkReadPermissionOwnerEntity($ownerEntityTypeId, $ownerEntityId);
 		}
 
-		return \Bitrix\Crm\EntityRequisite::checkReadPermissionOwnerEntity($ownerEntityTypeId, $ownerEntityId);
+		$ownerEntityTypeId = (int)($context['ownerEntityTypeId'] ?? 0);
+		$ownerEntityId = (int)($context['ownerEntityId'] ?? 0);
+		$ownerCategoryId = (int)($context['ownerEntityCategoryId'] ?? 0);
+
+		$canReadOwnerEntity = \Bitrix\Crm\EntityRequisite::checkReadPermissionOwnerEntity($ownerEntityTypeId, $ownerEntityId, $ownerCategoryId);
+		if ($canReadOwnerEntity)
+		{
+			return true;
+		}
+
+		return PermissionToken::canEditRequisites($context['permissionToken'] ?? '', $ownerEntityTypeId, $ownerEntityId);
 	}
 
 	protected function getRequisite(int $requisiteId): ?array

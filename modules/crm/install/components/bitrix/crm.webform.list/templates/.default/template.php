@@ -24,6 +24,9 @@ Main\Loader::includeModule("ui");
 if(Main\Loader::includeModule("bitrix24"))
 {
 	CBitrix24::initLicenseInfoPopupJS();
+	Main\UI\Extension::load([
+		'bitrix24.phoneverify',
+	]);
 }
 
 $region = Main\Application::getInstance()->getLicense()->getRegion();
@@ -93,7 +96,7 @@ foreach ($arResult["ITEMS"] as $index => $data)
 	$data['EMBEDDING'] = '<button 
 			type="button" 
 			class="ui-btn ui-btn-xs ui-btn-light-border ui-btn-round ui-btn-no-caps crm-webform-item-btn"  
- 			onclick="event.stopPropagation(); BX.Crm.WebFormList.showSiteCode(' . $data["ID"] . ', {activeMenuItemId: \'inline\'}); return false;"
+ 			onclick="event.stopPropagation(); BX.Crm.WebFormList.showSiteCode(' . $data["ID"] . ', {activeMenuItemId: \'inline\'}, '.($data['PHONE_VERIFIED'] ? 'false' : 'true').'); return false;"
  		>' . Loc::getMessage('CRM_WEBFORM_LIST_ITEM_BTN_GET_SCRIPT'). '
  		</button>'
 	;
@@ -196,6 +199,7 @@ foreach ($arResult["ITEMS"] as $index => $data)
 				. htmlspecialcharsbx(Json::encode([
 					'id' => $data["ID"],
 					'path' => $data['PATH_TO_WEB_FORM_FILL'],
+					'needVerify' => !$data['PHONE_VERIFIED'],
 				]))
 				. '" 
 			onclick="event.stopPropagation();"
@@ -529,6 +533,10 @@ if ($arResult['PERM_CAN_EDIT'])
 				CRM_WEBFORM_LIST_DELETE_CONFIRM_TITLE:"<?=CUtil::jsEscape(getMessage("CRM_WEBFORM_LIST_DELETE_CONFIRM_TITLE")) ?>",
 				CRM_WEBFORM_LIST_BTN_DETAILS:"<?=CUtil::jsEscape(getMessage("CRM_WEBFORM_LIST_BTN_DETAILS")) ?>",
 				CRM_WEBFORM_LIST_NOT_ACTIVE:"<?=CUtil::jsEscape(getMessage("CRM_WEBFORM_LIST_NOT_ACTIVE")) ?>",
+				CRM_WEBFORM_LIST_ITEM_PHONE_NOT_VERIFIED:"<?=CUtil::jsEscape(getMessage("CRM_WEBFORM_LIST_ITEM_PHONE_NOT_VERIFIED")) ?>",
+				CRM_WEBFORM_PHONE_VERIFY_CUSTOM_SLIDER_TITLE:"<?=CUtil::jsEscape(getMessage("CRM_WEBFORM_PHONE_VERIFY_CUSTOM_SLIDER_TITLE")) ?>",
+				CRM_WEBFORM_PHONE_VERIFY_CUSTOM_TITLE:"<?=CUtil::jsEscape(getMessage("CRM_WEBFORM_PHONE_VERIFY_CUSTOM_TITLE")) ?>",
+				CRM_WEBFORM_PHONE_VERIFY_CUSTOM_DESCRIPTION_V1:"<?=CUtil::jsEscape(getMessage("CRM_WEBFORM_PHONE_VERIFY_CUSTOM_DESCRIPTION_V1")) ?>",
 			});
 
 			window.webformList = BX.Crm.WebFormList.init(<?=Json::encode(array(

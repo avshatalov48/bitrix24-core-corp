@@ -295,8 +295,8 @@ class CCrmInvoiceRestService extends IRestService
 		// sanitize
 		$comments = isset($fields['COMMENTS']) ? trim($fields['COMMENTS']) : '';
 		$userDescription = isset($fields['USER_DESCRIPTION']) ? trim($fields['USER_DESCRIPTION']) : '';
-		$bSanitizeComments = ($comments !== '' && mb_strpos($comments, '<'));
-		$bSanitizeUserDescription = ($userDescription !== '' && mb_strpos($userDescription, '<'));
+		$bSanitizeComments = ($comments !== '' && mb_strpos($comments, '<') !== false);
+		$bSanitizeUserDescription = ($userDescription !== '' && mb_strpos($userDescription, '<') !== false);
 		if ($bSanitizeComments || $bSanitizeUserDescription)
 		{
 			$sanitizer = new CBXSanitizer();
@@ -486,8 +486,8 @@ class CCrmInvoiceRestService extends IRestService
 		$updateUserDescription = isset($fields['USER_DESCRIPTION']);
 		$comments = $updateComments ? trim($fields['COMMENTS']) : '';
 		$userDescription = $updateUserDescription ? trim($fields['USER_DESCRIPTION']) : '';
-		$bSanitizeComments = ($comments !== '' && mb_strpos($comments, '<'));
-		$bSanitizeUserDescription = ($userDescription !== '' && mb_strpos($userDescription, '<'));
+		$bSanitizeComments = ($comments !== '' && mb_strpos($comments, '<') !== false);
+		$bSanitizeUserDescription = ($userDescription !== '' && mb_strpos($userDescription, '<') !== false);
 		if ($bSanitizeComments || $bSanitizeUserDescription)
 		{
 			$sanitizer = new CBXSanitizer();

@@ -6,6 +6,7 @@ use Bitrix\Bizproc\Automation\Helper;
 use Bitrix\Bizproc\Workflow\Template\SourceType;
 use Bitrix\Bizproc\Workflow\Type\GlobalConst;
 use Bitrix\Bizproc\Workflow\Type\GlobalVar;
+use Bitrix\Crm;
 use Bitrix\Crm\Automation\TunnelManager;
 use Bitrix\Crm\Color\PhaseColorScheme;
 use Bitrix\Crm\Controller\ErrorCode;
@@ -151,7 +152,12 @@ class Category extends Controller
 	 */
 	public function getListAction(Factory $factory): Dto\CategoryList
 	{
-		return $this->getCategoryList($factory);
+		if ($factory->isCategoriesSupported())
+		{
+			return $this->getCategoryList($factory);
+		}
+
+		return new Dto\CategoryList();
 	}
 
 	/**
@@ -161,7 +167,42 @@ class Category extends Controller
 	 */
 	public function getAction(Factory $factory, int $categoryId): ?Dto\Category
 	{
-		return $this->getCategoryById($factory, $categoryId);
+		if ($factory->isCategoriesSupported())
+		{
+			return $this->getCategoryById($factory, $categoryId);
+		}
+
+		return $this->getCategoryFromCategorylessEntity($factory, $categoryId);
+	}
+
+	private function getCategoryFromCategorylessEntity(Factory $factory, int $categoryId = 0): Dto\Category
+	{
+		$entityTypeId = $factory->getEntityTypeId();
+		$permissions = $this->getCategoryPermissions($entityTypeId, $categoryId);
+
+		$categoriesEnabled = $factory->isCategoriesEnabled();
+		$stagesEnabled = $factory->isStagesEnabled();
+		$tunnelsEnabled = $categoriesEnabled && $stagesEnabled;
+
+		$stages = $factory->getStages($categoryId);
+		$stageColors = $this->getStageColors($stages);
+		$stagesBySemantics = $this->getStagesBySemantics($stages, [], $stageColors);
+
+		return new Dto\Category([
+			'id' => 0,
+			'name' => $factory->getEntityDescriptionInPlural(),
+			'isDefault' => true,
+			'editable' => $this->canUserEditCategory(),
+			'access' => $this->getAccess($permissions),
+			'categoriesSupported' => $factory->isCategoriesSupported(),
+			'categoriesEnabled' => $categoriesEnabled,
+			'stagesEnabled' => $stagesEnabled,
+			'tunnelsEnabled' => $tunnelsEnabled,
+			'processStages' => $stagesBySemantics[PhaseSemantics::PROCESS] ?? [],
+			'successStages' => $stagesBySemantics[PhaseSemantics::SUCCESS] ?? [],
+			'failedStages' => $stagesBySemantics[PhaseSemantics::FAILURE] ?? [],
+			'documentFields' => $this->getUsedDocumentFields($entityTypeId),
+		]);
 	}
 
 	public function createAction(Factory $factory, array $fields): ?int
@@ -210,25 +251,18 @@ class Category extends Controller
 
 	public function updateAction(Factory $factory, int $categoryId, array $fields): void
 	{
-		$category = $factory->getCategory($categoryId);
-		if (!$category)
+		if (!$this->canUpdateCategory($factory, $categoryId))
 		{
-			$this->addError(ErrorCode::getNotFoundError());
 			return;
 		}
 
-		if (!Container::getInstance()->getUserPermissions()->canUpdateCategory($category))
-		{
-			$this->addError(ErrorCode::getAccessDeniedError());
-			return;
-		}
-
-		$entityId = $factory->getStagesEntityId($category->getId());
+		$entityId = $factory->getStagesEntityId($categoryId);
 		$stages = array_merge(
 			$fields['processStages'] ?? [],
 			$fields['successStages'] ?? [],
 			$fields['failedStages'] ?? [],
 		);
+
 		foreach ($stages as $stage)
 		{
 			$stageResult = $this->updateStageSort($entityId, $stage['id'], $stage['sort']);
@@ -239,33 +273,90 @@ class Category extends Controller
 			}
 		}
 
-		$name = $fields['name'] ?? '';
-		if ($name)
+		$newCategoryName = ($fields['name'] ?? null);
+		if (!$this->updateCategoryName($factory, $categoryId, $newCategoryName))
 		{
-			$category->setName($name);
-		}
-		$result = $category->save();
-
-		if (!$result->isSuccess())
-		{
-			$this->addErrors($result->getErrors());
 			return;
 		}
 
-		if (
-			in_array(
-				$fields['access'],
-				[UserPermissions::PERMISSION_ALL, UserPermissions::PERMISSION_SELF, UserPermissions::PERMISSION_NONE],
-				true
-			)
-		)
+		$permissions = [
+			UserPermissions::PERMISSION_ALL,
+			UserPermissions::PERMISSION_SELF,
+			UserPermissions::PERMISSION_NONE,
+		];
+		$entityTypeId = $factory->getEntityTypeId();
+		if (in_array($fields['access'], $permissions, true))
 		{
-			$this->setAccess($factory->getEntityTypeId(), $fields['id'], $fields['access']);
+			$this->setAccess($entityTypeId, $fields['id'], $fields['access']);
 		}
 		elseif (is_numeric($fields['access']))
 		{
-			$this->copyAccessCategory($factory->getEntityTypeId(), $fields['id'], (int)$fields['access']);
+			$this->copyAccessCategory($entityTypeId, $fields['id'], (int)$fields['access']);
 		}
+	}
+
+	private function canUpdateCategory(Factory $factory, int $categoryId): bool
+	{
+		$isCategoriesEnabled = $factory->isCategoriesEnabled();
+		if ($isCategoriesEnabled)
+		{
+			$category = $this->getCategoryFromFactory($factory, $categoryId);
+			if (!$category)
+			{
+				return false;
+			}
+
+			if (!Container::getInstance()->getUserPermissions()->canUpdateCategory($category))
+			{
+				$this->addError(ErrorCode::getAccessDeniedError());
+				return false;
+			}
+		}
+		elseif (!Container::getInstance()->getUserPermissions()->canUpdateType($factory->getEntityTypeId()))
+		{
+			$this->addError(ErrorCode::getAccessDeniedError());
+			return false;
+		}
+
+		return true;
+	}
+
+	private function updateCategoryName(Factory $factory, int $categoryId, ?string $name): bool
+	{
+		if (!$name || !$factory->isCategoriesEnabled())
+		{
+			return true;
+		}
+
+		$category = $this->getCategoryFromFactory($factory, $categoryId);
+		if (!$category)
+		{
+			return false;
+		}
+
+		$category->setName($name);
+		$result = $category->save();
+		if ($result->isSuccess())
+		{
+			return true;
+		}
+
+		$this->addErrors($result->getErrors());
+
+		return false;
+	}
+
+	private function getCategoryFromFactory(Factory $factory, int $categoryId): ?Crm\Category\Entity\Category
+	{
+		$category = $factory->getCategory($categoryId);
+		if ($category)
+		{
+			return $category;
+		}
+
+		$this->addError(ErrorCode::getNotFoundError());
+
+		return null;
 	}
 
 	private function setAccess(int $entityTypeId, int $categoryId, string $access): void
@@ -305,8 +396,7 @@ class Category extends Controller
 	 */
 	public function getCountersAction(Factory $factory, int $categoryId, array $params = []): ?array
 	{
-		$category = $this->getEntity($factory, $categoryId);
-		if ($category === null)
+		if (!$this->canViewItems($factory, $categoryId))
 		{
 			return null;
 		}
@@ -424,7 +514,7 @@ class Category extends Controller
 	{
 		$categories = [];
 		$restrictions = [];
-		$canUserEditCategory = Container::getInstance()->getUserPermissions()->canWriteConfig();
+		$canUserEditCategory = $this->canUserEditCategory();
 
 		$sortedTunnelsByCategory = [];
 		if ($canUserEditCategory)
@@ -492,6 +582,11 @@ class Category extends Controller
 		]);
 	}
 
+	private function canUserEditCategory(): bool
+	{
+		return Container::getInstance()->getUserPermissions()->canWriteConfig();
+	}
+
 	private function getCategoriesCollection(Factory $factory): array
 	{
 		return
@@ -511,8 +606,7 @@ class Category extends Controller
 	private function getCategoryById(Factory $factory, int $categoryId): ?Dto\Category
 	{
 		$categoryNotFound = false;
-		$category = $factory->getCategory($categoryId);
-
+		$category = ($factory->isCategoriesSupported() ? $factory->getCategory($categoryId) : null);
 		if (!$category)
 		{
 			$categoryNotFound = true;
@@ -529,12 +623,17 @@ class Category extends Controller
 			return null;
 		}
 
+		$categoriesEnabled = $factory->isCategoriesEnabled();
+		$stagesEnabled = $factory->isStagesEnabled();
+		$tunnelsEnabled = $categoriesEnabled && $stagesEnabled;
+
 		$stageObjects = $factory->getStages($categoryId);
 		$stageColors = $this->getStageColors($stageObjects);
-
 		$canUserEditCategory = Container::getInstance()->getUserPermissions()->canWriteConfig();
+
 		$filteredTunnelsByCategory = [];
-		if ($canUserEditCategory)
+
+		if ($tunnelsEnabled && $canUserEditCategory)
 		{
 			$tunnelScheme = (new TunnelManager($factory->getEntityTypeId()))->getScheme();
 
@@ -556,12 +655,47 @@ class Category extends Controller
 				}, []);
 		}
 
+		$stagesBySemantics = $this->getStagesBySemantics($stageObjects, $filteredTunnelsByCategory, $stageColors);
+
+		if ($categoryNotFound && empty($stagesBySemantics))
+		{
+			$this->addError(ErrorCode::getNotFoundError());
+
+			return null;
+		}
+
+		$entityTypeId = $factory->getEntityTypeId();
+		$permissions = $this->getCategoryPermissions($entityTypeId, $categoryId);
+
+		return new Dto\Category([
+			'id' => $category->getId(),
+			'name' => $categoriesEnabled ? $category->getName() : $factory->getEntityDescriptionInPlural(),
+			'isDefault' => $category->getIsDefault(),
+			'editable' => $this->canUserEditCategory(),
+			'access' => $this->getAccess($permissions),
+			'categoriesSupported' => $factory->isCategoriesSupported(),
+			'categoriesEnabled' => $categoriesEnabled,
+			'stagesEnabled' => $stagesEnabled,
+			'tunnelsEnabled' => $tunnelsEnabled,
+			'processStages' => $stagesBySemantics[PhaseSemantics::PROCESS] ?? [],
+			'successStages' => $stagesBySemantics[PhaseSemantics::SUCCESS] ?? [],
+			'failedStages' => $stagesBySemantics[PhaseSemantics::FAILURE] ?? [],
+			'documentFields' => $this->getUsedDocumentFields($entityTypeId),
+		]);
+	}
+
+	private function getStagesBySemantics(
+		EO_Status_Collection $stageObjects,
+		array $filteredTunnelsByCategory = [],
+		array $stageColors = []
+	): array
+	{
 		$stagesBySemantics = [];
 
 		foreach ($stageObjects as $stage)
 		{
 			$statusId = $stage->getStatusId();
-			$semanticId = $stage->getSemantics() ?? PhaseSemantics::PROCESS;
+			$semanticId = ($stage->getSemantics() ?? PhaseSemantics::PROCESS);
 			$semanticId = $semanticId ?: PhaseSemantics::PROCESS;
 			$color = $stageColors[$statusId]['COLOR'] ?? $stage->getColor();
 
@@ -572,32 +706,17 @@ class Category extends Controller
 				'statusId' => $statusId,
 				'semantics' => $semanticId,
 				'color' => $color,
-				'tunnels' => $filteredTunnelsByCategory[$statusId] ?? [],
+				'tunnels' => ($filteredTunnelsByCategory[$statusId] ?? []),
 			];
 		}
 
-		if ($categoryNotFound && empty($stagesBySemantics))
-		{
-			$this->addError(ErrorCode::getNotFoundError());
+		return $stagesBySemantics;
+	}
 
-			return null;
-		}
-
-		$entityTypeId = $factory->getEntityTypeId();
+	private function getCategoryPermissions(int $entityTypeId, int $categoryId = 0): array
+	{
 		$permissionEntityName = UserPermissions::getPermissionEntityType($entityTypeId, $categoryId);
-		$permissions = RolePermission::getByEntityId($permissionEntityName);
-
-		return new Dto\Category([
-			'id' => $category->getId(),
-			'name' => $category->getName(),
-			'isDefault' => $category->getIsDefault(),
-			'editable' => $canUserEditCategory,
-			'access' => $this->getAccess($permissions),
-			'processStages' => $stagesBySemantics[PhaseSemantics::PROCESS] ?? [],
-			'successStages' => $stagesBySemantics[PhaseSemantics::SUCCESS] ?? [],
-			'failedStages' => $stagesBySemantics[PhaseSemantics::FAILURE] ?? [],
-			'documentFields' => $this->getUsedDocumentFields($entityTypeId),
-		]);
+		return RolePermission::getByEntityId($permissionEntityName);
 	}
 
 	private function getUsedDocumentFields(int $entityTypeId): array
@@ -700,22 +819,39 @@ class Category extends Controller
 		return $tunnelDocumentFields[$entityTypeId];
 	}
 
-	private function getEntity(Factory $factory, int $categoryId): ?\Bitrix\Crm\Category\Entity\Category
+	private function canViewItems(Factory $factory, int $categoryId): bool
 	{
-		$category = $factory->getCategory($categoryId);
-		if (!$category)
+		if ($factory->isCategoriesSupported())
 		{
-			$this->addError(ErrorCode::getNotFoundError());
-			return null;
+			$category = $factory->getCategory($categoryId);
+
+			if (!$category)
+			{
+				$this->addError(ErrorCode::getNotFoundError());
+				return false;
+			}
+
+			if (!Container::getInstance()->getUserPermissions()->canViewItemsInCategory($category))
+			{
+				$this->addError(ErrorCode::getAccessDeniedError());
+				return false;
+			}
+
+			return true;
 		}
 
-		if (!Container::getInstance()->getUserPermissions()->canViewItemsInCategory($category))
+		$canRead = Container::getInstance()
+			->getUserPermissions()
+			->checkReadPermissions($factory->getEntityTypeId(), 0, $categoryId)
+		;
+
+		if (!$canRead)
 		{
 			$this->addError(ErrorCode::getAccessDeniedError());
-			return null;
+			return false;
 		}
 
-		return $category;
+		return true;
 	}
 
 	private function prepareTunnelData(Factory $factory, array $tunnel, array $stageColors = []): ?array

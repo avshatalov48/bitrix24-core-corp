@@ -2,6 +2,7 @@
 
 use Bitrix\Main\Routing\RoutingConfigurator;
 use Bitrix\Main\Routing\Controllers\PublicPageController;
+use Bitrix\Bitrix24\Sso\Scim;
 
 return function (RoutingConfigurator $routes) {
 
@@ -75,6 +76,9 @@ return function (RoutingConfigurator $routes) {
 
 		$routes->any('calendar-sharing/{hash}/', new PublicPageController('/pub/calendar_sharing.php'))
 			->where('hash', '[0-9a-zA-Z]+');
+
+		$routes->any('payment-slip/{signed_payment_id}/', new PublicPageController('/pub/payment_slip.php'))
+			->where('signed_payment_id', '[\w\W]+');
 	});
 
 	$routes->any('/pub/', new PublicPageController('/pub/payment.php'));
@@ -319,4 +323,23 @@ return function (RoutingConfigurator $routes) {
 
 	$routes->any('/conference/{any}', new PublicPageController('/conference/index.php'))
 		->where('any', '.*');
+
+//scim azure
+	$routes
+		->prefix('integration/scim/v2.0')
+		->group(function (RoutingConfigurator $routes) {
+			$routes->get('Users', [Scim\Controller\UserController::class, 'list'])->name('AzureProvisioning.Users');
+			$routes->get('Users/{id}', [Scim\Controller\UserController::class, 'get'])->name('AzureProvisioning.User');
+			$routes->post('Users', [Scim\Controller\UserController::class, 'create'])->name('AzureProvisioning.User.Create');
+			$routes->patch('Users/{id}', [Scim\Controller\UserController::class, 'update'])->name('AzureProvisioning.User.Update');
+			$routes->put('Users/{id}', [Scim\Controller\UserController::class, 'replace'])->name('AzureProvisioning.User.Replace');
+			$routes->delete('Users/{id}', [Scim\Controller\UserController::class, 'delete'])->name('AzureProvisioning.User.Delete');
+
+			$routes->get('ServiceProviderConfig', [Scim\Controller\ServiceProviderConfigController::class, 'index']);
+			$routes->get('Schemas', [Scim\Controller\SchemaController::class, 'index']);
+			$routes->get('Schemas/{id}', [Scim\Controller\SchemaController::class, 'get'])->name('AzureProvisioning.Schemas');
+			$routes->get('ResourceTypes', [Scim\Controller\ResourceTypesController::class, 'index']);
+			$routes->get('ResourceTypes/{id}', [Scim\Controller\ResourceTypesController::class, 'get'])->name('AzureProvisioning.ResourceType');
+		}
+	);
 };

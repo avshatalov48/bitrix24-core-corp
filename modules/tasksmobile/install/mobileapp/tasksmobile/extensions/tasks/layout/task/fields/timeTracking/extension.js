@@ -40,12 +40,8 @@ jn.define('tasks/layout/task/fields/timeTracking', (require, exports, module) =>
 		{
 			return {
 				...this.props.deepMergeStyles,
-				wrapper: {
-					...this.props.deepMergeStyles.wrapper,
-					marginHorizontal: 10,
-				},
-				readOnlyWrapper: {
-					...this.props.deepMergeStyles.readOnlyWrapper,
+				externalWrapper: {
+					...this.props.deepMergeStyles.externalWrapper,
 					marginHorizontal: 10,
 				},
 			};
@@ -101,7 +97,7 @@ jn.define('tasks/layout/task/fields/timeTracking', (require, exports, module) =>
 				View({
 					style: {
 						height: 0.5,
-						backgroundColor: '#e6e6e6',
+						backgroundColor: '#e6e7e9',
 					},
 				}),
 				field,

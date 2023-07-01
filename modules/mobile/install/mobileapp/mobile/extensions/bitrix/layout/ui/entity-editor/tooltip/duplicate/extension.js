@@ -30,6 +30,7 @@ jn.define('layout/ui/entity-editor/tooltip/duplicate', (require, exports, module
 			this.fieldRef = null;
 			this.fieldValueMap = {
 				title: ['TITLE'],
+				companyTitle: ['COMPANY_TITLE'],
 				fullName: ['NAME', 'LAST_NAME', 'SECOND_NAME'],
 			};
 			this.customEventEmitter = EventEmitter.createWithUid(this.props.uid);
@@ -129,7 +130,7 @@ jn.define('layout/ui/entity-editor/tooltip/duplicate', (require, exports, module
 
 		initialize(fieldRef)
 		{
-			const { fieldType, entityType, entityId } = this.props;
+			const { fieldType, entityTypeName, entityId } = this.props;
 			this.fieldRef = fieldRef;
 
 			return new Promise((resolve) => {
@@ -137,10 +138,11 @@ jn.define('layout/ui/entity-editor/tooltip/duplicate', (require, exports, module
 						.then((values) =>
 							Duplicates.find({
 								entityId,
-								entityType,
+								entityTypeName,
 								values,
 								duplicateControl: this.getDuplicateControl(),
-							}))
+							}),
+						)
 						.then((duplicates) => {
 							const { TOTAL_DUPLICATES } = duplicates;
 							const color = this.getColor();
@@ -151,7 +153,7 @@ jn.define('layout/ui/entity-editor/tooltip/duplicate', (require, exports, module
 									message: Duplicates.getTooltipContent({
 										duplicates,
 										fieldType,
-										entityType,
+										entityTypeName,
 										color,
 										parentUid: fieldRef.uid,
 										isAllowed: this.isAllowed(),

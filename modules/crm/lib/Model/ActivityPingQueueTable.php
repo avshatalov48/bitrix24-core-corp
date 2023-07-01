@@ -8,6 +8,22 @@ use Bitrix\Main\ORM\Fields\DatetimeField;
 use Bitrix\Main\ORM\Fields\IntegerField;
 use Bitrix\Main\Type\DateTime;
 
+/**
+ * Class ActivityPingQueueTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_ActivityPingQueue_Query query()
+ * @method static EO_ActivityPingQueue_Result getByPrimary($primary, array $parameters = [])
+ * @method static EO_ActivityPingQueue_Result getById($id)
+ * @method static EO_ActivityPingQueue_Result getList(array $parameters = [])
+ * @method static EO_ActivityPingQueue_Entity getEntity()
+ * @method static \Bitrix\Crm\Model\EO_ActivityPingQueue createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Model\EO_ActivityPingQueue_Collection createCollection()
+ * @method static \Bitrix\Crm\Model\EO_ActivityPingQueue wakeUpObject($row)
+ * @method static \Bitrix\Crm\Model\EO_ActivityPingQueue_Collection wakeUpCollection($rows)
+ */
 class ActivityPingQueueTable extends DataManager
 {
 	public static function getTableName(): string

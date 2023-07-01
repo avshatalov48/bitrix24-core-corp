@@ -4,6 +4,7 @@
 jn.define('layout/ui/empty-screen', (require, exports, module) => {
 
 	const { stringify } = require('utils/string');
+	const { mergeImmutable } = require('utils/object');
 
 	/**
 	 * @class EmptyScreen
@@ -52,6 +53,43 @@ jn.define('layout/ui/empty-screen', (require, exports, module) => {
 			return stringify(this.props.description);
 		}
 
+		get styles()
+		{
+			return BX.prop.get(this.props, 'styles', {});
+		}
+
+		get containerStyle()
+		{
+			const defaultStyles = {
+				flexDirection: 'column',
+				flexGrow: 1,
+				justifyContent: 'center',
+				alignItems: 'center',
+				paddingHorizontal: 35,
+			};
+
+			if (this.styles.container)
+			{
+				return mergeImmutable(defaultStyles, this.styles.container);
+			}
+
+			return defaultStyles;
+		}
+
+		get iconStyle()
+		{
+			const defaultStyles = {
+				marginBottom: 36,
+			};
+
+			if (this.styles.icon)
+			{
+				return mergeImmutable(defaultStyles, this.styles.icon);
+			}
+
+			return defaultStyles;
+		}
+
 		/**
 		 * @return {boolean}
 		 */
@@ -97,13 +135,7 @@ jn.define('layout/ui/empty-screen', (require, exports, module) => {
 					},
 					View(
 						{
-							style: {
-								flexDirection: 'column',
-								flexGrow: 1,
-								justifyContent: 'center',
-								alignItems: 'center',
-								paddingHorizontal: 35,
-							},
+							style: this.containerStyle,
 						},
 						this.renderIcon(),
 						this.renderTitle(),
@@ -122,9 +154,7 @@ jn.define('layout/ui/empty-screen', (require, exports, module) => {
 
 			return View(
 				{
-					style: {
-						marginBottom: 36,
-					}
+					style: this.iconStyle
 				},
 				Image(this.image)
 			);

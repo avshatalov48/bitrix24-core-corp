@@ -202,11 +202,22 @@ class CDavGroupdavClient
 		}
 		if ($dav = $response->GetHeader('DAV'))
 		{
-			$ar = explode(",", $dav);
+			$ar = [];
+			if (is_string($dav))
+			{
+				$ar = explode(",", $dav);
+			}
+			else if (is_array($dav))
+			{
+				$ar = $dav;
+			}
+
 			foreach ($ar as $v)
 			{
-				if (trim($v)."!" == "1!")
+				if (trim($v)."!" === "1!")
+				{
 					return true;
+				}
 			}
 		}
 

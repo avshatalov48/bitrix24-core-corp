@@ -38,14 +38,6 @@ class UserTable extends \Bitrix\Main\UserTable
 		$conditionList = [];
 		$externalUserTypesUsed = [];
 
-		if (ModuleManager::isModuleInstalled('replica'))
-		{
-			$conditionList[] = [
-				'PATTERN' => 'EXTERNAL_AUTH_ID',
-				'VALUE' => "WHEN %s = 'replica' THEN 'network'"
-			];
-			$externalUserTypesUsed[] = 'replica';
-		}
 		if (ModuleManager::isModuleInstalled('sale'))
 		{
 			$conditionList[] = [

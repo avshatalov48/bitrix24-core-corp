@@ -60,10 +60,6 @@ type Params = {
 	backlog: BacklogParams,
 	sprints: Array<SprintParams>,
 	views: Views,
-	tags: {
-		epic: Array<EpicType>,
-		task: Array
-	},
 	defaultResponsible: ResponsibleType,
 	pageSize: number,
 	isShortView: 'Y' | 'N',
@@ -120,9 +116,6 @@ export class Plan extends View
 			filter: this.filter,
 			groupId: params.groupId,
 			tagsAreConverting: params.tagsAreConverting,
-		});
-		Object.values(params.tags.epic).forEach((epic) => {
-			this.tagSearcher.addEpicToSearcher(epic);
 		});
 
 		this.planBuilder = new PlanBuilder({
@@ -362,9 +355,7 @@ export class Plan extends View
 		sprint.subscribe('toggleActionPanel', this.onToggleActionPanel.bind(this));
 		sprint.subscribe('showLinked', this.onShowLinked.bind(this));
 		sprint.subscribe('showDropzone', this.onShowDropZone.bind(this));
-		sprint.subscribe('toggleVisibilityContent', () => {
-			this.planBuilder.adjustSprintListWidth();
-		});
+		sprint.subscribe('toggleVisibilityContent', this.onToggleVisibilityContent.bind(this));
 		sprint.subscribe('deactivateGroupMode', this.onDeactivateGroupMode.bind(this));
 	}
 
@@ -469,8 +460,17 @@ export class Plan extends View
 		}
 	}
 
-	onOpenAddTaskForm()
+	onOpenAddTaskForm(baseEvent: BaseEvent)
 	{
+		const header: ?BacklogHeader = baseEvent.getData();
+
+		this.sidePanel.subscribeOnce('onLoadSidePanel', () => {
+			if (!Type.isPlainObject(header))
+			{
+				header.unLockTaskButton();
+			}
+		});
+
 		this.sidePanel.openSidePanelByUrl(this.pathToTaskCreate.replace('#task_id#', 0));
 	}
 
@@ -826,6 +826,8 @@ export class Plan extends View
 		this.requestSender.changeSprintDeadline(requestData)
 			.then((response) => {
 				const sprintData = response.data;
+				sprint.setDateStartFormatted(sprintData.dateStartFormatted);
+				sprint.setDateEndFormatted(sprintData.dateEndFormatted);
 				sprint.setDateStart(sprintData.dateStart);
 				sprint.setDateEnd(sprintData.dateEnd);
 			})
@@ -865,6 +867,12 @@ export class Plan extends View
 					if (!sprint.getItems().has(item.getId()))
 					{
 						item.setDisableStatus(sprint.isDisabled());
+						if (item.isParentTask())
+						{
+							item.setToggle(false);
+							item.setParentTask(false);
+						}
+
 						sprint.appendItemToList(item);
 						sprint.setItem(item);
 					}
@@ -1255,10 +1263,27 @@ export class Plan extends View
 		}, 200);
 	}
 
+	onToggleVisibilityContent(baseEvent: BaseEvent)
+	{
+		const sprint: Sprint = baseEvent.getTarget();
+
+		this.planBuilder.adjustSprintListWidth();
+
+		if (!sprint.isCompleted())
+		{
+			this.requestSender.saveSprintVisibility({
+				sprintId: sprint.getId(),
+				isHidden: sprint.isHideContent() ? 'Y' : 'N'
+			});
+		}
+	}
+
 	loadItems(entity: Entity)
 	{
 		if (this.loadItemsRepeatCounter.get(entity.getId()) > 1)
 		{
+			entity.unbindItemsLoader();
+
 			return;
 		}
 
@@ -1268,8 +1293,6 @@ export class Plan extends View
 		{
 			entity.getListItems().addScrollbar();
 		}
-
-		const loader = entity.showItemsLoader();
 
 		const requestData = {
 			entityId: entity.getId(),
@@ -1282,6 +1305,11 @@ export class Plan extends View
 				const items = response.data;
 
 				entity.setActiveLoadItems(false);
+
+				if (entity.isHideContent())
+				{
+					return;
+				}
 
 				if (Type.isArray(items) && items.length)
 				{
@@ -1309,11 +1337,13 @@ export class Plan extends View
 
 						this.loadItems(entity);
 					}
+					else
+					{
+						entity.unbindItemsLoader();
+					}
 				}
-				loader.hide();
 			})
 			.catch((response) => {
-				loader.hide();
 				entity.setActiveLoadItems(false);
 				this.requestSender.showErrorAlert(response);
 			})
@@ -1464,11 +1494,12 @@ export class Plan extends View
 
 							return;
 						}
+						const groupItems = entity.getGroupModeItems();
 						this.diskManager = new DiskManager({
 							targetElement: event.currentTarget
 						});
 						this.diskManager.subscribe('onFinish', (baseEvent) => {
-							this.attachFilesToTask(entity, baseEvent.getData());
+							this.attachFilesToTask(entity, groupItems, baseEvent.getData());
 						});
 						this.diskManager.showAttachmentMenu(event.currentTarget);
 						this.actionPanel.subscribe('onDestroy', () => {
@@ -1733,7 +1764,7 @@ export class Plan extends View
 		return this.actionPanel;
 	}
 
-	attachFilesToTask(entity: Entity, attachedIds: Array<string>)
+	attachFilesToTask(entity: Entity, groupItems: Map<number, Item>, attachedIds: Array<string>)
 	{
 		if (attachedIds.length === 0)
 		{
@@ -1742,23 +1773,20 @@ export class Plan extends View
 
 		const itemIds = [];
 
-		entity.getGroupModeItems()
-			.forEach((groupModeItem: Item) => {
-				this.pullItem.addIdToSkipUpdating(groupModeItem.getId());
-				itemIds.push(groupModeItem.getId());
-			})
-		;
+		groupItems.forEach((item: Item) => {
+			this.pullItem.addIdToSkipUpdating(item.getId());
+
+			itemIds.push(item.getId());
+		});
 
 		this.requestSender.attachFilesToTask({
 			itemIds: itemIds,
 			attachedIds: attachedIds,
 		})
 			.then((response) => {
-				entity.getGroupModeItems()
-					.forEach((groupModeItem: Item) => {
-						groupModeItem.setFiles(response.data.attachedFilesCount[groupModeItem.getId()]);
-					})
-				;
+				groupItems.forEach((item: Item) => {
+					item.setFiles(response.data.attachedFilesCount[item.getId()]);
+				});
 				this.destroyActionPanel();
 				entity.deactivateGroupMode();
 			})
@@ -1869,17 +1897,19 @@ export class Plan extends View
 		this.tagSearcher.unsubscribeAll('updateItemEpic');
 		this.tagSearcher.subscribe('updateItemEpic', (innerBaseEvent: BaseEvent) => {
 			const itemIds = [];
-			const epicId = innerBaseEvent.getData();
+			const epic: EpicType = innerBaseEvent.getData();
+
 			entity.getGroupModeItems()
 				.forEach((groupModeItem: Item) => {
-					groupModeItem.setEpic(this.tagSearcher.getEpicById(epicId));
+					groupModeItem.setEpic(epic);
 					itemIds.push(groupModeItem.getId());
 					this.pullItem.addIdToSkipUpdating(groupModeItem.getId());
 				})
 			;
+
 			this.requestSender.updateItemEpics({
 				itemIds: itemIds,
-				epicId: epicId
+				epicId: epic.id
 			})
 				.then((response) => {})
 				.catch((response) => {

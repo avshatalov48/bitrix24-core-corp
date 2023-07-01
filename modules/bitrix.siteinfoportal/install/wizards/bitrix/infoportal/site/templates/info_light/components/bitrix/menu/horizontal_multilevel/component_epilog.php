@@ -1,5 +1,5 @@
 <?
-__IncludeLang(dirname(__FILE__).'/lang/'.LANGUAGE_ID.'/component_epilog.php');
+__IncludeLang(__DIR__.'/lang/'.LANGUAGE_ID.'/component_epilog.php');
 
 $APPLICATION->SetEditArea("horizontal-multilevel-menu", array(
 	array(

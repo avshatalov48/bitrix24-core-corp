@@ -1,12 +1,24 @@
-<? use Bitrix\Disk\Security\ParameterSigner;
+<?php
+
+use Bitrix\Disk\Security\ParameterSigner;
 
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 if (mb_strpos($this->__page, "show") === 0)
 {
-	$arParams["THUMB_SIZE"] = array_change_key_case(is_array($arParams["THUMB_SIZE"]) ? $arParams["THUMB_SIZE"] : array("width" => 69, "height" => 69), CASE_LOWER);
-	$arParams["MAX_SIZE"] = array_change_key_case((is_array($arParams["MAX_SIZE"]) ? $arParams["MAX_SIZE"] : array("width" => 800, "height" => 800)), CASE_LOWER);
-	$arParams["HTML_SIZE"] = array_change_key_case((is_array($arParams["HTML_SIZE"]) ? $arParams["HTML_SIZE"] : array("width" => 800, "height" => 800)), CASE_LOWER);
-	$arParams["SCREEN_SIZE"] = array("width" => 1024, "height" => 1024);
+	$rebuildCaseKeyParams = function (string $key, array $default) use($arParams) {
+		$newArray = $default;
+		if (isset($arParams[$key]) && is_array($arParams[$key]))
+		{
+			$newArray = $arParams[$key];
+		}
+
+		return array_change_key_case($newArray, CASE_LOWER);
+	};
+
+	$arParams["THUMB_SIZE"] = $rebuildCaseKeyParams("THUMB_SIZE", ["width" => 69, "height" => 69]);
+	$arParams["MAX_SIZE"] = $rebuildCaseKeyParams("MAX_SIZE", ["width" => 800, "height" => 800]);
+	$arParams["HTML_SIZE"] = $rebuildCaseKeyParams("HTML_SIZE", ["width" => 800, "height" => 800]);
+	$arParams["SCREEN_SIZE"] = ["width" => 1024, "height" => 1024];
 
 	$images = $files = $deletedFiles = array();
 	foreach ($arResult['FILES'] as $id => $file)
@@ -31,8 +43,9 @@ if (mb_strpos($this->__page, "show") === 0)
 				"width" => $file["IMAGE"]["WIDTH"],
 				"height" => $file["IMAGE"]["HEIGHT"]);
 
-			$arSize = array_change_key_case(is_array($arParams["SIZE"][ $file["ID"]]) ? $arParams["SIZE"][$file["ID"]] : array(), CASE_LOWER);
-			$bExactly = ($arSize["width"] > 0 && $arSize["height"] > 0);
+			$arSize = $arParams["SIZE"][$file["ID"]] ?? [];
+			$arSize = array_change_key_case($arSize, CASE_LOWER);
+			$bExactly = (isset($arSize["width"]) && isset($arSize["height"])) && ($arSize["width"] > 0 && $arSize["height"] > 0);
 
 			if (!empty($arParams["MAX_SIZE"]) && ($arParams["MAX_SIZE"]["width"] > 0 || $arParams["MAX_SIZE"]["height"] > 0))
 			{

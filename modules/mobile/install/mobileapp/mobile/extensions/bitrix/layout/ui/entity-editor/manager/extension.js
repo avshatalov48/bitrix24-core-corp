@@ -2,6 +2,12 @@
  * @module layout/ui/entity-editor/manager
  */
 jn.define('layout/ui/entity-editor/manager', (require, exports, module) => {
+
+	const { EntityEditor } = require('layout/ui/entity-editor');
+	const { EntityModel } = require('layout/ui/entity-editor/model');
+	const { EntityConfig } = require('layout/ui/entity-editor/config');
+	const { EntityScheme } = require('layout/ui/entity-editor/scheme');
+
 	/**
 	 * @class EntityManager
 	 */
@@ -11,25 +17,21 @@ jn.define('layout/ui/entity-editor/manager', (require, exports, module) => {
 		{
 			const {
 				uid,
-				componentId,
 				refCallback,
 				editorProps,
 				loadFromModel,
 				desktopUrl,
-				onScroll,
-				layout,
 				payload,
+				...restProps
 			} = settings;
 
 			const id = editorProps.GUID;
 
 			return new EntityEditor({
+				...restProps,
 				id: editorProps.GUID,
 				uid,
-				onScroll,
-				componentId,
 				ref: refCallback,
-				layout,
 				settings: {
 					loadFromModel,
 					entityTypeName: editorProps.ENTITY_TYPE_NAME,

@@ -2,6 +2,7 @@
 namespace Bitrix\Crm\Activity\Provider;
 
 use Bitrix\Crm\Activity\CommunicationStatistics;
+use Bitrix\Crm\Controller\ErrorCode;
 use Bitrix\Main;
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
@@ -10,9 +11,13 @@ Loc::loadMessages(__FILE__);
 
 class Base
 {
+	const ACTION_UPDATE = 'UPDATE';
+	const ACTION_ADD = 'ADD';
 	const COMMUNICATION_TYPE_UNDEFINED = '';
 	const COMMUNICATION_TYPE_PHONE = 'PHONE';
 	const COMMUNICATION_TYPE_EMAIL = 'EMAIL';
+
+	private static ?Error $completionDeniedError = null;
 
 	/**
 	 * @return string the fully qualified name of this class.
@@ -199,6 +204,11 @@ class Base
 		if ($direction === \CCrmActivityDirection::Incoming)
 			return false;
 
+		return true;
+	}
+
+	public static function isActivityEditable(array $activity = [], int $userId = 0): bool
+	{
 		return true;
 	}
 
@@ -465,6 +475,17 @@ class Base
 	}
 
 	/**
+	 * Activity before complete callback
+	 *
+	 * @param int $id
+	 * @param array $activityFields
+	 * @param array|null $params
+	 */
+	public static function onBeforeComplete(int $id, array $activityFields, array $params = null)
+	{
+	}
+
+	/**
 	 * Process activity creation.
 	 * @param array $activityFields
 	 * @param array|null $params
@@ -594,7 +615,7 @@ class Base
 		return false;
 	}
 
-	public function createActivity(string $typeId, array $fields): Main\Result
+	public function createActivity(string $typeId, array $fields, array $options = []): Main\Result
 	{
 		$result = new Main\Result();
 		if (!static::isTypeValid($typeId))
@@ -606,13 +627,13 @@ class Base
 		$fields['PROVIDER_ID'] = static::getId();
 		$fields['PROVIDER_TYPE_ID'] = $typeId;
 
+		$options['REGISTER_SONET_EVENT'] = (bool) ($options['REGISTER_SONET_EVENT'] ?? true);
+
 		$activityId = \CCrmActivity::Add(
 			$fields,
 			false,
 			true,
-			[
-				'REGISTER_SONET_EVENT' => true,
-			]
+			$options
 		);
 		if ($activityId > 0)
 		{
@@ -643,5 +664,28 @@ class Base
 	public static function getDefaultPingOffsets(): array
 	{
 		return [];
+	}
+
+	public static function skipCalendarSync(array $activityFields, array $options = []): bool
+	{
+		return false;
+	}
+
+	public static function isTask(): bool
+	{
+		return false;
+	}
+
+	public static function getCompletionDeniedError(): Error
+	{
+		return
+			is_null(self::$completionDeniedError)
+				? ErrorCode::getAccessDeniedError()
+				: self::$completionDeniedError;
+	}
+
+	public static function setCompletionDeniedError(string $errorMessage): void
+	{
+		self::$completionDeniedError = new Error($errorMessage, ErrorCode::ACCESS_DENIED);
 	}
 }

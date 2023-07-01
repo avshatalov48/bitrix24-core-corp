@@ -26,6 +26,7 @@ jn.define('layout/ui/product-grid/components/discount-price', (require, exports,
 				style: Styles.container,
 			},
 			Text({
+				testId: 'product-grid-summary-discount-old-price',
 				text: oldPrice.formatted,
 				style: Styles.oldPrice(customStyle),
 			}),
@@ -34,6 +35,7 @@ jn.define('layout/ui/product-grid/components/discount-price', (require, exports,
 					style: Styles.discountContainer(discount.amount, customStyle),
 				},
 				Text({
+					testId: 'product-grid-summary-discount-price',
 					text: `${sign}${discountAbs.formatted}`,
 					style: Styles.discountText(customStyle),
 				})

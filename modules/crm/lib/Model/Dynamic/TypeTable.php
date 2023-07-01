@@ -11,6 +11,7 @@ use Bitrix\Crm\Integration;
 use Bitrix\Crm\Integration\IntranetManager;
 use Bitrix\Crm\Integration\Recyclebin;
 use Bitrix\Crm\Model\AssignedTable;
+use Bitrix\Crm\Model\FieldContentTypeTable;
 use Bitrix\Crm\Model\ItemCategoryTable;
 use Bitrix\Crm\Observer\Entity\ObserverTable;
 use Bitrix\Crm\ProductRowTable;
@@ -20,6 +21,7 @@ use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Factory\Dynamic;
 use Bitrix\Crm\StatusTable;
 use Bitrix\Crm\Timeline\TimelineEntry;
+use Bitrix\Crm\Update\Entity\LastActivityFields;
 use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\DB\SqlExpression;
@@ -328,7 +330,11 @@ class TypeTable extends UserField\Internal\TypeDataManager
 		static::getTemporaryStorage()->saveData($primary, $typeData);
 
 		static::deleteItemIndexTable($typeData);
+
 		$entityTypeId = (int)$typeData['ENTITY_TYPE_ID'];
+
+		LastActivityFields::onAfterTypeDelete($entityTypeId);
+		FieldContentTypeTable::deleteByEntityTypeId($entityTypeId);
 		EventRelationsTable::deleteByEntityType(\CCrmOwnerType::ResolveName($entityTypeId));
 		TimelineEntry::deleteByAssociatedEntityType($entityTypeId);
 		ItemCategoryTable::deleteByEntityTypeId($entityTypeId);
@@ -651,11 +657,11 @@ class TypeTable extends UserField\Internal\TypeDataManager
 			'ix_crm_type_item_' . (int)$type['ID'] . '_company',
 			[\Bitrix\Crm\Item::FIELD_NAME_COMPANY_ID],
 		);
-		// self::createIndexIfNotExists(
-		// 	$type['TABLE_NAME'],
-		// 	'ix_crm_type_item_' . (int)$type['ID'] . '_last_activity_time',
-		// 	[\Bitrix\Crm\Item::FIELD_NAME_LAST_ACTIVITY_TIME],
-		// );
+		self::createIndexIfNotExists(
+			$type['TABLE_NAME'],
+			'ix_crm_type_item_' . (int)$type['ID'] . '_last_activity_time',
+			[\Bitrix\Crm\Item::FIELD_NAME_LAST_ACTIVITY_TIME],
+		);
 	}
 
 	private static function createIndexIfNotExists(string $tableName, string $indexName, array $columns): void
@@ -736,6 +742,14 @@ class TypeTable extends UserField\Internal\TypeDataManager
 			}
 		}
 
+		if (LastActivityFields::wereLastActivityColumnsAddedSuccessfullyOnModuleUpdate((int)$type['ENTITY_TYPE_ID']))
+		{
+			$fieldRepository = ServiceLocator::getInstance()->get('crm.model.fieldRepository');
+
+			$entity->addField($fieldRepository->getLastActivityBy());
+			$entity->addField($fieldRepository->getLastActivityTime());
+		}
+
 		return $entity;
 	}
 
@@ -745,18 +759,11 @@ class TypeTable extends UserField\Internal\TypeDataManager
 		{
 			$assignedByIdField = (new ORM\Fields\ArrayField('ASSIGNED_BY_ID'))
 				->configureUnserializeCallback([$dataClass, 'unserializeAssignedById'])
-				->configureDefaultValue(static function()
-				{
-					return [Container::getInstance()->getContext()->getUserId()];
-				});
+			;
 		}
 		else
 		{
-			$assignedByIdField = (new ORM\Fields\TextField('ASSIGNED_BY_ID'))
-				->configureDefaultValue(static function()
-				{
-					return Container::getInstance()->getContext()->getUserId();
-				});
+			$assignedByIdField = (new ORM\Fields\TextField('ASSIGNED_BY_ID'));
 		}
 		$assignedByIdField
 			->configureRequired()

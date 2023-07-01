@@ -3,9 +3,11 @@
 namespace Bitrix\Disk\Volume;
 
 use Bitrix\Main\Application;
+use Bitrix\Main\Entity\Query;
+use Bitrix\Disk;
 use Bitrix\Disk\Internals\ObjectTable;
 use Bitrix\Disk\Internals\ObjectPathTable;
-use \Bitrix\Main\Entity\Query;
+use Bitrix\Disk\Internals\VolumeTable;
 
 
 class QueryHelper
@@ -15,9 +17,9 @@ class QueryHelper
 	 * @param array $selectFields Selected fields.
 	 * @return string
 	 */
-	public static function prepareSelect(array $selectFields)
+	public static function prepareSelect(array $selectFields): string
 	{
-		$select = array();
+		$select = [];
 		foreach ($selectFields as $alias => $statement)
 		{
 			$select[] = "$statement as $alias";
@@ -38,13 +40,13 @@ class QueryHelper
 	 * @param array $filterAlias Aliases for the filter fields.
 	 * @return string
 	 */
-	public static function prepareWhere(array $filterFields, array $filterAlias = array())
+	public static function prepareWhere(array $filterFields, array $filterAlias = []): string
 	{
 		$sqlHelper = Application::getConnection()->getSqlHelper();
 
-		$where = array();
+		$where = [];
 		$logic = 'AND';
-		// todo: wrap it into recursive
+
 		foreach ($filterFields as $key => $val)
 		{
 			if ($key === 'LOGIC')
@@ -93,7 +95,7 @@ class QueryHelper
 				{
 					if (is_array($val) && count($val) > 0)
 					{
-						$val = array_map(array($sqlHelper, 'forSql'), $val);
+						$val = array_map([$sqlHelper, 'forSql'], $val);
 						$where[] = "$key IN('".implode("', '", $val)."')";
 					}
 					elseif (is_string($val) && $val <> '')
@@ -107,7 +109,7 @@ class QueryHelper
 				{
 					if (is_array($val) && count($val) > 0)
 					{
-						$val = array_map(array($sqlHelper, 'forSql'), $val);
+						$val = array_map([$sqlHelper, 'forSql'], $val);
 						$where[] = "$key NOT IN('".implode("', '", $val)."')";
 					}
 					elseif (is_string($val) && $val <> '')
@@ -128,9 +130,7 @@ class QueryHelper
 							unset($val['LOGIC']);
 						}
 
-						//$val = array_pop($val);
-
-						$condition = array();
+						$condition = [];
 						foreach ($val as $k => $v)
 						{
 							$subOperator = '=';
@@ -183,7 +183,7 @@ class QueryHelper
 	 * @param array $groupByFields Group by fields.
 	 * @return string
 	 */
-	public static function prepareGroupBy(array $groupByFields)
+	public static function prepareGroupBy(array $groupByFields): string
 	{
 		$groupBySql = '';
 		if (count($groupByFields))
@@ -201,9 +201,9 @@ class QueryHelper
 	 * @param string[] $fieldAlias Aliases for the order fields.
 	 * @return string
 	 */
-	public static function prepareOrder(array $orderFields, array $fieldAlias = array())
+	public static function prepareOrder(array $orderFields, array $fieldAlias = []): string
 	{
-		$order = array();
+		$order = [];
 		foreach ($orderFields as $field => $direction)
 		{
 			if (isset($fieldAlias[$field]))
@@ -227,7 +227,7 @@ class QueryHelper
 	 * @param array $selectFields Selected fields.
 	 * @return string
 	 */
-	public static function prepareInsert(array $columns, array $selectFields = array())
+	public static function prepareInsert(array $columns, array $selectFields = []): string
 	{
 		$sqlHelper = Application::getConnection()->getSqlHelper();
 
@@ -243,8 +243,8 @@ class QueryHelper
 			$columns['CREATE_TIME'] = new \Bitrix\Main\Type\DateTime();
 		}
 
-		$tableName = \Bitrix\Disk\Internals\VolumeTable::getTableName();
-		list($columnList, , ) = $sqlHelper->prepareInsert($tableName, $columns);
+		$tableName = VolumeTable::getTableName();
+		[$columnList,,] = $sqlHelper->prepareInsert($tableName, $columns);
 
 		return $columnList;
 	}
@@ -258,7 +258,7 @@ class QueryHelper
 	 * @param string $selectAlias Source query alias.
 	 * @return string
 	 */
-	public static function prepareUpdateOnSelect(array $columns, array $selectFields, $tableAlias = 'dest', $selectAlias = 'src')
+	public static function prepareUpdateOnSelect(array $columns, array $selectFields, $tableAlias = 'dest', $selectAlias = 'src'): string
 	{
 		$sqlHelper = Application::getConnection()->getSqlHelper();
 
@@ -270,10 +270,10 @@ class QueryHelper
 			}
 		}
 
-		$tableName = \Bitrix\Disk\Internals\VolumeTable::getTableName();
+		$tableName = VolumeTable::getTableName();
 		$tableFields = Application::getConnection()->getTableFields($tableName);
 
-		$columnList = array();
+		$columnList = [];
 		foreach ($columns as $columnName)
 		{
 			if (isset($tableFields[$columnName]))
@@ -292,17 +292,17 @@ class QueryHelper
 	 * @param int $parentId Top parent folder.
 	 * @return string
 	 */
-	public static function prepareFolderTreeQuery($parentId)
+	public static function prepareFolderTreeQuery($parentId): string
 	{
 		$subQuery = new Query(ObjectPathTable::getEntity());
 		$subQuery
-			->registerRuntimeField('folder', array(
-				'data_type' => '\Bitrix\Disk\Internals\ObjectTable',
-				'reference' => array(
+			->registerRuntimeField('folder', [
+				'data_type' => Disk\Internals\ObjectTable::class,
+				'reference' => [
 					'=this.OBJECT_ID' => 'ref.ID',
-				),
+				],
 				'join_type' => 'INNER',
-			))
+			])
 			->addSelect('OBJECT_ID')
 			->addFilter('=folder.TYPE', ObjectTable::TYPE_FOLDER)// type folder
 			->addFilter('=folder.ID', new \Bitrix\Main\DB\SqlExpression('disk_internals_object_path_folder.REAL_OBJECT_ID'))// not link

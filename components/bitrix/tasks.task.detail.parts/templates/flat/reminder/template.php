@@ -8,7 +8,7 @@ Loc::loadMessages(__FILE__);
 $APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
 
 $templateId = $arResult['TEMPLATE_DATA']['ID'];
-$prefix = htmlspecialcharsbx($arResult['TEMPLATE_DATA']['INPUT_PREFIX']);
+$prefix = htmlspecialcharsbx($arResult['TEMPLATE_DATA']['INPUT_PREFIX'] ?? null);
 ?>
 
 <div id="bx-component-scope-<?=htmlspecialcharsbx($templateId)?>">
@@ -32,7 +32,7 @@ $prefix = htmlspecialcharsbx($arResult['TEMPLATE_DATA']['INPUT_PREFIX']);
 
 	</div>
 
-    <?if($arResult['TEMPLATE_DATA']['ENABLE_ADD_BUTTON']):?>
+    <?if($arResult['TEMPLATE_DATA']['ENABLE_ADD_BUTTON'] ?? null):?>
 
         <div class="task-dashed-link">
             + <span data-bx-id="reminder-open-form" class="task-dashed-link-inner"><?=Loc::getMessage('TASKS_TTDP_TEMPLATE_REMINDER_ADD')?></span>
@@ -113,14 +113,14 @@ $prefix = htmlspecialcharsbx($arResult['TEMPLATE_DATA']['INPUT_PREFIX']);
 				'COMPANY_WORKTIME' => [
 					'HOURS' => $arResult['TEMPLATE_DATA']['COMPANY_WORKTIME']['HOURS'],
 				],
-				'CALENDAR_SETTINGS' => $arResult['CALENDAR_SETTINGS'],
+				'CALENDAR_SETTINGS' => ($arResult['CALENDAR_SETTINGS'] ?? null),
 			],
-			'data' => $arResult['TEMPLATE_DATA']['ITEMS']['DATA'],
-			'can' => $arResult['TEMPLATE_DATA']['ITEMS']['CAN'],
-			'taskId' => $arResult['TEMPLATE_DATA']['TASK_ID'],
-			'taskDeadline' => $arResult['TEMPLATE_DATA']['TASK_DEADLINE'],
-			'autoSync' => (bool)$arResult['TEMPLATE_DATA']['AUTO_SYNC'],
-			'itemFx' => ($arResult['TEMPLATE_DATA']['ITEM_FX'] === 'horizontal' ? 'horizontal' : 'vertical'),
+			'data' => ($arResult['TEMPLATE_DATA']['ITEMS']['DATA'] ?? null),
+			'can' => ($arResult['TEMPLATE_DATA']['ITEMS']['CAN'] ?? null),
+			'taskId' => ($arResult['TEMPLATE_DATA']['TASK_ID'] ?? null),
+			'taskDeadline' => ($arResult['TEMPLATE_DATA']['TASK_DEADLINE'] ?? null),
+			'autoSync' => (bool)($arResult['TEMPLATE_DATA']['AUTO_SYNC'] ?? null),
+			'itemFx' => (($arResult['TEMPLATE_DATA']['ITEM_FX'] ?? null) === 'horizontal' ? 'horizontal' : 'vertical'),
 			'itemFxHoverDelete' => true,
 		],
 		false,

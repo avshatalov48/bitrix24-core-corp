@@ -32,14 +32,17 @@ jn.define('animation/components/fade-view', (require, exports, module) => {
 			const fadeInOnMount = BX.prop.getBoolean(this.props, 'fadeInOnMount', false);
 			const fadeOutOnMount = BX.prop.getBoolean(this.props, 'fadeOutOnMount', false);
 
-			if (fadeInOnMount)
-			{
-				void this.fadeIn();
-			}
-			else if (fadeOutOnMount)
-			{
-				void this.fadeOut();
-			}
+			// android hack: we need small delay, to ensure this.containerRef is available
+			setTimeout(() => {
+				if (fadeInOnMount)
+				{
+					void this.fadeIn();
+				}
+				else if (fadeOutOnMount)
+				{
+					void this.fadeOut();
+				}
+			}, 50);
 		}
 
 		render()

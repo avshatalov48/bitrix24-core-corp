@@ -6,6 +6,8 @@ use Bitrix\Crm\Agent\Duplicate\Background\ContactMerge;
 use Bitrix\Crm\Agent\Duplicate\Volatile\IndexRebuild;
 use Bitrix\Crm\Agent\Requisite\ContactAddressConvertAgent;
 use Bitrix\Crm\Agent\Requisite\ContactUfAddressConvertAgent;
+use Bitrix\Crm\Component\EntityList\FieldRestrictionManager;
+use Bitrix\Crm\Component\EntityList\FieldRestrictionManagerTypes;
 use Bitrix\Crm\ContactAddress;
 use Bitrix\Crm\EntityAddress;
 use Bitrix\Crm\EntityAddressType;
@@ -20,7 +22,10 @@ use Bitrix\Crm\WebForm\Manager as WebFormManager;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
+{
+	die();
+}
 
 /**
  * @global \CMain $APPLICATION
@@ -103,8 +108,12 @@ $arResult['STEXPORT_TOTAL_ITEMS'] = isset($arParams['STEXPORT_TOTAL_ITEMS']) ?
 	(int)$arParams['STEXPORT_TOTAL_ITEMS'] : 0;
 //endregion
 
-$CCrmContact = new CCrmContact();
+$fieldRestrictionManager = new FieldRestrictionManager(
+	FieldRestrictionManager::MODE_GRID,
+	[FieldRestrictionManagerTypes::ACTIVITY]
+);
 
+$CCrmContact = new CCrmContact();
 if (!$isErrorOccured && $isInExportMode)
 {
 	if ($CCrmContact->cPerms->HavePerm(
@@ -471,6 +480,10 @@ if(isset($arNavParams['nPageSize']) && $arNavParams['nPageSize'] > 100)
 }
 //endregion
 
+//region Filter fields cleanup
+$fieldRestrictionManager->removeRestrictedFields($filterOptions, $gridOptions);
+//endregion
+
 //region Filter initialization
 if (!$bInternal)
 {
@@ -667,7 +680,7 @@ if ($factory && $category)
 	}
 }
 
-$CCrmUserType->ListAddHeaders($arResult['HEADERS']);
+$CCrmUserType->appendGridHeaders($arResult['HEADERS']);
 
 $arResult['HEADERS_SECTIONS'] = [
 	[
@@ -710,6 +723,15 @@ if ($isBizProcInstalled)
 		CJSCore::Init('bp_starter');
 	}
 }
+
+//region Check and fill fields restriction
+$restrictedFields = $fieldRestrictionManager->fetchRestrictedFields(
+	$arResult['GRID_ID'] ?? '',
+	$arResult['HEADERS'] ?? [],
+	$entityFilter ?? null
+);
+$arResult = array_merge($arResult, $restrictedFields);
+//endregion
 
 // list all filds for export
 $exportAllFieldsList = array();
@@ -1669,20 +1691,6 @@ else
 			$arSelectMap['POST'] = true;
 	}
 
-	if(isset($arSelectMap['ACTIVITY_ID']))
-	{
-		$arSelectMap['ACTIVITY_TIME'] =
-			$arSelectMap['ACTIVITY_SUBJECT'] =
-			$arSelectMap['C_ACTIVITY_ID'] =
-			$arSelectMap['C_ACTIVITY_TIME'] =
-			$arSelectMap['C_ACTIVITY_SUBJECT'] =
-			$arSelectMap['C_ACTIVITY_RESP_ID'] =
-			$arSelectMap['C_ACTIVITY_RESP_LOGIN'] =
-			$arSelectMap['C_ACTIVITY_RESP_NAME'] =
-			$arSelectMap['C_ACTIVITY_RESP_LAST_NAME'] =
-			$arSelectMap['C_ACTIVITY_RESP_SECOND_NAME'] = true;
-	}
-
 	if(isset($arSelectMap['CREATED_BY']))
 	{
 		$arSelectMap['CREATED_BY_LOGIN'] =
@@ -1808,6 +1816,13 @@ if(isset($arParams['IS_EXTERNAL_CONTEXT']))
 }
 
 $arSelect = array_unique(array_keys($arSelectMap), SORT_STRING);
+
+if (in_array('ACTIVITY_ID', $arSelect, true)) // Remove ACTIVITY_ID from $arSelect
+{
+	$arResult['NEED_ADD_ACTIVITY_BLOCK'] = true;
+	unset($arSelect[array_search('ACTIVITY_ID', $arSelect)]);
+	$arSelect = array_values($arSelect);
+}
 
 $arResult['CONTACT'] = array();
 $arResult['CONTACT_ID'] = array();
@@ -2353,13 +2368,6 @@ foreach($arResult['CONTACT'] as &$arContact)
 		true,
 		false
 	);
-
-	if (isset($arContact['~ACTIVITY_TIME']))
-	{
-		$time = MakeTimeStamp($arContact['~ACTIVITY_TIME']);
-		$arContact['~ACTIVITY_EXPIRED'] = $time <= $now;
-		$arContact['~ACTIVITY_IS_CURRENT_DAY'] = $arContact['~ACTIVITY_EXPIRED'] || CCrmActivity::IsCurrentDay($time);
-	}
 
 	if ($arResult['ENABLE_TASK'])
 	{

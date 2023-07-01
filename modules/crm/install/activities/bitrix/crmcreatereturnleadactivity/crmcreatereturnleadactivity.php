@@ -5,6 +5,10 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Crm\Automation\Starter;
+use Bitrix\Crm\Service\Container;
+use Bitrix\Main\Localization\Loc;
+
 class CBPCrmCreateReturnLeadActivity extends CBPActivity
 {
 	public function __construct($name)
@@ -39,50 +43,46 @@ class CBPCrmCreateReturnLeadActivity extends CBPActivity
 			return CBPActivityExecutionStatus::Closed;
 		}
 
-		$entityId = explode('_', $this->GetDocumentId()[2])[1];
+		$docId = $this->GetDocumentId();
+		[$entityTypeId, $entityId] = \CCrmBizProcHelper::resolveEntityId($docId);
+		$responsibleUserId = $this->getResponsibleUserId();
 
-		$dealFields = \CCrmDeal::GetListEx(
-			array(),
-			array('=ID' => $entityId, 'CHECK_PERMISSIONS' => 'N'),
-			false,
-			false,
-			array('COMPANY_ID', 'CONTACT_ID', 'ASSIGNED_BY_ID')
-		)->Fetch();
+		$leadFields = $this->getLeadFields($entityTypeId, $entityId, $responsibleUserId);
 
-		if(!$dealFields)
+		if (empty($leadFields))
 		{
-			$this->WriteToTrackingService(GetMessage('CRM_CRL_DEAL_NOT_EXISTS'), 0, CBPTrackingType::Error);
+			$this->WriteToTrackingService(
+				Loc::getMessage('CRM_CRL_DATA_NOT_EXISTS'),
+				0,
+				CBPTrackingType::Error
+			);
+
 			return CBPActivityExecutionStatus::Closed;
 		}
 
-		if (empty($dealFields['CONTACT_ID']) && empty($dealFields['COMPANY_ID']))
+		if (empty($leadFields['CONTACT_ID']) && empty($leadFields['COMPANY_ID']))
 		{
-			$this->WriteToTrackingService(GetMessage('CRM_CRL_NO_CLIENTS'), 0, CBPTrackingType::Error);
+			$this->WriteToTrackingService(
+				Loc::getMessage('CRM_CRL_NO_CLIENTS'),
+				0,
+				CBPTrackingType::Error
+			);
+
 			return CBPActivityExecutionStatus::Closed;
 		}
 
 		$leadTitle = $this->LeadTitle;
-		$responsibles = CBPHelper::ExtractUsers($this->Responsible, $this->GetDocumentId());
-		if (count($responsibles) > 1)
+		if (empty($leadTitle) || !is_string($leadTitle))
 		{
-			shuffle($responsibles);
-		}
-		elseif (!$responsibles)
-		{
-			$responsibles[] = $dealFields['ASSIGNED_BY_ID'];
+			$leadTitle = Loc::getMessage('CRM_CRL_LEAD_TITLE_DEFAULT');
 		}
 
-		if (empty($leadTitle))
+		if ($this->workflow->isDebug())
 		{
-			$leadTitle = GetMessage('CRM_CRL_LEAD_TITLE_DEFAULT');
+			$this->logDebug($leadTitle, $leadFields['ASSIGNED_BY_ID']);
 		}
 
-		$leadFields = [
-			'TITLE' => $leadTitle,
-			'ASSIGNED_BY_ID' => $responsibles[0],
-			'CONTACT_ID' => $dealFields['CONTACT_ID'],
-			'COMPANY_ID' => $dealFields['COMPANY_ID']
-		];
+		$leadFields['TITLE'] = $leadTitle;
 
 		$leadEntity = new \CCrmLead(false);
 
@@ -92,11 +92,9 @@ class CBPCrmCreateReturnLeadActivity extends CBPActivity
 			[
 				'REGISTER_SONET_EVENT' => true,
 				'CURRENT_USER' => 0,
-				'DISABLE_USER_FIELD_CHECK' => true
+				'DISABLE_USER_FIELD_CHECK' => true,
 			]
 		);
-
-		$this->logDebug($leadTitle, $responsibles[0]);
 
 		if (!$id)
 		{
@@ -104,9 +102,13 @@ class CBPCrmCreateReturnLeadActivity extends CBPActivity
 		}
 		else
 		{
-			$this->logDebugId($id);
+			if ($this->workflow->isDebug())
+			{
+				$this->logDebugId($id);
+			}
+
 			$this->LeadId = $id;
-			if (\COption::GetOptionString("crm", "start_bp_within_bp", "N") == "Y")
+			if (\COption::GetOptionString("crm", "start_bp_within_bp", "N") === "Y")
 			{
 				$CCrmBizProc = new \CCrmBizProc('LEAD');
 				if ($CCrmBizProc->CheckFields(false, true))
@@ -116,7 +118,7 @@ class CBPCrmCreateReturnLeadActivity extends CBPActivity
 			}
 
 			//Region automation
-			$starter = new \Bitrix\Crm\Automation\Starter(\CCrmOwnerType::Lead, $id);
+			$starter = new Starter(\CCrmOwnerType::Lead, $id);
 			$starter->setContextToBizproc()->runOnAdd();
 			//End region
 		}
@@ -124,12 +126,64 @@ class CBPCrmCreateReturnLeadActivity extends CBPActivity
 		return CBPActivityExecutionStatus::Closed;
 	}
 
-	public static function GetPropertiesDialog($documentType, $activityName, $arWorkflowTemplate, $arWorkflowParameters, $arWorkflowVariables, $arCurrentValues = null, $formName = '', $popupWindow = null, $siteId = '')
+	protected function getResponsibleUserId(): ?int
+	{
+		$responsible = CBPHelper::extractUsers($this->Responsible, $this->getDocumentId());
+		if ($responsible)
+		{
+			shuffle($responsible);
+
+			return (int)$responsible[0];
+		}
+
+		return null;
+	}
+
+	protected function getLeadFields(int $entityTypeId, int $entityId, ?int $responsibleUserId): ?array
+	{
+		$factory = Container::getInstance()->getFactory($entityTypeId);
+		if (!$factory)
+		{
+			return null;
+		}
+
+		$item = $factory->getItem($entityId);
+
+		if (!$item)
+		{
+			return null;
+		}
+
+		if (!$responsibleUserId)
+		{
+			$responsibleUserId = (int)$item->getAssignedById();
+		}
+
+		return [
+			'ASSIGNED_BY_ID' => $responsibleUserId,
+			'CONTACT_ID' => $item->getContactId(),
+			'COMPANY_ID' => $item->getCompanyId(),
+		];
+	}
+
+	public static function GetPropertiesDialog(
+		$documentType,
+		$activityName,
+		$arWorkflowTemplate,
+		$arWorkflowParameters,
+		$arWorkflowVariables,
+		$arCurrentValues = null,
+		$formName = '',
+		$popupWindow = null,
+		$siteId = ''
+	)
 	{
 		if (!CModule::IncludeModule("crm"))
+		{
 			return '';
+		}
 
-		$dialog = new \Bitrix\Bizproc\Activity\PropertiesDialog(__FILE__, array(
+		$dialog = new \Bitrix\Bizproc\Activity\PropertiesDialog(__FILE__, [
 			'documentType' => $documentType,
 			'activityName' => $activityName,
 			'workflowTemplate' => $arWorkflowTemplate,
@@ -137,30 +191,38 @@ class CBPCrmCreateReturnLeadActivity extends CBPActivity
 			'workflowVariables' => $arWorkflowVariables,
 			'currentValues' => $arCurrentValues,
 			'formName' => $formName,
-			'siteId' => $siteId
-		));
+			'siteId' => $siteId,
+		]);
 
 		$dialog->setMap(static::getPropertiesMap($documentType));
 
 		return $dialog;
 	}
 
-	public static function GetPropertiesDialogValues($documentType, $activityName, &$arWorkflowTemplate, &$arWorkflowParameters, &$arWorkflowVariables, $arCurrentValues, &$arErrors)
+	public static function GetPropertiesDialogValues(
+		$documentType,
+		$activityName,
+		&$arWorkflowTemplate,
+		&$arWorkflowParameters,
+		&$arWorkflowVariables,
+		$arCurrentValues,
+		&$arErrors
+	)
 	{
 		$arErrors = [];
 
-		$arProperties = array(
+		$arProperties = [
 			'LeadTitle' => $arCurrentValues["lead_title"],
 			'Responsible' => CBPHelper::UsersStringToArray($arCurrentValues["responsible"], $documentType, $arErrors),
-		);
+		];
 
-		if (count($arErrors) > 0)
+		if (!empty($arErrors))
 		{
 			return false;
 		}
 
 		$arErrors = self::ValidateProperties($arProperties, new CBPWorkflowTemplateUser(CBPWorkflowTemplateUser::CurrentUser));
-		if (count($arErrors) > 0)
+		if (!empty($arErrors))
 		{
 			return false;
 		}
@@ -175,13 +237,13 @@ class CBPCrmCreateReturnLeadActivity extends CBPActivity
 	{
 		return [
 			'LeadTitle' => [
-				'Name' => GetMessage('CRM_CRL_LEAD_TITLE'),
-				'Description' => GetMessage('CRM_CRL_LEAD_TITLE'),
+				'Name' => Loc::getMessage('CRM_CRL_LEAD_TITLE'),
+				'Description' => Loc::getMessage('CRM_CRL_LEAD_TITLE'),
 				'FieldName' => 'lead_title',
 				'Type' => 'string'
 			],
 			'Responsible' => [
-				'Name' => GetMessage('CRM_CRL_RESPONSIBLE'),
+				'Name' => Loc::getMessage('CRM_CRL_RESPONSIBLE'),
 				'FieldName' => 'responsible',
 				'Type' => 'user'
 			],

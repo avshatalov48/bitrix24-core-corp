@@ -5,14 +5,18 @@ namespace Bitrix\Crm\Component\EntityDetails;
 use Bitrix\Crm\Attribute\FieldAttributeManager;
 use Bitrix\Crm\Category\Entity\Category;
 use Bitrix\Crm\Component\ComponentError;
+use Bitrix\Crm\Component\EntityDetails\Traits;
 use Bitrix\Crm\Controller\Entity;
+use Bitrix\Crm\Entity\FieldContentType;
 use Bitrix\Crm\EO_Status;
 use Bitrix\Crm\Field;
 use Bitrix\Crm\Format\Money;
 use Bitrix\Crm\Integration;
 use Bitrix\Crm\Integration\DocumentGeneratorManager;
+use Bitrix\Crm\Integration\UI\EntityEditor\SupportsEditorProvider;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\ItemIdentifier;
+use Bitrix\Crm\MessageSender\Channel\ChannelRepository;
 use Bitrix\Crm\PhaseSemantics;
 use Bitrix\Crm\Product\Url\ProductBuilder;
 use Bitrix\Crm\Relation;
@@ -24,7 +28,6 @@ use Bitrix\Crm\Service\EditorAdapter;
 use Bitrix\Crm\Service\Factory;
 use Bitrix\Crm\Service\Operation;
 use Bitrix\Crm\Service\ParentFieldManager;
-use Bitrix\Crm\UserField\UserFieldManager;
 use Bitrix\Main\Application;
 use Bitrix\Main\Engine\Contract\Controllerable;
 use Bitrix\Main\Engine\Response\Json;
@@ -35,7 +38,9 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main\ObjectException;
 use Bitrix\Main\Request;
+use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\UserField\Dispatcher;
+use Bitrix\Main\UserField\Types\DateTimeType;
 use Bitrix\Main\UserField\Types\DoubleType;
 use Bitrix\Main\Web\Uri;
 use Bitrix\UI\Buttons;
@@ -43,8 +48,10 @@ use Bitrix\UI\Toolbar\ButtonLocation;
 use CCrmComponentHelper;
 use CLists;
 
-abstract class FactoryBased extends BaseComponent implements Controllerable
+abstract class FactoryBased extends BaseComponent implements Controllerable, SupportsEditorProvider
 {
+	use Traits\EditorInitialMode;
+
 	public const TAB_NAME_EVENT = 'tab_event';
 	public const TAB_NAME_PRODUCTS = 'tab_products';
 	public const TAB_NAME_TREE = 'tab_tree';
@@ -71,6 +78,8 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 	protected $parentIdentifiers;
 	protected $isReadOnly;
 
+	private bool $isSearchHistoryEnabled = true;
+
 	public function onPrepareComponentParams($arParams): array
 	{
 		$arParams['ENTITY_TYPE_ID'] = (int) $arParams['ENTITY_TYPE_ID'];
@@ -81,6 +90,22 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 		$this->fillParameterFromRequest('parentTypeId', $arParams);
 
 		return parent::onPrepareComponentParams($arParams);
+	}
+
+	public function initializeParams(array $params): void
+	{
+		$mergedParams = array_merge($this->arParams, $params);
+		$this->arParams = $this->onPrepareComponentParams($mergedParams);
+
+		if (isset($this->arParams['CATEGORY_ID']) && is_numeric($this->arParams['CATEGORY_ID']))
+		{
+			$this->setCategoryId((int)$this->arParams['CATEGORY_ID']);
+		}
+
+		if (!empty($this->arParams['ENABLE_SEARCH_HISTORY']))
+		{
+			$this->enableSearchHistory($this->arParams['ENABLE_SEARCH_HISTORY'] === 'Y');
+		}
 	}
 
 	public function setEntityTypeID(int $id): void
@@ -96,8 +121,15 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 	public function setEntityID($entityID): void
 	{
 		$this->entityID = $entityID;
+		$this->arParams['ENTITY_ID'] = $entityID;
+
 		$this->userFields = null;
 		$this->userFieldInfos = null;
+	}
+
+	public function enableSearchHistory($enable): void
+	{
+		$this->isSearchHistoryEnabled = (bool)$enable;
 	}
 
 	public function init(): void
@@ -177,7 +209,9 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 				}
 			}
 		}
-		$this->categoryId = $this->category ? $this->category->getId() : 0;
+
+		$categoryId = $this->category ? $this->category->getId() : 0;
+		$this->setCategoryId($categoryId);
 
 		if(!$this->tryToDetectMode())
 		{
@@ -204,6 +238,11 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 		$this->editorAdapter = $this->factory->getEditorAdapter();
 	}
 
+	public function setCategoryId(int $categoryId): void
+	{
+		$this->categoryId = $categoryId;
+	}
+
 	protected function getFileHandlerUrl()
 	{
 		return Container::getInstance()->getRouter()->getFileUrlTemplate($this->getEntityTypeID());
@@ -211,6 +250,12 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 
 	public function initializeEditorAdapter(): void
 	{
+		if ($this->editorAdapter->hasData())
+		{
+			return;
+		}
+
+		$this->editorAdapter->enableSearchHistory($this->isSearchHistoryEnabled);
 		$this->editorAdapter->setContext($this->getEditorContext());
 		$this->editorAdapter->processByItem(
 			$this->item,
@@ -230,6 +275,13 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 	{
 		if (!empty($this->mode))
 		{
+			return true;
+		}
+
+		if (!empty($this->arParams['COMPONENT_MODE']))
+		{
+			$this->mode = $this->arParams['COMPONENT_MODE'];
+
 			return true;
 		}
 
@@ -403,6 +455,13 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 					'options' => $checkAutomationTourGuideData,
 				];
 			}
+		}
+
+		if (!$this->item->isNew())
+		{
+			$params['receiversJSONString'] = \Bitrix\Main\Web\Json::encode(
+				ChannelRepository::create(ItemIdentifier::createByItem($this->item))->getToList(),
+			);
 		}
 
 		return $params;
@@ -610,7 +669,7 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 				'id' => static::TAB_NAME_ORDERS,
 				'name' => \CCrmOwnerType::GetCategoryCaption(\CCrmOwnerType::Order),
 				'loader' => [
-					'serviceUrl' => '/bitrix/components/bitrix/crm.order.list/lazyload.ajax.php?&site'.SITE_ID.'&'.bitrix_sessid_get(),
+					'serviceUrl' => '/bitrix/components/bitrix/crm.order.list/lazyload.ajax.php?&site='.SITE_ID.'&'.bitrix_sessid_get(),
 					'componentData' => [
 						'template' => '',
 						'signedParameters' => \CCrmInstantEditorHelper::signComponentParams([
@@ -622,7 +681,7 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 							'GRID_ID_SUFFIX' => $this->getGuid(),
 							'TAB_ID' => static::TAB_NAME_ORDERS,
 							'PRESERVE_HISTORY' => true,
-							'BUILDER_CONTEXT' => ProductBuilder::TYPE_ID
+							'BUILDER_CONTEXT' => ProductBuilder::TYPE_ID,
 						], 'crm.order.list')
 					]
 				],
@@ -962,14 +1021,19 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 	{
 		$userFieldEntityId = $this->getUserFieldEntityId();
 		$isUserFieldCreationEnabled = Container::getInstance()->getUserPermissions()->canWriteConfig();
-		$context = $this->getEditorContext();
-		$serviceUrl = $this->getServiceUrl();
+		$editorGuid = $this->getEditorGuid();
 
 		return [
-			'ENTITY_ID' => $this->getEntityID(),
 			'ENTITY_TYPE_ID' => $this->getEntityTypeID(),
-			'SERVICE_URL' => $serviceUrl,
-			'GUID' => $this->getEditorGuid(),
+			'ENTITY_ID' => $this->isCopyMode() ? 0 : $this->getEntityID(),
+			'IS_COPY_MODE' => $this->isCopyMode(),
+			'EXTRAS' => $this->getExtras(),
+			'READ_ONLY' => $this->isReadOnly(),
+			'INITIAL_MODE' => $this->getInitialMode($this->isCopyMode()),
+			'DETAIL_MANAGER_ID' => $editorGuid,
+			'MODULE_ID' => 'crm',
+			'SERVICE_URL' => $this->getServiceUrl(),
+			'GUID' => $editorGuid,
 			'CONFIG_ID' => $this->getEditorConfigId(),
 			'ENTITY_CONFIG' => $this->getEditorEntityConfig(),
 			'DUPLICATE_CONTROL' => [],
@@ -995,11 +1059,17 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 				'SIGNED_PARAMETERS' => $this->getSignedParameters(),
 				'RELOAD_ACTION_NAME' => 'load',
 			],
-			'CONTEXT' => $context,
+			'CONTEXT' => $this->getEditorContext(),
 			'ATTRIBUTE_CONFIG' => $this->getEditorAttributeConfig(),
 			'ENABLE_STAGEFLOW' => $this->factory->isStagesEnabled(),
 			'USER_FIELD_PREFIX' => $this->factory->getUserFieldEntityId(),
 		];
+	}
+
+	public function initializeEditorData(): void
+	{
+		$this->init();
+		$this->initializeEditorAdapter();
 	}
 
 	public function getEditorConfigId(): string
@@ -1025,11 +1095,20 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 			'type' => 'section',
 			'elements' => [],
 		];
+
+		$skipFields = ($this->arParams['skipFields'] ?? []);
+		if ($this->factory->isStagesEnabled() && !in_array(Item::FIELD_NAME_STAGE_ID, $skipFields, true))
+		{
+			$sectionMain['elements'][] = ['name' => Item::FIELD_NAME_STAGE_ID];
+		}
+
 		if ($this->factory->isLinkWithProductsEnabled())
 		{
 			$sectionMain['elements'][] = ['name' => EditorAdapter::FIELD_OPPORTUNITY];
 		}
+
 		$sectionMain['elements'][] = ['name' => Item::FIELD_NAME_TITLE];
+
 		$sections[] = $sectionMain;
 
 		$sectionAdditional = [
@@ -1038,12 +1117,14 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 			'type' => 'section',
 			'elements' => [],
 		];
-		foreach($this->prepareEntityUserFields() as $fieldName => $userField)
+
+		foreach ($this->prepareEntityUserFields() as $fieldName => $userField)
 		{
 			$sectionAdditional['elements'][] = [
 				'name' => $fieldName,
 			];
 		}
+
 		$sections[] = $sectionAdditional;
 
 		if ($this->factory->isLinkWithProductsEnabled())
@@ -1078,16 +1159,14 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 
 	public function prepareFieldInfos(): array
 	{
-		if($this->factory === null)
+		if ($this->factory === null)
 		{
 			$this->factory = Container::getInstance()->getFactory($this->getEntityTypeID());
 			$this->item = $this->factory->createItem();
 			$this->editorAdapter = $this->factory->getEditorAdapter();
 		}
-		if (!$this->editorAdapter->hasData())
-		{
-			$this->initializeEditorAdapter();
-		}
+
+		$this->initializeEditorAdapter();
 
 		return $this->editorAdapter->getEntityFields();
 	}
@@ -1097,16 +1176,6 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 	{
 		return [
 			'GUID' => mb_strtolower($this->getGuid()).'_timeline',
-			'ENABLE_WAIT' => true,
-			'ENABLE_CALL' => true,
-			'ENABLE_MEETING' => true,
-			'ENABLE_EMAIL' => true,
-			'ENABLE_SMS' => $this->factory->isClientEnabled(),
-			'ENABLE_TASK' => (
-				$this->factory->isUseInUserfieldEnabled()
-				&& UserFieldManager::isEnabledInTasksUserField($this->factory->getEntityName())
-			),
-			'ENABLE_VISIT' => false,
 		];
 	}
 
@@ -1367,12 +1436,46 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 				{
 					$value = str_replace(',', '.', $value);
 				}
+				elseif (
+					$userType === DateTimeType::USER_TYPE_ID
+					/**
+					 * @see \Bitrix\Main\UserField\Internal\PrototypeItemDataManager::convertSingleValueBeforeSave
+					 * this case is already handled there
+					 * @todo refactor and remove this crutch
+					 */
+					&& !\CCrmOwnerType::isUseDynamicTypeBasedApproach($this->item->getEntityTypeId())
+				)
+				{
+					$useTimezone = $field->getUserField()['SETTINGS']['USE_TIMEZONE'] ?? 'Y';
+					if ($useTimezone !== 'N')
+					{
+						if (is_array($value) && $field->isMultiple())
+						{
+							foreach ($value as &$singleValue)
+							{
+								if (is_string($singleValue))
+								{
+									$singleValue = DateTime::createFromUserTime($singleValue);
+								}
+							}
+							unset($singleValue);
+						}
+						elseif (is_string($value))
+						{
+							$value = DateTime::createFromUserTime($value);
+						}
+					}
+				}
 			}
 
 			$setData[$name] = $value;
 		}
 
-		return $setData;
+		return FieldContentType::prepareFieldsFromDetailsToSave(
+			$this->item->getEntityTypeId(),
+			$this->item->getId(),
+			$setData,
+		);
 	}
 
 	public function compatibleAction(int $entityTypeId, int $entityId): ?Json
@@ -1461,13 +1564,19 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 	{
 		if($this->operation === null)
 		{
+			$context = clone Container::getInstance()->getContext();
+			$context->setItemOption(
+				'PRESERVE_CONTENT_TYPE',
+				FieldContentType::shouldPreserveContentTypeInDetails($this->item->getEntityTypeId(), $this->item->getId()),
+			);
+
 			if($this->item->getId() > 0)
 			{
-				$this->operation = $this->factory->getUpdateOperation($this->item);
+				$this->operation = $this->factory->getUpdateOperation($this->item, $context);
 			}
 			else
 			{
-				$this->operation = $this->factory->getAddOperation($this->item);
+				$this->operation = $this->factory->getAddOperation($this->item, $context);
 			}
 		}
 

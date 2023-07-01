@@ -2,6 +2,7 @@
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Bitrix24\Feature;
+use Bitrix\Bitrix24\Sso;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Loader;
@@ -146,6 +147,41 @@ class CIntranetUserProfileSecurityComponent extends \CBitrixComponent
 					),
 					"ACTIVE" => isset($_GET["page"]) && $_GET["page"] === "mailingAgreement" ? true : false
 				);
+
+				if (class_exists(Sso\Configuration::class) && Sso\Configuration::isSsoAvailable())
+				{
+					$menuItems["sso"] = [
+						"NAME" => Loc::getMessage("INTRANET_USER_PROFILE_SSO_TITLE"),
+						"LABEL" => Loc::getMessage('INTRANET_USER_PROFILE_SECURITY_MENU_ITEM_LABEL_NEW'),
+						"ACTIVE" => isset($_GET["page"]) && $_GET["page"] === "sso",
+					];
+
+					$isSsoLocked = Sso\Configuration::isSsoLocked();
+					if ($isSsoLocked)
+					{
+						$menuItems['sso']["ATTRIBUTES"] = array_filter([
+							'data-action' => null,
+							'onclick' => "BX.UI.InfoHelper.show('limit_office_sso');",
+						]);
+					}
+					elseif ($isAdminRights)
+					{
+						$menuItems['sso']["ATTRIBUTES"] = array_filter([
+							'data-action' => 'sso',
+							'onclick' => null,
+						]);
+					}
+					else
+					{
+						$errorMessage = \CUtil::JSEscape(Loc::getMessage('INTRANET_USER_PROFILE_SSO_ERROR_NO_RIGHTS'));
+						$menuItems['sso']["ATTRIBUTES"] = array_filter([
+							'data-action' => null,
+							'onclick' => "BX.UI.Notification.Center.notify({
+								content: '{$errorMessage}',
+							});",
+						]);
+					}
+				}
 			}
 		}
 
@@ -187,7 +223,7 @@ class CIntranetUserProfileSecurityComponent extends \CBitrixComponent
 		if (
 			isset($_GET["page"])
 			&& in_array($_GET["page"], array("auth", "history", "synchronize", "appPasswords", "otpConnected", "socnetEmail",
-				"otp", "recoveryCodes", "socserv", "mailingAgreement")
+				"otp", "recoveryCodes", "socserv", "mailingAgreement", "sso")
 			)
 		)
 		{

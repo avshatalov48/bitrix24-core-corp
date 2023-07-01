@@ -2,7 +2,6 @@
  * @module crm/in-app-url/url/mobile
  */
 jn.define('crm/in-app-url/url/mobile', (require, exports, module) => {
-
 	const { CrmUrlBase } = require('crm/in-app-url/url/base');
 
 	/**
@@ -10,7 +9,6 @@ jn.define('crm/in-app-url/url/mobile', (require, exports, module) => {
 	 */
 	class CrmMobileUrl extends CrmUrlBase
 	{
-
 		getUrl()
 		{
 			if (this.isExistUrl() && !this.url.isMobileView)
@@ -20,7 +18,6 @@ jn.define('crm/in-app-url/url/mobile', (require, exports, module) => {
 
 			return this.createUrl();
 		}
-
 	}
 
 	module.exports = { CrmMobileUrl };

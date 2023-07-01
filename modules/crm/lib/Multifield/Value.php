@@ -4,7 +4,7 @@ namespace Bitrix\Crm\Multifield;
 
 use Bitrix\Main\Type\Contract\Arrayable;
 
-final class Value implements Arrayable
+final class Value implements Arrayable, \JsonSerializable
 {
 	/**
 	 * @var int|null
@@ -112,5 +112,16 @@ final class Value implements Arrayable
 	public function toArray(): array
 	{
 		return Assembler::arrayByValue($this);
+	}
+
+	public function jsonSerialize()
+	{
+		return [
+			'id' => $this->getId(),
+			'typeId' => $this->getTypeId(),
+			'valueType' => $this->getValueType(),
+			'value' => $this->getValue(),
+			'valueExtra' => $this->getValueExtra(),
+		];
 	}
 }

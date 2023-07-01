@@ -1015,14 +1015,17 @@ class CIntranetEventHandlers
 
 	public static function OnAfterUserAdd($arUser)
 	{
-		static
-			$processedIdListIblock = [];
+		static $processedIdListIblock = [];
 
 		if (
-			$arUser['ID'] > 0
+			isset($arUser['ID'])
+			&& $arUser['ID'] > 0
 			&& $arUser['ACTIVE'] === 'Y'
 			&& empty($arUser['CONFIRM_CODE'])
-			&& !in_array($arUser['EXTERNAL_AUTH_ID'], \Bitrix\Main\UserTable::getExternalUserTypes())
+			&& (
+				!isset($arUser['EXTERNAL_AUTH_ID'])
+				|| !in_array($arUser['EXTERNAL_AUTH_ID'], \Bitrix\Main\UserTable::getExternalUserTypes())
+			)
 			&& !defined('INTR_SKIP_EVENT_ADD')
 			&& ($IBLOCK_ID = COption::GetOptionInt('intranet', 'iblock_state_history', ''))
 			&& !in_array($arUser['ID'], $processedIdListIblock)
@@ -1122,7 +1125,7 @@ class CIntranetEventHandlers
 					$oldFields['UF_DEPARTMENT'] = [];
 				}
 
-				$arDepts = array_diff($fields['UF_DEPARTMENT'], $oldFields['UF_DEPARTMENT']);
+				$arDepts = array_merge($fields['UF_DEPARTMENT'], $oldFields['UF_DEPARTMENT']);
 				if (count($arDepts) > 0)
 				{
 					$CACHE_MANAGER->ClearByTag('intranet_department_structure');
@@ -1145,7 +1148,11 @@ class CIntranetEventHandlers
 		{
 			if(
 				is_array(self::$userDepartmentCache[$fields['ID']])
-				&& array_diff($fields['UF_DEPARTMENT'], self::$userDepartmentCache[$fields['ID']]))
+				&& (
+					array_diff($fields['UF_DEPARTMENT'], self::$userDepartmentCache[$fields['ID']])
+					|| count($fields['UF_DEPARTMENT']) !== count(self::$userDepartmentCache[$fields['ID']])
+				)
+			)
 			{
 				$event = new Event("intranet", "onEmployeeDepartmentsChanged", array(
 					'userId' => $fields['ID'],
@@ -1153,12 +1160,21 @@ class CIntranetEventHandlers
 					'newDepartmentList' => $fields['UF_DEPARTMENT']
 				));
 				$event->send();
+
+				if (defined('BX_COMP_MANAGED_CACHE'))
+				{
+					global $CACHE_MANAGER;
+
+					$CACHE_MANAGER->ClearByTag('intranet_department_structure');
+				}
 			}
 
 			if (
 				$fields['ID'] > 0
+				&& isset($fields['UF_DEPARTMENT'])
 				&& is_array($fields['UF_DEPARTMENT'])
-				&& $fields['UF_DEPARTMENT'][0]
+				&& !empty($fields['UF_DEPARTMENT'][0])
+				&& isset($fields['ACTIVE'])
 				&& $fields['ACTIVE'] === 'Y'
 				&& (
 					!isset($fields['EXTERNAL_AUTH_ID'])
@@ -1287,7 +1303,7 @@ TODO: what do we should check in case of user's departments change? variant: if 
 				if (!is_array($arOldFields['UF_DEPARTMENT']))
 					$arOldFields['UF_DEPARTMENT'] = array();
 
-				$arDepts = array_diff($arFields['UF_DEPARTMENT'], $arOldFields['UF_DEPARTMENT']);
+				$arDepts = array_merge($arFields['UF_DEPARTMENT'], $arOldFields['UF_DEPARTMENT']);
 				if(count($arDepts) > 0)
 				{
 					$CACHE_MANAGER->ClearByTag('intranet_department_structure');
@@ -1357,13 +1373,6 @@ RegisterModuleDependences('iblock', 'OnAfterIBlockSectionUpdate', 'intranet', 'C
 	public static function OnBeforeProlog()
 	{
 		$conditionList = array();
-		if (\Bitrix\Main\ModuleManager::isModuleInstalled('replica'))
-		{
-			$conditionList[] = array(
-				'PATTERN' => 'EXTERNAL_AUTH_ID',
-				'VALUE' => "WHEN %s = 'replica' THEN 'network'"
-			);
-		}
 		if (\Bitrix\Main\ModuleManager::isModuleInstalled('sale'))
 		{
 			$conditionList[] = array(
@@ -1913,15 +1922,15 @@ RegisterModuleDependences('main', 'OnBeforeProlog', 'intranet', 'CIntranetEventH
 					}
 
 					$defaultLang = \Bitrix\Main\Localization\Loc::getDefaultLang(LANGUAGE_ID);
-					if ($langList[LANGUAGE_ID])
+					if (!empty($langList[LANGUAGE_ID]))
 					{
 						$text = $langList[LANGUAGE_ID];
 					}
-					elseif ($langList[$defaultLang])
+					elseif (!empty($langList[$defaultLang]))
 					{
 						$text = $langList[$defaultLang];
 					}
-					elseif ($langList['en'])
+					elseif (!empty($langList['en']))
 					{
 						$text = $langList['en'];
 					}

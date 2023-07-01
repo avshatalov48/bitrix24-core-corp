@@ -236,17 +236,27 @@ class CIBlockPropertyEmployee extends CIEmployeeProperty
 		];
 	}
 
-	public static function CheckFields($arProperty, $value)
+	public static function CheckFields($arProperty, $valueContainer)
 	{
-		$error = array();
+		$error = [];
 
-		$value = trim($value["VALUE"], "\n\r\t ");
-		if(!empty($value))
+		if (is_array($valueContainer) && isset($valueContainer["VALUE"]))
 		{
-			$value = (int)$value;
-			if(empty($value))
+			if (!is_scalar($valueContainer["VALUE"]))
 			{
 				$error[] = GetMessage("INTR_PROP_EMP_VALIDATE_ERROR");
+			}
+			else
+			{
+				$value = trim($valueContainer["VALUE"], "\n\r\t ");
+				if (!empty($value))
+				{
+					$value = (int)$value;
+					if (empty($value))
+					{
+						$error[] = GetMessage("INTR_PROP_EMP_VALIDATE_ERROR");
+					}
+				}
 			}
 		}
 
@@ -480,6 +490,11 @@ class CIBlockPropertyEmployee extends CIEmployeeProperty
 
 	public static function GetPublicEditHTML($arProperty, $value, $strHTMLControlName)
 	{
+		if (!empty($arProperty['SETTINGS']['USE_ENTITY_SELECTOR']))
+		{
+			return self::renderEntitySelector($arProperty, $value, $strHTMLControlName);
+		}
+
 		global $APPLICATION;
 			ob_start();
 
@@ -600,6 +615,11 @@ class CIBlockPropertyEmployee extends CIEmployeeProperty
 
 	public static function GetPublicEditHTMLMulty($arProperty, $value, $strHTMLControlName)
 	{
+		if (!empty($arProperty['SETTINGS']['USE_ENTITY_SELECTOR']))
+		{
+			return self::renderEntitySelector($arProperty, $value, $strHTMLControlName, true);
+		}
+
 		global $APPLICATION;
 			ob_start();
 
@@ -716,6 +736,76 @@ class CIBlockPropertyEmployee extends CIEmployeeProperty
 		$strResult = ob_get_contents();
 		ob_end_clean();
 		return $strResult;
+	}
+
+	private static function renderEntitySelector($arProperty, $value, $strHTMLControlName, $multiple = false): string
+	{
+		\Bitrix\Main\UI\Extension::load([
+			'ui.entity-selector',
+		]);
+
+		Loader::includeModule('ui');
+
+		$ids = array_values(array_filter(array_map(
+			function($val)
+			{
+				$id = is_array($val) ? $val['VALUE'] : $val;
+
+				return $id > 0 ? ['user', $id] : null;
+			},
+			$multiple ? $value : [$value]
+		)));
+
+		$selectedItems = Main\Web\Json::encode(
+			\Bitrix\UI\EntitySelector\Dialog::getSelectedItems($ids)->toArray()
+		);
+
+		$inputName = current(explode('[', $strHTMLControlName['VALUE'])) . ($multiple ? '[]' : '');
+		$controlId = CUtil::JSEscape('tag-selector-' . $arProperty['FIELD_ID']);
+		$jsMultiple = $multiple ? 'true' : 'false';
+		$inputNode = '<input type="hidden" name="' . htmlspecialcharsbx($inputName) . '" value="${id}" />';
+
+		$html = <<<HTML
+			<script>
+				BX.ready(() => {
+					const valuesNode = document.getElementById('{$controlId}-values');
+					
+					const addItem = (id) => BX.Dom.append(BX.Tag.render`{$inputNode}`, valuesNode);
+					const removeItem = (id) => BX.Dom.remove(valuesNode.querySelector('[value="' + id + '"]'));
+					
+					const selector = new BX.UI.EntitySelector.TagSelector({
+						multiple: {$jsMultiple},
+						id: '{$controlId}',
+						events: {
+							onTagAdd: (event) => addItem(event.getData().tag.getId()),
+							onTagRemove: (event) => removeItem(event.getData().tag.getId()),
+						},
+						dialogOptions: {
+							id: '{$controlId}',
+							context: 'IBLOCK_EMPLOYEE',
+							selectedItems: {$selectedItems},
+							entities: [
+								{
+									id: 'user',
+									options: {
+										intranetUsersOnly: true,
+										inviteEmployeeLink: false,
+									},
+								},
+								{id: 'department'},
+							],
+						}
+					});
+		
+					selector.renderTo(document.getElementById('{$controlId}'));
+					{$selectedItems}.forEach(({id}) => addItem(id));
+				});
+			</script>
+			<div id="{$controlId}-values" style="display: none"></div>
+			<div id="{$controlId}" style="min-width:250px"></div>
+		HTML;
+
+		return $html;
 	}
 
 	public static function ConvertFromToDB($arProperty, $value)

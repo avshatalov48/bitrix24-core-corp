@@ -1,17 +1,19 @@
 (() => {
 
-	const { ClientType } = jn.require('layout/ui/fields/client');
-	const { TabType } = jn.require('layout/ui/detail-card/tabs/factory/type');
-	const { FieldFactory, StringType } = jn.require('layout/ui/fields');
-	const { CounterComponent } = jn.require('layout/ui/kanban/counter');
-	const { CommunicationButton } = jn.require('crm/communication/button');
-	const { chain, transition } = jn.require('animation');
-	const { Haptics } = jn.require('haptics');
-	const { mergeImmutable } = jn.require('utils/object');
-	const { CounterView } = jn.require('layout/ui/counter-view');
-	const { FriendlyDate } = jn.require('layout/ui/friendly-date');
-	const { Moment } = jn.require('utils/date');
-	const { longDate, dayMonth } = jn.require('utils/date/formats');
+	const require = (ext) => jn.require(ext);
+
+	const { ClientType } = require('layout/ui/fields/client');
+	const { TabType } = require('layout/ui/detail-card/tabs/factory/type');
+	const { FieldFactory, StringType } = require('layout/ui/fields');
+	const { CounterComponent } = require('layout/ui/kanban/counter');
+	const { CommunicationButton } = require('crm/communication/button');
+	const { chain, transition } = require('animation');
+	const { Haptics } = require('haptics');
+	const { mergeImmutable, get } = require('utils/object');
+	const { CounterView } = require('layout/ui/counter-view');
+	const { FriendlyDate } = require('layout/ui/friendly-date');
+	const { Moment } = require('utils/date');
+	const { longDate, dayMonth } = require('utils/date/formats');
 
 	/**
 	 * @class ListItems.Base
@@ -21,20 +23,25 @@
 		constructor(props)
 		{
 			super(props);
-			this.testId = props.testId || '';
+
 			this.blockManager = new ItemLayoutBlocksManager(this.props.itemLayoutOptions);
 			this.showMenuHandler = props.showMenuHandler;
-			this.params = (this.props.params || {});
 			this.styles = styles;
 
+			/** @var {CommunicationButton} */
 			this.communicationButtonRef = null;
 
 			this.showCommunicationButton = this.showCommunicationButton.bind(this);
 		}
 
-		componentWillReceiveProps(props)
+		get testId()
 		{
-			this.testId = props.testId || '';
+			return this.props.testId || '';
+		}
+
+		get params()
+		{
+			return this.props.params || {};
 		}
 
 		blink(callback = null, showUpdated = true)
@@ -44,7 +51,8 @@
 
 		render()
 		{
-			const itemData = this.props.item.data;
+			const { item } = this.props;
+			const itemData = item.data;
 			const activityTotal = (itemData.activityTotal || 0);
 
 			const customStyles = this.getCustomStyles();
@@ -54,15 +62,12 @@
 			return View(
 				{
 					style: wrapperStyle,
-					onClick: () => this.props.itemDetailOpenHandler(
-						this.props.item.id,
-						this.props.item.data,
-						this.params,
-					),
+					testId: `${this.testId}_ITEM_${item.id}`,
+					onClick: () => this.props.itemDetailOpenHandler(item.id, item.data, this.params),
 					onLongClick: this.isMenuEnabled() && (() => {
 						Haptics.impactLight();
-						this.showMenuHandler(this.props.item.data.id);
-					})
+						this.showMenuHandler(item.data.id);
+					}),
 				},
 				View(
 					{
@@ -238,7 +243,7 @@
 
 		getMenuFilledColor(svg, counterValue)
 		{
-			const filledColor = this.hasCounter(counterValue) ? '#ff5752' : '#b9c0ca';
+			const filledColor = this.hasCounter(counterValue) ? '#ff5752' : '#bdc1c6';
 			return svg.content.replace(/%color%/g, filledColor);
 		}
 
@@ -303,7 +308,10 @@
 
 		renderConnectionComponent()
 		{
-			const { item, params } = this.props;
+			const { item } = this.props;
+			const ownerTypeName = this.params.entityTypeName;
+			const hasTelegramConnection = get(this.params, 'connectors.telegram', true);
+			const openLinesAccess = get(this.params, 'entityPermissions.openLinesAccess', false);
 
 			return View(
 				{
@@ -319,10 +327,14 @@
 					ref: (ref) => this.communicationButtonRef = ref,
 					border: false,
 					horizontal: false,
+					showTelegramConnection: !hasTelegramConnection,
 					value: item.data[ClientType],
+					permissions: {
+						openLinesAccess,
+					},
 					ownerInfo: {
 						ownerId: item.id,
-						ownerTypeName: params.entityTypeName,
+						ownerTypeName,
 					},
 				}),
 			);
@@ -373,10 +385,14 @@
 					multiple: (field.multiple || false),
 					isShowAnimate: (field.isShowAnimate || false),
 				});
-
-				// @todo here need to start the animation of changing the field value
-
-				fields.push(fieldComponent);
+				if (fieldComponent)
+				{
+					fields.push(fieldComponent);
+				}
+				else
+				{
+					console.warn(`Field ${field.title} with type ${field.type} is not yet supported.`);
+				}
 			});
 
 			return View(
@@ -439,7 +455,7 @@
 
 			const transitionToBeige = transition(this.elementRef, {
 				duration: 300,
-				backgroundColor: '#ffecc4',
+				backgroundColor: '#ffe9be',
 				opacity: 1,
 			});
 
@@ -533,7 +549,7 @@
 		},
 		date: {
 			fontSize: 13,
-			color: '#82888f',
+			color: '#828b95',
 			flexShink: 2,
 		},
 		legend: {

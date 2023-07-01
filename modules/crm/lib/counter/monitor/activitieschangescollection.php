@@ -32,6 +32,7 @@ class ActivitiesChangesCollection extends \Bitrix\Main\Type\Dictionary
 				|| $activityChange->isDeadlineChanged()
 				|| $activityChange->isCompletedChanged()
 				|| $activityChange->areBindingsChanged()
+				|| $activityChange->isLightTimeChanges()
 			)
 			{
 				$result->add($activityChange);

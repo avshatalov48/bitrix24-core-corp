@@ -18,13 +18,15 @@ class CrmControlPanel extends CBitrixComponent
 	public const MENU_ID_CRM_CONTACT = 'menu_crm_contact';
 	public const MENU_ID_CRM_COMPANY = 'menu_crm_company';
 	public const MENU_ID_CRM_STORE_CONTRACTORS = 'menu_crm_store_contractors';
+	public const MENU_ID_CRM_SIGN_COUNTERPARTY = 'menu_crm_counterparty';
+	public const MENU_ID_CRM_SIGN_COUNTERPARTY_CONTACTS = 'menu_crm_counterparty_contacts';
 	public const MENU_ID_CRM_STORE_CONTRACTORS_COMPANIES = 'menu_crm_store_contractors_companies';
 	public const MENU_ID_CRM_STORE_CONTRACTORS_CONTACTS = 'menu_crm_store_contractors_contacts';
 	public const MENU_ID_CRM_CONTACT_CENTER = 'menu_contact_center';
-
 	protected $oldMenuStructure;
 
 	protected array $contractorCategories = [];
+	protected array $counterPartyCategories = [];
 
 	public function __construct($component = null)
 	{
@@ -38,6 +40,17 @@ class CrmControlPanel extends CBitrixComponent
 				\CCrmOwnerType::Contact
 			),
 		];
+
+		$counterPartyCategory = Container::getInstance()
+			->getFactory(\CCrmOwnerType::Contact)
+			->getCategoryByCode(\Bitrix\Crm\Service\Factory\SmartDocument::CONTACT_CATEGORY_CODE)
+		;
+		if ($counterPartyCategory)
+		{
+			$this->counterPartyCategories = [
+				\CCrmOwnerType::Contact => $counterPartyCategory->getId(),
+			];
+		}
 	}
 
 	public function onPrepareComponentParams($arParams)
@@ -72,6 +85,7 @@ class CrmControlPanel extends CBitrixComponent
 				'SUB_ITEMS' => [
 					['ID' => 'CONTACT'],
 					['ID' => 'COMPANY'],
+					...$this->getCounterpartyMenuSubItems(),
 					...$this->getContractorsMenuSubItems(),
 					['ID' => 'CONTACT_CENTER', 'SLIDER_MODE' => true],
 				],
@@ -84,6 +98,7 @@ class CrmControlPanel extends CBitrixComponent
 					['ID' => 'INVOICE'],
 					['ID' => 'QUOTE'],
 					['ID' => 'SALES_CENTER', 'SLIDER_MODE' => true],
+					['ID' => 'TERMINAL'],
 				],
 			],
 			[
@@ -334,6 +349,15 @@ class CrmControlPanel extends CBitrixComponent
 		];
 	}
 
+	protected function resolveCounterpartyMenuId($entityTypeId)
+	{
+		$categoryId = $this->counterPartyCategories[$entityTypeId];
+		return CCrmComponentHelper::getMenuActiveItemId(
+			CCrmOwnerType::ResolveName($entityTypeId),
+			$categoryId
+		);
+	}
+
 	protected function prepareItems($items)
 	{
 		foreach ($items as $key => $item)
@@ -529,6 +553,26 @@ class CrmControlPanel extends CBitrixComponent
 					'ID' => self::MENU_ID_CRM_STORE_CONTRACTORS,
 					'TEXT' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_CONTRACTORS'),
 					'SUB_ITEMS' => $subItems,
+				],
+			];
+		}
+
+		return $result;
+	}
+	/**
+	 * @return array|array[]
+	 */
+	private function getCounterpartyMenuSubItems(): array
+	{
+		$result = [];
+
+		if (isset($this->counterPartyCategories[\CCrmOwnerType::Contact]))
+		{
+			$result = [
+				[
+					'ID' => self::MENU_ID_CRM_SIGN_COUNTERPARTY,
+					'TEXT' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_SIGN_COUNTERPARTY'),
+					'SUB_ITEMS' => [['ID' => $this->resolveCounterpartyMenuId(\CCrmOwnerType::Contact),]],
 				],
 			];
 		}

@@ -41,17 +41,12 @@ jn.define('tasks/layout/task/fields/description', (require, exports, module) => 
 		{
 			return {
 				...this.props.deepMergeStyles,
-				wrapper: {
-					...this.props.deepMergeStyles.wrapper,
-					marginHorizontal: 10,
-				},
-				readOnlyWrapper: {
-					...this.props.deepMergeStyles.readOnlyWrapper,
+				externalWrapper: {
+					...this.props.deepMergeStyles.externalWrapper,
 					marginHorizontal: 10,
 				},
 				editableValue: {
 					minHeight: 82,
-					maxHeight: undefined,
 				},
 			};
 		}

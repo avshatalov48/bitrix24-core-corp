@@ -20,6 +20,7 @@ if (Main\Loader::includeModule('ui') && class_exists('\Bitrix\UI\Fonts\Proxy'))
 	}
 }
 
+$region = Main\Application::getInstance()->getLicense()->getRegion();
 return [
 	'js' => [
 		'crm.site.form.js',
@@ -52,6 +53,12 @@ return [
 				"proxy" => [
 					"fonts" => $fontProxy,
 				],
+				"abuse" => [
+					"link" => (Main\Loader::includeModule('bitrix24')
+						&& method_exists(\Bitrix\Bitrix24\Form\AbuseZoneMap::class, 'getLink'))
+							? \Bitrix\Bitrix24\Form\AbuseZoneMap::getLink($region)
+							: '',
+				]
 			]
 		]
 	]

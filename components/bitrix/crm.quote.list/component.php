@@ -1,5 +1,18 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+
+use Bitrix\Crm;
+use Bitrix\Crm\Component\EntityList\FieldRestrictionManager;
+use Bitrix\Crm\Component\EntityList\FieldRestrictionManagerTypes;
+use Bitrix\Crm\Settings\LayoutSettings;
+use Bitrix\Crm\Tracking;
+use Bitrix\Crm\WebForm\Manager as WebFormManager;
+use Bitrix\Main;
+use Bitrix\Main\Localization\Loc;
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 /**
  * @global \CMain $APPLICATION
@@ -50,18 +63,16 @@ if (!empty($sExportType))
 }
 
 $isStExportAllFields = (isset($arParams['STEXPORT_INITIAL_OPTIONS']['EXPORT_ALL_FIELDS'])
-						&& $arParams['STEXPORT_INITIAL_OPTIONS']['EXPORT_ALL_FIELDS'] === 'Y');
+	&& $arParams['STEXPORT_INITIAL_OPTIONS']['EXPORT_ALL_FIELDS'] === 'Y');
 $arResult['STEXPORT_EXPORT_ALL_FIELDS'] = ($isStExport && $isStExportAllFields) ? 'Y' : 'N';
 
 $isStExportProductsFields = (isset($arParams['STEXPORT_INITIAL_OPTIONS']['EXPORT_PRODUCT_FIELDS'])
-						&& $arParams['STEXPORT_INITIAL_OPTIONS']['EXPORT_PRODUCT_FIELDS'] === 'Y');
+	&& $arParams['STEXPORT_INITIAL_OPTIONS']['EXPORT_PRODUCT_FIELDS'] === 'Y');
 $arResult['STEXPORT_EXPORT_PRODUCT_FIELDS'] = ($isStExport && $isStExportProductsFields) ? 'Y' : 'N';
 
 $arResult['STEXPORT_MODE'] = $isStExport ? 'Y' : 'N';
-$arResult['STEXPORT_TOTAL_ITEMS'] = isset($arParams['STEXPORT_TOTAL_ITEMS']) ?
-	(int)$arParams['STEXPORT_TOTAL_ITEMS'] : 0;
+$arResult['STEXPORT_TOTAL_ITEMS'] = isset($arParams['STEXPORT_TOTAL_ITEMS']) ? (int)$arParams['STEXPORT_TOTAL_ITEMS'] : 0;
 //endregion
-
 
 if (!$isErrorOccured && $isInExportMode && $CCrmPerms->HavePerm('QUOTE', BX_CRM_PERM_NONE, 'EXPORT'))
 {
@@ -82,13 +93,10 @@ if ($isErrorOccured)
 	}
 }
 
-use Bitrix\Main;
-use Bitrix\Crm;
-use Bitrix\Crm\Tracking;
-use Bitrix\Crm\WebForm\Manager as WebFormManager;
-use Bitrix\Crm\Settings\LayoutSettings;
-use Bitrix\Main\Localization\Loc;
-
+$fieldRestrictionManager = new FieldRestrictionManager(
+	FieldRestrictionManager::MODE_GRID,
+	[FieldRestrictionManagerTypes::ACTIVITY]
+);
 $CCrmQuote = new CCrmQuote(false);
 
 $userID = CCrmSecurityHelper::GetCurrentUserID();
@@ -106,10 +114,13 @@ $arParams['PATH_TO_LEAD_SHOW'] = CrmCheckPath('PATH_TO_LEAD_SHOW', $arParams['PA
 $arParams['PATH_TO_DEAL_SHOW'] = CrmCheckPath('PATH_TO_DEAL_SHOW', $arParams['PATH_TO_DEAL_SHOW'] ?? '', $APPLICATION->GetCurPage().'?deal_id=#deal_id#&show');
 $arParams['PATH_TO_CONTACT_SHOW'] = CrmCheckPath('PATH_TO_CONTACT_SHOW', $arParams['PATH_TO_CONTACT_SHOW'] ?? '', $APPLICATION->GetCurPage().'?contact_id=#contact_id#&show');
 $arParams['PATH_TO_USER_PROFILE'] = CrmCheckPath('PATH_TO_USER_PROFILE', $arParams['PATH_TO_USER_PROFILE'] ?? '', '/company/personal/user/#user_id#/');
-$arParams['NAME_TEMPLATE'] = empty($arParams['NAME_TEMPLATE']) ? CSite::GetNameFormat(false) : str_replace(array("#NOBR#","#/NOBR#"), array("",""), $arParams["NAME_TEMPLATE"]);
+$arParams['NAME_TEMPLATE'] = empty($arParams['NAME_TEMPLATE'])
+	? CSite::GetNameFormat(false)
+	: str_replace(array("#NOBR#","#/NOBR#"), array("",""), $arParams["NAME_TEMPLATE"]);
 $arParams['ADD_EVENT_NAME'] = $arParams['ADD_EVENT_NAME'] ?? '';
 $arResult['ADD_EVENT_NAME'] = $arParams['ADD_EVENT_NAME'] !== ''
-	? preg_replace('/[^a-zA-Z0-9_\.]/', '', $arParams['ADD_EVENT_NAME']) : '';
+	? preg_replace('/[^a-zA-Z0-9_\.]/', '', $arParams['ADD_EVENT_NAME'])
+	: '';
 
 $arResult['IS_AJAX_CALL'] = isset($_REQUEST['AJAX_CALL']) || isset($_REQUEST['ajax_request']) || !!CAjax::GetSession();
 $arResult['NAVIGATION_CONTEXT_ID'] = $arParams['NAVIGATION_CONTEXT_ID'] ?? '';
@@ -164,7 +175,7 @@ if (isset($arParams['GADGET_ID']) && $arParams['GADGET_ID'] <> '')
 }
 $isInGadgetMode = $arResult['GADGET'] === 'Y';
 
-$arFilter = $arSort = array();
+$arFilter = $arSort = [];
 $bInternal = false;
 $arResult['FORM_ID'] = isset($arParams['FORM_ID']) ? $arParams['FORM_ID'] : '';
 $arResult['TAB_ID'] = isset($arParams['TAB_ID']) ? $arParams['TAB_ID'] : '';
@@ -192,9 +203,9 @@ $arResult['GRID_ID'] = 'CRM_QUOTE_LIST_V12'.($bInternal && !empty($arParams['GRI
 $arResult['STATUS_LIST'] = CCrmStatus::GetStatusListEx('QUOTE_STATUS');
 $arResult['CLOSED_LIST'] = array('Y' => GetMessage('MAIN_YES'), 'N' => GetMessage('MAIN_NO'));
 $arResult['WEBFORM_LIST'] = WebFormManager::getListNamesEncoded();
-$arResult['FILTER'] = array();
+$arResult['FILTER'] = [];
 $arResult['FILTER2LOGIC'] = [];
-$arResult['FILTER_PRESETS'] = array();
+$arResult['FILTER_PRESETS'] = [];
 $arResult['PERMS']['ADD']    = !$CCrmPerms->HavePerm('QUOTE', BX_CRM_PERM_NONE, 'ADD');
 $arResult['PERMS']['WRITE']  = !$CCrmPerms->HavePerm('QUOTE', BX_CRM_PERM_NONE, 'WRITE');
 $arResult['PERMS']['DELETE'] = !$CCrmPerms->HavePerm('QUOTE', BX_CRM_PERM_NONE, 'DELETE');
@@ -229,6 +240,10 @@ if ($arParams['QUOTE_COUNT'] <= 0)
 }
 $arNavParams = $gridOptions->GetNavParams(array('nPageSize' => $arParams['QUOTE_COUNT']));
 $arNavParams['bShowAll'] = false;
+//endregion
+
+//region Filter fields cleanup
+$fieldRestrictionManager->removeRestrictedFields($filterOptions, $gridOptions);
 //endregion
 
 //region Filter initialization
@@ -268,7 +283,7 @@ if (!$bInternal)
 //endregion
 
 $arResult['~STATUS_LIST_WRITE']= CCrmStatus::GetStatusList('QUOTE_STATUS');
-$arResult['STATUS_LIST_WRITE'] = array();
+$arResult['STATUS_LIST_WRITE'] = [];
 foreach ($arResult['~STATUS_LIST_WRITE'] as $sStatusId => $sStatusTitle)
 {
 	if ($CCrmPerms->GetPermType('QUOTE', 'WRITE', array('STATUS_ID'.$sStatusId)) > BX_CRM_PERM_NONE)
@@ -347,8 +362,17 @@ if (
 }
 unset($factory);
 
+//region Check and fill fields restriction
+$restrictedFields = $fieldRestrictionManager->fetchRestrictedFields(
+	$arResult['GRID_ID'] ?? '',
+	$arResult['HEADERS'] ?? [],
+	$entityFilter ?? null
+);
+$arResult = array_merge($arResult, $restrictedFields);
+//endregion
+
 // list all filds for export
-$exportAllFieldsList = array();
+$exportAllFieldsList = [];
 if ($isInExportMode && $isStExportAllFields)
 {
 	foreach ($arResult['HEADERS'] as $arHeader)
@@ -371,7 +395,7 @@ if(check_bitrix_sessid())
 	$postAction = 'action_button_'.$arResult['GRID_ID'];
 	$getAction = 'action_'.$arResult['GRID_ID'];
 	//We need to check grid 'controls'
-	$controls = isset($_POST['controls']) && is_array($_POST['controls']) ? $_POST['controls'] : array();
+	$controls = isset($_POST['controls']) && is_array($_POST['controls']) ? $_POST['controls'] : [];
 	if ($actionData['METHOD'] == 'POST' && (isset($controls[$postAction]) || isset($_POST[$postAction])))
 	{
 		CUtil::JSPostUnescape();
@@ -490,17 +514,17 @@ if($_SERVER['REQUEST_METHOD'] === 'GET')
 {
 	if(isset($_REQUEST['CREATED_BY_ID_name']) && $_REQUEST['CREATED_BY_ID_name'] === '')
 	{
-		$_REQUEST['CREATED_BY_ID'] = $_GET['CREATED_BY_ID'] = array();
+		$_REQUEST['CREATED_BY_ID'] = $_GET['CREATED_BY_ID'] = [];
 	}
 
 	if(isset($_REQUEST['MODIFY_BY_ID_name']) && $_REQUEST['MODIFY_BY_ID_name'] === '')
 	{
-		$_REQUEST['MODIFY_BY_ID'] = $_GET['MODIFY_BY_ID'] = array();
+		$_REQUEST['MODIFY_BY_ID'] = $_GET['MODIFY_BY_ID'] = [];
 	}
 
 	if(isset($_REQUEST['ASSIGNED_BY_ID_name']) && $_REQUEST['ASSIGNED_BY_ID_name'] === '')
 	{
-		$_REQUEST['ASSIGNED_BY_ID'] = $_GET['ASSIGNED_BY_ID'] = array();
+		$_REQUEST['ASSIGNED_BY_ID'] = $_GET['ASSIGNED_BY_ID'] = [];
 	}
 }
 
@@ -540,12 +564,12 @@ CCrmEntityHelper::applyCounterFilterWrapper(
 	$arResult['GRID_ID'],
 	Bitrix\Crm\Counter\EntityCounter::internalizeExtras($_REQUEST),
 	$arFilter,
-	$entityFilter
+	$entityFilter ?? null
 );
 //endregion
 
 
-CCrmEntityHelper::PrepareMultiFieldFilter($arFilter, array(), '=%', false);
+CCrmEntityHelper::PrepareMultiFieldFilter($arFilter, [], '=%', false);
 $arImmutableFilters = array(
 	'FM', 'ID', 'ASSIGNED_BY_ID', '!ASSIGNED_BY_ID', 'CURRENCY_ID',
 	'CONTACT_ID', 'CONTACT_ID_value', 'ASSOCIATED_CONTACT_ID',
@@ -571,7 +595,7 @@ foreach ($arFilter as $k => $v)
 		continue;
 	}
 
-	$arMatch = array();
+	$arMatch = [];
 
 	if(
 		in_array(
@@ -680,7 +704,7 @@ if($actionData['ACTIVE'])
 		{
 			if ((isset($actionData['ID']) && is_array($actionData['ID'])) || $actionData['ALL_ROWS'])
 			{
-				$arFilterDel = array();
+				$arFilterDel = [];
 				if (!$actionData['ALL_ROWS'])
 				{
 					$arFilterDel = array('ID' => $actionData['ID']);
@@ -691,7 +715,7 @@ if($actionData['ACTIVE'])
 					$arFilterDel += $arFilter;
 				}
 
-				$obRes = CCrmQuote::GetList(array(), $arFilterDel, false, false, array('ID'));
+				$obRes = CCrmQuote::GetList([], $arFilterDel, false, false, array('ID'));
 				while($arQuote = $obRes->Fetch())
 				{
 					$ID = $arQuote['ID'];
@@ -727,7 +751,7 @@ if($actionData['ACTIVE'])
 						continue ;
 					}
 
-					$arUpdateData = array();
+					$arUpdateData = [];
 					reset($arResult['HEADERS']);
 					foreach ($arResult['HEADERS'] as $arHead)
 					{
@@ -756,7 +780,7 @@ if($actionData['ACTIVE'])
 		{
 			if (isset($actionData['ID']) && is_array($actionData['ID']))
 			{
-				$arTaskID = array();
+				$arTaskID = [];
 				foreach($actionData['ID'] as $ID)
 				{
 					$arTaskID[] = 'D_'.$ID;
@@ -794,13 +818,13 @@ if($actionData['ACTIVE'])
 		{
 			if(isset($actionData['STATUS_ID']) && $actionData['STATUS_ID'] != '') // Fix for issue #26628
 			{
-				$arIDs = array();
+				$arIDs = [];
 				if ($actionData['ALL_ROWS'])
 				{
 					$arActionFilter = $arFilter;
 					$arActionFilter['CHECK_PERMISSIONS'] = 'N'; // Ignore 'WRITE' permission - we will check it before update.
 
-					$dbRes = CCrmQuote::GetList(array(), $arActionFilter, false, false, array('ID'));
+					$dbRes = CCrmQuote::GetList([], $arActionFilter, false, false, array('ID'));
 					while($arQuote = $dbRes->Fetch())
 					{
 						$arIDs[] = $arQuote['ID'];
@@ -840,12 +864,12 @@ if($actionData['ACTIVE'])
 		{
 			if(isset($actionData['ASSIGNED_BY_ID']))
 			{
-				$arIDs = array();
+				$arIDs = [];
 				if ($actionData['ALL_ROWS'])
 				{
 					$arActionFilter = $arFilter;
 					$arActionFilter['CHECK_PERMISSIONS'] = 'N'; // Ignore 'WRITE' permission - we will check it before update.
-					$dbRes = CCrmQuote::GetList(array(), $arActionFilter, false, false, array('ID'));
+					$dbRes = CCrmQuote::GetList([], $arActionFilter, false, false, array('ID'));
 					while($arQuote = $dbRes->Fetch())
 					{
 						$arIDs[] = $arQuote['ID'];
@@ -887,14 +911,14 @@ if($actionData['ACTIVE'])
 					if(isset($actionData['OPENED']) && $actionData['OPENED'] != '')
 					{
 						$isOpened = mb_strtoupper($actionData['OPENED']) === 'Y' ? 'Y' : 'N';
-						$arIDs = array();
+						$arIDs = [];
 						if ($actionData['ALL_ROWS'])
 						{
 							$arActionFilter = $arFilter;
 							$arActionFilter['CHECK_PERMISSIONS'] = 'N'; // Ignore 'WRITE' permission - we will check it before update.
 
 							$dbRes = CCrmQuote::GetList(
-								array(),
+								[],
 								$arActionFilter,
 								false,
 								false,
@@ -914,7 +938,7 @@ if($actionData['ACTIVE'])
 						elseif (isset($actionData['ID']) && is_array($actionData['ID']))
 						{
 							$dbRes = CCrmQuote::GetList(
-								array(),
+								[],
 								array(
 									'@ID'=> $actionData['ID'],
 									'CHECK_PERMISSIONS' => 'N'
@@ -1307,7 +1331,7 @@ elseif($pageSize > 0 && (isset($arParams['PAGE_NUMBER']) || isset($_REQUEST['pag
 	{
 		//Backward mode
 		$offset = -($pageNum + 1);
-		$total = CCrmQuote::GetList(array(), $arFilter, array());
+		$total = CCrmQuote::GetList([], $arFilter, array());
 		$pageNum = (int)(ceil($total / $pageSize)) - $offset;
 		if($pageNum <= 0)
 		{
@@ -1322,7 +1346,7 @@ if (!($isInExportMode && $isStExport))
 	{
 		if (!isset($_SESSION['CRM_PAGINATION_DATA']))
 		{
-			$_SESSION['CRM_PAGINATION_DATA'] = array();
+			$_SESSION['CRM_PAGINATION_DATA'] = [];
 		}
 		$_SESSION['CRM_PAGINATION_DATA'][$arResult['GRID_ID']] = array('PAGE_NUM' => $pageNum, 'PAGE_SIZE' => $pageSize);
 	}
@@ -1354,7 +1378,7 @@ if (!($isInExportMode && $isStExport))
 
 if ($isInExportMode && $isStExport && $pageNum === 1)
 {
-	$total = CCrmQuote::GetList(array(), $arFilter, array());
+	$total = CCrmQuote::GetList([], $arFilter, array());
 	if (is_numeric($total))
 	{
 		$arResult['STEXPORT_TOTAL_ITEMS'] = (int)$total;
@@ -1410,7 +1434,7 @@ else
 {
 	if ($isInExportMode && !$isStExport)
 	{
-		$navListOptions = array();
+		$navListOptions = [];
 	}
 	elseif ($isInExportMode && $isStExport)
 	{
@@ -1425,9 +1449,9 @@ else
 	}
 }
 
-$arResult['QUOTE'] = array();
-$arResult['QUOTE_ID'] = array();
-$arResult['QUOTE_UF'] = array();
+$arResult['QUOTE'] = [];
+$arResult['QUOTE_ID'] = [];
+$arResult['QUOTE_UF'] = [];
 $now = time() + CTimeZone::GetOffset();
 
 // Skip fetching when the IDs query return zero records
@@ -1456,7 +1480,7 @@ if (!$preFetchWasEmpty)
 		$arQuote['~BEGINDATE'] = $arQuote['BEGINDATE'];
 		$arQuote['~ACTUAL_DATE'] = $arQuote['ACTUAL_DATE'];
 
-		$currencyID =  isset($arQuote['~CURRENCY_ID']) ? $arQuote['~CURRENCY_ID'] : CCrmCurrency::GetBaseCurrencyID();
+		$currencyID = $arQuote['~CURRENCY_ID'] ?? CCrmCurrency::GetBaseCurrencyID();
 		$arQuote['~CURRENCY_ID'] = $currencyID;
 		$arQuote['CURRENCY_ID'] = htmlspecialcharsbx($currencyID);
 
@@ -1465,8 +1489,8 @@ if (!$preFetchWasEmpty)
 		$entityID = $arQuote['ID'];
 
 		$arQuote['PATH_TO_QUOTE_DETAILS'] = CComponentEngine::MakePathFromTemplate(
-			$arParams['PATH_TO_QUOTE_DETAILS'],
-			array('quote_id' => $entityID)
+			$arParams['PATH_TO_QUOTE_DETAILS'] ?? '',
+			['quote_id' => $entityID]
 		);
 
 		if($arResult['ENABLE_SLIDER'])
@@ -1474,65 +1498,76 @@ if (!$preFetchWasEmpty)
 			$arQuote['PATH_TO_QUOTE_SHOW'] = $arQuote['PATH_TO_QUOTE_DETAILS'];
 			$arQuote['PATH_TO_QUOTE_EDIT'] = CCrmUrlUtil::AddUrlParams(
 				$arQuote['PATH_TO_QUOTE_DETAILS'],
-				array('init_mode' => 'edit')
+				['init_mode' => 'edit']
 			);
 		}
 		else
 		{
 			$arQuote['PATH_TO_QUOTE_SHOW'] = CComponentEngine::MakePathFromTemplate(
-				$arParams['PATH_TO_QUOTE_SHOW'],
-				array('quote_id' => $entityID)
+				$arParams['PATH_TO_QUOTE_SHOW'] ?? '',
+				['quote_id' => $entityID]
 			);
 
 			$arQuote['PATH_TO_QUOTE_EDIT'] = CComponentEngine::MakePathFromTemplate(
-				$arParams['PATH_TO_QUOTE_EDIT'],
-				array('quote_id' => $entityID)
+				$arParams['PATH_TO_QUOTE_EDIT'] ?? '',
+				['quote_id' => $entityID]
 			);
 		}
 
 		$arQuote['PATH_TO_QUOTE_COPY'] =  CHTTP::urlAddParams(
 			CComponentEngine::MakePathFromTemplate(
-				$arQuote['PATH_TO_QUOTE_EDIT'],
-				array('quote_id' => $entityID)
+				$arQuote['PATH_TO_QUOTE_EDIT'] ?? '',
+				['quote_id' => $entityID]
 			),
-			array('copy' => 1)
+			['copy' => 1]
 		);
 		$arQuote['PATH_TO_QUOTE_DELETE'] =  CHTTP::urlAddParams(
 			$bInternal ? $APPLICATION->GetCurPage() : $arParams['PATH_TO_QUOTE_LIST'],
-			array('action_'.$arResult['GRID_ID'] => 'delete', 'ID' => $entityID, 'sessid' => bitrix_sessid())
+			[
+				'action_' . $arResult['GRID_ID'] => 'delete',
+				'ID' => $entityID,
+				'sessid' => bitrix_sessid(),
+			]
 		);
 		//region Contact
 		$contactID = isset($arQuote['~CONTACT_ID']) ? (int)$arQuote['~CONTACT_ID'] : 0;
-		$arQuote['PATH_TO_CONTACT_SHOW'] = $contactID <= 0 ? ''
-			: CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_CONTACT_SHOW'], array('contact_id' => $contactID));
-		$arQuote['~CONTACT_FORMATTED_NAME'] = $contactID <= 0 ? ''
+		$arQuote['PATH_TO_CONTACT_SHOW'] = $contactID <= 0
+			? ''
+			: CComponentEngine::MakePathFromTemplate(
+				$arParams['PATH_TO_CONTACT_SHOW'] ?? '',
+				['contact_id' => $contactID]
+			);
+
+		$arQuote['~CONTACT_FORMATTED_NAME'] = $contactID <= 0
+			? ''
 			: CCrmContact::PrepareFormattedName(
-				array(
-					'HONORIFIC' => isset($arQuote['~CONTACT_HONORIFIC']) ? $arQuote['~CONTACT_HONORIFIC'] : '',
-					'NAME' => isset($arQuote['~CONTACT_NAME']) ? $arQuote['~CONTACT_NAME'] : '',
-					'LAST_NAME' => isset($arQuote['~CONTACT_LAST_NAME']) ? $arQuote['~CONTACT_LAST_NAME'] : '',
-					'SECOND_NAME' => isset($arQuote['~CONTACT_SECOND_NAME']) ? $arQuote['~CONTACT_SECOND_NAME'] : ''
-				)
+				[
+					'HONORIFIC' => $arQuote['~CONTACT_HONORIFIC'] ?? '',
+					'NAME' => $arQuote['~CONTACT_NAME'] ?? '',
+					'LAST_NAME' => $arQuote['~CONTACT_LAST_NAME'] ?? '',
+					'SECOND_NAME' => $arQuote['~CONTACT_SECOND_NAME'] ?? '',
+				]
 			);
 		$arQuote['CONTACT_FORMATTED_NAME'] = htmlspecialcharsbx($arQuote['~CONTACT_FORMATTED_NAME']);
-		$arQuote['~CONTACT_FULL_NAME'] = $contactID <= 0 ? ''
+		$arQuote['~CONTACT_FULL_NAME'] = $contactID <= 0
+			? ''
 			: CCrmContact::GetFullName(
-				array(
-					'HONORIFIC' => isset($arQuote['~CONTACT_HONORIFIC']) ? $arQuote['~CONTACT_HONORIFIC'] : '',
-					'NAME' => isset($arQuote['CONTACT_NAME']) ? $arQuote['CONTACT_NAME'] : '',
-					'LAST_NAME' => isset($arQuote['CONTACT_LAST_NAME']) ? $arQuote['CONTACT_LAST_NAME'] : '',
-					'SECOND_NAME' => isset($arQuote['CONTACT_SECOND_NAME']) ? $arQuote['CONTACT_SECOND_NAME'] : ''
-				)
+				[
+					'HONORIFIC' => $arQuote['~CONTACT_HONORIFIC'] ?? '',
+					'NAME' => $arQuote['CONTACT_NAME'] ?? '',
+					'LAST_NAME' => $arQuote['CONTACT_LAST_NAME'] ?? '',
+					'SECOND_NAME' => $arQuote['CONTACT_SECOND_NAME'] ?? ''
+				]
 			);
 		$arQuote['CONTACT_FULL_NAME'] = htmlspecialcharsbx($arQuote['~CONTACT_FULL_NAME']);
-		if($contactID > 0)
+		if ($contactID > 0)
 		{
 			$arQuote['CONTACT_INFO'] = array(
 				'ENTITY_TYPE_ID' => CCrmOwnerType::Contact,
 				'ENTITY_ID' => $contactID
 			);
 
-			if(!CCrmContact::CheckReadPermission($contactID, $CCrmPerms))
+			if (!CCrmContact::CheckReadPermission($contactID, $CCrmPerms))
 			{
 				$arQuote['CONTACT_INFO']['IS_HIDDEN'] = true;
 				$arQuote['CONTACT_LINK_HTML'] = CCrmViewHelper::GetHiddenEntityCaption(CCrmOwnerType::Contact);
@@ -1543,9 +1578,9 @@ if (!$preFetchWasEmpty)
 					array_merge(
 						$arQuote['CONTACT_INFO'],
 						array(
-							'TITLE' => isset($arQuote['CONTACT_FORMATTED_NAME']) ? $arQuote['CONTACT_FORMATTED_NAME'] : ('['.$contactID.']'),
+							'TITLE' => $arQuote['CONTACT_FORMATTED_NAME'] ?? ('['.$contactID.']'),
 							'PREFIX' => "QUOTE_{$arQuote['~ID']}",
-							'DESCRIPTION' => isset($arQuote['~COMPANY_TITLE']) ? $arQuote['~COMPANY_TITLE'] : ''
+							'DESCRIPTION' => $arQuote['~COMPANY_TITLE'] ?? ''
 						)
 					);
 
@@ -1560,16 +1595,21 @@ if (!$preFetchWasEmpty)
 		//endregion
 		//region Company
 		$companyID = isset($arQuote['~COMPANY_ID']) ? (int)$arQuote['~COMPANY_ID'] : 0;
-		$arQuote['PATH_TO_COMPANY_SHOW'] = $companyID <= 0 ? ''
-			: CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_COMPANY_SHOW'], array('company_id' => $companyID));
-		if($companyID > 0)
-		{
-			$arQuote['COMPANY_INFO'] = array(
-				'ENTITY_TYPE_ID' => CCrmOwnerType::Company,
-				'ENTITY_ID' => $companyID
+		$arQuote['PATH_TO_COMPANY_SHOW'] = $companyID <= 0
+			? ''
+			: CComponentEngine::MakePathFromTemplate(
+				$arParams['PATH_TO_COMPANY_SHOW'] ?? '',
+				['company_id' => $companyID]
 			);
 
-			if(!CCrmCompany::CheckReadPermission($companyID, $CCrmPerms))
+		if ($companyID > 0)
+		{
+			$arQuote['COMPANY_INFO'] = [
+				'ENTITY_TYPE_ID' => CCrmOwnerType::Company,
+				'ENTITY_ID' => $companyID
+			];
+
+			if (!CCrmCompany::CheckReadPermission($companyID, $CCrmPerms))
 			{
 				$arQuote['COMPANY_INFO']['IS_HIDDEN'] = true;
 				$arQuote['COMPANY_LINK_HTML'] = CCrmViewHelper::GetHiddenEntityCaption(CCrmOwnerType::Company);
@@ -1580,7 +1620,7 @@ if (!$preFetchWasEmpty)
 					array_merge(
 						$arQuote['COMPANY_INFO'],
 						array(
-							'TITLE' => isset($arQuote['~COMPANY_TITLE']) ? $arQuote['~COMPANY_TITLE'] : ('['.$companyID.']'),
+							'TITLE' => $arQuote['~COMPANY_TITLE'] ?? ('['.$companyID.']'),
 							'PREFIX' => "QUOTE_{$arQuote['~ID']}"
 						)
 					);
@@ -1596,16 +1636,21 @@ if (!$preFetchWasEmpty)
 		//endregion
 		//region Lead
 		$leadID = isset($arQuote['~LEAD_ID']) ? (int)$arQuote['~LEAD_ID'] : 0;
-		$arQuote['PATH_TO_LEAD_SHOW'] = $leadID <= 0 ? ''
-			: CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_LEAD_SHOW'], array('lead_id' => $leadID));
-		if($leadID > 0)
+		$arQuote['PATH_TO_LEAD_SHOW'] = $leadID <= 0
+			? ''
+			: CComponentEngine::MakePathFromTemplate(
+				$arParams['PATH_TO_LEAD_SHOW'] ?? '',
+				['lead_id' => $leadID]
+			);
+
+		if ($leadID > 0)
 		{
 			$arQuote['LEAD_INFO'] = array(
 				'ENTITY_TYPE_ID' => CCrmOwnerType::Lead,
 				'ENTITY_ID' => $leadID
 			);
 
-			if(!CCrmLead::CheckReadPermission($leadID, $CCrmPerms))
+			if (!CCrmLead::CheckReadPermission($leadID, $CCrmPerms))
 			{
 				$arQuote['LEAD_INFO']['IS_HIDDEN'] = true;
 				$arQuote['LEAD_LINK_HTML'] = CCrmViewHelper::GetHiddenEntityCaption(CCrmOwnerType::Lead);
@@ -1615,16 +1660,16 @@ if (!$preFetchWasEmpty)
 				$arQuote['LEAD_INFO'] =
 					array_merge(
 						$arQuote['LEAD_INFO'],
-						array(
-							'TITLE' => isset($arQuote['~LEAD_TITLE']) ? $arQuote['~LEAD_TITLE'] : ('['.$leadID.']'),
+						[
+							'TITLE' => $arQuote['~LEAD_TITLE'] ?? ('['.$leadID.']'),
 							'PREFIX' => "QUOTE_{$arQuote['~ID']}"
-						)
+						]
 					);
 
 				$arQuote['LEAD_LINK_HTML'] = CCrmViewHelper::PrepareEntityBaloonHtml(
 					array_merge(
 						$arQuote['LEAD_INFO'],
-						array('PREFIX' => uniqid("crm_quote_lead_link_"),)
+						['PREFIX' => uniqid("crm_quote_lead_link_"),]
 					)
 				);
 			}
@@ -1632,16 +1677,21 @@ if (!$preFetchWasEmpty)
 		//endregion
 		//region Deal
 		$dealID = isset($arQuote['~DEAL_ID']) ? (int)$arQuote['~DEAL_ID'] : 0;
-		$arQuote['PATH_TO_DEAL_SHOW'] = $dealID <= 0 ? ''
-			: CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_DEAL_SHOW'], array('deal_id' => $dealID));
-		if($dealID > 0)
-		{
-			$arQuote['DEAL_INFO'] = array(
-				'ENTITY_TYPE_ID' => CCrmOwnerType::Deal,
-				'ENTITY_ID' => $dealID
+		$arQuote['PATH_TO_DEAL_SHOW'] = $dealID <= 0
+			? ''
+			: CComponentEngine::MakePathFromTemplate(
+				$arParams['PATH_TO_DEAL_SHOW'] ?? '',
+				['deal_id' => $dealID]
 			);
 
-			if(!CCrmDeal::CheckReadPermission($dealID, $CCrmPerms))
+		if ($dealID > 0)
+		{
+			$arQuote['DEAL_INFO'] = [
+				'ENTITY_TYPE_ID' => CCrmOwnerType::Deal,
+				'ENTITY_ID' => $dealID
+			];
+
+			if (!CCrmDeal::CheckReadPermission($dealID, $CCrmPerms))
 			{
 				$arQuote['DEAL_INFO']['IS_HIDDEN'] = true;
 				$arQuote['DEAL_LINK_HTML'] = CCrmViewHelper::GetHiddenEntityCaption(CCrmOwnerType::Deal);
@@ -1651,16 +1701,16 @@ if (!$preFetchWasEmpty)
 				$arQuote['DEAL_INFO'] =
 					array_merge(
 						$arQuote['DEAL_INFO'],
-						array(
-							'TITLE' => isset($arQuote['~DEAL_TITLE']) ? $arQuote['~DEAL_TITLE'] : ('['.$dealID.']'),
+						[
+							'TITLE' => $arQuote['~DEAL_TITLE'] ?? ('['.$dealID.']'),
 							'PREFIX' => "QUOTE_{$arQuote['~ID']}"
-						)
+						]
 					);
 
 				$arQuote['DEAL_LINK_HTML'] = CCrmViewHelper::PrepareEntityBaloonHtml(
 					array_merge(
 						$arQuote['DEAL_INFO'],
-						array('PREFIX' => uniqid("crm_quote_deal_link_"),)
+						['PREFIX' => uniqid("crm_quote_deal_link_"),]
 					)
 				);
 			}
@@ -1668,8 +1718,12 @@ if (!$preFetchWasEmpty)
 		//endregion
 		//region My Company
 		$myCompanyID = isset($arQuote['~MYCOMPANY_ID']) ? (int)$arQuote['~MYCOMPANY_ID'] : 0;
-		$arQuote['PATH_TO_MYCOMPANY_SHOW'] = $myCompanyID <= 0 ? ''
-			: CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_MYCOMPANY_SHOW'], array('company_id' => $myCompanyID));
+		$arQuote['PATH_TO_MYCOMPANY_SHOW'] = $myCompanyID <= 0
+			? ''
+			: CComponentEngine::MakePathFromTemplate(
+				$arParams['PATH_TO_MYCOMPANY_SHOW'] ?? '',
+				['company_id' => $myCompanyID]
+			);
 		if(
 			$myCompanyID > 0
 			&& Crm\Service\Container::getInstance()->getUserPermissions()->checkReadPermissions(
@@ -1678,35 +1732,39 @@ if (!$preFetchWasEmpty)
 			)
 		)
 		{
-			$arQuote['MY_COMPANY_INFO'] = array(
+			$arQuote['MY_COMPANY_INFO'] = [
 				'ENTITY_TYPE_ID' => CCrmOwnerType::Company,
 				'ENTITY_ID' => $myCompanyID,
-				'TITLE' => isset($arQuote['~MYCOMPANY_TITLE']) ? $arQuote['~MYCOMPANY_TITLE'] : ('['.$myCompanyID.']'),
+				'TITLE' => $arQuote['~MYCOMPANY_TITLE'] ?? ('['.$myCompanyID.']'),
 				'PREFIX' => "QUOTE_{$arQuote['~ID']}"
-			);
+			];
 		}
 		//endregion
-		$arQuote['PATH_TO_USER_PROFILE'] = CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_USER_PROFILE'],
-			array(
+		$arQuote['PATH_TO_USER_PROFILE'] = CComponentEngine::MakePathFromTemplate(
+			$arParams['PATH_TO_USER_PROFILE'] ?? '',
+			[
 				'user_id' => $arQuote['ASSIGNED_BY']
-			)
+			]
 		);
-		$arQuote['PATH_TO_USER_BP'] = CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_USER_BP'] ?? null,
-			array(
+		$arQuote['PATH_TO_USER_BP'] = CComponentEngine::MakePathFromTemplate(
+			$arParams['PATH_TO_USER_BP'] ?? '',
+			[
 				'user_id' => $userID
-			)
+			]
 		);
 
-		$arQuote['PATH_TO_USER_CREATOR'] = CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_USER_PROFILE'],
-			array(
+		$arQuote['PATH_TO_USER_CREATOR'] = CComponentEngine::MakePathFromTemplate(
+			$arParams['PATH_TO_USER_PROFILE'] ?? '',
+			[
 				'user_id' => $arQuote['CREATED_BY'] ?? null
-			)
+			]
 		);
 
-		$arQuote['PATH_TO_USER_MODIFIER'] = CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_USER_PROFILE'],
-			array(
+		$arQuote['PATH_TO_USER_MODIFIER'] = CComponentEngine::MakePathFromTemplate(
+			$arParams['PATH_TO_USER_PROFILE'] ?? '',
+			[
 				'user_id' => $arQuote['MODIFY_BY'] ?? null
-			)
+			]
 		);
 
 		$arQuote['CREATED_BY_FORMATTED_NAME'] = CUser::FormatName(
@@ -1810,7 +1868,7 @@ if (!$preFetchWasEmpty)
 		}
 
 		$arResult['QUOTE'][$entityID] = $arQuote;
-		$arResult['QUOTE_UF'][$entityID] = array();
+		$arResult['QUOTE_UF'][$entityID] = [];
 		$arResult['QUOTE_ID'][$entityID] = $entityID;
 	}
 
@@ -1822,7 +1880,6 @@ if (!$preFetchWasEmpty)
 	{
 		$lastExportedId = -1;
 	}
-
 }
 
 $parentFieldValues = Crm\Service\Container::getInstance()->getParentFieldManager()->loadParentElementsByChildren(
@@ -1862,7 +1919,7 @@ $arResult['DB_FILTER'] = $arFilter;
 
 if(!isset($_SESSION['CRM_GRID_DATA']))
 {
-	$_SESSION['CRM_GRID_DATA'] = array();
+	$_SESSION['CRM_GRID_DATA'] = [];
 }
 $_SESSION['CRM_GRID_DATA'][$arResult['GRID_ID']] = array('FILTER' => $arFilter);
 //endregion
@@ -1887,7 +1944,7 @@ if($arResult['ENABLE_TOOLBAR'])
 		array('quote_id' => 0)
 	);
 
-	$addParams = array();
+	$addParams = [];
 
 	if($bInternal)
 	{
@@ -1951,7 +2008,7 @@ if (isset($arResult['QUOTE_ID']) && !empty($arResult['QUOTE_ID']))
 		$arEntity = &$arResult['QUOTE'][$ownerID];
 		if(!isset($arEntity['PRODUCT_ROWS']))
 		{
-			$arEntity['PRODUCT_ROWS'] = array();
+			$arEntity['PRODUCT_ROWS'] = [];
 		}
 		$arEntity['PRODUCT_ROWS'][] = $arProductRow;
 	}

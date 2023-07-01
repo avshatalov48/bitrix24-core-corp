@@ -777,9 +777,9 @@ else
 			}
 
 			$comments = trim($_POST['COMMENTS']);
-			$bSanitizeComments = ($comments !== '' && mb_strpos($comments, '<'));
+			$bSanitizeComments = ($comments !== '' && mb_strpos($comments, '<') !== false);
 			$userDescription = trim($_POST['USER_DESCRIPTION']);
-			$bSanitizeUserDescription = ($userDescription !== '' && mb_strpos($userDescription, '<'));
+			$bSanitizeUserDescription = ($userDescription !== '' && mb_strpos($userDescription, '<') !== false);
 			if($bSanitizeComments || $bSanitizeUserDescription)
 			{
 				$sanitizer = new CBXSanitizer();

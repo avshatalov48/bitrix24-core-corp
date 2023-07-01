@@ -20,7 +20,7 @@ use Bitrix\Tasks\Util;
 
 $templateData = [];
 
-if (is_array($arResult['ERROR']) && !empty($arResult['ERROR']))
+if (!empty($arResult['ERROR']) && is_array($arResult['ERROR']))
 {
 	foreach ($arResult['ERROR'] as $error)
 	{
@@ -53,6 +53,9 @@ $nameTemplate = empty($arParams['NAME_TEMPLATE'])
 ;
 $arParams['NAME_TEMPLATE'] = $templateData['NAME_TEMPLATE'] = $nameTemplate;
 
+$arParams['AVATAR_SIZE'] = ($arParams['AVATAR_SIZE'] ?? null);
+$arParams['AVATAR_SIZE'] = ($arParams['AVATAR_SIZE'] ?: 58);
+
 // Task Paths
 if ($arParams['GROUP_ID'] > 0)
 {
@@ -84,8 +87,8 @@ else
 }
 
 if (
-	is_array($arParams['TASK_URL_PARAMETERS'])
-	&& !empty($arParams['TASK_URL_PARAMETERS'])
+	!empty($arParams['TASK_URL_PARAMETERS'])
+	&& is_array($arParams['TASK_URL_PARAMETERS'])
 	&& (string)$arParams['PATH_TO_TASKS_TASK'] !== ''
 )
 {
@@ -119,8 +122,7 @@ $templateData['NEW_SUBTASK_PATH'] = $templateData['NEW_TASK_PATH']
 	.(mb_strpos($templateData['NEW_TASK_PATH'], '?') === false ? '?' : '&').'PARENT_ID='.$taskData['ID'];
 
 // Rating
-$rating = CRatings::GetRatingVoteResult('TASK', $taskData['ID']);
-$arResult['RATING'] = $templateData['RATING'] = $rating;
+$arResult['RATING'] = $templateData['RATING'] = CRatings::GetRatingVoteResult('TASK', $taskData['ID']);
 
 // Group
 if (array_key_exists('GROUP', $arResult['DATA']) && is_array($arResult['DATA']['GROUP']))
@@ -265,7 +267,8 @@ if (!empty($prevTaskIds))
 	}
 }
 
-$templateData['TIMER_IS_RUNNING_FOR_CURRENT_USER'] = ($taskData['TIMER_IS_RUNNING'] ? 'Y' : 'N');
+$isTimerRunning = ($taskData['TIMER_IS_RUNNING'] ?? null);
+$templateData['TIMER_IS_RUNNING_FOR_CURRENT_USER'] = ($isTimerRunning ? 'Y' : 'N');
 
 // Description
 $taskData['~DESCRIPTION'] = $taskData['DESCRIPTION'];
@@ -309,7 +312,10 @@ if (!empty($taskData['DESCRIPTION']))
 }
 
 // todo: remove this when tasksRenderJSON() removed
-if (is_array($arResult['DATA']['EVENT_TASK']))
+if (
+	isset($arResult['DATA']['EVENT_TASK'])
+	&& is_array($arResult['DATA']['EVENT_TASK'])
+)
 {
 	// It seems DESCRIPTION is not used anywhere, so to avoid security problems, simply dont pass DESCRIPTION.
 	unset($arResult['DATA']['EVENT_TASK']['DESCRIPTION']);
@@ -317,7 +323,6 @@ if (is_array($arResult['DATA']['EVENT_TASK']))
 	$arResult['DATA']['EVENT_TASK_SAFE'] = Util::escape($arResult['DATA']['EVENT_TASK']);
 }
 
-$arParams['AVATAR_SIZE'] = ($arParams['AVATAR_SIZE'] ?: 58);
 if (!array_key_exists('ID', $taskData))
 {
 	$taskData['ID'] = 0;

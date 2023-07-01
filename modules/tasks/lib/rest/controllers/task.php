@@ -8,6 +8,7 @@ use Bitrix\Main;
 use Bitrix\Main\Engine;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
+use Bitrix\Main\UI\Filter\Options;
 use Bitrix\Main\UI\PageNavigation;
 use Bitrix\Main\UserTable;
 use Bitrix\Pull\MobileCounter;
@@ -31,6 +32,8 @@ use Bitrix\Tasks\Internals\SearchIndex;
 use Bitrix\Tasks\Internals\Task\ParameterTable;
 use Bitrix\Tasks\Internals\Task\Result\ResultManager;
 use Bitrix\Tasks\Internals\Task\Result\ResultTable;
+use Bitrix\Tasks\Internals\Task\ScenarioTable;
+use Bitrix\Tasks\Internals\TaskTable;
 use Bitrix\Tasks\Scrum\Service\TaskService;
 use Bitrix\Tasks\Internals\UserOption;
 use Bitrix\Tasks\Manager;
@@ -216,7 +219,7 @@ final class Task extends Base
 		}
 		if (array_key_exists('DESCRIPTION', $row))
 		{
-			$row['DESCRIPTION'] = htmlspecialchars_decode($row['DESCRIPTION'], ENT_QUOTES);
+			$row['DESCRIPTION'] = htmlspecialchars_decode($row['DESCRIPTION'] ?? '', ENT_QUOTES);
 		}
 
 		$row = $this->fillGroupInfo([$row], $params)[0];
@@ -349,11 +352,17 @@ final class Task extends Base
 		$userIds = [];
 		foreach ($rows as $row)
 		{
-			if (array_key_exists('CREATED_BY', $row) && !$users[$row['CREATED_BY']])
+			if (
+				array_key_exists('CREATED_BY', $row)
+				&& !array_key_exists($row['CREATED_BY'], $users)
+			)
 			{
 				$userIds[] = (int)$row['CREATED_BY'];
 			}
-			if (array_key_exists('RESPONSIBLE_ID', $row) && !$users[$row['RESPONSIBLE_ID']])
+			if (
+				array_key_exists('RESPONSIBLE_ID', $row)
+				&& !array_key_exists($row['RESPONSIBLE_ID'], $users)
+			)
 			{
 				$userIds[] = (int)$row['RESPONSIBLE_ID'];
 			}
@@ -362,7 +371,7 @@ final class Task extends Base
 				foreach ($row['ACCOMPLICES'] as $userId)
 				{
 					$userId = (int)$userId;
-					if (!$users[$userId])
+					if (!array_key_exists($userId, $users))
 					{
 						$userIds[] = $userId;
 					}
@@ -373,7 +382,7 @@ final class Task extends Base
 				foreach ($row['AUDITORS'] as $userId)
 				{
 					$userId = (int)$userId;
-					if (!$users[$userId])
+					if (!array_key_exists($userId, $users))
 					{
 						$userIds[] = $userId;
 					}
@@ -466,7 +475,10 @@ final class Task extends Base
 		$groupIds = [];
 		foreach ($rows as $id => $row)
 		{
-			if (array_key_exists('GROUP_ID', $row) && !$groups[$row['GROUP_ID']])
+			if (
+				array_key_exists('GROUP_ID', $row)
+				&& !array_key_exists($row['GROUP_ID'], $groups)
+			)
 			{
 				$groupIds[] = (int)$row['GROUP_ID'];
 			}
@@ -558,7 +570,11 @@ final class Task extends Base
 			$tasks[$id]['TIME_ELAPSED'] = $task['TIME_SPENT_IN_LOGS'];
 			$tasks[$id]['TIMER_IS_RUNNING_FOR_CURRENT_USER'] = 'N';
 
-			if ((int)$task['ID'] === (int)$runningTaskData['TASK_ID'] && $task['ALLOW_TIME_TRACKING'] === 'Y')
+			if (
+				is_array($runningTaskData)
+				&& (int)$task['ID'] === (int)$runningTaskData['TASK_ID']
+				&& $task['ALLOW_TIME_TRACKING'] === 'Y'
+			)
 			{
 				// elapsed time is a sum of times in task log plus time of the current timer
 				$tasks[$id]['TIME_ELAPSED'] += (time() - $runningTaskData['TIMER_STARTED_AT']);
@@ -680,7 +696,11 @@ final class Task extends Base
 		foreach ($tasks as $id => $task)
 		{
 			$tasks[$id]['FILES'] = [];
-			$fileIds[] = ($task[Disk\UserField::getMainSysUFCode()] ?: []);
+			$fileId = $task[Disk\UserField::getMainSysUFCode()] ?? [];
+			if ($fileId !== false)
+			{
+				$fileIds[] = $fileId;
+			}
 		}
 		$fileIds = array_merge(...$fileIds);
 		$fileIds = array_unique($fileIds);
@@ -768,7 +788,7 @@ final class Task extends Base
 				}
 
 				$textFragmentParser->setText($task['DESCRIPTION']);
-				$textFragmentParser->setFiles($task['FILES'] ?: []);
+				$textFragmentParser->setFiles(isset($task['FILES']) && $task['FILES'] ? $task['FILES'] : []);
 
 				$tasks[$id]['PARSED_DESCRIPTION'] = htmlspecialchars_decode($textFragmentParser->getParsedText(), ENT_QUOTES);
 			}
@@ -799,19 +819,32 @@ final class Task extends Base
 	 * @param $fields
 	 * @return array
 	 */
-	private function formatDateFieldsForInput(array $fields): array
+	private function formatDateFieldsForInput(array $fields, array $params = []): array
 	{
 		$getUf = $this->isUfExist(array_keys($fields));
 
 		foreach ($this->getDateFields($getUf) as $fieldName => $fieldData)
 		{
-			$date = $fields[$fieldName];
-			if ($date)
+			if (
+				isset($fields[$fieldName])
+				&& ($date = $fields[$fieldName])
+			)
 			{
 				$timestamp = strtotime($date);
 				if ($timestamp !== false)
 				{
-					$timestamp += \CTimeZone::GetOffset() - DateTime::createFromTimestamp($timestamp)->getSecondGmt();
+					if (
+						isset($params['skipTimeZoneOffset'])
+						&& $params['skipTimeZoneOffset'] === $fieldName
+					)
+					{
+						$timestamp -= DateTime::createFromTimestamp($timestamp)->getSecondGmt();
+
+					}
+					else
+					{
+						$timestamp += \CTimeZone::GetOffset() - DateTime::createFromTimestamp($timestamp)->getSecondGmt();
+					}
 					$fields[$fieldName] = ConvertTimeStamp($timestamp, 'FULL');
 				}
 			}
@@ -842,7 +875,10 @@ final class Task extends Base
 
 		foreach ($dateFields as $fieldName => $fieldData)
 		{
-			if ($field = $row[$fieldName])
+			if (
+				isset($row[$fieldName])
+				&& ($field = $row[$fieldName])
+			)
 			{
 				if (is_array($field))
 				{
@@ -912,7 +948,7 @@ final class Task extends Base
 		}
 
 		$crmUfCode = CRM\UserField::getMainSysUFCode();
-		if (!is_array($fields[$crmUfCode]))
+		if (!is_array($fields[$crmUfCode] ?? null))
 		{
 			$fields[$crmUfCode] = [];
 		}
@@ -965,6 +1001,7 @@ final class Task extends Base
 		$fields = $this->formatDateFieldsForInput($fields);
 		$fields = $this->processFiles(0, $fields);
 		$fields = $this->processCrmElements($fields);
+		$fields = $this->processScenario($fields, $params);
 
 		try
 		{
@@ -985,7 +1022,7 @@ final class Task extends Base
 			return null;
 		}
 
-		if ($params['PLATFORM'] === 'mobile')
+		if (isset($params['PLATFORM']) && $params['PLATFORM'] === 'mobile')
 		{
 			AnalyticLogger::logToFile('addTask');
 		}
@@ -1009,7 +1046,7 @@ final class Task extends Base
 	public function updateAction(\CTaskItem $task, array $fields, array $params = []): ?array
 	{
 		$fields = $this->filterFields($fields);
-		$fields = $this->formatDateFieldsForInput($fields);
+		$fields = $this->formatDateFieldsForInput($fields, $params);
 		$fields = $this->processFiles($task->getId(), $fields);
 		$fields = $this->processCrmElements($fields);
 
@@ -1068,94 +1105,42 @@ final class Task extends Base
 	/**
 	 * Get list all task
 	 *
-	 * @param PageNavigation $pageNavigation
 	 * @param array $filter
 	 * @param array $select
 	 * @param array $group
 	 * @param array $order
 	 * @param array $params
+	 * @param PageNavigation|null $pageNavigation
 	 * @return Engine\Response\DataType\Page
 	 * @throws Main\ArgumentException
 	 * @throws Main\ArgumentNullException
 	 * @throws Main\ArgumentOutOfRangeException
-	 * @throws Main\LoaderException
 	 * @throws Main\ObjectException
 	 * @throws Main\SystemException
 	 */
 	public function listAction(
-		PageNavigation $pageNavigation,
 		array $filter = [],
 		array $select = [],
 		array $group = [],
 		array $order = [],
-		array $params = []
+		array $params = [],
+		PageNavigation $pageNavigation = null
 	): ?Engine\Response\DataType\Page
 	{
 		if (!$this->checkOrderKeys($order))
         {
             $this->addError(new Error(GetMessage('TASKS_FAILED_WRONG_ORDER_FIELD')));
+
             return null;
         }
 
-		$filter = $this->getFilter($filter);
-		$getUf = $this->isUfExist($select) || $this->isUfExist(array_keys($filter));
-		$dateFields = $this->getDateFields($getUf);
-
-		foreach ($filter as $fieldName => $fieldData)
-		{
-			preg_match('#(\w+)#', $fieldName, $m);
-
-			if (array_key_exists($m[1], $dateFields) && $filter[$fieldName])
-			{
-				$filter[$fieldName] = DateTime::createFromTimestamp(strtotime($filter[$fieldName]));
-			}
-		}
-
-		if (isset($params['SIFT_THROUGH_FILTER']))
-		{
-			$isSprintKanban = ($params['SIFT_THROUGH_FILTER']['sprintKanban'] === 'Y');
-
-			/** @var Filter $filterInstance */
-			if ($isSprintKanban)
-			{
-				$taskService = new TaskService($params['SIFT_THROUGH_FILTER']['userId']);
-				$filterInstance = $taskService->getFilterInstance(
-					$params['SIFT_THROUGH_FILTER']['groupId'],
-					$params['SIFT_THROUGH_FILTER']['isCompletedSprint'] === 'Y' ? 'complete' : 'active'
-				);
-			}
-			else
-			{
-				$filterInstance = Filter::getInstance(
-					$params['SIFT_THROUGH_FILTER']['userId'],
-					$params['SIFT_THROUGH_FILTER']['groupId']
-				);
-			}
-			$filter = array_merge($filter, $filterInstance->process());
-			unset($filter['ONLY_ROOT_TASKS']);
-		}
-
-		$navParams = [
-			'nPageSize' => $pageNavigation->getLimit(),
-			'iNumPageSize' => $pageNavigation->getOffset(),
-			'iNumPage' => $pageNavigation->getCurrentPage(),
-			'getTotalCount' => true,
-		];
-		if (
-			($getPlusOne = (isset($params['GET_PLUS_ONE']) && $params['GET_PLUS_ONE'] === 'Y'))
-			|| (int)$this->getRequest()->get('start') === -1
-		)
-		{
-			if ($getPlusOne)
-			{
-				$navParams['getPlusOne'] = true;
-			}
-			unset($navParams['getTotalCount']);
-		}
+		$preparedSelect = $this->prepareSelect($select);
+		$preparedFilter = $this->prepareFilter($filter, $select, $params);
+		$navParams = $this->prepareNavParams($pageNavigation, $params);
 
 		$getListParams = [
-			'select' => $this->prepareSelect($select),
-			'legacyFilter' => ($filter ?: []),
+			'select' => $preparedSelect,
+			'legacyFilter' => ($preparedFilter ?: []),
 			'order' => ($order ?: []),
 			'group' => ($group ?: []),
 			'NAV_PARAMS' => $navParams,
@@ -1172,11 +1157,14 @@ final class Task extends Base
 		catch (\Exception $exception)
 		{
 			$this->addError(new Error($exception->getMessage()));
+
 			return null;
 		}
+
 		$tasks = array_values($result['DATA']);
 		$tasks = $this->fillGroupInfo($tasks, $params);
 		$tasks = $this->fillUserInfo($tasks);
+
 		if (array_key_exists('WITH_RESULT_INFO', $params))
 		{
 			$tasks = $this->fillResultInfo($tasks);
@@ -1206,26 +1194,13 @@ final class Task extends Base
 				$task['STATUS'] = $task['REAL_STATUS'];
 				unset($task['REAL_STATUS']);
 			}
-			if (array_key_exists('DESCRIPTION', $task))
+			if (isset($task['DESCRIPTION']))
 			{
 				$task['DESCRIPTION'] = htmlspecialchars_decode($task['DESCRIPTION'], ENT_QUOTES);
 			}
 
 			$this->formatDateFieldsForOutput($task);
 			$task = $this->convertKeysToCamelCase($task);
-
-			if (
-				isset($params['SEND_PULL'])
-				&& $params['SEND_PULL'] !== 'N'
-				&& Loader::includeModule('pull')
-			)
-			{
-				$users = array_unique(array_merge([$task['CREATED_BY']], [$task['RESPONSIBLE_ID']]));
-				foreach ($users as $userId)
-				{
-					\CPullWatch::Add($userId, 'TASK_'.$task['ID']);
-				}
-			}
 		}
 		unset($task);
 
@@ -1236,7 +1211,30 @@ final class Task extends Base
 				return $result['AUX']['OBJ_RES']->nSelectedCount;
 			}
 		);
+	}
 
+	private function prepareNavParams(PageNavigation $pageNavigation, array $params): array
+	{
+		$navParams = [
+			'nPageSize' => $pageNavigation->getLimit(),
+			'iNumPageSize' => $pageNavigation->getOffset(),
+			'iNumPage' => $pageNavigation->getCurrentPage(),
+			'getTotalCount' => true,
+		];
+
+		if (
+			($getPlusOne = (isset($params['GET_PLUS_ONE']) && $params['GET_PLUS_ONE'] === 'Y'))
+			|| (int)$this->getRequest()->get('start') === -1
+		)
+		{
+			if ($getPlusOne)
+			{
+				$navParams['getPlusOne'] = true;
+			}
+			unset($navParams['getTotalCount']);
+		}
+
+		return $navParams;
 	}
 
 	/**
@@ -1331,38 +1329,72 @@ final class Task extends Base
 	 * Parses source filter.
 	 *
 	 * @param array $filter
+	 * @param array $select
+	 * @param array $params
 	 * @return array
-	 * @throws Main\ArgumentException
-	 * @throws Main\ArgumentNullException
-	 * @throws Main\ArgumentOutOfRangeException
-	 * @throws Main\SystemException
 	 */
-	private function getFilter(array $filter): array
+	private function prepareFilter(array $filter, array $select, array $params): array
 	{
-		$filter = (is_array($filter) && !empty($filter) ? $filter : []);
+		$filter = (!empty($filter) ? $filter : []);
+
 		$userId = ($filter['MEMBER'] ?? $this->getCurrentUser()->getId());
 		$roleId = (array_key_exists('ROLE', $filter) ? $filter['ROLE'] : '');
 
-		return $this->processFilter($filter, $userId, $roleId);
-	}
-
-	/**
-	 * @param array $filter
-	 * @param int $userId
-	 * @param string $roleId
-	 * @return array
-	 * @throws Main\ArgumentException
-	 * @throws Main\ArgumentNullException
-	 * @throws Main\ArgumentOutOfRangeException
-	 * @throws Main\SystemException
-	 */
-	private function processFilter(array $filter, int $userId, string $roleId): array
-	{
 		$filter = $this->processFilterSearchIndex($filter);
-		// $filter = $this->processFilterStatus($filter);
-		$filter = $this->processFilterWithoutDeadline($filter, $userId, $roleId);
+		$filter = $this->processFilterWithoutDeadline($filter);
 		$filter = $this->processFilterNotViewed($filter, $userId, $roleId);
 		$filter = $this->processFilterRoleId($filter, $userId, $roleId);
+
+		$getUf = ($this->isUfExist($select) || $this->isUfExist(array_keys($filter)));
+		$dateFields = $this->getDateFields($getUf);
+
+		foreach ($filter as $fieldName => $fieldData)
+		{
+			preg_match('#(\w+)#', $fieldName, $m);
+			if (array_key_exists($m[1], $dateFields) && $fieldData)
+			{
+				$filter[$fieldName] = DateTime::createFromTimestamp(strtotime($fieldData));
+			}
+		}
+
+		if (isset($params['SIFT_THROUGH_FILTER']))
+		{
+			/** @var Filter $filterInstance */
+			$isSprintKanban = (($params['SIFT_THROUGH_FILTER']['sprintKanban'] ?? null) === 'Y');
+			if ($isSprintKanban)
+			{
+				$taskService = new TaskService($params['SIFT_THROUGH_FILTER']['userId']);
+				$filterInstance = $taskService->getFilterInstance(
+					$params['SIFT_THROUGH_FILTER']['groupId'],
+					($params['SIFT_THROUGH_FILTER']['isCompletedSprint'] === 'Y' ? 'complete' : 'active')
+				);
+			}
+			else
+			{
+				$filterInstance = Filter::getInstance(
+					$params['SIFT_THROUGH_FILTER']['userId'],
+					$params['SIFT_THROUGH_FILTER']['groupId']
+				);
+				if ($presetId = ($params['SIFT_THROUGH_FILTER']['presetId'] ?? ''))
+				{
+					$filterValues = [];
+					if (array_key_exists($presetId, $filterInstance->getAllPresets()))
+					{
+						$filterOptions = $filterInstance->getOptions();
+						$filterSettings = (
+							$filterOptions->getFilterSettings($presetId)
+							?? $filterOptions->getDefaultPresets()[$presetId]
+						);
+						$sourceFields = $filterInstance->getFilters();
+						$filterValues = Options::fetchFieldValuesFromFilterSettings($filterSettings, [], $sourceFields);
+					}
+					$filterInstance->setFilterData($filterValues);
+				}
+			}
+
+			$filter = array_merge($filter, $filterInstance->process());
+			unset($filter['ONLY_ROOT_TASKS']);
+		}
 
 		return $filter;
 	}
@@ -1370,10 +1402,6 @@ final class Task extends Base
 	/**
 	 * @param array $filter
 	 * @return array
-	 * @throws Main\ArgumentException
-	 * @throws Main\ArgumentNullException
-	 * @throws Main\ArgumentOutOfRangeException
-	 * @throws Main\SystemException
 	 */
 	private function processFilterSearchIndex(array $filter): array
 	{
@@ -1395,64 +1423,12 @@ final class Task extends Base
 	 * @param array $filter
 	 * @return array
 	 */
-	private function processFilterStatus(array $filter): array
+	private function processFilterWithoutDeadline(array $filter): array
 	{
-		if (!array_key_exists('STATUS', $filter))
+		if (array_key_exists('WO_DEADLINE', $filter) && $filter['WO_DEADLINE'] === 'Y')
 		{
-			return $filter;
+			$filter['DEADLINE'] = '';
 		}
-
-		$filter['REAL_STATUS'] = $filter['STATUS'];
-		unset($filter['STATUS']);
-
-		return $filter;
-	}
-
-	/**
-	 * @param array $filter
-	 * @param int $userId
-	 * @param string $roleId
-	 * @return array
-	 */
-	private function processFilterWithoutDeadline(array $filter, int $userId, string $roleId): array
-	{
-		if (!array_key_exists('WO_DEADLINE', $filter) || $filter['WO_DEADLINE'] !== 'Y')
-		{
-			return $filter;
-		}
-
-		switch ($roleId)
-		{
-			case 'R':
-				$filter['!CREATED_BY'] = $userId;
-				break;
-
-			case 'O':
-				$filter['!RESPONSIBLE_ID'] = $userId;
-				break;
-
-			default:
-				if (array_key_exists('GROUP_ID', $filter))
-				{
-					$filter['!REFERENCE:RESPONSIBLE_ID'] = 'CREATED_BY';
-				}
-				else
-				{
-					$filter['::SUBFILTER-OR'] = [
-						'::LOGIC' => 'OR',
-						'::SUBFILTER-R' => [
-							'!CREATED_BY' => $userId,
-							'RESPONSIBLE_ID' => $userId,
-						],
-						'::SUBFILTER-O' => [
-							'CREATED_BY' => $userId,
-							'!RESPONSIBLE_ID' => $userId,
-						],
-					];
-				}
-				break;
-		}
-		$filter['DEADLINE'] = '';
 
 		return $filter;
 	}
@@ -1484,8 +1460,8 @@ final class Task extends Base
 				$filter['::SUBFILTER-R'] = ['=AUDITOR' => $userId];
 				break;
 
-			default:
 			case '': // view all
+			default:
 				$filter['::SUBFILTER-OR-NW'] = [
 					'::LOGIC' => 'OR',
 					'::SUBFILTER-R' => ['RESPONSIBLE_ID' => $userId],
@@ -1624,12 +1600,21 @@ final class Task extends Base
 	 * @param \CTaskItem $task
 	 * @return bool
 	 */
-	public function pingAction(\CTaskItem $task): bool
+	public function pingAction(\CTaskItem $task): ?bool
 	{
-		if ($taskData = $task->getData(false))
+		try
 		{
-			return $this->pingStatusAction($taskData);
+			if ($taskData = $task->getData(false))
+			{
+				return $this->pingStatusAction($taskData);
+			}
 		}
+		catch (\Exception $exception)
+		{
+			$this->addError(new Error($exception->getMessage()));
+			return null;
+		}
+
 
 		return false;
 	}
@@ -2275,27 +2260,20 @@ final class Task extends Base
 		return $tree;
 	}
 
-	//tmp, remove after internalizer is injected
+	//todo: tmp, remove after internalizer is injected
 	private function removeReferences(array $receivedFields): array
 	{
-		$blackList = [
-			'CREATOR',
-			'RESPONSIBLE',
-			'PARENT',
-			'SITE',
-			'MEMBERS',
-			'RESULTS',
-			'GROUP',
-			'MEMBER_LIST',
-			'TAG_LIST',
-		];
 		$allowableFields = [];
+		$taskEntityFields = TaskTable::getEntity()->getFields();
+
 		foreach ($receivedFields as $field => $data)
 		{
-			if (!in_array($field, $blackList, true))
+			if (($taskEntityFields[$field] ?? null) instanceof Main\ORM\Fields\Relations\Relation)
 			{
-				$allowableFields[$field] = $data;
+				continue;
 			}
+
+			$allowableFields[$field] = $data;
 		}
 
 		return $allowableFields;
@@ -2315,5 +2293,27 @@ final class Task extends Base
 		/** @var \TasksTaskListComponent $componentClassName */
 		$componentClassName = \CBitrixComponent::includeComponentClass("bitrix:tasks.task.list");
 		return $componentClassName::getGridRows($taskIds, $arParams);
+	}
+
+	private function processScenario(array $fields, array $params): array
+	{
+		$isMobile = isset($params['PLATFORM']) && $params['PLATFORM'] === 'mobile';
+
+		if ($isMobile)
+		{
+			$fields['SCENARIO_NAME'][] = ScenarioTable::SCENARIO_MOBILE;
+		}
+
+		if (!empty($fields[CRM\UserField::getMainSysUFCode()]))
+		{
+			$fields['SCENARIO_NAME'][] = ScenarioTable::SCENARIO_CRM;
+		}
+
+		if (isset($fields['SCENARIO_NAME']) && is_array($fields['SCENARIO_NAME']))
+		{
+			$fields['SCENARIO_NAME'] = ScenarioTable::filterByValidScenarios($fields['SCENARIO_NAME']);
+		}
+
+		return $fields;
 	}
 }

@@ -277,7 +277,7 @@ class TasksTaskGanttComponent extends TasksTaskListComponent
 	private function prepareRow(array $item): array
 	{
 		$item['TITLE'] = $this->prepareTitle($item);
-		$item['GROUP_NAME'] = htmlspecialcharsbx($item['GROUP_NAME']);
+		$item['GROUP_NAME'] = htmlspecialcharsbx($item['GROUP_NAME'] ?? null);
 
 		$item['RESPONSIBLE_NAME'] = htmlspecialcharsbx($item['RESPONSIBLE_NAME']);
 		$item['RESPONSIBLE_LAST_NAME'] = htmlspecialcharsbx($item['RESPONSIBLE_LAST_NAME']);

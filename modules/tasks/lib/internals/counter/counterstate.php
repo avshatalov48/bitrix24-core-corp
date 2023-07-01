@@ -102,7 +102,7 @@ class CounterState implements \Iterator
 	/**
 	 *
 	 */
-	public function rewind()
+	public function rewind(): void
 	{
 		reset($this->state);
 	}
@@ -110,31 +110,33 @@ class CounterState implements \Iterator
 	/**
 	 * @return mixed
 	 */
+	#[\ReturnTypeWillChange]
 	public function current()
 	{
 		return current($this->state);
 	}
 
 	/**
-	 * @return bool|float|int|string|null
+	 * @return int|string|null
 	 */
+	#[\ReturnTypeWillChange]
 	public function key()
 	{
 		return key($this->state);
 	}
 
 	/**
-	 * @return mixed|void
+	 * @return void
 	 */
-	public function next()
+	public function next(): void
 	{
-		return next($this->state);
+		next($this->state);
 	}
 
 	/**
 	 * @return bool
 	 */
-	public function valid()
+	public function valid(): bool
 	{
 		$key = key($this->state);
 		return ($key !== null && $key !== false);
@@ -335,6 +337,35 @@ class CounterState implements \Iterator
 			$meta = $this->getMetaProp($item, $groups, $projects, $scrum);
 			$subType = $this->getItemSubType($type);
 
+			if (!isset($this->counters[$meta][$type][$groupId]))
+			{
+				$this->counters[$meta][$type][$groupId] = 0;
+			}
+			if (!isset($this->counters[$meta][$subType][$groupId]))
+			{
+				$this->counters[$meta][$subType][$groupId] = 0;
+			}
+			if (!isset($tmpHeap[$meta][$subType][$groupId]))
+			{
+				$tmpHeap[$meta][$subType][$groupId] = [];
+			}
+			if (!isset($this->counters[CounterDictionary::META_PROP_SONET][$type][$groupId]))
+			{
+				$this->counters[CounterDictionary::META_PROP_SONET][$type][$groupId] = 0;
+			}
+			if (!isset($this->counters[CounterDictionary::META_PROP_SONET][$subType][$groupId]))
+			{
+				$this->counters[CounterDictionary::META_PROP_SONET][$subType][$groupId] = 0;
+			}
+			if (!isset($this->counters[CounterDictionary::META_PROP_ALL][$type][$groupId]))
+			{
+				$this->counters[CounterDictionary::META_PROP_ALL][$type][$groupId] = 0;
+			}
+			if (!isset($this->counters[CounterDictionary::META_PROP_ALL][$subType][$groupId]))
+			{
+				$this->counters[CounterDictionary::META_PROP_ALL][$subType][$groupId] = 0;
+			}
+
 			if (!isset($tmpHeap[$meta][$type][$groupId][$taskId]))
 			{
 				$tmpHeap[$meta][$type][$groupId][$taskId] = $value;
@@ -381,6 +412,50 @@ class CounterState implements \Iterator
 			}
 
 			// Total sum for the all groups/projects
+			if (!isset($this->counters[CounterDictionary::META_PROP_ALL][CounterDictionary::COUNTER_GROUPS_TOTAL_EXPIRED][0]))
+			{
+				$this->counters[CounterDictionary::META_PROP_ALL][CounterDictionary::COUNTER_GROUPS_TOTAL_EXPIRED][0] = 0;
+			}
+			if (!isset($this->counters[CounterDictionary::META_PROP_SONET][CounterDictionary::COUNTER_GROUPS_TOTAL_EXPIRED][0]))
+			{
+				$this->counters[CounterDictionary::META_PROP_SONET][CounterDictionary::COUNTER_GROUPS_TOTAL_EXPIRED][0] = 0;
+			}
+			if (!isset($this->counters[CounterDictionary::META_PROP_ALL][CounterDictionary::COUNTER_GROUPS_FOREIGN_EXPIRED][0]))
+			{
+				$this->counters[CounterDictionary::META_PROP_ALL][CounterDictionary::COUNTER_GROUPS_FOREIGN_EXPIRED][0] = 0;
+			}
+			if (!isset($this->counters[CounterDictionary::META_PROP_SONET][CounterDictionary::COUNTER_GROUPS_FOREIGN_EXPIRED][0]))
+			{
+				$this->counters[CounterDictionary::META_PROP_SONET][CounterDictionary::COUNTER_GROUPS_FOREIGN_EXPIRED][0] = 0;
+			}
+			if (!isset($this->counters[CounterDictionary::META_PROP_ALL][CounterDictionary::COUNTER_GROUPS_TOTAL_COMMENTS][0]))
+			{
+				$this->counters[CounterDictionary::META_PROP_ALL][CounterDictionary::COUNTER_GROUPS_TOTAL_COMMENTS][0] = 0;
+			}
+			if (!isset($this->counters[CounterDictionary::META_PROP_SONET][CounterDictionary::COUNTER_GROUPS_TOTAL_COMMENTS][0]))
+			{
+				$this->counters[CounterDictionary::META_PROP_SONET][CounterDictionary::COUNTER_GROUPS_TOTAL_COMMENTS][0] = 0;
+			}
+			if (!isset($this->counters[CounterDictionary::META_PROP_ALL][CounterDictionary::COUNTER_GROUPS_FOREIGN_COMMENTS][0]))
+			{
+				$this->counters[CounterDictionary::META_PROP_ALL][CounterDictionary::COUNTER_GROUPS_FOREIGN_COMMENTS][0] = 0;
+			}
+			if (!isset($this->counters[CounterDictionary::META_PROP_SONET][CounterDictionary::COUNTER_GROUPS_FOREIGN_COMMENTS][0]))
+			{
+				$this->counters[CounterDictionary::META_PROP_SONET][CounterDictionary::COUNTER_GROUPS_FOREIGN_COMMENTS][0] = 0;
+			}
+			if (!isset($this->counters[$meta][CounterDictionary::COUNTER_GROUPS_FOREIGN_COMMENTS][0]))
+			{
+				$this->counters[$meta][CounterDictionary::COUNTER_GROUPS_FOREIGN_COMMENTS][0] = 0;
+			}
+			if (!isset($this->counters[$meta][CounterDictionary::COUNTER_GROUPS_FOREIGN_EXPIRED][0]))
+			{
+				$this->counters[$meta][CounterDictionary::COUNTER_GROUPS_FOREIGN_EXPIRED][0] = 0;
+			}
+			if (!isset($this->counters[$meta][CounterDictionary::COUNTER_GROUPS_TOTAL_EXPIRED][0]))
+			{
+				$this->counters[$meta][CounterDictionary::COUNTER_GROUPS_TOTAL_EXPIRED][0] = 0;
+			}
 
 			if (
 				$subType === CounterDictionary::COUNTER_EXPIRED
@@ -409,6 +484,10 @@ class CounterState implements \Iterator
 				&& !isset($tmpHeap[$meta][CounterDictionary::COUNTER_GROUPS_TOTAL_COMMENTS][0][$taskId])
 			)
 			{
+				if (!isset($this->counters[$meta][CounterDictionary::COUNTER_GROUPS_TOTAL_COMMENTS][0]))
+				{
+					$this->counters[$meta][CounterDictionary::COUNTER_GROUPS_TOTAL_COMMENTS][0] = 0;
+				}
 				$this->counters[$meta][CounterDictionary::COUNTER_GROUPS_TOTAL_COMMENTS][0] += $value;
 				if (in_array($meta, [CounterDictionary::META_PROP_PROJECT, CounterDictionary::META_PROP_GROUP]))
 				{

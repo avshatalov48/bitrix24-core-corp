@@ -12,4 +12,4 @@ $MESS["JS_DISK_ONLYOFFICE_PROMO_EDIT_POPUP_TITLE"] = "Welcome to the all new doc
 $MESS["JS_DISK_ONLYOFFICE_PROMO_VIEW_POPUP_1"] = "Use Bitrix24.Docs to view files inside tasks, chats, feed and calendar.";
 $MESS["JS_DISK_ONLYOFFICE_PROMO_VIEW_POPUP_2"] = "Bitrix24.Docs supports most popular document file formats: docx, pptx, xls, ppt, pdf, txt, html, csv etc.";
 $MESS["JS_DISK_ONLYOFFICE_PROMO_VIEW_POPUP_3"] = "<a href=\"https://helpdesk.bitrix24.com/open/13722896/\">Details</a>";
-$MESS["JS_DISK_ONLYOFFICE_PROMO_VIEW_POPUP_TITLE"] = "Using Bitrix24.Docs file viewer";
+$MESS["JS_DISK_ONLYOFFICE_PROMO_VIEW_POPUP_TITLE_MSGVER_1"] = "Bitrix24.Docs file viewer";

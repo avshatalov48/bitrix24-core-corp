@@ -4,6 +4,7 @@ namespace Bitrix\Crm\Badge\Type;
 
 use Bitrix\Crm\Badge\Badge;
 use Bitrix\Crm\Badge\ValueItem;
+use Bitrix\Crm\Badge\ValueItemOptions;
 use Bitrix\Main\Localization\Loc;
 
 class PaymentStatus extends Badge
@@ -23,8 +24,8 @@ class PaymentStatus extends Badge
 			new ValueItem(
 				self::MISSED_CALL_VALUE,
 				Loc::getMessage('CRM_BADGE_PAYMENT_STATUS_COMPLETE_PAYMENT_VALUE'),
-				'#76950b',
-				'#e9f6d6'
+				ValueItemOptions::TEXT_COLOR_SUCCESS,
+				ValueItemOptions::BG_COLOR_SUCCESS
 			),
 		];
 	}

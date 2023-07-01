@@ -1,0 +1,4 @@
+<?php
+$MESS["MARKET_COLLECTIONS_ITEM_ADS_JS_ADVERTISING"] = "Реклама";
+$MESS["MARKET_COLLECTIONS_ITEM_ADS_JS_ADVERTISING_SPACE_PARTNERS"] = "Здесь будет рекламное место для партнёров";
+$MESS["MARKET_COLLECTIONS_ITEM_ADS_JS_CLICK_TO_VIEW"] = "Нажмите, чтобы посмотреть";

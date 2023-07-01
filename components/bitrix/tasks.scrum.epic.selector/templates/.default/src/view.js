@@ -129,6 +129,12 @@ export class ViewSelector
 			return;
 		}
 
+		const preselectedItems = [];
+		if (!Type.isNull(this.epic))
+		{
+			preselectedItems.push(['epic-selector' , this.epic.id]);
+		}
+
 		this.dialog = new Dialog({
 			id: Text.getRandom(),
 			targetNode: this.selectorNode,
@@ -139,8 +145,18 @@ export class ViewSelector
 			enableSearch: true,
 			compactView: true,
 			hideOnDeselect: true,
-			selectedItems: [],
-			items: [],
+			context: 'epic-selector-' + this.groupId,
+			preselectedItems: preselectedItems,
+			entities: [
+				{
+					id: 'epic-selector',
+					options: {
+						groupId: this.groupId
+					},
+					dynamicLoad: true,
+					dynamicSearch: true
+				}
+			],
 			searchOptions: {
 				allowCreateItem: true,
 				footerOptions: {
@@ -175,29 +191,7 @@ export class ViewSelector
 			this.changeTaskEpic(epicId).then((epic: ?Epic) => this.updateSelector(epic));
 		});
 
-		this.dialog.showLoader();
-
 		this.dialog.show();
-
-		this.getEpics()
-			.then((epics) => {
-				if (!Type.isNull(this.epic))
-				{
-					const selectedItem = this.getEpicDialogItem(this.epic);
-					selectedItem.selected = true;
-					selectedItem.sort = 1;
-					this.dialog.addItem(selectedItem);
-				}
-				epics.forEach((item) => {
-					this.dialog.addItem(item);
-				});
-				this.dialog.hideLoader();
-			})
-			.catch((response) => {
-				this.showErrorAlert(response);
-				this.dialog.hideLoader();
-			})
-		;
 	}
 
 	updateSelector(epic: ?Epic)
@@ -225,48 +219,18 @@ export class ViewSelector
 		}
 	}
 
-	getEpics(): Promise
-	{
-		return ajax.runComponentAction(
-			'bitrix:tasks.scrum.epic.selector',
-			'getEpics',
-			{
-				mode: 'class',
-				data: {
-					groupId: this.groupId
-				}
-			}
-		)
-			.then((response) => {
-				const epics = response.data;
-				if (Type.isNull(epics))
-				{
-					return [];
-				}
-
-				const list = [];
-				epics.forEach((epic: Epic) => {
-					list.push(this.getEpicDialogItem(epic));
-				});
-
-				return list;
-			})
-			.catch((response) => this.showErrorAlert(response))
-		;
-	}
-
 	getEpicDialogItem(epic: Epic): Object
 	{
-		const avatar = '/bitrix/components/bitrix/tasks.scrum.epic.selector/templates/.default'
-			+ '/images/search-hashtag-green.svg'
-		;
-
 		return {
 			id: epic.id,
-			entityId: 'epic',
+			entityId: 'epic-selector',
 			title: epic.name,
 			tabs: 'recents',
-			avatar: avatar
+			avatarOptions: {
+				bgColor: epic.color,
+				bgImage: 'none',
+				borderRadius: '12px'
+			}
 		};
 	}
 

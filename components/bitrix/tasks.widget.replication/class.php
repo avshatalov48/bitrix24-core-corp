@@ -229,14 +229,14 @@ class TasksWidgetReplicationComponent extends TasksBaseComponent
 		$data = $this->arParams['DATA'];
 
 		$time = strtotime($data['TIME']);
-		$timeZoneOffset = $data['TIMEZONE_OFFSET'];
+		$timeZoneOffset = ($data['TIMEZONE_OFFSET'] ?? null);
 		$creator = $this->arParams['TEMPLATE_CREATED_BY'];
 
 		$creatorTimeZoneOffset = (isset($timeZoneOffset)? $timeZoneOffset : \Bitrix\Tasks\Util\User::getTimeZoneOffset($creator));
 
 		$serverTime = date('H:i', $time - $creatorTimeZoneOffset);
-		$serverStartDate = MakeTimeStamp($data['START_DATE']);
-		$serverEndDate = MakeTimeStamp($data['END_DATE']);
+		$serverStartDate = MakeTimeStamp($data['START_DATE'] ?? null);
+		$serverEndDate = MakeTimeStamp($data['END_DATE'] ?? null);
 
 		$this->arParams['DATA']['TIME'] = ReplicateParamsCorrector::correctTime($serverTime, $currentTimeZoneOffset, 'user');
 		$this->arParams['DATA']['START_DATE'] = ReplicateParamsCorrector::correctStartDate($serverTime, $serverStartDate, $currentTimeZoneOffset, 'user');

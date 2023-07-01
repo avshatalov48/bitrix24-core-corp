@@ -1,8 +1,11 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
-	die();
 
-use \Bitrix\Main\Localization\Loc;
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
+use Bitrix\Main\Localization\Loc;
 
 \Bitrix\Main\UI\Extension::load([
 	'ui.design-tokens',
@@ -47,7 +50,7 @@ $storeBarcodeTmplI=
 
 foreach($arResult['PRODUCTS'] as $product)
 {
-	$namePrefix = 'PRODUCT['.$product['BASKET_CODE'].']';
+	$namePrefix = 'PRODUCT[' . $product['BASKET_CODE'] . ']';
 
 	$properties = '';
 	if (!empty($product['PROPS']) && is_array($product['PROPS']))
@@ -117,8 +120,8 @@ foreach($arResult['PRODUCTS'] as $product)
 
 	$nameHtml =
 		$arResult['ALLOW_SELECT_PRODUCT']
-			? '<a href="'.$product['EDIT_PAGE_URL'].'" class="crm-order-product-info-name-text">'.htmlspecialcharsbx($product['NAME']).'</a>'
-			: htmlspecialcharsbx($product['NAME'])
+			? '<a href="'.$product['EDIT_PAGE_URL'].'" class="crm-order-product-info-name-text">'.htmlspecialcharsbx($product['NAME'] ?? '').'</a>'
+			: htmlspecialcharsbx($product['NAME'] ?? '')
 	;
 
 
@@ -162,8 +165,7 @@ foreach($arResult['PRODUCTS'] as $product)
 		$storeRemainingQuantity = '';
 		$storeBarcodeTmpl = '';
 		$storeBarcodeInfo[$product['BASKET_CODE']] = $product['STORE_BARCODE_INFO'];
-
-
+		
 		$storeTmpl =
 			'<div class="crm-order-product-store-container" data-ps-basketcode="#BASKET_CODE#" data-ps-store-id="#STORE_ID#" style="min-height: 39px;">'.
 				'<span class="crm-order-product-store-name">
@@ -404,7 +406,7 @@ $APPLICATION->IncludeComponent(
 		'AJAX_MODE' => $arParams['AJAX_MODE'],
 		'AJAX_OPTION_JUMP' => $arResult['AJAX_OPTION_JUMP'],
 		'AJAX_OPTION_HISTORY' => $arResult['AJAX_OPTION_HISTORY'],
-		'AJAX_LOADER' => isset($arParams['AJAX_LOADER']) ? $arParams['AJAX_LOADER'] : null,
+		'AJAX_LOADER' => $arParams['AJAX_LOADER'] ?? null,
 		'ENABLE_ROW_COUNT_LOADER' => true,
 		"SHOW_CHECK_ALL_CHECKBOXES" => false,
 		"SHOW_ROW_CHECKBOXES" => false,
@@ -412,14 +414,14 @@ $APPLICATION->IncludeComponent(
 		'PRESERVE_HISTORY' => $arResult['PRESERVE_HISTORY'],
 		'SHOW_ROW_ACTIONS_MENU' => !$isSetItems,
 		'ENABLE_COLLAPSIBLE_ROWS' => true,
-		'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'],
+		'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'] ?? '',
 		'EXTENSION' => [
 			'ID' => $gridManagerID,
 			'CONFIG' => [
 				'ownerTypeName' => 'ORDER_PRODUCT',
 				'gridId' => $arResult['GRID_ID'],
-				'serviceUrl' => '/bitrix/components/bitrix/crm.order.shipment.product.list/list.ajax.php?siteID='.SITE_ID.'&'.bitrix_sessid_get(),
-				'loaderData' => isset($arParams['AJAX_LOADER']) ? $arParams['AJAX_LOADER'] : null
+				'serviceUrl' => '/bitrix/components/bitrix/crm.order.shipment.product.list/list.ajax.php?siteID=' . SITE_ID . '&' . bitrix_sessid_get(),
+				'loaderData' => $arParams['AJAX_LOADER'] ?? null
 			],
 			'MESSAGES' => [
 				'deletionDialogTitle' => Loc::getMessage('CRM_ORDER_SPLT_DELETE_ITEM'),

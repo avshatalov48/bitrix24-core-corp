@@ -22,7 +22,7 @@ export default class ItemImage extends Item
 
 			return Tag.render`
 		<div class="disk-file-thumb disk-file-thumb-preview">
-			<div style="background-image: url('${this.data['PREVIEW_URL']}'); background-size: cover;" class="disk-file-thumb-image"></div>
+			<div style="background-image: url('${encodeURI(this.data['PREVIEW_URL'])}'); background-size: cover;" class="disk-file-thumb-image"></div>
 			${this.getIcon(extension)}
 			${this.getNameBox(nameWithoutExtension, extension)}
 			${this.getDeleteButton()}

@@ -1,22 +1,22 @@
 .ui-counter-panel__scope {
 	--color-background: rgba(82,92,105,.08);
 	--color-hover: rgba(82,92,105,.1);
-	--color-active: rgba(0,195,255,.6);
-	--color-active-hover: rgba(248,250,251,1);
-	--color-text: rgba(82,92,105,1);
-	--color-text-active: rgba(82,92,105,1);
-	--color-separator: rgba(151,151,151,.3);
+	--color-active: rgba(var(--ui-color-primary-rgb), .57);
+	--color-active-hover: var(--ui-color-base-02);
+	--color-text: var(--ui-color-base-90);
+	--color-text-active: var(--ui-color-base-90);
+	--color-separator: rgba(var(--ui-color-palette-beige-base-rgb), .15);
 
 	--border-radius-xl: 24px;
 	--border-radius-sm: 2px;
 }
 
 .bitrix24-light-theme .ui-counter-panel__scope {
-	--color-background: rgba(255,255,255,.15);
-	--color-hover: rgba(255,255,255,.15);
-	--color-text: rgba(255,255,255,.8);
-	--color-text-active: rgba(255,255,255,1);
-	--color-separator: rgba(255,255,255,.15);
+	--color-background: rgba(var(--ui-color-on-primary-rgb), .15);
+	--color-hover: rgba(var(--ui-color-on-primary-rgb), .15);
+	--color-text: rgba(var(--ui-color-on-primary-rgb), .8);
+	--color-text-active: rgba(var(--ui-color-on-primary-rgb), 1);
+	--color-separator: rgba(var(--ui-color-palette-beige-base-rgb), .15);
 }
 
 .ui-counter-panel {
@@ -29,7 +29,7 @@
 	overflow: hidden;
 	background: var(--color-background);
 	border-radius: var(--border-radius-xl);
-	font: 14px/normal var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font: 14px/normal var(--ui-font-family-secondary);
 	font-weight: var(--ui-font-weight-regular, 400);
 }
 
@@ -54,6 +54,9 @@
 	display: -webkit-inline-box;
 	display: -ms-inline-flexbox;
 	display: inline-flex;
+	-webkit-box-align: center;
+	    -ms-flex-align: center;
+	        align-items: center;
 	overflow: hidden;
 	padding: 0 20px 0 5px;
 	position: relative;
@@ -142,7 +145,8 @@
 	width: calc(100% - 30px);
 }
 
-.ui-counter-panel__item.--locked {
+.ui-counter-panel__item.--locked,
+.ui-counter-panel__item.--restricted {
 	pointer-events: none;
 	opacity: .5;
 }
@@ -162,6 +166,15 @@
 	z-index: 1;
 }
 
+.ui-counter-panel__item-lock {
+	display: block;
+	width: 12px;
+	height: 16px;
+	content: '';
+	background: url("data:image/svg+xml;charset=utf-8,%3Csvg width='12' height='16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M6.692 11.726v1.746H5.308v-1.746a1.107 1.107 0 01-.408-.86c0-.611.493-1.107 1.1-1.107.607 0 1.1.495 1.1 1.107 0 .347-.16.657-.408.86zM2.989 4.63A3.02 3.02 0 016 1.601a3.02 3.02 0 013.011 3.03v2.562H2.99V4.63zm7.614 2.561V4.631C10.603 2.073 8.542 0 6 0S1.397 2.073 1.397 4.631v2.561H.5a.5.5 0 00-.5.5v7.77a.5.5 0 00.5.5h11a.5.5 0 00.5-.5v-7.77a.5.5 0 00-.5-.5h-.897z' fill='%23fff'/%3E%3C/svg%3E") center no-repeat;
+	margin-right: 5px;
+}
+
 .ui-counter-panel__item-title + .ui-counter-panel__item-value {
 	margin-right: 0;
 }
@@ -173,6 +186,7 @@
 	-webkit-box-align: center;
 	    -ms-flex-align: center;
 	        align-items: center;
+	margin-bottom: 1px;
 	overflow: hidden;
 	white-space: nowrap;
 	z-index: 1;
@@ -197,6 +211,9 @@
 	-webkit-box-pack: center;
 	    -ms-flex-pack: center;
 	        justify-content: center;
+	-webkit-box-align: center;
+	    -ms-flex-align: center;
+	        align-items: center;
 	width: 20px;
 	z-index: 1;
 	cursor: pointer;
@@ -241,7 +258,6 @@
 	display: block;
 	width: 8px;
 	height: 7px;
-	margin-top: 14px;
 	background: url("data:image/svg+xml;charset=utf-8,%3Csvg width='8' height='7' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M6.409.276L4.382 2.303 2.356.276c-.368-.368-.829-.368-1.197 0-.369.369-.369.83 0 1.198L3.185 3.5 1.159 5.526c-.369.369-.369.83 0 1.198.368.368.829.368 1.197 0l2.026-2.027L6.41 6.724c.368.368.829.368 1.197 0 .368-.369.368-.83 0-1.198L5.58 3.5l2.026-2.026c.368-.369.368-.83 0-1.198C7.238 0 6.685 0 6.409.276z' fill='%23525C69'/%3E%3C/svg%3E") center no-repeat;
 	pointer-events: none;
 }
@@ -277,10 +293,10 @@
 	display: -ms-inline-flexbox;
 	display: inline-flex;
 	-webkit-box-align: center;
-	-ms-flex-align: center;
-	align-items: center;
+	    -ms-flex-align: center;
+	        align-items: center;
 	-ms-flex-wrap: wrap;
-	flex-wrap: wrap;
+	    flex-wrap: wrap;
 	overflow: hidden;
 	white-space: normal;
 	padding-left: 20px;

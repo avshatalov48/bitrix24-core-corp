@@ -2,22 +2,22 @@
 
 namespace Bitrix\Crm\Integration\Report\Handler\Order;
 
+use Bitrix\Crm\Binding\OrderContactCompanyTable;
+use Bitrix\Crm\Integration\Report\Handler;
 use Bitrix\Crm\Integration\Report\View\ColumnFunnel;
 use Bitrix\Crm\Integration\Report\View\FunnelGrid;
-use Bitrix\Crm\PhaseSemantics;
 use Bitrix\Crm\Order\OrderStatus;
-use Bitrix\Crm\Binding\OrderContactCompanyTable;
+use Bitrix\Crm\PhaseSemantics;
 use Bitrix\Main\Loader;
-use Bitrix\Main\ORM\Query\Query;
-use Bitrix\Main\ORM\Fields\Relations\Reference;
-use Bitrix\Sale\Internals\OrderPropsValueTable;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ORM\Fields\Relations\Reference;
+use Bitrix\Main\ORM\Query\Query;
 use Bitrix\Main\UI\Filter\Options;
 use Bitrix\Report\VisualConstructor\Fields\Valuable\Hidden;
 use Bitrix\Report\VisualConstructor\IReportMultipleData;
 use Bitrix\Report\VisualConstructor\IReportMultipleGroupedData;
 use Bitrix\Report\VisualConstructor\IReportSingleData;
-use Bitrix\Crm\Integration\Report\Handler;
+use Bitrix\Sale\Internals\OrderPropsValueTable;
 use Bitrix\Sale\Internals\OrderTable;
 
 /**
@@ -654,6 +654,10 @@ abstract class BaseGrid extends Handler\Base implements IReportSingleData, IRepo
 		}
 		elseif ($calculateValue === self::WHAT_WILL_CALCULATE_ORDER_CONVERSION || $calculateValue === self::WHAT_WILL_CALCULATE_ORDER_LOSES)
 		{
+			if (!isset($amount['value']))
+			{
+				$amount['value'] = 0.0;
+			}
 			$amount['value'] += round( $calculatedData['amount']['ratio'] * 100, 2);
 			$amount['postfix'] = '%';
 		}
@@ -741,7 +745,7 @@ abstract class BaseGrid extends Handler\Base implements IReportSingleData, IRepo
 		if ($permissionSql)
 		{
 			$this->permissionEntity = \Bitrix\Main\Entity\Base::compileEntity(
-				'order_user_perms',
+				'order_user_perms' . randString(),
 				['ENTITY_ID' => ['data_type' => 'integer']],
 				['table_name' => "({$permissionSql})"]
 			);

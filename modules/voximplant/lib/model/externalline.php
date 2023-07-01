@@ -57,6 +57,10 @@ class ExternalLineTable extends Base
 			new Entity\BooleanField('IS_MANUAL', [
 				'values' => ['N', 'Y']
 			]),
+			new Entity\BooleanField('CRM_AUTO_CREATE', [
+				'values' => ['N', 'Y'],
+				'default_value' => 'Y',
+			]),
 			new Entity\DateTimeField('DATE_CREATE', [
 				'default_value' => function()
 				{

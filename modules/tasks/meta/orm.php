@@ -474,6 +474,16 @@ namespace Bitrix\Tasks\Integration\Report\Internals {
 	 * @method bool isResultsFilled()
 	 * @method bool isResultsChanged()
 	 * @method \Bitrix\Tasks\Internals\Task\Result\Result fillResults()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_Scenario getScenario()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_Scenario remindActualScenario()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_Scenario requireScenario()
+	 * @method \Bitrix\Tasks\Internals\TaskObject setScenario(\Bitrix\Tasks\Internals\Task\EO_Scenario $object)
+	 * @method \Bitrix\Tasks\Internals\TaskObject resetScenario()
+	 * @method \Bitrix\Tasks\Internals\TaskObject unsetScenario()
+	 * @method bool hasScenario()
+	 * @method bool isScenarioFilled()
+	 * @method bool isScenarioChanged()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_Scenario fillScenario()
 	 * @method \Bitrix\Socialnetwork\EO_Workgroup getGroup()
 	 * @method \Bitrix\Socialnetwork\EO_Workgroup remindActualGroup()
 	 * @method \Bitrix\Socialnetwork\EO_Workgroup requireGroup()
@@ -505,9 +515,9 @@ namespace Bitrix\Tasks\Integration\Report\Internals {
 	 * @method void removeAllMemberList()
 	 * @method \Bitrix\Tasks\Internals\TaskObject resetMemberList()
 	 * @method \Bitrix\Tasks\Internals\TaskObject unsetMemberList()
-	 * @method \Bitrix\Tasks\Internals\Task\EO_Label_Collection getTagList()
-	 * @method \Bitrix\Tasks\Internals\Task\EO_Label_Collection requireTagList()
-	 * @method \Bitrix\Tasks\Internals\Task\EO_Label_Collection fillTagList()
+	 * @method \Bitrix\Tasks\Internals\Task\TagCollection getTagList()
+	 * @method \Bitrix\Tasks\Internals\Task\TagCollection requireTagList()
+	 * @method \Bitrix\Tasks\Internals\Task\TagCollection fillTagList()
 	 * @method bool hasTagList()
 	 * @method bool isTagListFilled()
 	 * @method bool isTagListChanged()
@@ -556,6 +566,37 @@ namespace Bitrix\Tasks\Integration\Report\Internals {
 	 * @method \Bitrix\Tasks\Internals\TaskObject resetDeadlineCounted()
 	 * @method \Bitrix\Tasks\Internals\TaskObject unsetDeadlineCounted()
 	 * @method \int fillDeadlineCounted()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_UtsTasksTask getUtsData()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_UtsTasksTask remindActualUtsData()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_UtsTasksTask requireUtsData()
+	 * @method \Bitrix\Tasks\Internals\TaskObject setUtsData(\Bitrix\Tasks\Internals\Task\EO_UtsTasksTask $object)
+	 * @method \Bitrix\Tasks\Internals\TaskObject resetUtsData()
+	 * @method \Bitrix\Tasks\Internals\TaskObject unsetUtsData()
+	 * @method bool hasUtsData()
+	 * @method bool isUtsDataFilled()
+	 * @method bool isUtsDataChanged()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_UtsTasksTask fillUtsData()
+	 * @method \Bitrix\Tasks\Internals\Task\Result\EO_Result_Collection getResult()
+	 * @method \Bitrix\Tasks\Internals\Task\Result\EO_Result_Collection requireResult()
+	 * @method \Bitrix\Tasks\Internals\Task\Result\EO_Result_Collection fillResult()
+	 * @method bool hasResult()
+	 * @method bool isResultFilled()
+	 * @method bool isResultChanged()
+	 * @method void addToResult(\Bitrix\Tasks\Internals\Task\Result\Result $result)
+	 * @method void removeFromResult(\Bitrix\Tasks\Internals\Task\Result\Result $result)
+	 * @method void removeAllResult()
+	 * @method \Bitrix\Tasks\Internals\TaskObject resetResult()
+	 * @method \Bitrix\Tasks\Internals\TaskObject unsetResult()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_CheckList getChecklistData()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_CheckList remindActualChecklistData()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_CheckList requireChecklistData()
+	 * @method \Bitrix\Tasks\Internals\TaskObject setChecklistData(\Bitrix\Tasks\Internals\Task\EO_CheckList $object)
+	 * @method \Bitrix\Tasks\Internals\TaskObject resetChecklistData()
+	 * @method \Bitrix\Tasks\Internals\TaskObject unsetChecklistData()
+	 * @method bool hasChecklistData()
+	 * @method bool isChecklistDataFilled()
+	 * @method bool isChecklistDataChanged()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_CheckList fillChecklistData()
 	 * @method \string getDescriptionTr()
 	 * @method \string remindActualDescriptionTr()
 	 * @method \string requireDescriptionTr()
@@ -829,6 +870,9 @@ namespace Bitrix\Tasks\Integration\Report\Internals {
 	 * @method \Bitrix\Tasks\Internals\Task\Result\Result[] getResultsList()
 	 * @method \Bitrix\Tasks\Integration\Report\Internals\EO_Task_Collection getResultsCollection()
 	 * @method \Bitrix\Tasks\Internals\Task\Result\EO_Result_Collection fillResults()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_Scenario[] getScenarioList()
+	 * @method \Bitrix\Tasks\Integration\Report\Internals\EO_Task_Collection getScenarioCollection()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_Scenario_Collection fillScenario()
 	 * @method \Bitrix\Socialnetwork\EO_Workgroup[] getGroupList()
 	 * @method \Bitrix\Tasks\Integration\Report\Internals\EO_Task_Collection getGroupCollection()
 	 * @method \Bitrix\Socialnetwork\EO_Workgroup_Collection fillGroup()
@@ -837,9 +881,9 @@ namespace Bitrix\Tasks\Integration\Report\Internals {
 	 * @method \Bitrix\Tasks\Internals\Task\EO_Member_Collection[] getMemberListList()
 	 * @method \Bitrix\Tasks\Internals\Task\EO_Member_Collection getMemberListCollection()
 	 * @method \Bitrix\Tasks\Internals\Task\EO_Member_Collection fillMemberList()
-	 * @method \Bitrix\Tasks\Internals\Task\EO_Label_Collection[] getTagListList()
-	 * @method \Bitrix\Tasks\Internals\Task\EO_Label_Collection getTagListCollection()
-	 * @method \Bitrix\Tasks\Internals\Task\EO_Label_Collection fillTagList()
+	 * @method \Bitrix\Tasks\Internals\Task\TagCollection[] getTagListList()
+	 * @method \Bitrix\Tasks\Internals\Task\TagCollection getTagListCollection()
+	 * @method \Bitrix\Tasks\Internals\Task\TagCollection fillTagList()
 	 * @method \string[] getExchangeIdList()
 	 * @method \string[] fillExchangeId()
 	 * @method \string[] getExchangeModifiedList()
@@ -848,6 +892,15 @@ namespace Bitrix\Tasks\Integration\Report\Internals {
 	 * @method \string[] fillDeclineReason()
 	 * @method \int[] getDeadlineCountedList()
 	 * @method \int[] fillDeadlineCounted()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_UtsTasksTask[] getUtsDataList()
+	 * @method \Bitrix\Tasks\Integration\Report\Internals\EO_Task_Collection getUtsDataCollection()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_UtsTasksTask_Collection fillUtsData()
+	 * @method \Bitrix\Tasks\Internals\Task\Result\EO_Result_Collection[] getResultList()
+	 * @method \Bitrix\Tasks\Internals\Task\Result\EO_Result_Collection getResultCollection()
+	 * @method \Bitrix\Tasks\Internals\Task\Result\EO_Result_Collection fillResult()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_CheckList[] getChecklistDataList()
+	 * @method \Bitrix\Tasks\Integration\Report\Internals\EO_Task_Collection getChecklistDataCollection()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_CheckList_Collection fillChecklistData()
 	 * @method \string[] getDescriptionTrList()
 	 * @method \string[] fillDescriptionTr()
 	 * @method \string[] getStatusPseudoList()
@@ -1418,6 +1471,16 @@ namespace Bitrix\Tasks\Internals {
 	 * @method bool isResultsFilled()
 	 * @method bool isResultsChanged()
 	 * @method \Bitrix\Tasks\Internals\Task\Result\Result fillResults()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_Scenario getScenario()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_Scenario remindActualScenario()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_Scenario requireScenario()
+	 * @method \Bitrix\Tasks\Internals\TaskObject setScenario(\Bitrix\Tasks\Internals\Task\EO_Scenario $object)
+	 * @method \Bitrix\Tasks\Internals\TaskObject resetScenario()
+	 * @method \Bitrix\Tasks\Internals\TaskObject unsetScenario()
+	 * @method bool hasScenario()
+	 * @method bool isScenarioFilled()
+	 * @method bool isScenarioChanged()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_Scenario fillScenario()
 	 * @method \Bitrix\Socialnetwork\EO_Workgroup getGroup()
 	 * @method \Bitrix\Socialnetwork\EO_Workgroup remindActualGroup()
 	 * @method \Bitrix\Socialnetwork\EO_Workgroup requireGroup()
@@ -1449,9 +1512,9 @@ namespace Bitrix\Tasks\Internals {
 	 * @method void removeAllMemberList()
 	 * @method \Bitrix\Tasks\Internals\TaskObject resetMemberList()
 	 * @method \Bitrix\Tasks\Internals\TaskObject unsetMemberList()
-	 * @method \Bitrix\Tasks\Internals\Task\EO_Label_Collection getTagList()
-	 * @method \Bitrix\Tasks\Internals\Task\EO_Label_Collection requireTagList()
-	 * @method \Bitrix\Tasks\Internals\Task\EO_Label_Collection fillTagList()
+	 * @method \Bitrix\Tasks\Internals\Task\TagCollection getTagList()
+	 * @method \Bitrix\Tasks\Internals\Task\TagCollection requireTagList()
+	 * @method \Bitrix\Tasks\Internals\Task\TagCollection fillTagList()
 	 * @method bool hasTagList()
 	 * @method bool isTagListFilled()
 	 * @method bool isTagListChanged()
@@ -1500,6 +1563,37 @@ namespace Bitrix\Tasks\Internals {
 	 * @method \Bitrix\Tasks\Internals\TaskObject resetDeadlineCounted()
 	 * @method \Bitrix\Tasks\Internals\TaskObject unsetDeadlineCounted()
 	 * @method \int fillDeadlineCounted()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_UtsTasksTask getUtsData()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_UtsTasksTask remindActualUtsData()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_UtsTasksTask requireUtsData()
+	 * @method \Bitrix\Tasks\Internals\TaskObject setUtsData(\Bitrix\Tasks\Internals\Task\EO_UtsTasksTask $object)
+	 * @method \Bitrix\Tasks\Internals\TaskObject resetUtsData()
+	 * @method \Bitrix\Tasks\Internals\TaskObject unsetUtsData()
+	 * @method bool hasUtsData()
+	 * @method bool isUtsDataFilled()
+	 * @method bool isUtsDataChanged()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_UtsTasksTask fillUtsData()
+	 * @method \Bitrix\Tasks\Internals\Task\Result\EO_Result_Collection getResult()
+	 * @method \Bitrix\Tasks\Internals\Task\Result\EO_Result_Collection requireResult()
+	 * @method \Bitrix\Tasks\Internals\Task\Result\EO_Result_Collection fillResult()
+	 * @method bool hasResult()
+	 * @method bool isResultFilled()
+	 * @method bool isResultChanged()
+	 * @method void addToResult(\Bitrix\Tasks\Internals\Task\Result\Result $result)
+	 * @method void removeFromResult(\Bitrix\Tasks\Internals\Task\Result\Result $result)
+	 * @method void removeAllResult()
+	 * @method \Bitrix\Tasks\Internals\TaskObject resetResult()
+	 * @method \Bitrix\Tasks\Internals\TaskObject unsetResult()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_CheckList getChecklistData()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_CheckList remindActualChecklistData()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_CheckList requireChecklistData()
+	 * @method \Bitrix\Tasks\Internals\TaskObject setChecklistData(\Bitrix\Tasks\Internals\Task\EO_CheckList $object)
+	 * @method \Bitrix\Tasks\Internals\TaskObject resetChecklistData()
+	 * @method \Bitrix\Tasks\Internals\TaskObject unsetChecklistData()
+	 * @method bool hasChecklistData()
+	 * @method bool isChecklistDataFilled()
+	 * @method bool isChecklistDataChanged()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_CheckList fillChecklistData()
 	 *
 	 * Common methods:
 	 * ---------------
@@ -1642,6 +1736,9 @@ namespace Bitrix\Tasks\Internals {
 	 * @method \Bitrix\Tasks\Internals\Task\Result\Result[] getResultsList()
 	 * @method \Bitrix\Tasks\Internals\EO_Task_Collection getResultsCollection()
 	 * @method \Bitrix\Tasks\Internals\Task\Result\EO_Result_Collection fillResults()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_Scenario[] getScenarioList()
+	 * @method \Bitrix\Tasks\Internals\EO_Task_Collection getScenarioCollection()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_Scenario_Collection fillScenario()
 	 * @method \Bitrix\Socialnetwork\EO_Workgroup[] getGroupList()
 	 * @method \Bitrix\Tasks\Internals\EO_Task_Collection getGroupCollection()
 	 * @method \Bitrix\Socialnetwork\EO_Workgroup_Collection fillGroup()
@@ -1650,9 +1747,9 @@ namespace Bitrix\Tasks\Internals {
 	 * @method \Bitrix\Tasks\Internals\Task\EO_Member_Collection[] getMemberListList()
 	 * @method \Bitrix\Tasks\Internals\Task\EO_Member_Collection getMemberListCollection()
 	 * @method \Bitrix\Tasks\Internals\Task\EO_Member_Collection fillMemberList()
-	 * @method \Bitrix\Tasks\Internals\Task\EO_Label_Collection[] getTagListList()
-	 * @method \Bitrix\Tasks\Internals\Task\EO_Label_Collection getTagListCollection()
-	 * @method \Bitrix\Tasks\Internals\Task\EO_Label_Collection fillTagList()
+	 * @method \Bitrix\Tasks\Internals\Task\TagCollection[] getTagListList()
+	 * @method \Bitrix\Tasks\Internals\Task\TagCollection getTagListCollection()
+	 * @method \Bitrix\Tasks\Internals\Task\TagCollection fillTagList()
 	 * @method \string[] getExchangeIdList()
 	 * @method \string[] fillExchangeId()
 	 * @method \string[] getExchangeModifiedList()
@@ -1661,6 +1758,15 @@ namespace Bitrix\Tasks\Internals {
 	 * @method \string[] fillDeclineReason()
 	 * @method \int[] getDeadlineCountedList()
 	 * @method \int[] fillDeadlineCounted()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_UtsTasksTask[] getUtsDataList()
+	 * @method \Bitrix\Tasks\Internals\EO_Task_Collection getUtsDataCollection()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_UtsTasksTask_Collection fillUtsData()
+	 * @method \Bitrix\Tasks\Internals\Task\Result\EO_Result_Collection[] getResultList()
+	 * @method \Bitrix\Tasks\Internals\Task\Result\EO_Result_Collection getResultCollection()
+	 * @method \Bitrix\Tasks\Internals\Task\Result\EO_Result_Collection fillResult()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_CheckList[] getChecklistDataList()
+	 * @method \Bitrix\Tasks\Internals\EO_Task_Collection getChecklistDataCollection()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_CheckList_Collection fillChecklistData()
 	 *
 	 * Common methods:
 	 * ---------------
@@ -1783,6 +1889,16 @@ namespace Bitrix\Tasks\Internals\Task {
 	 * @method bool isGroupFilled()
 	 * @method bool isGroupChanged()
 	 * @method \Bitrix\Socialnetwork\EO_Workgroup fillGroup()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_TaskTag getTaskTag()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_TaskTag remindActualTaskTag()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_TaskTag requireTaskTag()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_Label setTaskTag(\Bitrix\Tasks\Internals\Task\EO_TaskTag $object)
+	 * @method \Bitrix\Tasks\Internals\Task\EO_Label resetTaskTag()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_Label unsetTaskTag()
+	 * @method bool hasTaskTag()
+	 * @method bool isTaskTagFilled()
+	 * @method bool isTaskTagChanged()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_TaskTag fillTaskTag()
 	 * @method \Bitrix\Tasks\Internals\EO_Task_Collection getTasks()
 	 * @method \Bitrix\Tasks\Internals\EO_Task_Collection requireTasks()
 	 * @method \Bitrix\Tasks\Internals\EO_Task_Collection fillTasks()
@@ -1832,7 +1948,7 @@ namespace Bitrix\Tasks\Internals\Task {
 }
 namespace Bitrix\Tasks\Internals\Task {
 	/**
-	 * EO_Label_Collection
+	 * TagCollection
 	 *
 	 * Custom methods:
 	 * ---------------
@@ -1845,11 +1961,14 @@ namespace Bitrix\Tasks\Internals\Task {
 	 * @method \int[] getGroupIdList()
 	 * @method \int[] fillGroupId()
 	 * @method \Bitrix\Main\EO_User[] getUserList()
-	 * @method \Bitrix\Tasks\Internals\Task\EO_Label_Collection getUserCollection()
+	 * @method \Bitrix\Tasks\Internals\Task\TagCollection getUserCollection()
 	 * @method \Bitrix\Main\EO_User_Collection fillUser()
 	 * @method \Bitrix\Socialnetwork\EO_Workgroup[] getGroupList()
-	 * @method \Bitrix\Tasks\Internals\Task\EO_Label_Collection getGroupCollection()
+	 * @method \Bitrix\Tasks\Internals\Task\TagCollection getGroupCollection()
 	 * @method \Bitrix\Socialnetwork\EO_Workgroup_Collection fillGroup()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_TaskTag[] getTaskTagList()
+	 * @method \Bitrix\Tasks\Internals\Task\TagCollection getTaskTagCollection()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_TaskTag_Collection fillTaskTag()
 	 * @method \Bitrix\Tasks\Internals\EO_Task_Collection[] getTasksList()
 	 * @method \Bitrix\Tasks\Internals\EO_Task_Collection getTasksCollection()
 	 * @method \Bitrix\Tasks\Internals\EO_Task_Collection fillTasks()
@@ -1866,7 +1985,7 @@ namespace Bitrix\Tasks\Internals\Task {
 	 * @method bool remove(\Bitrix\Tasks\Internals\Task\EO_Label $object)
 	 * @method void removeByPrimary($primary)
 	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
-	 * @method static \Bitrix\Tasks\Internals\Task\EO_Label_Collection wakeUp($data)
+	 * @method static \Bitrix\Tasks\Internals\Task\TagCollection wakeUp($data)
 	 * @method \Bitrix\Main\ORM\Data\Result save($ignoreEvents = false)
 	 * @method void offsetSet() ArrayAccess
 	 * @method void offsetExists() ArrayAccess
@@ -1891,7 +2010,7 @@ namespace Bitrix\Tasks\Internals\Task {
 	 *
 	 * @method EO_Label_Result exec()
 	 * @method \Bitrix\Tasks\Internals\Task\EO_Label fetchObject()
-	 * @method \Bitrix\Tasks\Internals\Task\EO_Label_Collection fetchCollection()
+	 * @method \Bitrix\Tasks\Internals\Task\TagCollection fetchCollection()
 	 *
 	 * Custom methods:
 	 * ---------------
@@ -1900,14 +2019,14 @@ namespace Bitrix\Tasks\Internals\Task {
 	class EO_Label_Query extends \Bitrix\Main\ORM\Query\Query {}
 	/**
 	 * @method \Bitrix\Tasks\Internals\Task\EO_Label fetchObject()
-	 * @method \Bitrix\Tasks\Internals\Task\EO_Label_Collection fetchCollection()
+	 * @method \Bitrix\Tasks\Internals\Task\TagCollection fetchCollection()
 	 */
 	class EO_Label_Result extends \Bitrix\Main\ORM\Query\Result {}
 	/**
 	 * @method \Bitrix\Tasks\Internals\Task\EO_Label createObject($setDefaultValues = true)
-	 * @method \Bitrix\Tasks\Internals\Task\EO_Label_Collection createCollection()
+	 * @method \Bitrix\Tasks\Internals\Task\TagCollection createCollection()
 	 * @method \Bitrix\Tasks\Internals\Task\EO_Label wakeUpObject($row)
-	 * @method \Bitrix\Tasks\Internals\Task\EO_Label_Collection wakeUpCollection($rows)
+	 * @method \Bitrix\Tasks\Internals\Task\TagCollection wakeUpCollection($rows)
 	 */
 	class EO_Label_Entity extends \Bitrix\Main\ORM\Entity {}
 }
@@ -3322,6 +3441,16 @@ namespace Bitrix\Tasks\Internals\Task {
 	 * @method void removeAllDependencies()
 	 * @method \Bitrix\Tasks\Internals\Task\Template\TemplateObject resetDependencies()
 	 * @method \Bitrix\Tasks\Internals\Task\Template\TemplateObject unsetDependencies()
+	 * @method \Bitrix\Tasks\Internals\Task\Template\EO_Scenario getScenario()
+	 * @method \Bitrix\Tasks\Internals\Task\Template\EO_Scenario remindActualScenario()
+	 * @method \Bitrix\Tasks\Internals\Task\Template\EO_Scenario requireScenario()
+	 * @method \Bitrix\Tasks\Internals\Task\Template\TemplateObject setScenario(\Bitrix\Tasks\Internals\Task\Template\EO_Scenario $object)
+	 * @method \Bitrix\Tasks\Internals\Task\Template\TemplateObject resetScenario()
+	 * @method \Bitrix\Tasks\Internals\Task\Template\TemplateObject unsetScenario()
+	 * @method bool hasScenario()
+	 * @method bool isScenarioFilled()
+	 * @method bool isScenarioChanged()
+	 * @method \Bitrix\Tasks\Internals\Task\Template\EO_Scenario fillScenario()
 	 *
 	 * Common methods:
 	 * ---------------
@@ -3447,6 +3576,9 @@ namespace Bitrix\Tasks\Internals\Task {
 	 * @method \Bitrix\Tasks\Internals\Task\Template\EO_TemplateDependence_Collection[] getDependenciesList()
 	 * @method \Bitrix\Tasks\Internals\Task\Template\EO_TemplateDependence_Collection getDependenciesCollection()
 	 * @method \Bitrix\Tasks\Internals\Task\Template\EO_TemplateDependence_Collection fillDependencies()
+	 * @method \Bitrix\Tasks\Internals\Task\Template\EO_Scenario[] getScenarioList()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_Template_Collection getScenarioCollection()
+	 * @method \Bitrix\Tasks\Internals\Task\Template\EO_Scenario_Collection fillScenario()
 	 *
 	 * Common methods:
 	 * ---------------
@@ -6705,7 +6837,7 @@ namespace Bitrix\Tasks\Access\Permission {
 	 */
 	class EO_TasksTemplatePermission_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Tasks\Integration\Intranet\Internals\Runtime\UtmUserTable:tasks/lib/integration/intranet/internals/runtime/userdepartment.php */
+/* ORMENTITYANNOTATION:Bitrix\Tasks\Integration\Intranet\Internals\Runtime\UtmUserTable:tasks/lib/integration/intranet/internals/runtime/utmuser.php */
 namespace Bitrix\Tasks\Integration\Intranet\Internals\Runtime {
 	/**
 	 * EO_UtmUser
@@ -8179,6 +8311,146 @@ namespace Bitrix\Tasks\Internals\Task {
 	 */
 	class EO_Reminder_Entity extends \Bitrix\Main\ORM\Entity {}
 }
+/* ORMENTITYANNOTATION:Bitrix\Tasks\Internals\Task\UtsTasksTaskTable:tasks/lib/internals/task/utstaskstask.php */
+namespace Bitrix\Tasks\Internals\Task {
+	/**
+	 * EO_UtsTasksTask
+	 * @see \Bitrix\Tasks\Internals\Task\UtsTasksTaskTable
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int getValueId()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_UtsTasksTask setValueId(\int|\Bitrix\Main\DB\SqlExpression $valueId)
+	 * @method bool hasValueId()
+	 * @method bool isValueIdFilled()
+	 * @method bool isValueIdChanged()
+	 * @method \string getUfCrmTask()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_UtsTasksTask setUfCrmTask(\string|\Bitrix\Main\DB\SqlExpression $ufCrmTask)
+	 * @method bool hasUfCrmTask()
+	 * @method bool isUfCrmTaskFilled()
+	 * @method bool isUfCrmTaskChanged()
+	 * @method \string remindActualUfCrmTask()
+	 * @method \string requireUfCrmTask()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_UtsTasksTask resetUfCrmTask()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_UtsTasksTask unsetUfCrmTask()
+	 * @method \string fillUfCrmTask()
+	 * @method \string getUfTaskWebdavFiles()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_UtsTasksTask setUfTaskWebdavFiles(\string|\Bitrix\Main\DB\SqlExpression $ufTaskWebdavFiles)
+	 * @method bool hasUfTaskWebdavFiles()
+	 * @method bool isUfTaskWebdavFilesFilled()
+	 * @method bool isUfTaskWebdavFilesChanged()
+	 * @method \string remindActualUfTaskWebdavFiles()
+	 * @method \string requireUfTaskWebdavFiles()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_UtsTasksTask resetUfTaskWebdavFiles()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_UtsTasksTask unsetUfTaskWebdavFiles()
+	 * @method \string fillUfTaskWebdavFiles()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @property-read array $primary
+	 * @property-read int $state @see \Bitrix\Main\ORM\Objectify\State
+	 * @property-read \Bitrix\Main\Type\Dictionary $customData
+	 * @property \Bitrix\Main\Authentication\Context $authContext
+	 * @method mixed get($fieldName)
+	 * @method mixed remindActual($fieldName)
+	 * @method mixed require($fieldName)
+	 * @method bool has($fieldName)
+	 * @method bool isFilled($fieldName)
+	 * @method bool isChanged($fieldName)
+	 * @method \Bitrix\Tasks\Internals\Task\EO_UtsTasksTask set($fieldName, $value)
+	 * @method \Bitrix\Tasks\Internals\Task\EO_UtsTasksTask reset($fieldName)
+	 * @method \Bitrix\Tasks\Internals\Task\EO_UtsTasksTask unset($fieldName)
+	 * @method void addTo($fieldName, $value)
+	 * @method void removeFrom($fieldName, $value)
+	 * @method void removeAll($fieldName)
+	 * @method \Bitrix\Main\ORM\Data\Result delete()
+	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method mixed[] collectValues($valuesType = \Bitrix\Main\ORM\Objectify\Values::ALL, $fieldsMask = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL)
+	 * @method \Bitrix\Main\ORM\Data\AddResult|\Bitrix\Main\ORM\Data\UpdateResult|\Bitrix\Main\ORM\Data\Result save()
+	 * @method static \Bitrix\Tasks\Internals\Task\EO_UtsTasksTask wakeUp($data)
+	 */
+	class EO_UtsTasksTask {
+		/* @var \Bitrix\Tasks\Internals\Task\UtsTasksTaskTable */
+		static public $dataClass = '\Bitrix\Tasks\Internals\Task\UtsTasksTaskTable';
+		/**
+		 * @param bool|array $setDefaultValues
+		 */
+		public function __construct($setDefaultValues = true) {}
+	}
+}
+namespace Bitrix\Tasks\Internals\Task {
+	/**
+	 * EO_UtsTasksTask_Collection
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int[] getValueIdList()
+	 * @method \string[] getUfCrmTaskList()
+	 * @method \string[] fillUfCrmTask()
+	 * @method \string[] getUfTaskWebdavFilesList()
+	 * @method \string[] fillUfTaskWebdavFiles()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @method void add(\Bitrix\Tasks\Internals\Task\EO_UtsTasksTask $object)
+	 * @method bool has(\Bitrix\Tasks\Internals\Task\EO_UtsTasksTask $object)
+	 * @method bool hasByPrimary($primary)
+	 * @method \Bitrix\Tasks\Internals\Task\EO_UtsTasksTask getByPrimary($primary)
+	 * @method \Bitrix\Tasks\Internals\Task\EO_UtsTasksTask[] getAll()
+	 * @method bool remove(\Bitrix\Tasks\Internals\Task\EO_UtsTasksTask $object)
+	 * @method void removeByPrimary($primary)
+	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method static \Bitrix\Tasks\Internals\Task\EO_UtsTasksTask_Collection wakeUp($data)
+	 * @method \Bitrix\Main\ORM\Data\Result save($ignoreEvents = false)
+	 * @method void offsetSet() ArrayAccess
+	 * @method void offsetExists() ArrayAccess
+	 * @method void offsetUnset() ArrayAccess
+	 * @method void offsetGet() ArrayAccess
+	 * @method void rewind() Iterator
+	 * @method \Bitrix\Tasks\Internals\Task\EO_UtsTasksTask current() Iterator
+	 * @method mixed key() Iterator
+	 * @method void next() Iterator
+	 * @method bool valid() Iterator
+	 * @method int count() Countable
+	 */
+	class EO_UtsTasksTask_Collection implements \ArrayAccess, \Iterator, \Countable {
+		/* @var \Bitrix\Tasks\Internals\Task\UtsTasksTaskTable */
+		static public $dataClass = '\Bitrix\Tasks\Internals\Task\UtsTasksTaskTable';
+	}
+}
+namespace Bitrix\Tasks\Internals\Task {
+	/**
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @method EO_UtsTasksTask_Result exec()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_UtsTasksTask fetchObject()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_UtsTasksTask_Collection fetchCollection()
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 */
+	class EO_UtsTasksTask_Query extends \Bitrix\Main\ORM\Query\Query {}
+	/**
+	 * @method \Bitrix\Tasks\Internals\Task\EO_UtsTasksTask fetchObject()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_UtsTasksTask_Collection fetchCollection()
+	 */
+	class EO_UtsTasksTask_Result extends \Bitrix\Main\ORM\Query\Result {}
+	/**
+	 * @method \Bitrix\Tasks\Internals\Task\EO_UtsTasksTask createObject($setDefaultValues = true)
+	 * @method \Bitrix\Tasks\Internals\Task\EO_UtsTasksTask_Collection createCollection()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_UtsTasksTask wakeUpObject($row)
+	 * @method \Bitrix\Tasks\Internals\Task\EO_UtsTasksTask_Collection wakeUpCollection($rows)
+	 */
+	class EO_UtsTasksTask_Entity extends \Bitrix\Main\ORM\Entity {}
+}
 /* ORMENTITYANNOTATION:Bitrix\Tasks\Internals\Task\SearchIndexTable:tasks/lib/internals/task/searchindex.php */
 namespace Bitrix\Tasks\Internals\Task {
 	/**
@@ -8630,6 +8902,134 @@ namespace Bitrix\Tasks\Internals\Task {
 	 * @method \Bitrix\Tasks\Internals\Task\EO_Tag_Collection wakeUpCollection($rows)
 	 */
 	class EO_Tag_Entity extends \Bitrix\Main\ORM\Entity {}
+}
+/* ORMENTITYANNOTATION:Bitrix\Tasks\Internals\Task\ScenarioTable:tasks/lib/internals/task/scenario.php */
+namespace Bitrix\Tasks\Internals\Task {
+	/**
+	 * EO_Scenario
+	 * @see \Bitrix\Tasks\Internals\Task\ScenarioTable
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int getTaskId()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_Scenario setTaskId(\int|\Bitrix\Main\DB\SqlExpression $taskId)
+	 * @method bool hasTaskId()
+	 * @method bool isTaskIdFilled()
+	 * @method bool isTaskIdChanged()
+	 * @method \string getScenario()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_Scenario setScenario(\string|\Bitrix\Main\DB\SqlExpression $scenario)
+	 * @method bool hasScenario()
+	 * @method bool isScenarioFilled()
+	 * @method bool isScenarioChanged()
+	 * @method \string remindActualScenario()
+	 * @method \string requireScenario()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_Scenario resetScenario()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_Scenario unsetScenario()
+	 * @method \string fillScenario()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @property-read array $primary
+	 * @property-read int $state @see \Bitrix\Main\ORM\Objectify\State
+	 * @property-read \Bitrix\Main\Type\Dictionary $customData
+	 * @property \Bitrix\Main\Authentication\Context $authContext
+	 * @method mixed get($fieldName)
+	 * @method mixed remindActual($fieldName)
+	 * @method mixed require($fieldName)
+	 * @method bool has($fieldName)
+	 * @method bool isFilled($fieldName)
+	 * @method bool isChanged($fieldName)
+	 * @method \Bitrix\Tasks\Internals\Task\EO_Scenario set($fieldName, $value)
+	 * @method \Bitrix\Tasks\Internals\Task\EO_Scenario reset($fieldName)
+	 * @method \Bitrix\Tasks\Internals\Task\EO_Scenario unset($fieldName)
+	 * @method void addTo($fieldName, $value)
+	 * @method void removeFrom($fieldName, $value)
+	 * @method void removeAll($fieldName)
+	 * @method \Bitrix\Main\ORM\Data\Result delete()
+	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method mixed[] collectValues($valuesType = \Bitrix\Main\ORM\Objectify\Values::ALL, $fieldsMask = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL)
+	 * @method \Bitrix\Main\ORM\Data\AddResult|\Bitrix\Main\ORM\Data\UpdateResult|\Bitrix\Main\ORM\Data\Result save()
+	 * @method static \Bitrix\Tasks\Internals\Task\EO_Scenario wakeUp($data)
+	 */
+	class EO_Scenario {
+		/* @var \Bitrix\Tasks\Internals\Task\ScenarioTable */
+		static public $dataClass = '\Bitrix\Tasks\Internals\Task\ScenarioTable';
+		/**
+		 * @param bool|array $setDefaultValues
+		 */
+		public function __construct($setDefaultValues = true) {}
+	}
+}
+namespace Bitrix\Tasks\Internals\Task {
+	/**
+	 * EO_Scenario_Collection
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int[] getTaskIdList()
+	 * @method \string[] getScenarioList()
+	 * @method \string[] fillScenario()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @method void add(\Bitrix\Tasks\Internals\Task\EO_Scenario $object)
+	 * @method bool has(\Bitrix\Tasks\Internals\Task\EO_Scenario $object)
+	 * @method bool hasByPrimary($primary)
+	 * @method \Bitrix\Tasks\Internals\Task\EO_Scenario getByPrimary($primary)
+	 * @method \Bitrix\Tasks\Internals\Task\EO_Scenario[] getAll()
+	 * @method bool remove(\Bitrix\Tasks\Internals\Task\EO_Scenario $object)
+	 * @method void removeByPrimary($primary)
+	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method static \Bitrix\Tasks\Internals\Task\EO_Scenario_Collection wakeUp($data)
+	 * @method \Bitrix\Main\ORM\Data\Result save($ignoreEvents = false)
+	 * @method void offsetSet() ArrayAccess
+	 * @method void offsetExists() ArrayAccess
+	 * @method void offsetUnset() ArrayAccess
+	 * @method void offsetGet() ArrayAccess
+	 * @method void rewind() Iterator
+	 * @method \Bitrix\Tasks\Internals\Task\EO_Scenario current() Iterator
+	 * @method mixed key() Iterator
+	 * @method void next() Iterator
+	 * @method bool valid() Iterator
+	 * @method int count() Countable
+	 */
+	class EO_Scenario_Collection implements \ArrayAccess, \Iterator, \Countable {
+		/* @var \Bitrix\Tasks\Internals\Task\ScenarioTable */
+		static public $dataClass = '\Bitrix\Tasks\Internals\Task\ScenarioTable';
+	}
+}
+namespace Bitrix\Tasks\Internals\Task {
+	/**
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @method EO_Scenario_Result exec()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_Scenario fetchObject()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_Scenario_Collection fetchCollection()
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 */
+	class EO_Scenario_Query extends \Bitrix\Main\ORM\Query\Query {}
+	/**
+	 * @method \Bitrix\Tasks\Internals\Task\EO_Scenario fetchObject()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_Scenario_Collection fetchCollection()
+	 */
+	class EO_Scenario_Result extends \Bitrix\Main\ORM\Query\Result {}
+	/**
+	 * @method \Bitrix\Tasks\Internals\Task\EO_Scenario createObject($setDefaultValues = true)
+	 * @method \Bitrix\Tasks\Internals\Task\EO_Scenario_Collection createCollection()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_Scenario wakeUpObject($row)
+	 * @method \Bitrix\Tasks\Internals\Task\EO_Scenario_Collection wakeUpCollection($rows)
+	 */
+	class EO_Scenario_Entity extends \Bitrix\Main\ORM\Entity {}
 }
 /* ORMENTITYANNOTATION:Bitrix\Tasks\Internals\Task\Template\AccessTable:tasks/lib/internals/task/template/access.php */
 namespace Bitrix\Tasks\Internals\Task\Template {
@@ -9426,6 +9826,134 @@ namespace Bitrix\Tasks\Internals\Task\Template {
 	 */
 	class EO_CheckListTree_Entity extends \Bitrix\Main\ORM\Entity {}
 }
+/* ORMENTITYANNOTATION:Bitrix\Tasks\Internals\Task\Template\ScenarioTable:tasks/lib/internals/task/template/scenario.php */
+namespace Bitrix\Tasks\Internals\Task\Template {
+	/**
+	 * EO_Scenario
+	 * @see \Bitrix\Tasks\Internals\Task\Template\ScenarioTable
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int getTemplateId()
+	 * @method \Bitrix\Tasks\Internals\Task\Template\EO_Scenario setTemplateId(\int|\Bitrix\Main\DB\SqlExpression $templateId)
+	 * @method bool hasTemplateId()
+	 * @method bool isTemplateIdFilled()
+	 * @method bool isTemplateIdChanged()
+	 * @method \string getScenario()
+	 * @method \Bitrix\Tasks\Internals\Task\Template\EO_Scenario setScenario(\string|\Bitrix\Main\DB\SqlExpression $scenario)
+	 * @method bool hasScenario()
+	 * @method bool isScenarioFilled()
+	 * @method bool isScenarioChanged()
+	 * @method \string remindActualScenario()
+	 * @method \string requireScenario()
+	 * @method \Bitrix\Tasks\Internals\Task\Template\EO_Scenario resetScenario()
+	 * @method \Bitrix\Tasks\Internals\Task\Template\EO_Scenario unsetScenario()
+	 * @method \string fillScenario()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @property-read array $primary
+	 * @property-read int $state @see \Bitrix\Main\ORM\Objectify\State
+	 * @property-read \Bitrix\Main\Type\Dictionary $customData
+	 * @property \Bitrix\Main\Authentication\Context $authContext
+	 * @method mixed get($fieldName)
+	 * @method mixed remindActual($fieldName)
+	 * @method mixed require($fieldName)
+	 * @method bool has($fieldName)
+	 * @method bool isFilled($fieldName)
+	 * @method bool isChanged($fieldName)
+	 * @method \Bitrix\Tasks\Internals\Task\Template\EO_Scenario set($fieldName, $value)
+	 * @method \Bitrix\Tasks\Internals\Task\Template\EO_Scenario reset($fieldName)
+	 * @method \Bitrix\Tasks\Internals\Task\Template\EO_Scenario unset($fieldName)
+	 * @method void addTo($fieldName, $value)
+	 * @method void removeFrom($fieldName, $value)
+	 * @method void removeAll($fieldName)
+	 * @method \Bitrix\Main\ORM\Data\Result delete()
+	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method mixed[] collectValues($valuesType = \Bitrix\Main\ORM\Objectify\Values::ALL, $fieldsMask = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL)
+	 * @method \Bitrix\Main\ORM\Data\AddResult|\Bitrix\Main\ORM\Data\UpdateResult|\Bitrix\Main\ORM\Data\Result save()
+	 * @method static \Bitrix\Tasks\Internals\Task\Template\EO_Scenario wakeUp($data)
+	 */
+	class EO_Scenario {
+		/* @var \Bitrix\Tasks\Internals\Task\Template\ScenarioTable */
+		static public $dataClass = '\Bitrix\Tasks\Internals\Task\Template\ScenarioTable';
+		/**
+		 * @param bool|array $setDefaultValues
+		 */
+		public function __construct($setDefaultValues = true) {}
+	}
+}
+namespace Bitrix\Tasks\Internals\Task\Template {
+	/**
+	 * EO_Scenario_Collection
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int[] getTemplateIdList()
+	 * @method \string[] getScenarioList()
+	 * @method \string[] fillScenario()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @method void add(\Bitrix\Tasks\Internals\Task\Template\EO_Scenario $object)
+	 * @method bool has(\Bitrix\Tasks\Internals\Task\Template\EO_Scenario $object)
+	 * @method bool hasByPrimary($primary)
+	 * @method \Bitrix\Tasks\Internals\Task\Template\EO_Scenario getByPrimary($primary)
+	 * @method \Bitrix\Tasks\Internals\Task\Template\EO_Scenario[] getAll()
+	 * @method bool remove(\Bitrix\Tasks\Internals\Task\Template\EO_Scenario $object)
+	 * @method void removeByPrimary($primary)
+	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method static \Bitrix\Tasks\Internals\Task\Template\EO_Scenario_Collection wakeUp($data)
+	 * @method \Bitrix\Main\ORM\Data\Result save($ignoreEvents = false)
+	 * @method void offsetSet() ArrayAccess
+	 * @method void offsetExists() ArrayAccess
+	 * @method void offsetUnset() ArrayAccess
+	 * @method void offsetGet() ArrayAccess
+	 * @method void rewind() Iterator
+	 * @method \Bitrix\Tasks\Internals\Task\Template\EO_Scenario current() Iterator
+	 * @method mixed key() Iterator
+	 * @method void next() Iterator
+	 * @method bool valid() Iterator
+	 * @method int count() Countable
+	 */
+	class EO_Scenario_Collection implements \ArrayAccess, \Iterator, \Countable {
+		/* @var \Bitrix\Tasks\Internals\Task\Template\ScenarioTable */
+		static public $dataClass = '\Bitrix\Tasks\Internals\Task\Template\ScenarioTable';
+	}
+}
+namespace Bitrix\Tasks\Internals\Task\Template {
+	/**
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @method EO_Scenario_Result exec()
+	 * @method \Bitrix\Tasks\Internals\Task\Template\EO_Scenario fetchObject()
+	 * @method \Bitrix\Tasks\Internals\Task\Template\EO_Scenario_Collection fetchCollection()
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 */
+	class EO_Scenario_Query extends \Bitrix\Main\ORM\Query\Query {}
+	/**
+	 * @method \Bitrix\Tasks\Internals\Task\Template\EO_Scenario fetchObject()
+	 * @method \Bitrix\Tasks\Internals\Task\Template\EO_Scenario_Collection fetchCollection()
+	 */
+	class EO_Scenario_Result extends \Bitrix\Main\ORM\Query\Result {}
+	/**
+	 * @method \Bitrix\Tasks\Internals\Task\Template\EO_Scenario createObject($setDefaultValues = true)
+	 * @method \Bitrix\Tasks\Internals\Task\Template\EO_Scenario_Collection createCollection()
+	 * @method \Bitrix\Tasks\Internals\Task\Template\EO_Scenario wakeUpObject($row)
+	 * @method \Bitrix\Tasks\Internals\Task\Template\EO_Scenario_Collection wakeUpCollection($rows)
+	 */
+	class EO_Scenario_Entity extends \Bitrix\Main\ORM\Entity {}
+}
 /* ORMENTITYANNOTATION:Bitrix\Tasks\Internals\Task\Template\CheckList\MemberTable:tasks/lib/internals/task/template/checklist/member.php */
 namespace Bitrix\Tasks\Internals\Task\Template\CheckList {
 	/**
@@ -9603,6 +10131,152 @@ namespace Bitrix\Tasks\Internals\Task\Template\CheckList {
 	 * @method \Bitrix\Tasks\Internals\Task\Template\CheckList\EO_Member_Collection wakeUpCollection($rows)
 	 */
 	class EO_Member_Entity extends \Bitrix\Main\ORM\Entity {}
+}
+/* ORMENTITYANNOTATION:Bitrix\Tasks\Internals\Task\ViewedGroupTable:tasks/lib/internals/task/viewedgroup.php */
+namespace Bitrix\Tasks\Internals\Task {
+	/**
+	 * EO_ViewedGroup
+	 * @see \Bitrix\Tasks\Internals\Task\ViewedGroupTable
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int getGroupId()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_ViewedGroup setGroupId(\int|\Bitrix\Main\DB\SqlExpression $groupId)
+	 * @method bool hasGroupId()
+	 * @method bool isGroupIdFilled()
+	 * @method bool isGroupIdChanged()
+	 * @method \string getMemberType()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_ViewedGroup setMemberType(\string|\Bitrix\Main\DB\SqlExpression $memberType)
+	 * @method bool hasMemberType()
+	 * @method bool isMemberTypeFilled()
+	 * @method bool isMemberTypeChanged()
+	 * @method \int getUserId()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_ViewedGroup setUserId(\int|\Bitrix\Main\DB\SqlExpression $userId)
+	 * @method bool hasUserId()
+	 * @method bool isUserIdFilled()
+	 * @method bool isUserIdChanged()
+	 * @method \int getTypeId()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_ViewedGroup setTypeId(\int|\Bitrix\Main\DB\SqlExpression $typeId)
+	 * @method bool hasTypeId()
+	 * @method bool isTypeIdFilled()
+	 * @method bool isTypeIdChanged()
+	 * @method \Bitrix\Main\Type\DateTime getViewedDate()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_ViewedGroup setViewedDate(\Bitrix\Main\Type\DateTime|\Bitrix\Main\DB\SqlExpression $viewedDate)
+	 * @method bool hasViewedDate()
+	 * @method bool isViewedDateFilled()
+	 * @method bool isViewedDateChanged()
+	 * @method \Bitrix\Main\Type\DateTime remindActualViewedDate()
+	 * @method \Bitrix\Main\Type\DateTime requireViewedDate()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_ViewedGroup resetViewedDate()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_ViewedGroup unsetViewedDate()
+	 * @method \Bitrix\Main\Type\DateTime fillViewedDate()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @property-read array $primary
+	 * @property-read int $state @see \Bitrix\Main\ORM\Objectify\State
+	 * @property-read \Bitrix\Main\Type\Dictionary $customData
+	 * @property \Bitrix\Main\Authentication\Context $authContext
+	 * @method mixed get($fieldName)
+	 * @method mixed remindActual($fieldName)
+	 * @method mixed require($fieldName)
+	 * @method bool has($fieldName)
+	 * @method bool isFilled($fieldName)
+	 * @method bool isChanged($fieldName)
+	 * @method \Bitrix\Tasks\Internals\Task\EO_ViewedGroup set($fieldName, $value)
+	 * @method \Bitrix\Tasks\Internals\Task\EO_ViewedGroup reset($fieldName)
+	 * @method \Bitrix\Tasks\Internals\Task\EO_ViewedGroup unset($fieldName)
+	 * @method void addTo($fieldName, $value)
+	 * @method void removeFrom($fieldName, $value)
+	 * @method void removeAll($fieldName)
+	 * @method \Bitrix\Main\ORM\Data\Result delete()
+	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method mixed[] collectValues($valuesType = \Bitrix\Main\ORM\Objectify\Values::ALL, $fieldsMask = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL)
+	 * @method \Bitrix\Main\ORM\Data\AddResult|\Bitrix\Main\ORM\Data\UpdateResult|\Bitrix\Main\ORM\Data\Result save()
+	 * @method static \Bitrix\Tasks\Internals\Task\EO_ViewedGroup wakeUp($data)
+	 */
+	class EO_ViewedGroup {
+		/* @var \Bitrix\Tasks\Internals\Task\ViewedGroupTable */
+		static public $dataClass = '\Bitrix\Tasks\Internals\Task\ViewedGroupTable';
+		/**
+		 * @param bool|array $setDefaultValues
+		 */
+		public function __construct($setDefaultValues = true) {}
+	}
+}
+namespace Bitrix\Tasks\Internals\Task {
+	/**
+	 * EO_ViewedGroup_Collection
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 * @method \int[] getGroupIdList()
+	 * @method \string[] getMemberTypeList()
+	 * @method \int[] getUserIdList()
+	 * @method \int[] getTypeIdList()
+	 * @method \Bitrix\Main\Type\DateTime[] getViewedDateList()
+	 * @method \Bitrix\Main\Type\DateTime[] fillViewedDate()
+	 *
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @property-read \Bitrix\Main\ORM\Entity $entity
+	 * @method void add(\Bitrix\Tasks\Internals\Task\EO_ViewedGroup $object)
+	 * @method bool has(\Bitrix\Tasks\Internals\Task\EO_ViewedGroup $object)
+	 * @method bool hasByPrimary($primary)
+	 * @method \Bitrix\Tasks\Internals\Task\EO_ViewedGroup getByPrimary($primary)
+	 * @method \Bitrix\Tasks\Internals\Task\EO_ViewedGroup[] getAll()
+	 * @method bool remove(\Bitrix\Tasks\Internals\Task\EO_ViewedGroup $object)
+	 * @method void removeByPrimary($primary)
+	 * @method void fill($fields = \Bitrix\Main\ORM\Fields\FieldTypeMask::ALL) flag or array of field names
+	 * @method static \Bitrix\Tasks\Internals\Task\EO_ViewedGroup_Collection wakeUp($data)
+	 * @method \Bitrix\Main\ORM\Data\Result save($ignoreEvents = false)
+	 * @method void offsetSet() ArrayAccess
+	 * @method void offsetExists() ArrayAccess
+	 * @method void offsetUnset() ArrayAccess
+	 * @method void offsetGet() ArrayAccess
+	 * @method void rewind() Iterator
+	 * @method \Bitrix\Tasks\Internals\Task\EO_ViewedGroup current() Iterator
+	 * @method mixed key() Iterator
+	 * @method void next() Iterator
+	 * @method bool valid() Iterator
+	 * @method int count() Countable
+	 */
+	class EO_ViewedGroup_Collection implements \ArrayAccess, \Iterator, \Countable {
+		/* @var \Bitrix\Tasks\Internals\Task\ViewedGroupTable */
+		static public $dataClass = '\Bitrix\Tasks\Internals\Task\ViewedGroupTable';
+	}
+}
+namespace Bitrix\Tasks\Internals\Task {
+	/**
+	 * Common methods:
+	 * ---------------
+	 *
+	 * @method EO_ViewedGroup_Result exec()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_ViewedGroup fetchObject()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_ViewedGroup_Collection fetchCollection()
+	 *
+	 * Custom methods:
+	 * ---------------
+	 *
+	 */
+	class EO_ViewedGroup_Query extends \Bitrix\Main\ORM\Query\Query {}
+	/**
+	 * @method \Bitrix\Tasks\Internals\Task\EO_ViewedGroup fetchObject()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_ViewedGroup_Collection fetchCollection()
+	 */
+	class EO_ViewedGroup_Result extends \Bitrix\Main\ORM\Query\Result {}
+	/**
+	 * @method \Bitrix\Tasks\Internals\Task\EO_ViewedGroup createObject($setDefaultValues = true)
+	 * @method \Bitrix\Tasks\Internals\Task\EO_ViewedGroup_Collection createCollection()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_ViewedGroup wakeUpObject($row)
+	 * @method \Bitrix\Tasks\Internals\Task\EO_ViewedGroup_Collection wakeUpCollection($rows)
+	 */
+	class EO_ViewedGroup_Entity extends \Bitrix\Main\ORM\Entity {}
 }
 /* ORMENTITYANNOTATION:Bitrix\Tasks\Internals\Task\ProjectLastActivityTable:tasks/lib/internals/task/projectlastactivity.php */
 namespace Bitrix\Tasks\Internals\Task {
@@ -10149,11 +10823,21 @@ namespace Bitrix\Tasks\Internals\Task {
 	 * Custom methods:
 	 * ---------------
 	 *
+	 * @method \int getId()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_TaskTag setId(\int|\Bitrix\Main\DB\SqlExpression $id)
+	 * @method bool hasId()
+	 * @method bool isIdFilled()
+	 * @method bool isIdChanged()
 	 * @method \int getTagId()
 	 * @method \Bitrix\Tasks\Internals\Task\EO_TaskTag setTagId(\int|\Bitrix\Main\DB\SqlExpression $tagId)
 	 * @method bool hasTagId()
 	 * @method bool isTagIdFilled()
 	 * @method bool isTagIdChanged()
+	 * @method \int remindActualTagId()
+	 * @method \int requireTagId()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_TaskTag resetTagId()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_TaskTag unsetTagId()
+	 * @method \int fillTagId()
 	 * @method \int getTaskId()
 	 * @method \Bitrix\Tasks\Internals\Task\EO_TaskTag setTaskId(\int|\Bitrix\Main\DB\SqlExpression $taskId)
 	 * @method bool hasTaskId()
@@ -10164,6 +10848,26 @@ namespace Bitrix\Tasks\Internals\Task {
 	 * @method \Bitrix\Tasks\Internals\Task\EO_TaskTag resetTaskId()
 	 * @method \Bitrix\Tasks\Internals\Task\EO_TaskTag unsetTaskId()
 	 * @method \int fillTaskId()
+	 * @method \Bitrix\Tasks\Internals\TaskObject getTask()
+	 * @method \Bitrix\Tasks\Internals\TaskObject remindActualTask()
+	 * @method \Bitrix\Tasks\Internals\TaskObject requireTask()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_TaskTag setTask(\Bitrix\Tasks\Internals\TaskObject $object)
+	 * @method \Bitrix\Tasks\Internals\Task\EO_TaskTag resetTask()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_TaskTag unsetTask()
+	 * @method bool hasTask()
+	 * @method bool isTaskFilled()
+	 * @method bool isTaskChanged()
+	 * @method \Bitrix\Tasks\Internals\TaskObject fillTask()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_Label getTag()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_Label remindActualTag()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_Label requireTag()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_TaskTag setTag(\Bitrix\Tasks\Internals\Task\EO_Label $object)
+	 * @method \Bitrix\Tasks\Internals\Task\EO_TaskTag resetTag()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_TaskTag unsetTag()
+	 * @method bool hasTag()
+	 * @method bool isTagFilled()
+	 * @method bool isTagChanged()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_Label fillTag()
 	 *
 	 * Common methods:
 	 * ---------------
@@ -10207,9 +10911,17 @@ namespace Bitrix\Tasks\Internals\Task {
 	 * Custom methods:
 	 * ---------------
 	 *
+	 * @method \int[] getIdList()
 	 * @method \int[] getTagIdList()
+	 * @method \int[] fillTagId()
 	 * @method \int[] getTaskIdList()
 	 * @method \int[] fillTaskId()
+	 * @method \Bitrix\Tasks\Internals\TaskObject[] getTaskList()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_TaskTag_Collection getTaskCollection()
+	 * @method \Bitrix\Tasks\Internals\EO_Task_Collection fillTask()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_Label[] getTagList()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_TaskTag_Collection getTagCollection()
+	 * @method \Bitrix\Tasks\Internals\Task\TagCollection fillTag()
 	 *
 	 * Common methods:
 	 * ---------------
@@ -10576,6 +11288,16 @@ namespace Bitrix\Tasks\Internals\Task {
 	 * @method \Bitrix\Tasks\Internals\Task\EO_CheckList resetSortIndex()
 	 * @method \Bitrix\Tasks\Internals\Task\EO_CheckList unsetSortIndex()
 	 * @method \int fillSortIndex()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_CheckListTree getTreeByChild()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_CheckListTree remindActualTreeByChild()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_CheckListTree requireTreeByChild()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_CheckList setTreeByChild(\Bitrix\Tasks\Internals\Task\EO_CheckListTree $object)
+	 * @method \Bitrix\Tasks\Internals\Task\EO_CheckList resetTreeByChild()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_CheckList unsetTreeByChild()
+	 * @method bool hasTreeByChild()
+	 * @method bool isTreeByChildFilled()
+	 * @method bool isTreeByChildChanged()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_CheckListTree fillTreeByChild()
 	 *
 	 * Common methods:
 	 * ---------------
@@ -10636,6 +11358,9 @@ namespace Bitrix\Tasks\Internals\Task {
 	 * @method \boolean[] fillIsImportant()
 	 * @method \int[] getSortIndexList()
 	 * @method \int[] fillSortIndex()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_CheckListTree[] getTreeByChildList()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_CheckList_Collection getTreeByChildCollection()
+	 * @method \Bitrix\Tasks\Internals\Task\EO_CheckListTree_Collection fillTreeByChild()
 	 *
 	 * Common methods:
 	 * ---------------

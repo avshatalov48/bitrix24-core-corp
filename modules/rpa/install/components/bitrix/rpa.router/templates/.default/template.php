@@ -51,6 +51,7 @@ endif;
 						options: {
 							cacheable: false,
 							customLeftBoundary: 0,
+							loader: 'bizproc:automation-loader',
 						}
 					},
 					{

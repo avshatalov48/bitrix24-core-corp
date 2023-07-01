@@ -3,16 +3,15 @@
 namespace Bitrix\Intranet\Controller;
 
 use Bitrix\Main\Loader;
-use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Config\Option;
-use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Intranet;
-use Bitrix\Main;
+use Bitrix\Main\Engine;
+use Bitrix\Main\Engine\Response;
 
-class InvitationWidget extends Main\Engine\Controller
+class InvitationWidget extends Engine\Controller
 {
-	public function configureActions()
+	public function configureActions(): array
 	{
 		$configureActions = parent::configureActions();
 
@@ -34,41 +33,18 @@ class InvitationWidget extends Main\Engine\Controller
 		return $preFilters;
 	}
 
-	protected function isCurrentUserAdmin()
+	public function getDataAction(): array
 	{
-		return (
-			(
-				Loader::includeModule('bitrix24')
-				&& \CBitrix24::IsPortalAdmin(CurrentUser::get()->getId())
-			)
-			|| CurrentUser::get()->isAdmin()
-		);
-	}
-
-	public function getDataAction()
-	{
-		$invitationLink = \Bitrix\Main\Engine\UrlManager::getInstance()->create('getSliderContent', [
-			'c' => 'bitrix:intranet.invitation',
-			'mode' => \Bitrix\Main\Engine\Router::COMPONENT_MODE_AJAX,
-			'analyticsLabel[source]' => 'headerPopup',
-		]);
-
 		$currentUserCount = 0;
 		$currentExtranetUserCount = 0;
 		$maxUserCount = 0;
-		$isInvitationAvailable = true;
+		$currentExtranetUserCountMessage = '';
 
 		if (Loader::includeModule('bitrix24'))
 		{
-			$isInvitationAvailable = \CBitrix24::isInvitingUsersAllowed();
-
 			$currentUserCount = \CBitrix24::getActiveUserCount();
 
-			if (\CBitrix24BusinessTools::isAvailable())
-			{
-				$maxUserCount = 0;
-			}
-			else
+			if (!\CBitrix24BusinessTools::isAvailable())
 			{
 				$maxUserCount = \CBitrix24::getMaxBitrix24UsersCount();
 			}
@@ -103,11 +79,8 @@ class InvitationWidget extends Main\Engine\Controller
 		}
 
 		return [
-			'invitationLink' => $isInvitationAvailable ? $invitationLink : '',
-			'structureLink' => '/company/vis_structure.php',
-			'isInvitationAvailable' => $isInvitationAvailable,
-			'isExtranetAvailable' => ModuleManager::isModuleInstalled('extranet'),
 			'users' => [
+				'rightType' => $this->getInvitationRight(),
 				'currentUserCountMessage' => $currentUserCountMessage,
 				'currentUserCount' => $currentUserCount,
 				'currentExtranetUserCountMessage' => $currentExtranetUserCountMessage,
@@ -119,29 +92,29 @@ class InvitationWidget extends Main\Engine\Controller
 		];
 	}
 
-	public function analyticsLabelAction()
+	public function analyticsLabelAction(): void
 	{
 
 	}
 
-	public function saveInvitationRightAction($type)
+	public function saveInvitationRightAction($type): void
 	{
-		if (!$this->isCurrentUserAdmin())
+		if (!Intranet\CurrentUser::get()->isAdmin())
 		{
-			return null;
+			return;
 		}
 
 		Option::set('bitrix24', 'allow_invite_users', ($type === 'all' ? 'Y' : 'N'));
 	}
 
-	public function getInvitationRightAction()
+	public function getInvitationRight(): string
 	{
 		$rightSetting = Option::get('bitrix24', 'allow_invite_users', 'N');
 
 		return ($rightSetting === 'N' ? 'admin' : 'all');
 	}
 
-	public function getUserOnlineComponentAction()
+	public function getUserOnlineComponentAction(): Response\Component
 	{
 		$componentName = 'bitrix:intranet.ustat.online';
 
@@ -150,6 +123,6 @@ class InvitationWidget extends Main\Engine\Controller
 			'MAX_USER_TO_SHOW' => 9,
 		];
 
-		return new \Bitrix\Main\Engine\Response\Component($componentName, '', $params, []);
+		return new Response\Component($componentName, '', $params, []);
 	}
 }

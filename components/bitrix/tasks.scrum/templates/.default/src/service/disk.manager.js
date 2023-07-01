@@ -1,4 +1,4 @@
-import {Loc, Tag, Text, Type} from 'main.core';
+import {Loc, Runtime, Tag, Text, Type} from 'main.core';
 import {Popup} from 'main.popup';
 import {EventEmitter} from 'main.core.events';
 
@@ -25,7 +25,17 @@ export class DiskManager extends EventEmitter
 			urlUpload: '/bitrix/tools/disk/uf.php?action=uploadFile&ncc=1'
 		};
 
+		this.onFinishDebounce = Runtime.debounce(
+			(attachedIds) => {
+				this.attachedIds = [];
+
+				this.emit('onFinish', attachedIds);
+			},
+			500
+		);
+
 		this.attachedIds = [];
+
 	}
 
 	showAttachmentMenu(node)
@@ -66,10 +76,6 @@ export class DiskManager extends EventEmitter
 			{
 				EventEmitter.subscribe(BX.DiskFileDialog, 'loadItemsDone', this.openDiskFileDialog.bind(this));
 			}
-		});
-
-		this.popup.subscribe('onClose', () => {
-			this.emit('onFinish', this.attachedIds);
 		});
 
 		EventEmitter.subscribe('onFinish', () => this.popup.close());
@@ -176,5 +182,7 @@ export class DiskManager extends EventEmitter
 		}
 
 		this.attachedIds.push(fileResult.element_id.toString());
+
+		this.onFinishDebounce(this.attachedIds);
 	}
 }

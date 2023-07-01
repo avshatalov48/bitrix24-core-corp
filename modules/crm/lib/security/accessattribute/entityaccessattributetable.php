@@ -67,7 +67,7 @@ abstract class EntityAccessAttributeTable extends Main\ORM\Data\DataManager
 			]
 		])->fetch();
 
-		$entityCount = (int) $result['CNT'];
+		$entityCount = (int)($result['CNT'] ?? 0);
 
 		$updateFields = [
 			'CATEGORY_ID' => $categoryId,

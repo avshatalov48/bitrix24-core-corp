@@ -210,7 +210,7 @@ class GroupSender
 				$push['GROUP_ID'] = $task['GROUP_ID'];
 			}
 
-			if (!$push['GROUP_ID'])
+			if (!isset($push['GROUP_ID']))
 			{
 				continue;
 			}

@@ -3,6 +3,8 @@ define('NOT_CHECK_PERMISSIONS', true);
 define('NO_KEEP_STATISTIC', true);
 define('BX_SECURITY_SESSION_VIRTUAL', true);
 define('SKIP_DISK_QUOTA_CHECK', true);
+define('CACHED_b_file', false);
+define('BX_PUBLIC_TOOLS', true);
 require $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_before.php';
 
 /** @var CUser $USER */
@@ -12,7 +14,10 @@ if (!$USER->IsAuthorized())
 }
 
 @set_time_limit(0);
-while(ob_end_clean());
+while (ob_get_length() !== false)
+{
+	ob_end_clean();
+}
 header('Content-Type:application/json; charset=UTF-8');
 
 $inputJSON = file_get_contents('php://input');
@@ -31,6 +36,10 @@ if (\Bitrix\Main\Loader::includeModule('biconnector'))
 		$accessKey = substr($_GET['token'], 0 ,32);
 		$languageCode = substr($_GET['token'], 32, 2);
 	}
+
+	$lockFileName = CTempFile::GetAbsoluteRoot() . '/' . md5($accessKey) . '-bi.lock';
+	$lockFile = fopen($lockFileName, 'w');
+	$isLocked = $lockFile ? flock($lockFile, LOCK_EX) : false;
 
 	$manager = Bitrix\BIConnector\Manager::getInstance();
 	$service = $manager->createService('gds');
@@ -75,182 +84,255 @@ if (\Bitrix\Main\Loader::includeModule('biconnector'))
 	elseif (isset($_GET['explain']))
 	{
 		$result = $service->getData($_GET['table'], $input);
-		$connection = $manager->getDatabaseConnection();
-
-		try
+		if (isset($result['error']))
 		{
-			$res = $connection->query('explain ' . $result['sql']);
-		}
-		catch (\Bitrix\Main\DB\SqlQueryException $e)
-		{
-			$res = $e->getMessage();
-		}
-
-		echo $result['sql'] . "\n";
-		if (is_object($res))
-		{
-			\Bitrix\BIConnector\PrettyPrinter::printQueryResult($res);
+			echo Bitrix\Main\Web\Json::encode($result);
 		}
 		else
 		{
-			echo $e;
+			echo $result['sql'] . "\n";
+
+			$connection = $manager->getDatabaseConnection();
+			try
+			{
+				$res = $connection->query('explain ' . $result['sql']);
+				if (is_object($res))
+				{
+					\Bitrix\BIConnector\PrettyPrinter::printQueryResult($res);
+				}
+			}
+			catch (\Bitrix\Main\DB\SqlQueryException $e)
+			{
+				echo $e->getMessage();
+			}
 		}
 	}
 	elseif (isset($_GET['data']))
 	{
 		$result = $service->getData($_GET['table'], $input);
-
-		$fields = [];
-		foreach ($result['schema'] as $fieldInfo)
+		if (isset($result['error']))
 		{
-			$fields[] = $fieldInfo['ID'];
-		}
-
-		$connection = $manager->getDatabaseConnection();
-		$connection->lock('biconnector_data', -1);
-		$comma = '';
-
-		$logId = $manager->startQuery(
-			$_GET['table']
-			,'*'
-			,\Bitrix\Main\Web\Json::encode($result['where'], JSON_UNESCAPED_UNICODE)
-			,\Bitrix\Main\Web\Json::encode($input, JSON_UNESCAPED_UNICODE)
-			,$_SERVER['REQUEST_METHOD']
-			,preg_replace('/(?:^|\\?|&)token=(.+?)(?:$|&)/', 'token=hide-the-key-from-the-log', $_SERVER['REQUEST_URI'])
-		);
-
-		$stmt = $connection->getResource()->prepare($result['sql']);
-		if (is_object($stmt))
-		{
-			$stmt->execute();
-
-			$primary = null;
-			$concat_fields = [];
-			foreach ($result['schema'] as $i => $fieldInfo)
-			{
-				if (isset($fieldInfo['IS_PRIMARY']) && $fieldInfo['IS_PRIMARY'] === 'Y')
-				{
-					$primary = $i;
-				}
-				elseif (isset($fieldInfo['CONCAT_GROUP_BY']))
-				{
-					$unique_id = $i;
-					foreach ($result['schema'] as $j => $keyInfo)
-					{
-						if ($keyInfo['ID'] == $fieldInfo['CONCAT_KEY'])
-						{
-							$unique_id = $j;
-							break;
-						}
-					}
-					$concat_fields[$i] = [
-						'delimiter' => $fieldInfo['CONCAT_GROUP_BY'],
-						'unique_id' => $unique_id,
-					];
-				}
-			}
-
-			$row_dat = [];
-			$row_ref = [];
-			foreach ($result['schema'] as $fieldInfo)
-			{
-				$row_dat[] = '';
-				$row_ref[] = &$row_dat[count($row_dat) - 1];
-			}
-			call_user_func_array([$stmt, 'bind_result'], $row_ref);
-
-			$count = 0;
-			echo '{"schema":' . \Bitrix\Main\Web\Json::encode($result['schema'], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) . ',"rows":[' . "\n";
-			$output_row = false;
-			while ($stmt->fetch())
-			{
-				$row = [];
-				foreach ($row_dat as $v)
-				{
-					$row[] = $v; //dereference
-				}
-
-				foreach ($result['onAfterFetch'] as $i => $callback)
-				{
-					$row[$i] = $callback($row[$i], $service::$dateFormats);
-				}
-
-				if (isset($primary) && $concat_fields)
-				{
-					if (!$output_row)
-					{
-						$output_row = $row;
-						foreach ($concat_fields as $i => $concatInfo)
-						{
-							$concat_id = $row[$concatInfo['unique_id']];
-							$output_row[$i] = [
-								$concat_id => $row[$i]
-							];
-						}
-					}
-					elseif ($row[$primary] === $output_row[$primary])
-					{
-						foreach ($concat_fields as $i => $concatInfo)
-						{
-							$concat_id = $row[$concatInfo['unique_id']];
-							$output_row[$i][$concat_id] = $row[$i];
-						}
-					}
-					else
-					{
-						foreach ($concat_fields as $i => $concatInfo)
-						{
-							$output_row[$i] = implode($concatInfo['delimiter'], $output_row[$i]);
-						}
-						echo $comma . '{"values":' . Bitrix\Main\Web\Json::encode($output_row, JSON_UNESCAPED_UNICODE) . '}' . "\n";
-						$comma = ',';
-						$count++;
-
-						$output_row = $row;
-						foreach ($concat_fields as $i => $concatInfo)
-						{
-							$concat_id = $row[$concatInfo['unique_id']];
-							$output_row[$i] = [
-								$concat_id => $row[$i]
-							];
-						}
-					}
-				}
-				else
-				{
-					echo $comma . '{"values":' . Bitrix\Main\Web\Json::encode($row, JSON_UNESCAPED_UNICODE) . '}' . "\n";
-					$comma = ',';
-					$count++;
-				}
-			}
-
-			if ($output_row)
-			{
-				foreach ($concat_fields as $i => $concatInfo)
-				{
-					$output_row[$i] = implode($concatInfo['delimiter'], $output_row[$i]);
-				}
-				echo $comma . '{"values":' . Bitrix\Main\Web\Json::encode($output_row, JSON_UNESCAPED_UNICODE) . '}' . "\n";
-				$count++;
-			}
-
-			echo ']' . ($result['filtersApplied'] ? ',"filtersApplied":true' : '') . '}';
-			$manager->endQuery($logId, $count);
-			\Bitrix\BIConnector\LimitManager::getInstance()->fixLimit($count);
+			echo Bitrix\Main\Web\Json::encode($result);
 		}
 		else
 		{
-			echo Bitrix\Main\Web\Json::encode([
-				'error' => 'SQL_ERROR',
-				'errno' => $connection->getResource()->errno,
-				'errstr' => $connection->getResource()->error,
-			]);
+			$fields = [];
+			foreach ($result['schema'] as $fieldInfo)
+			{
+				$fields[] = $fieldInfo['ID'];
+			}
+
+			$connection = $manager->getDatabaseConnection();
+			$connection->lock('biconnector_data', -1);
+			$comma = '';
+
+			$getIdFunction = function ($x)
+			{
+				return $x['ID'];
+			};
+
+			$logId = $manager->startQuery(
+				$_GET['table']
+				,implode(', ', array_map($getIdFunction, $result['schema']))
+				,\Bitrix\Main\Web\Json::encode($result['where'], JSON_UNESCAPED_UNICODE)
+				,\Bitrix\Main\Web\Json::encode($input, JSON_UNESCAPED_UNICODE)
+				,$_SERVER['REQUEST_METHOD']
+				,preg_replace('/(?:^|\\?|&)token=(.+?)(?:$|&)/', 'token=hide-the-key-from-the-log', $_SERVER['REQUEST_URI'])
+			);
+
+			$res = $connection->biQuery($result['sql']);
+			if ($res)
+			{
+				$extraCount = count($result['shadowFields']);
+				$selectFields = array_merge(array_values($result['schema']) , array_values($result['shadowFields']));
+
+				$primary = [];
+				foreach ($selectFields as $i => $fieldInfo)
+				{
+					if (isset($fieldInfo['IS_PRIMARY']) && $fieldInfo['IS_PRIMARY'] === 'Y')
+					{
+						$primary[] = $i;
+					}
+				}
+
+				$concat_fields = [];
+				foreach ($selectFields as $i => $fieldInfo)
+				{
+					if (isset($fieldInfo['CONCAT_GROUP_BY']))
+					{
+						foreach ($selectFields as $j => $keyInfo)
+						{
+							if ($keyInfo['ID'] == $fieldInfo['CONCAT_KEY'])
+							{
+								$concat_fields[$i] = [
+									'delimiter' => $fieldInfo['CONCAT_GROUP_BY'],
+									'unique_id' => $j,
+								];
+								break;
+							}
+						}
+					}
+				}
+
+				//Cleanup
+				foreach ($result['schema'] as $i => $tableInfo)
+				{
+					unset($result['schema'][$i]['CONCAT_KEY']);
+					unset($result['schema'][$i]['CONCAT_GROUP_BY']);
+					unset($result['schema'][$i]['IS_PRIMARY']);
+					if (!$tableInfo['AGGREGATION_TYPE'])
+					{
+						unset($result['schema'][$i]['AGGREGATION_TYPE']);
+					}
+					if (!$tableInfo['DESCRIPTION'])
+					{
+						unset($result['schema'][$i]['DESCRIPTION']);
+					}
+					if (!$tableInfo['NAME'])
+					{
+						unset($result['schema'][$i]['NAME']);
+					}
+				}
+
+				$out = '{"schema":' . \Bitrix\Main\Web\Json::encode($result['schema'], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) . ',"rows":[' . "\n";
+				echo $out;
+				$count = 0;
+				$size = strlen($out);
+
+				$prevPrimaryKey = '';
+				$output_row = false;
+				while ($row = $res->fetch())
+				{
+					foreach ($result['onAfterFetch'] as $i => $callback)
+					{
+						$row[$i] = $callback($row[$i], $service::$dateFormats);
+					}
+
+					$primaryKey = '';
+					foreach ($primary as $primaryIndex)
+					{
+						if ($primaryKey)
+						{
+							$primaryKey .= '-';
+						}
+						$primaryKey .= $row[$primaryIndex];
+					}
+
+					if ($primary && $concat_fields)
+					{
+						if (!$output_row)
+						{
+							$output_row = $row;
+							foreach ($concat_fields as $i => $concatInfo)
+							{
+								$concat_id = $row[$concatInfo['unique_id']];
+								$output_row[$i] = [
+									$concat_id => $row[$i]
+								];
+							}
+						}
+						elseif ($primaryKey === $prevPrimaryKey)
+						{
+							foreach ($concat_fields as $i => $concatInfo)
+							{
+								$concat_id = $row[$concatInfo['unique_id']];
+								$output_row[$i][$concat_id] = $row[$i];
+							}
+						}
+						else
+						{
+							foreach ($concat_fields as $i => $concatInfo)
+							{
+								$output_row[$i] = implode($concatInfo['delimiter'], $output_row[$i]);
+							}
+
+							if ($extraCount)
+							{
+								array_splice($output_row, -$extraCount);
+							}
+
+							$out = $comma . '{"values":' . Bitrix\Main\Web\Json::encode($output_row, JSON_UNESCAPED_UNICODE) . '}' . "\n";
+							echo $out;
+							$count++;
+							$size += strlen($out);
+
+							$comma = ',';
+
+							$output_row = $row;
+							foreach ($concat_fields as $i => $concatInfo)
+							{
+								$concat_id = $row[$concatInfo['unique_id']];
+								$output_row[$i] = [
+									$concat_id => $row[$i]
+								];
+							}
+						}
+						$prevPrimaryKey = $primaryKey;
+					}
+					else
+					{
+						if ($extraCount)
+						{
+							array_splice($row, -$extraCount);
+						}
+
+						$out = $comma . '{"values":' . Bitrix\Main\Web\Json::encode($row, JSON_UNESCAPED_UNICODE) . '}' . "\n";
+						echo $out;
+						$count++;
+						$size += strlen($out);
+
+						$comma = ',';
+					}
+				}
+
+				if ($output_row)
+				{
+					foreach ($concat_fields as $i => $concatInfo)
+					{
+						$output_row[$i] = implode($concatInfo['delimiter'], $output_row[$i]);
+					}
+
+					if ($extraCount)
+					{
+						array_splice($output_row, -$extraCount);
+					}
+
+					$out = $comma . '{"values":' . Bitrix\Main\Web\Json::encode($output_row, JSON_UNESCAPED_UNICODE) . '}' . "\n";
+					echo $out;
+					$count++;
+					$size += strlen($out);
+				}
+
+				$out = ']' . ($result['filtersApplied'] ? ',"filtersApplied":true' : '') . '}';
+				echo $out;
+				$size += strlen($out);
+
+				$manager->endQuery($logId, $count, $size);
+				\Bitrix\BIConnector\LimitManager::getInstance()->fixLimit($count);
+			}
+			else
+			{
+				echo Bitrix\Main\Web\Json::encode([
+					'error' => 'SQL_ERROR',
+					'errstr' => $connection->getErrorMessage(),
+				]);
+			}
+			$connection->unlock('biconnector_data');
 		}
-		$connection->unlock('biconnector_data');
 	}
 	else
 	{
 		echo Bitrix\Main\Web\Json::encode(['error' => 'UKNOWN_COMMAND']);
+	}
+
+	if ($isLocked)
+	{
+		flock($lockFile, LOCK_UN);
+	}
+	if ($lockFile)
+	{
+		fclose($lockFile);
+		unlink($lockFileName);
 	}
 }
 else

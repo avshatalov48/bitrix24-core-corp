@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CRM_ACTIVITY_EDITOR_ADD_TASK"] = "New task";
 $MESS["CRM_ACTIVITY_EDITOR_ADD_CALL"] = "New call";
 $MESS["CRM_ACTIVITY_EDITOR_ADD_MEETING"] = "New meeting";
@@ -92,4 +92,6 @@ $MESS["CRM_ACTIVITY_DISK_UPLOAD_FILE"] = "Upload file";
 $MESS["CRM_ACTIVITY_DISK_UPLOAD_FILE_LEGEND"] = "Drag attachments here";
 $MESS["CRM_SIP_MGR_UNKNOWN_RECIPIENT"] = "Unknown caller";
 $MESS["CRM_SIP_MGR_MAKE_CALL"] = "Call";
-?>
+$MESS["CRM_ACTIVITY_TODO_OPENLINE_COMPLETE_CONF"] = "Customer conversation will automatically close if you complete the activity.";
+$MESS["CRM_ACTIVITY_TODO_OPENLINE_COMPLETE_CONF_OK_TEXT"] = "Complete activity";
+$MESS["CRM_ACTIVITY_TODO_OPENLINE_COMPLETE_CONF_TITLE"] = "Are you sure you want to complete the activity?";

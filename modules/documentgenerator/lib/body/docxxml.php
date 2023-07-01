@@ -6,6 +6,8 @@ use Bitrix\DocumentGenerator\DataProvider;
 use Bitrix\DocumentGenerator\DataProvider\ArrayDataProvider;
 use Bitrix\DocumentGenerator\Value;
 use Bitrix\Main\Application;
+use Bitrix\Main\Error;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
 use Bitrix\Main\Text\Encoding;
 use Bitrix\Main\Web\DOM;
@@ -30,6 +32,13 @@ class DocxXml extends Xml
 	public function process(): Result
 	{
 		$result = new Result();
+
+		if (!$this->isFileProcessable())
+		{
+			return $result->addError(
+				new Error(Loc::getMessage('DOCGEN_BODY_DOCXXML_ERROR_FILE_IS_NOT_PROCESSABLE'), 'FILE_NOT_PROCESSABLE'),
+			);
+		}
 
 		$data = [];
 		$this->processArrays();
@@ -74,6 +83,11 @@ class DocxXml extends Xml
 	 */
 	public function normalizeContent(): void
 	{
+		if (!$this->isFileProcessable())
+		{
+			return;
+		}
+
 		$this->initDomDocument();
 		$bracketNodes = [];
 		$nodes = $this->xpath->query('//w:t[text()[contains(.,"{")]]');
@@ -619,9 +633,11 @@ class DocxXml extends Xml
 		$fields = $this->getFields();
 		foreach($fields as $placeholder => $field)
 		{
+			$fieldType = $field['TYPE'] ?? null;
+
 			if(
-				($field['TYPE'] === DataProvider::FIELD_TYPE_IMAGE || $field['TYPE'] === DataProvider::FIELD_TYPE_STAMP) ||
-				(isset($field['OPTIONS']['IS_ARRAY']) && $field['OPTIONS']['IS_ARRAY'] === true)
+				($fieldType === DataProvider::FIELD_TYPE_IMAGE || $fieldType === DataProvider::FIELD_TYPE_STAMP)
+				|| (isset($field['OPTIONS']['IS_ARRAY']) && $field['OPTIONS']['IS_ARRAY'] === true)
 			)
 			{
 				$fieldsToHide[] = $placeholder;
@@ -635,9 +651,12 @@ class DocxXml extends Xml
 			foreach($fieldsToHide as $placeholder)
 			{
 				if(
-					$fields[$placeholder]['HIDE_ROW'] === 'Y'
-					&& ($this->values[$placeholder] === null
-						|| $this->values[$placeholder] === '')
+					isset($fields[$placeholder]['HIDE_ROW'])
+					&& $fields[$placeholder]['HIDE_ROW'] === 'Y'
+					&& (
+						$this->values[$placeholder] === null
+						|| $this->values[$placeholder] === ''
+					)
 				)
 				{
 					$nodes = $this->findPlaceholderNodes($placeholder);
@@ -703,6 +722,11 @@ class DocxXml extends Xml
 	 */
 	public function findImages(bool $generateNewImageIds = false, \DOMNode $contextNode = null): array
 	{
+		if (!$this->isFileProcessable())
+		{
+			return [];
+		}
+
 		$this->initDomDocument();
 		if($contextNode)
 		{
@@ -954,7 +978,10 @@ class DocxXml extends Xml
 		foreach($nodes as $childNode)
 		{
 			$nodeValue = str_replace("\n", '', $childNode->getNodeValue());
-			if($context['display'] === DOM\DisplayProperties::DISPLAY_BLOCK || $displayProperties->isDisplayBlock())
+			if (
+				(isset($context['display']) && $context['display'] === DOM\DisplayProperties::DISPLAY_BLOCK)
+				|| $displayProperties->isDisplayBlock()
+			)
 			{
 				$nodeValue = trim($nodeValue);
 			}
@@ -983,7 +1010,7 @@ class DocxXml extends Xml
 					$context['display'] = $displayProperties->getProperties()[DOM\DisplayProperties::DISPLAY];
 					$result .= '<w:r>';
 				}
-				elseif($context['display'] === DOM\DisplayProperties::DISPLAY_BLOCK)
+				elseif(isset($context['display']) && $context['display'] === DOM\DisplayProperties::DISPLAY_BLOCK)
 				{
 					$result .= '<w:r>';
 					$result .= '<w:br/>';

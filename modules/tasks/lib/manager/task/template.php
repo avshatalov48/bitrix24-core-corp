@@ -88,9 +88,9 @@ final class Template extends \Bitrix\Tasks\Manager
 
 		// select sub-entity related data
 
-		if(!is_array($parameters['ENTITY_SELECT']))
+		if (!is_array($parameters['ENTITY_SELECT'] ?? null))
 		{
-			$parameters['ENTITY_SELECT'] = array(); // none by default
+			$parameters['ENTITY_SELECT'] = []; // none by default
 		}
 		$entitySelect = array_flip($parameters['ENTITY_SELECT']);
 
@@ -135,10 +135,10 @@ final class Template extends \Bitrix\Tasks\Manager
 			$data[static::SE_PREFIX.'TAG'] = $seTag;
 		}
 
-		if($parameters['DROP_PRIMARY'])
+		if ($parameters['DROP_PRIMARY'] ?? null)
 		{
 			unset($data['ID']);
-			$can = array();
+			$can = [];
 		}
 
 		$data[static::ACT_KEY] = $can;
@@ -207,9 +207,9 @@ final class Template extends \Bitrix\Tasks\Manager
 		else
 		{
 			$navParams = static::prepareNav(
-				$listParameters['limit'],
-				$listParameters['offset'],
-				$parameters['PUBLIC_MODE']
+				($listParameters['limit'] ?? null),
+				($listParameters['offset'] ?? null),
+				($parameters['PUBLIC_MODE'] ?? null)
 			);
 
 			$params = false;
@@ -219,22 +219,24 @@ final class Template extends \Bitrix\Tasks\Manager
 			}
 		}
 
-		if (array_key_exists('SORTING', (array)$listParameters['order']) &&
-			array_key_exists('GROUP_ID', $listParameters['legacyFilter']))
+		if (
+			array_key_exists('SORTING', (array)($listParameters['order'] ?? null))
+			&& array_key_exists('GROUP_ID', ($listParameters['legacyFilter'] ?? null))
+		)
 		{ // need for sorting in group
 			$params['SORTING_GROUP_ID'] = $listParameters['legacyFilter']['GROUP_ID'];
 		}
 
 		// an exception about sql error may fall here
 		$res = \CTaskTemplates::GetList(
-			$listParameters['order'],
-			$listParameters['filter'],
+			($listParameters['order'] ?? null),
+			($listParameters['filter'] ?? null),
 			$params,
-			array(
-				'USER_ID' => $userId,        // check permissions for current user
+			[
+				'USER_ID' => $userId, // check permissions for current user
 				'USER_IS_ADMIN' => SocialNetwork\User::isAdmin(),
-			),
-			$listParameters['select']
+			],
+			($listParameters['select'] ?? null)
 		);
 
 		$accessController = new TemplateAccessController((int) $userId);
@@ -255,10 +257,10 @@ final class Template extends \Bitrix\Tasks\Manager
 			$row['AUDITORS'] = unserialize($row['AUDITORS'], ['allowed_classes' => false]);
 			$row['RESPONSIBLES'] = unserialize($row['RESPONSIBLES'], ['allowed_classes' => false]);
 
-			$row['TAGS'] = unserialize($row['TAGS'], ['allowed_classes' => false]);
-			$row['DEPENDS_ON'] = unserialize($row['DEPENDS_ON'], ['allowed_classes' => false]);
+			$row['TAGS'] = unserialize(($row['TAGS'] ?? ''), ['allowed_classes' => false]);
+			$row['DEPENDS_ON'] = unserialize(($row['DEPENDS_ON'] ?? ''), ['allowed_classes' => false]);
 
-			$row['REPLICATE_PARAMS'] = unserialize($row['REPLICATE_PARAMS'], ['allowed_classes' => false]);
+			$row['REPLICATE_PARAMS'] = unserialize(($row['REPLICATE_PARAMS'] ?? ''), ['allowed_classes' => false]);
 			$row['ALLOWED_ACTIONS'] = $accessController->batchCheck($accessRequest, $templateModel);
 
 			$items[$templateId] = $row;
@@ -381,13 +383,13 @@ final class Template extends \Bitrix\Tasks\Manager
 
 		$errors = static::ensureHaveErrorCollection($parameters);
 
-		if($parameters['PUBLIC_MODE'])
+		if(isset($parameters['PUBLIC_MODE']))
 		{
 			$data = static::filterData($data, array(), $errors);
 		}
 
 		$template = static::getTemplate($itemId);
-		if(intval($template['ID']))
+		if (isset($template['ID']) && (int)$template['ID'] > 0)
 		{
 			$templateData = $template;
 		}
@@ -489,16 +491,13 @@ final class Template extends \Bitrix\Tasks\Manager
 				}
 			}
 		}
-		else
+		else if ($parameters['MODE'] == static::MODE_UPDATE)
 		{
-			if($parameters['MODE'] == static::MODE_UPDATE)
+			$template = static::getByParentTask(false, $taskId);
+			if ((int)($template['DATA']['ID'] ?? null)) // then update template
 			{
-				$template = static::getByParentTask(false, $taskId);
-				if(intval($template['DATA']['ID'])) // then update template
-				{
-					$templateInstance = new \CTaskTemplates();
-					$templateInstance->delete(intval($template['DATA']['ID']));
-				}
+				$templateInstance = new \CTaskTemplates();
+				$templateInstance->delete((int)$template['DATA']['ID']);
 			}
 		}
 
@@ -688,7 +687,7 @@ final class Template extends \Bitrix\Tasks\Manager
 	public static function getAnalyticsData(&$data)
 	{
 		$code = Checklist::getCode(true);
-		$checklistData = $data[$code];
+		$checklistData = ($data[$code] ?? null);
 
 		if (!$checklistData)
 		{

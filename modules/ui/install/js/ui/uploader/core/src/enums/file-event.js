@@ -1,4 +1,4 @@
-export const FileEvent = {
+export const FileEvent: Object<string, string> = {
 	ADD: 'onAdd',
 	BEFORE_UPLOAD: 'onBeforeUpload',
 	UPLOAD_START: 'onUploadStart',

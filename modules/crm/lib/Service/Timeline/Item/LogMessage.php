@@ -2,14 +2,14 @@
 
 namespace Bitrix\Crm\Service\Timeline\Item;
 
+use Bitrix\Crm\Service\Timeline\Layout\Common\Icon;
 use Bitrix\Crm\Service\Timeline\Layout\Header\ChangeStreamButton;
-use Bitrix\Crm\Timeline\Entity\NoteTable;
 
 abstract class LogMessage extends Configurable
 {
 	public function getIconCode(): ?string
 	{
-		return 'info';
+		return Icon::INFO;
 	}
 
 	public function isLogMessage(): bool

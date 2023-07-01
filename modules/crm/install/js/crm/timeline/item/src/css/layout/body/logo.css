@@ -62,16 +62,16 @@
 }
 
 .crm-timeline__card-logo_icon.--in-circle {
-	width: 54px;
-	height: 54px;
+	width: var(--ui-size-7xl, 64px);
+	height: var(--ui-size-7xl, 64px);
 	border-radius: 50%;
 	background-color: #fff;
 	box-shadow: 0px 3px 6px rgba(4, 61, 79, 0.12);
 }
 
 .crm-timeline__card-logo_icon.--in-circle > i {
-	width: 46px;
-	height: 46px;
+	width: var(--ui-size-6xl, 48px);
+	height: var(--ui-size-6xl, 48px);
 	mask-size: contain;
 }
 .crm-timeline__card-logo_icon > i {
@@ -225,6 +225,27 @@
 	mask-image: url('../../../images/timeline-card-logos/call/crm-timeline__call.svg');
 }
 
+.crm-timeline__card-logo_icon.--email > i {
+	background-image: url('../../../images/timeline-card-logos/email/crm-timeline__email.svg');
+	mask-image: none;
+	background-color: transparent;
+}
+
+.crm-timeline__card-logo_add-icon.--icon-arrow-incoming > i {
+	background-color: #ffffff;
+	background-image: url('../../../images/timeline-card-logos/document/additions/crm-timeline_arrow-incoming.svg');
+}
+
+.crm-timeline__card-logo_add-icon.--icon-arrow-outgoing > i {
+	background-color: #ffffff;
+	background-image: url('../../../images/timeline-card-logos/document/additions/crm-timeline_arrow-outgoing.svg');
+}
+
+.crm-timeline__card-logo_add-icon.--icon-done > i {
+	background-color: #ffffff;
+	background-image: url('../../../images/timeline-card-logos/document/additions/crm-timeline_done.svg');
+}
+
 .crm-timeline__card-logo_icon.--call-incoming > i {
 	mask-image: url('../../../images/timeline-card-logos/call/crm-timeline__call-incoming.svg');
 }
@@ -265,11 +286,17 @@
 	mask-image: url('../../../images/timeline-card-logos/shop/crm-timeline__check.svg');
 }
 
-
 .crm-timeline__card-logo_icon.--comment > i {
-	mask-image: url('../../../images/timeline-card-logos/crm-timeline__web-chat.svg');
+	mask-image: url('../../../images/timeline-card-logos/comment/crm-timeline__comment.svg');
 }
 
+.crm-timeline__card-logo_icon.--sms > i {
+	mask-image: url('../../../images/timeline-card-logos/sms/crm-timeline__sms.svg');
+}
+
+.crm-timeline__card-logo_icon.--calendar-share > i {
+	mask-image: url('../../../images/timeline-card-logos/calendar/crm-timeline__calendar-share.svg');
+}
 
 .crm-timeline__card-logo_add-icon {
 	--add-icon-size: var(--ui-size-3xl, 34px);
@@ -367,4 +394,16 @@
 .crm-timeline__card-logo_icon.--empty > i {
 	background-color: transparent;
 	mask-image: none;
+}
+
+.crm-timeline__card-logo_icon.--unread-comment > i {
+	background-color: transparent;
+	mask-image: none;
+	background-image: url('../../../images/timeline-card-logos/tasks/crm-timeline__unread-comment.svg');
+}
+
+.crm-timeline__card-logo_icon.--task-activity > i {
+	background-color: transparent;
+	mask-image: none;
+	background-image: url('../../../images/timeline-card-logos/tasks/crm-timeline__task-activity.svg');
 }

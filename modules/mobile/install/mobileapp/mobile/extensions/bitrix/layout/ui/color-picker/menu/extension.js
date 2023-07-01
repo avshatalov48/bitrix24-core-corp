@@ -54,19 +54,13 @@
 		{
 			if (this.props.layoutWidget)
 			{
-				this.props.layoutWidget.setLeftButtons([
-					{
-						name: BX.message('COLOR_MENU_NAVIGATION_TITLE'),
-						type: 'text',
-						color: '#333333',
-					},
-				]);
+				this.props.layoutWidget.setTitle({ text: BX.message('COLOR_MENU_NAVIGATION_TITLE') });
 
 				this.props.layoutWidget.setRightButtons([
 					{
 						name: BX.message('COLOR_MENU_NAVIGATION_BUTTON'),
 						type: 'text',
-						color: '#0065a3',
+						color: '#2066b0',
 						callback: () => {
 							this.onChangeColor().then(() => {
 								this.props.layoutWidget.close();

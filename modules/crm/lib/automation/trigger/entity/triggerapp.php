@@ -10,9 +10,9 @@ use Bitrix\Main;
  *
  * <<< ORMENTITYANNOTATION
  * @method static EO_TriggerApp_Query query()
- * @method static EO_TriggerApp_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_TriggerApp_Result getByPrimary($primary, array $parameters = [])
  * @method static EO_TriggerApp_Result getById($id)
- * @method static EO_TriggerApp_Result getList(array $parameters = array())
+ * @method static EO_TriggerApp_Result getList(array $parameters = [])
  * @method static EO_TriggerApp_Entity getEntity()
  * @method static \Bitrix\Crm\Automation\Trigger\Entity\EO_TriggerApp createObject($setDefaultValues = true)
  * @method static \Bitrix\Crm\Automation\Trigger\Entity\EO_TriggerApp_Collection createCollection()

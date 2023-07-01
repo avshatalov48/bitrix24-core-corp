@@ -19,6 +19,7 @@ use Bitrix\Imopenlines\Model\UserRelationTable;
 use Bitrix\Main;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Config\Option;
+use Bitrix\Main\ORM\Query\Query;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\ORM\Fields\ExpressionField;
 
@@ -590,6 +591,41 @@ class Agent
 		}
 
 		return '';
+	}
+
+	/**
+	 * Agent sets correct status for closed sessions
+	 *
+	 * @return string
+	 */
+	public static function correctionStatusClosedSessionsAgent(): string
+	{
+		$query = new Query(SessionTable::getEntity());
+		$query->setSelect([
+			'ID',
+			'CHECK_SESSION_ID' => 'CHECK.SESSION_ID'
+		]);
+		$query->setFilter([
+			'<STATUS' => Session::STATUS_CLOSE,
+			'CLOSED' => 'Y'
+		]);
+		$query->setLimit(100);
+
+		$sessionManager = $query->exec();
+		while ($session = $sessionManager->fetch())
+		{
+			$resultSessionUpdate = SessionTable::update($session['ID'], ['STATUS' => Session::STATUS_CLOSE]);
+
+			if ($resultSessionUpdate->isSuccess())
+			{
+				if ($session['CHECK_SESSION_ID'] > 0)
+				{
+					SessionCheckTable::delete($session['CHECK_SESSION_ID']);
+				}
+			}
+		}
+
+		return __METHOD__ . '();';
 	}
 
 	/**

@@ -5,6 +5,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Main\Localization\Loc;
+
 $runtime = CBPRuntime::GetRuntime();
 $runtime->IncludeActivityFile('SetFieldActivity');
 
@@ -22,7 +24,11 @@ class CBPCrmSetCompanyField extends CBPSetFieldActivity
 
 		if (!$documentId)
 		{
-			$this->WriteToTrackingService(GetMessage('CRM_ACTIVITY_SET_COMPANY_ERROR'), 0, \CBPTrackingType::Error);
+			$this->writeToTrackingService(
+				Loc::getMessage('CRM_ACTIVITY_SET_COMPANY_ERROR'),
+				0,
+				\CBPTrackingType::Error
+			);
 
 			return CBPActivityExecutionStatus::Closed;
 		}
@@ -40,13 +46,27 @@ class CBPCrmSetCompanyField extends CBPSetFieldActivity
 		}
 
 		$documentService = $this->workflow->GetService("DocumentService");
-		$map = $this->getDebugInfo(
-			$fieldValue,
-			$documentService->GetDocumentFields(\CCrmBizProcHelper::ResolveDocumentType(\CCrmOwnerType::Company))
-		);
-		$this->writeDebugInfo($map);
 
-		$documentService->UpdateDocument($documentId, $fieldValue, $this->ModifiedBy);
+		try
+		{
+			if ($this->workflow->isDebug())
+			{
+				$map = $this->getDebugInfo(
+					$fieldValue,
+					$documentService->GetDocumentFields(
+						\CCrmBizProcHelper::ResolveDocumentType(\CCrmOwnerType::Company)
+					)
+				);
+				$this->writeDebugInfo($map);
+			}
+
+			$documentService->UpdateDocument($documentId, $fieldValue, $this->ModifiedBy);
+		}
+		catch (Exception $e)
+		{
+			$this->writeToTrackingService($e->getMessage(), 0, CBPTrackingType::Error);
+			$this->ErrorMessage = $e->getMessage();
+		}
 
 		return CBPActivityExecutionStatus::Closed;
 	}
@@ -65,7 +85,7 @@ class CBPCrmSetCompanyField extends CBPSetFieldActivity
 		if (!CModule::IncludeModule('crm'))
 		{
 			return '';
-		};
+		}
 
 		$documentType = \CCrmBizProcHelper::ResolveDocumentType(\CCrmOwnerType::Company);
 
@@ -94,7 +114,7 @@ class CBPCrmSetCompanyField extends CBPSetFieldActivity
 		if (!CModule::IncludeModule('crm'))
 		{
 			return false;
-		};
+		}
 
 		$documentType = \CCrmBizProcHelper::ResolveDocumentType(\CCrmOwnerType::Company);
 
@@ -113,23 +133,44 @@ class CBPCrmSetCompanyField extends CBPSetFieldActivity
 	{
 		$id = null;
 
-		[$entityType, $entityId] = mb_split('_(?=[^_]*$)', $this->GetDocumentId()[2]);
-		$entityTypeId = CCrmOwnerType::ResolveID($entityType);
+		[$entityTypeId, $entityId] = CCrmBizProcHelper::resolveEntityId($this->getDocumentId());
 
-		if ($entityType === \CCrmOwnerType::LeadName)
+		if ($entityTypeId === \CCrmOwnerType::Lead)
 		{
 			$entity = \CCrmLead::GetByID($entityId, false);
-			$id = isset($entity['COMPANY_ID']) ? intval($entity['COMPANY_ID']) : 0;
+			if ($entity)
+			{
+				$id = isset($entity['COMPANY_ID']) ? (int)($entity['COMPANY_ID']) : 0;
+			}
 		}
-		elseif ($entityType === \CCrmOwnerType::DealName)
+		elseif ($entityTypeId === \CCrmOwnerType::Deal)
 		{
 			$entity = \CCrmDeal::GetByID($entityId, false);
-			$id = isset($entity['COMPANY_ID']) ? intval($entity['COMPANY_ID']) : 0;
+			if ($entity)
+			{
+				$id = isset($entity['COMPANY_ID']) ? (int)($entity['COMPANY_ID']) : 0;
+			}
 		}
-		elseif ($entityType === \CCrmOwnerType::ContactName)
+		elseif ($entityTypeId === \CCrmOwnerType::Contact)
 		{
 			$entity = \CCrmContact::GetByID($entityId, false);
-			$id = isset($entity['COMPANY_ID']) ? intval($entity['COMPANY_ID']) : 0;
+			if ($entity)
+			{
+				$id = isset($entity['COMPANY_ID']) ? (int)($entity['COMPANY_ID']) : 0;
+			}
+		}
+		elseif ($entityTypeId === \CCrmOwnerType::Order)
+		{
+			$entity = \Bitrix\Crm\Order\Order::load($entityId);
+			if ($entity)
+			{
+				$company = $entity->getContactCompanyCollection()->getCompany();
+
+				if ($company)
+				{
+					$id = $company->getField('ENTITY_ID');
+				}
+			}
 		}
 		else
 		{
@@ -137,7 +178,10 @@ class CBPCrmSetCompanyField extends CBPSetFieldActivity
 			if (isset($factory) && $factory->isAutomationEnabled())
 			{
 				$entity = $factory->getItem($entityId);
-				$id = (int)$entity->getCompanyId();
+				if ($entity)
+				{
+					$id = (int)$entity->getCompanyId();
+				}
 			}
 		}
 

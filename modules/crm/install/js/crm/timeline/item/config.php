@@ -12,6 +12,8 @@ return [
 		'ui.notification',
 		'ui.dialogs.messagebox',
 		'crm.activity.file-uploader-popup',
+		'crm.activity.settings-popup',
+		'crm.activity.todo-editor',
 		'crm.timeline.tools',
 		'crm.datetime',
 		'main.popup',
@@ -27,6 +29,8 @@ return [
 		'ui.alerts',
 		'ui.fonts.opensans',
 		'loader',
+		'crm.timeline.editors.comment-editor',
+		'calendar.sharing.interface',
 	],
 	'skip_core' => false,
 ];

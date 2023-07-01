@@ -22,6 +22,18 @@ final class Category extends Dto
 	/** @var int|null */
 	public $sort;
 
+	/** @var bool */
+	public $categoriesSupported = false;
+
+	/** @var bool */
+	public $categoriesEnabled = false;
+
+	/** @var bool */
+	public $stagesEnabled = false;
+
+	/** @var bool */
+	public $tunnelsEnabled = false;
+
 	/** @var string|null */
 	public $access;
 
@@ -51,6 +63,10 @@ final class Category extends Dto
 			'editable' => Type::bool(),
 			'isDefault' => Type::bool(),
 			'sort' => Type::int(),
+			'categoriesSupported' => Type::bool(),
+			'categoriesEnabled' => Type::bool(),
+			'stagesEnabled' => Type::bool(),
+			'tunnelsEnabled' => Type::bool(),
 			'counter' => Type::int(),
 			'access' => Type::string(),
 			'tunnels' => Type::collection(Tunnel::class),

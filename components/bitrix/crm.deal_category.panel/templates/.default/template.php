@@ -1,5 +1,10 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
 /**
  * Bitrix vars
  *
@@ -18,9 +23,11 @@ $containerID = "{$guid}_container";
 <div class="crm-deal-panel-array-have" id="<?=htmlspecialcharsbx($containerID)?>">
 	<div class="crm-deal-panel-tab"><?
 		$iconNumber = 0;
-		foreach($arResult['ITEMS'] as $item):
-			if(isset($item['ENABLED']) && $item['ENABLED'] === false)
+		foreach ($arResult['ITEMS'] as $item):
+			if (isset($item['ENABLED']) && $item['ENABLED'] === false)
+			{
 				continue;
+			}
 
 			$iconNumber++;
 			if($iconNumber > 10):
@@ -118,4 +125,3 @@ $containerID = "{$guid}_container";
 		);
 	</script>
 </div><?
-

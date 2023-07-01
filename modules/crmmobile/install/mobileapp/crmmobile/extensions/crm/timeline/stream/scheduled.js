@@ -2,11 +2,9 @@
  * @module crm/timeline/stream/scheduled
  */
 jn.define('crm/timeline/stream/scheduled', (require, exports, module) => {
-
 	const { Loc } = require('loc');
 	const { TimelineStreamBase } = require('crm/timeline/stream/base');
 	const { TimelineItemModel } = require('crm/timeline/item');
-	const { TimelineItemBackground } = require('crm/timeline/item/ui/styles');
 
 	/**
 	 * @class TimelineStreamScheduled
@@ -36,7 +34,7 @@ jn.define('crm/timeline/stream/scheduled', (require, exports, module) => {
 		 */
 		getAttentionableItems()
 		{
-			return this.items.filter(item => item.needsAttention || item.isIncomingChannel);
+			return this.items.filter((item) => item.needsAttention || item.isIncomingChannel);
 		}
 
 		/**
@@ -45,7 +43,7 @@ jn.define('crm/timeline/stream/scheduled', (require, exports, module) => {
 		 */
 		getNeedsAttentionItems()
 		{
-			return this.items.filter(item => item.needsAttention);
+			return this.items.filter((item) => item.needsAttention);
 		}
 
 		/**
@@ -54,12 +52,12 @@ jn.define('crm/timeline/stream/scheduled', (require, exports, module) => {
 		 */
 		getIncomingChannelItems()
 		{
-			return this.items.filter(item => item.isIncomingChannel);
+			return this.items.filter((item) => item.isIncomingChannel);
 		}
 
 		exportToListView()
 		{
-			if (!this.items.length && !this.isEditable)
+			if (this.items.length === 0 && !this.isEditable)
 			{
 				return [];
 			}
@@ -72,15 +70,15 @@ jn.define('crm/timeline/stream/scheduled', (require, exports, module) => {
 				props: {
 					color: '#9DCF00',
 					text: Loc.getMessage('CRM_TIMELINE_SCHEDULED_TITLE2'),
-				}
+				},
 			});
 
-			if (!this.items.length)
+			if (this.items.length === 0)
 			{
 				result.push({
 					type: 'CreateReminder',
 					key: 'CreateReminder',
-					props: {}
+					props: {},
 				});
 			}
 
@@ -92,5 +90,4 @@ jn.define('crm/timeline/stream/scheduled', (require, exports, module) => {
 	}
 
 	module.exports = { TimelineStreamScheduled };
-
 });

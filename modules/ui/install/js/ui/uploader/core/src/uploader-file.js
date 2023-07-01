@@ -5,9 +5,6 @@ import { FileStatus } from './enums/file-status';
 import { FileOrigin } from './enums/file-origin';
 import { FileEvent } from './enums/file-event';
 
-import type { FileInfo } from './types/file-info';
-import type { UploaderFileOptions } from './types/uploader-file-options';
-
 import UploaderError from './uploader-error';
 import AbstractUploadController from './backend/abstract-upload-controller';
 import AbstractLoadController from './backend/abstract-load-controller';
@@ -20,14 +17,17 @@ import createBlobFromDataUri from './helpers/create-blob-from-data-uri';
 import isResizableImage from './helpers/is-resizable-image';
 import formatFileSize from './helpers/format-file-size';
 
+import type { UploaderFileOptions } from './types/uploader-file-options';
+import type { UploaderFileInfo } from './types/uploader-file-info';
+import type { RemoveFileOptions } from './types/remove-file-options';
+
 export default class UploaderFile extends EventEmitter
 {
 	#id: string = null;
 	#file: File = null;
-	#serverId: number | string = null;
+	#serverFileId: number | string = null;
 
-	#name: string = '';
-	#originalName: string = null;
+	#name: string = null;
 	#size: number = 0;
 	#type: string = '';
 	#width: ?number = null;
@@ -43,12 +43,12 @@ export default class UploaderFile extends EventEmitter
 	#serverPreviewHeight: ?number = null;
 
 	#downloadUrl: ?string = null;
-	#removeUrl: ?string = null;
 
 	#status: FileStatus = FileStatus.INIT;
 	#origin: FileOrigin = FileOrigin.CLIENT;
 	#errors: UploaderError[] = [];
 	#progress: number = 0;
+	#customData: Object<string, any> = Object.create(null);
 
 	#uploadController: AbstractUploadController = null;
 	#loadController: AbstractLoadController = null;
@@ -56,40 +56,45 @@ export default class UploaderFile extends EventEmitter
 
 	#uploadCallbacks: CallbackCollection = new CallbackCollection(this);
 
-	constructor(source: File | Blob | string | number, fileOptions: UploaderFileOptions = {})
+	constructor(source: File | Blob | string | number | UploaderFileOptions, fileOptions: UploaderFileOptions = {})
 	{
 		super();
 		this.setEventNamespace('BX.UI.Uploader.File');
 
-		const options = Type.isPlainObject(fileOptions) ? fileOptions : {};
+		const options: UploaderFileOptions = Type.isPlainObject(fileOptions) ? fileOptions : {};
 
 		if (Type.isFile(source))
 		{
 			this.#file = source;
+			this.update(options);
 		}
 		else if (Type.isBlob(source))
 		{
 			this.#file = createFileFromBlob(source, options.name || source.name);
+			this.update(options);
 		}
 		else if (isDataUri(source))
 		{
-			const blob = createBlobFromDataUri(source);
+			const blob: Blob = createBlobFromDataUri(source);
 			this.#file = createFileFromBlob(blob, options.name);
+			this.update(options);
 		}
 		else if (Type.isNumber(source) || Type.isStringFilled(source))
 		{
 			this.#origin = FileOrigin.SERVER;
-			this.#serverId = source;
-			if (Type.isPlainObject(options))
-			{
-				this.setFile(options);
-			}
+			this.#serverFileId = source;
+			this.update(options);
+		}
+		else if (Type.isPlainObject(source) && (Type.isNumber(source.serverFileId) || Type.isStringFilled(source.serverFileId)))
+		{
+			this.#origin = FileOrigin.SERVER;
+			this.update(source);
 		}
 
 		this.#id = Type.isStringFilled(options.id) ? options.id : createUniqueId();
 
 		this.subscribeFromOptions({
-			[FileEvent.ADD]: () => {
+			[FileEvent.ADD]: (): void => {
 				this.#setStatus(FileStatus.ADDED);
 			},
 		});
@@ -126,7 +131,7 @@ export default class UploaderFile extends EventEmitter
 			return this.#uploadCallbacks.emit('onError', { error: new UploaderError('FILE_UPLOAD_NOT_ALLOWED') });
 		}
 
-		const event = new BaseEvent({ data: { file: this } });
+		const event: BaseEvent<{ file: UploaderFile }> = new BaseEvent({ data: { file: this } });
 		this.emit(FileEvent.BEFORE_UPLOAD, event);
 		if (event.isDefaultPrevented())
 		{
@@ -138,7 +143,7 @@ export default class UploaderFile extends EventEmitter
 		this.#uploadController.upload(this);
 	}
 
-	remove(): void
+	remove(options?: RemoveFileOptions): void
 	{
 		if (this.getStatus() === FileStatus.INIT)
 		{
@@ -153,7 +158,8 @@ export default class UploaderFile extends EventEmitter
 		//this.#setStatus(FileStatus.REMOVING);
 		//this.#removeController.remove(this);
 
-		if (this.#removeController !== null && this.getOrigin() === FileOrigin.CLIENT)
+		const removeFromServer: boolean = !options || options.removeFromServer !== false;
+		if (removeFromServer && this.#removeController !== null && this.getOrigin() === FileOrigin.CLIENT)
 		{
 			this.#removeController.remove(this);
 		}
@@ -187,14 +193,14 @@ export default class UploaderFile extends EventEmitter
 		{
 			this.#setStatus(FileStatus.LOAD_FAILED);
 
-			const error = new UploaderError('FILE_LOAD_ABORTED');
+			const error: UploaderError = new UploaderError('FILE_LOAD_ABORTED');
 			this.emit(FileEvent.LOAD_ERROR, { error });
 		}
 		else if (this.isUploading())
 		{
 			this.#setStatus(FileStatus.UPLOAD_FAILED);
 
-			const error = new UploaderError('FILE_UPLOAD_ABORTED');
+			const error: UploaderError = new UploaderError('FILE_UPLOAD_ABORTED');
 			this.emit('onUploadError', { error });
 			this.#uploadCallbacks.emit('onError', { error });
 		}
@@ -217,11 +223,6 @@ export default class UploaderFile extends EventEmitter
 
 	setUploadController(controller: ?AbstractUploadController): void
 	{
-		if (this.getOrigin() === FileOrigin.SERVER)
-		{
-			return;
-		}
-
 		if (!(controller instanceof AbstractUploadController) && !Type.isNull(controller))
 		{
 			return;
@@ -232,22 +233,22 @@ export default class UploaderFile extends EventEmitter
 
 		if (this.#uploadController && changed)
 		{
-			this.#uploadController.subscribeOnce('onError', (event: BaseEvent) => {
-				const error = this.addError(event.getData().error);
+			this.#uploadController.subscribeOnce('onError', (event: BaseEvent): void => {
+				const error: UploaderError = this.addError(event.getData().error);
 				this.#setStatus(FileStatus.UPLOAD_FAILED);
 				this.emit(FileEvent.UPLOAD_ERROR, { error });
 				this.#uploadCallbacks.emit('onError', { error });
 			});
 
-			this.#uploadController.subscribe('onProgress', (event: BaseEvent) => {
+			this.#uploadController.subscribe('onProgress', (event: BaseEvent): void => {
 				const { progress } = event.getData();
 				this.setProgress(progress);
 				this.emit(FileEvent.UPLOAD_PROGRESS, { progress });
 			});
 
-			this.#uploadController.subscribeOnce('onUpload', (event: BaseEvent) => {
+			this.#uploadController.subscribeOnce('onUpload', (event: BaseEvent): void => {
 				this.#setStatus(FileStatus.COMPLETE);
-				this.setFile(event.getData().fileInfo);
+				this.update(event.getData().fileInfo);
 				this.emit(FileEvent.UPLOAD_COMPLETE);
 
 				this.#uploadCallbacks.emit('onComplete');
@@ -272,29 +273,23 @@ export default class UploaderFile extends EventEmitter
 
 		if (this.#loadController && changed)
 		{
-			this.#loadController.subscribeOnce('onError', (event: BaseEvent) => {
-				const error = this.addError(event.getData().error);
+			this.#loadController.subscribeOnce('onError', (event: BaseEvent): void => {
+				const error: UploaderError = this.addError(event.getData().error);
 				this.#setStatus(FileStatus.LOAD_FAILED);
 				this.emit(FileEvent.LOAD_ERROR, { error });
 			});
 
-			this.#loadController.subscribe('onProgress', (event: BaseEvent) => {
+			this.#loadController.subscribe('onProgress', (event: BaseEvent): void => {
 				const { progress } = event.getData();
 				this.emit(FileEvent.LOAD_PROGRESS, { progress });
 			});
 
-			this.#loadController.subscribeOnce('onLoad', (event: BaseEvent) => {
-				if (this.getOrigin() === FileOrigin.SERVER)
+			this.#loadController.subscribeOnce('onLoad', (event: BaseEvent): void => {
+				if (this.getOrigin() === FileOrigin.CLIENT)
 				{
-					this.setFile(event.getData().fileInfo);
-					this.#setStatus(FileStatus.COMPLETE);
-					this.emit(FileEvent.LOAD_COMPLETE);
-				}
-				else
-				{
-					const event = new BaseEvent({ data: { file: this } });
+					const event: BaseEvent = new BaseEvent({ data: { file: this } });
 					this.emitAsync(FileEvent.PREPARE_FILE_ASYNC, event)
-						.then(() => {
+						.then((): void => {
 							if (this.isUploadable())
 							{
 								this.#setStatus(FileStatus.PENDING);
@@ -312,6 +307,21 @@ export default class UploaderFile extends EventEmitter
 							this.emit(FileEvent.LOAD_ERROR, { error });
 						})
 					;
+				}
+				else
+				{
+					this.update(event.getData().fileInfo);
+
+					if (this.isUploadable())
+					{
+						this.#setStatus(FileStatus.PENDING);
+					}
+					else
+					{
+						this.#setStatus(FileStatus.COMPLETE);
+					}
+
+					this.emit(FileEvent.LOAD_COMPLETE);
 				}
 			});
 		}
@@ -366,6 +376,11 @@ export default class UploaderFile extends EventEmitter
 		return this.#loadController !== null;
 	}
 
+	isRemoveable(): boolean
+	{
+		return this.#removeController !== null;
+	}
+
 	canUpload(): boolean
 	{
 		return this.isReadyToUpload() && this.isUploadable();
@@ -411,10 +426,7 @@ export default class UploaderFile extends EventEmitter
 		return this.#file;
 	}
 
-	/**
-	 * @internal
-	 */
-	setFile(file: File | FileInfo): void
+	setFile(file: File | Blob): void
 	{
 		if (Type.isFile(file))
 		{
@@ -424,63 +436,50 @@ export default class UploaderFile extends EventEmitter
 		{
 			this.#file = createFileFromBlob(file, this.getName());
 		}
-		else if (Type.isPlainObject(file))
+	}
+
+	update(options: UploaderFileOptions): void
+	{
+		if (Type.isPlainObject(options))
 		{
-			this.setName(file.name);
-			this.setOriginalName(file.originalName);
-			this.setType(file.type);
-			this.setSize(file.size);
+			this.setName(options.name);
+			this.setType(options.type);
+			this.setSize(options.size);
 
-			this.setServerId(file.serverId);
-			this.setWidth(file.width);
-			this.setHeight(file.height);
+			this.setServerFileId(options.serverFileId);
+			this.setWidth(options.width);
+			this.setHeight(options.height);
 
-			this.setClientPreview(file.clientPreview, file.clientPreviewWidth, file.clientPreviewHeight);
-			this.setServerPreview(file.serverPreviewUrl, file.serverPreviewWidth, file.serverPreviewHeight);
+			this.setClientPreview(options.clientPreview, options.clientPreviewWidth, options.clientPreviewHeight);
+			this.setServerPreview(options.serverPreviewUrl, options.serverPreviewWidth, options.serverPreviewHeight);
 
-			this.setDownloadUrl(file.downloadUrl);
-			this.setRemoveUrl(file.removeUrl);
+			this.setDownloadUrl(options.downloadUrl);
+			this.setCustomData(options.customData);
+
+			this.setLoadController(options.loadController);
+			this.setUploadController(options.uploadController);
+			this.setRemoveController(options.removeController);
 		}
 	}
 
 	getName(): string
 	{
-		return this.getBinary() ? this.getBinary().name : this.#name;
+		return this.#name !== null ? this.#name : (this.getBinary() ? this.getBinary().name : '');
 	}
 
-	/**
-	 * @internal
-	 */
-	setName(name: string): void
+	setName(name: string | null): void
 	{
-		if (Type.isStringFilled(name))
+		if (Type.isStringFilled(name) || Type.isNull(name))
 		{
 			this.#name = name;
 			this.emit(FileEvent.STATE_CHANGE, { property: 'name', value: name });
 		}
 	}
 
-	getOriginalName(): string
-	{
-		return this.#originalName ? this.#originalName : this.getName();
-	}
-
-	/**
-	 * @internal
-	 */
-	setOriginalName(name: string): void
-	{
-		if (Type.isStringFilled(name))
-		{
-			this.#originalName = name;
-			this.emit(FileEvent.STATE_CHANGE, { property: 'originalName', value: name });
-		}
-	}
-
 	getExtension(): string
 	{
-		const name = this.getOriginalName();
-		const position = name.lastIndexOf('.');
+		const name: string = this.getName();
+		const position: number = name.lastIndexOf('.');
 
 		return position >= 0 ? name.substring(position + 1).toLowerCase() : '';
 	}
@@ -490,9 +489,6 @@ export default class UploaderFile extends EventEmitter
 		return this.getBinary() ? this.getBinary().type : this.#type;
 	}
 
-	/**
-	 * internal
-	 */
 	setType(type: string): string
 	{
 		if (Type.isStringFilled(type))
@@ -512,9 +508,6 @@ export default class UploaderFile extends EventEmitter
 		return formatFileSize(this.getSize());
 	}
 
-	/**
-	 * @internal
-	 */
 	setSize(size: number): void
 	{
 		if (Type.isNumber(size) && size >= 0)
@@ -529,17 +522,26 @@ export default class UploaderFile extends EventEmitter
 		return this.#id;
 	}
 
-	getServerId(): number | string | null
+	getServerFileId(): number | string | null
 	{
-		return this.#serverId;
+		return this.#serverFileId;
 	}
 
-	setServerId(id: number | string): void
+	/**
+	 * @deprecated
+	 * use getServerFileId
+	 */
+	getServerId(): number | string | null
+	{
+		return this.getServerFileId();
+	}
+
+	setServerFileId(id: number | string): void
 	{
 		if (Type.isNumber(id) || Type.isStringFilled(id))
 		{
-			this.#serverId = id;
-			this.emit(FileEvent.STATE_CHANGE, { property: 'serverId', value: id });
+			this.#serverFileId = id;
+			this.emit(FileEvent.STATE_CHANGE, { property: 'serverFileId', value: id });
 		}
 	}
 
@@ -571,20 +573,6 @@ export default class UploaderFile extends EventEmitter
 		{
 			this.#downloadUrl = url;
 			this.emit(FileEvent.STATE_CHANGE, { property: 'downloadUrl', value: url });
-		}
-	}
-
-	getRemoveUrl(): ?string
-	{
-		return this.#removeUrl;
-	}
-
-	setRemoveUrl(url: string)
-	{
-		if (Type.isStringFilled(url))
-		{
-			this.#removeUrl = url;
-			this.emit(FileEvent.STATE_CHANGE, { property: 'removeUrl', value: url });
 		}
 	}
 
@@ -711,7 +699,7 @@ export default class UploaderFile extends EventEmitter
 
 	isImage(): boolean
 	{
-		return isResizableImage(this.getOriginalName(), this.getType());
+		return isResizableImage(this.getName(), this.getType());
 	}
 
 	getProgress(): number
@@ -719,7 +707,7 @@ export default class UploaderFile extends EventEmitter
 		return this.#progress;
 	}
 
-	setProgress(progress: ?number)
+	setProgress(progress: ?number): void
 	{
 		if (Type.isNumber(progress))
 		{
@@ -751,19 +739,62 @@ export default class UploaderFile extends EventEmitter
 		return this.#errors;
 	}
 
-	getState(): { [key: string]: any }
+	getState(): UploaderFileInfo
 	{
 		return JSON.parse(JSON.stringify(this));
 	}
 
-	toJSON(): { [key: string]: any }
+	setCustomData(property: ?string | { [key: string]: any }, value?: any): void
+	{
+		if (Type.isNull(property))
+		{
+			this.#customData = Object.create(null);
+			this.emit(FileEvent.STATE_CHANGE, { property: 'customData', value: null });
+		}
+		else if (Type.isPlainObject(property))
+		{
+			Object.entries(property).forEach((item) => {
+				const [currentKey, currentValue] = item;
+				this.setCustomData(currentKey, currentValue);
+			});
+		}
+		else if (Type.isString(property))
+		{
+			if (Type.isNull(value))
+			{
+				delete this.#customData[property];
+				this.emit(FileEvent.STATE_CHANGE, { property: 'customData', customProperty: property, value: null });
+			}
+			else if (!Type.isUndefined(value))
+			{
+				this.#customData[property] = value;
+				this.emit(FileEvent.STATE_CHANGE, { property: 'customData', customProperty: property, value: value });
+			}
+		}
+	}
+
+	getCustomData(property?: string): any
+	{
+		if (Type.isUndefined(property))
+		{
+			return this.#customData;
+		}
+		else if (Type.isStringFilled(property))
+		{
+			return this.#customData[property];
+		}
+
+		return undefined;
+	}
+
+	toJSON(): UploaderFileInfo
 	{
 		return {
 			id: this.getId(),
-			serverId: this.getServerId(),
+			serverFileId: this.getServerFileId(),
+			serverId: this.getServerFileId(), // compatibility
 			status: this.getStatus(),
 			name: this.getName(),
-			originalName: this.getOriginalName(),
 			size: this.getSize(),
 			sizeFormatted: this.getSizeFormatted(),
 			type: this.getType(),
@@ -776,21 +807,17 @@ export default class UploaderFile extends EventEmitter
 			progress: this.getProgress(),
 			error: this.getError(),
 			errors: this.getErrors(),
-
 			previewUrl: this.getPreviewUrl(),
 			previewWidth: this.getPreviewWidth(),
 			previewHeight: this.getPreviewHeight(),
-
 			clientPreviewUrl: this.getClientPreviewUrl(),
 			clientPreviewWidth: this.getClientPreviewWidth(),
 			clientPreviewHeight: this.getClientPreviewHeight(),
-
 			serverPreviewUrl: this.getServerPreviewUrl(),
 			serverPreviewWidth: this.getServerPreviewWidth(),
 			serverPreviewHeight: this.getServerPreviewHeight(),
-
 			downloadUrl: this.getDownloadUrl(),
-			removeUrl: this.getRemoveUrl(),
+			customData: this.getCustomData(),
 		};
 	}
 }

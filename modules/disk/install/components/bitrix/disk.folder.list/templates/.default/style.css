@@ -207,48 +207,48 @@ div.bizproc-statuses{width:22px;height:18px;margin-right:6px;float: right;backgr
 	}
 }
 
-html:not(.bx-ie) .menu-popup .disk-folder-list-context-menu-item.menu-popup-item,
-html:not(.bx-ie) .disk-folder-list-sorting-menu .menu-popup .menu-popup-item {
+.menu-popup .disk-folder-list-context-menu-item.menu-popup-item,
+.disk-folder-list-sorting-menu .menu-popup .menu-popup-item {
 	display: flex;
 }
 
-html:not(.bx-ie) .disk-folder-list-context-menu-item .menu-popup-item-icon,
-html:not(.bx-ie) .disk-folder-list-context-menu-item .menu-popup-item-text,
-html:not(.bx-ie) .disk-folder-list-sorting-menu .menu-popup-item-icon,
-html:not(.bx-ie) .disk-folder-list-sorting-menu .menu-popup-item-text {
+.disk-folder-list-context-menu-item .menu-popup-item-icon,
+.disk-folder-list-context-menu-item .menu-popup-item-text,
+.disk-folder-list-sorting-menu .menu-popup-item-icon,
+.disk-folder-list-sorting-menu .menu-popup-item-text {
 	flex: 1;
 }
 
-html:not(.bx-ie) .disk-folder-list-context-menu-item .menu-popup-item-icon,
-html:not(.bx-ie) .disk-folder-list-sorting-menu .menu-popup-item-icon {
+.disk-folder-list-context-menu-item .menu-popup-item-icon,
+.disk-folder-list-sorting-menu .menu-popup-item-icon {
 	order: 1;
 	margin: auto;
 	width: 32px;
 	position: relative;
 }
 
-html:not(.bx-ie) .disk-folder-list-context-menu-item .menu-popup-item-text,
-html:not(.bx-ie) .disk-folder-list-sorting-menu .menu-popup-item-text {
+.disk-folder-list-context-menu-item .menu-popup-item-text,
+.disk-folder-list-sorting-menu .menu-popup-item-text {
 	order: 0;
 	padding: 0 13px 0 20px;
 }
 
-html:not(.bx-ie) .disk-folder-list-context-menu-item .menu-popup-no-icon .menu-popup-item-text,
-html:not(.bx-ie) .disk-folder-list-sorting-menu .menu-popup-no-icon .menu-popup-item-text {
+.disk-folder-list-context-menu-item .menu-popup-no-icon .menu-popup-item-text,
+.disk-folder-list-sorting-menu .menu-popup-no-icon .menu-popup-item-text {
 	padding: 0 13px 0 20px;
 }
 
-html:not(.bx-ie) .disk-folder-list-context-menu-item.menu-popup-item-accept .menu-popup-item-icon:before,
-html:not(.bx-ie) .disk-folder-list-sorting-menu .menu-popup-item-accept .menu-popup-item-icon {
+.disk-folder-list-context-menu-item.menu-popup-item-accept .menu-popup-item-icon:before,
+.disk-folder-list-sorting-menu .menu-popup-item-accept .menu-popup-item-icon {
 	background: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2212px%22%20height%3D%229px%22%20viewBox%3D%220%200%2012%209%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%0A%20%20%20%20%3Cg%20transform%3D%22translate%28-200.000000%2C%20-682.000000%29%22%3E%0A%20%20%20%20%20%20%20%20%3Cg%20transform%3D%22translate%2859.000000%2C%20492.000000%29%22%20fill%3D%22%230063C6%22%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%3Cpolygon%20points%3D%22142.360083%20193.446392%20145.013295%20196.099605%20151.316057%20190%20152.67614%20191.360083%20146.376563%20197.459687%20145.013295%20198.81977%20143.653213%20197.459687%20141%20194.806475%22%3E%3C/polygon%3E%0A%20%20%20%20%20%20%20%20%3C/g%3E%0A%20%20%20%20%3C/g%3E%0A%3C/svg%3E') left center no-repeat;
 }
 
-html:not(.bx-ie) .disk-folder-list-context-menu-item.menu-popup-item-accept .menu-popup-item-icon {
+.disk-folder-list-context-menu-item.menu-popup-item-accept .menu-popup-item-icon {
 	background: none;
 	max-width: 32px;
 }
 
-html:not(.bx-ie) .disk-folder-list-context-menu-item .menu-popup-item-icon:before {
+.disk-folder-list-context-menu-item .menu-popup-item-icon:before {
 	background: transparent left center no-repeat;
 	content: '';
 	position: absolute;
@@ -259,7 +259,7 @@ html:not(.bx-ie) .disk-folder-list-context-menu-item .menu-popup-item-icon:befor
 	transition: .3s;
 }
 
-html:not(.bx-ie) .disk-folder-list-context-menu-item-accept-animate.menu-popup-item-accept .menu-popup-item-icon:before {
+.disk-folder-list-context-menu-item-accept-animate.menu-popup-item-accept .menu-popup-item-icon:before {
 	width: 32px;
 }
 

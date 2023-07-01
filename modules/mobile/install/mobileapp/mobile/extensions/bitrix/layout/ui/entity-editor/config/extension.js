@@ -1,13 +1,19 @@
-(() => {
-	/**
-	 * @class EntityConfig
-	 */
+/**
+ * @module layout/ui/entity-editor/config
+ */
+jn.define('layout/ui/entity-editor/config', (require, exports, module) => {
+
+	const { Type } = require('type');
+	const { EntityConfigFactory } = require('layout/ui/entity-editor/config/factory');
+	const { EntityConfigScope } = require('layout/ui/entity-editor/config/scope');
+
 	class EntityConfig
 	{
 		static create(id, settings)
 		{
 			const self = new EntityConfig();
 			self.initialize(id, settings);
+
 			return self;
 		}
 
@@ -15,7 +21,7 @@
 		{
 			this.id = '';
 			this.settings = {};
-			this.scope = BX.UI.EntityConfigScope.undefined;
+			this.scope = EntityConfigScope.undefined;
 
 			this.canUpdatePersonalConfiguration = true;
 			this.canUpdateCommonConfiguration = false;
@@ -27,36 +33,36 @@
 
 		initialize(id, settings)
 		{
-			this.id = CommonUtils.isNotEmptyString(id) ? id : Random.getString();
+			this.id = Type.isStringFilled(id) ? id : Random.getString();
 			this.settings = settings ? settings : {};
-			this.scope = BX.prop.getString(this.settings, "scope", BX.UI.EntityConfigScope.personal);
+			this.scope = BX.prop.getString(this.settings, 'scope', EntityConfigScope.personal);
 
-			this.canUpdatePersonalConfiguration = BX.prop.getBoolean(this.settings, "canUpdatePersonalConfiguration", true);
-			this.canUpdateCommonConfiguration = BX.prop.getBoolean(this.settings, "canUpdateCommonConfiguration", false);
+			this.canUpdatePersonalConfiguration = BX.prop.getBoolean(this.settings, 'canUpdatePersonalConfiguration', true);
+			this.canUpdateCommonConfiguration = BX.prop.getBoolean(this.settings, 'canUpdateCommonConfiguration', false);
 
-			this.data = BX.prop.getArray(this.settings, "data", []);
+			this.data = BX.prop.getArray(this.settings, 'data', []);
 
 			this.items = [];
 
 			this.data.forEach((item) => {
-				const type = BX.prop.getString(item, "type", "");
-				const config = EntityConfigFactory.createByType(type, {data: item});
+				const type = BX.prop.getString(item, 'type', '');
+				const config = EntityConfigFactory.createByType(type, { data: item });
 				this.items.push(config);
 			});
 
-			this.options = BX.prop.getObject(this.settings, "options", {});
+			this.options = BX.prop.getObject(this.settings, 'options', {});
 		}
 
 		isChangeable()
 		{
 			if (
-				this.scope === BX.UI.EntityConfigScope.common
-				|| this.scope === BX.UI.EntityConfigScope.custom
+				this.scope === EntityConfigScope.common
+				|| this.scope === EntityConfigScope.custom
 			)
 			{
 				return this.canUpdateCommonConfiguration;
 			}
-			else if (this.scope === BX.UI.EntityConfigScope.personal)
+			else if (this.scope === EntityConfigScope.personal)
 			{
 				return this.canUpdatePersonalConfiguration;
 			}
@@ -65,5 +71,5 @@
 		}
 	}
 
-	jnexport(EntityConfig);
-})();
+	module.exports = { EntityConfig };
+});

@@ -3,7 +3,6 @@
  */
 
 jn.define('crm/required-fields', (require, exports, module) => {
-
 	const { Haptics } = require('haptics');
 	const { Loc } = require('loc');
 	const { RequiredFieldsBackdrop } = require('crm/required-fields/required-backdrop');
@@ -31,7 +30,7 @@ jn.define('crm/required-fields', (require, exports, module) => {
 		static hasRequiredFields(errors)
 		{
 			const requiredFields = this.getRequiredFields(errors);
-			return Boolean(requiredFields.length);
+			return requiredFields.length > 0;
 		}
 
 		constructor(props)
@@ -66,6 +65,7 @@ jn.define('crm/required-fields', (require, exports, module) => {
 
 			PageManager.openWidget('layout', {
 				modal: true,
+				backgroundColor: '#eef2f4',
 				backdrop: {
 					swipeAllowed: false,
 					horizontalSwipeAllowed: false,
@@ -145,5 +145,4 @@ jn.define('crm/required-fields', (require, exports, module) => {
 	}
 
 	module.exports = { RequiredFields };
-
 });

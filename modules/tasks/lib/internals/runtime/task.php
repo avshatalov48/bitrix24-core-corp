@@ -54,7 +54,7 @@ final class Task extends \Bitrix\Tasks\Internals\Runtime
 		$result = array('runtime' => array());
 
 		$parameters = static::checkParameters($parameters);
-		if(!is_array($parameters['FILTER_PARAMETERS']))
+		if(!isset($parameters['FILTER_PARAMETERS']) || !is_array($parameters['FILTER_PARAMETERS']))
 		{
 			$parameters['FILTER_PARAMETERS'] = array();
 		}
@@ -100,9 +100,17 @@ final class Task extends \Bitrix\Tasks\Internals\Runtime
 		{
 			$query = static::getAccessCheckSql($parameters);
 
-			$rtName = (string) $parameters['NAME'] != '' ? (string) $parameters['NAME'] : 'ACCESS';
-			$rf = $parameters['REF_FIELD'];
-			$rfName = ((string) $rf != '' ? $rf : 'ID');
+			$rtName =
+				isset($parameters['NAME']) && (string)$parameters['NAME'] !== ''
+					? (string)$parameters['NAME']
+					: 'ACCESS'
+			;
+
+			$rfName =
+				isset($parameters['REF_FIELD']) && (string)$parameters['REF_FIELD'] !== ''
+					? (string)$parameters['REF_FIELD']
+					: 'ID'
+			;
 
 			$sql = $query['sql'];
 
@@ -163,10 +171,10 @@ final class Task extends \Bitrix\Tasks\Internals\Runtime
 		$result = [];
 
 		$parameters = static::checkParameters($parameters);
-		$filter = static::getForwardedFilter($parameters['APPLY_FILTER'], $parameters);
+		$filter = static::getForwardedFilter($parameters['APPLY_FILTER'] ?? null, $parameters);
 		$runtimeOptions = [];
 
-		if ($parameters['MAKE_ACCESS_FILTER'])
+		if ($parameters['MAKE_ACCESS_FILTER'] ?? null)
 		{
 			$runtimeOptions = $parameters['ACCESS_FILTER_RUNTIME_OPTIONS'];
 		}
@@ -401,7 +409,7 @@ final class Task extends \Bitrix\Tasks\Internals\Runtime
 		{
 			$memberReferenceFilter = ['=ref.TASK_ID' => 'this.ID'];
 
-			if ($parameters['APPLY_MEMBER_FILTER'])
+			if ($parameters['APPLY_MEMBER_FILTER'] ?? null)
 			{
 				$memberCondition = static::getMemberConditions($parameters['APPLY_MEMBER_FILTER'], $parameters);
 				$memberReferenceFilter = array_merge($memberReferenceFilter, $memberCondition[0]);
@@ -454,7 +462,7 @@ final class Task extends \Bitrix\Tasks\Internals\Runtime
 			'=ref.USER_ID' => ['?', $parameters['USER_ID']]
 		];
 
-		if ($parameters['APPLY_MEMBER_FILTER'])
+		if ($parameters['APPLY_MEMBER_FILTER'] ?? null)
 		{
 			$memberCondition = static::getMemberConditions($parameters['APPLY_MEMBER_FILTER'], $parameters);
 			$memberReferenceFilter = array_merge($memberReferenceFilter, $memberCondition[0]);

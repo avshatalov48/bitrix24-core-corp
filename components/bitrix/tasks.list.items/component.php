@@ -46,7 +46,7 @@ else	// for backward compatibility
 	);
 }
 
-if(is_array($arParams['SYSTEM_COLUMN_IDS']))
+if(is_array($arParams['SYSTEM_COLUMN_IDS'] ?? null))
 {
 	$arResult['SYSTEM_COLUMN_IDS'] = $arParams['SYSTEM_COLUMN_IDS'];
 }

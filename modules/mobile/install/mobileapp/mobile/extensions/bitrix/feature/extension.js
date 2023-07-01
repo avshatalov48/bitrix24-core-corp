@@ -15,14 +15,34 @@ jn.define('feature', (require, exports, module) => {
 			return Application.getApiVersion() >= 47;
 		}
 
+		static isGridViewSupported()
+		{
+			return Application.getApiVersion() >= 47;
+		}
+
 		static isImageSupportsSuccessCallback()
 		{
 			return Application.getApiVersion() >= 47;
 		}
 
-		static showDefaultUnsupportedWidget()
+		static isKeyboardEventsSupported()
 		{
-			AppUpdateNotifier.open();
+			return Application.getApiVersion() >= 48;
+		}
+
+		static isOAuthSupported()
+		{
+			return Application.getApiVersion() >= 48;
+		}
+
+		static isReceivePaymentSupported()
+		{
+			return Application.getApiVersion() >= 49;
+		}
+
+		static showDefaultUnsupportedWidget(props = {}, parentWidget = PageManager)
+		{
+			AppUpdateNotifier.open(props, parentWidget);
 		}
 	}
 

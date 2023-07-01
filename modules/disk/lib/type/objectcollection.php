@@ -33,7 +33,7 @@ final class ObjectCollection implements \IteratorAggregate
 	 * <b>Traversable</b>
 	 * @since 5.0.0
 	 */
-	public function getIterator()
+	public function getIterator(): \ArrayIterator
 	{
 		return new \ArrayIterator($this->items);
 	}

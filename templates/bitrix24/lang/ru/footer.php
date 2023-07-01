@@ -31,4 +31,5 @@ $MESS["BITRIX24_PARTNER_ORDER"] = "Заказать внедрение";
 $MESS["BITRIX24_THEME"] = "Темы";
 $MESS["BITRIX24_PRINT"] = "Печать";
 $MESS["BITRIX24_IE_SUPPORT"] = "Ваша версия браузера устарела и скоро не будет поддерживаться. Чтобы продолжить работать в&nbsp;Битрикс24, установите Google Chrome, Mozilla Firefox, Apple Safari или Microsoft Edge.";
-?>
+$MESS["BITRIX24_PARTNER_POPUP_TITLE"] = "Внедрение, установка и настройка Битрикс24";
+$MESS["BITRIX24_PARTNER_POPUP_BUTTON"] = "оставить заявку";

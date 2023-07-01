@@ -119,4 +119,4 @@ $MESS["CRM_EMAIL_CONFIRM_EVENT_DESC"] = "<span style=\"font-size:16px;line-heigh
 </span>";
 $MESS["CRM_UNINS_MODULE_SALE"] = "Для работы модуля CRM необходим модуль \"Интернет-магазин\".<br />Установите сначала необходимый модуль.";
 $MESS['CRM_MODULE_UNINSTALL_ERROR'] = "Деинсталляция модуля невозможна.";
-$MESS['CRM_MODULE_UNINSTALL_ERROR_CRMMOBILE'] = "Модуль CRM требуется для корректной работы модуля Мобильной CRM.\r\nПожалуйста, удалите сначала модуль crmmobile.";
+$MESS['CRM_MODULE_UNINSTALL_ERROR_CRMMOBILE'] = "Модуль CRM требуется для корректной работы мобильной CRM.\r\nПожалуйста, удалите сначала модуль crmmobile.";

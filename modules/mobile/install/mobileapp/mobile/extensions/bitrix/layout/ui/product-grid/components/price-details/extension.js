@@ -86,7 +86,7 @@ jn.define('layout/ui/product-grid/components/price-details', (require, exports, 
 	function MoneyRow({ title, amount, currency })
 	{
 		const style = {
-			borderBottomColor: '#ebebeb',
+			borderBottomColor: '#edeef0',
 			borderBottomWidth: 1,
 		};
 

@@ -10,8 +10,8 @@ require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/tools/clock.php")
 \Bitrix\Main\UI\Extension::load("ui.hint");
 \Bitrix\Main\Page\Asset::getInstance()->addJS('/bitrix/components/bitrix/timeman.schedule.edit/templates/.default/js/violations.js');
 /** @var \Bitrix\Timeman\Form\Schedule\ViolationForm $violationForm */
-$violationForm = $arResult['violationForm'] ? $arResult['violationForm'] : $scheduleForm->violationForm;
-if ($arResult['violationForm'])
+$violationForm = ($arResult['violationForm'] ?? null) ? $arResult['violationForm'] : $scheduleForm->violationForm;
+if ($arResult['violationForm'] ?? null)
 {
 	$violationFormName = $violationForm->getFormName();
 }

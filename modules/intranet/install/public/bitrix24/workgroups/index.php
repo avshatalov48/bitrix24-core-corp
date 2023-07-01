@@ -1,7 +1,11 @@
 <?
+
+use Bitrix\Intranet\Integration\Wizards\Portal\Ids;
+
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/header.php");
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/public_bitrix24/index.php");
 $APPLICATION->SetTitle(GetMessage("TITLE"));
+\CModule::IncludeModule('intranet');
 ?>
 <?
 GetGlobalID();
@@ -53,10 +57,10 @@ $APPLICATION->IncludeComponent("bitrix:socialnetwork_group", ".default", Array(
 	),
 	"SET_NAVCHAIN"	=>	"Y",
 	"AJAX_LONG_TIMEOUT"	=>	"60",
-	"BLOG_GROUP_ID"	=> $GLOBAL_BLOG_GROUP[SITE_ID],
+	"BLOG_GROUP_ID"	=> Ids::getBlogId(),
 	"BLOG_COMMENT_AJAX_POST" => "Y",
 	"BLOG_ALLOW_POST_CODE" => "N",
-	"FORUM_ID"	=>	$GLOBAL_FORUM_ID["USERS_AND_GROUPS"],//"#FORUM_ID#",
+	"FORUM_ID"	=>	Ids::getForumId('USERS_AND_GROUPS'),
 
 	"CALENDAR_ALLOW_SUPERPOSE" => "Y",
 	"CALENDAR_ALLOW_RES_MEETING" => "Y",
@@ -84,23 +88,23 @@ $APPLICATION->IncludeComponent("bitrix:socialnetwork_group", ".default", Array(
 	//"CALENDAR_PATH_TO_VIDEO_MEETING_DETAIL" => "/services/video/detail.php?ID=#ID#",
 	//"CALENDAR_PATH_TO_VIDEO_MEETING" => "/services/video/",
 	//"CALENDAR_VIDEO_MEETING_USERGROUPS" => array("1"),
-	"TASK_FORUM_ID" =>  $GLOBAL_FORUM_ID["intranet_tasks"],//"#TASKS_FORUM_ID#",
+	"TASK_FORUM_ID" =>  Ids::getForumId('intranet_tasks'),
 	"FILES_GROUP_IBLOCK_TYPE"	=>	"library",
-	"FILES_GROUP_IBLOCK_ID"	=>	$GLOBAL_IBLOCK_ID["group_files"],//"#FILES_GROUP_IBLOCK_ID#",
+	"FILES_GROUP_IBLOCK_ID"	=>	Ids::getIblockId('group_files'),
 	"FILES_USE_AUTH"	=>	"Y",
 	"NAME_FILE_PROPERTY"	=>	"FILE",
 	"FILES_UPLOAD_MAX_FILESIZE"	=>	"1024",
 	"FILES_UPLOAD_MAX_FILE"	=>	"5",
 	"FILES_USE_COMMENTS" => "Y",
-	"FILES_FORUM_ID" => $GLOBAL_FORUM_ID["GROUPS_AND_USERS_FILES_COMMENTS"],//"#FILES_FORUM_ID#",
+	"FILES_FORUM_ID" => Ids::getForumId('GROUPS_AND_USERS_FILES_COMMENTS'),
 	"PHOTO_GROUP_IBLOCK_TYPE"	=>	"photos",
-	"PHOTO_GROUP_IBLOCK_ID"	=>	$GLOBAL_IBLOCK_ID["group_photogallery"],//"#PHOTO_GROUP_IBLOCK_ID#",
+	"PHOTO_GROUP_IBLOCK_ID"	=>	Ids::getIblockId('group_photogallery', SITE_ID),
 	"PHOTO_UPLOAD_MAX_FILESIZE"	=>	"64",
 	"PHOTO_UPLOAD_MAX_FILE"	=>	"4",
 	"PHOTO_ORIGINAL_SIZE" => "1024",
 	"PHOTO_UPLOADER_TYPE" => "form",
 	"PHOTO_USE_COMMENTS"	=>	"Y",
-	"PHOTO_FORUM_ID"	=>	$GLOBAL_FORUM_ID["PHOTOGALLERY_COMMENTS"],//"#PHOTO_FORUM_ID#",
+	"PHOTO_FORUM_ID"	=>	Ids::getForumId('PHOTOGALLERY_COMMENTS'),
 	"PHOTO_USE_CAPTCHA"	=>	"Y",
 	"PHOTO_GALLERY_AVATAR_SIZE"	=>	"50",
 	"PHOTO_ALBUM_PHOTO_THUMBS_SIZE"	=>	"150",

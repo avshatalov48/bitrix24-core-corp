@@ -14,9 +14,9 @@ Loc::loadMessages(__FILE__);
  *
  * <<< ORMENTITYANNOTATION
  * @method static EO_DuplicateEntityStatistics_Query query()
- * @method static EO_DuplicateEntityStatistics_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_DuplicateEntityStatistics_Result getByPrimary($primary, array $parameters = [])
  * @method static EO_DuplicateEntityStatistics_Result getById($id)
- * @method static EO_DuplicateEntityStatistics_Result getList(array $parameters = array())
+ * @method static EO_DuplicateEntityStatistics_Result getList(array $parameters = [])
  * @method static EO_DuplicateEntityStatistics_Entity getEntity()
  * @method static \Bitrix\Crm\Integrity\Entity\EO_DuplicateEntityStatistics createObject($setDefaultValues = true)
  * @method static \Bitrix\Crm\Integrity\Entity\EO_DuplicateEntityStatistics_Collection createCollection()

@@ -12,9 +12,9 @@ use Bitrix\Crm;
  *
  * <<< ORMENTITYANNOTATION
  * @method static EO_CompanyActivityStreamStatistics_Query query()
- * @method static EO_CompanyActivityStreamStatistics_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_CompanyActivityStreamStatistics_Result getByPrimary($primary, array $parameters = [])
  * @method static EO_CompanyActivityStreamStatistics_Result getById($id)
- * @method static EO_CompanyActivityStreamStatistics_Result getList(array $parameters = array())
+ * @method static EO_CompanyActivityStreamStatistics_Result getList(array $parameters = [])
  * @method static EO_CompanyActivityStreamStatistics_Entity getEntity()
  * @method static \Bitrix\Crm\Statistics\Entity\EO_CompanyActivityStreamStatistics createObject($setDefaultValues = true)
  * @method static \Bitrix\Crm\Statistics\Entity\EO_CompanyActivityStreamStatistics_Collection createCollection()

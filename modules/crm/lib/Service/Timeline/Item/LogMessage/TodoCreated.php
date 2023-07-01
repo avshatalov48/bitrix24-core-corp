@@ -3,11 +3,13 @@
 namespace Bitrix\Crm\Service\Timeline\Item\LogMessage;
 
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Service\Timeline\Layout\Common\Icon;
 use Bitrix\Crm\Service\Timeline\Item\LogMessage;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\ContentBlockFactory;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\Date;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\LineOfTextBlocks;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\Text;
+use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\EditableDescription;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\DateTime;
 use CCrmActivity;
@@ -23,7 +25,7 @@ class TodoCreated extends LogMessage
 
 	public function getIconCode(): ?string
 	{
-		return 'circle-check';
+		return Icon::CIRCLE_CHECK;
 	}
 
 	public function getTitle(): ?string
@@ -87,25 +89,10 @@ class TodoCreated extends LogMessage
 
 		if ($description)
 		{
-			$titleContentBlock = ContentBlockFactory::createTitle(Loc::getMessage('CRM_TIMELINE_LOG_TODO_CREATED_DESCRIPTION'));
-			$isMultiline = strpos($description, "\n") !== false;
-			$descriptionContentBLock = (new Text())
-				->setValue($description)
-				->setIsMultiline($isMultiline)
-				->setColor(Text::COLOR_BASE_90)
-			;
-			if ($isMultiline)
-			{
-				$result['descriptionTitle'] = $titleContentBlock;
-				$result['descriptionValue'] = $descriptionContentBLock;
-			}
-			else
-			{
-				$result['description'] = (new LineOfTextBlocks())
-					->addContentBlock('title', $titleContentBlock)
-					->addContentBlock('value', $descriptionContentBLock)
-				;
-			}
+			$result['description'] = (new EditableDescription())
+				->setText($description)
+				->setEditable(false)
+				->setHeight(EditableDescription::HEIGHT_SHORT);
 		}
 
 		return $result;

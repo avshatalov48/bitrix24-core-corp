@@ -42,6 +42,26 @@ if ($arUnreaded['result'])
 	$result = $notifyList;
 }
 
+
+$parser = new \CTextParser();
+foreach ($parser->allow as $tag => $value)
+{
+	$parser->allow[$tag] = 'N';
+}
+$parser->allow['BIU'] = 'Y';
+$parser->allow['FONT'] = 'Y';
+$parser->allow['EMOJI'] = 'Y';
+$parser->allow['SMILES'] = 'Y';
+$parser->allow['NL2BR'] = 'Y';
+$parser->allow['ANCHOR'] = 'Y';
+$parser->allow['TEXT_ANCHOR'] = 'Y';
+
+foreach($result as $key =>$notify)
+{
+	$notify['text'] = $parser->convertText($notify['text']);
+	$result[$key] = $notify;
+}
+
 $arResult['NOTIFY'] = $result;
 $arResult['UNREAD_NOTIFY_ID'] = $unreadNotifyId;
 

@@ -1159,12 +1159,13 @@ class CommentPoster
 
 			foreach ($partsItems as [$messageCode, $replace])
 			{
-				$replace = (is_array($replace) ? $replace : []);
-				if (empty($messageCode) || !($message = Loc::getMessage($messageCode, $replace)))
+				if (
+					!empty($messageCode)
+					&& ($message = Loc::getMessage($messageCode, static::prepareReplaces($replace ?? [])))
+				)
 				{
-					continue;
+					$textList[] = static::parseReplaces($message, $params);
 				}
-				$textList[] = static::parseReplaces($message, $params);
 			}
 		}
 
@@ -1174,6 +1175,19 @@ class CommentPoster
 		}
 
 		return $result;
+	}
+
+	private static function prepareReplaces(array $replaces = []): array
+	{
+		foreach ($replaces as $key => $replace)
+		{
+			if (is_array($replace))
+			{
+				unset($replaces[$key]);
+			}
+		}
+
+		return $replaces;
 	}
 
 	private static function parseReplaces(string $message, array $params): string

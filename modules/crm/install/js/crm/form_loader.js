@@ -12,7 +12,7 @@
 	{
 		if (window.console && console.warn)
 		{
-			console.warn(message || '[DEPRECATED] This javascript-loader of CRM-forms is deprecated. Please, change to new javascript-loader.');
+			// console.warn(message || '[DEPRECATED] This javascript-loader of CRM-forms is deprecated. Please, change to new javascript-loader.');
 		}
 	}
 	Warn();

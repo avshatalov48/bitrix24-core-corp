@@ -1,4 +1,4 @@
-import {Action} from "../../../action";
+import { Action } from "../../../action";
 
 export const ChangeStreamButton = {
 	props: {
@@ -10,6 +10,7 @@ export const ChangeStreamButton = {
 	data(): Object {
 		return {
 			isReadonlyMode: false,
+			isComplete: false,
 		}
 	},
 	inject: [
@@ -35,6 +36,8 @@ export const ChangeStreamButton = {
 				return;
 			}
 
+			this.isComplete = true;
+
 			const action = new Action(this.action);
 			action.execute(this);
 		},
@@ -56,6 +59,10 @@ export const ChangeStreamButton = {
 			{
 				this.isReadonlyMode = true;
 			}
+		},
+		markCheckboxUnchecked(): void
+		{
+			this.isComplete = false;
 		}
 	},
 
@@ -66,6 +73,7 @@ export const ChangeStreamButton = {
 				@click="executeAction"
 				type="checkbox"
 				:disabled="isReadonlyMode"
+				:checked="isComplete"
 				class="crm-timeline__card-top_checkbox"
 			/>
 			<div

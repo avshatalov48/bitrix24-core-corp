@@ -21,7 +21,7 @@
 
 			this.updateList = items => {
 				if (this.singleSelection === true) {
-					let modifiedItems = items.map( item => {
+					const modifiedItems = items.map( item => {
 						if (typeof(item.type) === 'undefined') {
 							item.type = 'info'
 						}
@@ -47,7 +47,7 @@
 				id: "recent",
 				backgroundColor: "#ffffff",
 				height: 30,
-				title: BX.message("MOBILE_SELECTOR_RECENT").toUpperCase()
+				title: BX.message("MOBILE_SELECTOR_RECENT").toLocaleUpperCase(env.languageId)
 			})
 			this.sections.push({
 				id: "common",

@@ -32,9 +32,9 @@ elseif ($action == 'complete' && !empty($id) && !empty($ownerId))
 	{
 		$id = mb_substr($id, 1);
 		if (
-			($ownerTypeId == \CCrmOwnerType::Lead && \CCrmLead::getById($id))
+			($ownerTypeId == \CCrmOwnerType::Lead && \CCrmLead::getById($ownerId))
 			||
-			($ownerTypeId == \CCrmOwnerType::Deal && \CCrmDeal::getById($id))
+			($ownerTypeId == \CCrmOwnerType::Deal && \CCrmDeal::getById($ownerId))
 		)
 		{
 			\Bitrix\Crm\Pseudoactivity\WaitEntry::complete($id, true);

@@ -320,24 +320,24 @@ this.BX.Disk = this.BX.Disk || {};
 	  }, {
 	    key: "incrementItemsCount",
 	    value: function incrementItemsCount() {
-	      var _this$itemsCount, _this$itemsCount2;
+	      var _this$itemsCount;
 
 	      if (babelHelpers.classPrivateFieldGet(this, _itemsCount) <= 0) {
 	        main_core_events.EventEmitter.emit(this, 'onUploadIsStart');
 	      }
 
-	      babelHelpers.classPrivateFieldSet(this, _itemsCount, (_this$itemsCount = babelHelpers.classPrivateFieldGet(this, _itemsCount), _this$itemsCount2 = _this$itemsCount++, _this$itemsCount)), _this$itemsCount2;
+	      babelHelpers.classPrivateFieldSet(this, _itemsCount, (_this$itemsCount = +babelHelpers.classPrivateFieldGet(this, _itemsCount)) + 1), _this$itemsCount;
 	    }
 	  }, {
 	    key: "decrementItemsCount",
 	    value: function decrementItemsCount() {
-	      var _this$itemsCount3, _this$itemsCount4;
+	      var _this$itemsCount2;
 
 	      if (babelHelpers.classPrivateFieldGet(this, _itemsCount) === 1) {
 	        main_core_events.EventEmitter.emit(this, 'onUploadIsDone');
 	      }
 
-	      babelHelpers.classPrivateFieldSet(this, _itemsCount, Math.max((babelHelpers.classPrivateFieldSet(this, _itemsCount, (_this$itemsCount3 = babelHelpers.classPrivateFieldGet(this, _itemsCount), _this$itemsCount4 = _this$itemsCount3--, _this$itemsCount3)), _this$itemsCount4), 0));
+	      babelHelpers.classPrivateFieldSet(this, _itemsCount, Math.max((babelHelpers.classPrivateFieldSet(this, _itemsCount, (_this$itemsCount2 = +babelHelpers.classPrivateFieldGet(this, _itemsCount)) - 1), _this$itemsCount2), 0));
 	    }
 	  }]);
 	  return FileUploader;
@@ -1056,7 +1056,7 @@ this.BX.Disk = this.BX.Disk || {};
 	      return this.cache.remember('container', function () {
 	        var nameWithoutExtension = main_core.Text.encode(_this2.getNameWithoutExtension());
 	        var extension = main_core.Text.encode(_this2.data['EXTENSION']).toLowerCase();
-	        return main_core.Tag.render(_templateObject$3 || (_templateObject$3 = babelHelpers.taggedTemplateLiteral(["\n\t\t<div class=\"disk-file-thumb disk-file-thumb-preview\">\n\t\t\t<div style=\"background-image: url('", "'); background-size: cover;\" class=\"disk-file-thumb-image\"></div>\n\t\t\t", "\n\t\t\t", "\n\t\t\t", "\n\t\t\t", "\n\t\t</div>"])), _this2.data['PREVIEW_URL'], _this2.getIcon(extension), _this2.getNameBox(nameWithoutExtension, extension), _this2.getDeleteButton(), _this2.getButtonBox());
+	        return main_core.Tag.render(_templateObject$3 || (_templateObject$3 = babelHelpers.taggedTemplateLiteral(["\n\t\t<div class=\"disk-file-thumb disk-file-thumb-preview\">\n\t\t\t<div style=\"background-image: url('", "'); background-size: cover;\" class=\"disk-file-thumb-image\"></div>\n\t\t\t", "\n\t\t\t", "\n\t\t\t", "\n\t\t\t", "\n\t\t</div>"])), encodeURI(_this2.data['PREVIEW_URL']), _this2.getIcon(extension), _this2.getNameBox(nameWithoutExtension, extension), _this2.getDeleteButton(), _this2.getButtonBox());
 	      });
 	    }
 	  }, {

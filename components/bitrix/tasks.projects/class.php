@@ -666,7 +666,7 @@ class TasksProjectsComponent extends CBitrixComponent implements Controllerable
 			}
 		}
 
-		if ($this->provider->isScrum())
+		if ($this->provider->getIsScrum())
 		{
 			return (new Bitrix\Tasks\Grid\Scrum\Grid($groups, $this->arParams))->prepareRows();
 		}

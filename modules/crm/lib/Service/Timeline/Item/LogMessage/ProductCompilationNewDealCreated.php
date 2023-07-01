@@ -7,6 +7,7 @@ use Bitrix\Crm\Service\Timeline\Layout\Action\Redirect;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\ContentBlockFactory;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\Money;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\Text;
+use Bitrix\Crm\Service\Timeline\Layout\Common\Icon;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\Type\DateTime;
@@ -39,7 +40,7 @@ class ProductCompilationNewDealCreated extends LogMessage
 
 	public function getIconCode(): ?string
 	{
-		return 'task';
+		return Icon::TASK;
 	}
 
 	public function getContentBlocks(): ?array

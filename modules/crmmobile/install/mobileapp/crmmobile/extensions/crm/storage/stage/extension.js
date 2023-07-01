@@ -2,7 +2,6 @@
  * @module crm/storage/stage
  */
 jn.define('crm/storage/stage', (require, exports, module) => {
-
 	const { get } = require('utils/object');
 	const { StageAjax } = require('crm/ajax');
 	const { CategoryStorage } = require('crm/storage/category');
@@ -33,7 +32,7 @@ jn.define('crm/storage/stage', (require, exports, module) => {
 				this.getAjax()
 					.create(entityTypeId, categoryId, fields)
 					.then((response) => {
-						if (response.errors && response.errors.length)
+						if (response.errors && response.errors.length > 0)
 						{
 							reject(response);
 							return;
@@ -84,7 +83,7 @@ jn.define('crm/storage/stage', (require, exports, module) => {
 					.getAjax()
 					.update(entityTypeId, fields)
 					.then((response) => {
-						if (response.errors && response.errors.length)
+						if (response.errors && response.errors.length > 0)
 						{
 							reject(response);
 							return;
@@ -115,7 +114,7 @@ jn.define('crm/storage/stage', (require, exports, module) => {
 					.getAjax()
 					.delete(entityTypeId, statusId)
 					.then((response) => {
-						if (response.errors && response.errors.length)
+						if (response.errors && response.errors.length > 0)
 						{
 							reject(response);
 							return;
@@ -135,5 +134,4 @@ jn.define('crm/storage/stage', (require, exports, module) => {
 	}
 
 	module.exports = { StageStorage: new StageStorage() };
-
 });

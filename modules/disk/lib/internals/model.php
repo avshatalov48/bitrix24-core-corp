@@ -53,7 +53,7 @@ abstract class Model implements \ArrayAccess, IErrorable
 			return $this;
 		}
 
-		$modelMapAttributes = $this->getMapAttributes();
+		$modelMapAttributes = static::getMapAttributes();
 
 		foreach(array_intersect_key($attributes, $modelMapAttributes) as $name => $value)
 		{
@@ -584,30 +584,27 @@ abstract class Model implements \ArrayAccess, IErrorable
 	 * @param array $with
 	 * @return array
 	 */
-	public function toArray(array $with = array())
+	public function toArray(array $with = []): array
 	{
-		$data = array();
-		$referenceAttributes = $this->getMapReferenceAttributes();
-		foreach ($this->getMapAttributes() as $name => $attribute)
+		$data = [];
+		$referenceAttributes = self::getMapReferenceAttributes();
+		foreach (static::getMapAttributes() as $name => $attribute)
 		{
-			if(is_array($attribute))
+			if (is_array($attribute))
 			{
 				$attribute = array_pop($attribute);
 			}
-			if(isset($referenceAttributes[$name]))
+			if (isset($referenceAttributes[$name]) && !in_array($name, $with, true))
 			{
-				if(!in_array($name, $with))
-				{
-					continue;
-				}
+				continue;
 			}
+
 			$getterName = 'get' . $attribute;
-			if(method_exists($this, $getterName))
+			if (method_exists($this, $getterName))
 			{
 				$data[$name] = $this->$getterName();
 			}
 		}
-		unset($name, $attribute);
 
 		return $data;
 	}
@@ -711,9 +708,10 @@ abstract class Model implements \ArrayAccess, IErrorable
 	 * <p>
 	 * The return value will be casted to boolean if non-boolean was returned.
 	 */
-	public function offsetExists($offset)
+	public function offsetExists($offset): bool
 	{
-		$attributes = $this->getMapAttributes();
+		$attributes = static::getMapAttributes();
+
 		return isset($attributes[$offset]);
 	}
 
@@ -726,10 +724,11 @@ abstract class Model implements \ArrayAccess, IErrorable
 	 * </p>
 	 * @return mixed Can return all value types.
 	 */
+	#[\ReturnTypeWillChange]
 	public function offsetGet($offset)
 	{
-		$attributes = $this->getMapAttributes();
-		if(isset($attributes[$offset]))
+		$attributes = static::getMapAttributes();
+		if (isset($attributes[$offset]))
 		{
 			$getterName = 'get' . $attributes[$offset];
 
@@ -752,7 +751,7 @@ abstract class Model implements \ArrayAccess, IErrorable
 	 * @throws \Bitrix\Main\NotSupportedException
 	 * @return void
 	 */
-	public function offsetSet($offset, $value)
+	public function offsetSet($offset, $value): void
 	{
 		throw new NotSupportedException('Model provide ArrayAccess only for reading');
 	}
@@ -767,7 +766,7 @@ abstract class Model implements \ArrayAccess, IErrorable
 	 * @throws \Bitrix\Main\NotSupportedException
 	 * @return void
 	 */
-	public function offsetUnset($offset)
+	public function offsetUnset($offset): void
 	{
 		throw new NotSupportedException('Model provide ArrayAccess only for reading');
 	}

@@ -1860,6 +1860,7 @@ a.crm-activity-subject:before {
 	background-size: 20px auto;
 	background-repeat: no-repeat;
 	content: "";
+	background-position: 0 -143px;
 }
 
 div.crm-activity-crm_todo a.crm-activity-subject:before { background-position: 0 -143px; }
@@ -1914,7 +1915,8 @@ div.crm-activity-crm_sms a.crm-activity-subject:before { background-position: 0 
 div.crm-activity-crm_notification a.crm-activity-subject:before { background-position: 0 -693px; }
 
 /* REST_APP */
-div.crm-activity-rest_app a.crm-activity-subject:before { background-position: 0 -721px; }
+div.crm-activity-rest_app a.crm-activity-subject:before { background-position: 4px -721px; }
+div.crm-activity-configurable_rest_app a.crm-activity-subject:before { background-position: 4px -721px; }
 
 /* CRM_PHONE_TRACKER */
 div.crm-activity-crm_phone_tracker-incoming a.crm-activity-subject:before { background-position: 0 -46px; }

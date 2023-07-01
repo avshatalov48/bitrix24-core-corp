@@ -1,7 +1,7 @@
 <? if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die(); ?>
 <script id="sharing-item" type="text/html">
 	<div class="disk-detail-sidebar-user-access" id="sharing-item-{{id}}" data-entity="sharing-item" data-id="{{id}}">
-		<div class="disk-detail-sidebar-user-access-avatar" {{#entity.avatar}} style="background-image: url('{{entity.avatar}}')"{{/entity.avatar}}></div>
+		<div class="disk-detail-sidebar-user-access-avatar" {{#entity.avatar}} style="background-image: url('{{#encodeURI}}{{entity.avatar}}{{/encodeURI}}')"{{/entity.avatar}}></div>
 		<div class="disk-detail-sidebar-user-access-name">
 			<div class="disk-detail-sidebar-user-access-name-block">
 				<a class="disk-detail-sidebar-user-access-link" href="{{entity.link}}">{{entity.name}}</a>

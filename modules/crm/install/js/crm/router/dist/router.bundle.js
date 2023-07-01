@@ -219,6 +219,15 @@ this.BX = this.BX || {};
 	      return Router.openSlider('/sign/doc/0/?docId=' + documentId + '&stepId=changePartner&noRedirect=Y');
 	    }
 	  }, {
+	    key: "openCalendarEventSlider",
+	    value: function openCalendarEventSlider(eventId, isSharing) {
+	      var sliderId = 'crm-calendar-slider-' + eventId + '-' + Math.floor(Math.random() * 1000);
+	      return new (window.top.BX || window.BX).Calendar.SliderLoader(eventId, {
+	        sliderId: sliderId,
+	        isSharing: isSharing
+	      }).show();
+	    }
+	  }, {
 	    key: "closeSettingsMenu",
 	    value: function closeSettingsMenu(event, item) {
 	      if (item && main_core.Type.isFunction(item.getMenuWindow)) {

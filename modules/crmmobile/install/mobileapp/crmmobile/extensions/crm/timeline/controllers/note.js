@@ -2,7 +2,6 @@
  * @module crm/timeline/controllers/note
  */
 jn.define('crm/timeline/controllers/note', (require, exports, module) => {
-
 	const { TimelineBaseController } = require('crm/controllers/base');
 
 	const SupportedActions = {
@@ -30,9 +29,6 @@ jn.define('crm/timeline/controllers/note', (require, exports, module) => {
 			{
 				case SupportedActions.START_EDIT:
 					return this.openNoteEditor();
-
-				default:
-					return;
 			}
 		}
 
@@ -46,5 +42,4 @@ jn.define('crm/timeline/controllers/note', (require, exports, module) => {
 	}
 
 	module.exports = { TimelineNoteController };
-
 });

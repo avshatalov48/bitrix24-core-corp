@@ -96,6 +96,7 @@ $MESS['TASKS_TASK_COMPONENT_TEMPLATE_PARAMETER_PARAM_SUBTASKS_AUTOCOMPLETE'] = '
 $MESS['TASKS_TASK_COMPONENT_TEMPLATE_PARAMETER_PARAM_RESULT_REQUIRED'] = 'Результат задачи';
 
 $MESS["TASKS_TASK_COMPONENT_TEMPLATE_PARAMETER_HINT_1"] = "Даты планируемого начала и завершения этой задачи будут расчитаны автоматически на основании дат её подзадач. Датой её начала будет наименьшая из дат начала подзадачи, а датой завершения - наибольшая из дат завершения подзадачи.";
+$MESS["TASKS_TASK_COMPONENT_TEMPLATE_PARAMETER_HINT_1a"] = "Планируемые начало и завершение этой задачи будут автоматически определяться начальной датой самой ранней подзадачи и датой завершения самой поздней подзадачи.";
 $MESS["TASKS_TASK_COMPONENT_TEMPLATE_PARAMETER_HINT_2"] = "Главная задача будет автоматически завершена, как только будут завершены все ее подзадачи. Также, при завершении главной задачи, будут автоматически завершены все ее подзадачи.";
 $MESS["TASKS_TASK_COMPONENT_TEMPLATE_PARAMETER_HINT_3"] = "Обязательный отчет при завершении задачи";
 $MESS['TASKS_TASK_COMPONENT_TEMPLATE_PARAMETER_HINT_4'] = 'Не завершать задачу без результата';

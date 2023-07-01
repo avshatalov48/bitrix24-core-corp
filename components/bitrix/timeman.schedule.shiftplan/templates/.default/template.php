@@ -17,7 +17,7 @@ $APPLICATION->includeComponent('bitrix:timeman.worktime.grid', '', [
 	'GRID_ID' => $arResult['GRID_ID'],
 	'SCHEDULE_ID' => $arResult['SCHEDULE_ID'],
 	'SHOW_ADD_SHIFT_BTN' => $arResult['SHOW_ADD_SHIFT_BTN'],
-	'ADD_SHIFT_LINK' => $arResult['ADD_SHIFT_LINK'],
+	'ADD_SHIFT_LINK' => $arResult['ADD_SHIFT_LINK'] ?? null,
 	'TODAY_POSITIONED_LEFT' => true,
 	'SHOW_PRINT_BTN' => false,
 	'IS_SHIFTPLAN' => true,

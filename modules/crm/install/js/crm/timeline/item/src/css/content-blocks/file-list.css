@@ -9,10 +9,10 @@
 }
 
 .crm-timeline__file-list-wrapper .crm-timeline__file-list-title-container {
+	width: 100px;
 	display: flex;
 	flex-direction: row;
 	align-items: flex-start;
-	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: var(--ui-font-size-sm, 13px);
 	color: var(--ui-color-palette-gray-70, #828b95);
 	overflow: hidden;
@@ -40,14 +40,15 @@
 }
 
 .crm-timeline__file-list-wrapper .crm-timeline__file-list-container {
-	padding-left: 40px;
+	margin-top: 4px;
+	margin-left: 10px;
 	overflow: hidden;
 	zoom: 1;
 }
 
 .crm-timeline__file-list-wrapper .crm-timeline__file-list-container .crm-timeline__file-container {
 	display: block;
-	padding-bottom: 4px;
+	padding-bottom: 8px;
 	font-size: var(--ui-font-size-md, 14px);
 	line-height: var(--ui-font-line-height-lg, 1.5);
 	margin: 0;

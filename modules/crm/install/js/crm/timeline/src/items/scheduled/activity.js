@@ -195,6 +195,24 @@ export default class Activity extends Scheduled
 		return (new DatetimeConverter(time)).toUserTime().getValue();
 	}
 
+	getLightTime()
+	{
+		const entityData = this.getAssociatedEntityData();
+		const time = BX.parseDate(
+			entityData["LIGHT_TIME_SERVER"],
+			false,
+			"YYYY-MM-DD",
+			"YYYY-MM-DD HH:MI:SS"
+		);
+
+		if(!time)
+		{
+			return null;
+		}
+
+		return (new DatetimeConverter(time)).toUserTime().getValue();
+	}
+
 	getCreatedDate()
 	{
 		const entityData = this.getAssociatedEntityData();

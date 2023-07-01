@@ -9,10 +9,11 @@ use Bitrix\Crm\Requisite\DefaultRequisite;
 use Bitrix\Crm\Requisite\EntityLink;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Timeline\Item\Activity;
+use Bitrix\Crm\Service\Timeline\Layout\Common\Icon;
 use Bitrix\Crm\Service\Timeline\Layout;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock;
+use Bitrix\Crm\Service\Timeline\Layout\Common\Logo;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\ObjectNotFoundException;
 
 Container::getInstance()->getLocalization()->loadMessages();
 
@@ -28,7 +29,7 @@ final class SignDocument extends Activity
 
 	public function getIconCode(): ?string
 	{
-		return 'document';
+		return Icon::DOCUMENT;
 	}
 
 	public function getBackgroundColorToken(): string
@@ -47,12 +48,15 @@ final class SignDocument extends Activity
 	public function getLogo(): ?Layout\Body\Logo
 	{
 		$action = $this->getOpenDocumentAction();
-		$logo = (new Layout\Body\Logo('document'));
+		$logo = Layout\Common\Logo::getInstance(Layout\Common\Logo::DOCUMENT)
+			->createLogo()
+			->setAdditionalIconCode('search')
+		;
 		if ($action)
 		{
 			$logo->setAction($action);
 		}
-
+		
 		return $logo;
 	}
 

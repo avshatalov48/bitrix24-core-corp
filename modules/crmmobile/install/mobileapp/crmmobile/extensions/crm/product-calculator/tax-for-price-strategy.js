@@ -2,7 +2,6 @@
  * @module crm/product-calculator/tax-for-price-strategy
  */
 jn.define('crm/product-calculator/tax-for-price-strategy', (require, exports, module) => {
-
 	const { DiscountType } = require('crm/product-calculator/discount-type');
 	const { ProductRow } = require('crm/product-calculator/product-row');
 
@@ -59,7 +58,7 @@ jn.define('crm/product-calculator/tax-for-price-strategy', (require, exports, mo
 		{
 			if (value < 0)
 			{
-				throw new Error('Price must be equal or greater than zero.')
+				throw new Error('Price must be equal or greater than zero.');
 			}
 
 			const productRow = this.getProductRow();
@@ -90,7 +89,7 @@ jn.define('crm/product-calculator/tax-for-price-strategy', (require, exports, mo
 		{
 			if (value < 0)
 			{
-				throw new Error('Price must be equal or greater than zero.')
+				throw new Error('Price must be equal or greater than zero.');
 			}
 
 			const productRow = this.getProductRow();
@@ -119,7 +118,7 @@ jn.define('crm/product-calculator/tax-for-price-strategy', (require, exports, mo
 		{
 			if (value < 0)
 			{
-				throw new Error('Quantity must be equal or greater than zero.')
+				throw new Error('Quantity must be equal or greater than zero.');
 			}
 
 			const productRow = this.getProductRow();
@@ -144,7 +143,7 @@ jn.define('crm/product-calculator/tax-for-price-strategy', (require, exports, mo
 				productRow = this.getProductRow();
 			}
 
-			if (value === 0.0)
+			if (value === 0)
 			{
 				this.clearResultPrices(productRow);
 			}
@@ -156,7 +155,7 @@ jn.define('crm/product-calculator/tax-for-price-strategy', (require, exports, mo
 
 				productRow.setField(
 					'DISCOUNT_SUM',
-					productRow.getPriceNetto() - productRow.getPriceExclusive()
+					productRow.getPriceNetto() - productRow.getPriceExclusive(),
 				);
 			}
 			else if (productRow.isDiscountMonetary())
@@ -169,8 +168,8 @@ jn.define('crm/product-calculator/tax-for-price-strategy', (require, exports, mo
 					'DISCOUNT_RATE',
 					this.calculateDiscountRate(
 						productRow.getPriceNetto(),
-						productRow.getPriceExclusive()
-					)
+						productRow.getPriceExclusive(),
+					),
 				);
 			}
 
@@ -229,7 +228,7 @@ jn.define('crm/product-calculator/tax-for-price-strategy', (require, exports, mo
 			{
 				productRow.setField(
 					'DISCOUNT_SUM',
-					productRow.getDiscountRow() / productRow.getQuantity()
+					productRow.getDiscountRow() / productRow.getQuantity(),
 				);
 			}
 
@@ -315,12 +314,11 @@ jn.define('crm/product-calculator/tax-for-price-strategy', (require, exports, mo
 				productRow.setField('QUANTITY', 1);
 			}
 
-			const discountSum =
-					productRow.getPriceNetto()
-					- (
-						productRow.getSum()
-						/ (productRow.getQuantity() * (1 + productRow.getTaxRate() / 100))
-					)
+			const discountSum = productRow.getPriceNetto()
+				- (
+					productRow.getSum()
+					/ (productRow.getQuantity() * (1 + productRow.getTaxRate() / 100))
+				)
 			;
 
 			productRow.setField('DISCOUNT_SUM', discountSum);
@@ -374,8 +372,8 @@ jn.define('crm/product-calculator/tax-for-price-strategy', (require, exports, mo
 			productRow.setField('PRICE_EXCLUSIVE', productRow.getPriceNetto());
 			productRow.setField('PRICE', productRow.getPriceBrutto());
 
-			productRow.setField('DISCOUNT_RATE', 0.0);
-			productRow.setField('DISCOUNT_SUM', 0.0);
+			productRow.setField('DISCOUNT_RATE', 0);
+			productRow.setField('DISCOUNT_SUM', 0);
 		}
 
 		/**
@@ -386,7 +384,7 @@ jn.define('crm/product-calculator/tax-for-price-strategy', (require, exports, mo
 		 */
 		calculatePriceWithoutDiscount(price, discount, discountType)
 		{
-			let result = 0.0;
+			let result = 0;
 
 			switch (discountType)
 			{
@@ -412,7 +410,7 @@ jn.define('crm/product-calculator/tax-for-price-strategy', (require, exports, mo
 				productRow.setField('BASE_PRICE', productRow.getPriceBrutto());
 				productRow.setField(
 					'PRICE_NETTO',
-					this.calculatePriceWithoutTax(productRow.getPriceBrutto(), productRow.getTaxRate())
+					this.calculatePriceWithoutTax(productRow.getPriceBrutto(), productRow.getTaxRate()),
 				);
 			}
 			else
@@ -420,7 +418,7 @@ jn.define('crm/product-calculator/tax-for-price-strategy', (require, exports, mo
 				productRow.setField('BASE_PRICE', productRow.getPriceNetto());
 				productRow.setField(
 					'PRICE_BRUTTO',
-					this.calculatePriceWithTax(productRow.getPriceNetto(), productRow.getTaxRate())
+					this.calculatePriceWithTax(productRow.getPriceNetto(), productRow.getTaxRate()),
 				);
 			}
 		}
@@ -438,7 +436,7 @@ jn.define('crm/product-calculator/tax-for-price-strategy', (require, exports, mo
 				exclusivePrice = this.calculatePriceWithoutDiscount(
 					productRow.getPriceNetto(),
 					productRow.getDiscountRate(),
-					DiscountType.PERCENTAGE
+					DiscountType.PERCENTAGE,
 				);
 			}
 			else if (productRow.isDiscountMonetary())
@@ -446,7 +444,7 @@ jn.define('crm/product-calculator/tax-for-price-strategy', (require, exports, mo
 				exclusivePrice = this.calculatePriceWithoutDiscount(
 					productRow.getPriceNetto(),
 					productRow.getDiscountSum(),
-					DiscountType.MONETARY
+					DiscountType.MONETARY,
 				);
 			}
 			else
@@ -457,7 +455,7 @@ jn.define('crm/product-calculator/tax-for-price-strategy', (require, exports, mo
 			productRow.setField('PRICE_EXCLUSIVE', exclusivePrice);
 			productRow.setField(
 				'PRICE',
-				this.calculatePriceWithTax(exclusivePrice, productRow.getTaxRate())
+				this.calculatePriceWithTax(exclusivePrice, productRow.getTaxRate()),
 			);
 		}
 
@@ -482,7 +480,7 @@ jn.define('crm/product-calculator/tax-for-price-strategy', (require, exports, mo
 			{
 				productRow.setField(
 					'DISCOUNT_SUM',
-					productRow.getPriceNetto() - productRow.getPriceExclusive()
+					productRow.getPriceNetto() - productRow.getPriceExclusive(),
 				);
 			}
 			else if (productRow.isDiscountMonetary())
@@ -491,8 +489,8 @@ jn.define('crm/product-calculator/tax-for-price-strategy', (require, exports, mo
 					'DISCOUNT_RATE',
 					this.calculateDiscountRate(
 						productRow.getPriceNetto(),
-						productRow.getPriceNetto() - productRow.getDiscountSum()
-					)
+						productRow.getPriceNetto() - productRow.getDiscountSum(),
+					),
 				);
 			}
 		}
@@ -504,7 +502,7 @@ jn.define('crm/product-calculator/tax-for-price-strategy', (require, exports, mo
 		{
 			productRow.setField(
 				'DISCOUNT_ROW',
-				productRow.getDiscountSum() * productRow.getQuantity()
+				productRow.getDiscountSum() * productRow.getQuantity(),
 			);
 		}
 
@@ -517,16 +515,14 @@ jn.define('crm/product-calculator/tax-for-price-strategy', (require, exports, mo
 
 			if (productRow.isTaxIncluded())
 			{
-				sum =
-					productRow.getPrice()
+				sum = productRow.getPrice()
 					* productRow.getQuantity()
 					* (1 - 1 / (1 + productRow.getTaxRate() / 100))
 				;
 			}
 			else
 			{
-				sum =
-					productRow.getPriceExclusive()
+				sum = productRow.getPriceExclusive()
 					* productRow.getQuantity()
 					* (productRow.getTaxRate() / 100)
 				;
@@ -550,7 +546,7 @@ jn.define('crm/product-calculator/tax-for-price-strategy', (require, exports, mo
 			{
 				sum = this.calculatePriceWithTax(
 					productRow.getPriceExclusive() * productRow.getQuantity(),
-					productRow.getTaxRate()
+					productRow.getTaxRate(),
 				);
 			}
 
@@ -564,14 +560,14 @@ jn.define('crm/product-calculator/tax-for-price-strategy', (require, exports, mo
 		 */
 		calculateDiscountRate(originalPrice, price)
 		{
-			if (originalPrice === 0.0)
+			if (originalPrice === 0)
 			{
-				return 0.0;
+				return 0;
 			}
 
-			if (price === 0.0)
+			if (price === 0)
 			{
-				return originalPrice > 0 ? 100.0 : -100.0;
+				return originalPrice > 0 ? 100 : -100;
 			}
 
 			return (originalPrice - price) / originalPrice * 100;

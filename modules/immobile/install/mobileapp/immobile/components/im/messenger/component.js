@@ -12,33 +12,22 @@ BX.message.LIMIT_ONLINE = BX.componentParameters.get('LIMIT_ONLINE', 1380);
 /* region Clearing session variables after script reload */
 
 // eslint-disable-next-line bitrix-rules/no-typeof
-if (typeof window.Messenger !== 'undefined' && typeof window.Messenger.destructor !== 'undefined')
+if (typeof window.messenger !== 'undefined' && typeof window.messenger.destructor !== 'undefined')
 {
-	window.Messenger.destructor();
+	window.messenger.destructor();
 }
+
 /* endregion Clearing session variables after script reload */
+
 (() => {
 	/* region import */
+	const require = ext => jn.require(ext); //for IDE hints
 
-	const { Type } = jn.require('type');
-	const { Loc } = jn.require('loc');
-	const { get } = jn.require('utils/object');
-	const { createStore } = jn.require('statemanager/vuex');
-	const { VuexManager } = jn.require('statemanager/vuex-manager');
-	const { RestManager } = jn.require('im/messenger/lib/rest-manager');
-	const {
-		applicationModel,
-		recentModel,
-		messagesModel,
-		usersModel,
-		dialoguesModel,
-		filesModel,
-	} = jn.require('im/messenger/model');
-
-	const {
-		RecentCache,
-		UsersCache,
-	} = jn.require('im/messenger/cache');
+	const { Type } = require('type');
+	const { Loc } = require('loc');
+	const { get } = require('utils/object');
+	const { core } = require('im/messenger/core');
+	const { restManager } = require('im/messenger/lib/rest-manager');
 
 	const {
 		MessagePullHandler,
@@ -47,29 +36,29 @@ if (typeof window.Messenger !== 'undefined' && typeof window.Messenger.destructo
 		DesktopPullHandler,
 		NotificationPullHandler,
 		OnlinePullHandler,
-	} = jn.require('im/messenger/pull-handler');
+	} = require('im/messenger/provider/pull');
 
 	const {
 		EventType,
 		RestMethod,
 		FeatureFlag,
-	} = jn.require('im/messenger/const');
-	const { MessengerEvent } = jn.require('im/messenger/lib/event');
-	const { Logger } = jn.require('im/messenger/lib/logger');
-	const { SoftLoader } = jn.require('im/messenger/lib/helper');
+	} = require('im/messenger/const');
+	const { MessengerEmitter } = require('im/messenger/lib/emitter');
+	const { Logger } = require('im/messenger/lib/logger');
+	const { SoftLoader } = require('im/messenger/lib/helper');
 
-	const { Recent } = jn.require('im/messenger/controller/recent');
-	const { RecentView } = jn.require('im/messenger/view/recent');
-	const { Dialog } = jn.require('im/messenger/controller/dialog');
-	const { DialogSelector } = jn.require('im/messenger/controller/dialog-selector');
-	const { ChatCreator } = jn.require('im/messenger/controller/chat-creator');
-	const { Counters } = jn.require('im/messenger/lib/counters');
-	const { EntityReady } = jn.require('entity-ready');
-	const { Communication } = jn.require('im/messenger/lib/integration/mobile/communication');
-	const { Promotion } = jn.require('im/messenger/lib/promotion');
-	const { PushHandler } = jn.require('im/messenger/push-handler');
-	const { SelectorDialogListAdapter } = jn.require('im/chat/selector/adapter/dialog-list');
-	const { DialogCreator } = jn.require('im/messenger/controller/dialog-creator');
+	const { Recent } = require('im/messenger/controller/recent');
+	const { RecentView } = require('im/messenger/view/recent');
+	const { Dialog } = require('im/messenger/controller/dialog');
+	const { DialogSelector } = require('im/messenger/controller/dialog-selector');
+	const { ChatCreator } = require('im/messenger/controller/chat-creator');
+	const { Counters } = require('im/messenger/lib/counters');
+	const { EntityReady } = require('entity-ready');
+	const { Communication } = require('im/messenger/lib/integration/mobile/communication');
+	const { Promotion } = require('im/messenger/lib/promotion');
+	const { PushHandler } = require('im/messenger/provider/push');
+	const { SelectorDialogListAdapter } = require('im/chat/selector/adapter/dialog-list');
+	const { DialogCreator } = require('im/messenger/controller/dialog-creator');
 	/* endregion import */
 
 	class Messenger
@@ -104,31 +93,41 @@ if (typeof window.Messenger !== 'undefined' && typeof window.Messenger.destructo
 
 			this.isReady = false;
 			this.isFirstLoad = true;
+			this.refreshTimeout = null;
+			this.refreshAfterErrorInterval = 10000;
+			this.refreshErrorNoticeFlag = false;
 
+			this.store = null;
+			this.storeManager = null;
+
+			this.recent = null;
+			this.dialog = null;
+			this.dialogSelector = null;
+			this.chatCreator = null;
+			this.dialogCreator = null;
+			this.communication = new Communication();
 			this.loader = new SoftLoader({
 				safeDisplayTime: 500,
 				onShow: this.showProgress.bind(this),
 				onHide: this.hideProgress.bind(this),
 			});
 
-			this.refreshTimeout = null;
-			this.refreshAfterErrorInterval = 10000;
-			this.refreshErrorNoticeFlag = false;
 			EntityReady.addCondition('chat', () => this.isReady);
 
-			this.store = null;
-			this.storeManager = null;
-			this.recent = null;
-			this.dialog = null;
-			this.dialogSelector = null;
-			this.chatCreator = null;
-			this.dialogCreator = null
-			this.communication = new Communication();
+			this.init();
+		}
 
-			this.initStore();
+		init()
+		{
+			this.preloadAssets();
 
-			this.initCache()
+			this.core = core;
+			this.core
+				.ready()
 				.then(() => {
+					this.store = this.core.getStore();
+					this.storeManager = this.core.getStoreManager();
+
 					this.initRequests();
 
 					BX.onViewLoaded(() => {
@@ -146,37 +145,18 @@ if (typeof window.Messenger !== 'undefined' && typeof window.Messenger.destructo
 			;
 		}
 
-		initStore()
-		{
-			this.store = createStore({
-				modules: {
-					applicationModel,
-					recentModel,
-					messagesModel,
-					usersModel,
-					dialoguesModel,
-					filesModel,
-				}
-			});
-
-			this.storeManager =
-				new VuexManager(this.store)
-					.build()
-			;
-		}
-
 		initRequests()
 		{
-			RestManager.on(RestMethod.imRevisionGet, {}, this.checkRevision.bind(this));
+			restManager.on(RestMethod.imRevisionGet, {}, this.checkRevision.bind(this));
 		}
 
 		initComponents()
 		{
 			this.recent = new Recent({
-				view: new RecentView(),
+				view: new RecentView({
+					ui: dialogList,
+				}),
 			});
-
-			this.dialog = new Dialog();
 
 			this.dialogSelector = new DialogSelector({
 				view: new SelectorDialogListAdapter(dialogList),
@@ -187,6 +167,15 @@ if (typeof window.Messenger !== 'undefined' && typeof window.Messenger.destructo
 			if (Application.getApiVersion() >= 47)
 			{
 				this.dialogCreator = new DialogCreator();
+			}
+		}
+
+		preloadAssets()
+		{
+			if (FeatureFlag.dialog.nativeSupported)
+			{
+				//TODO: generalize the approach to background caching
+				Dialog.preloadAssets();
 			}
 		}
 
@@ -202,11 +191,11 @@ if (typeof window.Messenger !== 'undefined' && typeof window.Messenger.destructo
 			BX.addCustomEvent(EventType.messenger.openLine, this.openLine.bind(this));
 			BX.addCustomEvent(EventType.messenger.getOpenDialogParams, this.getOpenDialogParams.bind(this));
 			BX.addCustomEvent(EventType.messenger.getOpenLineParams, this.getOpenLineParams.bind(this));
-			BX.addCustomEvent(EventType.messenger.joinCall, this.joinCall.bind(this));
 			BX.addCustomEvent(EventType.messenger.showSearch, this.openChatSearch.bind(this));
 			BX.addCustomEvent(EventType.messenger.createChat, this.openChatCreate.bind(this));
 			BX.addCustomEvent(EventType.messenger.openNotifications, this.openNotifications.bind(this));
 			BX.addCustomEvent(EventType.messenger.refresh, this.refresh.bind(this));
+			BX.addCustomEvent(EventType.messenger.closeDialog, this.closeDialog.bind(this));
 		}
 
 		subscribeExternalEvents()
@@ -269,7 +258,7 @@ if (typeof window.Messenger !== 'undefined' && typeof window.Messenger.destructo
 		{
 			this.loader.show();
 
-			RestManager.callBatch()
+			restManager.callBatch()
 				.then((response) => this.afterRefresh(response))
 				.catch((response) => this.afterRefreshError(response))
 			;
@@ -340,7 +329,7 @@ if (typeof window.Messenger !== 'undefined' && typeof window.Messenger.destructo
 
 			this.isFirstLoad = false;
 
-			new MessengerEvent(EventType.messenger.afterRefreshSuccess).send();
+			MessengerEmitter.emit(EventType.messenger.afterRefreshSuccess);
 		}
 
 		/* endregion initiation */
@@ -351,6 +340,10 @@ if (typeof window.Messenger !== 'undefined' && typeof window.Messenger.destructo
 		openDialog(options = {})
 		{
 			Logger.info('EventType.messenger.openDialog', options);
+			if (options.dialogId)
+			{
+				options.dialogId = options.dialogId.toString();
+			}
 
 			//TODO: transfer the list of calls to the model and transfer the work with calls to the integration class
 			if (options.callId && !options.dialogId)
@@ -367,26 +360,30 @@ if (typeof window.Messenger !== 'undefined' && typeof window.Messenger.destructo
 					return;
 				}
 
-				options.dialogId = dialogId;
+				options.dialogId = String(dialogId);
 			}
 
+			this.dialog = new Dialog({
+				storeManager: this.storeManager,
+			});
+
 			this.dialog.open(options);
+		}
+
+		closeDialog(dialogId)
+		{
+			Logger.info('EventType.messenger.closeDialog', dialogId);
 		}
 
 		openLine(options)
 		{
 			Logger.info('EventType.messenger.openLine', options);
 
+			this.dialog = new Dialog({
+				storeManager: this.storeManager,
+			});
+
 			this.dialog.openLine(options);
-		}
-
-		joinCall(options)
-		{
-			Logger.info('EventType.messenger.joinCall', options);
-
-			const { callId } = options;
-
-			BX.postComponentEvent(EventType.call.join, [callId], 'calls');
 		}
 
 		openNotifications()
@@ -485,7 +482,7 @@ if (typeof window.Messenger !== 'undefined' && typeof window.Messenger.destructo
 		{
 			Logger.log('EventType.chatDialog.counterChange', event);
 
-			const recentItem = ChatUtils.objectClone(MessengerStore.getters['recentModel/getById'](event.dialogId));
+			const recentItem = ChatUtils.objectClone(this.store.getters['recentModel/getById'](event.dialogId));
 			if (!recentItem)
 			{
 				return;
@@ -493,7 +490,7 @@ if (typeof window.Messenger !== 'undefined' && typeof window.Messenger.destructo
 
 			recentItem.counter = event.counter;
 
-			MessengerStore.dispatch('recentModel/set', [ recentItem ]);
+			this.store.dispatch('recentModel/set', [ recentItem ]);
 		}
 
 		onChatDialogAccessError()
@@ -530,6 +527,7 @@ if (typeof window.Messenger !== 'undefined' && typeof window.Messenger.destructo
 		{
 			const recentState = RecentCache.get();
 			const usersState = UsersCache.get();
+			const filesState = FilesCache.get();
 
 			const cachePromiseList = [];
 
@@ -541,6 +539,11 @@ if (typeof window.Messenger !== 'undefined' && typeof window.Messenger.destructo
 			if (usersState)
 			{
 				cachePromiseList.push(this.store.dispatch('usersModel/setState', usersState));
+			}
+
+			if (filesState)
+			{
+				cachePromiseList.push(this.store.dispatch('filesModel/setState', filesState));
 			}
 
 			return Promise.all(cachePromiseList);
@@ -584,7 +587,5 @@ if (typeof window.Messenger !== 'undefined' && typeof window.Messenger.destructo
 		}
 	}
 
-	window.Messenger = new Messenger();
-	window.MessengerStore = window.Messenger.store;
-	window.MessengerStoreManager = window.Messenger.storeManager;
+	window.messenger = new Messenger();
 })();

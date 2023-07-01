@@ -13,7 +13,6 @@ use Bitrix\Crm\Model\ItemCategoryTable;
 use Bitrix\Crm\Service;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Context;
-use Bitrix\Crm\Service\EventHistory\TrackedObject;
 use Bitrix\Crm\Service\Operation;
 use Bitrix\Crm\Settings\CompanySettings;
 use Bitrix\Crm\Statistics;
@@ -194,7 +193,9 @@ final class Company extends Service\Factory
 			Item::FIELD_NAME_COMMENTS => [
 				'TYPE' => Field::TYPE_TEXT,
 				'ATTRIBUTES' => [],
-				'VALUE_TYPE' => Field::VALUE_TYPE_HTML,
+				'SETTINGS' => [
+					'isFlexibleContentType' => true,
+				],
 			],
 			Item::FIELD_NAME_HAS_PHONE => [
 				'TYPE' => Field::TYPE_BOOLEAN,
@@ -275,6 +276,11 @@ final class Company extends Service\Factory
 			Item::FIELD_NAME_ORIGIN_VERSION => [
 				'TYPE' => Field::TYPE_STRING,
 				'ATTRIBUTES' => [\CCrmFieldInfoAttr::NotDisplayed],
+			],
+			Item::FIELD_NAME_FM => [
+				'TYPE' => Field::TYPE_CRM_MULTIFIELD,
+				'ATTRIBUTES' => [\CCrmFieldInfoAttr::Multiple],
+				'CLASS' => Field\Multifield::class,
 			],
 		];
 	}

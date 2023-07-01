@@ -1,16 +1,19 @@
 <?php
 
 namespace Bitrix\Disk\Volume;
-use \Bitrix\Disk\Volume;
+
+use Bitrix\Main;
+use Bitrix\Disk\Volume;
+
 
 interface IVolumeIndicator
 {
 	/**
 	 * Runs measure test to get volumes of selecting objects.
 	 * @param array $collectData List types data to collect.
-	 * @return self
+	 * @return static
 	 */
-	public function measure($collectData = array());
+	public function measure(array $collectData = []): self;
 
 	/**
 	 * Returns measure process stages list.
@@ -20,86 +23,86 @@ interface IVolumeIndicator
 
 	/**
 	 * Gets stage id.
-	 * @return string
+	 * @return string|null
 	 */
-	public function getStage();
+	public function getStage(): ?string;
 
 	/**
 	 * Sets current stage id.
-	 * @param string $stageId Stage id.
-	 * @return $this
+	 * @param string|null $stageId Stage id.
+	 * @return static
 	 */
-	public function setStage($stageId);
+	public function setStage(?string $stageId): self;
 
 	/**
 	 * Recalculates percent from total file size per row selected by filter.
 	 * @param string|Volume\IVolumeIndicator $totalSizeIndicator Use this indicator as total volume.
 	 * @param string|Volume\IVolumeIndicator $excludeSizeIndicator Exclude indicator's volume from total volume.
-	 * @return self
+	 * @return static
 	 */
-	public function recalculatePercent($totalSizeIndicator, $excludeSizeIndicator);
+	public function recalculatePercent($totalSizeIndicator, $excludeSizeIndicator): self;
 
 	/**
 	 * Loads file list corresponding to indicator's filter.
 	 * @param array $additionalFilter Additional parameters to filter file list.
-	 * @return \Bitrix\Main\DB\Result
+	 * @return Main\DB\Result
 	 */
-	public function getCorrespondingFileList($additionalFilter = array());
+	public function getCorrespondingFileList(array $additionalFilter = []): Main\DB\Result;
 
 	/**
 	 * Loads folder list corresponding to indicator's filter.
 	 * @param array $additionalFilter Additional parameters to filter file list.
-	 * @return \Bitrix\Main\DB\Result
+	 * @return Main\DB\Result
 	 */
-	public function getCorrespondingFolderList($additionalFilter = array());
+	public function getCorrespondingFolderList(array $additionalFilter = []): Main\DB\Result;
 
 	/**
 	 * Loads file version list corresponding to indicator's filter.
 	 * @param array $additionalFilter Additional parameters to filter file list.
-	 * @return \Bitrix\Main\DB\Result
+	 * @return Main\DB\Result
 	 */
-	public function getCorrespondingUnnecessaryVersionList($additionalFilter = array());
+	public function getCorrespondingUnnecessaryVersionList(array $additionalFilter = []): Main\DB\Result;
 
 	/**
 	 * Preforms data preparation.
-	 * @return self
+	 * @return static
 	 */
-	public function prepareData();
+	public function prepareData(): self;
 
 	/**
 	 * @return string The fully qualified name of this class.
 	 */
-	public static function className();
+	public static function className(): string;
 
 	/**
 	 * @return string The short indicator name of this class.
 	 */
-	public static function getIndicatorId();
+	public static function getIndicatorId(): string;
 
 	/**
 	 * Deletes objects selecting by filter.
-	 * @return self
+	 * @return static
 	 */
-	public function purify();
+	public function purify(): self;
 
 	/**
 	 * Returns calculation result set.
 	 * @param array $collectedData List types of collected data to return.
-	 * @return \Bitrix\Main\DB\Result
+	 * @return Main\DB\Result
 	 */
-	public function getMeasurementResult($collectedData = array());
+	public function getMeasurementResult(array $collectedData = []): Main\DB\Result;
 
 	/**
 	 * Unset calculated values.
-	 * @return self
+	 * @return static
 	 */
-	public function resetMeasurementResult();
+	public function resetMeasurementResult(): self;
 
 	/**
 	 * Tells true if total result is available.
 	 * @return boolean
 	 */
-	public function isResultAvailable();
+	public function isResultAvailable(): bool;
 
 	/**
 	 * Returns total volume size of objects selecting by filter.
@@ -184,36 +187,36 @@ interface IVolumeIndicator
 	 * @param string[] $filter Array filter set to find entity object.
 	 * @return Volume\Fragment
 	 */
-	public static function getFragment(array $filter);
+	public static function getFragment(array $filter): Volume\Fragment;
 
 	/**
 	 * Returns title of the entity object.
 	 * @param Volume\Fragment $fragment Entity object.
-	 * @return string
+	 * @return string|null
 	 */
-	public static function getTitle(Volume\Fragment $fragment);
+	public static function getTitle(Volume\Fragment $fragment): ?string;
 
 	/**
 	 * Returns last update time of the entity object.
 	 * @param Volume\Fragment $fragment Entity object.
-	 * @return \Bitrix\Main\Type\DateTime
+	 * @return Main\Type\DateTime|null
 	 */
-	public static function getUpdateTime(Volume\Fragment $fragment);
+	public static function getUpdateTime(Volume\Fragment $fragment): ?Main\Type\DateTime;
 
 	/**
 	 * Sets filter parameters.
 	 * @param string $key Parameter name to filter.
 	 * @param string $value Parameter value.
-	 * @return $this
+	 * @return static
 	 */
-	public function addFilter($key, $value);
+	public function addFilter($key, $value): self;
 
 	/**
 	 * Gets filter parameters.
 	 * @param string[] $defaultFilter Default filter set.
 	 * @return array
 	 */
-	public function getFilter(array $defaultFilter = array());
+	public function getFilter(array $defaultFilter = []): array;
 
 	/**
 	 * Gets filter parameter by key.
@@ -228,23 +231,23 @@ interface IVolumeIndicator
 	/**
 	 * Clear filter parameters.
 	 * @param string $key Parameter name to unset.
-	 * @return $this
+	 * @return static
 	 */
-	public function unsetFilter($key = '');
+	public function unsetFilter($key = ''): self;
 
 	/**
 	 * Restores filter state from saved $measurement result.
 	 * @param int|array $measurementResult The id of result row or row from table.
-	 * @return $this
+	 * @return static
 	 */
-	public function restoreFilter($measurementResult);
+	public function restoreFilter($measurementResult): self;
 
 	/**
 	 * Sets filter id.
 	 * @param int $filterId Stored filter id.
-	 * @return void
+	 * @return static
 	 */
-	public function setFilterId($filterId);
+	public function setFilterId($filterId): self;
 
 	/**
 	 * Gets stored filter id.
@@ -256,35 +259,35 @@ interface IVolumeIndicator
 	 * Sets select field.
 	 * @param string $alias Parameter alias.
 	 * @param string $statement Parameter value.
-	 * @return $this
+	 * @return static
 	 */
-	public function addSelect($alias, $statement);
+	public function addSelect($alias, $statement): self;
 
 	/**
 	 * Gets select fields.
 	 * @return array
 	 */
-	public function getSelect();
+	public function getSelect(): array;
 
 	/**
 	 * Sets sort order parameters.
 	 * @param string[] $order Sort order parameters and directions.
-	 * @return $this
+	 * @return static
 	 */
-	public function setOrder($order);
+	public function setOrder($order): self;
 
 	/**
 	 * Gets sort order parameters
 	 * @return array
 	 */
-	public function getOrder();
+	public function getOrder(): array;
 
 	/**
 	 * Sets limit result rows count.
 	 * @param int $limit Limit value.
-	 * @return $this
+	 * @return static
 	 */
-	public function setLimit($limit);
+	public function setLimit($limit): self;
 
 	/**
 	 * Gets limit result rows count.
@@ -295,9 +298,9 @@ interface IVolumeIndicator
 	/**
 	 * Sets offset in result.
 	 * @param int $offset Offset value.
-	 * @return $this
+	 * @return static
 	 */
-	public function setOffset($offset);
+	public function setOffset($offset): self;
 
 	/**
 	 * Gets offset in result.
@@ -314,7 +317,7 @@ interface IVolumeIndicator
 	/**
 	 * Sets owner id.
 	 * @param int $ownerId User id.
-	 * @return $this
+	 * @return static
 	 */
-	public function setOwner($ownerId);
+	public function setOwner($ownerId): self;
 }

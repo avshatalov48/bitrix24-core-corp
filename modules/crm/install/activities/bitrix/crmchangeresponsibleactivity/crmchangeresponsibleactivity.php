@@ -145,11 +145,14 @@ class CBPCrmChangeResponsibleActivity extends CBPActivity
 	{
 		$lastUserId = $this->getStorage()->getValue('lastUserId');
 
+		$hasTargetLastUserId = false;
 		if ($lastUserId && count($target) > 1)
 		{
 			$searchKey = array_search($lastUserId, $target);
 			if ($searchKey !== false)
 			{
+				$hasTargetLastUserId = true;
+
 				$target = array_merge(
 					array_slice($target, $searchKey + 1),
 					array_slice($target, 0, $searchKey),
@@ -158,6 +161,11 @@ class CBPCrmChangeResponsibleActivity extends CBPActivity
 		}
 
 		$nextUserId = $this->getFirstUser($target, $skipAbsent, $skipTimeMan);
+		if ($nextUserId === null && $hasTargetLastUserId)
+		{
+			$nextUserId = $this->getFirstUser([$lastUserId], $skipAbsent, $skipTimeMan);
+		}
+
 		if ($nextUserId)
 		{
 			$this->getStorage()->setValue('lastUserId', $nextUserId);
@@ -241,7 +249,7 @@ class CBPCrmChangeResponsibleActivity extends CBPActivity
 		if (Main\ModuleManager::isModuleInstalled('intranet'))
 		{
 			$map['SkipAbsent'] = [
-				'Name' => GetMessage('CRM_CHANGE_RESPONSIBLE_SKIP_ABSENT'),
+				'Name' => GetMessage('CRM_CHANGE_RESPONSIBLE_SKIP_ABSENT_MSGVER_1'),
 				'FieldName' => 'skip_absent',
 				'Type' => 'bool',
 				'Default' => 'N',

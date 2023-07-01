@@ -138,7 +138,7 @@
 	 */
 	function set(object, path, value)
 	{
-		path = isArray(path) ? path : path.split('.');
+		path = Array.isArray(path) ? path : path.split('.');
 		const len = path.length;
 		let schema = object;
 
@@ -161,18 +161,18 @@
 	 * Path must be an array or a string with dots as divider.
 	 * @param {object} object
 	 * @param {string | string[]} path
-	 * @returns {*}
+	 * @returns {boolean}
 	 */
 	function has(object, path)
 	{
 		let schema = object;
 
-		path = isArray(path) ? path : path.split('.');
+		path = Array.isArray(path) ? path : path.split('.');
 
 		for (let i = 0; i < path.length; i++)
 		{
 			const elem = path[i];
-			if (schema && typeof schema === 'object' && schema.hasOwnProperty(elem))
+			if (schema && typeof schema === 'object' && elem in schema)
 			{
 				schema = schema[elem];
 			}
@@ -197,12 +197,12 @@
 	{
 		let schema = object;
 
-		path = isArray(path) ? path : path.split('.');
+		path = Array.isArray(path) ? path : path.split('.');
 
 		for (let i = 0; i < path.length; i++)
 		{
 			const elem = path[i];
-			if (schema && typeof schema === 'object' && schema.hasOwnProperty(elem))
+			if (schema && typeof schema === 'object' && elem in schema)
 			{
 				schema = schema[elem];
 			}
@@ -263,10 +263,16 @@
 				return setsEquals(value, other);
 			}
 
+			if (value instanceof Date && other instanceof Date)
+			{
+				return value.getTime() === other.getTime();
+			}
+
 			const oneIsArray = isArray(value) || isArray(other);
 			const oneIsMap = isMap(value) || isMap(other);
 			const oneIsSet = isSet(value) || isSet(other);
-			if (oneIsArray || oneIsMap || oneIsSet)
+			const oneIsDate = value instanceof Date || other instanceof Date;
+			if (oneIsArray || oneIsMap || oneIsSet || oneIsDate)
 			{
 				return false;
 			}
@@ -287,6 +293,7 @@
 	}
 
 	/**
+	 * @deprecated Just use Array.isArray() instead of adding unnecessary dependency.
 	 * @param {*} value
 	 * @returns {boolean}
 	 */

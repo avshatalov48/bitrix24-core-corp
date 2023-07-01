@@ -1,4 +1,4 @@
-<?
+<?php
 
 use Bitrix\Main\Controller\UserFieldConfig;
 use Bitrix\Rpa;
@@ -803,7 +803,7 @@ class CBPRpaApproveActivity
 		$properties = [];
 		foreach ($arMap as $key => $value)
 		{
-			$properties[$value] = $arCurrentValues[$key];
+			$properties[$value] = $arCurrentValues[$key] ?? null;
 		}
 
 		if (empty($properties['ApproveType']))

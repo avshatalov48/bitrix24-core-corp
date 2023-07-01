@@ -1,0 +1,8 @@
+<?php
+$MESS['SALE_PS_SLIP_NUMBER'] = 'т. #NUMBER#';
+$MESS['SALE_PS_SLIP_PAYMENT_TITLE'] = 'Оплата';
+$MESS['SALE_PS_SLIP_PAYMENT_RESULT_SUCCESS'] = 'УСПЕШНО';
+$MESS['SALE_PS_SLIP_FIELD_SUM'] = 'СУММА';
+$MESS['SALE_PS_SLIP_FIELD_METHOD'] = 'Способ оплаты';
+$MESS['SALE_PS_SLIP_FIELD_TRANSACTION_ID'] = 'ID транзакции';
+$MESS['SALE_PS_SLIP_FIELD_TERMINAL_DATE'] = 'Дата (терминал)';

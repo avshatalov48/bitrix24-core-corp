@@ -1,0 +1,3 @@
+<?php
+$MESS["DUPLICATE_SUMMARY_LIST_TOTAL_COUNT_TITLE"] = "Найдены совпадения: #COUNT#";
+$MESS["DUPLICATE_SUMMARY_LIST_ITEM_ADD_BUTTON"] = "Заменить";

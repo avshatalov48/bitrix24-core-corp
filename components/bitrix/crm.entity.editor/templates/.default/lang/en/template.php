@@ -1,4 +1,12 @@
 <?php
+$MESS["CRM_CLIENT_EDITOR_NOTIFY_COMPANY_TO_CONTACT"] = "Company added to contact";
+$MESS["CRM_CLIENT_EDITOR_NOTIFY_COMPANY_TO_DEAL"] = "Company added to deal";
+$MESS["CRM_CLIENT_EDITOR_NOTIFY_COMPANY_TO_INVOICE"] = "Company added to invoice";
+$MESS["CRM_CLIENT_EDITOR_NOTIFY_COMPANY_TO_LEAD"] = "Company added to lead";
+$MESS["CRM_CLIENT_EDITOR_NOTIFY_CONTACT_TO_COMPANY"] = "Contact added to company";
+$MESS["CRM_CLIENT_EDITOR_NOTIFY_CONTACT_TO_DEAL"] = "Contact added to deal";
+$MESS["CRM_CLIENT_EDITOR_NOTIFY_CONTACT_TO_INVOICE"] = "Contact added to invoice";
+$MESS["CRM_CLIENT_EDITOR_NOTIFY_CONTACT_TO_LEAD"] = "Contact added to lead";
 $MESS["CRM_EDITOR_ADDRESS"] = "Address";
 $MESS["CRM_EDITOR_ADD_BANK_DETAILS"] = "Add banking details";
 $MESS["CRM_EDITOR_ADD_REQUISITE"] = "Add details";

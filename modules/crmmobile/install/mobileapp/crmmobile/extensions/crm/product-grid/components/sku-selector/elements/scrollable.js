@@ -2,7 +2,6 @@
  * @module crm/product-grid/components/sku-selector/elements/scrollable
  */
 jn.define('crm/product-grid/components/sku-selector/elements/scrollable', (require, exports, module) => {
-
 	function Scrollable(...children)
 	{
 		return ScrollView(
@@ -11,7 +10,7 @@ jn.define('crm/product-grid/components/sku-selector/elements/scrollable', (requi
 					backgroundColor: '#EEF2F4',
 					flexDirection: 'column',
 					flexGrow: 1,
-				}
+				},
 			},
 			View(
 				{
@@ -22,13 +21,12 @@ jn.define('crm/product-grid/components/sku-selector/elements/scrollable', (requi
 						paddingBottom: 195,
 						flexDirection: 'column',
 						flexGrow: 1,
-					}
+					},
 				},
-				...children
-			)
+				...children,
+			),
 		);
 	}
 
 	module.exports = { Scrollable };
-
 });

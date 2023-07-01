@@ -5,7 +5,7 @@ namespace Bitrix\Crm;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentOutOfRangeException;
 
-class ItemIdentifier
+class ItemIdentifier implements \JsonSerializable
 {
 	/** @var int */
 	private $entityTypeId;
@@ -39,7 +39,41 @@ class ItemIdentifier
 	 */
 	public static function createByItem(Item $item): ItemIdentifier
 	{
-		return new static($item->getEntityTypeId(), $item->getId());
+		$categoryId = $item->isCategoriesSupported() ? $item->getCategoryId() : null;
+
+		return new static($item->getEntityTypeId(), $item->getId(), $categoryId);
+	}
+
+	/**
+	 * Creates a new ItemIdentifier object, that is based on the provided $data array
+	 *
+	 * @param array $data
+	 *
+	 * @return ItemIdentifier|null
+	 */
+	public static function createFromArray(array $data): ?self
+	{
+		$entityTypeId = 0;
+		$entityId = 0;
+
+		if (isset($data['ENTITY_TYPE_ID'], $data['ENTITY_ID']))
+		{
+			$entityTypeId = (int)$data['ENTITY_TYPE_ID'];
+			$entityId = (int)$data['ENTITY_ID'];
+		}
+		elseif (isset($data['OWNER_TYPE_ID'], $data['OWNER_ID']))
+		{
+			$entityTypeId = (int)$data['OWNER_TYPE_ID'];
+			$entityId = (int)$data['OWNER_ID'];
+		}
+		$categoryId = isset($data['CATEGORY_ID']) ? (int)$data['CATEGORY_ID'] : null;
+
+		if (\CCrmOwnerType::isCorrectEntityTypeId($entityTypeId) && $entityId > 0)
+		{
+			return new self($entityTypeId, $entityId, $categoryId);
+		}
+
+		return null;
 	}
 
 	/**
@@ -124,6 +158,15 @@ class ItemIdentifier
 		return 'type_' . $this->getEntityTypeId() . '_id_' . $this->getEntityId();
 	}
 
+	final public function jsonSerialize()
+	{
+		return [
+			'entityTypeId' => $this->getEntityTypeId(),
+			'entityId' => $this->getEntityId(),
+			'categoryId' => $this->getCategoryId(),
+		];
+	}
+
 	/**
 	 * Return array representation of this object
 	 *
@@ -136,15 +179,5 @@ class ItemIdentifier
 			'ENTITY_ID' => $this->getEntityId(),
 			'CATEGORY_ID' => $this->getCategoryId(),
 		];
-	}
-
-	public static function createFromArray(array $data): ?self
-	{
-		if (isset($data['ENTITY_TYPE_ID']) && isset($data['ENTITY_ID']))
-		{
-			return new self((int)$data['ENTITY_TYPE_ID'], (int)$data['ENTITY_ID']);
-		}
-
-		return null;
 	}
 }

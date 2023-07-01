@@ -1,6 +1,8 @@
 <?php
 namespace Bitrix\ImOpenLines;
 
+use Bitrix\Im\V2\Message;
+use Bitrix\Im\V2\Message\ReadService;
 use Bitrix\Main;
 use Bitrix\Main\Event;
 use Bitrix\Main\Loader;
@@ -19,23 +21,27 @@ use Bitrix\Pull;
 
 use Bitrix\ImOpenlines\Model\ConfigTable;
 use Bitrix\ImOpenLines\Model\OperatorTransferTable;
+use Bitrix\ImOpenLines\Model\SessionTable;
 
 Loc::loadMessages(__FILE__);
 
 class Chat
 {
-	const FIELD_SESSION = 'LINES_SESSION';
-	const FIELD_CRM = 'LINES_CRM';
-	const FIELD_LIVECHAT = 'LIVECHAT_SESSION';
+	public const
+		FIELD_SESSION = 'LINES_SESSION',
+		FIELD_CRM = 'LINES_CRM',
+		FIELD_LIVECHAT = 'LIVECHAT_SESSION',
+		FIELD_SILENT_MODE = 'LINES_SILENT_MODE'
+	;
 
-	const FIELD_SILENT_MODE = 'LINES_SILENT_MODE';
-
-	const RATING_TYPE_CLIENT = 'CLIENT';
-	const RATING_TYPE_HEAD = 'HEAD';
-	const RATING_TYPE_COMMENT = 'COMMENT';
-	const RATING_TYPE_HEAD_AND_COMMENT = 'HEAD_AND_COMMENT';
-	const RATING_VALUE_LIKE = '5';
-	const RATING_VALUE_DISLIKE = '1';
+	public const
+		RATING_TYPE_CLIENT = 'CLIENT',
+		RATING_TYPE_HEAD = 'HEAD',
+		RATING_TYPE_COMMENT = 'COMMENT',
+		RATING_TYPE_HEAD_AND_COMMENT = 'HEAD_AND_COMMENT',
+		RATING_VALUE_LIKE = '5',
+		RATING_VALUE_DISLIKE = '1'
+	;
 
 	public static $fieldAssoc = [
 		'LINES_SESSION' => 'ENTITY_DATA_1',
@@ -44,15 +50,21 @@ class Chat
 		'LIVECHAT_SESSION' => 'ENTITY_DATA_1',
 	];
 
-	const TRANSFER_MODE_AUTO = 'AUTO';
-	const TRANSFER_MODE_MANUAL = 'MANUAL';
-	const TRANSFER_MODE_BOT = 'BOT';
+	public const
+		TRANSFER_MODE_AUTO = 'AUTO',
+		TRANSFER_MODE_MANUAL = 'MANUAL',
+		TRANSFER_MODE_BOT = 'BOT'
+	;
 
-	const TEXT_WELCOME = 'WELCOME';
-	const TEXT_DEFAULT = 'DEFAULT';
+	public const
+		TEXT_WELCOME = 'WELCOME',
+		TEXT_DEFAULT = 'DEFAULT'
+	;
 
-	const CHAT_TYPE_OPERATOR = 'LINES';
-	const CHAT_TYPE_CLIENT = 'LIVECHAT';
+	public const
+		CHAT_TYPE_OPERATOR = 'LINES',
+		CHAT_TYPE_CLIENT = 'LIVECHAT'
+	;
 
 	public const ERROR_USER_NOT_OPERATOR = 'ERROR_USER_NOT_OPERATOR';
 
@@ -129,16 +141,15 @@ class Chat
 	 * TODO: Hack for telegram 22.04.2022
 	 *
 	 * @param array $chat
-	 * @return bool
+	 * @return void
 	 */
-	protected function isNoSession(array $chat): bool
+	private function isNoSession(array $chat): void
 	{
-		$result = false;
 		$isSession = true;
 
 		if(self::parseLinesChatEntityId($chat['ENTITY_ID'])['connectorId'] === 'telegrambot')
 		{
-			$isSession = (bool)Model\SessionTable::getList([
+			$isSession = (bool)SessionTable::getList([
 				'select' => ['ID'],
 				'filter' => [
 					'=CHAT_ID' => $chat['ID'],
@@ -150,10 +161,7 @@ class Chat
 		if ($isSession === false)
 		{
 			$this->isCreated = true;
-			$result = true;
 		}
-
-		return $result;
 	}
 
 	/**
@@ -289,7 +297,7 @@ class Chat
 	 * @param bool $skipMessage
 	 * @return Result
 	 */
-	public function answer($userId, $skipSession = false, $skipMessage = false): Result
+	public function answer($userId, $skipSession = false, $skipMessage = false, $skipRead = false): Result
 	{
 		$result = new Result();
 		$result->setResult(true);
@@ -311,7 +319,7 @@ class Chat
 			if (Tools\Lock::getInstance()->set($keyLock))
 			{
 				$chat = new \CIMChat(0);
-				$relations = \CIMChat::GetRelationById($this->chat['ID']);
+				$relations = \CIMChat::GetRelationById($this->chat['ID'], false, true, false);
 
 				if (!isset($relations[$userId]))
 				{
@@ -351,7 +359,7 @@ class Chat
 
 				if($result->isSuccess())
 				{
-					$relations = \CIMChat::GetRelationById($this->chat['ID']);
+					$relations = \CIMChat::GetRelationById($this->chat['ID'], false, true, false);
 					foreach ($relations as $relation)
 					{
 						if(
@@ -399,9 +407,11 @@ class Chat
 						$event->send();
 					}
 
-					$CIMChat = new \CIMChat($userId);
-					$CIMChat->SetReadMessage($this->chat['ID']);
-
+					if (!$skipRead)
+					{
+						$CIMChat = new \CIMChat($userId);
+						$CIMChat->SetReadMessage($this->chat['ID']);
+					}
 				}
 				else
 				{
@@ -698,7 +708,7 @@ class Chat
 				]);
 
 				$chat = new \CIMChat(0);
-				$relations = \CIMChat::GetRelationById($this->chat['ID']);
+				$relations = \CIMChat::GetRelationById($this->chat['ID'], false, true, false);
 				foreach ($relations as $relation)
 				{
 					if (
@@ -814,7 +824,7 @@ class Chat
 			)
 			{
 				$chat = new \CIMChat(0);
-				$relations = \CIMChat::GetRelationById($this->chat['ID']);
+				$relations = \CIMChat::GetRelationById($this->chat['ID'], false, true, false);
 				foreach ($relations as $relation)
 				{
 					if (
@@ -916,7 +926,7 @@ class Chat
 
 				if ($mode === self::TRANSFER_MODE_MANUAL)
 				{
-					$this->answer($transferUserId, false, true);
+					$this->answer($transferUserId, false, true, true);
 					$updateDataSession['DATE_MODIFY'] = new DateTime();
 					$updateDataSession['SKIP_DATE_CLOSE'] = true;
 				}
@@ -1012,7 +1022,7 @@ class Chat
 						]
 					])->fetch();
 
-					self::setCounterRelationForChat($this->chat['ID'], $addUsers, 1);
+					self::setCounterRelationForChat($this->chat['ID'], $addUsers);
 
 					foreach($addUsers as $userId)
 					{
@@ -1245,6 +1255,7 @@ class Chat
 			$relations = \Bitrix\Im\Chat::getRelation($this->chat['ID'], [
 				'SELECT' => Array('USER_ID'),
 				'USER_DATA' => 'Y',
+				'WITHOUT_COUNTERS' => 'Y',
 			]);
 			foreach ($relations as $relation)
 			{
@@ -2045,7 +2056,7 @@ class Chat
 	 * @param int $userId
 	 * @return Result
 	 */
-	public function createLead($userId = 0)
+	public function createLead($userId = 0): Result
 	{
 		$result = new Result();
 
@@ -2054,36 +2065,37 @@ class Chat
 		{
 			$result->setResult(true);
 		}
-		elseif($this->isDataLoaded())
+		elseif ($this->isDataLoaded())
 		{
 			$session = new Session();
 			$session->setChat($this);
 
-			$resultLoad = $session->load([
-				'USER_CODE' => $this->chat['ENTITY_ID']
-			]);
-			if($resultLoad)
+			if ($session->load(['USER_CODE' => $this->chat['ENTITY_ID']]))
 			{
-				if($this->validationAction($session->getData('CHAT_ID')))
+				if ($this->validationAction($session->getData('CHAT_ID')))
 				{
-					if(
-						$userId > 0 &&
-						$session->getData('OPERATOR_ID') == $userId
+					if (
+						$userId > 0
+						&& $session->getData('OPERATOR_ID') == $userId
 					)
 					{
 						$crmManager = new Crm($session);
-						if($crmManager->isLoaded())
+						if ($crmManager->isLoaded())
 						{
-							$crmFieldsManager = $crmManager->getFields();
-							$crmFieldsManager->setTitle($session->getChat()->getData('TITLE'));
-							$crmFieldsManager->setDataFromUser();
-							$crmManager->setSkipSearch();
-							$crmManager->setSkipAutomationTrigger();
+							$crmManager
+								->getFields()
+								->setTitle($session->getChat()->getData('TITLE'))
+								->setDataFromUser()
+							;
 
-							$rawResult = $crmManager->registrationChanges();
+							$rawResult = $crmManager
+								->setSkipSearch()
+								->setSkipAutomationTrigger()
+								->registrationChanges()
+							;
 							$crmManager->sendCrmImMessages();
 
-							if($rawResult->isSuccess())
+							if ($rawResult->isSuccess())
 							{
 								$result->setResult(true);
 							}
@@ -2523,7 +2535,7 @@ class Chat
 			{
 				ChatTable::update($this->chat['ID'], $fields);
 
-				$relations = \CIMChat::GetRelationById($this->chat['ID']);
+				$relations = \CIMChat::GetRelationById($this->chat['ID'], false, true, false);
 				foreach ($relations as $rel)
 				{
 					\CIMContactList::CleanChatCache($rel['USER_ID']);
@@ -3093,7 +3105,7 @@ class Chat
 			}
 		}
 
-		return \Bitrix\ImOpenLines\Config::canJoin($chatId, $crmEntityType, $crmEntityId);
+		return Config::canJoin($chatId, $crmEntityType, $crmEntityId);
 	}
 
 	public static function getChatIdBySession(int $sessionId)
@@ -3103,7 +3115,7 @@ class Chat
 			return null;
 		}
 
-		$session = \Bitrix\ImOpenLines\Model\SessionTable::getById($sessionId)->fetch();
+		$session = SessionTable::getById($sessionId)->fetch();
 		if (!$session)
 		{
 			return null;
@@ -3138,10 +3150,9 @@ class Chat
 	/**
 	 * @param $chatId
 	 * @param array $users
-	 * @param int $counter
 	 * @return Result
 	 */
-	protected static function setCounterRelationForChat($chatId, array $users, int $counter = 0): Result
+	protected static function setCounterRelationForChat($chatId, array $users): Result
 	{
 		$result = new Result();
 
@@ -3160,27 +3171,17 @@ class Chat
 
 		if(!empty($users))
 		{
-			$relations = RelationTable::getList([
-				'select' => [
-					'ID',
-					'COUNTER'
-				],
-				'filter' => [
-					'=CHAT_ID' => $chatId,
-					'=USER_ID' => $users,
-				],
-			]);
+			$readService = new ReadService();
+			$counters = $readService->getCounterService()->getByChatForEachUsers($chatId, $users);
+			$lastId = $readService->getViewedService()->getLastMessageIdInChat($chatId) ?? 0;
+			$lastMessageInChat = new Message();
+			$lastMessageInChat->setMessageId($lastId)->setChatId($chatId);
 
-			while ($relation = $relations->fetch())
+			foreach ($counters as $userId => $counter)
 			{
-				if($relation['COUNTER'] < 1)
+				if ($counter === 0 && $lastId !== 0)
 				{
-					$resultRelationUpdate = RelationTable::update($relation['ID'], ['COUNTER' => $counter]);
-
-					if(!$resultRelationUpdate->isSuccess())
-					{
-						$result->addErrors($resultRelationUpdate->getErrors());
-					}
+					$readService->withContextUser($userId)->unreadTo($lastMessageInChat);
 				}
 			}
 		}

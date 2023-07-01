@@ -198,7 +198,7 @@ final class Disk extends BFile
 				$bFileId = $result->getId();
 				$result = $this->addFile($bFileId, [
 					'fileName' => $fileName,
-					'isTemplate' => ($file['isTemplate'] === true),
+					'isTemplate' => isset($file['isTemplate']) && ($file['isTemplate'] === true),
 				], $file['size']);
 			}
 		}
@@ -236,7 +236,7 @@ final class Disk extends BFile
 			'SIZE' => $size,
 			'CREATED_BY' => $this->getUserId(),
 		];
-		if($options['isTemplate'] === true)
+		if (isset($options['isTemplate']) && $options['isTemplate'] === true)
 		{
 			$folder = static::getTemplatesFolder();
 		}

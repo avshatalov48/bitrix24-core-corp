@@ -23,8 +23,8 @@ class SprintSelectorProvider extends BaseProvider
 	{
 		parent::__construct();
 
-		$this->options['groupId'] = (int) $options['groupId'];
-		$this->options['onlyCompleted'] = (bool) $options['onlyCompleted'];
+		$this->options['groupId'] = (int) ($options['groupId'] ?? null);
+		$this->options['onlyCompleted'] = (bool) ($options['onlyCompleted'] ?? null);
 	}
 
 	public function isAvailable(): bool

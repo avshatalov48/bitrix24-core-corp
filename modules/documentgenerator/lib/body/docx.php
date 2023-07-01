@@ -6,9 +6,13 @@ use Bitrix\DocumentGenerator\Value;
 use Bitrix\Main\Application;
 use Bitrix\Main\Error;
 use Bitrix\Main\IO\File;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
 use Bitrix\Main\Security\Random;
 
+/**
+ * @todo remove all try catch around loadXml when there are no new errors in log
+ */
 class Docx extends ZipDocument
 {
 	protected const PATH_DOCUMENT = 'word/document.xml';
@@ -64,6 +68,13 @@ class Docx extends ZipDocument
 	{
 		$result = new Result();
 
+		if (!$this->isFileProcessable())
+		{
+			return $result->addError(
+				new Error(Loc::getMessage('DOCGEN_BODY_DOCX_ERROR_FILE_IS_NOT_PROCESSABLE'), 'FILE_NOT_PROCESSABLE')
+			);
+		}
+
 		if($this->open() === true)
 		{
 			$this->fillInnerDocuments();
@@ -102,7 +113,7 @@ class Docx extends ZipDocument
 	{
 		$placeholders = [];
 
-		if($this->open() === true)
+		if($this->isFileProcessable() && $this->open() === true)
 		{
 			$this->fillInnerDocuments();
 			foreach($this->innerDocuments as $path => $data)
@@ -121,7 +132,7 @@ class Docx extends ZipDocument
 	 */
 	public function normalizeContent(): void
 	{
-		if($this->open() === true)
+		if($this->isFileProcessable() && $this->open() === true)
 		{
 			$this->fillInnerDocuments();
 			foreach($this->innerDocuments as $path => $data)
@@ -429,7 +440,7 @@ class Docx extends ZipDocument
 	protected function importImage(File $image, \DOMElement $relationshipNode, string $newId = ''): void
 	{
 		$mimeType = $this->getMimeType($image);
-		$extension = $image->getExtension() ?? $this->getPrintableMimeTypes()[$mimeType];
+		$extension = $image->getExtension() ?: $this->getPrintableMimeTypes()[$mimeType] ?? '';
 		$newName = Random::getString(15).'.'.$extension;
 		$this->zip->addFile($image->getPhysicalPath(), 'word/media/'.$newName);
 		$relationshipNode->removeAttribute('Target');
@@ -522,10 +533,16 @@ class Docx extends ZipDocument
 
 		if(!$this->numbering['document'])
 		{
+			$numberingContent = $this->zip->getFromName($this->numbering['documentPath']);
+			if (empty($numberingContent))
+			{
+				return;
+			}
+
 			$numberingDocument = new \DOMDocument();
 			try
 			{
-				$numberingDocument->loadXML($this->zip->getFromName($this->numbering['documentPath']));
+				$numberingDocument->loadXML($numberingContent);
 			}
 			catch (\ValueError $emptyArgumentError)
 			{

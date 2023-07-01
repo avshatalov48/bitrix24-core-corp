@@ -18,15 +18,15 @@ use Bitrix\Main\ORM\Fields\Relations\Reference;
  * DO NOT WRITE ANYTHING BELOW THIS
  *
  * <<< ORMENTITYANNOTATION
- * @method static EO_OrderDeal_Query query()
- * @method static EO_OrderDeal_Result getByPrimary($primary, array $parameters = array())
- * @method static EO_OrderDeal_Result getById($id)
- * @method static EO_OrderDeal_Result getList(array $parameters = array())
- * @method static EO_OrderDeal_Entity getEntity()
- * @method static \Bitrix\Crm\Binding\EO_OrderDeal createObject($setDefaultValues = true)
- * @method static \Bitrix\Crm\Binding\EO_OrderDeal_Collection createCollection()
- * @method static \Bitrix\Crm\Binding\EO_OrderDeal wakeUpObject($row)
- * @method static \Bitrix\Crm\Binding\EO_OrderDeal_Collection wakeUpCollection($rows)
+ * @method static EO_OrderEntity_Query query()
+ * @method static EO_OrderEntity_Result getByPrimary($primary, array $parameters = [])
+ * @method static EO_OrderEntity_Result getById($id)
+ * @method static EO_OrderEntity_Result getList(array $parameters = [])
+ * @method static EO_OrderEntity_Entity getEntity()
+ * @method static \Bitrix\Crm\Binding\EO_OrderEntity createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Binding\EO_OrderEntity_Collection createCollection()
+ * @method static \Bitrix\Crm\Binding\EO_OrderEntity wakeUpObject($row)
+ * @method static \Bitrix\Crm\Binding\EO_OrderEntity_Collection wakeUpCollection($rows)
  */
 class OrderEntityTable extends Main\ORM\Data\DataManager
 {

@@ -11,6 +11,7 @@ $map = $dialog->getMap();
  * @var array $voiceLanguage
  * @var array $voiceSpeed
  * @var array $voiceVolume
+ * @var bool $isEnableText
  */
 
 if (empty($outputNumber)):?>
@@ -29,7 +30,9 @@ if (empty($outputNumber)):?>
 	<div class="bizproc-automation-popup-settings">
 		<span class="bizproc-automation-popup-settings-title"><?= GetMessage("BPVICA_RPD_CALL_TYPE") ?>: </span>
 		<select class="bizproc-automation-popup-settings-dropdown" name="use_audio_file" onchange="__BPVICA_change(this.value)">
-			<option value="N"<?= $currentValues['use_audio_file'] != 'Y' ? " selected" : "" ?>><?= GetMessage("BPVICA_RPD_CALL_TYPE_TEXT") ?></option>
+			<?php if ($isEnableText): ?>
+				<option value="N"<?= $currentValues['use_audio_file'] != 'Y' ? " selected" : "" ?>><?= GetMessage("BPVICA_RPD_CALL_TYPE_TEXT") ?></option>
+			<?php endif; ?>
 			<option value="Y"<?= $currentValues['use_audio_file'] == 'Y' ? " selected" : "" ?>><?= GetMessage("BPVICA_RPD_CALL_TYPE_AUDIO") ?></option>
 		</select>
 	</div>

@@ -3,12 +3,17 @@
 namespace Bitrix\Tasks\Control;
 
 use Bitrix\Main\Application;
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\DB\SqlQueryException;
+use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\SystemException;
 use Bitrix\Tasks\Control\Exception\TemplateNotFoundException;
-use Bitrix\Tasks\Internals\Task\TemplateTable;
 use \Bitrix\Tasks\Internals\Task\Template\TemplateMemberTable;
 
 class TemplateMember
 {
+	use BaseTemplateControlTrait;
+
 	private const FIELD_CREATED_BY = 'CREATED_BY';
 	private const FIELD_RESPONSIBLES = 'RESPONSIBLES';
 	private const FIELD_ACCOMPLICES = 'ACCOMPLICES';
@@ -27,17 +32,15 @@ class TemplateMember
 	}
 
 	/**
-	 * @param array $data
-	 * @return void
 	 * @throws TemplateNotFoundException
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\DB\SqlQueryException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
+	 * @throws ArgumentException
+	 * @throws SqlQueryException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
 	 */
-	public function set(array $data)
+	public function set(array $data): void
 	{
-		$this->loadTemplate();
+		$this->loadByTemplate();
 
 		$members = $this->getCurrentMembers();
 
@@ -132,43 +135,15 @@ class TemplateMember
 	}
 
 	/**
-	 * @return void
 	 * @throws TemplateNotFoundException
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
+	 * @throws SystemException
 	 */
-	private function loadTemplate(): void
+	private function loadByTemplate(): void
 	{
-		if ($this->template)
-		{
-			return;
-		}
-
-		$this->template = TemplateTable::getByPrimary($this->templateId)->fetchObject();
-		if (!$this->template)
-		{
-			throw new TemplateNotFoundException();
-		}
+		$this->loadTemplate();
 		$this->template->fillMembers();
 	}
 
-	/**
-	 * @return void
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\DB\SqlQueryException
-	 * @throws \Bitrix\Main\SystemException
-	 */
-	public function deleteByTemplate()
-	{
-		TemplateMemberTable::deleteList([
-			'TEMPLATE_ID' => $this->templateId,
-		]);
-	}
-
-	/**
-	 * @return array
-	 */
 	private function getCurrentMembers(): array
 	{
 		$members = [];
@@ -186,5 +161,10 @@ class TemplateMember
 		}
 
 		return $members;
+	}
+
+	public function getTableClass(): string
+	{
+		return TemplateMemberTable::class;
 	}
 }

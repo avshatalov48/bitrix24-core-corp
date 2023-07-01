@@ -35,7 +35,7 @@ final class Template extends \Bitrix\Tasks\Internals\Runtime
 		{
 			$query = static::getAccessCheckSql($parameters);
 
-			$rtName = (string) $parameters['NAME'] != '' ? (string) $parameters['NAME'] : 'ACCESS';
+			$rtName = isset($parameters['NAME']) ? (string) $parameters['NAME'] : 'ACCESS';
 			$rf = $parameters['REF_FIELD'];
 			$rfName = ((string) $rf != '' ? $rf : 'ID');
 

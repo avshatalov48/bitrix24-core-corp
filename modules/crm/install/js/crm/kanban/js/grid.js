@@ -49,6 +49,7 @@ BX.CRM.Kanban.Grid = function(options)
 	BX.addCustomEvent("onPopupClose", BX.proxy(this.onPopupClose, this));
 	BX.addCustomEvent("CrmDragItemDragRelease", BX.proxy(this.onEditorDragItemRelease, this));
 	BX.addCustomEvent(window, "onCrmEntityCreate", BX.delegate(this.onCrmEntityCreateDeadlinesView, this));
+	BX.addCustomEvent(this, "Kanban.Grid:onRender", BX.Runtime.debounce(this.handleHintForNotVisibleColumns, 400, this));
 
 	//setInterval(BX.proxy(this.loadNew, this), this.loadNewInterval * 1000);
 	this.bindEvents();
@@ -87,6 +88,8 @@ BX.CRM.Kanban.Grid.prototype = {
 	fieldsSelectors: {},
 	headersSections: {},
 	animationDuration: 800,
+	hintForNotVisibleItems: null,
+	handleHideHintForNotVisibleItems: null,
 
 	/**
 	 * Get current checkeds items.
@@ -260,8 +263,9 @@ BX.CRM.Kanban.Grid.prototype = {
 				this.isItKanban(el.target) ? this.currentNode = el.target : this.currentNode = null;
 
 				if(
-					!BX.findParent(el.target, {"className": "main-kanban-item"}) &&
-					!BX.findParent(el.target, {"className": "ui-action-panel"})
+					!BX.findParent(el.target, {'className': 'main-kanban-item'})
+					&& !BX.findParent(el.target, {'className': 'ui-action-panel'})
+					&& !BX.findParent(el.target, {'className': 'ui-action-panel-item-popup-menu'})
 				)
 				{
 					this.unSetKanbanDragMode();
@@ -310,6 +314,15 @@ BX.CRM.Kanban.Grid.prototype = {
 						&& this.itemMoving.item.columnId === this.items[this.itemMoving.item.id].columnId
 					)
 					{
+						const column = this.getColumn(event.data.item.columnId);
+						if (
+							event.data.item.columnId === event.data.oldColumn.id
+							&& column.data.type === 'PROGRESS'
+						)
+						{
+							return;
+						}
+
 						// @todo check this for ticket 0143009
 						//this.itemMoving.oldColumn = event.data.oldColumn;
 						this.onItemMoved(
@@ -951,25 +964,25 @@ BX.CRM.Kanban.Grid.prototype = {
 			targetColumn.addItems(checked, beforeItem);
 			this.resetMultiSelectMode();
 			this.stopActionPanel();
+
 			return;
 		}
-		else
+
+		item.beforeItem = beforeItem;
+		currentColumn.removeItem(item).then(function (){
+			targetColumn.addItem(item, item.beforeItem);
+		});
+
+		this.stopActionPanel();
+
+		if (usePromise)
 		{
-			item.beforeItem = beforeItem;
-			currentColumn.removeItem(item).then(function (){
-				targetColumn.addItem(item, item.beforeItem);
+			return Promise.resolve({
+				status: true,
 			});
-
-			this.stopActionPanel();
-
-			if (usePromise)
-			{
-				return Promise.resolve({
-					status: true,
-				});
-			}
-			return true;
 		}
+
+		return true;
 	},
 
 	/**
@@ -1373,6 +1386,7 @@ BX.CRM.Kanban.Grid.prototype = {
 					this.itemMoving.oldNextSiblingId
 				);
 			}
+
 			return;
 		}
 
@@ -1489,6 +1503,8 @@ BX.CRM.Kanban.Grid.prototype = {
 					this.itemMoving.oldColumn.renderSubTitle();
 				}
 			}
+
+			item.notChangeTotal = false;
 		}
 
 		this.itemMoving.item.setDataKey(
@@ -1568,10 +1584,13 @@ BX.CRM.Kanban.Grid.prototype = {
 							&& BX.CRM.Kanban.Restriction.Instance.isTodoActivityCreateAvailable()
 						)
 						{
-							item.showPlannerMenu(
-								item.getContainer(),
-								BX.Crm.Activity.TodoEditorMode.UPDATE
-							);
+							setTimeout(() => {
+								item.showPlannerMenu(
+									item.getContainer(),
+									BX.Crm.Activity.TodoEditorMode.UPDATE,
+									true
+								);
+							}, 500);
 						}
 
 						if (data.items && data.items.length > 0)
@@ -1782,6 +1801,13 @@ BX.CRM.Kanban.Grid.prototype = {
 
 				this.resetMultiSelectMode();
 
+				setTimeout(() => {
+					if (this.hasOnlyNotVisibleColumnsWithItems())
+					{
+						this.showHintForNotVisibleItems();
+					}
+				}, 20);
+
 				if (typeof promise !== "undefined")
 				{
 					promise.fulfill();
@@ -1797,6 +1823,137 @@ BX.CRM.Kanban.Grid.prototype = {
 				this.fadeIn();
 			}.bind(this)
 		);
+	},
+
+	handleHintForNotVisibleColumns: function()
+	{
+		if (this.hintForNotVisibleItems || !this.hasOnlyNotVisibleColumnsWithItems())
+		{
+			return;
+		}
+
+		this.showHintForNotVisibleItems();
+	},
+
+	hasOnlyNotVisibleColumnsWithItems: function()
+	{
+		const columns = this.getColumns();
+		let result = false;
+
+		for (let columnIndex = 0; columnIndex < columns.length; columnIndex++)
+		{
+			const column = columns[columnIndex];
+			const isColumnHaveItems = column.items.filter((item) => item.id > -1).length > 0;
+
+			if (!isColumnHaveItems)
+			{
+				continue;
+			}
+
+			if (this.isVisibleColumn(column))
+			{
+				result = false;
+				break;
+			}
+			else
+			{
+				result = true;
+			}
+		}
+
+		return result;
+
+	},
+
+	isVisibleColumn: function(column)
+	{
+		if (!column || !this.layout.gridContainer)
+		{
+			return false;
+		}
+
+		const gridContainerPos = BX.Dom.getPosition(this.layout.gridContainer);
+		const columnPos = BX.Dom.getPosition(column.layout.container);
+
+		return columnPos.left < gridContainerPos.right;
+	},
+
+	showHintForNotVisibleItems: function()
+	{
+		if (this.hintForNotVisibleItems)
+		{
+			return;
+		}
+
+		const entityType = this.getData().entityType;
+
+		const hintTitle = BX.Loc.getMessage(`CRM_GRID_HINT_FOR_NOT_VISIBLE_${entityType}_TITLE`)
+			|| BX.Loc.getMessage(`CRM_GRID_HINT_FOR_NOT_VISIBLE_ELEMENT_TITLE`);
+		const hintText = BX.Loc.getMessage(`CRM_GRID_HINT_FOR_NOT_VISIBLE_${entityType}_TEXT`)
+			|| BX.Loc.getMessage(`CRM_GRID_HINT_FOR_NOT_VISIBLE_ELEMENT_TEXT`);
+
+		this.hintForNotVisibleItems = new BX.UI.Tour.Guide({
+			onEvents: true,
+			simpleMode: true,
+			steps: [
+				{
+					target: '.main-kanban-ear-right',
+					title: hintTitle,
+					text: hintText,
+					position: 'left',
+				},
+			],
+		});
+
+		this.hintForNotVisibleItems.showNextStep()
+		this.adjustHintForNotVisibleItems();
+
+		this.handleHideHintForNotVisibleItems = this.hideHintForNotVisibleItems.bind(this);
+		BX.Event.bind(window, 'scroll', this.handleHideHintForNotVisibleItems);
+		BX.Event.bind(this.layout.gridContainer, 'scroll', this.handleHideHintForNotVisibleItems);
+		BX.addCustomEvent('BX.Main.Filter:apply', this.handleHideHintForNotVisibleItems);
+
+		this.addClassEar();
+	},
+
+	hideHintForNotVisibleItems: function()
+	{
+		if (this.hintForNotVisibleItems)
+		{
+			BX.Event.unbind(this.layout.gridContainer, 'scroll', this.handleHideHintForNotVisibleItems);
+			BX.Event.unbind(window, 'scroll', this.handleHideHintForNotVisibleItems);
+			this.hintForNotVisibleItems.close();
+			this.hintForNotVisibleItems = null;
+		}
+
+	},
+
+	adjustHintForNotVisibleItems: function()
+	{
+		if (!this.hintForNotVisibleItems)
+		{
+			return;
+		}
+
+		const popup = this.hintForNotVisibleItems.getPopup();
+		const bindElementPos = BX.Dom.getPosition(popup.bindElement);
+
+		const {width: popupWidth} = BX.Dom.getPosition(popup.getPopupContainer());
+		const angleHeight = 18;
+		const angleWidth = 13;
+		const angleOffset = 16;
+
+		const newTopPos = bindElementPos.top + (bindElementPos.height / 2) - (angleHeight / 2) - angleOffset + 'px';
+		const newLeftPos = (bindElementPos.left - popupWidth - angleWidth) + 'px';
+
+		BX.Dom.style(popup.getPopupContainer(), 'top', newTopPos);
+		BX.Dom.style(popup.getPopupContainer(), 'left', newLeftPos);
+	},
+
+	adjustLayout: function()
+	{
+		BX.Kanban.Grid.prototype.adjustLayout.apply(this, arguments);
+		this.adjustHintForNotVisibleItems();
 	},
 
 	clearItemMoving: function()

@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Service\Timeline\Item;
 
+use Bitrix\Crm\Service\Timeline\Layout\Common\Logo;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm\Service\Timeline\Item\Interfaces;
 use Bitrix\Crm\Service\Timeline\Item\Mixin;
@@ -15,7 +16,7 @@ abstract class OrderCheckPrintStatus extends Configurable implements Interfaces\
 
 	public function getIconCode(): ?string
 	{
-		return 'check';
+		return Layout\Common\Icon::CHECK;
 	}
 
 	public function getTitle(): ?string
@@ -28,7 +29,9 @@ abstract class OrderCheckPrintStatus extends Configurable implements Interfaces\
 
 	public function getLogo(): ?Layout\Body\Logo
 	{
-		return (new Layout\Body\Logo('check'))->setInCircle();
+		return Logo::getInstance(Logo::LIST_CHECK)
+			->createLogo()
+		;
 	}
 
 	public function getContentBlocks(): ?array

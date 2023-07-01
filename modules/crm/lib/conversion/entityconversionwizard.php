@@ -13,7 +13,7 @@ class EntityConversionWizard
 	public const QUERY_PARAM_SOURCE_ID = 'conv_source_id';
 
 	/** @var EntityConverter|null  */
-	protected $converter = null;
+	public $converter = null;
 	/** @var string  */
 	protected $originUrl = '';
 	/** @var string  */
@@ -152,6 +152,13 @@ class EntityConversionWizard
 		}
 
 		return $url;
+	}
+
+	public static function getQueryParamSource(): array{
+		return [
+			'ENTITY_TYPE_ID' => self::QUERY_PARAM_SOURCE_TYPE_ID,
+			'ENTITY_ID' => self::QUERY_PARAM_SOURCE_ID
+		];
 	}
 
 	/**

@@ -27,7 +27,7 @@ abstract class Dictionary implements \IteratorAggregate, \ArrayAccess, \Countabl
 		}
 	}
 
-	public function getIterator()
+	public function getIterator(): \Traversable
 	{
 		return new \ArrayIterator($this->values);
 	}
@@ -65,7 +65,7 @@ abstract class Dictionary implements \IteratorAggregate, \ArrayAccess, \Countabl
 	/**
 	 * Whether a offset exists
 	 */
-	public function offsetExists($offset)
+	public function offsetExists($offset): bool
 	{
 		return array_key_exists($offset, $this->values);
 	}
@@ -76,6 +76,7 @@ abstract class Dictionary implements \IteratorAggregate, \ArrayAccess, \Countabl
 	 * @param string $offset
 	 * @return mixed
 	 */
+	#[\ReturnTypeWillChange]
 	public function offsetGet($offset)
 	{
 		if (isset($this->values[$offset]) || array_key_exists($offset, $this->values))
@@ -89,7 +90,7 @@ abstract class Dictionary implements \IteratorAggregate, \ArrayAccess, \Countabl
 	/**
 	 * Offset to set
 	 */
-	public function offsetSet($offset, $value)
+	public function offsetSet($offset, $value): void
 	{
 		if($offset === null)
 		{
@@ -105,7 +106,7 @@ abstract class Dictionary implements \IteratorAggregate, \ArrayAccess, \Countabl
 	/**
 	 * Offset to unset
 	 */
-	public function offsetUnset($offset)
+	public function offsetUnset($offset): void
 	{
 		unset($this->values[$offset]);
 		$this->onChange();
@@ -114,7 +115,7 @@ abstract class Dictionary implements \IteratorAggregate, \ArrayAccess, \Countabl
 	/**
 	 * Count elements of an object
 	 */
-	public function count()
+	public function count(): int
 	{
 		return count($this->values);
 	}

@@ -2,9 +2,9 @@
 
 namespace Bitrix\Crm\Timeline;
 
+use Bitrix\Crm\Service;
 use Bitrix\Crm\Timeline\Entity\NoteTable;
 use Bitrix\Main\Loader;
-use Bitrix\Crm\Service;
 
 class TimelineManager
 {
@@ -65,6 +65,16 @@ class TimelineManager
 		if($typeID === TimelineType::LOG_MESSAGE)
 		{
 			return LogMessageController::getInstance();
+		}
+
+		if ($typeID === TimelineType::CALENDAR_SHARING)
+		{
+			return CalendarSharing\Controller::getInstance();
+		}
+
+		if ($typeID === TimelineType::TASK)
+		{
+			return Tasks\Controller::getInstance();
 		}
 
 		if($assocEntityTypeID === \CCrmOwnerType::Activity)
@@ -233,11 +243,30 @@ class TimelineManager
 					false,
 					false,
 					[
-						'ID', 'OWNER_ID', 'OWNER_TYPE_ID', 'TYPE_ID', 'RESPONSIBLE_ID',  'CREATED',
-						'PROVIDER_ID', 'PROVIDER_TYPE_ID', 'PROVIDER_PARAMS',
-						'ASSOCIATED_ENTITY_ID', 'DIRECTION', 'SUBJECT', 'STATUS', 'DEADLINE',
-						'DESCRIPTION', 'DESCRIPTION_TYPE', 'ASSOCIATED_ENTITY_ID',
-						'STORAGE_TYPE_ID', 'STORAGE_ELEMENT_IDS', 'ORIGIN_ID', 'SETTINGS', 'RESULT_MARK'
+						'ID',
+						'OWNER_ID',
+						'OWNER_TYPE_ID',
+						'TYPE_ID',
+						'RESPONSIBLE_ID',
+						'CREATED',
+						'PROVIDER_ID',
+						'PROVIDER_TYPE_ID',
+						'PROVIDER_PARAMS',
+						'PROVIDER_DATA',
+						'ASSOCIATED_ENTITY_ID',
+						'DIRECTION',
+						'SUBJECT',
+						'STATUS',
+						'DEADLINE',
+						'DESCRIPTION',
+						'DESCRIPTION_TYPE',
+						'ASSOCIATED_ENTITY_ID',
+						'STORAGE_TYPE_ID',
+						'STORAGE_ELEMENT_IDS',
+						'ORIGIN_ID',
+						'SETTINGS',
+						'RESULT_MARK',
+						'CALENDAR_EVENT_ID'
 					]
 				);
 				$noteData = [];
@@ -297,8 +326,6 @@ class TimelineManager
 							unset($items[$itemID]);
 						}
 					}
-
-					$items = \Bitrix\Crm\Timeline\Entity\NoteTable::loadForItems($items, NoteTable::NOTE_TYPE_ACTIVITY);
 				}
 
 				$communications = \CCrmActivity::PrepareCommunicationInfos(
@@ -357,7 +384,10 @@ class TimelineManager
 				{
 					$shipment['SHOW_URL'] = Service\Sale\EntityLinkBuilder\EntityLinkBuilder::getInstance()
 						->getShipmentDetailsLink($shipment['ID']);
-					$shipment['PRICE_WITH_CURRENCY'] = \CCrmCurrency::MoneyToString($shipment['PRICE'], $shipment['CURRENCY']);
+					$shipment['PRICE_WITH_CURRENCY'] = \CCrmCurrency::MoneyToString(
+						$shipment['PRICE'] ?? 0.0,
+						$shipment['CURRENCY']
+					);
 					$orderShipmentMap[$shipment['ORDER_ID']][$shipment['ID']] = $shipment;
 				}
 

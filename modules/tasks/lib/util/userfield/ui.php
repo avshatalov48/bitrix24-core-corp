@@ -37,8 +37,12 @@ abstract class UI
 
 	public static function showEdit(array $field, array $parameters = array(), $component = null)
 	{
-		if($field['EDIT_IN_LIST'] === 'Y')
+		if(isset($field['EDIT_IN_LIST']) && $field['EDIT_IN_LIST'] === 'Y')
 		{
+			$parameters['CALLBACK_BEFORE'] = [
+				'openDialog' => 'BX.Tasks.handleOpenCrmDialog',
+				'context' => 'BX.Tasks',
+			];
 			static::showUI('bitrix:system.field.edit', $field, $parameters, $component);
 		}
 		else
@@ -80,12 +84,12 @@ abstract class UI
 
 	private static function showUI($componentName, array $field, array $parameters = array(), $parentComponentInstance = null)
 	{
-		if(!intval($field['ENTITY_VALUE_ID']))
+		if (!(int)($field['ENTITY_VALUE_ID'] ?? null))
 		{
 			$useDefault = false;
-			$valueEmpty = UserField::isValueEmpty($field['VALUE']);
+			$valueEmpty = isset($field['VALUE']) ? UserField::isValueEmpty($field['VALUE']) : true;
 
-			if(($parameters['PREFER_DEFAULT'] || $field['MANDATORY'] == 'Y') && $valueEmpty)
+			if ((($parameters['PREFER_DEFAULT'] ?? null) || (isset($field['MANDATORY']) && $field['MANDATORY'] == 'Y')) && $valueEmpty)
 			{
 				$useDefault = true;
 			}
@@ -94,20 +98,23 @@ abstract class UI
 			$field['ENTITY_VALUE_ID'] = !$useDefault;
 		}
 
-		if(Collection::isA($field['VALUE']))
+		if (isset($field['VALUE']) && Collection::isA($field['VALUE']))
 		{
 			$field['VALUE'] = $field['VALUE']->toArray();
 		}
 
-		$parameters = array_merge($parameters, array(
-			"bVarsFromForm" => false,
-			"arUserField" => $field,
-			"DISABLE_LOCAL_EDIT" => $parameters["PUBLIC_MODE"]
-		));
+		$parameters = array_merge(
+			$parameters,
+			[
+				'bVarsFromForm' => false,
+				'arUserField' => $field,
+				'DISABLE_LOCAL_EDIT' => ($parameters['PUBLIC_MODE'] ?? null)
+			]
+		);
 
 		$GLOBALS['APPLICATION']->IncludeComponent(
 			$componentName,
-			$field["USER_TYPE"]["USER_TYPE_ID"],
+			$field["USER_TYPE"]["USER_TYPE_ID"] ?? '',
 			$parameters,
 			$parentComponentInstance,
 			array("HIDE_ICONS" => "Y")

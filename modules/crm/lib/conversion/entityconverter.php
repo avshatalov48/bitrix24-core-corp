@@ -236,7 +236,10 @@ class EntityConverter
 		return $destinationItem;
 	}
 
-	public function fillDestinationItemWithDataFromSourceItem(Item $destinationItem): void
+	public function fillDestinationItemWithDataFromSourceItem(
+		Item  $destinationItem,
+		array $sourceCollectionFieldNames = []
+	): void
 	{
 		$this->initialize();
 
@@ -263,6 +266,15 @@ class EntityConverter
 			$sourceField = $this->sourceFactory->getFieldsCollection()->getField($mapItem->getSourceField());
 			$dstField = $destinationFactory->getFieldsCollection()->getField($mapItem->getDestinationField());
 
+			if (
+				!empty($sourceCollectionFieldNames)
+				&& (!$sourceField || !$dstField
+					|| !in_array($sourceField->getName(), $sourceCollectionFieldNames, true))
+			)
+			{
+				continue;
+			}
+
 			$sourceValue = $this->sourceItem->get($mapItem->getSourceField());
 
 			//todo move this code to mapper/merger
@@ -278,10 +290,27 @@ class EntityConverter
 					$destinationFactory->getEntityTypeId(),
 					$dstField->getName(),
 					$dstValues,
-					['ENABLE_FILES' => false],
 				);
 
 				$sourceValue = $dstValues[$dstField->getName()] ?? $sourceValue;
+
+				if (is_array($sourceValue) && $dstField->isFileUserField())
+				{
+					$fileUploader = Container::getInstance()->getFileUploader();
+
+					if ($dstField->isMultiple())
+					{
+						foreach ($sourceValue as &$singleFileArray)
+						{
+							$singleFileArray = $fileUploader->saveFileTemporary($dstField, $singleFileArray);
+						}
+						unset($singleFileArray);
+					}
+					else
+					{
+						$sourceValue = $fileUploader->saveFileTemporary($dstField, $sourceValue);
+					}
+				}
 			}
 			//todo new hierarchy of migrators that will polymorphicaly transform field values from source to dst?
 			elseif ($sourceValue instanceof Crm\ProductRowCollection)

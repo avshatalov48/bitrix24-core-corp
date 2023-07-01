@@ -19,14 +19,14 @@ class Helper
 	 */
 	public static function getAllowedUserIds($userId, $permission)
 	{
-		$result = array();
+		$result = [];
 		switch ($permission)
 		{
 			case Permissions::PERMISSION_NONE:
-				$result = array();
+				$result = [];
 				break;
 			case Permissions::PERMISSION_SELF:
-				$result = array($userId);
+				$result = [$userId];
 				break;
 			case Permissions::PERMISSION_DEPARTMENT:
 				$result = self::getUserColleagues($userId);
@@ -53,7 +53,7 @@ class Helper
 	 * @param int $userId Id of the user.
 	 * @return bool
 	 */
-	public static function isAdmin($userId = null)
+	public static function isAdmin($userId = null): bool
 	{
 		global $USER;
 
@@ -83,7 +83,8 @@ class Helper
 		{
 			//Check user group 1 ('Admins')
 			$user = new \CUser();
-			$userGroups = $user->getUserGroup($userId);
+			$userGroups = $user::getUserGroup($userId);
+
 			return in_array(1, $userGroups);
 		}
 	}
@@ -95,9 +96,11 @@ class Helper
 	public static function getUserColleagues($userId)
 	{
 		if(!Loader::includeModule('intranet'))
-			return array();
+		{
+			return [];
+		}
 
-		$colleagues = array();
+		$colleagues = [];
 		$cursor = \CIntranetUtils::getDepartmentColleagues($userId, true);
 		while ($row = $cursor->Fetch())
 		{
@@ -116,7 +119,7 @@ class Helper
 		return $result;
 	}
 
-	public static function isMainMenuEnabled()
+	public static function isMainMenuEnabled(): bool
 	{
 		return (
 			self::isBalanceMenuEnabled() ||
@@ -126,57 +129,58 @@ class Helper
 		);
 	}
 
-	public static function isBalanceMenuEnabled()
+	public static function isBalanceMenuEnabled(): bool
 	{
 		$permissions = Permissions::createWithCurrentUser();
 		return (
-			$permissions->canPerform(Permissions::ENTITY_CALL_DETAIL, Permissions::ACTION_VIEW) ||
-			$permissions->canPerform(Permissions::ENTITY_LINE, Permissions::ACTION_MODIFY)
+			$permissions->canPerform(Permissions::ENTITY_CALL_DETAIL, Permissions::ACTION_VIEW)
+			|| $permissions->canPerform(Permissions::ENTITY_LINE, Permissions::ACTION_MODIFY)
+			|| $permissions->canPerform(Permissions::ENTITY_BALANCE, Permissions::ACTION_MODIFY)
 		);
 	}
 
-	public static function isSettingsMenuEnabled()
+	public static function isSettingsMenuEnabled(): bool
 	{
 		$permissions = Permissions::createWithCurrentUser();
 		return $permissions->canModifySettings();
 	}
 
-	public static function isLinesMenuEnabled()
+	public static function isLinesMenuEnabled(): bool
 	{
 		$permissions = Permissions::createWithCurrentUser();
 		return $permissions->canModifyLines();
 	}
 
-	public static function isUsersMenuEnabled()
+	public static function isUsersMenuEnabled(): bool
 	{
 		$permissions = Permissions::createWithCurrentUser();
 		return $permissions->canPerform(Permissions::ENTITY_USER, Permissions::ACTION_MODIFY);
 	}
 
-	public static function clearMenuCache()
+	public static function clearMenuCache(): void
 	{
 		\Bitrix\Main\Application::getInstance()->getTaggedCache()->clearByTag('bitrix:menu');
 	}
 
-	public static function canCurrentUserPerformCalls()
+	public static function canCurrentUserPerformCalls(): bool
 	{
 		$permissions = Permissions::createWithCurrentUser();
 		return $permissions->canPerform(Permissions::ENTITY_CALL, Permissions::ACTION_PERFORM);
 	}
 
-	public static function canCurrentUserCallFromCrm()
+	public static function canCurrentUserCallFromCrm(): bool
 	{
 		$permissions = Permissions::createWithCurrentUser();
 		return $permissions->canPerform(Permissions::ENTITY_CALL, Permissions::ACTION_PERFORM, Permissions::PERMISSION_CALL_CRM);
 	}
 
-	public static function canCurrentUserPerformAnyCall()
+	public static function canCurrentUserPerformAnyCall(): bool
 	{
 		$permissions = Permissions::createWithCurrentUser();
 		return $permissions->canPerform(Permissions::ENTITY_CALL, Permissions::ACTION_PERFORM, Permissions::PERMISSION_ANY);
 	}
 
-	public static function canUserCallNumber($userId, $number, $country = '')
+	public static function canUserCallNumber($userId, $number, $country = ''): bool
 	{
 		$result = false;
 		$userPermissions = Permissions::createWithUserId($userId);
@@ -197,11 +201,11 @@ class Helper
 				$result = (\CVoxImplantCrmHelper::GetCrmEntity($number, $country) !== false);
 				if(!$result)
 				{
-					$cursor = PhoneTable::getList(array(
-						'filter' => array(
+					$cursor = PhoneTable::getList([
+						'filter' => [
 							'=PHONE_NUMBER' => \CVoxImplantPhone::Normalize($number),
-						)
-					));
+						]
+					]);
 					$result = ($cursor->fetch() !== false);					
 				}
 				break;
@@ -209,10 +213,35 @@ class Helper
 		return $result;
 	}
 
-	public static function canUse()
+	public static function canUpdateBalance(): bool
+	{
+		if (\Bitrix\Voximplant\Limits::isRestOnly())
+		{
+			return false;
+		}
+
+		if (self::isAdmin())
+		{
+			return true;
+		}
+
+		if (!self::canUse())
+		{
+			return false;
+		}
+
+		return
+			Permissions::createWithCurrentUser()
+				->canPerform(Permissions::ENTITY_BALANCE, Permissions::ACTION_MODIFY)
+		;
+	}
+
+	public static function canUse(): bool
 	{
 		if(!Loader::includeModule('bitrix24'))
+		{
 			return true;
+		}
 
 		return Feature::isFeatureEnabled('voximplant_security');
 	}
@@ -221,7 +250,7 @@ class Helper
 	 * Deletes oll roles and permissions and creates default ones instead.
 	 * @return null
 	 */
-	public static function resetToDefault()
+	public static function resetToDefault(): void
 	{
 		Model\RoleTable::truncate();
 		Model\RoleAccessTable::truncate();
@@ -236,21 +265,23 @@ class Helper
 	 * @throws \Bitrix\Main\LoaderException
 	 * @throws \Exception
 	 */
-	public static function createDefaultRoles()
+	public static function createDefaultRoles(): bool
 	{
-		$checkCursor = \Bitrix\Voximplant\Model\RoleTable::getList(array(
+		$checkCursor = \Bitrix\Voximplant\Model\RoleTable::getList([
 			'limit' => 1
-		));
+		]);
 
 		if($checkCursor->fetch())
+		{
 			return false;
+		}
 
-		$roleIds = array();
+		$roleIds = [];
 		foreach (static::getDefaultRoles() as $roleCode => $role)
 		{
-			$addResult = \Bitrix\Voximplant\Model\RoleTable::add(array(
+			$addResult = \Bitrix\Voximplant\Model\RoleTable::add([
 				'NAME' => $role['NAME'],
-			));
+			]);
 
 			$roleId = $addResult->getId();
 			if($roleId)
@@ -264,88 +295,88 @@ class Helper
 		{
 			if(isset($roleIds[$roleAccess['ROLE']]))
 			{
-				Model\RoleAccessTable::add(array(
+				Model\RoleAccessTable::add([
 					'ROLE_ID' => $roleIds[$roleAccess['ROLE']],
 					'ACCESS_CODE' => $roleAccess['ACCESS_CODE']
-				));
+				]);
 			}
 		}
 
 		return true;
 	}
 
-	public static function getDefaultRoles()
+	public static function getDefaultRoles(): array
 	{
-		return $defaultRoles = array(
-			'admin' => array(
+		return [
+			'admin' => [
 				'NAME' => Loc::getMessage('VOXIMPLANT_ROLE_ADMIN'),
-				'PERMISSIONS' => array(
-					'CALL_DETAIL' => array(
+				'PERMISSIONS' => [
+					'CALL_DETAIL' => [
 						'VIEW' => 'X',
-					),
-					'CALL' => array(
+					],
+					'CALL' => [
 						'PERFORM' => 'X'
-					),
-					'CALL_RECORD' => array(
+					],
+					'CALL_RECORD' => [
 						'LISTEN' => 'X'
-					),
-					'USER' => array(
+					],
+					'USER' => [
 						'MODIFY' => 'X'
-					),
-					'SETTINGS' => array(
+					],
+					'SETTINGS' => [
 						'MODIFY' => 'X'
-					),
-					'LINE' => array(
+					],
+					'LINE' => [
 						'MODIFY' => 'X'
-					)
-				)
-			),
-			'chief' => array(
+					]
+				]
+			],
+			'chief' => [
 				'NAME' => Loc::getMessage('VOXIMPLANT_ROLE_CHIEF'),
-				'PERMISSIONS' => array(
-					'CALL_DETAIL' => array(
+				'PERMISSIONS' => [
+					'CALL_DETAIL' => [
 						'VIEW' => 'X',
-					),
-					'CALL' => array(
+					],
+					'CALL' => [
 						'PERFORM' => 'X'
-					),
-					'CALL_RECORD' => array(
+					],
+					'CALL_RECORD' => [
 						'LISTEN' => 'X'
-					),
-				)
-			),
-			'department_head' => array(
+					],
+				]
+			],
+			'department_head' => [
 				'NAME' => Loc::getMessage('VOXIMPLANT_ROLE_DEPARTMENT_HEAD'),
-				'PERMISSIONS' => array(
-					'CALL_DETAIL' => array(
+				'PERMISSIONS' => [
+					'CALL_DETAIL' => [
 						'VIEW' => 'D',
-					),
-					'CALL' => array(
+					],
+					'CALL' => [
 						'PERFORM' => 'X'
-					),
-					'CALL_RECORD' => array(
+					],
+					'CALL_RECORD' => [
 						'LISTEN' => 'D'
-					),
-				)
-			),
-			'manager' => array(
+					],
+				]
+			],
+			'manager' => [
 				'NAME' => Loc::getMessage('VOXIMPLANT_ROLE_MANAGER'),
-				'PERMISSIONS' => array(
-					'CALL_DETAIL' => array(
+				'PERMISSIONS' => [
+					'CALL_DETAIL' => [
 						'VIEW' => 'A',
-					),
-					'CALL' => array(
+					],
+					'CALL' => [
 						'PERFORM' => 'X'
-					),
-					'CALL_RECORD' => array(
+					],
+					'CALL_RECORD' => [
 						'LISTEN' => 'A'
-					),
-				)
-			)
-		);
+					],
+				]
+			]
+		];
 	}
 
-	public static function getDefaultRoleAccess()
+	public static function getDefaultRoleAccess(): array
 	{
 		$result = [];
 

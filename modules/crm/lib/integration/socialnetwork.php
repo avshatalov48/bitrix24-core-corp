@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Integration;
 
+use Bitrix\Crm\Activity\Provider\Tasks\Task;
 use Bitrix\Main\Event;
 use Bitrix\Main\EventResult;
 use Bitrix\Main\Localization\Loc;
@@ -140,21 +141,29 @@ class Socialnetwork
 							[],
 							[
 								'ID' => (int)$eventFields['ENTITY_ID'],
-								'TYPE_ID' => \CCrmActivityType::Task,
 								'CHECK_PERMISSIONS' => 'N',
 							],
 							false,
 							false,
-							[ 'ASSOCIATED_ENTITY_ID' ]
+							['ASSOCIATED_ENTITY_ID', 'TYPE_ID', 'PROVIDER_ID']
 						);
 						if (
 							($activityFields = $res->fetch())
 							&& ((int)$activityFields['ASSOCIATED_ENTITY_ID'] > 0)
 						)
 						{
-							$provider = new \Bitrix\Socialnetwork\Livefeed\TasksTask();
-							$contentEntityType = $provider->getContentTypeId();
-							$contentEntityId = (int)$activityFields['ASSOCIATED_ENTITY_ID'];
+							if (
+								(int)$activityFields['TYPE_ID'] === \CCrmActivityType::Task
+								|| (
+									(int)$activityFields['TYPE_ID'] === \CCrmActivityType::Provider
+									&& $activityFields['PROVIDER_ID'] === Task::getId()
+								)
+							)
+							{
+								$provider = new \Bitrix\Socialnetwork\Livefeed\TasksTask();
+								$contentEntityType = $provider->getContentTypeId();
+								$contentEntityId = (int)$activityFields['ASSOCIATED_ENTITY_ID'];
+							}
 						}
 					}
 

@@ -36,7 +36,7 @@ final class CTaskTimerManager
 			return;
 		}
 
-		if (($arFields['PAUSED'] === 'Y'))
+		if (($arFields['PAUSED'] ?? null) === 'Y')
 		{
 			$needStopTimer = true;
 		}
@@ -282,8 +282,8 @@ final class CTaskTimerManager
 		$dateFormat = Date::convertFormatToPhp(\CSite::GetDateFormat());
 		$userOffset = User::getTimeZoneOffset($this->userId);
 
-		$dateStart = date($dateFormat, $timer['TIMER_STARTED_AT'] + $userOffset);
-		$dateStop = date($dateFormat, $timer['TIMER_STARTED_AT'] + $timer['TIMER_ACCUMULATOR'] + $userOffset);
+		$dateStart = date($dateFormat, ($timer['TIMER_STARTED_AT'] ?? null) + $userOffset);
+		$dateStop = date($dateFormat, ($timer['TIMER_STARTED_AT'] ?? null) + ($timer['TIMER_ACCUMULATOR'] ?? null) + $userOffset);
 
 		$this->cachedLastTimer = null;
 
@@ -384,12 +384,12 @@ final class CTaskTimerManager
 
 
 	// prevent __wakeup of object
-	private function __wakeup()
+	public function __wakeup()
 	{
 	}
 
 	// prevent __sleep of object
-	private function __sleep()
+	public function __sleep()
 	{
 	}
 

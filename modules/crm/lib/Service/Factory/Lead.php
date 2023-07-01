@@ -278,7 +278,9 @@ final class Lead extends Service\Factory
 			],
 			Item::FIELD_NAME_COMMENTS => [
 				'TYPE' => Field::TYPE_TEXT,
-				'VALUE_TYPE' => Field::VALUE_TYPE_HTML,
+				'SETTINGS' => [
+					'isFlexibleContentType' => true,
+				],
 			],
 			Item::FIELD_NAME_HAS_PHONE => [
 				'TYPE' => Field::TYPE_BOOLEAN,
@@ -395,6 +397,11 @@ final class Lead extends Service\Factory
 				'TYPE' => Field::TYPE_USER,
 				'ATTRIBUTES' => [\CCrmFieldInfoAttr::Multiple],
 				'CLASS' => Field\Observers::class,
+			],
+			Item::FIELD_NAME_FM => [
+				'TYPE' => Field::TYPE_CRM_MULTIFIELD,
+				'ATTRIBUTES' => [\CCrmFieldInfoAttr::Multiple],
+				'CLASS' => Field\Multifield::class,
 			],
 		];
 	}
@@ -610,6 +617,11 @@ final class Lead extends Service\Factory
 	}
 
 	public function isCountersEnabled(): bool
+	{
+		return true;
+	}
+
+	public function isSmartActivityNotificationSupported(): bool
 	{
 		return true;
 	}

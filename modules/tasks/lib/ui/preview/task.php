@@ -96,6 +96,65 @@ class Task
 		return $attach;
 	}
 
+	public static function getImRich(array $params)
+	{
+		if (!Loader::includeModule('im'))
+		{
+			return false;
+		}
+
+		if (!class_exists('\Bitrix\Im\V2\Entity\Url\RichData'))
+		{
+			return false;
+		}
+
+		$taskId = (int)$params['taskId'];
+		if (!$taskId)
+		{
+			return false;
+		}
+
+		$task = new \CTaskItem($taskId, static::getUser()->getId());
+		if (!$task)
+		{
+			return false;
+		}
+
+		try
+		{
+			$select = ['ID', 'TITLE', 'DESCRIPTION', 'RESPONSIBLE_ID', 'CREATED_BY', 'AUDITORS', 'ACCOMPLICES'];
+			$taskData = $task->getData(false, ['select' => $select], false);
+		}
+		catch (\TasksException $exception)
+		{
+			return false;
+		}
+
+		$membersIds = array_merge(
+			[(int)$taskData['CREATED_BY']],
+			[(int)$taskData['RESPONSIBLE_ID']],
+			array_map(static fn ($id) => (int)$id, $taskData['AUDITORS'] ?? []),
+			array_map(static fn ($id) => (int)$id, $taskData['ACCOMPLICES'] ?? [])
+		);
+		$membersIds = array_values(array_unique($membersIds));
+
+		$richData = new \Bitrix\Im\V2\Entity\Url\RichData();
+		$link = \CTaskNotifications::getNotificationPath(
+			['ID' => $taskData['RESPONSIBLE_ID']],
+			$taskData['ID']
+		);
+
+		$richData
+			->setType(\Bitrix\Im\V2\Entity\Url\RichData::TASKS_TYPE)
+			->setName(\CTextParser::clearAllTags($taskData['TITLE']))
+			->setDescription(\CTextParser::clearAllTags($taskData['DESCRIPTION']))
+			->setLink($link)
+			->setAllowedUsers($membersIds)
+		;
+
+		return $richData;
+	}
+
 	protected static function getImAttachGrid(array $taskData): array
 	{
 		$grid = [];
@@ -114,7 +173,7 @@ class Task
 
 		$grid[] = [
 			'NAME' => Loc::getMessage('TASK_PREVIEW_FIELD_ASSIGNER') . ':',
-			'VALUE' => htmlspecialcharsback(\Bitrix\Im\User::getInstance($taskData['CREATED_BY'])->getFullName()),
+			'VALUE' => \Bitrix\Im\User::getInstance($taskData['CREATED_BY'])->getFullName(false),
 			'USER_ID' => $taskData['CREATED_BY'],
 			'DISPLAY' => $display,
 			'WIDTH' => $columnWidth,
@@ -122,7 +181,7 @@ class Task
 
 		$grid[] = [
 			'NAME' => Loc::getMessage('TASK_PREVIEW_FIELD_RESPONSIBLE') . ':',
-			'VALUE' => htmlspecialcharsback(\Bitrix\Im\User::getInstance($taskData['RESPONSIBLE_ID'])->getFullName()),
+			'VALUE' => \Bitrix\Im\User::getInstance($taskData['RESPONSIBLE_ID'])->getFullName(false),
 			'USER_ID' => $taskData['RESPONSIBLE_ID'],
 			'DISPLAY' => $display,
 			'WIDTH' => $columnWidth,

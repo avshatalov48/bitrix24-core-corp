@@ -70,15 +70,7 @@ $arResult['USE_SYMBOLIC_ID'] = (count($supportedTypes) > 1);
 
 $arResult['LIST_PREFIXES'] = array_flip(ElementType::getEntityTypeNames());
 
-$arResult['SELECTOR_ENTITY_TYPES'] = [
-	\CCrmOwnerType::DealName => 'deals',
-	\CCrmOwnerType::ContactName => 'contacts',
-	\CCrmOwnerType::CompanyName => 'companies',
-	\CCrmOwnerType::LeadName => 'leads',
-	\CCrmOwnerType::OrderName => 'orders',
-	\CCrmOwnerType::CommonDynamicName => 'dynamics',
-	\CCrmOwnerType::SmartInvoiceName => 'smart_invoices',
-];
+$arResult['SELECTOR_ENTITY_TYPES'] = ElementType::getSelectorEntityTypes();
 
 foreach($arResult['value'] as $key => $value)
 {

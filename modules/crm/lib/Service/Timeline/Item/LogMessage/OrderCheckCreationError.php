@@ -23,7 +23,7 @@ class OrderCheckCreationError extends LogMessage
 
 	public function getIconCode(): ?string
 	{
-		return 'check';
+		return Layout\Common\Icon::CHECK;
 	}
 
 	public function getTags(): ?array

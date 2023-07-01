@@ -1,6 +1,10 @@
 <?php
 
 return [
-	'utils',
-	'alert',
+	'extensions' => [
+		'utils/function',
+		'utils/object',
+		'utils/file',
+		'alert',
+	],
 ];

@@ -20,10 +20,10 @@ class RpaAutomationEditRobotComponent extends Rpa\Components\Base
 	public function onPrepareComponentParams($arParams)
 	{
 		$arParams["typeId"] = (int)$arParams["typeId"];
-		static::fillParameterFromRequest('stage', $arParams);
-		static::fillParameterFromRequest('robotType', $arParams);
-		static::fillParameterFromRequest('robotName', $arParams);
-		$arParams["SET_TITLE"] = ($arParams["SET_TITLE"] === "N" ? "N" : "Y");
+		$this->fillParameterFromRequest('stage', $arParams);
+		$this->fillParameterFromRequest('robotType', $arParams);
+		$this->fillParameterFromRequest('robotName', $arParams);
+		$arParams["SET_TITLE"] = (isset($arParams["SET_TITLE"]) && $arParams["SET_TITLE"] === "N" ? "N" : "Y");
 
 		return $arParams;
 	}
@@ -75,7 +75,7 @@ class RpaAutomationEditRobotComponent extends Rpa\Components\Base
 			return $this->showError('Robot dialog not supported in current context.');
 		}
 
-		if (is_array($this->arParams['~CONTEXT']))
+		if (isset($this->arParams['~CONTEXT']) && is_array($this->arParams['~CONTEXT']))
 		{
 			$dialog->setContext($this->arParams['~CONTEXT']);
 		}

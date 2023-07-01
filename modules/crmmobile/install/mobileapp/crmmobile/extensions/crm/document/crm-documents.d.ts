@@ -1,7 +1,7 @@
 type CrmDocumentProps = {
 	id: string,
 	title: string,
-	publicUrl: string|null,
+	publicUrl: string | null,
 	publicUrlView?: {
 		time: string,
 	},
@@ -11,4 +11,9 @@ type CrmDocumentProps = {
 	pullTag: string,
 	createTime: string,
 	updateTime: string,
+	isTransformationError: boolean,
+	qrCodeEnabled: boolean,
+	changeQrCodeDisabledReason?: string,
+	stampsEnabled: boolean,
+	changeStampsEnabled: boolean,
 };

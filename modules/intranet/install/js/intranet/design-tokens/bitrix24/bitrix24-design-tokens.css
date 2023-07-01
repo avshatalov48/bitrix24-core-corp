@@ -1,6 +1,6 @@
 :root, body {
 	--popup-window-border-radius: var(--ui-border-radius-md);
-	--popup-window-content-border-radius: var(--ui-border-radius-xs);
+	--popup-window-content-border-radius: var(--ui-border-radius-3xs);
 	--popup-window-button-border-radius: var(--ui-border-radius-2xs);
 	--mib-radius: var(--ui-border-radius-md);
 	--ui-btn-radius: var(--ui-border-radius-2xs);

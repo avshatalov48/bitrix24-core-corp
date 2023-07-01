@@ -67,7 +67,7 @@ if(!empty($_GET['document_action']) && !empty($_GET['service']))
 	}
 }
 
-$oauthToken = $_GET['auth'];
+$oauthToken = $_GET['auth'] ?? null;
 if($oauthToken && \Bitrix\Main\Loader::includeModule('rest'))
 {
 	$authResult = null;
@@ -83,5 +83,5 @@ if($oauthToken && \Bitrix\Main\Loader::includeModule('rest'))
 
 $ufController = new Bitrix\Disk\Uf\Controller();
 $ufController
-	->setActionName($_GET['action'])
+	->setActionName($_GET['action'] ?? '')
 	->exec();

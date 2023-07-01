@@ -133,7 +133,7 @@ export default class PromoPopup {
 		`;
 
 		MessageBox.show({
-			title: this.canEdit()? Loc.getMessage('JS_DISK_ONLYOFFICE_PROMO_EDIT_POPUP_TITLE') : Loc.getMessage('JS_DISK_ONLYOFFICE_PROMO_VIEW_POPUP_TITLE'),
+			title: this.canEdit()? Loc.getMessage('JS_DISK_ONLYOFFICE_PROMO_EDIT_POPUP_TITLE') : Loc.getMessage('JS_DISK_ONLYOFFICE_PROMO_VIEW_POPUP_TITLE_MSGVER_1'),
 			message: content,
 			modal: true,
 			buttons: MessageBoxButtons.OK,

@@ -89,7 +89,7 @@ jn.define('layout/ui/detail-card/tabs/editor', (require, exports, module) => {
 		getEntityEditor(editorProps, refresh = false)
 		{
 			const loadFromModel = refresh || !this.editorRef || this.editorRef.getEntityId() !== editorProps.ENTITY_ID;
-			const { payload, onScroll } = this.props;
+			const { payload, onScroll, externalFloatingButton } = this.props;
 
 			return View(
 				{
@@ -106,7 +106,8 @@ jn.define('layout/ui/detail-card/tabs/editor', (require, exports, module) => {
 					componentId: 'detail-card',
 					refCallback: this.refCallback,
 					layout: this.layout,
-					payload
+					showBottomPadding: externalFloatingButton,
+					payload,
 				}),
 			);
 		}

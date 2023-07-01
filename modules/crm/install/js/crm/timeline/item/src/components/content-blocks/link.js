@@ -4,6 +4,11 @@ export default {
 	props: {
 		text: String,
 		action: Object,
+		title: {
+			type: String,
+			required: false,
+			default: '',
+		},
 		bold: {
 			type: Boolean,
 			required: false,
@@ -24,6 +29,28 @@ export default {
 			}
 
 			return null;
+		},
+		linkAttrs(): Object
+		{
+			if (!this.action)
+			{
+				return {};
+			}
+			const action = new Action(this.action);
+			if (!action.isRedirect())
+			{
+				return {};
+			}
+			const attrs = {
+				'href': action.getValue(),
+			};
+			const target = action.getActionParam('target');
+			if (target)
+			{
+				attrs.target = target;
+			}
+
+			return attrs;
 		},
 
 		className() {
@@ -48,8 +75,9 @@ export default {
 		`
 			<a
 				v-if="href"
-				:href="href"
+				v-bind="linkAttrs"
 				:class="className"
+				:title="title"
 			>
 			{{text}}
 			</a>
@@ -57,6 +85,7 @@ export default {
 				v-else
 				@click="executeAction"
 				:class="className"
+				:title="title"
 			>
 				{{text}}
 			</span>

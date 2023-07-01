@@ -5,7 +5,6 @@ namespace Bitrix\Crm\Entity\Compatibility\Adapter;
 use Bitrix\Crm\Entity\Compatibility\Adapter;
 use Bitrix\Crm\EntityAddress;
 use Bitrix\Crm\EntityAddressType;
-use Bitrix\Crm\Field;
 use Bitrix\Crm\Item;
 use Bitrix\Main\Error;
 use Bitrix\Main\Result;
@@ -23,36 +22,6 @@ class Address extends Adapter
 		'COUNTRY_CODE' => 'ADDRESS_COUNTRY_CODE',
 		'LOC_ADDR_ID' => 'ADDRESS_LOC_ADDR_ID',
 		'LOC_ADDR' => 'ADDRESS_LOC_ADDR',
-	];
-
-	private const COMPATIBLE_FIELDS_INFO = [
-		'ADDRESS' => [
-			'TYPE' => Field::TYPE_STRING,
-		],
-		'ADDRESS_2' => [
-			'TYPE' => Field::TYPE_STRING,
-		],
-		'ADDRESS_CITY' => [
-			'TYPE' => Field::TYPE_STRING,
-		],
-		'ADDRESS_POSTAL_CODE' => [
-			'TYPE' => Field::TYPE_STRING,
-		],
-		'ADDRESS_REGION' => [
-			'TYPE' => Field::TYPE_STRING,
-		],
-		'ADDRESS_PROVINCE' => [
-			'TYPE' => Field::TYPE_STRING,
-		],
-		'ADDRESS_COUNTRY' => [
-			'TYPE' => Field::TYPE_STRING,
-		],
-		'ADDRESS_COUNTRY_CODE' => [
-			'TYPE' => Field::TYPE_STRING,
-		],
-		'ADDRESS_LOC_ADDR_ID' => [
-			'TYPE' => Field::TYPE_INTEGER,
-		],
 	];
 
 	/** @var int */
@@ -81,24 +50,6 @@ class Address extends Adapter
 		$this->entityAddress = $address;
 
 		return $this;
-	}
-
-	protected function doGetFieldsInfo(): array
-	{
-		$fieldsInfo = [];
-
-		foreach (self::COMPATIBLE_FIELDS_INFO as $compatibleFieldName => $singleFieldInfo)
-		{
-			$fieldsInfo[$this->resolvePrefix() . $compatibleFieldName] = $singleFieldInfo;
-		}
-
-		if ($this->addressType === EntityAddressType::Registered)
-		{
-			// alias for REG_ADDRESS. Not used in CUD
-			$fieldsInfo['ADDRESS_LEGAL'] = self::COMPATIBLE_FIELDS_INFO['ADDRESS'];
-		}
-
-		return $fieldsInfo;
 	}
 
 	final protected function doPerformAdd(array &$fields, array $compatibleOptions): Result

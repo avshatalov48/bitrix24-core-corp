@@ -15,6 +15,7 @@ namespace Bitrix\Tasks\Manager\Task;
 use Bitrix\Tasks\Integration;
 use \Bitrix\Tasks\Util\Error\Collection;
 use Bitrix\Tasks\Integration\SocialServices;
+use Bitrix\Tasks\Util\Type;
 
 abstract class Member extends \Bitrix\Tasks\Manager
 {
@@ -28,24 +29,24 @@ abstract class Member extends \Bitrix\Tasks\Manager
 		$from = static::getCode(true);
 		$to = static::getLegacyFieldName();
 
-		if(array_key_exists($from, $data))
+		if (array_key_exists($from, $data))
 		{
-			if(!is_array($data[$to]))
+			if (!is_array($data[$to] ?? null))
 			{
-				$data[$to] = array();
+				$data[$to] = [];
 			}
 
-			if(static::getIsMultiple())
+			if (static::getIsMultiple())
 			{
-				$items = \Bitrix\Tasks\Util\Type::normalizeArray($data[$from]);
-				foreach($items as $item)
+				$items = Type::normalizeArray($data[$from]);
+				foreach ($items as $item)
 				{
-					$data[$to][] = intval($item['ID']);
+					$data[$to][] = (int)$item['ID'];
 				}
 			}
 			else
 			{
-				$data[$to] = intval($data[$from]['ID']);
+				$data[$to] = (int)$data[$from]['ID'];
 			}
 		}
 	}
@@ -57,7 +58,7 @@ abstract class Member extends \Bitrix\Tasks\Manager
 
 		if(static::getIsMultiple())
 		{
-			$items = \Bitrix\Tasks\Util\Type::normalizeArray($data[$from]);
+			$items = (isset($data[$from]) && is_array($data[$from])) ? Type::normalizeArray($data[$from]) : [];
 			foreach($items as $item)
 			{
 				$item = intval($item);
@@ -69,7 +70,7 @@ abstract class Member extends \Bitrix\Tasks\Manager
 		}
 		else
 		{
-			$item = intval($data[$from]);
+			$item = isset($data[$from]) ? intval($data[$from]) : 0;
 			if($item > 0)
 			{
 				$data[$to] = array('ID' => $item);
@@ -88,7 +89,7 @@ abstract class Member extends \Bitrix\Tasks\Manager
 
 		if(static::getIsMultiple())
 		{
-			$data[$code] = \Bitrix\Tasks\Util\Type::normalizeArray($data[$code]);
+			$data[$code] = (isset($data[$code]) && is_array($data[$code])) ? Type::normalizeArray($data[$code]) : [];
 			foreach($data[$code] as $k => $item)
 			{
 				if(isset($knownMembers[$item['ID']]))

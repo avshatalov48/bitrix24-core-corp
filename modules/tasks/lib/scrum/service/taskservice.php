@@ -874,7 +874,7 @@ class TaskService implements Errorable
 			$groupId = (int) $taskInfo['GROUP_ID'];
 
 			$attachedFilesCount = (
-				is_array($taskInfo['UF_TASK_WEBDAV_FILES'])
+				is_array($taskInfo['UF_TASK_WEBDAV_FILES'] ?? null)
 				? count($taskInfo['UF_TASK_WEBDAV_FILES'])
 				: 0
 			);
@@ -932,7 +932,7 @@ class TaskService implements Errorable
 		{
 			if (in_array($tag['TASK_ID'], $taskIds))
 			{
-				if (!is_array($tags[$tag['TASK_ID']]))
+				if (!is_array($tags[$tag['TASK_ID']] ?? null))
 				{
 					$tags[$tag['TASK_ID']] = [];
 				}
@@ -976,8 +976,11 @@ class TaskService implements Errorable
 		$checkListCounts = $this->getChecklistCounts($taskIds);
 		foreach ($checkListCounts as $taskId => $checkListCount)
 		{
-			$itemsData[$taskId]['checkListComplete'] = (int) $checkListCount['complete'];
-			$itemsData[$taskId]['checkListAll'] = (int) ($checkListCount['complete'] + $checkListCount['progress']);
+			$itemsData[$taskId]['checkListComplete'] = (int) ($checkListCount['complete'] ?? null);
+			$itemsData[$taskId]['checkListAll'] = (
+				(int) ($checkListCount['complete'] ?? null)
+				+ (int) ($checkListCount['progress'] ?? null)
+			);
 		}
 
 		$tasksCounters = $this->getTasksCounters($taskIds);
@@ -1014,253 +1017,277 @@ class TaskService implements Errorable
 
 	public static function onAfterTaskAdd(int $taskId, array &$fields)
 	{
-		try
+		if ($fields['GROUP_ID'] && Loader::includeModule('socialnetwork'))
 		{
-			if ($fields['GROUP_ID'] && Loader::includeModule('socialnetwork'))
+			$currentGroupId = (int) $fields['GROUP_ID'];
+			$group = Workgroup::getById($currentGroupId);
+			if ($group && $group->isScrumProject())
 			{
-				$currentGroupId = (int) $fields['GROUP_ID'];
-				$group = Workgroup::getById($currentGroupId);
-				if ($group && $group->isScrumProject())
+				self::createScrumItem($taskId, $fields);
+
+				$parentTaskId = $fields['PARENT_ID'] ?? null;
+				if ($parentTaskId)
 				{
-					self::createScrumItem($taskId, $fields);
-
-					$parentTaskId = $fields['PARENT_ID'];
-					if ($parentTaskId)
-					{
-						$itemService = new ItemService();
-						$parentItem = $itemService->getItemBySourceId($parentTaskId);
-						if (!$parentItem->isEmpty())
-						{
-							(new CacheService($parentItem->getSourceId(), CacheService::ITEM_TASKS))->clean();
-
-							$pushService = (Loader::includeModule('pull') ? new PushService() : null);
-
-							$entityService = new EntityService();
-							$parentEntity = $entityService->getEntityById($parentItem->getEntityId());
-							if ($parentEntity->getGroupId() === $currentGroupId)
-							{
-								$parentItem->getInfo()->setVisibilitySubtasks('Y');
-							}
-
-							$itemService->changeItem($parentItem, $pushService);
-						}
-					}
-
-					$hasLinks = (isset($fields['DEPENDS_ON']) && is_array($fields['DEPENDS_ON']));
-					if ($hasLinks)
-					{
-						$taskService = new TaskService(Util\User::getId());
-
-						foreach ($fields['DEPENDS_ON'] as $linkedTaskId)
-						{
-							$taskService->updateTaskLinks($linkedTaskId, $taskId);
-						}
-					}
-				}
-			}
-		}
-		catch (\Exception $exception) {}
-	}
-
-	public static function onAfterTaskUpdate(int $taskId, array &$fields, array &$previousFields)
-	{
-		try
-		{
-			$currentGroupId = (int) $previousFields['GROUP_ID'];
-
-			$isScrumTaskUpdated = false;
-			if (Loader::includeModule('socialnetwork'))
-			{
-				$currentGroupId = (int) ($fields['GROUP_ID'] > 0
-					? $fields['GROUP_ID']
-					: $previousFields['GROUP_ID']
-				);
-				$group = Workgroup::getById($currentGroupId);
-				if ($group && $group->isScrumProject())
-				{
-					$isScrumTaskUpdated = true;
-				}
-			}
-			if (!$isScrumTaskUpdated)
-			{
-				return;
-			}
-
-			(new CacheService($taskId, CacheService::ITEM_TASKS))->clean();
-
-			$isGroupUpdateAction = isset($fields['GROUP_ID']);
-			if ($isGroupUpdateAction)
-			{
-				if ($fields['GROUP_ID'] > 0)
-				{
-					$oldGroupId = (int)$previousFields['GROUP_ID'];
-					$oldParentId = (int)$previousFields['PARENT_ID'];
-					if ($oldGroupId && $fields['GROUP_ID'] != $oldGroupId)
-					{
-						$previousFieldsPart = ['GROUP_ID' => $fields['GROUP_ID']];
-						if ($oldParentId && $fields['PARENT_ID'] && $fields['PARENT_ID'] != $oldParentId)
-						{
-							$previousFieldsPart['PARENT_ID'] = $fields['PARENT_ID'];
-						}
-
-						self::updateScrumItem($taskId, array_merge($previousFields, $previousFieldsPart));
-					}
-					if (!$oldGroupId)
-					{
-						self::createScrumItem($taskId, $fields, $previousFields);
-					}
-				}
-				else
-				{
-					self::deleteScrumItem($taskId);
-				}
-			}
-
-			$hasLinks = (isset($fields['DEPENDS_ON']) && is_array($fields['DEPENDS_ON']));
-			$hasPrevLinks = (isset($previousFields['DEPENDS_ON']) && is_array($previousFields['DEPENDS_ON']));
-			if ($hasLinks)
-			{
-				$taskService = new TaskService(Util\User::getId());
-
-				foreach ($fields['DEPENDS_ON'] as $linkedTaskId)
-				{
-					$taskService->updateTaskLinks($linkedTaskId, $taskId);
-				}
-
-				if ($hasPrevLinks)
-				{
-					foreach (array_diff($previousFields['DEPENDS_ON'], $fields['DEPENDS_ON']) as $linkedTaskId)
-					{
-						$taskDependence = new \CTaskDependence();
-
-						$taskDependence->delete($linkedTaskId, $taskId);
-					}
-				}
-			}
-
-			$isScrumFieldsUpdated = (
-				(isset($fields['TITLE']) && $fields['TITLE'] !== $previousFields['TITLE'])
-				|| (isset($fields['TAGS']))
-				|| (isset($fields['RESPONSIBLE_ID']) && $fields['RESPONSIBLE_ID'] != $previousFields['RESPONSIBLE_ID'])
-				|| (
-					isset($fields['UF_TASK_WEBDAV_FILES'])
-					&& (array_filter($fields['UF_TASK_WEBDAV_FILES']) != $previousFields['UF_TASK_WEBDAV_FILES'])
-				)
-			);
-			$isCompleteAction = (
-				isset($fields['STATUS']) && $fields['STATUS'] == \CTasks::STATE_COMPLETED
-				&& (isset($previousFields['STATUS']) && $previousFields['STATUS'] != \CTasks::STATE_COMPLETED)
-			);
-
-			$isRenewAction = (
-				(isset($fields['STATUS']) && $fields['STATUS'] == \CTasks::STATE_PENDING)
-				&& (
-					isset($previousFields['STATUS'])
-					&& (
-						$previousFields['STATUS'] == \CTasks::STATE_COMPLETED
-						|| $previousFields['STATUS'] == \CTasks::STATE_SUPPOSEDLY_COMPLETED
-					)
-				)
-			);
-
-			$isEpicChangeAction = (isset($fields['EPIC']) && $fields['EPIC'] !== $previousFields['EPIC']);
-			if ($isEpicChangeAction)
-			{
-				$itemService = new ItemService();
-				$pushService = (Loader::includeModule('pull') ? new PushService() : null);
-
-				$scrumItem = $itemService->getItemBySourceId($taskId);
-				$scrumItem->setEpicId($fields['EPIC']);
-
-				$itemService->changeItem($scrumItem, $pushService);
-			}
-
-			$isParentChangeAction =
-				isset($fields['PARENT_ID'])
-				&& $fields['PARENT_ID'] != $previousFields['PARENT_ID']
-			;
-			if ($isParentChangeAction)
-			{
-				$itemService = new ItemService();
-				$pushService = (Loader::includeModule('pull') ? new PushService() : null);
-
-				$parentId = (int) $fields['PARENT_ID'];
-				$oldParentId = (int) $previousFields['PARENT_ID'];
-				if ($oldParentId)
-				{
-					$parentItem = $itemService->getItemBySourceId($oldParentId);
-					if (!$parentItem->isEmpty())
-					{
-						$itemService->changeItem($parentItem, $pushService);
-
-						(new CacheService($parentItem->getSourceId(), CacheService::ITEM_TASKS))->clean();
-					}
-				}
-				if ($parentId)
-				{
-					$parentItem = $itemService->getItemBySourceId($parentId);
-					if (!$parentItem->isEmpty())
-					{
-						$itemService->changeItem($parentItem, $pushService);
-
-						(new CacheService($parentItem->getSourceId(), CacheService::ITEM_TASKS))->clean();
-					}
-				}
-
-				$itemService->changeItem($itemService->getItemBySourceId($taskId), $pushService);
-			}
-
-			if (($isScrumFieldsUpdated || $isCompleteAction || $isRenewAction) && !$isParentChangeAction)
-			{
-				$itemService = new ItemService();
-				$pushService = (Loader::includeModule('pull') ? new PushService() : null);
-				$itemService->changeItem($itemService->getItemBySourceId($taskId), $pushService);
-			}
-
-			if ($isRenewAction)
-			{
-				$parentId = (int) $previousFields['PARENT_ID'];
-				if ($parentId && self::isTaskInActiveSprint($parentId, $currentGroupId))
-				{
-					if (!self::isTaskInActiveSprint($taskId, $currentGroupId))
-					{
-						self::moveTaskToActiveSprint($taskId, $currentGroupId);
-					}
-
 					$itemService = new ItemService();
-
-					$item = $itemService->getItemBySourceId($taskId);
-					$parentItem = $itemService->getItemBySourceId($parentId);
-					if (!$item->isEmpty() && !$parentItem->isEmpty())
+					$parentItem = $itemService->getItemBySourceId($parentTaskId);
+					if (!$parentItem->isEmpty())
 					{
+						(new CacheService($parentItem->getSourceId(), CacheService::ITEM_TASKS))->clean();
+
+						$pushService = (Loader::includeModule('pull') ? new PushService() : null);
+
 						$entityService = new EntityService();
 						$parentEntity = $entityService->getEntityById($parentItem->getEntityId());
 						if ($parentEntity->getGroupId() === $currentGroupId)
 						{
-							$kanbanService = new KanbanService();
-							if ($kanbanService->isTaskInFinishStatus($parentEntity->getId(), $taskId))
-							{
-								$kanbanService->addTaskToNewStatus($parentEntity->getId(), $taskId);
-							}
-
 							$parentItem->getInfo()->setVisibilitySubtasks('Y');
-
-							$itemService->changeItem($parentItem);
 						}
+
+						$itemService->changeItem($parentItem, $pushService);
 					}
 				}
-				else
+
+				$hasLinks = (isset($fields['DEPENDS_ON']) && is_array($fields['DEPENDS_ON']));
+				if ($hasLinks)
 				{
-					self::moveTaskToBacklog($taskId, $currentGroupId);
+					$taskService = new TaskService(Util\User::getId());
+
+					foreach ($fields['DEPENDS_ON'] as $linkedTaskId)
+					{
+						$taskService->updateTaskLinks($linkedTaskId, $taskId);
+					}
+				}
+			}
+		}
+	}
+
+	public static function onAfterTaskUpdate(int $taskId, array &$fields, array &$previousFields)
+	{
+		if (!Loader::includeModule('socialnetwork'))
+		{
+			return;
+		}
+
+		$newGroupId = (int) ($fields['GROUP_ID'] ?? null);
+		$previousGroupId = (int) ($previousFields['GROUP_ID'] ?? null);
+
+		$isGroupUpdateAction = ($newGroupId > 0 && $newGroupId !== $previousGroupId);
+
+		if ($isGroupUpdateAction)
+		{
+			$newGroupIsScrum = false;
+			$newGroup = Workgroup::getById($newGroupId);
+			if ($newGroup && $newGroup->isScrumProject())
+			{
+				$newGroupIsScrum = true;
+			}
+
+			$previousGroupIsScrum = false;
+			$previousGroup = Workgroup::getById($previousGroupId);
+			if ($previousGroup && $previousGroup->isScrumProject())
+			{
+				$previousGroupIsScrum = true;
+			}
+
+			if (!$newGroupIsScrum)
+			{
+				if ($previousGroupIsScrum)
+				{
+					(new CacheService($taskId, CacheService::ITEM_TASKS))->clean();
+
+					self::deleteScrumItem($taskId);
+				}
+
+				return;
+			}
+		}
+
+		$currentGroupId = $newGroupId ?: $previousGroupId;
+
+		$groupIsScrum = false;
+		$group = Workgroup::getById($currentGroupId);
+		if ($group && $group->isScrumProject())
+		{
+			$groupIsScrum = true;
+		}
+		if (!$groupIsScrum)
+		{
+			return;
+		}
+
+		$newParentId = (int) ($fields['PARENT_ID'] ?? null);
+		$oldParentId = (int) ($previousFields['PARENT_ID'] ?? null);
+
+		if ($isGroupUpdateAction)
+		{
+			$itemService = new ItemService();
+			$scrumItem = $itemService->getItemBySourceId($taskId);
+			if ($scrumItem->isEmpty())
+			{
+				self::createScrumItem($taskId, $fields, $previousFields);
+			}
+			else
+			{
+				$previousFieldsPart = [];
+				if ($previousGroupId && $newGroupId && $newGroupId !== $previousGroupId)
+				{
+					$previousFieldsPart = ['GROUP_ID' => $newGroupId];
+				}
+				if ($oldParentId && $newParentId && $newParentId !== $oldParentId)
+				{
+					$previousFieldsPart['PARENT_ID'] = $newParentId;
+				}
+
+				self::updateScrumItem($taskId, array_merge($previousFields, $previousFieldsPart));
+			}
+		}
+
+		$hasLinks = (isset($fields['DEPENDS_ON']) && is_array($fields['DEPENDS_ON']));
+		$hasPrevLinks = (isset($previousFields['DEPENDS_ON']) && is_array($previousFields['DEPENDS_ON']));
+		if ($hasLinks)
+		{
+			$taskService = new TaskService(Util\User::getId());
+
+			foreach ($fields['DEPENDS_ON'] as $linkedTaskId)
+			{
+				$taskService->updateTaskLinks($linkedTaskId, $taskId);
+			}
+
+			if ($hasPrevLinks)
+			{
+				foreach (array_diff($previousFields['DEPENDS_ON'], $fields['DEPENDS_ON']) as $linkedTaskId)
+				{
+					$taskDependence = new \CTaskDependence();
+
+					$taskDependence->delete($linkedTaskId, $taskId);
+				}
+			}
+		}
+
+		$isScrumFieldsUpdated = (
+			(isset($fields['TITLE']) && $fields['TITLE'] !== $previousFields['TITLE'])
+			|| (
+				isset($fields['TAGS'])
+				&& $fields['TAGS'] != $previousFields['TAGS']
+			)
+			|| (
+				isset($fields['RESPONSIBLE_ID'])
+				&& $fields['RESPONSIBLE_ID'] != $previousFields['RESPONSIBLE_ID']
+			)
+			|| (
+				isset($fields['UF_TASK_WEBDAV_FILES'])
+				&& (array_filter($fields['UF_TASK_WEBDAV_FILES']) != $previousFields['UF_TASK_WEBDAV_FILES'])
+			)
+		);
+		$isCompleteAction = (
+			isset($fields['STATUS']) && $fields['STATUS'] == \CTasks::STATE_COMPLETED
+			&& (isset($previousFields['STATUS']) && $previousFields['STATUS'] != \CTasks::STATE_COMPLETED)
+		);
+
+		$isRenewAction = (
+			(isset($fields['STATUS']) && $fields['STATUS'] == \CTasks::STATE_PENDING)
+			&& (
+				isset($previousFields['STATUS'])
+				&& (
+					$previousFields['STATUS'] == \CTasks::STATE_COMPLETED
+					|| $previousFields['STATUS'] == \CTasks::STATE_SUPPOSEDLY_COMPLETED
+				)
+			)
+		);
+
+		$isEpicChangeAction = (($fields['EPIC'] ?? null) !== ($previousFields['EPIC'] ?? null));
+		if ($isEpicChangeAction)
+		{
+			$itemService = new ItemService();
+			$pushService = (Loader::includeModule('pull') ? new PushService() : null);
+
+			$scrumItem = $itemService->getItemBySourceId($taskId);
+			$scrumItem->setEpicId($fields['EPIC']);
+
+			$itemService->changeItem($scrumItem, $pushService);
+		}
+
+		$isParentChangeAction = ($newParentId && $newParentId !== $oldParentId);
+		if ($isParentChangeAction)
+		{
+			$itemService = new ItemService();
+			$pushService = (Loader::includeModule('pull') ? new PushService() : null);
+
+			if ($oldParentId)
+			{
+				$parentItem = $itemService->getItemBySourceId($oldParentId);
+				if (!$parentItem->isEmpty())
+				{
+					$itemService->changeItem($parentItem, $pushService);
+
+					(new CacheService($parentItem->getSourceId(), CacheService::ITEM_TASKS))->clean();
 				}
 			}
 
-			if ($isCompleteAction)
+			if ($newParentId)
 			{
-				self::moveTaskToFinishStatus($taskId, $currentGroupId);
+				$parentItem = $itemService->getItemBySourceId($newParentId);
+				if (!$parentItem->isEmpty())
+				{
+					$itemService->changeItem($parentItem, $pushService);
+
+					(new CacheService($parentItem->getSourceId(), CacheService::ITEM_TASKS))->clean();
+				}
+			}
+
+			$itemService->changeItem($itemService->getItemBySourceId($taskId), $pushService);
+		}
+
+		if (($isScrumFieldsUpdated || $isCompleteAction || $isRenewAction) && !$isParentChangeAction)
+		{
+			$itemService = new ItemService();
+			$pushService = (Loader::includeModule('pull') ? new PushService() : null);
+			$itemService->changeItem($itemService->getItemBySourceId($taskId), $pushService);
+		}
+
+		if ($isRenewAction)
+		{
+			if ($oldParentId && self::isTaskInActiveSprint($oldParentId, $currentGroupId))
+			{
+				if (!self::isTaskInActiveSprint($taskId, $currentGroupId))
+				{
+					self::moveTaskToActiveSprint($taskId, $currentGroupId);
+				}
+
+				$itemService = new ItemService();
+
+				$item = $itemService->getItemBySourceId($taskId);
+				$parentItem = $itemService->getItemBySourceId($oldParentId);
+				if (!$item->isEmpty() && !$parentItem->isEmpty())
+				{
+					$entityService = new EntityService();
+					$parentEntity = $entityService->getEntityById($parentItem->getEntityId());
+					if ($parentEntity->getGroupId() === $currentGroupId)
+					{
+						$kanbanService = new KanbanService();
+						if ($kanbanService->isTaskInFinishStatus($parentEntity->getId(), $taskId))
+						{
+							$kanbanService->addTaskToNewStatus($parentEntity->getId(), $taskId);
+						}
+
+						$parentItem->getInfo()->setVisibilitySubtasks('Y');
+
+						$itemService->changeItem($parentItem);
+					}
+				}
+			}
+			else
+			{
+				self::moveTaskToBacklog($taskId, $currentGroupId);
 			}
 		}
-		catch (\Exception $exception) {}
+
+		if ($isCompleteAction)
+		{
+			self::moveTaskToFinishStatus($taskId, $currentGroupId);
+		}
+
+		(new CacheService($taskId, CacheService::ITEM_TASKS))->clean();
 	}
 
 	public function getTasksInfo(array $taskIds): array
@@ -1519,7 +1546,7 @@ class TaskService implements Errorable
 	{
 		$isBacklogTarget = true;
 
-		$parentTaskId = $fields['PARENT_ID'] ? $fields['PARENT_ID'] : $previousFields['PARENT_ID'];
+		$parentTaskId = ($fields['PARENT_ID'] ?? null) ? $fields['PARENT_ID'] : ($previousFields['PARENT_ID'] ?? null);
 
 		if ($parentTaskId)
 		{
@@ -1538,19 +1565,22 @@ class TaskService implements Errorable
 
 					$groupId = (int) $fields['GROUP_ID'];
 
-					$sort = count($taskService->getSubTasksInfo($groupId, [$parentTaskId])[$parentTaskId]);
-					$sort = ($sort === 0 ? 1 : $sort);
+					if ($entity->getGroupId() === $groupId)
+					{
+						$sort = count($taskService->getSubTasksInfo($groupId, [$parentTaskId])[$parentTaskId]);
+						$sort = ($sort === 0 ? 1 : $sort);
 
-					self::createItem(
-						$entity,
-						$taskId,
-						$fields,
-						$previousFields,
-						$parentScrumItem->getEpicId(),
-						$sort
-					);
+						self::createItem(
+							$entity,
+							$taskId,
+							$fields,
+							$previousFields,
+							$parentScrumItem->getEpicId(),
+							$sort
+						);
 
-					$isBacklogTarget = false;
+						$isBacklogTarget = false;
+					}
 				}
 			}
 		}
@@ -1585,13 +1615,13 @@ class TaskService implements Errorable
 
 			$scrumItem = new ItemForm();
 
-			$createdBy = ($fields['CREATED_BY'] ? $fields['CREATED_BY'] : $previousFields['CREATED_BY']);
+			$createdBy = (($fields['CREATED_BY'] ?? null) ? $fields['CREATED_BY'] : $previousFields['CREATED_BY']);
 			$scrumItem->setCreatedBy($createdBy);
 			$scrumItem->setEntityId($entity->getId());
 			$scrumItem->setSourceId($taskId);
 			$scrumItem->setSort($sort);
 
-			$epicId = (is_numeric($fields['EPIC']) ? (int) $fields['EPIC'] : $epicId);
+			$epicId = (is_numeric($fields['EPIC'] ?? null) ? (int) $fields['EPIC'] : $epicId);
 
 			$scrumItem->setEpicId($epicId);
 
@@ -1611,7 +1641,7 @@ class TaskService implements Errorable
 	{
 		$isActiveSprintItem = false;
 
-		$parentTaskId = $fields['PARENT_ID'];
+		$parentTaskId = (int) $fields['PARENT_ID'] ?? null;
 
 		if ($parentTaskId)
 		{

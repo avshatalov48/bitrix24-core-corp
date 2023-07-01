@@ -1,4 +1,9 @@
-(() => {
+/**
+ * @module layout/ui/entity-editor/control/file
+ */
+jn.define('layout/ui/entity-editor/control/file', (require, exports, module) => {
+
+	const { EntityEditorField } = require('layout/ui/entity-editor/control/field');
 
 	/**
 	 * @class EntityEditorFileField
@@ -48,5 +53,5 @@
 		}
 	}
 
-	jnexport(EntityEditorFileField);
-})();
+	module.exports = { EntityEditorFileField };
+});

@@ -313,6 +313,7 @@
 							get: ["log.blogpost.get", {POST_ID: '$result[add]'}],
 							update: ["log.blogpost.update", {
 								POST_ID: '$result[add]',
+								POST_TITLE: '$result[data][title]',
 								POST_MESSAGE: '[DISK FILE ID=' + '$result[get][0][FILES][0]' + ' ]'
 							}],
 						},

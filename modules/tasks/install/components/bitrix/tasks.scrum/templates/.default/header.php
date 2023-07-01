@@ -117,7 +117,7 @@ switch ($viewName)
 				'html' => Loc::getMessage('KANBAN_SORT_ACTUAL').
 					'<span class=\"menu-popup-item-sort-field-label\">'.
 					Loc::getMessage("KANBAN_SORT_ACTUAL_RECOMMENDED_LABEL").'</span>',
-				'className' => ($arResult['orderNewTask'] == 'actual') ?
+				'className' => (isset($arResult['orderNewTask']) && $arResult['orderNewTask'] === 'actual') ?
 					'menu-popup-item-accept' : 'menu-popup-item-none',
 				'onclick' => '"BX.Tasks.Scrum.Kanban.onClickSort(this, \'actual\')"'
 			],
@@ -128,14 +128,14 @@ switch ($viewName)
 			[
 				'tabId' => 'popupMenuOptions',
 				'text' => Loc::getMessage('KANBAN_SORT_DESC'),
-				'className' => ($arResult['orderNewTask'] == 'desc') ?
+				'className' => (isset($arResult['orderNewTask']) && $arResult['orderNewTask'] === 'desc') ?
 					'menu-popup-item-accept' : 'menu-popup-item-none',
 				'onclick' => '"BX.Tasks.Scrum.Kanban.onClickSort(this, \'desc\')"'
 			],
 			[
 				'tabId' => 'popupMenuOptions',
 				'text' => Loc::getMessage('KANBAN_SORT_ASC'),
-				'className' => ($arResult['orderNewTask'] == 'asc') ?
+				'className' => (isset($arResult['orderNewTask']) && $arResult['orderNewTask'] === 'asc') ?
 					'menu-popup-item-accept' : 'menu-popup-item-none',
 				'onclick' => '"BX.Tasks.Scrum.Kanban.onClickSort(this, \'asc\')"'
 			]
@@ -151,16 +151,16 @@ $APPLICATION->includeComponent(
 		'FILTER_ID' => $filterId,
 		'FILTER' => $filters,
 		'PRESETS' => $presets,
-		'TEMPLATES_LIST' => $arParams['TEMPLATES_LIST'],//todo
-		'USER_ID' => $arParams['USER_ID'],
-		'GROUP_ID' => $arParams['GROUP_ID'],
+		'TEMPLATES_LIST' => $arParams['TEMPLATES_LIST'] ?? null,
+		'USER_ID' => $arParams['USER_ID'] ?? null,
+		'GROUP_ID' => $arParams['GROUP_ID'] ?? null,
 		'SPRINT_ID' => (isset($arResult['completedSprintId']) ? $arResult['completedSprintId'] : -1),
-		'MENU_GROUP_ID' => $arParams['GROUP_ID'],
-		'PATH_TO_USER_TASKS_TEMPLATES' => $arParams['PATH_TO_USER_TASKS_TEMPLATES'],
-		'PATH_TO_GROUP_TASKS_TASK' => $arParams['PATH_TO_GROUP_TASKS_TASK'],
+		'MENU_GROUP_ID' => $arParams['GROUP_ID'] ?? null,
+		'PATH_TO_USER_TASKS_TEMPLATES' => $arParams['PATH_TO_USER_TASKS_TEMPLATES'] ?? null,
+		'PATH_TO_GROUP_TASKS_TASK' => $arParams['PATH_TO_GROUP_TASKS_TASK'] ?? null,
 		'SHOW_QUICK_FORM_BUTTON' => 'N',
-		'PROJECT_VIEW' => ($arParams['PROJECT_VIEW'] ? 'Y' : 'N'),
-		'USE_GROUP_SELECTOR' => ($arParams['PROJECT_VIEW'] ? 'Y' : 'N'),
+		'PROJECT_VIEW' => ((array_key_exists('PROJECT_VIEW', $arParams) && $arParams['PROJECT_VIEW']) ? 'Y' : 'N'),
+		'USE_GROUP_SELECTOR' => ((array_key_exists('PROJECT_VIEW', $arParams) && $arParams['PROJECT_VIEW']) ? 'Y' : 'N'),
 		'USE_EXPORT' => 'N',
 		'SHOW_CREATE_TASK_BUTTON' => 'Y',
 		'POPUP_MENU_ITEMS' => $popupMenuItems,

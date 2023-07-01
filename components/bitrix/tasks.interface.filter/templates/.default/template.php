@@ -11,7 +11,8 @@ $isBitrix24Template = SITE_TEMPLATE_ID === "bitrix24";
 	"ui.buttons",
 	"ui.buttons.icons",
 	"popup",
-	"ui.fonts.opensans"
+	"ui.fonts.opensans",
+	"ui.dialogs.checkbox-list"
 ]);
 
 $APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");

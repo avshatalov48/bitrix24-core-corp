@@ -67,7 +67,7 @@ foreach ($arResult['ITEMS'] as &$arItem)
 				{
 					if (isset($arParams['PATH_TO_GROUP']))
 					{
-						echo '<a href="' 
+						echo '<a href="'
 							. CComponentEngine::MakePathFromTemplate(
 								$arParams['PATH_TO_GROUP'],
 								array('group_id' => $task['GROUP_ID'])
@@ -85,7 +85,7 @@ foreach ($arResult['ITEMS'] as &$arItem)
 					<?php if ($childrenCount > 0 && !$arParams["PLAIN"]):?>
 						<div class="task-title-folding" onclick="ToggleSubtasks(this.parentNode.parentNode.parentNode, <?php echo $depth?>, <?php echo $task["ID"]?>)"><span id="task-children-count-<?php echo (int) $task['ID']; ?>"><?php echo $childrenCount; ?></span></div>
 					<?php endif?>
-					<div id="task-title-div-<?php echo $task["ID"]?>" class="task-title-info<?php if ($task["COMMENTS_COUNT"] || $updatesCount || $task["FILES"] && sizeof($task["FILES"])):?> task-indicators<?php if ($updatesCount):?>-updates<?php endif?><?php if(sizeof($task["FILES"])):?>-files<?php endif?><?php if ($task["COMMENTS_COUNT"]):?>-comments<?php endif?><?php endif?>">
+					<div id="task-title-div-<?php echo $task["ID"]?>" class="task-title-info<?php if (isset($task["COMMENTS_COUNT"]) || isset($updatesCount) || isset($task["FILES"]) && sizeof($task["FILES"])):?> task-indicators<?php if ($updatesCount):?>-updates<?php endif?><?php if(sizeof($task["FILES"])):?>-files<?php endif?><?php if (isset($task["COMMENTS_COUNT"])):?>-comments<?php endif?><?php endif?>">
 						<?php
 						if ($task["MULTITASK"] == "Y")
 						{
@@ -97,7 +97,7 @@ foreach ($arResult['ITEMS'] as &$arItem)
 						?><a href="<?php echo $viewUrl; ?>"
 							class="task-title-link"
 
-							<?if($arParams['SHOW_QUICK_INFORMERS'] !== false):?>
+							<?if(($arParams['SHOW_QUICK_INFORMERS'] ?? null) !== false):?>
 								onmouseover="ShowTaskQuickInfo(<?php echo $task["ID"]?>, event);"
 								onmouseout="HideTaskQuickInfo(<?php echo $task["ID"]?>, event);"
 							<?endif?>
@@ -130,7 +130,7 @@ foreach ($arResult['ITEMS'] as &$arItem)
 							><span class="task-item-updates-inner"><?php echo $updatesCount?></span></a><?php
 						}
 
-						if ($task["COMMENTS_COUNT"] || $task["FILES"] && sizeof($task["FILES"]))
+						if (isset($task["COMMENTS_COUNT"]) || isset($task["FILES"]) && sizeof($task["FILES"]))
 						{
 							?><span class="task-title-indicators"><?php
 							if(sizeof($task["FILES"]) && $arParams['SHOW_QUICK_INFORMERS'] !== false)
@@ -578,7 +578,7 @@ foreach ($arResult['ITEMS'] as &$arItem)
 
 	<script type="text/javascript"<?php echo $arParams["DEFER"] ? "  defer=\"defer\"" : ""?>>
 		tasksMenuPopup[<?php echo $task["ID"]?>] = [<?
-			if((string) $arParams['CUSTOM_ACTIONS_CALLBACK'] != '' && is_callable($arParams['CUSTOM_ACTIONS_CALLBACK']))
+			if ((string)($arParams['CUSTOM_ACTIONS_CALLBACK'] ?? null) != '' && is_callable($arParams['CUSTOM_ACTIONS_CALLBACK']))
 			{
 				call_user_func_array($arParams['CUSTOM_ACTIONS_CALLBACK'], array($task, $arParams["PATHS"]));
 			}
@@ -588,7 +588,7 @@ foreach ($arResult['ITEMS'] as &$arItem)
 			}
 		?>];
 
-		<?if($arParams['SHOW_QUICK_INFORMERS'] !== false):?>
+		<?if (($arParams['SHOW_QUICK_INFORMERS'] ?? null) !== false):?>
 			quickInfoData[<?php echo $task["ID"]?>] = <?=tasksRenderJSON($task, $childrenCount, $arParams["PATHS"], false, false, false, $arParams["NAME_TEMPLATE"], array(), false, array('VIEW_STATE' => $arParams['VIEW_STATE']))?>;
 		<?endif?>
 		<?php if($arParams["TASK_ADDED"]):?>
@@ -611,7 +611,7 @@ foreach ($arResult['ITEMS'] as &$arItem)
 		);
 
 		<?php
-		if ($arItem['SHOW_TIMER_NODE'] === 'Y')
+		if (($arItem['SHOW_TIMER_NODE'] ?? null) === 'Y')
 		{
 			?>
 			tasksListNS.redrawTimerNode(

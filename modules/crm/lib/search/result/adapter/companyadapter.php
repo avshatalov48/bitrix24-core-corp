@@ -14,7 +14,7 @@ class CompanyAdapter extends \Bitrix\Crm\Search\Result\Adapter
 			['@ID' => $ids, 'CHECK_PERMISSIONS' => 'N'],
 			false,
 			false,
-			['ID', 'TITLE', 'COMPANY_TYPE', 'INDUSTRY', 'LOGO', 'ORIGINATOR_ID']
+			['ID', 'TITLE', 'COMPANY_TYPE', 'INDUSTRY', 'LOGO', 'ORIGINATOR_ID', 'CATEGORY_ID']
 		);
 		while ($company = $companies->Fetch())
 		{
@@ -37,6 +37,8 @@ class CompanyAdapter extends \Bitrix\Crm\Search\Result\Adapter
 	protected function prepareSubTitle(array $item): string
 	{
 		$descriptions = [];
+
+		$this->addCategoryLabelToSubtitle((int)($item['CATEGORY_ID'] ?? 0), $descriptions);
 
 		if (
 			!$this->category

@@ -129,6 +129,8 @@ export class CompletedSprints extends EventEmitter
 		if (isShown)
 		{
 			Dom.removeClass(node, '--up');
+
+			this.hideList();
 		}
 		else
 		{
@@ -136,19 +138,12 @@ export class CompletedSprints extends EventEmitter
 
 			Dom.addClass(this.listNode, '--visible');
 
+			this.showList();
+
 			if (!this.isSprintsUploaded() && Type.isNull(this.loader))
 			{
 				this.loader = this.showLoader();
 			}
-		}
-
-		if (isShown)
-		{
-			this.hideList();
-		}
-		else
-		{
-			this.showList();
 		}
 
 		this.onLoadStats();

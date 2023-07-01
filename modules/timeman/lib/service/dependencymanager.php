@@ -373,7 +373,12 @@ class DependencyManager
 		return new ShiftsManager($userId, $activeSchedules, $this->getShiftPlanProvider());
 	}
 
-	public function buildWorktimeRecordManager(WorktimeRecord $record, ?Schedule $schedule, ?Shift $shift, ?ScheduleCollection $activeSchedules = null): WorktimeRecordManager
+	public function buildWorktimeRecordManager(
+		WorktimeRecord $record,
+		?Schedule $schedule,
+		?Shift $shift,
+		?ScheduleCollection $activeSchedules = null
+	): WorktimeRecordManager
 	{
 		return new WorktimeRecordManager(
 			$record,

@@ -10,16 +10,24 @@ namespace Bitrix\Intranet;
 
 use Bitrix\Main;
 use Bitrix\Main\Loader;
+use Bitrix\Main\Type\DateTime;
 
 class CurrentUser
 {
-	/** @var Main\Engine\CurrentUser */
-	private $currentUser;
+	private Main\Engine\CurrentUser $currentUser;
+	private ?array $userFields;
 
-	public static function get()
+	public static function get(): CurrentUser
 	{
 		$self = new static();
 		$self->currentUser = Main\Engine\CurrentUser::get();
+		$result = \CUser::GetById($self->currentUser->getId());
+
+		if ($result)
+		{
+			$fields = $result->fetch();
+			$self->userFields = is_array($fields) ? $fields : null;
+		}
 
 		return $self;
 	}
@@ -46,5 +54,11 @@ class CurrentUser
 		}
 
 		return null;
+	}
+
+	public function getDateRegister(): ?DateTime
+	{
+		return isset($this->userFields['DATE_REGISTER']) ? DateTime::createFromText($this->userFields['DATE_REGISTER'])
+			: null;
 	}
 }

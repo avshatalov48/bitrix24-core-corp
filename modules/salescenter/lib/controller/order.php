@@ -194,6 +194,8 @@ class Order extends Base
 
 		$formData['PRODUCT'] = CatalogJSProductForm::convertToBuilderFormat($basketItems);
 
+		$formData['PRODUCT'] = $this->tryToObtainMissingProductProperties($basketItems, $formData['PRODUCT']);
+
 		$formData['PROPERTIES'] = $this->obtainPropertiesFields($propertyValues);
 
 		if ($this->needObtainShipmentFields($params))
@@ -231,6 +233,34 @@ class Order extends Base
 		}
 
 		return $formData;
+	}
+
+	private function tryToObtainMissingProductProperties(array $basketItems, array $formProducts): array
+	{
+		$resultProducts = $formProducts;
+
+		$itemsToFill = array_filter($basketItems, static function($item) {
+			return !array_key_exists('properties', $item);
+		});
+		$idsToFill = array_column($itemsToFill, 'skuId');
+
+		if (empty($idsToFill))
+		{
+			return $resultProducts;
+		}
+
+		$productsData = Sale\Helpers\Admin\Blocks\OrderBasket::getProductsData($idsToFill, SITE_ID, ['PROPS']);
+		foreach ($resultProducts as $key => $product)
+		{
+			$productId = $product['PRODUCT_ID'];
+			if (isset($productsData[$productId]['PROPS']))
+			{
+				$resultProducts[$key]['PROPS'] = $productsData[$productId]['PROPS'];
+				$resultProducts[$key]['FIELDS_VALUES'] = Main\Web\Json::encode($resultProducts[$key]);
+			}
+		}
+
+		return $resultProducts;
 	}
 
 	/**
@@ -566,6 +596,15 @@ class Order extends Base
 			{
 				/** @var Crm\Order\Payment $payment */
 				$payment = $order->getPaymentCollection()->getItemById($paymentId);
+			}
+
+			if ($payment === null)
+			{
+				$this->addError(
+					new Error(Loc::getMessage('SALESCENTER_CONTROLLER_ORDER_CANT_SEND_SMS_PAYMENT_NOT_FOUND'))
+				);
+
+				return;
 			}
 
 			$shipment = null;

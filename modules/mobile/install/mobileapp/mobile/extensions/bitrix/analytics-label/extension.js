@@ -1,4 +1,7 @@
-(() => {
+/**
+ * @module analytics-label
+ */
+jn.define('analytics-label', (require, exports, module) => {
 	/**
 	 * @class AnalyticsLabel
 	 */
@@ -9,23 +12,16 @@
 		 */
 		static send(analyticsLabel)
 		{
-			if (AnalyticsLabel.isDebug)
+			analyticsLabel.platform = Application.getPlatform();
+
+			if (Application.isBeta())
 			{
 				console.info('Sending analytics event', analyticsLabel);
 			}
 
-			BX.ajax.runAction('mobile.analytics.sendLabel', {analyticsLabel});
-		}
-
-		/**
-		 * @param {boolean} isDebug
-		 */
-		static debug(isDebug = true)
-		{
-			AnalyticsLabel.isDebug = Boolean(isDebug);
+			BX.ajax.runAction('mobile.analytics.sendLabel', { analyticsLabel });
 		}
 	}
 
-	AnalyticsLabel.isDebug = false;
-	this.AnalyticsLabel = AnalyticsLabel;
-})();
+	module.exports = { AnalyticsLabel };
+});

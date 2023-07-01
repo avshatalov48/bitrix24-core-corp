@@ -1,8 +1,8 @@
-import {ajax, Loc} from 'main.core';
-import {Popup} from 'main.popup';
-import {Button, ButtonColor} from 'ui.buttons';
-import {BaseEvent, EventEmitter} from "main.core.events";
-import {DocumentManager} from "./document-manager"
+import { ajax, Loc } from 'main.core';
+import { Popup } from 'main.popup';
+import { Button, ButtonColor } from 'ui.buttons';
+import { BaseEvent, EventEmitter } from 'main.core.events';
+import { DocumentManager } from './document-manager';
 
 export class GridManager
 {
@@ -14,24 +14,33 @@ export class GridManager
 		this.isConductDisabled = options.isConductDisabled;
 		this.masterSliderUrl = options.masterSliderUrl;
 		this.inventoryManagementSource = options.inventoryManagementSource;
+		this.isInventoryManagementDisabled = options.isInventoryManagementDisabled;
+		this.inventoryManagementFeatureCode = options.inventoryManagementFeatureCode;
 
 		window.top.BX.addCustomEvent('onEntityEditorDocumentOrderShipmentControllerDocumentSave', this.reloadGrid.bind(this));
 	}
 
 	getSelectedIds()
 	{
-		return this.grid.getRows().getSelectedIds()
+		return this.grid.getRows().getSelectedIds();
 	}
 
 	deleteDocument(documentId)
 	{
-		let popup = new Popup({
+		if (this.isInventoryManagementDisabled && this.inventoryManagementFeatureCode)
+		{
+			top.BX.UI.InfoHelper.show(this.inventoryManagementFeatureCode);
+
+			return;
+		}
+
+		const popup = new Popup({
 			id: 'crm_delete_document_popup',
 			titleBar: Loc.getMessage('DOCUMENT_GRID_DOCUMENT_DELETE_TITLE'),
 			content: Loc.getMessage('DOCUMENT_GRID_DOCUMENT_DELETE_CONTENT'),
 			buttons: [
 				new Button({
-					text:  Loc.getMessage('DOCUMENT_GRID_CONTINUE'),
+					text: Loc.getMessage('DOCUMENT_GRID_CONTINUE'),
 					color: ButtonColor.SUCCESS,
 					onclick: (button, event) => {
 						ajax.runAction(
@@ -45,7 +54,7 @@ export class GridManager
 									action: 'delete',
 									inventoryManagementSource: this.inventoryManagementSource,
 								},
-							}
+							},
 						).then((response) => {
 							popup.destroy();
 							this.reloadGrid();
@@ -65,7 +74,7 @@ export class GridManager
 					color: ButtonColor.DANGER,
 					onclick: (button, event) => {
 						popup.destroy();
-					}
+					},
 				}),
 			],
 		});
@@ -74,18 +83,26 @@ export class GridManager
 
 	conductDocument(documentId)
 	{
+		if (this.isInventoryManagementDisabled && this.inventoryManagementFeatureCode)
+		{
+			top.BX.UI.InfoHelper.show(this.inventoryManagementFeatureCode);
+
+			return;
+		}
+
 		if (this.isConductDisabled)
 		{
 			this.openStoreMasterSlider();
+
 			return;
 		}
-		let popup = new Popup({
+		const popup = new Popup({
 			id: 'crm_delete_document_popup',
 			titleBar: Loc.getMessage('DOCUMENT_GRID_DOCUMENT_CONDUCT_TITLE'),
 			content: Loc.getMessage('DOCUMENT_GRID_DOCUMENT_CONDUCT_CONTENT'),
 			buttons: [
 				new Button({
-					text:  Loc.getMessage('DOCUMENT_GRID_CONTINUE'),
+					text: Loc.getMessage('DOCUMENT_GRID_CONTINUE'),
 					color: ButtonColor.SUCCESS,
 					onclick: (button, event) => {
 						ajax.runAction(
@@ -99,7 +116,7 @@ export class GridManager
 									action: 'deduct',
 									inventoryManagementSource: this.inventoryManagementSource,
 								},
-							}
+							},
 						).then((response) => {
 							popup.destroy();
 							this.reloadGrid();
@@ -119,7 +136,7 @@ export class GridManager
 					color: ButtonColor.DANGER,
 					onclick: (button, event) => {
 						popup.destroy();
-					}
+					},
 				}),
 			],
 		});
@@ -128,18 +145,26 @@ export class GridManager
 
 	cancelDocument(documentId)
 	{
+		if (this.isInventoryManagementDisabled && this.inventoryManagementFeatureCode)
+		{
+			top.BX.UI.InfoHelper.show(this.inventoryManagementFeatureCode);
+
+			return;
+		}
+
 		if (this.isConductDisabled)
 		{
 			this.openStoreMasterSlider();
+
 			return;
 		}
-		let popup = new Popup({
+		const popup = new Popup({
 			id: 'crm_delete_document_popup',
 			titleBar: Loc.getMessage('DOCUMENT_GRID_DOCUMENT_CANCEL_TITLE'),
 			content: Loc.getMessage('DOCUMENT_GRID_DOCUMENT_CANCEL_CONTENT'),
 			buttons: [
 				new Button({
-					text:  Loc.getMessage('DOCUMENT_GRID_CONTINUE'),
+					text: Loc.getMessage('DOCUMENT_GRID_CONTINUE'),
 					color: ButtonColor.SUCCESS,
 					onclick: (button, event) => {
 						ajax.runAction(
@@ -153,7 +178,7 @@ export class GridManager
 									action: 'cancelDeduct',
 									inventoryManagementSource: this.inventoryManagementSource,
 								},
-							}
+							},
 						).then((response) => {
 							popup.destroy();
 							this.reloadGrid();
@@ -173,7 +198,7 @@ export class GridManager
 					color: ButtonColor.DANGER,
 					onclick: (button, event) => {
 						popup.destroy();
-					}
+					},
 				}),
 			],
 		});
@@ -182,7 +207,7 @@ export class GridManager
 
 	deleteSelectedDocuments()
 	{
-		let documentIds = this.getSelectedIds();
+		const documentIds = this.getSelectedIds();
 		ajax.runAction(
 			'crm.api.realizationdocument.setRealizationList',
 			{
@@ -194,7 +219,7 @@ export class GridManager
 					action: 'delete',
 					inventoryManagementSource: this.inventoryManagementSource,
 				},
-			}
+			},
 		).then((response) => {
 			this.reloadGrid();
 		}).catch((response) => {
@@ -215,12 +240,20 @@ export class GridManager
 
 	conductSelectedDocuments()
 	{
+		if (this.isInventoryManagementDisabled && this.inventoryManagementFeatureCode)
+		{
+			top.BX.UI.InfoHelper.show(this.inventoryManagementFeatureCode);
+
+			return;
+		}
+
 		if (this.isConductDisabled)
 		{
 			this.openStoreMasterSlider();
+
 			return;
 		}
-		let documentIds = this.getSelectedIds();
+		const documentIds = this.getSelectedIds();
 		ajax.runAction(
 			'crm.api.realizationdocument.setShippedList',
 			{
@@ -232,7 +265,7 @@ export class GridManager
 					inventoryManagementSource: this.inventoryManagementSource,
 					action: 'deduct',
 				},
-			}
+			},
 		).then((response) => {
 			this.reloadGrid();
 		}).catch((response) => {
@@ -253,12 +286,20 @@ export class GridManager
 
 	cancelSelectedDocuments()
 	{
+		if (this.isInventoryManagementDisabled && this.inventoryManagementFeatureCode)
+		{
+			top.BX.UI.InfoHelper.show(this.inventoryManagementFeatureCode);
+
+			return;
+		}
+
 		if (this.isConductDisabled)
 		{
 			this.openStoreMasterSlider();
+
 			return;
 		}
-		let documentIds = this.getSelectedIds();
+		const documentIds = this.getSelectedIds();
 		ajax.runAction(
 			'crm.api.realizationdocument.setShippedList',
 			{
@@ -270,7 +311,7 @@ export class GridManager
 					inventoryManagementSource: this.inventoryManagementSource,
 					action: 'cancelDeduct',
 				},
-			}
+			},
 		).then((response) => {
 			this.reloadGrid();
 		}).catch((response) => {
@@ -291,7 +332,7 @@ export class GridManager
 
 	applyFilter(options)
 	{
-		let filterManager = BX.Main.filterManager.getById(this.filterId);
+		const filterManager = BX.Main.filterManager.getById(this.filterId);
 		if (!filterManager)
 		{
 			return;
@@ -302,13 +343,14 @@ export class GridManager
 
 	processApplyButtonClick()
 	{
-		let actionValues = this.grid.getActionsPanel().getValues();
-		let selectedAction = actionValues['action_button_' + this.gridId];
+		const actionValues = this.grid.getActionsPanel().getValues();
+		const selectedAction = actionValues[`action_button_${this.gridId}`];
 
 		if (selectedAction === 'conduct')
 		{
 			this.conductSelectedDocuments();
 		}
+
 		if (selectedAction === 'cancel')
 		{
 			this.cancelSelectedDocuments();
@@ -317,9 +359,9 @@ export class GridManager
 
 	openHowToShipProducts()
 	{
-		if(top.BX.Helper)
+		if (top.BX.Helper)
 		{
-			top.BX.Helper.show("redirect=detail&code=14640548");
+			top.BX.Helper.show('redirect=detail&code=14640548');
 			event.preventDefault();
 		}
 	}
@@ -335,7 +377,7 @@ export class GridManager
 				},
 				events: {
 					onCloseComplete: function(event) {
-						let slider = event.getSlider();
+						const slider = event.getSlider();
 						if (!slider)
 						{
 							return;
@@ -345,9 +387,9 @@ export class GridManager
 						{
 							document.location.reload();
 						}
-					}
-				}
-			}
+					},
+				},
+			},
 		);
 	}
 

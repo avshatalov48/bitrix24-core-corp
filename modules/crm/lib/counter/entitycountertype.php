@@ -5,24 +5,30 @@ use Bitrix\Main;
 
 class EntityCounterType
 {
+	// ATTENTION!!!!
+	// Don't forget to make changes to the JS files with same constants.
+	// Like crm/install/components/bitrix/crm.entity.counter.panel/templates/.default/src/entity-counter-type.js
+	// or use the project search, so you don't miss other places, if any.
 	public const UNDEFINED = 0;
 	public const IDLE  = 1;
 	public const PENDING = 2;
 	public const OVERDUE = 4;
 	public const INCOMING_CHANNEL = 8;
+	public const READY_TODO = 16;
 
-	public const CURRENT = 6;  //PENDING|OVERDUE
-	public const ALL_DEADLINE_BASED = 7;  //IDLE|PENDING|OVERDUE
-	public const ALL = 15;  //IDLE|PENDING|OVERDUE|INCOMINGCHANNEL
+	public const CURRENT = 20;  // READY_TODO|OVERDUE
+	public const ALL_DEADLINE_BASED = 23;  //IDLE|PENDING|OVERDUE|READY_TODO
+	public const ALL = 31;  //IDLE|PENDING|OVERDUE|INCOMINGCHANNEL|READY_TODO
 
 	public const FIRST = 1;
-	public const LAST = 15;
+	public const LAST = 31;
 
 	public const IDLE_NAME  = 'IDLE';
 	public const PENDING_NAME = 'PENDING';
 	public const OVERDUE_NAME = 'OVERDUE';
 	public const CURRENT_NAME = 'CURRENT';
 	public const INCOMING_CHANNEL_NAME = 'INCOMINGCHANNEL';
+	public const READY_TODO_NAME = 'READYTODO';
 	public const ALL_DEADLINE_BASED_NAME = 'ALLDEADLINEBASED';
 	public const ALL_NAME = 'ALL';
 
@@ -52,6 +58,7 @@ class EntityCounterType
 			|| $typeID === self::OVERDUE
 			|| $typeID === self::CURRENT
 			|| $typeID === self::INCOMING_CHANNEL
+			|| $typeID === self::READY_TODO
 			|| $typeID === self::ALL_DEADLINE_BASED
 			|| $typeID === self::ALL
 		;
@@ -135,6 +142,10 @@ class EntityCounterType
 		{
 			return self::ALL_NAME;
 		}
+		elseif($typeID === self::READY_TODO)
+		{
+			return self::READY_TODO_NAME;
+		}
 		return '';
 	}
 	/**
@@ -184,16 +195,13 @@ class EntityCounterType
 	 */
 	public static function getAll($enableGrouping = false)
 	{
-		if(self::$all === null)
-		{
-			self::$all = array(self::IDLE, self::PENDING, self::OVERDUE, self::INCOMING_CHANNEL);
-		}
+		$types = [self::IDLE, self::PENDING, self::OVERDUE, self::INCOMING_CHANNEL, self::READY_TODO];
 
 		if(!$enableGrouping)
 		{
-			return self::$all;
+			return $types;
 		}
-		return array_merge(self::$all, self::getGroupings());
+		return array_merge($types, self::getGroupings());
 	}
 
 	public static function getAllDeadlineBased(bool $enableGrouping = false): array
@@ -202,6 +210,20 @@ class EntityCounterType
 			self::IDLE,
 			self::PENDING,
 			self::OVERDUE
+		];
+
+		if ($enableGrouping)
+		{
+			$result = array_merge($result, self::getGroupings());
+		}
+
+		return $result;
+	}
+
+	public static function getAllLightTimeBased(bool $enableGrouping = false): array
+	{
+		$result = [
+			self::READY_TODO
 		];
 
 		if ($enableGrouping)
@@ -338,6 +360,10 @@ class EntityCounterType
 		if ($countersSettings->isIdleCounterEnabledInFilter())
 		{
 			$items[self::IDLE] = GetMessage('CRM_ENTITY_COUNTER_TYPE_FILTER_IDLE');
+		}
+		if ($countersSettings->isReadyToDoCounterEnabledInFilter())
+		{
+			$items[self::READY_TODO] = GetMessage('CRM_ENTITY_COUNTER_TYPE_FILTER_READY_TODO');
 		}
 
 		return array_merge(

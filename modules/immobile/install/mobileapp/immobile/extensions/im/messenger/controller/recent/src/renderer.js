@@ -7,10 +7,10 @@
  */
 jn.define('im/messenger/controller/recent/renderer', (require, exports, module) => {
 
-	const { Type } = jn.require('type');
-	const { Logger } = jn.require('im/messenger/lib/logger');
-	const { RecentConverter } = jn.require('im/messenger/lib/converter');
-	const { Worker } = jn.require('im/messenger/lib/helper/worker');
+	const { Type } = require('type');
+	const { Logger } = require('im/messenger/lib/logger');
+	const { RecentConverter } = require('im/messenger/lib/converter');
+	const { Worker } = require('im/messenger/lib/helper/worker');
 
 	/**
 	 * @class RecentRenderer

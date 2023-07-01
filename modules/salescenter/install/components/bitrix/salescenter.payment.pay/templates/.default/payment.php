@@ -14,9 +14,9 @@ $containerClasses = $arResult['PAYMENT']['PAID'] === 'Y'
 	? ['order-payment-container']
 	: ['order-payment-container', 'order-payment-sibling-container', 'mb-4'];
 
-if ($arParams['TEMPLATE_MODE'] === 'darkmode')
+if (!empty($arResult['COMPONENT_THEME']))
 {
-	$containerClasses[] = 'bx-dark';
+	$containerClasses[] = $arResult['COMPONENT_THEME'];
 }
 
 if (!empty($arResult['JS_DATA']['app']['paySystems']))

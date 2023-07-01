@@ -4,8 +4,8 @@ namespace Bitrix\Crm\Service\Timeline;
 
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Timeline\Item\Compatible\Wait;
-use Bitrix\Crm\Service\Timeline\Repository\Query;
 use Bitrix\Crm\Service\Timeline\Repository\IgnoredItemsRules;
+use Bitrix\Crm\Service\Timeline\Repository\Query;
 use Bitrix\Crm\Service\Timeline\Repository\Result;
 use Bitrix\Crm\Timeline\Entity\NoteTable;
 use Bitrix\Crm\Timeline\Entity\TimelineBindingTable;
@@ -31,7 +31,7 @@ class Repository
 		$filter = $queryParams ? $queryParams->getFilter() : [];
 		$filter = array_merge($filter, [
 			'CHECK_PERMISSIONS' => 'N',
-			'STATUS' => \CCrmActivityStatus::Waiting,
+			'COMPLETED' => 'N',
 			'BINDINGS' => [
 				[
 					'OWNER_TYPE_ID' => $this->context->getEntityTypeId(),
@@ -53,29 +53,6 @@ class Repository
 			false,
 			[
 				'ID',
-				'OWNER_ID',
-				'OWNER_TYPE_ID',
-				'TYPE_ID',
-				'PROVIDER_ID',
-				'PROVIDER_TYPE_ID',
-				'ASSOCIATED_ENTITY_ID',
-				'DIRECTION',
-				'SUBJECT',
-				'STATUS',
-				'DESCRIPTION',
-				'DESCRIPTION_TYPE',
-				'CREATED',
-				'DEADLINE',
-				'RESPONSIBLE_ID',
-				'PROVIDER_PARAMS',
-				'SETTINGS',
-				'RESULT_MARK',
-				'ORIGIN_ID',
-				'LAST_UPDATED',
-				'END_TIME',
-				'STORAGE_TYPE_ID',
-				'STORAGE_ELEMENT_IDS',
-				'IS_INCOMING_CHANNEL',
 			],
 			[
 				'QUERY_OPTIONS' => [
@@ -86,10 +63,67 @@ class Repository
 		);
 
 		$items = [];
+		$activityIds = [];
 		while ($fields = $dbResult->Fetch())
 		{
-			$items[$fields['ID']] = $fields;
+			$activityIds[] = (int)$fields['ID'];
 		}
+
+		if (!empty($activityIds))
+		{
+			$dbResult = \CCrmActivity::GetList(
+				[],
+				[
+					'@ID' => $activityIds,
+					'CHECK_PERMISSIONS' => 'N',
+				],
+				false,
+				false,
+				[
+					'ID',
+					'OWNER_ID',
+					'OWNER_TYPE_ID',
+					'TYPE_ID',
+					'PROVIDER_ID',
+					'PROVIDER_TYPE_ID',
+					'ASSOCIATED_ENTITY_ID',
+					'CALENDAR_EVENT_ID',
+					'DIRECTION',
+					'SUBJECT',
+					'STATUS',
+					'DESCRIPTION',
+					'DESCRIPTION_TYPE',
+					'CREATED',
+					'DEADLINE',
+					'RESPONSIBLE_ID',
+					'PROVIDER_PARAMS',
+					'PROVIDER_DATA',
+					'SETTINGS',
+					'RESULT_MARK',
+					'ORIGIN_ID',
+					'LAST_UPDATED',
+					'END_TIME',
+					'STORAGE_TYPE_ID',
+					'STORAGE_ELEMENT_IDS',
+					'IS_INCOMING_CHANNEL',
+					'LIGHT_COUNTER_AT',
+				]
+			);
+			$activities = [];
+			while ($fields = $dbResult->Fetch())
+			{
+				$activities[$fields['ID']] = $fields;
+			}
+			foreach ($activityIds as $activityId)
+			{
+				if (!isset($activities[$activityId]))
+				{
+					continue;
+				}
+				$items[$activityId] = $activities[$activityId];
+			}
+		}
+
 		\Bitrix\Crm\Timeline\EntityController::loadCommunicationsAndMultifields(
 			$items,
 			$this->context->getUserPermissions()->getCrmPermissions()
@@ -362,4 +396,5 @@ class Repository
 			return 0;
 		});
 	}
+
 }

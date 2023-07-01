@@ -133,9 +133,9 @@ abstract class DataSource
 					$result[$key][$alias.'_PHOTO'] = null;
 					if (isset($users[$userID]))
 					{
-						$result[$key][$alias] = $users[$userID]['NAME'];
-						$result[$key][$alias.'_PHOTO_ID'] = $users[$userID]['PERSONAL_PHOTO_ID'];
-						$result[$key][$alias.'_PHOTO'] = $users[$userID]['PERSONAL_PHOTO'];
+						$result[$key][$alias] = $users[$userID]['NAME'] ?? null;
+						$result[$key][$alias.'_PHOTO_ID'] = $users[$userID]['PERSONAL_PHOTO_ID'] ?? null;
+						$result[$key][$alias.'_PHOTO'] = $users[$userID]['PERSONAL_PHOTO'] ?? null;
 					}
 				}
 			}

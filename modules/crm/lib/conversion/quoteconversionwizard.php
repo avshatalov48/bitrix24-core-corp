@@ -6,6 +6,8 @@ use Bitrix\Crm\ItemIdentifier;
 
 class QuoteConversionWizard extends EntityConversionWizard
 {
+	public const QUERY_PARAM_SRC_ID = 'conv_quote_id';
+
 	/**
 	 * @param int $entityID Entity ID.
 	 * @param QuoteConversionConfig|null $config Configuration parameters.
@@ -93,13 +95,13 @@ class QuoteConversionWizard extends EntityConversionWizard
 					{
 						case (\CCrmOwnerType::Invoice):
 						{
-							$this->redirectUrl = "/mobile/crm/invoice/?page=edit&conv_quote_id="
+							$this->redirectUrl = "/mobile/crm/invoice/?page=edit&" . self::QUERY_PARAM_SRC_ID . "="
 								. $converter->getEntityID();
 							break;
 						}
 						case (\CCrmOwnerType::Quote):
 						{
-							$this->redirectUrl = "/mobile/crm/quote/?page=edit&conv_quote_id="
+							$this->redirectUrl = "/mobile/crm/quote/?page=edit&" . self::QUERY_PARAM_SRC_ID . "="
 								. $converter->getEntityID();
 							break;
 						}
@@ -120,7 +122,7 @@ class QuoteConversionWizard extends EntityConversionWizard
 							false,
 							$options
 						),
-						['conv_quote_id' => $converter->getEntityID()]
+						[self::QUERY_PARAM_SRC_ID => $converter->getEntityID()]
 					);
 				}
 			}

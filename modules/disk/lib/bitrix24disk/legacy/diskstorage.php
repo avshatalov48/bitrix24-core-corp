@@ -189,7 +189,7 @@ class DiskStorage extends AbstractStorage
 	protected function flushTreeCache()
 	{}
 
-	protected function loadTree()
+	protected function loadTree(): void
 	{
 		$this->loadFormattedFolderTreeAndBreadcrumbs();
 	}

@@ -809,6 +809,7 @@ if ($actionData['ACTIVE'])
 									$errorMessage.= '<br />';
 								}
 								$errorMessage .= CCrmProduct::GetLastError();
+								$DB->Rollback();
 							}
 						}
 					}
@@ -828,6 +829,7 @@ if ($actionData['ACTIVE'])
 									$errorMessage.= '<br />';
 								}
 								$errorMessage .= CCrmProduct::GetLastError();
+								$DB->Rollback();
 							}
 						}
 					}

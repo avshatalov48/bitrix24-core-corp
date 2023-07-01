@@ -90,13 +90,14 @@ class Collection extends Dictionary
 			$limit = -1;
 		}
 
-		if(is_array($parameters['CONTAINER']) || Collection::isA($parameters['CONTAINER']))
+		$container = ($parameters['CONTAINER'] ?? null);
+		if (is_array($container) || Collection::isA($container))
 		{
-			$filtered = $parameters['CONTAINER'];
+			$filtered = $container;
 		}
-		elseif($parameters['CONTAINER'] == 'ARRAY')
+		elseif ($container === 'ARRAY')
 		{
-			$filtered = array();
+			$filtered = [];
 		}
 		else
 		{

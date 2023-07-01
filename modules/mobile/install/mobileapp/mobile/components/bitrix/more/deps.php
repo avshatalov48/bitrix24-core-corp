@@ -8,10 +8,11 @@ return [
 		'menu/spotlight',
 		'stress/more',
 		'qrauth/utils',
-		'intent',
+		'intent/handlers',
 	],
 	'components' => [
 		'users',
 		'tab.settings',
+		'tab.presets',
 	],
 ];

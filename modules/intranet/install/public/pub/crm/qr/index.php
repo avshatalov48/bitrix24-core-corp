@@ -16,7 +16,7 @@ if (!Main\Loader::includeModule("crm"))
 
 global $APPLICATION;
 
-if ($_GET['img'] === 'y')
+if (isset($_GET['img']) && $_GET['img'] === 'y')
 {
 	Main\Loader::includeModule("ui");
 	$uri = new Main\Web\Uri(Main\Application::getInstance()->getContext()->getRequest()->getRequestUri());

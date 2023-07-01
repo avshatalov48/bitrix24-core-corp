@@ -488,15 +488,15 @@ final class Cleaner
 				$connection->queryExecute('DELETE FROM b_disk_storage WHERE ID = '.(int)$row['ID']);
 			}
 
-			if ($row['ENTITY_TYPE'] === 'Bitrix\Disk\ProxyType\User')
+			if ($row['ENTITY_TYPE'] === \Bitrix\Disk\ProxyType\User::class)
 			{
 				$storage = $driver->addUserStorage($row['ENTITY_ID']);
 			}
-			elseif ($row['ENTITY_TYPE'] === 'Bitrix\Disk\ProxyType\Group')
+			elseif ($row['ENTITY_TYPE'] === \Bitrix\Disk\ProxyType\Group::class)
 			{
 				$storage = $driver->addGroupStorage($row['ENTITY_ID']);
 			}
-			elseif ($row['ENTITY_TYPE'] === 'Bitrix\Disk\ProxyType\Common')
+			elseif ($row['ENTITY_TYPE'] === \Bitrix\Disk\ProxyType\Common::class)
 			{
 				$storage = $driver->addCommonStorage(array(
 					'NAME' => $row['NAME'],

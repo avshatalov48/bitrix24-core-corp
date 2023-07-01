@@ -2,9 +2,7 @@
  * @module crm/storage/base
  */
 jn.define('crm/storage/base', (require, exports, module) => {
-
 	const { get, set, isEqual } = require('utils/object');
-	const { BaseAjax } = require('crm/ajax/base');
 
 	const Event = {
 		OnChange: 'onChange',
@@ -53,13 +51,15 @@ jn.define('crm/storage/base', (require, exports, module) => {
 
 		subscribeOnChange(handler = null)
 		{
-			const eventId = (this.eventId ? this.eventId + '.onChange' : null);
+			const eventId = (this.eventId ? `${this.eventId}.onChange` : null);
+
 			return this.subscribe(Event.OnChange, handler, eventId);
 		}
 
 		subscribeOnLoading(handler = null)
 		{
-			const eventId = (this.eventId ? this.eventId + '.onLoading' : null);
+			const eventId = (this.eventId ? `${this.eventId}.onLoading` : null);
+
 			return this.subscribe(Event.OnLoading, handler, eventId);
 		}
 
@@ -85,7 +85,7 @@ jn.define('crm/storage/base', (require, exports, module) => {
 		 */
 		publish(event, eventArgs = {}, fromCurrentContext = true)
 		{
-			Array.from(this.subscribers.values())
+			[...this.subscribers.values()]
 				.filter((sub) => sub.event === event)
 				.forEach(({ handler }) => handler(eventArgs))
 			;
@@ -192,7 +192,7 @@ jn.define('crm/storage/base', (require, exports, module) => {
 		 */
 		getTtlValue(pathTo)
 		{
-			pathTo += '.' + TTL_KEY;
+			pathTo += `.${TTL_KEY}`;
 
 			return get(this.getTtlObject(), pathTo, 0);
 		}
@@ -204,7 +204,7 @@ jn.define('crm/storage/base', (require, exports, module) => {
 		 */
 		setTtlValue(pathTo, ttl)
 		{
-			pathTo += '.' + TTL_KEY;
+			pathTo += `.${TTL_KEY}`;
 			const mutatedTtl = set(this.getTtlObject(), pathTo, ttl);
 			this.getStorage().setObject(TTL_KEY, mutatedTtl);
 		}
@@ -276,7 +276,7 @@ jn.define('crm/storage/base', (require, exports, module) => {
 		 */
 		handleAjaxResponse(pathTo, response)
 		{
-			if (response.error || response.errors && response.errors.length)
+			if (response.error || (response.errors && response.errors.length > 0))
 			{
 				console.warn(`Fetch error for ${this.getStorageId()} {${pathTo}}.`, response);
 
@@ -373,5 +373,4 @@ jn.define('crm/storage/base', (require, exports, module) => {
 	}
 
 	module.exports = { BaseStorage };
-
 });

@@ -44,7 +44,7 @@ class UserField extends \Bitrix\Tasks\Integration\CRM
 				{
 					@include($fileName);
 				}
-				$names[$lang] = $MESS['CRM_UF_NAME'];
+				$names[$lang] = ($MESS['CRM_UF_NAME'] ?? null);
 			}
 
 			$scheme = [

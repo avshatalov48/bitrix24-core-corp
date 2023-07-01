@@ -105,7 +105,7 @@ abstract class ClosureTree
 
 			if(static::isNodeExist($id))
 			{
-				if($settings['NEW_NODE'])
+				if ($settings['NEW_NODE'] ?? null)
 				{
 					$result->addError('NODE_EXISTS', Loc::getMessage('TASKS_CLOSURE_TREE_NODE_EXISTS_BUT_DECLARED_NEW'));
 				}
@@ -263,7 +263,7 @@ abstract class ClosureTree
 
 			$connection = Main\HttpApplication::getConnection();
 
-			if($settings['DELETE_SUBTREE'])
+			if ($settings['DELETE_SUBTREE'] ?? null)
 			{
 				$sql = "
 					delete from ".$tableName." where ".$cName." in (
@@ -379,13 +379,13 @@ abstract class ClosureTree
 			 and
 			 ".$cName." = ".intval($id)."
 
-			 ".($settings['DIRECT'] ? "
+			 ".(($settings['DIRECT'] ?? null) ? "
 
 			    and DIRECT = '1'
 
 			 " : "")."
 			)
-			".($settings['BOTH_DIRECTIONS'] ? "
+			".(($settings['BOTH_DIRECTIONS'] ?? null) ? "
 
 			or
 			(
@@ -480,7 +480,9 @@ abstract class ClosureTree
 		$res = $dc::getList($parameters);
 		$data = array();
 
-		if($settings['RETURN_ARRAY'] && $settings['GROUP_PARENT'])
+		$returnArray = ($settings['RETURN_ARRAY'] ?? null);
+
+		if ($returnArray && ($settings['GROUP_PARENT'] ?? null))
 		{
 			while($item = $res->fetch())
 			{
@@ -492,26 +494,24 @@ abstract class ClosureTree
 
 			return $data;
 		}
-		else
+
+		while($item = $res->fetch())
 		{
-			while($item = $res->fetch())
-			{
-				$item['__PARENT_ID'] = $item['ACTUAL_PARENT_ID'];
-				$item['__ID'] = $item[$cName];
+			$item['__PARENT_ID'] = $item['ACTUAL_PARENT_ID'];
+			$item['__ID'] = $item[$cName];
 
-				unset($item['ACTUAL_PARENT_ID']);
-				unset($item[$cName]);
+			unset($item['ACTUAL_PARENT_ID']);
+			unset($item[$cName]);
 
-				$data[$item['__ID']] = $item;
-			}
-
-			if($settings['RETURN_ARRAY'])
-			{
-				return $data;
-			}
-
-			return new ClosureTree\Fragment($data);
+			$data[$item['__ID']] = $item;
 		}
+
+		if ($returnArray)
+		{
+			return $data;
+		}
+
+		return new ClosureTree\Fragment($data);
 	}
 
 	/**
@@ -527,7 +527,7 @@ abstract class ClosureTree
 	{
 		$root = static::getRootNode($id, array(), array('RETURN_ARRAY' => true));
 
-		return static::getSubTree(intval($root['__ID']), $parameters, $settings);
+		return static::getSubTree((int)($root['__ID'] ?? null), $parameters, $settings);
 	}
 
 	public static function getCount()

@@ -12,7 +12,7 @@ Extension::load(['ui.alerts']);
 
 Loc::loadMessages(__FILE__);
 
-$isIFrame = ($_REQUEST['IFRAME'] === 'Y');
+$isIFrame = (isset($_REQUEST['IFRAME']) && $_REQUEST['IFRAME'] === 'Y');
 $taskLimitExceeded = $arResult['TASK_LIMIT_EXCEEDED'];
 
 if (isset($_REQUEST["IFRAME"]) && $isIFrame)
@@ -24,7 +24,7 @@ if (isset($_REQUEST["IFRAME"]) && $isIFrame)
 	<head>
 		<?$APPLICATION->ShowHead(); ?>
 	</head>
-	<body class="template-<?=SITE_TEMPLATE_ID?> <?$APPLICATION->ShowProperty("BodyClass");?> <?if($isSideSlider):?>task-iframe-popup-side-slider<?php endif?> <?if($taskLimitExceeded):?>task-report-locked<?php endif?>"
+	<body class="template-<?=SITE_TEMPLATE_ID?> <?$APPLICATION->ShowProperty("BodyClass");?> <?if($isIFrame):?>task-iframe-popup-side-slider<?php endif?> <?if($taskLimitExceeded):?>task-report-locked<?php endif?>"
 		  onload="window.top.BX.onCustomEvent(window.top, 'tasksIframeLoad');"
 		  onunload="window.top.BX.onCustomEvent(window.top, 'tasksIframeUnload');">
 	<div class="tasks-iframe-header">
@@ -34,7 +34,7 @@ if (isset($_REQUEST["IFRAME"]) && $isIFrame)
 					$APPLICATION->ShowViewContent("pagetitle")
 					?></div>
 				<div class="pagetitle" <?if($isIFrame):?>style="padding-left: 20px;padding-right:20px;"<?endif?>>
-					<span id="pagetitle" class="pagetitle-item"><?$APPLICATION->ShowTitle(false);?><?if($existingTask):?><span class="task-page-link-btn js-id-copy-page-url" title="<?=Loc::getMessage('TASKS_TIP_TEMPLATE_COPY_CURRENT_URL')?>"></span><?endif?></span>
+					<span id="pagetitle" class="pagetitle-item"><?$APPLICATION->ShowTitle(false);?></span>
 				</div>
 			</div>
 		</div>
@@ -75,7 +75,7 @@ if ($taskLimitExceeded)
 		'USER_ID' => $arParams['USER_ID'],
 
 		'SECTION_URL_PREFIX' => '',
-		'MARK_SECTION_EFFECTIVE'=>$arParams['MARK_TEMPLATES'],
+		'MARK_SECTION_EFFECTIVE' => ($arParams['MARK_TEMPLATES'] ?? null),
 
 		'PATH_TO_USER_TASKS' => $arParams[ 'PATH_TO_USER_TASKS' ],
 		'PATH_TO_USER_TASKS_TASK' => $arParams[ 'PATH_TO_USER_TASKS_TASK' ],

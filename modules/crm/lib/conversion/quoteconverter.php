@@ -83,6 +83,11 @@ class QuoteConverter extends EntityConverter
 	 */
 	public function isFinished()
 	{
+		if ($this->currentPhase === static::PHASE_NEW_API)
+		{
+			return parent::isFinished();
+		}
+
 		return QuoteConversionPhase::isFinal($this->currentPhase);
 	}
 	/**

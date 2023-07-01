@@ -16,9 +16,9 @@ Loc::loadMessages(__FILE__);
  *
  * <<< ORMENTITYANNOTATION
  * @method static EO_TraceTree_Query query()
- * @method static EO_TraceTree_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_TraceTree_Result getByPrimary($primary, array $parameters = [])
  * @method static EO_TraceTree_Result getById($id)
- * @method static EO_TraceTree_Result getList(array $parameters = array())
+ * @method static EO_TraceTree_Result getList(array $parameters = [])
  * @method static EO_TraceTree_Entity getEntity()
  * @method static \Bitrix\Crm\Tracking\Internals\EO_TraceTree createObject($setDefaultValues = true)
  * @method static \Bitrix\Crm\Tracking\Internals\EO_TraceTree_Collection createCollection()

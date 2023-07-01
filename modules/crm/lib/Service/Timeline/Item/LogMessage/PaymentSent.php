@@ -7,6 +7,7 @@ use Bitrix\Crm\Service\Timeline\Item\Mixin;
 use Bitrix\Crm\Service\Timeline\Item\LogMessage;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\Text;
+use Bitrix\Crm\Service\Timeline\Layout\Common\Icon;
 use Bitrix\Crm\Service\Timeline\Layout\Header\Tag;
 use Bitrix\Main\Localization\Loc;
 
@@ -28,7 +29,7 @@ class PaymentSent extends LogMessage implements Interfaces\HasPaymentDetailsCont
 
 	public function getIconCode(): ?string
 	{
-		return 'bank-card';
+		return Icon::BANK_CARD;
 	}
 
 	public function getTags(): ?array

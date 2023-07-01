@@ -2,19 +2,17 @@
 
 namespace Bitrix\Crm\Controller\Action\Entity;
 
+use Bitrix\Crm\Category\NamingHelper;
 use Bitrix\Crm\Controller\EntitySearchScope;
 use Bitrix\Crm\Restriction\RestrictionManager;
-
+use Bitrix\Crm\Search\Result;
+use Bitrix\Crm\Search\Result\Factory;
 use Bitrix\Crm\Service\Container;
-use Bitrix\Crm\Settings\InvoiceSettings;
 use Bitrix\Main;
 use Bitrix\Main\Engine\Controller;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Search;
 use Bitrix\Main\UI\PageNavigation;
-
-use \Bitrix\Main\Localization\Loc;
-use Bitrix\Crm\Search\Result\Factory;
-use Bitrix\Crm\Search\Result;
 
 Loc::loadMessages(__FILE__);
 
@@ -77,13 +75,22 @@ class SearchAction extends Search\SearchAction
 				$searchResultProvider->setLimit($this->limit);
 				$searchResultProvider->setUseDenominationSearch($scope !== EntitySearchScope::INDEX);
 				$searchResultProvider->setAdditionalFilter($this->getAdditionalFilter($entityTypeId, $options));
+				$searchResultProvider->setAffectedCategories($this->getAffectedCategoriesFromOptions($options));
+
+				if ($this->isMyCompanyFromOptions($options) && Container::getInstance()->getUserPermissions()->getMyCompanyPermissions()->canSearch())
+				{
+					$searchResultProvider->setCheckPermissions(false);
+				}
 
 				$searchResult = $searchResultProvider->getSearchResult($searchQuery);
 				$categoryId = $options['categoryId'] ?? 0;
 
+				$adapter = Factory::createResultAdapter($entityTypeId, $categoryId);
+				self::applyCategoryLabelsToAdapter($adapter, (int)$entityTypeId, $options);
+
 				$results = array_merge(
 					$results,
-					Factory::createResultAdapter($entityTypeId, $categoryId)->adapt($searchResult)
+					$adapter->adapt($searchResult)
 				);
 
 				$this->limit = static::LIMIT - count($results);
@@ -125,44 +132,23 @@ class SearchAction extends Search\SearchAction
 	protected function getAdditionalFilter(int $entityTypeId, array $options): array
 	{
 		$categoryFilter = [];
-		if (isset($options['categoryId']) && in_array($entityTypeId, [\CCrmOwnerType::Contact, \CCrmOwnerType::Company], true))
+		$categoriesFromOptions = $this->getAffectedCategoriesFromOptions($options);
+		if (!empty($categoriesFromOptions) && is_array($categoriesFromOptions) && in_array($entityTypeId, [\CCrmOwnerType::Contact, \CCrmOwnerType::Company], true))
 		{
-			$categoryId = $options['categoryId'] ?? 0;
-			if (isset($options['extraCategoryIds']) && is_array($options['extraCategoryIds']))
+			if (count($categoriesFromOptions) === 1)
 			{
-				$extraCategoryIds = [];
-				foreach($options['extraCategoryIds'] as $extraCategoryId)
-				{
-					$extraCategoryId = (int)$extraCategoryId;
-					if ($extraCategoryId >= 0)
-					{
-						$extraCategoryIds[] = $extraCategoryId;
-					}
-				}
-				if (!empty($extraCategoryIds))
-				{
-					$extraCategoryIds[] = (int)$categoryId;
-					$extraCategoryIds = array_unique($extraCategoryIds);
-
-					$categoryFilter['@CATEGORY_ID'] = $extraCategoryIds;
-				}
+				$categoryFilter['=CATEGORY_ID'] = reset($categoriesFromOptions);
 			}
-
-			if (empty($categoryFilter))
+			else
 			{
-				$categoryFilter['=CATEGORY_ID'] = (int)$categoryId;
+				$categoryFilter['@CATEGORY_ID'] = $categoriesFromOptions;
 			}
 		}
 
 		if ($entityTypeId === \CCrmOwnerType::Company)
 		{
-			$isMyCompany = (
-				isset($options['isMyCompany'])
-				&& mb_strtoupper($options['isMyCompany']) === 'Y'
-			);
-
 			return array_merge($categoryFilter, [
-				'=IS_MY_COMPANY' => $isMyCompany ? 'Y' : 'N',
+				'=IS_MY_COMPANY' => $this->isMyCompanyFromOptions($options) ? 'Y' : 'N',
 			]);
 		}
 		if ($entityTypeId === \CCrmOwnerType::Contact)
@@ -171,6 +157,34 @@ class SearchAction extends Search\SearchAction
 		}
 
 		return [];
+	}
+
+	protected function getAffectedCategoriesFromOptions(array $options): ?array
+	{
+		if (isset($options['categoryId']))
+		{
+			$categoryId = (int)$options['categoryId'];
+
+			$result = [
+				$categoryId
+			];
+			if (isset($options['extraCategoryIds']) && is_array($options['extraCategoryIds']))
+			{
+				foreach($options['extraCategoryIds'] as $extraCategoryId)
+				{
+					$extraCategoryId = (int)$extraCategoryId;
+					if ($extraCategoryId >= 0)
+					{
+						$result[] = $extraCategoryId;
+					}
+				}
+				$result = array_unique($result);
+			}
+
+			return $result;
+		}
+
+		return null;
 	}
 
 	protected function provideLimits($searchQuery, array $options = null)
@@ -233,7 +247,7 @@ class SearchAction extends Search\SearchAction
 	 * @return array|array[]
 	 * @throws Main\NotImplementedException
 	 */
-	public static function prepareSearchResultsJson(array $items)
+	public static function prepareSearchResultsJson(array $items, array $searchOptions = [])
 	{
 		$result = [];
 		$supportedEntityTypeIds = Factory::getSupportedEntityTypeIds();
@@ -250,7 +264,7 @@ class SearchAction extends Search\SearchAction
 			/**
 			 * Assuming that all entity type's items have the same category
 			 */
-			$entityTypeToCategoryMap[$entityTypeId] = $item['CATEGORY_ID'];
+			$entityTypeToCategoryMap[$entityTypeId] = $item['CATEGORY_ID'] ?? null;
 			$itemsByEntityType[$entityTypeId][] = (int)$item['ENTITY_ID'];
 		}
 
@@ -261,12 +275,15 @@ class SearchAction extends Search\SearchAction
 				$searchResult = new Result();
 				$searchResult->addIds($entityIds);
 
+				$adapter = Factory::createResultAdapter(
+					$entityTypeId,
+					$entityTypeToCategoryMap[$entityTypeId] ?? null
+				);
+				self::applyCategoryLabelsToAdapter($adapter, (int)$entityTypeId, $searchOptions);
+
 				$result = array_merge(
 					$result,
-					Factory::createResultAdapter(
-						$entityTypeId,
-						$entityTypeToCategoryMap[$entityTypeId] ?? null
-					)->adapt($searchResult)
+					$adapter->adapt($searchResult)
 				);
 			}
 		}
@@ -277,6 +294,45 @@ class SearchAction extends Search\SearchAction
 				return $item->jsonSerialize();
 			},
 			$result
+		);
+	}
+
+	private static function applyCategoryLabelsToAdapter(Result\Adapter $adapter, int $entityTypeId, array $options): void
+	{
+		if ($entityTypeId !== \CCrmOwnerType::Contact)
+		{
+			return;
+		}
+
+		$categoryId = $options['categoryId'] ?? 0;
+		$extraCategoryIds = [];
+		if (isset($options['extraCategoryIds']) && is_array($options['extraCategoryIds']) && !empty($options['extraCategoryIds']))
+		{
+			$extraCategoryIds = $options['extraCategoryIds'];
+		}
+		else
+		{
+			return;
+		}
+
+		$contactFactory = Container::getInstance()->getFactory(\CCrmOwnerType::Contact);
+		$smartDocumentContactCategory = $contactFactory->getCategoryByCode(\Bitrix\Crm\Service\Factory\SmartDocument::CONTACT_CATEGORY_CODE);
+		$defaultContactCategoryId = $contactFactory->getDefaultCategory()->getId();
+
+		if (in_array($defaultContactCategoryId, $extraCategoryIds) && $smartDocumentContactCategory && $smartDocumentContactCategory->getId() == $categoryId)
+		{
+			$namingHelper = NamingHelper::getInstance();
+			$langCode = 'CRM_CONTROLLER_SEARCH_LABEL_CATEGORY_TITLE';
+			$adapter->addCategoryLabel($defaultContactCategoryId, $namingHelper->getLangPhrase($langCode, $defaultContactCategoryId));
+			$adapter->addCategoryLabel($categoryId, $namingHelper->getLangPhrase($langCode, $categoryId));
+		}
+	}
+
+	private function isMyCompanyFromOptions(array $options): bool
+	{
+		return (
+			isset($options['isMyCompany'])
+			&& mb_strtoupper($options['isMyCompany']) === 'Y'
 		);
 	}
 }

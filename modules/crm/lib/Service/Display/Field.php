@@ -5,9 +5,7 @@ namespace Bitrix\Crm\Service\Display;
 use Bitrix\Crm\Kanban\Exception;
 use Bitrix\Crm\Service\Display\Field\AddressField;
 use Bitrix\Crm\Service\Display\Field\BooleanField;
-use Bitrix\Crm\Service\Display\Field\CrmCompanyField;
 use Bitrix\Crm\Service\Display\Field\CrmCurrencyField;
-use Bitrix\Crm\Service\Display\Field\CrmEntityField;
 use Bitrix\Crm\Service\Display\Field\CrmField;
 use Bitrix\Crm\Service\Display\Field\CrmStatusField;
 use Bitrix\Crm\Service\Display\Field\DateField;
@@ -28,6 +26,7 @@ use Bitrix\Crm\Service\Display\Field\HlBlockField;
 use Bitrix\Crm\Service\Display\Field\TextField;
 use Bitrix\Crm\Service\Display\Field\UrlField;
 use Bitrix\Crm\Service\Display\Field\UserField;
+use CCrmOwnerType;
 
 abstract class Field
 {
@@ -86,43 +85,43 @@ abstract class Field
 				{
 					$type = 'crm';
 					$displayParams = [
-						\CCrmOwnerType::ResolveName($parentEntityTypeId) => 'Y',
+						CCrmOwnerType::ResolveName($parentEntityTypeId) => 'Y',
 					];
 				}
 				break;
 			case 'crm':
 				$crmFieldsMap = [
-					'LEAD_ID' => [\CCrmOwnerType::LeadName => 'Y'],
-					'DEAL_ID' => [\CCrmOwnerType::DealName => 'Y'],
-					'CONTACT_ID' => [\CCrmOwnerType::ContactName => 'Y'],
-					'COMPANY_ID' => [\CCrmOwnerType::CompanyName => 'Y'],
-					'QUOTE_ID' => [\CCrmOwnerType::QuoteName => 'Y'],
-					'INVOICE_ID' => [\CCrmOwnerType::InvoiceName => 'Y'],
+					'LEAD_ID' => [CCrmOwnerType::LeadName => 'Y'],
+					'DEAL_ID' => [CCrmOwnerType::DealName => 'Y'],
+					'CONTACT_ID' => [CCrmOwnerType::ContactName => 'Y'],
+					'COMPANY_ID' => [CCrmOwnerType::CompanyName => 'Y'],
+					'QUOTE_ID' => [CCrmOwnerType::QuoteName => 'Y'],
+					'INVOICE_ID' => [CCrmOwnerType::InvoiceName => 'Y'],
 				];
 				$displayParams = $crmFieldsMap[$id] ?? [];
 				break;
 			case 'crm_lead':
-				$displayParams = [\CCrmOwnerType::LeadName => 'Y'];
+				$displayParams = [CCrmOwnerType::LeadName => 'Y'];
 				$type = 'crm';
 				break;
 			case 'crm_deal':
-				$displayParams = [\CCrmOwnerType::DealName => 'Y'];
+				$displayParams = [CCrmOwnerType::DealName => 'Y'];
 				$type = 'crm';
 				break;
 			case 'crm_contact':
-				$displayParams = [\CCrmOwnerType::ContactName => 'Y'];
+				$displayParams = [CCrmOwnerType::ContactName => 'Y'];
 				$type = 'crm';
 				break;
 			case 'crm_company':
-				$displayParams = [\CCrmOwnerType::CompanyName => 'Y'];
+				$displayParams = [CCrmOwnerType::CompanyName => 'Y'];
 				$type = 'crm';
 				break;
 			case 'crm_quote':
-				$displayParams = [\CCrmOwnerType::QuoteName => 'Y'];
+				$displayParams = [CCrmOwnerType::QuoteName => 'Y'];
 				$type = 'crm';
 				break;
 			case 'crm_invoice':
-				$displayParams = [\CCrmOwnerType::InvoiceName => 'Y'];
+				$displayParams = [CCrmOwnerType::InvoiceName => 'Y'];
 				$type = 'crm';
 				break;
 			case 'crm_status':
@@ -164,7 +163,7 @@ abstract class Field
 
 	protected static function getInstance(string $type, string $id): Field
 	{
-		if ($type === 'string')
+		if ($type === StringField::TYPE)
 		{
 			return new StringField($id);
 		}
@@ -175,122 +174,184 @@ abstract class Field
 		// 	return new StatusField($id);
 		// }
 
-		if ($type === 'payment_status')
+		if ($type === PaymentStatusField::TYPE)
 		{
 			return new PaymentStatusField($id);
 		}
 
-		if ($type === 'delivery_status')
+		if ($type === DeliveryStatusField::TYPE)
 		{
 			return new DeliveryStatusField($id);
 		}
 
-		if ($type === 'hlblock')
+		if ($type === HlBlockField::TYPE)
 		{
 			return new HlBlockField($id);
 		}
 
-		if ($type === 'text')
+		if ($type === TextField::TYPE)
 		{
 			return new TextField($id);
 		}
 
-		if ($type === 'date')
+		if ($type === DateField::TYPE)
 		{
 			return new DateField($id);
 		}
 
-		if ($type === 'datetime')
+		if ($type === DateTimeField::TYPE)
 		{
 			return new DateTimeField($id);
 		}
 
-		if ($type === 'enumeration')
+		if ($type === EnumerationField::TYPE)
 		{
 			return new EnumerationField($id);
 		}
 
-		if ($type === 'employee')
+		if ($type === EmployeeField::TYPE)
 		{
 			return new EmployeeField($id);
 		}
 
-		if ($type === 'file')
+		if ($type === FileField::TYPE)
 		{
 			return new FileField($id);
 		}
 
-		if ($type === 'iblock_element')
+		if ($type === IblockElementField::TYPE)
 		{
 			return new IblockElementField($id);
 		}
 
-		if ($type === 'iblock_section')
+		if ($type === IblockSectionField::TYPE)
 		{
 			return new IblockSectionField($id);
 		}
 
-		if ($type === 'user')
+		if ($type === UserField::TYPE)
 		{
 			return new UserField($id);
 		}
 
-		if ($type === 'crm_status')
-		{
-			return new CrmStatusField($id);
-		}
-
-		if ($type === 'resourcebooking')
+		if ($type === ResourceBookingField::TYPE)
 		{
 			return new ResourceBookingField($id);
 		}
 
-		if ($type === 'money')
+		if ($type === MoneyField::TYPE)
 		{
 			return new MoneyField($id);
 		}
 
-		if ($type === 'address')
+		if ($type === AddressField::TYPE)
 		{
 			return new AddressField($id);
 		}
 
-		if ($type === 'url')
+		if ($type === UrlField::TYPE)
 		{
 			return new UrlField($id);
 		}
 
-		if ($type === 'crm_currency')
-		{
-			return new CrmCurrencyField($id);
-		}
-
-		if ($type === 'crm')
-		{
-			return new CrmField($id);
-		}
-
-		if ($type === 'crm_company')
-		{
-			return new CrmCompanyField($id);
-		}
-
-		if ($type === 'crm_entity')
-		{
-			return new CrmEntityField($id);
-		}
-
-		if (in_array($type, ['number', 'double', 'integer', 'float']))
-		{
-			return new NumberField($id);
-		}
-
-		if ($type === 'boolean')
+		if ($type === BooleanField::TYPE)
 		{
 			return new BooleanField($id);
 		}
 
+		if (in_array($type, ['number', 'double', 'integer', 'float'], true))
+		{
+			return new NumberField($id);
+		}
+
+		if ($type === CrmStatusField::TYPE)
+		{
+			return new CrmStatusField($id);
+		}
+
+		if ($type === CrmCurrencyField::TYPE)
+		{
+			return new CrmCurrencyField($id);
+		}
+
+		$crmField = static::resolveCrmField($type, $id);
+		if ($crmField)
+		{
+			return $crmField;
+		}
+
 		return new OtherField($id);
+	}
+
+	private static function resolveCrmField(string $type, string $id): ?Field
+	{
+		$displayParams = [];
+
+		if ($type === \Bitrix\Crm\Field::TYPE_CRM_LEAD)
+		{
+			$type = CrmField::TYPE;
+			$displayParams = [CCrmOwnerType::LeadName => 'Y'];
+		}
+
+		if ($type === \Bitrix\Crm\Field::TYPE_CRM_DEAL)
+		{
+			$type = CrmField::TYPE;
+			$displayParams = [CCrmOwnerType::DealName => 'Y'];
+		}
+
+		if ($type === \Bitrix\Crm\Field::TYPE_CRM_QUOTE)
+		{
+			$type = CrmField::TYPE;
+			$displayParams = [CCrmOwnerType::QuoteName => 'Y'];
+		}
+
+		if ($type === 'crm_invoice')
+		{
+			$type = CrmField::TYPE;
+			$displayParams = [CCrmOwnerType::InvoiceName => 'Y'];
+		}
+
+		// these fields render with client_light type
+		// if ($type === \Bitrix\Crm\Field::TYPE_CRM_CONTACT)
+		// {
+		// 	$type = CrmField::TYPE;
+		// 	$displayParams = [\CCrmOwnerType::ContactName => 'Y'];
+		// }
+		// if ($type === \Bitrix\Crm\Field::TYPE_CRM_COMPANY)
+		// {
+		// 	$type = CrmField::TYPE;
+		// 	$displayParams = [\CCrmOwnerType::CompanyName => 'Y'];
+		// }
+
+		if ($type === \Bitrix\Crm\Field::TYPE_CRM_ENTITY)
+		{
+			$type = CrmField::TYPE;
+
+			if (strpos($id, 'PARENT_ID_') === 0)
+			{
+				$entityTypeId = (int)substr($id, 10);
+				$entityTypeName = CCrmOwnerType::ResolveName($entityTypeId);
+
+				if ($entityTypeName !== '')
+				{
+					$displayParams[$entityTypeName] = 'Y';
+				}
+			}
+		}
+
+		if ($type === CrmField::TYPE)
+		{
+			$field = new CrmField($id);
+
+			if (!empty($displayParams))
+			{
+				$field->addDisplayParams($displayParams);
+			}
+
+			return $field;
+		}
+
+		return null;
 	}
 
 	public function getType(): string

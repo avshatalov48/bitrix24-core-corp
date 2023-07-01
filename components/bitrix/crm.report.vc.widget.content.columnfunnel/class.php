@@ -28,10 +28,10 @@ class CrmReportVcWidgetContentColumnFunnel extends BaseViewComponent
 				$entity['title'] = $reportResult['title'];
 				if (isset($reportResult['config']['mode']) && $reportResult['config']['mode'] === 'singleData')
 				{
-					$entity['topAdditionalTitle'] = $reportResult['config']['topAdditionalTitle'];
-					$entity['topAdditionalValue'] = $reportResult['config']['topAdditionalValue'];
+					$entity['topAdditionalTitle'] = $reportResult['config']['topAdditionalTitle'] ?? '';
+					$entity['topAdditionalValue'] = $reportResult['config']['topAdditionalValue'] ?? null;
 					$entity['singleData'] = true;
-					$entity['topAdditionalValueUnit'] = $reportResult['config']['topAdditionalValueUnit'];
+					$entity['topAdditionalValueUnit'] = $reportResult['config']['topAdditionalValueUnit'] ?? null;
 				}
 
 				if (!empty($reportResult['items']))

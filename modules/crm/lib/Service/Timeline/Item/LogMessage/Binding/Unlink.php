@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Service\Timeline\Item\LogMessage\Binding;
 
+use Bitrix\Crm\Service\Timeline\Layout\Common\Icon;
 use Bitrix\Main\Localization\Loc;
 
 class Unlink extends Base
@@ -18,6 +19,6 @@ class Unlink extends Base
 
 	public function getIconCode(): ?string
 	{
-		return 'unlink';
+		return Icon::UNLINK;
 	}
 }

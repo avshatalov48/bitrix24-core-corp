@@ -30,7 +30,7 @@ Extension::load([
 ]);
 
 $isIFrame = isset($_REQUEST["IFRAME"]) && $_REQUEST["IFRAME"] === "Y";
-if($isIFrame)
+if($isIFrame && isset($templateAddUrl))
 {
     $templateAddUrl .= '?IFRAME=Y';
 }
@@ -39,7 +39,8 @@ if($isIFrame)
 $helper = $arResult['HELPER'];
 $arParams =& $helper->getComponent()->arParams; // make $arParams the same variable as $this->__component->arParams, as it really should be
 
-if ($arParams['HIDE_FILTER'] != 'Y')
+$hideFilter = $arParams['HIDE_FILTER'] ?? 'N';
+if ($hideFilter != 'Y')
 {
 	$bodyClass = $APPLICATION->GetPageProperty('BodyClass');
 	$APPLICATION->SetPageProperty(
@@ -64,7 +65,8 @@ $templateAddUrl = CComponentEngine::MakePathFromTemplate(
 ?>
 
 <?php
-if ($arParams['HIDE_MENU'] != 'Y')
+$hideMenu = $arParams['HIDE_MENU'] ?? 'N';
+if ($hideMenu != 'Y')
 {
 	$APPLICATION->IncludeComponent(
 		'bitrix:tasks.interface.topmenu',
@@ -89,7 +91,8 @@ if ($arParams['HIDE_MENU'] != 'Y')
 } ?>
 
 <?php
-if ($arParams['HIDE_FILTER'] !== 'Y')
+$hideFilter = $arParams['HIDE_FILTER'] ?? 'N';
+if ($hideFilter !== 'Y')
 {
 	//region FILTER
 	if (!$isBitrix24Template): ?>
@@ -105,7 +108,7 @@ if ($arParams['HIDE_FILTER'] !== 'Y')
 			'FILTER' => $arResult['FILTER']['FIELDS'],
 			'FILTER_PRESETS' => $arResult['FILTER']['PRESETS'],
 			'ENABLE_LABEL' => true,
-			'ENABLE_LIVE_SEARCH' => $arParams['USE_LIVE_SEARCH'] === 'Y',
+			'ENABLE_LIVE_SEARCH' => (isset($arParams['USE_LIVE_SEARCH']) && $arParams['USE_LIVE_SEARCH'] === 'Y'),
 			'RESET_TO_DEFAULT_MODE' => true,
 		]);
 		if ((TemplateAccessController::can($arParams['USER_ID'], ActionDictionary::ACTION_TEMPLATE_CREATE)))
@@ -182,20 +185,20 @@ if ($arParams['HIDE_FILTER'] !== 'Y')
 						"SHOW_PAGESIZE" => true,
 						//					"SHOW_ACTION_PANEL"         => true,
 
-						"MESSAGES" => $arResult['MESSAGES'],
+						"MESSAGES" => $arResult['MESSAGES'] ?? null,
 
 						"ENABLE_COLLAPSIBLE_ROWS" => true,
 						//		'ALLOW_SAVE_ROWS_STATE'=>true,
 
 						"SHOW_MORE_BUTTON" => false,
-						'~NAV_PARAMS' => $arResult['GET_LIST_PARAMS']['NAV_PARAMS'],
+						'~NAV_PARAMS' => $arResult['GET_LIST_PARAMS']['NAV_PARAMS'] ?? '',
 						'NAV_OBJECT' => $arResult['NAV_OBJECT'],
 						'NAV_STRING' => $arResult['NAV_STRING'],
 
 						"TOTAL_ROWS_COUNT" => $arResult['TOTAL_RECORD_COUNT'],
 						//		"CURRENT_PAGE" => $arResult[ 'NAV' ]->getCurrentPage(),
 						//		"ENABLE_NEXT_PAGE" => ($arResult[ 'NAV' ]->getPageSize() * $arResult[ 'NAV' ]->getCurrentPage()) < $arResult[ 'NAV' ]->getRecordCount(),
-						"PAGE_SIZES" => $arResult['PAGE_SIZES'],
+						"PAGE_SIZES" => $arResult['PAGE_SIZES'] ?? '',
 						"DEFAULT_PAGE_SIZE" => 50,
 					),
 					$component,
@@ -278,28 +281,22 @@ if ($arParams['HIDE_FILTER'] !== 'Y')
 		<? $helper->initializeExtension(); ?>
 
 		<script>
-			var tasksListAjaxUrl = "/bitrix/components/bitrix/tasks.templates.list/ajax.php?SITE_ID=<?php echo SITE_ID?>";
+			var tasksListAjaxUrl = "/bitrix/components/bitrix/tasks.templates.list/ajax.php?SITE_ID=<?= SITE_ID?>";
 
 			BX.message({
-				TASKS_PATH_TO_USER_PROFILE: '<?php echo CUtil::JSEscape($arParams['PATH_TO_USER_PROFILE'])?>',
-				TASKS_PATH_TO_TASK: '<?php echo CUtil::JSEscape(
-					str_replace('#template_id#', '#task_id#', $arParams['PATH_TO_TEMPLATES_TEMPLATE'])
+				TASKS_PATH_TO_USER_PROFILE: '<?= CUtil::JSEscape($arParams['PATH_TO_USER_PROFILE'])?>',
+				TASKS_PATH_TO_TASK: '<?= CUtil::JSEscape(
+					str_replace('#template_id#', '#task_id#', ($arParams['PATH_TO_TEMPLATES_TEMPLATE'] ?? ''))
 				)?>',
 				TASKS_LIST_MENU_RESET_TO_DEFAULT_PRESET: '',
-				TASKS_PATH_TO_TEMPLATES_TEMPLATE: '<?php echo CUtil::JSEscape($arParams['PATH_TO_TEMPLATES_TEMPLATE'])?>',
+				TASKS_PATH_TO_TEMPLATES_TEMPLATE: '<?= CUtil::JSEscape($arParams['PATH_TO_TEMPLATES_TEMPLATE'] ?? '')?>',
 
-				TASKS_LIST_CONFIRM_ACTION_FOR_ALL_ITEMS: '<?php echo GetMessageJS(
-					'TASKS_LIST_CONFIRM_ACTION_FOR_ALL_TEMPLATE_ITEMS'
-				); ?>',
-				TASKS_LIST_CONFIRM_REMOVE_FOR_SELECTED_ITEMS: '<?php echo GetMessageJS(
-					'TASKS_LIST_CONFIRM_REMOVE_FOR_SELECTED_TEMPLATE_ITEMS'
-				); ?>',
-				TASKS_LIST_CONFIRM_REMOVE_FOR_ALL_ITEMS: '<?php echo GetMessageJS(
-					'TASKS_LIST_CONFIRM_REMOVE_FOR_ALL_TEMPLATE_ITEMS'
-				); ?>',
+				TASKS_LIST_CONFIRM_ACTION_FOR_ALL_ITEMS: '<?= GetMessageJS('TASKS_LIST_CONFIRM_ACTION_FOR_ALL_TEMPLATE_ITEMS'); ?>',
+				TASKS_LIST_CONFIRM_REMOVE_FOR_SELECTED_ITEMS: '<?= GetMessageJS('TASKS_LIST_CONFIRM_REMOVE_FOR_SELECTED_TEMPLATE_ITEMS'); ?>',
+				TASKS_LIST_CONFIRM_REMOVE_FOR_ALL_ITEMS: '<?= GetMessageJS('TASKS_LIST_CONFIRM_REMOVE_FOR_ALL_TEMPLATE_ITEMS'); ?>',
 
-				TASKS_LIST_GROUP_ACTION_DELETE_ERROR: '<?php echo GetMessageJS('TASKS_LIST_GROUP_ACTION_DELETE_ERROR'); ?>',
-				TASKS_TEMPLATE_LIST_GROUP_ACTION_REMOVE_CONFIRM: '<?php echo GetMessageJS('TASKS_TEMPLATE_LIST_GROUP_ACTION_REMOVE_CONFIRM'); ?>',
+				TASKS_LIST_GROUP_ACTION_DELETE_ERROR: '<?= GetMessageJS('TASKS_LIST_GROUP_ACTION_DELETE_ERROR'); ?>',
+				TASKS_TEMPLATE_LIST_GROUP_ACTION_REMOVE_CONFIRM: '<?= GetMessageJS('TASKS_TEMPLATE_LIST_GROUP_ACTION_REMOVE_CONFIRM'); ?>',
 				TASKS_TEMPLATES_LIST_TITLE_ERROR: '<?= Loc::getMessage('TASKS_TEMPLATES_LIST_TITLE_ERROR')?>',
 				TASKS_TEMPLATES_LIST_CLOSE: '<?= Loc::getMessage('TASKS_TEMPLATES_LIST_CLOSE')?>',
 			});
@@ -307,23 +304,3 @@ if ($arParams['HIDE_FILTER'] !== 'Y')
 	<? endif ?>
 
 <?php endif;
-if ($arParams['BACKGROUND_FOR_TEMPLATE'])
-{
-	$ownerId = (int)$arParams['USER_ID'];
-	$templateId = (int)$arParams['TEMPLATE_ID'];
-
-	$factory = new SliderFactory();
-	try
-	{
-		$factory
-			->setAction($arParams['TEMPLATE_ACTION'])
-			->setQueryParams($arParams['GET_PARAMS']);
-
-		$slider = $factory->createEntitySlider($templateId, SliderFactory::TEMPLATE, $ownerId, SliderFactory::PERSONAL_CONTEXT);
-		$slider->open();
-	}
-	catch (SliderException $exception)
-	{
-		$exception->show();
-	}
-}

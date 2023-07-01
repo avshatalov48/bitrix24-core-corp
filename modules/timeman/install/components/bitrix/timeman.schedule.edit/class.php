@@ -66,7 +66,7 @@ class TimemanScheduleComponent extends \Bitrix\Timeman\Component\BaseComponent
 		$this->arResult['ENTITY_CODE'] = $this->getRequest()->get('ENTITY_CODE');
 		if ($this->arResult['ENTITY_CODE'] === null)
 		{
-			$this->arResult['ENTITY_CODE'] = $this->arParams['ENTITY_CODE'];
+			$this->arResult['ENTITY_CODE'] = $this->arParams['ENTITY_CODE'] ?? null;
 		}
 		$this->arResult['hideShiftPlanBtn'] = $this->getRequest()->get('hideShiftPlanBtn') === 'Y';
 		return $arParams;
@@ -221,13 +221,14 @@ class TimemanScheduleComponent extends \Bitrix\Timeman\Component\BaseComponent
 		{
 			foreach ($this->arResult['calendarTemplates'] as $calendarTemplate)
 			{
-				if ($calendarTemplate['isCurrentCountry'])
+				if ($calendarTemplate['isCurrentCountry'] ?? false)
 				{
 					$scheduleForm->calendarForm->parentId = $calendarTemplate['id'];
 					$scheduleForm->calendarForm->setDates(CalendarFormHelper::convertDatesToDbFormat($calendarTemplate['exclusions']));
 				}
 			}
-			$scheduleForm->getShiftForms()[0]->workDays = reset(array_keys($this->arResult['shiftWorkdaysOptions']));
+			$shiftWorkdaysOption = array_keys($this->arResult['shiftWorkdaysOptions']);
+			$scheduleForm->getShiftForms()[0]->workDays = reset($shiftWorkdaysOption);
 
 			if (!DependencyManager::getInstance()->getScheduleRepository()->querySchedulesForAllUsers()->exec()->fetch() !== false)
 			{
@@ -257,7 +258,8 @@ class TimemanScheduleComponent extends \Bitrix\Timeman\Component\BaseComponent
 		$this->arResult['weekDays'][5] = Loc::getMessage('TIMEMAN_SCHEDULE_EDIT_FRI');
 		$this->arResult['weekDays'][6] = Loc::getMessage('TIMEMAN_SCHEDULE_EDIT_SAT');
 		$this->arResult['weekDays'][7] = Loc::getMessage('TIMEMAN_SCHEDULE_EDIT_SUN');
-		$this->arResult['customWorkdaysText'] = end(array_values($this->arResult['shiftWorkdaysOptions']));
+		$shiftWorkdaysOption = array_values($this->arResult['shiftWorkdaysOptions']);
+		$this->arResult['customWorkdaysText'] = end($shiftWorkdaysOption);
 		$this->arResult['WEEKS_PERIODS'] = [ScheduleTable::REPORT_PERIOD_WEEK, ScheduleTable::REPORT_PERIOD_TWO_WEEKS];
 		/** @noinspection PhpVoidFunctionResultUsedInspection */
 		$this->includeComponentTemplate();

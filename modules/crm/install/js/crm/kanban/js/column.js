@@ -219,28 +219,33 @@
 					this.items.push(item);
 				}
 
-				if (item.isCountable() && !item.notChangeTotal)
+				if (item.isCountable())
 				{
 					this.incrementTotal();
-					item.notChangeTotal = false;
 				}
 			}
 
 			this.setPullItemBackground(item);
 			item.animate({
-				duration: this.getGrid().animationDuration,
+				duration: this.getGrid().animationDuration / 4,
 				draw: function(progress) {
-					item.layout.container.style.opacity = progress*100+'%';
+					const currentHeight = item.layout.container.scrollHeight * progress;
+					item.layout.container.style.height = `${currentHeight}px`;
+					item.layout.container.style.zIndex = -1;
 				},
 				useAnimation: item.useAnimation
 			}).then(function(){
 				this.setPullItemBackground(item, '#fff');
 				item.useAnimation = false;
 
-				if (item.layout.container)
-				{
-					item.layout.container.style.opacity = '100%';
-				}
+				Object.assign(
+					item.layout.container.style,
+					{
+						height: 'auto',
+						opacity: '100%',
+						zIndex: null,
+					}
+				);
 
 				BX.Event.EventEmitter.emit(
 					'Crm.Kanban.Column:onItemAdded',
@@ -331,41 +336,46 @@
 			}
 
 			// ajax
-			this.getGrid().ajax({
+			this.getGrid().ajax(
+				{
 					action: "status",
 					entity_id: forSend,
 					prev_entity_id: afterItemId,
 					status: this.getId()
 				},
-				function(data)
-				{
-					if (data && data.error)
+				(data) => {
+					if (!data)
+					{
+						return;
+					}
+
+					if (data.error)
 					{
 						BX.Kanban.Utils.showErrorDialog(data.error, true);
-					} else if (data && data.IS_SHOULD_UPDATE_CARD) {
-						this.getGrid().loadNew(forSend, false, true, true, true);
 					}
-				}.bind(this),
-				function(error)
-				{
-					BX.Kanban.Utils.showErrorDialog("Error: " + error, true);
-				}.bind(this)
+					else if (data.IS_SHOULD_UPDATE_CARD)
+					{
+						const useAnimation = (!Array.isArray(forSend) || forSend.length <= 1);
+						void this.getGrid().loadNew(forSend, false, true, true, useAnimation);
+					}
+				},
+				(error) => BX.Kanban.Utils.showErrorDialog('Error: ' + error, true)
 			);
 
 			if (this.getGrid().isRendered())
 			{
 				// crutches for real total items
-				var arr = [];
+				const arr = [];
 
-				for(var prop in this.items)
+				for (const prop in this.items)
 				{
-					if(!BX.util.in_array(this.items[prop].id, arr))
+					if (!BX.util.in_array(this.items[prop].id, arr))
 					{
 						arr.push(this.items[prop].id);
 					}
 				}
 
-				this.render( );
+				this.render();
 			}
 		},
 
@@ -704,7 +714,10 @@
 						{
 							this.getGrid().loadNew(
 								entityData.entityId,
-								true
+								true,
+								false,
+								false,
+								true,
 							);
 						}
 
@@ -1187,6 +1200,12 @@
 						}) : null
 				);
 			}
+			else if (this.isShowHiddenAddItemButton())
+			{
+				this.layout.subTitleAddButton = BX.Tag.render`
+					<div class="crm-kanban-column-add-item-button--dummy"</div>
+				`;
+			}
 
 			this.subtitleNode = BX.create("div", {
 				children: [
@@ -1210,6 +1229,12 @@
 			});
 
 			return this.subtitleNode;
+		},
+
+		isShowHiddenAddItemButton: function()
+		{
+			const columns = this.getGrid().getColumns();
+			return columns.some(column => column.canAddItem);
 		},
 
 		cleanEditorNode: function()
@@ -1409,10 +1434,7 @@
 					}).then(function(value){
 						if (itemToRemove.isCountable() && itemToRemove.isVisible())
 						{
-							if (!itemToRemove.notChangeTotal)
-							{
-								this.decrementTotal();
-							}
+							this.decrementTotal();
 							this.getGrid().resetMultiSelectMode();
 						}
 						if (this.getGrid().isRendered())

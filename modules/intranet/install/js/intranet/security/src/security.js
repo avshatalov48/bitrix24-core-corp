@@ -52,6 +52,7 @@ export class Security
 			case "appPasswords":
 			case "synchronize":
 			case "mailingAgreement":
+			case "sso":
 				this.sendAction(action, {});
 				break;
 

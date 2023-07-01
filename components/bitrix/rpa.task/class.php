@@ -16,7 +16,7 @@ class RpaAutomationTaskComponent extends Rpa\Components\Base
 	{
 		$arParams["typeId"] = (string) $arParams["typeId"];
 		$arParams["elementId"] = (int) $arParams["elementId"];
-		$arParams["SET_TITLE"] = ($arParams["SET_TITLE"] === "N" ? "N" : "Y");
+		$arParams["SET_TITLE"] = (($arParams["SET_TITLE"] ?? '') === "N" ? "N" : "Y");
 
 		return $arParams;
 	}
@@ -56,9 +56,9 @@ class RpaAutomationTaskComponent extends Rpa\Components\Base
 		);
 
 		$userId = (int) Main\Engine\CurrentUser::get()->getId();
-		$this->arResult['USER'] = reset(static::getUsers([$userId]));
+		$this->arResult['USER'] = current(static::getUsers([$userId]));
 
-		$task = $this->arResult['TASK'] ?? reset(Rpa\Driver::getInstance()->getTaskManager()->getIncompleteItemTasks($item, $userId));
+		$task = $this->arResult['TASK'] ?? current(Rpa\Driver::getInstance()->getTaskManager()->getIncompleteItemTasks($item, $userId));
 		if ($task)
 		{
 			$task = Rpa\Driver::getInstance()->getTaskManager()->getTaskById($task['ID']);

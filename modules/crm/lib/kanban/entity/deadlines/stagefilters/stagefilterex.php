@@ -37,7 +37,11 @@ final class StageFilterEx implements StageFilter
 				];
 				break;
 			case DeadlinesStageManager::STAGE_LATER:
-				$filter[] = [">=$fieldName" => $this->datePeriods->afterNextWeek()];
+				$filter[] = [
+					'LOGIC' => 'OR',
+					">=$fieldName" => $this->datePeriods->afterNextWeek(),
+					"=$fieldName" => false
+				];
 				break;
 			default:
 				return $filter;

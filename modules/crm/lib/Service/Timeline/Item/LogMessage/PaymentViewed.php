@@ -5,6 +5,7 @@ namespace Bitrix\Crm\Service\Timeline\Item\LogMessage;
 use Bitrix\Crm\Service\Timeline\Item\Interfaces;
 use Bitrix\Crm\Service\Timeline\Item\Mixin;
 use Bitrix\Crm\Service\Timeline\Item\LogMessage;
+use Bitrix\Crm\Service\Timeline\Layout\Common\Icon;
 use Bitrix\Crm\Service\Timeline\Layout\Header\Tag;
 use Bitrix\Main\Localization\Loc;
 
@@ -26,7 +27,7 @@ class PaymentViewed extends LogMessage implements Interfaces\HasPaymentDetailsCo
 
 	public function getIconCode(): ?string
 	{
-		return 'view';
+		return Icon::VIEW;
 	}
 
 	public function getTags(): ?array

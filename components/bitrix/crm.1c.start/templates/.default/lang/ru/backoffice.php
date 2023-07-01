@@ -1,7 +1,9 @@
 <?php
 
 $MESS["CRM_1C_START_BACKOFFICE_NAME"] = "1С:Бэкофис - 2.0";
+$MESS["CRM_1C_START_BACKOFFICE_NAME_MSGVER_1"] = "Коннектор к 1С";
 $MESS["CRM_1C_START_DOC_ADV_TITLE"] = "Комплексное решение для обмена 1С и не только.";
+$MESS["CRM_1C_START_DOC_ADV_TITLE_MSGVER_1"] = "Комплексное решение для обмена с 1С и не только.";
 $MESS["CRM_1C_START_DOC_ADV_1"] = "Простое подключение";
 $MESS["CRM_1C_START_DOC_ADV_2"] = "Легкая настройка";
 $MESS["CRM_1C_START_DOC_INFO_TEXT"] = "НОВИНКА!<br>

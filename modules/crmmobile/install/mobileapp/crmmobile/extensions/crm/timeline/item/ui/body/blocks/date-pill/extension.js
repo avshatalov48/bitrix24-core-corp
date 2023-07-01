@@ -2,7 +2,6 @@
  * @module crm/timeline/item/ui/body/blocks/date-pill
  */
 jn.define('crm/timeline/item/ui/body/blocks/date-pill', (require, exports, module) => {
-
 	const { TimelineItemBodyBlock } = require('crm/timeline/item/ui/body/blocks/base');
 	const { Moment } = require('utils/date');
 	const { datetime, shortTime, dayShortMonth, mediumDate } = require('utils/date/formats');
@@ -71,7 +70,7 @@ jn.define('crm/timeline/item/ui/body/blocks/date-pill', (require, exports, modul
 							paddingVertical: 4,
 							flexDirection: 'row',
 							alignItems: 'center',
-						}
+						},
 					},
 					Text({
 						text: this.formatDate(),
@@ -79,18 +78,18 @@ jn.define('crm/timeline/item/ui/body/blocks/date-pill', (require, exports, modul
 							fontSize: 12,
 							fontWeight: '600',
 							color: '#6A737F',
-						}
+						},
 					}),
 					this.props.action && !this.isReadonly && Image({
 						svg: {
-							content: `<svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M8.3065 0.753906L5.66572 3.39469L5.00042 4.04969L4.34773 3.39469L1.70695 0.753906L0.775096 1.68576L5.00669 5.91735L9.23828 1.68576L8.3065 0.753906Z" fill="#6A737F"/></svg>`
+							content: '<svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M8.3065 0.753906L5.66572 3.39469L5.00042 4.04969L4.34773 3.39469L1.70695 0.753906L0.775096 1.68576L5.00669 5.91735L9.23828 1.68576L8.3065 0.753906Z" fill="#6A737F"/></svg>',
 						},
 						style: {
 							marginLeft: 4,
 							width: 10,
 							height: 6,
-						}
-					})
+						},
+					}),
 				),
 			);
 		}
@@ -121,7 +120,7 @@ jn.define('crm/timeline/item/ui/body/blocks/date-pill', (require, exports, modul
 				date = `${day}, ${this.moment.format(dateFormat)}`;
 			}
 
-			const time = this.moment.format(shortTime()).toLocaleLowerCase(env.languageId);
+			const time = this.moment.format(shortTime());
 
 			return this.props.withTime ? `${date}, ${time}` : date;
 		}
@@ -141,7 +140,7 @@ jn.define('crm/timeline/item/ui/body/blocks/date-pill', (require, exports, modul
 							this.onAction(moment);
 						});
 					}
-				}
+				},
 			);
 		}
 
@@ -154,6 +153,7 @@ jn.define('crm/timeline/item/ui/body/blocks/date-pill', (require, exports, modul
 			{
 				const { actionParams } = this.props.action;
 				actionParams.value = moment.format(datetime());
+				actionParams.valueTs = moment.timestamp;
 
 				this.emitAction({
 					...this.props.action,
@@ -164,5 +164,4 @@ jn.define('crm/timeline/item/ui/body/blocks/date-pill', (require, exports, modul
 	}
 
 	module.exports = { TimelineItemBodyDatePillBlock };
-
 });

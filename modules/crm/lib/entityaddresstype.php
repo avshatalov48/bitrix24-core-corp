@@ -9,6 +9,10 @@
 namespace Bitrix\Crm;
 
 
+use Bitrix\Crm\Category\Entity\ItemCategory;
+use Bitrix\Crm\Service\Container;
+use CCrmOwnerType;
+
 class EntityAddressType
 {
 	const Undefined = 0;
@@ -449,6 +453,61 @@ class EntityAddressType
 		$zoneMap = self::getZoneMap();
 
 		return isset($zoneMap[$addressZoneId]) ? $zoneMap[$addressZoneId]['default'] : self::Undefined;
+	}
+
+	public static function getDefaultIdByEntityCategory(int $entityTypeId, int $categoryId) : int
+	{
+		$result = static::Undefined;
+
+		if (CCrmOwnerType::IsDefined($entityTypeId) && $categoryId > 0)
+		{
+			$factory = Container::getInstance()->getFactory($entityTypeId);
+			if ($factory && $factory->isCategoryAvailable($categoryId))
+			{
+				$category = $factory->getCategory($categoryId);
+				if ($category instanceof ItemCategory)
+				{
+					$result = $category->getDefaultAddressType();
+				}
+			}
+		}
+
+		return $result;
+	}
+
+	public static function getDefaultIdByEntityId(int $entityTypeId, int $entityId) : int
+	{
+		$result = static::Undefined;
+
+		if (CCrmOwnerType::IsDefined($entityTypeId) && $entityId > 0)
+		{
+			$factory = Container::getInstance()->getFactory($entityTypeId);
+
+			if ($factory)
+			{
+				$categoryId = 0;
+
+				if ($factory->isCategoriesSupported())
+				{
+					$item = $factory->getItem($entityId);
+					if ($item)
+					{
+						$categoryId = $item->getCategoryId();
+					}
+				}
+
+				if ($categoryId > 0 && $factory->isCategoryAvailable($categoryId))
+				{
+					$category = $factory->getCategory($categoryId);
+					if ($category instanceof ItemCategory)
+					{
+						$result = $category->getDefaultAddressType();
+					}
+				}
+			}
+		}
+
+		return $result;
 	}
 
 	public static function getDescriptionsByZonesOrValues(array $addressZones = [], array $values = []) : array

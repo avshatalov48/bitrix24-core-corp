@@ -128,11 +128,11 @@ if (isset($arResult['FILTER']['FIELDS']) && is_array($arResult['FILTER']['FIELDS
 
 		'PATH_TO_USER_TASKS' => $arParams['PATH_TO_USER_TASKS'],
 		'PATH_TO_USER_TASKS_TASK' => $arParams['PATH_TO_USER_TASKS_TASK'],
-		'PATH_TO_USER_TASKS_VIEW' => $arParams['PATH_TO_USER_TASKS_VIEW'],
-		'PATH_TO_USER_TASKS_REPORT' => $arParams['PATH_TO_USER_TASKS_REPORT'],
+		'PATH_TO_USER_TASKS_VIEW' => ($arParams['PATH_TO_USER_TASKS_VIEW'] ?? null),
+		'PATH_TO_USER_TASKS_REPORT' => ($arParams['PATH_TO_USER_TASKS_REPORT'] ?? null),
 		'PATH_TO_USER_TASKS_TEMPLATES' => $arParams['PATH_TO_USER_TASKS_TEMPLATES'],
 		'PATH_TO_USER_TASKS_PROJECTS_OVERVIEW' => $arParams['PATH_TO_USER_TASKS_PROJECTS_OVERVIEW'],
-		'PATH_TO_CONPANY_DEPARTMENT' => $arParams['PATH_TO_CONPANY_DEPARTMENT'],
+		'PATH_TO_CONPANY_DEPARTMENT' => ($arParams['PATH_TO_CONPANY_DEPARTMENT'] ?? null),
 	),
 	$component,
 	array('HIDE_ICONS' => true)
@@ -155,7 +155,7 @@ if (isset($arResult['FILTER']['FIELDS']) && is_array($arResult['FILTER']['FIELDS
 		"FILTER_PRESETS" => $arResult['FILTER']['PRESETS'],
 
 		"ENABLE_LABEL"          => true,
-		'ENABLE_LIVE_SEARCH'    => $arParams['USE_LIVE_SEARCH'] != 'N',
+		'ENABLE_LIVE_SEARCH'    => ($arParams['USE_LIVE_SEARCH'] ?? null) != 'N',
 		'RESET_TO_DEFAULT_MODE' => true,
 	),
 	$component,
@@ -221,7 +221,7 @@ $this->EndViewTarget();
 					//					"TOTAL_ROWS_COUNT"  => $arResult['TOTAL_RECORD_COUNT'],
 					//		"CURRENT_PAGE" => $arResult[ 'NAV' ]->getCurrentPage(),
 					//		"ENABLE_NEXT_PAGE" => ($arResult[ 'NAV' ]->getPageSize() * $arResult[ 'NAV' ]->getCurrentPage()) < $arResult[ 'NAV' ]->getRecordCount(),
-					"PAGE_SIZES" => $arResult['PAGE_SIZES'],
+					"PAGE_SIZES" => ($arResult['PAGE_SIZES'] ?? null),
 					"DEFAULT_PAGE_SIZE" => 50
 				),
 				$component,

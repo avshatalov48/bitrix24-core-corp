@@ -12,4 +12,4 @@ $MESS["SPP_EMPTY_TEMPLATE_TITLE"] = "Спасибо за заказ!";
 $MESS["SPP_EMPTY_TEMPLATE_SUM_WITH_CURRENCY_FIELD"] = "Сумма к оплате:";
 $MESS["SPP_EMPTY_TEMPLATE_PAY_SYSTEM_NAME_FIELD"] = "Способ оплаты:";
 $MESS["SPP_EMPTY_TEMPLATE_FOOTER"] = "Выберите другую платежную систему, если хотите оплатить онлайн";
-$MESS["SPP_SELECT_PAYMENT_TITLE_NEW_NEW"] = "Выберите способ оплаты";
+$MESS["SPP_SELECT_PAYMENT_TITLE_NEW_NEW_MSGVER_1"] = "Выберите удобный способ оплаты";

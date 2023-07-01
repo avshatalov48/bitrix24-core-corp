@@ -2,14 +2,14 @@
 
 namespace Bitrix\Crm\Restriction;
 
+use Bitrix\Crm\Activity\Provider\Visit;
+use Bitrix\Crm\Integration\Bitrix24Manager;
+use Bitrix\Crm\ItemIdentifier;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main;
 use Bitrix\Main\Loader;
-use Bitrix\Crm\Integration\Bitrix24Manager;
-use Bitrix\Crm\Category\DealCategory;
-use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Main\Type\Date;
-use Bitrix\Crm\Activity\Provider\Visit;
-use Bitrix\Crm\Service\Container;
+use function Symfony\Component\String\s;
 
 
 class RestrictionManager
@@ -71,6 +71,8 @@ class RestrictionManager
 	private static $clientFieldsRestriction;
 	/** @var ObserversFieldRestriction  */
 	private static $observersFieldRestriction;
+	/** @var ActivityFieldRestriction  */
+	private static $activityFieldRestriction;
 	/** @var Bitrix24AccessRestriction  */
 	private static $observersRestriction;
 	/** @var Bitrix24AccessRestriction|null  */
@@ -87,6 +89,8 @@ class RestrictionManager
 	private static $invoicesRestriction;
 	/** @var Bitrix24AccessRestriction|null  */
 	private static $inventoryControlIntegrationRestriction;
+	/** @var Bitrix24AccessRestriction|null  */
+	private static $calendarSharingRestriction;
 
 	/**
 	 * @return SqlRestriction
@@ -857,6 +861,16 @@ class RestrictionManager
 		return static::$observersFieldRestriction;
 	}
 
+	public static function getActivityFieldRestriction(): ActivityFieldRestriction
+	{
+		if (!static::$activityFieldRestriction)
+		{
+			static::$activityFieldRestriction = new ActivityFieldRestriction();
+		}
+
+		return static::$activityFieldRestriction;
+	}
+
 	public static function getObserversRestriction(): Bitrix24AccessRestriction
 	{
 		if (self::$observersRestriction === null)
@@ -993,6 +1007,30 @@ class RestrictionManager
 		}
 
 		return static::$visitRestriction;
+	}
+
+	public static function getCalendarSharingRestriction(): Bitrix24AccessRestriction
+	{
+		if (is_null(static::$calendarSharingRestriction))
+		{
+			static::$calendarSharingRestriction = new Bitrix24AccessRestriction(
+				'crm_event_sharing',
+				false,
+				null,
+				[
+					'ID' => 'limit_crm_calendar_free_slots'
+				],
+			);
+
+			if (!static::$calendarSharingRestriction->load())
+			{
+				static::$calendarSharingRestriction->permit(
+					Bitrix24Manager::isFeatureEnabled('crm_event_sharing')
+				);
+			}
+		}
+
+		return static::$calendarSharingRestriction;
 	}
 
 	public static function getActivityRestriction(

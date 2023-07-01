@@ -6,6 +6,7 @@
 
 namespace Bitrix\Crm\Integration\SocialNetwork;
 
+use Bitrix\Crm\Activity\Provider\Tasks\Task;
 use Bitrix\Main\Event;
 use Bitrix\Main\EventResult;
 use Bitrix\Main\Loader;
@@ -79,19 +80,27 @@ class Log
 			[],
 			[
 				'ID' => $activityId,
-				'TYPE_ID' => \CCrmActivityType::Task,
 				'CHECK_PERMISSIONS' => 'N',
 			],
 			false,
 			false,
-			[ 'ASSOCIATED_ENTITY_ID' ]
+			['ASSOCIATED_ENTITY_ID', 'TYPE_ID', 'PROVIDER_ID']
 		);
 		if (
 			($activityFields = $res->fetch())
 			&& ((int)$activityFields['ASSOCIATED_ENTITY_ID'] > 0)
 		)
 		{
-			$taskId = (int)$activityFields['ASSOCIATED_ENTITY_ID'];
+			if (
+				(int)$activityFields['TYPE_ID'] === \CCrmActivityType::Task
+				|| (
+					(int)$activityFields['TYPE_ID'] === \CCrmActivityType::Provider
+					&& $activityFields['PROVIDER_ID'] === Task::getId()
+				)
+			)
+			{
+				$taskId = (int)$activityFields['ASSOCIATED_ENTITY_ID'];
+			}
 		}
 
 		if (

@@ -59,7 +59,7 @@ jn.define('layout/ui/kanban/refs-container', (require, exports, module) => {
 		}
 
 		/**
-		 * @param {DealToolbar} toolbar
+		 * @param {DealToolbar|LeadToolbar} toolbar
 		 */
 		setToolbar(toolbar)
 		{

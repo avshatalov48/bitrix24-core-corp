@@ -20,6 +20,8 @@ export default class Comments
 		this.taskId = options.taskId;
 		this.guid = options.guid;
 
+		this.canReadCommentsOnInit = true;
+
 		this.timeout = 0;
 		this.timeoutSec = 2000;
 		this.commentsList = null;
@@ -42,9 +44,10 @@ export default class Comments
 		}
 		else
 		{
-			EventEmitter.subscribe(BX.MobileUI.events.MOBILE_UI_TEXT_FIELD_SET_PARAMS, () => {
-				window.BX.MobileUI.TextField.show();
-			});
+			EventEmitter.subscribe(
+				BX.MobileUI.events.MOBILE_UI_TEXT_FIELD_SET_PARAMS,
+				() => window.BX.MobileUI.TextField.show()
+			);
 		}
 	}
 
@@ -168,14 +171,13 @@ export default class Comments
 		BXMobileApp.addCustomEvent('onPull-tasks', () => {});
 
 		BXMobileApp.addCustomEvent('tasks.task.tabs:onTabSelected', (event) => {
-			if (
-				event.guid === this.guid
-				&& this.commentsList
-			)
+			if (event.guid === this.guid && this.commentsList)
 			{
-				this.commentsList.canCheckVisibleComments = (event.tab === 'tasks.task.comments');
+				const isCommentsTab = (event.tab === 'tasks.task.comments');
 
-				if (event.tab === 'tasks.task.comments')
+				this.commentsList.canCheckVisibleComments = isCommentsTab;
+
+				if (isCommentsTab)
 				{
 					const scroll = GetWindowScrollPos();
 					const position = {
@@ -183,13 +185,17 @@ export default class Comments
 						bottom: scroll.scrollTop + GetWindowInnerSize().innerHeight,
 					};
 					this.commentsList.checkVisibleComments(position);
+
+					if (this.canReadCommentsOnInit)
+					{
+						this.canReadCommentsOnInit = false;
+						this.readComments();
+					}
 				}
 			}
 		});
 
-		BX.MobileUI.addLivefeedLongTapHandler(this.commentsBlock, {
-			likeNodeClass: 'post-comment-control-item-like',
-		});
+		BX.MobileUI.addLivefeedLongTapHandler(this.commentsBlock, { likeNodeClass: 'post-comment-control-item-like' });
 	}
 
 	sendOnCommentsReadEvent(newCommentsCount: number = 0): void
@@ -207,7 +213,12 @@ export default class Comments
 		this.timeout = 0;
 		this.commentsToRead.clear();
 
-		void BX.ajax.runAction('tasks.task.view.update', {data: {taskId: this.taskId}});
+		void BX.ajax.runAction('tasks.task.view.update', {
+			data: {
+				taskId: this.taskId,
+				parameters: { IS_REAL_VIEW: 'Y' },
+			},
+		});
 	}
 }
 

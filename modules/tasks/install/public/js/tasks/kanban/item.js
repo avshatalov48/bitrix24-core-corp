@@ -770,6 +770,8 @@ BX.Tasks.Kanban.Item.prototype = {
 			"tasks-kanban-item-title-hot",
 			data.high
 		);
+		this.switchVisible(this.link, data.name !== '');
+
 		if (this.getGrid().isScrumGrid())
 		{
 			BX.cleanNode(this.epicLayout);
@@ -828,7 +830,7 @@ BX.Tasks.Kanban.Item.prototype = {
 			}, this));
 		}
 
-		if (!this.isSprintView)
+		if (!this.isSprintView && data?.deadline_visibility !== 'hidden')
 		{
 			if (data.date_deadline || data.deferred || data.completed_supposedly)
 			{
@@ -1096,7 +1098,60 @@ BX.Tasks.Kanban.Item.prototype = {
 			}
 		}
 
+		// item fields
+		BX.cleanNode(this.itemFieldsNode);
+		if (data?.item_fields?.length > 0)
+		{
+			data.item_fields.forEach((item) =>
+			{
+				if (item?.value || item?.collection?.length > 0)
+				{
+					this.itemFieldsNode.appendChild(this.getItemFieldDiv(item));
+				}
+			});
+		}
+
 		return this.container;
+	},
+
+	getItemFieldDiv(item)
+	{
+		return BX.create("div", {
+			props: {
+				className: "tasks-kanban-item-fields-item"
+			},
+			children: [
+				BX.create("div", {
+					props: {
+						className: "tasks-kanban-item-fields-item-title"
+					},
+					children:[
+						BX.create("div", {
+							props: {
+								className: "tasks-kanban-item-fields-item-title-text"
+							},
+							text: item?.label,
+						})
+					],
+				}),
+				BX.create("div", {
+					props: {
+						className: "tasks-kanban-item-fields-item-value"
+					},
+					text: item?.value,
+					html: (item?.collection?.length > 0)
+						? this.getItemFieldLinks(item.collection)
+						: ''
+				}),
+			]
+		});
+	},
+
+	getItemFieldLinks(collection)
+	{
+		return collection.map((item) => {
+			return `<a href="${BX.util.htmlspecialchars(item.url)}">${BX.util.htmlspecialchars(item.name)}</a>`;
+		});
 	},
 
 	animate: function(params)
@@ -1191,6 +1246,12 @@ BX.Tasks.Kanban.Item.prototype = {
 
 		//endregion
 
+		// region item fields
+		this.itemFieldsNode = BX.create("div", {
+			props: { className: "tasks-kanban-item-fields" }
+		});
+		this.container.appendChild(this.itemFieldsNode);
+
 		if (this.getGrid().isScrumGrid())
 		{
 			//region epic
@@ -1255,7 +1316,7 @@ BX.Tasks.Kanban.Item.prototype = {
 		//endregion
 
 		//region deadline
-		if (!this.isSprintView)
+		if (!this.isSprintView && data.deadline_visibility !== 'hidden')
 		{
 			this.date_deadline = new BX.UI.Label({
 				text: data.deadline.value.replace('&minus;', '-'),

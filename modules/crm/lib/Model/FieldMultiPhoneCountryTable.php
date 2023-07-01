@@ -7,6 +7,22 @@ use Bitrix\Main\ORM\Data\DataManager;
 use Bitrix\Main\ORM\Fields\IntegerField;
 use Bitrix\Main\ORM\Fields\StringField;
 
+/**
+ * Class FieldMultiPhoneCountryTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_FieldMultiPhoneCountry_Query query()
+ * @method static EO_FieldMultiPhoneCountry_Result getByPrimary($primary, array $parameters = [])
+ * @method static EO_FieldMultiPhoneCountry_Result getById($id)
+ * @method static EO_FieldMultiPhoneCountry_Result getList(array $parameters = [])
+ * @method static EO_FieldMultiPhoneCountry_Entity getEntity()
+ * @method static \Bitrix\Crm\Model\EO_FieldMultiPhoneCountry createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Model\EO_FieldMultiPhoneCountry_Collection createCollection()
+ * @method static \Bitrix\Crm\Model\EO_FieldMultiPhoneCountry wakeUpObject($row)
+ * @method static \Bitrix\Crm\Model\EO_FieldMultiPhoneCountry_Collection wakeUpCollection($rows)
+ */
 class FieldMultiPhoneCountryTable extends DataManager
 {
 	public static function getTableName(): string

@@ -579,6 +579,9 @@ BX.ready(function()
 {
 	<?= 'BX.message('.\CUtil::PhpToJSObject(Loc::loadLanguageFile(__FILE__)).');' ?>
 	<?= 'BX.message('.\CUtil::PhpToJSObject(Container::getInstance()->getLocalization()->loadMessages()).');' ?>
+
+	BX.UI.Switcher.initByClassName();
+
 	var type = new BX.Crm.Models.TypeModel(<?= CUtil::PhpToJSObject($arResult['type']) ?>);
 	var form = document.getElementById('crm-type-form');
 	var component = new BX.Crm.Component.TypeDetail({
@@ -598,5 +601,7 @@ BX.ready(function()
 	component.init();
 	BX.UI.Hint.init(form);
 	BX.UI.Switcher.initByClassName();
+
+	console.log(BX.UI.Switcher.getList());
 });
 </script>

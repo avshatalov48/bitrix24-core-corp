@@ -55,7 +55,7 @@ final class Editor
 
 			"TEXT" => array(
 				"INPUT_NAME" => $parameters['INPUT_PREFIX']."[DESCRIPTION]",
-				"VALUE" => str_replace("\r\n", "\n", $parameters['CONTENT']), // avoid input containing double amount of <br>
+				"VALUE" => str_replace("\r\n", "\n", ($parameters['CONTENT'] ?? '')), // avoid input containing double amount of <br>
 				"HEIGHT" => "120px"
 			),
 

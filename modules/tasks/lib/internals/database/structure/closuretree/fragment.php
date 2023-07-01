@@ -128,7 +128,7 @@ final class Fragment extends \Bitrix\Tasks\Util\Collection
 
 	public function getNodeData($id)
 	{
-		return $this->values[$id];
+		return ($this->values[$id] ?? null);
 	}
 
 	public function walkDepth($cb)
@@ -223,7 +223,7 @@ final class Fragment extends \Bitrix\Tasks\Util\Collection
 					array(
 						null/** todo: object will be here some day, on which we can do ->getParentId() or even ->getParent() */,
 						$nextId,
-						$this->values[$nextId],
+						$this->values[$nextId] ?? null,
 						$this->getParentIdFor($nextId)
 					)
 				);
@@ -302,7 +302,7 @@ final class Fragment extends \Bitrix\Tasks\Util\Collection
 			$subSet[] = $id;
 		}, $id);
 
-		$ignoreSelf = $settings['IGNORE_SELF'] == true;
+		$ignoreSelf = ($settings['IGNORE_SELF'] ?? null) == true;
 
 		foreach($subSet as $itemId)
 		{
@@ -340,6 +340,6 @@ final class Fragment extends \Bitrix\Tasks\Util\Collection
 
 	private function getParentIdFor($id)
 	{
-		return $this->values[$id]['__PARENT_ID'];
+		return $this->values[$id]['__PARENT_ID'] ?? null;
 	}
 }

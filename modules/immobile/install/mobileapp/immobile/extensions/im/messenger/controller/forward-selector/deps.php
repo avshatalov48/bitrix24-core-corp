@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
+		'im:messenger/core',
 		'im:messenger/lib/ui/selector',
 		'im:messenger/lib/ui/base/item',
 		'im:messenger/lib/ui/base/buttons',

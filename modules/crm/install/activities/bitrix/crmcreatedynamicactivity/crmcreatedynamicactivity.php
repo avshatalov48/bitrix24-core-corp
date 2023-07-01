@@ -12,6 +12,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+/** @property-write string|null ErrorMessage */
 class CBPCrmCreateDynamicActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 {
 	protected static $requiredModules = ['crm'];
@@ -27,10 +28,12 @@ class CBPCrmCreateDynamicActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 
 			// return
 			'ItemId' => null,
+			'ErrorMessage' => null,
 		];
 
 		$this->SetPropertiesTypes([
 			'DynamicTypeId' => ['Type' => FieldType::INT],
+			'ErrorMessage' => ['Type' => FieldType::STRING],
 		]);
 	}
 
@@ -38,6 +41,7 @@ class CBPCrmCreateDynamicActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 	{
 		parent::reInitialize();
 		$this->ItemId = 0;
+		$this->ErrorMessage = null;
 	}
 
 	protected function prepareProperties(): void
@@ -96,10 +100,12 @@ class CBPCrmCreateDynamicActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 		if (is_string($creationResult))
 		{
 			$errorCollection->setError(new Error($creationResult));
+			$this->ErrorMessage = $creationResult;
 		}
 		elseif ($creationResult === false)
 		{
 			$errorCollection->setError(new Error(Loc::getMessage('CRM_CDA_ITEM_CREATION_ERROR')));
+			$this->ErrorMessage = Loc::getMessage('CRM_CDA_ITEM_CREATION_ERROR');
 		}
 		elseif (is_int($creationResult))
 		{
@@ -127,7 +133,9 @@ class CBPCrmCreateDynamicActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 
 	protected static function extractPropertiesValues(PropertiesDialog $dialog, array $fieldsMap): Result
 	{
-		$result = parent::extractPropertiesValues($dialog, $fieldsMap);
+		$simpleMap = $fieldsMap;
+		unset($simpleMap['DynamicEntitiesFields']);
+		$result = parent::extractPropertiesValues($dialog, $simpleMap);
 
 		if ($result->isSuccess())
 		{

@@ -37,6 +37,7 @@ $MESS['TASKS_BTN_SORT_ORIGINATOR_NAME'] = "Постановщик";
 $MESS['TASKS_BTN_SORT_RESPONSIBLE_NAME'] = "Ответственный";
 $MESS['TASKS_BTN_SORT_PRIORITY'] = "Важность";
 $MESS['TASKS_BTN_SORT_MARK'] = "Оценка";
+$MESS['TASKS_BTN_SORT_MARK_MSGVER_1'] = "Оценка";
 $MESS['TASKS_BTN_SORT_TIME_ESTIMATE'] = "Плановые трудозатраты";
 $MESS['TASKS_BTN_SORT_ALLOW_TIME_TRACKING']= "Учитывать время";
 $MESS['TASKS_BTN_SORT_CREATED_DATE'] = "Дата создания";
@@ -52,3 +53,4 @@ $MESS['TASKS_LINK_CREATE_GROUP'] = 'Создать группу';
 $MESS['TASKS_LINK_CREATE_PROJECT'] = 'Создать проект';
 
 $MESS['TASKS_BTN_ADD_SCRUM_TASK']='Создать задачу';
+$MESS['TASKS_BTN_KANBAN_POPUP_TITLE_CONFIGURE_VIEW']='Настроить карточку просмотра';

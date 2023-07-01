@@ -116,9 +116,7 @@ class ToolBar
 	{
 		return [
 			'id' => 'crm-kanban-settings-sub-menu',
-			'text' => Crm::isUniversalActivityScenarioEnabled()
-				? Loc::getMessage('CRM_PIPELINE_SETTINGS_TITLE')
-				: Loc::getMessage('CRM_KANBAN_SETTINGS_TITLE'),
+			'text' => Loc::getMessage('CRM_KANBAN_SETTINGS_TITLE'),
 			'items' => [
 				// a 'sort' item could be added dynamically on frontend
 				// see crm.kanban.sort extension

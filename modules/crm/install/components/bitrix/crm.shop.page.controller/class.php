@@ -12,10 +12,7 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 use Bitrix\Main\Loader;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\AccessDeniedException;
-use Bitrix\Catalog\Access\AccessController;
-use Bitrix\Catalog\Access\ActionDictionary;
 use Bitrix\Main\UI\Extension;
-use Bitrix\Main\Localization\Loc;
 
 class CCrmShopPageController extends CBitrixComponent
 {
@@ -25,6 +22,41 @@ class CCrmShopPageController extends CBitrixComponent
 		$params["CONNECT_PAGE"] = (!empty($params["CONNECT_PAGE"]) ? $params["CONNECT_PAGE"] : "Y");
 
 		return $params;
+	}
+
+	private function getNeedTemplatePage(): string
+	{
+		$requestUrl = Bitrix\Main\Context::getCurrent()->getRequest()->getRequestedPage();
+
+		if (preg_match('#^/shop/settings/menu_catalog_attributes_(\d+)/details/(\d+)/list-values/#', $requestUrl, $m))
+		{
+			$this->arResult['IBLOCK_ID'] = $m[1];
+			$this->arResult['PROPERTY_ID'] = $m[2];
+
+			return 'property-list-values';
+		}
+		elseif (preg_match('#^/shop/settings/menu_catalog_attributes_(\d+)/details/(\d+)/directory-items/#', $requestUrl, $m))
+		{
+			$this->arResult['IBLOCK_ID'] = $m[1];
+			$this->arResult['PROPERTY_ID'] = $m[2];
+
+			return 'property-directory-items';
+		}
+		elseif (preg_match('#^/shop/settings/menu_catalog_attributes_(\d+)/details/(\d+)/#', $requestUrl, $m))
+		{
+			$this->arResult['IBLOCK_ID'] = $m[1];
+			$this->arResult['PROPERTY_ID'] = $m[2];
+
+			return 'property-details';
+		}
+		elseif (preg_match('#^/shop/settings/menu_catalog_attributes_(\d+)/#', $requestUrl, $m))
+		{
+			$this->arResult['IBLOCK_ID'] = $m[1];
+
+			return 'property-list';
+		}
+
+		return '';
 	}
 
 	public function executeComponent()
@@ -37,7 +69,8 @@ class CCrmShopPageController extends CBitrixComponent
 			$this->formatResult();
 			$this->initCore();
 			\CCrmInvoice::installExternalEntities();
-			$this->includeComponentTemplate();
+
+			$this->includeComponentTemplate($this->getNeedTemplatePage());
 		}
 		catch(AccessDeniedException $e)
 		{

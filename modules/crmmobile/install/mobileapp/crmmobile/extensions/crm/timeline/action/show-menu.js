@@ -2,7 +2,6 @@
  * @module crm/timeline/action/show-menu
  */
 jn.define('crm/timeline/action/show-menu', (require, exports, module) => {
-
 	const { BaseTimelineAction } = require('crm/timeline/action/base');
 	const { TimelineItemContextMenu } = require('crm/timeline/item/ui/context-menu');
 
@@ -11,7 +10,8 @@ jn.define('crm/timeline/action/show-menu', (require, exports, module) => {
 		execute()
 		{
 			const items = [];
-			Object.keys(this.value.items).map(key => {
+
+			Object.keys(this.value.items).forEach((key) => {
 				items.push({ ...this.value.items[key], id: key });
 			});
 
@@ -21,7 +21,7 @@ jn.define('crm/timeline/action/show-menu', (require, exports, module) => {
 					...action,
 					source: this.source,
 					entity: this.entity,
-				})
+				}),
 			});
 
 			if (menu.hasItems())
@@ -32,5 +32,4 @@ jn.define('crm/timeline/action/show-menu', (require, exports, module) => {
 	}
 
 	module.exports = { ShowMenuAction };
-
 });

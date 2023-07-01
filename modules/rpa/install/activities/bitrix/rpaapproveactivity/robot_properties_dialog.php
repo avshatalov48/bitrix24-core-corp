@@ -6,18 +6,19 @@ global $APPLICATION;
 use Bitrix\Main\Localization\Loc;
 /** @var \Bitrix\Bizproc\Activity\PropertiesDialog $dialog */
 
-$name = $dialog->getMap()['Name'];
-$desc = $dialog->getMap()['Description'];
-$responsibleType = $dialog->getMap()['ResponsibleType'];
-$responsible = $dialog->getMap()['Responsible'];
-$executiveResponsible = $dialog->getMap()['ExecutiveResponsible'];
-$skipAbsent = $dialog->getMap()['SkipAbsent'];
-$alterResponsible = $dialog->getMap()['AlterResponsible'];
-$aprType = $dialog->getMap()['ApproveType'];
-$aprVoteTarget = $dialog->getMap()['ApproveVoteTarget'];
-$actions = $dialog->getMap()['Actions'];
-$fieldsToShow = $dialog->getMap()['FieldsToShow'];
-$fieldsToSet = $dialog->getMap()['FieldsToSet'];
+$map = $dialog->getMap();
+$name = $map['Name'];
+$desc = $map['Description'];
+$responsibleType = $map['ResponsibleType'] ?? null;
+$responsible = $map['Responsible'];
+$executiveResponsible = $map['ExecutiveResponsible'] ?? null;
+$skipAbsent = $map['SkipAbsent'] ?? null;
+$alterResponsible = $map['AlterResponsible'] ?? null;
+$aprType = $map['ApproveType'] ?? null;
+$aprVoteTarget = $map['ApproveVoteTarget'] ?? null;
+$actions = $map['Actions'];
+$fieldsToShow = $map['FieldsToShow'];
+$fieldsToSet = $map['FieldsToSet'] ?? null;
 ?>
 <div class="rpa-automation-block" data-section="general">
 	<div class="rpa-automation-title">
@@ -418,7 +419,7 @@ $fieldsToSet = $dialog->getMap()['FieldsToSet'];
 					respHandler(respCheckbox.checked);
 				});
 			</script>
-		<?endif;?>
+		<?php endif;?>
 	</div>
 </div>
 <div class="rpa-automation-block" data-section="general">
@@ -431,7 +432,7 @@ $fieldsToSet = $dialog->getMap()['FieldsToSet'];
 			<div class="rpa-edit-robot-btn-header-item"><?= Loc::getMessage("RPA_BP_APR_SPD_BTN_COLOR") ?></div>
 			<div class="rpa-edit-robot-btn-header-item"><?= Loc::getMessage("RPA_BP_APR_SPD_BTN_ACTION") ?></div>
 		</div>
-		<?
+		<?php
 
 		$actionsList = $dialog->getCurrentValue($actions);
 		$stages = $actions['Options'];
@@ -442,7 +443,7 @@ $fieldsToSet = $dialog->getMap()['FieldsToSet'];
 		}?>
 
 		<div class="rpa-edit-robot-btn-item-list">
-		<? foreach ($actionsList as $i => $action):
+		<?php foreach ($actionsList as $i => $action):
 			$actionFieldName = sprintf('%s[%d]', $actions['FieldName'], $i);
 			?>
 			<div class="rpa-edit-robot-btn-item" data-role="approve-action">
@@ -466,7 +467,7 @@ $fieldsToSet = $dialog->getMap()['FieldsToSet'];
 				<span class="rpa-edit-robot-link" data-role="approve-action-stage-selector"><?=htmlspecialcharsbx($stages[$action['stageId']] ?? '?')?></span>
 <!--				<span class="rpa-edit-robot-btn-delete"></span>-->
 			</div>
-		<?endforeach;?>
+		<?php endforeach;?>
 		</div>
 		<?php /*
 		<span style="opacity: .3" class="rpa-edit-robot-btn-add"><?= Loc::getMessage("RPA_BP_APR_SPD_BTN_ADD_BTN") ?></span>
@@ -560,7 +561,7 @@ $fieldsToSet = $dialog->getMap()['FieldsToSet'];
 		</script>
 	</div>
 </div>
-<?endif;?>
+<?php endif;?>
 <script>
 	BX.ready(function() {
 		BX.UI.Hint.init(BX('rpa-automation-block-hint'));

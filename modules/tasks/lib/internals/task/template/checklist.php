@@ -110,16 +110,24 @@ class CheckListTable extends Main\Entity\DataManager
 
 	public static function getListByTemplateDependency($templateId, $parameters)
 	{
-		$templateId = intval($templateId);
-		if(!$templateId) // getter should not throw any exception on bad parameters
-			return new \Bitrix\Main\DB\ArrayResult(array());
+		$templateId = (int)$templateId;
+		if (!$templateId) // getter should not throw any exception on bad parameters
+		{
+			return new \Bitrix\Main\DB\ArrayResult([]);
+		}
 
-		if(!is_array($parameters))
-			$parameters = array();
-		if(!is_array($parameters['filter']))
-			$parameters['filter'] = array();
+		if (!is_array($parameters))
+		{
+			$parameters = [];
+		}
+		if (!is_array($parameters['filter'] ?? null))
+		{
+			$parameters['filter'] = [];
+		}
 
-		$parameters['filter']['@TEMPLATE_ID'] = new \Bitrix\Main\DB\SqlExpression(\Bitrix\Tasks\Internals\Task\Template\DependenceTable::getSubTreeSql($templateId));
+		$parameters['filter']['@TEMPLATE_ID'] = new \Bitrix\Main\DB\SqlExpression(
+			\Bitrix\Tasks\Internals\Task\Template\DependenceTable::getSubTreeSql($templateId)
+		);
 
 		return static::getList($parameters);
 	}

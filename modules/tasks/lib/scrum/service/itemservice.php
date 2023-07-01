@@ -25,7 +25,6 @@ class ItemService implements Errorable
 	const ERROR_COULD_NOT_READ_ITEM = 'TASKS_IS_03';
 	const ERROR_COULD_NOT_REMOVE_ITEM = 'TASKS_IS_04';
 	const ERROR_COULD_NOT_MOVE_ITEM = 'TASKS_IS_09';
-	const ERROR_COULD_NOT_CHANGE_SORT = 'TASKS_IS_10';
 	const ERROR_COULD_NOT_READ_ITEM_INFO = 'TASKS_IS_11';
 	const ERROR_COULD_NOT_UPDATE_ITEMS_ENTITY = 'TASKS_IS_12';
 	const ERROR_COULD_NOT_READ_ALL_ITEMS = 'TASKS_IS_13';
@@ -577,70 +576,58 @@ class ItemService implements Errorable
 
 	public function sortItems(array $sortInfo, PushService $pushService = null): void
 	{
-		try
+		$itemIds = [];
+		$sortWhens = [];
+		$entityWhens = [];
+
+		$updatedItems = [];
+
+		foreach($sortInfo as $itemId => $info)
 		{
-			$itemIds = [];
-			$sortWhens = [];
-			$entityWhens = [];
+			$itemId = (is_numeric($itemId ?? null) ? (int) $itemId : 0);
+			$sort = (is_numeric($info['sort'] ?? null) ? (int) $info['sort'] : 0);
+			$entityId = (is_numeric($info['entityId'] ?? null) ? (int) $info['entityId'] : 0);
+			$updatedItemId = (is_numeric($info['updatedItemId'] ?? null) ? (int) $info['updatedItemId'] : 0);
+			$tmpId = (is_string($info['tmpId'] ?? null) ? $info['tmpId'] : '');
 
-			$updatedItems = [];
-
-			foreach($sortInfo as $itemId => $info)
+			if ($itemId)
 			{
-				$itemId = (is_numeric($itemId) ? (int) $itemId : 0);
-				$sort = (is_numeric($info['sort']) ? (int) $info['sort'] : 0);
-				$entityId = (is_numeric($info['entityId']) ? (int) $info['entityId'] : 0);
-				$updatedItemId = (is_numeric($info['updatedItemId']) ? (int) $info['updatedItemId'] : 0);
-				$tmpId = (is_string($info['tmpId']) ? $info['tmpId'] : '');
+				$itemIds[] = $itemId;
+				$sortWhens[] = 'WHEN ID = ' . $itemId . ' THEN ' . $sort;
 
-				if ($itemId)
+				if ($updatedItemId)
 				{
-					$itemIds[] = $itemId;
-					$sortWhens[] = 'WHEN ID = ' . $itemId . ' THEN ' . $sort;
-
-					if ($updatedItemId)
+					$updatedItems[$itemId] = [
+						'sort' => $sort,
+						'tmpId' => $tmpId,
+					];
+					if ($entityId)
 					{
-						$updatedItems[$itemId] = [
-							'sort' => $sort,
-							'tmpId' => $tmpId,
-						];
-						if ($entityId)
-						{
-							$entityWhens[] = 'WHEN ID = ' . $itemId . ' THEN ' . $entityId;
-							$updatedItems[$itemId]['entityId'] = $entityId;
-						}
+						$entityWhens[] = 'WHEN ID = ' . $itemId . ' THEN ' . $entityId;
+						$updatedItems[$itemId]['entityId'] = $entityId;
 					}
 				}
 			}
-
-			if ($itemIds)
-			{
-				$data = [];
-				if ($sortWhens)
-				{
-					$data['SORT'] = new SqlExpression('(CASE ' . implode(' ', $sortWhens) . ' END)');
-				}
-				if ($entityWhens && count($entityWhens) === count($sortWhens))
-				{
-					$data['ENTITY_ID'] = new SqlExpression('(CASE ' . implode(' ', $entityWhens) . ' END)');
-				}
-
-				ItemTable::updateMulti($itemIds, $data);
-			}
-
-			if ($updatedItems && $pushService)
-			{
-				$pushService->sendSortItemEvent($updatedItems);
-			}
 		}
-		catch (\Exception $exception)
+
+		if ($itemIds)
 		{
-			$this->errorCollection->setError(
-				new Error(
-					$exception->getMessage(),
-					self::ERROR_COULD_NOT_CHANGE_SORT
-				)
-			);
+			$data = [];
+			if ($sortWhens)
+			{
+				$data['SORT'] = new SqlExpression('(CASE ' . implode(' ', $sortWhens) . ' END)');
+			}
+			if ($entityWhens && count($entityWhens) === count($sortWhens))
+			{
+				$data['ENTITY_ID'] = new SqlExpression('(CASE ' . implode(' ', $entityWhens) . ' END)');
+			}
+
+			ItemTable::updateMulti($itemIds, $data);
+		}
+
+		if ($updatedItems && $pushService)
+		{
+			$pushService->sendSortItemEvent($updatedItems);
 		}
 	}
 

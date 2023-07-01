@@ -4,6 +4,8 @@ namespace Bitrix\Tasks\Provider;
 
 use Bitrix\Forum\MessageTable;
 use Bitrix\Forum\TopicTable;
+use Bitrix\Im\Model\LinkTaskTable;
+use Bitrix\Main\ArgumentException;
 use Bitrix\Main\DB\SqlExpression;
 use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\Loader;
@@ -11,17 +13,20 @@ use Bitrix\Main\ORM\Entity;
 use Bitrix\Main\ORM\Fields\ExpressionField;
 use Bitrix\Main\ORM\Query\Join;
 use Bitrix\Main\ORM\Query\Query;
+use Bitrix\Main\SystemException;
 use Bitrix\Main\UserTable;
 use Bitrix\Tasks\Access\Model\UserModel;
 use Bitrix\Tasks\Access\Permission\PermissionDictionary;
 use Bitrix\Tasks\Access\Permission\TasksPermissionTable;
 use Bitrix\Tasks\Access\Role\RoleDictionary;
+use Bitrix\Tasks\Integration\Intranet\Department;
+use Bitrix\Tasks\Integration\Intranet\Internals\Runtime\UtmUserTable;
 use Bitrix\Tasks\Integration\SocialNetwork\Group;
 use Bitrix\Tasks\Internals\Counter\CounterTable;
 use Bitrix\Tasks\Internals\Counter\Deadline;
 use Bitrix\Tasks\Internals\Task\ElapsedTimeTable;
 use Bitrix\Tasks\Internals\Task\FavoriteTable;
-use Bitrix\Tasks\Internals\Task\RelatedTable;
+use Bitrix\Tasks\Internals\Task\ScenarioTable;
 use Bitrix\Tasks\Internals\Task\SortingTable;
 use Bitrix\Tasks\Internals\Task\TaskTagTable;
 use Bitrix\Tasks\Internals\Task\UserOptionTable;
@@ -35,6 +40,7 @@ use Bitrix\Tasks\Internals\Task\MemberTable;
 use Bitrix\Tasks\Scrum\Form\EntityForm;
 use Bitrix\Tasks\Scrum\Internal\EntityTable;
 use Bitrix\Tasks\Scrum\Internal\ItemTable;
+use CUserTypeEntity;
 
 class TaskQueryBuilder
 {
@@ -57,6 +63,7 @@ class TaskQueryBuilder
 	public const ALIAS_TASK_TAG = 'TG';
 	public const ALIAS_TASK_OPTION = 'TUO';
 	public const ALIAS_TASK_ELAPSED_TIME = 'TE';
+	public const ALIAS_CHAT_TASK = 'CTT';
 
 	// scrum tables can be joined several times
 	public const ALIAS_SCRUM_ITEM = 'TSI';
@@ -67,6 +74,7 @@ class TaskQueryBuilder
 	public const ALIAS_SCRUM_ENTITY_C = 'TSES';
 	public const ALIAS_SCRUM_ITEM_D = 'TSIE';
 	public const ALIAS_SCRUM_ENTITY_D = 'TSEE';
+	public const ALIAS_TASK_SCENARIO = 'SCR';
 
 	private const DEFAULT_LIMIT = 50;
 
@@ -96,6 +104,9 @@ class TaskQueryBuilder
 	 */
 	private $runtimeFields = [];
 
+	private $roles;
+	private $permissions;
+
 	/**
 	 * @var
 	 */
@@ -105,8 +116,8 @@ class TaskQueryBuilder
 	 * @param string $alias
 	 * @param $entity
 	 * @return Query
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\SystemException
+	 * @throws ArgumentException
+	 * @throws SystemException
 	 */
 	public static function createQuery(string $alias, Entity $entity): Query
 	{
@@ -138,8 +149,8 @@ class TaskQueryBuilder
 	 * @return Query
 	 * @throws InvalidSelectException
 	 * @throws UnexpectedTableException
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\SystemException
+	 * @throws ArgumentException
+	 * @throws SystemException
 	 */
 	public static function build(TaskQuery $taskQuery): Query
 	{
@@ -168,8 +179,8 @@ class TaskQueryBuilder
 
 	/**
 	 * @param TaskQuery $taskQuery
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\SystemException
+	 * @throws ArgumentException
+	 * @throws SystemException
 	 */
 	private function __construct(TaskQuery $taskQuery)
 	{
@@ -204,9 +215,9 @@ class TaskQueryBuilder
 
 	/**
 	 * @return $this
-	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws ArgumentException
 	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
+	 * @throws SystemException
 	 */
 	private function addAccessCheck(): self
 	{
@@ -308,13 +319,13 @@ class TaskQueryBuilder
 
 	/**
 	 * @return array
-	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws ArgumentException
 	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
+	 * @throws SystemException
 	 */
 	private function getPermissions(): array
 	{
-		if ($this->permissions === null)
+		if (!isset($this->permissions))
 		{
 			$roles = $this->getUserRoles();
 			if (empty($roles))
@@ -345,7 +356,7 @@ class TaskQueryBuilder
 	 */
 	private function getUserRoles(): array
 	{
-		if ($this->roles === null)
+		if (!isset($this->roles))
 		{
 			$this->roles = $this->getUser()->getRoles();
 		}
@@ -396,8 +407,8 @@ class TaskQueryBuilder
 
 	/**
 	 * @return $this
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\SystemException
+	 * @throws ArgumentException
+	 * @throws SystemException
 	 */
 	private function buildOrder(): self
 	{
@@ -413,8 +424,8 @@ class TaskQueryBuilder
 	 * @param string $column
 	 * @param string $order
 	 * @return void
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\SystemException
+	 * @throws ArgumentException
+	 * @throws SystemException
 	 */
 	private function addOrder(string $column, string $order): void
 	{
@@ -582,6 +593,15 @@ class TaskQueryBuilder
 				$this->registerRuntimeField(self::ALIAS_SCRUM_ITEM_B);
 				break;
 
+			case 'IM_CHAT_ID':
+				if (!Loader::includeModule('im'))
+				{
+					break;
+				}
+				$this->query->addOrder(self::ALIAS_CHAT_TASK.".ID", $order);
+				$this->registerRuntimeField(self::ALIAS_CHAT_TASK);
+				break;
+
 			default:
 				if (preg_match('/^UF_/', $column))
 				{
@@ -594,9 +614,9 @@ class TaskQueryBuilder
 
 	/**
 	 * @return $this
-	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws ArgumentException
 	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\SystemException
+	 * @throws SystemException
 	 */
 	private function buildJoin(): self
 	{
@@ -630,9 +650,9 @@ class TaskQueryBuilder
 	/**
 	 * @param string $alias
 	 * @return void
-	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws ArgumentException
 	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\SystemException
+	 * @throws SystemException
 	 */
 	private function joinByAlias(string $alias): void
 	{
@@ -786,7 +806,7 @@ class TaskQueryBuilder
 						$alias,
 						ItemTable::getEntity(),
 						Join::on('this.ID', 'ref.SOURCE_ID')
-							// ->where('ref.ENTITY_ID', self::ALIAS_SCRUM_ENTITY.'.ID')
+							->whereColumn('ref.ENTITY_ID', 'this.' . self::ALIAS_SCRUM_ENTITY . '.ID')
 					))->configureJoinType('left')
 				);
 				break;
@@ -870,6 +890,10 @@ class TaskQueryBuilder
 				{
 					$epicId = (int) $filter['EPIC'];
 				}
+				elseif (isset($filter['::SUBFILTER-EPIC']['EPIC']))
+				{
+					$epicId = (int) $filter['::SUBFILTER-EPIC']['EPIC'];
+				}
 
 				if (!$epicId)
 				{
@@ -910,6 +934,32 @@ class TaskQueryBuilder
 				);
 				break;
 
+			case self::ALIAS_TASK_SCENARIO:
+				$this->query->registerRuntimeField(
+					$alias,
+					(new ReferenceField(
+						$alias,
+						ScenarioTable::getEntity(),
+						Join::on('this.ID', 'ref.TASK_ID')
+					))->configureJoinType('left')
+				);
+				break;
+
+			case self::ALIAS_CHAT_TASK:
+				if (!Loader::includeModule('im'))
+				{
+					break;
+				}
+				$this->query->registerRuntimeField(
+					$alias,
+					(new ReferenceField(
+						$alias,
+						LinkTaskTable::getEntity(),
+						Join::on('this.ID', 'ref.TASK_ID')
+					))->configureJoinType('inner')
+				);
+				break;
+
 			case self::ALIAS_SEARCH_FULL:
 				break;
 		}
@@ -942,6 +992,8 @@ class TaskQueryBuilder
 
 			$this->addSelect($key);
 		}
+
+		$this->query->setDistinct($this->taskQuery->getDistinct());
 
 		return $this;
 	}
@@ -1113,6 +1165,10 @@ class TaskQueryBuilder
 				return $this->getFavoriteField();
 			},
 			"SORTING" => self::ALIAS_TASK_SORT.".SORT",
+			"IM_CHAT_ID" => self::ALIAS_CHAT_TASK.".ID",
+			"IM_CHAT_MESSAGE_ID" => self::ALIAS_CHAT_TASK.".MESSAGE_ID",
+			"IM_CHAT_CHAT_ID" => self::ALIAS_CHAT_TASK.".CHAT_ID",
+			"IM_CHAT_AUTHOR_ID" => self::ALIAS_CHAT_TASK.".AUTHOR_ID",
 
 			"DURATION_PLAN_SECONDS" => "DURATION_PLAN",
 			"DURATION_TYPE_ALL" => "DURATION_TYPE",
@@ -1203,14 +1259,15 @@ class TaskQueryBuilder
 				END',
 				["DEADLINE"]
 			),
+			"SCENARIO_NAME" => self::ALIAS_TASK_SCENARIO.".SCENARIO",
 		];
 	}
 
 	/**
 	 * @return ExpressionField
-	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws ArgumentException
 	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\SystemException
+	 * @throws SystemException
 	 */
 	private function getFavoriteField(): ExpressionField
 	{
@@ -1225,9 +1282,9 @@ class TaskQueryBuilder
 
 	/**
 	 * @return ExpressionField
-	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws ArgumentException
 	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\SystemException
+	 * @throws SystemException
 	 */
 	private function getNotViewedField(): ExpressionField
 	{
@@ -1253,9 +1310,9 @@ class TaskQueryBuilder
 
 	/**
 	 * @return ExpressionField
-	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws ArgumentException
 	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\SystemException
+	 * @throws SystemException
 	 */
 	private function getMessageIdField(): ExpressionField
 	{
@@ -1270,9 +1327,9 @@ class TaskQueryBuilder
 
 	/**
 	 * @return ExpressionField
-	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws ArgumentException
 	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\SystemException
+	 * @throws SystemException
 	 */
 	private function getStatusField(): ExpressionField
 	{
@@ -1314,8 +1371,8 @@ class TaskQueryBuilder
 
 	/**
 	 * @return ExpressionField
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\SystemException
+	 * @throws ArgumentException
+	 * @throws SystemException
 	 */
 	private function getTimeSpentField(): ExpressionField
 	{
@@ -1339,8 +1396,8 @@ class TaskQueryBuilder
 
 	/**
 	 * @return ExpressionField
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\SystemException
+	 * @throws ArgumentException
+	 * @throws SystemException
 	 */
 	private function getDurationFactField(): ExpressionField
 	{
@@ -1363,23 +1420,84 @@ class TaskQueryBuilder
 	}
 
 	/**
+	 * @throws SystemException
+	 * @throws ArgumentException
+	 */
+	private function getSubordinateSql(): string
+	{
+		$departmentIds = Department::getSubordinateIds($this->taskQuery->getBehalfUser(), true);
+		$departmentIds = array_map('intval', $departmentIds);
+		if (count($departmentIds) <= 0)
+		{
+			return '';
+		}
+		$departmentOption = CUserTypeEntity::GetList([], [
+			'ENTITY_ID' => 'USER',
+			'FIELD_NAME' => 'UF_DEPARTMENT',
+		])->Fetch();
+
+		if (!$departmentOption)
+		{
+			return '';
+		}
+
+		$fieldId = (int)$departmentOption['ID'];
+
+		$responsibleIdQuery = self::createQuery('BUF', UtmUserTable::getEntity());
+		$responsibleIdQuery
+			->setSelect(['FIELD_ID'])
+			->where('FIELD_ID', $fieldId)
+			->whereIn('VALUE_INT', $departmentIds)
+			->where('VALUE_ID', new SqlExpression('%s'))
+		;
+
+		$createdByQuery = clone $responsibleIdQuery;
+
+		//todo.
+		$existsQuery = self::createQuery('BUF', UtmUserTable::getEntity());
+		$existsQuery
+			->setSelect(['FIELD_ID'])
+			->where('FIELD_ID', $fieldId)
+			->where('DSTM.TASK_ID', new SqlExpression('%s'))
+			->whereIn('VALUE_INT', $departmentIds)
+			->registerRuntimeField('DSTM',
+				(new ReferenceField(
+					'rel',
+					MemberTable::getEntity(),
+					Join::on('this.VALUE_ID', 'ref.USER_ID')
+				))->configureJoinType(Join::TYPE_INNER)
+			)
+		;
+
+		$sql = "
+			CASE
+				WHEN EXISTS({$responsibleIdQuery->getQuery()}) THEN 'Y'
+				WHEN EXISTS({$createdByQuery->getQuery()}) THEN 'Y'
+				WHEN EXISTS({$existsQuery->getQuery()}) THEN 'Y'
+				ELSE 'N'
+			END
+		";
+
+		return $sql;
+	}
+	/**
 	 * @return ExpressionField
-	 * @throws \Bitrix\Main\SystemException
+	 * @throws SystemException
 	 */
 	private function getSubordinateField(): ExpressionField
 	{
-		$subordinateQuery = \CTasks::GetSubordinateSql('', ['USER_ID' => $this->taskQuery->getBehalfUser()], ['USE_PLACEHOLDERS' => true]);
-		if ($subordinateQuery)
+		$subordinateQuery = $this->getSubordinateSql();
+		if (!empty($subordinateQuery))
 		{
 			$field = (new ExpressionField(
-				"SUBORDINATE",
-				"CASE WHEN EXISTS({$subordinateQuery}) THEN 'Y' ELSE 'N' END",
-				["RESPONSIBLE_ID", "CREATED_BY", "ID"]
+				'SUBORDINATE',
+				$subordinateQuery,
+				['RESPONSIBLE_ID', 'CREATED_BY', 'ID']
 			));
 		}
 		else
 		{
-			$field = new ExpressionField("SUBORDINATE", "'N'");
+			$field = new ExpressionField('SUBORDINATE', "'N'");
 		}
 
 		return $field;
@@ -1389,7 +1507,7 @@ class TaskQueryBuilder
 	 * @param string $field
 	 * @param int $option
 	 * @return ExpressionField
-	 * @throws \Bitrix\Main\SystemException
+	 * @throws SystemException
 	 */
 	private function getUserOptionField(string $field, int $option): ExpressionField
 	{
@@ -1419,6 +1537,10 @@ class TaskQueryBuilder
 			'COMMENTS_COUNT' => 'forum',
 			'SERVICE_COMMENTS_COUNT' => 'forum',
 			'FORUM_ID' => 'forum',
+			'IM_CHAT_ID' => 'im',
+			'IM_CHAT_MESSAGE_ID' => 'im',
+			'IM_CHAT_CHAT_ID' => 'im',
+			'IM_CHAT_AUTHOR_ID' => 'im',
 		];
 	}
 

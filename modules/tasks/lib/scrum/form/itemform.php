@@ -149,67 +149,67 @@ class ItemForm
 	 */
 	public function fillFromDatabase(array $fields): void
 	{
-		if ($fields['ID'])
+		if ($fields['ID'] ?? null)
 		{
 			$this->setId($fields['ID']);
 		}
 
-		if ($fields['ENTITY_ID'])
+		if ($fields['ENTITY_ID'] ?? null)
 		{
 			$this->setEntityId($fields['ENTITY_ID']);
 		}
 
-		if ($fields['TYPE_ID'])
+		if ($fields['TYPE_ID'] ?? null)
 		{
 			$this->setTypeId($fields['TYPE_ID']);
 		}
 
-		if ($fields['EPIC_ID'])
+		if ($fields['EPIC_ID'] ?? null)
 		{
 			$this->setEpicId($fields['EPIC_ID']);
 		}
 
-		if ($fields['ACTIVE'])
+		if ($fields['ACTIVE'] ?? null)
 		{
 			$this->setActive($fields['ACTIVE']);
 		}
 
-		if ($fields['NAME'])
+		if ($fields['NAME'] ?? null)
 		{
 			$this->setName($fields['NAME']);
 		}
 
-		if ($fields['DESCRIPTION'])
+		if ($fields['DESCRIPTION'] ?? null)
 		{
 			$this->setDescription($fields['DESCRIPTION']);
 		}
 
-		if ($fields['SORT'])
+		if ($fields['SORT'] ?? null)
 		{
 			$this->setSort($fields['SORT']);
 		}
 
-		if ($fields['CREATED_BY'])
+		if ($fields['CREATED_BY'] ?? null)
 		{
 			$this->setCreatedBy($fields['CREATED_BY']);
 		}
 
-		if ($fields['MODIFIED_BY'])
+		if ($fields['MODIFIED_BY'] ?? null)
 		{
 			$this->setModifiedBy($fields['MODIFIED_BY']);
 		}
 
-		if ($fields['STORY_POINTS'] <> '')
+		if (($fields['STORY_POINTS'] ?? '') <> '')
 		{
 			$this->setStoryPoints($fields['STORY_POINTS']);
 		}
 
-		if ($fields['SOURCE_ID'])
+		if ($fields['SOURCE_ID'] ?? null)
 		{
 			$this->setSourceId($fields['SOURCE_ID']);
 		}
 
-		if ($fields['INFO'])
+		if ($fields['INFO'] ?? null)
 		{
 			$this->setInfo($fields['INFO']);
 		}

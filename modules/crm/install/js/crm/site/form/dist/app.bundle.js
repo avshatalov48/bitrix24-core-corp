@@ -1079,8 +1079,7 @@ var Vue = exports.Vue;
       if (self && nodeListAsArray($root.querySelectorAll(selector)).indexOf($el) !== -1) {
         return $el;
       }
-      while (($el = $el.parentElement) && nodeListAsArray($root.querySelectorAll(selector)).indexOf($el) === -1) {
-      }
+      while (($el = $el.parentElement) && nodeListAsArray($root.querySelectorAll(selector)).indexOf($el) === -1);
       return $el;
     };
     var elementHasSelector = function elementHasSelector($el, selector) {
@@ -3766,22 +3765,23 @@ var Vue = exports.Vue;
       babelHelpers.inherits(Item$$1, _BaseItem);
       function Item$$1(options) {
         babelHelpers.classCallCheck(this, Item$$1);
-        return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Item$$1).call(this, options)); /*
-                                                                                                                    let value;
-                                                                                                                    if (Util.Type.object(options.value))
-                                                                                                                    {
-                                                                                                                    	value = options.value;
-                                                                                                                    	value.quantity = value.quantity ? Util.Conv.number(value.quantity) : 0;
-                                                                                                                    }
-                                                                                                                    else
-                                                                                                                    {
-                                                                                                                    	value = {id: options.value};
-                                                                                                                    }
-                                                                                                                    this.value = {
-                                                                                                                    	id: value.id || '',
-                                                                                                                    	quantity: value.quantity || this.quantity.min || this.quantity.step,
-                                                                                                                    };
-                                                                                                                    */
+        return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Item$$1).call(this, options));
+        /*
+        let value;
+        if (Util.Type.object(options.value))
+        {
+        	value = options.value;
+        	value.quantity = value.quantity ? Util.Conv.number(value.quantity) : 0;
+        }
+        else
+        {
+        	value = {id: options.value};
+        }
+        this.value = {
+        	id: value.id || '',
+        	quantity: value.quantity || this.quantity.min || this.quantity.step,
+        };
+        */
       }
       babelHelpers.createClass(Item$$1, [{
         key: "getFileData",
@@ -6361,9 +6361,7 @@ var Vue = exports.Vue;
     }
     function _arrayWithoutHoles(arr) {
       if (Array.isArray(arr)) {
-        for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) {
-          arr2[i] = arr[i];
-        }
+        for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) arr2[i] = arr[i];
         return arr2;
       }
     }
@@ -7274,13 +7272,27 @@ var Vue = exports.Vue;
         'basket-block': BasketBlock,
         'recaptcha-block': ReCaptcha$2
       },
-      template: "\n\t\t<div class=\"b24-form-wrapper\"\n\t\t\t:class=\"classes()\"\n\t\t>\n\t\t\t<div v-if=\"form.title || form.desc\" class=\"b24-form-header b24-form-padding-side\">\n\t\t\t\t<div v-if=\"form.title\" class=\"b24-form-header-title\">{{ form.title }}</div>\n\t\t\t\t<div class=\"b24-form-header-description\"\n\t\t\t\t\tv-if=\"form.desc\"\n\t\t\t\t\tv-html=\"form.desc\"\n\t\t\t\t></div>\n\t\t\t</div>\n\t\t\t<div v-else class=\"b24-form-header-padding\"></div>\n\n\t\t\t<div class=\"b24-form-content b24-form-padding-side\">\n\t\t\t\t<form \n\t\t\t\t\tmethod=\"post\"\n\t\t\t\t\tnovalidate\n\t\t\t\t\t@submit=\"submit\"\n\t\t\t\t\tv-if=\"form.pager\"\n\t\t\t\t>\n\t\t\t\t\t<component \n\t\t\t\t\t\t:is=\"'pager-block'\"\n\t\t\t\t\t\t:pager=\"form.pager\"\n\t\t\t\t\t\tv-if=\"form.pager.iterable()\"\n\t\t\t\t\t></component>\n\t\t\t\t\t\t\t\t\n\t\t\t\t\t<div v-if=\"!form.disabled\">\t\t\n\t\t\t\t\t\t<component \n\t\t\t\t\t\t\t:is=\"'field'\"\n\t\t\t\t\t\t\tv-for=\"field in form.pager.current().fields\"\n\t\t\t\t\t\t\t:key=\"field.id\"\n\t\t\t\t\t\t\t:field=\"field\"\n\t\t\t\t\t\t></component>\n\t\t\t\t\t</div>\t\n\t\t\t\t\t\n\t\t\t\t\t<component \n\t\t\t\t\t\t:is=\"'agreement-block'\"\n\t\t\t\t\t\t:formId=\"form.getId()\"\n\t\t\t\t\t\t:fields=\"form.agreements\"\n\t\t\t\t\t\t:view=\"form.view\"\n\t\t\t\t\t\t:messages=\"form.messages\"\n\t\t\t\t\t\tv-if=\"form.pager.ended()\"\n\t\t\t\t\t></component>\n\t\t\t\t\t\n\t\t\t\t\t<component \n\t\t\t\t\t\t:is=\"'basket-block'\"\n\t\t\t\t\t\t:basket=\"form.basket\"\n\t\t\t\t\t\t:messages=\"form.messages\"\n\t\t\t\t\t></component>\n\t\t\t\t\t\n\t\t\t\t\t<div class=\"b24-form-btn-container\">\n\t\t\t\t\t\t<div class=\"b24-form-btn-block\"\n\t\t\t\t\t\t\tv-if=\"!form.pager.beginning()\" \n\t\t\t\t\t\t\t@click.prevent=\"prevPage()\"\t\t\t\t\t\t\t\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<button type=\"button\" class=\"b24-form-btn b24-form-btn-white b24-form-btn-border\">\n\t\t\t\t\t\t\t\t{{ form.messages.get('navBack') }}\n\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\n\t\t\t\t\t\t<div class=\"b24-form-btn-block\"\n\t\t\t\t\t\t\tv-if=\"!form.pager.ended()\"\n\t\t\t\t\t\t\t@click.prevent=\"nextPage()\"\t\t\t\t\t\t\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<button type=\"button\" class=\"b24-form-btn\">\n\t\t\t\t\t\t\t\t{{ form.messages.get('navNext') }}\n\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"b24-form-btn-block\"\n\t\t\t\t\t\t\tv-if=\"form.pager.ended()\"\t\t\t\t\t\t\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<button type=\"submit\" class=\"b24-form-btn\">\n\t\t\t\t\t\t\t\t{{ form.buttonCaption || form.messages.get('defButton') }}\n\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t\n\t\t\t\t\t<span style=\"color: red;\" v-show=\"false && hasErrors\">\n\t\t\t\t\t\tDebug: fill fields\n\t\t\t\t\t</span>\n\t\t\t\t</form>\n\t\t\t</div>\n\t\t\t\n\t\t\t<state-block :form=\"form\" />\n\t\t\t\n\t\t\t<recaptcha-block :form=\"form\" />\n\t\t\t\n\t\t\t<div class=\"b24-form-sign\" v-if=\"form.useSign\">\n\t\t\t\t<select v-show=\"false\" v-model=\"form.messages.language\">\n\t\t\t\t\t<option \n\t\t\t\t\t\tv-for=\"language in form.languages\" \n\t\t\t\t\t\t:value=\"language\"\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\n\t\t\t\t\t>\n\t\t\t\t\t\t{{ language }}\n\t\t\t\t\t</option>\t\t\t\t\n\t\t\t\t</select>\n\t\t\t\n\t\t\t\t<span class=\"b24-form-sign-text\">{{ form.messages.get('sign') }}</span>\n\t\t\t\t<span class=\"b24-form-sign-bx\">{{ getSignBy() }}</span>\n\t\t\t\t<span class=\"b24-form-sign-24\">24</span>\t\t\t\n\t\t\t</div>\t\t\t\n\t\t</div>\n\t",
+      template: "\n\t\t<div class=\"b24-form-wrapper\"\n\t\t\t:class=\"classes()\"\n\t\t>\n\t\t\t<div v-if=\"form.title || form.desc\" class=\"b24-form-header b24-form-padding-side\">\n\t\t\t\t<div v-if=\"form.title\" class=\"b24-form-header-title\">{{ form.title }}</div>\n\t\t\t\t<div class=\"b24-form-header-description\"\n\t\t\t\t\tv-if=\"form.desc\"\n\t\t\t\t\tv-html=\"form.desc\"\n\t\t\t\t></div>\n\t\t\t</div>\n\t\t\t<div v-else class=\"b24-form-header-padding\"></div>\n\n\t\t\t<div class=\"b24-form-content b24-form-padding-side\">\n\t\t\t\t<form \n\t\t\t\t\tmethod=\"post\"\n\t\t\t\t\tnovalidate\n\t\t\t\t\t@submit=\"submit\"\n\t\t\t\t\tv-if=\"form.pager\"\n\t\t\t\t>\n\t\t\t\t\t<component \n\t\t\t\t\t\t:is=\"'pager-block'\"\n\t\t\t\t\t\t:pager=\"form.pager\"\n\t\t\t\t\t\tv-if=\"form.pager.iterable()\"\n\t\t\t\t\t></component>\n\t\t\t\t\t\t\t\t\n\t\t\t\t\t<div v-if=\"!form.disabled\">\t\t\n\t\t\t\t\t\t<component \n\t\t\t\t\t\t\t:is=\"'field'\"\n\t\t\t\t\t\t\tv-for=\"field in form.pager.current().fields\"\n\t\t\t\t\t\t\t:key=\"field.id\"\n\t\t\t\t\t\t\t:field=\"field\"\n\t\t\t\t\t\t></component>\n\t\t\t\t\t</div>\t\n\t\t\t\t\t\n\t\t\t\t\t<component \n\t\t\t\t\t\t:is=\"'agreement-block'\"\n\t\t\t\t\t\t:formId=\"form.getId()\"\n\t\t\t\t\t\t:fields=\"form.agreements\"\n\t\t\t\t\t\t:view=\"form.view\"\n\t\t\t\t\t\t:messages=\"form.messages\"\n\t\t\t\t\t\tv-if=\"form.pager.ended()\"\n\t\t\t\t\t></component>\n\t\t\t\t\t\n\t\t\t\t\t<component \n\t\t\t\t\t\t:is=\"'basket-block'\"\n\t\t\t\t\t\t:basket=\"form.basket\"\n\t\t\t\t\t\t:messages=\"form.messages\"\n\t\t\t\t\t></component>\n\t\t\t\t\t\n\t\t\t\t\t<div class=\"b24-form-btn-container\">\n\t\t\t\t\t\t<div class=\"b24-form-btn-block\"\n\t\t\t\t\t\t\tv-if=\"!form.pager.beginning()\" \n\t\t\t\t\t\t\t@click.prevent=\"prevPage()\"\t\t\t\t\t\t\t\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<button type=\"button\" class=\"b24-form-btn b24-form-btn-white b24-form-btn-border\">\n\t\t\t\t\t\t\t\t{{ form.messages.get('navBack') }}\n\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\n\t\t\t\t\t\t<div class=\"b24-form-btn-block\"\n\t\t\t\t\t\t\tv-if=\"!form.pager.ended()\"\n\t\t\t\t\t\t\t@click.prevent=\"nextPage()\"\t\t\t\t\t\t\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<button type=\"button\" class=\"b24-form-btn\">\n\t\t\t\t\t\t\t\t{{ form.messages.get('navNext') }}\n\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"b24-form-btn-block\"\n\t\t\t\t\t\t\tv-if=\"form.pager.ended()\"\t\t\t\t\t\t\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<button type=\"submit\" class=\"b24-form-btn\">\n\t\t\t\t\t\t\t\t{{ form.buttonCaption || form.messages.get('defButton') }}\n\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t\n\t\t\t\t\t<span style=\"color: red;\" v-show=\"false && hasErrors\">\n\t\t\t\t\t\tDebug: fill fields\n\t\t\t\t\t</span>\n\t\t\t\t</form>\n\t\t\t</div>\n\t\t\t\n\t\t\t<state-block :form=\"form\" />\n\t\t\t\n\t\t\t<recaptcha-block :form=\"form\" />\n\t\t\t\n\t\t\t<div class=\"b24-form-sign\">\n\t\t\t\t<select v-show=\"false\" v-model=\"form.messages.language\">\n\t\t\t\t\t<option \n\t\t\t\t\t\tv-for=\"language in form.languages\" \n\t\t\t\t\t\t:value=\"language\"\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\n\t\t\t\t\t>\n\t\t\t\t\t\t{{ language }}\n\t\t\t\t\t</option>\t\t\t\t\n\t\t\t\t</select>\n\t\t\t \t\n\t\t\t\t<a :href=\"abuseLink\" target=\"_blank\" class=\"b24-form-sign-abuse-link\" v-if=\"abuseEnabled\">\n\t\t\t\t\t{{ form.messages.get('abuseLink') }}\n\t\t\t\t</a>\n\t\t\t\t<span class=\"b24-form-sign-abuse-help\" :title=\"form.messages.get('abuseInfoHint')\"></span>\n\t\t\t\t<div class=\"b24-form-sign-info\" v-if=\"form.useSign\">\n\t\t\t\t\t<span class=\"b24-form-sign-text\">{{ form.messages.get('sign') }}</span>\n\t\t\t\t\t<span class=\"b24-form-sign-bx\">{{ getSignBy() }}</span>\n\t\t\t\t\t<span class=\"b24-form-sign-24\">24</span>\n\t\t\t\t</div>\n\t\t\t</div>\t\t\t\n\t\t</div>\n\t",
       computed: {
         hasErrors: function hasErrors() {
           return this.form.validated && !this.form.valid();
+        },
+        abuseEnabled: function abuseEnabled() {
+          var _this$form, _this$form$abuse;
+          return !!((_this$form = this.form) !== null && _this$form !== void 0 && (_this$form$abuse = _this$form.abuse) !== null && _this$form$abuse !== void 0 && _this$form$abuse.link);
+        },
+        abuseLink: function abuseLink() {
+          return this.abuseEnabled ? this.getQueryParametersForAbuseLink() : '';
         }
       },
       methods: {
+        getQueryParametersForAbuseLink: function getQueryParametersForAbuseLink() {
+          var url = new URL(this.form.abuse.link);
+          url.searchParams.set('b24_form_id', this.form.identification.id);
+          url.searchParams.set('b24_address', this.form.identification.address);
+          url.searchParams.set('b24_form_address', window.location.href);
+          return url;
+        },
         prevPage: function prevPage() {
           var _this = this;
           this.form.loading = true;
@@ -7552,6 +7564,7 @@ var Vue = exports.Vue;
         babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _dependence, new Manager(babelHelpers.assertThisInitialized(_this)));
         _this.analytics = new Analytics$1(babelHelpers.assertThisInitialized(_this));
         _this.recaptcha = new ReCaptcha$1();
+        _this.abuse = options.abuse;
         _this.emit(EventTypes.initBefore, options);
         options = _this.adjust(options);
         babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _id$2, options.id || Math.random().toString().split('.')[1] + Math.random().toString().split('.')[1]);
@@ -8277,6 +8290,8 @@ var Vue = exports.Vue;
         value: function createForm24(b24options, options) {
           var _b24form$common,
             _b24form$common$prope,
+            _b24form$common2,
+            _b24form$common2$prop,
             _this = this;
           options.provider = options.provider || {};
           if (!options.provider.user) {
@@ -8297,6 +8312,7 @@ var Vue = exports.Vue;
             options.language = b24options.lang;
           }
           options.proxy = ((_b24form$common = b24form.common) === null || _b24form$common === void 0 ? void 0 : (_b24form$common$prope = _b24form$common.properties) === null || _b24form$common$prope === void 0 ? void 0 : _b24form$common$prope.proxy) || {};
+          options.abuse = ((_b24form$common2 = b24form.common) === null || _b24form$common2 === void 0 ? void 0 : (_b24form$common2$prop = _b24form$common2.properties) === null || _b24form$common2$prop === void 0 ? void 0 : _b24form$common2$prop.abuse) || {};
           options.languages = b24form.common.languages || [];
           options.messages = options.messages || {};
           options.messages = Object.assign(b24form.common.messages, options.messages || {});

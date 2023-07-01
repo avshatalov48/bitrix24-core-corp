@@ -297,7 +297,7 @@ class CIntranetUserSelectorHelper
 			$arSubDeps = CIntranetUtils::getSubordinateDepartments($USER->GetID(), true);
 
 			$arLastSelected = CUserOptions::GetOption("intranet", "user_search", array());
-			if (is_array($arLastSelected) && $arLastSelected['last_selected'] <> '')
+			if (is_array($arLastSelected) && !empty($arLastSelected['last_selected']))
 			{
 				$arLastSelected = array_unique(explode(',', $arLastSelected['last_selected']));
 			}

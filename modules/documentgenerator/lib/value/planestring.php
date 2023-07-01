@@ -12,7 +12,7 @@ class PlaneString extends Value
 
 	public function toString($modifier = ''): string
 	{
-		$case = $this->getOptions($modifier)['letterCase'];
+		$case = $this->getOptions($modifier)['letterCase'] ?? null;
 
 		$mbConstant = $this->getMultiByteConstant($case);
 		if ($mbConstant !== null)

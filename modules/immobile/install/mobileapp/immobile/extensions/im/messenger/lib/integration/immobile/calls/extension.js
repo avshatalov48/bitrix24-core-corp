@@ -3,15 +3,17 @@
  */
 jn.define('im/messenger/lib/integration/immobile/calls', (require, exports, module) => {
 
-	const { Logger } = jn.require('im/messenger/lib/logger');
-	const { DialogHelper } = jn.require('im/messenger/lib/helper');
+	const { core } = require('im/messenger/core');
+	const { Logger } = require('im/messenger/lib/logger');
+	const { DialogHelper } = require('im/messenger/lib/helper');
+	const { EventType } = require('im/messenger/const');
 
 	/**
 	 * @class Calls
 	 */
 	class Calls
 	{
-		createAudioCall(dialogId)
+		static createAudioCall(dialogId)
 		{
 			Logger.info('Calls.createAudioCall', dialogId);
 
@@ -20,7 +22,7 @@ jn.define('im/messenger/lib/integration/immobile/calls', (require, exports, modu
 				const eventData = {
 					dialogId,
 					video: false,
-					chatData: MessengerStore.getters['dialoguesModel/getById'](dialogId),
+					chatData: core.getStore().getters['dialoguesModel/getById'](dialogId),
 				};
 
 				BX.postComponentEvent('onCallInvite', [ eventData ], 'calls');
@@ -28,7 +30,7 @@ jn.define('im/messenger/lib/integration/immobile/calls', (require, exports, modu
 				return;
 			}
 
-			const userData = MessengerStore.getters['usersModel/getUserById'](dialogId);
+			const userData = core.getStore().getters['usersModel/getUserById'](dialogId);
 			const eventData = {
 				userId: dialogId,
 				video: false,
@@ -40,7 +42,7 @@ jn.define('im/messenger/lib/integration/immobile/calls', (require, exports, modu
 			BX.postComponentEvent('onCallInvite', [ eventData ], 'calls');
 		}
 
-		createVideoCall(dialogId)
+		static createVideoCall(dialogId)
 		{
 			Logger.info('Calls.createVideoCall', dialogId);
 
@@ -49,7 +51,7 @@ jn.define('im/messenger/lib/integration/immobile/calls', (require, exports, modu
 				const eventData = {
 					dialogId,
 					video: true,
-					chatData: MessengerStore.getters['dialoguesModel/getById'](dialogId),
+					chatData: core.getStore().getters['dialoguesModel/getById'](dialogId),
 				};
 
 				BX.postComponentEvent('onCallInvite', [ eventData ], 'calls');
@@ -57,7 +59,7 @@ jn.define('im/messenger/lib/integration/immobile/calls', (require, exports, modu
 				return;
 			}
 
-			const userData = MessengerStore.getters['usersModel/getUserById'](dialogId);
+			const userData = core.getStore().getters['usersModel/getUserById'](dialogId);
 			const eventData = {
 				userId: dialogId,
 				video: true,
@@ -68,9 +70,16 @@ jn.define('im/messenger/lib/integration/immobile/calls', (require, exports, modu
 
 			BX.postComponentEvent('onCallInvite', [ eventData ], 'calls');
 		}
+
+		static joinCall(callId)
+		{
+			Logger.info('Calls.joinCall', callId);
+
+			BX.postComponentEvent(EventType.call.join, [callId], 'calls');
+		}
 	}
 
 	module.exports = {
-		Calls: new Calls(),
+		Calls,
 	};
 });

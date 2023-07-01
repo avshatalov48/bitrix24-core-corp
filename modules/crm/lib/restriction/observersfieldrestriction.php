@@ -4,13 +4,21 @@ namespace Bitrix\Crm\Restriction;
 
 use Bitrix\Crm\Integration\Bitrix24Manager;
 use Bitrix\Main\NotSupportedException;
-use CCrmOwnerType;
 use CCrmDeal;
+use CCrmOwnerType;
 
 class ObserversFieldRestriction extends Bitrix24QuantityRestriction
 {
 	protected int $entityTypeId;
 	protected bool $isFeatureEnabled;
+
+	private array $sliderCodes = [
+		CCrmOwnerType::Deal => [
+			'FEATURE' => 'limit_crm_search_deals_by_observers',
+			'RESTRICTION' => 'limit_crm_50000_deals_by_observers',
+			'MAX_RESTRICTION' => 'limit_crm_search_deals_by_observers_max_number',
+		],
+	];
 
 	public function __construct(int $entityTypeId)
 	{
@@ -20,7 +28,7 @@ class ObserversFieldRestriction extends Bitrix24QuantityRestriction
 		$limit = 0;
 
 		$restrictionSliderInfo = [
-			'ID' => 'limit_crm_search_deals_by_observers',
+			'ID' => $this->sliderCodes[$entityTypeId]['FEATURE'],
 		];
 
 		// crm_search_by_observers_in_deal
@@ -40,8 +48,12 @@ class ObserversFieldRestriction extends Bitrix24QuantityRestriction
 			);
 
 			$limit = max(0, (int)Bitrix24Manager::getVariable($restrictionName));
+			$maxLimit = Bitrix24Manager::getMaxVariable($restrictionName);
+
 			$restrictionSliderInfo = [
-				'ID' => 'limit_crm_50000_deals_by_observers',
+				'ID' => $limit === $maxLimit
+					? $this->sliderCodes[$entityTypeId]['MAX_RESTRICTION']
+					: $this->sliderCodes[$entityTypeId]['RESTRICTION'],
 			];
 		}
 

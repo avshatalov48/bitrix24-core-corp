@@ -2,8 +2,7 @@
  * @module crm/entity-tab/kanban
  */
 jn.define('crm/entity-tab/kanban', (require, exports, module) => {
-
-	const { Loc } = require('loc');
+	const { TypeId } = require('crm/type');
 	const { EntityTab } = require('crm/entity-tab');
 	const { TypeSort } = require('crm/entity-tab/sort');
 	const { TypePull } = require('crm/entity-tab/pull-manager');
@@ -14,16 +13,13 @@ jn.define('crm/entity-tab/kanban', (require, exports, module) => {
 	const { CategoryStorage } = require('crm/storage/category');
 	const { CategoryCountersStoreManager } = require('crm/state-storage');
 	const { Filter } = require('crm/entity-tab/filter');
+	const { PlanRestriction } = require('layout/ui/plan-restriction');
 	const { getSmartActivityMenuItem } = require('crm/entity-detail/component');
-	const {
-		get,
-		isEqual,
-	} = require('utils/object');
+	const { getActionChangeCrmMode } = require('crm/entity-actions');
+	const { get, isEqual } = require('utils/object');
 
 	const MAX_CATEGORY_CHANGE_ATTEMPTS = 5;
 	const CATEGORY_CHANGE_DELAY_TIME = 1000;
-
-	const pathToIcons = `${currentDomain}/bitrix/mobileapp/crmmobile/extensions/crm/entity-tab/kanban/icons/`;
 
 	/**
 	 * @class KanbanTab
@@ -42,8 +38,10 @@ jn.define('crm/entity-tab/kanban', (require, exports, module) => {
 			this.categoryChangeAttempts = 0;
 			this.categoryChangeTimeoutId = null;
 
-			this.state.categoryId = currentCategoryId;
-			this.state.isLoading = !this.category;
+			this.state = {
+				categoryId: currentCategoryId,
+				isLoading: !this.category,
+			};
 
 			this.onSelectedCategory = this.onSelectedCategoryHandler.bind(this);
 			this.onCategoryDelete = this.onCategoryDeleteHandler.bind(this);
@@ -100,8 +98,26 @@ jn.define('crm/entity-tab/kanban', (require, exports, module) => {
 
 			if (this.entityTypeName !== nextProps.entityTypeName)
 			{
-				this.entityTypeName = nextProps.entityTypeName;
-				this.state.categoryId = this.getCurrentCategoryId();
+				this.setIsLoading().then(() => {
+					this.filter = new Filter();
+					this.needReloadTab = true;
+					this.entityTypeName = nextProps.entityTypeName;
+
+					const categoryId = this.getCurrentCategoryId();
+					const categoryFromStorage = this.getCategoryFromCategoryStorage(categoryId);
+
+					this.setState(
+						{
+							isLoading: false,
+							searchButtonBackgroundColor: null,
+							categoryId,
+						},
+						() => this.initAfterCategoryChange(
+							categoryFromStorage,
+							{ categoryId },
+						),
+					);
+				});
 			}
 		}
 
@@ -160,15 +176,24 @@ jn.define('crm/entity-tab/kanban', (require, exports, module) => {
 
 		applyCategoryStorageChanges()
 		{
-			const category = this.getCategoryFromCategoryStorage(this.state.categoryId);
+			const newCategory = this.getCategoryFromCategoryStorage(this.state.categoryId);
 
 			if (this.category === null)
 			{
-				this.changeCategory(category);
+				this.changeCategory(newCategory);
+				return;
 			}
-			else if (!isEqual(this.category, category))
+
+			if (!isEqual(this.category, newCategory))
 			{
-				this.category = category;
+				if (this.isCategoryStagesCountChanged(newCategory))
+				{
+					this.reload();
+				}
+				else
+				{
+					this.category = newCategory;
+				}
 			}
 		}
 
@@ -195,18 +220,18 @@ jn.define('crm/entity-tab/kanban', (require, exports, module) => {
 
 			const desiredCategoryId = category ? category.id : null;
 
-			const promise = this.category ? new Promise(resolve => {
+			const promise = this.category ? new Promise((resolve) => {
 				this.setIsLoading().then(resolve);
 			}) : Promise.resolve();
 
 			promise
 				.then(() => this.trySetCurrentCategory(category))
-				.then(data => this.tryUpdateToNewCategory(data, desiredCategoryId, showNotice));
+				.then((data) => this.tryUpdateToNewCategory(data, desiredCategoryId, showNotice));
 		}
 
 		trySetCurrentCategory(category)
 		{
-			return new Promise(resolve => {
+			return new Promise((resolve) => {
 				const entityType = this.getCurrentEntityType();
 				const categoryId = category ? category.id : -1;
 
@@ -218,7 +243,7 @@ jn.define('crm/entity-tab/kanban', (require, exports, module) => {
 							entityTypeId,
 							categoryId,
 						},
-					}).then(response => {
+					}).then((response) => {
 						if (categoryId !== response.data.categoryId && categoryId >= 0)
 						{
 							const pathToList = CategoryStorage.getPathToCategoryList(entityTypeId);
@@ -351,16 +376,20 @@ jn.define('crm/entity-tab/kanban', (require, exports, module) => {
 			}
 		}
 
-		/**
-		 * @param {Object} data
-		 * @param {Function|null} callback
-		 */
-		updateEntityTypeData(data, callback = null)
+		isCategoryStagesCountChanged(newCategory)
 		{
-			if (this.props.updateEntityTypeData)
+			const currentCategory = this.category;
+
+			if (currentCategory.id !== newCategory.id)
 			{
-				this.props.updateEntityTypeData(this.props.entityTypeId, data, callback);
+				return false;
 			}
+
+			return (
+				currentCategory.processStages.length !== newCategory.processStages.length
+				|| currentCategory.successStages.length !== newCategory.successStages.length
+				|| currentCategory.failedStages.length !== newCategory.failedStages.length
+			);
 		}
 
 		render()
@@ -420,10 +449,20 @@ jn.define('crm/entity-tab/kanban', (require, exports, module) => {
 				getEmptyListComponent: this.getEmptyListComponent.bind(this),
 				onBeforeReload: this.onBeforeReload,
 				toolbarFactory: this.toolbarFactory,
-				config: config,
+				config,
 				needInitMenu: this.props.needInitMenu,
-				ref: ref => this.viewComponent = ref,
+				ref: (ref) => {
+					if (ref)
+					{
+						this.viewComponent = ref;
+					}
+				},
 				getMenuButtons: this.getMenuButtons.bind(this),
+				analyticsLabel: {
+					module: 'crm',
+					source: 'crm-entity-tab',
+					entityTypeId: this.props.entityTypeId,
+				},
 			});
 		}
 
@@ -481,14 +520,18 @@ jn.define('crm/entity-tab/kanban', (require, exports, module) => {
 		getMenuButtons()
 		{
 			const buttons = super.getMenuButtons();
-			buttons.push({
-				svg: {
-					content: CategorySvg.funnel(),
-				},
-				type: 'options',
-				badgeCode: 'kanban_categories_selector',
-				callback: this.showCategorySelector,
-			});
+
+			if (this.getCurrentEntityType().isCategoriesEnabled)
+			{
+				buttons.push({
+					svg: {
+						content: CategorySvg.funnel(),
+					},
+					type: 'options',
+					badgeCode: 'kanban_categories_selector',
+					callback: this.showCategorySelector,
+				});
+			}
 
 			return buttons;
 		}
@@ -539,8 +582,13 @@ jn.define('crm/entity-tab/kanban', (require, exports, module) => {
 		/**
 		 * @returns {null|number}
 		 */
-		getCategoryId()
+		getCategoryId(entityTypeId)
 		{
+			if (!isNaN(entityTypeId) && entityTypeId !== this.props.entityTypeId)
+			{
+				return super.getCategoryId(entityTypeId);
+			}
+
 			if (Number.isInteger(this.state.categoryId))
 			{
 				return this.state.categoryId;
@@ -694,9 +742,13 @@ jn.define('crm/entity-tab/kanban', (require, exports, module) => {
 
 		getMenuActions()
 		{
-			let menuActions = [
-				this.getSortMenuAction(),
-			];
+			const menuActions = [];
+			const { entityTypeId } = this.props;
+			const entityType = this.getCurrentEntityType();
+			if (entityType && entityType.isLastActivityEnabled)
+			{
+				menuActions.push(this.itemsSortManager.getSortMenuAction(this.onSetSortTypeHandler));
+			}
 
 			const smartActivityAction = this.getSmartActivityAction();
 			if (smartActivityAction)
@@ -704,73 +756,44 @@ jn.define('crm/entity-tab/kanban', (require, exports, module) => {
 				menuActions.push(smartActivityAction);
 			}
 
-			const parentMenu = super.getMenuActions();
-			if (parentMenu[0])
+			let topSeparatorInstalled = false;
+
+			if (entityType.isAvailableCrmMode && (entityTypeId === TypeId.Deal || entityTypeId === TypeId.Lead))
 			{
-				parentMenu[0].showTopSeparator = true;
-				menuActions = menuActions.concat(parentMenu);
+				topSeparatorInstalled = true;
+				menuActions.push(this.getCrmModeAction());
 			}
 
-			return menuActions;
+			const parentMenu = super.getMenuActions();
+			if (menuActions.length > 0 && !topSeparatorInstalled)
+			{
+				parentMenu[0].showTopSeparator = true;
+			}
+
+			return [...menuActions, ...parentMenu];
 		}
 
-		getSortMenuAction()
+		getCrmModeAction()
 		{
-			const currentSortType = this.getCurrentTypeSort();
+			const { restrictions } = this.props;
+			const { id, title, iconUrl, onAction } = getActionChangeCrmMode(restrictions.crmMode);
 
 			return {
-				id: 'kanban-sort-toggle',
-				title: Loc.getMessage('M_CRM_ENTITY_TAB_SORT_TOGGLE_TEXT'),
-				checked: (currentSortType === TypeSort.LastActivityTime),
-				sectionCode: 'sort',
-				onItemSelected: () => this.setSortType(),
-				iconUrl: pathToIcons + 'focus.png',
-			};
-		}
-
-		getCurrentTypeSort()
-		{
-			const { sortType } = this.getCurrentEntityType().data;
-
-			return sortType || TypeSort.LastActivityTime;
-		}
-
-		setSortType()
-		{
-			const type = (
-				this.getCurrentTypeSort() === TypeSort.LastActivityTime
-					? TypeSort.Id
-					: TypeSort.LastActivityTime
-			);
-
-			BX.ajax.runAction(this.props.actions.setSortType, {
-				data: {
-					entityTypeId: this.props.entityTypeId,
-					categoryId: this.getCategoryId(),
-					type,
+				id,
+				title,
+				iconUrl,
+				showTopSeparator: true,
+				onItemSelected: () => {
+					if (restrictions.crmMode)
+					{
+						onAction();
+					}
+					else
+					{
+						PlanRestriction.open({ title });
+					}
 				},
-			}).then(response => {
-				if (response.errors.length)
-				{
-					console.error(response);
-					return;
-				}
-
-				this.updateEntityTypeData({
-					sortType: type,
-				}, () => {
-					this.reload({
-						skipFillSlides: true,
-						skipUseCache: true,
-						updateToolbarColumnId: false,
-						skipInitCounters: true,
-						force: true,
-						initMenu: true,
-					});
-				});
-			}).catch((response) => {
-				console.error(response);
-			});
+			};
 		}
 
 		getSmartActivityAction()
@@ -781,7 +804,7 @@ jn.define('crm/entity-tab/kanban', (require, exports, module) => {
 				return null;
 			}
 
-			return getSmartActivityMenuItem(!smartActivitySettings.skipped);
+			return getSmartActivityMenuItem(smartActivitySettings.notificationEnabled, this.props.entityTypeId);
 		}
 
 		getSmartActivitySettings()
@@ -799,14 +822,12 @@ jn.define('crm/entity-tab/kanban', (require, exports, module) => {
 				return;
 			}
 
-			const skipped = !status;
-
-			if (smartActivitySettings.skipped === skipped)
+			if (smartActivitySettings.notificationEnabled === status)
 			{
 				return;
 			}
 
-			smartActivitySettings.skipped = skipped;
+			smartActivitySettings.notificationEnabled = status;
 
 			this.getCurrentStatefulList().initMenu({
 				layoutMenuActions: this.getMenuActions(),
@@ -853,7 +874,7 @@ jn.define('crm/entity-tab/kanban', (require, exports, module) => {
 				&& viewComponent.getSlideName() === viewComponent.getCurrentSlideName()
 			)
 			{
-				this.isEmpty = !Boolean(this.getCurrentStatefulList().getItems().size);
+				this.isEmpty = this.getCurrentStatefulList().getItems().size === 0;
 			}
 
 			return super.getEmptyListComponent();
@@ -864,7 +885,7 @@ jn.define('crm/entity-tab/kanban', (require, exports, module) => {
 			const viewComponent = this.getViewComponent();
 			const stages = CategoryCountersStoreManager.getStages();
 			const stageId = viewComponent.getCurrentColumnId();
-			const currentStage = stages.find(stage => stage.id === stageId);
+			const currentStage = stages.find((stage) => stage.id === stageId);
 
 			return (currentStage && currentStage.dropzone);
 		}

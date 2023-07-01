@@ -1,5 +1,8 @@
 (() =>
 {
+	const require = (ext) => jn.require(ext);
+	const { CommonSelectorProvider } = require('selector/providers/common');
+
 	const defaultOptions = {
 		entities: {
 			"user": {
@@ -49,7 +52,7 @@
 			super(ui);
 			this.singleSelection = false;
 			this.entities = entities || defaultEntities
-			let provider = new CommonSelectorProvider(context);
+			const provider = new CommonSelectorProvider(context);
 			this.setProvider(provider)
 			this.setEntitiesOptions(defaultOptions.entities)
 		}
@@ -58,7 +61,7 @@
 			if(typeof options === 'undefined')
 				return this;
 
-			let entities = this.entities.reduce((result, entityName)=>{
+			const entities = this.entities.reduce((result, entityName)=>{
 
 				result[entityName] = options[entityName]
 										? options[entityName]

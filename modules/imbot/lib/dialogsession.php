@@ -8,7 +8,7 @@ use Bitrix\Main\Type\DateTime;
 
 class DialogSession
 {
-	public const EXPIRES_DAYS = 90;
+	public const EXPIRES_DAYS = 30;
 
 	/** @var int */
 	protected $primaryId;
@@ -408,6 +408,7 @@ class DialogSession
 			$filter['=BOT_ID'] = $this->botId;
 		}
 
+		$filter['=CLOSED'] = 0;
 		$filter['>SESSION_ID'] = 0;
 		$days = self::EXPIRES_DAYS;
 		$filter['>DATE_CREATE'] = (new \Bitrix\Main\Type\DateTime())->add("-{$days}D");

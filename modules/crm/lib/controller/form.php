@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\Crm\Controller;
 
+use Bitrix\Bitrix24\PhoneVerify;
 use Bitrix\Main;
 use Bitrix\Crm;
 use Bitrix\Crm\WebForm;
@@ -11,6 +12,8 @@ use Bitrix\Crm\WebForm;
  */
 class Form extends Main\Engine\JsonController
 {
+
+	private const PHONE_VERIFY_ENTITY = WebForm\Form::PHONE_VERIFY_ENTITY;
 
 	private const EMBED_DEFAULT_WIDGETS_DISPLAY_COUNT = 10;
 	private const EMBED_DEFAULT_OPENLINES_DISPLAY_COUNT = 10;
@@ -208,6 +211,12 @@ class Form extends Main\Engine\JsonController
 			return ['error' => ['status' => 'access denied', 'code' => self::ERROR_CODE_FORM_READ_ACCESS_DENIED]];
 		}
 
+		if ($this->shouldVerifyPhone() && !$this->isPhoneVerified($formId))
+		{
+			$this->addError(new Main\Error('Phone doesn\'t verified', self::ERROR_CODE_PHONE_NOT_VERIFIED, ['id' => $formId]));
+			return [];
+		}
+
 		$form = new WebForm\Form($formId);
 		$formData = $form->get();
 
@@ -249,6 +258,12 @@ class Form extends Main\Engine\JsonController
 			return ['error' => ['status' => 'access denied', 'code' => self::ERROR_CODE_FORM_WRITE_ACCESS_DENIED]];
 		}
 
+		if ($this->shouldVerifyPhone() && !$this->isPhoneVerified($formId))
+		{
+			$this->addError(new Main\Error('Phone doesn\'t verified', self::ERROR_CODE_PHONE_NOT_VERIFIED, ['id' => $formId]));
+			return [];
+		}
+
 		$options = WebForm\Options::create($formId);
 		$aOptions = $options->getArray();
 		foreach ($data as $type => $values)
@@ -278,6 +293,12 @@ class Form extends Main\Engine\JsonController
 		{
 			$this->addError(new Main\Error('Access denied.', self::ERROR_CODE_FORM_READ_ACCESS_DENIED));
 			return ['error' => ['status' => 'access denied', 'code' => self::ERROR_CODE_FORM_READ_ACCESS_DENIED]];
+		}
+
+		if ($this->shouldVerifyPhone() && !$this->isPhoneVerified($formId))
+		{
+			$this->addError(new Main\Error('Phone doesn\'t verified', self::ERROR_CODE_PHONE_NOT_VERIFIED, ['id' => $formId]));
+			return [];
 		}
 
 		if (!$this->getSiteButtonAccess())
@@ -338,6 +359,12 @@ class Form extends Main\Engine\JsonController
 			return ['error' => ['status' => 'access denied', 'code' => self::ERROR_CODE_FORM_WRITE_ACCESS_DENIED]];
 		}
 
+		if ($this->shouldVerifyPhone() && !$this->isPhoneVerified($formId))
+		{
+			$this->addError(new Main\Error('Phone doesn\'t verified', self::ERROR_CODE_PHONE_NOT_VERIFIED, ['id' => $formId]));
+			return [];
+		}
+
 		if (!$this->getSiteButtonAccess(true))
 		{
 			$this->addError(new Main\Error('Access denied.', self::ERROR_CODE_WIDGET_WRITE_ACCESS_DENIED));
@@ -381,6 +408,12 @@ class Form extends Main\Engine\JsonController
 		{
 			$this->addError(new Main\Error('Access denied.', self::ERROR_CODE_FORM_READ_ACCESS_DENIED));
 			return ['error' => ['status' => 'access denied', 'code' => self::ERROR_CODE_FORM_READ_ACCESS_DENIED]];
+		}
+
+		if ($this->shouldVerifyPhone() && !$this->isPhoneVerified($formId))
+		{
+			$this->addError(new Main\Error('Phone doesn\'t verified', self::ERROR_CODE_PHONE_NOT_VERIFIED, ['id' => $formId]));
+			return [];
 		}
 
 		if (!\Bitrix\Main\Loader::includeModule('imopenlines'))
@@ -464,6 +497,12 @@ class Form extends Main\Engine\JsonController
 			return ['error' => ['status' => 'access denied', 'code' => self::ERROR_CODE_FORM_WRITE_ACCESS_DENIED]];
 		}
 
+		if ($this->shouldVerifyPhone() && !$this->isPhoneVerified($formId))
+		{
+			$this->addError(new Main\Error('Phone doesn\'t verified', self::ERROR_CODE_PHONE_NOT_VERIFIED, ['id' => $formId]));
+			return [];
+		}
+
 		if (!$this->getOpenlineModifyAccess($lineId))
 		{
 			$this->addError(new Main\Error('Access denied.', self::ERROR_CODE_OPENLINES_WRITE_ACCESS_DENIED, ['lineId' => $lineId]));
@@ -509,13 +548,15 @@ class Form extends Main\Engine\JsonController
 			return [];
 		}
 
-		if ($this->shouldVerifyPhone() && !$this->isPhoneVerified())
+		$formOptions = WebForm\Options::createFromArray($options);
+		$formId = (int)$formOptions->getForm()->getId();
+
+		if ($this->shouldVerifyPhone() && !$this->isPhoneVerified($formId))
 		{
-			$this->addError(new Main\Error('Phone doesn\'t verified', static::ERROR_CODE_PHONE_NOT_VERIFIED));
+			$this->addError(new Main\Error('Phone doesn\'t verified', static::ERROR_CODE_PHONE_NOT_VERIFIED, ['id' => $formId]));
 			return [];
 		}
 
-		$formOptions = WebForm\Options::createFromArray($options);
 		(new WebForm\FieldSynchronizer())->replaceOptionFields($formOptions);
 		$result = $formOptions->save();
 		$this->addErrors($result->getErrors());
@@ -1103,9 +1144,12 @@ class Form extends Main\Engine\JsonController
 		;
 	}
 
-	private function isPhoneVerified(): bool
+	private function isPhoneVerified(int $formId): bool
 	{
-		return !\Bitrix\Main\Loader::includeModule('bitrix24') || \CBitrix24::isPhoneConfirmed();
+		return
+			!\Bitrix\Main\Loader::includeModule('bitrix24')
+			|| (new PhoneVerify(self::PHONE_VERIFY_ENTITY, $formId))->isVerified()
+		;
 	}
 
 	private function shouldVerifyPhone(): bool
@@ -1114,6 +1158,7 @@ class Form extends Main\Engine\JsonController
 		{
 			return false;
 		}
+
 		$validatedLicenseType = [
 			'project',
 			'demo'

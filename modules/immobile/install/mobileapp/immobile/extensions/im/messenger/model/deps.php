@@ -3,9 +3,14 @@
 return [
 	'extensions' => [
 		'type',
-		'im:messenger/lib/const',
+		'utils/uuid',
+		'utils/object',
+		'im:chat/utils',
+		'im:messenger/const',
 		'im:messenger/lib/helper',
 		'im:messenger/cache',
+		'im:messenger/lib/logger',
+		'im:messenger/lib/params',
 	],
 	'bundle' => [
 		'./src/application',

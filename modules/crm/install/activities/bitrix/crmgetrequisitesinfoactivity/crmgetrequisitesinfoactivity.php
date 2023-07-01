@@ -497,7 +497,7 @@ class CBPCrmGetRequisitesInfoActivity extends CBPActivity
 			$rqFields,
 			array_merge(
 				$requisite->getFieldsTitles(GetCountryIdByCode('US')),
-				$requisite->getFieldsTitles()
+				$requisite->getFieldsTitles($countryId)
 			)
 		);
 

@@ -108,7 +108,7 @@ endif;
 
 
 		if ($arResult["SKIP_BP"] == "Y" && $arResult["ShowMode"] != "Success"):?>
-			<div class="bp-errortext"><?=GetMessage("MB_BP_SKIP")?></div>
+			<div class="bp-errortext"><?=GetMessage("MB_BP_SKIP_MSGVER_1")?></div>
 		<? elseif ($arResult["ShowMode"] != "Success" && $arResult["TASK"]['IS_INLINE'] != 'Y'):?>
 			<form class="bp-task-form" method="post" name="task_form1" action="<?=POST_FORM_ACTION_URI?>" enctype="multipart/form-data" onsubmit="return false;">
 				<?= bitrix_sessid_post() ?>

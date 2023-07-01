@@ -13,11 +13,13 @@ Loc::loadMessages(__FILE__);
 $helper = $arResult['HELPER'];
 $arParams =& $helper->getComponent()->arParams;
 
+$arParams['PUBLIC_MODE'] = ($arParams['PUBLIC_MODE'] ?? null);
+
 /** @var Template $template */
 $template = $arResult['ITEM'];
-$taskLimitExceeded = $arResult['AUX_DATA']['TASK_LIMIT_EXCEEDED'];
-$templateSubtaskLimitExceeded = $arResult['AUX_DATA']['TEMPLATE_SUBTASK_LIMIT_EXCEEDED'];
-$templateTaskRecurrentLimitExceeded = $arResult['AUX_DATA']['TASK_RECURRENT_RESTRICT'];
+$taskLimitExceeded = $arResult['AUX_DATA']['TASK_LIMIT_EXCEEDED'] ?? null;
+$templateSubtaskLimitExceeded = $arResult['AUX_DATA']['TEMPLATE_SUBTASK_LIMIT_EXCEEDED'] ?? null;
+$templateTaskRecurrentLimitExceeded = $arResult['AUX_DATA']['TASK_RECURRENT_RESTRICT'] ?? null;
 
 $toList = str_replace("#user_id#", $arParams["USER_ID"], $arParams["PATH_TO_USER_TASKS_TEMPLATES"]);
 
@@ -78,7 +80,7 @@ $APPLICATION->SetAdditionalCSS('/bitrix/js/tasks/css/tasks.css');
 			}
 
 			$buttonIcon = (($taskLimitExceeded || $templateSubtaskLimitExceeded) ? 'ui-btn-icon-lock' : 'ui-btn-icon-add');
-			$href = (($taskLimitExceeded || $templateSubtaskLimitExceeded) ? '' : htmlspecialcharsbx($arParams['PATH_TO_TASKS_TEMPLATE_CREATE_SUB']));
+			$href = (($taskLimitExceeded || $templateSubtaskLimitExceeded) ? '' : htmlspecialcharsbx($arParams['PATH_TO_TASKS_TEMPLATE_CREATE_SUB'] ?? ''));
 			?>
 			<button class="ui-btn ui-btn-light-border ui-btn-icon-setting ui-btn-themes" id="templateViewPopupMenuOptions"></button>
 			<?if (!$helper->checkHasFatals() && \Bitrix\Tasks\Access\TemplateAccessController::can(User::getId(), \Bitrix\Tasks\Access\ActionDictionary::ACTION_TEMPLATE_CREATE)):?>

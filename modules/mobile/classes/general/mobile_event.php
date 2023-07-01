@@ -14,7 +14,7 @@ class CMobileEvent
 	{
 		return [
 			'MODULE_ID' => "mobile",
-			'USE' => ["PUBLIC_SECTION"]
+			'USE' => ["PUBLIC_SECTION"],
 		];
 	}
 
@@ -36,22 +36,21 @@ class CMobileEvent
 
 		if ($energySave == true && $isMessageEmpty)
 		{
-			$lastTimePushOption = "last_time_push_".$message["USER_ID"];
-			$lastEmptyMessageTime = Option::get("mobile", $lastTimePushOption,  0);
-			$throttleTimeout = Option::get("mobile", "push_throttle_timeout",  20);
+			$lastTimePushOption = "last_time_push_" . $message["USER_ID"];
+			$lastEmptyMessageTime = Option::get("mobile", $lastTimePushOption, 0);
+			$throttleTimeout = Option::get("mobile", "push_throttle_timeout", 20);
 			$now = time();
-			if(($now - $lastEmptyMessageTime) < $throttleTimeout)
+			if (($now - $lastEmptyMessageTime) < $throttleTimeout)
 			{
 				return false;
 			}
 			else
 			{
-				Option::set("mobile", $lastTimePushOption,  $now);
+				Option::set("mobile", $lastTimePushOption, $now);
 			}
 		}
 
 		return true;
-
 	}
 
 	public static function getJNWorkspace()
@@ -62,8 +61,8 @@ class CMobileEvent
 	public static function getKernelCheckPath()
 	{
 		return [
-			"install/mobileapp/mobile/components/bitrix"=>"/bitrix/mobileapp/mobile/components/bitrix/",
-			"install/mobileapp/mobile/extensions/bitrix"=>"/bitrix/mobileapp/mobile/erxtensions/bitrix/",
+			"install/mobileapp/mobile/components/bitrix" => "/bitrix/mobileapp/mobile/components/bitrix/",
+			"install/mobileapp/mobile/extensions/bitrix" => "/bitrix/mobileapp/mobile/erxtensions/bitrix/",
 		];
 	}
 
@@ -73,7 +72,9 @@ class CMobileEvent
 		 * Tabs are not supported with web-version of menu
 		 */
 		if (!($eventProvider instanceof Component))
+		{
 			return $data;
+		}
 
 		/**
 		 * @var  $eventProvider Component
@@ -81,19 +82,42 @@ class CMobileEvent
 		$imageDir = $eventProvider->getPath() . "/images/";
 		$manager = new Manager();
 		$active = array_keys($manager->getActiveTabs());
-		$all = $manager->getAllTabIDs();
+		$all = $manager->getAllTabIDs(true);
 		$diff = array_diff($all, $active);
 		$favorite = &$data[0]["items"];
 		foreach ($diff as $tabId)
 		{
 			$tab = $manager->getTabInstance($tabId);
-			if($tab->shouldShowInMenu())
+			if ($tab->shouldShowInMenu())
 			{
 				$item = $tab->getMenuData();
-				if($item["imageUrl"])
-					$item["imageUrl"] = $imageDir. $item["imageUrl"];
+				if ($item["imageUrl"])
+				{
+					$item["imageUrl"] = $imageDir . $item["imageUrl"];
+				}
+				if (isset($item["sectionCode"]))
+				{
+					$count = count($data);
+					for ($i = 0; $i < $count; $i++)
+					{
+						$section = &$data[$i];
+						if (isset($section["code"]) && $section['code'] === $item['sectionCode'])
+						{
+							if (!isset($section["items"]))
+							{
+								$section["items"] = [];
+							}
 
-				array_unshift($favorite, $item);
+							array_unshift($section["items"], $item);
+							break;
+						}
+					}
+				}
+				else
+				{
+					array_unshift($favorite, $item);
+				}
+
 			}
 		}
 
@@ -113,6 +137,8 @@ class MobileApplication extends Bitrix\Main\Authentication\Application
 		"/bitrix/tools/composite_data.php",
 		"/bitrix/tools/crm_show_file.php",
 		"/bitrix/tools/dav_profile.php",
+		"/bitrix/tools/crm_lead_mode.php",
+		"/bitrix/components/bitrix/crm.lead.list/list.ajax.php",
 		"/bitrix/components/bitrix/disk.folder.list/ajax.php",
 		"/bitrix/services/mobile/jscomponent.php",
 		"/bitrix/services/mobile/webcomponent.php",
@@ -122,14 +148,15 @@ class MobileApplication extends Bitrix\Main\Authentication\Application
 		"/bitrix/components/bitrix/main.urlpreview/",
 		"/bitrix/components/bitrix/main.file.input/",
 		"/mobileapp/",
-		"/rest/"
+		"/rest/",
 	];
 
 	public function __construct()
 	{
-		$diskEnabled = \Bitrix\Main\Config\Option::get('disk', 'successfully_converted', false) && CModule::includeModule('disk');
+		$diskEnabled = \Bitrix\Main\Config\Option::get('disk', 'successfully_converted', false)
+			&& CModule::includeModule('disk');
 
-		if(!$diskEnabled)
+		if (!$diskEnabled)
 		{
 			$this->validUrls = array_merge(
 				$this->validUrls,
@@ -137,7 +164,7 @@ class MobileApplication extends Bitrix\Main\Authentication\Application
 					"/company/personal.php",
 					"/docs/index.php",
 					"/docs/shared/index.php",
-					"/workgroups/index.php"
+					"/workgroups/index.php",
 				]);
 		}
 
@@ -148,15 +175,15 @@ class MobileApplication extends Bitrix\Main\Authentication\Application
 			{
 				$res = \Bitrix\Main\SiteTable::getList([
 					'filter' => ['=LID' => $extranetSiteId],
-					'select' => ['DIR']
+					'select' => ['DIR'],
 				]);
 				if ($site = $res->fetch())
 				{
 					$this->validUrls = array_merge(
 						$this->validUrls,
 						[
-							$site['DIR']."mobile/",
-							$site['DIR']."contacts/personal.php"
+							$site['DIR'] . "mobile/",
+							$site['DIR'] . "contacts/personal.php",
 						]);
 				}
 			}
@@ -169,9 +196,9 @@ class MobileApplication extends Bitrix\Main\Authentication\Application
 			$buckets = CCloudStorageBucket::getAllBuckets();
 			foreach ($buckets as $bucket)
 			{
-				if($bucket["PREFIX"])
+				if ($bucket["PREFIX"])
 				{
-					$this->validUrls[] = "/".$bucket["PREFIX"]."/";
+					$this->validUrls[] = "/" . $bucket["PREFIX"] . "/";
 				}
 			}
 		}

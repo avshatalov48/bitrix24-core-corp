@@ -75,7 +75,7 @@ $canReadGroupTasks = (
 			<div class="task-detail-sidebar-item task-detail-sidebar-item-report">
 				<div class="task-detail-sidebar-item-report-content">
 					<div class="ui-icon ui-icon-common-info"><i></i></div>
-					<div class="task-detail-sidebar-item-report-text"><?= Loc::getMessage('TASK_RESULT_SIDEBAR_HINT'); ?></div>
+					<div class="task-detail-sidebar-item-report-text"><?= Loc::getMessage('TASK_RESULT_SIDEBAR_HINT_MSGVER_1'); ?></div>
 				</div>
 			</div>
 		<?php endforeach; ?>
@@ -93,7 +93,7 @@ $canReadGroupTasks = (
 					"TEMPLATE_DATA" => array(
 						"ITEMS" => array(
 							"DATA" => $taskData["SE_REMINDER"],
-							"CAN" => $arResult["CAN"]["TASK"]["SE_REMINDER"]
+							"CAN" => ($arResult["CAN"]["TASK"]["SE_REMINDER"] ?? null),
 						),
 						"TASK_ID" => $taskData["ID"],
 						"TASK_DEADLINE" => $taskData["DEADLINE"],
@@ -130,7 +130,7 @@ $canReadGroupTasks = (
 			<div class="task-detail-sidebar-item task-detail-sidebar-item-robot">
 				<div class="task-detail-sidebar-item-title"><?=Loc::getMessage('TASKS_SIDEBAR_AUTOMATION')?>:</div>
 				<div class="task-detail-sidebar-item-value">
-					<span onclick="BX.SidePanel.Instance.open('/bitrix/components/bitrix/tasks.automation/slider.php?site_id='+BX.message('SITE_ID')+'&amp;project_id=<?=(int)$taskData['GROUP_ID']?>&amp;task_id=<?=(int)$taskData['ID']?>', {cacheable: false, customLeftBoundary: 0})"><?=Loc::getMessage('TASKS_SIDEBAR_ROBOTS_1')?></span>
+					<span onclick="BX.SidePanel.Instance.open('/bitrix/components/bitrix/tasks.automation/slider.php?site_id='+BX.message('SITE_ID')+'&amp;project_id=<?=(int)$taskData['GROUP_ID']?>&amp;task_id=<?=(int)$taskData['ID']?>', {cacheable: false, customLeftBoundary: 0, loader: 'bizproc:automation-loader'})"><?=Loc::getMessage('TASKS_SIDEBAR_ROBOTS_1')?></span>
 				</div>
 			</div>
 		<?endif;?>
@@ -173,7 +173,7 @@ $canReadGroupTasks = (
 		<? endif ?>
 
 		<div class="task-detail-sidebar-item task-detail-sidebar-item-mark">
-			<div class="task-detail-sidebar-item-title"><?=Loc::getMessage("TASKS_MARK")?>:</div>
+			<div class="task-detail-sidebar-item-title"><?=Loc::getMessage("TASKS_MARK_MSGVER_1")?>:</div>
 			<div class="task-detail-sidebar-item-value<?if(!$can["RATE"]):?> task-detail-sidebar-item-readonly<?php endif?>">
 				<?php
 					if ($taskLimitExceeded)
@@ -191,7 +191,7 @@ $canReadGroupTasks = (
 				}
 				?>
 
-				<span class="task-detail-sidebar-item-mark-<?= mb_strtolower($taskData["MARK"])?>" id="task-detail-mark">
+				<span class="task-detail-sidebar-item-mark-<?= mb_strtolower($taskData["MARK"] ?? '')?>" id="task-detail-mark">
 					<?=Loc::getMessage(($taskData["MARK"] ? "TASKS_MARK_".$taskData["MARK"] : "TASKS_MARK_NONE"))?>
 				</span>
 			</div>
@@ -411,6 +411,17 @@ $canReadGroupTasks = (
 if(\Bitrix\Main\Loader::includeModule('rest'))
 {
 	$restPlacementHandlerList = \Bitrix\Rest\PlacementTable::getHandlersList(\CTaskRestService::PLACEMENT_TASK_VIEW_SIDEBAR);
+	$restPlacementHandlerList = array_filter($restPlacementHandlerList, function($placement) use ($taskData) {
+		$groupIdOption = (string)$placement['OPTIONS']['groupId'];
+		if ($groupIdOption == '')
+		{
+			return true;
+		}
+		$allowedGroups = array_map('trim', explode(',', $groupIdOption));
+
+		return $taskData['GROUP_ID'] > 0 && in_array($taskData['GROUP_ID'], $allowedGroups, false);
+	});
+
 	foreach($restPlacementHandlerList as $app):?>
 		<div class="task-detail-sidebar-placement task-sidebar-restapp-<?=$app['APP_ID']?>" id="task-sidebar-restapp-<?=$app['APP_ID']?>">
 			<?php

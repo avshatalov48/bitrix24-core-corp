@@ -341,6 +341,10 @@ const SmsMessage = {
 		{
 			BX.Salescenter.Manager.openBitrix24NotificationsHelp(event);
 		},
+		openBitrix24NotificationsWorks(event)
+		{
+			BX.Salescenter.Manager.openBitrix24NotificationsWorks(event);
+		},
 	},
 	//language=Vue
 	template: `
@@ -382,7 +386,7 @@ const SmsMessage = {
 							<template v-if="currentSenderCode === 'bitrix24'">
 								<div class="salescenter-app-payment-by-sms-item-container-sms-content-info">
 									${Loc.getMessage('SALESCENTER_SEND_ORDER_VIA_BITRIX24')}
-									<span @click="openBitrix24NotificationsHelp(event)">
+									<span @click="openBitrix24NotificationsWorks(event)">
 										${Loc.getMessage('SALESCENTER_PRODUCT_SET_BLOCK_TITLE_SHORT')}
 									</span>
 								</div>

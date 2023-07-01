@@ -3,6 +3,7 @@
 use Bitrix\Catalog;
 use Bitrix\Catalog\Access\AccessController;
 use Bitrix\Catalog\Access\ActionDictionary;
+use Bitrix\Catalog\Config\Feature;
 use Bitrix\Catalog\StoreDocumentTable;
 use Bitrix\Catalog\Url\InventoryManagementSourceBuilder;
 use Bitrix\Main;
@@ -86,6 +87,9 @@ class CatalogStoreDocumentListComponent extends CBitrixComponent implements Cont
 		}
 
 		$this->init();
+
+		$this->checkIfInventoryManagementIsDisabled();
+
 		if (!$this->checkDocumentReadRights())
 		{
 			if ($crmIncluded)
@@ -122,6 +126,19 @@ class CatalogStoreDocumentListComponent extends CBitrixComponent implements Cont
 		$this->initInventoryManagementSlider();
 
 		$this->includeComponentTemplate();
+	}
+
+	private function checkIfInventoryManagementIsDisabled(): void
+	{
+		$this->arResult['IS_INVENTORY_MANAGEMENT_DISABLED'] = !Feature::isInventoryManagementEnabled();
+		if ($this->arResult['IS_INVENTORY_MANAGEMENT_DISABLED'])
+		{
+			$this->arResult['INVENTORY_MANAGEMENT_FEATURE_SLIDER_CODE'] = Feature::getInventoryManagementHelpLink()['FEATURE_CODE'] ?? null;
+		}
+		else
+		{
+			$this->arResult['INVENTORY_MANAGEMENT_FEATURE_SLIDER_CODE'] = null;
+		}
 	}
 
 	/**
@@ -757,12 +774,14 @@ class CatalogStoreDocumentListComponent extends CBitrixComponent implements Cont
 		$resultColumn = $column;
 		foreach ($stores as $store)
 		{
+			$existingStoreTitle = $existingStores[$store]['TITLE'] ?? '';
+
 			$encodedFilter = Json::encode([
 				$fieldName => [$store],
-				$fieldName . '_label' => [$existingStores[$store]['TITLE']],
+				$fieldName . '_label' => [$existingStoreTitle],
 			]);
 			$resultColumn[$fieldName][$fieldName . '_LABEL_' . $store] = [
-				'text' => $existingStores[$store]['TITLE'] ?: Loc::getMessage('DOCUMENT_LIST_EMPTY_STORE_TITLE'),
+				'text' => $existingStoreTitle ?: Loc::getMessage('DOCUMENT_LIST_EMPTY_STORE_TITLE'),
 				'color' => 'ui-label-light',
 				'events' => [
 					'click' => 'BX.delegate(function() {BX.Catalog.DocumentGridManager.Instance.applyFilter(' . $encodedFilter . ')})',
@@ -948,6 +967,27 @@ class CatalogStoreDocumentListComponent extends CBitrixComponent implements Cont
 
 	private function getAddDocumentButton(): ?\Bitrix\UI\Buttons\Button
 	{
+		if (!Feature::isInventoryManagementEnabled())
+		{
+			$btn = CreateButton::create([
+				'text' => Loc::getMessage('DOCUMENT_LIST_ADD_DOCUMENT_BUTTON_2'),
+				'color' => \Bitrix\UI\Buttons\Color::SUCCESS,
+				'classList' => [
+					'add-document-button',
+					'ui-btn-icon-lock',
+				],
+			]);
+
+			$inventoryManagementHelpLink = Feature::getInventoryManagementHelpLink();
+			if (isset($inventoryManagementHelpLink['LINK']))
+			{
+				$btn->bindEvent('click', new \Bitrix\UI\Buttons\JsCode(
+					"{$inventoryManagementHelpLink['LINK']}",
+				));
+			}
+			return $btn;
+		}
+
 		if (!$this->checkDocumentModifyRights())
 		{
 			return LockedButton::create([
@@ -1054,11 +1094,17 @@ class CatalogStoreDocumentListComponent extends CBitrixComponent implements Cont
 			$isGuideOver = filter_var($isGuideOver, FILTER_VALIDATE_BOOLEAN);
 		}
 
+		$canModifyAdjustDocument = AccessController::getCurrent()->checkByValue(
+			ActionDictionary::ACTION_STORE_DOCUMENT_MODIFY,
+			StoreDocumentTable::TYPE_STORE_ADJUSTMENT
+		);
+
 		return (
 			$this->mode === self::ARRIVAL_MODE
 			&& !$isGuideOver
 			&& $this->isFirstTime()
 			&& Catalog\Component\UseStore::isUsed()
+			&& $canModifyAdjustDocument
 		);
 	}
 
@@ -1312,7 +1358,7 @@ class CatalogStoreDocumentListComponent extends CBitrixComponent implements Cont
 
 	private function getZone()
 	{
-		if (Bitrix\Main\ModuleManager::isModuleInstalled('bitrix24'))
+		if (\Bitrix\Main\Loader::includeModule('bitrix24'))
 		{
 			$zone = \CBitrix24::getPortalZone();
 		}

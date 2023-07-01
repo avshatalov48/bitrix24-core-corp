@@ -197,7 +197,7 @@ export default class Widget extends EventEmitter
 		this.#popup = new PopupComponentsMaker({
 			target: this.#container,
 			content: content.map(prepareFunc),
-			width: 400
+			width: 400,
 		});
 		EventEmitter.subscribe('BX.Main.InterfaceButtons:onMenuShow', this.hide);
 		EventEmitter.subscribe(Options.eventNameSpace + 'onNeedToHide', this.hide);

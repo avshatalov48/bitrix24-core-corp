@@ -12,6 +12,7 @@ use Bitrix\Main\DB\SqlExpression;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\Access\ActionDictionary;
 use Bitrix\Tasks\Access\Model\TaskModel;
+use Bitrix\Tasks\Access\Role\RoleDictionary;
 use Bitrix\Tasks\Access\TaskAccessController;
 use Bitrix\Tasks\Integration\SocialNetwork\Group;
 use Bitrix\Tasks\Internals\Log\Log;
@@ -60,16 +61,12 @@ final class Task extends \Bitrix\Tasks\Item\Access
 
 	public function canCreate($item, $userId = 0)
 	{
-		$accessController = $this->getAccessController($item->getUserId());
-		$res = $accessController->check(ActionDictionary::ACTION_TASK_SAVE, TaskModel::createNew(), $this->getTaskModel($item));
-		return $this->makeResult($res, 'create');
+		return $this->makeResult(true, 'create');
 	}
 
 	public function canUpdate($item, $userId = 0)
 	{
-		$accessController = $this->getAccessController($item->getUserId());
-		$res = $accessController->check(ActionDictionary::ACTION_TASK_SAVE, TaskModel::createFromId($item->getId()), $this->getTaskModel($item));
-		return $this->makeResult($res, 'update');
+		return $this->makeResult(true, 'update');
 	}
 
 	public function canRead($item, $userId = 0)

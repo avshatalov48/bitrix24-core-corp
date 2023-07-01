@@ -1,13 +1,14 @@
 <?php
+
 define('NO_KEEP_STATISTIC', 'Y');
 define('NO_AGENT_STATISTIC','Y');
 define('NO_AGENT_CHECK', true);
 define('DisableEventsCheck', true);
 
-require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_before.php');
+require_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_before.php');
 
-use Bitrix\Sale\Cashbox;
 use Bitrix\Crm\Order;
+use Bitrix\Sale\Cashbox;
 
 if (!CModule::IncludeModule('crm'))
 {
@@ -25,22 +26,29 @@ if (!CModule::IncludeModule('sale'))
  * 'SAVE_CHECK'
  */
 global $DB, $APPLICATION, $USER_FIELD_MANAGER;
+
 \Bitrix\Main\Localization\Loc::loadMessages(__FILE__);
-if(!function_exists('__CrmOrderCheckDetailsEndJsonResponse'))
+
+if (!function_exists('__CrmOrderCheckDetailsEndJsonResponse'))
 {
 	function __CrmOrderCheckDetailsEndJsonResponse($result)
 	{
 		$GLOBALS['APPLICATION']->RestartBuffer();
-		Header('Content-Type: application/x-javascript; charset='.LANG_CHARSET);
-		if(!empty($result))
+
+		Header('Content-Type: application/x-javascript; charset=' . LANG_CHARSET);
+
+		if (!empty($result))
 		{
 			echo CUtil::PhpToJSObject($result);
 		}
-		if(!defined('PUBLIC_AJAX_MODE'))
+
+		if (!defined('PUBLIC_AJAX_MODE'))
 		{
 			define('PUBLIC_AJAX_MODE', true);
 		}
-		require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/epilog_after.php');
+
+		require_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/epilog_after.php');
+
 		die();
 	}
 }
@@ -58,22 +66,23 @@ Header('Content-Type: application/x-javascript; charset='.LANG_CHARSET);
 $currentUserID = CCrmSecurityHelper::GetCurrentUserID();
 $currentUserPermissions =  CCrmPerms::GetCurrentUserPermissions();
 
-$action = isset($_POST['ACTION']) ? $_POST['ACTION'] : '';
-if($action === '' && isset($_POST['MODE']))
+$action = $_POST['ACTION'] ?? '';
+if ($action === '' && isset($_POST['MODE']))
 {
 	$action = $_POST['MODE'];
 }
-if($action === '')
+
+if ($action === '')
 {
 	__CrmOrderCheckDetailsEndJsonResponse(array('ERROR'=>'ACTION IS NOT DEFINED!'));
 }
-elseif($action === 'SAVE_CHECK')
+elseif ($action === 'SAVE_CHECK')
 {
-	$orderId = (int)$_POST['ORDER_ID'];
+	$orderId = (int)($_POST['ORDER_ID'] ?? 0);
 	$entityType = $_POST['MAIN']['TYPE'];
-	$entityId = (int)$_POST['MAIN']['VALUE'];
+	$entityId = (int)($_POST['MAIN']['VALUE'] ?? 0);
 	$checkType = $_POST['TYPE'];
-	$additionData = $_POST['ADDITION'];
+	$additionData = $_POST['ADDITION'] ?? null;
 
 	$order = Order\Order::load($orderId);
 	if ($order === null || $entityId <= 0)
@@ -81,7 +90,7 @@ elseif($action === 'SAVE_CHECK')
 		__CrmOrderCheckDetailsEndJsonResponse(array('ERROR' => GetMessage('CRM_ORDER_NOT_FOUND')));
 	}
 
-	if(!\Bitrix\Crm\Order\Permissions\Order::checkUpdatePermission($orderId))
+	if (!\Bitrix\Crm\Order\Permissions\Order::checkUpdatePermission($orderId))
 	{
 		__CrmOrderCheckDetailsEndJsonResponse(array('ERROR' => GetMessage('CRM_ORDER_ACCESS_DENIED')));
 	}
@@ -140,13 +149,13 @@ elseif($action === 'GET_CHECK_DATA')
 {
 	$result = array();
 
-	$orderId = (int)$_POST['ORDER_ID'];
+	$orderId = (int)($_POST['ORDER_ID'] ?? 0);
 	if ($orderId <= 0)
 	{
 		__CrmOrderCheckDetailsEndJsonResponse(array('ERROR' => GetMessage('CRM_ORDER_NOT_FOUND')));
 	}
 	$entityType = ($_POST['MAIN']['TYPE'] === Cashbox\Check::SUPPORTED_ENTITY_TYPE_SHIPMENT) ? Cashbox\Check::SUPPORTED_ENTITY_TYPE_SHIPMENT : Cashbox\Check::SUPPORTED_ENTITY_TYPE_PAYMENT;
-	$entityId = (int)$_POST['MAIN']['VALUE'];
+	$entityId = (int)($_POST['MAIN']['VALUE'] ?? 0);
 	$checkType = $_POST['TYPE'];
 	if ($orderId > 0)
 	{
@@ -156,7 +165,7 @@ elseif($action === 'GET_CHECK_DATA')
 			__CrmOrderCheckDetailsEndJsonResponse(array('ERROR' => GetMessage('CRM_ORDER_NOT_FOUND')));
 		}
 
-		if(!\Bitrix\Crm\Order\Permissions\Order::checkUpdatePermission($orderId))
+		if (!\Bitrix\Crm\Order\Permissions\Order::checkUpdatePermission($orderId))
 		{
 			__CrmOrderCheckDetailsEndJsonResponse(array('ERROR' => GetMessage('CRM_ORDER_ACCESS_DENIED')));
 		}
@@ -181,6 +190,6 @@ elseif($action === 'GET_CHECK_DATA')
 		$orderCheck = new CCrmOrderCheckDetailsComponent();
 		$result = $orderCheck->prepareEditData($entityId, $entityType, $checkType);
 	}
+	
 	__CrmOrderCheckDetailsEndJsonResponse(array('DATA' => $result));
 }
-

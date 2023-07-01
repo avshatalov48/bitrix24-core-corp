@@ -1,7 +1,13 @@
-<?
+<?php
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
-
-$arParams['NAME_TEMPLATE'] = $arParams['NAME_TEMPLATE'] ? $arParams['NAME_TEMPLATE'] : CSite::GetNameFormat();
+/**
+ * @var array $arParams
+ * @global \CUser $USER
+ */
+$arParams['NAME_TEMPLATE'] = $arParams['NAME_TEMPLATE'] ?? CSite::GetNameFormat();
+$arParams['DATE_FORMAT'] = $arParams['DATE_FORMAT'] ?? \Bitrix\Main\Context::getCurrent()->getCulture()->getLongDateFormat();
+$arParams['DATE_TIME_FORMAT'] = $arParams['DATE_TIME_FORMAT'] ?? \Bitrix\Main\Context::getCurrent()->getCulture()->getFullDateFormat();
+$arParams['DATE_FORMAT_NO_YEAR'] = $arParams['DATE_FORMAT_NO_YEAR'] ?? \Bitrix\Main\Context::getCurrent()->getCulture()->getDayMonthFormat();
 
 $bUseLogin = $arParams['SHOW_LOGIN'] != "N" ? true : false;
 $arResult["bUseLogin"] = $bUseLogin;

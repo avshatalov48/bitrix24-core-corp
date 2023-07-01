@@ -1,6 +1,7 @@
 <?
 namespace Bitrix\Intranet;
 
+use Bitrix\Bitrix24\Sso;
 use Bitrix\Intranet\Internals\InvitationTable;
 use Bitrix\Main\Error;
 use Bitrix\Main\Event;
@@ -211,6 +212,15 @@ class Invitation
 	public static function canCurrentUserInvite(): bool
 	{
 		global $USER;
+
+		if (
+			Loader::includeModule('bitrix24')
+			&& class_exists(Sso\Configuration::class)
+			&& Sso\Configuration::isSsoEnabled()
+		)
+		{
+			return false;
+		}
 
 		return (
 			Loader::includeModule('bitrix24')

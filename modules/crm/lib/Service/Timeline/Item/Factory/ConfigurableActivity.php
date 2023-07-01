@@ -2,12 +2,15 @@
 
 namespace Bitrix\Crm\Service\Timeline\Item\Factory;
 
+use Bitrix\Crm\Activity\Provider\ConfigurableRestApp;
 use Bitrix\Crm\Activity\Provider\Delivery;
 use Bitrix\Crm\Activity\Provider\Document;
+use Bitrix\Crm\Activity\Provider\CalendarSharing;
 use Bitrix\Crm\Activity\Provider\Payment;
 use Bitrix\Crm\Activity\Provider\SignDocument;
 use Bitrix\Crm\Activity\Provider\Sms;
 use Bitrix\Crm\Activity\Provider\StoreDocument;
+use Bitrix\Crm\Activity\Provider\Tasks;
 use Bitrix\Crm\Activity\Provider\ToDo;
 use Bitrix\Crm\Activity\Provider\Notification;
 use Bitrix\Crm\Activity\ProviderId;
@@ -31,6 +34,11 @@ class ConfigurableActivity
 	public static function create(int $typeId, string $providerId, Context $context, Model $model): ?Item
 	{
 		$providerTypeId = $model->getAssociatedEntityModel()->get('PROVIDER_TYPE_ID');
+
+		if ($typeId === \CCrmActivityType::Email)
+		{
+			return new Item\Activity\Email($context, $model);
+		}
 
 		// Configurable items for calls and openlines are temporary disabled
 		if ($typeId === \CCrmActivityType::Call && Crm::isUniversalActivityScenarioEnabled())
@@ -102,6 +110,26 @@ class ConfigurableActivity
 			if ($providerId === Notification::getId())
 			{
 				return new Item\Activity\Sms\Notification($context, $model);
+			}
+
+			if ($providerId === CalendarSharing::getId())
+			{
+				return new Item\Activity\CalendarSharing($context, $model);
+			}
+
+			if ($providerId === ConfigurableRestApp::getId())
+			{
+				return new Item\Activity\ConfigurableRestApp($context, $model);
+			}
+
+			if ($providerId === Tasks\Comment::getId())
+			{
+				return new Item\Activity\Tasks\Comment($context, $model);
+			}
+
+			if ($providerId === Tasks\Task::getId())
+			{
+				return new Item\Activity\Tasks\Task($context, $model);
 			}
 		}
 

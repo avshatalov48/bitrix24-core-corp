@@ -125,6 +125,8 @@ class LeadTable extends Main\ORM\Data\DataManager
 
 			$fieldRepository->getCompanyId(),
 
+			$fieldRepository->getCompany(),
+
 			$fieldRepository->getContactId(),
 
 			$fieldRepository->getStageId('STATUS_ID', \CCrmOwnerType::Lead),

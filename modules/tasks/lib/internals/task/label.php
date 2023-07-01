@@ -14,9 +14,12 @@
  **/
 namespace Bitrix\Tasks\Internals\Task;
 
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\ArgumentTypeException;
 use Bitrix\Main\ORM\Fields\Relations\ManyToMany;
 use Bitrix\Main\ORM\Fields\Relations\Reference;
 use Bitrix\Main\ORM\Query\Join;
+use Bitrix\Main\SystemException;
 use Bitrix\Main\UserTable;
 use Bitrix\Socialnetwork\WorkgroupTable;
 use Bitrix\Tasks\Internals\TaskDataManager;
@@ -39,17 +42,12 @@ use Bitrix\Tasks\Internals\TaskTable;
  * @method static EO_Label_Result getList(array $parameters = [])
  * @method static EO_Label_Entity getEntity()
  * @method static \Bitrix\Tasks\Internals\Task\EO_Label createObject($setDefaultValues = true)
- * @method static \Bitrix\Tasks\Internals\Task\EO_Label_Collection createCollection()
+ * @method static \Bitrix\Tasks\Internals\Task\TagCollection createCollection()
  * @method static \Bitrix\Tasks\Internals\Task\EO_Label wakeUpObject($row)
- * @method static \Bitrix\Tasks\Internals\Task\EO_Label_Collection wakeUpCollection($rows)
+ * @method static \Bitrix\Tasks\Internals\Task\TagCollection wakeUpCollection($rows)
  */
 class LabelTable extends TaskDataManager
 {
-	/**
-	 * Returns DB table name for entity.
-	 *
-	 * @return string
-	 */
 	public static function getTableName()
 	{
 		return 'b_tasks_label';
@@ -65,22 +63,21 @@ class LabelTable extends TaskDataManager
 		return 'TASK_TAG';
 	}
 
-	public static function getRelationTable()
+	public static function getRelationTable(): string
 	{
 		return 'b_tasks_task_tag';
 	}
 
-	public static function getClass()
+	public static function getClass(): string
 	{
 		return static::class;
 	}
 
 	/**
-	 * Returns entity map definition.
-	 *
-	 * @return array
+	 * @throws ArgumentException
+	 * @throws SystemException
 	 */
-	public static function getMap()
+	public static function getMap(): array
 	{
 		return [
 			new IntegerField(
@@ -118,38 +115,42 @@ class LabelTable extends TaskDataManager
 				'USER',
 				UserTable::class,
 				Join::on('this.USER_ID', 'ref.ID')
-			))->configureJoinType('left'),
+			))->configureJoinType(Join::TYPE_INNER),
 
 			(new Reference(
 				'GROUP',
 				WorkgroupTable::class,
 				Join::on('this.GROUP_ID', 'ref.ID')
-			))->configureJoinType('left'),
+			))->configureJoinType(Join::TYPE_INNER),
 
 			(new Reference(
 				'TASK_TAG',
 				TaskTagTable::class,
 				Join::on('this.ID', 'ref.TAG_ID')
-			))->configureJoinType('inner'),
+			))->configureJoinType(Join::TYPE_INNER),
 
 			(new ManyToMany(
 				'TASKS', TaskTable::class
 			))
 				->configureTableName('b_tasks_task_tag')
 				->configureLocalReference('TAG')
-				->configureJoinType('inner')
+				->configureJoinType(Join::TYPE_INNER)
 		];
 	}
 
 	/**
-	 * Returns validators for NAME field.
-	 *
-	 * @return array
+	 * @throws ArgumentTypeException
 	 */
 	public static function validateName(): array
 	{
 		return [
 			new LengthValidator(null, 255),
 		];
+	}
+
+
+	public static function getCollectionClass(): string
+	{
+		return TagCollection::class;
 	}
 }

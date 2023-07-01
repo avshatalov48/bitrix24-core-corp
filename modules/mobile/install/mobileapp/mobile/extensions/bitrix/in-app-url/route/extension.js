@@ -77,7 +77,7 @@ jn.define('in-app-url/route', (require, exports, module) => {
 				{
 					url = url.replaceAll(`:${key}`, variables[key]);
 				}
-			})
+			});
 
 			return url;
 		}
@@ -111,7 +111,7 @@ jn.define('in-app-url/route', (require, exports, module) => {
 		 */
 		parsePathParams(url)
 		{
-			const values = [ ...url.toString().matchAll(this.regexp) ].shift().slice(1);
+			const values = [...url.toString().matchAll(this.regexp)].shift().slice(1);
 
 			const paramsDict = {};
 

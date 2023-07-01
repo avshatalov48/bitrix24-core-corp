@@ -13,6 +13,7 @@ return [
 		'ui.buttons',
 		'crm.router',
 		'main.popup',
+		'ui.tour',
 		'ui.hint',
 		'main.core',
 		'ui.navigationpanel',

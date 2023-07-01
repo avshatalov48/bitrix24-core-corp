@@ -2,8 +2,13 @@
 
 namespace Bitrix\Crm\Integration;
 
+use Bitrix\Crm\Integration\ImOpenLines\GoToChat;
+use Bitrix\Crm\MessageSender\Channel;
 use Bitrix\Crm\MessageSender\ICanSendMessage;
 use Bitrix\Crm\MessageSender\NotificationsPromoManager;
+use Bitrix\ImConnector;
+use Bitrix\ImOpenLines\Common;
+use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\PhoneNumber\Format;
@@ -12,17 +17,14 @@ use Bitrix\Main\PhoneNumber\Parser;
 use Bitrix\Notifications\Account;
 use Bitrix\Notifications\Billing;
 use Bitrix\Notifications\FeatureStatus;
-use Bitrix\Notifications\Limit;
+use Bitrix\Notifications\Integration\Pull;
+use Bitrix\Notifications\MessageStatus;
 use Bitrix\Notifications\Model\ErrorCode;
 use Bitrix\Notifications\Model\Message;
-use Bitrix\Notifications\Model\MessageTable;
 use Bitrix\Notifications\Model\MessageHistoryTable;
+use Bitrix\Notifications\Model\MessageTable;
 use Bitrix\Notifications\Model\QueueTable;
-use Bitrix\Notifications\MessageStatus;
 use Bitrix\Notifications\ProviderEnum;
-use Bitrix\Notifications\Integration\Pull;
-use Bitrix\ImConnector;
-use Bitrix\ImOpenLines\Common;
 use Bitrix\Notifications\Settings;
 
 //use Bitrix\Main\DI\ServiceLocator;
@@ -51,6 +53,7 @@ class NotificationsManager implements ICanSendMessage
 			static::$canUse = (
 				Loader::includeModule('notifications')
 				&& Loader::includeModule('imconnector')
+				&& \Bitrix\Notifications\Limit::isAvailable()
 			);
 		}
 
@@ -166,6 +169,68 @@ class NotificationsManager implements ICanSendMessage
 		return $result;
 	}
 
+	public static function getChannelsList(array $toListByType, int $userId): array
+	{
+		if (!self::canUse())
+		{
+			return [];
+		}
+
+		return [
+			new Channel(
+				self::class,
+				[
+					'id' => self::getSenderCode(),
+					'name' => Loc::getMessage('CRM_NOTIFICATIONS_MANAGER_CHANNEL_NAME'),
+					'shortName' => Loc::getMessage('CRM_NOTIFICATIONS_MANAGER_CHANNEL_SHORT_NAME'),
+					'isDefault' => true,
+				],
+				[
+					new Channel\Correspondents\From(
+						self::getSenderCode(),
+						Loc::getMessage('CRM_NOTIFICATIONS_MANAGER_CHANNEL_SHORT_NAME'),
+						Loc::getMessage('CRM_NOTIFICATIONS_MANAGER_CHANNEL_NAME'),
+					),
+				],
+				$toListByType[\Bitrix\Crm\Multifield\Type\Phone::ID] ?? [],
+				$userId,
+			),
+		];
+	}
+
+	public static function canSendMessageViaChannel(Channel $channel): \Bitrix\Main\Result
+	{
+		$result = new \Bitrix\Main\Result();
+
+		if (!self::canUse())
+		{
+			return $result->addError(Channel\ErrorCode::getNotEnoughModulesError());
+		}
+
+		if (!self::isAvailable())
+		{
+			return $result->addError(Channel\ErrorCode::getNotAvailableError());
+		}
+
+		if (!self::isConnected())
+		{
+			return $result->addError(Channel\ErrorCode::getNotConnectedError());
+		}
+
+		$usageErrors = self::getUsageErrors();
+		if (!empty($usageErrors) && !NotificationsPromoManager::isPromoSession())
+		{
+			foreach ($usageErrors as $errorMessage)
+			{
+				$result->addError(new Error($errorMessage, Channel\ErrorCode::USAGE_ERROR));
+			}
+
+			return $result;
+		}
+
+		return $result;
+	}
+
 	/**
 	 * @inheritDoc
 	 */
@@ -173,10 +238,8 @@ class NotificationsManager implements ICanSendMessage
 	{
 		return (
 			static::canUse()
-			&& (
-				static::isAvailable()
-				&& static::isConnected()
-			)
+			&& static::isAvailable()
+			&& static::isConnected()
 		);
 	}
 
@@ -185,7 +248,15 @@ class NotificationsManager implements ICanSendMessage
 	 */
 	public static function sendMessage(array $messageFields)
 	{
-		if (static::canUse() && static::canSendMessage())
+		$templateCode = $messageFields['TEMPLATE_CODE'] ?? null;
+
+		$canSendMessage = (
+			$templateCode === GoToChat::NOTIFICATIONS_MESSAGE_CODE
+				? static::canUse()
+				: static::canSendMessage()
+		);
+
+		if ($canSendMessage)
 		{
 			if (NotificationsPromoManager::isPromoSession())
 			{
@@ -224,7 +295,7 @@ class NotificationsManager implements ICanSendMessage
 			'PLACEHOLDERS' => $options['PLACEHOLDERS'],
 			'USER_ID' => $commonOptions['USER_ID'],
 			'PHONE_NUMBER' => $e164PhoneNumber,
-			'LANGUAGE_ID' => LANGUAGE_ID,
+			'LANGUAGE_ID' => $options['LANGUAGE_ID'] ?? LANGUAGE_ID,
 			'ADDITIONAL_FIELDS' => array_merge(
 				$commonOptions['ADDITIONAL_FIELDS'],
 				[

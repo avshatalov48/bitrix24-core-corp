@@ -1846,36 +1846,47 @@ class CCrmDocument
 			throw new CBPArgumentNullException('documentId');
 		}
 
-		$exists = false;
-		switch ($arDocumentID['TYPE'])
-		{
-			case 'CONTACT':
-				$exists = CCrmContact::Exists($arDocumentID['ID']);
-				break;
-			case 'COMPANY':
-				$exists = CCrmCompany::Exists($arDocumentID['ID']);
-				break;
-			case 'DEAL':
-				$exists = CCrmDeal::Exists($arDocumentID['ID']);
-				break;
-			case 'LEAD':
-				$exists = CCrmLead::Exists($arDocumentID['ID']);
-				break;
-			default:
-				$entityTypeId = $arDocumentID['TYPE_ID'] ?? 0;
-				$factory = Service\Container::getInstance()->getFactory($entityTypeId);
-				$item = isset($factory) ? $factory->getItem($arDocumentID['ID']) : null;
-
-				$exists = isset($item);
-				break;
-		}
-
-		if (!$exists)
+		if (!static::isDocumentExists($documentId))
 		{
 			throw new Exception(GetMessage('CRM_DOCUMENT_ELEMENT_IS_NOT_FOUND'));
 		}
 
 		return $arDocumentID['TYPE'];
+	}
+
+	public static function isDocumentExists($documentId): bool
+	{
+		$documentInfo = static::getDocumentInfo($documentId);
+		if (empty($documentInfo))
+		{
+			return false;
+		}
+
+		$exists = false;
+		switch ($documentInfo['TYPE'])
+		{
+			case 'CONTACT':
+				$exists = CCrmContact::Exists($documentInfo['ID']);
+				break;
+			case 'COMPANY':
+				$exists = CCrmCompany::Exists($documentInfo['ID']);
+				break;
+			case 'DEAL':
+				$exists = CCrmDeal::Exists($documentInfo['ID']);
+				break;
+			case 'LEAD':
+				$exists = CCrmLead::Exists($documentInfo['ID']);
+				break;
+			default:
+				$entityTypeId = $documentInfo['TYPE_ID'] ?? 0;
+				$factory = Service\Container::getInstance()->getFactory($entityTypeId);
+				$item = isset($factory) ? $factory->getItem($documentInfo['ID']) : null;
+
+				$exists = isset($item);
+				break;
+		}
+
+		return $exists;
 	}
 
 	protected static function GetDocumentInfo($documentId)

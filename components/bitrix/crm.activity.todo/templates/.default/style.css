@@ -13,7 +13,7 @@
 	padding-bottom: 5px;
 }
 
-.crm-activity-todo-item-completed .crm-activity-todo-link {
+.crm-activity-todo-item-completed .crm-activity-todo-link .crm-activity-todo-link-txt {
         text-decoration: line-through;
         color: #cdcdcd;
 }
@@ -100,10 +100,10 @@
 	text-overflow: ellipsis;
 
 }
-a.crm-activity-todo-link,
-a.crm-activity-todo-link:hover {
+.crm-activity-todo-link.--active
+{
 	color: #0b66c3;
-	text-decoration: none !important;
+	cursor: pointer;
 }
 
 .crm-activity-todo-link-txt {

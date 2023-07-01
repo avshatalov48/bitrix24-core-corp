@@ -8,5 +8,5 @@ $MESS['CRM_CHANGE_RESPONSIBLE_GETTER_TYPE'] = "Как выбирать";
 $MESS['CRM_CHANGE_RESPONSIBLE_GETTER_TYPE_R'] = "случайно";
 $MESS['CRM_CHANGE_RESPONSIBLE_GETTER_TYPE_F'] = "конкретно";
 $MESS['CRM_CHANGE_RESPONSIBLE_GETTER_TYPE_S'] = "последовательно";
-$MESS['CRM_CHANGE_RESPONSIBLE_SKIP_ABSENT'] = "Пропускать отсутствующих";
+$MESS['CRM_CHANGE_RESPONSIBLE_SKIP_ABSENT_MSGVER_1'] = "Пропускать отсутствующих";
 $MESS["CRM_CHANGE_RESPONSIBLE_SKIP_TIMEMAN"] = "Пропускать с завершенным рабочим днем";

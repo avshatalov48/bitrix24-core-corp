@@ -6,12 +6,14 @@
 	let CrmContactSelector;
 	let CrmCompanySelector;
 	let CrmElementSelector;
+	let DocumentGeneratorTemplateSelector;
 
 	try
 	{
 		CrmContactSelector = jn.require('crm/selector/entity/contact').CrmContactSelector;
 		CrmCompanySelector = jn.require('crm/selector/entity/company').CrmCompanySelector;
 		CrmElementSelector = jn.require('crm/selector/entity/element').CrmElementSelector;
+		DocumentGeneratorTemplateSelector = jn.require('crm/selector/documentgenerator/template').DocumentGeneratorTemplateSelector;
 	}
 	catch (e)
 	{
@@ -32,6 +34,7 @@
 		CRM_CONTACT: 'contact',
 		CRM_COMPANY: 'company',
 		CRM_ELEMENT: 'crm-element',
+		DOCUMENTGENERATOR_TEMPLATE: 'documentgenerator-template',
 		TASK_TAG: 'task_tag',
 		IBLOCK_ELEMENT_USER_FIELD: 'iblock-element-user-field',
 		IBLOCK_SECTION_USER_FIELD: 'iblock-section-user-field',
@@ -92,6 +95,11 @@
 			if (type === Type.CRM_ELEMENT && CrmElementSelector)
 			{
 				return CrmElementSelector.make(data);
+			}
+
+			if (type === Type.DOCUMENTGENERATOR_TEMPLATE && DocumentGeneratorTemplateSelector)
+			{
+				return DocumentGeneratorTemplateSelector.make(data);
 			}
 
 			if (type === Type.TASK_TAG)

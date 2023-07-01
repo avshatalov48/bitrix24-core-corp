@@ -207,6 +207,14 @@ class TaskProvider
 		;
 
 		if (
+			(isset($arParams['CHECK_PERMISSIONS']) && $arParams['CHECK_PERMISSIONS'] === 'N')
+			|| (isset($arFilter['CHECK_PERMISSIONS']) && $arFilter['CHECK_PERMISSIONS'] === 'N')
+		)
+		{
+			$query->skipAccessCheck();
+		}
+
+		if (
 			isset($arParams['FILTER_PARAMS']['SEARCH_TASK_ONLY'])
 			&& $arParams['FILTER_PARAMS']['SEARCH_TASK_ONLY'] = 'Y'
 		)
@@ -221,8 +229,33 @@ class TaskProvider
 			? $arParams['NAV_PARAMS']['iNumPage']
 			: 1;
 
-		$query->setLimit($pageSize + $nPlusOne);
-		$query->setOffset(($page - 1) * $pageSize);
+		$navNum = null;
+		$cnt = null;
+		// this is a query for subtasks on the task view page
+		if ($this->isLimitQuery())
+		{
+			global $NavNum;
+			$navNum = (int)$NavNum;
+			$pageName = 'PAGEN_' . ($navNum + 1);
+			global ${$pageName};
+			$page = ${$pageName};
+			$page = $page > 0 ? (int)$page : (int)$this->arParams['NAV_PARAMS']['iNumPage'];
+			$page = $page > 0 ? $page : 1;
+			$cnt = $this->getCountOrm($this->arFilter, $this->arParams, $this->arGroup)->Fetch()['CNT'];
+			$pageSize = $this->arParams['NAV_PARAMS']['nPageSize'] ?? 10;
+		}
+
+		// this is a query with limit which used in \Bitrix\Tasks\Integration\UI\EntitySelector\TaskProvider etc
+		$nTopCount = (int)($this->arParams['NAV_PARAMS']['nTopCount'] ?? 0);
+		if ($nTopCount > 0)
+		{
+			$query->setLimit($nTopCount + $nPlusOne);
+		}
+		else
+		{
+			$query->setLimit($pageSize + $nPlusOne);
+			$query->setOffset(($page - 1) * $pageSize);
+		}
 
 		try
 		{
@@ -241,6 +274,10 @@ class TaskProvider
 		$result->InitFromArray($tasks);
 		$result->NavPageNomer = $page;
 		$result->PAGEN = $page;
+		$result->NavRecordCount = $cnt;
+		$result->NavPageSize = $pageSize;
+		$result->NavPageCount = ($pageSize > 0 && !is_null($cnt)) ? ceil($cnt / $pageSize) : null;
+		$result->NavNum = is_null($navNum) ? null : $navNum + 1;
 
 		return $result;
 	}
@@ -325,7 +362,7 @@ class TaskProvider
 		}
 		catch (\Exception $e)
 		{
-			throw new \TasksException('', \TasksException::TE_SQL_ERROR);
+			throw new \TasksException($e->getMessage(), \TasksException::TE_SQL_ERROR);
 		}
 
 		$result = new CDBResult($dbResult);
@@ -340,12 +377,12 @@ class TaskProvider
 	{
 		if (
 			is_array($this->arParams)
-			&& array_key_exists("NAV_PARAMS", $this->arParams)
-			&& is_array($this->arParams["NAV_PARAMS"])
+			&& array_key_exists('NAV_PARAMS', $this->arParams)
+			&& is_array($this->arParams['NAV_PARAMS'])
 		)
 		{
-			$nTopCount = intval($this->arParams['NAV_PARAMS']['nTopCount']);
-			if($nTopCount > 0)
+			$nTopCount = (int)($this->arParams['NAV_PARAMS']['nTopCount'] ?? 0);
+			if ($nTopCount > 0)
 			{
 				$res = $this->executeTopQuery($nTopCount);
 			}
@@ -575,7 +612,7 @@ class TaskProvider
 			$buildAccessSql = true;
 			$this->arParams['APPLY_FILTER'] = \CTasks::makePossibleForwardedFilter($this->arOptimizedFilter);
 
-			if ($this->arParams['MAKE_ACCESS_FILTER'])
+			if ($this->arParams['MAKE_ACCESS_FILTER'] ?? null)
 			{
 				$viewedUserId = \CTasks::getViewedUserId($this->arFilter, $this->userId);
 
@@ -584,7 +621,7 @@ class TaskProvider
 					'VIEWED_USER_ID' => $viewedUserId
 				]);
 
-				if (!is_array($this->arParams['ACCESS_FILTER_RUNTIME_OPTIONS']))
+				if (!is_array($this->arParams['ACCESS_FILTER_RUNTIME_OPTIONS'] ?? null))
 				{
 					$this->arParams['ACCESS_FILTER_RUNTIME_OPTIONS'] = $runtimeOptions;
 				}
@@ -961,6 +998,11 @@ class TaskProvider
 			$this->arSelect = array_diff($this->arSelect, ['MESSAGE_ID']);
 		}
 
+		if (!array_key_exists('IM_CHAT_CHAT_ID', $this->arFilter))
+		{
+			$this->arSelect = array_diff($this->arSelect, ['IM_CHAT_ID', 'IM_CHAT_MESSAGE_ID', 'IM_CHAT_CHAT_ID', 'IM_CHAT_AUTHOR_ID']);
+		}
+
 		return $this;
 	}
 
@@ -1123,6 +1165,7 @@ class TaskProvider
 						T.DURATION_TYPE
 				end
 			",
+			"SCENARIO_NAME" => "SCR.SCENARIO",
 		];
 
 		if ($this->userId)
@@ -1198,8 +1241,8 @@ class TaskProvider
 			$this->deleteMessageId = true;
 		}
 
-		$this->disableOptimization = (is_array($this->arParams) && $this->arParams['DISABLE_OPTIMIZATION'] === true);
-		$this->useAccessAsWhere = !(is_array($this->arParams) && $this->arParams['DISABLE_ACCESS_OPTIMIZATION'] === true);
+		$this->disableOptimization = (is_array($this->arParams) && array_key_exists('DISABLE_OPTIMIZATION', $this->arParams) && $this->arParams['DISABLE_OPTIMIZATION'] === true);
+		$this->useAccessAsWhere = !(is_array($this->arParams) && array_key_exists('DISABLE_ACCESS_OPTIMIZATION', $this->arParams) && $this->arParams['DISABLE_ACCESS_OPTIMIZATION'] === true);
 		$this->canUseOptimization = !$this->disableOptimization && !$this->bNeedJoinMembersTable;
 
 		// First level logic MUST be 'AND', because of backward compatibility
@@ -1333,5 +1376,38 @@ class TaskProvider
 		$order[] = " SORTING ".$direction." ";
 
 		return $order;
+	}
+
+	private function isLimitQuery(): bool
+	{
+		if (
+			is_array($this->arParams)
+			&& array_key_exists('NAV_PARAMS', $this->arParams)
+			&& is_array($this->arParams['NAV_PARAMS'])
+		)
+		{
+			if ((int)($this->arParams['NAV_PARAMS']['nTopCount'] ?? 0)> 0)
+			{
+				return false;
+			}
+
+			if (is_numeric($this->nPageTop))
+			{
+				return false;
+			}
+
+			if (
+				array_key_exists('nPageSize', $this->arParams['NAV_PARAMS'])
+				&& array_key_exists('iNumPage', $this->arParams['NAV_PARAMS'])
+				&& !array_key_exists('getTotalCount', $this->arParams['NAV_PARAMS'])
+			)
+			{
+				return false;
+			}
+
+			return true;
+		}
+
+		return false;
 	}
 }

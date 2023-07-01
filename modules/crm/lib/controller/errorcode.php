@@ -16,6 +16,7 @@ abstract class ErrorCode
 	public const INVALID_ARG_VALUE = 'INVALID_ARG_VALUE';
 	public const ADDING_DISABLED = 'ADDING_DISABLED';
 	public const REMOVING_DISABLED = 'REMOVING_DISABLED';
+	public const MULTIPLE_BINDINGS = 'MULTIPLE_BINDINGS';
 
 	protected static function loadMessages(): void
 	{
@@ -74,6 +75,16 @@ abstract class ErrorCode
 			[
 				'ARGUMENT_NAME' => $argumentName,
 			]
+		);
+	}
+
+	public static function getMultipleBindingsError(): Error
+	{
+		static::loadMessages();
+
+		return new Error(
+			'Entity has multiple bindings',
+			static::MULTIPLE_BINDINGS
 		);
 	}
 }

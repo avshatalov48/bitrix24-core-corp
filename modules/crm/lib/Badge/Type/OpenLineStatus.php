@@ -4,6 +4,7 @@ namespace Bitrix\Crm\Badge\Type;
 
 use Bitrix\Crm\Badge\Badge;
 use Bitrix\Crm\Badge\ValueItem;
+use Bitrix\Crm\Badge\ValueItemOptions;
 use Bitrix\Main\Localization\Loc;
 
 class OpenLineStatus extends Badge
@@ -23,8 +24,8 @@ class OpenLineStatus extends Badge
 			new ValueItem(
 				self::CHAT_NOT_READ_VALUE,
 				Loc::getMessage('CRM_BADGE__OPEN_LINE_CHAT_NOT_READ'),
-				'#755c18',
-				'#ebe997'
+				ValueItemOptions::TEXT_COLOR_WARNING,
+				ValueItemOptions::BG_COLOR_WARNING
 			),
 		];
 	}

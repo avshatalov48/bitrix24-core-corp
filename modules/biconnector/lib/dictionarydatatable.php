@@ -79,15 +79,19 @@ class DictionaryDataTable extends DataManager
 	}
 
 	/**
-	 * @param array $filter
+	 * Deletes cached data by filter.
+	 *
+	 * @param array $filter Delete filter.
+	 *
+	 * @return void
 	 */
 	public static function deleteByFilter(array $filter)
 	{
 		$entity = static::getEntity();
 		$sqlTableName = static::getTableName();
 
-		$where = \Bitrix\Main\Entity\Query::buildFilterSql($entity, $filter);
-		if ($where <> '')
+		$where = \Bitrix\Main\ORM\Query\Query::buildFilterSql($entity, $filter);
+		if ($where)
 		{
 			$sql = 'DELETE FROM ' . $sqlTableName . ' WHERE ' . $where;
 			$manager = Manager::getInstance();
@@ -96,11 +100,14 @@ class DictionaryDataTable extends DataManager
 	}
 
 	/**
-	 * @param string $select
+	 * Batch insert.
+	 *
+	 * @param string $select Sql query.
+	 *
+	 * @return void
 	 */
 	public static function insertSelect($select)
 	{
-		$entity = static::getEntity();
 		$sqlTableName = static::getTableName();
 
 		$sql = 'INSERT INTO ' . $sqlTableName . ' ' . $select;

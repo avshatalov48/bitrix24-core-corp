@@ -26,7 +26,7 @@ class TagRegistry
 		{
 			$this->load($tagId);
 		}
-		if (!$this->storage[$tagId])
+		if (!isset($this->storage[$tagId]))
 		{
 			return null;
 		}

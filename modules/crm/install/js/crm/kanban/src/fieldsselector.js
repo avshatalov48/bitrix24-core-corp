@@ -66,7 +66,7 @@ export default class FieldsSelector
 		return PopupManager.create({
 			id: 'kanban_custom_fields_' + this.type,
 			className: 'crm-kanban-popup-field',
-			titleBar: BX.message('CRM_KANBAN_CUSTOM_FIELDS_' + this.type.toUpperCase()),
+			titleBar: Loc.getMessage('CRM_KANBAN_CUSTOM_FIELDS_' + this.type.toUpperCase()),
 			cacheable: false,
 			closeIcon: true,
 			lightShadow: true,
@@ -76,7 +76,10 @@ export default class FieldsSelector
 			contentColor: 'white',
 			maxHeight: window.innerHeight - 50,
 			events: {
-				onClose: () => (this.popup = null)
+				onClose: () => {
+					this.fieldsPopupItems = null;
+					this.popup = null;
+				}
 			},
 			buttons: [
 				new BX.UI.SaveButton({

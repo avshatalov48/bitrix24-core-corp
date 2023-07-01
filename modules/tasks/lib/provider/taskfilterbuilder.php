@@ -28,6 +28,7 @@ use Bitrix\Tasks\Internals\Counter\Deadline;
 use Bitrix\Tasks\Internals\Task\LabelTable;
 use Bitrix\Tasks\Internals\Task\MemberTable;
 use Bitrix\Tasks\Internals\Task\RelatedTable;
+use Bitrix\Tasks\Internals\Task\ScenarioTable;
 use Bitrix\Tasks\Internals\Task\SearchIndexTable;
 use Bitrix\Tasks\Internals\Task\TaskTagTable;
 use Bitrix\Tasks\Internals\Task\UserOptionTable;
@@ -429,9 +430,12 @@ class TaskFilterBuilder
 					break;
 
 				case 'REAL_STATUS':
+					$containCompletedSprint =
+						is_array($val) && in_array(EntityForm::STATE_COMPLETED_IN_ACTIVE_SPRINT, $val, true)
+					;
 					$val = $this->removeStatusForActiveSprint($val);
 					$subFilter = $this->createSubfilter('STATUS', $val, $operation, self::CAST_NUMBER);
-					if ($this->containCompletedStatus($filter))
+					if ($containCompletedSprint)
 					{
 						$scrumFilter = Query::filter()
 							->logic('and')
@@ -679,13 +683,13 @@ class TaskFilterBuilder
 					$dateStart = null;
 					if ($val['START'])
 					{
-						$dateStart = new Date($val['START']);
+						$dateStart = new DateTime($val['START']);
 					}
 
 					$dateEnd = null;
 					if ($val['END'])
 					{
-						$dateEnd = new Date($val['END']);
+						$dateEnd = new DateTime($val['END']);
 					}
 
 					if (
@@ -1137,6 +1141,65 @@ class TaskFilterBuilder
 					$this->registerRuntimeField(TaskQueryBuilder::ALIAS_SCRUM_ITEM_D);
 					break;
 
+				case 'SCENARIO_NAME':
+					$filter = $this->query->getWhere();
+					$scenario = (array_key_exists('SCENARIO_NAME', $filter))
+						? $filter['SCENARIO_NAME']
+						: null;
+
+					if ($scenario === null)
+					{
+						break;
+					}
+					// filter by valid values
+					if (is_array($scenario))
+					{
+						$scenario = ScenarioTable::filterByValidScenarios($scenario);
+						if (empty($scenario))
+						{
+							break;
+						}
+					}
+					else
+					{
+						if (!ScenarioTable::isValidScenario($scenario))
+						{
+							break;
+						}
+					}
+
+					$this->registerRuntimeField(TaskQueryBuilder::ALIAS_TASK_SCENARIO);
+
+					if (is_array($scenario))
+					{
+						$conditionTree->whereIn(TaskQueryBuilder::ALIAS_TASK_SCENARIO.'.SCENARIO', $scenario);
+					}
+					else
+					{
+						$conditionTree->where(TaskQueryBuilder::ALIAS_TASK_SCENARIO.'.SCENARIO', $scenario);
+					}
+
+					break;
+
+				case 'IM_CHAT_ID':
+				case 'IM_CHAT_CHAT_ID':
+					if (!Loader::includeModule('im'))
+					{
+						break;
+					}
+					$fieldMap = [
+						'IM_CHAT_ID' => TaskQueryBuilder::ALIAS_CHAT_TASK.'.ID',
+						'IM_CHAT_CHAT_ID' => TaskQueryBuilder::ALIAS_CHAT_TASK.'.CHAT_ID',
+					];
+					$subFilter = $this->createSubfilter($fieldMap[$field], $val, $operation, self::CAST_NUMBER);
+					if (!$subFilter)
+					{
+						break;
+					}
+					$this->registerRuntimeField(TaskQueryBuilder::ALIAS_CHAT_TASK);
+					$conditionTree->where($subFilter);
+					break;
+
 				default:
 					if (preg_match('/^UF_/', $field))
 					{
@@ -1251,7 +1314,16 @@ class TaskFilterBuilder
 				)
 			)
 			{
-				continue;
+				$allowEmptyCastTypes = [
+					self::CAST_NULL_OR_ZERO,
+					self::CAST_DATE,
+					self::CAST_LEFT_EXIST,
+				];
+
+				if (!in_array($cast, $allowEmptyCastTypes, true))
+				{
+					continue;
+				}
 			}
 
 			switch ($cast)
@@ -1683,7 +1755,7 @@ class TaskFilterBuilder
 		{
 			foreach ($values as $key => $value)
 			{
-				if ($value == EntityForm::STATE_COMPLETED_IN_ACTIVE_SPRINT)
+				if ($value === EntityForm::STATE_COMPLETED_IN_ACTIVE_SPRINT)
 				{
 					unset($values[$key]);
 				}
@@ -1783,9 +1855,10 @@ class TaskFilterBuilder
 		}
 		else
 		{
+			$fieldName = mb_substr($key, 0, mb_strlen($key) - 3);
 			if ($operation !== self::OPERATION_DEFAULT)
 			{
-				$fieldName = mb_substr($key, mb_strlen($operation));
+				$fieldName = mb_substr($fieldName, mb_strlen($operation));
 			}
 
 			switch ($operation)
@@ -2004,8 +2077,13 @@ class TaskFilterBuilder
 
 		// we can optimize only if there is no "or-logic"
 		if (
-			$filter['::LOGIC'] === 'OR'
-			|| $filter['LOGIC'] === 'OR'
+			(
+				isset($filter['::LOGIC'])
+				&& $filter['::LOGIC'] === 'OR'
+			) || (
+				isset($filter['LOGIC'])
+				&& $filter['LOGIC'] === 'OR'
+			)
 		)
 		{
 			return $this;
@@ -2266,6 +2344,10 @@ class TaskFilterBuilder
 					$tags = [];
 					foreach ($field as $fieldKey => $fieldValue)
 					{
+						if (!is_array($filterKey))
+						{
+							continue;
+						}
 						foreach ($fieldValue as $tag)
 						{
 							$tags[] = $this->prepareForSprintf($tag);

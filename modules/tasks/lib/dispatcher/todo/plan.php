@@ -58,7 +58,7 @@ final class Plan extends Collection
 		$this[] = new ToDo($operation, $arguments, $parameters);
 	}
 
-	public function offsetSet($offset, $value)
+	public function offsetSet($offset, $value): void
 	{
 		$this->ensureHasCode($value);
 		parent::offsetSet($offset, $value);
@@ -73,7 +73,11 @@ final class Plan extends Collection
 				if(is_array($op))
 				{
 					// todo: submit version and context through $op['PARAMETERS']
-					$this->addToDo($op['OPERATION'], $op['ARGUMENTS'], $op['PARAMETERS']);
+					$this->addToDo(
+						($op['OPERATION'] ?? null),
+						($op['ARGUMENTS'] ?? null),
+						($op['PARAMETERS'] ?? null)
+					);
 				}
 			}
 		}

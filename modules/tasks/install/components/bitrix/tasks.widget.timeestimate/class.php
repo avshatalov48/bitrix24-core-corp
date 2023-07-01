@@ -25,7 +25,7 @@ class TasksWidgetTimeEstimateComponent extends TasksBaseComponent
 		$hours = 0;
 		$minutes = 0;
 
-		if($time = intval($this->arParams['ENTITY_DATA']['TIME_ESTIMATE']))
+		if ($time = (int)($this->arParams['ENTITY_DATA']['TIME_ESTIMATE'] ?? null))
 		{
 			$hours = floor($time / 3600);
 			$minutes = floor(($time - $hours * 3600) / 60);

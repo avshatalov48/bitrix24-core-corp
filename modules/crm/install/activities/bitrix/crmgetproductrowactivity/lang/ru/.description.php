@@ -15,3 +15,5 @@ $MESS['CRM_BP_GPR_RETURN_ROW_SUM_ACCOUNT'] = 'Сумма';
 $MESS["CRM_BP_GPR_RETURN_ROW_SUM_ACCOUNT_MONEY"] = 'Сумма (текст)';
 $MESS['CRM_BP_GPR_NAME_1'] = 'Получить информацию о товаре';
 $MESS['CRM_BP_GPR_DESC_1'] = 'Передаёт данные о товаре другим роботам. Вспомогательный робот';
+$MESS['CRM_BP_GPR_NAME_2'] = 'Получить информацию о товарной позиции';
+$MESS['CRM_BP_GPR_DESC_2'] = 'Передаёт данные о товарной позиции другим роботам. Вспомогательный робот';

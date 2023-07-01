@@ -12,6 +12,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 /** @global CUser $USER */
 /** @global CMain $APPLICATION */
 
+use Bitrix\Main\Application;
 use Bitrix\Main\Localization\Loc;
 
 \Bitrix\Main\UI\Extension::load([
@@ -29,6 +30,7 @@ use Bitrix\Main\Localization\Loc;
 
 \CJSCore::Init(['phone_number']);
 
+$bodyClass = $APPLICATION->GetPageProperty('BodyClass');
 $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'no-background invite-body');
 
 $menuContainerId = 'invitation-form-menu-'.$this->randString();
@@ -333,7 +335,7 @@ if ($arResult["IS_CLOUD"] && $arResult['canCurrentUserInvite'])
 										id="ADD_SEND_PASSWORD"
 										value="Y"
 										class="invite-dialog-inv-form-checkbox"
-										<?= ($_POST["ADD_SEND_PASSWORD"] === "Y" ? " checked" : "") ?>
+										<?= (isset($_POST["ADD_SEND_PASSWORD"]) && $_POST["ADD_SEND_PASSWORD"] === "Y" ? " checked" : "") ?>
 									>
 									<label class="invite-dialog-inv-form-checkbox-label" for="ADD_SEND_PASSWORD">
 										<?=Loc::getMessage($arResult["IS_CLOUD"] ? "BX24_INVITE_DIALOG_ADD_WO_CONFIRMATION_TITLE" : "BX24_INVITE_DIALOG_ADD_SEND_PASSWORD_TITLE")?><?
@@ -486,7 +488,7 @@ $APPLICATION->IncludeComponent("bitrix:ui.button.panel", "", array(
 	BX.message(<?=CUtil::phpToJsObject(Loc::loadLanguageFile(__FILE__))?>);
 	BX.message({
 		BX24_INVITE_DIALOG_USERS_LIMIT_TEXT: "<?=GetMessageJS("BX24_INVITE_DIALOG_USERS_LIMIT_TEXT", array(
-			"#NUM#" => COption::GetOptionString("main", "PARAM_MAX_USERS")))?>",
+			"#NUM#" => Application::getInstance()->getLicense()->getMaxUsers()))?>",
 		INTRANET_INVITE_DIALOG_EMAIL_OR_PHONE_VALIDATE_ERROR: "<?=Loc::getMessage("INTRANET_INVITE_DIALOG_VALIDATE_ERROR_".($arResult["IS_SMS_INVITATION_AVAILABLE"] ? "EMAIL_AND_PHONE" : "EMAIL"))?>",
 		INTRANET_INVITE_DIALOG_EMAIL_OR_PHONE_EMPTY_ERROR: "<?=Loc::getMessage("INTRANET_INVITE_DIALOG_EMPTY_ERROR_".($arResult["IS_SMS_INVITATION_AVAILABLE"] ? "EMAIL_AND_PHONE" : "EMAIL"))?>",
 		INTRANET_INVITE_DIALOG_EMAIL_OR_PHONE_INPUT: "<?=Loc::getMessage("INTRANET_INVITE_DIALOG_INPUT_".($arResult["IS_SMS_INVITATION_AVAILABLE"] ? "EMAIL_AND_PHONE" : "EMAIL"))?>"

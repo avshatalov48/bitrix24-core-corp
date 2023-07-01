@@ -21,6 +21,7 @@ export default class ImageResizeFilter extends Filter
 	#resizeMimeType: ResizeImageMimeType = 'image/jpeg';
 	#resizeMimeTypeMode: ResizeImageMimeTypeMode = 'auto';
 	#resizeQuality: number = 0.92;
+	#resizeFilter: Function = null;
 
 	constructor(uploader: Uploader, filterOptions: { [key: string]: any } = {})
 	{
@@ -34,6 +35,7 @@ export default class ImageResizeFilter extends Filter
 		this.setResizeMimeType(options['imageResizeMimeType']);
 		this.setResizeMimeTypeMode(options['imageResizeMimeTypeMode']);
 		this.setResizeQuality(options['imageResizeQuality']);
+		this.setResizeFilter(options['imageResizeFilter']);
 	}
 
 	apply(file: UploaderFile): Promise
@@ -50,13 +52,20 @@ export default class ImageResizeFilter extends Filter
 				return resolve();
 			}
 
+			const result = this.invokeFilter(file);
+			if (result === false)
+			{
+				return resolve();
+			}
+
+			const overrides = Type.isPlainObject(result) ? result : {};
 			const options: ResizeImageOptions = {
-				width: this.getResizeWidth(),
-				height: this.getResizeHeight(),
-				mode: this.getResizeMode(),
-				quality: this.getResizeQuality(),
-				mimeType: this.getResizeMimeType(),
-				mimeTypeMode: this.getResizeMimeTypeMode(),
+				width: Type.isNumber(overrides.width) ? overrides.width : this.getResizeWidth(),
+				height: Type.isNumber(overrides.height) ? overrides.height : this.getResizeHeight(),
+				mode: Type.isStringFilled(overrides.mode) ? overrides.mode : this.getResizeMode(),
+				quality: Type.isNumber(overrides.quality) ? overrides.quality : this.getResizeQuality(),
+				mimeType: Type.isStringFilled(overrides.mimeType) ? overrides.mimeType : this.getResizeMimeType(),
+				mimeTypeMode: Type.isStringFilled(overrides.mimeTypeMode) ? overrides.mimeTypeMode : this.getResizeMimeTypeMode(),
 			};
 
 			resizeImage(file.getBinary(), options)
@@ -155,5 +164,27 @@ export default class ImageResizeFilter extends Filter
 		{
 			this.#resizeQuality = value;
 		}
+	}
+
+	setResizeFilter(fn: Function): void
+	{
+		if (Type.isFunction(fn))
+		{
+			this.#resizeFilter = fn;
+		}
+	}
+
+	invokeFilter(file: UploaderFile): boolean | ResizeImageOptions
+	{
+		if (this.#resizeFilter !== null)
+		{
+			const result = this.#resizeFilter(file);
+			if (Type.isBoolean(result) || Type.isPlainObject(result))
+			{
+				return result;
+			}
+		}
+
+		return true;
 	}
 }

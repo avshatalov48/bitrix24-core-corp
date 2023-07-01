@@ -3,5 +3,5 @@
 return [
 	'bundle' => [
 		'./kanban',
-	]
+	],
 ];

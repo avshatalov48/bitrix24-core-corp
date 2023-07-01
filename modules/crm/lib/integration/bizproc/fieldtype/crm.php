@@ -85,6 +85,7 @@ class Crm extends UserFieldBase
 		$collectSettingsFunctionName = $settings['collectSettingsFunctionName'] ?? $idsPrefix . 'CRM';
 		$inputs = '';
 		$collectSettingsFunction = "function " . $collectSettingsFunctionName . "()\n{\n\tvar a = {};";
+
 		$entityTypeIds = [
 			\CCrmOwnerType::Lead,
 			\CCrmOwnerType::Contact,
@@ -107,6 +108,7 @@ class Crm extends UserFieldBase
 				$entityTypeIds[] = $type->getEntityTypeId();
 			}
 		}
+
 		foreach ($entityTypeIds as $entityTypeId)
 		{
 			$entityName = \CCrmOwnerType::ResolveName($entityTypeId);

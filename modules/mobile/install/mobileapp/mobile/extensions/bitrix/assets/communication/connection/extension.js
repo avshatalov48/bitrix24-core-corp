@@ -3,7 +3,7 @@
  */
 jn.define('assets/communication/connection', (require, exports, module) => {
 
-	const getColor = (enabled) => enabled ? '#378ee7' : '#d5d7db';
+	const getColor = (enabled) => enabled ? '#0091e3' : '#d5d7db';
 
 	/**
 	 * @class ConnectionSvg

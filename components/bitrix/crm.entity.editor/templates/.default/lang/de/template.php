@@ -1,4 +1,12 @@
 <?php
+$MESS["CRM_CLIENT_EDITOR_NOTIFY_COMPANY_TO_CONTACT"] = "Unternehmen zum Kontakt hinzugefügt";
+$MESS["CRM_CLIENT_EDITOR_NOTIFY_COMPANY_TO_DEAL"] = "Unternehmen zum Auftrag hinzugefügt";
+$MESS["CRM_CLIENT_EDITOR_NOTIFY_COMPANY_TO_INVOICE"] = "Unternehmen zur Rechnung hinzugefügt";
+$MESS["CRM_CLIENT_EDITOR_NOTIFY_COMPANY_TO_LEAD"] = "Unternehmen zum Lead hinzugefügt";
+$MESS["CRM_CLIENT_EDITOR_NOTIFY_CONTACT_TO_COMPANY"] = "Kontakt zum Unternehmen hinzugefügt";
+$MESS["CRM_CLIENT_EDITOR_NOTIFY_CONTACT_TO_DEAL"] = "Kontakt zum Auftrag hinzugefügt";
+$MESS["CRM_CLIENT_EDITOR_NOTIFY_CONTACT_TO_INVOICE"] = "Kontakt zur Rechnung hinzugefügt";
+$MESS["CRM_CLIENT_EDITOR_NOTIFY_CONTACT_TO_LEAD"] = "Kontakt zum Lead hinzugefügt";
 $MESS["CRM_EDITOR_ADDRESS"] = "Adresse";
 $MESS["CRM_EDITOR_ADD_BANK_DETAILS"] = "Bankverbindung hinzufügen";
 $MESS["CRM_EDITOR_ADD_REQUISITE"] = "Detaillierte Informationen hinzufügen";

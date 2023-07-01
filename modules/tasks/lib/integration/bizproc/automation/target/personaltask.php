@@ -18,7 +18,7 @@ class PersonalTask extends Base
 	public function getDocumentStatus()
 	{
 		$entity = $this->getFields();
-		return (int) $entity['STATUS'];
+		return (int)($entity['STATUS'] ?? null);
 	}
 
 	public function setDocumentStatus($statusId)

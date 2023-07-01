@@ -37,8 +37,6 @@ export class EditSelector
 
 		this.selector = null;
 
-		this.listEpics = new Map();
-
 		this.node = null;
 		this.inputNode = null;
 
@@ -73,7 +71,13 @@ export class EditSelector
 
 	buildSelector(): TagSelector
 	{
-		// todo add scrum epic provider
+		const preselectedItems = [];
+		if (this.savedEpic)
+		{
+			preselectedItems.push(['epic-selector' , this.savedEpic.id]);
+
+			this.updateInputValue(this.savedEpic.id);
+		}
 
 		this.selector = new TagSelector({
 			multiple: false,
@@ -85,6 +89,18 @@ export class EditSelector
 				compactView: true,
 				multiple: false,
 				hideOnDeselect: true,
+				context: 'epic-selector-' + this.groupId,
+				preselectedItems: preselectedItems,
+				entities: [
+					{
+						id: 'epic-selector',
+						options: {
+							groupId: this.groupId
+						},
+						dynamicLoad: true,
+						dynamicSearch: true
+					}
+				],
 				searchOptions: {
 					allowCreateItem: true,
 					footerOptions: {
@@ -138,15 +154,6 @@ export class EditSelector
 			})
 		;
 
-		this.selector.getDialog().subscribe('onShow', () => {
-			this.updateSelectorItems();
-		});
-
-		if (this.savedEpic)
-		{
-			this.updateSelectorItems();
-		}
-
 		return this.selector;
 	}
 
@@ -156,11 +163,13 @@ export class EditSelector
 
 		this.groupId = parseInt(data.ID, 10);
 
-		this.listEpics.clear();
-
-		this.selector.getDialog().removeItems();
-
 		this.updateInputValue(0);
+
+		this.savedEpic = null;
+
+		Dom.clean(this.node);
+
+		this.renderTo(this.node);
 	}
 
 	onProjectPreselected(baseEvent: BaseEvent)
@@ -169,46 +178,9 @@ export class EditSelector
 
 		this.groupId = parseInt(data.groupId, 10);
 
-		this.listEpics.clear();
+		Dom.clean(this.node);
 
-		this.selector.getDialog().removeItems();
-
-		this.updateInputValue(0);
-	}
-
-	updateSelectorItems()
-	{
-		if (
-			this.groupId === 0
-			|| this.listEpics.has(this.groupId)
-		)
-		{
-			return;
-		}
-
-		this.selector.getDialog().removeItems();
-
-		this.selector.getDialog().showLoader();
-
-		this.getEpics()
-			.then((epics: Array) => {
-				epics.forEach((item) => {
-					if (this.savedEpic && this.savedEpic.id === item.id)
-					{
-						item.selected = true;
-						item.sort = 1;
-
-						this.selector.addTag(item);
-						this.updateInputValue(item.id);
-					}
-					this.selector.getDialog().addItem(item);
-				});
-				this.selector.getDialog().hideLoader();
-
-				return true;
-			})
-			.catch((response) => this.showErrorAlert(response))
-		;
+		this.renderTo(this.node);
 	}
 
 	updateInputValue(epicId: number)
@@ -216,50 +188,18 @@ export class EditSelector
 		this.inputNode.value = parseInt(epicId, 10);
 	}
 
-	getEpics(): Promise
-	{
-		return ajax.runComponentAction(
-			'bitrix:tasks.scrum.epic.selector',
-			'getEpics',
-			{
-				mode: 'class',
-				data: {
-					groupId: this.groupId
-				}
-			}
-		)
-			.then((response) => {
-				const epics = response.data;
-				if (Type.isNull(epics))
-				{
-					return [];
-				}
-
-				const list = [];
-				epics.forEach((epic: Epic) => {
-					list.push(this.getEpicDialogItem(epic));
-				});
-
-				this.listEpics.set(this.groupId, list);
-
-				return list;
-			})
-			.catch((response) => this.showErrorAlert(response))
-		;
-	}
-
 	getEpicDialogItem(epic: Epic): Object
 	{
-		const avatar = '/bitrix/components/bitrix/tasks.scrum.epic.selector/templates/.default'
-			+ '/images/search-hashtag-green.svg'
-		;
-
 		return {
 			id: epic.id,
-			entityId: 'epic',
+			entityId: 'epic-selector',
 			title: epic.name,
 			tabs: 'recents',
-			avatar: avatar
+			avatarOptions: {
+				bgColor: epic.color,
+				bgImage: 'none',
+				borderRadius: '12px'
+			}
 		};
 	}
 

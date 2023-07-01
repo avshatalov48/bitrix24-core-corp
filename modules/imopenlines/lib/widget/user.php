@@ -8,6 +8,7 @@
 
 namespace Bitrix\Imopenlines\Widget;
 
+use Bitrix\Main\Application;
 use Bitrix\ImOpenLines\BasicError;
 use Bitrix\Main\Localization\Loc;
 
@@ -192,8 +193,7 @@ class User
 		}
 		else
 		{
-			require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/classes/general/update_client.php");
-			$licence = \CUpdateClient::GetLicenseKey();
+			$licence = Application::getInstance()->getLicense()->getKey();
 		}
 
 		return md5(time().bitrix_sessid().$licence.uniqid());

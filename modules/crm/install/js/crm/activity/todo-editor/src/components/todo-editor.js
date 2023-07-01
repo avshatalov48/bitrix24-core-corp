@@ -1,14 +1,24 @@
+import { DateTimeFormat } from 'main.date';
+import { Browser, Dom } from 'main.core';
+import { BaseEvent } from 'main.core.events';
 import { DatetimeConverter } from 'crm.timeline.tools';
 import { TodoEditorActionBtn } from './todo-editor-action-btn';
-import { DateTimeFormat } from 'main.date';
-import { Dom, Browser } from 'main.core';
+import { TodoEditorActionDelimiter } from './todo-editor-action-delimiter';
+import { TodoEditorResponsibleUserSelector } from './todo-editor-responsible-user-selector';
 
 const TEXTAREA_MAX_HEIGHT = 126;
+
+export const Events = {
+	EVENT_RESPONSIBLE_USER_CHANGE: 'crm:timeline:todo:responsible-user-changed',
+};
 
 export const TodoEditor = {
 	components: {
 		TodoEditorActionBtn,
+		TodoEditorActionDelimiter,
+		TodoEditorResponsibleUserSelector
 	},
+
 	props: {
 		onFocus: Function,
 		onChangeDescription: Function,
@@ -21,23 +31,29 @@ export const TodoEditor = {
 		},
 		additionalButtons: Array,
 		popupMode: Boolean,
+		currentUser: Object,
 	},
+
 	data(): Object
 	{
 		return {
 			description: this.defaultDescription,
 			currentDeadline: this.deadline ?? new Date(),
+			responsibleUserId: this.currentUser.userId,
 			showFileUploader: false,
 			isTextareaToLong: false,
 		}
 	},
+
 	computed: {
 		deadlineFormatted(): string
 		{
 			const converter = new DatetimeConverter(this.currentDeadline);
+
 			return converter.toDatetimeString({ withDayOfWeek: true, delimiter:', ' });
 		}
 	},
+
 	watch: {
 		description(): void
 		{
@@ -52,6 +68,7 @@ export const TodoEditor = {
 			});
 		},
 	},
+	
 	methods: {
 		clearDescription(): void
 		{
@@ -106,11 +123,37 @@ export const TodoEditor = {
 			this.currentDeadline = newDeadline;
 		},
 
+		onResponsibleUserChange(event: BaseEvent): void
+		{
+			const data = event.getData();
+			if (data)
+			{
+				this.setResponsibleUserId(data.responsibleUserId);
+			}
+		},
+
+		setResponsibleUserId(userId: Number): void
+		{
+			this.responsibleUserId = userId;
+		},
+
+		resetResponsibleUserToDefault(): void
+		{
+			this.setResponsibleUserId(this.currentUser.userId);
+
+			const userSelector = this.$refs.userSelector;
+			if (userSelector)
+			{
+				userSelector.resetToDefault();
+			}
+		},
+
 		getData(): Object
 		{
 			return {
 				description: this.description,
 				deadline: this.currentDeadline,
+				responsibleUserId: this.responsibleUserId,
 			};
 		},
 
@@ -120,6 +163,17 @@ export const TodoEditor = {
 			this.onChangeDescription(event.target.value);
 		},
 	},
+
+	mounted()
+	{
+		this.$Bitrix.eventEmitter.subscribe(Events.EVENT_RESPONSIBLE_USER_CHANGE, this.onResponsibleUserChange);
+	},
+
+	beforeUnmount()
+	{
+		this.$Bitrix.eventEmitter.unsubscribe(Events.EVENT_RESPONSIBLE_USER_CHANGE, this.onResponsibleUserChange);
+	},
+
 	template: `
 		<label class="crm-activity__todo-editor_body">
 			<textarea
@@ -150,6 +204,15 @@ export const TodoEditor = {
 						:description="btn.description"
 						:action="btn.action"
 					/>
+					<TodoEditorActionDelimiter/>
+					<TodoEditorResponsibleUserSelector
+						:userId="currentUser.userId"
+						:userName="currentUser.title"
+						:imageUrl="currentUser.imageUrl"
+						ref="userSelector"
+						class="crm-activity__todo-editor_action-btn"
+					>
+					</TodoEditorResponsibleUserSelector>
 				</div>
 			</div>
 		</label>

@@ -6,6 +6,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Crm\Integration\ClientResolver;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Application;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
@@ -56,6 +57,8 @@ class CCrmRequisiteDetailsComponent extends CBitrixComponent
 
 	/** @var int */
 	protected $entityTypeId = 0;
+	/** @var int */
+	protected $categoryId = 0;
 	/** @var int */
 	protected $entityId = 0;
 
@@ -143,6 +146,8 @@ class CCrmRequisiteDetailsComponent extends CBitrixComponent
 
 	/** @var string */
 	protected $formSettingsId = '';
+
+	protected string $permissionToken = '';
 
 	public function __construct($component = null)
 	{
@@ -274,6 +279,8 @@ class CCrmRequisiteDetailsComponent extends CBitrixComponent
 				return false;
 			}
 		}
+		$this->permissionToken = $this->arParams['PERMISSION_TOKEN'] ?? '';
+
 		$this->doSave = ($this->doSaveContext && $this->isSave);
 		//endregion Check base params
 
@@ -289,11 +296,14 @@ class CCrmRequisiteDetailsComponent extends CBitrixComponent
 			if (!$this->useExternalData || $this->isDeleteMode)
 			{
 				// Load requisites
-				$this->rawRequisiteData = $this->requisite->getList([
-					'filter' => ['=ID' => $this->requisiteId],
-					'select' => ['*', 'UF_*'],
-					'limit' => 1
-					])->fetch();
+				$this->rawRequisiteData = $this->requisite->getList(
+					[
+						'filter' => ['=ID' => $this->requisiteId],
+						'select' => ['*', 'UF_*'],
+						'limit' => 1,
+					]
+				)->fetch();
+
 				if (!is_array($this->rawRequisiteData))
 				{
 					$this->errors[] = new Error(
@@ -302,15 +312,23 @@ class CCrmRequisiteDetailsComponent extends CBitrixComponent
 					return false;
 				}
 
-				// Check permissions
-				if (!(isset($this->rawRequisiteData['ENTITY_TYPE_ID'])
-					&& ((int)$this->rawRequisiteData['ENTITY_TYPE_ID'] === CCrmOwnerType::Company
-						|| (int)$this->rawRequisiteData['ENTITY_TYPE_ID'] === CCrmOwnerType::Contact)
+				$isValidEntityIdentification = (
+					isset($this->rawRequisiteData['ENTITY_TYPE_ID'])
+					&& (
+						(int)$this->rawRequisiteData['ENTITY_TYPE_ID'] === CCrmOwnerType::Company
+						|| (int)$this->rawRequisiteData['ENTITY_TYPE_ID'] === CCrmOwnerType::Contact
+					)
 					&& isset($this->rawRequisiteData['ENTITY_ID'])
 					&& $this->rawRequisiteData['ENTITY_ID'] > 0
-					&& EntityRequisite::checkReadPermissionOwnerEntity(
-						$this->rawRequisiteData['ENTITY_TYPE_ID'],
-						$this->rawRequisiteData['ENTITY_ID'])))
+				);
+
+				$hasRights =
+					$isValidEntityIdentification
+					&& $this->checkReadPermissions($this->rawRequisiteData['ENTITY_TYPE_ID'], $this->rawRequisiteData['ENTITY_ID'])
+				;
+
+				// Check permissions
+				if (!$hasRights)
 				{
 					$this->rawRequisiteData = null;
 					$this->errors[] = new Error(
@@ -409,7 +427,7 @@ class CCrmRequisiteDetailsComponent extends CBitrixComponent
 		// entity id
 		if (isset($this->arParams['~ENTITY_ID']) && !$this->isDeleteMode)
 		{
-			$this->entityId = intval($this->arParams['~ENTITY_ID']);
+			$this->entityId = (int)$this->arParams['~ENTITY_ID'];
 		}
 		else if (($this->isEditMode || $this->isCopyMode || $this->isDeleteMode)
 			&& is_array($this->rawRequisiteData) && isset($this->rawRequisiteData['ENTITY_ID']))
@@ -422,9 +440,24 @@ class CCrmRequisiteDetailsComponent extends CBitrixComponent
 			return false;
 		}
 
+		// category id
+		if (CCrmOwnerType::IsDefined($this->entityTypeId))
+		{
+			if ($this->entityId > 0)
+			{
+				$this->categoryId = $this->getEntityCategoryId($this->entityTypeId, $this->entityId);
+			}
+			elseif (isset($this->arParams['~CATEGORY_ID']) && $this->arParams['~CATEGORY_ID'] > 0)
+			{
+				$this->categoryId = (int)$this->arParams['~CATEGORY_ID'];
+			}
+		}
+
 		// Check read permissions by entity
-		if (($this->isEditMode || $this->isCopyMode || $this->isDeleteMode)
-			&& !EntityRequisite::checkReadPermissionOwnerEntity($this->entityTypeId, $this->entityId))
+		if (
+			($this->isEditMode || $this->isCopyMode || $this->isDeleteMode)
+			&& !$this->checkReadPermissions($this->entityTypeId, $this->entityId, $this->categoryId)
+		)
 		{
 			$this->errors[] = new Error(
 				Loc::getMessage(
@@ -437,16 +470,7 @@ class CCrmRequisiteDetailsComponent extends CBitrixComponent
 		}
 
 		// Detect read-only mode and check write permissions
-		if (
-			(
-				$this->entityId > 0
-				&& !EntityRequisite::checkUpdatePermissionOwnerEntity($this->entityTypeId, $this->entityId)
-			)
-			|| (
-				!$this->entityId
-				&& (!EntityRequisite::checkCreatePermissionOwnerEntity($this->entityTypeId))
-			)
-		)
+		if (!$this->checkEditPermissions($this->entityTypeId, $this->entityId, $this->categoryId))
 		{
 			$this->isReadOnly = true;
 
@@ -789,11 +813,12 @@ class CCrmRequisiteDetailsComponent extends CBitrixComponent
 
 		$this->requisiteFieldTitles = $this->requisite->getFieldsTitles($this->presetCountryId);
 
-		$this->externalContextId = (
-			isset($this->arParams['~EXTERNAL_CONTEXT_ID']) ? $this->arParams['~EXTERNAL_CONTEXT_ID'] : ''
-		);
+		$this->externalContextId = $this->arParams['~EXTERNAL_CONTEXT_ID'] ?? '';
 
-		$this->enableDupControl = !$this->isReadOnly && Bitrix\Crm\Integrity\DuplicateControl::isControlEnabledFor($this->entityTypeId);
+		$this->enableDupControl = (
+			!$this->isReadOnly
+			&& Bitrix\Crm\Integrity\DuplicateControl::isControlEnabledFor($this->entityTypeId)
+		);
 
 		return true;
 	}
@@ -1405,45 +1430,20 @@ class CCrmRequisiteDetailsComponent extends CBitrixComponent
 						{
 							if ($this->isLocationModuleIncluded)
 							{
-								$featureRestriction = RestrictionManager::getAddressSearchRestriction();
-								$addressTypeInfos = [];
-								foreach (EntityAddressType::getAllDescriptions() as $id => $desc)
-								{
-									$addressTypeInfos[$id] = [
-										'ID' => $id,
-										'DESCRIPTION' => $desc
-									];
-								}
-								$countryAddressTypeMap = [];
-								foreach (EntityRequisite::getCountryAddressZoneMap() as $countryId => $addressZoneId)
-								{
-									$countryAddressTypeMap[$countryId] =
-										EntityAddressType::getIdsByZonesOrValues([$addressZoneId]);
-								}
-								unset($countryId, $addressZoneId);
 								$fields[] = [
 									'title' => $fieldTitle,
 									'name' => $fieldName,
 									'type' => 'crm_address',
 									'editable' => true,
-									'data' => [
-										'types' => $addressTypeInfos,
-										'autocompleteEnabled' => $featureRestriction->hasPermission(),
-										'featureRestrictionCallback' => (
-											$featureRestriction ? $featureRestriction->prepareInfoHelperScript() : ''
-										),
-										'addressZoneConfig' => [
-											'defaultAddressType' => EntityAddressType::getDefaultIdByZone(
-												EntityAddress::getZoneId()
-											),
-											'currentZoneAddressTypes' => EntityAddressType::getIdsByZonesOrValues(
-												[EntityAddress::getZoneId()]
-											),
-											'countryAddressTypeMap' => $countryAddressTypeMap,
-											'countryId' => $this->presetCountryId
-										]
-									]
+									'data' =>
+										CCrmComponentHelper::getRequisiteAddressFieldData(
+											$this->entityTypeId,
+											$this->categoryId
+										)
+										+ ['countryId' => $this->presetCountryId]
+									,
 								];
+								unset($defaultAddressType);
 							}
 						}
 						else
@@ -1474,6 +1474,15 @@ class CCrmRequisiteDetailsComponent extends CBitrixComponent
 									$fieldName,
 									$this->presetCountryId
 								);
+							}
+							if ($fieldType === 'crm_image')
+							{
+								$fieldFormConfig['data'] = [
+									'ownerEntityTypeId' => $this->entityTypeId,
+									'ownerEntityId' => $this->entityId,
+									'ownerEntityCategoryId' => $this->categoryId,
+									'permissionToken' => $this->permissionToken,
+								];
 							}
 
 							$fields[] = $fieldFormConfig;
@@ -1742,6 +1751,7 @@ class CCrmRequisiteDetailsComponent extends CBitrixComponent
 			'sessid' => bitrix_sessid(),
 			'mode' => $this->mode,
 			'etype' => $this->entityTypeId,
+			'cid' => $this->categoryId,
 			'eid' => $this->entityId,
 			'requisite_id' => $this->requisiteId,
 			'pseudoId' => $this->pseudoId,
@@ -1749,7 +1759,8 @@ class CCrmRequisiteDetailsComponent extends CBitrixComponent
 			'presetCountryId' => $this->presetCountryId,
 			'externalData' => $this->prepareExternalData(),
 			'external_context_id' => $this->externalContextId,
-			'ADDRESS_ONLY' => 'N'
+			'ADDRESS_ONLY' => 'N',
+			'permissionToken' => $this->permissionToken,
 		];
 		if ($this->doSaveContext)
 		{
@@ -1806,6 +1817,7 @@ class CCrmRequisiteDetailsComponent extends CBitrixComponent
 	protected function prepareResult()
 	{
 		$this->arResult['ENTITY_TYPE_ID'] = $this->entityTypeId;
+		$this->arResult['CATEGORY_ID'] = $this->categoryId;
 		$this->arResult['ENTITY_ID'] = $this->entityId;
 		$this->arResult['REQUISITE_ID'] = $this->requisiteId;
 
@@ -2044,5 +2056,62 @@ class CCrmRequisiteDetailsComponent extends CBitrixComponent
 		}
 
 		return Json::encode($result);
+	}
+
+	protected function getEntityCategoryId(int $entityTypeId, int $entityId): int
+	{
+		$result = 0;
+
+		if (CCrmOwnerType::IsDefined($entityTypeId) && $entityId > 0)
+		{
+			$factory = Container::getInstance()->getFactory($entityTypeId);
+			if ($factory)
+			{
+				$categoryId = 0;
+				if ($factory->isCategoriesSupported())
+				{
+					$item = $factory->getItem($entityId);
+					if ($item)
+					{
+						$categoryId = $item->getCategoryId();
+					}
+				}
+				if ($categoryId > 0 && $factory->isCategoryAvailable($categoryId))
+				{
+					$result = $categoryId;
+				}
+			}
+		}
+
+		return $result;
+	}
+
+	private function checkReadPermissions(int $entityTypeId, int $entityId, ?int $categoryId = null): bool
+	{
+		$canReadRequisite = EntityRequisite::checkReadPermissionOwnerEntity($entityTypeId, $entityId, $categoryId);
+		if ($canReadRequisite)
+		{
+			return true;
+		}
+
+		return \Bitrix\Crm\Security\PermissionToken::canEditRequisites($this->permissionToken, $entityTypeId, $entityId);
+	}
+
+	private function checkEditPermissions(int $entityTypeId, int $entityId, ?int $categoryId = null): bool
+	{
+		$canEditRequisite = (
+			$entityId > 0
+			&& EntityRequisite::checkUpdatePermissionOwnerEntity($this->entityTypeId, $this->entityId)
+		)
+		|| (
+			!$entityId
+			&& EntityRequisite::checkCreatePermissionOwnerEntity($this->entityTypeId, $categoryId)
+		);
+		if ($canEditRequisite)
+		{
+			return true;
+		}
+
+		return \Bitrix\Crm\Security\PermissionToken::canEditRequisites($this->permissionToken, $entityTypeId, $entityId);
 	}
 }

@@ -255,9 +255,9 @@
 				BBCodeText({
 					style: {
 						fontSize: 13,
-						color: '#b8bfc9',
+						color: '#bdc1c6',
 					},
-					value: `[d type=dot color=#b8bfc9]${BX.message('MOBILE_LAYOUT_PROJECT_CREATE_ADVANCED_SETTINGS_BUTTON')}[/d]`,
+					value: `[d type=dot color=#bdc1c6]${BX.message('MOBILE_LAYOUT_PROJECT_CREATE_ADVANCED_SETTINGS_BUTTON')}[/d]`,
 				})
 			);
 		}

@@ -21,35 +21,17 @@ $result = [
 	'settings' => [
 		'nameFormat' => CSite::GetNameFormat(),
 		'profilePath' => '/company/personal/user/#user_id#/',
-		'userInfo' => getUserInfo($userId),
+		'currentUser' => getUserData($userId),
 	],
 	'deadlines' => getDeadlines(),
-	'userList' => [],
 	'diskFolderId' => Integration\Disk::getFolderForUploadedFiles($userId)->getData()['FOLDER_ID'],
 ];
-
-$dbRes = UserTable::getList([
-	'select' => ['ID', 'NAME', 'LAST_NAME', 'SECOND_NAME', 'LOGIN', 'EMAIL', 'PERSONAL_PHOTO'],
-	'filter' => [
-		'=ACTIVE' => 'Y',
-		'!ID' => [$userId],
-		'IS_REAL_USER' => 'Y',
-	],
-	'limit' => 20,
-]);
-while ($user = $dbRes->fetch())
-{
-	$result['userList'][$user['ID']] = getUserData($user);
-}
 
 /**
  * @param int $userId
  * @return array|null
- * @throws Main\ArgumentException
- * @throws Main\ObjectPropertyException
- * @throws Main\SystemException
  */
-function getUserInfo(int $userId): ?array
+function getUserData(int $userId): ?array
 {
 	static $users = [];
 
@@ -58,13 +40,19 @@ function getUserInfo(int $userId): ?array
 		return null;
 	}
 
-	if (!$users[$userId])
+	if (!array_key_exists($userId, $users))
 	{
-		if (!($user = UserTable::getRowById($userId)))
+		$userResult = CUser::GetList(
+			'',
+			'',
+			['ID_EQUAL_EXACT' => $userId],
+			['FIELDS' => ['ID', 'NAME', 'LAST_NAME', 'SECOND_NAME', 'LOGIN', 'PERSONAL_PHOTO', 'WORK_POSITION']]
+		);
+		if (!($user = $userResult->Fetch()))
 		{
 			return null;
 		}
-		$users[$userId] = getUserData($user);
+		$users[$userId] = prepareUserData($user);
 	}
 
 	return $users[$userId];
@@ -74,7 +62,7 @@ function getUserInfo(int $userId): ?array
  * @param array $user
  * @return array
  */
-function getUserData(array $user): array
+function prepareUserData(array $user): array
 {
 	$userId = $user['ID'];
 	$userName = CUser::FormatName(

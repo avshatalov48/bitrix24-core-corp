@@ -3,7 +3,7 @@
  */
 jn.define('im/messenger/lib/logger', (require, exports, module) => {
 
-	const { Logger } = jn.require('utils/logger');
+	const { Logger } = require('utils/logger');
 
 	/**
 	 * @class MessengerLogger

@@ -129,7 +129,7 @@ class Request extends Base
 		$result = new Main\Result();
 
 		//Only START_TIME can be taken for DEADLINE!
-		if ($action === 'UPDATE' && isset($fields['START_TIME']) && $fields['START_TIME'] !== '')
+		if ($action === self::ACTION_UPDATE && isset($fields['START_TIME']) && $fields['START_TIME'] !== '')
 		{
 			$fields['DEADLINE'] = $fields['START_TIME'];
 		}

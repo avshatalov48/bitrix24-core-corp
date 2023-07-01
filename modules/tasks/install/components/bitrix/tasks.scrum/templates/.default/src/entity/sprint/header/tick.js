@@ -18,14 +18,13 @@ export class Tick extends EventEmitter
 
 	render(): HTMLElement
 	{
-
 		this.node = Tag.render`
 			<div class="tasks-scrum__sprint--btn-dropdown ui-btn ui-btn-sm ui-btn-icon-angle-down --up"></div>
 		`;
 
 		Event.bind(this.node, 'click', this.onClick.bind(this));
 
-		if (this.sprint.isCompleted())
+		if (this.sprint.isHideContent())
 		{
 			Dom.removeClass(this.node, '--up');
 		}

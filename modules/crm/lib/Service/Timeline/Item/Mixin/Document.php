@@ -43,10 +43,12 @@ trait Document
 
 	private function getOpenDocumentAction(): Layout\Action
 	{
+		$document = $this->getDocument();
 		$action =
 			(new Layout\Action\JsEvent('Document:Open'))
 				->addActionParamInt('documentId', $this->getDocumentId())
-				->addActionParamString('title', $this->getDocument()->getTitle())
+				->addActionParamString('title', $document->getTitle())
+				->addActionParamString('createdAt', $document->getCreateTime()->format(\DateTimeInterface::ATOM))
 		;
 
 		$pdfUrl = $this->getPdfUrl();

@@ -42,7 +42,7 @@ class CIntranetContactCenterListComponent extends \CBitrixComponent implements C
 	{
 		$this->errorCollection = new ErrorCollection();
 
-		if (intval($arParams['CACHE_TIME']) < 0)
+		if (isset($arParams['CACHE_TIME']) && intval($arParams['CACHE_TIME']) < 0)
 		{
 			$arParams['CACHE_TIME'] = 86400;
 		}
@@ -343,7 +343,7 @@ class CIntranetContactCenterListComponent extends \CBitrixComponent implements C
 					}
 					$crmItem["ONCLICK"] = $this->getOnclickScript($crmItem["LINK"], $itemParams);
 
-					if ($crmItem['LINK_TYPE'] === 'newWindow')
+					if (isset($crmItem['LINK_TYPE']) && $crmItem['LINK_TYPE'] === 'newWindow')
 					{
 						$crmItem["ONCLICK"] = "top.window.location='{$crmItem["LINK"]}'";
 					}
@@ -385,12 +385,12 @@ class CIntranetContactCenterListComponent extends \CBitrixComponent implements C
 				$this->jsParams['menu'][] = [
 					'element' => 'menu' . $itemCode,
 					'bindElement' => 'feed-add-post-form-link-text-' . $itemCode,
-					'items' => ($item['LIST'] ?: '')
+					'items' => !empty($item['LIST']) ? $item['LIST'] : '',
 				];
 
 				if(!$item['CONNECTION_INFO_HELPER_LIMIT'])
 				{
-					$item['ONCLICK'] = $this->getOnclickScript($item['LINK'], $itemParams);
+					$item['ONCLICK'] = $this->getOnclickScript($item['LINK'] ?? null, $itemParams);
 				}
 				else
 				{
@@ -603,7 +603,7 @@ class CIntranetContactCenterListComponent extends \CBitrixComponent implements C
 	{
 		$params = array();
 		$reloadParams = '';
-		if (intval($itemParams["width"]) > 0)
+		if (isset($itemParams["width"]) && intval($itemParams["width"]) > 0)
 		{
 			$params[] = "width: " . intval($itemParams["width"]);
 		}

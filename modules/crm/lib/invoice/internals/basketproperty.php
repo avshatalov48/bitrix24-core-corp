@@ -12,9 +12,9 @@ Loc::loadMessages(__FILE__);
  *
  * <<< ORMENTITYANNOTATION
  * @method static EO_BasketProperty_Query query()
- * @method static EO_BasketProperty_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_BasketProperty_Result getByPrimary($primary, array $parameters = [])
  * @method static EO_BasketProperty_Result getById($id)
- * @method static EO_BasketProperty_Result getList(array $parameters = array())
+ * @method static EO_BasketProperty_Result getList(array $parameters = [])
  * @method static EO_BasketProperty_Entity getEntity()
  * @method static \Bitrix\Crm\Invoice\Internals\EO_BasketProperty createObject($setDefaultValues = true)
  * @method static \Bitrix\Crm\Invoice\Internals\EO_BasketProperty_Collection createCollection()

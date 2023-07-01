@@ -10,18 +10,12 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
  * @var array $arParams
  */
 
-$darkMode = '';
-
-if (isset($arParams['TEMPLATE_MODE']) && $arParams['TEMPLATE_MODE'] === 'darkmode')
-{
-	$darkMode = 'bx-dark';
-}
 
 if (!empty($arResult['JS_DATA']['app']['paySystems']))
 {
 	$options = CUtil::PhpToJSObject($arResult['JS_DATA']);
 	?>
-	<div class="page-section order-payment-method-container <?= $darkMode ?>">
+	<div class="page-section order-payment-method-container <?= $arResult['COMPONENT_THEME'] ?>">
 		<div id="salescenter-payment-pay-app"></div>
 	</div>
 	<script>

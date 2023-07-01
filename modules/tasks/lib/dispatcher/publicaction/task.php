@@ -135,7 +135,7 @@ final class Task extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 	/**
 	 * Add a new task
 	 */
-	public function add(array $data, array $parameters = array('RETURN_DATA' => false))
+	public function add(array $data, array $parameters = ['RETURN_DATA' => false])
 	{
 		$result = [];
 
@@ -145,21 +145,26 @@ final class Task extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 		if (!(new TaskAccessController($this->userId))->check(ActionDictionary::ACTION_TASK_SAVE, $oldTask, $newTask))
 		{
 			$this->addForbiddenError();
+
 			return $result;
 		}
 
 		// todo: move to \Bitrix\Tasks\Item\Task
-		$mgrResult = Manager\Task::add($this->userId, $data, array(
-			'PUBLIC_MODE' => true,
-			'ERRORS' => $this->errors,
-			'RETURN_ENTITY' => $parameters[ 'RETURN_ENTITY' ]
-		));
-
-		return array(
-			'ID' => $mgrResult[ 'DATA' ][ 'ID' ],
-			'DATA' => $mgrResult[ 'DATA' ],
-			'CAN' => $mgrResult[ 'CAN' ],
+		$mgrResult = Manager\Task::add(
+			$this->userId,
+			$data,
+			[
+				'PUBLIC_MODE' => true,
+				'ERRORS' => $this->errors,
+				'RETURN_ENTITY' => ($parameters['RETURN_ENTITY'] ?? null),
+			]
 		);
+
+		return [
+			'ID' => $mgrResult['DATA']['ID'] ?? null,
+			'DATA' => $mgrResult['DATA'] ?? null,
+			'CAN' => $mgrResult['CAN'] ?? null,
+		];
 	}
 
 	/**
@@ -249,32 +254,33 @@ final class Task extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 			return $result;
 		}
 
-		if ($id = $this->checkTaskId($id))
+		if (!empty($data) && ($id = $this->checkTaskId($id)))
 		{
-			if (!empty($data))
-			{
-				// todo: move to \Bitrix\Tasks\Item\Task
-				$mgrResult = Manager\Task::update(Util\User::getId(), $id, $data, array(
+			// todo: move to \Bitrix\Tasks\Item\Task
+			$mgrResult = Manager\Task::update(
+				Util\User::getId(),
+				$id,
+				$data,
+				[
 					'PUBLIC_MODE' => true,
 					'ERRORS' => $this->errors,
-					'THROTTLE_MESSAGES' => $parameters[ 'THROTTLE_MESSAGES' ],
-
+					'THROTTLE_MESSAGES' => ($parameters['THROTTLE_MESSAGES'] ?? null),
 					// there also could be RETURN_CAN or RETURN_DATA, or both as RETURN_ENTITY
-					'RETURN_ENTITY' => $parameters[ 'RETURN_ENTITY' ],
-				));
+					'RETURN_ENTITY' => ($parameters['RETURN_ENTITY'] ?? null),
+				]
+			);
 
-				$result['ID'] = $id;
-				$result['DATA'] = $mgrResult['DATA'];
-				$result['CAN'] = $mgrResult['CAN'];
+			$result['ID'] = $id;
+			$result['DATA'] = $mgrResult['DATA'];
+			$result['CAN'] = $mgrResult['CAN'];
 
-				if ($this->errors->checkNoFatals())
-				{
-					if ($parameters[ 'RETURN_OPERATION_RESULT_DATA' ])
-					{
-						$task = $mgrResult[ 'TASK' ];
-						$result['OPERATION_RESULT' ] = $task->getLastOperationResultData('UPDATE');
-					}
-				}
+			if (
+				($parameters['RETURN_OPERATION_RESULT_DATA'] ?? null)
+				&& $this->errors->checkNoFatals()
+			)
+			{
+				$task = $mgrResult['TASK'];
+				$result['OPERATION_RESULT'] = $task->getLastOperationResultData('UPDATE');
 			}
 		}
 

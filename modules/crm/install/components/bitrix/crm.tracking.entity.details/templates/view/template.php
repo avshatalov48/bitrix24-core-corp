@@ -1,5 +1,6 @@
-<?
-if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
+<?php
+
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
 {
 	die();
 }
@@ -80,7 +81,7 @@ $containerId = 'crm-tracking-entity-details-view';
 				</div>
 			</div>
 
-			<?if ($trace['SITE'] && $trace['PAGES']):?>
+			<?if (isset($trace['SITE'], $trace['PAGES']) && $trace['SITE'] && $trace['PAGES']):?>
 				<div data-role="trace/details" class="crm-tracking-entity-details-body">
 					<div class="crm-tracking-entity-details-path-header"></div>
 					<div class="crm-tracking-entity-details-path-site">

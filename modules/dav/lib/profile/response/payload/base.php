@@ -17,9 +17,9 @@ use Bitrix\Main\Context;
  */
 class Base extends ResponseBase
 {
-	protected static $allowedRequestParams = array('resources', 'access_token');
-	protected static $allowedResourceTypes = array('carddav', 'caldav', 'all');
-	private $resources = array();
+	protected static $allowedRequestParams = ['resources', 'access_token'];
+	protected static $allowedResourceTypes = ['carddav', 'caldav', 'all'];
+	private $resources = [];
 	private $accessToken = '';
 
 	/**
@@ -56,7 +56,7 @@ class Base extends ResponseBase
 		}
 		else
 		{
-			$this->errors[] = 'params[access_token] is required';;
+			$this->errors[] = 'params[access_token] is required';
 			$this->setErrorHeaderContent();
 			$this->setErrorBodyContent();
 		}
@@ -108,8 +108,8 @@ class Base extends ResponseBase
 	 */
 	private function setPayloadHeaderContent()
 	{
-		$this->setHeader('Content-Disposition: attachment; filename=profile.mobileconfig');
-		$this->setHeader('Content-Type: application/xml');
+		$this->setHeader('Content-Disposition', 'attachment; filename=profile.mobileconfig');
+		$this->setHeader('Content-Type', 'application/xml');
 	}
 
 	/**
@@ -118,8 +118,8 @@ class Base extends ResponseBase
 	 */
 	private function setErrorHeaderContent()
 	{
-		$this->setHeader('HTTP/1.0 404 Not Found');
-		$this->setHeader('Content-Type: application/json');
+		$this->setStatus(404);
+		$this->setHeader('Content-Type', 'application/json');
 	}
 
 	/**
@@ -128,8 +128,8 @@ class Base extends ResponseBase
 	 */
 	private function setAccessDeniedHeaderContent()
 	{
-		$this->setHeader('HTTP/1.0 403 Forbidden');
-		$this->setHeader('Content-Type: application/json');
+		$this->setStatus(403);
+		$this->setHeader('Content-Type','application/json');
 	}
 
 	/**
@@ -157,7 +157,7 @@ class Base extends ResponseBase
 	 */
 	private function collectParamsErrors($params)
 	{
-		$errors = array();
+		$errors = [];
 		foreach (static::$allowedRequestParams as $requiredKey)
 		{
 			if (!isset($params[$requiredKey]))
@@ -175,7 +175,7 @@ class Base extends ResponseBase
 	 */
 	private function collectResources($resourceKeyList)
 	{
-		$resources = array();
+		$resources = [];
 		$errors = $this->getResourceNameErrors($resourceKeyList);
 		if (!$errors)
 		{
@@ -213,7 +213,7 @@ class Base extends ResponseBase
 		$errors = array();
 		foreach ($resourceNamesList as $resourceName)
 		{
-			if (!in_array($resourceName, static::$allowedResourceTypes))
+			if (!in_array($resourceName, static::$allowedResourceTypes, true))
 			{
 				$errors[] = !empty($resourceName) ? $resourceName . ' is not allowed' : 'Require resource type for generate payload';
 			}

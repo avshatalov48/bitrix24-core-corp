@@ -7,7 +7,7 @@ jn.define('im/messenger/controller/dialog-creator/dialog-info', (require, export
 	include("InAppNotifier");
 
 	const { Loc } = require('loc');
-	const { MessengerEvent } = require('im/messenger/lib/event');
+	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { EventType } = require('im/messenger/const');
 	const { getFile } = require('files/entry');
 	const { FileConverter } = require('files/converter')
@@ -221,7 +221,7 @@ jn.define('im/messenger/controller/dialog-creator/dialog-info', (require, export
 			BX.rest.callMethod('im.dialog.get', {DIALOG_ID: dialogId})
 				.then(result => {
 					const chatData = result.data();
-					new MessengerEvent(EventType.messenger.openDialog, {
+					MessengerEmitter.emit(EventType.messenger.openDialog, {
 						dialogId: dialogId,
 						dialogTitleParams: {
 							name: chatData.name,
@@ -229,7 +229,7 @@ jn.define('im/messenger/controller/dialog-creator/dialog-info', (require, export
 							avatar: chatData.avatar,
 							color: chatData.color,
 						}
-					}).send();
+					});
 				})
 		}
 	}

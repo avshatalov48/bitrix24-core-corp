@@ -11,7 +11,7 @@
 			height: 38,
 			alignItems: 'center',
 			justifyContent: 'center',
-			backgroundColor: '#26378EE7',
+			backgroundColor: '#260091e3',
 			marginRight: 12,
 			borderRadius: 19,
 		}
@@ -63,7 +63,7 @@
 						style: {
 							width: 2,
 							height: "100%",
-							backgroundColor: '#378EE7',
+							backgroundColor: '#0091e3',
 							opacity: 0.5,
 							borderRadius: 1,
 						}

@@ -45,7 +45,7 @@ define("BX_SOCSERV_POPUP", true);
 							$onClickEvent = $service["FORM_HTML"]["ON_CLICK"];
 						else
 							$onClickEvent = "onclick=\"BxShowAuthService('".$service['ID']."', '".$arParams['SUFFIX']."')\"";
-						?><a title="<?=htmlspecialcharsbx($service["NAME"])?>" href="javascript:void(0)" <?=$onClickEvent?> id="bx_auth_href_<?=$arParams["SUFFIX"]?><?=$service["ID"]?>"><span class="bx-auth-serv-icon <?=htmlspecialcharsbx($icon)?>"></span></a><?
+						?><a title="<?=htmlspecialcharsbx($service["NAME"])?>" href="javascript:void(0)" <?=$onClickEvent?> id="bx_auth_href_<?=$arParams["SUFFIX"] ?? null?><?=$service["ID"]?>"><span class="bx-auth-serv-icon <?=htmlspecialcharsbx($icon)?>"></span></a><?
 					}
 					else
 					{
@@ -84,7 +84,7 @@ define("BX_SOCSERV_POPUP", true);
 		}
 		?>
 		<div class="bx-auth" style="margin-bottom:0; margin-top:0">
-			<form method="post" name="bx_auth_services<?=$arParams["SUFFIX"]?>" target="_top" action="<?=$arParams["AUTH_URL"]?>">
+			<form method="post" name="bx_auth_services<?=$arParams["SUFFIX"] ?? null?>" target="_top" action="<?=$arParams["AUTH_URL"]?>">
 				<?if($arParams["~SHOW_TITLES"] != 'N'):?>
 					<div class="bx-auth-title"><?=GetMessage("socserv_as_user")?></div>
 					<div class="bx-auth-note"><?=GetMessage("socserv_as_user_note")?></div>
@@ -104,7 +104,7 @@ define("BX_SOCSERV_POPUP", true);
 		<?if($arParams["~AUTH_LINE"] != 'N'):?>
 			<div class="bx-auth-line"></div>
 		<?endif;*/?>
-				<div class="bx-auth-service-form" id="bx_auth_serv<?=$arParams["SUFFIX"]?>" style="display:none; margin-top: 12px;margin-left: 20px;">
+				<div class="bx-auth-service-form" id="bx_auth_serv<?=$arParams["SUFFIX"] ?? null?>" style="display:none; margin-top: 12px;margin-left: 20px;">
 					<?foreach($arParams["~AUTH_SERVICES"] as $service):?>
 						<?if(($arParams["~FOR_SPLIT"] != 'Y') || (!is_array($service["FORM_HTML"]))):?>
 							<div id="bx_auth_serv_<?=$arParams["SUFFIX"]?><?=$service["ID"]?>" style="display:none"><?=$service["FORM_HTML"]?></div>

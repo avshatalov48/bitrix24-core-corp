@@ -2,54 +2,117 @@
  * @module crm/entity-detail/component/additional-button-provider
  */
 jn.define('crm/entity-detail/component/additional-button-provider', (require, exports, module) => {
-	const { animateScrollButton } = require('crm/entity-detail/component/communication-button/button-animate');
-	const { preparationContactInfo } = require('crm/entity-detail/component/communication-button/contact-info');
 	const { CommunicationFloatingButton } = require('crm/communication/floating-button');
-	const { TypeId, Type } = require('crm/type');
+	const {
+		prepareClientInfo,
+		addMultiFieldInfo,
+	} = require('crm/entity-detail/component/communication-button/contact-info');
+	const { Type } = require('crm/type');
+	const { clone, get } = require('utils/object');
 
 	/**
 	 * @function additionalButtonProvider
-	 * @param detailCard
+	 * @param {DetailCardComponent} detailCard
 	 * @returns {CommunicationFloatingButton[]}
 	 */
 	const additionalButtonProvider = (detailCard) => {
-
 		const entityTypeId = detailCard.getEntityTypeId();
-		const entityId = detailCard.getEntityId();
-		const { customEventEmitter } = detailCard;
-		const isShow = [TypeId.Contact, TypeId.Company, TypeId.Deal].includes(entityTypeId);
 
-		if (!isShow || !entityId)
+		if (!Type.existsById(entityTypeId) || detailCard.isNewEntity())
 		{
 			return [];
 		}
 
-		const ownerInfo = {
-			ownerId: entityId,
-			ownerTypeName: Type.resolveNameById(entityTypeId),
-		};
-		const button = new CommunicationFloatingButton();
+		const hasTelegramConnector = get(detailCard.getComponentParams(), 'connectors.telegram', false);
+		const isGoToChatAvailable = get(detailCard.getComponentParams(), 'isGoToChatAvailable', false);
+		const openLinesAccess = get(detailCard.getComponentParams(), 'permissions.openLinesAccess', false);
 
-		const handleOnReady = (entityModel) => {
-
-			const contactInfo = preparationContactInfo({
-				entityModel,
-				entityTypeId,
-				entityId,
-			});
-
-			button.setValue(contactInfo, ownerInfo);
-		};
-
-		customEventEmitter.on('UI.EntityEditor.Model::onReady', handleOnReady);
-		customEventEmitter.on('DetailCard::onScroll', (params, tabId) => animateScrollButton(params, button, tabId, detailCard.activeTab));
-		customEventEmitter.on('Communication::onUpdate', (updateInfo) => {
-			button.setValue(updateInfo, ownerInfo);
+		const button = new CommunicationFloatingButton({
+			showTelegramConnection: (!hasTelegramConnector && isGoToChatAvailable),
 		});
+		button.setPermissions({ openLinesAccess });
+		const { customEventEmitter } = detailCard;
+
+		customEventEmitter.on('UI.Fields.Client::onUpdate', (eventArgs) => handleClientFieldUpdate(
+			eventArgs,
+			detailCard,
+			button,
+		));
+
+		customEventEmitter.on('DetailCard::onTabContentLoaded', (eventArgs) => handleEditorTabLoaded(
+			eventArgs,
+			detailCard,
+			button,
+		));
 
 		return [button];
 	};
 
-	module.exports = { additionalButtonProvider };
+	/**
+	 * @function handleEditorTabLoaded
+	 * @param {string} tabId
+	 * @param {DetailCardComponent} detailCard
+	 * @param {CommunicationFloatingButton} button
+	 */
+	const handleEditorTabLoaded = (tabId, detailCard, button) => {
+		if (tabId !== 'main' || !detailCard.hasEntityModel())
+		{
+			return;
+		}
 
+		const value = prepareClientInfo(detailCard);
+
+		button.setValue(value, getOwnerInfo(detailCard));
+	};
+
+	/**
+	 * @function handleClientFieldUpdate
+	 * @param {{uid: string, isEmpty: boolean, canAdd: boolean, isMyCompany: boolean, value: object, compound: ?array, permissions: object}} eventArgs
+	 * @param {DetailCardComponent} detailCard
+	 * @param {CommunicationFloatingButton} button
+	 */
+	const handleClientFieldUpdate = (
+		{
+			uid,
+			isEmpty,
+			canAdd,
+			isMyCompany,
+			value,
+			compound,
+			permissions,
+		},
+		detailCard,
+		button,
+	) => {
+		if (isMyCompany || (isEmpty && !canAdd))
+		{
+			return;
+		}
+
+		value = clone(value);
+
+		Object.keys(value).forEach((key) => {
+			value[key.toUpperCase()] = value[key];
+			delete value[key];
+		});
+
+		value = addMultiFieldInfo(value, detailCard);
+
+		button.setUid(uid);
+		button.setPermissions({ ...button.permissions, ...permissions });
+		button.setValue(value, getOwnerInfo(detailCard), compound);
+	};
+
+	const getOwnerInfo = (detailCard) => {
+		const entityTypeId = detailCard.getEntityTypeId();
+		const entityTypeName = Type.resolveNameById(entityTypeId);
+		const entityId = detailCard.getEntityId();
+
+		return {
+			ownerTypeName: entityTypeName,
+			ownerId: entityId,
+		};
+	};
+
+	module.exports = { additionalButtonProvider };
 });

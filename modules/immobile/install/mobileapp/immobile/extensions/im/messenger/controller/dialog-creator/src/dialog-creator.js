@@ -4,10 +4,11 @@
 jn.define('im/messenger/controller/dialog-creator/dialog-creator', (require, exports, module) => {
 
 	const { Type } = require('type');
+	const { core } = require('im/messenger/core');
 	const { NavigationSelector } = require('im/messenger/controller/dialog-creator/navigation-selector');
 	const { ChatTitle, ChatAvatar } = require('im/messenger/lib/element');
 	const { MessengerParams } = require('im/messenger/lib/params');
-	const { RestManager } = require('im/messenger/lib/rest-manager');
+	const { restManager } = require('im/messenger/lib/rest-manager');
 	const { RestMethod } = require('im/messenger/const');
 	const { Logger } = require('im/messenger/lib/logger');
 
@@ -15,13 +16,14 @@ jn.define('im/messenger/controller/dialog-creator/dialog-creator', (require, exp
 	{
 		constructor(options = {})
 		{
+			this.store = core.getStore();
 			this.selector = () => {};
 			this.initRequests();
 		}
 
 		initRequests()
 		{
-			RestManager.on(
+			restManager.on(
 				RestMethod.imUserGet,
 				{ ID: MessengerParams.getUserId() },
 				this.handleUserGet.bind(this)
@@ -43,7 +45,7 @@ jn.define('im/messenger/controller/dialog-creator/dialog-creator', (require, exp
 		{
 			const userItems = [];
 
-			const recentUserList = ChatUtils.objectClone(MessengerStore.getters['recentModel/getUserList']);
+			const recentUserList = ChatUtils.objectClone(this.store.getters['recentModel/getUserList']);
 			const recentUserListIndex = {};
 			if (Type.isArrayFilled(recentUserList))
 			{
@@ -54,7 +56,7 @@ jn.define('im/messenger/controller/dialog-creator/dialog-creator', (require, exp
 				});
 			}
 
-			const colleaguesList = ChatUtils.objectClone(MessengerStore.getters['usersModel/getUserList']);
+			const colleaguesList = ChatUtils.objectClone(this.store.getters['usersModel/getUserList']);
 			if (Type.isArrayFilled(colleaguesList))
 			{
 				colleaguesList.forEach((user) => {
@@ -106,7 +108,7 @@ jn.define('im/messenger/controller/dialog-creator/dialog-creator', (require, exp
 
 			Logger.info('DialogCreator.handleUserGet', currentUser);
 
-			MessengerStore.dispatch('usersModel/set', [currentUser]);
+			this.store.dispatch('usersModel/set', [currentUser]);
 		}
 	}
 

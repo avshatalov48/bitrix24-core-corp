@@ -11,9 +11,9 @@ use Bitrix\Main\Entity;
  *
  * <<< ORMENTITYANNOTATION
  * @method static EO_ActivityChannelStatistics_Query query()
- * @method static EO_ActivityChannelStatistics_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_ActivityChannelStatistics_Result getByPrimary($primary, array $parameters = [])
  * @method static EO_ActivityChannelStatistics_Result getById($id)
- * @method static EO_ActivityChannelStatistics_Result getList(array $parameters = array())
+ * @method static EO_ActivityChannelStatistics_Result getList(array $parameters = [])
  * @method static EO_ActivityChannelStatistics_Entity getEntity()
  * @method static \Bitrix\Crm\Statistics\Entity\EO_ActivityChannelStatistics createObject($setDefaultValues = true)
  * @method static \Bitrix\Crm\Statistics\Entity\EO_ActivityChannelStatistics_Collection createCollection()

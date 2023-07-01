@@ -1,12 +1,16 @@
-(() => {
+/**
+ * @module layout/ui/wizard/step/field-editor
+ */
+jn.define('layout/ui/wizard/step/field-editor', (require, exports, module) => {
 
-	const { FieldFactory, CombinedType } = jn.require('layout/ui/fields');
+	const { FieldFactory, CombinedType } = require('layout/ui/fields');
+	const { WizardStep } = require('layout/ui/wizard/step');
 
 	const styles = {
 		editor: {
 			container: {
 				backgroundColor: '#ffffff',
-				borderRadius: 15,
+				borderRadius: 12,
 				paddingTop: 8,
 				paddingBottom: 8,
 				paddingLeft: 18,
@@ -139,7 +143,7 @@
 			{
 				value = this.state.fieldValues[fieldId];
 			}
-			else if (field && typeof field.value != 'undefined')
+			else if (field && typeof field.value !== 'undefined')
 			{
 				value = field.value;
 			}
@@ -253,5 +257,5 @@
 		}
 	}
 
-	this.FieldEditorStep = FieldEditorStep;
-})();
+	module.exports = { FieldEditorStep };
+});

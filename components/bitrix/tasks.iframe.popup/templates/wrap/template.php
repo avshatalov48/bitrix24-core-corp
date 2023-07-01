@@ -108,7 +108,10 @@ else
 	}
 }
 ?>
-<?php if($arParams['HIDE_MENU_PANEL'] == 'Y'):
+<?php if(
+		isset($arParams['HIDE_MENU_PANEL'])
+		&& $arParams['HIDE_MENU_PANEL'] === 'Y'
+	):
 	$parameters['TOOLBAR_PARAMETERS'] = array(
 		'SHOW_SECTIONS_BAR' => 'N',
 		'SHOW_FILTER_BAR' => 'N',
@@ -178,7 +181,13 @@ endif?>
 								$APPLICATION->ShowViewContent("pagetitle")
 								?></div>
 							<div class="pagetitle">
-								<span id="pagetitle" class="pagetitle-item"><?$APPLICATION->ShowTitle(false);?><?if($existingTask):?><span class="task-page-link-btn js-id-copy-page-url" title="<?=Loc::getMessage('TASKS_TIP_TEMPLATE_COPY_CURRENT_URL')?>"></span><?endif?></span>
+								<span id="pagetitle" class="pagetitle-item">
+									<?$APPLICATION->ShowTitle(false);?>
+									<?if($existingTask):?>
+									<span class="task-page-link-btn js-id-copy-page-url" title="<?=Loc::getMessage('TASKS_TIP_TEMPLATE_COPY_CURRENT_URL')?>"></span>
+									<?php $APPLICATION->ShowViewContent("mobileqrpopup")?>
+									<?endif?>
+								</span>
 							</div>
 						</div>
 					</div>

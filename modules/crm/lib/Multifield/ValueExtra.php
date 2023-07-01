@@ -4,7 +4,7 @@ namespace Bitrix\Crm\Multifield;
 
 use Bitrix\Main\Type\Contract\Arrayable;
 
-class ValueExtra implements Arrayable
+class ValueExtra implements Arrayable, \JsonSerializable
 {
 	private ?string $countryCode;
 
@@ -24,6 +24,13 @@ class ValueExtra implements Arrayable
 	{
 		return [
 			'VALUE_COUNTRY_CODE' => $this->getCountryCode(),
+		];
+	}
+
+	final public function jsonSerialize()
+	{
+		return [
+			'countryCode' => $this->getCountryCode(),
 		];
 	}
 }

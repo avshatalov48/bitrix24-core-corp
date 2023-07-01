@@ -1,7 +1,5 @@
-(() =>
-{
-	const MAX_PRODUCT_PHOTO_WIDTH = 2048;
-	const MAX_PRODUCT_PHOTO_HEIGHT = 2048;
+(() => {
+	const { Wizard } = jn.require('layout/ui/wizard');
 
 	/**
 	 * @abstract
@@ -22,7 +20,9 @@
 		 * @abstract
 		 * @returns {BaseCatalogProductEntity}
 		 */
-		makeProductEntity() {}
+		makeProductEntity()
+		{
+		}
 
 		/**
 		 * @abstract
@@ -55,9 +55,10 @@
 					},
 				},
 				new Wizard({
+					parentLayout: layout,
 					steps: this.getSteps().map(step => step.id),
 					stepForId: this.getStepForId.bind(this),
-				})
+				}),
 			);
 		}
 	}
@@ -78,19 +79,19 @@
 
 			steps.push({
 				id: 'title',
-				component: CatalogProductTitleStep
+				component: CatalogProductTitleStep,
 			});
 
 			if (hasProductEditAccess)
 			{
 				steps.push({
 					id: 'photo',
-					component: CatalogProductPhotoStep
+					component: CatalogProductPhotoStep,
 				});
 
 				steps.push({
 					id: 'prices',
-					component: StoreCatalogProductPricesStep
+					component: StoreCatalogProductPricesStep,
 				});
 			}
 
@@ -98,7 +99,7 @@
 			{
 				steps.push({
 					id: 'amount',
-					component: StoreCatalogProductAmountStep
+					component: StoreCatalogProductAmountStep,
 				});
 			}
 
@@ -127,7 +128,8 @@
 	{
 		static make(type)
 		{
-			switch (type) {
+			switch (type)
+			{
 				case 'crm':
 					return new CrmCatalogWizard();
 				default:
@@ -167,7 +169,7 @@
 				'NAME': '',
 				'BARCODE': '',
 				'MORE_PHOTO': [],
-			}
+			};
 		}
 
 		getTitle()
@@ -176,8 +178,7 @@
 
 			return name && this.get('ID')
 				? name
-				: BX.message('WIZARD_STEP1_TITLE')
-			;
+				: BX.message('WIZARD_STEP1_TITLE');
 		}
 
 		getIblockId()
@@ -189,8 +190,7 @@
 		{
 			return (this.config && this.config.dictionaries.hasOwnProperty(fieldId))
 				? this.config.dictionaries[fieldId]
-				: []
-			;
+				: [];
 		}
 
 		get(fieldId, defaultValue = null)
@@ -200,7 +200,7 @@
 
 		getFields()
 		{
-			return {...this.fields};
+			return { ...this.fields };
 		}
 
 		set(fieldId, value)
@@ -408,7 +408,7 @@
 			navigator.notification.alert(
 				errorMessage,
 				() => {},
-				BX.message('WIZARD_ERROR_MESSAGE_TITLE')
+				BX.message('WIZARD_ERROR_MESSAGE_TITLE'),
 			);
 		}
 	}
@@ -430,7 +430,7 @@
 				'BARCODE': '',
 				'MORE_PHOTO': [],
 				'BASE_PRICE': null,
-			}
+			};
 		}
 	}
 
@@ -455,12 +455,11 @@
 				'QUANTITY': 0,
 				'VAT_ID': null,
 				'VAT_INCLUDED': false,
-			}
+			};
 		}
 	}
 
-	BX.onViewLoaded(() =>
-	{
+	BX.onViewLoaded(() => {
 		const wizardType = BX.componentParameters.get('type', 'store');
 
 		layout.enableNavigationBarBorder(false);

@@ -17,7 +17,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Web\Uri;
 
-if ($_REQUEST['BLOCK_RELOAD'] !== 'Y')
+if (!isset($_REQUEST['BLOCK_RELOAD']) || $_REQUEST['BLOCK_RELOAD'] !== 'Y')
 {
 	?><div id="socialnetwork-group-sidebar-block"><?php
 }
@@ -526,7 +526,7 @@ if (
 	}
 }
 
-if ($_REQUEST['BLOCK_RELOAD'] !== 'Y')
+if (!isset($_REQUEST['BLOCK_RELOAD']) || $_REQUEST['BLOCK_RELOAD'] !== 'Y')
 {
 	?></div><?php
 }

@@ -6,34 +6,6 @@ use Bitrix\Main\Localization\Loc;
 
 class ResponsibleChangedTrigger extends BaseTrigger
 {
-	public static function isSupported($entityTypeId)
-	{
-		$supported = [
-			\CCrmOwnerType::Deal,
-			\CCrmOwnerType::Lead,
-			\CCrmOwnerType::Order,
-			\CCrmOwnerType::SmartDocument,
-		];
-		if (in_array($entityTypeId, $supported, true))
-		{
-			return true;
-		}
-
-		if (\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId))
-		{
-			$factory = Container::getInstance()->getFactory($entityTypeId);
-
-			return (
-				static::areDynamicTypesSupported()
-				&& !is_null($factory)
-				&& $factory->isAutomationEnabled()
-				&& $factory->isStagesEnabled()
-			);
-		}
-
-		return false;
-	}
-
 	public static function getCode()
 	{
 		return 'RESP_CHANGED';

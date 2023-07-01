@@ -8,6 +8,7 @@ use Bitrix\Disk\BaseObject;
 use Bitrix\Disk\Ui;
 use Bitrix\Main\Grid;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Web\Uri;
 
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
@@ -227,7 +228,7 @@ class CDiskTrashCanComponent extends DiskComponent
 		$grid = array(
 			'ID' => $gridId,
 		);
-		list($grid['SORT'], $grid['SORT_VARS']) = $this->gridOptions->getGridOptionsSorting();
+		[$grid['SORT'], $grid['SORT_VARS']] = $this->gridOptions->getGridOptionsSorting();
 		$visibleColumns = array_combine(
 			$this->gridOptions->getVisibleColumns(),
 			$this->gridOptions->getVisibleColumns()
@@ -378,7 +379,7 @@ class CDiskTrashCanComponent extends DiskComponent
 				);
 
 				$columns['CREATE_USER'] = "
-					<div class=\"bx-disk-user-link\"><span class=\"bx-disk-fileinfo-owner-avatar\" style=\"background-image: url({$createUser->getAvatarSrc()});\"></span><a target='_blank' href=\"{$createdByLink}\" id=\"\">" . htmlspecialcharsbx(
+					<div class=\"bx-disk-user-link\"><span class=\"bx-disk-fileinfo-owner-avatar\" style=\"background-image: url('" . Uri::urnEncode($createUser->getAvatarSrc()) . "');\"></span><a target='_blank' href=\"{$createdByLink}\" id=\"\">" . htmlspecialcharsbx(
 						$createUser->getFormattedName()) . "</a></div>
 				";
 			}
@@ -392,7 +393,7 @@ class CDiskTrashCanComponent extends DiskComponent
 				);
 
 				$columns['UPDATE_USER'] = "
-					<div class=\"bx-disk-user-link\"><span class=\"bx-disk-fileinfo-owner-avatar\" style=\"background-image: url({$updateUser->getAvatarSrc()});\"></span><a target='_blank' href=\"{$updatedByLink}\" id=\"\">" . htmlspecialcharsbx(
+					<div class=\"bx-disk-user-link\"><span class=\"bx-disk-fileinfo-owner-avatar\" style=\"background-image: url('" . Uri::urnEncode($updateUser->getAvatarSrc()) . "');\"></span><a target='_blank' href=\"{$updatedByLink}\" id=\"\">" . htmlspecialcharsbx(
 						$updateUser->getFormattedName()) . "</a></div>
 				";
 			}
@@ -406,7 +407,7 @@ class CDiskTrashCanComponent extends DiskComponent
 				);
 
 				$columns['DELETE_USER'] = "
-					<div class=\"bx-disk-user-link\"><span class=\"bx-disk-fileinfo-owner-avatar\" style=\"background-image: url({$deleteUser->getAvatarSrc()});\"></span><a target='_blank' href=\"{$deletedByLink}\" id=\"\">" . htmlspecialcharsbx(
+					<div class=\"bx-disk-user-link\"><span class=\"bx-disk-fileinfo-owner-avatar\" style=\"background-image: url('" . Uri::urnEncode($deleteUser->getAvatarSrc()) . "');\"></span><a target='_blank' href=\"{$deletedByLink}\" id=\"\">" . htmlspecialcharsbx(
 						$deleteUser->getFormattedName()) . "</a></div>
 				";
 			}

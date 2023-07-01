@@ -128,9 +128,13 @@ $APPLICATION->IncludeComponent(
 		});
 
 		AccessRights.draw();
-		setTimeout(function(){
-			BX.onCustomEvent('<?= $initPopupEvent ?>', [{openDialogWhenInit: false}])
-		}, 1000);
+
+		BX.ready(function() {
+			setTimeout(function() {
+				BX.onCustomEvent('<?= $initPopupEvent ?>', [{openDialogWhenInit: false}])
+			});
+		});
+
 	</script>
 
 	<?php

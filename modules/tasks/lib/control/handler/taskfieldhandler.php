@@ -90,6 +90,32 @@ class TaskFieldHandler
 	/**
 	 * @return $this
 	 */
+	public function prepareIntegration(): self
+	{
+		if ($this->taskId)
+		{
+			return $this;
+		}
+
+		if (!array_key_exists('IM_CHAT_ID', $this->fields))
+		{
+			$this->fields['IM_CHAT_ID'] = 0;
+		}
+
+		if (!array_key_exists('IM_MESSAGE_ID', $this->fields))
+		{
+			$this->fields['IM_MESSAGE_ID'] = 0;
+		}
+
+		$this->fields['IM_CHAT_ID'] = (int) $this->fields['IM_CHAT_ID'];
+		$this->fields['IM_MESSAGE_ID'] = (int) $this->fields['IM_MESSAGE_ID'];
+
+		return $this;
+	}
+
+	/**
+	 * @return $this
+	 */
 	public function prepareGroupId(): self
 	{
 		if (
@@ -107,6 +133,7 @@ class TaskFieldHandler
 
 		if (
 			$this->taskId
+			&& isset($this->fields['GROUP_ID'])
 			&& $this->fields['GROUP_ID']
 			&& $this->fields['GROUP_ID'] !== (int) $this->taskData['GROUP_ID']
 		)
@@ -493,8 +520,8 @@ class TaskFieldHandler
 	{
 		$this->checkDatesInProject();
 
-		$startDate = $this->fields['START_DATE_PLAN'];
-		$endDate = $this->fields['END_DATE_PLAN'];
+		$startDate = ($this->fields['START_DATE_PLAN'] ?? null);
+		$endDate = ($this->fields['END_DATE_PLAN'] ?? null);
 
 		// you are not allowed to clear up END_DATE_PLAN while the task is linked
 		if (
@@ -622,7 +649,7 @@ class TaskFieldHandler
 			)
 			{
 				$subordinateDepartments = Department::getSubordinateIds(
-					$this->fields['CREATED_BY'],
+					($this->fields['CREATED_BY'] ?? null),
 					true
 				);
 
@@ -662,7 +689,7 @@ class TaskFieldHandler
 	{
 		if (
 			$this->taskId
-			&& is_array($this->fields['DEPENDS_ON'])
+			&& is_array($this->fields['DEPENDS_ON'] ?? null)
 			&& in_array($this->taskId, $this->fields['DEPENDS_ON'])
 		)
 		{

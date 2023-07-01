@@ -1,4 +1,7 @@
-<?
+<?php
+
+use Bitrix\Crm\Activity\Provider\Tasks\Task;
+
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 /** @var CBitrixComponent $this */
@@ -21,11 +24,20 @@ $bMobile = (
 	&& $arParams["PARAMS"]["MOBILE"] == "Y"
 );
 
+
 if (intval($arParams["FIELDS"]["ENTITY_ID"]) > 0)
 {
 	$arActivity = $arParams["ACTIVITY"];
+	$providerId = $arActivity['PROVIDER_ID'] ?? '';
+	$providerTypeId = $arActivity['PROVIDER_TYPE_ID'] ?? '';
 
-	if ($arActivity["TYPE_ID"] == CCrmActivityType::Task)
+	if (
+		(int)$arActivity["TYPE_ID"] === CCrmActivityType::Task
+		|| (
+			$providerId === Task::getId()
+			&& $providerTypeId === Task::getProviderTypeId()
+		)
+	)
 	{
 		\Bitrix\Main\UI\Extension::load([
 			'ui.design-tokens',

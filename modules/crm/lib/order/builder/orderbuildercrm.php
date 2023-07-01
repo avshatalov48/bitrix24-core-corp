@@ -1,22 +1,22 @@
-<?
+<?php
+
 namespace Bitrix\Crm\Order\Builder;
 
+use Bitrix\Crm\Order\BasketItem;
+use Bitrix\Crm\Order\ContactCompanyEntity;
+use Bitrix\Crm\Order\Matcher;
+use Bitrix\Crm\Order\Order;
+use Bitrix\Crm\Order\PersonType;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ObjectException;
-use Bitrix\Main\SystemException;
 use Bitrix\Main\Web\Json;
 use Bitrix\Sale\Helpers\Order\Builder\BuildingException;
 use Bitrix\Sale\Helpers\Order\Builder\OrderBuilder;
 use Bitrix\Sale\Helpers\Order\Builder\OrderBuilderNew;
 use Bitrix\Sale\Helpers\Order\Builder\SettingsContainer;
-use Bitrix\Crm\Order\Order;
-use Bitrix\Crm\Order\BasketItem;
-use Bitrix\Crm\Order\ContactCompanyEntity;
-use Bitrix\Crm\Order\Matcher;
-use Bitrix\Crm\Order\PersonType;
 
 if (!Loader::includeModule('sale'))
 {
@@ -209,7 +209,7 @@ class OrderBuilderCrm extends OrderBuilder
 		{
 			foreach($this->formData["PAYMENT"] as $idx => $data)
 			{
-				if(is_array($data['fields']))
+				if(isset($data['fields']) && is_array($data['fields']))
 				{
 					$this->formData["PAYMENT"][$idx] = $data['fields'];
 				}
@@ -302,11 +302,11 @@ class OrderBuilderCrm extends OrderBuilder
 
 	protected function setContactCompanyCollection()
 	{
-		$client = $this->formData['CLIENT'];
+		$client = $this->formData['CLIENT'] ?? [];
 		$clientCollection = $this->order->getContactCompanyCollection();
 		$clientCollection->clearCollection();
 
-		if((int)($client['COMPANY_ID']) > 0)
+		if ((int)($client['COMPANY_ID'] ?? 0) > 0)
 		{
 			/** @var \Bitrix\Crm\Order\Company $company */
 			$company = $clientCollection->createCompany();
@@ -316,11 +316,11 @@ class OrderBuilderCrm extends OrderBuilder
 			]);
 		}
 
-		if(!empty($client['CONTACT_IDS']) && is_array($client['CONTACT_IDS']))
+		if (!empty($client['CONTACT_IDS']) && is_array($client['CONTACT_IDS']))
 		{
 			$contactIds = array_unique($client['CONTACT_IDS']);
 			$firstKey = key($contactIds);
-			foreach($contactIds as $key => $itemId)
+			foreach ($contactIds as $key => $itemId)
 			{
 				if ($itemId > 0)
 				{
@@ -338,6 +338,7 @@ class OrderBuilderCrm extends OrderBuilder
 		{
 			$requisites['REQUISITE_ID'] = (int)($this->formData['REQUISITE_ID']);
 		}
+
 		if (isset($this->formData['BANK_DETAIL_ID']) && (int)($this->formData['BANK_DETAIL_ID'])> 0)
 		{
 			$requisites['BANK_DETAIL_ID'] = (int)($this->formData['BANK_DETAIL_ID']);
@@ -357,7 +358,7 @@ class OrderBuilderCrm extends OrderBuilder
 		{
 			$this->formData['TRADE_BINDINGS'] = [
 				[
-					'TRADING_PLATFORM_ID' => (int)$this->formData['TRADING_PLATFORM']
+					'TRADING_PLATFORM_ID' => (int)($this->formData['TRADING_PLATFORM'] ?? 0)
 				]
 			];
 
@@ -402,6 +403,7 @@ class OrderBuilderCrm extends OrderBuilder
 	{
 		$clientProperties = Matcher\FieldMatcher::getPropertyValues($entity->getField('ENTITY_TYPE_ID'), (int)$entity->getField('ENTITY_ID'));
 		$propertyCollection = $this->order->getPropertyCollection();
+
 		/**
 		 * @var  \Bitrix\Crm\Order\PropertyValue $property
 		 */

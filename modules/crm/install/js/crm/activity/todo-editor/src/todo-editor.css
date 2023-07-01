@@ -125,7 +125,8 @@
 	transition-duration: unset;
 }
 
-.crm-activity__todo-editor_action-btn:hover .crm-activity__todo-editor_action-btn-icon {
+.crm-activity__todo-editor_action-btn:hover .crm-activity__todo-editor_action-btn-icon,
+.crm-activity__todo-editor_action-btn:hover .crm-activity__todo-editor_action-user-selector-tick-icon {
 	background-color: var(--ui-color-base-40, #bdc1c6);
 	transition-duration: unset;
 }
@@ -145,8 +146,41 @@
 	transition: background-color 0.2s linear;
 }
 
+.crm-activity__todo-editor_action-delimiter {
+	width: 1px;
+	height: 12px;
+	margin-right: 16px;
+	margin-bottom: 3px;
+	mask-size: 10px;
+	background-color: var(--ui-color-base-30, #D5D7DB);
+	transition: background-color 0.2s linear;
+}
+
+.crm-activity__todo-editor_action-delimiter-icon {
+	mask-image: url("./images/crm-activity__todo-editor_delimiter-icon.svg");
+}
+
+.crm-activity__todo-editor_action-user-selector-tick-icon {
+	display: inline-block;
+	width: 18px;
+	height: 18px;
+	mask-image: url("./images/crm-activity__todo-editor_selector-indicator-icon.svg");
+	mask-position: center center;
+	mask-repeat: no-repeat;
+	background-color: var(--ui-color-base-30, #D5D7DB);
+	transition: background-color 0.2s linear;
+}
+
+.crm-activity__todo-editor_action-user-selector-tick-icon.--flipped {
+	transform: rotate(-180deg);
+}
+
 .crm-activity__todo-editor_action-btn-icon.--micro {
 	mask-image: url("./images/crm-activity__todo-editor_micro-icon.svg");
+}
+
+.crm-activity__todo-editor_action-btn-icon.--settings {
+	mask-image: url("./images/crm-activity__todo-editor_settings-icon.svg");
 }
 
 .crm-activity__todo-editor_action-btn-icon.--attach {

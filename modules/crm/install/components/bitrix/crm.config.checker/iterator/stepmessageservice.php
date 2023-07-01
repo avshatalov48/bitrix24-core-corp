@@ -19,7 +19,7 @@ class StepMessageService extends Step
 
 	protected function init(array $data)
 	{
-		$this->lastTemplateId = intval($data["lastTemplateId"]);
+		$this->lastTemplateId = (int)($data["lastTemplateId"] ?? 0);
 	}
 
 	protected function pack()

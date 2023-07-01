@@ -11,8 +11,7 @@ $APPLICATION->SetTitle(GetMessage("TITLE"));
 		"POPUP_COMPONENT_TEMPLATE_NAME" => ".default",
 		"POPUP_COMPONENT_PARAMS" => [],
 		"PAGE_MODE" => false
-	),
-	$component
+	)
 );
 ?>
 <?require($_SERVER["DOCUMENT_ROOT"]."/bitrix/footer.php");?>

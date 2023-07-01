@@ -158,6 +158,10 @@ class CBPImOpenLinesMessageActivity extends CBPActivity
 		else
 		{
 			$attachmentFiles = \CIMDisk::UploadFileFromMain($chatId, $attachmentFiles);
+			if (!$attachmentFiles)
+			{
+				return null;
+			}
 			$attachmentFiles = array_map(function ($file)
 			{
 				return 'upload'.$file;
@@ -267,7 +271,7 @@ class CBPImOpenLinesMessageActivity extends CBPActivity
 		{
 			$clients = $this->getOrderClients($entityId);
 		}
-		elseif (CCrmOwnerType::isUseFactoryBasedApproach($entityTypeId))
+		elseif ($entityTypeId !== \CCrmOwnerType::Contact && CCrmOwnerType::isUseFactoryBasedApproach($entityTypeId))
 		{
 			$clients = $this->getItemClients($entityTypeId, $entityId);
 		}

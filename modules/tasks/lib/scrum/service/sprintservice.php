@@ -12,6 +12,8 @@ use Bitrix\Main\Entity\Query;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\UI\PageNavigation;
 use Bitrix\Socialnetwork\Item\Workgroup;
+use Bitrix\Tasks\Access\ActionDictionary;
+use Bitrix\Tasks\Access\TaskAccessController;
 use Bitrix\Tasks\Scrum\Form\EntityForm;
 use Bitrix\Tasks\Scrum\Internal\EntityTable;
 use Bitrix\Tasks\Scrum\Utility\SprintRanges;
@@ -188,7 +190,10 @@ class SprintService implements Errorable
 			$subTaskIds = [];
 			foreach ($taskIds as $taskId)
 			{
-				$subTaskIds = array_merge($subTaskIds, $taskService->getSubTaskIds($sprint->getGroupId(), $taskId));
+				$subTaskIds = array_merge(
+					$subTaskIds,
+					$taskService->getSubTaskIds($sprint->getGroupId(), $taskId)
+				);
 			}
 			if ($taskService->getErrors())
 			{
@@ -220,7 +225,10 @@ class SprintService implements Errorable
 
 			if ($lastSprintId && $robotService)
 			{
-				$stageIdsMap = $kanbanService->getStageIdsMapBetweenTwoSprints($sprint->getId(), $lastSprintId);
+				$stageIdsMap = $kanbanService->getStageIdsMapBetweenTwoSprints(
+					$sprint->getId(),
+					$lastSprintId
+				);
 				if ($stageIdsMap)
 				{
 					$robotService->updateRobotsOfLastSprint($sprint->getGroupId(), $stageIdsMap);
@@ -293,7 +301,14 @@ class SprintService implements Errorable
 					return $sprint;
 				}
 
-				if (!$isCompletedTask)
+				if (
+					!$isCompletedTask
+					&& TaskAccessController::can(
+						$this->userId,
+						ActionDictionary::ACTION_TASK_COMPLETE,
+						$finishedTaskId
+					)
+				)
 				{
 					$taskIdsToComplete[] = $finishedTaskId;
 				}
@@ -476,8 +491,7 @@ class SprintService implements Errorable
 				'!=STATUS' => EntityForm::SPRINT_COMPLETED,
 			],
 			'order' => [
-				'SORT' => 'ASC',
-				'DATE_END' => 'DESC',
+				'DATE_START' => 'ASC',
 			]
 		]);
 		while ($sprintData = $queryObject->fetch())
@@ -538,6 +552,43 @@ class SprintService implements Errorable
 		}
 
 		return $sprints;
+	}
+
+	/**
+	 * The method returns the end date of the last planned sprint.
+	 *
+	 * @param int $groupId Group id.
+	 * @return int|null
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public function getDateEndFromLastPlannedSprint(int $groupId): ?int
+	{
+		$sprint = new EntityForm();
+
+		$queryObject = EntityTable::getList([
+			'select' => ['ID', 'DATE_END'],
+			'filter' => [
+				'GROUP_ID'=> $groupId,
+				'=ENTITY_TYPE' => EntityForm::SPRINT_TYPE,
+				'=STATUS' => EntityForm::SPRINT_PLANNED,
+			],
+			'order' => [
+				'DATE_START' => 'DESC',
+			]
+		]);
+		if ($data = $queryObject->fetch())
+		{
+			$sprint->fillFromDatabase($data);
+		}
+
+		if ($sprint->isEmpty())
+		{
+			return null;
+		}
+
+		return $sprint->getDateEnd()->getTimestamp();
 	}
 
 	/**
@@ -940,6 +991,11 @@ class SprintService implements Errorable
 				'start' => $this->canStartSprint($this->userId, $sprint->getGroupId()),
 				'complete' => $this->canCompleteSprint($this->userId, $sprint->getGroupId()),
 			],
+			'isShownContent' => (
+				($sprint->isShownContent($this->userId) && !$sprint->isCompletedSprint())
+					? 'Y'
+					: 'N'
+			),
 		];
 	}
 
@@ -956,7 +1012,10 @@ class SprintService implements Errorable
 		}
 
 		$key = $userId . $groupId;
-		if (self::$allowedActions[$key])
+		if (
+			array_key_exists($key, self::$allowedActions)
+			&& self::$allowedActions[$key]
+		)
 		{
 			return self::$allowedActions[$key];
 		}
@@ -992,7 +1051,7 @@ class SprintService implements Errorable
 		}
 
 		$key = $userId . $groupId;
-		if (self::$allowedActions[$key])
+		if (self::$allowedActions[$key] ?? null)
 		{
 			return self::$allowedActions[$key];
 		}

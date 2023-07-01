@@ -842,7 +842,7 @@ class Task implements \IBPWorkflowDocument
 		$documentFields = self::getDocumentFields(null);
 		foreach ($fields as $fieldName => $fieldValue)
 		{
-			if($documentFields[$fieldName]['Type'] === 'bool')
+			if(($documentFields[$fieldName]['Type'] ?? null) === 'bool')
 			{
 				$fields[$fieldName] = self::resolveBoolType($fieldValue);
 			}

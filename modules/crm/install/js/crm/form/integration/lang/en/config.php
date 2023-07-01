@@ -28,4 +28,4 @@ You have to disconnect the current group to change it.
 Other forms presently using the current group will stop receiving orders from it.
 ";
 $MESS["CRM_FORM_INTEGRATION_JS_PROVIDER_FACEBOOK"] = "Facebook";
-$MESS["CRM_FORM_INTEGRATION_JS_PROVIDER_VKONTAKTE"] = "VK";
+$MESS["CRM_FORM_INTEGRATION_JS_PROVIDER_VKONTAKTE"] = "VK Ads";

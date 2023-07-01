@@ -103,7 +103,7 @@ class TaskList
 			$select[] = 'DESCRIPTION_IN_BBCODE';
 		}
 
-		if (ModuleManager::isModuleInstalled('forum'))
+		if (!ModuleManager::isModuleInstalled('forum'))
 		{
 			$select = array_diff($select, ['COMMENTS_COUNT', 'FORUM_ID', 'SERVICE_COMMENTS_COUNT']);
 		}

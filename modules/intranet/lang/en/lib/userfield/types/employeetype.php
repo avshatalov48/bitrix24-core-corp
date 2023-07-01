@@ -1,4 +1,3 @@
-<?
+<?php
 $MESS["INTRANET_FIELD_EMPLOYEE_CHANGE"] = "Change";
-$MESS["INTRANET_PROPERTY_TITLE"] = "Bind to user";
-?>
+$MESS["INTRANET_PROPERTY_TITLE_MSGVER_1"] = "Bind to employee";

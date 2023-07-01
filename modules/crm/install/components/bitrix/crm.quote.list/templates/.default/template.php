@@ -1,5 +1,9 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 /**
  * Bitrix vars
@@ -13,37 +17,44 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 use \Bitrix\Crm\Category\DealCategory;
 use \Bitrix\Crm\Conversion\EntityConverter;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Tracking;
 use Bitrix\Crm\UI\NavigationBarPanel;
+use Bitrix\Main\UI\Extension;
 
 $APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/crm-entity-show.css");
-if(SITE_TEMPLATE_ID === 'bitrix24')
+if (SITE_TEMPLATE_ID === 'bitrix24')
 {
 	$APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/bitrix24/crm-entity-show.css");
 }
+
 if (CModule::IncludeModule('bitrix24') && !\Bitrix\Crm\CallList\CallList::isAvailable())
 {
 	CBitrix24::initLicenseInfoPopupJS();
 }
+
 CJSCore::Init(['crm_activity_planner', 'crm_common', 'ui.fonts.opensans']);
+
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/progress_control.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/interface_grid.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/autorun_proc.js');
 Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/js/crm/css/autorun_proc.css');
 
+Extension::load(['crm.restriction.filter-fields']);
+
 ?><div id="rebuildMessageWrapper"><?
 
-if($arResult['NEED_FOR_REBUILD_SEARCH_CONTENT']):
+if (!empty($arResult['NEED_FOR_REBUILD_SEARCH_CONTENT'])):
 	?><div id="rebuildQuoteSearchWrapper"></div><?
 endif;
 
-if($arResult['NEED_FOR_REBUILD_QUOTE_ATTRS']):
+if (!empty($arResult['NEED_FOR_REBUILD_QUOTE_ATTRS'])):
 	?><div id="rebuildQuoteAttrsMsg" class="crm-view-message">
 		<?=GetMessage('CRM_QUOTE_REBUILD_ACCESS_ATTRS', array('#ID#' => 'rebuildQuoteAttrsLink', '#URL#' => $arResult['PATH_TO_PRM_LIST']))?>
 	</div><?
 endif;
 
-if($arResult['NEED_FOR_TRANSFER_PS_REQUISITES']):
+if (!empty($arResult['NEED_FOR_TRANSFER_PS_REQUISITES'])):
 	?><div id="transferPSRequisitesMsg" class="crm-view-message">
 	<?=Bitrix\Crm\Requisite\Conversion\PSRequisiteConverter::getIntroMessage(
 		array(
@@ -67,25 +78,30 @@ $gridManagerCfg = array(
 	'gridId' => $arResult['GRID_ID'],
 	'formName' => "form_{$arResult['GRID_ID']}",
 	'allRowsCheckBoxId' => "actallrows_{$arResult['GRID_ID']}",
-	'filterFields' => array()
+	'filterFields' => []
 );
 echo CCrmViewHelper::RenderQuoteStatusSettings();
 $prefix = $arResult['GRID_ID'];
 $prefixLC = mb_strtolower($arResult['GRID_ID']);
 
-	$arResult['GRID_DATA'] = array();
-	$arColumns = array();
+	$arResult['GRID_DATA'] = [];
+	$arColumns = [];
 	foreach ($arResult['HEADERS'] as $arHead)
 		$arColumns[$arHead['id']] = false;
 
 	$now = time() + CTimeZone::GetOffset();
+
+	$fieldContentTypeMap = \Bitrix\Crm\Model\FieldContentTypeTable::loadForMultipleItems(
+		\CCrmOwnerType::Quote,
+		array_keys($arResult['QUOTE']),
+	);
 
 	foreach($arResult['QUOTE'] as $sKey =>  $arQuote)
 	{
 		$jsTitle = isset($arQuote['~TITLE']) ? CUtil::JSEscape($arQuote['~TITLE']) : '';
 		$jsShowUrl = isset($arQuote['PATH_TO_QUOTE_SHOW']) ? CUtil::JSEscape($arQuote['PATH_TO_QUOTE_SHOW']) : '';
 
-		$arActions = array();
+		$arActions = [];
 
 		$arActions[] = array(
 			'TITLE' => GetMessage('CRM_QUOTE_SHOW_TITLE'),
@@ -94,7 +110,7 @@ $prefixLC = mb_strtolower($arResult['GRID_ID']);
 			'DEFAULT' => true
 		);
 
-		if($arQuote['EDIT'])
+		if ($arQuote['EDIT'])
 		{
 			$arActions[] = array(
 				'TITLE' => GetMessage('CRM_QUOTE_EDIT_TITLE'),
@@ -124,16 +140,16 @@ $prefixLC = mb_strtolower($arResult['GRID_ID']);
 
 		$arActions[] = array('SEPARATOR' => true);
 
-		if(!$isInternal && $arResult['CAN_CONVERT'])
+		if (!$isInternal && $arResult['CAN_CONVERT'])
 		{
-			if($arResult['CONVERSION_PERMITTED'])
+			if ($arResult['CONVERSION_PERMITTED'])
 			{
 				$arSchemeDescriptions = \Bitrix\Crm\Conversion\QuoteConversionScheme::getJavaScriptDescriptions(true);
 				if (!\Bitrix\Crm\Settings\InvoiceSettings::getCurrent()->isOldInvoicesEnabled())
 				{
 					unset($arSchemeDescriptions[\Bitrix\Crm\Conversion\QuoteConversionScheme::INVOICE_NAME]);
 				}
-				$arSchemeList = array();
+				$arSchemeList = [];
 				foreach($arSchemeDescriptions as $name => $description)
 				{
 					$arSchemeList[] = array(
@@ -142,7 +158,7 @@ $prefixLC = mb_strtolower($arResult['GRID_ID']);
 						'ONCLICK' => "BX.CrmQuoteConverter.getCurrent().convert({$arQuote['ID']}, BX.CrmQuoteConversionScheme.createConfig('{$name}'), '".CUtil::JSEscape($APPLICATION->GetCurPage())."');"
 					);
 				}
-				if(!empty($arSchemeList))
+				if (!empty($arSchemeList))
 				{
 					$arActions[] = array(
 						'TITLE' => GetMessage('CRM_QUOTE_CREATE_ON_BASIS_TITLE'),
@@ -172,11 +188,11 @@ $prefixLC = mb_strtolower($arResult['GRID_ID']);
 			ExecuteModuleEventEx($event, array('CRM_QUOTE_LIST_MENU', $eventParam, &$arActions));
 		}
 
-		$contactID = isset($arQuote['~CONTACT_ID']) ? intval($arQuote['~CONTACT_ID']) : 0;
-		$companyID = isset($arQuote['~COMPANY_ID']) ? intval($arQuote['~COMPANY_ID']) : 0;
-		$leadID = isset($arQuote['~LEAD_ID']) ? intval($arQuote['~LEAD_ID']) : 0;
-		$dealID = isset($arQuote['~DEAL_ID']) ? intval($arQuote['~DEAL_ID']) : 0;
-		$myCompanyID = isset($arQuote['~MYCOMPANY_ID']) ? intval($arQuote['~MYCOMPANY_ID']) : 0;
+		$contactID = (int)($arQuote['~CONTACT_ID'] ?? 0);
+		$companyID = (int)($arQuote['~COMPANY_ID'] ?? 0);
+		$leadID = (int)($arQuote['~LEAD_ID'] ?? 0);
+		$dealID = (int)($arQuote['~DEAL_ID'] ?? 0);
+		$myCompanyID = (int)($arQuote['~MYCOMPANY_ID'] ?? 0);
 
 
 		$webformId = null;
@@ -285,6 +301,13 @@ $prefixLC = mb_strtolower($arResult['GRID_ID']);
 			$resultItem['columns']
 		);
 
+		$resultItem['columns'] = \Bitrix\Crm\Entity\FieldContentType::enrichGridRow(
+			\CCrmOwnerType::Quote,
+			$fieldContentTypeMap[$arQuote['ID']] ?? [],
+			$arQuote,
+			$resultItem['columns'],
+		);
+
 		if ($arQuote['IN_COUNTER_FLAG'] === true)
 		{
 			if ($resultItem['columnClasses']['CLOSEDATE'] != '')
@@ -317,7 +340,7 @@ $prefixLC = mb_strtolower($arResult['GRID_ID']);
 //region Action Panel
 $controlPanel = array('GROUPS' => array(array('ITEMS' => array())));
 
-if(!$isInternal
+if (!$isInternal
 	&& ($allowWrite || $allowDelete))
 {
 	$yesnoList = array(
@@ -339,7 +362,7 @@ if(!$isInternal
 
 	$actionList = array(array('NAME' => GetMessage('CRM_QUOTE_LIST_CHOOSE_ACTION'), 'VALUE' => 'none'));
 
-	if($allowWrite)
+	if ($allowWrite)
 	{
 		//region Set Status
 		$statusList = array(array('NAME' => GetMessage('CRM_STATUS_INIT'), 'VALUE' => ''));
@@ -373,7 +396,7 @@ if(!$isInternal
 		//endregion
 		//region Assign To
 		//region Render User Search control
-		if(!Bitrix\Main\Grid\Context::isInternalRequest())
+		if (!Bitrix\Main\Grid\Context::isInternalRequest())
 		{
 			//action_assigned_by_search + _control
 			//Prefix control will be added by main.ui.grid
@@ -387,7 +410,7 @@ if(!$isInternal
 					'SHOW_EXTRANET_USERS' => 'NONE',
 					'POPUP' => 'Y',
 					'SITE_ID' => SITE_ID,
-					'NAME_TEMPLATE' => $arResult['NAME_TEMPLATE']
+					'NAME_TEMPLATE' => $arResult['NAME_TEMPLATE'] ?? ''
 				),
 				null,
 				array('HIDE_ICONS' => 'Y')
@@ -428,7 +451,7 @@ if(!$isInternal
 		);
 		//endregion
 		//region Create call list
-		if(IsModuleInstalled('voximplant'))
+		if (IsModuleInstalled('voximplant'))
 		{
 			$actionList[] = array(
 				'NAME' => GetMessage('CRM_QUOTE_CREATE_CALL_LIST'),
@@ -450,13 +473,13 @@ if(!$isInternal
 		//endregion
 	}
 
-	if($allowDelete)
+	if ($allowDelete)
 	{
 		$controlPanel['GROUPS'][0]['ITEMS'][] = $snippet->getRemoveButton();
 		$actionList[] = $snippet->getRemoveAction();
 	}
 
-	if($allowWrite)
+	if ($allowWrite)
 	{
 		//region Edit Button
 		$controlPanel['GROUPS'][0]['ITEMS'][] = $snippet->getEditButton();
@@ -488,7 +511,7 @@ if(!$isInternal
 		//endregion
 	}
 
-	if($callListUpdateMode)
+	if ($callListUpdateMode)
 	{
 		$callListContext = \CUtil::jsEscape($arResult['CALL_LIST_CONTEXT']);
 		$controlPanel['GROUPS'][0]['ITEMS'][] = [
@@ -507,7 +530,7 @@ if(!$isInternal
 	else
 	{
 		//region Create & start call list
-		if(IsModuleInstalled('voximplant'))
+		if (IsModuleInstalled('voximplant'))
 		{
 			$controlPanel['GROUPS'][0]['ITEMS'][] = array(
 				"TYPE" => \Bitrix\Main\Grid\Panel\Types::BUTTON,
@@ -534,7 +557,7 @@ if(!$isInternal
 }
 //endregion
 
-if($arResult['ENABLE_TOOLBAR'])
+if ($arResult['ENABLE_TOOLBAR'])
 {
 	$addButton =array(
 		'TEXT' => GetMessage('CRM_QUOTE_LIST_ADD_SHORT'),
@@ -543,7 +566,7 @@ if($arResult['ENABLE_TOOLBAR'])
 		'ICON' => 'btn-new'
 	);
 
-	if($arResult['ADD_EVENT_NAME'] !== '')
+	if ($arResult['ADD_EVENT_NAME'] !== '')
 	{
 		$addButton['ONCLICK'] = "BX.onCustomEvent(window, '{$arResult['ADD_EVENT_NAME']}')";
 	}
@@ -552,25 +575,25 @@ if($arResult['ENABLE_TOOLBAR'])
 		'bitrix:crm.interface.toolbar',
 		'',
 		array(
-			'TOOLBAR_ID' => mb_strtolower($arResult['GRID_ID']).'_toolbar',
-			'BUTTONS' => array($addButton)
+			'TOOLBAR_ID' => mb_strtolower($arResult['GRID_ID']) . '_toolbar',
+			'BUTTONS' => [$addButton]
 		),
 		$component,
-		array('HIDE_ICONS' => 'Y')
+		['HIDE_ICONS' => 'Y']
 	);
 }
 
 //region Navigation
 $navigationHtml = '';
-if(isset($arResult['PAGINATION']) && is_array($arResult['PAGINATION']))
+if (isset($arResult['PAGINATION']) && is_array($arResult['PAGINATION']))
 {
 	ob_start();
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.pagenavigation',
 		'',
-		isset($arResult['PAGINATION']) ? $arResult['PAGINATION'] : array(),
+		$arResult['PAGINATION'] ?? [],
 		$component,
-		array('HIDE_ICONS' => 'Y')
+		['HIDE_ICONS' => 'Y']
 	);
 	$navigationHtml = ob_get_contents();
 	ob_end_clean();
@@ -608,12 +631,11 @@ $APPLICATION->IncludeComponent(
 				'showPopupInCenter' => true,
 			],
 		),
-		'LIVE_SEARCH_LIMIT_INFO' => isset($arResult['LIVE_SEARCH_LIMIT_INFO'])
-			? $arResult['LIVE_SEARCH_LIMIT_INFO'] : null,
+		'LIVE_SEARCH_LIMIT_INFO' => $arResult['LIVE_SEARCH_LIMIT_INFO'] ?? null,
 		'ENABLE_LIVE_SEARCH' => true,
 		'ACTION_PANEL' => $controlPanel,
 		'PAGINATION' => isset($arResult['PAGINATION']) && is_array($arResult['PAGINATION'])
-			? $arResult['PAGINATION'] : array(),
+			? $arResult['PAGINATION'] : [],
 		'ENABLE_ROW_COUNT_LOADER' => true,
 		'PRESERVE_HISTORY' => $arResult['PRESERVE_HISTORY'],
 		'NAVIGATION_BAR' => (new NavigationBarPanel(CCrmOwnerType::Quote))
@@ -634,7 +656,7 @@ $APPLICATION->IncludeComponent(
 				'activityServiceUrl' => '',
 				'taskCreateUrl'=> '',
 				'serviceUrl' => '/bitrix/components/bitrix/crm.quote.list/list.ajax.php?siteID='.SITE_ID.'&'.bitrix_sessid_get(),
-				'loaderData' => isset($arParams['AJAX_LOADER']) ? $arParams['AJAX_LOADER'] : null
+				'loaderData' => $arParams['AJAX_LOADER'] ?? null
 			),
 			'MESSAGES' => array(
 				'deletionDialogTitle' => GetMessage('CRM_QUOTE_DELETE_TITLE'),
@@ -684,7 +706,8 @@ $APPLICATION->IncludeComponent(
 
 					/** @see BX.Crm.PushCrmSettings */
 					new exports.PushCrmSettings({
-						entityTypeId: <?= (int)\CCrmOwnerType::Quote ?>,
+						smartActivityNotificationSupported: <?= Container::getInstance()->getFactory(\CCrmOwnerType::Quote)->isSmartActivityNotificationSupported() ? 'true' : 'false' ?>,
+						entityTypeId: <?= \CCrmOwnerType::Quote ?>,
 						rootMenu: settingsButton ? settingsButton.getMenuWindow() : undefined,
 						grid: BX.Reflection.getClass('BX.Main.gridManager') ? BX.Main.gridManager.getInstanceById('<?= \CUtil::JSEscape($arResult['GRID_ID']) ?>') : undefined,
 					});
@@ -693,7 +716,7 @@ $APPLICATION->IncludeComponent(
 		);
 	</script>
 <?endif;?><?
-if($arResult['CONVERSION_PERMITTED'] && $arResult['CAN_CONVERT'] && isset($arResult['CONVERSION_CONFIG'])):?>
+if ($arResult['CONVERSION_PERMITTED'] && $arResult['CAN_CONVERT'] && isset($arResult['CONVERSION_CONFIG'])):?>
 	<script type="text/javascript">
 		BX.ready(
 			function()
@@ -736,12 +759,12 @@ if($arResult['CONVERSION_PERMITTED'] && $arResult['CAN_CONVERT'] && isset($arRes
 		);
 	</script>
 <?endif;?>
-<?if($arResult['NEED_FOR_REBUILD_SEARCH_CONTENT']):?>
+<?if ($arResult['NEED_FOR_REBUILD_SEARCH_CONTENT']):?>
 	<script type="text/javascript">
 		BX.ready(
 			function()
 			{
-				if(BX.AutorunProcessPanel.isExists("rebuildQuoteSearch"))
+				if (BX.AutorunProcessPanel.isExists("rebuildQuoteSearch"))
 				{
 					return;
 				}
@@ -764,13 +787,13 @@ if($arResult['CONVERSION_PERMITTED'] && $arResult['CAN_CONVERT'] && isset($arRes
 		);
 	</script>
 <?endif;?>
-<?if($arResult['NEED_FOR_REBUILD_QUOTE_ATTRS']):?>
+<?if ($arResult['NEED_FOR_REBUILD_QUOTE_ATTRS']):?>
 <script type="text/javascript">
 	BX.ready(
 		function()
 		{
 			var link = BX("rebuildQuoteAttrsLink");
-			if(link)
+			if (link)
 			{
 				BX.bind(
 					link,
@@ -778,7 +801,7 @@ if($arResult['CONVERSION_PERMITTED'] && $arResult['CAN_CONVERT'] && isset($arRes
 					function(e)
 					{
 						var msg = BX("rebuildQuoteAttrsMsg");
-						if(msg)
+						if (msg)
 						{
 							msg.style.display = "none";
 						}
@@ -789,7 +812,7 @@ if($arResult['CONVERSION_PERMITTED'] && $arResult['CAN_CONVERT'] && isset($arRes
 	);
 </script>
 <?endif;?>
-<?if($arResult['NEED_FOR_TRANSFER_PS_REQUISITES']):?>
+<?if ($arResult['NEED_FOR_TRANSFER_PS_REQUISITES']):?>
 	<script type="text/javascript">
 		BX.ready(
 			function()
@@ -813,7 +836,7 @@ if($arResult['CONVERSION_PERMITTED'] && $arResult['CAN_CONVERT'] && isset($arRes
 					function()
 					{
 						var msg = BX("transferPSRequisitesMsg");
-						if(msg)
+						if (msg)
 						{
 							msg.style.display = "none";
 						}
@@ -821,7 +844,7 @@ if($arResult['CONVERSION_PERMITTED'] && $arResult['CAN_CONVERT'] && isset($arRes
 				);
 
 				var transferLink = BX("transferPSRequisitesLink");
-				if(transferLink)
+				if (transferLink)
 				{
 					BX.bind(
 						transferLink,
@@ -835,7 +858,7 @@ if($arResult['CONVERSION_PERMITTED'] && $arResult['CAN_CONVERT'] && isset($arRes
 				}
 
 				var skipTransferLink = BX("skipTransferPSRequisitesLink");
-				if(skipTransferLink)
+				if (skipTransferLink)
 				{
 					BX.bind(
 						skipTransferLink,
@@ -845,7 +868,7 @@ if($arResult['CONVERSION_PERMITTED'] && $arResult['CAN_CONVERT'] && isset($arRes
 							converter.skip();
 
 							var msg = BX("transferPSRequisitesMsg");
-							if(msg)
+							if (msg)
 							{
 								msg.style.display = "none";
 							}
@@ -857,4 +880,6 @@ if($arResult['CONVERSION_PERMITTED'] && $arResult['CAN_CONVERT'] && isset($arRes
 			}
 		);
 	</script>
-<?endif;?>
+<?endif;
+
+echo $arResult['ACTIVITY_FIELD_RESTRICTIONS'] ?? '';

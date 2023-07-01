@@ -1,5 +1,9 @@
 <?php
-if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 use Bitrix\Crm\Component\EntityDetails\ComponentMode;
 
@@ -37,16 +41,15 @@ $APPLICATION->IncludeComponent(
 	'bitrix:crm.order.payment.menu',
 	'',
 	array(
-		'PATH_TO_ORDER_PAYMENT_LIST' => $arResult['PATH_TO_ORDER_PAYMENT_LIST'],
-		'PATH_TO_ORDER_PAYMENT_SHOW' => $arResult['PATH_TO_ORDER_PAYMENT_SHOW'],
-		'PATH_TO_ORDER_PAYMENT_EDIT' => $arResult['PATH_TO_ORDER_PAYMENT_EDIT'],
+		'PATH_TO_ORDER_PAYMENT_LIST' => $arResult['PATH_TO_ORDER_PAYMENT_LIST'] ?? '',
+		'PATH_TO_ORDER_PAYMENT_SHOW' => $arResult['PATH_TO_ORDER_PAYMENT_SHOW'] ?? '',
+		'PATH_TO_ORDER_PAYMENT_EDIT' => $arResult['PATH_TO_ORDER_PAYMENT_EDIT'] ?? '',
 		'ELEMENT_ID' => $arResult['ENTITY_ID'],
-		'MULTIFIELD_DATA' => isset($arResult['ENTITY_DATA']['MULTIFIELD_DATA'])
-			? $arResult['ENTITY_DATA']['MULTIFIELD_DATA'] : array(),
+		'MULTIFIELD_DATA' => $arResult['ENTITY_DATA']['MULTIFIELD_DATA'] ?? [],
 		'OWNER_INFO' => $arResult['ENTITY_INFO'],
 		'TYPE' => 'details',
 		'SCRIPTS' => array(
-			'DELETE' => 'BX.Crm.EntityDetailManager.items["'.CUtil::JSEscape($guid).'"].processRemoval();'
+			'DELETE' => 'BX.Crm.EntityDetailManager.items["' . CUtil::JSEscape($guid) . '"].processRemoval();'
 		)
 	),
 	$component
@@ -65,7 +68,8 @@ $editorContext = array(
 	'PARAMS' => $arResult['CONTEXT_PARAMS'],
 	'ORDER_ID' => $arResult['ORDER_ID']
 );
-if(isset($arResult['ORIGIN_ID']) && $arResult['ORIGIN_ID'] !== '')
+
+if (isset($arResult['ORIGIN_ID']) && $arResult['ORIGIN_ID'] !== '')
 {
 	$editorContext['ORIGIN_ID'] = $arResult['ORIGIN_ID'];
 }
@@ -86,16 +90,16 @@ $APPLICATION->IncludeComponent(
 			'GUID' => "{$guid}_editor",
 			'CONFIG_ID' => $arResult['EDITOR_CONFIG_ID'],
 			'ENTITY_CONFIG' => $arResult['ENTITY_CONFIG'],
-			'DUPLICATE_CONTROL' => $arResult['DUPLICATE_CONTROL'],
+			'DUPLICATE_CONTROL' => $arResult['DUPLICATE_CONTROL'] ?? [],
 			'ENTITY_CONTROLLERS' => $arResult['ENTITY_CONTROLLERS'],
 			'ENTITY_FIELDS' => $arResult['ENTITY_FIELDS'],
 			'ENTITY_DATA' => $arResult['ENTITY_DATA'],
 			'ENABLE_SECTION_EDIT' => true,
 			'ENABLE_SECTION_CREATION' => true,
-			'ENABLE_USER_FIELD_CREATION' => $arResult['ENABLE_USER_FIELD_CREATION'],
-			'USER_FIELD_ENTITY_ID' => $arResult['USER_FIELD_ENTITY_ID'],
-			'USER_FIELD_CREATE_PAGE_URL' => $arResult['USER_FIELD_CREATE_PAGE_URL'],
-			'USER_FIELD_CREATE_SIGNATURE' => $arResult['USER_FIELD_CREATE_SIGNATURE'],
+			'ENABLE_USER_FIELD_CREATION' => $arResult['ENABLE_USER_FIELD_CREATION'] ?? null,
+			'USER_FIELD_ENTITY_ID' => $arResult['USER_FIELD_ENTITY_ID'] ?? null,
+			'USER_FIELD_CREATE_PAGE_URL' => $arResult['USER_FIELD_CREATE_PAGE_URL'] ?? '',
+			'USER_FIELD_CREATE_SIGNATURE' => $arResult['USER_FIELD_CREATE_SIGNATURE'] ?? '',
 			'SERVICE_URL' => '/bitrix/components/bitrix/crm.order.payment.details/ajax.php?'.bitrix_sessid_get(),
 			'EXTERNAL_CONTEXT_ID' => $arResult['EXTERNAL_CONTEXT_ID'],
 			'CONTEXT_ID' => $arResult['CONTEXT_ID'],
@@ -112,7 +116,6 @@ $APPLICATION->IncludeComponent(
 			'ENTITY_ID' => $arResult['ORDER_ID'],
 			'ENTITY_TYPE_ID' => \CCrmOwnerType::Order,
 			'GUID' => "{$guid}_timeline",
-			'ENABLE_WAIT' => true,
 			'WAIT_TARGET_DATES' => $arResult['WAIT_TARGET_DATES'],
 			'ENABLE_SALESCENTER' => false,
 		),

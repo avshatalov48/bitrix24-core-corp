@@ -29,8 +29,8 @@ class Task extends Controller
 
 		$actionArguments = $action->getArguments();
 
-		$taskId = (is_numeric($actionArguments['taskId']) ? (int) $actionArguments['taskId'] : 0);
-		$groupId = (is_numeric($actionArguments['groupId']) ? (int) $actionArguments['groupId'] : 0);
+		$taskId = (is_numeric($actionArguments['taskId'] ?? null) ? (int) $actionArguments['taskId'] : 0);
+		$groupId = (is_numeric($actionArguments['groupId'] ?? null) ? (int) $actionArguments['groupId'] : 0);
 
 		$userId = User::getId();
 

@@ -6,11 +6,11 @@ define('DisableEventsCheck', true);
 
 require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_before.php');
 
-use Bitrix\Main;
 use Bitrix\Crm;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Tracking;
 use Bitrix\Location;
-use Bitrix\Crm\Service\Container;
+use Bitrix\Main;
 
 if (!CModule::IncludeModule('crm'))
 {
@@ -178,11 +178,15 @@ elseif($action === 'SAVE')
 	}
 
 	Crm\Service\EditorAdapter::fillParentFieldFromContextEnrichedData($_POST);
-	foreach(array_keys($fieldsInfo) as $fieldName)
+	foreach (array_keys($fieldsInfo) as $fieldName)
 	{
-		if(\CCrmFieldMulti::IsSupportedType($fieldName) && is_array($_POST[$fieldName]))
+		if (
+			isset($_POST[$fieldName])
+			&& \CCrmFieldMulti::IsSupportedType($fieldName)
+			&& is_array($_POST[$fieldName])
+		)
 		{
-			if(!isset($fields['FM']))
+			if (!isset($fields['FM']))
 			{
 				$fields['FM'] = array();
 			}
@@ -537,10 +541,11 @@ elseif($action === 'SAVE')
 				);
 			}
 
-			if(isset($fields['COMMENTS']))
-			{
-				$fields['COMMENTS'] = \Bitrix\Crm\Format\TextHelper::sanitizeHtml($fields['COMMENTS']);
-			}
+			$fields = Crm\Entity\FieldContentType::prepareFieldsFromDetailsToSave(
+				\CCrmOwnerType::Lead,
+				$ID,
+				$fields
+			);
 
 			Tracking\UI\Details::appendEntityFieldValue($fields, $_POST);
 
@@ -587,21 +592,24 @@ elseif($action === 'SAVE')
 
 				$fields['EXCH_RATE'] = CCrmCurrency::GetExchangeRate($fields['CURRENCY_ID']);
 
-				$options = [
-					'REGISTER_SONET_EVENT' => true,
-					'FIELD_CHECK_OPTIONS' => $fieldCheckOptions,
-					'ITEM_OPTIONS' => [
-						'VIEW_MODE' => $viewMode,
-						'STATUS_ID' => $fields['STATUS_ID'],
+				$options = array_merge(
+					Crm\Entity\FieldContentType::prepareSaveOptionsForDetails(\CCrmOwnerType::Lead, $ID),
+					[
+						'REGISTER_SONET_EVENT' => true,
+						'FIELD_CHECK_OPTIONS' => $fieldCheckOptions,
+						'ITEM_OPTIONS' => [
+							'VIEW_MODE' => $viewMode,
+							'STATUS_ID' => $fields['STATUS_ID'],
+						],
 					],
-				];
+				);
 
 				if(!$enableRequiredUserFieldCheck)
 				{
 					$options['DISABLE_REQUIRED_USER_FIELD_CHECK'] = true;
 				}
 
-				$ID = $entity->Add($fields, true, $options);
+				$ID = $entity->Add($fields, true, $options ?? []);
 				if($ID <= 0)
 				{
 					$checkExceptions = $entity->GetCheckExceptions();
@@ -644,7 +652,7 @@ elseif($action === 'SAVE')
 				}
 
 				$notChangeStatus = ($_POST['NOT_CHANGE_STATUS'] ?? 'N');
-				if ($notChangeStatus === 'Y')
+				if ($notChangeStatus === 'Y' && CCrmLead::IsStatusFinished($fields['STATUS_ID']))
 				{
 					unset($fields['STATUS_ID']);
 				}

@@ -1,7 +1,11 @@
 <?
+
+use Bitrix\Intranet\Integration\Wizards\Portal\Ids;
+
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/header.php");
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/public_bitrix24/company/personal.php");
 $APPLICATION->SetTitle(GetMessage("TITLE"));
+\CModule::IncludeModule('intranet');
 ?>
 <?
 $arEditableFields = array(
@@ -133,7 +137,7 @@ $APPLICATION->IncludeComponent("bitrix:socialnetwork_user", ".default", Array(
 	),
 	"SONET_USER_PROPERTY_SEARCHABLE" => array(
 	),
-	"BLOG_GROUP_ID" => $GLOBAL_BLOG_GROUP[SITE_ID],
+	"BLOG_GROUP_ID" => Ids::getBlogId(),
 	"BLOG_COMMENT_AJAX_POST" => "Y",
 	"BLOG_ALLOW_POST_CODE" => "N",
 	"PATH_TO_GROUP_POST_EDIT" => "/workgroups/group/#group_id#/blog/edit/#post_id#/",
@@ -143,7 +147,7 @@ $APPLICATION->IncludeComponent("bitrix:socialnetwork_user", ".default", Array(
 	"PATH_TO_GROUP_POST" => "/workgroups/group/#group_id#/blog/#post_id#/",
 	"PATH_TO_GROUP_MICROBLOG" => "/workgroups/group/#group_id#/microblog/",
 
-	"FORUM_ID" => $GLOBAL_FORUM_ID["USERS_AND_GROUPS"],//"#FORUM_ID#",
+	"FORUM_ID" => Ids::getForumId('USERS_AND_GROUPS'),
 	"CALENDAR_ALLOW_SUPERPOSE" => "Y",
 	"CALENDAR_ALLOW_RES_MEETING" => "Y",
 	// "CALENDAR_IBLOCK_TYPE"	=>	"events",
@@ -171,17 +175,17 @@ $APPLICATION->IncludeComponent("bitrix:socialnetwork_user", ".default", Array(
 	// "CALENDAR_PATH_TO_VIDEO_MEETING_DETAIL" => "/services/video/detail.php?ID=#ID#",
 	// "CALENDAR_PATH_TO_VIDEO_MEETING" => "/services/video/",
 	// "CALENDAR_VIDEO_MEETING_USERGROUPS" => array("1"),
-	"TASK_FORUM_ID" => $GLOBAL_FORUM_ID["intranet_tasks"],//"#TASKS_FORUM_ID#",
+	"TASK_FORUM_ID" => Ids::getForumId('intranet_tasks'),
 	"FILES_USER_IBLOCK_TYPE"	=>	"library",
-	"FILES_USER_IBLOCK_ID"	=> $GLOBAL_IBLOCK_ID["user_files"] ?? null,//"#FILES_USER_IBLOCK_ID#",
+	"FILES_USER_IBLOCK_ID"	=> Ids::getIblockId('user_files'),
 	"FILES_USE_AUTH"	=>	"Y",
 	"NAME_FILE_PROPERTY"	=>	"FILE",
 	"FILES_UPLOAD_MAX_FILESIZE"	=>	"1024",
 	"FILES_UPLOAD_MAX_FILE"	=>	"4",
 	"FILES_USE_COMMENTS" => "Y",
-	"FILES_FORUM_ID" => $GLOBAL_FORUM_ID["GROUPS_AND_USERS_FILES_COMMENTS"],//"#FILES_FORUM_ID#",
+	"FILES_FORUM_ID" => Ids::getForumId('GROUPS_AND_USERS_FILES_COMMENTS'),
 	"PHOTO_USER_IBLOCK_TYPE"	=>	"photos",
-	"PHOTO_USER_IBLOCK_ID"	=> $GLOBAL_IBLOCK_ID["user_photogallery"],//"#PHOTO_USER_IBLOCK_ID#",
+	"PHOTO_USER_IBLOCK_ID"	=> Ids::getIblockId('user_photogallery'),
 	"PHOTO_UPLOAD_MAX_FILESIZE"	=>	"64",
 	"PHOTO_UPLOAD_MAX_FILE"	=>	"4",
 	"PHOTO_ORIGINAL_SIZE" => "1024",
@@ -189,7 +193,7 @@ $APPLICATION->IncludeComponent("bitrix:socialnetwork_user", ".default", Array(
 	"PHOTO_USE_RATING"	=>	"Y",
 	"PHOTO_DISPLAY_AS_RATING" => "vote_avg",
 	"PHOTO_USE_COMMENTS" => "Y",
-	"PHOTO_FORUM_ID" => $GLOBAL_FORUM_ID["PHOTOGALLERY_COMMENTS"],//"#PHOTO_FORUM_ID#",
+	"PHOTO_FORUM_ID" => Ids::getForumId('PHOTOGALLERY_COMMENTS'),
 	"PHOTO_USE_CAPTCHA" => "N",
 	"PHOTO_GALLERY_AVATAR_SIZE" => "50",
 	"PHOTO_ALBUM_PHOTO_THUMBS_SIZE" => "150",

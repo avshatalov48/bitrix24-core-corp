@@ -3,10 +3,10 @@
 namespace Bitrix\Crm\UI;
 
 use Bitrix\Crm\Automation\Helper;
+use Bitrix\Crm\Component\EntityList\ActivityFieldRestrictionManager;
 use Bitrix\Crm\Integration\Calendar;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Router;
-use Bitrix\Crm\Settings\Crm;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Uri;
 use CCrmOwnerType;
@@ -111,15 +111,21 @@ class NavigationBarPanel
 			}
 			else
 			{
-				$messageId = self::LANG_MAP[$id];
-				if (Crm::isUniversalActivityScenarioEnabled() && $messageId === 'CRM_COMMON_KANBAN')
+				$lockedCallback = '';
+				if ($id === self::ID_ACTIVITY)
 				{
-					$messageId = 'CRM_COMMON_PIPELINE';
+					$activityFieldRestrictionManager = new ActivityFieldRestrictionManager();
+					if ($activityFieldRestrictionManager->hasRestrictions())
+					{
+						$lockedCallback = $activityFieldRestrictionManager->getJsCallback();
+					}
 				}
+
 				$this->items[] = [
 					'id' => $id,
-					'name' => Loc::getMessage($messageId),
+					'name' => Loc::getMessage(self::LANG_MAP[$id]),
 					'active' => $id === $activeId,
+					'lockedCallback' => $lockedCallback,
 					'url' => $this->getUrl($id),
 				];
 			}

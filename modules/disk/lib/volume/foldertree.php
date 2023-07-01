@@ -6,11 +6,10 @@ use Bitrix\Main;
 use Bitrix\Main\Application;
 use Bitrix\Main\Entity;
 use Bitrix\Main\Entity\Query;
-use Bitrix\Main\ArgumentTypeException;
 use Bitrix\Disk\Internals\ObjectTable;
 use Bitrix\Disk\Internals\VolumeTable;
 use Bitrix\Disk\Internals\SharingTable;
-use Bitrix\Disk\Internals\ObjectPathTable;
+use Bitrix\Disk;
 use Bitrix\Disk\Volume;
 
 /**
@@ -22,10 +21,10 @@ class FolderTree extends Volume\Folder
 	/**
 	 * Runs measure test to get volumes of selecting objects.
 	 * @param array $collectData List types data to collect: ATTACHED_OBJECT, SHARING_OBJECT, EXTERNAL_LINK, UNNECESSARY_VERSION.
-	 * @return $this
+	 * @return static
 	 * @throws Main\ArgumentException
 	 */
-	public function measure($collectData = [self::DISK_FILE, self::UNNECESSARY_VERSION])
+	public function measure(array $collectData = [self::DISK_FILE, self::UNNECESSARY_VERSION]): self
 	{
 		$connection = Application::getConnection();
 		$sqlHelper = $connection->getSqlHelper();
@@ -55,7 +54,7 @@ class FolderTree extends Volume\Folder
 		{
 			$storageList = (new $excludeInd)->getStorageList();
 			if (
-				($storageList[0] instanceof \Bitrix\Disk\Storage)
+				($storageList[0] instanceof Disk\Storage)
 				&& (int)$storageId === (int)$storageList[0]->getId()
 			)
 			{
@@ -304,7 +303,7 @@ class FolderTree extends Volume\Folder
 						LEFT JOIN b_disk_external_link link ON files.ID = link.OBJECT_ID
 					WHERE
 						files.TYPE = ".ObjectTable::TYPE_FILE."
-						AND link.TYPE != ".\Bitrix\Disk\Internals\ExternalLinkTable::TYPE_AUTO."
+						AND link.TYPE != ".Disk\Internals\ExternalLinkTable::TYPE_AUTO."
 						AND files.ID = files.REAL_OBJECT_ID
 						{$subWhereSql}
 					GROUP BY
@@ -435,7 +434,7 @@ class FolderTree extends Volume\Folder
 								ON link.OBJECT_ID  = ver.OBJECT_ID
 								AND link.VERSION_ID = ver.ID
 								AND link.VERSION_ID != head.ID
-								AND ifnull(link.TYPE,-1) != ". \Bitrix\Disk\Internals\ExternalLinkTable::TYPE_AUTO. "
+								AND ifnull(link.TYPE,-1) != ". Disk\Internals\ExternalLinkTable::TYPE_AUTO. "
 
 						WHERE
 							files.TYPE = ". ObjectTable::TYPE_FILE. "
@@ -590,9 +589,9 @@ class FolderTree extends Volume\Folder
 	 * @param string|Volume\IVolumeIndicator $totalSizeIndicator Use this indicator as total volume.
 	 * @param string|Volume\IVolumeIndicator $excludeSizeIndicator Exclude indicator's volume from total volume.
 	 * @throws \Bitrix\Main\ArgumentException
-	 * @return self
+	 * @return static
 	 */
-	public function recalculatePercent($totalSizeIndicator = '\\Bitrix\\Disk\\Volume\\Storage\\Storage', $excludeSizeIndicator = null)
+	public function recalculatePercent($totalSizeIndicator = '\\Bitrix\\Disk\\Volume\\Storage\\Storage', $excludeSizeIndicator = null): self
 	{
 		if (is_string($totalSizeIndicator) && !empty($totalSizeIndicator) && class_exists($totalSizeIndicator))
 		{
@@ -614,12 +613,12 @@ class FolderTree extends Volume\Folder
 		{
 			$connection = Application::getConnection();
 			$tableName = VolumeTable::getTableName();
-			$filter = array(
+			$filter = [
 				'=INDICATOR_TYPE' => Volume\Folder::className(),
 				'=OWNER_ID' => $this->getOwner(),
 				'=STORAGE_ID' => $storageId,
 				'>FILE_COUNT' => 0,
-			);
+			];
 
 			$where = Query::buildFilterSql(VolumeTable::getEntity(), $filter);
 
@@ -643,12 +642,12 @@ class FolderTree extends Volume\Folder
 	public function loadTotals()
 	{
 		$filter = $this->getFilter(
-			array(
+			[
 				'=INDICATOR_TYPE' => Volume\Folder::className(),
 				'=OWNER_ID' => $this->getOwner(),
 				'>FILE_COUNT' => 0,
 				'>FILES_LEFT' => 0,
-			),
+			],
 			VolumeTable::getEntity()
 		);
 		// nested level folder's total results
@@ -664,8 +663,8 @@ class FolderTree extends Volume\Folder
 				$filter['=PARENT_ID'] = $folderId;
 			}
 		}
-		$row = VolumeTable::getRow(array(
-			'runtime' => array(
+		$row = VolumeTable::getRow([
+			'runtime' => [
 				new Entity\ExpressionField('CNT', 'COUNT(*)'),
 				new Entity\ExpressionField('FILE_SIZE', 'SUM(FILE_SIZE)'),
 				new Entity\ExpressionField('FILE_COUNT', 'SUM(FILE_COUNT)'),
@@ -679,8 +678,8 @@ class FolderTree extends Volume\Folder
 				//new Entity\ExpressionField('SHARING_COUNT', 'SUM(SHARING_COUNT)'),
 				new Entity\ExpressionField('UNNECESSARY_VERSION_SIZE', 'SUM(UNNECESSARY_VERSION_SIZE)'),
 				new Entity\ExpressionField('UNNECESSARY_VERSION_COUNT', 'SUM(UNNECESSARY_VERSION_COUNT)'),
-			),
-			'select' => array(
+			],
+			'select' => [
 				'CNT',
 				'FILE_SIZE',
 				'FILE_COUNT',
@@ -694,9 +693,9 @@ class FolderTree extends Volume\Folder
 				//'SHARING_COUNT',
 				'UNNECESSARY_VERSION_SIZE',
 				'UNNECESSARY_VERSION_COUNT',
-			),
+			],
 			'filter' => $filter
-		));
+		]);
 		if ($row)
 		{
 			$this->resultAvailable = (bool)($row['CNT'] > 0);
@@ -719,28 +718,29 @@ class FolderTree extends Volume\Folder
 
 	/**
 	 * Deletes objects selecting by filter.
-	 * @return $this
+	 * @return static
 	 */
-	public function purify()
+	public function purify(): self
 	{
 		$connection = Application::getConnection();
 		$tableName = VolumeTable::getTableName();
 		$filter = $this->getFilter(
-			array(
+			[
 				'=INDICATOR_TYPE' => Volume\Folder::className(),
 				'=OWNER_ID' => $this->getOwner(),
-			),
+			],
 			VolumeTable::getEntity()
 		);
 
-		$parentKeyId = array_shift(array_intersect(array_keys($filter), array('PARENT_ID', '=PARENT_ID', '@PARENT_ID')));
+		$filterParent = array_intersect(array_keys($filter), ['PARENT_ID', '=PARENT_ID', '@PARENT_ID']);
+		$parentKeyId = array_shift($filterParent);
 		if ($parentKeyId && isset($filter[$parentKeyId]))
 		{
-			$filter[] = array(
+			$filter[] = [
 				'LOGIC' => 'OR',
 				'PARENT_ID' => $filter[$parentKeyId],
 				'FOLDER_ID' => $filter[$parentKeyId],
-			);
+			];
 			unset($filter[$parentKeyId]);
 		}
 

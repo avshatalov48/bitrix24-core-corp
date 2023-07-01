@@ -30,4 +30,6 @@ class TimelineType
 	public const SIGN_DOCUMENT = 23;
 	public const SIGN_DOCUMENT_LOG = 24;
 	public const LOG_MESSAGE = 25;
+	public const CALENDAR_SHARING = 26;
+	public const TASK = 27;
 }

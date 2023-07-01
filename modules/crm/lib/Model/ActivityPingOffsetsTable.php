@@ -6,6 +6,22 @@ use Bitrix\Main\Application;
 use Bitrix\Main\ORM\Data\DataManager;
 use Bitrix\Main\ORM\Fields\IntegerField;
 
+/**
+ * Class ActivityPingOffsetsTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_ActivityPingOffsets_Query query()
+ * @method static EO_ActivityPingOffsets_Result getByPrimary($primary, array $parameters = [])
+ * @method static EO_ActivityPingOffsets_Result getById($id)
+ * @method static EO_ActivityPingOffsets_Result getList(array $parameters = [])
+ * @method static EO_ActivityPingOffsets_Entity getEntity()
+ * @method static \Bitrix\Crm\Model\EO_ActivityPingOffsets createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Model\EO_ActivityPingOffsets_Collection createCollection()
+ * @method static \Bitrix\Crm\Model\EO_ActivityPingOffsets wakeUpObject($row)
+ * @method static \Bitrix\Crm\Model\EO_ActivityPingOffsets_Collection wakeUpCollection($rows)
+ */
 class ActivityPingOffsetsTable extends DataManager
 {
 	public static function getTableName(): string

@@ -1,13 +1,14 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 /**
  * @var array $arParams
  * @var array $arResult
- * @var \CBitrixComponent $component
  * @global \CMain $APPLICATION
- * @global \CUser $USER
- * @global CDatabase $DB
  */
 
 use Bitrix\Crm\Integration\DocumentGenerator;
@@ -15,24 +16,50 @@ use Bitrix\Crm\Integration\DocumentGeneratorManager;
 use Bitrix\Main\Localization\Loc;
 
 if (!CModule::IncludeModule('crm'))
+{
 	return;
+}
 
 \Bitrix\Crm\Service\Container::getInstance()->getLocalization()->loadMessages();
 
 $currentUserID = CCrmSecurityHelper::GetCurrentUserID();
 $CrmPerms = CCrmPerms::GetCurrentUserPermissions();
-if(!CCrmQuote::CheckReadPermission(0, $CrmPerms))
+if (!CCrmQuote::CheckReadPermission(0, $CrmPerms))
 {
 	return;
 }
 
-$arParams['PATH_TO_QUOTE_LIST'] = CrmCheckPath('PATH_TO_QUOTE_LIST', $arParams['PATH_TO_QUOTE_LIST'], $APPLICATION->GetCurPage());
-$arParams['PATH_TO_QUOTE_SHOW'] = CrmCheckPath('PATH_TO_QUOTE_SHOW', $arParams['PATH_TO_QUOTE_SHOW'], $APPLICATION->GetCurPage().'?quote_id=#quote_id#&show');
-$arParams['PATH_TO_QUOTE_EDIT'] = CrmCheckPath('PATH_TO_QUOTE_EDIT', $arParams['PATH_TO_QUOTE_EDIT'], $APPLICATION->GetCurPage().'?quote_id=#quote_id#&edit');
-$arParams['PATH_TO_QUOTE_DETAILS'] = CrmCheckPath('PATH_TO_QUOTE_DETAILS', $arParams['PATH_TO_QUOTE_DETAILS'], $APPLICATION->GetCurPage().'?quote_id=#quote_id#&details');
-$arParams['PATH_TO_QUOTE_KANBAN'] = CrmCheckPath('PATH_TO_QUOTE_KANBAN', $arParams['PATH_TO_QUOTE_KANBAN'], $APPLICATION->GetCurPage()."?kanban");
+$arParams['PATH_TO_QUOTE_LIST'] = CrmCheckPath(
+	'PATH_TO_QUOTE_LIST',
+	$arParams['PATH_TO_QUOTE_LIST'] ?? '',
+	$APPLICATION->GetCurPage()
+);
 
-$arParams['ELEMENT_ID'] = isset($arParams['ELEMENT_ID']) ? intval($arParams['ELEMENT_ID']) : 0;
+$arParams['PATH_TO_QUOTE_SHOW'] = CrmCheckPath(
+	'PATH_TO_QUOTE_SHOW',
+	$arParams['PATH_TO_QUOTE_SHOW'] ?? '',
+	$APPLICATION->GetCurPage() . '?quote_id=#quote_id#&show'
+);
+
+$arParams['PATH_TO_QUOTE_EDIT'] = CrmCheckPath(
+	'PATH_TO_QUOTE_EDIT',
+	$arParams['PATH_TO_QUOTE_EDIT'] ?? '',
+	$APPLICATION->GetCurPage() . '?quote_id=#quote_id#&edit'
+);
+
+$arParams['PATH_TO_QUOTE_DETAILS'] = CrmCheckPath(
+	'PATH_TO_QUOTE_DETAILS',
+	$arParams['PATH_TO_QUOTE_DETAILS'] ?? '',
+	$APPLICATION->GetCurPage() . '?quote_id=#quote_id#&details'
+);
+
+$arParams['PATH_TO_QUOTE_KANBAN'] = CrmCheckPath(
+	'PATH_TO_QUOTE_KANBAN',
+	$arParams['PATH_TO_QUOTE_KANBAN'] ?? '',
+	$APPLICATION->GetCurPage() . "?kanban"
+);
+
+$arParams['ELEMENT_ID'] = isset($arParams['ELEMENT_ID']) ? (int)($arParams['ELEMENT_ID']) : 0;
 
 $makeEditPathFromDetailsPath = static function(string $pathToDetails): string
 {
@@ -49,22 +76,27 @@ if (\CCrmOwnerType::IsSliderEnabled(\CCrmOwnerType::Quote))
 }
 
 if (!isset($arParams['TYPE']))
+{
 	$arParams['TYPE'] = 'list';
+}
 
 if (isset($_REQUEST['copy']))
+{
 	$arParams['TYPE'] = 'copy';
+}
 
 $toolbarID = 'toolbar_quote_'.$arParams['TYPE'];
-if($arParams['ELEMENT_ID'] > 0)
+
+if (isset($arParams['ELEMENT_ID']) && $arParams['ELEMENT_ID'] > 0)
 {
-	$toolbarID .= '_'.$arParams['ELEMENT_ID'];
+	$toolbarID .= '_' . $arParams['ELEMENT_ID'];
 }
 $arResult['TOOLBAR_ID'] = $toolbarID;
 
-$arResult['BUTTONS'] = array();
-$isInSlider = ($arParams['IN_SLIDER'] === 'Y');
+$arResult['BUTTONS'] = [];
+$isInSlider = isset($arParams['IN_SLIDER']) && $arParams['IN_SLIDER'] === 'Y';
 
-if ($arParams['TYPE'] == 'list')
+if ($arParams['TYPE'] === 'list')
 {
 	$bRead   = !$CrmPerms->HavePerm('QUOTE', BX_CRM_PERM_NONE, 'READ');
 	$bExport = !$CrmPerms->HavePerm('QUOTE', BX_CRM_PERM_NONE, 'EXPORT');
@@ -86,33 +118,35 @@ else
 	$bConfig = $CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE');
 }
 
-if (isset($arParams['DISABLE_EXPORT']) && $arParams['DISABLE_EXPORT'] == 'Y')
+if (isset($arParams['DISABLE_EXPORT']) && $arParams['DISABLE_EXPORT'] === 'Y')
 {
 	$bExport = false;
 }
 
 if (!$bRead && !$bAdd && !$bWrite)
+{
 	return false;
+}
 
 //Skip COPY menu in slider mode
 /*
-if($arParams['TYPE'] == 'copy' && \Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isSliderEnabled())
+if ($arParams['TYPE'] == 'copy' && \Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isSliderEnabled())
 {
 	return false;
 }
 */
 
-if($arParams['TYPE'] === 'details')
+if ($arParams['TYPE'] === 'details')
 {
-	if($arParams['ELEMENT_ID'] <= 0)
+	if ($arParams['ELEMENT_ID'] <= 0)
 	{
 		return false;
 	}
 
-	$scripts = isset($arParams['~SCRIPTS']) && is_array($arParams['~SCRIPTS']) ? $arParams['~SCRIPTS'] : array();
+	$scripts = isset($arParams['~SCRIPTS']) && is_array($arParams['~SCRIPTS']) ? $arParams['~SCRIPTS'] : [];
 
 	CCrmQuote::PrepareConversionPermissionFlags($arParams['ELEMENT_ID'], $arResult, $CrmPerms);
-	if($arResult['CAN_CONVERT'])
+	if ($arResult['CAN_CONVERT'])
 	{
 		$schemeID = \Bitrix\Crm\Conversion\QuoteConversionConfig::getCurrentSchemeID();
 		$restriction = \Bitrix\Crm\Restriction\RestrictionManager::getConversionRestriction();
@@ -131,8 +165,8 @@ if($arParams['TYPE'] === 'details')
 				'LOCK_SCRIPT' => $isPermitted ? '' : $restriction->prepareInfoHelperScript()
 			),
 			'CODE' => 'convert',
-			'TEXT' => GetMessage('QUOTE_CREATE_ON_BASIS'),
-			'TITLE' => GetMessage('QUOTE_CREATE_ON_BASIS_TITLE'),
+			'TEXT' => Loc::getMessage('QUOTE_CREATE_ON_BASIS'),
+			'TITLE' => Loc::getMessage('QUOTE_CREATE_ON_BASIS_TITLE'),
 			'ICON' => $isPermitted ? 'btn-convert' : 'btn-convert-blocked'
 		);
 	}
@@ -140,7 +174,7 @@ if($arParams['TYPE'] === 'details')
 	//Force start new bar after first button
 	$arResult['BUTTONS'][] = array('NEWBAR' => true);
 
-	if($bAdd)
+	if ($bAdd)
 	{
 		$copyUrl = CHTTP::urlAddParams(
 			CComponentEngine::MakePathFromTemplate(
@@ -151,39 +185,41 @@ if($arParams['TYPE'] === 'details')
 		);
 
 		$arResult['BUTTONS'][] = array(
-			'TEXT' => GetMessage('QUOTE_COPY'),
-			'TITLE' => GetMessage('QUOTE_COPY_TITLE'),
+			'TEXT' => Loc::getMessage('QUOTE_COPY'),
+			'TITLE' => Loc::getMessage('QUOTE_COPY_TITLE'),
 			'ONCLICK' => "BX.Crm.Page.open('".CUtil::JSEscape($copyUrl)."')",
 			'ICON' => 'btn-copy'
 		);
 	}
 
-	if($bDelete && isset($scripts['DELETE']))
+	if ($bDelete && isset($scripts['DELETE']))
 	{
 		$arResult['BUTTONS'][] = array(
-			'TEXT' => GetMessage('QUOTE_DELETE'),
-			'TITLE' => GetMessage('QUOTE_DELETE_TITLE'),
+			'TEXT' => Loc::getMessage('QUOTE_DELETE'),
+			'TITLE' => Loc::getMessage('QUOTE_DELETE_TITLE'),
 			'ONCLICK' => $scripts['DELETE'],
 			'ICON' => 'btn-delete'
 		);
 	}
 
 	$this->IncludeComponentTemplate();
+
 	return;
 }
 
-if($arParams['TYPE'] === 'list')
+if ($arParams['TYPE'] === 'list')
 {
 	$arResult['BUTTONS'][] = [
-		'TEXT' => GetMessage('CRM_COMMON_ACTION_CREATE'),
-		'LINK' => CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_QUOTE_EDIT'],
+		'TEXT' => Loc::getMessage('CRM_COMMON_ACTION_CREATE'),
+		'LINK' => CComponentEngine::MakePathFromTemplate(
+			$arParams['PATH_TO_QUOTE_EDIT'] ?? '',
 			[
 				'quote_id' => 0
 			]
 		),
 		'HIGHLIGHT' => true,
 		'IS_DISABLED' => !$bAdd,
-		'HINT' => GetMessage('CRM_QUOTE_ADD_HINT')
+		'HINT' => Loc::getMessage('CRM_QUOTE_ADD_HINT')
 	];
 
 	if (!$isInSlider)
@@ -202,8 +238,8 @@ if($arParams['TYPE'] === 'list')
 		if ($userFieldListUrl)
 		{
 			$arResult['BUTTONS'][] = [
-				'TEXT' => GetMessage('CRM_TYPE_TYPE_FIELDS_SETTINGS'),
-				'TITLE' => GetMessage('CRM_TYPE_TYPE_FIELDS_SETTINGS'),
+				'TEXT' => Loc::getMessage('CRM_TYPE_TYPE_FIELDS_SETTINGS'),
+				'TITLE' => Loc::getMessage('CRM_TYPE_TYPE_FIELDS_SETTINGS'),
 				'ONCLICK' => 'BX.SidePanel.Instance.open("' . $userFieldListUrl . '")',
 			];
 		}
@@ -212,8 +248,8 @@ if($arParams['TYPE'] === 'list')
 	/*if ($bImport)
 	{
 		$arResult['BUTTONS'][] = array(
-			'TEXT' => GetMessage('QUOTE_IMPORT'),
-			'TITLE' => GetMessage('QUOTE_IMPORT_TITLE'),
+			'TEXT' => Loc::getMessage('QUOTE_IMPORT'),
+			'TITLE' => Loc::getMessage('QUOTE_IMPORT_TITLE'),
 			'LINK' => CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_QUOTE_IMPORT'], array()),
 			'ICON' => 'btn-import'
 		);
@@ -221,7 +257,7 @@ if($arParams['TYPE'] === 'list')
 
 	if ($bExport && !$isInSlider)
 	{
-		/*if($bImport)
+		/*if ($bImport)
 		{
 			$arResult['BUTTONS'][] = array('SEPARATOR' => true);
 		}*/
@@ -242,14 +278,17 @@ if($arParams['TYPE'] === 'list')
 				'ENTITY_TYPE' => \CCrmOwnerType::QuoteName,
 				'EXPORT_TYPE' => 'csv',
 				'COMPONENT_NAME' => $componentName,
-				'signedParameters' => \Bitrix\Main\Component\ParameterSigner::signParameters($componentName, array(
-					'QUOTE_COUNT' => '20',
-					'PATH_TO_QUOTE_SHOW' => $arResult['PATH_TO_QUOTE_SHOW'],
-					'PATH_TO_QUOTE_EDIT' => $arResult['PATH_TO_QUOTE_EDIT'],
-					'PATH_TO_QUOTE_KANBAN' => $arResult['PATH_TO_QUOTE_KANBAN'],
-					'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'],
-					'NAVIGATION_CONTEXT_ID' => \CCrmOwnerType::QuoteName
-				)),
+				'signedParameters' => \Bitrix\Main\Component\ParameterSigner::signParameters(
+					$componentName,
+					[
+						'QUOTE_COUNT' => '20',
+						'PATH_TO_QUOTE_SHOW' => $arResult['PATH_TO_QUOTE_SHOW'] ?? '',
+						'PATH_TO_QUOTE_EDIT' => $arResult['PATH_TO_QUOTE_EDIT'] ?? '',
+						'PATH_TO_QUOTE_KANBAN' => $arResult['PATH_TO_QUOTE_KANBAN'] ?? '',
+						'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'] ?? '',
+						'NAVIGATION_CONTEXT_ID' => \CCrmOwnerType::QuoteName
+					]
+				),
 			],
 			'optionsFields' => array(
 				'EXPORT_ALL_FIELDS' => array(
@@ -299,7 +338,7 @@ if($arParams['TYPE'] === 'list')
 		unset($stExportId);
 	}
 
-	if(count($arResult['BUTTONS']) > 1)
+	if (count($arResult['BUTTONS']) > 1)
 	{
 		$arResult['BUTTONS'][] = ['SEPARATOR' => true];
 		//Force start new bar after first button
@@ -310,9 +349,11 @@ if($arParams['TYPE'] === 'list')
 	return;
 }
 
-if (($arParams['TYPE'] == 'edit' || $arParams['TYPE'] == 'show')
+if (
+	($arParams['TYPE'] === 'edit' || $arParams['TYPE'] === 'show')
 	&& !empty($arParams['ELEMENT_ID'])
-	&& CCrmQuote::CheckConvertPermission($arParams['ELEMENT_ID'], CCrmOwnerType::Undefined, $CrmPerms))
+	&& CCrmQuote::CheckConvertPermission($arParams['ELEMENT_ID'], CCrmOwnerType::Undefined, $CrmPerms)
+)
 {
 	$schemeID = \Bitrix\Crm\Conversion\QuoteConversionConfig::getCurrentSchemeID();
 	$restriction = \Bitrix\Crm\Restriction\RestrictionManager::getConversionRestriction();
@@ -331,20 +372,20 @@ if (($arParams['TYPE'] == 'edit' || $arParams['TYPE'] == 'show')
 			'LOCK_SCRIPT' => $isPermitted ? '' : $restriction->prepareInfoHelperScript()
 		),
 		'CODE' => 'convert',
-		'TEXT' => GetMessage('QUOTE_CREATE_ON_BASIS'),
-		'TITLE' => GetMessage('QUOTE_CREATE_ON_BASIS_TITLE'),
+		'TEXT' => Loc::getMessage('QUOTE_CREATE_ON_BASIS'),
+		'TITLE' => Loc::getMessage('QUOTE_CREATE_ON_BASIS_TITLE'),
 		'ICON' => $isPermitted ? 'btn-convert' : 'btn-convert-blocked'
 	);
 }
 
-if ($arParams['TYPE'] == 'show' && !empty($arParams['ELEMENT_ID']))
+if ($arParams['TYPE'] === 'show' && !empty($arParams['ELEMENT_ID']))
 {
-	if(\Bitrix\Crm\Integration\DocumentGeneratorManager::getInstance()->isDocumentButtonAvailable())
+	if (\Bitrix\Crm\Integration\DocumentGeneratorManager::getInstance()->isDocumentButtonAvailable())
 	{
 		$arResult['BUTTONS'][] = [
 			'CODE' => 'document',
-			'TEXT' => GetMessage('QUOTE_DOCUMENT_BUTTON_TEXT'),
-			'TITLE' => GetMessage('QUOTE_DOCUMENT_BUTTON_TITLE'),
+			'TEXT' => Loc::getMessage('QUOTE_DOCUMENT_BUTTON_TEXT'),
+			'TITLE' => Loc::getMessage('QUOTE_DOCUMENT_BUTTON_TITLE'),
 			'TYPE' => 'crm-document-button',
 			'PARAMS' => DocumentGeneratorManager::getInstance()->getDocumentButtonParameters(DocumentGenerator\DataProvider\Quote::class, $arParams['ELEMENT_ID']),
 		];
@@ -354,30 +395,31 @@ if ($arParams['TYPE'] == 'show' && !empty($arParams['ELEMENT_ID']))
 	{
 		$menuItems = [];
 		$menuItems[] = [
-			'text' => GetMessage('QUOTE_PAYMENT_HTML'),
-			'title' => GetMessage('QUOTE_PAYMENT_HTML_TITLE'),
+			'text' => Loc::getMessage('QUOTE_PAYMENT_HTML'),
+			'title' => Loc::getMessage('QUOTE_PAYMENT_HTML_TITLE'),
 			'onclick' => "BX.onCustomEvent(window, 'CrmQuotePrint', [this, { blank: false }])"
 		];
 		$menuItems[] = [
-			'text' => GetMessage('QUOTE_PAYMENT_HTML_BLANK'),
-			'title' => GetMessage('QUOTE_PAYMENT_HTML_BLANK_TITLE'),
+			'text' => Loc::getMessage('QUOTE_PAYMENT_HTML_BLANK'),
+			'title' => Loc::getMessage('QUOTE_PAYMENT_HTML_BLANK_TITLE'),
 			'onclick' => "BX.onCustomEvent(window, 'CrmQuotePrint', [this, { blank: true }])"
 		];
+
 		if (is_callable(array('CSalePdf', 'isPdfAvailable')) && CSalePdf::isPdfAvailable())
 		{
 			$menuItems[] = [
-				'text' => GetMessage('QUOTE_PAYMENT_PDF'),
-				'title' => GetMessage('QUOTE_PAYMENT_PDF_TITLE'),
+				'text' => Loc::getMessage('QUOTE_PAYMENT_PDF'),
+				'title' => Loc::getMessage('QUOTE_PAYMENT_PDF_TITLE'),
 				'onclick' => "BX.onCustomEvent(window, 'CrmQuoteDownloadPdf', [this, { blank: false }])"
 			];
 			$menuItems[] = [
-				'text' => GetMessage('QUOTE_PAYMENT_PDF_BLANK'),
-				'title' => GetMessage('QUOTE_PAYMENT_PDF_BLANK_TITLE'),
+				'text' => Loc::getMessage('QUOTE_PAYMENT_PDF_BLANK'),
+				'title' => Loc::getMessage('QUOTE_PAYMENT_PDF_BLANK_TITLE'),
 				'onclick' => "BX.onCustomEvent(window, 'CrmQuoteDownloadPdf', [this, { blank: true }])"
 			];
 			$menuItems[] = [
-				'text' => GetMessage('QUOTE_PAYMENT_EMAIL'),
-				'title' => GetMessage('QUOTE_PAYMENT_EMAIL_TITLE'),
+				'text' => Loc::getMessage('QUOTE_PAYMENT_EMAIL'),
+				'title' => Loc::getMessage('QUOTE_PAYMENT_EMAIL_TITLE'),
 				'onclick' => "BX.onCustomEvent(window, 'CrmQuoteSendByEmail', [this])"
 			];
 		}
@@ -385,8 +427,8 @@ if ($arParams['TYPE'] == 'show' && !empty($arParams['ELEMENT_ID']))
 		{
 			$arResult['BUTTONS'][] = [
 				'CODE' => 'leftMenu',
-				'TEXT' => GetMessage('QUOTE_LEFT_MENU_TEXT'),
-				'TITLE' => GetMessage('QUOTE_LEFT_MENU_TITLE'),
+				'TEXT' => Loc::getMessage('QUOTE_LEFT_MENU_TEXT'),
+				'TITLE' => Loc::getMessage('QUOTE_LEFT_MENU_TITLE'),
 				'TYPE' => 'toolbar-menu-left',
 				'ITEMS' => $menuItems,
 			];
@@ -394,11 +436,11 @@ if ($arParams['TYPE'] == 'show' && !empty($arParams['ELEMENT_ID']))
 		unset($menuItems);
 	}
 
-	if($bWrite)
+	if ($bWrite)
 	{
 		$arResult['BUTTONS'][] = array(
-			'TEXT' => GetMessage('QUOTE_EDIT'),
-			'TITLE' => GetMessage('QUOTE_EDIT_TITLE'),
+			'TEXT' => Loc::getMessage('QUOTE_EDIT'),
+			'TITLE' => Loc::getMessage('QUOTE_EDIT_TITLE'),
 			'LINK' => CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_QUOTE_EDIT'],
 				array(
 					'quote_id' => $arParams['ELEMENT_ID']
@@ -409,11 +451,11 @@ if ($arParams['TYPE'] == 'show' && !empty($arParams['ELEMENT_ID']))
 	}
 }
 
-if ($arParams['TYPE'] == 'edit' && $bRead && !empty($arParams['ELEMENT_ID']))
+if ($arParams['TYPE'] === 'edit' && $bRead && !empty($arParams['ELEMENT_ID']))
 {
 	$arResult['BUTTONS'][] = array(
-		'TEXT' => GetMessage('QUOTE_SHOW'),
-		'TITLE' => GetMessage('QUOTE_SHOW_TITLE'),
+		'TEXT' => Loc::getMessage('QUOTE_SHOW'),
+		'TITLE' => Loc::getMessage('QUOTE_SHOW_TITLE'),
 		'LINK' => CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_QUOTE_SHOW'],
 			array(
 				'quote_id' => $arParams['ELEMENT_ID']
@@ -423,12 +465,12 @@ if ($arParams['TYPE'] == 'edit' && $bRead && !empty($arParams['ELEMENT_ID']))
 	);
 }
 
-if (($arParams['TYPE'] == 'edit' || $arParams['TYPE'] == 'show') && $bAdd
+if (($arParams['TYPE'] === 'edit' || $arParams['TYPE'] === 'show') && $bAdd
 	&& !empty($arParams['ELEMENT_ID']) && !isset($_REQUEST['copy']))
 {
 	$arResult['BUTTONS'][] = array(
-		'TEXT' => GetMessage('QUOTE_COPY'),
-		'TITLE' => GetMessage('QUOTE_COPY_TITLE'),
+		'TEXT' => Loc::getMessage('QUOTE_COPY'),
+		'TITLE' => Loc::getMessage('QUOTE_COPY_TITLE'),
 		'LINK' => CHTTP::urlAddParams(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_QUOTE_EDIT'],
 			array(
 				'quote_id' => $arParams['ELEMENT_ID']
@@ -451,9 +493,9 @@ elseif ($qty >= 3)
 if (($arParams['TYPE'] == 'edit' || $arParams['TYPE'] == 'show') && $bDelete && !empty($arParams['ELEMENT_ID']))
 {
 	$arResult['BUTTONS'][] = array(
-		'TEXT' => GetMessage('QUOTE_DELETE'),
-		'TITLE' => GetMessage('QUOTE_DELETE_TITLE'),
-		'LINK' => "javascript:quote_delete('".GetMessage('QUOTE_DELETE_DLG_TITLE')."', '".GetMessage('QUOTE_DELETE_DLG_MESSAGE')."', '".GetMessage('QUOTE_DELETE_DLG_BTNTITLE')."', '".CHTTP::urlAddParams(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_QUOTE_EDIT'],
+		'TEXT' => Loc::getMessage('QUOTE_DELETE'),
+		'TITLE' => Loc::getMessage('QUOTE_DELETE_TITLE'),
+		'LINK' => "javascript:quote_delete('".Loc::getMessage('QUOTE_DELETE_DLG_TITLE')."', '".Loc::getMessage('QUOTE_DELETE_DLG_MESSAGE')."', '".Loc::getMessage('QUOTE_DELETE_DLG_BTNTITLE')."', '".CHTTP::urlAddParams(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_QUOTE_EDIT'],
 			array(
 				'quote_id' => $arParams['ELEMENT_ID']
 			)),
@@ -466,7 +508,7 @@ if (($arParams['TYPE'] == 'edit' || $arParams['TYPE'] == 'show') && $bDelete && 
 if ($bAdd)
 {
 	$arResult['BUTTONS'][] = array(
-		'TEXT' => GetMessage('CRM_COMMON_ACTION_CREATE'),
+		'TEXT' => Loc::getMessage('CRM_COMMON_ACTION_CREATE'),
 		'LINK' => CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_QUOTE_EDIT'],
 			array(
 				'quote_id' => 0
@@ -477,4 +519,3 @@ if ($bAdd)
 }
 
 $this->IncludeComponentTemplate();
-?>

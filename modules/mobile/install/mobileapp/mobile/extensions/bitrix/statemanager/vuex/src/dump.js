@@ -1,3 +1,6 @@
+/**
+ * @module statemanager/vuex/reactivity
+ */
 jn.define('statemanager/vuex/reactivity', (require, exports, module) => {
 
 	function reactive(target) {

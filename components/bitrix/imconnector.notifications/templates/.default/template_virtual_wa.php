@@ -49,7 +49,7 @@ if (!empty($arResult['error']))
 					<p><?=Loc::getMessage('IMCONNECTOR_COMPONENT_NOTIFICATIONS_INDEX_DESCRIPTION')?></p>
 					<p>
 						<?= Loc::getMessage('IMCONNECTOR_COMPONENT_NOTIFICATIONS_VIRTUAL_WHATSAPP_INDEX_SECOND_DESCRIPTION') ?>
-						<a href="<?=UI\Util::getArticleUrlByCode('13655934')?>"><?=Loc::getMessage('IMCONNECTOR_COMPONENT_NOTIFICATIONS_INDEX_DETAILS')?></a>
+						<a href="<?=UI\Util::getArticleUrlByCode('13655934')?>"><?=Loc::getMessage('IMCONNECTOR_COMPONENT_NOTIFICATIONS_INDEX_DETAILS_MSGVER_2')?></a>
 					</p>
 				</div>
 				<div class="ui-btn-container">

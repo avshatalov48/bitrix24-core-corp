@@ -4,7 +4,6 @@ namespace Bitrix\Crm\Integration\DocumentGenerator\DataProvider;
 
 use Bitrix\Crm\EntityAddressType;
 use Bitrix\Crm\EntityRequisite;
-use Bitrix\Crm\RequisiteAddress;
 use Bitrix\DocumentGenerator\Value\Name;
 
 class Requisite extends BaseRequisite
@@ -29,10 +28,16 @@ class Requisite extends BaseRequisite
 			}
 			$this->fields['RQ_FIRST_NAME']['TYPE'] = static::FIELD_TYPE_NAME;
 			$this->fields['RQ_FIRST_NAME']['VALUE'] = [$this, 'getNameValue'];
+
 			$this->fields['RQ_SECOND_NAME']['TYPE'] = static::FIELD_TYPE_NAME;
 			$this->fields['RQ_SECOND_NAME']['VALUE'] = [$this, 'getNameValue'];
+
 			$this->fields['RQ_LAST_NAME']['TYPE'] = static::FIELD_TYPE_NAME;
 			$this->fields['RQ_LAST_NAME']['VALUE'] = [$this, 'getNameValue'];
+
+			$this->fields['RQ_SIGNATURE']['TYPE'] = static::FIELD_TYPE_STAMP;
+
+			$this->fields['RQ_STAMP']['TYPE'] = static::FIELD_TYPE_STAMP;
 
 			$this->fields['RQ_PHONE']['TYPE'] = 'PHONE';
 
@@ -229,7 +234,7 @@ class Requisite extends BaseRequisite
 	 */
 	protected function getNameDataFromString($name)
 	{
-		list($lastName, $firstName, $secondName) = explode(' ', $name);
+		[$lastName, $firstName, $secondName] = explode(' ', $name);
 		if(!empty($firstName) && !empty($secondName))
 		{
 			return [

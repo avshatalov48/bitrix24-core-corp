@@ -935,6 +935,11 @@ export class Manager
 		Manager.openHelper(event, 'redirect=detail&code=12849128', 'cashbox_connect');
 	}
 
+	static openHowToConfigYooKassaCashBox(event)
+	{
+		Manager.openHelper(event, 'redirect=detail&code=17776800', 'cashbox_connect');
+	}
+
 	static openHowToSetupCheckboxCashBoxAndKeys(event)
 	{
 		Manager.openHelper(event, 'redirect=detail&code=12334663', 'cashbox_connect');
@@ -942,7 +947,7 @@ export class Manager
 
 	static openHowToSell(event)
 	{
-		Manager.openHelper(event, 'redirect=detail&code=11274792', 'crmstore_connect');
+		Manager.openHelper(event, 'redirect=detail&code=17615318', 'crmstore_connect');
 	}
 
 	static openHowToWork(event)
@@ -957,17 +962,12 @@ export class Manager
 
 	static openHowPayDealWorks(event)
 	{
-		Manager.openHelper(event, 'redirect=detail&code=11274792', 'pay_deal');
-	}
-
-	static openHowPayDynamicEntityWorks(event)
-	{
-		Manager.openHelper(event, 'redirect=detail&code=11274792', 'pay_dynamic_entity');
+		Manager.openHelper(event, 'redirect=detail&code=17615318', 'pay_deal');
 	}
 
 	static openHowPaySmartInvoiceWorks(event)
 	{
-		Manager.openHelper(event, 'redirect=detail&code=11274792', 'pay_smart_invoice');
+		Manager.openHelper(event, 'redirect=detail&code=17615318', 'pay_smart_invoice');
 	}
 
 	static openFormPagesHelp(event)
@@ -982,7 +982,12 @@ export class Manager
 
 	static openBitrix24NotificationsHelp(event)
 	{
-		Manager.openHelper(event, 'redirect=detail&code=13659402', 'bitrix24_notifications');
+		Manager.openHelper(event, 'redirect=detail&code=17615266', 'bitrix24_notifications');
+	}
+
+	static openBitrix24NotificationsWorks(event)
+	{
+		Manager.openHelper(event, 'redirect=detail&code=13655934', 'bitrix24_notifications_work');
 	}
 
 	static openHelper(event = null, url = '', analyticsArticle = '')

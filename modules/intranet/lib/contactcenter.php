@@ -6,6 +6,7 @@ use Bitrix\ImOpenLines\Common;
 use Bitrix\ImOpenlines\Security\Helper;
 use Bitrix\ImOpenlines\Security\Permissions;
 use Bitrix\ImConnector;
+use Bitrix\Intranet\Binding\Marketplace;
 use Bitrix\Main\Application;
 use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Error;
@@ -140,7 +141,7 @@ class ContactCenter
 			$count = count(\Bitrix\Mail\MailboxTable::getUserMailboxes());
 			$selected = $count > 0;
 
-			$isAddItemToList = $this->isAddItemToList($filter["ACTIVE"], $selected);
+			$isAddItemToList = $this->isAddItemToList($filter["ACTIVE"] ?? null, $selected);
 
 			if ($isAddItemToList)
 			{
@@ -179,7 +180,7 @@ class ContactCenter
 		else
 		{
 			$canCall = true;
-			if ($filter["CHECK_REGION"] !== "N")
+			if (!isset($filter["CHECK_REGION"]) || $filter["CHECK_REGION"] !== "N")
 			{
 				if (Loader::includeModule("bitrix24"))
 				{
@@ -192,7 +193,7 @@ class ContactCenter
 			{
 				$lines = \CVoxImplantConfig::GetLines(true, true);
 				$selected = count($lines) > 0;
-				$isAddItemToList = $this->isAddItemToList($filter["ACTIVE"], $selected);
+				$isAddItemToList = $this->isAddItemToList($filter["ACTIVE"] ?? null, $selected);
 
 				if ($isAddItemToList)
 				{
@@ -393,7 +394,7 @@ class ContactCenter
 					$connectionInfoHelperLimit = ImConnector\Limit::getIdInfoHelperConnector($code);
 				}
 
-				$isAddItemToList = $this->isAddItemToList($filter["ACTIVE"], $selected);
+				$isAddItemToList = $this->isAddItemToList($filter["ACTIVE"] ?? null, $selected);
 
 				if ($isAddItemToList)
 				{
@@ -420,7 +421,7 @@ class ContactCenter
 
 					if ($code === "vkgroup")
 					{
-						$isAddItemToList = $this->isAddItemToList($filter["ACTIVE"], $selectedOrder);
+						$isAddItemToList = $this->isAddItemToList($filter["ACTIVE"] ?? null, $selectedOrder);
 
 						//Hack for vkgroup order
 						if ($isAddItemToList)
@@ -707,7 +708,7 @@ class ContactCenter
 						'CODE' => 'bitrix.eshop',
 					],
 				])),
-				"ONCLICK" => "BX.SidePanel.Instance.open('/marketplace/detail/bitrix.eshop/')",
+				"ONCLICK" => "BX.SidePanel.Instance.open(" . Marketplace::getMainDirectory() . "'detail/bitrix.eshop/?from=contact_center_eshop')",
 			];
 		}
 
@@ -740,7 +741,7 @@ class ContactCenter
 				'NAME' => 'Kufar',
 				'SELECTED' => false,
 				'LOGO_CLASS' => "ui-icon ui-icon-service-kufar",
-				'LINK' => "/marketplace/detail/integrations24.kufar/"
+				'LINK' => Marketplace::getMainDirectory() . "detail/integrations24.kufar/"
 			];
 
 			return;
@@ -805,7 +806,7 @@ class ContactCenter
 				$onclick = preg_match("/^(http|https|ftp):\/\/(([A-Z0-9][A-Z0-9_-]*)(\.[A-Z0-9][A-Z0-9_-]*)+)/i", $item['HANDLER'])
 					? "BX.SidePanel.Instance.open('voximplant', {
 						contentCallback: function () {return '".$frame."';}})"
-					: "BX.SidePanel.Instance.open('/marketplace/?category=".$item['HANDLER']."')";
+					: "BX.SidePanel.Instance.open('" . Marketplace::getMainDirectory() . "?category=".$item['HANDLER']."')";
 			}
 			else
 			{
@@ -855,7 +856,7 @@ class ContactCenter
 		$installedMarketplaceApps = $this->getInstalledMarketplaceApps();
 		foreach ($marketplaceApps['ITEMS'] as $marketplaceApp)
 		{
-			$onclick = "BX.SidePanel.Instance.open('/marketplace/detail/{$marketplaceApp['CODE']}/')";
+			$onclick = "BX.SidePanel.Instance.open('" . Marketplace::getMainDirectory() . "detail/{$marketplaceApp['CODE']}/')";
 			if (isset($installedMarketplaceApps[$marketplaceApp['CODE']]))
 			{
 				$applicationId = $installedMarketplaceApps[$marketplaceApp['CODE']]['ID'];
@@ -942,7 +943,7 @@ class ContactCenter
 				try
 				{
 					$channelData = JSON::decode($channelInfo['DATA']);
-					if (is_string($channelData[$connectorCode]['name']))
+					if (isset($channelData[$connectorCode]['name']) && is_string($channelData[$connectorCode]['name']))
 					{
 						$channelName = trim($channelData[$connectorCode]['name']);
 					}
@@ -951,7 +952,7 @@ class ContactCenter
 						$channelName = '';
 					}
 				}
-				catch (\Exception $exception)
+				catch (\Bitrix\Main\ArgumentException $exception)
 				{
 					$channelName = '';
 				}
@@ -1014,7 +1015,7 @@ class ContactCenter
 	 */
 	private function getButtonListItem($filter = array())
 	{
-		if ($filter["IS_LOAD_INNER_ITEMS"] !== "N")
+		if (!isset($filter["IS_LOAD_INNER_ITEMS"]) || $filter["IS_LOAD_INNER_ITEMS"] !== "N")
 		{
 			$list = \Bitrix\Crm\SiteButton\Manager::getList();
 
@@ -1072,7 +1073,7 @@ class ContactCenter
 	 */
 	private function getFormListItem($filter = array())
 	{
-		if ($filter["IS_LOAD_INNER_ITEMS"] !== "N")
+		if (!isset($filter["IS_LOAD_INNER_ITEMS"]) || $filter["IS_LOAD_INNER_ITEMS"] !== "N")
 		{
 			if (method_exists(\Bitrix\Crm\WebForm\Internals\FormTable::class, 'getDefaultTypeList'))
 			{
@@ -1112,7 +1113,7 @@ class ContactCenter
 	 */
 	private function getCallFormListItem($filter = array())
 	{
-		if ($filter["IS_LOAD_INNER_ITEMS"] !== "N")
+		if (!isset($filter["IS_LOAD_INNER_ITEMS"]) || $filter["IS_LOAD_INNER_ITEMS"] !== "N")
 		{
 			if (method_exists(\Bitrix\Crm\WebForm\Internals\FormTable::class, 'getDefaultTypeList'))
 			{
@@ -1219,8 +1220,8 @@ class ContactCenter
 		}
 
 		$codeMap = \Bitrix\Crm\Ads\AdsForm::getAdsIconMap();
-		$cisCheck = $this->cisCheck() && $filter["CHECK_REGION"] !== "N";
-		$isRuPortal = $this->isRuZone() && $filter["CHECK_REGION"] !== "N";
+		$cisCheck = $this->cisCheck() && (!isset($filter["CHECK_REGION"]) || $filter["CHECK_REGION"] !== "N");
+		$isRuPortal = $this->isRuZone() && (!isset($filter["CHECK_REGION"]) || $filter["CHECK_REGION"] !== "N");
 
 		$itemsList = [];
 		foreach (\Bitrix\Crm\Ads\AdsForm::getServiceTypes() as $type)

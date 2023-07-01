@@ -3,40 +3,38 @@
  * @module crm/entity-detail/component/smart-activity-menu-item
  */
 jn.define('crm/entity-detail/component/smart-activity-menu-item', (require, exports, module) => {
-
 	const { getEntityMessage } = require('crm/loc');
-	const { TypeId } = require('crm/type');
 	const { Haptics } = require('haptics');
 	const { Loc } = require('loc');
 
-	const pathToIcons = currentDomain + '/bitrix/mobileapp/crmmobile/components/crm/crm.entity.details/icons/';
+	const pathToIcons = `${currentDomain}/bitrix/mobileapp/crmmobile/components/crm/crm.entity.details/icons/`;
 
-	const getSmartActivityMenuItem = (checked) => ({
+	const getSmartActivityMenuItem = (checked, entityTypeId) => ({
 		id: 'smartActivityItem',
 		sectionCode: 'action',
 		onItemSelected: () => {
 			if (checked)
 			{
-				askDisableSmartActivity();
+				askDisableSmartActivity(entityTypeId);
 			}
 			else
 			{
-				enableSmartActivity();
+				enableSmartActivity(entityTypeId);
 			}
 		},
 		title: BX.message('M_CRM_ACTION_SMART_ACTIVITY2'),
 		checked,
-		iconUrl: pathToIcons + 'smart_activities.png',
+		iconUrl: `${pathToIcons}smart_activities.png`,
 	});
 
-	const askDisableSmartActivity = () => {
+	const askDisableSmartActivity = (entityTypeId) => {
 		const periods = ['day', 'week', 'month', 'forever'];
 
 		const actions = periods.map((period) => ({
 			id: period,
 			title: Loc.getMessage(`M_CRM_ACTION_SMART_ACTIVITY_SKIP_${period.toUpperCase()}`),
 			onClickCallback: () => new Promise((resolve) => {
-				menu.close(() => disableSmartActivity(period));
+				menu.close(() => disableSmartActivity(period, entityTypeId));
 				resolve({ closeMenu: false });
 			}),
 		}));
@@ -44,8 +42,7 @@ jn.define('crm/entity-detail/component/smart-activity-menu-item', (require, expo
 		const menu = new ContextMenu({
 			actions,
 			params: {
-				// ToDo move to entityTypeId from props
-				title: getEntityMessage('M_CRM_ACTION_SMART_ACTIVITY_SKIP_TITLE', TypeId.Deal),
+				title: getEntityMessage('M_CRM_ACTION_SMART_ACTIVITY_SKIP_TITLE', entityTypeId),
 				showCancelButton: true,
 				showActionLoader: false,
 			},
@@ -53,19 +50,19 @@ jn.define('crm/entity-detail/component/smart-activity-menu-item', (require, expo
 		void menu.show();
 	};
 
-	const disableSmartActivity = (period) => {
+	const disableSmartActivity = (period, entityTypeId) => {
 		BX.ajax
 			.runAction('crm.activity.todo.skipEntityDetailsNotification', {
 				data: {
-					entityTypeId: TypeId.Deal,
+					entityTypeId,
 					period,
 				},
 			})
 			.then(() => {
 				BX.postComponentEvent('Crm.Activity.Todo::onChangeNotifications', [false]);
 
-				const title = BX.message('M_CRM_ACTION_SMART_ACTIVITY_DISABLED_NOTIFY_TITLE');
-				const text = BX.message('M_CRM_ACTION_SMART_ACTIVITY_DISABLED_NOTIFY_TEXT');
+				const title = getEntityMessage('M_CRM_ACTION_SMART_ACTIVITY_DISABLED_NOTIFY_TITLE', entityTypeId);
+				const text = getEntityMessage('M_CRM_ACTION_SMART_ACTIVITY_DISABLED_NOTIFY_TEXT', entityTypeId);
 
 				Notify.showUniqueMessage(text, title, { time: 5 });
 				Haptics.impactLight();
@@ -73,11 +70,11 @@ jn.define('crm/entity-detail/component/smart-activity-menu-item', (require, expo
 		;
 	};
 
-	const enableSmartActivity = () => {
+	const enableSmartActivity = (entityTypeId) => {
 		BX.ajax
 			.runAction('crm.activity.todo.skipEntityDetailsNotification', {
 				data: {
-					entityTypeId: TypeId.Deal,
+					entityTypeId,
 					period: '',
 				},
 			})
@@ -85,7 +82,7 @@ jn.define('crm/entity-detail/component/smart-activity-menu-item', (require, expo
 				BX.postComponentEvent('Crm.Activity.Todo::onChangeNotifications', [true]);
 
 				const title = BX.message('M_CRM_ACTION_SMART_ACTIVITY_ENABLED_NOTIFY_TITLE');
-				const text = BX.message('M_CRM_ACTION_SMART_ACTIVITY_ENABLED_NOTIFY_TEXT');
+				const text = getEntityMessage('M_CRM_ACTION_SMART_ACTIVITY_ENABLED_NOTIFY_TEXT', entityTypeId);
 
 				Notify.showUniqueMessage(text, title, { time: 5 });
 				Haptics.impactLight();

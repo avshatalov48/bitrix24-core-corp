@@ -17,18 +17,18 @@ $scrumData = $arParams['TEMPLATE_DATA']['DATA']['SCRUM'];
 
 $arParams['TEMPLATE_DATA']['PATH_TO_TEMPLATES_TEMPLATE'] = UI\Task\Template::makeActionUrl(
 	$arParams['PATH_TO_TEMPLATES_TEMPLATE'],
-	$taskData['SE_TEMPLATE']['ID'],
+	($taskData['SE_TEMPLATE']['ID'] ?? null),
 	'view'
 );
 $arParams['TEMPLATE_DATA']['PATH_TO_TEMPLATES_TEMPLATE_SOURCE'] = UI\Task\Template::makeActionUrl(
 	$arParams['PATH_TO_TEMPLATES_TEMPLATE'],
-	$taskData['SE_TEMPLATE.SOURCE']['ID'],
+	($taskData['SE_TEMPLATE.SOURCE']['ID'] ?? null),
 	'view'
 );
 
 $arParams['TEMPLATE_DATA']['EPIC'] = $scrumData['EPIC'];
 
-$arParams['TEMPLATE_DATA']['TAGS'] = UI\Task\Tag::formatTagString($taskData['SE_TAG']);
+$arParams['TEMPLATE_DATA']['TAGS'] = UI\Task\Tag::formatTagString($taskData['SE_TAG'] ?? null);
 
 //Dates
 $dates = [

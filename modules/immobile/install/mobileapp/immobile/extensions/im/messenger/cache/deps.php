@@ -14,6 +14,7 @@ return [
 		'./src/shared-storage/recent',
 		'./src/shared-storage/messages',
 		'./src/shared-storage/users',
+		'./src/shared-storage/files',
 		'./src/native/share-dialog',
 	],
 ];

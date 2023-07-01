@@ -9,7 +9,7 @@
 		{
 			props = props || {};
 			props.backgroundColor = props.backgroundColor || '#f5f7f8';
-			props.loaderColor = props.loaderColor || '#82888F';
+			props.loaderColor = props.loaderColor || '#828b95';
 			props.loaderSize = props.loaderSize || 'small';
 
 			super(props);

@@ -1,4 +1,5 @@
 <?php
+
 use Bitrix\Crm\PhaseSemantics;
 use Bitrix\Crm\Settings\Crm;
 
@@ -145,7 +146,10 @@ class CCrmUserCounter
 		$currentDayEnd = ConvertTimeStamp(mktime(23, 59, 59, date('n', $currentDay), date('j', $currentDay), date('Y', $currentDay)), 'FULL', SITE_ID);
 
 		$count = 0;
-		if (!\Bitrix\Crm\Settings\CounterSettings::getCurrent()->isEnabled())
+		if (
+			!\Bitrix\Crm\Settings\CounterSettings::getInstance()->isEnabled()
+			|| !\Bitrix\Crm\Settings\CounterSettings::getInstance()->canBeCounted()
+		)
 		{
 			$count = 0; // counters feature is completely disabled
 		}

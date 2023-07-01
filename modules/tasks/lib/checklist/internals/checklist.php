@@ -60,7 +60,7 @@ class CheckList extends CompositeTreeItem
 
 		$this->userId = $userId;
 		$this->facade = $facade;
-		$this->action = (is_array($fields['ACTION']) ? $fields['ACTION'] : []);
+		$this->action = (isset($fields['ACTION']) && is_array($fields['ACTION']) ? $fields['ACTION'] : []);
 		$this->fields = new CheckListFields($fields);
 
 		$this->checkListDataController = $facade::getCheckListDataController();
@@ -365,7 +365,7 @@ class CheckList extends CompositeTreeItem
 		$facade = $this->facade;
 
 		/** @noinspection PhpUndefinedVariableInspection */
-		$oldItemFields = ($facade::$oldItemsToMerge[$id]?: $facade::getList([], ['ID' => $id])[$id]);
+		$oldItemFields = (($facade::$oldItemsToMerge[$id] ?? null) ?: $facade::getList([], ['ID' => $id])[$id]);
 		$oldItem = new CheckList(0, $this->userId, $facade, $oldItemFields);
 
 		$changedFields = $this->getChangedFields($oldItem->getFields());
@@ -407,7 +407,7 @@ class CheckList extends CompositeTreeItem
 			$this->setFields(['ATTACHMENTS' => $facade::getList(['ATTACHMENTS'], ['ID' => $id])[$id]['ATTACHMENTS']]);
 		}
 
-		$newParentId = $commonFields['PARENT_ID'];
+		$newParentId = ($commonFields['PARENT_ID'] ?? null);
 
 		if (isset($newParentId))
 		{

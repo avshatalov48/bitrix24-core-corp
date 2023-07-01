@@ -1,4 +1,4 @@
-import {Type, Loc, clone, ajax} from 'main.core';
+import { ajax, clone, Loc, Type } from 'main.core';
 import Stream from './stream';
 import Fasten from "./animations/fasten";
 import CompatibleItem from "./items/compatible-item";
@@ -181,7 +181,7 @@ export default class PullActionProcessor
 
 		if (existedStreamItem instanceof CompatibleItem && isDone)
 		{
-			existedStreamItem._existedStreamItemDeadLine = existedStreamItem.getDeadline();
+			existedStreamItem._existedStreamItemDeadLine = existedStreamItem.getLightTime();
 		}
 
 		existedStreamItem.setData(itemData);
@@ -215,7 +215,11 @@ export default class PullActionProcessor
 
 		const destinationItem = destinationStream.createItem(destinationItemData);
 		destinationStream.addItem(destinationItem, destinationStream.calculateItemIndex(destinationItem));
-		destinationItem.layout({ add: false });
+
+		if (destinationItem instanceof CompatibleItem)
+		{
+			destinationItem.layout({ add: false });
+		}
 
 		return sourceStream.moveItemToStream(sourceItem, destinationStream, destinationItem);
 	}
@@ -240,10 +244,18 @@ export default class PullActionProcessor
 		}
 		else
 		{
+			// hide files block in comment content before pin
+			const historyCommentBlock = historyItem.getLayoutContentBlockById('commentContent');
+			if (historyCommentBlock)
+			{
+				historyCommentBlock.setIsFilesBlockDisplayed(false);
+				historyCommentBlock.setIsMoving();
+			}
+
 			return this.#updateItem(id, itemData, this.#historyStream, false, false).then(() => {
 				const fixedHistoryItem = this.#fixedHistoryStream.createItem(itemData);
+				fixedHistoryItem.initWrapper();
 				this.#fixedHistoryStream.addItem(fixedHistoryItem, 0);
-				fixedHistoryItem.layout({ add: false });
 
 				return new Promise((resolve) => {
 					const animation = Fasten.create(
@@ -253,7 +265,25 @@ export default class PullActionProcessor
 							finalItem: fixedHistoryItem,
 							anchor: this.#fixedHistoryStream.getAnchor(),
 							events: {
-								complete: resolve,
+								complete: () => {
+									fixedHistoryItem.initLayoutApp({ add: false });
+
+									// show files block in comment content after pin record
+									if (historyCommentBlock)
+									{
+										historyCommentBlock.setIsFilesBlockDisplayed();
+										historyCommentBlock.setIsMoving(false);
+
+										const fixedHistoryCommentBlock = fixedHistoryItem.getLayoutContentBlockById('commentContent');
+										if (fixedHistoryCommentBlock)
+										{
+											fixedHistoryCommentBlock.setIsFilesBlockDisplayed();
+											fixedHistoryCommentBlock.setIsMoving(false);
+										}
+									}
+
+									resolve();
+								},
 							}
 						}
 					);

@@ -1,0 +1,10 @@
+<?php
+$MESS["CRM_TIMELINE_LOG_MSG_STATUS_TITLE_FAILURE"] = "#MESSENGER# message has not been delivered";
+$MESS["CRM_TIMELINE_LOG_MSG_STATUS_TITLE_READ"] = "#MESSENGER# message has been viewed";
+$MESS["CRM_TIMELINE_LOG_MSG_STATUS_TITLE_SUCCESS"] = "#MESSENGER# message has been delivered";
+$MESS["CRM_TIMELINE_LOG_SMS_STATUS_RECIPIENT"] = "Recipient";
+$MESS["CRM_TIMELINE_LOG_SMS_STATUS_TITLE_FAILURE"] = "SMS message has not been delivered";
+$MESS["CRM_TIMELINE_LOG_SMS_STATUS_TITLE_READ"] = "SMS message has been viewed";
+$MESS["CRM_TIMELINE_LOG_SMS_STATUS_TITLE_SUCCESS"] = "SMS message has been delivered";
+$MESS["CRM_TIMELINE_LOG_SMS_STATUS_TITLE_UNKNOWN"] = "Unknown status";
+$MESS["CRM_TIMELINE_LOG_TAG_SENDING_ERROR"] = "Sending error";

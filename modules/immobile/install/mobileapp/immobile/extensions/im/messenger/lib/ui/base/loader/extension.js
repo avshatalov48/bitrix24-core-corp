@@ -16,7 +16,7 @@ jn.define('im/messenger/lib/ui/base/loader', (require, exports, module) => {
 		{
 			super(props);
 			this.state.enable = this.props.enable;
-			this.text = props.text ?? Loc.getMessage('IMMOBILE_LOADER_ITEM_DEFAULT_TEXT');
+			this.text = props.text || Loc.getMessage('IMMOBILE_LOADER_ITEM_DEFAULT_TEXT');
 		}
 
 		render()

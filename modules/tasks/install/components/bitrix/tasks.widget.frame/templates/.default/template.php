@@ -91,7 +91,7 @@ $inputPrefix = $arParams['INPUT_PREFIX'];
 									$lockClassName = 'task-options-item-open-inner';
 									$onLockClick = '';
 									$lockClassStyle = '';
-									if ($block['RESTRICTED'])
+									if ($block['RESTRICTED'] ?? null)
 									{
 										$lockClassName .= ' tasks-btn-restricted';
 										$onLockClick =
@@ -106,7 +106,7 @@ $inputPrefix = $arParams['INPUT_PREFIX'];
 
 									<?=$block['HTML']?>
 
-									<?if($block['TOGGLE'] && count($block['TOGGLE'])):?>
+									<?if (($block['TOGGLE'] ?? null) && count($block['TOGGLE'])):?>
 										<span class="task-dashed-link task-dashed-link-add tasks-additional-block-link">
 											<?foreach($block['TOGGLE'] as $link):?>
 			                                    <span class="js-id-wfr-edit-form-toggler task-dashed-link-inner" data-target="<?=htmlspecialcharsbx(ToLower($link['TARGET']))?>"><?=htmlspecialcharsbx($link['TITLE'])?></span>
@@ -116,7 +116,7 @@ $inputPrefix = $arParams['INPUT_PREFIX'];
 
 								</div>
 
-								<?if($block['SUB'] && count($block['SUB'])):?>
+								<?if (($block['SUB'] ?? null) && count($block['SUB'])):?>
 									<div class="task-options-item-open-inner task-options-item-open-inner-sh task-options-item-open-inner-sett">
 										<?foreach($block['SUB'] as $sub):?>
 

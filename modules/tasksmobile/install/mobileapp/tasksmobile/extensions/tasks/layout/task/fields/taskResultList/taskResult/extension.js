@@ -100,7 +100,7 @@ jn.define('tasks/layout/task/fields/taskResultList/taskResult', (require, export
 						marginLeft: 30,
 						paddingLeft: 12,
 						borderLeftWidth: 3,
-						borderLeftColor: '#8fbc00',
+						borderLeftColor: '#8dbb00',
 					},
 				},
 				this.renderText(),

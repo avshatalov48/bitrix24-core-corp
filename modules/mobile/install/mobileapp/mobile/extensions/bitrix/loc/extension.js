@@ -42,7 +42,7 @@ jn.define('loc', (require, exports, module) => {
 		 */
 		static hasMessage(messageId)
 		{
-			return Type.isString(messageId) && !Type.isNil(BX.message[messageId]);
+			return Type.isString(messageId) && Type.isStringFilled(BX.message[messageId]);
 		}
 
 		/**

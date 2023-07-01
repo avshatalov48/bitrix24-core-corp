@@ -27,6 +27,7 @@ export class Editor
 	products: Row[] = [];
 	productsWasInitiated = false;
 	isChangedGrid = false;
+	isVisibleGrid = false;
 	pageEventsManager: PageEventsManager;
 	cache = new Cache.MemoryCache();
 
@@ -2306,7 +2307,22 @@ export class Editor
 
 	handleOnTabShow(): void
 	{
+		if (!this.isVisible())
+		{
+			this.products.forEach(
+				(product) => {
+					product.getSelector()?.layout();
+					product.initHandlersForSelectors();
+				});
+		}
 		EventEmitter.emit('onDemandRecalculateWrapper', [this]);
+
+		this.isVisibleGrid = true;
+	}
+
+	isVisible(): boolean
+	{
+		return this.isVisibleGrid;
 	}
 
 	showFieldTourHint(fieldName: string, tourData: Object, endTourHandler: Function, addictedFields: Array<string> = [], rowId: string = ''): void

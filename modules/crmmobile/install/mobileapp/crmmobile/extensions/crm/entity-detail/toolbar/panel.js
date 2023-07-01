@@ -2,7 +2,6 @@
  * @module crm/entity-detail/toolbar/panel
  */
 jn.define('crm/entity-detail/toolbar/panel', (require, exports, module) => {
-
 	const { mergeImmutable } = require('utils/object');
 	const { FadeView } = require('animation/components/fade-view');
 
@@ -17,21 +16,21 @@ jn.define('crm/entity-detail/toolbar/panel', (require, exports, module) => {
 
 			this.visible = false;
 			this.ref = null;
-			/** @type {ActivityPinnedBase} */
+			/** @type {ToolbarContent} */
 			this.toolbar = null;
 		}
 
 		/**
 		 * @public
-		 * @param {Object} model
-		 * @param {?Object} params
+		 * @param {string} template
+		 * @param {object} data
 		 * @return void
 		 */
-		show(model, params = {})
+		show(template, data = {})
 		{
 			if (this.toolbar)
 			{
-				this.toolbar.show(model, params);
+				this.toolbar.show(template, data);
 			}
 		}
 
@@ -103,8 +102,7 @@ jn.define('crm/entity-detail/toolbar/panel', (require, exports, module) => {
 				left: 3,
 				right: 3,
 			},
-			style: {
-			},
+			style: {},
 		},
 		mainWrapper: {
 			flex: 1,

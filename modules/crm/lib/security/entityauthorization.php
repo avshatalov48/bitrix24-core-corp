@@ -8,6 +8,10 @@ use Bitrix\Main;
 use Bitrix\Catalog\Access\AccessController;
 use Bitrix\Catalog\Access\ActionDictionary;
 
+/**
+ * @deprecated
+ * @see \Bitrix\Crm\Service\UserPermissions
+ */
 class EntityAuthorization
 {
 	public static function getCurrentUserID()

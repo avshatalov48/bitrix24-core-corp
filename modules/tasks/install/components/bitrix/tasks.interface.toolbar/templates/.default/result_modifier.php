@@ -18,7 +18,7 @@ $emptyMessage = '';
 if (
 	$isMyTasks
 	|| \Bitrix\Tasks\Util\User::isAdmin()
-	|| CTasks::IsSubordinate($this->arParams['USER_ID'], $this->arResult['USER_ID'])
+	|| CTasks::IsSubordinate($arParams['USER_ID'], $arResult['USER_ID'])
 )
 {
 	$emptyMessage = GetMessageJS('TASKS_COUNTER_EMPTY');
@@ -35,15 +35,15 @@ $readAllButton =
 
 $arResult['TEMPLATE_DATA'] = [];
 $arResult['JS_DATA'] = [
-	'userId' => $arResult['USER_ID'],
-	'ownerId' => $arResult['OWNER_ID'],
-	'groupId' => $arParams['GROUP_ID'],
-	'filterId' => $arParams['FILTER_ID'],
-	'roleId' => $arResult['ROLE'],
-	'showCounters' => $arResult['SHOW_COUNTERS'],
-	'counters' => $arResult['COUNTERS'],
-	'foreign_counters' => $arResult['FOREIGN_COUNTERS'],
-	'project_mode'	=> ($arParams['GROUP_ID'] > 0),
+	'userId' => $arResult['USER_ID'] ?? null,
+	'ownerId' => $arResult['OWNER_ID'] ?? null,
+	'groupId' => $arParams['GROUP_ID'] ?? null,
+	'filterId' => $arParams['FILTER_ID'] ?? null,
+	'roleId' => $arResult['ROLE'] ?? null,
+	'showCounters' => $arResult['SHOW_COUNTERS'] ?? null,
+	'counters' => $arResult['COUNTERS'] ?? null,
+	'foreign_counters' => $arResult['FOREIGN_COUNTERS'] ?? null,
+	'project_mode'	=> (isset($arParams['GROUP_ID']) && $arParams['GROUP_ID'] > 0),
 	'templates' => [
 		'empty' => '<span id="tasksSimpleCounters" class="tasks-page-name">#TEXT#</span>',
 		'total' => '<span id="tasksSimpleCounters" class="tasks-counter-page-name">#TEXT#</span>',

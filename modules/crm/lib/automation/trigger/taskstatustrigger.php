@@ -18,7 +18,11 @@ class TaskStatusTrigger extends BaseTrigger
 	 */
 	public static function isSupported($entityTypeId)
 	{
-		if (in_array($entityTypeId, [\CCrmOwnerType::Lead, \CCrmOwnerType::Deal], true))
+		if (in_array(
+			$entityTypeId,
+			[\CCrmOwnerType::Lead, \CCrmOwnerType::Deal, \CCrmOwnerType::SmartInvoice, \CCrmOwnerType::Quote],
+			true)
+		)
 		{
 			return true;
 		}

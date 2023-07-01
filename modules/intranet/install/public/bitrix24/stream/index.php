@@ -5,12 +5,16 @@
  * @global  \CUser $USER
  */
 
-require($_SERVER["DOCUMENT_ROOT"]."/bitrix/header.php");
+use Bitrix\Intranet\Integration\Wizards\Portal\Ids;
+use Bitrix\Main\Loader;
 
-IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/public_bitrix24/index.php");
+require($_SERVER['DOCUMENT_ROOT'] . '/bitrix/header.php');
 
-$APPLICATION->SetPageProperty("NOT_SHOW_NAV_CHAIN", "Y");
-$APPLICATION->SetPageProperty("title", htmlspecialcharsbx(COption::GetOptionString("main", "site_name", "Bitrix24")));
+IncludeModuleLangFile($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/intranet/public_bitrix24/index.php');
+
+$APPLICATION->SetPageProperty('NOT_SHOW_NAV_CHAIN', 'Y');
+$APPLICATION->SetPageProperty('title', htmlspecialcharsbx(COption::GetOptionString('main', 'site_name', 'Bitrix24')));
+Loader::includeModule('intranet');
 
 GetGlobalID();
 
@@ -59,14 +63,14 @@ $APPLICATION->IncludeComponent(
 		"SET_LOG_CACHE" => "Y",
 		"USE_COMMENTS" => "Y",
 		"BLOG_ALLOW_POST_CODE" => "Y",
-		"BLOG_GROUP_ID" => $GLOBAL_BLOG_GROUP[SITE_ID],
+		"BLOG_GROUP_ID" => Ids::getBlogId(),
 		"PHOTO_USER_IBLOCK_TYPE" => "photos",
-		"PHOTO_USER_IBLOCK_ID" => $GLOBAL_IBLOCK_ID["user_photogallery"],
+		"PHOTO_USER_IBLOCK_ID" => Ids::getIblockId('user_photogallery'),
 		"PHOTO_USE_COMMENTS" => "Y",
 		"PHOTO_COMMENTS_TYPE" => "FORUM",
-		"PHOTO_FORUM_ID" => $GLOBAL_FORUM_ID["PHOTOGALLERY_COMMENTS"],
+		"PHOTO_FORUM_ID" => Ids::getForumId('PHOTOGALLERY_COMMENTS'),
 		"PHOTO_USE_CAPTCHA" => "N",
-		"FORUM_ID" => $GLOBAL_FORUM_ID["USERS_AND_GROUPS"],
+		"FORUM_ID" => Ids::getForumId('USERS_AND_GROUPS'),
 		"PAGER_DESC_NUMBERING" => "N",
 		"AJAX_MODE" => "N",
 		"AJAX_OPTION_SHADOW" => "N",
@@ -84,10 +88,10 @@ $APPLICATION->IncludeComponent(
 	)
 );
 
-if (CModule::IncludeModule("intranet"))
+if (Loader::includeModule('intranet'))
 {
-	$APPLICATION->IncludeComponent("bitrix:intranet.ustat.online", "", [], false);
-	$APPLICATION->IncludeComponent("bitrix:intranet.ustat.status", "", array(),	false);
+	$APPLICATION->IncludeComponent('bitrix:intranet.ustat.online', '', [], false);
+	$APPLICATION->IncludeComponent('bitrix:intranet.ustat.status', '', ['CREATE_FRAME' => 'N'], false);
 }
 
 $APPLICATION->IncludeComponent(
@@ -118,7 +122,7 @@ $APPLICATION->IncludeComponent(
 	["HIDE_ICONS" => "N"]
 );
 
-if ($GLOBALS["USER"]->IsAuthorized())
+if ($USER->IsAuthorized())
 {
 	$APPLICATION->IncludeComponent(
 		"bitrix:socialnetwork.blog.blog",
@@ -127,7 +131,7 @@ if ($GLOBALS["USER"]->IsAuthorized())
 			"BLOG_URL" => "",
 			"FILTER" => array(
 				"=UF_BLOG_POST_IMPRTNT" => 1,
-				"!POST_PARAM_BLOG_POST_IMPRTNT" => array("USER_ID" => $GLOBALS["USER"]->GetId(), "VALUE" => "Y")
+				"!POST_PARAM_BLOG_POST_IMPRTNT" => array("USER_ID" => $USER->GetId(), "VALUE" => "Y")
 			),
 			"FILTER_NAME" => "",
 			"YEAR" => "",
@@ -135,7 +139,7 @@ if ($GLOBALS["USER"]->IsAuthorized())
 			"DAY" => "",
 			"CATEGORY_ID" => "",
 			"GROUP_ID" => array(),
-			"USER_ID" => $GLOBALS["USER"]->GetId(),
+			"USER_ID" => $USER->GetId(),
 			"SOCNET_GROUP_ID" => 0,
 			"SORT" => array(),
 			"SORT_BY1" => "",
@@ -169,7 +173,7 @@ if ($GLOBALS["USER"]->IsAuthorized())
 			//************** CACHE **********************************************
 			"CACHE_TYPE" => "A",
 			"CACHE_TIME" => 3600,
-			"CACHE_TAGS" => array("IMPORTANT", "IMPORTANT".$GLOBALS["USER"]->GetId()),
+			"CACHE_TAGS" => array("IMPORTANT", "IMPORTANT".$USER->GetId()),
 			//************** Template Settings **********************************
 			"OPTIONS" => array(array("name" => "BLOG_POST_IMPRTNT", "value" => "Y")),
 		),
@@ -210,13 +214,6 @@ $APPLICATION->IncludeComponent(
 		"CACHE_TYPE" => "A",
 		"CACHE_TIME" => "86450",
 		"CACHE_DATE" => date('dmy'),
-		"DATE_FORMAT" => CIntranetUtils::getCurrentDateTimeFormat(array(
-			'woTime' => true
-		)),
-		"DATE_FORMAT_NO_YEAR" => CIntranetUtils::getCurrentDateTimeFormat(array(
-			'woYear' => true,
-			'woTime' => true
-		)),
 		"SHOW_YEAR" => "N",
 		"DETAIL_URL" => "/company/personal/user/#USER_ID#/",
 		"DEPARTMENT" => "0",

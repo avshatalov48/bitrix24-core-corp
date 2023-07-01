@@ -14,6 +14,8 @@ use Bitrix\Tasks\AnalyticLogger;
 use Bitrix\Tasks\CheckList\CheckListFacade;
 use Bitrix\Tasks\CheckList\Internals\CheckList;
 use Bitrix\Tasks\Comments\Task\CommentPoster;
+use Bitrix\Tasks\Integration\CRM\TimeLineManager;
+use Bitrix\Tasks\Internals\Registry\TaskRegistry;
 use Bitrix\Tasks\Internals\SearchIndex;
 use Bitrix\Tasks\Internals\Task\CheckList\MemberTable;
 use Bitrix\Tasks\Internals\Task\CheckListTable;
@@ -458,7 +460,7 @@ class TaskCheckListFacade extends CheckListFacade
 	 */
 	private static function logToAnalyticsFile($parameters): void
 	{
-		$analyticsData = $parameters['analyticsData'];
+		$analyticsData = ($parameters['analyticsData'] ?? null);
 
 		if (is_array($analyticsData) && !empty($analyticsData))
 		{
@@ -481,5 +483,50 @@ class TaskCheckListFacade extends CheckListFacade
 	protected static function getAccessControllerClass(): string
 	{
 		return TaskAccessController::class;
+	}
+
+	protected static function onAfterMerge(array $traversedItems, int $userId, int $taskId, array $parameters): void
+	{
+		if (
+			isset($parameters['context'])
+			&& $parameters['context'] === self::TASK_ADD_CONTEXT
+		)
+		{
+			return;
+		}
+		$task = TaskRegistry::getInstance()->getObject($taskId);
+		if (is_null($task))
+		{
+			return;
+		}
+
+		$newRootItems = array_filter($traversedItems,
+			static fn (array $item): bool => (int)$item['PARENT_ID'] === 0
+		);
+		$newRootItemKeys = array_values(array_map(
+			static fn (array $item): int => (int)$item['ID'],
+			$newRootItems
+		));
+
+		$oldRootItems = array_filter(static::$oldItemsToMerge,
+			static fn (array $item): bool => (int)$item['PARENT_ID'] === 0
+		);
+		$oldRootItemKeys = array_keys($oldRootItems);
+
+		$timeline = new TimeLineManager($taskId, $userId);
+		if (!empty(array_diff($newRootItemKeys, $oldRootItemKeys)))
+		{
+			$timeline->onTaskChecklistAdded();
+		}
+		else
+		{
+			$timeline->onTaskChecklistChanged();
+		}
+		$timeline->save();
+	}
+
+	protected static function onAfterUpdate(int $taskId): void
+	{
+		(new TimeLineManager($taskId))->onTaskChecklistChanged()->save();
 	}
 }

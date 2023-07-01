@@ -51,8 +51,8 @@ class DoD extends Controller
 
 		$post = $this->request->getPostList()->toArray();
 
-		$groupId = (is_numeric($post['groupId']) ? (int) $post['groupId'] : 0);
-		$taskId = (is_numeric($post['taskId']) ? (int) $post['taskId'] : 0);
+		$groupId = (is_numeric($post['groupId'] ?? null) ? (int) $post['groupId'] : 0);
+		$taskId = (is_numeric($post['taskId'] ?? null) ? (int) $post['taskId'] : 0);
 		$userId = User::getId();
 
 		if ($taskId && !TaskAccessController::can($userId, ActionDictionary::ACTION_TASK_READ, $taskId))
@@ -95,6 +95,11 @@ class DoD extends Controller
 	public function isNecessaryAction(int $groupId, int $taskId): bool
 	{
 		$userId = User::getId();
+
+		if (!Group::canReadGroupTasks($userId, $groupId))
+		{
+			return false;
+		}
 
 		$taskService = new TaskService($userId);
 
@@ -395,7 +400,10 @@ class DoD extends Controller
 			return null;
 		}
 
-		if ($this->isItemListEmpty($item->getId(), $userId) || $item->getTypeId() !== $typeId)
+		if (
+			$this->isItemListEmpty($item->getId(), $userId)
+			|| $item->getTypeId() !== $typeId
+		)
 		{
 			$typeItems = $definitionOfDoneService->getTypeItems($typeId);
 
@@ -522,14 +530,16 @@ class DoD extends Controller
 
 		$typeItems = $this->generateNodeIdForItems($typeItems);
 
-		$parentsMap = $this->getParentsMap($typeItems);
-
 		foreach ($typeItems as $typeItem)
 		{
 			$items[$typeItem['NODE_ID']] = [
 				'ITEM_ID' => $itemId,
 				'NODE_ID' => $typeItem['NODE_ID'],
-				'PARENT_NODE_ID' => ($parentsMap[$typeItem['PARENT_ID']] ?? 0),
+				'PARENT_NODE_ID' => (
+					isset($typeItems[$typeItem['PARENT_ID']])
+						? $typeItems[$typeItem['PARENT_ID']]['NODE_ID']
+						: 0
+				),
 				'TITLE' => $typeItem['TITLE'],
 				'ACTION' => [
 					'MODIFY' => false,
@@ -577,7 +587,8 @@ class DoD extends Controller
 		catch (\Exception $exception)
 		{
 			$this->errorCollection->setError(
-				new Error($exception->getMessage(),
+				new Error(
+					$exception->getMessage(),
 					self::ERROR_COULD_NOT_GET_DATA
 				)
 			);
@@ -596,21 +607,6 @@ class DoD extends Controller
 		}
 
 		return $items;
-	}
-
-	private function getParentsMap(array $items): array
-	{
-		$parentsMap = [];
-
-		foreach ($items as $itemId => $item)
-		{
-			if ((int) $item['PARENT_ID'] === 0)
-			{
-				$parentsMap[$itemId] = $item['NODE_ID'];
-			}
-		}
-
-		return $parentsMap;
 	}
 
 	private function getItemType(int $taskId): TypeForm

@@ -1,15 +1,22 @@
-(() => {
+jn.define("intent", (require, exports, module) => {
 	/**
-	 * @typedef {{check: (function((String|Array)): T), notify: (function(intent:String, event:String):void)}} MobileIntent
+	 * @typedef {{addHandler: Intent.addHandler, handlers: *[], check: (function(*): *), execute:  (function(): *), notify: (function(data:String, eventName:String):void)}} MobileIntent
 	 */
-
-	/** @var  {MobileIntent} mobileIntent */
-	let mobileIntent = {
-		/**
-		 * @param {String|Array} data
-		 * @return {*}
-		 */
-		check: data => {
+	const Intent = {
+		addHandler: (func) => { Intent.handlers.push(func) },
+		handlers: [],
+		execute: () => {
+			BX.onCustomEvent("onIntentHandle", [Intent])
+			Intent.handlers.forEach( handler =>  handler.call())
+			Intent.handlers = [];
+		},
+		notify: (data, eventName) => {
+			const intent = Intent.check(data)
+			if (intent)  {
+				analytics.send(eventName, {type: intent}, ["fbonly"])
+			}
+		},
+		check: (data) => {
 			let targetIntents;
 			if (Array.isArray(data))
 			{
@@ -23,14 +30,8 @@
 				({intent} = Application.getLastNotification(name))
 				return intents.includes(intent)
 			})
-		},
-		notify: (data, eventName) => {
-			let intent = mobileIntent.check(data)
-			if (intent)  {
-				analytics.send(eventName, {type: intent}, ["fbonly"])
-			}
 		}
 	}
 
-	jnexport([mobileIntent, 'mobileIntent'])
-})();
+	module.exports = Intent
+});

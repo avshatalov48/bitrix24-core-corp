@@ -14,7 +14,7 @@ $arParams['INPUT_NAME'] = CUtil::JSEscape($arParams['INPUT_NAME']);
 <? } ?>
 
 <? if ($arParams['SHOW_BUTTON'] == 'Y') { ?>
-<input type="button" onclick="<?=$name_x; ?>.Show()" value="<?=($arParams['BUTTON_CAPTION'] ? htmlspecialcharsex($arParams['BUTTON_CAPTION']) : '...'); ?>" />
+<input type="button" onclick="<?=$name_x; ?>.Show()" value="<?=(!empty($arParams['BUTTON_CAPTION']) ? htmlspecialcharsex($arParams['BUTTON_CAPTION']) : '...'); ?>" />
 <? } ?>
 
 <script type="text/javascript">
@@ -40,7 +40,7 @@ function GetInput_<?=$name_x; ?>(doc)
 	<? } ?>
 }
 
-<? if (!$arParams['ONSELECT']) { ?>
+<? if (empty($arParams['ONSELECT'])) { ?>
 
 function OnSelect_<?=$name_x; ?>(value)
 {

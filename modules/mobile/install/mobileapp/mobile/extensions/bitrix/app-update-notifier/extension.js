@@ -22,9 +22,9 @@ jn.define('app-update-notifier', (require, exports, module) => {
 			this.layout = props.layout;
 		}
 
-		static open(props = {})
+		static open(props = {}, parentWidget = PageManager)
 		{
-			PageManager.openWidget('layout', {
+			parentWidget.openWidget('layout', {
 				modal: true,
 				backdrop: {
 					onlyMediumPosition: false,

@@ -2,7 +2,6 @@
  * @module crm/duplicates/panel
  */
 jn.define('crm/duplicates/panel', (require, exports, module) => {
-
 	const { ClientItem } = require('layout/ui/fields/client/elements');
 	const { Loc } = require('loc');
 	const { Type } = require('crm/type');
@@ -10,7 +9,7 @@ jn.define('crm/duplicates/panel', (require, exports, module) => {
 	const { transparent } = require('utils/color');
 	const { openCrmEntityInAppUrl } = require('crm/in-app-url/open');
 
-	const BACKGROUND_COLOR = '#EEF2F4';
+	const BACKGROUND_COLOR = '#eef2f4';
 
 	/**
 	 * @class DuplicatesPanel
@@ -18,7 +17,7 @@ jn.define('crm/duplicates/panel', (require, exports, module) => {
 	class DuplicatesPanel extends LayoutComponent
 	{
 		/**
-		 * @param {String} props.entityType
+		 * @param {String} props.entityTypeName
 		 * @param {Boolean} props.isAllowed
 		 * @param {Object} props.duplicates
 		 * @param {String} props.uid
@@ -31,7 +30,6 @@ jn.define('crm/duplicates/panel', (require, exports, module) => {
 
 			const { duplicates } = props;
 			this.sections = this.getSections(duplicates);
-
 		}
 
 		render()
@@ -54,41 +52,38 @@ jn.define('crm/duplicates/panel', (require, exports, module) => {
 
 		renderItems(sections)
 		{
-
 			const border = {
-				borderBottomColor: '#e6e6e6',
+				borderBottomColor: '#e6e7e9',
 				borderBottomWidth: 1,
 			};
 
-			return sections.map((section) =>
-				View({
+			return sections.map((section) => View(
+				{
+					style: {
+						width: '100%',
+						marginBottom: 16,
+						backgroundColor: '#ffffff',
+						borderRadius: 12,
+						paddingHorizontal: 16,
+					},
+				},
+				...section.map((item, index) => View(
+					{
 						style: {
-							width: '100%',
-							marginBottom: 16,
-							backgroundColor: '#FFFFFF',
-							borderRadius: 12,
-							paddingHorizontal: 16,
+							paddingTop: 18,
+							paddingBottom: 20,
+							...(index === section.length - 1 ? {} : border),
 						},
 					},
-					...section.map((item, index) =>
-						View({
-								style: {
-									paddingTop: 18,
-									paddingBottom: 20,
-									...(index !== section.length - 1 ? border : {}),
-								},
-							},
-							new ClientItem(item),
-						),
-					),
-				),
-			);
+					new ClientItem(item),
+				)),
+			));
 		}
 
 		prepareItem(item)
 		{
 			const { ENTITY_ID, ENTITY_TYPE_ID, PHONE, EMAIL, TITLE, POST, URL } = item;
-			const hidden = !Boolean(URL.trim());
+			const hidden = !URL.trim();
 
 			const params = {
 				id: ENTITY_ID,
@@ -114,23 +109,23 @@ jn.define('crm/duplicates/panel', (require, exports, module) => {
 
 		getSections({ ENTITIES })
 		{
-			const { entityType } = this.props;
+			const { entityTypeName } = this.props;
 			if (!Array.isArray(ENTITIES))
 			{
 				return [];
 			}
 
-			const entityTypeId = Type.resolveIdByName(entityType);
+			const entityTypeId = Type.resolveIdByName(entityTypeName);
 			const sectionsByEntity = {};
 
 			ENTITIES
-				.sort(({ ENTITY_TYPE_ID }) => Number(entityTypeId) === Number(ENTITY_TYPE_ID) ? -1 : 1)
+				.sort(({ ENTITY_TYPE_ID }) => (Number(entityTypeId) === Number(ENTITY_TYPE_ID) ? -1 : 1))
 				.forEach((entity) => {
-					const entityTypeName = Type.resolveNameById(entity.ENTITY_TYPE_ID);
-					const entityResult = sectionsByEntity[entityTypeName] || [];
+					const typeName = Type.resolveNameById(entity.ENTITY_TYPE_ID);
+					const entityResult = sectionsByEntity[typeName] || [];
 					const item = this.prepareItem(entity);
 					entityResult.push(item);
-					sectionsByEntity[entityTypeName] = entityResult;
+					sectionsByEntity[typeName] = entityResult;
 				});
 
 			return Object.values(sectionsByEntity);
@@ -147,7 +142,7 @@ jn.define('crm/duplicates/panel', (require, exports, module) => {
 				onClick: () => {
 					if (isAllowed && onUseContact)
 					{
-						onUseContact(id, entityTypeId);
+						onUseContact(id, entityTypeId, params);
 					}
 					else
 					{
@@ -158,60 +153,82 @@ jn.define('crm/duplicates/panel', (require, exports, module) => {
 					style: {
 						marginLeft: 8,
 						marginTop: 2,
-						color: '#2066B0',
+						color: '#2066b0',
 						fontSize: 12,
 						borderBottomWidth: 1,
-						borderBottomColor: transparent('#2066B0', 0.4),
+						borderBottomColor: transparent('#2066b0', 0.4),
 						borderStyle: 'dash',
 						borderDashSegmentLength: 3,
-						borderDashGapLength: 3
-					}, text,
+						borderDashGapLength: 3,
+					},
+					text,
 				}),
 			};
 		}
 
-		handleOpenBackdrop({ type, url })
+		handleOpenBackdrop(params)
 		{
-			if (!url)
+			if (!params.url)
 			{
 				return;
 			}
 
-			this.layoutWidget.close(() => {
-				const { uid } = this.props;
+			if (this.shouldCloseOnEntityOpen)
+			{
+				this.layoutWidget.close(() => {
+					this.openCrmEntity(params);
+				});
+			}
+			else
+			{
+				this.openCrmEntity(params);
+			}
+		}
 
-				const payload = !this.isAllowed(type)
-					? { url }
-					: {
-						url,
-						context: {
-							useDuplicate: true,
-							rightButtonName: capitalize(Loc.getMessage('MCRM_DUPLICATES_PANEL_CONTACT_USE')),
-							uid,
-						},
-					};
+		openCrmEntity(params)
+		{
+			const { uid } = this.props;
+			const { url, type } = params;
 
-				openCrmEntityInAppUrl(payload);
-			});
+			const payload = this.isAllowed(type)
+				? {
+					url,
+					context: {
+						useDuplicate: this.useDuplicateForEntityDetails,
+						rightButtonName: capitalize(Loc.getMessage('MCRM_DUPLICATES_PANEL_CONTACT_USE')),
+						uid,
+						parentWidget: this.layoutWidget,
+					},
+				}
+				: { url };
+
+			openCrmEntityInAppUrl(payload);
 		}
 
 		isAllowed(duplicateEntityTypeName)
 		{
-			const { isAllowed, entityType } = this.props;
+			const { isAllowed, entityTypeName, isAllowedAnyEntityType } = this.props;
 
-			return isAllowed && entityType === duplicateEntityTypeName;
+			return (
+				isAllowed
+				&& (
+					isAllowedAnyEntityType
+					|| entityTypeName === duplicateEntityTypeName
+				)
+			);
 		}
 
-		open()
+		open(layoutWidget = PageManager)
 		{
-			if (!this.sections.length)
+			if (this.sections.length === 0)
 			{
 				return;
 			}
 
-			PageManager.openWidget('layout', this.getWidgetParams())
+			layoutWidget.openWidget('layout', this.getWidgetParams())
 				.then((layoutWidget) => {
 					this.layoutWidget = layoutWidget;
+					this.layoutWidget.enableNavigationBarBorder(false);
 					layoutWidget.showComponent(this);
 				});
 		}
@@ -234,11 +251,44 @@ jn.define('crm/duplicates/panel', (require, exports, module) => {
 			};
 		}
 
+		close(callback = () => {})
+		{
+			if (this.layoutWidget)
+			{
+				this.layoutWidget.close(callback);
+			}
+		}
+
 		calcBackdropHeight()
 		{
-			return this.sections
-				.flat()
-				.reduce((height, item) => height + (item.title ? 103 : 85), 36);
+			const dividerHeight = this.sections.length * 15;
+
+			// eslint-disable-next-line unicorn/no-array-reduce
+			return this.sections.flat().reduce((height, item) => {
+				let itemHeight = 78;
+
+				if (item.subtitle)
+				{
+					itemHeight += 20;
+				}
+
+				if (item.phone && item.phone.length > 0 && item.email && item.email.length > 0)
+				{
+					itemHeight += 20;
+				}
+
+				return height + itemHeight;
+			}, 36) + dividerHeight;
+		}
+
+		get shouldCloseOnEntityOpen()
+		{
+			return BX.prop.getBoolean(this.props, 'shouldCloseOnEntityOpen', true);
+		}
+
+		get useDuplicateForEntityDetails()
+		{
+			return BX.prop.getBoolean(this.props, 'useDuplicateForEntityDetails', true);
 		}
 	}
 

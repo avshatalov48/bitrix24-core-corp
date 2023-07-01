@@ -70,8 +70,12 @@ jn.define('notify-manager', (require, exports, module) => {
 					loadingTimeout = null;
 				}
 
+				if (!loadingIndicatorIsShown)
+				{
+					Notify.showIndicatorLoading();
+				}
+
 				loadingIndicatorIsShown = true;
-				Notify.showIndicatorLoading();
 			};
 
 			if (dismissKeyboard)

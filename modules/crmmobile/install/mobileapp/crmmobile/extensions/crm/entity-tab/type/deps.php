@@ -8,9 +8,13 @@ return [
 		'crm:timeline/scheduler',
 	],
 	'bundle' => [
-		'./base',
-		'./deal',
-		'./contact',
-		'./company',
+		'./entities/base',
+		'./entities/deal',
+		'./entities/lead',
+		'./entities/contact',
+		'./entities/company',
+		'./entities/smart-invoice',
+		'./entities/quote',
+		'./traits/exclude-item',
 	],
 ];

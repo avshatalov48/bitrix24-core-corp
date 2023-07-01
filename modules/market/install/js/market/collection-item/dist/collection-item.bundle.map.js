@@ -1,0 +1,1 @@
+{"version":3,"file":"collection-item.bundle.map.js","names":["this","BX","exports","CollectionItem","props","template","Market"],"sources":["collection-item.bundle.js"],"mappings":"AAAAA,KAAKC,GAAKD,KAAKC,IAAM,CAAC,GACrB,SAAUC,GACV,aAEA,MAAMC,EAAiB,CACrBC,MAAO,CAAC,QACRC,SAAU,qjDAuCZH,EAAQC,eAAiBA,CAE1B,EA9CA,CA8CGH,KAAKC,GAAGK,OAASN,KAAKC,GAAGK,QAAU,CAAC"}

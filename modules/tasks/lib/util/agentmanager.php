@@ -4,7 +4,7 @@
  *
  * This class is for internal use only, not a part of public API.
  * It can be changed at any time without notification.
- * 
+ *
  * @access private
  */
 
@@ -41,13 +41,13 @@ final class AgentManager
 
 		return '\\'.__CLASS__."::createOverdueChats();";
 	}
-	
+
 	public static function checkAgentIsAlive($name, $interval)
 	{
 		$name = '\\'.__CLASS__.'::'.$name.'();';
 
 		$agent = \CAgent::GetList(array(), array('MODULE_ID' => 'tasks', 'NAME' => $name))->fetch();
-		if(!$agent['ID'])
+		if(!isset($agent['ID']))
 		{
 			\CAgent::AddAgent(
 				$name,

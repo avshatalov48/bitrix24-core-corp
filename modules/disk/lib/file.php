@@ -382,26 +382,23 @@ class File extends BaseObject
 	{
 		$this->errorCollection->clear();
 
-
-		$forkFileId = \CFile::copyFile($this->getFileId(), true);
-		if(!$forkFileId)
+		$forkFileId = \CFile::CloneFile($this->getFileId());
+		if (!$forkFileId)
 		{
 			$this->errorCollection->add(array(new Error(Loc::getMessage('DISK_FILE_MODEL_ERROR_COULD_NOT_COPY_FILE'), self::ERROR_COULD_NOT_COPY_FILE)));
 			return null;
 		}
 
-
-		$fileArray = \CFile::getFileArray($forkFileId);
-		$fileModel = $targetFolder->addFile(array(
+		$fileModel = $targetFolder->addFile([
 			'NAME' => $this->getName(),
 			'FILE_ID' => $forkFileId,
 			'ETAG' => $this->getEtag(),
-			'SIZE' => $fileArray['FILE_SIZE'],
+			'SIZE' => $this->getSize(),
 			'CREATED_BY' => $updatedBy,
-		), array(), $generateUniqueName);
-		if(!$fileModel)
+		], [], $generateUniqueName);
+		if (!$fileModel)
 		{
-			\CFile::delete($forkFileId);
+			\CFile::Delete($forkFileId);
 			$this->errorCollection->add($targetFolder->getErrors());
 
 			return null;
@@ -1068,11 +1065,11 @@ class File extends BaseObject
 		if($version->getObjectId() != $this->getRealObjectId())
 		{
 			$this->errorCollection->add(array(new Error(Loc::getMessage('DISK_FILE_MODEL_ERROR_COULD_NOT_RESTORE_FROM_ANOTHER_OBJECT'), self::ERROR_COULD_NOT_RESTORE_FROM_OBJECT)));
+
 			return false;
 		}
 
-		$forkFileId = \CFile::copyFile($version->getFileId(), true);
-
+		$forkFileId = \CFile::CloneFile($version->getFileId());
 		if(!$forkFileId)
 		{
 			$this->errorCollection->add(array(new Error(Loc::getMessage('DISK_FILE_MODEL_ERROR_COULD_NOT_COPY_FILE'), self::ERROR_COULD_NOT_COPY_FILE)));
@@ -1135,11 +1132,11 @@ class File extends BaseObject
 		$possibleNewName = $this->name;
 		if($generateUniqueName)
 		{
-			$possibleNewName = $this->generateUniqueName($this->name, $realFolderId);
+			$possibleNewName = static::generateUniqueName($this->name, $realFolderId);
 		}
 		$needToRename = $possibleNewName != $this->name;
 
-		if(!$this->isUniqueName($possibleNewName, $realFolderId))
+		if(!static::isUniqueName($possibleNewName, $realFolderId))
 		{
 			$this->errorCollection->add(array(new Error(Loc::getMessage('DISK_OBJECT_MODEL_ERROR_NON_UNIQUE_NAME'), self::ERROR_NON_UNIQUE_NAME)));
 			return false;
@@ -1627,7 +1624,7 @@ class File extends BaseObject
 	 * which is a value of any type other than a resource.
 	 * @since 5.4.0
 	 */
-	public function jsonSerialize()
+	public function jsonSerialize(): array
 	{
 		$urlShowObjectInGrid = Driver::getInstance()->getUrlManager()->getUrlFocusController('showObjectInGrid', [
 			'objectId' => $this->getId(),

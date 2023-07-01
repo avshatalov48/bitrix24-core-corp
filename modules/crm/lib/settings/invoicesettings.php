@@ -143,9 +143,7 @@ class InvoiceSettings
 
 			self::$descriptions= [
 				self::VIEW_LIST => GetMessage('CRM_COMMON_LIST'),
-				self::VIEW_KANBAN => Crm::isUniversalActivityScenarioEnabled()
-					? GetMessage('CRM_COMMON_PIPELINE')
-					: GetMessage('CRM_INVOICE_SETTINGS_VIEW_KANBAN')
+				self::VIEW_KANBAN => GetMessage('CRM_INVOICE_SETTINGS_VIEW_KANBAN')
 			];
 		}
 		return self::$descriptions;

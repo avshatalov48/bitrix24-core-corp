@@ -1,16 +1,20 @@
 <?php
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 use Bitrix\Main\Entity\Query;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UserTable;
 use Bitrix\Tasks\Access\ActionDictionary;
 use Bitrix\Tasks\Access\TaskAccessController;
-use Bitrix\Tasks\Internals\Registry\TaskRegistry;
 use Bitrix\Tasks\Util\Result;
 use Bitrix\Tasks\Util\Error\Collection;
 use Bitrix\Tasks\Util\Error;
 use Bitrix\Tasks\Integration\Intranet;
+use Bitrix\Tasks\Util\Type;
 use Bitrix\Tasks\Util\User;
 use Bitrix\Tasks\Integration\Report\Internals\TaskTable;
 use Bitrix\Tasks\Integration\Intranet\Department;
@@ -403,8 +407,7 @@ class TasksEmployeePlanComponent extends TasksBaseComponent
 		);
 
 		// filter tasks by status
-		$status = intval($filter['TASK']['STATUS']);
-		if($status)
+		if ($status = (int)($filter['TASK']['STATUS'] ?? null))
 		{
 			$tParams['filter']['=STATUS'] = $status;
 		}
@@ -447,11 +450,14 @@ class TasksEmployeePlanComponent extends TasksBaseComponent
 		}
 
 		// add member filter
-		if(is_array($filter['MEMBER']))
+		if (
+			isset($filter['MEMBER'])
+			&& is_array($filter['MEMBER'])
+		)
 		{
 			$member = $filter['MEMBER'];
-			$user = \Bitrix\Tasks\Util\Type::normalizeArrayOfUInteger($member['USER']);
-			$department = \Bitrix\Tasks\Util\Type::normalizeArrayOfUInteger($member['DEPARTMENT']);
+			$user = (isset($member['USER']) ? Type::normalizeArrayOfUInteger($member['USER']) : []);
+			$department = (isset($member['DEPARTMENT']) ? Type::normalizeArrayOfUInteger($member['DEPARTMENT']) : []);
 
 			$uMemberFilter = array();
 
@@ -674,29 +680,41 @@ class TasksEmployeePlanComponent extends TasksBaseComponent
 			}
 		}
 
-		if(is_array($parameters['filter']))
+		if (
+			isset($parameters['filter'])
+			&& is_array($parameters['filter'])
+		)
 		{
 			$query->setFilter($parameters['filter']);
 		}
-		if(is_array($parameters['order']))
+		if (
+			isset($parameters['order'])
+			&& is_array($parameters['order'])
+		)
 		{
 			$query->setOrder($parameters['order']);
 		}
-		if(is_array($parameters['select']))
+		if (
+			isset($parameters['select'])
+			&& is_array($parameters['select'])
+		)
 		{
 			$query->setSelect($parameters['select']);
 		}
 
-		if(isset($parameters['limit']))
+		if (isset($parameters['limit']))
 		{
 			$query->setLimit($parameters['limit']);
 		}
-		if(isset($parameters['offset']))
+		if (isset($parameters['offset']))
 		{
 			$query->setOffset($parameters['offset']);
 		}
 
-		if(is_array($parameters['group']))
+		if (
+			isset($parameters['group'])
+			&& is_array($parameters['group'])
+		)
 		{
 			$query->setGroup($parameters['group']);
 			$query->countTotal();
@@ -817,13 +835,19 @@ if(CModule::IncludeModule('tasks'))
 
 			$value = static::check($value);
 
-			if(!is_array($_SESSION['TASKS']))
+			if (
+				!isset($_SESSION['TASKS'])
+				|| !is_array($_SESSION['TASKS'])
+			)
 			{
-				$_SESSION['TASKS'] = array();
+				$_SESSION['TASKS'] = [];
 			}
-			if(!is_array($_SESSION['TASKS']['OPTION']))
+			if (
+				!isset($_SESSION['TASKS']['OPTION'])
+				|| !is_array($_SESSION['TASKS']['OPTION'])
+			)
 			{
-				$_SESSION['TASKS']['OPTION'] = array();
+				$_SESSION['TASKS']['OPTION'] = [];
 			}
 
 			// write checked values to the session
@@ -834,18 +858,21 @@ if(CModule::IncludeModule('tasks'))
 			);
 			unset($value['TASK']['DATE_RANGE']);
 
-			User::setOption(static::getFilterOptionName(), \Bitrix\Tasks\Util\Type::serializeArray($value));
+			User::setOption(static::getFilterOptionName(), Type::serializeArray($value));
 		}
 
 		public function get()
 		{
 			global $_SESSION;
 
-			$value = \Bitrix\Tasks\Util\Type::unSerializeArray($this->fetchOptionValue());
+			$value = Type::unSerializeArray($this->fetchOptionValue());
 
 			// mix up with session
 			$inSession = array();
-			if(is_array($_SESSION['TASKS']) && is_array($_SESSION['TASKS']['OPTION'][static::getFilterOptionName()]))
+			if (
+				isset($_SESSION['TASKS']['OPTION'])
+				&& is_array($_SESSION['TASKS']['OPTION'][static::getFilterOptionName()])
+			)
 			{
 				$inSession = $_SESSION['TASKS']['OPTION'][static::getFilterOptionName()];
 			}

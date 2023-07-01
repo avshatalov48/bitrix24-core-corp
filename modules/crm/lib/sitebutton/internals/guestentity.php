@@ -14,9 +14,9 @@ Loc::loadMessages(__FILE__);
  *
  * <<< ORMENTITYANNOTATION
  * @method static EO_GuestEntity_Query query()
- * @method static EO_GuestEntity_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_GuestEntity_Result getByPrimary($primary, array $parameters = [])
  * @method static EO_GuestEntity_Result getById($id)
- * @method static EO_GuestEntity_Result getList(array $parameters = array())
+ * @method static EO_GuestEntity_Result getList(array $parameters = [])
  * @method static EO_GuestEntity_Entity getEntity()
  * @method static \Bitrix\Crm\SiteButton\Internals\EO_GuestEntity createObject($setDefaultValues = true)
  * @method static \Bitrix\Crm\SiteButton\Internals\EO_GuestEntity_Collection createCollection()

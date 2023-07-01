@@ -132,7 +132,7 @@ class CIntranetUserListComponent extends UserList
 				[
 					'id' => 'WWW',
 					'fieldId' => 'PERSONAL_WWW',
-					'name' => Loc::getMessage('INTRANET_USER_LIST_COLUMN_WWW'),
+					'name' => Loc::getMessage('INTRANET_USER_LIST_COLUMN_WWW_MSGVER_1'),
 					'sort' => 'WWW',
 					'default' => false,
 					'editable' => false

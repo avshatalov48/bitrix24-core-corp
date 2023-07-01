@@ -14,6 +14,8 @@ use Bitrix\Tasks\Util\User;
 
 class TasksMobileFragmentRendererComponent extends CBitrixComponent
 {
+	private Collection $errors;
+
 	private function checkPermissions(): bool
 	{
 		$this->arResult['USER_ID'] = User::getId();
@@ -71,7 +73,7 @@ class TasksMobileFragmentRendererComponent extends CBitrixComponent
 	public function getData(): void
 	{
 		$this->arResult['FRAGMENT'] = (
-			$this->arResult['RESULT_ID']
+			array_key_exists('RESULT_ID', $this->arResult) && $this->arResult['RESULT_ID']
 				? $this->getFragmentFromTaskResult()
 				: $this->getFragmentFromTaskDescription()
 		);

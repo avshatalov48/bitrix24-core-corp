@@ -12,11 +12,8 @@ use Bitrix\Tasks\UI;
 use Bitrix\Tasks\Util\User;
 use Bitrix\Tasks\Util\Type\DateTime;
 
-$replace = ['#USER_NAME#' => htmlspecialcharsbx($arResult['USER_NAME'])];
-$message = Loc::getMessage('TASKS_EFFECTIVE_TITLE_FULL', $replace);
-
-$APPLICATION->SetPageProperty('title', $message);
-$APPLICATION->SetTitle($message);
+$APPLICATION->SetPageProperty('title', Loc::getMessage('TASKS_EFFECTIVE_TITLE_FULL'));
+$APPLICATION->SetTitle(Loc::getMessage('TASKS_EFFECTIVE_TITLE_FULL'));
 
 if (!function_exists('prepareTaskRowUserBalloonHtml'))
 {

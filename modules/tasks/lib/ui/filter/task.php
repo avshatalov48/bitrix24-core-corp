@@ -131,6 +131,10 @@ class Task
 		$listStateInstance->setSection(\CTaskListState::VIEW_SECTION_ADVANCED_FILTER);
 		$listStateInstance->setTaskCategory(\CTaskListState::VIEW_TASK_CATEGORY_ALL);
 
+		if (!isset($request['F_STATE']))
+		{
+			$request['F_STATE'] = [];
+		}
 		$stateParam = (array)$request[ 'F_STATE' ];
 
 		if(!empty($stateParam))

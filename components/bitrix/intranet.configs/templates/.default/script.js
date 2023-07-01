@@ -314,6 +314,19 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      });
 	    }
 
+	    var generalChatCanPostSelect = BX('general_chat_can_post_select');
+		if (generalChatCanPostSelect) {
+		  BX.bind(generalChatCanPostSelect, 'change', function () {
+			  if (generalChatCanPostSelect.value == 'MANAGER') {
+				  chatRightsCont.style.display = '';
+			  }
+			  else
+			  {
+				  chatRightsCont.style.display = 'none';
+			  }
+		  })
+		}
+
 	    var mpUserInstallChechBox = BX('mp_allow_user_install');
 	    var mpUserInstallCont = BX('mp_user_install');
 

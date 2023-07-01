@@ -3,6 +3,7 @@
  */
 jn.define('im/messenger/controller/search/adapter/user', (require, exports, module) => {
 
+	const { core } = require('im/messenger/core');
 	const { SelectorDialogListAdapter } = require('im/chat/selector/adapter/dialog-list');
 	const { ChatTitle, ChatAvatar } = require('im/messenger/lib/element');
 
@@ -14,6 +15,8 @@ jn.define('im/messenger/controller/search/adapter/user', (require, exports, modu
 		constructor(list)
 		{
 			super(list);
+
+			this.store = core.getStore();
 		}
 
 		onScopeSelected(data)
@@ -61,7 +64,7 @@ jn.define('im/messenger/controller/search/adapter/user', (require, exports, modu
 			});
 
 			const itemsData = filteredItems.map(item => ChatUtils.objectKeysToLowerCase(item.params.customData.imUser));
-			MessengerStore.dispatch('usersModel/set', itemsData);
+			this.store.dispatch('usersModel/set', itemsData);
 
 			const renderingItems = this.prepareItems(itemsData);
 			const loaderItem = items.find(item => item.id === 'loading');

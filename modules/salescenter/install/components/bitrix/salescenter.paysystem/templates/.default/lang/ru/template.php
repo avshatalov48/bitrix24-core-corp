@@ -12,6 +12,7 @@ $MESS["SALESCENTER_SP_LINK_CONNECT"] = "Как подключить платёж
 $MESS["SALESCENTER_SP_LINK_SBP_CONNECT"] = "Подробнее о системе быстрых платежей в Битрикс24";
 $MESS["SALESCENTER_SP_CONNECT_HINT"] = "Используйте для авторизации профиль ЮKassa";
 $MESS['SALESCENTER_SP_PARAMS_FORM_TITLE'] = 'Параметры';
+$MESS['SALESCENTER_SP_PARAMS_FORM_ADDITIONAL_TITLE'] = 'Дополнительные параметры';
 $MESS['SALESCENTER_SP_PARAMS_FORM_NAME'] = 'Название';
 $MESS['SALESCENTER_SP_PARAMS_FORM_ACTIVE'] = 'Активность';
 $MESS['SALESCENTER_SP_PARAMS_FORM_NAME_HINT'] = 'Например &laquoОплата картами Visa и MasterCard на сайте&raquo. Название будет отображаться для посетителей Вашего сайта в перечне способов оплаты';
@@ -29,7 +30,9 @@ $MESS['SALESCENTER_SP_PARAMS_FORM_CASHBOX'] = 'Кассы';
 $MESS['SALESCENTER_SP_PARAMS_FORM_CAN_PRINT_CHECK'] = 'Разрешить печать чеков';
 $MESS["SALESCENTER_SP_YANDEX_LOGOUT"] = "Отключить";
 $MESS["SALESCENTER_SP_ERROR_POPUP_TITLE"] = "Ошибка";
-$MESS["SALESCENTER_SP_CAHSBOX_HINT"] = "У вас нет настроенной кассы. <a href='#CASHBOX_SETTINGS_LINK#' target='_blank'>Как настроить кассу</a>";
+$MESS["SALESCENTER_SP_CASHBOX_HINT"] = "У вас нет настроенной кассы. <a href='#CASHBOX_SETTINGS_LINK#' target='_blank'>Как настроить кассу</a>";
+$MESS["SALESCENTER_SP_CASHBOX_HINT_CASHBOXYOOKASSA"] = "У вас нет настроенной кассы. Вы можете использовать чеки от ЮKassa (опция ниже) или подключить другую онлайн-кассу. <br><a href='#CASHBOX_SETTINGS_LINK#' target='_blank'>Как настроить онлайн-кассу</a>";
+$MESS["SALESCENTER_SP_CASHBOX_HINT_CASHBOXROBOKASSA"] = "У вас нет настроенной кассы. Вы можете использовать Робочеки (опция ниже) или подключить другую онлайн-кассу. <br><a href='#CASHBOX_SETTINGS_LINK#' target='_blank'>Как настроить онлайн-кассу</a>";
 $MESS["SALESCENTER_SP_PAYSYSTEM_CASH_TITLE"] = "Оплата наличными";
 $MESS["SALESCENTER_SP_PAYSYSTEM_CASH_DESCRIPTION"] = "Принимайте оплату наличными. Клиент сможет оплатить заказ при самовывозе или курьеру.";
 $MESS["SALESCENTER_SP_PAYSYSTEM_SBERBANKONLINE_TITLE"] = "Оплата банковской картой. Сбербанк";
@@ -122,6 +125,9 @@ $MESS["SALESCENTER_SP_CASHBOX_PAYSYSTEM_CASHBOXROBOKASSA_SECTION_TITLE"] = "Ро
 $MESS["SALESCENTER_SP_CASHBOX_PAYSYSTEM_CASHBOXROBOKASSA_TITLE"] = "Использовать «Робочеки»";
 $MESS["SALESCENTER_SP_CASHBOX_PAYSYSTEM_CASHBOXROBOKASSA_DESCRIPTION"] = "Передача фискальных чеков будет осуществляется через онлайн-кассу Robokassa.";
 $MESS["SALESCENTER_SP_CASHBOX_PAYSYSTEM_CASHBOXROBOKASSA_LINK_TEXT"] = "Как работают Робочеки?";
+$MESS["SALESCENTER_SP_CASHBOX_PAYSYSTEM_CASHBOXYOOKASSA_TITLE"] = "Использовать чеки от ЮКassa";
+$MESS["SALESCENTER_SP_CASHBOX_PAYSYSTEM_CASHBOXYOOKASSA_DESCRIPTION"] = "Автоматическая отправка чеков в налоговую и покупателям через онлайн-кассу ЮKassa. <br>Для подключения перейдите в личный кабинет ЮKassa.";
+$MESS["SALESCENTER_SP_CASHBOX_PAYSYSTEM_CASHBOXYOOKASSA_LINK_TEXT"] = "Как подключить";
 $MESS["SALESCENTER_SP_PAYSYSTEM_SETTINGS_ADD_NOTIFICATION"] = "Регистрация успешно завершена";
 $MESS["SALESCENTER_SP_SAVE_NEW_BUTTON_CAPTION"] = "Подключить";
 $MESS["SALESCENTER_SP_PAY_SYSTEM_EXPERT_SETTINGS"] = "Экспертные настройки";

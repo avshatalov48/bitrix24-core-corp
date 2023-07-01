@@ -13,11 +13,6 @@ class FileList extends ContentBlock
 	protected ?string $title = null;
 
 	/**
-	 * @var int|null
-	 */
-	protected ?int $numberOfFiles = null;
-
-	/**
 	 * @var File[]|null
 	 */
 	protected ?array $files = null;
@@ -44,16 +39,9 @@ class FileList extends ContentBlock
 		return $this;
 	}
 
-	public function getNumberOfFiles(): ?int
+	public function getNumberOfFiles(): int
 	{
-		return $this->numberOfFiles;
-	}
-
-	public function setNumberOfFiles(?int $numberOfFiles): self
-	{
-		$this->numberOfFiles = $numberOfFiles;
-
-		return $this;
+		return $this->files ? count($this->files) : 0;
 	}
 
 	public function getUpdateParams(): ?array

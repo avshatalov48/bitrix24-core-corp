@@ -81,7 +81,7 @@ class Display
 	{
 		$this->processValues();
 
-		return $this->processedValues[$itemId];
+		return $this->processedValues[$itemId] ?? null;
 	}
 
 	public function getValue(int $itemId, string $fieldName): ?string

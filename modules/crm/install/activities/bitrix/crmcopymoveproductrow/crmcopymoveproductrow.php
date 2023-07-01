@@ -7,6 +7,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Crm;
 use Bitrix\Crm\Activity\Access\CatalogAccessChecker;
+use Bitrix\Catalog\Product;
+use Bitrix\Crm\Order;
+use Bitrix\Sale\Basket;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main;
 
 class CBPCrmCopyMoveProductRow extends CBPActivity
 {
@@ -53,6 +58,14 @@ class CBPCrmCopyMoveProductRow extends CBPActivity
 			return CBPActivityExecutionStatus::Closed;
 		}
 
+		if (
+			($entityTypeId === \CCrmOwnerType::Order || $dstEntityTypeId === \CCrmOwnerType::Order)
+			&& !Main\Loader::includeModule('sale')
+		)
+		{
+			return CBPActivityExecutionStatus::Closed;
+		}
+
 		$copyResult = $this->copyRows($entityTypeId, $entityId, $dstEntityTypeId, $dstEntityId);
 
 		if ($copyResult && $this->Operation === self::OP_MOVE)
@@ -72,6 +85,28 @@ class CBPCrmCopyMoveProductRow extends CBPActivity
 		{
 			return $entityDocument::setProductRows($complexDocumentId[2], [])->isSuccess();
 		}
+		elseif ($entityTypeId === CCrmOwnerType::Order)
+		{
+			$order = Order\Order::load($entityId);
+			if (!$order)
+			{
+				return false;
+			}
+
+			$basket = $order->getBasket();
+
+			/** @var Order\BasketItem $basketItem */
+			foreach ($basket->getBasketItems() as $basketItem)
+			{
+				$result = $basketItem->delete();
+				if (!$result->isSuccess())
+				{
+					return false;
+				}
+			}
+
+			return $order->save()->isSuccess();
+		}
 		else
 		{
 			$entityType = \CCrmOwnerTypeAbbr::ResolveByTypeID($entityTypeId);
@@ -80,41 +115,102 @@ class CBPCrmCopyMoveProductRow extends CBPActivity
 		}
 	}
 
-	private function copyRows($entityTypeId, $entityId, $dstEntityTypeId, $dstEntityId): bool
+	private function copyRows(int $entityTypeId, int $entityId, int $dstEntityTypeId, int $dstEntityId): bool
 	{
-		$sourceRows = \CCrmProductRow::LoadRows(
-			\CCrmOwnerTypeAbbr::ResolveByTypeID($entityTypeId),
-			$entityId,
-			true
-		);
+		$sourceRows = $this->getSourceRows($entityTypeId, $entityId);
 
 		if (!$sourceRows)
 		{
-			$this->WriteToTrackingService(GetMessage('CRM_CMPR_NO_SOURCE_PRODUCTS'), 0, CBPTrackingType::Error);
+			$this->WriteToTrackingService(
+				Loc::getMessage('CRM_CMPR_NO_SOURCE_PRODUCTS'),
+				0,
+				CBPTrackingType::Error
+			);
 
-			return CBPActivityExecutionStatus::Closed;
-		}
-
-		$this->logDebugRows($this->Operation, array_column($sourceRows, 'ID'));
-
-		foreach ($sourceRows as $i => $product)
-		{
-			unset($sourceRows[$i]['ID'], $sourceRows[$i]['OWNER_ID'], $sourceRows[$i]['OWNER_TYPE_ID']);
+			return false;
 		}
 
 		$saveResult = false;
 
 		$entityDocument = CCrmBizProcHelper::ResolveDocumentName($dstEntityTypeId);
+
 		if ($dstEntityTypeId === \CCrmOwnerType::Deal)
 		{
+			if ($entityTypeId === \CCrmOwnerType::Order)
+			{
+				$sourceRows = $this->convertToCrmProductRowFormat($sourceRows);
+			}
+
 			$saveResult = \CCrmDeal::addProductRows($dstEntityId, $sourceRows, [], false);
 		}
 		elseif (class_exists($entityDocument) && method_exists($entityDocument, 'addProductRows'))
 		{
+			if ($entityTypeId === \CCrmOwnerType::Order)
+			{
+				$sourceRows = $this->convertToCrmProductRowFormat($sourceRows);
+			}
+
 			$dstDocumentId = CCrmBizProcHelper::ResolveDocumentId($dstEntityTypeId, $dstEntityId);
 			$productRows = array_map([Crm\ProductRow::class, 'createFromArray'], $sourceRows);
 
 			$saveResult = $entityDocument::addProductRows($dstDocumentId[2], $productRows)->isSuccess();
+		}
+		elseif (
+			$dstEntityTypeId === CCrmOwnerType::Order
+			&& Main\Loader::includeModule('catalog')
+		)
+		{
+			$order = Order\Order::load($dstEntityId);
+
+			if (!$order)
+			{
+				$this->WriteToTrackingService(
+					Loc::getMessage('CRM_CMPR_NO_DST_ENTITY'),
+					0,
+					CBPTrackingType::Error
+				);
+
+				return false;
+			}
+
+			if ($entityTypeId !== \CCrmOwnerType::Order)
+			{
+				$sourceRows = $this->convertToSaleBasketFormat($sourceRows);
+			}
+
+			$basket = $order->getBasket();
+
+			$isAllRowsAdded = true;
+
+			foreach ($sourceRows as $row)
+			{
+				$row['CURRENCY'] = $order->getCurrency();
+
+				$result = Product\Basket::addProductToBasket(
+					$basket,
+					$row,
+					[]
+				);
+
+				$basketItem = $result->getData()['BASKET_ITEM'] ?? null;
+
+				if (
+					!$result->isSuccess()
+					|| $basketItem === null
+				)
+				{
+					$isAllRowsAdded = false;
+					break;
+				}
+
+				$singleStrategy = Basket\RefreshFactory::createSingle($basketItem->getBasketCode());
+				$basket->refresh($singleStrategy);
+			}
+
+			if ($isAllRowsAdded)
+			{
+				$saveResult = $order->save()->isSuccess();
+			}
 		}
 
 		if (!$saveResult)
@@ -125,9 +221,49 @@ class CBPCrmCopyMoveProductRow extends CBPActivity
 		return $saveResult;
 	}
 
+	private function convertToSaleBasketFormat(array $products) : array
+	{
+		$converter = new Order\ProductManager\EntityProductConverter();
+
+		$result = [];
+		foreach ($products as $product)
+		{
+			$fields = $converter->convertToSaleBasketFormat($product);
+
+			unset(
+				$fields['OFFER_ID'],
+				$fields['DISCOUNT_SUM'],
+				$fields['DISCOUNT_RATE'],
+				$fields['DISCOUNT_TYPE_ID']
+			);
+
+			$result[] = $fields;
+		}
+
+		return $result;
+	}
+
+	private function convertToCrmProductRowFormat(array $products) : array
+	{
+		$converter = new Order\ProductManager\EntityProductConverter();
+
+		$result = [];
+		foreach ($products as $product)
+		{
+			$result[] = $converter->convertToCrmProductRowFormat($product);
+		}
+
+		return $result;
+	}
+
 	private function resolveDstEntityId(): ?array
 	{
 		$entityType = $this->DstEntityType;
+		if (CBPHelper::isEmptyValue($entityType))
+		{
+			return null;
+		}
+
 		$entityId = $this->DstEntityId;
 		if (is_array($entityId))
 		{
@@ -165,13 +301,14 @@ class CBPCrmCopyMoveProductRow extends CBPActivity
 
 			return isset($item) ? [$dynamicTypeId, (int)$entityId] : null;
 		}
-		/*elseif ($entityType === \CCrmOwnerTypeAbbr::Order)
+		elseif ($entityType === \CCrmOwnerTypeAbbr::Order)
 		{
-			if (Crm\Order\Order::load($entityId))
+			if (Order\Order::load($entityId))
 			{
-				return [\CCrmOwnerType::Order, $entityId];
+				return [\CCrmOwnerType::Order, (int)$entityId];
 			}
 		}
+		/*
 		elseif ($entityType === \CCrmOwnerTypeAbbr::Invoice)
 		{
 			if (\CCrmInvoice::Exists($entityId))
@@ -183,7 +320,17 @@ class CBPCrmCopyMoveProductRow extends CBPActivity
 		return null;
 	}
 
-	public static function GetPropertiesDialog($documentType, $activityName, $arWorkflowTemplate, $arWorkflowParameters, $arWorkflowVariables, $arCurrentValues = null, $formName = '', $popupWindow = null, $siteId = '')
+	public static function GetPropertiesDialog(
+		$documentType,
+		$activityName,
+		$arWorkflowTemplate,
+		$arWorkflowParameters,
+		$arWorkflowVariables,
+		$arCurrentValues = null,
+		$formName = '',
+		$popupWindow = null,
+		$siteId = ''
+	)
 	{
 		if (!CModule::IncludeModule('crm'))
 		{
@@ -201,7 +348,6 @@ class CBPCrmCopyMoveProductRow extends CBPActivity
 			'siteId' => $siteId,
 		]);
 
-
 		if (!CatalogAccessChecker::hasAccess())
 		{
 			$dialog->setRenderer(CatalogAccessChecker::getDialogRenderer());
@@ -214,7 +360,15 @@ class CBPCrmCopyMoveProductRow extends CBPActivity
 		return $dialog;
 	}
 
-	public static function GetPropertiesDialogValues($documentType, $activityName, &$arWorkflowTemplate, &$arWorkflowParameters, &$arWorkflowVariables, $arCurrentValues, &$errors)
+	public static function GetPropertiesDialogValues(
+		$documentType,
+		$activityName,
+		&$arWorkflowTemplate,
+		&$arWorkflowParameters,
+		&$arWorkflowVariables,
+		$arCurrentValues,
+		&$errors
+	)
 	{
 		if (!CatalogAccessChecker::hasAccess())
 		{
@@ -252,6 +406,7 @@ class CBPCrmCopyMoveProductRow extends CBPActivity
 			\CCrmOwnerTypeAbbr::Deal => \CCrmOwnerType::GetDescription(\CCrmOwnerType::Deal),
 			\CCrmOwnerTypeAbbr::SmartInvoice => \CCrmOwnerType::GetDescription(\CCrmOwnerType::SmartInvoice),
 			\CCrmOwnerTypeAbbr::SmartDocument => \CCrmOwnerType::GetDescription(\CCrmOwnerType::SmartDocument),
+			\CCrmOwnerTypeAbbr::Order => \CCrmOwnerType::GetDescription(\CCrmOwnerType::Order),
 		];
 
 		$dynamicTypesMap =
@@ -304,6 +459,11 @@ class CBPCrmCopyMoveProductRow extends CBPActivity
 
 	private function logDebug($id)
 	{
+		if (!$this->workflow->isDebug())
+		{
+			return;
+		}
+
 		$debugInfo = $this->getDebugInfo([
 			'DstEntityId' => $id,
 		]);
@@ -313,6 +473,11 @@ class CBPCrmCopyMoveProductRow extends CBPActivity
 
 	private function logDebugRows($operation, array $rowIds)
 	{
+		if (!$this->workflow->isDebug())
+		{
+			return;
+		}
+
 		$title = $operation === static::OP_COPY
 			? GetMessage('CRM_CMPR_COPIED_ROWS')
 			: GetMessage('CRM_CMPR_MOVED_ROWS')
@@ -325,10 +490,61 @@ class CBPCrmCopyMoveProductRow extends CBPActivity
 					'Name' => $title,
 					'Type' => 'string',
 					'Multiple' => true,
-				]
+				],
 			],
 		);
 
 		$this->writeDebugInfo($debugInfo);
 	}
+
+	private function getSourceRows(int $entityTypeId, int $entityId): array
+	{
+		$sourceRows = [];
+
+		if ($entityTypeId === CCrmOwnerType::Order)
+		{
+			$order = Order\Order::load($entityId);
+			if ($order === null)
+			{
+				return $sourceRows;
+			}
+
+			/** @var Order\BasketItem $basketItem */
+			foreach ($order->getBasket() as $basketItem)
+			{
+				$sourceRows[] = [
+					'NAME' => $basketItem->getField('NAME'),
+					'MODULE' => $basketItem->getField('MODULE'),
+					'PRODUCT_ID' => $basketItem->getProductId(),
+					'QUANTITY' => $basketItem->getQuantity(),
+					'PRICE' => $basketItem->getPrice(),
+					'BASE_PRICE' => $basketItem->getBasePrice(),
+					'CUSTOM_PRICE' => $basketItem->isCustomPrice() ? 'Y' : 'N',
+					'DISCOUNT_PRICE' => $basketItem->getDiscountPrice(),
+					'VAT_INCLUDED' => $basketItem->isVatInPrice() ? 'Y' : 'N',
+					'VAT_RATE' => $basketItem->getVatRate(),
+					'TYPE' => $basketItem->getField('TYPE'),
+					'PRODUCT_PROVIDER_CLASS' => $basketItem->getField('PRODUCT_PROVIDER_CLASS'),
+				];
+			}
+		}
+		else
+		{
+			$sourceRows = \CCrmProductRow::LoadRows(
+				\CCrmOwnerTypeAbbr::ResolveByTypeID($entityTypeId),
+				$entityId,
+				true
+			);
+		}
+
+		$this->logDebugRows($this->Operation, array_column($sourceRows, 'ID'));
+
+		foreach ($sourceRows as $i => $product)
+		{
+			unset($sourceRows[$i]['ID'], $sourceRows[$i]['OWNER_ID'], $sourceRows[$i]['OWNER_TYPE']);
+		}
+
+		return $sourceRows;
+	}
+
 }

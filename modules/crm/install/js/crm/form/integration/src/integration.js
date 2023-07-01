@@ -170,7 +170,6 @@ export class Integration extends EventEmitter
 				}
 				else
 				{
-
 					this.#renderProfileSelector();
 				}
 			})
@@ -204,9 +203,11 @@ export class Integration extends EventEmitter
 			}
 		})
 		.then(() => {
+			this.#requestAuthUrl();
 			this.#adAccounts = null;
 			this.getProvider().profile = null;
 			this.#renderProfileSelector();
+			this.#adForms = null;
 		})
 	}
 
@@ -315,7 +316,7 @@ export class Integration extends EventEmitter
 		this.#profileContainer.appendChild(Tag.render`
 			<div>
 				<div class="crm-ads-conversion-block">
-					<div class="crm-ads-conversion-social crm-ads-conversion-social-facebook"  style="padding-bottom: 15px">
+					<div class="crm-ads-conversion-social crm-ads-conversion-social-facebook"  style="padding-bottom: 15px; height: 58px;">
 						${this.showAvatar(provider)}
 						<div class="crm-ads-conversion-social-user">
 							<a
@@ -536,6 +537,30 @@ export class Integration extends EventEmitter
 		}
 
 		this.#formsContainer.innerHTML = '';
+
+		// hack for vk
+		if (!this.getCase().account.id && this.type === 'vkontakte')
+		{
+			this.#formsContainer.appendChild(this.#renderLoader());
+			ajax.runAction('crm.api.ads.leadads.account.getProfile', {
+				data: {
+					type: this.type,
+					proxyId: null,
+				}
+			}).then(response => {
+				this.#adAccounts = [{
+					id: response.data.profile.id + '',
+					name: response.data.profile.name + '',
+				}];
+
+				this.getCase().account.id = this.#adAccounts[0].id;
+				this.getCase().account.name = this.#adAccounts[0].name;
+
+				this.#renderFormSelector();
+			});
+
+			return this.#formsContainer;
+		}
 
 		if (this.getProvider().hasPages)
 		{
@@ -766,5 +791,17 @@ export class Integration extends EventEmitter
 				this.showBannerForOldProfile();
 			}
 		)
+	}
+
+	#requestAuthUrl()
+	{
+		ajax.runAction('crm.api.ads.leadads.service.getAuthUrl', {
+			data: {
+				type: this.type
+			}
+		}).then((response) => {
+			this.getProvider().authUrl = response.data.authUrl;
+		});
+
 	}
 }

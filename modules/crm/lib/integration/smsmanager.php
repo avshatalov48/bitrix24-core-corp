@@ -4,7 +4,10 @@ namespace Bitrix\Crm\Integration;
 
 use Bitrix\Crm\Binding\EntityBinding;
 use Bitrix\Crm\CustomerType;
+use Bitrix\Crm\MessageSender\Channel;
+use Bitrix\Crm\MessageSender\Channel\Correspondents\From;
 use Bitrix\Crm\MessageSender\ICanSendMessage;
+use Bitrix\Crm\Multifield\Type\Phone;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main;
 use Bitrix\MessageService;
@@ -61,8 +64,9 @@ class SmsManager implements ICanSendMessage
 
 	/**
 	 * @inheritDoc
+	 * @return string|null
 	 */
-	public static function getConnectUrl()
+	public static function getConnectUrl(): ?string
 	{
 		if (!static::canUse())
 		{
@@ -82,6 +86,58 @@ class SmsManager implements ICanSendMessage
 	public static function getUsageErrors(): array
 	{
 		return [];
+	}
+
+	public static function getChannelsList(array $toListByType, int $userId): array
+	{
+		$channels = [];
+
+		foreach (self::getSenderInfoList(true) as $channelInfo)
+		{
+			$fromList = [];
+			foreach ($channelInfo['fromList'] as $fromInfo)
+			{
+				$fromList[] = new From(
+					(string)($fromInfo['id'] ?? ''),
+					(string)($fromInfo['name'] ?? ''),
+					isset($fromInfo['description']) ? (string)$fromInfo['description'] : null,
+					isset($fromInfo['isDefault']) && is_bool($fromInfo['isDefault']) ? $fromInfo['isDefault'] : false,
+				);
+			}
+
+			$channels[] = new Channel(
+				self::class,
+				$channelInfo,
+				$fromList,
+				$toListByType[\Bitrix\Crm\Multifield\Type\Phone::ID] ?? [],
+				$userId,
+			);
+		}
+
+		return $channels;
+	}
+
+	public static function canSendMessageViaChannel(Channel $channel): \Bitrix\Main\Result
+	{
+		$result = new \Bitrix\Main\Result();
+
+		if (!self::canUse())
+		{
+			return $result->addError(Channel\ErrorCode::getNotEnoughModulesError());
+		}
+
+		$sender = MessageService\Sender\SmsManager::getSenderById($channel->getId());
+		if (!$sender)
+		{
+			return $result->addError(Channel\ErrorCode::getUnknownChannelError());
+		}
+
+		if (!$sender->canUse())
+		{
+			return $result->addError(Channel\ErrorCode::getUnusableChannelError());
+		}
+
+		return $result;
 	}
 
 	/**
@@ -117,7 +173,13 @@ class SmsManager implements ICanSendMessage
 			$sender = MessageService\Sender\SmsManager::getSenderById($senderId);
 			if ($sender)
 			{
-				$list = $sender->getFromList();
+				$defaultFrom = $sender->getDefaultFrom();
+				foreach ($sender->getFromList() as $fromInfo)
+				{
+					$list[] = $fromInfo + [
+						'isDefault' => ($fromInfo['id'] === $defaultFrom),
+					];
+				}
 			}
 		}
 		return $list;
@@ -132,6 +194,8 @@ class SmsManager implements ICanSendMessage
 		$info = array();
 		if (static::canUse())
 		{
+			$default = MessageService\Sender\SmsManager::getDefaultSender();
+
 			foreach (MessageService\Sender\SmsManager::getSenders() as $sender)
 			{
 				$senderInfo = array(
@@ -141,6 +205,7 @@ class SmsManager implements ICanSendMessage
 					'shortName' => $sender->getShortName(),
 					'canUse' => $sender->canUse(),
 					'isDemo' => $sender->isConfigurable() ? $sender->isDemo() : null,
+					'isDefault' => ($default && $default->getId() === $sender->getId()),
 					'manageUrl' => $sender->getManageUrl(),
 					'isTemplatesBased' => $sender->isConfigurable() ? $sender->isTemplatesBased() : false,
 					'templates' => null, // will be loaded asynchronously
@@ -226,6 +291,20 @@ class SmsManager implements ICanSendMessage
 			return MessageService\MessageStatus::getSemantics();
 		}
 		return array();
+	}
+
+	/**
+	 * Returns list of registered SMS services
+	 * @return array
+	 */
+	public static function getRegisteredSmsSenderList(): array
+	{
+		if (static::canUse())
+		{
+			return MessageService\Sender\SmsManager::getRegisteredSenderList();
+		}
+
+		return [];
 	}
 
 	/**
@@ -464,7 +543,7 @@ class SmsManager implements ICanSendMessage
 			}
 		}
 
-		return array_filter($communications);
+		return array_values(array_filter($communications));
 	}
 
 	/**
@@ -497,16 +576,21 @@ class SmsManager implements ICanSendMessage
 			)
 		);
 
+		$multiFieldEntityTypes = \CCrmFieldMulti::GetEntityTypes();
 		while ($row = $iterator->fetch())
 		{
 			if (empty($row['VALUE']))
+			{
 				continue;
+			}
 
-			$result['phones'][] = array(
+			$result['phones'][] = [
 				'value' => $row['VALUE'],
 				'valueFormatted' => Main\PhoneNumber\Parser::getInstance()->parse($row['VALUE'])->format(),
-				'type' => $row['VALUE_TYPE']
-			);
+				'type' => $row['VALUE_TYPE'],
+				'typeLabel' => $multiFieldEntityTypes[Phone::ID][$row['VALUE_TYPE']]['SHORT'],
+				'id' => $row['ID'],
+			];
 		}
 
 		return count($result['phones']) > 0 ? $result : null;

@@ -330,7 +330,7 @@ class TasksWidgetResult extends \CBitrixComponent
 				true
 			);
 
-			$this->arResult['USERS'][$userId]['AVATAR'] = $fileFields['src'] ? $fileFields['src'] : '';
+			$this->arResult['USERS'][$userId]['AVATAR'] = ($fileFields && $fileFields['src'] ? $fileFields['src'] : '');
 		}
 	}
 }

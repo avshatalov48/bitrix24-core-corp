@@ -174,18 +174,27 @@ export default class PullManager
 			return;
 		}
 
+		const { id, data: { columnId } } = params.item;
+
 		/**
 		 * Delay so that the element has time to be rendered before deletion,
 		 * if an event for changing the element came before. Ticket #141983
 		 */
-		const delay = (this.queue.has(params.item.id) ? 5000 : 0);
+		const delay = (this.queue.has(id) ? 5000 : 0);
 
 		setTimeout(function() {
-			this.queue.delete(params.item.id);
-			this.grid.removeItem(params.item.id);
+			this.queue.delete(id);
 
-			const column = this.grid.getColumn(params.item.data.columnId);
-			column.decPrice(params.item.data.price);
+			const item = this.grid.getItem(id);
+			if (!item)
+			{
+				return;
+			}
+
+			this.grid.removeItem(id);
+
+			const column = this.grid.getColumn(columnId);
+			column.decPrice(item.price);
 			column.renderSubTitle();
 		}.bind(this), delay);
 	}

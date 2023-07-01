@@ -9,6 +9,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
 use Bitrix\Main\UI;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Web\Uri;
 
 UI\Extension::load([
 	'ui.tooltip',
@@ -20,7 +21,7 @@ UI\Extension::load([
 ?>
 <div class="task-preview">
 	<div class="task-preview-header"><?php
-		$style = (!empty($arResult['TASK']['CREATED_BY_PHOTO']) ? 'background-image: url('. \CHTTP::urnEncode($arResult['TASK']['CREATED_BY_PHOTO']) .');' : '');
+		$style = (!empty($arResult['TASK']['CREATED_BY_PHOTO']) ? 'background-image: url('. Uri::urnEncode($arResult['TASK']['CREATED_BY_PHOTO']) .');' : '');
 		?><span class="ui-icon ui-icon-common-user task-preview-header-icon" title="<?= htmlspecialcharsbx($arResult['TASK']['CREATED_BY_FORMATTED']) ?>">
 			<i style="<?= $style ?>"></i>
 		</span>
@@ -33,7 +34,7 @@ UI\Extension::load([
 		if ((int)$arResult['TASK']['RESPONSIBLE_ID'] > 0)
 		{
 			?><span class="urlpreview__icon-destination"></span><?php
-			$style = (!empty($arResult['TASK']['RESPONSIBLE_PHOTO']) ? 'background-image: url('. \CHTTP::urnEncode($arResult['TASK']['RESPONSIBLE_PHOTO']) .');' : '');
+			$style = (!empty($arResult['TASK']['RESPONSIBLE_PHOTO']) ? 'background-image: url('. Uri::urnEncode($arResult['TASK']['RESPONSIBLE_PHOTO']) .');' : '');
 			?><span class="ui-icon ui-icon-common-user task-preview-header-icon" title="<?= htmlspecialcharsbx($arResult['TASK']['RESPONSIBLE_FORMATTED']) ?>">
 				<i style="<?= $style ?>"></i>
 			</span>

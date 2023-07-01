@@ -4,6 +4,7 @@ namespace Bitrix\Tasks\Grid\Task\Row;
 use \Bitrix\Main\Grid;
 use Bitrix\Tasks\Internals\Counter\Template\CounterStyle;
 use Bitrix\Tasks\Internals\Counter\Template\TaskCounter;
+use Bitrix\Tasks\Internals\Routes\RouteDictionary;
 
 /**
  * Class Counter
@@ -53,7 +54,7 @@ class Counter
 		}
 
 		$taskUrlTemplate = (
-			$groupId > 0 ? $this->parameters['PATH_TO_GROUP_TASKS_TASK'] : $this->parameters['PATH_TO_USER_TASKS_TASK']
+			$groupId > 0 ? RouteDictionary::PATH_TO_GROUP_TASK : RouteDictionary::PATH_TO_USER_TASK
 		);
 		$taskUrl = \CComponentEngine::MakePathFromTemplate($taskUrlTemplate, [
 			'user_id' => $userId,
@@ -65,7 +66,7 @@ class Counter
 		return [
 			'ACTIVITY_DATE' => [
 				'type' => Grid\Counter\Type::LEFT_ALIGNED,
-				'color' => $colorMap[$rowCounter['COLOR']],
+				'color' => ($colorMap[$rowCounter['COLOR']] ?? null),
 				'value' => $rowCounter['VALUE'],
 				'events' => [
 					'click' => "BX.SidePanel.Instance.open.bind(BX.SidePanel.Instance, '{$taskUrl}')",

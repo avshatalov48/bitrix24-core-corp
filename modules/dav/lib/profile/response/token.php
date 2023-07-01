@@ -20,16 +20,16 @@ class Token extends Base
 	{
 		global $USER;
 		$this->setUser($USER);
-		$this->setHeader('Content-Type: application/json');
+		$this->setHeader('Content-Type', 'application/json');
 		if (!$this->isAccess())
 		{
-			$this->setHeader('HTTP/1.0 403 Forbidden');
+			$this->setStatus(403);
 			$this->errors[] = 'Access denied for this user. User is not authorized in system';
 			$this->setErrorBodyContent();
 		}
 		else
 		{
-			$body = array('token' => $this->getToken($this->getUser()->GetID()));
+			$body = ['token' => $this->getToken($this->getUser()->GetID())];
 			$this->setBody(Json::encode($body));
 		}
 

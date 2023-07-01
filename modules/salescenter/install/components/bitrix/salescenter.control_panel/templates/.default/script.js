@@ -478,7 +478,7 @@
 	  }, {
 	    key: "opensSlider",
 	    value: function opensSlider() {
-	      var tileHasSlider = this.isCrmStoreTile() || this.isCrmWithEshopTile() || this.isCrmFormTile();
+	      var tileHasSlider = this.isCrmStoreTile() || this.isCrmWithEshopTile() || this.isCrmFormTile() || this.isTerminalTile();
 	      var tileHasUrl = this.getUrl();
 	      var tileHasMenu = this.hasMenu();
 	      return tileHasSlider && tileHasUrl && !tileHasMenu;
@@ -502,6 +502,11 @@
 	    key: "isCrmFormTile",
 	    value: function isCrmFormTile() {
 	      return this.id && this.id === 'crmform';
+	    }
+	  }, {
+	    key: "isTerminalTile",
+	    value: function isTerminalTile() {
+	      return this.id && this.id === 'terminal';
 	    }
 	  }]);
 	  return PaymentItem;

@@ -7,8 +7,8 @@
  */
 jn.define('im/messenger/lib/rest-manager/rest-manager', (require, exports, module) => {
 
-	const { Type } = jn.require('type');
-	const { Logger } = jn.require('im/messenger/lib/logger');
+	const { Type } = require('type');
+	const { Logger } = require('im/messenger/lib/logger');
 
 	/**
 	 * @class RestManager
@@ -97,7 +97,7 @@ jn.define('im/messenger/lib/rest-manager/rest-manager', (require, exports, modul
 		 * @param {object} params
 		 * @param {function} callback
 		 */
-		on(method, params, callback)
+		on(method, params = {}, callback = () => {})
 		{
 			if (!Type.isStringFilled(method))
 			{
@@ -115,6 +115,8 @@ jn.define('im/messenger/lib/rest-manager/rest-manager', (require, exports, modul
 			}
 
 			this._subscribe(method, params, callback);
+
+			return this;
 		}
 
 		/**
@@ -124,7 +126,7 @@ jn.define('im/messenger/lib/rest-manager/rest-manager', (require, exports, modul
 		 * @param {object} params
 		 * @param {function} callback
 		 */
-		off(method, params, callback)
+		off(method, params= {}, callback)
 		{
 			if (!Type.isStringFilled(method))
 			{
@@ -142,6 +144,8 @@ jn.define('im/messenger/lib/rest-manager/rest-manager', (require, exports, modul
 			}
 
 			this._unsubscribe(method, params, callback);
+
+			return this;
 		}
 
 		/**
@@ -151,7 +155,7 @@ jn.define('im/messenger/lib/rest-manager/rest-manager', (require, exports, modul
 		 * @param {object} params
 		 * @param {function} callback
 		 */
-		once(method, params, callback)
+		once(method, params = {}, callback = () => {})
 		{
 			if (!Type.isStringFilled(method))
 			{
@@ -174,6 +178,8 @@ jn.define('im/messenger/lib/rest-manager/rest-manager', (require, exports, modul
 			};
 
 			this._subscribe(method, params, onceCallback);
+
+			return this;
 		}
 
 		_subscribe(method, params, callback)

@@ -5,9 +5,9 @@ namespace Bitrix\Crm\Reservation;
 use Bitrix\Main;
 use Bitrix\Sale;
 
-class BasketReservation
+final class BasketReservation
 {
-	private $products = [];
+	private array $productsRowsIds = [];
 
 	/**
 	 * @throws Main\SystemException
@@ -22,7 +22,7 @@ class BasketReservation
 
 	public function addProduct(array $product): void
 	{
-		$this->products[$product['ID']] = $product;
+		$this->productsRowsIds[] = (int)$product['ID'];
 	}
 
 	public function addProducts(array $products): void
@@ -78,17 +78,15 @@ class BasketReservation
 	{
 		$result = [];
 
-		if (!$this->products)
+		if (empty($this->productsRowsIds))
 		{
 			return $result;
 		}
 
-		$productIds = array_column($this->products, 'ID');
-
 		$productReservationMapIterator = Internals\ProductReservationMapTable::getList([
 			'select' => ['PRODUCT_ROW_ID', 'BASKET_RESERVATION_ID'],
 			'filter' => [
-				'=PRODUCT_ROW_ID' => $productIds,
+				'=PRODUCT_ROW_ID' => $this->productsRowsIds,
 			]
 		]);
 		while ($productReservationMapData = $productReservationMapIterator->fetch())

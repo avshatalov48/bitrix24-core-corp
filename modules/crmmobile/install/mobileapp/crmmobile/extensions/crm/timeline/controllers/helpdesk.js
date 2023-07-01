@@ -2,7 +2,6 @@
  * @module crm/timeline/controllers/helpdesk
  */
 jn.define('crm/timeline/controllers/helpdesk', (require, exports, module) => {
-
 	const { TimelineBaseController } = require('crm/controllers/base');
 
 	const SupportedActions = {
@@ -31,12 +30,11 @@ jn.define('crm/timeline/controllers/helpdesk', (require, exports, module) => {
 				const articleCode = actionParams.mobileArticleCode || actionParams.articleCode;
 				if (articleCode)
 				{
-					helpdesk.openHelpArticle(articleCode);
+					helpdesk.openHelpArticle(String(articleCode));
 				}
 			}
 		}
 	}
 
 	module.exports = { TimelineHelpdeskController };
-
 });

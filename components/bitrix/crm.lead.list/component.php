@@ -1,5 +1,9 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 /**
 /**
@@ -14,24 +18,41 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 global $USER_FIELD_MANAGER, $USER, $APPLICATION, $DB;
 
-use Bitrix\Crm\PhaseSemantics;
+use Bitrix\Crm;
+use Bitrix\Crm\Agent\Duplicate\Background\LeadIndexRebuild;
+use Bitrix\Crm\Agent\Duplicate\Background\LeadMerge;
+use Bitrix\Crm\Agent\Duplicate\Volatile\IndexRebuild;
+use Bitrix\Crm\Component\EntityList\FieldRestrictionManager;
+use Bitrix\Crm\Component\EntityList\FieldRestrictionManagerTypes;
+use Bitrix\Crm\Context\GridContext;
+use Bitrix\Crm\Conversion\LeadConversionDispatcher;
+use Bitrix\Crm\EntityAddress;
+use Bitrix\Crm\Format\AddressFormatter;
+use Bitrix\Crm\Integrity\Volatile;
+use Bitrix\Crm\LeadAddress;
+use Bitrix\Crm\Settings\HistorySettings;
+use Bitrix\Crm\Settings\LayoutSettings;
+use Bitrix\Crm\Tracking;
+use Bitrix\Crm\WebForm\Manager as WebFormManager;
+use Bitrix\Main;
+use Bitrix\Main\Localization\Loc;
 
-$isErrorOccured = false;
+$isErrorOccurred = false;
 $errorMessage = '';
 
-if (!$isErrorOccured && !CModule::IncludeModule('crm'))
+if (!$isErrorOccurred && !CModule::IncludeModule('crm'))
 {
 	$errorMessage = GetMessage('CRM_MODULE_NOT_INSTALLED');
-	$isErrorOccured = true;
+	$isErrorOccurred = true;
 }
 
 $isBizProcInstalled = IsModuleInstalled('bizproc');
-if (!$isErrorOccured && $isBizProcInstalled)
+if (!$isErrorOccurred && $isBizProcInstalled)
 {
 	if (!CModule::IncludeModule('bizproc'))
 	{
 		$errorMessage = GetMessage('BIZPROC_MODULE_NOT_INSTALLED');
-		$isErrorOccured = true;
+		$isErrorOccurred = true;
 	}
 	elseif (!CBPRuntime::isFeatureEnabled())
 	{
@@ -39,37 +60,37 @@ if (!$isErrorOccured && $isBizProcInstalled)
 	}
 }
 
-if (!$isErrorOccured && !CAllCrmInvoice::installExternalEntities())
+if (!$isErrorOccurred && !CAllCrmInvoice::installExternalEntities())
 {
-	$isErrorOccured = true;
+	$isErrorOccurred = true;
 }
-if(!$isErrorOccured && !CCrmQuote::LocalComponentCausedUpdater())
+if(!$isErrorOccurred && !CCrmQuote::LocalComponentCausedUpdater())
 {
-	$isErrorOccured = true;
+	$isErrorOccurred = true;
 }
 
-if (!$isErrorOccured && !CModule::IncludeModule('currency'))
+if (!$isErrorOccurred && !CModule::IncludeModule('currency'))
 {
 	$errorMessage = GetMessage('CRM_MODULE_NOT_INSTALLED_CURRENCY');
-	$isErrorOccured = true;
+	$isErrorOccurred = true;
 }
-if (!$isErrorOccured && !CModule::IncludeModule('catalog'))
+if (!$isErrorOccurred && !CModule::IncludeModule('catalog'))
 {
 	$errorMessage = GetMessage('CRM_MODULE_NOT_INSTALLED_CATALOG');
-	$isErrorOccured = true;
+	$isErrorOccurred = true;
 }
-if (!$isErrorOccured && !CModule::IncludeModule('sale'))
+if (!$isErrorOccurred && !CModule::IncludeModule('sale'))
 {
 	$errorMessage = GetMessage('CRM_MODULE_NOT_INSTALLED_SALE');
-	$isErrorOccured = true;
+	$isErrorOccurred = true;
 }
 
 
 $userPermissions = CCrmPerms::GetCurrentUserPermissions();
-if (!$isErrorOccured && !CCrmLead::CheckReadPermission(0, $userPermissions))
+if (!$isErrorOccurred && !CCrmLead::CheckReadPermission(0, $userPermissions))
 {
 	$errorMessage = GetMessage('CRM_PERMISSION_DENIED');
-	$isErrorOccured = true;
+	$isErrorOccurred = true;
 }
 
 //region Export params
@@ -105,13 +126,13 @@ $arResult['STEXPORT_TOTAL_ITEMS'] = isset($arParams['STEXPORT_TOTAL_ITEMS']) ?
 	(int)$arParams['STEXPORT_TOTAL_ITEMS'] : 0;
 //endregion
 
-if (!$isErrorOccured && $isInExportMode && $userPermissions->HavePerm('LEAD', BX_CRM_PERM_NONE, 'EXPORT'))
+if (!$isErrorOccurred && $isInExportMode && $userPermissions->HavePerm('LEAD', BX_CRM_PERM_NONE, 'EXPORT'))
 {
 	$errorMessage = GetMessage('CRM_PERMISSION_DENIED');
-	$isErrorOccured = true;
+	$isErrorOccurred = true;
 }
 
-if ($isErrorOccured)
+if ($isErrorOccurred)
 {
 	if ($isStExport)
 	{
@@ -124,55 +145,93 @@ if ($isErrorOccured)
 	}
 }
 
-use Bitrix\Crm;
-use Bitrix\Crm\Agent\Duplicate\Background\LeadIndexRebuild;
-use Bitrix\Crm\Agent\Duplicate\Background\LeadMerge;
-use Bitrix\Crm\Agent\Duplicate\Volatile\IndexRebuild;
-use Bitrix\Crm\Context\GridContext;
-use Bitrix\Crm\Conversion\LeadConversionDispatcher;
-use Bitrix\Crm\EntityAddress;
-use Bitrix\Crm\Format\AddressFormatter;
-use Bitrix\Crm\Integrity\Volatile;
-use Bitrix\Crm\LeadAddress;
-use Bitrix\Crm\Settings\HistorySettings;
-use Bitrix\Crm\Settings\LayoutSettings;
-use Bitrix\Crm\Tracking;
-use Bitrix\Crm\WebForm\Manager as WebFormManager;
-use Bitrix\Main;
-use Bitrix\Main\Localization\Loc;
-
 $isInCalendarMode = isset($arParams['CALENDAR_MODE']) && ($arParams['CALENDAR_MODE'] === 'Y');
 
 $CCrmLead = new CCrmLead(false);
 $CCrmBizProc = new CCrmBizProc('LEAD');
+$fieldRestrictionManager = new FieldRestrictionManager(
+	FieldRestrictionManager::MODE_GRID,
+	[FieldRestrictionManagerTypes::ACTIVITY]
+);
 
 $userID = CCrmSecurityHelper::GetCurrentUserID();
 $isAdmin = CCrmPerms::IsAdmin();
 
 $currentPage = $APPLICATION->GetCurPage();
-$arParams['PATH_TO_LEAD_LIST'] = CrmCheckPath('PATH_TO_LEAD_LIST', $arParams['PATH_TO_LEAD_LIST'], $currentPage);
-$arParams['PATH_TO_LEAD_DETAILS'] = CrmCheckPath('PATH_TO_LEAD_DETAILS', $arParams['PATH_TO_LEAD_DETAILS'], $APPLICATION->GetCurPage().'?lead_id=#lead_id#&details');
-$arParams['PATH_TO_LEAD_SHOW'] = CrmCheckPath('PATH_TO_LEAD_SHOW', $arParams['PATH_TO_LEAD_SHOW'], $currentPage.'?lead_id=#lead_id#&show');
-$arParams['PATH_TO_LEAD_EDIT'] = CrmCheckPath('PATH_TO_LEAD_EDIT', $arParams['PATH_TO_LEAD_EDIT'], $currentPage.'?lead_id=#lead_id#&edit');
-$arParams['PATH_TO_LEAD_CONVERT'] = CrmCheckPath('PATH_TO_LEAD_CONVERT', $arParams['PATH_TO_LEAD_CONVERT'], $currentPage.'?lead_id=#lead_id#&convert');
-$arParams['PATH_TO_LEAD_MERGE'] = CrmCheckPath('PATH_TO_LEAD_MERGE', $arParams['PATH_TO_LEAD_MERGE'], '/lead/merge/');
-$arParams['PATH_TO_QUOTE_EDIT'] = CrmCheckPath('PATH_TO_QUOTE_EDIT', $arParams['PATH_TO_QUOTE_EDIT'], $currentPage.'?quote_id=#quote_id#&edit');
-$arParams['PATH_TO_LEAD_WIDGET'] = CrmCheckPath('PATH_TO_LEAD_WIDGET', $arParams['PATH_TO_LEAD_WIDGET'], $currentPage);
-$arParams['PATH_TO_LEAD_KANBAN'] = CrmCheckPath('PATH_TO_LEAD_KANBAN', $arParams['PATH_TO_LEAD_KANBAN'], $currentPage);
-$arParams['PATH_TO_LEAD_CALENDAR'] = CrmCheckPath('PATH_TO_LEAD_CALENDAR', $arParams['PATH_TO_LEAD_CALENDAR'], $currentPage);
-$arParams['PATH_TO_USER_PROFILE'] = CrmCheckPath('PATH_TO_USER_PROFILE', $arParams['PATH_TO_USER_PROFILE'], '/company/personal/user/#user_id#/');
-$arParams['PATH_TO_USER_BP'] = CrmCheckPath('PATH_TO_USER_BP', $arParams['PATH_TO_USER_BP'], '/company/personal/bizproc/');
-$arParams['NAME_TEMPLATE'] = empty($arParams['NAME_TEMPLATE']) ? CSite::GetNameFormat(false) : str_replace(array("#NOBR#","#/NOBR#"), array("",""), $arParams["NAME_TEMPLATE"]);
+
+$arParams['PATH_TO_LEAD_LIST'] = CrmCheckPath(
+	'PATH_TO_LEAD_LIST',
+	$arParams['PATH_TO_LEAD_LIST'] ?? '',
+	$currentPage
+);
+$arParams['PATH_TO_LEAD_DETAILS'] = CrmCheckPath(
+	'PATH_TO_LEAD_DETAILS',
+	$arParams['PATH_TO_LEAD_DETAILS'] ?? '',
+	$currentPage . '?lead_id=#lead_id#&details'
+);
+$arParams['PATH_TO_LEAD_SHOW'] = CrmCheckPath(
+	'PATH_TO_LEAD_SHOW',
+	$arParams['PATH_TO_LEAD_SHOW'] ?? '',
+	$currentPage . '?lead_id=#lead_id#&show'
+);
+$arParams['PATH_TO_LEAD_EDIT'] = CrmCheckPath(
+	'PATH_TO_LEAD_EDIT',
+	$arParams['PATH_TO_LEAD_EDIT'] ?? '',
+	$currentPage . '?lead_id=#lead_id#&edit'
+);
+$arParams['PATH_TO_LEAD_CONVERT'] = CrmCheckPath(
+	'PATH_TO_LEAD_CONVERT',
+	$arParams['PATH_TO_LEAD_CONVERT'] ?? '',
+	$currentPage . '?lead_id=#lead_id#&convert'
+);
+$arParams['PATH_TO_LEAD_MERGE'] = CrmCheckPath(
+	'PATH_TO_LEAD_MERGE',
+	$arParams['PATH_TO_LEAD_MERGE'] ?? '',
+	'/lead/merge/'
+);
+$arParams['PATH_TO_QUOTE_EDIT'] = CrmCheckPath(
+	'PATH_TO_QUOTE_EDIT',
+	$arParams['PATH_TO_QUOTE_EDIT'] ?? '',
+	$currentPage . '?quote_id=#quote_id#&edit'
+);
+$arParams['PATH_TO_LEAD_WIDGET'] = CrmCheckPath(
+	'PATH_TO_LEAD_WIDGET',
+	$arParams['PATH_TO_LEAD_WIDGET'] ?? '',
+	$currentPage
+);
+$arParams['PATH_TO_LEAD_KANBAN'] = CrmCheckPath(
+	'PATH_TO_LEAD_KANBAN',
+	$arParams['PATH_TO_LEAD_KANBAN'] ?? '',
+	$currentPage
+);
+$arParams['PATH_TO_LEAD_CALENDAR'] = CrmCheckPath(
+	'PATH_TO_LEAD_CALENDAR',
+	$arParams['PATH_TO_LEAD_CALENDAR'] ?? '',
+	$currentPage
+);
+$arParams['PATH_TO_USER_PROFILE'] = CrmCheckPath(
+	'PATH_TO_USER_PROFILE',
+	$arParams['PATH_TO_USER_PROFILE'] ?? '',
+	'/company/personal/user/#user_id#/'
+);
+$arParams['PATH_TO_USER_BP'] = CrmCheckPath(
+	'PATH_TO_USER_BP',
+	$arParams['PATH_TO_USER_BP'] ?? '',
+	'/company/personal/bizproc/'
+);
+$arParams['NAME_TEMPLATE'] = empty($arParams['NAME_TEMPLATE'])
+	? CSite::GetNameFormat(false)
+	: str_replace(['#NOBR#', '#/NOBR#'], ['', ''], $arParams['NAME_TEMPLATE']);
 
 $arResult['CURRENT_USER_ID'] = CCrmSecurityHelper::GetCurrentUserID();
 $arResult['IS_AJAX_CALL'] = isset($_REQUEST['AJAX_CALL']) || isset($_REQUEST['ajax_request']) || !!CAjax::GetSession();
 $arResult['SESSION_ID'] = bitrix_sessid();
-$arResult['NAVIGATION_CONTEXT_ID'] = isset($arParams['NAVIGATION_CONTEXT_ID']) ? $arParams['NAVIGATION_CONTEXT_ID'] : '';
-$arResult['DISABLE_NAVIGATION_BAR'] = isset($arParams['DISABLE_NAVIGATION_BAR']) ? $arParams['DISABLE_NAVIGATION_BAR'] : 'N';
-$arResult['PRESERVE_HISTORY'] = isset($arParams['PRESERVE_HISTORY']) ? $arParams['PRESERVE_HISTORY'] : false;
+$arResult['NAVIGATION_CONTEXT_ID'] = $arParams['NAVIGATION_CONTEXT_ID'] ?? '';
+$arResult['DISABLE_NAVIGATION_BAR'] = $arParams['DISABLE_NAVIGATION_BAR'] ?? 'N';
+$arResult['PRESERVE_HISTORY'] = $arParams['PRESERVE_HISTORY'] ?? false;
 $arResult['ENABLE_SLIDER'] = \Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isSliderEnabled();
 
-if(LayoutSettings::getCurrent()->isSimpleTimeFormatEnabled())
+if (LayoutSettings::getCurrent()->isSimpleTimeFormatEnabled())
 {
 	$arResult['TIME_FORMAT'] = array(
 		'tommorow' => 'tommorow',
@@ -370,7 +429,7 @@ $CCrmUserType = new CCrmUserType($USER_FIELD_MANAGER, CCrmLead::$sUFEntityID);
 $CCrmFieldMulti = new CCrmFieldMulti();
 
 $arResult['GRID_ID'] = (new Crm\Component\EntityList\GridId(CCrmOwnerType::Lead))
-	->getValue((string)$arParams['GRID_ID_SUFFIX'])
+	->getValue((string)($arParams['GRID_ID_SUFFIX'] ?? ''))
 ;
 
 $arResult['HONORIFIC'] = CCrmStatus::GetStatusListEx('HONORIFIC');
@@ -387,13 +446,14 @@ $arResult['BOOLEAN_VALUES_LIST'] = array(
 $arResult['FILTER'] = array();
 $arResult['FILTER2LOGIC'] = array();
 $arResult['FILTER_PRESETS'] = array();
-$arResult['PERMS']['ADD']    = !$userPermissions->HavePerm('LEAD', BX_CRM_PERM_NONE, 'ADD');
-$arResult['PERMS']['WRITE']  = !$userPermissions->HavePerm('LEAD', BX_CRM_PERM_NONE, 'WRITE');
+$arResult['PERMS']['ADD'] = !$userPermissions->HavePerm('LEAD', BX_CRM_PERM_NONE, 'ADD');
+$arResult['PERMS']['WRITE'] = !$userPermissions->HavePerm('LEAD', BX_CRM_PERM_NONE, 'WRITE');
 $arResult['PERMS']['DELETE'] = !$userPermissions->HavePerm('LEAD', BX_CRM_PERM_NONE, 'DELETE');
 $arResult['CALL_LIST_UPDATE_MODE'] = isset($_REQUEST['call_list_context']) && isset($_REQUEST['call_list_id']) && IsModuleInstalled('voximplant');
-$arResult['CALL_LIST_CONTEXT'] = (string)$_REQUEST['call_list_context'];
-$arResult['CALL_LIST_ID'] = (int)$_REQUEST['call_list_id'];
-if($arResult['CALL_LIST_UPDATE_MODE'])
+$arResult['CALL_LIST_CONTEXT'] = (string)($_REQUEST['call_list_context'] ?? '');
+$arResult['CALL_LIST_ID'] = (int)($_REQUEST['call_list_id'] ?? 0);
+
+if ($arResult['CALL_LIST_UPDATE_MODE'])
 {
 	AddEventHandler('crm', 'onCrmLeadListItemBuildMenu', array('\Bitrix\Crm\CallList\CallList', 'handleOnCrmLeadListItemBuildMenu'));
 }
@@ -416,7 +476,7 @@ if(!$bInternal)
 		new Crm\Filter\LeadSettings(['ID' => $arResult['GRID_ID']])
 	);
 
-	if($externalFilterId)
+	if (!empty($externalFilterId))
 	{
 		$fields = $entityFilter->getFields();
 		foreach ($fields as $field)
@@ -463,6 +523,10 @@ if(isset($arNavParams['nPageSize']) && $arNavParams['nPageSize'] > 100)
 }
 //endregion
 
+//region Filter fields cleanup
+$fieldRestrictionManager->removeRestrictedFields($filterOptions, $gridOptions);
+//endregion
+
 //region Filter initialization
 if(!$bInternal)
 {
@@ -494,7 +558,7 @@ if(!$bInternal)
 
 	//endregion
 
-	if (!$externalFilterId)
+	if (empty($externalFilterId))
 	{
 		foreach($effectiveFilterFieldIDs as $filterFieldID)
 		{
@@ -613,7 +677,7 @@ foreach ($utmList as $utmCode => $utmName)
 	);
 }
 
-$CCrmUserType->ListAddHeaders($arResult['HEADERS']);
+$CCrmUserType->appendGridHeaders($arResult['HEADERS']);
 
 Crm\Service\Container::getInstance()->getParentFieldManager()->prepareGridHeaders(
 	\CCrmOwnerType::Lead,
@@ -672,6 +736,15 @@ if ($isBizProcInstalled)
 		CJSCore::Init('bp_starter');
 	}
 }
+
+//region Check and fill fields restriction
+$restrictedFields = $fieldRestrictionManager->fetchRestrictedFields(
+	$arResult['GRID_ID'] ?? '',
+	$arResult['HEADERS'] ?? [],
+	$entityFilter ?? null
+);
+$arResult = array_merge($arResult, $restrictedFields);
+//endregion
 
 // list all filds for export
 $exportAllFieldsList = array();
@@ -1255,7 +1328,7 @@ if($actionData['ACTIVE'])
 
 						//Region automation
 						$starter = new \Bitrix\Crm\Automation\Starter(\CCrmOwnerType::Lead, $ID);
-						$starter->setUserIdFromCurrent()->runOnUpdate($arUpdateData, []);
+						$starter->setUserIdFromCurrent()->runOnUpdate(['STATUS_ID' => $actionData['STATUS_ID']], []);
 						//end region
 					}
 					else
@@ -1320,7 +1393,10 @@ if($actionData['ACTIVE'])
 							$arErrors
 						);
 						$starter = new \Bitrix\Crm\Automation\Starter(\CCrmOwnerType::Lead, $ID);
-						$starter->setUserIdFromCurrent()->runOnUpdate($arUpdateData, []);
+						$starter->setUserIdFromCurrent()->runOnUpdate(
+							['ASSIGNED_BY_ID' => $actionData['ASSIGNED_BY_ID']],
+							[]
+						);
 					}
 					else
 					{
@@ -1403,7 +1479,7 @@ if($actionData['ACTIVE'])
 							$arErrors
 						);
 						$starter = new \Bitrix\Crm\Automation\Starter(\CCrmOwnerType::Lead, $ID);
-						$starter->setUserIdFromCurrent()->runOnUpdate($arUpdateData, []);
+						$starter->setUserIdFromCurrent()->runOnUpdate(['OPENED' => $isOpened], []);
 					}
 					else
 					{
@@ -1576,7 +1652,7 @@ if (empty($arSelectMap))
 {
 	foreach ($arResult['HEADERS'] as $arHeader)
 	{
-		if ($arHeader['default'])
+		if ($arHeader['default'] ?? false)
 		{
 			$arSelectMap[$arHeader['id']] = true;
 		}
@@ -1623,20 +1699,6 @@ else
 	{
 		$arSelectMap['TITLE'] =
 			$arSelectMap['SOURCE_ID'] = true;
-	}
-
-	if(isset($arSelectMap['ACTIVITY_ID']))
-	{
-		$arSelectMap['ACTIVITY_TIME'] =
-			$arSelectMap['ACTIVITY_SUBJECT'] =
-			$arSelectMap['C_ACTIVITY_ID'] =
-			$arSelectMap['C_ACTIVITY_TIME'] =
-			$arSelectMap['C_ACTIVITY_SUBJECT'] =
-			$arSelectMap['C_ACTIVITY_RESP_ID'] =
-			$arSelectMap['C_ACTIVITY_RESP_LOGIN'] =
-			$arSelectMap['C_ACTIVITY_RESP_NAME'] =
-			$arSelectMap['C_ACTIVITY_RESP_LAST_NAME'] =
-			$arSelectMap['C_ACTIVITY_RESP_SECOND_NAME'] = true;
 	}
 
 	if(isset($arSelectMap['LEAD_FORMATTED_NAME']))
@@ -1770,13 +1832,12 @@ if ($isInExportMode)
 $nTopCount = false;
 if ($isInGadgetMode)
 {
-	$nTopCount = $arParams['LEAD_COUNT'];
+	$nTopCount = $arParams['LEAD_COUNT'] ?? 0;
 }
-
 
 if ($isInCalendarMode)
 {
-	$nTopCount = $arParams['DEAL_COUNT'];
+	$nTopCount = $arParams['DEAL_COUNT'] ?? 0;
 }
 
 if($nTopCount > 0)
@@ -1832,7 +1893,7 @@ if(isset($arSort['lead_client']))
 	unset($arSort['lead_client']);
 }
 
-if($arSort['date_create'])
+if (isset($arSort['date_create']))
 {
 	$arSort['id'] = $arSort['date_create'];
 	unset($arSort['date_create']);
@@ -1844,6 +1905,13 @@ if(!empty($arSort) && !isset($arSort['id']))
 }
 
 $arSelect = array_unique(array_keys($arSelectMap), SORT_STRING);
+
+if (in_array('ACTIVITY_ID', $arSelect, true)) // Remove ACTIVITY_ID from $arSelect
+{
+	$arResult['NEED_ADD_ACTIVITY_BLOCK'] = true;
+	unset($arSelect[array_search('ACTIVITY_ID', $arSelect)]);
+	$arSelect = array_values($arSelect);
+}
 
 // For calendar view
 if (isset($arParams['CALENDAR_MODE_LIST']) && !in_array('DATE_CREATE', $arSelect))
@@ -1933,13 +2001,24 @@ if ($isInCalendarMode)
 	$arSelect = [
 		'ID', 'TITLE', 'DATE_CREATE'
 	];
+
 	foreach ($arParams['CALENDAR_MODE_LIST'] as $calendarModeItem)
 	{
 		if ($calendarModeItem['selected'])
 		{
-			[$calendarModeItemUserFieldId, $calendarModeItemUserFieldType, $calendarModeItemUserFieldName] =
-				\Bitrix\Crm\Integration\Calendar::parseUserfieldKey($calendarModeItem['id']);
-			if ($calendarModeItemUserFieldName && !in_array($calendarModeItemUserFieldName, $arSelect, true))
+			$calendarModeItemUserFieldId = null;
+			$calendarModeItemUserFieldType = null;
+			$calendarModeItemUserFieldName = null;
+			$parsedKeys = \Bitrix\Crm\Integration\Calendar::parseUserfieldKey($calendarModeItem['id']);
+			if (count($parsedKeys) > 1)
+			{
+				[$calendarModeItemUserFieldId, $calendarModeItemUserFieldType, $calendarModeItemUserFieldName] = $parsedKeys;
+			}
+
+			if (
+				isset($calendarModeItemUserFieldName)
+				&& !in_array($calendarModeItemUserFieldName, $arSelect, true)
+			)
 			{
 				$arSelect[] = $calendarModeItemUserFieldName;
 			}
@@ -2213,7 +2292,6 @@ $arResult['PAGINATION']['URL'] = $APPLICATION->GetCurPageParam('', array('apply_
 $enableExportEvent = $isInExportMode && HistorySettings::getCurrent()->isExportEventEnabled();
 
 $now = time() + CTimeZone::GetOffset();
-$activitylessItems = array();
 $entityAttrs = CCrmLead::GetPermissionAttributes(array_keys($arResult['LEAD']));
 
 // check adding to exclusion list
@@ -2261,13 +2339,15 @@ foreach($arResult['LEAD'] as &$arLead)
 	$arLead['CAN_EXCLUDE'] = in_array($arLead['ID'], $excludeApplicableList);
 
 	if (!empty($arLead['WEB']) && mb_strpos($arLead['WEB'], '://') === false)
-		$arLead['WEB'] = 'http://'.$arLead['WEB'];
+	{
+		$arLead['WEB'] = 'http://' . $arLead['WEB'];
+	}
 
-	$currencyID =  isset($arLead['CURRENCY_ID']) ? $arLead['CURRENCY_ID'] : CCrmCurrency::GetBaseCurrencyID();
-	$arLead['FORMATTED_OPPORTUNITY'] = CCrmCurrency::MoneyToString($arLead['~OPPORTUNITY'], $currencyID);
+	$currencyID = $arLead['CURRENCY_ID'] ?? CCrmCurrency::GetBaseCurrencyID();
+	$arLead['FORMATTED_OPPORTUNITY'] = CCrmCurrency::MoneyToString($arLead['~OPPORTUNITY'] ?? 0.0, $currencyID);
 
-	$statusID = isset($arLead['STATUS_ID']) ? $arLead['STATUS_ID'] : '';
-	$arLead['LEAD_STATUS_NAME'] = isset($arResult['STATUS_LIST'][$statusID]) ? $arResult['STATUS_LIST'][$statusID] : htmlspecialcharsbx($statusID);
+	$statusID = $arLead['STATUS_ID'] ?? '';
+	$arLead['LEAD_STATUS_NAME'] = $arResult['STATUS_LIST'][$statusID] ?? htmlspecialcharsbx($statusID);
 
 	$arLead['DELETE'] = $arLead['EDIT'] = !$arResult['INTERNAL'];
 
@@ -2351,78 +2431,80 @@ foreach($arResult['LEAD'] as &$arLead)
 	}
 
 	$arLead['PATH_TO_USER_PROFILE'] = CComponentEngine::MakePathFromTemplate(
-		$arParams['PATH_TO_USER_PROFILE'],
-		array('user_id' => $arLead['ASSIGNED_BY'])
+		$arParams['PATH_TO_USER_PROFILE'] ?? '',
+		array('user_id' => $arLead['ASSIGNED_BY'] ?? null)
 	);
 
 	$arLead['PATH_TO_USER_BP'] = CComponentEngine::MakePathFromTemplate(
-		$arParams['PATH_TO_USER_BP'],
+		$arParams['PATH_TO_USER_BP'] ?? '',
 		array('user_id' => $userID)
 	);
 
 	$arLead['PATH_TO_USER_CREATOR'] = CComponentEngine::MakePathFromTemplate(
-		$arParams['PATH_TO_USER_PROFILE'],
-		array('user_id' => $arLead['CREATED_BY'])
+		$arParams['PATH_TO_USER_PROFILE'] ?? '',
+		array('user_id' => $arLead['CREATED_BY'] ?? null)
 	);
 
 	$arLead['PATH_TO_USER_MODIFIER'] = CComponentEngine::MakePathFromTemplate(
-		$arParams['PATH_TO_USER_PROFILE'],
-		array('user_id' => $arLead['MODIFY_BY'])
+		$arParams['PATH_TO_USER_PROFILE'] ?? '',
+		array('user_id' => $arLead['MODIFY_BY'] ?? null)
 	);
 
 	$arLead['~CREATED_BY_FORMATTED_NAME'] = CUser::FormatName(
 		$arParams['NAME_TEMPLATE'],
 		array(
-			'LOGIN' => $arLead['~CREATED_BY_LOGIN'],
-			'NAME' => $arLead['~CREATED_BY_NAME'],
-			'SECOND_NAME' => $arLead['~CREATED_BY_SECOND_NAME'],
-			'LAST_NAME' => $arLead['~CREATED_BY_LAST_NAME']
+			'LOGIN' => $arLead['~CREATED_BY_LOGIN'] ?? null,
+			'NAME' => $arLead['~CREATED_BY_NAME'] ?? null,
+			'SECOND_NAME' => $arLead['~CREATED_BY_SECOND_NAME'] ?? null,
+			'LAST_NAME' => $arLead['~CREATED_BY_LAST_NAME'] ?? null
 		),
 		true, false
 	);
-	$arLead['CREATED_BY_FORMATTED_NAME'] = htmlspecialcharsbx($arLead['~CREATED_BY_FORMATTED_NAME']);
+	$arLead['CREATED_BY_FORMATTED_NAME'] = htmlspecialcharsbx($arLead['~CREATED_BY_FORMATTED_NAME'] ?? '');
 
 	$arLead['~MODIFY_BY_FORMATTED_NAME'] = CUser::FormatName(
 		$arParams['NAME_TEMPLATE'],
 		array(
-			'LOGIN' => $arLead['~MODIFY_BY_LOGIN'],
-			'NAME' => $arLead['~MODIFY_BY_NAME'],
-			'SECOND_NAME' => $arLead['~MODIFY_BY_SECOND_NAME'],
-			'LAST_NAME' => $arLead['~MODIFY_BY_LAST_NAME']
+			'LOGIN' => $arLead['~MODIFY_BY_LOGIN'] ?? null,
+			'NAME' => $arLead['~MODIFY_BY_NAME'] ?? null,
+			'SECOND_NAME' => $arLead['~MODIFY_BY_SECOND_NAME'] ?? null,
+			'LAST_NAME' => $arLead['~MODIFY_BY_LAST_NAME'] ?? null
 		),
 		true, false
 	);
-	$arLead['MODIFY_BY_FORMATTED_NAME'] = htmlspecialcharsbx($arLead['~MODIFY_BY_FORMATTED_NAME']);
+	$arLead['MODIFY_BY_FORMATTED_NAME'] = htmlspecialcharsbx($arLead['~MODIFY_BY_FORMATTED_NAME'] ?? '');
 
-	$sourceID = isset($arLead['~SOURCE_ID']) ? $arLead['~SOURCE_ID'] : '';
-	$arLead['LEAD_SOURCE_NAME'] = $sourceID !== '' ? (isset($arResult['SOURCE_LIST'][$sourceID]) ? $arResult['SOURCE_LIST'][$sourceID] : htmlspecialcharsbx($sourceID)) : '';
-	$arLead['~LEAD_SOURCE_NAME'] = htmlspecialcharsback($arLead['~LEAD_SOURCE_NAME']);
+	$sourceID = $arLead['~SOURCE_ID'] ?? '';
+	$arLead['LEAD_SOURCE_NAME'] = $sourceID !== ''
+		? ($arResult['SOURCE_LIST'][$sourceID] ?? htmlspecialcharsbx($sourceID))
+		: '';
 
-	$arLead['~LEAD_FORMATTED_NAME'] = CCrmLead::PrepareFormattedName(
-		array(
-			'HONORIFIC' => isset($arLead['~HONORIFIC']) ? $arLead['~HONORIFIC'] : '',
-			'NAME' => isset($arLead['~NAME']) ? $arLead['~NAME'] : '',
-			'SECOND_NAME' => isset($arLead['~SECOND_NAME']) ? $arLead['~SECOND_NAME'] : '',
-			'LAST_NAME' => isset($arLead['~LAST_NAME']) ? $arLead['~LAST_NAME'] : ''
-		)
-	);
+	$arLead['~LEAD_SOURCE_NAME'] = htmlspecialcharsback($arLead['~LEAD_SOURCE_NAME'] ?? '');
 
-	$arLead['LEAD_FORMATTED_NAME'] = htmlspecialcharsbx($arLead['~LEAD_FORMATTED_NAME']);
+	$arLead['~LEAD_FORMATTED_NAME'] = CCrmLead::PrepareFormattedName([
+		'HONORIFIC' => $arLead['~HONORIFIC'] ?? '',
+		'NAME' => $arLead['~NAME'] ?? '',
+		'SECOND_NAME' => $arLead['~SECOND_NAME'] ?? '',
+		'LAST_NAME' => $arLead['~LAST_NAME'] ?? ''
+	]);
+
+	$arLead['LEAD_FORMATTED_NAME'] = htmlspecialcharsbx($arLead['~LEAD_FORMATTED_NAME'] ?? '');
 
 	//region Client info
-	$contactID = isset($arLead['~CONTACT_ID']) ? intval($arLead['~CONTACT_ID']) : 0;
-	if($contactID > 0)
+	$contactID = (int)($arLead['~CONTACT_ID'] ?? 0);
+	if ($contactID > 0)
 	{
-		$arLead['~CONTACT_FORMATTED_NAME'] = $contactID <= 0 ? ''
+		$arLead['~CONTACT_FORMATTED_NAME'] = $contactID <= 0
+			? ''
 			: CCrmContact::PrepareFormattedName(
 				array(
-					'HONORIFIC' => isset($arLead['~CONTACT_HONORIFIC']) ? $arLead['~CONTACT_HONORIFIC'] : '',
-					'NAME' => isset($arLead['~CONTACT_NAME']) ? $arLead['~CONTACT_NAME'] : '',
-					'LAST_NAME' => isset($arLead['~CONTACT_LAST_NAME']) ? $arLead['~CONTACT_LAST_NAME'] : '',
-					'SECOND_NAME' => isset($arLead['~CONTACT_SECOND_NAME']) ? $arLead['~CONTACT_SECOND_NAME'] : ''
+					'HONORIFIC' => $arLead['~CONTACT_HONORIFIC'] ?? '',
+					'NAME' => $arLead['~CONTACT_NAME'] ?? '',
+					'LAST_NAME' => $arLead['~CONTACT_LAST_NAME'] ?? '',
+					'SECOND_NAME' => $arLead['~CONTACT_SECOND_NAME'] ?? ''
 				)
 			);
-		$arLead['CONTACT_FORMATTED_NAME'] = htmlspecialcharsbx($arLead['~CONTACT_FORMATTED_NAME']);
+		$arLead['CONTACT_FORMATTED_NAME'] = htmlspecialcharsbx($arLead['~CONTACT_FORMATTED_NAME'] ?? '');
 
 		$arLead['CONTACT_INFO'] = array(
 			'ENTITY_TYPE_ID' => CCrmOwnerType::Contact,
@@ -2439,15 +2521,16 @@ foreach($arResult['LEAD'] as &$arLead)
 				array_merge(
 					$arLead['CONTACT_INFO'],
 					array(
-						'TITLE' => isset($arLead['~CONTACT_FORMATTED_NAME']) ? $arLead['~CONTACT_FORMATTED_NAME'] : ('['.$contactID.']'),
+						'TITLE' => $arLead['~CONTACT_FORMATTED_NAME'] ?? ('['.$contactID.']'),
 						'PREFIX' => "LEAD_{$arLead['~ID']}",
-						'DESCRIPTION' => isset($arLead['~ASSOCIATED_COMPANY_TITLE']) ? $arLead['~ASSOCIATED_COMPANY_TITLE'] : ''
+						'DESCRIPTION' => $arLead['~ASSOCIATED_COMPANY_TITLE'] ?? ''
 					)
 				);
 		}
 	}
-	$companyID = isset($arLead['~COMPANY_ID']) ? intval($arLead['~COMPANY_ID']) : 0;
-	if($companyID > 0)
+
+	$companyID = (int)($arLead['~COMPANY_ID'] ?? 0);
+	if ($companyID > 0)
 	{
 		$arLead['COMPANY_INFO'] = array(
 			'ENTITY_TYPE_ID' => CCrmOwnerType::Company,
@@ -2464,7 +2547,7 @@ foreach($arResult['LEAD'] as &$arLead)
 				array_merge(
 					$arLead['COMPANY_INFO'],
 					array(
-						'TITLE' => isset($arLead['~ASSOCIATED_COMPANY_TITLE']) ? $arLead['~ASSOCIATED_COMPANY_TITLE'] : ('['.$companyID.']'),
+						'TITLE' => $arLead['~ASSOCIATED_COMPANY_TITLE'] ?? ('['.$companyID.']'),
 						'PREFIX' => "LEAD_{$arLead['~ID']}"
 					)
 				);
@@ -2482,14 +2565,8 @@ foreach($arResult['LEAD'] as &$arLead)
 	//endregion
 
 	$arLead['LEAD_LEGEND'] = isset($arLead['IS_RETURN_CUSTOMER']) && $arLead['IS_RETURN_CUSTOMER'] === 'Y'
-		? GetMessage('CRM_COLUMN_IS_RETURN_CUSTOMER1') : '';
-
-	if(isset($arLead['~ACTIVITY_TIME']))
-	{
-		$time = MakeTimeStamp($arLead['ACTIVITY_TIME']);
-		$arLead['~ACTIVITY_EXPIRED'] = $time <= $now;
-		$arLead['~ACTIVITY_IS_CURRENT_DAY'] = $arLead['~ACTIVITY_EXPIRED'] || CCrmActivity::IsCurrentDay($time);
-	}
+		? GetMessage('CRM_COLUMN_IS_RETURN_CUSTOMER1')
+		: '';
 
 	if ($arResult['ENABLE_TASK'])
 	{
@@ -2613,13 +2690,6 @@ foreach($arResult['LEAD'] as &$arLead)
 		}
 	}
 
-	$userActivityID = isset($arLead['~ACTIVITY_ID']) ? intval($arLead['~ACTIVITY_ID']) : 0;
-	$commonActivityID = isset($arLead['~C_ACTIVITY_ID']) ? intval($arLead['~C_ACTIVITY_ID']) : 0;
-	if($userActivityID <= 0 && $commonActivityID <= 0)
-	{
-		$activitylessItems[] = $entityID;
-	}
-
 	if (isset($parentFieldValues[$entityID]))
 	{
 		foreach ($parentFieldValues[$entityID] as $parentEntityTypeId => $parentEntity)
@@ -2636,19 +2706,6 @@ foreach($arResult['LEAD'] as &$arLead)
 	}
 }
 unset($arLead);
-
-if(!empty($activitylessItems))
-{
-	$waitingInfos = \Bitrix\Crm\Pseudoactivity\WaitEntry::getRecentInfos(CCrmOwnerType::Lead, $activitylessItems);
-	foreach($waitingInfos as $waitingInfo)
-	{
-		$entityID = (int)$waitingInfo['OWNER_ID'];
-		if(isset($arResult['LEAD'][$entityID]))
-		{
-			$arResult['LEAD'][$entityID]['~WAITING_TITLE'] = $waitingInfo['TITLE'];
-		}
-	}
-}
 
 $CCrmUserType->ListAddEnumFieldsValue(
 	$arResult,
@@ -2906,7 +2963,8 @@ if (!$isInExportMode)
 
 	$this->IncludeComponentTemplate();
 	include_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/components/bitrix/crm.lead/include/nav.php');
-	return $arResult['ROWS_COUNT'];
+
+	return $arResult['ROWS_COUNT'] ?? null;
 }
 else
 {

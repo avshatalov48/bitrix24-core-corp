@@ -142,6 +142,11 @@ h1 {
 	text-transform: uppercase;
 }
 
+.flexible-mode--linear-blue--v2 .main-title-custom {
+	font-size: 26px;
+	color: #fff;
+}
+
 .flexible-mode--linear-blue--v2 .main-title:before {
 	display: none;
 }
@@ -169,6 +174,7 @@ h1 {
 }
 
 .flexible-mode--linear-blue .main-title-inner,
+.flexible-mode--linear-blue .main-title-custom,
 .flexible-mode--linear-blue .title-num {
 	font-size: 35px;
 	color: #fff;
@@ -215,6 +221,7 @@ h1 {
 	}
 
 	.flexible-mode--linear-blue .main-title-inner,
+	.flexible-mode--linear-blue .main-title-custom,
 	.flexible-mode--linear-blue .title-num {
 		font-size: 26px;
 		font-weight: 500;
@@ -275,6 +282,17 @@ h1 {
 	white-space: nowrap;
 	vertical-align: top;
 	padding-right: 54px;
+}
+
+.main-title-custom {
+	box-sizing: border-box;
+	display: inline-block;
+	font-size: 37px;
+	max-width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	vertical-align: top;
 }
 
 .title-num {

@@ -6,7 +6,9 @@ use Bitrix\Crm\Integration\DocumentGenerator\DataProvider\CrmEntityDataProvider;
 use Bitrix\Crm\Integration\DocumentGeneratorManager;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Timeline\Item\Activity;
+use Bitrix\Crm\Service\Timeline\Layout\Common\Icon;
 use Bitrix\Crm\Service\Timeline\Layout;
+use Bitrix\Crm\Service\Timeline\Layout\Common\Logo;
 use Bitrix\DocumentGenerator\Driver;
 use Bitrix\DocumentGenerator\Value;
 use Bitrix\Main\Loader;
@@ -32,7 +34,7 @@ final class Document extends Activity
 
 	public function getIconCode(): ?string
 	{
-		return 'document';
+		return Icon::DOCUMENT;
 	}
 
 	public function getTitle(): ?string
@@ -48,7 +50,8 @@ final class Document extends Activity
 	public function getLogo(): ?Layout\Body\Logo
 	{
 		return
-			(new Layout\Body\Logo('document'))
+			Logo::getInstance(Logo::DOCUMENT)
+				->createLogo()
 				->setAction($this->getOpenDocumentAction())
 		;
 	}

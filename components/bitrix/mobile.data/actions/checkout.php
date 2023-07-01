@@ -110,6 +110,11 @@ if (!$isAlreadyAuthorized)
 }
 else
 {
+	$event = new Bitrix\Main\Event("mobile", "onRequestSyncMail", [
+		'urgent' => false,
+	]);
+	$event->send();
+
 	$isExtranetModuleInstalled = \Bitrix\Main\Loader::includeModule("extranet");
 	$intent = $_REQUEST['intent'] ?? null;
 	if ($isExtranetModuleInstalled)
@@ -200,11 +205,7 @@ else
 			$manager->setPresetName($preset);
 		}
 	}
-	elseif (
-		Main\Loader::includeModule('intranet')
-		&& Main\Loader::includeModule('crm')
-		&& Crm\Settings\Crm::isUniversalActivityScenarioEnabled()
-	)
+	elseif (Main\Loader::includeModule('intranet') && Main\Loader::includeModule('crm'))
 	{
 		$lastInstalledPreset = CUserOptions::GetOption('mobile', 'last_installed_preset_by_left_menu');
 		if ($lastInstalledPreset !== 'crm')

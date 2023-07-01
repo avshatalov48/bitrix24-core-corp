@@ -9,18 +9,19 @@ return [
 	'css' => 'dist/todo-editor.bundle.css',
 	'js' => 'dist/todo-editor.bundle.js',
 	'rel' => [
-		'main.core.events',
 		'ui.vue3',
 		'main.popup',
 		'main.core',
+		'main.core.events',
+		'ui.entity-selector',
 		'ui.notification',
 		'main.date',
 		'crm.timeline.tools',
 		'crm.activity.file-uploader',
+		'crm.activity.settings-popup',
 	],
 	'skip_core' => false,
-	'oninit' => static function()
-	{
+	'oninit' => static function(){
 		$date = null;
 		if (\Bitrix\Main\Loader::includeModule('crm'))
 		{
@@ -35,7 +36,7 @@ return [
 				'CRM_TIMELINE_TODO_EDITOR_DEFAULT_DATETIME' => $date ? $date->toString() : '',
 				'CRM_ACTIVITY_TODO_NOTIFICATION_DEFAULT_TEXT' => $defaultDescription,
 				'CRM_ACTIVITY_TODO_NOTIFICATION_DEFAULT_TEXT_DEAL' => $defaultDescriptionDeal,
-			]
+			],
 		];
 	}
 ];

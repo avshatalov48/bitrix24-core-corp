@@ -13,12 +13,12 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 	const { debounce, throttle } = require('utils/function');
 	const { clone, isEqual } = require('utils/object');
 	const { Uuid } = require('utils/uuid');
-
-	const MEDIA_TYPE = {
-		IMAGE: 'image',
-		VIDEO: 'video',
-		FILE: 'file',
-	};
+	const {
+		NativeViewerMediaTypes,
+		getNativeViewerMediaType,
+		getMimeType,
+		getExtension,
+	} = require('utils/file');
 
 	const FILE_TASK_ID_PREFIX = 'mobile-file-field-';
 	const HIDDEN_FILES_COUNTER_WIDTH = 36;
@@ -49,6 +49,11 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 			this.onUploadDone = this.onUploadDone.bind(this);
 			this.onUploadError = this.onUploadError.bind(this);
 
+			if (!this.isReadOnly())
+			{
+				this.customContentClickHandler = throttle(this.onFileFieldContentClick, 500, this);
+			}
+
 			this.deleteFileHandler = this.onDeleteFile.bind(this);
 			this.throttleFileErrorNotification = throttle(() => Haptics.notifyWarning(), 3000, this);
 
@@ -58,8 +63,6 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 					super.handleChange(this.queuedValue);
 				}
 			}, 50, this);
-
-			this.openFilePickerHandler = this.openFilePicker.bind(this);
 		}
 
 		componentWillReceiveProps(newProps)
@@ -150,7 +153,7 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 				...config,
 				controller,
 				fileInfo: BX.prop.getObject(config, 'fileInfo', {}),
-				mediaType: BX.prop.getString(config, 'mediaType', MEDIA_TYPE.FILE),
+				mediaType: BX.prop.getString(config, 'mediaType', NativeViewerMediaTypes.FILE),
 				isEnabledToEdit: BX.prop.getBoolean(config, 'enableToEdit', !this.isReadOnly()),
 				emptyEditableButtonStyle: BX.prop.getObject(config, 'emptyEditableButtonStyle', {}),
 			};
@@ -366,12 +369,15 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 							color: emptyEditableButtonStyle.textColor,
 						},
 						clickable: false,
-						text: this.getAddButtonText(this.getConfig().mediaType),
+						text: this.getAddButtonText(),
 					},
 				),
 			);
 		}
 
+		/**
+		 * @public
+		 */
 		getFilesInfo(values)
 		{
 			const fileInfo = this.getConfig().fileInfo;
@@ -456,6 +462,7 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 						alignItems: 'center',
 						marginTop: 10,
 					},
+					onClick: () => this.focus(),
 				},
 				View(
 					{
@@ -485,22 +492,28 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 							color: '#a8adb4',
 							fontSize: 15,
 						},
-						text: this.getAddButtonText(this.getConfig().mediaType),
+						text: this.getAddButtonText(),
 					},
 				),
 			);
 		}
 
-		getAddButtonText(mediaType)
+		/**
+		 * @private
+		 * @return {string}
+		 */
+		getAddButtonText()
 		{
+			const { mediaType } = this.getConfig();
+
 			if (!this.isEmpty() && !this.isMultiple())
 			{
-				if (mediaType === MEDIA_TYPE.IMAGE)
+				if (mediaType === NativeViewerMediaTypes.IMAGE)
 				{
 					return BX.message('FIELDS_FILE_EDIT_IMAGE');
 				}
 
-				if (mediaType === MEDIA_TYPE.VIDEO)
+				if (mediaType === NativeViewerMediaTypes.VIDEO)
 				{
 					return BX.message('FIELDS_FILE_EDIT_VIDEO');
 				}
@@ -508,12 +521,12 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 				return BX.message('FIELDS_FILE_EDIT_FILE');
 			}
 
-			if (mediaType === MEDIA_TYPE.IMAGE)
+			if (mediaType === NativeViewerMediaTypes.IMAGE)
 			{
 				return BX.message('FIELDS_FILE_ADD_IMAGE');
 			}
 
-			if (mediaType === MEDIA_TYPE.VIDEO)
+			if (mediaType === NativeViewerMediaTypes.VIDEO)
 			{
 				return BX.message('FIELDS_FILE_ADD_VIDEO');
 			}
@@ -521,6 +534,9 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 			return this.isMultiple() ? BX.message('FIELDS_FILE_ADD_FILES') : BX.message('FIELDS_FILE_ADD_FILE');
 		}
 
+		/**
+		 * @public
+		 */
 		openFilePicker()
 		{
 			if (this.isReadOnly())
@@ -584,6 +600,9 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 			return Promise.resolve();
 		}
 
+		/**
+		 * @public
+		 */
 		getValue()
 		{
 			if (this.queuedValue)
@@ -664,10 +683,16 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 
 			Haptics.impactLight();
 			this.handleChange(files);
+			this.refreshFileAttachmentWidgetTitle();
 		}
 
+		/**
+		 * @param {number} hiddenFilesCount
+		 */
 		renderHiddenFilesCounter(hiddenFilesCount)
 		{
+			const text = hiddenFilesCount > 99 ? '99+' : `+${hiddenFilesCount}`;
+
 			return View(
 				{
 					style: this.styles.hiddenFilesCounterWrapper,
@@ -675,10 +700,18 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 						this.onOpenAttachmentList();
 					},
 				},
-				Text(
+				this.hasUploadingFiles() ? Loader({
+					style: {
+						width: 18,
+						height: 18,
+					},
+					tintColor: '#dee2e5',
+					animating: true,
+					size: 'small',
+				}) : Text(
 					{
+						text,
 						style: this.styles.hiddenFilesCounterText,
-						text: '+' + String(hiddenFilesCount),
 					},
 				),
 			);
@@ -704,7 +737,12 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 
 						layoutWidget.showComponent(
 							new UI.FileAttachment({
-								ref: (ref) => this.fileAttachmentRef = ref,
+								ref: (ref) => {
+									if (ref)
+									{
+										this.fileAttachmentRef = ref;
+									}
+								},
 								attachments: this.getFilesInfo(this.getValue()),
 								layoutWidget,
 								onDeleteAttachmentItem: !this.isReadOnly() && this.onDeleteFile.bind(this),
@@ -738,7 +776,8 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 								},
 								showName: this.showFilesName(),
 								showAddButton: !this.isReadOnly(),
-								onAddButtonClick: this.openFilePickerHandler,
+								addButtonText: this.getAddButtonText(),
+								onAddButtonClick: () => this.openFilePicker(),
 							}),
 						);
 					},
@@ -747,6 +786,10 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 			);
 		}
 
+		/**
+		 * @public
+		 * @param {number} deletedFileIndex
+		 */
 		onDeleteFile(deletedFileIndex)
 		{
 			const files = this.getValue();
@@ -765,11 +808,15 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 
 			Haptics.impactLight();
 			this.handleChange(filesAfterDeletion);
+			this.refreshFileAttachmentWidgetTitle();
+		}
 
+		refreshFileAttachmentWidgetTitle()
+		{
 			if (this.fileAttachmentWidget)
 			{
 				this.fileAttachmentWidget.setTitle({
-					text: BX.message('FIELDS_FILE_ATTACHMENTS_NAVIGATION_TITLE').replace('#NUM#', filesAfterDeletion.length),
+					text: BX.message('FIELDS_FILE_ATTACHMENTS_NAVIGATION_TITLE').replace('#NUM#', this.getFilesCount()),
 				});
 			}
 		}
@@ -854,9 +901,9 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 		{
 			switch (mediaType)
 			{
-				case MEDIA_TYPE.IMAGE:
+				case NativeViewerMediaTypes.IMAGE:
 					return 0;
-				case MEDIA_TYPE.VIDEO:
+				case NativeViewerMediaTypes.VIDEO:
 					return 1;
 				default:
 					return 2;
@@ -865,12 +912,12 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 
 		filterFilesByValidMediaType(files, mediaType)
 		{
-			if (mediaType === MEDIA_TYPE.FILE)
+			if (mediaType === NativeViewerMediaTypes.FILE)
 			{
 				return files;
 			}
 
-			return files.filter(file => UI.File.getType(UI.File.getFileMimeType(file.type)) === mediaType);
+			return files.filter(file => getNativeViewerMediaType(getMimeType(file.type)) === mediaType);
 		}
 
 		prepareDiskFiles(files)
@@ -908,7 +955,7 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 					.map((file) => {
 						const uuid = Uuid.getV4();
 						const taskId = FILE_TASK_ID_PREFIX + uuid;
-						const extension = this.getExtension(file.name);
+						const extension = getExtension(file.name);
 
 						let fileName = file.name;
 						if (extension === 'heic')
@@ -927,7 +974,7 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 							params: file,
 							name: fileName,
 							type: file.type,
-							mimeType: this.getFileMimeType(file.type),
+							mimeType: getMimeType(file.type),
 							url: file.url,
 							resize: this.getResizeOptions(file.type),
 							onDestroyEventName: Events.FILE_CREATED,
@@ -1083,25 +1130,14 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 			return errors.find(({ type, system }) => type === 'file-uploader' && !system);
 		}
 
-		/**
-		 * @param {string} uri
-		 * @returns {string}
-		 */
-		getExtension(uri)
-		{
-			if (uri && uri.indexOf('.') >= 0)
-			{
-				return uri.split('.').pop().toLowerCase();
-			}
-
-			return '';
-		}
-
 		getResizeOptions(type)
 		{
-			const mimeType = this.getFileMimeType(type);
-			const fileType = this.getType(mimeType);
-			const shouldBeConverted = ((fileType === 'image' && mimeType !== 'image/gif') || fileType === 'video');
+			const mimeType = getMimeType(type);
+			const fileType = getNativeViewerMediaType(mimeType);
+			const shouldBeConverted = (
+				(fileType === NativeViewerMediaTypes.IMAGE && mimeType !== 'image/gif')
+				|| fileType === NativeViewerMediaTypes.VIDEO
+			);
 
 			if (shouldBeConverted)
 			{
@@ -1113,46 +1149,6 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 			}
 
 			return null;
-		}
-
-		getFileMimeType(fileType)
-		{
-			fileType = fileType.toString().toLowerCase();
-
-			if (fileType.indexOf('/') !== -1) // iOS old form
-			{
-				return fileType;
-			}
-
-			const mimeTypeMap = {
-				png: 'image/png',
-				gif: 'image/gif',
-				jpg: 'image/jpeg',
-				jpeg: 'image/jpeg',
-				heic: 'image/heic',
-				mp3: 'audio/mpeg',
-				mp4: 'video/mp4',
-				mpeg: 'video/mpeg',
-				ogg: 'video/ogg',
-				mov: 'video/quicktime',
-				zip: 'application/zip',
-				php: 'text/php',
-			};
-
-			return (mimeTypeMap[fileType] || '');
-		}
-
-		getType(mimeType)
-		{
-			const result = mimeType.substring(0, mimeType.indexOf('/'));
-			const types = ['image', 'video', 'audio'];
-
-			if (!types.includes(result))
-			{
-				return 'file';
-			}
-
-			return result;
 		}
 
 		renderLeftIcons()
@@ -1190,6 +1186,18 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 		{
 			this.openFilePicker();
 		}
+
+		onFileFieldContentClick()
+		{
+			if (this.isEmpty())
+			{
+				this.focus();
+			}
+			else
+			{
+				this.onOpenAttachmentList();
+			}
+		}
 	}
 
 	const svgImages = {
@@ -1204,7 +1212,7 @@ jn.define('layout/ui/fields/file', (require, exports, module) => {
 	module.exports = {
 		FileType: 'file',
 		FileField: (props) => new FileField(props),
-		MediaType: MEDIA_TYPE,
+		MediaType: NativeViewerMediaTypes,
 	};
 
 });

@@ -29,10 +29,6 @@ class CDiskFileUploadComponent extends DiskComponent
 
 	protected function processActionDefault()
 	{
-		/**
-		 * @var \Bitrix\Disk\Folder $folder
-		 */
-		$folder = $this->arParams['FOLDER'];
 		if($this->storage->isEnabledBizProc() && \Bitrix\Disk\Integration\BizProcManager::isAvailable())
 		{
 			$documentData = array(

@@ -15,9 +15,9 @@ Loc::loadMessages(__FILE__);
  *
  * <<< ORMENTITYANNOTATION
  * @method static EO_DuplicateIndexMismatch_Query query()
- * @method static EO_DuplicateIndexMismatch_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_DuplicateIndexMismatch_Result getByPrimary($primary, array $parameters = [])
  * @method static EO_DuplicateIndexMismatch_Result getById($id)
- * @method static EO_DuplicateIndexMismatch_Result getList(array $parameters = array())
+ * @method static EO_DuplicateIndexMismatch_Result getList(array $parameters = [])
  * @method static EO_DuplicateIndexMismatch_Entity getEntity()
  * @method static \Bitrix\Crm\Integrity\Entity\EO_DuplicateIndexMismatch createObject($setDefaultValues = true)
  * @method static \Bitrix\Crm\Integrity\Entity\EO_DuplicateIndexMismatch_Collection createCollection()

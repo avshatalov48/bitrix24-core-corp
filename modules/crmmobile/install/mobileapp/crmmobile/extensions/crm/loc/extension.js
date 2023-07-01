@@ -2,31 +2,33 @@
  * @module crm/loc
  */
 jn.define('crm/loc', (require, exports, module) => {
-
 	const { Loc } = require('loc');
 	const { Type } = require('crm/type');
 
 	/**
 	 * @param {String} messageCode
 	 * @param {String|Number} entityType
-	 * @returns {null|String}
+	 * @returns {String}
 	 */
 	const getEntityMessage = (messageCode, entityType) => {
-		const entityTypeName = getEntityTypeName(entityType);
+		const entityTypeName = Type.getCommonEntityTypeName(entityType);
 		if (!entityTypeName)
 		{
-			return null;
+			return Loc.hasMessage(messageCode) ? Loc.getMessage(messageCode) : '';
 		}
 
 		const entityCode = `${messageCode}_${entityTypeName.toUpperCase()}`;
-		let message = Loc.getMessage(entityCode);
-
-		if (!message)
+		if (Loc.hasMessage(entityCode))
 		{
-			message = Loc.getMessage(messageCode);
+			return Loc.getMessage(entityCode);
 		}
 
-		return message;
+		if (Loc.hasMessage(messageCode))
+		{
+			return Loc.getMessage(messageCode);
+		}
+
+		return '';
 	};
 
 	/**
@@ -36,13 +38,13 @@ jn.define('crm/loc', (require, exports, module) => {
 	 * @returns {null|String}
 	 */
 	const getEntityMessagePlural = (messageCode, entityType, value) => {
-		const entityTypeName = getEntityTypeName(entityType);
+		const entityTypeName = Type.getCommonEntityTypeName(entityType);
 		if (!entityTypeName)
 		{
 			return null;
 		}
 
-		const entityCode = `${messageCode}_${entityTypeName.toUpperCase()}`;
+		const entityCode = `${messageCode}_${entityTypeName}`;
 		let message = Loc.getMessagePlural(entityCode, value);
 
 		if (!message)
@@ -51,23 +53,6 @@ jn.define('crm/loc', (require, exports, module) => {
 		}
 
 		return message;
-	};
-
-	/**
-	 * @private
-	 */
-	const getEntityTypeName = (entityType) => {
-		if (Type.existsByName(entityType))
-		{
-			return entityType;
-		}
-
-		if (Type.existsById(entityType))
-		{
-			return Type.resolveNameById(entityType);
-		}
-
-		return null;
 	};
 
 	module.exports = {

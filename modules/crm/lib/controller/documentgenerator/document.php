@@ -3,14 +3,17 @@
 namespace Bitrix\Crm\Controller\DocumentGenerator;
 
 use Bitrix\Crm\Controller\ErrorCode;
+use Bitrix\Crm\Integration\DocumentGenerator\DataProvider\CrmEntityDataProvider;
 use Bitrix\Crm\Integration\DocumentGeneratorManager;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Engine\ActionFilter\Csrf;
+use Bitrix\Main\Engine\Response;
 use Bitrix\Main\Engine\Response\DataType\ContentUri;
 use Bitrix\Main\Engine\Response\DataType\Page;
 use Bitrix\Main\Engine\UrlManager;
 use Bitrix\Main\Error;
 use Bitrix\Main\HttpResponse;
+use Bitrix\Main\IO;
 use Bitrix\Main\Result;
 use Bitrix\Main\UI\PageNavigation;
 
@@ -28,6 +31,11 @@ class Document extends Base
 	{
 		$configureActions = parent::configureActions();
 		$configureActions['download'] = [
+			'-prefilters' => [
+				Csrf::class,
+			],
+		];
+		$configureActions['showQrCode'] = [
 			'-prefilters' => [
 				Csrf::class,
 			],
@@ -422,5 +430,25 @@ class Document extends Base
 	public function bindToPaymentAction(\Bitrix\DocumentGenerator\Document $document, int $paymentId)
 	{
 		DocumentGeneratorManager::getInstance()->bindDocumentToPayment($document->ID, $paymentId);
+	}
+
+	public function showQrCodeAction(\Bitrix\DocumentGenerator\Document $document): ?Response\File
+	{
+		$provider = $document->getProvider();
+		if (!$provider instanceof CrmEntityDataProvider)
+		{
+			$this->addError(new Error('Data provider not supports QR-codes'));
+			return null;
+		}
+
+		$path = $provider->getPaymentQrCode();
+		if (!$path)
+		{
+			$this->addError(new Error('No QR-code found for this document'));
+			return null;
+		}
+
+		$file = new IO\File($path);
+		return new Response\File($path, null, $file->getContentType());
 	}
 }

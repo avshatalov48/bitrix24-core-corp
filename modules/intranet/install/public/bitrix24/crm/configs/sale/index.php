@@ -1,7 +1,7 @@
 <?
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/header.php");
 
-if ($_REQUEST["IFRAME"] == "Y")
+if (isset($_REQUEST["IFRAME"]) && $_REQUEST["IFRAME"] == "Y")
 {
 	$APPLICATION->IncludeComponent(
 		"bitrix:crm.webform.popup",

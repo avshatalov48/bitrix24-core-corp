@@ -6,7 +6,6 @@ this.BX = this.BX || {};
 	  function DocumentManager() {
 	    babelHelpers.classCallCheck(this, DocumentManager);
 	  }
-
 	  babelHelpers.createClass(DocumentManager, null, [{
 	    key: "getRealizationDocumentDetailUrl",
 	    value: function getRealizationDocumentDetailUrl(id) {
@@ -31,9 +30,10 @@ this.BX = this.BX || {};
 	    this.isConductDisabled = options.isConductDisabled;
 	    this.masterSliderUrl = options.masterSliderUrl;
 	    this.inventoryManagementSource = options.inventoryManagementSource;
+	    this.isInventoryManagementDisabled = options.isInventoryManagementDisabled;
+	    this.inventoryManagementFeatureCode = options.inventoryManagementFeatureCode;
 	    window.top.BX.addCustomEvent('onEntityEditorDocumentOrderShipmentControllerDocumentSave', this.reloadGrid.bind(this));
 	  }
-
 	  babelHelpers.createClass(GridManager, [{
 	    key: "getSelectedIds",
 	    value: function getSelectedIds() {
@@ -43,7 +43,10 @@ this.BX = this.BX || {};
 	    key: "deleteDocument",
 	    value: function deleteDocument(documentId) {
 	      var _this = this;
-
+	      if (this.isInventoryManagementDisabled && this.inventoryManagementFeatureCode) {
+	        top.BX.UI.InfoHelper.show(this.inventoryManagementFeatureCode);
+	        return;
+	      }
 	      var popup = new main_popup.Popup({
 	        id: 'crm_delete_document_popup',
 	        titleBar: main_core.Loc.getMessage('DOCUMENT_GRID_DOCUMENT_DELETE_TITLE'),
@@ -63,7 +66,6 @@ this.BX = this.BX || {};
 	              }
 	            }).then(function (response) {
 	              popup.destroy();
-
 	              _this.reloadGrid();
 	            })["catch"](function (response) {
 	              if (response.errors) {
@@ -71,7 +73,6 @@ this.BX = this.BX || {};
 	                  content: BX.util.htmlspecialchars(response.errors[0].message)
 	                });
 	              }
-
 	              popup.destroy();
 	            });
 	          }
@@ -89,12 +90,14 @@ this.BX = this.BX || {};
 	    key: "conductDocument",
 	    value: function conductDocument(documentId) {
 	      var _this2 = this;
-
+	      if (this.isInventoryManagementDisabled && this.inventoryManagementFeatureCode) {
+	        top.BX.UI.InfoHelper.show(this.inventoryManagementFeatureCode);
+	        return;
+	      }
 	      if (this.isConductDisabled) {
 	        this.openStoreMasterSlider();
 	        return;
 	      }
-
 	      var popup = new main_popup.Popup({
 	        id: 'crm_delete_document_popup',
 	        titleBar: main_core.Loc.getMessage('DOCUMENT_GRID_DOCUMENT_CONDUCT_TITLE'),
@@ -114,7 +117,6 @@ this.BX = this.BX || {};
 	              }
 	            }).then(function (response) {
 	              popup.destroy();
-
 	              _this2.reloadGrid();
 	            })["catch"](function (response) {
 	              if (response.errors) {
@@ -122,7 +124,6 @@ this.BX = this.BX || {};
 	                  content: BX.util.htmlspecialchars(response.errors[0].message)
 	                });
 	              }
-
 	              popup.destroy();
 	            });
 	          }
@@ -140,12 +141,14 @@ this.BX = this.BX || {};
 	    key: "cancelDocument",
 	    value: function cancelDocument(documentId) {
 	      var _this3 = this;
-
+	      if (this.isInventoryManagementDisabled && this.inventoryManagementFeatureCode) {
+	        top.BX.UI.InfoHelper.show(this.inventoryManagementFeatureCode);
+	        return;
+	      }
 	      if (this.isConductDisabled) {
 	        this.openStoreMasterSlider();
 	        return;
 	      }
-
 	      var popup = new main_popup.Popup({
 	        id: 'crm_delete_document_popup',
 	        titleBar: main_core.Loc.getMessage('DOCUMENT_GRID_DOCUMENT_CANCEL_TITLE'),
@@ -165,7 +168,6 @@ this.BX = this.BX || {};
 	              }
 	            }).then(function (response) {
 	              popup.destroy();
-
 	              _this3.reloadGrid();
 	            })["catch"](function (response) {
 	              if (response.errors) {
@@ -173,7 +175,6 @@ this.BX = this.BX || {};
 	                  content: BX.util.htmlspecialchars(response.errors[0].message)
 	                });
 	              }
-
 	              popup.destroy();
 	            });
 	          }
@@ -191,7 +192,6 @@ this.BX = this.BX || {};
 	    key: "deleteSelectedDocuments",
 	    value: function deleteSelectedDocuments() {
 	      var _this4 = this;
-
 	      var documentIds = this.getSelectedIds();
 	      main_core.ajax.runAction('crm.api.realizationdocument.setRealizationList', {
 	        data: {
@@ -214,7 +214,6 @@ this.BX = this.BX || {};
 	            }
 	          });
 	        }
-
 	        _this4.reloadGrid();
 	      });
 	    }
@@ -222,12 +221,14 @@ this.BX = this.BX || {};
 	    key: "conductSelectedDocuments",
 	    value: function conductSelectedDocuments() {
 	      var _this5 = this;
-
+	      if (this.isInventoryManagementDisabled && this.inventoryManagementFeatureCode) {
+	        top.BX.UI.InfoHelper.show(this.inventoryManagementFeatureCode);
+	        return;
+	      }
 	      if (this.isConductDisabled) {
 	        this.openStoreMasterSlider();
 	        return;
 	      }
-
 	      var documentIds = this.getSelectedIds();
 	      main_core.ajax.runAction('crm.api.realizationdocument.setShippedList', {
 	        data: {
@@ -250,7 +251,6 @@ this.BX = this.BX || {};
 	            }
 	          });
 	        }
-
 	        _this5.reloadGrid();
 	      });
 	    }
@@ -258,12 +258,14 @@ this.BX = this.BX || {};
 	    key: "cancelSelectedDocuments",
 	    value: function cancelSelectedDocuments() {
 	      var _this6 = this;
-
+	      if (this.isInventoryManagementDisabled && this.inventoryManagementFeatureCode) {
+	        top.BX.UI.InfoHelper.show(this.inventoryManagementFeatureCode);
+	        return;
+	      }
 	      if (this.isConductDisabled) {
 	        this.openStoreMasterSlider();
 	        return;
 	      }
-
 	      var documentIds = this.getSelectedIds();
 	      main_core.ajax.runAction('crm.api.realizationdocument.setShippedList', {
 	        data: {
@@ -286,7 +288,6 @@ this.BX = this.BX || {};
 	            }
 	          });
 	        }
-
 	        _this6.reloadGrid();
 	      });
 	    }
@@ -294,23 +295,19 @@ this.BX = this.BX || {};
 	    key: "applyFilter",
 	    value: function applyFilter(options) {
 	      var filterManager = BX.Main.filterManager.getById(this.filterId);
-
 	      if (!filterManager) {
 	        return;
 	      }
-
 	      filterManager.getApi().extendFilter(options);
 	    }
 	  }, {
 	    key: "processApplyButtonClick",
 	    value: function processApplyButtonClick() {
 	      var actionValues = this.grid.getActionsPanel().getValues();
-	      var selectedAction = actionValues['action_button_' + this.gridId];
-
+	      var selectedAction = actionValues["action_button_".concat(this.gridId)];
 	      if (selectedAction === 'conduct') {
 	        this.conductSelectedDocuments();
 	      }
-
 	      if (selectedAction === 'cancel') {
 	        this.cancelSelectedDocuments();
 	      }
@@ -319,7 +316,7 @@ this.BX = this.BX || {};
 	    key: "openHowToShipProducts",
 	    value: function openHowToShipProducts() {
 	      if (top.BX.Helper) {
-	        top.BX.Helper.show("redirect=detail&code=14640548");
+	        top.BX.Helper.show('redirect=detail&code=14640548');
 	        event.preventDefault();
 	      }
 	    }
@@ -334,11 +331,9 @@ this.BX = this.BX || {};
 	        events: {
 	          onCloseComplete: function onCloseComplete(event) {
 	            var slider = event.getSlider();
-
 	            if (!slider) {
 	              return;
 	            }
-
 	            if (slider.getData().get('isInventoryManagementEnabled')) {
 	              document.location.reload();
 	            }

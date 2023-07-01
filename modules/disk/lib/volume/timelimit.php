@@ -10,17 +10,15 @@ use Bitrix\Disk\Volume;
  */
 trait TimeLimit // implements Volume\IVolumeTimeLimit
 {
-	/** @var Volume\Timer */
-	private $timer;
+	private ?Volume\Timer $timer = null;
 
-	/** @var bool */
-	private $isCronRun = false;
+	private bool $isCronRun = false;
 
 	/**
 	 * Gets timer.
 	 * @return Volume\Timer
 	 */
-	public function instanceTimer()
+	public function instanceTimer(): Volume\Timer
 	{
 		if (!($this->timer instanceof Volume\Timer))
 		{
@@ -45,7 +43,16 @@ trait TimeLimit // implements Volume\IVolumeTimeLimit
 	 * Sets start up time.
 	 * @return void
 	 */
-	public function startTimer()
+	public function setTimer(Volume\Timer $timer): void
+	{
+		$this->timer = $timer;
+	}
+
+	/**
+	 * Sets start up time.
+	 * @return void
+	 */
+	public function startTimer(): void
 	{
 		// running on hint
 		if ($this->isCronRun === false && defined('START_EXEC_TIME') && START_EXEC_TIME > 0)
@@ -62,7 +69,7 @@ trait TimeLimit // implements Volume\IVolumeTimeLimit
 	 * Checks timer for time limitation.
 	 * @return bool
 	 */
-	public function checkTimeEnd()
+	public function checkTimeEnd(): bool
 	{
 		return $this->instanceTimer()->checkTimeEnd();
 	}
@@ -71,7 +78,7 @@ trait TimeLimit // implements Volume\IVolumeTimeLimit
 	 * Tells true if time limit reached.
 	 * @return boolean
 	 */
-	public function hasTimeLimitReached()
+	public function hasTimeLimitReached(): bool
 	{
 		return $this->instanceTimer()->hasTimeLimitReached();
 	}
@@ -79,9 +86,9 @@ trait TimeLimit // implements Volume\IVolumeTimeLimit
 	/**
 	 * Sets limitation time in seconds.
 	 * @param int $timeLimit Timeout in seconds.
-	 * @return $this
+	 * @return static
 	 */
-	public function setTimeLimit($timeLimit)
+	public function setTimeLimit(int $timeLimit): self
 	{
 		$this->instanceTimer()->setTimeLimit($timeLimit);
 
@@ -92,7 +99,7 @@ trait TimeLimit // implements Volume\IVolumeTimeLimit
 	 * Gets limitation time in seconds.
 	 * @return int
 	 */
-	public function getTimeLimit()
+	public function getTimeLimit(): int
 	{
 		return $this->instanceTimer()->getTimeLimit();
 	}

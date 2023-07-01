@@ -15,7 +15,7 @@ class Item extends Base
 	public function getDocumentStatus(): int
 	{
 		$entity = $this->getFields();
-		return (int) $entity['STAGE_ID'];
+		return (int)($entity['STAGE_ID'] ?? null);
 	}
 
 	public function setDocumentStatus($statusId): bool

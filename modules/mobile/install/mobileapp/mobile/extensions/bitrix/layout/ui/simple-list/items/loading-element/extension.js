@@ -47,12 +47,12 @@
 			marginTop: 1,
 			marginLeft: 6,
 			fontSize: 17,
-			color: '#82888F'
+			color: '#828b95'
 		}
 	}
 
 	const params = {
-		loaderColor: '#82888F',
+		loaderColor: '#828b95',
 		loaderSize: 'small',
 	}
 

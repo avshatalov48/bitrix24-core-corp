@@ -6,19 +6,20 @@
  */
 jn.define('im/messenger/controller/chat-creator/chat-creator', (require, exports, module) => {
 
-	const { Type } = jn.require('type');
-	const { Loc } = jn.require('loc');
-	const { Controller } = jn.require('im/messenger/controller/base');
-	const { MessengerParams } = jn.require('im/messenger/lib/params');
+	const { Type } = require('type');
+	const { Loc } = require('loc');
+	const { clone } = require('utils/object');
+	const { core } = require('im/messenger/core');
+	const { MessengerParams } = require('im/messenger/lib/params');
 
 	/**
 	 * @class ChatCreator
 	 */
-	class ChatCreator extends Controller
+	class ChatCreator
 	{
-		constructor(options = {})
+		constructor()
 		{
-			super(options);
+			this.store = core.getStore();
 		}
 
 		open()
@@ -80,7 +81,7 @@ jn.define('im/messenger/controller/chat-creator/chat-creator', (require, exports
 		{
 			const userItems = [];
 
-			const recentUserList = ChatUtils.objectClone(MessengerStore.getters['recentModel/getUserList']);
+			const recentUserList = clone(this.store.getters['recentModel/getUserList']);
 			const recentUserListIndex = {};
 			if (Type.isArrayFilled(recentUserList))
 			{
@@ -91,7 +92,7 @@ jn.define('im/messenger/controller/chat-creator/chat-creator', (require, exports
 				});
 			}
 
-			const colleaguesList = ChatUtils.objectClone(MessengerStore.getters['usersModel/getUserList']);
+			const colleaguesList = clone(this.store.getters['usersModel/getUserList']);
 			if (Type.isArrayFilled(colleaguesList))
 			{
 				colleaguesList.forEach((user) => {

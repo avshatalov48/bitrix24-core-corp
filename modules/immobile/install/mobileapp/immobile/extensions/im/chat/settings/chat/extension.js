@@ -41,7 +41,7 @@
 				historyShow: true,
 				autoplayVideo: ChatPerformance.isAutoPlayVideoSupported(),
 				backgroundType: SettingsChat.BackgroundType.lightGray,
-				nativeDialogEnable: false,
+				chatBetaEnable: false,
 			});
 
 			const backgroundItems = [];
@@ -62,12 +62,24 @@
 				])
 			}
 
-			let nativeDialogOption = null;
+			let chatBetaOption = null;
 			if (Application.getPlatform() === 'ios' && Application.getApiVersion() >= 43 && Application.isBeta())
 			{
-				nativeDialogOption = FormSection.create('nativeDialog', BX.message("SE_CHAT_NATIVE_DIALOG_TITLE")).addItems([
-					FormItem.create("nativeDialogEnable", FormItemType.SWITCH, BX.message("SE_CHAT_NATIVE_DIALOG_ENABLE_TITLE")).setValue(this.values.nativeDialogEnable),
-				]);
+				const chatBetaEnableSwitch =
+					FormItem.create('chatBetaEnable', FormItemType.SWITCH, BX.message('SE_CHAT_BETA_ENABLE_TITLE'))
+						.setValue(this.values.chatBetaEnable)
+				;
+
+				if (typeof chatBetaEnableSwitch.setTestId === 'function')
+				{
+					chatBetaEnableSwitch.setTestId('CHAT_SETTINGS_CHAT_BETA_ENABLE');
+				}
+
+				chatBetaOption =
+					FormSection
+						.create('chatBeta', BX.message('SE_CHAT_BETA_TITLE'))
+						.addItems([ chatBetaEnableSwitch ])
+				;
 			}
 
 			return Form.create(this.providerId, this.providerTitle).addSections([
@@ -81,7 +93,7 @@
 				FormSection.create("background", BX.message("SE_CHAT_BACKGROUND_TITLE"), BX.message('SE_CHAT_DESC')).addItems([
 					FormItem.create("backgroundType", FormItemType.SELECTOR, BX.message("SE_CHAT_BACKGROUND_COLOR_TITLE")).setSelectorItems(backgroundItems).setValue(this.values.backgroundType),
 				]),
-				nativeDialogOption,
+				chatBetaOption,
 			]);
 		}
 

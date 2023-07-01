@@ -14,4 +14,6 @@ abstract class RouteDictionary
 	public const PATH_TO_USER_TEMPLATES_LIST = '/company/personal/user/#user_id#/tasks/templates/';
 
 	public const PATH_TO_USER_TAGS = '/company/personal/user/#user_id#/tasks/tags/';
+
+	public const PATH_TO_USER = '/company/personal/user/#user_id#/';
 }

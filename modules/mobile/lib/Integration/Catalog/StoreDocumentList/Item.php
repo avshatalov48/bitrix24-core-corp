@@ -126,8 +126,8 @@ class Item
 			elseif ($fieldConfig['type'] === 'client_light')
 			{
 				$value = [
-					'company' => $entityData[$fieldConfig['data']['info']]['COMPANY_DATA'],
-					'contact' => $entityData[$fieldConfig['data']['info']]['CONTACT_DATA'],
+					'company' => $entityData[$fieldConfig['data']['info']]['COMPANY_DATA'] ?? null,
+					'contact' => $entityData[$fieldConfig['data']['info']]['CONTACT_DATA'] ?? null,
 				];
 
 				$fieldConfig['entityList'] = $value;

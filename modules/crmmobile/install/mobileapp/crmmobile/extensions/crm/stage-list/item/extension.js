@@ -40,6 +40,8 @@ jn.define('crm/stage-list/item', (require, exports, module) => {
 			this.showCount = !this.unsuitable && BX.prop.get(props, 'showCount', false);
 			this.showCounters = !this.unsuitable && BX.prop.get(props, 'showCounters', false);
 			this.showAllStagesItem = BX.prop.get(props, 'showAllStagesItem', false);
+			this.hideBadge = BX.prop.get(props, 'hideBadge', false);
+			this.showArrow = BX.prop.get(props, 'showArrow', false);
 		}
 
 		handlerOnSelectedStage()
@@ -171,6 +173,7 @@ jn.define('crm/stage-list/item', (require, exports, module) => {
 						showCounters: this.showCounters,
 						showAllStagesItem: this.showAllStagesItem,
 						unsuitable: this.unsuitable,
+						showArrow: this.showArrow,
 					}),
 					(this.showTunnels ? this.renderTunnels(stage) : null),
 				),
@@ -257,7 +260,7 @@ jn.define('crm/stage-list/item', (require, exports, module) => {
 					{
 						style: {
 							paddingBottom: 6,
-							paddingLeft: index !== 0 ? 4 : 0,
+							paddingLeft: index === 0 ? 0 : 4,
 						},
 					},
 					Image(
@@ -286,7 +289,7 @@ jn.define('crm/stage-list/item', (require, exports, module) => {
 					style: styles.wrapper(this.isStageEnabled()),
 					onClick: this.enableStageSelect() && this.isStageEnabled() && this.onSelectedStage,
 				},
-				this.renderBadgeContainer(),
+				this.hideBadge ? null : this.renderBadgeContainer(),
 				this.renderContent(stage),
 			);
 		}
@@ -319,7 +322,7 @@ jn.define('crm/stage-list/item', (require, exports, module) => {
 			marginRight: 9,
 		},
 		indexText: {
-			color: '#b8bfc9',
+			color: '#bdc1c6',
 			fontWeight: '500',
 			fontSize: 14,
 			flexWrap: 'no-wrap',
@@ -332,7 +335,7 @@ jn.define('crm/stage-list/item', (require, exports, module) => {
 		content: (showContentBorder) => (
 			{
 				borderBottomWidth: showContentBorder ? 1 : 0,
-				borderBottomColor: '#e6e6e6',
+				borderBottomColor: '#e6e7e9',
 				flexDirection: 'row',
 				flexGrow: 2,
 				alignItems: 'center',
@@ -362,8 +365,8 @@ jn.define('crm/stage-list/item', (require, exports, module) => {
 		},
 		tunnelWrapper: (index) => ({
 			flexDirection: 'row',
-			height: index !== 0 ? TUNNEL_HEIGHT + TUNNEL_MARGIN_TOP : TUNNEL_HEIGHT + FIRST_TUNNEL_ADDITIONAL_HEIGHT,
-			marginTop: index !== 0 ? -(TUNNEL_MARGIN_TOP) : 0,
+			height: index === 0 ? TUNNEL_HEIGHT + FIRST_TUNNEL_ADDITIONAL_HEIGHT : TUNNEL_HEIGHT + TUNNEL_MARGIN_TOP,
+			marginTop: index === 0 ? 0 : -(TUNNEL_MARGIN_TOP),
 		}),
 		tunnelContentContainer: {
 			marginLeft: 6,
@@ -377,12 +380,12 @@ jn.define('crm/stage-list/item', (require, exports, module) => {
 	};
 
 	const svgImages = {
-		tunnelFirstVector: `<svg width="12" height="21" viewBox="0 0 12 21" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="12" height="21"/><circle cx="5" cy="5" r="3.75" fill="#CBCED2" stroke="white" stroke-width="1.5"/><path d="M5 5V11.5625V17C5 18.6569 6.34315 20 8 20H11" stroke="#CBCED2" stroke-width="1.5" stroke-linecap="round"/></svg>`,
-		tunnelVector: `<svg width="8" height="23" viewBox="0 0 8 23" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="8" height="23" fill="none"/><path d="M1 -7V20C1 21.1046 1.89543 22 3 22H7" stroke="#CBCED2" stroke-width="1.5" stroke-linecap="round"/></svg>`,
-		editButtonIcon: `<svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg"><path opacity="0.4" fill-rule="evenodd" clip-rule="evenodd" d="M11.5505 0.708708C11.9426 0.31773 12.5779 0.319865 12.9674 0.71347L14.2992 2.05937C14.6867 2.45089 14.6846 3.08201 14.2945 3.47092L5.28648 12.4522L2.54781 9.68469L11.5505 0.708708ZM0.00953897 14.6436C-0.0163586 14.7416 0.0113888 14.8452 0.0816823 14.9173C0.153826 14.9894 0.257416 15.0172 0.355457 14.9894L3.41693 14.1646L0.834563 11.5831L0.00953897 14.6436Z" fill="#767C87"/></svg>`,
-		successStageFlagIcon: `<svg width="14" height="16" viewBox="0 0 14 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M0.0644531 0.19812V15.7924H2.6635V10.5943H13.926L10.659 5.39621L13.926 0.19812H0.0644531Z" fill="#9DCF00"/></svg>`,
-		failedStageFlagIcon: `<svg width="18" height="17" viewBox="0 0 18 17" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M0.332031 0.19812V15.7924H2.93107V10.5943H5.66641C5.95968 7.45074 8.39145 4.92814 11.4925 4.49569L14.1936 0.19812H0.332031Z" fill="#FF514A"/><path fill-rule="evenodd" clip-rule="evenodd" d="M12.4407 16.2967C15.2366 16.2967 17.5031 14.0302 17.5031 11.2343C17.5031 8.43843 15.2366 6.17192 12.4407 6.17192C9.6448 6.17192 7.37829 8.43843 7.37829 11.2343C7.37829 14.0302 9.6448 16.2967 12.4407 16.2967ZM15.3766 13.1918L14.3979 14.1705L12.4404 12.2131L10.483 14.1705L9.50422 13.1918L11.4617 11.2343L9.50422 9.27686L10.483 8.29813L12.4404 10.2556L14.3979 8.29813L15.3766 9.27686L13.4192 11.2343L15.3766 13.1918Z" fill="#FF514A"/></svg>`,
-		allStagesBadge: `<svg width="16" height="12" viewBox="0 0 16 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 0H0V2H2V0Z" fill="#CED4DA"/><path d="M16 0H4V2H16V0Z" fill="#CED4DA"/><path d="M4 10H16V12H4V10Z" fill="#CED4DA"/><path d="M2 10H0V12H2V10Z" fill="#CED4DA"/><path d="M4 5H16V7H4V5Z" fill="#CED4DA"/><path d="M2 5H0V7H2V5Z" fill="#CED4DA"/></svg>`,
+		tunnelFirstVector: '<svg width="12" height="21" viewBox="0 0 12 21" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="12" height="21"/><circle cx="5" cy="5" r="3.75" fill="#c9ccd0" stroke="white" stroke-width="1.5"/><path d="M5 5V11.5625V17C5 18.6569 6.34315 20 8 20H11" stroke="#c9ccd0" stroke-width="1.5" stroke-linecap="round"/></svg>',
+		tunnelVector: '<svg width="8" height="23" viewBox="0 0 8 23" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="8" height="23" fill="none"/><path d="M1 -7V20C1 21.1046 1.89543 22 3 22H7" stroke="#c9ccd0" stroke-width="1.5" stroke-linecap="round"/></svg>',
+		editButtonIcon: '<svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg"><path opacity="0.4" fill-rule="evenodd" clip-rule="evenodd" d="M11.5505 0.708708C11.9426 0.31773 12.5779 0.319865 12.9674 0.71347L14.2992 2.05937C14.6867 2.45089 14.6846 3.08201 14.2945 3.47092L5.28648 12.4522L2.54781 9.68469L11.5505 0.708708ZM0.00953897 14.6436C-0.0163586 14.7416 0.0113888 14.8452 0.0816823 14.9173C0.153826 14.9894 0.257416 15.0172 0.355457 14.9894L3.41693 14.1646L0.834563 11.5831L0.00953897 14.6436Z" fill="#6a737f"/></svg>',
+		successStageFlagIcon: '<svg width="14" height="16" viewBox="0 0 14 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M0.0644531 0.19812V15.7924H2.6635V10.5943H13.926L10.659 5.39621L13.926 0.19812H0.0644531Z" fill="#9DCF00"/></svg>',
+		failedStageFlagIcon: '<svg width="18" height="17" viewBox="0 0 18 17" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M0.332031 0.19812V15.7924H2.93107V10.5943H5.66641C5.95968 7.45074 8.39145 4.92814 11.4925 4.49569L14.1936 0.19812H0.332031Z" fill="#ff5752"/><path fill-rule="evenodd" clip-rule="evenodd" d="M12.4407 16.2967C15.2366 16.2967 17.5031 14.0302 17.5031 11.2343C17.5031 8.43843 15.2366 6.17192 12.4407 6.17192C9.6448 6.17192 7.37829 8.43843 7.37829 11.2343C7.37829 14.0302 9.6448 16.2967 12.4407 16.2967ZM15.3766 13.1918L14.3979 14.1705L12.4404 12.2131L10.483 14.1705L9.50422 13.1918L11.4617 11.2343L9.50422 9.27686L10.483 8.29813L12.4404 10.2556L14.3979 8.29813L15.3766 9.27686L13.4192 11.2343L15.3766 13.1918Z" fill="#ff5752"/></svg>',
+		allStagesBadge: '<svg width="16" height="12" viewBox="0 0 16 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 0H0V2H2V0Z" fill="#d5d7db"/><path d="M16 0H4V2H16V0Z" fill="#d5d7db"/><path d="M4 10H16V12H4V10Z" fill="#d5d7db"/><path d="M2 10H0V12H2V10Z" fill="#d5d7db"/><path d="M4 5H16V7H4V5Z" fill="#d5d7db"/><path d="M2 5H0V7H2V5Z" fill="#d5d7db"/></svg>',
 	};
 
 	module.exports = { StageListItem, TUNNEL_HEIGHT, MIN_STAGE_HEIGHT, FIRST_TUNNEL_ADDITIONAL_HEIGHT };

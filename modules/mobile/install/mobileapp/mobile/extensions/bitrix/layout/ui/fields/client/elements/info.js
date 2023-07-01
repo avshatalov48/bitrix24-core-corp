@@ -4,6 +4,7 @@
 jn.define('layout/ui/fields/client/elements/info', (require, exports, module) => {
 
 	const { AddressView, AddressViewType } = require('layout/ui/address');
+	const { phoneUtils } = require('native/phonenumber');
 
 	/**
 	 * @class ClientItemInfo
@@ -12,10 +13,11 @@ jn.define('layout/ui/fields/client/elements/info', (require, exports, module) =>
 	{
 		render()
 		{
-			const { addresses = [], subtitle } = this.props;
+			const { addresses = [], subtitle, testId } = this.props;
 
 			return View(
 				{
+					testId: `${testId}-info`,
 					style: {
 						flexShrink: 2,
 					},
@@ -40,13 +42,20 @@ jn.define('layout/ui/fields/client/elements/info', (require, exports, module) =>
 			const phones = this.getValue(phone);
 			const emails = this.getValue(email);
 
+			let formattedNumbers = phones;
+			if (Array.isArray(formattedNumbers))
+			{
+				formattedNumbers = phones && phones.map(phone => phoneUtils.getFormattedNumber(phone, phoneUtils.getCountryCode(phone)));
+			}
+
+
 			return View(
 				{
 					style: {
 						flexDirection: 'column',
 					},
 				},
-				this.renderText(phones),
+				this.renderText(formattedNumbers),
 				this.renderText(emails),
 			);
 

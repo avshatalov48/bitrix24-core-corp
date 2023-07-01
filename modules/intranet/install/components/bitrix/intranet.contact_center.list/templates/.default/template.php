@@ -56,7 +56,7 @@ if(!empty($arResult["ADDITIONAL_STYLES"]))
 				$cropTextID = \Bitrix\Main\Security\Random::getString(5);
 				?>
 					<div class="intranet-contact-center-item-block">
-						<div class="intranet-contact-item<?=($item["SELECTED"] ? " intranet-contact-item-selected "  . $item["COLOR_CLASS"] : "")?>"
+						<div class="intranet-contact-item<?=($item["SELECTED"] ? " intranet-contact-item-selected "  . ($item["COLOR_CLASS"] ?? '') : "")?>"
 							title="<?=$item["NAME"]?>"
 							data-module="<?=$moduleId?>"
 							data-item="<?=$code?>"
@@ -109,7 +109,7 @@ if(!empty($arResult["ADDITIONAL_STYLES"]))
 					?>
 					<div class="intranet-contact-center-item-block">
 						<div class="intranet-contact-item<?=($item["SELECTED"]
-							? " intranet-contact-item-selected " . $item["COLOR_CLASS"]
+							? " intranet-contact-item-selected " . ($item["COLOR_CLASS"] ?? '')
 							: "")
 						?>"
 							title="<?=\Bitrix\Main\Text\HtmlFilter::encode($item["NAME"])?>"
@@ -124,7 +124,7 @@ if(!empty($arResult["ADDITIONAL_STYLES"]))
 								</div>
 							<?php else: ?>
 								<div class="intranet-contact-logo-container">
-									<span class="intranet-contact-logo <?=$item["LOGO_CLASS"]?>"><i <?=$item['IMAGE'] ? "style=\"background-image: url(".$item['IMAGE']."); background-color: ". $item['COLOR'] . "\"" : '';?>></i></span>
+									<span class="intranet-contact-logo <?=$item["LOGO_CLASS"]?>"><i <?= (!empty($item['IMAGE']) ? "style=\"background-image: url(".$item['IMAGE']."); background-color: ". $item['COLOR'] . "\"" : '')?>></i></span>
 								</div>
 							<?php endif; ?>
 							<div class="intranet-contact-name <?=(isset($item['MARKETPLACE_APP']) ? 'intranet-contact-marketplace-name' : '')?>">

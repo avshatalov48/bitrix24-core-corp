@@ -53,17 +53,17 @@ foreach($arParams["BUTTONS"] as $index=>$item):
 				<script type="text/javascript">
 				var jsMnu_<?=$arParams["TOOLBAR_ID"].'_'.$index?> = <?=CUtil::PhpToJSObject($item["MENU"])?>;
 				</script>
-				<a href="javascript:void(0);" hidefocus="true" 
-					onclick="this.blur(); jsPopup_<?=$arParams["TOOLBAR_ID"]?>.ShowMenu(this, jsMnu_<?=$arParams["TOOLBAR_ID"].'_'.$index?>); return false;" 
+				<a href="javascript:void(0);" hidefocus="true"
+					onclick="this.blur(); jsPopup_<?=$arParams["TOOLBAR_ID"]?>.ShowMenu(this, jsMnu_<?=$arParams["TOOLBAR_ID"].'_'.$index?>); return false;"
 					title="<?=$item["TITLE"]?>" class="bx-context-button"><span class="bx-context-button-left"></span><?if(!empty($item["ICON"])):?><span class="bx-context-button-icon <?=$item["ICON"]?>"></span><?endif?><span class="bx-context-button-text"><?=$item["TEXT"]?></span><span class="bx-arrow" alt=""></span><span class="bx-context-button-right"></span></a></td>
-<?		
-	elseif($item["HTML"] <> ""):
+<?
+	elseif(isset($item["HTML"]) && $item["HTML"] <> ""):
 ?>
 				<td><?=$item["HTML"]?></td>
 <?
 	else:
 ?>
-				<td><a href="<?=$item["LINK"]?>" hidefocus="true" title="<?=$item["TITLE"]?>" <?=$item["LINK_PARAM"]?> class="bx-context-button"><span class="bx-context-button-left"></span><?if(!empty($item["ICON"])):?><span class="bx-context-button-icon <?=$item["ICON"]?>"></span><?endif?><span class="bx-context-button-text"><?=$item["TEXT"]?></span><span class="bx-context-button-right"></span></a></td>
+				<td><a href="<?=$item["LINK"]?>" hidefocus="true" title="<?=$item["TITLE"]?>" <?= $item["LINK_PARAM"] ?? null ?> class="bx-context-button"><span class="bx-context-button-left"></span><?if(!empty($item["ICON"])):?><span class="bx-context-button-icon <?=$item["ICON"]?>"></span><?endif?><span class="bx-context-button-text"><?=$item["TEXT"]?></span><span class="bx-context-button-right"></span></a></td>
 <?
 	endif;
 endforeach;?>

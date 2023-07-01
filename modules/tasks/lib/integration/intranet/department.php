@@ -174,29 +174,26 @@ final class Department extends \Bitrix\Tasks\Integration\Intranet
 		{
 			global $CACHE_MANAGER;
 			$CACHE_MANAGER->startTagCache($cacheDir);
-			$CACHE_MANAGER->registerTag("iblock_id_".$iblockId);
+			$CACHE_MANAGER->registerTag("iblock_id_{$iblockId}");
 
 			$res = \CIBlockSection::getList(
-				array('left_margin' => 'asc'), 		// order as full expanded tree
+				['left_margin' => 'asc'], // order as full expanded tree
 				$filter,
-				false, 								// don't count
+				false, // don't count
 				$select
 			);
-
 			while ($item = $res->fetch())
 			{
-				$iblockSectionID = intval($item['IBLOCK_SECTION_ID']);
+				$id = $item['ID'];
+				$iblockSectionID = (int)$item['IBLOCK_SECTION_ID'];
 
-				if (!is_array($structure[$iblockSectionID]))
+				if (!isset($structure[$iblockSectionID]))
 				{
-					$structure[$iblockSectionID] = array($item['ID']);
+					$structure[$iblockSectionID] = [];
 				}
-				else
-				{
-					$structure[$iblockSectionID][] = $item['ID'];
-				}
+				$structure[$iblockSectionID][] = $id;
 
-				$sections[$item['ID']] = $item;
+				$sections[$id] = $item;
 			}
 			$CACHE_MANAGER->endTagCache();
 			$cache->endDataCache(array("SECTIONS" => $sections, "STRUCTURE" => $structure));

@@ -2,16 +2,16 @@
 IncludeModuleLangFile(__FILE__);
 
 use Bitrix\Crm;
+use Bitrix\Crm\Binding\QuoteContactTable;
 use Bitrix\Crm\CompanyAddress;
 use Bitrix\Crm\ContactAddress;
-use Bitrix\Crm\EntityAddressType;
 use Bitrix\Crm\Entity\Traits\EntityFieldsNormalizer;
+use Bitrix\Crm\EntityAddressType;
 use Bitrix\Crm\Format\AddressFormatter;
-use Bitrix\Crm\UtmTable;
-use Bitrix\Crm\Tracking;
 use Bitrix\Crm\Integration\StorageManager;
 use Bitrix\Crm\Integration\StorageType;
-use Bitrix\Crm\Binding\QuoteContactTable;
+use Bitrix\Crm\Tracking;
+use Bitrix\Crm\UtmTable;
 
 class CAllCrmQuote
 {
@@ -39,6 +39,7 @@ class CAllCrmQuote
 	protected $lastErrors;
 
 	private static ?Crm\Entity\Compatibility\Adapter $lastActivityAdapter = null;
+	private static ?Crm\Entity\Compatibility\Adapter $contentTypeIdAdapter = null;
 
 	/** @var \Bitrix\Crm\Entity\Compatibility\Adapter */
 	private $compatibiltyAdapter;
@@ -127,6 +128,16 @@ class CAllCrmQuote
 		}
 
 		return self::$lastActivityAdapter;
+	}
+
+	private static function getContentTypeIdAdapter(): Crm\Entity\Compatibility\Adapter\ContentTypeId
+	{
+		if (!self::$contentTypeIdAdapter)
+		{
+			self::$contentTypeIdAdapter = new Crm\Entity\Compatibility\Adapter\ContentTypeId(\CCrmOwnerType::Quote);
+		}
+
+		return self::$contentTypeIdAdapter;
 	}
 
 	public function __construct($bCheckPermission = true)
@@ -412,6 +423,8 @@ class CAllCrmQuote
 			//region Search content index
 			Bitrix\Crm\Search\SearchContentBuilderFactory::create(CCrmOwnerType::Quote)->build($ID);
 			//endregion
+
+			self::getContentTypeIdAdapter()->performAdd($arFields, $options);
 
 			//region Rise AfterAdd event
 			foreach (GetModuleEvents('crm', 'OnAfterCrmQuoteAdd', true) as $arEvent)
@@ -997,6 +1010,11 @@ class CAllCrmQuote
 			// Responsible user sync
 			//CCrmActivity::Synchronize(CCrmOwnerType::Quote, $ID);
 
+			self::getContentTypeIdAdapter()
+				->setPreviousFields((int)$ID, $arRow)
+				->performUpdate((int)$ID, $arFields, $options)
+			;
+
 			if($bResult)
 			{
 				foreach (GetModuleEvents('crm', 'OnAfterCrmQuoteUpdate', true) as $arEvent)
@@ -1111,6 +1129,8 @@ class CAllCrmQuote
 			CCrmProductRow::DeleteSettings(self::OWNER_TYPE, $ID);
 			/*CCrmActivity::DeleteByOwner(CCrmOwnerType::Quote, $ID);*/
 			\Bitrix\Crm\Requisite\EntityLink::unregister(CCrmOwnerType::Quote, $ID);
+
+			self::getContentTypeIdAdapter()->performDelete((int)$ID, $options);
 
 			// delete utm fields
 			UtmTable::deleteEntityUtm(CCrmOwnerType::Quote, $ID);
@@ -1949,153 +1969,146 @@ class CAllCrmQuote
 	{
 		if(!self::$FIELD_INFOS)
 		{
-			if (static::isFactoryEnabled())
-			{
-				self::$FIELD_INFOS = static::createCompatibilityAdapter()->getFieldsInfo();
-			}
-			else
-			{
-				self::$FIELD_INFOS = array(
-					'ID' => array(
-						'TYPE' => 'integer',
-						'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
-					),
-					'QUOTE_NUMBER' => array(
-						'TYPE' => 'string',
-						'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
-					),
-					'TITLE' => array(
-						'TYPE' => 'string',
-						'ATTRIBUTES' => array(CCrmFieldInfoAttr::Required)
-					),
-					'STATUS_ID' => array(
-						'TYPE' => 'crm_status',
-						'CRM_STATUS_TYPE' => 'QUOTE_STATUS'
-					),
-					'CURRENCY_ID' => array(
-						'TYPE' => 'crm_currency'
-					),
-					'OPPORTUNITY' => array(
-						'TYPE' => 'double'
-					),
-					'TAX_VALUE' => array(
-						'TYPE' => 'double'
-					),
-					'EXCH_RATE' => array(
-						'TYPE' => 'double',
-						'ATTRIBUTES' => array(CCrmFieldInfoAttr::Hidden)
-					),
-					'ACCOUNT_CURRENCY_ID' => array(
-						'TYPE' => 'string',
-						'ATTRIBUTES' => array(CCrmFieldInfoAttr::Hidden)
-					),
-					'OPPORTUNITY_ACCOUNT' => array(
-						'TYPE' => 'double',
-						'ATTRIBUTES' => array(CCrmFieldInfoAttr::Hidden)
-					),
-					'TAX_VALUE_ACCOUNT' => array(
-						'TYPE' => 'double',
-						'ATTRIBUTES' => array(CCrmFieldInfoAttr::Hidden)
-					),
-					'COMPANY_ID' => array(
-						'TYPE' => 'crm_company'
-					),
-					'MYCOMPANY_ID' => array(
-						'TYPE' => 'crm_company'
-					),
-					'CONTACT_ID' => array(
-						'TYPE' => 'crm_contact',
-						'ATTRIBUTES' => array(CCrmFieldInfoAttr::Deprecated)
-					),
-					'CONTACT_IDS' => array(
-						'TYPE' => 'crm_contact',
-						'ATTRIBUTES' => array(CCrmFieldInfoAttr::Multiple)
-					),
-					'BEGINDATE' => array(
-						'TYPE' => 'date'
-					),
-					'CLOSEDATE' => array(
-						'TYPE' => 'date'
-					),
-					'ACTUAL_DATE' => array(
-						'TYPE' => 'date'
-					),
-					'OPENED' => array(
-						'TYPE' => 'char'
-					),
-					'CLOSED' => array(
-						'TYPE' => 'char'
-					),
-					'COMMENTS' => array(
-						'TYPE' => 'string',
-						'VALUE_TYPE' => 'html',
-					),
-					'CONTENT' => array(
-						'TYPE' => 'string'
-					),
-					'TERMS' => array(
-						'TYPE' => 'string'
-					),
-					'CLIENT_TITLE' => array(
-						'TYPE' => 'string'
-					),
-					'CLIENT_ADDR' => array(
-						'TYPE' => 'string'
-					),
-					'CLIENT_CONTACT' => array(
-						'TYPE' => 'string'
-					),
-					'CLIENT_EMAIL' => array(
-						'TYPE' => 'string'
-					),
-					'CLIENT_PHONE' => array(
-						'TYPE' => 'string'
-					),
-					'CLIENT_TP_ID' => array(
-						'TYPE' => 'string'
-					),
-					'CLIENT_TPA_ID' => array(
-						'TYPE' => 'string'
-					),
-					'ASSIGNED_BY_ID' => array(
-						'TYPE' => 'user'
-					),
-					'CREATED_BY_ID' => array(
-						'TYPE' => 'user',
-						'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
-					),
-					'MODIFY_BY_ID' => array(
-						'TYPE' => 'user',
-						'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
-					),
-					'DATE_CREATE' => array(
-						'TYPE' => 'datetime',
-						'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
-					),
-					'DATE_MODIFY' => array(
-						'TYPE' => 'datetime',
-						'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
-					),
-					'LEAD_ID' => array(
-						'TYPE' => 'crm_lead'
-					),
-					'DEAL_ID' => array(
-						'TYPE' => 'crm_deal'
-					),
-					'PERSON_TYPE_ID' => array(
-						'TYPE' => 'integer'
-					),
-					'LOCATION_ID' => array(
-						'TYPE' => 'location'
-					)
-				);
+			self::$FIELD_INFOS = array(
+				'ID' => array(
+					'TYPE' => 'integer',
+					'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
+				),
+				'QUOTE_NUMBER' => array(
+					'TYPE' => 'string',
+					'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
+				),
+				'TITLE' => array(
+					'TYPE' => 'string',
+					'ATTRIBUTES' => array(CCrmFieldInfoAttr::Required)
+				),
+				'STATUS_ID' => array(
+					'TYPE' => 'crm_status',
+					'CRM_STATUS_TYPE' => 'QUOTE_STATUS'
+				),
+				'CURRENCY_ID' => array(
+					'TYPE' => 'crm_currency'
+				),
+				'OPPORTUNITY' => array(
+					'TYPE' => 'double'
+				),
+				'TAX_VALUE' => array(
+					'TYPE' => 'double'
+				),
+				'EXCH_RATE' => array(
+					'TYPE' => 'double',
+					'ATTRIBUTES' => array(CCrmFieldInfoAttr::Hidden)
+				),
+				'ACCOUNT_CURRENCY_ID' => array(
+					'TYPE' => 'string',
+					'ATTRIBUTES' => array(CCrmFieldInfoAttr::Hidden)
+				),
+				'OPPORTUNITY_ACCOUNT' => array(
+					'TYPE' => 'double',
+					'ATTRIBUTES' => array(CCrmFieldInfoAttr::Hidden)
+				),
+				'TAX_VALUE_ACCOUNT' => array(
+					'TYPE' => 'double',
+					'ATTRIBUTES' => array(CCrmFieldInfoAttr::Hidden)
+				),
+				'COMPANY_ID' => array(
+					'TYPE' => 'crm_company'
+				),
+				'MYCOMPANY_ID' => array(
+					'TYPE' => 'crm_company'
+				),
+				'CONTACT_ID' => array(
+					'TYPE' => 'crm_contact',
+					'ATTRIBUTES' => array(CCrmFieldInfoAttr::Deprecated)
+				),
+				'CONTACT_IDS' => array(
+					'TYPE' => 'crm_contact',
+					'ATTRIBUTES' => array(CCrmFieldInfoAttr::Multiple)
+				),
+				'BEGINDATE' => array(
+					'TYPE' => 'date'
+				),
+				'CLOSEDATE' => array(
+					'TYPE' => 'date'
+				),
+				'ACTUAL_DATE' => array(
+					'TYPE' => 'date'
+				),
+				'OPENED' => array(
+					'TYPE' => 'char'
+				),
+				'CLOSED' => array(
+					'TYPE' => 'char'
+				),
+				'COMMENTS' => array(
+					'TYPE' => 'string',
+					'VALUE_TYPE' => 'html',
+				),
+				'CONTENT' => array(
+					'TYPE' => 'string'
+				),
+				'TERMS' => array(
+					'TYPE' => 'string'
+				),
+				'CLIENT_TITLE' => array(
+					'TYPE' => 'string'
+				),
+				'CLIENT_ADDR' => array(
+					'TYPE' => 'string'
+				),
+				'CLIENT_CONTACT' => array(
+					'TYPE' => 'string'
+				),
+				'CLIENT_EMAIL' => array(
+					'TYPE' => 'string'
+				),
+				'CLIENT_PHONE' => array(
+					'TYPE' => 'string'
+				),
+				'CLIENT_TP_ID' => array(
+					'TYPE' => 'string'
+				),
+				'CLIENT_TPA_ID' => array(
+					'TYPE' => 'string'
+				),
+				'ASSIGNED_BY_ID' => array(
+					'TYPE' => 'user'
+				),
+				'CREATED_BY_ID' => array(
+					'TYPE' => 'user',
+					'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
+				),
+				'MODIFY_BY_ID' => array(
+					'TYPE' => 'user',
+					'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
+				),
+				'DATE_CREATE' => array(
+					'TYPE' => 'datetime',
+					'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
+				),
+				'DATE_MODIFY' => array(
+					'TYPE' => 'datetime',
+					'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
+				),
+				'LEAD_ID' => array(
+					'TYPE' => 'crm_lead'
+				),
+				'DEAL_ID' => array(
+					'TYPE' => 'crm_deal'
+				),
+				'PERSON_TYPE_ID' => array(
+					'TYPE' => 'integer'
+				),
+				'LOCATION_ID' => array(
+					'TYPE' => 'location'
+				)
+			);
 
-				// add utm fields
-				self::$FIELD_INFOS = self::$FIELD_INFOS + UtmTable::getUtmFieldsInfo();
+			// add utm fields
+			self::$FIELD_INFOS = self::$FIELD_INFOS + UtmTable::getUtmFieldsInfo();
 
-				self::$FIELD_INFOS += Crm\Service\Container::getInstance()->getParentFieldManager()->getParentFieldsInfo(\CCrmOwnerType::Quote);
-				self::$FIELD_INFOS += self::getLastActivityAdapter()->getFieldsInfo();
-			}
+			self::$FIELD_INFOS += Crm\Service\Container::getInstance()->getParentFieldManager()->getParentFieldsInfo(\CCrmOwnerType::Quote);
+			self::$FIELD_INFOS += self::getLastActivityAdapter()->getFieldsInfo();
 		}
 
 		return self::$FIELD_INFOS;

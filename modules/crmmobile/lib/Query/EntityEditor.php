@@ -1,26 +1,21 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace Bitrix\CrmMobile\Query;
 
+use Bitrix\Crm\Integration\UI\EntityEditor\Provider;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\Service\Factory;
-use Bitrix\Main\Loader;
-use Bitrix\CrmMobile\UI\EntityEditor\Provider;
+use Bitrix\CrmMobile\UI\EntityEditor\ProviderDecorator;
 use Bitrix\Mobile\Query;
 use Bitrix\Mobile\UI\EntityEditor\FormWrapper;
 
-Loader::requireModule('crm');
-
 final class EntityEditor extends Query
 {
-	/** @var Factory */
-	private $factory;
-
-	/** @var Item */
-	private $entity;
-
-	/** @var array */
-	private $params;
+	private Factory $factory;
+	private Item $entity;
+	private array $params;
 
 	public function __construct(Factory $factory, Item $entity, array $params = [])
 	{
@@ -29,12 +24,17 @@ final class EntityEditor extends Query
 		$this->params = $params;
 	}
 
-	public function execute(): array
+	public function execute(array $requiredFields = null): array
 	{
-		$provider = new Provider($this->factory, $this->entity, $this->params);
+		$provider = new Provider($this->entity, $this->params);
+		$mobileDecoratedProvider = new ProviderDecorator($provider, $this->factory, $this->entity);
+		$formWrapper = new FormWrapper($mobileDecoratedProvider, 'bitrix:crm.entity.editor');
 
-		return [
-			'editor' => (new FormWrapper($provider, 'bitrix:crm.entity.editor'))->getResult(),
-		];
+		if ($requiredFields !== null)
+		{
+			return $formWrapper->getRequiredFields($requiredFields);
+		}
+
+		return $formWrapper->getResult();
 	}
 }

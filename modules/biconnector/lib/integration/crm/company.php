@@ -22,12 +22,9 @@ class Company
 		}
 
 		$params = $event->getParameters();
-		$manager = $params[0];
+		//$manager = $params[0];
 		$result = &$params[1];
 		$languageId = $params[2];
-
-		$connection = $manager->getDatabaseConnection();
-		$helper = $connection->getSqlHelper();
 
 		$result['crm_company'] = [
 			'TABLE_NAME' => 'b_crm_company',
@@ -351,6 +348,7 @@ class Company
 				],
 				'PHONE' => [
 					'CONCAT_GROUP_BY' => ', ',
+					'CONCAT_KEY' => 'PHONE',
 					'IS_METRIC' => 'N', // 'Y'
 					'FIELD_NAME' => 'concat(\'[\', FM_PHONE.VALUE_TYPE, \'] \', FM_PHONE.VALUE)',
 					'FIELD_TYPE' => 'string',
@@ -360,6 +358,7 @@ class Company
 				],
 				'WEB' => [
 					'CONCAT_GROUP_BY' => ', ',
+					'CONCAT_KEY' => 'WEB',
 					'IS_METRIC' => 'N', // 'Y'
 					'FIELD_NAME' => 'concat(\'[\', FM_WEB.VALUE_TYPE, \'] \', FM_WEB.VALUE)',
 					'FIELD_TYPE' => 'string',
@@ -369,6 +368,7 @@ class Company
 				],
 				'EMAIL' => [
 					'CONCAT_GROUP_BY' => ', ',
+					'CONCAT_KEY' => 'EMAIL',
 					'IS_METRIC' => 'N', // 'Y'
 					'FIELD_NAME' => 'concat(\'[\', FM_EMAIL.VALUE_TYPE, \'] \', FM_EMAIL.VALUE)',
 					'FIELD_TYPE' => 'string',
@@ -378,6 +378,7 @@ class Company
 				],
 				'IM' => [
 					'CONCAT_GROUP_BY' => ', ',
+					'CONCAT_KEY' => 'IM',
 					'IS_METRIC' => 'N', // 'Y'
 					'FIELD_NAME' => 'concat(\'[\', FM_IM.VALUE_TYPE, \'] \', FM_IM.VALUE)',
 					'FIELD_TYPE' => 'string',
@@ -398,7 +399,7 @@ class Company
 				$fieldInfo['FIELD_DESCRIPTION'] = $fieldCode;
 			}
 
-			$fieldInfo['FIELD_DESCRIPTION_FULL'] = $messages['CRM_BIC_COMPANY_FIELD_' . $fieldCode . '_FULL'];
+			$fieldInfo['FIELD_DESCRIPTION_FULL'] = $messages['CRM_BIC_COMPANY_FIELD_' . $fieldCode . '_FULL'] ?? '';
 		}
 		unset($fieldInfo);
 	}

@@ -143,13 +143,17 @@ abstract class Type
 
 	public static function unSerializeArray($data)
 	{
-		if(!\CheckSerializedData($data))
+		if (
+			!isset($data)
+			|| !\CheckSerializedData($data)
+		)
 		{
-			return array();
+			return [];
 		}
 
 		$data = unserialize($data, ['allowed_classes' => false]);
-		return is_array($data) ? $data : array();
+
+		return (is_array($data) ? $data : []);
 	}
 
 	/**
@@ -167,6 +171,10 @@ abstract class Type
 
 		foreach($data as $i => $value)
 		{
+            if (!is_scalar($value))
+            {
+                continue;
+            }
 			if((string) $value == '')
 			{
 				unset($data[$i]);

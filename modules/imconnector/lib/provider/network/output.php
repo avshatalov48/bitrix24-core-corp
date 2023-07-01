@@ -51,7 +51,7 @@ class Output extends Base\Output
 				else
 				{
 					Application::getInstance()->addBackgroundJob(
-						['\Bitrix\ImBot\Service\Openlines', $eventName],
+						[\Bitrix\ImBot\Service\Openlines::class, $eventName],
 						[$args],
 						Application::JOB_PRIORITY_LOW
 					);

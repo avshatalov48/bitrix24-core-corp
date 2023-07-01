@@ -337,7 +337,9 @@ final class Deal extends Factory
 			Item::FIELD_NAME_COMMENTS => [
 				'TYPE' => Field::TYPE_TEXT,
 				'ATTRIBUTES' => [],
-				'VALUE_TYPE' => Field::VALUE_TYPE_HTML,
+				'SETTINGS' => [
+					'isFlexibleContentType' => true,
+				],
 			],
 			Item::FIELD_NAME_ASSIGNED => [
 				'TYPE' => Field::TYPE_USER,
@@ -726,6 +728,11 @@ final class Deal extends Factory
 	}
 
 	public function isCountersEnabled(): bool
+	{
+		return true;
+	}
+
+	public function isSmartActivityNotificationSupported(): bool
 	{
 		return true;
 	}

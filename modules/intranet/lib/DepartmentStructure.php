@@ -58,7 +58,7 @@ final class DepartmentStructure
 						'=ACTIVE' => 'Y'
 					]
 				),
-				'order' => ['left_margin' => 'asc'],
+				'order' => ['LEFT_MARGIN' => 'asc'],
 				'limit' => 1,
 				'cache' => ['ttl' => 84600]
 			])->fetch())
@@ -71,7 +71,7 @@ final class DepartmentStructure
 
 	public static function getInstance(?string $siteId): self
 	{
-		if (!self::$instances[$siteId])
+		if (empty(self::$instances[$siteId]))
 		{
 			self::$instances[$siteId] = new self($siteId);
 		}

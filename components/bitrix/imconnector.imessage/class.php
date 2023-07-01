@@ -66,8 +66,6 @@ class ImConnectorImessage extends CBitrixComponent
 
 	/**
 	 * @return string
-	 * @throws \Bitrix\Main\ArgumentNullException
-	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
 	 */
 	protected function getJsLangMessageSetting()
 	{
@@ -238,9 +236,6 @@ class ImConnectorImessage extends CBitrixComponent
 					$redirect = $uri->getUri();
 
 					LocalRedirect($redirect);
-
-					//Reset cache
-					$this->cleanCache();
 				}
 			}
 		}
@@ -328,10 +323,6 @@ class ImConnectorImessage extends CBitrixComponent
 		}
 	}
 
-	/**
-	 * @throws \Bitrix\Main\ArgumentNullException
-	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
-	 */
 	public function constructionForm()
 	{
 		global $APPLICATION;
@@ -360,7 +351,6 @@ class ImConnectorImessage extends CBitrixComponent
 				{
 					$this->arResult['FORM']['business_name'] = '';
 				}
-				$this->arResult['FORM']['business_name'] = $this->request['business_name'];
 			}
 			else
 			{
@@ -434,12 +424,6 @@ class ImConnectorImessage extends CBitrixComponent
 
 	/**
 	 * @return mixed|void
-	 * @throws LoaderException
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ArgumentNullException
-	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public function executeComponent()
 	{

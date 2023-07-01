@@ -498,9 +498,12 @@ BX.CTimeMan.prototype._setFatalError = function(e)
 	if (this.INTERVAL)
 		clearTimeout(this.INTERVAL);
 
-	this.DIV.innerHTML = e;
+	if (this.DIV)
+	{
+		this.DIV.innerHTML = e;
 
-	BX.addClass(this.DIV, 'bx-tm-error');
+		BX.addClass(this.DIV, 'bx-tm-error');
+	}
 }
 
 BX.CTimeMan.prototype._setDenyError = function(e)
@@ -510,7 +513,10 @@ BX.CTimeMan.prototype._setDenyError = function(e)
 	if (this.INTERVAL)
 		clearTimeout(this.INTERVAL);
 
-	BX.addClass(this.DIV, 'bx-tm-error');
+	if (this.DIV)
+	{
+		BX.addClass(this.DIV, 'bx-tm-error');
+	}
 }
 
 BX.CTimeMan.prototype._setRestrictionError = function(e)
@@ -535,7 +541,6 @@ BX.CTimeMan.prototype._setRestrictionError = function(e)
 
 BX.CTimeMan.prototype._unsetError = function()
 {
-	BX.addClass(this.DIV, 'bx-tm-error');
 	if (this.ERROR)
 	{
 		this.ERROR = false;
@@ -543,7 +548,12 @@ BX.CTimeMan.prototype._unsetError = function()
 
 	this.DENY_QUERY = false;
 
-	BX.removeClass(this.DIV, 'bx-tm-error');
+	if (this.DIV)
+	{
+		BX.addClass(this.DIV, 'bx-tm-error');
+
+		BX.removeClass(this.DIV, 'bx-tm-error');
+	}
 }
 
 BX.CTimeMan.prototype._checkQueryError = function(data)
@@ -609,7 +619,14 @@ BX.CTimeMan.prototype.Open = function()
 {
 	if (this.WND.Show())
 	{
-		this.Update(true);
+		// todo http://jabber.bx/view.php?id=165797
+		this.Query('check_module', {}, function (data) {
+			if (data && data.error && data.type === 'fatal')
+			{
+				return;
+			}
+			this.Update(true);
+		}.bind(this), true);
 	}
 }
 

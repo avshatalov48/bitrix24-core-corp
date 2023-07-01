@@ -1,27 +1,35 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 use Bitrix\Crm;
-use Bitrix\Crm\Order\EntityBinding;
-use Bitrix\Main;
+use Bitrix\Crm\Component\ComponentError;
+use Bitrix\Crm\Component\EntityDetails\ComponentMode;
 use Bitrix\Crm\Order;
+use Bitrix\Crm\Order\EntityBinding;
+use Bitrix\Crm\Security\EntityAuthorization;
+use Bitrix\Crm\Security\EntityPermissionType;
+use Bitrix\Crm\Service;
+use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Sale\Cashbox;
-use Bitrix\Crm\Security\EntityAuthorization;
-use Bitrix\Crm\Component\ComponentError;
-use Bitrix\Crm\Security\EntityPermissionType;
-use Bitrix\Crm\Component\EntityDetails\ComponentMode;
-use Bitrix\Crm\Service;
 
 Loc::loadMessages(__FILE__);
-if(!Main\Loader::includeModule('crm'))
+
+if (!Main\Loader::includeModule('crm'))
 {
 	ShowError(Loc::getMessage('CRM_MODULE_NOT_INSTALLED'));
+
 	return;
 }
-if(!Main\Loader::includeModule('sale'))
+
+if (!Main\Loader::includeModule('sale'))
 {
 	ShowError(Loc::getMessage('SALE_MODULE_NOT_INSTALLED'));
+
 	return;
 }
 
@@ -45,6 +53,7 @@ class CCrmOrderCheckDetailsComponent extends Crm\Component\EntityDetails\BaseCom
 		{
 			return Loc::getMessage('CRM_ORDER_NOT_FOUND');
 		}
+
 		return ComponentError::getMessage($error);
 	}
 
@@ -73,7 +82,7 @@ class CCrmOrderCheckDetailsComponent extends Crm\Component\EntityDetails\BaseCom
 		global $APPLICATION;
 
 		//region Params
-		$this->arResult['ENTITY_ID'] = isset($this->arParams['~ENTITY_ID']) ? (int)$this->arParams['~ENTITY_ID'] : 0;
+		$this->arResult['ENTITY_ID'] = (int)($this->arParams['~ENTITY_ID'] ?? 0);
 
 		$this->arResult['NAME_TEMPLATE'] = empty($this->arParams['NAME_TEMPLATE'])
 			? CSite::GetNameFormat(false)
@@ -81,17 +90,19 @@ class CCrmOrderCheckDetailsComponent extends Crm\Component\EntityDetails\BaseCom
 
 		$this->arResult['PATH_TO_ORDER_SHOW'] = CrmCheckPath(
 			'PATH_TO_ORDER_SHOW',
-			$APPLICATION->GetCurPage().'?order_id=#order_id#&show',
+			$APPLICATION->GetCurPage() . '?order_id=#order_id#&show',
 			null
 		);
+
 		$this->arResult['ACTION_URI'] = $this->arResult['POST_FORM_URI'] = POST_FORM_ACTION_URI;
 		$this->arResult['DATE_FORMAT'] = Main\Type\Date::getFormat();
 		$this->arResult['CONTEXT_ID'] = \CCrmOwnerType::OrderCheckName.'_'.$this->arResult['ENTITY_ID'];
 		$this->arResult['CONTEXT_PARAMS'] = array(
-			'NAME_TEMPLATE' => $this->arResult['NAME_TEMPLATE']
+			'NAME_TEMPLATE' => $this->arResult['NAME_TEMPLATE'] ?? ''
 		);
 
 		$this->arResult['EXTERNAL_CONTEXT_ID'] = $this->request->get('external_context_id');
+
 		if($this->arResult['EXTERNAL_CONTEXT_ID'] === null)
 		{
 			$this->arResult['EXTERNAL_CONTEXT_ID'] = $this->request->get('external_context');
@@ -115,6 +126,7 @@ class CCrmOrderCheckDetailsComponent extends Crm\Component\EntityDetails\BaseCom
 			{
 				$this->addError(Loc::getMessage('CRM_ORDER_NOT_FOUND'));
 				$this->showErrors();
+
 				return;
 			}
 			$dateInsert = time() + \CTimeZone::GetOffset();
@@ -128,6 +140,7 @@ class CCrmOrderCheckDetailsComponent extends Crm\Component\EntityDetails\BaseCom
 		{
 			$this->addError(Loc::getMessage('CRM_ORDER_NOT_FOUND'));
 			$this->showErrors();
+
 			return;
 		}
 
@@ -137,6 +150,7 @@ class CCrmOrderCheckDetailsComponent extends Crm\Component\EntityDetails\BaseCom
 		)
 		{
 			ShowError(Loc::getMessage('CRM_ORDER_CHECK_NOT_FOUND'));
+
 			return;
 		}
 
@@ -144,29 +158,28 @@ class CCrmOrderCheckDetailsComponent extends Crm\Component\EntityDetails\BaseCom
 		{
 			$this->addError(Loc::getMessage('CRM_PERMISSION_DENIED'));
 			$this->showErrors();
+
 			return;
 		}
 
 		if ($this->arResult['ENTITY_ID'] <= 0 && Cashbox\Manager::isEnabledPaySystemPrint())
 		{
 			ShowError(Loc::getMessage('CRM_ORDER_CASHBOX_MANUAL_PRINT_ERROR'));
+
 			return;
 		}
 
 		$this->arResult['ENTITY_DATA'] = $entityData;
 
 		//region GUID
-		$this->guid = $this->arResult['GUID'] = isset($this->arParams['GUID'])
-			? $this->arParams['GUID'] : "order_check_{$this->entityID}_details";
-
-		$this->arResult['EDITOR_CONFIG_ID'] = isset($this->arParams['EDITOR_CONFIG_ID'])
-			? $this->arParams['EDITOR_CONFIG_ID'] : 'order_check_details';
+		$this->guid = $this->arResult['GUID'] = $this->arParams['GUID'] ?? "order_check_{$this->entityID}_details";
+		$this->arResult['EDITOR_CONFIG_ID'] = $this->arParams['EDITOR_CONFIG_ID'] ?? 'order_check_details';
 		//endregion
 
 		$title = Loc::getMessage(
 			'CRM_ORDER_CHECK_TITLE',
 			array(
-				'#ID#' => $entityData['ID'],
+				'#ID#' => $entityData['ID'] ?? null,
 				'#DATE_CREATE#' => FormatDate(Main\Type\Date::getFormat(), MakeTimeStamp($entityData['DATE_CREATE']))
 			));
 
@@ -181,15 +194,15 @@ class CCrmOrderCheckDetailsComponent extends Crm\Component\EntityDetails\BaseCom
 		//endregion
 
 		//region Page title
-		if($this->mode === ComponentMode::CREATION)
+		if ($this->mode === ComponentMode::CREATION)
 		{
 			$APPLICATION->SetTitle(Loc::getMessage('CRM_ORDER_CHECK_ADD_TITLE'));
 		}
-		elseif($this->mode === ComponentMode::COPING)
+		elseif ($this->mode === ComponentMode::COPING)
 		{
 			$APPLICATION->SetTitle(Loc::getMessage('CRM_ORDER_COPY_PAGE_TITLE'));
 		}
-		elseif(!empty($title))
+		elseif (!empty($title))
 		{
 			$APPLICATION->SetTitle($title);
 		}
@@ -229,7 +242,7 @@ class CCrmOrderCheckDetailsComponent extends Crm\Component\EntityDetails\BaseCom
 		//endregion
 
 		//region VIEW EVENT
-		if($this->entityID > 0 && \Bitrix\Crm\Settings\HistorySettings::getCurrent()->isViewEventEnabled())
+		if ($this->entityID > 0 && \Bitrix\Crm\Settings\HistorySettings::getCurrent()->isViewEventEnabled())
 		{
 			CCrmEvent::RegisterViewEvent(CCrmOwnerType::OrderCheck, $this->entityID, $this->userID);
 		}
@@ -242,9 +255,10 @@ class CCrmOrderCheckDetailsComponent extends Crm\Component\EntityDetails\BaseCom
 
 		$this->includeComponentTemplate($template);
 	}
+
 	protected function prepareFieldInfos()
 	{
-		if(isset($this->arResult['ENTITY_FIELDS']))
+		if (isset($this->arResult['ENTITY_FIELDS']))
 		{
 			return $this->arResult['ENTITY_FIELDS'];
 		}
@@ -368,7 +382,7 @@ class CCrmOrderCheckDetailsComponent extends Crm\Component\EntityDetails\BaseCom
 			$this->arResult = array_merge($this->arResult, $checkTypes);
 		}
 
-		return $this->arResult['ENTITY_FIELDS'];
+		return $this->arResult['ENTITY_FIELDS'] ?? null;
 	}
 
 	/**
@@ -873,6 +887,6 @@ class CCrmOrderCheckDetailsComponent extends Crm\Component\EntityDetails\BaseCom
 			}
 		}
 
-		return $this->arResult['MAIN_LIST'][0];
+		return $this->arResult['MAIN_LIST'][0] ?? [];
 	}
 }

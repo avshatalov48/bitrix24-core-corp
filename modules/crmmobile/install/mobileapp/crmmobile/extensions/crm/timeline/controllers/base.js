@@ -2,7 +2,6 @@
  * @module crm/controllers/base
  */
 jn.define('crm/controllers/base', (require, exports, module) => {
-
 	/**
 	 * @abstract
 	 * @class TimelineBaseController
@@ -12,20 +11,25 @@ jn.define('crm/controllers/base', (require, exports, module) => {
 		/**
 		 * @param {TimelineItemBase} item
 		 * @param {TimelineEntityProps} entity
+		 * @param {TimelineScheduler} scheduler
 		 */
-		constructor(item, entity)
+		constructor(item, entity, scheduler)
 		{
 			/** @type TimelineItemBase */
 			this.item = item;
 
 			/** @type {TimelineEntityProps} */
 			this.entity = entity;
+
+			/** @type {TimelineScheduler} */
+			this.scheduler = scheduler;
 		}
 
 		/**
 		 * @abstract
 		 */
-		onItemAction() {}
+		onItemAction()
+		{}
 
 		/**
 		 * @abstract
@@ -61,20 +65,16 @@ jn.define('crm/controllers/base', (require, exports, module) => {
 			return this.item.timelineScopeEventBus;
 		}
 
-		pinInTopToolbar(actionParams)
+		/**
+		 * @private
+		 * @param {string} template
+		 * @param {object} data
+		 */
+		openDetailCardTopToolbar(template, data = {})
 		{
-			if (!this.item)
-			{
-				return;
-			}
-
-			this.timelineScopeEventBus.emit(
-				'DetailCard::onShowTopToolbar',
-				[this.item.model.props, actionParams]
-			);
+			this.timelineScopeEventBus.emit('DetailCard::onShowTopToolbar', [template, data]);
 		}
 	}
 
 	module.exports = { TimelineBaseController };
-
 });

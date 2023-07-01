@@ -2,7 +2,6 @@
  * @module crm/timeline/item/ui/body/blocks/with-title
  */
 jn.define('crm/timeline/item/ui/body/blocks/with-title', (require, exports, module) => {
-
 	const { TimelineItemBodyBlock } = require('crm/timeline/item/ui/body/blocks/base');
 
 	/**
@@ -16,8 +15,8 @@ jn.define('crm/timeline/item/ui/body/blocks/with-title', (require, exports, modu
 				{
 					style: {
 						flexDirection: this.props.inline ? 'row' : 'column',
-						flexWrap: 'wrap',
-					}
+						flexWrap: this.props.inline ? 'wrap' : 'no-wrap',
+					},
 				},
 				Text({
 					text: this.props.title,
@@ -26,7 +25,7 @@ jn.define('crm/timeline/item/ui/body/blocks/with-title', (require, exports, modu
 						fontWeight: '400',
 						color: '#828B95',
 						marginRight: 4,
-					}
+					},
 				}),
 				this.renderInnerContent(),
 			);
@@ -40,5 +39,4 @@ jn.define('crm/timeline/item/ui/body/blocks/with-title', (require, exports, modu
 	}
 
 	module.exports = { TimelineItemBodyWithTitleBlock };
-
 });

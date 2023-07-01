@@ -1,4 +1,5 @@
-<?
+<?php
+
 $MESS["SE_CHAT_TITLE"] = "Чаты";
 $MESS["SE_CHAT_DESC"] = "Настройки из данной категории будут применены после повторного открытия диалога.";
 $MESS["SE_CHAT_ENABLE_TITLE"] = "Включить новый чат";
@@ -18,5 +19,5 @@ $MESS["SE_CHAT_BACKGROUND_COLOR_LIGHT_GREEN"] = "Салатовый";
 $MESS["SE_CHAT_BACKGROUND_COLOR_PINK"] = "Розовый";
 $MESS["SE_CHAT_BACKGROUND_COLOR_CREAMY"] = "Сливочный";
 $MESS["SE_CHAT_BACKGROUND_COLOR_DARK"] = "Тёмный";
-$MESS["SE_CHAT_NATIVE_DIALOG_TITLE"] = "Нативный чат (Beta)";
-$MESS["SE_CHAT_NATIVE_DIALOG_ENABLE_TITLE"] = "Включить";
+$MESS["SE_CHAT_BETA_TITLE"] = "Новый чат (beta)";
+$MESS["SE_CHAT_BETA_ENABLE_TITLE"] = "Включить";

@@ -26,17 +26,29 @@ jn.define('layout/ui/audio-player', (require, exports, module) => {
 
 			this.currentTime = 0;
 			this.speed = 1;
+			this.uid = this.props.uid || Random.getString();
 			this.customEventEmitter = EventEmitter.createWithUid(this.uid);
-		}
 
-		get uid()
-		{
-			return BX.prop.get(this.props, 'uid', Random.getString());
+			this.handleExternalChangePlay = this.handleExternalEvent(this.handleExternalChangePlay);
+			this.handleExternalCancel = this.handleExternalEvent(this.handleExternalCancel);
+			this.handleExternalSetSeek = this.handleExternalEvent(this.handleExternalSetSeek);
+			this.onPlay = this.onPlay.bind(this);
+			this.onLoadAudio = this.onLoadAudio.bind(this);
 		}
 
 		get title()
 		{
 			return BX.prop.getString(this.props, 'title', null);
+		}
+
+		get fileName()
+		{
+			return BX.prop.getString(this.props, 'fileName', null);
+		}
+
+		get uri()
+		{
+			return BX.prop.getString(this.props, 'uri', null);
 		}
 
 		get imageUri()
@@ -46,26 +58,58 @@ jn.define('layout/ui/audio-player', (require, exports, module) => {
 
 		componentDidMount()
 		{
-			this.customEventEmitter.on('onTimelineIconClicked', () => {
-				this.onPlay.bind(this)
+			this.customEventEmitter.on('TimelineIconAudioPlayer::onChangePlay', this.handleExternalChangePlay);
+			this.customEventEmitter.on('TopPanelAudioPlayer::onChangePlay', this.handleExternalChangePlay);
+			this.customEventEmitter.on('TopPanelAudioPlayer::onCancel', this.handleExternalCancel);
+			this.customEventEmitter.on('TopPanelAudioPlayer::onSetSeek', this.handleExternalSetSeek);
+		}
 
-				if (!this.state.isLoading && !this.state.duration)
+		/**
+		 * @private
+		 * @param {function} handler
+		 */
+		handleExternalEvent(handler)
+		{
+			return (params = {}) => {
+				if (params.uri && params.uri === this.uri)
 				{
-					this.onLoadAudio();
+					handler.call(this, params);
 				}
-				else
-				{
-					this.onPlay();
-				}
-			});
-			this.customEventEmitter.on('TopPanelAudioPlayer::onChangePlay', () => this.onPlay());
-			this.customEventEmitter.on('TopPanelAudioPlayer::onCancel', () => this.onCancel());
-			this.customEventEmitter.on('TopPanelAudioPlayer::onSetSeek', ({ currentTime }) => {
-				currentTime = Math.min(currentTime, this.state.duration);
-				currentTime = Math.max(currentTime, 0);
+			};
+		}
 
-				this.player.setSeek(currentTime);
-			});
+		/**
+		 * @private
+		 */
+		handleExternalChangePlay()
+		{
+			if (!this.state.isLoading && !this.state.duration)
+			{
+				this.onLoadAudio();
+			}
+			else
+			{
+				this.onPlay();
+			}
+		}
+
+		/**
+		 * @private
+		 */
+		handleExternalCancel()
+		{
+			this.onCancel();
+		}
+
+		/**
+		 * @private
+		 */
+		handleExternalSetSeek({ currentTime })
+		{
+			currentTime = Math.min(currentTime, this.state.duration);
+			currentTime = Math.max(currentTime, 0);
+
+			this.player.setSeek(currentTime);
 		}
 
 		onPlayerReady(duration)
@@ -81,7 +125,9 @@ jn.define('layout/ui/audio-player', (require, exports, module) => {
 					duration: this.state.duration,
 					uid: this.uid,
 					currentTime: this.currentTime,
-					speed: this.speed
+					speed: this.speed,
+					uri: this.uri,
+					title: this.title,
 				}]);
 		}
 
@@ -136,8 +182,8 @@ jn.define('layout/ui/audio-player', (require, exports, module) => {
 				},
 				PlayButton({
 					play,
-					onClick: this.onPlay.bind(this),
-					onLoadAudio: this.onLoadAudio.bind(this),
+					onClick: this.onPlay,
+					onLoadAudio: this.onLoadAudio,
 					isLoading,
 					duration,
 				}),
@@ -147,7 +193,8 @@ jn.define('layout/ui/audio-player', (require, exports, module) => {
 					maximumValue: duration,
 					enabled: duration,
 					active: play,
-					showValues: duration,
+					showTimings: duration,
+					fileName: this.fileName,
 					onSlidingComplete: (currentTime) => {
 						if (this.player)
 						{
@@ -167,6 +214,7 @@ jn.define('layout/ui/audio-player', (require, exports, module) => {
 						}
 					},
 					customEventEmitter: this.customEventEmitter,
+					uri: this.uri,
 				}),
 			);
 		}
@@ -177,7 +225,7 @@ jn.define('layout/ui/audio-player', (require, exports, module) => {
 				isLoading: true,
 			}, () => {
 				this.player = new Player({
-					uri: this.props.uri,
+					uri: this.uri,
 					speed: this.speed,
 					title: this.title,
 					imageUri: this.imageUri,
@@ -189,18 +237,16 @@ jn.define('layout/ui/audio-player', (require, exports, module) => {
 
 		bindPlayerEvents()
 		{
-			this.player.on('ready', ({duration}) => {
+			this.player.on('ready', ({ duration }) => {
 				if (duration !== this.state.duration)
 				{
 					this.onPlayerReady(duration);
-					this.setState({
-						duration,
-					}, this.onPlay.bind(this));
+					this.setState({ duration }, this.onPlay);
 				}
 			});
 
 			this.player.on('error', (data) => {
-				console.log(data);
+				console.error('AudioPlayer error', data);
 
 				this.onPlayerPause();
 				this.setState({
@@ -219,12 +265,12 @@ jn.define('layout/ui/audio-player', (require, exports, module) => {
 				);
 			});
 
-			this.player.on('timeupdate', ({currentTime}) => {
+			this.player.on('timeupdate', ({ currentTime }) => {
 				this.currentTime = currentTime;
 				this.onPlayerUpdate(currentTime);
 			});
 
-			this.player.on("play", (data) => {
+			this.player.on('play', () => {
 				if (!this.state.play)
 				{
 					this.onPlayerPlay();
@@ -235,7 +281,7 @@ jn.define('layout/ui/audio-player', (require, exports, module) => {
 				}
 			});
 
-			this.player.on('pause', (data) => {
+			this.player.on('pause', () => {
 				if (this.state.play)
 				{
 					this.onPlayerPause();
@@ -245,7 +291,7 @@ jn.define('layout/ui/audio-player', (require, exports, module) => {
 				}
 			});
 
-			this.player.on('finish', (data) => {
+			this.player.on('finish', () => {
 				this.onPlayerFinish();
 				this.setState({
 					play: false,

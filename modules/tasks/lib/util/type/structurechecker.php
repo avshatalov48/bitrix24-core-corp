@@ -74,15 +74,15 @@ final class StructureChecker
 			{
 				$value = $this->walk($value, $sValue, $params, $depth + 1);
 			}
-			elseif($sValue == 'integer' || $sValue == static::TYPE_INT)
+			elseif (!($sValue instanceof \Closure) && ($sValue === 'integer' || $sValue == static::TYPE_INT))
 			{
 				$value = intval($value);
 			}
-			elseif($sValue == 'boolean' || $sValue == static::TYPE_BOOLEAN)
+			elseif (!($sValue instanceof \Closure) && ($sValue === 'boolean' || $sValue == static::TYPE_BOOLEAN))
 			{
 				$value = !!$value;
 			}
-			elseif($sValue == static::TYPE_INT_POSITIVE)
+			elseif (!($sValue instanceof \Closure) && $sValue == static::TYPE_INT_POSITIVE)
 			{
 				$value = intval($value);
 				if($value <= 0)
@@ -91,11 +91,11 @@ final class StructureChecker
 					continue;
 				}
 			}
-			elseif($sValue == static::TYPE_STRING)
+			elseif (!($sValue instanceof \Closure) && $sValue == static::TYPE_STRING)
 			{
 				$value = (string) $value;
 			}
-			elseif($sValue == static::TYPE_ARRAY_OF_STRING)
+			elseif (!($sValue instanceof \Closure) && $sValue == static::TYPE_ARRAY_OF_STRING)
 			{
 				if(!is_array($value) && (string) $value != '')
 				{
@@ -116,7 +116,7 @@ final class StructureChecker
 					$value[$m] = (string) $j;
 				}
 			}
-			elseif($sValue == 'unique integer[]') // array of unique integer
+			elseif ($sValue == 'unique integer[]') // array of unique integer
 			{
 				if(!is_array($value))
 				{
@@ -124,7 +124,7 @@ final class StructureChecker
 				}
 				$value = array_unique(array_filter($value, 'intval'));
 			}
-			elseif($sValue == static::TYPE_ENUM)
+			elseif (!($sValue instanceof \Closure) && $sValue == static::TYPE_ENUM)
 			{
 				$allowed = $standard[$k]['VALUES'];
 				if(!is_array($allowed) || empty($allowed) || !array_key_exists($value, $allowed))

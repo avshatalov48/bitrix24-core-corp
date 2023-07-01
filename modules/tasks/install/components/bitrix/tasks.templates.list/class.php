@@ -522,9 +522,15 @@ class TasksTemplatesListComponent extends TasksBaseComponent
 			}
 		}
 
-		if (\Bitrix\Main\Grid\Context::isInternalRequest() &&
-			check_bitrix_sessid() &&
-			$_REQUEST['action'] == \Bitrix\Main\Grid\Actions::GRID_GET_CHILD_ROWS)
+		if (isset($this->arParams['SCENARIO']))
+		{
+			$filter['SCENARIO'] = $this->arParams['SCENARIO'];
+		}
+
+		if (
+			\Bitrix\Main\Grid\Context::isInternalRequest()
+			&& check_bitrix_sessid()
+			&& (($_REQUEST['action'] ?? null) == \Bitrix\Main\Grid\Actions::GRID_GET_CHILD_ROWS))
 		{
 			if (!empty($_REQUEST['parent_id']))
 			{
@@ -607,6 +613,10 @@ class TasksTemplatesListComponent extends TasksBaseComponent
 			)
 			{
 				continue;
+			}
+			if (!is_array($items[$templateId]['TAGS']))
+			{
+				$items[$templateId]['TAGS'] = [];
 			}
 			$items[$templateId]['TAGS'][] = $row['NAME'];
 			$uniqueTags[$templateId][] = $row['NAME'];

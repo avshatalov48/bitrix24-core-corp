@@ -197,6 +197,7 @@ class TimemanWorktimeGridComponent extends Timeman\Component\BaseComponent
 				}
 				$url = !empty($departmentData['URL']) ? $departmentData['URL'] : '#';
 				$depName = '<a data-hint-no-icon ' . ($this->arResult['isSlider'] ? ' target="_blank" ' : '') . '
+				data-hint-html 
 				data-hint="' . htmlspecialcharsbx($hintChain) . '"
 				href="' . $url . '">'
 					. htmlspecialcharsbx($departmentData['NAME'])
@@ -246,7 +247,7 @@ class TimemanWorktimeGridComponent extends Timeman\Component\BaseComponent
 					}
 
 					##############
-					$templateParamsList = (array)$departmentData['USERS_DATA_BY_DATES'][$user->getId()][$worktimeCellData['id']];
+					$templateParamsList = (array) ($departmentData['USERS_DATA_BY_DATES'][$user->getId()][$worktimeCellData['id']] ?? null);
 					ob_start();
 					require __DIR__ . '/templates/.default/day-cell.php';
 					$cellHtml = ob_get_clean();
@@ -513,8 +514,7 @@ class TimemanWorktimeGridComponent extends Timeman\Component\BaseComponent
 				->buildWorktimeRecordManager(
 					$worktimeRecord,
 					$recordSchedule,
-					$recordShift,
-					$activeSchedulesByUser[$worktimeRecord->getUserId()]
+					$recordShift
 				);
 		}
 
@@ -602,34 +602,37 @@ class TimemanWorktimeGridComponent extends Timeman\Component\BaseComponent
 			$baseUri->addParams(['IFRAME' => $this->getRequest()->get('IFRAME')]);
 		}
 		$nextPeriod = clone $baseUri;
+		$periodNext = $this->getGrid()->getPeriodNext();
 		$nextPeriod->addParams(['REPORT_PERIOD_datesel' => 'RANGE'])
-			->addParams(['REPORT_PERIOD_from' => reset($this->getGrid()->getPeriodNext())->toString()])
-			->addParams(['REPORT_PERIOD_to' => end($this->getGrid()->getPeriodNext())->toString()]);
+			->addParams(['REPORT_PERIOD_from' => reset($periodNext)->toString()])
+			->addParams(['REPORT_PERIOD_to' => end($periodNext)->toString()]);
 		$this->arResult['URLS']['PERIOD_NEXT_PARTS'] = [
 			'REPORT_PERIOD_datesel' => 'RANGE',
-			'REPORT_PERIOD_from' => reset($this->getGrid()->getPeriodNext())->toString(),
-			'REPORT_PERIOD_to' => end($this->getGrid()->getPeriodNext())->toString(),
+			'REPORT_PERIOD_from' => reset($periodNext)->toString(),
+			'REPORT_PERIOD_to' => end($periodNext)->toString(),
 		];
 		$prevPeriod = clone $baseUri;
+		$periodPrev = $this->getGrid()->getPeriodPrev();
 		$prevPeriod->addParams(['REPORT_PERIOD_datesel' => 'RANGE'])
-			->addParams(['REPORT_PERIOD_from' => reset($this->getGrid()->getPeriodPrev())->toString()])
-			->addParams(['REPORT_PERIOD_to' => end($this->getGrid()->getPeriodPrev())->toString()]);
+			->addParams(['REPORT_PERIOD_from' => reset($periodPrev)->toString()])
+			->addParams(['REPORT_PERIOD_to' => end($periodPrev)->toString()]);
 		$this->arResult['URLS']['PERIOD_PREV_PARTS'] = [
 			'REPORT_PERIOD_datesel' => 'RANGE',
-			'REPORT_PERIOD_from' => reset($this->getGrid()->getPeriodPrev())->toString(),
-			'REPORT_PERIOD_to' => end($this->getGrid()->getPeriodPrev())->toString(),
+			'REPORT_PERIOD_from' => reset($periodPrev)->toString(),
+			'REPORT_PERIOD_to' => end($periodPrev)->toString(),
 		];
 
 		$this->arResult['URLS']['PERIOD_PREV'] = $prevPeriod;
 		$this->arResult['URLS']['PERIOD_NEXT'] = $nextPeriod;
 		try
 		{
-			$todayStartFrom = reset(Ranges::getRange($this->getGrid()->getCurrentPeriodType(), new Main\Type\DateTime()));
+			$range = Ranges::getRange($this->getGrid()->getCurrentPeriodType(), new Main\Type\DateTime());
+			$todayStartFrom = reset($range);
 			if ($todayStartFrom)
 			{
 				$todayStartFrom = \Bitrix\Main\Type\Date::createFromPhp($todayStartFrom)->toString();
 			}
-			$todayStartTo = end(Ranges::getRange($this->getGrid()->getCurrentPeriodType(), new Main\Type\DateTime()));
+			$todayStartTo = end($range);
 			if ($todayStartTo)
 			{
 				$todayStartTo = \Bitrix\Main\Type\Date::createFromPhp($todayStartTo)->toString();
@@ -713,7 +716,10 @@ class TimemanWorktimeGridComponent extends Timeman\Component\BaseComponent
 		{
 			$this->arResult['TIMEMAN_WORKTIME_GRID_COLUMNS_DATE_FORMAT_DAY_FULL_MONTH'] = 'j F';
 		}
-		$this->arResult['nowDate'] = TimeHelper::getInstance()->getUserDateTimeNow($this->arResult['currentUserId'])->format($this->dateTimeFormat);
+		$this->arResult['nowDate'] = TimeHelper::getInstance()
+			->getUserDateTimeNow($this->arResult['currentUserId'])
+			->format($this->dateTimeFormat)
+		;
 		$this->arResult['weekStart'] = 1;
 		$this->arResult['addScheduleLink'] = $this->dependencyManager->getUrlManager()->getUriTo(TimemanUrlManager::URI_SCHEDULE_CREATE);
 		if ($this->arResult['IS_SHIFTPLAN'] && $this->arResult['ADD_SHIFT_LINK'])
@@ -1042,7 +1048,7 @@ class TimemanWorktimeGridComponent extends Timeman\Component\BaseComponent
 				$heads[$depId] = $departmentsDataRaw[$depId]['UF_HEAD'];
 				$result[$depId]['ID'] = $depId;
 				$result[$depId]['CHAIN'] = $departmentsDataRaw[$depId]['CHAIN'];
-				$result[$depId]['TOP_SECTION'] = $departmentsDataRaw[$depId]['TOP_SECTION'];
+				$result[$depId]['TOP_SECTION'] = ($departmentsDataRaw[$depId]['TOP_SECTION'] ?? 0);
 				$result[$depId]['NAME'] = $departmentsDataRaw[$depId]['NAME'];
 				$result[$depId]['URL'] = str_replace('#ID#', $depId, $sectionUrl);
 				$result[$depId]['USERS'] = [];

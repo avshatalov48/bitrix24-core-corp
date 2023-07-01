@@ -18,6 +18,11 @@ class BaseScenario
 	 * @var string
 	 */
 	protected $id;
+	
+	/**
+	 * @var string
+	 */
+	protected $title;
 
 	/**
 	 * @var string
@@ -138,7 +143,23 @@ class BaseScenario
 	 */
 	public function getTitle(): string
 	{
-		return Loc::getMessage('CRM_SERVICE_FORM_SCENARIO_'.mb_strtoupper($this->getId())) ?? '';
+		if (!$this->title)
+		{
+			return Loc::getMessage('CRM_SERVICE_FORM_SCENARIO_'.mb_strtoupper($this->getId())) ?? '';
+		}
+		
+		return $this->title;
+	}
+	
+	/**
+	 * @param string|null $title
+	 * @return BaseScenario
+	 */
+	public function setTitle(?string $title): BaseScenario
+	{
+		$this->title = $title;
+		
+		return $this;
 	}
 
 	/**

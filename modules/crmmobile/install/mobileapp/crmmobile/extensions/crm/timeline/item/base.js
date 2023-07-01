@@ -2,7 +2,6 @@
  * @module crm/timeline/item/base
  */
 jn.define('crm/timeline/item/base', (require, exports, module) => {
-
 	const { MarketBanner } = require('crm/timeline/item/ui/market-banner');
 	const { TimelineItemHeader } = require('crm/timeline/item/ui/header');
 	const { TimelineItemIcon } = require('crm/timeline/item/ui/icon');
@@ -15,11 +14,11 @@ jn.define('crm/timeline/item/base', (require, exports, module) => {
 	const { get } = require('utils/object');
 	const { EventEmitter } = require('event-emitter');
 
-    /**
-     * @class TimelineItemBase
-     */
-    class TimelineItemBase extends LayoutComponent
-    {
+	/**
+	 * @class TimelineItemBase
+	 */
+	class TimelineItemBase extends LayoutComponent
+	{
 		constructor(props)
 		{
 			super(props);
@@ -83,7 +82,7 @@ jn.define('crm/timeline/item/base', (require, exports, module) => {
 		}
 
 		render()
-        {
+		{
 			return this.renderContainer(
 				this.renderInnerContent(),
 				this.model.needShowMarketBanner && MarketBanner({
@@ -91,22 +90,23 @@ jn.define('crm/timeline/item/base', (require, exports, module) => {
 					onClose: () => this.hideMarketBanner(),
 				}),
 			);
-        }
+		}
 
 		renderContainer(...children)
 		{
 			return View(
 				{
 					ref: (ref) => this.containerRef = ref,
+					testId: `${this.model.type}_${this.model.id}`,
 					style: {
-						borderRadius: 16,
+						borderRadius: 12,
 						padding: 0,
 						marginBottom: 16,
-						borderColor: '#DFE0E3',
+						borderColor: '#dfe0e3',
 						borderWidth: this.model.hasLowPriority ? 1 : 0,
-					}
+					},
 				},
-				...children
+				...children,
 			);
 		}
 
@@ -124,7 +124,7 @@ jn.define('crm/timeline/item/base', (require, exports, module) => {
 						style: {
 							flexDirection: 'row',
 							justifyContent: 'space-between',
-						}
+						},
 					},
 					this.hasIcon && new TimelineItemIcon({
 						logo: this.layoutSchema.body.logo,
@@ -179,11 +179,11 @@ jn.define('crm/timeline/item/base', (require, exports, module) => {
 			}
 		}
 
-		onAction({ type, value, actionParams })
+		onAction(params = {})
 		{
 			if (this.props.onAction)
 			{
-				this.props.onAction({ type, value, actionParams, source: this });
+				this.props.onAction({ ...params, source: this });
 			}
 		}
 
@@ -193,17 +193,29 @@ jn.define('crm/timeline/item/base', (require, exports, module) => {
 		 */
 		blink()
 		{
-			return new Promise(resolve => {
-				if (this.backgroundLayerRef)
+			return new Promise((resolve) => {
+				if (this.isBlinkable())
 				{
-					return this.backgroundLayerRef.blink();
+					this.backgroundLayerRef.blink().finally(resolve);
 				}
 				else
 				{
 					resolve();
 				}
-			})
+			});
+		}
 
+		/**
+		 * @private
+		 * @return {boolean}
+		 */
+		isBlinkable()
+		{
+			if (this.model.hasLowPriority)
+			{
+				return false;
+			}
+			return Boolean(this.backgroundLayerRef);
 		}
 
 		/**
@@ -212,12 +224,12 @@ jn.define('crm/timeline/item/base', (require, exports, module) => {
 		 */
 		fadeOut()
 		{
-			return new Promise(resolve => {
+			return new Promise((resolve) => {
 				if (this.containerRef)
 				{
 					this.containerRef.animate({
 						duration: 300,
-						opacity: 0
+						opacity: 0,
 					}, resolve);
 				}
 				else
@@ -233,12 +245,12 @@ jn.define('crm/timeline/item/base', (require, exports, module) => {
 		 */
 		fadeIn()
 		{
-			return new Promise(resolve => {
+			return new Promise((resolve) => {
 				if (this.containerRef)
 				{
 					this.containerRef.animate({
 						duration: 300,
-						opacity: 1
+						opacity: 1,
 					}, resolve);
 				}
 				else
@@ -278,8 +290,7 @@ jn.define('crm/timeline/item/base', (require, exports, module) => {
 		{
 			return 16;
 		}
-    }
+	}
 
-    module.exports = { TimelineItemBase };
-
+	module.exports = { TimelineItemBase };
 });

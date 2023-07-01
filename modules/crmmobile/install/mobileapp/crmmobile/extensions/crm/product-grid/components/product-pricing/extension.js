@@ -2,7 +2,6 @@
  * @module crm/product-grid/components/product-pricing
  */
 jn.define('crm/product-grid/components/product-pricing', (require, exports, module) => {
-
 	const { Loc } = require('loc');
 	const { mergeImmutable } = require('utils/object');
 	const { debounce } = require('utils/function');
@@ -16,7 +15,7 @@ jn.define('crm/product-grid/components/product-pricing', (require, exports, modu
 	const { Haptics } = require('haptics');
 	const { DiscountType } = require('crm/product-calculator');
 
-	const tap = fn => (...args) => {
+	const tap = (fn) => (...args) => {
 		setTimeout(() => Haptics.impactMedium(), 0);
 		fn(...args);
 	};
@@ -49,13 +48,13 @@ jn.define('crm/product-grid/components/product-pricing', (require, exports, modu
 					{
 						style: {
 							marginBottom: 0,
-						}
+						},
 					},
 					this.renderDiscountField(),
 					this.renderTotalSum(),
 				),
 				this.renderDiscountValue(),
-				this.renderTaxes(),
+				this.showTax && this.renderTaxes(),
 			);
 		}
 
@@ -63,8 +62,8 @@ jn.define('crm/product-grid/components/product-pricing', (require, exports, modu
 		{
 			const price = this.productRow.getBasePrice();
 			const currency = this.productRow.getCurrency();
-			const money = new Money({amount: price, currency});
-			const moneyStub = new Money({amount: 0, currency});
+			const money = new Money({ amount: price, currency });
+			const moneyStub = new Money({ amount: 0, currency });
 
 			const handleChange = (field) => {
 				const newVal = this.normalizeMoneyFieldValue(field.value);
@@ -81,13 +80,20 @@ jn.define('crm/product-grid/components/product-pricing', (require, exports, modu
 				placeholder: moneyStub.formattedAmount,
 				label: `${Loc.getMessage('PRODUCT_GRID_CONTROL_PRICING_PRICE')}, ${money.formattedCurrency}`,
 				onChange: debounce((field) => {
-					if (field.value === '') return;
+					if (field.value === '')
+					{
+						return;
+					}
 					handleChange(field);
 				}, 300),
 				onBlur: (field) => {
-					if (field.value === '') handleChange(field);
+					if (field.value === '')
+					{
+						handleChange(field);
+					}
 				},
 				onClick: () => this.notifyPriceDisabled(),
+				testId: 'productGridPriceField',
 			});
 		}
 
@@ -114,7 +120,7 @@ jn.define('crm/product-grid/components/product-pricing', (require, exports, modu
 				disabled,
 				value,
 				groupSize: 3,
-				groupSeparator: Boolean(groupSeparator) ? groupSeparator : ' ',
+				groupSeparator: groupSeparator || ' ',
 				decimalSeparator: moneyFormat.DEC_POINT,
 				placeholder: '0',
 				useIncrement: true,
@@ -125,12 +131,19 @@ jn.define('crm/product-grid/components/product-pricing', (require, exports, modu
 				labelAlign: 'center',
 				textAlign: 'center',
 				onChange: debounce((field) => {
-					if (field.value === '') return;
+					if (field.value === '')
+					{
+						return;
+					}
 					handleChange(field);
 				}, 300),
 				onBlur: (field) => {
-					if (field.value === '') handleChange(field);
-				}
+					if (field.value === '')
+					{
+						handleChange(field);
+					}
+				},
+				testId: 'productGridQuantityField',
 			});
 		}
 
@@ -142,7 +155,7 @@ jn.define('crm/product-grid/components/product-pricing', (require, exports, modu
 				? this.productRow.getDiscountSum()
 				: this.productRow.getDiscountRate();
 
-			const moneyStub = new Money({amount: 0, currency});
+			const moneyStub = new Money({ amount: 0, currency });
 			const disabled = !this.isDiscountFieldEditable();
 
 			const handleChange = (field) => {
@@ -152,7 +165,7 @@ jn.define('crm/product-grid/components/product-pricing', (require, exports, modu
 					this.onChangeDiscountValue(newVal);
 				}
 			};
-			
+
 			return new ProductGridMoneyField({
 				value,
 				currency,
@@ -161,11 +174,17 @@ jn.define('crm/product-grid/components/product-pricing', (require, exports, modu
 				keyboardType: 'decimal-pad',
 				label: Loc.getMessage('PRODUCT_GRID_CONTROL_PRICING_DISCOUNT'),
 				onChange: debounce((field) => {
-					if (field.value === '') return;
+					if (field.value === '')
+					{
+						return;
+					}
 					handleChange(field);
 				}, 300),
 				onBlur: (field) => {
-					if (field.value === '') handleChange(field);
+					if (field.value === '')
+					{
+						handleChange(field);
+					}
 				},
 				rightBlock: (field) => DiscountTypeSwitch({
 					disabled,
@@ -178,8 +197,9 @@ jn.define('crm/product-grid/components/product-pricing', (require, exports, modu
 						const nextDiscountValue = field.isFocused ? this.normalizeMoneyFieldValue(field.value) : false;
 
 						this.onChangeDiscountType(nextDiscountType, nextDiscountValue);
-					})
+					}),
 				}),
+				testId: 'productGridDiscountField',
 			});
 		}
 
@@ -196,36 +216,37 @@ jn.define('crm/product-grid/components/product-pricing', (require, exports, modu
 				return null;
 			}
 
-			const discount = new Money({amount: discountRow, currency});
-			const oldPrice = new Money({amount: oldPriceSum, currency});
+			const discount = new Money({ amount: discountRow, currency });
+			const oldPrice = new Money({ amount: oldPriceSum, currency });
 
 			return Row(
 				{
 					style: {
 						marginTop: 6,
 						marginBottom: 0,
-					}
+					},
 				},
 				View(
 					{
 						style: {
 							flexDirection: 'row',
 							justifyContent: 'flex-end',
-						}
+						},
 					},
 					DiscountPrice({
 						oldPrice,
 						discount,
-					})
-			));
+					}),
+				),
+			);
 		}
 
 		renderTotalSum()
 		{
 			const amount = this.productRow.getSum();
 			const currency = this.productRow.getCurrency();
-			const money = new Money({amount, currency});
-			const moneyStub = new Money({amount: 0, currency});
+			const money = new Money({ amount, currency });
+			const moneyStub = new Money({ amount: 0, currency });
 
 			const handleChange = (field) => {
 				const val = this.normalizeMoneyFieldValue(field.value);
@@ -244,12 +265,19 @@ jn.define('crm/product-grid/components/product-pricing', (require, exports, modu
 				textAlign: 'right',
 				disabled: !this.isDiscountFieldEditable(),
 				onChange: debounce((field) => {
-					if (field.value === '') return;
+					if (field.value === '')
+					{
+						return;
+					}
 					handleChange(field);
 				}, 300),
 				onBlur: (field) => {
-					if (field.value === '') handleChange(field);
-				}
+					if (field.value === '')
+					{
+						handleChange(field);
+					}
+				},
+				testId: 'productGridTotalSumField',
 			});
 		}
 
@@ -273,13 +301,13 @@ jn.define('crm/product-grid/components/product-pricing', (require, exports, modu
 
 			const amount = this.productRow.getTaxSum();
 			const currency = this.productRow.getCurrency();
-			const taxValue = new Money({amount, currency});
+			const taxValue = new Money({ amount, currency });
 
 			const taxValueMessage = `${taxPercentMessage}, ${taxValue.formatted}`;
 
 			const style = {
 				fontSize: 12,
-				color: '#A8ADB4',
+				color: '#a8adb4',
 				textAlign: 'right',
 			};
 
@@ -288,20 +316,20 @@ jn.define('crm/product-grid/components/product-pricing', (require, exports, modu
 					style: {
 						marginTop: 4,
 						marginBottom: 0,
-					}
+					},
 				},
 				View(
 					{
 						style: {
 							flexDirection: 'row',
 							justifyContent: 'flex-end',
-						}
+						},
 					},
 					View(
 						{
 							style: {
 								flexDirection: 'column',
-							}
+							},
 						},
 						Text({
 							style,
@@ -311,8 +339,8 @@ jn.define('crm/product-grid/components/product-pricing', (require, exports, modu
 							style,
 							text: taxIncludedMessage,
 						}),
-					)
-				)
+					),
+				),
 			);
 		}
 
@@ -365,6 +393,11 @@ jn.define('crm/product-grid/components/product-pricing', (require, exports, modu
 			}
 		}
 
+		get showTax()
+		{
+			return BX.prop.getBoolean(this.props, 'showTax', true);
+		}
+
 		notifyPriceDisabled()
 		{
 			if (!this.productRow.isPriceEditable())
@@ -373,7 +406,7 @@ jn.define('crm/product-grid/components/product-pricing', (require, exports, modu
 				const message = Loc.getMessage('PRODUCT_GRID_CONTROL_PRICING_FIELD_CHANGE_NOT_PERMITTED_BODY');
 				const seconds = 5;
 
-				notify({title, message, seconds});
+				notify({ title, message, seconds });
 			}
 		}
 
@@ -425,7 +458,7 @@ jn.define('crm/product-grid/components/product-pricing', (require, exports, modu
 				marginLeft: index === 0 ? 0 : horizontalGap,
 				marginRight: index === maxIndex ? 0 : horizontalGap,
 			};
-			return View({style}, columnContent);
+			return View({ style }, columnContent);
 		});
 
 		const defaultOptions = {
@@ -433,12 +466,12 @@ jn.define('crm/product-grid/components/product-pricing', (require, exports, modu
 				flexDirection: 'row',
 				justifyContent: 'space-between',
 				marginBottom: verticalGap,
-			}
+			},
 		};
 
 		return View(
 			mergeImmutable(defaultOptions, options),
-			...children
+			...children,
 		);
 	}
 
@@ -449,7 +482,7 @@ jn.define('crm/product-grid/components/product-pricing', (require, exports, modu
 				style: {
 					flexDirection: 'row',
 				},
-				onClick: () => props.disabled ? false : props.onClick(),
+				onClick: () => (props.disabled ? false : props.onClick()),
 			},
 			View(
 				{
@@ -458,14 +491,14 @@ jn.define('crm/product-grid/components/product-pricing', (require, exports, modu
 						justifyContent: 'center',
 						paddingLeft: 4,
 						paddingRight: 4,
-					}
+					},
 				},
 				Text({
 					text: String(props.text),
 					style: {
-						color: '#828B95',
+						color: '#828b95',
 						fontSize: 16,
-					}
+					},
 				}),
 			),
 			!props.disabled && View(
@@ -473,7 +506,7 @@ jn.define('crm/product-grid/components/product-pricing', (require, exports, modu
 					style: {
 						flexDirection: 'column',
 						justifyContent: 'center',
-					}
+					},
 				},
 				Image({
 					style: {
@@ -481,13 +514,12 @@ jn.define('crm/product-grid/components/product-pricing', (require, exports, modu
 						height: 5,
 					},
 					svg: {
-						content: `<svg width="8" height="5" viewBox="0 0 8 5" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M6.8344 0.0751953L4.57087 2.33872L4.00061 2.90015L3.44117 2.33872L1.17764 0.0751953L0.378906 0.873929L4.00599 4.50101L7.63307 0.873929L6.8344 0.0751953Z" fill="#A8ADB4"/></svg>`,
-					}
-				})
+						content: '<svg width="8" height="5" viewBox="0 0 8 5" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M6.8344 0.0751953L4.57087 2.33872L4.00061 2.90015L3.44117 2.33872L1.17764 0.0751953L0.378906 0.873929L4.00599 4.50101L7.63307 0.873929L6.8344 0.0751953Z" fill="#A8ADB4"/></svg>',
+					},
+				}),
 			),
 		);
 	}
 
 	module.exports = { ProductPricing };
-
 });

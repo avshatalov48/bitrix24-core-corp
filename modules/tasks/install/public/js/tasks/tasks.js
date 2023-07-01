@@ -322,7 +322,18 @@ BX.mergeEx(BX.Tasks, {
 		}
 
 		return top;
-	}
+	},
+
+	handleOpenCrmDialog()
+	{
+		BX.ajax.runAction('tasks.analytics.hit', {
+				data: {},
+				analyticsLabel: {
+					scenario: 'task_add',
+				}
+			},
+		);
+	},
 });
 
 if(typeof BX.Tasks.Runtime == 'undefined')

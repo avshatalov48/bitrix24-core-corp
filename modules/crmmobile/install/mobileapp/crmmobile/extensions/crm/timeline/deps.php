@@ -5,10 +5,23 @@ return [
 		'layout/ui/floating-button',
 		'layout/ui/empty-list',
 		'layout/ui/context-menu',
+		'layout/ui/widget-header-button',
 		'layout/ui/snackbar-text',
 		'selector/widget/factory',
-		'crm:timeline/ui/*',
-		'crm:timeline/services/*',
+
+		'crm:timeline/ui/banner',
+		'crm:timeline/ui/divider',
+		'crm:timeline/ui/reminder',
+		'crm:timeline/ui/sticky-date',
+		'crm:timeline/ui/text-editor',
+		'crm:timeline/ui/textarea',
+		'crm:timeline/ui/toolbar',
+
+		'crm:timeline/services/activity-viewer',
+		'crm:timeline/services/data-provider',
+		'crm:timeline/services/file-selector-configs',
+		'crm:timeline/services/push-processor',
+
 		'crm:timeline/action',
 		'crm:timeline/controllers',
 		'crm:timeline/item',
@@ -23,6 +36,7 @@ return [
 		'utils/color',
 		'utils/type',
 		'utils/url',
+		'utils/file',
 		'event-emitter',
 		'rest',
 		'haptics',
@@ -34,5 +48,5 @@ return [
 		'animation/components/fade-view',
 		'pull/client/events',
 		'feature',
-	]
+	],
 ];

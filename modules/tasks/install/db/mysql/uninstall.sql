@@ -123,3 +123,9 @@ DROP TABLE IF EXISTS b_tasks_template_dependence;
 DROP TABLE IF EXISTS b_tasks_task_tag;
 
 DROP TABLE IF EXISTS b_tasks_label;
+
+DROP TABLE IF EXISTS b_tasks_viewed_group;
+
+DROP TABLE IF EXISTS b_tasks_scenario;
+
+DROP TABLE IF EXISTS b_tasks_template_scenario;

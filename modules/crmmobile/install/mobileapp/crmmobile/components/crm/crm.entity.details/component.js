@@ -1,28 +1,37 @@
 (() => {
+	const require = (ext) => jn.require(ext);
 
 	const {
 		ajaxErrorHandler,
+		analyticsProvider,
 		onCloseHandler,
 		headerProcessor,
 		rightButtonsProvider,
 		additionalButtonProvider,
+		floatingButtonProvider,
 		setAvailableTabs,
 		listenTimelinePush,
 		customEvents,
 		globalEvents,
 		onEntityModelReady,
 		menuProvider,
-	} = jn.require('crm/entity-detail/component');
+		ahaMomentsManager,
+	} = require('crm/entity-detail/component');
 
-	const { DetailToolbarFactory } = jn.require('crm/entity-detail/toolbar');
+	const { DetailToolbarFactory } = require('crm/entity-detail/toolbar');
+	const { DetailCardComponent } = require('layout/ui/detail-card');
 
-	UI.DetailCardComponent
+	DetailCardComponent
 		.create(result.card)
 		.setTestIdPrefix('CRM_ENTITY_DETAILS')
+		.setAnalyticsProvider(analyticsProvider)
 		.setMenuActionsProvider(menuProvider)
 		.setTopToolbarFactory(DetailToolbarFactory)
 		.setRightButtonsProvider(rightButtonsProvider)
 		.setAdditionalElementsProvider(additionalButtonProvider)
+		.setFloatingButtonProvider(floatingButtonProvider)
+		.setAhaMomentsManager(ahaMomentsManager)
+		.enableFloatingButton(true)
 		.setAvailableTabsHandler(setAvailableTabs)
 		.setAjaxErrorHandler(ajaxErrorHandler)
 		.setOnCloseHandler(onCloseHandler)
@@ -33,5 +42,4 @@
 		.onEntityModelReady(onEntityModelReady)
 		.renderTo(layout)
 	;
-
 })();

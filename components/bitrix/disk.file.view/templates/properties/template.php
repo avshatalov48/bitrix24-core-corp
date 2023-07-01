@@ -1,6 +1,7 @@
 <?php
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Web\Uri;
 
 if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 /** @var array $arParams */
@@ -83,7 +84,7 @@ foreach ($jsTemplates->getChildren() as $jsTemplate)
 				<? endif; ?>
 			</table>
 			<div class="disk-detail-properties-owner">
-				<div class="disk-detail-properties-owner-avatar" style="background-image: url(<?= $arResult['FILE']['CREATE_USER']['AVA'] ?>);"></div>
+				<div class="disk-detail-properties-owner-avatar" style="background-image: url('<?= Uri::urnEncode($arResult['FILE']['CREATE_USER']['AVA']) ?>');"></div>
 				<div class="disk-detail-properties-owner-name">
 					<a class="disk-detail-properties-owner-link" target="_top" href="<?= $arResult['FILE']['CREATE_USER']['LINK'] ?>"><?= htmlspecialcharsbx($arResult['FILE']['CREATE_USER']['NAME']) ?></a>
 					<div class="disk-detail-properties-owner-position"><?= htmlspecialcharsbx($arResult['FILE']['CREATE_USER']['WORK_POSITION']) ?></div>
@@ -164,7 +165,7 @@ foreach ($jsTemplates->getChildren() as $jsTemplate)
 				<div class="disk-file-info-users-title"><?= Loc::getMessage('DISK_FILE_VIEW_ENTITY_MEMBERS') ?></div>
 				<? foreach($entity['MEMBERS'] as $member){?>
 					<div class="disk-file-info-user">
-						<div class="disk-file-info-user-avatar" <?= (!empty($member['AVATAR_SRC'])? "style=\"background-image: url({$member['AVATAR_SRC']});\"" : '') ?>></div>
+						<div class="disk-file-info-user-avatar" <?= (!empty($member['AVATAR_SRC'])? "style=\"background-image: url('" . Uri::urnEncode($member['AVATAR_SRC']) . "');\"" : '') ?>></div>
 						<? if(empty($member['LINK'])) {?>
 							<div class="disk-file-info-user-name"><?= htmlspecialcharsbx($member['NAME']) ?></div>
 						<? } else { ?>

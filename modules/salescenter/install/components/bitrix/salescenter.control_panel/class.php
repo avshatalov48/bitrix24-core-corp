@@ -84,8 +84,17 @@ class SalesCenterControlPanelComponent extends CBitrixComponent implements Contr
 		$tiles = [
 			$this->getCrmWithEshopTile(),
 			$this->getCrmStoreTile(),
-			$this->getCrmFormTile(),
 		];
+
+		if (
+			CrmManager::getInstance()->isEnabled()
+			&& CrmManager::getInstance()->isTerminalAvailable()
+		)
+		{
+			$tiles[] = $this->getTerminalTile();
+		}
+
+		$tiles[] = $this->getCrmFormTile();
 
 		if (RestManager::getInstance()->isEnabled())
 		{
@@ -162,7 +171,6 @@ class SalesCenterControlPanelComponent extends CBitrixComponent implements Contr
 				'active' => $isActive,
 				'activeColor' => '#DC3F49',
 				'activeImage' => $this->getImagePath().'crm-with-eshop-active.svg',
-				'label' => self::LABEL_NEW,
 				'reloadAction' => 'getCrmWithEshopTile',
 				'sliderOptions' => [
 					'width' => 1200,
@@ -245,7 +253,6 @@ class SalesCenterControlPanelComponent extends CBitrixComponent implements Contr
 				'active' => \Bitrix\SalesCenter\Integration\LandingManager::getInstance()->isSiteExists(),
 				'activeColor' => '#00B4AC',
 				'activeImage' => $this->getImagePath().'crm-store.svg',
-				'label' => self::LABEL_NEW,
 			],
 		];
 	}
@@ -535,7 +542,6 @@ class SalesCenterControlPanelComponent extends CBitrixComponent implements Contr
 				'activeColor' => '#2FC6F6',
 				'activeImage' => $this->getImagePath().'crm-form-active.svg',
 				'isDependsOnConnection' => false,
-				'label' => self::LABEL_NEW,
 			],
 		];
 	}
@@ -1114,6 +1120,34 @@ class SalesCenterControlPanelComponent extends CBitrixComponent implements Contr
 		}
 
 		return $agreementId;
+	}
+
+	protected function getTerminalTile(): array
+	{
+		$terminalPath = '/terminal/';
+
+		$platformId = CrmManager::getInstance()->getTerminalPlatformId();
+		$terminalPayment = Sale\Payment::getList([
+			'select' => ['ID'],
+			'filter' => [
+				'=ORDER.TRADING_PLATFORM.TRADING_PLATFORM_ID' => $platformId,
+			],
+			'limit' => 1,
+		])->fetch();
+
+		return [
+			'id' => 'terminal',
+			'title' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_TERMINAL_PAYMENT_TILE'),
+			'image' => $this->getImagePath() . 'terminal.svg',
+			'data' => [
+				'isDependsOnConnection' => true,
+				'url' => $terminalPath,
+				'active' => (bool)$terminalPayment,
+				'activeColor' => '#0B66C3',
+				'activeImage' => $this->getImagePath() . 'terminal-active.svg',
+				'label' => self::LABEL_NEW,
+			],
+		];
 	}
 
 	/**

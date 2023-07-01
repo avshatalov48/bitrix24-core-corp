@@ -7,3 +7,4 @@ $MESS["CT_BBKL_COLUMN_ACCESS_KEY"] = "Ключ";
 $MESS["CT_BBKL_COLUMN_APPLICATION"] = "Приложение";
 $MESS["CT_BBKL_COLUMN_DATE_CREATE"] = "Создан";
 $MESS["CT_BBKL_COLUMN_CREATED_BY"] = "Администратор";
+$MESS["CT_BBKL_COLUMN_LAST_ACTIVITY_DATE"] = "Последняя активность";

@@ -1,8 +1,8 @@
 <?php
 namespace Bitrix\Crm\Integration;
 
-use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm\Entity\EntityEditorConfigScope;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Ui\EntityForm\Scope;
 
@@ -150,7 +150,7 @@ class Calendar
 	 */
 	public static function isUserfieldShownInForm($userfield, $entityType, $categoryId = 0)
 	{
-		$map = array();
+		$map = [];
 		$categoryId = intval($categoryId);
 		if ($entityType == 'CRM_DEAL')
 		{
@@ -203,7 +203,7 @@ class Calendar
 	{
 		if (!isset(self::$fieldsMap[$configId]))
 		{
-			self::$fieldsMap[$configId] = array();
+			self::$fieldsMap[$configId] = [];
 			$formSettings = self::getFormFieldsMap($configId);
 
 			if (is_array($formSettings))
@@ -323,17 +323,25 @@ class Calendar
 
 	public static function prepareNewEntityUrlFromCalendar($url = '', $filterSelect = '')
 	{
-		list($filterSelectId, $filterSelectType, $filterSelectName) = self::parseUserfieldKey($filterSelect);
+		$filterSelectId = null;
+		$filterSelectType = null;
+		$filterSelectName = null;
 
-		if (intval($filterSelectId) > 0 && ($filterSelectType == 'resourcebooking' || is_null($filterSelectType)))
+		$parsedKeys = self::parseUserfieldKey($filterSelect);
+		if (count($parsedKeys) > 1)
+		{
+			[$filterSelectId, $filterSelectType, $filterSelectName] = self::parseUserfieldKey($filterSelect);
+		}
+
+		if ((int)$filterSelectId > 0 && ($filterSelectType === 'resourcebooking' || is_null($filterSelectType)))
 		{
 			$url .= '#calendar:'.urlencode($filterSelectId).'|#DATE_FROM#|#DATE_TO#';
 		}
-		elseif (intval($filterSelectId) > 0 && ($filterSelectType == 'date' || $filterSelectType == 'datetime'))
+		elseif ((int)$filterSelectId > 0 && ($filterSelectType === 'date' || $filterSelectType === 'datetime'))
 		{
 			$url = \CHTTP::urlAddParams($url, array($filterSelectName => '#DATE_FROM#'));
 		}
-		elseif($filterSelectId == 'CLOSEDATE' || $filterSelectId == 'BEGINDATE')
+		elseif($filterSelectId == 'CLOSEDATE' || $filterSelectId === 'BEGINDATE')
 		{
 			$url = \CHTTP::urlAddParams($url, array($filterSelectId => '#DATE_FROM#'));
 		}

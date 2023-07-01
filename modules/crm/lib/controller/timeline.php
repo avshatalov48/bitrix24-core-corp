@@ -1,31 +1,42 @@
 <?php
+
 namespace Bitrix\Crm\Controller;
 
+use Bitrix\Crm\Security\EntityAuthorization;
+use Bitrix\Crm\Timeline\CommentController;
+use Bitrix\Crm\Timeline\Entity\TimelineBindingTable;
+use Bitrix\Crm\Timeline\Entity\TimelineTable;
+use Bitrix\Crm\Timeline\ExternalNoticeController;
 use Bitrix\Main;
-use Bitrix\Crm;
-use Bitrix\Crm\Controller\Response;
+use Bitrix\Main\Engine\Response\Component;
+use Bitrix\Main\Engine\Response\HtmlContent;
+use Bitrix\Main\Text\Emoji;
 
 class Timeline extends Main\Engine\Controller
 {
-	//BX.ajax.runAction("crm.api.timeline.loadEditor", { data: { $id: 0, name: "" } });
-	public function loadEditorAction($id = null, $name = null)
+	/**
+	 * BX.ajax.runAction('crm.api.timeline.loadEditor', { data: { $id: 0, name: '' } });
+	 *
+	 * @param mixed $id
+	 * @param mixed $name
+	 */
+	final public function loadEditorAction($id = null, $name = null)
 	{
-		$id = ((int)$id > 0) ? (int)$id : 0;
-		$editorName = !empty($name) ? htmlspecialcharsbx($name) : "CrmTimeLineComment{$id}";
+		$id = isset($id) ? (int)$id : 0;
+		$editorName = empty($name) ? "CrmTimeLineComment{$id}" : htmlspecialcharsbx($name);
 		$formId = "crm-timeline-comment-{$id}";
 
-		$text = "";
-		if ($id)
+		$text = '';
+		if ($id > 0)
 		{
-			$timelineBinding = Crm\Timeline\Entity\TimelineBindingTable::getList(
-				array(
-					"filter" => array('OWNER_ID' => $id)
-				)
-			);
 			$isAllowed = false;
+			$timelineBinding = TimelineBindingTable::getList(['filter' => ['OWNER_ID' => $id]]);
 			while($bind = $timelineBinding->fetch())
 			{
-				$isAllowed = Crm\Security\EntityAuthorization::checkUpdatePermission($bind['ENTITY_TYPE_ID'], $bind['ENTITY_ID']);
+				$isAllowed = EntityAuthorization::checkUpdatePermission(
+					$bind['ENTITY_TYPE_ID'],
+					$bind['ENTITY_ID']
+				);
 				if ($isAllowed)
 				{
 					break;
@@ -34,20 +45,20 @@ class Timeline extends Main\Engine\Controller
 
 			if ($isAllowed)
 			{
-				$timelineData = Crm\Timeline\Entity\TimelineTable::getById($id);
-				$comment = $timelineData->fetch();
-				$text = \Bitrix\Main\Text\Emoji::decode($comment['COMMENT']);
+				$timelineData = TimelineTable::getById($id);
+				$comment = $timelineData->fetch() ?? [];
+				$text = Emoji::decode($comment['COMMENT']);
 			}
 			else
 			{
-				return Main\Engine\Response\HtmlContent::createDenied();
+				return HtmlContent::createDenied();
 			}
 		}
 
-		$fileFields = $GLOBALS['USER_FIELD_MANAGER']->GetUserFields(Crm\Timeline\CommentController::UF_FIELD_NAME, $id);
+		$fileFields = $GLOBALS['USER_FIELD_MANAGER']->GetUserFields(CommentController::UF_FIELD_NAME, $id);
 		if (isset($fileFields['UF_CRM_COMMENT_FILES']))
 		{
-			$fileFields['UF_CRM_COMMENT_FILES']['~EDIT_FORM_LABEL'] = Crm\Timeline\CommentController::UF_COMMENT_FILE_NAME;
+			$fileFields['UF_CRM_COMMENT_FILES']['~EDIT_FORM_LABEL'] = CommentController::UF_COMMENT_FILE_NAME;
 			$fileFields['UF_CRM_COMMENT_FILES']['TAG'] = 'DOCUMENT ID';
 		}
 
@@ -55,27 +66,26 @@ class Timeline extends Main\Engine\Controller
 			'SELECTOR_VERSION' => 2,
 			'FORM_ID' => $formId,
 			'SHOW_MORE' => 'N',
-			'PARSER' => array(
+			'PARSER' => [
 				'Bold', 'Italic', 'Underline', 'Strike',
 				'ForeColor', 'FontList', 'FontSizeList', 'RemoveFormat',
 				'Quote', 'Code', 'InsertCut',
 				'CreateLink', 'Image', 'Table', 'Justify',
 				'InsertOrderedList', 'InsertUnorderedList',
 				'SmileList', 'Source', 'UploadImage', 'InputVideo', 'MentionUser'
-			),
-			'BUTTONS' => array(
+			],
+			'BUTTONS' => [
 				'UploadImage',
-				"CreateLink",
-				"InputVideo",
-				"Quote",
-				"MentionUser"
-			),
-			'TEXT' => array(
+				'CreateLink',
+				'InputVideo',
+				'MentionUser'
+			],
+			'TEXT' => [
 				'NAME' => 'MESSAGE',
 				'VALUE' => $text,
 				'HEIGHT' => '120px'
-			),
-			'LHE' => array(
+			],
+			'LHE' => [
 				'id' => $editorName,
 				'documentCSS' => 'body {color:#434343;background:#F7FBE9}',
 				'ctrlEnterHandler' => "CrmTimeLineComment{$id}FormSendHandler",
@@ -97,49 +107,43 @@ class Timeline extends Main\Engine\Controller
 				'setFocusAfterShow' => true,
 				'askBeforeUnloadPage' => false,
 				'useFileDialogs' => false,
-				'controlsMap' => array(
-					array('id' => 'Bold',  'compact' => true, 'sort' => 10),
-					array('id' => 'Italic',  'compact' => true, 'sort' => 20),
-					array('id' => 'Underline',  'compact' => true, 'sort' => 30),
-					array('id' => 'Strikeout',  'compact' => true, 'sort' => 40),
-					array('id' => 'RemoveFormat',  'compact' => true, 'sort' => 50),
-					array('id' => 'Color',  'compact' => true, 'sort' => 60),
-					array('id' => 'FontSelector',  'compact' => false, 'sort' => 70),
-					array('id' => 'FontSize',  'compact' => false, 'sort' => 80),
-					array('separator' => true, 'compact' => false, 'sort' => 90),
-					array('id' => 'OrderedList',  'compact' => true, 'sort' => 100),
-					array('id' => 'UnorderedList',  'compact' => true, 'sort' => 110),
-					array('id' => 'AlignList', 'compact' => false, 'sort' => 120),
-					array('separator' => true, 'compact' => false, 'sort' => 130),
-					array('id' => 'InsertLink',  'compact' => true, 'sort' => 140, 'wrap' => 'bx-b-link-'.$formId),
-					array('id' => 'InsertImage',  'compact' => false, 'sort' => 150),
-					array('id' => 'InsertVideo',  'compact' => true, 'sort' => 160, 'wrap' => 'bx-b-video-'.$formId),
-					array('id' => 'InsertTable',  'compact' => false, 'sort' => 170),
-					array('id' => 'Code',  'compact' => true, 'sort' => 180),
-					array('id' => 'Quote',  'compact' => true, 'sort' => 190, 'wrap' => 'bx-b-quote-'.$formId),
-					array('separator' => true, 'compact' => false, 'sort' => 200),
-					array('id' => 'BbCode',  'compact' => true, 'sort' => 220),
-					array('id' => 'More',  'compact' => true, 'sort' => 230),
-				),
-			),
-			"USE_CLIENT_DATABASE" => "Y",
-			"FILES" => Array(
-				"VALUE" => array(),
-				"DEL_LINK" => '',
-				"SHOW" => "N"
-			),
-			"UPLOAD_FILE" => true,
-			"UPLOAD_FILE_PARAMS" => array('width' => 400, 'height' => 400),
-			'UPLOAD_WEBDAV_ELEMENT' => isset($fileFields['UF_CRM_COMMENT_FILES']) ? $fileFields['UF_CRM_COMMENT_FILES'] : false,
-			"ALLOW_CRM_EMAILS" => "Y"
+				'controlsMap' => [
+					['id' => 'Bold',  'compact' => true, 'sort' => 10],
+					['id' => 'Italic',  'compact' => true, 'sort' => 20],
+					['id' => 'Underline',  'compact' => true, 'sort' => 30],
+					['id' => 'Strikeout',  'compact' => true, 'sort' => 40],
+					['separator' => true, 'compact' => false, 'sort' => 90],
+					['id' => 'UnorderedList',  'compact' => true, 'sort' => 100],
+					['id' => 'OrderedList',  'compact' => true, 'sort' => 110],
+					['separator' => true, 'compact' => false, 'sort' => 120],
+					['id' => 'InsertLink',  'compact' => true, 'sort' => 130, 'wrap' => 'bx-b-link-' . $formId],
+				],
+			],
+			'USE_CLIENT_DATABASE' => 'Y',
+			'FILES' => [
+				'VALUE' => [],
+				'DEL_LINK' => '',
+				'SHOW' => 'N'
+			],
+			'UPLOAD_FILE' => true,
+			'UPLOAD_FILE_PARAMS' => ['width' => 400, 'height' => 400],
+			'UPLOAD_WEBDAV_ELEMENT' => $fileFields['UF_CRM_COMMENT_FILES'] ?? false,
+			'ALLOW_CRM_EMAILS' => 'Y'
 		];
 
-		return new \Bitrix\Main\Engine\Response\Component('bitrix:main.post.form', '', $editorParameters);
+		return new Component(
+			'bitrix:main.post.form',
+			'',
+			$editorParameters
+		);
 	}
 
-	public function onReceiveAction($entityId, $entitTypeId, $settings)
+	final public function onReceiveAction($entityId, $entityTypeId, $settings): void
 	{
-		return $externalController = \Bitrix\Crm\Timeline\ExternalNoticeController::getInstance()
-			->onReceive($entityId, $entitTypeId, $settings);
+		ExternalNoticeController::getInstance()->onReceive(
+			$entityId,
+			$entityTypeId,
+			$settings
+		);
 	}
 }

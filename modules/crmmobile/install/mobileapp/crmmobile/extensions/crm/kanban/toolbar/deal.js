@@ -3,7 +3,6 @@
  * @module crm/kanban/toolbar/deal
  */
 jn.define('crm/kanban/toolbar/deal', (require, exports, module) => {
-
 	const {
 		isEqual,
 		mergeImmutable,
@@ -13,7 +12,7 @@ jn.define('crm/kanban/toolbar/deal', (require, exports, module) => {
 	const { CategoryStorage } = require('crm/storage/category');
 	const { CategoryCountersStoreManager } = require('crm/state-storage');
 
-	const MAX_FORMATTED_SUM = 1000000000;
+	const MAX_FORMATTED_SUM = 1_000_000_000;
 	const PLUS_ONE_ACTION = 'plus';
 	const MINUS_ONE_ACTION = 'minus';
 
@@ -46,8 +45,7 @@ jn.define('crm/kanban/toolbar/deal', (require, exports, module) => {
 			this.onSimpleListRefreshHandler = this.handleOnSimpleListRefresh.bind(this);
 			this.updateCountersHandler = this.updateCounters.bind(this);
 
-			this.blinkItem = BX.prop.getFunction(props, 'blinkItem', () => {
-			});
+			this.blinkItem = BX.prop.getFunction(props, 'blinkItem', () => {});
 
 			this.toolbarRef = null;
 		}
@@ -255,7 +253,7 @@ jn.define('crm/kanban/toolbar/deal', (require, exports, module) => {
 			if (this.stageToolbarRef)
 			{
 				const stages = this.getCategoryCounters();
-				const unsuitableStages = stages.filter(stage => stage.dropzone).map(stage => stage.id);
+				const unsuitableStages = stages.filter((stage) => stage.dropzone).map((stage) => stage.id);
 
 				this.stageToolbarRef.handleSelectorClick(unsuitableStages);
 			}
@@ -312,7 +310,7 @@ jn.define('crm/kanban/toolbar/deal', (require, exports, module) => {
 		{
 			const stages = this.getStages(false);
 
-			return stages.find(stage => stage.id === id);
+			return stages.find((stage) => stage.id === id);
 		}
 
 		getFirstStage()
@@ -324,12 +322,12 @@ jn.define('crm/kanban/toolbar/deal', (require, exports, module) => {
 		{
 			const stages = this.getStages(false);
 
-			return stages.find(stage => stage.statusId === statusId);
+			return stages.find((stage) => stage.statusId === statusId);
 		}
 
 		getCountersById(id)
 		{
-			return this.state.categoryCounters.find(stage => stage.id === id);
+			return this.state.categoryCounters.find((stage) => stage.id === id);
 		}
 
 		/**
@@ -345,7 +343,7 @@ jn.define('crm/kanban/toolbar/deal', (require, exports, module) => {
 
 			return (
 				money.amount >= MAX_FORMATTED_SUM
-					? Math.floor(money.amount * 10 / MAX_FORMATTED_SUM) / 10 + ' ' + BX.message('M_CRM_MAX_FORMATTED_SUM')
+					? `${Math.floor(money.amount * 10 / MAX_FORMATTED_SUM) / 10} ${BX.message('M_CRM_MAX_FORMATTED_SUM')}`
 					: money.formattedAmount
 			);
 		}
@@ -381,12 +379,12 @@ jn.define('crm/kanban/toolbar/deal', (require, exports, module) => {
 		{
 			const { categoryCounters } = this.state;
 
-			if (!categoryCounters.length)
+			if (categoryCounters.length === 0)
 			{
 				return null;
 			}
 
-			return (categoryCounters.find(stage => stage.id === id) || null);
+			return (categoryCounters.find((stage) => stage.id === id) || null);
 		}
 
 		getCurrency()
@@ -408,13 +406,11 @@ jn.define('crm/kanban/toolbar/deal', (require, exports, module) => {
 
 		getColumns()
 		{
-			if (this.columns === null || !this.columns.size)
+			if (this.columns === null || this.columns.size === 0)
 			{
 				const columns = new Map();
 
-				this.getStages().map(stage => {
-					columns.set(stage.statusId, stage);
-				});
+				this.getStages().forEach((stage) => columns.set(stage.statusId, stage));
 
 				this.columns = columns;
 			}
@@ -562,16 +558,14 @@ jn.define('crm/kanban/toolbar/deal', (require, exports, module) => {
 		{
 			style = mergeImmutable({
 				height: 6,
-				width: width,
+				width,
 				marginTop: Application.getPlatform() === 'android' ? 10 : 8,
 			}, style);
 
 			return Image({
 				style,
 				svg: {
-					content: `<svg width="${width}" height="6" viewBox="0 0 ${width} 6" fill="none" xmlns="http://www.w3.org/2000/svg">\n` +
-						`<rect width="${width}" height="6" rx="2" fill="#DFE0E3"/>\n` +
-						`</svg>`,
+					content: `<svg width="${width}" height="6" viewBox="0 0 ${width} 6" fill="none" xmlns="http://www.w3.org/2000/svg"><rect width="${width}" height="6" rx="2" fill="#DFE0E3"/></svg>`,
 				},
 			});
 		}
@@ -585,7 +579,7 @@ jn.define('crm/kanban/toolbar/deal', (require, exports, module) => {
 			top: 0,
 		},
 		shadow: {
-			color: '#e6e6e6',
+			color: '#e6e7e9',
 			radius: 3,
 			offset: {
 				y: 3,

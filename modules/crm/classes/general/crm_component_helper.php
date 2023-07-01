@@ -1,14 +1,20 @@
 <?php
 
+use Bitrix\Crm\Category\Entity\ItemCategory;
 use Bitrix\Crm\Category\EntityTypeRelationsRepository;
 use Bitrix\Crm\EntityAddress;
 use Bitrix\Crm\EntityAddressType;
 use Bitrix\Crm\EntityPreset;
 use Bitrix\Crm\EntityRequisite;
 use Bitrix\Crm\Integration\ClientResolver;
+use Bitrix\Crm\Integrity\DuplicateControl;
 use Bitrix\Crm\Restriction\RestrictionManager;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\StatusTable;
 use Bitrix\Main;
+use Bitrix\Main\Localization\Loc;
+
+Loc::loadMessages(__FILE__);
 
 class CCrmComponentHelper
 {
@@ -402,36 +408,7 @@ class CCrmComponentHelper
 				];
 				break;
 			case "requisite_address":
-				$featureRestriction = RestrictionManager::getAddressSearchRestriction();
-				$addressTypeInfos = [];
-				foreach (EntityAddressType::getAllDescriptions() as $id => $desc)
-				{
-					$addressTypeInfos[$id] = [
-						'ID' => $id,
-						'DESCRIPTION' => $desc
-					];
-				}
-				$countryAddressTypeMap = [];
-				foreach (EntityRequisite::getCountryAddressZoneMap() as $countryId => $addressZoneId)
-				{
-					$countryAddressTypeMap[$countryId] = EntityAddressType::getIdsByZonesOrValues([$addressZoneId]);
-				}
-				unset($countryId, $addressZoneId);
-				$result = [
-					'multiple' => true,
-					'types' => $addressTypeInfos,
-					'autocompleteEnabled' => $featureRestriction->hasPermission(),
-					'featureRestrictionCallback' => (
-						$featureRestriction ? $featureRestriction->prepareInfoHelperScript() : ''
-					),
-					'addressZoneConfig' => [
-						'defaultAddressType' => EntityAddressType::getDefaultIdByZone(EntityAddress::getZoneId()),
-						'currentZoneAddressTypes' => EntityAddressType::getIdsByZonesOrValues(
-							[EntityAddress::getZoneId()]
-						),
-						'countryAddressTypeMap' => $countryAddressTypeMap
-					]
-				];
+				$result = static::getRequisiteAddressFieldData((int)$entityTypeId);
 				break;
 			case "address":
 				$featureRestriction = RestrictionManager::getAddressSearchRestriction();
@@ -443,6 +420,52 @@ class CCrmComponentHelper
 					)
 				];
 				break;
+		}
+
+		return $result;
+	}
+
+	public static function getRequisiteAddressFieldData(int $entityTypeId, int $categoryId = 0): array
+	{
+		$featureRestriction = RestrictionManager::getAddressSearchRestriction();
+		$addressTypeInfos = [];
+		foreach (EntityAddressType::getAllDescriptions() as $id => $desc)
+		{
+			$addressTypeInfos[$id] = [
+				'ID' => $id,
+				'DESCRIPTION' => $desc
+			];
+		}
+		$countryAddressTypeMap = [];
+		foreach (EntityRequisite::getCountryAddressZoneMap() as $countryId => $addressZoneId)
+		{
+			$countryAddressTypeMap[$countryId] = EntityAddressType::getIdsByZonesOrValues([$addressZoneId]);
+		}
+		$addressZoneId = EntityAddress::getZoneId();
+
+		$result = [
+			'multiple' => true,
+			'types' => $addressTypeInfos,
+			'autocompleteEnabled' => $featureRestriction->hasPermission(),
+			'featureRestrictionCallback' => $featureRestriction->prepareInfoHelperScript(),
+			'addressZoneConfig' => [
+				'defaultAddressType' => EntityAddressType::getDefaultIdByZone($addressZoneId),
+				'currentZoneAddressTypes' => EntityAddressType::getIdsByZonesOrValues([$addressZoneId]),
+				'countryAddressTypeMap' => $countryAddressTypeMap,
+			],
+		];
+
+		if (CCrmOwnerType::IsDefined($entityTypeId) && $categoryId > 0)
+		{
+			$factory = Container::getInstance()->getFactory($entityTypeId);
+			if ($factory && $factory->isCategoryAvailable($categoryId))
+			{
+				$category = $factory->getCategory($categoryId);
+				if ($category instanceof ItemCategory)
+				{
+					$result['defaultAddressTypeByCategory'] = $category->getDefaultAddressType();
+				}
+			}
 		}
 
 		return $result;
@@ -541,8 +564,30 @@ class CCrmComponentHelper
 	 *
 	 * @todo: temporary stub to get entity client field additional parameters
 	 */
-	public static function getEntityClientFieldCategoryParams(int $entityTypeId, int $categoryId = 0): array
+	public static function getEntityClientFieldCategoryParams(int $entityTypeId, int $categoryId = 0, ?int $parentEntityTypeId = null): array
 	{
+		if ($entityTypeId === CCrmOwnerType::SmartDocument || $parentEntityTypeId === CCrmOwnerType::SmartDocument)
+		{
+			$contactCategory = Container::getInstance()
+				->getFactory(\CCrmOwnerType::Contact)
+				->getCategoryByCode(\Bitrix\Crm\Service\Factory\SmartDocument::CONTACT_CATEGORY_CODE)
+			;
+			if ($contactCategory)
+			{
+				return [
+					\CCrmOwnerType::Contact => [
+						'categoryId' => $contactCategory->getId(),
+						'extraCategoryIds' => [
+							$categoryId
+						]
+					],
+					\CCrmOwnerType::Company => [
+						'categoryId' => $categoryId,
+					]
+				];
+			}
+		}
+
 		return array_map(
 			function ($categoryId)
 			{
@@ -652,7 +697,7 @@ class CCrmComponentHelper
 					'COMPLEX_NAME' => \CCrmFieldMulti::GetEntityNameByComplex($complexID, false),
 				);
 			}
-			
+
 			if ($addToDataLevel)
 			{
 				$multiFieldID = $ID;
@@ -693,21 +738,113 @@ class CCrmComponentHelper
 	/**
 	 * @return array
 	 */
-	public static function prepareClientEditorFieldsParams(): array
+	public static function prepareClientEditorFieldsParams(array $params = []): array
 	{
-		$result = [
-			CCrmOwnerType::ContactName => [
-				'REQUISITES' => \CCrmComponentHelper::getFieldInfoData(CCrmOwnerType::Contact, 'requisite')
-			],
-			CCrmOwnerType::CompanyName => [
-				'REQUISITES' => \CCrmComponentHelper::getFieldInfoData(CCrmOwnerType::Company, 'requisite')
-			]
+		$result = [];
+
+		$entityTypeCategoryMap = [
+			CCrmOwnerType::Contact => 0,
+			CCrmOwnerType::Company => 0,
 		];
 
-		if (Main\Loader::includeModule('location'))
+		$entityTypeMap = [];
+		if (isset($params['entityTypes']) && is_array($params['entityTypes']))
 		{
-			$result[CCrmOwnerType::ContactName]['ADDRESS'] = \CCrmComponentHelper::getFieldInfoData(CCrmOwnerType::Contact,'requisite_address');
-			$result[CCrmOwnerType::CompanyName]['ADDRESS'] = \CCrmComponentHelper::getFieldInfoData(CCrmOwnerType::Company,'requisite_address');
+			foreach($params['entityTypes'] as $entityTypeId)
+			{
+				if (is_int($entityTypeId) && isset($entityTypeCategoryMap[$entityTypeId]))
+				{
+					$entityTypeMap[$entityTypeId] = true;
+				}
+			}
+		}
+
+		if (isset($params['categoryParams']) && is_array($params['categoryParams']))
+		{
+			foreach (array_keys($entityTypeCategoryMap) as $entityTypeId)
+			{
+				if (
+					isset($params['categoryParams'][$entityTypeId])
+					&& is_array($params['categoryParams'][$entityTypeId])
+					&& isset($params['categoryParams'][$entityTypeId]['categoryId'])
+					&& is_int($params['categoryParams'][$entityTypeId]['categoryId'])
+					&& $params['categoryParams'][$entityTypeId]['categoryId'] > 0
+				)
+				{
+					$entityTypeCategoryMap[$entityTypeId] = $params['categoryParams'][$entityTypeId]['categoryId'];
+				}
+			}
+		}
+
+		$isLocationModuleIncluded = Main\Loader::includeModule('location');
+
+		foreach (array_keys($entityTypeCategoryMap) as $entityTypeId)
+		{
+			if (empty($entityTypeMap) || isset($entityTypeMap[$entityTypeId]))
+			{
+				$entityTypeName = CCrmOwnerType::ResolveName($entityTypeId);
+				$result[$entityTypeName] = [
+					'REQUISITES' => static::getFieldInfoData($entityTypeId, 'requisite')
+				];
+				if ($isLocationModuleIncluded)
+				{
+					$result[$entityTypeName]['ADDRESS'] =
+						static::getRequisiteAddressFieldData($entityTypeId, $entityTypeCategoryMap[$entityTypeId])
+					;
+				}
+			}
+		}
+
+		return $result;
+	}
+
+	public static function prepareClientEditorDuplicateControlParams(array $params = []): array
+	{
+		$result = [];
+
+		$entityTypes =
+			(isset($params['entityTypes']) && is_array($params['entityTypes']))
+				? $params['entityTypes']
+				: []
+		;
+
+		foreach ($entityTypes as $entityTypeId)
+		{
+			$entityTypeId = (int)$entityTypeId;
+			if (
+				CCrmOwnerType::IsDefined($entityTypeId)
+				&& DuplicateControl::isControlEnabledFor($entityTypeId)
+			)
+			{
+				$entityTypeName = CCrmOwnerType::ResolveName($entityTypeId);
+				$entityTypeNameLower = mb_strtolower($entityTypeName);
+				$result[$entityTypeId] = [
+					'enabled' => true,
+					'serviceUrl' =>
+						'/bitrix/components/bitrix/crm.'
+						. $entityTypeNameLower
+						. '.edit/ajax.php?'
+						. bitrix_sessid_get(),
+					'entityTypeName' => $entityTypeName,
+					'groups' => [
+						'title' => [
+							'parameterName' => 'TITLE',
+							'groupType' => 'single',
+							'groupSummaryTitle' => Loc::getMessage('CRM_COMPONENT_HELPER_DUP_CTRL_TTL_SUMMARY_TITLE')
+						],
+						'email' => [
+							'groupType' => 'communication',
+							'communicationType' => 'EMAIL',
+							'groupSummaryTitle' => Loc::getMessage('CRM_COMPONENT_HELPER_DUP_CTRL_EMAIL_SUMMARY_TITLE')
+						],
+						'phone' => [
+							'groupType' => 'communication',
+							'communicationType' => 'PHONE',
+							'groupSummaryTitle' => Loc::getMessage('CRM_COMPONENT_HELPER_DUP_CTRL_PHONE_SUMMARY_TITLE')
+						],
+					],
+				];
+			}
 		}
 
 		return $result;
@@ -724,6 +861,31 @@ class CCrmComponentHelper
 		$textLines = array_map(static function($item) { return htmlspecialcharsbx($item); }, $textLines);
 
 		return implode('<br>', $textLines);
+	}
+
+	public static function prepareInitReceiverRepositoryJS(int $entityTypeId, int $entityId): string
+	{
+		\Bitrix\Main\UI\Extension::load('crm.messagesender');
+
+		$receivers = [];
+		if (\CCrmOwnerType::IsDefined($entityTypeId) && $entityId > 0)
+		{
+			$repo = \Bitrix\Crm\MessageSender\Channel\ChannelRepository::create(
+				new \Bitrix\Crm\ItemIdentifier($entityTypeId, $entityId),
+			);
+
+			$receivers = $repo->getToList();
+		}
+
+		$receiversJson = Main\Web\Json::encode($receivers);
+
+		return <<<JS
+<script type="text/javascript">
+	BX.ready(() => {
+		BX.Crm.MessageSender.ReceiverRepository.onDetailsLoad({$entityTypeId}, {$entityId}, '{$receiversJson}');
+	});
+</script>
+JS;
 	}
 }
 

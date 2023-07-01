@@ -69,6 +69,8 @@ class SalesCenterOrderDetails extends CBitrixComponent implements Main\Engine\Co
 			$params['HEADER_TITLE'] = $title ?? 'Company 24';
 		}
 
+		$params['TEMPLATE_MODE'] ??= '';
+
 		return $params;
 	}
 
@@ -239,7 +241,11 @@ class SalesCenterOrderDetails extends CBitrixComponent implements Main\Engine\Co
 
 		$propertyCollection = $basketItem->getPropertyCollection();
 		$basketValues['PROPERTIES'] = $propertyCollection ? $propertyCollection->getPropertyValues() : [];
-		unset($basketValues['PROPERTIES']['CATALOG.XML_ID'], $basketValues['PROPERTIES']['PRODUCT.XML_ID']);
+		unset(
+			$basketValues['PROPERTIES']['CATALOG.XML_ID'],
+			$basketValues['PROPERTIES']['PRODUCT.XML_ID'],
+			$basketValues['PROPERTIES'][\CIBlockPropertyTools::CODE_ARTNUMBER]
+		);
 
 		$basketValues['FORMATED_PRICE'] = SaleFormatCurrency($basketValues["PRICE_WITH_VAT"], $basketValues["CURRENCY"]);
 		$basketValues['FORMATED_BASE_PRICE'] = SaleFormatCurrency($basketValues["BASE_PRICE_WITH_VAT"], $basketValues["CURRENCY"]);
@@ -377,6 +383,8 @@ class SalesCenterOrderDetails extends CBitrixComponent implements Main\Engine\Co
 	 */
 	public function executeComponent()
 	{
+		Localization\Loc::loadMessages(__FILE__);
+
 		try
 		{
 			$this->setFrameMode(false);
@@ -396,7 +404,17 @@ class SalesCenterOrderDetails extends CBitrixComponent implements Main\Engine\Co
 			$this->arResult['ERRORS']['FATAL'][$e->getCode()] = $e->getMessage();
 		}
 
-		$this->includeComponentTemplate();
+		$this->includeComponentTemplate($this->getComponentTemplateNameByTemplateMode($this->arParams['TEMPLATE_MODE']));
+	}
+
+	private function getComponentTemplateNameByTemplateMode(string $mode): string
+	{
+		if ($mode === 'graymode')
+		{
+			return 'graytheme';
+		}
+
+		return '';
 	}
 
 	/**

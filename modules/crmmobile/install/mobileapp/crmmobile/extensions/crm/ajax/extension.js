@@ -12,5 +12,4 @@ jn.define('crm/ajax', (require, exports, module) => {
 		StageAjax,
 		StageActions,
 	};
-
 });

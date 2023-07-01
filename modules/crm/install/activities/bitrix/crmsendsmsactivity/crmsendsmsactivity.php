@@ -324,6 +324,7 @@ class CBPCrmSendSmsActivity extends CBPActivity
 		}
 		else
 		{
+			$communications = [];
 			$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory($typeId);
 			if ($factory)
 			{
@@ -342,7 +343,10 @@ class CBPCrmSendSmsActivity extends CBPActivity
 			});
 		}
 
-		$communications = array_slice($communications, 0, 1);
+		if (is_array($communications))
+		{
+			$communications = array_slice($communications, 0, 1);
+		}
 
 		return $communications ? $communications[0] : null;
 	}

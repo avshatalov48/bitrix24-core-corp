@@ -11,9 +11,9 @@ use Bitrix\Main\Entity;
  *
  * <<< ORMENTITYANNOTATION
  * @method static EO_AppType_Query query()
- * @method static EO_AppType_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_AppType_Result getByPrimary($primary, array $parameters = [])
  * @method static EO_AppType_Result getById($id)
- * @method static EO_AppType_Result getList(array $parameters = array())
+ * @method static EO_AppType_Result getList(array $parameters = [])
  * @method static EO_AppType_Entity getEntity()
  * @method static \Bitrix\Crm\Activity\Entity\EO_AppType createObject($setDefaultValues = true)
  * @method static \Bitrix\Crm\Activity\Entity\EO_AppType_Collection createCollection()

@@ -711,6 +711,7 @@ class LeftMenu extends \Bitrix\Main\Engine\Controller
 		{
 			\CUserOptions::DeleteOptionsByName('intranet', 'left_menu_sorted_items_' . SITE_ID);
 			\CUserOptions::DeleteOptionsByName('intranet', 'left_menu_preset_' . SITE_ID);
+			\CUserOptions::DeleteOptionsByName('intranet', 'left_menu_first_page_' . SITE_ID);
 		}
 
 		if (isset($_POST['itemsSort']))

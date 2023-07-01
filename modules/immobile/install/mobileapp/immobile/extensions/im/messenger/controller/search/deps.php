@@ -3,6 +3,7 @@
 return [
 	'extensions' => [
 		'im:chat/selector/adapter/dialog-list',
+		'im:messenger/core',
 		'im:messenger/lib/element',
 		'type',
 	],

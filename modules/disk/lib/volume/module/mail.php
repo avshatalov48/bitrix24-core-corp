@@ -2,7 +2,9 @@
 
 namespace Bitrix\Disk\Volume\Module;
 
+use Bitrix\Disk;
 use Bitrix\Disk\Volume;
+use Bitrix\Disk\Internals\VolumeTable;
 
 /**
  * Disk storage volume measurement class.
@@ -14,39 +16,39 @@ class Mail
 	/** @var string */
 	protected static $moduleId = 'mail';
 
-	/** @var \Bitrix\Disk\Storage[] */
-	private $storageList = array();
+	/** @var Disk\Storage[] */
+	private $storageList = [];
 
-	/** @var \Bitrix\Disk\Folder[] */
-	private $folderList = array();
+	/** @var Disk\Folder[] */
+	private $folderList = [];
 
 	/**
 	 * Returns entity type list.
 	 * @return string[]
 	 */
-	public static function getEntityType()
+	public static function getEntityType(): array
 	{
-		return array(
-			'Bitrix\\Mail\\Disk\\ProxyType\\Mail'
-		);
+		return [
+			\Bitrix\Mail\Disk\ProxyType\Mail::class
+		];
 	}
 
 	/**
 	 * Returns module storage.
 	 * @see \Bitrix\Mail\Helper\Attachment\Storage::getStorage
-	 * @return \Bitrix\Disk\Storage[]|array
+	 * @return Disk\Storage[]|array
 	 */
-	public function getStorageList()
+	public function getStorageList(): array
 	{
-		if (count($this->storageList) == 0 || !$this->storageList[0] instanceof \Bitrix\Disk\Storage)
+		if (count($this->storageList) == 0 || !$this->storageList[0] instanceof Disk\Storage)
 		{
 			$entityTypes = self::getEntityType();
-			$storage = \Bitrix\Disk\Storage::load(array(
+			$storage = Disk\Storage::load([
 				'MODULE_ID' => self::getModuleId(),
 				'ENTITY_TYPE' => $entityTypes[0]
-			));
+			]);
 
-			if ($storage instanceof \Bitrix\Disk\Storage)
+			if ($storage instanceof Disk\Storage)
 			{
 				$this->storageList[] = $storage;
 			}
@@ -57,22 +59,22 @@ class Mail
 
 	/**
 	 * Returns folder list corresponding to module.
-	 * @param \Bitrix\Disk\Storage $storage Module's storage.
-	 * @return \Bitrix\Disk\Folder[]|array
+	 * @param Disk\Storage $storage Module's storage.
+	 * @return Disk\Folder[]|array
 	 */
-	public function getFolderList($storage)
+	public function getFolderList($storage): array
 	{
 		if (
-			$storage instanceof \Bitrix\Disk\Storage &&
-			$storage->getId() > 0
+			$storage instanceof Disk\Storage
+			&& $storage->getId() > 0
 		)
 		{
 			if (
-				!isset($this->folderList[$storage->getId()]) ||
-				empty($this->folderList[$storage->getId()])
+				!isset($this->folderList[$storage->getId()])
+				|| empty($this->folderList[$storage->getId()])
 			)
 			{
-				$this->folderList[$storage->getId()] = array();
+				$this->folderList[$storage->getId()] = [];
 				if ($this->isMeasureAvailable())
 				{
 					$this->folderList[$storage->getId()][] = $storage->getRootObject();
@@ -82,15 +84,15 @@ class Mail
 			return $this->folderList[$storage->getId()];
 		}
 
-		return array();
+		return [];
 	}
 
 	/**
 	 * Runs measure test to get volumes of selecting objects.
 	 * @param array $collectData List types data to collect: ATTACHED_OBJECT, SHARING_OBJECT, EXTERNAL_LINK, UNNECESSARY_VERSION.
-	 * @return $this
+	 * @return static
 	 */
-	public function measure($collectData = array())
+	public function measure(array $collectData = []): self
 	{
 		if (!$this->isMeasureAvailable())
 		{
@@ -104,12 +106,12 @@ class Mail
 
 		// collect disk statistics
 		$this
-			->addFilter(0, array(
+			->addFilter(0, [
 				'LOGIC' => 'OR',
 				'MODULE_ID' => self::getModuleId(),
 				'ENTITY_TYPE' => \Bitrix\Mail\Disk\ProxyType\Mail::className(),
-			))
-			->addFilter('DELETED_TYPE', \Bitrix\Disk\Internals\ObjectTable::DELETED_TYPE_NONE);
+			])
+			->addFilter('DELETED_TYPE', Disk\Internals\ObjectTable::DELETED_TYPE_NONE);
 
 		parent::measure();
 
@@ -130,7 +132,7 @@ class Mail
 		";
 
 		$columnList = Volume\QueryHelper::prepareInsert(
-			array(
+			[
 				'INDICATOR_TYPE',
 				'OWNER_ID',
 				'CREATE_TIME',
@@ -138,11 +140,11 @@ class Mail
 				'FILE_COUNT',
 				'DISK_SIZE',
 				'DISK_COUNT',
-			),
+			],
 			$this->getSelect()
 		);
 
-		$tableName = \Bitrix\Disk\Internals\VolumeTable::getTableName();
+		$tableName = VolumeTable::getTableName();
 
 		$connection->queryExecute("INSERT INTO {$tableName} ({$columnList}) {$querySql}");
 

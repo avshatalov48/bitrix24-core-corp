@@ -70,9 +70,62 @@ jn.define('tasks/layout/task/create', (require, exports, module) => {
 			};
 		}
 
+		static createGuid()
+		{
+			function s4()
+			{
+				return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
+			}
+
+			return `${s4()}${s4()}-${s4()}-${s4()}-${s4()}-${s4()}${s4()}${s4()}`;
+		}
+
+		static open(data = {})
+		{
+			const taskCreate = new TaskCreate({
+				currentUser: data.currentUser,
+				diskFolderId: data.diskFolderId,
+				deadlines: data.deadlines,
+				initialTaskData: data.initialTaskData,
+			});
+			const parentWidget = (data.layoutWidget || PageManager);
+
+			parentWidget.openWidget('layout', {
+				backdrop: {
+					bounceEnable: true,
+					swipeAllowed: false,
+					showOnTop: false,
+					hideNavigationBar: true,
+					horizontalSwipeAllowed: false,
+					shouldResizeContent: true,
+					mediumPositionHeight: fieldHeight * 3 + BottomPanel.getPanelHeight() + 8,
+					adoptHeightByKeyboard: true,
+				},
+			}).then((layoutWidget) => {
+				layoutWidget.showComponent(taskCreate);
+				taskCreate.layoutWidget = layoutWidget;
+			});
+		}
+
 		constructor(props)
 		{
 			super(props);
+
+			this.currentUser = (props.currentUser || {});
+			this.diskFolderId = Number(props.diskFolderId);
+
+			this.pathToImages = '/bitrix/mobileapp/tasksmobile/extensions/tasks/layout/task/images';
+			this.layoutWidget = null;
+			this.scrollY = 0;
+
+			this.checkList = CheckListTree.buildTree();
+			this.guid = TaskCreate.createGuid();
+
+			this.initialTaskData = props.initialTaskData;
+			this.fillDeadlines(
+				props.deadlines
+				|| (this.getDeadlinesCachedOption() ? this.getDeadlinesCachedOption().value : null)
+			);
 
 			this.state = {
 				showLoading: true,
@@ -81,29 +134,28 @@ jn.define('tasks/layout/task/create', (require, exports, module) => {
 				isMoreExpanded: true,
 				focus: true,
 			};
+		}
 
-			this.guid = props.guid;
-			this.userId = Number(props.currentUser.id);
-			this.diskFolderId = Number(props.diskFolderId);
-			this.pathToImages = '/bitrix/mobileapp/tasksmobile/extensions/tasks/layout/task/images';
-			this.layoutWidget = null;
-			this.deadlines = Object.entries(Task.deadlines).map(([key, value]) => {
-				return {
-					name: value.name,
-					value: props.deadlines[key] * 1000,
-				};
-			});
+		componentDidMount()
+		{
+			Promise.allSettled([
+				this.getCurrentUserData(),
+				this.getDeadlines(),
+				this.getDiskFolderId(),
+				CalendarSettings.loadSettings(),
+			]).then(() => this.doFinalInitAction());
+		}
 
-			this.task = new Task(props.currentUser);
+		doFinalInitAction()
+		{
+			this.task = new Task(this.currentUser);
 			this.task.updateData({
-				creator: props.currentUser,
-				responsible: props.responsible,
-				groupId: props.groupId,
-				group: props.groupData,
-				parentId: props.parentId,
-				parentTask: props.parentTask,
+				creator: this.currentUser,
+				responsible: this.currentUser,
 				deadline: new Date((new Date()).setSeconds(0, 0) + 86400 * 7 * 1000),
+				...this.initialTaskData,
 			});
+
 			this.datesResolver = new DatesResolver({
 				id: this.task.id,
 				guid: this.guid,
@@ -112,21 +164,92 @@ jn.define('tasks/layout/task/create', (require, exports, module) => {
 				endDatePlan: this.task.endDatePlan,
 				isMatchWorkTime: this.task.isMatchWorkTime,
 			});
-			this.checkList = CheckListTree.buildTree();
 
-			this.scrollY = 0;
+			this.bindEvents();
+			this.setState({showLoading: false});
+			setTimeout(() => this.setState({focus: null}));
 		}
 
-		componentDidMount()
+		getCurrentUserData()
 		{
-			Promise.allSettled([
-				this.getDiskFolderId(),
-				CalendarSettings.loadSettings(),
-			]).then(() => {
-				this.bindEvents();
-				this.setState({showLoading: false});
-				setTimeout(() => this.setState({focus: null}));
+			return new Promise((resolve) => {
+				if (this.currentUser && this.currentUser.id)
+				{
+					return resolve();
+				}
+				(new RequestExecutor('tasksmobile.User.getUsersData', {userIds: [env.userId]}))
+					.call()
+					.then((response) => {
+						this.currentUser = response.result[env.userId];
+						resolve();
+					})
+				;
 			});
+		}
+
+		getDeadlines()
+		{
+			return new Promise((resolve) => {
+				const now = new Date();
+				if (
+					this.deadlines.length > 0
+					&& this.getDeadlinesCachedOption()
+					&& now.getDate() === (new Date(this.getDeadlinesCachedOption().lastTime)).getDate()
+				)
+				{
+					return resolve();
+				}
+				(new RequestExecutor('mobile.tasks.deadlines.get'))
+					.call()
+					.then((response) => {
+						this.fillDeadlines(response.result);
+						this.updateDeadlinesCachedOption({
+							lastTime: now.getTime(),
+							value: response.result,
+						});
+						resolve();
+					})
+				;
+			});
+		}
+
+		fillDeadlines(values = {})
+		{
+			if (!values)
+			{
+				this.deadlines = [];
+			}
+			else
+			{
+				this.deadlines = Object.entries(Task.deadlines).map(([key, value]) => {
+					return {
+						name: value.name,
+						value: values[key] * 1000,
+					};
+				});
+			}
+		}
+
+		getDeadlinesCachedOption()
+		{
+			const storage = Application.sharedStorage('tasksTaskList');
+			const optionsCache = storage.get('options');
+
+			if (Type.isString(optionsCache))
+			{
+				return JSON.parse(optionsCache).deadlines;
+			}
+
+			return null;
+		}
+
+		updateDeadlinesCachedOption(value)
+		{
+			const storage = Application.sharedStorage('tasksTaskList');
+			const optionsCache = storage.get('options');
+			const currentOption = (Type.isString(optionsCache) ? JSON.parse(optionsCache) : {});
+			currentOption.deadlines = value;
+			storage.set('options', JSON.stringify(currentOption));
 		}
 
 		getDiskFolderId()
@@ -197,7 +320,7 @@ jn.define('tasks/layout/task/create', (require, exports, module) => {
 			{
 				style.marginHorizontal = 6;
 				style.borderWidth = 1;
-				style.borderColor = '#e6e6e6';
+				style.borderColor = '#e6e7e9';
 				style.borderRadius = 7;
 			}
 
@@ -207,14 +330,7 @@ jn.define('tasks/layout/task/create', (require, exports, module) => {
 		getDeepMergeStylesForField(isExpandable = false)
 		{
 			const deepMergeStyles = {
-				wrapper: (isExpandable) => ({
-					height: (isExpandable ? undefined : fieldHeight),
-					minHeight: (isExpandable ? fieldHeight : undefined),
-					justifyContent: 'center',
-					paddingTop: 10,
-					paddingBottom: 10,
-				}),
-				readOnlyWrapper: (isExpandable) => ({
+				externalWrapper: (isExpandable) => ({
 					height: (isExpandable ? undefined : fieldHeight),
 					minHeight: (isExpandable ? fieldHeight : undefined),
 					justifyContent: 'center',
@@ -377,7 +493,7 @@ jn.define('tasks/layout/task/create', (require, exports, module) => {
 					style: {
 						...this.getStyleForField(),
 						height: 0.5,
-						backgroundColor: '#e6e6e6',
+						backgroundColor: '#e6e7e9',
 					},
 				}),
 				content,
@@ -491,7 +607,7 @@ jn.define('tasks/layout/task/create', (require, exports, module) => {
 					checkList: this.checkList,
 					taskId: 0,
 					taskGuid: this.task.guid,
-					userId: this.userId,
+					userId: this.currentUser.id,
 					diskConfig: {
 						folderId: this.diskFolderId,
 					},
@@ -541,7 +657,7 @@ jn.define('tasks/layout/task/create', (require, exports, module) => {
 				}),
 				[TaskCreate.field.files]: new Files({
 					readOnly: this.state.readOnly,
-					userId: this.userId,
+					userId: this.currentUser.id,
 					taskId: 0,
 					files: [...(this.task.files || []), ...(this.task.uploadedFiles || [])],
 					isAlwaysShowed: this.state.isFullForm,
@@ -705,7 +821,7 @@ jn.define('tasks/layout/task/create', (require, exports, module) => {
 					{
 						type: 'text',
 						name: Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_CREATE_BUTTON_CREATE'),
-						color: '#0065a3',
+						color: '#2066b0',
 						callback: () => this.save(),
 					},
 				]);
@@ -746,7 +862,7 @@ jn.define('tasks/layout/task/create', (require, exports, module) => {
 				() => {
 					if (this.checkList.isActive())
 					{
-						this.checkList.save(this.task.id);
+						this.checkList.save(this.task.id, 'TASK_ADD');
 					}
 					this.layoutWidget.close();
 				},
@@ -809,45 +925,5 @@ jn.define('tasks/layout/task/create', (require, exports, module) => {
 		}
 	}
 
-	class TaskCreateManager
-	{
-		static open(data)
-		{
-			function s4()
-			{
-				return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
-			}
-
-			const taskCreate = new TaskCreate({
-				guid: `${s4()}${s4()}-${s4()}-${s4()}-${s4()}-${s4()}${s4()}${s4()}`,
-				currentUser: data.currentUser,
-				responsible: (data.responsible || data.currentUser),
-				groupId: (data.groupId || 0),
-				groupData: (data.groupData || {}),
-				diskFolderId: (data.diskFolderId || 0),
-				deadlines: data.deadlines,
-				parentId: (data.parentId || 0),
-				parentTask: (data.parentTask || {}),
-			});
-			const parentWidget = (data.layoutWidget || PageManager);
-
-			parentWidget.openWidget('layout', {
-				backdrop: {
-					bounceEnable: true,
-					swipeAllowed: false,
-					showOnTop: false,
-					hideNavigationBar: true,
-					horizontalSwipeAllowed: false,
-					shouldResizeContent: true,
-					mediumPositionHeight: fieldHeight * 3 + BottomPanel.getPanelHeight(),
-					adoptHeightByKeyboard: true,
-				},
-			}).then((layoutWidget) => {
-				layoutWidget.showComponent(taskCreate);
-				taskCreate.layoutWidget = layoutWidget;
-			});
-		}
-	}
-
-	module.exports = {TaskCreate, TaskCreateManager};
+	module.exports = {TaskCreate};
 });

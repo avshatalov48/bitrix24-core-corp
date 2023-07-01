@@ -26,8 +26,8 @@ class TasksWidgetTagSelectorComponent extends TasksBaseComponent
 			$this->arParams['TASK_ID'] = 0;
 		}
 
-		$this->arResult['GROUP_ID'] = (int) $this->arParams['GROUP_ID'];
-		$this->arResult['IS_SCRUM_TASK'] = ($this->arParams['IS_SCRUM_TASK'] ? 'Y' : 'N');
+		$this->arResult['GROUP_ID'] = (int)($this->arParams['GROUP_ID'] ?? null);
+		$this->arResult['IS_SCRUM_TASK'] = (($this->arParams['IS_SCRUM_TASK'] ?? null) ? 'Y' : 'N');
 
 		return $this->errors->checkNoFatals();
 	}

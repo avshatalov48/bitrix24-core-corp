@@ -12,8 +12,11 @@ namespace Bitrix\Tasks\Util\Replicator\Task;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\CheckList\Task\TaskCheckListFacade;
 use Bitrix\Tasks\CheckList\Template\TemplateCheckListFacade;
+use Bitrix\Tasks\Integration\CRM\TimeLineManager;
 use Bitrix\Tasks\Item;
 use Bitrix\Tasks\Item\Result;
+use Bitrix\Tasks\Provider\TaskList;
+use Bitrix\Tasks\Provider\TaskQuery;
 use Bitrix\Tasks\Util\Collection;
 use Bitrix\Tasks\Util\User;
 use Bitrix\Tasks\Util;
@@ -135,7 +138,7 @@ final class FromTemplate extends Util\Replicator\Task
 				{
 					$topTemplate = array_shift($walkQueue);
 
-					if(is_array($cTree[$topTemplate]))
+					if(is_array($cTree[$topTemplate] ?? null))
 					{
 						// create all sub template on that tree level
 						foreach($cTree[$topTemplate] as $template)
@@ -263,22 +266,24 @@ final class FromTemplate extends Util\Replicator\Task
 	{
 		try
 		{
-			$select = array('ID', 'CREATED_DATE');
-			$filter = array(
-				'FORKED_BY_TEMPLATE_ID' => $templateId,
-				'CREATED_DATE' => $executionTime
-			);
-			$params = array('USER_ID' => 1);
+			$userId = static::getEffectiveUser();
 
-			$tasks = \CTasks::GetList(array(), $filter, $select, $params);
-			if ($tasks->Fetch())
-			{
-				return true;
-			}
+			$query = new TaskQuery($userId);
+			$query
+				->setSelect(['ID'])
+				->setWhere([
+					'FORKED_BY_TEMPLATE_ID' => $templateId,
+					'CREATED_DATE' => $executionTime
+				])
+				->setLimit(1)
+				->skipAccessCheck();
 
-			return false;
+			$list = new TaskList();
+			$tasks = $list->getList($query);
+
+			return !empty($tasks);
 		}
-		catch (\TasksException $exception)
+		catch (\Exception $exception)
 		{
 			return false;
 		}
@@ -744,7 +749,10 @@ final class FromTemplate extends Util\Replicator\Task
 
 	protected static function getDailyDate($baseTime, $replicateParams, $preferredTime)
 	{
-		$num = intval($replicateParams["EVERY_DAY"]) + intval($replicateParams["DAILY_MONTH_INTERVAL"]) * 30;
+		$num =
+			(int)$replicateParams["EVERY_DAY"]
+			+ (int)($replicateParams["DAILY_MONTH_INTERVAL"] ?? 0)
+		;
 
 		$date = static::stripTime($baseTime) + $preferredTime;
 
@@ -1061,12 +1069,12 @@ final class FromTemplate extends Util\Replicator\Task
 			}
 
 			// unpack values
-			$item['RESPONSIBLES'] = unserialize($item['RESPONSIBLES'], ['allowed_classes' => false]);
-			$item['ACCOMPLICES'] = unserialize($item['ACCOMPLICES'], ['allowed_classes' => false]);
-			$item['AUDITORS'] = unserialize($item['AUDITORS'], ['allowed_classes' => false]);
-			$item['TAGS'] = unserialize($item['TAGS'], ['allowed_classes' => false]);
-			$item['REPLICATE_PARAMS'] = unserialize($item['REPLICATE_PARAMS'], ['allowed_classes' => false]);
-			$item['DEPENDS_ON'] = unserialize($item['DEPENDS_ON'], ['allowed_classes' => false]);
+			$item['RESPONSIBLES'] = unserialize($item['RESPONSIBLES'] ?? '', ['allowed_classes' => false]);
+			$item['ACCOMPLICES'] = unserialize($item['ACCOMPLICES'] ?? '', ['allowed_classes' => false]);
+			$item['AUDITORS'] = unserialize($item['AUDITORS'] ?? '', ['allowed_classes' => false]);
+			$item['TAGS'] = unserialize($item['TAGS'] ?? '', ['allowed_classes' => false]);
+			$item['REPLICATE_PARAMS'] = unserialize($item['REPLICATE_PARAMS'] ?? '', ['allowed_classes' => false]);
+			$item['DEPENDS_ON'] = unserialize($item['DEPENDS_ON'] ?? '', ['allowed_classes' => false]);
 
 			$result[$item['ID']] = $item;
 		}
@@ -1188,7 +1196,7 @@ final class FromTemplate extends Util\Replicator\Task
 			}
 			$met[$topTemplate] = true;
 
-			if(is_array($treeBundles[$topTemplate]))
+			if(is_array($treeBundles[$topTemplate] ?? null))
 			{
 				foreach($treeBundles[$topTemplate] as $template)
 				{

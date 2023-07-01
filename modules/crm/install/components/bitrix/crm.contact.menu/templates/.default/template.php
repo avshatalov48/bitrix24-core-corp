@@ -57,7 +57,7 @@ BX.ready(
 );
 </script><?
 }
-if (is_array($arResult['EXPORT_CSV_PARAMS']))
+if (isset($arResult['EXPORT_CSV_PARAMS']) && is_array($arResult['EXPORT_CSV_PARAMS']))
 {
 	\Bitrix\Main\UI\Extension::load('ui.stepprocessing');
 	?>

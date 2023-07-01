@@ -6,6 +6,8 @@ class Version
 	private const VERSIONS = [
 		0 => null,
 		1 => \Bitrix\Landing\Site\Update\ChatSales::class,
+		2 => \Bitrix\Landing\Site\Update\ChatSalesOrder::class,
+		3 => \Bitrix\Landing\Site\Update\DomainUa::class,
 	];
 
 	protected static $process = false;

@@ -55,6 +55,7 @@ $APPLICATION->IncludeComponent('bitrix:crm.item.list',
 			$parentEntityTypeId,
 			$parentEntityId
 		),
+		'isEmbedded' => true,
 	],
 	false,
 	[

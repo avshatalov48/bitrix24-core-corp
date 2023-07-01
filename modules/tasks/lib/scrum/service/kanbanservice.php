@@ -6,13 +6,11 @@ use Bitrix\Main\Errorable;
 use Bitrix\Main\ErrorCollection;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\Integration\Recyclebin;
-use Bitrix\Tasks\Access\ActionDictionary;
 use Bitrix\Tasks\Kanban\StagesTable;
 use Bitrix\Tasks\Kanban\TaskStageTable;
 use Bitrix\Tasks\ProjectsTable;
 use Bitrix\Tasks\Scrum\Form\EntityForm;
 use Bitrix\Tasks\Scrum\Internal\EntityTable;
-use Bitrix\Tasks\Util\User;
 
 class KanbanService implements Errorable
 {
@@ -89,11 +87,11 @@ class KanbanService implements Errorable
 			{
 				if ($stage['SYSTEM_TYPE'] != '')
 				{
-					$stage['TITLE'] = Loc::getMessage('TASKS_SCRUM_STAGE_' . $stage['SYSTEM_TYPE']);
+					$stage['TITLE'] = $this->getDefaultStageTitle($stage['SYSTEM_TYPE']);
 				}
 				else
 				{
-					$stage['TITLE'] = Loc::getMessage('TASKS_SCRUM_STAGE_' . StagesTable::SYS_TYPE_DEFAULT);
+					$stage['TITLE'] = $this->getDefaultStageTitle(StagesTable::SYS_TYPE_DEFAULT);
 				}
 			}
 
@@ -462,14 +460,17 @@ class KanbanService implements Errorable
 
 		return [
 			'NEW' => [
+				'TITLE' => $this->getDefaultStageTitle(StagesTable::SYS_TYPE_DEFAULT),
 				'COLOR' => '00C4FB',
 				'SYSTEM_TYPE' => StagesTable::SYS_TYPE_DEFAULT
 			],
 			'WORK' => [
+				'TITLE' => $this->getDefaultStageTitle(StagesTable::SYS_TYPE_PROGRESS),
 				'COLOR' => '47D1E2',
 				'SYSTEM_TYPE' => StagesTable::SYS_TYPE_PROGRESS
 			],
 			'FINISH' => [
+				'TITLE' => $this->getDefaultStageTitle(StagesTable::SYS_TYPE_FINISH),
 				'COLOR' => '75D900',
 				'SYSTEM_TYPE' => StagesTable::SYS_TYPE_FINISH
 			]
@@ -533,6 +534,47 @@ class KanbanService implements Errorable
 	public function getErrorByCode($code)
 	{
 		return $this->errorCollection->getErrorByCode($code);
+	}
+
+	public function getStageTitles(array $stageIds): array
+	{
+		$stageTitles = [];
+		foreach ($stageIds as $stageId)
+		{
+			$stageTitles[$stageId] = '';
+		}
+
+		$res = StagesTable::getList([
+			'select' => ['ID', 'TITLE', 'SYSTEM_TYPE'],
+			'filter' => ['@ID' => $stageIds],
+		]);
+		while ($stage = $res->fetch())
+		{
+			$stageId = (int) $stage['ID'];
+			$stageKey = array_search($stageId, $stageIds);
+			if ($stageKey !== false && $stageId === $stageIds[$stageKey])
+			{
+				if ($stage['TITLE'] === '')
+				{
+					if ($stage['SYSTEM_TYPE'] !== '')
+					{
+						$title = $this->getDefaultStageTitle($stage['SYSTEM_TYPE']);
+					}
+					else
+					{
+						$title = $this->getDefaultStageTitle(StagesTable::SYS_TYPE_DEFAULT);
+					}
+				}
+				else
+				{
+					$title = $stage['TITLE'];
+				}
+
+				$stageTitles[$stageId] = $title;
+			}
+		}
+
+		return $stageTitles;
 	}
 
 	public function moveTask(int $taskId, int $stageId): bool
@@ -742,7 +784,7 @@ class KanbanService implements Errorable
 		return count($firstStages) !== count($secondStages);
 	}
 
-	private function getDefaultStageId(int $sprintId): int
+	public function getDefaultStageId(int $sprintId): int
 	{
 		foreach ($this->getStages($sprintId) as $stage)
 		{
@@ -753,6 +795,11 @@ class KanbanService implements Errorable
 		}
 
 		return 0;
+	}
+
+	private function getDefaultStageTitle(string $systemType): string
+	{
+		return Loc::getMessage('TASKS_SCRUM_STAGE_' . $systemType);
 	}
 
 	private function getTaskIds(array $filter): array

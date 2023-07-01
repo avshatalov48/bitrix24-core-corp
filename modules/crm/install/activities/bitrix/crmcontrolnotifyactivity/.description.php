@@ -20,9 +20,11 @@ $arActivityDescription = [
 		'INCLUDE' => [
 			['crm', 'CCrmDocumentDeal'],
 			['crm', 'CCrmDocumentLead'],
-			['crm', 'Bitrix\Crm\Integration\BizProc\Document\Order'],
-			['crm', 'Bitrix\Crm\Integration\BizProc\Document\Invoice'],
+			['crm', \Bitrix\Crm\Integration\BizProc\Document\Order::class],
+			['crm', \Bitrix\Crm\Integration\BizProc\Document\Invoice::class],
 			['crm', \Bitrix\Crm\Integration\BizProc\Document\Dynamic::class],
+			['crm', \Bitrix\Crm\Integration\BizProc\Document\SmartInvoice::class],
+			['crm', \Bitrix\Crm\Integration\BizProc\Document\Quote::class],
 			['crm', \Bitrix\Crm\Integration\BizProc\Document\SmartDocument::class],
 		],
 	],

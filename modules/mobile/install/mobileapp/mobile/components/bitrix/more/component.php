@@ -1,13 +1,11 @@
-<?
+<?php
 
-use Bitrix\Main\Application;
 use Bitrix\Main\Config\Option;
-use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Socialnetwork\Controller\User\StressLevel;
 use Bitrix\Socialnetwork\Item\UserWelltory;
 use Bitrix\Intranet\Invitation;
+use Bitrix\Crm\Terminal\AvailabilityManager;
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
@@ -77,6 +75,7 @@ $menuModificationTime = $menuFile->getModificationTime();
 $cacheIsActual = ($menuModificationTime == $menuSavedModificationTime);
 $clearOptionName = "clear_more_$userId";
 $force = \Bitrix\Main\Config\Option::get("mobile", $clearOptionName, false);
+
 if (!$cacheIsActual || $force)
 {
 	$CACHE_MANAGER->ClearByTag('mobile_custom_menu' . $userId);
@@ -84,8 +83,29 @@ if (!$cacheIsActual || $force)
 	\Bitrix\Main\Config\Option::set("mobile", "jscomponent.menu.date.modified.user_" . $userId, $menuModificationTime);
 	\Bitrix\Main\Config\Option::set("mobile", $clearOptionName, false);
 }
-
-$cache_id = 'more_menu_' . $userId . '_' . $extEnabled . '_' . LANGUAGE_ID . '_' . CSite::GetNameFormat(false) . "ver" . $version . "_" . $apiVersion;
+$cache_id = 'more_menu_'
+	. implode(
+		'_',
+		[
+			$userId,
+			$extEnabled,
+			LANGUAGE_ID,
+			CSite::GetNameFormat(false) . 'ver' . $version,
+			$apiVersion,
+			/**
+			 * Should be removed after the release option release-spring-2023 is set to true!
+			 */
+			md5(
+				serialize([
+					'isTerminalAvailable' => (int)(
+						Loader::includeModule('crm')
+						&& AvailabilityManager::getInstance()->isAvailable()
+					)
+				])
+			)
+		]
+	)
+;
 $cache_dir = '/bx/mobile_component/more/user_' . $userId;
 $obCache = new CPHPCache;
 
@@ -119,6 +139,7 @@ else
 	$CACHE_MANAGER->RegisterTag('USER_CARD_' . intval($userId / TAGGED_user_card_size));
 	$CACHE_MANAGER->RegisterTag('sonet_user2group_U' . $userId);
 	$CACHE_MANAGER->RegisterTag('mobile_custom_menu' . $userId);
+	$CACHE_MANAGER->RegisterTag('mobile_custom_menu');
 	$CACHE_MANAGER->RegisterTag('crm_change_role');
 	$CACHE_MANAGER->RegisterTag('bitrix24_left_menu');
 	$CACHE_MANAGER->EndTagCache();

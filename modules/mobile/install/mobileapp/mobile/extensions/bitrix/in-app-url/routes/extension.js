@@ -39,11 +39,11 @@ jn.define('in-app-url/routes', (require, exports, module) => {
 			BX.postComponentEvent('onDiskFolderOpen', params, 'background');
 		}).name('disk:common');
 
-		inAppUrl.register('/company/personal/user/:userId/', ({ userId }, { context }) => {
+		inAppUrl.register('/company/personal/user/:userId/(\\?\\w+)?$', ({ userId }, { context = {} }) => {
 			const widgetParams = { groupStyle: true };
-			const isBackdrop = Boolean(context.backdrop);
+			const { backdrop = true } = context;
 
-			if (isBackdrop)
+			if (backdrop)
 			{
 				widgetParams.backdrop = {
 					bounceEnable: false,
@@ -55,7 +55,7 @@ jn.define('in-app-url/routes', (require, exports, module) => {
 			}
 
 			PageManager.openWidget('list', widgetParams)
-				.then(list => ProfileView.open({ userId, isBackdrop }, list));
+				.then(list => ProfileView.open({ userId, backdrop }, list));
 
 		}).name('open:user');
 

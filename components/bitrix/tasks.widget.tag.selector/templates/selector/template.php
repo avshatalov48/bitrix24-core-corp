@@ -14,7 +14,7 @@ Extension::load(['ui.entity-selector']);
 <?php $helper->displayFatals();?>
 <?php if(!$helper->checkHasFatals()):?>
 
-	<div id="<?=$helper->getScopeId()?>" class="tasks task-form-field <?=$arParams['DISPLAY']?> <?=($arParams['READ_ONLY'] ? 'readonly' : '')?>" <?php if($arParams['MAX_WIDTH'] > 0):?>style="max-width: <?=$arParams['MAX_WIDTH']?>px"<?php endif?>>
+	<div id="<?=$helper->getScopeId()?>" class="tasks task-form-field <?=$arParams['DISPLAY']?> <?=(($arParams['READ_ONLY'] ?? null) ? 'readonly' : '')?>" <?php if($arParams['MAX_WIDTH'] > 0):?>style="max-width: <?=$arParams['MAX_WIDTH']?>px"<?php endif?>>
 
 		<?php $helper->displayWarnings();?>
 

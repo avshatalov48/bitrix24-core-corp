@@ -1,43 +1,46 @@
-<?
+<?php
+
 namespace Bitrix\Crm\Integration\Main\UISelector;
 
 use Bitrix\Main\Localization\Loc;
+use CCrmContact;
+use CCrmDeal;
+use CCrmOwnerType;
 
-class CrmDeals extends \Bitrix\Main\UI\Selector\EntityBase
+class CrmDeals extends CrmBase
 {
-	const PREFIX_SHORT = 'D_';
-	const PREFIX_FULL = 'CRMDEAL';
+	public const PREFIX_SHORT = 'D_';
+	public const PREFIX_FULL = 'CRMDEAL';
 
-	private static function getPrefix($options = [])
+	protected static function getOwnerType()
 	{
-		return (
-			is_array($options)
-			&& isset($options['prefixType'])
-			&& mb_strtolower($options['prefixType']) == 'short'
-				? self::PREFIX_SHORT
-				: self::PREFIX_FULL
-		);
+		return CCrmOwnerType::Deal;
 	}
 
-	private static function prepareEntity($data, $options = [])
+	protected static function getHandlerType()
 	{
-		$prefix = self::getPrefix($options);
+		return Handler::ENTITY_TYPE_CRMDEALS;
+	}
+
+	protected static function prepareEntity($data, $options = [])
+	{
+		$prefix = static::getPrefix($options);
 		$descList = [];
 		if ($data['COMPANY_TITLE'] != '')
 		{
 			$descList[] = $data['COMPANY_TITLE'];
 		}
-		$descList[] = \CCrmContact::PrepareFormattedName(
-			array(
-				'HONORIFIC' => isset($data['CONTACT_HONORIFIC']) ? $data['CONTACT_HONORIFIC'] : '',
-				'NAME' => isset($data['CONTACT_NAME']) ? $data['CONTACT_NAME'] : '',
-				'SECOND_NAME' => isset($data['CONTACT_SECOND_NAME']) ? $data['CONTACT_SECOND_NAME'] : '',
-				'LAST_NAME' => isset($data['CONTACT_LAST_NAME']) ? $data['CONTACT_LAST_NAME'] : ''
-			)
+		$descList[] = CCrmContact::PrepareFormattedName(
+			[
+				'HONORIFIC' => $data['CONTACT_HONORIFIC'] ?? '',
+				'NAME' => $data['CONTACT_NAME'] ?? '',
+				'SECOND_NAME' => $data['CONTACT_SECOND_NAME'] ?? '',
+				'LAST_NAME' => $data['CONTACT_LAST_NAME'] ?? '',
+			]
 		);
 
 		$result = [
-			'id' => $prefix.$data['ID'],
+			'id' => $prefix . $data['ID'],
 			'entityType' => 'deals',
 			'entityId' => $data['ID'],
 			'name' => htmlspecialcharsbx($data['TITLE']),
@@ -54,44 +57,50 @@ class CrmDeals extends \Bitrix\Main\UI\Selector\EntityBase
 			&& $options['returnItemUrl'] == 'Y'
 		)
 		{
-			$result['url'] = \CCrmOwnerType::getEntityShowPath(\CCrmOwnerType::Deal, $data['ID']);
-			$result['urlUseSlider'] = (\CCrmOwnerType::isSliderEnabled(\CCrmOwnerType::Deal) ? 'Y' : 'N');
+			$result['url'] = CCrmOwnerType::getEntityShowPath(CCrmOwnerType::Deal, $data['ID']);
+			$result['urlUseSlider'] = (CCrmOwnerType::isSliderEnabled(CCrmOwnerType::Deal) ? 'Y' : 'N');
 		}
 
 		return $result;
 	}
 
-	public function getData($params = array())
+	public function getData($params = [])
 	{
-		$entityType = Handler::ENTITY_TYPE_CRMDEALS;
+		$entityType = static::getHandlerType();
 
-		$result = array(
-			'ITEMS' => array(),
-			'ITEMS_LAST' => array(),
-			'ITEMS_HIDDEN' => array(),
-			'ADDITIONAL_INFO' => array(
-				'GROUPS_LIST' => array(
-					'crmdeals' => array(
+		$result = [
+			'ITEMS' => [],
+			'ITEMS_LAST' => [],
+			'ITEMS_HIDDEN' => [],
+			'ADDITIONAL_INFO' => [
+				'GROUPS_LIST' => [
+					'crmdeals' => [
 						'TITLE' => Loc::getMessage('MAIN_UI_SELECTOR_TITLE_CRMDEALS'),
 						'TYPE_LIST' => [ $entityType ],
 						'DESC_LESS_MODE' => 'N',
-						'SORT' => 50
-					)
-				),
-				'SORT_SELECTED' => 500
-			)
-		);
+						'SORT' => 50,
+					]
+				],
+				'SORT_SELECTED' => 500,
+			],
+		];
 
-		$entityOptions = (!empty($params['options']) ? $params['options'] : array());
-		$prefix = self::getPrefix($entityOptions);
+		$entityOptions = (!empty($params['options']) ? $params['options'] : []);
+		$prefix = static::getPrefix($entityOptions);
 
-		$lastItems = (!empty($params['lastItems']) ? $params['lastItems'] : array());
-		$selectedItems = (!empty($params['selectedItems']) ? $params['selectedItems'] : array());
+		$lastItems = (!empty($params['lastItems']) ? $params['lastItems'] : []);
+		$selectedItems = (!empty($params['selectedItems']) ? $params['selectedItems'] : []);
 
 		$lastDealsIdList = [];
 		if(!empty($lastItems[$entityType]))
 		{
-			$result["ITEMS_LAST"] = array_map(function($code) use ($prefix) { return preg_replace('/^'.self::PREFIX_FULL.'(\d+)$/', $prefix.'$1', $code); }, array_values($lastItems[$entityType]));
+			$result["ITEMS_LAST"] = array_map(
+				function($code) use ($prefix)
+				{
+					return preg_replace('/^'.self::PREFIX_FULL . '(\d+)$/', $prefix . '$1', $code);
+				},
+				array_values($lastItems[$entityType])
+			);
 			foreach ($lastItems[$entityType] as $value)
 			{
 				$lastDealsIdList[] = str_replace(self::PREFIX_FULL, '', $value);
@@ -109,14 +118,12 @@ class CrmDeals extends \Bitrix\Main\UI\Selector\EntityBase
 		}
 
 		$dealsIdList = array_merge($selectedDealsIdList, $lastDealsIdList);
-		$dealsIdList = array_slice($dealsIdList, 0, count($selectedDealsIdList) > 20 ? count($selectedDealsIdList) : 20);
+		$dealsIdList = array_slice($dealsIdList, 0, max(count($selectedDealsIdList), 20));
 		$dealsIdList = array_unique($dealsIdList);
 
 		$dealsList = [];
 
-		$filter = [
-			'CHECK_PERMISSIONS' => 'Y'
-		];
+		$filter = ['CHECK_PERMISSIONS' => 'Y'];
 		$order = [];
 
 		if (!empty($dealsIdList))
@@ -126,9 +133,7 @@ class CrmDeals extends \Bitrix\Main\UI\Selector\EntityBase
 		}
 		else
 		{
-			$order = [
-				'ID' => 'DESC'
-			];
+			$order = ['ID' => 'DESC'];
 			$navParams = [ 'nTopCount' => 10 ];
 		}
 
@@ -140,17 +145,17 @@ class CrmDeals extends \Bitrix\Main\UI\Selector\EntityBase
 			$filter['=HAS_EMAIL'] = 'Y';
 		}
 
-		$res = \CCrmDeal::getListEx(
+		$res = CCrmDeal::getListEx(
 			$order,
 			$filter,
 			false,
 			$navParams,
-			['ID', 'TITLE', 'COMPANY_TITLE', 'CONTACT_NAME', 'CONTACT_SECOND_NAME', 'CONTACT_LAST_NAME', 'CONTACT_HONORIFIC', 'DATE_CREATE']
+			$this->getSearchSelect()
 		);
 
 		while ($dealFields = $res->fetch())
 		{
-			$dealsList[$prefix.$dealFields['ID']] = self::prepareEntity($dealFields, $entityOptions);
+			$dealsList[$prefix . $dealFields['ID']] = static::prepareEntity($dealFields, $entityOptions);
 		}
 
 		if (empty($lastDealsIdList))
@@ -163,7 +168,13 @@ class CrmDeals extends \Bitrix\Main\UI\Selector\EntityBase
 		if (!empty($selectedItems[$entityType]))
 		{
 			$hiddenItemsList = array_diff($selectedItems[$entityType], array_keys($dealsList));
-			$hiddenItemsList = array_map(function($code) use ($prefix) { return preg_replace('/^'.$prefix.'(\d+)$/', '$1', $code); }, $hiddenItemsList);
+			$hiddenItemsList = array_map(
+				function($code) use ($prefix)
+				{
+					return preg_replace('/^' . $prefix . '(\d+)$/', '$1', $code);
+				},
+				$hiddenItemsList
+			);
 
 			if (!empty($hiddenItemsList))
 			{
@@ -180,7 +191,7 @@ class CrmDeals extends \Bitrix\Main\UI\Selector\EntityBase
 					$filter['=HAS_EMAIL'] = 'Y';
 				}
 
-				$res = \CCrmDeal::getListEx(
+				$res = CCrmDeal::getListEx(
 					[],
 					$filter,
 					false,
@@ -189,7 +200,7 @@ class CrmDeals extends \Bitrix\Main\UI\Selector\EntityBase
 				);
 				while($dealFields = $res->fetch())
 				{
-					$result['ITEMS_HIDDEN'][] = $prefix.$dealFields["ID"];
+					$result['ITEMS_HIDDEN'][] = $prefix . $dealFields["ID"];
 				}
 			}
 		}
@@ -208,29 +219,29 @@ class CrmDeals extends \Bitrix\Main\UI\Selector\EntityBase
 			&& $options['addTab'] == 'Y'
 		)
 		{
-			$result = array(
-				array(
+			$result = [
+				[
 					'id' => 'deals',
 					'name' => Loc::getMessage('MAIN_UI_SELECTOR_TAB_CRMDEALS'),
-					'sort' => 50
-				)
-			);
+					'sort' => 50,
+				],
+			];
 		}
 
 		return $result;
 	}
 
-	public function search($params = array())
+	public function search($params = [])
 	{
-		$result = array(
-			'ITEMS' => array(),
-			'ADDITIONAL_INFO' => array()
-		);
+		$result = [
+			'ITEMS' => [],
+			'ADDITIONAL_INFO' => [],
+		];
 
-		$entityOptions = (!empty($params['options']) ? $params['options'] : array());
-		$requestFields = (!empty($params['requestFields']) ? $params['requestFields'] : array());
+		$entityOptions = (!empty($params['options']) ? $params['options'] : []);
+		$requestFields = (!empty($params['requestFields']) ? $params['requestFields'] : []);
 		$search = $requestFields['searchString'];
-		$prefix = self::getPrefix($entityOptions);
+		$prefix = static::getPrefix($entityOptions);
 
 		if (
 			$search <> ''
@@ -240,47 +251,60 @@ class CrmDeals extends \Bitrix\Main\UI\Selector\EntityBase
 			)
 		)
 		{
-			$res = \CCrmDeal::getListEx(
-				[],
-				[
-					'SEARCH_CONTENT' => $search,
-					'%TITLE' => $search,
-					'__ENABLE_SEARCH_CONTENT_PHONE_DETECTION' => false
-				],
+			$filter = $this->getSearchFilter($search, $entityOptions);
+
+			if ($filter === false)
+			{
+				return $result;
+			}
+
+			$res = CCrmDeal::getListEx(
+				$this->getSearchOrder(),
+				$filter,
 				false,
 				['nTopCount' => 20],
-				['ID', 'TITLE', 'COMPANY_TITLE', 'CONTACT_NAME', 'CONTACT_SECOND_NAME', 'CONTACT_LAST_NAME', 'CONTACT_HONORIFIC', 'DATE_CREATE']
+				$this->getSearchSelect()
 			);
+
+			$resultItems = [];
 
 			while ($dealFields = $res->fetch())
 			{
-				$result["ITEMS"][$prefix.$dealFields['ID']] = self::prepareEntity($dealFields, $entityOptions);
+				$resultItems[$prefix . $dealFields['ID']] = static::prepareEntity($dealFields, $entityOptions);
 			}
 
-			if (
-				!empty($entityOptions['searchById'])
-				&& $entityOptions['searchById'] == 'Y'
-				&& intval($search) == $search
-				&& intval($search) > 0
-			)
-			{
-				$res = \CCrmDeal::getListEx(
-					[],
-					[
-						'=ID' => intval($search)
-					],
-					false,
-					['nTopCount' => 1],
-					['ID', 'TITLE', 'COMPANY_TITLE', 'CONTACT_NAME', 'CONTACT_SECOND_NAME', 'CONTACT_LAST_NAME', 'CONTACT_HONORIFIC', 'DATE_CREATE']
-				);
+			$resultItems = $this->appendItemsByIds($resultItems, $search, $entityOptions);
 
-				while ($dealFields = $res->fetch())
-				{
-					$result["ITEMS"][$prefix.$dealFields['ID']] = self::prepareEntity($dealFields, $entityOptions);
-				}
-			}
+			$resultItems = $this->processResultItems($resultItems, $entityOptions);
+
+			$result["ITEMS"] = $resultItems;
 		}
 
 		return $result;
+	}
+
+	protected function getSearchSelect(): array
+	{
+		return [
+			'ID',
+			'TITLE',
+			'COMPANY_TITLE',
+			'CONTACT_NAME',
+			'CONTACT_SECOND_NAME',
+			'CONTACT_LAST_NAME',
+			'CONTACT_HONORIFIC',
+			'DATE_CREATE',
+		];
+	}
+
+	protected function getSearchFilter(string $search, array $options)
+	{
+		$filter = [
+			'SEARCH_CONTENT' => $search,
+			'%TITLE' => $search,
+			'__ENABLE_SEARCH_CONTENT_PHONE_DETECTION' => false
+		];
+
+		return $this->prepareOptionalFilter($filter, $options);
 	}
 }

@@ -2,6 +2,8 @@
 
 namespace Bitrix\Crm\Integration\Landing;
 
+use Bitrix\Crm\UI\Webpack;
+use Bitrix\Landing\Agent;
 use Bitrix\Landing\Internals\LandingTable;
 use Bitrix\Landing\Landing;
 use Bitrix\Landing\Subtype;
@@ -220,9 +222,15 @@ class FormLanding
 			$blockId = $landing->addBlock('66.90.form_new_default', [
 				'ACCESS' => 'W'
 			]);
-			if($blockId)
+			if ($blockId)
 			{
 				Subtype\Form::setFormIdToBlock($blockId, $formId);
+			}
+
+			$webpack = Webpack\Form::instance($formId);
+			if (!$webpack->getEmbeddedFileUrl())
+			{
+				Agent::addUniqueAgent('rePublicationLanding', [$lid], 7200, 60);
 			}
 
 			Rights::setGlobalOn();

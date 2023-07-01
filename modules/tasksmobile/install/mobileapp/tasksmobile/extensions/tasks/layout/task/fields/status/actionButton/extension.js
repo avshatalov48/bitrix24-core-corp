@@ -127,7 +127,7 @@ jn.define('tasks/layout/task/fields/status/actionButton', (require, exports, mod
 					fontSize: 10,
 					fontColor: '#696c70',
 					fontWeight: '600',
-					color: (timeEstimate && timeElapsed > timeEstimate ? '#ff514a' : '#696c70'),
+					color: (timeEstimate && timeElapsed > timeEstimate ? '#ff5752' : '#696c70'),
 				},
 				text: `${elapsedHours}:${elapsedMinutes} ${(timeEstimate ? `/ ${estimateHours}:${estimateMinutes}` : '')}`,
 			});

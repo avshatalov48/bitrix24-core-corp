@@ -3,10 +3,13 @@
 namespace Bitrix\Crm\Counter\Monitor;
 
 use Bitrix\Crm\Activity\IncomingChannel;
+use Bitrix\Crm\Activity\LightCounter\ActCounterLightTimeRepo;
+use Bitrix\Crm\Activity\LightCounter\ActCounterLightTimeTable;
 use Bitrix\Crm\Counter\EntityCountableActivityTable;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\DB\SqlQueryException;
+use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Type\DateTime;
 
 class CountableActivitySynchronizer
@@ -52,8 +55,26 @@ class CountableActivitySynchronizer
 			&& !$activityChange->getNewIsCompleted()
 		)
 		{
+
+			/** @var ActCounterLightTimeRepo $lightCounterRepo */
+			$lightCounterRepo = ServiceLocator::getInstance()->get('crm.activity.actcounterlighttimerepo');
+			$lightCounterAt = $lightCounterRepo->queryLightTimeByActivityId($activityChange->getId());
+
+			$deadline = $activityChange->getNewDeadline() ?? \CCrmDateTimeHelper::getMaxDatabaseDateObject();
+
+			if (!$lightCounterAt)
+			{
+				$lightCounterAt = clone $deadline;
+				$lightCounterAt->add('-PT15M');
+			}
+
 			foreach ($activityChange->getNewBindings() as $binding)
 			{
+				if (!\CCrmOwnerType::IsEntity($binding->getEntityTypeId()))
+				{
+					continue;
+				}
+
 				$entityData = $entitiesData[$binding->getEntityTypeId()][$binding->getEntityId()] ?? [];
 				EntityCountableActivityTable::upsert([
 					'ENTITY_TYPE_ID' => $binding->getEntityTypeId(),
@@ -63,6 +84,8 @@ class CountableActivitySynchronizer
 					'ACTIVITY_RESPONSIBLE_ID' => (int)$activityChange->getNewResponsibleId(),
 					'ACTIVITY_DEADLINE' => $activityChange->getNewDeadline() ?? \CCrmDateTimeHelper::getMaxDatabaseDateObject(),
 					'ACTIVITY_IS_INCOMING_CHANNEL' => (bool)$activityChange->getNewIsIncomingChannel(),
+					'LIGHT_COUNTER_AT' => $lightCounterAt,
+					'DEADLINE_EXPIRED_AT' => self::endDayOfDateTime($deadline)
 				]);
 			}
 		}
@@ -122,9 +145,25 @@ class CountableActivitySynchronizer
 			return;
 		}
 		$processedBindings = [];
+
+
+		/** @var ActCounterLightTimeRepo $lightCounterRepo */
+		$lightCounterRepo = ServiceLocator::getInstance()->get('crm.activity.actcounterlighttimerepo');
+		$lightCounterAt = $lightCounterRepo->queryLightTimeByActivityId($activityId);
+
+		if (!$lightCounterAt && $deadline)
+		{
+			$lightCounterAt = clone $deadline;
+			$lightCounterAt->add('-PT15M');
+		}
+
 		foreach ($bindings as $binding)
 		{
 			$entityTypeId = (int)$binding['OWNER_TYPE_ID'];
+			if (!\CCrmOwnerType::IsEntity($entityTypeId))
+			{
+				continue;
+			}
 			$entityId = (int)$binding['OWNER_ID'];
 			$factory = Container::getInstance()->getFactory($entityTypeId);
 			if (!$factory)
@@ -153,6 +192,8 @@ class CountableActivitySynchronizer
 				'ACTIVITY_RESPONSIBLE_ID' => $responsibleId,
 				'ACTIVITY_DEADLINE' => $deadline ?? \CCrmDateTimeHelper::getMaxDatabaseDateObject(),
 				'ACTIVITY_IS_INCOMING_CHANNEL' => $isIncomingChannel,
+				'LIGHT_COUNTER_AT' => $lightCounterAt ?? \CCrmDateTimeHelper::getMaxDatabaseDateObject(),
+				'DEADLINE_EXPIRED_AT' => self::endDayOfDateTime($deadline) ?? \CCrmDateTimeHelper::getMaxDatabaseDateObject()
 			];
 
 			try
@@ -167,5 +208,16 @@ class CountableActivitySynchronizer
 				}
 			}
 		}
+	}
+
+	private static function endDayOfDateTime(?DateTime $dateTime): ?DateTime
+	{
+		if ($dateTime === null)
+		{
+			return null;
+		}
+		$dt = clone $dateTime;
+		$dt->setTime(23, 59, 59);
+		return $dt;
 	}
 }

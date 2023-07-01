@@ -190,16 +190,6 @@ export class RequestSender
 		return this.sendRequestToComponent(data, 'updateBorderColorToLinkedItems');
 	}
 
-	editEpic(data): Promise
-	{
-		return this.sendRequestToComponent(data, 'editEpic');
-	}
-
-	removeEpic(data): Promise
-	{
-		return this.sendRequestToComponent(data, 'removeEpic');
-	}
-
 	applyFilter(data): Promise
 	{
 		return this.sendRequestToComponent(data, 'applyFilter');
@@ -225,6 +215,11 @@ export class RequestSender
 		return this.sendRequest('bitrix:tasks.scrum.epic.createEpic', data);
 	}
 
+	getEpic(data): Promise
+	{
+		return this.sendRequest('bitrix:tasks.scrum.epic.getEpic', data);
+	}
+
 	getItemData(data): Promise
 	{
 		return this.sendRequestToComponent(data, 'getItemData');
@@ -233,6 +228,11 @@ export class RequestSender
 	getSprintData(data): Promise
 	{
 		return this.sendRequestToComponent(data, 'getSprintData');
+	}
+
+	saveSprintVisibility(data): Promise
+	{
+		return this.sendRequestToComponent(data, 'saveSprintVisibility');
 	}
 
 	showErrorAlert(response: ErrorResponse, alertTitle?: string)

@@ -12,6 +12,7 @@ class LimitManagerBox extends LimitManager
 
 	/**
 	 * Called on data export end.
+	 *
 	 * @param int $rowsCount How many data rows was exported.
 	 *
 	 * @return void
@@ -56,7 +57,7 @@ class LimitManagerBox extends LimitManager
 	/**
 	 * Returns true if there is nothing to worry about.
 	 *
-	 * @return boolean
+	 * @return bool
 	 */
 	public function checkLimitWarning()
 	{
@@ -69,7 +70,7 @@ class LimitManagerBox extends LimitManager
 	/**
 	 * Returns true if data export and some functions is not disabled.
 	 *
-	 * @return boolean
+	 * @return bool
 	 */
 	public function checkLimit()
 	{
@@ -80,7 +81,10 @@ class LimitManagerBox extends LimitManager
 	}
 
 	/**
-	 * @param \Bitrix\Main\Event $event
+	 * Event OnAfterSetOption_~controller_group_name handler.
+	 *
+	 * @param \Bitrix\Main\Event $event Event parameters.
+	 *
 	 * @return void
 	 */
 	public function licenseChange(\Bitrix\Main\Event $event)

@@ -71,7 +71,7 @@ if($action == '')
 CBitrixComponent::includeComponentClass("bitrix:crm.timeline");
 $component = new CCrmTimelineComponent();
 
-if($action == 'SAVE_COMMENT')
+if($action == 'SAVE_COMMENT') // OBSOLETE: new API 'crm.timeline.comment.add' is used
 {
 	$ownerTypeID = isset($_POST['OWNER_TYPE_ID']) ? (int)$_POST['OWNER_TYPE_ID'] : 0;
 	$ownerID = isset($_POST['OWNER_ID']) ? (int)$_POST['OWNER_ID'] : 0;
@@ -437,108 +437,64 @@ elseif($action == 'GET_HISTORY_ITEMS')
 }
 elseif($action == 'SAVE_SMS_MESSAGE')
 {
-	$source = $_REQUEST['source'] ?? null;
-	$siteID = !empty($_REQUEST['site']) ? $_REQUEST['site'] : SITE_ID;
-
-	$ownerTypeID = isset($_REQUEST['OWNER_TYPE_ID']) ? (int)$_REQUEST['OWNER_TYPE_ID'] : 0;
-	if(!CCrmOwnerType::IsDefined($ownerTypeID))
+	$ownerTypeId = (int)($_REQUEST['OWNER_TYPE_ID'] ?? 0);
+	if($ownerTypeId <= 0)
 	{
-		__CrmTimelineEndResponse(array('ERROR'=>'OWNER TYPE IS NOT SUPPORTED!'));
+		__CrmTimelineEndResponse(['ERROR'=>'OWNER TYPE IS NOT SUPPORTED!']);
 	}
 
-	$ownerID = isset($_REQUEST['OWNER_ID']) ? (int)$_REQUEST['OWNER_ID'] : 0;
-	if($ownerID <= 0)
+	$ownerId = (int)($_REQUEST['OWNER_ID'] ?? 0);
+	if($ownerId <= 0)
 	{
-		__CrmTimelineEndResponse(array('ERROR'=>'OWNER ID IS NOT DEFINED!'));
+		__CrmTimelineEndResponse(['ERROR'=>'OWNER ID IS NOT DEFINED!']);
 	}
 
-	if(!\Bitrix\Crm\Security\EntityAuthorization::checkUpdatePermission($ownerTypeID, $ownerID))
-	{
-		__CrmTimelineEndResponse(array('ERROR' => GetMessage('CRM_PERMISSION_DENIED')));
-	}
-
-	$responsibleID = $currentUser->GetID();
+	$owner = new ItemIdentifier($ownerTypeId, $ownerId);
 
 	$senderId = isset($_REQUEST['SENDER_ID']) ? (string)$_REQUEST['SENDER_ID'] : null;
 	$messageFrom = isset($_REQUEST['MESSAGE_FROM']) ? (string)$_REQUEST['MESSAGE_FROM'] : null;
 	$messageTo = isset($_REQUEST['MESSAGE_TO']) ? (string)$_REQUEST['MESSAGE_TO'] : null;
 	$messageBody = isset($_REQUEST['MESSAGE_BODY']) ? (string)$_REQUEST['MESSAGE_BODY'] : null;
 	$messageTemplate = $_REQUEST['MESSAGE_TEMPLATE'] ?? null;
-
-	$comEntityTypeID = isset($_REQUEST['TO_ENTITY_TYPE_ID']) ? (int)$_REQUEST['TO_ENTITY_TYPE_ID'] : 0;
-	$comEntityID = isset($_REQUEST['TO_ENTITY_ID']) ? (int)$_REQUEST['TO_ENTITY_ID'] : 0;
-	if (!$comEntityTypeID || !$comEntityID)
-	{
-		$comEntityTypeID = $ownerTypeID;
-		$comEntityID = $ownerID;
-	}
-
-	$paymentId = isset($_REQUEST['PAYMENT_ID']) ? (int)$_REQUEST['PAYMENT_ID'] : null;
-	$shipmentId = isset($_REQUEST['SHIPMENT_ID']) ? (int)$_REQUEST['SHIPMENT_ID'] : null;
-
-	$bindings = array(array(
-		'OWNER_TYPE_ID' => $ownerTypeID,
-		'OWNER_ID' => $ownerID
-	));
-
-	if (!($comEntityTypeID === $ownerTypeID && $comEntityID === $ownerID))
-	{
-		$bindings[] = array(
-			'OWNER_TYPE_ID' => $comEntityTypeID,
-			'OWNER_ID' => $comEntityID
-		);
-	}
-
-	$additionalFields = [
-		'ACTIVITY_PROVIDER_TYPE_ID' => \Bitrix\Crm\Activity\Provider\Sms::PROVIDER_TYPE_SMS,
-		'ENTITY_TYPE' => \CCrmOwnerType::ResolveName($comEntityTypeID),
-		'ENTITY_TYPE_ID' => $comEntityTypeID,
-		'ENTITY_ID' => $comEntityID,
-		'BINDINGS' => $bindings,
-		'ACTIVITY_AUTHOR_ID' => $responsibleID,
-		'ACTIVITY_DESCRIPTION' => $messageBody,
-		'MESSAGE_TO' => $messageTo,
-	];
-
-	if (
-		$source === 'order'
-		&& $paymentId
-		&& \Bitrix\Main\Loader::includeModule('sale')
-		&& ($payment = \Bitrix\Sale\Repository\PaymentRepository::getInstance()->getById($paymentId))
-		&& preg_match('/(?:https?):\/\//', $messageBody)
-	)
-	{
-		$bindings = array_merge($bindings, ActivityBindingsMaker::makeByPayment($payment));
-
-		$additionalFields['ENTITIES'] = [
-			'ORDER' => $payment->getOrder(),
-			'PAYMENT' => $payment,
-			'SHIPMENT' => $shipmentId ? \Bitrix\Sale\Repository\ShipmentRepository::getInstance()->getById($shipmentId) : null,
-		];
-	}
-
-	$compilationProductIds = is_array($_REQUEST['COMPILATION_PRODUCT_IDS']) ? $_REQUEST['COMPILATION_PRODUCT_IDS'] : [];
-	if ($source === 'deal' && !empty($compilationProductIds))
-	{
-		$additionalFields['PRODUCT_IDS'] = $compilationProductIds;
-		$additionalFields['ENTITIES'] = [
-			'DEAL' => $ownerTypeID === CCrmOwnerType::Deal ? CCrmDeal::GetByID($ownerID) : null,
-		];
-	}
-
-	$result = \Bitrix\Crm\Integration\SmsManager::sendMessage([
-		'SENDER_ID' => $senderId,
-		'AUTHOR_ID' => $responsibleID,
-		'MESSAGE_FROM' => $messageFrom,
-		'MESSAGE_TO' => $messageTo,
-		'MESSAGE_BODY' => $messageBody,
-		'MESSAGE_TEMPLATE' => $messageTemplate,
-		'MESSAGE_HEADERS' => [
-			'module_id' => 'crm',
-			'bindings' => $bindings,
-		],
-		'ADDITIONAL_FIELDS' => $additionalFields
+	$message = new \Bitrix\Crm\Activity\Provider\Sms\MessageDto([
+		'senderId' => $senderId,
+		'from' => $messageFrom,
+		'to' => $messageTo,
+		'body' => $messageBody,
+		'template' => $messageTemplate,
 	]);
+
+	$sender = (new \Bitrix\Crm\Activity\Provider\Sms\Sender($owner, $message));
+
+	if (isset($_REQUEST['PAYMENT_ID']))
+	{
+		$sender->setPaymentId((int) $_REQUEST['PAYMENT_ID']);
+	}
+
+	if (isset($_REQUEST['SHIPMENT_ID']))
+	{
+		$sender->setShipmentId((int) $_REQUEST['SHIPMENT_ID']);
+	}
+
+	if (isset($_REQUEST['source']))
+	{
+		$sender->setSource($_REQUEST['source']);
+	}
+
+	if (isset($_REQUEST['COMPILATION_PRODUCT_IDS']) && is_array($_REQUEST['COMPILATION_PRODUCT_IDS']))
+	{
+		$sender->setCompilationProductIds($_REQUEST['COMPILATION_PRODUCT_IDS']);
+	}
+
+	$comEntityTypeId = (int)($_REQUEST['TO_ENTITY_TYPE_ID'] ?? 0);
+	$comEntityId = (int)($_REQUEST['TO_ENTITY_ID'] ?? 0);
+	if ($comEntityTypeId && $comEntityId)
+	{
+		$entity = new ItemIdentifier($comEntityTypeId, $comEntityId);
+		$sender->setEntityIdentifier($entity);
+	}
+
+	$result = $sender->send();
 
 	__CrmTimelineEndResponse(
 		$result->isSuccess()
@@ -609,7 +565,7 @@ elseif($action == 'CHANGE_FASTEN_ITEM')
 
 	__CrmTimelineEndResponse(array('ID' => $id));
 }
-elseif($action == 'UPDATE_COMMENT')
+elseif($action == 'UPDATE_COMMENT') // OBSOLETE: new API 'crm.timeline.comment.update' is used
 {
 	$id =  isset($_POST['ID']) ? (int)$_POST['ID'] : 0;
 	$text = isset($_POST['TEXT']) ? $_POST['TEXT'] : '';
@@ -725,7 +681,7 @@ elseif($action == 'UPDATE_COMMENT')
 		__CrmTimelineEndResponse(array('ERROR' => 'Could not update comment.'));
 	}
 }
-elseif($action == 'DELETE_COMMENT')
+elseif($action == 'DELETE_COMMENT') // OBSOLETE: new API 'crm.timeline.comment.delete' is used
 {
 	$ownerTypeID = isset($_POST['OWNER_TYPE_ID']) ? (int)$_POST['OWNER_TYPE_ID'] : 0;
 	$ownerID = isset($_POST['OWNER_ID']) ? (int)$_POST['OWNER_ID'] : 0;
@@ -781,7 +737,7 @@ elseif($action == 'DELETE_COMMENT')
 
 	__CrmTimelineEndResponse(array('ID' => $id));
 }
-elseif($action == 'GET_COMMENT_CONTENT')
+elseif($action == 'GET_COMMENT_CONTENT') // OBSOLETE: new API 'crm.timeline.comment.load' is used
 {
 	$entityTypeID = isset($_REQUEST['ENTITY_TYPE_ID']) ? (int)$_REQUEST['ENTITY_TYPE_ID'] : 0;
 	$id = isset($_POST['ID']) ? (int)$_POST['ID'] : 0;

@@ -153,7 +153,7 @@ abstract class SynchronizeReserves extends Action
 		else
 		{
 			$syncronizer = new OrderDealSynchronizer();
-			$syncronizer->syncOrderReservesFromDeal($dealId, $this->reservationResult);
+			$syncronizer->syncOrderReservesFromDeal($dealId, $this->reservationResult, true);
 		}
 	}
 }

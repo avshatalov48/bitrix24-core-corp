@@ -85,6 +85,8 @@ class CTimeManEntry extends CAllTimeManEntry
 
 		$arSqls = CTimeManEntry::PrepareSql($arFields, $arOrder, $arFilter, $arGroupBy, $arSelectFields, $obUserFieldsSql);
 
+		$strSqlUFFilter = '';
+
 		$r = $obUserFieldsSql->GetFilter();
 		if($r <> '')
 			$strSqlUFFilter = " (".$r.") ";

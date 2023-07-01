@@ -6,121 +6,127 @@
  */
 jn.define('im/messenger/lib/converter/dialog', (require, exports, module) => {
 
-	const { Type, Loc } = jn.require('im/messenger/lib/core');
-	const { MessengerParams } = jn.require('im/messenger/lib/params');
+	const { Type } = require('type');
+	const { core } = require('im/messenger/core');
+	const {
+		FileType,
+		DialogType,
+	} = require('im/messenger/const');
+	const { MessengerParams } = require('im/messenger/lib/params');
+	const {
+		TextMessage,
+		DeletedMessage,
+		ImageMessage,
+		AudioMessage,
+		VideoMessage,
+		FileMessage,
+		SystemTextMessage,
+		UnsupportedMessage
+	} = require('im/messenger/lib/element');
 
 	/**
 	 * @class DialogConverter
 	 */
 	class DialogConverter
 	{
-		constructor()
+		static createMessageList(modelMessageList)
 		{
-			this.quoteSeparator = '------------------------------------------------------';
-			this.mobileQuoteSeparator = '------------------';
+			if (!Type.isArrayFilled(modelMessageList))
+			{
+				return [];
+			}
+
+			const options = {};
+
+			const chatId = modelMessageList[0].chatId;
+			const dialog = core.getStore().getters['dialoguesModel/getByChatId'](chatId);
+			if (dialog.type === DialogType.user)
+			{
+				options.showUsername = false;
+				options.showAvatar = false;
+			}
+
+			return modelMessageList.map((modelMessage) => DialogConverter.createMessage(modelMessage, options));
 		}
 
-		toMessageList(modelMessageList)
+		static createMessage(modelMessage = {}, options = {})
 		{
-			return modelMessageList.map(modelMessage => this.toMessageItem(modelMessage));
-		}
+			const isSystemMessage = modelMessage.authorId === 0;
+			if (isSystemMessage)
+			{
+				return new SystemTextMessage(modelMessage, options);
+			}
 
-		toMessageItem(modelMessage)
-		{
-			const currentUserId = MessengerParams.getUserId();
+			const isDeletedMessage = modelMessage.params.IS_DELETED === 'Y';
+			if (isDeletedMessage)
+			{
+				return new DeletedMessage(modelMessage, options);
+			}
 
-			const messageItem = {
-				id: modelMessage.id.toString(),
-				username: modelMessage.author_name,
-				time: this.toMessageTime(modelMessage.date),
-				me: modelMessage.author_id === currentUserId,
-				read: true,//TODO: !modelMessage.unread,
-			};
+			const isMessageWithFile = modelMessage.files[0];
+			let file = null;
+			if (isMessageWithFile)
+			{
+				file = core.getStore().getters['filesModel/getById'](modelMessage.files[0]);
+			}
+
+			if (isMessageWithFile && file && file.type === FileType.image)
+			{
+				return new ImageMessage(modelMessage, options, file);
+			}
+
+			if (isMessageWithFile && file && file.type === FileType.audio)
+			{
+				return new AudioMessage(modelMessage, options, file);
+			}
+
+			if (isMessageWithFile && file && file.type === FileType.video)
+			{
+				return new VideoMessage(modelMessage, options, file);
+			}
+
+			if (isMessageWithFile && file && file.type === FileType.file)
+			{
+				return new FileMessage(modelMessage, options, file);
+			}
 
 			if (Type.isStringFilled(modelMessage.text))
 			{
-				messageItem.message = this.toMessageText(modelMessage.text);
+				return new TextMessage(modelMessage, options);
 			}
 
-			if (!modelMessage.params)
-			{
-				return messageItem;
-			}
-
-			if (Type.isArrayFilled(modelMessage.params.FILE_ID))
-			{
-				messageItem.message = 'Dev: Pictures are not supported yet.';
-			}
-
-			if (Type.isArrayFilled(modelMessage.params.LIKE))
-			{
-				messageItem.likeCount = modelMessage.params.LIKE.length;
-			}
-
-			return messageItem;
+			return new UnsupportedMessage(modelMessage, options);
 		}
 
-		toMessageText(text)
+		static fromPushToMessage(params = {})
 		{
-			return text.replace(new RegExp(this.quoteSeparator,'g'), this.mobileQuoteSeparator);
-		}
-
-		toMessageTime(date)
-		{
-			if (!Type.isDate(date))
-			{
-				date = new Date(date);
-			}
-
-			if (Number.isNaN(date))
-			{
-				return '--:--';
-			}
-
-			const addZero = num => (num >= 0 && num <= 9) ? '0' + num : num;
-
-			return date.getHours() + ':' + addZero(date.getMinutes());
-		}
-
-		toQuote(quotedMessage, commentText)
-		{
-			const lineBreak = '\n';
-
-			return (
-				this.quoteSeparator
-				+ lineBreak
-				+ quotedMessage.username
-				+ lineBreak
-				+ quotedMessage.message
-				+ lineBreak
-				+ this.quoteSeparator
-				+ lineBreak
-				+ commentText
-			);
-		}
-
-		fromPushToMessage(params = {})
-		{
-			const message = {
-				author_id: params.message.senderId,
+			const modelMessage = {
+				authorId: params.message.senderId,
 				dialogId: params.dialogId,
+				chatId: params.message.chatId,
 				date: params.message.date,
 				id: params.message.id,
 				params: params.message.params,
-				text: params.message.textOriginal,
+				text: params.message.text,
 				unread: params.message.unread,
-				templateId: params.message.templateId,
+				system: params.message.system,
 			};
 
-			const user = MessengerStore.getters['usersModel/getUserById'](message.author_id);
+			if (modelMessage.authorId !== MessengerParams.getUserId())
+			{
+				modelMessage.unread = true;
+				modelMessage.viewed = false;
+			}
+			else
+			{
+				modelMessage.unread = false;
+			}
 
-			message.author_name = (user && user.name) ? user.name : '';
-
-			return message;
+			return modelMessage;
 		}
 	}
 
 	module.exports = {
-		DialogConverter: new DialogConverter(),
+		DialogConverter,
 	};
 });

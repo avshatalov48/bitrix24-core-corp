@@ -27,4 +27,5 @@ $MESS["SHOP_MENU_SETTINGS_USER_FIELDS"] = "Custom fields";
 $MESS["SHOP_MENU_SHOP_MARKETING"] = "Online store marketing";
 $MESS["SHOP_MENU_SHOP_TITLE"] = "Online stores";
 $MESS["SHOP_MENU_SITES"] = "Sites";
+$MESS["SHOP_MENU_TERMINAL"] = "Payment terminal";
 $MESS["SHOP_MENU_WEBFORMS"] = "CRM forms";

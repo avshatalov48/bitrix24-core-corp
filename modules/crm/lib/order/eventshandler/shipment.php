@@ -113,7 +113,7 @@ final class Shipment
 		}
 	}
 
-	public static function onBeforeSetField(Main\Event $event) : Main\EventResult
+	public static function onBeforeSetField(Main\Event $event): Main\EventResult
 	{
 		$shipment = $event->getParameter('ENTITY');
 		if (!($shipment instanceof Crm\Order\Shipment))
@@ -121,7 +121,7 @@ final class Shipment
 			return new Main\EventResult(Main\EventResult::SUCCESS);
 		}
 
-		$errors = [];
+		$errorCollection = new Main\ErrorCollection();
 
 		$name = $event->getParameter('NAME');
 		$value = $event->getParameter('VALUE');
@@ -194,7 +194,8 @@ final class Shipment
 
 					if ($quantity > $availableQuantity)
 					{
-						$errors[] = Main\Localization\Loc::getMessage(
+						$errorCode = 'CRM_REALIZATION_NOT_ENOUGH_PRODUCTS';
+						$errorMessage = Main\Localization\Loc::getMessage(
 							'CRM_SHIPMENT_EVENTS_PRODUCT_QUANTITY_ERROR',
 							[
 								'#PRODUCT_NAME#' => $basketItem->getField('NAME'),
@@ -203,17 +204,26 @@ final class Shipment
 								'#STORE_ID#' => $storeId,
 							]
 						);
+						$errorCollection->add([new Main\Error($errorMessage, $errorCode)]);
 					}
 				}
 			}
 		}
 
-		if ($errors)
+		if (!$errorCollection->isEmpty())
 		{
+			$errorMessages = [];
+			/** @var Main\Error $error */
+			foreach ($errorCollection->getValues() as $error)
+			{
+				$errorMessages[] = $error->getMessage();
+			}
+
 			return new Main\EventResult(
 				Main\EventResult::ERROR,
 				new Sale\ResultError(
-					implode('<br>', $errors)
+					implode('<br>', $errorMessages),
+					'CRM_REALIZATION_NOT_ENOUGH_PRODUCTS'
 				)
 			);
 		}

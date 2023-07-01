@@ -363,7 +363,7 @@
 					id: 'edit',
 					title: BX.message('MOBILE_LAYOUT_PROJECT_VIEW_MENU_EDIT'),
 					data: {
-						svgIcon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M16.417 4.79822L19.8679 8.28543L9.86399 18.253L6.4131 14.7658L16.417 4.79822ZM4.81048 19.4185C4.77785 19.542 4.81281 19.6725 4.90139 19.7633C4.99229 19.8542 5.12282 19.8892 5.24636 19.8542L9.10398 18.815L5.85006 15.562L4.81048 19.4185Z" fill="#82888F"/></svg>',
+						svgIcon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M16.417 4.79822L19.8679 8.28543L9.86399 18.253L6.4131 14.7658L16.417 4.79822ZM4.81048 19.4185C4.77785 19.542 4.81281 19.6725 4.90139 19.7633C4.99229 19.8542 5.12282 19.8892 5.24636 19.8542L9.10398 18.815L5.85006 15.562L4.81048 19.4185Z" fill="#828b95"/></svg>',
 					},
 					onClickCallback: () => new Promise((resolve) => {
 						contextMenu.close(() => {

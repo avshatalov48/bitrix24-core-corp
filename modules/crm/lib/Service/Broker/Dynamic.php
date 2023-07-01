@@ -18,7 +18,7 @@ class Dynamic extends Broker
 
 		if ($factory)
 		{
-			return $factory->getItemsFilteredByPermissions([
+			return $factory->getItems([
 				'filter' => [
 					'@ID' => $id,
 				],
@@ -35,7 +35,7 @@ class Dynamic extends Broker
 
 		if ($factory)
 		{
-			$dynamicEntityList = $factory->getItemsFilteredByPermissions([
+			$dynamicEntityList = $factory->getItems([
 				'filter' => [
 					'@ID' => $ids,
 				],

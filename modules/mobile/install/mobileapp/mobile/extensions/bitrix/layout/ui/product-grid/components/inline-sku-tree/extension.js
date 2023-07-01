@@ -83,7 +83,7 @@ jn.define('layout/ui/product-grid/components/inline-sku-tree', (require, exports
 							borderRadius: 2,
 							marginRight: 6,
 							borderWidth: 1,
-							borderColor: '#eaeaea',
+							borderColor: '#e6e7e9',
 						},
 						resizeMode: 'cover',
 						uri: prepareImagePath(src),

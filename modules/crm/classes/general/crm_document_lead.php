@@ -507,7 +507,13 @@ class CCrmDocumentLead extends CCrmDocument
 		{
 			$CCrmBizProc = new CCrmBizProc('LEAD');
 			if (false === $CCrmBizProc->CheckFields(false, true))
+			{
+				if ($useTransaction)
+				{
+					$DB->Rollback();
+				}
 				throw new Exception($CCrmBizProc->LAST_ERROR);
+			}
 
 			if ($id && $id > 0 && !$CCrmBizProc->StartWorkflow($id))
 			{
@@ -665,6 +671,8 @@ class CCrmDocumentLead extends CCrmDocument
 			$arFields['MODIFY_BY_ID'] = $modifiedById;
 		}
 
+		$updatedFields = $arFields;
+
 		$CCrmEntity = new CCrmLead(false);
 		$res = $CCrmEntity->Update(
 			$arDocumentID['ID'],
@@ -691,7 +699,13 @@ class CCrmDocumentLead extends CCrmDocument
 		{
 			$CCrmBizProc = new CCrmBizProc('LEAD');
 			if (false === $CCrmBizProc->CheckFields($arDocumentID['ID'], true))
+			{
+				if ($useTransaction)
+				{
+					$DB->Rollback();
+				}
 				throw new Exception($CCrmBizProc->LAST_ERROR);
+			}
 
 			if ($res && !$CCrmBizProc->StartWorkflow($arDocumentID['ID']))
 			{
@@ -714,7 +728,7 @@ class CCrmDocumentLead extends CCrmDocument
 
 		//region automation
 		$starter = new Crm\Automation\Starter(\CCrmOwnerType::Lead, $arDocumentID['ID']);
-		$starter->setContextToBizproc()->runOnUpdate($arFields, $arPresentFields);
+		$starter->setContextToBizproc()->runOnUpdate($updatedFields, $arPresentFields);
 		//endregion
 
 		if ($res && $useTransaction)

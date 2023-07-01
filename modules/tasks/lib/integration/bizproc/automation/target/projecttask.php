@@ -18,7 +18,7 @@ class ProjectTask extends Base
 	{
 		$projectId = Document\Task::resolveProjectId($this->getDocumentType()[2]);
 		$fields = $this->getFields();
-		$documentStatus = (int) $fields['STAGE_ID'];
+		$documentStatus = (int) ($fields['STAGE_ID'] ?? 0);
 		if ($documentStatus === 0 && $projectId > 0)
 		{
 			Tasks\Kanban\StagesTable::setWorkMode(Tasks\Kanban\StagesTable::WORK_MODE_GROUP);

@@ -246,6 +246,10 @@ class CIntranetNotify
 			"EVENT" => $arFields
 		);
 
+		$arParams = is_array($arParams) ? $arParams : [];
+		$arParams['MOBILE'] = $arParams['MOBILE'] ?? 'N';
+		$arParams['PATH_TO_USER'] = $arParams['PATH_TO_USER'] ?? '';
+
 		$user_url = str_replace('#user_id#', $arFields['ENTITY_ID'], $arParams['PATH_TO_USER']);
 
 		$dbRes = CUser::GetByID($arFields['ENTITY_ID']);

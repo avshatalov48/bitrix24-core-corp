@@ -2,7 +2,9 @@
 
 return [
 	'extensions' => [
-		'crm:communication/button',
+		'animation/hide-on-scroll',
+		'feature',
 		'utils/array',
+		'crm:communication/button',
 	],
 ];

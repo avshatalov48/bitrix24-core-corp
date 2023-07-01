@@ -4,7 +4,7 @@ class CBIConnectorSqlBuilder extends CSQLWhere
 {
 	protected $select;
 
-	public function setSelect($selectedFields, $options = [])
+	public function SetSelect($selectedFields, $options = [])
 	{
 		global $DB;
 
@@ -24,20 +24,35 @@ class CBIConnectorSqlBuilder extends CSQLWhere
 				$this->select[] = $fieldInfo['FIELD_NAME'] . ' AS ' . $fieldName;
 			}
 
-			if (!$this->c_joins[$fieldName])
+			if (!isset($this->c_joins[$fieldName]))
+			{
+				$this->c_joins[$fieldName] = 1;
+			}
+			else
 			{
 				$this->c_joins[$fieldName]++;
-				$this->l_joins[$fieldInfo['TABLE_ALIAS']]++;
+			}
+
+			if (isset($fieldInfo['TABLE_ALIAS']))
+			{
+				if (!isset($this->l_joins[$fieldInfo['TABLE_ALIAS']]))
+				{
+					$this->l_joins[$fieldInfo['TABLE_ALIAS']] = 1;
+				}
+				else
+				{
+					$this->l_joins[$fieldInfo['TABLE_ALIAS']]++;
+				}
 			}
 		}
 	}
 
-	public function getSelect()
+	public function GetSelect()
 	{
 		return implode("\n  ,", $this->select);
 	}
 
-	public function getJoins()
+	public function GetJoins()
 	{
 		$result = [];
 
@@ -46,7 +61,7 @@ class CBIConnectorSqlBuilder extends CSQLWhere
 			if ($counter > 0)
 			{
 				$TABLE_ALIAS = $this->fields[$key]['TABLE_ALIAS'];
-				if ($this->l_joins[$TABLE_ALIAS])
+				if (isset($this->l_joins[$TABLE_ALIAS]) && $this->l_joins[$TABLE_ALIAS])
 				{
 					if (isset($this->fields[$key]['LEFT_JOIN']))
 					{

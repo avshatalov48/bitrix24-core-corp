@@ -38,5 +38,6 @@ $MESS["TASKS_SIDEBAR_AUTOMATION"] = "Автоматизация";
 $MESS["TASKS_SIDEBAR_ROBOTS_1"] = "Роботы";
 
 $MESS['TASK_RESULT_SIDEBAR_HINT'] = 'Требуется отчет о работе';
+$MESS['TASK_RESULT_SIDEBAR_HINT_MSGVER_1'] = 'Требуется отчёт о работе';
 
 $MESS["TASKS_TASK_EPIC"] = "Эпик";

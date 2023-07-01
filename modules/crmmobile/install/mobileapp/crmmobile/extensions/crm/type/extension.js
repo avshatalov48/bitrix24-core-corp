@@ -2,9 +2,9 @@
  * @module crm/type
  */
 jn.define('crm/type', (require, exports, module) => {
-	const { stringify } = require('utils/string');
-	const { TypeId } = require('crm/type/id');
-	const { TypeName } = require('crm/type/name');
+	const { stringify, camelize } = require('utils/string');
+	const { TypeId, DynamicTypeId } = require('crm/type/id');
+	const { TypeName, DynamicTypeName } = require('crm/type/name');
 
 	const idByNameMap = new Map();
 	Object.keys(TypeName).forEach((name) => {
@@ -22,30 +22,53 @@ jn.define('crm/type', (require, exports, module) => {
 		}
 	});
 
+	const SUPPORTED_ENTITIES = new Set([
+		TypeId.Contact,
+		TypeId.Company,
+		TypeId.Lead,
+		TypeId.Deal,
+		TypeId.Quote,
+		TypeId.SmartInvoice,
+	]);
+
 	/**
 	 * @class Type
 	 */
 	class Type
 	{
 		/**
-		 * @param {String} name
-		 * @return {null|Number}
+		 * @param {Number} id
+		 * @return {Boolean}
 		 */
-		static resolveIdByName(name)
+		static isEntitySupportedById(id)
 		{
-			name = stringify(name);
-			name = name.toUpperCase().trim();
-			if (name === '')
+			id = Type.prepareEntityId(id);
+			if (!Number.isInteger(id))
 			{
-				return null;
+				return false;
 			}
 
-			if (idByNameMap.has(name))
+			return SUPPORTED_ENTITIES.has(id) || Type.isDynamicTypeById(id);
+		}
+
+		/**
+		 * @param {Number} id
+		 * @return {Boolean}
+		 */
+		static existsById(id)
+		{
+			id = Type.prepareEntityId(id);
+			if (!Number.isInteger(id))
 			{
-				return idByNameMap.get(name);
+				return false;
 			}
 
-			return null;
+			if (nameByIdMap.has(id))
+			{
+				return true;
+			}
+
+			return Type.isDynamicTypeById(id);
 		}
 
 		/**
@@ -54,7 +77,7 @@ jn.define('crm/type', (require, exports, module) => {
 		 */
 		static resolveNameById(id)
 		{
-			id = Number(id);
+			id = Type.prepareEntityId(id);
 			if (!Number.isInteger(id))
 			{
 				return null;
@@ -65,38 +88,169 @@ jn.define('crm/type', (require, exports, module) => {
 				return nameByIdMap.get(id);
 			}
 
+			if (Type.isDynamicTypeById(id))
+			{
+				return Type.getDynamicTypeNameById(id);
+			}
+
 			return null;
+		}
+
+		static getDynamicTypeNameById(id)
+		{
+			id = Type.prepareEntityId(id);
+			if (!Number.isInteger(id))
+			{
+				return null;
+			}
+
+			return DynamicTypeName.Prefix + id;
 		}
 
 		/**
 		 * @param {Number} id
-		 * @return {boolean}
+		 * @return {Boolean}
 		 */
-		static existsById(id)
+		static isDynamicTypeById(id)
 		{
-			id = Number(id);
+			id = Type.prepareEntityId(id);
 			if (!Number.isInteger(id))
 			{
 				return false;
 			}
 
-			return nameByIdMap.has(id);
+			return id >= DynamicTypeId.Start && id < DynamicTypeId.End;
+		}
+
+		/**
+		 * @param {Number} id
+		 * @return {Number}
+		 */
+		static prepareEntityId(id)
+		{
+			return Number(id);
 		}
 
 		/**
 		 * @param {String} name
-		 * @return {boolean}
+		 * @return {Boolean}
 		 */
-		static existsByName(name = '')
+		static isEntitySupportedByName(name)
 		{
-			name = stringify(name);
-			name = name.toUpperCase().trim();
+			return Type.isEntitySupportedById(Type.resolveIdByName(name));
+		}
+
+		/**
+		 * @param {String} name
+		 * @return {Boolean}
+		 */
+		static existsByName(name)
+		{
+			name = Type.prepareEntityName(name);
 			if (name === '')
 			{
 				return false;
 			}
 
-			return idByNameMap.has(name);
+			if (idByNameMap.has(name))
+			{
+				return true;
+			}
+
+			return Type.isDynamicTypeByName(name);
+		}
+
+		/**
+		 * @param {String} name
+		 * @return {null|Number}
+		 */
+		static resolveIdByName(name)
+		{
+			name = Type.prepareEntityName(name);
+			if (name === '')
+			{
+				return null;
+			}
+
+			if (idByNameMap.has(name))
+			{
+				return idByNameMap.get(name);
+			}
+
+			if (Type.isDynamicTypeByName(name))
+			{
+				return Type.getDynamicTypeIdByName(name);
+			}
+
+			return null;
+		}
+
+		/**
+		 * @param {String} name
+		 * @return {Boolean}
+		 */
+		static isDynamicTypeByName(name)
+		{
+			const dynamicTypeId = Type.getDynamicTypeIdByName(name);
+
+			return Type.isDynamicTypeById(dynamicTypeId);
+		}
+
+		/**
+		 * @param {String} name
+		 * @return {Number}
+		 */
+		static getDynamicTypeIdByName(name)
+		{
+			name = Type.prepareEntityName(name);
+			if (name === '')
+			{
+				return 0;
+			}
+
+			if (name.indexOf(DynamicTypeName.Prefix) === 0)
+			{
+				return parseInt(name.replace(DynamicTypeName.Prefix, '')) || 0;
+			}
+
+			return 0;
+		}
+
+		/**
+		 * @param {String} name
+		 * @return {String}
+		 */
+		static prepareEntityName(name)
+		{
+			name = stringify(name);
+
+			return name.toUpperCase().trim();
+		}
+
+		static getCommonEntityTypeName(entityType)
+		{
+			if (Type.existsById(entityType))
+			{
+				entityType = Type.resolveNameById(entityType);
+			}
+
+			if (Type.existsByName(entityType))
+			{
+				return Type.isDynamicTypeByName(entityType) ? TypeName.CommonDynamic : entityType.toUpperCase();
+			}
+
+			return null;
+		}
+
+		static getCamelizedEntityTypeName(entityType)
+		{
+			entityType = Type.getCommonEntityTypeName(entityType);
+			if (entityType)
+			{
+				return camelize(entityType.toLowerCase());
+			}
+
+			return null;
 		}
 	}
 

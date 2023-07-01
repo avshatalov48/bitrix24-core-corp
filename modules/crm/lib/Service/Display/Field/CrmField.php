@@ -78,101 +78,107 @@ class CrmField extends BaseLinkedEntitiesField
 				continue;
 			}
 
-			$entityType = \CCrmOwnerTypeAbbr::ResolveName($entityTypePrefix);
+			$entityTypeName = \CCrmOwnerTypeAbbr::ResolveName($entityTypePrefix);
+			$entityValue = $linkedEntitiesValues[$entityTypeName][$entityElementId];
+			if (!$entityValue)
+			{
+				continue;
+			}
+
 			$link = Container::getInstance()->getRouter()->getItemDetailUrl($entityTypeId, $entityElementId);
-			$title = null;
 			$prefix = '';
 			$tooltipLoader = null;
 			$className = null;
 
-			if ($entityTypePrefix === \CCrmOwnerTypeAbbr::Lead)
+			$hasReadPermission = $this->hasReadPermissions($entityTypeId, $entityElementId, $entityValue);
+			if ($hasReadPermission)
 			{
-				$title = ($linkedEntitiesValues[\CCrmOwnerType::LeadName][$entityElementId]['TITLE'] ?? null);
-				$prefix = \CCrmOwnerTypeAbbr::Lead;
-				$className = 'crm_balloon_no_photo';
-			}
-			elseif ($entityTypePrefix === \CCrmOwnerTypeAbbr::Contact)
-			{
-				if (isset($linkedEntitiesValues[\CCrmOwnerType::ContactName][$entityElementId]))
-				{
-					$isEntityElementId = isset($linkedEntitiesValues[\CCrmOwnerType::ContactName][$entityElementId]);
-					$title = (
-					$isEntityElementId
-						? $linkedEntitiesValues[\CCrmOwnerType::ContactName][$entityElementId]->getFormattedName()
-						: null
-					);
-				}
-				$prefix = \CCrmOwnerTypeAbbr::Contact;
-			}
-			elseif ($entityTypePrefix === \CCrmOwnerTypeAbbr::Company)
-			{
-				$title = ($linkedEntitiesValues[\CCrmOwnerType::CompanyName][$entityElementId]['TITLE'] ?? null);
-				$prefix = \CCrmOwnerTypeAbbr::Company;
-			}
-			elseif ($entityTypePrefix === \CCrmOwnerTypeAbbr::Deal)
-			{
-				$title = ($linkedEntitiesValues[\CCrmOwnerType::DealName][$entityElementId]['TITLE'] ?? null);
-				$prefix = \CCrmOwnerTypeAbbr::Deal;
-				$className = 'crm_balloon_no_photo';
-			}
-			elseif ($entityTypePrefix === \CCrmOwnerTypeAbbr::Order)
-			{
-				$title = $this->getOrderTitle($entityElementId);
-				$prefix = \CCrmOwnerTypeAbbr::Order;
-				$tooltipLoader = '/bitrix/components/bitrix/crm.order.details/card.ajax.php';
-			}
-			elseif ($entityTypePrefix === \CCrmOwnerTypeAbbr::Quote)
-			{
-				$className = 'crm_balloon_no_photo';
-				$title = ($linkedEntitiesValues[\CCrmOwnerType::QuoteName][$entityElementId]['TITLE'] ?? null);
-			}
-			elseif (\CCrmOwnerType::isUseFactoryBasedApproach($entityTypeId))
-			{
-				$title = (
-					$linkedEntitiesValues[$entityType][$entityElementId]
-						? $linkedEntitiesValues[$entityType][$entityElementId]->getHeading()
-						: null
-				);
-				$prefix = \CCrmOwnerTypeAbbr::ResolveByTypeID($entityTypeId);
-				$tooltipLoader = UrlManager::getInstance()->create(
-					'bitrix:crm.controller.tooltip.card',
-					[
-						'sessid' => bitrix_sessid(),
-					]
-				);
-				$className = 'crm_balloon_no_photo';
-				$entityElementId = $entityTypeId . '-' . $entityElementId;
-			}
+				$title = $this->getEntityTitle($entityTypeId, $entityElementId, $entityValue);
 
-			$formattedValue = '';
-			if ($title !== null)
-			{
-				$formattedValue = htmlspecialcharsbx($title);
-				if ($displayOptions && !$this->isExportContext())
+				if ($entityTypeId === \CCrmOwnerType::Lead)
 				{
-					\Bitrix\Main\UI\Extension::load('ui.tooltip');
-					$tooltipLoader = (
-						$tooltipLoader
-						?? htmlspecialcharsbx(
-							'/bitrix/components/bitrix/crm.' . mb_strtolower($entityType) . '.show/card.ajax.php'
-						)
+					$prefix = \CCrmOwnerTypeAbbr::Lead;
+					$className = 'crm_balloon_no_photo';
+				}
+				elseif ($entityTypeId === \CCrmOwnerType::Contact)
+				{
+					$prefix = \CCrmOwnerTypeAbbr::Contact;
+				}
+				elseif ($entityTypeId === \CCrmOwnerType::Company)
+				{
+					$prefix = \CCrmOwnerTypeAbbr::Company;
+				}
+				elseif ($entityTypeId === \CCrmOwnerType::Deal)
+				{
+					$prefix = \CCrmOwnerTypeAbbr::Deal;
+					$className = 'crm_balloon_no_photo';
+				}
+				elseif ($entityTypeId === \CCrmOwnerType::Order)
+				{
+					$prefix = \CCrmOwnerTypeAbbr::Order;
+					$tooltipLoader = '/bitrix/components/bitrix/crm.order.details/card.ajax.php';
+				}
+				elseif ($entityTypeId === \CCrmOwnerType::Quote)
+				{
+					$className = 'crm_balloon_no_photo';
+				}
+				elseif (\CCrmOwnerType::isUseFactoryBasedApproach($entityTypeId))
+				{
+					$prefix = \CCrmOwnerTypeAbbr::ResolveByTypeID($entityTypeId);
+					$tooltipLoader = UrlManager::getInstance()->create(
+						'bitrix:crm.controller.tooltip.card',
+						[
+							'sessid' => bitrix_sessid(),
+						]
 					);
-					$className = ($className ?? 'crm_balloon_' . mb_strtolower($entityType));
-					$formattedValue = $this->getHtmlLink($link, $entityElementId, $tooltipLoader, $className, $formattedValue);
+					$className = 'crm_balloon_no_photo';
+					$entityElementId = $entityTypeId . '-' . $entityElementId;
 				}
-				elseif ($this->isUserField())
+
+				$formattedValue = '';
+
+				if ($title !== null)
 				{
-					$formattedValue = "[$prefix]$formattedValue";
+					$formattedValue = htmlspecialcharsbx($title);
+
+					if (!$this->isExportContext())
+					{
+						\Bitrix\Main\UI\Extension::load('ui.tooltip');
+
+						$tooltipLoader = (
+							$tooltipLoader
+							??
+							htmlspecialcharsbx('/bitrix/components/bitrix/crm.'
+								. mb_strtolower($entityTypeName)
+								. '.show/card.ajax.php')
+						);
+
+						$className = ($className ?? 'crm_balloon_' . mb_strtolower($entityTypeName));
+						$formattedValue = $this->getHtmlLink($link, $entityElementId, $tooltipLoader, $className,
+							$formattedValue);
+					}
+					elseif ($this->isUserField())
+					{
+						$formattedValue = "[$prefix]$formattedValue";
+					}
 				}
+			}
+			else
+			{
+				$formattedValue = \CCrmEntitySelectorHelper::getHiddenTitle($entityTypeName);
 			}
 
 			if ($formattedValue !== '')
 			{
-				if (!$this->isMultiple())
+				if ($this->isMultiple())
 				{
-					return $formattedValue;
+					$result[] = $formattedValue;
 				}
-				$result[] = $formattedValue;
+				else
+				{
+					$result = $formattedValue;
+					break;
+				}
 			}
 		}
 
@@ -255,92 +261,48 @@ class CrmField extends BaseLinkedEntitiesField
 			{
 				continue;
 			}
-			$categoryId = 0;
-			$entityType = \CCrmOwnerTypeAbbr::ResolveName($entityTypePrefix);
-			$factory = Container::getInstance()->getFactory($entityTypeId);
-			if ($factory && $factory->isCategoriesSupported())
+
+			$entityTypeName = \CCrmOwnerTypeAbbr::ResolveName($entityTypePrefix);
+			$entityValue = $linkedEntitiesValues[$entityTypeName][$entityElementId];
+			if (!$entityValue)
 			{
-				$entityValue = $linkedEntitiesValues[$entityType][$entityElementId];
-				if ($entityValue)
-				{
-					$categoryId = $entityValue->getCategoryId();
-				}
+				continue;
 			}
+
 			$title = null;
-			$hidden = !Container::getInstance()->getUserPermissions()->checkReadPermissions(
-				$entityTypeId,
-				$entityElementId,
-				$categoryId
-			);
 			$imageUrl = null;
 
-			if(!$hidden)
+			$hasReadPermission = $this->hasReadPermissions($entityTypeId, $entityElementId, $entityValue);
+			if ($hasReadPermission)
 			{
-				if ($entityTypePrefix === \CCrmOwnerTypeAbbr::Lead)
+				$title = $this->getEntityTitle($entityTypeId, $entityElementId, $entityValue);
+
+				if ($entityTypeId === \CCrmOwnerType::Contact)
 				{
-					$title = ($linkedEntitiesValues[\CCrmOwnerType::LeadName][$entityElementId]['TITLE'] ?? null);
-				}
-				elseif ($entityTypePrefix === \CCrmOwnerTypeAbbr::Contact)
-				{
-					if (isset($linkedEntitiesValues[\CCrmOwnerType::ContactName][$entityElementId]))
-					{
-						$entityElementObject = $linkedEntitiesValues[\CCrmOwnerType::ContactName][$entityElementId] ?? null;
-						if ($entityElementObject)
-						{
-							$title = $entityElementObject->getFormattedName();
-							$logo = $entityElementObject->get(Contact::FIELD_NAME_PHOTO);
-							$imageUrl = \CFile::ResizeImageGet(
-								$logo,
-								['width' => 200, 'height' => 200],
-								BX_RESIZE_IMAGE_EXACT,
-								false,
-								false,
-								true
-							);
-							$imageUrl = $imageUrl['src'] ?? null;
-						}
-					}
-				}
-				elseif ($entityTypePrefix === \CCrmOwnerTypeAbbr::Company)
-				{
-					if (isset($linkedEntitiesValues[\CCrmOwnerType::CompanyName][$entityElementId]))
-					{
-						$entityElementObject = $linkedEntitiesValues[\CCrmOwnerType::CompanyName][$entityElementId] ?? null;
-						if ($entityElementObject)
-						{
-							$title = $entityElementObject->getTitle();
-							$logo = $entityElementObject->get(Company::FIELD_NAME_LOGO);
-							$imageUrl = \CFile::ResizeImageGet(
-								$logo,
-								['width' => 300, 'height' => 300],
-								BX_RESIZE_IMAGE_EXACT,
-								false,
-								false,
-								true
-							);
-							$imageUrl = $imageUrl['src'] ?? null;
-						}
-					}
-				}
-				elseif ($entityTypePrefix === \CCrmOwnerTypeAbbr::Deal)
-				{
-					$title = ($linkedEntitiesValues[\CCrmOwnerType::DealName][$entityElementId]['TITLE'] ?? null);
-				}
-				elseif ($entityTypePrefix === \CCrmOwnerTypeAbbr::Order)
-				{
-					$title = $this->getOrderTitle($entityElementId);
-				}
-				elseif ($entityTypePrefix === \CCrmOwnerTypeAbbr::Quote)
-				{
-					$title = ($linkedEntitiesValues[\CCrmOwnerType::QuoteName][$entityElementId]['TITLE'] ?? null);
-				}
-				elseif (\CCrmOwnerType::isUseFactoryBasedApproach($entityTypeId))
-				{
-					$title = (
-					$linkedEntitiesValues[$entityType][$entityElementId]
-						? $linkedEntitiesValues[$entityType][$entityElementId]->getHeading()
-						: null
+					$logo = $entityValue->get(Contact::FIELD_NAME_PHOTO);
+					$imageUrl = \CFile::ResizeImageGet(
+						$logo,
+						['width' => 200, 'height' => 200],
+						BX_RESIZE_IMAGE_EXACT,
+						false,
+						false,
+						true
 					);
+					$imageUrl = $imageUrl['src'] ?? null;
+				}
+				elseif ($entityTypeId === \CCrmOwnerType::Company)
+				{
+					$title = $entityValue->getTitle();
+					$logo = $entityValue->get(Company::FIELD_NAME_LOGO);
+					$imageUrl = \CFile::ResizeImageGet(
+						$logo,
+						['width' => 300, 'height' => 300],
+						BX_RESIZE_IMAGE_EXACT,
+						false,
+						false,
+						true
+					);
+					$imageUrl = $imageUrl['src'] ?? null;
 				}
 			}
 
@@ -349,15 +311,15 @@ class CrmField extends BaseLinkedEntitiesField
 				&& \CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId)
 			)
 			{
-					$entityElementId = DynamicMultipleProvider::prepareId($entityTypeId, $entityElementId);
-					$entityType = DynamicMultipleProvider::DYNAMIC_MULTIPLE_ID;
+				$entityElementId = DynamicMultipleProvider::prepareId($entityTypeId, $entityElementId);
+				$entityTypeName = DynamicMultipleProvider::DYNAMIC_MULTIPLE_ID;
 			}
 
 			$result[] = [
 				'id' => $entityElementId,
 				'title' => $title,
-				'type' => mb_strtolower($entityType),
-				'hidden' => $hidden,
+				'type' => mb_strtolower($entityTypeName),
+				'hidden' => !$hasReadPermission,
 				'imageUrl' => $imageUrl,
 				'subtitle' => \CCrmOwnerType::GetDescription($entityTypeId),
 			];
@@ -369,6 +331,7 @@ class CrmField extends BaseLinkedEntitiesField
 			'value' => array_column($result, 'id'),
 			'config' => [
 				'castType' => 'string',
+				'selectorTitle' => $this->getTitle(),
 				'entityList' => $result,
 				'entityIds' => $entityIds,
 				'provider' => [
@@ -389,7 +352,7 @@ class CrmField extends BaseLinkedEntitiesField
 			[$entityTypePrefix, $entityElementId] = explode('_', $entityElement);
 			$elementWasExploded = true;
 		}
-		elseif(empty($this->entityTypes[0]))
+		elseif (empty($this->entityTypes[0]))
 		{
 			return null;
 		}
@@ -517,13 +480,15 @@ class CrmField extends BaseLinkedEntitiesField
 
 		foreach ($linkedEntity as $entityTypeName => $entityIds)
 		{
-			if (in_array($entityTypeName, [
-				\CCrmOwnerType::LeadName,
-				\CCrmOwnerType::DealName,
-				\CCrmOwnerType::ContactName,
-				\CCrmOwnerType::CompanyName,
-				\CCrmOwnerType::OrderName,
-			]))
+			if (
+				in_array($entityTypeName, [
+					\CCrmOwnerType::LeadName,
+					\CCrmOwnerType::DealName,
+					\CCrmOwnerType::ContactName,
+					\CCrmOwnerType::CompanyName,
+					\CCrmOwnerType::OrderName,
+				])
+			)
 			{
 				continue;
 			}
@@ -559,5 +524,62 @@ class CrmField extends BaseLinkedEntitiesField
 		return [
 			$fieldValueType => $results,
 		];
+	}
+
+	private function hasReadPermissions(int $entityTypeId, int $entityId, $entityValue): bool
+	{
+		$categoryId = 0;
+
+		$factory = Container::getInstance()->getFactory($entityTypeId);
+		if ($factory && $factory->isCategoriesSupported())
+		{
+			$categoryId = $entityValue->getCategoryId();
+		}
+
+		$userPermissions = Container::getInstance()->getUserPermissions();
+
+		if ($entityTypeId === \CCrmOwnerType::Company && \CCrmCompany::isMyCompany($entityId))
+		{
+			return $userPermissions->getMyCompanyPermissions()->canReadBaseFields();
+		}
+
+		return $userPermissions->checkReadPermissions($entityTypeId, $entityId, $categoryId);
+	}
+
+	private function getEntityTitle(int $entityTypeId, int $entityId, $entityValue): ?string
+	{
+		if (!$entityValue)
+		{
+			return null;
+		}
+
+		if (
+			$entityTypeId === \CCrmOwnerType::Lead
+			|| $entityTypeId === \CCrmOwnerType::Deal
+			|| $entityTypeId === \CCrmOwnerType::Company
+		)
+		{
+			return $entityValue->getTitle();
+		}
+
+		if ($entityTypeId === \CCrmOwnerType::Contact)
+		{
+			return $entityValue->getFormattedName();
+		}
+
+		if ($entityTypeId === \CCrmOwnerType::Order)
+		{
+			return $this->getOrderTitle($entityId);
+		}
+
+		if (
+			$entityTypeId === \CCrmOwnerType::Quote
+			|| \CCrmOwnerType::isUseFactoryBasedApproach($entityTypeId)
+		)
+		{
+			return $entityValue->getHeading();
+		}
+
+		return null;
 	}
 }

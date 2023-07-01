@@ -76,6 +76,8 @@ class PaymentDocumentsRepository
 	{
 		$this->ownerTypeId = $ownerTypeId;
 		$this->ownerId = $ownerId;
+		$this->paidSum = 0.0;
+		$this->orders = [];
 
 		$result = new Main\Result;
 
@@ -210,7 +212,7 @@ class PaymentDocumentsRepository
 			return [];
 		}
 
-		$select = ['ID', 'ORDER_ID', 'ACCOUNT_NUMBER', 'PAID', 'DATE_BILL', 'SUM', 'CURRENCY'];
+		$select = ['ID', 'ORDER_ID', 'ACCOUNT_NUMBER', 'PAID', 'DATE_BILL', 'SUM', 'CURRENCY', 'PAY_SYSTEM_NAME', 'DATE_PAID'];
 		$filter = ['=ORDER_ID' => $this->orderIds];
 		$result = [];
 
@@ -226,6 +228,10 @@ class PaymentDocumentsRepository
 			$payment['ORIG_SUM'] = $payment['SUM'];
 			$payment['ORIG_CURRENCY'] = $payment['CURRENCY'];
 			$payment['DATE'] = $payment['DATE_BILL'];
+			if ($payment['DATE_PAID'])
+			{
+				$payment['FORMATTED_DATE_PAID'] = ConvertTimeStamp($payment['DATE_PAID']->getTimestamp(), 'FULL');
+			}
 
 			$payment['STAGE'] = ($payment['PAID'] === 'Y') ? PaymentStage::PAID : PaymentStage::NOT_PAID;
 

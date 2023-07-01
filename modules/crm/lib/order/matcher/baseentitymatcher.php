@@ -401,6 +401,15 @@ abstract class BaseEntityMatcher
 		if (!empty($entityId))
 		{
 			$this->matchRequisites($entityId);
+
+			$arErrors = [];
+
+			\CCrmBizProcHelper::AutoStartWorkflows(
+				$this->getEntityTypeId(),
+				$entityId,
+				\CCrmBizProcEventType::Create,
+				$arErrors
+			);
 		}
 
 		return $entityId;

@@ -1,5 +1,9 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 /**
  * Bitrix vars
@@ -11,22 +15,35 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
  * @var CBitrixComponent $component
  */
 
+use Bitrix\Crm\Category\DealCategory;
+use Bitrix\Crm\Conversion\EntityConverter;
+use Bitrix\Crm\Conversion\LeadConversionScheme;
 use Bitrix\Crm\Integration;
 use Bitrix\Crm\Restriction\RestrictionManager;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Tracking;
 use Bitrix\Crm\UI\NavigationBarPanel;
+use Bitrix\Main\Localization\Loc;
 
 $APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/crm-entity-show.css");
-if(SITE_TEMPLATE_ID === 'bitrix24')
+if (SITE_TEMPLATE_ID === 'bitrix24')
 {
 	$APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/bitrix24/crm-entity-show.css");
 }
+
 if (CModule::IncludeModule('bitrix24') && !\Bitrix\Crm\CallList\CallList::isAvailable())
 {
 	CBitrix24::initLicenseInfoPopupJS();
 }
-Bitrix\Main\UI\Extension::load(['crm.merger.batchmergemanager', 'ui.fonts.opensans']);
-\Bitrix\Main\UI\Extension::load('crm.router');
+
+Bitrix\Main\UI\Extension::load(
+	[
+		'crm.merger.batchmergemanager',
+		'crm.router',
+		'crm.restriction.filter-fields',
+		'ui.fonts.opensans',
+	]
+);
 
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/progress_control.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/activity.js');
@@ -40,64 +57,69 @@ Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/dialog.js');
 
 Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/js/crm/css/autorun_proc.css');
 
-use \Bitrix\Crm\Conversion\LeadConversionScheme;
-use \Bitrix\Crm\Category\DealCategory;
-use \Bitrix\Crm\Conversion\EntityConverter;
-use Bitrix\Main\Localization\Loc;
 
 ?><div id="batchConversionWrapper"></div><?
+echo (\Bitrix\Crm\Tour\NumberOfClients::getInstance())->build();
 ?><div id="batchDeletionWrapper"></div><?
 
 ?><div id="rebuildMessageWrapper"><?
 
-if($arResult['NEED_TO_SHOW_DUP_INDEX_PROCESS']):
+if (!empty($arResult['NEED_TO_SHOW_DUP_INDEX_PROCESS'])):
 	?><div id="backgroundLeadIndexRebuildWrapper"></div><?
 endif;
-if($arResult['NEED_TO_SHOW_DUP_MERGE_PROCESS']):
+
+if (!empty($arResult['NEED_TO_SHOW_DUP_MERGE_PROCESS'])):
 	?><div id="backgroundLeadMergeWrapper"></div><?
 endif;
-if($arResult['NEED_TO_SHOW_DUP_VOL_DATA_PREPARE']):
+
+if (!empty($arResult['NEED_TO_SHOW_DUP_VOL_DATA_PREPARE'])):
 	?><div id="backgroundLeadDupVolDataPrepareWrapper"></div><?
 endif;
 
-if($arResult['NEED_FOR_REBUILD_DUP_INDEX']):
+if (!empty($arResult['NEED_FOR_REBUILD_DUP_INDEX'])):
 ?><div id="rebuildLeadDupIndexMsg" class="crm-view-message">
-	<?=GetMessage('CRM_LEAD_REBUILD_DUP_INDEX', array('#ID#' => 'rebuildLeadDupIndexLink', '#URL#' => '#'))?>
+	<?=Loc::getMessage('CRM_LEAD_REBUILD_DUP_INDEX', ['#ID#' => 'rebuildLeadDupIndexLink', '#URL#' => '#'])?>
 </div><?
 endif;
 
-if($arResult['NEED_FOR_REBUILD_SEARCH_CONTENT'])
+if (!empty($arResult['NEED_FOR_REBUILD_SEARCH_CONTENT']))
 {
 	?><div id="rebuildLeadSearchWrapper"></div><?
 }
-if($arResult['NEED_FOR_REBUILD_TIMELINE_SEARCH_CONTENT'])
+
+if (!empty($arResult['NEED_FOR_REBUILD_TIMELINE_SEARCH_CONTENT']))
 {
 	?><div id="buildTimelineSearchWrapper"></div><?
 }
-if($arResult['NEED_FOR_BUILD_TIMELINE'])
+
+if (!empty($arResult['NEED_FOR_BUILD_TIMELINE']))
 {
 	?><div id="buildLeadTimelineWrapper"></div><?
 }
-if($arResult['NEED_FOR_REFRESH_ACCOUNTING'])
+
+if (!empty($arResult['NEED_FOR_REFRESH_ACCOUNTING']))
 {
 	?><div id="refreshLeadAccountingWrapper"></div><?
 }
-if($arResult['NEED_FOR_REBUILD_LEAD_SEMANTICS'])
+
+if (!empty($arResult['NEED_FOR_REBUILD_LEAD_SEMANTICS']))
 {
 	?><div id="rebuildLeadSemanticsWrapper"></div><?
 }
-if($arResult['NEED_FOR_REBUILD_SECURITY_ATTRS'])
+
+if (!empty($arResult['NEED_FOR_REBUILD_SECURITY_ATTRS']))
 {
 	?><div id="rebuildLeadSecurityAttrsWrapper"></div><?
 }
-if($arResult['NEED_FOR_REBUILD_LEAD_ATTRS']):
+
+if (!empty($arResult['NEED_FOR_REBUILD_LEAD_ATTRS'])):
 	?><div id="rebuildLeadAttrsMsg" class="crm-view-message">
-	<?=GetMessage('CRM_LEAD_REBUILD_ACCESS_ATTRS', array('#ID#' => 'rebuildLeadAttrsLink', '#URL#' => $arResult['PATH_TO_PRM_LIST']))?>
+	<?=Loc::getMessage('CRM_LEAD_REBUILD_ACCESS_ATTRS', array('#ID#' => 'rebuildLeadAttrsLink', '#URL#' => $arResult['PATH_TO_PRM_LIST']))?>
 	</div><?
 endif;
 ?></div><?
 
-if(isset($arResult['ERROR_HTML'])):
+if (isset($arResult['ERROR_HTML'])):
 	ShowError($arResult['ERROR_HTML']);
 endif;
 
@@ -108,12 +130,12 @@ $allowDelete = $arResult['PERMS']['DELETE'] && !$callListUpdateMode;
 $allowExclude = $arResult['CAN_EXCLUDE'];
 $currentUserID = $arResult['CURRENT_USER_ID'];
 $activityEditorID = '';
-if(!$isInternal):
+if (!$isInternal):
 	$activityEditorID = "{$arResult['GRID_ID']}_activity_editor";
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.activity.editor',
 		'',
-		array(
+		[
 			'EDITOR_ID' => $activityEditorID,
 			'PREFIX' => $arResult['GRID_ID'],
 			'OWNER_TYPE' => 'LEAD',
@@ -122,15 +144,15 @@ if(!$isInternal):
 			'ENABLE_UI' => false,
 			'ENABLE_TOOLBAR' => false,
 			'SKIP_VISUAL_COMPONENTS' => 'Y'
-		),
+		],
 		null,
-		array('HIDE_ICONS' => 'Y')
+		['HIDE_ICONS' => 'Y']
 	);
 endif;
 
-$gridManagerID = $arResult['GRID_ID'].'_MANAGER';
+$gridManagerID = $arResult['GRID_ID'] . '_MANAGER';
 $preparedGridId = htmlspecialcharsbx(CUtil::JSescape($gridManagerID));
-$gridManagerCfg = array(
+$gridManagerCfg = [
 	'ownerType' => 'LEAD',
 	'gridId' => $arResult['GRID_ID'],
 	'formName' => "form_{$arResult['GRID_ID']}",
@@ -138,262 +160,288 @@ $gridManagerCfg = array(
 	'activityEditorId' => $activityEditorID,
 	'serviceUrl' => '/bitrix/components/bitrix/crm.activity.editor/ajax.php?siteID='.SITE_ID.'&'.bitrix_sessid_get(),
 	'listServiceUrl' => '/bitrix/components/bitrix/crm.lead.list/list.ajax.php?siteID='.SITE_ID.'&'.bitrix_sessid_get(),
-	'filterFields' => array(),
+	'filterFields' => [],
 	'userFilterHash' => $arResult['DB_FILTER_HASH'],
 	'enableIterativeDeletion' => true,
-	'messages' => array(
-		'deletionDialogTitle' => GetMessage('CRM_LEAD_LIST_DEL_PROC_DLG_TITLE'),
-		'deletionDialogSummary' => GetMessage('CRM_LEAD_LIST_DEL_PROC_DLG_SUMMARY')
-	)
-);
+	'messages' => [
+		'deletionDialogTitle' => Loc::getMessage('CRM_LEAD_LIST_DEL_PROC_DLG_TITLE'),
+		'deletionDialogSummary' => Loc::getMessage('CRM_LEAD_LIST_DEL_PROC_DLG_SUMMARY')
+	]
+];
 
 echo CCrmViewHelper::RenderLeadStatusSettings();
 $prefix = $arResult['GRID_ID'];
 
-$arResult['GRID_DATA'] = array();
-$arColumns = array();
+$prefix = $arResult['GRID_ID'] ?? '';
+$arResult['GRID_DATA'] = [];
+$arColumns = [];
+
 foreach ($arResult['HEADERS'] as $arHead)
+{
 	$arColumns[$arHead['id']] = false;
+}
 
 $now = time() + CTimeZone::GetOffset();
 
+$fieldContentTypeMap = \Bitrix\Crm\Model\FieldContentTypeTable::loadForMultipleItems(
+	\CCrmOwnerType::Lead,
+	array_keys($arResult['LEAD']),
+);
+
+if ($arResult['NEED_ADD_ACTIVITY_BLOCK'] ?? false)
+{
+	$arResult['LEAD'] = (new \Bitrix\Crm\Component\EntityList\NearestActivity\Manager(CCrmOwnerType::Lead))->appendNearestActivityBlock($arResult['LEAD']);
+}
+
 foreach($arResult['LEAD'] as $sKey => $arLead)
 {
-	$arActivityMenuItems = array();
-	$arActivitySubMenuItems = array();
-	$arActions = array();
+	$arActivityMenuItems = [];
+	$arActivitySubMenuItems = [];
+	$arActions = [];
 
-	$arActions[] = array(
-		'TITLE' => GetMessage('CRM_LEAD_SHOW_TITLE'),
-		'TEXT' => GetMessage('CRM_LEAD_SHOW'),
+	$arActions[] = [
+		'TITLE' => Loc::getMessage('CRM_LEAD_SHOW_TITLE'),
+		'TEXT' => Loc::getMessage('CRM_LEAD_SHOW'),
 		'ONCLICK' => "BX.Crm.Page.open('".CUtil::JSEscape($arLead['PATH_TO_LEAD_SHOW'])."')",
 		'DEFAULT' => true
-	);
-	if($arLead['EDIT'])
+	];
+
+	if ($arLead['EDIT'])
 	{
-		$arActions[] = array(
-			'TITLE' => GetMessage('CRM_LEAD_EDIT_TITLE'),
-			'TEXT' => GetMessage('CRM_LEAD_EDIT'),
+		$arActions[] = [
+			'TITLE' => Loc::getMessage('CRM_LEAD_EDIT_TITLE'),
+			'TEXT' => Loc::getMessage('CRM_LEAD_EDIT'),
 			'ONCLICK' => "BX.Crm.Page.open('".CUtil::JSEscape($arLead['PATH_TO_LEAD_EDIT'])."')"
-		);
-		$arActions[] = array(
-			'TITLE' => GetMessage('CRM_LEAD_COPY_TITLE'),
-			'TEXT' => GetMessage('CRM_LEAD_COPY'),
+		];
+
+		$arActions[] = [
+			'TITLE' => Loc::getMessage('CRM_LEAD_COPY_TITLE'),
+			'TEXT' => Loc::getMessage('CRM_LEAD_COPY'),
 			'ONCLICK' => "BX.Crm.Page.open('".CUtil::JSEscape($arLead['PATH_TO_LEAD_COPY'])."')"
-		);
+		];
 	}
 
-	if(!$isInternal)
+	if (!$isInternal)
 	{
-		if($arLead['DELETE'])
+		if ($arLead['DELETE'])
 		{
 			$pathToRemove = CUtil::JSEscape($arLead['PATH_TO_LEAD_DELETE']);
-			$arActions[] = array(
-				'TITLE' => GetMessage('CRM_LEAD_DELETE_TITLE'),
-				'TEXT' => GetMessage('CRM_LEAD_DELETE'),
+			$arActions[] = [
+				'TITLE' => Loc::getMessage('CRM_LEAD_DELETE_TITLE'),
+				'TEXT' => Loc::getMessage('CRM_LEAD_DELETE'),
 				'ONCLICK' => "BX.CrmUIGridExtension.processMenuCommand(
 					'{$gridManagerID}',
 					BX.CrmUIGridMenuCommand.remove,
 					{ pathToRemove: '{$pathToRemove}' }
 				)"
-			);
+			];
 		}
-		if($arResult['CAN_EXCLUDE'] && $arLead['CAN_EXCLUDE'])
+
+		if ($arResult['CAN_EXCLUDE'] && $arLead['CAN_EXCLUDE'])
 		{
 			$pathToExclude = CUtil::JSEscape($arLead['PATH_TO_LEAD_EXCLUDE']);
-			$arActions[] = array(
-				'TITLE' => GetMessage('CRM_LEAD_EXCLUDE_TITLE'),
-				'TEXT' => GetMessage('CRM_LEAD_EXCLUDE'),
+			$arActions[] = [
+				'TITLE' => Loc::getMessage('CRM_LEAD_EXCLUDE_TITLE'),
+				'TEXT' => Loc::getMessage('CRM_LEAD_EXCLUDE'),
 				'ONCLICK' => "BX.CrmUIGridExtension.processMenuCommand(
 					'{$gridManagerID}',
 					BX.CrmUIGridMenuCommand.exclude,
 					{ pathToExclude: '{$pathToExclude}' }
 				)"
-			);
+			];
 		}
 	}
 
-	$arActions[] = array('SEPARATOR' => true);
+	$arActions[] = ['SEPARATOR' => true];
 
-	if(!$isInternal)
+	if (!$isInternal)
 	{
-		if($arResult['CAN_CONVERT'])
+		if ($arResult['CAN_CONVERT'])
 		{
-			$isReturnCustomer = $arLead['IS_RETURN_CUSTOMER'] == 'Y';
+			$isReturnCustomer = $arLead['IS_RETURN_CUSTOMER'] === 'Y';
 			$arSchemeDescriptions = \Bitrix\Crm\Conversion\LeadConversionDispatcher::getConfiguration(
-				array('FIELDS' => $arLead)
+				['FIELDS' => $arLead]
 			)->getSchemeJavaScriptDescriptions(true);
 
-			$arSchemeList = array();
+			$arSchemeList = [];
+
 			foreach($arSchemeDescriptions as $name => $description)
 			{
-				$arSchemeList[] = array(
+				$arSchemeList[] = [
 					'TITLE' => $description,
 					'TEXT' => $description,
 					'ONCLICK' => "BX.CrmLeadConverter.getCurrent().convert({$arLead['ID']}, BX.CrmLeadConversionScheme.createConfig('{$name}'), '".CUtil::JSEscape($APPLICATION->GetCurPage())."');"
-				);
+				];
 			}
-			if(!empty($arSchemeList))
+
+			if (!empty($arSchemeList))
 			{
 				if (!$isReturnCustomer)
 				{
-					$arSchemeList[] = array(
-						'TITLE' => GetMessage('CRM_LEAD_CONV_OPEN_ENTITY_SEL'),
-						'TEXT' => GetMessage('CRM_LEAD_CONV_OPEN_ENTITY_SEL'),
+					$arSchemeList[] = [
+						'TITLE' => Loc::getMessage('CRM_LEAD_CONV_OPEN_ENTITY_SEL'),
+						'TEXT' => Loc::getMessage('CRM_LEAD_CONV_OPEN_ENTITY_SEL'),
 						'ONCLICK' => "BX.CrmLeadConverter.getCurrent().openEntitySelector(function(result){ BX.CrmLeadConverter.getCurrent().convert({$arLead['ID']}, result.config, '".CUtil::JSEscape($APPLICATION->GetCurPage())."', result.data); });"
-					);
+					];
 				}
 
-				$arActions[] = array('SEPARATOR' => true);
-				$arActions[] = array(
-					'TITLE' => GetMessage('CRM_LEAD_CREATE_ON_BASIS_TITLE'),
-					'TEXT' => GetMessage('CRM_LEAD_CREATE_ON_BASIS'),
+				$arActions[] = ['SEPARATOR' => true];
+				$arActions[] = [
+					'TITLE' => Loc::getMessage('CRM_LEAD_CREATE_ON_BASIS_TITLE'),
+					'TEXT' => Loc::getMessage('CRM_LEAD_CREATE_ON_BASIS'),
 					'MENU' => $arSchemeList
-				);
+				];
 			}
 		}
 
-		$arActions[] = array('SEPARATOR' => true);
+		$arActions[] = ['SEPARATOR' => true];
 	}
 
-	if(!$isInternal)
+	if (!$isInternal)
 	{
 		if (RestrictionManager::isHistoryViewPermitted())
 		{
-			$arActions[] = $arActivityMenuItems[] = array(
-				'TITLE' => GetMessage('CRM_LEAD_EVENT_TITLE'),
-				'TEXT' => GetMessage('CRM_LEAD_EVENT'),
+			$arActions[] = $arActivityMenuItems[] = [
+				'TITLE' => Loc::getMessage('CRM_LEAD_EVENT_TITLE'),
+				'TEXT' => Loc::getMessage('CRM_LEAD_EVENT'),
 				'ONCLICK' => "BX.CrmUIGridExtension.processMenuCommand(
 					'{$gridManagerID}',
 					BX.CrmUIGridMenuCommand.createEvent,
 					{ entityTypeName: BX.CrmEntityType.names.lead, entityId: {$arLead['ID']} }
 				)"
-			);
+			];
 		}
 
-		if($arLead['EDIT'])
+		if ($arLead['EDIT'])
 		{
 			if (\Bitrix\Crm\Settings\Crm::isUniversalActivityScenarioEnabled())
 			{
-				$arActivitySubMenuItems[] = array(
-					'TEXT' => GetMessage('CRM_LEAD_ADD_TODO'),
-					'ONCLICK' => "BX.CrmUIGridExtension.showActivityAddingPopupFromMenu('".$preparedGridId."', " . CCrmOwnerType::Lead . ", " . (int)$arLead['ID'] . ");"
-				);
+				$currentUser = CUtil::PhpToJSObject(CCrmViewHelper::getUserInfo(true, false));
+				$arActivitySubMenuItems[] = [
+					'TEXT' => Loc::getMessage('CRM_LEAD_ADD_TODO'),
+					'ONCLICK' => "BX.CrmUIGridExtension.showActivityAddingPopupFromMenu('".$preparedGridId."', " . CCrmOwnerType::Lead . ", " . (int)$arLead['ID'] . ", " . $currentUser . ");"
+				];
 			}
 
-			if(IsModuleInstalled('subscribe'))
+			if (IsModuleInstalled('subscribe'))
 			{
-				$arActions[] = array(
-					'TITLE' => GetMessage('CRM_LEAD_ADD_EMAIL_TITLE'),
-					'TEXT' => GetMessage('CRM_LEAD_ADD_EMAIL'),
+				$arActions[] = [
+					'TITLE' => Loc::getMessage('CRM_LEAD_ADD_EMAIL_TITLE'),
+					'TEXT' => Loc::getMessage('CRM_LEAD_ADD_EMAIL'),
 					'ONCLICK' => "BX.CrmUIGridExtension.processMenuCommand(
 						'{$gridManagerID}',
 						BX.CrmUIGridMenuCommand.createActivity,
 						{ typeId: BX.CrmActivityType.email, settings: { ownerID: {$arLead['ID']} } }
 					)"
-				);
+				];
 
-				$arActivityMenuItems[] = array(
-					'TITLE' => GetMessage('CRM_LEAD_ADD_EMAIL_TITLE'),
-					'TEXT' => GetMessage('CRM_LEAD_ADD_EMAIL'),
+				$arActivityMenuItems[] = [
+					'TITLE' => Loc::getMessage('CRM_LEAD_ADD_EMAIL_TITLE'),
+					'TEXT' => Loc::getMessage('CRM_LEAD_ADD_EMAIL'),
 					'ONCLICK' => "BX.CrmUIGridExtension.processMenuCommand(
 						'{$gridManagerID}',
 						BX.CrmUIGridMenuCommand.createActivity,
 						{ typeId: BX.CrmActivityType.email, settings: { ownerID: {$arLead['ID']} } }
 					)"
-				);
+				];
 			}
 
-			if(IsModuleInstalled(CRM_MODULE_CALENDAR_ID) && \Bitrix\Crm\Settings\ActivitySettings::areOutdatedCalendarActivitiesEnabled())
+			if (
+					IsModuleInstalled(CRM_MODULE_CALENDAR_ID)
+					&& \Bitrix\Crm\Settings\ActivitySettings::areOutdatedCalendarActivitiesEnabled()
+			)
 			{
-				$arActivityMenuItems[] = array(
-					'TITLE' => GetMessage('CRM_LEAD_ADD_CALL_TITLE'),
-					'TEXT' => GetMessage('CRM_LEAD_ADD_CALL'),
+				$arActivityMenuItems[] = [
+					'TITLE' => Loc::getMessage('CRM_LEAD_ADD_CALL_TITLE'),
+					'TEXT' => Loc::getMessage('CRM_LEAD_ADD_CALL'),
 					'ONCLICK' => "BX.CrmUIGridExtension.processMenuCommand(
 						'{$gridManagerID}',
 						BX.CrmUIGridMenuCommand.createActivity,
 						{ typeId: BX.CrmActivityType.call, settings: { ownerID: {$arLead['ID']} } }
 					)"
-				);
+				];
 
-				$arActivityMenuItems[] = array(
-					'TITLE' => GetMessage('CRM_LEAD_ADD_MEETING_TITLE'),
-					'TEXT' => GetMessage('CRM_LEAD_ADD_MEETING'),
+				$arActivityMenuItems[] = [
+					'TITLE' => Loc::getMessage('CRM_LEAD_ADD_MEETING_TITLE'),
+					'TEXT' => Loc::getMessage('CRM_LEAD_ADD_MEETING'),
 					'ONCLICK' => "BX.CrmUIGridExtension.processMenuCommand(
 						'{$gridManagerID}',
 						BX.CrmUIGridMenuCommand.createActivity,
 						{ typeId: BX.CrmActivityType.meeting, settings: { ownerID: {$arLead['ID']} } }
 					)"
-				);
+				];
 
-				$arActivitySubMenuItems[] = array(
-					'TITLE' => GetMessage('CRM_LEAD_ADD_CALL_TITLE'),
-					'TEXT' => GetMessage('CRM_LEAD_ADD_CALL_SHORT'),
+				$arActivitySubMenuItems[] = [
+					'TITLE' => Loc::getMessage('CRM_LEAD_ADD_CALL_TITLE'),
+					'TEXT' => Loc::getMessage('CRM_LEAD_ADD_CALL_SHORT'),
 					'ONCLICK' => "BX.CrmUIGridExtension.processMenuCommand(
 						'{$gridManagerID}',
 						BX.CrmUIGridMenuCommand.createActivity,
 						{ typeId: BX.CrmActivityType.call, settings: { ownerID: {$arLead['ID']} } }
 					)"
-				);
+				];
 
-				$arActivitySubMenuItems[] = array(
-					'TITLE' => GetMessage('CRM_LEAD_ADD_MEETING_TITLE'),
-					'TEXT' => GetMessage('CRM_LEAD_ADD_MEETING_SHORT'),
+				$arActivitySubMenuItems[] = [
+					'TITLE' => Loc::getMessage('CRM_LEAD_ADD_MEETING_TITLE'),
+					'TEXT' => Loc::getMessage('CRM_LEAD_ADD_MEETING_SHORT'),
 					'ONCLICK' => "BX.CrmUIGridExtension.processMenuCommand(
 						'{$gridManagerID}',
 						BX.CrmUIGridMenuCommand.createActivity,
 						{ typeId: BX.CrmActivityType.meeting, settings: { ownerID: {$arLead['ID']} } }
 					)"
-				);
+				];
 			}
 
-			if(IsModuleInstalled('tasks'))
+			if (IsModuleInstalled('tasks'))
 			{
-				$arActivityMenuItems[] = array(
-					'TITLE' => GetMessage('CRM_LEAD_TASK_TITLE'),
-					'TEXT' => GetMessage('CRM_LEAD_TASK'),
+				$arActivityMenuItems[] = [
+					'TITLE' => Loc::getMessage('CRM_LEAD_TASK_TITLE'),
+					'TEXT' => Loc::getMessage('CRM_LEAD_TASK'),
 					'ONCLICK' => "BX.CrmUIGridExtension.processMenuCommand(
-					'{$gridManagerID}',
-					BX.CrmUIGridMenuCommand.createActivity,
-					{ typeId: BX.CrmActivityType.task, settings: { ownerID: {$arLead['ID']} } }
-				)"
-				);
+						'{$gridManagerID}',
+						BX.CrmUIGridMenuCommand.createActivity,
+						{ typeId: BX.CrmActivityType.task, settings: { ownerID: {$arLead['ID']} } }
+					)"
+				];
 
-				$arActivitySubMenuItems[] = array(
-					'TITLE' => GetMessage('CRM_LEAD_TASK_TITLE'),
-					'TEXT' => GetMessage('CRM_LEAD_TASK_SHORT'),
+				$arActivitySubMenuItems[] = [
+					'TITLE' => Loc::getMessage('CRM_LEAD_TASK_TITLE'),
+					'TEXT' => Loc::getMessage('CRM_LEAD_TASK_SHORT'),
 					'ONCLICK' => "BX.CrmUIGridExtension.processMenuCommand(
-					'{$gridManagerID}',
-					BX.CrmUIGridMenuCommand.createActivity,
-					{ typeId: BX.CrmActivityType.task, settings: { ownerID: {$arLead['ID']} } }
-				)"
-				);
+						'{$gridManagerID}',
+						BX.CrmUIGridMenuCommand.createActivity,
+						{ typeId: BX.CrmActivityType.task, settings: { ownerID: {$arLead['ID']} } }
+					)"
+				];
 			}
 
-			if(!empty($arActivitySubMenuItems))
+			if (!empty($arActivitySubMenuItems))
 			{
-				$arActions[] = array(
-					'TITLE' => GetMessage('CRM_LEAD_ADD_ACTIVITY_TITLE'),
-					'TEXT' => GetMessage('CRM_LEAD_ADD_ACTIVITY'),
+				$arActions[] = [
+					'TITLE' => Loc::getMessage('CRM_LEAD_ADD_ACTIVITY_TITLE'),
+					'TEXT' => Loc::getMessage('CRM_LEAD_ADD_ACTIVITY'),
 					'MENU' => $arActivitySubMenuItems
-				);
+				];
 			}
 
-			if(IsModuleInstalled('sale'))
+			if (IsModuleInstalled('sale'))
 			{
 				$quoteAction = [
-					'TITLE' => GetMessage('CRM_LEAD_ADD_QUOTE_TITLE'),
-					'TEXT' => GetMessage('CRM_LEAD_ADD_QUOTE'),
+					'TITLE' => Loc::getMessage('CRM_LEAD_ADD_QUOTE_TITLE'),
+					'TEXT' => Loc::getMessage('CRM_LEAD_ADD_QUOTE'),
 					'ONCLICK' => "jsUtils.Redirect([], '".CUtil::JSEscape($arLead['PATH_TO_QUOTE_ADD'])."');",
 				];
+
 				if (\Bitrix\Crm\Settings\QuoteSettings::getCurrent()->isFactoryEnabled())
 				{
 					unset($quoteAction['ONCLICK']);
+
 					$link = \Bitrix\Crm\Service\Container::getInstance()->getRouter()->getItemDetailUrl(
 						\CCrmOwnerType::Quote,
 						0,
 						null
 					);
+
 					$link->addParams([
 						'lead_id' => $arLead['ID'],
 					]);
@@ -401,49 +449,61 @@ foreach($arResult['LEAD'] as $sKey => $arLead)
 				}
 				$arActions[] = $quoteAction;
 			}
-			if($arResult['IS_BIZPROC_AVAILABLE'])
+
+			if ($arResult['IS_BIZPROC_AVAILABLE'])
 			{
-				$arActions[] = array('SEPARATOR' => true);
-				if(isset($arContact['PATH_TO_BIZPROC_LIST']) && $arContact['PATH_TO_BIZPROC_LIST'] !== '')
+				$arActions[] = ['SEPARATOR' => true];
+				if (isset($arContact['PATH_TO_BIZPROC_LIST']) && $arContact['PATH_TO_BIZPROC_LIST'] !== '')
 				{
-					$arActions[] = array(
-						'TITLE' => GetMessage('CRM_LEAD_BIZPROC_TITLE'),
-						'TEXT' => GetMessage('CRM_LEAD_BIZPROC'),
+					$arActions[] = [
+						'TITLE' => Loc::getMessage('CRM_LEAD_BIZPROC_TITLE'),
+						'TEXT' => Loc::getMessage('CRM_LEAD_BIZPROC'),
 						'ONCLICK' => "jsUtils.Redirect([], '".CUtil::JSEscape($arLead['PATH_TO_BIZPROC_LIST'])."');"
-					);
+					];
 				}
-				if(!empty($arLead['BIZPROC_LIST']))
+
+				if (!empty($arLead['BIZPROC_LIST']))
 				{
-					$arBizprocList = array();
+					$arBizprocList = [];
 					foreach($arLead['BIZPROC_LIST'] as $arBizproc)
 					{
-						$arBizprocList[] = array(
+						$arBizprocList[] = [
 							'TITLE' => $arBizproc['DESCRIPTION'],
 							'TEXT' => $arBizproc['NAME'],
-							'ONCLICK' => isset($arBizproc['ONCLICK']) ?
-								$arBizproc['ONCLICK']
+							'ONCLICK' => isset($arBizproc['ONCLICK'])
+								? $arBizproc['ONCLICK']
 								: "jsUtils.Redirect([], '".CUtil::JSEscape($arBizproc['PATH_TO_BIZPROC_START'])."');"
-						);
+						];
 					}
-					$arActions[] = array(
-						'TITLE' => GetMessage('CRM_LEAD_BIZPROC_LIST_TITLE'),
-						'TEXT' => GetMessage('CRM_LEAD_BIZPROC_LIST'),
+
+					$arActions[] = [
+						'TITLE' => Loc::getMessage('CRM_LEAD_BIZPROC_LIST_TITLE'),
+						'TEXT' => Loc::getMessage('CRM_LEAD_BIZPROC_LIST'),
 						'MENU' => $arBizprocList
-					);
+					];
 				}
 			}
 		}
 	}
 
-	$eventParam = array(
+	$eventParam = [
 		'ID' => $arLead['ID'],
 		'CALL_LIST_ID' => $arResult['CALL_LIST_ID'],
 		'CALL_LIST_CONTEXT' => $arResult['CALL_LIST_CONTEXT'],
 		'GRID_ID' => $arResult['GRID_ID']
-	);
-	foreach(GetModuleEvents('crm', 'onCrmLeadListItemBuildMenu', true) as $event)
+	];
+
+	foreach (GetModuleEvents('crm', 'onCrmLeadListItemBuildMenu', true) as $event)
 	{
-		ExecuteModuleEventEx($event, array('CRM_LEAD_LIST_MENU', $eventParam, &$arActions));
+		ExecuteModuleEventEx($event, ['CRM_LEAD_LIST_MENU', $eventParam, &$arActions]);
+	}
+
+	$dateCreate = $arLead['DATE_CREATE'] ?? '';
+	$dateModify = $arLead['DATE_MODIFY'] ?? '';
+	$webformId = null;
+	if (isset($arLead['WEBFORM_ID']))
+	{
+		$webformId = $arResult['WEBFORM_LIST'][$arLead['WEBFORM_ID']] ?? $arLead['WEBFORM_ID'];
 	}
 
 	$resultItem = array(
@@ -454,20 +514,20 @@ foreach($arResult['LEAD'] as $sKey => $arLead)
 		'columns' => array(
 			'LEAD_SUMMARY' => CCrmViewHelper::RenderInfo(
 				$arLead['PATH_TO_LEAD_SHOW'],
-				isset($arLead['TITLE']) ? $arLead['TITLE'] : ('['.$arLead['ID'].']'),
+				$arLead['TITLE'] ?? ('['.$arLead['ID'].']'),
 				Tracking\UI\Grid::enrichSourceName(
 					\CCrmOwnerType::Lead,
 					$arLead['ID'],
 					$arLead['LEAD_SOURCE_NAME']
 				),
-				array(
+				[
 					'TARGET' => '_top',
 					'LEGEND' => $arLead['LEAD_LEGEND']
-				)
+				]
 			),
 			'LEAD_CLIENT' => isset($arLead['CLIENT_INFO']) ? CCrmViewHelper::PrepareClientInfo($arLead['CLIENT_INFO']) : '',
-			'COMMENTS' => htmlspecialcharsback($arLead['COMMENTS']),
-			'ADDRESS' => nl2br($arLead['ADDRESS']),
+			'COMMENTS' => htmlspecialcharsback($arLead['COMMENTS'] ?? ''),
+			'ADDRESS' => nl2br($arLead['ADDRESS'] ?? ''),
 			'ASSIGNED_BY' => $arLead['~ASSIGNED_BY_ID'] > 0
 				? CCrmViewHelper::PrepareUserBaloonHtml(
 					array(
@@ -477,13 +537,13 @@ foreach($arResult['LEAD'] as $sKey => $arLead)
 						'USER_PROFILE_URL' => $arLead['PATH_TO_USER_PROFILE']
 					)
 				) : '',
-			'STATUS_DESCRIPTION' => nl2br($arLead['STATUS_DESCRIPTION']),
-			'SOURCE_DESCRIPTION' => nl2br($arLead['SOURCE_DESCRIPTION']),
-			'DATE_CREATE' => FormatDate($arResult['TIME_FORMAT'], MakeTimeStamp($arLead['DATE_CREATE']), $now),
-			'DATE_MODIFY' => FormatDate($arResult['TIME_FORMAT'], MakeTimeStamp($arLead['DATE_MODIFY']), $now),
+			'STATUS_DESCRIPTION' => nl2br($arLead['STATUS_DESCRIPTION'] ?? ''),
+			'SOURCE_DESCRIPTION' => nl2br($arLead['SOURCE_DESCRIPTION'] ?? ''),
+			'DATE_CREATE' => FormatDate($arResult['TIME_FORMAT'], MakeTimeStamp($dateCreate), $now),
+			'DATE_MODIFY' => FormatDate($arResult['TIME_FORMAT'], MakeTimeStamp($dateModify), $now),
 			'SUM' => $arLead['FORMATTED_OPPORTUNITY'],
-			'OPPORTUNITY' => $arLead['~OPPORTUNITY'],
-			'CURRENCY_ID' => CCrmCurrency::GetEncodedCurrencyName($arLead['~CURRENCY_ID']),
+			'OPPORTUNITY' => $arLead['~OPPORTUNITY'] ?? 0.0,
+			'CURRENCY_ID' => CCrmCurrency::GetEncodedCurrencyName($arLead['~CURRENCY_ID'] ?? null),
 			'PRODUCT_ID' => isset($arLead['PRODUCT_ROWS']) ? htmlspecialcharsbx(CCrmProductRow::RowsToString($arLead['PRODUCT_ROWS'])) : '',
 			'IS_RETURN_CUSTOMER' => isset($arResult['BOOLEAN_VALUES_LIST'][$arLead['IS_RETURN_CUSTOMER']]) ? $arResult['BOOLEAN_VALUES_LIST'][$arLead['IS_RETURN_CUSTOMER']] : $arLead['IS_RETURN_CUSTOMER'],
 			'HONORIFIC' => isset($arResult['HONORIFIC'][$arLead['HONORIFIC']]) ? $arResult['HONORIFIC'][$arLead['HONORIFIC']] : '',
@@ -500,9 +560,9 @@ foreach($arResult['LEAD'] as $sKey => $arLead)
 					'READ_ONLY' => !(isset($arLead['EDIT']) && $arLead['EDIT'] === true)
 				)
 			),
-			'SOURCE_ID' => $arLead['LEAD_SOURCE_NAME'],
-			'WEBFORM_ID' => isset($arResult['WEBFORM_LIST'][$arLead['WEBFORM_ID']]) ? $arResult['WEBFORM_LIST'][$arLead['WEBFORM_ID']] : $arLead['WEBFORM_ID'],
-			'CREATED_BY' => $arLead['~CREATED_BY'] > 0
+			'SOURCE_ID' => $arLead['LEAD_SOURCE_NAME'] ?? null,
+			'WEBFORM_ID' => $webformId,
+			'CREATED_BY' => isset($arLead['~CREATED_BY']) && $arLead['~CREATED_BY'] > 0
 				? CCrmViewHelper::PrepareUserBaloonHtml(
 					array(
 						'PREFIX' => "LEAD_{$arLead['~ID']}_CREATOR",
@@ -510,8 +570,9 @@ foreach($arResult['LEAD'] as $sKey => $arLead)
 						'USER_NAME'=> $arLead['CREATED_BY_FORMATTED_NAME'],
 						'USER_PROFILE_URL' => $arLead['PATH_TO_USER_CREATOR'],
 					)
-				) : '',
-			'MODIFY_BY' => $arLead['~MODIFY_BY'] > 0
+				)
+				: '',
+			'MODIFY_BY' => isset($arLead['~MODIFY_BY']) && $arLead['~MODIFY_BY'] > 0
 				? CCrmViewHelper::PrepareUserBaloonHtml(
 					array(
 						'PREFIX' => "LEAD_{$arLead['~ID']}_MODIFIER",
@@ -519,7 +580,8 @@ foreach($arResult['LEAD'] as $sKey => $arLead)
 						'USER_NAME'=> $arLead['MODIFY_BY_FORMATTED_NAME'],
 						'USER_PROFILE_URL' => $arLead['PATH_TO_USER_MODIFIER']
 					)
-				) : '',
+				)
+				: '',
 		) + CCrmViewHelper::RenderListMultiFields($arLead, "LEAD_{$arLead['ID']}_", array('ENABLE_SIP' => true, 'SIP_PARAMS' => array('ENTITY_TYPE' => 'CRM_'.CCrmOwnerType::LeadName, 'ENTITY_ID' => $arLead['ID']))) + $arResult['LEAD_UF'][$sKey]
 	);
 
@@ -529,91 +591,24 @@ foreach($arResult['LEAD'] as $sKey => $arLead)
 		$resultItem['columns']
 	);
 
-	if(isset($arLead['~BIRTHDATE']))
+	$resultItem['columns'] = \Bitrix\Crm\Entity\FieldContentType::enrichGridRow(
+		\CCrmOwnerType::Lead,
+		$fieldContentTypeMap[$arLead['ID']] ?? [],
+		$arLead,
+		$resultItem['columns'],
+	);
+
+	if (isset($arLead['~BIRTHDATE']))
 	{
 		$resultItem['columns']['BIRTHDATE'] = '<nobr>'.FormatDate('SHORT', MakeTimeStamp($arLead['~BIRTHDATE'])).'</nobr>';
 	}
 
-	$userActivityID = isset($arLead['~ACTIVITY_ID']) ? intval($arLead['~ACTIVITY_ID']) : 0;
-	$commonActivityID = isset($arLead['~C_ACTIVITY_ID']) ? intval($arLead['~C_ACTIVITY_ID']) : 0;
-	if($userActivityID > 0)
+	if (isset($arLead['ACTIVITY_BLOCK']) && $arLead['ACTIVITY_BLOCK'] instanceof \Bitrix\Crm\Component\EntityList\NearestActivity\Block)
 	{
-		$resultItem['columns']['ACTIVITY_ID'] = CCrmViewHelper::RenderNearestActivity(
-			array(
-				'ENTITY_TYPE_NAME' => CCrmOwnerType::ResolveName(CCrmOwnerType::Lead),
-				'ENTITY_ID' => $arLead['~ID'],
-				'ENTITY_RESPONSIBLE_ID' => $arLead['~ASSIGNED_BY'],
-				'GRID_MANAGER_ID' => $gridManagerID,
-				'ACTIVITY_ID' => $userActivityID,
-				'ACTIVITY_SUBJECT' => isset($arLead['~ACTIVITY_SUBJECT']) ? $arLead['~ACTIVITY_SUBJECT'] : '',
-				'ACTIVITY_TIME' => isset($arLead['~ACTIVITY_TIME']) ? $arLead['~ACTIVITY_TIME'] : '',
-				'ACTIVITY_EXPIRED' => isset($arLead['~ACTIVITY_EXPIRED']) ? $arLead['~ACTIVITY_EXPIRED'] : '',
-				'ALLOW_EDIT' => $arLead['EDIT'],
-				'MENU_ITEMS' => $arActivityMenuItems,
-				'USE_GRID_EXTENSION' => true
-			)
-		);
-
-		$counterData = array(
-			'CURRENT_USER_ID' => $currentUserID,
-			'ENTITY' => $arLead,
-			'ACTIVITY' => array(
-				'RESPONSIBLE_ID' => $currentUserID,
-				'TIME' => isset($arLead['~ACTIVITY_TIME']) ? $arLead['~ACTIVITY_TIME'] : '',
-				'IS_CURRENT_DAY' => isset($arLead['~ACTIVITY_IS_CURRENT_DAY']) ? $arLead['~ACTIVITY_IS_CURRENT_DAY'] : false
-			)
-		);
-
-		if(CCrmUserCounter::IsReckoned(CCrmUserCounter::CurrentLeadActivies, $counterData))
+		$resultItem['columns']['ACTIVITY_ID'] = $arLead['ACTIVITY_BLOCK']->render($gridManagerID);
+		if ($arLead['ACTIVITY_BLOCK']->needHighlight())
 		{
-			$resultItem['columnClasses'] = array('ACTIVITY_ID' => 'crm-list-deal-today');
-		}
-	}
-	elseif($commonActivityID > 0)
-	{
-		$resultItem['columns']['ACTIVITY_ID'] = CCrmViewHelper::RenderNearestActivity(
-			array(
-				'ENTITY_TYPE_NAME' => CCrmOwnerType::ResolveName(CCrmOwnerType::Lead),
-				'ENTITY_ID' => $arLead['~ID'],
-				'ENTITY_RESPONSIBLE_ID' => $arLead['~ASSIGNED_BY'],
-				'GRID_MANAGER_ID' => $gridManagerID,
-				'ACTIVITY_ID' => $commonActivityID,
-				'ACTIVITY_SUBJECT' => isset($arLead['~C_ACTIVITY_SUBJECT']) ? $arLead['~C_ACTIVITY_SUBJECT'] : '',
-				'ACTIVITY_TIME' => isset($arLead['~C_ACTIVITY_TIME']) ? $arLead['~C_ACTIVITY_TIME'] : '',
-				'ACTIVITY_RESPONSIBLE_ID' => isset($arLead['~C_ACTIVITY_RESP_ID']) ? intval($arLead['~C_ACTIVITY_RESP_ID']) : 0,
-				'ACTIVITY_RESPONSIBLE_LOGIN' => isset($arLead['~C_ACTIVITY_RESP_LOGIN']) ? $arLead['~C_ACTIVITY_RESP_LOGIN'] : '',
-				'ACTIVITY_RESPONSIBLE_NAME' => isset($arLead['~C_ACTIVITY_RESP_NAME']) ? $arLead['~C_ACTIVITY_RESP_NAME'] : '',
-				'ACTIVITY_RESPONSIBLE_LAST_NAME' => isset($arLead['~C_ACTIVITY_RESP_LAST_NAME']) ? $arLead['~C_ACTIVITY_RESP_LAST_NAME'] : '',
-				'ACTIVITY_RESPONSIBLE_SECOND_NAME' => isset($arLead['~C_ACTIVITY_RESP_SECOND_NAME']) ? $arLead['~C_ACTIVITY_RESP_SECOND_NAME'] : '',
-				'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'],
-				'PATH_TO_USER_PROFILE' => $arParams['PATH_TO_USER_PROFILE'],
-				'ALLOW_EDIT' => $arLead['EDIT'],
-				'MENU_ITEMS' => $arActivityMenuItems,
-				'USE_GRID_EXTENSION' => true
-			)
-		);
-	}
-	else
-	{
-		$resultItem['columns']['ACTIVITY_ID'] = CCrmViewHelper::RenderNearestActivity(
-			array(
-				'ENTITY_TYPE_NAME' => CCrmOwnerType::ResolveName(CCrmOwnerType::Lead),
-				'ENTITY_ID' => $arLead['~ID'],
-				'ENTITY_RESPONSIBLE_ID' => $arLead['~ASSIGNED_BY'],
-				'GRID_MANAGER_ID' => $gridManagerID,
-				'ALLOW_EDIT' => $arLead['EDIT'],
-				'MENU_ITEMS' => $arActivityMenuItems,
-				'HINT_TEXT' => isset($arLead['~WAITING_TITLE']) ? $arLead['~WAITING_TITLE'] : '',
-				'USE_GRID_EXTENSION' => true
-			)
-		);
-
-		$counterData = array('CURRENT_USER_ID' => $currentUserID, 'ENTITY' => $arLead);
-		if($waitingID <= 0
-			&& CCrmUserCounter::IsReckoned(CCrmUserCounter::CurrentLeadActivies, $counterData)
-		)
-		{
-			$resultItem['columnClasses'] = array('ACTIVITY_ID' => 'crm-list-enitity-action-need');
+			$resultItem['columnClasses'] = ['ACTIVITY_ID' => 'crm-list-deal-today'];
 		}
 	}
 
@@ -624,12 +619,12 @@ foreach($arResult['LEAD'] as $sKey => $arLead)
 //region Action Panel
 $controlPanel = array('GROUPS' => array(array('ITEMS' => array())));
 
-if(!$isInternal
+if (!$isInternal
 	&& ($allowWrite || $allowDelete || $allowExclude ||  $callListUpdateMode))
 {
 	$yesnoList = array(
-		array('NAME' => GetMessage('MAIN_YES'), 'VALUE' => 'Y'),
-		array('NAME' => GetMessage('MAIN_NO'), 'VALUE' => 'N')
+		array('NAME' => Loc::getMessage('MAIN_YES'), 'VALUE' => 'Y'),
+		array('NAME' => Loc::getMessage('MAIN_NO'), 'VALUE' => 'N')
 	);
 
 	$snippet = new \Bitrix\Main\Grid\Panel\Snippet();
@@ -644,9 +639,9 @@ if(!$isInternal
 		)
 	);
 
-	$actionList = array(array('NAME' => GetMessage('CRM_LEAD_LIST_CHOOSE_ACTION'), 'VALUE' => 'none'));
+	$actionList = array(array('NAME' => Loc::getMessage('CRM_LEAD_LIST_CHOOSE_ACTION'), 'VALUE' => 'none'));
 
-	if($allowWrite)
+	if ($allowWrite)
 	{
 		//region Add letter & Add to segment
 		Integration\Sender\GridPanel::appendActions($actionList, $applyButton, $gridManagerID);
@@ -655,7 +650,7 @@ if(!$isInternal
 		if (IsModuleInstalled('tasks'))
 		{
 			$actionList[] = array(
-				'NAME' => GetMessage('CRM_LEAD_TASK'),
+				'NAME' => Loc::getMessage('CRM_LEAD_TASK'),
 				'VALUE' => 'tasks',
 				'ONCHANGE' => array(
 					array(
@@ -671,13 +666,13 @@ if(!$isInternal
 		}
 		//endregion
 		//region Set Status
-		$statusList = array(array('NAME' => GetMessage('CRM_STATUS_INIT'), 'VALUE' => ''));
+		$statusList = array(array('NAME' => Loc::getMessage('CRM_STATUS_INIT'), 'VALUE' => ''));
 		foreach($arResult['STATUS_LIST_WRITE'] as $statusID => $statusName)
 		{
 			$statusList[] = array('NAME' => $statusName, 'VALUE' => $statusID);
 		}
 		$actionList[] = array(
-			'NAME' => GetMessage('CRM_LEAD_SET_STATUS'),
+			'NAME' => Loc::getMessage('CRM_LEAD_SET_STATUS'),
 			'VALUE' => 'set_status',
 			'ONCHANGE' => array(
 				array(
@@ -702,7 +697,7 @@ if(!$isInternal
 
 		//region Assign To
 		//region Render User Search control
-		if(!Bitrix\Main\Grid\Context::isInternalRequest())
+		if (!Bitrix\Main\Grid\Context::isInternalRequest())
 		{
 			//action_assigned_by_search + _control
 			//Prefix control will be added by main.ui.grid
@@ -716,7 +711,7 @@ if(!$isInternal
 					'SHOW_EXTRANET_USERS' => 'NONE',
 					'POPUP' => 'Y',
 					'SITE_ID' => SITE_ID,
-					'NAME_TEMPLATE' => $arResult['NAME_TEMPLATE']
+					'NAME_TEMPLATE' => $arResult['NAME_TEMPLATE'] ?? ''
 				),
 				null,
 				array('HIDE_ICONS' => 'Y')
@@ -724,7 +719,7 @@ if(!$isInternal
 		}
 		//endregion
 		$actionList[] = array(
-			'NAME' => GetMessage('CRM_LEAD_ASSIGN_TO'),
+			'NAME' => Loc::getMessage('CRM_LEAD_ASSIGN_TO'),
 			'VALUE' => 'assign_to',
 			'ONCHANGE' => array(
 				array(
@@ -758,18 +753,18 @@ if(!$isInternal
 		//endregion
 
 		//region Convert
-		if($arResult['CAN_CONVERT'])
+		if ($arResult['CAN_CONVERT'])
 		{
-			$schemeList = array();
+			$schemeList = [];
 			foreach(LeadConversionScheme::getJavaScriptDescriptions(true) as $schemeName => $schemeDescr)
 			{
 				$schemeList[] = array('NAME' => $schemeDescr, 'VALUE' => $schemeName);
 			}
 
-			if(!empty($schemeList))
+			if (!empty($schemeList))
 			{
 				$actionList[] = array(
-					'NAME' => GetMessage('CRM_LEAD_CONVERT'),
+					'NAME' => Loc::getMessage('CRM_LEAD_CONVERT'),
 					'VALUE' => 'convert',
 					'ONCHANGE' => array(
 						array(
@@ -795,10 +790,10 @@ if(!$isInternal
 		//endregion
 
 		//region Create call list
-		if(IsModuleInstalled('voximplant'))
+		if (IsModuleInstalled('voximplant'))
 		{
 			$actionList[] = array(
-				'NAME' => GetMessage('CRM_LEAD_CREATE_CALL_LIST'),
+				'NAME' => Loc::getMessage('CRM_LEAD_CREATE_CALL_LIST'),
 				'VALUE' => 'create_call_list',
 				'ONCHANGE' => array(
 					array(
@@ -816,10 +811,10 @@ if(!$isInternal
 		}
 		//endregion
 
-		if($allowDelete && !$arResult['IS_EXTERNAL_FILTER'])
+		if ($allowDelete && !$arResult['IS_EXTERNAL_FILTER'])
 		{
 			$actionList[] = [
-				'NAME' => GetMessage('CRM_LEAD_ACTION_MERGE'),
+				'NAME' => Loc::getMessage('CRM_LEAD_ACTION_MERGE'),
 				'VALUE' => 'merge',
 				'ONCHANGE' => [
 					[
@@ -843,7 +838,7 @@ if(!$isInternal
 		}
 	}
 
-	if($allowDelete)
+	if ($allowDelete)
 	{
 		//region Remove button
 		//$controlPanel['GROUPS'][0]['ITEMS'][] = $snippet->getRemoveButton();
@@ -863,7 +858,7 @@ if(!$isInternal
 
 		//$actionList[] = $snippet->getRemoveAction();
 		$actionList[] = array(
-			'NAME' => GetMessage('CRM_LEAD_ACTION_DELETE'),
+			'NAME' => Loc::getMessage('CRM_LEAD_ACTION_DELETE'),
 			'VALUE' => 'delete',
 			'ONCHANGE' => array(
 				array(
@@ -877,10 +872,10 @@ if(!$isInternal
 		);
 	}
 
-	if($allowExclude)
+	if ($allowExclude)
 	{
 		$actionList[] = array(
-			'NAME' => GetMessage('CRM_LEAD_EXCLUDE'),
+			'NAME' => Loc::getMessage('CRM_LEAD_EXCLUDE'),
 			'VALUE' => 'exclude',
 			'ONCHANGE' => array(
 				array(
@@ -895,7 +890,7 @@ if(!$isInternal
 		);
 	}
 
-	if($allowWrite)
+	if ($allowWrite)
 	{
 		//region Edit Button
 		$controlPanel['GROUPS'][0]['ITEMS'][] = $snippet->getEditButton();
@@ -903,7 +898,7 @@ if(!$isInternal
 		//endregion
 		//region Mark as Opened
 		$actionList[] = array(
-			'NAME' => GetMessage('CRM_LEAD_MARK_AS_OPENED'),
+			'NAME' => Loc::getMessage('CRM_LEAD_MARK_AS_OPENED'),
 			'VALUE' => 'mark_as_opened',
 			'ONCHANGE' => array(
 				array(
@@ -927,7 +922,7 @@ if(!$isInternal
 		//endregion
 		//region Refresh Accounting Data
 		$actionList[] = array(
-			'NAME' => GetMessage('CRM_LEAD_REFRESH_ACCOUNT'),
+			'NAME' => Loc::getMessage('CRM_LEAD_REFRESH_ACCOUNT'),
 			'VALUE' => 'refresh_account',
 			'ONCHANGE' => array(
 				array(
@@ -940,12 +935,12 @@ if(!$isInternal
 		//endregion
 	}
 
-	if($callListUpdateMode)
+	if ($callListUpdateMode)
 	{
 		$callListContext = \CUtil::jsEscape($arResult['CALL_LIST_CONTEXT']);
 		$controlPanel['GROUPS'][0]['ITEMS'][] = [
 			"TYPE" => \Bitrix\Main\Grid\Panel\Types::BUTTON,
-			"TEXT" => GetMessage("CRM_LEAD_UPDATE_CALL_LIST"),
+			"TEXT" => Loc::getMessage("CRM_LEAD_UPDATE_CALL_LIST"),
 			"ID" => "update_call_list",
 			"NAME" => "update_call_list",
 			'ONCHANGE' => [
@@ -959,11 +954,11 @@ if(!$isInternal
 	else
 	{
 		//region Start call list
-		if(IsModuleInstalled('voximplant'))
+		if (IsModuleInstalled('voximplant'))
 		{
 			$controlPanel['GROUPS'][0]['ITEMS'][] = array(
 				"TYPE" => \Bitrix\Main\Grid\Panel\Types::BUTTON,
-				"TEXT" => GetMessage('CRM_LEAD_START_CALL_LIST'),
+				"TEXT" => Loc::getMessage('CRM_LEAD_START_CALL_LIST'),
 				"VALUE" => "start_call_list",
 				"ONCHANGE" => array(
 					array(
@@ -986,7 +981,7 @@ if(!$isInternal
 }
 //endregion
 
-if($arResult['ENABLE_TOOLBAR'])
+if ($arResult['ENABLE_TOOLBAR'])
 {
 	$addButton =array(
 		'TEXT' => \CCrmOwnerType::GetDescription(\CCrmOwnerType::Lead),
@@ -995,7 +990,7 @@ if($arResult['ENABLE_TOOLBAR'])
 		'ICON' => 'btn-new'
 	);
 
-	if(!empty($arResult['ADD_EVENT_NAME']))
+	if (!empty($arResult['ADD_EVENT_NAME']))
 	{
 		$addButton['ONCLICK'] = "BX.onCustomEvent(window, '{$arResult['ADD_EVENT_NAME']}')";
 	}
@@ -1012,8 +1007,8 @@ if($arResult['ENABLE_TOOLBAR'])
 	);
 }
 
-$messages = array();
-if(isset($arResult['ERRORS']) && is_array($arResult['ERRORS']))
+$messages = [];
+if (isset($arResult['ERRORS']) && is_array($arResult['ERRORS']))
 {
 	foreach($arResult['ERRORS'] as $error)
 	{
@@ -1024,7 +1019,7 @@ if(isset($arResult['ERRORS']) && is_array($arResult['ERRORS']))
 		);
 	}
 }
-if(isset($arResult['MESSAGES']) && is_array($arResult['MESSAGES']))
+if (isset($arResult['MESSAGES']) && is_array($arResult['MESSAGES']))
 {
 	foreach($arResult['MESSAGES'] as $message)
 	{
@@ -1057,9 +1052,9 @@ $APPLICATION->IncludeComponent(
 		'SORT' => $arResult['SORT'],
 		'SORT_VARS' => $arResult['SORT_VARS'],
 		'ROWS' => $arResult['GRID_DATA'],
-		'FORM_ID' => $arResult['FORM_ID'],
-		'TAB_ID' => $arResult['TAB_ID'],
-		'AJAX_ID' => $arResult['AJAX_ID'],
+		'FORM_ID' => $arResult['FORM_ID'] ?? null,
+		'TAB_ID' => $arResult['TAB_ID'] ?? null,
+		'AJAX_ID' => $arResult['AJAX_ID'] ?? null,
 		'AJAX_OPTION_JUMP' => 'N',
 		'AJAX_OPTION_HISTORY' => 'N',
 		'HIDE_FILTER' => ($arParams['HIDE_FILTER'] ?? null),
@@ -1115,13 +1110,13 @@ $APPLICATION->IncludeComponent(
 				'loaderData' => ($arParams['AJAX_LOADER'] ?? null),
 			],
 			'MESSAGES' => [
-				'deletionDialogTitle' => GetMessage('CRM_LEAD_DELETE_TITLE'),
-				'deletionDialogMessage' => GetMessage('CRM_LEAD_DELETE_CONFIRM'),
-				'deletionDialogButtonTitle' => GetMessage('CRM_LEAD_DELETE'),
-				'exclusionDialogTitle' => GetMessage('CRM_LEAD_EXCLUDE_TITLE'),
-				'exclusionDialogMessage' => GetMessage('CRM_LEAD_EXCLUDE_CONFIRM'),
-				'exclusionDialogMessageHelp' => GetMessage('CRM_LEAD_EXCLUDE_CONFIRM_HELP'),
-				'exclusionDialogButtonTitle' => GetMessage('CRM_LEAD_EXCLUDE'),
+				'deletionDialogTitle' => Loc::getMessage('CRM_LEAD_DELETE_TITLE'),
+				'deletionDialogMessage' => Loc::getMessage('CRM_LEAD_DELETE_CONFIRM'),
+				'deletionDialogButtonTitle' => Loc::getMessage('CRM_LEAD_DELETE'),
+				'exclusionDialogTitle' => Loc::getMessage('CRM_LEAD_EXCLUDE_TITLE'),
+				'exclusionDialogMessage' => Loc::getMessage('CRM_LEAD_EXCLUDE_CONFIRM'),
+				'exclusionDialogMessageHelp' => Loc::getMessage('CRM_LEAD_EXCLUDE_CONFIRM_HELP'),
+				'exclusionDialogButtonTitle' => Loc::getMessage('CRM_LEAD_EXCLUDE'),
 			],
 		],
 	],
@@ -1195,7 +1190,7 @@ $APPLICATION->IncludeComponent(
 				"/bitrix/components/bitrix/crm.lead.show/ajax.php?<?=bitrix_sessid_get()?>"
 			);
 
-			if(typeof(BX.CrmSipManager.messages) === 'undefined')
+			if (typeof(BX.CrmSipManager.messages) === 'undefined')
 			{
 				BX.CrmSipManager.messages =
 				{
@@ -1221,6 +1216,7 @@ $APPLICATION->IncludeComponent(
 
 				/** @see BX.Crm.PushCrmSettings */
 				new exports.PushCrmSettings({
+					smartActivityNotificationSupported: <?= Container::getInstance()->getFactory(\CCrmOwnerType::Lead)->isSmartActivityNotificationSupported() ? 'true' : 'false' ?>,
 					entityTypeId: <?= (int)\CCrmOwnerType::Lead ?>,
 					rootMenu: settingsButton ? settingsButton.getMenuWindow() : undefined,
 					grid: BX.Reflection.getClass('BX.Main.gridManager') ? BX.Main.gridManager.getInstanceById('<?= \CUtil::JSEscape($arResult['GRID_ID']) ?>') : undefined,
@@ -1230,7 +1226,8 @@ $APPLICATION->IncludeComponent(
 	);
 </script>
 <?php endif; ?>
-<?if(!$isInternal):?>
+
+<?if (!$isInternal):?>
 <script type="text/javascript">
 	BX.ready(
 			function()
@@ -1253,7 +1250,8 @@ $APPLICATION->IncludeComponent(
 	);
 </script>
 <?endif;?>
-<?if($arResult['CAN_CONVERT'] && isset($arResult['CONVERSION']['CONFIGS'])):?>
+
+<?if ($arResult['CAN_CONVERT'] && isset($arResult['CONVERSION']['CONFIGS'])):?>
 <script type="text/javascript">
 	BX.ready(
 		function()
@@ -1325,7 +1323,8 @@ $APPLICATION->IncludeComponent(
 	);
 </script>
 <?endif;?>
-<?if($arResult['NEED_FOR_REBUILD_DUP_INDEX']):?>
+
+<?if (isset($arResult['NEED_FOR_REBUILD_DUP_INDEX']) && $arResult['NEED_FOR_REBUILD_DUP_INDEX']):?>
 <script type="text/javascript">
 	BX.ready(
 		function()
@@ -1343,7 +1342,7 @@ $APPLICATION->IncludeComponent(
 				function()
 				{
 					var msg = BX("rebuildLeadDupIndexMsg");
-					if(msg)
+					if (msg)
 					{
 						msg.style.display = "none";
 					}
@@ -1351,7 +1350,7 @@ $APPLICATION->IncludeComponent(
 			);
 
 			var link = BX("rebuildLeadDupIndexLink");
-			if(link)
+			if (link)
 			{
 				BX.bind(
 					link,
@@ -1367,7 +1366,8 @@ $APPLICATION->IncludeComponent(
 	);
 </script>
 <?endif;?>
-<?if($arResult['NEED_FOR_REBUILD_SEARCH_CONTENT']):?>
+
+<?if (isset($arResult['NEED_FOR_REBUILD_SEARCH_CONTENT']) && $arResult['NEED_FOR_REBUILD_SEARCH_CONTENT']):?>
 	<script type="text/javascript">
 		BX.ready(
 			function()
@@ -1395,12 +1395,13 @@ $APPLICATION->IncludeComponent(
 		);
 	</script>
 <?endif;?>
-<?if($arResult['NEED_FOR_REBUILD_TIMELINE_SEARCH_CONTENT']):?>
+
+<?if (isset($arResult['NEED_FOR_REBUILD_TIMELINE_SEARCH_CONTENT']) && $arResult['NEED_FOR_REBUILD_TIMELINE_SEARCH_CONTENT']):?>
 	<script type="text/javascript">
 		BX.ready(
 			function()
 			{
-				if(BX.AutorunProcessPanel.isExists("rebuildTimelineSearch"))
+				if (BX.AutorunProcessPanel.isExists("rebuildTimelineSearch"))
 				{
 					return;
 				}
@@ -1423,7 +1424,8 @@ $APPLICATION->IncludeComponent(
 		);
 	</script>
 <?endif;?>
-<?if($arResult['NEED_FOR_REBUILD_SECURITY_ATTRS']):?>
+
+<?if (isset($arResult['NEED_FOR_REBUILD_SECURITY_ATTRS']) && $arResult['NEED_FOR_REBUILD_SECURITY_ATTRS']):?>
 	<script type="text/javascript">
 		BX.ready(
 			function()
@@ -1443,12 +1445,13 @@ $APPLICATION->IncludeComponent(
 		);
 	</script>
 <?endif;?>
-<?if($arResult['NEED_FOR_BUILD_TIMELINE']):?>
+
+<?if (isset($arResult['NEED_FOR_BUILD_TIMELINE']) && $arResult['NEED_FOR_BUILD_TIMELINE']):?>
 	<script type="text/javascript">
 		BX.ready(
 			function()
 			{
-				if(BX.AutorunProcessPanel.isExists("buildLeadTimeline"))
+				if (BX.AutorunProcessPanel.isExists("buildLeadTimeline"))
 				{
 					return;
 				}
@@ -1471,12 +1474,13 @@ $APPLICATION->IncludeComponent(
 		);
 	</script>
 <?endif;?>
-<?if($arResult['NEED_FOR_REFRESH_ACCOUNTING']):?>
+
+<?if (isset($arResult['NEED_FOR_REFRESH_ACCOUNTING']) && $arResult['NEED_FOR_REFRESH_ACCOUNTING']):?>
 	<script type="text/javascript">
 		BX.ready(
 			function()
 			{
-				if(BX.AutorunProcessPanel.isExists("refreshLeadAccounting"))
+				if (BX.AutorunProcessPanel.isExists("refreshLeadAccounting"))
 				{
 					return;
 				}
@@ -1499,12 +1503,13 @@ $APPLICATION->IncludeComponent(
 		);
 	</script>
 <?endif;?>
-<?if($arResult['NEED_FOR_REBUILD_LEAD_SEMANTICS']):?>
+
+<?if (isset($arResult['NEED_FOR_REBUILD_LEAD_SEMANTICS']) && $arResult['NEED_FOR_REBUILD_LEAD_SEMANTICS']):?>
 	<script type="text/javascript">
 		BX.ready(
 			function()
 			{
-				if(BX.AutorunProcessPanel.isExists("rebuildLeadSemantics"))
+				if (BX.AutorunProcessPanel.isExists("rebuildLeadSemantics"))
 				{
 					return;
 				}
@@ -1527,13 +1532,14 @@ $APPLICATION->IncludeComponent(
 		);
 	</script>
 <?endif;?>
-<?if($arResult['NEED_FOR_REBUILD_LEAD_ATTRS']):?>
+
+<?if (isset($arResult['NEED_FOR_REBUILD_LEAD_ATTRS']) && $arResult['NEED_FOR_REBUILD_LEAD_ATTRS']):?>
 <script type="text/javascript">
 	BX.ready(
 		function()
 		{
 			var link = BX("rebuildLeadAttrsLink");
-			if(link)
+			if (link)
 			{
 				BX.bind(
 					link,
@@ -1541,7 +1547,7 @@ $APPLICATION->IncludeComponent(
 					function(e)
 					{
 						var msg = BX("rebuildLeadAttrsMsg");
-						if(msg)
+						if (msg)
 						{
 							msg.style.display = "none";
 						}
@@ -1553,7 +1559,7 @@ $APPLICATION->IncludeComponent(
 </script>
 <?endif;
 
-if($arResult['NEED_TO_SHOW_DUP_INDEX_PROCESS'])
+if (isset($arResult['NEED_TO_SHOW_DUP_INDEX_PROCESS']) && $arResult['NEED_TO_SHOW_DUP_INDEX_PROCESS'])
 {?>
 	<script type="text/javascript">
 		BX.ready(function () {
@@ -1579,7 +1585,8 @@ if($arResult['NEED_TO_SHOW_DUP_INDEX_PROCESS'])
 		});
 	</script><?
 }
-if($arResult['NEED_TO_SHOW_DUP_MERGE_PROCESS'])
+
+if (isset($arResult['NEED_TO_SHOW_DUP_MERGE_PROCESS']) && $arResult['NEED_TO_SHOW_DUP_MERGE_PROCESS'])
 {?>
 	<script type="text/javascript">
 		BX.ready(function () {
@@ -1605,7 +1612,8 @@ if($arResult['NEED_TO_SHOW_DUP_MERGE_PROCESS'])
 		});
 	</script><?
 }
-if($arResult['NEED_TO_SHOW_DUP_VOL_DATA_PREPARE'])
+
+if (isset($arResult['NEED_TO_SHOW_DUP_VOL_DATA_PREPARE']) && $arResult['NEED_TO_SHOW_DUP_VOL_DATA_PREPARE'])
 {?>
 	<script type="text/javascript">
 		BX.ready(function () {
@@ -1631,3 +1639,5 @@ if($arResult['NEED_TO_SHOW_DUP_VOL_DATA_PREPARE'])
 		});
 	</script><?
 }
+
+echo $arResult['ACTIVITY_FIELD_RESTRICTIONS'] ?? '';

@@ -5,8 +5,9 @@
  */
 jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => {
 
-	const { DialogHelper } = jn.require('im/messenger/lib/helper');
-	const { MessengerParams } = jn.require('im/messenger/lib/params');
+	const { core } = require('im/messenger/core');
+	const { DialogHelper } = require('im/messenger/lib/helper');
+	const { MessengerParams } = require('im/messenger/lib/params');
 
 	/**
 	 * @class ChatAvatar
@@ -26,6 +27,7 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 
 		constructor(dialogId, options = {})
 		{
+			this.store = core.getStore();
 			this.avatar = null;
 			this.color = null;
 
@@ -46,7 +48,7 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 
 		createDialogAvatar(dialogId)
 		{
-			const dialog = MessengerStore.getters['dialoguesModel/getById'](dialogId);
+			const dialog = this.store.getters['dialoguesModel/getById'](dialogId);
 			if (!dialog)
 			{
 				return;
@@ -73,7 +75,7 @@ jn.define('im/messenger/lib/element/chat-avatar', (require, exports, module) => 
 
 		createUserAvatar(userId)
 		{
-			const user = MessengerStore.getters['usersModel/getUserById'](userId);
+			const user = this.store.getters['usersModel/getUserById'](userId);
 			if (!user)
 			{
 				return;

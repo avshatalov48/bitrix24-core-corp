@@ -117,7 +117,7 @@ class Action
 			return false;
 		}
 
-		$relations = \CIMChat::GetRelationById($message['CHAT_ID']);
+		$relations = \CIMChat::GetRelationById($message['CHAT_ID'], false, true, false);
 		if (!isset($relations[$userId]))
 		{
 			return false;

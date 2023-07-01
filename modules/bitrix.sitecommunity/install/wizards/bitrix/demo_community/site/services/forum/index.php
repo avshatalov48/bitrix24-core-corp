@@ -432,8 +432,6 @@ CWizardUtil::ReplaceMacros(WIZARD_SITE_PATH."/forum/index.php", Array("FORUM_ID"
 
 if (!WIZARD_IS_RERUN)
 {
-	$APPLICATION->SetGroupRight("forum", WIZARD_PORTAL_ADMINISTRATION_GROUP, "W");
 	COption::SetOptionString("forum", "SHOW_VOTES", "N");
 	COption::SetOptionString("forum", "file_max_size", 10485760);
 }
-?>

@@ -12,6 +12,7 @@ use Bitrix\ImConnector\Result;
 use Bitrix\ImConnector\Status;
 use Bitrix\ImConnector\Library;
 use Bitrix\ImConnector\Connector;
+use Bitrix\ImConnector\Connectors;
 
 Library::loadMessages();
 
@@ -107,7 +108,7 @@ class Input
 
 			if (
 				empty($connector)
-				&& Connector::isConnector($connector, true)
+				&& Connector::isConnector($connector)
 			)
 			{
 				$result->addError(new Error(
@@ -266,6 +267,23 @@ class Input
 				case 'welcome':
 					$result = $this->processingWelcomeMessage($message);
 					break;
+				case 'command_start':
+					$result = $this->processingCommand($typeMessage, $message);
+
+					if ($result->isSuccess())
+					{
+						if (
+							!empty($message['ref']['source']) // has start parameter
+							&& strpos($message['ref']['source'], Connectors\Base::REF_PREFIX) !== 0 // and does not begin with "btrx" prefix
+						)
+						{
+							// display message as usual
+							$this->processingNewMessage($message);
+						}
+					}
+
+					break;
+
 				default:
 					$result->addError(new Error(
 						Loc::getMessage('IMCONNECTOR_ERROR_PROVIDER_UNSUPPORTED_TYPE_INCOMING_MESSAGE'),
@@ -442,6 +460,9 @@ class Input
 		return $result;
 	}
 
+	/**
+	 * @return Result
+	 */
 	protected function processingWelcomeMessage($message): Result
 	{
 		$result = clone $this->result;
@@ -449,6 +470,34 @@ class Input
 		if ($result->isSuccess())
 		{
 			$result = Connector::initConnectorHandler($this->connector)->processingInputWelcomeMessage($message, $this->line);
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @param string $command
+	 * @param array $message
+	 * @return Result
+	 */
+	protected function processingCommand(string $command, array $message): Result
+	{
+		$result = clone $this->result;
+
+		if ($result->isSuccess())
+		{
+			$result = Connector::initConnectorHandler($this->connector)->processingInputCommand($command, $message, $this->line);
+
+			if ($result->isSuccess())
+			{
+				$resultEvent = $this->sendEventCommand($command, $result->getResult());
+				if (!$resultEvent->isSuccess())
+				{
+					$result->addErrors($resultEvent->getErrors());
+				}
+
+				$result->setResult(array_merge($message, $result->getResult()));
+			}
 		}
 
 		return $result;
@@ -583,10 +632,13 @@ class Input
 
 		if ($result->isSuccess())
 		{
-			Status::getInstance($this->connector, (int)$this->line)->setError(true);
-			$cacheId = Connector::getCacheIdConnector($this->line, $this->connector);
+			Status::getInstance($this->connector, (int)$this->line)
+				->setError(true)
+				->save()
+			;
 
 			//Reset cache
+			$cacheId = Connector::getCacheIdConnector($this->line, $this->connector);
 			$cache = Cache::createInstance();
 			$cache->clean($cacheId, Library::CACHE_DIR_COMPONENT);
 		}
@@ -639,8 +691,21 @@ class Input
 		return $result;
 	}
 
-	//TODO: Event
+
+	//region Incoming event
+
 	/**
+	 * @param string $command
+	 * @param array $data
+	 * @return Result
+	 */
+	protected function sendEventCommand(string $command, array $data): Result
+	{
+		return $this->sendEvent($data, Library::EVENT_RECEIVED_COMMAND_START);
+	}
+
+	/**
+	 * @see \Bitrix\ImOpenLines\Connector::onReceivedMessage
 	 * @param $data
 	 * @return Result
 	 */
@@ -650,6 +715,7 @@ class Input
 	}
 
 	/**
+	 * @see \Bitrix\ImOpenLines\Connector::onReceivedMessageUpdate
 	 * @param $data
 	 * @return Result
 	 */
@@ -659,6 +725,7 @@ class Input
 	}
 
 	/**
+	 * @see \Bitrix\ImOpenLines\Connector::onReceivedMessageDelete
 	 * @param $data
 	 * @return Result
 	 */
@@ -668,6 +735,7 @@ class Input
 	}
 
 	/**
+	 * @see \Bitrix\ImOpenLines\Connector::onReceivedStatusWrites
 	 * @param $data
 	 * @return Result
 	 */
@@ -695,6 +763,7 @@ class Input
 	}
 
 	/**
+	 * @see \Bitrix\ImOpenLines\Connector::onReceivedStatusDelivery
 	 * @param $data
 	 * @return Result
 	 */
@@ -751,4 +820,5 @@ class Input
 
 		return $result;
 	}
+	//endregion
 }

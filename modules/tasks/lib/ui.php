@@ -409,9 +409,9 @@ class UI
 			return '';
 		}
 
-		$preset = $parameters['PRESET'] == 'BASIC' ? 'BASIC' : 'FULL';
+		$preset = (($parameters['PRESET'] ?? null) === 'BASIC' ? 'BASIC' : 'FULL');
 
-		if($preset == 'FULL')
+		if ($preset === 'FULL')
 		{
 			$parser = \Bitrix\Tasks\Util::getParser($parameters);
 
@@ -430,7 +430,7 @@ class UI
 				"NL2BR" => "Y", "MULTIPLE_BR" => "N",
 				"VIDEO" => "Y", "LOG_VIDEO" => "N",
 				"SHORT_ANCHOR" => "Y",
-				"USERFIELDS" => $parameters["USER_FIELDS"]
+				"USERFIELDS" => $parameters["USER_FIELDS"] ?? null,
 			);
 
 			return $parser->convert(

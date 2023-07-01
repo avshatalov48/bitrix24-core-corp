@@ -51,7 +51,7 @@ $taskTemplateUrlTemplate = $arParams['PATH_TO_USER_TASKS_TEMPLATE'];
 
 
 $strIframe = '';
-if($_REQUEST['IFRAME'])
+if(isset($_REQUEST['IFRAME']))
 {
     $strIframe = '?IFRAME='.($_REQUEST['IFRAME'] == 'Y' ? 'Y' : 'N');
 }
@@ -88,7 +88,7 @@ function prepareTaskRowActions($row, $arParams, $arResult)
     $strIframe = '';
     $strIframe2 = '';
 
-    if ($_REQUEST['IFRAME'])
+    if (isset($_REQUEST['IFRAME']))
     {
 		$iframe = ($_REQUEST['IFRAME'] === 'Y' ? 'Y' : 'N');
 
@@ -439,7 +439,7 @@ function prepareTaskTemplateRow($row, $arParams)
 
 	$groupId = $row['GROUP_ID'];
 	$group = SocialNetwork\Group::getData([$groupId]);
-	$groupName = htmlspecialcharsbx($group[$groupId]['NAME']);
+	$groupName = empty($group) ? '' : htmlspecialcharsbx($group[$groupId]['NAME']);
 	$groupUrl = CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_GROUP'], ['group_id' => $groupId]);
 
 	$createdBy = (int)$row['CREATED_BY'];
@@ -610,7 +610,7 @@ if (!empty($arResult['GRID']['DATA']))
 
 		$rowItem = array(
 			"id" => $row["ID"],
-			'has_child' => $row['CHILDS_COUNT'] > 0 && !$arResult['IS_SEARCH_MODE'],
+			'has_child' => isset($row['CHILDS_COUNT']) && $row['CHILDS_COUNT'] > 0 && !$arResult['IS_SEARCH_MODE'],
 			'parent_id' => \Bitrix\Main\Grid\Context::isInternalRequest() ? $row['BASE_TEMPLATE_ID'] : 0,
 			"parent_group_id" => $row["GROUP_ID"],
 			'actions' => prepareTaskRowActions($row, $arParams, $arResult),

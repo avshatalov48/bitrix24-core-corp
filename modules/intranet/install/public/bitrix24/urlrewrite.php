@@ -24,6 +24,12 @@ $arUrlRewrite = array(
 		"PATH" => "/pub/payment.php",
 	),
 	array(
+		"CONDITION" => "#^/pub/payment-slip/([\\w\\W]+)/#",
+		"RULE" => "signed_payment_id=\$1",
+		"ID" => "bitrix:salescenter.pub.payment.slip",
+		"PATH" => "/pub/payment_slip.php",
+	),
+	array(
 		"CONDITION" => "#^/pub/calendar-event/([0-9]+)/([0-9a-zA-Z]+)/?([^/]*)#",
 		"RULE" => "event_id=\$1&hash=\$2",
 		"ID" => "bitrix:calendar.pub.event",
@@ -367,6 +373,12 @@ $arUrlRewrite = array(
 		"PATH" => "/marketplace/index.php",
 	),
 	array(
+		"CONDITION" => "#^/market/#",
+		"RULE" => "",
+		"ID" => "bitrix:market",
+		"PATH" => "/market/index.php",
+	),
+	array(
 		"CONDITION" => "#^/crm/invoice/#",
 		"RULE" => "",
 		"ID" => "bitrix:crm.invoice",
@@ -654,6 +666,24 @@ $arUrlRewrite = array(
 		"PATH" => "/shop/documents-stores/index.php",
 	),
 	array(
+		"CONDITION" => "#^/terminal/#",
+		"RULE" => "",
+		"ID" => "bitrix:crm.terminal.payment.controller",
+		"PATH" => "/terminal/index.php",
+	),
+	array(
+		"CONDITION" => "#^/shop/terminal/#",
+		"RULE" => "",
+		"ID" => "bitrix:crm.terminal.payment.controller",
+		"PATH" => "/terminal/index.php",
+	),
+	array(
+		"CONDITION" => "#^/crm/terminal/#",
+		"RULE" => "",
+		"ID" => "bitrix:crm.terminal.payment.controller",
+		"PATH" => "/terminal/index.php",
+	),
+	array(
 		"CONDITION" => "#^/marketing/rc/#",
 		"RULE" => "",
 		"ID" => "",
@@ -766,6 +796,12 @@ $arUrlRewrite = array(
 		"RULE" => "",
 		"ID" => "bitrix:landing.start",
 		"PATH" => "/kb/index.php",
+	),
+	array(
+		"CONDITION" => "#^/extranet/kb/group/#",
+		"RULE" => "",
+		"ID" => "bitrix:landing.start",
+		"PATH" => "/extranet/kb/group/index.php",
 	),
 	array(
 		"CONDITION" => "#^/rpa/#",

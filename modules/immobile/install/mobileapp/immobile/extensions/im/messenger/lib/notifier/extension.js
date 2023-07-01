@@ -3,9 +3,9 @@
  */
 jn.define('im/messenger/lib/notifier', (require, exports, module) => {
 
-	const { Type } = jn.require('type');
-	const { MessengerEvent } = jn.require('im/messenger/lib/event');
-	const { EventType } = jn.require('im/messenger/const');
+	const { Type } = require('type');
+	const { MessengerEmitter } = require('im/messenger/lib/emitter');
+	const { EventType } = require('im/messenger/const');
 
 	/**
 	 * @class Notifier
@@ -26,11 +26,11 @@ jn.define('im/messenger/lib/notifier', (require, exports, module) => {
 					{
 						if (data.dialogId === 'notify')
 						{
-							new MessengerEvent(EventType.messenger.openNotifications).send();
+							MessengerEmitter.emit(EventType.messenger.openNotifications);
 							return;
 						}
 
-						new MessengerEvent(EventType.messenger.openDialog, { dialogId: data.dialogId }).send();
+						MessengerEmitter.emit(EventType.messenger.openDialog, { dialogId: data.dialogId });
 					}
 				});
 			}

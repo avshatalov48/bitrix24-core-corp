@@ -25,6 +25,7 @@ BX.Tasks.Kanban.Grid = function(options)
 
 	this.neighborGrids = [];
 	this.delayedQueueForChildGrid = {};
+	this.isBindEvents = false;
 
 	BX.Kanban.Grid.apply(this, arguments);
 
@@ -42,8 +43,6 @@ BX.Tasks.Kanban.Grid = function(options)
 	BX.addCustomEvent("BX.Main.Filter:apply", BX.delegate(this.onApplyFilter, this));
 	BX.addCustomEvent("onTaskTimerChange", BX.delegate(this.onTaskTimerChange, this));
 	BX.addCustomEvent("onTaskSortChanged", BX.delegate(this.onTaskSortChanged, this));
-	BX.addCustomEvent("onPullEvent-im", BX.delegate(this.tasksTaskPull, this));
-	BX.addCustomEvent("onPullEvent-tasks", BX.delegate(this.tasksTaskPull, this));
 
 	BX.addCustomEvent(this, "Kanban.Grid:multiSelectModeOn", BX.delegate(this.startActionPanel, this));
 	BX.addCustomEvent(this, "Kanban.Grid:multiSelectModeOff", BX.delegate(this.stopActionPanel, this));
@@ -58,6 +57,10 @@ BX.Tasks.Kanban.Grid = function(options)
 	{
 		BX.bind(this.getGridContainer(), 'scroll', BX.delegate(this.onGridScroll, this));
 	}
+
+	this.bindEvents();
+
+	this.subscribeToTasksPull();
 };
 
 BX.Tasks.Kanban.Grid.prototype = {
@@ -106,6 +109,297 @@ BX.Tasks.Kanban.Grid.prototype = {
 			onsuccess: onsuccess,
 			onfailure: onfailure
 		});
+	},
+
+	/**
+	 * Bind some events.
+	 * @returns {void}
+	 */
+	bindEvents: function() {
+		if (!this.isBindEvents) {
+			BX.Event.EventEmitter.subscribe('tasks-kanban-settings-fields-view', function ()
+			{
+				this.showFieldsSelectPopup();
+			}.bind(this));
+			this.isBindEvents = true;
+		}
+	},
+
+	subscribeToTasksPull()
+	{
+		const eventHandlers = {
+			comment_read_all: this.onPullCommentReadAll,
+			tag_changed: this.onPullTagChanged,
+		};
+		const eventHandlersToPool = {
+			comment_add: this.onPullCommentAdd,
+			stage_change: this.onPullStageChange,
+			task_add: this.onPullTaskAdd,
+			task_update: this.onPullTaskUpdate,
+			task_view: this.onPullTaskView,
+			task_remove: this.onPullTaskRemove,
+		};
+
+		const tasksEventQueue = {
+			pull: new BX.Tasks.Runtime.DebouncedQueue({
+				timeout: 1000,
+				events: {
+					onCommitAsync: (event) => {
+						this.getTaskDataFromQueueCollection(
+							event.getData().poolItems,
+							(data) => {
+								tasksEventQueue.event.push(data);
+							}
+						);
+					}
+				}
+			}),
+			event: new BX.Tasks.Runtime.DebouncedQueue({
+				timeout: 10,
+				events: {
+					onCommitAsync: (event) => {
+						this.emitHandlersFromQueueCollection(
+							event.getData().poolItems,
+							(data) => {
+								const command = data.command;
+								const eventParams = data.params;
+								const taskId = data.taskId;
+								const taskData = data.taskData;
+
+								if (eventHandlersToPool[command])
+								{
+									eventHandlersToPool[command].apply(
+										this,
+										[eventParams, taskId, taskData]
+									);
+								}
+							}
+						);
+					}
+				}
+			})
+		};
+
+		BX.addCustomEvent('onPullEvent-tasks', (command, eventParams) => {
+			if (this.isScrumGridHeader())
+			{
+				return;
+			}
+
+			if (eventHandlers[command])
+			{
+				eventHandlers[command].apply(this, [eventParams]);
+			}
+			else
+			{
+				const taskId = this.resolveIdByEventParams(command, eventParams);
+				if (taskId > 0)
+				{
+					tasksEventQueue.pull.push({ id: taskId, params: eventParams }, command);
+				}
+			}
+		});
+	},
+
+	resolveIdByEventParams(command, params)
+	{
+		const actions = [
+			'comment_add',
+			'stage_change',
+			'task_add',
+			'task_update',
+			'task_view',
+			'task_remove',
+		];
+
+		if (actions.includes(command))
+		{
+			const taskId = this.recognizeTaskId(params);
+			if (taskId > 0)
+			{
+				return taskId;
+			}
+			else
+			{
+				throw new Error(`taskId is not resolved for command: ${command}`);
+			}
+		}
+
+		return 0;
+	},
+
+	getTaskDataFromQueueCollection(collection, onTaskDataReceived)
+	{
+		const listTaskData = new Map();
+
+		const taskIds = this.getTaskIdsFromQueueCollection(collection);
+
+		const requestParams = this.getData().params;
+
+		BX.ajax.runAction('tasks.task.list', {
+			data: {
+				filter: { ID: taskIds },
+				params: {
+					RETURN_ACCESS: 'Y',
+					SIFT_THROUGH_FILTER: {
+						sprintKanban: (this.isScrumGrid() ? 'Y' : 'N'),
+						isCompletedSprint: (this.isScrumGrid()
+							? requestParams.IS_COMPLETED_SPRINT
+							: 'N'
+						),
+						userId: this.ownerId,
+						groupId: this.groupId
+					}
+				},
+				start: -1
+			}
+		}).then((response) => {
+			const taskIdsToRequest = [];
+			if (response.data.tasks.length > 0)
+			{
+				response.data.tasks.forEach((taskData) => {
+					taskIdsToRequest.push(parseInt(taskData['id'], 10));
+				});
+			}
+			this.ajax(
+				{
+					action: 'refreshListTasks',
+					taskIds: taskIdsToRequest,
+					isScrum: this.isScrumGrid() ? 'Y' : 'N',
+					parentId: this.getParentTaskId()
+				},
+				(response) => {
+					if (BX.type.isArray(response))
+					{
+						response.forEach((taskData) => {
+							listTaskData.set(parseInt(taskData['id'], 10), taskData);
+						});
+					}
+
+					taskIds.forEach((taskId) => {
+						if (!listTaskData.has(taskId))
+						{
+							listTaskData.set(taskId, null);
+						}
+					});
+
+					onTaskDataReceived({
+						params: {
+							poolItems: collection,
+							listTaskData: listTaskData
+						}
+					});
+				},
+				(error) => {}
+			);
+		});
+	},
+
+	emitHandlersFromQueueCollection(collection, executeHandlersFromQueue)
+	{
+		const listParams = [];
+
+		Object.keys(collection).forEach((key) => {
+			const item = collection[key];
+
+			const poolItems = item['default'].fields.params.poolItems;
+			const listTaskData = item['default'].fields.params.listTaskData;
+
+			Object.keys(poolItems).forEach((key) => {
+				const poolItem = poolItems[key];
+
+				const [param] = Object.values(poolItem);
+				const params = param.fields.params;
+				const taskId = this.recognizeTaskId(params);
+
+				const taskData = listTaskData.get(taskId);
+
+				listParams.push({ poolItem, taskId, taskData });
+			});
+		});
+
+		const itemsToEmit = Object.values(listParams);
+		for (let inx in itemsToEmit)
+		{
+			if (!itemsToEmit.hasOwnProperty(inx))
+			{
+				continue;
+			}
+
+			const item = itemsToEmit[inx];
+			const { poolItem, taskId, taskData } = item;
+
+			const [param] = Object.values(poolItem);
+			const [command] = Object.keys(poolItem);
+
+			const params = param.fields.params;
+
+			executeHandlersFromQueue({
+				command: command,
+				params: params,
+				taskId: taskId,
+				taskData: taskData
+			});
+		}
+	},
+
+	getTaskIdsFromQueueCollection(collection)
+	{
+		const result = [];
+
+		try
+		{
+			for (let inx in collection)
+			{
+				if (!collection.hasOwnProperty(inx))
+				{
+					continue;
+				}
+
+				let [cmd] = Object.keys(collection[inx]);
+				let [params] = Object.values(collection[inx]);
+
+				let id = params.fields.id;
+				if (result.includes(id) === false)
+				{
+					result.push(id)
+				}
+			}
+		}
+		catch (e) {}
+
+		return result;
+	},
+
+	/**
+	 * Show popup for selecting fields which must show in view.
+	 */
+	showFieldsSelectPopup: function()
+	{
+		var gridData = this.getData();
+		const checkboxListPopup = new BX.UI.CheckboxList({
+			columnCount: 3,
+			lang: {
+				title: gridData.customSectionsFields.title,
+			},
+			sections: gridData.customSectionsFields.sections,
+			categories: gridData.customSectionsFields.categories,
+			options: gridData.customSectionsFields.options,
+			events: {
+				onApply: (event) => {
+					this.ajax({
+							action: "saveUserSelectedFields",
+							fields: event.data.fields
+						},
+						function()
+						{
+							this.onApplyFilter();
+						}.bind(this)
+					);
+				},
+			},
+		});
+		checkboxListPopup.show();
 	},
 
 	/**
@@ -334,6 +628,21 @@ BX.Tasks.Kanban.Grid.prototype = {
 		else if (columnOne && columnItems.length >= columnOne.total)
 		{
 			this.addItem(data);
+		}
+	},
+
+	updateItemState(taskId, taskData)
+	{
+		if (taskData)
+		{
+			this.addItemOrder(taskData);
+		}
+		else
+		{
+			if (this.hasItem(taskId))
+			{
+				this.removeItem(taskId);
+			}
 		}
 	},
 
@@ -1029,6 +1338,12 @@ BX.Tasks.Kanban.Grid.prototype = {
 			},
 			function(data)
 			{
+				// re-set some data
+				var gridData = this.getData();
+				if (typeof data.customFields !== "undefined")
+				{
+					gridData.customFields = data.customFields;
+				}
 				this.removeItems();
 				this.loadData(data);
 				if (promise)
@@ -1111,145 +1426,78 @@ BX.Tasks.Kanban.Grid.prototype = {
 		return taskId;
 	},
 
-	/**
-	 * Hook on pull event.
-	 * @param {String} command
-	 * @param {Object} data
-	 * @returns {void}
-	 */
-	tasksTaskPull: function(command, data)
+	onPullCommentReadAll(eventParams)
 	{
-		if (this.isScrumGridHeader())
-		{
-			return;
-		}
-
-		var taskId = this.recognizeTaskId(data);
-		if (!taskId)
-		{
-			return;
-		}
-
-		if (this.isScrumGrid())
-		{
-			// todo wtf... split into different methods tasksTaskPull
+		Object.values(this.getItems()).forEach((item) => {
+			const data = item.data;
+			const isExpiredCounts = (
+				data.is_expired
+				&& !data.completed
+				&& !data.completed_supposedly
+			);
+			const counter = item.task_counter;
+			const counterValue = counter.getValue();
 			if (
-				!this.hasItem(taskId)
-				&& command !== 'task_add'
-				&& command !== 'comment_read_all'
-				&& command !== 'tag_changed'
+				counterValue > 0
+				&& (!isExpiredCounts || counterValue > 1)
 			)
 			{
-				return;
+				data.counter.value = (isExpiredCounts ? 1 : 0);
+				counter.update(data.counter.value);
+				item.render();
 			}
-		}
+		});
+	},
 
-		switch (command)
+	onPullTagChanged(eventParams)
+	{
+		if (this.isScrumGrid())
 		{
-			case 'task_add':
-				if (this.isScrumGrid())
-				{
-					var taskData = data.AFTER;
-					if (this.isChildScrumGrid())
-					{
-						if (this.isChildTask(taskData['PARENT_ID']))
-						{
-							this.refreshTask(taskId);
-						}
-					}
-					else
-					{
-						if (!taskData['PARENT_ID'])
-						{
-							this.refreshTask(taskId);
-						}
-					}
-				}
-				break;
-			case "comment_add":
-			case "stage_change":
-			case "task_view":
-				if (taskId)
-				{
-					var requestParams = this.getData().params;
-
-					BX.ajax.runAction('tasks.task.list', {
-						data: {
-							filter: {ID: taskId},
-							params: {
-								RETURN_ACCESS: 'Y',
-								SIFT_THROUGH_FILTER: {
-									sprintKanban: (this.isScrumGrid() ? 'Y' : 'N'),
-									isCompletedSprint: (this.isScrumGrid()
-										? requestParams.IS_COMPLETED_SPRINT
-										: 'N'
-									),
-									userId: this.ownerId,
-									groupId: this.groupId
-								}
-							},
-							start: -1
-						}
-					}).then(function(response) {
-						if (response.data.tasks.length > 0)
-						{
-							this.refreshTask(taskId);
-						}
-						else
-						{
-							this.removeItem(taskId);
-						}
-					}.bind(this));
-				}
-				break;
-
-			case "comment_read_all":
-				Object.values(this.getItems()).forEach(function(item) {
-					var data = item.data;
-					var isExpiredCounts = data.is_expired && !data.completed && !data.completed_supposedly;
-					var counter = item.task_counter;
-					var counterValue = counter.getValue();
-					if (counterValue > 0 && (!isExpiredCounts || counterValue > 1))
-					{
-						data.counter.value = (isExpiredCounts ? 1 : 0);
-						counter.update(data.counter.value);
-						item.render();
-					}
-				});
-				break;
-
-			case "task_remove":
-				if (taskId)
-				{
-					this.removeItem(taskId);
-				}
-				break;
-			case 'task_update':
-				if (taskId)
-				{
-					this.refreshTask(taskId);
-				}
-				break;
-			case 'tag_changed':
-				if (this.isScrumGrid())
-				{
-					BX.Tasks.Scrum.Kanban.onApplyFilter()
-				}
-				else
-				{
-					this.onApplyFilter();
-				}
-				break;
-			default:
-				break;
+			BX.Tasks.Scrum.Kanban.onApplyFilter();
 		}
+		else
+		{
+			this.onApplyFilter();
+		}
+	},
+
+	onPullCommentAdd(eventParams, taskId, taskData)
+	{
+		this.updateItemState(taskId, taskData);
+	},
+
+	onPullStageChange(eventParams, taskId, taskData)
+	{
+		this.updateItemState(taskId, taskData);
+	},
+
+	onPullTaskAdd: function (eventParams, taskId, taskData)
+	{
+		this.updateItemState(taskId, taskData);
+	},
+
+	onPullTaskUpdate(eventParams, taskId, taskData)
+	{
+		this.updateItemState(taskId, taskData);
+	},
+
+	onPullTaskView(eventParams, taskId, taskData)
+	{
+		this.updateItemState(taskId, taskData);
+	},
+
+	onPullTaskRemove(eventParams, taskId)
+	{
+		this.removeItem(taskId);
 	},
 
 	refreshTask: function(taskId)
 	{
 		this.ajax({
 				action: 'refreshTask',
-				taskId: taskId
+				taskId: taskId,
+				isScrum: this.isScrumGrid() ? 'Y' : 'N',
+				parentId: this.getParentTaskId()
 			},
 			function(data) {
 				if (data && !BX.type.isArray(data) && !data.error)

@@ -15,7 +15,7 @@ class IntranetApps extends \CBitrixComponent
 	{
 		global $USER;
 
-		$params['USER_ID'] = (int)($params['USER_ID'] ?: $USER->getId());
+		$params['USER_ID'] = (int)(!empty($params['USER_ID']) ? $params['USER_ID'] : $USER->getId());
 
 		return $params;
 	}

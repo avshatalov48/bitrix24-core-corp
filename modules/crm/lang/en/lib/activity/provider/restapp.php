@@ -1,4 +1,3 @@
-<?
-$MESS["CRM_ACTIVITY_PROVIDER_REST_APP_NAME"] = "App Activity";
+<?php
+$MESS["CRM_ACTIVITY_PROVIDER_REST_APP_NAME_MSGVER_1"] = "App activity (old version)";
 $MESS["CRM_ACTIVITY_PROVIDER_REST_APP_OPEN_BUTTON"] = "Open App";
-?>

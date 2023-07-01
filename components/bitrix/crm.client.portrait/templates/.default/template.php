@@ -1,8 +1,13 @@
 <?php
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
+{
+	die();
+}
+
 use Bitrix\Crm\Activity\CommunicationWidgetPanel;
-
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
-
+use Bitrix\Crm\Integration\IntranetManager;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main\UI;
 
 UI\Extension::load([
@@ -25,8 +30,10 @@ $primaryBar = $loadbars['primary'];
 unset($loadbars['primary']);
 
 $comments = \CrmClientPortraitComponent::prepareComments($element['COMMENTS']);
-
 $rowData = CommunicationWidgetPanel::getPortraitRowData($arResult['ENTITY_TYPE_ID']);
+$currentUserID = Container::getInstance()->getContext()->getUserId();
+$isSupervisor = Container::getInstance()->getUserPermissions($currentUserID)->isAdmin()
+	|| IntranetManager::isSupervisor($currentUserID);
 
 if (isset($arParams['IS_FRAME']) && $arParams['IS_FRAME'] === 'Y' && empty($arParams['IS_FRAME_RELOAD'])):?>
 	<div class="pagetitle-wrap">
@@ -333,18 +340,20 @@ if (isset($arParams['IS_FRAME']) && $arParams['IS_FRAME'] === 'Y' && empty($arPa
 						\CCrmOwnerType::InvoiceName
 					),
 					'LAYOUT' => 'L50R50',
-					'NAVIGATION_CONTEXT_ID' => $arResult['NAVIGATION_CONTEXT_ID'],
-					'PATH_TO_WIDGET' => CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_'.$arResult['ENTITY_TYPE'].'_PORTRAIT'],
-						array(
+					'NAVIGATION_CONTEXT_ID' => $arResult['NAVIGATION_CONTEXT_ID'] ?? null,
+					'PATH_TO_WIDGET' => CComponentEngine::MakePathFromTemplate(
+						$arParams['PATH_TO_'.$arResult['ENTITY_TYPE'].'_PORTRAIT'] ?? '',
+						[
 							'contact_id' => $arResult['ELEMENT']['ID'],
-							'company_id' => $arResult['ELEMENT']['ID']
-						)
+							'company_id' => $arResult['ELEMENT']['ID'],
+						]
 					),
-					'PATH_TO_LIST' => CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_'.$arResult['ENTITY_TYPE'].'_SHOW'],
-						array(
+					'PATH_TO_LIST' => CComponentEngine::MakePathFromTemplate(
+						$arParams['PATH_TO_'.$arResult['ENTITY_TYPE'].'_SHOW'] ?? '',
+						[
 							'contact_id' => $arResult['ELEMENT']['ID'],
-							'company_id' => $arResult['ELEMENT']['ID']
-						)
+							'company_id' => $arResult['ELEMENT']['ID'],
+						]
 					),
 					'IS_SUPERVISOR' => $isSupervisor,
 					'ROWS' => $rowData,

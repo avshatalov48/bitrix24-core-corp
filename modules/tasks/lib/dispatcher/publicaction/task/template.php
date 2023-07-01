@@ -217,16 +217,16 @@ final class Template extends \Bitrix\Tasks\Dispatcher\PublicAction
 	 * @return array
 	 * @throws SystemException
 	 */
-	public function update($id, array $data)
+	public function update($id, array $data = null)
 	{
-		$result = array();
+		$result = [];
 
 		if (!($id = $this->checkId($id)))
 		{
 			return $result;
 		}
 
-		if ($data['CREATED_BY'] <= 0)
+		if (($data['CREATED_BY'] ?? null) <= 0)
 		{
 			$data['CREATED_BY'] = $this->userId;
 		}
@@ -251,7 +251,7 @@ final class Template extends \Bitrix\Tasks\Dispatcher\PublicAction
 		{
 			$analyticsData = Manager\Task\Template::getAnalyticsData($data);
 
-			$checkListItems = $data['SE_CHECKLIST'];
+			$checkListItems = ($data['SE_CHECKLIST'] ?? null);
 			unset($data['SE_CHECKLIST']);
 
 			$templatePermissions = null;
@@ -459,7 +459,7 @@ final class Template extends \Bitrix\Tasks\Dispatcher\PublicAction
 
 	private function prepareReplicateParams(array &$data)
 	{
-		if ($data['REPLICATE_PARAMS'])
+		if ($data['REPLICATE_PARAMS'] ?? null)
 		{
 			$data['REPLICATE_PARAMS'] = (new ReplicateParamsCorrector($this->userId))->correctReplicateParamsByTemplateData($data);
 		}

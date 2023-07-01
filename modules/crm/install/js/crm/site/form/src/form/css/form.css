@@ -79,6 +79,57 @@
 	padding: 0 30px 10px 10px;
 	text-align: right;
 	margin: -10px 0 0;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	padding: 10px 31px;
+}
+
+.b24-form-sign-info {
+	margin-left: auto;
+}
+
+.b24-form .b24-form-sign-abuse-link {
+	transition: .2s;
+	font: 12px var(--b24-font-family);
+	opacity: 0.4;
+	text-decoration: none;
+	/*border-bottom: 1px solid var(--b24-text-color);*/
+	border-bottom: 1px solid var(--b24-text-color);
+}
+
+.b24-form .b24-form-sign-abuse-link:hover {
+	opacity: 0.7;
+}
+
+.b24-form .b24-form-sign-abuse-help {
+	display: inline-block;
+	margin-right: auto;
+	margin-left: 5px;
+	width: 20px;
+	height: 20px;
+	background: url(../../../image/b24-form-sign-icon-help.svg) center no-repeat;
+	background-size: 100%;
+	cursor: pointer;
+	opacity: .35;
+	transition: .2s;
+}
+
+.b24-form .b24-form-sign-abuse-help:hover {
+	opacity: .45;
+	transition: none;
+}
+
+.b24-form-sign-abuse-info {
+	font: 12px var(--b24-font-family);
+	color: var(--b24-text-color);
+	opacity: 0.4;
+}
+
+.b24-form-sign-info + .b24-form-sign-abuse-info {
+	width: 100%;
+	text-align: left;
+	margin-top: 10px;
 }
 
 .b24-form-sign-text {

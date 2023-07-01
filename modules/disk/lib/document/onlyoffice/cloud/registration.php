@@ -6,6 +6,7 @@ use Bitrix\Disk\Document\OnlyOffice\Configuration;
 use Bitrix\Main\Engine\UrlManager;
 use Bitrix\Main\Error;
 use Bitrix\Main\Result;
+use Bitrix\Main\Web\Http\Response;
 use Bitrix\Main\Web\HttpClient;
 
 final class Registration extends BaseSender
@@ -55,22 +56,19 @@ final class Registration extends BaseSender
 		return $this->performRequest('documentproxy.Registration.registerClient', $data);
 	}
 
-	protected function buildResult(HttpClient $httpClient, bool $requestResult): Result
+	protected function buildHttpClient(): HttpClient
 	{
-		if ($requestResult)
-		{
-			$tempSecret = $httpClient->getHeaders()->get('X-Temp-Secret');
+		$httpClient = new HttpClient($this->getHttpClientParameters());
+		$httpClient->shouldFetchBody(function (Response $response)  {
+			$tempSecret = $response->getHeadersCollection()->get('X-Temp-Secret');
 			if ($tempSecret)
 			{
 				(new Configuration())->storeTempSecretForDomainVerification($tempSecret);
 			}
-		}
 
-		return $this->createAnswerForJsonResponse(
-			$requestResult,
-			$httpClient->getResult(),
-			$httpClient->getError(),
-			$httpClient->getStatus()
-		);
+			return true;
+		});
+
+		return $httpClient;
 	}
 }

@@ -19,15 +19,15 @@ Loc::loadMessages(__FILE__);
  * DO NOT WRITE ANYTHING BELOW THIS
  *
  * <<< ORMENTITYANNOTATION
- * @method static EO_FormCounter_Query query()
- * @method static EO_FormCounter_Result getByPrimary($primary, array $parameters = array())
- * @method static EO_FormCounter_Result getById($id)
- * @method static EO_FormCounter_Result getList(array $parameters = array())
- * @method static EO_FormCounter_Entity getEntity()
- * @method static \Bitrix\Crm\WebForm\Internals\EO_FormCounter createObject($setDefaultValues = true)
- * @method static \Bitrix\Crm\WebForm\Internals\EO_FormCounter_Collection createCollection()
- * @method static \Bitrix\Crm\WebForm\Internals\EO_FormCounter wakeUpObject($row)
- * @method static \Bitrix\Crm\WebForm\Internals\EO_FormCounter_Collection wakeUpCollection($rows)
+ * @method static EO_FormCounterDaily_Query query()
+ * @method static EO_FormCounterDaily_Result getByPrimary($primary, array $parameters = [])
+ * @method static EO_FormCounterDaily_Result getById($id)
+ * @method static EO_FormCounterDaily_Result getList(array $parameters = [])
+ * @method static EO_FormCounterDaily_Entity getEntity()
+ * @method static \Bitrix\Crm\WebForm\Internals\EO_FormCounterDaily createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\WebForm\Internals\EO_FormCounterDaily_Collection createCollection()
+ * @method static \Bitrix\Crm\WebForm\Internals\EO_FormCounterDaily wakeUpObject($row)
+ * @method static \Bitrix\Crm\WebForm\Internals\EO_FormCounterDaily_Collection wakeUpCollection($rows)
  */
 class FormCounterDailyTable extends Entity\DataManager
 {

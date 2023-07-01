@@ -3,6 +3,7 @@
 namespace Bitrix\Crm\Service\Timeline\Item\LogMessage;
 
 use Bitrix\Crm\Integration\OpenLineManager;
+use Bitrix\Crm\Service\Timeline\Layout\Common\Icon;
 use Bitrix\Crm\Service\Timeline\Item\LogMessage;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\ContentBlockFactory;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\LineOfTextBlocks;
@@ -19,7 +20,7 @@ class OpenLineIncoming extends LogMessage
 
 	public function getIconCode(): ?string
 	{
-		return 'open-line-incoming-message';
+		return Icon::OPENLINE_INCOMING_MESSAGE;
 	}
 
 	public function getTitle(): ?string

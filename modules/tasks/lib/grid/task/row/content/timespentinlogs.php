@@ -19,8 +19,8 @@ class TimeSpentInLogs extends Content
 
 		return sprintf(
 			'%02d:%02d',
-			floor(($row['TIME_SPENT_IN_LOGS'] ?: 0) / 3600),
-			floor(($row['TIME_SPENT_IN_LOGS'] ?: 0) / 60) % 60
+			floor(($row['TIME_SPENT_IN_LOGS'] ?? 0) / 3600),
+			floor(($row['TIME_SPENT_IN_LOGS'] ?? 0) / 60) % 60
 		);
 	}
 }

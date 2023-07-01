@@ -2,7 +2,6 @@
  * @module crm/entity-tab/list
  */
 jn.define('crm/entity-tab/list', (require, exports, module) => {
-
 	const { EntityTab } = require('crm/entity-tab');
 	const { Filter } = require('crm/entity-tab/filter');
 	const { TypePull } = require('crm/entity-tab/pull-manager');
@@ -30,7 +29,7 @@ jn.define('crm/entity-tab/list', (require, exports, module) => {
 
 		renderStatefulList()
 		{
-			const testId = `LIST_${this.props.entityTypeName}`.toUpperCase();
+			const testId = `LIST_${this.props.entityTypeName.toUpperCase()}`;
 
 			return new StatefulList({
 				testId,
@@ -58,7 +57,12 @@ jn.define('crm/entity-tab/list', (require, exports, module) => {
 				getEmptyListComponent: this.getEmptyListComponent.bind(this),
 				itemType: 'Kanban',
 				pull: this.getPullConfig(),
-				ref: ref => this.viewComponent = ref,
+				ref: (ref) => this.viewComponent = ref,
+				analyticsLabel: {
+					module: 'crm',
+					source: 'crm-entity-tab',
+					entityTypeId: this.props.entityTypeId,
+				},
 			});
 		}
 
@@ -91,8 +95,8 @@ jn.define('crm/entity-tab/list', (require, exports, module) => {
 						entityType: this.props.entityTypeName,
 						params,
 					},
-				}).then(response => {
-					if (response.errors.length)
+				}).then((response) => {
+					if (response.errors.length > 0)
 					{
 						reject({
 							errors: response.errors,
@@ -104,7 +108,7 @@ jn.define('crm/entity-tab/list', (require, exports, module) => {
 						action: 'delete',
 						id: itemId,
 					});
-				}).catch(response => {
+				}).catch((response) => {
 					console.error(response.errors);
 					reject({
 						errors: response.errors,
@@ -162,8 +166,10 @@ jn.define('crm/entity-tab/list', (require, exports, module) => {
 				this.state.searchButtonBackgroundColor = null;
 			}
 
+			const initMenu = BX.prop.getBoolean(params, 'initMenu', false);
+
 			this.setState({
-				forceRenderSwitcher: !this.state. forceRenderSwitcher,
+				forceRenderSwitcher: !this.state.forceRenderSwitcher,
 			}, () => {
 				const canUseCache = !(Boolean(this.filter.currentFilterId) || Boolean(this.filter.search));
 				this.getViewComponent().reload(
@@ -173,6 +179,7 @@ jn.define('crm/entity-tab/list', (require, exports, module) => {
 					{
 						useCache: canUseCache,
 					},
+					() => initMenu && this.getViewComponent().initMenu(),
 				);
 			});
 		}
@@ -194,6 +201,25 @@ jn.define('crm/entity-tab/list', (require, exports, module) => {
 		{
 			const simpleList = this.getViewComponent().getSimpleList();
 			this.scrollSimpleListToTop(simpleList);
+		}
+
+		getMenuActions()
+		{
+			const menuActions = [];
+
+			const entityType = this.getCurrentEntityType();
+			if (entityType && entityType.isLastActivityEnabled)
+			{
+				menuActions.push(this.itemsSortManager.getSortMenuAction(this.onSetSortTypeHandler));
+			}
+
+			const parentMenu = super.getMenuActions();
+			if (menuActions.length > 0)
+			{
+				parentMenu[0].showTopSeparator = true;
+			}
+
+			return [...menuActions, ...parentMenu];
 		}
 	}
 

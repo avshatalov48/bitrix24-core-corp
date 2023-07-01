@@ -1,4 +1,5 @@
 (() => {
+	const MAX_RETRY_COUNT = 3;
 
 	/**
 	 * @class Money
@@ -39,8 +40,13 @@
 			return new Money({ amount, currency });
 		}
 
-		static init()
+		static init(retryCount = 0)
 		{
+			if (retryCount >= MAX_RETRY_COUNT)
+			{
+				return Promise.reject('Max retry count exceeded.', MAX_RETRY_COUNT);
+			}
+
 			return new Promise((resolve, reject) => {
 				const cache = new Cache('MoneyCurrencyFormatList');
 				const cachedData = cache.get();
@@ -62,6 +68,13 @@
 						})
 						.catch((response) => {
 							reject(response.errors);
+						})
+						.finally(() => {
+							if (!CommonUtils.isNotEmptyObject(Money.formats))
+							{
+								retryCount++;
+								setTimeout(() => Money.init(retryCount), 200 * retryCount);
+							}
 						});
 				}
 			});

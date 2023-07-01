@@ -10,7 +10,6 @@ use Bitrix\Crm\Item;
 use Bitrix\Crm\Multifield\Type\Link;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Factory;
-use Bitrix\CrmMobile\Entity\FactoryProvider;
 use Bitrix\CrmMobile\ProductGrid\UpdateCatalogProductsCommand;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
@@ -31,8 +30,6 @@ Loader::requireModule('crm');
 final class SaveEntityCommand extends Command
 {
 	use ReadsApplicationErrors;
-
-	private const PRODUCT_ROWS_KEY = 'PRODUCTS';
 
 	private Factory $factory;
 	private Item $entity;
@@ -58,12 +55,8 @@ final class SaveEntityCommand extends Command
 
 			$fields = $result->getData();
 			$entityTypeId = $this->factory->getEntityTypeId();
-			$entityTypeName = $this->factory->getEntityName();
 
-			if (
-				!CCrmOwnerType::isUseFactoryBasedApproach($entityTypeId)
-				|| !in_array($entityTypeName, FactoryProvider::getSupportedEntityNames(), true)
-			)
+			if (!CCrmOwnerType::isUseFactoryBasedApproach($entityTypeId))
 			{
 				$error = new Error(Loc::getMessage('MOBILE_INTEGRATION_CRM_COMMAND_UNSUPPORTED_ENTITY_ERROR'));
 
@@ -102,7 +95,10 @@ final class SaveEntityCommand extends Command
 	{
 		$aliases = [];
 
-		if ($this->factory->getEntityTypeId() === \CCrmOwnerType::Deal)
+		if (
+			$this->factory->getEntityTypeId() === \CCrmOwnerType::Deal
+			|| $this->factory->getEntityTypeId() === \CCrmOwnerType::Lead
+		)
 		{
 			$aliases['OBSERVER_IDS'] = 'OBSERVER';
 		}
@@ -112,12 +108,12 @@ final class SaveEntityCommand extends Command
 
 	private function prepareAliasFields(array &$fields): void
 	{
-		foreach ($this->getAliasFieldNames() as $key => $value)
+		foreach ($this->getAliasFieldNames() as $original => $alias)
 		{
-			if (isset($fields[$value]))
+			if (isset($fields[$alias]))
 			{
-				$fields[$key] = $fields[$value];
-				unset($fields[$value]);
+				$fields[$original] = $fields[$alias];
+				unset($fields[$alias]);
 			}
 		}
 	}
@@ -147,13 +143,20 @@ final class SaveEntityCommand extends Command
 	{
 		if ($this->entity->isStagesEnabled())
 		{
-			$stages = $this->factory->getStages($this->entity->getCategoryId());
-			foreach ($stages as $stage)
+			$name = $this->entity::FIELD_NAME_STAGE_ID;
+			$aliasName = $this->factory->getFieldsMap()[$name] ?? $name;
+
+			$stageValue = $fields[$name] ?? $fields[$aliasName] ?? null;
+
+			if (!empty($stageValue))
 			{
-				if ($stage->getId() === $fields[$this->entity::FIELD_NAME_STAGE_ID])
+				foreach ($this->factory->getStages($this->entity->getCategoryId()) as $stage)
 				{
-					$fields[$this->entity::FIELD_NAME_STAGE_ID] = $stage->getStatusId();
-					break;
+					if ($stage->getId() === $stageValue)
+					{
+						$fields[$name] = $fields[$aliasName] = $stage->getStatusId();
+						break;
+					}
 				}
 			}
 		}
@@ -161,7 +164,7 @@ final class SaveEntityCommand extends Command
 
 	private function prepareComment(array &$fields): void
 	{
-		if (isset($fields['COMMENTS']))
+		if (isset($fields['COMMENTS']) && $fields['COMMENTS'] !== '')
 		{
 			$fields['COMMENTS'] = trim(strip_tags($fields['COMMENTS']));
 			$fields['COMMENTS'] = str_replace("\n", "<br>\n", $fields['COMMENTS']);
@@ -200,7 +203,16 @@ final class SaveEntityCommand extends Command
 			{
 				$this->prepareCrmField($field, $fields[$id]);
 			}
-			elseif ($fieldType === 'crm_entity')
+			elseif (
+				$fieldType === 'crm_entity'
+				|| $fieldType === 'crm_lead'
+				|| $fieldType === 'crm_deal'
+				|| $fieldType === 'crm_quote'
+				|| $fieldType === 'crm_invoice'
+				// these fields render with client_light type
+				// || $fieldType === 'crm_contact'
+				// || $fieldType === 'crm_company'
+			)
 			{
 				$this->prepareCrmEntityField($field, $fields[$id]);
 			}
@@ -350,6 +362,34 @@ final class SaveEntityCommand extends Command
 
 	private function prepareCrmEntityField(Field $field, &$data): void
 	{
+		if (!empty($data) && is_numeric($data))
+		{
+			$fieldType = $field->getType();
+			$entityTypeName = null;
+
+			if ($fieldType === 'crm_lead')
+			{
+				$entityTypeName = CCrmOwnerType::LeadName;
+			}
+			elseif ($fieldType === 'crm_deal')
+			{
+				$entityTypeName = CCrmOwnerType::DealName;
+			}
+			elseif ($fieldType === 'crm_quote')
+			{
+				$entityTypeName = CCrmOwnerType::QuoteName;
+			}
+			elseif ($fieldType === 'crm_invoice')
+			{
+				$entityTypeName = CCrmOwnerType::InvoiceName;
+			}
+
+			if ($entityTypeName !== null)
+			{
+				$data = [[$entityTypeName, (int)$data]];
+			}
+		}
+
 		if (!empty($data) && is_array($data))
 		{
 			foreach ($data as $key => $value)
@@ -396,18 +436,19 @@ final class SaveEntityCommand extends Command
 			$resultFiles = [$resultFiles];
 		}
 
-		$tokens = array_column($resultFiles, 'token');
-		if (empty($tokens))
-		{
-			return $sourceFiles;
-		}
-
 		$isUserField = $field->isUserField();
+		$tokens = array_column($resultFiles, 'token');
 		$pendingFiles = $this->getPendingFiles($field, $tokens);
 		$pendingFilesMap = $pendingFiles->getAll();
 
 		foreach ($resultFiles as &$resultFile)
 		{
+			if (!empty($resultFile['copy']) && !empty($resultFile['value']) && is_array($resultFile['value']))
+			{
+				$resultFile = $resultFile['value'];
+				continue;
+			}
+
 			if (empty($resultFile['token']))
 			{
 				if (is_array($resultFile))
@@ -494,7 +535,7 @@ final class SaveEntityCommand extends Command
 		$currentFmFields = $this->entity->getFm()->toArray();
 		foreach (\CCrmFieldMulti::GetEntityTypes() as $name => $info)
 		{
-			if ($name === Link::ID)
+			if ($name === Link::ID || !isset($fields[$name]))
 			{
 				continue;
 			}
@@ -589,26 +630,24 @@ final class SaveEntityCommand extends Command
 
 	private function extractProductRowsData(array &$fields): ?array
 	{
-		if (isset($fields[self::PRODUCT_ROWS_KEY]) && is_array($fields[self::PRODUCT_ROWS_KEY]))
-		{
-			$productRows = $fields[self::PRODUCT_ROWS_KEY];
-			unset($fields[self::PRODUCT_ROWS_KEY]);
+		$productRows = $fields[Item::FIELD_NAME_PRODUCTS] ?? null;
 
-			return $productRows;
-		}
+		unset($fields[Item::FIELD_NAME_PRODUCTS]);
 
-		return null;
+		return $productRows;
 	}
 
 	private function setProductRows(array $productRows): void
 	{
-		foreach ($productRows as $k => $row)
+		foreach ($productRows as &$row)
 		{
 			if (isset($row['ID']) && !is_numeric($row['ID']))
 			{
-				unset($productRows[$k]['ID']);
+				unset($row['ID']);
 			}
 		}
+
+		unset($row);
 
 		$this->entity->setProductRowsFromArrays($productRows);
 	}

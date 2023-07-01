@@ -63,7 +63,7 @@ class Livefeed extends Base
 	{
 		$result = new Main\Result();
 		if (
-			$action == 'UPDATE'
+			$action == self::ACTION_UPDATE
 			&& isset($fields['COMPLETED'])
 			&& $fields['COMPLETED'] == 'N'
 		)

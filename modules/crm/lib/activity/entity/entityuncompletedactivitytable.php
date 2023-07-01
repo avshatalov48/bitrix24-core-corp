@@ -8,6 +8,22 @@ use Bitrix\Main\ORM\Fields\BooleanField;
 use Bitrix\Main\ORM\Fields\DatetimeField;
 use Bitrix\Main\ORM\Fields\IntegerField;
 
+/**
+ * Class EntityUncompletedActivityTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_EntityUncompletedActivity_Query query()
+ * @method static EO_EntityUncompletedActivity_Result getByPrimary($primary, array $parameters = [])
+ * @method static EO_EntityUncompletedActivity_Result getById($id)
+ * @method static EO_EntityUncompletedActivity_Result getList(array $parameters = [])
+ * @method static EO_EntityUncompletedActivity_Entity getEntity()
+ * @method static \Bitrix\Crm\Activity\Entity\EO_EntityUncompletedActivity createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Activity\Entity\EO_EntityUncompletedActivity_Collection createCollection()
+ * @method static \Bitrix\Crm\Activity\Entity\EO_EntityUncompletedActivity wakeUpObject($row)
+ * @method static \Bitrix\Crm\Activity\Entity\EO_EntityUncompletedActivity_Collection wakeUpCollection($rows)
+ */
 class EntityUncompletedActivityTable extends \Bitrix\Main\Entity\DataManager
 {
 	public static function getTableName()
@@ -36,6 +52,8 @@ class EntityUncompletedActivityTable extends \Bitrix\Main\Entity\DataManager
 				->configureRequired(),
 			(new BooleanField('HAS_ANY_INCOMING_CHANEL'))
 				->configureStorageValues('N', 'Y')
+				->configureRequired(),
+			(new DatetimeField('MIN_LIGHT_COUNTER_AT'))
 				->configureRequired(),
 		];
 	}

@@ -2,7 +2,6 @@
  * @module crm/timeline/stream/base
  */
 jn.define('crm/timeline/stream/base', (require, exports, module) => {
-
 	const { Loc } = require('loc');
 	const { TimelineItemModel, TimelineItemFactory } = require('crm/timeline/item');
 	const { isArray } = require('utils/object');
@@ -54,21 +53,24 @@ jn.define('crm/timeline/stream/base', (require, exports, module) => {
 		 * @abstract
 		 * @return {TimelineListViewItem[]}
 		 */
-		exportToListView() {}
+		exportToListView()
+		{}
 
 		/**
 		 * @public
 		 * @abstract
 		 * @return {string}
 		 */
-		getId() {}
+		getId()
+		{}
 
 		/**
 		 * @protected
 		 * @abstract
 		 * @return {'asc'|'desc'}
 		 */
-		getItemSortDirection() {}
+		getItemSortDirection()
+		{}
 
 		/**
 		 * @public
@@ -110,7 +112,7 @@ jn.define('crm/timeline/stream/base', (require, exports, module) => {
 		 */
 		setItems(rawItems)
 		{
-			this.items = rawItems.map(item => this.makeItemModel(item));
+			this.items = rawItems.map((item) => this.makeItemModel(item));
 		}
 
 		/**
@@ -186,7 +188,7 @@ jn.define('crm/timeline/stream/base', (require, exports, module) => {
 		 */
 		animateAddRemove(patch, animationType = 'automatic')
 		{
-			const removeItems = () => mapPromise(patch.getRemovedItems(), (item) => new Promise(resolve => {
+			const removeItems = () => mapPromise(patch.getRemovedItems(), (item) => new Promise((resolve) => {
 				const { section, index } = this.listViewRef.getElementPosition(item.key);
 				this.listViewRef.deleteRow(section, index, animationType, resolve);
 			}));
@@ -250,6 +252,10 @@ jn.define('crm/timeline/stream/base', (require, exports, module) => {
 						return this.listViewRef.moveRow(exportedItem, 0, newPosition, animated);
 					}
 					return Promise.resolve();
+				})
+				.then(() => {
+					const itemRef = this.findItemRef(item.id);
+					return itemRef ? itemRef.blink() : Promise.resolve();
 				});
 		}
 
@@ -303,16 +309,16 @@ jn.define('crm/timeline/stream/base', (require, exports, module) => {
 		exportCollapsibleGroup(items)
 		{
 			let collapsedRecords = [];
-			let result = [];
+			const result = [];
 
-			items.forEach(item => {
+			items.forEach((item) => {
 				if (item.isCompatible)
 				{
 					collapsedRecords.push(item);
 				}
 				else
 				{
-					if (collapsedRecords.length)
+					if (collapsedRecords.length > 0)
 					{
 						result.push(collapsedRecords);
 						collapsedRecords = [];
@@ -321,12 +327,12 @@ jn.define('crm/timeline/stream/base', (require, exports, module) => {
 				}
 			});
 
-			if (collapsedRecords.length)
+			if (collapsedRecords.length > 0)
 			{
 				result.push(collapsedRecords);
 			}
 
-			return result.map(item => isArray(item) ? this.exportCollapsedRecords(item) : this.exportItem(item));
+			return result.map((item) => (isArray(item) ? this.exportCollapsedRecords(item) : this.exportItem(item)));
 		}
 
 		/**
@@ -348,8 +354,8 @@ jn.define('crm/timeline/stream/base', (require, exports, module) => {
 							marginBottom: 16,
 							innerOpacity: 0.6,
 							backgroundColor: TimelineItemBackground.getByModel(model),
-						}
-					}
+						},
+					},
 				};
 			}
 
@@ -367,8 +373,8 @@ jn.define('crm/timeline/stream/base', (require, exports, module) => {
 						marginBottom: 16,
 						innerOpacity: 0.6,
 						backgroundColor: TimelineItemBackground.getByModel(model),
-					}
-				}
+					},
+				},
 			};
 		}
 
@@ -414,7 +420,7 @@ jn.define('crm/timeline/stream/base', (require, exports, module) => {
 		 */
 		onChange()
 		{
-			return new Promise(resolve => {
+			return new Promise((resolve) => {
 				if (this.onChangeHandler)
 				{
 					this.onChangeHandler(this).then(resolve);
@@ -433,5 +439,4 @@ jn.define('crm/timeline/stream/base', (require, exports, module) => {
 	}
 
 	module.exports = { TimelineStreamBase };
-
 });

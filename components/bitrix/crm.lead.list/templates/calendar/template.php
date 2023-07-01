@@ -1,5 +1,9 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 /**
  * Bitrix vars
@@ -11,22 +15,29 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
  * @var CBitrixComponent $component
  */
 
-use Bitrix\Main\Text\HtmlFilter;
-use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm\Integration\Calendar;
 use Bitrix\Crm\UI\NavigationBarPanel;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Text\HtmlFilter;
 
 $APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/crm-entity-show.css");
-if(SITE_TEMPLATE_ID === 'bitrix24')
+
+if (SITE_TEMPLATE_ID === 'bitrix24')
 {
 	$APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/bitrix24/crm-entity-show.css");
 }
+
 if (CModule::IncludeModule('bitrix24') && !\Bitrix\Crm\CallList\CallList::isAvailable())
 {
 	CBitrix24::initLicenseInfoPopupJS();
 }
 
-\Bitrix\Main\UI\Extension::load('ui.fonts.opensans');
+Bitrix\Main\UI\Extension::load(
+	[
+		'crm.restriction.filter-fields',
+		'ui.fonts.opensans'
+	]
+);
 
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/common.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/progress_control.js');
@@ -41,34 +52,35 @@ $newLeadUrl = preg_replace("/#lead_id#/i", "0", $arParams['PATH_TO_LEAD_DETAILS'
 $leadSliderRegexp = preg_replace("/#lead_id#/i", "(\\\\\d+)", $arParams['PATH_TO_LEAD_DETAILS']);
 
 ?><div id="rebuildMessageWrapper"><?
-if($arResult['NEED_FOR_REBUILD_DUP_INDEX']):
+if (isset($arResult['NEED_FOR_REBUILD_DUP_INDEX']) && $arResult['NEED_FOR_REBUILD_DUP_INDEX']):
 	?><div id="rebuildLeadDupIndexMsg" class="crm-view-message">
 		<?=GetMessage('CRM_LEAD_REBUILD_DUP_INDEX', array('#ID#' => 'rebuildLeadDupIndexLink', '#URL#' => '#'))?>
 	</div><?
 endif;
 
-if($arResult['NEED_FOR_REBUILD_SEARCH_CONTENT'])
+if (!empty($arResult['NEED_FOR_REBUILD_SEARCH_CONTENT']))
 {
 	?><div id="rebuildLeadSearchWrapper"></div><?
 }
 
-if($arResult['NEED_FOR_BUILD_TIMELINE'])
+if (!empty($arResult['NEED_FOR_BUILD_TIMELINE']))
 {
 	?><div id="buildLeadTimelineWrapper"></div><?
 }
-if($arResult['NEED_FOR_REFRESH_ACCOUNTING'])
+
+if (!empty($arResult['NEED_FOR_REFRESH_ACCOUNTING']))
 {
 	?><div id="refreshLeadAccountingWrapper"></div><?
 }
 
-if($arResult['NEED_FOR_REBUILD_LEAD_ATTRS']):
+if (!empty($arResult['NEED_FOR_REBUILD_LEAD_ATTRS'])):
 	?><div id="rebuildLeadAttrsMsg" class="crm-view-message">
 	<?=GetMessage('CRM_LEAD_REBUILD_ACCESS_ATTRS', array('#ID#' => 'rebuildLeadAttrsLink', '#URL#' => $arResult['PATH_TO_PRM_LIST']))?>
 	</div><?
 endif;
 ?></div><?
 
-if(isset($arResult['ERROR_HTML'])):
+if (isset($arResult['ERROR_HTML'])):
 	ShowError($arResult['ERROR_HTML']);
 endif;
 
@@ -78,7 +90,7 @@ $allowWrite = $arResult['PERMS']['WRITE'] && !$callListUpdateMode;
 $allowDelete = $arResult['PERMS']['DELETE'] && !$callListUpdateMode;
 $currentUserID = $arResult['CURRENT_USER_ID'];
 $activityEditorID = '';
-if(!$isInternal):
+if (!$isInternal):
 	$activityEditorID = "{$arResult['GRID_ID']}_activity_editor";
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.activity.editor',
@@ -98,7 +110,8 @@ if(!$isInternal):
 	);
 endif;
 
-$gridManagerID = $arResult['GRID_ID'].'_MANAGER';
+$gridManagerID = $arResult['GRID_ID'] . '_MANAGER';
+
 $gridManagerCfg = array(
 	'ownerType' => CCrmOwnerType::LeadName,
 	'gridId' => $arResult['GRID_ID'],
@@ -113,18 +126,40 @@ $gridManagerCfg = array(
 echo CCrmViewHelper::RenderLeadStatusSettings();
 $prefix = $arResult['GRID_ID'];
 
-$arResult['GRID_DATA'] = array();
-$arColumns = array();
+$arResult['GRID_DATA'] = [];
+$arColumns = [];
 foreach ($arResult['HEADERS'] as $arHead)
+{
 	$arColumns[$arHead['id']] = false;
+}
 
 $now = time() + CTimeZone::GetOffset();
 
 foreach($arResult['LEAD'] as $sKey => $arLead)
 {
-	$arActivityMenuItems = array();
-	$arActivitySubMenuItems = array();
-	$arActions = array();
+	$arActivityMenuItems = [];
+	$arActivitySubMenuItems = [];
+	$arActions = [];
+
+	$dateCreate = $arLead['DATE_CREATE'] ?? '';
+	$dateModify = $arLead['DATE_MODIFY'] ?? '';
+	$isReturnCustomer = null;
+	if (isset($arLead['IS_RETURN_CUSTOMER']))
+	{
+		$isReturnCustomer = $arResult['BOOLEAN_VALUES_LIST'][$arLead['IS_RETURN_CUSTOMER']] ?? $arLead['IS_RETURN_CUSTOMER'];
+	}
+
+	$webformId = null;
+	if (isset($arLead['WEBFORM_ID']))
+	{
+		$webformId = $arResult['WEBFORM_LIST'][$arLead['WEBFORM_ID']] ?? $arLead['WEBFORM_ID'];
+	}
+
+	$honorific = '';
+	if (isset($arLead['HONORIFIC']))
+	{
+		$honorific = $arResult['HONORIFIC'][$arLead['HONORIFIC']] ?? $arLead['HONORIFIC'];
+	}
 
 	$resultItem = array(
 		'id' => $arLead['ID'],
@@ -132,13 +167,14 @@ foreach($arResult['LEAD'] as $sKey => $arLead)
 		'editable' => !$arLead['EDIT'] ? $arColumns : true,
 		'columns' => array(
 			'LEAD_SUMMARY' => CCrmViewHelper::RenderInfo(
-				$arLead['PATH_TO_LEAD_SHOW'],
-				isset($arLead['TITLE']) ? $arLead['TITLE'] : ('['.$arLead['ID'].']'), $arLead['LEAD_SOURCE_NAME'],
+				$arLead['PATH_TO_LEAD_SHOW'] ?? '',
+				$arLead['TITLE'] ?? ('['.$arLead['ID'].']'),
+				$arLead['LEAD_SOURCE_NAME'] ?? '',
 				array('TARGET' => '_self')
 			),
-			'COMMENTS' => htmlspecialcharsback($arLead['COMMENTS']),
-			'ADDRESS' => nl2br($arLead['ADDRESS']),
-			'ASSIGNED_BY' => $arLead['~ASSIGNED_BY_ID'] > 0
+			'COMMENTS' => htmlspecialcharsback($arLead['COMMENTS'] ?? ''),
+			'ADDRESS' => nl2br($arLead['ADDRESS'] ?? ''),
+			'ASSIGNED_BY' => isset($arLead['~ASSIGNED_BY_ID']) && $arLead['~ASSIGNED_BY_ID'] > 0
 				? CCrmViewHelper::PrepareUserBaloonHtml(
 					array(
 						'PREFIX' => "LEAD_{$arLead['~ID']}_RESPONSIBLE",
@@ -146,30 +182,33 @@ foreach($arResult['LEAD'] as $sKey => $arLead)
 						'USER_NAME'=> $arLead['ASSIGNED_BY'],
 						'USER_PROFILE_URL' => $arLead['PATH_TO_USER_PROFILE']
 					)
-				) : '',
-			'STATUS_DESCRIPTION' => nl2br($arLead['STATUS_DESCRIPTION']),
-			'SOURCE_DESCRIPTION' => nl2br($arLead['SOURCE_DESCRIPTION']),
-			'DATE_CREATE' => FormatDate($arResult['TIME_FORMAT'], MakeTimeStamp($arLead['DATE_CREATE']), $now),
-			'DATE_MODIFY' => FormatDate($arResult['TIME_FORMAT'], MakeTimeStamp($arLead['DATE_MODIFY']), $now),
+				)
+				: '',
+			'STATUS_DESCRIPTION' => nl2br($arLead['STATUS_DESCRIPTION'] ?? ''),
+			'SOURCE_DESCRIPTION' => nl2br($arLead['SOURCE_DESCRIPTION'] ?? ''),
+			'DATE_CREATE' => FormatDate($arResult['TIME_FORMAT'], MakeTimeStamp($dateCreate), $now),
+			'DATE_MODIFY' => FormatDate($arResult['TIME_FORMAT'], MakeTimeStamp($dateModify), $now),
 			'SUM' => $arLead['FORMATTED_OPPORTUNITY'],
-			'OPPORTUNITY' => $arLead['~OPPORTUNITY'],
-			'CURRENCY_ID' => CCrmCurrency::GetCurrencyName($arLead['~CURRENCY_ID']),
-			'PRODUCT_ID' => isset($arLead['PRODUCT_ROWS']) ? htmlspecialcharsbx(CCrmProductRow::RowsToString($arLead['PRODUCT_ROWS'])) : '',
-			'IS_RETURN_CUSTOMER' => isset($arResult['BOOLEAN_VALUES_LIST'][$arLead['IS_RETURN_CUSTOMER']]) ? $arResult['BOOLEAN_VALUES_LIST'][$arLead['IS_RETURN_CUSTOMER']] : $arLead['IS_RETURN_CUSTOMER'],
-			'HONORIFIC' => isset($arResult['HONORIFIC'][$arLead['HONORIFIC']]) ? $arResult['HONORIFIC'][$arLead['HONORIFIC']] : '',
+			'OPPORTUNITY' => $arLead['~OPPORTUNITY'] ?? 0.0,
+			'CURRENCY_ID' => CCrmCurrency::GetCurrencyName($arLead['~CURRENCY_ID'] ?? null),
+			'PRODUCT_ID' => isset($arLead['PRODUCT_ROWS'])
+				? htmlspecialcharsbx(CCrmProductRow::RowsToString($arLead['PRODUCT_ROWS']))
+				: '',
+			'IS_RETURN_CUSTOMER' => $isReturnCustomer,
+			'HONORIFIC' => $honorific,
 			'STATUS_ID' => CCrmViewHelper::RenderLeadStatusControl(
 				array(
 					'PREFIX' => "{$arResult['GRID_ID']}_PROGRESS_BAR_",
 					'ENTITY_ID' => $arLead['~ID'],
-					'CURRENT_ID' => $arLead['~STATUS_ID'],
+					'CURRENT_ID' => $arLead['~STATUS_ID'] ?? null,
 					'SERVICE_URL' => '/bitrix/components/bitrix/crm.lead.list/list.ajax.php',
-					'CONVERSION_SCHEME' => $arResult['CONVERSION_SCHEME'],
+					'CONVERSION_SCHEME' => $arResult['CONVERSION_SCHEME'] ?? null,
 					'READ_ONLY' => !(isset($arLead['EDIT']) && $arLead['EDIT'] === true)
 				)
 			),
-			'SOURCE_ID' => $arLead['LEAD_SOURCE_NAME'],
-			'WEBFORM_ID' => isset($arResult['WEBFORM_LIST'][$arLead['WEBFORM_ID']]) ? $arResult['WEBFORM_LIST'][$arLead['WEBFORM_ID']] : $arLead['WEBFORM_ID'],
-			'CREATED_BY' => $arLead['~CREATED_BY'] > 0
+			'SOURCE_ID' => $arLead['LEAD_SOURCE_NAME'] ?? '',
+			'WEBFORM_ID' => $webformId,
+			'CREATED_BY' => isset($arLead['~CREATED_BY']) && $arLead['~CREATED_BY'] > 0
 				? CCrmViewHelper::PrepareUserBaloonHtml(
 					array(
 						'PREFIX' => "LEAD_{$arLead['~ID']}_CREATOR",
@@ -177,8 +216,9 @@ foreach($arResult['LEAD'] as $sKey => $arLead)
 						'USER_NAME'=> $arLead['CREATED_BY_FORMATTED_NAME'],
 						'USER_PROFILE_URL' => $arLead['PATH_TO_USER_CREATOR'],
 					)
-				) : '',
-			'MODIFY_BY' => $arLead['~MODIFY_BY'] > 0
+				)
+				: '',
+			'MODIFY_BY' => isset($arLead['~MODIFY_BY']) && $arLead['~MODIFY_BY'] > 0
 				? CCrmViewHelper::PrepareUserBaloonHtml(
 					array(
 						'PREFIX' => "LEAD_{$arLead['~ID']}_MODIFIER",
@@ -186,96 +226,14 @@ foreach($arResult['LEAD'] as $sKey => $arLead)
 						'USER_NAME'=> $arLead['MODIFY_BY_FORMATTED_NAME'],
 						'USER_PROFILE_URL' => $arLead['PATH_TO_USER_MODIFIER']
 					)
-				) : '',
+				)
+				: '',
 		) + CCrmViewHelper::RenderListMultiFields($arLead, "LEAD_{$arLead['ID']}_", array('ENABLE_SIP' => true, 'SIP_PARAMS' => array('ENTITY_TYPE' => 'CRM_'.CCrmOwnerType::LeadName, 'ENTITY_ID' => $arLead['ID']))) + $arResult['LEAD_UF'][$sKey]
 	);
 
-	if(isset($arLead['~BIRTHDATE']))
+	if (isset($arLead['~BIRTHDATE']))
 	{
 		$resultItem['columns']['BIRTHDATE'] = '<nobr>'.FormatDate('SHORT', MakeTimeStamp($arLead['~BIRTHDATE'])).'</nobr>';
-	}
-
-	$userActivityID = isset($arLead['~ACTIVITY_ID']) ? intval($arLead['~ACTIVITY_ID']) : 0;
-	$commonActivityID = isset($arLead['~C_ACTIVITY_ID']) ? intval($arLead['~C_ACTIVITY_ID']) : 0;
-	if($userActivityID > 0)
-	{
-		$resultItem['columns']['ACTIVITY_ID'] = CCrmViewHelper::RenderNearestActivity(
-			array(
-				'ENTITY_TYPE_NAME' => CCrmOwnerType::ResolveName(CCrmOwnerType::Lead),
-				'ENTITY_ID' => $arLead['~ID'],
-				'ENTITY_RESPONSIBLE_ID' => $arLead['~ASSIGNED_BY'],
-				'GRID_MANAGER_ID' => $gridManagerID,
-				'ACTIVITY_ID' => $userActivityID,
-				'ACTIVITY_SUBJECT' => isset($arLead['~ACTIVITY_SUBJECT']) ? $arLead['~ACTIVITY_SUBJECT'] : '',
-				'ACTIVITY_TIME' => isset($arLead['~ACTIVITY_TIME']) ? $arLead['~ACTIVITY_TIME'] : '',
-				'ACTIVITY_EXPIRED' => isset($arLead['~ACTIVITY_EXPIRED']) ? $arLead['~ACTIVITY_EXPIRED'] : '',
-				'ALLOW_EDIT' => $arLead['EDIT'],
-				'MENU_ITEMS' => $arActivityMenuItems,
-				'USE_GRID_EXTENSION' => true
-			)
-		);
-
-		$counterData = array(
-			'CURRENT_USER_ID' => $currentUserID,
-			'ENTITY' => $arLead,
-			'ACTIVITY' => array(
-				'RESPONSIBLE_ID' => $currentUserID,
-				'TIME' => isset($arLead['~ACTIVITY_TIME']) ? $arLead['~ACTIVITY_TIME'] : '',
-				'IS_CURRENT_DAY' => isset($arLead['~ACTIVITY_IS_CURRENT_DAY']) ? $arLead['~ACTIVITY_IS_CURRENT_DAY'] : false
-			)
-		);
-
-		if(CCrmUserCounter::IsReckoned(CCrmUserCounter::CurrentLeadActivies, $counterData))
-		{
-			$resultItem['columnClasses'] = array('ACTIVITY_ID' => 'crm-list-deal-today');
-		}
-	}
-	elseif($commonActivityID > 0)
-	{
-		$resultItem['columns']['ACTIVITY_ID'] = CCrmViewHelper::RenderNearestActivity(
-			array(
-				'ENTITY_TYPE_NAME' => CCrmOwnerType::ResolveName(CCrmOwnerType::Lead),
-				'ENTITY_ID' => $arLead['~ID'],
-				'ENTITY_RESPONSIBLE_ID' => $arLead['~ASSIGNED_BY'],
-				'GRID_MANAGER_ID' => $gridManagerID,
-				'ACTIVITY_ID' => $commonActivityID,
-				'ACTIVITY_SUBJECT' => isset($arLead['~C_ACTIVITY_SUBJECT']) ? $arLead['~C_ACTIVITY_SUBJECT'] : '',
-				'ACTIVITY_TIME' => isset($arLead['~C_ACTIVITY_TIME']) ? $arLead['~C_ACTIVITY_TIME'] : '',
-				'ACTIVITY_RESPONSIBLE_ID' => isset($arLead['~C_ACTIVITY_RESP_ID']) ? intval($arLead['~C_ACTIVITY_RESP_ID']) : 0,
-				'ACTIVITY_RESPONSIBLE_LOGIN' => isset($arLead['~C_ACTIVITY_RESP_LOGIN']) ? $arLead['~C_ACTIVITY_RESP_LOGIN'] : '',
-				'ACTIVITY_RESPONSIBLE_NAME' => isset($arLead['~C_ACTIVITY_RESP_NAME']) ? $arLead['~C_ACTIVITY_RESP_NAME'] : '',
-				'ACTIVITY_RESPONSIBLE_LAST_NAME' => isset($arLead['~C_ACTIVITY_RESP_LAST_NAME']) ? $arLead['~C_ACTIVITY_RESP_LAST_NAME'] : '',
-				'ACTIVITY_RESPONSIBLE_SECOND_NAME' => isset($arLead['~C_ACTIVITY_RESP_SECOND_NAME']) ? $arLead['~C_ACTIVITY_RESP_SECOND_NAME'] : '',
-				'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'],
-				'PATH_TO_USER_PROFILE' => $arParams['PATH_TO_USER_PROFILE'],
-				'ALLOW_EDIT' => $arLead['EDIT'],
-				'MENU_ITEMS' => $arActivityMenuItems,
-				'USE_GRID_EXTENSION' => true
-			)
-		);
-	}
-	else
-	{
-		$resultItem['columns']['ACTIVITY_ID'] = CCrmViewHelper::RenderNearestActivity(
-			array(
-				'ENTITY_TYPE_NAME' => CCrmOwnerType::ResolveName(CCrmOwnerType::Lead),
-				'ENTITY_ID' => $arLead['~ID'],
-				'ENTITY_RESPONSIBLE_ID' => $arLead['~ASSIGNED_BY'],
-				'GRID_MANAGER_ID' => $gridManagerID,
-				'ALLOW_EDIT' => $arLead['EDIT'],
-				'MENU_ITEMS' => $arActivityMenuItems,
-				'HINT_TEXT' => isset($arLead['~WAITING_TITLE']) ? $arLead['~WAITING_TITLE'] : '',
-				'USE_GRID_EXTENSION' => true
-			)
-		);
-
-		$counterData = array('CURRENT_USER_ID' => $currentUserID, 'ENTITY' => $arLead);
-		if($waitingID <= 0
-			&& CCrmUserCounter::IsReckoned(CCrmUserCounter::CurrentLeadActivies, $counterData)
-		)
-		{
-			$resultItem['columnClasses'] = array('ACTIVITY_ID' => 'crm-list-enitity-action-need');
-		}
 	}
 
 	$arResult['GRID_DATA'][] = &$resultItem;
@@ -375,16 +333,23 @@ $uri = new \Bitrix\Main\Web\Uri(\Bitrix\Main\HttpApplication::getInstance()->get
 $uri->deleteParams(\Bitrix\Main\HttpRequest::getSystemParameters());
 $currentUrl = $uri->getUri();
 $filterSelect = Calendar::getCalendarViewFieldOption(CCrmOwnerType::LeadName, 'DATE_CREATE');
-list($filterSelectId, $filterSelectType, $filterSelectName) = Calendar::parseUserfieldKey($filterSelect);
+$filterSelectId = null;
+$filterSelectType = null;
+$filterSelectName = null;
+$parsedKeys = Calendar::parseUserfieldKey($filterSelect);
+if (count($parsedKeys) > 1)
+{
+	[$filterSelectId, $filterSelectType, $filterSelectName] = $parsedKeys;
+}
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && check_bitrix_sessid())
 {
 	$request = \Bitrix\Main\Context::getCurrent()->getRequest()->toArray();
 	if (isset($request['crm_calendar_action']))
 	{
 		$settingsFilterSelect = CUserOptions::GetOption("calendar", "resourceBooking");
 
-		$entries = array();
+		$entries = [];
 		for ($i = 0, $l = count($arResult['GRID_DATA']); $i < $l; $i++)
 		{
 			$crmEntity = $arResult['GRID_DATA'][$i];
@@ -447,7 +412,10 @@ $APPLICATION->IncludeComponent("bitrix:calendar.interface.grid", "", Array(
 ));
 //endregion
 
+echo $arResult['ACTIVITY_FIELD_RESTRICTIONS'] ?? '';
+
 ?>
+
 <script type="text/javascript">
 //region Javascript External Handlers calendar
 BX.ready(function(){

@@ -2,10 +2,15 @@
 
 namespace Bitrix\ImConnector;
 
-use \Bitrix\Main\Loader;
-use \Bitrix\Main\Web\Json;
-use \Bitrix\Main\Data\Cache;
-use \Bitrix\ImConnector\Model\InfoConnectorsTable;
+use Bitrix\Main\Application;
+use Bitrix\Main\Loader;
+use Bitrix\Main\ORM;
+use Bitrix\Main\Event;
+use Bitrix\Main\Web\Json;
+use Bitrix\Main\Data\Cache;
+use Bitrix\Main\Type\DateTime;
+use Bitrix\ImConnector\Model\InfoConnectorsTable;
+use Bitrix\ImConnector\Model\StatusConnectorsTable;
 
 class InfoConnectors
 {
@@ -18,13 +23,11 @@ class InfoConnectors
 	{
 		if (Loader::includeModule('imopenlines'))
 		{
-			$lines = \Bitrix\ImOpenLines\Model\ConfigTable::getList(
-				array(
-					'filter' => array(
-						'ACTIVE' => 'Y'
-					)
-				)
-			);
+			$lines = \Bitrix\ImOpenLines\Model\ConfigTable::getList([
+				'filter' => [
+					'ACTIVE' => 'Y'
+				]
+			]);
 			$baseInterval = Library::LOCAL_AGENT_EXEC_INTERVAL;
 
 			while ($line = $lines->fetch())
@@ -61,7 +64,7 @@ class InfoConnectors
 
 		if ($isCalledRecursively == 0)
 		{
-			return '\Bitrix\ImConnector\InfoConnectors::infoConnectorsUpdateAgent();';
+			return __METHOD__ . '();';
 		}
 
 		return '';
@@ -99,25 +102,40 @@ class InfoConnectors
 		{
 			$result = self::updateInfoConnectors($lineId);
 
-			if (
-				$result instanceof \Bitrix\Main\ORM\Data\UpdateResult
-				&& $result->isSuccess()
-				&& Loader::includeModule('crm')
-			)
+			if ($result->isSuccess())
 			{
-				\CAgent::AddAgent(
-					'\\Bitrix\\Crm\\SiteButton\\Manager::updateScriptCacheAgent();',
-					'crm',
-					'N',
-					60,
-					'',
-					'Y',
-					\ConvertTimeStamp(time()+\CTimeZone::GetOffset()+1800, 'FULL')
-				);
+				self::addSiteButtonUpdaterAgent();
 			}
 		}
 
 		return '';
+	}
+
+	/**
+	 * Method for agent, which update SiteButton.
+	 *
+	 * @return void
+	 */
+	public static function addSiteButtonUpdaterAgent(): void
+	{
+		if (Loader::includeModule('crm'))
+		{
+			\CAgent::AddAgent(
+				'\\Bitrix\\Crm\\SiteButton\\Manager::updateScriptCacheAgent();',
+				'crm',
+				'N',
+				60,
+				'',
+				'Y',
+				\ConvertTimeStamp(time()+\CTimeZone::GetOffset()+1800, 'FULL')
+			);
+
+			global $APPLICATION;
+			if ($APPLICATION instanceof \CMain)
+			{
+				$APPLICATION->resetException();
+			}
+		}
 	}
 
 	/**
@@ -139,6 +157,12 @@ class InfoConnectors
 			'Y',
 			\ConvertTimeStamp((time() + \CTimeZone::GetOffset() + $interval), 'FULL')
 		);
+
+		global $APPLICATION;
+		if ($APPLICATION instanceof \CMain)
+		{
+			$APPLICATION->resetException();
+		}
 	}
 
 	/**
@@ -159,6 +183,12 @@ class InfoConnectors
 			'Y',
 			\ConvertTimeStamp((time() + \CTimeZone::GetOffset() + $interval), 'FULL')
 		);
+
+		global $APPLICATION;
+		if ($APPLICATION instanceof \CMain)
+		{
+			$APPLICATION->resetException();
+		}
 	}
 
 	/**
@@ -180,55 +210,82 @@ class InfoConnectors
 			'Y',
 			\ConvertTimeStamp((time() + \CTimeZone::GetOffset() + $interval), 'FULL')
 		);
+
+		global $APPLICATION;
+		if ($APPLICATION instanceof \CMain)
+		{
+			$APPLICATION->resetException();
+		}
 	}
 
 	/**
 	 * Event handler for add/delete connector statuses
-	 *
-	 * @param \Bitrix\Main\Event $event
+	 * @event 'imconnector:OnDeleteStatusConnector'
+	 * @param Event $event
 	 * @return void
 	 */
-	public static function onChangeStatusConnector(\Bitrix\Main\Event $event)
+	public static function onChangeStatusConnector(Event $event)
 	{
 		$parameters = $event->getParameters();
-		self::addSingleLineUpdateAgent($parameters['line']);
+
+		Application::getInstance()->addBackgroundJob(
+			[__CLASS__, 'updateInfoConnectors'],
+			[$parameters['line']],
+			Application::JOB_PRIORITY_LOW
+		);
+
+		self::addSiteButtonUpdaterAgent();
+
 	}
 
 	/**
 	 * Event handler for update connector status
+	 * @event 'imconnector:OnUpdateStatusConnector'
 	 *
-	 * @param \Bitrix\Main\Event $event
+	 * @param Event $event
 	 * @return void
 	 */
-	public static function onUpdateStatusConnector(\Bitrix\Main\Event $event)
+	public static function onUpdateStatusConnector(Event $event)
 	{
 		$parameters = $event->getParameters();
 
 		if (
 			(
-				$parameters['fields']['ACTIVE'] == 'Y'
+				isset($parameters['fields']['ACTIVE'])
+				&& isset($parameters['fields']['CONNECTION'])
+				&& isset($parameters['fields']['REGISTER'])
+				&& isset($parameters['fields']['ERROR'])
+				&& $parameters['fields']['ACTIVE'] == 'Y'
 				&& $parameters['fields']['CONNECTION'] == 'Y'
 				&& $parameters['fields']['REGISTER'] == 'Y'
 				&& $parameters['fields']['ERROR'] == 'N'
 			)
 			||
 			(
-				$parameters['fields']['ERROR'] == 'Y'
+				isset($parameters['fields']['ERROR'])
+				&& isset($parameters['fields']['ACTIVE'])
+				&& $parameters['fields']['ERROR'] == 'Y'
 				&& $parameters['fields']['ACTIVE'] == 'Y'
 			)
 		)
 		{
-			self::addSingleLineUpdateAgent($parameters['line']);
+			Application::getInstance()->addBackgroundJob(
+				[__CLASS__, 'updateInfoConnectors'],
+				[$parameters['line']],
+				Application::JOB_PRIORITY_LOW
+			);
+
+			self::addSiteButtonUpdaterAgent();
 		}
 	}
 
 	/**
 	 * Event handler for imopenline create
 	 *
-	 * @param \Bitrix\Main\Event $event
+	 * @param Event $event
 	 * @return void
 	 */
-	public static function onImopenlineCreate(\Bitrix\Main\Event $event)
+	public static function onImopenlineCreate(Event $event)
 	{
 		$parameters = $event->getParameters();
 
@@ -238,10 +295,10 @@ class InfoConnectors
 	/**
 	 * Event handler for imopenline delete
 	 *
-	 * @param \Bitrix\Main\Event $event
+	 * @param Event $event
 	 * @return void
 	 */
-	public static function onImopenlineDelete(\Bitrix\Main\Event $event)
+	public static function onImopenlineDelete(Event $event)
 	{
 		$parameters = $event->getParameters();
 
@@ -253,17 +310,11 @@ class InfoConnectors
 	 *
 	 * @param array $filter
 	 *
-	 * @return \Bitrix\Main\ORM\Query\Result
+	 * @return ORM\Query\Result
 	 */
-	public static function getInfoConnectors($filter = array())
+	public static function getInfoConnectors(array $filter = []): ORM\Query\Result
 	{
-		$result = InfoConnectorsTable::getList(
-			array(
-				'filter' => $filter
-			)
-		);
-
-		return $result;
+		return InfoConnectorsTable::getList(['filter' => $filter]);
 	}
 
 	/**
@@ -275,26 +326,11 @@ class InfoConnectors
 	 */
 	public static function infoConnectorsLine($lineId)
 	{
-		$cache = Cache::createInstance();
 		$result = [];
 
-		if ($cache->initCache(Library::CACHE_TIME_INFO_CONNECTORS_LINE, $lineId, Library::CACHE_DIR_INFO_CONNECTORS_LINE))
+		if ($infoConnectors = self::getInfoConnectorsById($lineId))
 		{
-			$result = $cache->getVars();
-		}
-		elseif($cache->startDataCache())
-		{
-			$infoConnectors = self::getInfoConnectorsById($lineId);
-
-			if ($infoConnectors->getSelectedRowsCount() == 0)
-			{
-				$cache->abortDataCache();
-			}
-			else
-			{
-				$result = $infoConnectors->fetch();
-				$cache->endDataCache($result);
-			}
+			$result = $infoConnectors->fetch();
 		}
 
 		return $result;
@@ -305,29 +341,21 @@ class InfoConnectors
 	 *
 	 * @param int $lineId
 	 *
-	 * @return \Bitrix\Main\ORM\Query\Result
+	 * @return ORM\Query\Result
 	 */
-	public static function getInfoConnectorsById($lineId)
+	public static function getInfoConnectorsById($lineId): ORM\Query\Result
 	{
-		$filter  = array(
-			'=LINE_ID' => (int)$lineId
-		);
-
-		return self::getInfoConnectors($filter);
+		return self::getInfoConnectors(['=LINE_ID' => (int)$lineId]);
 	}
 
 	/**
 	 * Return list of expired info connector data from InfoConnector table
 	 *
-	 * @return \Bitrix\Main\ORM\Query\Result
+	 * @return ORM\Query\Result
 	 */
-	public static function getExpiredInfoConnectors()
+	public static function getExpiredInfoConnectors(): ORM\Query\Result
 	{
-		$filter = array(
-			'<EXPIRES' => \Bitrix\Main\Type\DateTime::createFromTimestamp(time())
-		);
-
-		return self::getInfoConnectors($filter);
+		return self::getInfoConnectors(['<EXPIRES' => DateTime::createFromTimestamp(time())]);
 	}
 
 	/**
@@ -335,11 +363,11 @@ class InfoConnectors
 	 *
 	 * @param array $filter
 	 *
-	 * @return array
+	 * @return array<int, array>
 	 */
-	public static function getInfoConnectorsList($filter = array())
+	public static function getInfoConnectorsList(array $filter = [])
 	{
-		$result = array();
+		$result = [];
 		$infoConnectors = self::getInfoConnectors($filter);
 		while ($info = $infoConnectors->fetch())
 		{
@@ -350,93 +378,81 @@ class InfoConnectors
 	}
 
 	/**
-	 * Method for adding single connection info element for single line
+	 * Method is adding single connection info element for single line.
 	 *
-	 * @param $lineId
-	 *
-	 * @return \Bitrix\Main\ORM\Data\AddResult|bool
+	 * @param int $lineId
+	 * @return Result
 	 */
-	public static function addInfoConnectors($lineId)
+	public static function addInfoConnectors($lineId): Result
 	{
-		$connectorsInfoCount = InfoConnectorsTable::getByPrimary($lineId)->getSelectedRowsCount();
-		$result = false;
-
-		if ($connectorsInfoCount == 0)
-		{
-			$cacheTime = (int)Library::CACHE_TIME_INFO_CONNECTORS_LINE;
-			$timeExpires = \Bitrix\Main\Type\DateTime::createFromTimestamp(time() + $cacheTime);
-
-			$data = Connector::getOutputInfoConnectorsLine($lineId);
-			$dataEncoded = Json::encode($data);
-			$hashDataEncoded = md5($dataEncoded);
-
-			$result = InfoConnectorsTable::add([
-				'LINE_ID' => $lineId,
-				'DATA' => $dataEncoded,
-				'EXPIRES' => $timeExpires,
-				'DATA_HASH' => $hashDataEncoded,
-			]);
-
-			if ($result->isSuccess())
-			{
-				$cacheData = [
-					'DATA' => $dataEncoded,
-					'EXPIRES' => $timeExpires,
-					'DATA_HASH' => $hashDataEncoded,
-				];
-
-				self::rewriteInfoConnectorsLineCache($lineId, $cacheData);
-			}
-		}
-
-		return $result;
+		return self::refreshInfoConnectors((int)$lineId);
 	}
 
 	/**
 	 * Method for update single connection info element for single line
 	 *
 	 * @param $lineId
-	 *
-	 * @return \Bitrix\Main\ORM\Data\UpdateResult|bool
+	 * @return Result
 	 */
-	public static function updateInfoConnectors($lineId)
+	public static function updateInfoConnectors($lineId): Result
 	{
-		$connectorRes = InfoConnectorsTable::getByPrimary($lineId);
-		$connectorsInfoCount = $connectorRes->getSelectedRowsCount();
-		$result = false;
-
-		if ($connectorsInfoCount == 1)
+		$statusCount = StatusConnectorsTable::getCount(['LINE' => $lineId]);
+		if ($statusCount == 0)
 		{
-			$cacheTime = (int)Library::CACHE_TIME_INFO_CONNECTORS_LINE;
-			$timeExpires = \Bitrix\Main\Type\DateTime::createFromTimestamp(time() + $cacheTime);
+			self::deleteInfoConnectors($lineId);
+			return new Result();
+		}
 
-			$data = Connector::getOutputInfoConnectorsLine($lineId);
+		return self::refreshInfoConnectors((int)$lineId);
+	}
+
+	/**
+	 * Method for update single connection info element for single line
+	 *
+	 * @param int $lineId
+	 * @return Result
+	 */
+	public static function refreshInfoConnectors(int $lineId): Result
+	{
+		$result = new Result();
+
+		if ($data = Connector::getOutputInfoConnectorsLine($lineId))
+		{
+			$result->setResult($data);
+
 			$dataEncoded = Json::encode($data);
 			$hashDataEncoded = md5($dataEncoded);
+			$timeExpires = DateTime::createFromTimestamp(time() + (int)Library::CACHE_TIME_INFO_CONNECTORS_LINE);
 
-			$connectorData = $connectorRes->fetch();
-
-			$result = InfoConnectorsTable::update(
-				$lineId,
-				[
-					'DATA' => $dataEncoded,
-					'EXPIRES' => $timeExpires,
-					'DATA_HASH' => $hashDataEncoded,
-				]
-			);
-
-			$cacheData = [
+			$connectorsInfo = [
 				'DATA' => $dataEncoded,
 				'EXPIRES' => $timeExpires,
 				'DATA_HASH' => $hashDataEncoded,
 			];
 
-			self::rewriteInfoConnectorsLineCache($lineId, $cacheData);
-
-			if ($connectorData['DATA_HASH'] === $hashDataEncoded)
+			$connectorRes = InfoConnectorsTable::getByPrimary($lineId);
+			$connectorsInfoCount = $connectorRes->getSelectedRowsCount();
+			if ($connectorsInfoCount)
 			{
-				$result = false;
+				$updateResult = InfoConnectorsTable::update($lineId, $connectorsInfo);
+				if (!$updateResult->isSuccess())
+				{
+					$result->addErrors($updateResult->getErrors());
+				}
 			}
+			else
+			{
+				$connectorsInfo['LINE_ID'] = $lineId;
+				$addResult = InfoConnectorsTable::add($connectorsInfo);
+				if (!$addResult->isSuccess())
+				{
+					$result->addErrors($addResult->getErrors());
+				}
+			}
+		}
+		else
+		{
+			self::deleteInfoConnectors($lineId);
 		}
 
 		return $result;
@@ -447,20 +463,14 @@ class InfoConnectors
 	 *
 	 * @param $lineId
 	 *
-	 * @return \Bitrix\Main\ORM\Data\DeleteResult|bool
+	 * @return bool
 	 */
 	public static function deleteInfoConnectors($lineId)
 	{
-		$connectorsInfoCount = self::getInfoConnectorsById($lineId)->getSelectedRowsCount();
-		$result = false;
+		$result = InfoConnectorsTable::delete($lineId);
+		self::clearInfoConnectorsLineCache($lineId);
 
-		if ($connectorsInfoCount == 1)
-		{
-			$result = InfoConnectorsTable::delete($lineId);
-			self::clearInfoConnectorsLineCache($lineId);
-		}
-
-		return $result;
+		return $result->isSuccess();
 	}
 
 	/**
@@ -469,7 +479,7 @@ class InfoConnectors
 	 * @param $lineId
 	 * @param $data
 	 */
-	public static function rewriteInfoConnectorsLineCache($lineId, $data)
+	private static function rewriteInfoConnectorsLineCache($lineId, $data)
 	{
 		$cache = Cache::createInstance();
 		$cache->clean($lineId, Library::CACHE_DIR_INFO_CONNECTORS_LINE);
@@ -483,7 +493,7 @@ class InfoConnectors
 	 *
 	 * @param $lineId
 	 */
-	public static function clearInfoConnectorsLineCache($lineId)
+	private static function clearInfoConnectorsLineCache($lineId)
 	{
 		$cache = Cache::createInstance();
 		$cache->clean($lineId, Library::CACHE_DIR_INFO_CONNECTORS_LINE);

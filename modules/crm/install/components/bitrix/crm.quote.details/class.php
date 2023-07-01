@@ -517,9 +517,9 @@ class CrmQuoteDetailsComponent extends FactoryBased
 			'title' => Loc::getMessage('CRM_QUOTE_DETAILS_EDITOR_MAIN_SECTION_TITLE'),
 			'type' => 'section',
 			'elements' => [
+				['name' => Item\Quote::FIELD_NAME_STAGE_ID],
 				['name' => Item\Quote::FIELD_NAME_NUMBER],
 				['name' => Item\Quote::FIELD_NAME_TITLE],
-				['name' => Item\Quote::FIELD_NAME_STAGE_ID],
 				['name' => EditorAdapter::FIELD_OPPORTUNITY],
 				['name' => EditorAdapter::FIELD_CLIENT],
 				['name' => Item\Quote::FIELD_NAME_MYCOMPANY_ID],

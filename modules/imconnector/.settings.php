@@ -26,4 +26,13 @@ return [
 		],
 		'readonly' => true,
 	],
+	'controllers' => [
+		'value' => [
+			'defaultNamespace' => '\\Bitrix\\ImConnector\\Controller',
+			'restIntegration' => [
+				'enabled' => true,
+			]
+		],
+		'readonly' => true,
+	],
 ];

@@ -4,9 +4,12 @@
 
 jn.define('crm/entity-tab/type', (require, exports, module) => {
 	const { TypeName } = require('crm/type');
-	const { Deal } = require('crm/entity-tab/type/deal');
-	const { Contact } = require('crm/entity-tab/type/contact');
-	const { Company } = require('crm/entity-tab/type/company');
+	const { Deal } = require('crm/entity-tab/type/entities/deal');
+	const { Contact } = require('crm/entity-tab/type/entities/contact');
+	const { Company } = require('crm/entity-tab/type/entities/company');
+	const { Lead } = require('crm/entity-tab/type/entities/lead');
+	const { SmartInvoice } = require('crm/entity-tab/type/entities/smart-invoice');
+	const { Quote } = require('crm/entity-tab/type/entities/quote');
 
 	/**
 	 * @class TypeFactory
@@ -50,6 +53,21 @@ jn.define('crm/entity-tab/type', (require, exports, module) => {
 				return new Company(params);
 			}
 
+			if (entityTypeName === TypeName.Lead)
+			{
+				return new Lead(params);
+			}
+
+			if (entityTypeName === TypeName.SmartInvoice)
+			{
+				return new SmartInvoice(params);
+			}
+
+			if (entityTypeName === TypeName.Quote)
+			{
+				return new Quote(params);
+			}
+
 			// @todo for debug, may remove later
 			console.error(`Entity type name: ${entityTypeName} not known`);
 
@@ -58,5 +76,4 @@ jn.define('crm/entity-tab/type', (require, exports, module) => {
 	}
 
 	module.exports = { TypeFactory };
-
 });

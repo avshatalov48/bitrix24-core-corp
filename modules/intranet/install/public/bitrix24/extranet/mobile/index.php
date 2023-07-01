@@ -8,10 +8,7 @@ AddEventHandler("blog", "BlogImageSize", "ResizeMobileLogImages", 100, $_SERVER[
 if (IsModuleInstalled("bitrix24"))
 	GetGlobalID();
 
-if (
-	$_POST["ACTION"] == "ADD_POST"
-	|| $_POST["ACTION"] == "EDIT_POST"
-)
+if (isset($_POST["ACTION"]) && ($_POST["ACTION"] == "ADD_POST" || $_POST["ACTION"] == "EDIT_POST"))
 {
 	function LocalRedirectHandler(&$url)
 	{
@@ -84,11 +81,11 @@ if (
 
 		if (!$bSuccess)
 		{
-			echo ($_POST["response_type"] == "json" ? CUtil::PhpToJSObject(array("error" => "*")) : "*");
+			echo (isset($_POST["response_type"]) && $_POST["response_type"] == "json" ? CUtil::PhpToJSObject(array("error" => "*")) : "*");
 		}
 		else
 		{
-			echo ($_POST["response_type"] == "json" ? CUtil::PhpToJSObject(array("text" => $postText)) : $postText);
+			echo (isset($_POST["response_type"]) && $_POST["response_type"] == "json" ? CUtil::PhpToJSObject(array("text" => $postText)) : $postText);
 		}
 
 		die();
@@ -97,12 +94,12 @@ if (
 	$LocalRedirectHandlerId = AddEventHandler('main', 'OnBeforeLocalRedirect', "LocalRedirectHandler");
 
 	$APPLICATION->IncludeComponent("bitrix:socialnetwork.blog.post.edit", "mobile_empty", array(
-			"ID" => ($_POST["ACTION"] == "EDIT_POST" && intval($_POST["post_id"]) > 0 ? intval($_POST["post_id"]) : 0),	
-			"USER_ID" => ($_POST["ACTION"] == "EDIT_POST" && intval($_POST["post_user_id"]) > 0 ? intval($_POST["post_user_id"]) : $GLOBALS["USER"]->GetID()),
+			"ID" => (isset($_POST["ACTION"]) && $_POST["ACTION"] == "EDIT_POST" && isset($_POST["post_id"]) && intval($_POST["post_id"]) > 0 ? intval($_POST["post_id"]) : 0),
+			"USER_ID" => (isset($_POST["ACTION"]) && $_POST["ACTION"] == "EDIT_POST" && isset($_POST["post_user_id"]) && intval($_POST["post_user_id"]) > 0 ? intval($_POST["post_user_id"]) : $GLOBALS["USER"]->GetID()),
 			"PATH_TO_POST_EDIT" => $APPLICATION->GetCurPageParam("success=Y&new_post_id=#post_id#"), // redirect when success
 			"PATH_TO_POST" => "/company/personal/user/".$GLOBALS["USER"]->GetID()."/blog/#post_id#/", // search index
 			"USE_SOCNET" => "Y",
-			"SOCNET_GROUP_ID" => intval($_REQUEST["group_id"]),
+			"SOCNET_GROUP_ID" => intval($_REQUEST["group_id"] ?? 0),
 			"GROUP_ID" => (IsModuleInstalled("bitrix24") ? $GLOBAL_BLOG_GROUP[SITE_ID] : false),
 			"MOBILE" => "Y"
 		),
@@ -113,40 +110,40 @@ if (
 	RemoveEventHandler('main', 'OnBeforeLocalRedirect', $LocalRedirectHandlerId);
 
 	$GLOBALS["APPLICATION"]->RestartBuffer();
-	echo ($_POST["response_type"] == "json" ? CUtil::PhpToJSObject(array("error" => "*")) : "*");
+	echo (isset($_POST["response_type"]) && $_POST["response_type"] == "json" ? CUtil::PhpToJSObject(array("error" => "*")) : "*");
 	die();
 }
 
 $filter = false;
-if ($_GET["favorites"] == "Y")
+if (isset($_GET["favorites"]) && $_GET["favorites"] == "Y")
 {
 	$filter = "favorites";
 }
-elseif ($_GET["my"] == "Y")
+elseif (isset($_GET["my"]) && $_GET["my"] == "Y")
 {
 	$filter = "my";
 }
-elseif ($_GET["important"] == "Y")
+elseif (isset($_GET["important"]) && $_GET["important"] == "Y")
 {
 	$filter = "important";
 }
-elseif ($_GET["work"] == "Y")
+elseif (isset($_GET["work"]) && $_GET["work"] == "Y")
 {
 	$filter = "work";
 }
-elseif ($_GET["bizproc"] == "Y")
+elseif (isset($_GET["bizproc"]) && $_GET["bizproc"] == "Y")
 {
 	$filter = "bizproc";
 }
-elseif ($_GET["blog"] == "Y")
+elseif (isset($_GET["blog"]) && $_GET["blog"] == "Y")
 {
 	$filter = "blog";
 }
 
 ?><?$APPLICATION->IncludeComponent("bitrix:mobile.socialnetwork.log.ex", ".default", array(
-		"GROUP_ID" => intval($_GET["group_id"]),
-		"LOG_ID" => intval($_GET["detail_log_id"]),
-		"FAVORITES" => ($_GET["favorites"] == "Y" ? "Y" : "N"),
+		"GROUP_ID" => intval($_GET["group_id"] ?? 0),
+		"LOG_ID" => intval($_GET["detail_log_id"] ?? 0),
+		"FAVORITES" => (isset($_GET["favorites"]) && $_GET["favorites"] == "Y" ? "Y" : "N"),
 		"FILTER" => $filter,
 		"CREATED_BY_ID" => (isset($_GET["created_by_id"]) && intval($_GET["created_by_id"]) > 0 ? intval($_GET["created_by_id"]) : false),
 		"PATH_TO_LOG_ENTRY" => SITE_DIR."mobile/log/?detail_log_id=#log_id#",
@@ -160,11 +157,16 @@ elseif ($_GET["blog"] == "Y")
 		'PATH_TO_TASKS_SNM_ROUTER' => SITE_DIR.'mobile/tasks/snmrouter/'
 			. '?routePage=__ROUTE_PAGE__'
 			. '&USER_ID=#USER_ID#'
-			. '&GROUP_ID=' . (int) $_GET['group_id']
+			. '&GROUP_ID=' . ($_GET['group_id'] ?? 0)
 			. '&LIST_MODE=TASKS_FROM_GROUP',
 		"SET_LOG_CACHE" => "Y",
 		"IMAGE_MAX_WIDTH" => 550,
-		"DATE_TIME_FORMAT" => ((intval($_GET["detail_log_id"]) > 0 || $_REQUEST["ACTION"] == "CONVERT") ? "j F Y G:i" : ""),
+		"DATE_TIME_FORMAT" =>
+			(isset($_GET["detail_log_id"]) && intval($_GET["detail_log_id"]) > 0)
+			|| (isset($_REQUEST["ACTION"]) && $_REQUEST["ACTION"] == "CONVERT")
+				? "j F Y G:i"
+				: ""
+			,
 		"CHECK_PERMISSIONS_DEST" => "N",
 	),
 	false,

@@ -1,19 +1,33 @@
 (() => {
+	const require = (ext) => jn.require(ext);
 
-	const { merge } = jn.require('utils/object');
-	const { CounterView } = jn.require('layout/ui/counter-view');
+	const { AnalyticsLabel } = require('analytics-label');
+	const { CounterView } = require('layout/ui/counter-view');
+	const { chevronRight } = require('assets/common');
+	const { Badge } = require('layout/ui/context-menu/item/badge');
+	const { get, mergeImmutable } = require('utils/object');
+	const { changeFillColor } = require('utils/svg');
+	const { Type } = require('type');
+
+	const TINT_COLOR = '#6a737f';
 
 	const TYPE_BUTTON = 'button';
 	const TYPE_LAYOUT = 'layout';
 	const TYPE_CANCEL = 'cancel';
 
+	const WARNING_TYPE = 'warning';
+
 	const ImageAfterTypes = {
 		WEB: 'web',
+		LOCK: 'lock',
 	};
 
 	const svgIcons = {
 		[ImageAfterTypes.WEB]: {
-			content: `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3.93726 0.9375H6.00552V3.18574H4.1855C3.63321 3.18574 3.1855 3.63346 3.1855 4.18574V11.8122C3.1855 12.3645 3.63321 12.8122 4.1855 12.8122H11.812C12.3643 12.8122 12.812 12.3645 12.812 11.8122V10.5903H15.0624V12.0627C15.0624 13.7195 13.7193 15.0627 12.0624 15.0627H3.93725C2.2804 15.0627 0.937256 13.7195 0.937256 12.0627V3.9375C0.937256 2.28064 2.2804 0.9375 3.93726 0.9375Z" fill="#B8BFC9"/><path d="M8.98799 1.66387C8.799 1.47488 8.93285 1.15174 9.20012 1.15174H13.8782C14.4305 1.15174 14.8782 1.59945 14.8782 2.15174V6.82982C14.8782 7.09709 14.5551 7.23094 14.3661 7.04195L12.3898 5.06566L7.89355 9.56189C7.69829 9.75715 7.38171 9.75715 7.18644 9.56189L6.34414 8.71959C6.14888 8.52433 6.14888 8.20775 6.34414 8.01248L10.8404 3.51625L8.98799 1.66387Z" fill="#B8BFC9"/></svg>`,
+			content: `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3.93726 0.9375H6.00552V3.18574H4.1855C3.63321 3.18574 3.1855 3.63346 3.1855 4.18574V11.8122C3.1855 12.3645 3.63321 12.8122 4.1855 12.8122H11.812C12.3643 12.8122 12.812 12.3645 12.812 11.8122V10.5903H15.0624V12.0627C15.0624 13.7195 13.7193 15.0627 12.0624 15.0627H3.93725C2.2804 15.0627 0.937256 13.7195 0.937256 12.0627V3.9375C0.937256 2.28064 2.2804 0.9375 3.93726 0.9375Z" fill="#bdc1c6"/><path d="M8.98799 1.66387C8.799 1.47488 8.93285 1.15174 9.20012 1.15174H13.8782C14.4305 1.15174 14.8782 1.59945 14.8782 2.15174V6.82982C14.8782 7.09709 14.5551 7.23094 14.3661 7.04195L12.3898 5.06566L7.89355 9.56189C7.69829 9.75715 7.38171 9.75715 7.18644 9.56189L6.34414 8.71959C6.14888 8.52433 6.14888 8.20775 6.34414 8.01248L10.8404 3.51625L8.98799 1.66387Z" fill="#bdc1c6"/></svg>`,
+		},
+		[ImageAfterTypes.LOCK]: {
+			content: `<svg width="28" height="29" viewBox="0 0 28 29" fill="none" xmlns="http://www.w3.org/2000/svg"><g opacity="0.8"><path fill-rule="evenodd" clip-rule="evenodd" d="M14.17 18.4443V20.3019H12.6987V18.4443C12.4339 18.2285 12.2644 17.8989 12.2644 17.5293C12.2644 16.8792 12.7882 16.3522 13.4344 16.3522C14.0804 16.3522 14.6043 16.8792 14.6043 17.5293C14.6043 17.8989 14.4348 18.2285 14.17 18.4443ZM10.2313 10.8976C10.2313 9.11768 11.6653 7.67481 13.4343 7.67481C15.2033 7.67481 16.6374 9.11768 16.6374 10.8976V13.6219H10.2313V10.8976ZM18.3301 13.6219V10.8976C18.3301 8.17704 16.1382 5.97168 13.4343 5.97168C10.7305 5.97168 8.53854 8.17704 8.53854 10.8976V13.6219H7.05225V22.9508H19.8164V13.6219H18.3301Z" fill="#2FC6F6"/></g></svg>`,
 		},
 	};
 
@@ -31,41 +45,171 @@
 		{
 			super(props);
 
-			this.id = props.id;
-			this.parentId = props.parentId;
-			this.parent = props.parent;
-			this.title = props.title;
-			this.subtitle = props.subtitle;
-			this.label = props.label || null;
-			this.showActionLoader = BX.prop.getBoolean(props, 'showActionLoader', false);
-			this.isSelected = (props.isSelected || false);
-			this.showSelectedImage = (props.showSelectedImage || false);
-			this.isDisabled = (props.isDisabled || false);
-			this.sectionCode = (props.sectionCode || ContextMenuSection.getDefaultSectionName());
-			this.type = (props.type || TYPE_BUTTON);
-			this.data = (props.data || {});
-
-			// @todo check this. May need to be deleted as there are currently no examples of use
-			this.styles = (props.itemStyles || {});
-
-			this.updateItemHandler = props.updateItemHandler;
-			this.closeMenuHandler = props.closeHandler;
-
-			this.onClickCallback = props.onClickCallback;
-			this.onActiveCallback = (props.onActiveCallback || null);
-			this.onDisableClick = props.onDisableClick;
-			this.getParentWidget = (props.getParentWidget || null);
-
-			this.showIcon = props.showIcon !== undefined ? Boolean(props.showIcon) : Boolean(this.data.svgIcon);
-			this.largeIcon = props.largeIcon !== undefined ? Boolean(props.largeIcon) : true;
-			this.firstInSection = props.firstInSection !== undefined ? Boolean(props.firstInSection) : false;
-			this.lastInSection = props.lastInSection !== undefined ? Boolean(props.lastInSection) : false;
-
-			this.state.isProcessing = false;
-
-			this.isActive = props.isActive;
+			this.state = {
+				isProcessing: false,
+			};
 
 			this.handleSelectItem = this.handleSelectItem.bind(this);
+		}
+
+		get id()
+		{
+			return this.props.id;
+		}
+
+		get parentId()
+		{
+			return this.props.parentId;
+		}
+
+		get parent()
+		{
+			return this.props.parent;
+		}
+
+		get title()
+		{
+			return this.props.title;
+		}
+
+		get subtitle()
+		{
+			return this.props.subtitle;
+		}
+
+		get subtitleType()
+		{
+			return this.props.subtitleType;
+		}
+
+		get label()
+		{
+			return this.props.label;
+		}
+
+		get showArrow()
+		{
+			return this.props.showArrow;
+		}
+
+		get showActionLoader()
+		{
+			return BX.prop.getBoolean(this.props, 'showActionLoader', false);
+		}
+
+		get isCustomIconColor()
+		{
+			if (this.type === TYPE_CANCEL)
+			{
+				return true;
+			}
+
+			return BX.prop.getBoolean(this.props, 'isCustomIconColor', false);
+		}
+
+		get isSelected()
+		{
+			return BX.prop.getBoolean(this.props, 'isSelected', false);
+		}
+
+		get showSelectedImage()
+		{
+			return BX.prop.getBoolean(this.props, 'showSelectedImage', false);
+		}
+
+		get isDisabled()
+		{
+			return BX.prop.getBoolean(this.props, 'isDisabled', false);
+		}
+
+		get sectionCode()
+		{
+			return this.props.sectionCode || ContextMenuSection.getDefaultSectionName();
+		}
+
+		get type()
+		{
+			return this.props.type || TYPE_BUTTON;
+		}
+
+		get data()
+		{
+			return this.props.data || {};
+		}
+
+		get updateItemHandler()
+		{
+			return this.props.updateItemHandler;
+		}
+
+		get closeMenuHandler()
+		{
+			return this.props.closeHandler;
+		}
+
+		get onClickCallback()
+		{
+			return this.props.onClickCallback;
+		}
+
+		get onActiveCallback()
+		{
+			return this.props.onActiveCallback;
+		}
+
+		get onDisableClick()
+		{
+			return this.props.onDisableClick;
+		}
+
+		get getParentWidget()
+		{
+			return this.props.getParentWidget;
+		}
+
+		get showIcon()
+		{
+			return BX.prop.getBoolean(this.props, 'showIcon', Boolean(this.data.svgIcon));
+		}
+
+		get largeIcon()
+		{
+			return BX.prop.getBoolean(this.props, 'largeIcon', true);
+		}
+
+		get firstInSection()
+		{
+			return BX.prop.getBoolean(this.props, 'firstInSection', false);
+		}
+
+		get lastInSection()
+		{
+			return BX.prop.getBoolean(this.props, 'lastInSection', false);
+		}
+
+		get isActive()
+		{
+			return BX.prop.getBoolean(this.props, 'isActive', false);
+		}
+
+		get dimmed()
+		{
+			if (this.sectionCode === ContextMenuSection.getServiceSectionName())
+			{
+				return true;
+			}
+
+			return BX.prop.getBoolean(this.props, 'dimmed', false);
+		}
+
+		get isSemitransparent()
+		{
+			return BX.prop.getBoolean(this.props, 'isSemitransparent', false);
+		}
+
+		get analyticsLabel()
+		{
+			return BX.prop.getObject(this.props, 'analyticsLabel', null);
 		}
 
 		render()
@@ -76,23 +220,17 @@
 			}
 
 			const { id, testId } = this.props;
-			const isService = this.sectionCode === ContextMenuSection.getServiceSectionName();
+
+			const containerStyle = get(this.props, 'data.style.container', {});
+			const itemStyle = get(this.props, 'data.style.item', {});
 
 			return View(
 				{
+					style: mergeImmutable(styles.wrapper(this.dimmed), containerStyle),
 					testId: `${testId || ""}_${id}`,
-					style: styles.view(this.firstInSection, this.lastInSection, isService),
 					onClick: this.handleSelectItem,
 				},
-				View(
-					{
-						style: {
-							...styles.selectedView(this.isSelected, isService),
-							...(this.styles.selectedView || {}),
-						},
-					},
-					...this.renderByType(),
-				),
+				...this.renderByType(itemStyle),
 			);
 		}
 
@@ -129,6 +267,15 @@
 						parent: this.parent || null,
 					},
 				);
+
+				if (Type.isPlainObject(this.analyticsLabel))
+				{
+					AnalyticsLabel.send({
+						event: 'context-menu-click',
+						id: this.id,
+						...this.analyticsLabel,
+					});
+				}
 
 				if (!(promise instanceof Promise))
 				{
@@ -180,29 +327,23 @@
 			);
 		}
 
-		renderByType()
+		renderByType(customStyle = {})
 		{
-			let imageContainer = null;
-			let imageAfterContainer = null;
-			let labelContainer = null;
-			let title = null;
-			let subtitle = null;
-			let selectedImage = null;
-
-			const renderStyles = merge(
-				{},
-				styles,
-				this.styles,
-			);
-
-			const hasLabel = Boolean(this.label);
+			let imageContainer;
+			let imageAfterContainer;
+			let labelContainer;
+			let title;
+			let subtitle;
+			let selectedImage;
+			let arrowImage;
+			let badgeContainer;
 
 			if (this.type === TYPE_CANCEL)
 			{
 				title = Text({
 					style: {
-						...renderStyles.title(this.isActive, hasLabel),
-						...renderStyles.cancel,
+						...styles.title(this.isActive),
+						...styles.cancel,
 					},
 					text: this.title || BX.message('CONTEXT_MENU_CANCEL'),
 					numberOfLines: 1,
@@ -216,15 +357,17 @@
 			else
 			{
 				title = Text({
-					style: renderStyles.title(this.isActive, hasLabel),
+					style: styles.title(!this.isSemitransparent),
 					text: this.title,
 					numberOfLines: 1,
 					ellipsize: 'end',
 				});
 				if (this.subtitle)
 				{
+					const subtitleStyle = get(customStyle, 'subtitle', {});
+
 					subtitle = Text({
-						style: renderStyles.subtitle(hasLabel),
+						style: styles.subtitle(this.subtitleType, subtitleStyle),
 						text: this.subtitle,
 						numberOfLines: 1,
 						ellipsize: 'end',
@@ -236,37 +379,55 @@
 			{
 				imageContainer = View(
 					{
-						style: renderStyles.imageContainerOuter(this.isDisabled),
+						style: styles.imageContainerOuter(this.isSelected, this.dimmed, this.isTypeLayout()),
 					},
-					Loader({
-						style: {
-							width: 25,
-							height: 25,
-							marginLeft: 2,
+					View(
+						{
+							style: styles.imageContainerInner(this.isDisabled),
 						},
-						tintColor: '#000000',
-						animating: true,
-						size: 'small',
-					}),
+						Loader({
+							style: {
+								width: 25,
+								height: 25,
+							},
+							tintColor: '#000000',
+							animating: true,
+							size: 'small',
+						}),
+					),
 				);
 			}
 			else if (this.showIcon)
 			{
+				const { imgUri } = this.data;
+				let { svgIcon } = this.data;
+				let tintColor;
+
+				if (!this.isCustomIconColor)
+				{
+					tintColor = TINT_COLOR;
+
+					// Android can't change color of inline svg icons, only uri
+					if (svgIcon && Application.getPlatform() === 'android')
+					{
+						svgIcon = changeFillColor(svgIcon, TINT_COLOR);
+					}
+				}
+
 				imageContainer = View(
 					{
-						style: renderStyles.imageContainerOuter(this.isDisabled),
+						style: styles.imageContainerOuter(this.isSelected, this.dimmed, this.isTypeLayout()),
 					},
 					View(
 						{
-							style: renderStyles.imageContainerInner,
+							style: styles.imageContainerInner(this.isDisabled),
 						},
 						Image({
-							uri: this.data.imgUri || null,
-							style: renderStyles.icon(this.largeIcon),
-							resizeMode: this.data.imgUri ? 'contain' : 'center',
-							svg: {
-								content: this.data.svgIcon || null,
-							},
+							uri: imgUri,
+							style: styles.icon(this.largeIcon),
+							resizeMode: imgUri ? 'contain' : 'center',
+							tintColor,
+							svg: { content: svgIcon },
 						}),
 					),
 				);
@@ -283,16 +444,16 @@
 				{
 					imageAfterContainer = View(
 						{
-							style: renderStyles.imageAfterContainerOuter,
+							style: styles.imageAfterContainerOuter,
 						},
 						View(
 							{
-								style: renderStyles.imageAfterContainerInner,
+								style: styles.imageAfterContainerInner,
 							},
 							Image({
 								style: {
-									width: 15,
-									height: 15,
+									width: 18,
+									height: 18,
 								},
 								resizeMode: 'center',
 								svg: svgIconAfter,
@@ -319,7 +480,7 @@
 						style: {
 							width: 20,
 							height: 15,
-							marginRight: 23,
+							marginRight: 15,
 							opacity: this.isDisabled ? 0.4 : 1,
 						},
 						svg: {
@@ -329,35 +490,94 @@
 				);
 			}
 
+			if (this.showArrow)
+			{
+				arrowImage = Image(
+					{
+						style: {
+							width: 24,
+							height: 24,
+							marginRight: 6,
+						},
+						svg: {
+							content: chevronRight(),
+						},
+					},
+				);
+			}
+
+			if (Array.isArray(this.props.badges) && this.props.badges.length)
+			{
+				const items = [];
+				this.props.badges.forEach((params) => items.push(new Badge(params)));
+
+				badgeContainer = View({
+					style: {
+						flexDirection: 'row',
+					},
+				}, ...items);
+			}
+
 			return [
 				imageContainer,
 				View(
 					{
-						style: renderStyles.button(!this.lastInSection, this.isTypeLayout()),
+						style: styles.divider(this.hasAnyLeftIcon(), this.isSelected, this.dimmed, this.lastInSection, this.isTypeLayout()),
+					},
+				),
+				View(
+					{
+						style: styles.container(this.lastInSection),
 					},
 					View(
 						{
-							style: {
-								flexDirection: 'row',
-								opacity: this.isDisabled ? 0.4 : 1,
-							},
+							style: styles.selectedView(this.isSelected, this.dimmed),
 						},
 						View(
 							{
-								style: {
-									flexDirection: 'column',
-									justifyContent: 'center',
-									flexShrink: 2,
-								},
+								style: styles.button(!this.lastInSection, this.isTypeLayout()),
 							},
-							title,
-							subtitle,
+							View(
+								{
+									style: {
+										flexDirection: 'row',
+										alignItems: 'center',
+										opacity: this.isDisabled ? 0.4 : 1,
+										flex: 1,
+										justifyContent: 'space-between',
+										flexShrink: 2,
+									},
+								},
+								View(
+									{
+										style: {
+											flexDirection: 'row',
+											flexShrink: 2,
+											justifyContent: 'center',
+											alignItems: 'center',
+										},
+									},
+									View(
+										{
+											style: {
+												flexDirection: 'column',
+												justifyContent: 'center',
+												flexShrink: 2,
+											},
+										},
+										title,
+										subtitle,
+									),
+									badgeContainer,
+									imageAfterContainer,
+								),
+								labelContainer,
+							),
 						),
-						imageAfterContainer,
-						labelContainer,
+						selectedImage,
+						arrowImage,
 					),
 				),
-				selectedImage,
 			];
 		}
 
@@ -383,83 +603,132 @@
 		{
 			return TYPE_CANCEL;
 		}
+
+		hasAnyLeftIcon()
+		{
+			return (this.showActionLoader && this.isProcessing() || this.showIcon);
+		}
 	}
 
 	const styles = {
 		nonSelectedColor: (isService) => isService ? '#fbfbfc' : '#ffffff',
-		view: (showTopPadding, showBottomPadding, isService) => {
-			return {
-				backgroundColor: styles.nonSelectedColor(isService),
-				paddingHorizontal: 4,
-				paddingTop: (showTopPadding && !showBottomPadding ? 4 : 0),
-				paddingBottom: (showBottomPadding && !showTopPadding ? 4 : 0),
-			};
-		},
-		selectedView: (isSelected, isService) => {
+		wrapper: (isService) => {
 			return {
 				flexDirection: 'row',
 				alignItems: 'center',
-				paddingLeft: 15,
-				backgroundColor: (isSelected ? '#d7f4fd' : styles.nonSelectedColor(isService)),
-				borderRadius: 10,
+				backgroundColor: styles.nonSelectedColor(isService),
+			};
+		},
+		container: (isLast) => {
+			return {
+				justifyContent: 'center',
+				alignItems: 'center',
+				borderBottomColor: (!isLast ? '#edeef0' : '#00ffffff'),
+				borderBottomWidth: 1,
+				padding: 4,
+				paddingBottom: 3,
+				paddingLeft: 0,
+				flex: 1,
+				flexDirection: 'row',
+			};
+		},
+		divider: (hasAnyLeftIcon, isSelected, isService, isLastInSection, autoHeight = false) => {
+			const dividerStyles = {
+				backgroundColor: (isSelected && !isService ? '#d3f4ff' : null),
+				borderBottomLeftRadius: hasAnyLeftIcon ? 0 : 8,
+				borderTopLeftRadius: hasAnyLeftIcon ? 0 : 8,
+				width: hasAnyLeftIcon ? 0 : 11,
+				marginLeft: hasAnyLeftIcon ? 0 : 4,
+				borderBottomColor: (!isLastInSection ? '#edeef0' : '#00ffffff'),
+			};
+
+			if (!autoHeight)
+			{
+				dividerStyles.height = 50;
+			}
+
+			return dividerStyles;
+
+		},
+		selectedView: (isSelected, isService) => {
+			return {
+				flex: 1,
+				flexDirection: 'row',
+				justifyContent: 'center',
+				alignItems: 'center',
+				backgroundColor: (isSelected && !isService ? '#d3f4ff' : null),
+				borderTopRightRadius: 8,
+				borderBottomRightRadius: 8,
 			};
 		},
 		button: (showBorderBottom, autoHeight = false) => {
 			const styles = {
-				borderBottomColor: (showBorderBottom ? '#ebebeb' : '#00ffffff'),
-				borderBottomWidth: 1,
-				borderTopColor: '#00ffffff',
-				borderTopWidth: 1,
-				paddingTop: 15,
-				paddingBottom: 15,
-				paddingRight: 10,
 				flex: 1,
 				justifyContent: 'center',
 			};
 			if (!autoHeight)
 			{
-				styles.height = 60;
+				styles.height = 50;
 			}
 
 			return styles;
 		},
-		title: (isActive, hasLabel) => {
-			return {
-				fontSize: 18,
-				color: (isActive ? '#333333' : '#d5dce2'),
-				marginRight: (hasLabel ? 30 : 0),
-			};
-		},
-		subtitle: (hasLabel) => {
-			return {
+		title: (isSemitransparent) => ({
+			fontSize: 18,
+			color: isSemitransparent ? '#333333' : '#6a737f',
+		}),
+		subtitle: (type, subtitleStyle = {}) => {
+			let color = '#bdc1c6';
+
+			if (type === WARNING_TYPE)
+			{
+				color = '#c48300';
+			}
+
+			return mergeImmutable({
 				fontSize: 14,
-				color: '#b8bfc9',
-				marginRight: (hasLabel ? 30 : 0),
-			};
+				color,
+			}, subtitleStyle);
 		},
 		cancel: {
 			color: '#959ca4',
 		},
-		imageContainerOuter: (isDisabled) => {
+		imageContainerOuter: (isSelected, isService, autoHeight = false) => {
+			const imageStyles = {
+				justifyContent: 'center',
+				alignContent: 'center',
+
+				backgroundColor: (isSelected && !isService ? '#d3f4ff' : null),
+
+				marginTop: 4,
+				marginLeft: 4,
+				marginBottom: 4,
+				paddingLeft: 11,
+				paddingRight: 15,
+				borderTopLeftRadius: 8,
+				borderBottomLeftRadius: 8,
+			};
+
+			if (!autoHeight)
+			{
+				imageStyles.height = 50;
+			}
+
+			return imageStyles;
+		},
+		imageContainerInner: (isDisabled) => {
 			return {
 				width: 30,
 				height: 30,
-				marginRight: 15,
-				justifyContent: 'center',
-				flexDirection: 'column',
-				alignContent: 'center',
 				opacity: (isDisabled ? 0.4 : 1),
+				justifyContent: 'center',
+				alignItems: 'center',
 			};
-		},
-		imageContainerInner: {
-			flexDirection: 'row',
-			justifyContent: 'center',
 		},
 		imageAfterContainerOuter: {
 			width: 30,
 			height: 30,
 			justifyContent: 'center',
-			flexDirection: 'column',
 			alignContent: 'center',
 		},
 		imageAfterContainerInner: {
@@ -473,9 +742,7 @@
 			};
 		},
 		labelContainer: {
-			top: 1,
-			right: 14,
-			position: 'absolute',
+			marginHorizontal: 6,
 		},
 	};
 

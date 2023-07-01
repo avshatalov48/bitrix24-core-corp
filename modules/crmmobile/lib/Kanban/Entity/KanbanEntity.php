@@ -102,6 +102,7 @@ abstract class KanbanEntity extends Entity
 
 		$currentPage = ($this->pageNavigation ? $this->pageNavigation->getCurrentPage() : 1);
 		$itemsResult = $kanban->getItems($filter, $currentPage, ['filter' => $filterParams]);
+		$this->prepareItemsResult($itemsResult['ITEMS'], $kanban);
 
 		$entityAttributes = $this->getEntityAttributes($itemsResult['ITEMS']);
 		$this->prepareActivityCounters($itemsResult['ITEMS']);
@@ -123,12 +124,14 @@ abstract class KanbanEntity extends Entity
 			$items[] = $this->buildItemDto($preparedItem);
 		}
 
-		$restrictedValueClickCallback = $itemsResult['RESTRICTED_VALUE_CLICK_CALLBACK']; // @todo need?
-
 		return [
 			'items' => $items,
-			'restrictedValueClickCallback' => $restrictedValueClickCallback,
 		];
+	}
+
+	protected function prepareItemsResult(array &$items, Kanban $kanban): void
+	{
+
 	}
 
 	public function prepareFilter(\Bitrix\Crm\Kanban\Entity $entity): void
@@ -250,7 +253,7 @@ abstract class KanbanEntity extends Entity
 
 		if ($item['return'])
 		{
-			return Loc::getMessage('M_CRM_KANBAN_ENTITY_REPEATED_' . $this->getEntityType());
+			return Loc::getMessage('M_CRM_KANBAN_ENTITY_REPEATED_2_' . $this->getEntityType());
 		}
 
 		return '';

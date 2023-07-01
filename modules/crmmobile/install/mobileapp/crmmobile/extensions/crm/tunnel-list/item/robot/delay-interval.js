@@ -11,7 +11,7 @@ jn.define('crm/tunnel-list/item/delay-interval', (require, exports, module) => {
 	const DelayIntervalBasis = {
 		CurrentDate: '{=System:Date}',
 		CurrentDateTime: '{=System:Now}',
-		CurrentDateTimeLocal: '{=System:NowLocal}'
+		CurrentDateTimeLocal: '{=System:NowLocal}',
 	};
 
 	class DelayInterval
@@ -26,18 +26,35 @@ jn.define('crm/tunnel-list/item/delay-interval', (require, exports, module) => {
 			this.localTime = false;
 			if (BX.type.isPlainObject(params))
 			{
-				if (params['type'])
-					this.setType(params['type']);
-				if (params['value'])
-					this.setValue(params['value']);
-				if (params['valueType'])
-					this.setValueType(params['valueType']);
-				if (params['basis'])
-					this.setBasis(params['basis']);
-				if (params['workTime'])
-					this.setWorkTime(params['workTime']);
-				if (params['localTime'])
-					this.setLocalTime(params['localTime']);
+				if (params.type)
+				{
+					this.setType(params.type);
+				}
+
+				if (params.value)
+				{
+					this.setValue(params.value);
+				}
+
+				if (params.valueType)
+				{
+					this.setValueType(params.valueType);
+				}
+
+				if (params.basis)
+				{
+					this.setBasis(params.basis);
+				}
+
+				if (params.workTime)
+				{
+					this.setWorkTime(params.workTime);
+				}
+
+				if (params.localTime)
+				{
+					this.setLocalTime(params.localTime);
+				}
 			}
 		}
 
@@ -56,14 +73,16 @@ jn.define('crm/tunnel-list/item/delay-interval', (require, exports, module) => {
 
 		setValue(value)
 		{
-			value = parseInt(value);
+			value = parseInt(value, 10);
 			this.value = value >= 0 ? value : 0;
 		}
 
 		setValueType(valueType)
 		{
 			if (valueType !== 'i' && valueType !== 'h' && valueType !== 'd')
+			{
 				valueType = 'i';
+			}
 
 			this.valueType = valueType;
 		}
@@ -71,7 +90,9 @@ jn.define('crm/tunnel-list/item/delay-interval', (require, exports, module) => {
 		setBasis(basis)
 		{
 			if (BX.type.isNotEmptyString(basis))
+			{
 				this.basis = basis;
+			}
 		}
 
 		setWorkTime(flag)

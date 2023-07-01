@@ -622,14 +622,26 @@ class PaySystem
 		if (Main\ModuleManager::isModuleInstalled('bitrix24'))
 		{
 			$zone = \CBitrix24::getPortalZone();
+			return $zone;
 		}
-		else
+
+		$iterator = Main\Localization\LanguageTable::getList([
+			'select' => ['ID'],
+			'filter' => ['=DEF' => 'Y', '=ACTIVE' => 'Y'],
+		]);
+		$row = $iterator->fetch();
+		$zone = $row['ID'];
+		if ($zone !== null)
 		{
-			$iterator = Main\Localization\LanguageTable::getList([
+			return $zone;
+		}
+
+		if (defined('LANGUAGE_ID'))
+		{
+			$row = Main\Localization\LanguageTable::getList([
 				'select' => ['ID'],
-				'filter' => ['=DEF' => 'Y', '=ACTIVE' => 'Y'],
-			]);
-			$row = $iterator->fetch();
+				'filter' => ['=LID' => LANGUAGE_ID],
+			])->fetch();
 			$zone = $row['ID'];
 		}
 

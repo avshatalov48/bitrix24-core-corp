@@ -23,6 +23,7 @@ use Bitrix\Main\ORM\Fields\FieldTypeMask;
 use Bitrix\Main\ORM\Fields\FloatField;
 use Bitrix\Main\ORM\Fields\IntegerField;
 use Bitrix\Main\ORM\Fields\UserTypeField;
+use Bitrix\Main\ORM\Fields\UserTypeUtsMultipleField;
 use Bitrix\Main\ORM\Objectify\Collection;
 use Bitrix\Main\ORM\Objectify\EntityObject;
 use Bitrix\Main\ORM\Objectify\Values;
@@ -466,14 +467,26 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 
 	public function getDefaultValue(string $commonFieldName)
 	{
+		$implementation = $this->getImplementation($commonFieldName);
+		if ($implementation)
+		{
+			return $implementation->getDefaultValue($commonFieldName);
+		}
+
 		if($this->hasFieldInEntityObject($commonFieldName))
 		{
 			$entityFieldName = $this->getEntityFieldNameByMap($commonFieldName);
 
 			$field = $this->entityObject->sysGetEntity()->getField($entityFieldName);
-			if($field instanceof ScalarField)
+
+			if ($field instanceof ScalarField)
 			{
 				return $field->getDefaultValue();
+			}
+
+			if ($field instanceof UserTypeField && $field->getValueField() instanceof ScalarField)
+			{
+				return $field->getValueField()->getDefaultValue();
 			}
 		}
 
@@ -741,10 +754,14 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 		{
 			$entityFieldNames[] = $this->getEntityFieldNameByMap(static::FIELD_NAME_OBSERVERS);
 		}
-		if ($this->hasField(static::FIELD_NAME_CONTACT_IDS))
+
+		/** @var string[][] $fromImplementation */
+		$fromImplementation = [];
+		foreach ($this->getAllImplementations() as $implementation)
 		{
-			$entityFieldNames[] = $this->getEntityFieldNameByMap(static::FIELD_NAME_CONTACT_IDS);
+			$fromImplementation[] = $implementation->getSerializableFieldNames();
 		}
+		$entityFieldNames = array_merge($entityFieldNames, ...$fromImplementation);
 
 		$data = $this->collectValues($entityFieldNames, $valuesType);
 
@@ -874,11 +891,7 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 		}
 
 		// if we set fm again from compatible data, new values will be duplicated
-		$changedValues = array_filter(
-			$this->getCompatibleData(Values::CURRENT),
-			fn($fieldName) => $fieldName !== static::FIELD_NAME_FM,
-			ARRAY_FILTER_USE_KEY,
-		);
+		$changedValues = $this->getCompatibleData(Values::CURRENT);
 
 		$entityFieldsToFill = $this->getEntityFieldNames(FieldTypeMask::SCALAR|FieldTypeMask::USERTYPE);
 		foreach ($this->getAllImplementations() as $implementation)
@@ -1663,6 +1676,7 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 	protected function setFromExternalValue(string $commonFieldName, $value): self
 	{
 		$factory = Container::getInstance()->getFactory($this->getEntityTypeId());
+		$field = null;
 		if ($factory)
 		{
 			$field = $factory->getFieldsCollection()->getField($commonFieldName);
@@ -1688,17 +1702,30 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 
 		if ($entityField instanceof ScalarField || $entityField instanceof UserTypeField)
 		{
-			if($entityField instanceof BooleanField && !is_bool($value))
+			$baseField = null;
+			if ($entityField instanceof UserTypeField)
+			{
+				$baseField = $entityField->getValueField();
+				if ($baseField instanceof UserTypeUtsMultipleField)
+				{
+					$baseField = $baseField->getUtmField();
+				}
+			}
+
+			$isFieldInstanceOf = fn(string $type) => ($entityField instanceof $type) || ($baseField instanceof $type);
+
+			if($isFieldInstanceOf(BooleanField::class) && !is_bool($value))
 			{
 				$value = ($value === 'Y');
 			}
-			if ($entityField instanceof DateField && is_string($value) && !DateTime::isCorrect($value))
+			if ($isFieldInstanceOf(DateField::class) && is_string($value) && !DateTime::isCorrect($value))
 			{
 				$value = null;
 			}
-			if ($entityField instanceof DatetimeField && is_string($value))
+
+			if ($isFieldInstanceOf(DatetimeField::class) && $field && !is_null($value))
 			{
-				$value = DateTime::createFromUserTime($value);
+				$value = $this->prepareExternalDateTimeValue($value, $field);
 			}
 
 			$this->set($commonFieldName, $value);
@@ -1713,6 +1740,57 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 		}
 
 		return $this;
+	}
+
+	private function prepareExternalDateTimeValue($value, Field $field)
+	{
+		if ($field->isMultiple())
+		{
+			$shouldTransformValue = is_array($value) && !empty(array_filter($value, 'is_string'));
+		}
+		else
+		{
+			$shouldTransformValue = is_string($value);
+		}
+
+		if (!$shouldTransformValue)
+		{
+			return $value;
+		}
+
+		$useTimezones = true;
+		if ($field->isUserField())
+		{
+			$userField = $field->getUserField();
+			if (isset($userField['SETTINGS']['USE_TIMEZONE']) && $userField['SETTINGS']['USE_TIMEZONE'] === 'N')
+			{
+				$useTimezones = false;
+			}
+		}
+
+		if (!$useTimezones)
+		{
+			// leave it as it is. ORM will handle it just fine
+			return $value;
+		}
+
+		if (is_array($value) && $field->isMultiple())
+		{
+			foreach ($value as &$singleValue)
+			{
+				if (is_string($singleValue))
+				{
+					$singleValue = DateTime::createFromUserTime($singleValue);
+				}
+			}
+			unset($singleValue);
+		}
+		elseif (is_string($value))
+		{
+			$value = DateTime::createFromUserTime($value);
+		}
+
+		return $value;
 	}
 
 	/**
@@ -1990,7 +2068,14 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 	{
 		$this->loadExpressionField($commonFieldName);
 
-		return $this->currentValues[$commonFieldName] ?? $this->actualValues[$commonFieldName] ?? null;
+		if (array_key_exists($commonFieldName, $this->currentValues))
+		{
+			return $this->currentValues[$commonFieldName];
+		}
+		else
+		{
+			return $this->actualValues[$commonFieldName] ?? null;
+		}
 	}
 
 	protected function setExpressionField(string $commonFieldName, $value): self

@@ -1,5 +1,8 @@
 <?php
+
 return [
-	'layout/ui/entity-editor/control/base',
-	'money',
+	'extensions' => [
+		'money',
+		'layout/ui/entity-editor/control/base',
+	],
 ];

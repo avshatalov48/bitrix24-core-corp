@@ -11,5 +11,5 @@ export type EntityCounterPanelOptions = {
 	withExcludeUsers: ?boolean,
 	filterLastPresetId: String,
 	filterLastPresetData: Array,
-	isNewCountersTourSeen: String
+	lockedCallback: String
 };

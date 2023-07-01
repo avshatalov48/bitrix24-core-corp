@@ -2,6 +2,7 @@
 
 use Bitrix\Crm\Integration\UI\EntitySelector\CountryProvider;
 use Bitrix\Crm\Integration\UI\EntitySelector\DynamicMultipleProvider;
+use Bitrix\Crm\Integration\UI\EntitySelector\TimelinePingProvider;
 
 return array(
 	'controllers' => array(
@@ -16,6 +17,7 @@ return array(
 				'\\Bitrix\\Crm\\Controller\\Status' => 'status',
 				'\\Bitrix\\Crm\\Controller\\Ads' => 'ads',
 				'\\Bitrix\\Crm\\Controller\\Mobile' => 'mobile',
+				'\\Bitrix\\Crm\\Controller\\Mail' => 'mail',
 			],
 			'restIntegration' => [
 				'enabled' => true,
@@ -107,6 +109,9 @@ return array(
 			],
 			'crm.service.converter.category' => [
 				'className' => '\\Bitrix\\Crm\\Service\\Converter\\Category',
+			],
+			'crm.service.converter.caseCache' => [
+				'className' => '\\Bitrix\\Crm\\Service\\Converter\\InMemoryCaseCache',
 			],
 			'crm.service.broker.user' => [
 				'className' => '\\Bitrix\\Crm\\Service\\Broker\\User',
@@ -353,7 +358,10 @@ return array(
 						\Bitrix\Main\Engine\CurrentUser::get()->getId()
 					];
 				},
-			]
+			],
+			'crm.activity.actcounterlighttimerepo' => [
+				'className' => \Bitrix\Crm\Activity\LightCounter\ActCounterLightTimeRepo::class,
+			],
 		],
 		'readonly' => true,
 	],
@@ -435,6 +443,13 @@ return array(
 					'provider' => [
 						'moduleId' => 'crm',
 						'className' => CountryProvider::class,
+					],
+				],
+				[
+					'entityId' => 'timeline_ping',
+					'provider' => [
+						'moduleId' => 'crm',
+						'className' => TimelinePingProvider::class,
 					],
 				],
 			],

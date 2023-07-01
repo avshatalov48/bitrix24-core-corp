@@ -6,11 +6,10 @@ use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main;
 use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UserField\Access\ActionDictionary;
 use Bitrix\Main\UserField\Access\Permission\UserFieldPermissionTable;
 use Bitrix\Main\UserField\Access\UserFieldAccessController;
-use Bitrix\Main\Localization\Loc;
-use CCrmSecurityHelper;
 use CSocNetLogDestination;
 
 Loc::loadMessages(__FILE__);
@@ -23,7 +22,6 @@ class VisibilityManager
 {
 	private static $isEnabled;
 	private static $userFieldAccessCodes = [];
-	private static $isAdmin = null;
 
 	/**
 	 * @return bool
@@ -61,21 +59,17 @@ class VisibilityManager
 	 */
 	public static function getNotAccessibleFields(int $entityTypeId, ?array $userAccessCodes = null): array
 	{
-		if (static::$isAdmin === null)
+		if ($userAccessCodes === null)
 		{
-			static::$isAdmin = Container::getInstance()->getUserPermissions()->isAdmin();
+			$userAccessCodes = self::getUserAccessCodes();
 		}
 
-		if (static::$isAdmin)
+		if (self::isAdmin($userAccessCodes))
 		{
 			return [];
 		}
 
 		$accessCodes = static::getUserFieldsAccessCodes($entityTypeId);
-		if ($userAccessCodes === null)
-		{
-			$userAccessCodes = self::getUserAccessCodes();
-		}
 
 		$excludedFields = [];
 		foreach ($accessCodes as $name => $item)
@@ -117,10 +111,14 @@ class VisibilityManager
 	/**
 	 * @return array
 	 */
-	private static function getUserAccessCodes(): array
+	final public static function getUserAccessCodes(?int $userId = null): array
 	{
-		$user = \CCrmSecurityHelper::getCurrentUser();
-		return $user->getAccessCodes();
+		if ($userId === null)
+		{
+			$userId = Container::getInstance()->getContext()->getUserId();
+		}
+
+		return Main\UserField\Access\Model\UserModel::createFromId($userId)->getAccessCodes();
 	}
 
 	/**
@@ -226,5 +224,18 @@ class VisibilityManager
 		}
 
 		return $result;
+	}
+
+	private static function isAdmin(array $userAccessCodes): bool
+	{
+		$userId = 0;
+
+		$codesWithUserId = preg_grep('#^U\d+$#' . BX_UTF_PCRE_MODIFIER, $userAccessCodes);
+		if (!empty($codesWithUserId))
+		{
+			$userId = (int)str_replace('U', '', array_shift($codesWithUserId));
+		}
+
+		return Container::getInstance()->getUserPermissions($userId)->isAdmin();
 	}
 }

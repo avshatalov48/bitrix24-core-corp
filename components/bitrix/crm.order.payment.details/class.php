@@ -1,18 +1,22 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 use Bitrix\Crm;
-use Bitrix\Crm\Restriction\RestrictionManager;
-use Bitrix\Main;
-use Bitrix\Main\Localization\Loc;
-use Bitrix\Sale\Internals\AccountNumberGenerator;
 use Bitrix\Crm\Binding\EntityBinding;
 use Bitrix\Crm\Component\ComponentError;
 use Bitrix\Crm\Component\EntityDetails\ComponentMode;
+use Bitrix\Main;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Sale\Internals\AccountNumberGenerator;
 
-if(!Main\Loader::includeModule('crm'))
+if (!Main\Loader::includeModule('crm'))
 {
 	ShowError(GetMessage('CRM_MODULE_NOT_INSTALLED'));
+
 	return;
 }
 
@@ -24,7 +28,6 @@ class CCrmOrderPaymentDetailsComponent extends Crm\Component\EntityDetails\BaseC
 
 	/** @var \Bitrix\Sale\Payment */
 	private  $orderPayment = null;
-
 
 	public function getEntityTypeID()
 	{
@@ -49,44 +52,46 @@ class CCrmOrderPaymentDetailsComponent extends Crm\Component\EntityDetails\BaseC
 
 	protected function getErrorMessage($error)
 	{
-		if($error === ComponentError::ENTITY_NOT_FOUND)
+		if ($error === ComponentError::ENTITY_NOT_FOUND)
 		{
 			return Loc::getMessage('CRM_ORDER_PAYMENT_NOT_FOUND');
 		}
-		if($error === self::COMPONENT_ERROR_EMPTY_ORDER_ID)
+
+		if ($error === self::COMPONENT_ERROR_EMPTY_ORDER_ID)
 		{
 			return Loc::getMessage('CRM_ORDER_PAYMENT_EMPTY_ORDER_ID');
 		}
+
 		return ComponentError::getMessage($error);
 	}
 
 	public function initializeParams(array $params)
 	{
-		foreach($params as $k => $v)
+		foreach ($params as $k => $v)
 		{
-			if($k === 'EXTRAS')
+			if ($k === 'EXTRAS')
 			{
 				$this->arParams[$k] = $v;
 			}
 
-			if(!is_string($v))
+			if (!is_string($v))
 			{
 				continue;
 			}
 
-			if($k === 'PATH_TO_PRODUCT_SHOW')
+			if ($k === 'PATH_TO_PRODUCT_SHOW')
 			{
 				$this->arResult['PATH_TO_PRODUCT_SHOW'] = $this->arParams['PATH_TO_PRODUCT_SHOW'] = $v;
 			}
-			elseif($k === 'PATH_TO_USER_PROFILE')
+			elseif ($k === 'PATH_TO_USER_PROFILE')
 			{
 				$this->arResult['PATH_TO_USER_PROFILE'] = $this->arParams['PATH_TO_USER_PROFILE'] = $v;
 			}
-			elseif($k === 'NAME_TEMPLATE')
+			elseif ($k === 'NAME_TEMPLATE')
 			{
 				$this->arResult['NAME_TEMPLATE'] = $this->arParams['NAME_TEMPLATE'] = $v;
 			}
-			elseif($k === 'ORDER_SHIPMENT_ID')
+			elseif ($k === 'ORDER_SHIPMENT_ID')
 			{
 				$this->arResult[$k] = $this->arParams[$k] = (int)$v;
 			}
@@ -95,7 +100,7 @@ class CCrmOrderPaymentDetailsComponent extends Crm\Component\EntityDetails\BaseC
 
 	public function loadOrderPayment()
 	{
-		if($this->entityID > 0 && $this->orderPayment === null)
+		if ($this->entityID > 0 && $this->orderPayment === null)
 		{
 			$this->orderPayment = Crm\Order\Manager::getPaymentObject($this->entityID);
 		}
@@ -113,10 +118,14 @@ class CCrmOrderPaymentDetailsComponent extends Crm\Component\EntityDetails\BaseC
 		global $APPLICATION;
 
 		//region Params
-		$this->arResult['ENTITY_ID'] = isset($this->arParams['~ENTITY_ID']) ? (int)$this->arParams['~ENTITY_ID'] : 0;
+		$this->arResult['ENTITY_ID'] = (int)($this->arParams['~ENTITY_ID'] ?? 0);
 
 		$this->arResult['PATH_TO_USER_PROFILE'] = $this->arParams['PATH_TO_USER_PROFILE'] =
-			CrmCheckPath('PATH_TO_USER_PROFILE', $this->arParams['PATH_TO_USER_PROFILE'], '/company/personal/user/#user_id#/');
+			CrmCheckPath(
+				'PATH_TO_USER_PROFILE',
+				$this->arParams['PATH_TO_USER_PROFILE'] ?? '',
+				'/company/personal/user/#user_id#/'
+			);
 
 		$this->arResult['DATA_FIELD_NAME'] = 'ORDER_PAYMENT_DATA';
 
@@ -126,18 +135,19 @@ class CCrmOrderPaymentDetailsComponent extends Crm\Component\EntityDetails\BaseC
 
 		$this->arResult['PATH_TO_ORDER_PAYMENT_SHOW'] = CrmCheckPath(
 			'PATH_TO_ORDER_PAYMENT_SHOW',
-			$this->arParams['PATH_TO_ORDER_PAYMENT_SHOW'],
+			$this->arParams['PATH_TO_ORDER_PAYMENT_SHOW'] ?? '',
 			$APPLICATION->GetCurPage().'?order_id=#payment_id#&show'
 		);
+
 		$this->arResult['PATH_TO_ORDER_PAYMENT_EDIT'] = CrmCheckPath(
 			'PATH_TO_ORDER_PAYMENT_EDIT',
-			$this->arParams['PATH_TO_ORDER_PAYMENT_EDIT'],
+			$this->arParams['PATH_TO_ORDER_PAYMENT_EDIT'] ?? '',
 			$APPLICATION->GetCurPage().'?payment_id=#order_id#&edit'
 		);
 
 		$this->arResult['PATH_TO_ORDER_CHECK_SHOW'] = CrmCheckPath(
 			'PATH_TO_ORDER_CHECK_DETAILS',
-			$this->arParams['PATH_TO_ORDER_CHECK_DETAILS'],
+			$this->arParams['PATH_TO_ORDER_CHECK_DETAILS'] ?? '',
 			$APPLICATION->GetCurPage().'?check_id=#check_id#&check&show'
 		);
 
@@ -153,13 +163,13 @@ class CCrmOrderPaymentDetailsComponent extends Crm\Component\EntityDetails\BaseC
 
 		$this->arResult['PATH_TO_PRODUCT_EDIT'] = CrmCheckPath(
 			'PATH_TO_PRODUCT_EDIT',
-			$this->arParams['PATH_TO_PRODUCT_EDIT'],
+			$this->arParams['PATH_TO_PRODUCT_EDIT'] ?? '',
 			$APPLICATION->GetCurPage().'?product_id=#product_id#&edit'
 		);
 
 		$this->arResult['PATH_TO_PRODUCT_SHOW'] = CrmCheckPath(
 			'PATH_TO_PRODUCT_SHOW',
-			$this->arParams['PATH_TO_PRODUCT_SHOW'],
+			$this->arParams['PATH_TO_PRODUCT_SHOW'] ?? '',
 			$APPLICATION->GetCurPage().'?product_id=#product_id#&show'
 		);
 
@@ -172,21 +182,23 @@ class CCrmOrderPaymentDetailsComponent extends Crm\Component\EntityDetails\BaseC
 			'PATH_TO_PRODUCT_SHOW' => $this->arResult['PATH_TO_PRODUCT_SHOW'],
 			'PATH_TO_USER_PROFILE' => $this->arResult['PATH_TO_USER_PROFILE'],
 			'NAME_TEMPLATE' => $this->arResult['NAME_TEMPLATE'],
-			'EXTRAS' => isset($this->arParams['EXTRAS']) ? $this->arParams['EXTRAS'] : false
+			'EXTRAS' => $this->arParams['EXTRAS'] ?? false
 		);
 
 		$this->arResult['EXTERNAL_CONTEXT_ID'] = $this->request->get('external_context_id');
-		if($this->arResult['EXTERNAL_CONTEXT_ID'] === null)
+
+		if ($this->arResult['EXTERNAL_CONTEXT_ID'] === null)
 		{
 			$this->arResult['EXTERNAL_CONTEXT_ID'] = $this->request->get('external_context');
-			if($this->arResult['EXTERNAL_CONTEXT_ID'] === null)
+
+			if ($this->arResult['EXTERNAL_CONTEXT_ID'] === null)
 			{
 				$this->arResult['EXTERNAL_CONTEXT_ID'] = '';
 			}
 		}
 
 		$this->arResult['ORIGIN_ID'] = $this->request->get('origin_id');
-		if($this->arResult['ORIGIN_ID'] === null)
+		if ($this->arResult['ORIGIN_ID'] === null)
 		{
 			$this->arResult['ORIGIN_ID'] = '';
 		}
@@ -200,11 +212,8 @@ class CCrmOrderPaymentDetailsComponent extends Crm\Component\EntityDetails\BaseC
 		$this->prepareEntityData();
 
 		//region GUID
-		$this->guid = $this->arResult['GUID'] = isset($this->arParams['GUID'])
-			? $this->arParams['GUID'] : "order_payment_{$this->entityID}_details";
-
-		$this->arResult['EDITOR_CONFIG_ID'] = isset($this->arParams['EDITOR_CONFIG_ID'])
-			? $this->arParams['EDITOR_CONFIG_ID'] : 'order_payment_details';
+		$this->guid = $this->arResult['GUID'] =  $this->arParams['GUID'] ?? "order_payment_{$this->entityID}_details";
+		$this->arResult['EDITOR_CONFIG_ID'] = $this->arParams['EDITOR_CONFIG_ID'] ?? 'order_payment_details';
 		//endregion
 
 		$this->arResult['ENABLE_PROGRESS_CHANGE'] = false;
@@ -220,15 +229,15 @@ class CCrmOrderPaymentDetailsComponent extends Crm\Component\EntityDetails\BaseC
 		//endregion
 
 		//region Page title
-		if($this->mode === ComponentMode::CREATION)
+		if ($this->mode === ComponentMode::CREATION)
 		{
 			$APPLICATION->SetTitle(Loc::getMessage('CRM_ORDER_PAYMENT_CREATION_PAGE_TITLE'));
 		}
-		elseif($this->mode === ComponentMode::COPING)
+		elseif ($this->mode === ComponentMode::COPING)
 		{
 			$APPLICATION->SetTitle(Loc::getMessage('CRM_ORDER_PAYMENT_COPY_PAGE_TITLE'));
 		}
-		elseif(!empty($this->entityData['TITLE']))
+		elseif (!empty($this->entityData['TITLE']))
 		{
 			$APPLICATION->SetTitle($this->entityData['TITLE']);
 		}
@@ -308,7 +317,7 @@ class CCrmOrderPaymentDetailsComponent extends Crm\Component\EntityDetails\BaseC
 		//region Tabs
 		$this->arResult['TABS'] = array();
 
-		if($this->entityID > 0)
+		if ($this->entityID > 0)
 		{
 			$licensePrefix = Main\Loader::IncludeModule("bitrix24") ? \CBitrix24::getLicensePrefix() : "";
 			if (!Main\ModuleManager::isModuleInstalled("bitrix24") || in_array($licensePrefix, array("ru", "ua")))
@@ -325,11 +334,11 @@ class CCrmOrderPaymentDetailsComponent extends Crm\Component\EntityDetails\BaseC
 								'CHECK_COUNT' => '20',
 								'OWNER_ID' => $this->entityID,
 								'OWNER_TYPE' => CCrmOwnerType::OrderPayment,
-								'PATH_TO_ORDER_CHECK_SHOW' => $this->arResult['PATH_TO_ORDER_CHECK_SHOW'],
-								'PATH_TO_ORDER_CHECK_EDIT' => $this->arResult['PATH_TO_ORDER_CHECK_EDIT'],
+								'PATH_TO_ORDER_CHECK_SHOW' => $this->arResult['PATH_TO_ORDER_CHECK_SHOW'] ?? '',
+								'PATH_TO_ORDER_CHECK_EDIT' => $this->arResult['PATH_TO_ORDER_CHECK_EDIT'] ?? '',
 								'GRID_ID_SUFFIX' => 'CHECK_DETAILS',
 								'TAB_ID' => 'tab_check',
-								'NAME_TEMPLATE' => $this->arResult['NAME_TEMPLATE']
+								'NAME_TEMPLATE' => $this->arResult['NAME_TEMPLATE'] ?? ''
 							], 'crm.order.check.list')
 						)
 					)
@@ -370,9 +379,9 @@ class CCrmOrderPaymentDetailsComponent extends Crm\Component\EntityDetails\BaseC
 		if ($this->userType)
 		{
 			$userFields = $this->userType->GetFields();
-			foreach($userFields as $userField)
+			foreach ($userFields as $userField)
 			{
-				if($userField['USER_TYPE_ID'] === 'date' && $userField['MULTIPLE'] !== 'Y')
+				if ($userField['USER_TYPE_ID'] === 'date' && $userField['MULTIPLE'] !== 'Y')
 				{
 					$this->arResult['WAIT_TARGET_DATES'][] = [
 						'name' => $userField['FIELD_NAME'],
@@ -384,7 +393,7 @@ class CCrmOrderPaymentDetailsComponent extends Crm\Component\EntityDetails\BaseC
 		//endregion
 
 		//region VIEW EVENT
-		if($this->entityID > 0 && \Bitrix\Crm\Settings\HistorySettings::getCurrent()->isViewEventEnabled())
+		if ($this->entityID > 0 && \Bitrix\Crm\Settings\HistorySettings::getCurrent()->isViewEventEnabled())
 		{
 			CCrmEvent::RegisterViewEvent(CCrmOwnerType::OrderPayment, $this->entityID, $this->userID);
 		}
@@ -931,7 +940,7 @@ class CCrmOrderPaymentDetailsComponent extends Crm\Component\EntityDetails\BaseC
 			}
 		}
 
-		if ($paySystem = \Bitrix\Sale\PaySystem\Manager::getObjectById((int)$this->entityData['PAY_SYSTEM_ID']))
+		if ($paySystem = \Bitrix\Sale\PaySystem\Manager::getObjectById((int)($this->entityData['PAY_SYSTEM_ID'] ?? 0)))
 		{
 			$this->entityData['PAY_SYSTEM_NAME'] = $paySystem->getField('NAME');
 			$logoId = $paySystem->getField('LOGOTIP');
@@ -954,7 +963,7 @@ class CCrmOrderPaymentDetailsComponent extends Crm\Component\EntityDetails\BaseC
 		$this->entityData['FORMATED_TITLE_WITH_DATE_BILL'] = Loc::getMessage(
 			'CRM_ORDER_PAYMENT_SUBTITLE_MASK',
 			array(
-				'#ID#' => $this->entityData['ID'],
+				'#ID#' => $this->entityData['ID'] ?? null,
 				'#DATE_INSERT#' => 	CCrmComponentHelper::TrimDateTimeString(
 					ConvertTimeStamp(
 						MakeTimeStamp(
@@ -978,14 +987,14 @@ class CCrmOrderPaymentDetailsComponent extends Crm\Component\EntityDetails\BaseC
 			'#'
 		);
 		$this->entityData['STATUS'] = array(
-			'datePaid' => $this->entityData['DATE_PAID'],
-			'isPaid' => $this->entityData['PAID']
+			'datePaid' => $this->entityData['DATE_PAID'] ?? null,
+			'isPaid' => $this->entityData['PAID'] ?? false
 		);
 		//endregion
 
 		$this->addUserDataToEntity('RESPONSIBLE');
 
-		if ($this->entityData['EMP_RESPONSIBLE_ID'])
+		if (isset($this->entityData['EMP_RESPONSIBLE_ID']) && $this->entityData['EMP_RESPONSIBLE_ID'])
 		{
 			$this->addUserDataToEntity('EMP_RESPONSIBLE');
 		}
@@ -1041,39 +1050,37 @@ class CCrmOrderPaymentDetailsComponent extends Crm\Component\EntityDetails\BaseC
 
 	protected function addUserDataToEntity($entityPrefix)
 	{
-		$userId = isset($this->entityData[$entityPrefix.'_ID']) ? (int)$this->entityData[$entityPrefix.'_ID'] : 0;
-
-		if($userId <= 0)
-			return;
-
-		$user = self::getUser($this->entityData[$entityPrefix.'_ID']);
-
-		if(is_array($user))
+		$userId = (int)($this->entityData[$entityPrefix.'_ID'] ?? 0);
+		if ($userId <= 0)
 		{
-			$this->entityData[$entityPrefix.'_LOGIN'] = $user['LOGIN'];
-			$this->entityData[$entityPrefix.'_NAME'] = isset($user['NAME']) ? $user['NAME'] : '';
-			$this->entityData[$entityPrefix.'_SECOND_NAME'] = isset($user['SECOND_NAME']) ? $user['SECOND_NAME'] : '';
-			$this->entityData[$entityPrefix.'_LAST_NAME'] = isset($user['LAST_NAME']) ? $user['LAST_NAME'] : '';
-			$this->entityData[$entityPrefix.'_PERSONAL_PHOTO'] = isset($user['PERSONAL_PHOTO']) ? $user['PERSONAL_PHOTO'] : '';
+			return;
 		}
 
-		$this->entityData[$entityPrefix.'_FORMATTED_NAME'] =
+		$user = self::getUser($userId);
+		if (is_array($user))
+		{
+			$this->entityData[$entityPrefix . '_LOGIN'] = $user['LOGIN'] ?? '';
+			$this->entityData[$entityPrefix . '_NAME'] = $user['NAME'] ?? '';
+			$this->entityData[$entityPrefix . '_SECOND_NAME'] = $user['SECOND_NAME'] ?? '';
+			$this->entityData[$entityPrefix . '_LAST_NAME'] = $user['LAST_NAME'] ??'';
+			$this->entityData[$entityPrefix . '_PERSONAL_PHOTO'] = $user['PERSONAL_PHOTO'] ?? '';
+		}
+
+		$this->entityData[$entityPrefix. ' _FORMATTED_NAME'] =
 			\CUser::FormatName(
-				$this->arResult['NAME_TEMPLATE'],
+				$this->arResult['NAME_TEMPLATE'] ?? '',
 				array(
-					'LOGIN' => $this->entityData[$entityPrefix.'_LOGIN'],
-					'NAME' => $this->entityData[$entityPrefix.'_NAME'],
-					'LAST_NAME' => $this->entityData[$entityPrefix.'_LAST_NAME'],
-					'SECOND_NAME' => $this->entityData[$entityPrefix.'_SECOND_NAME']
+					'LOGIN' => $this->entityData[$entityPrefix . '_LOGIN'],
+					'NAME' => $this->entityData[$entityPrefix . '_NAME'],
+					'LAST_NAME' => $this->entityData[$entityPrefix . '_LAST_NAME'],
+					'SECOND_NAME' => $this->entityData[$entityPrefix . '_SECOND_NAME']
 				),
 				true,
 				false
 			);
 
-		$photoId = isset($this->entityData[$entityPrefix.'_PERSONAL_PHOTO'])
-			? (int)$this->entityData[$entityPrefix.'_PERSONAL_PHOTO'] : 0;
-
-		if($photoId > 0)
+		$photoId = (int)($this->entityData[$entityPrefix . '_PERSONAL_PHOTO'] ?? 0);
+		if ($photoId > 0)
 		{
 			$file = new CFile();
 			$fileInfo = $file->ResizeImageGet(
@@ -1081,14 +1088,15 @@ class CCrmOrderPaymentDetailsComponent extends Crm\Component\EntityDetails\BaseC
 				array('width' => 60, 'height'=> 60),
 				BX_RESIZE_IMAGE_EXACT
 			);
-			if(is_array($fileInfo) && isset($fileInfo['src']))
+
+			if (is_array($fileInfo) && isset($fileInfo['src']))
 			{
-				$this->entityData[$entityPrefix.'_PHOTO_URL'] = $fileInfo['src'];
+				$this->entityData[$entityPrefix . '_PHOTO_URL'] = $fileInfo['src'];
 			}
 		}
 
-		$this->entityData['PATH_TO_'.$entityPrefix.'_USER'] = CComponentEngine::MakePathFromTemplate(
-			$this->arResult['PATH_TO_USER_PROFILE'],
+		$this->entityData['PATH_TO_' . $entityPrefix . '_USER'] = CComponentEngine::MakePathFromTemplate(
+			$this->arResult['PATH_TO_USER_PROFILE'] ?? '',
 			array('user_id' => $userId)
 		);
 	}

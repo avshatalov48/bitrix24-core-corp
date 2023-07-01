@@ -54,7 +54,7 @@ final class ItemCounter
 			],
 			self::EMPTY_TYPE => [
 				'id' => self::EMPTY_TYPE,
-				'color' => '#b8c0c9',
+				'color' => '#bdc1c6',
 			],
 		];
 	}

@@ -10,7 +10,6 @@ use Bitrix\Crm\Integration\VoxImplantManager;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Settings\ActivitySettings;
-use Bitrix\Crm\Settings\Crm;
 use Bitrix\Main;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
@@ -37,7 +36,7 @@ class Call extends Base
 	public static function isActive()
 	{
 		$result = false;
-		if(Loader::includeModule('voximplant'))
+		if (Loader::includeModule('voximplant'))
 		{
 			$config = ConfigTable::getList(array(
 				'select' => array('ID'),
@@ -51,7 +50,7 @@ class Call extends Base
 
 	public static function getStatusAnchor()
 	{
-		if(!Loader::includeModule('voximplant'))
+		if (!Loader::includeModule('voximplant'))
 		{
 			return parent::getStatusAnchor();
 		}
@@ -65,7 +64,10 @@ class Call extends Base
 	public static function getTypeId(array $activity)
 	{
 		if (!empty($activity['PROVIDER_TYPE_ID']))
+		{
 			return $activity['PROVIDER_TYPE_ID'];
+		}
+
 		return static::ACTIVITY_PROVIDER_TYPE_CALL;
 	}
 
@@ -147,7 +149,7 @@ class Call extends Base
 		}
 
 		//Only START_TIME can be taken for DEADLINE!
-		if ($action === 'UPDATE')
+		if ($action === self::ACTION_UPDATE)
 		{
 			if (isset($fields['START_TIME']) && $fields['START_TIME'] !== '')
 			{
@@ -164,13 +166,12 @@ class Call extends Base
 
 	public static function canUseCalendarEvents($providerTypeId = null)
 	{
-		$result = false;
-		if($providerTypeId === static::ACTIVITY_PROVIDER_TYPE_CALL)
-			$result = true;
-		else if($providerTypeId === static::ACTIVITY_PROVIDER_TYPE_CALLBACK)
-			$result = false;
+		if ($providerTypeId === static::ACTIVITY_PROVIDER_TYPE_CALL)
+		{
+			return true;
+		}
 
-		return $result;
+		return false;
 	}
 
 	public static function canKeepCompletedInCalendar($providerTypeId = null)
@@ -214,13 +215,12 @@ class Call extends Base
 	 */
 	public static function isTypeEditable($providerTypeId = null, $direction = \CCrmActivityDirection::Undefined)
 	{
-		$result = false;
-		if($providerTypeId === static::ACTIVITY_PROVIDER_TYPE_CALL)
-			$result = true;
-		else if($providerTypeId === static::ACTIVITY_PROVIDER_TYPE_CALLBACK)
-			$result = false;
+		if ($providerTypeId === static::ACTIVITY_PROVIDER_TYPE_CALL)
+		{
+			return true;
+		}
 
-		return $result;
+		return false;
 	}
 
 	/**
@@ -229,7 +229,7 @@ class Call extends Base
 	 */
 	public static function getPlannerActions(array $params = null)
 	{
-		if (!\Bitrix\Crm\Settings\ActivitySettings::areOutdatedCalendarActivitiesEnabled())
+		if (!ActivitySettings::areOutdatedCalendarActivitiesEnabled())
 		{
 			return [];
 		}
@@ -254,7 +254,6 @@ class Call extends Base
 		return Loc::getMessage('VOXIMPLANT_ACTIVITY_PROVIDER_CALL_PLANNER_ACTION_NAME');
 	}
 
-
 	/**
 	 * @param null|string $providerTypeId Provider type id.
 	 * @param int $direction Activity direction.
@@ -263,11 +262,12 @@ class Call extends Base
 	 */
 	public static function generateSubject($providerTypeId = null, $direction = \CCrmActivityDirection::Undefined, array $replace = null)
 	{
-		if($direction === \CCrmActivityDirection::Incoming)
+		if ($direction === \CCrmActivityDirection::Incoming)
 		{
 			return Loc::getMessage('VOXIMPLANT_ACTIVITY_PROVIDER_CALL_INCOMING_SUBJECT', $replace);
 		}
-		elseif($direction === \CCrmActivityDirection::Outgoing)
+
+		if ($direction === \CCrmActivityDirection::Outgoing)
 		{
 			return Loc::getMessage('VOXIMPLANT_ACTIVITY_PROVIDER_CALL_OUTGOING_SUBJECT', $replace);
 		}
@@ -286,19 +286,19 @@ class Call extends Base
 			array(
 				'LABEL' => Loc::getMessage('VOXIMPLANT_ACTIVITY_PROVIDER_CALL_PLANNER_SUBJECT_LABEL'),
 				'TYPE' => 'SUBJECT',
-				'VALUE' => isset($activity['SUBJECT']) ? $activity['SUBJECT'] : ''
+				'VALUE' => $activity['SUBJECT'] ?? ''
 			)
 		);
 
 		$callId = mb_strpos($activity['ORIGIN_ID'], 'VI_') === false? null : mb_substr($activity['ORIGIN_ID'], 3);
 		$callInfo = VoxImplantManager::getCallInfo($callId);
-		if($callInfo)
+		if ($callInfo)
 		{
 			$fields[] = array(
 				'LABEL' => Loc::getMessage('VOXIMPLANT_ACTIVITY_PROVIDER_CALL_COMMENT'),
 				'TYPE' => 'TEXT',
 				'NAME' => 'COMMENT',
-				'VALUE' => isset($callInfo['COMMENT']) ? $callInfo['COMMENT'] : ''
+				'VALUE' => $callInfo['COMMENT'] ?? ''
 			);
 		}
 
@@ -313,20 +313,23 @@ class Call extends Base
 		$activity['NOTIFY_TYPE'] = \CCrmActivityNotifyType::Min;
 		$activity['NOTIFY_VALUE'] = 15;
 		$activity['DIRECTION'] = \CCrmActivityDirection::Outgoing;
+
 		if (empty($activity['PROVIDER_TYPE_ID']))
+		{
 			$activity['PROVIDER_TYPE_ID'] = static::ACTIVITY_PROVIDER_TYPE_CALL;
+		}
 	}
 
 	public static function postForm(array &$activity, array $formData)
 	{
 		$result = new Main\Result();
-		if($formData['comment'])
+		if ($formData['comment'])
 		{
 			$activityId = $formData['id'];
 			$activityFields = CCrmActivity::GetByID($activityId, false);
 
 			$callId = mb_strpos($activityFields['ORIGIN_ID'], 'VI_') === false? null : mb_substr($activityFields['ORIGIN_ID'], 3);
-			if($callId)
+			if ($callId)
 			{
 				VoxImplantManager::saveComment($callId, $formData['comment']);
 			}
@@ -336,10 +339,10 @@ class Call extends Base
 		{
 			foreach ($activity['COMMUNICATIONS'] as $k => $v)
 			{
-				if($activity['COMMUNICATIONS'][$k]['TYPE'] == '' && $activity['COMMUNICATIONS'][$k]['VALUE'] == '')
+				if ($activity['COMMUNICATIONS'][$k]['TYPE'] == '' && $activity['COMMUNICATIONS'][$k]['VALUE'] == '')
 				{
 					$firstNumber = static::getFirstPhoneNumber($activity['COMMUNICATIONS'][$k]['ENTITY_TYPE_ID'], $activity['COMMUNICATIONS'][$k]['ENTITY_ID']);
-					if($firstNumber == '')
+					if ($firstNumber === '')
 					{
 						$result->addError(new Main\Error(Loc::getMessage('VOXIMPLANT_ACTIVITY_PROVIDER_CALL_ERROR_NO_NUMBER')));
 						return $result;
@@ -358,14 +361,12 @@ class Call extends Base
 	{
 		$phones = Communication\Manager::resolveEntityCommunicationData($entityTypeId, $entityId, [Communication\Type::PHONE]);
 
-		if(is_array($phones) && count($phones) > 0)
+		if (is_array($phones) && count($phones) > 0)
 		{
 			return $phones[0]['VALUE'];
 		}
-		else
-		{
-			return '';
-		}
+		
+		return '';
 	}
 
 	/**
@@ -375,7 +376,7 @@ class Call extends Base
 	{
 		global $APPLICATION;
 
-		if(!Loader::includeModule('voximplant'))
+		if (!Loader::includeModule('voximplant'))
 		{
 			return '<div class="crm-task-list-call">
 				<div class="crm-task-list-call-info">
@@ -547,10 +548,6 @@ class Call extends Base
 
 	public static function hasPlanner(array $activity): bool
 	{
-		if(!Crm::isUniversalActivityScenarioEnabled())
-		{
-			return true;
-		}
-		return !$activity['ORIGIN_ID'];
+		return empty($activity['ORIGIN_ID']);
 	}
 }

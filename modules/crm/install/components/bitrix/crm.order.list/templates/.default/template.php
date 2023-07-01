@@ -1,10 +1,14 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
-use Bitrix\Crm\Restriction\OrderRestriction;
-use Bitrix\Main\Localization\Loc;
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
 use Bitrix\Crm\Tracking;
 use Bitrix\Crm\UI\NavigationBarPanel;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\UI\Extension;
 
 /**
  * Bitrix vars
@@ -18,16 +22,18 @@ use Bitrix\Crm\UI\NavigationBarPanel;
  */
 
 $APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/crm-entity-show.css");
-if(SITE_TEMPLATE_ID === 'bitrix24')
+
+if (SITE_TEMPLATE_ID === 'bitrix24')
 {
 	$APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/bitrix24/crm-entity-show.css");
 }
+
 if (CModule::IncludeModule('bitrix24') && !\Bitrix\Crm\CallList\CallList::isAvailable())
 {
 	CBitrix24::initLicenseInfoPopupJS();
 }
 
-\Bitrix\Main\UI\Extension::load('ui.fonts.opensans');
+Extension::load(['ui.fonts.opensans', 'crm.restriction.filter-fields']);
 
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/progress_control.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/activity.js');
@@ -35,22 +41,21 @@ Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/interface_grid.js')
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/autorun_proc.js');
 Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/js/crm/css/autorun_proc.css');
 
-
 ?><div id="rebuildMessageWrapper"><?
 
-if($arResult['NEED_FOR_REBUILD_SEARCH_CONTENT'])
+if ($arResult['NEED_FOR_REBUILD_SEARCH_CONTENT'])
 {
 	?><div id="rebuildOrderSearchWrapper"></div><?
 }
-if($arResult['NEED_FOR_BUILD_TIMELINE'])
+if ($arResult['NEED_FOR_BUILD_TIMELINE'])
 {
 	?><div id="buildOrderTimelineWrapper"></div><?
 }
-if($arResult['NEED_FOR_REFRESH_ACCOUNTING'])
+if ($arResult['NEED_FOR_REFRESH_ACCOUNTING'])
 {
 	?><div id="refreshOrderAccountingWrapper"></div><?
 }
-if($arResult['NEED_FOR_REBUILD_ORDER_ATTRS'])
+if ($arResult['NEED_FOR_REBUILD_ORDER_ATTRS'])
 {
 	?><div id="rebuildOrderAttrsMsg" class="crm-view-message">
 		<?=GetMessage('CRM_ORDER_REBUILD_ACCESS_ATTRS', array('#ID#' => 'rebuildOrderAttrsLink', '#URL#' => $arResult['PATH_TO_PRM_LIST']))?>
@@ -69,7 +74,7 @@ $allowWrite = $arResult['PERMS']['WRITE'];
 $allowDelete = $arResult['PERMS']['DELETE'];
 $currentUserID = $arResult['CURRENT_USER_ID'];
 $activityEditorID = '';
-if(!$isInternal)
+if (!$isInternal)
 {
 	$activityEditorID = "{$arResult['GRID_ID']}_activity_editor";
 	$APPLICATION->IncludeComponent(
@@ -98,25 +103,35 @@ $gridManagerCfg = array(
 	'allRowsCheckBoxId' => "actallrows_{$arResult['GRID_ID']}",
 	'activityEditorId' => $activityEditorID,
 	'serviceUrl' => '/bitrix/components/bitrix/crm.activity.editor/ajax.php?siteID='.SITE_ID.'&'.bitrix_sessid_get(),
-	'filterFields' => array()
+	'filterFields' => []
 );
+
 echo CCrmViewHelper::RenderOrderStatusSettings();
+
 $prefix = $arResult['GRID_ID'];
 $prefixLC = mb_strtolower($arResult['GRID_ID']);
 
-$arResult['GRID_DATA'] = array();
-$arColumns = array();
+$arResult['GRID_DATA'] = [];
+$arColumns = [];
 foreach ($arResult['HEADERS'] as $arHead)
+{
 	$arColumns[$arHead['id']] = false;
+}
 
 $now = time() + CTimeZone::GetOffset();
-$arOrderStatusInfoValues = array();
+$arOrderStatusInfoValues = [];
 
-foreach($arResult['ORDER'] as $sKey => $arOrder)
+if ($arResult['NEED_ADD_ACTIVITY_BLOCK'] ?? false)
 {
-	$arActivityMenuItems = array();
-	$arActivitySubMenuItems = array();
-	$arActions = array();
+	$arResult['ORDER'] = (new \Bitrix\Crm\Component\EntityList\NearestActivity\Manager(CCrmOwnerType::Order))
+		->appendNearestActivityBlock($arResult['ORDER']);
+}
+
+foreach ($arResult['ORDER'] as $sKey => $arOrder)
+{
+	$arActivityMenuItems = [];
+	$arActivitySubMenuItems = [];
+	$arActions = [];
 
 	$arOrderStatusInfoValues[$arOrder['ID']] = array(
 		'REASON_CANCELED' => ($arOrder['REASON_CANCELED'] != '') ? $arOrder['REASON_CANCELED'] : ''
@@ -129,7 +144,7 @@ foreach($arResult['ORDER'] as $sKey => $arOrder)
 		'DEFAULT' => true
 	);
 
-	if($arOrder['EDIT'])
+	if ($arOrder['EDIT'])
 	{
 		$arActions[] = array(
 			'TITLE' => GetMessage('CRM_ORDER_EDIT_TITLE'),
@@ -146,7 +161,7 @@ foreach($arResult['ORDER'] as $sKey => $arOrder)
 		);
 	}
 
-	if($salescenterMode)
+	if ($salescenterMode)
 	{
 		$arActions[] = array(
 			'TEXT' => GetMessage("CRM_ORDER_SEND_TO_CHAT"),
@@ -154,7 +169,7 @@ foreach($arResult['ORDER'] as $sKey => $arOrder)
 		);
 	}
 
-	if(!$isInternal && $arOrder['DELETE'])
+	if (!$isInternal && $arOrder['DELETE'])
 	{
 		$pathToRemove = CUtil::JSEscape($arOrder['PATH_TO_ORDER_DELETE']);
 		$arActions[] = array(
@@ -170,11 +185,11 @@ foreach($arResult['ORDER'] as $sKey => $arOrder)
 
 	$arActions[] = array('SEPARATOR' => true);
 
-	if(!$isInternal && $arParams['IS_RECURRING'] !== 'Y')
+	if (!$isInternal && !$isRecurring)
 	{
-		if($arOrder['EDIT'])
+		if ($arOrder['EDIT'])
 		{
-			if(IsModuleInstalled(CRM_MODULE_CALENDAR_ID) && \Bitrix\Crm\Settings\ActivitySettings::areOutdatedCalendarActivitiesEnabled())
+			if (IsModuleInstalled(CRM_MODULE_CALENDAR_ID) && \Bitrix\Crm\Settings\ActivitySettings::areOutdatedCalendarActivitiesEnabled())
 			{
 				$arActivityMenuItems[] = array(
 					'TITLE' => GetMessage('CRM_ORDER_ADD_CALL_TITLE'),
@@ -217,7 +232,7 @@ foreach($arResult['ORDER'] as $sKey => $arOrder)
 				);
 			}
 
-			if(IsModuleInstalled('tasks'))
+			if (IsModuleInstalled('tasks'))
 			{
 				$arActivityMenuItems[] = array(
 					'TITLE' => GetMessage('CRM_ORDER_TASK_TITLE'),
@@ -240,7 +255,7 @@ foreach($arResult['ORDER'] as $sKey => $arOrder)
 				);
 			}
 
-			if(!empty($arActivitySubMenuItems))
+			if (!empty($arActivitySubMenuItems))
 			{
 				$arActions[] = array(
 					'TITLE' => GetMessage('CRM_ORDER_ADD_ACTIVITY_TITLE'),
@@ -249,19 +264,23 @@ foreach($arResult['ORDER'] as $sKey => $arOrder)
 				);
 			}
 
-			if($arResult['IS_BIZPROC_AVAILABLE'])
+			if (isset($arResult['IS_BIZPROC_AVAILABLE']) && $arResult['IS_BIZPROC_AVAILABLE'])
 			{
 				$arActions[] = array('SEPARATOR' => true);
-				if(isset($arContact['PATH_TO_BIZPROC_LIST']) && $arContact['PATH_TO_BIZPROC_LIST'] !== '')
+
+				if (isset($arContact['PATH_TO_BIZPROC_LIST']) && $arContact['PATH_TO_BIZPROC_LIST'] !== '')
+				{
 					$arActions[] = array(
 						'TITLE' => GetMessage('CRM_ORDER_BIZPROC_TITLE'),
 						'TEXT' => GetMessage('CRM_ORDER_BIZPROC'),
 						'ONCLICK' => "jsUtils.Redirect([], '".CUtil::JSEscape($arOrder['PATH_TO_BIZPROC_LIST'])."');"
 					);
-				if(!empty($arOrder['BIZPROC_LIST']))
+				}
+
+				if (!empty($arOrder['BIZPROC_LIST']))
 				{
-					$arBizprocList = array();
-					foreach($arOrder['BIZPROC_LIST'] as $arBizproc)
+					$arBizprocList = [];
+					foreach ($arOrder['BIZPROC_LIST'] as $arBizproc)
 					{
 						$arBizprocList[] = array(
 							'TITLE' => $arBizproc['DESCRIPTION'],
@@ -287,20 +306,21 @@ foreach($arResult['ORDER'] as $sKey => $arOrder)
 		'CALL_LIST_CONTEXT' => $arResult['CALL_LIST_CONTEXT'],
 		'GRID_ID' => $arResult['GRID_ID']
 	);
-	foreach(GetModuleEvents('crm', 'onCrmOrderListItemBuildMenu', true) as $event)
+
+	foreach (GetModuleEvents('crm', 'onCrmOrderListItemBuildMenu', true) as $event)
 	{
 		ExecuteModuleEventEx($event, array('CRM_ORDER_LIST_MENU', $eventParam, &$arActions));
 	}
 
 	$basket = '';
 
-	if(!empty($arOrder['BASKET']))
+	if (!empty($arOrder['BASKET']))
 	{
 		foreach ($arOrder['BASKET'] as $item)
 		{
 			$basketItem = $item['NAME'];
 
-			if($item['EDIT_PAGE_URL'] <> '')
+			if ($item['EDIT_PAGE_URL'] <> '')
 			{
 				$basketItem = '<a href="'.$item['EDIT_PAGE_URL'].'">'.$basketItem.'</a>';
 			}
@@ -309,12 +329,12 @@ foreach($arResult['ORDER'] as $sKey => $arOrder)
 
 			$basketItem .= '<span>'.$item['QUANTITY'].'</span> ';
 
-			if($item['PRICE'] <> '')
+			if ($item['PRICE'] <> '')
 			{
 				$basketItem .= '<span>'.$item["PRICE"].'</span> ';
 			}
 
-			if((float)$item['WEIGHT'] > 0)
+			if ((float)$item['WEIGHT'] > 0)
 			{
 				$basketItem .= '<span>'.$item["WEIGHT"].'</span> ';
 			}
@@ -340,7 +360,7 @@ foreach($arResult['ORDER'] as $sKey => $arOrder)
 
 	$shipment = '';
 
-	if(is_array($arOrder['SHIPMENT']))
+	if (isset($arOrder['SHIPMENT']) && is_array($arOrder['SHIPMENT']))
 	{
 		foreach ($arOrder['SHIPMENT'] as $item)
 		{
@@ -370,7 +390,7 @@ foreach($arResult['ORDER'] as $sKey => $arOrder)
 						: Loc::getMessage('CRM_ORDER_LIST_SHIPMENT_NOT_DEDUCTED'))
 				.'</div>';
 
-			if($item['TRACKING_NUMBER'] <> '')
+			if ($item['TRACKING_NUMBER'] <> '')
 			{
 				$shipmentItem .= '<div>'
 						.Loc::getMessage('CRM_ORDER_LIST_SHIPMENT_TRACK_NUMBER').': '
@@ -378,17 +398,17 @@ foreach($arResult['ORDER'] as $sKey => $arOrder)
 					.'</div>';
 			}
 
-			if($item['CANCELED'] === 'Y')
+			if ($item['CANCELED'] === 'Y')
 			{
 				$shipmentItem .= '<div>'.Loc::getMessage('CRM_ORDER_LIST_SHIPMENT_CANCELLED').'</div>';
 			}
 
-			if($item['MARKED'] === 'Y')
+			if ($item['MARKED'] === 'Y')
 			{
 				$shipmentItem .= '<div class="marked">'.Loc::getMessage('CRM_ORDER_LIST_SHIPMENT_MARKED').'</div>';
 			}
 
-			if($item['WEIGHT'] <> '')
+			if ($item['WEIGHT'] <> '')
 			{
 				$shipmentItem .= '<div>'.Loc::getMessage('CRM_ORDER_LIST_SHIPMENT_WEIGHT').': '.$item["WEIGHT"].'</div> ';
 			}
@@ -399,7 +419,7 @@ foreach($arResult['ORDER'] as $sKey => $arOrder)
 
 	$payment = '';
 
-	if(is_array($arOrder['PAYMENT']))
+	if (isset($arOrder['PAYMENT']) && is_array($arOrder['PAYMENT']))
 	{
 		foreach ($arOrder['PAYMENT'] as $item)
 		{
@@ -428,7 +448,7 @@ foreach($arResult['ORDER'] as $sKey => $arOrder)
 
 	$properties = '';
 
-	if(is_array($arOrder['PROPS']))
+	if (isset($arOrder['PROPS']) && is_array($arOrder['PROPS']))
 	{
 		foreach ($arOrder['PROPS'] as $group)
 		{
@@ -448,6 +468,13 @@ foreach($arResult['ORDER'] as $sKey => $arOrder)
 		$properties = "<div class=\"crm-order-list-props\">{$properties}</div>";
 	}
 
+	$bizprocStatus = empty($arOrder['BIZPROC_STATUS']) ? '' : 'bizproc bizproc_status_' . $arOrder['BIZPROC_STATUS'];
+	$bizprocStatusHint = empty($arOrder['BIZPROC_STATUS_HINT'])
+		? ''
+		: 'onmouseover="BX.hint(this, \''.CUtil::JSEscape($arOrder['BIZPROC_STATUS_HINT']).'\');"';
+	$title = '<a target="_self" href="' . ($arOrder['PATH_TO_ORDER_SHOW'] ?? '') . '" class="' . $bizprocStatus . '"' . $bizprocStatusHint . '>' . ($arOrder['TITLE'] ?? '') . '</a>';
+	$dateInsert = $arOrder['DATE_INSERT'] ?? '';
+	$dateModify = $arOrder['DATE_MODIFY'] ?? '';
 
 	$resultItem = array(
 		'id' => $arOrder['ID'],
@@ -456,7 +483,7 @@ foreach($arResult['ORDER'] as $sKey => $arOrder)
 		'editable' => !$arOrder['EDIT'] ? ($arResult['INTERNAL'] ? 'N' : $arColumns) : 'Y',
 		'columns' => array(
 			'ORDER_SUMMARY' => CCrmViewHelper::RenderInfo(
-				$arOrder['PATH_TO_ORDER_DETAILS'],
+				$arOrder['PATH_TO_ORDER_DETAILS'] ?? '',
 				Loc::getMessage(
 					'CRM_ORDER_SUMMARY',
 					array(
@@ -483,23 +510,33 @@ foreach($arResult['ORDER'] as $sKey => $arOrder)
 			'SHIPMENT' => $shipment,
 			'PAYMENT' => $payment,
 			'PROPS' => $properties,
-			'TITLE' => '<a target="_self" href="'.$arOrder['PATH_TO_ORDER_SHOW'].'"
-				class="'.($arOrder['BIZPROC_STATUS'] != '' ? 'bizproc bizproc_status_'.$arOrder['BIZPROC_STATUS'] : '').'"
-				'.($arOrder['BIZPROC_STATUS_HINT'] != '' ? 'onmouseover="BX.hint(this, \''.CUtil::JSEscape($arOrder['BIZPROC_STATUS_HINT']).'\');"' : '').'>'.$arOrder['TITLE'].'</a>',
-			'PAYED' => $arOrder['PAYED'] == 'Y' ? GetMessage('MAIN_YES') : GetMessage('MAIN_NO'),
-			'RESERVED' => $arOrder['RESERVED'] == 'Y' ? GetMessage('MAIN_YES') : GetMessage('MAIN_NO'),
-			'CANCELED' => $arOrder['CANCELED'] == 'Y' ? GetMessage('MAIN_YES') : GetMessage('MAIN_NO'),
-			'DEDUCTED' => $arOrder['DEDUCTED'] == 'Y' ? GetMessage('MAIN_YES') : GetMessage('MAIN_NO'),
-			'ALLOW_DELIVERY' => $arOrder['ALLOW_DELIVERY'] == 'Y' ? GetMessage('MAIN_YES') : GetMessage('MAIN_NO'),
-			'MARKED' => $arOrder['MARKED'] == 'Y' ? GetMessage('MAIN_YES') : GetMessage('MAIN_NO'),
-			'DATE_INSERT' => FormatDate($arResult['TIME_FORMAT'], MakeTimeStamp($arOrder['DATE_INSERT']), $now),
+			'TITLE' => $title,
+			'PAYED' => isset($arOrder['PAYED']) && $arOrder['PAYED'] === 'Y'
+				? GetMessage('MAIN_YES')
+				: GetMessage('MAIN_NO'),
+			'RESERVED' => isset($arOrder['RESERVED']) && $arOrder['RESERVED'] === 'Y'
+				? GetMessage('MAIN_YES')
+				: GetMessage('MAIN_NO'),
+			'CANCELED' => isset($arOrder['CANCELED']) && $arOrder['CANCELED'] === 'Y'
+				? GetMessage('MAIN_YES')
+				: GetMessage('MAIN_NO'),
+			'DEDUCTED' => isset($arOrder['DEDUCTED']) && $arOrder['DEDUCTED'] === 'Y'
+				? GetMessage('MAIN_YES')
+				: GetMessage('MAIN_NO'),
+			'ALLOW_DELIVERY' => isset($arOrder['ALLOW_DELIVERY']) && $arOrder['ALLOW_DELIVERY'] === 'Y'
+				? GetMessage('MAIN_YES')
+				: GetMessage('MAIN_NO'),
+			'MARKED' => isset($arOrder['MARKED']) && $arOrder['MARKED'] === 'Y'
+				? GetMessage('MAIN_YES')
+				: GetMessage('MAIN_NO'),
+			'DATE_INSERT' => FormatDate($arResult['TIME_FORMAT'], MakeTimeStamp($dateInsert), $now),
 			'DATE_PAYED' => !empty($arOrder['DATE_PAYED']) ? FormatDate($arResult['TIME_FORMAT'], MakeTimeStamp($arOrder['DATE_PAYED']), $now) : '',
 			'DATE_CANCELED' => !empty($arOrder['DATE_CANCELED']) ? FormatDate($arResult['TIME_FORMAT'], MakeTimeStamp($arOrder['DATE_CANCELED']), $now) : '',
 			'DATE_STATUS' => !empty($arOrder['DATE_STATUS']) ? FormatDate($arResult['TIME_FORMAT'], MakeTimeStamp($arOrder['DATE_STATUS']), $now) : '',
 			'DATE_ALLOW_DELIVERY' => !empty($arOrder['DATE_ALLOW_DELIVERY']) ? FormatDate($arResult['TIME_FORMAT'], MakeTimeStamp($arOrder['DATE_ALLOW_DELIVERY']), $now) : '',
 			'DATE_DEDUCTED' => !empty($arOrder['DATE_DEDUCTED']) ? FormatDate($arResult['TIME_FORMAT'], MakeTimeStamp($arOrder['DATE_DEDUCTED']), $now) : '',
 			'DATE_UPDATE' => !empty($arOrder['DATE_UPDATE']) ? FormatDate($arResult['TIME_FORMAT'], MakeTimeStamp($arOrder['DATE_UPDATE']), $now) : '',
-			'RESPONSIBLE_BY' => $arOrder['RESPONSIBLE_ID'] > 0
+			'RESPONSIBLE_BY' => isset($arOrder['RESPONSIBLE_ID']) && $arOrder['RESPONSIBLE_ID'] > 0
 				? CCrmViewHelper::PrepareUserBaloonHtml(
 					array(
 						'PREFIX' => "ORDER_{$arOrder['ID']}_RESPONSIBLE",
@@ -507,20 +544,23 @@ foreach($arResult['ORDER'] as $sKey => $arOrder)
 						'USER_NAME'=> $arOrder['RESPONSIBLE_BY'],
 						'USER_PROFILE_URL' => $arOrder['PATH_TO_RESPONSIBLE_PROFILE']
 					)
-				) : '',
-			'USER' => $arOrder['USER_ID'] > 0 ? CCrmViewHelper::PrepareUserBaloonHtml(
-				array(
-					'PREFIX' => "ORDER_{$arOrder['USER_ID']}_USER",
-					'USER_ID' => $arOrder['USER_ID'],
-					'USER_NAME'=> $arOrder['USER_FORMATTED_NAME'],
-					'USER_PROFILE_URL' => $arOrder['PATH_TO_USER_PROFILE']
 				)
-			) : '',
-			'COMMENTS' => htmlspecialcharsback($arOrder['COMMENTS']),
-			'SUM' => $arOrder['SUM'],
-			'DATE_MODIFY' => FormatDate($arResult['TIME_FORMAT'], MakeTimeStamp($arOrder['DATE_MODIFY']), $now),
-			'ORIGINATOR_ID' => isset($arOrder['ORIGINATOR_NAME']) ? $arOrder['ORIGINATOR_NAME'] : '',
-			'CREATED_BY' => $arOrder['~CREATED_BY'] > 0
+				: '',
+			'USER' => isset($arOrder['USER_ID']) && $arOrder['USER_ID'] > 0
+				? CCrmViewHelper::PrepareUserBaloonHtml(
+					array(
+						'PREFIX' => "ORDER_{$arOrder['USER_ID']}_USER",
+						'USER_ID' => $arOrder['USER_ID'],
+						'USER_NAME'=> $arOrder['USER_FORMATTED_NAME'],
+						'USER_PROFILE_URL' => $arOrder['PATH_TO_USER_PROFILE']
+					)
+				)
+				: '',
+			'COMMENTS' => htmlspecialcharsback($arOrder['COMMENTS'] ?? ''),
+			'SUM' => $arOrder['SUM'] ?? 0.0,
+			'DATE_MODIFY' => FormatDate($arResult['TIME_FORMAT'], MakeTimeStamp($dateModify), $now),
+			'ORIGINATOR_ID' => $arOrder['ORIGINATOR_NAME'] ?? '',
+			'CREATED_BY' => isset($arOrder['~CREATED_BY']) && $arOrder['~CREATED_BY'] > 0
 				? CCrmViewHelper::PrepareUserBaloonHtml(
 					array(
 						'PREFIX' => "ORDER_{$arOrder['~ID']}_CREATOR",
@@ -529,7 +569,7 @@ foreach($arResult['ORDER'] as $sKey => $arOrder)
 						'USER_PROFILE_URL' => $arOrder['PATH_TO_USER_CREATOR']
 					)
 				) : '',
-			'EMP_PAYED_ID' => $arOrder['~EMP_PAYED_ID'] > 0
+			'EMP_PAYED_ID' => isset($arOrder['~EMP_PAYED_ID']) && $arOrder['~EMP_PAYED_ID'] > 0
 				? CCrmViewHelper::PrepareUserBaloonHtml(
 					array(
 						'PREFIX' => "ORDER_{$arOrder['~ID']}_EMP_PAYED_ID",
@@ -538,7 +578,7 @@ foreach($arResult['ORDER'] as $sKey => $arOrder)
 						'USER_PROFILE_URL' => $arOrder['PATH_TO_EMP_PAYED_ID']
 					)
 				) : '',
-			'EMP_CANCELED_ID' => $arOrder['~EMP_CANCELED_ID'] > 0
+			'EMP_CANCELED_ID' => isset($arOrder['~EMP_CANCELED_ID']) && $arOrder['~EMP_CANCELED_ID'] > 0
 				? CCrmViewHelper::PrepareUserBaloonHtml(
 					array(
 						'PREFIX' => "ORDER_{$arOrder['~ID']}_EMP_CANCELED_ID",
@@ -547,7 +587,7 @@ foreach($arResult['ORDER'] as $sKey => $arOrder)
 						'USER_PROFILE_URL' => $arOrder['PATH_TO_EMP_CANCELED_ID']
 					)
 				) : '',
-			'EMP_STATUS_ID' => $arOrder['~EMP_STATUS_ID'] > 0
+			'EMP_STATUS_ID' => isset($arOrder['~EMP_STATUS_ID']) && $arOrder['~EMP_STATUS_ID'] > 0
 				? CCrmViewHelper::PrepareUserBaloonHtml(
 					array(
 						'PREFIX' => "ORDER_{$arOrder['~ID']}_EMP_STATUS_ID",
@@ -556,7 +596,7 @@ foreach($arResult['ORDER'] as $sKey => $arOrder)
 						'USER_PROFILE_URL' => $arOrder['PATH_TO_EMP_STATUS_ID']
 					)
 				) : '',
-			'EMP_ALLOW_DELIVERY_ID' => $arOrder['~EMP_ALLOW_DELIVERY_ID'] > 0
+			'EMP_ALLOW_DELIVERY_ID' => isset($arOrder['~EMP_ALLOW_DELIVERY_ID']) && $arOrder['~EMP_ALLOW_DELIVERY_ID'] > 0
 				? CCrmViewHelper::PrepareUserBaloonHtml(
 					array(
 						'PREFIX' => "ORDER_{$arOrder['~ID']}_EMP_ALLOW_DELIVERY_ID",
@@ -565,7 +605,7 @@ foreach($arResult['ORDER'] as $sKey => $arOrder)
 						'USER_PROFILE_URL' => $arOrder['PATH_TO_EMP_ALLOW_DELIVERY_ID']
 					)
 				) : '',
-			'EMP_DEDUCTED_ID' => $arOrder['~EMP_DEDUCTED_ID'] > 0
+			'EMP_DEDUCTED_ID' => isset($arOrder['~EMP_DEDUCTED_ID']) && $arOrder['~EMP_DEDUCTED_ID'] > 0
 				? CCrmViewHelper::PrepareUserBaloonHtml(
 					array(
 						'PREFIX' => "ORDER_{$arOrder['~ID']}_EMP_DEDUCTED_ID",
@@ -583,85 +623,24 @@ foreach($arResult['ORDER'] as $sKey => $arOrder)
 		$resultItem['columns']
 	);
 
-	$userActivityID = isset($arOrder['USER_ACTIVITY_ID']) ? intval($arOrder['USER_ACTIVITY_ID']) : 0;
-	$commonActivityID = isset($arOrder['C_ACTIVITY_ID']) ? intval($arOrder['C_ACTIVITY_ID']) : 0;
-	if($userActivityID > 0)
+	if (
+		isset($arOrder['ACTIVITY_BLOCK'])
+		&& $arOrder['ACTIVITY_BLOCK'] instanceof \Bitrix\Crm\Component\EntityList\NearestActivity\Block
+	)
 	{
-		$resultItem['columns']['ACTIVITY_ID'] = CCrmViewHelper::RenderNearestActivity(
-			array(
-				'ENTITY_TYPE_NAME' => CCrmOwnerType::ResolveName(CCrmOwnerType::Order),
-				'ENTITY_ID' => $arOrder['~ID'],
-				'ENTITY_RESPONSIBLE_ID' => $arOrder['RESPONSIBLE_ID'],
-				'GRID_MANAGER_ID' => $gridManagerID,
-				'ACTIVITY_ID' => $userActivityID,
-				'ACTIVITY_SUBJECT' => isset($arOrder['C_ACTIVITY_SUBJECT']) ? $arOrder['C_ACTIVITY_SUBJECT'] : '',
-				'ACTIVITY_TIME' => isset($arOrder['C_ACTIVITY_TIME']) ? $arOrder['C_ACTIVITY_TIME'] : '',
-				'ACTIVITY_EXPIRED' => isset($arOrder['ACTIVITY_EXPIRED']) ? $arOrder['ACTIVITY_EXPIRED'] : '',
-				'ALLOW_EDIT' => $arOrder['EDIT'],
-				'MENU_ITEMS' => $arActivityMenuItems,
-				'USE_GRID_EXTENSION' => true
-			)
-		);
-
-		$counterData = array(
-			'CURRENT_USER_ID' => $currentUserID,
-			'ENTITY' => $arOrder,
-			'ACTIVITY' => array(
-				'RESPONSIBLE_ID' => $currentUserID,
-				'TIME' => isset($arOrder['~ACTIVITY_TIME']) ? $arOrder['~ACTIVITY_TIME'] : '',
-				'IS_CURRENT_DAY' => isset($arOrder['~ACTIVITY_IS_CURRENT_DAY']) ? $arOrder['~ACTIVITY_IS_CURRENT_DAY'] : false
-			)
-		);
-
-		if(CCrmUserCounter::IsReckoned(CCrmUserCounter::CurrentOrderActivies, $counterData))
+		$resultItem['columns']['ACTIVITY_ID'] = $arOrder['ACTIVITY_BLOCK']->render($gridManagerID);
+		if ($arOrder['ACTIVITY_BLOCK']->needHighlight())
 		{
-			$resultItem['columnClasses'] = array('ACTIVITY_ID' => 'crm-list-order-today');
+			$resultItem['columnClasses'] = ['ACTIVITY_ID' => 'crm-list-deal-today'];
 		}
-	}
-	elseif($commonActivityID > 0)
-	{
-		$resultItem['columns']['ACTIVITY_ID'] = CCrmViewHelper::RenderNearestActivity(
-			array(
-				'ENTITY_TYPE_NAME' => CCrmOwnerType::ResolveName(CCrmOwnerType::Order),
-				'ENTITY_ID' => $arOrder['~ID'],
-				'ENTITY_RESPONSIBLE_ID' => $arOrder['RESPONSIBLE_ID'],
-				'GRID_MANAGER_ID' => $gridManagerID,
-				'ACTIVITY_ID' => $commonActivityID,
-				'ACTIVITY_SUBJECT' => isset($arOrder['C_ACTIVITY_SUBJECT']) ? $arOrder['C_ACTIVITY_SUBJECT'] : '',
-				'ACTIVITY_TIME' => isset($arOrder['C_ACTIVITY_TIME']) ? $arOrder['C_ACTIVITY_TIME'] : '',
-				'ACTIVITY_RESPONSIBLE_ID' => isset($arOrder['C_ACTIVITY_RESP_ID']) ? intval($arOrder['C_ACTIVITY_RESP_ID']) : 0,
-				'ACTIVITY_RESPONSIBLE_LOGIN' => isset($arOrder['C_ACTIVITY_RESP_LOGIN']) ? $arOrder['C_ACTIVITY_RESP_LOGIN'] : '',
-				'ACTIVITY_RESPONSIBLE_NAME' => isset($arOrder['C_ACTIVITY_RESP_NAME']) ? $arOrder['C_ACTIVITY_RESP_NAME'] : '',
-				'ACTIVITY_RESPONSIBLE_LAST_NAME' => isset($arOrder['C_ACTIVITY_RESP_LAST_NAME']) ? $arOrder['C_ACTIVITY_RESP_LAST_NAME'] : '',
-				'ACTIVITY_RESPONSIBLE_SECOND_NAME' => isset($arOrder['C_ACTIVITY_RESP_SECOND_NAME']) ? $arOrder['C_ACTIVITY_RESP_SECOND_NAME'] : '',
-				'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'],
-				'PATH_TO_USER_PROFILE' => $arParams['PATH_TO_USER_PROFILE'],
-				'ALLOW_EDIT' => $arOrder['EDIT'],
-				'MENU_ITEMS' => $arActivityMenuItems,
-				'USE_GRID_EXTENSION' => true
-			)
-		);
-	}
-	else
-	{
-		$resultItem['columns']['ACTIVITY_ID'] = CCrmViewHelper::RenderNearestActivity(
-			array(
-				'ENTITY_TYPE_NAME' => CCrmOwnerType::ResolveName(CCrmOwnerType::Order),
-				'ENTITY_ID' => $arOrder['ID'],
-				'ENTITY_RESPONSIBLE_ID' => $arOrder['RESPONSIBLE_ID'],
-				'GRID_MANAGER_ID' => $gridManagerID,
-				'ALLOW_EDIT' => $arOrder['EDIT'],
-				'MENU_ITEMS' => $arActivityMenuItems,
-				'HINT_TEXT' => isset($arOrder['WAITING_TITLE']) ? $arOrder['WAITING_TITLE'] : '',
-				'USE_GRID_EXTENSION' => true
-			)
-		);
 	}
 
 	$arResult['GRID_DATA'][] = &$resultItem;
 	unset($resultItem);
 }
-$APPLICATION->IncludeComponent('bitrix:main.user.link',
+
+$APPLICATION->IncludeComponent(
+	'bitrix:main.user.link',
 	'',
 	array(
 		'AJAX_ONLY' => 'Y',
@@ -673,8 +652,10 @@ $APPLICATION->IncludeComponent('bitrix:main.user.link',
 //region Action Panel
 $controlPanel = array('GROUPS' => array(array('ITEMS' => array())));
 
-if(!$isInternal
-	&& ($allowWrite || $allowDelete))
+if (
+	!$isInternal
+	&& ($allowWrite || $allowDelete)
+)
 {
 	$snippet = new \Bitrix\Main\Grid\Panel\Snippet();
 	$applyButton = $snippet->getApplyButton(
@@ -695,7 +676,7 @@ if(!$isInternal
 		array('NAME' => GetMessage('MAIN_NO'), 'VALUE' => 'N')
 	);
 
-	if($allowWrite && $arParams['IS_RECURRING'] !== "Y")
+	if ($allowWrite && !$isRecurring)
 	{
 		//region Add Task
 		if (IsModuleInstalled('tasks'))
@@ -717,10 +698,11 @@ if(!$isInternal
 		}
 		//endregion
 
-		$statusList = array();
-
-		foreach($arResult['STATUS_LIST'] as $id => $name)
+		$statusList = [];
+		foreach ($arResult['STATUS_LIST'] as $id => $name)
+		{
 			$statusList[] = array('NAME' => $name, 'VALUE' => $id);
+		}
 
 		$actionList[] = array(
 			'NAME' => GetMessage('CRM_ORDER_SET_STATUS'),
@@ -747,7 +729,7 @@ if(!$isInternal
 
 		//region Assign To
 		//region Render User Search control
-		if(!Bitrix\Main\Grid\Context::isInternalRequest())
+		if (!Bitrix\Main\Grid\Context::isInternalRequest())
 		{
 			//action_responsible_by_search + _control
 			//Prefix control will be added by main.ui.grid
@@ -761,7 +743,7 @@ if(!$isInternal
 					'SHOW_EXTRANET_USERS' => 'NONE',
 					'POPUP' => 'Y',
 					'SITE_ID' => SITE_ID,
-					'NAME_TEMPLATE' => $arResult['NAME_TEMPLATE']
+					'NAME_TEMPLATE' => $arResult['NAME_TEMPLATE'] ?? ''
 				),
 				null,
 				array('HIDE_ICONS' => 'Y')
@@ -802,7 +784,7 @@ if(!$isInternal
 		);
 		//endregion
 		//region Create call list
-		if(IsModuleInstalled('voximplant'))
+		if (IsModuleInstalled('voximplant'))
 		{
 			$actionList[] = array(
 				'NAME' => GetMessage('CRM_ORDER_CREATE_CALL_LIST'),
@@ -824,13 +806,13 @@ if(!$isInternal
 		//endregion
 	}
 
-	if($allowDelete)
+	if ($allowDelete)
 	{
 		$controlPanel['GROUPS'][0]['ITEMS'][] = $snippet->getRemoveButton();
 		$actionList[] = $snippet->getRemoveAction();
 	}
 
-	if($salescenterMode)
+	if ($salescenterMode)
 	{
 		$controlPanel['GROUPS'][0]['ITEMS'][] = array(
 			"TYPE" => \Bitrix\Main\Grid\Panel\Types::BUTTON,
@@ -845,7 +827,7 @@ if(!$isInternal
 			)
 		);
 	}
-	elseif($callListUpdateMode)
+	elseif ($callListUpdateMode)
 	{
 		$callListContext = \CUtil::jsEscape($arResult['CALL_LIST_CONTEXT']);
 		$controlPanel['GROUPS'][0]['ITEMS'][] = [
@@ -864,7 +846,7 @@ if(!$isInternal
 	else
 	{
 		//region Create & start call list
-		if(IsModuleInstalled('voximplant'))
+		if (IsModuleInstalled('voximplant'))
 		{
 			$controlPanel['GROUPS'][0]['ITEMS'][] = array(
 				"TYPE" => \Bitrix\Main\Grid\Panel\Types::BUTTON,
@@ -891,7 +873,7 @@ if(!$isInternal
 }
 //endregion
 
-if($arResult['ENABLE_TOOLBAR'])
+if (isset($arResult['ENABLE_TOOLBAR']) && $arResult['ENABLE_TOOLBAR'])
 {
 	$addButton =array(
 		'TEXT' => GetMessage('CRM_ORDER_LIST_ADD_SHORT'),
@@ -900,7 +882,7 @@ if($arResult['ENABLE_TOOLBAR'])
 		'ICON' => 'btn-new'
 	);
 
-	if($arResult['ADD_EVENT_NAME'] !== '')
+	if ($arResult['ADD_EVENT_NAME'] !== '')
 	{
 		$addButton['ONCLICK'] = "BX.onCustomEvent(window, '{$arResult['ADD_EVENT_NAME']}')";
 	}
@@ -917,9 +899,10 @@ if($arResult['ENABLE_TOOLBAR'])
 	);
 }
 
-if ($arResult['IS_AJAX_CALL'])
+if (isset($arResult['IS_AJAX_CALL']) && $arResult['IS_AJAX_CALL'])
 {
 	$GLOBALS['OnCrmCrmOrderListAfterAjaxHandlerParams']['arOrderStatusInfoValues'] = $arOrderStatusInfoValues;
+
 	function OnCrmCrmOrderListAfterAjaxHandler()
 	{
 		?>
@@ -934,13 +917,14 @@ if ($arResult['IS_AJAX_CALL'])
 
 		return '';
 	}
+
 	AddEventHandler('main', 'OnAfterAjaxResponse', 'OnCrmCrmOrderListAfterAjaxHandler');
 }
 
-$messages = array();
-if(isset($arResult['ERRORS']) && is_array($arResult['ERRORS']))
+$messages = [];
+if (isset($arResult['ERRORS']) && is_array($arResult['ERRORS']))
 {
-	foreach($arResult['ERRORS'] as $error)
+	foreach ($arResult['ERRORS'] as $error)
 	{
 		$messages[] = array(
 			'TYPE' => \Bitrix\Main\Grid\MessageType::ERROR,
@@ -964,7 +948,7 @@ $APPLICATION->IncludeComponent(
 		'AJAX_ID' => $arResult['AJAX_ID'],
 		'AJAX_OPTION_JUMP' => $arResult['AJAX_OPTION_JUMP'],
 		'AJAX_OPTION_HISTORY' => $arResult['AJAX_OPTION_HISTORY'],
-		'AJAX_LOADER' => isset($arParams['AJAX_LOADER']) ? $arParams['AJAX_LOADER'] : null,
+		'AJAX_LOADER' => $arParams['AJAX_LOADER'] ?? null,
 		'FILTER' => $arResult['FILTER'],
 		'FILTER_PRESETS' => $arResult['FILTER_PRESETS'],
 		'FILTER_PARAMS' => array(
@@ -977,7 +961,8 @@ $APPLICATION->IncludeComponent(
 		'ACTION_PANEL' => $controlPanel,
 		'SHOW_ACTION_PANEL' => !empty($controlPanel),
 		'PAGINATION' => isset($arResult['PAGINATION']) && is_array($arResult['PAGINATION'])
-			? $arResult['PAGINATION'] : array(),
+			? $arResult['PAGINATION']
+			: [],
 		'ENABLE_ROW_COUNT_LOADER' => true,
 		'PRESERVE_HISTORY' => $arResult['PRESERVE_HISTORY'],
 		'MESSAGES' => $messages,
@@ -996,10 +981,10 @@ $APPLICATION->IncludeComponent(
 				'ownerTypeName' => CCrmOwnerType::OrderName,
 				'gridId' => $arResult['GRID_ID'],
 				'activityEditorId' => $activityEditorID,
-				'activityServiceUrl' => '/bitrix/components/bitrix/crm.activity.editor/ajax.php?siteID='.SITE_ID.'&'.bitrix_sessid_get(),
-				'taskCreateUrl'=> isset($arResult['TASK_CREATE_URL']) ? $arResult['TASK_CREATE_URL'] : '',
-				'serviceUrl' => '/bitrix/components/bitrix/crm.order.list/list.ajax.php?siteID='.SITE_ID.'&'.bitrix_sessid_get(),
-				'loaderData' => isset($arParams['AJAX_LOADER']) ? $arParams['AJAX_LOADER'] : null
+				'activityServiceUrl' => '/bitrix/components/bitrix/crm.activity.editor/ajax.php?siteID='.SITE_ID.'&' . bitrix_sessid_get(),
+				'taskCreateUrl'=> $arResult['TASK_CREATE_URL'] ?? '',
+				'serviceUrl' => '/bitrix/components/bitrix/crm.order.list/list.ajax.php?siteID='.SITE_ID.'&' . bitrix_sessid_get(),
+				'loaderData' => $arParams['AJAX_LOADER'] ?? null
 			),
 			'MESSAGES' => array(
 				'deletionDialogTitle' => GetMessage('CRM_ORDER_DELETE_TITLE'),
@@ -1007,8 +992,8 @@ $APPLICATION->IncludeComponent(
 				'deletionDialogButtonTitle' => GetMessage('CRM_ORDER_DELETE')
 			)
 		),
-		'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'],
-		'LIVE_SEARCH_LIMIT_INFO' => isset($arResult['LIVE_SEARCH_LIMIT_INFO']) ? $arResult['LIVE_SEARCH_LIMIT_INFO'] : null,
+		'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'] ?? '',
+		'LIVE_SEARCH_LIMIT_INFO' => $arResult['LIVE_SEARCH_LIMIT_INFO'] ?? null,
 	),
 	$component
 );
@@ -1027,7 +1012,6 @@ if (!$arResult['IS_AJAX_CALL'])
 	</script>
 	<?
 }
-
 ?>
 <script type="text/javascript">
 
@@ -1045,7 +1029,7 @@ if (!$arResult['IS_AJAX_CALL'])
 
 			BX.addCustomEvent("CrmProgressControlAfterSaveSucces", function(progressControl, result)
 			{
-				if(progressControl.getEntityType() !== "ORDER")
+				if (progressControl.getEntityType() !== "ORDER")
 					return;
 
 				if (BX.type.isNotEmptyString(result['ERROR']))
@@ -1062,7 +1046,7 @@ if (!$arResult['IS_AJAX_CALL'])
 		}
 	);
 </script><?
-if(!$isInternal):
+if (!$isInternal):
 ?><script type="text/javascript">
 	BX.ready(
 			function()
@@ -1074,7 +1058,7 @@ if(!$isInternal):
 						}
 				);
 				BX.namespace('BX.Crm.Activity');
-				if(typeof BX.Crm.Activity.Planner !== 'undefined')
+				if (typeof BX.Crm.Activity.Planner !== 'undefined')
 				{
 					BX.Crm.Activity.Planner.Manager.setCallback('onAfterActivitySave', function()
 					{
@@ -1085,7 +1069,7 @@ if(!$isInternal):
 	);
 </script>
 <?endif;?>
-<?if($arResult['CONVERSION_PERMITTED'] && $arResult['CAN_CONVERT'] && isset($arResult['CONVERSION_CONFIG'])):?>
+<?if ($arResult['CONVERSION_PERMITTED'] && $arResult['CAN_CONVERT'] && isset($arResult['CONVERSION_CONFIG'])):?>
 	<script type="text/javascript">
 		BX.ready(
 			function()
@@ -1106,8 +1090,8 @@ if(!$isInternal):
 				};
 				BX.CrmOrderConverter.permissions =
 				{
-					invoice: <?=CUtil::PhpToJSObject($arResult['CAN_CONVERT_TO_INVOICE'])?>,
-					quote: <?=CUtil::PhpToJSObject($arResult['CAN_CONVERT_TO_QUOTE'])?>
+					invoice: <?=CUtil::PhpToJSObject($arResult['CAN_CONVERT_TO_INVOICE'] ?? false)?>,
+					quote: <?=CUtil::PhpToJSObject($arResult['CAN_CONVERT_TO_QUOTE'] ?? false)?>
 				};
 				BX.CrmOrderConverter.settings =
 				{
@@ -1119,12 +1103,12 @@ if(!$isInternal):
 		);
 	</script>
 <?endif;?>
-<?if($arResult['NEED_FOR_REBUILD_SEARCH_CONTENT']):?>
+<?if ($arResult['NEED_FOR_REBUILD_SEARCH_CONTENT']):?>
 	<script type="text/javascript">
 		BX.ready(
 			function()
 			{
-				if(BX.AutorunProcessPanel.isExists("rebuildOrderSearch"))
+				if (BX.AutorunProcessPanel.isExists("rebuildOrderSearch"))
 				{
 					return;
 				}
@@ -1147,12 +1131,12 @@ if(!$isInternal):
 		);
 	</script>
 <?endif;?>
-<?if($arResult['NEED_FOR_BUILD_TIMELINE']):?>
+<?if ($arResult['NEED_FOR_BUILD_TIMELINE']):?>
 	<script type="text/javascript">
 		BX.ready(
 			function()
 			{
-				if(BX.AutorunProcessPanel.isExists("buildOrderTimeline"))
+				if (BX.AutorunProcessPanel.isExists("buildOrderTimeline"))
 				{
 					return;
 				}
@@ -1175,12 +1159,12 @@ if(!$isInternal):
 		);
 	</script>
 <?endif;?>
-<?if($arResult['NEED_FOR_REFRESH_ACCOUNTING']):?>
+<?if ($arResult['NEED_FOR_REFRESH_ACCOUNTING']):?>
 	<script type="text/javascript">
 		BX.ready(
 			function()
 			{
-				if(BX.AutorunProcessPanel.isExists("refreshOrderAccounting"))
+				if (BX.AutorunProcessPanel.isExists("refreshOrderAccounting"))
 				{
 					return;
 				}
@@ -1203,7 +1187,7 @@ if(!$isInternal):
 		);
 	</script>
 <?endif;?>
-<?if($arResult['NEED_FOR_REBUILD_ORDER_SEMANTICS']):?>
+<?if ($arResult['NEED_FOR_REBUILD_ORDER_SEMANTICS']):?>
 	<script type="text/javascript">
 		BX.ready(
 			function()
@@ -1229,14 +1213,13 @@ if(!$isInternal):
 		);
 	</script>
 <?endif;?>
-<?if($arResult['NEED_FOR_REBUILD_ORDER_ATTRS']):?>
+<?if ($arResult['NEED_FOR_REBUILD_ORDER_ATTRS']):?>
 <script type="text/javascript">
-
 	BX.ready(
 		function()
 		{
 			var link = BX("rebuildOrderAttrsLink");
-			if(link)
+			if (link)
 			{
 				BX.bind(
 					link,
@@ -1244,7 +1227,7 @@ if(!$isInternal):
 					function(e)
 					{
 						var msg = BX("rebuildOrderAttrsMsg");
-						if(msg)
+						if (msg)
 						{
 							msg.style.display = "none";
 						}
@@ -1255,4 +1238,9 @@ if(!$isInternal):
 	);
 </script>
 <?endif;?>
-<?\Bitrix\Crm\Integration\NotificationsManager::showSignUpFormOnCrmShopCreated()?>
+
+<?php
+
+echo $arResult['ACTIVITY_FIELD_RESTRICTIONS'] ?? '';
+
+\Bitrix\Crm\Integration\NotificationsManager::showSignUpFormOnCrmShopCreated();

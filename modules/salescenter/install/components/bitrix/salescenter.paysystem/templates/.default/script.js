@@ -1187,6 +1187,7 @@
 			this.formNode = BX(parameters.formId);
 			this.cashboxContainerInfoNode = BX(parameters.cashboxContainerInfoId);
 			this.cashboxContainerNode = BX(parameters.cashboxContainerId);
+			this.cashboxWarningContainerNode = BX(parameters.cashboxWarningContainerId);
 			this.canPrintCheckNode = BX(parameters.canPrintCheckId);
 
 			this.cashboxSwitchet = null;
@@ -1239,9 +1240,17 @@
 				children: [
 					BX.create('div', {
 						props: {
-							className: 'ui-title-6'
+							className: 'salescenter-paysystem-section-title-block',
 						},
-						text: section.title,
+						children: [
+							BX.create('div', {
+								props: {
+									className: 'ui-title-6',
+								},
+								text: section.title,
+							}),
+							section.hint && BX.UI.Hint.createNode(section.hint),
+						],
 					}),
 					BX.create('div', {
 						props: {
@@ -1259,6 +1268,10 @@
 			}));
 
 			var innerContent = BX.create('div');
+			if (section.collapsed === 'Y')
+			{
+				BX.hide(innerContent);
+			}
 			sectionNode.appendChild(innerContent);
 
 			if (section.warning)
@@ -1413,6 +1426,7 @@
 
 				var switcher = new BX.UI.Switcher({node: node});
 				this.cashboxSwitchet = switcher;
+				this.canPrintCheckNode.onchange = () => this.onToggleCanPrintCheckNode(this.canPrintCheckNode);
 
 				BX.addCustomEvent(switcher, 'unchecked', BX.proxy(this.onToggleCashboxSwitcher.bind(this, switcher)));
 				BX.addCustomEvent(switcher, 'checked', BX.proxy(this.onToggleCashboxSwitcher.bind(this, switcher)));
@@ -1421,20 +1435,34 @@
 
 		onToggleCashboxSwitcher: function (switcher)
 		{
-			if (switcher.checked)
+			if (switcher.isChecked())
 			{
 				this.canPrintCheckNode.checked = true;
-				this.canPrintCheckNode.setAttribute("disabled", "true");
 				this.cashboxContainerInfoNode.classList.remove("salescenter-paysystem-cashbox-block--disabled");
+				if (this.cashboxWarningContainerNode)
+				{
+					BX.hide(this.cashboxWarningContainerNode);
+				}
 
 				this.showCashboxSettings();
 			}
 			else
 			{
-				this.canPrintCheckNode.removeAttribute("disabled");
 				this.cashboxContainerInfoNode.classList.add("salescenter-paysystem-cashbox-block--disabled");
+				if (this.cashboxWarningContainerNode)
+				{
+					BX.show(this.cashboxWarningContainerNode);
+				}
 
 				this.hideCashboxSettings();
+			}
+		},
+
+		onToggleCanPrintCheckNode: function (switcher)
+		{
+			if (switcher.checked === false)
+			{
+				this.cashboxSwitchet.check(false);
 			}
 		},
 

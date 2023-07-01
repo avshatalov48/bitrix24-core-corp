@@ -1,12 +1,13 @@
-<?
+<?php
+
 namespace Bitrix\Crm\Order;
 
-use \Bitrix\Main\Error;
-use Bitrix\Main\Loader;
-use \Bitrix\Sale\Result;
-use \Bitrix\Main\Localization\Loc;
-use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\ArgumentOutOfRangeException;
+use Bitrix\Main\Error;
+use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\NotImplementedException;
+use Bitrix\Sale\Result;
 
 Loc::loadMessages(__FILE__);
 
@@ -14,6 +15,7 @@ if (!Loader::includeModule('sale'))
 {
 	return;
 }
+
 /** @internal */
 class AjaxProcessor
 {
@@ -46,22 +48,22 @@ class AjaxProcessor
 	{
 		$result = new Result();
 
-		if(!isset($this->request["ACTION"]) || $this->request["MODE"])
+		if (!isset($this->request["ACTION"]) || !empty($this->request["MODE"]))
 		{
 			$result->addError(new Error(Loc::getMessage('CRM_ORDER_AJAX_ERROR')));
 			$result->setData(["SYSTEM_ERROR" => "REQUEST[action] not defined!"]);
 		}
-		elseif(!Loader::includeModule('crm'))
+		elseif (!Loader::includeModule('crm'))
 		{
 			$result->addError(new Error(Loc::getMessage('CRM_ORDER_AJAX_ERROR')));
 			$result->setData(["SYSTEM_ERROR" => "Error! Can't include module \"crm\"!"]);
 		}
-		elseif(!Loader::includeModule('sale'))
+		elseif (!Loader::includeModule('sale'))
 		{
 			$result->addError(new Error(Loc::getMessage('CRM_ORDER_AJAX_ERROR')));
 			$result->setData(["SYSTEM_ERROR" => "Error! Can't include module \"sale\"!"]);
 		}
-		elseif(!\CCrmSecurityHelper::IsAuthorized() || !check_bitrix_sessid())
+		elseif (!\CCrmSecurityHelper::IsAuthorized() || !check_bitrix_sessid())
 		{
 			$result->addError(new Error(Loc::getMessage('CRM_ORDER_AJAX_ERROR_AD')));
 			$result->setData(["SYSTEM_ERROR" => "Access denied!"]);
@@ -178,11 +180,11 @@ class AjaxProcessor
 			throw new \Bitrix\Main\ArgumentNullException('action');
 		}
 
-		if($action == 'SAVE' || $action == 'DELETE')
+		if($action === 'SAVE' || $action === 'DELETE')
 		{
 			$action = ToLower($action);
 		}
-		elseif($action == 'GET_FORMATTED_SUM')
+		elseif($action === 'GET_FORMATTED_SUM')
 		{
 			$action = 'getFormattedSum';
 		}
@@ -228,10 +230,10 @@ class AjaxProcessor
 
 	protected function getFormattedSumAction()
 	{
-		$sum = isset($this->request['SUM']) ? $this->request['SUM'] : 0.0;
-		$currencyID = isset($this->request['CURRENCY_ID']) ? $this->request['CURRENCY_ID'] : '';
+		$sum = $this->request['SUM'] ?? 0.0;
+		$currencyID = $this->request['CURRENCY_ID'] ?? '';
 
-		if($currencyID === '')
+		if ($currencyID === '')
 		{
 			$currencyID = \CCrmCurrency::GetBaseCurrencyID();
 		}

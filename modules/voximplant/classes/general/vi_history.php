@@ -286,7 +286,8 @@ class CVoxImplantHistory
 		if ($params['URL'] != '')
 		{
 			$attachToCrm = $call->isCrmEnabled();
-			self::DownloadAgent($insertResult->getId(), $params['URL'], $attachToCrm);
+			$recordUrl = \Bitrix\Main\Web\Uri::urnEncode($params['URL']);
+			self::DownloadAgent($insertResult->getId(), $recordUrl, $attachToCrm);
 		}
 
 		if ($params["ACCOUNT_PAYED"] <> '' && in_array($params["ACCOUNT_PAYED"], Array('Y', 'N')))
@@ -351,90 +352,44 @@ class CVoxImplantHistory
 		return true;
 	}
 
-	public static function DownloadAgent($historyID, $recordUrl, $attachToCrm = true, $retryOnFailure = true)
+	public static function DownloadAgent(int $historyID, string $recordUrl, $attachToCrm = true, $retryOnFailure = true): bool
 	{
+		$recordUrl = \Bitrix\Main\Web\Uri::urnDecode($recordUrl);
 		self::WriteToLog('Downloading record ' . $recordUrl);
-		$historyID = intval($historyID);
-		$attachToCrm = ($attachToCrm == true);
+		$attachToCrm = ($attachToCrm === true);
+
 		if ($recordUrl == '' || $historyID <= 0)
 		{
 			return false;
 		}
 
+		$urlPath = parse_url($recordUrl, PHP_URL_PATH);
+
+		if ($urlPath)
+		{
+			$tempPath = \CFile::GetTempName('', bx_basename($urlPath));
+		}
+		else
+		{
+			$tempPath = \CFile::GetTempName('', bx_basename($recordUrl));
+		}
+
 		$http = VI\HttpClientFactory::create(array(
 			"disableSslVerification" => true
 		));
-		$http->query('GET', $recordUrl);
-		if ($http->getStatus() != 200)
-		{
-			if($retryOnFailure)
-			{
-				CAgent::AddAgent(
-					"CVoxImplantHistory::DownloadAgent('{$historyID}','".EscapePHPString($recordUrl, "'")."','{$attachToCrm}', false);",
-					'voximplant', 'N', 60, '', 'Y', ConvertTimeStamp(time() + CTimeZone::GetOffset() + 60, 'FULL')
-				);
-			}
-
-			$errors = [];
-			foreach($http->getError() as $code => $message)
-			{
-				$errors[] = $code . ": " . $message;
-			}
-
-			if(!empty($errors))
-			{
-				$error = join("; " , $errors);
-			}
-			else
-			{
-				$error = $http->getStatus();
-			}
-
-			static::WriteToLog("Call record download error. Url: " . $recordUrl . "; Error: " . $error);
-			return false;
-		}
-
-		static::WriteToLog("Call record downloaded successfully. Url: " . $recordUrl);
-
-		$history = VI\StatisticTable::getById($historyID);
-		$arHistory = $history->fetch();
 
 		try
 		{
-			$fileName = $http->getHeaders()->getFilename();
-			$urlComponents = parse_url($recordUrl);
-			if($fileName != '')
-			{
-				$tempPath = \CFile::GetTempName('', bx_basename($fileName));
-			}
-			else if ($urlComponents && $urlComponents["path"] <> '')
-			{
-				$tempPath = \CFile::GetTempName('', bx_basename($urlComponents["path"]));
-			}
-			else
-			{
-				$tempPath = \CFile::GetTempName('', bx_basename($recordUrl));
-			}
+			$http->download($recordUrl, $tempPath);
 
-			IO\Directory::createDirectory(IO\Path::getDirectory($tempPath));
-			if(IO\Directory::isDirectoryExists(IO\Path::getDirectory($tempPath)) === false)
+			if ($http->getStatus() !== 200)
 			{
-				self::WriteToLog('Error creating temporary directory ' . $tempPath);
+				self::DownloadAgentRequestErrorHandler($historyID, $recordUrl, $attachToCrm, $retryOnFailure, $http);
+
 				return false;
 			}
 
-			self::WriteToLog('Downloading to temporary file ' . $tempPath);
-			$file = new IO\File($tempPath);
-			$handler = $file->open("w+");
-			if($handler === false)
-			{
-				self::WriteToLog('Error opening temporary file ' . $tempPath);
-				return false;
-			}
-
-			$http->setOutputStream($handler);
-			$http->getResult();
-			$file->close();
+			static::WriteToLog("Call record downloaded successfully. Url: " . $recordUrl);
 
 			$fileType = $http->getHeaders()->getContentType() ?: CFile::GetContentType($tempPath);
 			$recordFile = CFile::MakeFileArray($tempPath, $fileType);
@@ -443,8 +398,11 @@ class CVoxImplantHistory
 			{
 				if(mb_strpos($recordFile['name'], '.') === false)
 				{
-					$recordFile['name'] = $recordFile['name'] . '.mp3';
+					$recordFile['name'] .= '.mp3';
 				}
+
+				$history = VI\StatisticTable::getById($historyID);
+				$arHistory = $history->fetch();
 
 				static::AttachRecord($arHistory['CALL_ID'], $recordFile);
 			}
@@ -455,6 +413,38 @@ class CVoxImplantHistory
 		}
 
 		return false;
+	}
+
+	private static function DownloadAgentRequestErrorHandler(
+		int $historyID,
+		string $recordUrl,
+		bool $attachToCrm,
+		bool $retryOnFailure,
+		\Bitrix\Main\Web\HttpClient $httpClient
+	)
+	{
+		if($retryOnFailure)
+		{
+			$recordUrl = \Bitrix\Main\Web\Uri::urnEncode($recordUrl);
+			CAgent::AddAgent(
+				"CVoxImplantHistory::DownloadAgent('{$historyID}','" . EscapePHPString($recordUrl, "'") . "','{$attachToCrm}', false);",
+				'voximplant',
+				'N',
+				60,
+				'',
+				'Y',
+				ConvertTimeStamp(time() + CTimeZone::GetOffset() + 60, 'FULL')
+			);
+		}
+
+		$errors = [];
+		foreach($httpClient->getError() as $code => $message)
+		{
+			$errors[] = $code . ": " . $message;
+		}
+		$error = !empty($errors) ? implode("; " , $errors) : $httpClient->getStatus();
+
+		static::WriteToLog("Call record download error. Url: " . $recordUrl . "; Error: " . $error);
 	}
 
 	public static function AttachRecord($callId, array $recordFileFields)

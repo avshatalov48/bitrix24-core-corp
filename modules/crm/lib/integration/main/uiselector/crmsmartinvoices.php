@@ -8,26 +8,26 @@ use Bitrix\Crm\Item;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Settings\InvoiceSettings;
 use Bitrix\Main\Localization\Loc;
+use CCrmOwnerType;
 
 class CrmSmartInvoices extends CrmDynamics
 {
-	const PREFIX_SHORT = 'SI_';
-	const PREFIX_FULL = 'CRMSMART_INVOICE';
+	public const PREFIX_SHORT = 'SI_';
+	public const PREFIX_FULL = 'CRMSMART_INVOICE';
 
-	protected static function getPrefix($options = [])
+	protected static function getOwnerType()
 	{
-		return (
-			is_array($options)
-			&& isset($options['prefixType'])
-			&& mb_strtolower($options['prefixType']) === 'short'
-				? self::PREFIX_SHORT
-				: self::PREFIX_FULL
-		);
+		return CCrmOwnerType::SmartInvoice;
+	}
+
+	protected static function getHandlerType()
+	{
+		return Handler::ENTITY_TYPE_CRMDYNAMICS;
 	}
 
 	protected static function prepareEntity(Item\Dynamic $item, ?array $options = []): array
 	{
-		$prefix = self::getPrefix($options);
+		$prefix = static::getPrefix($options);
 
 		$date = $item->getBegindate() ?? $item->getCreatedTime();
 
@@ -49,7 +49,9 @@ class CrmSmartInvoices extends CrmDynamics
 			&& $options['returnItemUrl'] === 'Y'
 		)
 		{
-			$result['url'] = Container::getInstance()->getRouter()->getItemDetailUrl(\CCrmOwnerType::SmartInvoice, $item->getId());
+			$result['url'] =
+				Container::getInstance()->getRouter()->getItemDetailUrl(static::getOwnerType(), $item->getId())
+			;
 			$result['urlUseSlider'] = 'Y';
 		}
 
@@ -83,19 +85,18 @@ class CrmSmartInvoices extends CrmDynamics
 		}
 
 		$entityOptions = $params['options'] ?? [];
-		$prefix = self::getPrefix($entityOptions);
+		$prefix = static::getPrefix($entityOptions);
 
 		$lastItems = $params['lastItems'] ?? [];
 
 		$lastEntitiesIdList = [];
-		if(!empty($lastItems[$entityType.'_MULTI']))
+		if(!empty($lastItems[$entityType . '_MULTI']))
 		{
-			$lastEntitiesIdList = [];
 			if(!empty($lastItems[$entityType]))
 			{
 				$result['ITEMS_LAST'] = array_map(
 					static function($code) use ($prefix) {
-						return preg_replace('/^'.self::PREFIX_FULL.'(\d+)$/', $prefix.'$1', $code);
+						return preg_replace('/^'.self::PREFIX_FULL . '(\d+)$/', $prefix . '$1', $code);
 					},
 					array_values($lastItems[$entityType])
 				);
@@ -108,14 +109,14 @@ class CrmSmartInvoices extends CrmDynamics
 
 		$entitiesList = [];
 
-		$list = Container::getInstance()->getFactory(\CCrmOwnerType::SmartInvoice)->getItemsFilteredByPermissions([
+		$list = Container::getInstance()->getFactory(static::getOwnerType())->getItemsFilteredByPermissions([
 			'order' => ['ID' => 'DESC'],
 			'limit' => 10,
 		]);
 
 		foreach ($list as $item)
 		{
-			$entitiesList[$prefix . $item['ID']] = self::prepareEntity($item, $entityOptions);
+			$entitiesList[$prefix . $item['ID']] = static::prepareEntity($item, $entityOptions);
 		}
 
 		if (empty($lastEntitiesIdList))
@@ -142,7 +143,7 @@ class CrmSmartInvoices extends CrmDynamics
 			$result = [
 				[
 					'id' => 'smart_invoices',
-					'name' => \CCrmOwnerType::GetDescription(\CCrmOwnerType::SmartInvoice),
+					'name' => CCrmOwnerType::GetDescription(static::getOwnerType()),
 					'sort' => 40
 				]
 			];
@@ -166,8 +167,7 @@ class CrmSmartInvoices extends CrmDynamics
 		$entityOptions = $params['options'] ?? [];
 		$requestFields = $params['requestFields'] ?? [];
 		$search = $requestFields['searchString'];
-		$prefix = self::getPrefix($entityOptions);
-		$entityTypeId = \CCrmOwnerType::SmartInvoice;
+		$prefix = static::getPrefix($entityOptions);
 
 		if (
 			$search <> ''
@@ -177,17 +177,16 @@ class CrmSmartInvoices extends CrmDynamics
 			)
 		)
 		{
-			$filter = [];
+			$filter = $this->getSearchFilter($search, $entityOptions);
 
-			$settings = new ItemSettings([
-				'ID' => 'crm-element-field-'.$entityTypeId,
-			], Container::getInstance()->getTypeByEntityTypeId($entityTypeId));
-			$factory = Container::getInstance()->getFactory($entityTypeId);
-			$provider = new ItemDataProvider($settings, $factory);
-			$provider->prepareListFilter($filter, ['FIND' => $search]);
+			if ($filter === false)
+			{
+				return $result;
+			}
 
-			$list = $factory->getItemsFilteredByPermissions([
-				'select' => ['*'],
+			$list = Container::getInstance()->getFactory(static::getOwnerType())->getItemsFilteredByPermissions([
+				'order' => $this->getSearchOrder(),
+				'select' => $this->getSearchSelect(),
 				'limit' => 10,
 				'filter' => $filter,
 			]);
@@ -195,12 +194,70 @@ class CrmSmartInvoices extends CrmDynamics
 			$resultItems = [];
 			foreach ($list as $item)
 			{
-				$resultItems[$prefix . $item->getId()] = self::prepareEntity($item, $entityOptions);
+				$resultItems[$prefix . $item->getId()] = static::prepareEntity($item, $entityOptions);
 			}
 
-			$result['ITEMS'] = $resultItems;
+			$resultItems = $this->appendItemsByIds($resultItems, $search, $entityOptions);
+
+			$resultItems = $this->processResultItems($resultItems, $entityOptions);
+
+			$result["ITEMS"] = $resultItems;
 		}
 
 		return $result;
+	}
+
+	protected function getSearchFilter(string $search, array $options)
+	{
+		$filter = [];
+
+		$entityTypeId = static::getOwnerType();
+		$settings = new ItemSettings(
+			['ID' => 'crm-element-field-' . $entityTypeId],
+			Container::getInstance()->getTypeByEntityTypeId($entityTypeId)
+		);
+		$factory = Container::getInstance()->getFactory($entityTypeId);
+		$provider = new ItemDataProvider($settings, $factory);
+		$provider->prepareListFilter($filter, ['FIND' => $search]);
+
+		return
+			empty($filter)
+				? false
+				: $this->prepareOptionalFilter($filter, $options)
+			;
+	}
+
+	protected function getByIdsResultItems(array $ids, array $options): array
+	{
+		$result = [];
+
+		$prefix = static::getPrefix($options);
+
+		$list = Container::getInstance()->getFactory(static::getOwnerType())->getItemsFilteredByPermissions(
+			[
+				'order' => $this->getByIdsOrder(),
+				'select' => $this->getByIdsSelect(),
+				'filter' => $this->getByIdsFilter($ids, $options),
+			]
+		);
+
+		foreach ($list as $item)
+		{
+			$result[$prefix . $item->getId()] = static::prepareEntity($item, $options);
+		}
+
+		return $result;
+	}
+
+	protected static function getPrefix($options = []): string
+	{
+		if (!is_array($options))
+		{
+			$options = [];
+		}
+
+		$options['typeId'] = CCrmOwnerType::SmartInvoice;
+
+		return parent::getPrefix($options);
 	}
 }

@@ -6,15 +6,15 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Crm\Service\Container;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Text\HtmlFilter;
+use Bitrix\Main\UI\Extension;
 use Bitrix\UI\Buttons\Button;
 use Bitrix\UI\Buttons\Color;
 use Bitrix\UI\Buttons\Icon;
 use Bitrix\UI\Buttons\JsCode;
-use Bitrix\Main\UI\Extension;
 use Bitrix\UI\Toolbar\ButtonLocation;
 use Bitrix\UI\Toolbar\Facade\Toolbar;
-use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\Text\HtmlFilter;
 
 Extension::load([
 	'crm.toolbar-component',
@@ -34,8 +34,8 @@ $menuItems = isset($arResult['ITEMS']) && is_array($arResult['ITEMS'])
 
 $menuItems = array_map(static function ($item)
 {
-	$item['id'] = 'toolbar-category-'.$item['id'];
-	$item['categoryId'] = $item['id'];
+	$item['id'] = 'toolbar-category-' . ($item['id'] ?? '');
+	$item['categoryId'] = $item['id'] ?? '';
 
 	return $item;
 }, $menuItems);

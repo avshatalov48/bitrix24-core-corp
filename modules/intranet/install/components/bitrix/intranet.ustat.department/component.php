@@ -165,7 +165,7 @@ foreach ($rawData as $k => $v)
 	/** @var Type\DateTime[] $v */
 	if ($sectionField == 'TOTAL')
 	{
-		$involvement = $v['INVOLVEMENT'];
+		$involvement = $v['INVOLVEMENT'] ?? 0;
 	}
 	elseif (isset($sectionInvolvement[$k]) && $sectionInvolvement[$k]['TOTAL_USERS'] > 0)
 	{

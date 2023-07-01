@@ -45,7 +45,6 @@ export class Row
 	handleMainSelectorClear = Runtime.debounce(this.#onMainSelectorClear.bind(this), 500, this);
 	handleStoreFieldChange = Runtime.debounce(this.#onStoreFieldChange.bind(this), 500, this);
 	handleStoreFieldClear = Runtime.debounce(this.#onStoreFieldClear.bind(this), 500, this);
-	handleOnGridUpdated = this.#onGridUpdated.bind(this);
 
 	cache = new Cache.MemoryCache();
 	modeChanges = {
@@ -69,7 +68,8 @@ export class Row
 		this.modifyBasePriceInput();
 		this.modifyQuantityInput();
 		this.refreshFieldsLayout();
-
+		this.updateUiStoreAmountData();
+		this.initHandlersForSelectors();
 		requestAnimationFrame(this.initHandlers.bind(this));
 	}
 
@@ -371,7 +371,14 @@ export class Row
 			}
 
 			this.mainSelector.skuTreeInstance = null;
-			this.mainSelector.renderTo(selectorWrapper);
+			if (this.editor.isVisible())
+			{
+				this.mainSelector.renderTo(selectorWrapper);
+			}
+			else
+			{
+				this.mainSelector.wrapper = selectorWrapper;
+			}
 		}
 
 		EventEmitter.subscribe(
@@ -461,12 +468,6 @@ export class Row
 			model: this.getModel(),
 			node: storeAvaiableNode,
 		});
-
-		// runs once because after grid update, row re-created.
-		EventEmitter.subscribeOnce(
-			'Grid::updated',
-			this.handleOnGridUpdated
-		);
 	}
 
 	#applyStoreSelectorRestrictionTweaks()
@@ -1133,6 +1134,7 @@ export class Row
 		this.updateUiStoreAmountData();
 		this.layoutReserveControl();
 		this.addActionProductChange();
+		this.initHandlersForSelectors();
 	}
 
 	#onChangeStoreData()
@@ -1186,13 +1188,10 @@ export class Row
 
 		if (!this.getModel().isCatalogExisted() || this.isRestrictedStoreInfo() || this.getModel().isService())
 		{
-			//do nothing
-		}
-		else
-		{
-			amountWithMeasure = amount + ' ' + this.#getMeasureName();
+			return;
 		}
 
+		amountWithMeasure = amount + ' ' + this.#getMeasureName();
 		availableWrapper.innerHTML =
 			amount > 0
 				? amountWithMeasure
@@ -1339,6 +1338,7 @@ export class Row
 				basePriceId: fields['BASE_PRICE_ID'],
 				isSimpleModel: Text.toInteger(fields['PRODUCT_ID']) <= 0 && Type.isStringFilled(fields['NAME']),
 				skuTree: Type.isStringFilled(fields['SKU_TREE']) ? JSON.parse(fields['SKU_TREE']) : null,
+				storeMap: fields['STORE_MAP'] ?? {},
 				fields,
 			});
 
@@ -2178,14 +2178,6 @@ export class Row
 	#getNodesChild(): NodeList
 	{
 		return this.getNode().querySelectorAll(`span[data-name]`);
-	}
-
-	#onGridUpdated(): void
-	{
-		if (this.storeAvailablePopup)
-		{
-			this.storeAvailablePopup.refreshStoreInfo();
-		}
 	}
 
 	setType(value)

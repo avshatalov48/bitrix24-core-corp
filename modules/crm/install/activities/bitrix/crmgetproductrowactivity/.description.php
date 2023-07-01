@@ -44,8 +44,8 @@ if (Loader::includeModule('crm'))
 }
 
 $arActivityDescription = [
-	'NAME' => Loc::getMessage('CRM_BP_GPR_NAME_1'),
-	'DESCRIPTION' => Loc::getMessage('CRM_BP_GPR_DESC_1'),
+	'NAME' => Loc::getMessage('CRM_BP_GPR_NAME_2'),
+	'DESCRIPTION' => Loc::getMessage('CRM_BP_GPR_DESC_2'),
 	'TYPE' => ['activity', 'robot_activity'],
 	'CLASS' => 'CrmGetProductRowActivity',
 	'JSCLASS' => 'BizProcActivity',
@@ -59,6 +59,8 @@ $arActivityDescription = [
 		'INCLUDE' => [
 			['crm', 'CCrmDocumentDeal'],
 			['crm', \Bitrix\Crm\Integration\BizProc\Document\SmartInvoice::class],
+			['crm', \Bitrix\Crm\Integration\BizProc\Document\Quote::class],
+			['crm', \Bitrix\Crm\Integration\BizProc\Document\Order::class],
 		],
 	],
 	'ROBOT_SETTINGS' => [

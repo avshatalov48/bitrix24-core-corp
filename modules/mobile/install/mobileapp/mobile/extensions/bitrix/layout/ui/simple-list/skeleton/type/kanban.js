@@ -2,7 +2,6 @@
  * @module layout/ui/simple-list/skeleton/type/kanban
  */
 jn.define('layout/ui/simple-list/skeleton/type/kanban', (require, exports, module) => {
-
 	const DEFAULT_LENGTH = 2;
 
 	/**
@@ -99,7 +98,7 @@ jn.define('layout/ui/simple-list/skeleton/type/kanban', (require, exports, modul
 						{
 							style: {
 								flexDirection: 'row',
-								marginLeft: 20,
+								marginLeft: 5,
 							},
 						},
 						this.renderLine('100%', 34),

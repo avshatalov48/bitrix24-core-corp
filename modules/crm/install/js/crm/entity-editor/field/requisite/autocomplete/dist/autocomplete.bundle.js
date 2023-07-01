@@ -730,10 +730,10 @@ this.BX = this.BX || {};
 	    _this3.placementParams = BX.prop.getObject(options, "placementParams", {});
 	    _this3.installDefaultAppHandler = _this3.onClickInstallDefaultApp.bind(babelHelpers.assertThisInitialized(_this3));
 	    _this3.installDefaultAppTimeout = 7000;
-	    _this3.installDefaultAppTimeoutHandler = _this3.onInstallDefaultAppTimeout.bind(babelHelpers.assertThisInitialized(_this3));
 	    _this3.afterInstallDefaultAppHandler = _this3.onAfterInstallDefaultApp.bind(babelHelpers.assertThisInitialized(_this3));
 	    _this3.popupAlertContainer = null;
 	    _this3.defaultAppInstallLoader = null;
+	    _this3.isDefaultAppInstalled = false;
 	    return _this3;
 	  }
 
@@ -789,7 +789,9 @@ this.BX = this.BX || {};
 	    key: "isDefaultAppCanInstall",
 	    value: function isDefaultAppCanInstall() {
 	      var defaultAppInfo = this.getDefaultAppInfo();
-	      return main_core.Type.isStringFilled(BX.prop.get(defaultAppInfo, "code", "")) && main_core.Type.isStringFilled(BX.prop.get(defaultAppInfo, "title", "")) && BX.prop.get(defaultAppInfo, "isAvailable", "N") === "Y" && BX.prop.get(defaultAppInfo, "isInstalled", "N") !== "Y";
+	      return main_core.Type.isStringFilled(BX.prop.get(defaultAppInfo, "code", "")) && main_core.Type.isStringFilled(BX.prop.get(defaultAppInfo, "title", "")) && BX.prop.get(defaultAppInfo, "isAvailable", "N") === "Y"
+	      /*&& BX.prop.get(defaultAppInfo, "isInstalled", "N") !== "Y"*/
+	      ;
 	    }
 	  }, {
 	    key: "getPopupAlertContainer",
@@ -926,14 +928,18 @@ this.BX = this.BX || {};
 	      }
 
 	      if (this.isDefaultAppCanInstall()) {
+	        this.isDefaultAppInstalled = false;
 	        BX.loadExt('marketplace').then(function () {
-	          setTimeout(_this4.installDefaultAppTimeoutHandler, _this4.installDefaultAppTimeout, event.target);
+	          setTimeout(function () {
+	            if (!_this4.isDefaultAppInstalled) {
+	              _this4.finalInstallDefaultApp();
+	            }
+	          }, _this4.installDefaultAppTimeout);
 	          top.BX.addCustomEvent(top, "Rest:AppLayout:ApplicationInstall", _this4.afterInstallDefaultAppHandler);
 	          BX.rest.Marketplace.install({
 	            CODE: _this4.placementParams["defaultAppInfo"]["code"],
 	            SILENT_INSTALL: "Y",
-	            REDIRECT_PRIORITY: false,
-	            IFRAME: true
+	            DO_NOTHING: "Y"
 	          });
 	        })["catch"](function () {
 	          top.BX.removeCustomEvent(top, "Rest:AppLayout:ApplicationInstall", _this4.afterInstallDefaultAppHandler);
@@ -941,25 +947,73 @@ this.BX = this.BX || {};
 	      }
 	    }
 	  }, {
-	    key: "onInstallDefaultAppTimeout",
-	    value: function onInstallDefaultAppTimeout(elementToShow) {
-	      top.BX.removeCustomEvent(top, "Rest:AppLayout:ApplicationInstall", this.afterInstallDefaultAppHandler);
+	    key: "wait",
+	    value: function wait(ms) {
+	      return new Promise(function (resolve) {
+	        return setTimeout(resolve, parseInt(ms));
+	      });
+	    }
+	  }, {
+	    key: "checkDefAppHandler",
+	    value: function checkDefAppHandler() {
+	      var countryId = BX.prop.getInteger(this.placementParams, "countryId", 0);
+	      return new Promise(function (resolve, reject) {
+	        BX.ajax.runAction('crm.requisite.autocomplete.checkDefaultAppHandler', {
+	          data: {
+	            countryId: countryId
+	          }
+	        }).then(function (data) {
+	          if (main_core.Type.isPlainObject(data) && data.hasOwnProperty("data") && data.hasOwnProperty("status") && data["status"] === "success" && main_core.Type.isBoolean(data["data"]) && data["data"]) {
+	            resolve();
+	          } else {
+	            reject();
+	          }
+	        });
+	      });
+	    }
+	  }, {
+	    key: "awaitHandler",
+	    value: function awaitHandler(context) {
+	      var _this5 = this;
 
-	      if (this.defaultAppInstallLoader) {
-	        this.defaultAppInstallLoader.destroy();
-	        this.defaultAppInstallLoader = null;
-	      }
-
-	      if (main_core.Type.isDomNode(elementToShow)) {
-	        main_core.Dom.show(elementToShow);
-	      }
+	      this.wait(context.waitTime).then(function () {
+	        _this5.checkDefAppHandler().then(function () {
+	          _this5.finalInstallDefaultAppSuccess();
+	        })["catch"](function () {
+	          if (--context.numberOfTimes > 0) {
+	            _this5.awaitHandler(context);
+	          } else {
+	            _this5.finalInstallDefaultApp();
+	          }
+	        });
+	      });
 	    }
 	  }, {
 	    key: "onAfterInstallDefaultApp",
 	    value: function onAfterInstallDefaultApp(installed, eventResult) {
+	      this.isDefaultAppInstalled = true;
 	      top.BX.removeCustomEvent(top, "Rest:AppLayout:ApplicationInstall", this.afterInstallDefaultAppHandler);
-	      BX.onCustomEvent(this, "Dropdown:onAfterInstallDefaultApp", [this]);
+	      var numberOfTimes = 3;
+	      var waitTime = Math.floor(this.installDefaultAppTimeout / numberOfTimes);
 
+	      if (!!installed) {
+	        this.awaitHandler({
+	          waitTime: waitTime,
+	          numberOfTimes: 3
+	        });
+	      } else {
+	        this.finalInstallDefaultApp();
+	      }
+	    }
+	  }, {
+	    key: "finalInstallDefaultAppSuccess",
+	    value: function finalInstallDefaultAppSuccess() {
+	      BX.onCustomEvent(this, "Dropdown:onAfterInstallDefaultApp", [this]);
+	      this.finalInstallDefaultApp();
+	    }
+	  }, {
+	    key: "finalInstallDefaultApp",
+	    value: function finalInstallDefaultApp() {
 	      if (this.defaultAppInstallLoader) {
 	        this.defaultAppInstallLoader.destroy();
 	        this.defaultAppInstallLoader = null;

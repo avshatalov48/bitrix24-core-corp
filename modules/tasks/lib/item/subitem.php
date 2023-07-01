@@ -177,9 +177,12 @@ abstract class SubItem extends \Bitrix\Tasks\Item
 			return static::getCollectionInstance(); // if no parent id passed, just return empty collection, no exceptions!
 		}
 
-		if(!is_array($parameters['filter']))
+		if (
+			!isset($parameters['filter'])
+			|| !is_array($parameters['filter'])
+		)
 		{
-			$parameters['filter'] = array();
+			$parameters['filter'] = [];
 		}
 		$parameters['filter'] = static::getBindCondition($parentId) + $parameters['filter'];
 

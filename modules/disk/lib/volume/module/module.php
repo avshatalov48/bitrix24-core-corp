@@ -2,14 +2,16 @@
 
 namespace Bitrix\Disk\Volume\Module;
 
-use Bitrix\Main\Application;
+use Bitrix\Main;
 use Bitrix\Main\DB;
+use Bitrix\Main\Application;
 use Bitrix\Main\Entity\Query;
 use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Disk;
+use Bitrix\Disk\Volume;
 use Bitrix\Disk\Internals\ObjectTable;
 use Bitrix\Disk\Internals\VolumeTable;
 use Bitrix\Disk\Internals\SharingTable;
-use Bitrix\Disk\Volume;
 
 /**
  * Common class indicator to module measurement volume.
@@ -25,7 +27,7 @@ abstract class Module extends Volume\Base implements Volume\IVolumeIndicatorModu
 	 * @return string
 	 * @throws ObjectPropertyException
 	 */
-	public static function getModuleId()
+	public static function getModuleId(): string
 	{
 		if (empty(static::$moduleId))
 		{
@@ -37,13 +39,13 @@ abstract class Module extends Volume\Base implements Volume\IVolumeIndicatorModu
 	/**
 	 * Runs measure test to get volumes of selecting objects.
 	 * @param array $collectData List types data to collect: ATTACHED_OBJECT, SHARING_OBJECT, EXTERNAL_LINK, UNNECESSARY_VERSION.
-	 * @return $this
+	 * @return static
 	 */
-	public function measure($collectData = [self::DISK_FILE])
+	public function measure(array $collectData = [self::DISK_FILE]): self
 	{
 		if (!$this->isMeasureAvailable())
 		{
-			$this->addError(new \Bitrix\Main\Error('', self::ERROR_MEASURE_UNAVAILABLE));
+			$this->addError(new Main\Error('', self::ERROR_MEASURE_UNAVAILABLE));
 			return $this;
 		}
 
@@ -68,13 +70,13 @@ abstract class Module extends Volume\Base implements Volume\IVolumeIndicatorModu
 				, CNT_FILES.DISK_COUNT
 				, CNT_FILES.VERSION_COUNT
 			";
-			$columns = array_merge($columns, array(
+			$columns = array_merge($columns, [
 				'FILE_SIZE',
 				'FILE_COUNT',
 				'DISK_SIZE',
 				'DISK_COUNT',
 				'VERSION_COUNT',
-			));
+			]);
 			if ($subSelectSql != '')
 			{
 				$sqlStatements = explode(',', $subSelectSql);
@@ -125,10 +127,10 @@ abstract class Module extends Volume\Base implements Volume\IVolumeIndicatorModu
 				, CNT_PREVIEW.PREVIEW_SIZE AS PREVIEW_SIZE
 				, CNT_PREVIEW.PREVIEW_COUNT AS PREVIEW_COUNT
 			";
-			$columns = array_merge($columns, array(
+			$columns = array_merge($columns, [
 				'PREVIEW_SIZE',
 				'PREVIEW_COUNT',
-			));
+			]);
 			// language=SQL
 			$fromSql .= "
 				/* preview */
@@ -166,9 +168,9 @@ abstract class Module extends Volume\Base implements Volume\IVolumeIndicatorModu
 			$selectSql .= "
 				, IFNULL(CNT_ATTACH.ATTACHED_COUNT, 0) AS ATTACHED_COUNT
 			";
-			$columns = array_merge($columns, array(
+			$columns = array_merge($columns, [
 				'ATTACHED_COUNT',
-			));
+			]);
 			// language=SQL
 			$fromSql .= "
 				/* attached */
@@ -204,9 +206,9 @@ abstract class Module extends Volume\Base implements Volume\IVolumeIndicatorModu
 			$selectSql .= "
 				, IFNULL(CNT_LINK.LINK_COUNT, 0) AS LINK_COUNT
 			";
-			$columns = array_merge($columns, array(
+			$columns = array_merge($columns, [
 				'LINK_COUNT',
-			));
+			]);
 			// language=SQL
 			$fromSql .= "
 				/* external_link */
@@ -221,7 +223,7 @@ abstract class Module extends Volume\Base implements Volume\IVolumeIndicatorModu
 						INNER JOIN b_disk_external_link link on link.OBJECT_ID = files.ID
 					WHERE
 						files.TYPE = ".ObjectTable::TYPE_FILE."
-						AND link.TYPE != ". \Bitrix\Disk\Internals\ExternalLinkTable::TYPE_AUTO. "
+						AND link.TYPE != ". Disk\Internals\ExternalLinkTable::TYPE_AUTO. "
 						AND files.ID = files.REAL_OBJECT_ID
 						{$subWhereSql}
 				) CNT_LINK
@@ -243,9 +245,9 @@ abstract class Module extends Volume\Base implements Volume\IVolumeIndicatorModu
 			$selectSql .= "
 				, IFNULL(CNT_SHARING.SHARING_COUNT, 0) AS SHARING_COUNT
 			";
-			$columns = array_merge($columns, array(
+			$columns = array_merge($columns, [
 				'SHARING_COUNT',
-			));
+			]);
 			// language=SQL
 			$fromSql .= "
 				/* sharing */
@@ -283,10 +285,10 @@ abstract class Module extends Volume\Base implements Volume\IVolumeIndicatorModu
 				, IFNULL(CNT_FREE.UNNECESSARY_VERSION_SIZE, 0) AS UNNECESSARY_VERSION_SIZE
 				, IFNULL(CNT_FREE.UNNECESSARY_VERSION_COUNT, 0) AS UNNECESSARY_VERSION_COUNT
 			";
-			$columns = array_merge($columns, array(
+			$columns = array_merge($columns, [
 				'UNNECESSARY_VERSION_SIZE',
 				'UNNECESSARY_VERSION_COUNT',
-			));
+			]);
 			// language=SQL
 			$fromSql .= "
 				/* may drop */
@@ -322,7 +324,7 @@ abstract class Module extends Volume\Base implements Volume\IVolumeIndicatorModu
 								ON link.OBJECT_ID  = ver.OBJECT_ID
 								AND link.VERSION_ID = ver.ID
 								AND link.VERSION_ID != head.ID
-								AND ifnull(link.TYPE,-1) != ". \Bitrix\Disk\Internals\ExternalLinkTable::TYPE_AUTO. "
+								AND ifnull(link.TYPE,-1) != ". Disk\Internals\ExternalLinkTable::TYPE_AUTO. "
 						WHERE 
 							files.TYPE = ". ObjectTable::TYPE_FILE. "
 							AND files.ID = files.REAL_OBJECT_ID
@@ -347,11 +349,11 @@ abstract class Module extends Volume\Base implements Volume\IVolumeIndicatorModu
 
 		$subWhereSql = Volume\QueryHelper::prepareWhere(
 			$this->getFilter(),
-			array(
+			[
 				'DELETED_TYPE' => 'files.DELETED_TYPE',
 				'MODULE_ID' => 'storage.MODULE_ID',
 				'ENTITY_TYPE' => 'storage.ENTITY_TYPE',
-			)
+			]
 		);
 		if ($subWhereSql != '')
 		{
@@ -360,11 +362,11 @@ abstract class Module extends Volume\Base implements Volume\IVolumeIndicatorModu
 		$selectSql = '';
 		$fromSql = '';
 		$whereSql = '';
-		$columns = array(
+		$columns = [
 			'INDICATOR_TYPE',
 			'OWNER_ID',
 			'CREATE_TIME',
-		);
+		];
 
 		$buildDiskSql($selectSql, $fromSql, $whereSql, $columns, $subSelectSql, $subWhereSql);
 
@@ -443,10 +445,10 @@ abstract class Module extends Volume\Base implements Volume\IVolumeIndicatorModu
 	 * Recalculates percent from total file size per row selected by filter.
 	 * @param string|Volume\IVolumeIndicator $totalSizeIndicator Use this indicator as total volume.
 	 * @param string|Volume\IVolumeIndicator $excludeSizeIndicator Exclude indicator's volume from total volume.
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @return self
+	 * @throws Main\ArgumentException
+	 * @return static
 	 */
-	public function recalculatePercent($totalSizeIndicator = '\\Bitrix\\Disk\\Volume\\Bfile', $excludeSizeIndicator = null)
+	public function recalculatePercent($totalSizeIndicator = '\\Bitrix\\Disk\\Volume\\Bfile', $excludeSizeIndicator = null): self
 	{
 		if (is_string($totalSizeIndicator) && !empty($totalSizeIndicator) && class_exists($totalSizeIndicator))
 		{
@@ -455,7 +457,7 @@ abstract class Module extends Volume\Base implements Volume\IVolumeIndicatorModu
 		}
 		if (!($totalSizeIndicator instanceof Volume\IVolumeIndicator))
 		{
-			throw new \Bitrix\Main\ArgumentException('Wrong parameter totalSizeIndicator');
+			throw new Main\ArgumentException('Wrong parameter totalSizeIndicator');
 		}
 		$totalSizeIndicator->setOwner($this->getOwner());
 		$totalSizeIndicator->loadTotals();
@@ -465,11 +467,11 @@ abstract class Module extends Volume\Base implements Volume\IVolumeIndicatorModu
 			$connection = Application::getConnection();
 			$tableName = VolumeTable::getTableName();
 			$filter = $this->getFilter(
-				array(
+				[
 					'=INDICATOR_TYPE' => static::className(),
 					'=OWNER_ID' => $this->getOwner(),
 					'>FILE_COUNT' => 0,
-				),
+				],
 				VolumeTable::getEntity()
 			);
 			$where = Query::buildFilterSql(VolumeTable::getEntity(), $filter);
@@ -488,7 +490,7 @@ abstract class Module extends Volume\Base implements Volume\IVolumeIndicatorModu
 	 * @param array $collectedData List types of collected data to return.
 	 * @return DB\Result
 	 */
-	public function getMeasurementResult($collectedData = array())
+	public function getMeasurementResult(array $collectedData = []): DB\Result
 	{
 		$this
 			->addFilter('=INDICATOR_TYPE', static::className())
@@ -529,7 +531,7 @@ abstract class Module extends Volume\Base implements Volume\IVolumeIndicatorModu
 	 * @param string[] $filter Filter with module id.
 	 * @return Volume\Fragment
 	 */
-	public static function getFragment(array $filter)
+	public static function getFragment(array $filter): Volume\Fragment
 	{
 		/** @var Volume\IVolumeIndicatorModule $class */
 		$class = $filter['INDICATOR_TYPE'];
@@ -539,11 +541,11 @@ abstract class Module extends Volume\Base implements Volume\IVolumeIndicatorModu
 
 	/**
 	 * @param Volume\Fragment $fragment Module description structure.
-	 * @return string
+	 * @return string|null
 	 */
-	public static function getTitle(Volume\Fragment $fragment)
+	public static function getTitle(Volume\Fragment $fragment): ?string
 	{
-		static $title = array();
+		static $title = [];
 		if (empty($title[$fragment->getModuleId()]))
 		{
 			if ($info = \CModule::createModuleObject($fragment->getModuleId()))
@@ -564,7 +566,7 @@ abstract class Module extends Volume\Base implements Volume\IVolumeIndicatorModu
 	 * @param Volume\Fragment $fragment Entity object.
 	 * @return array
 	 */
-	public static function getSpecific(Volume\Fragment $fragment)
+	public static function getSpecific(Volume\Fragment $fragment): array
 	{
 		return $fragment->getSpecific();
 	}
@@ -573,86 +575,84 @@ abstract class Module extends Volume\Base implements Volume\IVolumeIndicatorModu
 	 * Returns true if module installed and available to measure.
 	 * @return boolean
 	 */
-	public function isMeasureAvailable()
+	public function isMeasureAvailable(): bool
 	{
-		$isAvailable =
-			\Bitrix\Main\ModuleManager::isModuleInstalled(self::getModuleId()) &&
-				\Bitrix\Main\Loader::includeModule(self::getModuleId());
-
-		return $isAvailable;
+		return
+			Main\ModuleManager::isModuleInstalled(self::getModuleId())
+			&& Main\Loader::includeModule(self::getModuleId());
 	}
 
 	/**
 	 * Returns module corresponding to module.
-	 * @return \Bitrix\Disk\Storage[]|array
+	 * @return Disk\Storage[]|array
 	 */
-	public function getStorageList()
+	public function getStorageList(): array
 	{
-		return array();
+		return [];
 	}
 
 	/**
 	 * Returns folder list corresponding to module.
-	 * @param \Bitrix\Disk\Storage $storage Module's storage.
-	 * @return \Bitrix\Disk\Folder[]|array
+	 * @param Disk\Storage $storage Module's storage.
+	 * @return Disk\Folder[]|array
 	 */
-	public function getFolderList($storage)
+	public function getFolderList($storage): array
 	{
-		return array();
+		return [];
 	}
 
 	/**
 	 * Returns special folder code list.
 	 * @return string[]
 	 */
-	public static function getSpecialFolderCode()
+	public static function getSpecialFolderCode(): array
 	{
-		return array();
+		return [];
 	}
 
 	/**
 	 * Returns special folder xml_id code list.
 	 * @return string[]
 	 */
-	public static function getSpecialFolderXmlId()
+	public static function getSpecialFolderXmlId(): array
 	{
-		return array();
+		return [];
 	}
 
 	/**
 	 * Returns entity type list.
 	 * @return string[]
 	 */
-	public static function getEntityType()
+	public static function getEntityType(): array
 	{
-		return array();
+		return [];
 	}
 
 	/**
 	 * Returns entity user field list corresponding to module.
 	 * @return string[]
 	 */
-	public function getEntityList()
+	public function getEntityList(): array
 	{
-		return array();
+		return [];
 	}
 
 	/**
 	 * Returns iblock list corresponding to module.
 	 * @return array
 	 */
-	public function getIblockList()
+	public function getIblockList(): array
 	{
-		return array();
+		return [];
 	}
 
 	/**
 	 * Returns entity list attached to disk object corresponding to module.
 	 * @return string[]
 	 */
-	public function getAttachedEntityList()
+	public function getAttachedEntityList(): array
 	{
-		return array();
+		return [];
 	}
 
 	/**
@@ -662,35 +662,35 @@ abstract class Module extends Volume\Base implements Volume\IVolumeIndicatorModu
 	 * @return array
 	 */
 	public function getUserTypeFieldList(
-		$entityClass,
-		$userTypeField = array(\CUserTypeFile::USER_TYPE_ID, \Bitrix\Disk\Uf\FileUserType::USER_TYPE_ID, \Bitrix\Disk\Uf\VersionUserType::USER_TYPE_ID)
-	)
+		string $entityClass,
+		array $userTypeField = [\CUserTypeFile::USER_TYPE_ID, Disk\Uf\FileUserType::USER_TYPE_ID, Disk\Uf\VersionUserType::USER_TYPE_ID]
+	): array
 	{
-		static $fields = array();
+		static $fields = [];
 
 		if (!isset($fields[$entityClass]))
 		{
-			$fields[$entityClass] = array();
+			$fields[$entityClass] = [];
 
-			/** @var \Bitrix\Main\ORM\Data\DataManager $entityClass */
+			/** @var Main\ORM\Data\DataManager $entityClass */
 			$ufName = $entityClass::getUfId();
 			if ($ufName <> '' && count($userTypeField) > 0)
 			{
-				$filter = array(
+				$filter = [
 					'=ENTITY_ID'    => $ufName,
 					'=USER_TYPE_ID' => (count($userTypeField) == 1 ? $userTypeField[0] : $userTypeField),
-				);
-				$userFieldList = \Bitrix\Main\UserFieldTable::getList(array(
+				];
+				$userFieldList = Main\UserFieldTable::getList([
 					'filter' => $filter,
-					'select' => array(
+					'select' => [
 						'ID',
 						'ENTITY_ID',
 						'USER_TYPE_ID',
 						'FIELD_NAME',
 						'MULTIPLE',
 						'XML_ID',
-					),
-				));
+					],
+				]);
 				foreach ($userFieldList as $userField)
 				{
 					$fields[$entityClass][$userField['FIELD_NAME']] = $userField;
@@ -710,9 +710,9 @@ abstract class Module extends Volume\Base implements Volume\IVolumeIndicatorModu
 	 */
 	protected function prepareUserFieldQuery($entityClass, array $userField, array $relation = null)
 	{
-		$connection = \Bitrix\Main\Application::getConnection();
+		$connection = Application::getConnection();
 
-		/** @var \Bitrix\Main\ORM\Data\DataManager $entityClass */
+		/** @var Main\ORM\Data\DataManager $entityClass */
 		$ufName = $entityClass::getUfId();
 		$ufType = $userField['USER_TYPE_ID'];
 
@@ -722,9 +722,9 @@ abstract class Module extends Volume\Base implements Volume\IVolumeIndicatorModu
 		$relationGroupSelectSql = '';
 		if (is_array($relation))
 		{
-			$relationSelect = array();
-			$relationGroupBy = array();
-			$relationGroupSelect = array();
+			$relationSelect = [];
+			$relationGroupBy = [];
+			$relationGroupSelect = [];
 			foreach ($relation['select'] as $alias => $field)
 			{
 				$relationSelect[] = "REL.$field as $alias";
@@ -747,7 +747,7 @@ abstract class Module extends Volume\Base implements Volume\IVolumeIndicatorModu
 			{
 				switch ($ufType)
 				{
-					case \Bitrix\Disk\Uf\FileUserType::USER_TYPE_ID:
+					case Disk\Uf\FileUserType::USER_TYPE_ID:
 					{
 						$querySql = "
 							SELECT
@@ -782,7 +782,7 @@ abstract class Module extends Volume\Base implements Volume\IVolumeIndicatorModu
 						break;
 					}
 
-					case \Bitrix\Disk\Uf\VersionUserType::USER_TYPE_ID:
+					case Disk\Uf\VersionUserType::USER_TYPE_ID:
 					{
 						$querySql = "
 							SELECT
@@ -860,7 +860,7 @@ abstract class Module extends Volume\Base implements Volume\IVolumeIndicatorModu
 			{
 				switch ($ufType)
 				{
-					case \Bitrix\Disk\Uf\FileUserType::USER_TYPE_ID:
+					case Disk\Uf\FileUserType::USER_TYPE_ID:
 					{
 						$querySql = "
 							SELECT
@@ -895,7 +895,7 @@ abstract class Module extends Volume\Base implements Volume\IVolumeIndicatorModu
 						break;
 					}
 
-					case \Bitrix\Disk\Uf\VersionUserType::USER_TYPE_ID:
+					case Disk\Uf\VersionUserType::USER_TYPE_ID:
 					{
 						$querySql = "
 							SELECT
@@ -976,11 +976,11 @@ abstract class Module extends Volume\Base implements Volume\IVolumeIndicatorModu
 	 */
 	protected function prepareUserFieldSourceSql(
 		$relation = null,
-		$userTypeField = array(\CUserTypeFile::USER_TYPE_ID, \Bitrix\Disk\Uf\FileUserType::USER_TYPE_ID, \Bitrix\Disk\Uf\VersionUserType::USER_TYPE_ID)
+		$userTypeField = [\CUserTypeFile::USER_TYPE_ID, Disk\Uf\FileUserType::USER_TYPE_ID, Disk\Uf\VersionUserType::USER_TYPE_ID]
 	)
 	{
 		$entityList = $this->getEntityList();
-		$source = array();
+		$source = [];
 		if (count($entityList) > 0)
 		{
 			foreach ($entityList as $entityClass)

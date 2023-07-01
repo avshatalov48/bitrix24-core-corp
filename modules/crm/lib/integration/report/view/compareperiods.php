@@ -91,8 +91,17 @@ class ComparePeriods extends Serial
 
 		for ($i = 0; $i < $maxPoints; $i++)
 		{
-			$dateCurrent = $currentPeriod['items'][$i] ? new Date($currentPeriod['items'][$i]['groupBy'], BaseGraph::DATE_INDEX_FORMAT) : null;
-			$datePrev = $previousPeriod['items'][$i] ? new Date($previousPeriod['items'][$i]['groupBy'], BaseGraph::DATE_INDEX_FORMAT) : null;
+			$dateCurrent = null;
+			if (isset($currentPeriod['items'][$i]['groupBy']))
+			{
+				$dateCurrent = new Date($currentPeriod['items'][$i]['groupBy'], BaseGraph::DATE_INDEX_FORMAT);
+			}
+
+			$datePrev = null;
+			if (isset($previousPeriod['items'][$i]['groupBy']))
+			{
+				$datePrev = new Date($previousPeriod['items'][$i]['groupBy'], BaseGraph::DATE_INDEX_FORMAT);
+			}
 
 			$formattedDateCurrent = $dateCurrent ? FormatDate($dateFormatForLabel, $dateCurrent) : "-";
 			$formattedDatePrev = $datePrev ? FormatDate($dateFormatForLabel, $datePrev) : "-";

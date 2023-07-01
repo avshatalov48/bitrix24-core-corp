@@ -27,13 +27,13 @@ Library::loadMessages();
 class Connector
 {
 	/** @var Connectors\Base[] */
-	private static $connectors = [];
+	private static array $connectors = [];
 
 	/**
 	 * @param string $connectorId
-	 * @return Connectors\Facebook|Connectors\|Connectors\FacebookComments|Connectors\FbInstagram|Connectors\IMessage|Connectors\Olx|Connectors\Viber|Connectors\Network
+	 * @return Connectors\Base|Connectors\Facebook|Connectors\FacebookComments|Connectors\FbInstagram|Connectors\IMessage|Connectors\Olx|Connectors\Viber|Connectors\Network|Connectors\TelegramBot
 	 */
-	public static function initConnectorHandler($connectorId = '')
+	public static function initConnectorHandler(string $connectorId = ''): Connectors\Base
 	{
 		if (
 			!isset(self::$connectors[$connectorId])
@@ -53,7 +53,7 @@ class Connector
 	 * @param string $connectorId Mnemonic connector name.
 	 * @return string|Connectors\Base
 	 */
-	public static function getConnectorHandlerClass($connectorId): string
+	public static function getConnectorHandlerClass(string $connectorId): string
 	{
 		static $handlers = [];
 		$classDefault = '\\Bitrix\\ImConnector\\Connectors\\Base';
@@ -141,30 +141,29 @@ class Connector
 		$serviceLocator = ServiceLocator::getInstance();
 
 		$connectors = [];
-		$connectors['livechat'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_LIVECHAT');
-		$connectors['whatsappbytwilio'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_WHATSAPPBYTWILIO');
-		$connectors['avito'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_AVITO');
-		$connectors['viber'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_VIBER_BOT');
-		$connectors['telegrambot'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_TELEGRAM_BOT');
-		$connectors['imessage'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_IMESSAGE_NEW');
+		$connectors[Library::ID_LIVE_CHAT_CONNECTOR] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_LIVECHAT');
+		$connectors[Library::ID_WHATSAPPBYTWILIO_CONNECTOR] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_WHATSAPPBYTWILIO');
+		$connectors[Library::ID_AVITO_CONNECTOR] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_AVITO');
+		$connectors[Library::ID_VIBER_CONNECTOR] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_VIBER_BOT');
+		$connectors[Library::ID_TELEGRAMBOT_CONNECTOR] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_TELEGRAM_BOT');
+		$connectors[Library::ID_IMESSAGE_CONNECTOR] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_IMESSAGE_NEW');
 		if ($serviceLocator->has('ImConnector.toolsWeChat'))
 		{
 			/** @var \Bitrix\ImConnector\Tools\Connectors\WeChat $toolsWeChat */
 			$toolsWeChat = $serviceLocator->get('ImConnector.toolsWeChat');
 			if ($toolsWeChat->isEnabled())
 			{
-				$connectors['wechat'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_WECHAT');
+				$connectors[Library::ID_WECHAT_CONNECTOR] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_WECHAT');
 			}
 		}
-		$connectors['vkgroup'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_VK_GROUP');
-		$connectors['ok'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_OK');
-		$connectors['olx'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_OLX');
-		$connectors['facebook'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_FACEBOOK_PAGE');
-		$connectors['facebookcomments'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_FACEBOOK_COMMENTS_PAGE');
-		$connectors[Library::ID_FBINSTAGRAMDIRECT_CONNECTOR] =
-					Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_FBINSTAGRAMDIRECT');
-		$connectors['fbinstagram'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_FBINSTAGRAM');
-		$connectors['network'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_NETWORK');
+		$connectors[Library::ID_VKGROUP_CONNECTOR] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_VK_GROUP');
+		$connectors[Library::ID_OK_CONNECTOR] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_OK');
+		$connectors[Library::ID_OLX_CONNECTOR] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_OLX');
+		$connectors[Library::ID_FB_MESSAGES_CONNECTOR] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_FACEBOOK_PAGE');
+		$connectors[Library::ID_FB_COMMENTS_CONNECTOR] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_FACEBOOK_COMMENTS_PAGE');
+		$connectors[Library::ID_FBINSTAGRAMDIRECT_CONNECTOR] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_FBINSTAGRAMDIRECT');
+		$connectors[Library::ID_FBINSTAGRAM_CONNECTOR] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_FBINSTAGRAM');
+		$connectors[Library::ID_NETWORK_CONNECTOR] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_NETWORK');
 		if ($serviceLocator->has('ImConnector.toolsNotifications'))
 		{
 			/** @var \Bitrix\ImConnector\Tools\Connectors\Notifications $toolsNotifications */
@@ -188,26 +187,6 @@ class Connector
 	}
 
 	/**
-	 * @param bool $virtual
-	 * @return array
-	 */
-	protected static function getListVirtualConnectorBase(bool $virtual = false): array
-	{
-		if($virtual === true)
-		{
-			$connectors = [];
-			/*$connectors['botframework.skype'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_BOTFRAMEWORK_SKYPE');*/
-		}
-		else
-		{
-			$connectors = [];
-			/*$connectors['botframework'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_BOTFRAMEWORK');*/
-		}
-
-		return $connectors;
-	}
-
-	/**
 	 * @return array
 	 */
 	protected static function getListCustomConnectorBase(): array
@@ -220,11 +199,11 @@ class Connector
 	 * @param array $connectors
 	 * @return array
 	 */
-	protected static function getListReducedConnectorBase($reduced = false, $connectors = []): array
+	protected static function getListReducedConnectorBase($reduced = false, array $connectors = []): array
 	{
-		if(!empty($reduced))
+		if (!empty($reduced))
 		{
-			if($reduced>5)
+			if ($reduced > 5)
 			{
 				$number = $reduced;
 			}
@@ -235,7 +214,7 @@ class Connector
 
 			foreach ($connectors as $cell=>$connector)
 			{
-				if(mb_strlen($connector) > $number)
+				if (mb_strlen($connector) > $number)
 				{
 					$connectors[$cell] = mb_substr($connector, 0, ($number - 3)).'...';
 				}
@@ -250,20 +229,19 @@ class Connector
 	 * @param bool|integer $reduced To shorten the channel names.
 	 * @param bool $customConnectorsEnable Return custom connectors
 	 *
-	 * @return array.
+	 * @return array
 	 */
-	public static function getListConnector($reduced = false, $customConnectorsEnable = true): array
+	public static function getListConnector($reduced = false, bool $customConnectorsEnable = true): array
 	{
 		$connectors = self::getListConnectorBase();
-		$virtualConnector = self::getListVirtualConnectorBase(true);
 		$customConnectors = [];
 
-		if ($customConnectorsEnable === true)
+		if ($customConnectorsEnable)
 		{
 			$customConnectors = self::getListCustomConnectorBase();
 		}
 
-		$connectors = array_merge($connectors, $virtualConnector, $customConnectors);
+		$connectors = array_merge($connectors, $customConnectors);
 
 		$connectors = self::filterConnectorsByPortalRegion($connectors);
 
@@ -275,20 +253,19 @@ class Connector
 	 * @param bool|integer $reduced To shorten the channel names.
 	 * @param bool $customConnectorsEnable Return custom connectors
 	 *
-	 * @return array.
+	 * @return array
 	 */
-	public static function getListConnectorReal($reduced = false, $customConnectorsEnable = true): array
+	public static function getListConnectorReal($reduced = false, bool $customConnectorsEnable = true): array
 	{
 		$connectors = self::getListConnectorBase();
-		$virtualConnector = self::getListVirtualConnectorBase(false);
 		$customConnectors = [];
 
-		if ($customConnectorsEnable === true)
+		if ($customConnectorsEnable)
 		{
 			$customConnectors = self::getListCustomConnectorBase();
 		}
 
-		$connectors = array_merge($connectors, $virtualConnector, $customConnectors);
+		$connectors = array_merge($connectors, $customConnectors);
 
 		$connectors = self::filterConnectorsByPortalRegion($connectors);
 
@@ -297,15 +274,17 @@ class Connector
 
 	/**
 	 * @param bool $customConnectors
-	 * @return array|string
+	 * @return string[]
 	 */
-	public static function getListConnectorActive($customConnectors = true)
+	public static function getListConnectorActive(bool $customConnectors = true): array
 	{
 		$connectors = mb_strtolower(Option::get(Library::MODULE_ID, 'list_connector'));
 		$connectors = explode(',', $connectors);
 
-		if($customConnectors === true)
+		if ($customConnectors)
+		{
 			$connectors = array_merge(CustomConnectors::getListConnectorId(), $connectors);
+		}
 
 		return $connectors;
 	}
@@ -314,7 +293,7 @@ class Connector
 	/**
 	 * @return array
 	 */
-	public static function getListConnectorShowDeliveryStatus()
+	public static function getListConnectorShowDeliveryStatus(): array
 	{
 		return array_keys(static::getListConnector());
 	}
@@ -322,7 +301,7 @@ class Connector
 	/**
 	 * A list of matching id of the connector component.
 	 *
-	 * @return array.
+	 * @return array
 	 */
 	public static function getListComponentConnector(): array
 	{
@@ -342,13 +321,11 @@ class Connector
 		$components[Library::ID_FBINSTAGRAMDIRECT_CONNECTOR] = 'bitrix:imconnector.fbinstagramdirect';
 		$components[Library::ID_FBINSTAGRAM_CONNECTOR] = 'bitrix:imconnector.fbinstagram';
 		$components[Library::ID_NETWORK_CONNECTOR] = 'bitrix:imconnector.network';
-		$components['botframework'] = 'bitrix:imconnector.botframework';
 		$components[Library::ID_NOTIFICATIONS_CONNECTOR] = 'bitrix:imconnector.notifications';
 		$components[Library::ID_EDNA_WHATSAPP_CONNECTOR] = 'bitrix:imconnector.whatsappbyedna';
 
 		$customComponents = CustomConnectors::getListComponentConnector();
-
-		if(!empty($customComponents))
+		if (!empty($customComponents))
 		{
 			$components = array_merge($customComponents, $components);
 		}
@@ -361,14 +338,15 @@ class Connector
 	 *
 	 * @return array
 	 */
-	public static function getListConnectorDelExternalMessages()
+	public static function getListConnectorDelExternalMessages(): array
 	{
 		$listConnectorDelExternalMessages = Library::$listConnectorDelExternalMessages;
 
 		$customConnectorDelExternalMessages = CustomConnectors::getListConnectorDelExternalMessages();
-
-		if(!empty($customConnectorDelExternalMessages))
+		if (!empty($customConnectorDelExternalMessages))
+		{
 			$listConnectorDelExternalMessages = array_merge($customConnectorDelExternalMessages, $listConnectorDelExternalMessages);
+		}
 
 		return $listConnectorDelExternalMessages;
 	}
@@ -378,14 +356,15 @@ class Connector
 	 *
 	 * @return array
 	 */
-	public static function getListConnectorEditInternalMessages()
+	public static function getListConnectorEditInternalMessages(): array
 	{
 		$listConnectorEditInternalMessages = Library::$listConnectorEditInternalMessages;
 
 		$customConnectorEditInternalMessages = CustomConnectors::getListConnectorEditInternalMessages();
-
-		if(!empty($customConnectorEditInternalMessages))
+		if (!empty($customConnectorEditInternalMessages))
+		{
 			$listConnectorEditInternalMessages = array_merge($customConnectorEditInternalMessages, $listConnectorEditInternalMessages);
+		}
 
 		return $listConnectorEditInternalMessages;
 	}
@@ -395,14 +374,15 @@ class Connector
 	 *
 	 * @return array
 	 */
-	public static function getListConnectorDelInternalMessages()
+	public static function getListConnectorDelInternalMessages(): array
 	{
 		$listConnectorDelInternalMessages = Library::$listConnectorDelInternalMessages;
 
 		$customConnectorDelInternalMessages = CustomConnectors::getListConnectorEditInternalMessages();
-
-		if(!empty($customConnectorDelInternalMessages))
+		if (!empty($customConnectorDelInternalMessages))
+		{
 			$listConnectorDelInternalMessages = array_unique(array_merge($customConnectorDelInternalMessages, $listConnectorDelInternalMessages));
+		}
 
 		return $listConnectorDelInternalMessages;
 	}
@@ -412,14 +392,15 @@ class Connector
 	 *
 	 * @return array
 	 */
-	public static function getListConnectorNotNewsletter()
+	public static function getListConnectorNotNewsletter(): array
 	{
 		$listNotNewsletterChats = Library::$listNotNewsletterChats;
 
 		$customNotNewsletterChat = CustomConnectors::getListConnectorNotNewsletter();
-
-		if(!empty($customNotNewsletterChat))
+		if (!empty($customNotNewsletterChat))
+		{
 			$listNotNewsletterChats = array_unique(array_merge($customNotNewsletterChat, $listNotNewsletterChats));
+		}
 
 		return $listNotNewsletterChats;
 	}
@@ -429,7 +410,7 @@ class Connector
 	 *
 	 * @return array
 	 */
-	public static function getListConnectorNewsletter()
+	public static function getListConnectorNewsletter(): array
 	{
 		return array_diff(array_keys(static::getListConnector()), self::getListConnectorNotNewsletter());
 	}
@@ -437,104 +418,104 @@ class Connector
 	/**
 	 * Do I need to send system messages?
 	 *
-	 * @param string $id ID connector
+	 * @param string $connectorId ID connector
 	 * @return bool
 	 */
-	public static function isNeedSystemMessages($id): bool
+	public static function isNeedSystemMessages(string $connectorId): bool
 	{
 		$listNotNeedSystemMessages = Library::$listNotNeedSystemMessages;
 
 		$customNotNeedSystemMessages = CustomConnectors::getListNotNeedSystemMessages();
-
-		if(!empty($customNotNeedSystemMessages))
+		if (!empty($customNotNeedSystemMessages))
 		{
 			$listNotNeedSystemMessages = array_unique(array_merge($customNotNeedSystemMessages, $listNotNeedSystemMessages));
 		}
 
-		return !in_array($id, $listNotNeedSystemMessages, true);
+		return !in_array($connectorId, $listNotNeedSystemMessages, true);
 	}
 
 	/**
 	 * Whether to send a signature?
 	 *
-	 * @param string $id ID connector
+	 * @param string $connectorId ID connector
 	 * @return bool
 	 */
-	public static function isNeedSignature($id): bool
+	public static function isNeedSignature(string $connectorId): bool
 	{
 		$listNotNeedSignature = Library::$listNotNeedSignature;
 
 		$customNotNeedSignature = CustomConnectors::getListNotNeedSignature();
-
-		if(!empty($customNotNeedSignature))
+		if (!empty($customNotNeedSignature))
 		{
 			$listNotNeedSignature = array_unique(array_merge($customNotNeedSignature, $listNotNeedSignature));
 		}
 
-		return !in_array($id, $listNotNeedSignature);
+		return !in_array($connectorId, $listNotNeedSignature);
 	}
 
 	/**
 	 * This chat group?
 	 *
-	 * @param string $id ID connector
+	 * @param string $connectorId ID connector
 	 * @return bool
 	 */
-	public static function isChatGroup($id)
+	public static function isChatGroup(string $connectorId): bool
 	{
 		$listGroupChats = Library::$listGroupChats;
 
 		$customGroupChats = CustomConnectors::getListChatGroup();
-
-		if(!empty($customGroupChats))
+		if (!empty($customGroupChats))
+		{
 			$listGroupChats = array_unique(array_merge($customGroupChats, $listGroupChats));
+		}
 
-		return in_array($id, $listGroupChats);
+		return in_array($connectorId, $listGroupChats);
 	}
 
 	/**
 	 * Check that we can use message tracker on this chat messages
 	 *
-	 * @param $id
+	 * @param string $connectorId
 	 *
 	 * @return bool
 	 */
-	public static function isTrackedChat($id)
+	public static function isTrackedChat(string $connectorId): bool
 	{
 		$listSingleThreadGroupChats = Library::$listSingleThreadGroupChats;
-		$isChatGroup = self::isChatGroup($id);
+		$isChatGroup = self::isChatGroup($connectorId);
 
-		return !$isChatGroup || $isChatGroup && in_array($id, $listSingleThreadGroupChats);
+		return !$isChatGroup || $isChatGroup && in_array($connectorId, $listSingleThreadGroupChats);
 	}
 
 	/**
 	 * This chat for newsletter?
 	 *
-	 * @param string $id ID connector
+	 * @param string $connectorId ID connector
 	 * @return bool
 	 */
-	public static function isChatNewsletter($id)
+	public static function isChatNewsletter(string $connectorId): bool
 	{
 		$listConnectorNewsletter = self::getListConnectorNewsletter();
 
-		return in_array($id, $listConnectorNewsletter);
+		return in_array($connectorId, $listConnectorNewsletter);
 	}
 
 	/**
 	 * The list are available also connectors, active on the client.
 	 * The connector has to be available on the client, it has to be included in settings and be supported on the server.
 	 * @param bool|integer $reduced To shorten the channel names.
-	 * @param bool $local
 	 *
 	 * @return array.
 	 */
-	public static function getListActiveConnector($reduced = false, $local = false)
+	public static function getListActiveConnector($reduced = false): array
 	{
-		$result = array();
+		$result = [];
 		foreach (self::getListConnector($reduced) as $id => $value)
 		{
-			if(self::isConnector($id, $local))
+			if (self::isConnector($id))
+			{
 				$result[$id] = $value;
+			}
 		}
 
 		return $result;
@@ -549,11 +530,13 @@ class Connector
 	 */
 	public static function getListActiveConnectorReal($reduced = false)
 	{
-		$result = array();
+		$result = [];
 		foreach (self::getListConnectorReal($reduced) as $id => $value)
 		{
-			if(self::isConnector($id))
+			if (self::isConnector($id))
+			{
 				$result[$id] = $value;
+			}
 		}
 
 		return $result;
@@ -569,12 +552,13 @@ class Connector
 	{
 		$result = [];
 		$listActiveConnector = self::getListActiveConnector();
+		Status::getInstanceAllConnector($lineId);
 
-		foreach ($listActiveConnector as $id => $value)
+		foreach ($listActiveConnector as $connector => $value)
 		{
-			if (Status::getInstance($id, (int)$lineId)->isStatus())
+			if (Status::getInstance($connector, (int)$lineId)->isStatus())
 			{
-				$result[$id] = $value;
+				$result[$connector] = $value;
 			}
 		}
 
@@ -589,15 +573,17 @@ class Connector
 	 */
 	public static function getListConnectorMenu($reduced = false)
 	{
-		$result = array();
+		$result = [];
 		foreach (self::getListConnectorReal($reduced) as $id => $value)
 		{
-			if(self::isConnector($id, true))
+			if (self::isConnector($id))
 			{
 				$result[$id]['name'] = $value;
 
-				if($reduced)
+				if ($reduced)
+				{
 					$result[$id]['short_name'] = self::getNameConnector($value, $reduced);
+				}
 			}
 		}
 
@@ -614,12 +600,13 @@ class Connector
 	{
 		$result = [];
 		$listActiveConnector = self::getListActiveConnectorReal();
+		Status::getInstanceAllConnector($lineId);
 
-		foreach ($listActiveConnector as $id => $value)
+		foreach ($listActiveConnector as $connector => $value)
 		{
-			if (Status::getInstance($id, (int)$lineId)->isStatus())
+			if (Status::getInstance($connector, (int)$lineId)->isStatus())
 			{
-				$result[$id] = $value;
+				$result[$connector] = $value;
 			}
 		}
 
@@ -637,10 +624,12 @@ class Connector
 	{
 		$listConnector = self::getListConnector($reduced);
 
-		if(isset($listConnector[$id]))
+		if (isset($listConnector[$id]))
+		{
 			return $listConnector[$id];
-		else
-			return false;
+		}
+
+		return false;
 	}
 
 	/**
@@ -654,10 +643,12 @@ class Connector
 	{
 		$listConnector = self::getListConnectorReal($reduced);
 
-		if(isset($listConnector[$id]))
+		if (isset($listConnector[$id]))
+		{
 			return $listConnector[$id];
-		else
-			return false;
+		}
+
+		return false;
 	}
 
 	/**
@@ -672,7 +663,7 @@ class Connector
 
 		$positionSeparator = mb_strpos($id, '.');
 
-		if($positionSeparator != false)
+		if ($positionSeparator != false)
 		{
 			$id = mb_substr($id, 0, $positionSeparator);
 		}
@@ -683,20 +674,15 @@ class Connector
 	/**
 	 * Check of the connector. That it is included in settings is checked and supported by the server.
 	 *
-	 * @param string $id ID connector.
-	 * @param bool $local Not to check on a remote server.
+	 * @param string $connectorId ID connector.
 	 * @return bool
 	 */
-	public static function isConnector($id, $local = false)
+	public static function isConnector(string $connectorId): bool
 	{
-		$id = self::getConnectorRealId($id);
-
+		$connectorId = self::getConnectorRealId($connectorId);
 		$connectors = self::getListConnectorActive();
 
-		if(in_array($id, $connectors))
-			return true;
-		else
-			return false;
+		return in_array($connectorId, $connectors);
 	}
 
 	/**
@@ -704,7 +690,7 @@ class Connector
 	 *
 	 * @return string
 	 */
-	public static function getDomainDefault()
+	public static function getDomainDefault(): string
 	{
 		$uriOption = Option::getRealValue(Library::MODULE_ID, 'uri_client', '');
 
@@ -727,42 +713,58 @@ class Connector
 	/**
 	 * Returns information about all connected connectors specific open line.
 	 *
-	 * @param $lineId
+	 * @param int $lineId
 	 *
-	 * @return array|mixed
+	 * @return array<string, array>
 	 */
 	public static function infoConnectorsLine($lineId)
 	{
-		$result = array();
+		$result = [];
 
 		$info = InfoConnectors::infoConnectorsLine($lineId);
 
-		if (isset($info, $info['DATA']) && !empty($info['DATA']))
+		if (!empty($info['DATA']))
 		{
-			$result = Json::decode($info['DATA']);
-			$expiresTime =  new \Bitrix\Main\Type\DateTime($info['EXPIRES']);
+			$result = Json::decode($info['DATA']) ?? [];
 
+			$expiresTime =  new DateTime($info['EXPIRES']);
 			if ($expiresTime->getTimestamp() < time())
 			{
 				InfoConnectors::addSingleLineUpdateAgent($info['LINE_ID'], Library::LOCAL_AGENT_EXEC_INTERVAL);
 			}
-
 		}
 		else
 		{
-			$infoConnectors = InfoConnectors::addInfoConnectors($lineId);
-
-			if ($infoConnectors instanceof \Bitrix\Main\ORM\Data\AddResult)
+			$infoConnectors = InfoConnectors::refreshInfoConnectors($lineId);
+			if ($infoConnectors->isSuccess())
 			{
-				if ($infoConnectors->isSuccess())
-				{
-					$info = $infoConnectors->getData();
-					$result = Json::decode($info['DATA']);
-				}
+				$result = $infoConnectors->getResult() ?? [];
 			}
 		}
 
 		return $result;
+	}
+
+	/**
+	 * Generate url to redirect into messenger app.
+	 *
+	 * @param int $lineId
+	 * @param string $connectorId
+	 * @param array|string|null $additional
+	 * @return array{web: string, mob: string}
+	 */
+	public static function getImMessengerUrl(int $lineId, string $connectorId, $additional = null): array
+	{
+		$url = [];
+		$connectorClass = self::getConnectorHandlerClass($connectorId);
+		if (is_subclass_of($connectorClass, Connectors\MessengerUrl::class))
+		{
+			/** @var Connectors\MessengerUrl $connector */
+			$connector = self::initConnectorHandler($connectorId);
+			$url = $connector->getMessengerUrl($lineId, $additional);
+		}
+
+		return $url;
 	}
 
 	/**
@@ -774,23 +776,25 @@ class Connector
 	 */
 	public static function getOutputInfoConnectorsLine($lineId)
 	{
-		$result = array();
+		$result = [];
 		$rawInfo = Output::infoConnectorsLine($lineId);
 		$infoConnectors = $rawInfo->getData();
 
-		if(!empty($infoConnectors))
+		if (!empty($infoConnectors))
 		{
 			$connectors = self::getListActiveConnector();
 
-			foreach ($connectors as $idConnector=>$value)
+			foreach ($connectors as $connectorId => $value)
 			{
-				if(!empty($infoConnectors[$idConnector]))
+				if (!empty($infoConnectors[$connectorId]))
 				{
-					$result[$idConnector] = $infoConnectors[$idConnector];
-					if(empty($result[$idConnector]['name']))
-						$result[$idConnector]['name'] = $value;
+					$result[$connectorId] = $infoConnectors[$connectorId];
+					if (empty($result[$connectorId]['name']))
+					{
+						$result[$connectorId]['name'] = $value;
+					}
 
-					$result[$idConnector]['connector_name'] = $value;
+					$result[$connectorId]['connector_name'] = $value;
 				}
 			}
 		}
@@ -882,7 +886,6 @@ class Connector
 			'fbinstagram' => 'instagram-fb',
 			'network' => 'bitrix24',
 			Library::ID_NOTIFICATIONS_CONNECTOR => 'bitrix24-sms',
-//			'notifications_virtual_wa' => 'bitrix24-virtual-wa',
 			'notifications_virtual_wa' => 'whatsapp',
 			'notifications_reverse_wa' => 'bitrix24-sms',
 			'botframework' => 'microsoft',
@@ -934,10 +937,7 @@ class Connector
 	 */
 	public static function getAdditionalStyles()
 	{
-		$style = CustomConnectors::getStyleCss();
-		//$style .= self::getServicesBackgroundColorCss();
-
-		return $style;
+		return CustomConnectors::getStyleCss();
 	}
 
 	/**
@@ -949,48 +949,10 @@ class Connector
 
 		$iconStyle = self::getAdditionalStyles();
 
-		if(!empty($iconStyle))
+		if (!empty($iconStyle))
 		{
 			Asset::getInstance()->addString('<style>' . $iconStyle . '</style>', true);
 		}
-	}
-
-	/**
-	 * @deprecated
-	 *
-	 * @return string
-	 */
-	public static function getServicesBackgroundColorCss()
-	{
-		$style = '';
-		$cssFile = (file_exists($_SERVER['DOCUMENT_ROOT'].'/bitrix/js/ui/icons/service/ui.icons.service.css') ?
-			'/bitrix/js/ui/icons/service/ui.icons.service.css' : '/bitrix/js/ui/icons/ui.icons.css');
-		$cssFilePath = $_SERVER['DOCUMENT_ROOT'] . $cssFile;
-		$cssFile = file_get_contents($cssFilePath);
-
-		if (!empty($cssFile))
-		{
-			$cssList = \Bitrix\Main\Web\DOM\CssParser::parse($cssFile);
-
-			if (!empty($cssList))
-			{
-				$column = array_column($cssList, 'SELECTOR');
-				$connectorList = self::getConnectorIconMap();
-
-				foreach ($connectorList as $key => $connector)
-				{
-					$position = array_search('.ui-icon-service-' . $connector . ' > i', $column);
-
-					if ($position !== false)
-					{
-						$style .= '.imconnector-' . $key . '-background-color { background-color: ' . $cssList[$position]['STYLE']['background-color'] . '; }' . PHP_EOL;
-						$style .= '.intranet-' . $key . '-background-color { background-color: ' . $cssList[$position]['STYLE']['background-color'] . '; }' . PHP_EOL;
-					}
-				}
-			}
-		}
-
-		return $style;
 	}
 
 	/**
@@ -1002,7 +964,7 @@ class Connector
 
 		$iconStyle = CustomConnectors::getStyleCssDisabled();
 
-		if(!empty($iconStyle))
+		if (!empty($iconStyle))
 		{
 			Asset::getInstance()->addString('<style>' . $iconStyle . '</style>', true);
 		}
@@ -1025,128 +987,177 @@ class Connector
 			|| empty($connector)
 		)
 		{
-			$result->addError(new Error(Loc::getMessage('IMCONNECTOR_EMPTY_PARAMETRS'), Library::ERROR_IMCONNECTOR_EMPTY_PARAMETRS, __METHOD__, array('line' => $line, 'connector' => $connector, 'params' => $params)));
+			$result->addError(new Error(
+				Loc::getMessage('IMCONNECTOR_EMPTY_PARAMETRS'),
+				Library::ERROR_IMCONNECTOR_EMPTY_PARAMETRS,
+				__METHOD__,
+				['line' => $line, 'connector' => $connector, 'params' => $params]
+			));
+		}
+		elseif (!self::isConnector($connector))
+		{
+			$result->addError(new Error(
+				Loc::getMessage('IMCONNECTOR_NOT_AVAILABLE_CONNECTOR'),
+				Library::ERROR_NOT_AVAILABLE_CONNECTOR,
+				__METHOD__,
+				$connector
+			));
 		}
 		else
 		{
-			if (!self::isConnector($connector))
+			$status = Status::getInstance($connector, (int)$line);
+			$cacheId = self::getCacheIdConnector($line, $connector);
+
+			if ($status->getActive())
 			{
-				$result->addError(new Error(Loc::getMessage('IMCONNECTOR_NOT_AVAILABLE_CONNECTOR'), Library::ERROR_NOT_AVAILABLE_CONNECTOR, __METHOD__, $connector));
+				$result->addError(new Error(
+					Loc::getMessage('IMCONNECTOR_ADD_EXISTING_CONNECTOR'),
+					Library::ERROR_ADD_EXISTING_CONNECTOR,
+					__METHOD__,
+					$connector
+				));
 			}
-			else
+
+			if ($result->isSuccess())
 			{
-				$status = Status::getInstance($connector, (int)$line);
-				$cacheId = self::getCacheIdConnector($line, $connector);
-
-				if($status->getActive())
+				switch ($connector)
 				{
-					$result->addError(new Error(Loc::getMessage('IMCONNECTOR_ADD_EXISTING_CONNECTOR'),
-						Library::ERROR_ADD_EXISTING_CONNECTOR, __METHOD__, $connector));
-				}
-
-				if ($result->isSuccess())
-				{
-					switch ($connector)
-					{
-						case 'livechat':
-							if(Loader::includeModule(Library::MODULE_ID_OPEN_LINES))
+					case 'livechat':
+						if (Loader::includeModule(Library::MODULE_ID_OPEN_LINES))
+						{
+							$liveChatManager = new LiveChatManager($line);
+							if (!$liveChatManager->add($params))
 							{
-								$liveChatManager = new LiveChatManager($line);
-								if (!$liveChatManager->add($params))
-								{
-									$result->addError(new Error(Loc::getMessage('IMCONNECTOR_FAILED_TO_ADD_CONNECTOR'),
-										Library::ERROR_FAILED_TO_ADD_CONNECTOR, __METHOD__, $connector));
-								}
+								$result->addError(new Error(
+									Loc::getMessage('IMCONNECTOR_FAILED_TO_ADD_CONNECTOR'),
+									Library::ERROR_FAILED_TO_ADD_CONNECTOR,
+									__METHOD__,
+									$connector
+								));
 							}
-							else
-							{
-								$result->addError(new Error(Loc::getMessage('IMCONNECTOR_FAILED_TO_LOAD_MODULE_OPEN_LINES'), Library::ERROR_FAILED_TO_LOAD_MODULE_OPEN_LINES, __METHOD__, $connector));
-							}
-							break;
+						}
+						else
+						{
+							$result->addError(new Error(
+								Loc::getMessage('IMCONNECTOR_FAILED_TO_LOAD_MODULE_OPEN_LINES'),
+								Library::ERROR_FAILED_TO_LOAD_MODULE_OPEN_LINES,
+								__METHOD__,
+								$connector
+							));
+						}
+						break;
 
-						case 'network':
-							if (Loader::includeModule(Library::MODULE_ID_OPEN_LINES))
-							{
-								$output = new Output($connector, $line);
-								$resultRegister = $output->register($params);
-
-								if ($resultRegister->isSuccess())
-								{
-									$status->setData($resultRegister->getResult());
-								}
-								else
-								{
-									$result->addError(new Error(Loc::getMessage('IMCONNECTOR_FAILED_TO_ADD_CONNECTOR'), Library::ERROR_FAILED_TO_ADD_CONNECTOR, __METHOD__, $connector));
-									$result->addErrors($resultRegister->getErrors());
-								}
-
-							}
-							else
-							{
-								$result->addError(new Error(Loc::getMessage('IMCONNECTOR_FAILED_TO_LOAD_MODULE_OPEN_LINES'), Library::ERROR_FAILED_TO_LOAD_MODULE_OPEN_LINES, __METHOD__, $connector));
-							}
-							break;
-
-						case 'telegrambot':
-						case 'botframework':
-						case 'ok':
+					case 'network':
+						if (Loader::includeModule(Library::MODULE_ID_OPEN_LINES))
+						{
 							$output = new Output($connector, $line);
-							$saved = $output->saveSettings($params);
+							$resultRegister = $output->register($params);
 
-							if($saved->isSuccess())
+							if ($resultRegister->isSuccess())
 							{
-								$status->setActive(true);
+								$status->setData($resultRegister->getResult());
+							}
+							else
+							{
+								$result->addError(new Error(
+									Loc::getMessage('IMCONNECTOR_FAILED_TO_ADD_CONNECTOR'),
+									Library::ERROR_FAILED_TO_ADD_CONNECTOR,
+									__METHOD__,
+									$connector
+								));
+								$result->addErrors($resultRegister->getErrors());
+							}
 
-								$testConnect = $output->testConnect();
-								if($testConnect->isSuccess())
-								{
-									$status->setConnection(true);
+						}
+						else
+						{
+							$result->addError(new Error(
+								Loc::getMessage('IMCONNECTOR_FAILED_TO_LOAD_MODULE_OPEN_LINES'),
+								Library::ERROR_FAILED_TO_LOAD_MODULE_OPEN_LINES,
+								__METHOD__,
+								$connector
+							));
+						}
+						break;
 
-									$register = $output->register();
-									if(!$register->isSuccess())
-									{
-										$result->addError(new Error(Loc::getMessage('IMCONNECTOR_FAILED_REGISTER_CONNECTOR'), Library::ERROR_FAILED_REGISTER_CONNECTOR, __METHOD__, $connector));
-										$result->addErrors($testConnect->getErrors());
-									}
-								}
-								else
+					case 'telegrambot':
+					case 'botframework':
+					case 'ok':
+						$output = new Output($connector, $line);
+						$saved = $output->saveSettings($params);
+
+						if ($saved->isSuccess())
+						{
+							$status->setActive(true);
+
+							$testConnect = $output->testConnect();
+							if($testConnect->isSuccess())
+							{
+								$status->setConnection(true);
+
+								$register = $output->register();
+								if(!$register->isSuccess())
 								{
-									$result->addError(new Error(Loc::getMessage('IMCONNECTOR_FAILED_TO_TEST_CONNECTOR'), Library::ERROR_FAILED_TO_TEST_CONNECTOR, __METHOD__, $connector));
+									$result->addError(new Error(
+										Loc::getMessage('IMCONNECTOR_FAILED_REGISTER_CONNECTOR'),
+										Library::ERROR_FAILED_REGISTER_CONNECTOR,
+										__METHOD__,
+										$connector
+									));
 									$result->addErrors($testConnect->getErrors());
 								}
 							}
 							else
 							{
-								$result->addError(new Error(Loc::getMessage('IMCONNECTOR_FAILED_TO_SAVE_SETTINGS_CONNECTOR'), Library::ERROR_FAILED_TO_SAVE_SETTINGS_CONNECTOR, __METHOD__, $connector));
-								$result->addErrors($saved->getErrors());
+								$result->addError(new Error(
+									Loc::getMessage('IMCONNECTOR_FAILED_TO_TEST_CONNECTOR'),
+									Library::ERROR_FAILED_TO_TEST_CONNECTOR,
+									__METHOD__,
+									$connector
+								));
+								$result->addErrors($testConnect->getErrors());
 							}
-							break;
+						}
+						else
+						{
+							$result->addError(new Error(
+								Loc::getMessage('IMCONNECTOR_FAILED_TO_SAVE_SETTINGS_CONNECTOR'),
+								Library::ERROR_FAILED_TO_SAVE_SETTINGS_CONNECTOR,
+								__METHOD__,
+								$connector
+							));
+							$result->addErrors($saved->getErrors());
+						}
+						break;
 
-						case 'vkgroup':
-						case 'facebook':
-						case Library::ID_FBINSTAGRAMDIRECT_CONNECTOR:
-						case 'facebookcomments':
-						case Library::ID_FBINSTAGRAM_CONNECTOR:
-						default:
-							$result->addError(new Error(Loc::getMessage('IMCONNECTOR_FEATURE_IS_NOT_SUPPORTED'), Library::ERROR_FEATURE_IS_NOT_SUPPORTED, __METHOD__, $connector));
-							break;
-					}
+					case 'vkgroup':
+					case 'facebook':
+					case Library::ID_FBINSTAGRAMDIRECT_CONNECTOR:
+					case 'facebookcomments':
+					case Library::ID_FBINSTAGRAM_CONNECTOR:
+					default:
+						$result->addError(new Error(
+							Loc::getMessage('IMCONNECTOR_FEATURE_IS_NOT_SUPPORTED'),
+							Library::ERROR_FEATURE_IS_NOT_SUPPORTED,
+							__METHOD__,
+							$connector
+						));
+						break;
 				}
-
-				if ($result->isSuccess())
-				{
-					$status
-						->setActive(true)
-						->setConnection(true)
-						->setRegister(true)
-						->setError(false);
-
-					Status::save();
-					Status::sendUpdateEvent();
-				}
-
-				self::cleanCacheConnector($line, $cacheId);
 			}
+
+			if ($result->isSuccess())
+			{
+				$status
+					->setActive(true)
+					->setConnection(true)
+					->setRegister(true)
+					->setError(false)
+					->save()
+				;
+			}
+
+			self::cleanCacheConnector($line, $cacheId);
 		}
 
 		return $result;
@@ -1169,143 +1180,193 @@ class Connector
 			|| empty($connector)
 		)
 		{
-			$result->addError(new Error(Loc::getMessage('IMCONNECTOR_EMPTY_PARAMETRS'), Library::ERROR_IMCONNECTOR_EMPTY_PARAMETRS, __METHOD__, array('line' => $line, 'connector' => $connector, 'params' => $params)));
+			$result->addError(new Error(
+				Loc::getMessage('IMCONNECTOR_EMPTY_PARAMETRS'),
+				Library::ERROR_IMCONNECTOR_EMPTY_PARAMETRS,
+				__METHOD__,
+				array
+				('line' => $line, 'connector' => $connector, 'params' => $params)));
+		}
+		elseif (!self::isConnector($connector))
+		{
+			$result->addError(new Error(
+				Loc::getMessage('IMCONNECTOR_NOT_AVAILABLE_CONNECTOR'),
+				Library::ERROR_NOT_AVAILABLE_CONNECTOR,
+				__METHOD__,
+				$connector
+			));
 		}
 		else
 		{
-			if (!self::isConnector($connector))
+			$status = Status::getInstance($connector, (int)$line);
+			$cacheId = self::getCacheIdConnector($line, $connector);
+
+			if (!$status->getActive())
 			{
-				$result->addError(new Error(Loc::getMessage('IMCONNECTOR_NOT_AVAILABLE_CONNECTOR'), Library::ERROR_NOT_AVAILABLE_CONNECTOR, __METHOD__, $connector));
+				$result->addError(new Error(
+					Loc::getMessage('IMCONNECTOR_UPDATE_NOT_EXISTING_CONNECTOR'),
+					Library::ERROR_UPDATE_NOT_EXISTING_CONNECTOR,
+					__METHOD__,
+					$connector
+				));
 			}
-			else
+
+			if($result->isSuccess())
 			{
-				$status = Status::getInstance($connector, (int)$line);
-				$cacheId = self::getCacheIdConnector($line, $connector);
-
-				if (!$status->getActive())
+				switch ($connector)
 				{
-					$result->addError(new Error(Loc::getMessage('IMCONNECTOR_UPDATE_NOT_EXISTING_CONNECTOR'),
-						Library::ERROR_UPDATE_NOT_EXISTING_CONNECTOR, __METHOD__, $connector));
-				}
+					case 'livechat':
+						if (Loader::includeModule(Library::MODULE_ID_OPEN_LINES))
+						{
+							$liveChatManager = new LiveChatManager($line);
+							if (!$liveChatManager->update($params))
+								$result->addError(new Error(
+									Loc::getMessage('IMCONNECTOR_FAILED_TO_UPDATE_CONNECTOR'),
+									Library::ERROR_FAILED_TO_UPDATE_CONNECTOR,
+									__METHOD__,
+									$connector
+								));
+						}
+						else
+						{
+							$result->addError(new Error(
+								Loc::getMessage('IMCONNECTOR_FAILED_TO_LOAD_MODULE_OPEN_LINES'),
+								Library::ERROR_FAILED_TO_LOAD_MODULE_OPEN_LINES,
+								__METHOD__,
+								$connector
+							));
+						}
 
-				if($result->isSuccess())
-				{
-					switch ($connector)
-					{
-						case 'livechat':
-							if(Loader::includeModule(Library::MODULE_ID_OPEN_LINES))
-							{
-								$liveChatManager = new LiveChatManager($line);
-								if (!$liveChatManager->update($params))
-									$result->addError(new Error(Loc::getMessage('IMCONNECTOR_FAILED_TO_UPDATE_CONNECTOR'), Library::ERROR_FAILED_TO_UPDATE_CONNECTOR, __METHOD__, $connector));
-							}
-							else
-							{
-								$result->addError(new Error(Loc::getMessage('IMCONNECTOR_FAILED_TO_LOAD_MODULE_OPEN_LINES'), Library::ERROR_FAILED_TO_LOAD_MODULE_OPEN_LINES, __METHOD__, $connector));
-							}
+						if (!$result->isSuccess())
+						{
+							$status->setConnection(false);
+							$status->setRegister(false);
+						}
+						break;
 
-							if(!$result->isSuccess())
-							{
-								$status->setConnection(false);
-								$status->setRegister(false);
-							}
-							break;
-
-						case 'network':
-							if(Loader::includeModule(Library::MODULE_ID_OPEN_LINES))
-							{
-								$output = new Output($connector, $line);
-								$resultUpdate = $output->update($params);
-
-								if ($resultUpdate->isSuccess())
-								{
-									$dataStatus = $status->getData();
-									$dataStatus = array_merge($dataStatus, $params);
-									$status->setData($dataStatus);
-								}
-								else
-								{
-									$result->addError(new Error(Loc::getMessage('IMCONNECTOR_FAILED_TO_UPDATE_CONNECTOR'), Library::ERROR_FAILED_TO_UPDATE_CONNECTOR, __METHOD__, $connector));
-									$result->addErrors($resultUpdate->getErrors());
-								}
-							}
-							else
-							{
-								$result->addError(new Error(Loc::getMessage('IMCONNECTOR_FAILED_TO_LOAD_MODULE_OPEN_LINES'), Library::ERROR_FAILED_TO_LOAD_MODULE_OPEN_LINES, __METHOD__, $connector));
-							}
-
-							if(!$result->isSuccess())
-							{
-								$status->setConnection(false);
-								$status->setRegister(false);
-							}
-							break;
-
-						case 'telegrambot':
-						case 'botframework':
-						case 'ok':
+					case 'network':
+						if (Loader::includeModule(Library::MODULE_ID_OPEN_LINES))
+						{
 							$output = new Output($connector, $line);
-							$saved = $output->saveSettings($params);
+							$resultUpdate = $output->update($params);
 
-							if($saved->isSuccess())
+							if ($resultUpdate->isSuccess())
 							{
-								$testConnect = $output->testConnect();
-								if($testConnect->isSuccess())
-								{
-									$status->setConnection(true);
+								$dataStatus = $status->getData();
+								$dataStatus = array_merge($dataStatus, $params);
+								$status->setData($dataStatus);
+							}
+							else
+							{
+								$result->addError(new Error(
+									Loc::getMessage('IMCONNECTOR_FAILED_TO_UPDATE_CONNECTOR'),
+									 Library::ERROR_FAILED_TO_UPDATE_CONNECTOR,
+									__METHOD__,
+									$connector
+								));
+								$result->addErrors($resultUpdate->getErrors());
+							}
+						}
+						else
+						{
+							$result->addError(new Error(
+								Loc::getMessage('IMCONNECTOR_FAILED_TO_LOAD_MODULE_OPEN_LINES'),
+								Library::ERROR_FAILED_TO_LOAD_MODULE_OPEN_LINES,
+								__METHOD__,
+								$connector
+							));
+						}
 
-									$register = $output->register();
-									if(!$register->isSuccess())
-									{
-										$result->addError(new Error(Loc::getMessage('IMCONNECTOR_FAILED_REGISTER_CONNECTOR'), Library::ERROR_FAILED_REGISTER_CONNECTOR, __METHOD__, $connector));
-										$result->addErrors($testConnect->getErrors());
+						if(!$result->isSuccess())
+						{
+							$status->setConnection(false);
+							$status->setRegister(false);
+						}
+						break;
 
-										$status->setRegister(false);
-									}
-								}
-								else
+					case 'telegrambot':
+					case 'botframework':
+					case 'ok':
+						$output = new Output($connector, $line);
+						$saved = $output->saveSettings($params);
+
+						if ($saved->isSuccess())
+						{
+							$testConnect = $output->testConnect();
+							if ($testConnect->isSuccess())
+							{
+								$status->setConnection(true);
+
+								$register = $output->register();
+								if(!$register->isSuccess())
 								{
-									$result->addError(new Error(Loc::getMessage('IMCONNECTOR_FAILED_TO_TEST_CONNECTOR'), Library::ERROR_FAILED_TO_TEST_CONNECTOR, __METHOD__, $connector));
+									$result->addError(new Error(
+										Loc::getMessage('IMCONNECTOR_FAILED_REGISTER_CONNECTOR'),
+										Library::ERROR_FAILED_REGISTER_CONNECTOR,
+										__METHOD__,
+										 $connector
+									));
 									$result->addErrors($testConnect->getErrors());
 
-									$status->setConnection(false);
+									$status->setRegister(false);
 								}
 							}
 							else
 							{
-								$result->addError(new Error(Loc::getMessage('IMCONNECTOR_FAILED_TO_SAVE_SETTINGS_CONNECTOR'), Library::ERROR_FAILED_TO_SAVE_SETTINGS_CONNECTOR, __METHOD__, $connector));
-								$result->addErrors($saved->getErrors());
+								$result->addError(new Error(
+									Loc::getMessage('IMCONNECTOR_FAILED_TO_TEST_CONNECTOR'),
+									 Library::ERROR_FAILED_TO_TEST_CONNECTOR,
+									__METHOD__,
+									$connector
+								));
+								$result->addErrors($testConnect->getErrors());
 
 								$status->setConnection(false);
-								$status->setRegister(false);
 							}
-							break;
+						}
+						else
+						{
+							$result->addError(new Error(
+								Loc::getMessage('IMCONNECTOR_FAILED_TO_SAVE_SETTINGS_CONNECTOR'),
+								Library::ERROR_FAILED_TO_SAVE_SETTINGS_CONNECTOR,
+								__METHOD__,
+								$connector
+));
+							$result->addErrors($saved->getErrors());
 
-						case 'vkgroup':
-						case 'facebook':
-						case Library::ID_FBINSTAGRAMDIRECT_CONNECTOR:
-						case 'facebookcomments':
-						case Library::ID_FBINSTAGRAM_CONNECTOR:
-						default:
-							$result->addError(new Error(Loc::getMessage('IMCONNECTOR_FEATURE_IS_NOT_SUPPORTED'), Library::ERROR_FEATURE_IS_NOT_SUPPORTED, __METHOD__, $connector));
-							break;
-					}
+							$status->setConnection(false);
+							$status->setRegister(false);
+						}
+						break;
+
+					case 'vkgroup':
+					case 'facebook':
+					case Library::ID_FBINSTAGRAMDIRECT_CONNECTOR:
+					case 'facebookcomments':
+					case Library::ID_FBINSTAGRAM_CONNECTOR:
+					default:
+						$result->addError(new Error(
+							Loc::getMessage('IMCONNECTOR_FEATURE_IS_NOT_SUPPORTED'),
+							Library::ERROR_FEATURE_IS_NOT_SUPPORTED,
+							__METHOD__,
+							$connector
+				));
+						break;
 				}
-
-				if ($result->isSuccess())
-				{
-					$status
-						->setActive(true)
-						->setConnection(true)
-						->setRegister(true);
-				}
-
-				$status->setError(false);
-				Status::save();
-				Status::sendUpdateEvent();
-
-				self::cleanCacheConnector($line, $cacheId);
 			}
+
+			if ($result->isSuccess())
+			{
+				$status
+					->setActive(true)
+					->setConnection(true)
+					->setRegister(true);
+			}
+
+			$status->setError(false);
+			$status->save();
+
+			self::cleanCacheConnector($line, $cacheId);
 		}
 
 		return $result;
@@ -1327,102 +1388,137 @@ class Connector
 			|| empty($connector)
 		)
 		{
-			$result->addError(new Error(Loc::getMessage('IMCONNECTOR_EMPTY_PARAMETRS'), Library::ERROR_IMCONNECTOR_EMPTY_PARAMETRS, __METHOD__, array('line' => $line, 'connector' => $connector)));
+			$result->addError(new Error(
+				Loc::getMessage('IMCONNECTOR_EMPTY_PARAMETRS'),
+				Library::ERROR_IMCONNECTOR_EMPTY_PARAMETRS,
+				__METHOD__,
+				array('line' => $line, 'connector' => $connector)
+			));
+		}
+		elseif (!self::isConnector($connector))
+		{
+			$result->addError(new Error(
+				Loc::getMessage('IMCONNECTOR_NOT_AVAILABLE_CONNECTOR'),
+				Library::ERROR_NOT_AVAILABLE_CONNECTOR,
+				__METHOD__,
+				$connector
+			));
 		}
 		else
 		{
-			if (!self::isConnector($connector))
+			$status = Status::getInstance($connector, (int)$line);
+			$cacheId = self::getCacheIdConnector($line, $connector);
+
+			if (!$status->getActive())
 			{
-				$result->addError(new Error(Loc::getMessage('IMCONNECTOR_NOT_AVAILABLE_CONNECTOR'), Library::ERROR_NOT_AVAILABLE_CONNECTOR, __METHOD__, $connector));
+				$result->addError(new Error(
+					Loc::getMessage('IMCONNECTOR_DELETE_NOT_EXISTING_CONNECTOR'),
+					Library::ERROR_DELETE_NOT_EXISTING_CONNECTOR,
+					__METHOD__,
+					$connector
+				));
 			}
-			else
+
+			if ($result->isSuccess())
 			{
-				$status = Status::getInstance($connector, (int)$line);
-				$cacheId = self::getCacheIdConnector($line, $connector);
-
-				if (!$status->getActive())
+				switch ($connector)
 				{
-					$result->addError(new Error(Loc::getMessage('IMCONNECTOR_DELETE_NOT_EXISTING_CONNECTOR'),
-						Library::ERROR_DELETE_NOT_EXISTING_CONNECTOR, __METHOD__, $connector));
-				}
-
-				if($result->isSuccess())
-				{
-					switch ($connector)
-					{
-						case 'livechat':
-							if(Loader::includeModule(Library::MODULE_ID_OPEN_LINES))
-							{
+					case 'livechat':
+						if (Loader::includeModule(Library::MODULE_ID_OPEN_LINES))
+						{
 							$liveChatManager = new LiveChatManager($line);
 							if (!$liveChatManager->delete())
 							{
-								$result->addError(new Error(Loc::getMessage('IMCONNECTOR_FAILED_TO_DELETE_CONNECTOR'),
-									Library::ERROR_FAILED_TO_DELETE_CONNECTOR, __METHOD__, $connector));
+								$result->addError(new Error(
+									Loc::getMessage('IMCONNECTOR_FAILED_TO_DELETE_CONNECTOR'),
+									Library::ERROR_FAILED_TO_DELETE_CONNECTOR,
+									__METHOD__,
+									$connector
+								));
 							}
-							}
-							else
-							{
-								$result->addError(new Error(Loc::getMessage('IMCONNECTOR_FAILED_TO_LOAD_MODULE_OPEN_LINES'), Library::ERROR_FAILED_TO_LOAD_MODULE_OPEN_LINES, __METHOD__, $connector));
-							}
+						}
+						else
+						{
+							$result->addError(new Error(
+								Loc::getMessage('IMCONNECTOR_FAILED_TO_LOAD_MODULE_OPEN_LINES'),
+								Library::ERROR_FAILED_TO_LOAD_MODULE_OPEN_LINES,
+								__METHOD__,
+								$connector
+							));
+						}
 
-							break;
+						break;
 
-						case 'network':
-							if (Loader::includeModule(Library::MODULE_ID_OPEN_LINES))
-							{
-								$output = new Output($connector, $line);
-								$resultDelete = $output->delete();
-								if (!$resultDelete->isSuccess())
-								{
-									$result->addError(new Error(
-										Loc::getMessage('IMCONNECTOR_FAILED_TO_DELETE_CONNECTOR'),
-										Library::ERROR_FAILED_TO_DELETE_CONNECTOR,
-										__METHOD__,
-										$connector
-									));
-									$result->addErrors($resultDelete->getErrors());
-								}
-							}
-							else
-							{
-								$result->addError(new Error(Loc::getMessage('IMCONNECTOR_FAILED_TO_LOAD_MODULE_OPEN_LINES'), Library::ERROR_FAILED_TO_LOAD_MODULE_OPEN_LINES, __METHOD__, $connector));
-							}
-							break;
-
-						case 'facebook':
-						case Library::ID_FBINSTAGRAMDIRECT_CONNECTOR:
-						case 'vkgroup':
-						case 'ok':
-						case 'telegrambot':
-						case 'botframework':
-						case 'facebookcomments':
-						case Library::ID_FBINSTAGRAM_CONNECTOR:
-						case 'avito':
-						case 'wechat':
-						case 'imessage':
+					case 'network':
+						if (Loader::includeModule(Library::MODULE_ID_OPEN_LINES))
+						{
 							$output = new Output($connector, $line);
-							$rawDelete = $output->deleteConnector();
-							if(!$rawDelete->isSuccess())
+							$resultDelete = $output->delete();
+							if (!$resultDelete->isSuccess())
 							{
-								$result->addError(new Error(Loc::getMessage('IMCONNECTOR_FAILED_TO_DELETE_CONNECTOR'), Library::ERROR_FAILED_TO_DELETE_CONNECTOR, __METHOD__, $connector));
-								$result->addErrors($rawDelete->getErrors());
-
+								$result->addError(new Error(
+									Loc::getMessage('IMCONNECTOR_FAILED_TO_DELETE_CONNECTOR'),
+									Library::ERROR_FAILED_TO_DELETE_CONNECTOR,
+									__METHOD__,
+									$connector
+								));
+								$result->addErrors($resultDelete->getErrors());
 							}
-							break;
+						}
+						else
+						{
+							$result->addError(new Error(
+								Loc::getMessage('IMCONNECTOR_FAILED_TO_LOAD_MODULE_OPEN_LINES'),
+								Library::ERROR_FAILED_TO_LOAD_MODULE_OPEN_LINES,
+								__METHOD__,
+								$connector
+							));
+						}
+						break;
 
-						default:
-							$result->addError(new Error(Loc::getMessage('IMCONNECTOR_FEATURE_IS_NOT_SUPPORTED'), Library::ERROR_FEATURE_IS_NOT_SUPPORTED, __METHOD__, $connector));
-							break;
-					}
+					case 'facebook':
+					case Library::ID_FBINSTAGRAMDIRECT_CONNECTOR:
+					case 'vkgroup':
+					case 'ok':
+					case 'telegrambot':
+					case 'botframework':
+					case 'facebookcomments':
+					case Library::ID_FBINSTAGRAM_CONNECTOR:
+					case 'avito':
+					case 'wechat':
+					case 'imessage':
+						$output = new Output($connector, $line);
+						$rawDelete = $output->deleteConnector();
+						if(!$rawDelete->isSuccess())
+						{
+							$result->addError(new Error(
+								Loc::getMessage('IMCONNECTOR_FAILED_TO_DELETE_CONNECTOR'),
+								Library::ERROR_FAILED_TO_DELETE_CONNECTOR,
+								__METHOD__,
+								$connector
+							));
+							$result->addErrors($rawDelete->getErrors());
+
+						}
+						break;
+
+					default:
+						$result->addError(new Error(
+							Loc::getMessage('IMCONNECTOR_FEATURE_IS_NOT_SUPPORTED'),
+							Library::ERROR_FEATURE_IS_NOT_SUPPORTED,
+							__METHOD__,
+							$connector
+						));
+						break;
 				}
-
-				if($result->isSuccess())
-				{
-					Status::delete($connector, (int)$line);
-				}
-
-				self::cleanCacheConnector($line, $cacheId);
 			}
+
+			if ($result->isSuccess())
+			{
+				Status::delete($connector, (int)$line);
+			}
+
+			self::cleanCacheConnector($line, $cacheId);
 		}
 
 		return $result;
@@ -1531,24 +1627,6 @@ class Connector
 		$message['message']['attachments'] = $richData;
 
 		return $message;
-	}
-
-	/**
-	 * Temporary method to check if WeChat can be shown for the portal, based on "wechat_enabled" option,
-	 * which has been set in the updater, only if portal has active WeChat connection.
-	 * Remove this method and its usage when WeChat will be available again.
-	 * https://helpdesk.bitrix24.com/open/10225886/
-	 *
-	 * @return bool
-	 */
-	private static function isWeChatEnabled(): bool
-	{
-		if (Option::get(Library::MODULE_ID, 'wechat_enabled'))
-		{
-			return true;
-		}
-
-		return false;
 	}
 
 	/**

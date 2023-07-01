@@ -1,0 +1,6 @@
+<?
+return [
+	'extensions' => [
+		'tab.presets'
+	],
+];

@@ -1,12 +1,14 @@
 <?php
+
 return [
 	'extensions' => [
 		'event-emitter',
-		'utils',
 		'utils/function',
-		'animation/components/fade-view',
 		'layout/pure-component',
-		'layout/ui/buttons-toolbar',
-		'layout/ui/entity-editor/*',
+		'animation/components/fade-view',
+		'layout/ui/entity-editor/control',
+		'layout/ui/entity-editor/validator/async',
+		'layout/ui/entity-editor/controller',
+		'layout/ui/entity-editor/editor-enum/mode',
 	],
 ];

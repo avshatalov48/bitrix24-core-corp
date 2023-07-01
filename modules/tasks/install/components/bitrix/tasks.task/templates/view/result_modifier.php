@@ -17,8 +17,6 @@ use \Bitrix\Tasks\Util\Type;
 /** @var TasksBaseComponent $component */
 
 Loc::loadMessages(__DIR__.'/template.php');
-$taskData = $arResult["DATA"]["TASK"];
-$can = $arResult["CAN"]["TASK"]["ACTION"];
 
 \Bitrix\Main\UI\Extension::load(["ui.notification", "ui.design-tokens"]);
 
@@ -29,7 +27,7 @@ if (!intval($arParams['ID']))
 		"MESSAGE" => Loc::getMessage("TASKS_TT_NOT_FOUND_OR_NOT_ACCESSIBLE")
 	);
 
-	if($arParams["SET_TITLE"] == 'Y')
+	if($arParams["SET_TITLE"] === 'Y')
 	{
 		$APPLICATION->SetTitle(Loc::getMessage("TASKS_TT_VIEW"));
 	}
@@ -41,7 +39,7 @@ if (!empty($arResult["ERROR"]))
 	$hasFatals = false;
 	foreach($arResult["ERROR"] as $error)
 	{
-		if ($error["TYPE"] == "FATAL")
+		if ($error["TYPE"] === "FATAL")
 		{
 			$arResult["TEMPLATE_DATA"]["ERROR"][] = $error['MESSAGE'];
 			$hasFatals = true;
@@ -53,6 +51,9 @@ if (!empty($arResult["ERROR"]))
 		return;
 	}
 }
+
+$taskData = $arResult["DATA"]["TASK"];
+$can = $arResult["CAN"]["TASK"]["ACTION"];
 
 $folder = $this->GetFolder();
 CJSCore::RegisterExt(
@@ -141,7 +142,7 @@ else
 $arParams["PATH_TO_TASKS_WO_GROUP"] = str_replace("#user_id#", $arParams["USER_ID"], $arParams["PATH_TO_USER_TASKS"]);
 $arParams["PATH_TO_TASKS_TASK_WO_GROUP"] = str_replace("#user_id#", $arParams["USER_ID"], $arParams["PATH_TO_USER_TASKS_TASK"]);
 
-if (is_array($arParams["TASK_URL_PARAMETERS"]) && !empty($arParams["TASK_URL_PARAMETERS"]))
+if (isset($arParams["TASK_URL_PARAMETERS"]) && is_array($arParams["TASK_URL_PARAMETERS"]) && !empty($arParams["TASK_URL_PARAMETERS"]))
 {
 	if ($arParams["PATH_TO_TASKS_TASK"] !== "")
 	{
@@ -180,7 +181,7 @@ if ($arParams["SET_NAVCHAIN"])
 				array("user_id" => $arParams["USER_ID"])
 			)
 		);
-		$APPLICATION->AddChainItem($title);
+		$APPLICATION->AddChainItem($title ?? null);
 	}
 	elseif ($group)
 	{
@@ -191,7 +192,7 @@ if ($arParams["SET_NAVCHAIN"])
 				array("group_id" => $arParams["GROUP_ID"])
 			)
 		);
-		$APPLICATION->AddChainItem($title);
+		$APPLICATION->AddChainItem($title ?? null);
 	}
 }
 
@@ -364,8 +365,8 @@ if (!empty($prevTaskIds))
 
 //Elapsed Time
 $secondsSign = ($taskData["TIME_SPENT_IN_LOGS"] >= 0 ? 1 : -1);
-$elapsedHours = (int) $secondsSign * floor(abs($taskData["TIME_SPENT_IN_LOGS"]) / 3600);
-$elapsedMinutes = ($secondsSign * floor(abs($taskData["TIME_SPENT_IN_LOGS"]) / 60)) % 60;
+$elapsedHours = (int) $secondsSign * floor(abs($taskData["TIME_SPENT_IN_LOGS"] ?? 0) / 3600);
+$elapsedMinutes = ($secondsSign * floor(abs($taskData["TIME_SPENT_IN_LOGS"] ?? 0) / 60)) % 60;
 $arResult["TEMPLATE_DATA"]["ELAPSED"] = array(
 	"HOURS" => $elapsedHours,
 	"MINUTES" => $elapsedMinutes,
@@ -376,7 +377,7 @@ $arResult["TEMPLATE_DATA"]["ELAPSED"] = array(
 //$timerData = CTaskTimerManager::getInstance(User::getId())->getLastTimer(false);
 //$arResult["TEMPLATE_DATA"]["TIMER"] = $timerData;
 
-$arResult["TEMPLATE_DATA"]["TIMER_IS_RUNNING_FOR_CURRENT_USER"] = $taskData['TIMER_IS_RUNNING'] ? "Y" : "N";
+$arResult['TEMPLATE_DATA']['TIMER_IS_RUNNING_FOR_CURRENT_USER'] = (($taskData['TIMER_IS_RUNNING'] ?? null) ? 'Y' : 'N');
 
 //Files in Comments
 $arResult["TEMPLATE_DATA"]["FILES_IN_COMMENTS"] = \Bitrix\Tasks\Integration\Forum\Task\Topic::getFileCount((int)$taskData["ID"]);
@@ -407,7 +408,7 @@ if ((string) $arResult["DATA"]["TASK"]["DESCRIPTION"] != "")
 }
 
 // todo: remove this when tasksRenderJSON() removed
-if (Type::isIterable($arResult["DATA"]["EVENT_TASK"]))
+if (Type::isIterable($arResult["DATA"]["EVENT_TASK"] ?? null))
 {
 	// It seems DESCRIPTION is not used anywhere, so to avoid security problems, simply dont pass DESCRIPTION.
 	unset($arResult["DATA"]["EVENT_TASK"]["DESCRIPTION"]);

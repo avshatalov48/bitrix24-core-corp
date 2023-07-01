@@ -124,7 +124,7 @@ class TasksImportComponent extends TasksBaseComponent
 			$headers[] = $headerName;
 			$fields[$headerId] = $headerName;
 			$upperFields[$headerId] = ToUpper($headerName);
-			if ($header['mandatory'] === 'Y')
+			if (($header['mandatory'] ?? null) === 'Y')
 			{
 				$requiredFields[$headerId] = $headerName;
 			}
@@ -590,7 +590,7 @@ class TasksImportComponent extends TasksBaseComponent
 
 			$fields[$headerId] = $headerName;
 			$upperFields[$headerId] = ToUpper($headerName);
-			if ($header['mandatory'] === 'Y')
+			if (($header['mandatory'] ?? null) === 'Y')
 			{
 				$requiredFields[$headerId] = $headerName;
 			}

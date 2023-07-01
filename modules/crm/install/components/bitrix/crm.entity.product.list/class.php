@@ -4,13 +4,20 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Catalog;
+use Bitrix\Catalog\Access\AccessController;
+use Bitrix\Catalog\Access\ActionDictionary;
+use Bitrix\Catalog\Access\Permission\PermissionDictionary;
 use Bitrix\Catalog\Component\ImageInput;
 use Bitrix\Catalog\StoreProductTable;
+use Bitrix\Catalog\StoreTable;
 use Bitrix\Catalog\v2\IoC\ServiceContainer;
 use Bitrix\Crm;
+use Bitrix\Crm\Component\EntityDetails\ProductList;
 use Bitrix\Crm\Discount;
 use Bitrix\Crm\Product\Url\ProductBuilder;
-use Bitrix\Crm\Component\EntityDetails\ProductList;
+use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Service\Sale\Reservation\ReservationService;
 use Bitrix\Iblock;
 use Bitrix\Iblock\Url\AdminPage\BuilderManager;
 use Bitrix\Main;
@@ -20,14 +27,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\Web\Json;
 use Bitrix\Sale;
-use Bitrix\Catalog;
-use Bitrix\Catalog\StoreTable;
-use Bitrix\Crm\Service\Container;
 use Bitrix\UI\Util;
-use Bitrix\Crm\Service\Sale\Reservation\ReservationService;
-use Bitrix\Catalog\Access\AccessController;
-use Bitrix\Catalog\Access\ActionDictionary;
-use Bitrix\Catalog\Access\Permission\PermissionDictionary;
 
 if (!Loader::includeModule('crm'))
 {
@@ -1021,7 +1021,7 @@ final class CCrmEntityProductListComponent
 			return;
 		}
 
-		if (is_array($this->arParams['~PRODUCTS']))
+		if (isset($this->arParams['~PRODUCTS']) && is_array($this->arParams['~PRODUCTS']))
 		{
 			$this->rows = $this->arParams['~PRODUCTS'];
 
@@ -1083,8 +1083,6 @@ final class CCrmEntityProductListComponent
 					$row['TAX_RATE'] = ($row['TAX_RATE'] === '') ? null : (float)$row['TAX_RATE'];
 				}
 			}
-
-			$this->rows = ReservationService::getInstance()->fillBasketReserves($this->rows);
 		}
 		elseif ($this->entity['ID'] > 0)
 		{
@@ -1098,47 +1096,22 @@ final class CCrmEntityProductListComponent
 				$this->entity['ID']
 			);
 
-			$reserveData = \Bitrix\Crm\Reservation\Internals\ProductRowReservationTable::getList([
-				'filter' => [
-					'=ROW_ID' => array_column($this->rows, 'ID'),
-				],
-				'select' => [
-					'INPUT_RESERVE_QUANTITY' => 'RESERVE_QUANTITY',
-					'DATE_RESERVE_END',
-					'ROW_ID',
-					'STORE_ID',
-				],
-			]);
-
-			$reserveRowMap = [];
-			while ($reservation = $reserveData->fetch())
-			{
-				$rowId = $reservation['ROW_ID'];
-				unset($reservation['ROW_ID']);
-
-				if ($reservation['DATE_RESERVE_END'] instanceof Date)
-				{
-					$reservation['DATE_RESERVE_END'] = $reservation['DATE_RESERVE_END']->toString();
-				}
-				$reserveRowMap[$rowId] = $reservation;
-			}
-
 			foreach ($this->rows as &$row)
 			{
 				$id = $row['ID'];
-
-				if ($reserveRowMap[$id])
-				{
-					$row = array_merge($row, $reserveRowMap[$id]);
-				}
 
 				$row['DEDUCTED_QUANTITY'] = null;
 				if ((int)$row['PRODUCT_ID'] > 0)
 				{
 					$row['DEDUCTED_QUANTITY'] = $shippedRowMap[$id] ?? 0.0;
 				}
+
+				$row['INPUT_RESERVE_QUANTITY'] = $row['RESERVE_QUANTITY'];
+				unset($row['RESERVE_QUANTITY']); // filled after in `fillBasketReserves`
 			}
 			unset($row);
+
+			$this->rows = \Bitrix\Crm\Service\Sale\Reservation\ReservationService::getInstance()->fillBasketReserves($this->rows);
 		}
 	}
 
@@ -1915,7 +1888,7 @@ final class CCrmEntityProductListComponent
 		]);
 		while ($prop = $iterator->fetch())
 		{
-			$headerId = 'PROPERTY_' . $prop['ID'];
+			$headerId = self::getPropertyColumnId($prop['ID']);
 			$result[$headerId] = [
 				'id' => $headerId,
 				'iconUrl' => self::PRODUCT_ICON_URL,
@@ -1977,6 +1950,37 @@ final class CCrmEntityProductListComponent
 	protected function getVisibleColumns()
 	{
 		return $this->getStorageItem(self::STORAGE_GRID, 'VISIBLE_COLUMNS');
+	}
+
+	protected function isVisibleSkuFields(): bool
+	{
+		$columns = $this->getVisibleColumns();
+
+		return
+			isset($columns['SKU_NAME'])
+			|| isset($columns['SKU_DESCRIPTION'])
+			|| isset($columns['ID'])
+		;
+	}
+
+	/**
+	 * @return int[]
+	 */
+	protected function getVisiblePropertiesIds(): array
+	{
+		$result = [];
+
+		$columns = $this->getVisibleColumns();
+		foreach ($columns as $column)
+		{
+			$propertyId = self::parsePropertyIdByColumnId($column['id']);
+			if ($propertyId !== null)
+			{
+				$result[] = $propertyId;
+			}
+		}
+
+		return $result;
 	}
 
 	/**
@@ -2532,8 +2536,10 @@ final class CCrmEntityProductListComponent
 
 				while ($storeAmount = $storeAmounts->fetch())
 				{
-					$storeOfferMap[$storeAmount['PRODUCT_ID']] = $storeOfferMap[$storeAmount['PRODUCT_ID']] ?? [];
-					$storeOfferMap[$storeAmount['PRODUCT_ID']][$storeAmount['STORE_ID']] = $storeAmount;
+					$productId = $storeAmount['PRODUCT_ID'];
+					unset($storeAmount['PRODUCT_ID']);
+					$storeOfferMap[$productId] ??= [];
+					$storeOfferMap[$productId][$storeAmount['STORE_ID']] = $storeAmount;
 				}
 			}
 
@@ -2616,17 +2622,18 @@ final class CCrmEntityProductListComponent
 					}
 					$this->rows[$index]['IMAGE_INFO'] = Json::encode($imageInfo);
 
+					$this->rows[$index]['STORE_MAP'] = [];
 					$storeId = $this->rows[$index]['STORE_ID'] ?? null;
-					if (
-						(int)$data['OFFER_ID'] > 0
-						&& (int)$storeId > 0
-						&& isset($storeOfferMap[$data['OFFER_ID']][$storeId])
-						&& 	$this->isAllowedReservation()
-					)
+					if ((int)$data['OFFER_ID'] > 0	&& 	$this->isAllowedReservation())
 					{
-						$storeInfo = $storeOfferMap[$data['OFFER_ID']][$storeId];
-						$replace['STORE_AMOUNT'] = $storeInfo['AMOUNT'];
-						$replace['STORE_AVAILABLE'] = $storeInfo['AMOUNT'] - $storeInfo['QUANTITY_RESERVED'];
+						if ((int)$storeId > 0 && isset($storeOfferMap[$data['OFFER_ID']][$storeId]))
+						{
+							$storeInfo = $storeOfferMap[$data['OFFER_ID']][$storeId];
+							$replace['STORE_AMOUNT'] = $storeInfo['AMOUNT'];
+							$replace['STORE_AVAILABLE'] = $storeInfo['AMOUNT'] - $storeInfo['QUANTITY_RESERVED'];
+						}
+
+						$this->rows[$index]['STORE_MAP'] = $storeOfferMap[$data['OFFER_ID']] ?? [];
 					}
 
 					if ($data['TYPE'] === Sale\BasketItem::TYPE_SERVICE)
@@ -2649,7 +2656,6 @@ final class CCrmEntityProductListComponent
 						$this->rows[$index]['DATE_RESERVE_END'] = $this->rows[$index]['DATE_RESERVE_END'] ?? '';
 						$this->rows[$index]['SKY_TREE'] = $this->rows[$index]['SKY_TREE'] ?? [];
 					}
-
 
 					$oldProductId[$index] = $this->rows[$index]['PRODUCT_ID'];
 					$this->rows[$index] = array_merge($data, $this->rows[$index]);
@@ -2689,6 +2695,12 @@ final class CCrmEntityProductListComponent
 
 	private function loadSkuTree(array $items): void
 	{
+		$visibleColumns = $this->getVisibleColumns();
+		if (empty($visibleColumns['MAIN_INFO']))
+		{
+			return;
+		}
+
 		$itemsByIblock = [];
 		$productIdsToOffers = [];
 
@@ -2743,8 +2755,13 @@ final class CCrmEntityProductListComponent
 	private function loadProductProperties(array $items): void
 	{
 		$iblockId = Crm\Product\Catalog::getDefaultId();
-
 		if (!$iblockId)
+		{
+			return;
+		}
+
+		$visiblePropertiesIds = $this->getVisiblePropertiesIds();
+		if (empty($visiblePropertiesIds))
 		{
 			return;
 		}
@@ -2756,7 +2773,9 @@ final class CCrmEntityProductListComponent
 				$productId = $this->rows[$rowIndex]['PARENT_PRODUCT_ID'];
 				if ($productId)
 				{
-					$iblockProps = Catalog\UI\PropertyProduct::getIblockProperties($iblockId, $productId);
+					$iblockProps = Catalog\UI\PropertyProduct::getIblockProperties($iblockId, $productId, [
+						'ID' => $visiblePropertiesIds,
+					]);
 					$this->rows[$rowIndex]['PRODUCT_PROPERTIES'] = $iblockProps;
 					$this->rows[$rowIndex] = array_merge($this->rows[$rowIndex], $iblockProps);
 				}
@@ -2767,10 +2786,28 @@ final class CCrmEntityProductListComponent
 	private function loadSkuProperties(array $items): void
 	{
 		$iblockId = Crm\Product\Catalog::getDefaultOfferId();
-
 		if (!$iblockId)
 		{
 			return;
+		}
+
+		$visiblePropertiesIds = $this->getVisiblePropertiesIds();
+		if (empty($visiblePropertiesIds) && !$this->isVisibleSkuFields())
+		{
+			return;
+		}
+
+		if (empty($visiblePropertiesIds))
+		{
+			$propertyFilter = [
+				'ID' => -1, // skip load properties
+			];
+		}
+		else
+		{
+			$propertyFilter = [
+				'ID' => $visiblePropertiesIds,
+			];
 		}
 
 		foreach ($items as $item => $rowIndexes)
@@ -2780,7 +2817,7 @@ final class CCrmEntityProductListComponent
 				$productId = $item;
 				if ($productId)
 				{
-					$skuProps = Catalog\UI\PropertyProduct::getSkuProperties($iblockId, $productId);
+					$skuProps = Catalog\UI\PropertyProduct::getSkuProperties($iblockId, $productId, $propertyFilter);
 					$this->rows[$rowIndex]['SKU_PROPERTIES'] = $skuProps;
 					$this->rows[$rowIndex] = array_merge($this->rows[$rowIndex], $skuProps);
 				}
@@ -3093,5 +3130,21 @@ final class CCrmEntityProductListComponent
 		return [
 			\Bitrix\Catalog\ProductTable::TYPE_SET,
 		];
+	}
+
+	private static function getPropertyColumnId(int $propertyId): string
+	{
+		return 'PROPERTY_' . $propertyId;
+	}
+
+	private static function parsePropertyIdByColumnId(string $columnId): ?int
+	{
+		$re = '/^PROPERTY_(\d+)$/';
+		if (preg_match($re, $columnId, $m))
+		{
+			return (int)$m[1];
+		}
+
+		return null;
 	}
 }

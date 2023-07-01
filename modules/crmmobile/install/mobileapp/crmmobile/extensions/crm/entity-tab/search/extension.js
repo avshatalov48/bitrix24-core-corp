@@ -2,7 +2,6 @@
  * @module crm/entity-tab/search
  */
 jn.define('crm/entity-tab/search', (require, exports, module) => {
-
 	const { debounce } = require('utils/function');
 	const { clone, isEqual, mergeImmutable } = require('utils/object');
 	const { Preset } = require('crm/entity-tab/search/preset');
@@ -38,7 +37,7 @@ jn.define('crm/entity-tab/search', (require, exports, module) => {
 			this.onItemClick = this.onItemClickHandler.bind(this);
 			this.onTextChanged = this.onTextChangedHandler.bind(this);
 
-			this.debounceSearch = debounce(params => this.search(params, false), 500, this);
+			this.debounceSearch = debounce((params) => this.search(params, false), 500, this);
 		}
 
 		getInitialState()
@@ -80,7 +79,7 @@ jn.define('crm/entity-tab/search', (require, exports, module) => {
 			layout.search.removeAllListeners(this.nameOfClickEnterEvent);
 
 			layout.search.on('hide', () => this.onHide());
-			layout.search.on('textChanged', params => this.onTextChanged(params));
+			layout.search.on('textChanged', (params) => this.onTextChanged(params));
 			layout.search.on('cancel', () => this.onCancel());
 
 			layout.search.on(this.nameOfClickEnterEvent, () => this.onDone());
@@ -99,7 +98,7 @@ jn.define('crm/entity-tab/search', (require, exports, module) => {
 
 				const text = params.search || '';
 
-				const {search} = this.props.layout;
+				const { search } = this.props.layout;
 
 				search.mode = 'bar';
 				search.text = text;
@@ -163,7 +162,7 @@ jn.define('crm/entity-tab/search', (require, exports, module) => {
 				return null;
 			}
 
-			const defaultPreset = this.state.presets.find(preset => preset.default === true);
+			const defaultPreset = this.state.presets.find((preset) => preset.default === true);
 
 			return (defaultPreset ? defaultPreset.id : null);
 		}
@@ -177,7 +176,7 @@ jn.define('crm/entity-tab/search', (require, exports, module) => {
 
 			if (this.state.counterId)
 			{
-				const counter = this.state.counters.find(counter => counter.code === this.state.counterId);
+				const counter = this.state.counters.find((counter) => counter.code === this.state.counterId);
 				params.counter = {
 					code: this.state.counterId,
 					id: counter.typeId,
@@ -210,8 +209,8 @@ jn.define('crm/entity-tab/search', (require, exports, module) => {
 
 			new RunActionExecutor(this.props.getSearchDataAction, data)
 				.setCacheId(cacheId)
-				.setCacheHandler(response => this.setSearchDataFromResponse(response, visible))
-				.setHandler(response => this.setSearchDataFromResponse(response, visible))
+				.setCacheHandler((response) => this.setSearchDataFromResponse(response, visible))
+				.setHandler((response) => this.setSearchDataFromResponse(response, visible))
 				.call(true);
 		}
 
@@ -230,7 +229,7 @@ jn.define('crm/entity-tab/search', (require, exports, module) => {
 			}
 
 			let needSetState = false;
-			this.state.counters.forEach(counter => {
+			this.state.counters.forEach((counter) => {
 				if (
 					counters.hasOwnProperty(counter.code)
 					&& counter.value !== counters[counter.code]
@@ -275,7 +274,7 @@ jn.define('crm/entity-tab/search', (require, exports, module) => {
 			return View(
 				{
 					style: styles.wrapper(visible),
-					ref: ref => this.wrapperRef = ref,
+					ref: (ref) => this.wrapperRef = ref,
 				},
 				visible && View(
 					{},
@@ -308,7 +307,7 @@ jn.define('crm/entity-tab/search', (require, exports, module) => {
 						width: 50,
 						height: 50,
 					},
-					tintColor: '#82888f',
+					tintColor: '#828b95',
 					animating: true,
 					size: 'small',
 				});
@@ -319,7 +318,7 @@ jn.define('crm/entity-tab/search', (require, exports, module) => {
 
 		renderDefaultPreset(presets)
 		{
-			return presets.filter(preset => preset.isDefault());
+			return presets.filter((preset) => preset.isDefault());
 		}
 
 		/**
@@ -334,7 +333,7 @@ jn.define('crm/entity-tab/search', (require, exports, module) => {
 
 			const counters = clone(this.state.counters);
 
-			return counters.map(counter => {
+			return counters.map((counter) => {
 				counter.active = (this.state.counterId === counter.code);
 				counter.onClick = this.onItemClick;
 				return new Counter(counter);
@@ -343,7 +342,7 @@ jn.define('crm/entity-tab/search', (require, exports, module) => {
 
 		renderPresets(presets)
 		{
-			return presets.filter(preset => !preset.isDefault());
+			return presets.filter((preset) => !preset.isDefault());
 		}
 
 		/**
@@ -390,7 +389,7 @@ jn.define('crm/entity-tab/search', (require, exports, module) => {
 
 			params.text = (params.text === undefined ? this.state.search : params.text);
 
-			if (params.text.length && this.props.restrictions.isExceeded)
+			if (params.text.length > 0 && this.props.restrictions.isExceeded)
 			{
 				this.props.layout.search.text = '';
 				void PlanRestriction.open(
@@ -430,13 +429,13 @@ jn.define('crm/entity-tab/search', (require, exports, module) => {
 				{
 					params.data.background = DEFAULT_ICON_BACKGROUND;
 				}
-				else if (!params.data.background)
+				else if (params.data.background)
 				{
-					params.data.background = this.state.iconBackground;
+					this.state.iconBackground = params.data.background;
 				}
 				else
 				{
-					this.state.iconBackground = params.data.background;
+					params.data.background = this.state.iconBackground;
 				}
 			}
 
@@ -463,8 +462,8 @@ jn.define('crm/entity-tab/search', (require, exports, module) => {
 
 		showFilterSettings()
 		{
-			const pathToExtension = currentDomain + '/bitrix/mobileapp/crmmobile/extensions/crm/entity-tab/search/';
-			const imagePath = pathToExtension + 'images/settings.png';
+			const pathToExtension = `${currentDomain}/bitrix/mobileapp/crmmobile/extensions/crm/entity-tab/search/`;
+			const imagePath = `${pathToExtension}images/settings.png`;
 
 			this.menu = new ContextMenu({
 				banner: {
@@ -474,7 +473,7 @@ jn.define('crm/entity-tab/search', (require, exports, module) => {
 						BX.message('M_CRM_ENTITY_TAB_SEARCH_FILTER_SETTINGS_RESPONSIBLE'),
 						getEntityMessage(
 							'M_CRM_ENTITY_TAB_SEARCH_FILTER_SETTINGS_CUSTOMIZATION',
-							this.props.entityTypeName
+							this.props.entityTypeName,
 						),
 					],
 					imagePath,
@@ -493,7 +492,7 @@ jn.define('crm/entity-tab/search', (require, exports, module) => {
 
 		fadeOut()
 		{
-			return new Promise(resolve => {
+			return new Promise((resolve) => {
 				this.wrapperRef.animate({
 					opacity: 0,
 					duration: 300,
@@ -513,7 +512,7 @@ jn.define('crm/entity-tab/search', (require, exports, module) => {
 	}
 
 	const styles = {
-		wrapper: isVisible => {
+		wrapper: (isVisible) => {
 			return {
 				top: 3,
 				position: isVisible ? 'absolute' : 'relative',
@@ -525,7 +524,7 @@ jn.define('crm/entity-tab/search', (require, exports, module) => {
 		},
 		moreButtonView: {
 			width: 50,
-			borderColor: '#c3f2ff',
+			borderColor: '#c3f0ff',
 			borderRadius: 20,
 			borderWidth: 2,
 			height: 34,
@@ -573,11 +572,7 @@ jn.define('crm/entity-tab/search', (require, exports, module) => {
 		},
 	};
 
-	const MORE_BUTTON_ICON = '<svg width="16" height="4" viewBox="0 0 16 4" fill="none" xmlns="http://www.w3.org/2000/svg">\n' +
-		'<path d="M2 4C3.10457 4 4 3.10457 4 2C4 0.89543 3.10457 0 2 0C0.89543 0 0 0.89543 0 2C0 3.10457 0.89543 4 2 4Z" fill="#82888F"/>\n' +
-		'<path d="M8 4C9.10457 4 10 3.10457 10 2C10 0.89543 9.10457 0 8 0C6.89543 0 6 0.89543 6 2C6 3.10457 6.89543 4 8 4Z" fill="#82888F"/>\n' +
-		'<path d="M16 2C16 3.10457 15.1046 4 14 4C12.8954 4 12 3.10457 12 2C12 0.89543 12.8954 0 14 0C15.1046 0 16 0.89543 16 2Z" fill="#82888F"/>\n' +
-		'</svg>';
+	const MORE_BUTTON_ICON = '<svg width="16" height="4" viewBox="0 0 16 4" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 4C3.10457 4 4 3.10457 4 2C4 0.89543 3.10457 0 2 0C0.89543 0 0 0.89543 0 2C0 3.10457 0.89543 4 2 4Z" fill="#828b95"/><path d="M8 4C9.10457 4 10 3.10457 10 2C10 0.89543 9.10457 0 8 0C6.89543 0 6 0.89543 6 2C6 3.10457 6.89543 4 8 4Z" fill="#828b95"/><path d="M16 2C16 3.10457 15.1046 4 14 4C12.8954 4 12 3.10457 12 2C12 0.89543 12.8954 0 14 0C15.1046 0 16 0.89543 16 2Z" fill="#828b95"/></svg>';
 
 	module.exports = { Search };
 });

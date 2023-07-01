@@ -518,6 +518,26 @@ class ProductRow extends Base
 			{
 				$result[$index] = $internalizedFields;
 			}
+
+			if (isset($productRow['TAX_RATE']))
+			{
+				if (
+					(float)$productRow['TAX_RATE'] > 0
+					|| $productRow['TAX_RATE'] === 0
+					|| (
+						is_string($productRow['TAX_RATE'])
+						&& isset($productRow['TAX_RATE'][0])
+						&& $productRow['TAX_RATE'][0] === '0'
+					)
+				)
+				{
+					$result[$index]['TAX_RATE'] = (float)$productRow['TAX_RATE'];
+				}
+				else
+				{
+					$result[$index]['TAX_RATE'] = null;
+				}
+			}
 		}
 
 		$productIds = array_filter(array_column($result, 'PRODUCT_ID'));

@@ -11,6 +11,7 @@ namespace Bitrix\Tasks\Provider;
 use Bitrix\Tasks\Access\Permission\PermissionDictionary;
 use Bitrix\Tasks\Access\Permission\TasksTemplatePermissionTable;
 use Bitrix\Tasks\Internals\Task\MemberTable;
+use Bitrix\Tasks\Internals\Task\Template\ScenarioTable;
 use Bitrix\Tasks\Internals\Task\Template\TemplateMemberTable;
 use Bitrix\Tasks\Util\User;
 use \CDBResult;
@@ -214,9 +215,12 @@ class TemplateProvider
 
 	private function executeQuery(string $query): CDBResult
 	{
-		if (isset($this->arNavParams["NAV_PARAMS"]) && is_array($this->arNavParams["NAV_PARAMS"]))
+		if (
+			isset($this->arNavParams["NAV_PARAMS"])
+			&& is_array($this->arNavParams["NAV_PARAMS"])
+		)
 		{
-			$nTopCount = (int) $this->arNavParams['NAV_PARAMS']['nTopCount'];
+			$nTopCount = (int) ($this->arNavParams['NAV_PARAMS']['nTopCount'] ?? 0);
 
 			if ($nTopCount > 0)
 			{
@@ -265,7 +269,7 @@ class TemplateProvider
 			$field = strtoupper($field);
 			if (array_key_exists($field, $this->arFields))
 			{
-				$arSqlSelect[$field] = \Bitrix\Tasks\DB\Helper::wrapColumnWithFunction($this->arFields[$field]['FIELD'], $this->arFields[$field]['WRAP'])." AS ".$field;
+				$arSqlSelect[$field] = \Bitrix\Tasks\DB\Helper::wrapColumnWithFunction($this->arFields[$field]['FIELD'])." AS ".$field;
 			}
 		}
 
@@ -394,8 +398,8 @@ class TemplateProvider
 			}
 		}
 
-		$includeSubtree = $this->arParams['INCLUDE_TEMPLATE_SUBTREE'] === true || $this->arParams['INCLUDE_TEMPLATE_SUBTREE'] === 'Y';
-		$excludeSubtree = $this->arParams['EXCLUDE_TEMPLATE_SUBTREE'] === true || $this->arParams['EXCLUDE_TEMPLATE_SUBTREE'] === 'Y';
+		$includeSubtree = isset($this->arParams['INCLUDE_TEMPLATE_SUBTREE']) && ($this->arParams['INCLUDE_TEMPLATE_SUBTREE'] === true || $this->arParams['INCLUDE_TEMPLATE_SUBTREE'] === 'Y');
+		$excludeSubtree = isset($this->arParams['EXCLUDE_TEMPLATE_SUBTREE']) && ($this->arParams['EXCLUDE_TEMPLATE_SUBTREE'] === true || $this->arParams['EXCLUDE_TEMPLATE_SUBTREE'] === 'Y');
 
 		if($excludeSubtree)
 		{
@@ -434,6 +438,8 @@ class TemplateProvider
 				b_user CU ON CU.ID = TT.CREATED_BY
 			LEFT JOIN
 				b_user RU ON RU.ID = TT.RESPONSIBLE_ID
+			INNER JOIN
+				 " . ScenarioTable::getTableName() . " TS ON TS.TEMPLATE_ID = TT.ID
 
 			". $this->obUserFieldsSql->GetJoin("TT.ID");
 
@@ -446,11 +452,17 @@ class TemplateProvider
 		$alwaysSelect = array();
 		foreach($this->arFields as $field => $rule)
 		{
-			if($rule['DEFAULT'])
+			if(
+				isset($rule['DEFAULT'])
+				// && $rule['DEFAULT']
+			)
 			{
 				$defaultSelect[] = $field;
 			}
-			if($rule['ALWAYS'])
+			if(
+				isset($rule['ALWAYS'])
+				// && $rule['ALWAYS']
+			)
 			{
 				$alwaysSelect[] = $field;
 			}
@@ -556,7 +568,8 @@ class TemplateProvider
 			'RESPONSIBLE_SECOND_NAME' 	=> ['FIELD' => 'RU.SECOND_NAME', 'DEFAULT' => true, 'ALWAYS' => true],
 			'RESPONSIBLE_LOGIN' 		=> ['FIELD' => 'RU.LOGIN', 'DEFAULT' => true, 'ALWAYS' => true],
 			'RESPONSIBLE_WORK_POSITION' => ['FIELD' => 'RU.WORK_POSITION', 'DEFAULT' => true, 'ALWAYS' => true],
-			'RESPONSIBLE_PHOTO' 		=> ['FIELD' => 'RU.PERSONAL_PHOTO', 'DEFAULT' => true, 'ALWAYS' => true]
+			'RESPONSIBLE_PHOTO' 		=> ['FIELD' => 'RU.PERSONAL_PHOTO', 'DEFAULT' => true, 'ALWAYS' => true],
+			'SCENARIO' 					=> ['FIELD' => 'TS.SCENARIO', 'DEFAULT' => true, 'ALWAYS' => true],
 		];
 
 		return $this;
@@ -619,6 +632,19 @@ class TemplateProvider
 					}
 					break;
 
+				case "SCENARIO":
+					$scenarios = !is_array($val) ? [$val] : $val;
+					$filteredValue = [];
+					foreach ($scenarios as $scenario)
+					{
+						if (ScenarioTable::isValidScenario($scenario))
+						{
+							$filteredValue[] = $scenario;
+						}
+					}
+					$this->arSqlSearch[] = CTasks::FilterCreate("TS." . $key, $filteredValue, "string_equal", $bFullJoin);
+					break;
+
 				case "TITLE":
 				case "ZOMBIE":
 				case "XML_ID":
@@ -661,7 +687,13 @@ class TemplateProvider
 						$val = false;
 					}
 
-					$excludeSubtree = 	$this->arParams['EXCLUDE_TEMPLATE_SUBTREE'] === true || $this->arParams['EXCLUDE_TEMPLATE_SUBTREE'] === 'Y';
+					$excludeSubtree = (
+						isset($this->arParams['EXCLUDE_TEMPLATE_SUBTREE'])
+						&& (
+							$this->arParams['EXCLUDE_TEMPLATE_SUBTREE'] === true
+							|| $this->arParams['EXCLUDE_TEMPLATE_SUBTREE'] === 'Y'
+						)
+					);
 
 					if($excludeSubtree)
 					{
@@ -693,6 +725,11 @@ class TemplateProvider
 		if (isset($arParams['USER_ID']))
 		{
 			$this->userId = (int) $arParams['USER_ID'];
+		}
+
+		if (!isset($arFilter['SCENARIO']) || !ScenarioTable::isValidScenario($arFilter['SCENARIO']))
+		{
+			$this->arFilter['SCENARIO'] = ScenarioTable::SCENARIO_DEFAULT;
 		}
 
 		$this->executorId = $this->userId;

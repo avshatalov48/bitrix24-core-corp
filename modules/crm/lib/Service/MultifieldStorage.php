@@ -16,14 +16,17 @@ class MultifieldStorage
 	/** @var FieldMultiTable */
 	private $dataManager = FieldMultiTable::class;
 	/** @var Array<string, Multifield\Collection> */
-	private $cache = [];
+	private array $cache = [];
 
-	/** @var CCrmFieldMulti */
-	private $fieldMulti;
+	private CCrmFieldMulti $fieldMulti;
+	private \CMain $compatibleApplication;
 
 	final public function __construct()
 	{
 		$this->fieldMulti = new CCrmFieldMulti();
+
+		global $APPLICATION;
+		$this->compatibleApplication = $APPLICATION;
 	}
 
 	final public function get(ItemIdentifier $owner): Multifield\Collection
@@ -181,6 +184,35 @@ class MultifieldStorage
 		$this->getForMultipleOwners($entityTypeId, $ownerIds);
 	}
 
+	final public function validate(Multifield\Collection $values): Result
+	{
+		$result = new Result();
+
+		foreach ($values as $value)
+		{
+			$singleResult = $this->validateSingle($value);
+			if (!$singleResult->isSuccess())
+			{
+				$result->addErrors($singleResult->getErrors());
+			}
+		}
+
+		return $result;
+	}
+
+	private function validateSingle(Multifield\Value $value): Result
+	{
+		$result = new Result();
+
+		$isSuccess = $this->fieldMulti->CheckFields(Multifield\Assembler::databaseRowByValue($value));
+		if (!$isSuccess)
+		{
+			$result->addError(new Error((string)$this->compatibleApplication->GetException()));
+		}
+
+		return $result;
+	}
+
 	/**
 	 * Saves multifields values
 	 *
@@ -217,8 +249,6 @@ class MultifieldStorage
 		Multifield\Collection $valuesToSave
 	): Result
 	{
-		global $APPLICATION;
-
 		$result = new Result();
 		$invalidValues = [];
 		foreach ($valuesToSave as $valueToSave)
@@ -228,11 +258,10 @@ class MultifieldStorage
 				$valueToSave->setValue('');
 			}
 
-			$isSuccess = $this->fieldMulti->CheckFields(Multifield\Assembler::databaseRowByValue($valueToSave));
-			if (!$isSuccess)
+			$validateResult = $this->validateSingle($valueToSave);
+			if (!$validateResult->isSuccess())
 			{
-				$result->addError(new Error((string)$APPLICATION->GetException()));
-
+				$result->addErrors($validateResult->getErrors());
 				$invalidValues[] = $valueToSave;
 			}
 		}

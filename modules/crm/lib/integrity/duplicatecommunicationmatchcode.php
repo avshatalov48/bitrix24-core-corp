@@ -14,9 +14,9 @@ Loc::loadMessages(__FILE__);
  *
  * <<< ORMENTITYANNOTATION
  * @method static EO_DuplicateCommunicationMatchCode_Query query()
- * @method static EO_DuplicateCommunicationMatchCode_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_DuplicateCommunicationMatchCode_Result getByPrimary($primary, array $parameters = [])
  * @method static EO_DuplicateCommunicationMatchCode_Result getById($id)
- * @method static EO_DuplicateCommunicationMatchCode_Result getList(array $parameters = array())
+ * @method static EO_DuplicateCommunicationMatchCode_Result getList(array $parameters = [])
  * @method static EO_DuplicateCommunicationMatchCode_Entity getEntity()
  * @method static \Bitrix\Crm\Integrity\EO_DuplicateCommunicationMatchCode createObject($setDefaultValues = true)
  * @method static \Bitrix\Crm\Integrity\EO_DuplicateCommunicationMatchCode_Collection createCollection()

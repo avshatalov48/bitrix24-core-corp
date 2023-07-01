@@ -1,17 +1,16 @@
 <?php
-if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
-{
-	die();
-}
-
 /**
- * Bitrix vars
- * @global CUser $USER
- * @global CMain $APPLICATION
+ * @var CMain $APPLICATION
+ * @var CUser $USER
  * @var array $arParams
  * @var array $arResult
  * @var CBitrixComponent $this
  */
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 use Bitrix\Main\Localization\Loc;
 
@@ -53,7 +52,7 @@ if (
 			'ACCESS_KEY' => $_POST['ACCESS_KEY'],
 			'ACTIVE' => $_POST['ACTIVE'] === 'Y',
 			'CONNECTION' => $_POST['CONNECTION'],
-			'USER_ID' => $USER->GetId(),
+			'USER_ID' => $USER->GetID(),
 		];
 		if (isset($_POST['USERS']))
 		{
@@ -81,11 +80,14 @@ if (
 			$redirectUrl = str_replace('#ID#', $resultSave, $arParams['KEY_EDIT_URL']);
 			if (($_REQUEST['IFRAME'] == 'Y') && ($_REQUEST['IFRAME_TYPE'] == 'SIDE_SLIDER'))
 			{
-				$redirectUrl = CHTTP::urlAddParams($redirectUrl, [
-					'IFRAME' => 'Y',
-					'IFRAME_TYPE' => 'SIDE_SLIDER',
-					'sidePanelAction' => 'close',
-				]);
+				$redirectUrl = (new \Bitrix\Main\Web\Uri($redirectUrl))
+					->addParams([
+						'IFRAME' => 'Y',
+						'IFRAME_TYPE' => 'SIDE_SLIDER',
+						'sidePanelAction' => 'close',
+					])
+					->getUri()
+				;
 			}
 			LocalRedirect($redirectUrl);
 		}
@@ -154,4 +156,4 @@ if ($arResult['ERRORS'])
 	}
 }
 
-$this->IncludeComponentTemplate();
+$this->includeComponentTemplate();

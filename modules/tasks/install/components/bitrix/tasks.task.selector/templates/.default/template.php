@@ -51,7 +51,7 @@ $name = $arResult["NAME"];
 			};
 			<?endforeach?>
 
-			<?if ((string)$arParams['PATH_TO_TASKS_TASK'] != ''):?>
+			<?if ((string)($arParams['PATH_TO_TASKS_TASK'] ?? null) != ''):?>
 			BX.message({TASKS_PATH_TO_TASK: "<?=CUtil::JSEscape($arParams['PATH_TO_TASKS_TASK'])?>"});
 			<?endif?>
 
@@ -63,11 +63,11 @@ $name = $arResult["NAME"];
 			O_<?=$name?>.searchInput = BX("<?=$name?>_task_input");
 			<?endif?>
 
-			<?if ($arParams["ON_CHANGE"] <> ''):?>
+			<?if (($arParams["ON_CHANGE"] ?? null) <> ''):?>
 			O_<?=$name?>.onChange = <?=CUtil::JSEscape($arParams["ON_CHANGE"])?>;
 			<?endif?>
 
-			<?if ($arParams["ON_SELECT"] <> ''):?>
+			<?if (($arParams["ON_SELECT"] ?? null) <> ''):?>
 			O_<?=$name?>.onSelect= <?=CUtil::JSEscape($arParams["ON_SELECT"])?>;
 			<?endif?>
 
@@ -78,7 +78,7 @@ $name = $arResult["NAME"];
 	});
 </script>
 
-<div class="finder-box<?if ($arParams["MULTIPLE"]):?> finder-box-multiple<?endif?>"<?=($arParams["POPUP"] == "Y"? " style=\"display: none;\"" : "")?>
+<div class="finder-box<?if ($arParams["MULTIPLE"]):?> finder-box-multiple<?endif?>"<?=(($arParams["POPUP"] ?? null) == "Y"? " style=\"display: none;\"" : "")?>
 	 id="<?=$name?>_selector_content">
 	<table class="finder-box-layout">
 		<tr>

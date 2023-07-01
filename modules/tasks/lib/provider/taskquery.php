@@ -23,6 +23,7 @@ class TaskQuery
 	private $skipAccessCheck = false;
 	private bool $skipUfEscape = false;
 	private bool $skipTitleEscape = false;
+	private bool $distinct = true;
 	private $params = [];
 
 	private
@@ -283,6 +284,17 @@ class TaskQuery
 	{
 		$this->groupBy = $this->prepareGroupBy($groupBy);
 		return $this;
+	}
+
+	public function setDistinct(bool $distinct): self
+	{
+		$this->distinct = $distinct;
+		return $this;
+	}
+
+	public function getDistinct(): bool
+	{
+		return $this->distinct;
 	}
 
 	/**

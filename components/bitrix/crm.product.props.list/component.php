@@ -218,8 +218,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && check_bitrix_sessid() && isset($_PO
 				$errorMsg .= GetMessage("CRM_PRODUCT_PROP_PL_SAVE_ERROR", array("#ID#" => $id, "#ERROR_TEXT#" => $ibp->LAST_ERROR)).'<br>';
 				$DB->Rollback();
 			}
-
-			$DB->Commit();
+			else
+			{
+				$DB->Commit();
+			}
 		}
 	}
 	else if($arResult['CAN_DELETE'] && in_array($action, array('delete','activate','deactivate'), true))

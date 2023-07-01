@@ -81,7 +81,7 @@ final class SignDocument extends Base
 
 		$fields['PROVIDER_TYPE_ID'] = self::PROVIDER_TYPE_ID_SIGN;
 
-		if ($action === 'ADD')
+		if ($action === self::ACTION_ADD)
 		{
 			$documentId = (int)($fields['ASSOCIATED_ENTITY_ID'] ?? 0);
 			if ($documentId <= 0)
@@ -96,7 +96,7 @@ final class SignDocument extends Base
 			}
 		}
 
-		if ($action === 'UPDATE')
+		if ($action === self::ACTION_UPDATE)
 		{
 			if (isset($fields['END_TIME']) && $fields['END_TIME'] != '')
 			{

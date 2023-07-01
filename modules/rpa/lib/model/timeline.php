@@ -45,7 +45,7 @@ class Timeline extends EO_Timeline
 		$converter = Converter::toJson();
 
 		$fields = $this->collectValues();
-		$data = $fields['DATA'];
+		$data = $fields['DATA'] ?? null;
 		$fields['TITLE'] = $this->getTitle();
 		$fields = $converter->process($fields);
 		$fields['data'] = $data;

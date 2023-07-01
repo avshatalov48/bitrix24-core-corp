@@ -92,10 +92,8 @@ class TasksUserFieldPanelComponent extends TasksBaseComponent
 		return $this->errorCollection->toArray();
 	}
 
-	public function saveFieldAction($id = 0, array $data, array $parameters = [])
+	public function saveFieldAction($id, array $data, array $parameters = [])
 	{
-		$id = (int) $id;
-
 		if (!\Bitrix\Main\Loader::includeModule('tasks'))
 		{
 			return null;
@@ -144,6 +142,7 @@ class TasksUserFieldPanelComponent extends TasksBaseComponent
 			return [];
 		}
 
+		$id = ($id ?? 0);
 		if ($id) // update existing field
 		{
 			$userField = \CUserTypeEntity::GetByID($id);
@@ -559,12 +558,12 @@ class TasksUserFieldPanelComponent extends TasksBaseComponent
 	 */
 	protected function getUfLabel($ufDesc)
 	{
-		$ufLabel = ((string)$ufDesc['EDIT_FORM_LABEL'] != ''? $ufDesc['EDIT_FORM_LABEL'] : $ufDesc['FIELD_NAME_ORIG']);
+		$ufLabel = ((string)$ufDesc['EDIT_FORM_LABEL'] != ''? $ufDesc['EDIT_FORM_LABEL'] : ($ufDesc['FIELD_NAME_ORIG'] ?? null));
 
 		if ($ufLabel === null || $ufLabel === "")
 		{
 			$userField = \CUserTypeEntity::GetByID($ufDesc['ID']);
-			$userFieldLabels = $userField['EDIT_FORM_LABEL'];
+			$userFieldLabels = ($userField['EDIT_FORM_LABEL'] ?? null);
 
 			if (isset($userFieldLabels) && !empty($userFieldLabels))
 			{

@@ -51,7 +51,7 @@ class LeadSettings
 		$this->enableAutoUsingFinishedLead = new BooleanSetting('enable_auto_using_finished_lead', false);
 		$this->enableDeferredCleaning = new BooleanSetting('enable_lead_deferred_cleaning', true);
 		$this->enableRecycleBin = new BooleanSetting('enable_lead_recycle_bin', true);
-		$this->initIsFactoryEnabledSetting(\CCrmOwnerType::Lead, false);
+		$this->initIsFactoryEnabledSetting(\CCrmOwnerType::Lead);
 
 		$completionConfig = array();
 		foreach(Activity\Provider\ProviderManager::getCompletableProviderList() as $providerInfo)
@@ -249,9 +249,7 @@ class LeadSettings
 
 			self::$descriptions= array(
 				self::VIEW_LIST => GetMessage('CRM_COMMON_LIST'),
-				self::VIEW_KANBAN => Crm::isUniversalActivityScenarioEnabled()
-					? GetMessage('CRM_COMMON_PIPELINE')
-					: GetMessage('CRM_LEAD_SETTINGS_VIEW_KANBAN')
+				self::VIEW_KANBAN => GetMessage('CRM_LEAD_SETTINGS_VIEW_KANBAN')
 			);
 		}
 		return self::$descriptions;

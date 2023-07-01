@@ -3,6 +3,7 @@
 namespace Bitrix\Crm\Service\Timeline\Item\Activity\StoreDocument;
 
 use Bitrix\Crm\Service\Timeline\Item\Activity;
+use Bitrix\Crm\Service\Timeline\Layout\Common\Icon;
 use Bitrix\Crm\Service\Timeline\Layout\Footer\Button;
 use Bitrix\Main\Localization\Loc;
 
@@ -18,7 +19,7 @@ abstract class NotEnoughGoodsInStock extends Activity\StoreDocument
 
 	public function getIconCode(): ?string
 	{
-		return 'task';
+		return Icon::TASK;
 	}
 
 	public function getButtons(): ?array

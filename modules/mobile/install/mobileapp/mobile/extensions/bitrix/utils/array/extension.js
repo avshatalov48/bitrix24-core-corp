@@ -32,7 +32,29 @@
 		}, new Map()).values()];
 	}
 
-	function mergeBy(arr, value, predicate)
+	/**
+	 * Creates an array of elements, sorted in ascending order by
+	 * the results of running each element in a collection thru each iteratee.
+	 * @param collection
+	 * @param predicate
+	 * @return {array}
+	 */
+	function sortBy(collection, predicate)
+	{
+		const sortBy = (key) => (a, b) => (a[key] > b[key]) ? 1 : ((b[key] > a[key]) ? -1 : 0);
+
+		return collection.concat().sort(sortBy(predicate));
+	}
+
+	/**
+	 * Merges two arrays by predicate. If value is not found in array, it could be added to the end of array.
+	 * @param {array} arr
+	 * @param {*} value
+	 * @param predicate
+	 * @param {boolean} addIfNotFound
+	 * @return {*[]}
+	 */
+	function mergeBy(arr, value, predicate, addIfNotFound = true)
 	{
 		const changeArr = [...arr];
 		const foundIndex = changeArr.findIndex((item) => item[predicate] === value[predicate]);
@@ -40,7 +62,31 @@
 		{
 			changeArr[foundIndex] = mergeImmutable(changeArr[foundIndex], value);
 		}
-		else
+		else if (addIfNotFound)
+		{
+			changeArr.push(value);
+		}
+
+		return changeArr;
+	}
+
+	/**
+	 * Replaces value in array by predicate. If value is not found in array, it could be added to the end of array.
+	 * @param {array} arr
+	 * @param {*} value
+	 * @param predicate
+	 * @param {boolean} addIfNotFound
+	 * @return {*[]}
+	 */
+	function replaceBy(arr, value, predicate, addIfNotFound = true)
+	{
+		const changeArr = [...arr];
+		const foundIndex = changeArr.findIndex((item) => item[predicate] === value[predicate]);
+		if (foundIndex !== -1)
+		{
+			changeArr[foundIndex] = value;
+		}
+		else if (addIfNotFound)
 		{
 			changeArr.push(value);
 		}
@@ -77,6 +123,8 @@
 			unique,
 			uniqBy,
 			mergeBy,
+			sortBy,
+			replaceBy,
 		};
 
 	});

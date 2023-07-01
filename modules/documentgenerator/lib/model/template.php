@@ -13,6 +13,7 @@ use Bitrix\Main;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ORM\Event;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ORM\Query\Filter\ConditionTree;
 
 Loc::loadMessages(__FILE__);
 
@@ -65,7 +66,7 @@ class TemplateTable extends FileModel
 				'autocomplete' => true,
 			]),
 			new Main\Entity\BooleanField('ACTIVE', [
-				'values' => array('Y', 'N'),
+				'values' => array('N', 'Y'),
 				'default_value' => 'Y',
 			]),
 			new Main\Entity\StringField('NAME', [
@@ -140,7 +141,7 @@ class TemplateTable extends FileModel
 				'default_value' => self::PRODUCTS_TABLE_VARIANT_ALL,
 			]),
 			new Main\Entity\BooleanField('IS_DELETED', [
-				'values' => ['Y', 'N'],
+				'values' => ['N', 'Y'],
 				'default_value' => 'N',
 			]),
 		];
@@ -166,6 +167,30 @@ class TemplateTable extends FileModel
 	 * @throws Main\SystemException
 	 */
 	public static function getListByClassName($className, $userId = null, $value = ' ', $activeOnly = true)
+	{
+		$userId = $userId === null ? $userId : (int)$userId;
+
+		return static::getList([
+			'order' => ['SORT' => 'asc', 'ID' => 'asc'],
+			'filter' => self::prepareClassNameFilter((string)$className, $userId, $value, (bool)$activeOnly),
+			'cache' => ['ttl' => 1800],
+			'group' => ['ID'],
+		])->fetchAll();
+	}
+
+	/**
+	 * @param string $className
+	 * @param int|null $userId
+	 * @param mixed $value
+	 * @param bool $activeOnly
+	 * @return ConditionTree
+	 */
+	public static function prepareClassNameFilter(
+		string $className,
+		?int $userId = null,
+		$value = ' ',
+		bool $activeOnly = true
+	): ConditionTree
 	{
 		$filterProvider = $className;
 		if (is_a($className, Filterable::class, true))
@@ -202,12 +227,7 @@ class TemplateTable extends FileModel
 			$filter->where(Driver::getInstance()->getUserPermissions($userId)->getFilterForRelatedTemplateList());
 		}
 
-		return static::getList([
-			'order' => ['SORT' => 'asc', 'ID' => 'asc'],
-			'filter' => $filter,
-			'cache' => ['ttl' => 1800],
-			'group' => ['ID'],
-		])->fetchAll();
+		return $filter;
 	}
 
 	/**

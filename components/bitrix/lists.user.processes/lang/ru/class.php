@@ -1,4 +1,5 @@
-<?
+<?php
+
 $MESS["CC_BLL_MODULE_NOT_INSTALLED"] = "Модуль универсальных списков не установлен.";
 $MESS["CC_BLL_TITLE"] = "Мои процессы";
 $MESS["CC_BLL_DOCUMENT_NAME"] = "Документ";
@@ -7,7 +8,9 @@ $MESS["CC_BLL_WORKFLOW_PROGRESS"] = "Процесс выполнения";
 $MESS["CC_BLL_WORKFLOW_STATE"] = "Статус бизнес-процесса";
 $MESS["CC_BLL_FILTER_STATUS_ALL"] = "Все";
 $MESS["CC_BLL_FILTER_STATUS_RUNNING"] = "Активные";
+$MESS["CC_BLL_FILTER_STATUS_RUNNING_1"] = "В работе";
 $MESS["CC_BLL_FILTER_STATUS_COMPLETE"] = "Завершенные";
+$MESS["CC_BLL_FILTER_STATUS_COMPLETE_1"] = "Завершены";
 $MESS["CC_BLL_FILTER_STATUS"] = "Статус";
 $MESS["CC_BLL_MODIFIED"] = "Дата изменения";
 $MESS["CC_BLL_CREATED"] = "Дата создания";
@@ -23,3 +26,5 @@ $MESS["CC_BLL_ACCESS_DENIED"] = "Нет прав для просмотра и р
 $MESS["CC_BLL_DELETE_ERROR"] = "Ошибка удаления.";
 $MESS["BPATL_NAME"] = "Название";
 $MESS["CC_BLL_BIZPROC_MODULE_NOT_INSTALLED"] = "Модуль Бизнес-процессы не установлен.";
+$MESS["CC_BLL_FILTER_PRESET_RUNNING"] = "В работе";
+$MESS["CC_BLL_FILTER_PRESET_COMPLETED"] = "Завершены";

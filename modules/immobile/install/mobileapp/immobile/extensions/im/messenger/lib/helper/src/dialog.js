@@ -5,7 +5,7 @@
  */
 jn.define('im/messenger/lib/helper/dialog', (require, exports, module) => {
 
-	const { Type } = jn.require('type');
+	const { Type } = require('type');
 
 	/**
 	 * @class DialogHelper

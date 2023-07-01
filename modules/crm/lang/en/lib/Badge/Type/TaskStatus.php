@@ -1,0 +1,2 @@
+<?php
+$MESS["CRM_BADGE_TASK_STATUS_FIELD_NAME"] = "Task";

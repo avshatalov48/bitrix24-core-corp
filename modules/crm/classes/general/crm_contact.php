@@ -6,8 +6,8 @@ use Bitrix\Crm\Binding\ContactCompanyTable;
 use Bitrix\Crm\Binding\EntityBinding;
 use Bitrix\Crm\Category\PermissionEntityTypeHelper;
 use Bitrix\Crm\ContactAddress;
-use Bitrix\Crm\Entity\Traits\UserFieldPreparer;
 use Bitrix\Crm\Entity\Traits\EntityFieldsNormalizer;
+use Bitrix\Crm\Entity\Traits\UserFieldPreparer;
 use Bitrix\Crm\EntityAddress;
 use Bitrix\Crm\EntityAddressType;
 use Bitrix\Crm\Integration\Catalog\Contractor;
@@ -50,6 +50,7 @@ class CAllCrmContact
 	const DEFAULT_FORM_ID = 'CRM_CONTACT_SHOW_V12';
 
 	private static ?\Bitrix\Crm\Entity\Compatibility\Adapter $lastActivityAdapter = null;
+	private static ?Crm\Entity\Compatibility\Adapter $contentTypeIdAdapter = null;
 
 	/** @var Crm\Entity\Compatibility\Adapter */
 	private $compatibilityAdapter;
@@ -145,6 +146,16 @@ class CAllCrmContact
 		return self::$lastActivityAdapter;
 	}
 
+	private static function getContentTypeIdAdapter(): Crm\Entity\Compatibility\Adapter\ContentTypeId
+	{
+		if (!self::$contentTypeIdAdapter)
+		{
+			self::$contentTypeIdAdapter = new Crm\Entity\Compatibility\Adapter\ContentTypeId(\CCrmOwnerType::Contact);
+		}
+
+		return self::$contentTypeIdAdapter;
+	}
+
 	// Service -->
 	public static function GetFieldCaption($fieldName)
 	{
@@ -193,167 +204,160 @@ class CAllCrmContact
 			return self::$FIELD_INFOS;
 		}
 
-		if (static::isFactoryEnabled())
-		{
-			self::$FIELD_INFOS = static::createCompatibilityAdapter()->getFieldsInfo();
-		}
-		else
-		{
-			self::$FIELD_INFOS = array(
-				'ID' => array(
-					'TYPE' => 'integer',
-					'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
-				),
-				'HONORIFIC' => array(
-					'TYPE' => 'crm_status',
-					'CRM_STATUS_TYPE' => 'HONORIFIC'
-				),
-				'NAME' => array(
-					'TYPE' => 'string',
-					'ATTRIBUTES' => array(CCrmFieldInfoAttr::Required)
-				),
-				'SECOND_NAME' => array(
-					'TYPE' => 'string',
-					'ATTRIBUTES' => array(CCrmFieldInfoAttr::Required)
-				),
-				'LAST_NAME' => array(
-					'TYPE' => 'string',
-					'ATTRIBUTES' => array(CCrmFieldInfoAttr::Required)
-				),
-				'FULL_NAME' => array(
-					'TYPE' => 'string',
-					'ATTRIBUTES' => array(CCrmFieldInfoAttr::Hidden)
-				),
-				'PHOTO' => array(
-					'TYPE' => 'file',
-					'VALUE_TYPE' => 'image',
-				),
-				'BIRTHDATE' => array(
-					'TYPE' => 'date'
-				),
-				'BIRTHDAY_SORT' => array(
-					'TYPE' => 'integer',
-					'ATTRIBUTES' => array(CCrmFieldInfoAttr::Hidden)
-				),
-				'TYPE_ID' => array(
-					'TYPE' => 'crm_status',
-					'CRM_STATUS_TYPE' => 'CONTACT_TYPE',
-					'ATTRIBUTES' => [CCrmFieldInfoAttr::HasDefaultValue]
-				),
-				'SOURCE_ID' => array(
-					'TYPE' => 'crm_status',
-					'CRM_STATUS_TYPE' => 'SOURCE',
-					'ATTRIBUTES' => [CCrmFieldInfoAttr::HasDefaultValue]
-				),
-				'SOURCE_DESCRIPTION' => array(
-					'TYPE' => 'string'
-				),
-				'POST' => array(
-					'TYPE' => 'string'
-				),
-				'ADDRESS' => array(
-					'TYPE' => 'string'
-				),
-				'ADDRESS_2' => array(
-					'TYPE' => 'string'
-				),
-				'ADDRESS_CITY' => array(
-					'TYPE' => 'string'
-				),
-				'ADDRESS_POSTAL_CODE' => array(
-					'TYPE' => 'string'
-				),
-				'ADDRESS_REGION' => array(
-					'TYPE' => 'string'
-				),
-				'ADDRESS_PROVINCE' => array(
-					'TYPE' => 'string'
-				),
-				'ADDRESS_COUNTRY' => array(
-					'TYPE' => 'string'
-				),
-				'ADDRESS_COUNTRY_CODE' => array(
-					'TYPE' => 'string'
-				),
-				'ADDRESS_LOC_ADDR_ID' => array(
-					'TYPE' => 'integer'
-				),
-				'COMMENTS' => array(
-					'TYPE' => 'string',
-					'VALUE_TYPE' => 'html',
-				),
-				'OPENED' => array(
-					'TYPE' => 'char'
-				),
-				'EXPORT' => array(
-					'TYPE' => 'char'
-				),
-				'HAS_PHONE' => array(
-					'TYPE' => 'char',
-					'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
-				),
-				'HAS_EMAIL' => array(
-					'TYPE' => 'char',
-					'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
-				),
-				'HAS_IMOL' => array(
-					'TYPE' => 'char',
-					'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
-				),
-				'ASSIGNED_BY_ID' => array(
-					'TYPE' => 'user'
-				),
-				'CREATED_BY_ID' => array(
-					'TYPE' => 'user',
-					'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
-				),
-				'MODIFY_BY_ID' => array(
-					'TYPE' => 'user',
-					'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
-				),
-				'DATE_CREATE' => array(
-					'TYPE' => 'datetime',
-					'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
-				),
-				'DATE_MODIFY' => array(
-					'TYPE' => 'datetime',
-					'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
-				),
-				'COMPANY_ID' => array(
-					'TYPE' => 'crm_company',
-					'ATTRIBUTES' => array(CCrmFieldInfoAttr::Deprecated)
-				),
-				'COMPANY_IDS' => array(
-					'TYPE' => 'crm_company',
-					'ATTRIBUTES' => array(CCrmFieldInfoAttr::Multiple)
-				),
-				'LEAD_ID' => array(
-					'TYPE' => 'crm_lead',
-					'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly),
-					'SETTINGS' => [
-						'parentEntityTypeId' => \CCrmOwnerType::Lead,
-					],
-				),
-				'ORIGINATOR_ID' => array(
-					'TYPE' => 'string'
-				),
-				'ORIGIN_ID' => array(
-					'TYPE' => 'string'
-				),
-				'ORIGIN_VERSION' => array(
-						'TYPE' => 'string'
-				),
-				'FACE_ID' => array(
-					'TYPE' => 'integer'
-				)
-			);
+		self::$FIELD_INFOS = array(
+			'ID' => array(
+				'TYPE' => 'integer',
+				'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
+			),
+			'HONORIFIC' => array(
+				'TYPE' => 'crm_status',
+				'CRM_STATUS_TYPE' => 'HONORIFIC'
+			),
+			'NAME' => array(
+				'TYPE' => 'string',
+				'ATTRIBUTES' => array(CCrmFieldInfoAttr::Required)
+			),
+			'SECOND_NAME' => array(
+				'TYPE' => 'string',
+				'ATTRIBUTES' => array(CCrmFieldInfoAttr::Required)
+			),
+			'LAST_NAME' => array(
+				'TYPE' => 'string',
+				'ATTRIBUTES' => array(CCrmFieldInfoAttr::Required)
+			),
+			'FULL_NAME' => array(
+				'TYPE' => 'string',
+				'ATTRIBUTES' => array(CCrmFieldInfoAttr::Hidden)
+			),
+			'PHOTO' => array(
+				'TYPE' => 'file',
+				'VALUE_TYPE' => 'image',
+			),
+			'BIRTHDATE' => array(
+				'TYPE' => 'date'
+			),
+			'BIRTHDAY_SORT' => array(
+				'TYPE' => 'integer',
+				'ATTRIBUTES' => array(CCrmFieldInfoAttr::Hidden)
+			),
+			'TYPE_ID' => array(
+				'TYPE' => 'crm_status',
+				'CRM_STATUS_TYPE' => 'CONTACT_TYPE',
+				'ATTRIBUTES' => [CCrmFieldInfoAttr::HasDefaultValue]
+			),
+			'SOURCE_ID' => array(
+				'TYPE' => 'crm_status',
+				'CRM_STATUS_TYPE' => 'SOURCE',
+				'ATTRIBUTES' => [CCrmFieldInfoAttr::HasDefaultValue]
+			),
+			'SOURCE_DESCRIPTION' => array(
+				'TYPE' => 'string'
+			),
+			'POST' => array(
+				'TYPE' => 'string'
+			),
+			'ADDRESS' => array(
+				'TYPE' => 'string'
+			),
+			'ADDRESS_2' => array(
+				'TYPE' => 'string'
+			),
+			'ADDRESS_CITY' => array(
+				'TYPE' => 'string'
+			),
+			'ADDRESS_POSTAL_CODE' => array(
+				'TYPE' => 'string'
+			),
+			'ADDRESS_REGION' => array(
+				'TYPE' => 'string'
+			),
+			'ADDRESS_PROVINCE' => array(
+				'TYPE' => 'string'
+			),
+			'ADDRESS_COUNTRY' => array(
+				'TYPE' => 'string'
+			),
+			'ADDRESS_COUNTRY_CODE' => array(
+				'TYPE' => 'string'
+			),
+			'ADDRESS_LOC_ADDR_ID' => array(
+				'TYPE' => 'integer'
+			),
+			'COMMENTS' => array(
+				'TYPE' => 'string',
+				'VALUE_TYPE' => 'html',
+			),
+			'OPENED' => array(
+				'TYPE' => 'char'
+			),
+			'EXPORT' => array(
+				'TYPE' => 'char'
+			),
+			'HAS_PHONE' => array(
+				'TYPE' => 'char',
+				'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
+			),
+			'HAS_EMAIL' => array(
+				'TYPE' => 'char',
+				'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
+			),
+			'HAS_IMOL' => array(
+				'TYPE' => 'char',
+				'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
+			),
+			'ASSIGNED_BY_ID' => array(
+				'TYPE' => 'user'
+			),
+			'CREATED_BY_ID' => array(
+				'TYPE' => 'user',
+				'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
+			),
+			'MODIFY_BY_ID' => array(
+				'TYPE' => 'user',
+				'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
+			),
+			'DATE_CREATE' => array(
+				'TYPE' => 'datetime',
+				'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
+			),
+			'DATE_MODIFY' => array(
+				'TYPE' => 'datetime',
+				'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
+			),
+			'COMPANY_ID' => array(
+				'TYPE' => 'crm_company',
+				'ATTRIBUTES' => array(CCrmFieldInfoAttr::Deprecated)
+			),
+			'COMPANY_IDS' => array(
+				'TYPE' => 'crm_company',
+				'ATTRIBUTES' => array(CCrmFieldInfoAttr::Multiple)
+			),
+			'LEAD_ID' => array(
+				'TYPE' => 'crm_lead',
+				'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly),
+				'SETTINGS' => [
+					'parentEntityTypeId' => \CCrmOwnerType::Lead,
+				],
+			),
+			'ORIGINATOR_ID' => array(
+				'TYPE' => 'string'
+			),
+			'ORIGIN_ID' => array(
+				'TYPE' => 'string'
+			),
+			'ORIGIN_VERSION' => array(
+				'TYPE' => 'string'
+			),
+			'FACE_ID' => array(
+				'TYPE' => 'integer'
+			)
+		);
 
-			// add utm fields
-			self::$FIELD_INFOS = self::$FIELD_INFOS + UtmTable::getUtmFieldsInfo();
-			self::$FIELD_INFOS += Crm\Service\Container::getInstance()->getParentFieldManager()->getParentFieldsInfo(\CCrmOwnerType::Contact);
+		// add utm fields
+		self::$FIELD_INFOS = self::$FIELD_INFOS + UtmTable::getUtmFieldsInfo();
+		self::$FIELD_INFOS += Crm\Service\Container::getInstance()->getParentFieldManager()->getParentFieldsInfo(\CCrmOwnerType::Contact);
 
-			self::$FIELD_INFOS += self::getLastActivityAdapter()->getFieldsInfo();
-		}
+		self::$FIELD_INFOS += self::getLastActivityAdapter()->getFieldsInfo();
 
 		return self::$FIELD_INFOS;
 	}
@@ -493,6 +497,8 @@ class CAllCrmContact
 				$result['C_ACTIVITY_RESP_NAME'] = ['FIELD' => 'ACUSR.NAME', 'TYPE' => 'string', 'FROM' => $commonActivityJoin];
 				$result['C_ACTIVITY_RESP_LAST_NAME'] = ['FIELD' => 'ACUSR.LAST_NAME', 'TYPE' => 'string', 'FROM' => $commonActivityJoin];
 				$result['C_ACTIVITY_RESP_SECOND_NAME'] = ['FIELD' => 'ACUSR.SECOND_NAME', 'TYPE' => 'string', 'FROM' => $commonActivityJoin];
+				$result['C_ACTIVITY_TYPE_ID'] = ['FIELD' => 'AC.TYPE_ID', 'TYPE' => 'int', 'FROM' => $commonActivityJoin];
+				$result['C_ACTIVITY_PROVIDER_ID'] = ['FIELD' => 'AC.PROVIDER_ID', 'TYPE' => 'string', 'FROM' => $commonActivityJoin];
 
 				$userID = CCrmPerms::GetCurrentUserID();
 				if($userID > 0)
@@ -502,6 +508,8 @@ class CAllCrmContact
 					$result['ACTIVITY_ID'] = ['FIELD' => 'UA.ACTIVITY_ID', 'TYPE' => 'int', 'FROM' => $activityJoin];
 					$result['ACTIVITY_TIME'] = ['FIELD' => 'UA.ACTIVITY_TIME', 'TYPE' => 'datetime', 'FROM' => $activityJoin];
 					$result['ACTIVITY_SUBJECT'] = ['FIELD' => 'A.SUBJECT', 'TYPE' => 'string', 'FROM' => $activityJoin];
+					$result['ACTIVITY_TYPE_ID'] = ['FIELD' => 'A.TYPE_ID', 'TYPE' => 'int', 'FROM' => $activityJoin];
+					$result['ACTIVITY_PROVIDER_ID'] = ['FIELD' => 'A.PROVIDER_ID', 'TYPE' => 'string', 'FROM' => $activityJoin];
 				}
 			}
 		}
@@ -1678,6 +1686,8 @@ class CAllCrmContact
 			)->build($ID, ['checkExist' => true]);
 			//endregion
 
+			self::getContentTypeIdAdapter()->performAdd($arFields, $options);
+
 			if(isset($options['REGISTER_SONET_EVENT']) && $options['REGISTER_SONET_EVENT'] === true)
 			{
 				$multiFields = isset($arFields['FM']) ? $arFields['FM'] : null;
@@ -2416,6 +2426,11 @@ class CAllCrmContact
 				);
 			}
 
+			self::getContentTypeIdAdapter()
+				->setPreviousFields((int)$ID, $arRow)
+				->performUpdate((int)$ID, $arFields, $arOptions)
+			;
+
 			if(defined("BX_COMP_MANAGED_CACHE"))
 			{
 				static $arNameFields = array("NAME", "LAST_NAME", "SECOND_NAME");
@@ -2853,6 +2868,8 @@ class CAllCrmContact
 				EntityAddress::unregister(CCrmOwnerType::Contact, $ID, EntityAddressType::Primary);
 				\Bitrix\Crm\Timeline\TimelineEntry::deleteByOwner(CCrmOwnerType::Contact, $ID);
 
+				self::getContentTypeIdAdapter()->performDelete((int)$ID, $arOptions);
+
 				$requisite = new \Bitrix\Crm\EntityRequisite();
 				$requisite->deleteByEntity(CCrmOwnerType::Contact, $ID);
 				unset($requisite);
@@ -3014,7 +3031,9 @@ class CAllCrmContact
 					$ID,
 					$fieldsToCheck,
 					Crm\Attribute\FieldOrigin::UNDEFINED,
-					is_array($options['FIELD_CHECK_OPTIONS']) ? $options['FIELD_CHECK_OPTIONS'] : array()
+					isset($options['FIELD_CHECK_OPTIONS']) && is_array($options['FIELD_CHECK_OPTIONS'])
+						? $options['FIELD_CHECK_OPTIONS']
+						: []
 				);
 
 				$requiredSystemFields = $requiredFields[Crm\Attribute\FieldOrigin::SYSTEM] ?? [];
@@ -3586,7 +3605,7 @@ class CAllCrmContact
 		return CSqlUtil::GetCount(CCrmContact::TABLE_NAME, self::TABLE_ALIAS, $fields, $arFilter);
 	}
 
-	public static function PrepareFormattedName(array $arFields, $nameTemplate = '')
+	public static function PrepareFormattedName(array $arFields, $nameTemplate = '', $enabledEmptyNameStub = true)
 	{
 		if(!is_string($nameTemplate) || $nameTemplate === '')
 		{
@@ -3615,7 +3634,8 @@ class CAllCrmContact
 				'LAST_NAME' => isset($arFields['LAST_NAME']) ? $arFields['LAST_NAME'] : ''
 			),
 			false,
-			false
+			false,
+			$enabledEmptyNameStub
 		);
 	}
 

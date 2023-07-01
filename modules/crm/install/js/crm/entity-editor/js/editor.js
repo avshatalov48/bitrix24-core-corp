@@ -75,7 +75,7 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 
 		//region Duplicate manager
 		var duplicateControlConfig = BX.prop.getObject(this._settings, "duplicateControl", {});
-		if(this._ajaxForm)
+		if (!duplicateControlConfig.hasOwnProperty("form") && this._ajaxForm)
 		{
 			duplicateControlConfig["form"] = this._ajaxForm;
 		}

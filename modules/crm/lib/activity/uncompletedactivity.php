@@ -4,6 +4,7 @@ namespace Bitrix\Crm\Activity;
 
 use Bitrix\Crm\Activity\Entity\EntityUncompletedActivityTable;
 use Bitrix\Crm\Activity\Entity\IncomingChannelTable;
+use Bitrix\Crm\Activity\LightCounter\ActCounterLightTimeRepo;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Service\Timeline\Monitor;
 use Bitrix\Main\DB\SqlQueryException;
@@ -16,9 +17,15 @@ class UncompletedActivity
 	private ItemIdentifier $itemIdentifier;
 	private int $responsibleId;
 	private ?UncompletedActivityChange $activityChange = null;
+	private ActCounterLightTimeRepo $lightTimeRepo;
 
 	public static function synchronizeForUncompletedActivityChange(UncompletedActivityChange $change): void
 	{
+		if ($change->isChangedAlreadyCompletedActivity())
+		{
+			return;
+		}
+
 		$bindings = [];
 		$removedBindings = [];
 		foreach ($change->getNewBindings() as $binding)
@@ -67,14 +74,21 @@ class UncompletedActivity
 				null,
 				$removedBindings,
 				$removedBindings,
+				$change->getOldLightTime(),
+				null
 			);
 			foreach ($removedBindings as $binding)
 			{
 				$affectedUserIds = [0];
+				if ($change->getOldResponsibleId())
+				{
+					$affectedUserIds[] = $change->getOldResponsibleId();
+				}
 				if ($change->getNewResponsibleId())
 				{
 					$affectedUserIds[] = $change->getNewResponsibleId();
 				}
+				$affectedUserIds = array_unique($affectedUserIds);
 				foreach ($affectedUserIds as $responsibleId)
 				{
 					$instance = new self($binding, (int)$responsibleId);
@@ -142,6 +156,8 @@ class UncompletedActivity
 
 	public function __construct(ItemIdentifier $itemIdentifier, int $responsibleId)
 	{
+		$this->lightTimeRepo = new ActCounterLightTimeRepo();
+
 		$this->itemIdentifier = $itemIdentifier;
 		$this->responsibleId = $responsibleId;
 	}
@@ -191,11 +207,14 @@ class UncompletedActivity
 				$deadlineDateTime = DateTime::createFromUserTime($deadline);
 			}
 
+			$minLightTime = $this->lightTimeRepo->minLightTimeByItemIdentifier($this->itemIdentifier);
+
 			$this->upsert(
 				$activityId,
 				$deadlineDateTime,
 				$isIncomingChannel,
-				$hasAnyIncomingChannel
+				$hasAnyIncomingChannel,
+				$minLightTime
 			);
 			$isChanged = true;
 		}
@@ -282,25 +301,58 @@ class UncompletedActivity
 		return $filter;
 	}
 
-	protected function upsert(int $activityId, DateTime $minDeadline, bool $isIncomingChannel, bool $hasAnyIncomingChannel): void
+	protected function upsert(
+		int $activityId,
+		DateTime $minDeadline,
+		bool $isIncomingChannel,
+		bool $hasAnyIncomingChannel,
+		DateTime $minLightTime
+	): void
 	{
 		$fields = [
 			'ACTIVITY_ID' => $activityId,
 			'MIN_DEADLINE' => $minDeadline,
 			'IS_INCOMING_CHANNEL' => $isIncomingChannel ? 'Y' : 'N',
 			'HAS_ANY_INCOMING_CHANEL' => $hasAnyIncomingChannel ? 'Y' : 'N',
+			'MIN_LIGHT_COUNTER_AT' => $minLightTime
 		];
-		$existedRecordId = $this->getExistedRecordId();
-		if ($existedRecordId)
+		$existedRecord = $this->loadExistedRecord();
+
+		if ($existedRecord)
 		{
-			EntityUncompletedActivityTable::update($existedRecordId, $fields);
+			try
+			{
+				EntityUncompletedActivityTable::update((int)$existedRecord['ID'], $fields);
+			}
+			catch (SqlQueryException $e)
+			{
+				if (mb_strpos($e->getMessage(), 'Duplicate entry') !== false)
+				{
+					$existedMoreActualRecord = EntityUncompletedActivityTable::query()
+						->where('ENTITY_TYPE_ID', $this->itemIdentifier->getEntityTypeId())
+						->where('ENTITY_ID', $this->itemIdentifier->getEntityId())
+						->where('RESPONSIBLE_ID', $this->responsibleId)
+						->where('MIN_DEADLINE', $fields['MIN_DEADLINE'])
+						->setLimit(1)
+						->setSelect(['ID'])
+						->fetch()
+					;
+					if (!$existedMoreActualRecord || (int)$existedMoreActualRecord['ID'] === (int)$existedRecord['ID'])
+					{
+						throw $e;
+					}
+					EntityUncompletedActivityTable::update((int)$existedMoreActualRecord['ID'], $fields);
+					EntityUncompletedActivityTable::delete((int)$existedRecord['ID']);
+				}
+			}
 		}
 		else
 		{
 			$addFields = $fields;
 			$addFields['ENTITY_TYPE_ID'] = $this->itemIdentifier->getEntityTypeId();
 			$addFields['ENTITY_ID'] = $this->itemIdentifier->getEntityId();
-			$addFields['RESPONSIBLE_ID'] =$this->responsibleId;
+			$addFields['RESPONSIBLE_ID'] = $this->responsibleId;
+			$addFields['MIN_LIGHT_COUNTER_AT'] = $minLightTime;
 
 			try
 			{
@@ -352,7 +404,7 @@ class UncompletedActivity
 			->where('ENTITY_TYPE_ID', $this->itemIdentifier->getEntityTypeId())
 			->where('ENTITY_ID', $this->itemIdentifier->getEntityId())
 			->where('RESPONSIBLE_ID', $this->responsibleId)
-			->setSelect(['ID', 'MIN_DEADLINE', 'IS_INCOMING_CHANNEL', 'HAS_ANY_INCOMING_CHANEL'])
+			->setSelect(['ID', 'MIN_DEADLINE', 'IS_INCOMING_CHANNEL', 'HAS_ANY_INCOMING_CHANEL', 'MIN_LIGHT_COUNTER_AT'])
 			->setLimit(1)
 			->fetch()
 		;
@@ -362,7 +414,7 @@ class UncompletedActivity
 
 	private function trySynchronizeByActivityChange(): bool
 	{
-		if (!$this->activityChange)
+		if ($this->activityChange === null)
 		{
 			return false;
 		}
@@ -395,6 +447,7 @@ class UncompletedActivity
 
 			return true;
 		}
+
 		$existedDeadline = $existedRecord['MIN_DEADLINE'] && \CCrmDateTimeHelper::IsMaxDatabaseDate($existedRecord['MIN_DEADLINE']->toString())
 			? null
 			: $existedRecord['MIN_DEADLINE']
@@ -475,6 +528,20 @@ class UncompletedActivity
 			}
 			else // activity fields was updated
 			{
+				/** @var DateTime $existedLightTime */
+				$existedLightTime = $existedRecord['MIN_LIGHT_COUNTER_AT'] ?? null;
+				$activityLightTime = $this->activityChange->getNewLightTime();
+
+				if (
+					!$existedLightTime
+					|| !$activityLightTime
+					|| $existedLightTime->getTimestamp() > $activityLightTime->getTimestamp()
+				)
+				{
+					$this->updateByActivityChange();
+					return true;
+				}
+
 				$oldDeadline = $this->activityChange->getOldDeadline();
 				if ($existedDeadline && $newDeadline && $oldDeadline)
 				{
@@ -508,11 +575,15 @@ class UncompletedActivity
 		{
 			$hasAnyIncomingChannel = !!$this->getUncompletedIncomingActivityId();
 		}
+
+		$minLightTime = $this->lightTimeRepo->minLightTimeByItemIdentifier($this->itemIdentifier);
+
 		$this->upsert(
 			$this->activityChange->getId(),
 			$deadline,
 			$isIncomingChannel,
-			$hasAnyIncomingChannel
+			$hasAnyIncomingChannel,
+			$minLightTime
 		);
 	}
 

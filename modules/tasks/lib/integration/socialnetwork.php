@@ -121,7 +121,7 @@ abstract class SocialNetwork extends \Bitrix\Tasks\Integration
 
 	private static function reformatLastItems(&$result, $from, $to, $items)
 	{
-		if(is_array($items[$from]))
+		if(isset($items[$from]) && is_array($items[$from]))
 		{
 			$items[$from] = array_unique($items[$from]);
 			foreach($items[$from] as $userId)

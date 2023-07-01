@@ -132,9 +132,22 @@ trait HasCheckDetails
 		{
 			return null;
 		}
+
+		$shortTitle = Loc::getMessage(
+			'CRM_TIMELINE_ECOMMERCE_CHECK_ENTITY_TITLE',
+			[
+				'#NUMBER#' => $this->getAssociatedEntityModel()->get('ID'),
+				'#DATE#' => ConvertTimeStamp($this->getAssociatedEntityModel()->get('DATE_CREATE')->getTimestamp()),
+			]
+		);
+
 		$action = new Action\JsEvent('OrderCheck:OpenCheck');
 
-		return $action->addActionParamString('checkUrl', $url);
+		return $action
+			->addActionParamString('checkUrl', $url)
+			->addActionParamString('shortTitle', $shortTitle)
+			->addActionParamString('entityName', Loc::getMessage('CRM_TIMELINE_ECOMMERCE_CHECK_ENTITY_NAME'))
+		;
 	}
 
 	public function getCheckInFiscalDataOperatorAction(): ?Action

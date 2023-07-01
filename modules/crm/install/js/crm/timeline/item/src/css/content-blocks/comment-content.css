@@ -1,0 +1,60 @@
+.crm-timeline__editable-text_wrapper .feed-com-img-wrap img {
+	max-width: 100%;
+	height: auto !important;
+}
+
+.crm-timeline__comment_files_wrapper {
+	display: flex;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	overflow: hidden;
+	flex-direction: row;
+	align-items: flex-start;
+	max-width: 100%;
+	min-height: 22px;
+	margin-top: 10px;
+}
+
+.crm-timeline__comment_files_wrapper:empty {
+	display: none;
+}
+
+.crm-timeline__comment_files_wrapper .feed-com-files-title {
+	display: flex;
+	flex-direction: row;
+	align-items: flex-start;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font-size: var(--ui-font-size-sm, 13px);
+	color: var(--ui-color-palette-gray-70, #828b95);
+	line-height: var(--ui-font-line-height-lg, 1.5);
+	padding-right: 40px;
+}
+
+.crm-timeline__comment_files_wrapper .feed-com-files-cont {
+	padding-left: 1px;
+	overflow: hidden;
+	zoom: 1;
+}
+
+.crm-timeline__comment_files_wrapper .feed-com-files-cont .feed-com-file-name-wrap {
+	line-height: var(--ui-font-line-height-lg, 1.5);
+	vertical-align: middle;
+}
+
+.crm-timeline__comment_files_wrapper .feed-com-files-cont .feed-com-file-name {
+	font-size: var(--ui-font-size-md, 14px);
+	font-weight: var(--ui-font-weight-medium, 500);
+	text-decoration: none;
+}
+
+.crm-timeline__comment_files_wrapper .feed-com-files-cont .feed-com-file-size,
+.crm-timeline__comment_files_wrapper .feed-com-files-cont .feed-con-file-changes-link
+{
+	margin-left: 15px;
+	vertical-align: middle;
+}
+
+.crm-timeline__editable-text_content.--is-editor-loaded {
+	margin-left: -17px;
+	margin-right: -40px;
+}

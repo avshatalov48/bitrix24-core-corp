@@ -4,6 +4,7 @@ namespace Bitrix\Crm\Reservation\Compatibility;
 
 use Bitrix\Crm\Service\Sale\Reservation\ReservationService;
 use Bitrix\Main\Localization\Loc;
+use CCrmOwnerType;
 use CCrmProductRow;
 
 Loc::loadLanguageFile(__FILE__);
@@ -13,7 +14,7 @@ Loc::loadLanguageFile(__FILE__);
  *
  * @internal this class is only needed for compatibility, so you need to use `Bitrix\Crm\Service\Sales\Reservation\ReservationService` for reserves.
  */
-class ProductRowReserves
+final class ProductRowReserves
 {
 	/**
 	 * Reservations the product rows.
@@ -38,12 +39,13 @@ class ProductRowReserves
 		}
 	 * ```
 	 *
-	 * @param int $dealId
+	 * @param string $entityType
+	 * @param int $entityId
 	 * @param array $productRows
 	 *
 	 * @return void
 	 */
-	public static function processRows(int $dealId, array $productRows): void
+	public static function processRows(string $entityType, int $entityId, array $productRows): void
 	{
 		if (empty($productRows))
 		{
@@ -62,6 +64,10 @@ class ProductRowReserves
 			}, $originalRows);
 		}
 
-		ReservationService::getInstance()->reservationProductsByDealProductRows($dealId, $productRows);
+		ReservationService::getInstance()->reservationProductsByEntityProductRows(
+			CCrmOwnerType::ResolveID($entityType),
+			$entityId,
+			$productRows
+		);
 	}
 }

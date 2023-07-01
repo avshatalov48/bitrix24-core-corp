@@ -151,7 +151,7 @@ class IntranetUserLoginHistoryComponent extends CBitrixComponent implements Cont
 		$requestFilter = $this->getRequestFilter();
 		$filter = [];
 
-		if ($requestFilter['DATE_from'])
+		if (!empty($requestFilter['DATE_from']))
 		{
 			$filter['><LOGIN_DATE'] = [$requestFilter['DATE_from'], $requestFilter['DATE_to']];
 		}
@@ -167,7 +167,7 @@ class IntranetUserLoginHistoryComponent extends CBitrixComponent implements Cont
 		$isBrowserFilter = false;
 		$isIpFilter = false;
 
-		if ($requestFilter['BROWSER'])
+		if (!empty($requestFilter['BROWSER']))
 		{
 			$filter['DEVICE.BROWSER'] = '%' . $requestFilter['BROWSER'] . '%';
 			$isBrowserFilter = true;
@@ -177,7 +177,7 @@ class IntranetUserLoginHistoryComponent extends CBitrixComponent implements Cont
 			$filter['DEVICE.BROWSER'] = '%' . $searchString . '%';
 		}
 
-		if ($requestFilter['IP'])
+		if (!empty($requestFilter['IP']))
 		{
 			$filter['IP'] = '%' . $requestFilter['IP'] . '%';
 			$isIpFilter = true;
@@ -187,7 +187,7 @@ class IntranetUserLoginHistoryComponent extends CBitrixComponent implements Cont
 			$filter['IP'] = '%' . $searchString . '%';
 		}
 
-		if ($requestFilter['DEVICE_PLATFORM'])
+		if (!empty($requestFilter['DEVICE_PLATFORM']))
 		{
 			$filter['DEVICE.PLATFORM'] = '%' . $requestFilter['DEVICE_PLATFORM'] . '%';
 			$isIpFilter = true;
@@ -210,7 +210,7 @@ class IntranetUserLoginHistoryComponent extends CBitrixComponent implements Cont
 		$requestFilter = $this->getRequestFilter();
 		$listDeviceID = [];
 
-		if ($requestFilter['DEVICE_TYPE'])
+		if (!empty($requestFilter['DEVICE_TYPE']))
 		{
 			$listDeviceID = $requestFilter['DEVICE_TYPE'];
 		}
@@ -495,7 +495,7 @@ class IntranetUserLoginHistoryComponent extends CBitrixComponent implements Cont
 			->setSelect(['CNT' => Query::expr()->count('DEVICE.USER_ID')])
 			->setGroup('DEVICE.USER_ID');
 
-		return (int)$query->exec()->fetch()['CNT'];
+		return (int)($query->exec()->fetch()['CNT'] ?? 0);
 	}
 
 	/**

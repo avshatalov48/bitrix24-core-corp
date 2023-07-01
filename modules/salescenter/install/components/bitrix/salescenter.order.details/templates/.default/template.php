@@ -86,7 +86,7 @@ else
 									<div class="order-item-price-old"><?= $basketItem['FORMATED_BASE_PRICE'] ?></div>
 								<?php endif; ?>
 								<div class="order-item-quantity"><?= (float)$basketItem['QUANTITY'] ?>
-									&nbsp;<?= htmlspecialcharsbx($basketItem['MEASURE_NAME']) ?>
+									<?= htmlspecialcharsbx($basketItem['MEASURE_NAME']) ?>
 								</div>
 
 							</div>
@@ -175,7 +175,7 @@ else
 									name: "<?=$extension;?>"
 								});
 
-							iconExtension.renderTo(document.body.querySelector(".order-document-file-icon"));
+								iconExtension.renderTo(document.body.querySelector(".order-document-file-icon"));
 							});
 						</script>
 						<div class="order-document-description">
@@ -185,19 +185,29 @@ else
 						<div class="order-document-actions">
 							<?php if ($extension === 'pdf'):?>
 								<div class="order-document-actions-action">
-								<a target="_blank" href="<?=$arResult['DOCUMENT']['showUrl'];?>"><?=Loc::getMessage('SPOD_DOCUMENT_ACTION_OPEN');?></a>
+									<a
+										target="_blank"
+										href="<?=$arResult['DOCUMENT']['showUrl']?>"
+									>
+										<?=Loc::getMessage('SPOD_DOCUMENT_ACTION_OPEN')?>
+									</a>
 								</div>
 							<?php endif;?>
 							<div class="order-document-actions-action">
-							<a target="_blank" href="<?=$arResult['DOCUMENT'][$extension]['url'];?>"><?=Loc::getMessage('SPOD_DOCUMENT_ACTION_DOWNLOAD');?></a>
+								<a
+									target="_blank"
+									href="<?=$arResult['DOCUMENT'][$extension]['url']?>"
+								>
+									<?=Loc::getMessage('SPOD_DOCUMENT_ACTION_DOWNLOAD')?>
+								</a>
 							</div>
 							<div
 								class="order-document-actions-action"
 								data-role="document-share-action"
-								data-title="<?=CUtil::JSEscape($arResult['DOCUMENT'][$extension]['title']);?>"
-								data-url="<?=CUtil::JSEscape($arResult['DOCUMENT'][$extension]['url']);?>"
+								data-title="<?=CUtil::JSEscape($arResult['DOCUMENT'][$extension]['title'])?>"
+								data-url="<?=CUtil::JSEscape($arResult['DOCUMENT'][$extension]['url'])?>"
 							>
-								<a href="javascript:void(0);"><?=Loc::getMessage('SPOD_DOCUMENT_ACTION_SHARE');?></a>
+								<a href="javascript:void(0);"><?=Loc::getMessage('SPOD_DOCUMENT_ACTION_SHARE')?></a>
 							</div>
 						</div>
 					</div>

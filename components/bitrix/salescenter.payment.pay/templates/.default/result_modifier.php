@@ -17,7 +17,7 @@ $arResult['JS_DATA'] = [
 	'app' => [
 		'paySystems' => $arResult['PAYSYSTEMS_LIST'],
 		'template' => 'paySystemList',
-		'title' => Loc::getMessage('SPP_SELECT_PAYMENT_TITLE_NEW_NEW'),
+		'title' => Loc::getMessage('SPP_SELECT_PAYMENT_TITLE_NEW_NEW_MSGVER_1'),
 	],
 	'consent' => [
 		'id' => $arResult['USER_CONSENT_ID'],

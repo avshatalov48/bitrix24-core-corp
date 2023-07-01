@@ -661,9 +661,7 @@ a:hover {color: #2067b0;text-decoration: none;}
 .bx-messenger-message-edited .bx-messenger-file-image:first-child {
 	vertical-align: top;
 }
-.bx-messenger-file-image {
-	margin: -8px -13px 6px -13px;
-}
+
 .bx-messenger-content-item-content-without-padding .bx-messenger-file-image {
 	margin: -8px -13px -30px -13px;;
 }

@@ -5,7 +5,7 @@
 	const { describe, it, test, expect } = require('testing');
 
 	const { md5 } = require('utils/hash');
-	const { clone } = require('utils/object');
+	const { clone, get, has, isEqual } = require('utils/object');
 	const { isRegExp } = require('utils/type');
 	const { replaceAll } = require('utils/string');
 
@@ -299,6 +299,54 @@
 			expect(CommonUtils.objectDeepGet(origin, 'baz.meh', 'def')).toBe(0);
 		});
 
+		test('deep get from object with inheritance', () => {
+			const base = {
+				baseProp: 'baseValue',
+				falseProp: false,
+				falsyProp: null,
+				nestedProp: { foo: 'bar' }
+			};
+			const child = { childProp: 'childValue' };
+			Object.setPrototypeOf(child, base);
+
+			expect(get(child, 'childProp', 'def')).toBe('childValue');
+			expect(get(child, 'baseProp', 'def')).toBe('baseValue');
+			expect(get(child, 'falseProp', 'def')).toBeFalse();
+			expect(get(child, 'falsyProp', 'def')).toBeNull();
+			expect(get(child, 'nestedProp.foo', 'def')).toBe('bar');
+			expect(get(child, 'undefinedProp', 'def')).toBe('def');
+		});
+
+		test('object has property', () => {
+			const base = {
+				baseProp: 'baseValue',
+				falseProp: false,
+				falsyProp: null,
+				nestedProp: { foo: 'bar' }
+			};
+			const child = {
+				foo: 'bar',
+				baz: {
+					eggs: 'qux',
+					meh: 0,
+				},
+				qux: [1, 2, 3]
+			};
+			Object.setPrototypeOf(child, base);
+
+			expect(has(child, 'foo')).toBeTrue();
+			expect(has(child, 'baz.eggs')).toBeTrue();
+			expect(has(child, 'baz.meh')).toBeTrue();
+			expect(has(child, 'baz.qux')).toBeFalse();
+
+			expect(has(child, 'baseProp')).toBeTrue();
+			expect(has(child, 'nestedProp.foo')).toBeTrue();
+			expect(has(child, 'falseProp')).toBeTrue();
+			expect(has(child, 'falsyProp')).toBeTrue();
+			expect(has(child, 'undefinedProp')).toBeFalse();
+
+		});
+
 		test('objects equality', () => {
 
 			let none1, none2;
@@ -333,6 +381,13 @@
 				expect(ObjectUtils.isEqual(val, other)).toBe(result);
 			});
 
+		});
+
+		test('dates equality', () => {
+			expect(isEqual(new Date('2023-04-05'), new Date('2023-04-05'))).toBeTrue();
+			expect(isEqual(new Date('2023-04-05'), new Date('2023-04-06'))).toBeFalse();
+			expect(isEqual(new Date('wrong date'), new Date('other wrong date'))).toBeFalse();
+			expect(isEqual(new Date(), 'not date')).toBeFalse();
 		});
 
 		test('object emptiness', () => {

@@ -84,7 +84,7 @@ class Category extends Base
 		];
 	}
 
-	public function listAction(int $entityTypeId): ?Page
+	public function listAction(int $entityTypeId, array $filter = []): ?Page
 	{
 		$factory = $this->getFactory($entityTypeId);
 		if (!$factory)
@@ -95,11 +95,27 @@ class Category extends Base
 			$factory->getCategories()
 		);
 
+		$filteredCategories = [];
+		if (isset($filter['code']))
+		{
+			foreach ($categories as $category)
+			{
+				if ($category->getCode() === $filter['code'])
+				{
+					$filteredCategories[] = $category;
+				}
+			}
+		}
+		else
+		{
+			$filteredCategories = $categories;
+		}
+
 		return new Page(
 			'categories',
-			$categories,
-			static function () use ($categories): int {
-				return count($categories);
+			$filteredCategories,
+			static function () use ($filteredCategories): int {
+				return count($filteredCategories);
 			}
 		);
 	}

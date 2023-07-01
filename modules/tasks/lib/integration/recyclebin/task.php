@@ -15,7 +15,10 @@ use Bitrix\Recyclebin\Internals\Models\RecyclebinTable;
 use Bitrix\Tasks\CheckList\Task\TaskCheckListFacade;
 use Bitrix\Tasks\Control\Tag;
 use Bitrix\Tasks\Integration;
+use Bitrix\Tasks\Integration\CRM\TimeLineManager;
 use Bitrix\Tasks\Internals\Counter;
+use Bitrix\Tasks\Internals\Registry\TaskRegistry;
+use Bitrix\Tasks\Internals\Task\ScenarioTable;
 use Bitrix\Tasks\Internals\Task\TaskTagTable;
 use Bitrix\Tasks\Internals\TaskTable;
 use Bitrix\Tasks\Internals\Task\SearchIndexTable;
@@ -109,6 +112,18 @@ if (Loader::includeModule('recyclebin'))
 				$data['TAGS'] = $tagIds;
 			}
 
+			// Scenario
+			$scenarios = ScenarioTable::getList([
+				'select' => ['SCENARIO'],
+				'filter' => [
+					'=TASK_ID' => $taskId,
+				],
+			])->fetchAll();
+			foreach ($scenarios as $row)
+			{
+				$data['SCENARIO'][] = $row['SCENARIO'];
+			}
+
 			$res = TaskStageTable::getList(['filter' => ['TASK_ID' => $taskId], 'select' => ['STAGE_ID']]);
 			while ($row = $res->fetch())
 			{
@@ -151,6 +166,21 @@ if (Loader::includeModule('recyclebin'))
 			{
 				$data['TEMPLATES'][] = $row['ID'];
 			}
+
+			$tree = Dependence::getSubTree($taskId);
+			$subtasks = $tree->find(['__PARENT_ID' => $taskId])->getData();
+
+			$subtaskIds = [];
+			foreach ($subtasks as $relations)
+			{
+				$id = (int)$relations['__ID'];
+				if ($id > 0)
+				{
+					$subtaskIds[] = $id;
+				}
+			}
+
+			$data['SUBTASK_IDS'] = array_unique($subtaskIds);
 
 			if (\CModule::IncludeModule('crm'))
 			{
@@ -226,7 +256,6 @@ if (Loader::includeModule('recyclebin'))
 			{
 				if (!$taskData)
 				{
-					AddMessage2Log('Tasks RecycleBin: unable to load task data. TaskId: '.$taskId, 'tasks');
 					return false;
 				}
 
@@ -243,7 +272,6 @@ if (Loader::includeModule('recyclebin'))
 
 					if (!$restore->isSuccess())
 					{
-						AddMessage2Log('Tasks RecycleBin: unable to restore task data. TaskId: '.$taskId.'. Data: '.var_export($taskData, true), 'tasks');
 						return false;
 					}
 					unset($taskData[$key]);
@@ -252,7 +280,6 @@ if (Loader::includeModule('recyclebin'))
 
 				if (!$taskRestored)
 				{
-					AddMessage2Log('Tasks RecycleBin: task data not found. TaskId: '.$taskId.'. Data: '.var_export($taskData, true), 'tasks');
 					return false;
 				}
 
@@ -288,6 +315,8 @@ if (Loader::includeModule('recyclebin'))
 
 				Integration\SocialNetwork\Log::showLogByTaskId($taskId);
 				ItemTable::activateBySourceId($taskId);
+				(new TimeLineManager($taskId, User::getId()))->onTaskCreated(true)->save();
+
 			}
 			catch (\Exception $e)
 			{
@@ -419,6 +448,41 @@ if (Loader::includeModule('recyclebin'))
 						$tagService = new Tag(CurrentUser::get()->getId());
 						$tagService->linkTags($taskId, $data);
 						break;
+
+					case 'SCENARIO':
+						ScenarioTable::insertIgnore($taskId, $data);
+						break;
+
+					case 'SUBTASK_IDS':
+						$subtaskIds = array_map('intval', $data);
+
+						if (empty($subtaskIds))
+						{
+							break;
+						}
+
+						$registry = TaskRegistry::getInstance();
+						$registry->load($subtaskIds);
+
+						foreach ($subtaskIds as $subtaskId)
+						{
+							$task = $registry->get($subtaskId);
+							if (is_null($task))
+							{
+								continue;
+							}
+
+							$result = Dependence::attach($subtaskId, $taskId);
+							if (!$result->isSuccess())
+							{
+								continue;
+							}
+
+							TaskTable::update($subtaskId, [
+								'PARENT_ID' => $taskId,
+							]);
+						}
+						break;
 				}
 			}
 			catch (\Exception $e)
@@ -442,6 +506,19 @@ if (Loader::includeModule('recyclebin'))
 			global $USER_FIELD_MANAGER;
 
 			$result = new Result;
+
+			$taskData = null;
+			foreach ($entity->getData() as $data)
+			{
+				if (
+					is_array($data)
+					&& array_key_exists('ACTION', $data)
+					&& $data['ACTION'] === 'TASK'
+				)
+				{
+					$taskData = unserialize($data['DATA'], ['allowed_classes' => ['Bitrix\Tasks\Util\Type\DateTime', 'Bitrix\Main\Type\DateTime', 'DateTime']]);
+				}
+			}
 
 			try
 			{
@@ -477,12 +554,12 @@ if (Loader::includeModule('recyclebin'))
 					}
 				}
 
-				$task = TaskTable::getList([
-					'select' => ['FORUM_TOPIC_ID'],
-					'filter' => ['ID' => $taskId]
-				])->fetch();
+				if ($taskData)
+				{
+					Integration\Forum\Task\Topic::delete($taskData["FORUM_TOPIC_ID"]);
+				}
 
-				Integration\Forum\Task\Topic::delete($task["FORUM_TOPIC_ID"]);
+				Integration\IM\Internals\LinkTask::delete($taskId);
 
 				$USER_FIELD_MANAGER->Delete('TASKS_TASK', $taskId);
 

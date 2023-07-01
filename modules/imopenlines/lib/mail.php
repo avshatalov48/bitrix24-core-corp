@@ -184,17 +184,6 @@ class Mail
 		$parsedUserCode = Session\Common::parseUserCode($session['USER_CODE']);
 		$chatId = $parsedUserCode['EXTERNAL_CHAT_ID'];
 
-		$relation = \Bitrix\Im\Model\RelationTable::getList(Array(
-			'filter' => Array(
-				'=CHAT_ID' => $chatId,
-				'=USER_ID' => $session['USER_ID']
-			)
-		))->fetch();
-		if (!$relation)
-		{
-			return false;
-		}
-
 		$CIMChat = new \CIMChat($session['USER_ID']);
 		$result = $CIMChat->GetLastMessageLimit($chatId, $session['START_ID'], $session['END_ID'], false, false);
 		if (!$result)
@@ -212,11 +201,11 @@ class Mail
 			{
 				$lastMessageId = $messageId;
 			}
-			if (count($messages) == 0 && $messageId == $relation['LAST_SEND_ID'])
+			if (count($messages) == 0 && $messageId == $session['LAST_SEND_MAIL_ID'])
 			{
 				break;
 			}
-			if ($messageId < $relation['LAST_SEND_ID'])
+			if ($messageId < $session['LAST_SEND_MAIL_ID'])
 			{
 				if ($findClientMessage && $messageData['senderId'] != $session['USER_ID'])
 				{
@@ -247,7 +236,7 @@ class Mail
 
 		if ($setSendFlag)
 		{
-			\CIMMessage::SetLastSendId($chatId, $session['USER_ID'], $lastMessageId);
+			Session::setLastSendMailId($session, $lastMessageId);
 		}
 
 		return $messages;
@@ -447,7 +436,7 @@ class Mail
 			}
 			else
 			{
-				$messageText = $message['text'];
+				$messageText = $message['textLegacy'];
 
 				if (isset($message['params']['FILE_ID']))
 				{

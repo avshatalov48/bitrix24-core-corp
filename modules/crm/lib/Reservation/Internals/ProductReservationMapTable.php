@@ -16,7 +16,20 @@ use Bitrix\Main\ORM\Fields\IntegerField;
  * </ul>
  *
  * @package Bitrix\Crm\Reservation\Internals
- **/
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_ProductReservationMap_Query query()
+ * @method static EO_ProductReservationMap_Result getByPrimary($primary, array $parameters = [])
+ * @method static EO_ProductReservationMap_Result getById($id)
+ * @method static EO_ProductReservationMap_Result getList(array $parameters = [])
+ * @method static EO_ProductReservationMap_Entity getEntity()
+ * @method static \Bitrix\Crm\Reservation\Internals\EO_ProductReservationMap createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Reservation\Internals\EO_ProductReservationMap_Collection createCollection()
+ * @method static \Bitrix\Crm\Reservation\Internals\EO_ProductReservationMap wakeUpObject($row)
+ * @method static \Bitrix\Crm\Reservation\Internals\EO_ProductReservationMap_Collection wakeUpCollection($rows)
+ */
 class ProductReservationMapTable extends DataManager
 {
 	/**

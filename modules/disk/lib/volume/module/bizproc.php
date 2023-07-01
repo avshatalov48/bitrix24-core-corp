@@ -3,7 +3,9 @@
 namespace Bitrix\Disk\Volume\Module;
 
 use Bitrix\Main;
+use Bitrix\Disk;
 use Bitrix\Disk\Volume;
+use Bitrix\Disk\Internals\VolumeTable;
 
 /**
  * Disk storage volume measurement class.
@@ -18,11 +20,11 @@ class Bizproc extends Volume\Module\Module
 	/**
 	 * Runs measure test to get volumes of selecting objects.
 	 * @param array $collectData List types data to collect: ATTACHED_OBJECT, SHARING_OBJECT, EXTERNAL_LINK, UNNECESSARY_VERSION.
-	 * @return $this
+	 * @return static
 	 * @throws Main\ArgumentException
 	 * @throws Main\SystemException
 	 */
-	public function measure($collectData = array())
+	public function measure(array $collectData = []): self
 	{
 		if (!$this->isMeasureAvailable())
 		{
@@ -54,7 +56,7 @@ class Bizproc extends Volume\Module\Module
 						b_disk_version ver
 						INNER JOIN b_disk_object files
 							ON files.ID  = ver.OBJECT_ID
-							AND files.TYPE = '".\Bitrix\Disk\Internals\ObjectTable::TYPE_FILE."'
+							AND files.TYPE = '".Disk\Internals\ObjectTable::TYPE_FILE."'
 							AND files.ID = files.REAL_OBJECT_ID
 						INNER JOIN 
 						(
@@ -65,7 +67,7 @@ class Bizproc extends Volume\Module\Module
 								INNER JOIN b_forum_message message 
 									ON message.ID = attached.ENTITY_ID
 							WHERE
-								attached.ENTITY_TYPE = '". $connection->getSqlHelper()->forSql(\Bitrix\Disk\Uf\ForumMessageConnector::className()). "'
+								attached.ENTITY_TYPE = '". $connection->getSqlHelper()->forSql(Disk\Uf\ForumMessageConnector::className()). "'
 								AND substring_index(message.XML_ID,'_', 1) = '{$eventTypeXML}'
 							GROUP BY 
 								attached.OBJECT_ID
@@ -106,7 +108,7 @@ class Bizproc extends Volume\Module\Module
 		";
 
 		$columnList = Volume\QueryHelper::prepareInsert(
-			array(
+			[
 				'INDICATOR_TYPE',
 				'OWNER_ID',
 				'CREATE_TIME',
@@ -115,11 +117,11 @@ class Bizproc extends Volume\Module\Module
 				'DISK_SIZE',
 				'DISK_COUNT',
 				'VERSION_COUNT',
-			),
+			],
 			$this->getSelect()
 		);
 
-		$tableName = \Bitrix\Disk\Internals\VolumeTable::getTableName();
+		$tableName = VolumeTable::getTableName();
 
 		$connection->queryExecute("INSERT INTO {$tableName} ({$columnList}) {$querySql}");
 

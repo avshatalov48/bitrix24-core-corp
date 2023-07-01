@@ -1,5 +1,6 @@
 <?php
 $MESS["CRM_1C_START_BACKOFFICE"] = "1C:Backoffice- 2.0";
+$MESS["CRM_1C_START_BACKOFFICE_MSGVER_1"] = "Connector for 1C";
 $MESS["CRM_1C_START_CONNECT"] = "Connect";
 $MESS["CRM_1C_START_DOC"] = "1C:Backoffice";
 $MESS["CRM_1C_START_EXCHANGE"] = "1C + CRM";

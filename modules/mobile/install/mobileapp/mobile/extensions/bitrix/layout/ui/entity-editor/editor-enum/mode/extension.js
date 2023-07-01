@@ -1,10 +1,12 @@
-(() => {
-	BX.UI = BX.UI || {};
+/**
+ * @module layout/ui/entity-editor/editor-enum/mode
+ */
+jn.define('layout/ui/entity-editor/editor-enum/mode', (require, exports, module) => {
 
 	/**
-	 * @class BX.UI.EntityEditorMode
+	 * @object EntityEditorMode
 	 */
-	BX.UI.EntityEditorMode = {
+	const EntityEditorMode = {
 		intermediate: 0,
 		edit: 1,
 		view: 2,
@@ -39,4 +41,6 @@
 			return this.intermediate;
 		},
 	};
-})();
+
+	module.exports = { EntityEditorMode };
+});

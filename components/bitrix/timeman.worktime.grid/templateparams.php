@@ -340,7 +340,13 @@ class TemplateParams
 		}
 		else
 		{
-			$dateTime = clone TimeHelper::getInstance()->createDateTimeFromFormat('U', $utcTimestamp, 0);
+			$createdDateTime = TimeHelper::getInstance()->createDateTimeFromFormat('U', $utcTimestamp, 0);
+			if (!$createdDateTime)
+			{
+				return null;
+			}
+
+			$dateTime = clone $createdDateTime;
 		}
 
 		$tz = TimeHelper::getInstance()->getUserTimezone($userId);

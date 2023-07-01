@@ -321,7 +321,7 @@ class SearchIndex
 			case 'GROUP_ID':
 				$groupId = $taskData[$field];
 				$groups = Group::getData([$groupId]);
-				$groupName = $groups[$groupId]['NAME'];
+				$groupName = ($groups[$groupId]['NAME'] ?? null);
 
 				$fieldValue[] = $groupName;
 				break;
@@ -345,18 +345,25 @@ class SearchIndex
 			case 'UF_CRM_TASK':
 				if (Loader::includeModule('crm'))
 				{
+					if (!isset($taskData[$field]))
+					{
+						break;
+					}
 					/** @var array|Collection $crmItems */
 					$crmItems = $taskData[$field];
 					$crmItems = (is_object($crmItems)? $crmItems->toArray() : (array)$crmItems);
 
 					foreach ($crmItems as $item)
 					{
-						$crmElement = explode('_', $item);
-						$type = $crmElement[0];
-						$typeId = \CCrmOwnerType::ResolveID(\CCrmOwnerTypeAbbr::ResolveName($type));
-						$title = \CCrmOwnerType::GetCaption($typeId, $crmElement[1]);
+						if ($item)
+						{
+							$crmElement = explode('_', $item);
+							$type = $crmElement[0];
+							$typeId = \CCrmOwnerType::ResolveID(\CCrmOwnerTypeAbbr::ResolveName($type));
+							$title = \CCrmOwnerType::GetCaption($typeId, $crmElement[1]);
 
-						$fieldValue[] = $title;
+							$fieldValue[] = $title;
+						}
 					}
 				}
 				break;

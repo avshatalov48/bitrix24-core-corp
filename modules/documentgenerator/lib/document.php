@@ -10,6 +10,7 @@ use Bitrix\DocumentGenerator\Model\ExternalLinkTable;
 use Bitrix\DocumentGenerator\Model\FileTable;
 use Bitrix\DocumentGenerator\Storage\Disk;
 use Bitrix\Main\Engine\Response\DataType\ContentUri;
+use Bitrix\Main\Engine\UrlManager;
 use Bitrix\Main\Error;
 use Bitrix\Main\Event;
 use Bitrix\Main\EventManager;
@@ -17,7 +18,6 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Numerator\Numerator;
 use Bitrix\Main\Result;
-use Bitrix\Main\Engine\UrlManager;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Web\Uri;
 
@@ -846,6 +846,11 @@ class Document
 			}
 			else
 			{
+				if ($bodyResult->getErrorCollection()->getErrorByCode('FILE_NOT_PROCESSABLE'))
+				{
+					$bodyResult->addError(new Error(Loc::getMessage('DOCUMENT_FILE_NOT_PROCESSABLE_ERROR')));
+				}
+
 				$this->result = $bodyResult;
 			}
 		}
@@ -963,7 +968,7 @@ class Document
 	 */
 	protected function resolveProvider(array $field, string $name): void
 	{
-		if(!$field['PROVIDER'])
+		if(empty($field['PROVIDER']))
 		{
 			return;
 		}
@@ -1066,7 +1071,7 @@ class Document
 
 		$value = $this->resolveValue($value);
 
-		if($value && $this->fields[$name]['PROVIDER'] && isset($this->fields[$name]['PROVIDER_NAME']))
+		if($value && !empty($this->fields[$name]['PROVIDER']) && isset($this->fields[$name]['PROVIDER_NAME']))
 		{
 			/** @var DataProvider $dataProvider */
 			$dataProvider = DataProviderManager::getInstance()->createDataProvider($this->fields[$name], $value);
@@ -1098,7 +1103,7 @@ class Document
 		{
 			$value = $externalValues[$name];
 			$value = $this->resolveValue($value);
-			$value = DataProviderManager::getInstance()->prepareValue($value, $this->fields[$name]);
+			$value = DataProviderManager::getInstance()->prepareValue($value, $this->fields[$name] ?? []);
 		}
 
 		return $value;

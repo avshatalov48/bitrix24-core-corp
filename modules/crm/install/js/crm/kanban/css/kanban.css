@@ -20,18 +20,27 @@
 	-webkit-user-select: text;
 }
 
-.main-kanban-item-new .crm-kanban-item {
-	animation: crm-kanban-item-show-animate .2s linear forwards;
+.main-kanban-item-new .crm-kanban-item-new {
+	animation: crm-kanban-item-show-animate 2.8s linear forwards;
 }
 
 @keyframes crm-kanban-item-show-animate {
-	from {
-		opacity: 0;
-		transform: scale3d(.95,.95,.95);
+	0% {
+		opacity: 0.6;
+		transform: scale3d(.9,.9,.9);
+		transform-origin: center;
+		background: var(--ui-color-accent-yellow);
 	}
-	to {
+	7% {
 		opacity: 1;
 		transform: scale3d(1,1,1);
+		background: var(--ui-color-accent-yellow);
+	}
+	70% {
+		background: var(--ui-color-accent-yellow);
+	}
+	100% {
+		background: var(--ui-color-background-primary);
 	}
 }
 
@@ -568,6 +577,16 @@
 	line-height: 50px;
 	color: #525c68;
 	text-align: center;
+}
+
+.crm-kanban-column-add-item-button--dummy {
+	display: block;
+	overflow: hidden;
+	height: 31px;
+	line-height: 31px;
+	margin: 5px 7px 0 9px;
+	position: relative;
+	background: transparent;
 }
 
 .crm-kanban-column-add-item-button {

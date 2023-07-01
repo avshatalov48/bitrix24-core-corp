@@ -59,7 +59,7 @@ abstract class Queue
 				$newValues = $eventResult->getParameters();
 				if (!empty($newValues['newOperatorQueue']))
 				{
-					if(!isset($newValues['newOperatorQueue']['RESULT']))
+					if (!isset($newValues['newOperatorQueue']['RESULT']))
 					{
 						$errorEvent = true;
 						$errorsMessageEvent[] = 'The event handler must pass the value [newOperatorQueue][RESULT]';
@@ -69,12 +69,12 @@ abstract class Queue
 						$errorEvent = true;
 						$errorsMessageEvent[] = '[newOperatorQueue][RESULT] only the bool type is allowed';
 					}
-					if(!isset($newValues['newOperatorQueue']['OPERATOR_ID']))
+					if (!isset($newValues['newOperatorQueue']['OPERATOR_ID']))
 					{
 						$errorEvent = true;
 						$errorsMessageEvent[] = 'The event handler must pass the value [newOperatorQueue][OPERATOR_ID]';
 					}
-					elseif(
+					elseif (
 						!is_numeric($newValues['newOperatorQueue']['OPERATOR_ID']) &&
 						(
 							mb_strpos($newValues['newOperatorQueue']['OPERATOR_ID'], 'queue') !== 0 ||
@@ -85,12 +85,12 @@ abstract class Queue
 						$errorEvent = true;
 						$errorsMessageEvent[] = '[newOperatorQueue][OPERATOR_ID] only a number is allowed, including 0 or a number with the "queue" prefix';
 					}
-					if(!isset($newValues['newOperatorQueue']['OPERATOR_LIST']))
+					if (!isset($newValues['newOperatorQueue']['OPERATOR_LIST']))
 					{
 						$errorEvent = true;
 						$errorsMessageEvent[] = 'The event handler must pass the value [newOperatorQueue][OPERATOR_LIST]';
 					}
-					elseif(!is_array($newValues['newOperatorQueue']['OPERATOR_LIST']))
+					elseif (!is_array($newValues['newOperatorQueue']['OPERATOR_LIST']))
 					{
 						$errorEvent = true;
 						$errorsMessageEvent[] = '[newOperatorQueue][OPERATOR_LIST] only an array is allowed, including an empty array []';
@@ -99,24 +99,24 @@ abstract class Queue
 					{
 						foreach ($newValues['newOperatorQueue']['OPERATOR_LIST'] as $operator)
 						{
-							if(empty($operator))
+							if (empty($operator))
 							{
 								$errorEvent = true;
 								$errorsMessageEvent[] = '[newOperatorQueue][OPERATOR_LIST] each value must not be empty';
 							}
-							elseif(!is_numeric($operator))
+							elseif (!is_numeric($operator))
 							{
 								$errorEvent = true;
 								$errorsMessageEvent[] = '[newOperatorQueue][OPERATOR_LIST] each value must be a digit';
 							}
 						}
 					}
-					if(!isset($newValues['newOperatorQueue']['DATE_QUEUE']))
+					if (!isset($newValues['newOperatorQueue']['DATE_QUEUE']))
 					{
 						$errorEvent = true;
 						$errorsMessageEvent[] = 'The event handler must pass the value [newOperatorQueue][DATE_QUEUE]';
 					}
-					elseif(
+					elseif (
 						!($newValues['newOperatorQueue']['DATE_QUEUE'] instanceof DateTime) &&
 						!empty($newValues['newOperatorQueue']['DATE_QUEUE'])
 					)
@@ -124,18 +124,16 @@ abstract class Queue
 						$errorEvent = true;
 						$errorsMessageEvent[] = '[newOperatorQueue][DATE_QUEUE] a valid value is only an object of the "\Bitrix\Main\Type\DateTime" class or "false"';
 					}
-					elseif(
-						empty($newValues['newOperatorQueue']['DATE_QUEUE']) &&
-						(
-							empty($newValues['newOperatorQueue']['OPERATOR_ID']) &&
-							empty($newValues['newOperatorQueue']['OPERATOR_LIST'])
-						)
+					elseif (
+						empty($newValues['newOperatorQueue']['DATE_QUEUE'])
+						&& empty($newValues['newOperatorQueue']['OPERATOR_ID'])
+						&& empty($newValues['newOperatorQueue']['OPERATOR_LIST'])
 					)
 					{
 						$errorEvent = true;
 						$errorsMessageEvent[] = '[newOperatorQueue][DATE_QUEUE] if an "empty" value is passed, including "false", then [newOperatorQueue][OPERATOR_ID] or [newOperatorQueue][OPERATOR_LIST] must have non-empty values';
 					}
-					if(!isset($newValues['newOperatorQueue']['QUEUE_HISTORY']))
+					if (!isset($newValues['newOperatorQueue']['QUEUE_HISTORY']))
 					{
 						$errorEvent = true;
 						$errorsMessageEvent[] = 'The event handler must pass the value [newOperatorQueue][QUEUE_HISTORY]';
@@ -146,7 +144,7 @@ abstract class Queue
 						$errorsMessageEvent[] = '[newOperatorQueue][QUEUE_HISTORY] only an array is allowed, including an empty array []';
 					}
 
-					if($errorEvent === false)
+					if ($errorEvent === false)
 					{
 						$result = $newValues['newOperatorQueue'];
 					}
@@ -163,7 +161,7 @@ abstract class Queue
 				$errorsMessageEvent[] = 'The result of the processing of the event returned with an error';
 			}
 
-			if($errorEvent === true)
+			if ($errorEvent === true)
 			{
 				$eventError = new Event('imopenlines', 'OnErrorEventBeforeSessionTransfer',
 					[
@@ -223,7 +221,7 @@ abstract class Queue
 	{
 		$dateNoAnswer = SessionCheckTable::getById($this->session['ID'])->fetch()['DATE_NO_ANSWER'];
 
-		if($this->session['SEND_NO_ANSWER_TEXT'] != 'Y' && empty($dateNoAnswer))
+		if ($this->session['SEND_NO_ANSWER_TEXT'] != 'Y' && empty($dateNoAnswer))
 		{
 			$dateNoAnswer = new DateTime();
 			$dateNoAnswer->add($this->config['NO_ANSWER_TIME'] . ' SECONDS');
@@ -252,7 +250,7 @@ abstract class Queue
 			'limit' => 1
 		])->fetch();
 
-		if(!empty($resultRequest))
+		if (!empty($resultRequest))
 		{
 			$result = true;
 		}
@@ -295,13 +293,13 @@ abstract class Queue
 	{
 		$result = false;
 
-		if($this->isOperatorActive($userId) === true)
+		if ($this->isOperatorActive($userId) === true)
 		{
-			if((int)$userId !== (int)$currentOperator)
+			if ((int)$userId !== (int)$currentOperator)
 			{
 				$freeCountChatOperator = ImOpenLines\Queue::getCountFreeSlotOperator($userId, $this->config['ID'], $this->config["MAX_CHAT"], $this->config["TYPE_MAX_CHAT"]);
 
-				if($freeCountChatOperator > 0)
+				if ($freeCountChatOperator > 0)
 				{
 					$result = true;
 				}
@@ -323,19 +321,19 @@ abstract class Queue
 	 */
 	protected function processingEmptyQueue(int $configId, $fullCountOperators): void
 	{
-		if(!empty($configId))
+		if (!empty($configId))
 		{
-			if($fullCountOperators > 0)
+			if ($fullCountOperators > 0)
 			{
-				if($this->config['SEND_NOTIFICATION_EMPTY_QUEUE'] === 'Y')
+				if ($this->config['SEND_NOTIFICATION_EMPTY_QUEUE'] === 'Y')
 				{
 					$this->config['SEND_NOTIFICATION_EMPTY_QUEUE'] = 'N';
 					ConfigTable::update($configId, ['SEND_NOTIFICATION_EMPTY_QUEUE' => 'N']);
 				}
 			}
-			elseif($fullCountOperators === 0)
+			elseif ($fullCountOperators === 0)
 			{
-				if($this->config['SEND_NOTIFICATION_EMPTY_QUEUE'] === 'N')
+				if ($this->config['SEND_NOTIFICATION_EMPTY_QUEUE'] === 'N')
 				{
 					ConfigTable::update($configId, ['SEND_NOTIFICATION_EMPTY_QUEUE' => 'Y']);
 					$this->sendNotificationEmptyQueue($configId);
@@ -380,7 +378,7 @@ abstract class Queue
 	{
 		$queueTime = ImOpenLines\Queue::UNDISTRIBUTED_QUEUE_TIME;
 
-		if($this->config['QUEUE_TIME'] > 0)
+		if ($this->config['QUEUE_TIME'] > 0)
 		{
 			$queueTime = $this->config['QUEUE_TIME'];
 		}
@@ -407,22 +405,23 @@ abstract class Queue
 			'DATE_NO_ANSWER' => null,
 			'JOIN_BOT' => false,
 			'UNDISTRIBUTED' => false,
-
 			'OPERATOR_CRM' => false,
 		];
 
-		if(empty($operatorId))
+		if (empty($operatorId))
 		{
 			$result['DATE_QUEUE'] = new DateTime();
 
-			//Bot
-			if($this->config['ACTIVE'] != 'N' &&
+			// Bot
+			if (
+				$this->config['ACTIVE'] != 'N' &&
 				$this->config['WELCOME_BOT_ENABLE'] == 'Y' &&
 				$this->config['WELCOME_BOT_ID'] > 0 &&
 				(
 					$this->config['WELCOME_BOT_JOIN'] == Config::BOT_JOIN_ALWAYS ||
 					$this->chat->isNowCreated()
-				))
+				)
+			)
 			{
 				$result['JOIN_BOT'] = true;
 
@@ -445,13 +444,19 @@ abstract class Queue
 				$result['DATE_NO_ANSWER'] = (new DateTime())->add($this->config['NO_ANSWER_TIME'] . ' SECONDS');
 
 				//CRM
-				if ($crmManager && $isGroupByChat == false && $this->config['CRM'] == 'Y' && $crmManager->isLoaded() && $this->config['CRM_FORWARD'] == 'Y')
+				if (
+					$crmManager
+					&& $isGroupByChat == false
+					&& $this->config['CRM'] == 'Y'
+					&& $crmManager->isLoaded()
+					&& $this->config['CRM_FORWARD'] == 'Y'
+				)
 				{
 					$crmManager->search();
 
 					$crmOperatorId = $crmManager->getOperatorId();
 
-					if(
+					if (
 						$crmOperatorId !== null &&
 						$crmOperatorId > 0 &&
 						$this->isActiveCrmUser($crmOperatorId) === true
@@ -463,16 +468,15 @@ abstract class Queue
 						$result['OPERATOR_CRM'] = true;
 					}
 				}
-				//END CRM
 
 				$undistributedSession = $this->isUndistributedSession();
 
-				//Queue
-				if(empty($operatorId) && !$undistributedSession)
+				// Queue
+				if (empty($operatorId) && !$undistributedSession)
 				{
 					$resultOperatorQueue = $this->getOperatorsQueue();
 
-					if($resultOperatorQueue['RESULT'])
+					if ($resultOperatorQueue['RESULT'])
 					{
 						$operatorId = $resultOperatorQueue['OPERATOR_ID'];
 						$result['OPERATOR_LIST'] = $resultOperatorQueue['OPERATOR_LIST'];
@@ -486,13 +490,13 @@ abstract class Queue
 					$result['DATE_QUEUE'] = $resultOperatorQueue['DATE_QUEUE'];
 				}
 
-				if(empty($operatorId) && $undistributedSession)
+				if (empty($operatorId) && $undistributedSession)
 				{
 					$result['UNDISTRIBUTED'] = true;
 					$result['DATE_QUEUE'] = new DateTime();
 				}
 
-				if(!empty($operatorId))
+				if (!empty($operatorId))
 				{
 					$result['DATE_OPERATOR'] = new DateTime();
 				}
@@ -503,14 +507,14 @@ abstract class Queue
 			$result['DATE_OPERATOR'] = new DateTime();
 		}
 
-		if(!empty($operatorId))
+		if (!empty($operatorId))
 		{
 			$result['OPERATOR_ID'] = $operatorId;
-			if(empty($result['OPERATOR_LIST']))
+			if (empty($result['OPERATOR_LIST']))
 			{
 				$result['OPERATOR_LIST'] = [$operatorId];
 			}
-			if(empty($result['QUEUE_HISTORY']))
+			if (empty($result['QUEUE_HISTORY']))
 			{
 				$result['QUEUE_HISTORY'][$operatorId] = true;
 			}
@@ -531,11 +535,11 @@ abstract class Queue
 
 		ImOpenLines\Debug::addQueue($this->config['ID'], $this->session['ID'], 'start' . __METHOD__, ['manual' => $manual]);
 
-		if($this->startLock())
+		if ($this->startLock())
 		{
 			$resultOperatorQueue = $this->getOperatorsQueue($this->session['OPERATOR_ID']);
 
-			if(
+			if (
 				$manual &&
 				$resultOperatorQueue['RESULT'] != true
 			)
@@ -564,11 +568,11 @@ abstract class Queue
 
 				$leaveTransfer = (string)$this->config['WELCOME_BOT_LEFT'] === Config::BOT_LEFT_CLOSE && Im\User::getInstance($this->session['OPERATOR_ID'])->isBot()? 'N':'Y';
 
-				if((bool)$resultOperatorQueue['RESULT'] === true)
+				if ((bool)$resultOperatorQueue['RESULT'] === true)
 				{
-					if(!empty($resultOperatorQueue['OPERATOR_ID']))
+					if (!empty($resultOperatorQueue['OPERATOR_ID']))
 					{
-						if((int)$this->session['OPERATOR_ID'] !== (int)$resultOperatorQueue['OPERATOR_ID'])
+						if ((int)$this->session['OPERATOR_ID'] !== (int)$resultOperatorQueue['OPERATOR_ID'])
 						{
 							$this->chat->transfer(
 								[
@@ -581,7 +585,7 @@ abstract class Queue
 							);
 						}
 					}
-					elseif(!empty($resultOperatorQueue['OPERATOR_LIST']))
+					elseif (!empty($resultOperatorQueue['OPERATOR_LIST']))
 					{
 						$this->chat->setOperators($resultOperatorQueue['OPERATOR_LIST'], $this->session['ID']);
 						$this->chat->update(['AUTHOR_ID' => 0]);
@@ -593,7 +597,7 @@ abstract class Queue
 				}
 				else
 				{
-					if((int)$this->session['OPERATOR_ID'] !== 0)
+					if ((int)$this->session['OPERATOR_ID'] !== 0)
 					{
 						$this->chat->transfer(
 							[
@@ -609,11 +613,21 @@ abstract class Queue
 					$updateSessionCheck['UNDISTRIBUTED'] = 'Y';
 				}
 
+				if (
+					Im\User::getInstance($this->session['OPERATOR_ID'])->isBot()
+					&& $this->config['NO_ANSWER_RULE'] == Session::RULE_TEXT
+					&& $this->session['SEND_NO_ANSWER_TEXT'] !== 'Y'
+					&& $this->session['STATUS'] <= Session::STATUS_CLIENT
+				)
+				{
+					$updateSessionCheck['DATE_NO_ANSWER'] = (new DateTime())->add($this->config['NO_ANSWER_TIME'] . ' SECONDS');
+				}
+
 				$updateSessionCheck['DATE_QUEUE'] = $resultOperatorQueue['DATE_QUEUE'];
 
 				SessionCheckTable::update($this->session['ID'], $updateSessionCheck);
 
-				if((int)$this->session['OPERATOR_ID'] !== (int)$resultOperatorQueue['OPERATOR_ID'])
+				if ((int)$this->session['OPERATOR_ID'] !== (int)$resultOperatorQueue['OPERATOR_ID'])
 				{
 					$updateSession = [
 						'OPERATOR_ID' => $resultOperatorQueue['OPERATOR_ID'],
@@ -645,7 +659,7 @@ abstract class Queue
 	{
 		$removeSession = $this->isRemoveSession($finish, $vote);
 
-		if($removeSession !== false)
+		if ($removeSession !== false)
 		{
 			$this->transferOperatorNotAvailable($removeSession);
 		}
@@ -665,7 +679,7 @@ abstract class Queue
 	{
 		$result = false;
 
-		if(
+		if (
 			!$noCache &&
 			isset($this->cacheRemoveSession[$this->session['ID']])
 		)
@@ -674,7 +688,7 @@ abstract class Queue
 		}
 		else
 		{
-			if(
+			if (
 				$finish !== true &&
 				$vote !== true &&
 				!$this->sessionManager->isNowCreated() &&
@@ -687,7 +701,7 @@ abstract class Queue
 			)
 			{
 				$operatorActive = $this->isOperatorActive($this->session['OPERATOR_ID'], true);
-				if($operatorActive !== true)
+				if ($operatorActive !== true)
 				{
 					$result = $operatorActive;
 				}

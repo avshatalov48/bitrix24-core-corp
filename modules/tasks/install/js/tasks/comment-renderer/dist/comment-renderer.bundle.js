@@ -6,29 +6,22 @@ this.BX = this.BX || {};
 	  function CommentRenderer() {
 	    babelHelpers.classCallCheck(this, CommentRenderer);
 	  }
-
 	  babelHelpers.createClass(CommentRenderer, null, [{
 	    key: "getCommentPart",
 	    value: function getCommentPart(entity) {
 	      var _this = this;
-
 	      var message = '';
-
 	      try {
 	        message = main_core.Loc.getMessage(entity.CODE);
 	      } catch (e) {}
-
 	      if (!main_core.Type.isStringFilled(message) || !main_core.Type.isPlainObject(entity.REPLACE_LIST)) {
 	        return message;
 	      }
-
 	      var liveData = {};
-
 	      if (main_core.Type.isPlainObject(entity.REPLACE_LIST.LIVE_DATA)) {
 	        liveData = entity.REPLACE_LIST.LIVE_DATA;
 	        delete entity.REPLACE_LIST.LIVE_DATA;
 	      }
-
 	      Object.keys(entity.REPLACE_LIST).forEach(function (search) {
 	        message = message.replace(search, entity.REPLACE_LIST[search]);
 	      });
@@ -44,25 +37,21 @@ this.BX = this.BX || {};
 	      actionList.forEach(function (action) {
 	        var start = "#".concat(action, "_START#");
 	        var end = "#".concat(action, "_END#");
-
 	        if (message.indexOf(start) === -1 && message.indexOf(end) === -1) {
 	          return;
 	        }
-
 	        switch (action) {
 	          case 'EFFICIENCY':
 	            if (liveData.EFFICIENCY_MEMBERS.includes(userId)) {
 	              var efficiencyUrlStart = main_core.Loc.getMessage('SONET_RENDERPARTS_EFFICIENCY_PATH');
 	              efficiencyUrlStart = efficiencyUrlStart.replace('#user_id#', userId);
-	              efficiencyUrlStart = "<a href=\"".concat(efficiencyUrlStart, "\">");
+	              efficiencyUrlStart = "<a href=\"".concat(efficiencyUrlStart, "\" target=\"_blank\">");
 	              message = message.replace(start, efficiencyUrlStart);
 	              message = message.replace(end, '</a>');
 	            } else {
 	              message = _this.removeAnchors(message, start, end);
 	            }
-
 	            break;
-
 	          case 'DEADLINE':
 	            var regExp = new RegExp("".concat(start, "\\d+").concat(end), 'g');
 	            message = message.replaceAll(regExp, function (timestamp) {
@@ -73,7 +62,6 @@ this.BX = this.BX || {};
 	            });
 	            message = _this.removeAnchors(message, start, end);
 	            break;
-
 	          case 'DEADLINE_CHANGE':
 	          case 'TASK_APPROVE':
 	          case 'TASK_DISAPPROVE':
@@ -87,15 +75,12 @@ this.BX = this.BX || {};
 	                taskId: liveData.TASK_ID,
 	                deadline: liveData.DEADLINE || null
 	              });
-
 	              message = message.replace(start, "<a href=\"".concat(taskActionLink, "\">"));
 	              message = message.replace(end, '</a>');
 	            } else {
 	              message = _this.removeAnchors(message, start, end);
 	            }
-
 	            break;
-
 	          default:
 	            message = _this.removeAnchors(message, start, end);
 	            break;
@@ -117,13 +102,11 @@ this.BX = this.BX || {};
 	      link = main_core.Uri.addParam(link, {
 	        commentAction: actionMap[params.action]
 	      });
-
 	      if (params.action === 'DEADLINE_CHANGE' && params.deadline) {
 	        link = main_core.Uri.addParam(link, {
 	          deadline: params.deadline
 	        });
 	      }
-
 	      return link;
 	    }
 	  }, {

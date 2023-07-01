@@ -8,6 +8,11 @@ Loc::loadMessages(__FILE__);
 
 class Manifest
 {
+	/**
+	 * Returns rest applications description.
+	 *
+	 * @return array
+	 */
 	public static function list()
 	{
 		$manifestList = [];

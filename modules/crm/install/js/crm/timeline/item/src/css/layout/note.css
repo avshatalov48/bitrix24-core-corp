@@ -1,13 +1,18 @@
 .crm-timeline__card-note {
 	display: flex;
 	flex-wrap: wrap;
-	padding: 7px 5px 9px 8px;
+	padding: 7px 5px 21px 8px;
+	margin-bottom: 15px;
 	--height-base: 38px;
 	--user-icon-container-size: 22px;
 	--user-icon-container-right-margin: 8px;
 	box-shadow: 0 2px 3px rgba(0, 0, 0, .06);
 	background: var(--ui-color-background-note, #fff8cf);
 	position: relative;
+}
+
+.crm-timeline__card-note.--highlighted {
+	padding-bottom: 10px;
 }
 
 .crm-timeline__card-note_user {
@@ -130,4 +135,35 @@
 
 .crm-timeline__card-note__control:not(:last-child) {
 	margin-right: var(--ui-space-inline-2xs, 4px);
+}
+
+.crm-timeline__card-note_expand-note-btn {
+	box-sizing: border-box;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	padding: 0 11px 0px 11px;
+	min-height: 24px;
+	position: absolute;
+	bottom: -13px;
+	left: 49.9%;
+	transform: translateX(-50%);
+	text-align: center;
+	font-family: var(--ui-font-family-primary, 'Helvetica Neue');
+	font-size: var(--ui-font-size-sm, 13px);
+	line-height: var(--ui-font-line-height-3xs, 1.2);
+	color: var(--ui-color-base-70, #828B95);
+	background-color: var(--ui-color-background-note, #fff8cf);
+	outline: none;
+	border: 1px solid rgba(0, 0, 0, 0.1);
+	border-radius: 64px;
+	box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.08);
+	transition: box-shadow 0.2s linear;
+	cursor: pointer;
+}
+
+.crm-timeline__card-note_expand-note-btn:hover,
+.crm-timeline__card-note_expand-note-btn:focus {
+	transition-duration: unset;
+	box-shadow: unset;
 }

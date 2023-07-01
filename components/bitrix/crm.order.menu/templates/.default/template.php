@@ -1,5 +1,9 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 /**
  * @var array $arParams
@@ -19,11 +23,11 @@ if (!empty($arResult['BUTTONS']))
 {
 	$type = $arParams['TYPE'];
 	$template = 'type2';
-	if($type === 'list' || $type === 'kanban')
+	if ($type === 'list' || $type === 'kanban')
 	{
 		$template = SITE_TEMPLATE_ID === 'bitrix24' ? 'title' : '';
 	}
-	else if($type === 'details')
+	else if ($type === 'details')
 	{
 		$template = SITE_TEMPLATE_ID === 'bitrix24' ? 'slider' : 'type2';
 	}
@@ -40,7 +44,7 @@ if (!empty($arResult['BUTTONS']))
 	);
 }
 
-if(isset($arResult['SONET_SUBSCRIBE']) && is_array($arResult['SONET_SUBSCRIBE'])):
+if (isset($arResult['SONET_SUBSCRIBE']) && is_array($arResult['SONET_SUBSCRIBE'])):
 	$subscribe = $arResult['SONET_SUBSCRIBE'];
 ?><script type="text/javascript">
 BX.ready(
@@ -58,7 +62,7 @@ BX.ready(
 );
 </script><?
 endif;
-if (is_array($arResult['EXPORT_CSV_PARAMS']))
+if (isset($arResult['EXPORT_CSV_PARAMS']) && is_array($arResult['EXPORT_CSV_PARAMS']))
 {
 	\Bitrix\Main\UI\Extension::load('ui.stepprocessing');
 	?>

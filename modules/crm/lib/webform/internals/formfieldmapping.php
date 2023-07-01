@@ -4,6 +4,22 @@ namespace Bitrix\Crm\WebForm\Internals;
 
 use Bitrix\Main\ORM;
 
+/**
+ * Class FormFieldMappingTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_FormFieldMapping_Query query()
+ * @method static EO_FormFieldMapping_Result getByPrimary($primary, array $parameters = [])
+ * @method static EO_FormFieldMapping_Result getById($id)
+ * @method static EO_FormFieldMapping_Result getList(array $parameters = [])
+ * @method static EO_FormFieldMapping_Entity getEntity()
+ * @method static \Bitrix\Crm\WebForm\Internals\EO_FormFieldMapping createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\WebForm\Internals\EO_FormFieldMapping_Collection createCollection()
+ * @method static \Bitrix\Crm\WebForm\Internals\EO_FormFieldMapping wakeUpObject($row)
+ * @method static \Bitrix\Crm\WebForm\Internals\EO_FormFieldMapping_Collection wakeUpCollection($rows)
+ */
 class FormFieldMappingTable extends ORM\Data\DataManager
 {
 

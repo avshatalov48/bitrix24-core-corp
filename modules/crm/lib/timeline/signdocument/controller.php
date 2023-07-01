@@ -415,6 +415,9 @@ final class Controller extends Timeline\Controller
 			Entry::TYPE_CATEGORY_INTEGRITY_FAILURE => [TimelineEntry\Facade::SIGN_DOCUMENT_LOG,],
 			Entry::TYPE_CATEGORY_SENT_INTEGRITY_FAILURE => [TimelineEntry\Facade::SIGN_DOCUMENT_LOG,],
 			Entry::TYPE_CATEGORY_PIN_SEND_LIMIT_REACHED => [TimelineEntry\Facade::SIGN_DOCUMENT_LOG,],
+			Entry::TYPE_CATEGORY_NOTIFICATION_DELIVERED => [TimelineEntry\Facade::SIGN_DOCUMENT_LOG,],
+			Entry::TYPE_CATEGORY_NOTIFICATION_ERROR => [TimelineEntry\Facade::SIGN_DOCUMENT_LOG,],
+			Entry::TYPE_CATEGORY_NOTIFICATION_READ => [TimelineEntry\Facade::SIGN_DOCUMENT_LOG,],
 		];
 	}
 
@@ -427,5 +430,38 @@ final class Controller extends Timeline\Controller
 		}
 
 		return $factory->getItem($identifier->getEntityId());
+	}
+
+	public function onNotificationDelivered(ItemIdentifier $identifier, DocumentData $documentData,
+		?MessageData $messageData)
+	{
+		return $this->handleSignEvent(
+			Entry::TYPE_CATEGORY_NOTIFICATION_DELIVERED,
+			$identifier,
+			$documentData,
+			$messageData,
+		);
+	}
+
+	public function onNotificationError(ItemIdentifier $identifier, DocumentData $documentData,
+		?MessageData $messageData)
+	{
+		return $this->handleSignEvent(
+			Entry::TYPE_CATEGORY_NOTIFICATION_ERROR,
+			$identifier,
+			$documentData,
+			$messageData,
+		);
+	}
+
+	public function onNotificationRead(ItemIdentifier $identifier, DocumentData $documentData,
+		?MessageData $messageData)
+	{
+		return $this->handleSignEvent(
+			Entry::TYPE_CATEGORY_NOTIFICATION_READ,
+			$identifier,
+			$documentData,
+			$messageData,
+		);
 	}
 }

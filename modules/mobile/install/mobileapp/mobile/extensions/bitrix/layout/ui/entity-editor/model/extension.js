@@ -1,7 +1,10 @@
-(() => {
+/**
+ * @module layout/ui/entity-editor/model
+ */
+jn.define('layout/ui/entity-editor/model', (require, exports, module) => {
 
-	const { clone } = jn.require('utils/object');
-	const { EventEmitter } = jn.require('event-emitter');
+	const { clone } = require('utils/object');
+	const { EventEmitter } = require('event-emitter');
 
 	/**
 	 * @class EntityModel
@@ -82,5 +85,5 @@
 		}
 	}
 
-	jnexport(EntityModel);
-})();
+	module.exports = { EntityModel };
+});

@@ -50,7 +50,7 @@ class UserService
 			{
 				$row['PERSONAL_PHOTO'] = \CFile::resizeImageGet(
 					$row['PERSONAL_PHOTO'],
-					['width' => 20, 'height' => 20],
+					['width' => 100, 'height' => 100],
 					BX_RESIZE_IMAGE_EXACT,
 					false,
 					false,

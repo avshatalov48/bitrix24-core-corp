@@ -3,7 +3,6 @@
  */
 
 jn.define('crm/required-fields/required-backdrop', (require, exports, module) => {
-
 	const { EntityManager } = require('layout/ui/entity-editor/manager');
 
 	/**
@@ -30,7 +29,7 @@ jn.define('crm/required-fields/required-backdrop', (require, exports, module) =>
 			this.layout.setRightButtons([{
 				name: BX.message('CRM_REQUIRED_SAVE'),
 				type: 'text',
-				color: '#0065a3',
+				color: '#2066b0',
 				callback: this.onSave,
 			}]);
 			this.layout.setListener((eventName) => {
@@ -110,5 +109,4 @@ jn.define('crm/required-fields/required-backdrop', (require, exports, module) =>
 	}
 
 	module.exports = { RequiredFieldsBackdrop };
-
 });

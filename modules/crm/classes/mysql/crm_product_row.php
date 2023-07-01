@@ -1,4 +1,7 @@
 <?php
+
+use Bitrix\Crm\Reservation\Compatibility\ProductRowReserves;
+
 class CCrmProductRow extends CAllCrmProductRow
 {
 	const TABLE_NAME = 'b_crm_product_row';
@@ -32,6 +35,25 @@ class CCrmProductRow extends CAllCrmProductRow
 
 		$DB->Query(
 			"DELETE FROM {$tableName} WHERE OWNER_TYPE = '{$ownerType}' AND OWNER_ID = {$ownerID}", false, 'File: '.__FILE__.'<br/>Line: '.__LINE__);
+	}
+
+	public static function SaveRows($ownerType, $ownerID, $arRows, $accountContext = null, $checkPerms = true, $regEvent = true, $syncOwner = true, $totalInfo = array())
+	{
+		if (!CCrmSaleHelper::isProcessInventoryManagement())
+		{
+			return parent::SaveRows($ownerType, $ownerID, $arRows, $accountContext, $checkPerms, $regEvent, $syncOwner, $totalInfo);
+		}
+
+		self::setPerRowInsert(true);
+
+		$result = parent::SaveRows($ownerType, $ownerID, $arRows, $accountContext, $checkPerms, $regEvent, $syncOwner, $totalInfo);
+
+		if ($result)
+		{
+			ProductRowReserves::processRows((string)$ownerType, (int)$ownerID, $arRows);
+		}
+
+		return $result;
 	}
 
 	public static function DoSaveRows($ownerType, $ownerID, array $arRows)

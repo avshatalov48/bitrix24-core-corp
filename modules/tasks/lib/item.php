@@ -238,14 +238,19 @@ abstract class Item extends LazyAccess
 
 	private static function isWildCard($expression)
 	{
-		return $expression == '*'; // todo: more complicated wildcards, like UF_*, SE_*
+		return ($expression === '*'); // todo: more complicated wildcards, like UF_*, SE_*
 	}
 
-	private static function isRegularExpression($expression)
+	private static function isRegularExpression($expression): bool
 	{
-		$expression = trim((string) $expression);
+		if (is_array($expression))
+		{
+			return false;
+		}
 
-		return $expression[0] == '/' && $expression[mb_strlen($expression) - 1] == '/';
+		$expression = trim((string)$expression);
+
+		return ($expression[0] === '/' && $expression[mb_strlen($expression) - 1] === '/');
 	}
 
 	/**
@@ -268,7 +273,11 @@ abstract class Item extends LazyAccess
 		}
 
 		// update id from data, if passed
-		if(!$this->getId() && intval($data['ID']))
+		if(
+			!$this->getId()
+			&& isset($data['ID'])
+			&& intval($data['ID'])
+		)
 		{
 			$this->setId(intval($data['ID']));
 		}
@@ -350,6 +359,12 @@ abstract class Item extends LazyAccess
 	 */
 	public function isFieldModified($field)
 	{
+		if (
+			!isset($this->modifiedFields[$field])
+		)
+		{
+			return false;
+		}
 		return !!$this->modifiedFields[$field];
 	}
 
@@ -367,7 +382,7 @@ abstract class Item extends LazyAccess
 	 * @param mixed $offset
 	 * @param mixed $value
 	 */
-	public function offsetSet($offset, $value)
+	public function offsetSet($offset, $value): void
 	{
 		$this->offsetSetConfigurable($offset, $value);
 	}
@@ -378,6 +393,7 @@ abstract class Item extends LazyAccess
 	 * @param $offset
 	 * @return mixed
 	 */
+	#[\ReturnTypeWillChange]
 	public function offsetGet($offset)
 	{
 		$map = $this->getMap();
@@ -505,7 +521,8 @@ abstract class Item extends LazyAccess
 	public function offsetGetDirect($offset)
 	{
 		$data =& $this->getContextData();
-		return $data[$offset];
+
+		return ($data[$offset] ?? null);
 	}
 
 	/**
@@ -681,11 +698,11 @@ abstract class Item extends LazyAccess
 
 	private function &getContextFlags()
 	{
-		$index = $this->currentDataContext === null ? 'def' : $this->currentDataContext;
+		$index = ($this->currentDataContext ?? 'def');
 
-		if($this->dataContextFlags[$index] === null)
+		if (($this->dataContextFlags[$index] ?? null) === null)
 		{
-			$this->dataContextFlags[$index] = array();
+			$this->dataContextFlags[$index] = [];
 		}
 
 		return $this->dataContextFlags[$index];
@@ -808,7 +825,10 @@ abstract class Item extends LazyAccess
 		// prefer to use default access controller
 		$cache =& static::getCache();
 
-		if(!is_array($cache['INSTANCES']))
+		if(
+			!isset($cache['INSTANCES'])
+			|| !is_array($cache['INSTANCES'])
+		)
 		{
 			$cache['INSTANCES'] = array();
 		}
@@ -909,7 +929,7 @@ abstract class Item extends LazyAccess
 
 		$cache =& static::getCache();
 
-		if(!is_array($cache['INSTANCES']))
+		if(!is_array($cache['INSTANCES'] ?? null))
 		{
 			$cache['INSTANCES'] = array();
 		}
@@ -983,9 +1003,9 @@ abstract class Item extends LazyAccess
 		$cache =& static::getCache();
 		$key = $id.'-'.$userId;
 
-		if(!is_array($cache['ITEMS']))
+		if (!is_array($cache['ITEMS'] ?? null))
 		{
-			$cache['ITEMS'] = array();
+			$cache['ITEMS'] = [];
 		}
 
 		if(!isset($cache['ITEMS'][$key]))
@@ -1177,33 +1197,19 @@ abstract class Item extends LazyAccess
 
 		$result->adoptErrors($accessResult);
 
-		if($result->isSuccess() && $settings['KEEP_DATA'] !== true)
+		if(
+			$result->isSuccess()
+			&&
+			(
+				!isset($settings['KEEP_DATA'])
+				|| $settings['KEEP_DATA'] !== true
+			)
+		)
 		{
 			$this->clearData();
 		}
 
 		return $result;
-	}
-
-	private static function fixGlobalUser($userId)
-	{
-		$fixed = false;
-		$userId = intval($userId);
-		if($GLOBALS['USER'] === null && $userId > 0)
-		{
-			$GLOBALS['USER'] = \Bitrix\Tasks\Util\User\Mock::getInstance($userId);
-			$fixed = true;
-		}
-
-		return $fixed;
-	}
-
-	private static function restoreGlobalUser($fixed)
-	{
-		if($fixed)
-		{
-			$GLOBALS['USER'] = null;
-		}
 	}
 
 	/**
@@ -1369,7 +1375,7 @@ abstract class Item extends LazyAccess
 		{
 			$settings = array();
 		}
-		if(!intval($settings['USER_ID']))
+		if(!(int)($settings['USER_ID'] ?? null))
 		{
 			$settings['USER_ID'] = User::getId();
 		}
@@ -1564,9 +1570,12 @@ abstract class Item extends LazyAccess
 
 		$map = new Field\Map();
 
-		if(!is_array($parameters['EXCLUDE']))
+		if (
+			!isset($parameters['EXCLUDE'])
+			|| !is_array($parameters['EXCLUDE'])
+		)
 		{
-			$parameters['EXCLUDE'] = array();
+			$parameters['EXCLUDE'] = [];
 		}
 
 		// read from orm tablet
@@ -1605,9 +1614,9 @@ abstract class Item extends LazyAccess
 				'NAME' => $name,
 				'SOURCE' => Field\Scalar::SOURCE_TABLET,
 				//'DB_WRITABLE' => !($isReference || $isExpression),
-				'DEFAULT' => is_object($v) ? $v->getDefaultValue() : $v['default_value'],
+				'DEFAULT' => is_object($v) ? $v->getDefaultValue() : ($v['default_value'] ?? null),
 				'ENUMERATION' => $isBoolean ? (
-					is_object($v) ? $v->getValues() : $v['values']
+					is_object($v) ? $v->getValues() : ($v['values'] ?? null)
 				) : array(),
 			);
 
@@ -1644,7 +1653,7 @@ abstract class Item extends LazyAccess
 				$field = array(
 					'NAME' => $name,
 					'SOURCE' => Field\Scalar::SOURCE_UF,
-					'DEFAULT' => $v['SETTINGS']['DEFAULT_VALUE'],
+					'DEFAULT' => ($v['SETTINGS']['DEFAULT_VALUE'] ?? null),
 				);
 
 				if($v['MULTIPLE'] == 'Y')
@@ -1872,7 +1881,10 @@ abstract class Item extends LazyAccess
 				foreach($scheme as $field => $fieldDesc)
 				{
 					$fieldValue = $this[$field];
-					if($settings['COLLECTION_VALUE_TO_ARRAY'] && \Bitrix\Tasks\Util\Collection::isA($fieldValue))
+					if (
+						($settings['COLLECTION_VALUE_TO_ARRAY'] ?? null)
+						&& \Bitrix\Tasks\Util\Collection::isA($fieldValue)
+					)
 					{
 						$fieldValue = $fieldValue->toArray();
 					}
@@ -1906,7 +1918,7 @@ abstract class Item extends LazyAccess
 	{
 		$cache =& static::getCache();
 
-		if(!$cache['BATCH_STATE'])
+		if (!($cache['BATCH_STATE'] ?? null))
 		{
 			$state = new State\Trigger();
 			$state->setEnterCallback(static::getClass().'::processEnterBatchMode');
@@ -1979,7 +1991,7 @@ abstract class Item extends LazyAccess
 		{
 			$result = call_user_func_array($method, array($this));
 			/** @var \Bitrix\Tasks\Util\Result $mainResult */
-			$mainResult = $arguments[0];
+			$mainResult = ($arguments[0] ?? null);
 
 			if(Result::isA($mainResult))
 			{
@@ -2013,7 +2025,7 @@ abstract class Item extends LazyAccess
 	private function isTabletLoaded()
 	{
 		$flags =& $this->getContextFlags();
-		return !!$flags['TABLET_LOADED'];
+		return (bool)($flags['TABLET_LOADED'] ?? null);
 	}
 
 	private function setUFLoaded()

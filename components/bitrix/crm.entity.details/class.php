@@ -1,7 +1,14 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
+{
+	die();
+}
+
 CModule::IncludeModule("crm");
 
+use Bitrix\Crm\Component\EntityDetails\Traits\EditorInitialMode;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main;
 use Bitrix\Main\Event;
 use Bitrix\Main\EventManager;
@@ -12,6 +19,8 @@ Loc::loadMessages(__FILE__);
 
 class CCrmEntityPopupComponent extends CBitrixComponent
 {
+	use EditorInitialMode;
+
 	/** @var string */
 	private $guid = '';
 	/** @var int */
@@ -32,6 +41,11 @@ class CCrmEntityPopupComponent extends CBitrixComponent
 	{
 		parent::__construct($component);
 		$this->userPermissions = CCrmPerms::GetCurrentUserPermissions();
+	}
+
+	public function getEntityId(): int
+	{
+		return $this->entityID;
 	}
 
 	public function executeComponent()
@@ -153,21 +167,7 @@ class CCrmEntityPopupComponent extends CBitrixComponent
 			}
 		}
 
-		$initMode = $this->request->get('init_mode');
-		if(!is_string($initMode))
-		{
-			$initMode = '';
-		}
-		else
-		{
-			$initMode = mb_strtolower($initMode);
-			if($initMode !== 'edit' && $initMode !== 'view')
-			{
-				$initMode = '';
-			}
-		}
-		$this->arResult['INITIAL_MODE'] = $initMode !== '' ? $initMode : ($this->entityID > 0  ? 'view' : 'edit');
-
+		$this->arResult['INITIAL_MODE'] = $this->getInitialMode();
 		$this->arResult['GUID'] = $this->guid;
 		$this->arResult['ACTIVITY_EDITOR_ID'] = $this->arParams['~ACTIVITY_EDITOR_ID'] ?? '';
 		$this->arResult['SERVICE_URL'] = $this->arParams['~SERVICE_URL'] ?? '';
@@ -251,6 +251,9 @@ class CCrmEntityPopupComponent extends CBitrixComponent
 			? $this->arParams['~ANALYTIC_PARAMS'] : array();
 
 		$this->arResult['RESTRICTIONS_SCRIPT'] = $this->getRestrictionsScript();
+
+		$this->applyFieldInfos();
+
 		if ($this->arResult['RESTRICTIONS_SCRIPT'] !== '')
 		{
 			$this->includeComponentTemplate('restrictions');
@@ -307,24 +310,15 @@ class CCrmEntityPopupComponent extends CBitrixComponent
 			return null;
 		}
 
-		$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory($this->entityTypeID);
+		$factory = Container::getInstance()->getFactory($this->entityTypeID);
 
 		$todoCreateNotificationAvailable =
 			$this->entityID
 			&& !$this->arResult['READ_ONLY']
 			&& $factory
-			&& $factory->isStagesEnabled()
-			&& \Bitrix\Crm\Settings\Crm::isUniversalActivityScenarioEnabled()
+			&& $factory->isSmartActivityNotificationEnabled()
 		;
 		if (!$todoCreateNotificationAvailable)
-		{
-			return null;
-		}
-		$allowedEntityTypeIds = [
-			CCrmOwnerType::Lead,
-			CCrmOwnerType::Deal,
-		];
-		if (!in_array($this->entityTypeID, $allowedEntityTypeIds, true))
 		{
 			return null;
 		}
@@ -371,5 +365,35 @@ class CCrmEntityPopupComponent extends CBitrixComponent
 			'finalStages' => $finalStages,
 			'skipPeriod' => (new \Bitrix\Crm\Activity\TodoCreateNotification($this->entityTypeID))->getCurrentSkipPeriod(),
 		];
+	}
+
+	private function applyFieldInfos(): void
+	{
+		if (empty($this->arResult['EDITOR']['ENTITY_FIELDS']))
+		{
+			return;
+		}
+
+		foreach ($this->arResult['EDITOR']['ENTITY_FIELDS'] as &$field)
+		{
+			if (in_array($field['type'], ['date', 'datetime']))
+			{
+				if (!empty($field['data']['dateViewFormat']))
+				{
+					continue;
+				}
+
+				$field['data']['dateViewFormat'] = Main\Type\Date::convertFormatToPhp(
+					Main\Application::getInstance()->getContext()->getCulture()->getLongDateFormat()
+				);
+
+				$enableTime = !isset($field['data']['enableTime']) || $field['data']['enableTime'];
+				if ($field['type'] === 'datetime' && $enableTime)
+				{
+					$field['data']['dateViewFormat'] .= ' ' . Main\Application::getInstance()->getContext()->getCulture()->getShortTimeFormat();
+				}
+			}
+		}
+		unset($field);
 	}
 }

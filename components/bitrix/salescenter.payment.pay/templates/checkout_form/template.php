@@ -20,7 +20,7 @@ $currentPaySystemName = (mb_strlen($currentPaySystem['NAME']) > 20)
 	: $currentPaySystem['NAME'];
 $additionalContainerClasses = ($arParams['INCLUDED_IN_ORDER_TEMPLATE'] === 'Y')
 	? 'order-payment-sibling-container'
-	: (($arParams['TEMPLATE_MODE'] === 'darkmode') ? 'bx-dark' : '');
+	: $arResult['COMPONENT_THEME'];
 $messages = Loc::loadLanguageFile(__FILE__);
 
 if (!empty($arResult["errorMessage"]))
@@ -113,7 +113,7 @@ else
 	{
 		$paySystemListClassName = "checkout-payment-method-list";
 		$paySystemDescriptionClassName = "order-payment-method-description";
-		$title = Loc::getMessage('SPP_SELECT_PAYMENT_TITLE_NEW_NEW');
+		$title = Loc::getMessage('SPP_SELECT_PAYMENT_TITLE_NEW_NEW_MSGVER_1');
 		?>
 
 		<div class="checkout-payment-method-container" style="margin-top: 20px;">

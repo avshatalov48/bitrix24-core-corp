@@ -97,7 +97,7 @@ class File implements Storage
 	{
 		$result = new AddResult();
 		$fileName = uniqid(Driver::MODULE_ID, true);
-		if($options['isTemplate'] === true)
+		if (isset($options['isTemplate']) && $options['isTemplate'] === true)
 		{
 			$fileName = Path::combine('templates', $fileName);
 		}

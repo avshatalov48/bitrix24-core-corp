@@ -95,19 +95,14 @@ class ProductRow extends EO_ProductRow implements \JsonSerializable
 		// product name is a special field and its correct value can't be collected with collectValues
 		$result['PRODUCT_NAME'] = $this->getProductName();
 
-		return $result;
-	}
-
-	private function toArrayWithReserve(): array
-	{
-		$productFields = $this->toArray();
+		// append reservations fields
 		$productReservation = $this->getProductRowReservation();
 		if ($productReservation)
 		{
-			$productFields += $productReservation->toArray();
+			$result += $productReservation->toArray();
 		}
 
-		return $productFields;
+		return $result;
 	}
 
 	public function jsonSerialize()
@@ -132,8 +127,8 @@ class ProductRow extends EO_ProductRow implements \JsonSerializable
 		$comparer = new ProductRowComparer();
 
 		return $comparer->areEquals(
-			$this->toArrayWithReserve(),
-			$anotherProductRow->toArrayWithReserve(),
+			$this->toArray(),
+			$anotherProductRow->toArray(),
 		);
 	}
 

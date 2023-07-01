@@ -12,6 +12,7 @@ jn.define('layout/ui/plan-restriction', (require, exports, module) => {
 			return new Promise(resolve => {
 				const params = {
 					modal: true,
+					title: BX.prop.getString(props, 'title', ''),
 					backdrop: {
 						mediumPositionHeight: 464,
 						forceDismissOnSwipeDown: true,
@@ -39,14 +40,6 @@ jn.define('layout/ui/plan-restriction', (require, exports, module) => {
 		componentDidMount()
 		{
 			this.layout.enableNavigationBarBorder(false);
-			this.layout.setTitle({
-				text: this.title,
-			});
-		}
-
-		get title()
-		{
-			return BX.prop.getString(this.props, 'title', '');
 		}
 
 		render()
@@ -96,7 +89,7 @@ jn.define('layout/ui/plan-restriction', (require, exports, module) => {
 							color: '#333333',
 							fontSize: 16,
 						},
-						text: BX.message('PLAN_RESTRICTION_DESCRIPTION'),
+						text: BX.prop.getString(this.props, 'text', BX.message('PLAN_RESTRICTION_DESCRIPTION')),
 					},
 				),
 				View(

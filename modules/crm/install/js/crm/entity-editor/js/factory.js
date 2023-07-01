@@ -95,6 +95,10 @@ if(typeof BX.Crm.EntityEditorControlFactory === "undefined")
 				{
 					return BX.UI.EntityEditorHtml.create(controlId, settings);
 				}
+				else if(type === "bb")
+				{
+					return BX.UI.EntityEditorBB.create(controlId, settings);
+				}
 				else if(type === "file")
 				{
 					return BX.UI.EntityEditorFile.create(controlId, settings);

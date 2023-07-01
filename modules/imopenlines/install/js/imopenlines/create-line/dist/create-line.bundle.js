@@ -10,21 +10,17 @@ this.BX = this.BX || {};
 	    babelHelpers.defineProperty(this, "cache", new main_core.Cache.MemoryCache());
 	    this.path = options.path;
 	    this.sliderWidth = options.sliderWidth;
-
 	    if (this.path) {
 	      this.init();
 	    }
 	  }
-
 	  babelHelpers.createClass(CreateLine, [{
 	    key: "init",
 	    value: function init() {
 	      var _this = this;
-
 	      if (this.isLocked) {
 	        return;
 	      }
-
 	      this.isLocked = true;
 	      main_core.ajax({
 	        url: '/bitrix/components/bitrix/imopenlines.lines/ajax.php',
@@ -38,7 +34,6 @@ this.BX = this.BX || {};
 	        processData: true,
 	        onsuccess: function onsuccess(data) {
 	          data = data || {};
-
 	          if (data.error) {
 	            _this.onFail(data);
 	          } else {
@@ -66,13 +61,12 @@ this.BX = this.BX || {};
 	        'text': ''
 	      };
 	      this.isLocked = false;
-
-	      if (responseData.limited) //see \Bitrix\ImOpenLines\Config::canActivateLine()
+	      if (responseData.limited)
+	        //see \Bitrix\ImOpenLines\Config::canActivateLine()
 	        {
 	          if (!B24 || !B24['licenseInfoPopup']) {
 	            return;
 	          }
-
 	          BX.UI.InfoHelper.show('limit_contact_center_ol_number');
 	        } else {
 	        responseData = responseData || {};

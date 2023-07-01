@@ -327,6 +327,13 @@ class EntityActivities
 				{
 					$counterType |= EntityCounterType::PENDING;
 				}
+
+				if (in_array(EntityCounterType::READY_TODO, $activityCounterFilterValues))
+				{
+					$counterType |= EntityCounterType::READY_TODO;
+					$counterExtras['PERIOD_FROM'] = new DateTime();
+					$counterExtras['PERIOD_TO'] = new DateTime();
+				}
 				if (in_array(EntityCounterType::INCOMING_CHANNEL, $activityCounterFilterValues) || empty($activityCounterFilterValues))
 				{
 					$counterType |= EntityCounterType::INCOMING_CHANNEL;
@@ -351,29 +358,44 @@ class EntityActivities
 					),
 				);
 			case $this->getStatusIdByCategoryId(self::STAGE_THIS_WEEK, $this->categoryId):
+
+				$counterType = EntityCounterType::PENDING;
 				$lastWeekDay = $this->getLastWeekDay(new DateTime());
 				$tomorrow = $this->getTomorrowDay(new DateTime());
+
+				if (in_array(EntityCounterType::READY_TODO, $activityCounterFilterValues))
+				{
+					$counterType = EntityCounterType::READY_TODO;
+				}
 
 				$counterExtras['PERIOD_FROM'] = $tomorrow;
 				$counterExtras['PERIOD_TO'] = $lastWeekDay;
 				$counterExtras['HAS_ANY_INCOMING_CHANEL'] = false;
+				$counterExtras['ONLY_MIN_DEADLINE'] = true;
 				return \Bitrix\Crm\Counter\EntityCounterFactory::create(
 					$this->entityTypeId,
-					EntityCounterType::CURRENT,
+					$counterType,
 					0,
 					$counterExtras
 				);
 			case $this->getStatusIdByCategoryId(self::STAGE_NEXT_WEEK, $this->categoryId):
+				$counterType = EntityCounterType::PENDING;
 				$lastWeekDay = $this->getLastWeekDay(new DateTime());
 				$nextWeekFirstDay = (clone $lastWeekDay)->add('+1 day');
 				$nextWeekLastDay = (clone $lastWeekDay)->add('+7 days');
 
+				if (in_array(EntityCounterType::READY_TODO, $activityCounterFilterValues))
+				{
+					$counterType = EntityCounterType::READY_TODO;
+				}
+
 				$counterExtras['PERIOD_FROM'] = $nextWeekFirstDay;
 				$counterExtras['PERIOD_TO'] = $nextWeekLastDay;
 				$counterExtras['HAS_ANY_INCOMING_CHANEL'] = false;
+				$counterExtras['ONLY_MIN_DEADLINE'] = true;
 				return \Bitrix\Crm\Counter\EntityCounterFactory::create(
 					$this->entityTypeId,
-					EntityCounterType::CURRENT,
+					$counterType,
 					0,
 					$counterExtras
 				);
@@ -385,12 +407,18 @@ class EntityActivities
 					$counterExtras
 				);
 			case $this->getStatusIdByCategoryId(self::STAGE_LATER, $this->categoryId):
+				$counterType = EntityCounterType::PENDING;
+				if (in_array(EntityCounterType::READY_TODO, $activityCounterFilterValues))
+				{
+					$counterType = EntityCounterType::READY_TODO;
+				}
 				$counterExtras['PERIOD_FROM'] = $this->getLastWeekDay(new DateTime())->add('+8 days');
-				$counterExtras['PERIOD_TO'] = null;
+				$counterExtras['PERIOD_TO'] = (new DateTime())->setDate(9990, 1, 1)->disableUserTime();
 				$counterExtras['HAS_ANY_INCOMING_CHANEL'] = false;
+				$counterExtras['ONLY_MIN_DEADLINE'] = true;
 				return \Bitrix\Crm\Counter\EntityCounterFactory::create(
 					$this->entityTypeId,
-					EntityCounterType::CURRENT,
+					$counterType,
 					0,
 					$counterExtras
 				);
@@ -419,14 +447,30 @@ class EntityActivities
 		}
 
 		if (
-			$stageId === $this->getStatusIdByCategoryId(self::STAGE_OVERDUE, $this->categoryId)
-			&& (
-				in_array(EntityCounterType::OVERDUE, $activityCounterFilterValues, true)
-				|| in_array(EntityCounterType::INCOMING_CHANNEL, $activityCounterFilterValues, true)
-			)
+			in_array(EntityCounterType::READY_TODO, $activityCounterFilterValues)
+			&& $stageId !== $this->getStatusIdByCategoryId(self::STAGE_IDLE, $this->categoryId)
+			&& $stageId !== $this->getStatusIdByCategoryId(self::STAGE_OVERDUE, $this->categoryId)
 		)
 		{
 			return false;
+		}
+
+		if ($stageId === $this->getStatusIdByCategoryId(self::STAGE_OVERDUE, $this->categoryId))
+		{
+			if (in_array(EntityCounterType::OVERDUE, $activityCounterFilterValues, true))
+			{
+				return false;
+			}
+
+			if (in_array(EntityCounterType::READY_TODO, $activityCounterFilterValues, true))
+			{
+				return true;
+			}
+
+			if (in_array(EntityCounterType::INCOMING_CHANNEL, $activityCounterFilterValues, true))
+			{
+				return false;
+			}
 		}
 
 		if (

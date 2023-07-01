@@ -189,12 +189,23 @@
 
 	BX.Crm.DocumentView.initButtons = function()
 	{
-		BX.bind(document.getElementById('crm-document-stamp'), 'click', BX.proxy(this.showChangeStampsDisabledMessage, this));
-		BX.bind(document.getElementById('crm-document-stamp'), 'change', BX.proxy(this.onChangeStamps, this));
+		const stampInput = document.getElementById('crm-document-stamp');
+		if (stampInput)
+		{
+			if (stampInput.parentNode)
+			{
+				BX.bind(stampInput.parentNode, 'click', BX.proxy(this.showChangeStampsDisabledMessage, this));
+			}
+			BX.bind(document.getElementById('crm-document-stamp'), 'change', BX.proxy(this.onChangeStamps, this));
+		}
+
 		var qrCodeInput = document.getElementById('crm-document-qr');
 		if (qrCodeInput)
 		{
-			BX.Event.bind(qrCodeInput, 'click', this.handleQrCodeInputClick.bind(this));
+			if (qrCodeInput.parentNode)
+			{
+				BX.Event.bind(qrCodeInput.parentNode, 'click', this.handleQrCodeInputClick.bind(this));
+			}
 			BX.Event.bind(qrCodeInput, 'change', this.handleQrCodeInputChange.bind(this));
 		}
 		BX.bind(document.getElementById('crm-document-edit-template'), 'click', BX.proxy(function(event)
@@ -335,7 +346,7 @@
 							})
 							, [
 							new BX.PopupWindowButton({
-								text: BX.message('CRM_DOCUMENT_VIEW_SIGN_NEW_BUTTON'),
+								text: BX.message('CRM_DOCUMENT_VIEW_SIGN_NEW_BUTTON_MSGVER_1'),
 								className: "ui-btn ui-btn-md ui-btn-primary",
 								events: {
 									click: function () {
@@ -345,7 +356,7 @@
 								}
 							}),
 							new BX.PopupWindowButton({
-								text: BX.message('CRM_DOCUMENT_VIEW_SIGN_OLD_BUTTON'),
+								text: BX.message('CRM_DOCUMENT_VIEW_SIGN_OLD_BUTTON_MSGVER_1'),
 								className: "ui-btn ui-btn-md ui-btn-primary",
 								events: {
 									click: function () {
@@ -354,7 +365,7 @@
 									}
 								}
 							})
-						], BX.message('CRM_DOCUMENT_VIEW_SIGN_POPUP_TITLE'), (function () {
+						], BX.message('CRM_DOCUMENT_VIEW_SIGN_POPUP_TITLE_MSGVER_1'), (function () {
 							this.sendedToSign = false;
 							this.rightPanelLoader.hide();
 						}).bind(this));
@@ -687,7 +698,7 @@
 		if (this.changeQrCodeDisabledReason)
 		{
 			BX.Crm.DocumentView.showPopupNotice(
-				this.this.changeQrCodeDisabledReason
+				this.changeQrCodeDisabledReason
 			);
 		}
 	};

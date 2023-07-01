@@ -82,7 +82,7 @@ class FromTask extends \Bitrix\Tasks\Util\Replicator\Task
 
 			foreach($data['TREE'] as $childId => $parentId)
 			{
-				if(!$parameters['COPY_DESTINATION_ITEM'] && $childId == $destination->getId()) // do not copy self one more time as a sub-task
+				if(!isset($parameters['COPY_DESTINATION_ITEM']) && $childId == $destination->getId()) // do not copy self one more time as a sub-task
 				{
 					continue;
 				}
@@ -155,7 +155,7 @@ class FromTask extends \Bitrix\Tasks\Util\Replicator\Task
 			}
 
 			$nextId = array_shift($queue);
-			if($met[$nextId])
+			if(array_key_exists($nextId, $met))
 			{
 				$result->addError('ILLEGAL_STRUCTURE.LOOP', Loc::getMessage('TASKS_REPLICATOR_SUBTREE_LOOP'));
 				break;

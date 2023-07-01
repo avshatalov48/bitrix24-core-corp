@@ -3,7 +3,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
-if ($templateParamsList === null)
+if (($templateParamsList ?? null) === null)
 {
 	$templateParamsList = $arResult['templateParamsList'];
 }

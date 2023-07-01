@@ -65,11 +65,11 @@ if ($arResult['SETTED_UP'] !== false): ?>
 
 						if (typeof link == "object")
 						{
-							BX.adjust(link, {style: {display: json.result == "ok" ? "inline-block" : "none"}});
+							BX.adjust(link, {style: {display: "inline-block"}});
 						}
 						if (typeof warning == "object")
 						{
-							BX.adjust(warning, {style: {display: json.result == "ok" ? "none" : "inline-block"}});
+							BX.adjust(warning, {style: {display: "none"}});
 						}
 					}
 

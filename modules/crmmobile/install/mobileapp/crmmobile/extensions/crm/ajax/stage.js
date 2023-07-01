@@ -2,7 +2,6 @@
  * @module crm/ajax/stage
  */
 jn.define('crm/ajax/stage', (require, exports, module) => {
-
 	const { BaseAjax } = require('crm/ajax/base');
 
 	const StageActions = {
@@ -67,5 +66,4 @@ jn.define('crm/ajax/stage', (require, exports, module) => {
 		StageAjax: new StageAjax(),
 		StageActions,
 	};
-
 });

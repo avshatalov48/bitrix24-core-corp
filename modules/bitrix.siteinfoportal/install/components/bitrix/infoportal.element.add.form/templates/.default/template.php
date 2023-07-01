@@ -7,7 +7,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 //exit();
 ?>
 
-<?if (count($arResult["ERRORS"])):?>
+<?if (!empty($arResult["ERRORS"])):?>
 	<?=ShowError(implode("<br />", $arResult["ERRORS"]))?>
 <?endif?>
 <?if ($arResult["MESSAGE"] <> ''):?>
@@ -25,7 +25,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 				<td colspan="2">&nbsp;</td>
 			</tr>
 		</thead>
-		<?if (is_array($arResult["PROPERTY_LIST"]) && count($arResult["PROPERTY_LIST"] > 0)):?>
+		<?if (!empty($arResult["PROPERTY_LIST"]) && is_array($arResult["PROPERTY_LIST"])):?>
 		<tbody>
 			<?foreach ($arResult["PROPERTY_LIST"] as $propertyID):?>
 				<tr>
@@ -57,7 +57,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 
 						if ($arResult["PROPERTY_LIST_FULL"][$propertyID]["MULTIPLE"] == "Y")
 						{
-							$inputNum = ($arParams["ID"] > 0 || count($arResult["ERRORS"]) > 0) ? count($arResult["ELEMENT_PROPERTIES"][$propertyID]) : 0;
+							$inputNum = ($arParams["ID"] > 0 || !empty($arResult["ERRORS"])) && !empty($arResult["ELEMENT_PROPERTIES"][$propertyID]) ? count($arResult["ELEMENT_PROPERTIES"][$propertyID]) : 0;
 							$inputNum += $arResult["PROPERTY_LIST_FULL"][$propertyID]["MULTIPLE_CNT"];
 						}
 						else
@@ -74,7 +74,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 							case "USER_TYPE":
 								for ($i = 0; $i<$inputNum; $i++)
 								{
-									if ($arParams["ID"] > 0 || count($arResult["ERRORS"]) > 0)
+									if ($arParams["ID"] > 0 || !empty($arResult["ERRORS"]))
 									{
 										$value = intval($propertyID) > 0 ? $arResult["ELEMENT_PROPERTIES"][$propertyID][$i]["~VALUE"] : $arResult["ELEMENT"][$propertyID];
 										$description = intval($propertyID) > 0 ? $arResult["ELEMENT_PROPERTIES"][$propertyID][$i]["DESCRIPTION"] : "";
@@ -142,7 +142,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 								for ($i = 0; $i<$inputNum; $i++)
 								{
 
-									if ($arParams["ID"] > 0 || count($arResult["ERRORS"]) > 0)
+									if ($arParams["ID"] > 0 || !empty($arResult["ERRORS"]))
 									{
 										$value = intval($propertyID) > 0 ? $arResult["ELEMENT_PROPERTIES"][$propertyID][$i]["VALUE"] : $arResult["ELEMENT"][$propertyID];
 									}
@@ -164,7 +164,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 							case "N":
 								for ($i = 0; $i<$inputNum; $i++)
 								{
-									if ($arParams["ID"] > 0 || count($arResult["ERRORS"]) > 0)
+									if ($arParams["ID"] > 0 || !empty($arResult["ERRORS"]))
 									{
 										$value = intval($propertyID) > 0 ? $arResult["ELEMENT_PROPERTIES"][$propertyID][$i]["VALUE"] : $arResult["ELEMENT"][$propertyID];
 									}
@@ -246,7 +246,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 										foreach ($arResult["PROPERTY_LIST_FULL"][$propertyID]["ENUM"] as $key => $arEnum)
 										{
 											$checked = false;
-											if ($arParams["ID"] > 0 || count($arResult["ERRORS"]) > 0)
+											if ($arParams["ID"] > 0 || !empty($arResult["ERRORS"]))
 											{
 												if (is_array($arResult["ELEMENT_PROPERTIES"][$propertyID]))
 												{
@@ -278,7 +278,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 										foreach ($arResult["PROPERTY_LIST_FULL"][$propertyID]["ENUM"] as $key => $arEnum)
 										{
 											$checked = false;
-											if ($arParams["ID"] > 0 || count($arResult["ERRORS"]) > 0)
+											if ($arParams["ID"] > 0 || !empty($arResult["ERRORS"]))
 											{
 												foreach ($arResult[$sKey][$propertyID] as $elKey => $arElEnum)
 												{

@@ -38,6 +38,7 @@ $MESS["TASKS_LIST_COLUMN_3"] = "Created by";
 $MESS["TASKS_LIST_COLUMN_4"] = "Responsible person";
 $MESS["TASKS_LIST_COLUMN_5"] = "Deadline";
 $MESS["TASKS_LIST_COLUMN_6"] = "Score";
+$MESS["TASKS_LIST_COLUMN_6_MSGVER_1"] = "Rating";
 $MESS["TASKS_LIST_COLUMN_7"] = "CRM";
 $MESS["TASKS_LIST_COLUMN_8"] = "Priority";
 $MESS["TASKS_LIST_COLUMN_9"] = "Status";
@@ -92,6 +93,7 @@ Start to Finish (SF)
 Advanced Tasks + Advanced CRM + Advanced Telephony and other additional features are available in selected commercial plans.";
 $MESS["TASKS_LIST_TRIAL_EXPIRED_TITLE_V2"] = "Available only in Bitrix24's Advanced Tasks";
 $MESS["TASKS_MARK"] = "Score";
+$MESS["TASKS_MARK_MSGVER_1"] = "Rating";
 $MESS["TASKS_MARK_N"] = "Negative";
 $MESS["TASKS_MARK_NONE"] = "None";
 $MESS["TASKS_MARK_P"] = "Positive";

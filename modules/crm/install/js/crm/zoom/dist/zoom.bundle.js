@@ -1,51 +1,49 @@
 this.BX = this.BX || {};
-(function (exports,main_core,main_core_events,ui_timeline,calendar_planner,calendar_util) {
+(function (exports,main_core,main_core_events,calendar_planner,calendar_util) {
 	'use strict';
 
-	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5, _templateObject6, _templateObject7, _templateObject8, _templateObject9, _templateObject10, _templateObject11, _templateObject12, _templateObject13, _templateObject14;
+	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5, _templateObject6, _templateObject7, _templateObject8, _templateObject9, _templateObject10, _templateObject11, _templateObject12, _templateObject13;
 	/**
-	 * @memberOf BX.UI.Timeline
+	 * @memberOf BX.Crm.Timeline.ToolBar
 	 * @mixes EventEmitter
 	 */
 
-	var Zoom = /*#__PURE__*/function (_Timeline$Editor) {
-	  babelHelpers.inherits(Zoom, _Timeline$Editor);
-
+	var Zoom = /*#__PURE__*/function () {
 	  function Zoom(params) {
-	    var _this;
+	    var _this = this;
 
 	    babelHelpers.classCallCheck(this, Zoom);
-	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Zoom).call(this, params));
-	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "TITLE", 'Zoom');
-	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "error", false);
-	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "errorMessages", []);
-	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "cache", new main_core.Cache.MemoryCache());
-	    _this.containerId = params.container;
-	    _this.manager = params.manager;
-	    _this.userId = +params.userId;
-
-	    _this.setEventNamespace('BX.UI.Timeline.ZoomEditor');
-
-	    main_core.Dom.append(_this.getFormContainer(), BX(_this.containerId));
-	    main_core.Event.bind(_this.getDateContainer(), 'click', function (e) {
+	    babelHelpers.defineProperty(this, "TITLE", 'Zoom');
+	    babelHelpers.defineProperty(this, "error", false);
+	    babelHelpers.defineProperty(this, "errorMessages", []);
+	    babelHelpers.defineProperty(this, "cache", new main_core.Cache.MemoryCache());
+	    this.container = params.container;
+	    this.ownerTypeId = params.ownerTypeId;
+	    this.ownerId = params.ownerId;
+	    this.userId = +main_core.Loc.getMessage('USER_ID');
+	    this.onFinishEdit = params.onFinishEdit;
+	    main_core.Dom.append(this.getFormContainer(), this.container);
+	    main_core.Dom.append(this.renderButtons(), this.container);
+	    main_core.Event.bind(this.getDateContainer(), 'click', function (e) {
 	      _this.onDateFieldClick(e);
 	    });
-	    main_core.Event.bind(_this.getTimeContainer(), 'click', function () {
+	    main_core.Event.bind(this.getTimeContainer(), 'click', function () {
 	      _this.onTimeSwitchClick(_this.getTimeInputField());
 	    });
-	    main_core.Event.bind(_this.getDateContainer(), 'change', function () {
+	    main_core.Event.bind(this.getDateContainer(), 'change', function () {
 	      _this.onUpdateDateTime();
 	    });
-	    main_core.Event.bind(_this.getTimeContainer(), 'change', function () {
+	    main_core.Event.bind(this.getTimeContainer(), 'change', function () {
 	      _this.onUpdateDateTime();
 	    });
-	    main_core.Event.bind(_this.getDurationInputField(), 'change', function () {
+	    main_core.Event.bind(this.getDurationInputField(), 'change', function () {
 	      _this.onUpdateDateTime();
 	    });
-	    main_core.Event.bind(_this.getDurationTypeInputField(), 'change', function () {
+	    main_core.Event.bind(this.getDurationTypeInputField(), 'change', function () {
 	      _this.onUpdateDateTime();
 	    });
-	    return _this;
+	    this.refreshStartTimeView();
+	    this.initPlanner();
 	  }
 
 	  babelHelpers.createClass(Zoom, [{
@@ -249,14 +247,6 @@ this.BX = this.BX || {};
 	      });
 	    }
 	  }, {
-	    key: "render",
-	    value: function render() {
-	      this.refreshStartTimeView();
-	      this.initPlanner();
-	      this.layout.container = main_core.Tag.render(_templateObject13 || (_templateObject13 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-timeline-zoom-editor\">\n\t\t\t\t", "\n\t\t\t</div>"])), this.renderButtons());
-	      return this.getContainer();
-	    }
-	  }, {
 	    key: "initPlanner",
 	    value: function initPlanner() {
 	      this.planner = new calendar_planner.Planner({
@@ -317,22 +307,12 @@ this.BX = this.BX || {};
 	      });
 	    }
 	  }, {
-	    key: "onFocus",
-	    value: function onFocus() {
-	      var container = this.getContainer();
-
-	      if (container) {
-	        main_core.Dom.addClass(container, "focus");
-	      }
-	    }
-	  }, {
 	    key: "save",
 	    value: function save() {
 	      this.cleanError();
 	      main_core.Dom.addClass(this.renderSaveButton(), "ui-btn-wait");
-	      var entityInfo = this.manager.getOwnerInfo();
-	      var entityId = entityInfo['ENTITY_ID'];
-	      var entityType = entityInfo['ENTITY_TYPE_NAME'];
+	      var entityId = this.ownerId;
+	      var entityType = BX.CrmEntityType.resolveName(this.ownerTypeId);
 	      var dateStart = this.getDateInputField().value;
 	      var timeStart = this.getTimeInputField().textContent;
 	      var timestampStart = this.getStartDateTime().getTime();
@@ -389,56 +369,10 @@ this.BX = this.BX || {};
 	      this.refreshStartTimeView();
 	      this.refreshDuration();
 	      this.planner.updateSelector(this.getStartDateTime(), this.getEndDateTime(), false);
-	      this.setVisible(false);
 
-	      this.manager._commentEditor.setVisible(true);
-
-	      this.manager._menuBar.setActiveItemById("comment");
-	    }
-	  }, {
-	    key: "setVisible",
-	    value: function setVisible(show) {
-	      var container = this.getContainer();
-
-	      if (!show) {
-	        if (container) {
-	          BX.hide(container);
-	        }
-	      } else {
-	        if (!container) {
-	          container = this.renderInside();
-	        }
-
-	        if (container) {
-	          BX.show(container);
-	        }
-
-	        this.onFocus();
+	      if (main_core.Type.isFunction(this.onFinishEdit)) {
+	        this.onFinishEdit();
 	      }
-	    }
-	  }, {
-	    key: "renderInside",
-	    value: function renderInside() {
-	      if (main_core.Type.isStringFilled(this.containerId)) {
-	        var container = document.querySelector("#" + this.containerId);
-	        this.render();
-
-	        if (main_core.Type.isElementNode(container)) {
-	          var node = this.layout.container.firstElementChild;
-
-	          while (node) {
-	            container.appendChild(node);
-	            node = node.nextSibling;
-	          }
-
-	          main_core.Dom.remove(this.layout.container);
-	          main_core.Dom.addClass(container, "ui-timeline-zoom-editor");
-	          this.layout.container = container;
-	        }
-	      }
-
-	      this.containerId = null;
-	      return this.getContainer();
 	    }
 	  }, {
 	    key: "showError",
@@ -449,8 +383,8 @@ this.BX = this.BX || {};
 	      });
 
 	      if (!this.error && errorText !== '') {
-	        this.errorElement = main_core.Tag.render(_templateObject14 || (_templateObject14 = babelHelpers.taggedTemplateLiteral(["<div class=\"zoom-error-message ui-alert ui-alert-danger ui-alert-icon-danger\">\n\t\t\t\t<span class=\"ui-alert-message\">", "</span>\n\t\t\t</div>"])), errorText);
-	        main_core.Dom.append(this.errorElement, this.layout.container.firstElementChild);
+	        this.errorElement = main_core.Tag.render(_templateObject13 || (_templateObject13 = babelHelpers.taggedTemplateLiteral(["<div class=\"zoom-error-message ui-alert ui-alert-danger ui-alert-icon-danger\">\n\t\t\t\t<span class=\"ui-alert-message\">", "</span>\n\t\t\t</div>"])), errorText);
+	        main_core.Dom.append(this.errorElement, this.container.firstElementChild);
 	        this.error = true;
 	      }
 
@@ -495,13 +429,15 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "onNotAvailableHandler",
 	    value: function onNotAvailableHandler() {
-	      BX.UI.InfoHelper.show('limit_video_conference_zoom_crm');
+	      var _BX$UI, _BX$UI$InfoHelper;
+
+	      (_BX$UI = BX.UI) === null || _BX$UI === void 0 ? void 0 : (_BX$UI$InfoHelper = _BX$UI.InfoHelper) === null || _BX$UI$InfoHelper === void 0 ? void 0 : _BX$UI$InfoHelper.show('limit_video_conference_zoom_crm');
 	    }
 	  }]);
 	  return Zoom;
-	}(ui_timeline.Timeline.Editor);
+	}();
 
 	exports.Zoom = Zoom;
 
-}((this.BX.Crm = this.BX.Crm || {}),BX,BX.Event,BX.UI,BX.Calendar,BX.Calendar));
+}((this.BX.Crm = this.BX.Crm || {}),BX,BX.Event,BX.Calendar,BX.Calendar));
 //# sourceMappingURL=zoom.bundle.js.map

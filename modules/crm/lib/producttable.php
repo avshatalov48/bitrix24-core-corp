@@ -16,9 +16,9 @@ use Bitrix\Main\Entity;
  *
  * <<< ORMENTITYANNOTATION
  * @method static EO_Product_Query query()
- * @method static EO_Product_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Product_Result getByPrimary($primary, array $parameters = [])
  * @method static EO_Product_Result getById($id)
- * @method static EO_Product_Result getList(array $parameters = array())
+ * @method static EO_Product_Result getList(array $parameters = [])
  * @method static EO_Product_Entity getEntity()
  * @method static \Bitrix\Crm\EO_Product createObject($setDefaultValues = true)
  * @method static \Bitrix\Crm\EO_Product_Collection createCollection()

@@ -1,5 +1,9 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 /**
  * @var array $arParams
@@ -10,51 +14,78 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
  * @global CDatabase $DB
  */
 
-use Bitrix\Crm\Restriction\OrderRestriction;
-use Bitrix\Main\Localization\Loc;
+use Bitrix\Crm\Order\Permissions;
 use Bitrix\Crm\Service;
-use \Bitrix\Crm\Order\Permissions,
-	\Bitrix\Main\Config\Option;
+use Bitrix\Main\Config\Option;
+use Bitrix\Main\Localization\Loc;
 
 if (!CModule::IncludeModule('crm'))
+{
 	return;
+}
 
 $currentUserID = CCrmSecurityHelper::GetCurrentUserID();
 $CrmPerms = CCrmPerms::GetCurrentUserPermissions();
-if(!Permissions\Order::checkReadPermission(0, $CrmPerms))
+if (!Permissions\Order::checkReadPermission(0, $CrmPerms))
+{
 	return;
+}
 
-$arParams['PATH_TO_ORDER_LIST'] = CrmCheckPath('PATH_TO_ORDER_LIST', $arParams['PATH_TO_ORDER_LIST'], $APPLICATION->GetCurPage());
-$arParams['PATH_TO_ORDER_EDIT'] = CrmCheckPath('PATH_TO_ORDER_EDIT', $arParams['PATH_TO_ORDER_EDIT'], $APPLICATION->GetCurPage().'?order_id=#order_id#&edit');
-$arParams['PATH_TO_ORDER_IMPORT'] = CrmCheckPath('PATH_TO_ORDER_IMPORT', $arParams['PATH_TO_ORDER_IMPORT'], $APPLICATION->GetCurPage().'?import');
-$arParams['PATH_TO_MIGRATION'] = SITE_DIR."marketplace/category/migration/";
-$arParams['PATH_TO_ORDER_FORM'] = CrmCheckPath('PATH_TO_ORDER_FORM', $arParams['PATH_TO_ORDER_FORM'], $APPLICATION->GetCurPage());
+$arParams['PATH_TO_ORDER_LIST'] = CrmCheckPath(
+	'PATH_TO_ORDER_LIST',
+	$arParams['PATH_TO_ORDER_LIST'] ?? '',
+	$APPLICATION->GetCurPage()
+);
+
+$arParams['PATH_TO_ORDER_EDIT'] = CrmCheckPath(
+	'PATH_TO_ORDER_EDIT',
+	$arParams['PATH_TO_ORDER_EDIT'] ?? '',
+	$APPLICATION->GetCurPage() . '?order_id=#order_id#&edit'
+);
+
+$arParams['PATH_TO_ORDER_IMPORT'] = CrmCheckPath(
+	'PATH_TO_ORDER_IMPORT',
+	$arParams['PATH_TO_ORDER_IMPORT'] ?? '',
+	$APPLICATION->GetCurPage() . '?import'
+);
+
+$arParams['PATH_TO_MIGRATION'] = SITE_DIR . "marketplace/category/migration/";
+
+$arParams['PATH_TO_ORDER_FORM'] = CrmCheckPath(
+	'PATH_TO_ORDER_FORM',
+	$arParams['PATH_TO_ORDER_FORM'] ?? '',
+	$APPLICATION->GetCurPage()
+);
 
 $arParams['ELEMENT_ID'] = isset($arParams['ELEMENT_ID']) ? (int)$arParams['ELEMENT_ID'] : 0;
-$arResult['CONVERSION_PERMITTED'] = isset($arParams['CONVERSION_PERMITTED']) ? $arParams['CONVERSION_PERMITTED'] : true;
+$arResult['CONVERSION_PERMITTED'] = $arParams['CONVERSION_PERMITTED'] ?? true;
 
 if (!isset($arParams['TYPE']))
+{
 	$arParams['TYPE'] = 'list';
+}
 
 if (isset($_REQUEST['copy']))
+{
 	$arParams['TYPE'] = 'copy';
+}
 
-$toolbarID = 'toolbar_order_'.$arParams['TYPE'];
-if($arParams['ELEMENT_ID'] > 0)
+$toolbarID = 'toolbar_order_' . $arParams['TYPE'];
+if ($arParams['ELEMENT_ID'] > 0)
 {
 	$toolbarID .= '_'.$arParams['ELEMENT_ID'];
 }
 $arResult['TOOLBAR_ID'] = $toolbarID;
 
-$arResult['BUTTONS'] = array();
+$arResult['BUTTONS'] = [];
 
-if ($arParams['TYPE'] == 'list' || $arParams['TYPE'] == 'kanban')
+if ($arParams['TYPE'] === 'list' || $arParams['TYPE'] === 'kanban')
 {
-	$bRead   = Permissions\Order::checkReadPermission(0, $CrmPerms);
+	$bRead = Permissions\Order::checkReadPermission(0, $CrmPerms);
 	$bExport = Permissions\Order::checkExportPermission($CrmPerms);
 	$bImport = Permissions\Order::checkImportPermission($CrmPerms);
-	$bAdd    = Permissions\Order::checkCreatePermission($CrmPerms);
-	$bWrite  = Permissions\Order::checkUpdatePermission(0, $CrmPerms);
+	$bAdd = Permissions\Order::checkCreatePermission($CrmPerms);
+	$bWrite = Permissions\Order::checkUpdatePermission(0, $CrmPerms);
 	$bDelete = false;
 	$bConfig = $CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE');
 }
@@ -63,34 +94,36 @@ else
 	$bExport = false;
 	$bImport = false;
 
-	$bRead   = Permissions\Order::checkReadPermission($arParams['ELEMENT_ID'], $CrmPerms);
-	$bAdd    = Permissions\Order::checkCreatePermission($CrmPerms);
-	$bWrite  = Permissions\Order::checkUpdatePermission($arParams['ELEMENT_ID'], $CrmPerms);
+	$bRead = Permissions\Order::checkReadPermission($arParams['ELEMENT_ID'], $CrmPerms);
+	$bAdd = Permissions\Order::checkCreatePermission($CrmPerms);
+	$bWrite = Permissions\Order::checkUpdatePermission($arParams['ELEMENT_ID'], $CrmPerms);
 	$bDelete = Permissions\Order::checkDeletePermission($arParams['ELEMENT_ID'], $CrmPerms);
 }
 
-if (isset($arParams['DISABLE_EXPORT']) && $arParams['DISABLE_EXPORT'] == 'Y')
+if (isset($arParams['DISABLE_EXPORT']) && $arParams['DISABLE_EXPORT'] === 'Y')
 {
 	$bExport = false;
 }
 
 if (!$bRead && !$bAdd && !$bWrite)
-	return false;
-
-//Skip COPY menu in slider mode
-if($arParams['TYPE'] == 'copy' && \Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isSliderEnabled())
 {
 	return false;
 }
 
-if($arParams['TYPE'] === 'details')
+//Skip COPY menu in slider mode
+if ($arParams['TYPE'] === 'copy' && \Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isSliderEnabled())
 {
-	if($arParams['ELEMENT_ID'] <= 0)
+	return false;
+}
+
+if ($arParams['TYPE'] === 'details')
+{
+	if ($arParams['ELEMENT_ID'] <= 0)
 	{
 		return false;
 	}
 
-	$scripts = isset($arParams['~SCRIPTS']) && is_array($arParams['~SCRIPTS']) ? $arParams['~SCRIPTS'] : array();
+	$scripts = isset($arParams['~SCRIPTS']) && is_array($arParams['~SCRIPTS']) ? $arParams['~SCRIPTS'] : [];
 
 	if (!empty($arParams['BIZPROC_STARTER_DATA']))
 	{
@@ -105,19 +138,19 @@ if($arParams['TYPE'] === 'details')
 	//Force start new bar after first button
 	$arResult['BUTTONS'][] = array('NEWBAR' => true);
 
-	if($bWrite)
+	if ($bWrite)
 	{
 		$arResult['BUTTONS'][] = array(
 			'TYPE' => 'crm-communication-panel',
 			'DATA' => array(
 				'ENABLE_CALL' => \Bitrix\Main\ModuleManager::isModuleInstalled('calendar'),
-				'OWNER_INFO' => isset($arParams['OWNER_INFO']) ? $arParams['OWNER_INFO'] : array(),
-				'MULTIFIELDS' => isset($arParams['MULTIFIELD_DATA']) ? $arParams['MULTIFIELD_DATA'] : array()
+				'OWNER_INFO' => $arParams['OWNER_INFO'] ?? [],
+				'MULTIFIELDS' => $arParams['MULTIFIELD_DATA'] ?? [],
 			)
 		);
 	}
 
-	if($bAdd)
+	if ($bAdd)
 	{
 		$copyUrl = CHTTP::urlAddParams(
 			Service\Sale\EntityLinkBuilder\EntityLinkBuilder::getInstance()->getOrderDetailsLink(
@@ -135,7 +168,7 @@ if($arParams['TYPE'] === 'details')
 		);
 	}
 
-	if($bDelete && isset($scripts['DELETE']))
+	if ($bDelete && isset($scripts['DELETE']))
 	{
 		$arResult['BUTTONS'][] = array(
 			'TEXT' => GetMessage('ORDER_DELETE'),
@@ -154,7 +187,7 @@ if($arParams['TYPE'] === 'details')
 		'ICON' => 'btn-edit'
 	);
 
-	if(\Bitrix\Crm\Integration\DocumentGeneratorManager::getInstance()->isDocumentButtonAvailable())
+	if (\Bitrix\Crm\Integration\DocumentGeneratorManager::getInstance()->isDocumentButtonAvailable())
 	{
 		$arResult['BUTTONS'][] = [
 			'CODE' => 'document',
@@ -170,21 +203,22 @@ if($arParams['TYPE'] === 'details')
 	}
 
 	$this->IncludeComponentTemplate();
+
 	return;
 }
 
-$sites = array();
-$sitesTmp = array();
+$sites = [];
+$sitesTmp = [];
 $res = \Bitrix\Main\SiteTable::getList([
 	'filter' => ['=ACTIVE' => 'Y', '!LID' => 'ex'],
-	'order' => ['SORT' => 'ASC', 'LID' => 'ASC']	
+	'order' => ['SORT' => 'ASC', 'LID' => 'ASC']
 ]);
 
 while($site = $res->fetch())
 {
 	$optSite = Option::get("sale", "SHOP_SITE_".$site['LID'], "");
 
-	if($site['LID'] == $optSite)
+	if ($site['LID'] == $optSite)
 	{
 		$sites[$site['LID']] = '['.$site['LID'].'] '.htmlspecialcharsbx($site['NAME']);
 	}
@@ -194,12 +228,12 @@ while($site = $res->fetch())
 	}
 }
 
-if(count($sites) <= 0)
+if (count($sites) <= 0)
 {
 	$sites = $sitesTmp;
 }
 
-if($bAdd)
+if ($bAdd)
 {
 	$link = CCrmUrlUtil::AddUrlParams(
 		Service\Sale\EntityLinkBuilder\EntityLinkBuilder::getInstance()->getOrderDetailsLink(
@@ -209,7 +243,7 @@ if($bAdd)
 		array('SITE_ID' => key($sites))
 	);
 
-	if(count($sites) == 1)
+	if (count($sites) === 1)
 	{
 		$arResult['BUTTONS'][] = array(
 			'TEXT' => GetMessage('ORDER_ADD'),
@@ -220,9 +254,9 @@ if($bAdd)
 	}
 	else
 	{
-		$items = array();
+		$items = [];
 
-		foreach($sites as  $lid => $name)
+		foreach ($sites as  $lid => $name)
 		{
 			$onClickHandler = 'BX.SidePanel.Instance.open(\'' .
 				CCrmUrlUtil::AddUrlParams(
@@ -250,7 +284,7 @@ if($bAdd)
 	}
 }
 
-if($arParams['TYPE'] === 'list')
+if ($arParams['TYPE'] === 'list')
 {
 	if ($bExport)
 	{
@@ -276,9 +310,9 @@ if($arParams['TYPE'] === 'list')
 					$componentName,
 					array(
 						'ORDER_COUNT' => '20',
-						'PATH_TO_ORDER_SHOW' => $arResult['PATH_TO_ORDER_SHOW'],
-						'PATH_TO_ORDER_EDIT' => $arResult['PATH_TO_ORDER_EDIT'],
-						'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'],
+						'PATH_TO_ORDER_SHOW' => $arResult['PATH_TO_ORDER_SHOW'] ?? '',
+						'PATH_TO_ORDER_EDIT' => $arResult['PATH_TO_ORDER_EDIT'] ?? '',
+						'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'] ?? '',
 						'NAVIGATION_CONTEXT_ID' => \CCrmOwnerType::OrderName
 					)
 				),
@@ -340,6 +374,7 @@ if ($arParams['TYPE'] === 'kanban' && $GLOBALS['USER']->canDoOperation('edit_oth
 	$arResult['BUTTONS'][] = array('NEWBAR' => true);
 	$arResult['BUTTONS'][] = array('NEWBAR' => true);
 }
+
 if ($qty >= 3)
 {
 	$arResult['BUTTONS'][] = array('NEWBAR' => true);

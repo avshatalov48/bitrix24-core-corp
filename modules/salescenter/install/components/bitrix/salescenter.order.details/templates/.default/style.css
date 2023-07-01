@@ -339,7 +339,7 @@
 .bx-dark .checkout-payment-title {
 	color: #fff;
 }
-	/*endregion*/
+/*endregion*/
 
 /*region contacts*/
 .contacts-phone {
@@ -469,4 +469,332 @@
 
 .order-document-actions-action a:hover {
 	text-decoration: none;
+}
+
+/* region gray-theme */
+
+.salescenter-order-details {
+	padding-bottom: 15px;
+	font-family: "SF Pro Text", "SF UI Text", "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-weight: 400;
+	color: #ffffff;
+	z-index: 1;
+}
+
+.salescenter-order-details::before {
+	content: '';
+	z-index: -1;
+	position: absolute;
+	top: 0;
+	left: 50%;
+	display: block;
+	width: 100vw;
+	height: 334px;
+	transform: translate(-50%, 0);
+	/*background: url(./images/salescenter_bg.png) no-repeat center;*/
+	background-size: cover;
+	pointer-events: none;
+}
+
+.salescenter-order-details__header {
+	padding: 18px 0;
+	box-sizing: border-box;
+	border-bottom: 1px solid rgba(255,255,255,.2);
+	font-size: 28px;
+	line-height: 33px;
+	font-weight: 700;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.salescenter-order-details__header-text_color {
+	color: #2fc6f6;
+}
+
+.salescenter-order-details__info-order {
+	padding: 14px 0;
+	margin-bottom: 17px;
+	font-size: 16px;
+	line-height: 20px;
+	letter-spacing: -0.15px;
+	color: rgba(255,255,255,.5);
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.salescenter-order-details__section {
+	padding: 0 10px;
+	margin-bottom: 22px;
+	border-radius: 6px;
+	background: #31313b;
+}
+
+.salescenter-order-details__section.--internal-gap {
+	padding: 10px 18px;
+}
+
+.salescenter-order-details__product_items {
+	z-index: 1;
+	position: relative;
+	margin: 10px 0 22px;
+}
+
+.salescenter-order-details__product_items::before {
+	content: '';
+	z-index: -1;
+	position: absolute;
+	top: -13px;
+	left: -20px;
+	display: block;
+	width: calc(100% + 40px);
+	height: calc(100% + 24px);
+	padding: 20px;
+	border-radius: 10px;
+	background: linear-gradient(180deg, #1D6890 0%, #1D587A 100%);
+	box-shadow: 0 3px 6px 0 rgba(0,0,0,.16);
+	pointer-events: none;
+}
+
+.salescenter-order-details__product_item {
+	position: relative;
+	display: flex;
+	padding: 9px 0;
+	margin-top: 16px;
+}
+
+.salescenter-order-details__product_item::before {
+	content: '';
+	position: absolute;
+	left: 0;
+	top: -9px;
+	display: block;
+	width: 100%;
+	height: 1px;
+	background: #ffffff;
+	opacity: .1;
+}
+
+.salescenter-order-details__product_item:first-of-type {
+	margin-top: 0;
+}
+
+.salescenter-order-details__product_item:first-of-type::before {
+	display: none;
+}
+
+.salescenter-order-details__product_image {
+	flex-shrink: 0;
+	width: 60px;
+	height: 60px;
+	margin-right: 16px;
+}
+
+.salescenter-order-details__product_img {
+	width: 100%;
+	height: 100%;
+	border-radius: 8px;
+	object-fit: cover;
+}
+
+.salescenter-order-details__product_info {
+	flex: 1;
+	margin-right: 15px;
+	font-family: "SF UI Display", "SF UI Text", "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-weight: 500;
+	line-height: 21px;
+	letter-spacing: -0.35px;
+	word-wrap: break-word;
+	overflow: hidden;
+}
+
+.salescenter-order-details__product_name {
+	font-size: 16px;
+}
+
+.salescenter-order-details__product_additional {
+	font-size: 14px;
+	color: #a8adb4;
+}
+
+.salescenter-order-details__product_additional span {
+	border-right: 1px solid #a8adb4;
+	padding-right: 3px;
+	margin-right: 4px;
+}
+
+.salescenter-order-details__product_additional span:last-child {
+	border-right: none;
+}
+
+.salescenter-order-details__product_total {
+	flex-shrink: 0;
+	margin-left: auto;
+	padding-right: 5px;
+}
+
+.salescenter-order-details__product_price {
+	margin-bottom: 5px;
+	font-family: "SF UI Display", "SF UI Text", "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-weight: 500;
+	font-size: 15px;
+	line-height: 18px;
+	text-align: right;
+	letter-spacing: -0.24px;
+}
+
+.salescenter-order-details__product_old-price {
+	margin-bottom: 6px;
+	font-family: "SF UI Display", "SF UI Text", "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-weight: 500;
+	font-size: 13px;
+	line-height: 16px;
+	text-align: right;
+	letter-spacing: -0.2px;
+	text-decoration-line: line-through;
+	color: #ffa900;
+	opacity: .8;
+}
+
+.salescenter-order-details__order-info_details .salescenter-order-details__product_old-price {
+	margin-right: 6px;
+}
+
+.salescenter-order-details__product_quantity {
+	font-family: "SF UI Display", "SF UI Text", "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-size: 13px;
+	line-height: 16px;
+	text-align: right;
+	letter-spacing: -0.2px;
+	color: #a8adb4;
+}
+
+.salescenter-order-details__order-info {
+	display: flex;
+	padding: 4px 7px;
+	justify-content: space-between;
+	font-family: "SF UI Display", "SF UI Text", "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.salescenter-order-details__order-info_name {
+	flex: 1;
+	margin-right: 5px;
+	text-overflow: ellipsis;
+	overflow: hidden;
+	font-size: 15px;
+	line-height: 1.37;
+	letter-spacing: -0.15px;
+	color: #a8adb4;
+}
+
+.salescenter-order-details__order-info_name span{
+	color: #ffffff;
+}
+
+.salescenter-order-details__total {
+	display: flex;
+	justify-content: space-between;
+	align-items: baseline;
+	padding: 14px 0;
+	margin: 14px 7px 0;
+	border-top: 1px solid rgba(255,255,255,.1);
+	font-family: "SF UI Display", "SF UI Text", "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.salescenter-order-details__total_text {
+	font-weight: 400;
+	font-size: 20px;
+	line-height: 24px;
+	letter-spacing: -0.15px;
+}
+
+.salescenter-order-details__total_sum {
+	font-size: 24px;
+	font-weight: 500;
+	line-height: 29px;
+	text-align: right;
+	letter-spacing: -0.37px;
+}
+
+.salescenter-order-details__order-info_details {
+	font-family: "SF UI Display", "SF UI Text", "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-size: 15px;
+	font-weight: 500;
+	line-height: 18px;
+	text-align: right;
+	letter-spacing: -0.24px;
+}
+
+.salescenter-order-details__product_saving {
+	color: #78be1f;
+}
+
+.gray-theme .salescenter-order-details__item-button {
+	flex-shrink: 0;
+	padding: 6px 20px;
+	border-radius: 99rem;
+	font-family: "SF Pro Text", "SF UI Text", "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-size: 13px;
+	line-height: 24px;
+	font-weight: 700;
+	text-align: center;
+	letter-spacing: 0.2px;
+	text-transform: uppercase;
+
+	background: #326446;
+	transition: .2s;
+	cursor: pointer;
+}
+
+.gray-theme .salescenter-order-details__item-button:hover {
+	background: #348856;
+}
+
+.gray-theme .salescenter-order-details__item-button a  {
+	color: rgba(255,255,255,.8);
+}
+
+.gray-theme .salescenter-order-details__item-button a:hover  {
+	color: rgba(255,255,255,.8);
+	text-decoration: none;
+}
+
+.gray-theme .page-section {
+	margin-bottom: 22px;
+}
+
+.gray-theme .page-section-title {
+	color: #ffffff;
+	font-size: 15px;
+	font-weight: 400;
+	letter-spacing: -0.15px;
+}
+
+.gray-theme .order-document-title {
+	font-size: 16px;
+	line-height: 19px;
+	color: #ffffff;
+	padding-right: 10px;
+}
+
+@media (max-width: 780px) {
+	.gray-theme {
+		padding: 0 20px;
+	}
+}
+
+@media (max-width: 480px) {
+	.salescenter-order-details__title {
+		padding: 10px 3px;
+		font-size: 14px;
+	}
+
+	.salescenter-order-details__product_items::before {
+		left: -15px;
+		width: calc(100% + 30px);
+	}
+
+	.salescenter-order-details__payment_item::before {
+		width: 100%;
+		left: 0;
+	}
 }

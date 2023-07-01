@@ -56,9 +56,15 @@ class TasksWidgetCheckListNewComponent extends TasksBaseComponent
 		],
 		'SCRUM_ENTITY' => [
 			'FACADE' => TypeChecklistFacade::class,
+			'OPTIONS' => [
+				'PREFIX' => '',
+			],
 		],
 		'SCRUM_ITEM' => [
 			'FACADE' => ItemChecklistFacade::class,
+			'OPTIONS' => [
+				'PREFIX' => '',
+			],
 		],
 	];
 	private static $optionsMap = [];
@@ -123,7 +129,7 @@ class TasksWidgetCheckListNewComponent extends TasksBaseComponent
 	public function getSignature()
 	{
 		$seedPhrase = ToLower($this->getName().$this->getTemplateName());
-		if ($this->arParams['SIGNATURE_SEED'])
+		if ($this->arParams['SIGNATURE_SEED'] ?? null)
 		{
 			$seedPhrase = trim(ToLower($this->arParams['SIGNATURE_SEED']));
 		}
@@ -150,7 +156,7 @@ class TasksWidgetCheckListNewComponent extends TasksBaseComponent
 		User::setOption($optionName, $optionValue, $userId);
 	}
 
-	public function saveChecklistAction($taskId, $items = [], $params)
+	public function saveChecklistAction($taskId, $items = [], $params = [])
 	{
 		$taskId = (int) $taskId;
 		if (!$taskId)
@@ -203,11 +209,11 @@ class TasksWidgetCheckListNewComponent extends TasksBaseComponent
 
 		foreach ($items as $id => $item)
 		{
-			$item['ID'] = ((int)$item['ID'] === 0? null : (int)$item['ID']);
+			$item['ID'] = ((int)($item['ID'] ?? null) === 0 ? null : (int)$item['ID']);
 			$item['IS_COMPLETE'] = ($item['IS_COMPLETE'] === true) || ((int)$item['IS_COMPLETE'] > 0) ;
 			$item['IS_IMPORTANT'] = ($item['IS_IMPORTANT'] === true) || ((int)$item['IS_IMPORTANT'] > 0);
 
-			if (is_array($item['MEMBERS']))
+			if (is_array($item['MEMBERS'] ?? null))
 			{
 				$members = [];
 
@@ -274,7 +280,7 @@ class TasksWidgetCheckListNewComponent extends TasksBaseComponent
 		$this->arResult['MODE'] = (in_array(mb_strtolower($mode), ['view', 'edit'], true) ? $mode : 'view');
 		$this->arResult['IS_NETWORK_ENABLED'] = MemberSelector::isNetworkEnabled();
 
-		$this->arResult['AJAX_ACTIONS'] = static::$map[$entityType]['ACTIONS'];
+		$this->arResult['AJAX_ACTIONS'] = static::$map[$entityType]['ACTIONS'] ?? null;
 		$this->arResult['USER_OPTIONS'] = $this->getUserOptions($entityType, $userId);
 
 		return $this->errors->checkNoFatals();
@@ -314,8 +320,10 @@ class TasksWidgetCheckListNewComponent extends TasksBaseComponent
 				unset($checkListItems[$id]);
 				continue;
 			}
+
 			$checkListItems[$id] = $this->prepareItemActions($item);
-			$this->arResult['UF_CHECKLIST_FILES'][$id] = ($item['UF_CHECKLIST_FILES'] ?: []);
+
+			$this->arResult['UF_CHECKLIST_FILES'][$id] = (($item['UF_CHECKLIST_FILES'] ?? null) ?: []);
 		}
 
 		$this->arResult['UF_CHECKLIST_FILES'] = array_filter(

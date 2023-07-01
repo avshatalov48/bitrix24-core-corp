@@ -74,11 +74,11 @@ class PageNavigation extends UI\PageNavigation
 		}
 		else
 		{
-			$page = $this->getSessionVar()['page'];
+			$page = $this->getSessionVar()['page'] ?? 1;
 		}
 
 		$page = $page > 0 ? $page : 1;
 		$this->setCurrentPage($page);
-		$this->allRecords = $this->getSessionVar()['allRecords'];
+		$this->allRecords = $this->getSessionVar()['allRecords'] ?? false;
 	}
 }

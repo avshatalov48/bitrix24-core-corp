@@ -122,7 +122,9 @@ class TimelineEntryCategory
 				{
 					$categoryFilter->where(
 						Main\Entity\Query::filter()
+							->logic(Main\ORM\Query\Filter\ConditionTree::LOGIC_OR)
 							->where('ASSOCIATED_ENTITY_CLASS_NAME', Crm\Activity\Provider\Task::getId())
+							->where('ASSOCIATED_ENTITY_CLASS_NAME', Crm\Activity\Provider\Tasks\Task::getId())
 					);
 				}
 				elseif($entryCategoryID === self::ACTIVITY_CALL)
@@ -235,7 +237,10 @@ class TimelineEntryCategory
 				{
 					$categoryFilter->where(
 						Main\Entity\Query::filter()
-							->where('ASSOCIATED_ENTITY_CLASS_NAME', Crm\Activity\Provider\RestApp::getId())
+							->whereIn('ASSOCIATED_ENTITY_CLASS_NAME', [
+								Crm\Activity\Provider\RestApp::getId(),
+								Crm\Activity\Provider\ConfigurableRestApp::getId(),
+							])
 					);
 				}
 				elseif($entryCategoryID === self::ORDER)

@@ -10,6 +10,22 @@ use Bitrix\Main\ORM\Fields\IntegerField;
 use Bitrix\Main\ORM\Fields\DatetimeField;
 
 
+/**
+ * Class EntityCountableActivityTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_EntityCountableActivity_Query query()
+ * @method static EO_EntityCountableActivity_Result getByPrimary($primary, array $parameters = [])
+ * @method static EO_EntityCountableActivity_Result getById($id)
+ * @method static EO_EntityCountableActivity_Result getList(array $parameters = [])
+ * @method static EO_EntityCountableActivity_Entity getEntity()
+ * @method static \Bitrix\Crm\Counter\EO_EntityCountableActivity createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Counter\EO_EntityCountableActivity_Collection createCollection()
+ * @method static \Bitrix\Crm\Counter\EO_EntityCountableActivity wakeUpObject($row)
+ * @method static \Bitrix\Crm\Counter\EO_EntityCountableActivity_Collection wakeUpCollection($rows)
+ */
 class EntityCountableActivityTable extends DataManager
 {
 	public static function getTableName(): string
@@ -38,6 +54,9 @@ class EntityCountableActivityTable extends DataManager
 			(new BooleanField('ACTIVITY_IS_INCOMING_CHANNEL'))
 				->configureStorageValues('N', 'Y')
 				->configureRequired(),
+			new DatetimeField('LIGHT_COUNTER_AT'),
+			new DatetimeField('DEADLINE_EXPIRED_AT'),
+				//->configureRequired(),
 		];
 	}
 

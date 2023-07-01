@@ -128,6 +128,10 @@ type Proxy = {
 	fonts: Array<ProxyItem>;
 };
 
+type Abuse = {
+	link: string;
+}
+
 type Options = {
 	id: ?string;
 	identification: ?Identification;
@@ -155,7 +159,8 @@ type Options = {
 	dependencies: ?Array<DependenceGroup>;
 	handlers: ?Object;
 	proxy: ?Proxy;
-	hideOnOverlayClick: ?Boolean
+	hideOnOverlayClick: ?Boolean;
+	abuse: ?Abuse;
 };
 
 export {
@@ -179,4 +184,5 @@ export {
 	DependenceCondition,
 	Proxy,
 	ProxyItem,
+	Abuse,
 }

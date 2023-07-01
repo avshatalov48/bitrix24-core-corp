@@ -3,6 +3,22 @@ namespace Bitrix\Crm\Model;
 
 use Bitrix\Main;
 
+/**
+ * Class FieldSetTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_FieldSet_Query query()
+ * @method static EO_FieldSet_Result getByPrimary($primary, array $parameters = [])
+ * @method static EO_FieldSet_Result getById($id)
+ * @method static EO_FieldSet_Result getList(array $parameters = [])
+ * @method static EO_FieldSet_Entity getEntity()
+ * @method static \Bitrix\Crm\Model\EO_FieldSet createObject($setDefaultValues = true)
+ * @method static \Bitrix\Crm\Model\EO_FieldSet_Collection createCollection()
+ * @method static \Bitrix\Crm\Model\EO_FieldSet wakeUpObject($row)
+ * @method static \Bitrix\Crm\Model\EO_FieldSet_Collection wakeUpCollection($rows)
+ */
 class FieldSetTable extends Main\ORM\Data\DataManager
 {
 	public static function getTableName(): string

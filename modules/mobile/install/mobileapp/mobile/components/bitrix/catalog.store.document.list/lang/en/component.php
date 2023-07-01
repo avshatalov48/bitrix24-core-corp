@@ -22,4 +22,4 @@ $MESS["M_CSDL_TAB_MENU_STORE_ADJUSTMENT"] = "Stock adjustment";
 $MESS["M_CSDL_TAB_MOVING"] = "Transfers";
 $MESS["M_CSDL_TAB_REALIZATION"] = "Sales orders";
 $MESS["M_CSDL_TAB_RECEIPT_ADJUSTMENT"] = "Inventory";
-$MESS["M_CSDL_TO_LOGIN_ON_DESKTOP"] = "Open the full version";
+$MESS["M_CSDL_TO_LOGIN_ON_DESKTOP_MSGVER_1"] = "Open web version";

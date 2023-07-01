@@ -2,33 +2,45 @@
  * @module crm/category-list-view/open
  */
 jn.define('crm/category-list-view/open', (require, exports, module) => {
-
 	const { Alert } = require('alert');
 	const { Loc } = require('loc');
 	const { CategoryListView } = require('crm/category-list-view');
 
 	/**
 	 * @param {Number} props.entityTypeId
-	 * @param {Number} props.categoryId
-	 * @param {Function} props.onChangeCategory
 	 * @param {Object} props.parentWidget
+	 * @param {Boolean} props.readOnly
+	 * @param {Function} props.onChangeCategory
+	 * @param {Number} props.categoryId
 	 */
 	const openCategoryListView = (props) => {
-		const { entityTypeId, categoryId: currentCategoryId, onChangeCategory, parentWidget } = props;
+		const {
+			entityTypeId,
+			parentWidget,
+			readOnly = true,
+			needConfirm = true,
+			onChangeCategory,
+			categoryId: currentCategoryId,
+		} = props;
 
 		return CategoryListView.open(
 			{
 				entityTypeId,
 				currentCategoryId,
-				readOnly: true,
+				readOnly,
 				showCounters: false,
 				showTunnels: false,
 				onSelectCategory: (category, categoryListLayout) => {
-					if (parseInt(currentCategoryId) !== parseInt(category.id))
+					if (parseInt(currentCategoryId, 10) !== parseInt(category.id, 10))
 					{
-						return askToChangeCategory().then(() => {
-							onChangeCategory({ category, categoryListLayout });
-						});
+						if (needConfirm)
+						{
+							return askToChangeCategory().then(() => {
+								onChangeCategory({ category, categoryListLayout });
+							});
+						}
+
+						onChangeCategory({ category, categoryListLayout });
 					}
 
 					categoryListLayout.close();

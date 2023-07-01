@@ -3,14 +3,16 @@
  */
 jn.define('crm/tunnel-list/item/robot', (require, exports, module) => {
 	const { DelayInterval } = require('crm/tunnel-list/item/delay-interval');
-	const { ConditionGroup , ConditionGroupType } = require('crm/tunnel-list/item/condition-group');
+	const { ConditionGroup, ConditionGroupType } = require('crm/tunnel-list/item/condition-group');
 
 	class Robot
 	{
 		constructor(data = {})
 		{
 			if (data)
+			{
 				this.data = data;
+			}
 
 			this.name = this.getName(this.data);
 
@@ -31,10 +33,10 @@ jn.define('crm/tunnel-list/item/robot', (require, exports, module) => {
 
 		static generateName()
 		{
-			return 'A' + parseInt(Math.random() * 100000)
-				+ '_' + parseInt(Math.random() * 100000)
-				+ '_' + parseInt(Math.random() * 100000)
-				+ '_' + parseInt(Math.random() * 100000);
+			return `A${parseInt(Math.random() * 100_000, 10)
+			}_${parseInt(Math.random() * 100_000, 10)
+			}_${parseInt(Math.random() * 100_000, 10)
+			}_${parseInt(Math.random() * 100_000, 10)}`;
 		}
 	}
 

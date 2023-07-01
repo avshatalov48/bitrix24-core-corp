@@ -324,7 +324,7 @@ $frame = $this->createFrame("b24_helper")->begin("");
 			});
 		<?endif;?>
 		<?
-		if ($supportBotId && $_REQUEST['support_chat'])
+		if ($supportBotId && isset($_REQUEST['support_chat']))
 			echo 'BX.addCustomEvent("onImInit", function(BXIM) {BXIM.openMessenger('.$supportBotId.');});';
 		?>
 	</script>

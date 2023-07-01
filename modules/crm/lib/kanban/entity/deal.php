@@ -5,12 +5,13 @@ namespace Bitrix\Crm\Kanban\Entity;
 use Bitrix\Crm\Category\DealCategory;
 use Bitrix\Crm\Category\DealCategoryChangeError;
 use Bitrix\Crm\Component\EntityList\ClientDataProvider;
+use Bitrix\Crm\Component\EntityList\FieldRestrictionManager;
+use Bitrix\Crm\Component\EntityList\FieldRestrictionManagerTypes;
 use Bitrix\Crm\Deal\PaymentsRepository;
 use Bitrix\Crm\Deal\ShipmentsRepository;
 use Bitrix\Crm\Filter;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\Kanban\Entity;
-use Bitrix\Crm\Kanban\Sort;
 use Bitrix\Crm\PhaseSemantics;
 use Bitrix\Crm\Recurring;
 use Bitrix\Crm\Service\Container;
@@ -23,6 +24,18 @@ use Bitrix\Main\UI\Filter\Options;
 
 class Deal extends Entity
 {
+	private FieldRestrictionManager $dealFieldRestrictionManager;
+
+	public function __construct()
+	{
+		parent::__construct();
+
+		$this->dealFieldRestrictionManager = new FieldRestrictionManager(
+			FieldRestrictionManager::MODE_KANBAN,
+			[FieldRestrictionManagerTypes::CLIENT, FieldRestrictionManagerTypes::OBSERVERS]
+		);
+	}
+
 	public function getTypeName(): string
 	{
 		return \CCrmOwnerType::DealName;
@@ -76,12 +89,22 @@ class Deal extends Entity
 	public function getFilterOptions(): Options
 	{
 		$options = parent::getFilterOptions();
-		$clientFieldsRestrictionManager = new \Bitrix\Crm\Component\EntityList\ClientFieldRestrictionManager();
-		$clientFieldsRestrictionManager->removeRestrictedFieldsFromFilter($options);
-		$observersFieldRestrictionManager = new \Bitrix\Crm\Component\EntityList\ObserversFieldRestrictionManager();
-		$observersFieldRestrictionManager->removeRestrictedFieldsFromFilter($options);
+
+		$this->dealFieldRestrictionManager->removeRestrictedFields($options);
 
 		return $options;
+	}
+
+	public function getFieldsRestrictions(): array
+	{
+		$parentFieldsRestrictions = parent::getFieldsRestrictions();
+		$fieldsRestrictions = $this->dealFieldRestrictionManager->fetchRestrictedFields(
+			$this->getGridId(),
+			[],
+			$this->getFilter()
+		);
+
+		return array_merge($parentFieldsRestrictions, $fieldsRestrictions);
 	}
 
 	protected function getFilter(): Filter\Filter
@@ -333,36 +356,6 @@ class Deal extends Entity
 		return [
 			'GET_LIST' => $path . '&action=list',
 			'GET_FIELD' => $path . '&action=field'
-		];
-	}
-
-	public function getClientFieldsRestrictions(): ?array
-	{
-		$clientFieldsRestrictionManager = new \Bitrix\Crm\Component\EntityList\ClientFieldRestrictionManager();
-		if (!$clientFieldsRestrictionManager->hasRestrictions())
-		{
-			return null;
-		}
-
-		return [
-			'callback' => $clientFieldsRestrictionManager->getJsCallback(),
-			'filterId' =>  $this->getGridId(),
-			'filterFields' => $clientFieldsRestrictionManager->getRestrictedFilterFields($this->getFilter()),
-		];
-	}
-
-	public function getObserversFieldRestrictions(): ?array
-	{
-		$observersFieldRestrictionManager = new \Bitrix\Crm\Component\EntityList\ObserversFieldRestrictionManager();
-		if (!$observersFieldRestrictionManager->hasRestrictions())
-		{
-			return null;
-		}
-
-		return [
-			'callback' => $observersFieldRestrictionManager->getJsCallback(),
-			'filterId' =>  $this->getGridId(),
-			'filterFields' => $observersFieldRestrictionManager->getRestrictedFilterFields($this->getFilter()),
 		];
 	}
 

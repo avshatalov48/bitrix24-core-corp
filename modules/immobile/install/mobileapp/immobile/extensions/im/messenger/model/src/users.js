@@ -5,6 +5,7 @@ jn.define('im/messenger/model/users', (require, exports, module) => {
 
 	const { UsersCache } = require('im/messenger/cache');
 	const { Type } = require('type');
+	const { Logger } = require('im/messenger/lib/logger');
 
 	const elementState = {
 		id: 0,
@@ -45,9 +46,12 @@ jn.define('im/messenger/model/users', (require, exports, module) => {
 			collection: {},
 		}),
 		getters: {
+			/** @function usersModel/getUserById */
 			getUserById: (state) => (userId) => {
 				return state.collection[userId];
 			},
+
+			/** @function usersModel/getUserList */
 			getUserList: (state) => {
 				const userList = [];
 
@@ -59,10 +63,13 @@ jn.define('im/messenger/model/users', (require, exports, module) => {
 			},
 		},
 		actions: {
+			/** @function usersModel/setState */
 			setState: (store, payload) =>
 			{
 				store.commit('setState', payload);
 			},
+
+			/** @function usersModel/set */
 			set: (store, payload) =>
 			{
 				let result = [];
@@ -83,6 +90,8 @@ jn.define('im/messenger/model/users', (require, exports, module) => {
 
 				store.commit('set', result);
 			},
+
+			/** @function usersModel/delete */
 			delete: (store, payload) =>
 			{
 				const existingItem = store.state.collection[payload.id];
@@ -96,9 +105,13 @@ jn.define('im/messenger/model/users', (require, exports, module) => {
 		},
 		mutations: {
 			setState: (state, payload) => {
+				Logger.warn('usersModel: setState mutation', payload);
+
 				state.collection = payload.collection;
 			},
 			set: (state, payload) => {
+				Logger.warn('usersModel: set mutation', payload);
+
 				payload.forEach((user) => {
 					state.collection[user.id] = user;
 				});
@@ -106,6 +119,8 @@ jn.define('im/messenger/model/users', (require, exports, module) => {
 				UsersCache.save(state);
 			},
 			delete: (state, payload) => {
+				Logger.warn('usersModel: delete mutation', payload);
+
 				delete state.collection[payload.id];
 
 				UsersCache.save(state);

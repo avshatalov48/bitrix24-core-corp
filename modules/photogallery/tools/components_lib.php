@@ -36,7 +36,7 @@ class CPGalleryInterface
 			"path" => str_replace("//", "/", $cache_path)
 		);
 		$this->arError = array(
-			"show_error" => $additional_params["show_error"] === "N" ? "N" : "Y",
+			"show_error" => ($additional_params["show_error"] ?? '') === "N" ? "N" : "Y",
 			"set_404" => $additional_params["set_404"] == "Y" ? "Y" : "N"
 		);
 

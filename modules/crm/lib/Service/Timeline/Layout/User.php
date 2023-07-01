@@ -54,18 +54,18 @@ class User extends Base
 		}
 
 		return new self(
-			$user['FORMATTED_NAME'],
-			$user['SHOW_URL'],
-			$user['PHOTO_URL'],
+			$user['FORMATTED_NAME'] ?? '',
+			$user['SHOW_URL'] ?? '',
+			$user['PHOTO_URL'] ?? '',
 		);
 	}
 
 	public static function createFromArray(array $user): self
 	{
 		return new self(
-			$user['FORMATTED_NAME'],
-			$user['SHOW_URL'],
-			$user['PHOTO_URL'],
+			$user['FORMATTED_NAME'] ?? '',
+			$user['SHOW_URL'] ?? '',
+			$user['PHOTO_URL'] ?? '',
 		);
 	}
 }

@@ -2,7 +2,6 @@
  * @module crm/timeline/action/redirect
  */
 jn.define('crm/timeline/action/redirect', (require, exports, module) => {
-
 	const { BaseTimelineAction } = require('crm/timeline/action/base');
 	const { inAppUrl } = require('in-app-url');
 	const { Loc } = require('loc');
@@ -11,13 +10,19 @@ jn.define('crm/timeline/action/redirect', (require, exports, module) => {
 	{
 		execute()
 		{
+			if (this.entity.detailPageUrl === this.value)
+			{
+				return;
+			}
+
 			inAppUrl.open(this.value, this.getActionParams(), (url) => {
 				qrauth.open({
 					title: Loc.getMessage('CRM_TIMELINE_DESKTOP_VERSION'),
 					redirectUrl: url.toString(),
 				});
-
 			});
+
+			this.sendAnalytics();
 		}
 
 		getActionParams()
@@ -34,5 +39,4 @@ jn.define('crm/timeline/action/redirect', (require, exports, module) => {
 	}
 
 	module.exports = { RedirectAction };
-
 });

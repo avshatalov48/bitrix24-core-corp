@@ -8,7 +8,7 @@ return [
 		'navigation-loader',
 		'animation/components/fade-view',
 		'crm:type',
-		'crm:entity-detail/toolbar/activity',
+		'crm:entity-detail/toolbar/content',
 		'communication/connection',
 	],
 	'bundle' => [

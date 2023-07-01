@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\Crm\Activity\Provider;
 
+use Bitrix\Crm\Activity\Provider\Tasks;
 use Bitrix\Crm\Badge\SourceIdentifier;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Service\Container;
@@ -41,6 +42,10 @@ class ProviderManager
 				SignDocument::getId() => SignDocument::className(),
 				ToDo::getId() => ToDo::className(),
 				Payment::getId() => Payment::className(),
+				ConfigurableRestApp::getId() => ConfigurableRestApp::className(),
+				CalendarSharing::getId() => CalendarSharing::className(),
+				Tasks\Comment::getId() => Tasks\Comment::class,
+				Tasks\Task::getId() => Tasks\Task::class,
 			];
 
 			if(Visit::isAvailable())

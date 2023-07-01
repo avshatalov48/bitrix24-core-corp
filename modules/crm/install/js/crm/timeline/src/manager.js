@@ -1,13 +1,6 @@
-import Wait from "./editors/wait";
-import Sms from "./editors/sms";
-import Rest from "./editors/rest";
-import Comment from "./editors/comment";
-import ToDo from "./editors/todo";
 import Scheduled from "./items/scheduled";
 import {Item} from "crm.timeline.item";
-import Document from "./items/document";
 import EntityChat from "./streams/entitychat";
-import MenuBar from "./tools/menubar";
 import AudioPlaybackRateSelector from "./tools/audio-playback-rate-selector";
 import Schedule from "./streams/schedule";
 import FixedHistory from "./streams/fixedhistory";
@@ -30,17 +23,11 @@ export default class Manager
 		this._ownerInfo = null;
 		this._progressSemantics = "";
 
-		this._commentEditor = null;
-		this._todoEditor = null;
-		this._waitEditor = null;
-		this._smsEditor = null;
-		this._zoomEditor = null;
 		this._chat = null;
 		this._schedule = null;
 		this._history = null;
 		this._fixedHistory = null;
 		this._activityEditor = null;
-		this._menuBar = null;
 
 		this._userId = 0;
 		this._readOnly = false;
@@ -159,109 +146,6 @@ export default class Manager
 		this._schedule.setHistory(this._history);
 		this._fixedHistory.setHistory(this._history);
 
-		var isTodoEnabled = BX.prop.getBoolean(this._settings, 'enableTodo', false);
-		this._commentEditor = Comment.create(
-			this._id,
-			{
-				manager: this,
-				ownerTypeId: this._ownerTypeId,
-				ownerId: this._ownerId,
-				serviceUrl: this.getSetting("serviceUrl"),
-				container: this.getSetting("editorCommentContainer"),
-				input: this.getSetting("editorCommentInput"),
-				editorName: this.getSetting("editorCommentEditorName"),
-				button: this.getSetting("editorCommentButton"),
-				cancelButton: this.getSetting("editorCommentCancelButton")
-			}
-		);
-		this._commentEditor.setVisible(!isTodoEnabled && !this._readOnly);
-		this._commentEditor.setHistory(this._history);
-
-		if (isTodoEnabled)
-		{
-			this._todoEditor = ToDo.create(
-				this._id,
-				{
-					manager: this,
-					ownerTypeId: this._ownerTypeId,
-					ownerId: this._ownerId,
-					container: this.getSetting("editorTodoContainer"),
-					button: this.getSetting("editorTodoButton"),
-					cancelButton: this.getSetting("editorTodoCancelButton")
-				}
-			);
-			this._todoEditor.setVisible(!this._readOnly);
-		}
-
-		if (BX.prop.getBoolean(this._settings, "enableWait", false))
-		{
-			this._waitEditor = Wait.create(
-				this._id,
-				{
-					manager: this,
-					ownerTypeId: this._ownerTypeId,
-					ownerId: this._ownerId,
-					serviceUrl: this.getSetting("serviceUrl"),
-					config: this.getSetting("editorWaitConfig", {}),
-					targetDates: this.getSetting("editorWaitTargetDates", []),
-					container: this.getSetting("editorWaitContainer"),
-					configContainer: this.getSetting("editorWaitConfigContainer"),
-					input: this.getSetting("editorWaitInput"),
-					button: this.getSetting("editorWaitButton"),
-					cancelButton: this.getSetting("editorWaitCancelButton")
-				}
-			);
-			this._waitEditor.setVisible(false);
-		}
-
-		if (BX.prop.getBoolean(this._settings, "enableSms", false))
-		{
-			this._smsEditor = Sms.create(
-				this._id,
-				{
-					manager: this,
-					ownerTypeId: this._ownerTypeId,
-					ownerId: this._ownerId,
-					serviceUrl: this.getSetting("serviceUrl"),
-					config: this.getSetting("editorSmsConfig", {}),
-					container: this.getSetting("editorSmsContainer"),
-					input: this.getSetting("editorSmsInput"),
-					templatesContainer: this.getSetting("editorSmsTemplatesContainer"),
-					button: this.getSetting("editorSmsButton"),
-					cancelButton: this.getSetting("editorSmsCancelButton")
-				}
-			);
-			this._smsEditor.setVisible(false);
-		}
-
-		if (BX.prop.getBoolean(this._settings, "enableZoom", false) && BX.prop.getBoolean(this._settings, "statusZoom", false))
-		{
-			this._zoomEditor = new BX.Crm.Zoom(
-				{
-					id: this._id,
-					manager: this,
-					ownerTypeId: this._ownerTypeId,
-					ownerId: this._ownerId,
-					container: this.getSetting("editorZoomContainer"),
-					userId: this._userId
-				}
-			);
-			this._zoomEditor.setVisible(false);
-		}
-
-		if (BX.prop.getBoolean(this._settings, "enableRest", false))
-		{
-			this._restEditor = Rest.create(
-				this._id,
-				{
-					manager: this,
-					ownerTypeId: this._ownerTypeId,
-					ownerId: this._ownerId,
-					placement: BX.prop.getString(this._settings, "restPlacement", '')
-				}
-			);
-		}
-
 		this._chat.layout();
 		this._schedule.layout();
 		this._fixedHistory.layout();
@@ -279,28 +163,6 @@ export default class Manager
 				ownerTypeId: this._ownerTypeId,
 				ownerId: this._ownerId,
 			});
-		}
-		this._menuBar = MenuBar.create(
-			this._id,
-			{
-				container: BX(this.getSetting("menuBarContainer")),
-				menuId: this.getSetting("menuBarObjectId"),
-				ownerInfo: this._ownerInfo,
-				activityEditor: this._activityEditor,
-				commentEditor: this._commentEditor,
-				todoEditor: this._todoEditor,
-				waitEditor: this._waitEditor,
-				smsEditor: this._smsEditor,
-				zoomEditor: this._zoomEditor,
-				restEditor: this._restEditor,
-				readOnly: this._readOnly,
-				manager: this
-			}
-		);
-
-		if (!this._readOnly)
-		{
-			this._menuBar.reset();
 		}
 
 		BX.addCustomEvent(window, "Crm.EntityProgress.Change", BX.delegate(this.onEntityProgressChange, this));
@@ -819,19 +681,7 @@ export default class Manager
 
 	isStubCounterEnabled()
 	{
-		if (this.getSetting('enableTodo', false))
-		{
-			return false; // do not show counter for new scenarios
-		}
-		if (this._ownerId <= 0)
-		{
-			return false;
-		}
-
-		return (
-			(this._ownerTypeId === BX.CrmEntityType.enumeration.deal || this._ownerTypeId === BX.CrmEntityType.enumeration.lead)
-			&& this._progressSemantics === "process"
-		);
+		return false;
 	}
 
 	getSchedule()
@@ -849,26 +699,6 @@ export default class Manager
 		return this._fixedHistory;
 	}
 
-	getWaitEditor()
-	{
-		return this._waitEditor;
-	}
-
-	getSmsEditor()
-	{
-		return this._smsEditor;
-	}
-
-	getTodoEditor()
-	{
-		return this._todoEditor;
-	}
-
-	getMenuBar(): ?MenuBar
-	{
-		return this._menuBar;
-	}
-
 	processSheduleLayoutChange()
 	{
 	}
@@ -876,65 +706,6 @@ export default class Manager
 	processHistoryLayoutChange()
 	{
 		this._schedule.refreshLayout();
-	}
-
-	switchToDefaultEditor(editor)
-	{
-		let firstSuitableMenuItem = Array.from(this._menuBar.getMenuItems()).reduce(
-			(prev, item) => {
-				if (prev)
-				{
-					return prev;
-				}
-				const id = item.dataset.id;
-				if (['comment', 'wait', 'sms', 'zoom', 'todo'].indexOf(id) >= 0)
-				{
-					return id;
-				}
-
-				return null;
-			},
-			null
-		);
-
-		const editorsMap = {
-			'comment': this._commentEditor,
-			'wait': this._waitEditor,
-			'sms': this._smsEditor,
-			'zoom': this._zoomEditor,
-			'todo': this._todoEditor
-		};
-		let firstSuitableEditor;
-		if(editorsMap.hasOwnProperty(firstSuitableMenuItem) && editorsMap[firstSuitableMenuItem] && editorsMap[firstSuitableMenuItem].setVisible)
-		{
-			firstSuitableEditor = editorsMap[firstSuitableMenuItem];
-		}
-		else if (this._todoEditor)
-		{
-			firstSuitableEditor = this._todoEditor;
-			firstSuitableMenuItem = 'todo'
-		}
-		else
-		{
-			firstSuitableEditor = this._commentEditor;
-			firstSuitableMenuItem = 'comment'
-		}
-		if (editor !== firstSuitableEditor && editor.setVisible)
-		{
-			editor.setVisible(false);
-		}
-		firstSuitableEditor.setVisible(true);
-		this._menuBar.setActiveItemById(firstSuitableMenuItem);
-	}
-
-	processEditingCompletion(editor)
-	{
-		this.switchToDefaultEditor(editor);
-	}
-
-	processEditingCancellation(editor)
-	{
-		this.switchToDefaultEditor(editor);
 	}
 
 	addScheduleItem(data)
@@ -1042,6 +813,11 @@ export default class Manager
 
 	getCurrentUser(): ?Object
 	{
+		if (BX.type.isObject(this._currentUser) && this._userId > 0)
+		{
+			this._currentUser.userId = this._userId;
+		}
+		
 		return this._currentUser;
 	}
 

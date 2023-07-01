@@ -60,7 +60,7 @@ class Account extends AbstractController
 			return AjaxJson::createError($errorCollection);
 		}
 
-		if (!($response = $account->getProfileCached())->isSuccess())
+		if (empty($response = $account->getProfileCached()))
 		{
 			$errorCollection[] = new Error("External server error.");
 
@@ -68,9 +68,14 @@ class Account extends AbstractController
 		}
 
 		return AjaxJson::createSuccess(
-			array(
-				"profile" => $response->fetch()
-			)
+			[
+				"profile" => [
+					'id' => $response['ID'],
+					'name' => $response['NAME'],
+					'link' => $response['LINK'],
+					'picture' => $response['PICTURE'],
+				]
+			]
 
 		);
 	}

@@ -11,7 +11,7 @@ class Listener
 {
 	public static function onTaskAdd($id, array $fields)
 	{
-		if (TaskLimit::isLimitExceeded())
+		if (TaskLimit::isLimitExceeded() || !self::loadBizproc())
 		{
 			return false;
 		}
@@ -63,7 +63,7 @@ class Listener
 
 	public static function onTaskUpdate($id, array $fields, array $previousFields)
 	{
-		if (TaskLimit::isLimitExceeded())
+		if (TaskLimit::isLimitExceeded() || !self::loadBizproc())
 		{
 			return false;
 		}
@@ -168,7 +168,7 @@ class Listener
 
 	public static function onPlanTaskStageUpdate($memberId, $taskId, $stageId)
 	{
-		if (TaskLimit::isLimitExceeded())
+		if (TaskLimit::isLimitExceeded() || !self::loadBizproc())
 		{
 			return false;
 		}
@@ -194,7 +194,7 @@ class Listener
 
 	public static function onTaskExpired($id, array $fields)
 	{
-		if (TaskLimit::isLimitExceeded())
+		if (TaskLimit::isLimitExceeded() || !self::loadBizproc())
 		{
 			return false;
 		}
@@ -228,7 +228,7 @@ class Listener
 
 	public static function onTaskExpiredSoon($id, array $fields)
 	{
-		if (TaskLimit::isLimitExceeded())
+		if (TaskLimit::isLimitExceeded() || !self::loadBizproc())
 		{
 			return false;
 		}
@@ -407,7 +407,7 @@ class Listener
 			$users = array_merge($users, $fields['AUDITORS']);
 		}
 
-		if (is_object($fields['MEMBER_LIST']))
+		if (is_object($fields['MEMBER_LIST'] ?? null))
 		{
 			/** @var $members EO_Member_Collection */
 			$members = $fields['MEMBER_LIST'];

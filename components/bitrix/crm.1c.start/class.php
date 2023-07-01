@@ -164,16 +164,6 @@ class OnecStartComponent extends CBitrixComponent
 				$this->arResult['ITEMS'] = [];
 				$this->arResult['INTEGRATION_ITEMS'] = [];
 
-				$this->arResult['ITEMS'][] = [
-					'id' => 'realtime',
-					'name' => Loc::getMessage('CRM_1C_START_REALTIME'),
-					'iconClass' => 'ui-icon ui-icon-service-1c',
-					'selected' => isset($appSettings['realtime']) && $appSettings['realtime'] == 'Y' ? true : false,
-					'data' => [
-						'url' => '/onec/realtime/'
-					],
-				];
-
 				if (
 					\Bitrix\Main\ModuleManager::isModuleInstalled('rest')
 					&& \Bitrix\Main\Loader::includeModule('faceId')
@@ -188,19 +178,6 @@ class OnecStartComponent extends CBitrixComponent
 						'selected' => isset($appSettings['facecard']) && $appSettings['facecard'] == 'Y' ? true : false,
 						'data' => [
 							'url' => '/onec/facecard/'
-						],
-					];
-				}
-
-				if (\Bitrix\Main\ModuleManager::isModuleInstalled('rest'))
-				{
-					$this->arResult['ITEMS'][] = [
-						'id' => 'report',
-						'name' => Loc::getMessage('CRM_1C_START_REPORT'),
-						'iconClass' => 'ui-icon ui-icon-service-1c',
-						'selected' => isset($appSettings['report']) && $appSettings['report'] == 'Y' ? true : false,
-						'data' => [
-							'url' => '/onec/report/'
 						],
 					];
 				}
@@ -230,21 +207,11 @@ class OnecStartComponent extends CBitrixComponent
 				{
 					\Bitrix\Main\Loader::includeModule('sale');
 
-					$this->arResult['ITEMS'][] = [
-						'id' => 'doc',
-						'name' => Loc::getMessage('CRM_1C_START_DOC'),
-						'iconClass' => 'ui-icon ui-icon-service-1c',
-						'selected' => $this->applicationDocIsInactive() ? false : true,
-						'data' => [
-							'url' => '/onec/doc/'
-						],
-					];
-
 					if ($this->isBackOfficeAvailable())
 					{
 						$this->arResult['INTEGRATION_ITEMS'][] = [
 							'id' => 'backoffice',
-							'name' => Loc::getMessage('CRM_1C_START_BACKOFFICE'),
+							'name' => Loc::getMessage('CRM_1C_START_BACKOFFICE_MSGVER_1'),
 							'iconClass' => 'ui-icon ui-icon-service-red-1c',
 							'selected' => $this->applicationBackOfficeIsInactive() ? false : true,
 							'data' => [

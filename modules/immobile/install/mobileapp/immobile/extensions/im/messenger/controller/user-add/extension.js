@@ -4,14 +4,16 @@
 jn.define('im/messenger/controller/user-add', (require, exports, module) => {
 
 	const { Loc } = require('loc');
+	const { core } = require('im/messenger/core');
 	const { EventType, RestMethod, } = require('im/messenger/const');
 	const { ChatTitle } = require('im/messenger/lib/element');
-	const { MessengerEvent } = require('im/messenger/lib/event');
+	const { MessengerEmitter } = require('im/messenger/lib/emitter');
 	const { MessengerParams } = require('im/messenger/lib/params');
 	const { DialogHelper } = require('im/messenger/lib/helper/dialog');
 	const { UserAddView } = require('im/messenger/controller/user-add/view');
 
-	class UserAdd {
+	class UserAdd
+	{
 
 		static open(options = {}, parentLayout = null)
 		{
@@ -31,11 +33,12 @@ jn.define('im/messenger/controller/user-add', (require, exports, module) => {
 
 			this.isChatCreate = createChat;
 			this.layout = parentLayout;
+			this.store = core.getStore();
 		}
 
 		getUserList()
 		{
-			const userList = ChatUtils.objectClone(MessengerStore.getters['usersModel/getUserList']);
+			const userList = ChatUtils.objectClone(this.store.getters['usersModel/getUserList']);
 
 			return  userList.filter(user => {
 				if (user.id === MessengerParams.getUserId())
@@ -133,9 +136,9 @@ jn.define('im/messenger/controller/user-add', (require, exports, module) => {
 				if (chatId > 0)
 				{
 					setTimeout(() => {
-							new MessengerEvent(EventType.messenger.openDialog, {
+							MessengerEmitter.emit(EventType.messenger.openDialog, {
 								dialogId: 'chat' + chatId,
-							}).send();
+							});
 						},
 						500);
 

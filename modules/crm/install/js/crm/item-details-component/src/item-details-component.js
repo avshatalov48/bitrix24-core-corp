@@ -1,11 +1,12 @@
-import { ajax as Ajax, Dom, Loc, Reflection, Tag, Text, Type, Uri, Runtime} from "main.core";
+import { ajax as Ajax, Dom, Loc, Reflection, Runtime, Tag, Text, Type, Uri } from 'main.core';
 import { BaseEvent, EventEmitter } from 'main.core.events';
-import { MessageBox, MessageBoxButtons } from "ui.dialogs.messagebox";
+import { MessageBox, MessageBoxButtons } from 'ui.dialogs.messagebox';
 import { StageFlow } from 'ui.stageflow';
 import type { StageModelData } from 'crm.stage-model';
 import { StageModel } from 'crm.stage-model';
-import { Loader } from "main.loader";
-import { PopupMenu } from "main.popup";
+import { Loader } from 'main.loader';
+import { PopupMenu } from 'main.popup';
+import { ReceiverRepository } from 'crm.messagesender';
 
 export type ItemDetailsComponentParams = {
 	entityTypeId: number,
@@ -27,6 +28,7 @@ export type ItemDetailsComponentParams = {
 	pullTag: ?string,
 	bizprocStarterConfig: ?Object,
 	automationCheckAutomationTourGuideData: ?Object,
+	receiversJSONString: string,
 };
 
 declare type Category = {
@@ -64,6 +66,7 @@ export class ItemDetailsComponent
 	pullTag: ?string;
 	bizprocStarterConfig: ?Object;
 	automationCheckAutomationTourGuideData: ?Object;
+	receiversJSONString: string = '';
 
 	constructor(params: ItemDetailsComponentParams): void
 	{
@@ -111,6 +114,10 @@ export class ItemDetailsComponent
 					? params.automationCheckAutomationTourGuideData
 					: null
 			;
+			if (Type.isString(params.receiversJSONString))
+			{
+				this.receiversJSONString = params.receiversJSONString;
+			}
 
 			this.isPageTitleEditable = Boolean(params.isPageTitleEditable);
 		}
@@ -218,6 +225,7 @@ export class ItemDetailsComponent
 		this.initStageFlow();
 		this.bindEvents();
 		this.initDocumentButton();
+		this.initReceiversRepository();
 		if (this.id > 0)
 		{
 			this.initPageTitleButtons();
@@ -238,6 +246,11 @@ export class ItemDetailsComponent
 			this.documentButton = new BX.DocumentGenerator.Button(this.documentButtonParameters.buttonId, this.documentButtonParameters);
 			this.documentButton.init();
 		}
+	}
+
+	initReceiversRepository(): void
+	{
+		ReceiverRepository.onDetailsLoad(this.entityTypeId, this.id, this.receiversJSONString);
 	}
 
 	initPageTitleButtons(): void

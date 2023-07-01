@@ -1,4 +1,4 @@
-<?
+<?php
 
 use Bitrix\Main\Context;
 use Bitrix\Main\Web\Cookie;
@@ -13,6 +13,8 @@ use Bitrix\Timeman\Service\Worktime\Result\WorktimeServiceResult;
 class CTimeManUser
 {
 	public $SITE_ID = SITE_ID;
+
+	public $CACHE_ID = null;
 
 	protected $USER_ID;
 	protected $ABSENCE_TYPE_ID = null;
@@ -925,7 +927,7 @@ class CTimeManUser
 
 		$cat = intval($bPersonal);
 
-		if (!is_array($this->SETTINGS[$cat]))
+		if (!isset($this->SETTINGS[$cat]) || !is_array($this->SETTINGS[$cat]))
 		{
 			$this->SETTINGS[$cat] = [];
 
@@ -1221,7 +1223,7 @@ class CTimeManUser
 
 	protected function _cacheId()
 	{
-		if ($this->CACHE_ID)
+		if (!empty($this->CACHE_ID))
 		{
 			return $this->CACHE_ID;
 		}

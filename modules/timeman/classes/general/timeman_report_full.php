@@ -140,14 +140,14 @@ class CTimeManReportFull
 					if ($strSqlSelect <> '')
 							$strSqlSelect .= ", ";
 
-					if ($arField["FIELD_TYPE"] == "datetime")
+					if (($arField["FIELD_TYPE"] ?? '') == "datetime")
 					{
 							if (($DB->type == "ORACLE" || $DB->type == "MSSQL") && (array_key_exists($key, $arOrder)))
 								$strSqlSelect .= $arField["FIELD_NAME"]." as ".$key."_X1, ";
 
 							$strSqlSelect .= $DB->DateToCharFunction($arField["FIELD_NAME"], "FULL")." as ".$key;
 					}
-					elseif ($arField["FIELD_TYPE"] == "date")
+					elseif (($arField["FIELD_TYPE"] ?? '') == "date")
 					{
 							if (($DB->type == "ORACLE" || $DB->type == "MSSQL") && (array_key_exists($key, $arOrder)))
 								$strSqlSelect .= $arField["FIELD_NAME"]." as ".$key."_X1, ";
@@ -271,7 +271,10 @@ class CTimeManReportFull
 		}
 		// <-- ORDER BY
 
-		if (is_array($arNavStartParams) && intval($arNavStartParams["nTopCount"]) > 0)
+		if (
+			is_array($arNavStartParams)
+			&& intval($arNavStartParams["nTopCount"] ?? 0) > 0
+		)
 		{
 			$dbType = $DB->type;
 			switch ($dbType)
@@ -305,31 +308,46 @@ class CTimeManReportFull
 
 		if ($action == 'ADD')
 		{
-			if (!$arFields['USER_ID'])
-					$arFields['USER_ID'] = $USER->GetID();
-				if (!$arFields["DATE_FROM"])
-					$arFields["DATE_FROM"] = time();
-				if (!$arFields["DATE_TO"])
-					$arFields["DATE_TO"] = $arFields["DATE_FROM"];
+			if (!($arFields['USER_ID'] ?? null))
+			{
+				$arFields['USER_ID'] = $USER->GetID();
+			}
+			if (!$arFields["DATE_FROM"])
+			{
+				$arFields["DATE_FROM"] = time();
+			}
+			if (!$arFields["DATE_TO"])
+			{
+				$arFields["DATE_TO"] = $arFields["DATE_FROM"];
+			}
 		}
 
 		$arFields["REPORT_DATE"] = ConvertTimeStampForReport(time(),"FULL");
 
 		if (isset($arFields['REPORT']))
-				$arFields['REPORT'] = trim($arFields['REPORT']);
-
+		{
+			$arFields['REPORT'] = trim($arFields['REPORT']);
+		}
 		if (isset($arFields['ACTIVE']))
-				$arFields['ACTIVE'] = $arFields['ACTIVE'] == 'N' ? 'N' : 'Y';
-
-		if (is_array($arFields['TASKS']))
-				$arFields['TASKS'] = serialize($arFields['TASKS']);
-		if (is_array($arFields['EVENTS']))
-				$arFields['EVENTS'] = serialize($arFields['EVENTS']);
-		if (is_array($arFields['FILES']))
-				$arFields['FILES'] = serialize($arFields['FILES']);
-
+		{
+			$arFields['ACTIVE'] = $arFields['ACTIVE'] == 'N' ? 'N' : 'Y';
+		}
+		if (is_array($arFields['TASKS'] ?? null))
+		{
+			$arFields['TASKS'] = serialize($arFields['TASKS']);
+		}
+		if (is_array($arFields['EVENTS'] ?? null))
+		{
+			$arFields['EVENTS'] = serialize($arFields['EVENTS']);
+		}
+		if (is_array($arFields['FILES'] ?? null))
+		{
+			$arFields['FILES'] = serialize($arFields['FILES']);
+		}
 		if ($action == 'UPDATE')
-				$arFields['~TIMESTAMP_X'] = $DB->GetNowFunction();
+		{
+			$arFields['~TIMESTAMP_X'] = $DB->GetNowFunction();
+		}
 
 		unset($arFields['TIMESTAMP_X']);
 
@@ -340,7 +358,7 @@ class CTimeManReportFull
 	{
 		global $DB;
 
-		$tm_user = new CUserReportFull($arFields["USER_ID"]);
+		$tm_user = new CUserReportFull($arFields["USER_ID"] ?? null);
 		$arReportDate = $tm_user->GetReportInfo();
 
 		if ($arReportDate["IS_REPORT_DAY"]!="Y")
@@ -351,7 +369,7 @@ class CTimeManReportFull
 
 		$arFields["DATE_TO"] = ConvertTimeStamp(MakeTimeStamp($arReportDate["DATE_TO"], $shortFormat),"SHORT");
 		$arFields["DATE_FROM"] = ConvertTimeStamp(MakeTimeStamp($arReportDate["DATE_FROM"], $shortFormat),"SHORT");
-		$arFields["REPORT_DATE"] = ConvertTimeStamp(MakeTimeStamp($arFields["REPORT_DATE"], $fullFormat),"FULL");
+		$arFields["REPORT_DATE"] = ConvertTimeStamp(MakeTimeStamp($arFields["REPORT_DATE"] ?? '', $fullFormat),"FULL");
 
 		foreach(GetModuleEvents('timeman', 'OnBeforeFullReportAdd', true) as $event)
 		{
@@ -483,6 +501,14 @@ class CTimeManReportFull
 
 class CUserReportFull
 {
+	public $USER_ID = null;
+	public $SETTINGS = null;
+
+	public $TimeFull = null;
+	public $TimeShort = null;
+	public $days = null;
+	public $month = null;
+
 	private $oneDayTime = 3600 * 24;
 
 	function __construct($USER_ID = 0)
@@ -546,7 +572,7 @@ class CUserReportFull
 			$arFields["UF_SETTING_DATE"] = ConvertTimeStampForReport(time(), "FULL");
 		}
 
-		$arFields["UF_REPORT_PERIOD"] = $period["ID"];
+		$arFields["UF_REPORT_PERIOD"] = $period["ID"] ?? null;
 
 		if($USER->Update($this->USER_ID,$arFields))
 		{
@@ -725,7 +751,7 @@ class CUserReportFull
 				Array("nTopCount"=>1)
 			);
 			$last_report = $dbres->Fetch();
-			$last_date_report = MakeTimeStamp($last_report["DATE_TO"],$this->TimeShort);
+			$last_date_report = MakeTimeStamp($last_report["DATE_TO"] ?? null, $this->TimeShort);
 		}
 		else
 		{
@@ -881,7 +907,7 @@ class CUserReportFull
 		if(is_array($arReportInfo['_DATA']))
 		{
 			$arData = $arReportInfo['_DATA'];
-			$fix = $arReportInfo['_FIX'];
+			$fix = $arReportInfo['_FIX'] ?? null;
 
 			//is time to show a report form?
 			if ($this->isShowReportForm($arData["DATE_SUBMIT"]) && $arReportInfo["MODE"])
@@ -1054,7 +1080,7 @@ class CUserReportFull
 
 		list($entriesInfo, $savedReport) = $this->getSavedReportFull($userId);
 
-		if (!$this->isSavedReport($entriesInfo['REPORT_ID']))
+		if (!$this->isSavedReport($entriesInfo['REPORT_ID'] ?? null))
 		{
 			$reportFiles = self::getReportFiles();
 			if ($reportFiles)
@@ -1086,7 +1112,7 @@ class CUserReportFull
 
 		$entriesInfo = $this->clearEventsByCheckStatus($entriesInfo);
 
-		if (!$this->isSavedReport($entriesInfo["REPORT_ID"]))
+		if (!$this->isSavedReport($entriesInfo["REPORT_ID"] ?? null))
 		{
 			$entriesInfo['DATE_TEXT'] = $this->getReportDateText(
 				$entriesInfo["REPORT_DATE_FROM"],
@@ -1098,9 +1124,9 @@ class CUserReportFull
 			'FROM' => $currentUser,
 			'TO' => array_values($currentUserManagers),
 			'INFO' => $entriesInfo,
-			'REPORT' => $entriesInfo["REPORT"],
-			'PLANS' => $entriesInfo["PLANS"],
-			'REPORT_ID'=>($entriesInfo["REPORT_ID"] ? $entriesInfo["REPORT_ID"] : "")
+			'REPORT' => $entriesInfo["REPORT"] ?? null,
+			'PLANS' => $entriesInfo["PLANS"] ?? null,
+			'REPORT_ID' => $entriesInfo["REPORT_ID"] ?? ''
 		];
 
 		return $result;
@@ -1159,7 +1185,7 @@ class CUserReportFull
 				'NAME' => CUser::formatName(CSite::getNameFormat(false), $manager, true, false),
 				'URL' => str_replace(['#ID#', '#USER_ID#'], $manager['ID'], $userUrl),
 				'WORK_POSITION' => $manager['WORK_POSITION'],
-				'PHOTO' => $manager['PHOTO']['CACHE']['src'],
+				'PHOTO' => $manager['PHOTO']['CACHE']['src'] ?? '',
 			];
 
 			if ($userData["ID"] == $userId)
@@ -1265,7 +1291,7 @@ class CUserReportFull
 
 	private function prepareDayliTasks(array $report, array $taskIds, array $entriesInfo): array
 	{
-		$tasks = unserialize($report['TASKS'], ['allowed_classes' => false]);
+		$tasks = unserialize($report['TASKS'] ?? '', ['allowed_classes' => false]);
 
 		if (is_array($tasks))
 		{
@@ -1280,7 +1306,10 @@ class CUserReportFull
 				{
 					foreach ($entriesInfo['TASKS'] as $key => $entryTask)
 					{
-						if ($entryTask['ID'] == $task['ID'])
+						if (
+							$entryTask['ID'] == $task['ID']
+							&& isset($entriesInfo['TASKS'][$key]['TIME'])
+						)
 						{
 							$entriesInfo['TASKS'][$key]['TIME'] += $task['TIME'];
 						}
@@ -1313,9 +1342,17 @@ class CUserReportFull
 
 	private function prepareDailyReportContent(array $report, array $entryIds, array $entriesInfo): array
 	{
-		if ($report["REPORT"] <> '' && !$entriesInfo["REPORT_ID"])
+		if (
+			($report["REPORT"] ?? '') <> ''
+			&& !($entriesInfo["REPORT_ID"] ?? null)
+		)
 		{
-			$entriesInfo["REPORT"] .= $this->getReportMessageHtml($report["REPORT_DATE"], $report["REPORT"]);
+			$entriesInfo["REPORT"] = ($entriesInfo["REPORT"] ?? '')
+				. $this->getReportMessageHtml(
+					$report["REPORT_DATE"],
+					$report["REPORT"]
+				)
+			;
 			$entryIds[] = $report["ENTRY_ID"];
 		}
 
@@ -1336,7 +1373,11 @@ class CUserReportFull
 		if ($currentReport = $queryObject->fetch())
 		{
 			$reportDate = ConvertTimeStamp(time(),'SHORT');
-			if (strpos($entriesInfo['REPORT'], $reportDate) === false && !empty($currentReport['REPORT']))
+			$entriesInfo['REPORT'] = $entriesInfo['REPORT'] ?? '';
+			if (
+				strpos($entriesInfo['REPORT'], $reportDate) === false
+				&& !empty($currentReport['REPORT'] ?? null)
+			)
 			{
 				$entriesInfo['REPORT'] .= $this->getReportMessageHtml($reportDate, $currentReport['REPORT']);
 			}
@@ -1351,8 +1392,13 @@ class CUserReportFull
 		{
 			foreach ($entriesInfo['EVENTS'] as $key => $arEvent)
 			{
-				if ($arEvent['STATUS'] && $arEvent['STATUS'] != 'Y')
+				if (
+					($arEvent['STATUS'] ?? null)
+					&& $arEvent['STATUS'] != 'Y'
+				)
+				{
 					unset($entriesInfo['EVENTS'][$key]);
+				}
 			}
 			$entriesInfo['EVENTS'] = array_values($entriesInfo['EVENTS']);
 		}
@@ -1499,8 +1545,8 @@ class CReportSettings
 							$arSettings["UF_SETTING_DATE"] = $user_setting_date;
 						}
 
-						$arSettings["PARENT"] = ($res["PARENT"])?$res["PARENT"]:$res["ID"];
-						$arSettings["PARENT_NAME"] = ($res["PARENT_NAME"])?$res["PARENT_NAME"]:$res["NAME"];
+						$arSettings["PARENT"] = ($res["PARENT"] ?? false) ? $res["PARENT"] : $res["ID"];
+						$arSettings["PARENT_NAME"] = ($res["PARENT_NAME"] ?? false) ? $res["PARENT_NAME"] : $res["NAME"];
 					}
 				}
 			}
@@ -1544,9 +1590,9 @@ class CReportSettings
 			if (!$arRes["UF_REPORT_PERIOD"] && $arRes['IBLOCK_SECTION_ID']>0)
 			{
 				$parent = self::$SECTIONS_SETTINGS_CACHE[$arRes['IBLOCK_SECTION_ID']];
-				$parent["PARENT"] = ($parent["PARENT"])?$parent["PARENT"]:$arRes['IBLOCK_SECTION_ID'];
+				$parent["PARENT"] = ($parent["PARENT"] ?? false) ? $parent["PARENT"] : $arRes['IBLOCK_SECTION_ID'];
 				$parent["ID"] = $arRes["ID"];
-				$parent["PARENT_NAME"] = ($parent["PARENT_NAME"])?$parent["PARENT_NAME"]:$parent["NAME"];
+				$parent["PARENT_NAME"] = ($parent["PARENT_NAME"] ?? false) ? $parent["PARENT_NAME"] : $parent["NAME"];
 				$parent["NAME"] = $arRes["NAME"];
 				$arSectionSettings = $parent;
 			}
@@ -1776,7 +1822,7 @@ class CReportNotifications
 				CModule::IncludeModule("im")
 				&& is_array($arFields)
 				&& is_array($arReport)
-				&& intval($arReport["USER_ID"]) > 0
+				&& intval($arReport["USER_ID"] ?? null) > 0
 				&& $arReport["USER_ID"] != $curUser
 			)
 			{
@@ -1990,21 +2036,24 @@ class CReportNotifications
 			}
 
 			ob_start();
-			$GLOBALS['APPLICATION']->IncludeComponent('bitrix:timeman.livefeed.workreport', ($arParams["MOBILE"] == "Y" ? 'mobile' : ''), array(
+			$GLOBALS['APPLICATION']->IncludeComponent(
+				'bitrix:timeman.livefeed.workreport',
+				(($arParams["MOBILE"] ?? '') == "Y" ? 'mobile' : ''),
+				[
 					"USER" => $arUser,
 					"MANAGER" => $arCurrentUserManagers[0],
 					"MARK" => $arReport["MARK"],
 					"REPORT_ID" => $arReport["ID"],
 					"PARAMS" => $arParams
-				),
+				],
 				null,
-				array('HIDE_ICONS' => 'Y')
+				['HIDE_ICONS' => 'Y']
 			);
 			$html_message = ob_get_contents();
 			ob_end_clean();
 			$arResult["EVENT"] = $arFields;
 
-			if ($arParams["MOBILE"] == "Y")
+			if (($arParams["MOBILE"] ?? '') == "Y")
 				$arResult["EVENT_FORMATTED"] = Array(
 					"TITLE_24" => ($arFields["USER_ID"] == $arFields["ENTITY_ID"]
 									? GetMessage("REPORT_ADD_24".($arUser["SEX"] == "M" ? "_M" : ($arUser["SEX"] == "F" ? "_F" : "")))
@@ -2033,8 +2082,12 @@ class CReportNotifications
 					"STYLE" => ($arReport["MARK"] == "G" ? "workday-confirm" : ($arReport["MARK"] == "B" ? "workday-rejected" : "workday-edit"))
 				);
 
-				if ($arParams["NEW_TEMPLATE"] != "Y")
-					$arResult["EVENT_FORMATTED"]["IS_MESSAGE_SHORT"] = CSocNetLogTools::FormatEvent_IsMessageShort($arFields['MESSAGE']);
+				if (($arParams["NEW_TEMPLATE"] ?? null) !== "Y")
+				{
+					$arResult["EVENT_FORMATTED"]["IS_MESSAGE_SHORT"] = CSocNetLogTools::FormatEvent_IsMessageShort(
+						$arFields['MESSAGE']
+					);
+				}
 
 				$arResult['ENTITY']['FORMATTED']["NAME"] = GetMessage('REPORT_TITLE');
 				$arResult['ENTITY']['FORMATTED']["URL"] = COption::GetOptionString("timeman","WORK_REPORT_PATH","/timeman/work_report.php");
@@ -2076,26 +2129,36 @@ class CReportNotifications
 		if (!CModule::IncludeModule("socialnetwork"))
 			return $arResult;
 
-		if(!$bMail && $arParams["USE_COMMENT"] != "Y")
+		if (!$bMail && ($arParams["USE_COMMENT"] ?? '') != "Y")
 		{
 			$arLog["ENTITY_ID"] = $arFields["ENTITY_ID"];
 			$arLog["ENTITY_TYPE"] = $arFields["ENTITY_TYPE"];
 		}
 
-		$news_tmp = $arLog["TITLE"];
-		$title_tmp = GetMessage("REPORT_NEW_COMMENT").'"'.$arLog["TITLE"].'"'."\n";
+		$news_tmp = $arLog["TITLE"] ?? '';
+		$title_tmp = GetMessage("REPORT_NEW_COMMENT").'"'.($arLog["TITLE"] ?? '').'"'."\n";
 		$title_tmp.= GetMessage("COMMENT_AUTHOR").CUser::FormatName(CSite::GetNameFormat(false),
 			array("NAME" => $arFields["CREATED_BY_NAME"], "LAST_NAME" => $arFields["CREATED_BY_LAST_NAME"], "SECOND_NAME" => $arFields["CREATED_BY_SECOND_NAME"], "LOGIN" => $arFields["CREATED_BY_LOGIN"]), true)."\n";
 		$title_tmp.= GetMessage("COMMENT_TEXT");
 
 		$title = str_replace(
-			array("#TITLE#", "#ENTITY#"),
-			array($news_tmp, ($bMail ? $arResult["ENTITY"]["FORMATTED"] : $arResult["ENTITY"]["FORMATTED"]["NAME"])),
+			[
+				"#TITLE#",
+				"#ENTITY#"
+			],
+			[
+				$news_tmp,
+				(
+					$bMail
+						? (isset($arResult["ENTITY"]) ? $arResult["ENTITY"]["FORMATTED"] : '')
+						: (isset($arResult["ENTITY"]) ? $arResult["ENTITY"]["FORMATTED"]["NAME"] : '')
+				)
+			],
 			$title_tmp
 		);
 
 		$arResult["EVENT_FORMATTED"] = array(
-			"TITLE" => ($bMail || $arParams["USE_COMMENT"] != "Y" ? $title : ""),
+			"TITLE" => ($bMail || ($arParams["USE_COMMENT"] ?? '') != "Y" ? $title : ""),
 			"MESSAGE" => ($bMail ? $arFields["TEXT_MESSAGE"] : $arFields["MESSAGE"])
 		);
 
@@ -2128,14 +2191,14 @@ class CReportNotifications
 					"MULTIPLE_BR" => "N",
 					"VIDEO" => "Y", "LOG_VIDEO" => "N",
 					"USERFIELDS" => $arFields["UF"],
-					"USER" => ($arParams["IM"] == "Y" ? "N" : "Y")
+					"USER" => (($arParams["IM"] ?? '') == "Y" ? "N" : "Y")
 				);
 
 				if (!$parserLog)
 					$parserLog = new forumTextParser(LANGUAGE_ID);
 
 				$parserLog->pathToUser = $parserLog->userPath = $arParams["PATH_TO_USER"];
-				$parserLog->bMobile = ($arParams["MOBILE"] == "Y");
+				$parserLog->bMobile = (($arParams["MOBILE"] ?? '') == "Y");
 				$arResult["EVENT_FORMATTED"]["MESSAGE"] = htmlspecialcharsbx($parserLog->convert(htmlspecialcharsback($arResult["EVENT_FORMATTED"]["MESSAGE"]), $arAllow));
 				$arResult["EVENT_FORMATTED"]["MESSAGE"] = preg_replace("/\[user\s*=\s*([^\]]*)\](.+?)\[\/user\]/is".BX_UTF_PCRE_MODIFIER, "\\2", $arResult["EVENT_FORMATTED"]["MESSAGE"]);
 			}
@@ -2162,8 +2225,8 @@ class CReportNotifications
 			}
 
 			if (
-				$arParams["MOBILE"] != "Y"
-				&& $arParams["NEW_TEMPLATE"] != "Y"
+				($arParams["MOBILE"] ?? null) != "Y"
+				&& ($arParams["NEW_TEMPLATE"] ?? null) != "Y"
 			)
 			{
 				if (CModule::IncludeModule("forum"))

@@ -1,9 +1,11 @@
 <?
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
+use Bitrix\Bitrix24\Sso;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Engine\Response;
 
 class CIntranetUserProfileSecurityComponentAjaxController extends \Bitrix\Main\Engine\Controller
 {
@@ -159,5 +161,30 @@ class CIntranetUserProfileSecurityComponentAjaxController extends \Bitrix\Main\E
 		$params = [];
 
 		return new \Bitrix\Main\Engine\Response\Component($componentName, '', $params, $additionalParams);
+	}
+
+	public function ssoAction(): Response\AjaxJson
+	{
+		Loader::requireModule('bitrix24');
+		//todo remove after release class_exists and add dependece
+		if (!class_exists(Sso\Configuration::class))
+		{
+			return Response\AjaxJson::createDenied();
+		}
+
+		if (!Sso\Configuration::isSsoAvailable() || Sso\Configuration::isSsoLocked())
+		{
+			return Response\AjaxJson::createDenied();
+		}
+
+		$componentName = 'bitrix:bitrix24.sso.wizard';
+		$params = [];
+		$additionalParams = [
+			'pageTitle' => Loc::getMessage('INTRANET_USER_PROFILE_SSO_TITLE'),
+		];
+
+		return new Response\Component(
+			$componentName, '', $params, $additionalParams
+		);
 	}
 }

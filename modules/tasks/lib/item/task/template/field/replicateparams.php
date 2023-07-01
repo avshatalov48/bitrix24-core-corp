@@ -72,7 +72,7 @@ class ReplicateParams extends \Bitrix\Tasks\Item\Field\Scalar
 			"TIMEZONE_OFFSET" => array('VALUE' => StructureChecker::TYPE_INT),
 			"DAILY_MONTH_INTERVAL" => array('VALUE' => StructureChecker::TYPE_INT_POSITIVE, 'DEFAULT' => 0),
 			"REPEAT_TILL" => array('VALUE' => function($value, $params){
-				if(is_array($params) && (string) $params['data']['END_DATE'] != '' && !array_key_exists('REPEAT_TILL', $params['data']))
+				if(is_array($params) && (string)($params['data']['END_DATE'] ?? null) != '' && !array_key_exists('REPEAT_TILL', $params['data']))
 				{
 					$value = 'date';
 				}

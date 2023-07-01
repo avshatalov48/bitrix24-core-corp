@@ -46,16 +46,6 @@ class DocumentCardTimeline
 			'ENTITY_TYPE_NAME' => \CCrmOwnerType::StoreDocumentName,
 			'ENTITY_INFO' => $entityInfo,
 			'ACTIVITY_EDITOR_ID' => $editorId,
-			'ENABLE_TODO' => false,
-			'ENABLE_TASK' => false,
-			'ENABLE_WAIT' => false,
-			'ENABLE_SMS' => false,
-			'ENABLE_EMAIL' => false,
-			'ENABLE_SALESCENTER' => false,
-			'ENABLE_CALL' => false,
-			'ENABLE_MEETING' => false,
-			'ENABLE_VISIT' => false,
-			'ENABLE_ZOOM' => false,
 		];
 
 		$eventResult = [

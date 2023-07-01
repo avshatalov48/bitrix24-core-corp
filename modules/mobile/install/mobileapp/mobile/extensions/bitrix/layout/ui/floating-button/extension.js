@@ -1,7 +1,11 @@
 (() => {
 
 	const { Haptics } = jn.require('haptics');
+	const { HideOnScrollAnimator } = jn.require('animation/hide-on-scroll');
 
+	/**
+	 * @class UI.FloatingButtonComponent
+	 */
 	class FloatingButtonComponent extends LayoutComponent
 	{
 		constructor(props)
@@ -14,6 +18,9 @@
 			}
 
 			this.position = props.position || {};
+			this.viewStyle = props.viewStyle || {};
+
+			this.viewRef = null;
 		}
 
 		get vibrationEnabled()
@@ -21,10 +28,50 @@
 			return BX.prop.getBoolean(this.props, 'vibrationEnabled', true);
 		}
 
+		animateOnScroll(scrollParams, scrollViewHeight)
+		{
+			if (!this.viewRef)
+			{
+				return;
+			}
+
+			const animator = this.getAnimator();
+			if (animator)
+			{
+				animator.animateByScroll(this.viewRef, scrollParams, scrollViewHeight);
+			}
+		}
+
+		/**
+		 * @return {HideOnScrollAnimator}
+		 */
+		getAnimator()
+		{
+			if (!this.animator)
+			{
+				const { bottom } = styles.view;
+
+				this.animator = new HideOnScrollAnimator({ initialTopPosition: bottom });
+			}
+
+			return this.animator;
+		}
+
+		show()
+		{
+			return this.getAnimator().show(this.viewRef);
+		}
+
+		hide()
+		{
+			return this.getAnimator().hide(this.viewRef);
+		}
+
 		render()
 		{
 			return View(
 				{
+					ref: (ref) => this.viewRef = ref,
 					safeArea: {
 						bottom: true,
 						top: true,
@@ -33,7 +80,7 @@
 					},
 					testId: this.props.testId,
 					style: {
-						...styles.view(),
+						...styles.view,
 						...this.position,
 					},
 				},
@@ -56,7 +103,7 @@
 						Image({
 							style: styles.button,
 							svg: {
-								content: `<svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7.875 0H6.125V6.125H0V7.875H6.125V14H7.875V7.875H14V6.125H7.875V0Z" fill="white"/></svg>`,
+								content: '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M6.74915 1.25085C6.74915 0.560027 7.30917 0 8 0C8.69083 0 9.25085 0.560027 9.25085 1.25085V6.74915H14.7491C15.44 6.74915 16 7.30917 16 8C16 8.69083 15.44 9.25085 14.7491 9.25085H9.25085V14.7491C9.25085 15.44 8.69083 16 8 16C7.30917 16 6.74915 15.44 6.74915 14.7491V9.25085H1.25085C0.560027 9.25085 0 8.69083 0 8C0 7.30917 0.560027 6.74915 1.25085 6.74915H6.74915V1.25085Z" fill="white"/></svg>',
 							},
 						}),
 					),
@@ -91,15 +138,13 @@
 	}
 
 	const styles = {
-		view: () => {
-			return {
-				position: 'absolute',
-				right: Application.getPlatform() === 'android' ? 14 : 13,
-				bottom: Application.getPlatform() === 'android' ? 12 : 11,
-			};
+		view: {
+			position: 'absolute',
+			right: Application.getPlatform() === 'android' ? 14 : 13,
+			bottom: Application.getPlatform() === 'android' ? 12 : 11,
 		},
 		shadow: {
-			borderRadius: 31,
+			borderRadius: 30,
 		},
 		shadowView: {
 			height: Application.getPlatform() === 'android' ? 56 : 60,
@@ -110,8 +155,8 @@
 			alignItems: 'center',
 		},
 		button: {
-			width: 14,
-			height: 14,
+			width: 16,
+			height: 16,
 		},
 	};
 

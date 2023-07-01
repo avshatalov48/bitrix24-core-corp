@@ -2,14 +2,20 @@
  * @module crm/timeline/item/factory
  */
 jn.define('crm/timeline/item/factory', (require, exports, module) => {
-
 	const {
+		EmailActivity,
 		CallActivity,
 		OpenLineActivity,
 		CreationActivity,
 		TodoActivity,
 		Document,
 		ConfigurableRestAppActivity,
+		PaymentActivity,
+		SmsActivity,
+		NotificationActivity,
+		CalendarSharingActivity,
+		TasksTaskActivity,
+		TasksTaskCommentActivity,
 	} = require('crm/timeline/item/activity');
 
 	const {
@@ -22,6 +28,24 @@ jn.define('crm/timeline/item/factory', (require, exports, module) => {
 		Ping,
 		DocumentViewed,
 		RestLog,
+		Conversion,
+		PaymentPaid,
+		PaymentViewed,
+		PaymentNotViewed,
+		PaymentError,
+		FinalSummary,
+		OrderCheckNotPrinted,
+		OrderCheckPrinted,
+		OrderCheckCreationError,
+		SmsStatus,
+		CalendarSharingNotViewed,
+		CalendarSharingViewed,
+		CalendarSharingEventConfirmed,
+		CalendarSharingInvitationSent,
+		CalendarSharingLinkCopied,
+		TasksTaskCreation,
+		TasksTaskModification,
+		CustomerSelectedPaymentMethod,
 	} = require('crm/timeline/item/log');
 
 	const { TimelineItemCompatible } = require('crm/timeline/item/compatible');
@@ -37,21 +61,46 @@ jn.define('crm/timeline/item/factory', (require, exports, module) => {
 		TodoCreated,
 		CallIncoming,
 		Ping,
+		'Activity:Email': EmailActivity,
 		DocumentViewed,
 		Document,
 		RestLog,
+		Conversion,
 		'Activity:Call': CallActivity,
 		'Activity:OpenLine': OpenLineActivity,
 		'Activity:Creation': CreationActivity,
 		'Activity:ToDo': TodoActivity,
 		'Activity:ConfigurableRestApp': ConfigurableRestAppActivity,
+		'Activity:Payment': PaymentActivity,
+		'Activity:Sms': SmsActivity,
+		'Activity:Notification': NotificationActivity,
+		PaymentPaid,
+		PaymentViewed,
+		PaymentNotViewed,
+		PaymentError,
+		FinalSummary,
+		OrderCheckNotPrinted,
+		OrderCheckPrinted,
+		OrderCheckCreationError,
+		SmsStatus,
+		'Activity:CalendarSharing': CalendarSharingActivity,
+		CalendarSharingNotViewed,
+		CalendarSharingViewed,
+		CalendarSharingEventConfirmed,
+		CalendarSharingInvitationSent,
+		CalendarSharingLinkCopied,
+		'Activity:TasksTask': TasksTaskActivity,
+		'Activity:TasksTaskComment': TasksTaskCommentActivity,
+		TasksTaskCreation,
+		TasksTaskModification,
+		CustomerSelectedPaymentMethod,
 	};
 
-    /**
+	/**
      * @class TimelineItemFactory
      */
-    class TimelineItemFactory
-    {
+	class TimelineItemFactory
+	{
 		/**
 		 * @param {string} type
 		 * @param {object} props
@@ -66,8 +115,7 @@ jn.define('crm/timeline/item/factory', (require, exports, module) => {
 
 			return new TimelineItemCompatible(props);
 		}
-    }
+	}
 
-    module.exports = { TimelineItemFactory, SupportedTypes };
-
+	module.exports = { TimelineItemFactory, SupportedTypes };
 });

@@ -2,11 +2,11 @@
 
 namespace Bitrix\Crm\Timeline;
 
+use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Order;
 use Bitrix\Crm\Order\OrderStatus;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Crm\ItemIdentifier;
 
 Loc::loadMessages(__FILE__);
 
@@ -482,7 +482,7 @@ class OrderController extends EntityController
 	{
 		$typeID = isset($data['TYPE_ID']) ? (int)$data['TYPE_ID'] : TimelineType::UNDEFINED;
 		$settings = is_array($data['SETTINGS']) ? $data['SETTINGS'] : [];
-		$fields = $settings['FIELDS'];
+		$fields = $settings['FIELDS'] ?? [];
 
 		if ($typeID === TimelineType::MODIFICATION)
 		{
@@ -597,8 +597,8 @@ class OrderController extends EntityController
 				$data['ASSOCIATED_ENTITY']['SENT'] = 'Y';
 			}
 
-			$data['ASSOCIATED_ENTITY']['PAYMENT_ID'] = $fields['PAYMENT_ID'];
-			$data['ASSOCIATED_ENTITY']['SHIPMENT_ID'] = $fields['SHIPMENT_ID'];
+			$data['ASSOCIATED_ENTITY']['PAYMENT_ID'] = $fields['PAYMENT_ID'] ?? null;
+			$data['ASSOCIATED_ENTITY']['SHIPMENT_ID'] = $fields['SHIPMENT_ID'] ?? null;
 
 			unset($data['SETTINGS']);
 		}

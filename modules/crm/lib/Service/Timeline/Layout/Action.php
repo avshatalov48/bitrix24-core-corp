@@ -2,12 +2,14 @@
 
 namespace Bitrix\Crm\Service\Timeline\Layout;
 
+use Bitrix\Crm\Service\Timeline\Layout\Action\Analytics;
 use Bitrix\Crm\Service\Timeline\Layout\Action\Animation;
 
 abstract class Action extends Base
 {
 	protected ?array $actionParams = null;
 	protected ?Animation $animation = null;
+	protected ?Analytics $analytics = null;
 
 	public function getActionParams(): ?array
 	{
@@ -51,6 +53,18 @@ abstract class Action extends Base
 	public function setAnimation(?Animation $animation): self
 	{
 		$this->animation = $animation;
+
+		return $this;
+	}
+
+	public function getAnalytics(): ?Analytics
+	{
+		return $this->analytics;
+	}
+
+	public function setAnalytics(?Analytics $analytics): self
+	{
+		$this->analytics = $analytics;
 
 		return $this;
 	}

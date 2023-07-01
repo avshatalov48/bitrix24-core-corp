@@ -2,7 +2,6 @@
  * @module crm/timeline/ui/divider
  */
 jn.define('crm/timeline/ui/divider', (require, exports, module) => {
-
 	const { Loc } = require('loc');
 	const { Moment } = require('utils/date');
 	const { dayMonth, longDate } = require('utils/date/formats');
@@ -14,10 +13,11 @@ jn.define('crm/timeline/ui/divider', (require, exports, module) => {
 			moment = new Moment();
 		}
 
-		const color = moment.isToday ? '#2FC6F6' : '#dde5e8';
+		const color = moment.isToday ? '#2fc6f6' : '#dfe0e3';
 		const textColor = moment.isToday ? '#ffffff' : '#6e7273';
 		const text = (() => {
-			switch (true) {
+			switch (true)
+			{
 				case moment.isToday: return Loc.getMessage('CRM_TIMELINE_HISTORY_TODAY');
 				case moment.isYesterday: return Loc.getMessage('CRM_TIMELINE_HISTORY_YESTERDAY');
 				case moment.inThisYear: return moment.format(dayMonth());
@@ -50,8 +50,8 @@ jn.define('crm/timeline/ui/divider', (require, exports, module) => {
 				color,
 				text,
 				textColor,
-				counter
-			})
+				counter,
+			}),
 		);
 	}
 
@@ -65,12 +65,12 @@ jn.define('crm/timeline/ui/divider', (require, exports, module) => {
 					backgroundColor: '#DFE0E3',
 					position: 'absolute',
 					top: 10,
-				}
-			}
+				},
+			},
 		);
 	}
 
-	function Badge({color, text, textColor, counter = {}})
+	function Badge({ color, text, textColor, counter = {} })
 	{
 		return View(
 			{
@@ -81,7 +81,7 @@ jn.define('crm/timeline/ui/divider', (require, exports, module) => {
 					height: 21,
 					flexDirection: 'row',
 					justifyContent: 'center',
-				}
+				},
 			},
 			Text({
 				text,
@@ -89,7 +89,7 @@ jn.define('crm/timeline/ui/divider', (require, exports, module) => {
 					color: textColor,
 					fontSize: 11,
 					fontWeight: '700',
-				}
+				},
 			}),
 			Counter(counter),
 		);
@@ -97,13 +97,13 @@ jn.define('crm/timeline/ui/divider', (require, exports, module) => {
 
 	function Counter({ value, backgroundColor, borderColor })
 	{
-		value = parseInt(value);
+		value = parseInt(value, 10);
 		if (!value)
 		{
 			return null;
 		}
 
-		backgroundColor = backgroundColor || '#F54819';
+		backgroundColor = backgroundColor || '#f0371b';
 		borderColor = borderColor || backgroundColor;
 
 		return View(
@@ -119,7 +119,7 @@ jn.define('crm/timeline/ui/divider', (require, exports, module) => {
 					justifyContent: 'center',
 					marginLeft: 4,
 					marginTop: 4,
-				}
+				},
 			},
 			Text({
 				text: String(value),
@@ -127,11 +127,10 @@ jn.define('crm/timeline/ui/divider', (require, exports, module) => {
 					color: '#ffffff',
 					fontSize: 10,
 					fontWeight: 'bold',
-				}
-			})
-		)
+				},
+			}),
+		);
 	}
-    
-    module.exports = { Divider, DateDivider };
-    
+
+	module.exports = { Divider, DateDivider };
 });

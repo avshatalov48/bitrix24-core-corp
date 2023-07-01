@@ -96,14 +96,14 @@ if (!defined('TASKS_MUL_INCLUDED')):
 		'',
 		array(
 			"AJAX_ONLY" => "Y",
-			"PATH_TO_SONET_USER_PROFILE" => $arParams["~PATH_TO_USER_PROFILE"],
-			"PATH_TO_SONET_MESSAGES_CHAT" => $arParams["~PATH_TO_MESSAGES_CHAT"],
-			"DATE_TIME_FORMAT" => $arParams["~DATE_TIME_FORMAT"],
-			"SHOW_YEAR" => $arParams["SHOW_YEAR"],
-			"NAME_TEMPLATE" => $arParams["~NAME_TEMPLATE"],
-			"SHOW_LOGIN" => $arParams["SHOW_LOGIN"],
-			"PATH_TO_CONPANY_DEPARTMENT" => $arParams["~PATH_TO_CONPANY_DEPARTMENT"],
-			"PATH_TO_VIDEO_CALL" => $arParams["~PATH_TO_VIDEO_CALL"],
+			"PATH_TO_SONET_USER_PROFILE" => ($arParams["~PATH_TO_USER_PROFILE"] ?? null),
+			"PATH_TO_SONET_MESSAGES_CHAT" => ($arParams["~PATH_TO_MESSAGES_CHAT"] ?? null),
+			"DATE_TIME_FORMAT" => ($arParams["~DATE_TIME_FORMAT"] ?? null),
+			"SHOW_YEAR" => ($arParams["SHOW_YEAR"] ?? null),
+			"NAME_TEMPLATE" => ($arParams["~NAME_TEMPLATE"] ?? null),
+			"SHOW_LOGIN" => ($arParams["SHOW_LOGIN"] ?? null),
+			"PATH_TO_CONPANY_DEPARTMENT" => ($arParams["~PATH_TO_CONPANY_DEPARTMENT"] ?? null),
+			"PATH_TO_VIDEO_CALL" => ($arParams["~PATH_TO_VIDEO_CALL"] ?? null),
 		),
 		false,
 		array("HIDE_ICONS" => "Y")
@@ -136,10 +136,10 @@ BX.message({
 	TASKS_PRIORITY_LOW : '<?php echo GetMessageJS('TASKS_PRIORITY_0')?>',
 	TASKS_PRIORITY_MIDDLE : '<?php echo GetMessageJS('TASKS_PRIORITY_1')?>',
 	TASKS_PRIORITY_HIGH : '<?php echo GetMessageJS('TASKS_PRIORITY_2')?>',
-	TASKS_MARK : '<?php echo GetMessageJS('TASKS_MARK')?>',
+	TASKS_MARK : '<?php echo GetMessageJS('TASKS_MARK_MSGVER_1')?>',
 	TASKS_MARK_NONE : '<?php echo GetMessageJS('TASKS_MARK_NONE')?>',
-	TASKS_MARK_P : '<?php echo GetMessageJS('TASKS_MARK_P')?>',
-	TASKS_MARK_N : '<?php echo GetMessageJS('TASKS_MARK_N')?>',
+	TASKS_MARK_P : '<?php echo GetMessageJS('TASKS_MARK_P_MSGVER_1')?>',
+	TASKS_MARK_N : '<?php echo GetMessageJS('TASKS_MARK_N_MSGVER_1')?>',
 	TASKS_DURATION : '<?php echo GetMessageJS('TASKS_DURATION')?>',
 	TASKS_OK : '<?php echo GetMessageJS('TASKS_OK')?>',
 	TASKS_CANCEL : '<?php echo GetMessageJS('TASKS_CANCEL')?>',
@@ -173,7 +173,12 @@ BX.message({
 	<?php
 	foreach (array_keys($arResult['KNOWN_COLUMNS']) as $columnId)
 	{
-		echo 'TASKS_LIST_COLUMN_' . $columnId . ": '" . GetMessageJS('TASKS_LIST_COLUMN_' . $columnId) . "',";
+		$langKey = $columnId;
+		if ($langKey == 6)
+		{
+			$langKey = '6_MSGVER_1';
+		}
+		echo 'TASKS_LIST_COLUMN_' . $columnId . ": '" . GetMessageJS('TASKS_LIST_COLUMN_' . $langKey) . "',";
 	}
 	?>
 	TASKS_LIST_MENU_RESET_TO_DEFAULT_PRESET : '<?php echo GetMessageJS('TASKS_LIST_MENU_RESET_TO_DEFAULT_PRESET'); ?>',
@@ -331,7 +336,7 @@ if (
 
 					?>
 					<th style="<?php echo $columnWidthStr; ?>"
-						title="<?php echo GetMessage('TASKS_LIST_COLUMN_' . $column['ID']); ?>"
+						title="<?php echo ($column['ID'] == 6) ? GetMessage('TASKS_LIST_COLUMN_' . $column['ID'] . '_MSGVER_1') : GetMessage('TASKS_LIST_COLUMN_' . $column['ID']); ?>"
 						<?php echo $clsSort; ?>
 					>
 						<div class="task-head-cell-wrap" style="min-width:<?php echo $minColumnWidth; ?>px; <?php echo $columnWidthStr; ?>">
@@ -351,7 +356,7 @@ if (
 								?>
 							>
 								<span class="task-head-cell-sort-order"></span>
-								<span class="task-head-cell-title"><?php echo GetMessage('TASKS_LIST_COLUMN_' . $column['ID']); ?></span>
+								<span class="task-head-cell-title"><?php echo ($column['ID'] == 6) ? GetMessage('TASKS_LIST_COLUMN_' . $column['ID'] . '_MSGVER_1') : GetMessage('TASKS_LIST_COLUMN_' . $column['ID']); ?></span>
 						</div>
 					</th>
 					<?php
@@ -394,7 +399,7 @@ if (
 					}
 
 					$projectExpanded = true;
-					if ($arParams['TASKS_ALWAYS_EXPANDED'] != 'Y' && isset($arResult["GROUPS"][$task["GROUP_ID"]])
+					if (($arParams['TASKS_ALWAYS_EXPANDED'] ?? null) != 'Y' && isset($arResult["GROUPS"][$task["GROUP_ID"]])
 						&& isset($arResult["GROUPS"][$task["GROUP_ID"]]["EXPANDED"])
 						&& ( ! $arResult["GROUPS"][$task["GROUP_ID"]]["EXPANDED"] )
 					)
@@ -412,7 +417,7 @@ if (
 							"DEFER"         => false,
 							"SITE_ID"       => SITE_ID,
 							"TASK_ADDED"    => false,
-							"PATH_TO_GROUP" => $arParams['PATH_TO_GROUP'],
+							"PATH_TO_GROUP" => ($arParams['PATH_TO_GROUP'] ?? null),
 							"IFRAME"        => 'N',
 							"NAME_TEMPLATE" => $arParams["NAME_TEMPLATE"],
 							"COLUMNS"       => $arResult['COLUMNS'],
@@ -475,7 +480,7 @@ if (
 					echo htmlspecialcharsbx(GetMessage('TASKS_LIST_GROUP_ACTION_ADD_ACCOMPLICE'));
 				?></option>
 
-				<?if(!($arResult['VIEW_STATE']['SPECIAL_PRESET_SELECTED']['CODENAME'] == 'FAVORITE' && $arResult['VIEW_STATE']['SECTION_SELECTED']['CODENAME'] == 'VIEW_SECTION_ADVANCED_FILTER')):?>
+				<?if(!(($arResult['VIEW_STATE']['SPECIAL_PRESET_SELECTED']['CODENAME'] ?? null) == 'FAVORITE' && $arResult['VIEW_STATE']['SECTION_SELECTED']['CODENAME'] == 'VIEW_SECTION_ADVANCED_FILTER')):?>
 					<?// adding is blocked when filtering by this preset?>
 					<option value="add_favorite"><?php
 						echo htmlspecialcharsbx(GetMessage('TASKS_LIST_GROUP_ACTION_ADD_FAVORITE'));

@@ -1,10 +1,9 @@
 <?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
+use Bitrix\Main\Application;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Loader;
-use Bitrix\Main\ModuleManager;
-use Bitrix\Main\Error;
 use Bitrix\Main\Config\Option;
 use Bitrix\Bitrix24\Util;
 
@@ -149,14 +148,14 @@ class CIntranetInviteDialogComponent extends \CBitrixComponent
 
 		if (\CBitrix24BusinessTools::isAvailable())
 		{
-			$this->arResult["USER_MAX_COUNT"] = intval(COption::GetOptionString("main", "PARAM_MAX_USERS"));
+			$this->arResult["USER_MAX_COUNT"] = Application::getInstance()->getLicense()->getMaxUsers();
 		}
 		else
 		{
-			$this->arResult["USER_MAX_COUNT"] = \CBitrix24::getMaxBitrix24UsersCount();
+			$this->arResult["USER_MAX_COUNT"] = CBitrix24::getMaxBitrix24UsersCount();
 		}
 
-		$this->arResult["USER_CURRENT_COUNT"] = \Bitrix\Bitrix24\Util::getCurrentUserCount();
+		$this->arResult["USER_CURRENT_COUNT"] = Util::getCurrentUserCount();
 	}
 
 	public function executeComponent()
@@ -164,7 +163,7 @@ class CIntranetInviteDialogComponent extends \CBitrixComponent
 		$this->arResult["IS_CLOUD"] = Loader::includeModule("bitrix24");
 		if ($this->arResult["IS_CLOUD"])
 		{
-			$this->arResult["LICENSE_ZONE"] = \CBitrix24::getLicensePrefix();
+			$this->arResult["LICENSE_ZONE"] = CBitrix24::getLicensePrefix();
 		}
 
 		$this->arResult["IS_EXTRANET_INSTALLED"] = Loader::includeModule("extranet");

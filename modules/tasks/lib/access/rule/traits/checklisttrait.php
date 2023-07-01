@@ -15,15 +15,10 @@ trait ChecklistTrait
 	 */
 	private function isList($params): bool
 	{
-		if (
+		return
 			is_array($params)
-			&& array_keys($params)[0] === 0
-		)
-		{
-			return true;
-		}
-
-		return false;
+			&& (array_keys($params)[0] ?? null) === 0
+		;
 	}
 
 	/**

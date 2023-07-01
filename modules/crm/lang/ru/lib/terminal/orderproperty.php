@@ -1,0 +1,2 @@
+<?php
+$MESS['CRM_TERMINAL_ORDER_PROPERTY_PHONE'] = 'Телефон';

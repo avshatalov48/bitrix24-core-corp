@@ -26,6 +26,8 @@ if($_SERVER["REQUEST_METHOD"]=="POST" && check_bitrix_sessid() && isset($_POST["
 if($_SERVER["REQUEST_METHOD"]=="POST" && check_bitrix_sessid() && isset($_POST["ACTIVATE_COUPON_BUTTON"]))
 {
 	$coupon = $APPLICATION->UnJSEscape($_REQUEST["COUPON"]);
+	$errorMessage = '';
+
 	if ($coupon == '')
 		$errorMessage .= GetMessage("SUPA_ACE_CPN").". ";
 

@@ -11,10 +11,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
  * @var object $APPLICATION
  */
 
-use Bitrix\Crm\Tour\NewCountersMode;
-use Bitrix\Main\Page\Asset;
+use Bitrix\Crm\Component\EntityList\ActivityFieldRestrictionManager;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Page\Asset;
 use Bitrix\Main\UI\Extension;
+use Bitrix\Crm\Tour;
 
 Extension::load(['ui.fonts.opensans', 'ui.counterpanel']);
 Asset::getInstance()->addJs('/bitrix/js/crm/message.js');
@@ -33,8 +34,6 @@ $filterLastPresetId = htmlspecialcharsbx(
 	)
 );
 $filterLastPreset = CUserOptions::getOption('crm', $filterLastPresetId);
-$newCountersTourSeenOption = CUserOptions::GetOption('crm.tour', NewCountersMode::OPTION_NAME);
-$isNewCountersTourSeen = isset($newCountersTourSeenOption['closed']) && $newCountersTourSeenOption['closed'] === 'Y';
 
 $data = $arResult['DATA'] ?? [];
 $returnAsHtml = $arParams['RETURN_AS_HTML_MODE'] ?? false;
@@ -53,6 +52,16 @@ if ($isChangeViewTarget)
 $phrases = Loc::loadLanguageFile(__FILE__);
 $phrases['NEW_CRM_COUNTER_TYPE_CURRENT'] = $phrases['NEW_CRM_COUNTER_TYPE_CURRENT2'];
 unset($phrases['NEW_CRM_COUNTER_TYPE_CURRENT2']);
+
+echo (Tour\AhaMomentCounterLightTime::getInstance())->build();
+
+$lockedCallback = '';
+$activityFieldRestrictionManager = new ActivityFieldRestrictionManager();
+if ($activityFieldRestrictionManager->hasRestrictions())
+{
+	$lockedCallback = $activityFieldRestrictionManager->getJsCallback();
+}
+
 ?>
 
 <div id="<?= $containerId ?>" class="crm-counter"></div>
@@ -75,7 +84,7 @@ unset($phrases['NEW_CRM_COUNTER_TYPE_CURRENT2']);
 			withExcludeUsers: <?= $arResult['WITH_EXCLUDE_USERS'] ? 'true' : 'false' ?>,
 			filterLastPresetId: "<?= $filterLastPresetId ?>",
 			filterLastPresetData: <?= CUtil::PhpToJSObject($filterLastPreset) ?>,
-			isNewCountersTourSeen: "<?= $isNewCountersTourSeen ? 'Y' : 'N' ?>"
+			lockedCallback: <?= CUtil::PhpToJSObject($lockedCallback) ?>
 		})).init();
 	});
 </script>

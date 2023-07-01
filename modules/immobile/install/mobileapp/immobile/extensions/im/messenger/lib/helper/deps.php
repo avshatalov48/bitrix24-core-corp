@@ -9,5 +9,6 @@ return [
 		'./src/date',
 		'./src/worker',
 		'./src/soft-loader',
+		'./src/file',
 	],
 ];

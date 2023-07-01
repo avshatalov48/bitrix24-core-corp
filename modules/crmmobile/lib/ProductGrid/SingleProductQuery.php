@@ -21,7 +21,7 @@ Loader::requireModule('crm');
 
 class SingleProductQuery extends Query
 {
-	private Item $entity;
+	protected Item $entity;
 
 	private string $currencyId;
 
@@ -56,11 +56,7 @@ class SingleProductQuery extends Query
 		];
 
 		/** @var EnricherContract[] $enrichers */
-		$enrichers = [
-			new CompletePrices($this->taxCalculator, $this->entity),
-			new ConvertCurrency($this->currencyId),
-			new CompleteExtraFields($this->accounting, $this->permissionsProvider, $this->entity),
-		];
+		$enrichers = $this->getEnrichers();
 
 		foreach ($enrichers as $enricher)
 		{
@@ -68,6 +64,15 @@ class SingleProductQuery extends Query
 		}
 
 		return $rows[0]->toArray();
+	}
+
+	protected function getEnrichers(): array
+	{
+		return [
+			new CompletePrices($this->taxCalculator, $this->entity),
+			new ConvertCurrency($this->currencyId),
+			new CompleteExtraFields($this->accounting, $this->permissionsProvider, $this->entity),
+		];
 	}
 
 	private function initRow(): ProductRow

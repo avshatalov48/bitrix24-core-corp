@@ -23,10 +23,6 @@ final class CB24SearchTitle
 		);
 
 		$arExternalAuthId = array();
-		if (\Bitrix\Main\ModuleManager::isModuleInstalled('replica'))
-		{
-			$arExternalAuthId[] = 'replica';
-		}
 		if (\Bitrix\Main\ModuleManager::isModuleInstalled('im'))
 		{
 			$arExternalAuthId[] = 'bot';

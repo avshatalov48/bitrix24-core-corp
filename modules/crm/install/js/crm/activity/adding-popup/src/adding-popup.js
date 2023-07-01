@@ -1,6 +1,6 @@
 import { ajax as Ajax, Tag, Text, Type } from "main.core";
 import { Popup } from "main.popup";
-import { SaveButton, CancelButton, ButtonColor, ButtonSize, ButtonState } from "ui.buttons";
+import { ButtonColor, ButtonSize, ButtonState, CancelButton, SaveButton } from "ui.buttons";
 import { TodoEditor, TodoEditorMode } from "crm.activity.todo-editor";
 import { BaseEvent, EventEmitter } from "main.core.events";
 import { UI } from 'ui.notification';
@@ -15,19 +15,21 @@ export class AddingPopup
 {
 	#entityId: Number = null;
 	#entityTypeId: Number = null;
+	#currentUser: Object = null;
 	#popup: ?Popup = null;
 	#popupContainer: HTMLElement = null;
 	#todoEditor: ?TodoEditor = null;
 	#eventEmitter: EventEmitter = null;
 
-	constructor(entityTypeId: Number, entityId: Number, params: Object)
+	constructor(entityTypeId: Number, entityId: Number, currentUser: Object, params: Object)
 	{
 		this.#entityId = Text.toInteger(entityId);
 		this.#entityTypeId = Text.toInteger(entityTypeId);
+		this.#currentUser = currentUser;
 
 		this.#eventEmitter = new EventEmitter;
 		this.#eventEmitter.setEventNamespace('Crm.Activity.AddingPopup');
-
+		
 		if (!Type.isPlainObject(params))
 		{
 			params = {};
@@ -61,6 +63,7 @@ export class AddingPopup
 				container: this.#popupContainer,
 				ownerTypeId: this.#entityTypeId,
 				ownerId: this.#entityId,
+				currentUser: this.#currentUser,
 				events: {
 					onChangeDescription: this.#onChangeEditorDescription.bind(this),
 					onSaveHotkeyPressed: this.#onEditorSaveHotkeyPressed.bind(this),

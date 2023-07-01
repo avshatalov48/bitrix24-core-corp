@@ -12,8 +12,10 @@
 	var _stages = /*#__PURE__*/new WeakMap();
 	var _categoryContainer = /*#__PURE__*/new WeakMap();
 	var _stagesContainer = /*#__PURE__*/new WeakMap();
+	var _isRobot = /*#__PURE__*/new WeakMap();
 	var CompleteTaskActivity = /*#__PURE__*/function () {
 	  function CompleteTaskActivity(options) {
+	    var _this = this;
 	    babelHelpers.classCallCheck(this, CompleteTaskActivity);
 	    _classPrivateFieldInitSpec(this, _form, {
 	      writable: true,
@@ -35,16 +37,60 @@
 	      writable: true,
 	      value: void 0
 	    });
+	    _classPrivateFieldInitSpec(this, _isRobot, {
+	      writable: true,
+	      value: void 0
+	    });
 	    babelHelpers.classPrivateFieldSet(this, _form, document.forms.namedItem(options.formName));
+	    if (!main_core.Type.isArray(options.chosenStages)) {
+	      options.chosenStages = [];
+	    }
 	    babelHelpers.classPrivateFieldSet(this, _categoryContainer, babelHelpers.classPrivateFieldGet(this, _form)['target_category']);
 	    babelHelpers.classPrivateFieldSet(this, _stagesContainer, babelHelpers.classPrivateFieldGet(this, _form)['target_status[]']);
-	    babelHelpers.classPrivateFieldSet(this, _stages, options.stages);
-	    babelHelpers.classPrivateFieldSet(this, _chosenStages, new Set(options.chosenStages));
+	    babelHelpers.classPrivateFieldSet(this, _chosenStages, new Set(options.chosenStages.map(function (stageId) {
+	      return String(stageId);
+	    })));
+	    babelHelpers.classPrivateFieldSet(this, _isRobot, options.isRobot);
+	    babelHelpers.classPrivateFieldSet(this, _stages, {});
+	    if (main_core.Type.isPlainObject(options.stages)) {
+	      for (var _i = 0, _Object$entries = Object.entries(options.stages); _i < _Object$entries.length; _i++) {
+	        var _Object$entries$_i = babelHelpers.slicedToArray(_Object$entries[_i], 2),
+	          categoryId = _Object$entries$_i[0],
+	          stages = _Object$entries$_i[1];
+	        // Due to http://jabber.bx/view.php?id=169508
+	        // we have to cast types explicitly
+	        babelHelpers.classPrivateFieldGet(this, _stages)[categoryId] = stages.map(function (stageInfo) {
+	          return {
+	            id: String(stageInfo.id),
+	            name: String(stageInfo.name)
+	          };
+	        });
+	      }
+	    } else if (main_core.Type.isArray(options.stages)) {
+	      // Due to http://jabber.bx/view.php?id=169508
+	      // we have to cast types explicitly
+	      options.stages.forEach(function (categoryStages, categoryId) {
+	        babelHelpers.classPrivateFieldGet(_this, _stages)[categoryId] = categoryStages.map(function (stageInfo) {
+	          return {
+	            id: String(stageInfo.id),
+	            name: String(stageInfo.name)
+	          };
+	        });
+	      });
+	    }
 	  }
 	  babelHelpers.createClass(CompleteTaskActivity, [{
 	    key: "init",
 	    value: function init() {
-	      this.updateStages();
+	      if (babelHelpers.classPrivateFieldGet(this, _categoryContainer).options.length <= 1) {
+	        if (babelHelpers.classPrivateFieldGet(this, _isRobot)) {
+	          main_core.Dom.remove(babelHelpers.classPrivateFieldGet(this, _categoryContainer).parentElement);
+	        } else {
+	          main_core.Dom.remove(babelHelpers.classPrivateFieldGet(this, _categoryContainer).parentElement.parentElement);
+	        }
+	      } else {
+	        this.updateStages();
+	      }
 	    }
 	  }, {
 	    key: "updateStages",
@@ -62,14 +108,14 @@
 	  }, {
 	    key: "renderStages",
 	    value: function renderStages() {
-	      var _this = this;
+	      var _this2 = this;
 	      if (babelHelpers.classPrivateFieldGet(this, _stages).hasOwnProperty(babelHelpers.classPrivateFieldGet(this, _categoryContainer).value)) {
 	        var stages = babelHelpers.classPrivateFieldGet(this, _stages)[babelHelpers.classPrivateFieldGet(this, _categoryContainer).value];
 	        stages.forEach(function (_ref) {
 	          var id = _ref.id,
 	            name = _ref.name;
-	          var option = new Option(name, id, false, babelHelpers.classPrivateFieldGet(_this, _chosenStages).has(id));
-	          babelHelpers.classPrivateFieldGet(_this, _stagesContainer).append(option);
+	          var option = new Option(name, id, false, babelHelpers.classPrivateFieldGet(_this2, _chosenStages).has(id));
+	          babelHelpers.classPrivateFieldGet(_this2, _stagesContainer).append(option);
 	        });
 	      } else {
 	        var _iterator = _createForOfIteratorHelper(babelHelpers.classPrivateFieldGet(this, _categoryContainer).options),
@@ -79,13 +125,13 @@
 	            var categoryOption = _step.value;
 	            var categoryId = categoryOption.value;
 	            var categoryName = categoryOption.text;
-	            if (babelHelpers.classPrivateFieldGet(_this, _stages).hasOwnProperty(categoryId)) {
-	              babelHelpers.classPrivateFieldGet(_this, _stages)[categoryId].forEach(function (_ref2) {
+	            if (babelHelpers.classPrivateFieldGet(_this2, _stages).hasOwnProperty(categoryId)) {
+	              babelHelpers.classPrivateFieldGet(_this2, _stages)[categoryId].forEach(function (_ref2) {
 	                var id = _ref2.id,
 	                  name = _ref2.name;
 	                var stageName = main_core.Text.encode("".concat(categoryName, " / ").concat(name));
-	                var option = new Option(stageName, id, false, babelHelpers.classPrivateFieldGet(_this, _chosenStages).has(id));
-	                babelHelpers.classPrivateFieldGet(_this, _stagesContainer).append(option);
+	                var option = new Option(stageName, id, false, babelHelpers.classPrivateFieldGet(_this2, _chosenStages).has(id));
+	                babelHelpers.classPrivateFieldGet(_this2, _stagesContainer).append(option);
 	              });
 	            }
 	          };

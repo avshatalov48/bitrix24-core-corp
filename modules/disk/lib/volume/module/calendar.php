@@ -2,8 +2,10 @@
 
 namespace Bitrix\Disk\Volume\Module;
 
+use Bitrix\Disk;
 use Bitrix\Disk\Volume;
 use Bitrix\Disk\Internals\ObjectTable;
+use Bitrix\Disk\Internals\VolumeTable;
 
 /**
  * Disk storage volume measurement class.
@@ -17,9 +19,9 @@ class Calendar extends Volume\Module\Module
 	/**
 	 * Runs measure test to get volumes of selecting objects.
 	 * @param array $collectData List types data to collect: ATTACHED_OBJECT, SHARING_OBJECT, EXTERNAL_LINK, UNNECESSARY_VERSION.
-	 * @return $this
+	 * @return static
 	 */
-	public function measure($collectData = array())
+	public function measure(array $collectData = []): self
 	{
 		if (!$this->isMeasureAvailable())
 		{
@@ -43,7 +45,7 @@ class Calendar extends Volume\Module\Module
 		}
 
 		// Scan User fields specific to module
-		$entityUserFieldSource = $this->prepareUserFieldSourceSql(null, array(\CUserTypeFile::USER_TYPE_ID));
+		$entityUserFieldSource = $this->prepareUserFieldSourceSql(null, [\CUserTypeFile::USER_TYPE_ID]);
 		if ($entityUserFieldSource != '')
 		{
 			$entityUserFieldSource = " UNION {$entityUserFieldSource} ";
@@ -69,7 +71,7 @@ class Calendar extends Volume\Module\Module
 						b_disk_version ver
 						INNER JOIN b_disk_object files
 							ON files.ID  = ver.OBJECT_ID
-							AND files.TYPE = '".\Bitrix\Disk\Internals\ObjectTable::TYPE_FILE."'
+							AND files.TYPE = '".Disk\Internals\ObjectTable::TYPE_FILE."'
 							AND files.ID = files.REAL_OBJECT_ID
 						INNER JOIN 
 						(
@@ -80,7 +82,7 @@ class Calendar extends Volume\Module\Module
 								INNER JOIN b_forum_message message 
 									ON message.ID = attached.ENTITY_ID
 							WHERE
-								attached.ENTITY_TYPE = '". $connection->getSqlHelper()->forSql(\Bitrix\Disk\Uf\ForumMessageConnector::className()). "'
+								attached.ENTITY_TYPE = '". $connection->getSqlHelper()->forSql(Disk\Uf\ForumMessageConnector::className()). "'
 								AND substring_index(message.XML_ID,'_', 1) = '{$eventTypeXML}'
 							GROUP BY 
 								attached.OBJECT_ID
@@ -138,7 +140,7 @@ class Calendar extends Volume\Module\Module
 		";
 
 		$columnList = Volume\QueryHelper::prepareInsert(
-			array(
+			[
 				'INDICATOR_TYPE',
 				'OWNER_ID',
 				'CREATE_TIME',
@@ -147,11 +149,11 @@ class Calendar extends Volume\Module\Module
 				'DISK_SIZE',
 				'DISK_COUNT',
 				'VERSION_COUNT',
-			),
+			],
 			$this->getSelect()
 		);
 
-		$tableName = \Bitrix\Disk\Internals\VolumeTable::getTableName();
+		$tableName = VolumeTable::getTableName();
 
 		$connection->queryExecute("INSERT INTO {$tableName} ({$columnList}) {$querySql}");
 
@@ -162,36 +164,39 @@ class Calendar extends Volume\Module\Module
 	 * Returns entity list with user field corresponding to module.
 	 * @return string[]
 	 */
-	public function getEntityList()
+	public function getEntityList(): array
 	{
 		static $entityList;
 		if (!isset($entityList))
 		{
-			$entityList = array();
+			$entityList = [];
 
-			$filter = array(
+			$filter = [
 				'=ENTITY_ID' => 'CALENDAR_EVENT',
-				'=USER_TYPE_ID' => array(
+				'=USER_TYPE_ID' => [
 					\CUserTypeFile::USER_TYPE_ID,
-					\Bitrix\Disk\Uf\FileUserType::USER_TYPE_ID,
-					\Bitrix\Disk\Uf\VersionUserType::USER_TYPE_ID,
-				),
-			);
-			$userFieldList = \Bitrix\Main\UserFieldTable::getList(array('filter' => $filter));
+					Disk\Uf\FileUserType::USER_TYPE_ID,
+					Disk\Uf\VersionUserType::USER_TYPE_ID,
+				],
+			];
+			$userFieldList = \Bitrix\Main\UserFieldTable::getList(['filter' => $filter]);
 			if ($userFieldList->getSelectedRowsCount() > 0)
 			{
 				foreach ($userFieldList as $userField)
 				{
 					$entityName = $userField['ENTITY_ID'];
-					if (isset($entityList[$entityName])) continue;
+					if (isset($entityList[$entityName]))
+					{
+						continue;
+					}
 
 					$entity[$entityName][] = $userField;
 
 					/** @var \Bitrix\Main\Entity\Base $ent */
-					$ent = \Bitrix\Main\Entity\Base::compileEntity($entityName, array(), array(
+					$ent = \Bitrix\Main\Entity\Base::compileEntity($entityName, [], [
 						'namespace' => __NAMESPACE__,
 						'uf_id'     => $entityName,
-					));
+					]);
 
 					$entityList[$entityName] = $ent->getDataClass();
 				}
@@ -205,12 +210,10 @@ class Calendar extends Volume\Module\Module
 	 * Returns entity list attached to disk object corresponding to module.
 	 * @return string[]
 	 */
-	public function getAttachedEntityList()
+	public function getAttachedEntityList(): array
 	{
-		$attachedEntityList = array(
-			\Bitrix\Disk\Uf\CalendarEventConnector::className(),
-		);
-
-		return $attachedEntityList;
+		return [
+			Disk\Uf\CalendarEventConnector::class,
+		];
 	}
 }

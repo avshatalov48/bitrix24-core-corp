@@ -2,118 +2,52 @@
  * @module crm/in-app-url/routes
  */
 jn.define('crm/in-app-url/routes', (require, exports, module) => {
-
-	const { EntityDetailOpener } = require('crm/entity-detail/opener');
-	const { TypeId, TypeName } = require('crm/type');
-
-	const openCrmEntity = (
-		entityTypeId,
-		entityId,
-		{ linkText = '', canOpenInDefault, ...restPayload } = {}) => {
-
-		const extensionData = jnExtensionData.get('crm:in-app-url/routes');
-
-		if (typeof extensionData === 'undefined' || !extensionData.isUniversalActivityScenarioEnabled)
-		{
-			return;
-		}
-
-		EntityDetailOpener.open(
-			{ entityId, entityTypeId, ...restPayload },
-			{
-				titleParams: { text: linkText },
-			},
-			null,
-			canOpenInDefault,
-		);
-	};
-
-	const openCrm = ({ activeTab }) => {
-		const componentParams = {};
-
-		if (activeTab === TypeName.Company || activeTab === TypeName.Contact)
-		{
-			componentParams.activeTabName = activeTab;
-		}
-
-		ComponentHelper.openLayout(
-			{
-				widgetParams: {
-					titleParams: {
-						text: 'CRM',
-					},
-				},
-				name: 'crm:crm.tabs',
-				canOpenInDefault: true,
-				componentParams,
-			},
-		);
-	};
+	const { openEntityDetail, openEntityList } = require('crm/in-app-url/routes/open-actions');
+	const { Type } = require('crm/type');
 
 	/**
 	 * @param {InAppUrl} inAppUrl
 	 */
-	module.exports = function(inAppUrl) {
-		inAppUrl.register('/crm/deal/details/:id/', ({ id }, { context }) => {
+	module.exports = (inAppUrl) => {
+		inAppUrl.register('/crm/:entityTypeName/details/:id/', ({ id, entityTypeName }, { context, queryParams }) => {
+			const entityTypeId = Type.resolveIdByName(entityTypeName);
 
-			openCrmEntity(TypeId.Deal, id, context);
+			if (!Type.isEntitySupportedById(entityTypeId))
+			{
+				return;
+			}
 
-		}).name('crm:deal');
+			openEntityDetail(
+				entityTypeId,
+				id,
+				{ ...context, queryParams },
+			);
+		}).name('crm:detailStaticEntityTypes');
 
-		inAppUrl.register('/crm/deal/', () => {
-			openCrm({
-				activeTab: TypeName.Deal,
-			});
-		}).name('crm:dealList');
+		inAppUrl.register('/crm/type/:entityTypeId/details/:id/', ({ id, entityTypeId }, { context, queryParams }) => {
+			if (!Type.isEntitySupportedById(entityTypeId))
+			{
+				return;
+			}
 
-		inAppUrl.register('/crm/lead/details/:id/', ({ id }) => {
-			PageManager.openPage({
-				url: `/mobile/crm/lead/?page=view&lead_id=${id}`,
-			});
-		}).name('crm:lead');
+			openEntityDetail(
+				entityTypeId,
+				id,
+				{ ...context, queryParams },
+			);
+		}).name('crm:detailDynamicEntityTypes');
 
-		inAppUrl.register('/crm/lead/', ({ id }) => {
-			PageManager.openPage({
-				url: `/mobile/crm/lead/`,
-			});
-		}).name('crm:leadList');
+		inAppUrl.register('/crm/:typeName/:typeId/', ({ typeName, typeId }) => {
+			const entityTypeId = typeName === 'type' ? typeId : Type.resolveIdByName(typeName);
 
-		inAppUrl.register('/crm/contact/details/:id/', ({ id }, { context }) => {
+			if (!Type.isEntitySupportedById(entityTypeId))
+			{
+				return;
+			}
 
-			openCrmEntity(TypeId.Contact, id, context);
+			const entityTypeName = Type.resolveNameById(entityTypeId);
 
-		}).name('crm:contact');
-
-		inAppUrl.register('/crm/contact/list/', () => {
-			openCrm({
-				activeTab: TypeName.Contact,
-			});
-		}).name('crm:contactList');
-
-		inAppUrl.register('/crm/contact/', () => {
-			openCrm({
-				activeTab: TypeName.Contact,
-			});
-		}).name('crm:contactList');
-
-		inAppUrl.register('/crm/company/details/:id/', ({ id }, { context }) => {
-
-			openCrmEntity(TypeId.Company, id, context);
-
-		}).name('crm:company');
-
-		inAppUrl.register('/crm/company/list/', () => {
-			openCrm({
-				activeTab: TypeName.Company,
-			});
-		}).name('crm:companyList');
-
-		inAppUrl.register('/crm/company/', () => {
-			openCrm({
-				activeTab: TypeName.Company,
-			});
-		}).name('crm:companyList');
-
+			openEntityList({ activeTabName: entityTypeName });
+		}).name('crm:entityList');
 	};
-
 });

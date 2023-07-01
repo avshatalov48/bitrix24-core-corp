@@ -4,24 +4,29 @@ namespace Bitrix\Crm\Service\Timeline\Item\Activity\Sms;
 
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Timeline\Item\Activity;
-use Bitrix\Crm\Service\Timeline\Item\Payload\SmsActivityPayload;
-use Bitrix\Crm\Service\Timeline\Layout;
-use Bitrix\Main\Localization\Loc;
+use Bitrix\Crm\Service\Timeline\Layout\Action\JsEvent;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock;
+use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\SmsMessage;
+use Bitrix\Crm\Service\Timeline\Layout\Common\Icon;
+use Bitrix\Crm\Service\Timeline\Layout\Footer\Button;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Sale\Repository\PaymentRepository;
+use CCrmOwnerType;
 
 abstract class Base extends Activity
 {
+	abstract protected function getMessageText(): ?string;
+	abstract protected function getMessageSentViaContentBlock(): ?ContentBlock;
+
 	public function getIconCode(): ?string
 	{
-		return 'comment';
+		return Icon::COMMENT;
 	}
 
 	public function getContentBlocks(): ?array
 	{
 		$result = [
-			'messageBlock' => (new Layout\Body\ContentBlock\SmsMessage())->setText(
-				$this->getMessageText()
-			),
+			'messageBlock' => (new SmsMessage())->setText($this->getMessageText()),
 			'messageSentViaBlock' => $this->getMessageSentViaContentBlock(),
 		];
 
@@ -60,17 +65,20 @@ abstract class Base extends Activity
 		)
 		{
 			$ownerTypeId = $this->getContext()->getEntityTypeId();
+			$payment = PaymentRepository::getInstance()->getById($paymentId);
+			$formattedDate = $payment ? ConvertTimeStamp($payment->getField('DATE_BILL')->getTimestamp()) : null;
+			$accountNumber = $payment ? $payment->getField('ACCOUNT_NUMBER') : null;
 
 			$result['resendPayment'] =
-				(new Layout\Footer\Button(
-					Loc::getMessage('CRM_TIMELINE_TITLE_ACTIVITY_SMS_NOTIFICATION_RESEND'),
-					Layout\Footer\Button::TYPE_SECONDARY
+				(new Button(
+					Loc::getMessage('CRM_TIMELINE_TITLE_ACTIVITY_SMS_NOTIFICATION_RESEND_MSGVER_1'),
+					Button::TYPE_SECONDARY
 				))
 					->setAction(
-						(new Layout\Action\JsEvent('SalescenterApp:Start'))
+						(new JsEvent('SalescenterApp:Start'))
 							->addActionParamString(
 								'mode',
-								$ownerTypeId === \CCrmOwnerType::Deal
+								$ownerTypeId === CCrmOwnerType::Deal
 									? 'payment_delivery'
 									: 'payment'
 							)
@@ -78,9 +86,11 @@ abstract class Base extends Activity
 							->addActionParamInt('paymentId', $paymentId)
 							->addActionParamInt('ownerTypeId', $ownerTypeId)
 							->addActionParamInt('ownerId', $this->getContext()->getEntityId())
+							->addActionParamString('formattedDate', $formattedDate)
+							->addActionParamString('accountNumber', $accountNumber)
 							->addActionParamString(
 								'analyticsLabel',
-								\CCrmOwnerType::isUseDynamicTypeBasedApproach($ownerTypeId)
+								CCrmOwnerType::isUseDynamicTypeBasedApproach($ownerTypeId)
 									? 'crmDealTimelineSmsResendPaymentSlider'
 									: 'crmDynamicTypeTimelineSmsResendPaymentSlider'
 							)
@@ -89,20 +99,6 @@ abstract class Base extends Activity
 		}
 
 		return $result;
-	}
-
-	public function getPayload(): ?SmsActivityPayload
-	{
-		return
-			(new SmsActivityPayload())
-				->addValueMessage('message', $this->getMessageId())
-				->addValuePull(
-					'pull',
-					$this->getPullModuleId(),
-					$this->getPullCommand(),
-					$this->getPullTagName()
-				)
-		;
 	}
 
 	public function getMenuItems(): array
@@ -118,13 +114,6 @@ abstract class Base extends Activity
 		return true;
 	}
 
-	abstract protected function getMessageId(): ?int;
-	abstract protected function getMessageText(): ?string;
-	abstract protected function getMessageSentViaContentBlock(): ?Layout\Body\ContentBlock;
-
-	abstract protected function getPullModuleId(): string;
-	abstract protected function getPullCommand(): string;
-	abstract protected function getPullTagName(): string;
 	protected function buildUserContentBlock(): ?ContentBlock
 	{
 		return null;

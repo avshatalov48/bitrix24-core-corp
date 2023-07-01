@@ -51,12 +51,28 @@ class CBPCrmRemoveProductRow extends CBPActivity
 		{
 			return $entityDocument::setProductRows($complexDocumentId[2], [])->isSuccess();
 		}
-		else
-		{
-			$entityType = \CCrmOwnerTypeAbbr::ResolveByTypeID($entityTypeId);
 
-			return \CCrmProductRow::SaveRows($entityType, $entityId, [], null, false);
+		if ($entityTypeId === CCrmOwnerType::Order)
+		{
+			$order = \Bitrix\Crm\Order\Order::load($entityId);
+			if (!$order)
+			{
+				return false;
+			}
+
+			$basket = $order->getBasket();
+			/** @var \Bitrix\Sale\BasketItem $basketItem */
+			foreach ($basket->getBasketItems() as $basketItem)
+			{
+				$basketItem->delete();
+			}
+
+			return $order->save()->isSuccess();
 		}
+
+		$entityType = \CCrmOwnerTypeAbbr::ResolveByTypeID($entityTypeId);
+
+		return \CCrmProductRow::SaveRows($entityType, $entityId, [], null, false);
 	}
 
 	public static function GetPropertiesDialog($documentType, $activityName, $arWorkflowTemplate, $arWorkflowParameters, $arWorkflowVariables, $arCurrentValues = null, $formName = '', $popupWindow = null, $siteId = '')

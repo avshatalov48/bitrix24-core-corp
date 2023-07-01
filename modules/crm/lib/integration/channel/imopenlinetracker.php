@@ -359,7 +359,7 @@ class IMOpenLineTracker extends ChannelTracker
 			return ImOpenLines\Helper::isLiveChatAvailable();
 		}
 
-		$status = ImConnector\Status::getInstance($connectorID, $lineID);
+		$status = ImConnector\Status::getInstance($connectorID, (int)$lineID);
 		return $status->isStatus();
 	}
 	/**

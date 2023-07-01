@@ -1,5 +1,7 @@
 (() =>
 {
+	const { FieldEditorStep } = jn.require('layout/ui/wizard/step/field-editor');
+
 	const styles = {
 		footer: {
 			container: {

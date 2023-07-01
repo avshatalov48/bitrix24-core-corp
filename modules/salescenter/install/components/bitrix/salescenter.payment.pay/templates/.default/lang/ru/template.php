@@ -1,5 +1,5 @@
 <?
-$MESS["SPP_PAID_TITLE"] = "Платеж № #ACCOUNT_NUMBER#, от #DATE_INSERT#";
+$MESS["SPP_PAID_TITLE"] = "Платеж № #ACCOUNT_NUMBER# от #DATE_INSERT#";
 $MESS["SPP_PAID"] = "Оплачено";
 $MESS["SPP_SUM"] = "Сумма: #SUM#";
 $MESS["SPP_PAY_BUTTON"] = "Оплатить";
@@ -13,5 +13,5 @@ $MESS["SPP_EMPTY_TEMPLATE_SUM_WITH_CURRENCY_FIELD"] = "Сумма к оплат�
 $MESS["SPP_EMPTY_TEMPLATE_PAY_SYSTEM_NAME_FIELD"] = "Способ оплаты:";
 $MESS["SPP_EMPTY_TEMPLATE_FOOTER"] = "Выберите другую платежную систему, если хотите оплатить онлайн";
 $MESS["SPP_CHECK_TITLE"] = "Посмотреть чек №#CHECK_ID# от #DATE_CREATE#";
-$MESS["SPP_SELECT_PAYMENT_TITLE_NEW_NEW"] = "Выберите способ оплаты";
+$MESS["SPP_SELECT_PAYMENT_TITLE_NEW_NEW_MSGVER_1"] = "Выберите удобный способ оплаты";
 $MESS["SPP_CHECK_PRINT_TITLE"] = "Чек №#CHECK_ID# от #DATE_CREATE# скоро будет сформирован";

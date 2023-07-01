@@ -27,13 +27,6 @@ jn.define('layout/ui/fields/crm-element', (require, exports, module) => {
 		return;
 	}
 
-	const SUPPORTED_ENTITIES = [
-		TypeId.Contact,
-		TypeId.Company,
-		TypeId.Deal,
-		TypeId.Lead,
-	];
-
 	/**
 	 * @class CrmElementField
 	 */
@@ -111,6 +104,16 @@ jn.define('layout/ui/fields/crm-element', (require, exports, module) => {
 					text: BX.message('FIELDS_CRM_ELEMENT_EMPTY'),
 				}),
 			);
+		}
+
+		getEntityTypeId({ type, id })
+		{
+			if (type === 'dynamic_multiple' && id)
+			{
+				return parseInt(id.split(':')[0]) || null;
+			}
+
+			return Type.resolveIdByName(type);
 		}
 
 		renderEntity(entity = {}, showPadding = false)
@@ -197,8 +200,23 @@ jn.define('layout/ui/fields/crm-element', (require, exports, module) => {
 				return;
 			}
 
-			const { type: entityTypeName, id: entityId } = entity;
-			openCrmEntityInAppUrl({ entityId, entityTypeName });
+			let entityTypeId;
+			let entityId;
+
+			const { type, id } = entity;
+
+			if (type === 'dynamic_multiple' && id)
+			{
+				entityTypeId = parseInt(id.split(':')[0]) || null;
+				entityId = parseInt(id.split(':')[1]) || null;
+			}
+			else
+			{
+				entityTypeId = Type.resolveIdByName(type);
+				entityId = id;
+			}
+
+			openCrmEntityInAppUrl({ entityTypeId, entityId });
 		}
 
 		canOpenEntity(entity)
@@ -208,16 +226,13 @@ jn.define('layout/ui/fields/crm-element', (require, exports, module) => {
 				return false;
 			}
 
-			const { type, hidden } = entity;
+			const { hidden } = entity;
+			if (hidden)
+			{
+				return false;
+			}
 
-			return !hidden && this.supportsEntityType(type);
-		}
-
-		supportsEntityType(entityTypeName)
-		{
-			const entityTypeId = Type.resolveIdByName(entityTypeName);
-
-			return SUPPORTED_ENTITIES.includes(entityTypeId);
+			return Type.isEntitySupportedById(this.getEntityTypeId(entity));
 		}
 
 		getDefaultStyles()

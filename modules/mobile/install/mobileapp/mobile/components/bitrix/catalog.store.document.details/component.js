@@ -51,7 +51,9 @@
 		return null;
 	};
 
-	UI.DetailCardComponent
+	const { DetailCardComponent } = jn.require('layout/ui/detail-card');
+
+	DetailCardComponent
 		.create(result.card)
 		.setItemActions([
 			{

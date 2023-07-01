@@ -352,7 +352,7 @@ class CDiskFileViewComponent extends DiskComponent implements Controllerable, Si
 			}
 		}
 
-		$this->includeComponentTemplate($this->arParams['SUBTEMPLATE_NAME']?: '');
+		$this->includeComponentTemplate($this->arParams['SUBTEMPLATE_NAME'] ?? '');
 	}
 
 	protected function getViewerHtml()

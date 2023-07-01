@@ -446,7 +446,7 @@ export class Document extends Base
 			{
 				if (response?.data?.ID > 0) {
 					this.#showMessage(
-						Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_DO_USE_PREVIOUS',
+						Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_DO_USE_PREVIOUS_MSGVER_1',
 							{
 								'%TITLE%': '<b>' + (response.data.TITLE || '') + '</b>',
 								'%CREATED_AT%': '<b>' + (response.data.CREATED_AT || '') + '</b>',
@@ -454,7 +454,7 @@ export class Document extends Base
 							}),
 						[
 							new BX.UI.Button({
-								text: Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_NEW_BUTTON'),
+								text: Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_NEW_BUTTON_MSGVER_1'),
 								className: "ui-btn ui-btn-md ui-btn-primary",
 								events: {
 									click: () =>
@@ -465,7 +465,7 @@ export class Document extends Base
 								}
 							}),
 							new BX.UI.Button({
-								text: BX.message('CRM_TIMELINE_ITEM_ACTIVITY_OLD_BUTTON'),
+								text: BX.message('CRM_TIMELINE_ITEM_ACTIVITY_OLD_BUTTON_MSGVER_1'),
 								className: "ui-btn ui-btn-md ui-btn-primary",
 								events: {
 									click: () =>
@@ -476,7 +476,7 @@ export class Document extends Base
 								}
 							})
 						],
-						Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_POPUP_TITLE')
+						Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_POPUP_TITLE_MSGVER_1')
 					);
 				} else {
 					convertDealAndStartSign(false);

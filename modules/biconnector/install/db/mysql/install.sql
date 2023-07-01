@@ -8,6 +8,7 @@ CREATE TABLE b_biconnector_key
 	CONNECTION VARCHAR(50) NOT NULL,
 	ACTIVE CHAR(1) NOT NULL DEFAULT 'Y',
 	APP_ID INT NULL,
+	LAST_ACTIVITY_DATE DATETIME NULL,
 	INDEX ix_b_biconnector_key(ACCESS_KEY),
 	INDEX ix_b_biconnector_key_app(APP_ID),
 	PRIMARY KEY pk_b_biconnector_key(ID)
@@ -77,6 +78,7 @@ CREATE TABLE b_biconnector_log
 	REQUEST_METHOD VARCHAR(15),
 	REQUEST_URI VARCHAR(2000),
 	ROW_NUM INT,
+	DATA_SIZE INT,
 	REAL_TIME DOUBLE,
 	INDEX ix_b_biconnector_log_time(TIMESTAMP_X, ROW_NUM),
 	INDEX ix_b_biconnector_log_key(KEY_ID, TIMESTAMP_X),

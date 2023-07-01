@@ -72,13 +72,6 @@ class CDiskUfVersionComponent extends BaseComponent
 			}
 			$extension = $version->getExtension();
 
-			$additionalParams = array(
-				'version' => $version->getGlobalContentVersion(),
-				'canUpdate' => $attachedModel->canUpdate($userId),
-				'showStorage' => false,
-				'externalId' => false,
-				'relativePath' => false,
-			);
 			$versionData = array(
 				'ID' => $attachedModel->getId(),
 				'NAME' => $version->getName(),
@@ -94,6 +87,9 @@ class CDiskUfVersionComponent extends BaseComponent
 				'VIEW_URL' => $urlManager->getUrlToShowAttachedFileByService($attachedModel->getId(), 'gvdrive'),
 				'EDIT_URL' => $urlManager->getUrlToStartEditUfFileByService($attachedModel->getId(), 'gdrive'),
 				'GLOBAL_CONTENT_VERSION' => $version->getGlobalContentVersion(),
+				'CREATED_BY' => null,
+				'IS_LOCKED' => null,
+				'IS_LOCKED_BY_SELF' => null,
 			);
 
 			if($isEnabledObjectLock && $version->getObject()->getLock())
@@ -102,8 +98,6 @@ class CDiskUfVersionComponent extends BaseComponent
 				$versionData['CREATED_BY'] = $objectLock->getCreatedBy();
 				$versionData['IS_LOCKED'] = true;
 				$versionData['IS_LOCKED_BY_SELF'] = $this->getUser()->getId() == $objectLock->getCreatedBy();
-
-				$additionalParams['lockedBy'] = $objectLock->getCreatedBy();
 			}
 
 			$sourceUri = new \Bitrix\Main\Web\Uri($urlManager->getUrlUfController('download', array('attachedId' => $attachedModel->getId())));

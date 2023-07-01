@@ -6,6 +6,7 @@ return [
 		'layout/ui/fields/barcode',
 		'layout/ui/fields/string',
 		'layout/ui/fields/focus-manager',
+		'loc',
 		'selector/widget/factory',
 	],
 ];

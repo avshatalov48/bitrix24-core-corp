@@ -12,7 +12,7 @@ class EntityCounterSettings
 
 	public static function createDefault(bool $isStagesSupported): self
 	{
-		$isCountersEnabled = \Bitrix\Crm\Settings\CounterSettings::getCurrent()->isEnabled();
+		$isCountersEnabled = \Bitrix\Crm\Settings\CounterSettings::getInstance()->isEnabled();
 		$isIdleCounterEnabled = \CCrmUserCounterSettings::GetValue(
 			\CCrmUserCounterSettings::ReckonActivitylessItems,
 			true
@@ -41,6 +41,7 @@ class EntityCounterSettings
 			$enabledCounters[] = \Bitrix\Crm\Counter\EntityCounterType::PENDING;
 			$enabledCounters[] = \Bitrix\Crm\Counter\EntityCounterType::OVERDUE;
 			$enabledCounters[] = \Bitrix\Crm\Counter\EntityCounterType::CURRENT;
+			$enabledCounters[] = \Bitrix\Crm\Counter\EntityCounterType::READY_TODO;
 			$enabledCounters[] = \Bitrix\Crm\Counter\EntityCounterType::ALL;
 			$enabledInFilterCounters = $enabledCounters;
 		}
@@ -80,6 +81,7 @@ class EntityCounterSettings
 			[
 				\Bitrix\Crm\Counter\EntityCounterType::OVERDUE,
 				\Bitrix\Crm\Counter\EntityCounterType::PENDING,
+				\Bitrix\Crm\Counter\EntityCounterType::READY_TODO,
 			]
 		))
 		{
@@ -137,6 +139,11 @@ class EntityCounterSettings
 	public function isIncomingCounterEnabledInFilter(): bool
 	{
 		return $this->isCounterTypeEnabledInFilter(\Bitrix\Crm\Counter\EntityCounterType::INCOMING_CHANNEL);
+	}
+
+	public function isReadyToDoCounterEnabledInFilter(): bool
+	{
+		return $this->isCounterTypeEnabledInFilter(\Bitrix\Crm\Counter\EntityCounterType::READY_TODO);
 	}
 
 	public function setIsCountersEnabled(bool $isCountersEnabled): self

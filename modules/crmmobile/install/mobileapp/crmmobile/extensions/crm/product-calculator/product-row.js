@@ -2,7 +2,6 @@
  * @module crm/product-calculator/product-row
  */
 jn.define('crm/product-calculator/product-row', (require, exports, module) => {
-
 	/**
 	 * @typedef {object} ProductRowSchema
 	 * @property {number} QUANTITY
@@ -44,7 +43,7 @@ jn.define('crm/product-calculator/product-row', (require, exports, module) => {
 		TAX_INCLUDED: 'N',
 		TAX_RATE: 0,
 		TAX_SUM: 0,
-		SUM: 0
+		SUM: 0,
 	};
 
 	/**
@@ -125,36 +124,39 @@ jn.define('crm/product-calculator/product-row', (require, exports, module) => {
 				'DISCOUNT_SUM',
 				'DISCOUNT_ROW',
 				'TAX_SUM',
-				'SUM'
+				'SUM',
 			];
-			if (name === 'DISCOUNT_TYPE_ID')
-			{
-				value =
-					(value === DiscountType.PERCENTAGE || value === DiscountType.MONETARY)
-						? value
-						: DiscountType.UNDEFINED
-				;
 
-			}
-			else if (name === 'QUANTITY')
+			switch (name)
 			{
-				value = ProductRow.round(value, this.getQuantityPrecision());
-			}
-			else if (name === 'CUSTOMIZED' || name === 'TAX_INCLUDED' )
-			{
-				value = (value === 'Y') ? 'Y' : 'N';
-			}
-			else if (name === 'TAX_RATE')
-			{
-				value = (value === null) ? null : ProductRow.round(value, this.getCommonPrecision());
-			}
-			else if (name === 'DISCOUNT_RATE')
-			{
-				value = ProductRow.round(value, this.getCommonPrecision());
-			}
-			else if (priceFields.includes(name))
-			{
-				value = ProductRow.round(value, this.getPricePrecision());
+				case 'DISCOUNT_TYPE_ID':
+					value = (value === DiscountType.PERCENTAGE || value === DiscountType.MONETARY)
+						? value
+						: DiscountType.UNDEFINED;
+					break;
+
+				case 'QUANTITY':
+					value = ProductRow.round(value, this.getQuantityPrecision());
+					break;
+
+				case 'CUSTOMIZED':
+				case 'TAX_INCLUDED':
+					value = value === 'Y' ? 'Y' : 'N';
+					break;
+
+				case 'TAX_RATE':
+					value = (value === null) ? null : ProductRow.round(value, this.getCommonPrecision());
+					break;
+
+				case 'DISCOUNT_RATE':
+					value = ProductRow.round(value, this.getCommonPrecision());
+					break;
+
+				default:
+					if (priceFields.includes(name))
+					{
+						value = ProductRow.round(value, this.getPricePrecision());
+					}
 			}
 
 			return value;
@@ -167,7 +169,7 @@ jn.define('crm/product-calculator/product-row', (require, exports, module) => {
 		 */
 		static round(value, precision = defaultPrecision)
 		{
-			const factor = Math.pow(10, precision);
+			const factor = 10 ** precision;
 
 			return Math.round(value * factor) / factor;
 		}
@@ -177,7 +179,7 @@ jn.define('crm/product-calculator/product-row', (require, exports, module) => {
 		 */
 		getBasePrice()
 		{
-			return get(this.fields,  'BASE_PRICE', 0);
+			return get(this.fields, 'BASE_PRICE', 0);
 		}
 
 		/**
@@ -185,7 +187,7 @@ jn.define('crm/product-calculator/product-row', (require, exports, module) => {
 		 */
 		getPrice()
 		{
-			return get(this.fields,  'PRICE', 0);
+			return get(this.fields, 'PRICE', 0);
 		}
 
 		/**
@@ -193,7 +195,7 @@ jn.define('crm/product-calculator/product-row', (require, exports, module) => {
 		 */
 		getPriceExclusive()
 		{
-			return get(this.fields,  'PRICE_EXCLUSIVE', 0);
+			return get(this.fields, 'PRICE_EXCLUSIVE', 0);
 		}
 
 		/**
@@ -201,7 +203,7 @@ jn.define('crm/product-calculator/product-row', (require, exports, module) => {
 		 */
 		getPriceNetto()
 		{
-			return get(this.fields,  'PRICE_NETTO', 0);
+			return get(this.fields, 'PRICE_NETTO', 0);
 		}
 
 		/**
@@ -209,7 +211,7 @@ jn.define('crm/product-calculator/product-row', (require, exports, module) => {
 		 */
 		getPriceBrutto()
 		{
-			return get(this.fields,  'PRICE_BRUTTO', 0);
+			return get(this.fields, 'PRICE_BRUTTO', 0);
 		}
 
 		/**
@@ -217,7 +219,7 @@ jn.define('crm/product-calculator/product-row', (require, exports, module) => {
 		 */
 		getQuantity()
 		{
-			return get(this.fields,  'QUANTITY', 1);
+			return get(this.fields, 'QUANTITY', 1);
 		}
 
 		/**
@@ -225,7 +227,7 @@ jn.define('crm/product-calculator/product-row', (require, exports, module) => {
 		 */
 		getDiscountType()
 		{
-			return get(this.fields,  'DISCOUNT_TYPE_ID', DiscountType.UNDEFINED);
+			return get(this.fields, 'DISCOUNT_TYPE_ID', DiscountType.UNDEFINED);
 		}
 
 		/**
@@ -265,7 +267,7 @@ jn.define('crm/product-calculator/product-row', (require, exports, module) => {
 		 */
 		getDiscountRate()
 		{
-			return get(this.fields,  'DISCOUNT_RATE', 0);
+			return get(this.fields, 'DISCOUNT_RATE', 0);
 		}
 
 		/**
@@ -273,7 +275,7 @@ jn.define('crm/product-calculator/product-row', (require, exports, module) => {
 		 */
 		getDiscountSum()
 		{
-			return get(this.fields,  'DISCOUNT_SUM', 0);
+			return get(this.fields, 'DISCOUNT_SUM', 0);
 		}
 
 		/**
@@ -281,7 +283,7 @@ jn.define('crm/product-calculator/product-row', (require, exports, module) => {
 		 */
 		getDiscountRow()
 		{
-			return get(this.fields,  'DISCOUNT_ROW', 0);
+			return get(this.fields, 'DISCOUNT_ROW', 0);
 		}
 
 		/**
@@ -307,7 +309,7 @@ jn.define('crm/product-calculator/product-row', (require, exports, module) => {
 		 */
 		getTaxIncluded()
 		{
-			return get(this.fields,  'TAX_INCLUDED', 'N');
+			return get(this.fields, 'TAX_INCLUDED', 'N');
 		}
 
 		/**
@@ -323,7 +325,7 @@ jn.define('crm/product-calculator/product-row', (require, exports, module) => {
 		 */
 		getTaxRate()
 		{
-			return get(this.fields,  'TAX_RATE', 0);
+			return get(this.fields, 'TAX_RATE', 0);
 		}
 
 		/**
@@ -331,7 +333,7 @@ jn.define('crm/product-calculator/product-row', (require, exports, module) => {
 		 */
 		getTaxSum()
 		{
-			return get(this.fields,  'TAX_SUM', 0);
+			return get(this.fields, 'TAX_SUM', 0);
 		}
 
 		/**
@@ -339,10 +341,9 @@ jn.define('crm/product-calculator/product-row', (require, exports, module) => {
 		 */
 		getSum()
 		{
-			return get(this.fields,  'SUM', 0);
+			return get(this.fields, 'SUM', 0);
 		}
 	}
 
 	module.exports = { ProductRow };
-
 });

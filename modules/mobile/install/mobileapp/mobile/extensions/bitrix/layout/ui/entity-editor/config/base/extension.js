@@ -1,4 +1,7 @@
-(() => {
+/**
+ * @module layout/ui/entity-editor/config/base
+ */
+jn.define('layout/ui/entity-editor/config/base', (require, exports, module) => {
 	/**
 	 * @class EntityConfigBaseItem
 	 */
@@ -28,5 +31,5 @@
 		}
 	}
 
-	jnexport(EntityConfigBaseItem);
-})();
+	module.exports = { EntityConfigBaseItem };
+});

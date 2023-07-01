@@ -211,7 +211,9 @@
 							fontColor: '#000000',
 							textAlign: 'center'
 						},
-						text: BX.message('MOBILE_EXT_LAYOUT_POSTFORM_KEYBOARDPANEL_ITEM_ATTACH_COUNTER').toUpperCase().replace('#NUM#', attachments.length)
+						text: BX.message('MOBILE_EXT_LAYOUT_POSTFORM_KEYBOARDPANEL_ITEM_ATTACH_COUNTER')
+							.toLocaleUpperCase(env.languageId)
+							.replace('#NUM#', attachments.length)
 					})
 				),
 				ImageButton({

@@ -1,0 +1,23 @@
+.crm-activity__settings_popup__calendar__planner-container{
+	background-color: var(--ui-color-palette-gray-03, #f8f9fa);
+    padding-top: var(--ui-space-inset-md);
+    padding-bottom: var(--ui-space-inset-md);
+}
+
+.crm-activity__settings_popup__calendar__planner-container .calendar-planner-today-button{
+	background-color: var(--ui-color-palette-gray-03, #f8f9fa);
+}
+
+.ui-form .crm-activity__settings_popup__calendar__recall-container .ui-btn{
+	background-color: var(--ui-color-palette-gray-03, #f8f9fa);
+	border-color: var(--ui-color-palette-gray-03, #f8f9fa);
+}
+
+.ui-form .crm-activity__settings_popup__calendar__recall-container .ui-btn + .ui-btn{
+	margin-top: 0;
+}
+
+.ui-form .crm-activity__settings_popup__calendar__recall-container .ui-btn.active
+{
+	background-color: var(--ui-color-tag-1, #bcedfc);
+}

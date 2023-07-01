@@ -19,7 +19,7 @@ use Bitrix\Main\Loader;
 ]);
 
 global $APPLICATION;
-$APPLICATION->SetTitle(Loc::getMessage("CRM_1C_START_BACKOFFICE_NAME"));
+$APPLICATION->SetTitle(Loc::getMessage("CRM_1C_START_BACKOFFICE_NAME_MSGVER_1"));
 
 $bodyClass = $APPLICATION->GetPageProperty("BodyClass");
 $APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "") . "no-all-paddings no-background");
@@ -45,7 +45,7 @@ $isByLicense = Loader::includeModule('bitrix24') && \CBitrix24::getLicensePrefix
 				<i style="background-image: url('<?=$templateFolder?>/images/1c-logo-red.svg')"></i>
 			</div>
 			<div class="ui-slider-content-box">
-				<div class="ui-slider-heading-3"><?=Loc::getMessage("CRM_1C_START_DOC_ADV_TITLE")?></div>
+				<div class="ui-slider-heading-3"><?=Loc::getMessage("CRM_1C_START_DOC_ADV_TITLE_MSGVER_1")?></div>
 				<div class="crm-onec-header-futures-container">
 					<div class="crm-onec-header-futures-block">
 						<span class="crm-onec-header-futures">

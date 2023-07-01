@@ -1,6 +1,6 @@
 (() => {
 	const { Loc } = jn.require('loc');
-	const {TaskViewManager} = jn.require('tasks/layout/task/view');
+	const {TaskView} = jn.require('tasks/layout/task/view');
 	const {EventEmitter} = jn.require('event-emitter');
 
 	class Pull
@@ -102,7 +102,7 @@
 
 		bindEvents()
 		{
-			this.tabs.on('onTabSelected', (tab, changed) => this.onTabSelected(tab,  changed));
+			this.tabs.on('onTabSelected', (tab, changed, options) => this.onTabSelected(tab,  changed, options));
 
 			this.eventEmitter.on('tasks.task.view:updateTitle', (data) => {
 				this.tabs.setTitle({
@@ -132,7 +132,7 @@
 			this.eventEmitter.on('tasks.task.view:close', () => this.tabs.close());
 		}
 
-		onTabSelected(tab, changed)
+		onTabSelected(tab, changed, options)
 		{
 			if (changed)
 			{
@@ -140,6 +140,11 @@
 					guid: this.guid,
 					tab: tab.id,
 				});
+
+				if (tab.id === TaskTabs.tabNames.comments && options)
+				{
+					analytics.send('tasks.task.commentTab.open', {action: options.action});
+				}
 			}
 		}
 
@@ -153,7 +158,7 @@
 				this.tabs.setTitle({useProgress: true}, true);
 			}
 
-			TaskViewManager.open({
+			TaskView.open({
 				layoutWidget: viewWidget,
 				userId: this.userId,
 				taskId: this.taskId,

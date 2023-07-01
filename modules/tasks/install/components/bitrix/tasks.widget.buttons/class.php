@@ -44,7 +44,7 @@ class TasksWidgetButtonsComponent extends TasksBaseComponent
 
 			if(array_key_exists('GROUP', $button) && $button['GROUP'] != '')
 			{
-				if(!$metGroups[$button['GROUP']])
+				if(!($metGroups[$button['GROUP']] ?? null))
 				{
 					// add new group button at the place of the first occurrence
 					$buttons[] = array(

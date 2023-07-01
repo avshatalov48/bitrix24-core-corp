@@ -2,14 +2,17 @@
  * @module crm/stage-selector
  */
 jn.define('crm/stage-selector', (require, exports, module) => {
-
 	const { Haptics } = require('haptics');
 	const { NavigationLoader } = require('navigation-loader');
+	const { isLightColor } = require('utils/color');
 	const { isEqual } = require('utils/object');
 	const { throttle } = require('utils/function');
 	const { getStageIcon } = require('crm/assets/stage');
+	const { TypeId } = require('crm/type');
+	const { getEntityMessage } = require('crm/loc');
 	const { CategoryStorage } = require('crm/storage/category');
 	const { StageListView } = require('crm/stage-list-view');
+	const { actionCheckChangeStage } = require('crm/entity-actions/check-change-stage');
 
 	const STAGE_WIDTH = device.screen.width * 0.48;
 	const STAGE_MARGIN = 8;
@@ -18,6 +21,12 @@ jn.define('crm/stage-selector', (require, exports, module) => {
 	const AnimationMode = {
 		UPDATE_BEFORE_ANIMATION: 'updateBeforeAnimation',
 		ANIMATE_BEFORE_UPDATE: 'animateBeforeUpdate',
+	};
+
+	const STAGES_SEMANTICS = {
+		PROCESS: 'P',
+		FAILED: 'F',
+		SUCCESS: 'S',
 	};
 
 	/**
@@ -29,8 +38,7 @@ jn.define('crm/stage-selector', (require, exports, module) => {
 		{
 			super(props);
 
-			this.randomUid = Random.getString(10);
-
+			this.uid = this.getUid();
 			this.state = {
 				category: this.getCategoryByProps(props),
 				activeStageId: props.activeStageId,
@@ -54,9 +62,9 @@ jn.define('crm/stage-selector', (require, exports, module) => {
 			;
 		}
 
-		get uid()
+		getUid()
 		{
-			return this.props.uid || this.randomUid;
+			return this.props.uid || Random.getString();
 		}
 
 		get animationMode()
@@ -67,8 +75,21 @@ jn.define('crm/stage-selector', (require, exports, module) => {
 		getCategoryByProps(props)
 		{
 			const { entityTypeId, categoryId } = props;
+			const category = CategoryStorage.getCategory(entityTypeId, categoryId);
 
-			return CategoryStorage.getCategory(entityTypeId, categoryId);
+			if (this.isNewLead())
+			{
+				category.successStages = [];
+			}
+
+			return category;
+		}
+
+		isNewLead()
+		{
+			const { entityTypeId, isNewEntity } = this.props;
+
+			return isNewEntity && TypeId.Lead === entityTypeId;
 		}
 
 		reloadCategory()
@@ -95,7 +116,7 @@ jn.define('crm/stage-selector', (require, exports, module) => {
 			return BX.prop.getBoolean(this.props, 'showBorder', false);
 		}
 
-		getStagesFromCategory()
+		getCategoryToSlider()
 		{
 			const { category } = this.state;
 
@@ -126,13 +147,14 @@ jn.define('crm/stage-selector', (require, exports, module) => {
 
 		openStageList(activeStageId)
 		{
-			const { entityTypeId, categoryId, data } = this.props;
+			const { entityTypeId, categoryId, data, isNewEntity } = this.props;
 
 			return StageListView.open({
 				entityTypeId,
 				categoryId,
 				activeStageId,
 				data,
+				isNewEntity,
 				readOnly: true,
 				canMoveStages: false,
 				enableStageSelect: true,
@@ -173,13 +195,18 @@ jn.define('crm/stage-selector', (require, exports, module) => {
 						data: {
 							svgIcon: getStageIcon(color),
 						},
-						onClickCallback: () => this.handleStageClick(false, id, category, data),
+						onClickCallback: () => {
+							menu.close(() => {
+								this.handleStageClick(false, id, category, data);
+							});
+						},
 					},
 				],
 				params: {
 					title: BX.message('CRM_STAGE_SELECTOR_CHANGE_STAGE_TITLE'),
 					showCancelButton: true,
 					showActionLoader: false,
+					isCustomIconColor: true,
 				},
 			});
 
@@ -191,25 +218,34 @@ jn.define('crm/stage-selector', (require, exports, module) => {
 			if (this.isReadonlyNotificationEnabled())
 			{
 				Notify.showUniqueMessage(
-					BX.message('CRM_STAGE_SELECTOR_NOTIFY_READONLY_TEXT'),
+					getEntityMessage('CRM_STAGE_SELECTOR_NOTIFY_READONLY_TEXT2', this.props.entityTypeId),
 					BX.message('CRM_STAGE_SELECTOR_NOTIFY_READONLY_TITLE'),
 					{ time: 4 },
 				);
 			}
 		}
 
-		changeActiveStageId(selectedStageId, category, data)
+		changeActiveStageId(selectedStageId, activeCategory, data)
 		{
 			const { activeStageId } = this.state;
+			const category = activeCategory || this.getCategoryByProps(this.props);
+			const { onStageSelect, entityTypeId, entityId } = this.props;
 
-			if (this.isReadonly() || activeStageId === selectedStageId)
+			if (this.isReadonly() || activeStageId === selectedStageId || !onStageSelect)
 			{
 				return;
 			}
 
-			const { onStageSelect } = this.props;
-			if (typeof onStageSelect === 'function')
-			{
+			const actionParams = {
+				uid: this.getUid(),
+				category,
+				entityId,
+				entityTypeId,
+				activeStageId,
+				selectedStageId,
+			};
+
+			actionCheckChangeStage(actionParams).then(() => {
 				if (this.animationMode === AnimationMode.ANIMATE_BEFORE_UPDATE)
 				{
 					onStageSelect(selectedStageId, category, data)
@@ -229,18 +265,15 @@ jn.define('crm/stage-selector', (require, exports, module) => {
 									columnId: selectedStageId,
 								});
 							}
-						})
-					;
+						});
 				}
 				else
 				{
 					this.prevActiveStageId = activeStageId;
 
-					onStageSelect(selectedStageId, category, data)
-						.then(() => this.animate(selectedStageId))
-					;
+					onStageSelect(selectedStageId, category, data).then(() => this.animate(selectedStageId));
 				}
-			}
+			});
 		}
 
 		updateBeforeAnimation(selectedStageId)
@@ -268,9 +301,9 @@ jn.define('crm/stage-selector', (require, exports, module) => {
 							nextStageId: null,
 						}, () => resolve && resolve());
 					}
-					else
+					else if (resolve)
 					{
-						resolve && resolve();
+						resolve();
 					}
 				},
 			);
@@ -284,7 +317,8 @@ jn.define('crm/stage-selector', (require, exports, module) => {
 						flexDirection: 'column',
 					},
 				},
-				View({
+				View(
+					{
 						style: {
 							width: '100%',
 							flexDirection: 'row',
@@ -329,14 +363,7 @@ jn.define('crm/stage-selector', (require, exports, module) => {
 			}
 
 			const currentPosition = this.getCurrentSliderPosition(this.currentStages, prevIndex);
-			const renderedStages = this.currentStages.map((stage, index) => {
-				return this.renderStage(
-					stage,
-					index,
-					activeIndex,
-					activeStageId,
-				);
-			});
+			const renderedStages = this.currentStages.map((stage, index) => this.renderStage(stage, index, activeIndex, activeStageId));
 
 			return View(
 				{
@@ -346,7 +373,7 @@ jn.define('crm/stage-selector', (require, exports, module) => {
 						height: 50,
 						position: 'absolute',
 						top: 0,
-						//animation fix (create new object on each render)
+						// animation fix (create new object on each render)
 						left: activeStageId % 2 ? currentPosition - Math.random() : currentPosition + Math.random(),
 					},
 					ref: (ref) => this.stageSliderRef = ref,
@@ -357,19 +384,22 @@ jn.define('crm/stage-selector', (require, exports, module) => {
 
 		getSliderStages()
 		{
-			const stages = this.getStagesFromCategory();
-			let activeIndex, prevIndex;
+			const { activeStageId, nextStageId } = this.state;
+			const stages = this.getCategoryToSlider();
+
+			let activeIndex;
+			let prevIndex;
 
 			if (this.animationMode === AnimationMode.ANIMATE_BEFORE_UPDATE)
 			{
-				const prevStage = this.state.nextStageId || this.state.activeStageId;
+				const prevStage = nextStageId || activeStageId;
 
-				activeIndex = this.getStageIndexById(stages, this.state.activeStageId);
+				activeIndex = this.getStageIndexById(stages, activeStageId);
 				prevIndex = this.getStageIndexById(stages, prevStage);
 			}
 			else
 			{
-				activeIndex = this.getStageIndexById(stages, this.state.activeStageId);
+				activeIndex = this.getStageIndexById(stages, activeStageId);
 				prevIndex = this.getStageIndexById(stages, this.prevActiveStageId);
 			}
 
@@ -378,38 +408,43 @@ jn.define('crm/stage-selector', (require, exports, module) => {
 				return this.getInitialSliderStages(stages, activeIndex);
 			}
 
+			const { category } = this.state;
 			let start = Math.min(activeIndex, prevIndex);
-			const maxIndex = Math.max(prevIndex, activeIndex);
-
+			const activeStage = stages[activeIndex];
+			const prevStage = stages[prevIndex];
 			if (start !== 0)
 			{
-				start = start - 1;
+				start -= 1;
 			}
 
-			if (stages[activeIndex].semantics !== 'P')
+			if (activeStage.semantics !== STAGES_SEMANTICS.PROCESS)
 			{
-				if (stages[prevIndex].semantics === 'P')
+				if (prevStage.semantics === STAGES_SEMANTICS.PROCESS)
 				{
-					return [...this.state.category.processStages.slice(start), stages[activeIndex]];
+					return [...category.processStages.slice(start), activeStage];
 				}
-				else
-				{
-					return [this.state.category.processStages[this.state.category.processStages.length - 1], stages[activeIndex]];
-				}
-			}
-			else
-			{
-				if (stages[prevIndex].semantics === 'S')
-				{
-					return [...this.state.category.processStages.slice(start), stages[prevIndex]];
-				}
-				else if (stages[prevIndex].semantics === 'F')
-				{
-					return [...this.state.category.processStages.slice(start), ...this.state.category.successStages, stages[prevIndex]];
-				}
+
+				return [category.processStages[category.processStages.length - 1], activeStage];
 			}
 
-			return stages.slice(start, maxIndex + 2);
+			if (prevStage.semantics === STAGES_SEMANTICS.SUCCESS)
+			{
+				return [...category.processStages.slice(start), prevStage];
+			}
+
+			if (prevStage.semantics === STAGES_SEMANTICS.FAILED)
+			{
+				return [...category.processStages.slice(start), ...category.successStages];
+			}
+
+			const maxIndex = Math.max(prevIndex, activeIndex);
+
+			return this.filterFailedStages(stages).slice(start, maxIndex + 2);
+		}
+
+		filterFailedStages(stages)
+		{
+			return stages.filter(({ semantics }) => semantics !== STAGES_SEMANTICS.FAILED);
 		}
 
 		getInitialSliderStages(stages, activeIndex)
@@ -430,16 +465,9 @@ jn.define('crm/stage-selector', (require, exports, module) => {
 			{
 				return [this.state.category.processStages[this.state.category.processStages.length - 1], stages[activeIndex]];
 			}
-			else if (stages[activeIndex + 1])
+			if (stages[activeIndex + 1])
 			{
-				if (stages[activeIndex + 1].semantics === 'P')
-				{
-					end = 3;
-				}
-				else
-				{
-					end = 2;
-				}
+				end = stages[activeIndex + 1].semantics === 'P' ? 3 : 2;
 			}
 
 			return stages.slice(start, activeIndex + end);
@@ -447,17 +475,16 @@ jn.define('crm/stage-selector', (require, exports, module) => {
 
 		renderStage(stage, index, activeIndex, activeStageId)
 		{
-			const {
-				color,
-				name,
-				id,
-			} = stage;
+			const { color, name, id } = stage;
 			const { category, data, useStageChangeMenu } = this.props;
 			const backgroundColor = index > activeIndex ? '#eef2f4' : color;
 			const readOnly = this.isReadonly();
 
+			const textContrastColor = this.calculateTextColor(backgroundColor);
+
 			return View(
 				{
+					testId: this.getTestId(index, activeIndex),
 					style: {
 						height: 50,
 						width: STAGE_WIDTH,
@@ -520,25 +547,27 @@ jn.define('crm/stage-selector', (require, exports, module) => {
 								ellipsize: 'end',
 								style: {
 									height: 'auto',
-									color: index > activeIndex ? '#a8adb4' : this.calculateTextColor(backgroundColor),
+									color: index > activeIndex ? '#a8adb4' : textContrastColor,
 									fontWeight: '500',
 									flexShrink: 2,
 								},
 								text: name,
 							},
 						),
-						!readOnly && activeStageId === id ? Image(
+						!readOnly && activeStageId === id && Image(
 							{
 								style: {
 									width: 8,
 									height: 5,
-									margin: 5,
+									marginHorizontal: 5,
+									marginTop: 6,
+									marginBottom: 4,
 								},
 								svg: {
-									content: svgImages.stageSelectArrow(),
+									content: svgImages.stageSelectArrow(textContrastColor),
 								},
 							},
-						) : null,
+						),
 					),
 				),
 				Image(
@@ -557,42 +586,34 @@ jn.define('crm/stage-selector', (require, exports, module) => {
 			);
 		}
 
-		calculateTextColor(baseColor)
+		getTestId(index, activeIndex)
 		{
-			let r, g, b;
-			if (baseColor > 7)
+			if (index === activeIndex)
 			{
-				let hexComponent = baseColor.split('(')[1].split(')')[0];
-				hexComponent = hexComponent.split(',');
-				r = parseInt(hexComponent[0]);
-				g = parseInt(hexComponent[1]);
-				b = parseInt(hexComponent[2]);
-			}
-			else if (/^#([A-Fa-f0-9]{3}){1,2}$/.test(baseColor))
-			{
-				let c = baseColor.substring(1).split('');
-				if (c.length === 3)
-				{
-					c = [c[0], c[0], c[1], c[1], c[2], c[2]];
-				}
-				c = '0x' + c.join('');
-				r = (c >> 16) & 255;
-				g = (c >> 8) & 255;
-				b = c & 255;
+				return 'CURRENT_STAGE';
 			}
 
-			const y = 0.21 * r + 0.72 * g + 0.07 * b;
-			return (y < 145) ? '#fff' : '#333';
+			const diff = Math.abs(index - activeIndex);
+			const postfix = diff > 1 ? `_${diff}` : '';
+
+			return index > activeIndex ? `NEXT_STAGE${postfix}` : `PREV_STAGE${postfix}`;
+		}
+
+		calculateTextColor(baseColor)
+		{
+			if (isLightColor(baseColor))
+			{
+				return '#333333';
+			}
+
+			return '#ffffff';
 		}
 	}
 
 	const svgImages = {
-		stageSelectArrow: () => {
-			return `<svg width="8" height="5" viewBox="0 0 8 5" fill="none" xmlns="http://www.w3.org/2000/svg"><path opacity="0.5" fill-rule="evenodd" clip-rule="evenodd" d="M7.48524 0.949718L3.94971 4.48525L0.414173 0.949718H7.48524Z" fill="white"/></svg>`;
-		},
-		arrow: (backgroundColor, borderColor) => {
-			return `<svg width="15" height="34" viewBox="0 0 15 34" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M0 0H0.314926C2.30669 0 4.16862 0.9884 5.28463 2.63814L13.8629 15.3191C14.5498 16.3344 14.5498 17.6656 13.8629 18.6809L5.28463 31.3619C4.16863 33.0116 2.30669 34 0.314926 34H0V0Z" fill="${backgroundColor}"/><path d="M0 31H5.5L5.2812 31.3282C4.1684 32.9974 2.29502 34 0.288897 34H0V31Z" fill="${borderColor}"/></svg>`;
-		},
+		stageSelectArrow: (color) => `<svg width="8" height="5" viewBox="0 0 8 5" fill="none" xmlns="http://www.w3.org/2000/svg"><path opacity="0.5" fill-rule="evenodd" clip-rule="evenodd" d="M7.48524 0.949718L3.94971 4.48525L0.414173 0.949718H7.48524Z" fill="${color}"/></svg>`,
+
+		arrow: (backgroundColor, borderColor) => `<svg width="15" height="34" viewBox="0 0 15 34" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M0 0H0.314926C2.30669 0 4.16862 0.9884 5.28463 2.63814L13.8629 15.3191C14.5498 16.3344 14.5498 17.6656 13.8629 18.6809L5.28463 31.3619C4.16863 33.0116 2.30669 34 0.314926 34H0V0Z" fill="${backgroundColor}"/><path d="M0 31H5.5L5.2812 31.3282C4.1684 32.9974 2.29502 34 0.288897 34H0V31Z" fill="${borderColor}"/></svg>`,
 	};
 	module.exports = { StageSelector, AnimationMode };
 });

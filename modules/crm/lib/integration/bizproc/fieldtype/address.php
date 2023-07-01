@@ -25,4 +25,9 @@ class Address extends UserFieldBase
 
 		return $value;
 	}
+
+	public static function internalizeValue(FieldType $fieldType, $context, $value)
+	{
+		return htmlspecialcharsback($value);
+	}
 }

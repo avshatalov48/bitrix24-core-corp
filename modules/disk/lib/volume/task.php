@@ -2,6 +2,7 @@
 
 namespace Bitrix\Disk\Volume;
 
+use Bitrix\Disk;
 use Bitrix\Disk\Volume;
 use Bitrix\Main\Application;
 use Bitrix\Main\Type\DateTime;
@@ -26,7 +27,7 @@ class Task
 	private $lastFileId = -1;
 
 	/** @var int */
-	private $ownerId = \Bitrix\Disk\SystemUser::SYSTEM_USER_ID;
+	private $ownerId = Disk\SystemUser::SYSTEM_USER_ID;
 
 	/** @var string */
 	private $indicatorType = '';
@@ -81,7 +82,7 @@ class Task
 
 		if ($this->getId() > 0)
 		{
-			$taskParams = array();
+			$taskParams = [];
 
 			// status changed
 			if ($this->getStatus() != (int)$this->getParam('AGENT_LOCK'))
@@ -104,7 +105,7 @@ class Task
 		}
 		else
 		{
-			$result = VolumeTable::add(array(
+			$result = VolumeTable::add([
 				'INDICATOR_TYPE' => $this->getIndicatorType(),
 				'OWNER_ID' => $this->getOwnerId(),
 				'STORAGE_ID' => $this->getParam('STORAGE_ID'),
@@ -116,7 +117,7 @@ class Task
 				'LAST_FILE_ID' => ($this->getLastFileId() > 0 ? $this->getLastFileId() : null),
 				'FAIL_COUNT' => $this->getFailCount(),
 				'LAST_ERROR' => $this->getLastError(),
-			));
+			]);
 			if ($result->isSuccess())
 			{
 				$this->id = $result->getId();
@@ -134,19 +135,19 @@ class Task
 	 * @param int $ownerId Task owner id.
 	 * @return boolean
 	 */
-	public function loadTaskById($filterId, $ownerId = \Bitrix\Disk\SystemUser::SYSTEM_USER_ID)
+	public function loadTaskById($filterId, $ownerId = Disk\SystemUser::SYSTEM_USER_ID)
 	{
-		$filter = array(
+		$filter = [
 			'=ID' => $filterId,
-		);
-		if ($ownerId != \Bitrix\Disk\SystemUser::SYSTEM_USER_ID)
+		];
+		if ($ownerId != Disk\SystemUser::SYSTEM_USER_ID)
 		{
 			$filter['=OWNER_ID'] = $ownerId;
 		}
-		$workerResult = VolumeTable::getList(array(
+		$workerResult = VolumeTable::getList([
 			'filter' => $filter,
 			'limit' => 1,
-		));
+		]);
 		if ($row = $workerResult->fetch())
 		{
 			$this->param = $row;
@@ -234,35 +235,12 @@ class Task
 	}
 
 	/**
-	 * Checks if there are not any running task except current.
-	 * @param int $filterId Id of saved indicator result from b_disk_volume.
-	 * @return bool
-	 */
-	public static function isAllowRun($filterId): bool
-	{
-		$workerResult = VolumeTable::getList([
-			'select' => ['ID'],
-			'filter' => [
-				'!=ID' => $filterId,
-				'=AGENT_LOCK' => self::TASK_STATUS_RUNNING,
-			],
-			'limit' => 1,
-		]);
-		if ($workerResult->fetch())
-		{
-			return false;
-		}
-
-		return true;
-	}
-
-	/**
 	 * Checks if status is in running mode.
 	 * @param int $status Status to check.
 	 * @param int[] $runningStatus These statuses are running modes.
 	 * @return bool
 	 */
-	public static function isRunningMode($status, $runningStatus = array(self::TASK_STATUS_WAIT, self::TASK_STATUS_RUNNING)): bool
+	public static function isRunningMode($status, $runningStatus = [self::TASK_STATUS_WAIT, self::TASK_STATUS_RUNNING]): bool
 	{
 		return in_array((int)$status, $runningStatus);
 	}
@@ -275,7 +253,7 @@ class Task
 	{
 		if ($this->getId() > 0 && self::isRunningMode($this->getStatus()))
 		{
-			$param = VolumeTable::getByPrimary($this->getId(), array('select' => array('AGENT_LOCK')))->fetch();
+			$param = VolumeTable::getByPrimary($this->getId(), ['select' => ['AGENT_LOCK']])->fetch();
 			if ($param)
 			{
 				if ((int)$param['AGENT_LOCK'] === self::TASK_STATUS_CANCEL)
@@ -653,18 +631,18 @@ class Task
 
 	/**
 	 * Collects data for logging.
-	 * @param \Bitrix\Disk\BaseObject|\Bitrix\Disk\Version $object Object to delete.
+	 * @param Disk\BaseObject|Disk\Version $object Object to delete.
 	 * @return array
 	 */
 	public function collectLogData($object)
 	{
-		$logData = array();
-		/** \Bitrix\Disk\File $object */
-		if ($object instanceof \Bitrix\Disk\File)
+		$logData = [];
+		/** Disk\File $object */
+		if ($object instanceof Disk\File)
 		{
-			$crumbs = \Bitrix\Disk\CrumbStorage::getInstance()->getByObject($object, false);
-			$logData = array(
-				'OBJECT_TYPE' => \Bitrix\Disk\Internals\ObjectTable::TYPE_FILE,
+			$crumbs = Disk\CrumbStorage::getInstance()->getByObject($object, false);
+			$logData = [
+				'OBJECT_TYPE' => Disk\Internals\ObjectTable::TYPE_FILE,
 				'STORAGE_ID' => $object->getStorageId(),
 				'OBJECT_ID' => $object->getId(),
 				'OBJECT_PARENT_ID' => $object->getParentId(),
@@ -674,14 +652,14 @@ class Task
 				'OBJECT_CREATED_BY' => $object->getCreatedBy(),
 				'OBJECT_UPDATED_BY' => $object->getUpdatedBy(),
 				'FILE_ID' => $object->getFileId(),
-			);
+			];
 		}
-		/** \Bitrix\Disk\Folder $object */
-		elseif ($object instanceof \Bitrix\Disk\Folder)
+		/** Disk\Folder $object */
+		elseif ($object instanceof Disk\Folder)
 		{
-			$crumbs = \Bitrix\Disk\CrumbStorage::getInstance()->getByObject($object, false);
-			$logData = array(
-				'OBJECT_TYPE' => \Bitrix\Disk\Internals\ObjectTable::TYPE_FOLDER,
+			$crumbs = Disk\CrumbStorage::getInstance()->getByObject($object, false);
+			$logData = [
+				'OBJECT_TYPE' => Disk\Internals\ObjectTable::TYPE_FOLDER,
 				'STORAGE_ID' => $object->getStorageId(),
 				'OBJECT_ID' => $object->getId(),
 				'OBJECT_PARENT_ID' => $object->getParentId(),
@@ -689,21 +667,21 @@ class Task
 				'OBJECT_PATH' => implode('/', $crumbs),
 				'OBJECT_CREATED_BY' => $object->getCreatedBy(),
 				'OBJECT_UPDATED_BY' => $object->getUpdatedBy(),
-			);
+			];
 		}
-		/** \Bitrix\Disk\Version $object */
-		elseif ($object instanceof \Bitrix\Disk\Version)
+		/** Disk\Version $object */
+		elseif ($object instanceof Disk\Version)
 		{
 			$file = $object->getObject();
-			$logData = array(
+			$logData = [
 				'VERSION_ID' => $object->getId(),
 				'VERSION_NAME' => $object->getName(),
-			);
-			if ($file instanceof \Bitrix\Disk\File)
+			];
+			if ($file instanceof Disk\File)
 			{
-				$crumbs = \Bitrix\Disk\CrumbStorage::getInstance()->getByObject($file, false);
-				$logData = array_merge($logData, array(
-					'OBJECT_TYPE' => \Bitrix\Disk\Internals\ObjectTable::TYPE_FILE,
+				$crumbs = Disk\CrumbStorage::getInstance()->getByObject($file, false);
+				$logData = array_merge($logData, [
+					'OBJECT_TYPE' => Disk\Internals\ObjectTable::TYPE_FILE,
 					'STORAGE_ID' => $file->getStorageId(),
 					'OBJECT_ID' => $file->getId(),
 					'OBJECT_PARENT_ID' => $file->getParentId(),
@@ -713,7 +691,7 @@ class Task
 					'OBJECT_CREATED_BY' => $file->getCreatedBy(),
 					'OBJECT_UPDATED_BY' => $file->getUpdatedBy(),
 					'FILE_ID' => $file->getFileId(),
-				));
+				]);
 			}
 		}
 
@@ -732,7 +710,7 @@ class Task
 		$data['OPERATION'] = $operation;
 		$data['DELETED_TIME'] = new DateTime();
 		$data['DELETED_BY'] = $this->getOwnerId();
-		$result = \Bitrix\Disk\Internals\VolumeDeletedLogTable::add($data);
+		$result = Disk\Internals\VolumeDeletedLogTable::add($data);
 		return $result->isSuccess();
 	}
 }

@@ -60,10 +60,7 @@ final class UserFieldManager implements IErrorable
 
 		$data = $this->getAdditionalConnector($entityType);
 
-		return $data === null?
-			array(StubConnector::className(), Driver::INTERNAL_MODULE_ID) :
-			$data
-		;
+		return $data ?? [StubConnector::className(), Driver::INTERNAL_MODULE_ID];
 	}
 
 	/**
@@ -120,8 +117,8 @@ final class UserFieldManager implements IErrorable
 
 		return
 			$attachedObject->getEntityId()   == $entityId &&
-			$attachedObject->getModuleId()   == $moduleId &&
-			$attachedObject->getEntityType() == $connectorClass
+			$attachedObject->getModuleId()   === $moduleId &&
+			$attachedObject->getEntityType() === $connectorClass
 		;
 	}
 
@@ -139,7 +136,7 @@ final class UserFieldManager implements IErrorable
 	{
 		$additionalConnectorList = $this->getAdditionalConnectors();
 
-		return isset($additionalConnectorList[$entityType])? $additionalConnectorList[$entityType] : null;
+		return $additionalConnectorList[$entityType] ?? null;
 	}
 
 	private function buildAdditionalConnectorList()
@@ -225,7 +222,7 @@ final class UserFieldManager implements IErrorable
 		$upperParams = array_change_key_case($params, CASE_UPPER);
 		$APPLICATION->includeComponent(
 			'bitrix:disk.uf.file',
-			$upperParams['MOBILE'] == 'Y' ? 'mobile' : '.default',
+			($upperParams['MOBILE'] ?? null) === 'Y' ? 'mobile' : '.default',
 			[
 				'EDIT' => 'Y',
 				'PARAMS' => $params,
@@ -254,7 +251,7 @@ final class UserFieldManager implements IErrorable
 
 		$APPLICATION->includeComponent(
 			'bitrix:disk.uf.file',
-			$upperParams['MOBILE'] == 'Y' ? 'mobile' : '.default',
+			($upperParams['MOBILE'] ?? null) === 'Y' ? 'mobile' : '.default',
 			[
 				'PARAMS' => $params,
 				'RESULT' => $result,
@@ -282,8 +279,8 @@ final class UserFieldManager implements IErrorable
 			[
 				'PARAMS' => $params,
 				'RESULT' => $result,
-				'DISABLE_LOCAL_EDIT' => (isset($params['DISABLE_LOCAL_EDIT'])? $params['DISABLE_LOCAL_EDIT'] : false),
-				'USE_TOGGLE_VIEW' => (isset($params['USE_TOGGLE_VIEW']) ? $params['USE_TOGGLE_VIEW'] : false),
+				'DISABLE_LOCAL_EDIT' => ($params['DISABLE_LOCAL_EDIT'] ?? false),
+				'USE_TOGGLE_VIEW' => ($params['USE_TOGGLE_VIEW'] ?? false),
 			],
 			$component,
 			['HIDE_ICONS' => 'Y']
@@ -326,17 +323,17 @@ final class UserFieldManager implements IErrorable
 		$upperParams = array_change_key_case($params, CASE_UPPER);
 		$templateType = FileUserType::getTemplateType($upperParams);
 
-		if ($upperParams['MOBILE'] == 'Y')
+		if (($upperParams['MOBILE'] ?? null) === 'Y')
 		{
-			$template = 'mobile'.($templateType == 'grid' ? '_grid' : '');
+			$template = 'mobile'.($templateType === 'grid' ? '_grid' : '');
 		}
 		else
 		{
-			$template = $upperParams['TEMPLATE'];
+			$template = $upperParams['TEMPLATE'] ?? null;
 			$template = (
-				in_array($template, $possibleTemplates)
+				in_array($template, $possibleTemplates, true)
 					? $template
-					: ($templateType == 'grid' ? 'grid' : '')
+					: ($templateType === 'grid' ? 'grid' : '')
 			);
 		}
 

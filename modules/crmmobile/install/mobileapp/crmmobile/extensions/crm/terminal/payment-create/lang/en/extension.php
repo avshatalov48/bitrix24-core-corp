@@ -1,0 +1,5 @@
+<?php
+$MESS["M_CRM_TL_PAYMENT_CREATE_CANCEL"] = "Cancel";
+$MESS["M_CRM_TL_PAYMENT_CREATE_CONTINUE"] = "Continue";
+$MESS["M_CRM_TL_PAYMENT_CREATE_ERROR_TEXT"] = "Error creating payment";
+$MESS["M_CRM_TL_PAYMENT_CREATE_ERROR_TITLE"] = "There was an error";

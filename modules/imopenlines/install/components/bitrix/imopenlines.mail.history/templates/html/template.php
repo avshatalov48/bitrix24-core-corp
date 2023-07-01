@@ -16,6 +16,11 @@ if (!empty($arResult['ERROR']))
 	return;
 }
 ?>
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html;charset=<?=SITE_CHARSET?>"/>
+	<title><?=htmlspecialcharsbx($arResult['TEMPLATE_WIDGET_TITLE'])?></title>
+</head>
 <body style="margin: 0;padding: 0;display: flex;flex-direction: column;height: 100%;">
 	<div style="height: 71px;background: #17A3EA;text-align: center;margin-bottom: 28px;">
 		<div style="padding-top: 15px;font: 15px/20px var(--ui-font-family-secondary, var(--ui-font-family-open-sans)); font-weight: var(--ui-font-weight-semi-bold, 600); color: #fff">
@@ -114,3 +119,4 @@ if (!empty($arResult['ERROR']))
 		</a>
 	</div>
 </body>
+</html>

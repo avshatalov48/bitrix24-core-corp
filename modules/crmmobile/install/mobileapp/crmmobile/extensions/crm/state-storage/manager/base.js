@@ -2,7 +2,6 @@
  * @module crm/state-storage/manager/base
  */
 jn.define('crm/state-storage/manager/base', (require, exports, module) => {
-
 	const { VuexManager } = require('statemanager/vuex-manager');
 
 	/**
@@ -10,7 +9,7 @@ jn.define('crm/state-storage/manager/base', (require, exports, module) => {
 	 */
 	class Base
 	{
-		constructor({store})
+		constructor({ store })
 		{
 			this.store = store;
 			this.eventManager = new VuexManager(this.store)

@@ -1266,7 +1266,8 @@ class CExtranet
 	{
 		global $CACHE_MANAGER;
 
-		if ((int)$arFields["ID"] > 0) // update
+		$id = (int)(isset($arFields['ID']) ?? 0);
+		if ($id > 0) // update
 		{
 			$dbRes = CUser::GetList(
 				"id", "asc",
@@ -1455,7 +1456,7 @@ class CExtranet
 		return (Option::get('extranet', 'show_all_contacts', 'N') === 'Y');
 	}
 
-	public static function fillUserListFilterORM($arParams = array(), &$arFilter = array(), &$bFilteredByUserId)
+	public static function fillUserListFilterORM($arParams = array(), &$arFilter = array(), &$bFilteredByUserId = null)
 	{
 		global $USER;
 

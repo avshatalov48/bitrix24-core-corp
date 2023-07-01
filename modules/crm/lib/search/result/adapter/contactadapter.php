@@ -12,7 +12,7 @@ class ContactAdapter extends \Bitrix\Crm\Search\Result\Adapter
 			['@ID' => $ids, 'CHECK_PERMISSIONS' => 'N'],
 			false,
 			false,
-			['ID', 'HONORIFIC', 'NAME', 'SECOND_NAME', 'LAST_NAME', 'COMPANY_TITLE', 'PHOTO', 'ORIGINATOR_ID']
+			['ID', 'HONORIFIC', 'NAME', 'SECOND_NAME', 'LAST_NAME', 'COMPANY_TITLE', 'PHOTO', 'ORIGINATOR_ID', 'CATEGORY_ID']
 		);
 		while ($contact = $contacts->Fetch())
 		{
@@ -34,7 +34,10 @@ class ContactAdapter extends \Bitrix\Crm\Search\Result\Adapter
 
 	protected function prepareSubTitle(array $item): string
 	{
-		return '';
+		$descriptions = [];
+		$this->addCategoryLabelToSubtitle((int)($item['CATEGORY_ID'] ?? 0), $descriptions);
+
+		return implode(', ', $descriptions);
 	}
 
 	protected function areMultifieldsSupported(): bool

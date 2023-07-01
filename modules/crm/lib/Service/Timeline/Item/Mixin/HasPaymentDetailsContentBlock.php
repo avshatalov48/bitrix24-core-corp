@@ -12,6 +12,7 @@ use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\ContentBlockFactory;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm\Service\Sale\EntityLinkBuilder\EntityLinkBuilder;
 use Bitrix\Main\Web\Uri;
+use Bitrix\Sale\Repository\PaymentRepository;
 
 Loc::loadMessages(__DIR__ . '/../Ecommerce.php');
 
@@ -100,6 +101,17 @@ trait HasPaymentDetailsContentBlock
 
 	abstract protected function getAssociatedEntityModel(): ?AssociatedEntityModel;
 
+	private function getPayment(): ?\Bitrix\Sale\Payment
+	{
+		$paymentId = $this->getAssociatedEntityModel()->get('ID');
+		if (!$paymentId)
+		{
+			return null;
+		}
+
+		return PaymentRepository::getInstance()->getById($paymentId);
+	}
+
 	private function getPaymentDetailsEntityNameAction(): ?Action
 	{
 		$contextEntityTypeId = $this->getContext()->getEntityTypeId();
@@ -117,6 +129,9 @@ trait HasPaymentDetailsContentBlock
 		if ($factory && $factory->isPaymentsEnabled())
 		{
 			$ownerTypeId = $this->getContext()->getEntityTypeId();
+			$payment = $this->getPayment();
+			$formattedDate = $payment ? ConvertTimeStamp($payment->getField('DATE_BILL')->getTimestamp()) : null;
+			$accountNumber = $payment ? $payment->getField('ACCOUNT_NUMBER') : null;
 
 			return
 				(new JsEvent('SalescenterApp:Start'))
@@ -130,6 +145,8 @@ trait HasPaymentDetailsContentBlock
 					->addActionParamInt('paymentId', $this->getAssociatedEntityModel()->get('ID'))
 					->addActionParamInt('ownerTypeId', $ownerTypeId)
 					->addActionParamInt('ownerId', $this->getContext()->getEntityId())
+					->addActionParamString('formattedDate', $formattedDate)
+					->addActionParamString('accountNumber', $accountNumber)
 					->addActionParamString(
 						'analyticsLabel',
 						\CCrmOwnerType::isUseDynamicTypeBasedApproach($ownerTypeId)

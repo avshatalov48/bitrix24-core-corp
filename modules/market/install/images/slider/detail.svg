@@ -1,0 +1,138 @@
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100% 1796"
+    preserveAspectRatio="xMinYMin meet" style="width: 100%; height: 1796px;" fill="none">
+
+    <svg height="1796">
+        <defs>
+            <g id="detail-info">
+                <rect y="230.5" width="1" height="46" fill="#EDEEF0" />
+            </g>
+            <g id="slider-point">
+                <circle cx="0" cy="631" r="3" fill="#a3abb1" />
+                <circle cx="12" cy="631" r="2.5" stroke="#a3abb1" />
+                <circle cx="24" cy="631" r="2.5" stroke="#a3abb1" />
+                <circle cx="36" cy="631" r="2.5" stroke="#a3abb1" />
+            </g>
+
+            <g id="dividing-line">
+                <rect x="32" y="846" width="100%" height="1" fill="#EDEEF0" />
+                <rect x="100%" y="846" width="32" height="1" fill="white" transform="translate(-32)" />
+            </g>
+
+            <g id="group-arrow">
+                <path d="M0.5 16C0.5 7.43959 7.43959 0.5 16 0.5H51C59.5604 0.5 66.5 7.43959 66.5 16V22.5H0.5V16Z"
+                fill="white" stroke="#D6DADE" />
+                <path opacity="0.5" fill-rule="evenodd" clip-rule="evenodd"
+                    d="M33.6569 14.4853L37.8995 10.2427L39.3137 11.6569L33.6569 17.3137L28 11.6569L29.4142 10.2427L33.6569 14.4853Z"
+                    fill="#535C69" />
+                <rect x="1" y="21" width="65" height="3" fill="white" />
+            </g>
+        </defs>
+        
+        <rect width="100%" height="1796" fill="white" />
+
+        <rect width="100%" height="352" fill="#F5F7F8" x="7" y="309" />
+        <rect width="7" height="352" fill="white" x="100%" y="309" transform="translate(-7)" />
+
+        <rect x="31" y="203" width="100%" height="1" fill="#EDEEF0" />
+        <rect x="100%" y="203" width="31" height="1" fill="white" transform="translate(-31)" />
+
+        <use xlink:href="#detail-info" x="23%"></use>
+        <use xlink:href="#detail-info" x="50%"></use>
+        <use xlink:href="#detail-info" x="77%"></use>
+
+        <use xlink:href="#slider-point" x="50%" transform="translate(-19)"></use>
+
+        <use xlink:href="#dividing-line"></use>
+        <use xlink:href="#dividing-line" y="138"></use>
+
+        <use xlink:href="#group-arrow" x="50%" y="824" transform="translate(-36)"></use>
+    </svg>
+
+    <svg height="100%" id="animated-elements">
+        <defs>
+            <g id="detail-info--animat">
+                <rect x="0" y="228" width="95" height="21.5" rx="4" fill="#eeeef0" />
+                <rect x="24" y="257.5" width="47" height="10" rx="4" fill="#eeeef0" />
+            </g>
+
+            <g id="detail-link--animat">
+                <rect x="0" y="874" width="22.4%" height="90" rx="4" fill="#eeeef0" />
+            </g>
+
+            <g id="detail-item--animat">
+                <rect y="1385" width="21%" height="141" rx="4" fill="#eeeef0" />
+                <rect y="1545" width="17%" height="16" rx="4" fill="#eeeef0" />
+                <rect y="1574" width="12%" height="16" rx="4" fill="#eeeef0" />
+                <rect y="1598" width="6%" height="16" rx="4" fill="#eeeef0" />
+            </g>
+        </defs>
+
+        <g>
+            <rect x="31" y="24" width="156" height="156" rx="16" fill="#eeeef0" />
+            <rect x="211" y="39" width="156" height="32" rx="4" fill="#eeeef0" />
+            <rect x="211" y="105" width="156" height="16" rx="4" fill="#eeeef0" />
+            <rect x="211" y="142" width="156" height="38" rx="4" fill="#eeeef0" />
+            <rect x="383" y="142" width="156" height="38" rx="4" fill="#eeeef0" />
+            <rect x="100%" y="25" width="40" height="38" rx="4" fill="#eeeef0" transform="translate(-71)" />
+            <rect x="100%" y="142" width="40" height="38" rx="4" fill="#eeeef0" transform="translate(-71)" />
+        </g>
+
+        <use xlink:href="#detail-info--animat" transform="translate(-47)" x="9.4%"></use>
+        <use xlink:href="#detail-info--animat" transform="translate(-47)" x="36.4%"></use>
+        <use xlink:href="#detail-info--animat" transform="translate(-47)" x="63.4%"></use>
+        <use xlink:href="#detail-info--animat" transform="translate(-47)" x="90.4%"></use>
+
+        <rect x="31" y="333" width="calc(50% - 37px)" height="278" rx="4" fill="#e4e7ea" />
+        <rect x="calc(50% + 6px)" y="333" width="calc(50% - 37px)" height="278" rx="4" fill="#e4e7ea" />
+
+        <rect x="47.5" y="709" width="16%" height="22" rx="4" fill="#eeeef0" />
+        <rect x="47.5" y="765" width="67%" height="9" rx="4" fill="#eeeef0" />
+        <rect x="47.5" y="780" width="53%" height="9" rx="4" fill="#eeeef0" />
+        <rect x="47.5" y="795" width="45%" height="9" rx="4" fill="#eeeef0" />
+
+
+        <use xlink:href="#detail-link--animat" x="32"></use>
+        <use xlink:href="#detail-link--animat" x="calc(25% + 21px)"></use>
+        <use xlink:href="#detail-link--animat" x="calc(50% + 10px)"></use>
+        <use xlink:href="#detail-link--animat" x="75%"></use>
+
+        <rect x="32" y="1005" width="calc(100% - 62px)" height="272" rx="4" fill="#eeeef0" />
+
+        <rect x="31" y="1325" width="23%" height="28" rx="4" fill="#eeeef0" />
+        <rect x="100%" y="1325" width="56" height="28" rx="4" fill="#eeeef0" transform="translate(-87)" />
+
+        <use xlink:href="#detail-item--animat" x="43"></use>
+        <use xlink:href="#detail-item--animat" x="28%"></use>
+        <use xlink:href="#detail-item--animat" x="53%"></use>
+        <use xlink:href="#detail-item--animat" x="77%"></use>
+    </svg>
+
+    <defs>
+        <filter id="filter0_i_3005_70593" x="44" y="433" width="90%" height="1" filterUnits="userSpaceOnUse"
+                color-interpolation-filters="sRGB">
+            <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+            <feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+            <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
+                        result="hardAlpha"/>
+            <feOffset dy="-1"/>
+            <feComposite in2="hardAlpha" operator="arithmetic" k2="-1" k3="1"/>
+            <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.1 0"/>
+            <feBlend mode="normal" in2="shape" result="effect1_innerShadow_3005_70593"/>
+        </filter>
+    </defs>
+
+    <rect id="msk1" width="100%" fill="url(#msk_gd)" mask="url(#headerMsk)" height="100%"/>
+
+    <mask id="headerMsk" fill="white">
+        <use xlink:href="#animated-elements"/>
+    </mask>
+
+    <linearGradient x1="66.6%" y1="50%" x2="33.3%" y2="50%" id="msk_gd">
+        <stop stop-color="#000000" stop-opacity="0" offset="0%"/>
+        <stop stop-color="#000000" stop-opacity="0.07" offset="50%"/>
+        <stop stop-color="#000000" stop-opacity="0" offset="100%"/>
+    </linearGradient>
+
+    <animate xlink:href="#msk1" attributeName="x" from="-100%" to="100%" dur="1s" begin="0s" repeatCount="indefinite"/>
+
+</svg>

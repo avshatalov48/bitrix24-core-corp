@@ -46,7 +46,7 @@ abstract class DataProvider
 			$this->data[$name] = DataProviderManager::getInstance()->getDataProviderValue($this, $name);
 		}
 
-		return DataProviderManager::getInstance()->prepareValue($this->data[$name], $this->fields[$name]);
+		return DataProviderManager::getInstance()->prepareValue($this->data[$name], $this->fields[$name] ?? []);
 	}
 
 	/**

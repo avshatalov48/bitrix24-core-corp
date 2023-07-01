@@ -799,7 +799,7 @@ class CIntranetCalendarWS extends IWebService
 
 						$arRes['prop']['VERSION'] = $arOldEvent['VERSION'];
 
-						if ($arOldEvent['LOCATION']);
+						if ($arOldEvent['LOCATION'])
 						{
 							$arRes['location']['old'] = CEventCalendar::ParseLocation($arOldEvent['LOCATION']);
 							if ($arRes['location']['old']['mrid'])

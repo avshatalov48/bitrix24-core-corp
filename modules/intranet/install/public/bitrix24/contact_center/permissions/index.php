@@ -8,7 +8,7 @@ require_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_af
 $APPLICATION->SetTitle(GetMessage('OL_PAGE_PERMISSIONS_TITLE'));
 ?>
 <?
-if($_GET['IFRAME'] !== 'Y')
+if(!isset($_GET['IFRAME']) || $_GET['IFRAME'] !== 'Y')
 {
 	$APPLICATION->IncludeComponent(
 		'bitrix:intranet.contact_center.menu.top',

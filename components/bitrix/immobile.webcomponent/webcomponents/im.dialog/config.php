@@ -13,7 +13,8 @@ return [
 		'mobile_tools',
 		'mobile_uploader',
 		'mobile_fastclick',
-		'mobile_gesture'
+		'mobile_gesture',
+		'im.v2.lib.parser'
 	],
 	'deps' => [
 		'im:chat/uploaderconst',

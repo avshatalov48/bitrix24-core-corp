@@ -88,8 +88,16 @@ final class CTaskRestService extends IRestService
 				self::PLACEMENT_TASK_TOP_MENU          => [],
 				self::PLACEMENT_TASK_LIST_CONTEXT_MENU => [],
 				self::PLACEMENT_TASK_VIEW_MODE         => [],
-				self::PLACEMENT_TASK_VIEW_TAB          => [],
-				self::PLACEMENT_TASK_VIEW_SIDEBAR      => [],
+				self::PLACEMENT_TASK_VIEW_TAB          => [
+					'options' => [
+						'groupId' => 'string',
+					]
+				],
+				self::PLACEMENT_TASK_VIEW_SIDEBAR      => [
+					'options' => [
+						'groupId' => 'string',
+					]
+				],
 				self::PLACEMENT_TASK_VIEW_TOP_PANEL	   => [],
 				self::PLACEMENT_TASK_VIEW_MENU_ADD	   => [],
 
@@ -776,7 +784,7 @@ final class CTaskRestService extends IRestService
 			}
 
 			// add legal aggregated columns in keys & values array
-			if(is_array($paramMetaInfo['allowedAggregations']))
+			if(isset($paramMetaInfo['allowedAggregations']) && is_array($paramMetaInfo['allowedAggregations']))
 			{
 				// for keys
 				if(is_array($paramMetaInfo['allowedKeysInAggregation']))

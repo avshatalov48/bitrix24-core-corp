@@ -1,8 +1,10 @@
-(() =>
-{
+(() => {
 	include("InAppNotifier");
 
-	const { md5 } = jn.require('utils/hash');
+	const require = (ext) => jn.require(ext);
+
+	const { md5 } = require('utils/hash');
+	const { stringify } = require('utils/string');
 
 	/**
 	 * @class Notify
@@ -24,14 +26,17 @@
 		 */
 		static showMessage(message = "", title = "", options = {})
 		{
+			message = stringify(message);
+			title = stringify(title);
+
 			if (typeof InAppNotifier !== "undefined")
 			{
 				InAppNotifier.showNotification({
-					backgroundColor: "#075776",
+					backgroundColor: "#004f69",
 					time: 2,
 					blur: true,
 					...options,
-					message,
+					message: message === '' ? undefined : message,
 					title,
 				});
 			}
@@ -47,7 +52,7 @@
 			let { code } = options;
 			if (!code)
 			{
-				code = md5({ ...options, message, title })
+				code = md5({ ...options, message, title });
 			}
 
 			this.showMessage(message, title, { ...options, code });
@@ -76,14 +81,13 @@
 			ifApi(29,
 				() => Notify.showIndicator(options, delay))
 				.elseIf(options["fallbackText"],
-					() =>
-					{
+					() => {
 						this.hideCurrentIndicator();
 						Notify.showMessage(options["fallbackText"], options.title);
 					});
 		}
 
-		static showIndicator(options = {type: "loading"}, delay = 0)
+		static showIndicator(options = { type: "loading" }, delay = 0)
 		{
 			if (delay > 0)
 			{
@@ -100,9 +104,10 @@
 			dialogs.hideLoadingIndicator();
 		}
 
-		static alert(message, title = "", buttonLabel = "OK")
+		static alert(message, title = "", buttonLabel = "OK", callback = () => {
+		})
 		{
-			navigator.notification.alert(message,()=>{}, title, buttonLabel);
+			navigator.notification.alert(message, callback, title, buttonLabel);
 		}
 	}
 

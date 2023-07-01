@@ -21,7 +21,7 @@ class RestApp extends Base
 
 	public static function getName()
 	{
-		return Loc::getMessage('CRM_ACTIVITY_PROVIDER_REST_APP_NAME');
+		return Loc::getMessage('CRM_ACTIVITY_PROVIDER_REST_APP_NAME_MSGVER_1');
 	}
 
 	/**
@@ -41,14 +41,14 @@ class RestApp extends Base
 	{
 		return array(
 			array(
-				'NAME' => Loc::getMessage('CRM_ACTIVITY_PROVIDER_REST_APP_NAME'),
+				'NAME' => Loc::getMessage('CRM_ACTIVITY_PROVIDER_REST_APP_NAME_MSGVER_1'),
 			),
 		);
 	}
 
 	public static function getTypeName($providerTypeId = null, $direction = \CCrmActivityDirection::Undefined)
 	{
-		return Loc::getMessage('CRM_ACTIVITY_PROVIDER_REST_APP_NAME');
+		return Loc::getMessage('CRM_ACTIVITY_PROVIDER_REST_APP_NAME_MSGVER_1');
 	}
 
 	public static function renderView(array $activity)

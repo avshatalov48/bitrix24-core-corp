@@ -1,4 +1,5 @@
 <?php
+
 namespace Bitrix\Crm\Timeline;
 
 use Bitrix\Crm\ItemIdentifier;
@@ -183,65 +184,47 @@ class CommentController extends EntityController
 		$mentionList = array_unique($mentionList);
 		return $mentionList;
 	}
-	public function onCreate($id, array $params = array())
+
+	public function onCreate($id, array $params = [])
 	{
 		$id = (int)$id;
-		if($id <= 0)
+		if ($id <= 0)
 		{
 			throw new ArgumentException('ID must be greater than zero.', 'ID');
 		}
 
-		$ownerTypeID = $params['ENTITY_TYPE_ID'];
-		$ownerID = $params['ENTITY_ID'];
 		$this->onSave($id, $params);
 
-		$items = array($id => TimelineEntry::getByID($id));
-		TimelineManager::prepareDisplayData($items);
-
-		if(Loader::includeModule('pull') && \CPullOptions::GetQueueServerStatus())
-		{
-			$tag = TimelineEntry::prepareEntityPushTag($ownerTypeID, $ownerID);
-			\CPullWatch::AddToStack(
-				$tag,
-				array(
-					'module_id' => 'crm',
-					'command' => 'timeline_comment_add',
-					'params' => array('TAG' => $tag, 'HISTORY_ITEM' => $items[$id]),
-				)
-			);
-		}
-
-		return $items[$id];
+		$this->sendPullEventOnAdd(
+			new ItemIdentifier($params['ENTITY_TYPE_ID'], $params['ENTITY_ID']),
+			$id,
+			$params['AUTHOR_ID'] ?? null
+		);
 	}
-	public function onModify($id, array $params = array())
+
+	public function onModify($id, array $params = [])
 	{
 		$id = (int)$id;
-		if($id <= 0)
+		if ($id <= 0)
 		{
-			throw new \Bitrix\Main\ArgumentException('ID must be greater than zero.', 'ID');
+			throw new ArgumentException('ID must be greater than zero.', 'ID');
 		}
 
-		$ownerTypeID = $params['ENTITY_TYPE_ID'];
-		$ownerID = $params['ENTITY_ID'];
+		$ownerTypeId = (int)($params['ENTITY_TYPE_ID'] ?? 0);
+		$ownerId = (int)($params['ENTITY_ID'] ?? 0);
+		if ($ownerId <= 0 || !\CCrmOwnerType::IsDefined($ownerTypeId))
+		{
+			throw new ArgumentException('Owner ID and owner type ID must be greater than zero.', 'ID');
+		}
+
 		$this->onSave($id, $params);
 
-		$items = array($id => TimelineEntry::getByID($id));
-		TimelineManager::prepareDisplayData($items);
-		if(Loader::includeModule('pull') && \CPullOptions::GetQueueServerStatus())
-		{
-			$tag = TimelineEntry::prepareEntityPushTag($ownerTypeID, $ownerID);
-			\CPullWatch::AddToStack(
-				$tag,
-				array(
-					'module_id' => 'crm',
-					'command' => 'timeline_comment_update',
-					'params' => array('ENTITY_ID' => $id, 'TAG' => $tag, 'HISTORY_ITEM' => $items[$id]),
-				)
-			);
-		}
-
-		return $items[$id];
+		$this->sendPullEventOnUpdate(
+			new ItemIdentifier($ownerTypeId, $ownerId),
+			$id
+		);
 	}
+
 	public function onDelete($id, array $params = array())
 	{
 		$id = (int)$id;

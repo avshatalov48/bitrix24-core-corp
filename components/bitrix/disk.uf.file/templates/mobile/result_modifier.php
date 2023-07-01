@@ -19,7 +19,7 @@ $arParams["THUMB_SIZE"] = array("width" => 70, "height" => 70); // thumb
 $arParams["MAX_SIZE"] = array("width" => 550, "height" => 832); // inline
 $arParams["SMALL_SIZE"] = array("width" => 75, "height" => 100); // inline rough
 
-$arParams["HTML_SIZE"] = ($arParams["HTML_SIZE"] ?: false); // inline from parser
+$arParams["HTML_SIZE"] = ($arParams["HTML_SIZE"] ?? false); // inline from parser
 
 $images = [];
 $files = [];
@@ -98,10 +98,10 @@ foreach ($arResult['FILES'] as $id => $file)
 			"height" => $file["IMAGE"]["HEIGHT"]
 		);
 
-		$arSize = is_array($arParams["SIZE"][$file["ID"]]) ? $arParams["SIZE"][$file["ID"]] : array();
+		$arSize = (isset($arParams["SIZE"][$file["ID"]]) && is_array($arParams["SIZE"][$file["ID"]])) ? $arParams["SIZE"][$file["ID"]] : array();
 		$arSize = [
-			'width' => (int)($arSize['width'] ?? $arSize['WIDTH']),
-			'height' => (int)($arSize['height'] ?? $arSize['HEIGHT'])
+			'width' => (int)($arSize['width'] ?? $arSize['WIDTH'] ?? 0),
+			'height' => (int)($arSize['height'] ?? $arSize['HEIGHT'] ?? 0)
 		];
 
 		$bExactly = ($arSize["width"] > 0 && $arSize["height"] > 0);
@@ -121,6 +121,9 @@ foreach ($arResult['FILES'] as $id => $file)
 		}
 
 		$arSmallSize["signature"] = \Bitrix\Disk\Security\ParameterSigner::getImageSignature($file["ID"], $arSmallSize["width"], $arSmallSize["height"]);
+		$arResult["FILES"][$id]["SMALL"] ??= [
+			'src' => '',
+		];
 		$arResult["FILES"][$id]["SMALL"]["src"] .= "&width=".$arSmallSize["width"]."&height=".$arSmallSize["height"]."&signature=".$arSmallSize["signature"];
 
 		// inline

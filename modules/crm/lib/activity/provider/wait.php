@@ -85,7 +85,7 @@ class Wait extends Base
 		}
 
 		if (
-			$action === 'UPDATE'
+			$action === self::ACTION_UPDATE
 			&& isset($fields['COMPLETED'])
 			&& $fields['COMPLETED'] === 'Y'
 			&& isset($params['PREVIOUS_FIELDS'])
